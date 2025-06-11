@@ -1,0 +1,29 @@
+{
+  "instance": "cb1acbda-b825-4d2a-a656-56d168e89265",
+  "version": 1,
+  "deploymentMethod": "symlink_activator",
+  "gameId": "assassinscreedodyssey",
+  "deploymentTime": 1721785569246,
+  "stagingPath": "C:\\Users\\samue\\AppData\\Roaming\\Vortex\\assassinscreedodyssey\\mods",
+  "targetPath": "F:\\Game_Tools\\AssassinsCreed_Tools\\game-assassinscreedodyssey\\TEST GAME FOLDER",
+  "files": [
+    {
+      "relPath": "Forger.exe",
+      "source": "Forger Utility-42-2-10-0-1606267233.1",
+      "target": "",
+      "time": 1605474220000
+    },
+    {
+      "relPath": "oo2core_7_win64.dll",
+      "source": "Forger Utility-42-2-10-0-1606267233.1",
+      "target": "",
+      "time": 1569512220000
+    },
+    {
+      "relPath": "Newtonsoft.Json.dll",
+      "source": "Forger Utility-42-2-10-0-1606267233.1",
+      "target": "",
+      "time": 1555905976000
+    }
+  ]
+}

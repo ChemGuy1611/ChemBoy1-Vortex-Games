@@ -1,0 +1,29 @@
+{
+  "instance": "cb1acbda-b825-4d2a-a656-56d168e89265",
+  "version": 1,
+  "deploymentMethod": "symlink_activator",
+  "gameId": "assassinscreedodyssey",
+  "deploymentTime": 1721785569194,
+  "stagingPath": "C:\\Users\\samue\\AppData\\Roaming\\Vortex\\assassinscreedodyssey\\mods",
+  "targetPath": "F:\\Game_Tools\\AssassinsCreed_Tools\\game-assassinscreedodyssey\\TEST GAME FOLDER",
+  "files": [
+    {
+      "relPath": "AnvilToolkit.exe",
+      "source": "AnvilToolkit_Release_v1.2.8-455-1-2-8-1715159592",
+      "target": "",
+      "time": 1715111487000
+    },
+    {
+      "relPath": "README.txt",
+      "source": "AnvilToolkit_Release_v1.2.8-455-1-2-8-1715159592",
+      "target": "",
+      "time": 1713863131000
+    },
+    {
+      "relPath": "Utils\\texconv.exe",
+      "source": "AnvilToolkit_Release_v1.2.8-455-1-2-8-1715159592",
+      "target": "",
+      "time": 1642962172000
+    }
+  ]
+}
