@@ -105,8 +105,8 @@ function main(context) {
       GogAPPId: GOG_ID,
     },
     details: {
-      steamAppId: STEAM_ID,
-      gogAppId: GOG_ID,
+      steamAppId: +STEAM_ID,
+      gogAppId: +GOG_ID,
       compatibleDownloads: ['vampirebloodlines'],
       nexusPageId: 'vampirebloodlines',
     },
