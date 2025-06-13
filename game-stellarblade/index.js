@@ -61,7 +61,7 @@ const LOCALAPPDATA = util.getVortexPath('localAppData');
 const DATA_FOLDER = `SB`;
 
 const CONFIG_ID = `${GAME_ID}-config`;
-const CONFIG_NAME = "Config (Documents)";
+const CONFIG_NAME = "Config";
 const CONFIG_PATH = path.join(LOCALAPPDATA, DATA_FOLDER, "Saved", "Config", "WindowsNoEditor");
 const CONFIG_FILES = ["engine.ini", "scalability.ini", "input.ini", "game.ini"];
 const CONFIG_EXT = ".ini";
@@ -83,8 +83,9 @@ const ROOT_NAME = "Root Game Folder";
 const ROOT_FILE = EPIC_CODE_NAME;
 
 const SAVE_ID = `${GAME_ID}-save`;
-const SAVE_NAME = "Saves (Documents)";
-const SAVE_FOLDER = path.join(DOCUMENTS, 'StellarBlade');
+const SAVE_NAME = "Saves";
+//const SAVE_FOLDER = path.join(DOCUMENTS, 'StellarBlade');
+const SAVE_FOLDER = path.join(LOCALAPPDATA, DATA_FOLDER, 'Saved', 'SaveGames');
 let USERID_FOLDER = "";
 try {
   const SAVE_ARRAY = fs.readdirSync(SAVE_FOLDER);
@@ -99,7 +100,7 @@ if (USERID_FOLDER === undefined) {
 } //*/
 const SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
 const SAVE_EXT = ".sav";
-const SAVE_LOC = 'Documents';
+const SAVE_LOC = 'Local AppData';
 
 const SCRIPTS_ID = `${GAME_ID}-scripts`;
 const SCRIPTS_NAME = "UE4SS Script Mod";
@@ -1198,10 +1199,11 @@ async function setup(discovery, api, gameSpec) {
   // ASYNC CODE //////////////////////////////////////////
   if (CHECK_DATA) { //if game, staging folder, and config and save folders are on the same drive
     await fs.ensureDirWritableAsync(CONFIG_PATH);
-  }
-  if (CHECK_DOCS) { //if game, staging folder, and config and save folders are on the same drive
     await fs.ensureDirWritableAsync(SAVE_PATH);
   }
+  /*if (CHECK_DOCS) { //if game, staging folder, and config and save folders are on the same drive
+    await fs.ensureDirWritableAsync(SAVE_PATH);
+  } //*/
   await fs.ensureDirWritableAsync(path.join(GAME_PATH, SCRIPTS_PATH));
   await fs.ensureDirWritableAsync(path.join(GAME_PATH, LOGICMODS_PATH));
   //await downloadUe4ss(api, gameSpec);
@@ -1249,9 +1251,13 @@ function applyGame(context, gameSpec) {
     (gameId) => {
       GAME_PATH = getDiscoveryPath(context.api);
       if (GAME_PATH !== undefined) {
+        CHECK_DATA = checkPartitions(LOCALAPPDATA, GAME_PATH);
+      }
+      return ((gameId === GAME_ID) && (CHECK_DATA === true));
+      /*if (GAME_PATH !== undefined) {
         CHECK_DOCS = checkPartitions(DOCUMENTS, GAME_PATH);
       }
-      return ((gameId === GAME_ID) && (CHECK_DOCS === true));
+      return ((gameId === GAME_ID) && (CHECK_DOCS === true)); //*/
     },
     (game) => pathPattern(context.api, game, SAVE_PATH), 
     () => Promise.resolve(false), 

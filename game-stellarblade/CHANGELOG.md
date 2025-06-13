@@ -4,9 +4,10 @@ Future Changes (NOT IMPLEMENTED YET):
 
 - None
 
-## [0.1.2] - 2025-06-05
+## [0.1.2] - 2025-06-12
 
 - Set Vortex to launch the Steam version through Steam launcher.
+- Corrected save game folder path for release version.
 
 ## [0.1.1] - 2025-06-05
 
