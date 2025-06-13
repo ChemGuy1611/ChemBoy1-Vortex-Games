@@ -1192,7 +1192,7 @@ async function setup(discovery, api, gameSpec) {
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   CHECK_DATA = checkPartitions(LOCALAPPDATA, GAME_PATH);
-  CHECK_DOCS = checkPartitions(DOCUMENTS, GAME_PATH);
+  //CHECK_DOCS = checkPartitions(DOCUMENTS, GAME_PATH);
   if (!CHECK_DATA || !CHECK_DOCS) {
     partitionCheckNotify(api, CHECK_DATA, CHECK_DOCS);
   }
