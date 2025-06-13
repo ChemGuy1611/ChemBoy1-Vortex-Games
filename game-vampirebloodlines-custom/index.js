@@ -4,7 +4,7 @@ const winapi = require('winapi-bindings');
 const { fs, util, actions, selectors } = require('vortex-api');
 const { default: IniParser, WinapiFormat } = require('vortex-parse-ini');
 
-const GAME_ID = 'vampirebloodlines-custom';
+const GAME_ID = 'vampirebloodlines';
 const STEAM_ID = '2600';
 const GOG_ID = '1207659240';
 const EXEC = 'Vampire.exe';
@@ -12,7 +12,7 @@ const MOD_PATH = 'Unofficial_Patch';
 
 //3rd party tools and launchers
 const tools = [
-  {
+  /*{
     id: "LaunchUPGame",
     name: "Launch UP Game",
     logo: `exec.png`,
@@ -22,9 +22,8 @@ const tools = [
     relative: true,
     exclusive: true,
     defaultPrimary: true,
-    isPrimary: true,
     parameters: ['-game Unofficial_Patch']
-  },
+  }, //*/
 ];
 
 function readRegistryKey(hive, key, name) {
@@ -74,7 +73,6 @@ function getGameVersion(discoveryPath) {
 }
 
 function requiresLauncher(gamePath, store) {
-  // VtM Bloodlines does not seem to have any steam specific files within the game's discovery path... Attempt to launch via Steam if we're able to retrieve the game's information via the Steam wrapper
   if (store === 'steam') {
     return Promise.resolve({
       launcher: 'steam',
@@ -85,7 +83,6 @@ function requiresLauncher(gamePath, store) {
 
 async function setup(discovery, api) {
   return fs.ensureDirWritableAsync(path.join(discovery.path, 'Unofficial_Patch'));
-  //return fs.ensureDirWritableAsync(path.join(discovery.path, 'Vampire'));
 }
 
 function main(context) {
@@ -100,6 +97,7 @@ function main(context) {
     getGameVersion,
     queryModPath: () => MOD_PATH,
     executable: () => EXEC,
+    parameters: ['-game Unofficial_Patch'],
     requiredFiles: [
       EXEC
     ],
@@ -117,7 +115,7 @@ function main(context) {
     setup: async (discovery) => await setup(discovery, context.api),
   });
 
-  // The "unofficial patch" mod modifies the mods folder. GoG seems to include this by default ?
+  // The "unofficial patch" mod modifies the mods folder. GoG includes by default. Steam does not.
   context.registerModType('vtmb-up-modtype', 25, //id, priority
     (gameId) => gameId === GAME_ID, //isSupported - Is this mod for this game
     () => getUnofficialModPath(context.api), //getPath - mod install location
