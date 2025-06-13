@@ -73,11 +73,14 @@ function getGameVersion(discoveryPath) {
     });
 }
 
-function requiresLauncher(gamePath) {
+function requiresLauncher(gamePath, store) {
   // VtM Bloodlines does not seem to have any steam specific files within the game's discovery path... Attempt to launch via Steam if we're able to retrieve the game's information via the Steam wrapper
-  return util.steam.findByAppId(STEAM_ID)
-    .then(game => Promise.resolve({ launcher: 'steam' }))
-    .catch(err => Promise.resolve(undefined));
+  if (store === 'steam') {
+    return Promise.resolve({
+      launcher: 'steam',
+    });
+  }
+  return Promise.resolve(undefined);
 }
 
 async function setup(discovery, api) {
@@ -93,7 +96,7 @@ function main(context) {
     logo: 'gameart.jpg',
     mergeMods: true,
     queryPath: findGame,
-    requiresLauncher,
+    requiresLauncher: requiresLauncher,
     getGameVersion,
     queryModPath: () => MOD_PATH,
     executable: () => EXEC,
