@@ -360,41 +360,11 @@ function getShippingExe(api) {
   };
   if (isCorrectExec(EXEC_XBOX)) {
     SHIPPING_EXE = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_XBOX}\\${EPIC_CODE_NAME}-${EXEC_FOLDER_XBOX}-Shipping.exe`;
-    return; 
-    /*[
-      {
-        id: "Launch Shipping Executable",
-        name: `Launch Shipping Executable`,
-        logo: `exec.png`,
-        executable: () => SHIPPING_EXE,
-        requiredFiles: [SHIPPING_EXE],
-        detach: true,
-        relative: true,
-        exclusive: true,
-        //shell: true,
-        defaultPrimary: true,
-        parameters: []
-      }, 
-    ]; //*/
+    return SHIPPING_EXE; 
   };
   if (isCorrectExec(EXEC_DEFAULT)) {
     SHIPPING_EXE = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_DEFAULT}\\${EPIC_CODE_NAME}-${EXEC_FOLDER_DEFAULT}-Shipping.exe`;
-    return antiCheatNotify(api);
-    /*[
-      {
-        id: "Launch Shipping Executable",
-        name: `Launch Shipping Executable`,
-        logo: `exec.png`,
-        executable: () => SHIPPING_EXE,
-        requiredFiles: [SHIPPING_EXE],
-        detach: true,
-        relative: true,
-        exclusive: true,
-        //shell: true,
-        defaultPrimary: true,
-        parameters: []
-      }, 
-    ]; //*/
+    return SHIPPING_EXE;
   };
 }
 
