@@ -1295,6 +1295,8 @@ async function resolveGameVersion(gamePath) {
       const parser = new DOMParser();
       const XML = parser.parseFromString(appManifest, 'text/xml');
       try { //try to get version from appmanifest.xml
+        //const ns = "http://schemas.microsoft.com/appx/manifest/foundation/windows10"; //must define namespace
+        //const identity = XML.getElementsByTagNameNS(ns, 'Identity')[0];
         const identity = XML.getElementsByTagName('Identity')[0];
         version = identity.getAttribute('Version');
         return Promise.resolve(version);
@@ -1310,7 +1312,7 @@ async function resolveGameVersion(gamePath) {
   if (GAME_VERSION === 'epic') { // use EXEC_EPIC for Epic
     try {
       const exeVersion = require('exe-version');
-      version = exeVersion.getProductVersionLocalized(path.join(gamePath, EXEC_EPIC));
+      version = exeVersion.getProductVersion(path.join(gamePath, EXEC_EPIC));
       return Promise.resolve(version); 
     } catch (err) {
       log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
@@ -1320,7 +1322,7 @@ async function resolveGameVersion(gamePath) {
   if (GAME_VERSION === 'steam') { // use EXEC_DEFAULT for Steam
     try {
       const exeVersion = require('exe-version');
-      version = exeVersion.getProductVersionLocalized(path.join(gamePath, EXEC_DEFAULT));
+      version = exeVersion.getProductVersion(path.join(gamePath, EXEC_DEFAULT));
       return Promise.resolve(version); 
     } catch (err) {
       log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
