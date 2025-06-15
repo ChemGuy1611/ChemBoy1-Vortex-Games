@@ -2,14 +2,15 @@
 Name: Clair Obscur: Expedition 33 Vortex Extension
 Structure: UE5 (Xbox-Integrated)
 Author: ChemBoy1
-Version: 0.1.3
-Date: 2025-05-22
+Version: 0.1.4
+Date: 2025-06-15
 ////////////////////////////////////////////////*/
 
 //Import libraries
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
+const { get } = require('http');
 
 //Specify all information about the game
 const GAME_ID = "clairobscurexpedition33";
@@ -25,6 +26,7 @@ let GAME_PATH = null;
 let CHECK_DATA = false;
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
+const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 //Unreal Engine specific
 const EPIC_CODE_NAME = "Sandfall";
@@ -144,6 +146,10 @@ const UE4SS_URL = "https://github.com/UE4SS-RE/RE-UE4SS/releases";
 const UE4SS_PAGE_NO = 0; // <-- No Nexus page currently
 const UE4SS_FILE_NO = 0;
 
+const SAVE_EDITOR_ID = `${GAME_ID}-saveeditor`;
+const SAVE_EDITOR_NAME = "Save Editor";
+const SAVE_EDITOR_EXEC = "CO-E33_Save_Editor.exe";
+
 const MOD_PATH_DEFAULT = UE5_PATH;
 
 //Filled in from data above
@@ -202,23 +208,6 @@ const spec = {
     },
   ],
 };
-
-//3rd party tools and launchers
-const tools = [
-  /*{
-    id: "CustomLaunch",
-    name: `Custom Launch`,
-    logo: `exec.png`,
-    executable: () => EXEC,
-    requiredFiles: [EXEC],
-    detach: true,
-    relative: true,
-    exclusive: true,
-    shell: true,
-    //defaultPrimary: true,
-    parameters: []
-  }, //*/
-];
 
 // BASIC EXTENSION FUNCTIONS ///////////////////////////////////////////////////
 
@@ -409,8 +398,30 @@ function getShippingExe(api) {
   };
 }
 
+//Get correct shipping executable folder for game version
+function getBinariesFolder(discoveryPath) {
+  let BINARIES_FOLDER = '';
+  const isCorrectFolder = (folder) => {
+    try {
+      fs.statSync(path.join(discoveryPath, EPIC_CODE_NAME, 'Binaries', folder));
+      return true;
+    }
+    catch (err) {
+      return false;
+    }
+  };
+  if (isCorrectFolder(EXEC_FOLDER_XBOX)) {
+    BINARIES_FOLDER = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_XBOX}`;
+    return BINARIES_FOLDER;
+  };
+  if (isCorrectFolder(EXEC_FOLDER_DEFAULT)) {
+    BINARIES_FOLDER = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_DEFAULT}`;
+    return BINARIES_FOLDER;
+  };
+}
+
 //Get correct game version
-function getGameVersion(api) {
+function setGameVersion(api) {
   GAME_PATH = getDiscoveryPath(api);
   const isCorrectExec = (exec) => {
     try {
@@ -874,7 +885,7 @@ function configInstallerNotify(api) {
 //Test for save files
 function testSave(api, files, gameId) {
   const isMod = files.some(file => (path.extname(file).toLowerCase() === SAVE_EXT));
-  GAME_VERSION = getGameVersion(api);
+  GAME_VERSION = setGameVersion(api);
   const TEST = (GAME_VERSION === 'steam') || (GAME_VERSION === 'epic');
   let supported = (gameId === spec.game.id) && isMod && TEST;
   //let supported = (gameId === spec.game.id) && isMod;
@@ -1305,6 +1316,49 @@ function partitionCheckNotify(api, CHECK_DATA) {
   });
 }
 
+async function resolveGameVersion(gamePath) {
+  GAME_VERSION = setGameVersion(gamePath);
+  let version = '0.0.0';
+  if (GAME_VERSION === 'xbox') {
+    try { //try to parse appmanifest.xml for Xbox version
+      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
+      const parser = new DOMParser();
+      const XML = parser.parseFromString(appManifest, 'text/xml');
+      try { //try to get version from appmanifest.xml
+        const identity = XML.getElementsByTagName('Identity')[0];
+        version = identity.getAttribute('Version');
+        return Promise.resolve(version);
+      } catch (err) { //could not get version
+        log('error', `Could not get version from appmanifest.xml file for Xbox game version: ${err}`);
+        return Promise.resolve(version);
+      }
+    } catch (err) { //mod.manifest could not be read. Try to overwrite with a clean one.
+      log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+  if (GAME_VERSION === 'epic') { // use EXEC_EPIC for Epic
+    try {
+      const exeVersion = require('exe-version');
+      version = exeVersion.getProductVersionLocalized(path.join(gamePath, EXEC_EPIC));
+      return Promise.resolve(version); 
+    } catch (err) {
+      log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+  if (GAME_VERSION === 'steam') { // use EXEC_DEFAULT for Steam
+    try {
+      const exeVersion = require('exe-version');
+      version = exeVersion.getProductVersionLocalized(path.join(gamePath, EXEC_DEFAULT));
+      return Promise.resolve(version); 
+    } catch (err) {
+      log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+}
+
 //Setup function
 async function setup(discovery, api, gameSpec) {
   //SYNCHRONOUS CODE ////////////////////////////////////
@@ -1338,7 +1392,35 @@ function applyGame(context, gameSpec) {
     requiredFiles,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     requiresLauncher: requiresLauncher,
-    //supportedTools: getTools(context.api),
+    getGameVersion: resolveGameVersion,
+    supportedTools: [
+      /*{
+        id: "CustomLaunch",
+        name: `Custom Launch`,
+        logo: `exec.png`,
+        executable: getExecutable,
+        requiredFiles: [EXEC],
+        detach: true,
+        relative: true,
+        exclusive: true,
+        shell: true,
+        //defaultPrimary: true,
+        parameters: []
+      }, //*/
+      {
+        id: SAVE_EDITOR_ID,
+        name: SAVE_EDITOR_NAME,
+        logo: `saveeditor.png`,
+        queryPath: getBinariesFolder,
+        executable: () => SAVE_EDITOR_EXEC,
+        requiredFiles: [SAVE_EDITOR_EXEC],
+        detach: true,
+        relative: true,
+        exclusive: true,
+        //shell: true,
+        //parameters: []
+      }, //*/
+    ],
   };
   context.registerGame(game);
 
@@ -1405,7 +1487,7 @@ function applyGame(context, gameSpec) {
   context.registerModType(SAVE_ID, 60, 
     (gameId) => {
       GAME_PATH = getDiscoveryPath(context.api);
-      GAME_VERSION = getGameVersion(context.api);
+      GAME_VERSION = setGameVersion(context.api);
       if (GAME_PATH !== undefined) {
         CHECK_DATA = checkPartitions(LOCALAPPDATA, GAME_PATH);
       }

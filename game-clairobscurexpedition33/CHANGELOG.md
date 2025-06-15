@@ -1,7 +1,12 @@
 # Changelog
 
 ## Future Improvements (Not Yet Released)
-- 
+
+- None
+
+## [0.1.4] - 2025-06-15
+- Added tool for Save Editor.
+- Fixed version detection for all game store versions.
 
 ## [0.1.3] - 2025-05-22
 - Improved the config installer notification. 
