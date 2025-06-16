@@ -2,8 +2,8 @@
 Name: Stellar Blade Vortex Extension
 Structure: UE5 (static exe)
 Author: ChemBoy1
-Version: 0.1.3
-Date: 2025-06-15
+Version: 0.1.4
+Date: 2025-06-16
 //////////////////////////////////////////////////*/
 
 //Import libraries
@@ -1193,7 +1193,7 @@ function checkPartitions(folder, discoveryPath) {
 }
 
 //Notification if Config, Save, and Creations folders are not on the same partition
-function partitionCheckNotify(api, CHECK_DATA, CHECK_DOCS) {
+function partitionCheckNotify(api, CHECK_DATA) {
   const NOTIF_ID = `${GAME_ID}-partioncheck`;
   const MESSAGE = 'Some Mods Installers are Not Available';
   api.sendNotification({
@@ -1212,7 +1212,7 @@ function partitionCheckNotify(api, CHECK_DATA, CHECK_DOCS) {
                 + `\n`
                 + `Here are your results for the partition check to enable these mod types:\n`
                 + `  - Config: ${CHECK_DATA ? `ENABLED: ${CONFIG_LOC} folder is on the same partition as the game and the Vortex staging folder, so the Config modtype is available` : `DISABLED: ${CONFIG_LOC} folder is NOT on the same partition as the game and the Vortex staging folder, so the Config modtype is NOT available`}\n`
-                + `  - Save: ${CHECK_DOCS ? `ENABLED: ${SAVE_LOC} folder is on the same partition as the game and the Vortex staging folder, so the Save modtype is available` : `DISABLED: ${SAVE_LOC} folder is NOT on the same partition as the game and the Vortex staging folder, so the Save modtype is NOT available`}\n`
+                + `  - Save: ${CHECK_DATA ? `ENABLED: ${SAVE_LOC} folder is on the same partition as the game and the Vortex staging folder, so the Save modtype is available` : `DISABLED: ${SAVE_LOC} folder is NOT on the same partition as the game and the Vortex staging folder, so the Save modtype is NOT available`}\n`
 
                 + `\n`
                 + `Config Path: ${CONFIG_PATH}\n`
@@ -1244,8 +1244,8 @@ async function setup(discovery, api, gameSpec) {
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   CHECK_DATA = checkPartitions(LOCALAPPDATA, GAME_PATH);
   //CHECK_DOCS = checkPartitions(DOCUMENTS, GAME_PATH);
-  if (!CHECK_DATA || !CHECK_DOCS) {
-    partitionCheckNotify(api, CHECK_DATA, CHECK_DOCS);
+  if (!CHECK_DATA) {
+    partitionCheckNotify(api, CHECK_DATA);
   }
   // ASYNC CODE //////////////////////////////////////////
   if (CHECK_DATA) { //if game, staging folder, and config and save folders are on the same drive
