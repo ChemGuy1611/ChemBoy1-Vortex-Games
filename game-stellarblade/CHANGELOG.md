@@ -6,7 +6,7 @@ Future Changes (NOT IMPLEMENTED YET):
 
 ## [0.1.3] - 2025-06-15
 
-- Added installer for title screen mods (.bk2 files to "SB/Content/Movies).
+- Added installer for title screen mods (.bk2 files to "SB/Content/Movies").
 
 ## [0.1.2] - 2025-06-12
 
