@@ -4,6 +4,10 @@ Future Changes (NOT IMPLEMENTED YET):
 
 - None
 
+## [0.1.4] - 2025-06-16
+
+- Fixed config/save installers notification text.
+
 ## [0.1.3] - 2025-06-15
 
 - Added installer for title screen mods (.bk2 files to "SB/Content/Movies").
