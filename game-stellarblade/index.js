@@ -2,8 +2,8 @@
 Name: Stellar Blade Vortex Extension
 Structure: UE5 (static exe)
 Author: ChemBoy1
-Version: 0.1.2
-Date: 2025-06-12
+Version: 0.1.3
+Date: 2025-06-15
 //////////////////////////////////////////////////*/
 
 //Import libraries
@@ -130,6 +130,11 @@ const UE4SS_URL = "https://github.com/UE4SS-RE/RE-UE4SS/releases";
 const UE4SS_PAGE_NO = 0;
 const UE4SS_FILE_NO = 0;
 
+const MOVIE_ID = `${GAME_ID}-movie`;
+const MOVIE_NAME = "Movie Mod (.bk2)";
+const MOVIE_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Movies');
+const MOVIE_EXT = ".bk2";
+
 const MOD_PATH_DEFAULT = PAK_PATH;
 
 //Filled in from data above
@@ -206,6 +211,12 @@ const spec = {
       "name": BINARIES_NAME,
       "priority": "high",
       "targetPath": `{gamePath}\\${BINARIES_PATH}`
+    },
+    {
+      "id": MOVIE_ID,
+      "name": MOVIE_NAME,
+      "priority": "high",
+      "targetPath": `{gamePath}\\${MOVIE_PATH}`
     },
   ],
   "discovery": {
@@ -773,6 +784,46 @@ function saveInstallerNotify(api) {
   });
 }
 
+//Test for Movie mod files
+function testMovies(files, gameId) {
+  const isMod = files.some(file => (path.extname(file).toLowerCase() === MOVIE_EXT));
+  let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install Movie mod files
+function installMovies(files) {
+  const modFile = files.find(file => (path.extname(file).toLowerCase() === MOVIE_EXT));
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: MOVIE_ID };
+
+  //Filter files and set instructions
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
 //Test for Mod Loader mods
 function testBinaries(files, gameId) {
   const isPak = files.some(file => (path.extname(file).toLowerCase() === PAK_EXT));
@@ -1274,6 +1325,7 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(ROOT_ID, 37, testRoot, installRoot);
   context.registerInstaller(CONFIG_ID, 39, testConfig, (files) => installConfig(context.api, files));
   context.registerInstaller(SAVE_ID, 41, testSave, (files) => installSave(context.api, files));
+  context.registerInstaller(MOVIE_ID, 43, testMovies, installMovies);
   context.registerInstaller(BINARIES_ID, 45, testBinaries, installBinaries);
 
   //register buttons to open folders
