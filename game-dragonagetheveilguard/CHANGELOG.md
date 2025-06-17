@@ -4,6 +4,10 @@ Future Changes (NOT IMPLEMENTED YET):
 
 - None
 
+## [0.2.3] - 2025-06-17
+
+- Fixed new version check for Frosty Mod Manager.
+
 ## [0.2.2] - 2025-05-28
 
 - Fixed profile test when checking for new versions of Frosty Mod Manager

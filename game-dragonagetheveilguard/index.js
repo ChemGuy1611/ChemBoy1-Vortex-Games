@@ -2,8 +2,8 @@
 Name: Dragon Age: The Veilguard Vortex Extension
 Structure: 3rd Party Mod Manager (Frosty)
 Author: ChemBoy1
-Version: 0.2.2
-Date: 2025-05-28
+Version: 0.2.3
+Date: 2025-06-17
 ////////////////////////////////////////////////////*/
 
 //Import libraries
@@ -72,13 +72,13 @@ if (USERID_FOLDER === undefined) {
 const SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
 const SAVE_EXT = ".csav";
 
-const MOD_PATH_DEFAULT = ".";
-
 // Information for Frosty Mod Manager Alpha downloader and updater
 //const FROSTY_ARC_NAME = 'FrostyModManager_Alpha5v4.zip';
 const FROSTY_ARC_NAME = 'FrostyModManager_2025.5.15.0.zip';
-//const FROSTY_URL_MAIN = `https://api.github.com/repos/wavebend/FrostyToolsuite`;
-const FROSTY_URL_MAIN = `https://api.github.com/repos/J-Lyt/FrostyToolsuite`;
+const AUTHOR = 'J-Lyt'; // Author of the Frosty Mod Manager Alpha fork
+//const AUTHOR = 'wavebend'; // Author of the Frosty Mod Manager Alpha fork
+const REPO = 'FrostyToolsuite'; // Repository name on GitHub
+const FROSTY_URL_MAIN = `https://api.github.com/repos/${AUTHOR}/${REPO}`;
 const FROSTY_FILE = 'FrostyModManager.exe'; // <-- CASE SENSITIVE! Must match name exactly or downloader will download the file again.
 const REQUIREMENTS = [
   { //Frosty Mod Manager Alpha
@@ -94,6 +94,8 @@ const REQUIREMENTS = [
     resolveVersion: (api) => resolveVersionByPattern(api, REQUIREMENTS[0]),
   },
 ];
+
+const MOD_PATH_DEFAULT = ".";
 
 //Filled in from info above
 const spec = {
@@ -264,7 +266,7 @@ async function onCheckModVersion(api, gameId, mods, forced) {
   try {
     await testRequirementVersion(api, REQUIREMENTS[0]);
   } catch (err) {
-    log('warn', 'failed to test requirement version', err);
+    log('warn', 'failed to test version for Frosty Mod Manager', err);
   }
 }
 
