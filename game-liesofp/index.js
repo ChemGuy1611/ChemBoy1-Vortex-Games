@@ -1,13 +1,13 @@
-/*
+/*/////////////////////////////////////////////////
 Name: Lies of P Vortex Extension
 Structure: UE4 (XBOX Integrated)
 Author: ChemBoy1
-Version: 0.3.3
-Date: 11/07/2024
-*/
+Version: 0.4.0
+Date: 2025-06-17
+*//////////////////////////////////////////////////
 
 //Import libraries
-const { actions, fs, util, selectors } = require('vortex-api');
+const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 
@@ -21,6 +21,9 @@ const XBOXEXECNAME = "AppLiesofPShipping";
 const EPIC_CODE_NAME = "LiesofP";
 const GAME_NAME = "Lies of P";
 const GAME_NAME_SHORT = "Lies of P";
+let GAME_PATH = '';
+let STAGING_FOLDER = '';
+let DOWNLOAD_FOLDER = '';
 
 const gameFinderQuery = {
   steam: [{ id: STEAMAPP_ID, prefer: 0 }],
@@ -31,23 +34,15 @@ const gameFinderQuery = {
 
 //Information for setting the executable and variable paths based on the game store version
 let MOD_PATH = null;
+let EXEC_PATH = null;
 let EXEC_TARGET = null;
 let CONFIG_PATH = null;
-let CONFIG_TARGET = null;
+let SAVE_PATH = null;
 let requiredFiles = [EPIC_CODE_NAME];
 
-const CONFIG_PATH_DEFAULT = path.join(EPIC_CODE_NAME, "Saved", "Config", "WindowsNoEditor");
-const CONFIG_PATH_XBOX = path.join(EPIC_CODE_NAME, "Saved", "Config", "WinGDK"); //XBOX Version
-const LOCALAPPDATA = util.getVortexPath('localAppData');
-
 const STEAM_EXEC_FOLDER = "Win64";
-//const GOG_EXEC_FOLDER = "Win64";
-//const EPIC_EXEC_FOLDER = "Win64";
 const XBOX_EXEC_FOLDER = "WinGDK";
-
 const STEAM_EXEC= `LOP.exe`;
-//const GOG_EXEC= `LOP.exe`;
-//const EPIC_EXEC = `LOP.exe`;
 const XBOX_EXEC = `gamelaunchhelper.exe`;
 
 //Unreal Engine Game Data
@@ -57,29 +52,33 @@ const UNREALDATA = {
   loadOrder: true,
 }
 
-//This information will be filled in from the data above
+//Information for mod installers, modtypes, etc
+const LOCALAPPDATA = util.getVortexPath('localAppData');
+
 const CONFIG_ID = `${GAME_ID}-config`;
 const CONFIG_NAME = "Config (LocalAppData)";
-const CONFIG_FILE1 = "engine.ini";
-const CONFIG_FILE2 = "input.ini";
-const CONFIG_FILES = [CONFIG_FILE1, CONFIG_FILE2];
+const CONFIG_FILES = ['engine.ini', 'input.ini', 'game.ini', 'gameusersettings.ini', 'scalability.ini', 'scalabilitygroups.ini', 'defaultengine.ini', 'defaultinput.ini'];
 const CONFIG_EXT = ".ini";
+
+const CONFIG_PATH_DEFAULT = path.join(EPIC_CODE_NAME, "Saved", "Config", "WindowsNoEditor");
+const CONFIG_PATH_XBOX = path.join(LOCALAPPDATA, EPIC_CODE_NAME, "Saved", "Config", "WinGDK"); //XBOX Version
 
 const PAK_ID = `${GAME_ID}-pak`;
 const PAK_PATH = UNREALDATA.modsPath;
 
 const ROOT_ID = `${GAME_ID}-root`;
+const ROOT_NAME = "Root Game Folder";
 const ROOT_FILE = EPIC_CODE_NAME;
-const ROOT_IDX = `${ROOT_FILE}\\`;
 
 const BINARIES_ID = `${GAME_ID}-binaries`;
 const BINARIES_NAME = "Binaries (Engine Injector)";
 
 const SAVE_ID = `${GAME_ID}-save`;
-const SAVE_PATH = path.join(EPIC_CODE_NAME, "Saved", "SaveGames");
-//const USER_ID = process.env['USER_ID']; //XBOX Version
-//const SAVE_PATH = path.join("Packages", `${XBOXAPP_ID}_r4z3116tdh636`, "SystemAppData", "wgs", USER_ID); //XBOX Version
+const SAVE_NAME = "Save";
 const SAVE_EXT = ".sav";
+
+const SAVE_FOLDER_DEFAULT = path.join(EPIC_CODE_NAME, "Saved", "SaveGames");
+const SAVE_FOLDER_XBOX = path.join(LOCALAPPDATA, "Packages", `${XBOXAPP_ID}_r4z3116tdh636`, "SystemAppData", "wgs"); //XBOX Version
 
 const spec = {
   "game": {
@@ -90,11 +89,10 @@ const spec = {
     "mergeMods": true,
     "details": {
       "unrealEngine": UNREALDATA,
-      "steamAppId": STEAMAPP_ID,
+      "steamAppId": +STEAMAPP_ID,
       //"gogAppId": GOGAPP_ID,
       //"epicAppId": EPICAPP_ID,
       "xboxAppId": XBOXAPP_ID,
-      "nexusPageId": GAME_ID,
       "customOpenModsPath": UNREALDATA.absModsPath || UNREALDATA.modsPath
     },
     "compatible": {
@@ -108,14 +106,6 @@ const spec = {
     }
   },
   "modTypes": [
-    /*
-    {
-      "id": SAVE_ID,
-      "name": "Config (LocalAppData)",
-      "priority": "high",
-      "targetPath": `{localAppData}\\${SAVE_PATH}`
-    },
-    */
     {
       "id": PAK_ID,
       "name": "Paks",
@@ -136,6 +126,8 @@ const tools = [
   
 ];
 
+// BASIC EXTENSION FUNCTIONS //////////////////////////////////////////////////////////////////////////////////////
+
 //Set mod type priority
 function modTypePriority(priority) {
   return {
@@ -151,7 +143,7 @@ function pathPattern(api, game, pattern) {
     return template(pattern, {
       gamePath: (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0 ? void 0 : _a.path,
       documents: util.getVortexPath('documents'),
-      localAppData: process.env['LOCALAPPDATA'],
+      localAppData: util.getVortexPath('localAppData'),
       appData: util.getVortexPath('appData'),
     });
   }
@@ -161,36 +153,32 @@ function pathPattern(api, game, pattern) {
 }
 
 async function requiresLauncher(gamePath, store) {
-
   if (store === 'xbox') {
-      return Promise.resolve({
-          launcher: 'xbox',
-          addInfo: {
-              appId: XBOXAPP_ID,
-              parameters: [{ appExecName: XBOXEXECNAME }],
-          },
-      });
-  }
-
-  if (store === 'epic') {
+    return Promise.resolve({
+      launcher: 'xbox',
+      addInfo: {
+        appId: XBOXAPP_ID,
+        parameters: [{ appExecName: XBOXEXECNAME }],
+      },
+    });
+  } //*/
+  /*if (store === 'epic') {
     return Promise.resolve({
         launcher: 'epic',
         addInfo: {
             appId: EPICAPP_ID,
         },
     });
-  }
-  
+  } //*/
   return Promise.resolve(undefined);
 }
 
-//Get the executable and add to required files
+//Set the executable based on which file is present in the discovery path
 function getExecutable(discoveryPath) {
 
   const isCorrectExec = (exec) => {
     try {
       fs.statSync(path.join(discoveryPath, exec));
-      requiredFiles.push(exec);
       return true;
     }
     catch (err) {
@@ -201,15 +189,43 @@ function getExecutable(discoveryPath) {
   if (isCorrectExec(XBOX_EXEC)) {
     MOD_PATH = `${EPIC_CODE_NAME}\\Binaries\\${XBOX_EXEC_FOLDER}`;
     CONFIG_PATH = CONFIG_PATH_XBOX;
-    CONFIG_TARGET = `{localAppData}\\${CONFIG_PATH}`;
+    let USERID_FOLDER = "";
+    try {
+      const SAVE_ARRAY = fs.readdirSync(SAVE_FOLDER_XBOX);
+      USERID_FOLDER = SAVE_ARRAY.find((element) => 
+        //((/[a-z]/i.test(element) === false))
+        (element)
+      );
+    } catch(err) {
+      USERID_FOLDER = "";
+    }
+    if (USERID_FOLDER === undefined) {
+      USERID_FOLDER = "";
+    }
+    SAVE_PATH = path.join(SAVE_FOLDER_XBOX, USERID_FOLDER);
+    EXEC_PATH = `${EPIC_CODE_NAME}\\Binaries\\${XBOX_EXEC_FOLDER}`;
     EXEC_TARGET = `{gamePath}\\${EPIC_CODE_NAME}\\Binaries\\${XBOX_EXEC_FOLDER}`;
     return XBOX_EXEC;
   };
 
   if (isCorrectExec(STEAM_EXEC)) {
     MOD_PATH = `${EPIC_CODE_NAME}\\Binaries\\${STEAM_EXEC_FOLDER}`;
-    CONFIG_PATH = CONFIG_PATH_DEFAULT;
-    CONFIG_TARGET = `{localAppData}\\${CONFIG_PATH}`;
+    CONFIG_PATH = path.join(discoveryPath, CONFIG_PATH_DEFAULT);
+    let USERID_FOLDER = "";
+    try {
+      const SAVE_ARRAY = fs.readdirSync(path.join(discoveryPath, SAVE_FOLDER_DEFAULT));
+      USERID_FOLDER = SAVE_ARRAY.find((element) => 
+        ((/[a-z]/i.test(element) === false))
+        //(element)
+      );
+    } catch(err) {
+      USERID_FOLDER = "";
+    }
+    if (USERID_FOLDER === undefined) {
+      USERID_FOLDER = "";
+    }
+    SAVE_PATH = path.join(discoveryPath, SAVE_FOLDER_DEFAULT, USERID_FOLDER);
+    EXEC_PATH = `${EPIC_CODE_NAME}\\Binaries\\${STEAM_EXEC_FOLDER}`;
     EXEC_TARGET = `{gamePath}\\${EPIC_CODE_NAME}\\Binaries\\${STEAM_EXEC_FOLDER}`;
     return STEAM_EXEC;
   };
@@ -217,11 +233,25 @@ function getExecutable(discoveryPath) {
   return STEAM_EXEC;
 }
 
+const getDiscoveryPath = (api) => {
+  const state = api.getState();
+  const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});
+  return discovery === null || discovery === void 0 ? void 0 : discovery.path;
+};
+
+async function purge(api) {
+  return new Promise((resolve, reject) => api.events.emit('purge-mods', true, (err) => err ? reject(err) : resolve()));
+}
+async function deploy(api) {
+  return new Promise((resolve, reject) => api.events.emit('deploy-mods', (err) => err ? reject(err) : resolve()));
+}
+
+// MOD INSTALLER FUNCTIONS //////////////////////////////////////////////////////////////////////////////////////
+
 //Test for config files
 function testConfig(files, gameId) {
-  // Make sure we're able to support this mod
-  const isConfig = files.some(file => path.basename(file).toLocaleLowerCase() === (CONFIG_FILE1 || CONFIG_FILE2));
-  const isIni = files.find(file => path.extname(file).toLowerCase() === CONFIG_EXT) !== undefined;
+  const isConfig = files.some(file => CONFIG_FILES.includes(path.basename(file).toLocaleLowerCase()));
+  const isIni = files.some(file => (path.extname(file).toLowerCase() === CONFIG_EXT));
   let supported = (gameId === spec.game.id) && isConfig && isIni;
 
   // Test for a mod installer
@@ -239,7 +269,6 @@ function testConfig(files, gameId) {
 
 //Install config files
 function installConfig(files) {
-  // The config files are expected to always be positioned in the mods directory we're going to disregard anything placed outside the root.
   const modFile = files.find(file => path.extname(file).toLowerCase() === CONFIG_EXT);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
@@ -250,7 +279,47 @@ function installConfig(files) {
     ((file.indexOf(rootPath) !== -1) &&
       (!file.endsWith(path.sep)))
   );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
 
+//Test for save files
+function testSave(files, gameId) {
+  const isMod = files.some(file => (path.extname(file).toLowerCase() === SAVE_EXT));
+  let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install save files
+function installSave(files) {
+  const modFile = files.find(file => path.extname(file).toLowerCase() === SAVE_EXT);
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: SAVE_ID };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) &&
+      (!file.endsWith(path.sep)))
+  );
   const instructions = filtered.map(file => {
     return {
       type: 'copy',
@@ -277,7 +346,7 @@ function testRoot(files, gameId) {
 //Installer install Fluffy Mod Manger files
 function installRoot(files) {
   const modFile = files.find(file => path.basename(file) === ROOT_FILE);
-  const idx = modFile.indexOf(ROOT_IDX);
+  const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
 
@@ -298,6 +367,8 @@ function installRoot(files) {
 
   return Promise.resolve({ instructions });
 }
+
+//UNREAL ENGINE FUNCTIONS //////////////////////////////////////////////////////////////////////////////////////
 
 //Pre-sort function
 async function preSort(api, items, direction) {
@@ -320,18 +391,25 @@ async function preSort(api, items, direction) {
   return (direction === 'descending') ? Promise.resolve(loadOrder.reverse()) : Promise.resolve(loadOrder);
 }
 
+// MAIN FUNCTIONS //////////////////////////////////////////////////////////////////////////////////////
+
 //Setup function
 async function setup(discovery, api, gameSpec) {
-  await fs.ensureDirWritableAsync(path.join(LOCALAPPDATA, CONFIG_PATH));
+  const state = api.getState();
+  GAME_PATH = discovery.path;
+  STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
+  DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
+  await fs.ensureDirWritableAsync(path.join(CONFIG_PATH));
+  await fs.ensureDirWritableAsync(path.join(SAVE_PATH));
+  await fs.ensureDirWritableAsync(path.join(discovery.path, MOD_PATH));
   return fs.ensureDirWritableAsync(path.join(discovery.path, PAK_PATH));
 }
 
 //Let Vortex know about the game
 function applyGame(context, gameSpec) {
-  //require other extensions
-  context.requireExtension('Unreal Engine Mod Installer');
-  //register the game
-  const game = {
+  //* require other extensions
+  context.requireExtension('Unreal Engine Mod Installer'); //*/
+  const game = { //register the game
     ...gameSpec.game,
     requiresCleanup: true,
     queryArgs: gameFinderQuery,
@@ -344,7 +422,7 @@ function applyGame(context, gameSpec) {
   };
   context.registerGame(game);
 
-  //register mod types from spec
+  //register mod types recursively
   (gameSpec.modTypes || []).forEach((type, idx) => {
     context.registerModType(type.id, modTypePriority(type.priority) + idx, (gameId) => {
       var _a;
@@ -352,6 +430,7 @@ function applyGame(context, gameSpec) {
         && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
     }, (game) => pathPattern(context.api, game, type.targetPath), () => Promise.resolve(false), { name: type.name });
   });
+
   //register mod types explicitly
   context.registerModType(BINARIES_ID, 40, 
     (gameId) => {
@@ -367,21 +446,103 @@ function applyGame(context, gameSpec) {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
     }, 
-    (game) => pathPattern(context.api, game, CONFIG_TARGET), 
+    (game) => pathPattern(context.api, game, CONFIG_PATH), 
     () => Promise.resolve(false), 
     { name: CONFIG_NAME }
   );
+  context.registerModType(SAVE_ID, 50, 
+    (gameId) => {
+      var _a;
+      return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
+    }, 
+    (game) => pathPattern(context.api, game, SAVE_PATH), 
+    () => Promise.resolve(false), 
+    { name: SAVE_NAME }
+  );
 
   //register mod installers
-  context.registerInstaller(`${GAME_ID}-config`, 30, testConfig, installConfig);
-  context.registerInstaller(`${GAME_ID}-root`, 35, testRoot, installRoot);
+  // 25 is pak installer from UE Mod Installer extension
+  context.registerInstaller(CONFIG_ID, 27, testConfig, installConfig);
+  context.registerInstaller(SAVE_ID, 29, testSave, installSave);
+  context.registerInstaller(ROOT_ID, 31, testRoot, installRoot);
+
+  //register buttons to open folders
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Paks Mods Folder', () => {
+    GAME_PATH = getDiscoveryPath(context.api);
+    const openPath = path.join(GAME_PATH, PAK_PATH);
+    util.opn(openPath).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    }
+  );
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Binaries Folder', () => {
+    GAME_PATH = getDiscoveryPath(context.api);
+    const openPath = path.join(GAME_PATH, EXEC_PATH);
+    util.opn(openPath).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    }
+  );
+  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open UE4SS Mods Folder', () => {
+    GAME_PATH = getDiscoveryPath(context.api);
+    const openPath = path.join(GAME_PATH, SCRIPTS_PATH);
+    util.opn(openPath).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  }); //*/
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
+    const openPath = path.join(CONFIG_PATH);
+    util.opn(openPath).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    }
+  );
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Saves Folder', () => {
+    const openPath = path.join(SAVE_PATH);
+    util.opn(openPath).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    }
+  );
+  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download UE4SS', () => {
+    downloadUe4ss(context.api, gameSpec).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  }); //*/
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
+    const openPath = path.join(__dirname, 'CHANGELOG.md');
+    util.opn(openPath).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
+    const openPath = DOWNLOAD_FOLDER;
+    util.opn(openPath).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
 }
 
 //Main function
 function main(context) {
   applyGame(context, spec);
-  
-  if (UNREALDATA.loadOrder === true) {
+  if (UNREALDATA.loadOrder === true) { //Unreal Engine Load Order
     let previousLO;
     context.registerLoadOrderPage({
       gameId: spec.game.id,
@@ -402,11 +563,9 @@ function main(context) {
     });
   }
   
-  context.once(() => {
-    // put code here that should be run (once) when Vortex starts up
+  context.once(() => { // put code here that should be run (once) when Vortex starts up
 
   });
-
   return true;
 }
 

@@ -1101,10 +1101,7 @@ function makePrefix(input) {
 
 function loadOrderPrefix(api, mod) {
   const state = api.getState();
-  const gameId = mod.attributes.downloadGame;
-  if (!gameId)
-      return 'ZZZZ-';
-  const profile = selectors.lastActiveProfileForGame(state, gameId);
+  const profile = selectors.lastActiveProfileForGame(state, GAME_ID);
   const loadOrder = util.getSafe(state, ['persistent', 'loadOrder', profile], {});
   const loKeys = Object.keys(loadOrder);
   const pos = loKeys.indexOf(mod.id);
