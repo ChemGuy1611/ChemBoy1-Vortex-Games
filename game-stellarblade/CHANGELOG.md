@@ -7,6 +7,7 @@ Future Changes (NOT IMPLEMENTED YET):
 ## [0.1.4] - 2025-06-16
 
 - Fixed config/save installers notification text.
+- Added installer for splash screen mods (splash.bmp file).
 
 ## [0.1.3] - 2025-06-15
 

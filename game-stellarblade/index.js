@@ -135,6 +135,11 @@ const MOVIE_NAME = "Movie Mod (.bk2)";
 const MOVIE_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Movies');
 const MOVIE_EXT = ".bk2";
 
+const SPLASH_ID = `${GAME_ID}-splash`;
+const SPLASH_NAME = "Splash Screen";
+const SPLASH_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Splash');
+const SPLASH_FILE = "splash.bmp";
+
 const MOD_PATH_DEFAULT = PAK_PATH;
 
 //Filled in from data above
@@ -217,6 +222,12 @@ const spec = {
       "name": MOVIE_NAME,
       "priority": "high",
       "targetPath": `{gamePath}\\${MOVIE_PATH}`
+    },
+    {
+      "id": SPLASH_ID,
+      "name": SPLASH_NAME,
+      "priority": "high",
+      "targetPath": `{gamePath}\\${SPLASH_PATH}`
     },
   ],
   "discovery": {
@@ -824,6 +835,47 @@ function installMovies(files) {
   return Promise.resolve({ instructions });
 }
 
+//Test for Movie mod files
+function testSplash(files, gameId) {
+  const isMod = files.some(file => (path.basename(file).toLowerCase() === SPLASH_FILE));
+  let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install Movie mod files
+function installSplash(files) {
+  const modFile = files.find(file => (path.basename(file).toLowerCase() === SPLASH_FILE));
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: SPLASH_ID };
+
+  //Filter files and set instructions
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+
 //Test for Mod Loader mods
 function testBinaries(files, gameId) {
   const isPak = files.some(file => (path.extname(file).toLowerCase() === PAK_EXT));
@@ -1325,7 +1377,8 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(ROOT_ID, 37, testRoot, installRoot);
   context.registerInstaller(CONFIG_ID, 39, testConfig, (files) => installConfig(context.api, files));
   context.registerInstaller(SAVE_ID, 41, testSave, (files) => installSave(context.api, files));
-  context.registerInstaller(MOVIE_ID, 43, testMovies, installMovies);
+  context.registerInstaller(MOVIE_ID, 42, testMovies, installMovies);
+  context.registerInstaller(SPLASH_ID, 43, testSplash, installSplash);
   context.registerInstaller(BINARIES_ID, 45, testBinaries, installBinaries);
 
   //register buttons to open folders
