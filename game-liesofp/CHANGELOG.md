@@ -2,7 +2,8 @@
 
 Future Changes (NOT IMPLEMENTED YET):
 
-- None
+- UE4SS support
+- Remove UEMI dependency
 
 ## [0.4.0] - 2025-06-17
 
