@@ -4,6 +4,11 @@ Future Changes (NOT IMPLEMENTED YET):
 
 - None
 
+## [0.1.5] - 2025-06-21
+
+- Added Epic Games ID and full support.
+
+
 ## [0.1.4] - 2025-06-16
 
 - Fixed config/save installers notification text.
