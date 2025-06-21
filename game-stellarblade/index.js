@@ -16,7 +16,7 @@ const { get } = require('http');
 const GAME_ID = "stellarblade";
 const STEAMAPP_ID = "3489700";
 const STEAMAPP_ID_DEMO = "3564860";
-const EPICAPP_ID = "";
+const EPICAPP_ID = "4013d48a20c1403282fc9d1453ec8f5a";
 const GOGAPP_ID = "";
 const XBOXAPP_ID = "";
 const XBOXEXECNAME = "";
@@ -233,7 +233,7 @@ const spec = {
   "discovery": {
     "ids": [
       STEAMAPP_ID,
-      //EPICAPP_ID,
+      EPICAPP_ID,
       STEAMAPP_ID_DEMO,
     ],
     "names": []
@@ -301,7 +301,7 @@ async function requiresLauncher(gamePath, store) {
           },
       });
   } //*/
-  /*if (store === 'epic') {
+  if (store === 'epic') {
     return Promise.resolve({
         launcher: 'epic',
         addInfo: {
