@@ -1269,7 +1269,7 @@ function partitionCheckNotify(api, CHECK_DATA) {
                 + `Config Path: ${CONFIG_PATH}\n`
                 + `Save Path: ${SAVE_PATH}\n`
                 + `\n`
-                + `If you want to use the disabled mod types, you must move the game and staging folder to the same partition as the Documents folder (typically C Drive).\n`
+                + `If you want to use the disabled mod types, you must move the game and staging folder to the same partition as the folders shown above (typically C Drive).\n`
                 + `\n`
           }, [
             { label: 'Acknowledge', action: () => dismiss() },
