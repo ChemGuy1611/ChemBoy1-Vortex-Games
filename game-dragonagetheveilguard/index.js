@@ -74,7 +74,7 @@ const SAVE_EXT = ".csav";
 
 // Information for Frosty Mod Manager Alpha downloader and updater
 //const FROSTY_ARC_NAME = 'FrostyModManager_Alpha5v4.zip';
-const FROSTY_ARC_NAME = 'FrostyModManager_2025.5.15.0.zip';
+const FROSTY_ARC_NAME = 'FrostyModManager_2025.6.12.0.zip';
 const AUTHOR = 'J-Lyt'; // Author of the Frosty Mod Manager Alpha fork
 //const AUTHOR = 'wavebend'; // Author of the Frosty Mod Manager Alpha fork
 const REPO = 'FrostyToolsuite'; // Repository name on GitHub
@@ -90,7 +90,7 @@ const REQUIREMENTS = [
     findMod: (api) => findModByFile(api, FROSTYMANAGER_ID, FROSTY_FILE),
     findDownloadId: (api) => findDownloadIdByFile(api, FROSTY_ARC_NAME),
     //fileArchivePattern: new RegExp(/^FrostyModManager_Alpha(\d+)v(\d+)/, 'i'),
-    fileArchivePattern: new RegExp(/^FrostyModManager_(\d+).(\d+).(\d+).(\d+)/, 'i'),
+    fileArchivePattern: new RegExp(/^FrostyModManager_(\d+)\.(\d+)\.(\d+)\.(\d+)/, 'i'),
     resolveVersion: (api) => resolveVersionByPattern(api, REQUIREMENTS[0]),
   },
 ];
@@ -549,6 +549,9 @@ function applyGame(context, gameSpec) {
         && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
     }, (game) => pathPattern(context.api, game, type.targetPath), () => Promise.resolve(false), { name: type.name });
   });
+
+  //register mod types explicitlty (partion check)
+  
 
   //register mod installers
   context.registerInstaller(FROSTYMANAGER_ID, 25, testFrosty, installFrosty);

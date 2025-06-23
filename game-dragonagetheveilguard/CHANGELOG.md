@@ -2,7 +2,7 @@
 
 Future Changes (NOT IMPLEMENTED YET):
 
-- None
+- Config and save installers (partition check)
 
 ## [0.2.3] - 2025-06-17
 
