@@ -1,6 +1,6 @@
 /*//////////////////////////////////////////////////
 Name: Fallout London Setup Helper
-Structure: Utility Extension (not game support)
+Structure: Utility Extension (game helper)
 Author: ChemBoy1
 Version: 0.1.0
 Date: 2025-06-23
@@ -24,8 +24,8 @@ let FOLON_INSTALL_PATH = '';
 let GAME_PATH = '';
 const DISCOVERY_IDS = [GOGAPP_ID, GOGAPP_ID_ONECLICK];
 
-const STAGINGFOLDER_NAME = "falloutlondon"; // The name of the staging folder for FOLON
-const FOLON_FILE = 'LondonWorldSpace.esm'; // The main file for FOLON
+const STAGINGFOLDER_NAME = "falloutlondon"; // The name of the mod folder in the FO4 staging folder
+const FOLON_FILE = 'LondonWorldSpace.esm'; // The main file for FOLON (installer)
 
 const DOCUMENTS = util.getVortexPath("documents");
 const INI_PATH = path.join(DOCUMENTS, 'My Games', "Fallout4");
@@ -42,7 +42,7 @@ SResourceArchiveList2=Fallout4 - Animations.ba2, LondonWorldSpace - Animations.b
 SGeometryPackageList=Fallout4 - Geometry.csg, LondonWorldSpace - Geometry.csg
 SCellResourceIndexFileList=Fallout4.cdx, LondonWorldSpace.cdx
 SResourceArchiveMemoryCacheList=Fallout4 - Misc.ba2, Fallout4 - Shaders.ba2, Fallout4 - Interface.ba2, Fallout4 - Materials.ba2, LondonWorldSpace - Misc.ba2, LondonWorldSpace - Interface.ba2, LondonWorldSpace - Materials.ba2
-bInvalidateOlderFiles=1`; // The section in the INI file for archives
+bInvalidateOlderFiles=1`; // Add to FO4 INI files
 
 const FOLON_ID = `${GAME_ID}-folon`;
 const FOLON_NAME = "FOLON GOG Files";
@@ -98,7 +98,7 @@ async function writeFolonIni(api) {
   }
 
   try { //Fallout4Custom.ini
-    fs.statSync(INI_PATH_CUSTOM); //statsync Fallout4Custom.ini file, write section if it exists
+    fs.statSync(INI_PATH_CUSTOM); //dont need to write if it doesnt exist
     const contents = await parser.read(INI_PATH_CUSTOM);
     const section = contents?.['Archive'];
     // replace the section
@@ -184,7 +184,9 @@ async function setup(api) {
   GAME_PATH = getFallout4Path(api);
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   FOLON_STAGING_PATH = path.join(STAGING_FOLDER, STAGINGFOLDER_NAME);
+  //add check for if already linked and ini written
   makeLink(api); //create hardlink for FOLON to staging folder
+  writeFolonIni(api); //write "Archive" section to FO4 INI file(s)
   return;
 }
 
@@ -194,8 +196,7 @@ function main(context) {
   context.registerModType(FOLON_ID, 75, 
     (gameId) => {
       try { //do functions here
-        setup(context.api); //get information needed for setup and make link
-        writeFolonIni(context.api); //write "Archive" section to FO4 INI file(s)
+        setup(context.api); //FOLON setup
       } catch (err) {
         context.api.showErrorNotification(`Failed to set up ${GAME_NAME} Helper features.`, err, { allowReport: true });
       }
