@@ -179,12 +179,12 @@ async function makeLink(api) {
     return fs.symlinkAsync(src, dest, 'dir') //make directory link
     //return api.runExecutable('cmd.exe', [`mklink`, `/D`, `"${dest}"`, `"${src}"`], { shell: true, detached: true }) run through cmd.exe
     //return api.runExecutable('makelink.bat', [`mklink`, `/D`, `"${dest}"`, `"${src}"`], { shell: true, detached: true }) run through .bat file (close and restart Vortex)
-      .then(() => log('warn', `Created hardlink for FOLON files directory at path: "${dest}"`))
+      .then(() => log('warn', `Created hardlink for FOLON GOG files directory from path "${src}" to path "${dest}"`))
       //.then(() => restartNotify(api)) //notify user to restart
       .then(() => linkSuccessNotify(api)) //notify user of linking success
       .then(() => changeFolonModTypeNotify(api)) //write the FOLON settings to the FO4 INI files
       //.then(() => changeFolonModTypeAuto(api)) //automatically change mod type for FOLON mod (DONT KNOW HOW YET)
-      .catch(err => api.showErrorNotification(`Failed to create hardlink for FOLON files`, err, { allowReport: true }));
+      .catch(err => api.showErrorNotification(`Failed to create hardlink for FOLON GOG files`, err, { allowReport: true }));
   }
 }
 
