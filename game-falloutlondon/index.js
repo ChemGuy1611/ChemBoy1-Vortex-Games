@@ -305,7 +305,7 @@ async function setup(api) {
   if (FOLON_INSTALL_PATH === undefined) {
     return; //if FO4 Staging Folder path is not found, exit setup
   }
-
+  //Make link, write INI files, and change falloutlondon modtype
   makeLink(api, FOLON_INSTALL_PATH, FOLON_STAGING_PATH, 'dir'); //create link for FOLON game files to staging folder
   changeFolonModTypeNotify(api); //check if FOLON mod type is set and notify user to change it if it's not
   writeFolonIni(api); //write "[Archive]" section to FO4 INI file(s)
@@ -313,6 +313,17 @@ async function setup(api) {
 
 //Main function
 function main(context) {
+  context.once((profileId, gameId) => { // put code here that should be run (once) when Vortex starts up
+    /*const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
+    if (profileId !== LAST_ACTIVE_PROFILE) return; //*/
+    //if (gameId !== GAME_ID) return;
+    try {
+      setup(context.api); //FOLON setup
+    } catch (err) {
+      context.api.showErrorNotification(`Failed to set up ${GAME_NAME} Helper features.`, err, { allowReport: true });
+    }
+  });
+
   context.registerModType(FOLON_ID, 75, 
     (gameId) => {
       var _a;
@@ -325,17 +336,6 @@ function main(context) {
   );
 
   context.registerInstaller(FOLON_ID, 49, testFolon, installFolon);
-
-  context.once((profileId, gameId) => { // put code here that should be run (once) when Vortex starts up
-    /*const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
-    if (profileId !== LAST_ACTIVE_PROFILE) return; //*/
-    //if (gameId !== GAME_ID) return;
-    try {
-      setup(context.api); //FOLON setup
-    } catch (err) {
-      context.api.showErrorNotification(`Failed to set up ${GAME_NAME} Helper features.`, err, { allowReport: true });
-    }
-  });
   return true;
 }
 
