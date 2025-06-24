@@ -28,7 +28,7 @@ const FOLON_FILE = 'LondonWorldSpace.esm'; // The main file for FOLON
 
 const DOCUMENTS = util.getVortexPath("documents");
 const INI_PATH = path.join(DOCUMENTS, 'My Games', "Fallout4");
-const INI_FILE_DEFAULT = 'Fallout4.ini'; // The INI file for FO4
+const INI_FILE_DEFAULT = 'Fallout4.ini'; // The main INI file for FO4
 const INI_FILE_CUSTOM = 'Fallout4Custom.ini'; // Second (optional) INI file for FO4
 const INI_PATH_DEFAULT = path.join(INI_PATH, INI_FILE_DEFAULT);
 const INI_PATH_CUSTOM = path.join(INI_PATH, INI_FILE_CUSTOM);
@@ -53,7 +53,7 @@ const INI_ARCHIVE_OBJECT = {
   SCellResourceIndexFileList: 'Fallout4.cdx, LondonWorldSpace.cdx',
   SResourceArchiveMemoryCacheList: 'Fallout4 - Misc.ba2, Fallout4 - Shaders.ba2, Fallout4 - Interface.ba2, Fallout4 - Materials.ba2, LondonWorldSpace - Misc.ba2, LondonWorldSpace - Interface.ba2, LondonWorldSpace - Materials.ba2',
   bInvalidateOlderFiles: '1',
-};
+}; // [Archive] section in object format for the ini parser
 
 const FOLON_ID = `${GAME_ID}-folon`;
 const FOLON_NAME = "FOLON GOG Files";
@@ -145,7 +145,7 @@ async function writeFolonIni(api) {
       await parser.write(INI_PATH_DEFAULT, contents) //write the INI file
         .then(() => log('warn', `Wrote FOLON INI settings to "${INI_FILE_DEFAULT}"`))
         //.then(() => iniSuccessNotifyDefault(api))
-        .catch(error => api.showErrorNotification(`Error when writing FOLON INI settings to ${INI_FILE_DEFAULT}`, error, { allowReport: true }));
+        .catch(err => api.showErrorNotification(`Error when writing FOLON INI settings to ${INI_FILE_DEFAULT}`, err, { allowReport: true }));
     }
   } catch (err) {
     api.showErrorNotification(`Failed to write FOLON INI settings to ${INI_FILE_DEFAULT}`, err, { allowReport: true });
@@ -289,23 +289,26 @@ async function isFolonModType(api, instructions, files) {
 //Setup function
 async function setup(api) {
   const state = api.getState();
+  // Find FO4 game path
   GAME_PATH = getFallout4Path(api);
   if (GAME_PATH === undefined) {
     return; //if FO4 game path is not found, exit setup
   }
+  // Find FO4 staging folder
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   if (STAGING_FOLDER === undefined) {
     return; //if FO4 Staging Folder path is not found, exit setup
   }
   FOLON_STAGING_PATH = path.join(STAGING_FOLDER, STAGINGFOLDER_NAME);
+  // Find FOLON install path
   FOLON_INSTALL_PATH = await findFolon(api);
   if (FOLON_INSTALL_PATH === undefined) {
     return; //if FO4 Staging Folder path is not found, exit setup
   }
+
   makeLink(api, FOLON_INSTALL_PATH, FOLON_STAGING_PATH, 'dir'); //create link for FOLON game files to staging folder
-  changeFolonModTypeNotify(api); //check if FOLON mod type is set and notify user to change it if not
-  writeFolonIni(api); //write "Archive" section to FO4 INI file(s)
-  return;
+  changeFolonModTypeNotify(api); //check if FOLON mod type is set and notify user to change it if it's not
+  writeFolonIni(api); //write "[Archive]" section to FO4 INI file(s)
 }
 
 //Main function
@@ -314,7 +317,7 @@ function main(context) {
     (gameId) => {
       var _a;
       return ((gameId === GAME_ID))
-        && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
+        && !!((_a = context.api.getState().settings.gameMode.discovered[GAME_ID]) === null || _a === void 0 ? void 0 : _a.path);
     },
     () => getFallout4Path(context.api),
     (instructions, files) => isFolonModType(context.api, instructions, files), //test - is installed mod of this type
