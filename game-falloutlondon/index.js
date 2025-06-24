@@ -44,6 +44,18 @@ SCellResourceIndexFileList=Fallout4.cdx, LondonWorldSpace.cdx
 SResourceArchiveMemoryCacheList=Fallout4 - Misc.ba2, Fallout4 - Shaders.ba2, Fallout4 - Interface.ba2, Fallout4 - Materials.ba2, LondonWorldSpace - Misc.ba2, LondonWorldSpace - Interface.ba2, LondonWorldSpace - Materials.ba2
 bInvalidateOlderFiles=1`; // [Archive] section - write to FO4 INI files
 
+const INI_ARCHIVE_OBJECT = {
+  sResourceDataDirsFinal: '',
+  sResourceIndexFileList: 'Fallout4 - Textures1.ba2, Fallout4 - Textures2.ba2, Fallout4 - Textures3.ba2, Fallout4 - Textures4.ba2, Fallout4 - Textures5.ba2, Fallout4 - Textures6.ba2, Fallout4 - Textures7.ba2, Fallout4 - Textures8.ba2, Fallout4 - Textures9.ba2, LondonWorldSpace - Textures1.ba2, LondonWorldSpace - Textures2.ba2, LondonWorldSpace - Textures3.ba2, LondonWorldSpace - Textures4.ba2, LondonWorldSpace - Textures5.ba2, LondonWorldSpace - Textures6.ba2, LondonWorldSpace - Textures7.ba2, LondonWorldSpace - Textures8.ba2, LondonWorldSpace - Textures9.ba2, LondonWorldSpace - Textures10.ba2, LondonWorldSpace - Textures11.ba2, LondonWorldSpace - Textures12.ba2, LondonWorldSpace - Textures13.ba2',
+  sResourceStartUpArchiveList: 'Fallout4 - Startup.ba2, Fallout4 - Shaders.ba2, Fallout4 - Interface.ba2, LondonWorldSpace - Interface.ba2',
+  SResourceArchiveList: 'Fallout4 - Voices.ba2, Fallout4 - Meshes.ba2, Fallout4 - MeshesExtra.ba2, Fallout4 - Misc.ba2, Fallout4 - Sounds.ba2, Fallout4 - Materials.ba2, LondonWorldSpace - Sounds.ba2, LondonWorldSpace - Misc.ba2, LondonWorldSpace - Materials.ba2, LondonWorldSpace - Voices.ba2, LondonWorldSpace - VoicesExtra.ba2, LondonWorldSpace - Meshes.ba2, LondonWorldSpace - MeshesExtra.ba2, LondonWorldSpace - MeshesLOD.ba2',
+  SResourceArchiveList2: 'Fallout4 - Animations.ba2, LondonWorldSpace - Animations.ba2',
+  SGeometryPackageList: 'Fallout4 - Geometry.csg, LondonWorldSpace - Geometry.csg',
+  SCellResourceIndexFileList: 'Fallout4.cdx, LondonWorldSpace.cdx',
+  SResourceArchiveMemoryCacheList: 'Fallout4 - Misc.ba2, Fallout4 - Shaders.ba2, Fallout4 - Interface.ba2, Fallout4 - Materials.ba2, LondonWorldSpace - Misc.ba2, LondonWorldSpace - Interface.ba2, LondonWorldSpace - Materials.ba2',
+  bInvalidateOlderFiles: '1',
+};
+
 const FOLON_ID = `${GAME_ID}-folon`;
 const FOLON_NAME = "FOLON GOG Files";
 const ROOT_FILE = 'Data'; // The main data folder for FOLON
@@ -129,17 +141,18 @@ async function writeFolonIni(api) {
     const parser = new IniParser(new WinapiFormat());
     fs.statSync(INI_PATH_DEFAULT); //make sure the file exists
     const contents = await parser.read(INI_PATH_DEFAULT);
-    const section = contents?.data?.['Archive'];
-    contents.data['Archive'] = INI_ARCHIVE_SECTION; // Set the Archive section to the new value
-    // replace the section
-    return parser.write(INI_PATH_DEFAULT, contents) //write the INI file
-    /*return fs.writeFileAsync( //write Fallout4.ini file
-      INI_PATH_DEFAULT,
-      contents,
-    ) //*/
-      .then(() => log('warn', `Wrote FOLON INI settings to "${INI_FILE_DEFAULT}"`))
-      .then(() => iniSuccessNotifyDefault(api))
-      .catch(error => api.showErrorNotification(`Error when writing FOLON INI settings to ${INI_FILE_DEFAULT}`, error, { allowReport: true }));
+    let section = contents.data['Archive'];
+    if (contents.data['Archive'] !== INI_ARCHIVE_OBJECT) {
+      contents.data['Archive'] = INI_ARCHIVE_OBJECT; // Set the Archive section to the new value
+      await parser.write(INI_PATH_DEFAULT, contents) //write the INI file
+      /*return fs.writeFileAsync( //write Fallout4.ini file
+        INI_PATH_DEFAULT,
+        contents,
+      ) //*/
+        .then(() => log('warn', `Wrote FOLON INI settings to "${INI_FILE_DEFAULT}"`))
+        //.then(() => iniSuccessNotifyDefault(api))
+        .catch(error => api.showErrorNotification(`Error when writing FOLON INI settings to ${INI_FILE_DEFAULT}`, error, { allowReport: true }));
+    }
   } catch (error) {
     api.showErrorNotification(`Failed to write FOLON INI settings to ${INI_FILE_DEFAULT}`, error, { allowReport: true });
   }
@@ -148,17 +161,18 @@ async function writeFolonIni(api) {
     const parser = new IniParser(new WinapiFormat());
     fs.statSync(INI_PATH_CUSTOM); //dont need to write to it if it doesnt already exist
     const contents = await parser.read(INI_PATH_CUSTOM);
-    const section = contents?.data?.['Archive'];
-    // replace the section
-    contents.data['Archive'] = INI_ARCHIVE_SECTION; // Set the Archive section to the new value
-    return parser.write(INI_PATH_CUSTOM, contents) //write the INI file
-    /*return fs.writeFileAsync( //write Fallout4Custom.ini file
-      INI_PATH_CUSTOM,
-      contents,
-    ) //*/
-      .then(() => log('warn', `Wrote FOLON INI settings to "${INI_FILE_CUSTOM}"`))
-      .then(() => iniSuccessNotifyCustom(api))
-      .catch(error => log('error', `Error when writing FOLON INI settings to "${INI_FILE_CUSTOM}": ${error.message}`));
+    let section = contents?.data['Archive'];
+    if (contents.data['Archive'] !== INI_ARCHIVE_OBJECT) {
+      contents.data['Archive'] = INI_ARCHIVE_OBJECT; // Set the Archive section to the new value
+      await parser.write(INI_PATH_CUSTOM, contents) //write the INI file
+      /*return fs.writeFileAsync( //write Fallout4Custom.ini file
+        INI_PATH_CUSTOM,
+        contents,
+      ) //*/
+        .then(() => log('warn', `Wrote FOLON INI settings to "${INI_FILE_CUSTOM}"`))
+        //.then(() => iniSuccessNotifyCustom(api))
+        .catch(error => log('error', `Error when writing FOLON INI settings to "${INI_FILE_CUSTOM}": ${error.message}`));
+    }
   } catch (error) {
     log('warn', `Failed to write FOLON INI settings to ${INI_FILE_CUSTOM}. This likely means the file does not exist. Error: ${error.message}`);
   }
@@ -294,7 +308,7 @@ function linkSuccessNotify(api) {
 
 //Notification to notify user of successful INI writing
 function iniSuccessNotifyDefault(api) {
-  const NOTIF_ID = `${GAME_ID}-foloninisuccess`;
+  const NOTIF_ID = `${GAME_ID}-foloninisuccessdefault`;
   const MESSAGE = `Successfully wrote FOLON "[Archive]" settings to "${INI_FILE_DEFAULT}"`;
   api.sendNotification({
     id: NOTIF_ID,
@@ -308,7 +322,7 @@ function iniSuccessNotifyDefault(api) {
 
 //Notification to notify user of successful INI writing
 function iniSuccessNotifyCustom(api) {
-  const NOTIF_ID = `${GAME_ID}-foloninisuccess`;
+  const NOTIF_ID = `${GAME_ID}-foloninisuccesscustom`;
   const MESSAGE = `Successfully wrote FOLON "[Archive]" settings to "${INI_FILE_CUSTOM}"`;
   api.sendNotification({
     id: NOTIF_ID,
@@ -341,7 +355,7 @@ async function setup(api) {
   FOLON_STAGING_PATH = path.join(STAGING_FOLDER, STAGINGFOLDER_NAME);
   makeLink(api); //create hardlink for FOLON to staging folder
   changeFolonModTypeNotify(api); //check if FOLON mod type is set
-  //writeFolonIni(api); //write "Archive" section to FO4 INI file(s)
+  writeFolonIni(api); //write "Archive" section to FO4 INI file(s)
   return;
 }
 
