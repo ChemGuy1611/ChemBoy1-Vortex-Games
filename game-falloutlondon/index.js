@@ -124,9 +124,9 @@ function findFolon(api) {
 
 //Write the FOLON settings to the FO4 INI files
 async function writeFolonIni(api) {
-  const parser = new IniParser(new WinapiFormat());
-  // <-- ADD CHECKS FOR IF INI HAS ALREADY BEEN WRITTEN with new Archive section
+  // <-- ADD CHECKS HERE FOR IF INI HAS ALREADY BEEN WRITTEN with new Archive section
   try { //Fallout4.ini
+    const parser = new IniParser(new WinapiFormat());
     fs.statSync(INI_PATH_DEFAULT); //make sure the file exists
     const contents = await parser.read(INI_PATH_DEFAULT);
     const section = contents?.data?.['Archive'];
@@ -145,6 +145,7 @@ async function writeFolonIni(api) {
   }
 
   try { //Fallout4Custom.ini (optional, only write if it exists)
+    const parser = new IniParser(new WinapiFormat());
     fs.statSync(INI_PATH_CUSTOM); //dont need to write to it if it doesnt already exist
     const contents = await parser.read(INI_PATH_CUSTOM);
     const section = contents?.data?.['Archive'];
@@ -181,7 +182,7 @@ async function makeLink(api) {
       .then(() => log('warn', `Created hardlink for FOLON files directory at path: "${dest}"`))
       //.then(() => restartNotify(api)) //notify user to restart
       .then(() => linkSuccessNotify(api)) //notify user of linking success
-      .then(() => changeFolonModTypeNotify(api)) //notify user to restart Vortex
+      .then(() => changeFolonModTypeNotify(api)) //write the FOLON settings to the FO4 INI files
       //.then(() => changeFolonModTypeAuto(api)) //automatically change mod type for FOLON mod (DONT KNOW HOW YET)
       .catch(err => api.showErrorNotification(`Failed to create hardlink for FOLON files`, err, { allowReport: true }));
   }
@@ -232,35 +233,49 @@ function restartNotify(api) {
   });
 }
 
+//Check if FOLON files are installed
+function isFolonInstalled(api) {
+  const state = api.getState();
+  const mods = state.persistent.mods[GAME_ID] || {};
+  return Object.keys(mods).some(id => mods[id]?.type === FOLON_ID);
+}
+
 //Notification to change mod type for FOLON mod
 function changeFolonModTypeNotify(api) {
   const NOTIF_ID = `${GAME_ID}-folonchangemodtype`;
   const MESSAGE = 'Must Change Mod Type for falloutlondon Mod';
-  api.sendNotification({
-    id: NOTIF_ID,
-    type: 'warning',
-    message: MESSAGE,
-    allowSuppress: true,
-    actions: [
-      {
-        title: 'More',
-        action: (dismiss) => {
-          api.showDialog('question', MESSAGE, {
-            text: `The FOLON Helper Extension has successfully linked the GOG Fallout: London files to the Fallout 4 Staging Folder.\n`
-                + `\n`
-                + `You must now manually change the mod type for the new "${STAGINGFOLDER_NAME}" mod to "${FOLON_NAME}" to complete the setup.\n`
-                + `\n`
-          }, [
-            {
-              label: 'Continue', action: () => {
-                dismiss();
-              }
+  try {
+    fs.statSync(FOLON_STAGING_PATH); //check if the FOLON staging folder exists
+    if (!isFolonInstalled(api)) {
+      api.sendNotification({
+        id: NOTIF_ID,
+        type: 'warning',
+        message: MESSAGE,
+        allowSuppress: true,
+        actions: [
+          {
+            title: 'More',
+            action: (dismiss) => {
+              api.showDialog('question', MESSAGE, {
+                text: `The FOLON Helper Extension has successfully linked the GOG Fallout: London files to the Fallout 4 Staging Folder.\n`
+                    + `\n`
+                    + `You must now manually change the mod type for the new "${STAGINGFOLDER_NAME}" mod to "${FOLON_NAME}" to complete the setup.\n`
+                    + `\n`
+              }, [
+                {
+                  label: 'Continue', action: () => {
+                    dismiss();
+                  }
+                },
+              ]);
             },
-          ]);
-        },
-      },
-    ],
-  });
+          },
+        ],
+      });
+    }
+  } catch {
+    return;
+  }
 }
 
 //Notification to notify user of successful linking
@@ -323,6 +338,7 @@ async function setup(api) {
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   FOLON_STAGING_PATH = path.join(STAGING_FOLDER, STAGINGFOLDER_NAME);
   makeLink(api); //create hardlink for FOLON to staging folder
+  changeFolonModTypeNotify(api); //check if FOLON mod type is set
   //writeFolonIni(api); //write "Archive" section to FO4 INI file(s)
   return;
 }
