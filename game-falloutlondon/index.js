@@ -3,7 +3,7 @@ Name: Fallout London Setup Helper
 Structure: Utility Extension (game helper)
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2025-06-23
+Date: 2025-06-24
 //////////////////////////////////////////////////*/
 
 //Import libraries
@@ -42,96 +42,11 @@ SResourceArchiveList2=Fallout4 - Animations.ba2, LondonWorldSpace - Animations.b
 SGeometryPackageList=Fallout4 - Geometry.csg, LondonWorldSpace - Geometry.csg
 SCellResourceIndexFileList=Fallout4.cdx, LondonWorldSpace.cdx
 SResourceArchiveMemoryCacheList=Fallout4 - Misc.ba2, Fallout4 - Shaders.ba2, Fallout4 - Interface.ba2, Fallout4 - Materials.ba2, LondonWorldSpace - Misc.ba2, LondonWorldSpace - Interface.ba2, LondonWorldSpace - Materials.ba2
-bInvalidateOlderFiles=1`; // Add to FO4 INI files
+bInvalidateOlderFiles=1`; // [Archive] section - write to FO4 INI files
 
 const FOLON_ID = `${GAME_ID}-folon`;
 const FOLON_NAME = "FOLON GOG Files";
 const ROOT_FILE = 'Data'; // The main data folder for FOLON
-
-// BASIC EXTENSION FUNCTIONS ///////////////////////////////////////////////////
-
-//Find FOLON install directory (GOG)
-function findFolon(api) {
-  try {
-    const KEY = winapi.RegGetValue(
-      'HKEY_LOCAL_MACHINE',
-      'SOFTWARE\\WOW6432Node\\GOG.com\\Games\\' + GOGAPP_ID,
-      'PATH'
-    );
-    if (KEY && KEY.value) {
-      return Promise.resolve(KEY.value);
-    }
-  } catch { 
-    log('info', `Failed to find FOLON GOG app ID ${GOGAPP_ID} in registry.`);
-  }
-  try {
-    const KEY = winapi.RegGetValue(
-      'HKEY_LOCAL_MACHINE',
-      'SOFTWARE\\WOW6432Node\\GOG.com\\Games\\' + GOGAPP_ID_ONECLICK,
-      'PATH'
-    );
-    if (KEY && KEY.value) {
-      return Promise.resolve(KEY.value);
-    }
-  } catch {
-    log('info', `Failed to find FOLON One-Click GOG app ID ${GOGAPP_ID_ONECLICK} in registry.`);
-  }
-  return () => util.GameStoreHelper.findByAppId(DISCOVERY_IDS);
-}
-
-//Write the FOLON settings to the FO4 INI files
-async function writeFolonIni(api) {
-  const parser = new IniParser(new WinapiFormat());
-  try { //Fallout4.ini
-    const contents = await parser.read(INI_PATH_DEFAULT);
-    const section = contents?.['Archive'];
-    contents['Archive'] = INI_ARCHIVE_SECTION; // Set the Archive section to the
-    // replace the section
-    await fs.writeFileAsync( //write Fallout4.ini file
-      INI_PATH_DEFAULT,
-      contents,
-    )
-    .then(() => log('info', `Wrote FOLON INI settings to: "${INI_FILE_DEFAULT}"`))
-    .catch(err => log('error', `Failed to write FOLON INI settings: ${err.message}`));
-  } catch (error) {
-    api.showErrorNotification(`Failed to write FOLON INI settings to ${INI_FILE_DEFAULT}`, error, { allowReport: true });
-  }
-
-  try { //Fallout4Custom.ini
-    fs.statSync(INI_PATH_CUSTOM); //dont need to write if it doesnt exist
-    const contents = await parser.read(INI_PATH_CUSTOM);
-    const section = contents?.['Archive'];
-    // replace the section
-    contents['Archive'] = INI_ARCHIVE_SECTION; // Set the Archive section to the
-    await fs.writeFileAsync( //write Fallout4Custom.ini file
-      INI_PATH_CUSTOM,
-      contents,
-    )
-    .then(() => log('info', `Wrote FOLON INI settings to: "${INI_FILE_CUSTOM}"`))
-    .catch(err => log('error', `Failed to write FOLON INI settings: ${err.message}`));
-  } catch (error) {
-    log('error', `Failed to write FOLON INI settings to ${INI_FILE_CUSTOM}. The file likely does not exist: ${error.message}`);
-  }
-}
-
-//Create directory hardlink for FOLON files to FO4 staging folder
-async function makeLink(api) {
-  FOLON_INSTALL_PATH = await findFolon(api);
-  if (!FOLON_INSTALL_PATH) {
-    return Promise.reject(new Error("FOLON Game path not found"));
-  }
-  const src = FOLON_INSTALL_PATH;
-  const dest = FOLON_STAGING_PATH;
-  return fs.link(src, dest) //directory hardlink
-    .then(() => log('info', `Created hardlink for FOLON files at path: "${dest}"`))
-    .catch(err => api.showErrorNotification(`Failed to create hardlink for FOLON files`, err, { allowReport: true }));
-}
-
-const getFallout4Path = (api) => { //get the FO4 game's discovered path
-  const state = api.getState();
-  const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});
-  return discovery === null || discovery === void 0 ? void 0 : discovery.path;
-};
 
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
 
@@ -178,15 +93,237 @@ function installFolon(files) {
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
+//Find FOLON install directory (GOG)
+function findFolon(api) {
+  try {
+    const KEY = winapi.RegGetValue(
+      'HKEY_LOCAL_MACHINE',
+      'SOFTWARE\\WOW6432Node\\GOG.com\\Games\\' + GOGAPP_ID,
+      'PATH'
+    );
+    if (KEY && KEY.value) {
+      return Promise.resolve(KEY.value);
+    }
+  } catch { 
+    log('warn', `Failed to find FOLON GOG app ID ${GOGAPP_ID} in registry.`);
+  }
+  try {
+    const KEY = winapi.RegGetValue(
+      'HKEY_LOCAL_MACHINE',
+      'SOFTWARE\\WOW6432Node\\GOG.com\\Games\\' + GOGAPP_ID_ONECLICK,
+      'PATH'
+    );
+    if (KEY && KEY.value) {
+      return Promise.resolve(KEY.value);
+    }
+  } catch {
+    log('warn', `Failed to find FOLON One-Click GOG app ID ${GOGAPP_ID_ONECLICK} in registry.`);
+  }
+  return () => util.GameStoreHelper.findByAppId(DISCOVERY_IDS);
+}
+
+//Write the FOLON settings to the FO4 INI files
+async function writeFolonIni(api) {
+  const parser = new IniParser(new WinapiFormat());
+  // <-- ADD CHECKS FOR IF INI HAS ALREADY BEEN WRITTEN with new Archive section
+  try { //Fallout4.ini
+    fs.statSync(INI_PATH_DEFAULT); //make sure the file exists
+    const contents = await parser.read(INI_PATH_DEFAULT);
+    const section = contents?.data?.['Archive'];
+    contents.data['Archive'] = INI_ARCHIVE_SECTION; // Set the Archive section to the new value
+    // replace the section
+    return parser.write(INI_PATH_DEFAULT, contents) //write the INI file
+    /*return fs.writeFileAsync( //write Fallout4.ini file
+      INI_PATH_DEFAULT,
+      contents,
+    ) //*/
+      .then(() => log('warn', `Wrote FOLON INI settings to: "${INI_FILE_DEFAULT}"`))
+      .then(() => iniSuccessNotifyDefault(api))
+      .catch(err => log('error', `Failed to write FOLON INI settings: ${err.message}`));
+  } catch (error) {
+    api.showErrorNotification(`Failed to write FOLON INI settings to ${INI_FILE_DEFAULT}`, error, { allowReport: true });
+  }
+
+  try { //Fallout4Custom.ini (optional, only write if it exists)
+    fs.statSync(INI_PATH_CUSTOM); //dont need to write to it if it doesnt already exist
+    const contents = await parser.read(INI_PATH_CUSTOM);
+    const section = contents?.data?.['Archive'];
+    // replace the section
+    contents.data['Archive'] = INI_ARCHIVE_SECTION; // Set the Archive section to the new value
+    return parser.write(INI_PATH_CUSTOM, contents) //write the INI file
+    /*return fs.writeFileAsync( //write Fallout4Custom.ini file
+      INI_PATH_CUSTOM,
+      contents,
+    ) //*/
+      .then(() => log('warn', `Wrote FOLON INI settings to: "${INI_FILE_CUSTOM}"`))
+      .then(() => iniSuccessNotifyCustom(api))
+      .catch(err => log('error', `Failed to write FOLON INI settings: ${err.message}`));
+  } catch (error) {
+    log('warn', `Failed to write FOLON INI settings to ${INI_FILE_CUSTOM}. The file likely does not exist: ${error.message}`);
+  }
+}
+
+//Create directory link for FOLON game files to FO4 staging folder
+async function makeLink(api) {
+  FOLON_INSTALL_PATH = await findFolon(api);
+  if (!FOLON_INSTALL_PATH) {
+    return Promise.reject(new Error("FOLON Game path not found. Make sure it is installed from GOG."));
+  }
+  const src = FOLON_INSTALL_PATH;
+  const dest = FOLON_STAGING_PATH;
+  try {
+    fs.statSync(dest); //check if linked staging folder already exists
+    return;
+  } catch {
+    return fs.symlinkAsync(src, dest, 'dir') //make directory link
+    //return api.runExecutable('cmd.exe', [`mklink`, `/D`, `"${dest}"`, `"${src}"`], { shell: true, detached: true }) run through cmd.exe
+    //return api.runExecutable('makelink.bat', [`mklink`, `/D`, `"${dest}"`, `"${src}"`], { shell: true, detached: true }) run through .bat file (close and restart Vortex)
+      .then(() => log('warn', `Created hardlink for FOLON files directory at path: "${dest}"`))
+      //.then(() => restartNotify(api)) //notify user to restart
+      .then(() => linkSuccessNotify(api)) //notify user of linking success
+      .then(() => changeFolonModTypeNotify(api)) //notify user to restart Vortex
+      //.then(() => changeFolonModTypeAuto(api)) //automatically change mod type for FOLON mod (DONT KNOW HOW YET)
+      .catch(err => api.showErrorNotification(`Failed to create hardlink for FOLON files`, err, { allowReport: true }));
+  }
+}
+
+const getFallout4Path = (api) => { //get the FO4 game's discovered path
+  const state = api.getState();
+  const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});
+  return discovery === null || discovery === void 0 ? void 0 : discovery.path;
+};
+
+//Notification to restart Vortex to complete FOLON setup
+function restartNotify(api) {
+  const NOTIF_ID = `${GAME_ID}-folonlinkrestart`;
+  const MESSAGE = 'Restart Vortex to Complete FOLON Setup';
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'warning',
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        label: 'Restart Vortex', action: () => {
+          // FIND FUNCTION TO RESTART VORTEX
+          dismiss();
+        }
+      },
+      {
+        title: 'More',
+        action: (dismiss) => {
+          api.showDialog('question', MESSAGE, {
+            text: `FOLON files linked to FO4 Staging Folder.\n`
+                + `\n`
+                + `You must restart Vortex to complete setup.\n`
+                + `\n`
+          }, [
+            {
+              label: 'Restart Vortex', action: () => {
+                // FIND FUNCTION TO RESTART VORTEX
+                dismiss();
+              }
+            },
+            { label: 'Not Now', action: () => dismiss() },
+          ]);
+        },
+      },
+    ],
+  });
+}
+
+//Notification to change mod type for FOLON mod
+function changeFolonModTypeNotify(api) {
+  const NOTIF_ID = `${GAME_ID}-folonchangemodtype`;
+  const MESSAGE = 'Must Change Mod Type for falloutlondon Mod';
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'warning',
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: 'More',
+        action: (dismiss) => {
+          api.showDialog('question', MESSAGE, {
+            text: `The FOLON Helper Extension has successfully linked the GOG Fallout: London files to the Fallout 4 Staging Folder.\n`
+                + `\n`
+                + `You must now manually change the mod type for the new "${STAGINGFOLDER_NAME}" mod to "${FOLON_NAME}" to complete the setup.\n`
+                + `\n`
+          }, [
+            {
+              label: 'Continue', action: () => {
+                dismiss();
+              }
+            },
+          ]);
+        },
+      },
+    ],
+  });
+}
+
+//Notification to notify user of successful linking
+function linkSuccessNotify(api) {
+  const NOTIF_ID = `${GAME_ID}-folonlinksuccess`;
+  const MESSAGE = 'Successfully linked FOLON files to FO4 Staging Folder';
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'success',
+    message: MESSAGE,
+    allowSuppress: false,
+    actions: [
+    ],
+  });
+}
+
+//Notification to notify user of successful INI writing
+function iniSuccessNotifyDefault(api) {
+  const NOTIF_ID = `${GAME_ID}-foloninisuccess`;
+  const MESSAGE = `Successfully wrote FOLON "[Archive]" settings to "${INI_FILE_DEFAULT}"`;
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'success',
+    message: MESSAGE,
+    allowSuppress: false,
+    actions: [
+    ],
+  });
+}
+
+//Notification to notify user of successful INI writing
+function iniSuccessNotifyCustom(api) {
+  const NOTIF_ID = `${GAME_ID}-foloninisuccess`;
+  const MESSAGE = `Successfully wrote FOLON "[Archive]" settings to "${INI_FILE_CUSTOM}"`;
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'success',
+    message: MESSAGE,
+    allowSuppress: false,
+    actions: [
+    ],
+  });
+}
+
+
+//Mod Type test for FOLON files
+async function isFolonModType(api, instructions, files) {
+  const setModTypeInstruction = { type: 'setmodtype', value: FOLON_ID };
+  const isMod = files.some(file => (path.basename(file) === FOLON_FILE));
+  if (isMod) {
+    instructions.push(setModTypeInstruction);
+  }
+  return Promise.resolve(isMod);
+}
+
 //Setup function
 async function setup(api) {
   const state = api.getState();
   GAME_PATH = getFallout4Path(api);
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   FOLON_STAGING_PATH = path.join(STAGING_FOLDER, STAGINGFOLDER_NAME);
-  //add check for if already linked and ini written
   makeLink(api); //create hardlink for FOLON to staging folder
-  writeFolonIni(api); //write "Archive" section to FO4 INI file(s)
+  //writeFolonIni(api); //write "Archive" section to FO4 INI file(s)
   return;
 }
 
@@ -195,23 +332,27 @@ function main(context) {
   //register the mod type (and do other setup)
   context.registerModType(FOLON_ID, 75, 
     (gameId) => {
-      try { //do functions here
-        setup(context.api); //FOLON setup
-      } catch (err) {
-        context.api.showErrorNotification(`Failed to set up ${GAME_NAME} Helper features.`, err, { allowReport: true });
-      }
-      return ((gameId === GAME_ID));
+      var _a;
+      return ((gameId === GAME_ID))
+        && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
     },
     () => getFallout4Path(context.api),
-    () => Promise.resolve(false),
+    (instructions, files) => isFolonModType(context.api, instructions, files), //test - is installed mod of this type
     { name: FOLON_NAME }
   );
 
   //register mod installer for FOLON files (to FO4 root)
   context.registerInstaller(FOLON_ID, 49, testFolon, installFolon);
 
-  context.once(() => { // put code here that should be run (once) when Vortex starts up
-
+  context.once((profileId, gameId) => { // put code here that should be run (once) when Vortex starts up
+    /*const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
+    if (profileId !== LAST_ACTIVE_PROFILE) return; //*/
+    //if (gameId !== GAME_ID) return;
+    try {
+      setup(context.api); //FOLON setup
+    } catch (err) {
+      context.api.showErrorNotification(`Failed to set up ${GAME_NAME} Helper features.`, err, { allowReport: true });
+    }
   });
   return true;
 }
