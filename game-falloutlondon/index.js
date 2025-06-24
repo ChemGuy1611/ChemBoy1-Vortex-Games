@@ -137,9 +137,9 @@ async function writeFolonIni(api) {
       INI_PATH_DEFAULT,
       contents,
     ) //*/
-      .then(() => log('warn', `Wrote FOLON INI settings to: "${INI_FILE_DEFAULT}"`))
+      .then(() => log('warn', `Wrote FOLON INI settings to "${INI_FILE_DEFAULT}"`))
       .then(() => iniSuccessNotifyDefault(api))
-      .catch(err => log('error', `Failed to write FOLON INI settings: ${err.message}`));
+      .catch(error => api.showErrorNotification(`Error when writing FOLON INI settings to ${INI_FILE_DEFAULT}`, error, { allowReport: true }));
   } catch (error) {
     api.showErrorNotification(`Failed to write FOLON INI settings to ${INI_FILE_DEFAULT}`, error, { allowReport: true });
   }
@@ -156,11 +156,11 @@ async function writeFolonIni(api) {
       INI_PATH_CUSTOM,
       contents,
     ) //*/
-      .then(() => log('warn', `Wrote FOLON INI settings to: "${INI_FILE_CUSTOM}"`))
+      .then(() => log('warn', `Wrote FOLON INI settings to "${INI_FILE_CUSTOM}"`))
       .then(() => iniSuccessNotifyCustom(api))
-      .catch(err => log('error', `Failed to write FOLON INI settings: ${err.message}`));
+      .catch(error => log('error', `Error when writing FOLON INI settings to "${INI_FILE_CUSTOM}": ${error.message}`));
   } catch (error) {
-    log('warn', `Failed to write FOLON INI settings to ${INI_FILE_CUSTOM}. The file likely does not exist: ${error.message}`);
+    log('warn', `Failed to write FOLON INI settings to ${INI_FILE_CUSTOM}. This likely means the file does not exist. Error: ${error.message}`);
   }
 }
 
@@ -190,7 +190,7 @@ async function makeLink(api) {
 
 const getFallout4Path = (api) => { //get the FO4 game's discovered path
   const state = api.getState();
-  const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});
+  const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], undefined);
   return discovery === null || discovery === void 0 ? void 0 : discovery.path;
 };
 
@@ -335,7 +335,9 @@ async function isFolonModType(api, instructions, files) {
 async function setup(api) {
   const state = api.getState();
   GAME_PATH = getFallout4Path(api);
+  if (GAME_PATH === undefined) return; //if FO4 game path is not found, exit setup
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
+  if (STAGING_FOLDER === undefined) return; //if FO4 Staging Folder path is not found, exit setup
   FOLON_STAGING_PATH = path.join(STAGING_FOLDER, STAGINGFOLDER_NAME);
   makeLink(api); //create hardlink for FOLON to staging folder
   changeFolonModTypeNotify(api); //check if FOLON mod type is set
