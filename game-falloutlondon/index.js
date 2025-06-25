@@ -23,6 +23,7 @@ let STAGING_FOLDER = '';
 let FOLON_STAGING_PATH = '';
 let FOLON_INSTALL_PATH = '';
 let GAME_PATH = '';
+let PARTITION_CHECK = false;
 const STAGINGFOLDER_NAME = "falloutlondon"; // The name of the mod folder in the FO4 staging folder
 const FOLON_FILE = 'LondonWorldSpace.esm'; // The main file for FOLON
 
@@ -243,6 +244,29 @@ async function isFolonModType(api, instructions, files) {
   return Promise.resolve(isMod);
 }
 
+// Function to check if staging folder and game path are on same drive partition to enable modtypes + installers
+function checkPartitions(path1, path2, path3) {
+  try {
+    // Ensure all folders exist
+    fs.ensureDirSync(path1);
+    fs.ensureDirSync(path2);
+    fs.ensureDirSync(path3); 
+    // Get the stats for all folders
+    const stats1 = fs.statSync(path1);
+    const stats2 = fs.statSync(path2);
+    const stats3 = fs.statSync(path3);
+    // Read device IDs and check if they are all the same
+    const a = stats1.dev;
+    const b = stats2.dev;
+    const c = stats3.dev;
+    const TEST = ((a === b) && (b === c));
+    return TEST;
+  } catch (err) {
+    //log('error', `Error checking folder partitions: ${err}`);
+    return false;
+  }
+}
+
 //Setup function
 async function setup(api) {
   const state = api.getState();
@@ -260,6 +284,12 @@ async function setup(api) {
   // Find FOLON install path
   FOLON_INSTALL_PATH = await findFolon(api);
   if (FOLON_INSTALL_PATH === undefined) {
+    return; //if FOLON install path is not found, exit setup
+  }
+  // Check that all 3 are on same drive partition
+  PARTITION_CHECK = checkPartitions(FOLON_INSTALL_PATH, STAGING_FOLDER, GAME_PATH);
+  if (PARTITION_CHECK !== true) {
+    api.showErrorNotification(`The FOLON GOG game folder, FO4 game folder, and Vortex FO4 Staging Folder are not on the same drive partition. Cannot create link.`, { allowReport: false })
     return; //if FOLON install path is not found, exit setup
   }
   //Make link, write INI files, and change falloutlondon modtype
@@ -290,6 +320,14 @@ function main(context) {
     (instructions, files) => isFolonModType(context.api, instructions, files), //test - is installed mod of this type
     { name: FOLON_NAME }
   );
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open FOLON GOG Folder', () => {
+      const openPath = FOLON_INSTALL_PATH;
+      util.opn(openPath).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  });
   return true;
 }
 
