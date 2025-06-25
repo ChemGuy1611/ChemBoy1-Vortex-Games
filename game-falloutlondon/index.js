@@ -320,9 +320,9 @@ function main(context) {
       return ((gameId === GAME_ID))
         && !!((_a = context.api.getState().settings.gameMode.discovered[GAME_ID]) === null || _a === void 0 ? void 0 : _a.path);
     },
+    () => getFallout4Path(context.api),
     () => Promise.resolve(false), 
-    //() => getFallout4Path(context.api),
-    (instructions, files) => isFolonModType(context.api, instructions, files), //test - is installed mod of this type
+    //(instructions, files) => isFolonModType(context.api, instructions, files), //test - is installed mod of this type
     { name: FOLON_NAME }
   );
 
