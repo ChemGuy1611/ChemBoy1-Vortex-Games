@@ -260,7 +260,7 @@ async function setup(api) {
   // Find FOLON install path
   FOLON_INSTALL_PATH = await findFolon(api);
   if (FOLON_INSTALL_PATH === undefined) {
-    return; //if FO4 Staging Folder path is not found, exit setup
+    return; //if FOLON install path is not found, exit setup
   }
   //Make link, write INI files, and change falloutlondon modtype
   makeLink(api, FOLON_INSTALL_PATH, FOLON_STAGING_PATH, 'dir'); //create link for FOLON game files to staging folder
