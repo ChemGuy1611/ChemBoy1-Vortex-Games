@@ -102,7 +102,7 @@ async function writeFolonIni(api) {
       contents.data['Archive'] = INI_ARCHIVE_OBJECT; // Set the Archive section to the new value
       await parser.write(INI_PATH_DEFAULT, contents) //write the INI file
         .then(() => log('warn', `Wrote FOLON INI settings to "${INI_FILE_DEFAULT}"`))
-        //.then(() => iniSuccessNotifyDefault(api))
+        .then(() => iniSuccessNotifyDefault(api))
         .catch(err => api.showErrorNotification(`Error when writing FOLON INI settings to ${INI_FILE_DEFAULT}`, err, { allowReport: true }));
     }
   } catch (err) {
@@ -118,7 +118,7 @@ async function writeFolonIni(api) {
       contents.data['Archive'] = INI_ARCHIVE_OBJECT; // Set the Archive section to the new value
       await parser.write(INI_PATH_CUSTOM, contents) //write the INI file
         .then(() => log('warn', `Wrote FOLON INI settings to "${INI_FILE_CUSTOM}"`))
-        //.then(() => iniSuccessNotifyCustom(api))
+        .then(() => iniSuccessNotifyCustom(api))
         .catch(err => log('error', `Error when writing FOLON INI settings to "${INI_FILE_CUSTOM}": ${err.message}`));
     }
   } catch (err) {
