@@ -2,8 +2,13 @@
 
 Future Changes (NOT IMPLEMENTED YET):
 
-- Find out how to change modtype for falloutlondon mod automatically (? set from registerModType ?)
-- Add working check for if INI files already updated (existing check doesnt seem to work)
+- Find out how to enable and change modtype for falloutlondon mod automatically (? set from registerModType ? Use mods object directly?)
+- Enable 2 plugins automatically (may be challenging)
+
+## [0.1.2] - 2025-06-25
+
+- Fixed test to prevent INI files being written on each startup after they'd been written the first time.
+- Added instructions to the notification to enable the falloutlondon mod and plugins, in addition to changing the modtype.
 
 ## [0.1.1] - 2025-06-24
 

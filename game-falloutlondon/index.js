@@ -25,7 +25,11 @@ let FOLON_INSTALL_PATH = '';
 let GAME_PATH = '';
 let PARTITION_CHECK = false;
 const STAGINGFOLDER_NAME = "falloutlondon"; // The name of the mod folder in the FO4 staging folder
-const FOLON_FILE = 'LondonWorldSpace.esm'; // The main file for FOLON
+const FOLON_FILE = 'LondonWorldSpace.esm'; // The main plugin file for FOLON
+
+const PLUGIN1 = 'LondonWorldSpace.esm';
+const PLUGIN2 = 'LondonWorldSpace-DLCBlock.esp';
+const MOD_ID = 'falloutlondon'; // The mod ID for FOLON in Vortex (used to find mod for enabling and changing modtype)
 
 const DOCUMENTS = util.getVortexPath("documents");
 const INI_PATH = path.join(DOCUMENTS, 'My Games', "Fallout4");
@@ -97,8 +101,16 @@ async function writeFolonIni(api) {
     const parser = new IniParser(new WinapiFormat());
     fs.statSync(INI_PATH_DEFAULT); //make sure the file exists
     const contents = await parser.read(INI_PATH_DEFAULT);
-    let section = contents.data['Archive'];
-    if (contents.data['Archive'] !== INI_ARCHIVE_OBJECT) {
+    let TEST = false;
+    let TEST_LINE = '';
+    try {
+      TEST_LINE = contents.data['Archive']['SCellResourceIndexFileList'];
+    } catch {
+      TEST = false
+      TEST_LINE = '';
+    }
+    TEST = TEST_LINE === INI_ARCHIVE_OBJECT.SCellResourceIndexFileList;
+    if (!TEST) {
       contents.data['Archive'] = INI_ARCHIVE_OBJECT; // Set the Archive section to the new value
       await parser.write(INI_PATH_DEFAULT, contents) //write the INI file
         .then(() => log('warn', `Wrote FOLON INI settings to "${INI_FILE_DEFAULT}"`))
@@ -113,8 +125,16 @@ async function writeFolonIni(api) {
     const parser = new IniParser(new WinapiFormat());
     fs.statSync(INI_PATH_CUSTOM); //dont need to write to it if it doesnt already exist
     const contents = await parser.read(INI_PATH_CUSTOM);
-    let section = contents?.data['Archive'];
-    if (contents.data['Archive'] !== INI_ARCHIVE_OBJECT) {
+    let TEST = false;
+    let TEST_LINE = '';
+    try {
+      TEST_LINE = contents.data['Archive']['SCellResourceIndexFileList'];
+    } catch {
+      TEST = false
+      TEST_LINE = '';
+    }
+    TEST = TEST_LINE === INI_ARCHIVE_OBJECT.SCellResourceIndexFileList;
+    if (!TEST) {
       contents.data['Archive'] = INI_ARCHIVE_OBJECT; // Set the Archive section to the new value
       await parser.write(INI_PATH_CUSTOM, contents) //write the INI file
         .then(() => log('warn', `Wrote FOLON INI settings to "${INI_FILE_CUSTOM}"`))
@@ -177,7 +197,7 @@ function changeFolonModTypeNotify(api) {
               api.showDialog('question', MESSAGE, {
                 text: `The FOLON Helper Extension has successfully linked the GOG Fallout: London files to the Fallout 4 Staging Folder.\n`
                     + `\n`
-                    + `You must now manually change the mod type for the new "${STAGINGFOLDER_NAME}" mod to "${FOLON_NAME}" to complete the setup.\n`
+                    + `You must now manually change the mod type for the new "${STAGINGFOLDER_NAME}" mod to "${FOLON_NAME}" and enable the mod to complete the setup. Make sure the plugins are also enabled.\n`
                     + `\n`
               }, [
                 {
@@ -273,26 +293,26 @@ async function setup(api) {
   // Find FO4 game path
   GAME_PATH = getFallout4Path(api);
   if (GAME_PATH === undefined) {
-    log('warn', `Cannot find Fallout 4 game path. FOLON Helper Extension will not continue setup.`);
+    log('warn', `Cannot find Fallout 4 game path. FOLON Helper Extension will exit setup.`);
     return; //if FO4 game path is not found, exit setup
   }
   // Find FO4 staging folder
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   if (STAGING_FOLDER === undefined) {
-    log('warn', `Cannot find FO4 Vortex Staging Folder. FOLON Helper Extension will not continue setup.`);
+    log('warn', `Cannot find FO4 Vortex Staging Folder. FOLON Helper Extension will exit setup.`);
     return; //if FO4 Staging Folder path is not found, exit setup
   }
   FOLON_STAGING_PATH = path.join(STAGING_FOLDER, STAGINGFOLDER_NAME);
   // Find FOLON install path
   FOLON_INSTALL_PATH = await findFolon(api);
   if (FOLON_INSTALL_PATH === undefined) {
-    log('warn', `Cannot find FOLON GOG Folder. FOLON Helper Extension will not continue setup.`);
+    log('warn', `Cannot find FOLON GOG Folder. FOLON Helper Extension will exit setup.`);
     return; //if FOLON install path is not found, exit setup
   }
   // Check that all 3 folders are on same drive partition
   PARTITION_CHECK = checkPartitions(FOLON_INSTALL_PATH, STAGING_FOLDER, GAME_PATH);
   if (PARTITION_CHECK !== true) {
-    api.showErrorNotification(`The FOLON GOG game folder, FO4 game folder, and Vortex FO4 Staging Folder are not on the same drive partition. Cannot create link. Move folders to same drive.`, { allowReport: false })
+    api.showErrorNotification(`The FOLON GOG game folder, FO4 game folder, and Vortex FO4 Staging Folder are not on the same drive partition. FOLON Setup Helper cannot work in this case. Move all folders to same drive.`, { allowReport: false })
     return; //if FOLON install path is not found, exit setup
   }
   //Make link, write INI files, and change falloutlondon modtype
@@ -310,7 +330,7 @@ function main(context) {
     try {
       setup(context.api); //FOLON setup
     } catch (err) {
-      context.api.showErrorNotification(`Failed to set up ${GAME_NAME} Helper features.`, err, { allowReport: true });
+      context.api.showErrorNotification(`Failed to set up FOLON Setup Helper features.`, err, { allowReport: true });
     }
   });
   
@@ -334,7 +354,7 @@ function main(context) {
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Run FOLON Setup', () => {
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Run FOLON Helper Setup', () => {
     try {
       setup(context.api);
     } catch (err) {
