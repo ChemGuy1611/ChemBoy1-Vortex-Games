@@ -273,23 +273,26 @@ async function setup(api) {
   // Find FO4 game path
   GAME_PATH = getFallout4Path(api);
   if (GAME_PATH === undefined) {
+    log('warn', `Cannot find Fallout 4 game path. FOLON Helper Extension will not continue setup.`);
     return; //if FO4 game path is not found, exit setup
   }
   // Find FO4 staging folder
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   if (STAGING_FOLDER === undefined) {
+    log('warn', `Cannot find FO4 Vortex Staging Folder. FOLON Helper Extension will not continue setup.`);
     return; //if FO4 Staging Folder path is not found, exit setup
   }
   FOLON_STAGING_PATH = path.join(STAGING_FOLDER, STAGINGFOLDER_NAME);
   // Find FOLON install path
   FOLON_INSTALL_PATH = await findFolon(api);
   if (FOLON_INSTALL_PATH === undefined) {
+    log('warn', `Cannot find FOLON GOG Folder. FOLON Helper Extension will not continue setup.`);
     return; //if FOLON install path is not found, exit setup
   }
-  // Check that all 3 are on same drive partition
+  // Check that all 3 folders are on same drive partition
   PARTITION_CHECK = checkPartitions(FOLON_INSTALL_PATH, STAGING_FOLDER, GAME_PATH);
   if (PARTITION_CHECK !== true) {
-    api.showErrorNotification(`The FOLON GOG game folder, FO4 game folder, and Vortex FO4 Staging Folder are not on the same drive partition. Cannot create link.`, { allowReport: false })
+    api.showErrorNotification(`The FOLON GOG game folder, FO4 game folder, and Vortex FO4 Staging Folder are not on the same drive partition. Cannot create link. Move folders to same drive.`, { allowReport: false })
     return; //if FOLON install path is not found, exit setup
   }
   //Make link, write INI files, and change falloutlondon modtype
@@ -317,14 +320,15 @@ function main(context) {
       return ((gameId === GAME_ID))
         && !!((_a = context.api.getState().settings.gameMode.discovered[GAME_ID]) === null || _a === void 0 ? void 0 : _a.path);
     },
-    () => getFallout4Path(context.api),
+    () => Promise.resolve(false), 
+    //() => getFallout4Path(context.api),
     (instructions, files) => isFolonModType(context.api, instructions, files), //test - is installed mod of this type
     { name: FOLON_NAME }
   );
 
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open FOLON GOG Folder', () => {
-      const openPath = FOLON_INSTALL_PATH;
-      util.opn(openPath).catch(() => null);
+    const openPath = FOLON_INSTALL_PATH;
+    util.opn(openPath).catch(() => null);
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
@@ -332,7 +336,7 @@ function main(context) {
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Run FOLON Setup', () => {
     try {
-      setup(context.api); //FOLON setup
+      setup(context.api);
     } catch (err) {
       context.api.showErrorNotification(`Failed to manually execute ${GAME_NAME} Helper Extension setup.`, err, { allowReport: true });
     }
