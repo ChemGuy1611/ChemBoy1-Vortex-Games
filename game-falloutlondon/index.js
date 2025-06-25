@@ -204,7 +204,7 @@ function linkSuccessNotify(api) {
     id: NOTIF_ID,
     type: 'success',
     message: MESSAGE,
-    allowSuppress: false,
+    allowSuppress: true,
     actions: [
     ],
   });
@@ -216,7 +216,7 @@ function iniSuccessNotifyDefault(api) {
     id: NOTIF_ID,
     type: 'success',
     message: MESSAGE,
-    allowSuppress: false,
+    allowSuppress: true,
     actions: [
     ],
   });
@@ -228,7 +228,7 @@ function iniSuccessNotifyCustom(api) {
     id: NOTIF_ID,
     type: 'success',
     message: MESSAGE,
-    allowSuppress: false,
+    allowSuppress: true,
     actions: [
     ],
   });
@@ -310,6 +310,7 @@ function main(context) {
       context.api.showErrorNotification(`Failed to set up ${GAME_NAME} Helper features.`, err, { allowReport: true });
     }
   });
+  
   context.registerModType(FOLON_ID, 75, 
     (gameId) => {
       var _a;
@@ -320,9 +321,21 @@ function main(context) {
     (instructions, files) => isFolonModType(context.api, instructions, files), //test - is installed mod of this type
     { name: FOLON_NAME }
   );
+
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open FOLON GOG Folder', () => {
       const openPath = FOLON_INSTALL_PATH;
       util.opn(openPath).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Run FOLON Setup', () => {
+    try {
+      setup(context.api); //FOLON setup
+    } catch (err) {
+      context.api.showErrorNotification(`Failed to manually execute ${GAME_NAME} Helper Extension setup.`, err, { allowReport: true });
+    }
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
