@@ -1,5 +1,5 @@
 /*//////////////////////////////////////////////////
-Name: Fallout London Setup Helper
+Name: FOLON Setup Helper Extension
 Structure: Utility Extension (game helper)
 Author: ChemBoy1
 Version: 0.1.1
@@ -59,50 +59,7 @@ const FOLON_ID = `${GAME_ID}-folon`;
 const FOLON_NAME = "FOLON GOG Files";
 const ROOT_FILE = 'Data'; // The main data folder for FOLON (index for installer)
 
-// MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
-
-//Installer test for FOLON files
-function testFolon(files, gameId) {
-  const isMod = files.some(file => (path.basename(file) === FOLON_FILE));
-  let supported = (gameId === GAME_ID) && isMod;
-
-  // Test for a mod installer
-  if (supported && files.find(file =>
-    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
-    supported = false;
-  }
-
-  return Promise.resolve({
-    supported,
-    requiredFiles: [],
-  });
-}
-
-//Installer install FOLON files
-function installFolon(files) {
-  const modFile = files.find(file => (path.basename(file) === ROOT_FILE));
-  const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
-  const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: FOLON_ID };
-
-  // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    //((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
-    ((file.indexOf(rootPath) !== -1))
-  );
-  const instructions = filtered.map(file => {
-    return {
-      type: 'copy',
-      source: file,
-      destination: path.join(file.substr(idx)),
-    };
-  });
-  instructions.push(setModTypeInstruction);
-  return Promise.resolve({ instructions });
-}
-
-// MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
+// MAIN FUNCTIONS ////////////////////////////////////////////////////////////////////////
 
 //Find FOLON install directory (GOG)
 async function findFolon(api) {
@@ -323,7 +280,6 @@ function main(context) {
       context.api.showErrorNotification(`Failed to set up ${GAME_NAME} Helper features.`, err, { allowReport: true });
     }
   });
-
   context.registerModType(FOLON_ID, 75, 
     (gameId) => {
       var _a;
@@ -334,8 +290,6 @@ function main(context) {
     (instructions, files) => isFolonModType(context.api, instructions, files), //test - is installed mod of this type
     { name: FOLON_NAME }
   );
-
-  context.registerInstaller(FOLON_ID, 49, testFolon, installFolon);
   return true;
 }
 
