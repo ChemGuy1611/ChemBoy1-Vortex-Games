@@ -5,6 +5,11 @@ Future Changes (NOT IMPLEMENTED YET):
 - Find out how to enable and change modtype for falloutlondon mod automatically (? set from registerModType ? Use mods object directly?)
 - Enable 2 plugins automatically (may be challenging)
 
+## [0.1.3] - 2025-06-25
+
+- Improvements to notification with manual setup steps.
+- Reduced logo file size.
+
 ## [0.1.2] - 2025-06-25
 
 - Fixed test to prevent INI files being written on each startup after they'd been written the first time.
