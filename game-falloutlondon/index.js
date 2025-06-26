@@ -67,6 +67,8 @@ const ROOT_FILE = 'Data'; // The main data folder for FOLON (index for installer
 
 // MAIN FUNCTIONS ////////////////////////////////////////////////////////////////////////
 
+
+
 //Find FOLON install directory (GOG)
 async function findFolon(api) {
   try {
@@ -107,7 +109,6 @@ async function writeFolonIni(api) {
     try {
       TEST_LINE = contents.data['Archive']['SCellResourceIndexFileList'];
     } catch {
-      TEST = false
       TEST_LINE = '';
     }
     TEST = TEST_LINE === INI_ARCHIVE_OBJECT.SCellResourceIndexFileList;
@@ -131,7 +132,6 @@ async function writeFolonIni(api) {
     try {
       TEST_LINE = contents.data['Archive']['SCellResourceIndexFileList'];
     } catch {
-      TEST = false
       TEST_LINE = '';
     }
     TEST = TEST_LINE === INI_ARCHIVE_OBJECT.SCellResourceIndexFileList;
@@ -160,7 +160,7 @@ async function makeLink(api, src, dest, type) {
       .then(() => log('warn', `${EXTENSION_NAME} created directory link for FOLON GOG files directory from path "${src}" to path "${dest}"`))
       .then(() => linkSuccessNotify(api)) //notify user of linking success
       .then(() => changeFolonModTypeNotify(api)) //notify user to manually change mod type for FOLON mod
-      //.then(() => changeFolonModTypeAuto(api)) //automatically change mod type for FOLON mod (DONT KNOW HOW YET)
+      .then(() => changeFolonModTypeAuto(api)) //automatically enable and change mod type for FOLON mod
       .catch(err => api.showErrorNotification(`${EXTENSION_NAME} failed to create directory link for FOLON GOG files`, err, { allowReport: true }));
   }
 }
@@ -290,6 +290,23 @@ function checkPartitions(path1, path2, path3) {
   } catch (err) {
     //log('error', `Error checking folder partitions: ${err}`);
     return false;
+  }
+}
+
+async function changeFolonModTypeAuto(api) {
+  const state = api.getState();
+  const profileId = selectors.lastActiveProfileForGame(state, GAME_ID);
+  try {
+  const batched = [
+    actions.setModsEnabled(api, profileId, STAGINGFOLDER_NAME, true, {
+      allowAutoDeploy: true,
+      installed: true,
+    }),
+    actions.setModType(GAME_ID, STAGINGFOLDER_NAME, FOLON_ID), // Set the mod type
+  ];
+  util.batchDispatch(api.store, batched); // Will dispatch both actions.
+  } catch (err) {
+    api.showErrorNotification(`${EXTENSION_NAME} failed to automatically enable and change mod type for FOLON mod.`, err, { allowReport: true });
   }
 }
 
