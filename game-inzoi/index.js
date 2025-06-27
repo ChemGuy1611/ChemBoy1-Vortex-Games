@@ -2,8 +2,8 @@
 Name: inZOI Vortex Extension
 Structure: UE5
 Author: ChemBoy1
-Version: 0.2.0
-Date: 2025-04-08
+Version: 0.3.0
+Date: 2025-06-26
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -174,6 +174,11 @@ const TEXTURES_ID = `${GAME_ID}-textures`;
 const TEXTURES_NAME = "Textures (Documents)";
 const TEXTURES_PATH = path.join(DOCS_PATH, "Creations", "MyTextures");
 const TEXTURES_FILE = "albedo.jpg";
+
+const MODKIT_ID = `${GAME_ID}-modkit`;
+const MODKITAPP_ID = "e61de4231c6b43349615781e737ad297";
+const MODKIT_EXEC = path.join('inZOIModKit', 'Binaries', 'Win64', 'inZOIModKit.exe');
+const MODKIT_NAME = "MODKit";
 
 //Filled in from data above
 const spec = {
@@ -1606,6 +1611,13 @@ function partitionCheckNotify(api, CHECK_CONFIG, CHECK_DOCS) {
   });
 }
 
+//Get ModKit install path from Epic
+function getModKitPath() {
+  const path = util.GameStoreHelper.findByAppId(MODKITAPP_ID, 'epic');
+  log('warn', `ModKit path found at ${path}`)
+  return () => path;
+}
+
 //* Setup function
 async function setup(discovery, api, gameSpec) {
   const state = api.getState();
@@ -1650,7 +1662,33 @@ function applyGame(context, gameSpec) {
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     executable: () => gameSpec.game.executable,
     requiresLauncher: requiresLauncher,
-    supportedTools: tools,
+    supportedTools: [
+      {
+        id: `${GAME_ID}-customlaunch`,
+        name: `Custom Launch`,
+        logo: `exec.png`,
+        executable: () => EXEC,
+        requiredFiles: [EXEC],
+        detach: true,
+        relative: true,
+        exclusive: true,
+        shell: true,
+        parameters: []
+      }, //*/
+      {
+        id: MODKIT_ID,
+        name: MODKIT_NAME,
+        logo: `modkit.png`,
+        queryPath: getModKitPath,
+        executable: () => MODKIT_EXEC,
+        requiredFiles: [MODKIT_EXEC],
+        detach: true,
+        relative: false,
+        exclusive: false,
+        //defaultPrimary: true,
+        parameters: [],
+      }, //*/
+    ],
   };
   context.registerGame(game);
   

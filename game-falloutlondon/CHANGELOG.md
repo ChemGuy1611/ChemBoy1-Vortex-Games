@@ -1,6 +1,6 @@
 # Changelog
 
-Future Changes (NOT IMPLEMENTED YET):
+## Future Improvements (Not Yet Released)
 
 - Find out how to enable and change modtype for falloutlondon mod automatically (? set from registerModType ? Use mods object directly?)
 - Enable 2 plugins automatically (may be challenging)
