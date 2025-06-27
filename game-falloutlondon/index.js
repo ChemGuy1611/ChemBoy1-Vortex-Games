@@ -293,16 +293,14 @@ function checkPartitions(path1, path2, path3) {
   }
 }
 
+// Change falloutlondon modType and enable
 async function changeFolonModTypeAuto(api) {
   const state = api.getState();
   const profileId = selectors.lastActiveProfileForGame(state, GAME_ID);
   try {
   const batched = [
-    actions.setModsEnabled(api, profileId, STAGINGFOLDER_NAME, true, {
-      allowAutoDeploy: true,
-      installed: true,
-    }),
-    actions.setModType(GAME_ID, STAGINGFOLDER_NAME, FOLON_ID), // Set the mod type
+    actions.setModType(GAME_ID, MOD_ID, FOLON_ID),
+    actions.setModEnabled(profileId, MOD_ID, true),
   ];
   util.batchDispatch(api.store, batched); // Will dispatch both actions.
   } catch (err) {
@@ -336,7 +334,7 @@ async function setup(api) {
   PARTITION_CHECK = checkPartitions(FOLON_INSTALL_PATH, STAGING_FOLDER, GAME_PATH);
   if (PARTITION_CHECK !== true) {
     api.showErrorNotification(`${EXTENSION_NAME} - The FOLON GOG game folder, FO4 game folder, and Vortex FO4 Staging Folder are not on the same drive partition. Move all folders to same drive.`, { allowReport: false })
-    return; //if FOLON install path is not found, exit setup
+    return; //if folders not on same partition, exit setup
   }
   //Make link, write INI files, and change falloutlondon modtype
   makeLink(api, FOLON_INSTALL_PATH, FOLON_STAGING_PATH, 'dir'); //create link for FOLON game files to staging folder
