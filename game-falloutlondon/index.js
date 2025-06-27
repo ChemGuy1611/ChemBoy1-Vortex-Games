@@ -199,14 +199,14 @@ function changeFolonModTypeNotify(api) {
                 text: `The ${EXTENSION_NAME} Extension has successfully directory-linked the GOG FOLON files to the FO4 Staging Folder.\n`
                     + `\n`
                     + `You must now complete the following steps while managing Fallout 4 in Vortex to complete setup:\n`
+                    //+ `\n`
+                    //+ `1. Change the Mod Type for the new "${STAGINGFOLDER_NAME}" mod to "${FOLON_NAME}". Double-click on the mod in the list to bring up the side panel and make the change.\n`
+                    //+ `\n`
+                    //+ `2. Enable the mod "${STAGINGFOLDER_NAME}" and deploy mods.\n`
                     + `\n`
-                    + `1. Change the Mod Type for the new "${STAGINGFOLDER_NAME}" mod to "${FOLON_NAME}". Double-click on the mod in the list to bring up the side panel and make the change.\n`
+                    + `1. If there are conflicts, falloutlondon should load after other mods (unless they are mods specifically for FOLON, in which case, load them after falloutlondon).\n`
                     + `\n`
-                    + `2. Enable the mod "${STAGINGFOLDER_NAME}" and deploy mods.\n`
-                    + `\n`
-                    + `3. If there are conflicts, falloutlondon should load after other mods (unless they are mods specifically for FOLON, in which case, load them after falloutlondon).\n`
-                    + `\n`
-                    + `4. Enable the plugins "${PLUGIN1}" and "${PLUGIN2}" in the Plugins tab.\n`
+                    + `2. Enable the plugins "${PLUGIN1}" and "${PLUGIN2}" in the Plugins tab.\n`
                     + `\n`
               }, [
                 {
