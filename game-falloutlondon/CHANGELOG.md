@@ -5,7 +5,7 @@
 - Find out how to enable and change modtype for falloutlondon mod automatically (? set from registerModType ? Use mods object directly?)
 - Enable 2 plugins automatically (may be challenging)
 
-## [0.1.4] - 2025-06-25
+## [0.1.4] - 2025-06-27
 
 - Automated enabling and changing mod type for falloutlondon mod.
 

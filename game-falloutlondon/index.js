@@ -2,8 +2,8 @@
 Name: FOLON Setup Helper Extension
 Structure: Utility Extension (game helper)
 Author: ChemBoy1
-Version: 0.1.1
-Date: 2025-06-24
+Version: 0.1.4
+Date: 2025-06-27
 //////////////////////////////////////////////////*/
 
 //Import libraries
@@ -159,8 +159,8 @@ async function makeLink(api, src, dest, type) {
     //return api.runExecutable('makelink.bat', [`mklink`, `/D`, `"${dest}"`, `"${src}"`], { shell: true, detached: true }) run through .bat file (close and restart Vortex)
       .then(() => log('warn', `${EXTENSION_NAME} created directory link for FOLON GOG files directory from path "${src}" to path "${dest}"`))
       .then(() => linkSuccessNotify(api)) //notify user of linking success
-      .then(() => changeFolonModTypeNotify(api)) //notify user to manually change mod type for FOLON mod
-      .then(() => changeFolonModTypeAuto(api)) //automatically enable and change mod type for FOLON mod
+      .then(() => changeFolonModTypeNotify(api)) //notify user of manual steps required
+      .then(() => changeFolonModTypeAuto(api)) //automatically enable and change mod type for falloutlondon mod
       .catch(err => api.showErrorNotification(`${EXTENSION_NAME} failed to create directory link for FOLON GOG files`, err, { allowReport: true }));
   }
 }
@@ -196,17 +196,17 @@ function changeFolonModTypeNotify(api) {
             title: 'More',
             action: (dismiss) => {
               api.showDialog('question', MESSAGE, {
-                text: `The ${EXTENSION_NAME} Extension has successfully directory-linked the GOG FOLON files to the FO4 Staging Folder.\n`
+                text: `The ${EXTENSION_NAME} Extension has successfully directory-linked the GOG FOLON files to the FO4 Vortex Mod Staging Folder.\n`
                     + `\n`
                     + `You must now complete the following steps while managing Fallout 4 in Vortex to complete setup:\n`
-                    //+ `\n`
-                    //+ `1. Change the Mod Type for the new "${STAGINGFOLDER_NAME}" mod to "${FOLON_NAME}". Double-click on the mod in the list to bring up the side panel and make the change.\n`
-                    //+ `\n`
-                    //+ `2. Enable the mod "${STAGINGFOLDER_NAME}" and deploy mods.\n`
                     + `\n`
-                    + `1. If there are conflicts, falloutlondon should load after other mods (unless they are mods specifically for FOLON, in which case, load them after falloutlondon).\n`
+                    + `1. Change the Mod Type for the new "${STAGINGFOLDER_NAME}" mod to "${FOLON_NAME}". Double-click on the mod in the list to bring up the side panel and make the change in the "Mod Type" dropdown box.\n`
                     + `\n`
-                    + `2. Enable the plugins "${PLUGIN1}" and "${PLUGIN2}" in the Plugins tab.\n`
+                    + `2. Enable the mod "${STAGINGFOLDER_NAME}" and deploy mods.\n`
+                    + `\n`
+                    + `3. If there are conflicts, falloutlondon should load after other mods (unless the mod is specifically for FOLON, in which case, load it after falloutlondon).\n`
+                    + `\n`
+                    + `4. Enable the plugins "${PLUGIN1}" and "${PLUGIN2}" in the Plugins tab.\n`
                     + `\n`
               }, [
                 {
@@ -293,18 +293,34 @@ function checkPartitions(path1, path2, path3) {
   }
 }
 
+// Function to detect when falloutlondon mod is in state
+async function checkState(api) {
+  let mods = util.getSafe(api.store.getState(), ['persistent', 'mods', GAME_ID], {});
+  let STATUS =  Object.keys(mods).some(id => (mods[id] === MOD_ID));
+  while (!STATUS) { //wait until the new mod is in state
+    mods = util.getSafe(api.store.getState(), ['persistent', 'mods', GAME_ID], {});
+    STATUS =  Object.keys(mods).some(id => mods[id] === MOD_ID);
+  };
+  return STATUS;
+}
+
 // Change falloutlondon modType and enable
 async function changeFolonModTypeAuto(api) {
+  await new Promise(resolve => setTimeout(resolve, 10000)); //wait a few seconds to allow Vortex to startup
+  //const STATUS = await checkState(api);
+  // <-- Need to figure out a reliable way to WAIT to set the modtype and enable until after the user clicks the button to Apply Changes, thus adding the linked mod to state
   const state = api.getState();
   const profileId = selectors.lastActiveProfileForGame(state, GAME_ID);
   try {
-  const batched = [
-    actions.setModType(GAME_ID, MOD_ID, FOLON_ID),
-    actions.setModEnabled(profileId, MOD_ID, true),
-  ];
-  util.batchDispatch(api.store, batched); // Will dispatch both actions.
+    /*api.store.dispatch(actions.setModType(GAME_ID, MOD_ID, FOLON_ID));
+    api.store.dispatch(actions.setModEnabled(profileId, MOD_ID, false)); //*/
+    const batched = [
+      actions.setModType(GAME_ID, MOD_ID, FOLON_ID),
+      actions.setModEnabled(profileId, MOD_ID, false),
+    ];
+    util.batchDispatch(api.store, batched); //*/
   } catch (err) {
-    api.showErrorNotification(`${EXTENSION_NAME} failed to automatically enable and change mod type for FOLON mod.`, err, { allowReport: true });
+    api.showErrorNotification(`${EXTENSION_NAME} failed to automatically enable and change Mod Type for "${STAGINGFOLDER_NAME}" mod.`, err, { allowReport: true });
   }
 }
 

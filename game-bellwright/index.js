@@ -446,7 +446,7 @@ function installPak(files, fileName) {
     const JSON_OBJECT = JSON.parse(fs.readFileSync(path.join(fileName, rootPath, UE5KITMOD_FILE)));
     const JSON_MOD_NAME = JSON_OBJECT["folderName"];
     MOD_FOLDER = JSON_MOD_NAME;
-  } catch (err) { //modinfo.json could not be read. Try to write a clean one.
+  } catch (err) { //modinfo.json could not be read.
     log('error', `Could not read modinfo.json file for mod ${MOD_NAME}.`);
   }
 

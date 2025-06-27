@@ -3,7 +3,7 @@ Name: inZOI Vortex Extension
 Structure: UE5
 Author: ChemBoy1
 Version: 0.3.0
-Date: 2025-06-26
+Date: 2025-06-27
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -39,7 +39,6 @@ let PAK_FILE_MIN = 1;
 let SYM_LINKS = true;
 if (IO_STORE) { //Set file number for pak installer file selection (needs to be 3 if IO Store is used to accomodate .ucas and .utoc files)
   SYM_LINKS = false;
-  //PAKMOD_EXTS = ['.pak', '.ucas', '.utoc', '.sig'];
   PAKMOD_EXTS = ['.pak', '.ucas', '.utoc'];
   PAK_FILE_MIN = PAKMOD_EXTS.length;
 }
@@ -52,7 +51,6 @@ const UNREALDATA = {
 }
 
 //Information for installers, modtypes, and tools
-const USER_HOME = util.getVortexPath("home");
 const DOCUMENTS = util.getVortexPath("documents");
 const LOCALAPPDATA = util.getVortexPath("localAppData");
 const DOCS_PATH = path.join(DOCUMENTS, "inZOI");
@@ -70,7 +68,6 @@ const PAK_ID = `${GAME_ID}-pak`;
 const PAK_NAME = "Paks (no ~mods)";
 const PAK_PATH = UNREALDATA.modsPath;
 const PAK_EXT = '.pak';
-const MOD_PATH_DEFAULT = PAK_PATH;
 const PAK_ALT_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Paks');
 
 const BINARIES_ID = `${GAME_ID}-binaries`;
@@ -175,10 +172,20 @@ const TEXTURES_NAME = "Textures (Documents)";
 const TEXTURES_PATH = path.join(DOCS_PATH, "Creations", "MyTextures");
 const TEXTURES_FILE = "albedo.jpg";
 
+
+// MODKit
 const MODKIT_ID = `${GAME_ID}-modkit`;
 const MODKITAPP_ID = "e61de4231c6b43349615781e737ad297";
 const MODKIT_EXEC = path.join('inZOIModKit', 'Binaries', 'Win64', 'inZOIModKit.exe');
 const MODKIT_NAME = "MODKit";
+
+const UE5KITMOD_ID = `${GAME_ID}-ue5modkitpak`;
+const UE5KITMOD_NAME = "UE5 MODKit Pak Mod";
+const UE5KITMOD_FILE = 'mod_manifest.json';
+const UE5KITMOD_EXT = '.uplugin';
+const UE5KITMOD_PATH = path.join(DOCS_PATH, 'Mods');
+
+const MOD_PATH_DEFAULT = UE5KITMOD_PATH;
 
 //Filled in from data above
 const spec = {
@@ -191,7 +198,7 @@ const spec = {
     "mergeMods": true,
     "requiresCleanup": true,
     "modPath": MOD_PATH_DEFAULT,
-    "modPathIsRelative": true,
+    "modPathIsRelative": false,
     "requiredFiles": [
       EXEC,
       EPIC_CODE_NAME,
@@ -207,6 +214,7 @@ const spec = {
     },
   },
   "modTypes": [
+    //flip all modtypes in game folder to explicit, now that default is in Documents. Move Documents modtypes here
     {
       "id": UE4SSCOMBO_ID,
       "name": UE4SSCOMBO_NAME,
@@ -270,23 +278,6 @@ const spec = {
     "names": []
   }
 };
-
-//3rd party tools and launchers
-const tools = [
-  //*
-  {
-    id: `${GAME_ID}-customlaunch`,
-    name: `Custom Launch`,
-    logo: `exec.png`,
-    executable: () => EXEC,
-    requiredFiles: [EXEC],
-    detach: true,
-    relative: true,
-    exclusive: true,
-    shell: true,
-    parameters: []
-  }, //*/
-];
 
 //Set mod type priority
 function modTypePriority(priority) {
@@ -379,7 +370,7 @@ function testUe4ssCombo(files, gameId) {
 }
 
 //Install UE4SS Script-LogicMods combo files
-function installUe4ssCombo(files) {
+function installUe4ssCombo(api, files) {
   const modFile = files.find(file => (path.basename(file) === ROOT_FILE));
   const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
   const rootPath = path.dirname(modFile);
@@ -420,7 +411,7 @@ function testLogic(files, gameId) {
 }
 
 //Install LogicMods files
-function installLogic(files) {
+function installLogic(api, files) {
   const modFile = files.find(file => (path.extname(file).toLowerCase() === LOGICMODS_EXT));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
@@ -437,6 +428,61 @@ function installLogic(files) {
       type: 'copy',
       source: file,
       destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Installer test for mod files
+function testPak(files, gameId) {
+  const isMod = files.some(file => (path.extname(file).toLowerCase() === UE5KITMOD_EXT));
+  const isJson = files.some(file => (path.basename(file).toLowerCase() === UE5KITMOD_FILE));
+  let supported = (gameId === spec.game.id) && ( isMod && isJson );
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Installer install mod files
+function installPak(api, files, fileName) {
+  const modFile = files.find(file => (path.basename(file).toLowerCase() === UE5KITMOD_FILE));
+  //const JSON_FILE = files.find(file => (path.basename(file).toLowerCase() === UE5KITMOD_FILE));
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: UE5KITMOD_ID };
+  let MOD_NAME = path.basename(fileName);
+  let MOD_FOLDER = MOD_NAME.replace(/[\.]*(installing)*(zip)*/gi, '');
+  if (rootPath !== '.') {
+    MOD_NAME = path.basename(rootPath);
+    MOD_FOLDER = MOD_NAME;
+  }
+  try { //read mod_manifest.json file to get folder name (game will crash if this doesn't match)
+    const JSON_OBJECT = JSON.parse(fs.readFileSync(path.join(fileName, rootPath, UE5KITMOD_FILE)));
+    const JSON_MOD_NAME = JSON_OBJECT["ProjectName"];
+    MOD_FOLDER = JSON_MOD_NAME;
+  } catch (err) { //mod_manifest.json could not be read.
+    log('error', `Could not read modinfo.json file for mod ${MOD_NAME}.`);
+  }
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(MOD_FOLDER, file.substr(idx)),
     };
   });
   instructions.push(setModTypeInstruction);
@@ -462,7 +508,7 @@ function testUe4ss(files, gameId) {
 }
 
 //Installer install UE4SS files
-function installUe4ss(files) {
+function installUe4ss(api, files) {
   const modFile = files.find(file => (path.basename(file).toLowerCase() === UE4SS_FILE));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
@@ -505,7 +551,7 @@ function testModEnabler(files, gameId) {
 }
 
 //Install Mod Enabler files
-function installModEnabler(files) {
+function installModEnabler(api, files) {
   const setModTypeInstruction = { type: 'setmodtype', value: MODENABLER_ID };
   // Remove empty directories
   const filtered = files.filter(file =>
@@ -543,7 +589,7 @@ function testScripts(files, gameId) {
 }
 
 //Install UE4SS Script files
-function installScripts(files, fileName) {
+function installScripts(api, files, fileName) {
   const modFile = files.find(file => (path.basename(file) === SCRIPTS_FILE));
   const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
   const rootPath = path.dirname(modFile);
@@ -607,7 +653,7 @@ function testDll(files, gameId) {
 }
 
 //Install UE4SS DLL files
-function installDll(files, fileName) {
+function installDll(api, files, fileName) {
   const modFile = files.find(file => (path.basename(file) === DLL_FILE));
   const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
   const rootPath = path.dirname(modFile);
@@ -1011,7 +1057,7 @@ function testRoot(files, gameId) {
 }
 
 //Installer install Fluffy Mod Manger files
-function installRoot(files) {
+function installRoot(api, files) {
   const modFile = files.find(file => (path.basename(file) === ROOT_FILE));
   const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
   const rootPath = path.dirname(modFile);
@@ -1144,7 +1190,7 @@ function testBinaries(files, gameId) {
 }
 
 //Fallback installer to Binaries folder
-function installBinaries(files) {
+function installBinaries(api, files) {
   const setModTypeInstruction = { type: 'setmodtype', value: BINARIES_ID };
   
   // Remove empty directories and return instructions
@@ -1529,7 +1575,7 @@ function UNREALEXTENSION(context) {
     return discoveryPath ? path.join.apply(null, installPath) : undefined;
   };
 
-  context.registerInstaller('ue5-pak-installer', 27, testForUnrealMod, (files, __destinationPath, gameId) => installUnrealMod(context.api, files, gameId));
+  context.registerInstaller('ue5-pak-installer', 28, testForUnrealMod, (files, __destinationPath, gameId) => installUnrealMod(context.api, files, gameId));
 
   context.registerModType('ue5-sortable-modtype', 25, (gameId) => testUnrealGame(gameId, true), getUnrealModsPath, () => Promise.resolve(false), {
     name: 'UE5 Sortable Mod',
@@ -1675,7 +1721,7 @@ function applyGame(context, gameSpec) {
         shell: true,
         parameters: []
       }, //*/
-      {
+      /*{
         id: MODKIT_ID,
         name: MODKIT_NAME,
         logo: `modkit.png`,
@@ -1812,32 +1858,48 @@ function applyGame(context, gameSpec) {
   ); //*/
 
   //Core installers
-  context.registerInstaller(UE4SSCOMBO_ID, 25, testUe4ssCombo, installUe4ssCombo);
-  context.registerInstaller(LOGICMODS_ID, 26, testLogic, installLogic);
-  //27 is pak installer from above
-  context.registerInstaller(UE4SS_ID, 28, testUe4ss, installUe4ss);
-  context.registerInstaller(MODENABLER_ID, 29, testModEnabler, installModEnabler);
-  context.registerInstaller(SCRIPTS_ID, 30, testScripts, installScripts);
-  context.registerInstaller(DLL_ID, 31, testDll, installDll);
+  context.registerInstaller(UE4SSCOMBO_ID, 25, testUe4ssCombo, (files) => installUe4ssCombo(context.api, files));
+  context.registerInstaller(LOGICMODS_ID, 26, testLogic, (files) => installLogic(context.api, files));
+  context.registerInstaller(UE5KITMOD_ID, 27, testPak, (files, fileName) => installPak(context.api, files, fileName));
+  //28 is legacy pak installer
+  context.registerInstaller(UE4SS_ID, 29, testUe4ss, (files) => installUe4ss(context.api, files));
+  context.registerInstaller(MODENABLER_ID, 30, testModEnabler, (files) => installModEnabler(context.api, files));
+  context.registerInstaller(SCRIPTS_ID, 31, testScripts, (files, fileName) => installScripts(context.api, files, fileName));
+  context.registerInstaller(DLL_ID, 32, testDll, (files, fileName) => installDll(context.api, files, fileName));
   //Documents Folders
-  context.registerInstaller(CREATIONS_ID, 32, testCreations, (files) => installCreations(context.api, files));
-  context.registerInstaller(AIGENERATED_ID, 33, testAiGenerated, (files) => installAiGenerated(context.api, files));
-  context.registerInstaller(CANVAS_ID, 34, testCanvas, (files) => installCanvas(context.api, files));
-  //Individual files
-  context.registerInstaller(MY3DPRINTER_ID, 35, testMy3DPrinter, (files) => installMy3DPrinter(context.api, files));
-  context.registerInstaller(MYAPPEARANCES_ID, 36, testMyAppearances, (files) => installMyAppearances(context.api, files));
-  context.registerInstaller(ANIMATIONS_ID, 37, testAnimations, (files) => installAnimations(context.api, files)); 
-  context.registerInstaller(TEXTURES_ID, 38, testTextures, (files) => installTextures(context.api, files)); 
+  context.registerInstaller(CREATIONS_ID, 33, testCreations, (files) => installCreations(context.api, files));
+  context.registerInstaller(AIGENERATED_ID, 24, testAiGenerated, (files) => installAiGenerated(context.api, files));
+  context.registerInstaller(CANVAS_ID, 35, testCanvas, (files) => installCanvas(context.api, files));
+  context.registerInstaller(MY3DPRINTER_ID, 36, testMy3DPrinter, (files) => installMy3DPrinter(context.api, files));
+  context.registerInstaller(MYAPPEARANCES_ID, 37, testMyAppearances, (files) => installMyAppearances(context.api, files));
+  context.registerInstaller(ANIMATIONS_ID, 38, testAnimations, (files) => installAnimations(context.api, files)); 
+  context.registerInstaller(TEXTURES_ID, 39, testTextures, (files) => installTextures(context.api, files)); 
   //Others
-  context.registerInstaller(ROOT_ID, 39, testRoot, installRoot);
-  context.registerInstaller(CONFIG_ID, 40, testConfig, (files) => installConfig(context.api, files));
-  context.registerInstaller(SAVE_ID, 41, testSave, (files) => installSave(context.api, files));
-  context.registerInstaller(BINARIES_ID, 42, testBinaries, installBinaries);
+  context.registerInstaller(ROOT_ID, 40, testRoot, (files) => installRoot(context.api, files));
+  context.registerInstaller(CONFIG_ID, 41, testConfig, (files) => installConfig(context.api, files));
+  context.registerInstaller(SAVE_ID, 42, testSave, (files) => installSave(context.api, files));
+  context.registerInstaller(BINARIES_ID, 43, testBinaries, (files) => installBinaries(context.api, files));
 
   //register buttons to open folders
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Paks Folder', () => {
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open MODKit Mods Folder (Documents)', () => {
+    const openPath = UE5KITMOD_PATH;
+    util.opn(openPath).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open MODKit Folder (Epic)', () => {
+    const openPath = getModKitPath();
+    util.opn(openPath).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Legacy Pak Mods Folder', () => {
     GAME_PATH = getDiscoveryPath(context.api);
-    const openPath = path.join(GAME_PATH, PAK_ALT_PATH);
+    const openPath = path.join(GAME_PATH, PAK_PATH);
     util.opn(openPath).catch(() => null);
   }, () => {
     const state = context.api.getState();
@@ -1940,11 +2002,14 @@ function main(context) {
         previousLO = loadOrder;
       },
       createInfoPanel: () =>
-        context.api.translate(`Drag and drop the mods on the left to change the order in which they load. ${spec.game.name} loads mods in alphanumerical order, so Vortex prefixes `
-          + 'the folder names with "AAA, AAB, AAC, ..." to ensure they load in the order you set here. '
-          + 'The number in the left column represents the overwrite order. The changes from mods with higher numbers will take priority over other mods which make similar edits.'),
+        context.api.translate(`Drag and drop the mods on the left to change the order in which they load. ${spec.game.name} loads mods in alphanumerical order, so Vortex prefixes`
+          + 'the folder names with "AAA, AAB, AAC, ..." to ensure they load in the order you set here.\n'
+          + '\n'
+          + 'The number in the left column represents the overwrite order. The changes from mods with higher numbers will take priority over other mods which make similar edits.\n'
+          + '\n'
+          + 'NOTE: This Load Order is for legacy Pak mods only (not mods made with the MODKit).\n'),
     });
-  }
+  } //*/
 
   context.once(() => { // put code here that should be run (once) when Vortex starts up
 
