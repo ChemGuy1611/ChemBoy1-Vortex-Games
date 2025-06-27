@@ -7,7 +7,7 @@
 ## [0.3.0] - 2025-06-26
 
 - Updated Pak mod installer to handle new MODKit mod format. Moved to correct install directory "Document/inZOI/Mods".
-- Disabled all installers and modtypes that go to game folder so that hardlinks can be used.
+- Changed partion checks and installer error messages to target mod types that go into the game folder (since the default install path is in Documents now).
 
 ## [0.2.1] - 2025-04-22
 
