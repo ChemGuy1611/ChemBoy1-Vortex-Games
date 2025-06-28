@@ -325,7 +325,8 @@ async function changeFolonModTypeAuto(api) {
 }
 
 //Setup function
-async function setup(api) {
+async function setup(api, gameId) {
+  if (gameId !== GAME_ID) return; //exit if FO4 is not being managed.
   const state = api.getState();
   // Find FO4 game path
   GAME_PATH = getFallout4Path(api);
@@ -360,14 +361,13 @@ async function setup(api) {
 
 //Main function
 function main(context) {
-  context.once((profileId, gameId) => { // put code here that should be run (once) when Vortex starts up
-    /*const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
-    if (profileId !== LAST_ACTIVE_PROFILE) return; //*/
-    //if (gameId !== GAME_ID) return;
-    try {
-      setup(context.api); //FOLON setup
-    } catch (err) {
-      context.api.showErrorNotification(`${EXTENSION_NAME} failed to complete setup.`, err, { allowReport: true });
+  context.once(() => { // put code here that
+    context.api.events.on('gamemode-activated', (gameId) => {
+      try {
+        setup(context.api, gameId);
+      } catch (err) {
+        context.api.showErrorNotification(`${EXTENSION_NAME} failed to complete setup.`, err, { allowReport: true });
+      }
     }
   });
   
@@ -392,8 +392,10 @@ function main(context) {
       return gameId === GAME_ID;
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Run FOLON Helper Setup', () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
     try {
-      setup(context.api);
+      setup(context.api, gameId);
     } catch (err) {
       context.api.showErrorNotification(`Failed to manually execute ${EXTENSION_NAME}.`, err, { allowReport: true });
     }
