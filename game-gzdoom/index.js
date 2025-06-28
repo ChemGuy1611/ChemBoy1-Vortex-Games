@@ -2,8 +2,8 @@
 Name: Doom I & II (GZDoom) Vortex Extension
 Structure: Mod Loader (Any Folder)
 Author: ChemBoy1
-Version: 0.1.2
-Date: 2025-06-05
+Version: 0.1.3
+Date: 2025-06-28
 ///////////////////////////////////////*/
 /*
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣀⣀⣠⣤⣤⣤⡴⣦⡴⣖⠶⣴⠶⡶⣖⡶⣶⢶⣲⡾⠿⢿⡷⣾⢿⣷⣦⢾⣷⣾⣶⣤⣀⣰⣤⣀⡀⠀⠀⢀⣴⣿⡿⡿⣿⣿⣦⣄⠀⠀⣠⣴⣿⡿⢿⡿⣷⣦⡄⠀⠀⢀⣀⣤⣦⣀⣤⣶⣶⣷⣦⣴⡿⢿⡷⣿⠿⡿⣿⣷⢶⣦⢴⡲⣦⢶⡶⢶⡲⣖⡶⣦⣤⣤⣤⣤⣤⣤⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
@@ -57,7 +57,7 @@ let STAGING_FOLDER = '';
 const USER_HOME = util.getVortexPath('home');
 const DOCUMENTS = util.getVortexPath('documents');
 const GZSAVE_PATH = path.join(USER_HOME, 'Saved Games', 'GZDoom');
-const GZCONFIG_PATH = path.join(DOCUMENTS, 'My Games', "GZDoom");
+const GZCONFIG_PATH = path.join(DOCUMENTS, 'My Games', 'GZDoom');
 const GZDOOM_INI_FILE = 'gzdoom.ini';
 const GZDOOM_INI_PATH = path.join(GZCONFIG_PATH, GZDOOM_INI_FILE);
 
@@ -80,7 +80,7 @@ const MOD_EXTS = ['.wad', '.pk3', '.zip', '.pak', '.pk7', '.grp', '.rff', '.deh'
 const MOD_PATH = path.join(DML_TOP_FOLDER, 'FILE', "PWAD");
 
 const WAD_ID = `${GAME_ID}-wad`;
-const WAD_NAME = "WAD (Game)";
+const WAD_NAME = "IWAD (Game)";
 const WAD_FILENAMES = ["doom.wad",  "doom2.wad", "freedoom.wad", "nerve.wad"];
 const WAD_EXTS = [".iwad", ".ipk3"];
 const WAD_PATH = path.join(DML_TOP_FOLDER, 'FILE', "IWAD");
@@ -235,6 +235,13 @@ function testDML(files, gameId) {
   const isMod = files.some(file => (path.basename(file) === DML_TOP_FOLDER));
   let supported = (gameId === spec.game.id) && isMod;
 
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
   return Promise.resolve({
     supported,
     requiredFiles: [],
@@ -269,6 +276,13 @@ function testGzdoom(files, gameId) {
   const isMod = files.some(file => (path.basename(file).toLowerCase() === GZDOOM_EXEC));
   let supported = (gameId === spec.game.id) && isMod;
 
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
   return Promise.resolve({
     supported,
     requiredFiles: [],
@@ -301,7 +315,15 @@ function installGzdoom(files) {
 //Installer test for GZDOOM files
 function testWad(files, gameId) {
   const isMod = files.some(file => WAD_FILENAMES.includes(path.basename(file).toLowerCase()));
-  let supported = (gameId === spec.game.id) && isMod;
+  const isExt = files.some(file => WAD_EXTS.includes(path.extname(file).toLowerCase()));
+  let supported = (gameId === spec.game.id) && ( isMod || isExt );
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
 
   return Promise.resolve({
     supported,
@@ -311,7 +333,10 @@ function testWad(files, gameId) {
 
 //Installer install GZDOOM files
 function installWad(files) {
-  const modFile = files.find(file => WAD_FILENAMES.includes(path.basename(file).toLowerCase()));
+  let modFile = files.find(file => WAD_FILENAMES.includes(path.basename(file).toLowerCase()));
+  if (modFile === undefined) {
+    modFile = files.find(file => WAD_EXTS.includes(path.extname(file).toLowerCase()));
+  }
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: WAD_ID };
@@ -336,6 +361,13 @@ function installWad(files) {
 function testMod(files, gameId) {
   const isMod = files.some(file => MOD_EXTS.includes(path.extname(file).toLowerCase()));
   let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
 
   return Promise.resolve({
     supported,
@@ -700,10 +732,11 @@ function setupNotify(api) {
           api.showDialog('question', MESSAGE, {
             text: `Some setup for the Doom Mod Loader (DML) is required to use this extension.\n`
                 + `\n`
-                + `First: You must install DOOM game WADs. There are lots of places you can get them, but they cannot be included in the extension for legal reasons.\n`
+                + `First: You must install DOOM game WADs as a mod to Vortex. There are lots of places you can get them, but they cannot be included in the extension for legal reasons.\n`
+                + `If you own DOOM 3: BFG Edition or DOOM Eternal, WADs are included in their game files ("base/wads" and "base/classicwads", respectively).\n`
                 + `\n`
                 + `Second: Use the launch button to launch DML. Once there you can select your game wad and the load order for your mods.\n`
-                + `You can also set custom launch parameters and change various options. Check out the DML ReadMe for more info.\n`
+                + `You can also set custom launch parameters and change various options.\n`
                 + `\n`
                 + `For more info, you can open the DML ReadMe by clicking on the "Open DML ReadMe" button below.\n`
                 + `\n`

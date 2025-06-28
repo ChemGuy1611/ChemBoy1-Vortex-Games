@@ -30,7 +30,7 @@ const FOLON_FILE = 'LondonWorldSpace.esm'; // The main plugin file for FOLON
 
 const PLUGIN1 = 'LondonWorldSpace.esm';
 const PLUGIN2 = 'LondonWorldSpace-DLCBlock.esp';
-const MOD_ID = 'falloutlondon'; // The mod ID for FOLON in Vortex (used to find mod for enabling and changing modtype)
+const MOD_ID = STAGINGFOLDER_NAME; // The mod ID for FOLON in Vortex (used to find mod for enabling and changing modtype)
 
 const DOCUMENTS = util.getVortexPath("documents");
 const INI_PATH = path.join(DOCUMENTS, 'My Games', "Fallout4");

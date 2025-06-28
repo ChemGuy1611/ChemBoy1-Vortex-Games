@@ -1,8 +1,13 @@
 # Changelog
 
-Future Changes (NOT IMPLEMENTED YET):
+## Future Changes (NOT IMPLEMENTED YET)
 
-- None
+- None Planned
+
+## [0.1.3] - 2025-06-28
+
+- Updated DML Setup notification with some additional details.
+- Added .iwad and .ipk3 extensions to game WAD installer.
 
 ## [0.1.2] - 2025-06-05
 
