@@ -306,7 +306,7 @@ async function checkState(api) {
 
 // Change falloutlondon modType and enable
 async function changeFolonModTypeAuto(api) {
-  await new Promise(resolve => setTimeout(resolve, 10000)); //wait a few seconds to allow Vortex to startup
+  //await new Promise(resolve => setTimeout(resolve, 10000)); //wait a few seconds to allow Vortex to startup
   //const STATUS = await checkState(api);
   // <-- Need to figure out a reliable way to WAIT to set the modtype and enable until after the user clicks the button to Apply Changes, thus adding the linked mod to state
   const state = api.getState();
