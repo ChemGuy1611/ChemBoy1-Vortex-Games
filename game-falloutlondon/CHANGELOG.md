@@ -2,12 +2,12 @@
 
 ## Future Improvements (Not Yet Released)
 
-- Find out how to enable and change modtype for falloutlondon mod automatically (? set from registerModType ? Use mods object directly?)
-- Enable 2 plugins automatically (may be challenging)
+- Enable plugins automatically (may be challenging)
 
-## [0.1.4] - 2025-06-27
+## [0.1.4] - 2025-06-28
 
-- Automated enabling and changing mod type for falloutlondon mod.
+- Automated enabling and changing mod type for falloutlondon mod (Note this requires the user to respond to the "Accept Changes" prompt within 10 seconds to work).
+- Setup function will now only run when FO4 game is activated in Vortex.
 
 ## [0.1.3] - 2025-06-25
 

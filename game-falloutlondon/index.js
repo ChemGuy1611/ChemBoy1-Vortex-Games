@@ -3,7 +3,7 @@ Name: FOLON Setup Helper Extension
 Structure: Utility Extension (game helper)
 Author: ChemBoy1
 Version: 0.1.4
-Date: 2025-06-27
+Date: 2025-06-28
 //////////////////////////////////////////////////*/
 
 //Import libraries
@@ -301,27 +301,39 @@ async function checkState(api) {
     mods = util.getSafe(api.store.getState(), ['persistent', 'mods', GAME_ID], {});
     STATUS =  Object.keys(mods).some(id => mods[id] === MOD_ID);
   };
-  return STATUS;
+  return STATUS; //*/
 }
 
 // Change falloutlondon modType and enable
 async function changeFolonModTypeAuto(api) {
-  //await new Promise(resolve => setTimeout(resolve, 10000)); //wait a few seconds to allow Vortex to startup
+  await new Promise(resolve => setTimeout(resolve, 10000)); //wait a few seconds to allow Vortex to startup
   //const STATUS = await checkState(api);
   // <-- Need to figure out a reliable way to WAIT to set the modtype and enable until after the user clicks the button to Apply Changes, thus adding the linked mod to state
   const state = api.getState();
   const profileId = selectors.lastActiveProfileForGame(state, GAME_ID);
   try {
-    /*api.store.dispatch(actions.setModType(GAME_ID, MOD_ID, FOLON_ID));
-    api.store.dispatch(actions.setModEnabled(profileId, MOD_ID, false)); //*/
     const batched = [
       actions.setModType(GAME_ID, MOD_ID, FOLON_ID),
-      actions.setModEnabled(profileId, MOD_ID, false),
+      actions.setModEnabled(profileId, MOD_ID, true),
     ];
     util.batchDispatch(api.store, batched); //*/
   } catch (err) {
     api.showErrorNotification(`${EXTENSION_NAME} failed to automatically enable and change Mod Type for "${STAGINGFOLDER_NAME}" mod.`, err, { allowReport: true });
   }
+  /* State change should mean that the user added the mod.
+  api.onStateChange(['persistent', 'profiles'],
+    () => {
+      try {
+        const batched = [
+          actions.setModType(GAME_ID, MOD_ID, FOLON_ID),
+          actions.setModEnabled(profileId, MOD_ID, false),
+        ];
+        util.batchDispatch(api.store, batched);
+      } catch (err) {
+        api.showErrorNotification(`${EXTENSION_NAME} failed to automatically enable and change Mod Type for "${STAGINGFOLDER_NAME}" mod.`, err, { allowReport: true });
+      }
+    }
+  ); //*/
 }
 
 //Setup function
@@ -368,7 +380,7 @@ function main(context) {
       } catch (err) {
         context.api.showErrorNotification(`${EXTENSION_NAME} failed to complete setup.`, err, { allowReport: true });
       }
-    }
+    })
   });
   
   context.registerModType(FOLON_ID, 75, 
