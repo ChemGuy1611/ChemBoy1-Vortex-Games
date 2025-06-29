@@ -4,6 +4,10 @@
 
 - Added tool to launch inZOIMODKit.
 
+## [0.3.1] - 2025-06-29
+
+- Updated installer notification to reflect the new requirements of the mod folder being moved to User Documents. Partition checks are now for mods that install to the game folder and Local AppData.
+
 ## [0.3.0] - 2025-06-26
 
 - Updated Pak mod installer to handle new MODKit mod format. Moved to correct install directory "Document/inZOI/Mods".

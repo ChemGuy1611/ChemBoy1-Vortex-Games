@@ -2,8 +2,8 @@
 Name: inZOI Vortex Extension
 Structure: UE5
 Author: ChemBoy1
-Version: 0.3.0
-Date: 2025-06-27
+Version: 0.3.1
+Date: 2025-06-29
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -1653,17 +1653,18 @@ function partitionCheckNotify(api, CHECK_CONFIG, CHECK_DOCS) {
         action: (dismiss) => {
           api.showDialog('question', MESSAGE, {
             text: `Because ${GAME_NAME} includes the IO-Store Unreal Engine feature, Vortex must use hardlinks to install mods for the game.\n`
-                + `Because of this, the game, staging folder, and user folder (typically on C Drive) must all be on the same partition to install certain mods with Vortex.\n`
+                + `Because of this, the game, Vortex Staging folder, and user folders (typically on C Drive) must all be on the same partition to install certain mods with Vortex.\n`
                 + `Vortex detected that one or more of the mod types listed below are not available because the game, staging folder, and user folder are not on the same partition.\n`
                 + `\n`
                 + `Here are your results for the partition check to enable these mod types:\n`
-                + `  - Config: ${CHECK_CONFIG ? 'ENABLED: Config Folder (Local AppData) is on the same partition as the game and staging folder and the modtype is available' : 'DISABLED: Config Folder (Local AppData) is NOT on the same partition as the game and staging folder and the modtype is NOT available'}\n`
-                + `  - Documents: ${CHECK_DOCS ? 'ENABLED: Documents folders are on the same partition as the game and staging folder and the modtypes are available' : 'DISABLED: Documents folders are NOT on the same partition as the game and staging folder and the modtypes are NOT available'}\n`
+                + `  - Config: ${CHECK_CONFIG ? 'ENABLED: Config Folder (Local AppData) is on the same partition as the game folder and the Vortex Staging folder and the modtype is available' : 'DISABLED: Config Folder (Local AppData) is NOT on the same partition as the game folder and the Vortex staging folder and the modtype is NOT available'}\n`
+                + `  - Game Folder: ${CHECK_DOCS ? 'ENABLED: Game folders are on the same partition as User Documents and the Vortex Staging folder. All modtypes that install to the game folder are available.' : 'DISABLED: Game folders are NOT on the same partition as User Documents and the Vortex Staging folder. All modtypes that install to the game folder are NOT available.'}\n`
                 + `\n`
                 + `Config Path: ${CONFIG_PATH}\n`
                 + `Documents Path: ${DOCS_PATH}\n`
+                + `Game Path: ${GAME_PATH}\n`
                 + `\n`
-                + `If you want to use the disabled mod types, you must move the game and staging folder to the same partition as the user folder and/or Local AppData (typically C Drive).\n`
+                + `If you want to use the disabled mod types, you must move the game and/or Vortex Staging folder to the same partition as the User Documents folder and/or Local AppData (typically C Drive).\n`
                 + `\n`
           }, [
             { label: 'Acknowledge', action: () => dismiss() },
