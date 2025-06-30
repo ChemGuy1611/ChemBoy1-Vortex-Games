@@ -2,7 +2,7 @@
 Name: inZOI Vortex Extension
 Structure: UE5
 Author: ChemBoy1
-Version: 0.3.1
+Version: 0.3.2
 Date: 2025-06-29
 ////////////////////////////////////////////////*/
 
@@ -1716,7 +1716,7 @@ async function setup(discovery, api, gameSpec) {
   await fs.ensureDirWritableAsync(MYAPPEARANCES_PATH);
   await fs.ensureDirWritableAsync(ANIMATIONS_PATH);
   await fs.ensureDirWritableAsync(TEXTURES_PATH);
-  //await downloadModEnabler(api, gameSpec);
+  await downloadModEnabler(api, gameSpec);
   //await downloadUe4ss(api, gameSpec);
   //await downloadUe4ssNexus(api, gameSpec);
   return fs.ensureDirWritableAsync(path.join(MOD_PATH_DEFAULT));
