@@ -2,7 +2,7 @@
 Name: System Shock 2: 25th Anniversary Remaster Vortex Extension
 Structure: Basic game w/ mods folder
 Author: ChemBoy1
-Version: 0.2.0
+Version: 0.2.1
 Date: 2025-06-30
 ////////////////////////////////////////////////*/
 
@@ -11,6 +11,7 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 const Bluebird = require('bluebird');
+const fsPromises = require('fs/promises');
 
 //Specify all the information about the game
 const STEAMAPP_ID = "866570";
@@ -46,7 +47,7 @@ const MOD_EXT = [".kpf"];
 const LEGACY_ID = `${GAME_ID}-convertedlegacy`;
 const LEGACY_NAME = "Converted Legacy Mod";
 const LEGACY_PATH = MOD_PATH;
-const LEGACY_FOLDERS = ['obj', 'sq_scripts', 'sdn2', 'strings', 'iface', 'intrface']; //cannot put "custscenes" here since it would conflict with Root installer
+const LEGACY_FOLDERS = ['obj', 'mesh', 'bitmap', 'motions', 'sq_scripts', 'sdn2', 'strings', 'iface', 'intrface', 'misdml', 'snd']; //cannot put "custscenes" here since it would conflict with Root installer
 
 const REQ_FILE = 'base.kpf';
 
@@ -231,6 +232,19 @@ function toBlue(func) {
   return (...args) => Bluebird.Promise.resolve(func(...args));
 }
 
+//Success notifications
+function convertSuccessNotify(api, name) {
+  const NOTIF_ID = `${GAME_ID}-folonlinksuccess`;
+  const MESSAGE = `Successfully converted legacy SS2 Mod "${name}" to .kpf format.`;
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'success',
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [],
+  });
+}
+
 //Test for legacy SS2 mod files
 function testLegacy(files, gameId) {
   const isMod = files.some(file => LEGACY_FOLDERS.includes(path.basename(file).toLowerCase()))
@@ -249,30 +263,9 @@ function testLegacy(files, gameId) {
   });
 }
 
-//Success notifications
-function convertSuccessNotify(api, name) {
-  const NOTIF_ID = `${GAME_ID}-folonlinksuccess`;
-  const MESSAGE = `Successfully converted legacy SS2 Mod "${name}" to .kpf format.`;
-  api.sendNotification({
-    id: NOTIF_ID,
-    type: 'success',
-    message: MESSAGE,
-    allowSuppress: true,
-    actions: [],
-  });
-}
-
 //Install legacy SS2 mod files
 async function installLegacy(files, destinationPath) {
 //async function installLegacy(api, files, destinationPath) {
-  /*const modFile = files.find(file => LEGACY_FOLDERS.includes(path.basename(file).toLowerCase()));
-  const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
-  const rootPath = path.dirname(modFile);
-  const filtered = files.filter(file => (
-    (file.indexOf(rootPath) !== -1) &&
-    (!file.endsWith(path.sep))
-  )); //*/
-  
   /* experimental
   const szip = new util.SevenZip();
   const archiveName = path.basename(destinationPath, '.installing') + '.zip';
@@ -296,8 +289,12 @@ async function installLegacy(files, destinationPath) {
   const szip = new util.SevenZip();
   const archiveName = path.basename(destinationPath, '.installing') + '.kpf';
   const archivePath = path.join(destinationPath, archiveName);
-  const rootRelPaths = await fs.readdirAsync(destinationPath);
-  await szip.add(archivePath, rootRelPaths.map(relPath => path.join(destinationPath, relPath)), { raw: ['-r'] }); //*/
+  //const rootRelPaths = await fs.readdirAsync(destinationPath);
+  const rootRelPaths = await fsPromises.readdir(destinationPath, { recursive: true });
+  const modFile = rootRelPaths.find(file => LEGACY_FOLDERS.includes(path.basename(file).toLowerCase()));
+  const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
+  //FUTURE improvement - index the files on the folder names to remove any extraneous top level folders
+  await szip.add(archivePath, rootRelPaths.map(relPath => path.join(destinationPath, relPath.substr(idx))), { raw: ['-r'] }); //*/
 
   const instructions = [{
     type: 'copy',

@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.2.1] - 2025-06-30
+
+- Improved legacy mod converter/installer to remove extraneous folders from the .kpf archive.
+
 ## [0.2.0] - 2025-06-30
 
 - Added installer to convert legacy mods to .kpf format for this remaster. Note that some .kpf files created by the installer may not always work if there are issues with the original mods.
