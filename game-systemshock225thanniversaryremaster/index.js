@@ -266,6 +266,7 @@ function testLegacy(files, gameId) {
 //Install legacy SS2 mod files
 async function installLegacy(files, destinationPath) {
 //async function installLegacy(api, files, destinationPath) {
+  const setModTypeInstruction = { type: 'setmodtype', value: LEGACY_ID };
   /* experimental
   const szip = new util.SevenZip();
   const archiveName = path.basename(destinationPath, '.installing') + '.zip';
@@ -289,11 +290,12 @@ async function installLegacy(files, destinationPath) {
   const szip = new util.SevenZip();
   const archiveName = path.basename(destinationPath, '.installing') + '.kpf';
   const archivePath = path.join(destinationPath, archiveName);
-  //const rootRelPaths = await fs.readdirAsync(destinationPath);
+  const rootRelPaths = await fs.readdirAsync(destinationPath);
+  await szip.add(archivePath, rootRelPaths.map(relPath => path.join(destinationPath, relPath)), { raw: ['-r'] });
+  /* FUTURE improvement - index the files on the folder names to remove any extraneous top level folders
   const rootRelPaths = await fsPromises.readdir(destinationPath, { recursive: true });
   const modFile = rootRelPaths.find(file => LEGACY_FOLDERS.includes(path.basename(file).toLowerCase()));
   const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
-  //FUTURE improvement - index the files on the folder names to remove any extraneous top level folders
   await szip.add(archivePath, rootRelPaths.map(relPath => path.join(destinationPath, relPath.substr(idx))), { raw: ['-r'] }); //*/
 
   const instructions = [{
@@ -301,7 +303,6 @@ async function installLegacy(files, destinationPath) {
     source: archiveName,
     destination: path.basename(archivePath),
   }];
-  const setModTypeInstruction = { type: 'setmodtype', value: LEGACY_ID };
   instructions.push(setModTypeInstruction);
   return Promise.resolve({ instructions });
     //.then(() => convertSuccessNotify(api, path.basename(destinationPath, '.installing')));

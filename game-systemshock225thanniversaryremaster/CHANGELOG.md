@@ -4,7 +4,7 @@
 
 - None Planned
 
-## [0.2.1] - 2025-06-30
+## [0.2.1] - 2025-07-01
 
 - Improved legacy mod converter/installer to remove extraneous folders from the .kpf archive.
 
