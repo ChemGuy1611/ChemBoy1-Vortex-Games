@@ -6,9 +6,9 @@
 
 ## [0.3.0] - 2025-07-01
 
-- Added support for classic System Shock 2 game version on all platforms!
-- Added download-and-run on startup functions for SS2Tool (only for Classic 1999 version users).
-- Added tools for SS2Tool, Blue Mod Manager (default launch for Classic 1999 version users), and ShockEd.
+- Added support for classic (1999) System Shock 2 game version on Steam and GOG!
+- Classic - Added download-and-run on startup functions for SS2Tool.
+- Classic - Added tools for SS2Tool, Blue Mod Manager (default launch tool), and ShockEd.
 
 ## [0.2.0] - 2025-06-30
 

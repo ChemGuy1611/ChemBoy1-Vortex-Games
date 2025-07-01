@@ -14,6 +14,7 @@ const Bluebird = require('bluebird');
 const fsPromises = require('fs/promises');
 const child_process = require("child_process");
 const winapi = require('winapi-bindings');
+const fsNative = require('fs');
 
 //Specify all the information about the game
 const STEAMAPP_ID = "866570";
@@ -174,16 +175,15 @@ function pathPattern(api, game, pattern) {
 }
 
 //Set the mod path for the game
-function makeGetModPath(api, gameSpec) {
-  let path = 'mods';
-  /*try {
-    fs.statSync(path.join(gamePath, EXEC_CLASSIC));
+function makeGetModPath(gamePath) {
+  /*let path = 'mods';
+  try {
+    fsNative.stat(path.join(gamePath, EXEC_CLASSIC));
     path = CLASSIC_PATH;
   }
-  catch (err) {
-    
-  }//*/
-  return () => path;
+  catch (err) {}
+  return () => path; //*/
+  return () => '.';
 }
 
 //Find game installation directory
