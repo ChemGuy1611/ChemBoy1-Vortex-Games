@@ -292,7 +292,7 @@ async function installLegacy(files, destinationPath) {
   const archivePath = path.join(destinationPath, archiveName);
   const rootRelPaths = await fs.readdirAsync(destinationPath);
   await szip.add(archivePath, rootRelPaths.map(relPath => path.join(destinationPath, relPath)), { raw: ['-r'] });
-  /* FUTURE improvement - index the files on the folder names to remove any extraneous top level folders
+  /* IMPROVEMENT - index the files on the folder names to remove any extraneous top level folders
   const rootRelPaths = await fsPromises.readdir(destinationPath, { recursive: true });
   const modFile = rootRelPaths.find(file => LEGACY_FOLDERS.includes(path.basename(file).toLowerCase()));
   const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
