@@ -2,7 +2,7 @@
 Name: System Shock 2: 25th Anniversary Remaster Vortex Extension
 Structure: Basic game w/ mods folder
 Author: ChemBoy1
-Version: 0.1.0
+Version: 0.2.0
 Date: 2025-06-30
 ////////////////////////////////////////////////*/
 
@@ -10,6 +10,7 @@ Date: 2025-06-30
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
+const Bluebird = require('bluebird');
 
 //Specify all the information about the game
 const STEAMAPP_ID = "866570";
@@ -18,9 +19,11 @@ const GOGAPP_ID = "1448370350";
 const XBOXAPP_ID = "";
 const XBOXEXECNAME = "";
 const GAME_ID = "systemshock225thanniversaryremaster";
+const GAME_ID_CLASSIC = 'systemshock2'
 const GAME_NAME = "System Shock 2: 25th Anniversary Remaster";
 const GAME_NAME_SHORT = " SS2 Remaster";
 let GAME_PATH = undefined;
+let EXECUTABLE = undefined;
 let GAME_VERSION = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
@@ -40,6 +43,11 @@ const MOD_NAME = "Mod .kpf";
 const MOD_PATH = path.join("mods");
 const MOD_EXT = [".kpf"];
 
+const LEGACY_ID = `${GAME_ID}-convertedlegacy`;
+const LEGACY_NAME = "Converted Legacy Mod";
+const LEGACY_PATH = MOD_PATH;
+const LEGACY_FOLDERS = ['obj', 'sq_scripts', 'sdn2', 'strings', 'iface', 'intrface']; //cannot put "custscenes" here since it would conflict with Root installer
+
 const REQ_FILE = 'base.kpf';
 
 //Filled in from info above
@@ -48,7 +56,7 @@ const spec = {
     "id": GAME_ID,
     "name": GAME_NAME,
     "shortName": GAME_NAME_SHORT,
-    "logo": `systemshock2.jpg`,
+    "logo": `${GAME_ID_CLASSIC}.jpg`,
     "mergeMods": true,
     "requiresCleanup": true,
     "modPath": MOD_PATH,
@@ -62,6 +70,7 @@ const spec = {
       "epicAppId": EPICAPP_ID,
       //"xboxAppId": XBOXAPP_ID,
       "supportsSymlinks": true,
+      "compatibleDownloads": [GAME_ID_CLASSIC],
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
@@ -76,6 +85,12 @@ const spec = {
       "name": MOD_NAME,
       "priority": "high",
       "targetPath": `{gamePath}\\${MOD_PATH}`
+    },
+    {
+      "id": LEGACY_ID,
+      "name": LEGACY_NAME,
+      "priority": "high",
+      "targetPath": `{gamePath}\\${LEGACY_PATH}`
     },
     {
       "id": ROOT_ID,
@@ -94,22 +109,6 @@ const spec = {
     "names": []
   }
 };
-
-//3rd party tools and launchers
-const tools = [
-  /*{
-    id: "SkipLauncher",
-    name: "Skip Launcher",
-    logo: `exec.png`,
-    executable: () => EXEC_BIN,
-    requiredFiles: [EXEC_BIN],
-    detach: true,
-    relative: true,
-    exclusive: true,
-    //defaultPrimary: true,
-    //parameters: []
-  }, //*/
-];
 
 // BASIC FUNCTIONS //////////////////////////////////////////////////////////////
 
@@ -227,6 +226,91 @@ function installMod(files) {
   return Promise.resolve({ instructions });
 }
 
+//convert installer functions to Bluebird promises
+function toBlue(func) {
+  return (...args) => Bluebird.Promise.resolve(func(...args));
+}
+
+//Test for legacy SS2 mod files
+function testLegacy(files, gameId) {
+  const isMod = files.some(file => LEGACY_FOLDERS.includes(path.basename(file).toLowerCase()))
+  let supported = (gameId === spec.game.id) && ( isMod );
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Success notifications
+function convertSuccessNotify(api, name) {
+  const NOTIF_ID = `${GAME_ID}-folonlinksuccess`;
+  const MESSAGE = `Successfully converted legacy SS2 Mod "${name}" to .kpf format.`;
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'success',
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [],
+  });
+}
+
+//Install legacy SS2 mod files
+async function installLegacy(files, destinationPath) {
+//async function installLegacy(api, files, destinationPath) {
+  /*const modFile = files.find(file => LEGACY_FOLDERS.includes(path.basename(file).toLowerCase()));
+  const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
+  const rootPath = path.dirname(modFile);
+  const filtered = files.filter(file => (
+    (file.indexOf(rootPath) !== -1) &&
+    (!file.endsWith(path.sep))
+  )); //*/
+  
+  /* experimental
+  const szip = new util.SevenZip();
+  const archiveName = path.basename(destinationPath, '.installing') + '.zip';
+  const convertName = path.basename(destinationPath, '.installing') + '.kpf';
+  const archivePath = path.join(destinationPath, archiveName);
+  const convertPath = path.join(destinationPath, convertName);
+  try {//Pack files into zip first, then change extension to .kpf
+    const rootRelPaths = await fs.readdirAsync(destinationPath);
+    await szip.add(archivePath, rootRelPaths.map(relPath => path.join(destinationPath, relPath)), { raw: ['-r'] });
+    await fs.renameAsync (archivePath, convertPath);
+  } catch (err) {
+    api.showErrorNotification(`Failed to convert legacy SS2 Mod: "${MOD_NAME}". You will have to repack it manually to .kpf format.`, err, { allowReport: false });
+  } 
+  const instructions = [{
+    type: 'copy',
+    source: convertName,
+    destination: path.basename(convertPath),
+  }];
+  //*/
+
+  const szip = new util.SevenZip();
+  const archiveName = path.basename(destinationPath, '.installing') + '.kpf';
+  const archivePath = path.join(destinationPath, archiveName);
+  const rootRelPaths = await fs.readdirAsync(destinationPath);
+  await szip.add(archivePath, rootRelPaths.map(relPath => path.join(destinationPath, relPath)), { raw: ['-r'] }); //*/
+
+  const instructions = [{
+    type: 'copy',
+    source: archiveName,
+    destination: path.basename(archivePath),
+  }];
+  const setModTypeInstruction = { type: 'setmodtype', value: LEGACY_ID };
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+    //.then(() => convertSuccessNotify(api, path.basename(destinationPath, '.installing')));
+    //.then(() => log(`Successfully converted legacy mod "${path.basename(destinationPath, '.installing')}" to .kpf format`));
+}
+
 //Test for save files
 function testRootFolder(files, gameId) {
   const isMod = files.some(file => ROOT_FOLDERS.includes(path.basename(file).toLowerCase()))
@@ -335,6 +419,7 @@ function getExecutable(discoveryPath) {
 async function setup(discovery, api, gameSpec) {
   const state = api.getState();
   GAME_PATH = discovery.path;
+  //EXECUTABLE = getExecutable(GAME_PATH); //also sets GAME_VERSION
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   return fs.ensureDirWritableAsync(path.join(discovery.path, MOD_PATH));
@@ -350,7 +435,20 @@ function applyGame(context, gameSpec) {
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     executable: getExecutable,
-    supportedTools: tools,
+    supportedTools: [
+      {
+        id: `${GAME_ID}-customlaunch`,
+        name: `Custom Launch`,
+        logo: `exec.png`,
+        executable: (discoveryPath) => getExecutable(discoveryPath),
+        requiredFiles: [],
+        detach: true,
+        relative: true,
+        exclusive: true,
+        shell: true,
+        parameters: []
+      }, //*/
+    ],
   };
   context.registerGame(game);
 
@@ -365,8 +463,10 @@ function applyGame(context, gameSpec) {
 
   //register mod installers
   context.registerInstaller(MOD_ID, 25, testMod, installMod);
-  context.registerInstaller(`${ROOT_ID}folder`, 25, testRootFolder, installRootFolder);
-  context.registerInstaller(ROOT_ID, 33, testRoot, installRoot); //fallback to root folder
+  context.registerInstaller(LEGACY_ID, 27, toBlue(testLegacy), toBlue(installLegacy));
+  //context.registerInstaller(LEGACY_ID, 27, toBlue(testLegacy), (files, destinationPath) => toBlue(installLegacy(context.api, files, destinationPath)));
+  context.registerInstaller(`${ROOT_ID}folder`, 29, testRootFolder, installRootFolder);
+  context.registerInstaller(ROOT_ID, 31, testRoot, installRoot); //fallback to root folder
 
   //register actions
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
