@@ -1,9 +1,9 @@
 /*////////////////////////////////////////////////
-Name: System Shock 2: 25th Anniversary Remaster Vortex Extension
+Name: System Shock 2 (Classic AND 25th Anniversary Remaster) Vortex Extension
 Structure: Basic game w/ mods folder
 Author: ChemBoy1
-Version: 0.2.1
-Date: 2025-06-30
+Version: 0.3.0
+Date: 2025-07-01
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -12,20 +12,24 @@ const path = require('path');
 const template = require('string-template');
 const Bluebird = require('bluebird');
 const fsPromises = require('fs/promises');
+const child_process = require("child_process");
+const winapi = require('winapi-bindings');
 
 //Specify all the information about the game
 const STEAMAPP_ID = "866570";
-const EPICAPP_ID = "";
+const STEAMAPP_ID_CLASSIC = "238210";
 const GOGAPP_ID = "1448370350";
+const GOGAPP_ID_CLASSIC = "1207659172";
+const EPICAPP_ID = "";
 const XBOXAPP_ID = "";
 const XBOXEXECNAME = "";
 const GAME_ID = "systemshock225thanniversaryremaster";
 const GAME_ID_CLASSIC = 'systemshock2'
-const GAME_NAME = "System Shock 2: 25th Anniversary Remaster";
-const GAME_NAME_SHORT = " SS2 Remaster";
+const GAME_NAME = "System Shock 2";
+const GAME_NAME_SHORT = "System Shock 2";
 let GAME_PATH = undefined;
-let EXECUTABLE = undefined;
 let GAME_VERSION = '';
+let GAME_RELEASE = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 
@@ -33,15 +37,18 @@ let DOWNLOAD_FOLDER = '';
 const EXEC_STEAM = 'hathor_Shipping_Playfab_Steam_x64.exe';
 const EXEC_GOG = 'hathor_Shipping_Playfab_Galaxy_x64.exe';
 const EXEC_EPIC = 'hathor_Shipping_Playfab_Epic_x64.exe'; //NOT SURE IF THIS IS CORRECT. Need a user with Epic version to confirm.
+const EXEC_CLASSIC = 'SS2.exe';
 
 //Info for mod types and installers
+const USER_HOME = util.getVortexPath('home');
+
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Binaries / Root Folder";
 const ROOT_FOLDERS = ['mods', 'cutscenes'];
 
 const MOD_ID = `${GAME_ID}-kpfmod`;
 const MOD_NAME = "Mod .kpf";
-const MOD_PATH = path.join("mods");
+const MOD_PATH = path.join('mods');
 const MOD_EXT = [".kpf"];
 
 const LEGACY_ID = `${GAME_ID}-convertedlegacy`;
@@ -49,7 +56,28 @@ const LEGACY_NAME = "Converted Legacy Mod";
 const LEGACY_PATH = MOD_PATH;
 const LEGACY_FOLDERS = ['obj', 'mesh', 'bitmap', 'motions', 'sq_scripts', 'sdn2', 'strings', 'iface', 'intrface', 'misdml', 'snd']; //cannot put "custscenes" here since it would conflict with Root installer
 
-const REQ_FILE = 'base.kpf';
+const SS2TOOL_ID = `${GAME_ID}-ss2tool`;
+const SS2TOOL_NAME = `SS2Tool`;
+const SS2TOOL_EXEC = `SS2Tool-v.6.1.1.8.exe`;
+const SS2TOOL_URL = `https://www.systemshock.org/index.php?topic=4141.0`;
+const SS2TOOL_URL_DIRECT = `https://www.systemshock.org/index.php?action=dlattach;topic=4141.0;attach=15728&mid=45944&sesc=1dd1fec0fa9126c5ef752f3685775d4ce5f81760`;
+
+const BMM_ID = `${GAME_ID}-bmm`;
+const BMM_NAME = `Blue Mod Manager`;
+const BMM_EXEC = 'ss2bmm.exe';
+
+const EDITOR_ID = `${GAME_ID}-editor`;
+const EDITOR_NAME = `ShockEd`;
+const EDITOR_EXEC = 'ShockEd.exe';
+
+const CLASSIC_ID = `${GAME_ID}-classicmod`;
+const CLASSIC_NAME = `Classic Mod`;
+const CLASSIC_PATH = path.join('DMM');
+
+const CONFIG_PATH = path.join(USER_HOME, 'Saved Games', 'Nightdive Studios', 'System Shock 2 Remastered');
+
+//const REQ_FILE = 'base.kpf';
+const REQ_FILE = '';
 
 //Filled in from info above
 const spec = {
@@ -58,12 +86,11 @@ const spec = {
     "name": GAME_NAME,
     "shortName": GAME_NAME_SHORT,
     "logo": `${GAME_ID_CLASSIC}.jpg`,
+    "modPathIsRelative": true,
     "mergeMods": true,
     "requiresCleanup": true,
-    "modPath": MOD_PATH,
-    "modPathIsRelative": true,
     "requiredFiles": [
-      REQ_FILE,
+      //REQ_FILE,
     ],
     "details": {
       "steamAppId": STEAMAPP_ID,
@@ -99,12 +126,26 @@ const spec = {
       "priority": "high",
       "targetPath": `{gamePath}`
     },
+    {
+      "id": CLASSIC_ID,
+      "name": CLASSIC_NAME,
+      "priority": "low",
+      "targetPath": `{gamePath}\\${CLASSIC_PATH}`
+    },
+    {
+      "id": SS2TOOL_ID,
+      "name": SS2TOOL_NAME,
+      "priority": "low",
+      "targetPath": `{gamePath}`
+    },
   ],
   "discovery": {
     "ids": [
       STEAMAPP_ID,
+      STEAMAPP_ID_CLASSIC,
       //EPICAPP_ID,
       GOGAPP_ID,
+      GOGAPP_ID_CLASSIC,
       //XBOXAPP_ID
     ],
     "names": []
@@ -134,9 +175,15 @@ function pathPattern(api, game, pattern) {
 
 //Set the mod path for the game
 function makeGetModPath(api, gameSpec) {
-  return () => gameSpec.game.modPathIsRelative !== false
-    ? gameSpec.game.modPath || '.'
-    : pathPattern(api, gameSpec.game, gameSpec.game.modPath);
+  let path = 'mods';
+  /*try {
+    fs.statSync(path.join(gamePath, EXEC_CLASSIC));
+    path = CLASSIC_PATH;
+  }
+  catch (err) {
+    
+  }//*/
+  return () => path;
 }
 
 //Find game installation directory
@@ -184,12 +231,343 @@ async function deploy(api) {
   return new Promise((resolve, reject) => api.events.emit('deploy-mods', (err) => err ? reject(err) : resolve()));
 }
 
+// DOWNLOADER FUNCTIONS ///////////////////////////////////////////////////
+
+//* Repeatable code for browse-to-download regular archives and installers, and then executing installers from the appropriate location (staging (if zipped) or downloads (if not zipped))
+async function browseForDownloadFunction(api, gameSpec, URL, instructions, ARCHIVE_NAME, MOD_NAME, isArchive, isInstaller, INSTALLER, STAGING_PATH, MOD_TYPE, isInstalled, isElevated) {
+  const state = api.getState();
+  STAGING_FOLDER = selectors.installPathForGame(state, gameSpec.game.id);
+  DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, gameSpec.game.id);
+  //const dlInfo = {game: gameSpec.game.id, name: MOD_NAME};
+  const dlInfo = {
+    game: gameSpec.game.id,
+    name: MOD_NAME,
+  };
+
+  if (!isInstalled && isArchive && isInstaller && !isElevated) { // mod is not installed, is an archive, and has an installer exe in the archive that does not require elevation. Must launch from staging folder after extraction (need to know exact folder name STAGING_PATH)
+    return new Promise((resolve, reject) => { //Browse to modDB and download the mod
+      return api.emitAndAwait('browse-for-download', URL, instructions)
+      .then((result) => { //result is an array with the URL to the downloaded file as the only element
+        if (!result || !result.length) { //user clicks outside the window without downloading
+          return reject(new util.UserCanceled());
+        }
+        if (!result[0].toLowerCase().includes(ARCHIVE_NAME)) { //if user downloads the wrong file
+          return reject(new util.ProcessCanceled('Selected wrong download'));
+        }
+        return Promise.resolve(result);
+      })
+      .catch((err) => {
+        return reject(err);
+      })
+      .then((result) => {
+        api.events.emit('start-download', result, dlInfo, undefined,
+          async (error, id) => { //callback function to check for errors and pass id to and call 'start-install-download' event
+            if (error !== null && (error.name !== 'AlreadyDownloaded')) {
+              return reject(error);
+            }
+            api.events.emit('start-install-download', id, { allowAutoEnable: true }, async (error) => { //callback function to complete the installation
+              if (error !== null) {
+                return reject(error);
+              }
+              const profileId = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
+              const batched = [
+                actions.setModsEnabled(api, profileId, result, true, {
+                  allowAutoDeploy: true,
+                  installed: true,
+                }),
+                actions.setModType(GAME_ID, result[0], MOD_TYPE), // Set the mod type
+              ];
+              util.batchDispatch(api.store, batched); // Will dispatch both actions.
+              try {
+                const RUN_PATH = path.join(STAGING_FOLDER, STAGING_PATH, INSTALLER);
+                child_process.spawnSync( //run installer from staging folder
+                  RUN_PATH,
+                  []
+                );
+                log('warn', `${MOD_NAME} installer started from staging folder`);
+              } catch (err) {
+                log('error', `Running ${MOD_NAME} installer from staging folder failed: ${err}`);
+              }
+              return resolve();
+            });
+          },
+          'never',
+          { allowInstall: false },
+        );
+      })
+    })
+    .catch(err => {
+      if (err instanceof util.UserCanceled) {
+        api.showErrorNotification(`User cancelled download/install of ${MOD_NAME}. Please try again.`, err, { allowReport: false });
+        return Promise.resolve();
+      } else if (err instanceof util.ProcessCanceled) {
+        api.showErrorNotification(`Failed to download/install ${MOD_NAME}. Please re-launch Vortex and try again or download manually from the opened page..`, err, { allowReport: false });
+        util.opn(URL).catch(() => null);
+        return Promise.reject(err);
+      } else {
+        return Promise.reject(err);
+      }
+    })
+  } 
+
+  if (!isInstalled && isArchive && isInstaller && isElevated) { // mod is not installed, is an archive, and has an installer exe in the archive that requires elevation. Must launch from staging folder after extraction (need to know exact folder name STAGING_PATH)
+    return new Promise((resolve, reject) => { //Browse to modDB and download the mod
+      return api.emitAndAwait('browse-for-download', URL, instructions)
+      .then((result) => { //result is an array with the URL to the downloaded file as the only element
+        if (!result || !result.length) { //user clicks outside the window without downloading
+          return reject(new util.UserCanceled());
+        }
+        /*if (!result[0].toLowerCase().includes(ARCHIVE_NAME)) { //if user downloads the wrong file
+          return reject(new util.ProcessCanceled('Selected wrong download'));
+        } //*/
+        return Promise.resolve(result);
+      })
+      .catch((err) => {
+        return reject(err);
+      })
+      .then((result) => {
+        api.events.emit('start-download', result, dlInfo, undefined,
+          async (error, id) => { //callback function to check for errors and pass id to and call 'start-install-download' event
+            if (error !== null && (error.name !== 'AlreadyDownloaded')) {
+              return reject(error);
+            }
+            api.events.emit('start-install-download', id, { allowAutoEnable: true }, async (error) => { //callback function to complete the installation
+              if (error !== null) {
+                return reject(error);
+              }
+              const profileId = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
+              const batched = [
+                actions.setModsEnabled(api, profileId, result, true, {
+                  allowAutoDeploy: true,
+                  installed: true,
+                }),
+                actions.setModType(GAME_ID, result[0], MOD_TYPE), // Set the mod type
+              ];
+              util.batchDispatch(api.store, batched); // Will dispatch both actions.
+              try { //run installer from staging folder with elevation
+                const RUN_PATH = path.join(STAGING_FOLDER, STAGING_PATH, INSTALLER);
+                api.runExecutable(RUN_PATH, [], { suggestDeploy: false });
+                log('warn', `${MOD_NAME} installer started from staging folder`);
+              } catch (err) {
+                log('error', `Running ${MOD_NAME} installer from staging folder failed: ${err}`);
+              }
+              return resolve();
+            });
+          },
+          'never',
+          { allowInstall: false },
+        );
+      })
+    })
+    .catch(err => {
+      if (err instanceof util.UserCanceled) {
+        api.showErrorNotification(`User cancelled download/install of ${MOD_NAME}. Please try again.`, err, { allowReport: false });
+        return Promise.resolve();
+      } else if (err instanceof util.ProcessCanceled) {
+        api.showErrorNotification(`Failed to download/install ${MOD_NAME}. Please re-launch Vortex and try again or download manually from the opened page..`, err, { allowReport: false });
+        util.opn(URL).catch(() => null);
+        return Promise.reject(err);
+      } else {
+        return Promise.reject(err);
+      }
+    })
+  } 
+
+  if (!isInstalled && !isArchive && isInstaller && !isElevated) { // mod is not installed, is NOT an archive, and is an installer exe that does not require elevation. Can launch from Downloads folder
+    return new Promise((resolve, reject) => { //Browse to modDB and download the mod
+      return api.emitAndAwait('browse-for-download', URL, instructions)
+      .then((result) => { //result is an array with the URL to the downloaded file as the only element
+        if (!result || !result.length) { //user clicks outside the window without downloading
+          return reject(new util.UserCanceled());
+        }
+        /*if (!result[0].toLowerCase().includes(ARCHIVE_NAME)) { //if user downloads the wrong file
+          return reject(new util.ProcessCanceled('Selected wrong download'));
+        } //*/
+        return Promise.resolve(result);
+      })
+      .catch((err) => {
+        return reject(err);
+      })
+      .then((result) => {
+        api.events.emit('start-download', result, dlInfo, undefined,
+          async (error, id) => { //callback function to check for errors and then run installer from downloads folder
+            if (error !== null && (error.name !== 'AlreadyDownloaded')) {
+              return reject(error);
+            }
+            try {
+              const RUN_PATH = path.join(DOWNLOAD_FOLDER, INSTALLER);
+              child_process.spawnSync( //run installer from downloads folder
+                RUN_PATH,
+                []
+              );
+              log('warn', `${MOD_NAME} installer started from downloads folder`);
+            } catch (err) {
+              log('error', `Running ${MOD_NAME} installer frown downloads folder failed: ${err}`);
+            }
+            return resolve();
+          }, 
+          'never',
+          { allowInstall: false },
+        );
+      });
+    })
+    .catch(err => {
+      if (err instanceof util.UserCanceled) {
+        api.showErrorNotification(`User cancelled download/install of ${MOD_NAME}. Please re-launch Vortex and try again.`, err, { allowReport: false });
+        return Promise.resolve();
+      } else if (err instanceof util.ProcessCanceled) {
+        api.showErrorNotification(`Failed to download/install ${MOD_NAME}. Please re-launch Vortex and try again or download manually from the opened page.`, err, { allowReport: false });
+        util.opn(URL).catch(() => null);
+        return Promise.reject(err);
+      } else {
+        return Promise.reject(err);
+      }
+    });
+  }
+
+  if (!isInstalled && !isArchive && isInstaller && isElevated) { // mod is not installed, is NOT an archive, and is an installer exe that requires elevation. Can launch from Downloads folder
+    return new Promise((resolve, reject) => { //Browse to modDB and download the mod
+      return api.emitAndAwait('browse-for-download', URL, instructions)
+      .then((result) => { //result is an array with the URL to the downloaded file as the only element
+        if (!result || !result.length) { //user clicks outside the window without downloading
+          return reject(new util.UserCanceled());
+        }
+        /*if (!result[0].toLowerCase().includes(ARCHIVE_NAME)) { //if user downloads the wrong file
+          return reject(new util.ProcessCanceled('Selected wrong download'));
+        } //*/
+        return Promise.resolve(result);
+      })
+      .catch((err) => {
+        return reject(err);
+      })
+      .then((result) => {
+        api.events.emit('start-download', result, dlInfo, undefined,
+          async (error, id) => { //callback function to check for errors and then run installer from downloads folder
+            if (error !== null && (error.name !== 'AlreadyDownloaded')) {
+              return reject(error);
+            }
+            try { //run installer from downloads folder with elevation
+              const RUN_PATH = path.join(DOWNLOAD_FOLDER, INSTALLER);
+              api.runExecutable(RUN_PATH, [], { suggestDeploy: false });
+              log('warn', `${MOD_NAME} installer started from downloads folder`);
+            } catch (err) {
+              log('error', `Running ${MOD_NAME} installer frown downloads folder failed: ${err}`);
+            }
+            return resolve();
+          }, 
+          'never',
+          { allowInstall: false },
+        );
+      });
+    })
+    .catch(err => {
+      if (err instanceof util.UserCanceled) {
+        api.showErrorNotification(`User cancelled download/install of ${MOD_NAME}. Please re-launch Vortex and try again.`, err, { allowReport: false });
+        return Promise.resolve();
+      } else if (err instanceof util.ProcessCanceled) {
+        api.showErrorNotification(`Failed to download/install ${MOD_NAME}. Please re-launch Vortex and try again or download manually from the opened page.`, err, { allowReport: false });
+        util.opn(URL).catch(() => null);
+        return Promise.reject(err);
+      } else {
+        return Promise.reject(err);
+      }
+    });
+  }
+
+  if (!isInstalled && isArchive && !isInstaller) { // mod is not installed, is an archive, and has no installer. Install normally as a mod in Vortex
+    return new Promise((resolve, reject) => { //Browse to modDB and download the mod
+      return api.emitAndAwait('browse-for-download', URL, instructions)
+      .then((result) => { //result is an array with the URL to the downloaded file as the only element
+        if (!result || !result.length) { //user clicks outside the window without downloading
+          return reject(new util.UserCanceled());
+        }
+        /*if (!result[0].toLowerCase().includes(ARCHIVE_NAME)) { //if user downloads the wrong file
+          return reject(new util.ProcessCanceled('Selected wrong download'));
+        } //*/
+        return Promise.resolve(result);
+      })
+      .catch((err) => {
+        return reject(err);
+      })
+      .then((result) => {
+        api.events.emit('start-download', result, dlInfo, undefined,
+          async (error, id) => { //callback function to check for errors and pass id to and call 'start-install-download' event
+            if (error !== null && (error.name !== 'AlreadyDownloaded')) {
+              return reject(error);
+            }
+            api.events.emit('start-install-download', id, { allowAutoEnable: true }, async (error) => { //callback function to complete the installation
+              if (error !== null) {
+                return reject(error);
+              }
+              const profileId = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
+              const batched = [
+                actions.setModsEnabled(api, profileId, result, true, {
+                  allowAutoDeploy: true,
+                  installed: true,
+                }),
+                actions.setModType(GAME_ID, result[0], MOD_TYPE), // Set the mod type
+              ];
+              util.batchDispatch(api.store, batched); // Will dispatch both actions.
+              return resolve();
+            });
+          }, 
+          'never',
+          { allowInstall: false },
+        );
+      });
+    })
+    .catch(err => {
+      if (err instanceof util.UserCanceled) {
+        api.showErrorNotification(`User cancelled download/install of ${MOD_NAME}. Please try again.`, err, { allowReport: false });
+        return Promise.resolve();
+      } else if (err instanceof util.ProcessCanceled) {
+        api.showErrorNotification(`Failed to download/install ${MOD_NAME}. Please re-launch Vortex and try again or download manually from the opened page.`, err, { allowReport: false });
+        util.opn(URL).catch(() => null);
+        return Promise.reject(err);
+      } else {
+        return Promise.reject(err);
+      }
+    });
+  }
+} //*/
+
+//Check if SS2Tool is installed
+function isSS2ToolInstalled(api) {
+  GAME_PATH = getDiscoveryPath(api);
+  try {
+    fs.statSync(path.join(GAME_PATH, BMM_EXEC));
+    return true;
+  } catch (err) {
+    return false;
+  }
+}
+
+//* Function to have user browse to download RS_ASIO
+async function downloadSS2Tool(api, gameSpec) {
+  let isInstalled = isSS2ToolInstalled(api);
+  const URL = SS2TOOL_URL;
+  const MOD_NAME = SS2TOOL_NAME;
+  const MOD_TYPE = SS2TOOL_ID;
+  const INSTALLER = SS2TOOL_EXEC;
+  const STAGING_PATH = '';
+  const isArchive = false;
+  const isInstaller = true;
+  const isElevated = false;
+  const ARCHIVE_NAME = SS2TOOL_EXEC;
+  const instructions = api.translate(`1. Click on Continue below to open the browser.\n`
+    + `2. Navigate to the latest version of ${MOD_NAME} on the site.\n`
+    + `3. Click on the appropriate file to download and install the mod.\n`
+  );
+  await browseForDownloadFunction(api, gameSpec, URL, instructions, ARCHIVE_NAME, MOD_NAME, isArchive, isInstaller, INSTALLER, STAGING_PATH, MOD_TYPE, isInstalled, isElevated);
+}
+
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
 
 //Test for save files
 function testMod(files, gameId) {
   const isMod = files.some(file => MOD_EXT.includes(path.extname(file).toLowerCase()))
-  let supported = (gameId === spec.game.id) && isMod;
+  const isClassic = GAME_RELEASE === 'classic';
+  let supported = (gameId === spec.game.id) && isMod && !isClassic;
 
   // Test for a mod installer
   if (supported && files.find(file =>
@@ -248,7 +626,8 @@ function convertSuccessNotify(api, name) {
 //Test for legacy SS2 mod files
 function testLegacy(files, gameId) {
   const isMod = files.some(file => LEGACY_FOLDERS.includes(path.basename(file).toLowerCase()))
-  let supported = (gameId === spec.game.id) && ( isMod );
+  const isClassic = GAME_RELEASE === 'classic';
+  let supported = (gameId === spec.game.id) && isMod && !isClassic;
 
   // Test for a mod installer
   if (supported && files.find(file =>
@@ -284,20 +663,22 @@ async function installLegacy(files, destinationPath) {
     type: 'copy',
     source: convertName,
     destination: path.basename(convertPath),
-  }];
-  //*/
+  }]; //*/
 
   const szip = new util.SevenZip();
   const archiveName = path.basename(destinationPath, '.installing') + '.kpf';
   const archivePath = path.join(destinationPath, archiveName);
+  //* Tradional, from doometernal
   const rootRelPaths = await fs.readdirAsync(destinationPath);
-  await szip.add(archivePath, rootRelPaths.map(relPath => path.join(destinationPath, relPath)), { raw: ['-r'] });
+  await szip.add(archivePath, rootRelPaths.map(relPath => path.join(destinationPath, relPath)), { raw: ['-r'] }); //*/
+
   /* IMPROVEMENT - index the files on the folder names to remove any extraneous top level folders
   const rootRelPaths = await fsPromises.readdir(destinationPath, { recursive: true });
   const modFile = rootRelPaths.find(file => LEGACY_FOLDERS.includes(path.basename(file).toLowerCase()));
   const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
-  await szip.add(archivePath, rootRelPaths.map(relPath => path.join(destinationPath, relPath.substr(idx))), { raw: ['-r'] }); //*/
+  await szip.add(archivePath, rootRelPaths.map(relPath => path.join(destinationPath, relPath.substring(idx))), { raw: ['-r'] }); //*/
 
+  //execute instructions
   const instructions = [{
     type: 'copy',
     source: archiveName,
@@ -312,7 +693,8 @@ async function installLegacy(files, destinationPath) {
 //Test for save files
 function testRootFolder(files, gameId) {
   const isMod = files.some(file => ROOT_FOLDERS.includes(path.basename(file).toLowerCase()))
-  let supported = (gameId === spec.game.id) && isMod;
+  const isClassic = GAME_RELEASE === 'classic';
+  let supported = (gameId === spec.game.id) && !isClassic;
 
   // Test for a mod installer
   if (supported && files.find(file =>
@@ -352,7 +734,8 @@ function installRootFolder(files) {
 
 //Test for fallback binaries installer
 function testRoot(files, gameId) {
-  let supported = (gameId === spec.game.id);
+  const isClassic = GAME_RELEASE === 'classic';
+  let supported = (gameId === spec.game.id) && !isClassic;
 
   // Test for a mod installer.
   if (supported && files.find(file =>
@@ -385,9 +768,66 @@ function installRoot(files) {
   return Promise.resolve({ instructions });
 }
 
+//Test for fallback binaries installer
+function testClassic(files, gameId) {
+  const isMod = files.some(file => LEGACY_FOLDERS.includes(path.basename(file).toLowerCase()))
+  const isClassic = GAME_RELEASE === 'classic';
+  let supported = (gameId === spec.game.id) && isMod && isClassic;
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//* Install legacy SS2 mod files
+async function installClassic(files, destinationPath) {
+  const setModTypeInstruction = { type: 'setmodtype', value: CLASSIC_ID };
+
+  const szip = new util.SevenZip();
+  const archiveName = path.basename(destinationPath, '.installing') + '.zip';
+  const archivePath = path.join(destinationPath, archiveName);
+  const rootRelPaths = await fs.readdirAsync(destinationPath);
+  await szip.add(archivePath, rootRelPaths.map(relPath => path.join(destinationPath, relPath)), { raw: ['-r'] });
+
+  //execute instructions
+  const instructions = [{
+    type: 'copy',
+    source: archiveName,
+    destination: path.basename(archivePath),
+  }];
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+} //*/
+
+/* Install fallback binaries installer
+function installClassic(files) {
+  const setModTypeInstruction = { type: 'setmodtype', value: CLASSIC_ID };
+  
+  const filtered = files.filter(file =>
+    (!file.endsWith(path.sep))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+} //*/
+
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
-//Get correct executable, add to required files, set paths for mod types
+//Get correct executable for game registration
 function getExecutable(discoveryPath) {
   const isCorrectExec = (exec) => {
     try {
@@ -410,17 +850,92 @@ function getExecutable(discoveryPath) {
     GAME_VERSION = 'epic';
     return EXEC_EPIC;
   };
+  if (isCorrectExec(EXEC_CLASSIC)) {
+    GAME_VERSION = 'classic';
+    return EXEC_CLASSIC;
+  };
   return EXEC_STEAM;
+}
+
+//Get game store version based on which executable is in the game folder
+function getVersion(api) {
+  GAME_PATH = getDiscoveryPath(api);
+  const isCorrectExec = (exec) => {
+    try {
+      fs.statSync(path.join(GAME_PATH, exec));
+      return true;
+    }
+    catch (err) {
+      return false;
+    }
+  };
+  if (isCorrectExec(EXEC_STEAM)) {
+    GAME_VERSION = 'steam';
+    return GAME_VERSION;
+  };
+  if (isCorrectExec(EXEC_GOG)) {
+    GAME_VERSION = 'gog';
+    return GAME_VERSION;
+  };
+  if (isCorrectExec(EXEC_EPIC)) {
+    GAME_VERSION = 'epic';
+    return GAME_VERSION;
+  };
+  if (isCorrectExec(EXEC_CLASSIC)) {
+    GAME_VERSION = 'classic';
+    return GAME_VERSION;
+  };
+  return;
+}
+
+//Get game release version (classic or remaster) based on which executable is in the game folder
+function getRelease(api) {
+  GAME_PATH = getDiscoveryPath(api);
+  const isCorrectExec = (exec) => {
+    try {
+      fs.statSync(path.join(GAME_PATH, exec));
+      return true;
+    }
+    catch (err) {
+      return false;
+    }
+  };
+  if (isCorrectExec(EXEC_STEAM)) {
+    GAME_RELEASE = 'remaster';
+    return GAME_RELEASE;
+  };
+  if (isCorrectExec(EXEC_GOG)) {
+    GAME_RELEASE = 'remaster';
+    return GAME_RELEASE;
+  };
+  if (isCorrectExec(EXEC_EPIC)) {
+    GAME_RELEASE = 'remaster';
+    return GAME_RELEASE;
+  };
+  if (isCorrectExec(EXEC_CLASSIC)) {
+    GAME_RELEASE = 'classic';
+    return GAME_RELEASE;
+  };
+  return;
 }
 
 //Setup function
 async function setup(discovery, api, gameSpec) {
   const state = api.getState();
   GAME_PATH = discovery.path;
-  //EXECUTABLE = getExecutable(GAME_PATH); //also sets GAME_VERSION
+  GAME_VERSION = getVersion(api);
+  GAME_RELEASE = getRelease(api);
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
-  return fs.ensureDirWritableAsync(path.join(discovery.path, MOD_PATH));
+  if (GAME_RELEASE === 'classic') {
+    try {
+      await downloadSS2Tool(api, gameSpec);
+    } catch (err) {
+      log('error', `Failed to download SS2Tool: ${err}`);
+    }
+  }
+  await fs.ensureDirWritableAsync(path.join(GAME_PATH, CLASSIC_PATH));
+  return fs.ensureDirWritableAsync(path.join(GAME_PATH, MOD_PATH));
 }
 
 //Let Vortex know about the game
@@ -431,19 +946,57 @@ function applyGame(context, gameSpec) {
     queryPath: makeFindGame(context.api, gameSpec),
     queryModPath: makeGetModPath(context.api, gameSpec),
     requiresLauncher: requiresLauncher,
-    setup: async (discovery) => await setup(discovery, context.api, gameSpec),
+    setup: async (discovery) => await setup(discovery, context.api, gameSpec), //setup function
     executable: getExecutable,
     supportedTools: [
       {
         id: `${GAME_ID}-customlaunch`,
         name: `Custom Launch`,
         logo: `exec.png`,
-        executable: (discoveryPath) => getExecutable(discoveryPath),
+        executable: getExecutable,
         requiredFiles: [],
         detach: true,
         relative: true,
         exclusive: true,
         shell: true,
+        parameters: []
+      }, //*/
+      {
+        id: BMM_ID,
+        name: BMM_NAME,
+        logo: `bmm.png`,
+        executable: () => BMM_EXEC,
+        requiredFiles: [BMM_EXEC],
+        detach: true,
+        relative: true,
+        exclusive: true,
+        shell: false,
+        defaultPrimary: true,
+        parameters: []
+      }, //*/
+      {
+        id: SS2TOOL_ID,
+        name: SS2TOOL_NAME,
+        logo: `ss2tool.png`,
+        queryPath: () => path.join(DOWNLOAD_FOLDER, SS2TOOL_EXEC),
+        executable: () => SS2TOOL_EXEC,
+        requiredFiles: [SS2TOOL_EXEC],
+        detach: true,
+        relative: false,
+        exclusive: true,
+        shell: false,
+        parameters: []
+      }, //*/
+      {
+        id: EDITOR_ID,
+        name: EDITOR_NAME,
+        logo: `editor.png`,
+        executable: () => EDITOR_EXEC,
+        requiredFiles: [EDITOR_EXEC],
+        detach: true,
+        relative: true,
+        exclusive: true,
+        shell: false,
         parameters: []
       }, //*/
     ],
@@ -465,8 +1018,17 @@ function applyGame(context, gameSpec) {
   //context.registerInstaller(LEGACY_ID, 27, toBlue(testLegacy), (files, destinationPath) => toBlue(installLegacy(context.api, files, destinationPath)));
   context.registerInstaller(`${ROOT_ID}folder`, 29, testRootFolder, installRootFolder);
   context.registerInstaller(ROOT_ID, 31, testRoot, installRoot); //fallback to root folder
+  context.registerInstaller(CLASSIC_ID, 33, testClassic, installClassic); //fallback to root folder
 
   //register actions
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config/Save Folder (Remaster)', () => {
+    const openPath = CONFIG_PATH;
+    util.opn(openPath).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
     const openPath = path.join(__dirname, 'CHANGELOG.md');
     util.opn(openPath).catch(() => null);

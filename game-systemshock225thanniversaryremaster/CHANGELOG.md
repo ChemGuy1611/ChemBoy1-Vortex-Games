@@ -2,11 +2,13 @@
 
 ## Future Improvements (NOT implemented yet)
 
-- None Planned
-
-## [0.2.1] - 2025-07-01
-
 - Improved legacy mod converter/installer to remove extraneous folders from the .kpf archive.
+
+## [0.3.0] - 2025-07-01
+
+- Added support for classic System Shock 2 game version on all platforms!
+- Added download-and-run on startup functions for SS2Tool (only for Classic 1999 version users).
+- Added tools for SS2Tool, Blue Mod Manager (default launch for Classic 1999 version users), and ShockEd.
 
 ## [0.2.0] - 2025-06-30
 

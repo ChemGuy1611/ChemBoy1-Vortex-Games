@@ -1,10 +1,10 @@
-/*
+/*////////////////////////////////////////////
 Name: Monster Hunter Wilds Vortex Extension
 Structure: Fluffy + REFramework (RE Engine)
 Author: ChemBoy1
-Version: 0.2.0
-Date: 03/23/2025
-*/
+Version: 0.2.1
+Date: 2025-07-01
+///////////////////////////////////////////*/
 
 //Import libraries
 const { actions, fs, util, selectors, log } = require('vortex-api');
@@ -247,7 +247,7 @@ async function downloadFluffy(api, gameSpec) {
       }
       //Download the mod
       const dlInfo = {
-        game: gameSpec.game.id,
+        game: GAME_DOMAIN,
         name: MOD_NAME,
       };
       const nxmUrl = `nxm://${GAME_DOMAIN}/mods/${modPageId}/files/${file.file_id}`;

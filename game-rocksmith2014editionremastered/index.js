@@ -12,7 +12,6 @@ const path = require('path');
 const template = require('string-template');
 const child_process = require("child_process");
 const winapi = require('winapi-bindings');
-const { errorMonitor } = require('stream');
 
 //Specify all information about the game
 const STEAMAPP_ID = "221680";
