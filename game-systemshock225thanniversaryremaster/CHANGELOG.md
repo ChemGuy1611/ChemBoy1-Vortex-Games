@@ -4,6 +4,10 @@
 
 - Improved legacy mod converter/installer to remove extraneous folders from the .kpf archive.
 
+## [0.4.0] - 2025-07-02
+
+- Extensions now registers separate games for classic and Remaster versions of the game. This resolves multiple technical issues and allows for each version to be modded separately.
+
 ## [0.3.0] - 2025-07-01
 
 - Added support for classic (1999) System Shock 2 game version on Steam and GOG!
