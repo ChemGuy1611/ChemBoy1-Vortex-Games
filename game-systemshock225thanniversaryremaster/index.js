@@ -2,7 +2,7 @@
 Name: System Shock 2 (Classic AND 25th Anniversary Remaster) Vortex Extension
 Structure: Basic game w/ mods folder
 Author: ChemBoy1
-Version: 0.4.2
+Version: 0.4.3
 Date: 2025-07-03
 ////////////////////////////////////////////////*/
 
@@ -943,6 +943,17 @@ async function setupClassic(discovery, api, gameSpec) {
   STAGING_FOLDER_CLASSIC = selectors.installPathForGame(state, gameSpec.game.id);
   DOWNLOAD_FOLDER_CLASSIC = selectors.downloadPathForGame(state, gameSpec.game.id);
   await downloadSS2Tool(api, gameSpec);
+  const SS2TOOL_RUNPATH = path.join(GAME_PATH_CLASSIC, SS2TOOL_EXEC);
+  try {
+    fs.statSync(SS2TOOL_RUNPATH);
+  } catch (err) {
+    try {
+      fs.copyAsync(path.join(DOWNLOAD_FOLDER_CLASSIC, SS2TOOL_EXEC), SS2TOOL_RUNPATH);
+      log('warn', `Suucessfully copied SS2Tool from "${DOWNLOAD_FOLDER_CLASSIC}" to "${SS2TOOL_RUNPATH}"`);
+    } catch (err) {
+      log('error', `Failed to copy SS2Tool from "${DOWNLOAD_FOLDER_CLASSIC}" to "${SS2TOOL_RUNPATH}": ${err}`);
+    }
+  }
   return fs.ensureDirWritableAsync(path.join(GAME_PATH_CLASSIC, CLASSIC_PATH));
 }
 
@@ -996,7 +1007,7 @@ function applyGame(context, gameSpec) {
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
-      return gameId === GAME_ID;
+      return gameId === gameSpec.game.id;
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
     const openPath = path.join(__dirname, 'CHANGELOG.md');
@@ -1004,7 +1015,7 @@ function applyGame(context, gameSpec) {
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
-      return gameId === GAME_ID;
+      return gameId === gameSpec.game.id;
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
     const openPath = DOWNLOAD_FOLDER;
@@ -1012,7 +1023,7 @@ function applyGame(context, gameSpec) {
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
+    return gameId === gameSpec.game.id;
   });
 }
 
@@ -1056,11 +1067,11 @@ function applyGameClassic(context, gameSpec) {
         id: SS2TOOL_ID,
         name: SS2TOOL_NAME,
         logo: `ss2tool.png`,
-        queryPath: () => path.join(DOWNLOAD_FOLDER_CLASSIC, SS2TOOL_EXEC),
+        //queryPath: () => path.join(DOWNLOAD_FOLDER_CLASSIC, SS2TOOL_EXEC),
         executable: () => SS2TOOL_EXEC,
         requiredFiles: [SS2TOOL_EXEC],
         detach: true,
-        relative: false,
+        relative: true,
         exclusive: true,
         shell: false,
         parameters: []
@@ -1094,12 +1105,26 @@ function applyGameClassic(context, gameSpec) {
   context.registerInstaller(CLASSIC_ID, 33, toBlue(testClassic), toBlue(installClassic)); //fallback to root folder
 
   //register actions
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download and Run SS2Tool', () => {
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download and/or Run SS2Tool', () => {
     downloadSS2Tool(context.api, gameSpec);
+    GAME_PATH_CLASSIC = getDiscoveryPath(context.api, gameSpec);
+    DOWNLOAD_FOLDER_CLASSIC = selectors.downloadPathForGame(context.api.getState(), gameSpec.game.id);
+    const SS2TOOL_RUNPATH = path.join(GAME_PATH_CLASSIC, SS2TOOL_EXEC);
+    try {
+      fs.statSync(SS2TOOL_RUNPATH);
+      context.api.runExecutable(SS2TOOL_RUNPATH, [], { suggestDeploy: false });
+    } catch (err) {
+      try {
+        fs.copyAsync(path.join(DOWNLOAD_FOLDER_CLASSIC, SS2TOOL_EXEC), SS2TOOL_RUNPATH);
+        context.api.runExecutable(SS2TOOL_RUNPATH, [], { suggestDeploy: false });
+      } catch (err) {
+        context.api.showErrorNotification('Failed to run SS2Tool.', err, { allowReport: false });
+      }
+    }
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
-      return gameId === GAME_ID_CLASSIC;
+      return gameId === gameSpec.game.id;
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
     const openPath = path.join(__dirname, 'CHANGELOG.md');
@@ -1107,7 +1132,7 @@ function applyGameClassic(context, gameSpec) {
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
-      return gameId === GAME_ID_CLASSIC;
+      return gameId === gameSpec.game.id;
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
     const openPath = DOWNLOAD_FOLDER_CLASSIC;
@@ -1115,7 +1140,7 @@ function applyGameClassic(context, gameSpec) {
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID_CLASSIC;
+    return gameId === gameSpec.game.id;
   });
 }
 

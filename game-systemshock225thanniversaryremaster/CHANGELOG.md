@@ -4,9 +4,13 @@
 
 - None planned
 
+## [0.4.3] - 2025-07-03
+
+- Classic - Added functions to copy SS2Tool exe from downloads folder to game folder and allow the user to run it manully (tool in Dashboard OR button in folder icon on mods toolbar).
+
 ## [0.4.2] - 2025-07-03
 
-- Improved legacy mod converter/installer for Remaster to remove extraneous top-level folders from the .kpf archive.
+- Remaster - Improved legacy mod converter/installer for Remaster to remove extraneous top-level folders from the .kpf archive.
 
 ## [0.4.1] - 2025-07-02
 
