@@ -636,24 +636,6 @@ function installMod(files) {
   return Promise.resolve({ instructions });
 }
 
-//convert installer functions to Bluebird promises
-function toBlue(func) {
-  return (...args) => Bluebird.Promise.resolve(func(...args));
-}
-
-//Success notifications
-function convertSuccessNotify(api, name) {
-  const NOTIF_ID = `${GAME_ID}-legacyconvertsuccess`;
-  const MESSAGE = `Successfully converted legacy SS2 Mod "${name}" to .kpf format.`;
-  api.sendNotification({
-    id: NOTIF_ID,
-    type: 'success',
-    message: MESSAGE,
-    allowSuppress: true,
-    actions: [],
-  });
-}
-
 //Test for legacy SS2 mod files
 function testLegacy(files, gameId) {
   const isMod = files.some(file => LEGACY_FOLDERS.includes(path.basename(file).toLowerCase()))
@@ -672,6 +654,24 @@ function testLegacy(files, gameId) {
   });
 }
 
+//convert installer functions to Bluebird promises
+function toBlue(func) {
+  return (...args) => Bluebird.Promise.resolve(func(...args));
+}
+
+//Success notifications
+function convertSuccessNotify(api, name, file) {
+  const NOTIF_ID = `${GAME_ID}-legacyconvertsuccess`;
+  const MESSAGE = `Successfully converted legacy SS2 Mod "${name}" to .kpf format - found folder "${path.basename(file)}".`;
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'success',
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [],
+  });
+}
+
 async function asyncForEachCopy(relPaths, destinationPath, rootPath) {
   for (let index = 0; index < relPaths.length; index++) {
     await fs.copyAsync(path.join(destinationPath, rootPath, relPaths[index]), path.join(destinationPath, relPaths[index]));
@@ -680,7 +680,7 @@ async function asyncForEachCopy(relPaths, destinationPath, rootPath) {
 
 //Install legacy SS2 mod files
 async function installLegacy(files, destinationPath) {
-//async function installLegacy(api, files, destinationPath) {
+//async function installLegacy(files, destinationPath, api) {
   const setModTypeInstruction = { type: 'setmodtype', value: LEGACY_ID };
   const modFile = files.find(file => LEGACY_FOLDERS.includes(path.basename(file).toLowerCase()));
   const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
@@ -696,19 +696,14 @@ async function installLegacy(files, destinationPath) {
   const convertName = MOD_NAME_TRUNCATED + '.kpf';
   const archivePath = path.join(destinationPath, archiveName);
   const convertPath = path.join(destinationPath, convertName);
-  //* IMPROVEMENT - index the files on the folder names to remove any extraneous top level folders
   const relPaths = await fs.readdirAsync(path.join(destinationPath, rootPath));
   if (rootPath !== '') {
     await asyncForEachCopy(relPaths, destinationPath, rootPath);
     await fsPromises.rmdir(path.join(destinationPath, rootPath), { recursive: true });
   }
   await szip.add(archivePath, relPaths.map(relPath => path.join(destinationPath, relPath)), { raw: ['-r'] }); //*/
-  /* without indexing
-  const rootRelPaths = await fs.readdirAsync(destinationPath);
-  await szip.add(archivePath, rootRelPaths.map(relPath => path.join(destinationPath, relPath)), { raw: ['-r'] }); //*/
-  await fs.renameAsync (archivePath, convertPath);
-
-  //execute instructions
+  await fs.renameAsync (archivePath, convertPath); //rename archive from .zip to .kpf extension
+  //convertSuccessNotify(api, MOD_NAME, modFile);
   const instructions = [{
     type: 'copy',
     source: convertName,
@@ -716,8 +711,6 @@ async function installLegacy(files, destinationPath) {
   }];
   instructions.push(setModTypeInstruction);
   return Promise.resolve({ instructions });
-    //.then(() => convertSuccessNotify(api, path.basename(destinationPath, '.installing')));
-    //.then(() => log(`Successfully converted legacy mod "${path.basename(destinationPath, '.installing')}" to .kpf format`));
 }
 
 //Test for save files
@@ -996,7 +989,7 @@ function applyGame(context, gameSpec) {
   //register mod installers
   context.registerInstaller(MOD_ID, 25, testMod, installMod);
   context.registerInstaller(LEGACY_ID, 27, toBlue(testLegacy), toBlue(installLegacy));
-  //context.registerInstaller(LEGACY_ID, 27, toBlue(testLegacy), (files, destinationPath) => toBlue(installLegacy(context.api, files, destinationPath))); //with api passed in
+  //context.registerInstaller(LEGACY_ID, 27, toBlue(testLegacy), (files, destinationPath) => toBlue(installLegacy(files, destinationPath, context.api))); //with api passed in for notifications
   context.registerInstaller(`${ROOT_ID}folder`, 29, testRootFolder, installRootFolder);
   context.registerInstaller(ROOT_ID, 31, testRoot, installRoot); //fallback to root folder
 
