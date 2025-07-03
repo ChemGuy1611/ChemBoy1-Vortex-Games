@@ -672,6 +672,12 @@ function testLegacy(files, gameId) {
   });
 }
 
+async function asyncForEachCopy(relPaths, destinationPath, rootPath) {
+  for (let index = 0; index < relPaths.length; index++) {
+    await fs.copyAsync(path.join(destinationPath, rootPath, relPaths[index]), path.join(destinationPath, relPaths[index]));
+  }
+}
+
 //Install legacy SS2 mod files
 async function installLegacy(files, destinationPath) {
 //async function installLegacy(api, files, destinationPath) {
@@ -691,13 +697,11 @@ async function installLegacy(files, destinationPath) {
   const archivePath = path.join(destinationPath, archiveName);
   const convertPath = path.join(destinationPath, convertName);
   //* IMPROVEMENT - index the files on the folder names to remove any extraneous top level folders
-  //const relPaths = await fsPromises.readdir(path.join(destinationPath, rootPath), { recursive: true });
   const relPaths = await fs.readdirAsync(path.join(destinationPath, rootPath));
-  const relPathsfiltered = relPaths.filter(file => (
-    (file.indexOf(rootPath) !== -1) &&
-    (!file.endsWith(path.sep))
-  ));
-  const relPathsSubstring = relPathsfiltered.map(relPath => relPath.substring(idx));
+  if (rootPath !== '') {
+    await asyncForEachCopy(relPaths, destinationPath, rootPath);
+    await fsPromises.rmdir(path.join(destinationPath, rootPath), { recursive: true });
+  }
   await szip.add(archivePath, relPaths.map(relPath => path.join(destinationPath, relPath)), { raw: ['-r'] }); //*/
   /* without indexing
   const rootRelPaths = await fs.readdirAsync(destinationPath);
