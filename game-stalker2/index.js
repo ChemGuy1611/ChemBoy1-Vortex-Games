@@ -25,7 +25,8 @@ const GAME_NAME = 'S.T.A.L.K.E.R. 2 \tHeart of Chornobyl';
 const GAME_NAME_SHORT = "STALKER 2 HoC";
 const DEFAULT_EXEC = "Stalker2.exe";
 const EXEC_XBOX = `gamelaunchhelper.exe`;
-let GAME_PATH = null; //patched in the setup function to the discovered game path
+let GAME_PATH = undefined; //patched in the setup function to the discovered game path
+let GAME_VERSION = '';
 let CHECK_SAVE = false;
 let CHECK_CONFIG = false; 
 let STAGING_FOLDER = '';
@@ -163,6 +164,9 @@ const HERBATAMOD_FILE = "GameLite";
 const HERBATAMOD_IDX = `${HERBATAMOD_FILE}\\`;
 const HERBATAMOD_PATH = path.join(EPIC_CODE_NAME, 'Content');
 const HERBATAMOD_PATH_FULL = path.join(EPIC_CODE_NAME, 'Content', 'GameLite', 'DLCGameData');
+
+const STEAMWORKSHOP_FOLDER = path.join("workshop", "content", STEAMAPP_ID);
+let STEAMWORKSHOP_PATH = undefined;
 
 const MOD_PATH_DEFAULT = UE5_PATH;
 
@@ -1487,9 +1491,10 @@ function partitionCheckNotify(api, CHECK_CONFIG, CHECK_SAVE) {
 }
 
 //Setup function
-async function setup(discovery, api, gameSpec) {
+async function setup(discovery, api, gameSpec, store) {
   const state = api.getState();
   GAME_PATH = discovery.path;
+  GAME_VERSION = store;
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   CHECK_CONFIG = checkPartitions(CONFIG_PATH, GAME_PATH);
@@ -1538,6 +1543,12 @@ async function setup(discovery, api, gameSpec) {
   );
   //await downloadModMerger(api, gameSpec);
   downloadModMergerNotify(api, gameSpec);
+  if (GAME_VERSION === 'steam') { 
+    const SPLIT_PATH = GAME_PATH.split(path.sep);
+    const SPLIT_PATH_LENGTH = SPLIT_PATH.length;
+    const STEAM_INSTALL_PATH = SPLIT_PATH.slice(0, SPLIT_PATH_LENGTH - 2).join(path.sep);
+    STEAMWORKSHOP_PATH = path.join(STEAM_INSTALL_PATH, STEAMWORKSHOP_FOLDER);
+  } //*/
   await fs.ensureDirWritableAsync(path.join(GAME_PATH, SCRIPTS_PATH));
   await fs.ensureDirWritableAsync(path.join(GAME_PATH, HERBATAMOD_PATH_FULL));
   //await downloadUe4ss(api, gameSpec);
@@ -1554,7 +1565,7 @@ function applyGame(context, gameSpec) {
     executable: getExecutable,
     queryModPath: () => MOD_PATH_DEFAULT,
     requiredFiles,
-    setup: async (discovery) => await setup(discovery, context.api, gameSpec),
+    setup: async (discovery, store) => await setup(discovery, context.api, gameSpec, store),
     supportedTools: tools,
     requiresLauncher: requiresLauncher,
   };
@@ -1658,6 +1669,14 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(BINARIES_ID, 49, testBinaries, installBinaries);
 
   //register buttons to open folders
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Steam Workshop Mods Folder', () => {
+    const openPath = STEAMWORKSHOP_PATH;
+    util.opn(openPath).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Paks Folder', () => {
     GAME_PATH = getDiscoveryPath(context.api);
     const openPath = path.join(GAME_PATH, UE5_ALT_PATH);
