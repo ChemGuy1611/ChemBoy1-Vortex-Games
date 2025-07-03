@@ -2,8 +2,8 @@
 Name: System Shock 2 (Classic AND 25th Anniversary Remaster) Vortex Extension
 Structure: Basic game w/ mods folder
 Author: ChemBoy1
-Version: 0.4.0
-Date: 2025-07-02
+Version: 0.4.2
+Date: 2025-07-03
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -154,7 +154,7 @@ const specClassic = {
     "shortName": GAME_NAME_SHORT_CLASSIC,
     "executable": EXEC_CLASSIC,
     "logo": `${GAME_ID_CLASSIC}.jpg`,
-    "modPath": CLASSIC_PATH,
+    "modPath": '.',
     "modPathIsRelative": true,
     "mergeMods": true,
     "requiresCleanup": true,
@@ -676,43 +676,39 @@ function testLegacy(files, gameId) {
 async function installLegacy(files, destinationPath) {
 //async function installLegacy(api, files, destinationPath) {
   const setModTypeInstruction = { type: 'setmodtype', value: LEGACY_ID };
-  /* experimental
+  const modFile = files.find(file => LEGACY_FOLDERS.includes(path.basename(file).toLowerCase()));
+  const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
+  let rootPath = path.dirname(modFile);
+  if (rootPath === '.') {
+    rootPath = '';
+  }
   const szip = new util.SevenZip();
-  const archiveName = path.basename(destinationPath, '.installing') + '.zip';
-  const convertName = path.basename(destinationPath, '.installing') + '.kpf';
+  const MOD_NAME = path.basename(destinationPath, '.installing');
+  const MOD_NAME_TRIMMED = MOD_NAME.replace(/[\-]*[\.]*(installing)*(zip)*( )*/gi, '');
+  const MOD_NAME_TRUNCATED = truncateString(MOD_NAME_TRIMMED, 29);
+  const archiveName = MOD_NAME_TRUNCATED + '.zip';
+  const convertName = MOD_NAME_TRUNCATED + '.kpf';
   const archivePath = path.join(destinationPath, archiveName);
   const convertPath = path.join(destinationPath, convertName);
-  try {//Pack files into zip first, then change extension to .kpf
-    const rootRelPaths = await fs.readdirAsync(destinationPath);
-    await szip.add(archivePath, rootRelPaths.map(relPath => path.join(destinationPath, relPath)), { raw: ['-r'] });
-    await fs.renameAsync (archivePath, convertPath);
-  } catch (err) {
-    api.showErrorNotification(`Failed to convert legacy SS2 Mod: "${MOD_NAME}". You will have to repack it manually to .kpf format.`, err, { allowReport: false });
-  } 
-  const instructions = [{
-    type: 'copy',
-    source: convertName,
-    destination: path.basename(convertPath),
-  }]; //*/
-
-  const szip = new util.SevenZip();
-  const archiveName = path.basename(destinationPath, '.installing') + '.kpf';
-  const archivePath = path.join(destinationPath, archiveName);
-  //* Tradional, from doometernal
+  //* IMPROVEMENT - index the files on the folder names to remove any extraneous top level folders
+  //const relPaths = await fsPromises.readdir(path.join(destinationPath, rootPath), { recursive: true });
+  const relPaths = await fs.readdirAsync(path.join(destinationPath, rootPath));
+  const relPathsfiltered = relPaths.filter(file => (
+    (file.indexOf(rootPath) !== -1) &&
+    (!file.endsWith(path.sep))
+  ));
+  const relPathsSubstring = relPathsfiltered.map(relPath => relPath.substring(idx));
+  await szip.add(archivePath, relPaths.map(relPath => path.join(destinationPath, relPath)), { raw: ['-r'] }); //*/
+  /* without indexing
   const rootRelPaths = await fs.readdirAsync(destinationPath);
   await szip.add(archivePath, rootRelPaths.map(relPath => path.join(destinationPath, relPath)), { raw: ['-r'] }); //*/
-
-  /* IMPROVEMENT - index the files on the folder names to remove any extraneous top level folders
-  const rootRelPaths = await fsPromises.readdir(destinationPath, { recursive: true });
-  const modFile = rootRelPaths.find(file => LEGACY_FOLDERS.includes(path.basename(file).toLowerCase()));
-  const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
-  await szip.add(archivePath, rootRelPaths.map(relPath => path.join(destinationPath, relPath.substring(idx))), { raw: ['-r'] }); //*/
+  await fs.renameAsync (archivePath, convertPath);
 
   //execute instructions
   const instructions = [{
     type: 'copy',
-    source: archiveName,
-    destination: path.basename(archivePath),
+    source: convertName,
+    destination: path.basename(convertPath),
   }];
   instructions.push(setModTypeInstruction);
   return Promise.resolve({ instructions });
@@ -816,12 +812,19 @@ function testClassic(files, gameId) {
   });
 }
 
-//* Install legacy SS2 mod files
+function truncateString(str, num) {
+  return str.length > num ? str.slice(0, num) : str;
+}
+
+/* Install classic SS2 mod files (to zips)
 async function installClassic(files, destinationPath) {
   const setModTypeInstruction = { type: 'setmodtype', value: CLASSIC_ID };
 
   const szip = new util.SevenZip();
-  const archiveName = path.basename(destinationPath, '.installing') + '.zip';
+  const baseName = path.basename(destinationPath, '.installing');
+  const baseNameTrimmed = baseName.replace(/( )/g, '');
+  const truncateName = truncateString(baseNameTrimmed, 29);
+  const archiveName = truncateName + '.zip';
   const archivePath = path.join(destinationPath, archiveName);
   const rootRelPaths = await fs.readdirAsync(destinationPath);
   await szip.add(archivePath, rootRelPaths.map(relPath => path.join(destinationPath, relPath)), { raw: ['-r'] });
@@ -836,18 +839,28 @@ async function installClassic(files, destinationPath) {
   return Promise.resolve({ instructions });
 } //*/
 
-/* Install fallback binaries installer
-function installClassic(files) {
+//* Install classic SS2 mod files (to folders)
+function installClassic(files, fileName) {
+  const modFile = files.find(file => LEGACY_FOLDERS.includes(path.basename(file).toLowerCase()));
+  const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
+  const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: CLASSIC_ID };
+
+  const MOD_NAME = path.basename(fileName, '.installing');
+  const MOD_NAME_TRIMMED = MOD_NAME.replace(/[\-]*[\.]*(installing)*(zip)*( )*/gi, '');
+  const MOD_NAME_TRUNCATED = truncateString(MOD_NAME_TRIMMED, 29);
+  let MOD_FOLDER = MOD_NAME_TRUNCATED;
   
-  const filtered = files.filter(file =>
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file => (
+    (file.indexOf(rootPath) !== -1) &&
     (!file.endsWith(path.sep))
-  );
+  ));
   const instructions = filtered.map(file => {
     return {
       type: 'copy',
       source: file,
-      destination: path.join(file),
+      destination: path.join(MOD_FOLDER, file.substr(idx)),
     };
   });
   instructions.push(setModTypeInstruction);
@@ -1074,7 +1087,7 @@ function applyGameClassic(context, gameSpec) {
   });
 
   //register mod installers
-  context.registerInstaller(CLASSIC_ID, 33, testClassic, installClassic); //fallback to root folder
+  context.registerInstaller(CLASSIC_ID, 33, toBlue(testClassic), toBlue(installClassic)); //fallback to root folder
 
   //register actions
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download and Run SS2Tool', () => {

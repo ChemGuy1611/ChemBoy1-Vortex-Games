@@ -2,7 +2,15 @@
 
 ## Future Improvements (NOT implemented yet)
 
-- Improved legacy mod converter/installer to remove extraneous folders from the .kpf archive.
+- None planned
+
+## [0.4.2] - 2025-07-03
+
+- Improved legacy mod converter/installer for Remaster to remove extraneous top-level folders from the .kpf archive.
+
+## [0.4.1] - 2025-07-02
+
+- Classic mods now install directly to folders to avoid issues with BMM managing archives.
 
 ## [0.4.0] - 2025-07-02
 
