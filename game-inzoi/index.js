@@ -1684,6 +1684,7 @@ function partitionCheckNotify(api, CHECK_CONFIG, CHECK_DOCS) {
 //Get ModKit install path from Epic
 function getModKitPath() {
   return () => util.GameStoreHelper.findByAppId(MODKITAPP_ID, 'epic');
+    //.then((tool) => tool.toolPath);
   /*const path = util.GameStoreHelper.findByAppId(MODKITAPP_ID, 'epic');
   log('warn', `ModKit path found at ${path}`)
   return () => path; //*/

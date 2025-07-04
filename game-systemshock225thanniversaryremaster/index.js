@@ -698,8 +698,12 @@ async function installLegacy(files, destinationPath) {
   const convertPath = path.join(destinationPath, convertName);
   const relPaths = await fs.readdirAsync(path.join(destinationPath, rootPath));
   if (rootPath !== '') {
-    await asyncForEachCopy(relPaths, destinationPath, rootPath);
-    await fsPromises.rmdir(path.join(destinationPath, rootPath), { recursive: true });
+    try {
+      await asyncForEachCopy(relPaths, destinationPath, rootPath);
+      await fsPromises.rmdir(path.join(destinationPath, rootPath), { recursive: true });
+    } catch (err) {
+      log('error', `Failed to convert legacy SS2 mod files to .kpf format: ${err}`);
+    }
   }
   await szip.add(archivePath, relPaths.map(relPath => path.join(destinationPath, relPath)), { raw: ['-r'] }); //*/
   await fs.renameAsync (archivePath, convertPath); //rename archive from .zip to .kpf extension
