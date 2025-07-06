@@ -2,8 +2,8 @@
 Name: System Shock 2 (Classic AND 25th Anniversary Remaster) Vortex Extension
 Structure: Basic game w/ mods folder
 Author: ChemBoy1
-Version: 0.4.3
-Date: 2025-07-03
+Version: 0.4.4
+Date: 2025-07-05
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -62,6 +62,7 @@ const LEGACY_ID = `${GAME_ID}-convertedlegacy`;
 const LEGACY_NAME = "Converted Legacy Mod";
 const LEGACY_PATH = MOD_PATH;
 const LEGACY_FOLDERS = ['obj', 'mesh', 'bitmap', 'motions', 'sq_scripts', 'sdn2', 'strings', 'iface', 'intrface', 'misdml', 'snd']; //cannot put "custscenes" here since it would conflict with Root installer
+const LEGACY_EXTS = ['.dml', '.gam', '.mis'];
 
 const REQ_FILE = 'base.kpf';
 
@@ -83,6 +84,9 @@ const EDITOR_EXEC = 'ShockEd.exe';
 const CLASSIC_ID = `${GAME_ID_CLASSIC}-classicmod`;
 const CLASSIC_NAME = `Classic Mod`;
 const CLASSIC_PATH = path.join('DMM');
+const ADDITIONAL_FOLDERS = ['custscenes'];
+const CLASSIC_FOLDERS = LEGACY_FOLDERS.concat(ADDITIONAL_FOLDERS);
+const CLASSIC_EXTS = LEGACY_EXTS;
 
 const REQ_FILE_CLASSIC = EXEC_CLASSIC;
 
@@ -638,8 +642,9 @@ function installMod(files) {
 
 //Test for legacy SS2 mod files
 function testLegacy(files, gameId) {
-  const isMod = files.some(file => LEGACY_FOLDERS.includes(path.basename(file).toLowerCase()))
-  let supported = (gameId === spec.game.id) && isMod;
+  const isMod = files.some(file => LEGACY_FOLDERS.includes(path.basename(file).toLowerCase()));
+  const isExt = files.some(file => LEGACY_EXTS.includes(path.extname(file).toLowerCase()));
+  let supported = (gameId === spec.game.id) && (isMod || isExt);
 
   // Test for a mod installer
   if (supported && files.find(file =>
@@ -682,7 +687,10 @@ async function asyncForEachCopy(relPaths, destinationPath, rootPath) {
 async function installLegacy(files, destinationPath) {
 //async function installLegacy(files, destinationPath, api) {
   const setModTypeInstruction = { type: 'setmodtype', value: LEGACY_ID };
-  const modFile = files.find(file => LEGACY_FOLDERS.includes(path.basename(file).toLowerCase()));
+  let modFile = files.find(file => LEGACY_FOLDERS.includes(path.basename(file).toLowerCase()));
+  if (modFile === undefined) {
+    modFile = files.find(file => LEGACY_EXTS.includes(path.extname(file).toLowerCase()));
+  }
   const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
   let rootPath = path.dirname(modFile);
   if (rootPath === '.') {
@@ -797,8 +805,9 @@ function installRoot(files) {
 
 //Test for fallback binaries installer
 function testClassic(files, gameId) {
-  const isMod = files.some(file => LEGACY_FOLDERS.includes(path.basename(file).toLowerCase()))
-  let supported = (gameId === specClassic.game.id) && isMod;
+  const isMod = files.some(file => CLASSIC_FOLDERS.includes(path.basename(file).toLowerCase()))
+  const isExt = files.some(file => CLASSIC_EXTS.includes(path.extname(file).toLowerCase()))
+  let supported = (gameId === specClassic.game.id) && (isMod || isExt);
 
   // Test for a mod installer.
   if (supported && files.find(file =>
@@ -842,7 +851,10 @@ async function installClassic(files, destinationPath) {
 
 //* Install classic SS2 mod files (to folders)
 function installClassic(files, fileName) {
-  const modFile = files.find(file => LEGACY_FOLDERS.includes(path.basename(file).toLowerCase()));
+  const modFile = files.find(file => CLASSIC_FOLDERS.includes(path.basename(file).toLowerCase()));
+  if (modFile === undefined) {
+    modFile = files.find(file => CLASSIC_EXTS.includes(path.extname(file).toLowerCase()));
+  }
   const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: CLASSIC_ID };
