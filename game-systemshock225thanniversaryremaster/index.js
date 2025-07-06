@@ -640,7 +640,7 @@ function installMod(files) {
   return Promise.resolve({ instructions });
 }
 
-//Test for legacy SS2 mod files
+//Test for legacy SS2 mod files (to convert)
 function testLegacy(files, gameId) {
   const isMod = files.some(file => LEGACY_FOLDERS.includes(path.basename(file).toLowerCase()));
   const isExt = files.some(file => LEGACY_EXTS.includes(path.extname(file).toLowerCase()));
@@ -803,7 +803,7 @@ function installRoot(files) {
 
 // CLASSIC MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
 
-//Test for fallback binaries installer
+//Test for Classic SS2 mod files
 function testClassic(files, gameId) {
   const isMod = files.some(file => CLASSIC_FOLDERS.includes(path.basename(file).toLowerCase()))
   const isExt = files.some(file => CLASSIC_EXTS.includes(path.extname(file).toLowerCase()))
@@ -826,36 +826,17 @@ function truncateString(str, num) {
   return str.length > num ? str.slice(0, num) : str;
 }
 
-/* Install classic SS2 mod files (to zips)
-async function installClassic(files, destinationPath) {
-  const setModTypeInstruction = { type: 'setmodtype', value: CLASSIC_ID };
-
-  const szip = new util.SevenZip();
-  const baseName = path.basename(destinationPath, '.installing');
-  const baseNameTrimmed = baseName.replace(/( )/g, '');
-  const truncateName = truncateString(baseNameTrimmed, 29);
-  const archiveName = truncateName + '.zip';
-  const archivePath = path.join(destinationPath, archiveName);
-  const rootRelPaths = await fs.readdirAsync(destinationPath);
-  await szip.add(archivePath, rootRelPaths.map(relPath => path.join(destinationPath, relPath)), { raw: ['-r'] });
-
-  //execute instructions
-  const instructions = [{
-    type: 'copy',
-    source: archiveName,
-    destination: path.basename(archivePath),
-  }];
-  instructions.push(setModTypeInstruction);
-  return Promise.resolve({ instructions });
-} //*/
-
 //* Install classic SS2 mod files (to folders)
 function installClassic(files, fileName) {
-  const modFile = files.find(file => CLASSIC_FOLDERS.includes(path.basename(file).toLowerCase()));
+  let modFile = files.find(file => CLASSIC_FOLDERS.includes(path.basename(file).toLowerCase()));
+  let idx = 0;
+  if (modFile !== undefined) {
+    idx = modFile.indexOf(`${path.basename(modFile)}\\`);
+  }
   if (modFile === undefined) {
     modFile = files.find(file => CLASSIC_EXTS.includes(path.extname(file).toLowerCase()));
+    idx = modFile.indexOf(path.basename(modFile));
   }
-  const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: CLASSIC_ID };
 
