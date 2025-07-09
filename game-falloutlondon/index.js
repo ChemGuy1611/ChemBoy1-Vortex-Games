@@ -271,7 +271,7 @@ async function isFolonModType(api, instructions, files) {
 }
 
 // Function to check if staging folder and game path are on same drive partition to enable modtypes + installers
-function checkPartitions(path1, path2, path3) {
+async function checkPartitions(path1, path2, path3) {
   try {
     // Ensure all folders exist
     fs.ensureDirSync(path1);
@@ -360,15 +360,15 @@ async function setup(api, gameId) {
     return; //if FOLON install path is not found, exit setup
   }
   // Check that all 3 folders are on same drive partition
-  PARTITION_CHECK = checkPartitions(FOLON_INSTALL_PATH, STAGING_FOLDER, GAME_PATH);
+  PARTITION_CHECK = await checkPartitions(FOLON_INSTALL_PATH, STAGING_FOLDER, GAME_PATH);
   if (PARTITION_CHECK !== true) {
     api.showErrorNotification(`${EXTENSION_NAME} - The FOLON GOG game folder, FO4 game folder, and Vortex FO4 Staging Folder are not on the same drive partition. Move all folders to same drive.`, { allowReport: false })
     return; //if folders not on same partition, exit setup
   }
   //Make link, write INI files, and change falloutlondon modtype
-  makeLink(api, FOLON_INSTALL_PATH, FOLON_STAGING_PATH, 'dir'); //create link for FOLON game files to staging folder
-  changeFolonModTypeNotify(api); //check if FOLON mod type is set and notify user to change it if it's not
-  writeFolonIni(api); //write "[Archive]" section to FO4 INI file(s)
+  await makeLink(api, FOLON_INSTALL_PATH, FOLON_STAGING_PATH, 'dir'); //create link for FOLON game files to staging folder
+  await changeFolonModTypeNotify(api); //check if FOLON mod type is set and notify user to change it if it's not
+  await writeFolonIni(api); //write "[Archive]" section to FO4 INI file(s)
 }
 
 //Main function
