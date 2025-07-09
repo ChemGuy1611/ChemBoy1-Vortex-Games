@@ -67,8 +67,6 @@ const ROOT_FILE = 'Data'; // The main data folder for FOLON (index for installer
 
 // MAIN FUNCTIONS ////////////////////////////////////////////////////////////////////////
 
-
-
 //Find FOLON install directory (GOG)
 async function findFolon(api) {
   try {
@@ -160,7 +158,7 @@ async function makeLink(api, src, dest, type) {
       .then(() => log('warn', `${EXTENSION_NAME} created directory link for FOLON GOG files directory from path "${src}" to path "${dest}"`))
       .then(() => linkSuccessNotify(api)) //notify user of linking success
       .then(() => changeFolonModTypeNotify(api)) //notify user of manual steps required
-      .then(() => changeFolonModTypeAuto(api)) //automatically enable and change mod type for falloutlondon mod
+      .then(() => changeFolonModTypeAuto(api)) //attempt to automatically enable and change mod type for falloutlondon mod (relies on user responding to popup within 10 seconds)
       .catch(err => api.showErrorNotification(`${EXTENSION_NAME} failed to create directory link for FOLON GOG files`, err, { allowReport: true }));
   }
 }
@@ -366,8 +364,8 @@ async function setup(api, gameId) {
     return; //if folders not on same partition, exit setup
   }
   //Make link, write INI files, and change falloutlondon modtype
-  await makeLink(api, FOLON_INSTALL_PATH, FOLON_STAGING_PATH, 'dir'); //create link for FOLON game files to staging folder
-  await changeFolonModTypeNotify(api); //check if FOLON mod type is set and notify user to change it if it's not
+  await makeLink(api, FOLON_INSTALL_PATH, FOLON_STAGING_PATH, 'dir'); //create link for FOLON game files to staging folder. Attempt to autmatically enable and change mod type for falloutlondon mod (relies on user responding to popup within 10 seconds)
+  changeFolonModTypeNotify(api); //check if FOLON mod type is set and notify user to change it if it's not
   await writeFolonIni(api); //write "[Archive]" section to FO4 INI file(s)
 }
 
