@@ -2,8 +2,8 @@
 Name: FOLON Setup Helper Extension
 Structure: Utility Extension (game helper)
 Author: ChemBoy1
-Version: 0.1.4
-Date: 2025-06-28
+Version: 0.1.5
+Date: 2025-07-09
 //////////////////////////////////////////////////*/
 
 //Import libraries
