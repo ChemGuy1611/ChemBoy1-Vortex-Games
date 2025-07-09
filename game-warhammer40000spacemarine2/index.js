@@ -84,6 +84,7 @@ const INTEGRATION_STUDIO_URL = 'https://drive.usercontent.google.com/u/0/uc?id=1
 const INTEGRATION_STUDIO_URL_ERROR = 'https://drive.google.com/file/d/1zw1424H_kDHx2oO-KJKi_8R-cJoUOrDm/edit';
 const INTEGRTION_STUDIO_PAGEID = 0;
 const INTEGRTION_STUDIO_FILEID = 0;
+const INTEGRATION_STUDIO_URL_OFFICIAL = 'https://prismray.io/games/spacemarine2/mods/modding-toolset-for-space-marine-2'; //requires PROS login
 
 const MOD_PATH = PAK_PATH;
 const REQ_FILE = EXEC;
@@ -272,6 +273,58 @@ async function deploy(api) {
 }
 
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
+
+//Check if Integration Studio is installed
+function isIntegrationStudioInstalled(api) {
+  const state = api.getState();
+  const mods = state.persistent.mods[GAME_ID] || {};
+  return Object.keys(mods).some(id => mods[id]?.type === INTEGRATION_STUDIO_ID);
+}
+
+//Notification if Config, Save, and Creations folders are not on the same partition
+function notifyIntegrationStudio(api) {
+  let isInstalled = isIntegrationStudioInstalled(api);
+  const NOTIF_ID = `${GAME_ID}-integrationstudio`;
+  const MESSAGE = 'Integration Studio Important Info';
+  if (isInstalled) {
+    api.sendNotification({
+      id: NOTIF_ID,
+      type: 'warning',
+      message: MESSAGE,
+      allowSuppress: true,
+      actions: [
+        {
+          title: 'More',
+          action: (dismiss) => {
+            api.showDialog('question', MESSAGE, {
+              text: `Vortex detected that you have installed the Integration Studio (IS) mod toolkit for Space Marine 2.\n`
+                  + `Please note the following information related to using IS in Vortex:\n`
+                  + `\n`
+                  + `- During installation of IS, Vortex will automatically extract the resource file "${RESOURCE_PAK}" and add it to the mod staging folder.\n`
+                  + `- After each game update, you must Reinstall the IS mod to refresh the extracted resource file.\n`
+                  + `- You can use the button below to open the IS download page. Note that a PROS account login is required to download the mod kit.\n`
+                  + `\n`
+            }, [
+              { label: 'Acknowledge', action: () => dismiss() },
+              {
+                label: 'Open IS Download Page', action: () => {
+                  util.opn(INTEGRATION_STUDIO_URL_OFFICIAL).catch(() => null);
+                  dismiss();
+                }
+              },
+              {
+                label: 'Never Show Again', action: () => {
+                  api.suppressNotification(NOTIF_ID);
+                  dismiss();
+                }
+              },
+            ]);
+          },
+        },
+      ],
+    });
+  }
+}
 
 //Test for IS installer
 function testIntegrationStudio(files, gameId) {
@@ -551,11 +604,12 @@ function installBinaries(files) {
 async function setup(discovery, api, gameSpec) {
   const state = api.getState();
   GAME_PATH = discovery.path;
-  STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
-  DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
+  STAGING_FOLDER = selectors.installPathForGame(state, gameSpec.game.id);
+  DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, gameSpec.game.id);
   await fs.ensureDirWritableAsync(path.join(discovery.path, BINARIES_PATH));
   await fs.ensureDirWritableAsync(path.join(discovery.path, LOCALSUB_PATH));
   //await fs.ensureDirWritableAsync(path.join(discovery.path, INTEGRATION_STUDIO_PATH));
+  notifyIntegrationStudio(api);
   return fs.ensureDirWritableAsync(path.join(discovery.path, PAK_PATH));
 }
 
@@ -591,6 +645,14 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(BINARIES_ID, 33, testBinaries, installBinaries); //fallback to binaries folder
 
   //register actions
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open IS Download Page (Login Required)', () => {
+    const openPath = INTEGRATION_STUDIO_URL_OFFICIAL;
+    util.opn(openPath).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Binaries Folder', () => {
     GAME_PATH = getDiscoveryPath(context.api);
     const openPath = path.join(GAME_PATH, BINARIES_PATH);
@@ -656,9 +718,20 @@ function applyGame(context, gameSpec) {
 function main(context) {
   applyGame(context, spec);
   context.once(() => { // put code here that should be run (once) when Vortex starts up
-
+    //context.api.onAsync('did-deploy', (profileId) => didDeploy(context.api, profileId));
   });
   return true;
+}
+
+async function didDeploy(api, profileId) { //run on mod purge
+  const state = api.getState();
+  const profile = selectors.profileById(state, profileId);
+  const gameId = profile === null || profile === void 0 ? void 0 : profile.gameId;
+  if (gameId !== GAME_ID) {
+    return Promise.resolve();
+  }
+  notifyIntegrationStudio(api);
+  return Promise.resolve();
 }
 
 //export to Vortex
