@@ -2,8 +2,8 @@
 Name: System Shock 2 (Classic AND 25th Anniversary Remaster) Vortex Extension
 Structure: Basic game w/ mods folder
 Author: ChemBoy1
-Version: 0.4.4
-Date: 2025-07-05
+Version: 0.4.5
+Date: 2025-07-09
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -96,7 +96,7 @@ const spec = {
     "id": GAME_ID,
     "name": GAME_NAME,
     "shortName": GAME_NAME_SHORT,
-    "logo": `${GAME_ID_CLASSIC}.jpg`,
+    "logo": `${GAME_ID}.jpg`,
     "modPath": MOD_PATH,
     "modPathIsRelative": true,
     "mergeMods": true,

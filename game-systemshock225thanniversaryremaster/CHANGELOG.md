@@ -4,6 +4,10 @@
 
 - None planned
 
+## [0.4.5] - 2025-07-09
+
+- Fixed an issue with the game image displaying in the Vortex Games list prior to downloading the extension and added a unique image for the Classic version.
+
 ## [0.4.4] - 2025-07-05
 
 - Added extensions for Classic and Legacy mod installers to properly install mod archives with .dml, .gam, and .mis files and no folders.

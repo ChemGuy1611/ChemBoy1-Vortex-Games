@@ -1747,7 +1747,7 @@ function applyGame(context, gameSpec) {
         shell: true,
         parameters: []
       }, //*/
-      /*{
+      {
         id: MODKIT_ID,
         name: MODKIT_NAME,
         logo: `modkit.png`,
