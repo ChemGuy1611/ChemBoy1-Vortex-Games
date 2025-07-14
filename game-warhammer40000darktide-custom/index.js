@@ -53,7 +53,7 @@ function log(message) {
     message: message,
     allowSuppress: true,
   });
-}
+} //*/
 
 function api_warning(ID, message, supress) {
   if (!api) {
@@ -550,7 +550,6 @@ function main(context) {
         } catch (e) {}
       }
     });
-
     // Unpatch on purge
     context.api.events.on("will-purge", (profileId) => {
       if (is_darktide_profile_active() && GAME_PATH != null) {
@@ -565,13 +564,11 @@ function main(context) {
         updatemodid = modId;
       }
     });
-
     context.api.events.on("remove-mod", (gameMode, modId) => {
       if (modId.includes("-" + updatemodid + "-")) {
         mod_update_all_profile = true;
       }
     });
-
     context.api.events.on("will-install-mod", (gameId, archiveId, modId) => {
       mod_install_name = modId.split("-")[0];
       if (GAME_ID == gameId && modId.includes("-" + updatemodid + "-")) {
