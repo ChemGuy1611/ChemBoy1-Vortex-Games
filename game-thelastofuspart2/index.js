@@ -3,7 +3,7 @@ Name: The Last of Us Part II Remastered Vortex Extension
 Author: ChemBoy1
 Structure: Generic Game
 Version: 0.6.1
-Date: 2025-04-15
+Date: 2025-07-14
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -103,6 +103,12 @@ world-tracking 35
 world-tracking-horde 36
 world-watchtower 37
 `;
+
+// for mod update to keep them in the load order and not uncheck them
+let mod_update_all_profile = false;
+let updatemodid = undefined;
+let updating_mod = false; // used to see if it's a mod update or not
+let mod_install_name = ""; // used to display the name of the currently installed mod
 
 const PSARC_ID = `${GAME_ID}-psarc`;
 const PSARC_NAME = ".psarc (Mod Loader)";
@@ -289,7 +295,7 @@ const tools = [
     detach: true,
     relative: true,
     exclusive: true,
-    shell: true,
+    //shell: true,
     parameters: []
   }, //*/
 ];
@@ -898,6 +904,19 @@ function installPsarcTool(files) {
 // LOAD ORDER FUNCTIONS /////////////////////////////////////////////////////////////////////////////////////////////////
 
 async function deserializeLoadOrder(context) {
+  //* on mod update for all profile it would cause the mod if it was selected to be unselected
+  if (mod_update_all_profile) {
+    let allMods = Array("mod_update");
+
+    return allMods.map((modId) => {
+      return {
+        id: "mod update in progress, please wait. Refresh when finished. \n To avoid this wait, only update current profile",
+        modId: modId,
+        enabled: false,
+      };
+    });
+  } //*/
+
   //Set basic information for load order paths and data
   let gameDir = getDiscoveryPath(context.api);
   if (gameDir === undefined) {
@@ -987,6 +1006,11 @@ async function deserializeLoadOrder(context) {
 
 //Write load order to files
 async function serializeLoadOrder(context, loadOrder) {
+  //* don't write if all profiles are being updated
+  if (mod_update_all_profile) {
+    return;
+  } //*/
+
   let gameDir = getDiscoveryPath(context.api);
   if (gameDir === undefined) {
     return Promise.reject(new util.NotFound('Game not found'));
@@ -1433,6 +1457,29 @@ function main(context) {
   context.once(() => { // put code here that should be run (once) when Vortex starts up
     //context.api.onAsync('check-mods-version', (gameId, mods, forced) => onCheckModVersion(context.api, gameId, mods, forced));
     context.api.onAsync('did-purge', (profileId) => didPurge(context.api, profileId)); //*/
+    context.api.onAsync("did-deploy", (profileId) => {
+      mod_update_all_profile = false;
+      updating_mod = false;
+      updatemodid = undefined;
+    });
+    context.api.events.on("mod-update", (gameId, modId, fileId) => {
+      if (GAME_ID == gameId) {
+        updatemodid = modId;
+      }
+    });
+    context.api.events.on("remove-mod", (gameMode, modId) => {
+      if (modId.includes("-" + updatemodid + "-")) {
+        mod_update_all_profile = true;
+      }
+    });
+    context.api.events.on("will-install-mod", (gameId, archiveId, modId) => {
+      mod_install_name = modId.split("-")[0];
+      if (GAME_ID == gameId && modId.includes("-" + updatemodid + "-")) {
+        updating_mod = true;
+      } else {
+        updating_mod = false;
+      }
+    }); //*/
   });
   return true;
 }
