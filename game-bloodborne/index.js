@@ -76,12 +76,8 @@ const spec = {
     "requiredFiles": [
       GAME_FILE,
     ],
-    "details": {
-      
-    },
-    "environment": {
-
-    }
+    "details": {},
+    "environment": {}
   },
   "modTypes": [
     {
@@ -110,9 +106,7 @@ const spec = {
     },
   ],
   "discovery": {
-    "ids": [
-
-    ],
+    "ids": [],
     "names": []
   }
 };

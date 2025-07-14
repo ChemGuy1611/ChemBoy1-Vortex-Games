@@ -1681,13 +1681,16 @@ function partitionCheckNotify(api, CHECK_CONFIG, CHECK_DOCS) {
   });
 }
 
-//Get ModKit install path from Epic
-function getModKitPath() {
-  return () => util.GameStoreHelper.findByAppId(MODKITAPP_ID, 'epic');
-    //.then((tool) => tool.toolPath);
-  /*const path = util.GameStoreHelper.findByAppId(MODKITAPP_ID, 'epic');
-  log('warn', `ModKit path found at ${path}`)
-  return () => path; //*/
+//Get MODKit install path from Epic
+async function getModKitPath() {
+  /*return () => util.GameStoreHelper.findByAppId(MODKITAPP_ID, 'epic')
+    .then((game) => game.gamePath); //*/
+  const path = Promise.resolve(util.GameStoreHelper.findByAppId(MODKITAPP_ID, 'epic'));
+  log ('warn', `ModKit path: ${path}`);
+  if (path !== undefined) {
+    log('warn', `ModKit path found at ${JSON.stringify(path, null, 2)}`)
+    return () => path;
+  } //*/
 }
 
 //* Setup function
@@ -1745,6 +1748,7 @@ function applyGame(context, gameSpec) {
         relative: true,
         exclusive: true,
         shell: true,
+        //defaultPrimary: true,
         parameters: []
       }, //*/
       {
@@ -1757,7 +1761,6 @@ function applyGame(context, gameSpec) {
         detach: true,
         relative: false,
         exclusive: false,
-        //defaultPrimary: true,
         parameters: [],
       }, //*/
     ],
@@ -1927,7 +1930,7 @@ function applyGame(context, gameSpec) {
     return gameId === GAME_ID;
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open MODKit Folder (Epic)', () => {
-    const openPath = getModKitPath();
+    const openPath = getModKitPath;
     util.opn(openPath).catch(() => null);
   }, () => {
     const state = context.api.getState();

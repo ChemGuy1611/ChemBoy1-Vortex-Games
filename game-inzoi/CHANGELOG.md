@@ -2,6 +2,10 @@
 
 ## Future Improvements (Not Yet Released)
 
+- None Planned
+
+## [0.3.2] - 2025-07-10
+
 - Added tool to launch inZOIMODKit.
 
 ## [0.3.1] - 2025-06-29
