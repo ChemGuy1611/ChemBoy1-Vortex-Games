@@ -1,10 +1,10 @@
-/*
+/*////////////////////////////////////////////////
 Name: MechWarrior 5: Clans Vortex Extension
 Structure: UE5 (Xbox-Integrated)
 Author: ChemBoy1
-Version: 0.1.1
-Date: 11/06/2024
-*/
+Version: 0.2.0
+Date: 2025-07-14
+////////////////////////////////////////////////*/
 
 //Import libraries
 const { actions, fs, util, selectors } = require('vortex-api');
@@ -104,6 +104,18 @@ const UE4SS_ID = `${GAME_ID}-ue4ss`;
 const UE4SS_NAME = "UE4SS";
 const UE4SS_FILE = "dwmapi.dll";
 
+// Modding Editor
+const MODDINGEDITOR_ID = `${GAME_ID}-moddingeditor`;
+const MODDINGEDITORAPP_ID = "";
+const MODDINGEDITOR_EXEC = '';
+const MODDINGEDITOR_NAME = "Modding Editor";
+
+const EDITORMOD_ID = `${GAME_ID}-moddingeditormod`;
+const EDITORMOD_NAME = "Modding Editor Mod";
+const EDITORMOD_FILE = 'mod.json';
+const EDITORMOD_EXT = '.uplugin';
+const EDITORMOD_PATH = path.join(EPIC_CODE_NAME, 'Mods');
+
 //Set file number for pak installer file selection (needs to be 3 if IO Store is used to accomodate .ucas and .utoc files)
 //Also disable symlinks if IO Store is used. pak/ucas/utoc files will cause game crash/corruption with symlinks
 let PAK_FILE_MIN = 1;
@@ -141,6 +153,12 @@ const spec = {
   },
   "modTypes": [
     {
+      "id": EDITORMOD_ID,
+      "name": EDITORMOD_NAME,
+      "priority": "high",
+      "targetPath": `{gamePath}\\${EDITORMOD_PATH}`
+    },
+    {
       "id": LOGICMODS_ID,
       "name": "UE4SS LogicMods (Blueprint)",
       "priority": "high",
@@ -175,8 +193,7 @@ const spec = {
 
 //3rd party tools and launchers
 const tools = [
-  /*
-  {
+  /*{
     id: "LaunchModdedGame",
     name: "Launch Modded Game",
     logo: `exec.png`,
@@ -188,8 +205,7 @@ const tools = [
     defaultPrimary: true,
     isPrimary: true,
     parameters: ['-fileopenlog']
-  },
-  */
+  }, //*/
 ];
 
 //Set mod type priorities
@@ -301,6 +317,62 @@ function getExecutable(discoveryPath) {
   };
 
   return EXEC_DEFAULT;
+}
+
+// MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
+
+//Installer test for mod files
+function testEditorMod(files, gameId) {
+  const isMod = files.some(file => (path.extname(file).toLowerCase() === EDITORMOD_EXT));
+  const isJson = files.some(file => (path.basename(file).toLowerCase() === EDITORMOD_FILE));
+  let supported = (gameId === spec.game.id) && ( isMod && isJson );
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Installer install mod files
+function installEditorMod(files, fileName) {
+  const modFile = files.find(file => (path.basename(file).toLowerCase() === EDITORMOD_FILE));
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: EDITORMOD_ID };
+  let MOD_NAME = path.basename(fileName);
+  let MOD_FOLDER = MOD_NAME.replace(/[\.]*(installing)*(zip)*/gi, '');
+  if (rootPath !== '.') {
+    MOD_NAME = path.basename(rootPath);
+    MOD_FOLDER = MOD_NAME;
+  }
+  try { //read mod.json file to get folder name (game will crash if this doesn't match)
+    const JSON_OBJECT = JSON.parse(fs.readFileSync(path.join(fileName, rootPath, EDITORMOD_FILE)));
+    const JSON_MOD_NAME = JSON_OBJECT["modPluginName"];
+    MOD_FOLDER = JSON_MOD_NAME;
+  } catch (err) { //mod.json could not be read.
+    log('error', `Could not read mod.json file for mod ${MOD_NAME}.`);
+  }
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(MOD_FOLDER, file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
 }
 
 //Test for save files
@@ -805,7 +877,7 @@ function UNREALEXTENSION(context) {
     return discoveryPath ? path.join.apply(null, installPath) : undefined;
   };
 
-  context.registerInstaller('ue5-pak-installer', 35, testForUnrealMod, (files, __destinationPath, gameId) => installUnrealMod(context.api, files, gameId));
+  context.registerInstaller('ue5-pak-installer', 31, testForUnrealMod, (files, __destinationPath, gameId) => installUnrealMod(context.api, files, gameId));
 
   context.registerModType('ue5-sortable-modtype', 25, (gameId) => testUnrealGame(gameId, true), getUnrealModsPath, () => Promise.resolve(false), {
     name: 'UE5 Sortable Mod',
@@ -820,7 +892,8 @@ async function setup(discovery, api, gameSpec) {
   //await fs.ensureDirWritableAsync(path.join(SAVE_TARGET));
   await fs.ensureDirWritableAsync(path.join(discovery.path, SCRIPTS_PATH));
   await fs.ensureDirWritableAsync(path.join(discovery.path, LOGICMODS_PATH));
-  return fs.ensureDirWritableAsync(path.join(discovery.path, UE5_PATH));
+  await fs.ensureDirWritableAsync(path.join(discovery.path, UE5_PATH));
+  return fs.ensureDirWritableAsync(path.join(discovery.path, EDITORMOD_PATH));
 }
 
 //Let vortex know about the game
@@ -897,14 +970,15 @@ function applyGame(context, gameSpec) {
   );
 
   //register mod installers
-  context.registerInstaller(`${GAME_ID}-ue4ss-logicscriptcombo`, 25, testUe4ssCombo, installUe4ssCombo);
-  context.registerInstaller(`${GAME_ID}-ue4ss-logicmod`, 30, testLogic, installLogic);
-  //35 is pak installer above
-  context.registerInstaller(`${GAME_ID}-ue4ss`, 40, testUe4ss, installUe4ss);
-  context.registerInstaller(`${GAME_ID}-ue4ss-scripts`, 45, testScripts, installScripts);
-  context.registerInstaller(`${GAME_ID}-root`, 50, testRoot, installRoot);
-  //context.registerInstaller(`${GAME_ID}-config`, 55, testConfig, installConfig);
-  //context.registerInstaller(`${GAME_ID}-save`, 60, testSave, installSave);
+  context.registerInstaller(EDITORMOD_ID, 25, testEditorMod, installEditorMod);
+  context.registerInstaller(`${GAME_ID}-ue4ss-logicscriptcombo`, 27, testUe4ssCombo, installUe4ssCombo);
+  context.registerInstaller(`${GAME_ID}-ue4ss-logicmod`, 29, testLogic, installLogic);
+  //31 is pak installer above
+  context.registerInstaller(`${GAME_ID}-ue4ss`, 33, testUe4ss, installUe4ss);
+  context.registerInstaller(`${GAME_ID}-ue4ss-scripts`, 35, testScripts, installScripts);
+  context.registerInstaller(`${GAME_ID}-root`, 37, testRoot, installRoot);
+  //context.registerInstaller(`${GAME_ID}-config`, 39, testConfig, installConfig);
+  //context.registerInstaller(`${GAME_ID}-save`, 41, testSave, installSave);
 }
 
 //Main function
