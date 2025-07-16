@@ -10,6 +10,7 @@ Date: 2025-06-29
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
+const { get } = require('http');
 
 //Specify all information about the game
 const GAME_ID = "inzoi";
@@ -22,6 +23,7 @@ const GAME_NAME = "inZOI";
 const GAME_NAME_SHORT = "inZOI";
 const EXEC = "inZOI.exe";
 let GAME_PATH = null;
+let MODKIT_PATH = null;
 let CHECK_CONFIG = false;
 let CHECK_DOCS = false; 
 let STAGING_FOLDER = '';
@@ -1683,9 +1685,8 @@ function partitionCheckNotify(api, CHECK_CONFIG, CHECK_DOCS) {
 
 //Get MODKit install path from Epic
 async function getModKitPath() {
-  /*return () => util.GameStoreHelper.findByAppId(MODKITAPP_ID, 'epic')
-    .then((game) => game.gamePath); //*/
-  const path = Promise.resolve(util.GameStoreHelper.findByAppId(MODKITAPP_ID, 'epic'));
+  return util.GameStoreHelper.findByAppId(MODKITAPP_ID, 'epic');
+  /*const path = Promise.resolve(util.GameStoreHelper.findByAppId(MODKITAPP_ID, 'epic'));
   log ('warn', `ModKit path: ${path}`);
   if (path !== undefined) {
     log('warn', `ModKit path found at ${JSON.stringify(path, null, 2)}`)
@@ -1697,6 +1698,7 @@ async function getModKitPath() {
 async function setup(discovery, api, gameSpec) {
   const state = api.getState();
   GAME_PATH = discovery.path;
+  MODKIT_PATH = getModKitPath();
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   CHECK_CONFIG = checkPartitions(LOCALAPPDATA, GAME_PATH);
@@ -1728,7 +1730,7 @@ async function setup(discovery, api, gameSpec) {
 } //*/
 
 //Let Vortex know about the game
-function applyGame(context, gameSpec) {
+async function applyGame(context, gameSpec) {
   //register the game
   const game = {
     ...gameSpec.game,
@@ -1755,7 +1757,7 @@ function applyGame(context, gameSpec) {
         id: MODKIT_ID,
         name: MODKIT_NAME,
         logo: `modkit.png`,
-        queryPath: getModKitPath,
+        queryPath: () => MODKIT_PATH,
         executable: () => MODKIT_EXEC,
         requiredFiles: [MODKIT_EXEC],
         detach: true,

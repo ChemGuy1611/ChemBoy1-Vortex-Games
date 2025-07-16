@@ -4,6 +4,10 @@ FUTURE CHANGES (NOT IMPLEMENTED YET):
 
 - Mod Injector integration - upon release
 
+## [0.2.0] - 2025-07-15
+
+- Added support for DarkAgesModManager!
+
 ## [0.1.3] - 2025-05-28
 
 - Fixed game version detection for Xbox version
