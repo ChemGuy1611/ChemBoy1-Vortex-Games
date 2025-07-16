@@ -89,7 +89,7 @@ const SAVE_EXT = ".sav";
 
 const MODS_ID = `${GAME_ID}-mods`;
 const MODS_NAME = "Injector Mod";
-const MODS_PATH = path.join("Mods");
+const MODS_PATH = path.join("mods");
 
 const MOD_PATH_DEFAULT = MODS_PATH;
 const REQ_FILE = 'base';
@@ -97,32 +97,31 @@ const PARAMETERS = [`+com_skipIntroVideo 1`, `+exec ${AUTOEXEC_CFG_FILE}`];
 
 //Info for modding requirements
 const INJECTOR_ID = `${GAME_ID}-modmanager`;
-const INJECTOR_NAME = "DarkAgesModManager";
+const INJECTOR_NAME = "Atlan Mod Loader";
 const INJECTOR_FILE = 'DarkAgesModManager.exe';
-const INJ_DL_URL = `https://github.com/dcealopez/DarkAgesModManager/releases/latest/download/DarkAgesModManager.zip`;
-const INJ_DLERROR_URL = `https://github.com/dcealopez/DarkAgesModManager`;
+const INJ_DL_URL = `https://github.com/FlavorfulGecko5/EntityAtlan/releases/download/ModLoader/AtlanModLoader_v_1.zip`;
+const INJ_DLERROR_URL = `https://github.com/FlavorfulGecko5/EntityAtlan/releases/ModLoader`;
 
-const ATLAN_ID = `${GAME_ID}-atlan`;
+const ATLAN_ID = `${GAME_ID}-atlanextractor`;
 const ATLAN_NAME = "Atlan Resource Extractor";
 const ATLAN_FILE = 'AtlanResourceExtractor.exe';
-const ATLAN_URL = `https://github.com/FlavorfulGecko5/EntityAtlan/releases/latest/download/AtlanResourceExtractor.zip`;
-const ATLAN_DLERROR_URL = `https://github.com/FlavorfulGecko5/EntityAtlan`;
+
+const VALEN_ID = `${GAME_ID}-valen`;
+const VALEN_NAME = "Valen";
+const VALEN_FILE = 'Valen.exe';
+const VALEN_PATH = 'Valen';
 
 const PATCHER_ID = `${GAME_ID}-patcher`;
 const PATCHER_NAME = "DarkAgesPatcher";
 const PATCHER_FILE = 'DarkAgesPatcher.exe';
-const PATCHER_URL = `https://github.com/dcealopez/DarkAgesPatcher/releases/latest/download/AtlanResourceExtractor.zip`;
+const PATCHER_DL_URL = `https://github.com/dcealopez/DarkAgesPatcher/releases/latest/download/DarkAgesPatcher.zip`;
 const PATCHER_DLERROR_URL = `https://github.com/dcealopez/DarkAgesPatcher`;
 const PATCHER_NXM_PAGE_NO = 28;
 const PATCHER_NXM_FILE_NO = 79;
 
 // Information for downloader and updater
-const INJECTOR_ARC_NAME = 'DarkAgesModManager.zip';
-const INJECTOR_URL_API = `https://api.github.com/repos/dcealopez/DarkAgesModManager`;
-const ATLAN_ARC_NAME = 'AtlanResourceExtractor.zip';
-const ATLAN_URL_API = `https://api.github.com/repos/FlavorfulGecko5/EntityAtlan`;
-const PATCHER_ARC_NAME = 'DarkAgesPatcher.zip';
-const PATCHER_URL_API = `https://api.github.com/repos/dcealopez/DarkAgesPatcher`;
+const INJECTOR_ARC_NAME = 'AtlanModLoader_v_1.zip';
+const INJECTOR_URL_API = `https://api.github.com/repos/FlavorfulGecko5/EntityAtlan`;
 const REQUIREMENTS = [
   { //ModManager
     archiveFileName: INJECTOR_ARC_NAME,
@@ -132,30 +131,8 @@ const REQUIREMENTS = [
     githubUrl: INJECTOR_URL_API,
     findMod: (api) => findModByFile(api, INJECTOR_ID, INJECTOR_FILE),
     findDownloadId: (api) => findDownloadIdByFile(api, INJECTOR_ARC_NAME),
-    fileArchivePattern: new RegExp(/^DarkAgesModManager/, 'i'),
+    fileArchivePattern: new RegExp(/^AtlanModLoader_v_(\d+)/, 'i'),
     resolveVersion: (api) => resolveVersionByPattern(api, REQUIREMENTS[0]),
-  }, //*/
-  { //Atlan
-    archiveFileName: ATLAN_ARC_NAME,
-    modType: ATLAN_ID,
-    assemblyFileName: ATLAN_FILE,
-    userFacingName: ATLAN_NAME,
-    githubUrl: ATLAN_URL_API,
-    findMod: (api) => findModByFile(api, ATLAN_ID, ATLAN_FILE),
-    findDownloadId: (api) => findDownloadIdByFile(api, ATLAN_ARC_NAME),
-    fileArchivePattern: new RegExp(/^AtlanResourceExtractor/, 'i'),
-    resolveVersion: (api) => resolveVersionByPattern(api, REQUIREMENTS[1]),
-  }, //*/
-  /*{ //Patcher
-    archiveFileName: PATCHER_ARC_NAME,
-    modType: PATCHER_ID,
-    assemblyFileName: PATCHER_FILE,
-    userFacingName: PATCHER_NAME,
-    githubUrl: PATCHER_URL_API,
-    findMod: (api) => findModByFile(api, PATCHER_ID, PATCHER_FILE),
-    findDownloadId: (api) => findDownloadIdByFile(api, PATCHER_ARC_NAME),
-    fileArchivePattern: new RegExp(/^DarkAgesPatcher/, 'i'),
-    resolveVersion: (api) => resolveVersionByPattern(api, REQUIREMENTS[2]),
   }, //*/
 ];
 
@@ -241,6 +218,12 @@ const spec = {
       "priority": "low",
       "targetPath": "{gamePath}"
     },
+    {
+      "id": VALEN_ID,
+      "name": VALEN_NAME,
+      "priority": "low",
+      "targetPath": `{gamePath}`
+    },
   ],
   "discovery": {
     "ids": [
@@ -256,7 +239,7 @@ const tools = [
   {
     id: INJECTOR_ID,
     name: INJECTOR_NAME,
-    logo: "doom.png",
+    logo: "patcher.png",
     executable: () => INJECTOR_FILE,
     requiredFiles: [INJECTOR_FILE],
     detach: true,
@@ -264,12 +247,34 @@ const tools = [
     exclusive: true,
     parameters: []
   }, //*/
-  {
+  /*{
     id: PATCHER_ID,
     name: PATCHER_NAME,
     logo: "patcher.png",
     executable: () => PATCHER_FILE,
     requiredFiles: [PATCHER_FILE],
+    detach: true,
+    relative: true,
+    exclusive: true,
+    parameters: []
+  }, //*/
+  {
+    id: ATLAN_ID,
+    name: ATLAN_NAME,
+    logo: "doom.png",
+    executable: () => ATLAN_FILE,
+    requiredFiles: [ATLAN_FILE],
+    detach: true,
+    relative: true,
+    exclusive: true,
+    parameters: []
+  }, //*/
+  {
+    id: VALEN_ID,
+    name: VALEN_NAME,
+    logo: "valen.png",
+    executable: () => path.join(VALEN_PATH, VALEN_FILE),
+    requiredFiles: [path.join(VALEN_PATH, VALEN_FILE)],
     detach: true,
     relative: true,
     exclusive: true,
@@ -285,7 +290,7 @@ const tools = [
     relative: true,
     exclusive: true,
     shell: true,
-    //defaultPrimary: true,
+    defaultPrimary: true,
     parameters: [`+com_skipIntroVideo 1 +exec ${AUTOEXEC_CFG_FILE}`],
   }, //*/
 ];
@@ -450,7 +455,7 @@ function isPatcherInstalled(api, spec) {
   return Object.keys(mods).some(id => mods[id]?.type === PATCHER_ID);
 }
 
-//Function to auto-download Mod Loader
+//Function to download latest Injector directly from GitHub
 async function downloadInjector(api, gameSpec) {
   let isInstalled = isInjectorInstalled(api, gameSpec);
   if (!isInstalled) {
@@ -598,9 +603,9 @@ function installInjector(files) {
   return Promise.resolve({ instructions });
 }
 
-//Installer test for Atlan
+//Installer test for Atlan files
 function testAtlan(files, gameId) {
-  const isMod = files.some(file => (path.basename(file) === ATLAN_FILE));
+  const isMod = files.some(file => (path.basename(file)=== ATLAN_FILE));
   let supported = (gameId === spec.game.id) && isMod;
 
   // Test for a mod installer.
@@ -632,6 +637,46 @@ function installAtlan(files) {
       type: 'copy',
       source: file,
       destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Installer test for Atlan files
+function testValen(files, gameId) {
+  const isMod = files.some(file => (path.basename(file)=== VALEN_FILE));
+  let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Installer install Atlan files
+function installValen(files) {
+  const modFile = files.find(file => (path.basename(file) === VALEN_FILE));
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: VALEN_ID };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(VALEN_PATH, file.substr(idx)),
     };
   });
   instructions.push(setModTypeInstruction);
@@ -1011,13 +1056,13 @@ async function setup(discovery, api, gameSpec) {
       { encoding: "utf8" },
     );
   }
-  if (GAME_VERSION === 'steam') {
+  //if (GAME_VERSION === 'steam') {
     const requirementsInstalled = await checkForRequirements(api);
     if (!requirementsInstalled) {
       await download(api, REQUIREMENTS);
     }
-    await downloadPatcher(api, gameSpec);
-  }
+    //await downloadPatcher(api, gameSpec);
+  //}
   await fs.ensureDirWritableAsync(path.join(GAME_PATH, SOUND_PATH));
   //await fs.ensureDirWritableAsync(path.join(SAVE_PATH));
   return fs.ensureDirWritableAsync(path.join(GAME_PATH, MOD_PATH_DEFAULT));
@@ -1061,6 +1106,7 @@ function applyGame(context, gameSpec) {
   //register mod installers
   context.registerInstaller(INJECTOR_ID, 25, testInjector, installInjector);
   context.registerInstaller(ATLAN_ID, 27, testAtlan, installAtlan);
+  context.registerInstaller(VALEN_ID, 28, testValen, installValen);
   context.registerInstaller(PATCHER_ID, 29, testPatcher, installPatcher);
   context.registerInstaller(SOUND_ID, 31, testSound, installSound);
   context.registerInstaller(CONFIG_ID, 33, testConfig, installConfig);
@@ -1133,7 +1179,7 @@ function main(context) {
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;
       return didDeploy(context.api, profileId);
-    });
+    }); //*/
     context.api.onAsync('check-mods-version', (profileId, gameId, mods, forced) => {
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;

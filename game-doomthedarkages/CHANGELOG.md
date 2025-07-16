@@ -2,11 +2,13 @@
 
 FUTURE CHANGES (NOT IMPLEMENTED YET):
 
-- Mod Injector integration - upon release
+- None Planned
 
-## [0.2.0] - 2025-07-15
+## [0.2.0] - 2025-07-16
 
-- Added support for DarkAgesModManager!
+- Added support for Atlan Mod Loader! Note that only the Steam version is supported at this time.
+- Automatic download and update of Atlan Mod Loader (Steam only).
+- Added installers and tools for Atlan Resource Extractor and Valen.
 
 ## [0.1.3] - 2025-05-28
 
