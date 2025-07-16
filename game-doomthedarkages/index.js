@@ -351,7 +351,7 @@ async function requiresLauncher(gamePath, store) {
 }
 
 //Get correct executable, add to required files, set paths for mod types
-function setGameVersion(discoveryPath) {
+async function setGameVersion(discoveryPath) {
   const isCorrectExec = (exec) => {
     try {
       fs.statSync(path.join(discoveryPath, exec));
@@ -1043,7 +1043,7 @@ async function resolveGameVersion(gamePath) {
 async function setup(discovery, api, gameSpec) {
   const state = api.getState();
   GAME_PATH = discovery.path;
-  GAME_VERSION = setGameVersion(GAME_PATH);
+  GAME_VERSION = await setGameVersion(GAME_PATH);
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   const AUTOEXEC_CFG_PATH = path.join(GAME_PATH, CONFIG_PATH, AUTOEXEC_CFG_FILE);
@@ -1056,13 +1056,13 @@ async function setup(discovery, api, gameSpec) {
       { encoding: "utf8" },
     );
   }
-  //if (GAME_VERSION === 'steam') {
+  if (GAME_VERSION === 'steam') {
     const requirementsInstalled = await checkForRequirements(api);
     if (!requirementsInstalled) {
       await download(api, REQUIREMENTS);
     }
     //await downloadPatcher(api, gameSpec);
-  //}
+  }
   await fs.ensureDirWritableAsync(path.join(GAME_PATH, SOUND_PATH));
   //await fs.ensureDirWritableAsync(path.join(SAVE_PATH));
   return fs.ensureDirWritableAsync(path.join(GAME_PATH, MOD_PATH_DEFAULT));
