@@ -2,8 +2,8 @@
 Name: Doom I & II (GZDoom) Vortex Extension
 Structure: Mod Loader (Any Folder)
 Author: ChemBoy1
-Version: 0.1.3
-Date: 2025-06-28
+Version: 0.1.4
+Date: 2025-07-16
 ///////////////////////////////////////*/
 /*
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣀⣀⣠⣤⣤⣤⡴⣦⡴⣖⠶⣴⠶⡶⣖⡶⣶⢶⣲⡾⠿⢿⡷⣾⢿⣷⣦⢾⣷⣾⣶⣤⣀⣰⣤⣀⡀⠀⠀⢀⣴⣿⡿⡿⣿⣿⣦⣄⠀⠀⣠⣴⣿⡿⢿⡿⣷⣦⡄⠀⠀⢀⣀⣤⣦⣀⣤⣶⣶⣷⣦⣴⡿⢿⡷⣿⠿⡿⣿⣷⢶⣦⢴⡲⣦⢶⡶⢶⡲⣖⡶⣦⣤⣤⣤⣤⣤⣤⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
@@ -298,7 +298,7 @@ function installGzdoom(files) {
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1))
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
   );
 
   const instructions = filtered.map(file => {

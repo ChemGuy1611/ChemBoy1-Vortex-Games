@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.1.4] - 2025-07-16
+
+- Fixed an error that could potentially occur if installing a version of GZDoom that had empty folders in the archive.
+
 ## [0.1.3] - 2025-06-28
 
 - Updated DML Setup notification with some additional details.

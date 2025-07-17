@@ -90,6 +90,7 @@ const SAVE_EXT = ".sav";
 const MODS_ID = `${GAME_ID}-mods`;
 const MODS_NAME = "Injector Mod";
 const MODS_PATH = path.join("mods");
+const MOD_FILE = 'darkagesmod.txt';
 
 const MOD_PATH_DEFAULT = MODS_PATH;
 const REQ_FILE = 'base';
@@ -851,7 +852,8 @@ function installSave(files) {
 
 //test for zips
 async function testZipContent(files, gameId) {
-  const isMod = true; //need to come up with some kind of test here. Maybe "gameresources" folder?
+  //const isMod = true; //leaving as true until I see if mods consistently include the "darkagesmod.txt" file
+  const isMod = files.some(file => (path.basename(file) === MOD_FILE));
   let supported = (gameId === spec.game.id) && isMod;
 
   // Test for a mod installer.

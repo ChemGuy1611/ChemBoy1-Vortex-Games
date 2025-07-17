@@ -10,8 +10,8 @@ const MS_APPID = "FatsharkAB.Warhammer40000DarktideNew";
 
 //CUSTOM CODE//////////////////////
 const template = require("string-template");
-const LOCALAPPDATA = util.getVortexPath('localAppData');
-const CONFIG_PATH = path.join(LOCALAPPDATA, "Fatshark", "Darktide");
+const APPDATA = util.getVortexPath('appData');
+const CONFIG_PATH = path.join(APPDATA, "Fatshark", "Darktide");
 function pathPattern(api, game, pattern) {
   var _a;
   return template(pattern, {
@@ -505,8 +505,7 @@ function main(context) {
 
   //register mod types/////////////////////////////////////////////////
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
-    const openPath = CONFIG_PATH;
-    util.opn(openPath).catch(() => null);
+    util.opn(CONFIG_PATH).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
@@ -518,11 +517,11 @@ function main(context) {
       && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
     }, (game) => pathPattern(context.api, game, "{gamePath}\\binaries"), () => Promise.resolve(false), { name: 'Binaries' }
   );
-  /*context.registerModType('darktide-localappdata', 30, (gameId) => {
+  /*context.registerModType('darktide-config', 30, (gameId) => {
     var _a;
     return (gameId === GAME_ID)
       && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, (game) => pathPattern(context.api, game, CONFIG_PATH), () => Promise.resolve(false), { name: 'LocalAppData' }
+    }, (game) => pathPattern(context.api, game, CONFIG_PATH), () => Promise.resolve(false), { name: 'Config' }
   ); //*/
   /////////////////////////////////////////////////////////////////////
 
