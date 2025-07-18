@@ -10,7 +10,6 @@ Date: 2025-06-15
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
-const { get } = require('http');
 
 //Specify all information about the game
 const GAME_ID = "clairobscurexpedition33";
