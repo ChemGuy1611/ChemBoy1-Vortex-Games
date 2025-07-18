@@ -91,7 +91,7 @@ const SAVE_PATH_UNFINISHED = path.join(LOCALAPPDATA, 'RoboCopUnfinishedBusiness'
 const CONFIG_LOC_UNFINISHED = 'Local AppData';
 const SAVE_LOC_UNFINISHED = 'Local AppData';
 
-const UE5_SORTABLE_ID = `${GAME_ID}-ue5-sortable-modtype`; //this should not be changed to be maintain consistency with other UE5 games
+const UE5_SORTABLE_ID = `ue5-sortable-modtype`; //this should not be changed to be maintain consistency with other UE5 games
 const UE5_SORTABLE_ID_UNFINISHED = `${GAME_ID_UNFINISHED}-ue5-sortable-modtype`;
 const UE5_SORTABLE_NAME = 'UE5 Sortable Mod';
 
