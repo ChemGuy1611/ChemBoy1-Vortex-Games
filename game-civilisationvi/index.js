@@ -10,7 +10,6 @@ Date: 2025-07-20
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
-const { get } = require('http');
 //const winapi = require('winapi-bindings'); //gives access to the Windows registry
 
 //Specify all the information about the game
@@ -39,6 +38,7 @@ const MOD_EXT = '.modinfo';
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Game Folder";
+const ROOT_FILE = "Base";
 
 const DXLAUNCH_ID = `${GAME_ID}-dxlaunch`;
 const DXLAUNCH_NAME = "DX12 Launch";
@@ -267,6 +267,46 @@ function installMod(files, fileName) {
   return Promise.resolve({ instructions });
 }
 
+//Installer test for Root folder files
+function testRoot(files, gameId) {
+  const isMod = files.some(file => path.basename(file) === ROOT_FILE);
+  let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Installer install Root folder files
+function installRoot(files) {
+  const modFile = files.find(file => path.basename(file) === ROOT_FILE);
+  const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
 //Setup function
@@ -315,7 +355,7 @@ function applyGame(context, gameSpec) {
 
   //register mod installers
   context.registerInstaller(MOD_ID, 25, testMod, installMod);
-  //context.registerInstaller(ROOT_ID, 30, testRoot, installRoot);
+  context.registerInstaller(ROOT_ID, 30, testRoot, installRoot);
 
   //register actions
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {

@@ -8,6 +8,7 @@ FUTURE CHANGES (NOT IMPLEMENTED YET):
 
 - Fixed Epic version mod folder name.
 - Corrected Epic app ID for discovery.
+- Added installer for game root folder (mod contains "Base" folder).
 
 ## [0.1.1] - 2025-05-15
 
