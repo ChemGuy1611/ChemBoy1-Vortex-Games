@@ -2,19 +2,20 @@
 Name: Civilization VI Vortex Extension
 Structure: User Folder Mod Location
 Author: ChemBoy1
-Version: 0.1.1
-Date: 2025-05-15
+Version: 0.1.2
+Date: 2025-07-20
 /////////////////////////////////////////////////////*/
 
 //import libraries
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
+const { get } = require('http');
 //const winapi = require('winapi-bindings'); //gives access to the Windows registry
 
 //Specify all the information about the game
 const STEAMAPP_ID = "289070";
-const EPICAPP_ID = "KingletRiseAndFall";
+const EPICAPP_ID = "Kinglet";
 const XBOXAPP_ID = "";
 const XBOXEXECNAME = "";
 const GAME_ID = "civilisationvi";
@@ -23,13 +24,15 @@ const EXEC_EPIC = path.join("Base" , "Binaries", "Win64EOS", "CivilizationVI.exe
 const GAME_NAME = "Sid Meier's Civilization VI";
 const GAME_NAME_SHORT = "Civ VI";
 let GAME_PATH = null;
+let MOD_PATH = null;
 let GAME_VERSION = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 
 //Info for mod types and installers
 const DOCUMENTS = util.getVortexPath("documents");
-const MOD_PATH = path.join(DOCUMENTS, 'My Games', 'Sid Meier\'s Civilization VI', 'Mods');
+const MOD_PATH_STEAM = path.join(DOCUMENTS, 'My Games', 'Sid Meier\'s Civilization VI', 'Mods');
+const MOD_PATH_EPIC = path.join(DOCUMENTS, 'My Games', 'Sid Meier\'s Civilization VI (Epic)', 'Mods');
 const MOD_ID = `${GAME_ID}-mod`;
 const MOD_NAME = "Mod";
 const MOD_EXT = '.modinfo';
@@ -49,12 +52,9 @@ const spec = {
     "id": GAME_ID,
     "name": GAME_NAME,
     "shortName": GAME_NAME_SHORT,
-    "executable": EXEC,
     "logo": `${GAME_ID}.jpg`,
     "mergeMods": true,
     "requiresCleanup": true,
-    "modPath": MOD_PATH,
-    "modPathIsRelative": false,
     "requiredFiles": [
       REQ_FILE,
     ],
@@ -70,12 +70,6 @@ const spec = {
     },
   },
   "modTypes": [
-    {
-      "id": MOD_ID,
-      "name": MOD_NAME,
-      "priority": "high",
-      "targetPath": MOD_PATH
-    },
     {
       "id": ROOT_ID,
       "name": ROOT_NAME,
@@ -114,7 +108,7 @@ const tools = [
 //Set mod type priorities
 function modTypePriority(priority) {
   return {
-    high: 25,
+    high: 30,
     low: 75,
   }[priority];
 }
@@ -133,13 +127,6 @@ function pathPattern(api, game, pattern) {
   catch(err){
     api.showErrorNotification('Failed to locate executable. Please launch the game at least once.', err);
   }
-}
-
-//Get mod path
-function makeGetModPath(api, gameSpec) {
-  return () => gameSpec.game.modPathIsRelative !== false
-    ? gameSpec.game.modPath || '.'
-    : pathPattern(api, gameSpec.game, gameSpec.game.modPath);
 }
 
 //Find game installation directory
@@ -183,13 +170,40 @@ function getExecutable(api) {
   };
   if (isCorrectExec(EXEC)) {
     GAME_VERSION = 'steam';
+    MOD_PATH = MOD_PATH_STEAM;
     return EXEC;
   };
   if (isCorrectExec(EXEC_EPIC)) {
     GAME_VERSION = 'epic';
+    MOD_PATH = MOD_PATH_EPIC;
     return EXEC_EPIC;
   };
   return EXEC;
+}
+
+//Get correct mod folder (Epic folder is different)
+function getModPath(api) {
+  GAME_PATH = getDiscoveryPath(api);
+  const isCorrectExec = (exec) => {
+    try {
+      fs.statSync(path.join(GAME_PATH, exec));
+      return true;
+    }
+    catch (err) {
+      return false;
+    }
+  };
+  if (isCorrectExec(EXEC)) {
+    GAME_VERSION = 'steam';
+    MOD_PATH = MOD_PATH_STEAM;
+    return MOD_PATH;
+  };
+  if (isCorrectExec(EXEC_EPIC)) {
+    GAME_VERSION = 'epic';
+    MOD_PATH = MOD_PATH_EPIC;
+    return MOD_PATH;
+  };
+  return MOD_PATH_DEFAULT;
 }
 
 const getDiscoveryPath = (api) => {
@@ -261,7 +275,7 @@ async function setup(discovery, api, gameSpec) {
   GAME_PATH = discovery.path;
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
-  await fs.ensureDirWritableAsync(path.join(discovery.path));
+  await fs.ensureDirWritableAsync(GAME_PATH);
   return fs.ensureDirWritableAsync(MOD_PATH);
 }
 
@@ -272,7 +286,7 @@ function applyGame(context, gameSpec) {
     ...gameSpec.game,
     queryPath: makeFindGame(context.api, gameSpec),
     executable: () => getExecutable(context.api),
-    queryModPath: makeGetModPath(context.api, gameSpec),
+    queryModPath: () => getModPath(context.api),
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     supportedTools: tools,
@@ -287,6 +301,17 @@ function applyGame(context, gameSpec) {
         && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
     }, (game) => pathPattern(context.api, game, type.targetPath), () => Promise.resolve(false), { name: type.name });
   });
+
+  //register mod types explicitly
+    context.registerModType(MOD_ID, 25,
+      (gameId) => {
+        var _a;
+        return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
+      },
+      (game) => pathPattern(context.api, game, MOD_PATH),
+      () => Promise.resolve(false),
+      { name: MOD_NAME }
+    );
 
   //register mod installers
   context.registerInstaller(MOD_ID, 25, testMod, installMod);

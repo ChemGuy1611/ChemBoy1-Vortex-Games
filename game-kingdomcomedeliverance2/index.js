@@ -236,7 +236,7 @@ function getExecutable(discoveredPath) {
     BINARIES_TARGET = `{gamePath}\\${BINARIES_PATH}`;
     return EXEC_XBOX;
   }; //*/
-  log('error', `Could not read game folder to set executable for ${GAME_NAME}`);
+  //log('error', `Could not read game folder to set executable for ${GAME_NAME}`);
   return EXEC_STEAM;
 }
 

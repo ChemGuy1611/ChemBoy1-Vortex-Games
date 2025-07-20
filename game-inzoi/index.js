@@ -1685,7 +1685,8 @@ function partitionCheckNotify(api, CHECK_CONFIG, CHECK_DOCS) {
 
 //Get MODKit install path from Epic
 async function getModKitPath() {
-  return util.GameStoreHelper.findByAppId(MODKITAPP_ID, 'epic');
+  return () => util.GameStoreHelper.findByAppId(MODKITAPP_ID, 'epic')
+    .then((game) => game.gamePath);
   /*const path = Promise.resolve(util.GameStoreHelper.findByAppId(MODKITAPP_ID, 'epic'));
   log ('warn', `ModKit path: ${path}`);
   if (path !== undefined) {
@@ -1757,7 +1758,7 @@ async function applyGame(context, gameSpec) {
         id: MODKIT_ID,
         name: MODKIT_NAME,
         logo: `modkit.png`,
-        queryPath: () => MODKIT_PATH,
+        queryPath: getModKitPath,
         executable: () => MODKIT_EXEC,
         requiredFiles: [MODKIT_EXEC],
         detach: true,

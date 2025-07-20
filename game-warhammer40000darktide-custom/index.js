@@ -8,7 +8,7 @@ const STEAMAPP_ID = "1361210";
 // Microsoft Store app id (gamepass)
 const MS_APPID = "FatsharkAB.Warhammer40000DarktideNew";
 
-//CUSTOM CODE//////////////////////
+//CUSTOM CODE//////////////////////////////////////////////////////////////////
 const template = require("string-template");
 const APPDATA = util.getVortexPath('appData');
 const CONFIG_PATH = path.join(APPDATA, "Fatshark", "Darktide");
@@ -26,7 +26,7 @@ const getDiscoveryPath = (api) => {
   const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});
   return discovery === null || discovery === void 0 ? void 0 : discovery.path;
 };
-//END CUSTOM CODE///////////////////////////
+//END CUSTOM CODE/////////////////////////////////////////////////////////////
 
 // for mod update to keep them in the load order and not uncheck them
 let mod_update_all_profile = false;
