@@ -2,8 +2,8 @@
 Name: WUCHANG: Fallen Feathers Vortex Extension
 Structure: UE5 (Xbox-Integrated)
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2025-07-23
+Version: 0.1.1
+Date: 2025-07-25
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -14,7 +14,7 @@ const template = require('string-template');
 //Specify all information about the game
 const GAME_ID = "wuchangfallenfeathers";
 const STEAMAPP_ID = "2277560";
-const EPICAPP_ID = "";
+const EPICAPP_ID = "eab6c586a2534ada8837b118f24018f9";
 const GOGAPP_ID = "";
 const XBOXAPP_ID = "505GAMESS.P.A.WuchangPCGP";
 const XBOXEXECNAME = "AppProjectPlagueShipping";
@@ -36,7 +36,7 @@ const UE4SS_PATH = path.join('ue4ss', 'Mods');
 const gameFinderQuery = {
   steam: [{ id: STEAMAPP_ID, prefer: 0 }],
   //gog: [{ id: GOGAPP_ID }],
-  //epic: [{ id: EPICAPP_ID }],
+  epic: [{ id: EPICAPP_ID }],
   xbox: [{ id: XBOXAPP_ID }],
 };
 
@@ -156,8 +156,8 @@ const SIGBYPASS_NAME = "Mod Enabler";
 const SIGBYPASS_DLL = "dsound.dll";
 const SIGBYPASS_LUA = "sig.lua";
 const SIGBYPASS_PAGE_NO = 3;
-const SIGBYPASS_FILE_NO_XBOX = 37;
-const SIGBYPASS_FILE_NO_STEAM = 12;
+const SIGBYPASS_FILE_NO_XBOX = 53;
+const SIGBYPASS_FILE_NO_STEAM = 54;
 
 const MOD_PATH_DEFAULT = UE5_PATH;
 
@@ -254,7 +254,7 @@ async function requiresLauncher(gamePath, store) {
       },
     });
   } //*/
-  /*if (store === 'epic') {
+  if (store === 'epic') {
     return Promise.resolve({
         launcher: 'epic',
         addInfo: {
@@ -1203,9 +1203,9 @@ async function downloadSigBypass(api, gameSpec, version) {
       await api.ext.ensureLoggedIn();
     }
     try {
-      let FILE = null;
-      let URL = null;
-      try { //get the mod files information from Nexus
+      let FILE = FILE_ID; //use the FILE_ID directly for the correct game store version
+      let URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      /*try { //get the mod files information from Nexus
         const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
         const fileTime = () => Number.parseInt(input.uploaded_time, 10);
         const file = modFiles
@@ -1219,7 +1219,7 @@ async function downloadSigBypass(api, gameSpec, version) {
       } catch (err) { // use defined file ID if input is undefined above
         FILE = FILE_ID;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      }
+      } //*/
       const dlInfo = { //Download the mod
         game: GAME_DOMAIN,
         name: MOD_NAME,
