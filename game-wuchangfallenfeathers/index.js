@@ -20,7 +20,7 @@ const XBOXAPP_ID = "505GAMESS.P.A.WuchangPCGP";
 const XBOXEXECNAME = "AppProjectPlagueShipping";
 const GAME_NAME = "WUCHANG: Fallen Feathers";
 const GAME_NAME_SHORT = "WUCHANG FF";
-const DEFAULT_EXEC = "WUCHANG.exe";
+const DEFAULT_EXEC = "Project_Plague.exe";
 let GAME_PATH = null;
 let CHECK_DATA = false;
 let STAGING_FOLDER = '';
@@ -29,7 +29,7 @@ const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 //Unreal Engine specific
 const EPIC_CODE_NAME = "Project_Plague";
-const IO_STORE = true; //true if the Paks folder contains .ucas and .utoc files
+const IO_STORE = false; //true if the Paks folder contains .ucas and .utoc files
 const UE4SS_PATH = path.join('ue4ss', 'Mods');
 
 //Discovery IDs
@@ -74,11 +74,12 @@ const EXEC_EPIC = "WUCHANG_EGS.exe";
 //Config and save paths
 //const USER_HOME = util.getVortexPath("home");
 //const DOCUMENTS = util.getVortexPath("documents");
-const XBOX_SAVE_STRING = '';
+const XBOX_SAVE_STRING = 'tefn33qh9azfc';
 const LOCALAPPDATA = util.getVortexPath("localAppData");
 const CONFIG_PATH_DEFAULT = path.join(LOCALAPPDATA, EPIC_CODE_NAME, "Saved", "Config", "Windows");
 const CONFIG_PATH_XBOX = path.join(LOCALAPPDATA, EPIC_CODE_NAME, "Saved", "Config", "WinGDK"); //XBOX Version
 const SAVE_PATH_DEFAULT = path.join(LOCALAPPDATA, EPIC_CODE_NAME, "Saved");
+const SAVE_DEFAULT_FOLDERS = path.join('GameSlots', 'maingame0');
 const SAVE_PATH_XBOX = path.join(LOCALAPPDATA, "Packages", `${XBOXAPP_ID}_${XBOX_SAVE_STRING}`, "SystemAppData", "wgs"); //XBOX Version
 const CONFIG_LOC = 'Local AppData';
 const SAVE_LOC = 'Local AppData';
@@ -163,14 +164,14 @@ const spec = {
     "requiresCleanup": true,
     "details": {
       "steamAppId": STEAMAPP_ID,
-      "gogAppId": GOGAPP_ID,
+      //"gogAppId": GOGAPP_ID,
       "epicAppId": EPICAPP_ID,
       "xboxAppId": XBOXAPP_ID,
       "supportsSymlinks": SYM_LINKS,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
-      "GogAPPId": GOGAPP_ID,
+      //"GogAPPId": GOGAPP_ID,
       "EpicAPPId": EPICAPP_ID,
       "XboxAPPId": XBOXAPP_ID,
     },
@@ -288,9 +289,8 @@ function getExecutable(discoveryPath) {
       USERID_FOLDER = "";
     }
     SAVE_PATH = path.join(SAVE_PATH_XBOX, USERID_FOLDER);
-    SAVE_TARGET = `${SAVE_PATH}`;
+    SAVE_TARGET = SAVE_PATH;
     return EXEC_XBOX;
-    //return SHIPPING_EXE;
   };
   if (isCorrectExec(EXEC_DEFAULT)) {
     GAME_VERSION = 'steam';
@@ -312,10 +312,9 @@ function getExecutable(discoveryPath) {
     if (USERID_FOLDER === undefined) {
       USERID_FOLDER = "";
     }
-    SAVE_PATH = path.join(SAVE_PATH_DEFAULT, USERID_FOLDER);
-    SAVE_TARGET = `${SAVE_PATH}`;
+    SAVE_PATH = path.join(SAVE_PATH_DEFAULT, USERID_FOLDER, SAVE_DEFAULT_FOLDERS);
+    SAVE_TARGET = SAVE_PATH;
     return EXEC_DEFAULT;
-    //return SHIPPING_EXE;
   };
   /*if (isCorrectExec(EXEC_EPIC)) {
     GAME_VERSION = 'epic';
@@ -340,7 +339,6 @@ function getExecutable(discoveryPath) {
     SAVE_PATH = path.join(SAVE_PATH_DEFAULT, USERID_FOLDER);
     SAVE_TARGET = `${SAVE_PATH}`;
     return EXEC_EPIC;
-    //return SHIPPING_EXE;
   }; //*/
   return EXEC_DEFAULT;
 }
@@ -1337,7 +1335,7 @@ async function resolveGameVersion(gamePath) {
       log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
       return Promise.resolve(version);
     }
-  }
+  } //*/
   if (GAME_VERSION === 'steam') { // use EXEC_DEFAULT for Steam
     try {
       const exeVersion = require('exe-version');
@@ -1378,7 +1376,7 @@ function applyGame(context, gameSpec) {
   const game = {
     ...gameSpec.game,
     queryArgs: gameFinderQuery,
-    executable: () => getExecutable,
+    executable: getExecutable,
     queryModPath: () => MOD_PATH_DEFAULT,
     requiredFiles,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
