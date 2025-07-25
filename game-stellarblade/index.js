@@ -2,8 +2,8 @@
 Name: Stellar Blade Vortex Extension
 Structure: UE5 (static exe)
 Author: ChemBoy1
-Version: 0.1.4
-Date: 2025-06-16
+Version: 0.1.6
+Date: 2025-07-24
 //////////////////////////////////////////////////*/
 
 //Import libraries
@@ -40,7 +40,7 @@ let PAK_FILE_MIN = 1;
 let SYM_LINKS = true;
 if (IO_STORE) { //Set file number for pak installer file selection (needs to be 3 if IO Store is used to accomodate .ucas and .utoc files)
   SYM_LINKS = false;
-  PAKMOD_EXTS = ['.pak', '.ucas', '.utoc'];
+  PAKMOD_EXTS = ['.pak', '.ucas', '.utoc', '.json'];
   PAK_FILE_MIN = PAKMOD_EXTS.length;
 }
 

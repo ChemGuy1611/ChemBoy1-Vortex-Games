@@ -4,6 +4,10 @@ Future Changes (NOT IMPLEMENTED YET):
 
 - None
 
+## [0.1.6] - 2025-07-24
+
+- Added .json files to pak mod installer.
+
 ## [0.1.5] - 2025-06-21
 
 - Added Epic Games ID and full support.

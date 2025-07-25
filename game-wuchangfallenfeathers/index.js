@@ -151,6 +151,14 @@ const SAVE_EDITOR_ID = `${GAME_ID}-saveeditor`;
 const SAVE_EDITOR_NAME = "Save Editor";
 const SAVE_EDITOR_EXEC = "CO-E33_Save_Editor.exe";
 
+const SIGBYPASS_ID = `${GAME_ID}-sigbypass`;
+const SIGBYPASS_NAME = "Mod Enabler";
+const SIGBYPASS_DLL = "dsound.dll";
+const SIGBYPASS_LUA = "sig.lua";
+const SIGBYPASS_PAGE_NO = 3;
+const SIGBYPASS_FILE_NO_XBOX = 37;
+const SIGBYPASS_FILE_NO_STEAM = 12;
+
 const MOD_PATH_DEFAULT = UE5_PATH;
 
 //Filled in from data above
@@ -316,7 +324,7 @@ function getExecutable(discoveryPath) {
     SAVE_TARGET = SAVE_PATH;
     return EXEC_DEFAULT;
   };
-  /*if (isCorrectExec(EXEC_EPIC)) {
+  if (isCorrectExec(EXEC_EPIC)) {
     GAME_VERSION = 'epic';
     EXEC_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_DEFAULT}`;
     EXEC_TARGET = `{gamePath}\\${EXEC_PATH}`;
@@ -554,6 +562,49 @@ function installUe4ss(files) {
   instructions.push(setModTypeInstruction);
   return Promise.resolve({ instructions });
 }
+
+//Installer test for Signature Bypass files
+function testSigBypass(files, gameId) {
+  const isDll = files.some(file => path.basename(file).toLowerCase() === SIGBYPASS_DLL);
+  const isLua = files.some(file => path.basename(file).toLowerCase() === SIGBYPASS_LUA);
+  const TEST = isDll && isLua;
+  let supported = (gameId === spec.game.id) && TEST;
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Installer install UE4SS files
+function installSigBypass(files) {
+  const modFile = files.find(file => path.basename(file).toLowerCase() === SIGBYPASS_DLL);
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: SIGBYPASS_ID };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
 
 //Test for UE4SS Script files
 function testScripts(files, gameId) {
@@ -982,6 +1033,13 @@ function isUe4ssInstalled(api, spec) {
   return Object.keys(mods).some(id => mods[id]?.type === UE4SS_ID);
 }
 
+//Check if Signature Bypass is installed
+function isSigBypassInstalled(api, spec) {
+  const state = api.getState();
+  const mods = state.persistent.mods[spec.game.id] || {};
+  return Object.keys(mods).some(id => mods[id]?.type === SIGBYPASS_ID);
+}
+
 //* Download UE4SS from GitHub page (user browse for download)
 async function downloadUe4ss(api, gameSpec) {
   let isInstalled = isUe4ssInstalled(api, gameSpec);
@@ -1050,6 +1108,142 @@ async function downloadUe4ss(api, gameSpec) {
         return Promise.reject(err);
       }
     });
+  }
+} //*/
+
+//* Function to auto-download UE4SS from Nexus Mods
+async function downloadUe4ssNexus(api, gameSpec) {
+  let isInstalled = isUe4ssInstalled(api, gameSpec);
+  if (!isInstalled) {
+    const MOD_NAME = UE4SS_NAME;
+    const MOD_TYPE = UE4SS_ID;
+    const NOTIF_ID = `${GAME_ID}-${MOD_TYPE}-installing`;
+    const PAGE_ID = UE4SS_PAGE_NO;
+    const FILE_ID = UE4SS_FILE_NO;  //If using a specific file id because "input" below gives an error
+    const GAME_DOMAIN = gameSpec.game.id;
+    api.sendNotification({ //notification indicating install process
+      id: NOTIF_ID,
+      message: `Installing ${MOD_NAME}`,
+      type: 'activity',
+      noDismiss: true,
+      allowSuppress: false,
+    });
+    if (api.ext?.ensureLoggedIn !== undefined) { //make sure user is logged into Nexus Mods account in Vortex
+      await api.ext.ensureLoggedIn();
+    }
+    try {
+      let FILE = null;
+      let URL = null;
+      try { //get the mod files information from Nexus
+        const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
+        const fileTime = () => Number.parseInt(input.uploaded_time, 10);
+        const file = modFiles
+          .filter(file => file.category_id === 1)
+          .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))[0];
+        if (file === undefined) {
+          throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
+        }
+        FILE = file.file_id;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      } catch (err) { // use defined file ID if input is undefined above
+        FILE = FILE_ID;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      }
+      const dlInfo = { //Download the mod
+        game: gameSpec.game.id,
+        name: MOD_NAME,
+      };
+      const dlId = await util.toPromise(cb =>
+        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+      const modId = await util.toPromise(cb =>
+        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
+      const batched = [
+        actions.setModsEnabled(api, profileId, [modId], true, {
+          allowAutoDeploy: true,
+          installed: true,
+        }),
+        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
+      ];
+      util.batchDispatch(api.store, batched); // Will dispatch both actions
+    } catch (err) { //Show the user the download page if the download, install process fails
+      const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
+      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
+      util.opn(errPage).catch(() => null);
+    } finally {
+      api.dismissNotification(NOTIF_ID);
+    }
+  }
+} //*/
+
+//* Function to auto-download Mod Enabler form Nexus Mods
+async function downloadSigBypass(api, gameSpec, version) {
+  let isInstalled = isSigBypassInstalled(api, gameSpec);
+  if (!isInstalled) {
+    const MOD_NAME = SIGBYPASS_NAME;
+    const MOD_TYPE = SIGBYPASS_ID;
+    const NOTIF_ID = `${GAME_ID}-${MOD_TYPE}-installing`;
+    let FILE_ID = SIGBYPASS_FILE_NO_STEAM;  //If using a specific file id because "input" below gives an error
+    if (version === 'xbox') {
+      FILE_ID = SIGBYPASS_FILE_NO_XBOX;  //If using a specific file id because "input" below gives an error
+    } 
+    if (version === 'steam') {
+      FILE_ID = SIGBYPASS_FILE_NO_STEAM;  //If using a specific file id because "input" below gives an error
+    }
+    const PAGE_ID = SIGBYPASS_PAGE_NO;
+    const GAME_DOMAIN = gameSpec.game.id;
+    api.sendNotification({ //notification indicating install process
+      id: NOTIF_ID,
+      message: `Installing ${MOD_NAME}`,
+      type: 'activity',
+      noDismiss: true,
+      allowSuppress: false,
+    });
+    if (api.ext?.ensureLoggedIn !== undefined) { //make sure user is logged into Nexus Mods account in Vortex
+      await api.ext.ensureLoggedIn();
+    }
+    try {
+      let FILE = null;
+      let URL = null;
+      try { //get the mod files information from Nexus
+        const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
+        const fileTime = () => Number.parseInt(input.uploaded_time, 10);
+        const file = modFiles
+          .filter(file => file.category_id === 1)
+          .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))[0];
+        if (file === undefined) {
+          throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
+        }
+        FILE = file.file_id;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      } catch (err) { // use defined file ID if input is undefined above
+        FILE = FILE_ID;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      }
+      const dlInfo = { //Download the mod
+        game: GAME_DOMAIN,
+        name: MOD_NAME,
+      };
+      const dlId = await util.toPromise(cb =>
+        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+      const modId = await util.toPromise(cb =>
+        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
+      const batched = [
+        actions.setModsEnabled(api, profileId, [modId], true, {
+          allowAutoDeploy: true,
+          installed: true,
+        }),
+        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
+      ];
+      util.batchDispatch(api.store, batched); // Will dispatch both actions
+    } catch (err) { //Show the user the download page if the download, install process fails
+      const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
+      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
+      util.opn(errPage).catch(() => null);
+    } finally {
+      api.dismissNotification(NOTIF_ID);
+    }
   }
 } //*/
 
@@ -1353,6 +1547,7 @@ async function setup(discovery, api, gameSpec) {
   //SYNCHRONOUS CODE ////////////////////////////////////
   const state = api.getState();
   GAME_PATH = discovery.path;
+  GAME_VERSION = setGameVersion(api);
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   CHECK_DATA = checkPartitions(LOCALAPPDATA, GAME_PATH);
@@ -1364,6 +1559,8 @@ async function setup(discovery, api, gameSpec) {
     await fs.ensureDirWritableAsync(path.join(CONFIG_PATH));
     //await fs.ensureDirWritableAsync(SAVE_PATH);
   } //*/
+  
+  await downloadSigBypass(api, gameSpec, GAME_VERSION);
   //await downloadUe4ss(api, gameSpec);
   await fs.ensureDirWritableAsync(path.join(GAME_PATH, SCRIPTS_PATH));
   await fs.ensureDirWritableAsync(path.join(GAME_PATH, LOGICMODS_PATH));
@@ -1413,7 +1610,7 @@ function applyGame(context, gameSpec) {
   };
   context.registerGame(game);
 
-  //register mod types
+  //register mod types recursively
   (gameSpec.modTypes || []).forEach((type, idx) => {
     context.registerModType(type.id, modTypePriority(type.priority) + idx, (gameId) => {
       var _a;
@@ -1459,9 +1656,18 @@ function applyGame(context, gameSpec) {
     () => Promise.resolve(false), 
     { name: UE4SS_NAME }
   );
+  context.registerModType(SIGBYPASS_ID, 58, 
+    (gameId) => {
+      var _a;
+      return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
+    }, 
+    (game) => pathPattern(context.api, game, EXEC_TARGET), 
+    () => Promise.resolve(false), 
+    { name: SIGBYPASS_NAME }
+  );
 
   //* register modtypes with partition checks
-  context.registerModType(CONFIG_ID, 58, 
+  context.registerModType(CONFIG_ID, 60, 
     (gameId) => {
       GAME_PATH = getDiscoveryPath(context.api);
       if (GAME_PATH !== undefined) {
@@ -1473,7 +1679,7 @@ function applyGame(context, gameSpec) {
     () => Promise.resolve(false), 
     { name: CONFIG_NAME }
   ); //*/
-  context.registerModType(SAVE_ID, 60, 
+  context.registerModType(SAVE_ID, 62, 
     (gameId) => {
       GAME_PATH = getDiscoveryPath(context.api);
       GAME_VERSION = setGameVersion(context.api);
@@ -1492,6 +1698,7 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(LOGICMODS_ID, 27, testLogic, installLogic);
   //29 is pak installer above
   context.registerInstaller(UE4SS_ID, 31, testUe4ss, installUe4ss);
+  context.registerInstaller(SIGBYPASS_ID, 32, testSigBypass, installSigBypass);
   context.registerInstaller(SCRIPTS_ID, 33, testScripts, installScripts);
   context.registerInstaller(DLL_ID, 35, testDll, installDll);
   context.registerInstaller(ROOT_ID, 37, testRoot, installRoot);
