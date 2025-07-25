@@ -12,6 +12,7 @@ const MS_APPID = "FatsharkAB.Warhammer40000DarktideNew";
 const template = require("string-template");
 const APPDATA = util.getVortexPath('appData');
 const CONFIG_PATH = path.join(APPDATA, "Fatshark", "Darktide");
+const CONFIG_FILE = path.join(CONFIG_PATH, "user_settings.config");
 function pathPattern(api, game, pattern) {
   var _a;
   return template(pattern, {
@@ -506,6 +507,31 @@ function main(context) {
   //register mod types/////////////////////////////////////////////////
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
     util.opn(CONFIG_PATH).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open user_settings.config', () => {
+    util.opn(CONFIG_FILE).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open settings_common.ini', () => {
+    GAME_PATH = getDiscoveryPath(context.api);
+    const openPath = path.join(GAME_PATH, "bundle", "application_settings", 'settings_common.ini');
+    util.opn(openPath).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open win32_settings.ini', () => {
+    GAME_PATH = getDiscoveryPath(context.api);
+    const openPath = path.join(GAME_PATH, "bundle", "application_settings", 'win32_settings.ini');
+    util.opn(openPath).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
