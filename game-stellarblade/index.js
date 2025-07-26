@@ -2,8 +2,8 @@
 Name: Stellar Blade Vortex Extension
 Structure: UE5 (static exe)
 Author: ChemBoy1
-Version: 0.1.6
-Date: 2025-07-24
+Version: 0.1.7
+Date: 2025-07-26
 //////////////////////////////////////////////////*/
 
 //Import libraries
@@ -125,7 +125,8 @@ const UE4SS_ID = `${GAME_ID}-ue4ss`;
 const UE4SS_NAME = "UE4SS";
 const UE4SS_FILE = "dwmapi.dll";
 const UE4SS_DLFILE_STRING = "ue4ss";
-const UE4SS_URL = "https://github.com/UE4SS-RE/RE-UE4SS/releases";
+//const UE4SS_URL = "https://github.com/UE4SS-RE/RE-UE4SS/releases";
+const UE4SS_URL = "https://github.com/Chrisr0/RE-UE4SS/releases"; //custom version for Stellar Blade
 const UE4SS_PAGE_NO = 0;
 const UE4SS_FILE_NO = 0;
 
