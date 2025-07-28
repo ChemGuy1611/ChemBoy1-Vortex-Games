@@ -29,7 +29,7 @@ let DOWNLOAD_FOLDER = '';
 //Unreal Engine specific
 const EPIC_CODE_NAME = "LOTF2";
 const IO_STORE = true; //true if the Paks folder contains .ucas and .utoc files
-const UE4SS_PATH = path.join('ue4ss', 'Mods');
+const UE4SS_MOD_PATH = path.join('ue4ss', 'Mods');
 
 //Discovery IDs
 const gameFinderQuery = {
@@ -283,7 +283,7 @@ function getExecutable(discoveryPath) {
     EXEC_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_XBOX}`;
     EXEC_TARGET = `{gamePath}\\${EXEC_PATH}`;
     SHIPPING_EXE = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_XBOX}\\${EPIC_CODE_NAME}-${EXEC_FOLDER_XBOX}-Shipping.exe`;
-    SCRIPTS_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_XBOX}\\${UE4SS_PATH}`;
+    SCRIPTS_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_XBOX}\\${UE4SS_MOD_PATH}`;
     SCRIPTS_TARGET = `{gamePath}\\${SCRIPTS_PATH}`;
     CONFIG_PATH = CONFIG_PATH_XBOX;
     CONFIG_TARGET = `${CONFIG_PATH}`;
@@ -308,7 +308,7 @@ function getExecutable(discoveryPath) {
     EXEC_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_DEFAULT}`;
     EXEC_TARGET = `{gamePath}\\${EXEC_PATH}`;
     SHIPPING_EXE = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_DEFAULT}\\${EPIC_CODE_NAME}-${EXEC_FOLDER_DEFAULT}-Shipping.exe`;
-    SCRIPTS_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_DEFAULT}\\${UE4SS_PATH}`;
+    SCRIPTS_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_DEFAULT}\\${UE4SS_MOD_PATH}`;
     SCRIPTS_TARGET = `{gamePath}\\${SCRIPTS_PATH}`;
     CONFIG_PATH = CONFIG_PATH_DEFAULT;
     CONFIG_TARGET = `${CONFIG_PATH}`;

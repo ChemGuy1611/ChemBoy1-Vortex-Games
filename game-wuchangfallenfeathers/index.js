@@ -2,8 +2,8 @@
 Name: WUCHANG: Fallen Feathers Vortex Extension
 Structure: UE5 (Xbox-Integrated)
 Author: ChemBoy1
-Version: 0.1.1
-Date: 2025-07-25
+Version: 0.1.2
+Date: 2025-07-28
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -14,7 +14,8 @@ const template = require('string-template');
 //Specify all information about the game
 const GAME_ID = "wuchangfallenfeathers";
 const STEAMAPP_ID = "2277560";
-const EPICAPP_ID = "eab6c586a2534ada8837b118f24018f9";
+//const EPICAPP_ID = "eab6c586a2534ada8837b118f24018f9";
+const EPICAPP_ID = "ebfa14ea910a4e55a48ccf5daf6c2607"; //from edgata.app, probably is correct
 const GOGAPP_ID = "";
 const XBOXAPP_ID = "505GAMESS.P.A.WuchangPCGP";
 const XBOXEXECNAME = "AppProjectPlagueShipping";
@@ -30,7 +31,7 @@ const APPMANIFEST_FILE = 'appxmanifest.xml';
 //Unreal Engine specific
 const EPIC_CODE_NAME = "Project_Plague";
 const IO_STORE = false; //true if the Paks folder contains .ucas and .utoc files
-const UE4SS_PATH = path.join('ue4ss', 'Mods');
+const UE4SS_MOD_PATH = path.join('ue4ss', 'Mods');
 
 //Discovery IDs
 const gameFinderQuery = {
@@ -147,6 +148,7 @@ const UE4SS_URL = "https://github.com/UE4SS-RE/RE-UE4SS/releases";
 const UE4SS_PAGE_NO = 0; // <-- No Nexus page currently
 const UE4SS_FILE_NO = 0;
 
+//no save editor for this game, YET
 const SAVE_EDITOR_ID = `${GAME_ID}-saveeditor`;
 const SAVE_EDITOR_NAME = "Save Editor";
 const SAVE_EDITOR_EXEC = "CO-E33_Save_Editor.exe";
@@ -281,7 +283,7 @@ function getExecutable(discoveryPath) {
     EXEC_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_XBOX}`;
     EXEC_TARGET = `{gamePath}\\${EXEC_PATH}`;
     SHIPPING_EXE = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_XBOX}\\${EPIC_CODE_NAME}-${EXEC_FOLDER_XBOX}-Shipping.exe`;
-    SCRIPTS_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_XBOX}\\${UE4SS_PATH}`;
+    SCRIPTS_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_XBOX}\\${UE4SS_MOD_PATH}`;
     SCRIPTS_TARGET = `{gamePath}\\${SCRIPTS_PATH}`;
     CONFIG_PATH = CONFIG_PATH_XBOX;
     CONFIG_TARGET = `${CONFIG_PATH}`;
@@ -305,7 +307,7 @@ function getExecutable(discoveryPath) {
     EXEC_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_DEFAULT}`;
     EXEC_TARGET = `{gamePath}\\${EXEC_PATH}`;
     SHIPPING_EXE = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_DEFAULT}\\${EPIC_CODE_NAME}-${EXEC_FOLDER_DEFAULT}-Shipping.exe`;
-    SCRIPTS_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_DEFAULT}\\${UE4SS_PATH}`;
+    SCRIPTS_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_DEFAULT}\\${UE4SS_MOD_PATH}`;
     SCRIPTS_TARGET = `{gamePath}\\${SCRIPTS_PATH}`;
     CONFIG_PATH = CONFIG_PATH_DEFAULT;
     CONFIG_TARGET = `${CONFIG_PATH}`;
@@ -329,7 +331,7 @@ function getExecutable(discoveryPath) {
     EXEC_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_DEFAULT}`;
     EXEC_TARGET = `{gamePath}\\${EXEC_PATH}`;
     SHIPPING_EXE = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_DEFAULT}\\${EPIC_CODE_NAME}-${EXEC_FOLDER_DEFAULT}-Shipping.exe`;
-    SCRIPTS_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_DEFAULT}\\${UE4SS_PATH}`;
+    SCRIPTS_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_DEFAULT}\\${UE4SS_MOD_PATH}`;
     SCRIPTS_TARGET = `{gamePath}\\${SCRIPTS_PATH}`;
     CONFIG_PATH = CONFIG_PATH_DEFAULT;
     CONFIG_TARGET = `${CONFIG_PATH}`;

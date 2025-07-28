@@ -6,7 +6,11 @@
 
 ## [0.1.7] - 2025-07-26
 
-- UE4SS downloader function now points to the custom version for Stellar Blade (<https://github.com/Chrisr0/RE-UE4SS/releases>). This function can be run with the button located in the folder icon on the Mods tab toolbar.
+- Fixed UE4SS not installing properly on 0.1.6 due to installer test order.
+- Fixed UE4SS installer performance issue. UE4SS should now install in seconds.
+- Fixed pak mod installer to avoid hijacking any mod that had a .json file without a .pak file.
+- UE4SS downloader function now points to the custom version for Stellar Blade (<https://github.com/Chrisr0/RE-UE4SS/releases>). This function can be run using the button within the folder icon on the Mods toolbar.
+- Added support for Menu Video Randomizer and Improvements (<https://www.nexusmods.com/stellarblade/mods/529>) and mods that depend on it. Mods must include "Menu" folder and at least one .webm or .bk2 video file to trigger the installer.  Otherwise, the user must change the Mod Type to "Menu Mod (.bk2/.webm)" manually.
 
 ## [0.1.6] - 2025-07-24
 

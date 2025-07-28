@@ -135,12 +135,19 @@ const MOVIE_NAME = "Movie Mod (.bk2)";
 const MOVIE_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Movies');
 const MOVIE_EXT = ".bk2";
 
+const MENU_ID = `${GAME_ID}-menu`;
+const MENU_NAME = "Menu Mod (.bk2/.webm)";
+const MENU_PATH = path.join(MOVIE_PATH, 'Menu');
+const MENU_FILE = "menu";
+const MENU_EXTS = [".bk2", ".webm"];
+
 const SPLASH_ID = `${GAME_ID}-splash`;
 const SPLASH_NAME = "Splash Screen";
 const SPLASH_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Splash');
 const SPLASH_FILE = "splash.bmp";
 
 const MOD_PATH_DEFAULT = PAK_PATH;
+const MODTYPE_FOLDERS = [MENU_PATH, SPLASH_PATH, LOGICMODS_PATH, SCRIPTS_PATH, PAK_PATH];
 
 //Filled in from data above
 const spec = {
@@ -222,6 +229,12 @@ const spec = {
       "name": MOVIE_NAME,
       "priority": "high",
       "targetPath": `{gamePath}\\${MOVIE_PATH}`
+    },
+    {
+      "id": MENU_ID,
+      "name": MENU_NAME,
+      "priority": "high",
+      "targetPath": `{gamePath}\\${MENU_PATH}`
     },
     {
       "id": SPLASH_ID,
@@ -402,8 +415,9 @@ function installLogic(files) {
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
-  ((file.indexOf(rootPath) !== -1) &&
-    (!file.endsWith(path.sep)))
+    ((file.indexOf(rootPath) !== -1) &&
+      (!file.endsWith(path.sep))
+    )
   );
 
   const instructions = filtered.map(file => {
@@ -444,8 +458,9 @@ function installUe4ss(files) {
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
-    //((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
-    ((file.indexOf(rootPath) !== -1))
+    ((file.indexOf(rootPath) !== -1) &&
+      (!file.endsWith(path.sep))
+    )
   );
 
   const instructions = filtered.map(file => {
@@ -793,6 +808,47 @@ function saveInstallerNotify(api) {
       },
     ],
   });
+}
+
+//Test for Movie mod files
+function testMenu(files, gameId) {
+  const isMod = files.some(file => (path.basename(file).toLowerCase() === MENU_FILE));
+  const isFile = files.some(file => (MENU_EXTS.includes(path.extname(file).toLowerCase())));
+  let supported = (gameId === spec.game.id) && isMod && isFile;
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install Movie mod files
+function installMenu(files) {
+  const modFile = files.find(file => (MENU_EXTS.includes(path.extname(file).toLowerCase())));
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: MENU_ID };
+
+  //Filter files and set instructions
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
 }
 
 //Test for Movie mod files
@@ -1187,9 +1243,12 @@ function UNREALEXTENSION(context) {
     const supportedGame = testUnrealGame(gameId);
     const fileExt = UNREALDATA.fileExt;
     let modFiles = [];
-    if (fileExt)
+    let isPak = false;
+    if (fileExt) {
       modFiles = files.filter(file => fileExt.includes(path.extname(file).toLowerCase()));
-    const supported = (supportedGame && (gameId === spec.game.id) && modFiles.length > 0);
+      isPak = files.some(file => (path.extname(file).toLowerCase() === '.pak')); //added to avoid hijacking any mod that had a .json file without a .pak file
+    }
+    const supported = (supportedGame && (gameId === spec.game.id) && modFiles.length > 0 && isPak);
     return Promise.resolve({
       supported,
       requiredFiles: []
@@ -1204,7 +1263,7 @@ function UNREALEXTENSION(context) {
     return discoveryPath ? path.join.apply(null, installPath) : undefined;
   };
 
-  context.registerInstaller('ue5-pak-installer', 29, testForUnrealMod, (files, __destinationPath, gameId) => installUnrealMod(context.api, files, gameId));
+  context.registerInstaller('ue5-pak-installer', 35, testForUnrealMod, (files, __destinationPath, gameId) => installUnrealMod(context.api, files, gameId));
 
   context.registerModType(UE5_SORTABLE_ID, 25, (gameId) => testUnrealGame(gameId, true), getUnrealModsPath, () => Promise.resolve(false), {
     name: UE5_SORTABLE_NAME,
@@ -1287,6 +1346,12 @@ function partitionCheckNotify(api, CHECK_DATA) {
   });
 }
 
+async function modFoldersEnsureWritable(gamePath, relPaths) {
+  for (let index = 0; index < relPaths.length; index++) {
+    await fs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
+  }
+}
+
 //Setup function
 async function setup(discovery, api, gameSpec) {
   // SYNCHRONOUS CODE ////////////////////////////////////
@@ -1307,10 +1372,12 @@ async function setup(discovery, api, gameSpec) {
   /*if (CHECK_DOCS) { //if game, staging folder, and config and save folders are on the same drive
     await fs.ensureDirWritableAsync(SAVE_PATH);
   } //*/
-  await fs.ensureDirWritableAsync(path.join(GAME_PATH, SCRIPTS_PATH));
+   //await downloadUe4ss(api, gameSpec);
+  return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
+  /*await fs.ensureDirWritableAsync(path.join(GAME_PATH, SCRIPTS_PATH));
   await fs.ensureDirWritableAsync(path.join(GAME_PATH, LOGICMODS_PATH));
-  //await downloadUe4ss(api, gameSpec);
-  return fs.ensureDirWritableAsync(path.join(GAME_PATH, MOD_PATH_DEFAULT));
+  await fs.ensureDirWritableAsync(path.join(GAME_PATH, MENU_PATH));
+  return fs.ensureDirWritableAsync(path.join(GAME_PATH, MOD_PATH_DEFAULT)); //*/
 }
 
 //Let Vortex know about the game
@@ -1370,16 +1437,17 @@ function applyGame(context, gameSpec) {
   //register mod installers
   context.registerInstaller(UE4SSCOMBO_ID, 25, testUe4ssCombo, installUe4ssCombo);
   context.registerInstaller(LOGICMODS_ID, 27, testLogic, installLogic);
-  //29 is pak installer above
-  context.registerInstaller(UE4SS_ID, 31, testUe4ss, installUe4ss);
-  context.registerInstaller(SCRIPTS_ID, 33, testScripts, installScripts);
-  context.registerInstaller(DLL_ID, 35, testDll, installDll);
+  context.registerInstaller(UE4SS_ID, 29, testUe4ss, installUe4ss);
+  context.registerInstaller(SCRIPTS_ID, 31, testScripts, installScripts);
+  context.registerInstaller(DLL_ID, 33, testDll, installDll);
+  //35 is pak installer above
   context.registerInstaller(ROOT_ID, 37, testRoot, installRoot);
   context.registerInstaller(CONFIG_ID, 39, testConfig, (files) => installConfig(context.api, files));
   context.registerInstaller(SAVE_ID, 41, testSave, (files) => installSave(context.api, files));
-  context.registerInstaller(MOVIE_ID, 42, testMovies, installMovies);
-  context.registerInstaller(SPLASH_ID, 43, testSplash, installSplash);
-  context.registerInstaller(BINARIES_ID, 45, testBinaries, installBinaries);
+  context.registerInstaller(MENU_ID, 43, testMenu, installMenu);
+  context.registerInstaller(MOVIE_ID, 45, testMovies, installMovies);
+  context.registerInstaller(SPLASH_ID, 47, testSplash, installSplash);
+  context.registerInstaller(BINARIES_ID, 49, testBinaries, installBinaries);
 
   //register buttons to open folders
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Paks Folder', () => {
