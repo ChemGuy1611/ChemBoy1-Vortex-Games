@@ -21,7 +21,7 @@ const STEAMAPP_ID = "866570";
 const STEAMAPP_ID_CLASSIC = "238210";
 const GOGAPP_ID = "1448370350";
 const GOGAPP_ID_CLASSIC = "1207659172";
-const EPICAPP_ID = "";
+const EPICAPP_ID = "2feb2f328922458e9f698f620fbddc13";
 const XBOXAPP_ID = "";
 const XBOXEXECNAME = "";
 const GAME_ID = "systemshock225thanniversaryremaster";
@@ -142,7 +142,7 @@ const spec = {
   "discovery": {
     "ids": [
       STEAMAPP_ID,
-      //EPICAPP_ID,
+      EPICAPP_ID,
       GOGAPP_ID,
       //XBOXAPP_ID
     ],
@@ -238,7 +238,7 @@ async function requiresLauncher(gamePath, store) {
           },
       });
   } //*/
-  /*if (store === 'epic') {
+  if (store === 'epic') {
     return Promise.resolve({
         launcher: 'epic',
         addInfo: {

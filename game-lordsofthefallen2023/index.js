@@ -14,7 +14,7 @@ const template = require('string-template');
 //Specify all information about the game
 const GAME_ID = "lordsofthefallen2023";
 const STEAMAPP_ID = "1501750";
-const EPICAPP_ID = "";
+const EPICAPP_ID = "ce98de7d9e9c47ea8d9ba8e46a5063b4";
 const GOGAPP_ID = "";
 const XBOXAPP_ID = "CIGamesS.A.LordsoftheFallen-PC";
 const XBOXEXECNAME = "AppLordsoftheFallenShipping";
@@ -35,7 +35,7 @@ const UE4SS_MOD_PATH = path.join('ue4ss', 'Mods');
 const gameFinderQuery = {
   steam: [{ id: STEAMAPP_ID, prefer: 0 }],
   //gog: [{ id: GOGAPP_ID }],
-  //epic: [{ id: EPICAPP_ID }],
+  epic: [{ id: EPICAPP_ID }],
   xbox: [{ id: XBOXAPP_ID }],
 };
 
@@ -256,7 +256,7 @@ async function requiresLauncher(gamePath, store) {
           },
       });
   } //*/
-  /*if (store === 'epic') {
+  if (store === 'epic') {
     return Promise.resolve({
         launcher: 'epic',
         addInfo: {

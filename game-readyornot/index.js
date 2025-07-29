@@ -14,7 +14,7 @@ const template = require('string-template');
 //Specify all information about the game
 const GAME_ID = "readyornot";
 const STEAMAPP_ID = "1144200";
-const EPICAPP_ID = "";
+const EPICAPP_ID = "07e0052292f44e71a1efeb219d060ea5";
 const GOGAPP_ID = "";
 const XBOXAPP_ID = "";
 const XBOXEXECNAME = "";
@@ -158,7 +158,7 @@ const spec = {
   "discovery": {
     "ids": [
       STEAMAPP_ID,
-      //EPICAPP_ID,
+      EPICAPP_ID,
       //GOGAPP_ID,
       //XBOXAPP_ID
     ],

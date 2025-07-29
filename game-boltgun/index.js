@@ -13,7 +13,7 @@ const template = require('string-template');
 
 //Specify all information about the game
 const STEAMAPP_ID = "2005010";
-const EPICAPP_ID = "";
+const EPICAPP_ID = "7425a2db41cf4574a957363a79813ac1";
 const GOGAPP_ID = "2028053392";
 const XBOXAPP_ID = "FocusHomeInteractiveSA.Boltgun-Windows";
 const XBOXEXECNAME = "AppWarhammer40000BoltgunShipping";
@@ -25,7 +25,7 @@ const EPIC_CODE_NAME = "Boltgun";
 const gameFinderQuery = {
   steam: [{ id: STEAMAPP_ID, prefer: 0 }],
   gog: [{ id: GOGAPP_ID }],
-  //epic: [{ id: EPICAPP_ID }],
+  epic: [{ id: EPICAPP_ID }],
   xbox: [{ id: XBOXAPP_ID }],
 };
 

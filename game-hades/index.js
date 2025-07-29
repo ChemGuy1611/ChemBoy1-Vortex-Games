@@ -13,7 +13,7 @@ const template = require('string-template');
 
 //Specify all the information about the game
 const STEAMAPP_ID = "1145360";
-const EPICAPP_ID = "";
+const EPICAPP_ID = "Min";
 const XBOXAPP_ID = "";
 const XBOXEXECNAME = "";
 const GAME_ID = "hades";
@@ -117,7 +117,7 @@ const spec = {
   "discovery": {
     "ids": [
       STEAMAPP_ID,
-      //EPICAPP_ID,
+      EPICAPP_ID,
       //XBOXAPP_ID,
     ],
     "names": []
@@ -194,8 +194,6 @@ async function requiresLauncher() {
   if (game.gameStoreId === "steam") {
     return undefined;
   }
-
-  /*
   if (game.gameStoreId === "epic") {
     return {
       launcher: "epic",
@@ -203,8 +201,7 @@ async function requiresLauncher() {
         appId: EPICAPP_ID,
       },
     };
-  }
-  ///*
+  } //*/
   if (game.gameStoreId === "xbox") {
     return {
       launcher: "xbox",
@@ -214,8 +211,7 @@ async function requiresLauncher() {
         parameters: [{ appExecName: XBOXEXECNAME }],
       },
     };
-  }
-  //*/
+  } //*/
   return undefined;
 }
 

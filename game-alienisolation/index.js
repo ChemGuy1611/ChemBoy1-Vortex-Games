@@ -16,7 +16,7 @@ const GAME_NAME = "Alien Isolation";
 const GAME_NAME_SHORT = "Alien Isolation";
 const STEAMAPP_ID = "214490";
 const GOGAPP_ID = "1744178250";
-const EPICAPP_ID = "";
+const EPICAPP_ID = "8935bb3e1420443a9789fe01758039a5";
 const XBOXAPP_ID = "";
 const XBOXEXECNAME = "";
 const EXEC = "AI.exe";
@@ -75,7 +75,7 @@ const spec = {
     "ids": [
       STEAMAPP_ID,
       GOGAPP_ID,
-      //EPICAPP_ID,
+      EPICAPP_ID,
       //XBOXAPP_ID,
     ],
     "names": []
@@ -136,7 +136,6 @@ async function requiresLauncher() {
   if (game.gameStoreId === "gog") {
     return undefined;
   }
-  /*
   if (game.gameStoreId === "epic") {
     return {
       launcher: "epic",
@@ -145,7 +144,7 @@ async function requiresLauncher() {
       },
     };
   }
-  if (game.gameStoreId === "xbox") {
+  /*if (game.gameStoreId === "xbox") {
     return {
       launcher: "xbox",
       addInfo: {

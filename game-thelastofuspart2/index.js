@@ -16,7 +16,7 @@ const { clear } = require('console');
 
 //Specify all information about the game
 const STEAMAPP_ID = "2531310";
-const EPICAPP_ID = "";
+const EPICAPP_ID = "831cd8c0c25b4615ade419ecb4f50e42";
 const GAME_ID = "thelastofuspart2";
 const GAME_NAME = "The Last of Us Part II\t Remastered";
 const GAME_NAME_SHORT = "TLOU Part II";
@@ -266,7 +266,7 @@ const spec = {
   "discovery": {
     "ids": [
       STEAMAPP_ID,
-      //EPICAPP_ID,
+      EPICAPP_ID,
     ],
     "names": []
   }
@@ -333,7 +333,6 @@ function makeFindGame(api, gameSpec) {
 }
 
 async function requiresLauncher(gamePath, store) {
-  /*
   if (store === 'epic') {
     return Promise.resolve({
         launcher: 'epic',
