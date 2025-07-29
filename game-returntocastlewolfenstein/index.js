@@ -13,7 +13,7 @@ const template = require('string-template');
 
 //Specify all the information about the game
 const STEAMAPP_ID = "9010";
-const EPICAPP_ID = "";
+const EPICAPP_ID = null;
 const GOGAPP_ID = "1441704976";
 const XBOXAPP_ID = "BethesdaSoftworks.ReturntoCastleWolfenstein";
 const XBOXEXECNAME = "Game";

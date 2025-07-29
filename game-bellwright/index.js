@@ -14,7 +14,7 @@ const template = require('string-template');
 //Specify all information about the game
 const GAME_ID = "bellwright";
 const STEAMAPP_ID = "1812450";
-const EPICAPP_ID = "";
+const EPICAPP_ID = null;
 const GOGAPP_ID = "";
 const XBOXAPP_ID = "";
 const XBOXEXECNAME = "";

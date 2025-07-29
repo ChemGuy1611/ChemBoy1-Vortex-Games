@@ -15,7 +15,7 @@ const fsPromises = require('fs/promises');
 //Specify all information about the game
 const GAME_ID = "dragonballsparkingzero";
 const STEAMAPP_ID = "1790600";
-const EPICAPP_ID = "";
+const EPICAPP_ID = null;
 const GOGAPP_ID = "";
 const XBOXAPP_ID = "";
 const XBOXEXECNAME = "";

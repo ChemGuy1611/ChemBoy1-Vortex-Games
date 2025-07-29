@@ -15,7 +15,7 @@ const { download, findModByFile, findDownloadIdByFile, resolveVersionByPattern, 
 //Specify all information about the game
 const GAME_ID = "oblivionremastered";
 const STEAMAPP_ID = "2623190";
-const EPICAPP_ID = "";
+const EPICAPP_ID = null;
 const GOGAPP_ID = "";
 const XBOXAPP_ID = "BethesdaSoftworks.ProjectAltar";
 const XBOXEXECNAME = "AppUEGameShipping";

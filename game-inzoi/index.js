@@ -14,7 +14,7 @@ const { get } = require('http');
 
 //Specify all information about the game
 const GAME_ID = "inzoi";
-const EPICAPP_ID = "";
+const EPICAPP_ID = null;
 const STEAMAPP_ID = "2456740";
 const GOGAPP_ID = "";
 const XBOXAPP_ID = "";

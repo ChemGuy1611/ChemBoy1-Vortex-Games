@@ -14,7 +14,7 @@ const template = require('string-template');
 //Specify all information about the game
 const GAME_ID = "senuassagahellblade2";
 const STEAMAPP_ID = "2461850";
-const EPICAPP_ID = "";
+const EPICAPP_ID = null;
 const GOGAPP_ID = "";
 const XBOXAPP_ID = "Microsoft.Superb";
 const XBOXEXECNAME = "AppHellblade2Shipping";

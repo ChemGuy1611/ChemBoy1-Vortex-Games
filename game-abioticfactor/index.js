@@ -14,7 +14,7 @@ const template = require('string-template');
 //Specify all information about the game
 const GAME_ID = "abioticfactor"; //same as Nexus domain
 const STEAMAPP_ID = "427410"; //from steamdb.info
-const EPICAPP_ID = ""; //from egdata.app
+const EPICAPP_ID = null; //from egdata.app
 const GOGAPP_ID = ""; // from gogdb.org
 const XBOXAPP_ID = "PlayStack.AbioticFactor"; //from appxmanifest.xml
 const XBOXEXECNAME = "AppAbioticFactorShipping"; //from appxmanifest.xml

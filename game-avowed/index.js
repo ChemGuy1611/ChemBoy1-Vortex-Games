@@ -14,7 +14,7 @@ const template = require('string-template');
 //Specify all information about the game
 const GAME_ID = "avowed";
 const STEAMAPP_ID = "2457220";
-const EPICAPP_ID = "";
+const EPICAPP_ID = null;
 const GOGAPP_ID = "";
 const XBOXAPP_ID = "Microsoft.Avowed";
 const XBOXEXECNAME = "AppAvowedShipping";

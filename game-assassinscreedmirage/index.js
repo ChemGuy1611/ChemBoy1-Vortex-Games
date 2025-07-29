@@ -14,7 +14,7 @@ const winapi = require('winapi-bindings');
 //Specify all the information about the game
 const UPLAYAPP_ID = "6100";
 const STEAMAPP_ID = "3035570";
-const EPICAPP_ID = "";
+const EPICAPP_ID = null;
 const GAME_ID = "assassinscreedmirage";
 const EXEC = "ACMirage.exe";
 const FORGER_ID = "assassinscreedmirage-forger";

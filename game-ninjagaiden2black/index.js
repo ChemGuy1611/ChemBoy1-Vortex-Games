@@ -14,7 +14,7 @@ const template = require('string-template');
 //Specify all information about the game
 const GAME_ID = "ninjagaiden2black";
 const STEAMAPP_ID = "3287520";
-const EPICAPP_ID = "";
+const EPICAPP_ID = null;
 const GOGAPP_ID = "";
 const XBOXAPP_ID = "946B6A6E.NINJAGAIDEN2Black";
 const XBOXEXECNAME = "AppNINJAGAIDEN2BlackShipping";
