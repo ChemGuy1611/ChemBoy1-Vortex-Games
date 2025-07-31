@@ -4,6 +4,10 @@ FUTURE CHANGES (NOT IMPLEMENTED YET):
 
 - None Planned
 
+## [0.1.3] - 2025-07-31
+
+- Fixed an undefined variable error that could occur if the game folder is not readable.
+
 ## [0.1.2] - 2025-07-20
 
 - Fixed Epic version mod folder name.
