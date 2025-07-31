@@ -1,13 +1,13 @@
-/*
+/*///////////////////////////////////////////
 Name: WH40k Space Marine Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.1.3
-Date: 01/06/2025
-*/
+Version: 0.2.0
+Date: 2025-07-30
+///////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors } = require('vortex-api');
+const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 
@@ -19,6 +19,10 @@ const XBOXAPP_ID = "";
 const XBOXEXECNAME = "";
 const GAME_ID = "warhammer40000spacemarine";
 const EXEC = "SpaceMarine.exe";
+
+const XBOXAPP_ID_REMASTER = '7904SEGAEuropeLtd.SpaceMarine40k';
+const XBOXEXECNAME_REMASTER = 'SpaceMarineBootstrapper';
+const EXEC_XBOX = 'gamelaunchhelper.exe';
 
 const PREVIEW_ID = `${GAME_ID}-preview`;
 const PREVIEW_NAME = "Preview Folder";
@@ -44,7 +48,6 @@ const spec = {
       "gogAppId": GOGAPP_ID,
       //"epicAppId": EPICAPP_ID,
       //"xboxAppId": XBOXAPP_ID,
-      "nexusPageId": GAME_ID
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
