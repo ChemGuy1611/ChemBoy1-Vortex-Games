@@ -809,7 +809,7 @@ async function deserializeLoadOrder(context) {
     }
   }
 
-  //* //push new modid's from Steam Workshop mods to loadOrder
+  //* push new modid's from Steam Workshop mods to loadOrder
   if (SWFOLDER_FOUND === true) {
     for (let MOD_ID of steamWorkshopIds) {
       if (!loadOrder.find((mod) => (mod.id === MOD_ID))) {
@@ -833,7 +833,6 @@ async function serializeLoadOrder(context, loadOrder) {
     return;
   } //*/
   let gameDir = getDiscoveryPath(context.api);
-  //let gameDir = GAME_PATH;
   if (gameDir === undefined) {
     return Promise.reject(new util.NotFound('Game not found'));
   }
