@@ -1,12 +1,11 @@
 const path = require("path");
 const { fs, actions, util, selectors } = require("vortex-api");
 
-// Nexus Mods domain for the game. e.g. nexusmods.com/warhammer40kdarktide
-const GAME_ID = "warhammer40kdarktide";
-// Steam app id
-const STEAMAPP_ID = "1361210";
-// Microsoft Store app id (gamepass)
-const MS_APPID = "FatsharkAB.Warhammer40000DarktideNew";
+const GAME_ID = "warhammer40kdarktide"; // Nexus Mods domain for the game. e.g. nexusmods.com/warhammer40kdarktide
+const STEAMAPP_ID = "1361210"; // Steam app id
+const MS_APPID = "FatsharkAB.Warhammer40000DarktideNew"; // Microsoft Store app id (gamepass)
+
+let GAME_PATH = null;
 
 //CUSTOM CODE//////////////////////////////////////////////////////////////////
 const template = require("string-template");
@@ -100,25 +99,13 @@ const tools = [
   },
 ];
 
-// Not sure if there is a more elegant way to get this for patching later
-let GAME_PATH = null;
-
 async function prepareForModding(discovery, api) {
   GAME_PATH = discovery.path;
 
-  // Ensure the mods directory exists
-  await fs.ensureDirWritableAsync(path.join(discovery.path, "mods"));
-
-  // Ensure the mod load order file exists
-  await fs.ensureFileAsync(
-    path.join(discovery.path, "mods", "mod_load_order.txt"),
-  );
-
-  // Check if DMF is installed
-  await checkForDMF(api, path.join(discovery.path, "mods", "dmf"));
-
-  // Check if DML is installed
-  await checkForDML(api, path.join(discovery.path, "toggle_darktide_mods.bat"));
+  await fs.ensureDirWritableAsync(path.join(discovery.path, "mods")); // Ensure the mods directory exists
+  await fs.ensureFileAsync(path.join(discovery.path, "mods", "mod_load_order.txt")); // Ensure the mod load order file exists
+  await checkForDMF(api, path.join(discovery.path, "mods", "dmf")); // Check if DMF is installed
+  await checkForDML(api, path.join(discovery.path, "toggle_darktide_mods.bat")); // Check if DML is installed
 }
 
 function checkForDMF(api, mod_framework) {
@@ -328,10 +315,9 @@ async function deserializeLoadOrder(context) {
         enabled: false,
       };
     });
-    return;
   }
 
-  let gameDir = await queryPath();
+  let gameDir = getDiscoveryPath(context.api);
 
   let loadOrderPath = path.join(gameDir, "mods", "mod_load_order.txt");
   let loadOrderFile = await fs.readFileAsync(loadOrderPath, {
@@ -339,32 +325,26 @@ async function deserializeLoadOrder(context) {
   });
 
   let modFolderPath = path.join(gameDir, "mods");
-  let modFolders = fs
-    .readdirSync(modFolderPath)
-    // Filter any files/folders out that don't contain ModName.mod
-    .filter((fileName) => {
+  let modFolders = await fs.readdirAsync(modFolderPath);
+  modFolders = modFolders
+    .filter((fileName) => { // Filter any files/folders out that don't contain ModName.mod
       try {
-        fs.readFileSync(path.join(modFolderPath, fileName, `${fileName}.mod`));
+        fs.statSync(path.join(modFolderPath, fileName, `${fileName}.mod`));
         return true;
       } catch (e) {
         return false;
       }
     })
-    // Ignore case when sorting
-    .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+    .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase())); // Ignore case when sorting
 
   // This is the most reliable way I could find to detect if a mod is managed by Vortex
   function isVortexManaged(modId) {
     try {
-      fs.readFileSync(
-        path.join(modFolderPath, modId, `__folder_managed_by_vortex`),
-      );
+      fs.statSync(path.join(modFolderPath, modId, `__folder_managed_by_vortex`));
       return true;
     } catch (e) {
       try {
-        fs.readFileSync(
-          path.join(modFolderPath, modId, `${modId}.mod.vortex_backup`),
-        );
+        fs.statSync(path.join(modFolderPath, modId, `${modId}.mod.vortex_backup`));
         return true;
       } catch (d) {
         return false;
@@ -401,12 +381,12 @@ async function deserializeLoadOrder(context) {
   return loadOrder;
 }
 
-async function serializeLoadOrder(_context, loadOrder) {
+async function serializeLoadOrder(context, loadOrder) {
   if (mod_update_all_profile) {
     return;
   }
 
-  let gameDir = await queryPath();
+  let gameDir = getDiscoveryPath(context.api);
   let loadOrderPath = path.join(gameDir, "mods", "mod_load_order.txt");
 
   let loadOrderOutput = loadOrder
