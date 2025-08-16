@@ -3,8 +3,13 @@ Name: WH40k Space Marine Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
 Version: 0.2.0
+<<<<<<< HEAD
 Date: 2025-07-22
 *////////////////////////////////////////////
+=======
+Date: 2025-07-30
+///////////////////////////////////////////*/
+>>>>>>> bc3cb66ebf888ca8760a59bbe5b24f21cb33ddd2
 
 //Import libraries
 const { actions, fs, util, selectors, log } = require('vortex-api');
@@ -13,9 +18,13 @@ const template = require('string-template');
 
 //Specify all the information about the game
 const STEAMAPP_ID = "55150";
+<<<<<<< HEAD
 const STEAMAPP_ID_MCE = "3169520";
 const EPICAPP_ID = "";
 const EPICAPP_ID_MCE = "";
+=======
+const EPICAPP_ID = null;
+>>>>>>> bc3cb66ebf888ca8760a59bbe5b24f21cb33ddd2
 const GOGAPP_ID = "1668484481";
 const GOGAPP_ID_MCE = "1197056652";
 const XBOXAPP_ID = "";
@@ -24,6 +33,10 @@ const XBOXAPP_ID_MCE = "7904SEGAEuropeLtd.SpaceMarine40k";
 const XBOXEXECNAME_MCE = "SpaceMarineBootstrapper";
 const GAME_ID = "warhammer40000spacemarine";
 const EXEC = "SpaceMarine.exe"; //same for MCE (nice)
+
+const XBOXAPP_ID_REMASTER = '7904SEGAEuropeLtd.SpaceMarine40k';
+const XBOXEXECNAME_REMASTER = 'SpaceMarineBootstrapper';
+const EXEC_XBOX = 'gamelaunchhelper.exe';
 
 const PREVIEW_ID = `${GAME_ID}-preview`;
 const PREVIEW_NAME = "Preview Folder";
@@ -48,7 +61,6 @@ const spec = {
       "gogAppId": GOGAPP_ID,
       //"epicAppId": EPICAPP_ID,
       //"xboxAppId": XBOXAPP_ID,
-      "nexusPageId": GAME_ID
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,

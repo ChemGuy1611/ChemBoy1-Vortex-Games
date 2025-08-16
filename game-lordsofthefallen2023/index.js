@@ -14,7 +14,7 @@ const template = require('string-template');
 //Specify all information about the game
 const GAME_ID = "lordsofthefallen2023";
 const STEAMAPP_ID = "1501750";
-const EPICAPP_ID = "";
+const EPICAPP_ID = "ce98de7d9e9c47ea8d9ba8e46a5063b4";
 const GOGAPP_ID = "";
 const XBOXAPP_ID = "CIGamesS.A.LordsoftheFallen-PC";
 const XBOXEXECNAME = "AppLordsoftheFallenShipping";
@@ -29,13 +29,13 @@ let DOWNLOAD_FOLDER = '';
 //Unreal Engine specific
 const EPIC_CODE_NAME = "LOTF2";
 const IO_STORE = true; //true if the Paks folder contains .ucas and .utoc files
-const UE4SS_PATH = path.join('ue4ss', 'Mods');
+const UE4SS_MOD_PATH = path.join('ue4ss', 'Mods');
 
 //Discovery IDs
 const gameFinderQuery = {
   steam: [{ id: STEAMAPP_ID, prefer: 0 }],
   //gog: [{ id: GOGAPP_ID }],
-  //epic: [{ id: EPICAPP_ID }],
+  epic: [{ id: EPICAPP_ID }],
   xbox: [{ id: XBOXAPP_ID }],
 };
 
@@ -256,7 +256,7 @@ async function requiresLauncher(gamePath, store) {
           },
       });
   } //*/
-  /*if (store === 'epic') {
+  if (store === 'epic') {
     return Promise.resolve({
         launcher: 'epic',
         addInfo: {
@@ -283,7 +283,7 @@ function getExecutable(discoveryPath) {
     EXEC_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_XBOX}`;
     EXEC_TARGET = `{gamePath}\\${EXEC_PATH}`;
     SHIPPING_EXE = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_XBOX}\\${EPIC_CODE_NAME}-${EXEC_FOLDER_XBOX}-Shipping.exe`;
-    SCRIPTS_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_XBOX}\\${UE4SS_PATH}`;
+    SCRIPTS_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_XBOX}\\${UE4SS_MOD_PATH}`;
     SCRIPTS_TARGET = `{gamePath}\\${SCRIPTS_PATH}`;
     CONFIG_PATH = CONFIG_PATH_XBOX;
     CONFIG_TARGET = `${CONFIG_PATH}`;
@@ -308,7 +308,7 @@ function getExecutable(discoveryPath) {
     EXEC_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_DEFAULT}`;
     EXEC_TARGET = `{gamePath}\\${EXEC_PATH}`;
     SHIPPING_EXE = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_DEFAULT}\\${EPIC_CODE_NAME}-${EXEC_FOLDER_DEFAULT}-Shipping.exe`;
-    SCRIPTS_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_DEFAULT}\\${UE4SS_PATH}`;
+    SCRIPTS_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_DEFAULT}\\${UE4SS_MOD_PATH}`;
     SCRIPTS_TARGET = `{gamePath}\\${SCRIPTS_PATH}`;
     CONFIG_PATH = CONFIG_PATH_DEFAULT;
     CONFIG_TARGET = `${CONFIG_PATH}`;

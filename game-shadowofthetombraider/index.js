@@ -13,7 +13,7 @@ const template = require('string-template');
 
 //Specify all the information about the game
 const STEAMAPP_ID = "750920";
-const EPICAPP_ID = "";
+const EPICAPP_ID = "890d9cf396d04922a1559333df419fed";
 const GOGAPP_ID = "";
 const XBOXAPP_ID = "39C668CD.TombRaider11BaseGame";
 const XBOXEXECNAME = "Game";
@@ -112,7 +112,7 @@ const spec = {
   "discovery": {
     "ids": [
       STEAMAPP_ID,
-      //EPICAPP_ID,
+      EPICAPP_ID,
       //GOGAPP_ID,
       XBOXAPP_ID
     ],
@@ -194,7 +194,6 @@ async function requiresLauncher(gamePath, store) {
       undefined,
     );
   }
-  /*
   else if (store === 'epic') {
     return Promise.resolve({
       launcher: "epic",
@@ -202,8 +201,7 @@ async function requiresLauncher(gamePath, store) {
         appId: EPICAPP_ID,
       },
     });
-  }
-  //*/
+  } //*/
   else if (store === 'xbox') {
     return Promise.resolve({
       launcher: "xbox",

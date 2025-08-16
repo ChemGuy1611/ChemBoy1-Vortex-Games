@@ -13,7 +13,7 @@ const template = require('string-template');
 
 //Specify all the information about the game
 const STEAMAPP_ID = "2100";
-const EPICAPP_ID = "";
+const EPICAPP_ID = null;
 const GOGAPP_ID = "";
 const XBOXAPP_ID = "";
 const XBOXEXECNAME = "";

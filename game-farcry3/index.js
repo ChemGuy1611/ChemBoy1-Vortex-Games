@@ -13,7 +13,7 @@ const Bluebird = require('bluebird');
 
 //Specify all the information about the game
 const STEAMAPP_ID = "220240";
-const EPICAPP_ID = "";
+const EPICAPP_ID = null;
 const UPLAYAPP_ID = "46";
 const GOGAPP_ID = "";
 const XBOXAPP_ID = "";

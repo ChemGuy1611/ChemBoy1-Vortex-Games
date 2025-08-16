@@ -13,7 +13,7 @@ const template = require('string-template');
 
 //Specify all the information about the game
 const STEAMAPP_ID = "1145350";
-const EPICAPP_ID = "";
+const EPICAPP_ID = null;
 const GAME_ID = "hades2";
 const GAME_NAME = "Hades II"
 const EXEC = "Ship\\Hades2.exe";

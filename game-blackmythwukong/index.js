@@ -14,7 +14,7 @@ const template = require('string-template');
 //Specify all information about the game
 const GAME_ID = "blackmythwukong";
 const STEAMAPP_ID = "2358720";
-const EPICAPP_ID = "";
+const EPICAPP_ID = "f53c5471fd0e47619e72b6d21a527abe";
 const GOGAPP_ID = "";
 const XBOXAPP_ID = "";
 const XBOXEXECNAME = "";
@@ -177,7 +177,7 @@ const spec = {
   "discovery": {
     "ids": [
       STEAMAPP_ID,
-      //EPICAPP_ID,
+      EPICAPP_ID,
       //GOGAPP_ID,
       //XBOXAPP_ID
     ],
@@ -259,12 +259,9 @@ async function requiresLauncher() {
   if (game.gameStoreId === "steam") {
     return undefined;
   }
-
   if (game.gameStoreId === "gog") {
     return undefined;
   }
-
-  /*
   if (game.gameStoreId === "epic") {
     //api.showErrorNotification('Epic AppName needed to launch game', 'Please see the extension page on Nexus Mods for instructions and send the Epic AppName to the mod author.');
     //return undefined;
@@ -274,9 +271,7 @@ async function requiresLauncher() {
         appId: EPICAPP_ID,
       },
     };
-  }
-  */
-
+  } //*/
   if (game.gameStoreId === "xbox") {
     return {
       launcher: "xbox",
@@ -287,7 +282,6 @@ async function requiresLauncher() {
       },
     };
   }
-
   return undefined;
 }
 

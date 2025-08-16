@@ -14,7 +14,7 @@ const template = require('string-template');
 //Specify all information about the game
 const GAME_ID = "runescapedragonwilds";
 const STEAMAPP_ID = "1374490";
-const EPICAPP_ID = "";
+const EPICAPP_ID = null;
 const GOGAPP_ID = "";
 const XBOXAPP_ID = "";
 const XBOXEXECNAME = "";
