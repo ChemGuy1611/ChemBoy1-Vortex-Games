@@ -1,30 +1,34 @@
-/*
+/*///////////////////////////////////////////
 Name: WH40k Space Marine Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.1.3
-Date: 01/06/2025
-*/
+Version: 0.2.0
+Date: 2025-07-22
+*////////////////////////////////////////////
 
 //Import libraries
-const { actions, fs, util, selectors } = require('vortex-api');
+const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 
 //Specify all the information about the game
 const STEAMAPP_ID = "55150";
+const STEAMAPP_ID_MCE = "3169520";
 const EPICAPP_ID = "";
+const EPICAPP_ID_MCE = "";
 const GOGAPP_ID = "1668484481";
+const GOGAPP_ID_MCE = "1197056652";
 const XBOXAPP_ID = "";
 const XBOXEXECNAME = "";
+const XBOXAPP_ID_MCE = "7904SEGAEuropeLtd.SpaceMarine40k";
+const XBOXEXECNAME_MCE = "SpaceMarineBootstrapper";
 const GAME_ID = "warhammer40000spacemarine";
-const EXEC = "SpaceMarine.exe";
+const EXEC = "SpaceMarine.exe"; //same for MCE (nice)
 
 const PREVIEW_ID = `${GAME_ID}-preview`;
 const PREVIEW_NAME = "Preview Folder";
 const PREVIEW_PATH = "preview";
 const PREVIEW_FILE = "preview";
-const PREVIEW_IDX = `${PREVIEW_FILE}\\`;
 
 const spec = {
   "game": {
@@ -64,9 +68,13 @@ const spec = {
   "discovery": {
     "ids": [
       STEAMAPP_ID,
+      STEAMAPP_ID_MCE,
       //EPICAPP_ID,
+      //EPICAPP_ID_MCE,
       GOGAPP_ID,
-      //XBOXAPP_ID
+      GOGAPP_ID_MCE,
+      //XBOXAPP_ID,
+      XBOXAPP_ID_MCE
     ],
     "names": []
   }
