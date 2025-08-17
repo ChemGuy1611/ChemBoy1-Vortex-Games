@@ -2,8 +2,8 @@
 Name: Lords of the Fallen (2023) Vortex Extension
 Structure: UE5 (Xbox-Integrated)
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2025-04-23
+Version: 0.1.1
+Date: 2025-08-17
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -256,7 +256,7 @@ async function requiresLauncher(gamePath, store) {
           },
       });
   } //*/
-  if (store === 'epic') {
+  /*if (store === 'epic') {
     return Promise.resolve({
         launcher: 'epic',
         addInfo: {
@@ -301,7 +301,7 @@ function getExecutable(discoveryPath) {
     SAVE_PATH = path.join(SAVE_PATH_XBOX, USERID_FOLDER);
     SAVE_TARGET = `${SAVE_PATH}`;
     //return EXEC_XBOX;
-    return SHIPPING_EXE;
+    return SHIPPING_EXE; //MUST use the Shipping exe for Xbox version to bypass EAC to allow modding
   };
   if (isCorrectExec(EXEC_DEFAULT)) {
     GAME_VERSION = 'default';
@@ -990,9 +990,7 @@ function makePrefix(input) {
 
 function loadOrderPrefix(api, mod) {
   const state = api.getState();
-  const gameId = mod.attributes.downloadGame;
-  if (!gameId)
-      return 'ZZZZ-';
+  const gameId = GAME_ID;
   const profile = selectors.lastActiveProfileForGame(state, gameId);
   const loadOrder = util.getSafe(state, ['persistent', 'loadOrder', profile], {});
   const loKeys = Object.keys(loadOrder);
