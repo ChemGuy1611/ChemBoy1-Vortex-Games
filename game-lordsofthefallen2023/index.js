@@ -247,7 +247,7 @@ function pathPattern(api, game, pattern) {
 }
 
 async function requiresLauncher(gamePath, store) {
-  /*if (store === 'xbox') {
+  /*if (store === 'xbox') { //DO NOT launch from store due to EAC bypass
       return Promise.resolve({
           launcher: 'xbox',
           addInfo: {
@@ -256,7 +256,7 @@ async function requiresLauncher(gamePath, store) {
           },
       });
   } //*/
-  /*if (store === 'epic') {
+  /*if (store === 'epic') { //DO NOT launch from store due to EAC bypass
     return Promise.resolve({
         launcher: 'epic',
         addInfo: {
