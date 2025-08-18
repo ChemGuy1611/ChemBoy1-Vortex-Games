@@ -1,13 +1,13 @@
-/*
+/*////////////////////////////////////////////
 Name: Red Dead Redemption Vortex Extension
 Structure: 3rd-Party Mod Installer
 Author: ChemBoy1
-Version: 0.2.2
-Date: 11/08/2024
-*/
+Version: 0.2.4
+Date: 2025-08-18
+////////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors } = require('vortex-api');
+const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 
@@ -21,6 +21,9 @@ const GAME_ID = "reddeadredemption";
 const EXEC = "RDR.exe";
 const GAME_NAME = "Red Dead Redemption";
 const GAME_NAME_SHORT = "RDR";
+let GAME_PATH = null;
+let STAGING_FOLDER = '';
+let DOWNLOAD_FOLDER = '';
 
 const ROOT_ID = `${GAME_ID}-root`;
 
@@ -143,6 +146,8 @@ const tools = [
   },
 ];
 
+// BASIC EXTENSION FUNCTIONS ////////////////////////////////////////////////////////////////////
+
 //Set mod type priorities
 function modTypePriority(priority) {
   return {
@@ -157,7 +162,7 @@ function pathPattern(api, game, pattern) {
   return template(pattern, {
     gamePath: (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0 ? void 0 : _a.path,
     documents: util.getVortexPath('documents'),
-    localAppData: process.env['LOCALAPPDATA'],
+    localAppData: util.getVortexPath('localAppData'),
     appData: util.getVortexPath('appData'),
   });
 }
@@ -169,47 +174,31 @@ function makeGetModPath(api, gameSpec) {
     : pathPattern(api, gameSpec.game, gameSpec.game.modPath);
 }
 
-//Find game information by API utility
-async function queryGame() {
-  let game = await util.GameStoreHelper.findByAppId(spec.discovery.ids);
-  return game;
-}
-
-//Find game install location 
-async function queryPath() {
-  let game = await queryGame();
-  return game.gamePath;
+//Find game installation directory
+function makeFindGame(api, gameSpec) {
+  return () => util.GameStoreHelper.findByAppId(gameSpec.discovery.ids)
+    .then((game) => game.gamePath);
 }
 
 //Set launcher requirements
-async function requiresLauncher() {
-  let game = await queryGame();
-  if (game.gameStoreId === "steam") {
-    return undefined;
-  }
-  if (game.gameStoreId === "gog") {
-    return undefined;
-  }
-  if (game.gameStoreId === "epic") {
-    return {
-      launcher: "epic",
-      addInfo: {
-        appId: EPICAPP_ID,
-      },
-    };
+async function requiresLauncher(gamePath, store) {
+  /*if (store === 'steam') {
+    return Promise.resolve({
+        launcher: 'steam',
+    });
   } //*/
-  if (game.gameStoreId === "xbox") {
-    return {
-      launcher: "xbox",
-      addInfo: {
-        appId: XBOXAPP_ID,
-        // appExecName is the <Application id="" in the appxmanifest.xml file
-        parameters: [{ appExecName: XBOXEXECNAME }],
-      },
-    };
-  }
-  return undefined;
+  if (store === 'epic') {
+    return Promise.resolve({
+        launcher: 'epic',
+        addInfo: {
+            appId: EPICAPP_ID,
+        },
+    });
+  } //*/
+  return Promise.resolve(undefined);
 }
+
+// AUTOMATIC DOWNLOAD FUNCTIONS ////////////////////////////////////////////////////////
 
 //Check if mod injector is installed
 function isMagicInstalled(api, spec) {
@@ -254,7 +243,7 @@ async function downloadMagic(api, gameSpec) {
         game: gameSpec.game.id,
         name: MOD_NAME,
       };
-      const URL = `https://github.com/Foxxyyy/Magic-RDR/releases/download/v1.3.6/MagicRDR_v1.3.6.3.rar`;
+      const URL = `https://github.com/Foxxyyy/Magic-RDR/releases/download/v1.3.9/MagicRDR_v1.3.9.zip`;
       const dlId = await util.toPromise(cb =>
         api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
       const modId = await util.toPromise(cb =>
@@ -326,7 +315,7 @@ async function downloadScriptHook(api, gameSpec) {
           allowAutoDeploy: true,
           installed: true,
         }),
-        actions.setModType(gameSpec.game.id, modId, SIGBYPASS_ID), // Set the mod type
+        actions.setModType(gameSpec.game.id, modId, SCRIPTHOOK_ID), // Set the mod type
       ];
       util.batchDispatch(api.store, batched); // Will dispatch both actions.
     //Show the user the download page if the download, install process fails
@@ -387,7 +376,7 @@ async function downloadModLoader(api, gameSpec) {
           allowAutoDeploy: true,
           installed: true,
         }),
-        actions.setModType(gameSpec.game.id, modId, SIGBYPASS_ID), // Set the mod type
+        actions.setModType(gameSpec.game.id, modId, MODLOADER_ID), // Set the mod type
       ];
       util.batchDispatch(api.store, batched); // Will dispatch both actions.
     //Show the user the download page if the download, install process fails
@@ -400,6 +389,8 @@ async function downloadModLoader(api, gameSpec) {
     }
   }
 }
+
+// MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
 
 //Installer test for Fluffy Mod Manager files
 function testScriptHook(files, gameId) {
@@ -633,6 +624,8 @@ function installAsiPlugin(files) {
   return Promise.resolve({ instructions });
 }
 
+// MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
+
 //Notify User of Setup instructions for Mod Managers
 function setupNotify(api) {
   const MOD_NAME = "Magic RDR";
@@ -661,7 +654,13 @@ function setupNotify(api) {
 
 //Setup function
 async function setup(discovery, api, gameSpec) {
+  // SYNCHRONOUS CODE ////////////////////////////////////
   setupNotify(api);
+  const state = api.getState();
+  GAME_PATH = discovery.path;
+  STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
+  DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
+  // ASYNC CODE //////////////////////////////////////////
   await fs.ensureDirWritableAsync(path.join(discovery.path, RPF_PATH));
   await downloadMagic(api, gameSpec);
   await downloadScriptHook(api, gameSpec);
@@ -674,9 +673,9 @@ function applyGame(context, gameSpec) {
   //register game
   const game = {
     ...gameSpec.game,
-    queryPath,
+    queryPath: makeFindGame(context.api, gameSpec),
     queryModPath: makeGetModPath(context.api, gameSpec),
-    requiresLauncher,
+    requiresLauncher: requiresLauncher,
     requiresCleanup: true,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     executable: () => gameSpec.game.executable,
@@ -700,13 +699,30 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(MAGIC_ID, 40, testMagic, installMagic);
   context.registerInstaller(RPF_ID, 45, testRPF, installRPF);
   context.registerInstaller(ASIPLUGIN_ID, 50, testAsiPlugin, installAsiPlugin);
+
+  //register actions
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
+    const openPath = path.join(__dirname, 'CHANGELOG.md');
+    util.opn(openPath).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
+    const openPath = DOWNLOAD_FOLDER;
+    util.opn(openPath).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
 }
 
 //main function
 function main(context) {
   applyGame(context, spec);
-  context.once(() => {
-    // put code here that should be run (once) when Vortex starts up
+  context.once(() => { // put code here that should be run (once) when Vortex starts up
 
   });
   return true;
