@@ -14,7 +14,7 @@ const template = require('string-template');
 //Specify all the information about the game
 const STEAMAPP_ID = "55150";
 const STEAMAPP_ID_MCE = "3169520";
-const EPICAPP_ID_MCE = "";
+const EPICAPP_ID_MCE = "fe1bf774da544b3f817884c3d6324fa7";
 const EPICAPP_ID = null;
 const GOGAPP_ID = "1668484481";
 const GOGAPP_ID_MCE = "1197056652";
@@ -25,11 +25,13 @@ const XBOXEXECNAME_MCE = "SpaceMarineBootstrapper";
 const GAME_ID = "warhammer40000spacemarine";
 const EXEC = "SpaceMarine.exe"; //same for MCE (nice)
 const EXEC_XBOX = 'gamelaunchhelper.exe';
+let GAME_PATH = null;
+let STAGING_FOLDER = '';
+let DOWNLOAD_FOLDER = '';
 
 const PREVIEW_ID = `${GAME_ID}-preview`;
 const PREVIEW_NAME = "Preview Folder";
 const PREVIEW_PATH = "preview";
-const PREVIEW_FILE = "preview";
 
 const spec = {
   "game": {
@@ -47,14 +49,14 @@ const spec = {
     "details": {
       "steamAppId": STEAMAPP_ID,
       "gogAppId": GOGAPP_ID,
-      //"epicAppId": EPICAPP_ID,
-      //"xboxAppId": XBOXAPP_ID,
+      "epicAppId": EPICAPP_ID_MCE,
+      "xboxAppId": XBOXAPP_ID_MCE,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
       "GogAPPId": GOGAPP_ID,
-      //"EpicAPPId": EPICAPP_ID,
-      //"XboxAPPId": XBOXAPP_ID
+      "EpicAPPId": EPICAPP_ID_MCE,
+      "XboxAPPId": XBOXAPP_ID_MCE,
     }
   },
   "modTypes": [
@@ -70,7 +72,7 @@ const spec = {
       STEAMAPP_ID,
       STEAMAPP_ID_MCE,
       //EPICAPP_ID,
-      //EPICAPP_ID_MCE,
+      EPICAPP_ID_MCE,
       GOGAPP_ID,
       GOGAPP_ID_MCE,
       //XBOXAPP_ID,
@@ -114,7 +116,7 @@ function pathPattern(api, game, pattern) {
   return template(pattern, {
     gamePath: (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0 ? void 0 : _a.path,
     documents: util.getVortexPath('documents'),
-    localAppData: process.env['LOCALAPPDATA'],
+    localAppData: util.getVortexPath('localAppData'),
     appData: util.getVortexPath('appData'),
   });
 }
@@ -126,55 +128,47 @@ function makeGetModPath(api, gameSpec) {
     : pathPattern(api, gameSpec.game, gameSpec.game.modPath);
 }
 
-//Find game information by API utility
-async function queryGame() {
-  let game = await util.GameStoreHelper.findByAppId(spec.discovery.ids);
-  return game;
+//Find game installation directory
+function makeFindGame(api, gameSpec) {
+  return () => util.GameStoreHelper.findByAppId(gameSpec.discovery.ids)
+    .then((game) => game.gamePath);
 }
 
-//Find game install location 
-async function queryPath() {
-  let game = await queryGame();
-  return game.gamePath;
-}
-
-//Set launcher requirements
-async function requiresLauncher() {
-  let game = await queryGame();
-
-  if (game.gameStoreId === "steam") {
-    return undefined;
-  }
-
-  if (game.gameStoreId === "gog") {
-    return undefined;
-  }
-  /*
-  if (game.gameStoreId === "epic") {
-    return {
-      launcher: "epic",
-      addInfo: {
-        appId: EPICAPP_ID,
-      },
-    };
-  }
-  if (game.gameStoreId === "xbox") {
-    return {
-      launcher: "xbox",
-      addInfo: {
-        appId: XBOXAPP_ID,
-        // appExecName is the <Application id="" in the appxmanifest.xml file
-        parameters: [{ appExecName: XBOXEXECNAME }],
-      },
-    };
-  }
-  //*/
-  return undefined;
+async function requiresLauncher(gamePath, store) {
+  if (store === 'xbox') {
+      return Promise.resolve({
+          launcher: 'xbox',
+          addInfo: {
+              appId: XBOXAPP_ID,
+              parameters: [{ appExecName: XBOXEXECNAME }],
+          },
+      });
+  } //*/
+  if (store === 'epic') {
+    return Promise.resolve({
+        launcher: 'epic',
+        addInfo: {
+            appId: EPICAPP_ID,
+        },
+    });
+  } //*/
+  /*if (store === 'steam') {
+    return Promise.resolve({
+        launcher: 'steam',
+    });
+  } //*/
+  return Promise.resolve(undefined);
 }
 
 //Setup function
 async function setup(discovery, api, gameSpec) {
-  return fs.ensureDirWritableAsync(path.join(discovery.path, PREVIEW_PATH));
+  // SYNCHRONOUS CODE ////////////////////////////////////
+  const state = api.getState();
+  GAME_PATH = discovery.path;
+  STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
+  DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
+  // ASYNC CODE //////////////////////////////////////////
+  return fs.ensureDirWritableAsync(path.join(GAME_PATH, PREVIEW_PATH));
 }
 
 //Let Vortex know about the game
@@ -182,9 +176,9 @@ function applyGame(context, gameSpec) {
   //register game
   const game = {
     ...gameSpec.game,
-    queryPath,
+    queryPath: makeFindGame(context.api, gameSpec),
     queryModPath: makeGetModPath(context.api, gameSpec),
-    requiresLauncher,
+    requiresLauncher: requiresLauncher,
     requiresCleanup: true,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     executable: () => gameSpec.game.executable,
@@ -202,7 +196,25 @@ function applyGame(context, gameSpec) {
   });
 
   //register mod installers
+  //context.registerInstaller(PREVIEW_ID, 25, testPreview, installPreview);
 
+  //register actions
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
+    const openPath = path.join(__dirname, 'CHANGELOG.md');
+    util.opn(openPath).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
+    const openPath = DOWNLOAD_FOLDER;
+    util.opn(openPath).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
 }
 
 //main function
