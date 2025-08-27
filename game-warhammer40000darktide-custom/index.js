@@ -4,7 +4,8 @@ const { fs, actions, util, selectors } = require("vortex-api");
 const GAME_ID = "warhammer40kdarktide"; // Nexus Mods domain for the game. e.g. nexusmods.com/warhammer40kdarktide
 const STEAMAPP_ID = "1361210"; // Steam app id
 const MS_APPID = "FatsharkAB.Warhammer40000DarktideNew"; // Microsoft Store app id (gamepass)
-
+const MOD_FILE_EXT = ".mod";
+const BAT_FILE_EXT = ".bat";
 let GAME_PATH = null;
 
 //CHEMBOY1 CUSTOM CODE//////////////////////////////////////////////////////////////////
@@ -12,7 +13,10 @@ const template = require("string-template");
 const APPDATA = util.getVortexPath('appData');
 const CONFIG_PATH = path.join(APPDATA, "Fatshark", "Darktide");
 const CONFIG_FILE = path.join(CONFIG_PATH, "user_settings.config");
-
+const LO_FILE = "mod_load_order.txt";
+const MOD_FOLDER = "mods";
+const DMF_FOLDER = "dmf";
+const DML_FILE = "toggle_darktide_mods.bat";
 function pathPattern(api, game, pattern) {
   var _a;
   return template(pattern, {
@@ -37,19 +41,13 @@ function isFile(file) {
 }
 //END CHEMBOY1 CUSTOM CODE/////////////////////////////////////////////////////////////
 
-// for mod update to keep them in the load order and not uncheck them
-let mod_update_all_profile = false;
+let mod_update_all_profile = false; // for mod update to keep them in the load order and not uncheck them
 let updatemodid = undefined;
-// used to see if it's a mod update or not
-let updating_mod = false;
-// used to display the name of the currently installed mod
-let mod_install_name = "";
-
+let updating_mod = false; // used to see if it's a mod update or not
+let mod_install_name = ""; // used to display the name of the currently installed mod
 let api = false; // useful where we can't access API
 const state = () => api.getState(); //get the state from anywhere
-const is_darktide_profile_active = () =>
-  selectors.activeGameId(state()) === GAME_ID;
-
+const is_darktide_profile_active = () => selectors.activeGameId(state()) === GAME_ID;
 let warn_call = 0; // to avoid a notif not appearing due to having the same id
 function log(message) {
   if (!api) {
@@ -111,10 +109,10 @@ const tools = [
 async function prepareForModding(discovery, api) {
   GAME_PATH = discovery.path;
 
-  await fs.ensureDirWritableAsync(path.join(discovery.path, "mods")); // Ensure the mods directory exists
-  await fs.ensureFileAsync(path.join(discovery.path, "mods", "mod_load_order.txt")); // Ensure the mod load order file exists
-  await checkForDMF(api, path.join(discovery.path, "mods", "dmf")); // Check if DMF is installed
-  await checkForDML(api, path.join(discovery.path, "toggle_darktide_mods.bat")); // Check if DML is installed
+  await fs.ensureDirWritableAsync(path.join(discovery.path,  MOD_FOLDER)); // Ensure the mods directory exists
+  await fs.ensureFileAsync(path.join(discovery.path, MOD_FOLDER, LO_FILE)); // Ensure the mod load order file exists
+  await checkForDMF(api, path.join(discovery.path, MOD_FOLDER, DMF_FOLDER)); // Check if DMF is installed
+  await checkForDML(api, path.join(discovery.path, DML_FILE)); // Check if DML is installed
 }
 
 function checkForDMF(api, mod_framework) {
@@ -156,9 +154,6 @@ function checkForDML(api, toggle_mods_path) {
     });
   });
 }
-
-const MOD_FILE_EXT = ".mod";
-const BAT_FILE_EXT = ".bat";
 
 function testSupportedContent(files, gameId) {
   let supported =
@@ -326,24 +321,26 @@ async function deserializeLoadOrder(context) {
     });
   }
 
+  //read current LO file
   let gameDir = getDiscoveryPath(context.api);
-
-  let loadOrderPath = path.join(gameDir, "mods", "mod_load_order.txt");
+  let loadOrderPath = path.join(gameDir, "mods", LO_FILE);
   let loadOrderFile = await fs.readFileAsync(
     loadOrderPath, 
     { encoding: "utf8", }
   );
 
-  const ignoredFolders = ["dmf", "base", "mod_load_order.txt"];
-  let modFolderPath = path.join(gameDir, "mods");
+  //read and filter mod folders
+  const ignoredFolders = ["dmf", "base"];
+  const ignoredExtensions = [".txt", ".bat"];
+  let modFolderPath = path.join(gameDir, MOD_FOLDER);
   async function isValidModFolder(folder) {
     return fs.statAsync(path.join(modFolderPath, folder, `${folder}.mod`))
       .then(() => true)
       .catch(() => false)
   };
-  let modFolders = await fs.readdirAsync(modFolderPath);
-  modFolders = await modFolders
-    .filter((folder) => !ignoredFolders.includes(folder))
+  let modFoldersRaw = await fs.readdirAsync(modFolderPath);
+  let modFolders = await modFoldersRaw
+    .filter((folder) => !ignoredFolders.includes(folder) && !ignoredExtensions.includes(path.extname(folder)))
     //.filter((folder) => isDirectory(folder))
     .filter(async (folder) => { // Filter any files/folders out that don't contain ModName.mod
       await isValidModFolder(folder);
@@ -372,6 +369,7 @@ async function deserializeLoadOrder(context) {
       .catch(() => false)
   };
 
+  //create load order array
   let loadOrder = await loadOrderFile
     .split("\n")
     .reduce(async (accumP, line) => {
@@ -400,6 +398,7 @@ async function deserializeLoadOrder(context) {
     }) 
     .filter((mod) => modFolders.includes(mod.id))//*/
 
+  //add new mods to load order
   for (let folder of modFolders) {
     if (!loadOrder.find((mod) => mod.id === folder)) {
       loadOrder.push({
@@ -409,7 +408,6 @@ async function deserializeLoadOrder(context) {
       });
     }
   }
-
   return loadOrder;
 }
 
@@ -419,7 +417,7 @@ async function serializeLoadOrder(context, loadOrder) {
   }
 
   let gameDir = getDiscoveryPath(context.api);
-  let loadOrderPath = path.join(gameDir, "mods", "mod_load_order.txt");
+  let loadOrderPath = path.join(gameDir, MOD_FOLDER, LO_FILE);
 
   let loadOrderOutput = loadOrder
     .map((mod) => (mod.enabled ? mod.id : `-- ${mod.id}`))
