@@ -985,8 +985,7 @@ async function deserializeLoadOrder(context) {
       }
       );
       return Promise.resolve(accum);
-    }, Promise.resolve([])
-  );
+    }, Promise.resolve([]));
   
   //push new mod folders from Mods folder to loadOrder
   for (let file of modFiles) {

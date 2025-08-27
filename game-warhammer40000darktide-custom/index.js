@@ -320,9 +320,10 @@ async function deserializeLoadOrder(context) {
   let gameDir = getDiscoveryPath(context.api);
 
   let loadOrderPath = path.join(gameDir, "mods", "mod_load_order.txt");
-  let loadOrderFile = await fs.readFileAsync(loadOrderPath, {
-    encoding: "utf8",
-  });
+  let loadOrderFile = await fs.readFileAsync(
+    loadOrderPath, 
+    { encoding: "utf8", }
+  );
 
   let modFolderPath = path.join(gameDir, "mods");
   let modFolders = await fs.readdirAsync(modFolderPath);
@@ -335,6 +336,7 @@ async function deserializeLoadOrder(context) {
         return false;
       }
     })
+    .filter((fileName) => fileName !== "dmf" && fileName !== "base") //remove DMF and DML folders
     .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase())); // Ignore case when sorting
 
   // This is the most reliable way I could find to detect if a mod is managed by Vortex
@@ -354,17 +356,30 @@ async function deserializeLoadOrder(context) {
 
   let loadOrder = loadOrderFile
     .split("\n")
-    .map((line) => {
+    .reduce(async (accumP, line) => {
+      const accum = await accumP;
+      const id = line.replace(/-- /g, "").trim();
+      if (!modFolders.includes(id)) { //remove lines that don't have corresponding mods in the file system
+        return Promise.resolve(accum);
+      }
+      accum.push(
+      {
+        id: id,
+        modId: isVortexManaged(id) ? id : undefined,
+        enabled: !line.startsWith("--"),
+      }
+      );
+      return Promise.resolve(accum);
+    }, Promise.resolve([]))
+    /*.map((line) => {
       const id = line.replace(/-- /g, "").trim();
       return {
         id,
         modId: isVortexManaged(id) ? id : undefined,
         enabled: !line.startsWith("--"),
       };
-    })
-    // Remove any mods from the mod_load_order that don't have corresponding mods in the file system
-    .filter((mod) => modFolders.includes(mod.id))
-    .filter((mod) => mod.id !== "dmf" && mod.id !== "base");
+    }) 
+    .filter((mod) => modFolders.includes(mod.id))//*/
 
   for (let folder of modFolders) {
     if (folder !== "dmf" && folder !== "base") {
