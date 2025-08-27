@@ -1,5 +1,5 @@
 /*////////////////////////////////////////////////
-Name: Abiotic Factor Vortex Extension
+Name: XXX Vortex Extension
 Structure: UE5 (Xbox-Integrated)
 Author: ChemBoy1
 Version: 0.1.0
@@ -12,25 +12,32 @@ const path = require('path');
 const template = require('string-template');
 
 //Specify all information about the game
-const GAME_ID = "abioticfactor"; //same as Nexus domain
-const STEAMAPP_ID = "427410"; //from steamdb.info
-const EPICAPP_ID = null; //from egdata.app
+const GAME_ID = "XXX"; //same as Nexus domain
+const STEAMAPP_ID = "XXX"; //from steamdb.info
+const EPICAPP_ID = "XXX"; //from egdata.app
 const GOGAPP_ID = ""; // from gogdb.org
-const XBOXAPP_ID = "PlayStack.AbioticFactor"; //from appxmanifest.xml
-const XBOXEXECNAME = "AppAbioticFactorShipping"; //from appxmanifest.xml
-const GAME_NAME = "Abiotic Factor";
-const GAME_NAME_SHORT = "Abiotic Factor"; //Try for 8-10 characters
-const EXEC_DEFAULT = "AbioticFactor.exe";
+const XBOXAPP_ID = "XXX"; //from appxmanifest.xml
+const XBOXEXECNAME = "XXX"; //from appxmanifest.xml
+const GAME_NAME = "XXX";
+const GAME_NAME_SHORT = "XXX"; //Try for 8-10 characters
+const EXEC_DEFAULT = "XXX.exe";
+const EXEC_EPIC = "XXX_EGS.exe";
+//Unreal Engine specific
+const EPIC_CODE_NAME = "XXX";
+const IO_STORE = true; //true if the Paks folder contains .ucas and .utoc files
+const UE4SS_MOD_PATH = path.join('ue4ss', 'Mods');
+//config and save
+const DATA_FOLDER = EPIC_CODE_NAME;
+const XBOX_SAVE_STRING = 'XXX';
+const CONFIG_FOLDERNAME = 'Windows';
+const CONFIG_LOC = 'Local AppData';
+const SAVE_LOC = 'Local AppData';
+
 let GAME_PATH = null;
 let CHECK_DATA = false;
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 const APPMANIFEST_FILE = 'appxmanifest.xml';
-
-//Unreal Engine specific
-const EPIC_CODE_NAME = "AbioticFactor";
-const IO_STORE = true; //true if the Paks folder contains .ucas and .utoc files
-const UE4SS_MOD_PATH = path.join('ue4ss', 'Mods');
 
 //Discovery IDs
 const gameFinderQuery = {
@@ -68,19 +75,15 @@ const EXEC_FOLDER_XBOX = "WinGDK";
 const EXEC_XBOX = `gamelaunchhelper.exe`;
 const XBOX_FILE = `appxmanifest.xml`;
 
-const EXEC_EPIC = "AbioticFactor_EGS.exe";
-
 //Config and save paths
 //const USER_HOME = util.getVortexPath("home");
 //const DOCUMENTS = util.getVortexPath("documents");
-const XBOX_SAVE_STRING = '3wcqaesafpzfy';
+//const ROAMINGAPPDATA = util.getVortexPath("appData");
 const LOCALAPPDATA = util.getVortexPath("localAppData");
-const CONFIG_PATH_DEFAULT = path.join(LOCALAPPDATA, EPIC_CODE_NAME, "Saved", "Config", "Windows");
-const CONFIG_PATH_XBOX = path.join(LOCALAPPDATA, EPIC_CODE_NAME, "Saved", "Config", "WinGDK"); //XBOX Version
-const SAVE_PATH_DEFAULT = path.join(LOCALAPPDATA, EPIC_CODE_NAME, "Saved", "SaveGames");
+const CONFIG_PATH_DEFAULT = path.join(LOCALAPPDATA, DATA_FOLDER, "Saved", "Config", CONFIG_FOLDERNAME);
+const CONFIG_PATH_XBOX = path.join(LOCALAPPDATA, DATA_FOLDER, "Saved", "Config", "WinGDK"); //XBOX Version
+const SAVE_PATH_DEFAULT = path.join(LOCALAPPDATA, DATA_FOLDER, "Saved", "SaveGames");
 const SAVE_PATH_XBOX = path.join(LOCALAPPDATA, "Packages", `${XBOXAPP_ID}_${XBOX_SAVE_STRING}`, "SystemAppData", "wgs"); //XBOX Version
-const CONFIG_LOC = 'Local AppData';
-const SAVE_LOC = 'Local AppData';
 
 //Unreal Engine Game Data
 const UNREALDATA = {
@@ -142,21 +145,21 @@ const UE4SS_NAME = "UE4SS";
 const UE4SS_FILE = "dwmapi.dll";
 const UE4SS_DLFILE_STRING = "ue4ss";
 const UE4SS_URL = "https://github.com/UE4SS-RE/RE-UE4SS/releases";
-const UE4SS_PAGE_NO = 35; 
-const UE4SS_FILE_NO = 288;
+const UE4SS_PAGE_NO = 0; //set if there is UE4SS Nexus page
+const UE4SS_FILE_NO = 0;
 
-//no save editor for this game, YET
+//Save Editor
 const SAVE_EDITOR_ID = `${GAME_ID}-saveeditor`;
 const SAVE_EDITOR_NAME = "Save Editor";
-const SAVE_EDITOR_EXEC = "CO-E33_Save_Editor.exe";
+const SAVE_EDITOR_EXEC = "XXX.exe";
 
-//no sigypass for this game
+//Signature Bypass
 const SIGBYPASS_ID = `${GAME_ID}-sigbypass`;
 const SIGBYPASS_NAME = "Sig Bypass";
 const SIGBYPASS_DLL = "dsound.dll";
 const SIGBYPASS_LUA = "sig.lua";
-const SIGBYPASS_PAGE_NO = 0; //no sigypass for this game
-const SIGBYPASS_FILE_NO_XBOX = 0;
+const SIGBYPASS_PAGE_NO = 0; //set if there is sigbypass Nexus page
+const SIGBYPASS_FILE_NO_XBOX = 0; 
 const SIGBYPASS_FILE_NO_STEAM = 0;
 
 const MOD_PATH_DEFAULT = UE5_PATH;
@@ -604,7 +607,6 @@ function installSigBypass(files) {
   instructions.push(setModTypeInstruction);
   return Promise.resolve({ instructions });
 }
-
 
 //Test for UE4SS Script files
 function testScripts(files, gameId) {
@@ -1185,10 +1187,10 @@ async function downloadSigBypass(api, gameSpec, version) {
     const NOTIF_ID = `${GAME_ID}-${MOD_TYPE}-installing`;
     let FILE_ID = SIGBYPASS_FILE_NO_STEAM;  //If using a specific file id because "input" below gives an error
     if (version === 'xbox') {
-      FILE_ID = SIGBYPASS_FILE_NO_XBOX;  //If using a specific file id because "input" below gives an error
+      FILE_ID = SIGBYPASS_FILE_NO_XBOX;
     } 
     if (version === 'steam') {
-      FILE_ID = SIGBYPASS_FILE_NO_STEAM;  //If using a specific file id because "input" below gives an error
+      FILE_ID = SIGBYPASS_FILE_NO_STEAM;
     }
     const PAGE_ID = SIGBYPASS_PAGE_NO;
     const GAME_DOMAIN = gameSpec.game.id;
@@ -1561,7 +1563,6 @@ async function setup(discovery, api, gameSpec) {
       await fs.ensureDirWritableAsync(SAVE_PATH);
     }
   } //*/
-  
   //await downloadSigBypass(api, gameSpec, GAME_VERSION);
   //await downloadUe4ssNexus(api, gameSpec);
   await fs.ensureDirWritableAsync(path.join(GAME_PATH, SCRIPTS_PATH));
@@ -1582,7 +1583,7 @@ function applyGame(context, gameSpec) {
     requiresLauncher: requiresLauncher,
     getGameVersion: resolveGameVersion,
     supportedTools: [
-      {
+      /*{
         id: "CustomLaunch",
         name: `Custom Launch`,
         logo: `exec.png`,
@@ -1658,15 +1659,17 @@ function applyGame(context, gameSpec) {
     () => Promise.resolve(false), 
     { name: UE4SS_NAME }
   );
-  /*context.registerModType(SIGBYPASS_ID, 58, 
-    (gameId) => {
-      var _a;
-      return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, 
-    (game) => pathPattern(context.api, game, EXEC_TARGET), 
-    () => Promise.resolve(false), 
-    { name: SIGBYPASS_NAME }
-  ); //*/
+  if (SIGBYPASS_PAGE_NO !== 0) { //only enable modtype if there is a sigbypass Nexus page
+    context.registerModType(SIGBYPASS_ID, 58, 
+      (gameId) => {
+        var _a;
+        return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
+      }, 
+      (game) => pathPattern(context.api, game, EXEC_TARGET), 
+      () => Promise.resolve(false), 
+      { name: SIGBYPASS_NAME }
+    );
+  }
 
   //* register modtypes with partition checks
   context.registerModType(CONFIG_ID, 60, 
@@ -1700,14 +1703,16 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(LOGICMODS_ID, 27, testLogic, installLogic);
   //29 is pak installer above
   context.registerInstaller(UE4SS_ID, 31, testUe4ss, installUe4ss);
-  //context.registerInstaller(SIGBYPASS_ID, 32, testSigBypass, installSigBypass); //no sigbypass for this game
+  if (SIGBYPASS_PAGE_NO !== 0) { //only enable installer if there is a sigbypass Nexus page
+    context.registerInstaller(SIGBYPASS_ID, 32, testSigBypass, installSigBypass);
+  }
   context.registerInstaller(SCRIPTS_ID, 33, testScripts, installScripts);
   context.registerInstaller(DLL_ID, 35, testDll, installDll);
   context.registerInstaller(ROOT_ID, 37, testRoot, installRoot);
   context.registerInstaller(CONTENT_ID, 39, testContent, installContent);
   context.registerInstaller(CONFIG_ID, 41, testConfig, (files) => installConfig(context.api, files));
   context.registerInstaller(SAVE_ID, 43, (files, gameId) => testSave(context.api, files, gameId), (files) => installSave(context.api, files));
-  context.registerInstaller(BINARIES_ID, 45, testBinaries, installBinaries);
+  context.registerInstaller(BINARIES_ID, 49, testBinaries, installBinaries);
 
   //register buttons to open folders
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Paks Folder', () => {
@@ -1740,7 +1745,6 @@ function applyGame(context, gameSpec) {
     return gameId === GAME_ID;
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
-    const state = context.api.getState();
     const openPath = path.join(CONFIG_PATH);
     util.opn(openPath).catch(() => null);
     }, () => {
@@ -1750,7 +1754,6 @@ function applyGame(context, gameSpec) {
     }
   );
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Saves Folder', () => {
-    const state = context.api.getState();
     const openPath = path.join(SAVE_PATH);
     util.opn(openPath).catch(() => null);
     }, () => {
@@ -1760,12 +1763,16 @@ function applyGame(context, gameSpec) {
     }
   );
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download UE4SS', () => {
-    downloadUe4ssNexus(context.api, gameSpec).catch(() => null);
+    if (UE4SS_PAGE_NO !== 0) {
+      downloadUe4ssNexus(context.api, gameSpec).catch(() => null);
+    } else {
+      downloadUe4ss(context.api, gameSpec).catch(() => null);
+    }
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
-  }); //*/
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
     const openPath = path.join(__dirname, 'CHANGELOG.md');
     util.opn(openPath).catch(() => null);
