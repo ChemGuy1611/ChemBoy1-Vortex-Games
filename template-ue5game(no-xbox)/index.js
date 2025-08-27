@@ -3,7 +3,7 @@ Name: XXX Vortex Extension
 Structure: UE5 (static exe)
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2025-08-26
+Date: 2025-XXX-XXX
 //////////////////////////////////////////////////*/
 
 //Import libraries
@@ -14,11 +14,9 @@ const template = require('string-template');
 //Specify all information about the game
 const GAME_ID = "XXX";
 const STEAMAPP_ID = "XXX";
-const STEAMAPP_ID_DEMO = "";
-const EPICAPP_ID = "";
-const GOGAPP_ID = "";
-const XBOXAPP_ID = "";
-const XBOXEXECNAME = "";
+const STEAMAPP_ID_DEMO = "XXX";
+const EPICAPP_ID = "XXX";
+const GOGAPP_ID = "XXX";
 const GAME_NAME = "XXX";
 const GAME_NAME_SHORT = "XXX";
 const EXEC = "XXX.exe";
@@ -303,15 +301,6 @@ function makeFindGame(api, gameSpec) {
 }
 
 async function requiresLauncher(gamePath, store) {
-  /*if (store === 'xbox') {
-      return Promise.resolve({
-          launcher: 'xbox',
-          addInfo: {
-              appId: XBOXAPP_ID,
-              parameters: [{ appExecName: XBOXEXECNAME }],
-          },
-      });
-  } //*/
   /*if (store === 'epic') {
     return Promise.resolve({
         launcher: 'epic',

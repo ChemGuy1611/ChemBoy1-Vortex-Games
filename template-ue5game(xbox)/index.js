@@ -3,7 +3,7 @@ Name: XXX Vortex Extension
 Structure: UE5 (Xbox-Integrated)
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2025-07-28
+Date: 2025-XXX-XXX
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -15,7 +15,7 @@ const template = require('string-template');
 const GAME_ID = "XXX"; //same as Nexus domain
 const STEAMAPP_ID = "XXX"; //from steamdb.info
 const EPICAPP_ID = "XXX"; //from egdata.app
-const GOGAPP_ID = ""; // from gogdb.org
+const GOGAPP_ID = "XXX"; // from gogdb.org
 const XBOXAPP_ID = "XXX"; //from appxmanifest.xml
 const XBOXEXECNAME = "XXX"; //from appxmanifest.xml
 const GAME_NAME = "XXX";
