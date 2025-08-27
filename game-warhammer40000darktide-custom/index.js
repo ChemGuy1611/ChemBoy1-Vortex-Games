@@ -7,11 +7,12 @@ const MS_APPID = "FatsharkAB.Warhammer40000DarktideNew"; // Microsoft Store app 
 
 let GAME_PATH = null;
 
-//CUSTOM CODE//////////////////////////////////////////////////////////////////
+//CHEMBOY1 CUSTOM CODE//////////////////////////////////////////////////////////////////
 const template = require("string-template");
 const APPDATA = util.getVortexPath('appData');
 const CONFIG_PATH = path.join(APPDATA, "Fatshark", "Darktide");
 const CONFIG_FILE = path.join(CONFIG_PATH, "user_settings.config");
+
 function pathPattern(api, game, pattern) {
   var _a;
   return template(pattern, {
@@ -21,12 +22,20 @@ function pathPattern(api, game, pattern) {
       appData: util.getVortexPath('appData'),
   });
 }
+
 const getDiscoveryPath = (api) => {
   const state = api.getState();
   const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});
   return discovery === null || discovery === void 0 ? void 0 : discovery.path;
 };
-//END CUSTOM CODE/////////////////////////////////////////////////////////////
+
+function isDirectory(file) {
+    return file.endsWith(path.sep);
+}
+function isFile(file) {
+    return !file.endsWith(path.sep);
+}
+//END CHEMBOY1 CUSTOM CODE/////////////////////////////////////////////////////////////
 
 // for mod update to keep them in the load order and not uncheck them
 let mod_update_all_profile = false;
@@ -325,52 +334,62 @@ async function deserializeLoadOrder(context) {
     { encoding: "utf8", }
   );
 
+  const ignoredFolders = ["dmf", "base", "mod_load_order.txt"];
   let modFolderPath = path.join(gameDir, "mods");
+  async function isValidModFolder(folder) {
+    return fs.statAsync(path.join(modFolderPath, folder, `${folder}.mod`))
+      .then(() => true)
+      .catch(() => false)
+  };
   let modFolders = await fs.readdirAsync(modFolderPath);
-  modFolders = modFolders
-    .filter((fileName) => { // Filter any files/folders out that don't contain ModName.mod
-      try {
-        fs.statSync(path.join(modFolderPath, fileName, `${fileName}.mod`));
-        return true;
-      } catch (e) {
-        return false;
-      }
+  modFolders = await modFolders
+    .filter((folder) => !ignoredFolders.includes(folder))
+    //.filter((folder) => isDirectory(folder))
+    .filter(async (folder) => { // Filter any files/folders out that don't contain ModName.mod
+      await isValidModFolder(folder);
     })
-    .filter((fileName) => fileName !== "dmf" && fileName !== "base") //remove DMF and DML folders
     .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase())); // Ignore case when sorting
 
-  // This is the most reliable way I could find to detect if a mod is managed by Vortex
-  function isVortexManaged(modId) {
+  /* This is the most reliable way I could find to detect if a mod is managed by Vortex
+  async function isVortexManaged(modId) {
     try {
-      fs.statSync(path.join(modFolderPath, modId, `__folder_managed_by_vortex`));
+      fs.statAsync(path.join(modFolderPath, modId, `__folder_managed_by_vortex`));
       return true;
     } catch (e) {
       try {
-        fs.statSync(path.join(modFolderPath, modId, `${modId}.mod.vortex_backup`));
+        fs.statAsync(path.join(modFolderPath, modId, `${modId}.mod.vortex_backup`));
         return true;
       } catch (d) {
         return false;
       }
     }
-  }
+  } //*/
+
+  //Determine if mod is managed by Vortex (async version)
+  async function isVortexManaged(modId) {
+    return fs.statAsync(path.join(modFolderPath, modId, `__folder_managed_by_vortex`))
+      .then(() => true)
+      .catch(() => false)
+  };
 
   let loadOrder = await loadOrderFile
     .split("\n")
     .reduce(async (accumP, line) => {
       const accum = await accumP;
-      const id = line.replace(/-- /g, "").trim();
-      if (!modFolders.includes(id)) { //remove lines that don't have corresponding mods in the file system
+      const folder = line.replace(/-- /g, "").trim();
+      if (!modFolders.includes(folder)) { //remove lines that don't have corresponding mods in the file system
         return Promise.resolve(accum);
       }
       accum.push(
-      {
-        id: id,
-        modId: isVortexManaged(id) ? id : undefined,
-        enabled: !line.startsWith("--"),
-      }
+        {
+          id: folder,
+          modId: await isVortexManaged(folder) ? folder : undefined,
+          enabled: !line.startsWith("--"),
+        }
       );
       return Promise.resolve(accum);
-    }, Promise.resolve([]))
+      }, Promise.resolve([])
+    )
     /*.map((line) => {
       const id = line.replace(/-- /g, "").trim();
       return {
@@ -382,14 +401,12 @@ async function deserializeLoadOrder(context) {
     .filter((mod) => modFolders.includes(mod.id))//*/
 
   for (let folder of modFolders) {
-    if (folder !== "dmf" && folder !== "base") {
-      if (!loadOrder.find((mod) => mod.id === folder)) {
-        loadOrder.push({
-          id: folder,
-          modId: isVortexManaged(folder) ? folder : undefined,
-          enabled: true,
-        });
-      }
+    if (!loadOrder.find((mod) => mod.id === folder)) {
+      loadOrder.push({
+        id: folder,
+        modId: await isVortexManaged(folder) ? folder : undefined,
+        enabled: true,
+      });
     }
   }
 
