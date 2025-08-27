@@ -354,7 +354,7 @@ async function deserializeLoadOrder(context) {
     }
   }
 
-  let loadOrder = loadOrderFile
+  let loadOrder = await loadOrderFile
     .split("\n")
     .reduce(async (accumP, line) => {
       const accum = await accumP;
