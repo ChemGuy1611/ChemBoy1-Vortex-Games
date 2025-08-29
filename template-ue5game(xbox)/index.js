@@ -58,10 +58,11 @@ if (IO_STORE) { //Set file number for pak installer file selection (needs to be 
   PAK_FILE_MIN = PAKMOD_EXTS.length;
 }
 
-let GAME_PATH = null;
-let CHECK_DATA = false;
-let STAGING_FOLDER = '';
-let DOWNLOAD_FOLDER = '';
+let GAME_PATH = null; //game installation path
+let CHECK_DATA = false; //boolean to check if game, staging folder, and config and save folders are on the same drive
+let CHECK_DOCS = false; //secondary same as above (if save and config are in different locations)
+let STAGING_FOLDER = ''; //Vortex staging folder path
+let DOWNLOAD_FOLDER = ''; //Vortex download folder path
 const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 //Information for setting the executable and variable paths based on the game store version
@@ -1556,9 +1557,13 @@ async function setup(discovery, api, gameSpec) {
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   CHECK_DATA = checkPartitions(CONFIGMOD_LOCATION, GAME_PATH);
+  //CHECK_DOCS = checkPartitions(SAVEMOD_LOCATION, GAME_PATH);
   if (!CHECK_DATA) {
     partitionCheckNotify(api, CHECK_DATA);
   }
+  /*if (!CHECK_DOCS) {
+    partitionCheckNotify(api, CHECK_DOCS);
+  } //*/
   // ASYCRONOUS CODE ///////////////////////////////////
   if (CHECK_DATA) { //if game, staging folder, and config and save folders are on the same drive
     await fs.ensureDirWritableAsync(path.join(CONFIG_PATH));
@@ -1566,8 +1571,15 @@ async function setup(discovery, api, gameSpec) {
       await fs.ensureDirWritableAsync(SAVE_PATH);
     }
   } //*/
-  //await downloadSigBypass(api, gameSpec, GAME_VERSION);
-  //await downloadUe4ssNexus(api, gameSpec);
+  /*if (CHECK_DOCS) { //if game, staging folder, and config and save folders are on the same drive
+    await fs.ensureDirWritableAsync(SAVE_PATH);
+  } //*/
+  /*if (UE4SS_PAGE_NO !== 0) {
+    await downloadUe4ssNexus(api, gameSpec);
+  } //*/
+  if (SIGBYPASS_PAGE_NO !== 0) {
+    await downloadSigBypass(api, gameSpec, GAME_VERSION);
+  }
   await fs.ensureDirWritableAsync(path.join(GAME_PATH, SCRIPTS_PATH));
   await fs.ensureDirWritableAsync(path.join(GAME_PATH, LOGICMODS_PATH));
   return fs.ensureDirWritableAsync(path.join(GAME_PATH, UE5_PATH));

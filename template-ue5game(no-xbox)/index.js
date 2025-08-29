@@ -48,11 +48,11 @@ if (IO_STORE) { //Set file number for pak installer file selection (needs to be 
   PAK_FILE_MIN = PAKMOD_EXTS.length;
 }
 
-let GAME_PATH = null;
-let CHECK_DATA = false;
-let CHECK_DOCS = false;
-let STAGING_FOLDER = '';
-let DOWNLOAD_FOLDER = '';
+let GAME_PATH = null; //game installation path
+let CHECK_DATA = false; //boolean to check if game, staging folder, and config and save folders are on the same drive
+let CHECK_DOCS = false; //secondary same as above (if save and config are in different locations)
+let STAGING_FOLDER = ''; //Vortex staging folder path
+let DOWNLOAD_FOLDER = ''; //Vortex download folder path
 
 //Unreal Engine Game Data
 const UNREALDATA = {
@@ -1390,6 +1390,9 @@ async function setup(discovery, api, gameSpec) {
   if (!CHECK_DATA) {
     partitionCheckNotify(api, CHECK_DATA);
   }
+  /*if (!CHECK_DOCS) {
+    partitionCheckNotify(api, CHECK_DOCS);
+  } //*/
   // ASYNC CODE //////////////////////////////////////////
   if (CHECK_DATA) { //if game, staging folder, and config and save folders are on the same drive
     await fs.ensureDirWritableAsync(CONFIG_PATH);
@@ -1398,13 +1401,14 @@ async function setup(discovery, api, gameSpec) {
   /*if (CHECK_DOCS) { //if game, staging folder, and config and save folders are on the same drive
     await fs.ensureDirWritableAsync(SAVE_PATH);
   } //*/
-  //await downloadUe4ss(api, gameSpec);
-  //await downloadSigBypass(api, gameSpec);
+  /*if (UE4SS_PAGE_NO !== 0) {
+    await downloadUe4ssNexus(api, gameSpec);
+  } //*/
+  if (SIGBYPASS_PAGE_NO !== 0) {
+    await downloadSigBypass(api, gameSpec);
+  }
+  //await fs.ensureDirWritableAsync(path.join(GAME_PATH, MENU_PATH));
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
-  /*await fs.ensureDirWritableAsync(path.join(GAME_PATH, SCRIPTS_PATH));
-  await fs.ensureDirWritableAsync(path.join(GAME_PATH, LOGICMODS_PATH));
-  await fs.ensureDirWritableAsync(path.join(GAME_PATH, MENU_PATH));
-  return fs.ensureDirWritableAsync(path.join(GAME_PATH, MOD_PATH_DEFAULT)); //*/
 }
 
 //Let Vortex know about the game
