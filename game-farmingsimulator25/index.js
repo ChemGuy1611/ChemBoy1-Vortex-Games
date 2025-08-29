@@ -15,10 +15,11 @@ const Bluebird = require('bluebird');
 //Specify all the information about the game
 const STEAMAPP_ID = "2300320";
 const EPICAPP_ID = "";
-const XBOXAPP_ID = "";
-const XBOXEXECNAME = "";
+const XBOXAPP_ID = "GIANTSSoftware.FarmingSimulator25PC";
+const XBOXEXECNAME = "x64.FarmingSimulator2025Game";
 const GAME_ID = "farmingsimulator25";
 const EXEC = "FarmingSimulator2025.exe";
+const EXEC_X64 = path.join('x64', 'FarmingSimulator2025Game.exe');
 const GAME_NAME = "Farming Simulator 25";
 const GAME_NAME_SHORT = "Farming Sim 25";
 
@@ -41,13 +42,13 @@ const spec = {
     "id": GAME_ID,
     "name": GAME_NAME,
     "shortName": GAME_NAME_SHORT,
-    "executable": EXEC,
+    "executable": EXEC_X64,
     "logo": `${GAME_ID}.jpg`,
     "mergeMods": true,
     "modPath": MOD_PATH,
     "modPathIsRelative": false,
     "requiredFiles": [
-      EXEC
+      EXEC_X64
     ],
     "details": {
       "steamAppId": STEAMAPP_ID,
@@ -85,7 +86,7 @@ const spec = {
     "ids": [
       STEAMAPP_ID,
       //EPICAPP_ID,
-      //XBOXAPP_ID,
+      XBOXAPP_ID,
     ],
     "names": []
   }
@@ -122,51 +123,39 @@ function makeGetModPath(api, gameSpec) {
     : pathPattern(api, gameSpec.game, gameSpec.game.modPath);
 }
 
-//Find game information by API utility
-async function queryGame() {
-  let game = await util.GameStoreHelper.findByAppId(spec.discovery.ids);
-  return game;
+//Find game installation directory
+function makeFindGame(api, gameSpec) {
+  return () => util.GameStoreHelper.findByAppId(gameSpec.discovery.ids)
+    .then((game) => game.gamePath);
 }
 
-//Find game install location 
-async function queryPath() {
-  let game = await queryGame();
-  return game.gamePath;
-}
-
-//Set launcher requirements
-async function requiresLauncher() {
-  let game = await queryGame();
-
-  if (game.gameStoreId === "steam") {
-    //return { launcher: "steam"};
-    return undefined;
-  }
-
-  /*
-  if (game.gameStoreId === "epic") {
-    return {
-      launcher: "epic",
-      addInfo: {
-        appId: EPICAPP_ID,
-      },
-    };
-  }
-  */
-  /*
-  if (game.gameStoreId === "xbox") {
-    return {
+async function requiresLauncher(gamePath, store) {
+  /*if (store === 'epic') {
+    return Promise.resolve({
+        launcher: 'epic',
+        addInfo: {
+            appId: EPICAPP_ID,
+        },
+    });
+  } //*/
+  if (store === 'xbox') {
+    return Promise.resolve({
       launcher: "xbox",
       addInfo: {
         appId: XBOXAPP_ID,
-        // appExecName is the <Application id="" in the appxmanifest.xml file
-        parameters: [{ appExecName: XBOXEXECNAME }],
+        parameters: [{ appExecName: XBOXEXECNAME }], // appExecName is the <Application id="" in the appxmanifest.xml file
       },
-    };
-  }
-  */
-  return undefined;
+    });
+  } //*/
+  /*if (store === 'steam') {
+    return Promise.resolve({
+        launcher: 'steam',
+    });
+  } //*/
+  return Promise.resolve(undefined);
 }
+
+// MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
 
 //Test for .i3d files
 function testI3d(files, gameId) {
@@ -257,6 +246,8 @@ function toBlue(func) {
   return (...args) => Bluebird.Promise.resolve(func(...args));
 }
 
+// MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
+
 //Setup function
 async function setup(discovery, api, gameSpec) {
   await fs.ensureDirWritableAsync(path.join(discovery.path, I3D_PATH));
@@ -269,9 +260,9 @@ function applyGame(context, gameSpec) {
   //register the game
   const game = {
     ...gameSpec.game,
-    queryPath,
+    queryPath: makeFindGame(context.api, gameSpec),
     queryModPath: makeGetModPath(context.api, gameSpec),
-    requiresLauncher,
+    requiresLauncher: requiresLauncher,
     requiresCleanup: true,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     executable: () => gameSpec.game.executable,
