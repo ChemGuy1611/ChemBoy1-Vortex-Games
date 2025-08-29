@@ -11,6 +11,11 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 
+//const USER_HOME = util.getVortexPath("home");
+//const DOCUMENTS = util.getVortexPath("documents");
+//const ROAMINGAPPDATA = util.getVortexPath('appData');
+const LOCALAPPDATA = util.getVortexPath('localAppData');
+
 //Specify all information about the game
 const GAME_ID = "XXX";
 const STEAMAPP_ID = "XXX";
@@ -20,11 +25,6 @@ const GOGAPP_ID = "XXX";
 const GAME_NAME = "XXX";
 const GAME_NAME_SHORT = "XXX";
 const EXEC = "XXX.exe";
-let GAME_PATH = null;
-let CHECK_DATA = false;
-let CHECK_DOCS = false;
-let STAGING_FOLDER = '';
-let DOWNLOAD_FOLDER = '';
 //Unreal Engine specific
 const EPIC_CODE_NAME = "XXX";
 const EXEC_FOLDER_NAME = "Win64";
@@ -35,6 +35,8 @@ const DATA_FOLDER = EPIC_CODE_NAME;
 const CONFIG_FOLDERNAME = "Windows";
 const CONFIG_LOC = 'Local AppData';
 const SAVE_LOC = 'Local AppData';
+const CONFIGMOD_LOCATION = LOCALAPPDATA;
+const SAVEMOD_LOCATION = LOCALAPPDATA;
 
 //Settings related to the IO Store UE feature
 let PAKMOD_EXTS = ['.pak'];
@@ -46,6 +48,12 @@ if (IO_STORE) { //Set file number for pak installer file selection (needs to be 
   PAK_FILE_MIN = PAKMOD_EXTS.length;
 }
 
+let GAME_PATH = null;
+let CHECK_DATA = false;
+let CHECK_DOCS = false;
+let STAGING_FOLDER = '';
+let DOWNLOAD_FOLDER = '';
+
 //Unreal Engine Game Data
 const UNREALDATA = {
   modsPath: path.join(EPIC_CODE_NAME, 'Content', 'Paks', '~mods'),
@@ -56,14 +64,9 @@ const UE5_SORTABLE_ID = `${GAME_ID}-uesortablepak`; //this should not be changed
 const UE5_SORTABLE_NAME = 'UE Sortable Pak Mod';
 
 //Information for modtypes, installers, tools, and actions
-//const USER_HOME = util.getVortexPath("home");
-//const DOCUMENTS = util.getVortexPath("documents");
-//const ROAMINGAPPDATA = util.getVortexPath('appData');
-const LOCALAPPDATA = util.getVortexPath('localAppData');
-
 const CONFIG_ID = `${GAME_ID}-config`;
 const CONFIG_NAME = "Config";
-const CONFIG_PATH = path.join(LOCALAPPDATA, DATA_FOLDER, "Saved", "Config", CONFIG_FOLDERNAME);
+const CONFIG_PATH = path.join(CONFIGMOD_LOCATION, DATA_FOLDER, "Saved", "Config", CONFIG_FOLDERNAME);
 const CONFIG_FILES = ["engine.ini", "scalability.ini", "input.ini", "game.ini"];
 const CONFIG_EXT = ".ini";
 
@@ -90,7 +93,7 @@ const CONTENT_PATH = path.join(EPIC_CODE_NAME);
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_NAME = "Saves";
 //const SAVE_FOLDER = path.join(DOCUMENTS, 'StellarBlade');
-const SAVE_FOLDER = path.join(LOCALAPPDATA, DATA_FOLDER, 'Saved', 'SaveGames');
+const SAVE_FOLDER = path.join(SAVEMOD_LOCATION, DATA_FOLDER, 'Saved', 'SaveGames');
 let USERID_FOLDER = "";
 try {
   const SAVE_ARRAY = fs.readdirSync(SAVE_FOLDER);
@@ -163,7 +166,6 @@ const spec = {
     "modPath": MOD_PATH_DEFAULT,
     "modPathIsRelative": true,
     "requiredFiles": [
-      EXEC,
       EPIC_CODE_NAME,
     ],
     "details": {
@@ -216,6 +218,12 @@ const spec = {
     {
       "id": ROOT_ID,
       "name": ROOT_NAME,
+      "priority": "high",
+      "targetPath": "{gamePath}"
+    },
+    {
+      "id": CONTENT_ID,
+      "name": CONTENT_NAME,
       "priority": "high",
       "targetPath": "{gamePath}"
     },
@@ -1069,7 +1077,7 @@ async function downloadUe4ssNexus(api, gameSpec) {
 } //*/
 
 //* Function to auto-download Mod Enabler form Nexus Mods
-async function downloadSigBypass(api, gameSpec, version) {
+async function downloadSigBypass(api, gameSpec) {
   let isInstalled = isSigBypassInstalled(api, gameSpec);
   if (!isInstalled) {
     const MOD_NAME = SIGBYPASS_NAME;
@@ -1377,7 +1385,7 @@ async function setup(discovery, api, gameSpec) {
   GAME_PATH = discovery.path;
   STAGING_FOLDER = selectors.installPathForGame(state, gameSpec.game.id);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, gameSpec.game.id);
-  CHECK_DATA = checkPartitions(LOCALAPPDATA, GAME_PATH);
+  CHECK_DATA = checkPartitions(CONFIGMOD_LOCATION, GAME_PATH);
   //CHECK_DOCS = checkPartitions(DOCUMENTS, GAME_PATH);
   if (!CHECK_DATA) {
     partitionCheckNotify(api, CHECK_DATA);
@@ -1390,7 +1398,8 @@ async function setup(discovery, api, gameSpec) {
   /*if (CHECK_DOCS) { //if game, staging folder, and config and save folders are on the same drive
     await fs.ensureDirWritableAsync(SAVE_PATH);
   } //*/
-   //await downloadUe4ss(api, gameSpec);
+  //await downloadUe4ss(api, gameSpec);
+  //await downloadSigBypass(api, gameSpec);
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
   /*await fs.ensureDirWritableAsync(path.join(GAME_PATH, SCRIPTS_PATH));
   await fs.ensureDirWritableAsync(path.join(GAME_PATH, LOGICMODS_PATH));
@@ -1421,13 +1430,15 @@ function applyGame(context, gameSpec) {
         && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
     }, (game) => pathPattern(context.api, game, type.targetPath), () => Promise.resolve(false), { name: type.name });
   });
+
+  //register sibypass modtype
   if (SIGBYPASS_PAGE_NO !== 0) { //only enable modtype if there is a sigbypass Nexus page
     context.registerModType(SIGBYPASS_ID, 60, 
       (gameId) => {
         var _a;
         return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
       }, 
-      (game) => pathPattern(context.api, game, BINARIES_PATH), 
+      (game) => pathPattern(context.api, game, `{gamePath}\\${BINARIES_PATH}`), 
       () => Promise.resolve(false), 
       { name: SIGBYPASS_NAME }
     );
@@ -1438,7 +1449,7 @@ function applyGame(context, gameSpec) {
     (gameId) => {
       GAME_PATH = getDiscoveryPath(context.api);
       if (GAME_PATH !== undefined) {
-        CHECK_DATA = checkPartitions(LOCALAPPDATA, GAME_PATH);
+        CHECK_DATA = checkPartitions(CONFIGMOD_LOCATION, GAME_PATH);
       }
       return ((gameId === GAME_ID) && (CHECK_DATA === true));
     },
@@ -1450,7 +1461,7 @@ function applyGame(context, gameSpec) {
     (gameId) => {
       GAME_PATH = getDiscoveryPath(context.api);
       if (GAME_PATH !== undefined) {
-        CHECK_DATA = checkPartitions(LOCALAPPDATA, GAME_PATH);
+        CHECK_DATA = checkPartitions(SAVEMOD_LOCATION, GAME_PATH);
       }
       return ((gameId === GAME_ID) && (CHECK_DATA === true));
       /*if (GAME_PATH !== undefined) {
