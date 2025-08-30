@@ -1,15 +1,16 @@
-/*
+/*////////////////////////////////////////////
 Name: Farming Simulator 25 Vortex Extension
 Author: ChemBoy1
-Version: 0.1.0
-Date: 11/23/2024
-*/
+Version: 0.2.0
+Date: 2025-08-30
+////////////////////////////////////////////*/
 
 //import libraries
-const { actions, fs, util, selectors } = require('vortex-api');
+const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 const Bluebird = require('bluebird');
+const { get } = require('http');
 //const winapi = require('winapi-bindings'); //gives access to the Windows registry
 
 //Specify all the information about the game
@@ -19,15 +20,21 @@ const XBOXAPP_ID = "GIANTSSoftware.FarmingSimulator25PC";
 const XBOXEXECNAME = "x64.FarmingSimulator2025Game";
 const GAME_ID = "farmingsimulator25";
 const EXEC = "FarmingSimulator2025.exe";
+const EXEC_XBOX = 'gamelaunchhelper.exe';
 const EXEC_X64 = path.join('x64', 'FarmingSimulator2025Game.exe');
 const GAME_NAME = "Farming Simulator 25";
 const GAME_NAME_SHORT = "Farming Sim 25";
 
+let GAME_VERSION = '';
+
 //Info for mod types and installers
 const DOCUMENTS = util.getVortexPath('documents');
 const MOD_PATH = path.join(DOCUMENTS, 'My Games', 'FarmingSimulator2025', 'mods');
-const ZIP_ID = `${GAME_ID}-zip`;
+//for xbox version
+const LOCALAPPDATA = util.getVortexPath('localAppData');
+const MOD_PATH_XBOX = path.join(LOCALAPPDATA, 'Packages', 'GIANTSSoftware.FarmingSimulator25PC_fa8jxm5fj0esw', 'LocalCache', 'Local', 'mods');
 
+const ZIP_ID = `${GAME_ID}-zip`;
 const ROOT_ID = `${GAME_ID}-root`;
 
 const PDLC_ID = `${GAME_ID}-pdlc`;
@@ -45,8 +52,9 @@ const spec = {
     "executable": EXEC_X64,
     "logo": `${GAME_ID}.jpg`,
     "mergeMods": true,
-    "modPath": MOD_PATH,
-    "modPathIsRelative": false,
+    "requiresCleanup": true,
+    //"modPath": MOD_PATH,
+    //"modPathIsRelative": false,
     "requiredFiles": [
       EXEC_X64
     ],
@@ -54,7 +62,6 @@ const spec = {
       "steamAppId": STEAMAPP_ID,
       "epicAppId": EPICAPP_ID,
       "xboxAppId": XBOXAPP_ID,
-      "nexusPageId": GAME_ID,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
@@ -111,17 +118,28 @@ function pathPattern(api, game, pattern) {
   return template(pattern, {
     gamePath: (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0 ? void 0 : _a.path,
     documents: util.getVortexPath('documents'),
-    localAppData: process.env['LOCALAPPDATA'],
+    localAppData: util.getVortexPath('localAppData'),
     appData: util.getVortexPath('appData'),
   });
 }
 
-//Get mod path
+/*Get mod path
 function makeGetModPath(api, gameSpec) {
   return () => gameSpec.game.modPathIsRelative !== false
     ? gameSpec.game.modPath || '.'
     : pathPattern(api, gameSpec.game, gameSpec.game.modPath);
-}
+} //*/
+
+//Get mod path dynamically for Xbox vs Steam/Epic
+function getModPath(gamePath) {
+  GAME_VERSION = setGameVersion(gamePath);
+  if (GAME_VERSION === 'xbox') {
+    return MOD_PATH_XBOX;
+  }
+  else {
+    return MOD_PATH;
+  }
+} //*/
 
 //Find game installation directory
 function makeFindGame(api, gameSpec) {
@@ -153,6 +171,27 @@ async function requiresLauncher(gamePath, store) {
     });
   } //*/
   return Promise.resolve(undefined);
+}
+
+//Get correct game version
+function setGameVersion(gamePath) {
+  const isCorrectExec = (exec) => {
+    try {
+      fs.statSync(path.join(gamePath, exec));
+      return true;
+    }
+    catch (err) {
+      return false;
+    }
+  };
+  if (isCorrectExec(EXEC_XBOX)) {
+    GAME_VERSION = 'xbox';
+    return GAME_VERSION;
+  };
+  if (isCorrectExec(EXEC)) {
+    GAME_VERSION = 'default';
+    return GAME_VERSION;
+  };
 }
 
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
@@ -205,6 +244,13 @@ function installI3d(files) {
 async function testZip(files, gameId) {
   let supported = (gameId === spec.game.id);
 
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
   return Promise.resolve({
     supported,
     requiredFiles: []
@@ -250,6 +296,7 @@ function toBlue(func) {
 
 //Setup function
 async function setup(discovery, api, gameSpec) {
+  GAME_VERSION = setGameVersion(discovery.path);
   await fs.ensureDirWritableAsync(path.join(discovery.path, I3D_PATH));
   await fs.ensureDirWritableAsync(path.join(discovery.path, PDLC_PATH));
   return fs.ensureDirWritableAsync(MOD_PATH);
@@ -261,11 +308,11 @@ function applyGame(context, gameSpec) {
   const game = {
     ...gameSpec.game,
     queryPath: makeFindGame(context.api, gameSpec),
-    queryModPath: makeGetModPath(context.api, gameSpec),
-    requiresLauncher: requiresLauncher,
-    requiresCleanup: true,
-    setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     executable: () => gameSpec.game.executable,
+    //queryModPath: makeGetModPath(context.api, gameSpec),
+    queryModPath: getModPath,
+    requiresLauncher: requiresLauncher,
+    setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     supportedTools: tools,
   };
   context.registerGame(game);
@@ -281,14 +328,13 @@ function applyGame(context, gameSpec) {
 
   //register mod installers
   //context.registerInstaller(I3D_ID, 25, testI3d, installI3d);
-  context.registerInstaller(ZIP_ID, 70, toBlue(testZip), toBlue(installZip));
+  context.registerInstaller(ZIP_ID, 30, toBlue(testZip), toBlue(installZip));
 }
 
 //Main function
 function main(context) {
   applyGame(context, spec);
-  context.once(() => {
-    // put code here that should be run (once) when Vortex starts up
+  context.once(() => { // put code here that should be run (once) when Vortex starts up
 
   });
   return true;
