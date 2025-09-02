@@ -2,8 +2,8 @@
 Name: Stellar Blade Vortex Extension
 Structure: UE5 (static exe)
 Author: ChemBoy1
-Version: 0.1.7
-Date: 2025-07-26
+Version: 0.1.8
+Date: 2025-09-02
 //////////////////////////////////////////////////*/
 
 //Import libraries
@@ -146,6 +146,12 @@ const SPLASH_NAME = "Splash Screen";
 const SPLASH_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Splash');
 const SPLASH_FILE = "splash.bmp";
 
+const CNSJSON_ID = `${GAME_ID}-cnsjson`;
+const CNSJSON_NAME = "CNS JSON Mod";
+const CNSJSON_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Paks', '~mods');
+const CNSJSON_EXT = ".json";
+const CNSJSON_STRING = ".dekcns.json";
+
 const MOD_PATH_DEFAULT = PAK_PATH;
 const MODTYPE_FOLDERS = [MENU_PATH, SPLASH_PATH, LOGICMODS_PATH, SCRIPTS_PATH, PAK_PATH];
 
@@ -241,6 +247,12 @@ const spec = {
       "name": SPLASH_NAME,
       "priority": "high",
       "targetPath": `{gamePath}\\${SPLASH_PATH}`
+    },
+    {
+      "id": CNSJSON_ID,
+      "name": CNSJSON_NAME,
+      "priority": "high",
+      "targetPath": `{gamePath}\\${CNSJSON_PATH}`
     },
   ],
   "discovery": {
@@ -931,6 +943,46 @@ function installSplash(files) {
   return Promise.resolve({ instructions });
 }
 
+//Test for Movie mod files
+function testJson(files, gameId) {
+  const isExt = files.some(file => (path.extname(file).toLowerCase() === CNSJSON_EXT));
+  const isMod = files.some(file => (path.basename(file).toLowerCase().includes(CNSJSON_STRING)));
+  let supported = (gameId === spec.game.id) && isExt &&isMod;
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install Movie mod files
+function installJson(files) {
+  const modFile = files.find(file => (path.extname(file).toLowerCase() === CNSJSON_EXT));
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: MOVIE_ID };
+
+  //Filter files and set instructions
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
 
 //Test for Mod Loader mods
 function testBinaries(files, gameId) {
@@ -1447,6 +1499,7 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(MENU_ID, 43, testMenu, installMenu);
   context.registerInstaller(MOVIE_ID, 45, testMovies, installMovies);
   context.registerInstaller(SPLASH_ID, 47, testSplash, installSplash);
+  context.registerInstaller(CNSJSON_ID, 48, testJson, installJson);
   context.registerInstaller(BINARIES_ID, 49, testBinaries, installBinaries);
 
   //register buttons to open folders
