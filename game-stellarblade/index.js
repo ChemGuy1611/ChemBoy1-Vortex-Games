@@ -148,12 +148,12 @@ const SPLASH_FILE = "splash.bmp";
 
 const CNSJSON_ID = `${GAME_ID}-cnsjson`;
 const CNSJSON_NAME = "CNS JSON Mod";
-const CNSJSON_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Paks', '~mods');
+const CNSJSON_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Paks', '~mods', 'CustomNanosuitSystem');
 const CNSJSON_EXT = ".json";
 const CNSJSON_STRING = ".dekcns.json";
 
 const MOD_PATH_DEFAULT = PAK_PATH;
-const MODTYPE_FOLDERS = [MENU_PATH, SPLASH_PATH, LOGICMODS_PATH, SCRIPTS_PATH, PAK_PATH];
+const MODTYPE_FOLDERS = [MENU_PATH, SPLASH_PATH, LOGICMODS_PATH, SCRIPTS_PATH, PAK_PATH, CNSJSON_PATH];
 
 //Filled in from data above
 const spec = {
@@ -964,10 +964,11 @@ function testJson(files, gameId) {
 
 //Install Movie mod files
 function installJson(files) {
+  const MOD_TYPE = CNSJSON_ID;
   const modFile = files.find(file => (path.extname(file).toLowerCase() === CNSJSON_EXT));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: MOVIE_ID };
+  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
 
   //Filter files and set instructions
   const filtered = files.filter(file =>
