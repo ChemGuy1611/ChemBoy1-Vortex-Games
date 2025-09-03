@@ -225,7 +225,7 @@ const spec = {
       "id": CONTENT_ID,
       "name": CONTENT_NAME,
       "priority": "high",
-      "targetPath": "{gamePath}"
+      "targetPath": `{gamePath}\\${CONTENT_PATH}`
     },
     {
       "id": BINARIES_ID,
@@ -474,8 +474,7 @@ function installUe4ss(files) {
 function testSigBypass(files, gameId) {
   const isDll = files.some(file => path.basename(file).toLowerCase() === SIGBYPASS_DLL);
   const isLua = files.some(file => path.basename(file).toLowerCase() === SIGBYPASS_LUA);
-  const TEST = isDll && isLua;
-  let supported = (gameId === spec.game.id) && TEST;
+  let supported = (gameId === spec.game.id) && isDll && isLua;
 
   // Test for a mod installer
   if (supported && files.find(file =>
