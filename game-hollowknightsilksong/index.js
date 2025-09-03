@@ -1,9 +1,9 @@
 /*//////////////////////////////////////////
-Name: XXX Vortex Extension
+Name: Hollow Knight: Silksong Vortex Extension
 Structure: Unity BepinEx
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2025-07-02
+Date: 2025-09-04
 //////////////////////////////////////////*/
 
 //Import libraries
@@ -14,7 +14,7 @@ const template = require('string-template');
 //const turbowalk = require('turbowalk');
 
 //Specify all the information about the game
-const STEAMAPP_ID = "XXX";
+const STEAMAPP_ID = "1030300";
 const EPICAPP_ID = "XXX";
 const GOGAPP_ID = "XXX";
 const XBOXAPP_ID = "XXX";
@@ -89,9 +89,9 @@ const spec = {
   "discovery": {
     "ids": [
       STEAMAPP_ID,
+      XBOXAPP_ID,
       //EPICAPP_ID,
       //GOGAPP_ID,
-      //XBOXAPP_ID
     ],
     "names": []
   }
@@ -143,7 +143,7 @@ async function requiresLauncher(gamePath, store) {
         launcher: 'steam',
     });
   } //*/
-  /*if (store === 'xbox') {
+  if (store === 'xbox') {
     return Promise.resolve({
       launcher: 'xbox',
       addInfo: {
@@ -291,7 +291,7 @@ function main(context) {
         //* <--- Download BepinEx from GitHub. Comment out other section if using this.
         architecture: 'x64', // <--- Select version for 64-bit or 32-bit game ('x64' or 'x86')
         //installRelPath: "bin/x64" // <--- Specify install location (next to game .exe) if not the root game folder (not common)
-        bepinexVersion: '5.4.23.3', // <--- Force BepinEx version
+        bepinexVersion: '5.4.23.3', // <--- Force BepinEx version (5.4.23.X or 6.0.0)
         forceGithubDownload: true, // <--- Force Vortex to download directly from Github (recommended)
         unityBuild: 'unitymono', // <--- Download version 6.0.0 of BepInEx that supports IL2CPP or 5.4.23 Mono ('unityil2cpp' or 'unitymono') 
         //*/
