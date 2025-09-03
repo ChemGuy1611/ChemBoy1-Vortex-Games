@@ -4,6 +4,10 @@
 
 - None
 
+## [0.1.7] - 2025-09-02
+
+- Added additional installer for CNS mods with only a .json file and no .pak file.
+
 ## [0.1.7] - 2025-07-26
 
 - Fixed UE4SS not installing properly on 0.1.6 due to installer test order.
