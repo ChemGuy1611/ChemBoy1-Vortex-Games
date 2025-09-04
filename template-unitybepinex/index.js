@@ -23,6 +23,7 @@ const GAME_ID = "XXX";
 const GAME_NAME = "XXX"
 const GAME_NAME_SHORT = "XXX"
 const EXEC = "XXX.exe";
+const EXEC_XBOX = 'gamelaunchhelper.exe';
 const BEPINEX_PAGE_ID = 'XXX';
 const BEPINEX_FILE_ID = 'XXX';
 
@@ -231,6 +232,7 @@ function applyGame(context, gameSpec) {
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     executable: () => gameSpec.game.executable,
+    getGameVersion: resolveGameVersion,
     supportedTools: tools,
   };
   context.registerGame(game);

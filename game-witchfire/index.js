@@ -1,13 +1,13 @@
-/*
+/*//////////////////////////////////////
 Name: Witchfire Vortex Extension
 Structure: UE4
 Author: ChemBoy1
 Version: 0.3.2
 Date: 08/21/2024
-*/
+//////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors } = require('vortex-api');
+const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 
@@ -39,7 +39,6 @@ const UNREALDATA = {
 }
 
 //This information will be filled in from the data above
-const SHIPPING_EXE = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_NAME}\\${EPIC_CODE_NAME}-${EXEC_FOLDER_NAME}-Shipping.exe`;
 const EXEC_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_NAME}`;
 const CONFIG_ID = `${GAME_ID}-config`;
 const CONFIG_PATH = path.join(EPIC_CODE_NAME, "Saved", "Config", "WindowsNoEditor");
@@ -56,6 +55,10 @@ const ROOT_FILE = EPIC_CODE_NAME;
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_PATH = path.join(EPIC_CODE_NAME, "Saved", "SaveGames");
 const SAVE_EXT = ".json";
+
+const SHIPEXE_STRING_DEFAULT = '';
+const SHIPPING_EXE_FILENAME = `${EPIC_CODE_NAME}-${EXEC_FOLDER_NAME}${SHIPEXE_STRING_DEFAULT}-Shipping.exe`;
+let SHIPPING_EXE = path.join(EXEC_PATH, SHIPPING_EXE_FILENAME);
 
 const spec = {
   "game": {
@@ -336,11 +339,27 @@ function installSave(files) {
   return Promise.resolve({ instructions });
 }
 
+// MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
+
+async function resolveGameVersion(gamePath, exePath) {
+  //SHIPPING_EXE = getShippingExe(gamePath);
+  READ_FILE = path.join(gamePath, SHIPPING_EXE);
+  let version = '0.0.0';
+  try {
+    const exeVersion = require('exe-version');
+    version = await exeVersion.getProductVersion(READ_FILE);
+    //log('warn', `Resolved game version for ${GAME_ID} to: ${version}`);
+    return Promise.resolve(version); 
+  } catch (err) {
+    log('error', `Could not read ${READ_FILE} file to get game version: ${err}`);
+    return Promise.resolve(version);
+  }
+}
 
 //Setup function
 async function setup(discovery, api, gameSpec) {
-  await fs.ensureDirWritableAsync(path.join(process.env['LOCALAPPDATA'], CONFIG_PATH));
-  await fs.ensureDirWritableAsync(path.join(process.env['LOCALAPPDATA'], SAVE_PATH));
+  await fs.ensureDirWritableAsync(path.join(util.getVortexPath('localAppData'), CONFIG_PATH));
+  await fs.ensureDirWritableAsync(path.join(util.getVortexPath('localAppData'), SAVE_PATH));
   return fs.ensureDirWritableAsync(path.join(discovery.path, PAK_PATH));
 }
 
@@ -378,6 +397,7 @@ function applyGame(context, gameSpec) {
     requiresCleanup: true,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     executable: () => gameSpec.game.executable,
+    getGameVersion: resolveGameVersion,
     supportedTools: tools,
   };
   context.registerGame(game);

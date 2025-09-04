@@ -1,9 +1,9 @@
 /*//////////////////////////////////////////////////
-Name: XXX Vortex Extension
+Name: Cronos: The New Dawn Vortex Extension
 Structure: UE5 (static exe)
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2025-XXX-XXX
+Date: 2025-09-04
 //////////////////////////////////////////////////*/
 
 //Import libraries
@@ -17,17 +17,17 @@ const template = require('string-template');
 const LOCALAPPDATA = util.getVortexPath('localAppData');
 
 //Specify all information about the game
-const GAME_ID = "XXX";
-const STEAMAPP_ID = "XXX";
-const STEAMAPP_ID_DEMO = "XXX";
-const EPICAPP_ID = "XXX";
-const GOGAPP_ID = "XXX";
-const GAME_NAME = "XXX";
-const GAME_NAME_SHORT = "XXX";
-const EXEC = "XXX.exe";
-const EXEC_EPIC = "XXX_EGS.exe";
+const GAME_ID = "cronosthenewdawn";
+const STEAMAPP_ID = "2101960";
+const STEAMAPP_ID_DEMO = null;
+const EPICAPP_ID = "641abaddc74f4adfa3aa20dc9cadaf88";
+const GOGAPP_ID = "1546068368";
+const GAME_NAME = "Cronos: The New Dawn";
+const GAME_NAME_SHORT = "Cronos TND";
+const EXEC = "Cronos.exe";
+const EXEC_EPIC = "Cronos.exe";
 //Unreal Engine specific
-const EPIC_CODE_NAME = "XXX";
+const EPIC_CODE_NAME = "Cronos";
 const EXEC_FOLDER_NAME = "Win64";
 const IO_STORE = true; //true if the Paks folder contains .ucas and .utoc files
 const UE4SS_MOD_PATH = path.join('ue4ss', 'Mods');
@@ -241,8 +241,8 @@ const spec = {
   "discovery": {
     "ids": [
       STEAMAPP_ID,
-      //EPICAPP_ID,
-      //GOGAPP_ID,
+      EPICAPP_ID,
+      GOGAPP_ID,
       //STEAMAPP_ID_DEMO,
     ],
     "names": []

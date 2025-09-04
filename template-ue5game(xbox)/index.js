@@ -10,6 +10,7 @@ Date: 2025-XXX-XXX
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
+const { get } = require('http');
 
 //const USER_HOME = util.getVortexPath("home");
 //const DOCUMENTS = util.getVortexPath("documents");
@@ -19,6 +20,7 @@ const LOCALAPPDATA = util.getVortexPath("localAppData");
 //Specify all information about the game
 const GAME_ID = "XXX"; //same as Nexus domain
 const STEAMAPP_ID = "XXX"; //from steamdb.info
+const STEAMAPP_ID_DEMO = "XXX";
 const EPICAPP_ID = "XXX"; //from egdata.app
 const GOGAPP_ID = "XXX"; // from gogdb.org
 const XBOXAPP_ID = "XXX"; //from appxmanifest.xml
@@ -39,10 +41,14 @@ const CONFIG_LOC = 'Local AppData';
 const SAVE_LOC = 'Local AppData';
 const CONFIGMOD_LOCATION = LOCALAPPDATA;
 const SAVEMOD_LOCATION = LOCALAPPDATA;
+const SHIPEXE_STRING_DEFAULT = '';
+const SHIPEXE_STRING_EGS = '';
+const SHIPEXE_STRING_XBOX = '';
 
 //Discovery IDs
 const gameFinderQuery = {
   steam: [{ id: STEAMAPP_ID, prefer: 0 }],
+  //steam: [{ id: STEAMAPP_ID, prefer: 0 }, { id: STEAMAPP_ID_DEMO }],
   //gog: [{ id: GOGAPP_ID }],
   //epic: [{ id: EPICAPP_ID }],
   xbox: [{ id: XBOXAPP_ID }],
@@ -287,7 +293,7 @@ function getExecutable(discoveryPath) {
     GAME_VERSION = 'xbox';
     EXEC_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_XBOX}`;
     EXEC_TARGET = `{gamePath}\\${EXEC_PATH}`;
-    SHIPPING_EXE = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_XBOX}\\${EPIC_CODE_NAME}-${EXEC_FOLDER_XBOX}-Shipping.exe`;
+    SHIPPING_EXE = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_XBOX}\\${EPIC_CODE_NAME}-${EXEC_FOLDER_XBOX}${SHIPEXE_STRING_XBOX}-Shipping.exe`;
     SCRIPTS_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_XBOX}\\${UE4SS_MOD_PATH}`;
     SCRIPTS_TARGET = `{gamePath}\\${SCRIPTS_PATH}`;
     CONFIG_PATH = CONFIG_PATH_XBOX;
@@ -311,7 +317,7 @@ function getExecutable(discoveryPath) {
     GAME_VERSION = 'steam';
     EXEC_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_DEFAULT}`;
     EXEC_TARGET = `{gamePath}\\${EXEC_PATH}`;
-    SHIPPING_EXE = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_DEFAULT}\\${EPIC_CODE_NAME}-${EXEC_FOLDER_DEFAULT}-Shipping.exe`;
+    SHIPPING_EXE = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_DEFAULT}\\${EPIC_CODE_NAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_DEFAULT}-Shipping.exe`;
     SCRIPTS_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_DEFAULT}\\${UE4SS_MOD_PATH}`;
     SCRIPTS_TARGET = `{gamePath}\\${SCRIPTS_PATH}`;
     CONFIG_PATH = CONFIG_PATH_DEFAULT;
@@ -335,7 +341,7 @@ function getExecutable(discoveryPath) {
     GAME_VERSION = 'epic';
     EXEC_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_DEFAULT}`;
     EXEC_TARGET = `{gamePath}\\${EXEC_PATH}`;
-    SHIPPING_EXE = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_DEFAULT}\\${EPIC_CODE_NAME}-${EXEC_FOLDER_DEFAULT}-Shipping.exe`;
+    SHIPPING_EXE = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_DEFAULT}\\${EPIC_CODE_NAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_EGS}-Shipping.exe`;
     SCRIPTS_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_DEFAULT}\\${UE4SS_MOD_PATH}`;
     SCRIPTS_TARGET = `{gamePath}\\${SCRIPTS_PATH}`;
     CONFIG_PATH = CONFIG_PATH_DEFAULT;
@@ -359,11 +365,10 @@ function getExecutable(discoveryPath) {
 }
 
 //Get correct shipping executable for game version
-function getShippingExe(api) {
-  GAME_PATH = getDiscoveryPath(api);
+function getShippingExe(gamePath) {
   const isCorrectExec = (exec) => {
     try {
-      fs.statSync(path.join(GAME_PATH, exec));
+      fs.statSync(path.join(gamePath, exec));
       return true;
     }
     catch (err) {
@@ -1479,71 +1484,18 @@ function partitionCheckNotify(api, CHECK_DATA) {
   });
 }
 
-async function resolveGameVersion(gamePath) {
-  GAME_VERSION = setGameVersion(gamePath);
+async function resolveGameVersion(gamePath, exePath) {
+  SHIPPING_EXE = getShippingExe(gamePath);
+  READ_FILE = path.join(gamePath, SHIPPING_EXE);
   let version = '0.0.0';
-  if (GAME_VERSION === 'xbox') {
-    try { //try to parse appmanifest.xml for Xbox version
-      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
-      const parser = new DOMParser();
-      const XML = parser.parseFromString(appManifest, 'text/xml');
-      try { //try to get version from appmanifest.xml
-        /*
-        const ns = "http://schemas.microsoft.com/appx/manifest/foundation/windows10"; //must define namespace
-        const identity = XML.getElementsByTagNameNS(ns, 'Identity')[0]; 
-        //*/
-
-        /* Namespace resolver — important since default xmlns is in effect
-        const nsResolver = (prefix) => {
-          const ns = {
-            def: "http://schemas.microsoft.com/appx/manifest/foundation/windows10"
-          };
-          return ns[prefix] || null;
-        };
-        // This XPath selects only the "Version" attribute on the Identity element
-        const xpath = "/def:Package/def:Identity/@Version";
-        const result = XML.evaluate(
-          xpath,
-          XML,
-          nsResolver,
-          XPathResult.STRING_TYPE,
-          null
-        );
-        version = result.stringValue; 
-        //*/
-        //*
-        const identity = XML.getElementsByTagName('Identity')[0];
-        version = identity.getAttribute('Version'); 
-        //*/
-        return Promise.resolve(version);
-      } catch (err) { //could not get version
-        log('error', `Could not get version from appmanifest.xml file for Xbox game version: ${err}`);
-        return Promise.resolve(version);
-      }
-    } catch (err) { //mod.manifest could not be read. Try to overwrite with a clean one.
-      log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
-      return Promise.resolve(version);
-    }
-  }
-  if (GAME_VERSION === 'epic') { // use EXEC_EPIC for Epic
-    try {
-      const exeVersion = require('exe-version');
-      version = exeVersion.getProductVersion(path.join(gamePath, EXEC_EPIC));
-      return Promise.resolve(version); 
-    } catch (err) {
-      log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
-      return Promise.resolve(version);
-    }
-  } //*/
-  if (GAME_VERSION === 'steam') { // use EXEC_DEFAULT for Steam
-    try {
-      const exeVersion = require('exe-version');
-      version = exeVersion.getProductVersion(path.join(gamePath, EXEC_DEFAULT));
-      return Promise.resolve(version); 
-    } catch (err) {
-      log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
-      return Promise.resolve(version);
-    }
+  try {
+    const exeVersion = require('exe-version');
+    version = await exeVersion.getProductVersion(READ_FILE);
+    //log('warn', `Resolved game version for ${GAME_ID} to: ${version}`);
+    return Promise.resolve(version); 
+  } catch (err) {
+    log('error', `Could not read ${READ_FILE} file to get Steam game version: ${err}`);
+    return Promise.resolve(version);
   }
 }
 

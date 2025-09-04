@@ -1018,6 +1018,29 @@ async function resolveGameVersion(gamePath) {
       const parser = new DOMParser();
       const XML = parser.parseFromString(appManifest, 'text/xml');
       try { //try to get version from appxmanifest.xml
+        /*
+        const ns = "http://schemas.microsoft.com/appx/manifest/foundation/windows10"; //must define namespace
+        const identity = XML.getElementsByTagNameNS(ns, 'Identity')[0]; 
+        //*/
+
+        /* Namespace resolver — important since default xmlns is in effect
+        const nsResolver = (prefix) => {
+          const ns = {
+            def: "http://schemas.microsoft.com/appx/manifest/foundation/windows10"
+          };
+          return ns[prefix] || null;
+        };
+        // This XPath selects only the "Version" attribute on the Identity element
+        const xpath = "/def:Package/def:Identity/@Version";
+        const result = XML.evaluate(
+          xpath,
+          XML,
+          nsResolver,
+          XPathResult.STRING_TYPE,
+          null
+        );
+        version = result.stringValue; 
+        //*/
         const identity = XML.getElementsByTagName('Identity')[0];
         version = identity.getAttribute('Version');
         return Promise.resolve(version);

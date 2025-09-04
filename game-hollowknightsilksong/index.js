@@ -17,12 +17,13 @@ const template = require('string-template');
 const STEAMAPP_ID = "1030300";
 const EPICAPP_ID = null;
 const GOGAPP_ID = "1558393671";
-const XBOXAPP_ID = "XXX";
-const XBOXEXECNAME = "XXX";
+const XBOXAPP_ID = "TeamCherry.HollowKnightSilksong";
+const XBOXEXECNAME = "Hollow.Knight.Silksong";
 const GAME_ID = "hollowknightsilksong";
 const GAME_NAME = "Hollow Knight: Silksong"
 const GAME_NAME_SHORT = "HK Silksong"
-const EXEC = "XXX.exe";
+const EXEC = "Hollow Knight Silksong.exe";
+const EXEC_XBOX = 'gamelaunchhelper.exe';
 const BEPINEX_PAGE_ID = 'XXX';
 const BEPINEX_FILE_ID = 'XXX';
 
@@ -93,7 +94,7 @@ const spec = {
       STEAMAPP_ID,
       XBOXAPP_ID,
       //EPICAPP_ID,
-      //GOGAPP_ID,
+      GOGAPP_ID,
     ],
     "names": []
   }
