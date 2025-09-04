@@ -10,8 +10,13 @@ Date: 2025-09-04
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
-//const winapi = require('winapi-bindings');
+const winapi = require('winapi-bindings');
 //const turbowalk = require('turbowalk');
+
+const USER_HOME = util.getVortexPath("home");
+//const DOCUMENTS = util.getVortexPath("documents");
+//const ROAMINGAPPDATA = util.getVortexPath("appData");
+const LOCALAPPDATA = util.getVortexPath("localAppData");
 
 //Specify all the information about the game
 const STEAMAPP_ID = "1030300";
@@ -24,8 +29,12 @@ const GAME_NAME = "Hollow Knight: Silksong"
 const GAME_NAME_SHORT = "HK Silksong"
 const EXEC = "Hollow Knight Silksong.exe";
 const EXEC_XBOX = 'gamelaunchhelper.exe';
+const DATA_FOLDER = "Hollow Knight Silksong_Data";
 const BEPINEX_PAGE_ID = 'XXX';
 const BEPINEX_FILE_ID = 'XXX';
+const DEV_REGSTRING = "Team Cherry";
+const GAME_REGSTRING = "Hollow Knight Silksong";
+const XBOX_SAVE_STRING = 'y4jvztpgccj42';
 
 let GAME_PATH = null;
 let STAGING_FOLDER = '';
@@ -40,11 +49,25 @@ const BEPMOD_NAME = "BepinEx Mod";
 const BEPMOD_PATH = path.join("BepinEx", "plugins")
 const modFileExt = ".dll";
 
+const ASSEMBLY_ID = `${GAME_ID}-assemblydll`;
+const ASSEMBLY_NAME = "Assembly DLL Mod";
+const ASSEMBLY_PATH = path.join(DATA_FOLDER, "Managed");
+const ASSEMBLY_FILE = "Assembly-CSharp.dll";
+
+//Config and save paths
+const CONFIG_HIVE = 'HKEY_CURRENT_USER';
+const CONFIG_REGPATH = `Software\\${DEV_REGSTRING}\\${GAME_REGSTRING}`;
+const CONFIG_REGPATH_FULL = `${CONFIG_HIVE}\\${CONFIG_REGPATH}`;
+const SAVE_PATH_DEFAULT = path.join(USER_HOME, 'AppData', 'LocalLow', DEV_REGSTRING, GAME_REGSTRING);
+const SAVE_PATH_XBOX = path.join(LOCALAPPDATA, "Packages", `${XBOXAPP_ID}_${XBOX_SAVE_STRING}`, "SystemAppData", "wgs"); //XBOX Version
+let SAVE_PATH = SAVE_PATH_DEFAULT;
+
 const BEPINEXIL2CPP_BE_URL = `https://builds.bepinex.dev/projects/bepinex_be/738/BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.738%2Baf0cba7.zip`;
 
 const LOADER_ID = `${GAME_ID}-modloader`;
 
 const MOD_PATH_DEFAULT = ".";
+const MODTYPE_FOLDERS = [BEPMOD_PATH, ASSEMBLY_PATH];
 
 //Filled in from info above
 const spec = {
@@ -83,6 +106,12 @@ const spec = {
       "targetPath": "{gamePath}"
     },
     {
+      "id": ASSEMBLY_ID,
+      "name": ASSEMBLY_NAME,
+      "priority": "high",
+      "targetPath": `{gamePath}\\${ASSEMBLY_PATH}`
+    },
+    {
       "id": BEPMOD_ID,
       "name": BEPMOD_NAME,
       "priority": "high",
@@ -102,7 +131,19 @@ const spec = {
 
 //3rd party tools and launchers
 const tools = [
-  
+  {
+    id: `${GAME_ID}-customlaunch`,
+    name: `Custom Launch`,
+    logo: `exec.png`,
+    executable: () => EXEC,
+    requiredFiles: [EXEC],
+    detach: true,
+    relative: true,
+    exclusive: true,
+    shell: true,
+    //defaultPrimary: true,
+    parameters: []
+  }, //*/
 ];
 
 // BASIC FUNCTIONS //////////////////////////////////////////////////////////////
@@ -166,7 +207,102 @@ async function requiresLauncher(gamePath, store) {
   return Promise.resolve(undefined);
 }
 
+//Find the game installation folder
+function openConfigRegistry(api) {
+  GAME_PATH = getDiscoveryPath(api);
+  try {
+    api.runExecutable(path.join(GAME_PATH, 'regjump.exe'), [`"${CONFIG_REGPATH_FULL}"`], { shell: true, detached: true } )
+    /*winapi.WithRegOpen(
+      CONFIG_HIVE,
+      CONFIG_REGPATH,
+      hkey => {
+        util.opn(hkey);
+      }
+    ); //*/
+  } catch (err) {
+    log('error', `Could not open ${GAME_NAME} config in registry: ${err}`);
+  }
+}
+
+//Get correct save folder for game version
+function getSavePath(api) {
+  GAME_PATH = getDiscoveryPath(api);
+  const isCorrectExec = (exec) => {
+    try {
+      fs.statSync(path.join(GAME_PATH, exec));
+      return true;
+    }
+    catch (err) {
+      return false;
+    }
+  };
+  if (isCorrectExec(EXEC_XBOX)) {
+    SAVE_PATH = SAVE_PATH_XBOX;
+    return SAVE_PATH;
+  }
+  else {
+    SAVE_PATH = SAVE_PATH_DEFAULT;
+    return SAVE_PATH;
+  };
+}
+
+const getDiscoveryPath = (api) => { //get the game's discovered path
+  const state = api.getState();
+  const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});
+  return discovery === null || discovery === void 0 ? void 0 : discovery.path;
+};
+
+async function purge(api) { //useful to clear out mods prior to doing some action
+  return new Promise((resolve, reject) => api.events.emit('purge-mods', true, (err) => err ? reject(err) : resolve()));
+}
+async function deploy(api) { //useful to deploy mods after doing some action
+  return new Promise((resolve, reject) => api.events.emit('deploy-mods', (err) => err ? reject(err) : resolve()));
+}
+
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
+
+//Test for Assembly mod files
+function testAssembly(files, gameId) {
+  const isMod = files.some(file => (path.basename(file) === ASSEMBLY_FILE));
+  let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+      supported,
+      requiredFiles: [],
+  });
+}
+
+//Install Assembly mod files
+function installAssembly(files) {
+  const MOD_TYPE = ASSEMBLY_ID;
+  const modFile = files.find(file => (path.basename(file) === ASSEMBLY_FILE));
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file => (
+    (file.indexOf(rootPath) !== -1) &&
+    (!file.endsWith(path.sep))
+  ));
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
 
 //Test for .dll BepinEx mod files
 function testBepMod(files, gameId) {
@@ -188,10 +324,11 @@ function testBepMod(files, gameId) {
 
 //Install .dll BepinEx mod files
 function installBepMod(files) {
+  const MOD_TYPE = BEPMOD_ID;
   const modFile = files.find(file => (path.extname(file).toLowerCase() === modFileExt));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: BEPMOD_ID };
+  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file => (
@@ -211,6 +348,12 @@ function installBepMod(files) {
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
+async function modFoldersEnsureWritable(gamePath, relPaths) {
+  for (let index = 0; index < relPaths.length; index++) {
+    await fs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
+  }
+}
+
 //Setup function
 async function setup(discovery, api, gameSpec) {
   //SYNCHRONOUS CODE ////////////////////////////////////
@@ -220,7 +363,7 @@ async function setup(discovery, api, gameSpec) {
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   // ASYCRONOUS CODE ///////////////////////////////////
   //await downloadBepinex(api, gameSpec);
-  return fs.ensureDirWritableAsync(path.join(GAME_PATH, BEPMOD_PATH));
+  return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 
 //Let Vortex know about the game
@@ -251,8 +394,35 @@ function applyGame(context, gameSpec) {
   //context.registerInstaller(MELON_ID, 25, testMelon, installMelon);
   //context.registerInstaller(BEPMOD_ID, 25, testBepMod, installBepMod);
   //context.registerInstaller(MELONMOD_ID, 25, testMelonMod, installMelonMod);
+  context.registerInstaller(ASSEMBLY_ID, 48, testAssembly, installAssembly);
+  //context.registerInstaller(SAVE_ID, 49, testSave, installSave);
   
   //register actions
+  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config (Registry)', () => {
+    openConfigRegistry(context.api);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  }); //*/
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Data Folder', () => {
+    GAME_PATH = getDiscoveryPath(context.api);
+    const openPath = path.join(GAME_PATH, DATA_FOLDER);
+    util.opn(openPath).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', () => {
+    //const openPath = SAVE_PATH;
+    const openPath = getSavePath(context.api);
+    util.opn(openPath).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
     const openPath = path.join(__dirname, 'CHANGELOG.md');
     util.opn(openPath).catch(() => null);
