@@ -15,13 +15,13 @@ const template = require('string-template');
 
 //Specify all the information about the game
 const STEAMAPP_ID = "1030300";
-const EPICAPP_ID = "XXX";
-const GOGAPP_ID = "XXX";
+const EPICAPP_ID = null;
+const GOGAPP_ID = "1558393671";
 const XBOXAPP_ID = "XXX";
 const XBOXEXECNAME = "XXX";
-const GAME_ID = "XXX";
-const GAME_NAME = "XXX"
-const GAME_NAME_SHORT = "XXX"
+const GAME_ID = "hollowknightsilksong";
+const GAME_NAME = "Hollow Knight: Silksong"
+const GAME_NAME_SHORT = "HK Silksong"
 const EXEC = "XXX.exe";
 const BEPINEX_PAGE_ID = 'XXX';
 const BEPINEX_FILE_ID = 'XXX';
@@ -42,6 +42,8 @@ const modFileExt = ".dll";
 const BEPINEXIL2CPP_BE_URL = `https://builds.bepinex.dev/projects/bepinex_be/738/BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.738%2Baf0cba7.zip`;
 
 const LOADER_ID = `${GAME_ID}-modloader`;
+
+const MOD_PATH_DEFAULT = ".";
 
 //Filled in from info above
 const spec = {
