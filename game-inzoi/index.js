@@ -11,10 +11,7 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 const fsPromises = require('fs/promises');
-//const jsonrepair = require('jsonrepair');
-/*
-const child_process = require('child_process');
-child_process.execSync('npm install jsonrepair', { stdio: 'inherit' }); //*/
+const { jsonrepair } = require('./node_modules/jsonrepair');
 
 //Specify all information about the game
 const GAME_ID = "inzoi";
@@ -1709,11 +1706,10 @@ async function setModkitModsEnabled(api) {
   }
 
   for (let path of paths) {
-    let content = await fs.readFileAsync(path, { encoding: 'utf8' });
-    //log('warn', `${path} contents: ${raw}`);
-    //content = await jsonrepair(content);
+    let content = await fs.readFileAsync(path);
     let json;
     try {
+      content = jsonrepair(content);
       json = JSON.parse(content);
       if (json.bEnable === false || json.bEnable === undefined) {
         json.bEnable = true;
@@ -1721,7 +1717,7 @@ async function setModkitModsEnabled(api) {
         await fs.writeFileAsync(path, json, { encoding: 'utf8' });
       }
     } catch (err) {
-      log('error', `Could not parse/write ${path} containing "${content}" - ${err}:${err.message}`);
+      log('error', `Could not parse/write ${path}:${err}:${err.message}`);
     }
   }
 }
