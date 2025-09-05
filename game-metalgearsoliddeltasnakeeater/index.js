@@ -14,11 +14,11 @@ const template = require('string-template');
 //Specify all information about the game
 const GAME_ID = "metalgearsoliddeltasnakeeater";
 const STEAMAPP_ID = "2417610";
-const STEAMAPP_ID_DEMO = "";
+const STEAMAPP_ID_DEMO = null;
 const EPICAPP_ID = null;
-const GOGAPP_ID = "";
-const XBOXAPP_ID = "";
-const XBOXEXECNAME = "";
+const GOGAPP_ID = null;
+const XBOXAPP_ID = null;
+const XBOXEXECNAME = null;
 const GAME_NAME = "Metal Gear Solid Delta: Snake Eater";
 const GAME_NAME_SHORT = "MGS Delta: Snake Eater";
 const EXEC = "MGSDelta.exe";
@@ -148,12 +148,12 @@ const spec = {
       EPIC_CODE_NAME,
     ],
     "details": {
-      "epicAppId": EPICAPP_ID,
+      //"epicAppId": EPICAPP_ID,
       "steamAppId": +STEAMAPP_ID,
       "supportsSymlinks": SYM_LINKS,
     },
     "environment": {
-      "EpicAppId": EPICAPP_ID,
+      //"EpicAppId": EPICAPP_ID,
       "SteamAPPId": STEAMAPP_ID,
     },
   },

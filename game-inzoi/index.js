@@ -2,15 +2,16 @@
 Name: inZOI Vortex Extension
 Structure: UE5
 Author: ChemBoy1
-Version: 0.3.2
-Date: 2025-06-29
+Version: 0.4.0
+Date: 2025-09-05
 ////////////////////////////////////////////////*/
 
 //Import libraries
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
-const { get } = require('http');
+const fsPromises = require('fs/promises');
+//const jsonrepair = require('jsonrepair');
 
 //Specify all information about the game
 const GAME_ID = "inzoi";
@@ -175,7 +176,6 @@ const TEXTURES_ID = `${GAME_ID}-textures`;
 const TEXTURES_NAME = "Textures (Documents)";
 const TEXTURES_PATH = path.join(DOCS_PATH, "Creations", "MyTextures");
 const TEXTURES_FILE = "albedo.jpg";
-
 
 // MODKit
 const MODKIT_ID = `${GAME_ID}-modkit`;
@@ -490,7 +490,7 @@ function installPak(api, files, fileName) {
     const JSON_MOD_NAME = JSON_OBJECT["ProjectName"];
     MOD_FOLDER = JSON_MOD_NAME;
   } catch (err) { //mod_manifest.json could not be read.
-    log('error', `Could not read modinfo.json file for mod ${MOD_NAME}.`);
+    log('error', `Could not read ${UE5KITMOD_FILE} file for mod ${MOD_NAME} - ${err}:${err.message}`);
   }
 
   // Remove directories and anything that isn't in the rootPath.
@@ -1695,6 +1695,47 @@ async function getModKitPath() {
   } //*/
 }
 
+async function setModkitModsEnabled(api) {
+  let paths = [];
+  const raw = await fsPromises.readdir(UE5KITMOD_PATH, { recursive: true });
+  for (let entry of raw) {
+    if (path.basename(entry).toLowerCase() === UE5KITMOD_FILE) {
+      path_select = path.join(UE5KITMOD_PATH, entry);
+      paths.push(path_select);
+    }
+  }
+  for (let path of paths) {
+    let content = await fs.readFileAsync(path, { encoding: 'utf8' });
+    //log('warn', `${path} contents: ${raw}`);
+    //content = await jsonrepair(content);
+    content = content.replace(/\r?\n|\r/gi, '');
+    //content = content.replace(/[\'][\'][\,]/gi, '');
+    let json = JSON.parse(content);
+    if (json.bEnable === false || json.bEnable === undefined) {
+      json.bEnable = true;
+      json = JSON.stringify(json, null, 2);
+      await fs.writeFileAsync(path, json, { encoding: 'utf8' });
+    }
+  }
+  /*await turbowalk.default(UE5KITMOD_PATH, async (entries) => {
+    for (const entry of entries) {
+      if (path.basename(entry.filePath).toLowerCase() === UE5KITMOD_FILE) {
+        MODKITMOD_JSONS.push(entry.filePath);
+      }
+    }
+    for (let json of MODKITMOD_JSONS) {
+      const json_raw = await fs.readFileAsync(json, { encoding: 'utf8' });
+      const json_data = JSON.parse(json_raw);
+      if (json_data.bEnable === undefined) {
+        modkitmod_data.bEnable = true;
+        const modkitmod_data_json = JSON.stringify(json_data, null, 2);
+        await fs.writeFileAsync(modkitmod, modkitmod_data_json, { encoding: 'utf8' });
+      }
+    }
+    return Promise.resolve();
+  }); //*/
+}
+
 //* Setup function
 async function setup(discovery, api, gameSpec) {
   const state = api.getState();
@@ -2055,7 +2096,12 @@ function main(context) {
   } //*/
 
   context.once(() => { // put code here that should be run (once) when Vortex starts up
-
+    context.api.onAsync('did-deploy', async (profileId, deployment) => {
+      const state = context.api.getState();
+      const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(state, GAME_ID);
+      if (profileId !== LAST_ACTIVE_PROFILE) return;
+      return didDeploy(context.api);
+    });
   });
   return true;
 }
@@ -2064,3 +2110,9 @@ function main(context) {
 module.exports = {
   default: main,
 };
+
+
+async function didDeploy(api) { //run on mod purge
+  await setModkitModsEnabled(api);
+  return Promise.resolve();
+}

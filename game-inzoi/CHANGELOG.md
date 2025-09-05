@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.4.0] - 2025-09-05
+
+- Added functions to automatically set the "bEnable" flag to true for all MODKit mods on deployment.
+
 ## [0.3.2] - 2025-07-10
 
 - Added tool to launch inZOIMODKit.
