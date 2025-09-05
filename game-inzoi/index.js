@@ -12,6 +12,9 @@ const path = require('path');
 const template = require('string-template');
 const fsPromises = require('fs/promises');
 //const jsonrepair = require('jsonrepair');
+/*
+const child_process = require('child_process');
+child_process.execSync('npm install jsonrepair', { stdio: 'inherit' }); //*/
 
 //Specify all information about the game
 const GAME_ID = "inzoi";
@@ -1704,36 +1707,23 @@ async function setModkitModsEnabled(api) {
       paths.push(path_select);
     }
   }
+
   for (let path of paths) {
     let content = await fs.readFileAsync(path, { encoding: 'utf8' });
     //log('warn', `${path} contents: ${raw}`);
     //content = await jsonrepair(content);
-    content = content.replace(/\r?\n|\r/gi, '');
-    //content = content.replace(/[\'][\'][\,]/gi, '');
-    let json = JSON.parse(content);
-    if (json.bEnable === false || json.bEnable === undefined) {
-      json.bEnable = true;
-      json = JSON.stringify(json, null, 2);
-      await fs.writeFileAsync(path, json, { encoding: 'utf8' });
+    let json;
+    try {
+      json = JSON.parse(content);
+      if (json.bEnable === false || json.bEnable === undefined) {
+        json.bEnable = true;
+        json = JSON.stringify(json, null, 2);
+        await fs.writeFileAsync(path, json, { encoding: 'utf8' });
+      }
+    } catch (err) {
+      log('error', `Could not parse/write ${path} containing "${content}" - ${err}:${err.message}`);
     }
   }
-  /*await turbowalk.default(UE5KITMOD_PATH, async (entries) => {
-    for (const entry of entries) {
-      if (path.basename(entry.filePath).toLowerCase() === UE5KITMOD_FILE) {
-        MODKITMOD_JSONS.push(entry.filePath);
-      }
-    }
-    for (let json of MODKITMOD_JSONS) {
-      const json_raw = await fs.readFileAsync(json, { encoding: 'utf8' });
-      const json_data = JSON.parse(json_raw);
-      if (json_data.bEnable === undefined) {
-        modkitmod_data.bEnable = true;
-        const modkitmod_data_json = JSON.stringify(json_data, null, 2);
-        await fs.writeFileAsync(modkitmod, modkitmod_data_json, { encoding: 'utf8' });
-      }
-    }
-    return Promise.resolve();
-  }); //*/
 }
 
 //* Setup function
