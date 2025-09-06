@@ -30,11 +30,17 @@ const GAME_NAME_SHORT = "XXX"
 const EXEC = "XXX.exe";
 const EXEC_XBOX = 'gamelaunchhelper.exe';
 const DATA_FOLDER = "XXX_Data";
-const BEPINEX_PAGE_ID = 'XXX';
-const BEPINEX_FILE_ID = 'XXX';
 const DEV_REGSTRING = "XXX";
 const GAME_REGSTRING = "XXX";
 const XBOX_SAVE_STRING = 'XXX';
+
+const BEPINEX_PAGE_ID = '0'; //only specify if there is a Nexus page for BepInEx
+const BEPINEX_FILE_ID = '0';
+const BEPINEX_ARCH = 'x64'; // 'x64' or 'x86'
+const BEPINEX_BUILD = 'unitymono'; // 'unityil2cpp' or 'unitymono' 
+const BEPINEX_VERSION = '5.4.23.3'; //force BepInEx version ('5.4.23.3' or '6.0.0')
+const allowBepinexNexus = false; //set false until bugs are fixed
+const downloadCfgMan = true; //should BepInExConfigManager be downloaded?
 
 let GAME_PATH = null;
 let STAGING_FOLDER = '';
@@ -44,8 +50,17 @@ let DOWNLOAD_FOLDER = '';
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Game Folder";
 
+let BEPINEX_STRING = 'mono';
+if (BEPINEX_BUILD === 'unityil2cpp') {
+  BEPINEX_STRING = 'il2cpp';
+}
+const BEPCFGMAN_ID = `${GAME_ID}-bepcfgman`;
+const BEPCFGMAN_NAME = "BepInEx Configuration Manager";
+const BEPCFGMAN_URL = `https://github.com/sinai-dev/BepInExConfigManager/releases/download/1.3.0/BepInExConfigManager.${BEPINEX_STRING}.zip`;
+const BEPCFGMAN_FILE = `bepinexconfigmanager.${BEPINEX_STRING}.dll`; //lowercased
+
 const BEPMOD_ID = `${GAME_ID}-bepmods`;
-const BEPMOD_NAME = "BepinEx Mod";
+const BEPMOD_NAME = "BepInEx Mod";
 const BEPMOD_PATH = path.join("BepinEx", "plugins")
 const modFileExt = ".dll";
 
@@ -110,6 +125,12 @@ const spec = {
       "name": ASSEMBLY_NAME,
       "priority": "high",
       "targetPath": `{gamePath}\\${ASSEMBLY_PATH}`
+    },
+    {
+      "id": BEPCFGMAN_ID,
+      "name": BEPCFGMAN_NAME,
+      "priority": "high",
+      "targetPath": `{gamePath}\\Bepinex`
     },
     {
       "id": BEPMOD_ID,
@@ -261,6 +282,49 @@ async function deploy(api) { //useful to deploy mods after doing some action
 
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
 
+//Test for BepinExConfigManager mod files
+function testBepCfgMan(files, gameId) {
+  const isMod = files.some(file => (path.basename(file).toLowerCase() === BEPCFGMAN_FILE));
+  const isFolder = files.some(file => (path.basename(file).toLowerCase() === 'plugins'));
+  let supported = (gameId === spec.game.id) && isMod && isFolder;
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+      supported,
+      requiredFiles: [],
+  });
+}
+
+//Install BepinExConfigManager mod files
+function installBepCfgMan(files) {
+  const MOD_TYPE = BEPCFGMAN_ID;
+  const modFile = files.find(file => (path.basename(file).toLowerCase() === 'plugins'));
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file => (
+    (file.indexOf(rootPath) !== -1) &&
+    (!file.endsWith(path.sep))
+  ));
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
 //Test for Assembly mod files
 function testAssembly(files, gameId) {
   const isMod = files.some(file => (path.basename(file) === ASSEMBLY_FILE));
@@ -302,7 +366,6 @@ function installAssembly(files) {
   instructions.push(setModTypeInstruction);
   return Promise.resolve({ instructions });
 }
-
 
 //Test for .dll BepinEx mod files
 function testBepMod(files, gameId) {
@@ -363,6 +426,10 @@ async function setup(discovery, api, gameSpec) {
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   // ASYCRONOUS CODE ///////////////////////////////////
   //await downloadBepinex(api, gameSpec);
+  if (downloadCfgMan === true) {
+    await fs.ensureDirWritableAsync(path.join(GAME_PATH, 'Bepinex')); //allows downloader to write files
+    await downloadBepCfgMan(api, gameSpec);
+  }
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 
@@ -391,6 +458,7 @@ function applyGame(context, gameSpec) {
   });
 
   //register mod installers
+  context.registerInstaller(BEPCFGMAN_ID, 9, testBepCfgMan, installBepCfgMan);
   //context.registerInstaller(BEPINEX_ID, 25, testBepinex, installBepinex);
   //context.registerInstaller(MELON_ID, 25, testMelon, installMelon);
   //context.registerInstaller(BEPMOD_ID, 25, testBepMod, installBepMod);
@@ -446,30 +514,33 @@ function applyGame(context, gameSpec) {
 function main(context) {
   applyGame(context, spec);
   context.once(() => {
-    //Download BepinEx and register with extension
     if (context.api.ext.bepinexAddGame !== undefined) {
-      context.api.ext.bepinexAddGame({
-        gameId: GAME_ID,
-        autoDownloadBepInEx: true,
-        /* <--- Download BepInEx from a Nexus Mods page. Comment out other section if using this.
-        customPackDownloader: () => {
-          return {
-            gameId: GAME_ID, // <--- The game extension's domain Id/gameId as defined when registering the extension
-            domainId: GAME_ID, // <--- Nexus Mods site domain for the BepinEx package's mod page (GAME_ID or "site")
-            modId: BEPINEX_PAGE_ID, // <--- Nexus Mods site page number for the BepinEx package's mod page
-            fileId: BEPINEX_FILE_ID, // <--- Get this by hovering over the download button on the site
-            archiveName: `BepInEx-${GAME_ID}-Custom.zip`, // <--- What we want to call the archive of the downloaded pack.
-            allowAutoInstall: true, // <--- Whether we want this to be installed automatically - should always be true
-          }
-        }, //*/
-        //* <--- Download BepinEx from GitHub. Comment out other section if using this.
-        architecture: 'x64', // <--- Select version for 64-bit or 32-bit game ('x64' or 'x86')
-        //installRelPath: "bin/x64" // <--- Specify install location (next to game .exe) if not the root game folder (not common)
-        bepinexVersion: '5.4.23.3', // <--- Force BepinEx version
-        forceGithubDownload: true, // <--- Force Vortex to download directly from Github (recommended)
-        unityBuild: 'unitymono', // <--- Download version 6.0.0 of BepInEx that supports IL2CPP or 5.4.23 Mono ('unityil2cpp' or 'unitymono') 
-        //*/
-      });
+      if (BEPINEX_PAGE_ID !== '0' && allowBepinexNexus === true) { //if Nexus page exists and is allowed, download from Nexus
+        context.api.ext.bepinexAddGame({
+          gameId: GAME_ID,
+          autoDownloadBepInEx: true,
+          customPackDownloader: () => {
+            return {
+              gameId: GAME_ID, // <--- The game extension's domain Id/gameId as defined when registering the extension
+              domainId: GAME_ID, // <--- Nexus Mods site domain for the BepinEx package's mod page (GAME_ID or "site")
+              modId: BEPINEX_PAGE_ID, // <--- Nexus Mods site page number for the BepinEx package's mod page (string)
+              fileId: BEPINEX_FILE_ID, // <--- Get this by hovering over the download button on the site (string)
+              archiveName: `BepInEx-${GAME_ID}-Custom.zip`, // <--- What we want to call the archive of the downloaded pack.
+              allowAutoInstall: true, // <--- Whether we want this to be installed automatically - should always be true
+            }
+          },
+        });
+      } else { //if no Nexus page, download from GitHub
+        context.api.ext.bepinexAddGame({
+          gameId: GAME_ID,
+          autoDownloadBepInEx: true,
+          architecture: BEPINEX_ARCH, // <--- Select version for 64-bit or 32-bit game ('x64' or 'x86')
+          //installRelPath: "bin/x64" // <--- Specify install location (next to game .exe) if not the root game folder (not common)
+          bepinexVersion: BEPINEX_VERSION, // <--- Force BepinEx version
+          forceGithubDownload: true, // <--- Force Vortex to download directly from Github (recommended)
+          unityBuild: BEPINEX_BUILD, // <--- Download version 6.0.0 of BepInEx that supports IL2CPP or 5.4.23.x Mono ('unityil2cpp' or 'unitymono')
+        });
+      }
     }
   });
   return true;
@@ -479,6 +550,55 @@ function main(context) {
 module.exports = {
   default: main,
 };
+
+//Download BepInExConfigManager from GitHub
+function isBepCfgManInstalled(api, spec) {
+  const state = api.getState();
+  const mods = state.persistent.mods[spec.game.id] || {};
+  return Object.keys(mods).some(id => mods[id]?.type === BEPCFGMAN_ID);
+}
+
+async function downloadBepCfgMan(api, gameSpec) {
+  let isInstalled = isBepCfgManInstalled(api, gameSpec);
+  if (!isInstalled) {
+    const MOD_NAME = BEPCFGMAN_NAME;
+    const MOD_TYPE = BEPCFGMAN_ID;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
+    const GAME_DOMAIN = gameSpec.game.id;
+    api.sendNotification({ //notification indicating install process
+      id: NOTIF_ID,
+      message: `Installing ${MOD_NAME}`,
+      type: 'activity',
+      noDismiss: true,
+      allowSuppress: false,
+    });
+    try {
+      const URL = BEPCFGMAN_URL;
+      const dlInfo = { //Download the mod
+        game: GAME_DOMAIN,
+        name: MOD_NAME,
+      };
+      //const dlInfo = {};
+      const dlId = await util.toPromise(cb =>
+        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+      const modId = await util.toPromise(cb =>
+        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
+      const batched = [
+        actions.setModsEnabled(api, profileId, [modId], true, {
+          allowAutoDeploy: true,
+          installed: true,
+        }),
+        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
+      ];
+      util.batchDispatch(api.store, batched); // Will dispatch both actions
+    } catch (err) {
+      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
+    } finally {
+      api.dismissNotification(NOTIF_ID);
+    }
+  }
+} //*/
 
 
 //* Functions to download BepInEx 5.4.23.3 from GitHub (temporary due to error)
@@ -492,7 +612,7 @@ async function downloadBepinex(api, gameSpec) {
   if (!isInstalled) {
     const MOD_NAME = 'BepInEx_win_x64_5.4.23.3';
     const MOD_TYPE = 'bepinex-injector';
-    const NOTIF_ID = `${GAME_ID}-${MOD_TYPE}-installing`;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
     const GAME_DOMAIN = gameSpec.game.id;
     api.sendNotification({ //notification indicating install process
       id: NOTIF_ID,

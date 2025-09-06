@@ -667,7 +667,7 @@ function installDll(files, fileName) {
   return Promise.resolve({ instructions });
 }
 
-//Installer test for Fluffy Mod Manager files
+//Installer test for root folder
 function testRoot(files, gameId) {
   const isMod = files.some(file => (path.basename(file) === ROOT_FILE));
   let supported = (gameId === spec.game.id) && isMod;
@@ -685,7 +685,7 @@ function testRoot(files, gameId) {
   });
 }
 
-//Installer install Fluffy Mod Manger files
+//Installer install root folder
 function installRoot(files) {
   const modFile = files.find(file => (path.basename(file) === ROOT_FILE));
   const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
