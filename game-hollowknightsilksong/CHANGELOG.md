@@ -8,6 +8,8 @@
 
 - Added ignoreConflicts list for common files (icon.png, manifest.json, readme.txt).
 - BepInExConfigManager now installed automatically from GitHub.
+- Added button to open BepInEx.cfg (folder icon on Mods page toolbar).
+- Added executable icon for custom launch tool.
 
 ## [0.1.1] - 2025-09-04
 
