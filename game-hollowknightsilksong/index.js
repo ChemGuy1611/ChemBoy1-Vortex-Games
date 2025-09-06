@@ -2,8 +2,8 @@
 Name: Hollow Knight: Silksong Vortex Extension
 Structure: Unity BepinEx
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2025-09-04
+Version: 0.1.2
+Date: 2025-09-06
 //////////////////////////////////////////*/
 
 //Import libraries
@@ -84,6 +84,7 @@ const LOADER_ID = `${GAME_ID}-modloader`;
 
 const MOD_PATH_DEFAULT = ".";
 const MODTYPE_FOLDERS = [BEPMOD_PATH, ASSEMBLY_PATH];
+const IGNORE_CONFLICTS = [path.join('**', 'manifest.json'), path.join('**', 'icon.png'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
 
 //Filled in from info above
 const spec = {
@@ -106,6 +107,7 @@ const spec = {
       "epicAppId": EPICAPP_ID,
       "xboxAppId": XBOXAPP_ID,
       //"supportsSymlinks": false,
+      "ignoreConflicts": IGNORE_CONFLICTS,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,

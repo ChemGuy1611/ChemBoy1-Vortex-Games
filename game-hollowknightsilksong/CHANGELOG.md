@@ -6,6 +6,7 @@
 
 ## [0.1.2] - 2025-09-06
 
+- Added ignoreConflicts list for common files (icon.png, manifest.json, readme.txt).
 - BepInExConfigManager now installed automatically from GitHub.
 
 ## [0.1.1] - 2025-09-04
