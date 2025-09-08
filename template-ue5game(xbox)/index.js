@@ -124,7 +124,7 @@ const LOGICMODS_EXT = ".pak";
 
 const CONFIG_ID = `${GAME_ID}-config`;
 const CONFIG_NAME = "Config (LocalAppData)";
-const CONFIG_FILES = ["engine.ini", "scalability.ini", "input.ini", "game.ini"];
+const CONFIG_FILES = ["engine.ini", "scalability.ini", "input.ini", "game.ini", "gameusersettings.ini"];
 const CONFIG_EXT = ".ini";
 
 const ROOT_ID = `${GAME_ID}-root`;
