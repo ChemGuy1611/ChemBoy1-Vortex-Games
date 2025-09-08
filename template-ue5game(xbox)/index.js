@@ -31,6 +31,7 @@ const EXEC_DEFAULT = "XXX.exe";
 const EXEC_EPIC = "XXX_EGS.exe";
 //Unreal Engine specific
 const EPIC_CODE_NAME = "XXX";
+const SIGBYPASS_REQUIRED = false; //set true if there are .sig files in the Paks folder
 const IO_STORE = true; //true if the Paks folder contains .ucas and .utoc files
 const UE4SS_MOD_PATH = path.join('ue4ss', 'Mods');
 //config and save
@@ -167,10 +168,10 @@ const SAVE_EDITOR_EXEC = "XXX.exe";
 const SIGBYPASS_ID = `${GAME_ID}-sigbypass`;
 const SIGBYPASS_NAME = "Sig Bypass";
 const SIGBYPASS_DLL = "dsound.dll";
-const SIGBYPASS_LUA = "sig.lua";
-const SIGBYPASS_PAGE_NO = 0; //set if there is sigbypass Nexus page
-const SIGBYPASS_FILE_NO_XBOX = 0; 
-const SIGBYPASS_FILE_NO_STEAM = 0;
+const SIGBYPASS_LUA = "UniversalSigBypasser.asi";
+const SIGBYPASS_PAGE_NO = 1416;
+const SIGBYPASS_FILE_NO = 5719;
+const SIGBYPASS_DOMAIN = 'site';
 
 const MOD_PATH_DEFAULT = UE5_PATH;
 
@@ -1187,21 +1188,15 @@ async function downloadUe4ssNexus(api, gameSpec) {
 } //*/
 
 //* Function to auto-download Mod Enabler form Nexus Mods
-async function downloadSigBypass(api, gameSpec, version) {
+async function downloadSigBypass(api, gameSpec) {
   let isInstalled = isSigBypassInstalled(api, gameSpec);
   if (!isInstalled) {
     const MOD_NAME = SIGBYPASS_NAME;
     const MOD_TYPE = SIGBYPASS_ID;
     const NOTIF_ID = `${GAME_ID}-${MOD_TYPE}-installing`;
-    let FILE_ID = SIGBYPASS_FILE_NO_STEAM;  //If using a specific file id because "input" below gives an error
-    if (version === 'xbox') {
-      FILE_ID = SIGBYPASS_FILE_NO_XBOX;
-    } 
-    if (version === 'steam') {
-      FILE_ID = SIGBYPASS_FILE_NO_STEAM;
-    }
+    let FILE_ID = SIGBYPASS_FILE_NO;  //If using a specific file id because "input" below gives an error
     const PAGE_ID = SIGBYPASS_PAGE_NO;
-    const GAME_DOMAIN = gameSpec.game.id;
+    const GAME_DOMAIN = SIGBYPASS_DOMAIN;
     api.sendNotification({ //notification indicating install process
       id: NOTIF_ID,
       message: `Installing ${MOD_NAME}`,
@@ -1215,7 +1210,7 @@ async function downloadSigBypass(api, gameSpec, version) {
     try {
       let FILE = FILE_ID; //use the FILE_ID directly for the correct game store version
       let URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      /*try { //get the mod files information from Nexus
+      try { //get the mod files information from Nexus
         const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
         const fileTime = () => Number.parseInt(input.uploaded_time, 10);
         const file = modFiles
@@ -1528,7 +1523,7 @@ async function setup(discovery, api, gameSpec) {
   /*if (UE4SS_PAGE_NO !== 0) {
     await downloadUe4ssNexus(api, gameSpec);
   } //*/
-  if (SIGBYPASS_PAGE_NO !== 0) {
+  if (SIGBYPASS_REQUIRED === true) {
     await downloadSigBypass(api, gameSpec, GAME_VERSION);
   }
   await fs.ensureDirWritableAsync(path.join(GAME_PATH, SCRIPTS_PATH));
@@ -1627,7 +1622,7 @@ function applyGame(context, gameSpec) {
   );
 
   //register sibypass modtype
-  if (SIGBYPASS_PAGE_NO !== 0) { //only enable modtype if there is a sigbypass Nexus page
+  if (SIGBYPASS_REQUIRED === true) {
     context.registerModType(SIGBYPASS_ID, 58, 
       (gameId) => {
         var _a;
@@ -1671,7 +1666,7 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(LOGICMODS_ID, 27, testLogic, installLogic);
   //29 is pak installer above
   context.registerInstaller(UE4SS_ID, 31, testUe4ss, installUe4ss);
-  if (SIGBYPASS_PAGE_NO !== 0) { //only enable installer if there is a sigbypass Nexus page
+  if (SIGBYPASS_REQUIRED === true) {
     context.registerInstaller(SIGBYPASS_ID, 32, testSigBypass, installSigBypass);
   }
   context.registerInstaller(SCRIPTS_ID, 33, testScripts, installScripts);

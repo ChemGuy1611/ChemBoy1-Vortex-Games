@@ -28,9 +28,10 @@ const EXEC = "XXX.exe";
 const EXEC_EPIC = "XXX_EGS.exe";
 //Unreal Engine specific
 const EPIC_CODE_NAME = "XXX";
-const EXEC_FOLDER_NAME = "Win64";
+const SIGBYPASS_REQUIRED = false; //set true if there are .sig files in the Paks folder
 const IO_STORE = true; //true if the Paks folder contains .ucas and .utoc files
 const UE4SS_MOD_PATH = path.join('ue4ss', 'Mods');
+const EXEC_FOLDER_NAME = "Win64";
 //config and save
 const DATA_FOLDER = EPIC_CODE_NAME;
 const CONFIG_FOLDERNAME = "Windows";
@@ -150,9 +151,10 @@ const SAVE_EDITOR_EXEC = "XXX.exe";
 const SIGBYPASS_ID = `${GAME_ID}-sigbypass`;
 const SIGBYPASS_NAME = "Sig Bypass";
 const SIGBYPASS_DLL = "dsound.dll";
-const SIGBYPASS_LUA = "sig.lua";
-const SIGBYPASS_PAGE_NO = 0; //set if there is sigbypass Nexus page
-const SIGBYPASS_FILE_NO = 0;
+const SIGBYPASS_LUA = "UniversalSigBypasser.asi";
+const SIGBYPASS_PAGE_NO = 1416;
+const SIGBYPASS_FILE_NO = 5719;
+const SIGBYPASS_DOMAIN = 'site';
 
 const MOD_PATH_DEFAULT = PAK_PATH;
 const MODTYPE_FOLDERS = [LOGICMODS_PATH, SCRIPTS_PATH, PAK_PATH];
@@ -1110,7 +1112,7 @@ async function downloadSigBypass(api, gameSpec) {
     const NOTIF_ID = `${GAME_ID}-${MOD_TYPE}-installing`;
     let FILE_ID = SIGBYPASS_FILE_NO;  //If using a specific file id because "input" below gives an error
     const PAGE_ID = SIGBYPASS_PAGE_NO;
-    const GAME_DOMAIN = gameSpec.game.id;
+    const GAME_DOMAIN = SIGBYPASS_DOMAIN;
     api.sendNotification({ //notification indicating install process
       id: NOTIF_ID,
       message: `Installing ${MOD_NAME}`,
@@ -1444,7 +1446,7 @@ async function setup(discovery, api, gameSpec) {
   /*if (UE4SS_PAGE_NO !== 0) {
     await downloadUe4ssNexus(api, gameSpec);
   } //*/
-  if (SIGBYPASS_PAGE_NO !== 0) {
+  if (SIGBYPASS_REQUIRED === true) {
     await downloadSigBypass(api, gameSpec);
   }
   //await fs.ensureDirWritableAsync(path.join(GAME_PATH, MENU_PATH));
@@ -1476,7 +1478,7 @@ function applyGame(context, gameSpec) {
   });
 
   //register sibypass modtype
-  if (SIGBYPASS_PAGE_NO !== 0) { //only enable modtype if there is a sigbypass Nexus page
+  if (SIGBYPASS_REQUIRED === true) {
     context.registerModType(SIGBYPASS_ID, 60, 
       (gameId) => {
         var _a;
@@ -1523,7 +1525,7 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(LOGICMODS_ID, 27, testLogic, installLogic);
   //29 is pak installer above
   context.registerInstaller(UE4SS_ID, 31, testUe4ss, installUe4ss);
-  if (SIGBYPASS_PAGE_NO !== 0) { //only enable installer if there is a sigbypass Nexus page
+  if (SIGBYPASS_REQUIRED === true) {
     context.registerInstaller(SIGBYPASS_ID, 32, testSigBypass, installSigBypass);
   }
   context.registerInstaller(SCRIPTS_ID, 33, testScripts, installScripts);
