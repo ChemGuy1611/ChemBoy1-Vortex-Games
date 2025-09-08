@@ -4,6 +4,10 @@
 
 - None
 
+## [0.1.3] - 2025-09-08
+
+- Added "CHANGELOG.md" filename to ignoreConflicts list.
+
 ## [0.1.2] - 2025-09-06
 
 - Added ignoreConflicts list for common files (icon.png, manifest.json, readme.txt).

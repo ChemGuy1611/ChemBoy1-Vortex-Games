@@ -1,9 +1,9 @@
 /*//////////////////////////////////////////////////
-Name: XXX Vortex Extension
+Name: METAL EDEN Vortex Extension
 Structure: UE5 (static exe)
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2025-XXX-XXX
+Date: 2025-09-08
 //////////////////////////////////////////////////*/
 
 //Import libraries
@@ -17,18 +17,18 @@ const template = require('string-template');
 const LOCALAPPDATA = util.getVortexPath('localAppData');
 
 //Specify all information about the game
-const GAME_ID = "XXX";
-const STEAMAPP_ID = "XXX";
-const STEAMAPP_ID_DEMO = "XXX";
-const EPICAPP_ID = "XXX";
-const GOGAPP_ID = "XXX";
-const GAME_NAME = "XXX";
-const GAME_NAME_SHORT = "XXX";
-const EXEC = "XXX.exe";
-const EXEC_EPIC = "XXX_EGS.exe";
+const GAME_ID = "metaleden";
+const STEAMAPP_ID = "990380";
+const STEAMAPP_ID_DEMO = "3468980";
+const EPICAPP_ID = null;
+const GOGAPP_ID = "1253025084";
+const GAME_NAME = "METAL EDEN";
+const GAME_NAME_SHORT = "METAL EDEN";
+const EXEC = "MetalEden.exe";
+const EXEC_EPIC = "MetalEden_EGS.exe";
 //Unreal Engine specific
-const EPIC_CODE_NAME = "XXX";
-const SIGBYPASS_REQUIRED = false; //set true if there are .sig files in the Paks folder
+const EPIC_CODE_NAME = "MetalEden";
+const SIGBYPASS_REQUIRED = true; //set true if there are .sig files in the Paks folder
 const IO_STORE = true; //true if the Paks folder contains .ucas and .utoc files
 const UE4SS_PAGE_NO = 0; //set if there is UE4SS Nexus page
 const UE4SS_FILE_NO = 0;
@@ -244,8 +244,8 @@ const spec = {
     "ids": [
       STEAMAPP_ID,
       //EPICAPP_ID,
-      //GOGAPP_ID,
-      //STEAMAPP_ID_DEMO,
+      GOGAPP_ID,
+      STEAMAPP_ID_DEMO,
     ],
     "names": []
   }

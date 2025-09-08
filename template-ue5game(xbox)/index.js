@@ -10,7 +10,6 @@ Date: 2025-XXX-XXX
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
-const { get } = require('http');
 
 //const USER_HOME = util.getVortexPath("home");
 //const DOCUMENTS = util.getVortexPath("documents");
@@ -33,6 +32,8 @@ const EXEC_EPIC = "XXX_EGS.exe";
 const EPIC_CODE_NAME = "XXX";
 const SIGBYPASS_REQUIRED = false; //set true if there are .sig files in the Paks folder
 const IO_STORE = true; //true if the Paks folder contains .ucas and .utoc files
+const UE4SS_PAGE_NO = 0; //set if there is UE4SS Nexus page
+const UE4SS_FILE_NO = 0;
 const UE4SS_MOD_PATH = path.join('ue4ss', 'Mods');
 //config and save
 const DATA_FOLDER = EPIC_CODE_NAME;
@@ -156,8 +157,6 @@ const UE4SS_NAME = "UE4SS";
 const UE4SS_FILE = "dwmapi.dll";
 const UE4SS_DLFILE_STRING = "ue4ss";
 const UE4SS_URL = "https://github.com/UE4SS-RE/RE-UE4SS/releases";
-const UE4SS_PAGE_NO = 0; //set if there is UE4SS Nexus page
-const UE4SS_FILE_NO = 0;
 
 //Save Editor
 const SAVE_EDITOR_ID = `${GAME_ID}-saveeditor`;

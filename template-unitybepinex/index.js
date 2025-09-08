@@ -83,7 +83,7 @@ const LOADER_ID = `${GAME_ID}-modloader`;
 
 const MOD_PATH_DEFAULT = ".";
 const MODTYPE_FOLDERS = [BEPMOD_PATH, ASSEMBLY_PATH];
-const IGNORE_CONFLICTS = [path.join('**', 'manifest.json'), path.join('**', 'icon.png'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
+const IGNORE_CONFLICTS = [path.join('**', 'manifest.json'), path.join('**', 'icon.png'), path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
 
 //Filled in from info above
 const spec = {

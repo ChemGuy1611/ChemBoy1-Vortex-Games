@@ -1695,6 +1695,17 @@ async function getModKitPath() {
   } //*/
 }
 
+// Clean invalid characters from a string
+function cleanInvalidChars(string) {
+  // 1. Remove control characters (ASCII 0-31) & null character
+  let cleaned = string.replace(/[^\x00-\x7F]/gi, ''); // Keep only printable ASCII + UTF-8
+  // 2. Remove non-UTF8 sequences (if needed for strict JSON)
+  // (This is advanced - most apps don't need this)
+  cleaned = cleaned.replace(/[\u0000-\u001F]/gi, ''); // Null chars, control chars
+
+  return cleaned;
+}
+
 async function setModkitModsEnabled(api) {
   let paths = [];
   const raw = await fsPromises.readdir(UE5KITMOD_PATH, { recursive: true });
@@ -1709,12 +1720,12 @@ async function setModkitModsEnabled(api) {
     let content = await fs.readFileAsync(path);
     let json;
     try {
-      content = jsonrepair(content);
+      //content = cleanInvalidChars(content);
       json = JSON.parse(content);
       if (json.bEnable === false || json.bEnable === undefined) {
         json.bEnable = true;
-        json = JSON.stringify(json, null, 2);
-        await fs.writeFileAsync(path, json, { encoding: 'utf8' });
+        content = JSON.stringify(json, null, 2);
+        await fs.writeFileAsync(path, content, { encoding: 'utf8' });
       }
     } catch (err) {
       log('error', `Could not parse/write ${path}:${err}:${err.message}`);
