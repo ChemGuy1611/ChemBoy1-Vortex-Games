@@ -1,9 +1,9 @@
 /*//////////////////////////////////////////////////
-Name: Borderlands 4 Vortex Extension
+Name: Daemon X Machina: Titanic Scion Vortex Extension
 Structure: UE5 (static exe)
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2025-09-12
+Date: 2025-09-09
 //////////////////////////////////////////////////*/
 
 //Import libraries
@@ -17,17 +17,17 @@ const template = require('string-template');
 const LOCALAPPDATA = util.getVortexPath('localAppData');
 
 //Specify all information about the game
-const GAME_ID = "borderlands4";
-const STEAMAPP_ID = "1285190";
-const STEAMAPP_ID_DEMO = null;
-const EPICAPP_ID = "";
+const GAME_ID = "daemonxmachinatitanicscion";
+const STEAMAPP_ID = "1342490";
+const STEAMAPP_ID_DEMO = "3520430";
+const EPICAPP_ID = null;
 const GOGAPP_ID = null;
-const GAME_NAME = "Borderlands 4";
-const GAME_NAME_SHORT = "Borderlands 4";
-const EXEC = "Borderlands4.exe";
+const GAME_NAME = "Daemon X Machina: Titanic Scion";
+const GAME_NAME_SHORT = "Daemon X Machina: TS";
+const EXEC = "Game.exe";
 const EXEC_EPIC = EXEC;
 //Unreal Engine specific
-const EPIC_CODE_NAME = "Borderlands4";
+const EPIC_CODE_NAME = "Game";
 const SIGBYPASS_REQUIRED = false; //set true if there are .sig files in the Paks folder
 const IO_STORE = true; //true if the Paks folder contains .ucas and .utoc files
 const UE4SS_PAGE_NO = 0; //set if there is UE4SS Nexus page
@@ -35,7 +35,7 @@ const UE4SS_FILE_NO = 0;
 const UE4SS_MOD_PATH = path.join('ue4ss', 'Mods');
 const EXEC_FOLDER_NAME = "Win64";
 //config and save
-const DATA_FOLDER = EPIC_CODE_NAME;
+const DATA_FOLDER = 'DXMTS';
 const CONFIG_FOLDERNAME = "Windows";
 const CONFIG_LOC = 'Local AppData';
 const SAVE_LOC = 'Local AppData';
@@ -245,7 +245,7 @@ const spec = {
       STEAMAPP_ID,
       //EPICAPP_ID,
       //GOGAPP_ID,
-      //STEAMAPP_ID_DEMO,
+      STEAMAPP_ID_DEMO,
     ],
     "names": []
   }
