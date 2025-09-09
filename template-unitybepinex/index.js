@@ -20,6 +20,7 @@ const LOCALAPPDATA = util.getVortexPath("localAppData");
 
 //Specify all the information about the game
 const STEAMAPP_ID = "XXX";
+const STEAMDEMO_ID = "XXX";
 const EPICAPP_ID = "XXX";
 const GOGAPP_ID = "XXX";
 const XBOXAPP_ID = "XXX";
@@ -144,6 +145,7 @@ const spec = {
   "discovery": {
     "ids": [
       STEAMAPP_ID,
+      //STEAMDEMO_ID,
       //EPICAPP_ID,
       //GOGAPP_ID,
       //XBOXAPP_ID

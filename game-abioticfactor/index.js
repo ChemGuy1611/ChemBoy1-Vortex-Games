@@ -143,7 +143,7 @@ const UE4SS_FILE = "dwmapi.dll";
 const UE4SS_DLFILE_STRING = "ue4ss";
 const UE4SS_URL = "https://github.com/UE4SS-RE/RE-UE4SS/releases";
 const UE4SS_PAGE_NO = 35; 
-const UE4SS_FILE_NO = 288;
+const UE4SS_FILE_NO = 451;
 
 //no save editor for this game, YET
 const SAVE_EDITOR_ID = `${GAME_ID}-saveeditor`;
