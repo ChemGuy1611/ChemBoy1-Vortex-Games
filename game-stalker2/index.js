@@ -2,8 +2,8 @@
 Name: S.T.A.L.K.E.R. 2: Heart of Chornobyl Vortex Extension
 Structure: UE5 (Xbox-Integrated)
 Author: ChemBoy1
-Version: 0.3.2
-Date: 2025-04-22
+Version: 0.3.3
+Date: 2025-09-09
 //////////////////////////////////////////////////////////*/
 
 //Import libraries
@@ -17,7 +17,7 @@ const child_process = require("child_process");
 //Specify all information about the game
 const GAME_ID = "stalker2heartofchornobyl";
 const STEAMAPP_ID = "1643320";
-const EPICAPP_ID = "";
+const EPICAPP_ID = "c04ba25a0e674b1ab3ea79e50c24a722";
 const GOGAPP_ID = "1529799785";
 const XBOXAPP_ID = "GSCGameWorld.S.T.A.L.K.E.R.2HeartofChernobyl";
 const XBOXEXECNAME = "AppSTALKER2Shipping";
@@ -52,7 +52,7 @@ const gameFinderQuery = {
   steam: [{ id: STEAMAPP_ID, prefer: 0 }],
   xbox: [{ id: XBOXAPP_ID }],
   gog: [{ id: GOGAPP_ID }],
-  //epic: [{ id: EPICAPP_ID }],
+  epic: [{ id: EPICAPP_ID }],
 };
 
 //Info fo Simple Merger Tool
@@ -303,7 +303,7 @@ async function requiresLauncher(gamePath, store) {
       },
     });
   }
-  /*
+  //*
   if (store === 'epic') {
     return Promise.resolve({
         launcher: 'epic',

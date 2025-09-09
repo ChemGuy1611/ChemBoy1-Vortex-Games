@@ -6,6 +6,7 @@
 
 ## [0.4.0] - 2025-07-02
 
+- Added full Epic version support.
 - Added button to open Steam Workshop Mods folder - folder icon in Mods toolbar.
 
 ## [0.3.2] - 2025-04-22
