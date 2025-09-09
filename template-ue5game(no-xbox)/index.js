@@ -22,6 +22,7 @@ const STEAMAPP_ID = "XXX";
 const STEAMAPP_ID_DEMO = "XXX";
 const EPICAPP_ID = "XXX";
 const GOGAPP_ID = "XXX";
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 const GAME_NAME = "XXX";
 const GAME_NAME_SHORT = "XXX";
 const EXEC = "XXX.exe";
@@ -241,12 +242,7 @@ const spec = {
     },
   ],
   "discovery": {
-    "ids": [
-      STEAMAPP_ID,
-      //EPICAPP_ID,
-      //GOGAPP_ID,
-      //STEAMAPP_ID_DEMO,
-    ],
+    "ids": DISCOVERY_IDS_ACTIVE,
     "names": []
   }
 };
@@ -316,7 +312,8 @@ function makeFindGame(api, gameSpec) {
 }
 
 async function requiresLauncher(gamePath, store) {
-  /*if (store === 'epic') {
+  //*
+  if (store === 'epic' && (DISCOVERY_IDS_ACTIVE.includes(EPICAPP_ID))) {
     return Promise.resolve({
         launcher: 'epic',
         addInfo: {
@@ -324,6 +321,7 @@ async function requiresLauncher(gamePath, store) {
         },
     });
   } //*/
+  //*
   if (store === 'steam') {
     return Promise.resolve({
         launcher: 'steam',

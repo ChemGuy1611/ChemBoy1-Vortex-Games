@@ -421,6 +421,31 @@ function setGameVersion(api) {
   };
 }
 
+//Get correct game version
+function setGameVersionPath(gamePath) {
+  const isCorrectExec = (exec) => {
+    try {
+      fs.statSync(path.join(gamePath, exec));
+      return true;
+    }
+    catch (err) {
+      return false;
+    }
+  };
+  if (isCorrectExec(EXEC_XBOX)) {
+    GAME_VERSION = 'xbox';
+    return GAME_VERSION;
+  };
+  if (isCorrectExec(EXEC_DEFAULT)) {
+    GAME_VERSION = 'steam';
+    return GAME_VERSION;
+  };
+  if (isCorrectExec(EXEC_EPIC)) {
+    GAME_VERSION = 'epic';
+    return GAME_VERSION;
+  };
+}
+
 const getDiscoveryPath = (api) => {
   const state = api.getState();
   const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});
@@ -1475,7 +1500,7 @@ function partitionCheckNotify(api, CHECK_DATA) {
 }
 
 async function resolveGameVersion(gamePath) {
-  GAME_VERSION = setGameVersion(gamePath);
+  GAME_VERSION = setGameVersionPath(gamePath);
   let version = '0.0.0';
   if (GAME_VERSION === 'xbox') {
     try { //try to parse appmanifest.xml for Xbox version

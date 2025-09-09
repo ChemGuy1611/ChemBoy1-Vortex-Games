@@ -22,6 +22,7 @@ const STEAMAPP_ID = "1285190";
 const STEAMAPP_ID_DEMO = null;
 const EPICAPP_ID = "";
 const GOGAPP_ID = null;
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID];
 const GAME_NAME = "Borderlands 4";
 const GAME_NAME_SHORT = "Borderlands 4";
 const EXEC = "Borderlands4.exe";
@@ -241,12 +242,7 @@ const spec = {
     },
   ],
   "discovery": {
-    "ids": [
-      STEAMAPP_ID,
-      //EPICAPP_ID,
-      //GOGAPP_ID,
-      //STEAMAPP_ID_DEMO,
-    ],
+    "ids": DISCOVERY_IDS_ACTIVE,
     "names": []
   }
 };
