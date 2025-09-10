@@ -109,14 +109,15 @@ const APCGUI_EXEC = path.join('apcgui', 'apcgui.exe');
 
 const MOD_PATH_DEFAULT = '.';
 const REQ_FILE = 'archives_win64';
-const PARAMETERS = ['--vfs-fs dropzone --vfs-archive patch_win64 --vfs-archive archives_win64 --vfs-archive dlc_win64 --vfs-fs'];
+//const PARAMETERS = ['--vfs-fs dropzone', '--vfs-archive archives_win64', '--vfs-fs.'];
+const PARAMETERS = ['--vfs-fs dropzone', '--vfs-archive patch_win64', '--vfs-archive archives_win64', '--vfs-archive dlc_win64', '--vfs-fs.'];
 
 const spec = {
   "game": {
     "id": GAME_ID,
     "name": GAME_NAME,
     "shortName": GAME_NAME_SHORT,
-    "executable": EXEC,
+    //"executable": EXEC,
     "logo": `${GAME_ID}.jpg`,
     "mergeMods": true,
     "requiresCleanup": true,
@@ -155,7 +156,7 @@ const spec = {
 
 //3rd party tools and launchers
 const tools = [
-  /*{
+  {
     id: `${GAME_ID}-customlaunch`,
     name: 'Custom Launch',
     logo: 'exec.png',
