@@ -109,8 +109,12 @@ const APCGUI_EXEC = path.join('apcgui', 'apcgui.exe');
 
 const MOD_PATH_DEFAULT = '.';
 const REQ_FILE = 'archives_win64';
-//const PARAMETERS = ['--vfs-fs dropzone', '--vfs-archive archives_win64', '--vfs-fs.'];
-const PARAMETERS = ['--vfs-fs dropzone', '--vfs-archive patch_win64', '--vfs-archive archives_win64', '--vfs-archive dlc_win64', '--vfs-fs.'];
+const PARAMETERS_STRING0 = '--vfs-fs dropzone';
+const PARAMETERS_STRING1 = '--vfs-archive patch_win64';
+const PARAMETERS_STRING2 = '--vfs-archive archives_win64';
+const PARAMETERS_STRING3 = '--vfs-archive dlc_win64';
+const PARAMETERS_STRING4 = '--vfs-fs.';
+const PARAMETERS = [PARAMETERS_STRING0, PARAMETERS_STRING1, PARAMETERS_STRING2, PARAMETERS_STRING3, PARAMETERS_STRING4];
 
 const spec = {
   "game": {
@@ -118,6 +122,7 @@ const spec = {
     "name": GAME_NAME,
     "shortName": GAME_NAME_SHORT,
     //"executable": EXEC,
+    "parameters": PARAMETERS,
     "logo": `${GAME_ID}.jpg`,
     "mergeMods": true,
     "requiresCleanup": true,
@@ -231,28 +236,38 @@ function makeFindGame(api, gameSpec) {
     .then((game) => game.gamePath);
 }
 
+//Set launcher requirements
 async function requiresLauncher(gamePath, store) {
   if (store === 'xbox' && (DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID))) {
       return Promise.resolve({
-          launcher: 'xbox',
-          addInfo: {
-              appId: XBOXAPP_ID,
-              parameters: [{ appExecName: XBOXEXECNAME }],
-          },
+        launcher: 'xbox',
+        addInfo: {
+          appId: XBOXAPP_ID,
+          //parameters: [{ appExecName: XBOXEXECNAME }],
+          parameters: [{ appExecName: XBOXEXECNAME }, PARAMETERS_STRING0, PARAMETERS_STRING1, PARAMETERS_STRING2, PARAMETERS_STRING3, PARAMETERS_STRING4],
+          launchType: 'gamestore',
+        },
       });
   } //*/
   if (store === 'epic' && (DISCOVERY_IDS_ACTIVE.includes(EPICAPP_ID))) {
     return Promise.resolve({
         launcher: 'epic',
         addInfo: {
-            appId: EPICAPP_ID,
+          appId: EPICAPP_ID,
+          parameters: PARAMETERS,
+          launchType: 'gamestore',
         },
     });
   } //*/
-  /*
+  //*
   if (store === 'steam') {
     return Promise.resolve({
-        launcher: 'steam',
+      launcher: 'steam',
+      addInfo: {
+        appId: STEAM_ID,
+        parameters: PARAMETERS,
+        launchType: 'gamestore',
+      } //
     });
   } //*/
   return Promise.resolve(undefined);
@@ -469,7 +484,6 @@ function applyGame(context, gameSpec) {
     queryPath: makeFindGame(context.api, gameSpec),
     //executable: () => gameSpec.game.executable,
     executable: getExecutable,
-    parameters: PARAMETERS,
     queryModPath: makeGetModPath(context.api, gameSpec),
     //queryModPath: getModPath,
     requiresLauncher: requiresLauncher,

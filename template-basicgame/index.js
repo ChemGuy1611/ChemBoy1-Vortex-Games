@@ -10,6 +10,8 @@ Date: 2025-09-01
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
+//const winapi = require('winapi-bindings');
+//const turbowalk = require('turbowalk');
 
 //const USER_HOME = util.getVortexPath("home");
 const DOCUMENTS = util.getVortexPath("documents");
@@ -77,7 +79,8 @@ const TOOL_EXEC = path.join('XXX', 'XXX.exe');
 
 const MOD_PATH_DEFAULT = '.';
 const REQ_FILE = EXEC;
-const PARAMETERS = [''];
+const PARAMETERS_STRING = '';
+const PARAMETERS = [PARAMETERS_STRING];
 
 const spec = {
   "game": {
@@ -85,6 +88,7 @@ const spec = {
     "name": GAME_NAME,
     "shortName": GAME_NAME_SHORT,
     "executable": EXEC,
+    "parameters": PARAMETERS,
     "logo": `${GAME_ID}.jpg`,
     "mergeMods": true,
     "requiresCleanup": true,
@@ -202,25 +206,34 @@ function makeFindGame(api, gameSpec) {
 async function requiresLauncher(gamePath, store) {
   if (store === 'xbox' && (DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID))) {
       return Promise.resolve({
-          launcher: 'xbox',
-          addInfo: {
-              appId: XBOXAPP_ID,
-              parameters: [{ appExecName: XBOXEXECNAME }],
-          },
+        launcher: 'xbox',
+        addInfo: {
+          appId: XBOXAPP_ID,
+          parameters: [{ appExecName: XBOXEXECNAME }],
+          //parameters: [{ appExecName: XBOXEXECNAME }, PARAMETERS_STRING],
+          //launchType: 'gamestore',
+        },
       });
   } //*/
   if (store === 'epic' && (DISCOVERY_IDS_ACTIVE.includes(EPICAPP_ID))) {
     return Promise.resolve({
         launcher: 'epic',
         addInfo: {
-            appId: EPICAPP_ID,
+          appId: EPICAPP_ID,
+          //parameters: PARAMETERS,
+          //launchType: 'gamestore',
         },
     });
   } //*/
   /*
   if (store === 'steam') {
     return Promise.resolve({
-        launcher: 'steam',
+      launcher: 'steam',
+      addInfo: {
+        appId: STEAM_ID,
+        //parameters: PARAMETERS,
+        //launchType: 'gamestore',
+      } //
     });
   } //*/
   return Promise.resolve(undefined);
@@ -344,7 +357,6 @@ function applyGame(context, gameSpec) {
     queryPath: makeFindGame(context.api, gameSpec),
     executable: () => gameSpec.game.executable,
     //executable: getExecutable,
-    //parameters: PARAMETERS,
     queryModPath: makeGetModPath(context.api, gameSpec),
     //queryModPath: getModPath,
     requiresLauncher: requiresLauncher,
