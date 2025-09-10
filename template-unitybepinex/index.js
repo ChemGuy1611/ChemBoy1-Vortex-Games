@@ -19,13 +19,14 @@ const USER_HOME = util.getVortexPath("home");
 const LOCALAPPDATA = util.getVortexPath("localAppData");
 
 //Specify all the information about the game
+const GAME_ID = "XXX";
 const STEAMAPP_ID = "XXX";
-const STEAMDEMO_ID = "XXX";
+const STEAMAPP_ID_DEMO = "XXX";
 const EPICAPP_ID = "XXX";
 const GOGAPP_ID = "XXX";
 const XBOXAPP_ID = "XXX";
 const XBOXEXECNAME = "XXX";
-const GAME_ID = "XXX";
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 const GAME_NAME = "XXX"
 const GAME_NAME_SHORT = "XXX"
 const EXEC = "XXX.exe";
@@ -46,6 +47,7 @@ const downloadCfgMan = true; //should BepInExConfigManager be downloaded?
 let GAME_PATH = null;
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
+let GAME_VERSION = '';
 
 //modtypes
 const ROOT_ID = `${GAME_ID}-root`;
@@ -143,13 +145,7 @@ const spec = {
     },
   ],
   "discovery": {
-    "ids": [
-      STEAMAPP_ID,
-      //STEAMDEMO_ID,
-      //EPICAPP_ID,
-      //GOGAPP_ID,
-      //XBOXAPP_ID
-    ],
+    "ids": DISCOVERY_IDS_ACTIVE,
     "names": []
   }
 };
@@ -207,26 +203,27 @@ function makeFindGame(api, gameSpec) {
 
 //Set launcher requirements
 async function requiresLauncher(gamePath, store) {
-  /*if (store === 'steam') {
-    return Promise.resolve({
-        launcher: 'steam',
-    });
+  if (store === 'xbox' && (DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID))) {
+      return Promise.resolve({
+          launcher: 'xbox',
+          addInfo: {
+              appId: XBOXAPP_ID,
+              parameters: [{ appExecName: XBOXEXECNAME }],
+          },
+      });
   } //*/
-  /*if (store === 'xbox') {
-    return Promise.resolve({
-      launcher: 'xbox',
-      addInfo: {
-        appId: XBOXAPP_ID,
-        parameters: [{ appExecName: XBOXEXECNAME }],
-      },
-    });
-  } //*/
-  /*if (store === 'epic') {
+  if (store === 'epic' && (DISCOVERY_IDS_ACTIVE.includes(EPICAPP_ID))) {
     return Promise.resolve({
         launcher: 'epic',
         addInfo: {
             appId: EPICAPP_ID,
         },
+    });
+  } //*/
+  /*
+  if (store === 'steam') {
+    return Promise.resolve({
+        launcher: 'steam',
     });
   } //*/
   return Promise.resolve(undefined);
@@ -247,7 +244,7 @@ function openConfigRegistry(api) {
   } catch (err) {
     log('error', `Could not open ${GAME_NAME} config in registry: ${err}`);
   }
-}
+} //*/
 
 //Get correct save folder for game version
 function getSavePath(api) {
@@ -268,6 +265,24 @@ function getSavePath(api) {
   else {
     SAVE_PATH = SAVE_PATH_DEFAULT;
     return SAVE_PATH;
+  };
+} //*/
+
+//Get correct executable for game version
+function getExecutable(discoveryPath) {
+  const isCorrectExec = (exec) => {
+    try {
+      fs.statSync(path.join(discoveryPath, exec));
+      return true;
+    }
+    catch (err) {
+      return false;
+    }
+  };
+  if (isCorrectExec(EXEC_XBOX)) {
+    return EXEC_XBOX;
+  } else {
+    return EXEC;
   };
 }
 
@@ -448,7 +463,9 @@ function applyGame(context, gameSpec) {
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     executable: () => gameSpec.game.executable,
-    //etGameVersion: resolveGameVersion,
+    //executable: getExecutable,
+    //parameters: PARAMETERS,
+    //getGameVersion: resolveGameVersion,
     supportedTools: tools,
   };
   context.registerGame(game);
