@@ -2,7 +2,7 @@
 Name: Borderlands 4 Vortex Extension
 Structure: UE5 (static exe)
 Author: ChemBoy1
-Version: 0.1.0
+Version: 0.1.1
 Date: 2025-09-12
 //////////////////////////////////////////////////*/
 
@@ -11,10 +11,10 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 
-//const USER_HOME = util.getVortexPath("home");
+const USER_HOME = util.getVortexPath("home");
 //const DOCUMENTS = util.getVortexPath("documents");
 //const ROAMINGAPPDATA = util.getVortexPath('appData');
-const LOCALAPPDATA = util.getVortexPath('localAppData');
+//const LOCALAPPDATA = util.getVortexPath('localAppData');
 
 //Specify all information about the game
 const GAME_ID = "borderlands4";
@@ -28,7 +28,7 @@ const GAME_NAME_SHORT = "Borderlands 4";
 const EXEC = "Borderlands4.exe";
 const EXEC_EPIC = EXEC;
 //Unreal Engine specific
-const EPIC_CODE_NAME = "Borderlands4";
+const EPIC_CODE_NAME = "OakGame";
 const SIGBYPASS_REQUIRED = false; //set true if there are .sig files in the Paks folder
 const IO_STORE = true; //true if the Paks folder contains .ucas and .utoc files
 const UE4SS_PAGE_NO = 0; //set if there is UE4SS Nexus page
@@ -36,12 +36,12 @@ const UE4SS_FILE_NO = 0;
 const UE4SS_MOD_PATH = path.join('ue4ss', 'Mods');
 const EXEC_FOLDER_NAME = "Win64";
 //config and save
-const DATA_FOLDER = EPIC_CODE_NAME;
+const DATA_FOLDER = 'Borderlands 4';
 const CONFIG_FOLDERNAME = "Windows";
-const CONFIG_LOC = 'Local AppData';
-const SAVE_LOC = 'Local AppData';
-const CONFIGMOD_LOCATION = LOCALAPPDATA;
-const SAVEMOD_LOCATION = LOCALAPPDATA;
+const CONFIG_LOC = 'Documents';
+const SAVE_LOC = 'Documents';
+const CONFIGMOD_LOCATION = path.join(USER_HOME, 'Documents', 'My Games');
+const SAVEMOD_LOCATION = CONFIGMOD_LOCATION;
 const SHIPEXE_STRING_DEFAULT = '';
 const SHIPEXE_STRING_EGS = '';
 const SHIPPING_EXE_FILENAME = `${EPIC_CODE_NAME}-${EXEC_FOLDER_NAME}${SHIPEXE_STRING_DEFAULT}-Shipping.exe`;
