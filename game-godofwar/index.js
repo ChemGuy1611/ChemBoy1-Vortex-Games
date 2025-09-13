@@ -10,7 +10,6 @@ Date: 2025-04-10
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
-const { get } = require('http');
 
 //Specify all the information about the game
 const STEAMAPP_ID = "1593500";

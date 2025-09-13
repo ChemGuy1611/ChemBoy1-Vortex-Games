@@ -240,9 +240,9 @@ function modTypePriority(priority) {
   }[priority];
 }
 
-//Convert path placeholders to actual values
+//Replace folder path string placeholders with actual folder paths
 function pathPattern(api, game, pattern) {
-  try{
+  try {
     var _a;
     return template(pattern, {
       gamePath: (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0 ? void 0 : _a.path,
@@ -251,7 +251,7 @@ function pathPattern(api, game, pattern) {
       appData: util.getVortexPath('appData'),
     });
   }
-  catch(err){
+  catch (err) { //this happens if the executable comes back as "undefined", usually caused by the Xbox app locking down the folder
     api.showErrorNotification('Failed to locate executable. Please launch the game at least once.', err);
   }
 }

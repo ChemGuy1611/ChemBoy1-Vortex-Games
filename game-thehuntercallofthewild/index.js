@@ -203,13 +203,18 @@ function modTypePriority(priority) {
 
 //Replace folder path string placeholders with actual folder paths
 function pathPattern(api, game, pattern) {
-  var _a;
-  return template(pattern, {
-    gamePath: (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0 ? void 0 : _a.path,
-    documents: util.getVortexPath('documents'),
-    localAppData: util.getVortexPath('localAppData'),
-    appData: util.getVortexPath('appData'),
-  });
+  try {
+    var _a;
+    return template(pattern, {
+      gamePath: (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0 ? void 0 : _a.path,
+      documents: util.getVortexPath('documents'),
+      localAppData: util.getVortexPath('localAppData'),
+      appData: util.getVortexPath('appData'),
+    });
+  }
+  catch (err) { //this happens if the executable comes back as "undefined", usually caused by the Xbox app locking down the folder
+    api.showErrorNotification('Failed to locate executable. Please launch the game at least once.', err);
+  }
 }
 
 //Set the mod path for the game
@@ -286,9 +291,8 @@ function getExecutable(discoveryPath) {
   };
   if (isCorrectExec(EXEC_XBOX)) {
     return EXEC_XBOX;
-  } else {
-    return EXEC;
   };
+  return EXEC;
 }
 
 //Get correct game version
