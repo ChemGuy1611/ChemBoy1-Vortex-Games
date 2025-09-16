@@ -2,14 +2,15 @@
 Name: WH40K Space Marine 2 Vortex Extension
 Structure: Custom Game Data
 Author: ChemBoy1
-Version: 0.3.3
-Date: 2025-05-14
+Version: 0.3.5
+Date: 2025-09-16
 ////////////////////////////////////////////////*/
 
 //Import libraries
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
+const fsPromises = require('fs/promises');
 
 //Specify all the information about the game
 const STEAMAPP_ID = "2183900";
@@ -78,13 +79,16 @@ const INTEGRATION_STUDIO_PATH = path.join('client_pc', 'root');
 const INTEGRATION_STUDIO_EXE = "IntegrationStudio.exe";
 const IS_EXEPATH = path.join(INTEGRATION_STUDIO_PATH, 'tools', 'ModEditor', INTEGRATION_STUDIO_EXE);
 const PAK_PATH_VANILLA = path.join("client_pc", "root", "paks", "client", "default");
+const PAK_PATH_SERVER = path.join("server_pc", "root", "paks", "server", "default");
 const RESOURCE_PAK = 'default_other.pak';
 const INTEGRATION_STUDIO_RESOURCE_PATH = path.join(PAK_PATH_VANILLA, RESOURCE_PAK);
+const INTEGRATION_STUDIO_RESOURCE_PATH_SERVER = path.join(PAK_PATH_SERVER, RESOURCE_PAK);
 const INTEGRATION_STUDIO_URL = 'https://drive.usercontent.google.com/u/0/uc?id=1zw1424H_kDHx2oO-KJKi_8R-cJoUOrDm&export=download';
 const INTEGRATION_STUDIO_URL_ERROR = 'https://drive.google.com/file/d/1zw1424H_kDHx2oO-KJKi_8R-cJoUOrDm/edit';
-const INTEGRTION_STUDIO_PAGEID = 0;
-const INTEGRTION_STUDIO_FILEID = 0;
+const INTEGRTION_STUDIO_PAGEID = 280;
+const INTEGRTION_STUDIO_FILEID = 2544;
 const INTEGRATION_STUDIO_URL_OFFICIAL = 'https://prismray.io/games/spacemarine2/mods/modding-toolset-for-space-marine-2'; //requires PROS login
+const INTEGRATION_STUDIO_URL_NEXUS = 'https://www.nexusmods.com/warhammer40000spacemarine2/mods/280';
 
 const MOD_PATH = PAK_PATH;
 const REQ_FILE = EXEC;
@@ -302,13 +306,13 @@ function notifyIntegrationStudio(api) {
                   + `\n`
                   + `- During installation of IS, Vortex will automatically extract the resource file "${RESOURCE_PAK}" and add it to the mod staging folder.\n`
                   + `- After each game update, you must Reinstall the IS mod to refresh the extracted resource file.\n`
-                  + `- You can use the button below to open the IS download page. Note that a PROS account login is required to download the mod kit.\n`
+                  + `- You can use the button below to open the IS Nexus Mods page.\n`
                   + `\n`
             }, [
               { label: 'Acknowledge', action: () => dismiss() },
               {
                 label: 'Open IS Download Page', action: () => {
-                  util.opn(INTEGRATION_STUDIO_URL_OFFICIAL).catch(() => null);
+                  util.opn(INTEGRATION_STUDIO_URL_NEXUS).catch(() => null);
                   dismiss();
                 }
               },
@@ -349,7 +353,20 @@ async function installIntegrationStudio(files, tempFolder, api) {
   const setModTypeInstruction = { type: 'setmodtype', value: INTEGRATION_STUDIO_ID };
   GAME_PATH = getDiscoveryPath(api);
   const resourcePath = path.join(GAME_PATH, INTEGRATION_STUDIO_RESOURCE_PATH);
-  try {
+  const resourcePathServer = path.join(GAME_PATH, INTEGRATION_STUDIO_RESOURCE_PATH_SERVER);
+  try { // copy tools folder to root
+    const source = path.join(tempFolder, 'ModEditor');
+    await fs.statAsync(source);
+    const destination = path.join(tempFolder);
+    await fs.copyAsync(source, destination);
+    //await fsPromises.rmdir(source, { recursive: true });
+    const paths = await getAllFiles(destination);
+    files = [ ...files, ...paths.map(p => p.replace(`${tempFolder}${path.sep}`, ''))];
+  }
+  catch(err) {
+    log('error', 'Error copying Integration Studio tools folder: ' + err);
+  }
+  try { //extract client default_other.pak
     await fs.statAsync(resourcePath);
     const sevenZip = new util.SevenZip();
     const destination = path.join(tempFolder, 'mods_source');
@@ -359,7 +376,19 @@ async function installIntegrationStudio(files, tempFolder, api) {
     files = [ ...files, ...paths.map(p => p.replace(`${tempFolder}${path.sep}`, ''))];
   }
   catch(err) {
-    log('error', 'Error extracting Integration Studio resources: ' + err);
+    log('error', 'Error extracting Integration Studio client resources: ' + err);
+  }
+  try { //extract server default_other.pak
+    await fs.statAsync(resourcePathServer);
+    const sevenZip = new util.SevenZip();
+    const destination = path.join(tempFolder, 'mods_source');
+    const zipOp = await sevenZip.extractFull(resourcePathServer, destination);
+    if (zipOp?.code !== 0) throw new Error('7zip extraction failed');
+    const paths = await getAllFiles(destination);
+    files = [ ...files, ...paths.map(p => p.replace(`${tempFolder}${path.sep}`, ''))];
+  }
+  catch(err) {
+    log('error', 'Error extracting Integration Studio server resources: ' + err);
   }
 
   // Now we extract all the files from the IS archive, plus the unpacked PAK file into the staging folder.

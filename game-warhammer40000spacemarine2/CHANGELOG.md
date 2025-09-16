@@ -4,6 +4,11 @@
 
 - None Planned
 
+## [0.3.5] - 2025-09-16
+
+- IS mod installer now extracts both the "client" and "server" default_other.pak files to "mods_source" and copies the "tools" folder to "root" during installation.
+- Updated IS notification to reflect that it is now available on Nexus Mods.
+
 ## [0.3.4] - 2025-07-08
 
 - Added notification if user has installed Integration Studio mod toolkit with important usage information.
