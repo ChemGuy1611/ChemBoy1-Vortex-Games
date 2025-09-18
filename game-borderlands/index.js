@@ -1,8 +1,8 @@
 /*/////////////////////////////////////////
-Name: BioShock Infinite Vortex Extension
+Name: Borderlands Vortex Extension
 Structure: UE2/3 Game (TFC Installer)
 Author: ChemBoy1
-Version: 0.5.1
+Version: 0.1.0
 Date: 2025-09-17
 /////////////////////////////////////////*/
 
@@ -19,24 +19,29 @@ const USER_HOME = util.getVortexPath("home");
 //const LOCALAPPDATA = util.getVortexPath('localAppData');
 
 //Specify all the information about the game
-const GAME_ID = "bioshockinfinite";
-const STEAMAPP_ID = "8870";
-const EPICAPP_ID = "f9d6f0530ea140909f8e8a997a7532d7";
-const GOGAPP_ID = "1752654506";
-const XBOXAPP_ID = "";
-const XBOXEXECNAME = "";
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID, GOGAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
-const GAME_NAME = "BioShock Infinite";
-const GAME_NAME_SHORT = "BioShock Infinite";
-const ROOT_FOLDERS = ['XGame', 'DLC', 'Engine', 'Binaries'];
-const BINARIES_PATH = path.join("Binaries", "Win32");
-const EXEC = path.join(BINARIES_PATH, 'BioShockInfinite.exe');
-const EXEC_XBOX = 'gamelaunchhelper.exe';
-const DATA_FOLDER = path.join('BioShock Infinite', 'XGame');
+const GAME_ID = "borderlands";
+const STEAMAPP_ID = "8989";
+const STEAMAPP_ID_GOTY = '729040';
+const EPICAPP_ID = null;
+const GOGAPP_ID = null;
+const XBOXAPP_ID = null;
+const XBOXEXECNAME = null;
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID_GOTY, STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const GAME_NAME = "Borderlands";
+const GAME_NAME_SHORT = "Borderlands";
+const EPIC_CODE_NAME = "WillowGame";
+const ROOT_FOLDERS = [EPIC_CODE_NAME, 'Engine', 'Binaries'];
+const BINARIES_PATH = path.join("Binaries");
+const EXEC = path.join(BINARIES_PATH, 'Borderlands.exe');
+const BINARIES_PATH_GOTY = path.join("Binaries", "Win64");
+const EXEC_GOTY = path.join(BINARIES_PATH, 'BorderlandsGOTY.exe');
+const DATA_FOLDER = path.join('Borderlands', 'WillowGame');
 
 let GAME_PATH = null; //patched in the setup function to the discovered game path
 let STAGING_FOLDER = ''; //Vortex staging folder path
 let DOWNLOAD_FOLDER = ''; //Vortex download folder path
+
+let BINARIES_TARGET = '';
 
 //Information for mod types and installers
 const TFC_ID = `${GAME_ID}-tfcinstaller`;
@@ -66,10 +71,10 @@ const BINARIES_ID = `${GAME_ID}-binaries`;
 const BINARIES_NAME = "Binaries (Engine Injector)";
 
 const CONFIG_PATH = path.join(USER_HOME, 'Documents', 'My Games', DATA_FOLDER, 'Config');
-const SAVE_PATH = path.join(USER_HOME, 'Documents', 'My Games', DATA_FOLDER, 'SaveData');
+const SAVE_PATH = path.join(USER_HOME, 'Documents', 'My Games', 'Borderlands', 'SaveData');
 
 const REQ_FILE = EXEC;
-const MODTYPE_FOLDERS = [TFCMOD_PATH, BINARIES_PATH];
+let MODTYPE_FOLDERS = [TFCMOD_PATH];
 
 //Filled in from the data above
 const spec = {
@@ -77,7 +82,6 @@ const spec = {
     "id": GAME_ID,
     "name": GAME_NAME,
     "shortName": GAME_NAME_SHORT,
-    "executable": EXEC,
     "logo": `${GAME_ID}.jpg`,
     "mergeMods": true,
     "modPath": ".",
@@ -87,14 +91,14 @@ const spec = {
       REQ_FILE
     ],
     "details": {
-      "steamAppId": STEAMAPP_ID,
+      "steamAppId": STEAMAPP_ID_GOTY,
       "gogAppId": GOGAPP_ID,
       "epicAppId": EPICAPP_ID,
       "xboxAppId": XBOXAPP_ID,
       //"supportsSymlinks": false,
     },
     "environment": {
-      "SteamAPPId": STEAMAPP_ID,
+      "SteamAPPId": STEAMAPP_ID_GOTY,
       "GogAPPId": GOGAPP_ID,
       "EpicAPPId": EPICAPP_ID,
       "XboxAPPId": XBOXAPP_ID
@@ -112,12 +116,6 @@ const spec = {
       "name": ROOT_NAME,
       "priority": "high",
       "targetPath": `{gamePath}`
-    },
-    {
-      "id": BINARIES_ID,
-      "name": BINARIES_NAME,
-      "priority": "high",
-      "targetPath": `{gamePath}\\${BINARIES_PATH}`
     },
     {
       "id": TFC_ID,
@@ -140,7 +138,7 @@ const spec = {
 
 //3rd party tools and launchers
 const tools = [
-  {
+  /*{
     id: `${GAME_ID}-customlaunch`,
     name: `Custom Launch`,
     logo: `exec.png`,
@@ -187,13 +185,18 @@ function modTypePriority(priority) {
 
 //Replace folder path string placeholders with actual folder paths
 function pathPattern(api, game, pattern) {
-  var _a;
-  return template(pattern, {
-    gamePath: (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0 ? void 0 : _a.path,
-    documents: util.getVortexPath('documents'),
-    localAppData: process.env['LOCALAPPDATA'],
-    appData: util.getVortexPath('appData'),
-  });
+  try {
+    var _a;
+    return template(pattern, {
+      gamePath: (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0 ? void 0 : _a.path,
+      documents: util.getVortexPath('documents'),
+      localAppData: util.getVortexPath('localAppData'),
+      appData: util.getVortexPath('appData'),
+    });
+  }
+  catch (err) { //this happens if the executable comes back as "undefined", usually caused by the Xbox app locking down the folder
+    api.showErrorNotification('Failed to locate executable. Please launch the game at least once.', err);
+  }
 }
 
 //Set the mod path for the game
@@ -257,10 +260,13 @@ function getExecutable(gamePath) {
       return false;
     }
   };
-  if (isCorrectExec(EXEC_XBOX)) {
-    return EXEC_XBOX; 
+  if (isCorrectExec(EXEC_GOTY)) {
+    BINARIES_TARGET = `{gamePath}\\${BINARIES_PATH_GOTY}`;
+    MODTYPE_FOLDERS.push(BINARIES_PATH_GOTY);
+    return EXEC_GOTY; 
   };
-
+  BINARIES_TARGET = `{gamePath}\\${BINARIES_PATH}`;
+  MODTYPE_FOLDERS.push(BINARIES_PATH);
   return EXEC;
 }
 
@@ -279,14 +285,14 @@ async function deploy(api) { //useful to deploy mods after doing some action
 
 // AUTOMATIC MOD DOWNLOADERS ///////////////////////////////////////////////////
 
-//Check if Fluffy Mod Manager is installed
+//Check if TFC is installed
 function isTfcInstalled(api, spec) {
   const state = api.getState();
   const mods = state.persistent.mods[spec.game.id] || {};
   return Object.keys(mods).some(id => mods[id]?.type === TFC_ID);
 }
 
-//* Function to auto-download Mod Enabler form Nexus Mods
+//* Function to auto-download TFC from Nexus Mods
 async function downloadTfc(api, gameSpec) {
   let isInstalled = isTfcInstalled(api, gameSpec);
   if (!isInstalled) {
@@ -665,8 +671,7 @@ function applyGame(context, gameSpec) {
     queryModPath: makeGetModPath(context.api, gameSpec),
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
-    executable: () => gameSpec.game.executable,
-    //executable: getExecutable,
+    executable: getExecutable,
     supportedTools: tools,
   };
   context.registerGame(game);
@@ -679,6 +684,17 @@ function applyGame(context, gameSpec) {
         && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
     }, (game) => pathPattern(context.api, game, type.targetPath), () => Promise.resolve(false), { name: type.name });
   });
+
+  //register mod types explicitly
+  context.registerModType(BINARIES_ID, 50, 
+    (gameId) => {
+      var _a;
+      return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
+    }, 
+    (game) => pathPattern(context.api, game, BINARIES_TARGET), 
+    () => Promise.resolve(false), 
+    { name: BINARIES_NAME }
+  );
 
   //register mod installers
   context.registerInstaller(TFC_ID, 25, testTfc, installTfc);

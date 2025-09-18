@@ -947,7 +947,7 @@ function installSplash(files) {
 function testJson(files, gameId) {
   const isExt = files.some(file => (path.extname(file).toLowerCase() === CNSJSON_EXT));
   const isMod = files.some(file => (path.basename(file).toLowerCase().includes(CNSJSON_STRING)));
-  let supported = (gameId === spec.game.id) && isExt &&isMod;
+  let supported = (gameId === spec.game.id) && isExt && isMod;
 
   // Test for a mod installer
   if (supported && files.find(file =>

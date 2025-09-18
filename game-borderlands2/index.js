@@ -1,8 +1,8 @@
 /*/////////////////////////////////////////
-Name: BioShock Infinite Vortex Extension
+Name: Borderlands 2 Vortex Extension
 Structure: UE2/3 Game (TFC Installer)
 Author: ChemBoy1
-Version: 0.5.1
+Version: 0.1.0
 Date: 2025-09-17
 /////////////////////////////////////////*/
 
@@ -19,20 +19,21 @@ const USER_HOME = util.getVortexPath("home");
 //const LOCALAPPDATA = util.getVortexPath('localAppData');
 
 //Specify all the information about the game
-const GAME_ID = "bioshockinfinite";
-const STEAMAPP_ID = "8870";
-const EPICAPP_ID = "f9d6f0530ea140909f8e8a997a7532d7";
-const GOGAPP_ID = "1752654506";
-const XBOXAPP_ID = "";
-const XBOXEXECNAME = "";
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID, GOGAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
-const GAME_NAME = "BioShock Infinite";
-const GAME_NAME_SHORT = "BioShock Infinite";
-const ROOT_FOLDERS = ['XGame', 'DLC', 'Engine', 'Binaries'];
+const GAME_ID = "borderlands2";
+const STEAMAPP_ID = "49520";
+const EPICAPP_ID = "Dodo";
+const GOGAPP_ID = null;
+const XBOXAPP_ID = null;
+const XBOXEXECNAME = null;
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const GAME_NAME = "Borderlands 2";
+const GAME_NAME_SHORT = "Borderlands 2";
+const EPIC_CODE_NAME = "WillowGame";
+const ROOT_FOLDERS = [EPIC_CODE_NAME, 'Engine', 'Binaries', 'DLC'];
 const BINARIES_PATH = path.join("Binaries", "Win32");
-const EXEC = path.join(BINARIES_PATH, 'BioShockInfinite.exe');
+const EXEC = path.join(BINARIES_PATH, 'Borderlands2.exe');
 const EXEC_XBOX = 'gamelaunchhelper.exe';
-const DATA_FOLDER = path.join('BioShock Infinite', 'XGame');
+const DATA_FOLDER = path.join('Borderlands 2', 'WillowGame');
 
 let GAME_PATH = null; //patched in the setup function to the discovered game path
 let STAGING_FOLDER = ''; //Vortex staging folder path
@@ -279,14 +280,14 @@ async function deploy(api) { //useful to deploy mods after doing some action
 
 // AUTOMATIC MOD DOWNLOADERS ///////////////////////////////////////////////////
 
-//Check if Fluffy Mod Manager is installed
+//Check if TFC is installed
 function isTfcInstalled(api, spec) {
   const state = api.getState();
   const mods = state.persistent.mods[spec.game.id] || {};
   return Object.keys(mods).some(id => mods[id]?.type === TFC_ID);
 }
 
-//* Function to auto-download Mod Enabler form Nexus Mods
+//* Function to auto-download TFC from Nexus Mods
 async function downloadTfc(api, gameSpec) {
   let isInstalled = isTfcInstalled(api, gameSpec);
   if (!isInstalled) {

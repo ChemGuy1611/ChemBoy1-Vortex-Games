@@ -1042,7 +1042,7 @@ async function downloadUe4ssNexus(api, gameSpec) {
   if (!isInstalled) {
     const MOD_NAME = UE4SS_NAME;
     const MOD_TYPE = UE4SS_ID;
-    const NOTIF_ID = `${GAME_ID}-${MOD_TYPE}-installing`;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
     const PAGE_ID = UE4SS_PAGE_NO;
     const FILE_ID = UE4SS_FILE_NO;  //If using a specific file id because "input" below gives an error
     const GAME_DOMAIN = gameSpec.game.id;
@@ -1107,7 +1107,7 @@ async function downloadSigBypass(api, gameSpec) {
   if (!isInstalled) {
     const MOD_NAME = SIGBYPASS_NAME;
     const MOD_TYPE = SIGBYPASS_ID;
-    const NOTIF_ID = `${GAME_ID}-${MOD_TYPE}-installing`;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
     let FILE_ID = SIGBYPASS_FILE_NO;  //If using a specific file id because "input" below gives an error
     const PAGE_ID = SIGBYPASS_PAGE_NO;
     const GAME_DOMAIN = SIGBYPASS_DOMAIN;

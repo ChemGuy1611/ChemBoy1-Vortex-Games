@@ -1,6 +1,16 @@
 # Changelog
 
+## Future Changes (NOT IMPLEMENTED YET)
+
+- None Planned
+
+## [0.5.1] - 2025-09-17
+
+- Fixed potential issues with TFC Installer download.
+- Fixed Epic version discovery and launching.
+
 ## [0.5.0]
+
 - Improved support for TFC Installer and mods that use it
 - Moved TFC mods to "TFC Installer\Mods" folder
 - Added installer for root folders (XGame)

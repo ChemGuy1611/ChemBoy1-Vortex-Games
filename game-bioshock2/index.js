@@ -1,16 +1,16 @@
-/*
+/*///////////////////////////////////////////
 Name: BioShock 2 Remastered Vortex Extension
 Structure: UE2/3 TFC
 Author: ChemBoy1
-Version: 0.5.0
-Date: 03/12/2025
-*/
+Version: 0.5.1
+Date: 2025-09-17
+////////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors } = require('vortex-api');
+const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
-const turbowalk = require('turbowalk');
+//const turbowalk = require('turbowalk');
 //const winapi = require('winapi-bindings');
 
 //Specify all the information about the game
@@ -53,6 +53,8 @@ const TFC_NAME = "TFC Installer";
 const TFC_EXEC = "tfcinstaller.exe";
 const TFC_FOLDER = "TFCInstaller";
 const TFC_PATH = path.join('.');
+const TFC_PAGE_NO = 588;
+const TFC_FILE_NO = 5717;
 
 const UPKEXPLORER_ID = `${GAME_ID}-tfcexplorer`;
 const UPKEXPLORER_NAME = "UPK Explorer";
@@ -231,74 +233,57 @@ function getExecutable(discoveryPath) {
 
 // AUTOMATIC MOD DOWNLOADERS ///////////////////////////////////////////////////
 
-//Check if Fluffy Mod Manager is installed
+//Check if TFC is installed
 function isTfcInstalled(api, spec) {
   const state = api.getState();
   const mods = state.persistent.mods[spec.game.id] || {};
   return Object.keys(mods).some(id => mods[id]?.type === TFC_ID);
 }
 
-//Function to auto-download AnvilToolkit
+//* Function to auto-download TFC from Nexus Mods
 async function downloadTfc(api, gameSpec) {
-  //let isInstalled = isVoidInstalled(api, gameSpec);
-
-  //*
-  const state = api.getState();
-  const modLoaderFile = TFC_EXEC;
-  const installPath = selectors.installPathForGame(state, gameSpec.game.id); // This retrieves the staging folder for the game.
-  let isInstalled = false;
-  await turbowalk.default(installPath, async (entries) => { // Walk through the folders of the staging folder in an attempt to look for an identifiable file entry.
-    if (isInstalled === true) {
-      return Promise.resolve();
-    }
-    for (const entry of entries) {
-      if (path.basename(entry.filePath).toLowerCase() === modLoaderFile) {
-        isInstalled = true;
-        return Promise.resolve();
-      }
-    }
-  });
-  //*/
-
+  let isInstalled = isTfcInstalled(api, gameSpec);
   if (!isInstalled) {
-    //notification indicating install process
-    const MOD_TYPE = TFC_ID;
     const MOD_NAME = TFC_NAME;
-    const NOTIF_ID = `${GAME_ID}-${MOD_TYPE}-installing`;
-    const modPageId = 588;
-    const FILE_ID = 4530;  //If using a specific file id because "input" below gives an error
+    const MOD_TYPE = TFC_ID;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
+    let FILE_ID = TFC_FILE_NO;  //If using a specific file id because "input" below gives an error
+    const PAGE_ID = TFC_PAGE_NO;
     const GAME_DOMAIN = 'site';
-    api.sendNotification({
+    api.sendNotification({ //notification indicating install process
       id: NOTIF_ID,
       message: `Installing ${MOD_NAME}`,
       type: 'activity',
       noDismiss: true,
       allowSuppress: false,
     });
-    //make sure user is logged into Nexus Mods account in Vortex
-    if (api.ext?.ensureLoggedIn !== undefined) {
+    if (api.ext?.ensureLoggedIn !== undefined) { //make sure user is logged into Nexus Mods account in Vortex
       await api.ext.ensureLoggedIn();
     }
     try {
-      //*get the mod files information from Nexus
-      const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, modPageId);
-      const fileTime = () => Number.parseInt(input.uploaded_time, 10);
-      const file = modFiles
-        .filter(file => file.category_id === 1)
-        .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))[0];
-      if (file === undefined) {
-        throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
-      }
-      //*/
-      //Download the mod
-      const dlInfo = {
-        game: gameSpec.game.id,
+      let FILE = FILE_ID; //use the FILE_ID directly for the correct game store version
+      let URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      try { //get the mod files information from Nexus
+        const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
+        const fileTime = () => Number.parseInt(input.uploaded_time, 10);
+        const file = modFiles
+          .filter(file => file.category_id === 1)
+          .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))[0];
+        if (file === undefined) {
+          throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
+        }
+        FILE = file.file_id;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      } catch (err) { // use defined file ID if input is undefined above
+        FILE = FILE_ID;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      } //*/
+      const dlInfo = { //Download the mod
+        game: GAME_DOMAIN,
         name: MOD_NAME,
       };
-      const nxmUrl = `nxm://${GAME_DOMAIN}/mods/${modPageId}/files/${file.file_id}`;
-      //const nxmUrl = `nxm://${GAME_DOMAIN}/mods/${modPageId}/files/${FILE_ID}`;
       const dlId = await util.toPromise(cb =>
-        api.events.emit('start-download', [nxmUrl], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
       const modId = await util.toPromise(cb =>
         api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
       const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
@@ -307,19 +292,18 @@ async function downloadTfc(api, gameSpec) {
           allowAutoDeploy: true,
           installed: true,
         }),
-        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the modType
+        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
       ];
-      util.batchDispatch(api.store, batched); // Will dispatch both actions.
-    //Show the user the download page if the download/install process fails
-    } catch (err) {
-      const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${modPageId}/files/?tab=files`;
+      util.batchDispatch(api.store, batched); // Will dispatch both actions
+    } catch (err) { //Show the user the download page if the download, install process fails
+      const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
       api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
       util.opn(errPage).catch(() => null);
     } finally {
       api.dismissNotification(NOTIF_ID);
     }
   }
-}
+} //*/
 
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
 
