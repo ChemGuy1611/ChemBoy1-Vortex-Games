@@ -30,6 +30,7 @@ const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID_GOTY, STEAMAPP_ID]; // UPDATE THIS WIT
 const GAME_NAME = "Borderlands";
 const GAME_NAME_SHORT = "Borderlands";
 const EPIC_CODE_NAME = "WillowGame";
+
 const ROOT_FOLDERS = [EPIC_CODE_NAME, 'Engine', 'Binaries'];
 const BINARIES_PATH = path.join("Binaries");
 const EXEC = path.join(BINARIES_PATH, 'Borderlands.exe');

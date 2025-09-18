@@ -67,9 +67,10 @@ const JSON_PATH = path.join('data');
 const JSON_EXT = ".json";
 
 const MOD_PATH_DEFAULT = '.';
-const REQ_FILE = NAME_FOLDER; //or EXEC
+const REQ_FILE = EXEC; //NAME_FOLDER or EXEC
 const PARAMETERS_STRING = '';
 const PARAMETERS = [PARAMETERS_STRING];
+const IGNORE_CONFLICTS = [path.join('**', 'instructions.txt'), path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
 
 const spec = {
   "game": {
@@ -91,6 +92,7 @@ const spec = {
       "gogAppId": GOGAPP_ID,
       "epicAppId": EPICAPP_ID,
       "xboxAppId": XBOXAPP_ID,
+      "ignoreConflicts": IGNORE_CONFLICTS,
       //"supportsSymlinks": false,
     },
     "environment": {
@@ -295,15 +297,15 @@ function installJsFolder(files, fileName) {
 
   try { //Add mod to plugins.js file
   /*
-  1. get .js file(s) file names from files
+  - get .js file(s) file names from files
   fsPromises.readdir(fileName, {recursive: true});
-  2. map to get just the .js files
-  3. map to remove extension
-  2. read plugins.js file
+  - map to get just the .js files
+  - map to remove extension
+  - read plugins.js file
   fs.readFileSync(fileName, 'utf8');
-  2. check if the file names exists in plugins.js
-  3. add filename to plugins.js if not there
-  4. write plugins.js file
+  - check if the file names exists in plugins.js
+  - add filename to plugins.js if not there
+  - write plugins.js file
   */
   } catch (err) {
     log('error', `Could not add mod to plugins.js file. You will have to add it manually: ${err}`);
