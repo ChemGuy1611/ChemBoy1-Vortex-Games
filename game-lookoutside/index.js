@@ -2,8 +2,8 @@
 Name: Look Outside Vortex Extension
 Structure: RPGMaker Engine Game
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2025-09-17
+Version: 0.1.1
+Date: 2025-09-18
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -44,19 +44,20 @@ const JSFOLDER_NAME = "js folder";
 const JSFOLDER_PATH = ".";
 const JSFOLDER_FILE = 'js';
 
-const JSFILE_ID = `${GAME_ID}-jsfolder`;
+const JSFILE_ID = `${GAME_ID}-jsfile`;
 const JSFILE_NAME = "js file";
 const JSFILE_PATH = path.join('js', 'plugins');
 const JSFILE_EXT = ".js";
 
 const JSLIST_FILE = 'plugins.js';
-const JSLIST_FILE_PATH = path.join(JSFILE_PATH, JSLIST_FILE);
-const JSLIST_TEMPLATE = {
+const JSLIST_FILE_PATH = path.join('js', JSLIST_FILE);
+let JSLIST_TEMPLATE = {
   "name": "{modName}",
   "status": true,
-  "description": "Mod installed with Vortex. See mod page for descripton.",
+  "description": "Mod installed with Vortex. See mod page for description. You may need to add additional parameters below.",
   "parameters": {}
 }
+const JSLIST_HEADER = `var $plugins =\n`;
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Folder";
@@ -274,7 +275,7 @@ function testJsFolder(files, gameId) {
 }
 
 //Install save files
-function installJsFolder(files, fileName) {
+async function installJsFolder(files, fileName) {
   const MOD_TYPE = JSFOLDER_ID;
   const modFile = files.find(file => (path.basename(file).toLowerCase() === JSFOLDER_FILE));
   const idx = modFile.indexOf(path.basename(modFile));
@@ -296,17 +297,35 @@ function installJsFolder(files, fileName) {
   instructions.push(setModTypeInstruction);
 
   try { //Add mod to plugins.js file
-  /*
-  - get .js file(s) file names from files
-  fsPromises.readdir(fileName, {recursive: true});
-  - map to get just the .js files
-  - map to remove extension
-  - read plugins.js file
-  fs.readFileSync(fileName, 'utf8');
-  - check if the file names exists in plugins.js
-  - add filename to plugins.js if not there
-  - write plugins.js file
-  */
+    const listPath = path.join(GAME_PATH, JSLIST_FILE_PATH);
+    let plugins = await fsPromises.readdir(fileName, {recursive: true});
+    plugins = plugins.filter(file => file.endsWith(JSFILE_EXT)); //.js files
+    plugins = plugins.map(file => path.basename(file, JSFILE_EXT)); //map array to plugin names
+    let data = await fs.readFileAsync(listPath);
+    data = data.toString();
+    data = data.slice(data.indexOf('['), data.indexOf(';'));
+    let dataArray = JSON.parse(data);
+    let pluginsToWrite = [];
+    let pluginObjectArray = [];
+    plugins.forEach((plugin, index) => {
+      const inList = Object.keys(dataArray).some(idx => dataArray[idx]?.name === plugin);
+      if (!inList) {  
+        pluginsToWrite.push(plugin);
+      }
+    });
+    pluginsToWrite.forEach((plugin, index) => {
+      const entry = {
+        "name": `${plugin}`,
+        "status": true,
+        "description": "Mod installed with Vortex. See mod page for description. You may need to add additional parameters below.",
+        "parameters": {}
+      }
+      pluginObjectArray.push(entry);
+    });
+    log('warn', `plugins to write: ${pluginsToWrite}`);
+    const writeArray = dataArray.concat(pluginObjectArray);
+    const writeData = JSON.stringify(writeArray, null, 2);
+    await fs.writeFileAsync(listPath, `${JSLIST_HEADER}${writeData};`);
   } catch (err) {
     log('error', `Could not add mod to plugins.js file. You will have to add it manually: ${err}`);
   }
@@ -333,7 +352,7 @@ function testJsFile(files, gameId) {
 }
 
 //Install save files
-function installJsFile(files) {
+async function installJsFile(files) {
   const MOD_TYPE = JSFILE_ID;
   const modFile = files.find(file => (path.extname(file).toLowerCase() === JSFILE_EXT));
   const idx = modFile.indexOf(path.basename(modFile));
@@ -354,8 +373,39 @@ function installJsFile(files) {
   });
   instructions.push(setModTypeInstruction);
 
-  //Add mod to plugins.js file
-
+  try { //Add mod to plugins.js file
+    const listPath = path.join(GAME_PATH, JSLIST_FILE_PATH);
+    let plugins = await fsPromises.readdir(fileName, {recursive: true});
+    plugins = plugins.filter(file => file.endsWith(JSFILE_EXT)); //.js files
+    plugins = plugins.map(file => path.basename(file, JSFILE_EXT)); //map array to plugin names
+    let data = await fs.readFileAsync(listPath);
+    data = data.toString();
+    data = data.slice(data.indexOf('['), data.indexOf(';'));
+    let dataArray = JSON.parse(data);
+    let pluginsToWrite = [];
+    let pluginObjectArray = [];
+    plugins.forEach((plugin, index) => {
+      const inList = Object.keys(dataArray).some(idx => dataArray[idx]?.name === plugin);
+      if (!inList) {  
+        pluginsToWrite.push(plugin);
+      }
+    });
+    pluginsToWrite.forEach((plugin, index) => {
+      const entry = {
+        "name": `${plugin}`,
+        "status": true,
+        "description": "Mod installed with Vortex. See mod page for description. You may need to add additional parameters below.",
+        "parameters": {}
+      }
+      pluginObjectArray.push(entry);
+    });
+    log('warn', `plugins to write: ${pluginsToWrite}`);
+    const writeArray = dataArray.concat(pluginObjectArray);
+    const writeData = JSON.stringify(writeArray, null, 2);
+    await fs.writeFileAsync(listPath, `${JSLIST_HEADER}${writeData};`);
+  } catch (err) {
+    log('error', `Could not add mod to plugins.js file. You will have to add it manually: ${err}`);
+  }
 
   return Promise.resolve({ instructions });
 }
@@ -447,6 +497,44 @@ function installJson(files) {
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
+//Notify User to update plugins.js file
+function setupNotify(api) {
+  const NOTIF_ID = `${GAME_ID}-setup`;
+  const MESSAGE = `User Must Update plugins.js File Manually`;
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'warning',
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: 'More',
+        action: (dismiss) => {
+          api.showDialog('question', MESSAGE, {
+            text: `After installing a js plugin mods with Vortex, you must update the plugins.js file manually.\n`
+                + `Please read each mod's description for instructions on how to do this.\n`
+                + `You can open the file with the button below or using the button inside the folder icon on the Mods toolbar.\n`
+          }, [
+            { label: 'Acknowledge', action: () => dismiss() },
+            {
+              label: 'Open plugins.js File', action: () => {
+                util.opn(path.join(GAME_PATH, JSLIST_FILE_PATH)).catch(() => null);
+                dismiss();
+              }
+            },
+            {
+              label: 'Never Show Again', action: () => {
+                api.suppressNotification(NOTIF_ID);
+                dismiss();
+              }
+            },
+          ]);
+        },
+      },
+    ],
+  });    
+}
+
 //Setup function
 async function setup(discovery, api, gameSpec) {
   // SYNCHRONOUS CODE ////////////////////////////////////
@@ -454,6 +542,7 @@ async function setup(discovery, api, gameSpec) {
   GAME_PATH = discovery.path;
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
+  setupNotify(api);
   // ASYNC CODE //////////////////////////////////////////
   return fs.ensureDirWritableAsync(path.join(GAME_PATH, JSFILE_PATH));
 }

@@ -65,6 +65,17 @@ const TFCMOD_EXTS = ['.packagepatch', '.descriptor', '.tfcmapping', '.tfc', '.in
 const TFCMOD_FILE = 'gameprofile.xml';
 const TFCMOD_PATH = path.join(TFC_FOLDER, 'Mods');
 
+const SDK_ID = `${GAME_ID}-sdk`;
+const SDK_NAME = "SDK";
+const SDK_FOLDER = "sdk_mods";
+const SDK_DLL = "unrealsdk.dll";
+const SDK_PATH = '.';
+
+const SDKMOD_ID = `${GAME_ID}-sdkmod`;
+const SDKMOD_NAME = "SDK Mod";
+const SDKMOD_EXT = '.py';
+const SDKMOD_PATH = SDK_FOLDER;
+
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Folder";
 
@@ -75,7 +86,7 @@ const CONFIG_PATH = path.join(USER_HOME, 'Documents', 'My Games', DATA_FOLDER, '
 const SAVE_PATH = path.join(USER_HOME, 'Documents', 'My Games', 'Borderlands', 'SaveData');
 
 const REQ_FILE = EXEC;
-let MODTYPE_FOLDERS = [TFCMOD_PATH];
+let MODTYPE_FOLDERS = [TFCMOD_PATH, SDKMOD_PATH];
 
 //Filled in from the data above
 const spec = {
@@ -106,6 +117,18 @@ const spec = {
     }
   },
   "modTypes": [
+    {
+      "id": SDK_ID,
+      "name": SDK_NAME,
+      "priority": "high",
+      "targetPath": `{gamePath}\\${SDK_PATH}`
+    },
+    {
+      "id": SDKMOD_ID,
+      "name": SDKMOD_NAME,
+      "priority": "high",
+      "targetPath": `{gamePath}\\${SDKMOD_PATH}`
+    },
     {
       "id": TFCMOD_ID,
       "name": TFCMOD_NAME,
@@ -489,6 +512,95 @@ function installTfcMod(files, fileName) {
   return Promise.resolve({ instructions });
 }
 
+//Installer test for Fluffy Mod Manager files
+function testSdk(files, gameId) {
+  const isFile = files.some(file => (path.basename(file).toLowerCase() === SDK_DLL));
+  const isFolder = files.some(file => (path.basename(file).toLowerCase() === SDK_FOLDER));
+  let supported = (gameId === spec.game.id) && isFile && isFolder;
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Installer install Fluffy Mod Manger files
+function installSdk(files) {
+  const MOD_TYPE = SDK_ID;
+  const modFile = files.find(file => (path.basename(file).toLowerCase() === SDK_FOLDER));
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Test Fallback installer for Void Mods
+function testSdkMod(files, gameId) {
+  const isMod = files.some(file => (path.extname(file).toLowerCase() === SDKMOD_EXT));
+  let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Fallback installer for Void Mods
+function installSdkMod(files, fileName) {
+  const MOD_TYPE = SDKMOD_ID;
+  const modFile = files.find(file => (path.extname(file).toLowerCase() === SDKMOD_EXT));
+  const ROOT_PATH = path.basename(path.dirname(modFile));
+  const MOD_NAME = path.basename(fileName);
+  let MOD_FOLDER = '.';
+  if (ROOT_PATH === '.') {
+    MOD_FOLDER = MOD_NAME.replace(/[\.]*(installing)*(zip)*/gi, '');
+  }
+  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+  
+  // Remove empty directories
+  const filtered = files.filter(file =>
+    (!file.endsWith(path.sep))
+  );
+
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(MOD_FOLDER, file),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
 //Installer test for Root folder files
 function testRoot(files, gameId) {
   const isMod = files.some(file => ROOT_FOLDERS.includes(path.basename(file)));
@@ -699,9 +811,11 @@ function applyGame(context, gameSpec) {
 
   //register mod installers
   context.registerInstaller(TFC_ID, 25, testTfc, installTfc);
-  context.registerInstaller(UPKEXPLORER_ID, 30, testUpkExplorer, installUpkExplorer);
-  context.registerInstaller(TFCMOD_ID, 35, testTfcMod, installTfcMod);
-  context.registerInstaller(ROOT_ID, 40, testRoot, installRoot);
+  context.registerInstaller(UPKEXPLORER_ID, 27, testUpkExplorer, installUpkExplorer);
+  context.registerInstaller(TFCMOD_ID, 29, testTfcMod, installTfcMod);
+  context.registerInstaller(SDK_ID, 31, testSdk, installSdk);
+  context.registerInstaller(SDKMOD_ID, 33, testSdkMod, installSdkMod);
+  context.registerInstaller(ROOT_ID, 49, testRoot, installRoot);
 
   //register actions
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
