@@ -43,16 +43,23 @@ let DOWNLOAD_FOLDER = ''; //Vortex download folder path
 const MERGER_ID = `${GAME_ID}-hotfixmerger`;
 const MERGER_NAME = "Hotfix Merger";
 const MERGER_EXEC = "b3hm.exe";
+const MERGER_PATH = path.join(BINARIES_PATH, 'Plugins');
+const MERGER_EXEC_PATH = path.join(MERGER_PATH, MERGER_EXEC);
 const MERGER_DLL = "b3hm.dll";
-const MERGER_PATH = BINARIES_PATH;
 const MERGER_PAGE_NO = 244;
 const MERGER_FILE_NO = 1377;
-const MERGER_WEBUI_URL = `https://c0dycode.github.io/BL3HotfixWebUI/v2/`;
+const MERGER_WEBUI_URL = `https://c0dycode.github.io/BL3HotfixWebUI/v2`;
+
+const PLUGINLOADER_ID = `${GAME_ID}-pluginloader`;
+const PLUGINLOADER_NAME = "Plugin Loader";
+const PLUGINLOADER_FILE = 'd3d11.dll';
+const PLUGINLOADER_PATH = BINARIES_PATH;
+const PLUGINLOADER_URL = `https://github.com/FromDarkHell/BL3DX11Injection/releases/download/v1.1.3/D3D11.zip`;
 
 const HOTFIX_ID = `${GAME_ID}-hotfix`;
 const HOTFIX_NAME = "Hotfix Mod";
 const HOTFIX_EXT = '.bl3hotfix';
-const HOTFIX_PATH = BINARIES_PATH;
+const HOTFIX_PATH = MERGER_PATH;
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Folder";
@@ -74,7 +81,7 @@ const CONFIG_PATH = path.join(USER_HOME, 'Documents', 'My Games', DATA_FOLDER, '
 const SAVE_PATH = path.join(USER_HOME, 'Documents', 'My Games', DATA_FOLDER, 'Saved', 'SaveGames');
 
 const REQ_FILE = EXEC;
-let MODTYPE_FOLDERS = [HOTFIX_PATH, PAK_PATH, MOVIES_PATH];
+let MODTYPE_FOLDERS = [MERGER_PATH, HOTFIX_PATH, PAK_PATH, MOVIES_PATH];
 
 //Filled in from the data above
 const spec = {
@@ -92,24 +99,30 @@ const spec = {
     ],
     "details": {
       "steamAppId": STEAMAPP_ID,
-      "gogAppId": GOGAPP_ID,
+      //"gogAppId": GOGAPP_ID,
       "epicAppId": EPICAPP_ID,
-      "xboxAppId": XBOXAPP_ID,
+      //"xboxAppId": XBOXAPP_ID,
       //"supportsSymlinks": false,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
-      "GogAPPId": GOGAPP_ID,
+      //"GogAPPId": GOGAPP_ID,
       "EpicAPPId": EPICAPP_ID,
-      "XboxAPPId": XBOXAPP_ID
+      //"XboxAPPId": XBOXAPP_ID
     }
   },
   "modTypes": [
     {
       "id": MERGER_ID,
       "name": MERGER_NAME,
-      "priority": "high",
+      "priority": "low",
       "targetPath": `{gamePath}\\${MERGER_PATH}`
+    },
+    {
+      "id": PLUGINLOADER_ID,
+      "name": PLUGINLOADER_NAME,
+      "priority": "low",
+      "targetPath": `{gamePath}\\${PLUGINLOADER_PATH}`
     },
     {
       "id": HOTFIX_ID,
@@ -167,8 +180,8 @@ const tools = [
     id: MERGER_ID,
     name: MERGER_NAME,
     logo: "merger.png",
-    executable: () => MERGER_EXEC,
-    requiredFiles: [MERGER_EXEC],
+    executable: () => MERGER_EXEC_PATH,
+    requiredFiles: [MERGER_EXEC_PATH],
     detach: true,
     relative: true,
     exclusive: true,
@@ -273,6 +286,13 @@ function isHotfixMergerInstalled(api, spec) {
   return Object.keys(mods).some(id => mods[id]?.type === MERGER_ID);
 }
 
+//Check if plugin loader is installed
+function isPluginLoaderInstalled(api, spec) {
+  const state = api.getState();
+  const mods = state.persistent.mods[spec.game.id] || {};
+  return Object.keys(mods).some(id => mods[id]?.type === PLUGINLOADER_ID);
+}
+
 //* Function to auto-download Hotfix Merger from Nexus Mods
 async function downloadHotfixMerger(api, gameSpec) {
   let isInstalled = isHotfixMergerInstalled(api, gameSpec);
@@ -338,6 +358,52 @@ async function downloadHotfixMerger(api, gameSpec) {
   }
 } //*/
 
+
+//* Function to auto-download Hotfix Merger from Nexus Mods
+async function downloadPluginLoader(api, gameSpec) {
+  let isInstalled = isPluginLoaderInstalled(api, gameSpec);
+  if (!isInstalled) {
+    const MOD_NAME = PLUGINLOADER_NAME;
+    const MOD_TYPE = PLUGINLOADER_ID;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
+    const GAME_DOMAIN = GAME_ID;
+    const URL = PLUGINLOADER_URL;
+    const ERR_URL = `https://github.com/FromDarkHell/BL3DX11Injection/releases/latest`;
+    api.sendNotification({ //notification indicating install process
+      id: NOTIF_ID,
+      message: `Installing ${MOD_NAME}`,
+      type: 'activity',
+      noDismiss: true,
+      allowSuppress: false,
+    });
+    try {
+      const dlInfo = { //Download the mod
+        game: GAME_DOMAIN,
+        name: MOD_NAME,
+      };
+      const dlId = await util.toPromise(cb =>
+        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+      const modId = await util.toPromise(cb =>
+        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
+      const batched = [
+        actions.setModsEnabled(api, profileId, [modId], true, {
+          allowAutoDeploy: true,
+          installed: true,
+        }),
+        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
+      ];
+      util.batchDispatch(api.store, batched); // Will dispatch both actions
+    } catch (err) { //Show the user the download page if the download, install process fails
+      const errPage = ERR_URL;
+      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
+      util.opn(errPage).catch(() => null);
+    } finally {
+      api.dismissNotification(NOTIF_ID);
+    }
+  }
+} //*/
+
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
 
 //Installer test for Hotfix Merger files
@@ -383,6 +449,48 @@ function installHotfixMerger(files) {
   return Promise.resolve({ instructions });
 }
 
+//Installer test for plugin loader files
+function testPluginLoader(files, gameId) {
+  const isFile = files.some(file => (path.basename(file).toLowerCase() === PLUGINLOADER_FILE));
+  let supported = (gameId === spec.game.id) && isFile;
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Installer install plugin loader files
+function installPluginLoader(files) {
+  const MOD_TYPE = PLUGINLOADER_ID;
+  const modFile = files.find(file => (path.basename(file).toLowerCase() === PLUGINLOADER_FILE));
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
 //Test for .bl3hotfix files
 function testHotfix(files, gameId) {
   const isMod = files.some(file => (path.extname(file).toLowerCase() === HOTFIX_EXT));
@@ -404,7 +512,7 @@ function testHotfix(files, gameId) {
 //Install .bl3hotfix files
 function installHotfix(files) {
   const MOD_TYPE = HOTFIX_ID;
-  const modFile = files.find(file => (path.basename(file).toLowerCase() === HOTFIX_EXT));
+  const modFile = files.find(file => (path.extname(file).toLowerCase() === HOTFIX_EXT));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
@@ -488,7 +596,7 @@ function testPak(files, gameId) {
 //Install .pak files
 function installPak(files) {
   const MOD_TYPE = PAK_ID;
-  const modFile = files.find(file => (path.basename(file).toLowerCase() === PAK_EXT));
+  const modFile = files.find(file => (path.extname(file).toLowerCase() === PAK_EXT));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
@@ -530,7 +638,7 @@ function testMovies(files, gameId) {
 //Install .mp4 files
 function installMovies(files) {
   const MOD_TYPE = MOVIES_ID;
-  const modFile = files.find(file => (path.basename(file).toLowerCase() === MOVIES_EXT));
+  const modFile = files.find(file => (path.extname(file).toLowerCase() === MOVIES_EXT));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
@@ -620,11 +728,11 @@ function deployNotify(api) {
                 + `Use the included tool to launch ${MOD_NAME} (button on notification or in "Dashboard" tab).\n`
                 + `You can open the Hotfix Merger WebUI below, or using the button within the folder icon on the Mods toolbar.\n`
           }, [
-            {
+            /*{
               label: 'Run Hotfix Merger', action: () => {
                 runModManager(api);
               }
-            },
+            }, //*/
             {
               label: 'Open Hotfix Merger WebUI', action: () => {
                 util.opn(MERGER_WEBUI_URL).catch(() => null);
@@ -682,7 +790,9 @@ async function setup(discovery, api, gameSpec) {
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, gameSpec.game.id);
   setupNotify(api);
   // ASYNC CODE //////////////////////////////////////////
+  await ensureDirWritableAsync(path.join(GAME_PATH, MERGER_PATH));
   await downloadHotfixMerger(api, gameSpec);
+  await downloadPluginLoader(api, gameSpec);
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 
@@ -711,7 +821,8 @@ function applyGame(context, gameSpec) {
 
   //register mod installers
   context.registerInstaller(MERGER_ID, 25, testHotfixMerger, installHotfixMerger);
-  context.registerInstaller(HOTFIX_ID, 27, testHotfix, installHotfix);
+  context.registerInstaller(PLUGINLOADER_ID, 27, testPluginLoader, installPluginLoader);
+  context.registerInstaller(HOTFIX_ID, 29, testHotfix, installHotfix);
   context.registerInstaller(ROOT_ID, 45, testRoot, installRoot);
   context.registerInstaller(PAK_ID, 47, testPak, installPak);
   context.registerInstaller(MOVIES_ID, 49, testMovies, installMovies);

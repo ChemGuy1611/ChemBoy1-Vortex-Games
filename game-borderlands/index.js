@@ -677,7 +677,7 @@ function testMovies(files, gameId) {
 //Install .bik files
 function installMovies(files) {
   const MOD_TYPE = MOVIES_ID;
-  const modFile = files.find(file => (path.basename(file).toLowerCase() === MOVIES_EXT));
+  const modFile = files.find(file => (path.extname(file).toLowerCase() === MOVIES_EXT));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
