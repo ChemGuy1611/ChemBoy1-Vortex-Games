@@ -1,9 +1,9 @@
 /*/////////////////////////////////////////
-Name: Borderlands Vortex Extension
-Structure: UE2/3 Game (TFC Installer)
+Name: Borderlands 3 Vortex Extension
+Structure: UE4 Game (Custom)
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2025-09-17
+Date: 2025-09-19
 /////////////////////////////////////////*/
 
 //Import libraries
@@ -19,64 +19,40 @@ const USER_HOME = util.getVortexPath("home");
 //const LOCALAPPDATA = util.getVortexPath('localAppData');
 
 //Specify all the information about the game
-const GAME_ID = "borderlands";
-const STEAMAPP_ID = "8989";
-const STEAMAPP_ID_GOTY = '729040';
-const EPICAPP_ID = null;
+const GAME_ID = "borderlands3";
+const STEAMAPP_ID = "397540";
+const EPICAPP_ID = "Catnip";
 const GOGAPP_ID = null;
 const XBOXAPP_ID = null;
 const XBOXEXECNAME = null;
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID_GOTY, STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
-const GAME_NAME = "Borderlands";
-const GAME_NAME_SHORT = "Borderlands";
-const EPIC_CODE_NAME = "WillowGame";
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const GAME_NAME = "Borderlands 3";
+const GAME_NAME_SHORT = "Borderlands 3";
+const EPIC_CODE_NAME = "OakGame";
 
-const ROOT_FOLDERS = [EPIC_CODE_NAME, 'Engine', 'Binaries'];
-const BINARIES_PATH = path.join("Binaries");
-const EXEC = path.join(BINARIES_PATH, 'Borderlands.exe');
-const BINARIES_PATH_GOTY = path.join("Binaries", "Win64");
-const EXEC_GOTY = path.join(BINARIES_PATH, 'BorderlandsGOTY.exe');
-const DATA_FOLDER = path.join('Borderlands', 'WillowGame');
+const ROOT_FOLDERS = [EPIC_CODE_NAME];
+const BINARIES_PATH = path.join(EPIC_CODE_NAME, "Binaries", "Win64");
+const EXEC = path.join(BINARIES_PATH, 'Borderlands3.exe');
+const DATA_FOLDER = 'Borderlands 3';
 
 let GAME_PATH = null; //patched in the setup function to the discovered game path
 let STAGING_FOLDER = ''; //Vortex staging folder path
 let DOWNLOAD_FOLDER = ''; //Vortex download folder path
 
-let BINARIES_TARGET = '';
-
 //Information for mod types and installers
-const TFC_ID = `${GAME_ID}-tfcinstaller`;
-const TFC_NAME = "TFC Installer";
-const TFC_EXEC = "tfcinstaller.exe";
-const TFC_FOLDER = "TFCInstaller";
-const TFC_PATH = '.';
-const TFC_PAGE_NO = 588;
-const TFC_FILE_NO = 5717;
+const MERGER_ID = `${GAME_ID}-hotfixmerger`;
+const MERGER_NAME = "Hotfix Merger";
+const MERGER_EXEC = "b3hm.exe";
+const MERGER_DLL = "b3hm.dll";
+const MERGER_PATH = BINARIES_PATH;
+const MERGER_PAGE_NO = 244;
+const MERGER_FILE_NO = 1377;
+const MERGER_WEBUI_URL = `https://c0dycode.github.io/BL3HotfixWebUI/v2/`;
 
-const UPKEXPLORER_ID = `${GAME_ID}-tfcexplorer`;
-const UPKEXPLORER_NAME = "UPK Explorer";
-const UPKEXPLORER_EXEC = "upk explorer.exe";
-const UPKEXPLORER_FOLDER = "UPK Explorer";
-const UPKEXPLORER_PATH = path.join('.');
-
-const TFCMOD_ID = `${GAME_ID}-tfcmod`;
-const TFCMOD_NAME = "TFC Mod";
-const TFCMOD_EXTS = ['.packagepatch', '.descriptor', '.tfcmapping', '.tfc', '.inipatch'];
-const TFCMOD_FILE = 'gameprofile.xml';
-const TFCMOD_PATH = path.join(TFC_FOLDER, 'Mods');
-
-const SDK_ID = `${GAME_ID}-sdk`;
-const SDK_NAME = "SDK";
-const SDK_FOLDER = "sdk_mods";
-const SDK_DLL = "unrealsdk.dll";
-const SDK_PATH = '.';
-const SDK_URL = `https://github.com/Ry0511/willow1-mod-manager/releases`;
-const SDK_URL_ALT = `https://github.com/bl-sdk/willow1-mod-manager/releases`;
-
-const SDKMOD_ID = `${GAME_ID}-sdkmod`;
-const SDKMOD_NAME = "SDK Mod";
-const SDKMOD_EXT = '.py';
-const SDKMOD_PATH = SDK_FOLDER;
+const HOTFIX_ID = `${GAME_ID}-hotfix`;
+const HOTFIX_NAME = "Hotfix Mod";
+const HOTFIX_EXT = '.bl3hotfix';
+const HOTFIX_PATH = BINARIES_PATH;
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Folder";
@@ -86,14 +62,19 @@ const BINARIES_NAME = "Binaries (Engine Injector)";
 
 const MOVIES_ID = `${GAME_ID}-movies`;
 const MOVIES_NAME = "Movies";
-const MOVIES_PATH = path.join(EPIC_CODE_NAME, 'Movies');
-const MOVIES_EXT = '.bik';
+const MOVIES_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Movies');
+const MOVIES_EXT = '.mp4';
 
-const CONFIG_PATH = path.join(USER_HOME, 'Documents', 'My Games', DATA_FOLDER, 'Config');
-const SAVE_PATH = path.join(USER_HOME, 'Documents', 'My Games', 'Borderlands', 'SaveData');
+const PAK_ID = `${GAME_ID}-pak`;
+const PAK_NAME = "Pak Mod";
+const PAK_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Paks');
+const PAK_EXT = '.pak';
+
+const CONFIG_PATH = path.join(USER_HOME, 'Documents', 'My Games', DATA_FOLDER, 'Saved', 'Config', 'WindowsNoEditor');
+const SAVE_PATH = path.join(USER_HOME, 'Documents', 'My Games', DATA_FOLDER, 'Saved', 'SaveGames');
 
 const REQ_FILE = EXEC;
-let MODTYPE_FOLDERS = [TFCMOD_PATH, SDKMOD_PATH];
+let MODTYPE_FOLDERS = [HOTFIX_PATH, PAK_PATH, MOVIES_PATH];
 
 //Filled in from the data above
 const spec = {
@@ -110,14 +91,14 @@ const spec = {
       REQ_FILE
     ],
     "details": {
-      "steamAppId": STEAMAPP_ID_GOTY,
+      "steamAppId": STEAMAPP_ID,
       "gogAppId": GOGAPP_ID,
       "epicAppId": EPICAPP_ID,
       "xboxAppId": XBOXAPP_ID,
       //"supportsSymlinks": false,
     },
     "environment": {
-      "SteamAPPId": STEAMAPP_ID_GOTY,
+      "SteamAPPId": STEAMAPP_ID,
       "GogAPPId": GOGAPP_ID,
       "EpicAPPId": EPICAPP_ID,
       "XboxAPPId": XBOXAPP_ID
@@ -125,22 +106,16 @@ const spec = {
   },
   "modTypes": [
     {
-      "id": SDK_ID,
-      "name": SDK_NAME,
+      "id": MERGER_ID,
+      "name": MERGER_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${SDK_PATH}`
+      "targetPath": `{gamePath}\\${MERGER_PATH}`
     },
     {
-      "id": SDKMOD_ID,
-      "name": SDKMOD_NAME,
+      "id": HOTFIX_ID,
+      "name": HOTFIX_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${SDKMOD_PATH}`
-    },
-    {
-      "id": TFCMOD_ID,
-      "name": TFCMOD_NAME,
-      "priority": "high",
-      "targetPath": `{gamePath}\\${TFCMOD_PATH}`
+      "targetPath": `{gamePath}\\${HOTFIX_PATH}`
     },
     {
       "id": ROOT_ID,
@@ -149,22 +124,22 @@ const spec = {
       "targetPath": `{gamePath}`
     },
     {
+      "id": BINARIES_ID,
+      "name": BINARIES_NAME,
+      "priority": "high",
+      "targetPath": `{gamePath}\\${BINARIES_PATH}`
+    },
+    {
       "id": MOVIES_ID,
       "name": MOVIES_NAME,
       "priority": "high",
       "targetPath": `{gamePath}\\${MOVIES_PATH}`
     },
     {
-      "id": TFC_ID,
-      "name": TFC_NAME,
-      "priority": "low",
-      "targetPath": `{gamePath}\\${TFC_PATH}`
-    },
-    {
-      "id": UPKEXPLORER_ID,
-      "name": UPKEXPLORER_NAME,
-      "priority": "low",
-      "targetPath": `{gamePath}\\${UPKEXPLORER_PATH}`
+      "id": PAK_ID,
+      "name": PAK_NAME,
+      "priority": "high",
+      "targetPath": `{gamePath}\\${PAK_PATH}`
     },
   ],
   "discovery": {
@@ -175,7 +150,7 @@ const spec = {
 
 //3rd party tools and launchers
 const tools = [
-  /*{
+  {
     id: `${GAME_ID}-customlaunch`,
     name: `Custom Launch`,
     logo: `exec.png`,
@@ -189,21 +164,11 @@ const tools = [
     parameters: []
   }, //*/
   {
-    id: TFC_ID,
-    name: TFC_NAME,
-    logo: "tfc.png",
-    executable: () => TFC_EXEC,
-    requiredFiles: [TFC_EXEC],
-    detach: true,
-    relative: true,
-    exclusive: true,
-  },
-  {
-    id: UPKEXPLORER_ID,
-    name: UPKEXPLORER_NAME,
-    logo: "tfc.png",
-    executable: () => UPKEXPLORER_EXEC,
-    requiredFiles: [UPKEXPLORER_EXEC],
+    id: MERGER_ID,
+    name: MERGER_NAME,
+    logo: "merger.png",
+    executable: () => MERGER_EXEC,
+    requiredFiles: [MERGER_EXEC],
     detach: true,
     relative: true,
     exclusive: true,
@@ -286,27 +251,6 @@ async function requiresLauncher(gamePath, store) {
   return Promise.resolve(undefined);
 }
 
-//Get correct shipping executable for game version
-function getExecutable(gamePath) {
-  const isCorrectExec = (exec) => {
-    try {
-      fs.statSync(path.join(gamePath, exec));
-      return true;
-    }
-    catch (err) {
-      return false;
-    }
-  };
-  if (isCorrectExec(EXEC_GOTY)) {
-    BINARIES_TARGET = `{gamePath}\\${BINARIES_PATH_GOTY}`;
-    MODTYPE_FOLDERS.push(BINARIES_PATH_GOTY);
-    return EXEC_GOTY; 
-  };
-  BINARIES_TARGET = `{gamePath}\\${BINARIES_PATH}`;
-  MODTYPE_FOLDERS.push(BINARIES_PATH);
-  return EXEC;
-}
-
 const getDiscoveryPath = (api) => { //get the game's discovered path
   const state = api.getState();
   const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});
@@ -322,23 +266,23 @@ async function deploy(api) { //useful to deploy mods after doing some action
 
 // AUTOMATIC MOD DOWNLOADERS ///////////////////////////////////////////////////
 
-//Check if TFC is installed
-function isTfcInstalled(api, spec) {
+//Check if Hotfix Merger is installed
+function isHotfixMergerInstalled(api, spec) {
   const state = api.getState();
   const mods = state.persistent.mods[spec.game.id] || {};
-  return Object.keys(mods).some(id => mods[id]?.type === TFC_ID);
+  return Object.keys(mods).some(id => mods[id]?.type === MERGER_ID);
 }
 
-//* Function to auto-download TFC from Nexus Mods
-async function downloadTfc(api, gameSpec) {
-  let isInstalled = isTfcInstalled(api, gameSpec);
+//* Function to auto-download Hotfix Merger from Nexus Mods
+async function downloadHotfixMerger(api, gameSpec) {
+  let isInstalled = isHotfixMergerInstalled(api, gameSpec);
   if (!isInstalled) {
-    const MOD_NAME = TFC_NAME;
-    const MOD_TYPE = TFC_ID;
+    const MOD_NAME = MERGER_NAME;
+    const MOD_TYPE = MERGER_ID;
     const NOTIF_ID = `${MOD_TYPE}-installing`;
-    let FILE_ID = TFC_FILE_NO;  //If using a specific file id because "input" below gives an error
-    const PAGE_ID = TFC_PAGE_NO;
-    const GAME_DOMAIN = 'site';
+    let FILE_ID = MERGER_FILE_NO;  //If using a specific file id because "input" below gives an error
+    const PAGE_ID = MERGER_PAGE_NO;
+    const GAME_DOMAIN = GAME_ID;
     api.sendNotification({ //notification indicating install process
       id: NOTIF_ID,
       message: `Installing ${MOD_NAME}`,
@@ -396,10 +340,11 @@ async function downloadTfc(api, gameSpec) {
 
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
 
-//Installer test for Fluffy Mod Manager files
-function testTfc(files, gameId) {
-  const isTFC = files.some(file => (path.basename(file).toLowerCase() === TFC_EXEC));
-  let supported = (gameId === spec.game.id) && isTFC;
+//Installer test for Hotfix Merger files
+function testHotfixMerger(files, gameId) {
+  const isFile = files.some(file => (path.basename(file).toLowerCase() === MERGER_DLL));
+  const isExe = files.some(file => (path.basename(file).toLowerCase() === MERGER_EXEC));
+  let supported = (gameId === spec.game.id) && isFile && isExe;
 
   // Test for a mod installer.
   if (supported && files.find(file =>
@@ -414,140 +359,10 @@ function testTfc(files, gameId) {
   });
 }
 
-//Installer install Fluffy Mod Manger files
-function installTfc(files) {
-  const modFile = files.find(file => (path.basename(file).toLowerCase() === TFC_EXEC));
-  const idx = modFile.indexOf(path.basename(modFile));
-  const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: TFC_ID };
-
-  // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
-  );
-
-  const instructions = filtered.map(file => {
-    return {
-      type: 'copy',
-      source: file,
-      destination: path.join(TFC_FOLDER, file.substr(idx)),
-    };
-  });
-  instructions.push(setModTypeInstruction);
-  return Promise.resolve({ instructions });
-}
-
-//Installer test for Fluffy Mod Manager files
-function testUpkExplorer(files, gameId) {
-  const isUpk = files.some(file => (path.basename(file).toLowerCase() === UPKEXPLORER_EXEC));
-  let supported = (gameId === spec.game.id) && isUpk;
-
-  // Test for a mod installer.
-  if (supported && files.find(file =>
-    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
-    supported = false;
-  }
-
-  return Promise.resolve({
-    supported,
-    requiredFiles: [],
-  });
-}
-
-//Installer install Fluffy Mod Manger files
-function installUpkExplorer(files) {
-  const modFile = files.find(file => (path.basename(file).toLowerCase() === UPKEXPLORER_EXEC));
-  const idx = modFile.indexOf(path.basename(modFile));
-  const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: UPKEXPLORER_ID };
-
-  // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
-  );
-
-  const instructions = filtered.map(file => {
-    return {
-      type: 'copy',
-      source: file,
-      destination: path.join(UPKEXPLORER_FOLDER, file.substr(idx)),
-    };
-  });
-  instructions.push(setModTypeInstruction);
-  return Promise.resolve({ instructions });
-}
-
-//Test Fallback installer for Void Mods
-function testTfcMod(files, gameId) {
-  const isMod = files.some(file => TFCMOD_EXTS.includes(path.extname(file).toLowerCase()));
-  //const isXml = files.some(file => (path.basename(file).toLowerCase() === TFCMOD_FILE));
-  //let supported = (gameId === spec.game.id) && ( isMod || isXml );
-  let supported = (gameId === spec.game.id) && isMod;
-
-  // Test for a mod installer.
-  if (supported && files.find(file =>
-    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
-    supported = false;
-  }
-
-  return Promise.resolve({
-    supported,
-    requiredFiles: [],
-  });
-}
-
-//Fallback installer for Void Mods
-function installTfcMod(files, fileName) {
-  const modFile = files.find(file => TFCMOD_EXTS.includes(path.extname(file).toLowerCase()));
-  const ROOT_PATH = path.basename(path.dirname(modFile));
-  const MOD_NAME = path.basename(fileName);
-  let MOD_FOLDER = '.';
-  if (ROOT_PATH === '.') {
-    MOD_FOLDER = MOD_NAME.replace(/[\.]*(installing)*(zip)*/gi, '');
-  }
-  const setModTypeInstruction = { type: 'setmodtype', value: TFCMOD_ID };
-  
-  // Remove empty directories
-  const filtered = files.filter(file =>
-    (!file.endsWith(path.sep))
-  );
-
-  const instructions = filtered.map(file => {
-    return {
-      type: 'copy',
-      source: file,
-      destination: path.join(MOD_FOLDER, file),
-    };
-  });
-  instructions.push(setModTypeInstruction);
-  return Promise.resolve({ instructions });
-}
-
-//Installer test for Fluffy Mod Manager files
-function testSdk(files, gameId) {
-  const isFile = files.some(file => (path.basename(file).toLowerCase() === SDK_DLL));
-  const isFolder = files.some(file => (path.basename(file).toLowerCase() === SDK_FOLDER));
-  let supported = (gameId === spec.game.id) && isFile && isFolder;
-
-  // Test for a mod installer.
-  if (supported && files.find(file =>
-    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
-    supported = false;
-  }
-
-  return Promise.resolve({
-    supported,
-    requiredFiles: [],
-  });
-}
-
-//Installer install Fluffy Mod Manger files
-function installSdk(files) {
-  const MOD_TYPE = SDK_ID;
-  const modFile = files.find(file => (path.basename(file).toLowerCase() === SDK_FOLDER));
+//Installer install Hotfix Merger files
+function installHotfixMerger(files) {
+  const MOD_TYPE = MERGER_ID;
+  const modFile = files.find(file => (path.basename(file).toLowerCase() === MERGER_DLL));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
@@ -568,9 +383,9 @@ function installSdk(files) {
   return Promise.resolve({ instructions });
 }
 
-//Test Fallback installer for Void Mods
-function testSdkMod(files, gameId) {
-  const isMod = files.some(file => (path.extname(file).toLowerCase() === SDKMOD_EXT));
+//Test for .bl3hotfix files
+function testHotfix(files, gameId) {
+  const isMod = files.some(file => (path.extname(file).toLowerCase() === HOTFIX_EXT));
   let supported = (gameId === spec.game.id) && isMod;
 
   // Test for a mod installer.
@@ -586,28 +401,24 @@ function testSdkMod(files, gameId) {
   });
 }
 
-//Fallback installer for Void Mods
-function installSdkMod(files, fileName) {
-  const MOD_TYPE = SDKMOD_ID;
-  const modFile = files.find(file => (path.extname(file).toLowerCase() === SDKMOD_EXT));
-  const ROOT_PATH = path.basename(path.dirname(modFile));
-  const MOD_NAME = path.basename(fileName);
-  let MOD_FOLDER = '.';
-  if (ROOT_PATH === '.') {
-    MOD_FOLDER = MOD_NAME.replace(/[\.]*(installing)*(zip)*/gi, '');
-  }
+//Install .bl3hotfix files
+function installHotfix(files) {
+  const MOD_TYPE = HOTFIX_ID;
+  const modFile = files.find(file => (path.basename(file).toLowerCase() === HOTFIX_EXT));
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
-  
-  // Remove empty directories
+
+  // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
-    (!file.endsWith(path.sep))
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
   );
 
   const instructions = filtered.map(file => {
     return {
       type: 'copy',
       source: file,
-      destination: path.join(MOD_FOLDER, file),
+      destination: path.join(file),
     };
   });
   instructions.push(setModTypeInstruction);
@@ -656,7 +467,49 @@ function installRoot(files) {
   return Promise.resolve({ instructions });
 }
 
-//Test .bik files
+//Test .pak files
+function testPak(files, gameId) {
+  const isMod = files.some(file => (path.extname(file).toLowerCase() === PAK_EXT));
+  let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install .pak files
+function installPak(files) {
+  const MOD_TYPE = PAK_ID;
+  const modFile = files.find(file => (path.basename(file).toLowerCase() === PAK_EXT));
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Test .mp4 files
 function testMovies(files, gameId) {
   const isMod = files.some(file => (path.extname(file).toLowerCase() === MOVIES_EXT));
   let supported = (gameId === spec.game.id) && isMod;
@@ -674,7 +527,7 @@ function testMovies(files, gameId) {
   });
 }
 
-//Install .bik files
+//Install .mp4 files
 function installMovies(files) {
   const MOD_TYPE = MOVIES_ID;
   const modFile = files.find(file => (path.basename(file).toLowerCase() === MOVIES_EXT));
@@ -700,10 +553,10 @@ function installMovies(files) {
 
 // MAIN EXTENSION FUNCTION /////////////////////////////////////////////////////
 
-//Notify User of Setup instructions for TFC Installer
+//Notify User of Setup instructions for Hotfix Merger
 function setupNotify(api) {
   const NOTIF_ID = `${GAME_ID}-setup`;
-  const MOD_NAME = TFC_NAME;
+  const MOD_NAME = MERGER_NAME;
   const MESSAGE = `${MOD_NAME} Setup Required`;
   api.sendNotification({
     id: NOTIF_ID,
@@ -716,14 +569,13 @@ function setupNotify(api) {
         action: (dismiss) => {
           api.showDialog('question', MESSAGE, {
             text: `The ${MOD_NAME} tool downloaded by this extension requires setup.\n`
-                + `Please launch the tool and set the Game Folder.\n`
-                + `Mods to install with ${MOD_NAME} will be found at this folder: "[RootGameFolder]\\${TFC_FOLDER}\\Mods".\n`
-                + `If you don't see your mod's folder there, check in the root game folder.\n`              
+                + `Please launch the tool and follow the instructions.\n`
+                + `Mods to install with ${MOD_NAME} will be found at this folder: "${HOTFIX_PATH}".\n`     
                 + `You must use ${MOD_NAME} to install and uninstall those mods after installing with Vortex.\n`
           }, [
             { label: 'Acknowledge', action: () => dismiss() },
             {
-              label: 'Run TFC', action: () => {
+              label: 'Run Hotfix Merger', action: () => {
                 runModManager(api);
                 dismiss();
               }
@@ -741,12 +593,11 @@ function setupNotify(api) {
   });    
 }
 
-
 //Notify User to run TFC Installer after deployment
 function deployNotify(api) {
   const NOTIF_ID = `${GAME_ID}-deploy`;
-  const MOD_NAME = TFC_NAME;
-  const MESSAGE = `Run ${MOD_NAME} to Install Mods`;
+  const MOD_NAME = MERGER_NAME;
+  const MESSAGE = `Use ${MOD_NAME} to Install Mods`;
   api.sendNotification({
     id: NOTIF_ID,
     type: 'warning',
@@ -754,9 +605,9 @@ function deployNotify(api) {
     allowSuppress: true,
     actions: [
       {
-        title: 'Run TFC',
+        title: 'Open WebUI',
         action: (dismiss) => {
-          runModManager(api);
+          util.opn(MERGER_WEBUI_URL).catch(() => null);
           dismiss();
         },
       },
@@ -765,13 +616,18 @@ function deployNotify(api) {
         action: (dismiss) => {
           api.showDialog('question', MESSAGE, {
             text: `For most mods, you must use ${MOD_NAME} to install the mod to the game files after installing with Vortex.\n`
-                + `Mods to install with ${MOD_NAME} will be found at this folder: "[RootGameFolder]\\${TFC_FOLDER}\\Mods".\n`
-                + `If you don't see your mod's folder there, check in the root game folder.\n`   
+                + `Mods to install with ${MOD_NAME} will be found at this folder: "${HOTFIX_PATH}".\n`
                 + `Use the included tool to launch ${MOD_NAME} (button on notification or in "Dashboard" tab).\n`
+                + `You can open the Hotfix Merger WebUI below, or using the button within the folder icon on the Mods toolbar.\n`
           }, [
             {
-              label: 'Run TFC', action: () => {
+              label: 'Run Hotfix Merger', action: () => {
                 runModManager(api);
+              }
+            },
+            {
+              label: 'Open Hotfix Merger WebUI', action: () => {
+                util.opn(MERGER_WEBUI_URL).catch(() => null);
                 dismiss();
               }
             },
@@ -790,8 +646,8 @@ function deployNotify(api) {
 }
 
 function runModManager(api) {
-  const TOOL_ID = TFC_ID;
-  const TOOL_NAME = TFC_NAME;
+  const TOOL_ID = MERGER_ID;
+  const TOOL_NAME = MERGER_NAME;
   const state = api.store.getState();
   const tool = util.getSafe(state, ['settings', 'gameMode', 'discovered', GAME_ID, 'tools', TOOL_ID], undefined);
 
@@ -826,7 +682,7 @@ async function setup(discovery, api, gameSpec) {
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, gameSpec.game.id);
   setupNotify(api);
   // ASYNC CODE //////////////////////////////////////////
-  await downloadTfc(api, gameSpec);
+  await downloadHotfixMerger(api, gameSpec);
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 
@@ -839,7 +695,7 @@ function applyGame(context, gameSpec) {
     queryModPath: makeGetModPath(context.api, gameSpec),
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
-    executable: getExecutable,
+    executable: () => gameSpec.game.executable,
     supportedTools: tools,
   };
   context.registerGame(game);
@@ -853,27 +709,22 @@ function applyGame(context, gameSpec) {
     }, (game) => pathPattern(context.api, game, type.targetPath), () => Promise.resolve(false), { name: type.name });
   });
 
-  //register mod types explicitly
-  context.registerModType(BINARIES_ID, 50, 
-    (gameId) => {
-      var _a;
-      return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, 
-    (game) => pathPattern(context.api, game, BINARIES_TARGET), 
-    () => Promise.resolve(false), 
-    { name: BINARIES_NAME }
-  );
-
   //register mod installers
-  context.registerInstaller(TFC_ID, 25, testTfc, installTfc);
-  context.registerInstaller(UPKEXPLORER_ID, 27, testUpkExplorer, installUpkExplorer);
-  context.registerInstaller(TFCMOD_ID, 29, testTfcMod, installTfcMod);
-  context.registerInstaller(SDK_ID, 31, testSdk, installSdk);
-  context.registerInstaller(SDKMOD_ID, 33, testSdkMod, installSdkMod);
-  context.registerInstaller(ROOT_ID, 47, testRoot, installRoot);
+  context.registerInstaller(MERGER_ID, 25, testHotfixMerger, installHotfixMerger);
+  context.registerInstaller(HOTFIX_ID, 27, testHotfix, installHotfix);
+  context.registerInstaller(ROOT_ID, 45, testRoot, installRoot);
+  context.registerInstaller(PAK_ID, 47, testPak, installPak);
   context.registerInstaller(MOVIES_ID, 49, testMovies, installMovies);
 
   //register actions
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Hotfix Merger WebUI', () => {
+    const openPath = MERGER_WEBUI_URL;
+    util.opn(openPath).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
     const openPath = CONFIG_PATH;
     util.opn(openPath).catch(() => null);

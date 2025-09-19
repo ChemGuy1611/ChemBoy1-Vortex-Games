@@ -441,7 +441,7 @@ function testJsFile(files, gameId) {
 }
 
 //Install save files
-async function installJsFile(files) {
+async function installJsFile(files, fileName) {
   const MOD_TYPE = JSFILE_ID;
   const modFile = files.find(file => (path.extname(file).toLowerCase() === JSFILE_EXT));
   const idx = modFile.indexOf(path.basename(modFile));
