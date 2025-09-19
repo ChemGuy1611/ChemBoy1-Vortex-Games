@@ -1,8 +1,8 @@
 /*
 Name: Ghost of Tsushima Vortex Extension
 Author: ChemBoy1
-Version: 0.1.7
-Date: 09/02/2024
+Version: 0.1.8
+Date: 2025-09-18
 */
 
 //import libraries
@@ -16,6 +16,7 @@ const STEAMAPP_ID = "2215430";
 const EPICAPP_ID = "cd231060e6744ffb97684767b07d2b77";
 const GAME_ID = "ghostoftsushima";
 const EXEC = "GhostOfTsushima.exe";
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
 //Info for mod types and installers
 const modFileExt = ".psarc";
@@ -39,7 +40,7 @@ if (USERID_FOLDER === undefined) {
 }
 const SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
 
-
+//Filled in from the data above
 const spec = {
   "game": {
     "id": GAME_ID,
@@ -55,7 +56,6 @@ const spec = {
     "details": {
       "steamAppId": STEAMAPP_ID,
       "epicAppId": EPICAPP_ID,
-      "nexusPageId": GAME_ID
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
@@ -77,10 +77,7 @@ const spec = {
     },
   ],
   "discovery": {
-    "ids": [
-      STEAMAPP_ID,
-      EPICAPP_ID
-    ],
+    "ids": DISCOVERY_IDS_ACTIVE,
     "names": []
   }
 };
@@ -89,6 +86,8 @@ const spec = {
 const tools = [
 
 ];
+
+// BASIC EXTENSION FUNCTIONS ///////////////////////////////////////////////////
 
 //Set mod type priorities
 function modTypePriority(priority) {
@@ -116,35 +115,50 @@ function makeGetModPath(api, gameSpec) {
     : pathPattern(api, gameSpec.game, gameSpec.game.modPath);
 }
 
-//Find game information by API utility
-async function queryGame() {
-  let game = await util.GameStoreHelper.findByAppId(spec.discovery.ids);
-  return game;
+//Find game installation directory
+function makeFindGame(api, gameSpec) {
+  return () => util.GameStoreHelper.findByAppId(gameSpec.discovery.ids)
+    .then((game) => game.gamePath);
 }
 
-//Find game install location 
-async function queryPath() {
-  let game = await queryGame();
-  return game.gamePath;
-}
-
-//Set launcher requirements
-async function requiresLauncher() {
-  let game = await queryGame();
-
-  if (game.gameStoreId === "steam") {
-    return undefined;
-  }
-  if (game.gameStoreId === "epic") {
-    return {
-      launcher: "epic",
-      addInfo: {
-        appId: EPICAPP_ID,
-      },
-    };
+//set launcher requirements
+async function requiresLauncher(gamePath, store) {
+  /*if (store === 'xbox' && (DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID))) {
+      return Promise.resolve({
+        launcher: 'xbox',
+        addInfo: {
+          appId: XBOXAPP_ID,
+          parameters: [{ appExecName: XBOXEXECNAME }],
+          //parameters: [{ appExecName: XBOXEXECNAME }, PARAMETERS_STRING],
+          //launchType: 'gamestore',
+        },
+      });
   } //*/
-  return undefined;
+  if (store === 'epic' && (DISCOVERY_IDS_ACTIVE.includes(EPICAPP_ID))) {
+    return Promise.resolve({
+        launcher: 'epic',
+        addInfo: {
+          appId: EPICAPP_ID,
+          //parameters: PARAMETERS,
+          //launchType: 'gamestore',
+        },
+    });
+  } //*/
+  /*
+  if (store === 'steam') {
+    return Promise.resolve({
+      launcher: 'steam',
+      addInfo: {
+        appId: STEAM_ID,
+        //parameters: PARAMETERS,
+        //launchType: 'gamestore',
+      } //
+    });
+  } //*/
+  return Promise.resolve(undefined);
 }
+
+// MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
 
 //test whether to use mod installer
 function testPsarc(files, gameId) {
@@ -232,6 +246,8 @@ function installSave(files) {
   return Promise.resolve({ instructions });
 }
 
+// MAIN EXTENSION FUNCTION /////////////////////////////////////////////////////
+
 //Setup function
 async function setup(discovery, api, gameSpec) {
   await fs.ensureDirWritableAsync(path.join(discovery.path, gameSpec.game.modPath));
@@ -244,9 +260,9 @@ function applyGame(context, gameSpec) {
   //clone game info from above and add required parameters
   const game = {
     ...gameSpec.game,
-    queryPath,
+    queryPath: makeFindGame(context.api, gameSpec),
     queryModPath: makeGetModPath(context.api, gameSpec),
-    requiresLauncher,
+    requiresLauncher: requiresLauncher,
     requiresCleanup: true,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     executable: () => gameSpec.game.executable,
