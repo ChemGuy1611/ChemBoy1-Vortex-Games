@@ -460,27 +460,6 @@ function isPak(filePath) {
   return path.extname(filePath.toLowerCase()) === PAK_EXT;
 }
 
-/*Functions for .pak file extension renaming and load ordering
-async function preSort(api, items, direction) {
-  const mods = util.getSafe(api.store.getState(), ['persistent', 'mods', spec.game.id], {});
-  const fileExt = PAK_EXT;
-
-  const loadOrder = items.map(mod => {
-    const modInfo = mods[mod.id];
-    let name = modInfo ? modInfo.attributes.customFileName ?? modInfo.attributes.logicalFileName ?? modInfo.attributes.name : mod.name;
-    const pak = util.getSafe(modInfo.attributes, ['pakModFiles'], []);
-    //if (pak.length > 1) name = name + ` (${pak.length} ${fileExt} files)`;
-
-    return {
-      id: mod.id,
-      name,
-      imgUrl: util.getSafe(modInfo, ['attributes', 'pictureUrl'], path.join(__dirname, spec.game.logo))
-    }
-  });
-
-  return (direction === 'descending') ? Promise.resolve(loadOrder.reverse()) : Promise.resolve(loadOrder);
-} //*/
-
 //test whether to use the merger
 function mergeTest(api, game, discovery) {
   if (game.id !== GAME_ID && discovery?.path !== undefined) {
@@ -498,16 +477,6 @@ function mergeTest(api, game, discovery) {
     filter: filePath => isPak(filePath),
   };
 }
-
-//inform user to refresh load order if can't get index
-const sendRefreshLoadOrderNotification = (context) => {
-  context.api.sendNotification({
-    id: `${GAME_ID}-refreshloadorder`,
-    type: 'error',
-    message: 'Refresh your load order',
-    allowSuppress: false,
-  });
-};
 
 //merger file operations - filePath points to the mod file - mergeDir points to the __merged directory
 function mergeOperation(api, filePath, mergeDir) {
@@ -569,47 +538,6 @@ const requestDeployment = (context) => {
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
-//Notify User of Setup instructions
-function setupNotification(api) {
-  const NOTIF_ID = `${GAME_ID}-setup`;
-  const MESSAGE = `Special Instructions for ${GAME_NAME}`;
-  api.sendNotification({
-    id: NOTIF_ID,
-    type: 'warning',
-    message: MESSAGE,
-    allowSuppress: true,
-    actions: [
-      {
-        title: 'info',
-        action: (dismiss) => {
-          api.showDialog('question', MESSAGE, {
-            bbcode: `This extension uses the Load Order you set for "dataX.pak" mods to do automatic file renaming.
-            <br/>
-            <br/>
-            To do this, the extension will create another mod in your mod list ("_merged....."). Please do not enable or uninstall this mod.
-            <br/>
-            <br/>
-            You may sometimes see popups after installing new mods or changing the load order for "Changes Outside of Vortex".
-            <br/>
-            <br/>
-            Please accept and apply those changes for the "_merged" mod when you see the popups.
-            <br/>
-            <br/>`
-          }, [
-            { label: 'Acknowledge', action: () => dismiss() },
-            {
-              label: 'Never Show Again', action: () => {
-                api.suppressNotification(NOTIF_ID);
-                dismiss();
-              }
-            },
-          ]);
-        },
-      },
-    ],
-  });
-}
-
 //Setup function
 async function setup(discovery, api, gameSpec) {
   // SYNCHRONOUS CODE ////////////////////////////////////
@@ -617,7 +545,6 @@ async function setup(discovery, api, gameSpec) {
   GAME_PATH = discovery.path;
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
-  //setupNotification(api);
   // ASYNC CODE //////////////////////////////////////////
   return fs.ensureDirWritableAsync(path.join(GAME_PATH, MOD_PATH_DEFAULT));
 }
@@ -655,9 +582,6 @@ function applyGame(context, gameSpec) {
       () => Promise.resolve(false), //test - is installed mod of this type
       {
         name: PAK_NAME,
-        //mergeMods: true,
-        //deploymentEssential: true,
-        //noConflicts: true,
       } //options
     );
 
@@ -690,33 +614,6 @@ function applyGame(context, gameSpec) {
 //main function
 function main(context) {
   applyGame(context, spec);
-  /*
-  let currentLoadOrder;
-  context.registerLoadOrderPage({
-    gameId: spec.game.id,
-    gameArtURL: path.join(__dirname, spec.game.logo),
-    preSort: (items, direction) => preSort(context.api, items, direction),
-    filter: mods => mods.filter(mod => mod.type === PAK_ID),
-    displayCheckboxes: false,
-    callback: (updatedLoadOrder, mods) => {
-      if (currentLoadOrder == updatedLoadOrder) return;
-
-      if (currentLoadOrder == undefined) {
-        currentLoadOrder = updatedLoadOrder;
-        return;
-      }
-
-      currentLoadOrder = updatedLoadOrder;
-      requestDeployment(context);
-    },
-    createInfoPanel: () =>
-      context.api.translate(`${spec.game.name} loads "dataX.pak" mods in numerical 
-        order, so Vortex suffixes the file names with "${PAK_IDX_START}, ${PAK_IDX_START+1}, ${PAK_IDX_START+2}, ..." 
-        to ensure they load in the order you set here. The number in the left column 
-        represents the overwrite order. The changes from mods with higher numbers will 
-        take priority over other mods which make similar edits.`
-      ),
-  }); //*/
   //*merger for pak mods
   context.registerMerge(
     (game, discovery) => mergeTest(context.api, game, discovery),
@@ -725,29 +622,10 @@ function main(context) {
   ); //*/
 
   context.once(() => { // put code here that should be run (once) when Vortex starts up
-    context.api.onAsync('did-deploy', async (profileId, deployment) => {
+    /*context.api.onAsync('did-deploy', async (profileId, deployment) => {
       const lastActiveProfile = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
       if (profileId !== lastActiveProfile) return;
-      //context.api.dismissNotification(`${GAME_ID}-deployrequest`);
       context.api.dismissNotification('redundant-mods'); // Because we create a merged mod when deploying, Vortex thinks that all mods have duplicates and are redundant
-    });
-    /*
-    context.api.events.on('mods-enabled', (mods, enabled, gameId) => {
-      if (gameId !== GAME_ID) return;
-
-      const isAutoDeployOn = context.api.getState().settings.automation.deploy;
-      if (!isAutoDeployOn) {
-        requestDeployment(context);
-      }
-    });
-    context.api.events.on('mod-disabled', (profileId, modId) => {
-      const lastActiveHelldiverProfile = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
-      if (profileId !== lastActiveHelldiverProfile) return;
-
-      const isAutoDeployOn = context.api.getState().settings.automation.deploy;
-      if (!isAutoDeployOn) {
-        requestDeployment(context);
-      }
     }); //*/
   });
   return true;
