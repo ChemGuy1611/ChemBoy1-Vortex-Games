@@ -304,34 +304,34 @@ function installPak(api, files) {
   const queryVariant = () => {
     const paks = Object.keys(pakFiles).filter(key => pakFiles[key].length > 1);
     return Promise.map(paks, pakFile => {
-        return api.showDialog('question', 'Choose Variant', {
-          text: 'This mod has several variants for "{{pak}}" - please '
-              + 'choose the variant you wish to install. (You can choose a '
-              + 'different variant by re-installing the mod)',
-          choices: pakFiles[pakFile].map((iter, idx) => ({ 
-            id: iter,
-            text: iter,
-            value: idx === 0,
-          })),
-          parameters: {
-            pak: pakFile,
-          },
-        }, [
-          { label: 'Cancel' },
-          { label: 'Confirm' },
-        ]).then(res => {
-          if (res.action === 'Confirm') {
-            const choice = Object.keys(res.input).find(choice => res.input[choice]);
-            filtered = filtered.filter(file => (path.extname(file) !== PAK_EXT)
-              || ((path.basename(file) === pakFile) && file.includes(choice))
-              || (path.basename(file) !== pakFile));
-            return Promise.resolve();
-          } else {
-            return new util.UserCanceled();
-          }
-        });
-      })
-    };
+      return api.showDialog('question', 'Choose Variant', {
+        text: 'This mod has several variants for "{{pak}}" - please '
+            + 'choose the variant you wish to install. (You can choose a '
+            + 'different variant by re-installing the mod)',
+        choices: pakFiles[pakFile].map((iter, idx) => ({ 
+          id: iter,
+          text: iter,
+          value: idx === 0,
+        })),
+        parameters: {
+          pak: pakFile,
+        },
+      }, [
+        { label: 'Cancel' },
+        { label: 'Confirm' },
+      ]).then(res => {
+        if (res.action === 'Confirm') {
+          const choice = Object.keys(res.input).find(choice => res.input[choice]);
+          filtered = filtered.filter(file => (path.extname(file) !== PAK_EXT)
+            || ((path.basename(file) === pakFile) && file.includes(choice))
+            || (path.basename(file) !== pakFile));
+          return Promise.resolve();
+        } else {
+          return new util.UserCanceled();
+        }
+      });
+    })
+  };
   const generateInstructions = () => {
     const fileInstructions = filtered.reduce((accum, iter) => {
       if (!iter.endsWith(path.sep)) {
