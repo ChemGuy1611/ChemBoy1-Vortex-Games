@@ -657,12 +657,12 @@ function main(context) {
         take priority over other mods which make similar edits.`
       ),
   });
-
+  //*merger for pak mods
   context.registerMerge(
     (game, discovery) => mergeTest(game, discovery, context),
     (filePath, mergePath) => mergeOperation(filePath, mergePath, context, currentLoadOrder),
     PAK_ID
-  );
+  ); //*/
 
   context.once(() => { // put code here that should be run (once) when Vortex starts up
     context.api.onAsync('did-deploy', async (profileId, deployment) => {
