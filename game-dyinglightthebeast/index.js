@@ -9,6 +9,7 @@ Date: 2025-09-01
 //Import libraries
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
+const shortid = require('shortid');
 const template = require('string-template');
 //const winapi = require('winapi-bindings');
 //const turbowalk = require('turbowalk');
@@ -54,6 +55,7 @@ const PAK_EXT = '.pak';
 
 const PAK_STRING = 'data';
 const PAK_IDX_START = 2;
+const PAK_IDX_END = 7;
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Folder";
@@ -278,41 +280,100 @@ function testPak(files, gameId) {
   });
 }
 
-//Install .pak files (in mod merger)
-function installPak(files, gameSpec) {
-  const MOD_TYPE = PAK_ID;
-  const modFile = files.find(file => path.extname(file).toLowerCase() === PAK_EXT);
-  const pakFiles = files.filter(file => path.extname(file).toLowerCase() === PAK_EXT);
-  const idx = modFile.indexOf(path.basename(modFile));
-  const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
-  const pakModFiles = {
-    type: 'attribute',
-    key: 'pakModFiles',
-    value: pakFiles.map(f => path.basename(f))
-  };
+function installPak(api, files) {
+  const rootCandidate = files.find(file => file.toLowerCase().split(path.sep).includes('ph_ft'));
+  const idx = rootCandidate !== undefined
+    ? rootCandidate.toLowerCase().split(path.sep).findIndex(seg => seg === 'ph_ft')
+    : 0;
 
-  // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-  (
-    (file.indexOf(rootPath) !== -1) &&
-    (!file.endsWith(path.sep)) &&
-    (path.extname(file).toLowerCase() === PAK_EXT)
-  )
-  );
+  let hasVariants = false;
+  const pakFiles = files.reduce((accum, iter) => {
+    if (path.extname(iter) === '.pak') {
+      const exists = accum[path.basename(iter)] !== undefined;
+      if (exists) {
+        hasVariants = true;
+      }
+      accum[path.basename(iter)] = exists
+        ? accum[path.basename(iter)].concat(iter)
+        : [iter];
+    }
+    return accum;
+  }, {});
 
-  const instructions = filtered.map(file => {
-    return {
-      type: 'copy',
-      source: file,
-      destination: path.join(file.substr(idx)),
+  let filtered = files;
+  const queryVariant = () => {
+    const paks = Object.keys(pakFiles).filter(key => pakFiles[key].length > 1);
+    return Promise.map(paks, pakFile => {
+        return api.showDialog('question', 'Choose Variant', {
+          text: 'This mod has several variants for "{{pak}}" - please '
+              + 'choose the variant you wish to install. (You can choose a '
+              + 'different variant by re-installing the mod)',
+          choices: pakFiles[pakFile].map((iter, idx) => ({ 
+            id: iter,
+            text: iter,
+            value: idx === 0,
+          })),
+          parameters: {
+            pak: pakFile,
+          },
+        }, [
+          { label: 'Cancel' },
+          { label: 'Confirm' },
+        ]).then(res => {
+          if (res.action === 'Confirm') {
+            const choice = Object.keys(res.input).find(choice => res.input[choice]);
+            filtered = filtered.filter(file => (path.extname(file) !== PAK_EXT)
+              || ((path.basename(file) === pakFile) && file.includes(choice))
+              || (path.basename(file) !== pakFile));
+            return Promise.resolve();
+          } else {
+            return new util.UserCanceled();
+          }
+        });
+      })
     };
-  });
+  const generateInstructions = () => {
+    const fileInstructions = filtered.reduce((accum, iter) => {
+      if (!iter.endsWith(path.sep)) {
+        iter = iter.match(/data[0-9]*.pak/) !== null
+          ? iter : 'data2.pak';
+        const destination = isPak(iter)
+          ? shortid() + PAK_EXT
+          : iter.split(path.sep).slice(idx).join(path.sep);
+        if (isPak(iter)) {
+          const pakDictIdx = accum.findIndex(attrib =>
+            (attrib.type === 'attribute') && (attrib.key === 'pakDictionary'));
+          if (pakDictIdx !== -1) {
+            accum[pakDictIdx] = {
+              ...accum[pakDictIdx],
+              [destination]: path.basename(iter),
+            }
+          } else {
+            accum.push({
+              type: 'attribute',
+              key: 'pakDictionary',
+              value: { [destination]: path.basename(iter) },
+            });
+          }
+        }
+        accum.push({
+          type: 'copy',
+          source: iter,
+          destination, 
+        });
+      }
+      return accum;
+    }, []);
+    const instructions = [{ 
+      type: 'setmodtype',
+      value: PAK_ID,
+    }].concat(fileInstructions);
+    return instructions;
+  }
 
-  instructions.push(setModTypeInstruction);
-  instructions.push(pakModFiles);
-
-  return Promise.resolve({ instructions });
+  const prom = hasVariants ? queryVariant : Promise.resolve;
+  return prom()
+    .then(() => Promise.resolve({ instructions: generateInstructions() }));
 }
 
 //Installer test for Root folder files
@@ -399,7 +460,7 @@ function isPak(filePath) {
   return path.extname(filePath.toLowerCase()) === PAK_EXT;
 }
 
-//Functions for .pak file extension renaming and load ordering
+/*Functions for .pak file extension renaming and load ordering
 async function preSort(api, items, direction) {
   const mods = util.getSafe(api.store.getState(), ['persistent', 'mods', spec.game.id], {});
   const fileExt = PAK_EXT;
@@ -418,13 +479,15 @@ async function preSort(api, items, direction) {
   });
 
   return (direction === 'descending') ? Promise.resolve(loadOrder.reverse()) : Promise.resolve(loadOrder);
-}
+} //*/
 
 //test whether to use the merger
-const mergeTest = (game, discovery, context) => {
-  if (game.id !== GAME_ID) return;
-  /*const state = context.api.getState();
-  const installPath = selectors.installPathForGame(state, game.id);
+function mergeTest(api, game, discovery) {
+  if (game.id !== GAME_ID && discovery?.path !== undefined) {
+    return undefined;
+  }
+
+  const installPath = selectors.installPathForGame(api.store.getState(), game.id);
   return {
     baseFiles: (deployedFiles) => deployedFiles
       .filter(file => isPak(file.relPath))
@@ -433,12 +496,7 @@ const mergeTest = (game, discovery, context) => {
         out: file.relPath,
       })),
     filter: filePath => isPak(filePath),
-  }; //*/
-  //*
-  return {
-    baseFiles: () => [],
-    filter: () => true
-  } //*/
+  };
 }
 
 //inform user to refresh load order if can't get index
@@ -451,42 +509,44 @@ const sendRefreshLoadOrderNotification = (context) => {
   });
 };
 
-//merger file operations
-const mergeOperation = (filePath, mergePath, context, currentLoadOrder) => {
-  const state = context.api.getState();
-  const profile = selectors.lastActiveProfileForGame(state, GAME_ID);
-  const loadOrder = util.getSafe(state, ['persistent', 'loadOrder', profile], {});
-
-  const splittedPath = filePath.split(path.sep);
-  const fileName = splittedPath.pop();
-  const modName = splittedPath.pop();
-
-  const modIsInLoadOrder = loadOrder[modName] != undefined;
-  //const modPosition = modIsInLoadOrder ? loadOrder[modName].pos : Object.keys(loadOrder).length;
-  const modPosition = modIsInLoadOrder ? loadOrder[modName].pos : undefined;
-
-  if (modPosition == undefined) {
-    sendRefreshLoadOrderNotification(context);
+//merger file operations - filePath points to the mod file - mergeDir points to the __merged directory
+function mergeOperation(api, filePath, mergeDir) {
+  const state = api.getState();
+  const modId = Object.keys(state.persistent.mods[GAME_ID]).find(id => filePath.includes(id));
+  let pakDict;
+  if (modId !== undefined) {
+    const mod = state.persistent.mods[GAME_ID][modId];
+    pakDict = mod.attributes.pakDictionary;
   }
-  else {
-    context.api.dismissNotification(`${GAME_ID}-refreshloadorder`);
-    const number = modPosition + PAK_IDX_START;
-    const targetFileName = `data${number}.pak`;
-    const mergeTarget = path.join(mergePath, targetFileName);
-    fs.ensureDirWritableAsync(path.dirname(mergeTarget));
-    fs.ensureDirWritableAsync(path.dirname(filePath));
-    return util.copyFileAtomic(filePath, mergeTarget)
-    //return fs.copyAsync(filePath, mergeTarget)
-      .catch({ code: 'ENOENT' }, err => {
-        // not entirely sure whether "ENOENT" refers to the source file or the directory we're trying to copy into, the error object contains only one of those paths
-        context.api.showErrorNotification('Failed to rename dataX.pak files from load order', err);
-        log('error', 'file not found upon copying merge base file', {
-          source: filePath,
-          destination: mergeTarget,
-        });
-        return Promise.reject(err);
-      });
+
+  if (pakDict?.[path.basename(filePath)] === undefined) {
+    log('error', 'file is not present in pak dictionary',
+      { filePath, pakDict: pakDict !== undefined ? JSON.stringify(pakDict, undefined, 2) : 'undefined' });
+    return Promise.resolve();
   }
+  const sevenzip = new util.SevenZip();
+  const destDir = path.join(mergeDir);
+  const mergeFilePath = path.join(destDir, pakDict[path.basename(filePath)]);
+  const zipFile = mergeFilePath + '.zip';
+  const tempDir = path.join(mergeDir, 'temp');
+  return fs.ensureDirWritableAsync(destDir)
+    .then(() => fs.ensureDirWritableAsync(tempDir))
+    .then(() => fs.statAsync(mergeFilePath)
+      .then(() => sevenzip.extractFull(mergeFilePath, tempDir))
+      .catch(err => err.code === 'ENOENT')
+        ? Promise.resolve()
+        : Promise.reject(err))
+    .then(() => sevenzip.extractFull(filePath, tempDir))
+    .then(() => new Promise((resolve, reject) => setTimeout(() => resolve(), 500)))
+    .then(() => fs.readdirAsync(tempDir))
+    .then(entries => sevenzip.add(zipFile, entries.map(entry => path.join(tempDir, entry)),
+      { raw: ['-r'] }))
+    .then(() => fs.removeAsync(tempDir))
+    .then(() => fs.removeAsync(mergeFilePath)
+      .catch(err => err.code === 'ENOENT')
+        ? Promise.resolve()
+        : Promise.reject(err))
+    .then(() => fs.moveAsync(zipFile, mergeFilePath, { overwrite: true }));
 }
 
 const requestDeployment = (context) => {
@@ -602,7 +662,7 @@ function applyGame(context, gameSpec) {
     );
 
   //register mod installers
-  context.registerInstaller(PAK_ID, 25, testPak, installPak);
+  context.registerInstaller(PAK_ID, 25, testPak, (files) => installPak(context.api, files));
   //context.registerInstaller(CONFIG_ID, 43, testConfig, installConfig);
   //context.registerInstaller(SAVE_ID, 45, testSave, installSave);
   context.registerInstaller(ROOT_ID, 47, testRoot, installRoot);
@@ -630,7 +690,7 @@ function applyGame(context, gameSpec) {
 //main function
 function main(context) {
   applyGame(context, spec);
-
+  /*
   let currentLoadOrder;
   context.registerLoadOrderPage({
     gameId: spec.game.id,
@@ -656,11 +716,11 @@ function main(context) {
         represents the overwrite order. The changes from mods with higher numbers will 
         take priority over other mods which make similar edits.`
       ),
-  });
+  }); //*/
   //*merger for pak mods
   context.registerMerge(
-    (game, discovery) => mergeTest(game, discovery, context),
-    (filePath, mergePath) => mergeOperation(filePath, mergePath, context, currentLoadOrder),
+    (game, discovery) => mergeTest(context.api, game, discovery),
+    (filePath, mergeDir) => mergeOperation(context.api, filePath, mergeDir),
     PAK_ID
   ); //*/
 
@@ -668,10 +728,10 @@ function main(context) {
     context.api.onAsync('did-deploy', async (profileId, deployment) => {
       const lastActiveProfile = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
       if (profileId !== lastActiveProfile) return;
-      context.api.dismissNotification(`${GAME_ID}-deployrequest`);
+      //context.api.dismissNotification(`${GAME_ID}-deployrequest`);
       context.api.dismissNotification('redundant-mods'); // Because we create a merged mod when deploying, Vortex thinks that all mods have duplicates and are redundant
     });
-    //*
+    /*
     context.api.events.on('mods-enabled', (mods, enabled, gameId) => {
       if (gameId !== GAME_ID) return;
 
