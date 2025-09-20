@@ -2,8 +2,8 @@
 Name: Borderlands 2 Vortex Extension
 Structure: UE2/3 Game (TFC Installer)
 Author: ChemBoy1
-Version: 0.2.0
-Date: 2025-09-19
+Version: 0.3.1
+Date: 2025-09-20
 /////////////////////////////////////////*/
 
 //Import libraries
@@ -14,7 +14,7 @@ const template = require('string-template');
 //const winapi = require('winapi-bindings');
 
 const USER_HOME = util.getVortexPath("home");
-//const DOCUMENTS = util.getVortexPath("documents");
+const DOCUMENTS = util.getVortexPath("documents");
 //const ROAMINGAPPDATA = util.getVortexPath('appData');
 //const LOCALAPPDATA = util.getVortexPath('localAppData');
 
@@ -33,7 +33,7 @@ const ROOT_FOLDERS = [EPIC_CODE_NAME, 'Engine', 'Binaries', 'DLC'];
 const BINARIES_PATH = path.join("Binaries", "Win32");
 const EXEC = path.join(BINARIES_PATH, 'Borderlands2.exe');
 const EXEC_XBOX = 'gamelaunchhelper.exe';
-const DATA_FOLDER = path.join('Borderlands 2', 'WillowGame');
+const DATA_FOLDER = path.join('Borderlands 2', EPIC_CODE_NAME);
 
 let GAME_PATH = null; //patched in the setup function to the discovered game path
 let STAGING_FOLDER = ''; //Vortex staging folder path
@@ -63,7 +63,8 @@ const TFCMOD_PATH = path.join(TFC_FOLDER, 'Mods');
 const BLCMM_ID = `${GAME_ID}-blcmm`;
 const BLCMM_NAME = "BLCMM";
 const BLCMM_PATH = '.';
-const BLCMM_EXEC = 'BLCMM_Launcher.exe-61-1-2-0-1590167323.exe';
+const BLCMM_EXEC = 'openblcmm.exe';
+const BLCMM_URL = `https://github.com/BLCM/OpenBLCMM/releases/download/v1.4.1/OpenBLCMM-1.4.1-Windows.zip`;
 
 const BLCMMMOD_ID = `${GAME_ID}-blcmmmod`;
 const BLCMMMOD_NAME = "BLCMM Mod";
@@ -73,7 +74,7 @@ const BLCMMMOD_PATH = '.';
 const BLCMFILE_ID = `${GAME_ID}-blcmfile`;
 const BLCMFILE_NAME = ".blcm file (SDK)";
 const BLCMFILE_EXT = '.blcm';
-const BLCMFILE_PATH = BINARIES_PATH;
+const BLCMFILE_PATH = 'Binaries';
 
 const SDK_ID = `${GAME_ID}-sdk`;
 const SDK_NAME = "SDK";
@@ -98,11 +99,16 @@ const MOVIES_NAME = "Movies";
 const MOVIES_PATH = path.join(EPIC_CODE_NAME, 'Movies');
 const MOVIES_EXT = '.bik';
 
-const CONFIG_PATH = path.join(USER_HOME, 'Documents', 'My Games', DATA_FOLDER, 'Config');
-const SAVE_PATH = path.join(USER_HOME, 'Documents', 'My Games', DATA_FOLDER, 'SaveData');
+const CONFIG_PATH = path.join(DOCUMENTS, 'My Games', DATA_FOLDER, 'Config');
+const SAVE_PATH = path.join(DOCUMENTS, 'My Games', DATA_FOLDER, 'SaveData');
+
+const SAVEEDITOR_ID = `${GAME_ID}-saveeditor`;
+const SAVEEDITOR_NAME = "Save Editor";
+const SAVEEDITOR_EXEC = 'Gibbed.Borderlands2.SaveEdit.exe';
 
 const REQ_FILE = EXEC;
-const MODTYPE_FOLDERS = [TFCMOD_PATH, BINARIES_PATH];
+const MODTYPE_FOLDERS = [TFCMOD_PATH, SDKMOD_PATH, MOVIES_PATH, BINARIES_PATH];
+const IGNORE_CONFLICTS = [path.join('**', 'LICENSE.txt'), path.join('**', 'instructions.txt'), path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
 
 //Filled in from the data above
 const spec = {
@@ -124,6 +130,7 @@ const spec = {
       "gogAppId": GOGAPP_ID,
       "epicAppId": EPICAPP_ID,
       "xboxAppId": XBOXAPP_ID,
+      "ignoreConflicts": IGNORE_CONFLICTS,
       //"supportsSymlinks": false,
     },
     "environment": {
@@ -249,6 +256,16 @@ const tools = [
     exclusive: true,
   },
   {
+    id: SAVEEDITOR_ID,
+    name: SAVEEDITOR_NAME,
+    logo: "editor.png",
+    executable: () => SAVEEDITOR_EXEC,
+    requiredFiles: [SAVEEDITOR_EXEC],
+    detach: true,
+    relative: true,
+    exclusive: false,
+  },
+  {
     id: UPKEXPLORER_ID,
     name: UPKEXPLORER_NAME,
     logo: "tfc.png",
@@ -371,6 +388,13 @@ function isTfcInstalled(api, spec) {
   return Object.keys(mods).some(id => mods[id]?.type === TFC_ID);
 }
 
+//Check if BLCMM is installed
+function isBlcmmInstalled(api, spec) {
+  const state = api.getState();
+  const mods = state.persistent.mods[spec.game.id] || {};
+  return Object.keys(mods).some(id => mods[id]?.type === BLCMM_ID);
+}
+
 //* Function to auto-download TFC from Nexus Mods
 async function downloadTfc(api, gameSpec) {
   let isInstalled = isTfcInstalled(api, gameSpec);
@@ -436,6 +460,51 @@ async function downloadTfc(api, gameSpec) {
   }
 } //*/
 
+//* Function to auto-download Hotfix Merger from Nexus Mods
+async function downloadBlcmm(api, gameSpec) {
+  let isInstalled = isBlcmmInstalled(api, gameSpec);
+  if (!isInstalled) {
+    const MOD_NAME = BLCMM_NAME;
+    const MOD_TYPE = BLCMM_ID;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
+    const GAME_DOMAIN = GAME_ID;
+    const URL = BLCMM_URL;
+    const ERR_URL = `https://github.com/BLCM/OpenBLCMM/releases/`;
+    api.sendNotification({ //notification indicating install process
+      id: NOTIF_ID,
+      message: `Installing ${MOD_NAME}`,
+      type: 'activity',
+      noDismiss: true,
+      allowSuppress: false,
+    });
+    try {
+      const dlInfo = { //Download the mod
+        game: GAME_DOMAIN,
+        name: MOD_NAME,
+      };
+      const dlId = await util.toPromise(cb =>
+        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+      const modId = await util.toPromise(cb =>
+        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
+      const batched = [
+        actions.setModsEnabled(api, profileId, [modId], true, {
+          allowAutoDeploy: true,
+          installed: true,
+        }),
+        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
+      ];
+      util.batchDispatch(api.store, batched); // Will dispatch both actions
+    } catch (err) { //Show the user the download page if the download, install process fails
+      const errPage = ERR_URL;
+      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
+      util.opn(errPage).catch(() => null);
+    } finally {
+      api.dismissNotification(NOTIF_ID);
+    }
+  }
+} //*/
+
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
 
 //Installer test for Fluffy Mod Manager files
@@ -473,6 +542,48 @@ function installTfc(files) {
       type: 'copy',
       source: file,
       destination: path.join(TFC_FOLDER, file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Installer test for Fluffy Mod Manager files
+function testBlcmm(files, gameId) {
+  const isTFC = files.some(file => (path.basename(file).toLowerCase() === BLCMM_EXEC));
+  let supported = (gameId === spec.game.id) && isTFC;
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Installer install Fluffy Mod Manger files
+function installBlcmm(files) {
+  const MOD_TYPE = BLCMM_ID;
+  const modFile = files.find(file => (path.basename(file).toLowerCase() === BLCMM_EXEC));
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
     };
   });
   instructions.push(setModTypeInstruction);
@@ -588,7 +699,7 @@ function testBlcmFile(files, gameId) {
 //Install .blcm files
 function installBlcmFile(files) {
   const MOD_TYPE = BLCMFILE_ID;
-  const modFile = files.find(file => (path.basename(file).toLowerCase() === BLCMFILE_EXT));
+  const modFile = files.find(file => (path.extname(file).toLowerCase() === BLCMFILE_EXT));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
@@ -761,7 +872,7 @@ function testMovies(files, gameId) {
 //Install .bik files
 function installMovies(files) {
   const MOD_TYPE = MOVIES_ID;
-  const modFile = files.find(file => (path.basename(file).toLowerCase() === MOVIES_EXT));
+  const modFile = files.find(file => (path.extname(file).toLowerCase() === MOVIES_EXT));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
@@ -787,7 +898,7 @@ function installMovies(files) {
 //Notify User of Setup instructions for TFC Installer
 function setupNotify(api) {
   const NOTIF_ID = `${GAME_ID}-setup`;
-  const MOD_NAME = TFC_NAME;
+  const MOD_NAME = `BLCMM and TFC`;
   const MESSAGE = `${MOD_NAME} Setup Required`;
   api.sendNotification({
     id: NOTIF_ID,
@@ -799,16 +910,22 @@ function setupNotify(api) {
         title: 'More',
         action: (dismiss) => {
           api.showDialog('question', MESSAGE, {
-            text: `The ${MOD_NAME} tool downloaded by this extension requires setup.\n`
-                + `Please launch the tool and set the Game Folder.\n`
-                + `Mods to install with ${MOD_NAME} will be found at this folder: "[RootGameFolder]\\${TFC_FOLDER}\\Mods".\n`
-                + `If you don't see your mod's folder there, check in the root game folder.\n`              
-                + `You must use ${MOD_NAME} to install and uninstall those mods after installing with Vortex.\n`
+            text: `The ${MOD_NAME} tools downloaded by this extension each requires setup.\n`
+                + `Please launch each tool to set the Game Folder, patch the executable, etc.\n`
+                + `TFC mods will be found at this folder: "[RootGameFolder]\\${TFC_FOLDER}\\Mods".\n`
+                + `BLCMM mods (.txt files) will be found at the game root folder.\n`           
+                + `You must use these tools to install and uninstall mods that use them after installing with Vortex.\n`
           }, [
             { label: 'Acknowledge', action: () => dismiss() },
             {
+              label: 'Run BLCMM', action: () => {
+                runModManager(api, BLCMM_ID, BLCMM_NAME);
+                dismiss();
+              }
+            },
+            {
               label: 'Run TFC', action: () => {
-                runModManager(api);
+                runModManager(api, TFC_ID, TFC_NAME);
                 dismiss();
               }
             },
@@ -829,7 +946,7 @@ function setupNotify(api) {
 //Notify User to run TFC Installer after deployment
 function deployNotify(api) {
   const NOTIF_ID = `${GAME_ID}-deploy`;
-  const MOD_NAME = TFC_NAME;
+  const MOD_NAME = 'BLCMM or TFC';
   const MESSAGE = `Run ${MOD_NAME} to Install Mods`;
   api.sendNotification({
     id: NOTIF_ID,
@@ -838,9 +955,16 @@ function deployNotify(api) {
     allowSuppress: true,
     actions: [
       {
+        title: 'Run BLCMM',
+        action: (dismiss) => {
+          runModManager(api, BLCMM_ID, BLCMM_NAME);
+          dismiss();
+        },
+      },
+      {
         title: 'Run TFC',
         action: (dismiss) => {
-          runModManager(api);
+          runModManager(api, TFC_ID, TFC_NAME);
           dismiss();
         },
       },
@@ -849,13 +973,19 @@ function deployNotify(api) {
         action: (dismiss) => {
           api.showDialog('question', MESSAGE, {
             text: `For most mods, you must use ${MOD_NAME} to install the mod to the game files after installing with Vortex.\n`
-                + `Mods to install with ${MOD_NAME} will be found at this folder: "[RootGameFolder]\\${TFC_FOLDER}\\Mods".\n`
-                + `If you don't see your mod's folder there, check in the root game folder.\n`   
-                + `Use the included tool to launch ${MOD_NAME} (button on notification or in "Dashboard" tab).\n`
+                + `TFC mods will be found at this folder: "[RootGameFolder]\\${TFC_FOLDER}\\Mods".\n`
+                + `BLCMM mods (.txt files) will be found at the game root folder.\n`         
+                + `Use the included tools to launch ${MOD_NAME} (button on notification or in "Dashboard" tab).\n`
           }, [
             {
+              label: 'Run BLCMM', action: () => {
+                runModManager(api, BLCMM_ID, BLCMM_NAME);
+                dismiss();
+              }
+            },
+            {
               label: 'Run TFC', action: () => {
-                runModManager(api);
+                runModManager(api, TFC_ID, TFC_NAME);
                 dismiss();
               }
             },
@@ -873,25 +1003,23 @@ function deployNotify(api) {
   });
 }
 
-function runModManager(api) {
-  const TOOL_ID = TFC_ID;
-  const TOOL_NAME = TFC_NAME;
+function runModManager(api, toolId, toolName) {
   const state = api.store.getState();
-  const tool = util.getSafe(state, ['settings', 'gameMode', 'discovered', GAME_ID, 'tools', TOOL_ID], undefined);
+  const tool = util.getSafe(state, ['settings', 'gameMode', 'discovered', GAME_ID, 'tools', toolId], undefined);
 
   try {
     const TOOL_PATH = tool.path;
     if (TOOL_PATH !== undefined) {
       return api.runExecutable(TOOL_PATH, [], { suggestDeploy: false })
-        .catch(err => api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err,
+        .catch(err => api.showErrorNotification(`Failed to run ${toolName}`, err,
           { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 })
         );
     }
     else {
-      return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, `Path to ${TOOL_NAME} executable could not be found. Ensure ${TOOL_NAME} is installed through Vortex.`);
+      return api.showErrorNotification(`Failed to run ${toolName}`, `Path to ${toolName} executable could not be found. Ensure ${toolName} is installed through Vortex.`);
     }
   } catch (err) {
-    return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 });
+    return api.showErrorNotification(`Failed to run ${toolName}`, err, { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 });
   }
 }
 
@@ -911,6 +1039,7 @@ async function setup(discovery, api, gameSpec) {
   setupNotify(api);
   // ASYNC CODE //////////////////////////////////////////
   await downloadTfc(api, gameSpec);
+  await downloadBlcmm(api, gameSpec);
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 
@@ -940,11 +1069,12 @@ function applyGame(context, gameSpec) {
 
   //register mod installers
   context.registerInstaller(TFC_ID, 25, testTfc, installTfc);
+  context.registerInstaller(BLCMM_ID, 27, testBlcmm, installBlcmm);
   context.registerInstaller(TFCMOD_ID, 27, testTfcMod, installTfcMod);
-  context.registerInstaller(BLCMFILE_ID, 29, testBlcmFile, installBlcmFile);
   context.registerInstaller(UPKEXPLORER_ID, 31, testUpkExplorer, installUpkExplorer);
   context.registerInstaller(SDK_ID, 33, testSdk, installSdk);
   context.registerInstaller(SDKMOD_ID, 35, testSdkMod, installSdkMod);
+  context.registerInstaller(BLCMFILE_ID, 37, testBlcmFile, installBlcmFile);
   context.registerInstaller(ROOT_ID, 47, testRoot, installRoot);
   context.registerInstaller(MOVIES_ID, 49, testMovies, installMovies);
 

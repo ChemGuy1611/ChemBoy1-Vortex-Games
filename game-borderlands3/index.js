@@ -22,9 +22,6 @@ const USER_HOME = util.getVortexPath("home");
 const GAME_ID = "borderlands3";
 const STEAMAPP_ID = "397540";
 const EPICAPP_ID = "Catnip";
-const GOGAPP_ID = null;
-const XBOXAPP_ID = null;
-const XBOXEXECNAME = null;
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 const GAME_NAME = "Borderlands 3";
 const GAME_NAME_SHORT = "Borderlands 3";
@@ -89,6 +86,7 @@ const spec = {
     "id": GAME_ID,
     "name": GAME_NAME,
     "shortName": GAME_NAME_SHORT,
+    "executable": EXEC,
     "logo": `${GAME_ID}.jpg`,
     "mergeMods": true,
     "modPath": ".",
@@ -99,16 +97,11 @@ const spec = {
     ],
     "details": {
       "steamAppId": STEAMAPP_ID,
-      //"gogAppId": GOGAPP_ID,
       "epicAppId": EPICAPP_ID,
-      //"xboxAppId": XBOXAPP_ID,
-      //"supportsSymlinks": false,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
-      //"GogAPPId": GOGAPP_ID,
       "EpicAPPId": EPICAPP_ID,
-      //"XboxAPPId": XBOXAPP_ID
     }
   },
   "modTypes": [
@@ -179,13 +172,16 @@ const tools = [
   {
     id: MERGER_ID,
     name: MERGER_NAME,
-    logo: "merger.png",
+    logo: `merger.png`,
     executable: () => MERGER_EXEC_PATH,
     requiredFiles: [MERGER_EXEC_PATH],
     detach: true,
     relative: true,
-    exclusive: true,
-  },
+    exclusive: false,
+    //shell: true,
+    //defaultPrimary: true,
+    parameters: []
+  }, //*/
 ];
 
 // BASIC EXTENSION FUNCTIONS ///////////////////////////////////////////////////
@@ -229,17 +225,6 @@ function makeFindGame(api, gameSpec) {
 
 //set launcher requirements
 async function requiresLauncher(gamePath, store) {
-  if (store === 'xbox' && (DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID))) {
-      return Promise.resolve({
-        launcher: 'xbox',
-        addInfo: {
-          appId: XBOXAPP_ID,
-          parameters: [{ appExecName: XBOXEXECNAME }],
-          //parameters: [{ appExecName: XBOXEXECNAME }, PARAMETERS_STRING],
-          //launchType: 'gamestore',
-        },
-      });
-  } //*/
   if (store === 'epic' && (DISCOVERY_IDS_ACTIVE.includes(EPICAPP_ID))) {
     return Promise.resolve({
         launcher: 'epic',
@@ -357,7 +342,6 @@ async function downloadHotfixMerger(api, gameSpec) {
     }
   }
 } //*/
-
 
 //* Function to auto-download Hotfix Merger from Nexus Mods
 async function downloadPluginLoader(api, gameSpec) {
@@ -661,46 +645,6 @@ function installMovies(files) {
 
 // MAIN EXTENSION FUNCTION /////////////////////////////////////////////////////
 
-//Notify User of Setup instructions for Hotfix Merger
-function setupNotify(api) {
-  const NOTIF_ID = `${GAME_ID}-setup`;
-  const MOD_NAME = MERGER_NAME;
-  const MESSAGE = `${MOD_NAME} Setup Required`;
-  api.sendNotification({
-    id: NOTIF_ID,
-    type: 'warning',
-    message: MESSAGE,
-    allowSuppress: true,
-    actions: [
-      {
-        title: 'More',
-        action: (dismiss) => {
-          api.showDialog('question', MESSAGE, {
-            text: `The ${MOD_NAME} tool downloaded by this extension requires setup.\n`
-                + `Please launch the tool and follow the instructions.\n`
-                + `Mods to install with ${MOD_NAME} will be found at this folder: "${HOTFIX_PATH}".\n`     
-                + `You must use ${MOD_NAME} to install and uninstall those mods after installing with Vortex.\n`
-          }, [
-            { label: 'Acknowledge', action: () => dismiss() },
-            {
-              label: 'Run Hotfix Merger', action: () => {
-                runModManager(api);
-                dismiss();
-              }
-            },
-            {
-              label: 'Never Show Again', action: () => {
-                api.suppressNotification(NOTIF_ID);
-                dismiss();
-              }
-            },
-          ]);
-        },
-      },
-    ],
-  });    
-}
-
 //Notify User to run TFC Installer after deployment
 function deployNotify(api) {
   const NOTIF_ID = `${GAME_ID}-deploy`;
@@ -716,6 +660,7 @@ function deployNotify(api) {
         title: 'Open WebUI',
         action: (dismiss) => {
           util.opn(MERGER_WEBUI_URL).catch(() => null);
+          runModManager(api);
           dismiss();
         },
       },
@@ -725,17 +670,13 @@ function deployNotify(api) {
           api.showDialog('question', MESSAGE, {
             text: `For most mods, you must use ${MOD_NAME} to install the mod to the game files after installing with Vortex.\n`
                 + `Mods to install with ${MOD_NAME} will be found at this folder: "${HOTFIX_PATH}".\n`
-                + `Use the included tool to launch ${MOD_NAME} (button on notification or in "Dashboard" tab).\n`
-                + `You can open the Hotfix Merger WebUI below, or using the button within the folder icon on the Mods toolbar.\n`
+                + `Use the included tool to launch ${MOD_NAME} (button below or in "Dashboard" tab).\n`
+                + `You can open the Hotfix Merger WebUI using the button below, or using the button within the folder icon on the Mods toolbar.\n`
           }, [
-            /*{
-              label: 'Run Hotfix Merger', action: () => {
-                runModManager(api);
-              }
-            }, //*/
             {
               label: 'Open Hotfix Merger WebUI', action: () => {
                 util.opn(MERGER_WEBUI_URL).catch(() => null);
+                runModManager(api);
                 dismiss();
               }
             },
@@ -788,9 +729,8 @@ async function setup(discovery, api, gameSpec) {
   GAME_PATH = discovery.path;
   STAGING_FOLDER = selectors.installPathForGame(state, gameSpec.game.id);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, gameSpec.game.id);
-  setupNotify(api);
   // ASYNC CODE //////////////////////////////////////////
-  await ensureDirWritableAsync(path.join(GAME_PATH, MERGER_PATH));
+  await fs.ensureDirWritableAsync(path.join(GAME_PATH, MERGER_PATH));
   await downloadHotfixMerger(api, gameSpec);
   await downloadPluginLoader(api, gameSpec);
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
@@ -873,8 +813,8 @@ function applyGame(context, gameSpec) {
 //main function
 function main(context) {
   applyGame(context, spec);
-  context.once(() => {
-    context.api.onAsync('did-deploy', async (profileId, deployment) => { // put code here that should be run (once) when Vortex starts up
+  context.once(() => { // put code here that should be run (once) when Vortex starts up
+    context.api.onAsync('did-deploy', async (profileId, deployment) => { 
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;
 

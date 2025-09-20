@@ -4,10 +4,19 @@
 
 - None Planned
 
+## [0.3.1] - 2025-09-20
+
+- Added tool for Gibbed's Save Editor.
+- Added ignoreConflicts list for common files (i.e. LICENSE.txt, instructions.txt, readme.txt, etc.).
+- Improved deploy notification to cover both BLCMM and TFC.
+
+## [0.3.0] - 2025-09-19
+
+- Added support and auto-download for OpenBLCMM.
+
 ## [0.2.0] - 2025-09-19
 
 - Added SDK mod support.
-- Added support for BLCMM.
 - Added support for .blcm file mods.
 - Added installer for movies (.bik files).
 
