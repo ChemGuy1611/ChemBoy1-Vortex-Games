@@ -913,7 +913,7 @@ function saveInstallerNotify(api) {
   });
 }
 
-//Test for Mod Loader mods
+//Fallback installer to Binaries folder
 function testBinaries(files, gameId) {
   const isPak = files.some(file => (path.extname(file).toLowerCase() === PAK_EXT));
   let supported = (gameId === spec.game.id) && !isPak;
@@ -931,7 +931,7 @@ function testBinaries(files, gameId) {
   });
 }
 
-//Install Mod Loader mods
+//Fallback installer to Binaries folder
 function installBinaries(files) {
   const setModTypeInstruction = { type: 'setmodtype', value: BINARIES_ID };
   

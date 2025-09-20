@@ -1,16 +1,15 @@
-/*
+/*///////////////////////////////////////////
 Name: Helldivers 2 Vortex Extension
 Structure: Custom Game Data
 Author: ChemBoy1
-Version: 0.6.0
-Date: 01/30/2025
-*/
+Version: 0.6.1
+Date: 2025-09-20
+/////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors } = require('vortex-api');
+const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
-const { getMaxListeners } = require('events');
 
 //Specify all info about the game
 const STEAMAPP_ID = "553850";
@@ -480,8 +479,8 @@ function loadOrderSuffix(api, mod) {
 //Setup function
 async function setup(discovery, api, gameSpec) {
   setupNotification(api);
-  const isAutoDeployOn = api.getState().settings.automation.deploy;
-  if (isAutoDeployOn) autoDeployNotification(api);
+  /*const isAutoDeployOn = api.getState().settings.automation.deploy;
+  if (isAutoDeployOn) autoDeployNotification(api); //*/
   return fs.ensureDirWritableAsync(path.join(discovery.path, DATA_PATH));
 }
 
@@ -676,7 +675,7 @@ function main(context) {
       // Because we create a merged mod when deploying, Vortex thinks that all mods have duplicates and are redundant
       context.api.dismissNotification('redundant-mods');
     });
-  
+    //*
     context.api.events.on('mods-enabled', (mods, enabled, gameId) => {
       if (gameId !== GAME_ID) return;
 
@@ -685,7 +684,6 @@ function main(context) {
         requestDeployment(context);
       }
     });
-  
     context.api.events.on('mod-disabled', (profileId, modId) => {
       const lastActiveHelldiverProfile = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
       if (profileId !== lastActiveHelldiverProfile) return;
@@ -694,7 +692,7 @@ function main(context) {
       if (!isAutoDeployOn) {
         requestDeployment(context);
       }
-    });
+    }); //*/
 
   });
 
