@@ -4,6 +4,12 @@
 
 - None Planned
 
+## [0.3.2] - 2025-09-20
+
+- Added automatic install of Python SDK (enables modding).
+- Clarified in OpenBLCMM notifications that .blcm files are in the Binaries folder, while .txt mods are in root.
+- Changed OpenBLCMM tool to make it non-exclusive.
+
 ## [0.3.1] - 2025-09-20
 
 - Added tool for Gibbed's Save Editor.

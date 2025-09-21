@@ -2,7 +2,7 @@
 Name: Borderlands 2 Vortex Extension
 Structure: UE2/3 Game (TFC Installer)
 Author: ChemBoy1
-Version: 0.3.1
+Version: 0.3.2
 Date: 2025-09-20
 /////////////////////////////////////////*/
 
@@ -61,7 +61,7 @@ const TFCMOD_FILE = 'gameprofile.xml';
 const TFCMOD_PATH = path.join(TFC_FOLDER, 'Mods');
 
 const BLCMM_ID = `${GAME_ID}-blcmm`;
-const BLCMM_NAME = "BLCMM";
+const BLCMM_NAME = "OpenBLCMM";
 const BLCMM_PATH = '.';
 const BLCMM_EXEC = 'openblcmm.exe';
 const BLCMM_URL = `https://github.com/BLCM/OpenBLCMM/releases/download/v1.4.1/OpenBLCMM-1.4.1-Windows.zip`;
@@ -72,7 +72,7 @@ const BLCMMMOD_EXT = '.txt';
 const BLCMMMOD_PATH = '.';
 
 const BLCMFILE_ID = `${GAME_ID}-blcmfile`;
-const BLCMFILE_NAME = ".blcm file (SDK)";
+const BLCMFILE_NAME = ".blcm file (OpenBLCMM)";
 const BLCMFILE_EXT = '.blcm';
 const BLCMFILE_PATH = 'Binaries';
 
@@ -81,7 +81,8 @@ const SDK_NAME = "SDK";
 const SDK_FOLDER = "sdk_mods";
 const SDK_DLL = "unrealsdk.dll";
 const SDK_PATH = '.';
-const SDK_URL = `https://github.com/bl-sdk/willow2-mod-manager/releases`;
+const SDK_URL_ERR = `https://github.com/bl-sdk/willow2-mod-manager/releases`;
+const SDK_URL = `https://github.com/bl-sdk/willow2-mod-manager/releases/latest/download/willow2-sdk.zip`;
 
 const SDKMOD_ID = `${GAME_ID}-sdkmod`;
 const SDKMOD_NAME = "SDK Mod";
@@ -243,7 +244,7 @@ const tools = [
     requiredFiles: [BLCMM_EXEC],
     detach: true,
     relative: true,
-    exclusive: true,
+    exclusive: false,
   },
   {
     id: TFC_ID,
@@ -273,7 +274,7 @@ const tools = [
     requiredFiles: [UPKEXPLORER_EXEC],
     detach: true,
     relative: true,
-    exclusive: true,
+    exclusive: false,
   },
 ];
 
@@ -395,6 +396,13 @@ function isBlcmmInstalled(api, spec) {
   return Object.keys(mods).some(id => mods[id]?.type === BLCMM_ID);
 }
 
+//Check if SDK is installed
+function isSdkInstalled(api, spec) {
+  const state = api.getState();
+  const mods = state.persistent.mods[spec.game.id] || {};
+  return Object.keys(mods).some(id => mods[id]?.type === SDK_ID);
+}
+
 //* Function to auto-download TFC from Nexus Mods
 async function downloadTfc(api, gameSpec) {
   let isInstalled = isTfcInstalled(api, gameSpec);
@@ -470,6 +478,51 @@ async function downloadBlcmm(api, gameSpec) {
     const GAME_DOMAIN = GAME_ID;
     const URL = BLCMM_URL;
     const ERR_URL = `https://github.com/BLCM/OpenBLCMM/releases/`;
+    api.sendNotification({ //notification indicating install process
+      id: NOTIF_ID,
+      message: `Installing ${MOD_NAME}`,
+      type: 'activity',
+      noDismiss: true,
+      allowSuppress: false,
+    });
+    try {
+      const dlInfo = { //Download the mod
+        game: GAME_DOMAIN,
+        name: MOD_NAME,
+      };
+      const dlId = await util.toPromise(cb =>
+        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+      const modId = await util.toPromise(cb =>
+        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
+      const batched = [
+        actions.setModsEnabled(api, profileId, [modId], true, {
+          allowAutoDeploy: true,
+          installed: true,
+        }),
+        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
+      ];
+      util.batchDispatch(api.store, batched); // Will dispatch both actions
+    } catch (err) { //Show the user the download page if the download, install process fails
+      const errPage = ERR_URL;
+      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
+      util.opn(errPage).catch(() => null);
+    } finally {
+      api.dismissNotification(NOTIF_ID);
+    }
+  }
+} //*/
+
+//* Function to auto-download Hotfix Merger from Nexus Mods
+async function downloadSdk(api, gameSpec) {
+  let isInstalled = isSdkInstalled(api, gameSpec);
+  if (!isInstalled) {
+    const MOD_NAME = SDK_NAME;
+    const MOD_TYPE = SDK_ID;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
+    const GAME_DOMAIN = GAME_ID;
+    const URL = SDK_URL;
+    const ERR_URL = SDK_URL_ERR;
     api.sendNotification({ //notification indicating install process
       id: NOTIF_ID,
       message: `Installing ${MOD_NAME}`,
@@ -912,8 +965,9 @@ function setupNotify(api) {
           api.showDialog('question', MESSAGE, {
             text: `The ${MOD_NAME} tools downloaded by this extension each requires setup.\n`
                 + `Please launch each tool to set the Game Folder, patch the executable, etc.\n`
-                + `TFC mods will be found at this folder: "[RootGameFolder]\\${TFC_FOLDER}\\Mods".\n`
-                + `BLCMM mods (.txt files) will be found at the game root folder.\n`           
+                + `TFC mods will be found at this folder: "${TFC_FOLDER}\\Mods".\n`
+                + `BLCMM mods (.blcm files) will be found in the "Binaries" folder.\n`  
+                + `.txt patch files for OpenBLCMM will be found at the game root folder.\n`                
                 + `You must use these tools to install and uninstall mods that use them after installing with Vortex.\n`
           }, [
             { label: 'Acknowledge', action: () => dismiss() },
@@ -946,7 +1000,7 @@ function setupNotify(api) {
 //Notify User to run TFC Installer after deployment
 function deployNotify(api) {
   const NOTIF_ID = `${GAME_ID}-deploy`;
-  const MOD_NAME = 'BLCMM or TFC';
+  const MOD_NAME = 'OpenBLCMM or TFC';
   const MESSAGE = `Run ${MOD_NAME} to Install Mods`;
   api.sendNotification({
     id: NOTIF_ID,
@@ -973,8 +1027,9 @@ function deployNotify(api) {
         action: (dismiss) => {
           api.showDialog('question', MESSAGE, {
             text: `For most mods, you must use ${MOD_NAME} to install the mod to the game files after installing with Vortex.\n`
-                + `TFC mods will be found at this folder: "[RootGameFolder]\\${TFC_FOLDER}\\Mods".\n`
-                + `BLCMM mods (.txt files) will be found at the game root folder.\n`         
+                + `TFC mods will be found at this folder: "${TFC_FOLDER}\\Mods".\n`
+                + `BLCMM mods (.blcm files) will be found in the "Binaries" folder.\n`  
+                + `.txt patch files for OpenBLCMM will be found at the game root folder.\n`         
                 + `Use the included tools to launch ${MOD_NAME} (button on notification or in "Dashboard" tab).\n`
           }, [
             {
@@ -1040,6 +1095,7 @@ async function setup(discovery, api, gameSpec) {
   // ASYNC CODE //////////////////////////////////////////
   await downloadTfc(api, gameSpec);
   await downloadBlcmm(api, gameSpec);
+  await downloadSdk(api, gameSpec);
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 
