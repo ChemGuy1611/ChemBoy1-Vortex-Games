@@ -2,8 +2,8 @@
 Name: Borderlands 2 Vortex Extension
 Structure: UE2/3 Game (TFC Installer)
 Author: ChemBoy1
-Version: 0.3.2
-Date: 2025-09-20
+Version: 0.3.3
+Date: 2025-09-21
 /////////////////////////////////////////*/
 
 //Import libraries
@@ -13,7 +13,7 @@ const template = require('string-template');
 //const turbowalk = require('turbowalk');
 //const winapi = require('winapi-bindings');
 
-const USER_HOME = util.getVortexPath("home");
+//const USER_HOME = util.getVortexPath("home");
 const DOCUMENTS = util.getVortexPath("documents");
 //const ROAMINGAPPDATA = util.getVortexPath('appData');
 //const LOCALAPPDATA = util.getVortexPath('localAppData');
@@ -29,6 +29,7 @@ const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID]; // UPDATE THIS WITH ALL 
 const GAME_NAME = "Borderlands 2";
 const GAME_NAME_SHORT = "Borderlands 2";
 const EPIC_CODE_NAME = "WillowGame";
+
 const ROOT_FOLDERS = [EPIC_CODE_NAME, 'Engine', 'Binaries', 'DLC'];
 const BINARIES_PATH = path.join("Binaries", "Win32");
 const EXEC = path.join(BINARIES_PATH, 'Borderlands2.exe');
@@ -77,16 +78,17 @@ const BLCMFILE_EXT = '.blcm';
 const BLCMFILE_PATH = 'Binaries';
 
 const SDK_ID = `${GAME_ID}-sdk`;
-const SDK_NAME = "SDK";
+const SDK_NAME = "Python SDK";
 const SDK_FOLDER = "sdk_mods";
 const SDK_DLL = "unrealsdk.dll";
 const SDK_PATH = '.';
-const SDK_URL_ERR = `https://github.com/bl-sdk/willow2-mod-manager/releases`;
 const SDK_URL = `https://github.com/bl-sdk/willow2-mod-manager/releases/latest/download/willow2-sdk.zip`;
+const SDK_URL_ERR = `https://github.com/bl-sdk/willow2-mod-manager/releases`;
 
 const SDKMOD_ID = `${GAME_ID}-sdkmod`;
 const SDKMOD_NAME = "SDK Mod";
 const SDKMOD_EXT = '.py';
+const SDKMOD_EXT2 = '.sdkmod';
 const SDKMOD_PATH = SDK_FOLDER;
 
 const ROOT_ID = `${GAME_ID}-root`;
@@ -816,10 +818,11 @@ function installSdk(files) {
   return Promise.resolve({ instructions });
 }
 
-//Test Fallback installer for Void Mods
+//Test Fallback installer for SDK Mods
 function testSdkMod(files, gameId) {
   const isMod = files.some(file => (path.extname(file).toLowerCase() === SDKMOD_EXT));
-  let supported = (gameId === spec.game.id) && isMod;
+  const isMod2 = files.some(file => (path.extname(file).toLowerCase() === SDKMOD_EXT2));
+  let supported = (gameId === spec.game.id) && (isMod || isMod2);
 
   // Test for a mod installer.
   if (supported && files.find(file =>
@@ -834,13 +837,17 @@ function testSdkMod(files, gameId) {
   });
 }
 
-//Fallback installer for Void Mods
+//Fallback installer for SDK Mods
 function installSdkMod(files, fileName) {
   const MOD_TYPE = SDKMOD_ID;
-  const modFile = files.find(file => (path.extname(file).toLowerCase() === SDKMOD_EXT));
+  let modFile = files.find(file => (path.extname(file).toLowerCase() === SDKMOD_EXT2));
+  if (modFile === undefined) {
+    modFile = files.find(file => (path.extname(file).toLowerCase() === SDKMOD_EXT));
+  }
+  let MOD_FOLDER = '.';
+  const idx = modFile.indexOf(path.basename(modFile));
   const ROOT_PATH = path.basename(path.dirname(modFile));
   const MOD_NAME = path.basename(fileName);
-  let MOD_FOLDER = '.';
   if (ROOT_PATH === '.') {
     MOD_FOLDER = MOD_NAME.replace(/[\.]*(installing)*(zip)*/gi, '');
   }
@@ -851,13 +858,23 @@ function installSdkMod(files, fileName) {
     (!file.endsWith(path.sep))
   );
 
-  const instructions = filtered.map(file => {
+  let instructions = filtered.map(file => {
     return {
       type: 'copy',
       source: file,
       destination: path.join(MOD_FOLDER, file),
     };
   });
+  if ((path.extname(modFile).toLowerCase() === SDKMOD_EXT2)) { //index to .sdkmod file if it exists
+    instructions = filtered.map(file => {
+      return {
+        type: 'copy',
+        source: file,
+        destination: path.join(file.substr(idx)),
+      };
+    });
+  }
+
   instructions.push(setModTypeInstruction);
   return Promise.resolve({ instructions });
 }
@@ -1126,13 +1143,14 @@ function applyGame(context, gameSpec) {
   //register mod installers
   context.registerInstaller(TFC_ID, 25, testTfc, installTfc);
   context.registerInstaller(BLCMM_ID, 27, testBlcmm, installBlcmm);
-  context.registerInstaller(TFCMOD_ID, 27, testTfcMod, installTfcMod);
+  context.registerInstaller(TFCMOD_ID, 29, testTfcMod, installTfcMod);
   context.registerInstaller(UPKEXPLORER_ID, 31, testUpkExplorer, installUpkExplorer);
   context.registerInstaller(SDK_ID, 33, testSdk, installSdk);
   context.registerInstaller(SDKMOD_ID, 35, testSdkMod, installSdkMod);
   context.registerInstaller(BLCMFILE_ID, 37, testBlcmFile, installBlcmFile);
-  context.registerInstaller(ROOT_ID, 47, testRoot, installRoot);
-  context.registerInstaller(MOVIES_ID, 49, testMovies, installMovies);
+  context.registerInstaller(ROOT_ID, 45, testRoot, installRoot);
+  context.registerInstaller(MOVIES_ID, 47, testMovies, installMovies);
+  //context.registerInstaller(BINARIES_ID, 49, testBinaries, installBinaries);
 
   //register actions
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {

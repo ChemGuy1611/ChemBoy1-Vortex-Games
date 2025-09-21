@@ -2,8 +2,8 @@
 Name: Borderlands 3 Vortex Extension
 Structure: UE4 Game (Custom)
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2025-09-19
+Version: 0.2.0
+Date: 2025-09-21
 /////////////////////////////////////////*/
 
 //Import libraries
@@ -13,8 +13,8 @@ const template = require('string-template');
 //const turbowalk = require('turbowalk');
 //const winapi = require('winapi-bindings');
 
-const USER_HOME = util.getVortexPath("home");
-//const DOCUMENTS = util.getVortexPath("documents");
+//const USER_HOME = util.getVortexPath("home");
+const DOCUMENTS = util.getVortexPath("documents");
 //const ROAMINGAPPDATA = util.getVortexPath('appData');
 //const LOCALAPPDATA = util.getVortexPath('localAppData');
 
@@ -27,7 +27,7 @@ const GAME_NAME = "Borderlands 3";
 const GAME_NAME_SHORT = "Borderlands 3";
 const EPIC_CODE_NAME = "OakGame";
 
-const ROOT_FOLDERS = [EPIC_CODE_NAME];
+const ROOT_FOLDERS = [EPIC_CODE_NAME, 'Engine'];
 const BINARIES_PATH = path.join(EPIC_CODE_NAME, "Binaries", "Win64");
 const EXEC = path.join(BINARIES_PATH, 'Borderlands3.exe');
 const DATA_FOLDER = 'Borderlands 3';
@@ -37,17 +37,20 @@ let STAGING_FOLDER = ''; //Vortex staging folder path
 let DOWNLOAD_FOLDER = ''; //Vortex download folder path
 
 //Information for mod types and installers
-const MERGER_ID = `${GAME_ID}-hotfixmerger`;
-const MERGER_NAME = "Hotfix Merger";
-const MERGER_EXEC = "b3hm.exe";
+const MERGER_ID = `${GAME_ID}-openhotfixloader`;
+const MERGER_NAME = "OpenHotfixLoader";
+const MERGER_EXEC = "b3hm.exe"; //legacy merger exe (not used)
 const MERGER_PATH = path.join(BINARIES_PATH, 'Plugins');
 const MERGER_EXEC_PATH = path.join(MERGER_PATH, MERGER_EXEC);
-const MERGER_DLL = "b3hm.dll";
+//const MERGER_DLL = "b3hm.dll";
+const MERGER_DLL = "openhotfixloader.dll";
 const MERGER_PAGE_NO = 244;
 const MERGER_FILE_NO = 1377;
-const MERGER_WEBUI_URL = `https://c0dycode.github.io/BL3HotfixWebUI/v2`;
+const MERGER_WEBUI_URL = `https://c0dycode.github.io/BL3HotfixWebUI/v2`; //legacy merger UI (not used)
+const MERGER_URL = `https://github.com/apple1417/OpenHotfixLoader/releases/latest/download/OpenHotfixLoader.zip`;
+const MERGER_URL_ERR = `https://github.com/apple1417/OpenHotfixLoader/releases`;
 
-const PLUGINLOADER_ID = `${GAME_ID}-pluginloader`;
+const PLUGINLOADER_ID = `${GAME_ID}-pluginloader`; //not used
 const PLUGINLOADER_NAME = "Plugin Loader";
 const PLUGINLOADER_FILE = 'd3d11.dll';
 const PLUGINLOADER_PATH = BINARIES_PATH;
@@ -56,7 +59,21 @@ const PLUGINLOADER_URL = `https://github.com/FromDarkHell/BL3DX11Injection/relea
 const HOTFIX_ID = `${GAME_ID}-hotfix`;
 const HOTFIX_NAME = "Hotfix Mod";
 const HOTFIX_EXT = '.bl3hotfix';
-const HOTFIX_PATH = MERGER_PATH;
+const HOTFIX_PATH = path.join(MERGER_PATH, 'ohl-mods');
+
+const SDK_ID = `${GAME_ID}-sdk`;
+const SDK_NAME = "Python SDK";
+const SDK_FOLDER = "sdk_mods";
+const SDK_DLL = "unrealsdk.dll";
+const SDK_PATH = '.';
+const SDK_URL = `https://github.com/bl-sdk/oak-mod-manager/releases/latest/download/bl3-sdk.zip`;
+const SDK_URL_ERR = `https://github.com/bl-sdk/oak-mod-manager/releases`;
+
+const SDKMOD_ID = `${GAME_ID}-sdkmod`;
+const SDKMOD_NAME = "SDK Mod";
+const SDKMOD_EXT = '.py';
+const SDKMOD_EXT2 = '.sdkmod';
+const SDKMOD_PATH = SDK_FOLDER;
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Folder";
@@ -74,11 +91,16 @@ const PAK_NAME = "Pak Mod";
 const PAK_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Paks');
 const PAK_EXT = '.pak';
 
-const CONFIG_PATH = path.join(USER_HOME, 'Documents', 'My Games', DATA_FOLDER, 'Saved', 'Config', 'WindowsNoEditor');
-const SAVE_PATH = path.join(USER_HOME, 'Documents', 'My Games', DATA_FOLDER, 'Saved', 'SaveGames');
+const CONFIG_PATH = path.join(DOCUMENTS, 'My Games', DATA_FOLDER, 'Saved', 'Config', 'WindowsNoEditor');
+const SAVE_PATH = path.join(DOCUMENTS, 'My Games', DATA_FOLDER, 'Saved', 'SaveGames');
+
+const SAVEEDITOR_ID = `${GAME_ID}-saveeditor`;
+const SAVEEDITOR_NAME = "Save Editor";
+const SAVEEDITOR_EXEC = 'BL3SaveEditor.exe';
 
 const REQ_FILE = EXEC;
-let MODTYPE_FOLDERS = [MERGER_PATH, HOTFIX_PATH, PAK_PATH, MOVIES_PATH];
+let MODTYPE_FOLDERS = [SDKMOD_PATH, HOTFIX_PATH, PAK_PATH, MOVIES_PATH];
+const IGNORE_CONFLICTS = [path.join('**', 'LICENSE.txt'), path.join('**', 'instructions.txt'), path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
 
 //Filled in from the data above
 const spec = {
@@ -98,6 +120,7 @@ const spec = {
     "details": {
       "steamAppId": STEAMAPP_ID,
       "epicAppId": EPICAPP_ID,
+      "ignoreConflicts": IGNORE_CONFLICTS,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
@@ -105,6 +128,18 @@ const spec = {
     }
   },
   "modTypes": [
+    {
+      "id": SDK_ID,
+      "name": SDK_NAME,
+      "priority": "high",
+      "targetPath": `{gamePath}\\${SDK_PATH}`
+    },
+    {
+      "id": SDKMOD_ID,
+      "name": SDKMOD_NAME,
+      "priority": "high",
+      "targetPath": `{gamePath}\\${SDKMOD_PATH}`
+    },
     {
       "id": MERGER_ID,
       "name": MERGER_NAME,
@@ -170,6 +205,19 @@ const tools = [
     parameters: []
   }, //*/
   {
+    id: SAVEEDITOR_ID,
+    name: SAVEEDITOR_NAME,
+    logo: `saveeditor.png`,
+    executable: () => SAVEEDITOR_EXEC,
+    requiredFiles: [SAVEEDITOR_EXEC],
+    detach: true,
+    relative: true,
+    exclusive: false,
+    //shell: true,
+    //defaultPrimary: true,
+    parameters: []
+  }, //*/
+  /*{
     id: MERGER_ID,
     name: MERGER_NAME,
     logo: `merger.png`,
@@ -278,7 +326,14 @@ function isPluginLoaderInstalled(api, spec) {
   return Object.keys(mods).some(id => mods[id]?.type === PLUGINLOADER_ID);
 }
 
-//* Function to auto-download Hotfix Merger from Nexus Mods
+//Check if SDK is installed
+function isSdkInstalled(api, spec) {
+  const state = api.getState();
+  const mods = state.persistent.mods[spec.game.id] || {};
+  return Object.keys(mods).some(id => mods[id]?.type === SDK_ID);
+}
+
+/* Function to auto-download Hotfix Merger from Nexus Mods
 async function downloadHotfixMerger(api, gameSpec) {
   let isInstalled = isHotfixMergerInstalled(api, gameSpec);
   if (!isInstalled) {
@@ -315,7 +370,7 @@ async function downloadHotfixMerger(api, gameSpec) {
       } catch (err) { // use defined file ID if input is undefined above
         FILE = FILE_ID;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      } //*/
+      } //
       const dlInfo = { //Download the mod
         game: GAME_DOMAIN,
         name: MOD_NAME,
@@ -343,7 +398,52 @@ async function downloadHotfixMerger(api, gameSpec) {
   }
 } //*/
 
-//* Function to auto-download Hotfix Merger from Nexus Mods
+//* Function to auto-download Hotfix Merger from GitHub
+async function downloadHotfixMerger(api, gameSpec) {
+  let isInstalled = isHotfixMergerInstalled(api, gameSpec);
+  if (!isInstalled) {
+    const MOD_NAME = MERGER_NAME;
+    const MOD_TYPE = MERGER_ID;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
+    const GAME_DOMAIN = GAME_ID;
+    const URL = MERGER_URL;
+    const ERR_URL = MERGER_URL_ERR;
+    api.sendNotification({ //notification indicating install process
+      id: NOTIF_ID,
+      message: `Installing ${MOD_NAME}`,
+      type: 'activity',
+      noDismiss: true,
+      allowSuppress: false,
+    });
+    try {
+      const dlInfo = { //Download the mod
+        game: GAME_DOMAIN,
+        name: MOD_NAME,
+      };
+      const dlId = await util.toPromise(cb =>
+        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+      const modId = await util.toPromise(cb =>
+        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
+      const batched = [
+        actions.setModsEnabled(api, profileId, [modId], true, {
+          allowAutoDeploy: true,
+          installed: true,
+        }),
+        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
+      ];
+      util.batchDispatch(api.store, batched); // Will dispatch both actions
+    } catch (err) { //Show the user the download page if the download, install process fails
+      const errPage = ERR_URL;
+      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
+      util.opn(errPage).catch(() => null);
+    } finally {
+      api.dismissNotification(NOTIF_ID);
+    }
+  }
+} //*/
+
+//* Function to auto-download Plugin Loader from GitHub
 async function downloadPluginLoader(api, gameSpec) {
   let isInstalled = isPluginLoaderInstalled(api, gameSpec);
   if (!isInstalled) {
@@ -388,13 +488,58 @@ async function downloadPluginLoader(api, gameSpec) {
   }
 } //*/
 
+//* Function to auto-download SDK from GitHub
+async function downloadSdk(api, gameSpec) {
+  let isInstalled = isSdkInstalled(api, gameSpec);
+  if (!isInstalled) {
+    const MOD_NAME = SDK_NAME;
+    const MOD_TYPE = SDK_ID;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
+    const GAME_DOMAIN = GAME_ID;
+    const URL = SDK_URL;
+    const ERR_URL = SDK_URL_ERR;
+    api.sendNotification({ //notification indicating install process
+      id: NOTIF_ID,
+      message: `Installing ${MOD_NAME}`,
+      type: 'activity',
+      noDismiss: true,
+      allowSuppress: false,
+    });
+    try {
+      const dlInfo = { //Download the mod
+        game: GAME_DOMAIN,
+        name: MOD_NAME,
+      };
+      const dlId = await util.toPromise(cb =>
+        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+      const modId = await util.toPromise(cb =>
+        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
+      const batched = [
+        actions.setModsEnabled(api, profileId, [modId], true, {
+          allowAutoDeploy: true,
+          installed: true,
+        }),
+        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
+      ];
+      util.batchDispatch(api.store, batched); // Will dispatch both actions
+    } catch (err) { //Show the user the download page if the download, install process fails
+      const errPage = ERR_URL;
+      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
+      util.opn(errPage).catch(() => null);
+    } finally {
+      api.dismissNotification(NOTIF_ID);
+    }
+  }
+} //*/
+
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
 
 //Installer test for Hotfix Merger files
 function testHotfixMerger(files, gameId) {
   const isFile = files.some(file => (path.basename(file).toLowerCase() === MERGER_DLL));
-  const isExe = files.some(file => (path.basename(file).toLowerCase() === MERGER_EXEC));
-  let supported = (gameId === spec.game.id) && isFile && isExe;
+  //const isExe = files.some(file => (path.basename(file).toLowerCase() === MERGER_EXEC));
+  let supported = (gameId === spec.game.id) && isFile;
 
   // Test for a mod installer.
   if (supported && files.find(file =>
@@ -471,6 +616,110 @@ function installPluginLoader(files) {
       destination: path.join(file.substr(idx)),
     };
   });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Installer test for Fluffy Mod Manager files
+function testSdk(files, gameId) {
+  const isFile = files.some(file => (path.basename(file).toLowerCase() === SDK_DLL));
+  const isFolder = files.some(file => (path.basename(file).toLowerCase() === SDK_FOLDER));
+  let supported = (gameId === spec.game.id) && isFile && isFolder;
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Installer install Fluffy Mod Manger files
+function installSdk(files) {
+  const MOD_TYPE = SDK_ID;
+  const modFile = files.find(file => (path.basename(file).toLowerCase() === SDK_FOLDER));
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Test Fallback installer for SDK Mods
+function testSdkMod(files, gameId) {
+  const isMod = files.some(file => (path.extname(file).toLowerCase() === SDKMOD_EXT));
+  const isMod2 = files.some(file => (path.extname(file).toLowerCase() === SDKMOD_EXT2));
+  let supported = (gameId === spec.game.id) && (isMod || isMod2);
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Fallback installer for SDK Mods
+function installSdkMod(files, fileName) {
+  const MOD_TYPE = SDKMOD_ID;
+  let modFile = files.find(file => (path.extname(file).toLowerCase() === SDKMOD_EXT2));
+  if (modFile === undefined) {
+    modFile = files.find(file => (path.extname(file).toLowerCase() === SDKMOD_EXT));
+  }
+  let MOD_FOLDER = '.';
+  const idx = modFile.indexOf(path.basename(modFile));
+  const ROOT_PATH = path.basename(path.dirname(modFile));
+  const MOD_NAME = path.basename(fileName);
+  if (ROOT_PATH === '.') {
+    MOD_FOLDER = MOD_NAME.replace(/[\.]*(installing)*(zip)*/gi, '');
+  }
+  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+  
+  // Remove empty directories
+  const filtered = files.filter(file =>
+    (!file.endsWith(path.sep))
+  );
+
+  let instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(MOD_FOLDER, file),
+    };
+  });
+  if ((path.extname(modFile).toLowerCase() === SDKMOD_EXT2)) { //index to .sdkmod file if it exists
+    instructions = filtered.map(file => {
+      return {
+        type: 'copy',
+        source: file,
+        destination: path.join(file.substr(idx)),
+      };
+    });
+  }
+
   instructions.push(setModTypeInstruction);
   return Promise.resolve({ instructions });
 }
@@ -732,7 +981,8 @@ async function setup(discovery, api, gameSpec) {
   // ASYNC CODE //////////////////////////////////////////
   await fs.ensureDirWritableAsync(path.join(GAME_PATH, MERGER_PATH));
   await downloadHotfixMerger(api, gameSpec);
-  await downloadPluginLoader(api, gameSpec);
+  //await downloadPluginLoader(api, gameSpec);
+  await downloadSdk(api, gameSpec);
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 
@@ -761,11 +1011,14 @@ function applyGame(context, gameSpec) {
 
   //register mod installers
   context.registerInstaller(MERGER_ID, 25, testHotfixMerger, installHotfixMerger);
-  context.registerInstaller(PLUGINLOADER_ID, 27, testPluginLoader, installPluginLoader);
-  context.registerInstaller(HOTFIX_ID, 29, testHotfix, installHotfix);
-  context.registerInstaller(ROOT_ID, 45, testRoot, installRoot);
-  context.registerInstaller(PAK_ID, 47, testPak, installPak);
-  context.registerInstaller(MOVIES_ID, 49, testMovies, installMovies);
+  context.registerInstaller(SDK_ID, 27, testSdk, installSdk);
+  context.registerInstaller(SDKMOD_ID, 28, testSdkMod, installSdkMod);
+  context.registerInstaller(PLUGINLOADER_ID, 29, testPluginLoader, installPluginLoader);
+  context.registerInstaller(HOTFIX_ID, 31, testHotfix, installHotfix);
+  context.registerInstaller(ROOT_ID, 43, testRoot, installRoot);
+  context.registerInstaller(PAK_ID, 45, testPak, installPak);
+  context.registerInstaller(MOVIES_ID, 47, testMovies, installMovies);
+  //context.registerInstaller(BINARIES_ID, 49, testBinaries, installBinaries);
 
   //register actions
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Hotfix Merger WebUI', () => {
@@ -814,12 +1067,12 @@ function applyGame(context, gameSpec) {
 function main(context) {
   applyGame(context, spec);
   context.once(() => { // put code here that should be run (once) when Vortex starts up
-    context.api.onAsync('did-deploy', async (profileId, deployment) => { 
+    /*context.api.onAsync('did-deploy', async (profileId, deployment) => { 
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;
 
       return deployNotify(context.api);
-    });
+    }); //*/
   });
   return true;
 }

@@ -2,8 +2,8 @@
 Name: Borderlands Vortex Extension
 Structure: UE2/3 Game (TFC Installer)
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2025-09-17
+Version: 0.2.0
+Date: 2025-09-21
 /////////////////////////////////////////*/
 
 //Import libraries
@@ -13,8 +13,8 @@ const template = require('string-template');
 //const turbowalk = require('turbowalk');
 //const winapi = require('winapi-bindings');
 
-const USER_HOME = util.getVortexPath("home");
-//const DOCUMENTS = util.getVortexPath("documents");
+//const USER_HOME = util.getVortexPath("home");
+const DOCUMENTS = util.getVortexPath("documents");
 //const ROAMINGAPPDATA = util.getVortexPath('appData');
 //const LOCALAPPDATA = util.getVortexPath('localAppData');
 
@@ -66,16 +66,17 @@ const TFCMOD_FILE = 'gameprofile.xml';
 const TFCMOD_PATH = path.join(TFC_FOLDER, 'Mods');
 
 const SDK_ID = `${GAME_ID}-sdk`;
-const SDK_NAME = "SDK";
+const SDK_NAME = "Python SDK";
 const SDK_FOLDER = "sdk_mods";
 const SDK_DLL = "unrealsdk.dll";
 const SDK_PATH = '.';
-const SDK_URL = `https://github.com/Ry0511/willow1-mod-manager/releases`;
-const SDK_URL_ALT = `https://github.com/bl-sdk/willow1-mod-manager/releases`;
+const SDK_URL = `https://github.com/bl-sdk/willow1-mod-manager/releases/latest/download/willow1-sdk.zip`;
+const SDK_URL_ERR = `https://github.com/bl-sdk/willow1-mod-manager/releases`;
 
 const SDKMOD_ID = `${GAME_ID}-sdkmod`;
 const SDKMOD_NAME = "SDK Mod";
 const SDKMOD_EXT = '.py';
+const SDKMOD_EXT2 = '.sdkmod';
 const SDKMOD_PATH = SDK_FOLDER;
 
 const ROOT_ID = `${GAME_ID}-root`;
@@ -89,11 +90,12 @@ const MOVIES_NAME = "Movies";
 const MOVIES_PATH = path.join(EPIC_CODE_NAME, 'Movies');
 const MOVIES_EXT = '.bik';
 
-const CONFIG_PATH = path.join(USER_HOME, 'Documents', 'My Games', DATA_FOLDER, 'Config');
-const SAVE_PATH = path.join(USER_HOME, 'Documents', 'My Games', 'Borderlands', 'SaveData');
+const CONFIG_PATH = path.join(DOCUMENTS, 'My Games', DATA_FOLDER, 'Config');
+const SAVE_PATH = path.join(DOCUMENTS, 'My Games', 'Borderlands', 'SaveData');
 
 const REQ_FILE = EXEC;
 let MODTYPE_FOLDERS = [TFCMOD_PATH, SDKMOD_PATH];
+const IGNORE_CONFLICTS = [path.join('**', 'LICENSE.txt'), path.join('**', 'instructions.txt'), path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
 
 //Filled in from the data above
 const spec = {
@@ -114,6 +116,7 @@ const spec = {
       "gogAppId": GOGAPP_ID,
       "epicAppId": EPICAPP_ID,
       "xboxAppId": XBOXAPP_ID,
+      "ignoreConflicts": IGNORE_CONFLICTS,
       //"supportsSymlinks": false,
     },
     "environment": {
@@ -329,6 +332,13 @@ function isTfcInstalled(api, spec) {
   return Object.keys(mods).some(id => mods[id]?.type === TFC_ID);
 }
 
+//Check if SDK is installed
+function isSdkInstalled(api, spec) {
+  const state = api.getState();
+  const mods = state.persistent.mods[spec.game.id] || {};
+  return Object.keys(mods).some(id => mods[id]?.type === SDK_ID);
+}
+
 //* Function to auto-download TFC from Nexus Mods
 async function downloadTfc(api, gameSpec) {
   let isInstalled = isTfcInstalled(api, gameSpec);
@@ -386,6 +396,51 @@ async function downloadTfc(api, gameSpec) {
       util.batchDispatch(api.store, batched); // Will dispatch both actions
     } catch (err) { //Show the user the download page if the download, install process fails
       const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
+      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
+      util.opn(errPage).catch(() => null);
+    } finally {
+      api.dismissNotification(NOTIF_ID);
+    }
+  }
+} //*/
+
+//* Function to auto-download SDK from GitHub
+async function downloadSdk(api, gameSpec) {
+  let isInstalled = isSdkInstalled(api, gameSpec);
+  if (!isInstalled) {
+    const MOD_NAME = SDK_NAME;
+    const MOD_TYPE = SDK_ID;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
+    const GAME_DOMAIN = GAME_ID;
+    const URL = SDK_URL;
+    const ERR_URL = SDK_URL_ERR;
+    api.sendNotification({ //notification indicating install process
+      id: NOTIF_ID,
+      message: `Installing ${MOD_NAME}`,
+      type: 'activity',
+      noDismiss: true,
+      allowSuppress: false,
+    });
+    try {
+      const dlInfo = { //Download the mod
+        game: GAME_DOMAIN,
+        name: MOD_NAME,
+      };
+      const dlId = await util.toPromise(cb =>
+        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+      const modId = await util.toPromise(cb =>
+        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
+      const batched = [
+        actions.setModsEnabled(api, profileId, [modId], true, {
+          allowAutoDeploy: true,
+          installed: true,
+        }),
+        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
+      ];
+      util.batchDispatch(api.store, batched); // Will dispatch both actions
+    } catch (err) { //Show the user the download page if the download, install process fails
+      const errPage = ERR_URL;
       api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
       util.opn(errPage).catch(() => null);
     } finally {
@@ -568,10 +623,11 @@ function installSdk(files) {
   return Promise.resolve({ instructions });
 }
 
-//Test Fallback installer for Void Mods
+//Test Fallback installer for SDK Mods
 function testSdkMod(files, gameId) {
   const isMod = files.some(file => (path.extname(file).toLowerCase() === SDKMOD_EXT));
-  let supported = (gameId === spec.game.id) && isMod;
+  const isMod2 = files.some(file => (path.extname(file).toLowerCase() === SDKMOD_EXT2));
+  let supported = (gameId === spec.game.id) && (isMod || isMod2);
 
   // Test for a mod installer.
   if (supported && files.find(file =>
@@ -586,13 +642,17 @@ function testSdkMod(files, gameId) {
   });
 }
 
-//Fallback installer for Void Mods
+//Fallback installer for SDK Mods
 function installSdkMod(files, fileName) {
   const MOD_TYPE = SDKMOD_ID;
-  const modFile = files.find(file => (path.extname(file).toLowerCase() === SDKMOD_EXT));
+  let modFile = files.find(file => (path.extname(file).toLowerCase() === SDKMOD_EXT2));
+  if (modFile === undefined) {
+    modFile = files.find(file => (path.extname(file).toLowerCase() === SDKMOD_EXT));
+  }
+  let MOD_FOLDER = '.';
+  const idx = modFile.indexOf(path.basename(modFile));
   const ROOT_PATH = path.basename(path.dirname(modFile));
   const MOD_NAME = path.basename(fileName);
-  let MOD_FOLDER = '.';
   if (ROOT_PATH === '.') {
     MOD_FOLDER = MOD_NAME.replace(/[\.]*(installing)*(zip)*/gi, '');
   }
@@ -603,13 +663,23 @@ function installSdkMod(files, fileName) {
     (!file.endsWith(path.sep))
   );
 
-  const instructions = filtered.map(file => {
+  let instructions = filtered.map(file => {
     return {
       type: 'copy',
       source: file,
       destination: path.join(MOD_FOLDER, file),
     };
   });
+  if ((path.extname(modFile).toLowerCase() === SDKMOD_EXT2)) { //index to .sdkmod file if it exists
+    instructions = filtered.map(file => {
+      return {
+        type: 'copy',
+        source: file,
+        destination: path.join(file.substr(idx)),
+      };
+    });
+  }
+
   instructions.push(setModTypeInstruction);
   return Promise.resolve({ instructions });
 }
@@ -827,6 +897,7 @@ async function setup(discovery, api, gameSpec) {
   setupNotify(api);
   // ASYNC CODE //////////////////////////////////////////
   await downloadTfc(api, gameSpec);
+  await downloadSdk(api, gameSpec);
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 
@@ -870,8 +941,9 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(TFCMOD_ID, 29, testTfcMod, installTfcMod);
   context.registerInstaller(SDK_ID, 31, testSdk, installSdk);
   context.registerInstaller(SDKMOD_ID, 33, testSdkMod, installSdkMod);
-  context.registerInstaller(ROOT_ID, 47, testRoot, installRoot);
-  context.registerInstaller(MOVIES_ID, 49, testMovies, installMovies);
+  context.registerInstaller(ROOT_ID, 45, testRoot, installRoot);
+  context.registerInstaller(MOVIES_ID, 47, testMovies, installMovies);
+  //context.registerInstaller(BINARIES_ID, 49, testBinaries, installBinaries);
 
   //register actions
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {

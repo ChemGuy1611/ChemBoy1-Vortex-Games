@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.3.3] - 2025-09-21
+
+- Improved SDK mod installer to support both .py and .sdkmod files.
+
 ## [0.3.2] - 2025-09-20
 
 - Added automatic install of Python SDK (enables modding).
