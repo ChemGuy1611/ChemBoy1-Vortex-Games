@@ -20,7 +20,7 @@ const LOCALAPPDATA = util.getVortexPath('localAppData');
 const GAME_ID = "silenthillf";
 const STEAMAPP_ID = "2947440";
 const STEAMAPP_ID_DEMO = null;
-const EPICAPP_ID = "XXX";
+const EPICAPP_ID = "";
 const GOGAPP_ID = null;
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 const GAME_NAME = "Silent Hill f";
@@ -159,6 +159,7 @@ const SIGBYPASS_DOMAIN = 'site';
 
 const MOD_PATH_DEFAULT = PAK_PATH;
 const MODTYPE_FOLDERS = [LOGICMODS_PATH, SCRIPTS_PATH, PAK_PATH];
+const PARAMETERS = [];
 
 //Filled in from data above
 const spec = {
@@ -167,6 +168,7 @@ const spec = {
     "name": GAME_NAME,
     "shortName": GAME_NAME_SHORT,
     "executable": EXEC,
+    //"parameters": PARAMETERS,
     "logo": `${GAME_ID}.jpg`,
     "mergeMods": true,
     "requiresCleanup": true,

@@ -27,6 +27,7 @@ const GAME_NAME = "XXX";
 const GAME_NAME_SHORT = "XXX";
 const EXEC = "XXX.exe";
 const EXEC_EPIC = "XXX_EGS.exe";
+const EXEC_DEMO = "XXXDemo.exe";
 //Unreal Engine specific
 const EPIC_CODE_NAME = "XXX";
 const SIGBYPASS_REQUIRED = false; //set true if there are .sig files in the Paks folder
@@ -61,6 +62,7 @@ let CHECK_DATA = false; //boolean to check if game, staging folder, and config a
 let CHECK_DOCS = false; //secondary same as above (if save and config are in different locations)
 let STAGING_FOLDER = ''; //Vortex staging folder path
 let DOWNLOAD_FOLDER = ''; //Vortex download folder path
+let DEMO = false;
 
 //Unreal Engine Game Data
 const UNREALDATA = {
@@ -159,6 +161,7 @@ const SIGBYPASS_DOMAIN = 'site';
 
 const MOD_PATH_DEFAULT = PAK_PATH;
 const MODTYPE_FOLDERS = [LOGICMODS_PATH, SCRIPTS_PATH, PAK_PATH];
+const PARAMETERS = [];
 
 //Filled in from data above
 const spec = {
@@ -167,6 +170,7 @@ const spec = {
     "name": GAME_NAME,
     "shortName": GAME_NAME_SHORT,
     "executable": EXEC,
+    //"parameters": PARAMETERS,
     "logo": `${GAME_ID}.jpg`,
     "mergeMods": true,
     "requiresCleanup": true,
@@ -260,6 +264,19 @@ const tools = [
     exclusive: true,
     shell: true,
     //defaultPrimary: true,
+    parameters: PARAMETERS,
+  }, //*/
+  /*{
+    id: `${GAME_ID}-demolaunch`,
+    name: `Demo Launch`,
+    logo: `exec.png`,
+    executable: () => EXEC_DEMO,
+    requiredFiles: [EXEC_DEMO],
+    detach: true,
+    relative: true,
+    exclusive: true,
+    shell: true,
+    defaultPrimary: true,
     parameters: []
   }, //*/
   /*{
@@ -328,6 +345,30 @@ async function requiresLauncher(gamePath, store) {
     });
   } //*/
   return Promise.resolve(undefined);
+}
+
+//Get correct executable for game version
+function getExecutable(discoveryPath) {
+  const isCorrectExec = (exec) => {
+    try {
+      fs.statSync(path.join(discoveryPath, exec));
+      return true;
+    }
+    catch (err) {
+      return false;
+    }
+  };
+  if (isCorrectExec(EXEC)) {
+    return EXEC;
+  };
+  if (isCorrectExec(EXEC_EPIC)) {
+    return EXEC_EPIC;
+  };
+  if (isCorrectExec(EXEC_DEMO)) {
+    DEMO = true;
+    return EXEC_DEMO;
+  };
+  return EXEC;
 }
 
 //Get correct shipping executable for game version
@@ -1461,6 +1502,7 @@ function applyGame(context, gameSpec) {
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     executable: () => gameSpec.game.executable,
+    //executable: getExecutable,
     getGameVersion: resolveGameVersion,
     supportedTools: tools,
   };
