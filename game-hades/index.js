@@ -1,10 +1,10 @@
-/*
+/*/////////////////////////////////
 Name: Hades Vortex Extension
 Structure: 3rd-Party Mod Installer
 Author: ChemBoy1
-Version: 0.1.1
-Date: 01/14/2025
-*/
+Version: 0.1.2
+Date: 2025-09-22
+////////////////////////////////*/
 
 //Import libraries
 const { actions, fs, util, selectors } = require('vortex-api');
@@ -14,13 +14,14 @@ const template = require('string-template');
 //Specify all the information about the game
 const STEAMAPP_ID = "1145360";
 const EPICAPP_ID = "Min";
-const XBOXAPP_ID = "";
-const XBOXEXECNAME = "";
+const XBOXAPP_ID = "SupergiantGamesLLC.Hades";
+const XBOXEXECNAME = "Game";
 const GAME_ID = "hades";
 const GAME_NAME = "Hades"
 const EXEC = "x64\\Hades.exe";
 const EXEC_VK = "x64Vk\\Hades.exe";
-//const EXEC_XBOX = "x64\\Hades.exe";
+//const EXEC_XBOX = "Hades.exe";
+const EXEC_XBOX = "gamelaunchhelper.exe";
 
 //Data for mod types, tools, and installers
 const MOD_PATH = path.join("Content", "Mods");

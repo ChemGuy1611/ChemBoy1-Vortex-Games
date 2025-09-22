@@ -267,12 +267,12 @@ function testPak(files, gameId) {
   const isMod = files.some(file => path.extname(file).toLowerCase() === PAK_EXT);
   let supported = (gameId === spec.game.id) && isMod;
 
-  // Test for a mod installer.
+  /* Test for a mod installer.
   if (supported && files.find(file =>
     (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
     (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
     supported = false;
-  }
+  } //*/
 
   return Promise.resolve({
     supported,
