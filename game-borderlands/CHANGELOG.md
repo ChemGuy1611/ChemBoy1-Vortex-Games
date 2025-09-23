@@ -4,9 +4,9 @@
 
 - None Planned
 
-## [0.2.1] - 2025-09-22
+## [0.2.1] - 2025-09-23
 
-- Added "-nostartupmovies" launch argument.
+- Added "-nostartupmovies" launch argument to all methods of launching the game - skips unskippable launch videos.
 
 ## [0.2.0] - 2025-09-21
 
