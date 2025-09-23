@@ -20,15 +20,15 @@ const LOCALAPPDATA = util.getVortexPath('localAppData');
 const GAME_ID = "silenthillf";
 const STEAMAPP_ID = "2947440";
 const STEAMAPP_ID_DEMO = null;
-const EPICAPP_ID = "XXX";
+const EPICAPP_ID = "dc2af50022074452a20293a88da9940f";
 const GOGAPP_ID = null;
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 const GAME_NAME = "Silent Hill f";
 const GAME_NAME_SHORT = "Silent Hill f";
-const EXEC = "XXX.exe";
+const EXEC = "SHf.exe";
 const EXEC_EPIC = EXEC;
 //Unreal Engine specific
-const EPIC_CODE_NAME = "XXX";
+const EPIC_CODE_NAME = "SHf";
 const SIGBYPASS_REQUIRED = false; //set true if there are .sig files in the Paks folder
 const IO_STORE = true; //true if the Paks folder contains .ucas and .utoc files
 const UE4SS_PAGE_NO = 0; //set if there is UE4SS Nexus page
@@ -159,6 +159,7 @@ const SIGBYPASS_DOMAIN = 'site';
 
 const MOD_PATH_DEFAULT = PAK_PATH;
 const MODTYPE_FOLDERS = [LOGICMODS_PATH, SCRIPTS_PATH, PAK_PATH];
+const PARAMETERS = [];
 
 //Filled in from data above
 const spec = {
@@ -167,6 +168,7 @@ const spec = {
     "name": GAME_NAME,
     "shortName": GAME_NAME_SHORT,
     "executable": EXEC,
+    //"parameters": PARAMETERS,
     "logo": `${GAME_ID}.jpg`,
     "mergeMods": true,
     "requiresCleanup": true,

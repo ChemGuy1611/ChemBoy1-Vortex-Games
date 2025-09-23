@@ -172,6 +172,7 @@ const SIGBYPASS_FILE_NO = 5719;
 const SIGBYPASS_DOMAIN = 'site';
 
 const MOD_PATH_DEFAULT = UE5_PATH;
+const PARAMETERS = [];
 
 //Filled in from data above
 const spec = {
@@ -179,6 +180,7 @@ const spec = {
     "id": GAME_ID,
     "name": GAME_NAME,
     "shortName": GAME_NAME_SHORT,
+    //"parameters": PARAMETERS,
     "logo": `${GAME_ID}.jpg`,
     "mergeMods": true,
     "requiresCleanup": true,
@@ -1549,12 +1551,25 @@ function applyGame(context, gameSpec) {
     requiresLauncher: requiresLauncher,
     getGameVersion: resolveGameVersion,
     supportedTools: [
-      /*{
-        id: "CustomLaunch",
+      {
+        id: `${GAME_ID}-customlaunch`,
         name: `Custom Launch`,
         logo: `exec.png`,
         executable: () => EXEC_DEFAULT,
         requiredFiles: [EXEC_DEFAULT],
+        detach: true,
+        relative: true,
+        exclusive: true,
+        shell: true,
+        //defaultPrimary: true,
+        //parameters: [],
+      }, //*/
+      {
+        id: `${GAME_ID}-customlaunchxbox`,
+        name: `Custom Launch (Xbox)`,
+        logo: `exec.png`,
+        executable: () => EXEC_XBOX,
+        requiredFiles: [EXEC_XBOX],
         detach: true,
         relative: true,
         exclusive: true,
