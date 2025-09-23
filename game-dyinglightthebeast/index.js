@@ -1,9 +1,9 @@
 /*///////////////////////////////////////////
-Name: XXX Vortex Extension
+Name: Dying Light The Beast Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2025-09-01
+Version: 0.1.1
+Date: 2025-09-23
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -335,8 +335,9 @@ function installPak(api, files) {
   const generateInstructions = () => {
     const fileInstructions = filtered.reduce((accum, iter) => {
       if (!iter.endsWith(path.sep)) {
-        iter = iter.match(/data[0-9]*.pak/) !== null
-          ? iter : 'data2.pak';
+        iter = iter.match(/data[2-7].pak/) !== null //only 2-7 will be loaded by the game. 0-1 are vanilla paks
+          ? iter 
+          : 'data2.pak'; //use data2.pak if mod's pak name is invalid
         const destination = isPak(iter)
           ? shortid() + PAK_EXT
           : iter.split(path.sep).slice(idx).join(path.sep);
@@ -359,7 +360,7 @@ function installPak(api, files) {
         accum.push({
           type: 'copy',
           source: iter,
-          destination, 
+          destination: destination,
         });
       }
       return accum;

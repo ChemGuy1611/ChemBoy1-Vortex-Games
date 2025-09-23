@@ -39,6 +39,7 @@ const PATCH_EXTS = [".patch_0", ".gpu_resources", ".stream"];
 const PATCH_FILE1 = "9ba626afa44a3aa3.patch_0";
 const PATCH_FILE2 = "9ba626afa44a3aa3.patch_0.gpu_resources";
 const PATCH_FILE3 = "9ba626afa44a3aa3.patch_0.stream";
+const PATCH_FILES_ARR = [PATCH_FILE1, PATCH_FILE2, PATCH_FILE3];
 const PATCH_STRING = "9ba626afa44a3aa3.patch_0";
 const PATCH_BASE_STRING = "9ba626afa44a3aa3.patch_";
 const PATCH_IDX = PATCH_FILE1.indexOf("0");
@@ -202,15 +203,15 @@ function installDlbin(files, gameSpec) {
 //Test for .patch0 files (in mod merger)
 function testPatch(files, gameId) {
   const isMod = files.some(file => path.extname(file).toLowerCase() === patchModFileExt);
-  const isGpuPatch = files.some(file => path.basename(file).toLowerCase() === PATCH_FILE1);
+  const isGpuPatch = files.some(file => path.basename(file).toLowerCase() === PATCH_FILE2);
   let supported = (gameId === spec.game.id) && isMod && isGpuPatch;
 
-  // Test for a mod installer.
+  /* Test for a mod installer.
   if (supported && files.find(file =>
     (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
     (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
     supported = false;
-  }
+  } //*/
 
   return Promise.resolve({
     supported,
@@ -233,11 +234,11 @@ function installPatch(files, gameSpec) {
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
-  (
-    (file.indexOf(rootPath) !== -1) &&
-    (!file.endsWith(path.sep)) &&
-    (PATCH_EXTS.includes(path.extname(file).toLowerCase()))
-  )
+    (
+      (file.indexOf(rootPath) !== -1) &&
+      (!file.endsWith(path.sep)) &&
+      (PATCH_EXTS.includes(path.extname(file).toLowerCase()))
+    )
   );
 
   const instructions = filtered.map((file, index) => {
@@ -252,6 +253,87 @@ function installPatch(files, gameSpec) {
   instructions.push(patchModFiles);
 
   return Promise.resolve({ instructions });
+}
+
+function installPatchMulti(api, files) {
+  let hasVariants = false;
+  const patchFiles = files.reduce((accum, iter) => {
+    if (PATCH_EXTS.includes(path.extname(iter).toLowerCase()) && PATCH_FILES_ARR.includes(path.basename(iter))) {
+      const exists = accum[path.basename(iter)] !== undefined;
+      if (exists) {
+        hasVariants = true;
+      }
+      accum[path.basename(iter)] = exists
+        ? accum[path.basename(iter)].concat(iter)
+        : [iter];
+    }
+    return accum;
+  }, {});
+
+  let filtered = files.filter(file =>
+    (
+      (PATCH_EXTS.includes(path.extname(file).toLowerCase()))
+    )
+  );
+  const queryVariant = () => {
+    const patch = Object.keys(patchFiles).filter(key => patchFiles[key].length > 1);
+    return Promise.map(patch, patchFile => {
+      return api.showDialog('question', 'Choose Variant', {
+        text: 'This mod has several variants for "{{patch}}" - please '
+            + 'choose the variant you wish to install. (You can choose a '
+            + 'different variant by re-installing the mod)',
+        choices: patchFiles[patchFile].map((iter, idx) => ({ 
+          id: iter,
+          text: iter,
+          value: idx === 0,
+        })),
+        parameters: {
+          patch: patchFile,
+        },
+      }, [
+        { label: 'Cancel' },
+        { label: 'Confirm' },
+      ]).then(res => {
+        if (res.action === 'Confirm') {
+          const choice = Object.keys(res.input).find(choice => res.input[choice]);
+          filtered = filtered.filter(file => 
+            PATCH_EXTS.includes(path.extname(file).toLowerCase()) ||
+            ((path.basename(file) === patchFile) && file.includes(choice)) ||
+            (path.basename(file) !== patchFile)
+          );
+          return Promise.resolve();
+        } else {
+          return new util.UserCanceled();
+        }
+      });
+    })
+  };
+  const generateInstructions = () => {
+    const fileInstructions = filtered.reduce((accum, iter) => {
+      if (!iter.endsWith(path.sep)) {
+        /*accum.push({
+          type: 'attribute',
+          key: 'patchModFiles',
+          value: patchFiles.map(f => path.basename(f)),
+        }); //*/
+        accum.push({
+          type: 'copy',
+          source: iter,
+          destination: iter,
+        });
+      }
+      return accum;
+    }, []);
+    const instructions = [{ 
+      type: 'setmodtype',
+      value: PATCH_ID,
+    }].concat(fileInstructions);
+    return instructions;
+  }
+
+  const prom = hasVariants ? queryVariant : Promise.resolve;
+  return prom()
+    .then(() => Promise.resolve({ instructions: generateInstructions() }));
 }
 
 //Test for Sound .patch0 files (NOT in mod merger)
@@ -442,9 +524,10 @@ async function preSort(api, items, direction) {
   const loadOrder = items.map(mod => {
     const modInfo = mods[mod.id];
     let name = modInfo ? modInfo.attributes.customFileName ?? modInfo.attributes.logicalFileName ?? modInfo.attributes.name : mod.name;
+    /*
     const patch = util.getSafe(modInfo.attributes, ['patchModFiles'], []);
-    //if (patch.length > 1) name = name + ` (${patch.length} ${fileExt} files)`;
-
+    if (patch.length > 1) name = name + ` (${patch.length} ${fileExt} files)`; 
+    //*/
     return {
       id: mod.id,
       name,
@@ -533,9 +616,10 @@ function applyGame(context, gameSpec) {
 
   //register mod installers
   context.registerInstaller(DATA_ID, 25, testDlbin, installDlbin);
-  context.registerInstaller(PATCH_ID, 30, testPatch, installPatch);
-  context.registerInstaller(SOUNDPATCH_ID, 35, testSoundPatch, installSoundPatch);
-  context.registerInstaller(STREAM_ID, 40, testStream, installStream);
+  //context.registerInstaller(PATCH_ID, 30, testPatch, installPatch);
+  context.registerInstaller(PATCH_ID, 27, testPatch, (files) => installPatchMulti(context.api, files));
+  context.registerInstaller(SOUNDPATCH_ID, 29, testSoundPatch, installSoundPatch);
+  context.registerInstaller(STREAM_ID, 31, testStream, installStream);
 }
 
 const mergeTest = (game, discovery, context) => {
