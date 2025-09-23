@@ -2,8 +2,8 @@
 Name: Borderlands Vortex Extension
 Structure: UE2/3 Game (TFC Installer)
 Author: ChemBoy1
-Version: 0.2.0
-Date: 2025-09-21
+Version: 0.2.1
+Date: 2025-09-22
 /////////////////////////////////////////*/
 
 //Import libraries
@@ -96,6 +96,7 @@ const SAVE_PATH = path.join(DOCUMENTS, 'My Games', 'Borderlands', 'SaveData');
 const REQ_FILE = EXEC;
 let MODTYPE_FOLDERS = [TFCMOD_PATH, SDKMOD_PATH];
 const IGNORE_CONFLICTS = [path.join('**', 'LICENSE.txt'), path.join('**', 'instructions.txt'), path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
+const PARAMETERS = ['-nostartupmovies'];
 
 //Filled in from the data above
 const spec = {
@@ -103,6 +104,8 @@ const spec = {
     "id": GAME_ID,
     "name": GAME_NAME,
     "shortName": GAME_NAME_SHORT,
+    //"executable": EXEC,
+    "parameters": PARAMETERS,
     "logo": `${GAME_ID}.jpg`,
     "mergeMods": true,
     "modPath": ".",
@@ -178,7 +181,7 @@ const spec = {
 
 //3rd party tools and launchers
 const tools = [
-  /*{
+  {
     id: `${GAME_ID}-customlaunch`,
     name: `Custom Launch`,
     logo: `exec.png`,
@@ -189,7 +192,20 @@ const tools = [
     exclusive: true,
     shell: true,
     //defaultPrimary: true,
-    parameters: []
+    parameters: PARAMETERS
+  }, //*/
+  {
+    id: `${GAME_ID}-customlaunchgoty`,
+    name: `Custom Launch`,
+    logo: `exec.png`,
+    executable: () => EXEC_GOTY,
+    requiredFiles: [EXEC_GOTY],
+    detach: true,
+    relative: true,
+    exclusive: true,
+    shell: true,
+    //defaultPrimary: true,
+    parameters: PARAMETERS
   }, //*/
   {
     id: TFC_ID,

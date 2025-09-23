@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.2.1] - 2025-09-22
+
+- Added "-nostartupmovies" launch argument.
+
 ## [0.2.0] - 2025-09-21
 
 - Autodownload of Python SDK (enables modding and plugin loading).

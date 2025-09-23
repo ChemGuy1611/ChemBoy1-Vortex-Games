@@ -4,6 +4,6 @@
 
 - None Planned
 
-## [0.1.2] - 2025-09-21
+## [0.2.0] - 2025-09-22
 
 - Added Xbox version ID and full support.

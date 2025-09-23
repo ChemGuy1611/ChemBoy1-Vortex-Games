@@ -2,12 +2,12 @@
 Name: Hades Vortex Extension
 Structure: 3rd-Party Mod Installer
 Author: ChemBoy1
-Version: 0.1.2
+Version: 0.2.0
 Date: 2025-09-22
 ////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors } = require('vortex-api');
+const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 
@@ -51,18 +51,21 @@ const UTILITY_PATH = MOD_PATH;
 const UTILITY_FILE = "ModUtil";
 const UTILITY_IDX = `${UTILITY_FILE}\\`;
 
+const REQ_FILE = 'Content';
+const REQ_FILE2 = 'Content\\Game\\Animations\\CharacterAnim_EnemiesBosses_Hades.sjson';
+
 //Filled in from data above
 const spec = {
   "game": {
     "id": GAME_ID,
     "name": GAME_NAME,
-    "executable": EXEC,
+    //"executable": EXEC,
     "logo": `${GAME_ID}.jpg`,
     "mergeMods": true,
     "modPath": MOD_PATH,
     "modPathIsRelative": true,
     "requiredFiles": [
-      EXEC
+      REQ_FILE2
     ],
     "details": {
       "steamAppId": STEAMAPP_ID,
@@ -119,7 +122,7 @@ const spec = {
     "ids": [
       STEAMAPP_ID,
       EPICAPP_ID,
-      //XBOXAPP_ID,
+      XBOXAPP_ID,
     ],
     "names": []
   }
@@ -160,13 +163,18 @@ function modTypePriority(priority) {
 
 //Replace folder path string placeholders with actual folder paths
 function pathPattern(api, game, pattern) {
-  var _a;
-  return template(pattern, {
-    gamePath: (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0 ? void 0 : _a.path,
-    documents: util.getVortexPath('documents'),
-    localAppData: process.env['LOCALAPPDATA'],
-    appData: util.getVortexPath('appData'),
-  });
+  try {
+    var _a;
+    return template(pattern, {
+      gamePath: (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0 ? void 0 : _a.path,
+      documents: util.getVortexPath('documents'),
+      localAppData: util.getVortexPath('localAppData'),
+      appData: util.getVortexPath('appData'),
+    });
+  }
+  catch (err) { //this happens if the executable comes back as "undefined", usually caused by the Xbox app locking down the folder
+    api.showErrorNotification('Failed to locate executable. Please launch the game at least once.', err);
+  }
 }
 
 //Set the mod path for the game
@@ -176,45 +184,67 @@ function makeGetModPath(api, gameSpec) {
     : pathPattern(api, gameSpec.game, gameSpec.game.modPath);
 }
 
-//Find game information by API utility
-async function queryGame() {
-  let game = await util.GameStoreHelper.findByAppId(spec.discovery.ids);
-  return game;
+//Find game installation directory
+function makeFindGame(api, gameSpec) {
+  return () => util.GameStoreHelper.findByAppId(gameSpec.discovery.ids)
+    .then((game) => game.gamePath);
 }
 
-//Find game install location 
-async function queryPath() {
-  let game = await queryGame();
-  return game.gamePath;
-}
-
-//Set launcher requirements
-async function requiresLauncher() {
-  let game = await queryGame();
-
-  if (game.gameStoreId === "steam") {
-    return undefined;
-  }
-  if (game.gameStoreId === "epic") {
-    return {
-      launcher: "epic",
-      addInfo: {
-        appId: EPICAPP_ID,
-      },
-    };
+//set launcher requirements
+async function requiresLauncher(gamePath, store) {
+  if (store === 'xbox') {
+      return Promise.resolve({
+        launcher: 'xbox',
+        addInfo: {
+          appId: XBOXAPP_ID,
+          parameters: [{ appExecName: XBOXEXECNAME }],
+          //parameters: [{ appExecName: XBOXEXECNAME }, PARAMETERS_STRING],
+          //launchType: 'gamestore',
+        },
+      });
   } //*/
-  if (game.gameStoreId === "xbox") {
-    return {
-      launcher: "xbox",
-      addInfo: {
-        appId: XBOXAPP_ID,
-        // appExecName is the <Application id="" in the appxmanifest.xml file
-        parameters: [{ appExecName: XBOXEXECNAME }],
-      },
-    };
+  if (store === 'epic') {
+    return Promise.resolve({
+        launcher: 'epic',
+        addInfo: {
+          appId: EPICAPP_ID,
+          //parameters: PARAMETERS,
+          //launchType: 'gamestore',
+        },
+    });
   } //*/
-  return undefined;
+  /*
+  if (store === 'steam') {
+    return Promise.resolve({
+      launcher: 'steam',
+      addInfo: {
+        appId: STEAM_ID,
+        //parameters: PARAMETERS,
+        //launchType: 'gamestore',
+      } //
+    });
+  } //*/
+  return Promise.resolve(undefined);
 }
+
+//Get correct shipping executable for game version
+function getExecutable(gamePath) {
+  const isCorrectExec = (exec) => {
+    try {
+      fs.statSync(path.join(gamePath, exec));
+      return true;
+    }
+    catch (err) {
+      return false;
+    }
+  };
+  if (isCorrectExec(EXEC_XBOX)) {
+    return EXEC_XBOX; 
+  };
+  return EXEC;
+}
+
+// AUTO-DOWNLOAD FUNCTIONS ///////////////////////////////////////////////////
 
 //Check if mod injector is installed
 function isModManagerInstalled(api, spec) {
@@ -223,10 +253,16 @@ function isModManagerInstalled(api, spec) {
   return Object.keys(mods).some(id => mods[id]?.type === MANAGER_ID);
 }
 
+//Check if mod injector is installed
+function isModUtilityInstalled(api, spec) {
+  const state = api.getState();
+  const mods = state.persistent.mods[spec.game.id] || {};
+  return Object.keys(mods).some(id => mods[id]?.type === UTILITY_ID);
+}
+
 //Function to auto-download Mod Loader
 async function downloadModManager(api, gameSpec) {
   let isInstalled = isModManagerInstalled(api, gameSpec);
-
   if (!isInstalled) {
     //notification indicating install process
     const MOD_NAME = MANAGER_NAME;
@@ -289,17 +325,9 @@ async function downloadModManager(api, gameSpec) {
   }
 }
 
-//Check if mod injector is installed
-function isModUtilityInstalled(api, spec) {
-  const state = api.getState();
-  const mods = state.persistent.mods[spec.game.id] || {};
-  return Object.keys(mods).some(id => mods[id]?.type === UTILITY_ID);
-}
-
 //Function to auto-download Mod Loader
 async function downloadModUtility(api, gameSpec) {
   let isInstalled = isModUtilityInstalled(api, gameSpec);
-
   if (!isInstalled) {
     //notification indicating install process
     const MOD_NAME = UTILITY_NAME;
@@ -361,6 +389,8 @@ async function downloadModUtility(api, gameSpec) {
     }
   }
 }
+
+// MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
 
 //Installer test for Mod Importer
 function testModManger(files, gameId) {
@@ -491,6 +521,8 @@ function installMod(files,fileName) {
   return Promise.resolve({ instructions });
 }
 
+// MAIN EXTENSION FUNCTION ///////////////////////////////////////////////////
+
 //Notify User of Setup instructions for Mod Managers
 function setupNotify(api) {
   const NOTIF_ID = `setup-notification-${GAME_ID}`;
@@ -536,12 +568,12 @@ function applyGame(context, gameSpec) {
   //register game
   const game = {
     ...gameSpec.game,
-    queryPath,
+    queryPath: makeFindGame(context.api, gameSpec),
     queryModPath: makeGetModPath(context.api, gameSpec),
-    requiresLauncher,
+    requiresLauncher: requiresLauncher,
     requiresCleanup: true,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
-    executable: () => gameSpec.game.executable,
+    executable: getExecutable,
     supportedTools: tools,
   };
   context.registerGame(game);
