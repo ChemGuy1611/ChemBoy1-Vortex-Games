@@ -2,8 +2,8 @@
 Name: Helldivers 2 Vortex Extension
 Structure: Custom Game Data
 Author: ChemBoy1
-Version: 0.6.1
-Date: 2025-09-20
+Version: 0.7.0
+Date: 2025-09-24
 /////////////////////////////////////////*/
 
 //Import libraries
@@ -24,8 +24,17 @@ const DATA_NAME = "Game Data (.dl_bin)";
 const DATA_PATH = path.join("data", "game");
 const modFileExt = ".dl_bin";
 
+const STREAM_ID = `${GAME_ID}-stream`;
+const STREAM_NAME = "Data Stream File (.stream)";
+const STREAM_PATH = path.join("data");
+const streamFileExt = ".stream";
+
 const BINARIES_ID = `${GAME_ID}-binaries`;
 const BINARIES_PATH = path.join("bin");
+
+let GAME_PATH = null;
+let STAGING_FOLDER = '';
+let DOWNLOAD_FOLDER = '';
 
 // This will also be the name of the merge folder.
 // It creates a mod new mod folder and vortex will show an error message when for the first time after installing mods. User must select "Apply Changes".
@@ -34,30 +43,25 @@ const PATCH_ID = `${GAME_ID}-patch--MergedMods--This-is-fine--Ignore-this--SELEC
 const PATCH_NAME = "Data Patch (.patch0)";
 const PATCH_PATH = path.join("data");
 const patchModFileExt = ".patch_0";
+const PATCH_EXT_NONUMBER = ".patch_";
 const PATCH_EXTS = [".patch_0", ".gpu_resources", ".stream"];
 //const PATCH_EXTS = [".patch_0", ".patch_0.gpu_resources", ".patch_0.stream"];
 const PATCH_FILE1 = "9ba626afa44a3aa3.patch_0";
 const PATCH_FILE2 = "9ba626afa44a3aa3.patch_0.gpu_resources";
 const PATCH_FILE3 = "9ba626afa44a3aa3.patch_0.stream";
 const PATCH_FILES_ARR = [PATCH_FILE1, PATCH_FILE2, PATCH_FILE3];
-const PATCH_STRING = "9ba626afa44a3aa3.patch_0";
-const PATCH_BASE_STRING = "9ba626afa44a3aa3.patch_";
-const PATCH_IDX = PATCH_FILE1.indexOf("0");
-const IGNORED_FILES = [path.join('**', PATCH_FILE1), path.join('**', PATCH_FILE2), path.join('**', PATCH_FILE3)];
-
-const STREAM_ID = `${GAME_ID}-stream`;
-const STREAM_NAME = "Data Stream File (.stream)";
-const STREAM_PATH = path.join("data");
-const streamFileExt = ".stream";
 
 const SOUNDPATCH_ID = `${GAME_ID}-soundpatch`;
 const SOUNDPATCH_NAME = "Data Sound Patch (.patch0)";
-
+const SOUNDPATCH_EXTS = [".patch_0"];
 const SOUNDPATCH_FILE1 = "2e24ba9dd702da5c.patch_0";
 const SOUNDPATCH_FILE2 = "5ab4204a4e0ccbe8.patch_0";
 const SOUNDPATCH_FILE3 = "7c221cf5b12213ac.patch_0";
 const SOUNDPATCH_FILE4 = "9bc33b7058a2bd5a.patch_0";
 const SOUNDPATCH_FILE5 = "e75f556a740e00c9.patch_0";
+const SOUNDPATCH_FILES_ARR = [SOUNDPATCH_FILE1, SOUNDPATCH_FILE2, SOUNDPATCH_FILE3, SOUNDPATCH_FILE4, SOUNDPATCH_FILE5];
+
+const IGNORED_FILES = [path.join('**', PATCH_FILE1), path.join('**', PATCH_FILE2), path.join('**', PATCH_FILE3)];
 
 //Filled in from info above
 const spec = {
@@ -297,7 +301,7 @@ function installPatchMulti(api, files) {
         if (res.action === 'Confirm') {
           const choice = Object.keys(res.input).find(choice => res.input[choice]);
           filtered = filtered.filter(file => 
-            PATCH_EXTS.includes(path.extname(file).toLowerCase()) ||
+            !PATCH_EXTS.includes(path.extname(file).toLowerCase()) ||
             ((path.basename(file) === patchFile) && file.includes(choice)) ||
             (path.basename(file) !== patchFile)
           );
@@ -319,7 +323,7 @@ function installPatchMulti(api, files) {
         accum.push({
           type: 'copy',
           source: iter,
-          destination: iter,
+          destination: path.basename(iter),
         });
       }
       return accum;
@@ -387,6 +391,88 @@ function installSoundPatch(files, gameSpec) {
   instructions.push(setModTypeInstruction);
   //instructions.push(patchModFiles);
   return Promise.resolve({ instructions });
+}
+
+
+function installSoundPatchMulti(api, files) {
+  let hasVariants = false;
+  const patchFiles = files.reduce((accum, iter) => {
+    if (SOUNDPATCH_EXTS.includes(path.extname(iter).toLowerCase())) {
+      const exists = accum[path.basename(iter)] !== undefined;
+      if (exists) {
+        hasVariants = true;
+      }
+      accum[path.basename(iter)] = exists
+        ? accum[path.basename(iter)].concat(iter)
+        : [iter];
+    }
+    return accum;
+  }, {});
+
+  let filtered = files.filter(file =>
+    (
+      (SOUNDPATCH_EXTS.includes(path.extname(file).toLowerCase()))
+    )
+  );
+  const queryVariant = () => {
+    const patch = Object.keys(patchFiles).filter(key => patchFiles[key].length > 1);
+    return Promise.map(patch, patchFile => {
+      return api.showDialog('question', 'Choose Variant', {
+        text: 'This mod has several variants for "{{patch}}" - please '
+            + 'choose the variant you wish to install. (You can choose a '
+            + 'different variant by re-installing the mod)',
+        choices: patchFiles[patchFile].map((iter, idx) => ({ 
+          id: iter,
+          text: iter,
+          value: idx === 0,
+        })),
+        parameters: {
+          patch: patchFile,
+        },
+      }, [
+        { label: 'Cancel' },
+        { label: 'Confirm' },
+      ]).then(res => {
+        if (res.action === 'Confirm') {
+          const choice = Object.keys(res.input).find(choice => res.input[choice]);
+          filtered = filtered.filter(file => 
+            !SOUNDPATCH_EXTS.includes(path.extname(file).toLowerCase()) ||
+            ((path.basename(file) === patchFile) && file.includes(choice)) ||
+            (path.basename(file) !== patchFile)
+          );
+          return Promise.resolve();
+        } else {
+          return new util.UserCanceled();
+        }
+      });
+    })
+  };
+  const generateInstructions = () => {
+    const fileInstructions = filtered.reduce((accum, iter) => {
+      if (!iter.endsWith(path.sep)) {
+        /*accum.push({
+          type: 'attribute',
+          key: 'patchModFiles',
+          value: patchFiles.map(f => path.basename(f)),
+        }); //*/
+        accum.push({
+          type: 'copy',
+          source: iter,
+          destination: path.basename(iter),
+        });
+      }
+      return accum;
+    }, []);
+    const instructions = [{ 
+      type: 'setmodtype',
+      value: SOUNDPATCH_ID,
+    }].concat(fileInstructions);
+    return instructions;
+  }
+
+  const prom = hasVariants ? queryVariant : Promise.resolve;
+  return prom()
+    .then(() => Promise.resolve({ instructions: generateInstructions() }));
 }
 
 //Test for .stream files
@@ -488,16 +574,7 @@ function setupNotification(api) {
         title: 'info',
         action: (dismiss) => {
           api.showDialog('question', MESSAGE, {
-            bbcode: `This extension uses the Load Order you set for "patch0" mods to do automatic file renaming.
-            <br/>
-            <br/>
-            To do this, the extension will create another mod in your mod list ("_merged....."). Please do not enable or uninstall this mod.
-            <br/>
-            <br/>
-            You will also see popups after installing new mods or changing the load order for "Changes Outside of Vortex".
-            <br/>
-            <br/>
-            Please accept and apply those changes for the "_merged" mod when you see the popups.
+            bbcode: `This extension uses the Load Order you set for "patch0" graphics mods to do automatic file renaming.
             <br/>
             <br/>
             Note that this merger is only for graphics mods. Sound mods will not be merged and must be renumbered manually.`
@@ -562,6 +639,10 @@ function loadOrderSuffix(api, mod) {
 //Setup function
 async function setup(discovery, api, gameSpec) {
   setupNotification(api);
+  const state = api.getState();
+  GAME_PATH = discovery.path;
+  STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
+  DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   /*const isAutoDeployOn = api.getState().settings.automation.deploy;
   if (isAutoDeployOn) autoDeployNotification(api); //*/
   return fs.ensureDirWritableAsync(path.join(discovery.path, DATA_PATH));
@@ -618,7 +699,8 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(DATA_ID, 25, testDlbin, installDlbin);
   //context.registerInstaller(PATCH_ID, 30, testPatch, installPatch);
   context.registerInstaller(PATCH_ID, 27, testPatch, (files) => installPatchMulti(context.api, files));
-  context.registerInstaller(SOUNDPATCH_ID, 29, testSoundPatch, installSoundPatch);
+  //context.registerInstaller(SOUNDPATCH_ID, 29, testSoundPatch, installSoundPatch);
+  context.registerInstaller(SOUNDPATCH_ID, 27, testSoundPatch, (files) => installSoundPatchMulti(context.api, files));
   context.registerInstaller(STREAM_ID, 31, testStream, installStream);
 }
 
@@ -649,7 +731,8 @@ const mergeOperation = (filePath, mergePath, context, currentLoadOrder) => {
   const splittedPath = filePath.split(path.sep);
   const fileName = splittedPath.pop();
   const modName = splittedPath.pop();
-  // ? Use RegEx to get actual "patch_XXX" string from fileName ?
+
+  //const splitString = fileName.match(/patch_[0-9]*/); // Use RegEx to get actual "patch_X" string from fileName
   const splitString = "patch_0";
   const [fileStart, fileEnd] = fileName.split(splitString);
 
@@ -678,15 +761,6 @@ const mergeOperation = (filePath, mergePath, context, currentLoadOrder) => {
       });
   }
 }
-
-// const sendReinstallAllModsNotification = (context) => {
-//   context.api.sendNotification({
-//     id: 'reinstall-mods-notification-helldivers2',
-//     type: 'error',
-//     message: 'You need to re-install all your mods',
-//     allowSuppress: true,
-//   });
-// };
 
 const requestDeployment = (context) => {
   context.api.store.dispatch(actions.setDeploymentNecessary(GAME_ID, true));
@@ -743,14 +817,13 @@ function main(context) {
       ),
   });
 
-  context.registerMerge(
+  context.registerMerge( //register merger for .patch0 graphics mods
     (game, discovery) => mergeTest(game, discovery, context),
     (filePath, mergePath) => mergeOperation(filePath, mergePath, context, currentLoadOrder),
     PATCH_ID
   );
 
-  context.once(() => {
-    // put code here that should be run (once) when Vortex starts up
+  context.once(() => { // put code here that should be run (once) when Vortex starts up
     context.api.onAsync('did-deploy', async (profileId, deployment) => {
       const lastActiveHelldiverProfile = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
       if (profileId !== lastActiveHelldiverProfile) return;
