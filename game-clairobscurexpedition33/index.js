@@ -2,8 +2,8 @@
 Name: Clair Obscur: Expedition 33 Vortex Extension
 Structure: UE5 (Xbox-Integrated)
 Author: ChemBoy1
-Version: 0.1.4
-Date: 2025-06-15
+Version: 0.1.5
+Date: 2025-09-25
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -15,7 +15,7 @@ const template = require('string-template');
 const GAME_ID = "clairobscurexpedition33";
 const STEAMAPP_ID = "1903340";
 const EPICAPP_ID = "f18fc860e6b4419e89147983bf769723";
-const GOGAPP_ID = "";
+const GOGAPP_ID = "2125022825";
 const XBOXAPP_ID = "KeplerInteractive.Expedition33";
 const XBOXEXECNAME = "AppExpedition33Shipping";
 const GAME_NAME = "Clair Obscur: Expedition 33";
@@ -35,7 +35,7 @@ const UE4SS_MOD_PATH = path.join('ue4ss', 'Mods');
 //Discovery IDs
 const gameFinderQuery = {
   steam: [{ id: STEAMAPP_ID, prefer: 0 }],
-  //gog: [{ id: GOGAPP_ID }],
+  gog: [{ id: GOGAPP_ID }],
   epic: [{ id: EPICAPP_ID }],
   xbox: [{ id: XBOXAPP_ID }],
 };
@@ -70,6 +70,7 @@ const EXEC_XBOX = `gamelaunchhelper.exe`;
 const XBOX_FILE = `appxmanifest.xml`;
 
 const EXEC_EPIC = "Expedition33_EGS.exe";
+const EXEC_GOG = "SandFallGOG.exe";
 
 //Config and save paths
 //const USER_HOME = util.getVortexPath("home");
@@ -339,6 +340,31 @@ function getExecutable(discoveryPath) {
     SAVE_PATH = path.join(SAVE_PATH_DEFAULT, USERID_FOLDER);
     SAVE_TARGET = `${SAVE_PATH}`;
     return EXEC_EPIC;
+    //return SHIPPING_EXE;
+  };
+  if (isCorrectExec(EXEC_GOG)) {
+    GAME_VERSION = 'gog';
+    EXEC_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_DEFAULT}`;
+    EXEC_TARGET = `{gamePath}\\${EXEC_PATH}`;
+    SHIPPING_EXE = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_DEFAULT}\\${EPIC_CODE_NAME}GOG-${EXEC_FOLDER_DEFAULT}-Shipping.exe`;
+    SCRIPTS_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_DEFAULT}\\${UE4SS_MOD_PATH}`;
+    SCRIPTS_TARGET = `{gamePath}\\${SCRIPTS_PATH}`;
+    CONFIG_PATH = CONFIG_PATH_DEFAULT;
+    CONFIG_TARGET = `${CONFIG_PATH}`;
+    try {
+      const SAVE_ARRAY = fs.readdirSync(SAVE_PATH_DEFAULT);
+      USERID_FOLDER = SAVE_ARRAY.find((element) => 
+      ((/[a-z]/i.test(element) === false))
+       );
+    } catch(err) {
+      USERID_FOLDER = "";
+    }
+    if (USERID_FOLDER === undefined) {
+      USERID_FOLDER = "";
+    }
+    SAVE_PATH = path.join(SAVE_PATH_DEFAULT, USERID_FOLDER);
+    SAVE_TARGET = `${SAVE_PATH}`;
+    return EXEC_GOG;
     //return SHIPPING_EXE;
   };
   //log('warn', `Could not find executable for ${GAME_NAME}.`);
@@ -1482,7 +1508,7 @@ function applyGame(context, gameSpec) {
       if (GAME_PATH !== undefined) {
         CHECK_DATA = checkPartitions(LOCALAPPDATA, GAME_PATH);
       }
-      return ((gameId === GAME_ID) && (CHECK_DATA === true) && (GAME_VERSION === 'steam' || GAME_VERSION === 'epic'));
+      return ((gameId === GAME_ID) && (CHECK_DATA === true) && (GAME_VERSION === 'steam' || GAME_VERSION === 'epic' || GAME_VERSION === 'gog'));
     },
     (game) => pathPattern(context.api, game, SAVE_TARGET), 
     () => Promise.resolve(false), 
