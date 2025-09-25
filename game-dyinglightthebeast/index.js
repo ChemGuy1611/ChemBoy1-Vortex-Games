@@ -370,7 +370,7 @@ function testPak(files, gameId) {
   });
 }
 
-/*Install pak files (merger function version)
+/*Install pak files (Vortex merger function version)
 function installPak(api, files, fileName) {
   const rootCandidate = files.find(file => file.toLowerCase().split(path.sep).includes('ph_ft'));
   const idx = rootCandidate !== undefined
@@ -828,7 +828,7 @@ function applyGame(context, gameSpec) {
   ); //*/
 
   //register mod installers
-  //context.registerInstaller(PAK_ID, 25, testPak, (files, fileName) => installPak(context.api, files, fileName));
+  //context.registerInstaller(PAK_ID, 25, testPak, (files, fileName) => installPak(context.api, files, fileName)); // Change back to this function once Mod Merger Utility is updated to look for paks in subfolders
   context.registerInstaller(PAK_ID, 25, toBlue(testPak), toBlue(installZipContent));
   context.registerInstaller(MERGER_ID, 27, testMergerUtility, installMergerUtility);
   //context.registerInstaller(CONFIG_ID, 43, testConfig, installConfig);
@@ -869,9 +869,9 @@ function main(context) {
     context.api.onAsync('did-deploy', async (profileId, deployment) => {
       const lastActiveProfile = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
       if (profileId !== lastActiveProfile) return;
-      await didDeploy(context.api);
+      await didDeploy(context.api); // comment out once Mod Merger Utility is updated to use a consistent output pak file name
       return deployNotify(context.api);
-    }); //*/
+    }); //*/ comment out once Mod Merger Utility is updated
     context.api.onAsync('did-purge', async (profileId, deployment) => {
       const lastActiveProfile = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
       if (profileId !== lastActiveProfile) return;
