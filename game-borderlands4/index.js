@@ -20,9 +20,9 @@ const USER_HOME = util.getVortexPath("home");
 const GAME_ID = "borderlands4";
 const STEAMAPP_ID = "1285190";
 const STEAMAPP_ID_DEMO = null;
-const EPICAPP_ID = "";
+const EPICAPP_ID = "ea5f9a88243c48908d0205c245fddea0";
 const GOGAPP_ID = null;
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID];
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID];
 const GAME_NAME = "Borderlands 4";
 const GAME_NAME_SHORT = "Borderlands 4";
 const EXEC = "Borderlands4.exe";
@@ -44,7 +44,7 @@ const CONFIGMOD_LOCATION = path.join(USER_HOME, 'Documents', 'My Games');
 const SAVEMOD_LOCATION = CONFIGMOD_LOCATION;
 const SHIPEXE_STRING_DEFAULT = '';
 const SHIPEXE_STRING_EGS = '';
-const SHIPPING_EXE_FILENAME = `${EPIC_CODE_NAME}-${EXEC_FOLDER_NAME}${SHIPEXE_STRING_DEFAULT}-Shipping.exe`;
+const SHIPPING_EXE_FILENAME = `Borderlands4.exe`;
 
 //Settings related to the IO Store UE feature
 let PAKMOD_EXTS = ['.pak'];
@@ -64,9 +64,9 @@ let DOWNLOAD_FOLDER = ''; //Vortex download folder path
 
 //Unreal Engine Game Data
 const UNREALDATA = {
-  modsPath: path.join(EPIC_CODE_NAME, 'Content', 'Paks', '~mods'),
+  modsPath: path.join(EPIC_CODE_NAME, 'Content', 'Paks'),
   fileExt: PAKMOD_EXTS,
-  loadOrder: true,
+  loadOrder: false,
 }
 const UE5_SORTABLE_ID = `${GAME_ID}-uesortablepak`; //this should not be changed to be maintain consistency with other UE5 games
 const UE5_SORTABLE_NAME = 'UE Sortable Pak Mod';
@@ -114,7 +114,7 @@ try {
 if (USERID_FOLDER === undefined) {
   USERID_FOLDER = "";
 } //*/
-const SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
+const SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER, 'Profiles', 'client');
 const SAVE_EXT = ".sav";
 
 const SCRIPTS_ID = `${GAME_ID}-scripts`;
@@ -146,7 +146,8 @@ const UE4SS_URL = "https://github.com/UE4SS-RE/RE-UE4SS/releases";
 //Save Editor
 const SAVE_EDITOR_ID = `${GAME_ID}-saveeditor`;
 const SAVE_EDITOR_NAME = "Save Editor";
-const SAVE_EDITOR_EXEC = "XXX.exe";
+const SAVE_EDITOR_EXEC = "bl4_save_editor1.033a.exe";
+const SAVE_EDITOR_EXEC_PATH = path.join(BINARIES_PATH, 'Borderlands 4 Save Editor', SAVE_EDITOR_EXEC);
 
 //Signature Bypass
 const SIGBYPASS_ID = `${GAME_ID}-sigbypass`;
@@ -1239,11 +1240,13 @@ function installUnrealMod(api, files, gameId) {
       key: 'unrealModFiles',
       value: modFiles.map(f => path.basename(f))
     };
+    /*const indexer = installFiles.find(file => (path.extname(file).toLowerCase() === PAK_EXT));
+    const idx = installFiles.indexOf(path.basename(indexer)); //*/
     let instructions = installFiles.map(file => {
       return {
         type: 'copy',
         source: file,
-        destination: path.basename(file)
+        destination: path.basename(file),
       };
     });
     instructions.push(modType);
@@ -1286,8 +1289,8 @@ function UNREALEXTENSION(context) {
   const testUnrealGame = (gameId, withLoadOrder) => {
     const game = gameId === spec.game.id;
     const unrealModsPath = UNREALDATA.modsPath;
-    const loadOrder = UNREALDATA.loadOrder;
-    return (!!unrealModsPath && game && loadOrder === true);
+    //const loadOrder = UNREALDATA.loadOrder;
+    return (!!unrealModsPath && game);
   };
 
   const testForUnrealMod = (files, gameId) => {
@@ -1316,7 +1319,7 @@ function UNREALEXTENSION(context) {
 
   context.registerModType(UE5_SORTABLE_ID, 25, (gameId) => testUnrealGame(gameId, true), getUnrealModsPath, () => Promise.resolve(false), {
     name: UE5_SORTABLE_NAME,
-    mergeMods: mod => loadOrderPrefix(context.api, mod) + mod.id
+    //mergeMods: mod => loadOrderPrefix(context.api, mod) + mod.id
   });
 }
 
