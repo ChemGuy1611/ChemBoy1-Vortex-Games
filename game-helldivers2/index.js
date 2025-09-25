@@ -259,6 +259,7 @@ function installPatch(files, gameSpec) {
   return Promise.resolve({ instructions });
 }
 
+//install .patch_0 mods with multiple variants
 function installPatchMulti(api, files) {
   let hasVariants = false;
   const patchFiles = files.reduce((accum, iter) => {
@@ -393,7 +394,7 @@ function installSoundPatch(files, gameSpec) {
   return Promise.resolve({ instructions });
 }
 
-
+// install sound .patch_0 mods with multiple variants
 function installSoundPatchMulti(api, files) {
   let hasVariants = false;
   const patchFiles = files.reduce((accum, iter) => {
@@ -702,6 +703,24 @@ function applyGame(context, gameSpec) {
   //context.registerInstaller(SOUNDPATCH_ID, 29, testSoundPatch, installSoundPatch);
   context.registerInstaller(SOUNDPATCH_ID, 27, testSoundPatch, (files) => installSoundPatchMulti(context.api, files));
   context.registerInstaller(STREAM_ID, 31, testStream, installStream);
+
+  //register actions
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
+    const openPath = path.join(__dirname, 'CHANGELOG.md');
+    util.opn(openPath).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
+    const openPath = DOWNLOAD_FOLDER;
+    util.opn(openPath).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
 }
 
 const mergeTest = (game, discovery, context) => {

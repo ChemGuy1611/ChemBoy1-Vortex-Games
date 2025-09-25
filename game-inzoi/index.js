@@ -2,7 +2,7 @@
 Name: inZOI Vortex Extension
 Structure: UE5
 Author: ChemBoy1
-Version: 0.4.0
+Version: 0.3.2
 Date: 2025-09-05
 ////////////////////////////////////////////////*/
 
@@ -11,7 +11,7 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 const fsPromises = require('fs/promises');
-const { jsonrepair } = require('./node_modules/jsonrepair');
+//const { jsonrepair } = require('./node_modules/jsonrepair');
 
 //Specify all information about the game
 const GAME_ID = "inzoi";
@@ -488,9 +488,13 @@ function installPak(api, files, fileName) {
   try { //read mod_manifest.json file to get folder name (game will crash if this doesn't match)
     const JSON_OBJECT = JSON.parse(fs.readFileSync(path.join(fileName, rootPath, UE5KITMOD_FILE)));
     const JSON_MOD_NAME = JSON_OBJECT["ProjectName"];
+    if (JSON_MOD_NAME === undefined) {
+      throw new Error(`"ProjectName" key not found in mod_manifest.json for mod ${MOD_NAME}`);
+    }
     MOD_FOLDER = JSON_MOD_NAME;
   } catch (err) { //mod_manifest.json could not be read.
     log('error', `Could not read ${UE5KITMOD_FILE} file for mod ${MOD_NAME} - ${err}:${err.message}`);
+    api.showErrorNotification(`Could not get "ProjectName" from ${UE5KITMOD_FILE} file for mod ${MOD_NAME}`, `Could not get "ProjectName" from ${UE5KITMOD_FILE} file for mod ${MOD_NAME}. \n You must manually verify the folder above the mod files is named correctly.`, { allowReport: false });
   }
 
   // Remove directories and anything that isn't in the rootPath.
@@ -1047,7 +1051,7 @@ function installTextures(api, files) {
 }
 
 
-//Installer test for Fluffy Mod Manager files
+//Installer test for root folder files
 function testRoot(files, gameId) {
   const isMod = files.some(file => (path.basename(file) === ROOT_FILE));
   let supported = (gameId === spec.game.id) && isMod;
@@ -1065,7 +1069,7 @@ function testRoot(files, gameId) {
   });
 }
 
-//Installer install Fluffy Mod Manger files
+//Installer install root folder files
 function installRoot(api, files) {
   const modFile = files.find(file => (path.basename(file) === ROOT_FILE));
   const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
@@ -2103,13 +2107,12 @@ function main(context) {
   return true;
 }
 
+async function didDeploy(api) { //run on mod purge
+  //await setModkitModsEnabled(api);
+  return Promise.resolve();
+}
+
 //export to Vortex
 module.exports = {
   default: main,
 };
-
-
-async function didDeploy(api) { //run on mod purge
-  await setModkitModsEnabled(api);
-  return Promise.resolve();
-}
