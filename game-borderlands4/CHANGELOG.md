@@ -8,6 +8,7 @@
 
 - Installs pak mods directly to the "OakGame/Content/Paks" folder. This is thanks to Gearbox Software and their patch. This also means Load order is no longer supported.
 - Added Epic version ID and full support.
+- Added tool to launch BL4 Save Editor (by J_SUEY).
 
 ## [0.1.0] - 2025-09-12
 

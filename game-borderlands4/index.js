@@ -263,13 +263,13 @@ const tools = [
     //defaultPrimary: true,
     parameters: []
   }, //*/
-  /*{
+  {
     id: SAVE_EDITOR_ID,
     name: SAVE_EDITOR_NAME,
     logo: `saveeditor.png`,
-    queryPath: () => BINARIES_PATH,
-    executable: () => SAVE_EDITOR_EXEC,
-    requiredFiles: [SAVE_EDITOR_EXEC],
+    //queryPath: () => BINARIES_PATH,
+    executable: () => SAVE_EDITOR_EXEC_PATH,
+    requiredFiles: [SAVE_EDITOR_EXEC_PATH],
     detach: true,
     relative: true,
     exclusive: true,
