@@ -2,8 +2,8 @@
 Name: Dying Light The Beast Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.2.0
-Date: 2025-09-25
+Version: 0.2.1
+Date: 2025-09-26
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -781,6 +781,7 @@ async function setup(discovery, api, gameSpec) {
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   // ASYNC CODE //////////////////////////////////////////
   await downloadMergerUtility(api, gameSpec);
+  //* remove old merger folder if the user has it (temporary, remove after a few releases)
   const MERGER_FOLDER_OLD = path.join(STAGING_FOLDER, '__merged.dyinglightthebeast-pak');
   try {
     await fs.statAsync(MERGER_FOLDER_OLD);
@@ -947,13 +948,13 @@ function deployNotify(api) {
         title: 'More',
         action: (dismiss) => {
           api.showDialog('question', MESSAGE, {
-            text: `For most mods, you must use ${MOD_NAME} to install the mod to the game files after installing with Vortex.\n`
-                + `Mods to install with ${MOD_NAME} will be found at this folder: "${HOTFIX_PATH}".\n`
-                + `Use the included tool to launch ${MOD_NAME} (button below or in "Dashboard" tab).\n`
-                + `You can open the Hotfix Merger WebUI using the button below, or using the button within the folder icon on the Mods toolbar.\n`
+            text: `For pak mods, you must use ${MOD_NAME} to merge all your paks into a single pak after installing with Vortex.\n`
+                + `Use the included tool to launch ${MOD_NAME} (button below, in "Dashboard" tab, or in notification shown after deployment).\n`
+                + `You can run ${MOD_NAME} using the button below, or using the button within the folder icon on the Mods toolbar.\n`
+                + `The use of this tool ensures that all your mods can work together when they make modifications to common files (such as "player_atributes.scr").\n`
           }, [
             {
-              label: 'Run Merger', action: () => {
+              label: 'Run UTM Mod Merger Utility', action: () => {
                 runModManager(api);
                 dismiss();
               }

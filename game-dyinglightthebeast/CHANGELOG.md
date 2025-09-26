@@ -2,8 +2,12 @@
 
 ## Planned Improvements (Not Yet Released)
 
-- Update pak installer after Merger Utility is updated to look for paks in subfolders.
-- Remove pak deletion from source folder on DEPLOY - along with above (leave it for PURGE).
+- Update pak installer (after Merger Utility is updated to look for paks in subfolders).
+- Remove pak deletion from source folder on DEPLOY - along with above (leave it for PURGE) - utility will output to consistent file name.
+
+## [0.2.1] - 2025-09-26
+
+- Fixed undefined variable in the "More" text of the deployment notification to run UTM Mod Merger Utility.
 
 ## [0.2.0] - 2025-09-25
 
