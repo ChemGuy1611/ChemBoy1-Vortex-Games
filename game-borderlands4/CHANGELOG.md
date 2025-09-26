@@ -2,7 +2,12 @@
 
 ## Future Changes (NOT IMPLEMENTED YET)
 
-- None
+- tool to launch bl4-crypt (by Cr4nkSt4r, naked exe file)
+
+## [0.2.1] - 2025-09-26
+
+- Fixed Documents folder discovery to work correctly with OneDrive paths.
+- Added tool to launch BL4-Gear-N-Gun-Editor (by Awsam, Python required).
 
 ## [0.2.0] - 2025-09-25
 

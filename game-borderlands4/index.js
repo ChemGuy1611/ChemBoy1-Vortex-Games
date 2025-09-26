@@ -2,8 +2,8 @@
 Name: Borderlands 4 Vortex Extension
 Structure: UE5 (static exe)
 Author: ChemBoy1
-Version: 0.1.1
-Date: 2025-09-12
+Version: 0.2.1
+Date: 2025-09-26
 //////////////////////////////////////////////////*/
 
 //Import libraries
@@ -11,8 +11,8 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 
-const USER_HOME = util.getVortexPath("home");
-//const DOCUMENTS = util.getVortexPath("documents");
+//const USER_HOME = util.getVortexPath("home");
+const DOCUMENTS = util.getVortexPath("documents");
 //const ROAMINGAPPDATA = util.getVortexPath('appData');
 //const LOCALAPPDATA = util.getVortexPath('localAppData');
 
@@ -40,7 +40,7 @@ const DATA_FOLDER = 'Borderlands 4';
 const CONFIG_FOLDERNAME = "Windows";
 const CONFIG_LOC = 'Documents';
 const SAVE_LOC = 'Documents';
-const CONFIGMOD_LOCATION = path.join(USER_HOME, 'Documents', 'My Games');
+const CONFIGMOD_LOCATION = path.join(DOCUMENTS, 'My Games');
 const SAVEMOD_LOCATION = CONFIGMOD_LOCATION;
 const SHIPEXE_STRING_DEFAULT = '';
 const SHIPEXE_STRING_EGS = '';
@@ -149,6 +149,18 @@ const SAVE_EDITOR_NAME = "Save Editor";
 const SAVE_EDITOR_EXEC = "bl4_save_editor1.033a.exe";
 const SAVE_EDITOR_EXEC_PATH = path.join(BINARIES_PATH, 'Borderlands 4 Save Editor', SAVE_EDITOR_EXEC);
 
+//bl4-crypt Editor
+const CRYPTER_ID = `${GAME_ID}-savecrypter`;
+const CRYPTER_NAME = "bl4-crypt";
+const CRYPTER_EXEC = "bl4-crypt-gui";
+//const CRYPTER_EXEC_PATH = path.join(BINARIES_PATH, 'BL4-Gear-N-Gun-Editor', CRYPTER_EXEC);
+
+//Gear n Gun Editor
+const GUN_EDITOR_ID = `${GAME_ID}-guneditor`;
+const GUN_EDITOR_NAME = "Gear n Gun Editor";
+const GUN_EDITOR_EXEC = "main.py";
+const GUN_EDITOR_EXEC_PATH = path.join(BINARIES_PATH, 'BL4-Gear-N-Gun-Editor', GUN_EDITOR_EXEC);
+
 //Signature Bypass
 const SIGBYPASS_ID = `${GAME_ID}-sigbypass`;
 const SIGBYPASS_NAME = "Sig Bypass";
@@ -249,7 +261,7 @@ const spec = {
 };
 
 //3rd party tools and launchers
-const tools = [
+let tools = [
   {
     id: `${GAME_ID}-customlaunch`,
     name: `Custom Launch`,
@@ -274,6 +286,20 @@ const tools = [
     relative: true,
     exclusive: true,
     //shell: true,
+    //parameters: [],
+  }, //*/
+  // CRYPTER_TOOL is pushed to tools array in setup function
+  {
+    id: GUN_EDITOR_ID,
+    name: GUN_EDITOR_NAME,
+    logo: `guneditor.png`,
+    //queryPath: () => BINARIES_PATH,
+    executable: () => GUN_EDITOR_EXEC_PATH,
+    requiredFiles: [GUN_EDITOR_EXEC_PATH],
+    detach: true,
+    relative: true,
+    exclusive: true,
+    shell: true,
     //parameters: [],
   }, //*/
 ];
@@ -1419,6 +1445,14 @@ async function modFoldersEnsureWritable(gamePath, relPaths) {
   }
 }
 
+function getCrypterExec(api, gameSpec) {
+  const state = api.getState();
+  DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, gameSpec.game.id);
+  const files = fs.readdirSync(DOWNLOAD_FOLDER);
+  const exec = files.find(file => path.basename(file).includes(CRYPTER_EXEC));
+  return path.basename(exec);
+}
+
 //Setup function
 async function setup(discovery, api, gameSpec) {
   // SYNCHRONOUS CODE ////////////////////////////////////
@@ -1427,6 +1461,19 @@ async function setup(discovery, api, gameSpec) {
   STAGING_FOLDER = selectors.installPathForGame(state, gameSpec.game.id);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, gameSpec.game.id);
   CHECK_DATA = checkPartitions(CONFIGMOD_LOCATION, GAME_PATH);
+  /*
+  const CRYPTER_TOOL = {
+    "id": CRYPTER_ID,
+    "name": CRYPTER_NAME,
+    "logo": `crypter.png`,
+    "queryPath": () => DOWNLOAD_FOLDER,
+    "executable": () => getCrypterExec(api, gameSpec),
+    "requiredFiles": [getCrypterExec(api, gameSpec)],
+    "detach": true,
+    "relative": true,
+    "exclusive": true,
+  }
+  tools.push(CRYPTER_TOOL); //*/
   //CHECK_DOCS = checkPartitions(DOCUMENTS, GAME_PATH);
   if (!CHECK_DATA) {
     partitionCheckNotify(api, CHECK_DATA);
