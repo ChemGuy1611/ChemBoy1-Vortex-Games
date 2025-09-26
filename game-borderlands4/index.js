@@ -115,7 +115,7 @@ if (USERID_FOLDER === undefined) {
   USERID_FOLDER = "";
 } //*/
 const SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER, 'Profiles', 'client');
-const SAVE_EXT = ".sav";
+const SAVE_EXTS = [".sav", ".yaml"];
 
 const SCRIPTS_ID = `${GAME_ID}-scripts`;
 const SCRIPTS_NAME = "UE4SS Script Mod";
@@ -832,7 +832,7 @@ function configInstallerNotify(api) {
 
 //Test for save files
 function testSave(files, gameId) {
-  const isMod = files.some(file => (path.extname(file).toLowerCase() === SAVE_EXT));
+  const isMod = files.some(file => SAVE_EXTS.includes(path.extname(file).toLowerCase()));
   let supported = (gameId === spec.game.id) && isMod;
 
   // Test for a mod installer
@@ -850,7 +850,7 @@ function testSave(files, gameId) {
 
 //Install save files
 function installSave(api, files) {
-  const modFile = files.find(file => (path.extname(file).toLowerCase() === SAVE_EXT));
+  const modFile = files.find(file => SAVE_EXTS.includes(path.extname(file).toLowerCase()));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: SAVE_ID };
