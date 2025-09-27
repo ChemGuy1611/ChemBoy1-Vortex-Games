@@ -34,7 +34,7 @@ const EXEC_NAME = "dx2.exe";
 const EXEC = path.join(BINARIES_PATH, EXEC_NAME);
 const EXEC_VISIBLE = path.join(BINARIES_PATH, 'DeusEx2.exe');
 
-const ROOT_FOLDERS = ['System'];
+const ROOT_FOLDERS = ['System', 'content'];
 const BINARIES_FILES = ['dx2ui.ini'];
 
 const DATA_FOLDER = 'Deus Ex - Invisible War';

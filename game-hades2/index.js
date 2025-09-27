@@ -1,10 +1,10 @@
-/*
+/*/////////////////////////////////
 Name: Hades II Vortex Extension
 Structure: 3rd-Party Mod Installer
 Author: ChemBoy1
-Version: 0.1.2
-Date: 01/14/2025
-*/
+Version: 0.1.3
+Date: 2025-09-26
+////////////////////////////////*/
 
 //Import libraries
 const { actions, fs, util, selectors } = require('vortex-api');
@@ -13,7 +13,7 @@ const template = require('string-template');
 
 //Specify all the information about the game
 const STEAMAPP_ID = "1145350";
-const EPICAPP_ID = null;
+const EPICAPP_ID = "07c634c7291a49b5b2455e14b9a83950";
 const GAME_ID = "hades2";
 const GAME_NAME = "Hades II"
 const EXEC = "Ship\\Hades2.exe";
@@ -108,7 +108,7 @@ const spec = {
   "discovery": {
     "ids": [
       STEAMAPP_ID,
-      //EPICAPP_ID,
+      EPICAPP_ID,
     ],
     "names": []
   }
@@ -167,38 +167,50 @@ function makeGetModPath(api, gameSpec) {
     : pathPattern(api, gameSpec.game, gameSpec.game.modPath);
 }
 
-//Find game information by API utility
-async function queryGame() {
-  let game = await util.GameStoreHelper.findByAppId(spec.discovery.ids);
-  return game;
+//Find game installation directory
+function makeFindGame(api, gameSpec) {
+  return () => util.GameStoreHelper.findByAppId(gameSpec.discovery.ids)
+    .then((game) => game.gamePath);
 }
 
-//Find game install location 
-async function queryPath() {
-  let game = await queryGame();
-  return game.gamePath;
-}
-
-//Set launcher requirements
-async function requiresLauncher() {
-  let game = await queryGame();
-
-  if (game.gameStoreId === "steam") {
-    return undefined;
-  }
-
+//set launcher requirements
+async function requiresLauncher(gamePath, store) {
+  /*if (store === 'xbox') {
+      return Promise.resolve({
+        launcher: 'xbox',
+        addInfo: {
+          appId: XBOXAPP_ID,
+          parameters: [{ appExecName: XBOXEXECNAME }],
+          //parameters: [{ appExecName: XBOXEXECNAME }, PARAMETERS_STRING],
+          //launchType: 'gamestore',
+        },
+      });
+  } //*/
+  if (store === 'epic') {
+    return Promise.resolve({
+        launcher: 'epic',
+        addInfo: {
+          appId: EPICAPP_ID,
+          //parameters: PARAMETERS,
+          //launchType: 'gamestore',
+        },
+    });
+  } //*/
   /*
-  if (game.gameStoreId === "epic") {
-    return {
-      launcher: "epic",
+  if (store === 'steam') {
+    return Promise.resolve({
+      launcher: 'steam',
       addInfo: {
-        appId: EPICAPP_ID,
-      },
-    };
-  }
-  //*/
-  return undefined;
+        appId: STEAM_ID,
+        //parameters: PARAMETERS,
+        //launchType: 'gamestore',
+      } //
+    });
+  } //*/
+  return Promise.resolve(undefined);
 }
+
+// AUTOMATIC DOWNLOAD FUNCTIONS ///////////////////////////////////////////////////
 
 //Check if mod injector is installed
 function isModManagerInstalled(api, spec) {
@@ -348,6 +360,8 @@ async function downloadModUtility(api, gameSpec) {
   }
 }
 
+// MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
+
 //Installer test for Mod Importer
 function testModManger(files, gameId) {
   const isMod = files.some(file => path.basename(file).toLocaleLowerCase() === MANAGER_EXEC);
@@ -476,6 +490,8 @@ function installMod(files,fileName) {
   return Promise.resolve({ instructions });
 }
 
+// MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
+
 //Notify User of Setup instructions for Mod Managers
 function setupNotify(api) {
   const NOTIF_ID = `setup-notification-${GAME_ID}`;
@@ -522,9 +538,9 @@ function applyGame(context, gameSpec) {
   //register game
   const game = {
     ...gameSpec.game,
-    queryPath,
+    queryPath: makeFindGame(context.api, gameSpec),
     queryModPath: makeGetModPath(context.api, gameSpec),
-    requiresLauncher,
+    requiresLauncher: requiresLauncher,
     requiresCleanup: true,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     executable: () => gameSpec.game.executable,
@@ -543,16 +559,15 @@ function applyGame(context, gameSpec) {
 
   //register mod installers
   context.registerInstaller(MANAGER_ID, 25, testModManger, installModManager);
-  context.registerInstaller(UTILITY_ID, 30, testModUtility, installModUtility);
+  context.registerInstaller(UTILITY_ID, 27, testModUtility, installModUtility);
   //context.registerInstaller(MOD_ID, 35, testMod, installMod);
 }
 
 //main function
 function main(context) {
   applyGame(context, spec);
-  context.once(() => {
-    // put code here that should be run (once) when Vortex starts up
-
+  context.once(() => { // put code here that should be run (once) when Vortex starts up
+    
   });
   return true;
 }

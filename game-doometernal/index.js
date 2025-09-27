@@ -2,8 +2,8 @@
 Name: DOOM Eternal Vortex Extension
 Structure: 3rd party mod loader
 Author: ChemBoy1
-Version: 0.3.0
-Date: 2025-04-07
+Version: 0.3.1
+Date: 2025-09-27
 ////////////////////////////////////////////////*/
 /*
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣀⣀⣠⣤⣤⣤⡴⣦⡴⣖⠶⣴⠶⡶⣖⡶⣶⢶⣲⡾⠿⢿⡷⣾⢿⣷⣦⢾⣷⣾⣶⣤⣀⣰⣤⣀⡀⠀⠀⢀⣴⣿⡿⡿⣿⣿⣦⣄⠀⠀⣠⣴⣿⡿⢿⡿⣷⣦⡄⠀⠀⢀⣀⣤⣦⣀⣤⣶⣶⣷⣦⣴⡿⢿⡷⣿⠿⡿⣿⣷⢶⣦⢴⡲⣦⢶⡶⢶⡲⣖⡶⣦⣤⣤⣤⣤⣤⣤⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
@@ -69,7 +69,7 @@ const SANDBOX_PATH = path.join("doomSandBox");
 const INJECTOR_ID = "doometernal-injector";
 const INJECTOR_NAME = "EternalModInjector";
 const INJECTOR_FILE = "eternalmodmanager.exe";
-const INJ_DL_URL = `https://gamebanana.com/dl/1316340`;
+const INJ_DL_URL = `https://gamebanana.com/dl/1524087`;
 
 const ROLLBACK_FILE = "doometernalx64vk.exe";
 const KTDE_FILE = "keep the dead eternal - readme - install instructions.rtf";
