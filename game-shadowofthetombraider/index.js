@@ -1,10 +1,10 @@
-/*
+/*///////////////////////////////////////////
 Name: Shadow of the Tomb Raider Vortex Extension
 Structure: 3rd-Party Mod Installer
 Author: ChemBoy1
-Version: 0.4.1
-Date: 03/10/2025
-*/
+Version: 0.4.2
+Date: 2025-09-26
+////////////////////////////////////////////*/
 
 //Import libraries
 const { actions, fs, util, selectors, log } = require('vortex-api');
@@ -14,7 +14,7 @@ const template = require('string-template');
 //Specify all the information about the game
 const STEAMAPP_ID = "750920";
 const EPICAPP_ID = "890d9cf396d04922a1559333df419fed";
-const GOGAPP_ID = "";
+const GOGAPP_ID = "1356518037";
 const XBOXAPP_ID = "39C668CD.TombRaider11BaseGame";
 const XBOXEXECNAME = "Game";
 const GAME_ID = "shadowofthetombraider";
@@ -59,14 +59,14 @@ const spec = {
     ],
     "details": {
       "steamAppId": STEAMAPP_ID,
-      //"gogAppId": GOGAPP_ID,
+      "gogAppId": GOGAPP_ID,
       "epicAppId": EPICAPP_ID,
       "xboxAppId": XBOXAPP_ID,
       "nexusPageId": GAME_ID
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
-      //"GogAPPId": GOGAPP_ID,
+      "GogAPPId": GOGAPP_ID,
       "EpicAPPId": EPICAPP_ID,
       "XboxAPPId": XBOXAPP_ID
     }
@@ -113,7 +113,7 @@ const spec = {
     "ids": [
       STEAMAPP_ID,
       EPICAPP_ID,
-      //GOGAPP_ID,
+      GOGAPP_ID,
       XBOXAPP_ID
     ],
     "names": []

@@ -1,10 +1,10 @@
-/*
+/*///////////////////////////////////////////
 Name: Rise of the Tomb Raider Vortex Extension
 Structure: 3rd-Party Mod Installer
 Author: ChemBoy1
-Version: 0.4.1
-Date: 03/10/2025
-*/
+Version: 0.4.2
+Date: 2025-09-26
+////////////////////////////////////////////*/
 
 //Import libraries
 const { actions, fs, util, selectors } = require('vortex-api');
@@ -14,7 +14,7 @@ const template = require('string-template');
 //Specify all the information about the game
 const STEAMAPP_ID = "391220";
 const EPICAPP_ID = "f7cc1c999ac146f39b356f53e3489514";
-const GOGAPP_ID = "";
+const GOGAPP_ID = "1926077727";
 const XBOXAPP_ID = "39C668CD.RiseoftheTombRaider";
 const XBOXEXECNAME = "App";
 const GAME_ID = "riseofthetombraider";
@@ -57,14 +57,14 @@ const spec = {
     ],
     "details": {
       "steamAppId": STEAMAPP_ID,
-      //"gogAppId": GOGAPP_ID,
+      "gogAppId": GOGAPP_ID,
       "epicAppId": EPICAPP_ID,
       "xboxAppId": XBOXAPP_ID,
       "nexusPageId": GAME_ID
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
-      //"GogAPPId": GOGAPP_ID,
+      "GogAPPId": GOGAPP_ID,
       "EpicAPPId": EPICAPP_ID,
       "XboxAPPId": XBOXAPP_ID
     }
@@ -99,7 +99,7 @@ const spec = {
     "ids": [
       STEAMAPP_ID,
       EPICAPP_ID,
-      //GOGAPP_ID,
+      GOGAPP_ID,
       //XBOXAPP_ID
     ],
     "names": []
