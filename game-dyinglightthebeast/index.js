@@ -2,8 +2,8 @@
 Name: Dying Light The Beast Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.2.1
-Date: 2025-09-26
+Version: 0.3.0
+Date: 2025-09-27
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -829,9 +829,9 @@ function applyGame(context, gameSpec) {
   ); //*/
 
   //register mod installers
-  //context.registerInstaller(PAK_ID, 25, testPak, (files, fileName) => installPak(context.api, files, fileName)); // Change back to this function once Mod Merger Utility is updated to look for paks in subfolders
-  context.registerInstaller(PAK_ID, 25, toBlue(testPak), toBlue(installZipContent));
-  context.registerInstaller(MERGER_ID, 27, testMergerUtility, installMergerUtility);
+  context.registerInstaller(MERGER_ID, 25, testMergerUtility, installMergerUtility);
+  context.registerInstaller(PAK_ID, 27, testPak, (files, fileName) => installPak(context.api, files, fileName)); // Change back to this function once Mod Merger Utility is updated to look for paks in subfolders
+  //context.registerInstaller(PAK_ID, 25, toBlue(testPak), toBlue(installZipContent));
   //context.registerInstaller(CONFIG_ID, 43, testConfig, installConfig);
   //context.registerInstaller(SAVE_ID, 45, testSave, installSave);
   context.registerInstaller(ROOT_ID, 47, testRoot, installRoot);

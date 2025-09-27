@@ -2,8 +2,8 @@
 Name: theHunter: Call of the Wild Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2025-09-01
+Version: 0.1.2
+Date: 2025-09-27
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -61,6 +61,26 @@ const SAVE_STRINGS = [
   "animal_population_",
 ];
 const SAVE_FILES = [
+  "achievements_adf",
+  "achievements_progress_missiondata_adf",
+  "codex_seen_status_adf",
+  "collectibles_adf",
+  "contextual_help_adf",
+  "found_need_zones_adf",
+  "health_component_manager_adf",
+  "hunting_log_adf",
+  "leaderboard_adf",
+  "missions_missiondata_adf",
+  "playerinformation_adf",
+  "regions_adf",
+  "reserveworlddata_adf",
+  "settings_adf",
+  "socialconfig",
+  "statistics_adf",
+  "thp_dog_profile_adf",
+  "thp_player_profile_adf",
+  "tropy_lodges_adf",
+  "worlditemsdata_adf",
   "found_icons_0",
   "found_icons_1",
   "found_icons_2",
@@ -101,6 +121,26 @@ const SAVE_FILES = [
   "animal_population_17",
   "animal_population_18",
   "animal_population_19",
+  "adf_fog_of_war_data_faster_0",
+  "adf_fog_of_war_data_faster_1",
+  "adf_fog_of_war_data_faster_2",
+  "adf_fog_of_war_data_faster_3",
+  "adf_fog_of_war_data_faster_4",
+  "adf_fog_of_war_data_faster_5",
+  "adf_fog_of_war_data_faster_6",
+  "adf_fog_of_war_data_faster_7",
+  "adf_fog_of_war_data_faster_8",
+  "adf_fog_of_war_data_faster_9",
+  "adf_fog_of_war_data_faster_10",
+  "adf_fog_of_war_data_faster_11",
+  "adf_fog_of_war_data_faster_12",
+  "adf_fog_of_war_data_faster_13",
+  "adf_fog_of_war_data_faster_14",
+  "adf_fog_of_war_data_faster_15",
+  "adf_fog_of_war_data_faster_16",
+  "adf_fog_of_war_data_faster_17",
+  "adf_fog_of_war_data_faster_18",
+  "adf_fog_of_war_data_faster_19",
 ];
 
 const APCGUI_ID = `${GAME_ID}-apcguide`;
