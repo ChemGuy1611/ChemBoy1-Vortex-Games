@@ -2,11 +2,12 @@
 
 ## Planned Improvements (Not Yet Released)
 
-- Remove pak deletion from source folder on DEPLOY - along with above (leave it for PURGE) - utility will output to consistent file name.
+- None Planned
 
 ## [0.3.0] - 2025-09-27
 
 - Updated pak installer to no longer re-zip pak mods files (Merger Utility was updated to look for paks in subfolders). Mods are installed in individual folders inside the "ph_ft/mods" folder.
+- Removed pak deletion from "source" folder on deploy (Merger Utility now always outputs "data7.pak" file to "source" folder).
 - Moved UTM Mod Merger Utility installer to top priority so it will always install properly.
 
 ## [0.2.1] - 2025-09-26

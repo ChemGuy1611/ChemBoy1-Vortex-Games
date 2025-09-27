@@ -146,7 +146,7 @@ const UE4SS_URL = "https://github.com/UE4SS-RE/RE-UE4SS/releases";
 //Save Editor
 const SAVE_EDITOR_ID = `${GAME_ID}-saveeditor`;
 const SAVE_EDITOR_NAME = "Save Editor";
-const SAVE_EDITOR_EXEC = "bl4_save_editor1.033a.exe";
+const SAVE_EDITOR_EXEC = "bl4_save_editor1.04a_full.exe";
 const SAVE_EDITOR_EXEC_PATH = path.join(BINARIES_PATH, 'Borderlands 4 Save Editor', SAVE_EDITOR_EXEC);
 
 //bl4-crypt Editor
