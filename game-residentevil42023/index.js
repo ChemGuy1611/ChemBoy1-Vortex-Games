@@ -1,26 +1,33 @@
-/*
-Name: Resident Evil 4 (2023) Vortex Extension
+/*////////////////////////////////////////////
+Name: Resident Evil 4 (2023) + Chainsaw Demo Vortex Extension
 Structure: 3rd Party Mod Manager (Fluffy)
 Author: ChemBoy1
-Version: 0.2.0
-Date: 03/12/2025
-*/
+Version: 0.3.0
+Date: 2025-09-27
+///////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors } = require('vortex-api');
+const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 const Bluebird = require('bluebird');
 
 //Specify all information about the game
 const STEAMAPP_ID = "2050650";
+const STEAMAPP_ID_DEMO = "2231770";
 const GAME_ID = "residentevil42023";
 const GAME_NAME = "Resident Evil 4 (2023)";
 const GAME_NAME_SHORT = "RE4";
 const EXEC = "re4.exe";
+const EXEC_DEMO = "re4demo.exe";
 
 const FLUFFY_FOLDER = "RE4R";
+const FLUFFY_FOLDER_DEMO = "RE4R_Demo";
 const MOD_PATH = path.join("Games", FLUFFY_FOLDER, "Mods");
+const MOD_PATH_DEMO = path.join("Games", FLUFFY_FOLDER_DEMO, "Mods");
+
+let MOD_PATH_USED = null;
+let GAME_PATH = '';
 
 //Information for mod types, tools, and installers
 const ROOT_ID = `re4-root`;
@@ -45,6 +52,15 @@ const FLUFFYPAK_NAME = "Fluffy Pak Mod";
 const FLUFFYMOD_PATH = path.join("Games", FLUFFY_FOLDER, "Mods");
 const FLUFFYMOD_FILE = "modinfo.ini";
 const PAK_EXT = '.pak';
+
+const LOOSELUA_ID = `${GAME_ID}-looselua`;
+const LOOSELUA_NAME = "Loose Lua (REFramework)";
+const LOOSELUA_PATH = path.join(".");
+const LUA_EXT = '.lua';
+const REF_FOLDERS = ['reframework', 'autorun'];
+
+const REQ_FILE = 're_chunk_000.pak';
+
 const IGNORE_CONFLICTS = [path.join('**', 'screenshot.png'), path.join('**', 'screenshot.jpg'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
 const IGNORE_DEPLOY = [path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
 
@@ -54,13 +70,13 @@ const spec = {
     "id": GAME_ID,
     "name": GAME_NAME,
     "shortName": GAME_NAME_SHORT,
-    "executable": EXEC,
+    //"executable": EXEC,
     "logo": `${GAME_ID}.jpg`,
     "mergeMods": true,
-    "modPath": MOD_PATH,
+    //"modPath": MOD_PATH,
     "modPathIsRelative": true,
     "requiredFiles": [
-      EXEC,
+      REQ_FILE,
     ],
     "details": {
       "steamAppId": STEAMAPP_ID,
@@ -81,11 +97,17 @@ const spec = {
       "targetPath": "{gamePath}"
     },
     {
+      "id": LOOSELUA_ID,
+      "name": LOOSELUA_NAME,
+      "priority": "high",
+      "targetPath": `{gamePath}\\${LOOSELUA_PATH}`
+    },
+    /*{
       "id": FLUFFYMOD_ID,
       "name": FLUFFYMOD_NAME,
       "priority": "high",
       "targetPath": `{gamePath}\\${FLUFFYMOD_PATH}`
-    },
+    }, //*/
     {
       "id": FLUFFYPAK_ID,
       "name": FLUFFYPAK_NAME,
@@ -108,6 +130,7 @@ const spec = {
   "discovery": {
     "ids": [
       STEAMAPP_ID,
+      STEAMAPP_ID_DEMO,
     ],
     "names": []
   }
@@ -124,6 +147,19 @@ const tools = [
     detach: true,
     relative: true,
     exclusive: true,
+  },
+  {
+    id: `${GAME_ID}-demolaunch`,
+    name: `Steam Demo Launch`,
+    logo: "exec.png",
+    executable: () => EXEC_DEMO,
+    requiredFiles: [EXEC_DEMO],
+    detach: true,
+    relative: true,
+    exclusive: true,
+    shell: true,
+    defaultPrimary: true,
+    parameters: [],
   },
 ];
 
@@ -143,7 +179,7 @@ function pathPattern(api, game, pattern) {
   return template(pattern, {
     gamePath: (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0 ? void 0 : _a.path,
     documents: util.getVortexPath('documents'),
-    localAppData: process.env['LOCALAPPDATA'],
+    localAppData: util.getVortexPath('localAppData'),
     appData: util.getVortexPath('appData'),
   });
 }
@@ -180,6 +216,42 @@ async function requiresLauncher(gamePath, store) {
   }
   //*/
   return Promise.resolve(undefined);
+}
+
+//Get correct executable for game version
+function getExecutable(gamePath) {
+  const isCorrectExec = (exec) => {
+    try {
+      fs.statSync(path.join(gamePath, exec));
+      return true;
+    }
+    catch (err) {
+      return false;
+    }
+  };
+  if (isCorrectExec(EXEC_DEMO)) {
+    return EXEC_DEMO; 
+  };
+  return EXEC;
+}
+
+//Get correct mod path for game version
+function getModPath(gamePath) {
+  const isCorrectExec = (exec) => {
+    try {
+      fs.statSync(path.join(gamePath, exec));
+      return true;
+    }
+    catch (err) {
+      return false;
+    }
+  };
+  if (isCorrectExec(EXEC_DEMO)) {
+    MOD_PATH_USED = MOD_PATH_DEMO;
+    return MOD_PATH_DEMO; 
+  };
+  MOD_PATH_USED = MOD_PATH;
+  return MOD_PATH;
 }
 
 // AUTOMATIC INSTALLER FUNCTIONS /////////////////////////////////////////////////////////
@@ -554,6 +626,48 @@ function installFluffyPak(files, fileName) {
   return Promise.resolve({ instructions });
 }
 
+//Installer test for mod files
+function testLooseLua(files, gameId) {
+  const isLua = files.some(file => path.extname(file).toLowerCase() === LUA_EXT);
+  const isRefFolder = files.some(file => REF_FOLDERS.includes(path.basename(file).toLowerCase()));
+  let supported = (gameId === spec.game.id) && ( isLua && !isRefFolder );
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Installer install mod files
+function installLooseLua(files) {
+  const modFile = files.find(file => path.extname(file).toLowerCase() === LUA_EXT);
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: LOOSELUA_ID };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join('reframework', 'autorun', file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
 //test for zips
 async function testZipContent(files, gameId) {
   const isFluffy = files.some(file => path.basename(file).toLocaleLowerCase() === FLUFFY_EXEC);
@@ -703,9 +817,11 @@ function runFluffy(api) {
 //Setup function
 async function setup(discovery, api, gameSpec) {
   //setupNotify(api);
+  GAME_PATH = discovery.path;
+  MOD_PATH_USED = getModPath(GAME_PATH);
   await downloadFluffy(api, gameSpec);
   await downloadREFramework(api, gameSpec);
-  return fs.ensureDirWritableAsync(path.join(discovery.path, FLUFFYMOD_PATH));
+  return fs.ensureDirWritableAsync(path.join(GAME_PATH, MOD_PATH_USED));
 }
 
 //Let Vortex know about the game
@@ -714,11 +830,12 @@ function applyGame(context, gameSpec) {
   const game = {
     ...gameSpec.game,
     queryPath: makeFindGame(context.api, gameSpec),
-    queryModPath: makeGetModPath(context.api, gameSpec),
+    queryModPath: getModPath,
     requiresLauncher: requiresLauncher,
     requiresCleanup: true,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
-    executable: () => gameSpec.game.executable,
+    executable: getExecutable,
+    //executable: () => EXEC,
     supportedTools: tools,
   };
   context.registerGame(game);
@@ -732,11 +849,23 @@ function applyGame(context, gameSpec) {
     }, (game) => pathPattern(context.api, game, type.targetPath), () => Promise.resolve(false), { name: type.name });
   });
 
+  //register mod types explicitly
+  context.registerModType(FLUFFYMOD_ID, 35, 
+    (gameId) => {
+      var _a;
+      return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
+    }, 
+    (game) => pathPattern(context.api, game, `{gamePath}\\${MOD_PATH_USED}`), 
+    () => Promise.resolve(false), 
+    { name: FLUFFYMOD_NAME }
+  );
+
   //register mod installers
   context.registerInstaller(FLUFFY_ID, 25, testFluffy, installFluffy);
-  context.registerInstaller(REF_ID, 30, testREF, installREF);
+  context.registerInstaller(REF_ID, 27, testREF, installREF);
   //context.registerInstaller(FLUFFYMOD_ID, 35, testFluffyMod, installFluffyMod);
   //context.registerInstaller(`${FLUFFYMOD_ID}pak`, 40, testFluffyPak, installFluffyPak);
+  context.registerInstaller(LOOSELUA_ID, 43, testLooseLua, installLooseLua);
   context.registerInstaller(`${FLUFFYMOD_ID}zip`, 45, toBlue(testZipContent), toBlue(installZipContent));
   //context.registerInstaller(ROOT_ID, 50, testRoot, installRoot);
 }
@@ -749,7 +878,6 @@ function main(context) {
     context.api.onAsync('did-deploy', async (profileId, deployment) => {
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;
-
       return deployNotify(context.api);
     });
 
