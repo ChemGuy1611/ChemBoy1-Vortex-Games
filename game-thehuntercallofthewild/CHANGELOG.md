@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.1.3] - 2025-09-29
+
+- Version bump to fix incorrect files.
+
 ## [0.1.2] - 2025-09-27
 
 - Completed list of file names for Save Data File installer list.

@@ -2,7 +2,7 @@
 Name: theHunter: Call of the Wild Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.1.2
+Version: 0.1.3
 Date: 2025-09-27
 ///////////////////////////////////////////*/
 
@@ -17,13 +17,13 @@ const DOCUMENTS = util.getVortexPath("documents");
 //const LOCALAPPDATA = util.getVortexPath("localAppData");
 
 //Specify all the information about the game
+const GAME_ID = "thehuntercallofthewild";
 const STEAMAPP_ID = "518790";
 const EPICAPP_ID = "4f0c34d469bb47b2bcf5b377f47ccfe3";
 const GOGAPP_ID = null;
 const XBOXAPP_ID = "AvalancheStudios.theHunterCalloftheWild-Windows10";
 const XBOXEXECNAME = "Game";
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID, XBOXAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
-const GAME_ID = "thehuntercallofthewild";
 const GAME_NAME = "theHunter: Call of the Wild";
 const GAME_NAME_SHORT = "theHunter: CotW";
 const EXEC = "theHunterCotW_F.exe";

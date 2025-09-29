@@ -4,6 +4,11 @@
 
 - None Planned
 
+## [0.2.1] - 2025-09-29
+
+- Added the user id folder (Steam ID) to the save folder path.
+- Added fallback installer to the Binaries folder (used after all other installer checks fail).
+
 ## [0.2.0] - 2025-09-21
 
 - Converted from BL3 Hotfix Merger to Open Hotfix Loader (no need for running exe or using WebUI!).

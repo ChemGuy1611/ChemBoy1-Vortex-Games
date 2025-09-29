@@ -2,8 +2,8 @@
 Name: Borderlands 3 Vortex Extension
 Structure: UE4 Game (Custom)
 Author: ChemBoy1
-Version: 0.2.0
-Date: 2025-09-21
+Version: 0.2.1
+Date: 2025-09-29
 /////////////////////////////////////////*/
 
 //Import libraries
@@ -110,6 +110,7 @@ const SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
 const SAVEEDITOR_ID = `${GAME_ID}-saveeditor`;
 const SAVEEDITOR_NAME = "Save Editor";
 const SAVEEDITOR_EXEC = 'BL3SaveEditor.exe';
+const SAVEEDITOR_EXEC_PATH = path.join(BINARIES_PATH, SAVEEDITOR_EXEC);
 
 const REQ_FILE = EXEC;
 let MODTYPE_FOLDERS = [SDKMOD_PATH, HOTFIX_PATH, PAK_PATH, MOVIES_PATH];
@@ -222,8 +223,8 @@ const tools = [
     id: SAVEEDITOR_ID,
     name: SAVEEDITOR_NAME,
     logo: `saveeditor.png`,
-    executable: () => SAVEEDITOR_EXEC,
-    requiredFiles: [SAVEEDITOR_EXEC],
+    executable: () => SAVEEDITOR_EXEC_PATH,
+    requiredFiles: [SAVEEDITOR_EXEC_PATH],
     detach: true,
     relative: true,
     exclusive: false,
@@ -906,6 +907,41 @@ function installMovies(files) {
   return Promise.resolve({ instructions });
 }
 
+//Fallback installer to Binaries folder
+function testBinaries(files, gameId) {
+  let supported = (gameId === spec.game.id);
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Fallback installer to Binaries folder
+function installBinaries(files) {
+  const setModTypeInstruction = { type: 'setmodtype', value: BINARIES_ID };
+  
+  const filtered = files.filter(file =>
+    (!file.endsWith(path.sep))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
 // MAIN EXTENSION FUNCTION /////////////////////////////////////////////////////
 
 //Notify User to run TFC Installer after deployment
@@ -1032,17 +1068,17 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(ROOT_ID, 43, testRoot, installRoot);
   context.registerInstaller(PAK_ID, 45, testPak, installPak);
   context.registerInstaller(MOVIES_ID, 47, testMovies, installMovies);
-  //context.registerInstaller(BINARIES_ID, 49, testBinaries, installBinaries);
+  context.registerInstaller(BINARIES_ID, 49, testBinaries, installBinaries);
 
   //register actions
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Hotfix Merger WebUI', () => {
+  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Hotfix Merger WebUI', () => {
     const openPath = MERGER_WEBUI_URL;
     util.opn(openPath).catch(() => null);
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
-  });
+  }); //*/
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
     const openPath = CONFIG_PATH;
     util.opn(openPath).catch(() => null);
@@ -1084,7 +1120,6 @@ function main(context) {
     /*context.api.onAsync('did-deploy', async (profileId, deployment) => { 
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;
-
       return deployNotify(context.api);
     }); //*/
   });
