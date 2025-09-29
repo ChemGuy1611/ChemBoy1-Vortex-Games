@@ -995,7 +995,7 @@ async function setup(discovery, api, gameSpec) {
   // ASYNC CODE //////////////////////////////////////////
   await fs.ensureDirWritableAsync(path.join(GAME_PATH, MERGER_PATH));
   await downloadHotfixMerger(api, gameSpec);
-  await downloadPluginLoader(api, gameSpec);
+  //await downloadPluginLoader(api, gameSpec);
   await downloadSdk(api, gameSpec);
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
