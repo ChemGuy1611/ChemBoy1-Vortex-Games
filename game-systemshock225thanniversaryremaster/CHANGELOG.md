@@ -4,6 +4,11 @@
 
 - None planned
 
+## [0.4.6] - 2025-09-28
+
+- Fixed a Vortex crash that could occur for the classic version if the SS2Tool executable was not found in the downloads folder.
+- Added Epic version ID (Remaster) and full support.
+
 ## [0.4.5] - 2025-07-09
 
 - Fixed an issue with the game image displaying in the Vortex Games list prior to downloading the extension and added a unique image for the Classic version.

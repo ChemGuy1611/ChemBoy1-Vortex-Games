@@ -2,8 +2,8 @@
 Name: System Shock 2 (Classic AND 25th Anniversary Remaster) Vortex Extension
 Structure: Basic game w/ mods folder
 Author: ChemBoy1
-Version: 0.4.5
-Date: 2025-07-09
+Version: 0.4.6
+Date: 2025-09-28
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -934,11 +934,13 @@ async function setupClassic(discovery, api, gameSpec) {
   DOWNLOAD_FOLDER_CLASSIC = selectors.downloadPathForGame(state, gameSpec.game.id);
   await downloadSS2Tool(api, gameSpec);
   const SS2TOOL_RUNPATH = path.join(GAME_PATH_CLASSIC, SS2TOOL_EXEC);
+  const SS2TOOL_SOURCEPATH = path.join(DOWNLOAD_FOLDER_CLASSIC, SS2TOOL_EXEC);
   try {
     fs.statSync(SS2TOOL_RUNPATH);
   } catch (err) {
     try {
-      fs.copyAsync(path.join(DOWNLOAD_FOLDER_CLASSIC, SS2TOOL_EXEC), SS2TOOL_RUNPATH);
+      fs.statSync(SS2TOOL_SOURCEPATH);
+      await fs.copyAsync(SS2TOOL_SOURCEPATH, SS2TOOL_RUNPATH);
       log('warn', `Suucessfully copied SS2Tool from "${DOWNLOAD_FOLDER_CLASSIC}" to "${SS2TOOL_RUNPATH}"`);
     } catch (err) {
       log('error', `Failed to copy SS2Tool from "${DOWNLOAD_FOLDER_CLASSIC}" to "${SS2TOOL_RUNPATH}": ${err}`);
@@ -1100,12 +1102,14 @@ function applyGameClassic(context, gameSpec) {
     GAME_PATH_CLASSIC = getDiscoveryPath(context.api, gameSpec);
     DOWNLOAD_FOLDER_CLASSIC = selectors.downloadPathForGame(context.api.getState(), gameSpec.game.id);
     const SS2TOOL_RUNPATH = path.join(GAME_PATH_CLASSIC, SS2TOOL_EXEC);
+    const SS2TOOL_SOURCEPATH = path.join(DOWNLOAD_FOLDER_CLASSIC, SS2TOOL_EXEC);
     try {
       fs.statSync(SS2TOOL_RUNPATH);
       context.api.runExecutable(SS2TOOL_RUNPATH, [], { suggestDeploy: false });
     } catch (err) {
       try {
-        fs.copyAsync(path.join(DOWNLOAD_FOLDER_CLASSIC, SS2TOOL_EXEC), SS2TOOL_RUNPATH);
+        fs.statSync(SS2TOOL_SOURCEPATH);
+        fs.copyAsync(SS2TOOL_SOURCEPATH, SS2TOOL_RUNPATH);
         context.api.runExecutable(SS2TOOL_RUNPATH, [], { suggestDeploy: false });
       } catch (err) {
         context.api.showErrorNotification('Failed to run SS2Tool.', err, { allowReport: false });

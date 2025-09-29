@@ -92,7 +92,20 @@ const PAK_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Paks');
 const PAK_EXT = '.pak';
 
 const CONFIG_PATH = path.join(DOCUMENTS, 'My Games', DATA_FOLDER, 'Saved', 'Config', 'WindowsNoEditor');
-const SAVE_PATH = path.join(DOCUMENTS, 'My Games', DATA_FOLDER, 'Saved', 'SaveGames');
+const SAVE_FOLDER = path.join(DOCUMENTS, 'My Games', DATA_FOLDER, 'Saved', 'SaveGames');
+let USERID_FOLDER = "";
+try {
+  const SAVE_ARRAY = fs.readdirSync(SAVE_FOLDER);
+  USERID_FOLDER = SAVE_ARRAY.find((element) => 
+  ((/[a-z]/i.test(element) === false))
+  );
+} catch(err) {
+  USERID_FOLDER = "";
+}
+if (USERID_FOLDER === undefined) {
+  USERID_FOLDER = "";
+} //*/
+const SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
 
 const SAVEEDITOR_ID = `${GAME_ID}-saveeditor`;
 const SAVEEDITOR_NAME = "Save Editor";
@@ -100,6 +113,7 @@ const SAVEEDITOR_EXEC = 'BL3SaveEditor.exe';
 
 const REQ_FILE = EXEC;
 let MODTYPE_FOLDERS = [SDKMOD_PATH, HOTFIX_PATH, PAK_PATH, MOVIES_PATH];
+
 const IGNORE_CONFLICTS = [path.join('**', 'LICENSE.txt'), path.join('**', 'instructions.txt'), path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
 
 //Filled in from the data above
@@ -981,7 +995,7 @@ async function setup(discovery, api, gameSpec) {
   // ASYNC CODE //////////////////////////////////////////
   await fs.ensureDirWritableAsync(path.join(GAME_PATH, MERGER_PATH));
   await downloadHotfixMerger(api, gameSpec);
-  //await downloadPluginLoader(api, gameSpec);
+  await downloadPluginLoader(api, gameSpec);
   await downloadSdk(api, gameSpec);
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
