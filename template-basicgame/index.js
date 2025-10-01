@@ -149,7 +149,7 @@ const spec = {
 };
 
 //3rd party tools and launchers
-const tools = [
+const tools = [ //accepts: exe, jar, py, vbs, bat
   {
     id: `${GAME_ID}-customlaunch`,
     name: 'Custom Launch',

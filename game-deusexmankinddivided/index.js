@@ -3,7 +3,7 @@ Name: Deus Ex: Mankind Divided Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2025-09-29
+Date: 2025-09-30
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -33,6 +33,7 @@ const EXEC = path.join(BINARIES_PATH, EXEC_NAME);
 
 const ROOT_FOLDERS = ['DLC', 'retail', 'runtime'];
 
+//Config in registery: HKEY_CURRENT_USER\Software\Eidos Montreal\Deus Ex: MD\
 const SAVE_PATH_GOG = path.join(DOCUMENTS, 'My Games', 'Deus Ex Mankind Divided', 'Saves'); //GOG version
 const SAVE_PATH_EPIC = path.join(LOCALAPPDATA, 'Eidos Montreal', 'Deus Ex Mankind Divided'); //Epic version
 const SAVE_PATH_STEAM = path.join('STEAM_FOLDER', 'userdata', 'USER_ID', STEAMAPP_ID, 'remote'); //Steam version
@@ -91,6 +92,10 @@ const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_NAME = "Save";
 const SAVE_EXT = ".bin";
 const SAVE_FILES = ["XXX"];
+
+const ARCHEDIT_ID = `${GAME_ID}-archiveditor`;
+const ARCHEDIT_NAME = "Archive Editor";
+const ARCHEDIT_JAR = "DXMD-Archive-Editor.jar";
 
 const MOD_PATH_DEFAULT = '.';
 const REQ_FILE = EXEC;
@@ -172,6 +177,18 @@ const tools = [
     exclusive: true,
     shell: true,
     //defaultPrimary: true,
+    parameters: PARAMETERS,
+  }, //*/
+  {
+    id: ARCHEDIT_ID,
+    name: ARCHEDIT_NAME,
+    logo: 'archedit.png',
+    executable: () => ARCHEDIT_JAR,
+    requiredFiles: [
+      ARCHEDIT_JAR,
+    ],
+    relative: true,
+    exclusive: true,
     parameters: PARAMETERS,
   }, //*/
 ];
@@ -493,8 +510,16 @@ function applyGame(context, gameSpec) {
   
 
   //register actions
-  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', () => {
-    const openPath = SAVE_PATH;
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder (GOG)', () => {
+    const openPath = SAVE_PATH_GOG;
+    util.opn(openPath).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  }); //*/
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder (Epic)', () => {
+    const openPath = SAVE_PATH_EPIC;
     util.opn(openPath).catch(() => null);
     }, () => {
       const state = context.api.getState();
