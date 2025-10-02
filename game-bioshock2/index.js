@@ -265,7 +265,7 @@ async function downloadTfc(api, gameSpec) {
       let URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
       try { //get the mod files information from Nexus
         const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
-        const fileTime = () => Number.parseInt(input.uploaded_time, 10);
+        const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
         const file = modFiles
           .filter(file => file.category_id === 1)
           .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))[0];

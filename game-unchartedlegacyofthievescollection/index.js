@@ -191,7 +191,7 @@ async function downloadFluffy(api, gameSpec) {
     try {
       //get the mod files information from Nexus
       const modFiles = await api.ext.nexusGetModFiles('site', modPageId);
-      const fileTime = () => Number.parseInt(input.uploaded_time, 10);
+      const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
       const file = modFiles
         .filter(file => file.category_id === 1)
         .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))[0];
