@@ -586,7 +586,7 @@ function testBuildPakBin(files, gameId) {
 //Install .pak or .bin files in "build" folder
 function installBuildPakBin(files, fileName) {
   const modFile = files.find(file => (path.basename(file) === BUILD_FOLDER));
-  const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: BUILD_ID };
 
@@ -629,7 +629,7 @@ function testBin(files, gameId) {
 //Install "bin" folder
 function installBin(files, fileName) {
   const modFile = files.find(file => (path.basename(file) === BIN_FOLDER));
-  const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: BIN_ID };
 
@@ -761,7 +761,7 @@ function testBuild(files, gameId) {
 //Installer install "build" folder (non-Fluffy)
 function installBuild(files) {
   const modFile = files.find(file => (path.basename(file) === BUILD_FOLDER));
-  const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: BUILD_ID };
 

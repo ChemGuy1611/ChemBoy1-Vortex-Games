@@ -449,7 +449,7 @@ function testUnlimited(files, gameId) {
 //Installer install Unlimited mod files
 function installUnlimited(files) {
   const modFile = files.find(file => (path.basename(file).toLowerCase() === UNLIMITED_FILE));
-  const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: LAUNCHERMOD_ID };
 
@@ -490,7 +490,7 @@ function testRoot(files, gameId) {
 //Installer install Materials subfolders
 function installRoot(files) {
   const modFile = files.find(file => ROOT_FOLDERS.includes(path.basename(file)));
-  const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
 
@@ -579,7 +579,7 @@ function testData(files, gameId) {
 //Installer install Data folder
 function installData(files) {
   const modFile = files.find(file => (path.basename(file) === DATA_FILE));
-  const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: DATA_ID };
 
@@ -620,7 +620,7 @@ function testDataSub(files, gameId) {
 //Installer install Data subfolders
 function installDataSub(files) {
   const modFile = files.find(file => DATASUB_FOLDERS.includes(path.basename(file)));
-  const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: DATASUB_ID };
 
@@ -702,7 +702,7 @@ function testMaterials(files, gameId) {
 //Installer install Materials subfolders
 function installMaterials(files) {
   const modFile = files.find(file => MATERIALS_SUB_FOLDERS.includes(path.basename(file)));
-  const MATERIALS_SUB_IDX = `${path.basename(modFile)}\\`
+  const MATERIALS_SUB_IDX = `${path.basename(modFile)}${path.sep}`
   const idx = modFile.indexOf(MATERIALS_SUB_IDX);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MATERIALS_SUB_ID };

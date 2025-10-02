@@ -456,7 +456,7 @@ function testScripts(files, gameId) {
 //Install UE4SS Script files
 function installScripts(files, fileName) {
   const modFile = files.find(file => (path.basename(file) === SCRIPTS_FILE));
-  const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: SCRIPTS_ID };
   const MOD_NAME = path.basename(fileName);

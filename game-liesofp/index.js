@@ -346,7 +346,7 @@ function testRoot(files, gameId) {
 //Installer install Fluffy Mod Manger files
 function installRoot(files) {
   const modFile = files.find(file => path.basename(file) === ROOT_FILE);
-  const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
 

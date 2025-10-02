@@ -449,7 +449,7 @@ function testRoot(files, gameId) {
 //Installer install Root folder files
 function installRoot(files) {
   const modFile = files.find(file => ROOT_FOLDERS.includes(path.basename(file)));
-  const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
 
@@ -490,7 +490,7 @@ function testLocal(files, gameId) {
 //Installer install Root folder files
 function installLocal(files) {
   const modFile = files.find(file => path.basename(file) === LOCAL_FILE);
-  const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: LOCAL_ID };
 
@@ -531,7 +531,7 @@ function testLocalSub(files, gameId) {
 //Installer install Root folder files
 function installLocalSub(files) {
   const modFile = files.find(file => LOCALSUB_FOLDERS.includes(path.basename(file)));
-  const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: LOCALSUB_ID };
 

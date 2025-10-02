@@ -511,7 +511,7 @@ function testExtracted(files, gameId) {
 //Install "Extracted" folder
 function installExtracted(files) {
   const modFile = files.find(file => (path.basename(file) === EXTRACTED_FOLDER));
-  const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: EXTRACTED_ID };
 
@@ -551,7 +551,7 @@ function testForgeFolder(files, gameId) {
 //Install ".forge" containing folder name
 function installForgeFolder(files) {
   const modFile = files.find(file => path.basename(file).includes(FORGEFOLDER_STRING));
-  const MODFILE_IDX = `${path.basename(modFile)}\\`
+  const MODFILE_IDX = `${path.basename(modFile)}${path.sep}`
   const idx = modFile.indexOf(MODFILE_IDX);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: FORGEFOLDER_ID };
@@ -593,7 +593,7 @@ function testDataFolder(files, gameId) {
 //Install ".data" containing folder name
 function installDataFolder(api, files, fileName) {
   const modFile = files.find(file => path.basename(file).includes(DATAFOLDER_STRING));
-  const MODFILE_IDX = `${path.basename(modFile)}\\`
+  const MODFILE_IDX = `${path.basename(modFile)}${path.sep}`
   const idx = modFile.indexOf(MODFILE_IDX);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: DATAFOLDER_ID };
@@ -719,7 +719,7 @@ function testRoot(files, gameId) {
 //Installer install Root folder files
 function installRoot(files) {
   const modFile = files.find(file => ROOT_FOLDERS.includes(path.basename(file)));
-  const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
 

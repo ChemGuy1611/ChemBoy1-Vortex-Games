@@ -567,7 +567,7 @@ function testManagerMod(files, gameId) {
 function installManagerMod(files, fileName) {
   //const modFile = files.find(file => MANAGERMOD_EXTS.includes(path.extname(file).toLowerCase()));
   const modFile = files.find(file => path.basename(file).includes('.drm'));
-  const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const MOD_NAME = path.basename(fileName);
   let MOD_FOLDER = path.basename(rootPath);

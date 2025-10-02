@@ -391,7 +391,7 @@ function testModFolder(files, gameId) {
 //Installer install Root folder files
 function installModFolder(files) {
   const modFile = files.find(file => MODFOLDER_FOLDERS.includes(path.basename(file).toLowerCase()));
-  const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MODFOLDER_ID };
 

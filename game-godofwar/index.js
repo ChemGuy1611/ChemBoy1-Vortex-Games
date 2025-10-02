@@ -235,7 +235,7 @@ function testData(files, gameId) {
 //Installer install Root folder files
 function installData(files) {
   const modFile = files.find(file => (path.basename(file) === DATA_FILE));
-  const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: DATA_ID };
 
@@ -275,7 +275,7 @@ function testPatch(files, gameId) {
 //Installer install Root folder files
 function installPatch(files) {
   const modFile = files.find(file => (path.basename(file) === PATCH_FILE));
-  const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: PATCH_ID };
 
@@ -315,7 +315,7 @@ function testExecsub(files, gameId) {
 //Installer install Root folder files
 function installExecsub(files) {
   const modFile = files.find(file => EXECSUB_FOLDERS.includes(path.basename(file)));
-  const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: EXECSUB_ID };
 

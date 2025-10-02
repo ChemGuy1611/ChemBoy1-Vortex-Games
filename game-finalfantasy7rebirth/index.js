@@ -342,7 +342,7 @@ function testUe4ssCombo(files, gameId) {
 //Install save files
 function installUe4ssCombo(files, fileName) {
   const modFile = files.find(file => (path.basename(file) === ROOT_FILE));
-  const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: UE4SSCOMBO_ID };
 
@@ -426,7 +426,7 @@ function testModLoader(files, gameId) {
 //Install Mod Loader
 function installModLoader(files) {
   const modFile = files.find(file => (path.basename(file) === MODLOADER_FILE));
-  const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MODLOADER_ID };
 
@@ -559,7 +559,7 @@ function testScripts(files, gameId) {
 //Install UE4SS Script files
 function installScripts(files, fileName) {
   const modFile = files.find(file => (path.basename(file) === SCRIPTS_FILE));
-  const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: SCRIPTS_ID };
   const MOD_NAME = path.basename(fileName);
@@ -624,7 +624,7 @@ function testDll(files, gameId) {
 //Install UE4SS DLL files
 function installDll(files, fileName) {
   const modFile = files.find(file => (path.basename(file) === DLL_FILE));
-  const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: DLL_ID };
   const MOD_NAME = path.basename(fileName);
@@ -687,7 +687,7 @@ function testRoot(files, gameId) {
 //Installer install Fluffy Mod Manger files
 function installRoot(files) {
   const modFile = files.find(file => (path.basename(file) === ROOT_FILE));
-  const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
 

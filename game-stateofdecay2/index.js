@@ -490,7 +490,7 @@ function testCooked(files, gameId) {
 //Installer install Cooked mods
 function installCooked(files) {
   const modFile = files.find(file => (path.basename(file) === COOKED_FILE));
-  const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: COOKED_ID };
 
@@ -532,7 +532,7 @@ function testRoot(files, gameId) {
 //Installer install Cooked mods
 function installRoot(files) {
   const modFile = files.find(file => (path.basename(file) === ROOT_FILE));
-  const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
 

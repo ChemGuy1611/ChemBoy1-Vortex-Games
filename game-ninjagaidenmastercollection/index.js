@@ -880,7 +880,7 @@ function testDatabin(files, gameId) {
 //Installer install mod files
 function installDatabin(files) {
   const modFile = files.find(file => path.basename(file) === DATABIN_FOLDER);
-  const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: DATABIN_ID };
 
@@ -914,7 +914,7 @@ function testDatabinSub1(files, gameId) {
 //Installer install Root folder files
 function installDatabinSub1(files) {
   const modFile = files.find(file => DATABINSUB_FOLDERS1.includes(path.basename(file)));
-  const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: DATABINSUB_ID1 };
 
@@ -948,7 +948,7 @@ function testDatabinSub23(files, gameId) {
 //Installer install Root folder files
 function installDatabinSub23(files) {
   const modFile = files.find(file => DATABINSUB_FOLDERS23.includes(path.basename(file)));
-  const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: DATABINSUB_ID23 };
 

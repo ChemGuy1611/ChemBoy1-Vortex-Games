@@ -375,7 +375,7 @@ function testUe4ssCombo(files, gameId) {
 //Install UE4SS Script-LogicMods combo files
 function installUe4ssCombo(api, files) {
   const modFile = files.find(file => (path.basename(file) === ROOT_FILE));
-  const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: UE4SSCOMBO_ID };
 
@@ -630,7 +630,7 @@ function testScripts(files, gameId) {
 //Install UE4SS Script files
 function installScripts(api, files, fileName) {
   const modFile = files.find(file => (path.basename(file) === SCRIPTS_FILE));
-  const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: SCRIPTS_ID };
   const MOD_NAME = path.basename(fileName);
@@ -702,7 +702,7 @@ function testDll(files, gameId) {
 //Install UE4SS DLL files
 function installDll(api, files, fileName) {
   const modFile = files.find(file => (path.basename(file) === DLL_FILE));
-  const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: DLL_ID };
   const MOD_NAME = path.basename(fileName);
@@ -773,7 +773,7 @@ function testCreations(files, gameId) {
 //Install Creations folder
 function installCreations(api, files) {
   const modFile = files.find(file => (path.basename(file) === CREATIONS_FILE));
-  const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: CREATIONS_ID };
   
@@ -813,7 +813,7 @@ function testAiGenerated(files, gameId) {
 //Install Creations folder
 function installAiGenerated(api, files) {
   const modFile = files.find(file => (path.basename(file) === AIGENERATED_FILE));
-  const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: AIGENERATED_ID };
   
@@ -853,7 +853,7 @@ function testCanvas(files, gameId) {
 //Install Creations folder
 function installCanvas(api, files) {
   const modFile = files.find(file => (path.basename(file) === CANVAS_FILE));
-  const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: CANVAS_ID };
   
@@ -1072,7 +1072,7 @@ function testRoot(files, gameId) {
 //Installer install root folder files
 function installRoot(api, files) {
   const modFile = files.find(file => (path.basename(file) === ROOT_FILE));
-  const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
 

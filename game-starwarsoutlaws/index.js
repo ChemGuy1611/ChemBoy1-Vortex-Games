@@ -300,7 +300,7 @@ function testDataSub(files, gameId) {
 //Installer install data subfolder
 function installDataSub(files) {
   const modFile = files.find(file => DATASUB_FOLDERS.includes(path.basename(file)));
-  const DATASUB_IDX = `${path.basename(modFile)}\\`
+  const DATASUB_IDX = `${path.basename(modFile)}${path.sep}`
   const idx = modFile.indexOf(DATASUB_IDX);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: DATASUB_ID };

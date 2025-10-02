@@ -432,7 +432,7 @@ function testRoot(files, gameId) {
 function installRoot(files) {
   const MOD_TYPE = ROOT_ID;
   const modFile = files.find(file => ROOT_FOLDERS.includes(path.basename(file)));
-  const ROOT_IDX = `${path.basename(modFile)}\\`
+  const ROOT_IDX = `${path.basename(modFile)}${path.sep}`
   const idx = modFile.indexOf(ROOT_IDX);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };

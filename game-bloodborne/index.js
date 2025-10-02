@@ -310,7 +310,7 @@ function testDvdRootPs4(files, gameId) {
 //Installer install game data files
 function installDvdRootPs4(files) {
   const modFile = files.find(file => DVDROOTPS4_FOLDERS.includes(path.basename(file)));
-  const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: DVDROOTPS4_ID };
 

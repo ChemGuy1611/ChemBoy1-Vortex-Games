@@ -432,7 +432,7 @@ function testFluffyBuild(files, gameId) {
 //Install .pak files in "build" folder
 function installFluffyBuild(files, fileName) {
   const modFile = files.find(file => (path.basename(file) === BUILD_FOLDER));
-  const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: FLUFFYMOD_ID };
   const MOD_NAME = path.basename(fileName);
@@ -479,7 +479,7 @@ function testFluffyBin(files, gameId) {
 //Install .bin files from "build" folder
 function installFluffyBin(files, fileName) {
   const modFile = files.find(file => (path.basename(file) === BIN_FOLDER));
-  const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: FLUFFYMOD_ID };
   const MOD_NAME = path.basename(fileName);
@@ -571,7 +571,7 @@ function testBuild(files, gameId) {
 //Installer install "build" folder (non-Fluffy)
 function installBuild(files) {
   const modFile = files.find(file => (path.basename(file) === BUILD_FOLDER));
-  const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: BUILD_ID };
 

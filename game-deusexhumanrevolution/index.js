@@ -370,7 +370,7 @@ async function downloadHook(api, gameSpec) {
       let URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
       try { //get the mod files information from Nexus
         const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
-        const fileTime = () => Number.parseInt(input.uploaded_time, 10);
+        const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
         const file = modFiles
           .filter(file => file.category_id === 1)
           .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))[0];
@@ -382,6 +382,7 @@ async function downloadHook(api, gameSpec) {
       } catch (err) { // use defined file ID if input is undefined above
         FILE = FILE_ID;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+        log('warn', `Downloading ${MOD_NAME} from Nexus used fallback file ID`);
       } //*/
       const dlInfo = { //Download the mod
         game: GAME_DOMAIN,

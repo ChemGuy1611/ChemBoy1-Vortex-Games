@@ -251,7 +251,7 @@ function testDML(files, gameId) {
 //Installer install DML files
 function installDML(files) {
   const modFile = files.find(file => (path.basename(file) === DML_TOP_FOLDER));
-  const idx = modFile.indexOf(`${path.basename(modFile)}\\`);
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: DML_ID };
 
