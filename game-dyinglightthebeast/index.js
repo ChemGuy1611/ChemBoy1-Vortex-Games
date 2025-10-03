@@ -872,7 +872,7 @@ function main(context) {
       if (profileId !== lastActiveProfile) return;
       //await didDeploy(context.api); // commented out now that Mod Merger Utility updated to always output data7.pak
       return deployNotify(context.api);
-    }); //*/ comment out once Mod Merger Utility is updated
+    });
     context.api.onAsync('did-purge', async (profileId, deployment) => {
       const lastActiveProfile = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
       if (profileId !== lastActiveProfile) return;

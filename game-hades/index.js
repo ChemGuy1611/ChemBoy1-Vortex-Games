@@ -41,6 +41,7 @@ const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = `Root Game Folder`;
 
 const MANAGER_ID = `${GAME_ID}-manager`;
+const MANAGER_ID_TOOL = "HadesModImporter";
 const MANAGER_NAME = `Mod Importer`;
 const MANAGER_PATH = path.join("Content");
 const MANAGER_EXEC = "modimporter.exe";
@@ -131,8 +132,8 @@ const spec = {
 //3rd party tools and launchers
 const tools = [
   {
-    id: "HadesModImporter",
-    name: "Mod Importer",
+    id: MANAGER_ID_TOOL,
+    name: MANAGER_NAME,
     logo: "modimporter.png",
     executable: () => MANAGER_EXEC,
     requiredFiles: [MANAGER_EXEC],
@@ -553,6 +554,75 @@ function setupNotify(api) {
   });    
 }
 
+//Notify User to run Mod Merger Utility after deployment
+function deployNotify(api) {
+  const NOTIF_ID = `${GAME_ID}-deploy`;
+  const MOD_NAME = MANAGER_NAME;
+  const MESSAGE = `Use ${MOD_NAME} to Install Mods`;
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'warning',
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: 'Run Importer',
+        action: (dismiss) => {
+          runModManager(api);
+          dismiss();
+        },
+      },
+      {
+        title: 'More',
+        action: (dismiss) => {
+          api.showDialog('question', MESSAGE, {
+            text: `For pak mods, you must use ${MOD_NAME} to merge all your paks into a single pak after installing with Vortex.\n`
+                + `Use the included tool to launch ${MOD_NAME} (button below, in "Dashboard" tab, or in notification shown after deployment).\n`
+                + `You can run ${MOD_NAME} using the button below, or using the button within the folder icon on the Mods toolbar.\n`
+                + `The use of this tool ensures that all your mods can work together when they make modifications to common files (such as "player_atributes.scr").\n`
+          }, [
+            {
+              label: 'Run Mod Importer', action: () => {
+                runModManager(api);
+                dismiss();
+              }
+            },
+            { label: 'Continue', action: () => dismiss() },
+            {
+              label: 'Never Show Again', action: () => {
+                api.suppressNotification(NOTIF_ID);
+                dismiss();
+              }
+            },
+          ]);
+        },
+      },
+    ],
+  });
+}
+
+function runModManager(api) {
+  const TOOL_ID = MANAGER_ID_TOOL;
+  const TOOL_NAME = MANAGER_NAME;
+  const state = api.store.getState();
+  const tool = util.getSafe(state, ['settings', 'gameMode', 'discovered', GAME_ID, 'tools', TOOL_ID], undefined);
+
+  try {
+    const TOOL_PATH = tool.path;
+    if (TOOL_PATH !== undefined) {
+      return api.runExecutable(TOOL_PATH, [], { suggestDeploy: false, shell: true })
+        .catch(err => api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err,
+          { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 })
+        );
+    }
+    else {
+      return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, `Path to ${TOOL_NAME} executable could not be found. Ensure ${TOOL_NAME} is installed through Vortex.`);
+    }
+  } catch (err) {
+    return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 });
+  }
+}
+
 //Setup function
 async function setup(discovery, api, gameSpec) {
   setupNotify(api);
@@ -596,9 +666,12 @@ function applyGame(context, gameSpec) {
 //main function
 function main(context) {
   applyGame(context, spec);
-  context.once(() => {
-    // put code here that should be run (once) when Vortex starts up
-
+  context.once(() => { // put code here that should be run (once) when Vortex starts up
+    context.api.onAsync('did-deploy', async (profileId, deployment) => {
+      const lastActiveProfile = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
+      if (profileId !== lastActiveProfile) return;
+      return deployNotify(context.api);
+    });
   });
   return true;
 }
