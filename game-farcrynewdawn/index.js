@@ -1,9 +1,9 @@
 /*///////////////////////////////////////////
-Name: Far Cry Primal Vortex Extension
+Name: Far Cry New Dawn Vortex Extension
 Structure: Far Cry Game (Mod Installer)
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2025-10-03
+Date: 2025-10-04
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -16,23 +16,20 @@ const winapi = require('winapi-bindings');
 const DOCUMENTS = util.getVortexPath("documents");
 
 //Specify all the information about the game
-const GAME_ID = "farcryprimal";
-const STEAMAPP_ID = "371660";
-const UPLAYAPP_ID = "2010"; //2029
+const GAME_ID = "farcrynewdawn";
+const STEAMAPP_ID = "939960";
+const UPLAYAPP_ID = "5210"; //5211
+const GAME_NAME = "Far Cry New Dawn";
+const GAME_NAME_SHORT = "FCND";
 
 const BIN_PATH = "bin";
-const EXEC_NAME = "FCPrimal.exe";
-const EXEC = path.join(BIN_PATH, EXEC_NAME);
-const GAME_NAME = "Far Cry Primal";
-const GAME_NAME_SHORT = "FC Primal";
-const FC = 'fcp';
-const MI_EXEC = "FCPModInstaller.exe";
-const DB_URL = `https://mods.farcry.info/${FC}`;
+const DATA_PATH = "data_final";
+const EXEC_NAME = "FarCryNewDawn.exe";
+const FC = 'fcnd';
+const MI_EXEC = "FCNDModInstaller.exe";
+const MIMOD_FOLDER = "ModifiedFilesFCND";
 
-const MI_PATH = "FCModInstaller";
-const DATA_PATH = "data_win32";
-const MIMOD_PATH = path.join(MI_PATH, "ModifiedFilesFCP");
-const DATA_FOLDER = "Far Cry Primal";
+const DATA_FOLDER = "Far Cry New Dawn";
 const XML_PAGE_NO = 0;
 const XML_FILE_NO = 0;
 
@@ -40,6 +37,9 @@ let GAME_PATH = null;
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 let SAVE_PATH = null;
+
+const EXEC = path.join(BIN_PATH, EXEC_NAME);
+const DB_URL = `https://mods.farcry.info/${FC}`;
 
 //Info for mod types and installers
 const ROOT_ID = `${GAME_ID}-root`;
@@ -55,13 +55,25 @@ const DATA_EXTS = [".dat", ".fat"];
 
 const MI_ID = `${GAME_ID}-modinstaller`;
 const MI_NAME = "FC Mod Installer";
+const MI_PATH = "FCModInstaller";
 const MI_FILE = "fcmodinstaller.exe";
 const MI_URL = "https://downloads.fcmodding.com/files/FCModInstaller.zip";
 const MI_URL_ERR = "https://downloads.fcmodding.com/all/mod-installer/";
 
 const XML_ID = `${GAME_ID}-xml`;
 const XML_NAME = "XML Settings Mod";
-const XML_PATH = path.join(DOCUMENTS, "My Games", DATA_FOLDER);
+const XML_FOLDER = path.join(DOCUMENTS, "My Games", DATA_FOLDER);
+let USERID_FOLDER = "";
+try {
+  const ARRAY = fs.readdirSync(XML_FOLDER);
+  USERID_FOLDER = ARRAY[0];
+} catch(err) {
+  USERID_FOLDER = "";
+}
+if (USERID_FOLDER === undefined) {
+  USERID_FOLDER = "";
+}
+const XML_PATH = path.join(XML_FOLDER, USERID_FOLDER);
 const XML_FILE = "gamerprofile.xml";
 const XML_EXT = ".xml";
 
@@ -69,6 +81,7 @@ const MIMOD_ID = `${GAME_ID}-mimod`;
 const MIMOD_NAME = "FCMI Mod (.a2/.a3/.a4/.a5/.bin)";
 const MIMODA3_ID = `${GAME_ID}-mimoda3`;
 const MIMODA3_NAME = "Repacked FCMI Mod";
+const MIMOD_PATH = path.join(MI_PATH, MIMOD_FOLDER);
 
 const MIMOD_EXTA2 = ".a2";
 const MIMOD_EXTA3 = ".a3";
@@ -766,8 +779,8 @@ function toBlue(func) {
 async function setup(discovery, api, gameSpec) {
   // SYNCHRONOUS CODE ////////////////////////////////////
   setupNotify(api);
-  const state = api.getState();
   SAVE_PATH = getSavePath();
+  const state = api.getState();
   GAME_PATH = discovery.path;
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);

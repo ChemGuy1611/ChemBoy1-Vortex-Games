@@ -11,13 +11,14 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 const Bluebird = require('bluebird');
+const winapi = require('winapi-bindings');
 
 const DOCUMENTS = util.getVortexPath("documents");
 
 //Specify all the information about the game
 const GAME_ID = "farcry4";
 const STEAMAPP_ID = "298110";
-const UPLAYAPP_ID = "420";
+const UPLAYAPP_ID = "420"; //969, 856, 971
 const GAME_NAME = "Far Cry 4";
 const GAME_NAME_SHORT = "FC4";
 
@@ -35,6 +36,7 @@ const XML_FILE_NO = 0;
 let GAME_PATH = null;
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
+let SAVE_PATH = null;
 
 const EXEC = path.join(BIN_PATH, EXEC_NAME);
 const DB_URL = `https://mods.farcry.info/${FC}`;
@@ -261,6 +263,24 @@ function makeFindGame(api, gameSpec) {
   }
 }
 
+//Find the save folder (inside Ubisoft Launcher install path)
+function getSavePath() {
+  try {
+    const instPath = winapi.RegGetValue(
+      'HKEY_LOCAL_MACHINE',
+      `SOFTWARE\\WOW6432Node\\Ubisoft\\Launcher`,
+        'InstallDir');
+    if (!instPath) {
+      throw new Error('empty registry key');
+    }
+    const REG_PATH = instPath.value;
+    SAVE_PATH = path.join(REG_PATH, 'savegames', USERID_FOLDER, UPLAYAPP_ID);
+    return SAVE_PATH;
+  } catch (err) {
+    log('error', `Could not get Ubisoft Launcher install path from registry to set the Saves directory: ${err}`);
+  }
+}
+
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
 
 //Installer test for Mod Installer
@@ -323,7 +343,7 @@ async function testMiModA3(files, gameId) {
 }
 
 //Installer install .a3 files
-async function installMiModA3(files, gameSpec, destinationPath) {
+async function installMiModA3(files, destinationPath) {
   const setModTypeInstruction = { type: 'setmodtype', value: MIMODA3_ID };
 
   //Repack .a3 files since Vortex forcibly extracts them as archives for some reason...
@@ -360,7 +380,7 @@ function testMiMod(files, gameId) {
 }
 
 //Installer install mod installer .a2 and .bin mod files
-function installMiMod(files, gameSpec) {
+function installMiMod(files) {
   //const modFile = files.find(file => path.extname(file).toLowerCase() === MIMOD_EXTA2 || MIMOD_EXTA3 || MIMOD_EXTBIN);
   const modFile = files.find(file => MIMOD_EXTS.includes(path.extname(file).toLowerCase()));
   const idx = modFile.indexOf(path.basename(modFile));
@@ -484,7 +504,7 @@ function testData(files, gameId) {
 }
 
 //Installer install .dat and .fat files
-function installData(files, gameSpec) {
+function installData(files) {
   const modFile = files.find(file => DATA_EXTS.includes(path.extname(file).toLowerCase()));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
@@ -526,7 +546,7 @@ function testBin(files, gameId) {
 }
 
 //Installer install .dll files
-function installBin(files, gameSpec) {
+function installBin(files) {
   const modFile = files.find(file => path.extname(file).toLowerCase() === BIN_EXT);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
@@ -759,6 +779,7 @@ function toBlue(func) {
 async function setup(discovery, api, gameSpec) {
   // SYNCHRONOUS CODE ////////////////////////////////////
   setupNotify(api);
+  SAVE_PATH = getSavePath();
   const state = api.getState();
   GAME_PATH = discovery.path;
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
@@ -822,6 +843,15 @@ function applyGame(context, gameSpec) {
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
     const openPath = XML_PATH;
+    util.opn(openPath).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', () => {
+    SAVE_PATH = getSavePath();
+    const openPath = SAVE_PATH;
     util.opn(openPath).catch(() => null);
     }, () => {
       const state = context.api.getState();

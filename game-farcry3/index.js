@@ -2,8 +2,8 @@
 Name: Far Cry 3 Vortex Extension
 Structure: Basic Game (Mod Installer)
 Author: ChemBoy1
-Version: 0.2.0
-Date: 2025-10-03
+Version: 0.2.1
+Date: 2025-10-04
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -11,6 +11,7 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 const Bluebird = require('bluebird');
+const winapi = require('winapi-bindings');
 
 const DOCUMENTS = util.getVortexPath("documents");
 
@@ -28,6 +29,7 @@ const GAME_NAME_SHORT = "FC3";
 let GAME_PATH = null;
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
+let SAVE_PATH = null;
 
 //Info for mod types and installers
 const ROOT_ID = `${GAME_ID}-root`;
@@ -285,6 +287,24 @@ function makeFindGame(api, gameSpec) {
   }
 }
 
+//Find the save folder (inside Ubisoft Launcher install path)
+function getSavePath() {
+  try {
+    const instPath = winapi.RegGetValue(
+      'HKEY_LOCAL_MACHINE',
+      `SOFTWARE\\WOW6432Node\\Ubisoft\\Launcher`,
+        'InstallDir');
+    if (!instPath) {
+      throw new Error('empty registry key');
+    }
+    const REG_PATH = instPath.value;
+    SAVE_PATH = path.join(REG_PATH, 'savegames', USERID_FOLDER, UPLAYAPP_ID);
+    return SAVE_PATH;
+  } catch (err) {
+    log('error', `Could not get Ubisoft Launcher install path from registry to set the Saves directory: ${err}`);
+  }
+}
+
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
 
 //Installer test for Mod Installer
@@ -347,7 +367,7 @@ async function testMiModA3(files, gameId) {
 }
 
 //Installer install .a3 files
-async function installMiModA3(files, gameSpec, destinationPath) {
+async function installMiModA3(files, destinationPath) {
   const setModTypeInstruction = { type: 'setmodtype', value: MIMODA3_ID };
 
   //Repack .a3 files since Vortex forcibly extracts them as archives for some reason...
@@ -385,7 +405,7 @@ function testMiMod(files, gameId) {
 }
 
 //Installer install mod installer .a2 and .bin mod files
-function installMiMod(files, gameSpec) {
+function installMiMod(files) {
   //const modFile = files.find(file => path.extname(file).toLowerCase() === MIMOD_EXTA2 || MIMOD_EXTA3 || MIMOD_EXTBIN);
   const modFile = files.find(file => MIMOD_EXTS.includes(path.extname(file).toLowerCase()));
   const idx = modFile.indexOf(path.basename(modFile));
@@ -510,7 +530,7 @@ function testData(files, gameId) {
 }
 
 //Installer install .dat and .fat files
-function installData(files, gameSpec) {
+function installData(files) {
   //const modFile = files.find(file => path.extname(file).toLowerCase() === DATA_EXTS);
   const modFile = files.find(file => DATA_EXTS.includes(path.extname(file).toLowerCase()));
   const idx = modFile.indexOf(path.basename(modFile));
@@ -553,7 +573,7 @@ function testBin(files, gameId) {
 }
 
 //Installer install .dll files
-function installBin(files, gameSpec) {
+function installBin(files) {
   const modFile = files.find(file => path.extname(file).toLowerCase() === BIN_EXT);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
@@ -836,6 +856,7 @@ function toBlue(func) {
 async function setup(discovery, api, gameSpec) {
   // SYNCHRONOUS CODE ////////////////////////////////////
   setupNotify(api);
+  SAVE_PATH = getSavePath();
   const state = api.getState();
   GAME_PATH = discovery.path;
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
@@ -881,8 +902,16 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(MIMOD_ID, 37, testMiMod, installMiMod);
 
   //register actions
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Far Cry Modding Site', () => {
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Far Cry Mods Site', () => {
     const openPath = DB_URL;
+    util.opn(openPath).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Far Cry Mod Installer Site', () => {
+    const openPath = MI_URL_ERR;
     util.opn(openPath).catch(() => null);
     }, () => {
       const state = context.api.getState();
@@ -891,6 +920,15 @@ function applyGame(context, gameSpec) {
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
     const openPath = XML_PATH;
+    util.opn(openPath).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', () => {
+    SAVE_PATH = getSavePath();
+    const openPath = SAVE_PATH;
     util.opn(openPath).catch(() => null);
     }, () => {
       const state = context.api.getState();
