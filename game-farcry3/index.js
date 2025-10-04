@@ -40,7 +40,7 @@ const BIN_EXT = ".dll";
 const DATA_ID = `${GAME_ID}-data`;
 const DATA_NAME = "Game Data";
 const DATA_PATH = "data_win32";
-const DATA_FILE = [".dat", ".fat"];
+const DATA_EXTS = [".dat", ".fat"];
 
 const MI_ID = `${GAME_ID}-modinstaller`;
 const MI_NAME = "FC3 Mod Installer";
@@ -82,6 +82,10 @@ const DB_URL = "https://mods.farcry.info/fc3";
 const EDITOR_ID = `${GAME_ID}-mapeditor`;
 const EDITOR_NAME = "FC3 Map Editor";
 const EDITOR_EXEC = "FC3Editor.exe";
+
+const SAVEMANAGER_ID = `${GAME_ID}-savemanager`;
+const SAVEMANAGER_NAME = "FC Save Manager";
+const SAVEMANAGER_EXEC = path.join(MI_PATH, "FCSavegameManager.exe");
 
 const MOD_PATH_DEFAULT = '.';
 const ROOT_FOLDERS = [BIN_PATH, DATA_PATH, 'Support'];
@@ -219,6 +223,17 @@ const tools = [
     executable: () => EDITOR_EXEC,
     requiredFiles: [
       EDITOR_EXEC,
+    ],
+    relative: true,
+    exclusive: true,
+  },
+  {
+    id: SAVEMANAGER_ID,
+    name: SAVEMANAGER_NAME,
+    logo: 'savemanager.png',
+    executable: () => SAVEMANAGER_EXEC,
+    requiredFiles: [
+      SAVEMANAGER_EXEC,
     ],
     relative: true,
     exclusive: true,
@@ -477,8 +492,8 @@ function installRoot(files) {
 
 //Installer Test for .dat and .fat files
 function testData(files, gameId) {
-  //const isMod = files.find(file => path.extname(file).toLowerCase() === DATA_FILE) !== undefined;
-  const isMod = files.find(file => DATA_FILE.includes(path.extname(file).toLowerCase())) !== undefined;
+  //const isMod = files.find(file => path.extname(file).toLowerCase() === DATA_EXTS) !== undefined;
+  const isMod = files.find(file => DATA_EXTS.includes(path.extname(file).toLowerCase())) !== undefined;
   let supported = (gameId === spec.game.id) && isMod;
 
   // Test for a mod installer.
@@ -496,8 +511,8 @@ function testData(files, gameId) {
 
 //Installer install .dat and .fat files
 function installData(files, gameSpec) {
-  //const modFile = files.find(file => path.extname(file).toLowerCase() === DATA_FILE);
-  const modFile = files.find(file => DATA_FILE.includes(path.extname(file).toLowerCase()));
+  //const modFile = files.find(file => path.extname(file).toLowerCase() === DATA_EXTS);
+  const modFile = files.find(file => DATA_EXTS.includes(path.extname(file).toLowerCase()));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: DATA_ID };

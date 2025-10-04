@@ -49,7 +49,7 @@ const BIN_EXT = ".dll";
 
 const DATA_ID = `${GAME_ID}-data`;
 const DATA_NAME = "Game Data";
-const DATA_FILE = [".dat", ".fat"];
+const DATA_EXTS = [".dat", ".fat"];
 
 const MI_ID = `${GAME_ID}-modinstaller`;
 const MI_NAME = "FC Mod Installer";
@@ -75,6 +75,10 @@ const MIMOD_EXTA5 = ".a5";
 const MIMOD_EXTBIN = ".bin";
 const MIMOD_FILEXML = "info.xml";
 const MIMOD_EXTS = [MIMOD_EXTA2, MIMOD_EXTA3, MIMOD_EXTA4, MIMOD_EXTA5, MIMOD_EXTBIN];
+
+const SAVEMANAGER_ID = `${GAME_ID}-savemanager`;
+const SAVEMANAGER_NAME = "FC Save Manager";
+const SAVEMANAGER_EXEC = path.join(MI_PATH, "FCSavegameManager.exe");
 
 const MOD_PATH_DEFAULT = '.';
 const ROOT_FOLDERS = [BIN_PATH, DATA_PATH, 'Support'];
@@ -185,6 +189,17 @@ const tools = [
     shell: true,
     //defaultPrimary: true,
     parameters: PARAMETERS,
+  },
+  {
+    id: SAVEMANAGER_ID,
+    name: SAVEMANAGER_NAME,
+    logo: 'savemanager.png',
+    executable: () => SAVEMANAGER_EXEC,
+    requiredFiles: [
+      SAVEMANAGER_EXEC,
+    ],
+    relative: true,
+    exclusive: true,
   },
 ];
 
@@ -439,8 +454,7 @@ function installRoot(files) {
 
 //Installer Test for .dat and .fat files
 function testData(files, gameId) {
-  //const isMod = files.find(file => path.extname(file).toLowerCase() === DATA_FILE) !== undefined;
-  const isMod = files.some(file => DATA_FILE.includes(path.extname(file).toLowerCase()));
+  const isMod = files.some(file => DATA_EXTS.includes(path.extname(file).toLowerCase()));
   let supported = (gameId === spec.game.id) && isMod;
 
   // Test for a mod installer.
@@ -458,8 +472,7 @@ function testData(files, gameId) {
 
 //Installer install .dat and .fat files
 function installData(files, gameSpec) {
-  //const modFile = files.find(file => path.extname(file).toLowerCase() === DATA_FILE);
-  const modFile = files.find(file => DATA_FILE.includes(path.extname(file).toLowerCase()));
+  const modFile = files.find(file => DATA_EXTS.includes(path.extname(file).toLowerCase()));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: DATA_ID };
@@ -691,22 +704,22 @@ async function downloadXml(api, gameSpec) {
   }
 } //*/
 
-//Notify User of Setup instructions for FC3 Mod Installer
+//Notify User of Setup instructions for FC Mod Installer
 function setupNotify(api) {
   api.sendNotification({
-    id: 'setup-notification-farcry3',
+    id: `${GAME_ID}-setup`,
     type: 'warning',
-    message: 'FC3 Mod Installer Usage',
+    message: 'FC Mod Installer Usage',
     allowSuppress: true,
     actions: [
       {
         title: 'More',
         action: (dismiss) => {
           api.showDialog('question', 'Action required', {
-            text: 'This extension has automatically downloaded and installed the FC3 Mod Installer application. This can be used to install mods from the database site linked below.\n'
+            text: 'This extension has automatically downloaded and installed the FC Mod Installer application. This can be used to install mods from the database site linked below.\n'
                 + '\n'
                 + 'After downloading a file there, drag and drop the zip or file downloaded into Vortex, where it will be placed in the correct folder.\n'
-                + 'Next, run the FC3 Mod Installer using the tool in the Vortex Dashboard tab to launch the application and install the mod.\n'
+                + 'Next, run the FC Mod Installer using the tool in the Vortex Dashboard tab to launch the application and install the mod.\n'
                 + '\n'
                 + 'If you have already installed mods from Nexus previously, you may need to disable them in order to use the Mod Installer as it expects unmodified game files.\n'
                 + '\n'

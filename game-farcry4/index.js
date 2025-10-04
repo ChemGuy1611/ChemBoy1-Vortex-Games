@@ -1,9 +1,9 @@
 /*///////////////////////////////////////////
-Name: Far Cry XXX Vortex Extension
+Name: Far Cry 4 Vortex Extension
 Structure: Far Cry Game (Mod Installer)
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2025-XX-XX
+Date: 2025-10-03
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -15,20 +15,20 @@ const Bluebird = require('bluebird');
 const DOCUMENTS = util.getVortexPath("documents");
 
 //Specify all the information about the game
-const GAME_ID = "farcryXXX";
-const STEAMAPP_ID = "XXX";
-const UPLAYAPP_ID = "XXX";
-const GAME_NAME = "Far Cry XXX";
-const GAME_NAME_SHORT = "FCXXX";
+const GAME_ID = "farcry4";
+const STEAMAPP_ID = "298110";
+const UPLAYAPP_ID = "420";
+const GAME_NAME = "Far Cry 4";
+const GAME_NAME_SHORT = "FC4";
 
 const BIN_PATH = "bin";
 const DATA_PATH = "data_win32";
-const EXEC_NAME = "XXX.exe";
-const FC = 'fcXXX';
-const MI_EXEC = "FCXXXModInstaller.exe";
-const MIMOD_FOLDER = "ModifiedFilesFCXXX";
+const EXEC_NAME = "FarCry4.exe";
+const FC = 'fc4';
+const MI_EXEC = "FC4ModInstaller.exe";
+const MIMOD_FOLDER = "ModifiedFilesFC4";
 
-const DATA_FOLDER = "Far Cry XXX";
+const DATA_FOLDER = "Far Cry 4";
 const XML_PAGE_NO = 0;
 const XML_FILE_NO = 0;
 
