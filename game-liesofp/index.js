@@ -250,7 +250,7 @@ async function deploy(api) {
 
 //Test for config files
 function testConfig(files, gameId) {
-  const isConfig = files.some(file => CONFIG_FILES.includes(path.basename(file).toLocaleLowerCase()));
+  const isConfig = files.some(file => CONFIG_FILES.includes(path.basename(file).toLowerCase()));
   const isIni = files.some(file => (path.extname(file).toLowerCase() === CONFIG_EXT));
   let supported = (gameId === spec.game.id) && isConfig && isIni;
 
@@ -333,7 +333,7 @@ function installSave(files) {
 
 //Installer test for Fluffy Mod Manager files
 function testRoot(files, gameId) {
-  //const isMod = files.some(file => path.basename(file).toLocaleLowerCase() === ROOT_FILE);
+  //const isMod = files.some(file => path.basename(file).toLowerCase() === ROOT_FILE);
   const isMod = files.some(file => path.basename(file) === ROOT_FILE);
   let supported = (gameId === spec.game.id) && isMod;
 

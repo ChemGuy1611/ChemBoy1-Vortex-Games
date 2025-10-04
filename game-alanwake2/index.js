@@ -222,7 +222,7 @@ async function downloadModLoader(api, gameSpec) {
 
 //Installer test for Fluffy Mod Manager files
 function testModLoader(files, gameId) {
-  const isMod = files.some(file => path.basename(file).toLocaleLowerCase() === MODLOADER_FILE);
+  const isMod = files.some(file => path.basename(file).toLowerCase() === MODLOADER_FILE);
   let supported = (gameId === spec.game.id) && isMod;
 
   return Promise.resolve({
@@ -233,7 +233,7 @@ function testModLoader(files, gameId) {
 
 //Installer install Fluffy Mod Manger files
 function installModLoader(files) {
-  const modFile = files.find(file => path.basename(file).toLocaleLowerCase() === MODLOADER_FILE);
+  const modFile = files.find(file => path.basename(file).toLowerCase() === MODLOADER_FILE);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MODLOADER_ID };

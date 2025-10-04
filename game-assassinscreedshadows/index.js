@@ -536,7 +536,7 @@ async function downloadForger(discovery, api, gameSpec) {
 
 //Installer test for AnvilToolkit files
 function testATK(files, gameId) {
-  const isMod = files.some(file => path.basename(file).toLocaleLowerCase() === ATK_EXEC);
+  const isMod = files.some(file => path.basename(file).toLowerCase() === ATK_EXEC);
   let supported = (gameId === spec.game.id) && isMod;
 
   return Promise.resolve({
@@ -547,7 +547,7 @@ function testATK(files, gameId) {
 
 //Installer install AnvilToolkit files
 function installATK(files) {
-  const modFile = files.find(file => path.basename(file).toLocaleLowerCase() === ATK_EXEC);
+  const modFile = files.find(file => path.basename(file).toLowerCase() === ATK_EXEC);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: ATK_ID };
@@ -570,7 +570,7 @@ function installATK(files) {
 
 //Installer test for Forger Patch Manager files
 function testForger(files, gameId) {
-  const isMod = files.some(file => path.basename(file).toLocaleLowerCase() === ( FORGER_EXEC || FORGER_NEW_EXEC));
+  const isMod = files.some(file => path.basename(file).toLowerCase() === ( FORGER_EXEC || FORGER_NEW_EXEC));
   let supported = (gameId === spec.game.id) && isMod;
 
   return Promise.resolve({
@@ -581,7 +581,7 @@ function testForger(files, gameId) {
 
 //Installer install Forger Patch Manager files
 function installForger(files) {
-  const modFile = files.find(file => path.basename(file).toLocaleLowerCase() === ( FORGER_EXEC || FORGER_NEW_EXEC));
+  const modFile = files.find(file => path.basename(file).toLowerCase() === ( FORGER_EXEC || FORGER_NEW_EXEC));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: FORGER_ID };

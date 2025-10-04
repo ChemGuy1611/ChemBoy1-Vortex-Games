@@ -351,7 +351,7 @@ async function downloadSK(api, gameSpec) {
 
 //Installer test for SOTTR Mod Manager files
 function testModManger(files, gameId) {
-  const isMod = files.some(file => path.basename(file).toLocaleLowerCase() === MANAGER_EXEC);
+  const isMod = files.some(file => path.basename(file).toLowerCase() === MANAGER_EXEC);
   let supported = (gameId === spec.game.id) && isMod;
 
   return Promise.resolve({
@@ -362,7 +362,7 @@ function testModManger(files, gameId) {
 
 //Installer install SOTTR Mod Manager files
 function installModManager(files) {
-  const modFile = files.find(file => path.basename(file).toLocaleLowerCase() === MANAGER_EXEC);
+  const modFile = files.find(file => path.basename(file).toLowerCase() === MANAGER_EXEC);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MANAGER_ID };
@@ -385,7 +385,7 @@ function installModManager(files) {
 
 //Installer test for TR Reboot Mod Manager files
 function testModMangerUnified(files, gameId) {
-  const isMod = files.some(file => path.basename(file).toLocaleLowerCase() === MANAGERUNIFIED_EXEC);
+  const isMod = files.some(file => path.basename(file).toLowerCase() === MANAGERUNIFIED_EXEC);
   let supported = (gameId === spec.game.id) && isMod;
 
   return Promise.resolve({
@@ -396,7 +396,7 @@ function testModMangerUnified(files, gameId) {
 
 //Installer install TR Reboot Mod Manager files
 function installModManagerUnified(files) {
-  const modFile = files.find(file => path.basename(file).toLocaleLowerCase() === MANAGERUNIFIED_EXEC);
+  const modFile = files.find(file => path.basename(file).toLowerCase() === MANAGERUNIFIED_EXEC);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MANAGERUNIFIED_ID };

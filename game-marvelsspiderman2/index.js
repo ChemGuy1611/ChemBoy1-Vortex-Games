@@ -242,7 +242,7 @@ async function downloadOverstrike(api, gameSpec) {
 
 //Installer test for Overstrike
 function testOverstrike(files, gameId) {
-  const isOverstrike = files.some(file => (path.basename(file).toLocaleLowerCase() === OVERSTRIKE_EXEC));
+  const isOverstrike = files.some(file => (path.basename(file).toLowerCase() === OVERSTRIKE_EXEC));
   let supported = (gameId === spec.game.id) && isOverstrike;
 
   return Promise.resolve({
@@ -253,7 +253,7 @@ function testOverstrike(files, gameId) {
 
 //Installer install Overstrike
 function installOverstrike(files) {
-  const modFile = files.find(file => (path.basename(file).toLocaleLowerCase() === OVERSTRIKE_EXEC));
+  const modFile = files.find(file => (path.basename(file).toLowerCase() === OVERSTRIKE_EXEC));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: OVERSTRIKE_ID };
@@ -277,7 +277,7 @@ function installOverstrike(files) {
 
 //Installer test for mod files
 function testOsMod(files, gameId) {
-  const isMod = files.some(file => OSMOD_EXTS.includes(path.extname(file).toLocaleLowerCase()));
+  const isMod = files.some(file => OSMOD_EXTS.includes(path.extname(file).toLowerCase()));
   let supported = (gameId === spec.game.id) && isMod;
 
   // Test for a mod installer
@@ -295,7 +295,7 @@ function testOsMod(files, gameId) {
 
 //Installer install mod files
 function installOsMod(files) {
-  const modFile = files.find(file => OSMOD_EXTS.includes(path.extname(file).toLocaleLowerCase()));
+  const modFile = files.find(file => OSMOD_EXTS.includes(path.extname(file).toLowerCase()));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: OSMOD_ID };

@@ -177,7 +177,7 @@ function getExecutable(discoveryPath) {
 
 //Installer test for Fluffy Mod Manager files
 function testPric(files, gameId) {
-  const isMod = files.some(file => path.basename(file).toLocaleLowerCase() === PRIC_FILE);
+  const isMod = files.some(file => path.basename(file).toLowerCase() === PRIC_FILE);
   let supported = (gameId === GAME_ID) && isMod;
 
   return Promise.resolve({
@@ -188,7 +188,7 @@ function testPric(files, gameId) {
 
 //Installer install Fluffy Mod Manger files
 function installPric(files) {
-  const modFile = files.find(file => path.basename(file).toLocaleLowerCase() === PRIC_FILE);
+  const modFile = files.find(file => path.basename(file).toLowerCase() === PRIC_FILE);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: PRIC_ID };
@@ -212,7 +212,7 @@ function installPric(files) {
 
 //Installer test for Fluffy Mod Manager files
 function testChair(files, gameId) {
-  const isMod = files.some(file => path.basename(file).toLocaleLowerCase() === CHAIR_FILE);
+  const isMod = files.some(file => path.basename(file).toLowerCase() === CHAIR_FILE);
   let supported = (gameId === GAME_ID) && isMod;
 
   return Promise.resolve({
@@ -223,7 +223,7 @@ function testChair(files, gameId) {
 
 //Installer install Fluffy Mod Manger files
 function installChair(files) {
-  const modFile = files.find(file => path.basename(file).toLocaleLowerCase() === CHAIR_FILE);
+  const modFile = files.find(file => path.basename(file).toLowerCase() === CHAIR_FILE);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: CHAIR_ID };
@@ -247,7 +247,7 @@ function installChair(files) {
 
 //test for zips
 async function testChairModZip(files, gameId) {
-  const isMod = files.some(file => path.basename(file).toLocaleLowerCase() === CHAIRMOD_FILE);
+  const isMod = files.some(file => path.basename(file).toLowerCase() === CHAIRMOD_FILE);
   return Promise.resolve({
     supported: (gameId === GAME_ID) && isMod,
     requiredFiles: []
@@ -294,7 +294,7 @@ function toBlue(func) {
 
 //Installer test for Fluffy Mod Manager files
 function testChairMod(files, gameId) {
-  const isMod = files.some(file => path.basename(file).toLocaleLowerCase() === CHAIRMOD_FILE);
+  const isMod = files.some(file => path.basename(file).toLowerCase() === CHAIRMOD_FILE);
   let supported = (gameId === GAME_ID) && isMod;
 
   return Promise.resolve({
@@ -305,7 +305,7 @@ function testChairMod(files, gameId) {
 
 //Installer install Chairload mod files
 function installChairMod(files, fileName) {
-  const modFile = files.find(file => path.basename(file).toLocaleLowerCase() === CHAIRMOD_FILE);
+  const modFile = files.find(file => path.basename(file).toLowerCase() === CHAIRMOD_FILE);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: CHAIRMOD_ID};
@@ -374,7 +374,7 @@ function installChairModLegacy(files) {
 
 //Installer test for Fluffy Mod Manager files
 function testRoot(files, gameId) {
-  //const isMod = files.some(file => path.basename(file).toLocaleLowerCase() === ROOT_FILE);
+  //const isMod = files.some(file => path.basename(file).toLowerCase() === ROOT_FILE);
   const isMod = files.some(file => ROOT_FOLDERS.includes(path.basename(file)));
   let supported = (gameId === GAME_ID) && isMod;
 
@@ -386,7 +386,7 @@ function testRoot(files, gameId) {
 
 //Installer install Fluffy Mod Manger files
 function installRoot(files) {
-  //const modFile = files.find(file => path.basename(file).toLocaleLowerCase() === ROOT_FILE);
+  //const modFile = files.find(file => path.basename(file).toLowerCase() === ROOT_FILE);
   const modFile = files.find(file => ROOT_FOLDERS.includes(path.basename(file)));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);

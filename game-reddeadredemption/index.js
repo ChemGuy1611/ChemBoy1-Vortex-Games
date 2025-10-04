@@ -394,8 +394,8 @@ async function downloadModLoader(api, gameSpec) {
 
 //Installer test for Fluffy Mod Manager files
 function testScriptHook(files, gameId) {
-  const isMod = files.some(file => path.basename(file).toLocaleLowerCase() === SCRIPTHOOK_FILE);
-  const isMod2 = files.some(file => path.basename(file).toLocaleLowerCase() === SCRIPTHOOK_FILE2);
+  const isMod = files.some(file => path.basename(file).toLowerCase() === SCRIPTHOOK_FILE);
+  const isMod2 = files.some(file => path.basename(file).toLowerCase() === SCRIPTHOOK_FILE2);
   let supported = (gameId === spec.game.id) && isMod && isMod2;
 
   return Promise.resolve({
@@ -406,7 +406,7 @@ function testScriptHook(files, gameId) {
 
 //Installer install Fluffy Mod Manger files
 function installScriptHook(files) {
-  const modFile = files.find(file => path.basename(file).toLocaleLowerCase() === SCRIPTHOOK_FILE);
+  const modFile = files.find(file => path.basename(file).toLowerCase() === SCRIPTHOOK_FILE);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: SCRIPTHOOK_ID };
@@ -430,7 +430,7 @@ function installScriptHook(files) {
 
 //Installer test for Fluffy Mod Manager files
 function testModLoader(files, gameId) {
-  const isMod = files.some(file => path.basename(file).toLocaleLowerCase() === MODLOADER_FILE);
+  const isMod = files.some(file => path.basename(file).toLowerCase() === MODLOADER_FILE);
   let supported = (gameId === spec.game.id) && isMod;
 
   return Promise.resolve({
@@ -441,7 +441,7 @@ function testModLoader(files, gameId) {
 
 //Installer install Fluffy Mod Manger files
 function installModLoader(files) {
-  const modFile = files.find(file => path.basename(file).toLocaleLowerCase() === MODLOADER_FILE);
+  const modFile = files.find(file => path.basename(file).toLowerCase() === MODLOADER_FILE);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MODLOADER_ID };
@@ -507,7 +507,7 @@ function installMagicMod(files, fileName) {
 
 //Installer test for Fluffy Mod Manager files
 function testMagic(files, gameId) {
-  const isMod = files.some(file => path.basename(file).toLocaleLowerCase() === MAGIC_EXEC);
+  const isMod = files.some(file => path.basename(file).toLowerCase() === MAGIC_EXEC);
   let supported = (gameId === spec.game.id) && isMod;
 
   return Promise.resolve({
@@ -518,7 +518,7 @@ function testMagic(files, gameId) {
 
 //Installer install Fluffy Mod Manger files
 function installMagic(files) {
-  const modFile = files.find(file => path.basename(file).toLocaleLowerCase() === MAGIC_EXEC);
+  const modFile = files.find(file => path.basename(file).toLowerCase() === MAGIC_EXEC);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MAGIC_ID };

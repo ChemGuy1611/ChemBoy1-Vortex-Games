@@ -322,7 +322,7 @@ function setupNotify(api) {
 //Test for config files
 function testConfig(files, gameId) {
   // Make sure we're able to support this mod
-  const isConfig = files.some(file => path.basename(file).toLocaleLowerCase() === (CONFIG_FILE1 || CONFIG_FILE2));
+  const isConfig = files.some(file => path.basename(file).toLowerCase() === (CONFIG_FILE1 || CONFIG_FILE2));
   const isIni = files.find(file => path.extname(file).toLowerCase() === CONFIG_EXT) !== undefined;
   let supported = (gameId === spec.game.id) && isConfig && isIni;
 
@@ -367,7 +367,7 @@ function installConfig(files) {
 //Installer test for Mod Manager
 function testModManager(files, gameId) {
   // Make sure we're able to support this mod.
-  const isManager = files.some(file => path.basename(file).toLocaleLowerCase() === MANAGER_EXEC);
+  const isManager = files.some(file => path.basename(file).toLowerCase() === MANAGER_EXEC);
   let supported = (gameId === spec.game.id) && isManager
 
   // Test for a mod installer.
@@ -386,7 +386,7 @@ function testModManager(files, gameId) {
 //Install Mod Manager files
 function installModManager(files) {
   // The .fbmod file is expected to always be positioned in the mods directory we're going to disregard anything placed outside the root.
-  const modFile = files.find(file => path.basename(file).toLocaleLowerCase() === MANAGER_EXEC);
+  const modFile = files.find(file => path.basename(file).toLowerCase() === MANAGER_EXEC);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MANAGER_ID };

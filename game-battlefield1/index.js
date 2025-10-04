@@ -208,7 +208,7 @@ async function downloadFrosty(discovery, api, gameSpec) {
 //Test for Frosty Manager files
 function testFrosty(files, gameId) {
   // Make sure we're able to support this mod.
-  const isFrosty = files.some(file => path.basename(file).toLocaleLowerCase() === FROSTY_EXEC);
+  const isFrosty = files.some(file => path.basename(file).toLowerCase() === FROSTY_EXEC);
   let supported = (gameId === spec.game.id) && isFrosty;
 
   // Test for a mod installer.
@@ -227,7 +227,7 @@ function testFrosty(files, gameId) {
 //Install Frosty Manager files
 function installFrosty(files) {
   // The .fbmod file is expected to always be positioned in the mods directory we're going to disregard anything placed outside the root.
-  const modFile = files.find(file => path.basename(file).toLocaleLowerCase() === FROSTY_EXEC);
+  const modFile = files.find(file => path.basename(file).toLowerCase() === FROSTY_EXEC);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: BINARIES_ID };

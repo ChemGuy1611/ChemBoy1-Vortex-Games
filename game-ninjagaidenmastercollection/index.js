@@ -684,7 +684,7 @@ async function downloadMlSteam3(api, gameSpec) {
 
 //Installer test for Xbox Mod Loader
 function testModLoaderXbox(files, gameId) {
-  const isMl = files.some(file => path.basename(file).toLocaleLowerCase() === MODLOADER_XBOX_EXEC);
+  const isMl = files.some(file => path.basename(file).toLowerCase() === MODLOADER_XBOX_EXEC);
   let supported = (gameId === (spec1.game.id || spec2.game.id || spec3.game.id)) && isMl;
 
   return Promise.resolve({
@@ -695,7 +695,7 @@ function testModLoaderXbox(files, gameId) {
 
 //Installer install Xbox Mod Loader
 function installModLoaderXbox(files) {
-  const modFile = files.find(file => path.basename(file).toLocaleLowerCase() === MODLOADER_XBOX_EXEC);
+  const modFile = files.find(file => path.basename(file).toLowerCase() === MODLOADER_XBOX_EXEC);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MODLOADER_XBOX_ID };
@@ -718,7 +718,7 @@ function installModLoaderXbox(files) {
 
 //Installer test for Steam Mod Loader - for NGS1
 function testModLoaderSteam1(files, gameId) {
-  const isMl = files.some(file => path.basename(file).toLocaleLowerCase() === ML_STEAM_EXEC1);
+  const isMl = files.some(file => path.basename(file).toLowerCase() === ML_STEAM_EXEC1);
   let supported = (gameId === spec1.game.id) && isMl;
 
   return Promise.resolve({
@@ -729,7 +729,7 @@ function testModLoaderSteam1(files, gameId) {
 
 //Installer install Steam Mod Loader - for NGS1
 function installModLoaderSteam1(files) {
-  const modFile = files.find(file => path.basename(file).toLocaleLowerCase() === ML_STEAM_EXEC1);
+  const modFile = files.find(file => path.basename(file).toLowerCase() === ML_STEAM_EXEC1);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MODLOADER_STEAM_ID1 };
@@ -752,7 +752,7 @@ function installModLoaderSteam1(files) {
 
 //Installer test for Steam Mod Loader - for NGS2
 function testModLoaderSteam2(files, gameId) {
-  const isMl = files.some(file => path.basename(file).toLocaleLowerCase() === ML_STEAM_EXEC2);
+  const isMl = files.some(file => path.basename(file).toLowerCase() === ML_STEAM_EXEC2);
   let supported = (gameId === spec2.game.id) && isMl;
 
   return Promise.resolve({
@@ -763,7 +763,7 @@ function testModLoaderSteam2(files, gameId) {
 
 //Installer install Steam Mod Loader - for NGS2
 function installModLoaderSteam2(files) {
-  const modFile = files.find(file => path.basename(file).toLocaleLowerCase() === ML_STEAM_EXEC2);
+  const modFile = files.find(file => path.basename(file).toLowerCase() === ML_STEAM_EXEC2);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MODLOADER_STEAM_ID2 };
@@ -786,7 +786,7 @@ function installModLoaderSteam2(files) {
 
 //Installer test for Steam Mod Loader - for NG3RE
 function testModLoaderSteam3(files, gameId) {
-  const isMl = files.some(file => path.basename(file).toLocaleLowerCase() === ML_STEAM_EXEC3);
+  const isMl = files.some(file => path.basename(file).toLowerCase() === ML_STEAM_EXEC3);
   let supported = (gameId === spec3.game.id) && isMl;
 
   return Promise.resolve({
@@ -797,7 +797,7 @@ function testModLoaderSteam3(files, gameId) {
 
 //Installer install Steam Mod Loader - for NG3RE
 function installModLoaderSteam3(files) {
-  const modFile = files.find(file => path.basename(file).toLocaleLowerCase() === ML_STEAM_EXEC3);
+  const modFile = files.find(file => path.basename(file).toLowerCase() === ML_STEAM_EXEC3);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MODLOADER_STEAM_ID3 };
@@ -820,7 +820,7 @@ function installModLoaderSteam3(files) {
 
 //Installer test for mod files
 function testMlMod(files, gameId) {
-  const isMod = files.some(file => path.extname(file).toLocaleLowerCase() === MLMOD_EXT);
+  const isMod = files.some(file => path.extname(file).toLowerCase() === MLMOD_EXT);
   let supported = (gameId === (spec1.game.id || spec2.game.id || spec3.game.id)) && isMod;
 
   // Test for a mod installer
@@ -838,7 +838,7 @@ function testMlMod(files, gameId) {
 
 //Installer install mod files
 function installMlMod(files, fileName) {
-  const modFile = files.find(file => path.extname(file).toLocaleLowerCase() === MLMOD_EXT);
+  const modFile = files.find(file => path.extname(file).toLowerCase() === MLMOD_EXT);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MLMOD_ID };

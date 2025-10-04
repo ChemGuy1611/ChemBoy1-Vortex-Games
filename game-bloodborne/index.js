@@ -332,7 +332,7 @@ function installDvdRootPs4(files) {
 
 //Installer test for save files
 function testSave(files, gameId) {
-  const isMod = files.some(file => (path.basename(file).toLocaleLowerCase() === SAVE_FILE));
+  const isMod = files.some(file => (path.basename(file).toLowerCase() === SAVE_FILE));
   let supported = (gameId === spec.game.id) && isMod;
 
   return Promise.resolve({
@@ -343,7 +343,7 @@ function testSave(files, gameId) {
 
 //Installer install save files
 function installSave(files) {
-  const modFile = files.find(file => (path.basename(file).toLocaleLowerCase() === SAVE_FILE));
+  const modFile = files.find(file => (path.basename(file).toLowerCase() === SAVE_FILE));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: SAVE_ID };

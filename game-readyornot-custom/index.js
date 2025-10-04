@@ -245,7 +245,7 @@ async function requiresLauncher() {
 //Test for config files
 function testConfig(files, gameId) {
   // Make sure we're able to support this mod
-  const isConfig = files.some(file => path.basename(file).toLocaleLowerCase() === (CONFIG_FILE1 || CONFIG_FILE2));
+  const isConfig = files.some(file => path.basename(file).toLowerCase() === (CONFIG_FILE1 || CONFIG_FILE2));
   const isIni = files.find(file => path.extname(file).toLowerCase() === CONFIG_EXT) !== undefined;
   let supported = (gameId === spec.game.id) && isConfig && isIni;
 
@@ -289,7 +289,7 @@ function installConfig(files) {
 
 //Installer test for Fluffy Mod Manager files
 function testRoot(files, gameId) {
-  //const isMod = files.some(file => path.basename(file).toLocaleLowerCase() === ROOT_FILE);
+  //const isMod = files.some(file => path.basename(file).toLowerCase() === ROOT_FILE);
   const isMod = files.some(file => path.basename(file) === ROOT_FILE);
   let supported = (gameId === spec.game.id) && isMod;
 
@@ -301,7 +301,7 @@ function testRoot(files, gameId) {
 
 //Installer install Fluffy Mod Manger files
 function installRoot(files) {
-  //const modFile = files.find(file => path.basename(file).toLocaleLowerCase() === ROOT_FILE);
+  //const modFile = files.find(file => path.basename(file).toLowerCase() === ROOT_FILE);
   const modFile = files.find(file => path.basename(file) === ROOT_FILE);
   //const idx = modFile.indexOf(path.basename(modFile));
   const idx = modFile.indexOf(ROOT_IDX);

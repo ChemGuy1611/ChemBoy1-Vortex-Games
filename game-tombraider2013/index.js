@@ -425,7 +425,7 @@ async function downloadTexMod(discovery, api, gameSpec) {
 
 //Installer test for Fluffy Mod Manager files
 function testManager(files, gameId) {
-  const isMod = files.some(file => path.basename(file).toLocaleLowerCase() === MANAGER_EXEC);
+  const isMod = files.some(file => path.basename(file).toLowerCase() === MANAGER_EXEC);
   let supported = (gameId === spec.game.id) && isMod;
 
   // Test for a mod installer
@@ -442,7 +442,7 @@ function testManager(files, gameId) {
 }
 //Installer install Fluffy Mod Manger files
 function installManager(files) {
-  const modFile = files.find(file => path.basename(file).toLocaleLowerCase() === MANAGER_EXEC);
+  const modFile = files.find(file => path.basename(file).toLowerCase() === MANAGER_EXEC);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MANAGER_ID };
@@ -465,7 +465,7 @@ function installManager(files) {
 
 //Installer test for TexMod files
 function testTexMod(files, gameId) {
-  const isMod = files.some(file => path.basename(file).toLocaleLowerCase() === TEXMOD_EXEC);
+  const isMod = files.some(file => path.basename(file).toLowerCase() === TEXMOD_EXEC);
   let supported = (gameId === spec.game.id) && isMod;
 
   // Test for a mod installer
@@ -482,7 +482,7 @@ function testTexMod(files, gameId) {
 }
 //Installer install TexMod files
 function installTexMod(files) {
-  const modFile = files.find(file => path.basename(file).toLocaleLowerCase() === TEXMOD_EXEC);
+  const modFile = files.find(file => path.basename(file).toLowerCase() === TEXMOD_EXEC);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: TEXMOD_ID };

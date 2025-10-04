@@ -403,7 +403,7 @@ async function downloadLauncher(api, gameSpec) {
 
 //Installer test for WiltOS Mod Launcher files
 function testLauncher(files, gameId) {
-  const isMod = files.some(file => (path.basename(file).toLocaleLowerCase() === LAUNCHER_EXEC));
+  const isMod = files.some(file => (path.basename(file).toLowerCase() === LAUNCHER_EXEC));
   let supported = (gameId === spec.game.id) && isMod;
 
   return Promise.resolve({
@@ -414,7 +414,7 @@ function testLauncher(files, gameId) {
 
 //Installer install WiltOS Mod Launcher files
 function installLauncher(files) {
-  const modFile = files.find(file => (path.basename(file).toLocaleLowerCase() === LAUNCHER_EXEC));
+  const modFile = files.find(file => (path.basename(file).toLowerCase() === LAUNCHER_EXEC));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: LAUNCHER_ID };
@@ -437,7 +437,7 @@ function installLauncher(files) {
 
 //Installer test for Unlimited mod files
 function testUnlimited(files, gameId) {
-  const isMod = files.some(file => (path.basename(file).toLocaleLowerCase() === UNLIMITED_FILE));
+  const isMod = files.some(file => (path.basename(file).toLowerCase() === UNLIMITED_FILE));
   let supported = (gameId === spec.game.id) && isMod;
 
   return Promise.resolve({

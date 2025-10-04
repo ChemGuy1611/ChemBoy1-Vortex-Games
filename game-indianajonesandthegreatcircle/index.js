@@ -277,7 +277,7 @@ async function downloadModInjector(api, gameSpec) {
 
 //test for zips
 async function testZipContent(files, gameId) {
-  const isInjector = files.some(file => path.basename(file).toLocaleLowerCase() === INJECTOR_FILE);
+  const isInjector = files.some(file => path.basename(file).toLowerCase() === INJECTOR_FILE);
   return Promise.resolve({
     supported: (gameId === spec.game.id) && !isInjector,
     requiredFiles: []

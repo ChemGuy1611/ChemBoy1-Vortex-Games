@@ -332,8 +332,8 @@ function setupNotify(api) {
 
 //test for zips
 async function testZipContent(files, gameId) {
-  const isFluffy = files.some(file => path.basename(file).toLocaleLowerCase() === FLUFFY_EXEC);
-  const isREF = files.some(file => path.basename(file).toLocaleLowerCase() === REF_FILE);
+  const isFluffy = files.some(file => path.basename(file).toLowerCase() === FLUFFY_EXEC);
+  const isREF = files.some(file => path.basename(file).toLowerCase() === REF_FILE);
   return Promise.resolve({
     supported: (gameId === spec.game.id) && !isFluffy && !isREF,
     requiredFiles: []

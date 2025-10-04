@@ -398,7 +398,7 @@ function setupNotify(api) {
 
 //Test for Frosty Manager files
 function testFrosty(files, gameId) {
-  const isFrosty = files.some(file => path.basename(file).toLocaleLowerCase() === FROSTY_EXEC);
+  const isFrosty = files.some(file => path.basename(file).toLowerCase() === FROSTY_EXEC);
   let supported = (gameId === spec.game.id) && isFrosty;
 
   // Test for a mod installer.
@@ -417,7 +417,7 @@ function testFrosty(files, gameId) {
 //Install Frosty Manager files
 function installFrosty(files) {
   // The .fbmod file is expected to always be positioned in the mods directory we're going to disregard anything placed outside the root.
-  const modFile = files.find(file => path.basename(file).toLocaleLowerCase() === FROSTY_EXEC);
+  const modFile = files.find(file => path.basename(file).toLowerCase() === FROSTY_EXEC);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: FROSTY_ID };
@@ -441,7 +441,7 @@ function installFrosty(files) {
 //Test for Frosty Manager files
 function testDAI(files, gameId) {
   // Make sure we're able to support this mod.
-  const isDAI = files.some(file => path.basename(file).toLocaleLowerCase() === DAI_EXEC);
+  const isDAI = files.some(file => path.basename(file).toLowerCase() === DAI_EXEC);
   let supported = (gameId === spec.game.id) && isDAI;
 
   // Test for a mod installer.
@@ -460,7 +460,7 @@ function testDAI(files, gameId) {
 //Install Frosty Manager files
 function installDAI(files) {
   // The .fbmod file is expected to always be positioned in the mods directory we're going to disregard anything placed outside the root.
-  const modFile = files.find(file => path.basename(file).toLocaleLowerCase() === DAI_EXEC);
+  const modFile = files.find(file => path.basename(file).toLowerCase() === DAI_EXEC);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: DAI_ID };

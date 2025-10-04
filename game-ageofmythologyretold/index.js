@@ -244,7 +244,7 @@ function setupNotify(api) {
 
 //Installer test for Root folder files
 function testData(files, gameId) {
-  //const isMod = files.some(file => path.basename(file).toLocaleLowerCase() === ROOT_FILE);
+  //const isMod = files.some(file => path.basename(file).toLowerCase() === ROOT_FILE);
   const isMod = files.some(file => path.basename(file) === DATA_FOLDER);
   let supported = (gameId === spec.game.id) && isMod;
 
@@ -256,7 +256,7 @@ function testData(files, gameId) {
 
 //Installer install Root folder files
 function installData(files) {
-  //const modFile = files.find(file => path.basename(file).toLocaleLowerCase() === DATA_FOLDER);
+  //const modFile = files.find(file => path.basename(file).toLowerCase() === DATA_FOLDER);
   const modFile = files.find(file => path.basename(file) === DATA_FOLDER);
   const idx = modFile.indexOf(DATA_IDX);
   const rootPath = path.dirname(modFile);
@@ -361,7 +361,7 @@ function installConfig(files) {
 
 //Installer test for Root folder files
 function testReshade(files, gameId) {
-  //const isMod = files.some(file => path.basename(file).toLocaleLowerCase() === RESHADE_FOLDER);
+  //const isMod = files.some(file => path.basename(file).toLowerCase() === RESHADE_FOLDER);
   const isReshade = files.some(file => path.basename(file) === RESHADE_FOLDER);
   let supported = (gameId === spec.game.id) && isReshade;
 
@@ -373,7 +373,7 @@ function testReshade(files, gameId) {
 
 //Installer install Root folder files
 function installReshade(files) {
-  //const modFile = files.find(file => path.basename(file).toLocaleLowerCase() === RESHADE_FOLDER);
+  //const modFile = files.find(file => path.basename(file).toLowerCase() === RESHADE_FOLDER);
   const modFile = files.find(file => path.basename(file) === RESHADE_FOLDER);
   const idx = modFile.indexOf(RESHADE_IDX);
   const rootPath = path.dirname(modFile);

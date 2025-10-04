@@ -403,7 +403,7 @@ async function downloadModLoaderGithub(api, gameSpec) {
 
 //Installer test for Fluffy Mod Manager files
 function testModManger(files, gameId) {
-  const isMod = files.some(file => path.basename(file).toLocaleLowerCase() === RELOADED_EXEC);
+  const isMod = files.some(file => path.basename(file).toLowerCase() === RELOADED_EXEC);
   let supported = (gameId === spec.game.id) && isMod;
 
   return Promise.resolve({
@@ -414,7 +414,7 @@ function testModManger(files, gameId) {
 
 //Installer install Fluffy Mod Manger files
 function installModManager(files) {
-  const modFile = files.find(file => path.basename(file).toLocaleLowerCase() === RELOADED_EXEC);
+  const modFile = files.find(file => path.basename(file).toLowerCase() === RELOADED_EXEC);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: RELOADED_ID };
@@ -439,8 +439,8 @@ function installModManager(files) {
 //Test for Reloaded Mod files
 function testReloadedLoader(files, gameId) {
   // Make sure we're able to support this mod
-  const isMod = files.find(file => path.basename(file).toLocaleLowerCase() === RELOADEDMOD_FILE) !== undefined;
-  const isLoader = files.find(file => path.basename(file).toLocaleLowerCase() === RELOADEDMODLOADER_FILE) !== undefined;
+  const isMod = files.find(file => path.basename(file).toLowerCase() === RELOADEDMOD_FILE) !== undefined;
+  const isLoader = files.find(file => path.basename(file).toLowerCase() === RELOADEDMODLOADER_FILE) !== undefined;
   let supported = (gameId === spec.game.id) && isMod && isLoader;
 
   // Test for a mod installer
@@ -458,7 +458,7 @@ function testReloadedLoader(files, gameId) {
 
 //Install Reloaded Mod files
 function installReloadedLoader(files) {
-  const modFile = files.find(file => path.basename(file).toLocaleLowerCase() === RELOADEDMOD_FILE);
+  const modFile = files.find(file => path.basename(file).toLowerCase() === RELOADEDMOD_FILE);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: RELOADEDMODLOADER_ID };
@@ -482,7 +482,7 @@ function installReloadedLoader(files) {
 //Test for Reloaded Mod files
 function testReloadedMod(files, gameId) {
   // Make sure we're able to support this mod
-  const isMod = files.find(file => path.basename(file).toLocaleLowerCase() === RELOADEDMOD_FILE) !== undefined;
+  const isMod = files.find(file => path.basename(file).toLowerCase() === RELOADEDMOD_FILE) !== undefined;
   let supported = (gameId === spec.game.id) && isMod;
 
   // Test for a mod installer
@@ -500,7 +500,7 @@ function testReloadedMod(files, gameId) {
 
 //Install Reloaded Mod files
 function installReloadedMod(files, fileName) {
-  const modFile = files.find(file => path.basename(file).toLocaleLowerCase() === RELOADEDMOD_FILE);
+  const modFile = files.find(file => path.basename(file).toLowerCase() === RELOADEDMOD_FILE);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: RELOADEDMOD_ID };

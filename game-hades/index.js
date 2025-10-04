@@ -395,7 +395,7 @@ async function downloadModUtility(api, gameSpec) {
 
 //Installer test for Mod Importer
 function testModManger(files, gameId) {
-  const isMod = files.some(file => path.basename(file).toLocaleLowerCase() === MANAGER_EXEC);
+  const isMod = files.some(file => path.basename(file).toLowerCase() === MANAGER_EXEC);
   let supported = (gameId === spec.game.id) && isMod;
 
   // Test for a mod installer
@@ -413,7 +413,7 @@ function testModManger(files, gameId) {
 
 //Installer install Mod Importer
 function installModManager(files) {
-  const modFile = files.find(file => path.basename(file).toLocaleLowerCase() === MANAGER_EXEC);
+  const modFile = files.find(file => path.basename(file).toLowerCase() === MANAGER_EXEC);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MANAGER_ID };

@@ -1,148 +1,194 @@
-/*
+/*///////////////////////////////////////////
 Name: Far Cry 3 Vortex Extension
+Structure: Basic Game (Mod Installer)
 Author: ChemBoy1
-Version: 0.1.2
-Date: 07/31/2024
-*/
+Version: 0.2.0
+Date: 2025-10-03
+///////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors } = require('vortex-api');
+const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 const Bluebird = require('bluebird');
 
+const DOCUMENTS = util.getVortexPath("documents");
+
 //Specify all the information about the game
-const STEAMAPP_ID = "220240";
-const EPICAPP_ID = null;
-const UPLAYAPP_ID = "46";
-const GOGAPP_ID = "";
-const XBOXAPP_ID = "";
-const XBOXEXECNAME = "";
 const GAME_ID = "farcry3";
-const EXEC = "bin\\farcry3_d3d11.exe";
-const BIN_ID = "farcry3-binaries";
-const DATA_ID = "farcry3-data";
-const MI_ID = "farcry3-modinstaller";
-const LAA_ID = "farcry3-largeaddressaware";
-const XML_ID = "farcry3-xml";
-const MIMOD_ID = "farcry3-mimod";
-const MIMODA3_ID = "farcry3-mimoda3";
-const MI_FILE = "fcmodinstaller.exe";
-const LAA_FILE = "large address aware.exe";
-const ZIGGY_FILE = "readme - ziggy's mod.txt";
-const BIN_FILE = ".dll";
-const XML_FILE = "gamerprofile.xml";
+const STEAMAPP_ID = "220240";
+const UPLAYAPP_ID = "46";
+
+const BIN_PATH = "bin";
+const EXEC_NAME = "farcry3_d3d11.exe";
+const EXEC = path.join(BIN_PATH, EXEC_NAME);
+const GAME_NAME = "Far Cry 3";
+const GAME_NAME_SHORT = "FC3";
+
+let GAME_PATH = null;
+let STAGING_FOLDER = '';
+let DOWNLOAD_FOLDER = '';
+
+//Info for mod types and installers
+const ROOT_ID = `${GAME_ID}-root`;
+const ROOT_NAME = "Root Folder";
+
+const BIN_ID = `${GAME_ID}-binaries`;
+const BIN_NAME = "Binaries (Engine Injector)";
+const BIN_EXT = ".dll";
+
+const DATA_ID = `${GAME_ID}-data`;
+const DATA_NAME = "Game Data";
+const DATA_PATH = "data_win32";
 const DATA_FILE = [".dat", ".fat"];
-const MIMOD_FILE1 = ".a2";
-const MIMOD_FILE2 = ".a3";
-const MIMOD_FILE3 = ".bin";
-const MIMOD_FILEXML = "info.xml";
-const MIMOD_FILE = [".a2", ".a3", ".bin"];
-const MIMOD_PATH = "FCModInstaller\\ModifiedFilesFC3";
-const XML_PATH = "My Games\\Far Cry 3";
+
+const MI_ID = `${GAME_ID}-modinstaller`;
+const MI_NAME = "FC3 Mod Installer";
+const MI_PATH = "FCModInstaller";
+const MI_FILE = "fcmodinstaller.exe";
+const MI_EXEC = "FC3ModInstaller.exe";
+const MI_EXEC_PATH = path.join(MI_PATH, MI_EXEC);
 const MI_URL = "https://downloads.fcmodding.com/files/FCModInstaller.zip";
-const DB_URL = "https://mods.farcry.info/fc3";
+const MI_URL_ERR = "https://downloads.fcmodding.com/all/mod-installer/";
+
+const LAA_ID = `${GAME_ID}-largeaddressaware`;
+const LAA_NAME = "Large Address Aware App";
+const LAA_FILE = "large address aware.exe";
 const LAA_URL = "https://www.techpowerup.com/forums/attachments/laa_2_0_4-zip.34392/";
+
+const XML_ID = `${GAME_ID}-xml`;
+const XML_NAME = "XML Settings Mod";
+const XML_PATH = path.join(DOCUMENTS, "My Games", "Far Cry 3");
+const XML_FILE = "gamerprofile.xml";
+const XML_PAGE_NO = 331;
+const XML_FILE_NO = 167;
+
+const MIMOD_ID = `${GAME_ID}-mimod`;
+const MIMOD_NAME = "FCMI Mod (.a2/.a3/.a4/.a5/.bin)";
+const MIMODA3_ID = `${GAME_ID}-mimoda3`;
+const MIMODA3_NAME = "Repacked FCMI Mod";
+const MIMOD_PATH = path.join(MI_PATH, "ModifiedFilesFC3");
+const MIMOD_EXTA2 = ".a2";
+const MIMOD_EXTA3 = ".a3";
+const MIMOD_EXTA4 = ".a4";
+const MIMOD_EXTA5 = ".a5";
+const MIMOD_EXTBIN = ".bin";
+const MIMOD_FILEXML = "info.xml";
+const MIMOD_EXTS = [MIMOD_EXTA2, MIMOD_EXTA3, MIMOD_EXTA4, MIMOD_EXTA5, MIMOD_EXTBIN];
+
+const ZIGGY_FILE = "readme - ziggy's mod.txt";
+const DB_URL = "https://mods.farcry.info/fc3";
+
+const EDITOR_ID = `${GAME_ID}-mapeditor`;
+const EDITOR_NAME = "FC3 Map Editor";
+const EDITOR_EXEC = "FC3Editor.exe";
+
+const MOD_PATH_DEFAULT = '.';
+const ROOT_FOLDERS = [BIN_PATH, DATA_PATH, 'Support'];
+const PARAMETERS_STRING = '';
+const PARAMETERS = [PARAMETERS_STRING];
 
 const spec = {
   "game": {
     "id": GAME_ID,
-    "name": "Far Cry 3",
+    "name": GAME_NAME,
+    "shortName": GAME_NAME_SHORT,
     "executable": EXEC,
-    "logo": "farcry3.jpg",
+    //"parameters": PARAMETERS,
+    "logo": `${GAME_ID}.jpg`,
     "mergeMods": true,
-    "modPath": ".",
+    "requiresCleanup": true,
+    "modPath": MOD_PATH_DEFAULT,
     "modPathIsRelative": true,
     "requiredFiles": [
       EXEC
     ],
     "details": {
       "steamAppId": STEAMAPP_ID,
-      //"gogAppId": GOGAPP_ID,
-      "epicAppId": EPICAPP_ID,
-      "xboxAppId": XBOXAPP_ID,
       "uPlayAppId": UPLAYAPP_ID,
-      "nexusPageId": GAME_ID
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
-      //"GogAPPId": GOGAPP_ID,
-      "EpicAPPId": EPICAPP_ID,
       "UPlayAPPId": UPLAYAPP_ID,
-      "XboxAPPId": XBOXAPP_ID
     }
   },
   "modTypes": [
     {
-      "id": BIN_ID,
-      "name": "Binaries (Engine Injector)",
-      "priority": "high",
-      "targetPath": "{gamePath}\\bin"
-    },
-    {
-      "id": DATA_ID,
-      "name": "Game Data",
-      "priority": "high",
-      "targetPath": "{gamePath}\\data_win32"
-    },
-    {
-      "id": MI_ID,
-      "name": "Mod Installer",
+      "id": ROOT_ID,
+      "name": ROOT_NAME,
       "priority": "high",
       "targetPath": "{gamePath}"
     },
     {
+      "id": BIN_ID,
+      "name": BIN_NAME,
+      "priority": "high",
+      "targetPath": path.join("{gamePath}", BIN_PATH)
+    },
+    {
+      "id": DATA_ID,
+      "name": DATA_NAME,
+      "priority": "high",
+      "targetPath": path.join("{gamePath}", DATA_PATH)
+    },
+    {
+      "id": MI_ID,
+      "name": MI_NAME,
+      "priority": "high",
+      "targetPath": path.join("{gamePath}", MI_PATH)
+    },
+    {
       "id": LAA_ID,
-      "name": "Large Address Aware App",
+      "name": LAA_NAME,
       "priority": "high",
       "targetPath": "{gamePath}"
     },
     {
       "id": MIMOD_ID,
-      "name": "Mod Installer Mod",
+      "name": MIMOD_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${MIMOD_PATH}`
+      "targetPath": path.join("{gamePath}", MIMOD_PATH)
     },
     {
       "id": MIMODA3_ID,
-      "name": "Mod Installer .a3 Mod",
+      "name": MIMODA3_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${MIMOD_PATH}`
+      "targetPath": path.join("{gamePath}", MIMOD_PATH)
     },
     {
       "id": XML_ID,
-      "name": "XML Settings Mod",
+      "name": XML_NAME,
       "priority": "high",
-      "targetPath": `{documents}\\${XML_PATH}`
+      "targetPath": XML_PATH
     },
   ],
   "discovery": {
     "ids": [
       STEAMAPP_ID,
-      //UPLAYAPP_ID,
-      //EPICAPP_ID,
-      //GOGAPP_ID,
-      //XBOXAPP_ID
+      UPLAYAPP_ID,
     ],
     "names": []
   }
 };
 
+const MI_ID_TOOL = "FC3ModInstaller";
+const LAA_ID_TOOL = "LargeAddressAware";
+
 //launchers and 3rd party tools
 const tools = [
   {
-    id: 'FC3ModInstaller',
-    name: 'FC3 Mod Installer',
-    logo: 'fc3modinstaller.png',
-    executable: () => MI_FILE,
+    id: MI_ID_TOOL,
+    name: MI_NAME,
+    logo: 'modinstaller.png',
+    executable: () => MI_EXEC_PATH,
     requiredFiles: [
-      MI_FILE,
+      MI_EXEC_PATH,
     ],
     relative: true,
     exclusive: true,
   },
   {
-    id: 'LargeAddressAware',
+    id: LAA_ID_TOOL,
     name: 'Large Address Aware',
     logo: 'laa.png',
     executable: () => LAA_FILE,
@@ -152,7 +198,34 @@ const tools = [
     relative: true,
     exclusive: true,
   },
+  {
+    id: `${GAME_ID}-customlaunch`,
+    name: 'Custom Launch',
+    logo: 'exec.png',
+    executable: () => EXEC,
+    requiredFiles: [
+      EXEC,
+    ],
+    relative: true,
+    exclusive: true,
+    shell: true,
+    //defaultPrimary: true,
+    parameters: PARAMETERS,
+  },
+  {
+    id: EDITOR_ID,
+    name: EDITOR_NAME,
+    logo: 'editor.png',
+    executable: () => EDITOR_EXEC,
+    requiredFiles: [
+      EDITOR_EXEC,
+    ],
+    relative: true,
+    exclusive: true,
+  },
 ];
+
+// BASIC EXTENSION FUNCTIONS ///////////////////////////////////////////////////
 
 //set mod type priorities
 function modTypePriority(priority) {
@@ -168,7 +241,7 @@ function pathPattern(api, game, pattern) {
   return template(pattern, {
     gamePath: (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0 ? void 0 : _a.path,
     documents: util.getVortexPath('documents'),
-    localAppData: process.env['LOCALAPPDATA'],
+    localAppData: util.getVortexPath('localAppData'),
     appData: util.getVortexPath('appData'),
   });
 }
@@ -197,72 +270,19 @@ function makeFindGame(api, gameSpec) {
   }
 }
 
-//Set launcher requirements
-function makeRequiresLauncher(api, gameSpec) {
-
-  if (util.epicGamesLauncher.isGameInstalled(EPICAPP_ID)) {
-    return () => Promise.resolve({
-      launcher: "epic",
-      addInfo: {
-        appId: EPICAPP_ID,
-      },
-    });
-  }
-
-  return undefined;
-}
-
-//Find game information by API utility
-async function queryGame() {
-  let game = await util.GameStoreHelper.findByAppId(spec.discovery.ids);
-  return game;
-}
-
-//Find game install location 
-async function queryPath() {
-  let game = await queryGame();
-  return game.gamePath;
-}
-
-//Set launcher requirements
-async function requiresLauncher() {
-  let game = await queryGame();
-
-  if (game.gameStoreId === "steam") {
-    return undefined;
-  }
-
-  if (game.gameStoreId === "gog") {
-    return undefined;
-  }
-
-  if (game.gameStoreId === "epic") {
-    return {
-      launcher: "epic",
-      addInfo: {
-        appId: EPICAPP_ID,
-      },
-    };
-  }
-
-  if (game.gameStoreId === "xbox") {
-    return {
-      launcher: "xbox",
-      addInfo: {
-        appId: XBOXAPP_ID,
-        // appExecName is the <Application id="" in the appxmanifest.xml file
-        parameters: [{ appExecName: XBOXEXECNAME }],
-      },
-    };
-  }
-
-  return undefined;
-}
+// MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
 
 //Installer test for Mod Installer
 function testModInstaller(files, gameId) {
-  const isMod = files.some(file => path.basename(file).toLocaleLowerCase() === MI_FILE);
+  const isMod = files.some(file => path.basename(file).toLowerCase() === MI_FILE);
   let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
 
   return Promise.resolve({
     supported,
@@ -272,7 +292,7 @@ function testModInstaller(files, gameId) {
 
 //Installer install Mod Installer
 function installModInstaller(files) {
-  const modFile = files.find(file => path.basename(file).toLocaleLowerCase() === MI_FILE);
+  const modFile = files.find(file => path.basename(file).toLowerCase() === MI_FILE);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MI_ID };
@@ -290,14 +310,20 @@ function installModInstaller(files) {
     };
   });
   instructions.push(setModTypeInstruction);
-
   return Promise.resolve({ instructions });
 }
 
 //Installer Test for .a3 files
 async function testMiModA3(files, gameId) {
-  const isMod = files.some(file => path.basename(file).toLocaleLowerCase() === MIMOD_FILEXML);
+  const isMod = files.some(file => path.basename(file).toLowerCase() === MIMOD_FILEXML);
   let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
 
   return Promise.resolve({
     supported,
@@ -311,7 +337,7 @@ async function installMiModA3(files, gameSpec, destinationPath) {
 
   //Repack .a3 files since Vortex forcibly extracts them as archives for some reason...
   const szip = new util.SevenZip();
-  const archiveName = path.basename(destinationPath, '.installing') + MIMOD_FILE2;
+  const archiveName = path.basename(destinationPath, '.installing') + MIMOD_EXTA3;
   const archivePath = path.join(destinationPath, archiveName);
   const rootRelPaths = await fs.readdirAsync(destinationPath);
   await szip.add(archivePath, rootRelPaths.map(relPath => path.join(destinationPath, relPath)), { raw: ['-r'] });
@@ -326,9 +352,16 @@ async function installMiModA3(files, gameSpec, destinationPath) {
 
 //Installer Test for mod installer .a2 and .bin mod files
 function testMiMod(files, gameId) {
-  //const isMod = files.find(file => path.extname(file).toLowerCase() === MIMOD_FILE1 || MIMOD_FILE2 || MIMOD_FILE3) !== undefined;
-  const isMod = files.find(file => MIMOD_FILE.includes(path.extname(file).toLowerCase())) !== undefined;
+  //const isMod = files.find(file => path.extname(file).toLowerCase() === MIMOD_EXTA2 || MIMOD_EXTA3 || MIMOD_EXTBIN) !== undefined;
+  const isMod = files.find(file => MIMOD_EXTS.includes(path.extname(file).toLowerCase())) !== undefined;
   let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
 
   return Promise.resolve({
     supported,
@@ -338,9 +371,8 @@ function testMiMod(files, gameId) {
 
 //Installer install mod installer .a2 and .bin mod files
 function installMiMod(files, gameSpec) {
-  // The .a2 and .bin files are expected to always be positioned in the mods directory we're going to disregard anything placed outside the root.
-  //const modFile = files.find(file => path.extname(file).toLowerCase() === MIMOD_FILE1 || MIMOD_FILE2 || MIMOD_FILE3);
-  const modFile = files.find(file => MIMOD_FILE.includes(path.extname(file).toLowerCase()));
+  //const modFile = files.find(file => path.extname(file).toLowerCase() === MIMOD_EXTA2 || MIMOD_EXTA3 || MIMOD_EXTBIN);
+  const modFile = files.find(file => MIMOD_EXTS.includes(path.extname(file).toLowerCase()));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MIMOD_ID };
@@ -364,8 +396,15 @@ function installMiMod(files, gameSpec) {
 
 //Installer test for Ziggy's Mod
 function testZiggy(files, gameId) {
-  const isMod = files.some(file => path.basename(file).toLocaleLowerCase() === ZIGGY_FILE);
+  const isMod = files.some(file => path.basename(file).toLowerCase() === ZIGGY_FILE);
   let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
 
   return Promise.resolve({
     supported,
@@ -375,7 +414,7 @@ function testZiggy(files, gameId) {
 
 //Installer install Ziggy's Mod
 function installZiggy(files) {
-  const modFile = files.find(file => path.basename(file).toLocaleLowerCase() === ZIGGY_FILE);
+  const modFile = files.find(file => path.basename(file).toLowerCase() === ZIGGY_FILE);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
 
@@ -391,7 +430,48 @@ function installZiggy(files) {
       destination: path.join(file.substr(idx)),
     };
   });
+  return Promise.resolve({ instructions });
+}
 
+//Installer test for Root folder files
+function testRoot(files, gameId) {
+  const isMod = files.some(file => ROOT_FOLDERS.includes(path.basename(file)));
+  let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Installer install Root folder files
+function installRoot(files) {
+  const modFile = files.find(file => ROOT_FOLDERS.includes(path.basename(file)));
+  const ROOT_IDX = `${path.basename(modFile)}${path.sep}`
+  const idx = modFile.indexOf(ROOT_IDX);
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
   return Promise.resolve({ instructions });
 }
 
@@ -416,7 +496,6 @@ function testData(files, gameId) {
 
 //Installer install .dat and .fat files
 function installData(files, gameSpec) {
-  // The .dat and .fat files are expected to always be positioned in the mods directory we're going to disregard anything placed outside the root.
   //const modFile = files.find(file => path.extname(file).toLowerCase() === DATA_FILE);
   const modFile = files.find(file => DATA_FILE.includes(path.extname(file).toLowerCase()));
   const idx = modFile.indexOf(path.basename(modFile));
@@ -442,7 +521,7 @@ function installData(files, gameSpec) {
 
 //Installer Test for .dll files
 function testBin(files, gameId) {
-  const isMod = files.find(file => path.extname(file).toLowerCase() === BIN_FILE) !== undefined;
+  const isMod = files.find(file => path.extname(file).toLowerCase() === BIN_EXT) !== undefined;
   let supported = (gameId === spec.game.id) && isMod;
 
   // Test for a mod installer.
@@ -460,8 +539,7 @@ function testBin(files, gameId) {
 
 //Installer install .dll files
 function installBin(files, gameSpec) {
-  // The .dll files are expected to always be positioned in the mods directory we're going to disregard anything placed outside the root.
-  const modFile = files.find(file => path.extname(file).toLowerCase() === BIN_FILE);
+  const modFile = files.find(file => path.extname(file).toLowerCase() === BIN_EXT);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: BIN_ID };
@@ -484,8 +562,15 @@ function installBin(files, gameSpec) {
 
 //Installer test for xml settings file
 function testXml(files, gameId) {
-  const isMod = files.some(file => path.basename(file).toLocaleLowerCase() === XML_FILE);
+  const isMod = files.some(file => path.basename(file).toLowerCase() === XML_FILE);
   let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
 
   return Promise.resolve({
     supported,
@@ -495,7 +580,7 @@ function testXml(files, gameId) {
 
 //Installer install xml settings file
 function installXml(files) {
-  const modFile = files.find(file => path.basename(file).toLocaleLowerCase() === XML_FILE);
+  const modFile = files.find(file => path.basename(file).toLowerCase() === XML_FILE);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: XML_ID };
@@ -513,61 +598,16 @@ function installXml(files) {
     };
   });
   instructions.push(setModTypeInstruction);
-
   return Promise.resolve({ instructions });
 }
 
-//Check if FC3 Mod Installer is installed
+// AUTOMATIC DOWNLOAD FUNCTIONS //////////////////////////////////////////////
+
+//Check if Mod Installer is installed
 function isModInstallerInstalled(api, spec) {
   const state = api.getState();
   const mods = state.persistent.mods[spec.game.id] || {};
   return Object.keys(mods).some(id => mods[id]?.type === MI_ID);
-}
-
-//Function to auto-download FC3 Mod Installer
-async function downloadModInstaller(discovery, api, gameSpec) {
-  let modLoaderInstalled = isModInstallerInstalled(api, gameSpec);
-
-  if (!modLoaderInstalled) {
-    //notification indicating install process
-    const NOTIF_ID = 'farcry3-modinstaller-installing';
-    api.sendNotification({
-      id: NOTIF_ID,
-      message: 'Installing FC3 Mod Installer',
-      type: 'activity',
-      noDismiss: true,
-      allowSuppress: false,
-    });
-
-    try {
-      //Download the mod
-      const dlInfo = {
-        game: gameSpec.game.id,
-        name: 'FC3 Mod Installer',
-      };
-      const URL = MI_URL;
-      const dlId = await util.toPromise(cb =>
-        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
-      const modId = await util.toPromise(cb =>
-        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
-      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
-      const batched = [
-        actions.setModsEnabled(api, profileId, [modId], true, {
-          allowAutoDeploy: true,
-          installed: true,
-        }),
-        actions.setModType(gameSpec.game.id, modId, MI_ID), // Set the modType
-      ];
-      util.batchDispatch(api.store, batched); // Will dispatch both actions.
-    //Show the user the download page if the download, install process fails
-    } catch (err) {
-      const errPage = MI_URL;
-      api.showErrorNotification('Failed to download/install FC3 Mod Installer', err);
-      util.opn(errPage).catch(() => null);
-    } finally {
-      api.dismissNotification(NOTIF_ID);
-    }
-  }
 }
 
 //Check if Large Address Aware is installed
@@ -577,28 +617,35 @@ function isLaaInstalled(api, spec) {
   return Object.keys(mods).some(id => mods[id]?.type === LAA_ID);
 }
 
-//Function to auto-download Large Address Aware
-async function downloadLaa(discovery, api, gameSpec) {
-  let modLoaderInstalled = isLaaInstalled(api, gameSpec);
+//Check if XML is installed
+function isXmlInstalled(api, spec) {
+  const state = api.getState();
+  const mods = state.persistent.mods[spec.game.id] || {};
+  return Object.keys(mods).some(id => mods[id]?.type === XML_ID);
+}
 
-  if (!modLoaderInstalled) {
-    //notification indicating install process
-    const NOTIF_ID = 'farcry3-laa-installing';
-    api.sendNotification({
+//* Function to auto-download Mod Installer from site
+async function downloadModInstaller(api, gameSpec) {
+  let isInstalled = isModInstallerInstalled(api, gameSpec);
+  if (!isInstalled) {
+    const MOD_NAME = MI_NAME;
+    const MOD_TYPE = MI_ID;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
+    const GAME_DOMAIN = GAME_ID;
+    const URL = MI_URL;
+    const ERR_URL = MI_URL_ERR;
+    api.sendNotification({ //notification indicating install process
       id: NOTIF_ID,
-      message: 'Installing Large Address Aware',
+      message: `Installing ${MOD_NAME}`,
       type: 'activity',
       noDismiss: true,
       allowSuppress: false,
     });
-
     try {
-      //Download the mod
-      const dlInfo = {
-        game: gameSpec.game.id,
-        name: 'Large Address Aware',
+      const dlInfo = { //Download the mod
+        game: GAME_DOMAIN,
+        name: MOD_NAME,
       };
-      const URL = LAA_URL;
       const dlId = await util.toPromise(cb =>
         api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
       const modId = await util.toPromise(cb =>
@@ -609,65 +656,43 @@ async function downloadLaa(discovery, api, gameSpec) {
           allowAutoDeploy: true,
           installed: true,
         }),
-        actions.setModType(gameSpec.game.id, modId, LAA_ID), // Set the modType
+        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
       ];
-      util.batchDispatch(api.store, batched); // Will dispatch both actions.
-    //Show the user the download page if the download, install process fails
-    } catch (err) {
-      const errPage = LAA_URL;
-      api.showErrorNotification('Failed to download/install Large Address Aware', err);
+      util.batchDispatch(api.store, batched); // Will dispatch both actions
+    } catch (err) { //Show the user the download page if the download, install process fails
+      const errPage = ERR_URL;
+      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
       util.opn(errPage).catch(() => null);
     } finally {
       api.dismissNotification(NOTIF_ID);
     }
   }
-}
+} //*/
 
-//Check if XML is installed
-function isXmlInstalled(api, spec) {
-  const state = api.getState();
-  const mods = state.persistent.mods[spec.game.id] || {};
-  return Object.keys(mods).some(id => mods[id]?.type === XML_ID);
-}
-
-//Function to auto-download REFramework from Nexus
-async function downloadXml(discovery, api, gameSpec) {
-  let modLoaderInstalled = isXmlInstalled(api, gameSpec);
-  
-  if (!modLoaderInstalled) {
-    //notification indicating install process
-    const NOTIF_ID = 'farcry3-xml-installing';
-    api.sendNotification({
+//* Function to auto-download LAA app from TechPowerUp
+async function downloadLaa(api, gameSpec) {
+  let isInstalled = isLaaInstalled(api, gameSpec);
+  if (!isInstalled) {
+    const MOD_NAME = LAA_NAME;
+    const MOD_TYPE = LAA_ID;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
+    const GAME_DOMAIN = GAME_ID;
+    const URL = LAA_URL;
+    const ERR_URL = LAA_URL;
+    api.sendNotification({ //notification indicating install process
       id: NOTIF_ID,
-      message: 'Installing GamerProfile.xml',
+      message: `Installing ${MOD_NAME}`,
       type: 'activity',
       noDismiss: true,
       allowSuppress: false,
     });
-    //make sure user is logged into Nexus Mods account in Vortex
-    if (api.ext?.ensureLoggedIn !== undefined) {
-      await api.ext.ensureLoggedIn();
-    }
-
-    const modPageId = 331;
     try {
-      //get the mod files information from Nexus
-      const modFiles = await api.ext.nexusGetModFiles(gameSpec.game.id, modPageId);
-      const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
-      const file = modFiles
-        .filter(file => file.category_id === 1)
-        .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))[0];
-      if (file === undefined) {
-        throw new util.ProcessCanceled('No GamerProfile.xml main file found');
-      }
-      //Download the mod
-      const dlInfo = {
-        game: gameSpec.game.id,
-        name: 'GamerProfile.xml Settings Vortex',
+      const dlInfo = { //Download the mod
+        game: GAME_DOMAIN,
+        name: MOD_NAME,
       };
-      const nxmUrl = `nxm://${gameSpec.game.id}/mods/${modPageId}/files/${file.file_id}`;
       const dlId = await util.toPromise(cb =>
-        api.events.emit('start-download', [nxmUrl], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
       const modId = await util.toPromise(cb =>
         api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
       const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
@@ -676,19 +701,83 @@ async function downloadXml(discovery, api, gameSpec) {
           allowAutoDeploy: true,
           installed: true,
         }),
-        actions.setModType(gameSpec.game.id, modId, XML_ID), // Set the mod type
+        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
       ];
-      util.batchDispatch(api.store, batched); // Will dispatch both actions.
-    //Show the user the download page if the download, install process fails
-    } catch (err) {
-      const errPage = `https://www.nexusmods.com/${gameSpec.game.id}/mods/${modPageId}/files/?tab=files`;
-      api.showErrorNotification('Failed to download/install GamerProfile.xml', err);
+      util.batchDispatch(api.store, batched); // Will dispatch both actions
+    } catch (err) { //Show the user the download page if the download, install process fails
+      const errPage = ERR_URL;
+      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
       util.opn(errPage).catch(() => null);
     } finally {
       api.dismissNotification(NOTIF_ID);
     }
   }
-}
+} //*/
+
+//* Function to auto-download XML file from Nexus Mods
+async function downloadXml(api, gameSpec) {
+  let isInstalled = isXmlInstalled(api, gameSpec);
+  if (!isInstalled) {
+    const MOD_NAME = XML_NAME;
+    const MOD_TYPE = XML_ID;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
+    let FILE_ID = XML_FILE_NO;  //If using a specific file id because "input" below gives an error
+    const PAGE_ID = XML_PAGE_NO;
+    const GAME_DOMAIN = GAME_ID;
+    api.sendNotification({ //notification indicating install process
+      id: NOTIF_ID,
+      message: `Installing ${MOD_NAME}`,
+      type: 'activity',
+      noDismiss: true,
+      allowSuppress: false,
+    });
+    if (api.ext?.ensureLoggedIn !== undefined) { //make sure user is logged into Nexus Mods account in Vortex
+      await api.ext.ensureLoggedIn();
+    }
+    try {
+      let FILE = FILE_ID; //use the FILE_ID directly for the correct game store version
+      let URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      try { //get the mod files information from Nexus
+        const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
+        const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
+        const file = modFiles
+          .filter(file => file.category_id === 1)
+          .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))[0];
+        if (file === undefined) {
+          throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
+        }
+        FILE = file.file_id;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      } catch (err) { // use defined file ID if input is undefined above
+        FILE = FILE_ID;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      } //
+      const dlInfo = { //Download the mod
+        game: GAME_DOMAIN,
+        name: MOD_NAME,
+      };
+      const dlId = await util.toPromise(cb =>
+        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+      const modId = await util.toPromise(cb =>
+        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
+      const batched = [
+        actions.setModsEnabled(api, profileId, [modId], true, {
+          allowAutoDeploy: true,
+          installed: true,
+        }),
+        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
+      ];
+      util.batchDispatch(api.store, batched); // Will dispatch both actions
+    } catch (err) { //Show the user the download page if the download, install process fails
+      const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
+      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
+      util.opn(errPage).catch(() => null);
+    } finally {
+      api.dismissNotification(NOTIF_ID);
+    }
+  }
+} //*/
 
 //Notify User of Setup instructions for FC3 Mod Installer
 function setupNotify(api) {
@@ -707,12 +796,12 @@ function setupNotify(api) {
                 + 'After downloading a file there, drag and drop the zip or file downloaded into Vortex, where it will be placed in the correct folder.\n'
                 + 'Next, run the FC3 Mod Installer using the tool in the Vortex Dashboard tab to launch the application and install the mod.\n'
                 + '\n'
-                + 'If you have already installed mods from Nexus previously, you may need to disable them in order to use FC3 Mod Installer as it expects unmodified game files.\n'
+                + 'If you have already installed mods from Nexus previously, you may need to disable them in order to use the Mod Installer as it expects unmodified game files.\n'
                 + '\n'
                 + 'It is also recommended you run the Large Address Aware application in the Dashboard tab and target the game executable to prevent issues with crashing on DX11.\n'
           }, [
             { label: 'Continue', action: () => dismiss() },
-            { label: 'Get FC3 Mod Installer Mods', action: () => {
+            { label: 'Get Mod Installer Mods', action: () => {
               util.opn(DB_URL).catch(err => undefined);
               dismiss();
           }},
@@ -730,12 +819,18 @@ function toBlue(func) {
 
 //Setup function
 async function setup(discovery, api, gameSpec) {
+  // SYNCHRONOUS CODE ////////////////////////////////////
   setupNotify(api);
-  await downloadModInstaller(discovery, api, gameSpec);
-  await downloadXml(discovery, api, gameSpec);
-  await downloadLaa(discovery, api, gameSpec);
-  await fs.ensureDirWritableAsync(path.join(util.getVortexPath('documents'), XML_PATH));
-  return fs.ensureDirWritableAsync(path.join(discovery.path, MIMOD_PATH));
+  const state = api.getState();
+  GAME_PATH = discovery.path;
+  STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
+  DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
+  // ASYNC CODE //////////////////////////////////////////
+  await downloadModInstaller(api, gameSpec);
+  await downloadXml(api, gameSpec);
+  await downloadLaa(api, gameSpec);
+  await fs.ensureDirWritableAsync(XML_PATH);
+  return fs.ensureDirWritableAsync(path.join(GAME_PATH, MIMOD_PATH));
 }
 
 //Let Vortex know about the game
@@ -743,12 +838,8 @@ function applyGame(context, gameSpec) {
   //register the game
   const game = {
     ...gameSpec.game,
-    //queryPath,
     queryPath: makeFindGame(context.api, gameSpec),
     queryModPath: makeGetModPath(context.api, gameSpec),
-    //requiresLauncher,
-    //requiresLauncher: makeRequiresLauncher(context.api, gameSpec),
-    requiresCleanup: true,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     executable: () => gameSpec.game.executable,
     supportedTools: tools,
@@ -765,23 +856,132 @@ function applyGame(context, gameSpec) {
   });
 
   //register mod installers
-  context.registerInstaller('farcry3-modinstaller', 25, testModInstaller, installModInstaller);
-  context.registerInstaller('farcry3-ziggy', 30, testZiggy, installZiggy);
-  context.registerInstaller('farcry3-dat', 35, testData, installData);
-  context.registerInstaller('farcry3-bin', 40, testBin, installBin);
-  context.registerInstaller('farcry3-xml', 45, testXml, installXml);
-  context.registerInstaller('farcry3-mimoda3', 50, toBlue(testMiModA3), toBlue(installMiModA3));
-  //context.registerInstaller('farcry3-mimoda3', 50, testMiModA3, installMiModA3);
-  context.registerInstaller('farcry3-mimod', 55, testMiMod, installMiMod);
+  context.registerInstaller(MI_ID, 25, testModInstaller, installModInstaller);
+  context.registerInstaller('farcry3-ziggy', 26, testZiggy, installZiggy);
+  context.registerInstaller(ROOT_ID, 27, testRoot, installRoot);
+  context.registerInstaller(DATA_ID, 29, testData, installData);
+  context.registerInstaller(BIN_ID, 31, testBin, installBin);
+  context.registerInstaller(XML_ID, 33, testXml, installXml);
+  context.registerInstaller(MIMODA3_ID, 35, toBlue(testMiModA3), toBlue(installMiModA3));
+  context.registerInstaller(MIMOD_ID, 37, testMiMod, installMiMod);
+
+  //register actions
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Far Cry Modding Site', () => {
+    const openPath = DB_URL;
+    util.opn(openPath).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
+    const openPath = XML_PATH;
+    util.opn(openPath).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
+    const openPath = path.join(__dirname, 'CHANGELOG.md');
+    util.opn(openPath).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
+    const openPath = DOWNLOAD_FOLDER;
+    util.opn(openPath).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
 }
 
 //main function
 function main(context) {
   applyGame(context, spec);
-  context.once(() => {
-    // put code here that should be run (once) when Vortex starts up
+  context.once(() => { // put code here that should be run (once) when Vortex starts up
+    context.api.onAsync('did-deploy', async (profileId, deployment) => {
+      const lastActiveProfile = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
+      if (profileId !== lastActiveProfile) return;
+      return deployNotify(context.api);
+    });
   });
   return true;
+}
+
+//Notify User to run Mod Merger Utility after deployment
+function deployNotify(api) {
+  const NOTIF_ID = `${GAME_ID}-deploy`;
+  const MOD_NAME = MI_NAME;
+  const MESSAGE = `Use ${MOD_NAME} to Install Mods`;
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'warning',
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: 'Run Installer',
+        action: (dismiss) => {
+          runModManager(api);
+          dismiss();
+        },
+      },
+      {
+        title: 'More',
+        action: (dismiss) => {
+          api.showDialog('question', MESSAGE, {
+            text: `For ${MIMOD_EXTS.join('/')} mods, you must use ${MOD_NAME} to install mod files into the game data.\n`
+                + `Use the included tool to launch ${MOD_NAME} (button below, in "Dashboard" tab, or in notification shown after deployment).\n`
+          }, [
+            {
+              label: 'Run Mod Installer', action: () => {
+                runModManager(api);
+                dismiss();
+              }
+            },
+            { label: 'Get Mod Installer Mods', action: () => {
+              util.opn(DB_URL).catch(err => undefined);
+              dismiss();
+          }},
+            { label: 'Continue', action: () => dismiss() },
+            {
+              label: 'Never Show Again', action: () => {
+                api.suppressNotification(NOTIF_ID);
+                dismiss();
+              }
+            },
+          ]);
+        },
+      },
+    ],
+  });
+}
+
+function runModManager(api) {
+  const TOOL_ID = MI_ID_TOOL;
+  const TOOL_NAME = MI_NAME;
+  const state = api.store.getState();
+  const tool = util.getSafe(state, ['settings', 'gameMode', 'discovered', GAME_ID, 'tools', TOOL_ID], undefined);
+
+  try {
+    const TOOL_PATH = tool.path;
+    if (TOOL_PATH !== undefined) {
+      return api.runExecutable(TOOL_PATH, [], { suggestDeploy: false, shell: true })
+        .catch(err => api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err,
+          { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 })
+        );
+    }
+    else {
+      return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, `Path to ${TOOL_NAME} executable could not be found. Ensure ${TOOL_NAME} is installed through Vortex.`);
+    }
+  } catch (err) {
+    return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 });
+  }
 }
 
 //export to Vortex

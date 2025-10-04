@@ -297,7 +297,7 @@ function installSave(files) {
 
 //Installer test for Fluffy Mod Manager files
 function testRoot(files, gameId) {
-  //const isMod = files.some(file => path.basename(file).toLocaleLowerCase() === ROOT_FILE);
+  //const isMod = files.some(file => path.basename(file).toLowerCase() === ROOT_FILE);
   const isMod = files.some(file => path.basename(file) === ROOT_FILE);
   let supported = (gameId === spec.game.id) && isMod;
 
@@ -309,7 +309,7 @@ function testRoot(files, gameId) {
 
 //Installer install Fluffy Mod Manger files
 function installRoot(files) {
-  //const modFile = files.find(file => path.basename(file).toLocaleLowerCase() === ROOT_FILE);
+  //const modFile = files.find(file => path.basename(file).toLowerCase() === ROOT_FILE);
   const modFile = files.find(file => path.basename(file) === ROOT_FILE);
   const idx = modFile.indexOf(ROOT_IDX);
   const rootPath = path.dirname(modFile);

@@ -230,7 +230,7 @@ async function downloadFluffy(api, gameSpec) {
 
 //Installer test for Fluffy Mod Manager files
 function testFluffy(files, gameId) {
-  const isFluffy = files.some(file => path.basename(file).toLocaleLowerCase() === FLUFFY_EXEC);
+  const isFluffy = files.some(file => path.basename(file).toLowerCase() === FLUFFY_EXEC);
   let supported = (gameId === spec.game.id) && isFluffy
 
   return Promise.resolve({
@@ -241,7 +241,7 @@ function testFluffy(files, gameId) {
 
 //Installer install Fluffy Mod Manger files
 function installFluffy(files) {
-  const modFile = files.find(file => path.basename(file).toLocaleLowerCase() === FLUFFY_EXEC);
+  const modFile = files.find(file => path.basename(file).toLowerCase() === FLUFFY_EXEC);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: FLUFFY_ID };
@@ -309,7 +309,7 @@ function installPsarc(files) {
 
 //test for zips
 async function testZipContent(files, gameId) {
-  const isFluffy = files.some(file => path.basename(file).toLocaleLowerCase() === FLUFFY_EXEC);
+  const isFluffy = files.some(file => path.basename(file).toLowerCase() === FLUFFY_EXEC);
   return Promise.resolve({
     supported: (gameId === spec.game.id) && !isFluffy,
     requiredFiles: []

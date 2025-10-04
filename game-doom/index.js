@@ -442,7 +442,7 @@ function installLegacy(files) {
 
 //Installer test for game version rollback
 function testRollback(files, gameId) {
-  const isMod = files.some(file => path.basename(file).toLocaleLowerCase() === ROLLBACK_FILE);
+  const isMod = files.some(file => path.basename(file).toLowerCase() === ROLLBACK_FILE);
   let supported = (gameId === spec.game.id) && isMod;
 
   return Promise.resolve({
@@ -453,7 +453,7 @@ function testRollback(files, gameId) {
 
 //Installer install game version rollback files
 function installRollback(files) {
-  const modFile = files.find(file => path.basename(file).toLocaleLowerCase() === ROLLBACK_FILE);
+  const modFile = files.find(file => path.basename(file).toLowerCase() === ROLLBACK_FILE);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: ROLLBACK_ID };

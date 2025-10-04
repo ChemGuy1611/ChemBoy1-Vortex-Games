@@ -320,7 +320,7 @@ function installContent(files) {
 //Installer test for Mod Manager
 function testSupportedContentManager(files, gameId) {
   // Make sure we're able to support this mod.
-  const isManager = files.some(file => path.basename(file).toLocaleLowerCase() === MANAGER_EXEC);
+  const isManager = files.some(file => path.basename(file).toLowerCase() === MANAGER_EXEC);
   let supported = (gameId === spec.game.id) && isManager
 
   // Test for a mod installer.
@@ -339,7 +339,7 @@ function testSupportedContentManager(files, gameId) {
 //Install Mod Manager files
 function installContentManager(files) {
   // The .fbmod file is expected to always be positioned in the mods directory we're going to disregard anything placed outside the root.
-  const modFile = files.find(file => path.basename(file).toLocaleLowerCase() === MANAGER_EXEC);
+  const modFile = files.find(file => path.basename(file).toLowerCase() === MANAGER_EXEC);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MANAGER_ID };

@@ -71,7 +71,7 @@ const MERGER_PATH = 'ph_ft';
 const MERGER_EXEC = "unleashthemods.exe";
 const MERGER_EXEC_PATH = path.join(MERGER_PATH, MERGER_EXEC);
 const MERGER_PAGE_NO = 140;
-const MERGER_FILE_NO = 402;
+const MERGER_FILE_NO = 1157;
 
 /* Config and Save paths and modtypes
 const CONFIG_ID = `${GAME_ID}-config`;

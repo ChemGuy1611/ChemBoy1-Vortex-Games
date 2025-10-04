@@ -1,15 +1,17 @@
-/*
+/*////////////////////////////////////////////
 Name: Star Wars Outlaws Vortex Extension
-Structure: Ubisoft Root Folder
+Structure: Snowdrop Mod Loader
 Author: ChemBoy1
-Version: 0.2.3
-Date: 12/24/2024
-*/
+Version: 0.2.4
+Date: 2025-10-03
+////////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors } = require('vortex-api');
+const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
+
+const DOCUMENTS = util.getVortexPath("documents");
 
 //Specify all the information about the game
 const GAME_ID = "starwarsoutlaws";
@@ -19,24 +21,34 @@ const EXEC = "Outlaws.exe";
 const EXEC_PLUS = "Outlaws_Plus.exe";
 const GAME_NAME = "Star Wars Outlaws";
 const GAME_NAME_SHORT = "SW Outlaws";
-const MOD_PATH = ".";
+
+let GAME_PATH = null;
+let STAGING_FOLDER = '';
+let DOWNLOAD_FOLDER = '';
 
 //Info for mody types and installers
 const CONFIG_ID = `${GAME_ID}-config`;
-const CONFIG_PATH = `My Games\\Outlaws`;
+const CONFIG_NAME = "Config (Documents)";
+const CONFIG_PATH = path.join(DOCUMENTS, "My Games", "Outlaws");
 const CONFIG_FILES = ["graphic settings.cfg"];
 const CONFIG_EXT = ".cfg";
 
 const DATA_ID = `${GAME_ID}-data`;
+const DATA_NAME = "Game Data Folder";
 const DATA_FILE = "helix";
-const DATA_IDX = "helix\\";
 
 const DATASUB_ID = `${GAME_ID}-datasub`;
+const DATASUB_NAME = "Game Data Subfolder";
 const DATASUB_PATH = path.join("helix");
 const DATASUB_FOLDERS = ["baked", "graph objects", "game system data"]; // <-- Update to incorporate all subfolders 
 
 const MODLOADER_ID = `${GAME_ID}-modloader`;
+const MODLOADER_NAME = "Snowdrop ModLoader";
 const MODLOADER_FILE = `version.dll`;
+const MODLOADER_PAGE_NO = 24;
+const MODLOADER_FILE_NO = 294;
+
+const MOD_PATH = ".";
 
 const spec = {
   "game": {
@@ -46,6 +58,7 @@ const spec = {
     "executable": EXEC,
     "logo": `${GAME_ID}.jpg`,
     "mergeMods": true,
+    "requiresCleanup": true,
     "modPath": MOD_PATH,
     "modPathIsRelative": true,
     "requiredFiles": [
@@ -54,7 +67,6 @@ const spec = {
     "details": {
       "uPlayAppId": UPLAYAPP_ID,
       "steamAppId": STEAMAPP_ID,
-      "nexusPageId": GAME_ID
     },
     "environment": {
       "UPlayAPPId": UPLAYAPP_ID,
@@ -64,25 +76,25 @@ const spec = {
   "modTypes": [
     {
       "id": CONFIG_ID,
-      "name": "Config (Documents)",
+      "name": CONFIG_NAME,
       "priority": "high",
-      "targetPath": `{documents}\\${CONFIG_PATH}`
+      "targetPath": CONFIG_PATH
     },
     {
       "id": DATA_ID,
-      "name": "Game Data Folder",
+      "name": DATA_NAME,
       "priority": "high",
       "targetPath": `{gamePath}`
     },
     {
       "id": DATASUB_ID,
-      "name": "Game Data Subfolder",
+      "name": DATASUB_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${DATASUB_PATH}`
+      "targetPath": path.join("{gamePath}", DATASUB_PATH)
     },
     {
       "id": MODLOADER_ID,
-      "name": "ModLoader",
+      "name": MODLOADER_NAME,
       "priority": "low",
       "targetPath": `{gamePath}`
     },
@@ -113,6 +125,8 @@ const tools = [
   },
 ];
 
+// BASIC EXTENSION FUNCTIONS ///////////////////////////////////////////////////
+
 //Set mod type priorities
 function modTypePriority(priority) {
   return {
@@ -127,7 +141,7 @@ function pathPattern(api, game, pattern) {
   return template(pattern, {
     gamePath: (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0 ? void 0 : _a.path,
     documents: util.getVortexPath('documents'),
-    localAppData: process.env['LOCALAPPDATA'],
+    localAppData: util.getVortexPath('localAppData'),
     appData: util.getVortexPath('appData'),
   });
 }
@@ -163,10 +177,11 @@ function makeRequiresLauncher(api, gameSpec) {
     : undefined);
 }
 
+// MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
+
 //Test for config files
 function testConfig(files, gameId) {
-  //const isConfig = files.find(file => CONFIG_FILES.includes(path.basename(file).toLowerCase())) !== undefined;
-  const isConfig = files.find(file => path.extname(file).toLowerCase() === CONFIG_EXT) !== undefined;
+  const isConfig = files.some(file => (path.extname(file).toLowerCase() === CONFIG_EXT));
   let supported = (gameId === spec.game.id) && isConfig;
 
   // Test for a mod installer
@@ -184,7 +199,7 @@ function testConfig(files, gameId) {
 
 //Install config files
 function installConfig(files) {
-  const modFile = files.find(file => path.extname(file).toLowerCase() === CONFIG_EXT);
+  const modFile = files.find(file => (path.extname(file).toLowerCase() === CONFIG_EXT));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: CONFIG_ID };
@@ -243,8 +258,7 @@ function installModLoader(files) {
 
 //Installer test for "helix" data folder
 function testData(files, gameId) {
-  //const isMod = files.some(file => path.basename(file).toLocaleLowerCase() === ROOT_FILE);
-  const isMod = files.some(file => path.basename(file) === DATA_FILE);
+  const isMod = files.some(file => path.basename(file).toLowerCase() === DATA_FILE);
   let supported = (gameId === spec.game.id) && isMod;
 
   // Test for a mod installer
@@ -262,8 +276,8 @@ function testData(files, gameId) {
 
 //Installer install "helix" data folder
 function installData(files) {
-  //const modFile = files.find(file => path.basename(file).toLocaleLowerCase() === ROOT_FILE);
-  const modFile = files.find(file => path.basename(file) === DATA_FILE);
+  const modFile = files.find(file => path.basename(file).toLowerCase() === DATA_FILE);
+  const DATA_IDX = `${path.basename(modFile)}${path.sep}`
   const idx = modFile.indexOf(DATA_IDX);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: DATA_ID };
@@ -271,7 +285,6 @@ function installData(files) {
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
     ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
-    //((file.indexOf(rootPath) !== -1))
   );
 
   const instructions = filtered.map(file => {
@@ -288,7 +301,7 @@ function installData(files) {
 
 //Installer test for data subfolder
 function testDataSub(files, gameId) {
-  const isMod = files.find(file => DATASUB_FOLDERS.includes(path.basename(file))) !== undefined;
+  const isMod = files.some(file => DATASUB_FOLDERS.includes(path.basename(file).toLowerCase()));
   let supported = (gameId === spec.game.id) && isMod;
 
   return Promise.resolve({
@@ -299,7 +312,7 @@ function testDataSub(files, gameId) {
 
 //Installer install data subfolder
 function installDataSub(files) {
-  const modFile = files.find(file => DATASUB_FOLDERS.includes(path.basename(file)));
+  const modFile = files.find(file => DATASUB_FOLDERS.includes(path.basename(file).toLowerCase()));
   const DATASUB_IDX = `${path.basename(modFile)}${path.sep}`
   const idx = modFile.indexOf(DATASUB_IDX);
   const rootPath = path.dirname(modFile);
@@ -322,6 +335,8 @@ function installDataSub(files) {
   return Promise.resolve({ instructions });
 }
 
+// AUTOMATIC DOWNLOAD FUNCTIONS //////////////////////////////////////////////
+
 //Check if Signature Bypass is installed
 function isMLInstalled(api, spec) {
   const state = api.getState();
@@ -329,45 +344,50 @@ function isMLInstalled(api, spec) {
   return Object.keys(mods).some(id => mods[id]?.type === MODLOADER_ID);
 }
 
-//Function to auto-download Signature Bypass from Nexus
+//* Function to auto-download XML file from Nexus Mods
 async function downloadModLoader(api, gameSpec) {
   let isInstalled = isMLInstalled(api, gameSpec);
-  
   if (!isInstalled) {
-    //notification indicating install process
-    const MOD_NAME = `Universal Snowdrop Modloader`;
-    const NOTIF_ID = `${GAME_ID}-modloader-installing`;
-    api.sendNotification({
+    const MOD_NAME = MODLOADER_NAME;
+    const MOD_TYPE = MODLOADER_ID;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
+    let FILE_ID = MODLOADER_FILE_NO;  //If using a specific file id because "input" below gives an error
+    const PAGE_ID = MODLOADER_PAGE_NO;
+    const GAME_DOMAIN = GAME_ID;
+    api.sendNotification({ //notification indicating install process
       id: NOTIF_ID,
       message: `Installing ${MOD_NAME}`,
       type: 'activity',
       noDismiss: true,
       allowSuppress: false,
     });
-    //make sure user is logged into Nexus Mods account in Vortex
-    if (api.ext?.ensureLoggedIn !== undefined) {
+    if (api.ext?.ensureLoggedIn !== undefined) { //make sure user is logged into Nexus Mods account in Vortex
       await api.ext.ensureLoggedIn();
     }
-
-    const modPageId = 24;
     try {
-      //get the mod files information from Nexus
-      const modFiles = await api.ext.nexusGetModFiles(gameSpec.game.id, modPageId);
-      const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
-      const file = modFiles
-        .filter(file => file.category_id === 1)
-        .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))[0];
-      if (file === undefined) {
-        throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
-      }
-      //Download the mod
-      const dlInfo = {
-        game: gameSpec.game.id,
+      let FILE = FILE_ID; //use the FILE_ID directly for the correct game store version
+      let URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      try { //get the mod files information from Nexus
+        const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
+        const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
+        const file = modFiles
+          .filter(file => file.category_id === 1)
+          .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))[0];
+        if (file === undefined) {
+          throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
+        }
+        FILE = file.file_id;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      } catch (err) { // use defined file ID if input is undefined above
+        FILE = FILE_ID;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      } //
+      const dlInfo = { //Download the mod
+        game: GAME_DOMAIN,
         name: MOD_NAME,
       };
-      const nxmUrl = `nxm://${gameSpec.game.id}/mods/${modPageId}/files/${file.file_id}`;
       const dlId = await util.toPromise(cb =>
-        api.events.emit('start-download', [nxmUrl], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
       const modId = await util.toPromise(cb =>
         api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
       const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
@@ -376,25 +396,32 @@ async function downloadModLoader(api, gameSpec) {
           allowAutoDeploy: true,
           installed: true,
         }),
-        actions.setModType(gameSpec.game.id, modId, MODLOADER_ID), // Set the mod type
+        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
       ];
-      util.batchDispatch(api.store, batched); // Will dispatch both actions.
-    //Show the user the download page if the download, install process fails
-    } catch (err) {
-      const errPage = `https://www.nexusmods.com/${gameSpec.game.id}/mods/${modPageId}/files/?tab=files`;
+      util.batchDispatch(api.store, batched); // Will dispatch both actions
+    } catch (err) { //Show the user the download page if the download, install process fails
+      const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
       api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
       util.opn(errPage).catch(() => null);
     } finally {
       api.dismissNotification(NOTIF_ID);
     }
   }
-}
+} //*/
+
+// MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
 //Setup function
 async function setup(discovery, api, gameSpec) {
+  // SYNCHRONOUS CODE ////////////////////////////////////
+  const state = api.getState();
+  GAME_PATH = discovery.path;
+  STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
+  DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
+  // ASYNC CODE //////////////////////////////////////////
   await downloadModLoader(api, gameSpec);
-  await fs.ensureDirWritableAsync(path.join(util.getVortexPath('documents'), CONFIG_PATH));
-  return fs.ensureDirWritableAsync(path.join(discovery.path, gameSpec.game.modPath));
+  await fs.ensureDirWritableAsync(path.join(CONFIG_PATH));
+  return fs.ensureDirWritableAsync(path.join(GAME_PATH, DATASUB_PATH));
 }
 
 //Let Vortex know about the game
@@ -405,7 +432,6 @@ function applyGame(context, gameSpec) {
     queryPath: makeFindGame(context.api, gameSpec),
     queryModPath: makeGetModPath(context.api, gameSpec),
     requiresLauncher: makeRequiresLauncher(context.api, gameSpec),
-    requiresCleanup: true,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     executable: () => gameSpec.game.executable,
     supportedTools: tools,
@@ -422,17 +448,42 @@ function applyGame(context, gameSpec) {
   });
 
   //register mod installers
-  context.registerInstaller(`${GAME_ID}-config`, 25, testConfig, installConfig);
-  context.registerInstaller(MODLOADER_ID, 30, testModLoader, installModLoader);
-  context.registerInstaller(DATA_ID, 35, testData, installData);
-  context.registerInstaller(DATASUB_ID, 40, testDataSub, installDataSub);
+  context.registerInstaller(MODLOADER_ID, 25, testModLoader, installModLoader);
+  context.registerInstaller(DATA_ID, 27, testData, installData);
+  context.registerInstaller(DATASUB_ID, 29, testDataSub, installDataSub);
+  // ??? add fallback installer dialogue for user to set path where files should go (AFOP)?
+  context.registerInstaller(CONFIG_ID, 31, testConfig, installConfig);
+
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
+    const openPath = CONFIG_PATH;
+    util.opn(openPath).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
+    const openPath = path.join(__dirname, 'CHANGELOG.md');
+    util.opn(openPath).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
+    const openPath = DOWNLOAD_FOLDER;
+    util.opn(openPath).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
 }
 
 //main function
 function main(context) {
   applyGame(context, spec);
-  context.once(() => {
-    // put code here that should be run (once) when Vortex starts up
+  context.once(() => { // put code here that should be run (once) when Vortex starts up
 
   });
   return true;

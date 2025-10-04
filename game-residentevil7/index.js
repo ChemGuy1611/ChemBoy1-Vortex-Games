@@ -436,7 +436,7 @@ async function downloadREFrameworkRT(api, gameSpec) {
 
 //Installer test for Fluffy Mod Manager files
 function testFluffy(files, gameId) {
-  const isFluffy = files.some(file => path.basename(file).toLocaleLowerCase() === FLUFFY_EXEC);
+  const isFluffy = files.some(file => path.basename(file).toLowerCase() === FLUFFY_EXEC);
   let supported = (gameId === spec.game.id) && isFluffy
 
   return Promise.resolve({
@@ -447,7 +447,7 @@ function testFluffy(files, gameId) {
 
 //Installer install Fluffy Mod Manger files
 function installFluffy(files) {
-  const modFile = files.find(file => path.basename(file).toLocaleLowerCase() === FLUFFY_EXEC);
+  const modFile = files.find(file => path.basename(file).toLowerCase() === FLUFFY_EXEC);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: FLUFFY_ID };
@@ -471,7 +471,7 @@ function installFluffy(files) {
 
 //Installer test for REFramework file
 function testREF(files, gameId) {
-  const isREF = files.some(file => path.basename(file).toLocaleLowerCase() === REF_FILE);
+  const isREF = files.some(file => path.basename(file).toLowerCase() === REF_FILE);
   let supported = (gameId === spec.game.id) && isREF
 
   return Promise.resolve({
@@ -482,7 +482,7 @@ function testREF(files, gameId) {
 
 //Installer install REFramework file
 function installREF(files) {
-  const modFile = files.find(file => path.basename(file).toLocaleLowerCase() === REF_FILE);
+  const modFile = files.find(file => path.basename(file).toLowerCase() === REF_FILE);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: REF_ID };
@@ -506,7 +506,7 @@ function installREF(files) {
 
 //Installer test for mod files
 function testFluffyMod(files, gameId) {
-  const isMod = files.some(file => path.basename(file).toLocaleLowerCase() === FLUFFYMOD_FILE);
+  const isMod = files.some(file => path.basename(file).toLowerCase() === FLUFFYMOD_FILE);
   let supported = (gameId === spec.game.id) && isMod;
 
   // Test for a mod installer
@@ -524,7 +524,7 @@ function testFluffyMod(files, gameId) {
 
 //Installer install mod files
 function installFluffyMod(files, fileName) {
-  const modFile = files.find(file => path.basename(file).toLocaleLowerCase() === FLUFFYMOD_FILE);
+  const modFile = files.find(file => path.basename(file).toLowerCase() === FLUFFYMOD_FILE);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: FLUFFYMOD_ID };
@@ -551,7 +551,7 @@ function installFluffyMod(files, fileName) {
 
 //Installer test for mod files
 function testFluffyPak(files, gameId) {
-  const isMod = files.some(file => path.extname(file).toLocaleLowerCase() === PAK_EXT);
+  const isMod = files.some(file => path.extname(file).toLowerCase() === PAK_EXT);
   let supported = (gameId === spec.game.id) && isMod;
 
   // Test for a mod installer
@@ -569,7 +569,7 @@ function testFluffyPak(files, gameId) {
 
 //Installer install mod files
 function installFluffyPak(files, fileName) {
-  const modFile = files.find(file => path.extname(file).toLocaleLowerCase() === PAK_EXT);
+  const modFile = files.find(file => path.extname(file).toLowerCase() === PAK_EXT);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: FLUFFYPAK_ID };
@@ -596,8 +596,8 @@ function installFluffyPak(files, fileName) {
 
 //test for zips
 async function testZipContent(files, gameId) {
-  const isFluffy = files.some(file => path.basename(file).toLocaleLowerCase() === FLUFFY_EXEC);
-  const isREF = files.some(file => path.basename(file).toLocaleLowerCase() === REF_FILE);
+  const isFluffy = files.some(file => path.basename(file).toLowerCase() === FLUFFY_EXEC);
+  const isREF = files.some(file => path.basename(file).toLowerCase() === REF_FILE);
   return Promise.resolve({
     supported: (gameId === spec.game.id) && !isFluffy && !isREF,
     requiredFiles: []
