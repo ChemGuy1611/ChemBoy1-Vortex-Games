@@ -1,9 +1,9 @@
 /*/////////////////////////////////////////////////
-Name: XXX Vortex Extension
+Name: Digimon Story Time Stranger Vortex Extension
 Structure: Reloaded-II Game (Mod Installer)
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2025-XX-XX
+Date: 2025-10-05
 /////////////////////////////////////////////////*/
 
 //Import libraries
@@ -12,17 +12,17 @@ const path = require('path');
 const template = require('string-template');
 
 //Specify all the information about the game
-const GAME_ID = "XXX";
-const STEAMAPP_ID = "XXX";
-const STEAMAPP_ID_DEMO = "XXX";
+const GAME_ID = "digimonstorytimestranger";
+const STEAMAPP_ID = "1984270";
+const STEAMAPP_ID_DEMO = null;
 const EPICAPP_ID = null;
-const GOGAPP_ID = "XXX";
+const GOGAPP_ID = null;
 const XBOXAPP_ID = "XXX";
 const XBOXEXECNAME = "XXX";
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID];
-const GAME_NAME = "XXX";
-const GAME_NAME_SHORT = "XXX";
-const EXEC = "XXX.exe";
+const GAME_NAME = "Digimon Story Time Stranger";
+const GAME_NAME_SHORT = "Digimon STS";
+const EXEC = "Digimon Story Time Stranger.exe";
 const EXEC_XBOX = 'gamelaunchhelper.exe';
 const APPMANIFEST_FILE = 'appxmanifest.xml';
 
@@ -226,13 +226,6 @@ function isModManagerInstalled(api, spec) {
   return Object.keys(mods).some(id => mods[id]?.type === RELOADED_ID);
 }
 
-//Check if mod injector is installed
-function isModLoaderInstalled(api, spec) {
-  const state = api.getState();
-  const mods = state.persistent.mods[spec.game.id] || {};
-  return Object.keys(mods).some(id => mods[id]?.type === RELOADEDMODLOADER_ID);
-}
-
 //Function to auto-download Reloaded-II Mod Loader
 async function downloadModManager(api, gameSpec) {
   let modLoaderInstalled = isModManagerInstalled(api, gameSpec);
@@ -319,66 +312,6 @@ async function downloadModManagerNoCheck(api, gameSpec) {
     util.opn(errPage).catch(() => null);
   } finally {
     api.dismissNotification(NOTIF_ID);
-  }
-}
-
-//Function to auto-download MRFC Mod Loader for Reloaded-II Mod Loader (from Nexus)
-async function downloadModLoader(api, gameSpec) {
-  let modLoaderInstalled = isModLoaderInstalled(api, gameSpec);
-  if (!modLoaderInstalled) {
-    //notification indicating install process
-    const MOD_NAME = `Metaphor Essentials`;
-    const NOTIF_ID = `${GAME_ID}-${MOD_NAME}-installing`;
-    api.sendNotification({
-      id: NOTIF_ID,
-      message: `Installing ${MOD_NAME}`,
-      type: 'activity',
-      noDismiss: true,
-      allowSuppress: false,
-    });
-    //make sure user is logged into Nexus Mods account in Vortex
-    if (api.ext?.ensureLoggedIn !== undefined) {
-      await api.ext.ensureLoggedIn();
-    }
-
-    const modPageId = 5;
-    try {
-      //get the mod files information from Nexus
-      const modFiles = await api.ext.nexusGetModFiles(gameSpec.game.id, modPageId);
-      const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
-      const file = modFiles
-        .filter(file => file.category_id === 1)
-        .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))[0];
-      if (file === undefined) {
-        throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
-      }
-      //Download the mod
-      const dlInfo = {
-        game: gameSpec.game.id,
-        name: MOD_NAME,
-      };
-      const nxmUrl = `nxm://${gameSpec.game.id}/mods/${modPageId}/files/${file.file_id}`;
-      const dlId = await util.toPromise(cb =>
-        api.events.emit('start-download', [nxmUrl], dlInfo, undefined, cb, undefined, { allowInstall: false }));
-      const modId = await util.toPromise(cb =>
-        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
-      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
-      const batched = [
-        actions.setModsEnabled(api, profileId, [modId], true, {
-          allowAutoDeploy: true,
-          installed: true,
-        }),
-        actions.setModType(gameSpec.game.id, modId, RELOADEDMODLOADER_ID), // Set the mod type
-      ];
-      util.batchDispatch(api.store, batched); // Will dispatch both actions.
-    //Show the user the download page if the download, install process fails
-    } catch (err) {
-      const errPage = `https://www.nexusmods.com/${gameSpec.game.id}/mods/${modPageId}/files/?tab=files`;
-      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
-      util.opn(errPage).catch(() => null);
-    } finally {
-      api.dismissNotification(NOTIF_ID);
-    }
   }
 }
 
@@ -546,39 +479,6 @@ function setupNotify(api) {
   });    
 }
 
-async function resolveGameVersion(gamePath) {
-  GAME_VERSION = setGameVersion(gamePath);
-  let version = '0.0.0';
-  if (GAME_VERSION === 'xbox') {
-    try { //try to parse appmanifest.xml
-      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
-      const parser = new DOMParser();
-      const XML = parser.parseFromString(appManifest, 'text/xml');
-      try { //try to get version from appmanifest.xml
-        const identity = XML.getElementsByTagName('Identity')[0];
-        version = identity.getAttribute('Version');
-        return Promise.resolve(version);
-      } catch (err) { //could not get version
-        log('error', `Could not get version from appmanifest.xml file for Xbox game version: ${err}`);
-        return Promise.resolve(version);
-      }
-    } catch (err) { //mod.manifest could not be read. Try to overwrite with a clean one.
-      log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
-      return Promise.resolve(version);
-    }
-  }
-  else { // use game exe for Steam
-    try {
-      const exeVersion = require('exe-version');
-      version = exeVersion.getProductVersion(path.join(gamePath, EXEC));
-      return Promise.resolve(version); 
-    } catch (err) {
-      log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
-      return Promise.resolve(version);
-    }
-  }
-}
-
 //Setup function
 async function setup(discovery, api, gameSpec) {
   // SYNCHRONOUS CODE ////////////////////////////////////
@@ -590,7 +490,6 @@ async function setup(discovery, api, gameSpec) {
   // ASYNC CODE //////////////////////////////////////////
   await fs.ensureDirWritableAsync(path.join(discovery.path, RELOADEDMODLOADER_PATH));
   await downloadModManager(api, gameSpec);
-  //await downloadModLoader(api, gameSpec);
   return fs.ensureFileAsync(
     path.join(discovery.path, RELOADED_PATH, "portable.txt")
   );
@@ -606,7 +505,7 @@ function applyGame(context, gameSpec) {
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     executable: () => gameSpec.game.executable,
-    getGameVersion: resolveGameVersion,
+    //getGameVersion: resolveGameVersion,
     supportedTools: [
       /*
       {
