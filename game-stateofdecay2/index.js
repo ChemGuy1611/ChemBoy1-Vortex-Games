@@ -670,7 +670,7 @@ async function resolveGameVersion(gamePath) {
   }
   else {
     const exeVersion = require('exe-version');
-    return Promise.resolve(exeVersion.getProductVersionLocalized(path.join(gamePath, EXEC)));
+    return Promise.resolve(exeVersion.getProductVersion(path.join(gamePath, EXEC)));
   }
 }
 

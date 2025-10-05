@@ -4,6 +4,10 @@ Future Changes (NOT IMPLEMENTED YET):
 
 - NONE
 
+## [0.2.1] - 2025-10-05
+
+- Fixed an undefined variable in the game version detection function.
+
 ## [0.2.0] - 2025-05-28
 
 - Added Xbox version support, with custom game version detection

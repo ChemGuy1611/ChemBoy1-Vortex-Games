@@ -708,7 +708,7 @@ async function resolveGameVersion(gamePath) {
   try {
     const exeVersion = require('exe-version');
     const EXECUTABLE = path.join(gamePath, GZDOOM_EXEC_PATH);
-    version = exeVersion.getProductVersionLocalized(EXECUTABLE);
+    version = exeVersion.getProductVersion(EXECUTABLE);
     return Promise.resolve(version); 
   } catch (err) {
     log('error', `Could not read GZDoom executable file to get version: ${err}`);

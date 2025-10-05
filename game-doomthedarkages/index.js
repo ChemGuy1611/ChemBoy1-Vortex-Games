@@ -1056,7 +1056,7 @@ async function resolveGameVersion(gamePath) {
   else { // use DoomTheDarkAges.exe for Steam
     try {
       const exeVersion = require('exe-version');
-      version = exeVersion.getProductVersionLocalized(path.join(gamePath, EXEC));
+      version = exeVersion.getProductVersion(path.join(gamePath, EXEC));
       return Promise.resolve(version); 
     } catch (err) {
       log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);

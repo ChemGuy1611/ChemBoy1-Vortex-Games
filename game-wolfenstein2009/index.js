@@ -1,10 +1,10 @@
-/*
+/*/////////////////////////////////////////
 Name: Wolfenstein (2009) Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
 Version: 0.2.2
 Date: 08/07/2024
-*/
+//////////////////////////////////////////*/
 
 //Import libraries
 const { actions, fs, util, selectors } = require('vortex-api');

@@ -1,9 +1,9 @@
 /*/////////////////////////////////////////////////
-Name: Metaphor: ReFantazio Vortex Extension
-Structure: 3rd-Party Mod Installer (Reloaded-II)
+Name: XXX Vortex Extension
+Structure: Reloaded-II Game (Mod Installer)
 Author: ChemBoy1
-Version: 0.2.1
-Date: 2025-10-05
+Version: 0.1.0
+Date: 2025-XX-XX
 /////////////////////////////////////////////////*/
 
 //Import libraries
@@ -12,33 +12,50 @@ const path = require('path');
 const template = require('string-template');
 
 //Specify all the information about the game
-const STEAMAPP_ID = "2679460";
+const GAME_ID = "XXX";
+const STEAMAPP_ID = "XXX";
+const STEAMAPP_ID_DEMO = "XXX";
 const EPICAPP_ID = null;
-const GOGAPP_ID = "";
-const XBOXAPP_ID = "SEGAofAmericaInc.Pae22b02y";
-const XBOXEXECNAME = "METAPHOR";
-const GAME_ID = "metaphorrefantazio";
-const GAME_NAME = "Metaphor: ReFantazio";
-const GAME_NAME_SHORT = "Metaphor: RF";
-const EXEC = "METAPHOR.exe";
-
-let GAME_VERSION = '';
+const GOGAPP_ID = "XXX";
+const XBOXAPP_ID = "XXX";
+const XBOXEXECNAME = "XXX";
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID];
+const GAME_NAME = "XXX";
+const GAME_NAME_SHORT = "XXX";
+const EXEC = "XXX.exe";
 const EXEC_XBOX = 'gamelaunchhelper.exe';
 const APPMANIFEST_FILE = 'appxmanifest.xml';
 
+const MOD_LOADER_FOLDER = "";
+
+let GAME_PATH = null;
+let GAME_VERSION = '';
+let STAGING_FOLDER = '';
+let DOWNLOAD_FOLDER = '';
+
+//Data for mod types, tools, and installers
 const RELOADED_ID = `${GAME_ID}-reloadedmanager`;
+const RELOADED_NAME = "Reloaded II Mod Manager";
 const RELOADED_PATH = path.join("Reloaded");
 const RELOADED_EXEC = "reloaded-ii.exe";
 const RELOADED_URL_LATEST = `https://github.com/Reloaded-Project/Reloaded-II/releases/latest/download/Release.zip`;
 const RELOADED_URL_MANUAL = `https://github.com/Reloaded-Project/Reloaded-II/releases`;
 
-const RELOADEDMODLOADER_ID = `${GAME_ID}-reloadedmodloader`;
-const RELOADEDMODLOADER_PATH = path.join("Reloaded", "Mods", "MRFPC_Mod_Loader");
-const RELOADEDMODLOADER_FILE = "mrfpc.modloader.dll";
-
 const RELOADEDMOD_ID = `${GAME_ID}-reloadedmod`;
+const RELOADEDMOD_NAME = "Reloaded Mod";
 const RELOADEDMOD_PATH = path.join("Reloaded", "Mods");
 const RELOADEDMOD_FILE = "modconfig.json";
+
+const RELOADEDMODLOADER_ID = `${GAME_ID}-reloadedmodloader`;
+const RELOADEDMODLOADER_NAME = "Mod Loader";
+const RELOADEDMODLOADER_PATH = path.join(RELOADEDMOD_PATH, MOD_LOADER_FOLDER);
+const RELOADEDMODLOADER_FILE = "XXX.dll";
+const RELOADEDMODLOADER_PAGE_NO = 0;
+const RELOADEDMODLOADER_FILE_NO = 0;
+const RELOADEDMODLOADER_URL = `XXX`;
+const RELOADEDMODLOADER_URL_ERR = `XXX`;
+
+const MOD_PATH_DEFAULT = '.';
 
 const spec = {
   "game": {
@@ -48,42 +65,42 @@ const spec = {
     "executable": EXEC,
     "logo": `${GAME_ID}.jpg`,
     "mergeMods": true,
-    "modPath": ".",
+    "requiresCleanup": true,
+    "modPath": MOD_PATH_DEFAULT,
     "modPathIsRelative": true,
     "requiredFiles": [
       EXEC
     ],
     "details": {
       "steamAppId": STEAMAPP_ID,
-      //"gogAppId": GOGAPP_ID,
+      "gogAppId": GOGAPP_ID,
       "epicAppId": EPICAPP_ID,
-      //"xboxAppId": XBOXAPP_ID,
-      "nexusPageId": GAME_ID,
+      "xboxAppId": XBOXAPP_ID,
       "supportsSymlinks": false,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
-      //"GogAPPId": GOGAPP_ID,
+      "GogAPPId": GOGAPP_ID,
       "EpicAPPId": EPICAPP_ID,
-      //"XboxAPPId": XBOXAPP_ID
+      "XboxAPPId": XBOXAPP_ID
     }
   },
   "modTypes": [
     {
       "id": RELOADEDMOD_ID,
-      "name": "Reloaded Mod",
+      "name": RELOADEDMOD_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${RELOADEDMOD_PATH}`
+      "targetPath": path.join("{gamePath}", RELOADEDMOD_PATH)
     },
     {
       "id": RELOADEDMODLOADER_ID,
-      "name": "MRFPC Mod Loader",
+      "name": RELOADEDMODLOADER_NAME,
       "priority": "low",
-      "targetPath": `{gamePath}\\${RELOADEDMODLOADER_PATH}`
+      "targetPath": path.join("{gamePath}", RELOADEDMODLOADER_PATH)
     },
     {
       "id": RELOADED_ID,
-      "name": "Reloaded Mod Manager",
+      "name": RELOADED_NAME,
       "priority": "low",
       "targetPath": "{gamePath}"
     },
@@ -98,6 +115,10 @@ const spec = {
     "names": []
   }
 };
+
+const tools = [
+
+];
 
 // BASIC EXTENSION FUNCTIONS ///////////////////////////////////////////////////
 
@@ -115,7 +136,7 @@ function pathPattern(api, game, pattern) {
   return template(pattern, {
     gamePath: (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0 ? void 0 : _a.path,
     documents: util.getVortexPath('documents'),
-    localAppData: process.env['LOCALAPPDATA'],
+    localAppData: util.getVortexPath('localAppData'),
     appData: util.getVortexPath('appData'),
   });
 }
@@ -134,7 +155,7 @@ function makeFindGame(api, gameSpec) {
 }
 
 async function requiresLauncher(gamePath, store) {
-  if (store === 'xbox') {
+  if ((store === 'xbox') && DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID)) {
     return Promise.resolve({
       launcher: 'xbox',
       addInfo: {
@@ -143,9 +164,19 @@ async function requiresLauncher(gamePath, store) {
       },
     });
   } //*/
-  if (store === 'steam') {
+  //*
+  if ((store === 'epic') && DISCOVERY_IDS_ACTIVE.includes(EPICAPP_ID)) {
     return Promise.resolve({
-      launcher: 'steam',
+        launcher: 'epic',
+        addInfo: {
+            appId: EPICAPP_ID,
+        },
+    });
+  } //*/
+  /*
+  if ((store === 'steam') && DISCOVERY_IDS_ACTIVE.includes(EPICAPP_ID)) {
+    return Promise.resolve({
+        launcher: 'steam',
     });
   } //*/
   return Promise.resolve(undefined);
@@ -162,14 +193,14 @@ function setGameVersion(discoveryPath) {
       return false;
     }
   };
+
   if (isCorrectExec(EXEC_XBOX)) {
     GAME_VERSION = 'xbox';
     return GAME_VERSION;
   }
-  else { 
-    GAME_VERSION = 'steam';
-    return GAME_VERSION;
-  };
+
+  GAME_VERSION = 'steam';
+  return GAME_VERSION;
 }
 
 const getDiscoveryPath = (api) => {
@@ -351,55 +382,6 @@ async function downloadModLoader(api, gameSpec) {
   }
 }
 
-/*
-//Function to auto-download MRFC Mod Loader for Reloaded-II Mod Loader (from Github)
-async function downloadModLoaderGithub(api, gameSpec) {
-  let modLoaderInstalled = isModLoaderInstalled(api, gameSpec);
-  
-  if (!modLoaderInstalled) {
-    //notification indicating install process
-    const MOD_NAME = 'MRFPC Mod Loader';
-    const NOTIF_ID = `${GAME_ID}-${MOD_NAME}-installing`;
-    api.sendNotification({
-      id: NOTIF_ID,
-      message: `Installing-${MOD_NAME}`,
-      type: 'activity',
-      noDismiss: true,
-      allowSuppress: false,
-    });
-
-    try {
-      //Download the mod
-      const dlInfo = {
-        game: gameSpec.game.id,
-        name: MOD_NAME,
-      };
-      const URL = `https://github.com/DeathChaos25/mrfpc.modloader/releases/download/1.0.1/mrfpc.modloader1.0.1.7z`;
-      const dlId = await util.toPromise(cb =>
-        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
-      const modId = await util.toPromise(cb =>
-        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
-      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
-      const batched = [
-        actions.setModsEnabled(api, profileId, [modId], true, {
-          allowAutoDeploy: true,
-          installed: true,
-        }),
-        actions.setModType(gameSpec.game.id, modId, RELOADEDMODLOADER_ID), // Set the mod type
-      ];
-      util.batchDispatch(api.store, batched); // Will dispatch both actions.
-    //Show the user the download page if the download, install process fails
-    } catch (err) {
-      const errPage = `https://github.com/DeathChaos25/mrfpc.modloader/releases`;
-      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
-      util.opn(errPage).catch(() => null);
-    } finally {
-      api.dismissNotification(NOTIF_ID);
-    }
-  }
-}
-*/
-
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
 
 //Installer test for Fluffy Mod Manager files
@@ -433,15 +415,13 @@ function installModManager(files) {
     };
   });
   instructions.push(setModTypeInstruction);
-
   return Promise.resolve({ instructions });
 }
 
-//Test for Reloaded Mod files
+//Test for Mod Loaderfiles
 function testReloadedLoader(files, gameId) {
-  // Make sure we're able to support this mod
-  const isMod = files.find(file => path.basename(file).toLowerCase() === RELOADEDMOD_FILE) !== undefined;
-  const isLoader = files.find(file => path.basename(file).toLowerCase() === RELOADEDMODLOADER_FILE) !== undefined;
+  const isMod = files.some(file => (path.basename(file).toLowerCase() === RELOADEDMOD_FILE));
+  const isLoader = files.some(file => (path.basename(file).toLowerCase() === RELOADEDMODLOADER_FILE));
   let supported = (gameId === spec.game.id) && isMod && isLoader;
 
   // Test for a mod installer
@@ -457,7 +437,7 @@ function testReloadedLoader(files, gameId) {
   });
 }
 
-//Install Reloaded Mod files
+//Install Mod Loader files
 function installReloadedLoader(files) {
   const modFile = files.find(file => path.basename(file).toLowerCase() === RELOADEDMOD_FILE);
   const idx = modFile.indexOf(path.basename(modFile));
@@ -482,8 +462,7 @@ function installReloadedLoader(files) {
 
 //Test for Reloaded Mod files
 function testReloadedMod(files, gameId) {
-  // Make sure we're able to support this mod
-  const isMod = files.find(file => path.basename(file).toLowerCase() === RELOADEDMOD_FILE) !== undefined;
+  const isMod = files.some(file => (path.basename(file).toLowerCase() === RELOADEDMOD_FILE));
   let supported = (gameId === spec.game.id) && isMod;
 
   // Test for a mod installer
@@ -580,7 +559,7 @@ async function resolveGameVersion(gamePath) {
       return Promise.resolve(version);
     }
   }
-  else { // use METAPHOR.exe for Steam
+  else { // use game exe for Steam
     try {
       const exeVersion = require('exe-version');
       version = exeVersion.getProductVersion(path.join(gamePath, EXEC));
@@ -594,7 +573,13 @@ async function resolveGameVersion(gamePath) {
 
 //Setup function
 async function setup(discovery, api, gameSpec) {
+  // SYNCHRONOUS CODE ////////////////////////////////////
   setupNotify(api);
+  const state = api.getState();
+  GAME_PATH = discovery.path;
+  STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
+  DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
+  // ASYNC CODE //////////////////////////////////////////
   await fs.ensureDirWritableAsync(path.join(discovery.path, RELOADEDMODLOADER_PATH));
   await downloadModManager(api, gameSpec);
   await downloadModLoader(api, gameSpec);
@@ -611,7 +596,6 @@ function applyGame(context, gameSpec) {
     queryPath: makeFindGame(context.api, gameSpec),
     queryModPath: makeGetModPath(context.api, gameSpec),
     requiresLauncher: requiresLauncher,
-    requiresCleanup: true,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     executable: () => gameSpec.game.executable,
     getGameVersion: resolveGameVersion,
@@ -627,8 +611,7 @@ function applyGame(context, gameSpec) {
         relative: true,
         exclusive: true,
         defaultPrimary: true,
-        isPrimary: true,
-        parameters: [`--launch "${path.join(gamePath, EXEC)}"`]
+        parameters: [`--launch "${path.join(GAME_PATH, EXEC)}"`]
       },
       */
       {
@@ -641,7 +624,6 @@ function applyGame(context, gameSpec) {
         relative: true,
         exclusive: true,
         defaultPrimary: true,
-        isPrimary: true,
       },
     ],
   };
@@ -658,17 +640,33 @@ function applyGame(context, gameSpec) {
 
   //register mod installers
   context.registerInstaller(RELOADED_ID, 25, testModManger, installModManager);
-  context.registerInstaller(RELOADEDMODLOADER_ID, 30, testReloadedLoader, installReloadedLoader);
-  context.registerInstaller(RELOADEDMOD_ID, 35, testReloadedMod, installReloadedMod);
+  context.registerInstaller(RELOADEDMODLOADER_ID, 27, testReloadedLoader, installReloadedLoader);
+  context.registerInstaller(RELOADEDMOD_ID, 29, testReloadedMod, installReloadedMod);
 
   //register actions
-    context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download Reloaded Mod Manager', () => {
-      downloadModManagerNoCheck(context.api, gameSpec).catch(() => null);
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download Reloaded Mod Manager', () => {
+    downloadModManagerNoCheck(context.api, gameSpec).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  }); //*/
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
+    const openPath = path.join(__dirname, 'CHANGELOG.md');
+    util.opn(openPath).catch(() => null);
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
-    }); //*/
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
+    const openPath = DOWNLOAD_FOLDER;
+    util.opn(openPath).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
 }
 
 //main function
