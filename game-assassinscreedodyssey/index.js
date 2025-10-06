@@ -28,13 +28,6 @@ const PATCH_ID = "assassinscreedodyssey-forgerpatch";
 
 const userDocsValue = util.getVortexPath('documents');
 const userDocsPathString = userDocsValue.replace(/x00s/g, '');
-/*
-const userDocsPath = winapi.RegGetValue(
-  'HKEY_CURRENT_USER',
-  'Software\\Microsoft\\Windows\\CurrentVersion\\Explorer\\User Shell Folders',
-  'Personal'
-);
-*/
 const ddsModPath = path.join(userDocsPathString, "Resorep", "modded");
 
 const spec = {

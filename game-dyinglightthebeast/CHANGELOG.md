@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.3.1] - 2025-10-06
+
+- Added notification to install .NET8 if not found in the registry (required for Merger Utility).
+
 ## [0.3.0] - 2025-09-27
 
 - Updated pak installer to no longer re-zip pak mods files (Merger Utility was updated to look for paks in subfolders). Mods are installed in individual folders inside the "ph_ft/mods" folder.

@@ -11,7 +11,7 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const shortid = require('shortid');
 const template = require('string-template');
-//const winapi = require('winapi-bindings');
+const winapi = require('winapi-bindings');
 //const turbowalk = require('turbowalk');
 
 //const USER_HOME = util.getVortexPath("home");
@@ -47,6 +47,7 @@ const SAVE_FOLDERNAME = CONFIG_FOLDERNAME;
 let GAME_PATH = null;
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
+let DOTNET_INSTALLED = false;
 
 const PAK_ID = `${GAME_ID}-pak`;
 const PAK_NAME = "Pak Mod (Merged)";
@@ -99,6 +100,15 @@ const SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
 const SAVE_EXT = ".sav";
 const SAVE_FILES = ["XXX"];
 //*/
+
+const DN_REL = "8.0";
+const DN_VER = "8.0.20";
+const DOTNET_URL = `https://dotnet.microsoft.com/en-us/download/dotnet/${DN_REL}`;
+const DOTNET_URL_DIRECT = `https://builds.dotnet.microsoft.com/dotnet/WindowsDesktop/${DN_VER}/windowsdesktop-runtime-${DN_VER}-win-x64.exe`;
+const DOTNET_EXEC = `windowsdesktop-runtime-${DN_VER}-win-x64.exe`;
+const DOTNET_CHECK_PATH = `C:\\Program Files\\dotnet\\shared\\Microsoft.WindowsDesktop.App\\${DN_VER}\\System.Windows.Forms.dll`;
+const DOTNET_CHECK_REGPATH = `SOFTWARE\\Microsoft\\dotnet\\InstalledManifests\\x64\\Microsoft.NET.Workload.Mono.ToolChain.Current.Manifest-${DN_REL}.100\\${DN_VER}`;
+const DOTNET_CHECK_REGKEY = `ProductVersion`;
 
 const MOD_PATH_DEFAULT = PAK_PATH;
 const REQ_FILE = EXEC;
@@ -772,6 +782,62 @@ function mergeOperation(api, filePath, mergeDir) {
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
+//Notify User of Setup instructions
+function dotNetNotify(api) {
+  const NOTIF_ID = `${GAME_ID}-dotnet`;
+  const MESSAGE = `.NET ${DN_REL} Desktop Runtime Required`;
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'warning',
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: 'More',
+        action: (dismiss) => {
+          api.showDialog('question', MESSAGE, {
+            text: `.NET ${DN_REL} Desktop Runtime is required run the ${MERGER_NAME}.\n`
+                + `You can download and install the runtime from the Microsoft website using the button below.\n`
+                + `If you don\'t install the correct version of .NET, the Merger window will open and close immediately when launched, without doing anything.\n`
+                + `Mods must be merged by the utility in order to be loaded by the game.\n`
+          }, [
+            {
+              label: `Go To .NET ${DN_REL} Download Page`, action: () => {
+                util.opn(DOTNET_URL).catch(() => null);
+                dismiss();
+              }
+            },
+            { label: 'Acknowledge', action: () => dismiss() },
+            {
+              label: 'Never Show Again', action: () => {
+                api.suppressNotification(NOTIF_ID);
+                dismiss();
+              }
+            },
+          ]);
+        },
+      },
+    ],
+  });    
+}
+
+//Determine if .NET Desktop Runtime is installed
+function checkForDotNet() {
+  try {
+    const dotNetPath = winapi.RegGetValue(
+      'HKEY_LOCAL_MACHINE',
+      DOTNET_CHECK_REGPATH,
+        DOTNET_CHECK_REGKEY);
+    if (!dotNetPath) {
+      throw new Error('empty registry key');
+    }
+    return true;
+  } catch (err) {
+    log('warn', `Could not read registry entry for .NET ${DN_REL} installation: ${err}`);
+    return false
+  }
+}
+
 //Setup function
 async function setup(discovery, api, gameSpec) {
   // SYNCHRONOUS CODE ////////////////////////////////////
@@ -779,6 +845,12 @@ async function setup(discovery, api, gameSpec) {
   GAME_PATH = discovery.path;
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
+
+  DOTNET_INSTALLED = checkForDotNet();
+  log('warn', `DLTB Check - .NET ${DN_REL} Desktop Runtime Installed?: ${DOTNET_INSTALLED}`);
+  if (!DOTNET_INSTALLED) {
+    dotNetNotify(api);
+  }
   // ASYNC CODE //////////////////////////////////////////
   await downloadMergerUtility(api, gameSpec);
   //* remove old merger folder if the user has it (temporary, remove after a few releases)

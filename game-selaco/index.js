@@ -42,7 +42,7 @@ const ROOT_NAME = "Root Folder";
 
 const MOD_PATH_DEFAULT = '.';
 const REQ_FILE = EXEC;
-const PARAMETERS_STRING = '';
+const PARAMETERS_STRING = '+g_skipintro 1';
 const PARAMETERS = [PARAMETERS_STRING];
 
 const spec = {
@@ -51,7 +51,7 @@ const spec = {
     "name": GAME_NAME,
     "shortName": GAME_NAME_SHORT,
     "executable": EXEC,
-    //"parameters": PARAMETERS,
+    "parameters": PARAMETERS,
     "logo": `${GAME_ID}.jpg`,
     "mergeMods": true,
     "requiresCleanup": true,
