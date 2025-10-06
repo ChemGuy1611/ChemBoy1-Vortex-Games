@@ -7,6 +7,7 @@
 ## [0.3.1] - 2025-10-06
 
 - Added notification to install .NET8 if not found in the registry (required for Merger Utility).
+- Added check for FOMOD installer to the .pak mod installer. This allows authors to use FOMODs to handle variants if they choose.
 
 ## [0.3.0] - 2025-09-27
 

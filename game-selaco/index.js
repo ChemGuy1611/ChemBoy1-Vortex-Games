@@ -2,8 +2,8 @@
 Name: Selaco Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2025-10-05
+Version: 0.1.1
+Date: 2025-10-06
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -21,10 +21,8 @@ const XBOXAPP_ID = null;
 const XBOXEXECNAME = null;
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 const GAME_NAME = "Selaco";
-const GAME_NAME_SHORT = "Selaco";
-const BINARIES_PATH = path.join('.');
-const EXEC_NAME = "SELACO.exe";
-const EXEC = path.join(BINARIES_PATH, EXEC_NAME);
+const GAME_NAME_SHORT = GAME_NAME;
+const EXEC = "SELACO.exe";
 
 const ROOT_FOLDERS = ['fm_banks', 'Save', 'soundfonts', 'UltimateSelacoBuilder'];
 
@@ -40,7 +38,7 @@ const MOD_EXTS = [".pk3"];
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Folder";
 
-const MOD_PATH_DEFAULT = '.';
+const MOD_PATH_DEFAULT = MOD_PATH;
 const REQ_FILE = EXEC;
 const PARAMETERS_STRING = '+g_skipintro 1';
 const PARAMETERS = [PARAMETERS_STRING];
@@ -288,6 +286,41 @@ function installRoot(files) {
   return Promise.resolve({ instructions });
 }
 
+//Fallback installer to Binaries folder
+function testBinaries(files, gameId) {
+  let supported = (gameId === spec.game.id);
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install fallback
+function installBinaries(files) {
+  const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
+  
+  const filtered = files.filter(file =>
+    (!file.endsWith(path.sep))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
 //Setup function
@@ -327,6 +360,7 @@ function applyGame(context, gameSpec) {
   //register mod installers
   context.registerInstaller(MOD_ID, 25, testMod, installMod);
   context.registerInstaller(ROOT_ID, 47, testRoot, installRoot);
+  context.registerInstaller(`${GAME_ID}-binaries`, 49, testBinaries, installBinaries);
 
   //register actions
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
