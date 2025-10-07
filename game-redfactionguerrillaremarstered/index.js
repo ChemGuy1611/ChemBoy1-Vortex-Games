@@ -52,7 +52,7 @@ const spec = {
     "name": GAME_NAME,
     "shortName": GAME_NAME_SHORT,
     "executable": EXEC,
-    "logo": `${GAME_ID}.png`,
+    "logo": `${GAME_ID}.jpg`,
     "mergeMods": true,
     "requiresCleanup": true,
     "modPath": MOD_PATH,
