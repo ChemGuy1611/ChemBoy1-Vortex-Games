@@ -2,8 +2,11 @@
 
 ## Future Improvements (Not Yet Released)
 
-- functions to automatically set the "bEnable" flag to true for all MODKit mods on deployment. - The json files are not parsing correctly.
-- tool to launch inZOIMODKit.
+- tool to launch inZOIMODKit (having difficulty with discovering the install location)
+
+## [0.4.0] - 2025-10-07
+
+- Added functions to automatically set the "bEnable" flag to "true" in mod_manifest.json file for all MODKit mods on deployment.
 
 ## [0.3.2] - 2025-09-25
 

@@ -2,8 +2,8 @@
 Name: inZOI Vortex Extension
 Structure: UE5
 Author: ChemBoy1
-Version: 0.3.2
-Date: 2025-09-05
+Version: 0.4.0
+Date: 2025-10-07
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -11,7 +11,6 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 const fsPromises = require('fs/promises');
-//const { jsonrepair } = require('./node_modules/jsonrepair');
 
 //Specify all information about the game
 const GAME_ID = "inzoi";
@@ -1689,12 +1688,12 @@ function partitionCheckNotify(api, CHECK_CONFIG, CHECK_DOCS) {
 
 //Get MODKit install path from Epic
 async function getModKitPath() {
-  return () => util.GameStoreHelper.findByAppId(MODKITAPP_ID, 'epic')
-    .then((game) => game.gamePath);
-  /*const path = Promise.resolve(util.GameStoreHelper.findByAppId(MODKITAPP_ID, 'epic'));
-  log ('warn', `ModKit path: ${path}`);
+  /*return () => util.GameStoreHelper.findByAppId(MODKITAPP_ID)
+    .then((game) => game.gamePath); //*/
+  const game = await util.GameStoreHelper.findByAppId(MODKITAPP_ID);
+  const path = game.gamePath;
   if (path !== undefined) {
-    log('warn', `ModKit path found at ${JSON.stringify(path, null, 2)}`)
+    log('warn', `ModKit path found at ${path}`)
     return () => path;
   } //*/
 }
@@ -1722,6 +1721,8 @@ async function setModkitModsEnabled(api) {
 
   for (let path of paths) {
     let content = await fs.readFileAsync(path);
+    content = content.toString();
+    content = content.slice(content.indexOf('{'), content.indexOf('}')) + '\n}';
     let json;
     try {
       //content = cleanInvalidChars(content);
@@ -1732,7 +1733,7 @@ async function setModkitModsEnabled(api) {
         await fs.writeFileAsync(path, content, { encoding: 'utf8' });
       }
     } catch (err) {
-      log('error', `Could not parse/write ${path}:${err}:${err.message}`);
+      log('error', `[inZOI] Could not parse/write ${path}: ${err} - ${err.message}`);
     }
   }
 }
@@ -1796,7 +1797,7 @@ async function applyGame(context, gameSpec) {
         //defaultPrimary: true,
         parameters: []
       }, //*/
-      {
+      /*{
         id: MODKIT_ID,
         name: MODKIT_NAME,
         logo: `modkit.png`,
@@ -2108,7 +2109,7 @@ function main(context) {
 }
 
 async function didDeploy(api) { //run on mod purge
-  //await setModkitModsEnabled(api);
+  await setModkitModsEnabled(api);
   return Promise.resolve();
 }
 
