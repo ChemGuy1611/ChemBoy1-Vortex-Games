@@ -2,8 +2,8 @@
 Name: AC Shadows Vortex Extension
 Structure: Ubisoft AnvilToolkit & Forger Patch Manager
 Author: ChemBoy1
-Version: 0.1.1
-Date: 2025-04-01
+Version: 0.2.0
+Date: 2025-10-07
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -13,15 +13,20 @@ const template = require('string-template');
 const winapi = require('winapi-bindings');
 
 //Specify all the information about the game
+const GAME_ID = "assassinscreedshadows";
 const UPLAYAPP_ID = "8006";
 const STEAMAPP_ID = "3159330";
-const GAME_ID = "assassinscreedshadows";
 const GAME_NAME = "Assassin's Creed Shadows";
 const GAME_NAME_SHORT = "AC Shadows";
 const EXEC = "ACShadows.exe";
 let GAME_PATH = null; //patched in the setup function to the discovered game path
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
+
+const DLCSTRING10 = "_10_";
+const DLCSTRING26 = "_26_";
+const DLCSTRING28 = "_28_";
+const DLCSTRING29 = "_29_";
 
 const DLCFOLDER10 = 'dlc_10';
 const DLCFOLDER26 = 'dlc_26';
@@ -160,6 +165,8 @@ const FIXES_PATH = path.join(".");
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Folder";
 
+const MOD_PATH_DEFAULT = path.join(".");
+
 //Filled from data above
 const spec = {
   "game": {
@@ -170,7 +177,7 @@ const spec = {
     "logo": `${GAME_ID}.jpg`,
     "mergeMods": true,
     "requiresCleanup": true,
-    "modPath": ".",
+    "modPath": MOD_PATH_DEFAULT,
     "modPathIsRelative": true,
     "requiredFiles": [
       EXEC
@@ -178,7 +185,7 @@ const spec = {
     "details": {
       "steamAppId": STEAMAPP_ID,
       "uPlayAppId": UPLAYAPP_ID,
-      "supportsSymlinks": true,
+      //"supportsSymlinks": false,
       "ignoreDeploy": IGNORE_DEPLOY,
       "ignoreConflicts": IGNORE_CONFLICTS,
     },
@@ -405,7 +412,7 @@ function isForgerInstalled(api, spec) {
 }
 
 //Function to auto-download AnvilToolkit
-async function downloadAnvil(discovery, api, gameSpec) {
+async function downloadAnvil(api, gameSpec) {
   let isInstalled = isAnvilInstalled(api, gameSpec);
   if (!isInstalled) {
     const MOD_NAME = ATK_NAME;
@@ -469,7 +476,7 @@ async function downloadAnvil(discovery, api, gameSpec) {
 }
 
 //Function to auto-download Forger Patch Manager
-async function downloadForger(discovery, api, gameSpec) {
+async function downloadForger(api, gameSpec) {
   let isInstalled = isForgerInstalled(api, gameSpec);
   if (!isInstalled) {
     const MOD_NAME = FORGER_NAME;
@@ -570,7 +577,7 @@ function installATK(files) {
 
 //Installer test for Forger Patch Manager files
 function testForger(files, gameId) {
-  const isMod = files.some(file => path.basename(file).toLowerCase() === ( FORGER_EXEC || FORGER_NEW_EXEC));
+  const isMod = files.some(file => ((path.basename(file).toLowerCase() === FORGER_EXEC) || (path.basename(file).toLowerCase() === FORGER_NEW_EXEC)));
   let supported = (gameId === spec.game.id) && isMod;
 
   return Promise.resolve({
@@ -581,7 +588,7 @@ function testForger(files, gameId) {
 
 //Installer install Forger Patch Manager files
 function installForger(files) {
-  const modFile = files.find(file => path.basename(file).toLowerCase() === ( FORGER_EXEC || FORGER_NEW_EXEC));
+  const modFile = files.find(file => ((path.basename(file).toLowerCase() === FORGER_EXEC) || (path.basename(file).toLowerCase() === FORGER_NEW_EXEC)));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: FORGER_ID };
@@ -624,7 +631,6 @@ function testPatch(files, gameId) {
 
 //Install .forger2 files
 function installPatch(files) {
-  // The .forger2 file is expected to always be positioned in the mods directory we're going to disregard anything placed outside the root.
   const modFile = files.find(file => path.extname(file).toLowerCase() === PATCH_EXT);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
@@ -638,7 +644,6 @@ function installPatch(files) {
   );
 
   const instructions = filtered.map(file => {
-  //const instructions = files.map(file => {
     return {
       type: 'copy',
       source: file,
@@ -964,16 +969,16 @@ function installForge(files) {
   const rootPath = path.dirname(modFile);
 
   let setModTypeInstruction = { type: 'setmodtype', value: FORGE_ID };
-  if (path.basename(modFile).includes('_10_')) {
+  if (path.basename(modFile).includes(DLCSTRING10)) {
     setModTypeInstruction = { type: 'setmodtype', value: FORGEDLC10_ID };
   }
-  else if (path.basename(modFile).includes('_26_')) {
+  else if (path.basename(modFile).includes(DLCSTRING26)) {
     setModTypeInstruction = { type: 'setmodtype', value: FORGEDLC26_ID };
   }
-  else if (path.basename(modFile).includes('_28_')) {
+  else if (path.basename(modFile).includes(DLCSTRING28)) {
     setModTypeInstruction = { type: 'setmodtype', value: FORGEDLC28_ID };
   }
-  else if (path.basename(modFile).includes('_29_')) {
+  else if (path.basename(modFile).includes(DLCSTRING29)) {
     setModTypeInstruction = { type: 'setmodtype', value: FORGEDLC29_ID };
   }
 
@@ -1184,8 +1189,8 @@ async function setup(discovery, api, gameSpec) {
   /*await (gameSpec.modTypes || []).forEach((type, idx, arr) => {
     fs.ensureDirWritableAsync(pathPattern(api, gameSpec.game, type.targetPath));
   }); //*/
-  //await downloadAnvil(discovery, api, gameSpec); // <-- ATK is not yet compatible with Shadows
-  //await downloadForger(discovery, api, gameSpec); // <-- Forger Patch Manager is not yet compatible with Shadows
+  //await downloadAnvil(api, gameSpec); // <-- ATK is not yet compatible with Shadows
+  //await downloadForger(api, gameSpec); // <-- Forger Patch Manager is not yet compatible with Shadows
   //return fs.ensureDirWritableAsync(path.join(discovery.path, EXTRACTED_FOLDER));
   return fs.ensureDirWritableAsync(path.join(discovery.path));
 }
@@ -1218,7 +1223,7 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(FORGER_ID, 30, testForger, installForger); 
   //context.registerInstaller(PATCH_ID, 35, testPatch, installPatch);
   //context.registerInstaller(PATCH_TEXTURES_ID, 37, testPatchTextures, installPatchTextures);
-  context.registerInstaller(DLC_ID, 40, testDlc, installDlc);
+  context.registerInstaller(DLC_ID, 40, testDlc, installDlc); //DLC folder names, installed to root
   /* Disabled due to lack of ATK support
   context.registerInstaller(EXTRACTED_ID, 45, testExtracted, installExtracted);
   context.registerInstaller(FORGEFOLDER_ID, 50, testForgeFolder, installForgeFolder);
