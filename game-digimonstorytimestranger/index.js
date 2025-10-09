@@ -14,12 +14,12 @@ const template = require('string-template');
 //Specify all the information about the game
 const GAME_ID = "digimonstorytimestranger";
 const STEAMAPP_ID = "1984270";
-const STEAMAPP_ID_DEMO = null;
+const STEAMAPP_ID_DEMO = "3815860";
 const EPICAPP_ID = null;
 const GOGAPP_ID = null;
 const XBOXAPP_ID = "XXX";
 const XBOXEXECNAME = "XXX";
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID];
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, STEAMAPP_ID_DEMO];
 const GAME_NAME = "Digimon Story Time Stranger";
 const GAME_NAME_SHORT = "Digimon STS";
 const EXEC = "Digimon Story Time Stranger.exe";
@@ -54,6 +54,22 @@ const RELOADEDMODLOADER_PAGE_NO = 0;
 const RELOADEDMODLOADER_FILE_NO = 0;
 const RELOADEDMODLOADER_URL = `XXX`;
 const RELOADEDMODLOADER_URL_ERR = `XXX`;
+
+const SAVE_ID = `${GAME_ID}-save`;
+const SAVE_NAME = "Save File";
+const SAVE_FOLDER = path.join('gamedata', 'savedata');
+let USERID_FOLDER = "";
+/*try {
+  const ARRAY = fs.readdirSync(SAVE_FOLDER);
+  USERID_FOLDER = ARRAY[0];
+} catch(err) {
+  USERID_FOLDER = "";
+}
+if (USERID_FOLDER === undefined) {
+  USERID_FOLDER = "";
+} //*/
+const SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
+const SAVE_EXTS = ['.bin'];
 
 const MOD_PATH_DEFAULT = '.';
 
@@ -104,14 +120,15 @@ const spec = {
       "priority": "low",
       "targetPath": "{gamePath}"
     },
+    {
+      "id": SAVE_ID,
+      "name": SAVE_NAME,
+      "priority": "high",
+      "targetPath": path.join("{gamePath}", SAVE_PATH)
+    },
   ],
   "discovery": {
-    "ids": [
-      STEAMAPP_ID,
-      //EPICAPP_ID,
-      //GOGAPP_ID,
-      //XBOXAPP_ID
-    ],
+    "ids": DISCOVERY_IDS_ACTIVE,
     "names": []
   }
 };
@@ -461,9 +478,13 @@ function setupNotify(api) {
         action: (dismiss) => {
           api.showDialog('question', MESSAGE, {
             text: 'The Reloaded Mod Manager tool downloaded by this extension requires setup.\n'
+                + '\n'
                 + `Please launch the tool and set the location of the ${GAME_NAME} executable.\n`
+                + '\n'
                 + 'You must also enable mods in Reloaded using the "Manage Mods" button on the left hand side of the Reloaded window.\n'
-                + 'You must launch the game from Reloaded for mods installed there to load with the game".\n'
+                + '\n'
+                + 'You must launch the game from Reloaded for mods to load in the game.\n'
+                + '\n'
           }, [
             { label: 'Acknowledge', action: () => dismiss() },
             {
@@ -489,6 +510,7 @@ async function setup(discovery, api, gameSpec) {
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   // ASYNC CODE //////////////////////////////////////////
   await fs.ensureDirWritableAsync(path.join(discovery.path, RELOADEDMODLOADER_PATH));
+  await fs.ensureDirWritableAsync(path.join(discovery.path, SAVE_PATH));
   await downloadModManager(api, gameSpec);
   return fs.ensureFileAsync(
     path.join(discovery.path, RELOADED_PATH, "portable.txt")
@@ -549,10 +571,20 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(RELOADED_ID, 25, testModManger, installModManager);
   context.registerInstaller(RELOADEDMODLOADER_ID, 27, testReloadedLoader, installReloadedLoader);
   context.registerInstaller(RELOADEDMOD_ID, 29, testReloadedMod, installReloadedMod);
+  //context.registerInstaller(SAVE_ID, 49, testSave, installSave);
 
   //register actions
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download Reloaded Mod Manager', () => {
     downloadModManagerNoCheck(context.api, gameSpec).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  }); //*/
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', () => {
+    GAME_PATH = getDiscoveryPath(context.api);
+    const openPath = path.join(GAME_PATH, SAVE_PATH);
+    util.opn(openPath).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);

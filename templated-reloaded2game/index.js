@@ -106,12 +106,7 @@ const spec = {
     },
   ],
   "discovery": {
-    "ids": [
-      STEAMAPP_ID,
-      //EPICAPP_ID,
-      //GOGAPP_ID,
-      //XBOXAPP_ID
-    ],
+    "ids": DISCOVERY_IDS_ACTIVE,
     "names": []
   }
 };
@@ -528,9 +523,13 @@ function setupNotify(api) {
         action: (dismiss) => {
           api.showDialog('question', MESSAGE, {
             text: 'The Reloaded Mod Manager tool downloaded by this extension requires setup.\n'
+                + '\n'
                 + `Please launch the tool and set the location of the ${GAME_NAME} executable.\n`
+                + '\n'
                 + 'You must also enable mods in Reloaded using the "Manage Mods" button on the left hand side of the Reloaded window.\n'
-                + 'You must launch the game from Reloaded for mods installed there to load with the game".\n'
+                + '\n'
+                + 'You must launch the game from Reloaded for mods to load in the game.\n'
+                + '\n'
           }, [
             { label: 'Acknowledge', action: () => dismiss() },
             {
