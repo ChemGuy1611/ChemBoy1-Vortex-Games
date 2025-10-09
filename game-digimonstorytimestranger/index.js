@@ -2,8 +2,8 @@
 Name: Digimon Story Time Stranger Vortex Extension
 Structure: Reloaded-II Game (Mod Installer)
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2025-10-05
+Version: 0.1.1
+Date: 2025-10-09
 /////////////////////////////////////////////////*/
 
 //Import libraries
