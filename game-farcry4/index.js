@@ -274,7 +274,17 @@ function getSavePath() {
       throw new Error('empty registry key');
     }
     const REG_PATH = instPath.value;
-    SAVE_PATH = path.join(REG_PATH, 'savegames', USERID_FOLDER, UPLAYAPP_ID);
+    const READ_PATH = path.join(REG_PATH, 'savegames');
+    try {
+      const ARRAY = fs.readdirSync(READ_PATH);
+      USERID_FOLDER = ARRAY[0];
+    } catch(err) {
+      USERID_FOLDER = "";
+    }
+    if (USERID_FOLDER === undefined) {
+      USERID_FOLDER = "";
+    }
+    SAVE_PATH = path.join(READ_PATH, USERID_FOLDER, UPLAYAPP_ID);
     return SAVE_PATH;
   } catch (err) {
     log('error', `Could not get Ubisoft Launcher install path from registry to set the Saves directory: ${err}`);

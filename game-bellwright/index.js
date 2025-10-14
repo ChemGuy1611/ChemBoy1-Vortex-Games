@@ -127,9 +127,11 @@ const SIGBYPASS_PAGE_NO = 100;
 const SIGBYPASS_FILE_NO = 709;
 
 const MODKIT_ID = `${GAME_ID}-modkit`;
-const MODKITAPP_ID = "1e93cdb4d718490dae41b191191a2e12";
-const MODKIT_EXEC = path.join('Engine', 'Binaries', 'Win64', 'UnrealEditor.exe');
 const MODKIT_NAME = "ModKit";
+const MODKITAPP_ID = "1e93cdb4d718490dae41b191191a2e12";
+const MODKIT_EXEC_NAME = "UnrealEditor.exe";
+const MODKIT_FOLDER = path.join('Engine', 'Binaries', 'Win64');
+const MODKIT_PATH = path.join(MODKIT_FOLDER, MODKIT_EXEC_NAME);
 
 // Filled in from data above
 const spec = {
@@ -1191,11 +1193,17 @@ function partitionCheckNotify(api, CHECK_DATA) {
   });
 }
 
-//Get ModKit install path from Epic
-function getModKitPath() {
-  const path = util.GameStoreHelper.findByAppId(MODKITAPP_ID, 'epic');
-  log('warn', `ModKit path found at ${path}`)
-  return () => path;
+//Get MODKit install path from Epic
+async function getModKitPath() {
+  /*
+  return () => util.GameStoreHelper.findByAppId(MODKITAPP_ID, 'epic')
+    .then((game) => game.gamePath); //*/
+  //*
+  const game = await util.GameStoreHelper.findByAppId(MODKITAPP_ID, 'epic');
+  let path = game.gamePath;
+  log('warn', `ModKit path found at ${path}`);
+  path = path.join(path, MODKIT_FOLDER);
+  return () => path; //*/
 }
 
 //Setup function
@@ -1241,20 +1249,19 @@ function applyGame(context, gameSpec) {
         detach: true,
         relative: true,
         exclusive: true,
-        //defaultPrimary: true,
         parameters: [],
       }, //*/
-      /*{
+      //*
+      {
         id: MODKIT_ID,
         name: MODKIT_NAME,
         logo: `modkit.png`,
         queryPath: getModKitPath,
-        executable: () => MODKIT_EXEC,
-        requiredFiles: [MODKIT_EXEC],
+        executable: () => MODKIT_EXEC_NAME,
+        requiredFiles: [MODKIT_EXEC_NAME],
         detach: true,
         relative: false,
         exclusive: false,
-        //defaultPrimary: true,
         parameters: [],
       }, //*/
     ],

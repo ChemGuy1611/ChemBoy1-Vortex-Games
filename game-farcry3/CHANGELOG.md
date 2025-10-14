@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.2.2] - 2025-10-14
+
+- Fixed button to open Saves folder.
+
 ## [0.2.1] - 2025-10-04
 
 - Corrected an issue with the loose .a3 file installer.

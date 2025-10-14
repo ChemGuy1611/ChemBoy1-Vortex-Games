@@ -10,6 +10,7 @@ Date: 2025-XX-XX
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
+const process = require('node:process');
 
 //Specify all the information about the game
 const GAME_ID = "XXX";
@@ -27,6 +28,8 @@ const EXEC_XBOX = 'gamelaunchhelper.exe';
 const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 const MOD_LOADER_FOLDER = "";
+const PUBLISHER_FOLDER = "";
+const DATA_FOLDER = "";
 
 let GAME_PATH = null;
 let GAME_VERSION = '';
@@ -35,11 +38,15 @@ let DOWNLOAD_FOLDER = '';
 
 //Data for mod types, tools, and installers
 const RELOADED_ID = `${GAME_ID}-reloadedmanager`;
-const RELOADED_NAME = "Reloaded II Mod Manager";
+const RELOADED_NAME = "Reloaded-II Mod Manager";
 const RELOADED_PATH = path.join("Reloaded");
 const RELOADED_EXEC = "reloaded-ii.exe";
+const RELOADED_EXEC_PATH = path.join(RELOADED_PATH, RELOADED_EXEC);
 const RELOADED_URL_LATEST = `https://github.com/Reloaded-Project/Reloaded-II/releases/latest/download/Release.zip`;
 const RELOADED_URL_MANUAL = `https://github.com/Reloaded-Project/Reloaded-II/releases`;
+
+const ELEVATOR_PATH = path.join(util.getVortexPath('application'), 'resources');
+const ELEVATOR_EXEC = "elevate.exe";
 
 const RELOADEDMOD_ID = `${GAME_ID}-reloadedmod`;
 const RELOADEDMOD_NAME = "Reloaded Mod";
@@ -54,6 +61,23 @@ const RELOADEDMODLOADER_PAGE_NO = 0;
 const RELOADEDMODLOADER_FILE_NO = 0;
 const RELOADEDMODLOADER_URL = `XXX`;
 const RELOADEDMODLOADER_URL_ERR = `XXX`;
+
+const SAVE_ID = `${GAME_ID}-save`;
+const SAVE_NAME = "Save File";
+const SAVE_FOLDER = path.join('gamedata', 'savedata');
+let USERID_FOLDER = "";
+/*try {
+  const ARRAY = fs.readdirSync(SAVE_FOLDER);
+  USERID_FOLDER = ARRAY[0];
+} catch(err) {
+  USERID_FOLDER = "";
+}
+if (USERID_FOLDER === undefined) {
+  USERID_FOLDER = "";
+} //*/
+const SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
+//const SAVE_PATH = path.join(util.getVortexPath('localAppData'), PUBLISHER_FOLDER, DATA_FOLDER, USERID_FOLDER);
+const SAVE_EXTS = ['.bin'];
 
 const MOD_PATH_DEFAULT = '.';
 
@@ -104,16 +128,18 @@ const spec = {
       "priority": "low",
       "targetPath": "{gamePath}"
     },
+    {
+      "id": SAVE_ID,
+      "name": SAVE_NAME,
+      "priority": "high",
+      "targetPath": path.join("{gamePath}", SAVE_PATH)
+    }, //*/
   ],
   "discovery": {
     "ids": DISCOVERY_IDS_ACTIVE,
     "names": []
   }
 };
-
-const tools = [
-
-];
 
 // BASIC EXTENSION FUNCTIONS ///////////////////////////////////////////////////
 
@@ -506,11 +532,52 @@ function installReloadedMod(files, fileName) {
   return Promise.resolve({ instructions });
 }
 
+//Installer test for Save (.bin) files
+function testSave(files, gameId) {
+  const isMod = files.some(file => SAVE_EXTS.includes(path.extname(file).toLowerCase()));
+  let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Installer install Save (.bin) files
+function installSave(files) {
+  const modFile = files.find(file => SAVE_EXTS.includes(path.extname(file).toLowerCase()));
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: SAVE_ID };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(RELOADED_PATH, file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
-//Notify User of Setup instructions for Mod Managers
+//Notify User of Setup instructions for Reloaded-II
 function setupNotify(api) {
-  const NOTIF_ID = `${GAME_ID}-setup-notification`;
+  const NOTIF_ID = `${GAME_ID}-setup`;
   const MESSAGE = 'Reloaded Mod Manager Setup Required';
   api.sendNotification({
     id: NOTIF_ID,
@@ -522,7 +589,7 @@ function setupNotify(api) {
         title: 'More',
         action: (dismiss) => {
           api.showDialog('question', MESSAGE, {
-            text: 'The Reloaded Mod Manager tool downloaded by this extension requires setup.\n'
+            text: 'The Reloaded-II Mod Manager tool downloaded by this extension requires setup.\n'
                 + '\n'
                 + `Please launch the tool and set the location of the ${GAME_NAME} executable.\n`
                 + '\n'
@@ -530,7 +597,20 @@ function setupNotify(api) {
                 + '\n'
                 + 'You must launch the game from Reloaded for mods to load in the game.\n'
                 + '\n'
+                + '\n'
+                + `IMPORTANT: You may need to run Reloaded-II as Administrator for setup and dependency updates.\n`
+                + '\n'
+                + 'If you get a message about missing mod dependencies or .NET Runtimes, you may need to run Reloaded as an Administrator to allow dependencies to download.\n'
+                + '\n'
+                + 'You can launch Reloaded as Admin using the button below.\n'
+                + '\n'
           }, [
+            {
+              label: `Run Reloaded-II as Admin`, action: () => {
+                runReloadedAdmin(api);
+                dismiss();
+              }
+            },
             { label: 'Acknowledge', action: () => dismiss() },
             {
               label: 'Never Show Again', action: () => {
@@ -543,6 +623,29 @@ function setupNotify(api) {
       },
     ],
   });    
+}
+
+//Run Reloaded-II as Admin (allow dependency download in priviledged folders)
+function runReloadedAdmin(api) {
+  const TOOL_ID = RELOADED_ID;
+  const TOOL_NAME = RELOADED_NAME;
+  const state = api.store.getState();
+  const tool = util.getSafe(state, ['settings', 'gameMode', 'discovered', GAME_ID, 'tools', TOOL_ID], undefined);
+
+  try {
+    const TOOL_PATH = tool.path;
+    if (TOOL_PATH !== undefined) {
+      return api.runExecutable(path.join(util.getVortexPath('application'), 'resources', ELEVATOR_EXEC), [TOOL_PATH], { suggestDeploy: false, detached: true })
+        .catch(err => api.showErrorNotification(`Failed to run ${TOOL_NAME} as Admin`, err,
+          { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 })
+        );
+    }
+    else {
+      return api.showErrorNotification(`Failed to run ${TOOL_NAME} as Admin`, `Path to ${TOOL_NAME} executable could not be found. Ensure ${TOOL_NAME} is installed through Vortex.`);
+    }
+  } catch (err) {
+    return api.showErrorNotification(`Failed to run ${TOOL_NAME} as Admin`, err, { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 });
+  }
 }
 
 async function resolveGameVersion(gamePath) {
@@ -581,17 +684,18 @@ async function resolveGameVersion(gamePath) {
 //Setup function
 async function setup(discovery, api, gameSpec) {
   // SYNCHRONOUS CODE ////////////////////////////////////
+  GAME_PATH = discovery.path;
   setupNotify(api);
   const state = api.getState();
-  GAME_PATH = discovery.path;
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   // ASYNC CODE //////////////////////////////////////////
-  await fs.ensureDirWritableAsync(path.join(discovery.path, RELOADEDMODLOADER_PATH));
+  await fs.ensureDirWritableAsync(path.join(GAME_PATH, RELOADEDMODLOADER_PATH));
+  await fs.ensureDirWritableAsync(path.join(GAME_PATH, SAVE_PATH));
   await downloadModManager(api, gameSpec);
   //await downloadModLoader(api, gameSpec);
   return fs.ensureFileAsync(
-    path.join(discovery.path, RELOADED_PATH, "portable.txt")
+    path.join(GAME_PATH, RELOADED_PATH, "portable.txt")
   );
 }
 
@@ -607,23 +711,9 @@ function applyGame(context, gameSpec) {
     executable: () => gameSpec.game.executable,
     getGameVersion: resolveGameVersion,
     supportedTools: [
-      /*
       {
-        id: "LaunchModdedGame",
-        name: "Launch Modded Game",
-        logo: "exec.png",
-        executable: () => RELOADED_EXEC,
-        requiredFiles: [RELOADED_EXEC],
-        detach: true,
-        relative: true,
-        exclusive: true,
-        defaultPrimary: true,
-        parameters: [`--launch "${path.join(GAME_PATH, EXEC)}"`]
-      },
-      */
-      {
-        id: "ReloadedModManager",
-        name: "Reloaded Mod Manager",
+        id: RELOADED_ID,
+        name: RELOADED_NAME,
         logo: "reloaded.png",
         executable: () => RELOADED_EXEC,
         requiredFiles: [RELOADED_EXEC],
@@ -631,7 +721,21 @@ function applyGame(context, gameSpec) {
         relative: true,
         exclusive: true,
         defaultPrimary: true,
-      },
+        //parameters: [],
+      }, //*/
+      /*{
+        id: RELOADED_ID,
+        name: RELOADED_NAME,
+        logo: "reloaded.png",
+        queryPath: () => ELEVATOR_PATH,
+        executable: () => ELEVATOR_EXEC,
+        requiredFiles: [ELEVATOR_EXEC],
+        detach: true,
+        relative: false,
+        exclusive: true,
+        defaultPrimary: true,
+        parameters: [path.join(GAME_PATH, RELOADED_PATH, RELOADED_EXEC)],
+      }, //*/
     ],
   };
   context.registerGame(game);
@@ -649,10 +753,21 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(RELOADED_ID, 25, testModManger, installModManager);
   context.registerInstaller(RELOADEDMODLOADER_ID, 27, testReloadedLoader, installReloadedLoader);
   context.registerInstaller(RELOADEDMOD_ID, 29, testReloadedMod, installReloadedMod);
+  //context.registerInstaller(SAVE_ID, 49, testSave, installSave);
 
   //register actions
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download Reloaded Mod Manager', () => {
     downloadModManagerNoCheck(context.api, gameSpec).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  }); //*/
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', () => {
+    //const openPath = SAVE_PATH;
+    GAME_PATH = getDiscoveryPath(context.api);
+    const openPath = path.join(GAME_PATH, SAVE_PATH); //*/
+    util.opn(openPath).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
@@ -680,9 +795,62 @@ function applyGame(context, gameSpec) {
 function main(context) {
   applyGame(context, spec);
   context.once(() => { // put code here that should be run (once) when Vortex starts up
-
+    context.api.onAsync('did-deploy', async (profileId, deployment) => {
+      const lastActiveProfile = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
+      if (profileId !== lastActiveProfile) return;
+      return deployNotify(context.api);
+    });
   });
   return true;
+}
+
+//Notify User to run Mod Merger Utility after deployment
+function deployNotify(api) {
+  const NOTIF_ID = `${GAME_ID}-deploy`;
+  const MOD_NAME = RELOADED_NAME;
+  const MESSAGE = `Run ${MOD_NAME} as Admin`;
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'warning',
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: 'Run Reloaded (Admin)',
+        action: (dismiss) => {
+          runReloadedAdmin(api);
+          dismiss();
+        },
+      },
+      {
+        title: 'More',
+        action: (dismiss) => {
+          api.showDialog('question', MESSAGE, {
+            text: `If your game is installed in a protected folder, such as "C:\Program Files (x86)" (default for Steam), you must run ${MOD_NAME} as Administrator.\n`
+                + '\n'
+                + `Use the button below to launch ${MOD_NAME} as Administrator.\n`
+                + '\n'
+                + `If your game is NOT installed in a priviledged folder, you can suppress this notification with the "Never Show Again" button below.\n`
+                + '\n'
+          }, [
+            {
+              label: 'Run Reloaded (Admin)', action: () => {
+                runReloadedAdmin(api);
+                dismiss();
+              }
+            },
+            { label: 'Continue', action: () => dismiss() },
+            {
+              label: 'Never Show Again', action: () => {
+                api.suppressNotification(NOTIF_ID);
+                dismiss();
+              }
+            },
+          ]);
+        },
+      },
+    ],
+  });
 }
 
 //export to Vortex

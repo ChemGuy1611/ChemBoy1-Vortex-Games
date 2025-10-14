@@ -2,8 +2,8 @@
 Name: Far Cry Primal Vortex Extension
 Structure: Far Cry Game (Mod Installer)
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2025-10-03
+Version: 0.1.1
+Date: 2025-10-14
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -40,6 +40,7 @@ let GAME_PATH = null;
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 let SAVE_PATH = null;
+let USERID_FOLDER = "";
 
 //Info for mod types and installers
 const ROOT_ID = `${GAME_ID}-root`;
@@ -261,7 +262,17 @@ function getSavePath() {
       throw new Error('empty registry key');
     }
     const REG_PATH = instPath.value;
-    SAVE_PATH = path.join(REG_PATH, 'savegames', USERID_FOLDER, UPLAYAPP_ID);
+    const READ_PATH = path.join(REG_PATH, 'savegames');
+    try {
+      const ARRAY = fs.readdirSync(READ_PATH);
+      USERID_FOLDER = ARRAY[0];
+    } catch(err) {
+      USERID_FOLDER = "";
+    }
+    if (USERID_FOLDER === undefined) {
+      USERID_FOLDER = "";
+    }
+    SAVE_PATH = path.join(READ_PATH, USERID_FOLDER, UPLAYAPP_ID);
     return SAVE_PATH;
   } catch (err) {
     log('error', `Could not get Ubisoft Launcher install path from registry to set the Saves directory: ${err}`);

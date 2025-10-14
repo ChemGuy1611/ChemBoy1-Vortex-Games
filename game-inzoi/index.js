@@ -23,7 +23,6 @@ const GAME_NAME = "inZOI";
 const GAME_NAME_SHORT = "inZOI";
 const EXEC = "inZOI.exe";
 let GAME_PATH = null;
-let MODKIT_PATH = null;
 let CHECK_CONFIG = false;
 let CHECK_DOCS = false; 
 let STAGING_FOLDER = '';
@@ -178,9 +177,11 @@ const TEXTURES_FILE = "albedo.jpg";
 
 // MODKit
 const MODKIT_ID = `${GAME_ID}-modkit`;
-const MODKITAPP_ID = "e61de4231c6b43349615781e737ad297";
-const MODKIT_EXEC = path.join('inZOIModKit', 'Binaries', 'Win64', 'inZOIModKit.exe');
 const MODKIT_NAME = "MODKit";
+const MODKITAPP_ID = "e61de4231c6b43349615781e737ad297";
+const MODKIT_EXEC_NAME = "inZOIModKit.exe";
+const MODKIT_FOLDER = path.join('inZOIModKit', 'Binaries', 'Win64');
+const MODKIT_PATH = path.join(MODKIT_FOLDER, MODKIT_EXEC_NAME);
 
 const UE5KITMOD_ID = `${GAME_ID}-ue5modkitpak`;
 const UE5KITMOD_NAME = "UE5 MODKit Pak Mod";
@@ -1688,14 +1689,15 @@ function partitionCheckNotify(api, CHECK_CONFIG, CHECK_DOCS) {
 
 //Get MODKit install path from Epic
 async function getModKitPath() {
-  /*return () => util.GameStoreHelper.findByAppId(MODKITAPP_ID)
+  /*
+  return () => util.GameStoreHelper.findByAppId(MODKITAPP_ID, 'epic')
     .then((game) => game.gamePath); //*/
-  const game = await util.GameStoreHelper.findByAppId(MODKITAPP_ID);
-  const path = game.gamePath;
-  if (path !== undefined) {
-    log('warn', `ModKit path found at ${path}`)
-    return () => path;
-  } //*/
+  //*
+  const game = await util.GameStoreHelper.findByAppId(MODKITAPP_ID, 'epic');
+  let path = game.gamePath;
+  //log('warn', `ModKit path found at ${path}`);
+  path = path.join(path, MODKIT_FOLDER);
+  return () => path; //*/
 }
 
 // Clean invalid characters from a string
@@ -1703,9 +1705,7 @@ function cleanInvalidChars(string) {
   // 1. Remove control characters (ASCII 0-31) & null character
   let cleaned = string.replace(/[^\x00-\x7F]/gi, ''); // Keep only printable ASCII + UTF-8
   // 2. Remove non-UTF8 sequences (if needed for strict JSON)
-  // (This is advanced - most apps don't need this)
   cleaned = cleaned.replace(/[\u0000-\u001F]/gi, ''); // Null chars, control chars
-
   return cleaned;
 }
 
@@ -1714,7 +1714,7 @@ async function setModkitModsEnabled(api) {
   const raw = await fsPromises.readdir(UE5KITMOD_PATH, { recursive: true });
   for (let entry of raw) {
     if (path.basename(entry).toLowerCase() === UE5KITMOD_FILE) {
-      path_select = path.join(UE5KITMOD_PATH, entry);
+      const path_select = path.join(UE5KITMOD_PATH, entry);
       paths.push(path_select);
     }
   }
@@ -1742,7 +1742,6 @@ async function setModkitModsEnabled(api) {
 async function setup(discovery, api, gameSpec) {
   const state = api.getState();
   GAME_PATH = discovery.path;
-  MODKIT_PATH = getModKitPath();
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   CHECK_CONFIG = checkPartitions(LOCALAPPDATA, GAME_PATH);
@@ -1774,7 +1773,7 @@ async function setup(discovery, api, gameSpec) {
 } //*/
 
 //Let Vortex know about the game
-async function applyGame(context, gameSpec) {
+function applyGame(context, gameSpec) {
   //register the game
   const game = {
     ...gameSpec.game,
@@ -1794,16 +1793,16 @@ async function applyGame(context, gameSpec) {
         relative: true,
         exclusive: true,
         shell: true,
-        //defaultPrimary: true,
         parameters: []
       }, //*/
-      /*{
+      //*
+      {
         id: MODKIT_ID,
         name: MODKIT_NAME,
         logo: `modkit.png`,
         queryPath: getModKitPath,
-        executable: () => MODKIT_EXEC,
-        requiredFiles: [MODKIT_EXEC],
+        executable: () => MODKIT_EXEC_NAME,
+        requiredFiles: [MODKIT_EXEC_NAME],
         detach: true,
         relative: false,
         exclusive: false,

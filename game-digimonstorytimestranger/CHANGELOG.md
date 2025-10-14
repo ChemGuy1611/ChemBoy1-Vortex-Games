@@ -2,7 +2,12 @@
 
 ## Future Changes (NOT IMPLEMENTED YET)
 
-- Notification to install .NET 9.0.4 SDK (x64 and x86) + may need to launch as admin once to download dependencies.
+- Installer for Save (.bin) files (no mods of this type yet).
+
+## [0.1.2] - 2025-10-14
+
+- Added text information and button to run Reloaded-II as Admin to setup notification (needed to install dependencies if running from protected folder).
+- Added deploy notification with a button to run Reloaded-II as Admin after deployment.
 
 ## [0.1.1] - 2025-10-09
 
