@@ -13,8 +13,8 @@ const template = require('string-template');
 //const turbowalk = require('turbowalk');
 //const winapi = require('winapi-bindings');
 
-const USER_HOME = util.getVortexPath("home");
-//const DOCUMENTS = util.getVortexPath("documents");
+//const USER_HOME = util.getVortexPath("home");
+const DOCUMENTS = util.getVortexPath("documents");
 //const ROAMINGAPPDATA = util.getVortexPath('appData');
 //const LOCALAPPDATA = util.getVortexPath('localAppData');
 
@@ -30,11 +30,13 @@ const GAME_NAME = "XXX";
 const GAME_NAME_SHORT = "XXX";
 const EPIC_CODE_NAME = "XXX";
 const ROOT_FOLDERS = [EPIC_CODE_NAME, 'Engine', 'Binaries', 'DLC'];
-const BINARIES_PATH = path.join("Binaries", "Win32");
-const EXEC = path.join(BINARIES_PATH, 'XXX.exe');
+const BITS = '32'; //32 or 64
+const EXEC_NAME = 'XXX.exe';
 const DATA_FOLDER = path.join('XXX', 'XXX');
 
 const EXEC_XBOX = 'gamelaunchhelper.exe';
+const BINARIES_PATH = path.join("Binaries", `Win${BITS}`);
+const EXEC = path.join(BINARIES_PATH, EXEC_NAME);
 let GAME_PATH = null; //patched in the setup function to the discovered game path
 let STAGING_FOLDER = ''; //Vortex staging folder path
 let DOWNLOAD_FOLDER = ''; //Vortex download folder path
@@ -57,7 +59,7 @@ const UPKEXPLORER_PATH = path.join('.');
 const TFCMOD_ID = `${GAME_ID}-tfcmod`;
 const TFCMOD_NAME = "TFC Mod";
 const TFCMOD_EXTS = ['.packagepatch', '.descriptor', '.tfcmapping', '.tfc', '.inipatch'];
-const TFCMOD_FILE = 'gameprofile.xml';
+const TFCMOD_FILES = ['gameprofile.xml', 'gameprofile.idremappings.xml', 'objectdescriptors.xml', 'packageextensions.xml'];
 const TFCMOD_PATH = path.join(TFC_FOLDER, 'Mods');
 
 const ROOT_ID = `${GAME_ID}-root`;
@@ -66,9 +68,10 @@ const ROOT_NAME = "Root Folder";
 const BINARIES_ID = `${GAME_ID}-binaries`;
 const BINARIES_NAME = "Binaries (Engine Injector)";
 
-const CONFIG_PATH = path.join(USER_HOME, 'Documents', 'My Games', DATA_FOLDER, 'Config');
-const SAVE_PATH = path.join(USER_HOME, 'Documents', 'My Games', DATA_FOLDER, 'SaveData');
+const CONFIG_PATH = path.join(DOCUMENTS, 'My Games', DATA_FOLDER, 'Config');
+const SAVE_PATH = path.join(DOCUMENTS, 'My Games', DATA_FOLDER, 'SaveData');
 
+const MOD_PATH_DEFAULT = '.';
 const REQ_FILE = EXEC;
 const MODTYPE_FOLDERS = [TFCMOD_PATH, BINARIES_PATH];
 
@@ -81,7 +84,7 @@ const spec = {
     "executable": EXEC,
     "logo": `${GAME_ID}.jpg`,
     "mergeMods": true,
-    "modPath": ".",
+    "modPath": MOD_PATH_DEFAULT,
     "modPathIsRelative": true,
     "requiresCleanup": true,
     "requiredFiles": [
@@ -438,10 +441,9 @@ function installUpkExplorer(files) {
 
 //Test Fallback installer for Void Mods
 function testTfcMod(files, gameId) {
-  const isMod = files.some(file => TFCMOD_EXTS.includes(path.extname(file).toLowerCase()));
-  //const isXml = files.some(file => (path.basename(file).toLowerCase() === TFCMOD_FILE));
-  //let supported = (gameId === spec.game.id) && ( isMod || isXml );
-  let supported = (gameId === spec.game.id) && isMod;
+  const isExt = files.some(file => TFCMOD_EXTS.includes(path.extname(file).toLowerCase()));
+  const isXml = files.some(file => TFCMOD_FILES.includes(path.basename(file).toLowerCase()));
+  let supported = (gameId === spec.game.id) && ( isExt || isXml );
 
   // Test for a mod installer.
   if (supported && files.find(file =>
@@ -458,7 +460,10 @@ function testTfcMod(files, gameId) {
 
 //Fallback installer for Void Mods
 function installTfcMod(files, fileName) {
-  const modFile = files.find(file => TFCMOD_EXTS.includes(path.extname(file).toLowerCase()));
+  let modFile = files.find(file => TFCMOD_EXTS.includes(path.extname(file).toLowerCase()));
+  if (modFile === undefined) {
+    modFile = files.find(file => TFCMOD_FILES.includes(path.basename(file).toLowerCase()));
+  }
   const ROOT_PATH = path.basename(path.dirname(modFile));
   const MOD_NAME = path.basename(fileName);
   let MOD_FOLDER = '.';
@@ -683,9 +688,9 @@ function applyGame(context, gameSpec) {
 
   //register mod installers
   context.registerInstaller(TFC_ID, 25, testTfc, installTfc);
-  context.registerInstaller(UPKEXPLORER_ID, 30, testUpkExplorer, installUpkExplorer);
-  context.registerInstaller(TFCMOD_ID, 35, testTfcMod, installTfcMod);
-  context.registerInstaller(ROOT_ID, 40, testRoot, installRoot);
+  context.registerInstaller(UPKEXPLORER_ID, 27, testUpkExplorer, installUpkExplorer);
+  context.registerInstaller(TFCMOD_ID, 29, testTfcMod, installTfcMod);
+  context.registerInstaller(ROOT_ID, 31, testRoot, installRoot);
 
   //register actions
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {

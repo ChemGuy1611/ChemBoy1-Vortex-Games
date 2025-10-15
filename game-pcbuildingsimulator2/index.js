@@ -1,9 +1,9 @@
 /*//////////////////////////////////////////
-Name: XXX Vortex Extension
-Structure: Unity BepinEx
+Name: PC Building Simulator 2 Vortex Extension
+Structure: Unity BepinEx (IL2CPP)
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2025-09-04
+Date: 2025-10-15
 //////////////////////////////////////////*/
 
 //Import libraries
@@ -11,44 +11,34 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 const winapi = require('winapi-bindings');
-//const turbowalk = require('turbowalk');
 
-const USER_HOME = util.getVortexPath("home");
-//const DOCUMENTS = util.getVortexPath("documents");
-//const ROAMINGAPPDATA = util.getVortexPath("appData");
 const LOCALAPPDATA = util.getVortexPath("localAppData");
 
 //Specify all the information about the game
-const GAME_ID = "XXX";
-const STEAMAPP_ID = "XXX";
-const STEAMAPP_ID_DEMO = "XXX";
-const EPICAPP_ID = "XXX";
-const GOGAPP_ID = "XXX";
-const XBOXAPP_ID = "XXX";
-const XBOXEXECNAME = "XXX";
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
-const GAME_NAME = "XXX"
-const GAME_NAME_SHORT = "XXX"
-const EXEC = "XXX.exe";
+const GAME_ID = "pcbuildingsimulator2";
+const STEAMAPP_ID = null;
+const STEAMAPP_ID_DEMO = null;
+const EPICAPP_ID = "0449f415f5404df093b8d67c31940024";
+const GOGAPP_ID = null;
+const XBOXAPP_ID = null;
+const XBOXEXECNAME = null;
+const DISCOVERY_IDS_ACTIVE = [EPICAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const GAME_NAME = "PC Building Simulator 2"
+const GAME_NAME_SHORT = "PCBS2"
+const EXEC = "PCBS2.exe";
 const EXEC_XBOX = 'gamelaunchhelper.exe';
-
-const DATA_FOLDER = "XXX_Data";
-const ASSEMBLY_PATH = path.join(DATA_FOLDER, "Managed");
-const ASSEMBLY_FILE = "Assembly-CSharp.dll";
-
-const DEV_REGSTRING = "XXX";
-const GAME_REGSTRING = "XXX";
-const XBOX_SAVE_STRING = 'XXX';
+const DATA_FOLDER = "PCBS2_Data";
+const DEV_REGSTRING = "Epic Games Publishing";
+const GAME_REGSTRING = "PCBS2";
 
 const BEPINEX_PAGE_ID = '0'; //only specify if there is a Nexus page for BepInEx
 const BEPINEX_FILE_ID = '0';
 const BEPINEX_ARCH = 'x64'; // 'x64' or 'x86'
-const BEPINEX_BUILD = 'unitymono'; // 'unityil2cpp' or 'unitymono' 
-const BEPINEX_VERSION = '5.4.23.4'; //force BepInEx version ('5.4.23.3' or '6.0.0')
+const BEPINEX_BUILD = 'unityil2cpp'; // 'unityil2cpp' or 'unitymono' 
+const BEPINEX_VERSION = '6.0.0'; //force BepInEx version ('5.4.23.3' or '6.0.0')
 const allowBepinexNexus = false; //set false until bugs are fixed
-const downloadCfgMan = true; //should BepInExConfigManager be downloaded?
+const downloadCfgMan = false; //should BepInExConfigManager be downloaded?
 
-//info for download Bleeding Edge builds of BepInEx
 const BEPINEXIL2CPP_BE_URL = `https://builds.bepinex.dev/projects/bepinex_be/738/BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.738%2Baf0cba7.zip`;
 const BEPINEXIL2CPP_BE_URL_ERR = `https://builds.bepinex.dev/projects/bepinex_be`;
 const BEPINEX_ID = 'bepinex-injector';
@@ -80,22 +70,36 @@ const modFileExt = ".dll";
 
 const ASSEMBLY_ID = `${GAME_ID}-assemblydll`;
 const ASSEMBLY_NAME = "Assembly DLL Mod";
+const ASSEMBLY_PATH = path.join('.');
+const ASSEMBLY_FILE = "GameAssembly.dll";
 
 //Config and save paths
 const CONFIG_HIVE = 'HKEY_CURRENT_USER';
 const CONFIG_REGPATH = `Software\\${DEV_REGSTRING}\\${GAME_REGSTRING}`;
 const CONFIG_REGPATH_FULL = `${CONFIG_HIVE}\\${CONFIG_REGPATH}`;
-const SAVE_PATH_DEFAULT = path.join(USER_HOME, 'AppData', 'LocalLow', DEV_REGSTRING, GAME_REGSTRING);
-const SAVE_PATH_XBOX = path.join(LOCALAPPDATA, "Packages", `${XBOXAPP_ID}_${XBOX_SAVE_STRING}`, "SystemAppData", "wgs"); //XBOX Version
+
+const SAVE_ID = `${GAME_ID}-save`;
+const SAVE_NAME = "Save";
+const SAVE_PATH_DEFAULT = 'Saves';
 let SAVE_PATH = SAVE_PATH_DEFAULT;
+const SAVE_EXTS = ['.binary'];
+
+const PC_ID = `${GAME_ID}-pcbuild`;
+const PC_NAME = "PC Build";
+const PC_PATH = 'PCs';
+const PC_EXTS = ['.pcbs'];
 
 const ASSETS_ID = `${GAME_ID}-assets`;
 const ASSETS_NAME = "Assets/Resources File";
 const ASSETS_PATH = DATA_FOLDER;
 const ASSETS_EXTS = ['.assets', '.resource', '.ress'];
 
+const PARTCREATOR_ID = `${GAME_ID}-partcreator`;
+const PARTCREATOR_NAME = "Part Creator";
+const PARTCREATOR_EXEC = 'PCBS2 Part Creator-102-0-0-8-1757772262.exe';
+
 const MOD_PATH_DEFAULT = ".";
-const MODTYPE_FOLDERS = [BEPMOD_PATH, ASSEMBLY_PATH];
+const MODTYPE_FOLDERS = [BEPMOD_PATH, ASSEMBLY_PATH, SAVE_PATH];
 const IGNORE_CONFLICTS = [path.join('**', 'manifest.json'), path.join('**', 'icon.png'), path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
 
 //Filled in from info above
@@ -115,18 +119,12 @@ const spec = {
       EXEC
     ],
     "details": {
-      "steamAppId": STEAMAPP_ID,
-      "gogAppId": GOGAPP_ID,
       "epicAppId": EPICAPP_ID,
-      "xboxAppId": XBOXAPP_ID,
       //"supportsSymlinks": false,
       "ignoreConflicts": IGNORE_CONFLICTS,
     },
     "environment": {
-      "SteamAPPId": STEAMAPP_ID,
-      "GogAPPId": GOGAPP_ID,
       "EpicAPPId": EPICAPP_ID,
-      "XboxAPPId": XBOXAPP_ID
     }
   },
   "modTypes": [
@@ -155,6 +153,18 @@ const spec = {
       "targetPath": path.join('{gamePath}', BEPMOD_PATH)
     },
     {
+      "id": SAVE_ID,
+      "name": SAVE_NAME,
+      "priority": "high",
+      "targetPath": path.join('{gamePath}', SAVE_PATH)
+    },
+    {
+      "id": PC_ID,
+      "name": PC_NAME,
+      "priority": "high",
+      "targetPath": path.join('{gamePath}', PC_PATH)
+    },
+    {
       "id": ASSETS_ID,
       "name": ASSETS_NAME,
       "priority": "high",
@@ -180,7 +190,17 @@ const tools = [
     exclusive: true,
     shell: true,
     //defaultPrimary: true,
-    parameters: []
+    parameters: [],
+  }, //*/
+  {
+    id: PARTCREATOR_ID,
+    name: PARTCREATOR_NAME,
+    logo: `partcreator.png`,
+    executable: () => PARTCREATOR_EXEC,
+    requiredFiles: [PARTCREATOR_EXEC],
+    detach: true,
+    relative: true,
+    exclusive: true,
   }, //*/
 ];
 
@@ -225,27 +245,12 @@ function makeFindGame(api, gameSpec) {
 
 //Set launcher requirements
 async function requiresLauncher(gamePath, store) {
-  if (store === 'xbox' && (DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID))) {
-      return Promise.resolve({
-          launcher: 'xbox',
-          addInfo: {
-              appId: XBOXAPP_ID,
-              parameters: [{ appExecName: XBOXEXECNAME }],
-          },
-      });
-  } //*/
-  if (store === 'epic' && (DISCOVERY_IDS_ACTIVE.includes(EPICAPP_ID))) {
+  if (store === 'epic' && DISCOVERY_IDS_ACTIVE.includes(EPICAPP_ID)) {
     return Promise.resolve({
         launcher: 'epic',
         addInfo: {
             appId: EPICAPP_ID,
         },
-    });
-  } //*/
-  /*
-  if (store === 'steam') {
-    return Promise.resolve({
-        launcher: 'steam',
     });
   } //*/
   return Promise.resolve(undefined);
@@ -267,45 +272,6 @@ function openConfigRegistry(api) {
     log('error', `Could not open ${GAME_NAME} config in registry: ${err}`);
   }
 } //*/
-
-//Get correct save folder for game version
-function getSavePath(api) {
-  GAME_PATH = getDiscoveryPath(api);
-  const isCorrectExec = (exec) => {
-    try {
-      fs.statSync(path.join(GAME_PATH, exec));
-      return true;
-    }
-    catch (err) {
-      return false;
-    }
-  };
-  if (isCorrectExec(EXEC_XBOX)) {
-    SAVE_PATH = SAVE_PATH_XBOX;
-    return SAVE_PATH;
-  }
-  else {
-    SAVE_PATH = SAVE_PATH_DEFAULT;
-    return SAVE_PATH;
-  };
-} //*/
-
-//Get correct executable for game version
-function getExecutable(discoveryPath) {
-  const isCorrectExec = (exec) => {
-    try {
-      fs.statSync(path.join(discoveryPath, exec));
-      return true;
-    }
-    catch (err) {
-      return false;
-    }
-  };
-  if (isCorrectExec(EXEC_XBOX)) {
-    return EXEC_XBOX;
-  };
-  return EXEC;
-}
 
 const getDiscoveryPath = (api) => { //get the game's discovered path
   const state = api.getState();
@@ -449,6 +415,90 @@ function installRoot(files) {
   return Promise.resolve({ instructions });
 }
 
+//Installer Test for save files
+function testSave(files, gameId) {
+  const isMod = files.some(file => SAVE_EXTS.includes(path.extname(file).toLowerCase()));
+  let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Installer install save files
+function installSave(files) {
+  const modFile = files.find(file => SAVE_EXTS.includes(path.extname(file).toLowerCase()));
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: SAVE_ID };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) &&
+      (!file.endsWith(path.sep)))
+  );
+
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Installer Test for .pcbs files
+function testPc(files, gameId) {
+  const isMod = files.some(file => PC_EXTS.includes(path.extname(file).toLowerCase()));
+  let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Installer install .pcbs files
+function installPc(files) {
+  const modFile = files.find(file => PC_EXTS.includes(path.extname(file).toLowerCase()));
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: PC_ID };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) &&
+      (!file.endsWith(path.sep)))
+  );
+
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
 //Installer Test for assets files
 function testAssets(files, gameId) {
   const isMod = files.some(file => ASSETS_EXTS.includes(path.extname(file).toLowerCase()));
@@ -507,6 +557,7 @@ async function setup(discovery, api, gameSpec) {
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   // ASYNC CODE ///////////////////////////////////
+  //await downloadBepinex(api, gameSpec);
   if (downloadCfgMan === true) {
     await fs.ensureDirWritableAsync(path.join(GAME_PATH, 'Bepinex')); //allows downloader to write files
     await downloadBepCfgMan(api, gameSpec);
@@ -525,7 +576,6 @@ function applyGame(context, gameSpec) {
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     executable: () => gameSpec.game.executable,
-    //executable: getExecutable,
     //getGameVersion: resolveGameVersion,
     supportedTools: tools,
   };
@@ -542,13 +592,10 @@ function applyGame(context, gameSpec) {
   //register mod installers
   context.registerInstaller(ROOT_ID, 8, testRoot, installRoot);
   context.registerInstaller(BEPCFGMAN_ID, 9, testBepCfgMan, installBepCfgMan); //must be set to 9 since bepinex extension modtypes start at 10 and would hijack
-  //context.registerInstaller(BEPINEX_ID, 25, testBepinex, installBepinex);
-  //context.registerInstaller(MELON_ID, 25, testMelon, installMelon);
-  //context.registerInstaller(BEPMOD_ID, 25, testBepMod, installBepMod);
-  //context.registerInstaller(MELONMOD_ID, 25, testMelonMod, installMelonMod);
-  context.registerInstaller(ASSEMBLY_ID, 25, testAssembly, installAssembly);
-  context.registerInstaller(ASSETS_ID, 27, testAssets, installAssets);
-  //context.registerInstaller(SAVE_ID, 49, testSave, installSave); //best to only enable if saves are stored in the game's folder
+  context.registerInstaller(PC_ID, 25, testPc, installPc);
+  context.registerInstaller(ASSEMBLY_ID, 27, testAssembly, installAssembly);
+  context.registerInstaller(ASSETS_ID, 29, testAssets, installAssets);
+  context.registerInstaller(SAVE_ID, 49, testSave, installSave);
   
   //register actions
   /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config (Registry)', () => {
@@ -577,8 +624,8 @@ function applyGame(context, gameSpec) {
       return gameId === GAME_ID;
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', () => {
-    //const openPath = SAVE_PATH;
-    const openPath = getSavePath(context.api);
+    GAME_PATH = getDiscoveryPath(context.api);
+    const openPath = path.join(GAME_PATH, SAVE_PATH);
     util.opn(openPath).catch(() => null);
     }, () => {
       const state = context.api.getState();
@@ -608,46 +655,70 @@ function main(context) {
   applyGame(context, spec);
   context.once(() => {
     if (context.api.ext.bepinexAddGame !== undefined) {
-      if (BEPINEX_PAGE_ID !== '0' && allowBepinexNexus === true) { //if Nexus page exists and is allowed, download from Nexus
-        context.api.ext.bepinexAddGame({
-          gameId: GAME_ID,
-          autoDownloadBepInEx: true,
-          customPackDownloader: () => {
-            return {
-              gameId: GAME_ID, // <--- The game extension's domain Id/gameId as defined when registering the extension
-              domainId: GAME_ID, // <--- Nexus Mods site domain for the BepinEx package's mod page (GAME_ID or "site")
-              modId: BEPINEX_PAGE_ID, // <--- Nexus Mods site page number for the BepinEx package's mod page (string)
-              fileId: BEPINEX_FILE_ID, // <--- Get this by hovering over the download button on the site (string)
-              archiveName: `BepInEx-${GAME_ID}-Custom.zip`, // <--- What we want to call the archive of the downloaded pack.
-              allowAutoInstall: true, // <--- Whether we want this to be installed automatically - should always be true
-            }
-          },
-        });
-      } else { 
-        //* if no Nexus page, download from GitHub
-        context.api.ext.bepinexAddGame({
-          gameId: GAME_ID,
-          autoDownloadBepInEx: true,
-          architecture: BEPINEX_ARCH, // <--- Select version for 64-bit or 32-bit game ('x64' or 'x86')
-          //installRelPath: "bin/x64" // <--- Specify install location (next to game .exe) if not the root game folder (not common)
-          bepinexVersion: BEPINEX_VERSION, // <--- Force BepinEx version
-          forceGithubDownload: true, // <--- Force Vortex to download directly from Github (recommended)
-          unityBuild: BEPINEX_BUILD, // <--- Download version 6.0.0 of BepInEx that supports IL2CPP or 5.4.23.x Mono ('unityil2cpp' or 'unitymono')
-        }); //*/
-        /* Download the IL2CPP Bleeding Edge build
-        context.api.ext.bepinexAddGame({
+      context.api.ext.bepinexAddGame({
         gameId: GAME_ID,
         autoDownloadBepInEx: true,
         customPackDownloader: () => {
-          downloadBepinexBleedingEdge(context.api, spec);
+          downloadBepinex(context.api, spec);
           //return path.join(DOWNLOAD_FOLDER, BEPINEX_ZIP);
         },
-        }); //*/
-      }
+      });
     }
   });
   return true;
 }
+
+
+//* Functions to download BepInEx 5.4.23.3 from GitHub (temporary due to error)
+function isBepinexInstalled(api, spec) {
+  const state = api.getState();
+  const mods = state.persistent.mods[spec.game.id] || {};
+  return Object.keys(mods).some(id => mods[id]?.type === BEPINEX_ID);
+}
+
+async function downloadBepinex(api, gameSpec) {
+  let isInstalled = isBepinexInstalled(api, gameSpec);
+  if (!isInstalled) {
+    const MOD_NAME = BEPINEX_ZIP;
+    const MOD_TYPE = BEPINEX_ID;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
+    const GAME_DOMAIN = gameSpec.game.id;
+    api.sendNotification({ //notification indicating install process
+      id: NOTIF_ID,
+      message: `Installing ${MOD_NAME}`,
+      type: 'activity',
+      noDismiss: true,
+      allowSuppress: false,
+    });
+    try {
+      const URL = BEPINEXIL2CPP_BE_URL;
+      const dlInfo = { //Download the mod
+        game: GAME_DOMAIN,
+        name: MOD_NAME,
+      };
+      //const dlInfo = {};
+      const dlId = await util.toPromise(cb =>
+        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+      const modId = await util.toPromise(cb =>
+        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
+      const batched = [
+        actions.setModsEnabled(api, profileId, [modId], true, {
+          allowAutoDeploy: true,
+          installed: true,
+        }),
+        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
+      ];
+      util.batchDispatch(api.store, batched); // Will dispatch both actions
+    } catch (err) { //Show the user the download page if the download, install process fails
+      const errPage = BEPINEXIL2CPP_BE_URL_ERR;
+      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
+      util.opn(errPage).catch(() => null);
+    } finally {
+      api.dismissNotification(NOTIF_ID);
+    }
+  }
+} //*/
 
 //Download BepInExConfigManager from GitHub
 function isBepCfgManInstalled(api, spec) {
@@ -692,57 +763,6 @@ async function downloadBepCfgMan(api, gameSpec) {
       util.batchDispatch(api.store, batched); // Will dispatch both actions
     } catch (err) {
       api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
-    } finally {
-      api.dismissNotification(NOTIF_ID);
-    }
-  }
-} //*/
-
-//* Functions to download BepInEx 5.4.23.3 from GitHub (temporary due to error)
-function isBepinexInstalled(api, spec) {
-  const state = api.getState();
-  const mods = state.persistent.mods[spec.game.id] || {};
-  return Object.keys(mods).some(id => mods[id]?.type === BEPINEX_ID);
-}
-
-async function downloadBepinexBleedingEdge(api, gameSpec) {
-  let isInstalled = isBepinexInstalled(api, gameSpec);
-  if (!isInstalled) {
-    const MOD_NAME = BEPINEX_ZIP;
-    const MOD_TYPE = BEPINEX_ID;
-    const NOTIF_ID = `${MOD_TYPE}-installing`;
-    const GAME_DOMAIN = gameSpec.game.id;
-    api.sendNotification({ //notification indicating install process
-      id: NOTIF_ID,
-      message: `Installing ${MOD_NAME}`,
-      type: 'activity',
-      noDismiss: true,
-      allowSuppress: false,
-    });
-    try {
-      const URL = BEPINEXIL2CPP_BE_URL;
-      const dlInfo = { //Download the mod
-        game: GAME_DOMAIN,
-        name: MOD_NAME,
-      };
-      //const dlInfo = {};
-      const dlId = await util.toPromise(cb =>
-        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
-      const modId = await util.toPromise(cb =>
-        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
-      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
-      const batched = [
-        actions.setModsEnabled(api, profileId, [modId], true, {
-          allowAutoDeploy: true,
-          installed: true,
-        }),
-        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
-      ];
-      util.batchDispatch(api.store, batched); // Will dispatch both actions
-    } catch (err) { //Show the user the download page if the download, install process fails
-      const errPage = BEPINEXIL2CPP_BE_URL_ERR;
-      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
-      util.opn(errPage).catch(() => null);
     } finally {
       api.dismissNotification(NOTIF_ID);
     }
