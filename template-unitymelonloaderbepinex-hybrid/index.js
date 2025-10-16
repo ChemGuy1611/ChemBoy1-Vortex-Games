@@ -3,7 +3,7 @@ Name: XXX Vortex Extension
 Structure: Unity BepinEx/MelonLoader Hybrid (IL2CPP & x64)
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2025-09-04
+Date: 2025-XX-XX
 //////////////////////////////////////////*/
 
 //Import libraries
@@ -31,7 +31,6 @@ const EXEC = "XXX.exe";
 const EXEC_XBOX = 'gamelaunchhelper.exe';
 
 const DATA_FOLDER = "XXX_Data";
-
 const DEV_REGSTRING = "XXX";
 const GAME_REGSTRING = "XXX";
 const XBOX_SAVE_STRING = 'XXX';
@@ -51,6 +50,8 @@ const BEPINEX_URL_ERR = `https://builds.bepinex.dev/projects/bepinex_be`;
 const BEPINEX_ZIP = 'BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.738+af0cba7.zip';
 const BEPINEX_FILE = 'BepInEx.dll';
 const BEPINEX_FOLDER = 'BepInEx';
+const BEP_STRING = 'BepInEx';
+const BEP_PATCHER_STRING = 'BaseUnityPlugin';
 
 const MELON_ID = `${GAME_ID}-melonloader`;
 const MELON_NAME = "MelonLoader";
@@ -59,6 +60,8 @@ const MELON_URL_ERR = `https://github.com/LavaGang/MelonLoader/releases`;
 const MELON_ZIP = 'MelonLoader.x64.zip';
 const MELON_FILE = 'MelonLoader.dll';
 const MELON_FOLDER = 'MelonLoader';
+const MEL_STRING = 'MelonLoader';
+const MEL_PLUGIN_STRING = 'MelonPlugin';
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Game Folder";
@@ -78,16 +81,17 @@ const ASSEMBLY_FILE= "GameAssembly.dll";
 const CONFIG_HIVE = 'HKEY_CURRENT_USER';
 const CONFIG_REGPATH = `Software\\${DEV_REGSTRING}\\${GAME_REGSTRING}`;
 const CONFIG_REGPATH_FULL = `${CONFIG_HIVE}\\${CONFIG_REGPATH}`;
+
 const SAVE_PATH_DEFAULT = path.join(USER_HOME, 'AppData', 'LocalLow', DEV_REGSTRING, GAME_REGSTRING);
 const SAVE_PATH_XBOX = path.join(LOCALAPPDATA, "Packages", `${XBOXAPP_ID}_${XBOX_SAVE_STRING}`, "SystemAppData", "wgs"); //XBOX Version
 let SAVE_PATH = SAVE_PATH_DEFAULT;
+const SAVE_EXTS = [".json"];
 
 const ASSETS_ID = `${GAME_ID}-assets`;
 const ASSETS_NAME = "Assets/Resources File";
 const ASSETS_PATH = DATA_FOLDER;
 const ASSETS_EXTS = ['.assets', '.resource', '.ress'];
 
-//add mod types for BepinEx (patchers, plugins, config) and MelonLoader (plugins, mods, userdata)
 const PLUGIN_EXTS = ['.dll'];
 
 const BEPINEX_PATCHERS_ID = `${GAME_ID}-bepinex-patchers`;
@@ -115,7 +119,7 @@ const MELON_CONFIG_NAME = "MelonLoader Config";
 const MELON_CONFIG_PATH = path.join('userdata');
 
 const MOD_PATH_DEFAULT = ".";
-const MODTYPE_FOLDERS = [ASSEMBLY_PATH, BEPINEX_PATCHERS_PATH, BEPINEX_PLUGINS_PATH, BEPINEX_CONFIG_PATH, MELON_PLUGINS_PATH, MELON_MODS_PATH, MELON_CONFIG_PATH];
+const MODTYPE_FOLDERS = [ASSEMBLY_PATH, ASSETS_PATH, BEPINEX_PATCHERS_PATH, BEPINEX_PLUGINS_PATH, BEPINEX_CONFIG_PATH, MELON_PLUGINS_PATH, MELON_MODS_PATH, MELON_CONFIG_PATH];
 const IGNORE_CONFLICTS = [path.join('**', 'manifest.json'), path.join('**', 'icon.png'), path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
 
 //Filled in from info above
@@ -209,6 +213,18 @@ const spec = {
       "name": ASSETS_NAME,
       "priority": "high",
       "targetPath": path.join('{gamePath}', ASSETS_PATH)
+    },
+    {
+      "id": BEPINEX_ID,
+      "name": BEPINEX_NAME,
+      "priority": "low",
+      "targetPath": '{gamePath}'
+    },
+    {
+      "id": MELON_ID,
+      "name": MELON_NAME,
+      "priority": "low",
+      "targetPath": '{gamePath}'
     },
   ],
   "discovery": {
@@ -629,14 +645,92 @@ function testPlugin(files, gameId) {
 }
 
 //Installer install plugin files
-function installPlugin(api, files) {
+async function installPlugin(api, gameSpec, files, workingDir) {
   const modFile = files.find(file => PLUGIN_EXTS.includes(path.extname(file).toLowerCase()));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   let setModTypeInstruction = { type: 'setmodtype', value: BEPINEX_PLUGINS_ID };
 
-  //add logic to parse dll files to determine if they are MelonLoader plugins or BepInEx plugins
+  // logic to parse dll files to determine if they are MelonLoader plugins or BepInEx plugins
+  let isBepinex = false;
+  let isBepinexPatcher = false;
+  let isMelon = false;
+  let isMelonPlugin = false;
+  bepinexInstalled = isBepinexInstalled(api, gameSpec);
+  melonInstalled = isMelonInstalled(api, gameSpec);
 
+  // detect plugin types by reading DLL contents
+  await Promise.all(files.map(async file => {
+    if (PLUGIN_EXTS.includes(path.extname(file).toLowerCase())) {
+      try {
+        const content = await fs.readFileAsync(path.join(workingDir, file), 'utf8');
+        if (content.includes(BEP_STRING)) {
+            isBepinex = true;
+            isBepinexPatcher = content.includes(BEP_PATCHER_STRING);
+        } else if (content.includes(MEL_STRING)) {
+          isMelon = true;
+          isMelonPlugin = content.includes(MEL_PLUGIN_STRING);
+        }
+      } catch (err) {
+          api.showErrorNotification('Failed to read mod file', err);
+      }
+    }
+  }));
+
+  // CANCEL INSTALL CONDITIONS
+  // If both BepInEx and MelonLoader plugins are detected, cancel install
+  if (isBepinex && isMelon) {
+    const mixedModHandling = await api.showDialog('error', 'Mixed mod detected', {
+        bbcode: api.translate('Vortex has detected that the mod package has bepinex and melonloader mod in the same archive.[br][/br][br][/br]'
+            + `Mixed mods are not supported by the game extension and the mod author will need to repackage their mod.`),
+        options: { order: ['bbcode'], wrap: true },
+    }, [
+        { label: 'Ok' }
+    ]);
+    if (mixedModHandling.action === 'Ok') {
+        throw new util.UserCanceled();
+    }
+  }
+  //if BepInEx plugin is installed while using MelonLoader, cancel install
+  if (isBepinex && melonInstalled) {
+    const wrongLoader = await api.showDialog('error', 'Wrong Mod Loader', {
+        bbcode: api.translate('Vortex has detected that the mod package has BepInEx plugins, but you have installed MelonLoader.[br][/br][br][/br]'
+            + `The installation will be cancelled to avoid issues.`),
+        options: { order: ['bbcode'], wrap: true },
+    }, [
+        { label: 'Ok' }
+    ]);
+    if (wrongLoader.action === 'Ok') {
+        throw new util.UserCanceled();
+    }
+  }
+  //if MelonLoader plugin is installed while using BepInEx, cancel install
+  if (isMelon && bepinexInstalled) {
+    const wrongLoader = await api.showDialog('error', 'Wrong Mod Loader', {
+        bbcode: api.translate('Vortex has detected that the mod package has MelonLoader plugins, but you have installed BepInEx.[br][/br][br][/br]'
+            + `The installation will be cancelled to avoid issues.`),
+        options: { order: ['bbcode'], wrap: true },
+    }, [
+        { label: 'Ok' }
+    ]);
+    if (wrongLoader.action === 'Ok') {
+        throw new util.UserCanceled();
+    }
+  }
+
+  // NORMAL INSTALL - Assign mod types
+  if (isBepinex && !isBepinexPatcher) {
+    setModTypeInstruction = { type: 'setmodtype', value: BEPINEX_PLUGINS_ID };
+  }
+  if (isBepinex && isBepinexPatcher) {
+    setModTypeInstruction = { type: 'setmodtype', value: BEPINEX_PATCHERS_ID };
+  }
+  if (isMelon && isMelonPlugin) {
+    setModTypeInstruction = { type: 'setmodtype', value: MELON_PLUGINS_ID };
+  }
+  if (isMelon && !isMelonPlugin) {
+    setModTypeInstruction = { type: 'setmodtype', value: MELON_MODS_ID };
+  }
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
@@ -665,8 +759,9 @@ async function chooseModLoader(api, gameSpec) {
   };
   return api.showDialog('info', 'Mod Loader Selection', {
     bbcode: t('You must choose between BepInEx and MelonLoader to install mods.{{bl}}'
-      + 'Only one mod loader can be installed at a time. Make your choice based on whnich mods you would like to install and which loader they support.{{bl}}'
+      + 'Only one mod loader can be installed at a time.{{bl}}'
       + 'Make your choice based on which mods you would like to install and which loader they support.{{bl}}'
+      + 'You can change which mod loader you have installed by Uninstalling the current one from Vortex, which will bring up this dialog again.{{bl}}'
       + 'Which mod loader would you like to use for {{game}}?', 
       { replace }
     ),
@@ -708,9 +803,9 @@ async function deconflictModLoaders(api, gameSpec) {
       return;
     }
     if (result.action === 'BepInEx') {
-      await removeBepinex(api, gameSpec);
+      await removeMelon(api, gameSpec);
     } else if (result.action === 'MelonLoader') {
-      await removedMelon(api, gameSpec);
+      await removeBepinex(api, gameSpec);
     }
   });
 }
@@ -719,7 +814,7 @@ async function removeBepinex(api, gameSpec) {
 
 }
 
-async function removedMelon(api, gameSpec) {
+async function removeMelon(api, gameSpec) {
 
 }
 
@@ -778,7 +873,7 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(ROOT_ID, 27, testRoot, installRoot);
   context.registerInstaller(BEPCFGMAN_ID, 29, testBepCfgMan, installBepCfgMan);
   context.registerInstaller(ASSEMBLY_ID, 31, testAssembly, installAssembly);
-  context.registerInstaller(`${GAME_ID}-plugin`, 33, testPlugin, (files) => installPlugin(context.api, files));
+  context.registerInstaller(`${GAME_ID}-plugin`, 33, testPlugin, (files, workingDir) => installPlugin(context.api, gameSpec, files, workingDir));
   context.registerInstaller(ASSETS_ID, 37, testAssets, installAssets);
   //context.registerInstaller(SAVE_ID, 49, testSave, installSave); //best to only enable if saves are stored in the game's folder
   
