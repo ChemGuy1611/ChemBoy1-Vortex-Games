@@ -681,7 +681,7 @@ async function installPlugin(api, gameSpec, files, workingDir) {
   // If both BepInEx and MelonLoader plugins are detected, cancel install
   if (isBepinex && isMelon) {
     const mixedModHandling = await api.showDialog('error', 'Mixed mod detected', {
-        bbcode: api.translate('Vortex has detected that the mod package has bepinex and melonloader mod in the same archive.[br][/br][br][/br]'
+        bbcode: api.translate('Vortex has detected that the mod package has bepinex and melonloader plugins in the same archive.[br][/br][br][/br]'
             + `Mixed mods are not supported by the game extension and the mod author will need to repackage their mod.`),
         options: { order: ['bbcode'], wrap: true },
     }, [
