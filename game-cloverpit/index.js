@@ -1,9 +1,9 @@
 /*//////////////////////////////////////////
-Name: Megabonk Vortex Extension
-Structure: Unity BepinEx/MelonLoader Hybrid (IL2CPP & x64)
+Name: CloverPit Vortex Extension
+Structure: Unity BepinEx/MelonLoader Hybrid (Mono & x64)
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2025-10-15
+Date: 2025-10-16
 //////////////////////////////////////////*/
 
 //Import libraries
@@ -11,26 +11,27 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 
-const USER_HOME = util.getVortexPath("home");
-//const DOCUMENTS = util.getVortexPath("documents");
-//const ROAMINGAPPDATA = util.getVortexPath("appData");
-const LOCALAPPDATA = util.getVortexPath("localAppData");
-
 //Specify all the information about the game
-const GAME_ID = "megabonk";
-const STEAMAPP_ID = "3405340";
-const STEAMAPP_ID_DEMO = "3520070";
+const GAME_ID = "cloverpit";
+const STEAMAPP_ID = "3314790";
+const STEAMAPP_ID_DEMO = "3347820";
 const EPICAPP_ID = null;
 const GOGAPP_ID = null;
 const XBOXAPP_ID = null;
 const XBOXEXECNAME = null;
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
-const GAME_NAME = "Megabonk"
-const GAME_NAME_SHORT = "Megabonk"
-const EXEC = "Megabonk.exe";
-const DATA_FOLDER = "Megabonk_Data";
-const DEV_REGSTRING = "Ved";
-const GAME_REGSTRING = "Megabonk";
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, STEAMAPP_ID_DEMO]; // UPDATE THIS WITH ALL VALID IDs
+const GAME_NAME = "CloverPit"
+const GAME_NAME_SHORT = "CloverPit"
+const EXEC = "CloverPit.exe";
+const EXEC_XBOX = 'gamelaunchhelper.exe';
+
+const DATA_FOLDER = "CloverPit_Data";
+const ASSEMBLY_PATH = path.join(DATA_FOLDER, "Managed");
+const ASSEMBLY_FILES = ["Assembly-CSharp.dll", "Assembly-CSharp-firstpass.dll"];
+
+const BEPINEX_BUILD = 'mono'; // 'mono' or 'il2cpp'
+const ARCH = 'x64'; //x64 or x86
+const BEP_VER = '5.4.23.4'; //set BepInEx version for mono URLs
 
 let GAME_PATH = null;
 let STAGING_FOLDER = '';
@@ -42,19 +43,25 @@ let melonInstalled = false;
 //info for modtypes, installers, and tools
 const BEPINEX_ID = `${GAME_ID}-bepinex`;
 const BEPINEX_NAME = "BepInEx Injector";
-const BEPINEX_URL = `https://builds.bepinex.dev/projects/bepinex_be/738/BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.738%2Baf0cba7.zip`;
-const BEPINEX_URL_ERR = `https://builds.bepinex.dev/projects/bepinex_be`;
-const BEPINEX_ZIP = 'BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.738+af0cba7.zip';
 const BEPINEX_FILE = 'BepInEx.dll';
 const BEPINEX_FOLDER = 'BepInEx';
 const BEP_STRING = 'BepInEx';
 const BEP_PATCHER_STRING = 'BaseUnityPlugin';
 
+let BEPINEX_URL = `https://builds.bepinex.dev/projects/bepinex_be/738/BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.738%2Baf0cba7.zip`; //for IL2CPP builds
+let BEPINEX_URL_ERR = `https://builds.bepinex.dev/projects/bepinex_be`;
+let BEPINEX_ZIP = 'BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.738+af0cba7.zip';
+if (BEPINEX_BUILD === 'mono') {
+  BEPINEX_ZIP = `BepInEx_win_${ARCH}_${BEP_VER}.zip`;
+  BEPINEX_URL = `https://github.com/BepInEx/BepInEx/releases/download/v${BEP_VER}/${BEPINEX_ZIP}`;
+  BEPINEX_URL_ERR = `https://github.com/BepInEx/BepInEx/releases`;
+}
+
 const MELON_ID = `${GAME_ID}-melonloader`;
 const MELON_NAME = "MelonLoader";
-const MELON_URL = `https://github.com/LavaGang/MelonLoader/releases/latest/download/MelonLoader.x64.zip`;
+const MELON_ZIP = `MelonLoader.${ARCH}.zip`;
+const MELON_URL = `https://github.com/LavaGang/MelonLoader/releases/latest/download/${MELON_ZIP}`;
 const MELON_URL_ERR = `https://github.com/LavaGang/MelonLoader/releases`;
-const MELON_ZIP = 'MelonLoader.x64.zip';
 const MELON_FILE = 'MelonLoader.dll';
 const MELON_FOLDER = 'MelonLoader';
 const MEL_STRING = 'MelonLoader';
@@ -71,27 +78,6 @@ const BEPCFGMAN_FILE = `bepinexconfigmanager.il2cpp.dll`; //lowercased
 
 const ASSEMBLY_ID = `${GAME_ID}-assemblydll`;
 const ASSEMBLY_NAME = "Assembly DLL Mod";
-const ASSEMBLY_PATH = '.';
-const ASSEMBLY_FILE= "GameAssembly.dll";
-
-//Config and save paths
-const CONFIG_HIVE = 'HKEY_CURRENT_USER';
-const CONFIG_REGPATH = `Software\\${DEV_REGSTRING}\\${GAME_REGSTRING}`;
-const CONFIG_REGPATH_FULL = `${CONFIG_HIVE}\\${CONFIG_REGPATH}`;
-
-const SAVE_FOLDER_DEFAULT = path.join(USER_HOME, 'AppData', 'LocalLow', DEV_REGSTRING, GAME_REGSTRING, 'Saves', 'CloudDir');
-let USERID_FOLDER = "";
-try {
-  const ARRAY = fs.readdirSync(SAVE_FOLDER_DEFAULT);
-  USERID_FOLDER = ARRAY[0];
-} catch(err) {
-  USERID_FOLDER = "";
-}
-if (USERID_FOLDER === undefined) {
-  USERID_FOLDER = "";
-}
-let SAVE_PATH = path.join(SAVE_FOLDER_DEFAULT, USERID_FOLDER);
-const SAVE_EXTS = [".json"];
 
 const ASSETS_ID = `${GAME_ID}-assets`;
 const ASSETS_NAME = "Assets/Resources File";
@@ -123,6 +109,10 @@ const MELON_MODS_PATH = path.join('mods');
 const MELON_CONFIG_ID = `${GAME_ID}-melonloader-config`;
 const MELON_CONFIG_NAME = "MelonLoader Config";
 const MELON_CONFIG_PATH = path.join('userdata');
+
+const SAVE_ID = `${GAME_ID}-save`;
+const SAVE_NAME = "Save";
+const SAVE_PATH = path.join('SaveData', 'GameData');
 
 const MOD_PATH_DEFAULT = ".";
 const MODTYPE_FOLDERS = [ASSEMBLY_PATH, ASSETS_PATH, BEPINEX_PATCHERS_PATH, BEPINEX_PLUGINS_PATH, BEPINEX_CONFIG_PATH, MELON_PLUGINS_PATH, MELON_MODS_PATH, MELON_CONFIG_PATH];
@@ -463,7 +453,7 @@ function installBepCfgMan(files) {
 
 //Test for Assembly mod files
 function testAssembly(files, gameId) {
-  const isMod = files.some(file => (path.basename(file) === ASSEMBLY_FILE));
+  const isMod = files.some(file => (ASSEMBLY_FILES.includes(path.basename(file))));
   let supported = (gameId === spec.game.id) && isMod;
 
   // Test for a mod installer.
@@ -482,7 +472,7 @@ function testAssembly(files, gameId) {
 //Install Assembly mod files
 function installAssembly(files) {
   const MOD_TYPE = ASSEMBLY_ID;
-  const modFile = files.find(file => (path.basename(file) === ASSEMBLY_FILE));
+  const modFile = files.find(file => (ASSEMBLY_FILES.includes(path.basename(file))));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
@@ -814,6 +804,8 @@ function applyGame(context, gameSpec) {
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     executable: () => gameSpec.game.executable,
+    //executable: getExecutable,
+    //getGameVersion: resolveGameVersion,
     supportedTools: tools,
   };
   context.registerGame(game);
@@ -835,20 +827,20 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(ASSEMBLY_ID, 31, testAssembly, installAssembly);
   context.registerInstaller(`${GAME_ID}-plugin`, 33, testPlugin, (files, workingDir) => installPlugin(context.api, gameSpec, files, workingDir));
   context.registerInstaller(ASSETS_ID, 37, testAssets, installAssets);
-  //context.registerInstaller(SAVE_ID, 49, testSave, installSave); //best to only enable if saves are stored in the game's folder
   
   //register actions
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Data Folder', () => {
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Saves Folder', () => {
     GAME_PATH = getDiscoveryPath(context.api);
-    const openPath = path.join(GAME_PATH, DATA_FOLDER);
+    const openPath = path.join(GAME_PATH, SAVE_PATH);
     util.opn(openPath).catch(() => null);
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', () => {
-    const openPath = SAVE_PATH;
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Data Folder', () => {
+    GAME_PATH = getDiscoveryPath(context.api);
+    const openPath = path.join(GAME_PATH, DATA_FOLDER);
     util.opn(openPath).catch(() => null);
     }, () => {
       const state = context.api.getState();

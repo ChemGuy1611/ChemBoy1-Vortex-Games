@@ -3,7 +3,7 @@ Name: XXX Vortex Extension
 Structure: UE5 (static exe)
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2025-XXX-XXX
+Date: 2025-XX-XX
 //////////////////////////////////////////////////*/
 
 //Import libraries
@@ -45,7 +45,8 @@ const CONFIGMOD_LOCATION = LOCALAPPDATA;
 const SAVEMOD_LOCATION = CONFIGMOD_LOCATION;
 const SHIPEXE_STRING_DEFAULT = '';
 const SHIPEXE_STRING_EGS = '';
-const SHIPPING_EXE_FILENAME = `${EPIC_CODE_NAME}-${EXEC_FOLDER_NAME}${SHIPEXE_STRING_DEFAULT}-Shipping.exe`;
+const SHIPEXE_PROJECTNAME = EPIC_CODE_NAME;
+const SHIPPING_EXE_FILENAME = `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_NAME}${SHIPEXE_STRING_DEFAULT}-Shipping.exe`;
 
 //Settings related to the IO Store UE feature
 let PAKMOD_EXTS = ['.pak'];

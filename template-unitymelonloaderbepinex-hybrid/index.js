@@ -1,6 +1,6 @@
 /*//////////////////////////////////////////
 Name: XXX Vortex Extension
-Structure: Unity BepinEx/MelonLoader Hybrid (IL2CPP & x64)
+Structure: Unity BepinEx/MelonLoader Hybrid (x64)
 Author: ChemBoy1
 Version: 0.1.0
 Date: 2025-XX-XX
@@ -31,6 +31,13 @@ const EXEC = "XXX.exe";
 const EXEC_XBOX = 'gamelaunchhelper.exe';
 
 const DATA_FOLDER = "XXX_Data";
+const ASSEMBLY_PATH = '.';
+const ASSEMBLY_FILES = ["GameAssembly.dll"];
+
+const BEPINEX_BUILD = 'il2cpp'; // 'mono' or 'il2cpp'
+const ARCH = 'x64'; //x64 or x86
+const BEP_VER = '5.4.23.4'; //set BepInEx version for mono URLs
+
 const DEV_REGSTRING = "XXX";
 const GAME_REGSTRING = "XXX";
 const XBOX_SAVE_STRING = 'XXX';
@@ -45,19 +52,25 @@ let melonInstalled = false;
 //info for modtypes, installers, and tools
 const BEPINEX_ID = `${GAME_ID}-bepinex`;
 const BEPINEX_NAME = "BepInEx Injector";
-const BEPINEX_URL = `https://builds.bepinex.dev/projects/bepinex_be/738/BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.738%2Baf0cba7.zip`;
-const BEPINEX_URL_ERR = `https://builds.bepinex.dev/projects/bepinex_be`;
-const BEPINEX_ZIP = 'BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.738+af0cba7.zip';
 const BEPINEX_FILE = 'BepInEx.dll';
 const BEPINEX_FOLDER = 'BepInEx';
 const BEP_STRING = 'BepInEx';
 const BEP_PATCHER_STRING = 'BaseUnityPlugin';
 
+let BEPINEX_URL = `https://builds.bepinex.dev/projects/bepinex_be/738/BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.738%2Baf0cba7.zip`;
+let BEPINEX_URL_ERR = `https://builds.bepinex.dev/projects/bepinex_be`;
+let BEPINEX_ZIP = 'BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.738+af0cba7.zip';
+if (BEPINEX_BUILD === 'mono') {
+  BEPINEX_ZIP = `BepInEx_win_${ARCH}_${BEP_VER}.zip`;
+  BEPINEX_URL = `https://github.com/BepInEx/BepInEx/releases/download/v${BEP_VER}/${BEPINEX_ZIP}`;
+  BEPINEX_URL_ERR = `https://github.com/BepInEx/BepInEx/releases`;
+}
+
 const MELON_ID = `${GAME_ID}-melonloader`;
 const MELON_NAME = "MelonLoader";
-const MELON_URL = `https://github.com/LavaGang/MelonLoader/releases/latest/download/MelonLoader.x64.zip`;
+const MELON_ZIP = `MelonLoader.${ARCH}.zip`;
+const MELON_URL = `https://github.com/LavaGang/MelonLoader/releases/latest/download/${MELON_ZIP}`;
 const MELON_URL_ERR = `https://github.com/LavaGang/MelonLoader/releases`;
-const MELON_ZIP = 'MelonLoader.x64.zip';
 const MELON_FILE = 'MelonLoader.dll';
 const MELON_FOLDER = 'MelonLoader';
 const MEL_STRING = 'MelonLoader';
@@ -74,8 +87,6 @@ const BEPCFGMAN_FILE = `bepinexconfigmanager.il2cpp.dll`; //lowercased
 
 const ASSEMBLY_ID = `${GAME_ID}-assemblydll`;
 const ASSEMBLY_NAME = "Assembly DLL Mod";
-const ASSEMBLY_PATH = '.';
-const ASSEMBLY_FILE= "GameAssembly.dll";
 
 //Config and save paths
 const CONFIG_HIVE = 'HKEY_CURRENT_USER';
@@ -502,7 +513,7 @@ function installBepCfgMan(files) {
 
 //Test for Assembly mod files
 function testAssembly(files, gameId) {
-  const isMod = files.some(file => (path.basename(file) === ASSEMBLY_FILE));
+  const isMod = files.some(file => (ASSEMBLY_FILES.includes(path.basename(file))));
   let supported = (gameId === spec.game.id) && isMod;
 
   // Test for a mod installer.
@@ -521,7 +532,7 @@ function testAssembly(files, gameId) {
 //Install Assembly mod files
 function installAssembly(files) {
   const MOD_TYPE = ASSEMBLY_ID;
-  const modFile = files.find(file => (path.basename(file) === ASSEMBLY_FILE));
+  const modFile = files.find(file => (ASSEMBLY_FILES.includes(path.basename(file))));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
@@ -666,7 +677,8 @@ async function installPlugin(api, gameSpec, files, workingDir) {
         const content = await fs.readFileAsync(path.join(workingDir, file), 'utf8');
         if (content.includes(BEP_STRING)) {
             isBepinex = true;
-            isBepinexPatcher = content.includes(BEP_PATCHER_STRING);
+            isBepinexPatcher = false;
+            //isBepinexPatcher = !content.includes(BEP_PATCHER_STRING) && !files.find(file => path.extname(file).toLowerCase() = 'plugins');
         } else if (content.includes(MEL_STRING)) {
           isMelon = true;
           isMelonPlugin = content.includes(MEL_PLUGIN_STRING);
@@ -837,7 +849,7 @@ async function setup(discovery, api, gameSpec) {
   if (!bepinexInstalled && !melonInstalled) {
     await chooseModLoader(api, gameSpec); //dialog to choose mod loader
   }
-  /*if (bepinexInstalled && melonInstalled) {
+  if (bepinexInstalled && melonInstalled) {
     await deconflictModLoaders(api, gameSpec); //deconflict if both mod loaders are installed
   } //*/
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
@@ -926,7 +938,7 @@ function main(context) {
       if (!bepinexInstalled && !melonInstalled) {
         await chooseModLoader(context.api, spec); //dialog to choose mod loader
       }
-      /*if (bepinexInstalled && melonInstalled) {
+      if (bepinexInstalled && melonInstalled) {
         await deconflictModLoaders(context.api, spec); //deconflict if both mod loaders are installed
       } //*/
     });
