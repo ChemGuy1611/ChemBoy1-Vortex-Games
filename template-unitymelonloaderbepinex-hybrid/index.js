@@ -828,8 +828,7 @@ async function removeBepinex(api, gameSpec) {
   const mod = Object.keys(mods).find(id => mods[id]?.type === BEPINEX_ID);
   try {
     const modId = mod.id;
-    const profileId = selectors.lastActiveProfileForGame(state, gameSpec.game.id);
-    actions.removeMod(profileId, modId);
+    await util.removeMods(api, gameSpec.game.id, [modId]);
   } catch (err) {
     api.showErrorNotification('Failed to remove BepInEx', err);
   }
@@ -841,8 +840,7 @@ async function removeMelon(api, gameSpec) {
   const mod = Object.keys(mods).find(id => mods[id]?.type === MELON_ID);
   try {
     const modId = mod.id;
-    const profileId = selectors.lastActiveProfileForGame(state, gameSpec.game.id);
-    actions.removeMod(profileId, modId);
+    await util.removeMods(api, gameSpec.game.id, [modId]);
   } catch (err) {
     api.showErrorNotification('Failed to remove MelonLoader', err);
   }
