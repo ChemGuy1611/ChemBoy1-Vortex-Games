@@ -27,13 +27,11 @@ const XBOXEXECNAME = "XXX";
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 const GAME_NAME = "XXX"
 const GAME_NAME_SHORT = "XXX"
-const EXEC = "XXX.exe";
+const GAME_STRING = "XXX" //string for exe and data folder (seem to always match)
+const EXEC = `${GAME_STRING}.exe`;
 const EXEC_XBOX = 'gamelaunchhelper.exe';
 
-const DATA_FOLDER = "XXX_Data";
-const ASSEMBLY_PATH = '.';
-const ASSEMBLY_FILES = ["GameAssembly.dll"];
-
+const DATA_FOLDER = `${GAME_STRING}_Data`;
 const BEPINEX_BUILD = 'il2cpp'; // 'mono' or 'il2cpp'
 const ARCH = 'x64'; //'x64' or 'x86' game architecture
 const BEP_VER = '5.4.23.4'; //set BepInEx version for mono URLs
@@ -87,11 +85,17 @@ const ROOT_NAME = "Root Game Folder";
 const BEPCFGMAN_ID = `${GAME_ID}-bepcfgman`;
 const BEPCFGMAN_NAME = "BepInEx Config Manager";
 const BEPCFGMAN_PATH = 'Bepinex';
-const BEPCFGMAN_URL = `https://github.com/sinai-dev/BepInExConfigManager/releases/latest/download/BepInExConfigManager.il2cpp.zip`;
-const BEPCFGMAN_FILE = `bepinexconfigmanager.il2cpp.dll`; //lowercased
+const BEPCFGMAN_URL = `https://github.com/sinai-dev/BepInExConfigManager/releases/latest/download/BepInExConfigManager.${BEPINEX_BUILD}.zip`;
+const BEPCFGMAN_FILE = `bepinexconfigmanager.${BEPINEX_BUILD}.dll`; //lowercased
 
 const ASSEMBLY_ID = `${GAME_ID}-assemblydll`;
 const ASSEMBLY_NAME = "Assembly DLL Mod";
+let ASSEMBLY_PATH = '.';
+let ASSEMBLY_FILES = ["GameAssembly.dll"];
+if (BEPINEX_BUILD = 'mono') {
+  ASSEMBLY_PATH = path.join(DATA_FOLDER, 'Managed');
+  ASSEMBLY_FILES = ["Assembly-CSharp.dll", "Assembly-CSharp-firstpass.dll"];
+}
 
 //Config and save paths
 const CONFIG_HIVE = 'HKEY_CURRENT_USER';
@@ -546,7 +550,7 @@ function installBepCfgMan(files) {
 
 //Test for Assembly mod files
 function testAssembly(files, gameId) {
-  const isMod = files.some(file => (ASSEMBLY_FILES.includes(path.basename(file))));
+  const isMod = files.some(file => ASSEMBLY_FILES.includes(path.basename(file)));
   let supported = (gameId === spec.game.id) && isMod;
 
   // Test for a mod installer.
@@ -565,7 +569,7 @@ function testAssembly(files, gameId) {
 //Install Assembly mod files
 function installAssembly(files) {
   const MOD_TYPE = ASSEMBLY_ID;
-  const modFile = files.find(file => (ASSEMBLY_FILES.includes(path.basename(file))));
+  const modFile = files.find(file => ASSEMBLY_FILES.includes(path.basename(file)));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
