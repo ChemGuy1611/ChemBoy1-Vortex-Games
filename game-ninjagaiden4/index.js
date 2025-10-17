@@ -1,9 +1,9 @@
 /*///////////////////////////////////////////
-Name: XXX Vortex Extension
+Name: NINJA GAIDEN 4 Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2025-XX-XX
+Date: 2025-10-20
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -19,23 +19,23 @@ const DOCUMENTS = util.getVortexPath("documents");
 //const LOCALAPPDATA = util.getVortexPath("localAppData");
 
 //Specify all the information about the game
-const GAME_ID = "XXX";
-const STEAMAPP_ID = "XXX";
-const STEAMAPP_ID_DEMO = "XXX";
-const EPICAPP_ID = "XXX";
-const GOGAPP_ID = "XXX";
-const XBOXAPP_ID = "XXX";
-const XBOXEXECNAME = "XXX";
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
-const GAME_NAME = "XXX";
-const GAME_NAME_SHORT = "XXX";
+const GAME_ID = "ninjagaiden4";
+const STEAMAPP_ID = "2627260";
+const STEAMAPP_ID_DEMO = null;
+const EPICAPP_ID = null;
+const GOGAPP_ID = null;
+const XBOXAPP_ID = "Microsoft.TOROretail";
+const XBOXEXECNAME = "Game";
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, XBOXAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const GAME_NAME = "NINJA GAIDEN 4";
+const GAME_NAME_SHORT = "NG4";
 const BINARIES_PATH = path.join('.');
-const EXEC_NAME = "XXX.exe";
+const EXEC_NAME = "NINJAGAIDEN4-Win64.exe";
 const EXEC = path.join(BINARIES_PATH, EXEC_NAME);
-const EXEC_EGS = EXEC;
 const EXEC_XBOX = 'gamelaunchhelper.exe';
+const EXEC_XBOX_ALT = 'NINJAGAIDEN4-WinGDK.exe';
 
-const ROOT_FOLDERS = [''];
+const ROOT_FOLDERS = ['Assets', 'Blob', 'Config', 'Fonts', 'Shaders', 'Textures', 'TrueTypeFonts'];
 
 const DATA_FOLDER = 'XXX';
 const CONFIGMOD_LOCATION = DOCUMENTS;
@@ -48,11 +48,11 @@ let GAME_VERSION = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 
-const MOD_ID = `${GAME_ID}-mod`;
-const MOD_NAME = "Mod";
-const MOD_PATH = "mods";
+const ASSET_ID = `${GAME_ID}-asset`;
+const ASSET_NAME = "Asset Mod";
+const ASSET_PATH = "Assets";
 const MOD_PATH_XBOX = MOD_PATH;
-const MOD_EXTS = [''];
+const ASSET_EXTS = ['.dat'];
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Folder";
@@ -90,7 +90,7 @@ const TOOL_NAME = "XXX";
 const TOOL_EXEC = path.join('XXX', 'XXX.exe');
 
 const MOD_PATH_DEFAULT = '.';
-const REQ_FILE = EXEC;
+const REQ_FILE = path.join('Assets', '@image0.dat');
 const PARAMETERS_STRING = '';
 const PARAMETERS = [PARAMETERS_STRING];
 
@@ -111,24 +111,20 @@ const spec = {
     ],
     "details": {
       "steamAppId": STEAMAPP_ID,
-      "gogAppId": GOGAPP_ID,
-      "epicAppId": EPICAPP_ID,
       "xboxAppId": XBOXAPP_ID,
       //"supportsSymlinks": false,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
-      "GogAPPId": GOGAPP_ID,
-      "EpicAPPId": EPICAPP_ID,
       "XboxAPPId": XBOXAPP_ID,
     }
   },
   "modTypes": [
     {
-      "id": MOD_ID,
-      "name": MOD_NAME,
+      "id": ASSET_ID,
+      "name": ASSET_NAME,
       "priority": "high",
-      "targetPath": path.join("{gamePath}", MOD_PATH)
+      "targetPath": path.join("{gamePath}", ASSET_PATH)
     },
     {
       "id": ROOT_ID,
@@ -322,8 +318,8 @@ async function deploy(api) { //useful to deploy mods after doing some action
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
 
 //Test for mod files
-function testMod(files, gameId) {
-  const isMod = files.some(file => MOD_EXTS.includes(path.extname(file).toLowerCase()));
+function testAsset(files, gameId) {
+  const isMod = files.some(file => ASSET_EXTS.includes(path.extname(file).toLowerCase()));
   let supported = (gameId === spec.game.id) && isMod;
 
   // Test for a mod installer
@@ -340,9 +336,9 @@ function testMod(files, gameId) {
 }
 
 //Install mod files
-function installMod(files) {
-  const MOD_TYPE = MOD_ID;
-  const modFile = files.find(file => MOD_EXTS.includes(path.extname(file).toLowerCase()));
+function installAsset(files) {
+  const MOD_TYPE = ASSET_ID;
+  const modFile = files.find(file => ASSET_EXTS.includes(path.extname(file).toLowerCase()));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
@@ -405,41 +401,6 @@ function installRoot(files) {
   return Promise.resolve({ instructions });
 }
 
-//Fallback installer to Binaries folder
-function testBinaries(files, gameId) {
-  let supported = (gameId === spec.game.id);
-
-  // Test for a mod installer.
-  if (supported && files.find(file =>
-    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
-    supported = false;
-  }
-
-  return Promise.resolve({
-    supported,
-    requiredFiles: [],
-  });
-}
-
-//Fallback installer to Binaries folder
-function installBinaries(files) {
-  const setModTypeInstruction = { type: 'setmodtype', value: BINARIES_ID };
-  
-  const filtered = files.filter(file =>
-    (!file.endsWith(path.sep))
-  );
-  const instructions = filtered.map(file => {
-    return {
-      type: 'copy',
-      source: file,
-      destination: path.join(file),
-    };
-  });
-  instructions.push(setModTypeInstruction);
-  return Promise.resolve({ instructions });
-}
-
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
 //Setup function
@@ -451,7 +412,7 @@ async function setup(discovery, api, gameSpec) {
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   // ASYNC CODE //////////////////////////////////////////
-  return fs.ensureDirWritableAsync(path.join(GAME_PATH, MOD_PATH_DEFAULT));
+  return fs.ensureDirWritableAsync(path.join(GAME_PATH, ASSET_PATH));
 }
 
 //Let Vortex know about the game
@@ -460,8 +421,7 @@ function applyGame(context, gameSpec) {
   const game = {
     ...gameSpec.game,
     queryPath: makeFindGame(context.api, gameSpec),
-    executable: () => gameSpec.game.executable,
-    //executable: getExecutable,
+    executable: getExecutable,
     queryModPath: makeGetModPath(context.api, gameSpec),
     //queryModPath: getModPath,
     requiresLauncher: requiresLauncher,
@@ -501,11 +461,10 @@ function applyGame(context, gameSpec) {
   ); //*/
   
   //register mod installers
-  //context.registerInstaller(MOD_ID, 25, testMod, installMod);
+  context.registerInstaller(ASSET_ID, 25, testAsset, installAsset);
   //context.registerInstaller(CONFIG_ID, 43, testConfig, installConfig);
   //context.registerInstaller(SAVE_ID, 45, testSave, installSave);
   context.registerInstaller(ROOT_ID, 47, testRoot, installRoot);
-  //context.registerInstaller(BINARIES_ID, 49, testBinaries, installBinaries);
 
   //register actions
   /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {

@@ -1,9 +1,9 @@
 /*//////////////////////////////////////////////////
-Name: XXX Vortex Extension
+Name: Vampire: The Masquerade - Bloodlines 2 Vortex Extension
 Structure: UE5 (static exe)
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2025-XX-XX
+Date: 2025-10-21
 //////////////////////////////////////////////////*/
 
 //Import libraries
@@ -17,14 +17,14 @@ const template = require('string-template');
 const LOCALAPPDATA = util.getVortexPath('localAppData');
 
 //Specify all information about the game
-const GAME_ID = "XXX";
-const STEAMAPP_ID = "XXX";
-const STEAMAPP_ID_DEMO = "XXX";
-const EPICAPP_ID = "XXX";
-const GOGAPP_ID = "XXX";
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
-const GAME_NAME = "XXX";
-const GAME_NAME_SHORT = "XXX";
+const GAME_ID = "vampirethemasqueradebloodlines2";
+const STEAMAPP_ID = "532790";
+const STEAMAPP_ID_DEMO = null;
+const EPICAPP_ID = "";
+const GOGAPP_ID = "1519199034";
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, GOGAPP_ID]; // Add Epic once on egdata.app
+const GAME_NAME = "Vampire: The Masquerade - Bloodlines 2";
+const GAME_NAME_SHORT = "VTMB2";
 const EXEC = "XXX.exe";
 const EXEC_EPIC = "XXX_EGS.exe";
 const EXEC_GOG = "XXXGOG.exe";
@@ -66,6 +66,7 @@ let CHECK_DATA = false; //boolean to check if game, staging folder, and config a
 let CHECK_DOCS = false; //secondary same as above (if save and config are in different locations)
 let STAGING_FOLDER = ''; //Vortex staging folder path
 let DOWNLOAD_FOLDER = ''; //Vortex download folder path
+let DEMO = false;
 let GAME_VERSION = '';
 
 //Unreal Engine Game Data

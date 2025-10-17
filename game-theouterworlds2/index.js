@@ -19,9 +19,9 @@ const LOCALAPPDATA = util.getVortexPath("localAppData");
 //Specify all information about the game
 const GAME_ID = "theouterworlds2"; //same as Nexus domain
 const STEAMAPP_ID = "1449110"; //from steamdb.info
-const STEAMAPP_ID_DEMO = "XXX";
+const STEAMAPP_ID_DEMO = null;
 const EPICAPP_ID = "XXX"; //from egdata.app
-const GOGAPP_ID = "XXX"; // from gogdb.org
+const GOGAPP_ID = null; // from gogdb.org
 const XBOXAPP_ID = "Microsoft.OE-Arkansas"; //from appxmanifest.xml
 const XBOXEXECNAME = "AppTheOuterWorlds2Shipping"; //from appxmanifest.xml
 const GAME_NAME = "The Outer Worlds 2";

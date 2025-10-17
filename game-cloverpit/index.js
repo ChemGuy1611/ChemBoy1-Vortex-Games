@@ -86,29 +86,45 @@ const ASSETS_EXTS = ['.assets', '.resource', '.ress'];
 
 const PLUGIN_EXTS = ['.dll'];
 
-const BEPINEX_PATCHERS_ID = `${GAME_ID}-bepinex-patchers`;
-const BEPINEX_PATCHERS_NAME = "BepInEx Patchers";
-const BEPINEX_PATCHERS_PATH = path.join(BEPINEX_FOLDER, 'patchers');
+const BEPINEX_MOD_ID = `${GAME_ID}-bepinexmod`;
+const BEPINEX_MOD_NAME = "BepInEx Mod";
+const BEPINEX_MOD_PATH = BEPINEX_FOLDER;
+const BEPINEX_MOD_FOLDERS = ['plugins', 'patchers', 'config'];
+
+const MELON_MOD_ID = `${GAME_ID}-melonmod`;
+const MELON_MOD_NAME = "MelonLoader Mod";
+const MELON_MOD_PATH = '.';
+const MELON_MOD_FOLDERS = ['mods', 'plugins', 'userdata'];
 
 const BEPINEX_PLUGINS_ID = `${GAME_ID}-bepinex-plugins`;
 const BEPINEX_PLUGINS_NAME = "BepInEx Plugins";
-const BEPINEX_PLUGINS_PATH = path.join(BEPINEX_FOLDER, 'plugins');
+const BEPINEX_PLUGINS_FOLDER = 'plugins';
+const BEPINEX_PLUGINS_PATH = path.join(BEPINEX_FOLDER, BEPINEX_PLUGINS_FOLDER);
+
+const BEPINEX_PATCHERS_ID = `${GAME_ID}-bepinex-patchers`;
+const BEPINEX_PATCHERS_NAME = "BepInEx Patchers";
+const BEPINEX_PATCHERS_FOLDER = 'patchers';
+const BEPINEX_PATCHERS_PATH = path.join(BEPINEX_FOLDER, BEPINEX_PATCHERS_FOLDER);
 
 const BEPINEX_CONFIG_ID = `${GAME_ID}-bepinex-config`;
 const BEPINEX_CONFIG_NAME = "BepInEx Config";
-const BEPINEX_CONFIG_PATH = path.join(BEPINEX_FOLDER, 'config');
-
-const MELON_PLUGINS_ID = `${GAME_ID}-melonloader-plugins`;
-const MELON_PLUGINS_NAME = "MelonLoader Plugins";
-const MELON_PLUGINS_PATH = path.join('plugins');
+const BEPINEX_CONFIG_FOLDER = 'config';
+const BEPINEX_CONFIG_PATH = path.join(BEPINEX_FOLDER, BEPINEX_CONFIG_FOLDER);
 
 const MELON_MODS_ID = `${GAME_ID}-melonloader-mods`;
 const MELON_MODS_NAME = "MelonLoader Mods";
-const MELON_MODS_PATH = path.join('mods');
+const MELON_MODS_FOLDER = 'Mods';
+const MELON_MODS_PATH = MELON_MODS_FOLDER;
+
+const MELON_PLUGINS_ID = `${GAME_ID}-melonloader-plugins`;
+const MELON_PLUGINS_NAME = "MelonLoader Plugins";
+const MELON_PLUGINS_FOLDER = 'Plugins';
+const MELON_PLUGINS_PATH = MELON_PLUGINS_FOLDER;
 
 const MELON_CONFIG_ID = `${GAME_ID}-melonloader-config`;
 const MELON_CONFIG_NAME = "MelonLoader Config";
-const MELON_CONFIG_PATH = path.join('userdata');
+const MELON_CONFIG_FOLDER = 'UserData';
+const MELON_CONFIG_PATH = MELON_CONFIG_FOLDER;
 
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_NAME = "Save";
@@ -145,11 +161,17 @@ const spec = {
   },
   "modTypes": [
     {
-      "id": ROOT_ID,
-      "name": ROOT_NAME,
+      "id": BEPINEX_MOD_ID,
+      "name": BEPINEX_MOD_NAME,
       "priority": "high",
-      "targetPath": "{gamePath}"
+      "targetPath": path.join('{gamePath}', BEPINEX_MOD_PATH)
     },
+    {
+      "id": MELON_MOD_ID,
+      "name": MELON_MOD_NAME,
+      "priority": "high",
+      "targetPath": path.join('{gamePath}', MELON_MOD_PATH)
+    }, //*/
     {
       "id": BEPINEX_PLUGINS_ID,
       "name": BEPINEX_PLUGINS_NAME,
@@ -203,6 +225,12 @@ const spec = {
       "name": ASSETS_NAME,
       "priority": "high",
       "targetPath": path.join('{gamePath}', ASSETS_PATH)
+    },
+    {
+      "id": ROOT_ID,
+      "name": ROOT_NAME,
+      "priority": "high",
+      "targetPath": "{gamePath}"
     },
     {
       "id": BEPINEX_ID,
@@ -598,9 +626,10 @@ function testPlugin(files, gameId) {
 //Installer install plugin files
 async function installPlugin(api, gameSpec, files, workingDir) {
   const modFile = files.find(file => PLUGIN_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
-  const rootPath = path.dirname(modFile);
-  let setModTypeInstruction = { type: 'setmodtype', value: BEPINEX_PLUGINS_ID };
+  let idx = modFile.indexOf(path.basename(modFile));
+  let rootPath = path.dirname(modFile);
+  let setModTypeInstruction = {};
+  const MOD_NAME = path.basename(workingDir).replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*/gi, '');
 
   // logic to parse dll files to determine if they are MelonLoader plugins or BepInEx plugins
   let isBepinex = false;
@@ -617,14 +646,14 @@ async function installPlugin(api, gameSpec, files, workingDir) {
         const content = await fs.readFileAsync(path.join(workingDir, file), 'utf8');
         if (content.includes(BEP_STRING)) {
             isBepinex = true;
-            isBepinexPatcher = false;
-            //isBepinexPatcher = !content.includes(BEP_PATCHER_STRING) && !files.find(file => path.extname(file).toLowerCase() = 'plugins');
+            isBepinexPatcher = false; //temporary, find reliable string to id patchers
+            //isBepinexPatcher = !content.includes(BEP_PATCHER_STRING) && !files.find(file => path.extname(file).toLowerCase() = BEPINEX_PLUGINS_FOLDER);
         } else if (content.includes(MEL_STRING)) {
           isMelon = true;
           isMelonPlugin = content.includes(MEL_PLUGIN_STRING);
         }
       } catch (err) {
-          api.showErrorNotification('Failed to read mod file', err);
+        api.showErrorNotification(`Failed to read mod file "${file}" to determine if for BepInEx or MelonLoader`, err);
       }
     }
   }));
@@ -632,9 +661,10 @@ async function installPlugin(api, gameSpec, files, workingDir) {
   // CANCEL INSTALL CONDITIONS
   // If both BepInEx and MelonLoader plugins are detected, cancel install
   if (isBepinex && isMelon) {
-    const mixedModHandling = await api.showDialog('error', 'Mixed mod detected', {
-        bbcode: api.translate('Vortex has detected that the mod package has bepinex and melonloader plugins in the same archive.[br][/br][br][/br]'
-            + `Mixed mods are not supported by the game extension and the mod author will need to repackage their mod.`),
+    const mixedModHandling = await api.showDialog('error', 'Mixed Mod Detected', {
+        bbcode: api.translate(`Vortex has detected that the ${MOD_NAME} archive has both BepInEx and MelonLoader plugins in the same archive.[br][/br][br][/br]`
+            + `Mixed mods are not supported by the game extension and the mod author will need to repackage their mod.[br][/br][br][/br]`
+            + `You can manually extract the correct plugin from the archive and install it to Vortex.[br][/br][br][/br]`),
         options: { order: ['bbcode'], wrap: true },
     }, [
         { label: 'Ok' }
@@ -646,8 +676,9 @@ async function installPlugin(api, gameSpec, files, workingDir) {
   //if BepInEx plugin is installed while using MelonLoader, cancel install
   if (isBepinex && melonInstalled) {
     const wrongLoader = await api.showDialog('error', 'Wrong Mod Loader', {
-        bbcode: api.translate('Vortex has detected that the mod package has BepInEx plugins, but you have installed MelonLoader.[br][/br][br][/br]'
-            + `The installation will be cancelled to avoid issues.`),
+        bbcode: api.translate(`Vortex has detected that the ${MOD_NAME} archive has BepInEx plugins, but you have installed MelonLoader.[br][/br][br][/br]`
+            + `The installation will be cancelled to avoid issues.[br][/br][br][/br]`
+            + `Check the mod's page to see if there is a MelonLoader version of the mod, or change your mod loader to BepInEx.[br][/br][br][/br]`),
         options: { order: ['bbcode'], wrap: true },
     }, [
         { label: 'Ok' }
@@ -659,8 +690,9 @@ async function installPlugin(api, gameSpec, files, workingDir) {
   //if MelonLoader plugin is installed while using BepInEx, cancel install
   if (isMelon && bepinexInstalled) {
     const wrongLoader = await api.showDialog('error', 'Wrong Mod Loader', {
-        bbcode: api.translate('Vortex has detected that the mod package has MelonLoader plugins, but you have installed BepInEx.[br][/br][br][/br]'
-            + `The installation will be cancelled to avoid issues.`),
+        bbcode: api.translate(`Vortex has detected that the ${MOD_NAME} archive has MelonLoader plugins, but you have installed BepInEx.[br][/br][br][/br]`
+            + `The installation will be cancelled to avoid issues.[br][/br][br][/br]` 
+            + `Check the mod's page to see if there is a BepInEx version of the mod, or change your mod loader to MelonLoader.[br][/br][br][/br]`),
         options: { order: ['bbcode'], wrap: true },
     }, [
         { label: 'Ok' }
@@ -670,25 +702,74 @@ async function installPlugin(api, gameSpec, files, workingDir) {
     }
   }
 
-  // NORMAL INSTALL - Assign mod types
+  // Install method that attempts to index on folders, then dll files
+  if (isBepinex && !isBepinexPatcher) {
+    setModTypeInstruction = { type: 'setmodtype', value: BEPINEX_MOD_ID };
+    const folder = files.find(file => BEPINEX_MOD_FOLDERS.includes(path.basename(file).toLowerCase()));
+    if (folder !== undefined) {
+      idx = folder.indexOf(`${path.basename(folder)}${path.sep}`);
+      rootPath = path.dirname(folder);
+    }
+    if (folder === undefined) {
+      setModTypeInstruction = { type: 'setmodtype', value: BEPINEX_PLUGINS_ID };
+    }
+  }
+
+  if (isBepinex && isBepinexPatcher) {
+    setModTypeInstruction = { type: 'setmodtype', value: BEPINEX_MOD_ID };
+    const folder = files.find(file => BEPINEX_MOD_FOLDERS.includes(path.basename(file).toLowerCase()));
+    if (folder !== undefined) {
+      idx = folder.indexOf(`${path.basename(folder)}${path.sep}`);
+      rootPath = path.dirname(folder);
+    }
+    if (folder === undefined) {
+      setModTypeInstruction = { type: 'setmodtype', value: BEPINEX_PATCHERS_ID };
+    }
+  }
+
+  if (isMelon && !isMelonPlugin) {
+    setModTypeInstruction = { type: 'setmodtype', value: MELON_MOD_ID };
+    const folder = files.find(file => MELON_MOD_FOLDERS.includes(path.basename(file).toLowerCase()));
+    if (folder !== undefined) {
+      idx = folder.indexOf(`${path.basename(folder)}${path.sep}`);
+      rootPath = path.dirname(folder);
+    }
+    if (folder === undefined) {
+      setModTypeInstruction = { type: 'setmodtype', value: MELON_MODS_ID };
+    }
+  }
+
+  if (isMelon && isMelonPlugin) {
+    setModTypeInstruction = { type: 'setmodtype', value: MELON_MOD_ID };
+    const folder = files.find(file => MELON_MOD_FOLDERS.includes(path.basename(file).toLowerCase()));
+    if (folder !== undefined) {
+      idx = folder.indexOf(`${path.basename(folder)}${path.sep}`);
+      rootPath = path.dirname(folder);
+    }
+    if (folder === undefined) {
+      setModTypeInstruction = { type: 'setmodtype', value: MELON_PLUGINS_ID };
+    }
+  } //*/
+
+
+  /* NORMAL INSTALL - Assign mod types
   if (isBepinex && !isBepinexPatcher) {
     setModTypeInstruction = { type: 'setmodtype', value: BEPINEX_PLUGINS_ID };
   }
   if (isBepinex && isBepinexPatcher) {
     setModTypeInstruction = { type: 'setmodtype', value: BEPINEX_PATCHERS_ID };
   }
-  if (isMelon && isMelonPlugin) {
-    setModTypeInstruction = { type: 'setmodtype', value: MELON_PLUGINS_ID };
-  }
   if (isMelon && !isMelonPlugin) {
     setModTypeInstruction = { type: 'setmodtype', value: MELON_MODS_ID };
   }
+  if (isMelon && isMelonPlugin) {
+    setModTypeInstruction = { type: 'setmodtype', value: MELON_PLUGINS_ID };
+  } //*/
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
     ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
   );
-
   const instructions = filtered.map(file => {
     return {
       type: 'copy',
@@ -763,11 +844,29 @@ async function deconflictModLoaders(api, gameSpec) {
 }
 
 async function removeBepinex(api, gameSpec) {
-
+  const state = api.getState();
+  const mods = state.persistent.mods[gameSpec.game.id] || {};
+  const mod = Object.keys(mods).find(id => mods[id]?.type === BEPINEX_ID);
+  const modId = mods[mod].id
+  log('warn', `Found BepInEx mod to remove for deconfliction: ${modId}`);
+  try {
+    await util.removeMods(api, gameSpec.game.id, [modId]);
+  } catch (err) {
+    api.showErrorNotification('Failed to remove BepInEx', err);
+  }
 }
 
 async function removeMelon(api, gameSpec) {
-
+  const state = api.getState();
+  const mods = state.persistent.mods[gameSpec.game.id] || {};
+  const mod = Object.keys(mods).find(id => mods[id]?.type === MELON_ID);
+  const modId = mods[mod].id
+  log('warn', `Found MelonLoader mod to remove for deconfliction: ${modId}`);
+  try {
+    await util.removeMods(api, gameSpec.game.id, [modId]);
+  } catch (err) {
+    api.showErrorNotification('Failed to remove MelonLoader', err);
+  }
 }
 
 async function modFoldersEnsureWritable(gamePath, relPaths) {
