@@ -3,7 +3,7 @@ Name: XXX Vortex Extension
 Structure: UE2/3 Game (TFC Installer)
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2025-09-17
+Date: 2025-XX-XX
 /////////////////////////////////////////*/
 
 //Import libraries

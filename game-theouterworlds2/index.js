@@ -1,9 +1,9 @@
 /*////////////////////////////////////////////////
-Name: XXX Vortex Extension
+Name: The Outer Worlds 2 Vortex Extension
 Structure: UE5 (Xbox-Integrated)
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2025-XX-XX
+Date: 2025-10-21
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -17,19 +17,19 @@ const template = require('string-template');
 const LOCALAPPDATA = util.getVortexPath("localAppData");
 
 //Specify all information about the game
-const GAME_ID = "XXX"; //same as Nexus domain
-const STEAMAPP_ID = "XXX"; //from steamdb.info
+const GAME_ID = "theouterworlds2"; //same as Nexus domain
+const STEAMAPP_ID = "1449110"; //from steamdb.info
 const STEAMAPP_ID_DEMO = "XXX";
 const EPICAPP_ID = "XXX"; //from egdata.app
 const GOGAPP_ID = "XXX"; // from gogdb.org
-const XBOXAPP_ID = "XXX"; //from appxmanifest.xml
-const XBOXEXECNAME = "XXX"; //from appxmanifest.xml
-const GAME_NAME = "XXX";
-const GAME_NAME_SHORT = "XXX"; //Try for 8-10 characters
-const EXEC_DEFAULT = "XXX.exe";
-const EXEC_EPIC = "XXX_EGS.exe";
+const XBOXAPP_ID = "Microsoft.OE-Arkansas"; //from appxmanifest.xml
+const XBOXEXECNAME = "AppTheOuterWorlds2Shipping"; //from appxmanifest.xml
+const GAME_NAME = "The Outer Worlds 2";
+const GAME_NAME_SHORT = "TOW2"; //Try for 8-10 characters
+const EXEC_DEFAULT = "TheOuterWorlds2.exe";
+const EXEC_EPIC = "TheOuterWorlds2_EGS.exe";
 //Unreal Engine specific
-const EPIC_CODE_NAME = "XXX";
+const EPIC_CODE_NAME = "Arkansas";
 const SIGBYPASS_REQUIRED = false; //set true if there are .sig files in the Paks folder
 const IO_STORE = true; //true if the Paks folder contains .ucas and .utoc files
 const UE4SS_PAGE_NO = 0; //set if there is UE4SS Nexus page
@@ -46,7 +46,7 @@ const SAVEMOD_LOCATION = CONFIGMOD_LOCATION;
 const SHIPEXE_STRING_DEFAULT = '';
 const SHIPEXE_STRING_EGS = '';
 const SHIPEXE_STRING_XBOX = '';
-const SHIPEXE_PROJECTNAME = 'XXX';
+const SHIPEXE_PROJECTNAME = 'TheOuterWorlds2';
 //Discovery IDs
 const gameFinderQuery = {
   steam: [{ id: STEAMAPP_ID, prefer: 0 }],
