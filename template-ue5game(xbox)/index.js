@@ -103,7 +103,7 @@ const UNREALDATA = {
   fileExt: PAKMOD_EXTS,
   loadOrder: true,
 }
-const UE5_SORTABLE_ID = `${GAME_ID}-ue5-sortable-modtype`; //this should not be changed to be maintain consistency with other UE5 games
+const UE5_SORTABLE_ID = `${GAME_ID}-uesortablepak`; //this should not be changed to be maintain consistency with other UE5 games
 const UE5_SORTABLE_NAME = 'UE5 Sortable Mod';
 
 //Information for mod types and installers. This will be filled in from the data above
@@ -111,7 +111,7 @@ const BINARIES_ID = `${GAME_ID}-binaries`;
 const BINARIES_NAME = "Binaries (Engine Injector)";
 
 const UE5_ALT_ID = `${GAME_ID}-pakalt`;
-const UE5_ALT_NAME = 'UE5 Paks (no "~mods")';
+const UE5_ALT_NAME = 'Paks (no "~mods")';
 const PAK_EXT = '.pak';
 const UE5_PATH = UNREALDATA.modsPath;
 const UE5_ALT_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Paks');

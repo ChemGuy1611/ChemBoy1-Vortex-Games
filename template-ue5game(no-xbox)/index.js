@@ -81,7 +81,7 @@ const CONFIG_PATH = path.join(CONFIGMOD_LOCATION, DATA_FOLDER, "Saved", "Config"
 const CONFIG_FILES = ["engine.ini", "scalability.ini", "input.ini", "game.ini", "gameusersettings.ini"];
 const CONFIG_EXT = ".ini";
 
-const PAK_ID = `${GAME_ID}-pak`;
+const PAK_ID = `${GAME_ID}-pakalt`;
 const PAK_NAME = "Paks (no ~mods)";
 const PAK_PATH = UNREALDATA.modsPath;
 const PAK_ALT_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Paks');
