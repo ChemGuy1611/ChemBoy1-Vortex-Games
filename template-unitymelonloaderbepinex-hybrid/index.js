@@ -811,11 +811,29 @@ async function deconflictModLoaders(api, gameSpec) {
 }
 
 async function removeBepinex(api, gameSpec) {
-
+  const state = api.getState();
+  const mods = state.persistent.mods[gameSpec.game.id] || {};
+  const mod = Object.keys(mods).find(id => mods[id]?.type === BEPINEX_ID);
+  try {
+    const modId = mod.id;
+    const profileId = selectors.lastActiveProfileForGame(state, gameSpec.game.id);
+    actions.removeMod(profileId, modId);
+  } catch (err) {
+    api.showErrorNotification('Failed to remove BepInEx', err);
+  }
 }
 
 async function removeMelon(api, gameSpec) {
-
+  const state = api.getState();
+  const mods = state.persistent.mods[gameSpec.game.id] || {};
+  const mod = Object.keys(mods).find(id => mods[id]?.type === MELON_ID);
+  try {
+    const modId = mod.id;
+    const profileId = selectors.lastActiveProfileForGame(state, gameSpec.game.id);
+    actions.removeMod(profileId, modId);
+  } catch (err) {
+    api.showErrorNotification('Failed to remove MelonLoader', err);
+  }
 }
 
 async function modFoldersEnsureWritable(gamePath, relPaths) {
