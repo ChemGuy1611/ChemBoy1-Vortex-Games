@@ -2,8 +2,8 @@
 Name: Far Cry New Dawn Vortex Extension
 Structure: Far Cry Game (Mod Installer)
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2025-10-04
+Version: 0.1.1
+Date: 2025-10-18
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -23,7 +23,7 @@ const GAME_NAME = "Far Cry New Dawn";
 const GAME_NAME_SHORT = "FCND";
 
 const BIN_PATH = "bin";
-const DATA_PATH = "data_final";
+const DATA_PATH = path.join("data_final", "pc");
 const EXEC_NAME = "FarCryNewDawn.exe";
 const FC = 'fcnd';
 const MI_EXEC = "FCNDModInstaller.exe";
@@ -96,7 +96,7 @@ const SAVEMANAGER_NAME = "FC Save Manager";
 const SAVEMANAGER_EXEC = path.join(MI_PATH, "FCSavegameManager.exe");
 
 const MOD_PATH_DEFAULT = '.';
-const ROOT_FOLDERS = [BIN_PATH, DATA_PATH, 'Support'];
+const ROOT_FOLDERS = [BIN_PATH, 'data_final', 'Support'];
 const ROOT_FILES = [''];
 const PARAMETERS_STRING = '';
 const PARAMETERS = [PARAMETERS_STRING];

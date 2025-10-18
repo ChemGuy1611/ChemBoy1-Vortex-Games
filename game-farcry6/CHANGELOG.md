@@ -4,6 +4,10 @@
 
 - None Planned
 
-## [0.1.0] - 2025-XX-XX
+## [0.1.1] - 2025-10-18
+
+- Fixed data path for .dat and .fat files ("data_final/pc")
+
+## [0.1.0] - 2025-10-04
 
 - Initial release
