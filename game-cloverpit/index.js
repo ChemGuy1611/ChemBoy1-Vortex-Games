@@ -94,7 +94,7 @@ const BEPINEX_MOD_FOLDERS = ['plugins', 'patchers', 'config'];
 const MELON_MOD_ID = `${GAME_ID}-melonmod`;
 const MELON_MOD_NAME = "MelonLoader Mod";
 const MELON_MOD_PATH = '.';
-const MELON_MOD_FOLDERS = ['mods', 'plugins', 'userdata'];
+const MELON_MOD_FOLDERS = ['mods', 'plugins', 'userdata', 'userlibs'];
 
 const BEPINEX_PLUGINS_ID = `${GAME_ID}-bepinex-plugins`;
 const BEPINEX_PLUGINS_NAME = "BepInEx Plugins";

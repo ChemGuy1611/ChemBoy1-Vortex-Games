@@ -122,6 +122,18 @@ const CDLCMOD_EXT = ".psarc";
 const CDLCMOD_DLFILE_STRING = "_p.psarc";
 const CDLCMOD_URL = "https://ignition4.customsforge.com";
 
+const ROOT_ID = `${GAME_ID}-root`;
+const ROOT_NAME = "Root Game Folder";
+const ROOT_FILES = ["cache.psarc", "audio.psarc", "crowd.psarc", "etudes.psarc",
+  "gears.psarc", "guitars.psarc", "session.psarc", "songs.psarc", "static.psarc", 
+  "video.psarc",
+];
+const ROOT_FOLDERS = ['base', "dlc", 'guitarcade', 'venues'];
+
+const REPACK_ID = `${GAME_ID}-repack`;
+const REPACK_NAME = "PSARC Repack Tool";
+const REPACK_EXEC = "Unpack-Repack file.PSARC for Rocksmith 2014 Edition - Remastered By Mix98TH.exe";
+
 const SETTINGS_FILE = "Rocksmith.ini";
 const RSMODS_SETTINGS_FILE = "RSMods.ini";
 const NOCABLE_SETTINGS_FILE = "NCL_Settings.xml";
@@ -168,6 +180,12 @@ const spec = {
       "name": EOF_NAME,
       "priority": "high",
       "targetPath": `{gamePath}\\${EOF_PATH}`
+    },
+    {
+      "id": ROOT_ID,
+      "name": ROOT_NAME,
+      "priority": "high",
+      "targetPath": `{gamePath}`
     },
   ],
   "discovery": {
@@ -249,6 +267,18 @@ const tools = [
     logo: `eof.png`,
     executable: () => EOF_EXEC,
     requiredFiles: [EOF_EXEC],
+    detach: true,
+    relative: true,
+    exclusive: true,
+    //shell: true,
+    ///parameters: []
+  },
+  {
+    id: REPACK_ID,
+    name: REPACK_NAME,
+    logo: `repack.png`,
+    executable: () => REPACK_EXEC,
+    requiredFiles: [REPACK_EXEC],
     detach: true,
     relative: true,
     exclusive: true,
@@ -1155,6 +1185,53 @@ function installEof(files) {
   return Promise.resolve({ instructions });
 }
 
+//Installer test for mod files
+function testRoot(files, gameId) {
+  const isMod = files.some(file => ROOT_FILES.includes(path.basename(file).toLowerCase()));
+  const isFolder = files.some(file => ROOT_FOLDERS.includes(path.basename(file).toLowerCase()));
+  let supported = (gameId === spec.game.id) && (isMod || isFolder);
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Installer install mod files
+function installRoot(files) {
+  let modFile = files.find(file => ROOT_FILES.includes(path.basename(file).toLowerCase()));
+  let idx;
+  if (modFile === undefined) {
+    modFile = files.find(file => ROOT_FOLDERS.includes(path.basename(file).toLowerCase()));
+    idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  }
+  idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
 // MAIN FUNCTIONS ////////////////////////////////////////////////////////////////////////
 
 //Send notification for Reshade
@@ -1241,8 +1318,9 @@ function applyGame(context, gameSpec) {
   });
 
   //register mod installers
-  context.registerInstaller(CDLCMOD_ID, 25, testCdlcMod, installCdlcMod);
-  context.registerInstaller(EOF_ID, 25, testEof, installEof);
+  context.registerInstaller(ROOT_ID, 25, testRoot, installRoot);
+  context.registerInstaller(CDLCMOD_ID, 27, testCdlcMod, installCdlcMod);
+  context.registerInstaller(EOF_ID, 29, testEof, installEof);
 
   //register actions
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Game Settings INI', () => {
