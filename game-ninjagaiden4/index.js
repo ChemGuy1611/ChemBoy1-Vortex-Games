@@ -30,7 +30,7 @@ const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, XBOXAPP_ID]; // UPDATE THIS WITH ALL 
 const GAME_NAME = "NINJA GAIDEN 4";
 const GAME_NAME_SHORT = "NG4";
 const BINARIES_PATH = path.join('.');
-const EXEC_NAME = "NINJAGAIDEN4-Win64.exe";
+const EXEC_NAME = "NINJAGAIDEN4-Steam.exe";
 const EXEC = path.join(BINARIES_PATH, EXEC_NAME);
 const EXEC_XBOX = 'gamelaunchhelper.exe';
 const EXEC_XBOX_ALT = 'NINJAGAIDEN4-WinGDK.exe';
@@ -51,7 +51,6 @@ let DOWNLOAD_FOLDER = '';
 const ASSET_ID = `${GAME_ID}-asset`;
 const ASSET_NAME = "Asset Mod";
 const ASSET_PATH = "Assets";
-const MOD_PATH_XBOX = MOD_PATH;
 const ASSET_EXTS = ['.dat'];
 
 const ROOT_ID = `${GAME_ID}-root`;
@@ -70,7 +69,7 @@ const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_NAME = "Save";
 const SAVE_FOLDER = path.join(SAVEMOD_LOCATION, DATA_FOLDER, SAVE_FOLDERNAME);
 let USERID_FOLDER = "";
-try {
+/*try {
   const SAVE_ARRAY = fs.readdirSync(SAVE_FOLDER);
   USERID_FOLDER = SAVE_ARRAY.find((element) => 
   ((/[a-z]/i.test(element) === false))
@@ -209,17 +208,6 @@ function makeGetModPath(api, gameSpec) {
     ? gameSpec.game.modPath || '.'
     : pathPattern(api, gameSpec.game, gameSpec.game.modPath);
 }
-
-//* Get mod path dynamically for different game versions
-function getModPath(gamePath) {
-  GAME_VERSION = setGameVersion(gamePath);
-  if (GAME_VERSION === 'xbox') {
-    return MOD_PATH_XBOX;
-  }
-  else {
-    return MOD_PATH;
-  }
-} //*/
 
 //Find game installation directory
 function makeFindGame(api, gameSpec) {

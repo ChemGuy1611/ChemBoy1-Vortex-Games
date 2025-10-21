@@ -4,6 +4,10 @@
 
 - Change CDLC Song Downloader to open a free-roam browser window so that domain switching to file hosting sites for the .psarc files does not cause exit errors and allows downloading multiple files in one session.
 
+## [0.2.1] - 2025-10-21
+
+- Corrected a logic issue in the Root modtype installer.
+
 ## [0.2.0] - 2025-10-20
 
 - Added Root modtype and installer for known .psarc files and folders (i.e. cache.psarc).

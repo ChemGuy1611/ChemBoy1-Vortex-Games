@@ -1,10 +1,10 @@
-/*
+/*/////////////////////////////////////////////////////////
 Name: Rocksmith 2014 Edition REMASTERED Vortex Extension
 Structure: Basic Game with Tools & Launchers
 Author: ChemBoy1
-Version: 0.1.2
-Date: 2025-03-29
-*/
+Version: 0.2.1
+Date: 2025-10-21
+/////////////////////////////////////////////////////////*/
 
 //Import libraries
 const { actions, fs, util, selectors, log } = require('vortex-api');
@@ -1208,11 +1208,13 @@ function testRoot(files, gameId) {
 function installRoot(files) {
   let modFile = files.find(file => ROOT_FILES.includes(path.basename(file).toLowerCase()));
   let idx;
+  if (modFile !== undefined) {
+    idx = modFile.indexOf(path.basename(modFile));
+  }
   if (modFile === undefined) {
     modFile = files.find(file => ROOT_FOLDERS.includes(path.basename(file).toLowerCase()));
     idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   }
-  idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
 

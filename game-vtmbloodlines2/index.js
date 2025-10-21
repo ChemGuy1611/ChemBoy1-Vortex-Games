@@ -34,7 +34,7 @@ const EXEC_DEMO = "XXXDemo.exe";
 const EPIC_CODE_NAME = "XXX";
 const SIGBYPASS_REQUIRED = false; //set true if there are .sig files in the Paks folder
 const IO_STORE = true; //true if the Paks folder contains .ucas and .utoc files
-const UE4SS_PAGE_NO = 0; //set if there is UE4SS Nexus page
+const UE4SS_PAGE_NO = 0; //set ONLY if there is UE4SS Nexus page
 const UE4SS_FILE_NO = 0;
 const UE4SS_MOD_PATH = path.join('ue4ss', 'Mods');
 const EXEC_FOLDER_NAME = "Win64";
@@ -363,6 +363,7 @@ function getExecutable(discoveryPath) {
       return false;
     }
   };
+  //*
   if (isCorrectExec(EXEC_EPIC)) {
     GAME_VERSION = 'epic';
     return EXEC_EPIC;
