@@ -25,13 +25,13 @@ const GOGAPP_ID = "1519199034";
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, GOGAPP_ID]; // Add Epic once on egdata.app
 const GAME_NAME = "Vampire: The Masquerade - Bloodlines 2";
 const GAME_NAME_SHORT = "VTMB2";
-const EXEC = "XXX.exe";
-const EXEC_EPIC = "XXX_EGS.exe";
-const EXEC_GOG = "XXXGOG.exe";
-const EXEC_DEMO = "XXXDemo.exe";
+const EXEC = "Bloodlines2.exe";
+const EXEC_EPIC = EXEC;
+const EXEC_GOG = EXEC;
+const EXEC_DEMO = EXEC;
 
 //Unreal Engine specific
-const EPIC_CODE_NAME = "XXX";
+const EPIC_CODE_NAME = "Bloodlines2";
 const SIGBYPASS_REQUIRED = false; //set true if there are .sig files in the Paks folder
 const IO_STORE = true; //true if the Paks folder contains .ucas and .utoc files
 const UE4SS_PAGE_NO = 0; //set ONLY if there is UE4SS Nexus page
@@ -107,7 +107,7 @@ const CONTENT_PATH = path.join(EPIC_CODE_NAME);
 
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_NAME = "Saves";
-//const SAVE_FOLDER = path.join(DOCUMENTS, 'StellarBlade');
+//const SAVE_FOLDER = path.join(DOCUMENTS, DATA_FOLDER);
 const SAVE_FOLDER = path.join(SAVEMOD_LOCATION, DATA_FOLDER, 'Saved', 'SaveGames');
 let USERID_FOLDER = "";
 try {
@@ -368,10 +368,6 @@ function getExecutable(discoveryPath) {
     GAME_VERSION = 'epic';
     return EXEC_EPIC;
   };
-  if (isCorrectExec(EXEC_GOG)) {
-    GAME_VERSION = 'gog';
-    return EXEC_GOG;
-  }; 
   if (isCorrectExec(EXEC_DEMO)) {
     GAME_VERSION = 'demo';
     return EXEC_DEMO;
@@ -1526,7 +1522,7 @@ function applyGame(context, gameSpec) {
     }, (game) => pathPattern(context.api, game, type.targetPath), () => Promise.resolve(false), { name: type.name });
   });
 
-  //register sibypass modtype
+  //register sigbypass modtype
   if (SIGBYPASS_REQUIRED === true) {
     context.registerModType(SIGBYPASS_ID, 60, 
       (gameId) => {

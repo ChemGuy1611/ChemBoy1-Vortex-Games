@@ -106,7 +106,7 @@ const CONTENT_PATH = path.join(EPIC_CODE_NAME);
 
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_NAME = "Saves";
-//const SAVE_FOLDER = path.join(DOCUMENTS, 'StellarBlade');
+//const SAVE_FOLDER = path.join(DOCUMENTS, DATA_FOLDER);
 const SAVE_FOLDER = path.join(SAVEMOD_LOCATION, DATA_FOLDER, 'Saved', 'SaveGames');
 let USERID_FOLDER = "";
 try {
