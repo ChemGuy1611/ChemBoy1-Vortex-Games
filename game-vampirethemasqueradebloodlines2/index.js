@@ -17,7 +17,7 @@ const template = require('string-template');
 const LOCALAPPDATA = util.getVortexPath('localAppData');
 
 //Specify all information about the game
-const GAME_ID = "vampirethemasqueradebloodlines2";
+const GAME_ID = "vtmbloodlines2";
 const STEAMAPP_ID = "532790";
 const STEAMAPP_ID_DEMO = null;
 const EPICAPP_ID = "";
