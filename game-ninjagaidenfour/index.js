@@ -10,13 +10,14 @@ Date: 2025-10-20
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
+const { parseStringPromise } = require('xml2js');
 //const winapi = require('winapi-bindings');
 //const turbowalk = require('turbowalk');
 
 //const USER_HOME = util.getVortexPath("home");
-const DOCUMENTS = util.getVortexPath("documents");
+//const DOCUMENTS = util.getVortexPath("documents");
 //const ROAMINGAPPDATA = util.getVortexPath("appData");
-//const LOCALAPPDATA = util.getVortexPath("localAppData");
+const LOCALAPPDATA = util.getVortexPath("localAppData");
 
 //Specify all the information about the game
 const GAME_ID = "ninjagaidenfour";
@@ -37,17 +38,16 @@ const EXEC_XBOX_ALT = 'NINJAGAIDEN4-WinGDK.exe';
 
 const ROOT_FOLDERS = ['assets', 'blob', 'config', 'fonts', 'shaders', 'textures', 'truetypefonts'];
 
-const DATA_FOLDER = 'XXX';
-const CONFIGMOD_LOCATION = DOCUMENTS;
-const CONFIG_FOLDERNAME = 'XXX';
-const SAVEMOD_LOCATION = DOCUMENTS;
-const SAVE_FOLDERNAME = 'XXX';
+const DATA_FOLDER = 'NINJAGAIDEN4';
+const DATA_FOLDER_XBOX = 'NINJAGAIDEN4_Windows';
 
 let GAME_PATH = null;
 let GAME_VERSION = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
+const APPMANIFEST_FILE = 'appxmanifest.xml';
 
+//info for modtypes and installers
 const ASSET_ID = `${GAME_ID}-asset`;
 const ASSET_NAME = "Asset Mod";
 const ASSET_PATH = "Assets";
@@ -60,34 +60,9 @@ const ROOT_NAME = "Root Folder";
 const BINARIES_ID = `${GAME_ID}-binaries`;
 const BINARIES_NAME = "Binaries (Engine Injector)";
 
-const CONFIG_ID = `${GAME_ID}-config`;
-const CONFIG_NAME = "Config";
-const CONFIG_PATH = path.join(CONFIGMOD_LOCATION, DATA_FOLDER, CONFIG_FOLDERNAME);
-const CONFIG_EXT = ".ini";
-const CONFIG_FILES = ["XXX"];
-
-const SAVE_ID = `${GAME_ID}-save`;
-const SAVE_NAME = "Save";
-const SAVE_FOLDER = path.join(SAVEMOD_LOCATION, DATA_FOLDER, SAVE_FOLDERNAME);
-let USERID_FOLDER = "";
-/*try {
-  const SAVE_ARRAY = fs.readdirSync(SAVE_FOLDER);
-  USERID_FOLDER = SAVE_ARRAY.find((element) => 
-  ((/[a-z]/i.test(element) === false))
-  );
-} catch(err) {
-  USERID_FOLDER = "";
-}
-if (USERID_FOLDER === undefined) {
-  USERID_FOLDER = "";
-} //*/
-const SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
-const SAVE_EXT = ".sav";
-const SAVE_FILES = ["XXX"];
-
-const TOOL_ID = `${GAME_ID}-tool`;
-const TOOL_NAME = "XXX";
-const TOOL_EXEC = path.join('XXX', 'XXX.exe');
+let CONFIG_PATH = '';
+const CONFIG_PATH_STEAM = path.join(LOCALAPPDATA, DATA_FOLDER);
+const CONFIG_PATH_XBOX = path.join(LOCALAPPDATA, DATA_FOLDER_XBOX);
 
 const MOD_PATH_DEFAULT = '.';
 const REQ_FILE = path.join('Assets', '@image0.dat');
@@ -160,20 +135,6 @@ const tools = [ //accepts: exe, jar, py, vbs, bat
     shell: true,
     //defaultPrimary: true,
     parameters: PARAMETERS,
-  }, //*/
-  /*{
-    id: TOOL_ID,
-    name: TOOL_NAME,
-    logo: 'tool.png',
-    executable: () => TOOL_EXEC,
-    requiredFiles: [
-      TOOL_EXEC,
-    ],
-    relative: true,
-    exclusive: true,
-    //shell: true,
-    //defaultPrimary: true,
-    //parameters: PARAMETERS,
   }, //*/
 ];
 
@@ -265,13 +226,18 @@ function getExecutable(discoveryPath) {
     }
   };
   if (isCorrectExec(EXEC_XBOX)) {
+    GAME_VERSION = 'xbox';
+    CONFIG_PATH = CONFIG_PATH_XBOX;
     return EXEC_XBOX;
-  };
+  }
+
+  GAME_VERSION = 'default';
+  CONFIG_PATH = CONFIG_PATH_STEAM;
   return EXEC;
 }
 
 //Get correct game version
-function setGameVersion(gamePath) {
+async function setGameVersion(gamePath) {
   const isCorrectExec = (exec) => {
     try {
       fs.statSync(path.join(gamePath, exec));
@@ -281,13 +247,35 @@ function setGameVersion(gamePath) {
       return false;
     }
   };
+
   if (isCorrectExec(EXEC_XBOX)) {
     GAME_VERSION = 'xbox';
     return GAME_VERSION;
+  }
+
+  GAME_VERSION = 'default';
+  return GAME_VERSION;
+}
+
+//Get correct executable, add to required files, set paths for mod types
+async function setConfigPath(api) {
+  GAME_PATH = await getDiscoveryPath(api);
+  const isCorrectExec = (exec) => {
+    try {
+      fs.statSync(path.join(GAME_PATH, exec));
+      return true;
+    }
+    catch (err) {
+      return false;
+    }
   };
-  if (isCorrectExec(EXEC)) {
-    GAME_VERSION = 'default';
-    return GAME_VERSION;
+  if (isCorrectExec(EXEC_XBOX)) {
+    CONFIG_PATH = CONFIG_PATH_XBOX;
+    return CONFIG_PATH;
+  }
+  else { 
+    CONFIG_PATH =  CONFIG_PATH_STEAM
+    return CONFIG_PATH;
   };
 }
 
@@ -400,12 +388,38 @@ function installAsset(files) {
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
+async function resolveGameVersion(gamePath) {
+  GAME_VERSION = await setGameVersion(gamePath);
+  let version = '0.0.0';
+  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
+    try { //try to parse appxmanifest.xml
+      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
+      const parsed = await parseStringPromise(appManifest);
+      version = parsed?.Package?.Identity?.[0]?.$?.Version;
+      return Promise.resolve(version);
+    } catch (err) {
+      log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+  else { // use exe for Steam
+    try {
+      const exeVersion = require('exe-version');
+      version = exeVersion.getProductVersion(path.join(gamePath, EXEC));
+      return Promise.resolve(version); 
+    } catch (err) {
+      log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+}
+
 //Setup function
 async function setup(discovery, api, gameSpec) {
   // SYNCHRONOUS CODE ////////////////////////////////////
   const state = api.getState();
   GAME_PATH = discovery.path;
-  //GAME_VERSION = setGameVersion(GAME_PATH);
+  GAME_VERSION = await setGameVersion(GAME_PATH);
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   // ASYNC CODE //////////////////////////////////////////
@@ -420,10 +434,9 @@ function applyGame(context, gameSpec) {
     queryPath: makeFindGame(context.api, gameSpec),
     executable: getExecutable,
     queryModPath: makeGetModPath(context.api, gameSpec),
-    //queryModPath: getModPath,
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
-    //getGameVersion: resolveGameVersion,
+    getGameVersion: resolveGameVersion,
     supportedTools: tools,
   };
   context.registerGame(game);
@@ -464,16 +477,9 @@ function applyGame(context, gameSpec) {
   //context.registerInstaller(SAVE_ID, 45, testSave, installSave);
   
   //register actions
-  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save/Config Folder', async () => {
+    CONFIG_PATH = await setConfigPath(context.api);
     const openPath = CONFIG_PATH;
-    util.opn(openPath).catch(() => null);
-    }, () => {
-      const state = context.api.getState();
-      const gameId = selectors.activeGameId(state);
-      return gameId === GAME_ID;
-    });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', () => {
-    const openPath = SAVE_PATH;
     util.opn(openPath).catch(() => null);
     }, () => {
       const state = context.api.getState();

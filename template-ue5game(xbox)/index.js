@@ -10,6 +10,7 @@ Date: 2025-XX-XX
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
+const { parseStringPromise } = require('xml2js');
 
 //const USER_HOME = util.getVortexPath("home");
 //const DOCUMENTS = util.getVortexPath("documents");
@@ -142,6 +143,7 @@ const CONTENT_PATH = path.join(EPIC_CODE_NAME);
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_NAME = "Saves (LocalAppData)";
 const SAVE_EXT = ".sav";
+const SAVE_COMPAT_VERSIONS = ['steam', 'epic', 'gog'];
 
 const SCRIPTS_ID = `${GAME_ID}-scripts`;
 const SCRIPTS_NAME = "UE4SS Script Mod";
@@ -372,6 +374,31 @@ function getExecutable(discoveryPath) {
     SAVE_TARGET = `${SAVE_PATH}`;
     return EXEC_EPIC;
   }; //*/
+  /*
+  if (isCorrectExec(EXEC_GOG) {
+    GAME_VERSION = 'gog';
+    EXEC_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_DEFAULT}`;
+    EXEC_TARGET = `{gamePath}\\${EXEC_PATH}`;
+    SHIPPING_EXE = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_DEFAULT}\\${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_EGS}-Shipping.exe`;
+    SCRIPTS_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_DEFAULT}\\${UE4SS_MOD_PATH}`;
+    SCRIPTS_TARGET = `{gamePath}\\${SCRIPTS_PATH}`;
+    CONFIG_PATH = CONFIG_PATH_DEFAULT;
+    CONFIG_TARGET = `${CONFIG_PATH}`;
+    try {
+      const SAVE_ARRAY = fs.readdirSync(SAVE_PATH_DEFAULT);
+      USERID_FOLDER = SAVE_ARRAY.find((element) => 
+      ((/[a-z]/i.test(element) === false))
+       );
+    } catch(err) {
+      USERID_FOLDER = "";
+    }
+    if (USERID_FOLDER === undefined) {
+      USERID_FOLDER = "";
+    }
+    SAVE_PATH = path.join(SAVE_PATH_DEFAULT, USERID_FOLDER);
+    SAVE_TARGET = `${SAVE_PATH}`;
+    return EXEC_GOG;
+  }; //*/
   return EXEC_DEFAULT;
 }
 
@@ -419,7 +446,7 @@ function getBinariesFolder(discoveryPath) {
 }
 
 //Get correct game version
-function setGameVersion(api) {
+async function setGameVersion(api) {
   GAME_PATH = getDiscoveryPath(api);
   const isCorrectExec = (exec) => {
     try {
@@ -440,6 +467,39 @@ function setGameVersion(api) {
   };
   if (isCorrectExec(EXEC_EPIC)) {
     GAME_VERSION = 'epic';
+    return GAME_VERSION;
+  };
+  if (isCorrectExec(EXEC_GOG)) {
+    GAME_VERSION = 'gog';
+    return GAME_VERSION;
+  };
+}
+
+//Get correct game version
+async function setGameVersionPath(gamePath) {
+  const isCorrectExec = (exec) => {
+    try {
+      fs.statSync(path.join(gamePath, exec));
+      return true;
+    }
+    catch (err) {
+      return false;
+    }
+  };
+  if (isCorrectExec(EXEC_XBOX)) {
+    GAME_VERSION = 'xbox';
+    return GAME_VERSION;
+  };
+  if (isCorrectExec(EXEC_DEFAULT)) {
+    GAME_VERSION = 'steam';
+    return GAME_VERSION;
+  };
+  if (isCorrectExec(EXEC_EPIC)) {
+    GAME_VERSION = 'epic';
+    return GAME_VERSION;
+  };
+  if (isCorrectExec(EXEC_GOG)) {
+    GAME_VERSION = 'gog';
     return GAME_VERSION;
   };
 }
@@ -1490,17 +1550,31 @@ function partitionCheckNotify(api, CHECK_DATA) {
 }
 
 async function resolveGameVersion(gamePath, exePath) {
+  GAME_VERSION = await setGameVersionPath(gamePath);
   SHIPPING_EXE = getShippingExe(gamePath);
-  READ_FILE = path.join(gamePath, SHIPPING_EXE);
+  const READ_FILE = path.join(gamePath, SHIPPING_EXE);
   let version = '0.0.0';
-  try {
-    const exeVersion = require('exe-version');
-    version = await exeVersion.getProductVersion(READ_FILE);
-    //log('warn', `Resolved game version for ${GAME_ID} to: ${version}`);
-    return Promise.resolve(version); 
-  } catch (err) {
-    log('error', `Could not read ${READ_FILE} file to get Steam game version: ${err}`);
-    return Promise.resolve(version);
+  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
+    try { //try to parse appxmanifest.xml
+      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
+      const parsed = await parseStringPromise(appManifest);
+      version = parsed?.Package?.Identity?.[0]?.$?.Version;
+      return Promise.resolve(version);
+    } catch (err) {
+      log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+  else { //use shipping exe (note that this only returns the UE engine version right now)
+    try {
+      const exeVersion = require('exe-version');
+      version = await exeVersion.getProductVersion(READ_FILE);
+      //log('warn', `Resolved game version for ${GAME_ID} to: ${version}`);
+      return Promise.resolve(version); 
+    } catch (err) {
+      log('error', `Could not read ${READ_FILE} file to get Steam game version: ${err}`);
+      return Promise.resolve(version);
+    }
   }
 }
 
@@ -1509,7 +1583,7 @@ async function setup(discovery, api, gameSpec) {
   //SYNCHRONOUS CODE ////////////////////////////////////
   const state = api.getState();
   GAME_PATH = discovery.path;
-  GAME_VERSION = setGameVersion(api);
+  GAME_VERSION = await setGameVersion(api);
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   CHECK_DATA = checkPartitions(CONFIGMOD_LOCATION, GAME_PATH);
@@ -1523,7 +1597,8 @@ async function setup(discovery, api, gameSpec) {
   // ASYCRONOUS CODE ///////////////////////////////////
   if (CHECK_DATA) { //if game, staging folder, and config and save folders are on the same drive
     await fs.ensureDirWritableAsync(path.join(CONFIG_PATH));
-    if (GAME_VERSION === 'steam' || GAME_VERSION === 'epic') {
+    //if (GAME_VERSION === 'steam' || GAME_VERSION === 'epic') {
+    if (SAVE_COMPAT_VERSIONS.includes(GAME_VERSION)) {
       await fs.ensureDirWritableAsync(SAVE_PATH);
     }
   } //*/
@@ -1677,7 +1752,7 @@ function applyGame(context, gameSpec) {
       if (GAME_PATH !== undefined) {
         CHECK_DATA = checkPartitions(SAVEMOD_LOCATION, GAME_PATH);
       }
-      return ((gameId === GAME_ID) && (CHECK_DATA === true) && (GAME_VERSION === 'steam' || GAME_VERSION === 'epic'));
+      return ((gameId === GAME_ID) && (CHECK_DATA === true) && SAVE_COMPAT_VERSIONS.includes(GAME_VERSION));
     },
     (game) => pathPattern(context.api, game, SAVE_TARGET), 
     () => Promise.resolve(false), 

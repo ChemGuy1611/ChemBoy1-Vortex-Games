@@ -10,6 +10,7 @@ Date: 2025-XX-XX
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
+const { parseStringPromise } = require('xml2js');
 //const winapi = require('winapi-bindings');
 //const turbowalk = require('turbowalk');
 
@@ -47,6 +48,7 @@ let GAME_PATH = null;
 let GAME_VERSION = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
+const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 const MOD_ID = `${GAME_ID}-mod`;
 const MOD_NAME = "Mod";
@@ -286,7 +288,7 @@ function getExecutable(discoveryPath) {
 }
 
 //Get correct game version
-function setGameVersion(gamePath) {
+async function setGameVersion(gamePath) {
   const isCorrectExec = (exec) => {
     try {
       fs.statSync(path.join(gamePath, exec));
@@ -296,14 +298,14 @@ function setGameVersion(gamePath) {
       return false;
     }
   };
+
   if (isCorrectExec(EXEC_XBOX)) {
     GAME_VERSION = 'xbox';
     return GAME_VERSION;
   };
-  if (isCorrectExec(EXEC)) {
-    GAME_VERSION = 'default';
-    return GAME_VERSION;
-  };
+
+  GAME_VERSION = 'default';
+  return GAME_VERSION;
 }
 
 const getDiscoveryPath = (api) => { //get the game's discovered path
@@ -441,6 +443,32 @@ function installBinaries(files) {
 }
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
+
+async function resolveGameVersion(gamePath) {
+  GAME_VERSION = await setGameVersion(gamePath);
+  let version = '0.0.0';
+  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
+    try { //try to parse appxmanifest.xml
+      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
+      const parsed = await parseStringPromise(appManifest);
+      version = parsed?.Package?.Identity?.[0]?.$?.Version;
+      return Promise.resolve(version);
+    } catch (err) {
+      log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+  else { // use DoomTheDarkAges.exe for Steam
+    try {
+      const exeVersion = require('exe-version');
+      version = exeVersion.getProductVersion(path.join(gamePath, EXEC));
+      return Promise.resolve(version); 
+    } catch (err) {
+      log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+}
 
 //Setup function
 async function setup(discovery, api, gameSpec) {

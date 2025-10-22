@@ -2,8 +2,8 @@
 Name: DOOM: The Dark Ages Vortex Extension
 Structure: 3rd-Party Mod Loader
 Author: ChemBoy1
-Version: 0.2.0
-Date: 2025-07-15
+Version: 0.2.1
+Date: 2025-10-22
 /////////////////////////////////////////*/
 /*
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣀⣀⣠⣤⣤⣤⡴⣦⡴⣖⠶⣴⠶⡶⣖⡶⣶⢶⣲⡾⠿⢿⡷⣾⢿⣷⣦⢾⣷⣾⣶⣤⣀⣰⣤⣀⡀⠀⠀⢀⣴⣿⡿⡿⣿⣿⣦⣄⠀⠀⣠⣴⣿⡿⢿⡿⣷⣦⡄⠀⠀⢀⣀⣤⣦⣀⣤⣶⣶⣷⣦⣴⡿⢿⡷⣿⠿⡿⣿⣷⢶⣦⢴⡲⣦⢶⡶⢶⡲⣖⡶⣦⣤⣤⣤⣤⣤⣤⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
@@ -41,6 +41,7 @@ const path = require('path');
 const template = require('string-template');
 const Bluebird = require('bluebird');
 const { download, findModByFile, findDownloadIdByFile, resolveVersionByPattern, testRequirementVersion } = require('./downloader');
+const { parseStringPromise } = require('xml2js');
 
 //Specify all the information about the game
 const STEAMAPP_ID = "3017860";
@@ -52,6 +53,7 @@ const GAME_NAME_SHORT = "DOOM TDA";
 const EXEC = "DOOMTheDarkAges.exe";
 const EXEC_LAUNCHER = 'idTechLauncher.exe';
 const EXEC_XBOX = 'gamelaunchhelper.exe';
+
 let GAME_PATH = null;
 let GAME_VERSION = '';
 let STAGING_FOLDER = '';
@@ -84,7 +86,7 @@ const AUTOEXEC_CFG_FILE = "autoexec.cfg";
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_NAME = "Saves";
 let SAVE_PATH = '';
-const SAVE_PATH_STEAM = path.join(USER_HOME, 'Saved Games', 'id Software', 'DOOMTheDarkAges');
+//const SAVE_PATH_STEAM = path.join(USER_HOME, 'Saved Games', 'id Software', 'DOOMTheDarkAges');
 const SAVE_PATH_XBOX = path.join(LOCALAPPDATA, "Packages", `${XBOXAPP_ID}_3275kfvn8vcwc`, "SystemAppData", "wgs");
 const SAVE_EXT = ".sav";
 
@@ -365,26 +367,39 @@ async function setGameVersion(discoveryPath) {
   };
   if (isCorrectExec(EXEC_XBOX)) {
     GAME_VERSION = 'xbox';
-    let USERID_FOLDER = "";
-    try {
-      const SAVE_ARRAY = fs.readdirSync(SAVE_PATH_XBOX);
-      USERID_FOLDER = SAVE_ARRAY.find((element) => 
-      ((element))
-       );
-    } catch(err) {
-      USERID_FOLDER = "";
-    }
-    if (USERID_FOLDER === undefined) {
-      USERID_FOLDER = "";
-    }
-    SAVE_PATH = path.join(SAVE_PATH_XBOX, USERID_FOLDER);
     return GAME_VERSION;
   }
   else { 
     GAME_VERSION = 'steam';
+    return GAME_VERSION;
+  };
+}
+
+//Get correct executable, add to required files, set paths for mod types
+async function setSavePath(discoveryPath) {
+  const isCorrectExec = (exec) => {
+    try {
+      fs.statSync(path.join(discoveryPath, exec));
+      return true;
+    }
+    catch (err) {
+      return false;
+    }
+  };
+  if (isCorrectExec(EXEC_XBOX)) {
+    GAME_VERSION = 'xbox';
+    SAVE_PATH = SAVE_PATH_XBOX;
+    return SAVE_PATH;
+  }
+  else { 
+    GAME_VERSION = 'steam';
+    const SPLIT_PATH = discoveryPath.split(path.sep);
+    const SPLIT_PATH_LENGTH = SPLIT_PATH.length;
+    const STEAM_INSTALL_PATH = SPLIT_PATH.slice(0, SPLIT_PATH_LENGTH - 2).join(path.sep);
+    const STEAMDATA_PATH = path.join(STEAM_INSTALL_PATH, 'userdata');
     let USERID_FOLDER = "";
     try {
-      const SAVE_ARRAY = fs.readdirSync(SAVE_PATH_DEFAULT);
+      const SAVE_ARRAY = fs.readdirSync(STEAMDATA_PATH);
       USERID_FOLDER = SAVE_ARRAY.find((element) => 
       ((/[a-z]/i.test(element) === false))
        );
@@ -393,9 +408,9 @@ async function setGameVersion(discoveryPath) {
     }
     if (USERID_FOLDER === undefined) {
       USERID_FOLDER = "";
-    }
-    SAVE_PATH = path.join(SAVE_PATH_STEAM, USERID_FOLDER);
-    return GAME_VERSION;
+    } //*/
+    SAVE_PATH = path.join(STEAMDATA_PATH, USERID_FOLDER, STEAMAPP_ID, 'remote');
+    return SAVE_PATH;
   };
 }
 
@@ -941,7 +956,7 @@ function installBinaries(files) {
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
-//Notify User to run ATK after deployment
+//Notify User to run injector after deployment
 function deployNotify(api) {
   const NOTIF_ID = `${GAME_ID}-deploy-notification`;
   const MOD_NAME = INJECTOR_NAME;
@@ -1010,44 +1025,14 @@ function runInjector(api) {
 }
 
 async function resolveGameVersion(gamePath) {
-  GAME_VERSION = setGameVersion(gamePath);
+  GAME_VERSION = await setGameVersion(gamePath);
   let version = '0.0.0';
   if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
     try { //try to parse appxmanifest.xml
       const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
-      const parser = new DOMParser();
-      const XML = parser.parseFromString(appManifest, 'text/xml');
-      try { //try to get version from appxmanifest.xml
-        /*
-        const ns = "http://schemas.microsoft.com/appx/manifest/foundation/windows10"; //must define namespace
-        const identity = XML.getElementsByTagNameNS(ns, 'Identity')[0]; 
-        //*/
-
-        /* Namespace resolver — important since default xmlns is in effect
-        const nsResolver = (prefix) => {
-          const ns = {
-            def: "http://schemas.microsoft.com/appx/manifest/foundation/windows10"
-          };
-          return ns[prefix] || null;
-        };
-        // This XPath selects only the "Version" attribute on the Identity element
-        const xpath = "/def:Package/def:Identity/@Version";
-        const result = XML.evaluate(
-          xpath,
-          XML,
-          nsResolver,
-          XPathResult.STRING_TYPE,
-          null
-        );
-        version = result.stringValue; 
-        //*/
-        const identity = XML.getElementsByTagName('Identity')[0];
-        version = identity.getAttribute('Version');
-        return Promise.resolve(version);
-      } catch (err) { //could not get version
-        log('error', `Could not get version from appmanifest.xml file for Xbox game version: ${err}`);
-        return Promise.resolve(version);
-      }
+      const parsed = await parseStringPromise(appManifest);
+      version = parsed?.Package?.Identity?.[0]?.$?.Version;
+      return Promise.resolve(version);
     } catch (err) {
       log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
       return Promise.resolve(version);
@@ -1069,6 +1054,7 @@ async function resolveGameVersion(gamePath) {
 async function setup(discovery, api, gameSpec) {
   const state = api.getState();
   GAME_PATH = discovery.path;
+  //SAVE_PATH = setSavePath(GAME_PATH);
   GAME_VERSION = await setGameVersion(GAME_PATH);
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
@@ -1163,16 +1149,17 @@ function applyGame(context, gameSpec) {
   );
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
     GAME_PATH = getDiscoveryPath(context.api);
-    const openPath = path.join(CONFIG_PATH);
+    const openPath = path.join(GAME_PATH, CONFIG_PATH);
     util.opn(openPath).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Saves Folder', () => {
-    GAME_PATH = getDiscoveryPath(context.api);
-    const openPath = path.join(SAVE_PATH);
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Saves Folder', async () => {
+    GAME_PATH = await getDiscoveryPath(context.api);
+    SAVE_PATH = await setSavePath(GAME_PATH);
+    const openPath = SAVE_PATH;
     util.opn(openPath).catch(() => null);
   }, () => {
     const state = context.api.getState();
@@ -1209,6 +1196,7 @@ function main(context) {
     context.api.onAsync('check-mods-version', (profileId, gameId, mods, forced) => {
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;
+      log('warn', 'triggered check-mods-version event');
       return onCheckModVersion(context.api, gameId, mods, forced);
     }); //*/
     //context.api.onAsync('did-deploy', (profileId) => didDeploy(context.api, profileId));

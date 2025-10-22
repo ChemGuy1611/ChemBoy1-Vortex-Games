@@ -4,6 +4,11 @@ FUTURE CHANGES (NOT IMPLEMENTED YET):
 
 - None Planned
 
+## [0.2.1] - 2025-10-22
+
+- Fixed game version detection for Xbox version (for real this time!).
+- Fixed Steam Saves path.
+
 ## [0.2.0] - 2025-07-16
 
 - Added support for Atlan Mod Loader! Note that only the Steam version is supported at this time.

@@ -10,6 +10,7 @@ Date: 2025-10-22
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
+const { parseStringPromise } = require('xml2js');
 
 //const USER_HOME = util.getVortexPath("home");
 //const DOCUMENTS = util.getVortexPath("documents");
@@ -419,11 +420,36 @@ function getBinariesFolder(discoveryPath) {
 }
 
 //Get correct game version
-function setGameVersion(api) {
+async function setGameVersion(api) {
   GAME_PATH = getDiscoveryPath(api);
   const isCorrectExec = (exec) => {
     try {
       fs.statSync(path.join(GAME_PATH, exec));
+      return true;
+    }
+    catch (err) {
+      return false;
+    }
+  };
+  if (isCorrectExec(EXEC_XBOX)) {
+    GAME_VERSION = 'xbox';
+    return GAME_VERSION;
+  };
+  if (isCorrectExec(EXEC_DEFAULT)) {
+    GAME_VERSION = 'steam';
+    return GAME_VERSION;
+  };
+  if (isCorrectExec(EXEC_EPIC)) {
+    GAME_VERSION = 'epic';
+    return GAME_VERSION;
+  };
+}
+
+//Get correct game version
+async function setGameVersionPath(gamePath) {
+  const isCorrectExec = (exec) => {
+    try {
+      fs.statSync(path.join(gamePath, exec));
       return true;
     }
     catch (err) {
@@ -1490,17 +1516,31 @@ function partitionCheckNotify(api, CHECK_DATA) {
 }
 
 async function resolveGameVersion(gamePath, exePath) {
+  GAME_VERSION = await setGameVersionPath(gamePath);
   SHIPPING_EXE = getShippingExe(gamePath);
-  READ_FILE = path.join(gamePath, SHIPPING_EXE);
+  const READ_FILE = path.join(gamePath, SHIPPING_EXE);
   let version = '0.0.0';
-  try {
-    const exeVersion = require('exe-version');
-    version = await exeVersion.getProductVersion(READ_FILE);
-    //log('warn', `Resolved game version for ${GAME_ID} to: ${version}`);
-    return Promise.resolve(version); 
-  } catch (err) {
-    log('error', `Could not read ${READ_FILE} file to get Steam game version: ${err}`);
-    return Promise.resolve(version);
+  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
+    try { //try to parse appxmanifest.xml
+      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
+      const parsed = await parseStringPromise(appManifest);
+      version = parsed?.Package?.Identity?.[0]?.$?.Version;
+      return Promise.resolve(version);
+    } catch (err) {
+      log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+  else { //use shipping exe (note that this only returns the UE engine version right now)
+    try {
+      const exeVersion = require('exe-version');
+      version = await exeVersion.getProductVersion(READ_FILE);
+      //log('warn', `Resolved game version for ${GAME_ID} to: ${version}`);
+      return Promise.resolve(version); 
+    } catch (err) {
+      log('error', `Could not read ${READ_FILE} file to get Steam game version: ${err}`);
+      return Promise.resolve(version);
+    }
   }
 }
 
@@ -1509,7 +1549,7 @@ async function setup(discovery, api, gameSpec) {
   //SYNCHRONOUS CODE ////////////////////////////////////
   const state = api.getState();
   GAME_PATH = discovery.path;
-  GAME_VERSION = setGameVersion(api);
+  GAME_VERSION = await setGameVersion(api);
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   CHECK_DATA = checkPartitions(CONFIGMOD_LOCATION, GAME_PATH);
