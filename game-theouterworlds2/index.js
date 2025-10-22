@@ -3,7 +3,7 @@ Name: The Outer Worlds 2 Vortex Extension
 Structure: UE5 (Xbox-Integrated)
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2025-10-21
+Date: 2025-10-22
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -20,14 +20,14 @@ const LOCALAPPDATA = util.getVortexPath("localAppData");
 const GAME_ID = "theouterworlds2"; //same as Nexus domain
 const STEAMAPP_ID = "1449110"; //from steamdb.info
 const STEAMAPP_ID_DEMO = null;
-const EPICAPP_ID = "XXX"; //from egdata.app
+const EPICAPP_ID = null; //from egdata.app
 const GOGAPP_ID = null; // from gogdb.org
 const XBOXAPP_ID = "Microsoft.OE-Arkansas"; //from appxmanifest.xml
 const XBOXEXECNAME = "AppTheOuterWorlds2Shipping"; //from appxmanifest.xml
 const GAME_NAME = "The Outer Worlds 2";
 const GAME_NAME_SHORT = "TOW2"; //Try for 8-10 characters
 const EXEC_DEFAULT = "TheOuterWorlds2.exe";
-const EXEC_EPIC = "TheOuterWorlds2_EGS.exe";
+const EXEC_EPIC = EXEC_DEFAULT;
 //Unreal Engine specific
 const EPIC_CODE_NAME = "Arkansas";
 const SIGBYPASS_REQUIRED = false; //set true if there are .sig files in the Paks folder
@@ -346,6 +346,7 @@ function getExecutable(discoveryPath) {
     SAVE_TARGET = SAVE_PATH;
     return EXEC_DEFAULT;
   };
+  /*
   if (isCorrectExec(EXEC_EPIC)) {
     GAME_VERSION = 'epic';
     EXEC_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_DEFAULT}`;

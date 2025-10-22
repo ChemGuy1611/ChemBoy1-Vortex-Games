@@ -346,6 +346,7 @@ function getExecutable(discoveryPath) {
     SAVE_TARGET = SAVE_PATH;
     return EXEC_DEFAULT;
   };
+  /*
   if (isCorrectExec(EXEC_EPIC)) {
     GAME_VERSION = 'epic';
     EXEC_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_DEFAULT}`;
@@ -1642,7 +1643,7 @@ function applyGame(context, gameSpec) {
     { name: UE4SS_NAME }
   );
 
-  //register sibypass modtype
+  //register sigbypass modtype
   if (SIGBYPASS_REQUIRED === true) {
     context.registerModType(SIGBYPASS_ID, 58, 
       (gameId) => {

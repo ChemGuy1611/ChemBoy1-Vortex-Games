@@ -19,7 +19,7 @@ const DOCUMENTS = util.getVortexPath("documents");
 //const LOCALAPPDATA = util.getVortexPath("localAppData");
 
 //Specify all the information about the game
-const GAME_ID = "ninjagaiden4";
+const GAME_ID = "ninjagaidenfour";
 const STEAMAPP_ID = "2627260";
 const STEAMAPP_ID_DEMO = null;
 const EPICAPP_ID = null;
@@ -35,7 +35,7 @@ const EXEC = path.join(BINARIES_PATH, EXEC_NAME);
 const EXEC_XBOX = 'gamelaunchhelper.exe';
 const EXEC_XBOX_ALT = 'NINJAGAIDEN4-WinGDK.exe';
 
-const ROOT_FOLDERS = ['Assets', 'Blob', 'Config', 'Fonts', 'Shaders', 'Textures', 'TrueTypeFonts'];
+const ROOT_FOLDERS = ['assets', 'blob', 'config', 'fonts', 'shaders', 'textures', 'truetypefonts'];
 
 const DATA_FOLDER = 'XXX';
 const CONFIGMOD_LOCATION = DOCUMENTS;
@@ -52,6 +52,7 @@ const ASSET_ID = `${GAME_ID}-asset`;
 const ASSET_NAME = "Asset Mod";
 const ASSET_PATH = "Assets";
 const ASSET_EXTS = ['.dat'];
+const ASSET_FOLDERS = ['config', 'movies', 'sounds'];
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Folder";
@@ -305,51 +306,9 @@ async function deploy(api) { //useful to deploy mods after doing some action
 
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
 
-//Test for mod files
-function testAsset(files, gameId) {
-  const isMod = files.some(file => ASSET_EXTS.includes(path.extname(file).toLowerCase()));
-  let supported = (gameId === spec.game.id) && isMod;
-
-  // Test for a mod installer
-  if (supported && files.find(file =>
-      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
-    supported = false;
-  }
-
-  return Promise.resolve({
-    supported,
-    requiredFiles: [],
-  });
-}
-
-//Install mod files
-function installAsset(files) {
-  const MOD_TYPE = ASSET_ID;
-  const modFile = files.find(file => ASSET_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
-  const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
-
-  // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-  ((file.indexOf(rootPath) !== -1) &&
-    (!file.endsWith(path.sep))));
-
-  const instructions = filtered.map(file => {
-    return {
-      type: 'copy',
-      source: file,
-      destination: path.join(file.substr(idx)),
-    };
-  });
-  instructions.push(setModTypeInstruction);
-  return Promise.resolve({ instructions });
-}
-
 //Installer test for Root folder files
 function testRoot(files, gameId) {
-  const isMod = files.some(file => ROOT_FOLDERS.includes(path.basename(file)));
+  const isMod = files.some(file => ROOT_FOLDERS.includes(path.basename(file).toLowerCase()));
   let supported = (gameId === spec.game.id) && isMod;
 
   // Test for a mod installer.
@@ -367,7 +326,7 @@ function testRoot(files, gameId) {
 
 //Installer install Root folder files
 function installRoot(files) {
-  const modFile = files.find(file => ROOT_FOLDERS.includes(path.basename(file)));
+  const modFile = files.find(file => ROOT_FOLDERS.includes(path.basename(file).toLowerCase()));
   const ROOT_IDX = `${path.basename(modFile)}${path.sep}`
   const idx = modFile.indexOf(ROOT_IDX);
   const rootPath = path.dirname(modFile);
@@ -377,6 +336,56 @@ function installRoot(files) {
   const filtered = files.filter(file =>
     ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
   );
+
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Test for mod files
+function testAsset(files, gameId) {
+  const isMod = files.some(file => ASSET_EXTS.includes(path.extname(file).toLowerCase()));
+  const isFolder = files.some(file => ASSET_FOLDERS.includes(path.basename(file).toLowerCase()));
+  let supported = (gameId === spec.game.id) && ( isMod || isFolder );
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install mod files
+function installAsset(files) {
+  const MOD_TYPE = ASSET_ID;
+  let modFile = files.find(file => ASSET_EXTS.includes(path.extname(file).toLowerCase()));
+  let idx;
+  if (modFile !== undefined) {
+    idx = modFile.indexOf(path.basename(modFile));
+  }
+  if (modFile === undefined) {
+    modFile = files.find(file => ASSET_FOLDERS.includes(path.basename(file).toLowerCase()));
+    idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  }
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+  ((file.indexOf(rootPath) !== -1) &&
+    (!file.endsWith(path.sep))));
 
   const instructions = filtered.map(file => {
     return {
@@ -449,11 +458,11 @@ function applyGame(context, gameSpec) {
   ); //*/
   
   //register mod installers
-  context.registerInstaller(ASSET_ID, 25, testAsset, installAsset);
+  context.registerInstaller(ROOT_ID, 25, testRoot, installRoot);
+  context.registerInstaller(ASSET_ID, 27, testAsset, installAsset);
   //context.registerInstaller(CONFIG_ID, 43, testConfig, installConfig);
   //context.registerInstaller(SAVE_ID, 45, testSave, installSave);
-  context.registerInstaller(ROOT_ID, 47, testRoot, installRoot);
-
+  
   //register actions
   /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
     const openPath = CONFIG_PATH;

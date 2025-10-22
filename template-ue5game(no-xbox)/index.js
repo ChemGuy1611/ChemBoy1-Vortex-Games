@@ -1524,7 +1524,7 @@ function applyGame(context, gameSpec) {
     }, (game) => pathPattern(context.api, game, type.targetPath), () => Promise.resolve(false), { name: type.name });
   });
 
-  //register sibypass modtype
+  //register sigbypass modtype
   if (SIGBYPASS_REQUIRED === true) {
     context.registerModType(SIGBYPASS_ID, 60, 
       (gameId) => {
