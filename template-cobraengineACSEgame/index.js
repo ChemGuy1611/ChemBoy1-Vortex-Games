@@ -114,19 +114,19 @@ const spec = {
       "id": ACSE_ID,
       "name": ACSE_NAME,
       "priority": "high",
-      "targetPath": path.join("{gamePath}", ACSE_PATH)
+      "targetPath": path.join('{gamePath}', ACSE_PATH)
     },
     {
       "id": ROOT_ID,
       "name": ROOT_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}`
+      "targetPath": '{gamePath}'
     },
     { 
       "id": OVLDATA_ID,
       "name": OVLDATA_NAME,
       "priority": "high",
-      "targetPath": path.join("{gamePath}", OVLDATA_PATH)
+      "targetPath": path.join('{gamePath}', OVLDATA_PATH)
     },
     {
       "id": SAVE_ID,
