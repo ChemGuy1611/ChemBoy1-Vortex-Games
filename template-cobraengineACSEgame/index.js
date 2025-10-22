@@ -1,9 +1,9 @@
 /*///////////////////////////////////////
-Name: Planet Coaster 2 Vortex Extension
+Name: XXX Vortex Extension
 Structure: Cobra Engine (ACSE)
 Author: ChemBoy1
-Version: 0.3.0
-Date: 2025-10-22
+Version: 0.1.0
+Date: 2025-XX-XX
 ///////////////////////////////////////*/
 
 //import libraries
@@ -19,22 +19,22 @@ const USER_HOME = util.getVortexPath("home");
 //const LOCALAPPDATA = util.getVortexPath("localAppData");
 
 //Specify all the information about the game
-const GAME_ID = "planetcoaster2";
-const STEAMAPP_ID = "2688950";
-const EPICAPP_ID = "d945e57b9dde4510b664a581fead2819";
+const GAME_ID = "XXX";
+const STEAMAPP_ID = "XXX";
+const EPICAPP_ID = "XXX";
 const GOGAPP_ID  = null;
 const XBOXAPP_ID = null;
 const XBOXEXECNAME = null;
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
-const GAME_NAME = "Planet Coaster 2";
-const GAME_NAME_SHORT = "Planet Coaster 2";
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const GAME_NAME = "XXX";
+const GAME_NAME_SHORT = "XXX";
 
-const EXEC = "PlanetCoaster2.exe";
+const EXEC = "XXX.exe";
 const ROOT_FOLDERS = ['Win64', 'Blueprints', 'TerrainSkirts', 'ProvidedCustomTextures', 'Parks', 'Movies'];
 const ACSE_PAGE_NO = 1;
-const ACSE_FILE_NO = 2;
+const ACSE_FILE_NO = 1;
 const DEV_FOLDER = 'Frontier Developments';
-const GAME_FOLDER = 'Planet Coaster 2';
+const GAME_FOLDER = 'XXX';
 
 let GAME_PATH = null;
 let GAME_VERSION = '';
@@ -301,7 +301,6 @@ function installACSE(files) {
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
     ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
-    //((file.indexOf(rootPath) !== -1))
   );
 
   const instructions = filtered.map(file => {
@@ -312,7 +311,6 @@ function installACSE(files) {
     };
   });
   instructions.push(setModTypeInstruction);
-
   return Promise.resolve({ instructions });
 }
 
@@ -355,7 +353,6 @@ function installSave(files) {
     };
   });
   instructions.push(setModTypeInstruction);
-
   return Promise.resolve({ instructions });
 }
 

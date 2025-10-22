@@ -1,8 +1,8 @@
 /*///////////////////////////////////////
-Name: Planet Coaster 2 Vortex Extension
+Name: Jurassic World Evolution 3 Vortex Extension
 Structure: Cobra Engine (ACSE)
 Author: ChemBoy1
-Version: 0.3.0
+Version: 0.1.0
 Date: 2025-10-22
 ///////////////////////////////////////*/
 
@@ -19,22 +19,22 @@ const USER_HOME = util.getVortexPath("home");
 //const LOCALAPPDATA = util.getVortexPath("localAppData");
 
 //Specify all the information about the game
-const GAME_ID = "planetcoaster2";
-const STEAMAPP_ID = "2688950";
-const EPICAPP_ID = "d945e57b9dde4510b664a581fead2819";
+const GAME_ID = "jurassicworldevolution3";
+const STEAMAPP_ID = "2958130";
+const EPICAPP_ID = "XXX";
 const GOGAPP_ID  = null;
 const XBOXAPP_ID = null;
 const XBOXEXECNAME = null;
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
-const GAME_NAME = "Planet Coaster 2";
-const GAME_NAME_SHORT = "Planet Coaster 2";
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const GAME_NAME = "Jurassic World Evolution 3";
+const GAME_NAME_SHORT = "JWE3";
 
-const EXEC = "PlanetCoaster2.exe";
-const ROOT_FOLDERS = ['Win64', 'Blueprints', 'TerrainSkirts', 'ProvidedCustomTextures', 'Parks', 'Movies'];
-const ACSE_PAGE_NO = 1;
-const ACSE_FILE_NO = 2;
+const EXEC = "JWE3.exe";
+const ROOT_FOLDERS = ['Win64', 'Blueprints', 'Islands', 'TerrainSkirts', 'Movies'];
+const ACSE_PAGE_NO = 2;
+const ACSE_FILE_NO = 10;
 const DEV_FOLDER = 'Frontier Developments';
-const GAME_FOLDER = 'Planet Coaster 2';
+const GAME_FOLDER = 'Jurassic World Evolution 3';
 
 let GAME_PATH = null;
 let GAME_VERSION = '';
