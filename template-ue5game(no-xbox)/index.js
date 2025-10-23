@@ -835,7 +835,7 @@ function installConfig(api, files) {
   });
   instructions.push(setModTypeInstruction);
   GAME_PATH = getDiscoveryPath(api);
-  const IS_CONFIG = checkPartitions(CONFIG_PATH, GAME_PATH);
+  const IS_CONFIG = checkPartitions(CONFIGMOD_LOCATION, GAME_PATH);
   if (IS_CONFIG === false) {
     //api.showErrorNotification(`Could not install mod as Config`, `You tried installing a Config mod, but the game, staging folder, and Local AppData folder are not all on the same drive. Please move the game and/or staging folder to the same drive as the Local AppData folder (typically C Drive) to install these types of mods with Vortex.`, { allowReport: false });
     configInstallerNotify(api);
@@ -917,7 +917,7 @@ function installSave(api, files) {
   });
   instructions.push(setModTypeInstruction);
   GAME_PATH = getDiscoveryPath(api);
-  const IS_SAVE = checkPartitions(SAVE_PATH, GAME_PATH);
+  const IS_SAVE = checkPartitions(SAVEMOD_LOCATION, GAME_PATH);
   if (IS_SAVE === false) {
     //api.showErrorNotification(`Could not install mod as Save`, `You tried installing a Save mod, but the game, staging folder, and Local AppData folder are not all on the same drive. Please move the game and/or staging folder to the same drive as the Local AppData folder (typically C Drive) to install these types of mods with Vortex.`, { allowReport: false });
     saveInstallerNotify(api);
