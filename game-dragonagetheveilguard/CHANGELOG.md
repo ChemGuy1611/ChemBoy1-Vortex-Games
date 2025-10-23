@@ -1,8 +1,12 @@
 # Changelog
 
-Future Changes (NOT IMPLEMENTED YET):
+## Future Changes (NOT IMPLEMENTED YET)
 
 - Config and save installers (partition check)
+
+## [0.2.4] - 2025-10-23
+
+- Fixed new version check for Frosty Mod Manager (for real this time!).
 
 ## [0.2.3] - 2025-06-17
 

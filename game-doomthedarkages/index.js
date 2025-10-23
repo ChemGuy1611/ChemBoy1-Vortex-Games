@@ -124,7 +124,7 @@ const PATCHER_NXM_PAGE_NO = 28;
 const PATCHER_NXM_FILE_NO = 79;
 
 // Information for downloader and updater
-const INJECTOR_ARC_NAME = 'AtlanModLoader_v_1.zip';
+const INJECTOR_ARC_NAME = 'AtlanModLoader_v_3_1.zip';
 const INJECTOR_URL_API = `https://api.github.com/repos/FlavorfulGecko5/EntityAtlan`;
 const REQUIREMENTS = [
   { //ModManager
@@ -135,7 +135,7 @@ const REQUIREMENTS = [
     githubUrl: INJECTOR_URL_API,
     findMod: (api) => findModByFile(api, INJECTOR_ID, INJECTOR_FILE),
     findDownloadId: (api) => findDownloadIdByFile(api, INJECTOR_ARC_NAME),
-    fileArchivePattern: new RegExp(/^AtlanModLoader_v_(\d+)/, 'i'),
+    fileArchivePattern: new RegExp(/^AtlanModLoader_v_(\d+_\d+)/, 'i'),
     resolveVersion: (api) => resolveVersionByPattern(api, REQUIREMENTS[0]),
   }, //*/
 ];
@@ -427,7 +427,6 @@ async function deploy(api) {
   return new Promise((resolve, reject) => api.events.emit('deploy-mods', (err) => err ? reject(err) : resolve()));
 }
 
-
 // AUTO-DOWNLOADER FUNCTIONS ///////////////////////////////////////////////////
 
 async function asyncForEachTestVersion(api, requirements) {
@@ -448,8 +447,9 @@ async function asyncForEachCheck(api, requirements) {
 async function onCheckModVersion(api, gameId, mods, forced) {
   try {
     await asyncForEachTestVersion(api, REQUIREMENTS);
+    log('warn', 'Checked requirements versions');
   } catch (err) {
-    log('warn', 'failed to test requirement version', err);
+    log('warn', `failed to test requirement version: ${err}`);
   }
 }
 
@@ -1193,13 +1193,10 @@ function main(context) {
       if (profileId !== LAST_ACTIVE_PROFILE) return;
       return didDeploy(context.api, profileId);
     }); //*/
-    context.api.onAsync('check-mods-version', (profileId, gameId, mods, forced) => {
-      const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
-      if (profileId !== LAST_ACTIVE_PROFILE) return;
-      log('warn', 'triggered check-mods-version event');
+    context.api.onAsync('check-mods-version', (gameId, mods, forced) => {
+      if (gameId !== GAME_ID) return;
       return onCheckModVersion(context.api, gameId, mods, forced);
     }); //*/
-    //context.api.onAsync('did-deploy', (profileId) => didDeploy(context.api, profileId));
     context.api.onAsync('did-purge', (profileId) => didPurge(context.api, profileId));
   });
   return true;

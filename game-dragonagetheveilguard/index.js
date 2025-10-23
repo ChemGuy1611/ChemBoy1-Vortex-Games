@@ -2,8 +2,8 @@
 Name: Dragon Age: The Veilguard Vortex Extension
 Structure: 3rd Party Mod Manager (Frosty)
 Author: ChemBoy1
-Version: 0.2.3
-Date: 2025-06-17
+Version: 0.2.4
+Date: 2025-10-23
 ////////////////////////////////////////////////////*/
 
 //Import libraries
@@ -74,7 +74,7 @@ const SAVE_EXT = ".csav";
 
 // Information for Frosty Mod Manager Alpha downloader and updater
 //const FROSTY_ARC_NAME = 'FrostyModManager_Alpha5v4.zip';
-const FROSTY_ARC_NAME = 'FrostyModManager_2025.6.12.0.zip';
+const FROSTY_ARC_NAME = 'FrostyModManager_2025.10.14.0.zip';
 const AUTHOR = 'J-Lyt'; // Author of the Frosty Mod Manager Alpha fork
 //const AUTHOR = 'wavebend'; // Author of the Frosty Mod Manager Alpha fork
 const REPO = 'FrostyToolsuite'; // Repository name on GitHub
@@ -90,7 +90,7 @@ const REQUIREMENTS = [
     findMod: (api) => findModByFile(api, FROSTYMANAGER_ID, FROSTY_FILE),
     findDownloadId: (api) => findDownloadIdByFile(api, FROSTY_ARC_NAME),
     //fileArchivePattern: new RegExp(/^FrostyModManager_Alpha(\d+)v(\d+)/, 'i'),
-    fileArchivePattern: new RegExp(/^FrostyModManager_(\d+)\.(\d+)\.(\d+)\.(\d+)/, 'i'),
+    fileArchivePattern: new RegExp(/^FrostyModManager_(\d+\.\d+\.\d+)/, 'i'),
     resolveVersion: (api) => resolveVersionByPattern(api, REQUIREMENTS[0]),
   },
 ];
@@ -266,7 +266,7 @@ async function onCheckModVersion(api, gameId, mods, forced) {
   try {
     await testRequirementVersion(api, REQUIREMENTS[0]);
   } catch (err) {
-    log('warn', 'failed to test version for Frosty Mod Manager', err);
+    log('warn', `failed to test Frosty Mod Manager version: ${err}`);
   }
 }
 
@@ -610,10 +610,9 @@ function main(context) {
       if (profileId !== LAST_ACTIVE_PROFILE) return;
       return deployNotify(context.api);
     });
-    context.api.onAsync('check-mods-version', (profileId, gameId, mods, forced) => {
-      const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
-      if (profileId !== LAST_ACTIVE_PROFILE) return;
-      return onCheckModVersion(context.api, gameId, mods, forced)
+    context.api.onAsync('check-mods-version', (gameId, mods, forced) => {
+      if (gameId !== GAME_ID) return;
+      return onCheckModVersion(context.api, gameId, mods, forced);
     }); //*/
   });
   return true;

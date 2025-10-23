@@ -38,7 +38,7 @@ const BEPINEX_PAGE_ID = '26';
 const BEPINEX_FILE_ID = '40';
 const BEPINEX_ARCH = 'x64'; // 'x64' or 'x86'
 const BEPINEX_BUILD = 'unitymono'; // 'unityil2cpp' or 'unitymono' 
-const BEPINEX_VERSION = '5.4.23.3'; //force BepInEx version ('5.4.23.3' or '6.0.0')
+const BEPINEX_VERSION = '5.4.23.4'; //force BepInEx version ('5.4.23.4' or '6.0.0')
 const allowBepinexNexus = false; //set false until bugs are fixed
 const downloadCfgMan = true; //should BepInExConfigManager be downloaded?
 

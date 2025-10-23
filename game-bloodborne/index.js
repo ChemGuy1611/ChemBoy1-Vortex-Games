@@ -36,7 +36,7 @@ const SHADPS4_VERSION = '0.8.0';
 const SHADPS4_URL = `https://github.com/shadps4-emu/shadPS4/releases/download/v.${SHADPS4_VERSION}/shadps4-win64-qt-${SHADPS4_VERSION}.zip`;
 
 // Information for shadPS4 downloader and updater
-const SHADPS4_ARC_NAME = 'shadps4-win64-qt-0.8.0.zip';
+const SHADPS4_ARC_NAME = 'shadps4-win64-qt-0.11.0.zip';
 const SHADPS4_URL_MAIN = `https://api.github.com/repos/shadps4-emu/shadPS4`;
 const SHADPS4_FILE = 'shadPS4.exe'; // <-- CASE SENSITIVE! Must match name exactly or downloader will download the file again.
 const REQUIREMENTS = [
@@ -371,7 +371,7 @@ async function onCheckModVersion(api, gameId, mods, forced) {
   try {
     await testRequirementVersion(api, REQUIREMENTS[0]);
   } catch (err) {
-    log('warn', 'failed to test requirement version', err);
+    log('warn', `failed to test requirement version: ${err}`);
   }
 }
 
@@ -510,10 +510,9 @@ function applyGame(context, gameSpec) {
 function main(context) {
   applyGame(context, spec);
   context.once(() => { // put code here that should be run (once) when Vortex starts up
-    context.api.onAsync('check-mods-version', (profileId, gameId, mods, forced) => {
-      const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
-      if (profileId !== LAST_ACTIVE_PROFILE) return;
-      return onCheckModVersion(context.api, gameId, mods, forced)
+    context.api.onAsync('check-mods-version', (gameId, mods, forced) => {
+      if (gameId !== GAME_ID) return;
+      return onCheckModVersion(context.api, gameId, mods, forced);
     }); //*/
   });
   return true;

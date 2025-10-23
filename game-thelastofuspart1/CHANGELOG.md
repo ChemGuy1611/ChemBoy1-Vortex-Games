@@ -1,8 +1,12 @@
 # Changelog
 
-FUTURE CHANGES (NOT YET IMPLEMENTED)
+## FUTURE CHANGES (NOT YET IMPLEMENTED)
 
-- None
+- None Planned
+
+## [2.0.6] - 2025-10-23
+
+- Fixed UnPSARC update check not running on mod update check.
 
 ## [2.0.5] - 2025-05-28
 
@@ -29,7 +33,7 @@ FUTURE CHANGES (NOT YET IMPLEMENTED)
 
 ## [2.0.0] - 2025-04-04
 
-- Completely removed Fluffy Mod Manager. It was causing issues with mods and modding can be done without it. 
+- Completely removed Fluffy Mod Manager. It was causing issues with mods and modding can be done without it.
 - Fixed extraction path for bin.psarc to "bin" folder.
 - Added functions to clean out extracted .psarc files to "reset" mods on purge.
 
@@ -39,7 +43,7 @@ FUTURE CHANGES (NOT YET IMPLEMENTED)
 
 ## [1.5.1] - 2025-04-04
 
-- Switched .psarc extraction tool to UnPSARC (https://github.com/rm-NoobInCoding/UnPSARC) since it runs much faster.
+- Switched .psarc extraction tool to UnPSARC (<https://github.com/rm-NoobInCoding/UnPSARC>) since it runs much faster.
 
 ## [1.5.0] - 2025-04-04
 
@@ -49,7 +53,7 @@ FUTURE CHANGES (NOT YET IMPLEMENTED)
 
 ## [1.4.2] - 2025-04-02
 
-- Fixed installer structure for Fluffy so that mods will be installed by Fluffy correctly. 
+- Fixed installer structure for Fluffy so that mods will be installed by Fluffy correctly.
 - PLEASE REINSTALL YOUR MOD LIST!
 
 ## [1.4.1] - 2025-04-02

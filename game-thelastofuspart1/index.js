@@ -2,8 +2,8 @@
 Name: The Last of Us Part I Vortex Extension
 Author: ChemBoy1
 Structure: Gemeric Game + Fluffy
-Version: 2.0.5
-Date: 2025-05-28
+Version: 2.0.6
+Date: 2025-10-23
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -113,7 +113,7 @@ const REQUIREMENTS = [
     githubUrl: PSARCTOOL_URL,
     findMod: (api) => findModByFile(api, PSARCTOOL_ID, PSARCTOOL_EXEC),
     findDownloadId: (api) => findDownloadIdByFile(api, PSARCTOOL_ARC_NAME),
-    fileArchivePattern: new RegExp(/^UnPSARC_v(\d+\.\d+\.)/, 'i'),
+    fileArchivePattern: new RegExp(/^UnPSARC_v(\d+\.\d+)/, 'i'),
     resolveVersion: (api) => resolveVersionByPattern(api, REQUIREMENTS[0]),
   },
 ];
@@ -276,7 +276,7 @@ async function onCheckModVersion(api, gameId, mods, forced) {
   try {
     await testRequirementVersion(api, REQUIREMENTS[0]);
   } catch (err) {
-    log('warn', 'failed to test requirement version', err);
+    log('warn', `failed to test requirement version: ${err}`);
   }
 }
 
@@ -927,10 +927,9 @@ function applyGame(context, gameSpec) {
 function main(context) {
   applyGame(context, spec);
   context.once(() => { // put code here that should be run (once) when Vortex starts up
-    context.api.onAsync('check-mods-version', (profileId, gameId, mods, forced) => {
-      const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
-      if (profileId !== LAST_ACTIVE_PROFILE) return;
-      return onCheckModVersion(context.api, gameId, mods, forced)
+    context.api.onAsync('check-mods-version', (gameId, mods, forced) => {
+      if (gameId !== GAME_ID) return;
+      return onCheckModVersion(context.api, gameId, mods, forced);
     }); //*/
     context.api.onAsync('did-purge', (profileId) => didPurge(context.api, profileId)); //*/
   });

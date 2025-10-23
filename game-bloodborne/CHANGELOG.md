@@ -4,6 +4,10 @@ Future Changes (NOT IMPLEMENTED YET):
 
 - None
 
+## [0.2.4] - 2025-10-23
+
+- Fixed shadPS4 update check not running on mod update check.
+
 ## [0.2.3] - 2025-07-30
 
 - Version bump to fix mod page.

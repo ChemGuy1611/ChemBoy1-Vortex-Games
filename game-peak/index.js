@@ -330,7 +330,7 @@ function main(context) {
         //*
         architecture: 'x64', // <--- Select version for 64-bit or 32-bit game ('x64' or 'x86')
         //installRelPath: "bin/x64" // <--- Specify install location (next to game .exe) if not the root game folder
-        bepinexVersion: '5.4.23.3', // <--- Force BepinEx version
+        bepinexVersion: '5.4.23.4', // <--- Force BepinEx version
         forceGithubDownload: true, // <--- Force Vortex to download directly from Github (recommended)
         unityBuild: 'unitymono', // <--- Download version 6.0.0 of BepInEx that supports IL2CPP or 5.4.23 Mono ('unityil2cpp' or 'unitymono') 
         //*/

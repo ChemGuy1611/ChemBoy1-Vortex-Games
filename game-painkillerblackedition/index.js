@@ -10,19 +10,10 @@ Date: 2025-10-22
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
-const { parseStringPromise } = require('xml2js');
-//const winapi = require('winapi-bindings');
-//const turbowalk = require('turbowalk');
-
-//const USER_HOME = util.getVortexPath("home");
-const DOCUMENTS = util.getVortexPath("documents");
-//const ROAMINGAPPDATA = util.getVortexPath("appData");
-//const LOCALAPPDATA = util.getVortexPath("localAppData");
 
 //Specify all the information about the game
 const GAME_ID = "painkillerblackedition";
 const STEAMAPP_ID = "39530";
-const STEAMAPP_ID_DEMO = null;
 const EPICAPP_ID = null;
 const GOGAPP_ID = "1207658715";
 const XBOXAPP_ID = null;
@@ -33,15 +24,12 @@ const GAME_NAME_SHORT = "Painkiller BE";
 const BINARIES_PATH = path.join('Bin');
 const EXEC_NAME = "Painkiller.exe";
 const EXEC = path.join(BINARIES_PATH, EXEC_NAME);
-const EXEC_XBOX = 'gamelaunchhelper.exe';
 
 const ROOT_FOLDERS = ['Bin', 'Data'];
 
 let GAME_PATH = null;
-let GAME_VERSION = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
-const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 const DATA_ID = `${GAME_ID}-mod`;
 const DATA_NAME = "Data Mod";
@@ -58,7 +46,6 @@ const BINARIES_NAME = "Binaries (Engine Injector)";
 const CONFIG_ID = `${GAME_ID}-config`;
 const CONFIG_NAME = "Config";
 const CONFIG_PATH = path.join(BINARIES_PATH);
-const CONFIG_EXTS = [".ini"];
 const CONFIG_FILES = ["config.ini"];
 
 const SAVE_ID = `${GAME_ID}-save`;

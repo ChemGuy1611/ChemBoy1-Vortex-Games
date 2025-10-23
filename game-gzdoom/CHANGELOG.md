@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.1.5] - 2025-10-23
+
+- Fixed update check for GZDoom not running on mod update check.
+
 ## [0.1.4] - 2025-07-16
 
 - Fixed an error that could potentially occur if installing a version of GZDoom that had empty folders in the archive.

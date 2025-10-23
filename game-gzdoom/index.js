@@ -2,8 +2,8 @@
 Name: Doom I & II (GZDoom) Vortex Extension
 Structure: Mod Loader (Any Folder)
 Author: ChemBoy1
-Version: 0.1.4
-Date: 2025-07-16
+Version: 0.1.5
+Date: 2025-10-23
 ///////////////////////////////////////*/
 /*
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣀⣀⣠⣤⣤⣤⡴⣦⡴⣖⠶⣴⠶⡶⣖⡶⣶⢶⣲⡾⠿⢿⡷⣾⢿⣷⣦⢾⣷⣾⣶⣤⣀⣰⣤⣀⡀⠀⠀⢀⣴⣿⡿⡿⣿⣿⣦⣄⠀⠀⣠⣴⣿⡿⢿⡿⣷⣦⡄⠀⠀⢀⣀⣤⣦⣀⣤⣶⣶⣷⣦⣴⡿⢿⡷⣿⠿⡿⣿⣷⢶⣦⢴⡲⣦⢶⡶⢶⡲⣖⡶⣦⣤⣤⣤⣤⣤⣤⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
@@ -106,7 +106,7 @@ const REQUIREMENTS = [
     githubUrl: GZDOOM_URL_API,
     findMod: (api) => findModByFile(api, GZDOOM_ID, GZDOOM_EXEC),
     findDownloadId: (api) => findDownloadIdByFile(api, GZDOOM_ARC_NAME),
-    fileArchivePattern: new RegExp(/^gzdoom-(\d+)-(\d+)-(\d+)-windows\.zip/, 'i'),
+    fileArchivePattern: new RegExp(/^gzdoom-(\d+-\d+-\d+)-windows/, 'i'),
     resolveVersion: (api) => resolveVersionByPattern(api, REQUIREMENTS[0]),
   },
 ];
@@ -454,7 +454,7 @@ async function onCheckModVersion(api, gameId, mods, forced) {
   try {
     await testRequirementVersion(api, REQUIREMENTS[0]);
   } catch (err) {
-    log('warn', 'failed to test requirement version', err);
+    log('warn', `failed to test requirement version: ${err}`);
   }
 }
 
@@ -882,10 +882,9 @@ function applyGame(context, gameSpec) {
 function main(context) {
   applyGame(context, spec);
   context.once(() => { // put code here that should be run (once) when Vortex starts up
-    context.api.onAsync('check-mods-version', (profileId, gameId, mods, forced) => {
-      const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
-      if (profileId !== LAST_ACTIVE_PROFILE) return;
-      return onCheckModVersion(context.api, gameId, mods, forced)
+    context.api.onAsync('check-mods-version', (gameId, mods, forced) => {
+      if (gameId !== GAME_ID) return;
+      return onCheckModVersion(context.api, gameId, mods, forced);
     }); //*/
     /*context.api.onAsync('did-deploy', (profileId) => {
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);

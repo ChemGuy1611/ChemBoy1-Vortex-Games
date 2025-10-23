@@ -602,10 +602,9 @@ function applyGame(context, gameSpec) {
 function main(context) {
   applyGame(context, spec);
   context.once(() => { // put code here that should be run (once) when Vortex starts up
-    /*context.api.onAsync('check-mods-version', (profileId, gameId, mods, forced) => { //Disabled until I can figure out how to get the game version
-      const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
-      if (profileId !== LAST_ACTIVE_PROFILE) return;
-      return onCheckModVersion(context.api, gameId, mods, forced)
+    /*context.api.onAsync('check-mods-version', (gameId, mods, forced) => {
+      if (gameId !== GAME_ID) return;
+      return onCheckModVersion(context.api, gameId, mods, forced);
     }); //*/
   });
   return true;
