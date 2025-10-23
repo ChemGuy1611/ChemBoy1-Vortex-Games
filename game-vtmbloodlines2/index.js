@@ -46,6 +46,10 @@ const CONFIG_LOC = 'Local AppData';
 const SAVE_LOC = 'Local AppData';
 const CONFIGMOD_LOCATION = LOCALAPPDATA;
 const SAVEMOD_LOCATION = CONFIGMOD_LOCATION;
+const STEAM_STRING = 'Steam';
+const GOG_STRING = 'GOG';
+const EPIC_STRING = 'Epic';
+
 const SHIPEXE_STRING_DEFAULT = '';
 const SHIPEXE_STRING_EGS = '';
 const SHIPEXE_PROJECTNAME = EPIC_CODE_NAME;
@@ -66,8 +70,6 @@ let CHECK_DATA = false; //boolean to check if game, staging folder, and config a
 let CHECK_DOCS = false; //secondary same as above (if save and config are in different locations)
 let STAGING_FOLDER = ''; //Vortex staging folder path
 let DOWNLOAD_FOLDER = ''; //Vortex download folder path
-let DEMO = false;
-let GAME_VERSION = '';
 
 //Unreal Engine Game Data
 const UNREALDATA = {
@@ -81,7 +83,6 @@ const UE5_SORTABLE_NAME = 'UE Sortable Pak Mod';
 //Information for modtypes, installers, tools, and actions
 const CONFIG_ID = `${GAME_ID}-config`;
 const CONFIG_NAME = "Config";
-const CONFIG_PATH = path.join(CONFIGMOD_LOCATION, DATA_FOLDER, "Saved", "Config", CONFIG_FOLDERNAME);
 const CONFIG_FILES = ["engine.ini", "scalability.ini", "input.ini", "game.ini", "gameusersettings.ini"];
 const CONFIG_EXT = ".ini";
 
@@ -107,21 +108,6 @@ const CONTENT_PATH = path.join(EPIC_CODE_NAME);
 
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_NAME = "Saves";
-//const SAVE_FOLDER = path.join(DOCUMENTS, DATA_FOLDER);
-const SAVE_FOLDER = path.join(SAVEMOD_LOCATION, DATA_FOLDER, 'Saved', 'SaveGames');
-let USERID_FOLDER = "";
-try {
-  const SAVE_ARRAY = fs.readdirSync(SAVE_FOLDER);
-  USERID_FOLDER = SAVE_ARRAY.find((element) => 
-  ((/[a-z]/i.test(element) === false))
-  );
-} catch(err) {
-  USERID_FOLDER = "";
-}
-if (USERID_FOLDER === undefined) {
-  USERID_FOLDER = "";
-} //*/
-const SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
 const SAVE_EXT = ".sav";
 
 const SCRIPTS_ID = `${GAME_ID}-scripts`;
@@ -352,28 +338,58 @@ async function requiresLauncher(gamePath, store) {
   return Promise.resolve(undefined);
 }
 
-//Get correct executable for game version
-function getExecutable(discoveryPath) {
-  const isCorrectExec = (exec) => {
-    try {
-      fs.statSync(path.join(discoveryPath, exec));
-      return true;
-    }
-    catch (err) {
-      return false;
-    }
+//Get correct config path for game version
+async function setConfigPath(api) {
+  const state = await api.getState();
+  const discovery = await selectors.discoveryByGame(state, GAME_ID);
+  const STORE = discovery.store;
+  if (STORE === 'steam') {
+    const STORE_STRING = STEAM_STRING;
+    const CONFIG_PATH = path.join(CONFIGMOD_LOCATION, DATA_FOLDER, STORE_STRING, "Saved", "Config", CONFIG_FOLDERNAME);
+    return CONFIG_PATH;
   };
-  //*
-  if (isCorrectExec(EXEC_EPIC)) {
-    GAME_VERSION = 'epic';
-    return EXEC_EPIC;
+  if (STORE === 'epic') {
+    const STORE_STRING = EPIC_STRING;
+    const CONFIG_PATH = path.join(CONFIGMOD_LOCATION, DATA_FOLDER, STORE_STRING, "Saved", "Config", CONFIG_FOLDERNAME);
+    return CONFIG_PATH;
   };
-  if (isCorrectExec(EXEC_DEMO)) {
-    GAME_VERSION = 'demo';
-    return EXEC_DEMO;
-  }; //*/
-  GAME_VERSION = 'default';
-  return EXEC;
+  if (STORE === 'gog') {
+    const STORE_STRING = GOG_STRING;
+    const CONFIG_PATH = path.join(CONFIGMOD_LOCATION, DATA_FOLDER, STORE_STRING, "Saved", "Config", CONFIG_FOLDERNAME);
+    return CONFIG_PATH;
+  };
+  if (STORE === 'other') {
+    const STORE_STRING = STEAM_STRING;
+    const CONFIG_PATH = path.join(CONFIGMOD_LOCATION, DATA_FOLDER, STORE_STRING, "Saved", "Config", CONFIG_FOLDERNAME);
+    return CONFIG_PATH;
+  };
+}
+
+//Get correct save path for game version
+async function setSavePath(api) {
+  const state = await api.getState();
+  const discovery = await selectors.discoveryByGame(state, GAME_ID);
+  const STORE = discovery.store;
+  if (STORE === 'steam') {
+    const STORE_STRING = STEAM_STRING;
+    const SAVE_PATH = path.join(SAVEMOD_LOCATION, DATA_FOLDER, STORE_STRING, 'Saved', 'SaveGames'); //*/
+    return SAVE_PATH;
+  };
+  if (STORE === 'epic') {
+    const STORE_STRING = EPIC_STRING;
+    const SAVE_PATH = path.join(SAVEMOD_LOCATION, DATA_FOLDER, STORE_STRING, 'Saved', 'SaveGames'); //*/
+    return SAVE_PATH;
+  };
+  if (STORE === 'gog') {
+    const STORE_STRING = GOG_STRING;
+    const SAVE_PATH = path.join(SAVEMOD_LOCATION, DATA_FOLDER, STORE_STRING, 'Saved', 'SaveGames'); //*/
+    return SAVE_PATH;
+  };
+  if (STORE === 'other') {
+    const STORE_STRING = STEAM_STRING;
+    const SAVE_PATH = path.join(SAVEMOD_LOCATION, DATA_FOLDER, STORE_STRING, 'Saved', 'SaveGames'); //*/
+    return SAVE_PATH;
+  };
 }
 
 //Get correct shipping executable for game version
@@ -1471,20 +1487,16 @@ async function setup(discovery, api, gameSpec) {
   GAME_PATH = discovery.path;
   STAGING_FOLDER = selectors.installPathForGame(state, gameSpec.game.id);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, gameSpec.game.id);
+  /*
+  CONFIG_PATH = await setConfigPath(api);
+  SAVE_PATH = await setSavePath(api); 
   CHECK_DATA = checkPartitions(CONFIGMOD_LOCATION, GAME_PATH);
-  //CHECK_DOCS = checkPartitions(DOCUMENTS, GAME_PATH);
   if (!CHECK_DATA) {
     partitionCheckNotify(api, CHECK_DATA);
   }
-  /*if (!CHECK_DOCS) {
-    partitionCheckNotify(api, CHECK_DOCS);
-  } //*/
   // ASYNC CODE //////////////////////////////////////////
   if (CHECK_DATA) { //if game, staging folder, and config and save folders are on the same drive
     await fs.ensureDirWritableAsync(CONFIG_PATH);
-    await fs.ensureDirWritableAsync(SAVE_PATH);
-  }
-  /*if (CHECK_DOCS) { //if game, staging folder, and config and save folders are on the same drive
     await fs.ensureDirWritableAsync(SAVE_PATH);
   } //*/
   /*if (UE4SS_PAGE_NO !== 0) {
@@ -1507,7 +1519,6 @@ function applyGame(context, gameSpec) {
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     executable: () => gameSpec.game.executable,
-    //executable: getExecutable,
     getGameVersion: resolveGameVersion,
     supportedTools: tools,
   };
@@ -1535,7 +1546,7 @@ function applyGame(context, gameSpec) {
     );
   }
 
-  //register mod types for Config and Saves (conditional on all folders being on same drive partition)
+  /* register mod types for Config and Saves (conditional on all folders being on same drive partition)
   context.registerModType(CONFIG_ID, 45, 
     (gameId) => {
       GAME_PATH = getDiscoveryPath(context.api);
@@ -1544,7 +1555,7 @@ function applyGame(context, gameSpec) {
       }
       return ((gameId === GAME_ID) && (CHECK_DATA === true));
     },
-    (game) => pathPattern(context.api, game, CONFIG_PATH), 
+    () => setConfigPath(context.api),
     () => Promise.resolve(false), 
     { name: CONFIG_NAME }
   );
@@ -1555,15 +1566,11 @@ function applyGame(context, gameSpec) {
         CHECK_DATA = checkPartitions(SAVEMOD_LOCATION, GAME_PATH);
       }
       return ((gameId === GAME_ID) && (CHECK_DATA === true));
-      /*if (GAME_PATH !== undefined) {
-        CHECK_DOCS = checkPartitions(DOCUMENTS, GAME_PATH);
-      }
-      return ((gameId === GAME_ID) && (CHECK_DOCS === true)); //*/
     },
-    (game) => pathPattern(context.api, game, SAVE_PATH), 
+    () => setSavePath(context.api),
     () => Promise.resolve(false), 
     { name: SAVE_NAME }
-  );
+  ); //*/
 
   //register mod installers
   context.registerInstaller(UE4SSCOMBO_ID, 25, testUe4ssCombo, installUe4ssCombo);
@@ -1618,7 +1625,9 @@ function applyGame(context, gameSpec) {
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
+  /* Disabled until technical issues resolved
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', async () => {
+    const CONFIG_PATH = await setConfigPath(context.api);
     const openPath = CONFIG_PATH;
     util.opn(openPath).catch(() => null);
   }, () => {
@@ -1626,14 +1635,15 @@ function applyGame(context, gameSpec) {
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Saves Folder', () => {
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Saves Folder', async () => {
+    const SAVE_PATH = await setSavePath(context.api);
     const openPath = SAVE_PATH;
     util.opn(openPath).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
-  });
+  }); //*/
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download UE4SS', () => {
     if (UE4SS_PAGE_NO !== 0) { //download from Nexus if the page exists
       downloadUe4ssNexus(context.api, gameSpec).catch(() => null);
