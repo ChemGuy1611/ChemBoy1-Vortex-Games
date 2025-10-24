@@ -1510,7 +1510,7 @@ function applyGame(context, gameSpec) {
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     executable: () => gameSpec.game.executable,
     //executable: getExecutable,
-    getGameVersion: resolveGameVersion,
+    //getGameVersion: resolveGameVersion,
     supportedTools: tools,
   };
   context.registerGame(game);
