@@ -1447,7 +1447,7 @@ function partitionCheckNotify(api, CHECK_DATA) {
 
 async function resolveGameVersion(gamePath, exePath) {
   //SHIPPING_EXE = getShippingExe(gamePath);
-  READ_FILE = path.join(gamePath, SHIPPING_EXE);
+  const READ_FILE = path.join(gamePath, SHIPPING_EXE);
   let version = '0.0.0';
   try {
     const exeVersion = require('exe-version');
@@ -1510,7 +1510,7 @@ function applyGame(context, gameSpec) {
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     executable: () => gameSpec.game.executable,
     //executable: getExecutable,
-    getGameVersion: resolveGameVersion,
+    //getGameVersion: resolveGameVersion,
     supportedTools: tools,
   };
   context.registerGame(game);
