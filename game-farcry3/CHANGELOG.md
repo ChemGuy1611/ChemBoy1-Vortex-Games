@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.2.3] - 2025-10-24
+
+- Fixed potential error when write checking Config folder and setting path to Saves folder.
+
 ## [0.2.2] - 2025-10-14
 
 - Fixed button to open Saves folder.

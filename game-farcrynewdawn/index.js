@@ -2,8 +2,8 @@
 Name: Far Cry New Dawn Vortex Extension
 Structure: Far Cry Game (Mod Installer)
 Author: ChemBoy1
-Version: 0.1.1
-Date: 2025-10-18
+Version: 0.1.2
+Date: 2025-10-24
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -64,15 +64,19 @@ const XML_ID = `${GAME_ID}-xml`;
 const XML_NAME = "XML Settings Mod";
 const XML_FOLDER = path.join(DOCUMENTS, "My Games", DATA_FOLDER);
 let USERID_FOLDER = "";
+function isDir(folder, file) {
+  const stats = fs.statSync(path.join(folder, file));
+  return stats.isDirectory();
+}
 try {
   const ARRAY = fs.readdirSync(XML_FOLDER);
-  USERID_FOLDER = ARRAY[0];
+  USERID_FOLDER = ARRAY.find(entry => isDir(XML_FOLDER, entry));
 } catch(err) {
   USERID_FOLDER = "";
 }
 if (USERID_FOLDER === undefined) {
   USERID_FOLDER = "";
-}
+} //*/
 const XML_PATH = path.join(XML_FOLDER, USERID_FOLDER);
 const XML_FILE = "gamerprofile.xml";
 const XML_EXT = ".xml";
@@ -264,7 +268,7 @@ function makeFindGame(api, gameSpec) {
 }
 
 //Find the save folder (inside Ubisoft Launcher install path)
-function getSavePath() {
+async function getSavePath() {
   try {
     const instPath = winapi.RegGetValue(
       'HKEY_LOCAL_MACHINE',
@@ -277,7 +281,7 @@ function getSavePath() {
     const READ_PATH = path.join(REG_PATH, 'savegames');
     try {
       const ARRAY = fs.readdirSync(READ_PATH);
-      USERID_FOLDER = ARRAY[0];
+      USERID_FOLDER = ARRAY.find(entry => isDir(READ_PATH, entry));
     } catch(err) {
       USERID_FOLDER = "";
     }
@@ -859,8 +863,8 @@ function applyGame(context, gameSpec) {
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', () => {
-    SAVE_PATH = getSavePath();
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', async () => {
+    SAVE_PATH = await getSavePath();
     const openPath = SAVE_PATH;
     util.opn(openPath).catch(() => null);
     }, () => {

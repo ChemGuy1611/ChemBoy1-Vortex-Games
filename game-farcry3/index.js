@@ -2,8 +2,8 @@
 Name: Far Cry 3 Vortex Extension
 Structure: Basic Game (Mod Installer)
 Author: ChemBoy1
-Version: 0.2.2
-Date: 2025-10-14
+Version: 0.2.3
+Date: 2025-10-24
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -65,6 +65,10 @@ const XML_PATH = path.join(DOCUMENTS, "My Games", "Far Cry 3");
 const XML_FILE = "gamerprofile.xml";
 const XML_PAGE_NO = 331;
 const XML_FILE_NO = 167;
+function isDir(folder, file) {
+  const stats = fs.statSync(path.join(folder, file));
+  return stats.isDirectory();
+}
 
 const MIMOD_ID = `${GAME_ID}-mimod`;
 const MIMOD_NAME = "FCMI Mod (.a2/.a3/.a4/.a5/.bin)";
@@ -289,7 +293,7 @@ function makeFindGame(api, gameSpec) {
 }
 
 //Find the save folder (inside Ubisoft Launcher install path)
-function getSavePath() {
+async function getSavePath() {
   try {
     const instPath = winapi.RegGetValue(
       'HKEY_LOCAL_MACHINE',
@@ -302,7 +306,7 @@ function getSavePath() {
     const READ_PATH = path.join(REG_PATH, 'savegames');
     try {
       const ARRAY = fs.readdirSync(READ_PATH);
-      USERID_FOLDER = ARRAY[0];
+      USERID_FOLDER = ARRAY.find(entry => isDir(READ_PATH, entry));
     } catch(err) {
       USERID_FOLDER = "";
     }
@@ -937,8 +941,8 @@ function applyGame(context, gameSpec) {
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', () => {
-    SAVE_PATH = getSavePath();
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', async () => {
+    SAVE_PATH = await getSavePath();
     const openPath = SAVE_PATH;
     util.opn(openPath).catch(() => null);
     }, () => {

@@ -238,6 +238,11 @@ const spec = {
 
 // BASIC EXTENSION FUNCTIONS ///////////////////////////////////////////////////
 
+function isDir(folder, file) {
+  const stats = fs.statSync(path.join(folder, file));
+  return stats.isDirectory();
+}
+
 //Set mod type priorities
 function modTypePriority(priority) {
   return {
@@ -312,9 +317,7 @@ function getExecutable(discoveryPath) {
     CONFIG_TARGET = `${CONFIG_PATH}`;
     try {
       const SAVE_ARRAY = fs.readdirSync(SAVE_PATH_XBOX);
-      USERID_FOLDER = SAVE_ARRAY.find((element) => 
-      ((element))
-       );
+      USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_PATH_XBOX, entry));
     } catch(err) {
       USERID_FOLDER = "";
     }
@@ -336,9 +339,7 @@ function getExecutable(discoveryPath) {
     CONFIG_TARGET = `${CONFIG_PATH}`;
     try {
       const SAVE_ARRAY = fs.readdirSync(SAVE_PATH_DEFAULT);
-      USERID_FOLDER = SAVE_ARRAY.find((element) => 
-      ((/[a-z]/i.test(element) === false))
-       );
+      USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_PATH_DEFAULT, entry));
     } catch(err) {
       USERID_FOLDER = "";
     }
@@ -361,9 +362,7 @@ function getExecutable(discoveryPath) {
     CONFIG_TARGET = `${CONFIG_PATH}`;
     try {
       const SAVE_ARRAY = fs.readdirSync(SAVE_PATH_DEFAULT);
-      USERID_FOLDER = SAVE_ARRAY.find((element) => 
-      ((/[a-z]/i.test(element) === false))
-       );
+      USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_PATH_DEFAULT, entry));
     } catch(err) {
       USERID_FOLDER = "";
     }
@@ -386,9 +385,7 @@ function getExecutable(discoveryPath) {
     CONFIG_TARGET = `${CONFIG_PATH}`;
     try {
       const SAVE_ARRAY = fs.readdirSync(SAVE_PATH_DEFAULT);
-      USERID_FOLDER = SAVE_ARRAY.find((element) => 
-      ((/[a-z]/i.test(element) === false))
-       );
+      USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_PATH_DEFAULT, entry));
     } catch(err) {
       USERID_FOLDER = "";
     }

@@ -70,6 +70,8 @@ let CHECK_DATA = false; //boolean to check if game, staging folder, and config a
 let CHECK_DOCS = false; //secondary same as above (if save and config are in different locations)
 let STAGING_FOLDER = ''; //Vortex staging folder path
 let DOWNLOAD_FOLDER = ''; //Vortex download folder path
+let CONFIG_PATH = path.join(CONFIGMOD_LOCATION, DATA_FOLDER); //config path (variable on game store version)
+let SAVE_PATH = path.join(SAVEMOD_LOCATION, DATA_FOLDER); //save path (variable on game store version)
 
 //Unreal Engine Game Data
 const UNREALDATA = {
@@ -287,6 +289,11 @@ const tools = [
 
 // BASIC EXTENSION FUNCTIONS ///////////////////////////////////////////////////
 
+async function isDir(folder, file) {
+  const stats = await fs.statAsync(path.join(folder, file));
+  return stats.isDirectory();
+}
+
 //Set mod type priority
 function modTypePriority(priority) {
   return {
@@ -339,57 +346,37 @@ async function requiresLauncher(gamePath, store) {
 }
 
 //Get correct config path for game version
-async function setConfigPath(api) {
-  const state = await api.getState();
-  const discovery = await selectors.discoveryByGame(state, GAME_ID);
-  const STORE = discovery.store;
-  if (STORE === 'steam') {
-    const STORE_STRING = STEAM_STRING;
-    const CONFIG_PATH = path.join(CONFIGMOD_LOCATION, DATA_FOLDER, STORE_STRING, "Saved", "Config", CONFIG_FOLDERNAME);
-    return CONFIG_PATH;
-  };
-  if (STORE === 'epic') {
-    const STORE_STRING = EPIC_STRING;
-    const CONFIG_PATH = path.join(CONFIGMOD_LOCATION, DATA_FOLDER, STORE_STRING, "Saved", "Config", CONFIG_FOLDERNAME);
-    return CONFIG_PATH;
-  };
-  if (STORE === 'gog') {
-    const STORE_STRING = GOG_STRING;
-    const CONFIG_PATH = path.join(CONFIGMOD_LOCATION, DATA_FOLDER, STORE_STRING, "Saved", "Config", CONFIG_FOLDERNAME);
-    return CONFIG_PATH;
-  };
-  if (STORE === 'other') {
-    const STORE_STRING = STEAM_STRING;
-    const CONFIG_PATH = path.join(CONFIGMOD_LOCATION, DATA_FOLDER, STORE_STRING, "Saved", "Config", CONFIG_FOLDERNAME);
-    return CONFIG_PATH;
-  };
+async function setConfigPath() {
+  const DATA_PATH = path.join(CONFIGMOD_LOCATION, DATA_FOLDER);
+  let STORE_FOLDER = '';
+  try {
+    const ARRAY = await fs.readdirAsync(DATA_PATH);
+    STORE_FOLDER = ARRAY.find(entry => isDir(DATA_PATH, entry));
+  } catch(err) {
+    STORE_FOLDER = '';
+  }
+  if (STORE_FOLDER === undefined) {
+    STORE_FOLDER = '';
+  } //*/
+  CONFIG_PATH = path.join(CONFIGMOD_LOCATION, DATA_FOLDER, STORE_FOLDER, "Saved", "Config", CONFIG_FOLDERNAME);
+  return CONFIG_PATH;
 }
 
 //Get correct save path for game version
-async function setSavePath(api) {
-  const state = await api.getState();
-  const discovery = await selectors.discoveryByGame(state, GAME_ID);
-  const STORE = discovery.store;
-  if (STORE === 'steam') {
-    const STORE_STRING = STEAM_STRING;
-    const SAVE_PATH = path.join(SAVEMOD_LOCATION, DATA_FOLDER, STORE_STRING, 'Saved', 'SaveGames'); //*/
-    return SAVE_PATH;
-  };
-  if (STORE === 'epic') {
-    const STORE_STRING = EPIC_STRING;
-    const SAVE_PATH = path.join(SAVEMOD_LOCATION, DATA_FOLDER, STORE_STRING, 'Saved', 'SaveGames'); //*/
-    return SAVE_PATH;
-  };
-  if (STORE === 'gog') {
-    const STORE_STRING = GOG_STRING;
-    const SAVE_PATH = path.join(SAVEMOD_LOCATION, DATA_FOLDER, STORE_STRING, 'Saved', 'SaveGames'); //*/
-    return SAVE_PATH;
-  };
-  if (STORE === 'other') {
-    const STORE_STRING = STEAM_STRING;
-    const SAVE_PATH = path.join(SAVEMOD_LOCATION, DATA_FOLDER, STORE_STRING, 'Saved', 'SaveGames'); //*/
-    return SAVE_PATH;
-  };
+async function setSavePath() {
+  const DATA_PATH = path.join(SAVEMOD_LOCATION, DATA_FOLDER);
+  let STORE_FOLDER = '';
+  try {
+    const ARRAY = await fs.readdirAsync(DATA_PATH);
+    STORE_FOLDER = ARRAY.find(entry => isDir(DATA_PATH, entry));
+  } catch(err) {
+    STORE_FOLDER = '';
+  }
+  if (STORE_FOLDER === undefined) {
+    STORE_FOLDER = '';
+  } //*/
+  SAVE_PATH = path.join(SAVEMOD_LOCATION, DATA_FOLDER, STORE_FOLDER, "Saved", "SaveGames");
+  return SAVE_PATH;
 }
 
 const getDiscoveryPath = (api) => { //get the game's discovered path
@@ -1466,7 +1453,7 @@ async function setup(discovery, api, gameSpec) {
   GAME_PATH = discovery.path;
   STAGING_FOLDER = selectors.installPathForGame(state, gameSpec.game.id);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, gameSpec.game.id);
-  /*
+  //*
   CONFIG_PATH = await setConfigPath(api);
   SAVE_PATH = await setSavePath(api); 
   CHECK_DATA = checkPartitions(CONFIGMOD_LOCATION, GAME_PATH);
@@ -1525,7 +1512,7 @@ function applyGame(context, gameSpec) {
     );
   }
 
-  /* register mod types for Config and Saves (conditional on all folders being on same drive partition)
+  //* register mod types for Config and Saves (conditional on all folders being on same drive partition)
   context.registerModType(CONFIG_ID, 45, 
     (gameId) => {
       GAME_PATH = getDiscoveryPath(context.api);
@@ -1534,8 +1521,8 @@ function applyGame(context, gameSpec) {
       }
       return ((gameId === GAME_ID) && (CHECK_DATA === true));
     },
-    () => setConfigPath(context.api),
-    () => Promise.resolve(false), 
+    () => CONFIG_PATH,
+    () => Promise.resolve(false),
     { name: CONFIG_NAME }
   );
   context.registerModType(SAVE_ID, 47, 
@@ -1546,8 +1533,8 @@ function applyGame(context, gameSpec) {
       }
       return ((gameId === GAME_ID) && (CHECK_DATA === true));
     },
-    () => setSavePath(context.api),
-    () => Promise.resolve(false), 
+    () => SAVE_PATH,
+    () => Promise.resolve(false),
     { name: SAVE_NAME }
   ); //*/
 
@@ -1604,9 +1591,8 @@ function applyGame(context, gameSpec) {
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   });
-  /* Disabled until technical issues resolved
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', async () => {
-    const CONFIG_PATH = await setConfigPath(context.api);
+    CONFIG_PATH = await setConfigPath(context.api);
     const openPath = CONFIG_PATH;
     util.opn(openPath).catch(() => null);
   }, () => {
@@ -1615,7 +1601,7 @@ function applyGame(context, gameSpec) {
     return gameId === GAME_ID;
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Saves Folder', async () => {
-    const SAVE_PATH = await setSavePath(context.api);
+    SAVE_PATH = await setSavePath(context.api);
     const openPath = SAVE_PATH;
     util.opn(openPath).catch(() => null);
   }, () => {

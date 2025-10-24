@@ -2,8 +2,8 @@
 Name: Bloodborne Vortex Extension
 Structure: Emulation Game
 Author: ChemBoy1
-Version: 0.2.3
-Date: 2025-07-30
+Version: 0.2.5
+Date: 2025-10-24
 ////////////////////////////////////////////////////*/
 
 //Import libraries
@@ -32,11 +32,11 @@ const ROOT_NAME = "Root Folder";
 const SHADPS4_ID = `${GAME_ID}-shadps4`;
 const SHADPS4_NAME = "shadPS4";
 const SHADPS4_EXEC = "shadps4.exe";
-const SHADPS4_VERSION = '0.8.0';
+const SHADPS4_VERSION = '0.11.0';
 const SHADPS4_URL = `https://github.com/shadps4-emu/shadPS4/releases/download/v.${SHADPS4_VERSION}/shadps4-win64-qt-${SHADPS4_VERSION}.zip`;
 
 // Information for shadPS4 downloader and updater
-const SHADPS4_ARC_NAME = 'shadps4-win64-qt-0.11.0.zip';
+const SHADPS4_ARC_NAME = `shadps4-win64-qt-${SHADPS4_VERSION}.zip`;
 const SHADPS4_URL_MAIN = `https://api.github.com/repos/shadps4-emu/shadPS4`;
 const SHADPS4_FILE = 'shadPS4.exe'; // <-- CASE SENSITIVE! Must match name exactly or downloader will download the file again.
 const REQUIREMENTS = [
@@ -61,6 +61,8 @@ const SAVE_FILE = "userdata0000";
 const SMITHBOX_EXEC = "smithbox.exe";
 const FLVER_EXEC = "flver_editor.exe";
 
+const PARAMETERS = [GAME_FILE];
+
 //Filled in from info above
 const spec = {
   "game": {
@@ -68,6 +70,7 @@ const spec = {
     "name": GAME_NAME,
     "shortName": GAME_NAME_SHORT,
     "executable": SHADPS4_EXEC,
+    "parameters": PARAMETERS,
     "logo": `${GAME_ID}.jpg`,
     "mergeMods": true,
     "requiresCleanup": true,
@@ -123,9 +126,8 @@ const tools = [
     relative: true,
     exclusive: true,
     //shell: true,
-    defaultPrimary: true,
-    isPrimary: true,
-    parameters: [GAME_FILE],
+    //defaultPrimary: true,
+    //parameters: PARAMETERS,
   },
   {
     id: "Smithbox",
@@ -167,7 +169,7 @@ function pathPattern(api, game, pattern) {
   return template(pattern, {
     gamePath: (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0 ? void 0 : _a.path,
     documents: util.getVortexPath('documents'),
-    localAppData: process.env['LOCALAPPDATA'],
+    localAppData: util.getVortexPath('localAppData'),
     appData: util.getVortexPath('appData'),
   });
 }
@@ -377,19 +379,29 @@ async function onCheckModVersion(api, gameId, mods, forced) {
 
 async function checkForShadPs4(api) {
   const mod = await REQUIREMENTS[0].findMod(api);
-  return mod !== undefined;
+  //const check = await isShadPS4Installed(api, spec);
+  return (mod !== undefined);
 }
 
 //* Old shadPS4 download method
-function isShadPS4Installed(api, spec) {
+async function isShadPS4Installed(api, spec) {
   const state = api.getState();
   const mods = state.persistent.mods[spec.game.id] || {};
-  return Object.keys(mods).some(id => mods[id]?.type === SHADPS4_ID);
+  const modIdCheck = Object.keys(mods).some(id => mods[id]?.type === SHADPS4_ID);
+  const discovery = selectors.discoveryByGame(state, spec.game.id);
+  let statCheck = false;
+  try {
+    fs.statSync(path.join(discovery.path, SHADPS4_EXEC));
+    statCheck = true;
+  } catch (err) {
+    //do nothing
+  }
+  const TEST = modIdCheck || statCheck;
+  return TEST;
 }
-//Function to auto-download REFramework from Github
+//Function to auto-download shadPS4 from Github
 async function downloadShadPS4(api, gameSpec) {
   let modLoaderInstalled = isShadPS4Installed(api, gameSpec);
-  
   if (!modLoaderInstalled) {
     //notification indicating install process
     NOTIF_ID = 'bloodborne-shadps4-installing';
