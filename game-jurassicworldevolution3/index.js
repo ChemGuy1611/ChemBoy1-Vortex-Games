@@ -58,6 +58,16 @@ const OVLDATA_NAME = "ovldata Subfolder";
 const OVLDATA_PATH = path.join("Win64");
 const OVLDATA_FILE = "ovldata";
 
+const LOCALISED_ID = `${GAME_ID}-localised`;
+const LOCALISED_NAME = "ACSE Localization";
+const LOCALISED_PATH = path.join(ACSE_PATH, ACSE_FILE);
+const LOCALISED_FILE = "localised";
+
+const MOVIES_ID = `${GAME_ID}-movies`;
+const MOVIES_NAME = "Movies (.webm)";
+const MOVIES_PATH = 'Movies';
+const MOVIES_EXTS = ['.webm'];
+
 const SAVE_ID = `${GAME_ID}-save`
 const SAVE_NAME = "Saves";
 const SAVE_EXTS = ['.blpr2', '.prk2'];
@@ -127,6 +137,18 @@ const spec = {
       "name": OVLDATA_NAME,
       "priority": "high",
       "targetPath": path.join('{gamePath}', OVLDATA_PATH)
+    },
+    { 
+      "id": LOCALISED_ID,
+      "name": LOCALISED_NAME,
+      "priority": "high",
+      "targetPath": path.join('{gamePath}', LOCALISED_PATH)
+    },
+    { 
+      "id": MOVIES_ID,
+      "name": MOVIES_NAME,
+      "priority": "high",
+      "targetPath": path.join('{gamePath}', MOVIES_PATH)
     },
     {
       "id": SAVE_ID,
@@ -355,7 +377,6 @@ function installSave(files) {
     };
   });
   instructions.push(setModTypeInstruction);
-
   return Promise.resolve({ instructions });
 }
 
@@ -423,6 +444,82 @@ function installOvlData(files) {
   const filtered = files.filter(file =>
     ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
   );
+
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Installer test for localised folder
+function testLocalised(files, gameId) {
+  const isMod = files.some(file => (path.basename(file).toLowerCase() === LOCALISED_FILE));
+  let supported = (gameId === spec.game.id) && isMod;
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Installer install localised folder
+function installLocalised(files) {
+  const modFile = files.find(file => (path.basename(file).toLowerCase() === LOCALISED_FILE));
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: LOCALISED_ID };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Test for movies files
+function testMovies(files, gameId) {
+  const isMod = files.some(file => MOVIES_EXTS.includes(path.extname(file).toLowerCase()));
+  let supported = (gameId === spec.game.id) && isMod;
+  
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install movies files
+function installMovies(files) {
+  const modFile = files.find(file => MOVIES_EXTS.includes(path.extname(file).toLowerCase()));
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: MOVIES_ID };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file => (
+    (file.indexOf(rootPath) !== -1) && 
+    (!file.endsWith(path.sep))
+  ));
 
   const instructions = filtered.map(file => {
     return {
@@ -523,7 +620,7 @@ async function setup(discovery, api, gameSpec) {
   // ASYNC CODE //////////////////////////////////////////
   await downloadACSE(api, gameSpec);
   await fs.ensureDirWritableAsync(SAVE_PATH);
-  return fs.ensureDirWritableAsync(path.join(GAME_PATH, MOD_PATH));
+  return fs.ensureDirWritableAsync(path.join(GAME_PATH, LOCALISED_PATH));
 }
 
 //Let Vortex know about the game
@@ -554,7 +651,9 @@ function applyGame(context, gameSpec) {
   //register mod installers
   context.registerInstaller(ACSE_ID, 25, testACSE, installACSE);
   context.registerInstaller(ROOT_ID, 27, testRoot, installRoot);
-  context.registerInstaller(OVLDATA_ID, 29, testOvlData, installOvlData);
+  context.registerInstaller(LOCALISED_ID, 29, testLocalised, installLocalised);
+  context.registerInstaller(MOVIES_ID, 31, testMovies, installMovies);
+  context.registerInstaller(OVLDATA_ID, 33, testOvlData, installOvlData);
   context.registerInstaller(SAVE_ID, 49, testSave, installSave);
 
   //register actions
