@@ -27,8 +27,6 @@ const GAME_NAME = "Vampire: The Masquerade - Bloodlines 2";
 const GAME_NAME_SHORT = "VTMB2";
 const EXEC = "Bloodlines2.exe";
 const EXEC_EPIC = EXEC;
-const EXEC_GOG = EXEC;
-const EXEC_DEMO = EXEC;
 
 //Unreal Engine specific
 const EPIC_CODE_NAME = "Bloodlines2";
@@ -1593,6 +1591,7 @@ function applyGame(context, gameSpec) {
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', async () => {
     CONFIG_PATH = await setConfigPath(context.api);
+    //log('warn', `Config Path: ${CONFIG_PATH}`);
     const openPath = CONFIG_PATH;
     util.opn(openPath).catch(() => null);
   }, () => {
@@ -1602,6 +1601,7 @@ function applyGame(context, gameSpec) {
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Saves Folder', async () => {
     SAVE_PATH = await setSavePath(context.api);
+    //log('warn', `Save Path: ${SAVE_PATH}`);
     const openPath = SAVE_PATH;
     util.opn(openPath).catch(() => null);
   }, () => {

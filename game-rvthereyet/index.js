@@ -1,9 +1,9 @@
 /*//////////////////////////////////////////////////
-Name: Dragon Quest I & II HD-2D Remake Vortex Extension
+Name: RV There Yet? Vortex Extension
 Structure: UE5 (static exe)
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2025-10-30
+Date: 2025-10-25
 //////////////////////////////////////////////////*/
 
 //Import libraries
@@ -17,23 +17,20 @@ const template = require('string-template');
 const LOCALAPPDATA = util.getVortexPath('localAppData');
 
 //Specify all information about the game
-const GAME_ID = "dragonquestiandiihd2dremake";
-const STEAMAPP_ID = "2893570";
+const GAME_ID = "rvthereyet";
+const STEAMAPP_ID = "3949040";
 const STEAMAPP_ID_DEMO = null;
 const EPICAPP_ID = null;
-const GOGAPP_ID = "XXX";
+const GOGAPP_ID = null;
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
-const GAME_NAME = "Dragon Quest I & II HD-2D Remake";
-const GAME_NAME_SHORT = "DQ I&II Remake";
-const EXEC = "DragonQuestIIHD2DRemake.exe";
-const EXEC_EPIC = EXEC;
-const EXEC_GOG = EXEC;
-const EXEC_DEMO = EXEC;
+const GAME_NAME = "RV There Yet?";
+const GAME_NAME_SHORT = "RV There Yet?";
+const EXEC = "Ride.exe";
 
 //Unreal Engine specific
-const EPIC_CODE_NAME = "Game";
+const EPIC_CODE_NAME = "Ride";
 const SIGBYPASS_REQUIRED = false; //set true if there are .sig files in the Paks folder
-const IO_STORE = false; //true if the Paks folder contains .ucas and .utoc files
+const IO_STORE = true; //true if the Paks folder contains .ucas and .utoc files
 const UE4SS_PAGE_NO = 0; //set if there is UE4SS Nexus page
 const UE4SS_FILE_NO = 0;
 const UE4SS_MOD_PATH = path.join('ue4ss', 'Mods');
@@ -80,7 +77,7 @@ const UE5_SORTABLE_NAME = 'UE Sortable Pak Mod';
 //Information for modtypes, installers, tools, and actions
 const CONFIG_ID = `${GAME_ID}-config`;
 const CONFIG_NAME = "Config";
-const CONFIG_PATH = path.join(CONFIGMOD_LOCATION, DATA_FOLDER, "Saved", "Config", CONFIG_FOLDERNAME);
+let CONFIG_PATH = path.join(CONFIGMOD_LOCATION, DATA_FOLDER, "Saved", "Config", CONFIG_FOLDERNAME);
 const CONFIG_FILES = ["engine.ini", "scalability.ini", "input.ini", "game.ini", "gameusersettings.ini"];
 const CONFIG_EXT = ".ini";
 
@@ -122,7 +119,7 @@ try {
 if (USERID_FOLDER === undefined) {
   USERID_FOLDER = "";
 } //*/
-const SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
+let SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
 const SAVE_EXT = ".sav";
 
 const SCRIPTS_ID = `${GAME_ID}-scripts`;
@@ -206,31 +203,31 @@ const spec = {
       "id": LOGICMODS_ID,
       "name": LOGICMODS_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${LOGICMODS_PATH}`
+      "targetPath": path.join('{gamePath}', LOGICMODS_PATH)
     },
     {
       "id": UE4SS_ID,
       "name": UE4SS_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${BINARIES_PATH}`
+      "targetPath": path.join('{gamePath}', BINARIES_PATH)
     },
     {
       "id": SCRIPTS_ID,
       "name": SCRIPTS_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${SCRIPTS_PATH}`
+      "targetPath": path.join('{gamePath}', SCRIPTS_PATH)
     },
     {
       "id": DLL_ID,
       "name": DLL_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${DLL_PATH}`
+      "targetPath": path.join('{gamePath}', DLL_PATH)
     },
     {
       "id": PAK_ID,
       "name": PAK_NAME,
       "priority": "low",
-      "targetPath": `{gamePath}\\${PAK_ALT_PATH}`
+      "targetPath": path.join('{gamePath}', PAK_ALT_PATH)
     },
     {
       "id": ROOT_ID,
@@ -242,13 +239,13 @@ const spec = {
       "id": CONTENT_ID,
       "name": CONTENT_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${CONTENT_PATH}`
+      "targetPath": path.join('{gamePath}', CONTENT_PATH)
     },
     {
       "id": BINARIES_ID,
       "name": BINARIES_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${BINARIES_PATH}`
+      "targetPath": path.join('{gamePath}', BINARIES_PATH)
     },
   ],
   "discovery": {
@@ -305,7 +302,7 @@ const tools = [
 //Set mod type priority
 function modTypePriority(priority) {
   return {
-    high: 25,
+    high: 30,
     low: 75,
   }[priority];
 }
@@ -351,54 +348,6 @@ async function requiresLauncher(gamePath, store) {
     });
   } //*/
   return Promise.resolve(undefined);
-}
-
-//Get correct executable for game version
-function getExecutable(discoveryPath) {
-  const isCorrectExec = (exec) => {
-    try {
-      fs.statSync(path.join(discoveryPath, exec));
-      return true;
-    }
-    catch (err) {
-      return false;
-    }
-  };
-  if (isCorrectExec(EXEC_EPIC)) {
-    GAME_VERSION = 'epic';
-    return EXEC_EPIC;
-  };
-  if (isCorrectExec(EXEC_GOG)) {
-    GAME_VERSION = 'gog';
-    return EXEC_GOG;
-  }; 
-  if (isCorrectExec(EXEC_DEMO)) {
-    GAME_VERSION = 'demo';
-    return EXEC_DEMO;
-  }; //*/
-  GAME_VERSION = 'default';
-  return EXEC;
-}
-
-//Get correct shipping executable for game version
-function getShippingExe(gamePath) {
-  const isCorrectExec = (exec) => {
-    try {
-      fs.statSync(path.join(gamePath, exec));
-      return true;
-    }
-    catch (err) {
-      return false;
-    }
-  };
-  if (isCorrectExec(EXEC_DEFAULT)) {
-    SHIPPING_EXE = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_XBOX}\\${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_DEFAULT}-Shipping.exe`;
-    return SHIPPING_EXE; 
-  };
-  if (isCorrectExec(EXEC_EPIC)) {
-    SHIPPING_EXE = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_DEFAULT}\\${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_EGS}-Shipping.exe`;
-    return SHIPPING_EXE;
-  };
 }
 
 const getDiscoveryPath = (api) => { //get the game's discovered path
@@ -1366,10 +1315,14 @@ function UNREALEXTENSION(context) {
 
   context.registerInstaller('ue5-pak-installer', 29, testForUnrealMod, (files, __destinationPath, gameId) => installUnrealMod(context.api, files, gameId));
 
-  context.registerModType(UE5_SORTABLE_ID, 25, (gameId) => testUnrealGame(gameId, true), getUnrealModsPath, () => Promise.resolve(false), {
-    name: UE5_SORTABLE_NAME,
-    mergeMods: mod => loadOrderPrefix(context.api, mod) + mod.id
-  });
+  context.registerModType(UE5_SORTABLE_ID, 25, 
+    (gameId) => testUnrealGame(gameId, true), 
+    getUnrealModsPath, 
+    () => Promise.resolve(false), 
+    { name: UE5_SORTABLE_NAME,
+      mergeMods: mod => loadOrderPrefix(context.api, mod) + mod.id
+    }
+  );
 }
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
@@ -1533,7 +1486,7 @@ function applyGame(context, gameSpec) {
         var _a;
         return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
       }, 
-      (game) => pathPattern(context.api, game, `{gamePath}\\${BINARIES_PATH}`), 
+      (game) => pathPattern(context.api, game, path.join('{gamePath}', BINARIES_PATH)),
       () => Promise.resolve(false), 
       { name: SIGBYPASS_NAME }
     );
@@ -1623,6 +1576,7 @@ function applyGame(context, gameSpec) {
     return gameId === GAME_ID;
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
+    //CONFIG_PATH = await setConfigPath(context.api);
     const openPath = CONFIG_PATH;
     util.opn(openPath).catch(() => null);
   }, () => {
@@ -1631,6 +1585,7 @@ function applyGame(context, gameSpec) {
     return gameId === GAME_ID;
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Saves Folder', () => {
+    //SAVE_PATH = await setSavePath(context.api);
     const openPath = SAVE_PATH;
     util.opn(openPath).catch(() => null);
   }, () => {
@@ -1692,9 +1647,32 @@ function main(context) {
     });
   }
   context.once(() => { // put code here that should be run (once) when Vortex starts up
-
+    //context.api.onAsync('did-deploy', (profileId) => didDeploy(context.api, profileId)); //*/
+    //context.api.onAsync('did-purge', (profileId) => didPurge(context.api, profileId)); //*/
   });
   return true;
+}
+
+async function didDeploy(api, profileId) { //run on mod deploy
+  const state = api.getState();
+  const profile = selectors.profileById(state, profileId);
+  const gameId = profile === null || profile === void 0 ? void 0 : profile.gameId;
+  if (gameId !== GAME_ID) {
+    return Promise.resolve();
+  }
+  
+  return Promise.resolve();
+}
+
+async function didPurge(api, profileId) { //run on mod purge
+  const state = api.getState();
+  const profile = selectors.profileById(state, profileId);
+  const gameId = profile === null || profile === void 0 ? void 0 : profile.gameId;
+  if (gameId !== GAME_ID) {
+    return Promise.resolve();
+  }
+  
+  return Promise.resolve();
 }
 
 //export to Vortex

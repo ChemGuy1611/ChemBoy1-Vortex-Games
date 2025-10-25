@@ -48,6 +48,8 @@ const CONFIGMOD_LOCATION = LOCALAPPDATA;
 const SAVEMOD_LOCATION = CONFIGMOD_LOCATION;
 const SHIPEXE_STRING_DEFAULT = '';
 const SHIPEXE_STRING_EGS = '';
+const SHIPEXE_STRING_GOG = '';
+const SHIPEXE_STRING_DEMO = '';
 const SHIPEXE_PROJECTNAME = EPIC_CODE_NAME;
 const SHIPPING_EXE_FILENAME = `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_NAME}${SHIPEXE_STRING_DEFAULT}-Shipping.exe`;
 
@@ -80,7 +82,7 @@ const UE5_SORTABLE_NAME = 'UE Sortable Pak Mod';
 //Information for modtypes, installers, tools, and actions
 const CONFIG_ID = `${GAME_ID}-config`;
 const CONFIG_NAME = "Config";
-const CONFIG_PATH = path.join(CONFIGMOD_LOCATION, DATA_FOLDER, "Saved", "Config", CONFIG_FOLDERNAME);
+let CONFIG_PATH = path.join(CONFIGMOD_LOCATION, DATA_FOLDER, "Saved", "Config", CONFIG_FOLDERNAME);
 const CONFIG_FILES = ["engine.ini", "scalability.ini", "input.ini", "game.ini", "gameusersettings.ini"];
 const CONFIG_EXT = ".ini";
 
@@ -122,7 +124,7 @@ try {
 if (USERID_FOLDER === undefined) {
   USERID_FOLDER = "";
 } //*/
-const SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
+let SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
 const SAVE_EXT = ".sav";
 
 const SCRIPTS_ID = `${GAME_ID}-scripts`;
@@ -168,6 +170,7 @@ const SIGBYPASS_DOMAIN = 'site';
 const MOD_PATH_DEFAULT = PAK_PATH;
 const MODTYPE_FOLDERS = [LOGICMODS_PATH, SCRIPTS_PATH, PAK_PATH];
 const PARAMETERS = [];
+const REQ_FILES = [EPIC_CODE_NAME];
 
 //Filled in from data above
 const spec = {
@@ -182,9 +185,7 @@ const spec = {
     "requiresCleanup": true,
     "modPath": MOD_PATH_DEFAULT,
     "modPathIsRelative": true,
-    "requiredFiles": [
-      EPIC_CODE_NAME,
-    ],
+    "requiredFiles": REQ_FILES,
     "details": {
       "epicAppId": EPICAPP_ID,
       "steamAppId": +STEAMAPP_ID,
@@ -206,31 +207,31 @@ const spec = {
       "id": LOGICMODS_ID,
       "name": LOGICMODS_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${LOGICMODS_PATH}`
+      "targetPath": path.join('{gamePath}', LOGICMODS_PATH)
     },
     {
       "id": UE4SS_ID,
       "name": UE4SS_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${BINARIES_PATH}`
+      "targetPath": path.join('{gamePath}', BINARIES_PATH)
     },
     {
       "id": SCRIPTS_ID,
       "name": SCRIPTS_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${SCRIPTS_PATH}`
+      "targetPath": path.join('{gamePath}', SCRIPTS_PATH)
     },
     {
       "id": DLL_ID,
       "name": DLL_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${DLL_PATH}`
+      "targetPath": path.join('{gamePath}', DLL_PATH)
     },
     {
       "id": PAK_ID,
       "name": PAK_NAME,
       "priority": "low",
-      "targetPath": `{gamePath}\\${PAK_ALT_PATH}`
+      "targetPath": path.join('{gamePath}', PAK_ALT_PATH)
     },
     {
       "id": ROOT_ID,
@@ -242,13 +243,13 @@ const spec = {
       "id": CONTENT_ID,
       "name": CONTENT_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${CONTENT_PATH}`
+      "targetPath": path.join('{gamePath}', CONTENT_PATH)
     },
     {
       "id": BINARIES_ID,
       "name": BINARIES_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${BINARIES_PATH}`
+      "targetPath": path.join('{gamePath}', BINARIES_PATH)
     },
   ],
   "discovery": {
@@ -305,7 +306,7 @@ const tools = [
 //Set mod type priority
 function modTypePriority(priority) {
   return {
-    high: 25,
+    high: 30,
     low: 75,
   }[priority];
 }
@@ -392,14 +393,55 @@ function getShippingExe(gamePath) {
     }
   };
   if (isCorrectExec(EXEC_DEFAULT)) {
-    SHIPPING_EXE = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_XBOX}\\${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_DEFAULT}-Shipping.exe`;
-    return SHIPPING_EXE; 
+    SHIPPING_EXE = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_DEFAULT}-Shipping.exe`);
+    return SHIPPING_EXE;
   };
   if (isCorrectExec(EXEC_EPIC)) {
-    SHIPPING_EXE = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_DEFAULT}\\${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_EGS}-Shipping.exe`;
+    SHIPPING_EXE = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_EGS}-Shipping.exe`);
+    return SHIPPING_EXE;
+  };
+  if (isCorrectExec(EXEC_GOG)) {
+    SHIPPING_EXE = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_GOG}-Shipping.exe`);
+    return SHIPPING_EXE;
+  };
+  if (isCorrectExec(EXEC_DEMO)) {
+    SHIPPING_EXE = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_DEMO}-Shipping.exe`);
     return SHIPPING_EXE;
   };
 }
+
+//Get correct config path for game version
+async function setConfigPath() {
+  const DATA_PATH = path.join(CONFIGMOD_LOCATION, DATA_FOLDER);
+  let STORE_FOLDER = '';
+  try {
+    const ARRAY = await fs.readdirAsync(DATA_PATH);
+    STORE_FOLDER = ARRAY.find(entry => isDir(DATA_PATH, entry));
+  } catch(err) {
+    STORE_FOLDER = '';
+  }
+  if (STORE_FOLDER === undefined) {
+    STORE_FOLDER = '';
+  } 
+  CONFIG_PATH = path.join(CONFIGMOD_LOCATION, DATA_FOLDER, STORE_FOLDER, "Saved", "Config", CONFIG_FOLDERNAME);
+  return CONFIG_PATH;
+}
+//Get correct save path for game version
+async function setSavePath() {
+  const DATA_PATH = path.join(SAVEMOD_LOCATION, DATA_FOLDER);
+  let STORE_FOLDER = '';
+  try {
+    const ARRAY = await fs.readdirAsync(DATA_PATH);
+    STORE_FOLDER = ARRAY.find(entry => isDir(DATA_PATH, entry));
+  } catch(err) {
+    STORE_FOLDER = '';
+  }
+  if (STORE_FOLDER === undefined) {
+    STORE_FOLDER = '';
+  }
+  SAVE_PATH = path.join(SAVEMOD_LOCATION, DATA_FOLDER, STORE_FOLDER, "Saved", "SaveGames");
+  return SAVE_PATH;
+} //*/
 
 const getDiscoveryPath = (api) => { //get the game's discovered path
   const state = api.getState();
@@ -1366,10 +1408,14 @@ function UNREALEXTENSION(context) {
 
   context.registerInstaller('ue5-pak-installer', 29, testForUnrealMod, (files, __destinationPath, gameId) => installUnrealMod(context.api, files, gameId));
 
-  context.registerModType(UE5_SORTABLE_ID, 25, (gameId) => testUnrealGame(gameId, true), getUnrealModsPath, () => Promise.resolve(false), {
-    name: UE5_SORTABLE_NAME,
-    mergeMods: mod => loadOrderPrefix(context.api, mod) + mod.id
-  });
+  context.registerModType(UE5_SORTABLE_ID, 25, 
+    (gameId) => testUnrealGame(gameId, true), 
+    getUnrealModsPath, 
+    () => Promise.resolve(false), 
+    { name: UE5_SORTABLE_NAME,
+      mergeMods: mod => loadOrderPrefix(context.api, mod) + mod.id
+    }
+  );
 }
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
@@ -1533,7 +1579,7 @@ function applyGame(context, gameSpec) {
         var _a;
         return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
       }, 
-      (game) => pathPattern(context.api, game, `{gamePath}\\${BINARIES_PATH}`), 
+      (game) => pathPattern(context.api, game, path.join('{gamePath}', BINARIES_PATH)),
       () => Promise.resolve(false), 
       { name: SIGBYPASS_NAME }
     );
@@ -1568,7 +1614,7 @@ function applyGame(context, gameSpec) {
     () => Promise.resolve(false), 
     { name: SAVE_NAME }
   );
-
+  
   //register mod installers
   context.registerInstaller(UE4SSCOMBO_ID, 25, testUe4ssCombo, installUe4ssCombo);
   context.registerInstaller(LOGICMODS_ID, 27, testLogic, installLogic);
@@ -1623,6 +1669,7 @@ function applyGame(context, gameSpec) {
     return gameId === GAME_ID;
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
+    //CONFIG_PATH = await setConfigPath(context.api);
     const openPath = CONFIG_PATH;
     util.opn(openPath).catch(() => null);
   }, () => {
@@ -1631,6 +1678,7 @@ function applyGame(context, gameSpec) {
     return gameId === GAME_ID;
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Saves Folder', () => {
+    //SAVE_PATH = await setSavePath(context.api);
     const openPath = SAVE_PATH;
     util.opn(openPath).catch(() => null);
   }, () => {
@@ -1692,9 +1740,32 @@ function main(context) {
     });
   }
   context.once(() => { // put code here that should be run (once) when Vortex starts up
-
+    //context.api.onAsync('did-deploy', (profileId) => didDeploy(context.api, profileId)); //*/
+    //context.api.onAsync('did-purge', (profileId) => didPurge(context.api, profileId)); //*/
   });
   return true;
+}
+
+async function didDeploy(api, profileId) { //run on mod deploy
+  const state = api.getState();
+  const profile = selectors.profileById(state, profileId);
+  const gameId = profile === null || profile === void 0 ? void 0 : profile.gameId;
+  if (gameId !== GAME_ID) {
+    return Promise.resolve();
+  }
+  
+  return Promise.resolve();
+}
+
+async function didPurge(api, profileId) { //run on mod purge
+  const state = api.getState();
+  const profile = selectors.profileById(state, profileId);
+  const gameId = profile === null || profile === void 0 ? void 0 : profile.gameId;
+  if (gameId !== GAME_ID) {
+    return Promise.resolve();
+  }
+  
+  return Promise.resolve();
 }
 
 //export to Vortex
