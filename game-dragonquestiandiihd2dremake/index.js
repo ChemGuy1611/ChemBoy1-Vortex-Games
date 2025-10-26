@@ -21,14 +21,11 @@ const GAME_ID = "dragonquestiandiihd2dremake";
 const STEAMAPP_ID = "2893570";
 const STEAMAPP_ID_DEMO = null;
 const EPICAPP_ID = null;
-const GOGAPP_ID = "XXX";
+const GOGAPP_ID = null;
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 const GAME_NAME = "Dragon Quest I & II HD-2D Remake";
 const GAME_NAME_SHORT = "DQ I&II Remake";
 const EXEC = "DragonQuestIIHD2DRemake.exe";
-const EXEC_EPIC = EXEC;
-const EXEC_GOG = EXEC;
-const EXEC_DEMO = EXEC;
 
 //Unreal Engine specific
 const EPIC_CODE_NAME = "Game";
@@ -206,31 +203,31 @@ const spec = {
       "id": LOGICMODS_ID,
       "name": LOGICMODS_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${LOGICMODS_PATH}`
+      "targetPath": path.join('{gamePath}', LOGICMODS_PATH)
     },
     {
       "id": UE4SS_ID,
       "name": UE4SS_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${BINARIES_PATH}`
+      "targetPath": path.join('{gamePath}', BINARIES_PATH)
     },
     {
       "id": SCRIPTS_ID,
       "name": SCRIPTS_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${SCRIPTS_PATH}`
+      "targetPath": path.join('{gamePath}', SCRIPTS_PATH)
     },
     {
       "id": DLL_ID,
       "name": DLL_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${DLL_PATH}`
+      "targetPath": path.join('{gamePath}', DLL_PATH)
     },
     {
       "id": PAK_ID,
       "name": PAK_NAME,
       "priority": "low",
-      "targetPath": `{gamePath}\\${PAK_ALT_PATH}`
+      "targetPath": path.join('{gamePath}', PAK_ALT_PATH)
     },
     {
       "id": ROOT_ID,
@@ -242,13 +239,13 @@ const spec = {
       "id": CONTENT_ID,
       "name": CONTENT_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${CONTENT_PATH}`
+      "targetPath": path.join('{gamePath}', CONTENT_PATH)
     },
     {
       "id": BINARIES_ID,
       "name": BINARIES_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${BINARIES_PATH}`
+      "targetPath": path.join('{gamePath}', BINARIES_PATH)
     },
   ],
   "discovery": {
@@ -351,54 +348,6 @@ async function requiresLauncher(gamePath, store) {
     });
   } //*/
   return Promise.resolve(undefined);
-}
-
-//Get correct executable for game version
-function getExecutable(discoveryPath) {
-  const isCorrectExec = (exec) => {
-    try {
-      fs.statSync(path.join(discoveryPath, exec));
-      return true;
-    }
-    catch (err) {
-      return false;
-    }
-  };
-  if (isCorrectExec(EXEC_EPIC)) {
-    GAME_VERSION = 'epic';
-    return EXEC_EPIC;
-  };
-  if (isCorrectExec(EXEC_GOG)) {
-    GAME_VERSION = 'gog';
-    return EXEC_GOG;
-  }; 
-  if (isCorrectExec(EXEC_DEMO)) {
-    GAME_VERSION = 'demo';
-    return EXEC_DEMO;
-  }; //*/
-  GAME_VERSION = 'default';
-  return EXEC;
-}
-
-//Get correct shipping executable for game version
-function getShippingExe(gamePath) {
-  const isCorrectExec = (exec) => {
-    try {
-      fs.statSync(path.join(gamePath, exec));
-      return true;
-    }
-    catch (err) {
-      return false;
-    }
-  };
-  if (isCorrectExec(EXEC_DEFAULT)) {
-    SHIPPING_EXE = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_XBOX}\\${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_DEFAULT}-Shipping.exe`;
-    return SHIPPING_EXE; 
-  };
-  if (isCorrectExec(EXEC_EPIC)) {
-    SHIPPING_EXE = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_DEFAULT}\\${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_EGS}-Shipping.exe`;
-    return SHIPPING_EXE;
-  };
 }
 
 const getDiscoveryPath = (api) => { //get the game's discovered path
@@ -1533,7 +1482,7 @@ function applyGame(context, gameSpec) {
         var _a;
         return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
       }, 
-      (game) => pathPattern(context.api, game, `{gamePath}\\${BINARIES_PATH}`), 
+      (game) => pathPattern(context.api, game, path.join('{gamePath}', BINARIES_PATH)),
       () => Promise.resolve(false), 
       { name: SIGBYPASS_NAME }
     );

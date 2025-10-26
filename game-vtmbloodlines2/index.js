@@ -1451,14 +1451,13 @@ async function setup(discovery, api, gameSpec) {
   GAME_PATH = discovery.path;
   STAGING_FOLDER = selectors.installPathForGame(state, gameSpec.game.id);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, gameSpec.game.id);
-  //*
-  CONFIG_PATH = await setConfigPath(api);
-  SAVE_PATH = await setSavePath(api); 
   CHECK_DATA = checkPartitions(CONFIGMOD_LOCATION, GAME_PATH);
   if (!CHECK_DATA) {
     partitionCheckNotify(api, CHECK_DATA);
   }
   // ASYNC CODE //////////////////////////////////////////
+  CONFIG_PATH = await setConfigPath(api);
+  SAVE_PATH = await setSavePath(api); 
   if (CHECK_DATA) { //if game, staging folder, and config and save folders are on the same drive
     await fs.ensureDirWritableAsync(CONFIG_PATH);
     await fs.ensureDirWritableAsync(SAVE_PATH);
