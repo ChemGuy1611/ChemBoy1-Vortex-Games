@@ -2,8 +2,8 @@
 Name: Cronos: The New Dawn Vortex Extension
 Structure: UE5 (static exe)
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2025-09-04
+Version: 0.1.1
+Date: 2025-10-26
 //////////////////////////////////////////////////*/
 
 //Import libraries
@@ -19,7 +19,7 @@ const LOCALAPPDATA = util.getVortexPath('localAppData');
 //Specify all information about the game
 const GAME_ID = "cronosthenewdawn";
 const STEAMAPP_ID = "2101960";
-const STEAMAPP_ID_DEMO = null;
+const STEAMAPP_ID_DEMO = "3870690";
 const EPICAPP_ID = "641abaddc74f4adfa3aa20dc9cadaf88";
 const GOGAPP_ID = "1546068368";
 const GAME_NAME = "Cronos: The New Dawn";
@@ -243,7 +243,7 @@ const spec = {
       STEAMAPP_ID,
       EPICAPP_ID,
       GOGAPP_ID,
-      //STEAMAPP_ID_DEMO,
+      STEAMAPP_ID_DEMO,
     ],
     "names": []
   }
@@ -314,7 +314,7 @@ function makeFindGame(api, gameSpec) {
 }
 
 async function requiresLauncher(gamePath, store) {
-  /*if (store === 'epic') {
+  if (store === 'epic') {
     return Promise.resolve({
         launcher: 'epic',
         addInfo: {
@@ -1399,7 +1399,7 @@ function partitionCheckNotify(api, CHECK_DATA) {
 
 async function resolveGameVersion(gamePath, exePath) {
   //SHIPPING_EXE = getShippingExe(gamePath);
-  READ_FILE = path.join(gamePath, SHIPPING_EXE);
+  const READ_FILE = path.join(gamePath, SHIPPING_EXE);
   let version = '0.0.0';
   try {
     const exeVersion = require('exe-version');
