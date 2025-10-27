@@ -343,7 +343,7 @@ function installSave(files) {
 
 async function resolveGameVersion(gamePath, exePath) {
   //SHIPPING_EXE = getShippingExe(gamePath);
-  READ_FILE = path.join(gamePath, SHIPPING_EXE);
+  const READ_FILE = path.join(gamePath, SHIPPING_EXE);
   let version = '0.0.0';
   try {
     const exeVersion = require('exe-version');

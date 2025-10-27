@@ -783,7 +783,7 @@ async function psarcCleanup(api) {
     try { //make sure vanilla file is not in place - this usually means the game was updated
       fs.statSync(path.join(GAME_PATH, PSARCTOOL_PATH, SPCOMPSARC_FILE));
       fs.unlinkAsync(path.join(GAME_PATH, PSARCTOOL_PATH, BAK_SPCOMPSARC_FILE));
-    } catch (err) {
+    } catch (err) { //vanilla file not present, safe to rename
       await fs.renameAsync(path.join(GAME_PATH, PSARCTOOL_PATH, BAK_SPCOMPSARC_FILE), path.join(GAME_PATH, PSARCTOOL_PATH, SPCOMPSARC_FILE));
       //log('warn', `Renamed .psarc file ${BAK_SPCOMPSARC_FILE} to ${SPCOMPSARC_FILE}`);
     }

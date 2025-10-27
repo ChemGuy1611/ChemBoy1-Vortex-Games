@@ -1,3 +1,17 @@
+// TOP-LEVEL VARIABLES ///////////////////////////////////////////////////////////
+//////////////////////////////////////////////////////////////////////////////////
+
+const USER_HOME = util.getVortexPath("home");
+const DOCUMENTS = util.getVortexPath("documents");
+const ROAMINGAPPDATA = util.getVortexPath('appData');
+const LOCALAPPDATA = util.getVortexPath('localAppData');
+
+let GAME_PATH = null;
+let STAGING_FOLDER = '';
+let DOWNLOAD_FOLDER = '';
+let GAME_VERSION = '';
+
+
 
 // BASIC FUNCTIONS ///////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////
@@ -34,6 +48,48 @@ if (USERID_FOLDER === undefined) {
 } //*/
 let SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
 
+//Write section to an ini file //////////////////////////////////////////////////////
+try { //Fallout4.ini
+const parser = new IniParser(new WinapiFormat());
+fs.statSync(INI_PATH_DEFAULT); //make sure the file exists
+const contents = await parser.read(INI_PATH_DEFAULT);
+let TEST = false;
+let TEST_LINE = '';
+try {
+    TEST_LINE = contents.data['Archive']['SCellResourceIndexFileList'];
+} catch {
+    TEST_LINE = '';
+}
+TEST = TEST_LINE === INI_ARCHIVE_OBJECT.SCellResourceIndexFileList;
+if (!TEST) {
+    contents.data['Archive'] = INI_ARCHIVE_OBJECT; // Set the Archive section to the new value
+    await parser.write(INI_PATH_DEFAULT, contents) //write the INI file
+    .then(() => log('warn', `${EXTENSION_NAME} wrote FOLON INI settings to "${INI_FILE_DEFAULT}"`))
+    .then(() => iniSuccessNotifyDefault(api))
+    .catch(err => api.showErrorNotification(`Error when writing FOLON INI settings to ${INI_FILE_DEFAULT}`, err, { allowReport: true }));
+}
+} catch (err) {
+api.showErrorNotification(`${EXTENSION_NAME} failed to write FOLON INI settings to ${INI_FILE_DEFAULT}`, err, { allowReport: true });
+}
+
+//create a directory link in the staging folder //////////////////////////////////////////////////////
+async function makeLink(api, src, dest, type) {
+  type = type || 'dir'; //default to directory link
+  try {
+    fs.statSync(dest); //check if linked staging folder already exists
+    return; //exit if it does
+  } catch {
+    await fs.symlinkAsync(src, dest, type) //make directory link
+    //return api.runExecutable('cmd.exe', [`mklink`, `/D`, `"${dest}"`, `"${src}"`], { shell: true, detached: true }) run through cmd.exe
+    //return api.runExecutable('makelink.bat', [`mklink`, `/D`, `"${dest}"`, `"${src}"`], { shell: true, detached: true }) run through .bat file (close and restart Vortex)
+      .then(() => log('warn', `${EXTENSION_NAME} created directory link for FOLON GOG files directory from path "${src}" to path "${dest}"`))
+      .then(() => linkSuccessNotify(api)) //notify user of linking success
+      .then(() => changeFolonModTypeNotify(api)) //notify user of manual steps required
+      .then(() => changeFolonModTypeAuto(api)) //attempt to automatically enable and change mod type for falloutlondon mod (relies on user responding to popup within 10 seconds)
+      .catch(err => api.showErrorNotification(`${EXTENSION_NAME} failed to create directory link for FOLON GOG files`, err, { allowReport: true }));
+  }
+}
+
 // Check if folders are on the same drive partition //////////////////////////////////////////////////////
 STAGING_FOLDER = selectors.installPathForGame(state, gameSpec.game.id);
 DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, gameSpec.game.id);
@@ -62,7 +118,7 @@ function checkPartitions(folder, discoveryPath) {
     return false;
   }
 }
-//* register modtypes with partition checks
+//* register modtypes with partition checks //////////////////////////////////////////////////////
 context.registerModType(CONFIG_ID, 60, 
 (gameId) => {
     GAME_PATH = getDiscoveryPath(context.api);
@@ -98,10 +154,275 @@ async function didPurge(api, profileId) { //run on mod purge
   return Promise.resolve();
 }
 
+
+// INSTALLER FUNCTIONS ///////////////////////////////////////////////////////////
+///////////////////////////////////////////////////////////////////////////////////
+
+//Installer with dialogue selection //////////////////////////////////////////////////////
+function installPk4(api, files) {
+  const modFile = files.find(file => path.extname(file).toLowerCase() === modFileExt);
+  const CANC_BUT = 'Cancel';
+  const SP_BUT = 'Install to SP Folder';
+  const MP_BUT = 'Install to MP Folder';
+  //return __awaiter(this, void 0, void 0, function* () {
+    return api.showDialog('question', 'Choose Install for .pk4 Files', {
+      text: 'The mod you are installing contains .pk4 files.' +
+          `Select if these .pk4 files should be installed to the "SP" (SinglePlayer) folder or "MP" (MultiPlayer) folder.`,
+      }, [
+        { label: CANC_BUT },
+        { label: SP_BUT },
+        { label: MP_BUT },
+        ]).then((result) => {
+          if (result.action === CANC_BUT) {
+            return Promise.reject(new util.ProcessCanceled('User cancelled.'));
+          }
+          if (result.action === SP_BUT) {
+            const idx = modFile.indexOf(path.basename(modFile));
+            const rootPath = path.dirname(modFile);
+            const setModTypeInstruction = { type: 'setmodtype', value: SPBASE_ID };
+            // Remove directories and anything that isn't in the rootPath.
+            const filtered = files.filter(file =>
+              ((file.indexOf(rootPath) !== -1))
+            );
+            const instructions = filtered.map(file => {
+              return {
+                type: 'copy',
+                source: file,
+                destination: path.join(file.substr(idx)),
+              };
+            });
+            instructions.push(setModTypeInstruction);
+            return Promise.resolve({ instructions });
+          }
+          if (result.action === MP_BUT) {
+            const idx = modFile.indexOf(path.basename(modFile));
+            const rootPath = path.dirname(modFile);
+            const setModTypeInstruction = { type: 'setmodtype', value: MPBASE_ID };
+            // Remove directories and anything that isn't in the rootPath.
+            const filtered = files.filter(file =>
+              ((file.indexOf(rootPath) !== -1))
+            );
+            const instructions = filtered.map(file => {
+              return {
+                type: 'copy',
+                source: file,
+                destination: path.join(file.substr(idx)),
+              };
+            });
+            instructions.push(setModTypeInstruction);
+            return Promise.resolve({ instructions });
+          }
+        });
+  //});
+}
+
+//Installer with user input to rename folder //////////////////////////////////////////////////////
+function installFallback(api, files, fileName) {
+  // Remove empty directories
+  const filtered = files.filter(file =>
+    (!file.endsWith(path.sep))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file),
+    };
+  });
+  fallbackInstallerNotify(api, fileName);
+  return Promise.resolve({ instructions });
+}
+//Notify User of instructions for Mod Merger Tool
+function renamingRequiredNotify(api, fileName) {
+  const state = api.getState();
+  STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
+  const MOD_NAME = path.basename(fileName).replace(/(.installing)*(.zip)*(.rar)*(.7z)*/gi, '');
+  const NOTIF_ID = `${GAME_ID}-installerrenamingrequired`;
+  const MESSAGE = `MANUAL FOLDER RENAMING REQUIRED FOR ${MOD_NAME}`;
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'warning',
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: 'More',
+        action: (dismiss) => {
+          api.showDialog('question', MESSAGE, {
+            text: `You've just installed a mod with loose ".data" files or a folder name containing ".data" without a .forge folder above it. The affected mod is shown below.\n`
+              + `\n`
+              + `${MOD_NAME}.\n`
+              + `\n`
+              + `Because the mod author did not package the mod in the correct folder structure, you must manually rename folders in the mod Staging Folder. Pick one of the methods below to rename the folder.\n`
+              + `\n`
+              + `Check the mod page description to determine what the correct "FORGE_FILE_NAME" should be. You can use the "Open Mod Page" button below. This notification will remain active after opening the mod page.\n`
+              + `\n`
+              + `EASY MODE: Click the "Show Folder Rename Dialog" button below to open a dialog popup to rename the .forge folder.\n`
+              + `\n`
+              + `ADVANCED MODE:\n`
+              + ` 1. Open the Staging Folder with the button below and rename the folder as indicated.\n`
+              + ` 2. Deploy mods in Vortex.\n`
+              + ` 3. You will get an "External Changes" popup in Vortex after doing this. Select "Save change (delete file)".\n`
+              + `\n`
+              + `The correct structure is:  Extracted\\FORGE_FILE_NAME.forge\\DATA_FILE.data.\n`
+              + `The .forge folder is already in place for you to rename.\n`
+              + `\n`
+          }, [
+            //*
+            { label: `Open Mod Page`, action: () => {
+              const mods = util.getSafe(api.store.getState(), ['persistent', 'mods', spec.game.id], {});
+              const modMatch = Object.values(mods).find(mod => mod.installationPath === MOD_NAME);
+              log('warn', `Found ${modMatch?.id} for ${MOD_NAME}`);
+              let PAGE = ``;
+              if (modMatch) {
+                const MOD_ID = modMatch.attributes.modId;
+                PAGE = `${MOD_ID}?tab=description`;
+              }
+              const MOD_PAGE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${PAGE}`;
+              util.opn(MOD_PAGE_URL).catch(err => undefined);
+              //dismiss();
+            }}, //*/
+            { label: `Show Folder Rename Dialog`, action: () => {
+              const mods = util.getSafe(api.store.getState(), ['persistent', 'mods', spec.game.id], {});
+              const modMatch = Object.values(mods).find(mod => mod.installationPath === MOD_NAME);
+              folderRenameDialog(api, modMatch);
+              dismiss();
+            }}, //*/
+            { label: `Open Staging Folder`, action: () => {
+              util.opn(path.join(STAGING_FOLDER, MOD_NAME)).catch(err => undefined);
+              dismiss();
+            }}, //*/
+            { label: 'Close', action: () => dismiss() },
+          ]
+          );
+        },
+      },
+    ],
+  });
+}
+const RENAME_INPUT_ID = `${GAME_ID}-forgefolderrenameinput`;
+async function purge(api) {
+  return new Promise((resolve, reject) => api.events.emit('purge-mods', true, (err) => err ? reject(err) : resolve()));
+}
+async function deploy(api) {
+  return new Promise((resolve, reject) => api.events.emit('deploy-mods', (err) => err ? reject(err) : resolve()));
+}
+//dialogue for user input folder name
+async function folderRenameDialog(api, mod) {
+  return api.showDialog('question', 'Rename .forge Folder', {
+      text: api.translate(`Enter the correct .forge folder name for ${mod.name}:`),
+      input: [
+          {
+              id: RENAME_INPUT_ID,
+              label: 'For',
+              type: 'text',
+              placeholder: RENAME_FOLDER,
+          }
+      ],
+  }, [{ label: 'Cancel' }, { label: 'Rename', default: true }])
+  .then(result => { //rename the folder in the mod staging folder
+    if (result.action === 'Rename') {
+      const name = result.input[RENAME_INPUT_ID];
+      if ( ( name.trim() === ( '' || RENAME_FOLDER ) ) || !name.includes(FORGE_EXT) ) {
+        api.showErrorNotification('Invalid name entered for .forge folder. You will have to rename the folder manually.', undefined, { allowReport: false });
+        return Promise.resolve();
+      }
+      const state = api.getState();
+      STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
+      const FOLDER_PATH = path.join(STAGING_FOLDER, mod.installationPath, EXTRACTED_FOLDER);
+      const EXISTING = path.join(FOLDER_PATH, RENAME_FOLDER);
+      const NEW = path.join(FOLDER_PATH, name);
+      rename(api, EXISTING, NEW);
+      /*purge(api); //purge mods before renaming folder
+      fs.renameAsync(EXISTING, NEW) //rename the folder
+      deploy(api); //redeploy mods after renaming folder //*/
+    }
+    return Promise.resolve();
+  })
+  .catch(err => {
+    api.showErrorNotification('Failed to rename .forge folder. You will have to rename the folder manually.', err, { allowReport: false });
+    return Promise.resolve();
+  });
+}
+//purge and rename folder
+async function rename(api, EXISTING, NEW) {
+  await purge(api); //purge mods before renaming folder
+  try {
+    fs.statSync(EXISTING); //make sure the folder exists
+    await fs.renameAsync(EXISTING, NEW); //rename the folder
+  }
+  catch (err) {
+    api.showErrorNotification('Failed to rename .forge folder. You will have to rename the folder manually.', err, { allowReport: false });
+    return Promise.resolve();
+  }
+  await deploy(api); //redeploy mods after renaming folder
+  return Promise.resolve();
+}
+//Notify User of instructions for Mod Merger Tool
+function fallbackInstallerNotify(api, fileName) {
+  const state = api.getState();
+  STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
+  const MOD_NAME = path.basename(fileName).replace(/(.installing)*(.zip)*(.rar)*(.7z)*/gi, '');
+  const mods = util.getSafe(api.store.getState(), ['persistent', 'mods', spec.game.id], {});
+  const modMatch = Object.values(mods).find(mod => mod.installationPath === MOD_NAME);
+  log('warn', `Found ${modMatch?.id} for ${MOD_NAME}`);
+  let PAGE = ``;
+  if (modMatch) {
+    const MOD_ID = modMatch.attributes.modId;
+    PAGE = `${MOD_ID}?tab=description`;
+  }
+  const MOD_PAGE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${PAGE}`;
+  const NOTIF_ID = `${GAME_ID}-fallbackinstaller`;
+  const MESSAGE = `Fallback installer reached for ${MOD_NAME}`;
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'warning',
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: 'More',
+        action: (dismiss) => {
+          api.showDialog('question', MESSAGE, {
+            text: `You've reached the fallback installer for the mod below. This mod is either not intended to be used with ATK, or it is packaged in a way that Vortex can't handle.\n`
+              + `\n`
+              + `${MOD_NAME}.\n`
+              + `\n`
+              + `Please manually verify that the mod is installed correctly. You can open the Staging Folder with the button below.\n`
+              + `Check the mod page description with the button below to determine how the mod should be installed.\n`
+              + `\n`
+          }, [
+            //*
+            { label: `Open Mod Page`, action: () => {
+              const mods = util.getSafe(api.store.getState(), ['persistent', 'mods', spec.game.id], {});
+              const modMatch = Object.values(mods).find(mod => mod.installationPath === MOD_NAME);
+              log('warn', `Found ${modMatch?.id} for ${MOD_NAME}`);
+              let PAGE = ``;
+              if (modMatch) {
+                const MOD_ID = modMatch.attributes.modId;
+                PAGE = `${MOD_ID}?tab=description`;
+              }
+              const MOD_PAGE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${PAGE}`;
+              util.opn(MOD_PAGE_URL).catch(err => undefined);
+              dismiss();
+            }}, //*/
+            { label: `Open Staging Folder`, action: () => {
+              util.opn(path.join(STAGING_FOLDER, MOD_NAME)).catch(err => undefined);
+              dismiss();
+            }}, //*/
+            { label: 'Close', action: () => dismiss() },
+          ]
+          );
+        },
+      },
+    ],
+  });
+}
+
 //AUTO-DOWNLOAD FUNCTIONS /////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////
 
-//* for downloader.js
+//* for downloader.js //////////////////////////////////////////////////////
 const { download, findModByFile, findDownloadIdByFile, resolveVersionByPattern, testRequirementVersion } = require('./downloader');
 const SHADPS4_ARC_NAME = `shadps4-win64-qt-${SHADPS4_VERSION}.zip`;
 const SHADPS4_URL_MAIN = `https://api.github.com/repos/shadps4-emu/shadPS4`;
@@ -166,7 +487,7 @@ function isUe4ssInstalled(api, spec) {
   return Object.keys(mods).some(id => mods[id]?.type === UE4SS_ID);
 }
 
-// Download from GitHub page (user browse for download)
+// Download from GitHub page (user browse for download) /////////////////////////////////////////////////////
 async function downloadUe4ss(api, gameSpec) {
   let isInstalled = isUe4ssInstalled(api, gameSpec);
   const URL = UE4SS_URL;
@@ -237,7 +558,7 @@ async function downloadUe4ss(api, gameSpec) {
   }
 } //*/
 
-// Function to user-browse download from an external website
+// Function to user-browse download from an external website //////////////////////////////////////////////////////
 async function downloadUe4ssNexus(api, gameSpec) {
   let isInstalled = isUe4ssInstalled(api, gameSpec);
   if (!isInstalled) {
@@ -302,7 +623,8 @@ async function downloadUe4ssNexus(api, gameSpec) {
   }
 } //*/
 
-//* User Browse download and Run executable
+//* User Browse download and Run executable //////////////////////////////////////////////////////
+
 
 
 // LOAD ORDER /////////////////////////////////////////////////////////////////////
@@ -327,7 +649,6 @@ context.registerLoadOrderPage({
     + 'the folder names with "AAA, AAB, AAC, ..." to ensure they load in the order you set here. '
     + 'The number in the left column represents the overwrite order. The changes from mods with higher numbers will take priority over other mods which make similar edits.'),
 });
-
 //UNREAL - Pre-sort function
 async function preSort(api, items, direction) {
   const mods = util.getSafe(api.store.getState(), ['persistent', 'mods', spec.game.id], {});
@@ -457,7 +778,6 @@ function UNREALEXTENSION(context) {
       requiredFiles: []
     });
   };
-
   const getUnrealModsPath = (game) => {
     const modsPath = UNREALDATA.modsPath;
     const state = context.api.getState();
@@ -465,9 +785,7 @@ function UNREALEXTENSION(context) {
     const installPath = [discoveryPath].concat(modsPath.split(path.sep));
     return discoveryPath ? path.join.apply(null, installPath) : undefined;
   };
-
   context.registerInstaller('ue5-pak-installer', 29, testForUnrealMod, (files, __destinationPath, gameId) => installUnrealMod(context.api, files, gameId));
-
   context.registerModType(UE5_SORTABLE_ID, 25, 
     (gameId) => testUnrealGame(gameId, true), 
     getUnrealModsPath, 
@@ -478,10 +796,367 @@ function UNREALEXTENSION(context) {
   );
 }
 
-// FBLO (File-Based Load Order) //////////////////////////////////////////////////////////////////////
+// FBLO (File-Based Load Order) /////////////////////////////////////////////////////////////
+let mod_update_all_profile = false;
+let updatemodid = undefined;
+let updating_mod = false; // used to see if it's a mod update or not
+let mod_install_name = ""; // used to display the name of the currently installed mod
+//in main function
+context.once(() => { // put code here that should be run (once) when Vortex starts up
+    context.api.onAsync('did-purge', (profileId) => didPurge(context.api, profileId)); //*/
+    context.api.onAsync("did-deploy", (profileId) => {
+        mod_update_all_profile = false;
+        updating_mod = false;
+        updatemodid = undefined;
+    });
+    context.api.events.on("mod-update", (gameId, modId, fileId) => {
+        if (GAME_ID == gameId) {
+        updatemodid = modId;
+        }
+    });
+    context.api.events.on("remove-mod", (gameMode, modId) => {
+        if (modId.includes("-" + updatemodid + "-")) {
+        mod_update_all_profile = true;
+        }
+    });
+    context.api.events.on("will-install-mod", (gameId, archiveId, modId) => {
+        mod_install_name = modId.split("-")[0];
+        if (GAME_ID == gameId && modId.includes("-" + updatemodid + "-")) {
+        updating_mod = true;
+        } else {
+        updating_mod = false;
+        }
+    }); //*/
+});
+context.registerLoadOrder({
+    gameId: GAME_ID,
+    deserializeLoadOrder: async () => await deserializeLoadOrder(context),
+    serializeLoadOrder: async (loadOrder) => await serializeLoadOrder(context, loadOrder),  
+    validate: async (prev, current) => await validate(context, prev, current), 
+    //validate: async () => Promise.resolve(undefined), // no validation
+    toggleableEntries: true,
+    clearStateOnPurge: false,
+    //noCollectionGeneration: undefined,
+    usageInstructions:`Drag and drop the mods on the left to change the order in which they load.   \n` 
+                    +`${GAME_NAME} loads mods in the order you set from top to bottom.   \n`
+                    +`De-select mods to prevent the game from loading them.   \n`
+                    +`\n`,
+});
+//deserialize load order
+async function deserializeLoadOrder(context) {
+  //Set basic information for load order paths and data
+  let gameDir = getDiscoveryPath(context.api);
+  if (gameDir === undefined) {
+    return Promise.reject(new util.NotFound('Game not found'));
+  }
+  const mods = util.getSafe(context.api.store.getState(), ['persistent', 'mods', spec.game.id], {});
+  const loadOrderPath = path.join(gameDir, PLUGINSTXT_PATH);
+  let loadOrderFile = await fs.readFileAsync(
+    loadOrderPath, 
+    { encoding: "utf8", }
+  );
+  //Get all .esm/esp/esl files from Data folder
+  let modFolderPath = path.join(gameDir, PLUGINS_PATH);
+  let modFiles = [];
+  try {
+    modFiles = await fs.readdirAsync(modFolderPath);
+    modFiles = modFiles.filter(file => PLUGINS_EXTS_FILTER.includes(path.extname(file).toLowerCase()));
+    modFiles = modFiles.filter(file => !DEFAULT_PLUGINS.includes(path.basename(file)));
+    modFiles = modFiles.filter(file => !EXCLUDED_PLUGINS.includes(path.basename(file)));
+    modFiles.sort((a,b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+  } catch {
+    return Promise.reject(new Error('Failed to read Data folder'));
+  }
+  // Get readable mod name using attribute from mod installer
+  async function getModName(file) {
+    try {//find mod where atrribute (from installer) matches file in the load order
+      const modMatch = Object.values(mods).find(mod => (util.getSafe(mods[mod.id]?.attributes, ['plugins'], '').includes(file))); //find mod that includes the plugin file
+      if (modMatch) {
+        return modMatch.attributes.customFileName ?? modMatch.attributes.logicalFileName ?? modMatch.attributes.name;
+      }
+      return file;
+    } catch (err) {
+      return file;
+    }
+  }
+  // Get readable mod id using attribute from mod installer
+  async function getModId(file) {
+    try {//find mod where atrribute (from installer) matches file in the load order
+      const modMatch = Object.values(mods).find(mod => (util.getSafe(mods[mod.id]?.attributes, ['plugins'], '').includes(file))); //find mod that includes the plugin file
+      if (modMatch) {
+        return modMatch.id;
+      }
+      return undefined;
+    } catch (err) {
+      return undefined;
+    }
+  }
+  //* Set initial load order from file
+  let loadOrder = await (loadOrderFile.split("\n"))
+    .reduce(async (accumP, line) => {
+      const accum = await accumP;
+      const file = line.replace(/#/g, '');
+      if (!modFiles.includes(file)) {
+        return Promise.resolve(accum);
+      }
+      accum.push(
+      {
+        id: file,
+        name: `${file} (${await getModName(file)})`,
+        modId: await getModId(file),
+        enabled: !line.startsWith("#"),
+      }
+      );
+      return Promise.resolve(accum);
+    }, Promise.resolve([])
+  ); //*/
+  //push new mods to loadOrder
+  for (let file of modFiles) {
+    if (!loadOrder.find((mod) => (mod.id === file))) {
+      loadOrder.push({
+        id: file,
+        name: `${file} (${await getModName(file)})`,
+        modId: await getModId(file),
+        enabled: true,
+      });
+    }
+  }
+  return loadOrder;
+}
+//Serialize load order
+async function serializeLoadOrder(context, loadOrder) {
+  let gameDir = getDiscoveryPath(context.api);
+  if (gameDir === undefined) {
+    return Promise.reject(new util.NotFound('Game not found'));
+  }
+  const loadOrderPath = path.join(gameDir, PLUGINSTXT_PATH);
+  let loadOrderOutput = loadOrder
+  .map((mod) => (mod.enabled ? mod.id : `#${mod.id}`))
+  .join("\n");
+  /* Log load order
+  let loadOrderLog = loadOrder
+  .map((mod) => (mod.enabled ? mod.id : `#${mod.id}`))
+  .join(", ");
+  log('warn', `Load Order: ${loadOrderLog}`); //*/
+  const header = `# File generated by Vortex. Please do not edit this file.\n`;
+  return fs.writeFileAsync(
+    loadOrderPath,
+    `${header + PLUGINSTXT_DEFAULT_CONTENT + loadOrderOutput}`, //empty line included in default plugins list to avoid overlap
+    { encoding: "utf8" },
+  );
+}
+//Validate load order
+async function validate(context, prev, current) {
+  const invalid = [];
+  GAME_PATH = getDiscoveryPath(context.api);
+  const dataPath = path.join(GAME_PATH, PLUGINS_PATH);
+  for (const entry of current) {
+    try {
+      await fs.statAsync(path.join(dataPath, entry.id));
+    }
+    catch (err) {
+      invalid.push({ id: entry.id, reason: 'File not found in Data folder' });
+    }
+  }
+  return invalid.length > 0 ? Promise.resolve({ invalid }) : Promise.resolve(undefined);
+}
 
+//FBLO with order written to an existing txt file with other data in it //////////////////
+//purge reset txt files
+async function didPurge(api, profileId) { //run on mod purge
+  const state = api.getState();
+  const profile = selectors.profileById(state, profileId);
+  const gameId = profile === null || profile === void 0 ? void 0 : profile.gameId;
+  if (gameId !== GAME_ID) {
+    return Promise.resolve();
+  }
+  psarcCleanup(api);
+  clearModOrder(api);
+  clearChunksTxt(api);
+  return Promise.resolve();
+}
+//deserialize
+async function deserializeLoadOrder(context) {
+  //* on mod update for all profile it would cause the mod if it was selected to be unselected
+  if (mod_update_all_profile) {
+    let allMods = Array("mod_update");
 
-//Dynamic executable path
+    return allMods.map((modId) => {
+      return {
+        id: "mod update in progress, please wait. Refresh when finished. \n To avoid this wait, only update current profile",
+        modId: modId,
+        enabled: false,
+      };
+    });
+  } //*/
+  //Set basic information for load order paths and data
+  let gameDir = getDiscoveryPath(context.api);
+  if (gameDir === undefined) {
+    return Promise.reject(new util.NotFound('Game not found'));
+  }
+  const mods = util.getSafe(context.api.store.getState(), ['persistent', 'mods', spec.game.id], {});
+  let loadOrderPath = path.join(gameDir, LO_FILE);
+  let loadOrderFile = await fs.readFileAsync(
+    loadOrderPath, 
+    { encoding: "utf8", }
+  );
+  let loadOrderSplit = loadOrderFile.split("\n");
+  let LO_LINE = loadOrderSplit.find(line => line.startsWith(LO_LINE_START)); //we are putting the list on one line. should be element [1], but doing find just in case that ever changes.
+  LO_LINE = LO_LINE.replace(LO_LINE_START, '');
+  let modFolderPath = path.join(gameDir, PSARC_PATH);
+  //Get all .psarc files from mods folder
+  let modFiles = [];
+  try {
+    modFiles = await fs.readdirAsync(modFolderPath);
+    modFiles = modFiles.filter((file) => (path.extname(file) === PSARC_EXT));
+    modFiles.sort((a,b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+  } catch {
+    return Promise.reject(new Error('Failed to read .psarc "mods" folder'));
+  }
+  // Get readable mod name using attribute from mod installer
+  async function getModName(file) {
+    try {//find mod where atrribute (from installer) matches file in the load order
+      const modMatch = Object.values(mods).find(mod => (util.getSafe(mods[mod.id]?.attributes, ['psarcFiles'], '').includes(file))); //find mod that includes the psarc file
+      if (modMatch) {
+        return modMatch.attributes.customFileName ?? modMatch.attributes.logicalFileName ?? modMatch.attributes.name;
+      }
+      return file;
+    } catch (err) {
+      return file;
+    }
+  }
+  // Get readable mod id using attribute from mod installer
+  async function getModId(file) {
+    try {//find mod where atrribute (from installer) matches file in the load order
+      const modMatch = Object.values(mods).find(mod => (util.getSafe(mods[mod.id]?.attributes, ['psarcFiles'], '').includes(file))); //find mod that includes the psarc file
+      if (modMatch) {
+        return modMatch.id;
+      }
+      return undefined;
+    } catch (err) {
+      return undefined;
+    }
+  }
+  //Set load order
+  let loadOrder = await (LO_LINE.split(","))
+    .reduce(async (accumP, entry) => {
+      const accum = await accumP;
+      const file = entry;
+      if (!modFiles.includes(file)) {
+        return Promise.resolve(accum);
+      }
+      accum.push(
+      {
+        id: file,
+        name: `${file.replace(PSARC_EXT, '')} (${await getModName(file)})`,
+        modId: await getModId(file),
+        enabled: true,
+      }
+      );
+      return Promise.resolve(accum);
+    }, Promise.resolve([]));
+  //push new mod folders from Mods folder to loadOrder
+  for (let file of modFiles) {
+    if (!loadOrder.find((mod) => (mod.id === file))) {
+      loadOrder.push({
+        id: file,
+        name: `${file.replace(PSARC_EXT, '')} (${await getModName(file)})`,
+        modId: await getModId(file),
+        enabled: true,
+      });
+    }
+  }
+  return loadOrder;
+}
+//Write load order to files
+async function serializeLoadOrder(context, loadOrder) {
+  //* don't write if all profiles are being updated
+  if (mod_update_all_profile) {
+    return;
+  } //*/
+  let gameDir = getDiscoveryPath(context.api);
+  if (gameDir === undefined) {
+    return Promise.reject(new util.NotFound('Game not found'));
+  }
+  let loadOrderPath = path.join(gameDir, LO_FILE);
+  let loadOrderFile = await fs.readFileAsync(
+    loadOrderPath, 
+    { encoding: "utf8", }
+  );
+  let loadOrderSplit = loadOrderFile.split("\n");
+  let LO_LINE = loadOrderSplit.find(line => line.startsWith(LO_LINE_START)); //we are putting the list on one line. should be element [1], but doing find just in case that ever changes.
+  let index = loadOrderSplit.indexOf(LO_LINE);
+  let loadOrderMapped = loadOrder
+    //.map((mod) => (mod.id))
+    .map((mod) => (mod.enabled ? mod.id : ``)); //this is used for chunks.txt also
+  let loadOrderJoined = loadOrderMapped
+    .filter((entry) => (entry !== ``))
+    .join(",");
+  loadOrderSplit[index] = LO_LINE_START + loadOrderJoined;
+  //Write to chunks.txt file
+  let chunksPath = path.join(gameDir, CHUNKS_PATH);
+  let loadOrderName = loadOrderMapped
+    .filter((entry) => (entry !== ``))
+    .map((name) => (name.replace('.psarc', '')));
+  const startLine = CHUNKS_START_LINE;
+  for (let line = startLine; line < (startLine + loadOrderName.length); line++) {
+    let offset = line - startLine; //offset to zero for indexing the array from the first element
+    loadOrderName[offset] = `${loadOrderName[offset]} ${line}`;
+  }
+  let loadOrderJoinedChunks = loadOrderName.join(`\n`);
+  await fs.writeFileAsync(
+    chunksPath,
+    `${CHUNKS_DEFAULT_CONTENT}` + `${loadOrderJoinedChunks}`,
+    { encoding: "utf8" },
+  );
+  //write to modloader.ini file
+  let loadOrderOutput = loadOrderSplit.join("\n");
+  return fs.writeFileAsync(
+    loadOrderPath,
+    `${loadOrderOutput}`,
+    { encoding: "utf8" },
+  );
+}
+//remove load order list from modloader.ini on purge
+async function clearModOrder(api) {
+  let gameDir = getDiscoveryPath(api);
+  if (gameDir === undefined) {
+    return Promise.reject(new util.NotFound('Game not found'));
+  }
+  let loadOrderPath = path.join(gameDir, LO_FILE);
+  let loadOrderFile = await fs.readFileAsync(
+    loadOrderPath, 
+    { encoding: "utf8", }
+  );
+  let loadOrderSplit = loadOrderFile.split("\n");
+  let LO_LINE = loadOrderSplit.find(line => line.startsWith(LO_LINE_START)); //we are putting the list on one line. should be element [1], but doing find just in case that ever changes.
+  let index = loadOrderSplit.indexOf(LO_LINE);
+  loadOrderSplit[index] = LO_LINE_START; //set the line to the default "blank" text
+  let loadOrderOutput = loadOrderSplit.join("\n");
+  return fs.writeFileAsync(
+    loadOrderPath,
+    `${loadOrderOutput}`,
+    { encoding: "utf8" },
+  );
+}
+//remove load order list from chunks.txt on purge
+async function clearChunksTxt(api) {
+  let gameDir = getDiscoveryPath(api);
+  if (gameDir === undefined) {
+    return Promise.reject(new util.NotFound('Game not found'));
+  }
+  let chunksPath = path.join(gameDir, CHUNKS_PATH);
+  return fs.writeFileAsync(
+    chunksPath,
+    `${CHUNKS_DEFAULT_CONTENT}`,
+    { encoding: "utf8" },
+  );
+}
+
+// GAME REGISTRATION FUNCTIONS ///////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////////////
+
+//Dynamic executable path //////////////////////////////////////////////////////
 function getExecutable(discoveryPath) {
   const isCorrectExec = (exec) => {
     try {
@@ -516,10 +1191,12 @@ function getExecutable(discoveryPath) {
   return EXEC;
 }
 
+//
+
 // NOTIFICATIONS ///////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////
 
-//Success notification
+//Success notification //////////////////////////////////////////////////////
 function linkSuccessNotify(api) {
   const NOTIF_ID = `${GAME_ID}-folonlinksuccess`;
   const MESSAGE = `${EXTENSION_NAME} successfully linked FOLON GOG game files to FO4 Vortex Staging Folder`;
@@ -532,7 +1209,7 @@ function linkSuccessNotify(api) {
   });
 }
 
-//Basic notification
+//Basic notification //////////////////////////////////////////////////////
 function partitionCheckNotify(api, CHECK_DATA) {
   const NOTIF_ID = `${GAME_ID}-partioncheck`;
   const MESSAGE = 'Some Mods Installers are Not Available';
@@ -575,7 +1252,7 @@ function partitionCheckNotify(api, CHECK_DATA) {
   });
 }
 
-//Tool-run notification
+//Tool-run notification //////////////////////////////////////////////////////
 function deployNotify(api) {
   const NOTIF_ID = `${GAME_ID}-deploy`;
   const MOD_NAME = 'OpenBLCMM or TFC';
@@ -659,19 +1336,221 @@ function runModManager(api, toolId, toolName) {
 // SETUP FUNCTIONS ////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////
 
-//Setup function - ensure modType Folders are writable
+//Setup function - ensure modType Folders are writable /////////////////////
 async function modFoldersEnsureWritable(gamePath, relPaths) {
   for (let index = 0; index < relPaths.length; index++) {
     await fs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
   }
 }
 
-//
+//Choose between mutually-exclusive mod loaders / dependencies ////////////
+async function chooseModLoader(api, gameSpec) {
+  const t = api.translate;
+  const replace = {
+    game: gameSpec.game.name,
+    bl: '[br][/br][br][/br]',
+  };
+  return api.showDialog('info', 'Mod Loader Selection', {
+    bbcode: t('You must choose between BepInEx and MelonLoader to install mods.{{bl}}'
+      + 'Only one mod loader can be installed at a time.{{bl}}'
+      + 'Make your choice based on which mods you would like to install and which loader they support.{{bl}}'
+      + 'You can change which mod loader you have installed by Uninstalling the current one from Vortex, which will bring up this dialog again.{{bl}}'
+      + 'Which mod loader would you like to use for {{game}}?', 
+      { replace }
+    ),
+  }, [
+    { label: t('BepInEx') },
+    { label: t('MelonLoader') },
+  ])
+  .then(async (result) => {
+    if (result === undefined) {
+      return;
+    }
+    if (result.action === 'BepInEx') {
+      await downloadBepinex(api, gameSpec);
+    } else if (result.action === 'MelonLoader') {
+      await downloadMelon(api, gameSpec);
+    }
+  });
+}
+//Deconflict mod loaders
+async function deconflictModLoaders(api, gameSpec) {
+  const t = api.translate;
+  const replace = {
+    game: gameSpec.game.name,
+    bl: '[br][/br][br][/br]',
+  };
+  return api.showDialog('info', 'Mod Loader Conflict', {
+    bbcode: t('You have both BepInEx and MelonLoader installed.{{bl}}'
+      + 'This will cause the game to crash at launch. Only one mod loader can be installed at a time.{{bl}}'
+      + 'You must choose which mod loader you would like to use for {{game}}.', 
+      { replace }
+    ),
+  }, [
+    { label: t('BepInEx') },
+    { label: t('MelonLoader') },
+  ])
+  .then(async (result) => {
+    if (result === undefined) {
+      return;
+    }
+    if (result.action === 'BepInEx') {
+      await removeMelon(api, gameSpec);
+    } else if (result.action === 'MelonLoader') {
+      await removeBepinex(api, gameSpec);
+    }
+  });
+}
+//remove the non-selected mod loader
+async function removeBepinex(api, gameSpec) {
+  const state = api.getState();
+  const mods = state.persistent.mods[gameSpec.game.id] || {};
+  const mod = Object.keys(mods).find(id => mods[id]?.type === BEPINEX_ID);
+  const modId = mods[mod].id
+  log('warn', `Found BepInEx mod to remove for deconfliction: ${modId}`);
+  try {
+    await util.removeMods(api, gameSpec.game.id, [modId]);
+  } catch (err) {
+    api.showErrorNotification('Failed to remove BepInEx', err);
+  }
+}
+
+//Extract a game data file using specialized tools ////////////////////////////////////////////
+const CLEANUP_FOLDERS = ["actor97", "animstream97", "bin", "pak68", "sfx1", "soundbank4", "texturedict3"];
+async function psarcExtract(GAME_PATH, api) {
+  let RUN_PATH = path.join(__dirname, PSARCTOOL_EXT_PATH, PSARCTOOL_EXEC); //if bundled with extension
+  //* If installed as a mod (run from staging so that can purge prior to execution)
+  const state = api.getState();
+  STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
+  const mods = state.persistent.mods[spec.game.id] || {};
+  const modMatch = Object.keys(mods).find(id => mods[id]?.type === PSARCTOOL_ID);
+  const EXEC_FOLDER = mods[modMatch].installationPath;
+  if (EXEC_FOLDER !== undefined) {
+    //const RUN_PATH = path.join(GAME_PATH, PSARCTOOL_PATH, PSARCTOOL_EXEC);
+    RUN_PATH = path.join(STAGING_FOLDER, EXEC_FOLDER, PSARCTOOL_EXEC);
+  } //*/
+  const WORK_PATH = path.join(GAME_PATH, PSARCTOOL_PATH);
+  try { //extract sp-common.psarc
+    const TARGET_FILE = path.join(WORK_PATH, SPCOMPSARC_FILE);
+    const EXTRACT_PATH = WORK_PATH;
+    fs.statSync(TARGET_FILE);
+    //const ARGUMENTS = `"${path.join(WORK_PATH, SPCOMPSARC_FILE)}" "${WORK_PATH}"`; //UnPSARC arguments
+    const ARGUMENTS = `-e "${TARGET_FILE}" -o "${EXTRACT_PATH}"`; //ndarc arguments
+    await api.runExecutable(RUN_PATH, [ARGUMENTS], { shell: true, detached: true, suggestDeploy: false });
+    log('warn', `Ran extraction for .psarc file ${SPCOMPSARC_FILE}`);
+  } catch (err) {
+    log('error', `Could not extract .psarc file ${SPCOMPSARC_FILE}: ${err}`);
+    return false;
+  }
+  try { //extract bin.psarc
+    const TARGET_FILE = path.join(WORK_PATH, BINPSARC_FILE);
+    const EXTRACT_PATH = path.join(WORK_PATH, BIN_FOLDER);
+    fs.statSync(TARGET_FILE);
+    //const ARGUMENTS = `"${path.join(WORK_PATH, BINPSARC_FILE)}" "${path.join(WORK_PATH, BIN_FOLDER)}"`; //UnPSARC arguments
+    const ARGUMENTS = `-e "${TARGET_FILE}" -o "${EXTRACT_PATH}"`; //ndarc arguments
+    await api.runExecutable(RUN_PATH, [ARGUMENTS], { shell: true, detached: true, suggestDeploy: false });
+    log('warn', `Ran extraction for .psarc file ${BINPSARC_FILE}`);
+  } catch (err) {
+    log('error', `Could not extract .psarc file ${BINPSARC_FILE}: ${err}`);
+    return false;
+  }
+  try { //stat extracted folders to make sure they are there
+    fs.statSync(path.join(GAME_PATH, PSARCTOOL_PATH, BIN_FOLDER));
+    fs.statSync(path.join(GAME_PATH, PSARCTOOL_PATH, 'pak68'));
+    return true;
+  } catch (err) { //if the folders aren't there, the user probably clossed the terminal windows
+    return false;
+  }
+}
+//Setup .psarc files for modding
+async function psarcSetup(api) { //run on mod purge
+  const NOTIF_ID = `${GAME_ID}-psarcsetup`
+  api.sendNotification({ //notification indicating install process
+    id: NOTIF_ID,
+    message: `Extracting and Renaming .psarc Files. This will take a while. Do not close the terminal windows.`,
+    type: 'activity',
+    noDismiss: true,
+    allowSuppress: false,
+  });
+  const state = api.getState();
+  const discovery = selectors.discoveryByGame(state, GAME_ID);
+  GAME_PATH = discovery.path;
+  //await api.emitAndAwait('purge-mods-in-path', GAME_ID, '', path.join(GAME_PATH, PSARCTOOL_PATH));
+  await purge(api);
+  //await api.emitAndAwait('deploy-single-mod', GAME_ID, modMatch.id, false);
+  let EXTRACTED = await psarcExtract(GAME_PATH, api);
+  if (EXTRACTED) {
+    log('warn', `Extraction of all .psarc files complete. Renaming files...`);
+    try { //rename sp-common.psarc
+      fs.statSync(path.join(GAME_PATH, PSARCTOOL_PATH, SPCOMPSARC_FILE));
+      fs.renameAsync(path.join(GAME_PATH, PSARCTOOL_PATH, SPCOMPSARC_FILE), path.join(GAME_PATH, PSARCTOOL_PATH, BAK_SPCOMPSARC_FILE));
+      log('warn', `Renamed .psarc file ${SPCOMPSARC_FILE} to ${BAK_SPCOMPSARC_FILE}`);
+    } catch (err) {
+      log('error', `Could not rename .psarc file ${SPCOMPSARC_FILE}: ${err}`);
+    }
+    try { //rename bin.psarc
+      fs.statSync(path.join(GAME_PATH, PSARCTOOL_PATH, BINPSARC_FILE));
+      fs.renameAsync(path.join(GAME_PATH, PSARCTOOL_PATH, BINPSARC_FILE), path.join(GAME_PATH, PSARCTOOL_PATH, BAK_BINPSARC_FILE));
+      log('warn', `Renamed .psarc file ${BINPSARC_FILE} to ${BAK_BINPSARC_FILE}`);
+    } catch (err) {
+      log('error', `Could not rename .psarc file ${BINPSARC_FILE}: ${err}`);
+    } //*/
+    //api.events.emit('deploy-mods', (err) => {log('error', `Failed to deploy mods! User will have to deploy manually: ${err}`)});
+    await deploy(api);
+    api.dismissNotification(NOTIF_ID);
+    return;
+  }
+  await deploy(api);
+  api.dismissNotification(NOTIF_ID);
+  api.showErrorNotification(`Could not complete extraction of .psarc files. Please try again.`, `Could not complete extraction of .psarc files. Please try again. This error likely occured due to closing the ndarc terminal windows before extraction was complete.`, { allowReport: false });
+  return;
+}
+//Cleanup extracted .psarc game files (called on purge)
+async function psarcCleanup(api) {
+  const state = api.getState();
+  const discovery = selectors.discoveryByGame(state, GAME_ID);
+  GAME_PATH = discovery.path;
+  const FOLDERS_PATH = path.join(GAME_PATH, PSARCTOOL_PATH);
+  CLEANUP_FOLDERS.forEach((folder, idx, arr) => {
+    try { //remove extracted .psarc folders
+      fs.statSync(path.join(FOLDERS_PATH, folder));
+      fsPromises.rmdir(path.join(FOLDERS_PATH, folder), { recursive: true });
+      //log('warn', `Deleted extracted .psarc folder "${folder}"`);
+    } catch (err) {
+      log('error', `Could not delete extracted .psarc folder "${folder}": ${err}`);
+    }
+  }); //*/
+  try { //restore name of sp-common.psarc
+    fs.statSync(path.join(GAME_PATH, PSARCTOOL_PATH, BAK_SPCOMPSARC_FILE));
+    try { //make sure vanilla file is not in place - this usually means the game was updated
+      fs.statSync(path.join(GAME_PATH, PSARCTOOL_PATH, SPCOMPSARC_FILE));
+      fs.unlinkAsync(path.join(GAME_PATH, PSARCTOOL_PATH, BAK_SPCOMPSARC_FILE));
+    } catch (err) { //vanilla file not present, safe to rename
+      await fs.renameAsync(path.join(GAME_PATH, PSARCTOOL_PATH, BAK_SPCOMPSARC_FILE), path.join(GAME_PATH, PSARCTOOL_PATH, SPCOMPSARC_FILE));
+      //log('warn', `Renamed .psarc file ${BAK_SPCOMPSARC_FILE} to ${SPCOMPSARC_FILE}`);
+    }
+  } catch (err) {
+    //log('error', `Could not restore name of .psarc file ${SPCOMPSARC_FILE}: ${err}`);
+  }
+  try { //restore name of bin.psarc
+    fs.statSync(path.join(GAME_PATH, PSARCTOOL_PATH, BAK_BINPSARC_FILE));
+    try { //make sure vanilla file is not in place - this usually means the game was updated
+      fs.statSync(path.join(GAME_PATH, PSARCTOOL_PATH, BINPSARC_FILE));
+      fs.unlinkAsync(path.join(GAME_PATH, PSARCTOOL_PATH, BAK_BINPSARC_FILE));
+    } catch (err) {
+      await fs.renameAsync(path.join(GAME_PATH, PSARCTOOL_PATH, BAK_BINPSARC_FILE), path.join(GAME_PATH, PSARCTOOL_PATH, BINPSARC_FILE));
+      //log('warn', `Renamed .psarc file ${BAK_BINPSARC_FILE} to ${BINPSARC_FILE}`);
+    }
+  } catch (err) {
+    //log('error', `Could not restore name of .psarc file ${BINPSARC_FILE}: ${err}`);
+  }
+  setupNotify(api);
+}
 
 // REGISTER GAME FUNCTIONS /////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////
 
-//getGameVersion
+//getGameVersion //////////////////////////////////////////////////////
 async function setGameVersion(discoveryPath) {
   const isCorrectExec = (exec) => {
     try {
@@ -691,7 +1570,7 @@ async function setGameVersion(discoveryPath) {
     return GAME_VERSION;
   };
 }
-//For games with an Xbox version and a readable executable for non-Xbox versions
+//For games with an Xbox version and a readable executable for non-Xbox versions //
 async function resolveGameVersion(gamePath) {
   GAME_VERSION = await setGameVersion(gamePath);
   let version = '0.0.0';
@@ -718,7 +1597,7 @@ async function resolveGameVersion(gamePath) {
   }
 }
 
-//Specify a second executable to use for versioning
+//Specify a second executable to use for versioning //////////////////////////////////////////////////////
 function getShippingExe(gamePath) {
   const isCorrectExec = (exec) => {
     try {
@@ -761,8 +1640,10 @@ async function resolveGameVersion(gamePath, exePath) {
   }
 }
 
-//tools
-supportedTools: [
+// TOOLS /////////////////////////////////////////////////////////////////////////////////////
+/////////////////////////////////////////////////////////////////////////////////////////////
+
+[
     {
     id: `${GAME_ID}-customlaunch`,
     name: `Custom Launch`,
@@ -789,7 +1670,7 @@ supportedTools: [
     //defaultPrimary: true,
     //parameters: [],
     }, //*/
-    /*{
+    {
     id: SAVE_EDITOR_ID,
     name: SAVE_EDITOR_NAME,
     logo: `saveeditor.png`,
@@ -808,16 +1689,12 @@ supportedTools: [
 // CONTEXT.ONCE FUNCTIONS /////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////
 
-// Combine txt files into one
+// Combine txt/.cfg files into one //////////////////////////////////////////////////////
 //* In context.once 
 context.api.onAsync('did-deploy', async (profileId, deployment) => {
     const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
     if (profileId !== LAST_ACTIVE_PROFILE) return;
     return didDeploy(context.api, profileId);
-}); //*/
-context.api.onAsync('check-mods-version', (gameId, mods, forced) => {
-    if (gameId !== GAME_ID) return;
-    return onCheckModVersion(context.api, gameId, mods, forced);
 }); //*/
 context.api.onAsync('did-purge', (profileId) => didPurge(context.api, profileId));
 //* After deploy
@@ -901,3 +1778,76 @@ async function writeCfgPurge(api) {
     { encoding: "utf8" },
   );
 } //*/
+
+//Scan a folder for .json files and write there names to a list in a central .json file //////////////////////////////////////////////////////
+// in context.once
+context.api.onAsync('did-deploy', async (profileId, deployment) => { //update boot-options.json file on deployment
+    const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
+    if (profileId !== LAST_ACTIVE_PROFILE) return;
+    return await updateJsonFiles(context.api);
+});
+context.api.onAsync('did-purge', async (profileId) => {
+    const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
+    if (profileId !== LAST_ACTIVE_PROFILE) return;
+    return await resetJsonFiles(context.api);
+}); //*/
+// Write json file list to JsonFiles.json file (on deployment)
+async function updateJsonFiles(api) { 
+  GAME_PATH = getDiscoveryPath(api);
+  try { //write to JsonFiles.json file (on deploy)
+    try { //read JsonFiles.json file to get current list
+      fs.statSync(path.join(GAME_PATH, JSON_PATH, JSONFILES_FILE));
+      JSONFILES_JSON = JSON.parse(fs.readFileSync(path.join(GAME_PATH, JSON_PATH, JSONFILES_FILE)));
+    } catch (err) {
+      await fs.writeFileAsync(
+        path.join(GAME_PATH, JSON_PATH, JSONFILES_FILE),
+        `${JSON.stringify(DEFAULT_JSON, null, 2)}`,
+        { encoding: "utf8" },
+      );
+      JSONFILES_JSON = JSON.parse(fs.readFileSync(path.join(GAME_PATH, JSON_PATH, JSONFILES_FILE)));
+    } //*/
+    const JSON_FOLDER_FILES = await fsPromises.readdir(path.join(GAME_PATH, JSON_PATH), { recursive: true });
+    const JSON_FILES = JSON_FOLDER_FILES.filter(file => ( 
+      (path.extname(file).toLowerCase() === JSON_EXT) && 
+      (path.basename(file) !== JSONFILES_FILE) &&
+      (path.basename(file).toLowerCase() !== 'mod.json') &&
+      (path.basename(file) !== 'vortex.deployment.dragonballsparkingzero-json.json')
+    ));
+    const JSON_FILE_NAMES = JSON_FILES.map(file => path.basename(file, path.extname(file)));
+    JSONFILES_JSON[JSONFILES_KEY] = JSON_FILE_NAMES;
+    await fs.writeFileAsync(
+      path.join(GAME_PATH, JSON_PATH, JSONFILES_FILE),
+      `${JSON.stringify(JSONFILES_JSON, null, 2)}`,
+      { encoding: "utf8" },
+    );
+  } catch (err) {
+    api.showErrorNotification(`Could not update ${JSONFILES_FILE} file with texpack and lodpack file names. Please add entries manually.`, err, { allowReport: false });
+  }
+}
+// Reset JsonFiles.json file (on purge)
+async function resetJsonFiles(api) { 
+  GAME_PATH = getDiscoveryPath(api);
+  try { //reset JsonFiles.json file
+    try { //read JsonFiles.json file to get current list
+      fs.statSync(path.join(GAME_PATH, JSON_PATH, JSONFILES_FILE));
+      JSONFILES_JSON = JSON.parse(fs.readFileSync(path.join(GAME_PATH, JSON_PATH, JSONFILES_FILE)));
+    } catch (err) {
+      await fs.writeFileAsync(
+        path.join(GAME_PATH, JSON_PATH, JSONFILES_FILE),
+        `${JSON.stringify(DEFAULT_JSON, null, 2)}`,
+        { encoding: "utf8" },
+      );
+      JSONFILES_JSON = JSON.parse(fs.readFileSync(path.join(GAME_PATH, JSON_PATH, JSONFILES_FILE)));
+    } //*/
+    JSONFILES_JSON[JSONFILES_KEY] = [];
+    await fs.writeFileAsync(
+      path.join(GAME_PATH, JSON_PATH, JSONFILES_FILE),
+      `${JSON.stringify(JSONFILES_JSON, null, 2)}`,
+      { encoding: "utf8" },
+    );
+  } catch (err) {
+    api.showErrorNotification(`Could not reset ${JSONFILES_FILE} file. Please remove entries manually.`, err, { allowReport: false });
+  }
+}
+
+

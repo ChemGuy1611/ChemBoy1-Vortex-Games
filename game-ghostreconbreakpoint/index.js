@@ -1071,15 +1071,15 @@ function applyGame(context, gameSpec) {
 
   //register mod installers
   context.registerInstaller(ATK_ID, 25, testATK, installATK);
-  context.registerInstaller(SOUND_ID, 30, testSound, installSound);
-  context.registerInstaller(BUILDTABLE_ID, 35, testIndividualBuildtables, installIndividualBuildtables);
-  context.registerInstaller(EXTRACTED_ID, 40, testExtracted, installExtracted);
-  context.registerInstaller(FORGEFOLDER_ID, 45, testForgeFolder, installForgeFolder);
-  context.registerInstaller(DATAFOLDER_ID, 50, testDataFolder, (files, fileName) => installDataFolder(context.api, files, fileName));
-  context.registerInstaller(LOOSE_ID, 55, testLoose, (files, fileName) => installLoose(context.api, files, fileName));
-  context.registerInstaller(FORGE_ID, 60, testForge, installForge);
-  context.registerInstaller(ROOT_ID, 65, testRoot, installRoot);
-  context.registerInstaller(`${GAME_ID}-fallback`, 70, testFallback, (files, fileName) => installFallback(context.api, files, fileName));
+  context.registerInstaller(SOUND_ID, 27, testSound, installSound);
+  context.registerInstaller(BUILDTABLE_ID, 29, testIndividualBuildtables, installIndividualBuildtables);
+  context.registerInstaller(EXTRACTED_ID, 31, testExtracted, installExtracted);
+  context.registerInstaller(FORGEFOLDER_ID, 33, testForgeFolder, installForgeFolder);
+  context.registerInstaller(DATAFOLDER_ID, 35, testDataFolder, (files, fileName) => installDataFolder(context.api, files, fileName));
+  context.registerInstaller(LOOSE_ID, 37, testLoose, (files, fileName) => installLoose(context.api, files, fileName));
+  context.registerInstaller(FORGE_ID, 39, testForge, installForge);
+  context.registerInstaller(ROOT_ID, 41, testRoot, installRoot);
+  context.registerInstaller(`${GAME_ID}-fallback`, 43, testFallback, (files, fileName) => installFallback(context.api, files, fileName));
 
   //register actions
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Settings INI', () => {

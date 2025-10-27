@@ -1161,9 +1161,10 @@ async function psarcExtract(GAME_PATH, api) {
   let RUN_PATH = path.join(__dirname, PSARCTOOL_EXT_PATH, PSARCTOOL_EXEC);
   /*
   const state = api.getState();
+  STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   const mods = state.persistent.mods[spec.game.id] || {};
-  const modMatch = Object.values(mods).find(mod => mod.type === PSARCTOOL_ID);
-  const EXEC_FOLDER = modMatch.installationPath;
+  const modMatch = Object.keys(mods).find(id => mods[id]?.type === PSARCTOOL_ID);
+  const EXEC_FOLDER = mods[modMatch].installationPath;
   if (EXEC_FOLDER !== undefined) {
     //const RUN_PATH = path.join(GAME_PATH, PSARCTOOL_PATH, PSARCTOOL_EXEC);
     RUN_PATH = path.join(STAGING_FOLDER, EXEC_FOLDER, PSARCTOOL_EXEC);

@@ -16,8 +16,7 @@ export declare function setVortexPath(id: AppPath, value: string | (() => string
 declare function getVortexPath(id: AppPath): string;
 
 
-
-
+////////////////////////////////////////////////////////////////////////////
 
 //IGame
 export type PropsCallback = () => any;
