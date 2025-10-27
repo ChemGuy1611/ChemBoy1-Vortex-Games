@@ -143,30 +143,9 @@ function isModLoaderInstalled(api, spec) {
 //Function to auto-download Mod Loader
 async function downloadModLoader(api, gameSpec) {
   let modLoaderInstalled = isModLoaderInstalled(api, gameSpec);
-
-  /*
-  const state = api.getState();
-  const modLoaderFile = 'mod-loader.asi';
-  // This retrieves the staging folder for the game.
-  const installPath = selectors.installPathForGame(state, gameSpec.game.id);
-  // You can now walk through the folders of the staging folder in an attempt to look for `version.dll` or any other identifiable ML file entry, but I recommend using turbowalk.
-  let modLoaderInstalled = false;
-  await turbowalk.default(installPath, async (entries) => {
-    if (modLoaderInstalled === true) {
-      return Promise.resolve();
-    }
-    for (const entry of entries) {
-      if (path.basename(entry.filePath).toLowerCase() === modLoaderFile) {
-        modLoaderInstalled = true;
-        return Promise.resolve();
-      }
-    }
-  });
-*/
   if (!modLoaderInstalled) {
-    //notification indicating install process
     NOTIF_ID = 'alanwake2-modloader-installing';
-    api.sendNotification({
+    api.sendNotification({ //notification indicating install process
       id: NOTIF_ID,
       message: 'Installing Alan Wake 2 Mod Loader',
       type: 'activity',
