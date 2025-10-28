@@ -271,6 +271,23 @@ function openConfigRegistry(api) {
   }
 } //*/
 
+//Get correct executable for game version
+function getExecutable(discoveryPath) {
+  const isCorrectExec = (exec) => {
+    try {
+      fs.statSync(path.join(discoveryPath, exec));
+      return true;
+    }
+    catch (err) {
+      return false;
+    }
+  };
+  if (isCorrectExec(EXEC_XBOX)) {
+    return EXEC_XBOX;
+  };
+  return EXEC;
+}
+
 //Get correct save folder for game version
 function getSavePath(api) {
   GAME_PATH = getDiscoveryPath(api);
@@ -293,8 +310,8 @@ function getSavePath(api) {
   };
 } //*/
 
-//Get correct executable for game version
-function getExecutable(discoveryPath) {
+//Get correct executable, add to required files, set paths for mod types
+async function setGameVersion(discoveryPath) {
   const isCorrectExec = (exec) => {
     try {
       fs.statSync(path.join(discoveryPath, exec));
@@ -305,9 +322,13 @@ function getExecutable(discoveryPath) {
     }
   };
   if (isCorrectExec(EXEC_XBOX)) {
-    return EXEC_XBOX;
+    GAME_VERSION = 'xbox';
+    return GAME_VERSION;
+  }
+  else { 
+    GAME_VERSION = 'steam';
+    return GAME_VERSION;
   };
-  return EXEC;
 }
 
 const getDiscoveryPath = (api) => { //get the game's discovered path
@@ -495,6 +516,33 @@ function installAssets(files) {
 }
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
+
+/*
+async function resolveGameVersion(gamePath) {
+  GAME_VERSION = await setGameVersion(gamePath);
+  let version = '0.0.0';
+  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
+    try {
+      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
+      const parsed = await parseStringPromise(appManifest);
+      version = parsed?.Package?.Identity?.[0]?.$?.Version;
+      return Promise.resolve(version);
+    } catch (err) {
+      log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+  else { // use exe
+    try {
+      const exeVersion = require('exe-version');
+      version = exeVersion.getProductVersion(path.join(gamePath, EXEC));
+      return Promise.resolve(version); 
+    } catch (err) {
+      log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+} //*/
 
 async function modFoldersEnsureWritable(gamePath, relPaths) {
   for (let index = 0; index < relPaths.length; index++) {

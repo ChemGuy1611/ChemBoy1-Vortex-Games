@@ -822,7 +822,7 @@ function makePrefix(input) {
 
 function loadOrderPrefix(api, mod) {
   const state = api.getState();
-  const gameId = mod.attributes.downloadGame;
+  const gameId = GAME_ID;
   if (!gameId)
       return 'ZZZZ-';
   const profile = selectors.lastActiveProfileForGame(state, gameId);

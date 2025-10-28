@@ -10,7 +10,7 @@ Date: 2025-XX-XX
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
-const { parseStringPromise } = require('xml2js');
+//const { parseStringPromise } = require('xml2js');
 
 //Specify all the information about the game
 const GAME_ID = "XXX";
@@ -648,6 +648,7 @@ function runReloadedAdmin(api) {
   }
 }
 
+/* Set the game version
 async function resolveGameVersion(gamePath) {
   GAME_VERSION = await setGameVersion(gamePath);
   let version = '0.0.0';
@@ -672,7 +673,7 @@ async function resolveGameVersion(gamePath) {
       return Promise.resolve(version);
     }
   }
-}
+} //*/
 
 //Setup function
 async function setup(discovery, api, gameSpec) {
@@ -702,7 +703,7 @@ function applyGame(context, gameSpec) {
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     executable: () => gameSpec.game.executable,
-    getGameVersion: resolveGameVersion,
+    //getGameVersion: resolveGameVersion,
     supportedTools: [
       {
         id: RELOADED_ID,

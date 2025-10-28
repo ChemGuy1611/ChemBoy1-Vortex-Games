@@ -615,25 +615,6 @@ async function preSort(api, items, direction) {
   return (direction === 'descending') ? Promise.resolve(loadOrder.reverse()) : Promise.resolve(loadOrder);
 }
 
-/*
-function loadOrderSuffix(api, mod) {
-  const state = api.getState();
-  const gameId = mod.attributes.downloadGame;
-  if (!gameId)
-    return '99';
-  const profile = selectors.lastActiveProfileForGame(state, gameId);
-  const loadOrder = util.getSafe(state, ['persistent', 'loadOrder', profile], {});
-  const loKeys = Object.keys(loadOrder);
-  const pos = loKeys.indexOf(mod.id);
-  if (pos === -1) {
-    return '99';
-  }
-
-  let pos_adj = pos + 1;
-  return pos_adj;
-}
-//*/
-
 //util.copyFileAtomic(`srcPath`, `destPath`)
 
 //Setup function
