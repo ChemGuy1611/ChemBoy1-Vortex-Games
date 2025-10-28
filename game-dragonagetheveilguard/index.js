@@ -16,7 +16,7 @@ const { download, findModByFile, findDownloadIdByFile, resolveVersionByPattern, 
 //Specify all the information about the game
 const EAAPP_ID = "";
 const STEAMAPP_ID = "1845910";
-const EPICAPP_ID = "";
+const EPICAPP_ID = ""; // not on egdata.app yet
 const REGISTRY_NAME = "Dragon Age The Veilguard";
 const GAME_ID = "dragonagetheveilguard";
 const EXEC = "Dragon Age The Veilguard.exe";

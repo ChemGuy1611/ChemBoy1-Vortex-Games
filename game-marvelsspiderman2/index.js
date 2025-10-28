@@ -13,7 +13,7 @@ const template = require('string-template');
 
 //Specify all information about the game
 const STEAMAPP_ID = "2651280";
-const EPICAPP_ID = "";
+const EPICAPP_ID = ""; // not on egdata.app yet
 const GAME_ID = "marvelsspiderman2";
 const EXEC = "Spider-Man2.exe";
 const GAME_NAME = "Marvel's Spider-Man 2";

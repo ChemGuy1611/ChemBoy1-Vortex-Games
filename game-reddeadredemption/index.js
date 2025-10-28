@@ -14,9 +14,9 @@ const template = require('string-template');
 //Specify all the information about the game
 const STEAMAPP_ID = "2668510";
 const EPICAPP_ID = "c180bd9859624278aa20f1333918498a";
-const GOGAPP_ID = "";
-const XBOXAPP_ID = "";
-const XBOXEXECNAME = "";
+const GOGAPP_ID = null;
+const XBOXAPP_ID = null;
+const XBOXEXECNAME = null;
 const GAME_ID = "reddeadredemption";
 const EXEC = "RDR.exe";
 const GAME_NAME = "Red Dead Redemption";

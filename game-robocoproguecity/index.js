@@ -15,7 +15,7 @@ const { parseStringPromise } = require('xml2js');
 //for Rogue City
 const GAME_ID = "robocoproguecity";
 const STEAMAPP_ID = "1681430";
-const EPICAPP_ID = "";
+const EPICAPP_ID = ""; // not on egdata.app yet
 const GOGAPP_ID = "1950574400";
 const XBOXAPP_ID = "BigbenInteractiveSA.RoboCopRogueCity";
 const XBOXEXECNAME = "AppRobocopShipping";

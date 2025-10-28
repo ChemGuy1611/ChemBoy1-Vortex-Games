@@ -14,7 +14,7 @@ const Bluebird = require('bluebird');
 
 //Specify all the information about the game
 const STEAMAPP_ID = "2300320";
-const EPICAPP_ID = "";
+const EPICAPP_ID = ""; // not on egdata.app yet
 const XBOXAPP_ID = "GIANTSSoftware.FarmingSimulator25PC";
 const XBOXEXECNAME = "x64.FarmingSimulator2025Game";
 const GAME_ID = "farmingsimulator25";

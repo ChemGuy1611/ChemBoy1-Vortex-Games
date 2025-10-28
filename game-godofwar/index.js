@@ -13,7 +13,7 @@ const template = require('string-template');
 
 //Specify all the information about the game
 const STEAMAPP_ID = "1593500";
-const EPICAPP_ID = "";
+const EPICAPP_ID = ""; // not on egdata.app yet
 const GAME_ID = "godofwar";
 const EXEC = "GoW.exe";
 const GAME_NAME = "God of War (2018)";

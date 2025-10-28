@@ -13,7 +13,7 @@ const template = require('string-template');
 
 //Specify all information about the game
 const STEAMAPP_ID = "1182900";
-const EPICAPP_ID = "";
+const EPICAPP_ID = ""; // not on egdata.app yet
 const GOGAPP_ID = "1552771812";
 const XBOXAPP_ID = "FocusHomeInteractiveSA.APlagueTaleRequiem-Windows";
 const XBOXEXECNAME = "Game";

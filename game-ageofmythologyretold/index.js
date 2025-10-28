@@ -14,7 +14,7 @@ const template = require('string-template');
 //Specify all the information about the game
 const STEAMAPP_ID = "1934680";
 const EPICAPP_ID = null;
-const GOGAPP_ID = "";
+const GOGAPP_ID = null;
 const XBOXAPP_ID = "Microsoft.AthensStandardEdition";
 const XBOXEXECNAME = "Game";
 const GAME_ID = "ageofmythologyretold";

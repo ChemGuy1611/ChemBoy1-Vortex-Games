@@ -15,7 +15,7 @@ const Bluebird = require('bluebird');
 //Specify all the information about the game
 const STEAMAPP_ID = "2677660";
 const EPICAPP_ID = null;
-const GOGAPP_ID = "";
+const GOGAPP_ID = null;
 const XBOXAPP_ID = "BethesdaSoftworks.ProjectRelic"; // <Identity Name="" in the appxmanifest.xml file
 const XBOXEXECNAME = "Game"; // <Application id="" in the appxmanifest.xml file
 const GAME_ID = "indianajonesandthegreatcircle";

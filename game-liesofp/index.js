@@ -14,7 +14,7 @@ const template = require('string-template');
 //Specify all information about the game
 const GAME_ID = "liesofp";
 const STEAMAPP_ID = "1627720";
-const GOGAPP_ID = "";
+const GOGAPP_ID = null;
 const EPICAPP_ID = null;
 const XBOXAPP_ID = "Neowiz.3616725F496B";
 const XBOXEXECNAME = "AppLiesofPShipping";

@@ -13,7 +13,7 @@ const template = require('string-template');
 
 //Specify all the information about the game
 const STEAMAPP_ID = "2561580";
-const EPICAPP_ID = "";
+const EPICAPP_ID = ""; // not on egdata.app yet
 const GAME_ID = "horizonzerodawnremastered";
 const EXEC = "HorizonZeroDawnRemastered.exe";
 const GAME_NAME = "Horizon Zero Dawn Remastered";

@@ -14,7 +14,7 @@ const template = require('string-template');
 //Specify all information about the game
 const GAME_ID = "frostpunk2";
 const STEAMAPP_ID = "1601580";
-const EPICAPP_ID = "";
+const EPICAPP_ID = ""; // not on egdata.app yet
 const GOGAPP_ID = "1728870436";
 const XBOXAPP_ID = "4063811bitstudios.Frostpunk2ConsoleEdition";
 const XBOXEXECNAME = "AppFrostpunk2Shipping";

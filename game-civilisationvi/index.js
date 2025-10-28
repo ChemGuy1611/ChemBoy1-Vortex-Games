@@ -15,8 +15,8 @@ const template = require('string-template');
 //Specify all the information about the game
 const STEAMAPP_ID = "289070";
 const EPICAPP_ID = "Kinglet";
-const XBOXAPP_ID = "";
-const XBOXEXECNAME = "";
+const XBOXAPP_ID = null;
+const XBOXEXECNAME = null;
 const GAME_ID = "civilisationvi";
 const EXEC = path.join("Base" , "Binaries", "Win64Steam", "CivilizationVI.exe");
 const EXEC_EPIC = path.join("Base" , "Binaries", "Win64EOS", "CivilizationVI.exe");

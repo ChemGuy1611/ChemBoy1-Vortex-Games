@@ -17,8 +17,8 @@ const GAME_NAME_SHORT = "Alien Isolation";
 const STEAMAPP_ID = "214490";
 const GOGAPP_ID = "1744178250";
 const EPICAPP_ID = "8935bb3e1420443a9789fe01758039a5";
-const XBOXAPP_ID = "";
-const XBOXEXECNAME = "";
+const XBOXAPP_ID = null;
+const XBOXEXECNAME = null;
 const EXEC = "AI.exe";
 
 //Mod types, installers, and tools data

@@ -14,10 +14,10 @@ const template = require('string-template');
 //Specify all information about the game
 const GAME_ID = "systemshock2023";
 const STEAMAPP_ID = "482400";
-const EPICAPP_ID = "";
+const EPICAPP_ID = ""; //not on egdata.app yet
 const GOGAPP_ID = "1439637285";
-const XBOXAPP_ID = "";
-const XBOXEXECNAME = "";
+const XBOXAPP_ID = null;
+const XBOXEXECNAME = null;
 const EPIC_CODE_NAME = "SystemShock";
 const EXEC_FOLDER_NAME = "Win64";
 //const EXEC_FOLDER_NAME = "WinGDK"; //XBOX Version

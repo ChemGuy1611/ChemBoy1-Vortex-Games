@@ -1,10 +1,10 @@
-/*
+/*/////////////////////////////////////////////////
 Name: Diplomacy Is Not An Option Vortex Extension
 Structure: Unity BepinEx (Custom Nexus Download)
 Author: ChemBoy1
 Version: 0.1.0
 Date: 10/18/2024
-*/
+////////////////////////////////////////////////*/
 
 //Import libraries
 const { actions, fs, util, selectors, log } = require('vortex-api');
@@ -15,10 +15,10 @@ const template = require('string-template');
 
 //Specify all the information about the game
 const STEAMAPP_ID = "1272320";
-const EPICAPP_ID = "";
-const GOGAPP_ID = "";
-const XBOXAPP_ID = "";
-const XBOXEXECNAME = "";
+const EPICAPP_ID = ""; //not on egdata.app yet
+const GOGAPP_ID = "1946916562";
+const XBOXAPP_ID = null;
+const XBOXEXECNAME = null;
 const GAME_ID = "diplomacyisnotanoption";
 const GAME_NAME = "Diplomacy is Not an Option"
 const GAME_NAME_SHORT = "Diplomacy INAO"
@@ -77,7 +77,7 @@ const spec = {
     "ids": [
       STEAMAPP_ID,
       //EPICAPP_ID,
-      //GOGAPP_ID,
+      GOGAPP_ID,
       //XBOXAPP_ID
     ],
     "names": []

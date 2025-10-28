@@ -14,9 +14,9 @@ const template = require('string-template');
 //Specify all the information about the game
 const STEAMAPP_ID = "2100";
 const EPICAPP_ID = null;
-const GOGAPP_ID = "";
-const XBOXAPP_ID = "";
-const XBOXEXECNAME = "";
+const GOGAPP_ID = null;
+const XBOXAPP_ID = null;
+const XBOXEXECNAME = null;
 const GAME_ID = "darkmessiahofmightandmagic";
 const GAME_NAME = "Dark Messiah \tof Might & Magic";
 const GAME_NAME_SHORT = "Dark Messiah MM";

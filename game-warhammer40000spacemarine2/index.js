@@ -15,9 +15,9 @@ const fsPromises = require('fs/promises');
 //Specify all the information about the game
 const STEAMAPP_ID = "2183900";
 const EPICAPP_ID = "bb6054d614284c39bb203ebe134e5d79";
-const GOGAPP_ID = "";
-const XBOXAPP_ID = "";
-const XBOXEXECNAME = "";
+const GOGAPP_ID = null;
+const XBOXAPP_ID = null;
+const XBOXEXECNAME = null;
 const GAME_ID = "warhammer40000spacemarine2";
 const EXEC = "Warhammer 40000 Space Marine 2.exe";
 const EXEC_BIN = "client_pc\\root\\bin\\pc\\Warhammer 40000 Space Marine 2 - Retail.exe";

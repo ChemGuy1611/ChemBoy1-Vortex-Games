@@ -15,7 +15,7 @@ const fsPromises = require('fs/promises');
 
 //Specify all information about the game
 const STEAMAPP_ID = "1888930";
-const EPICAPP_ID = "";
+const EPICAPP_ID = ""; // not on egdata.app yet
 const GAME_ID = "thelastofuspart1";
 const GAME_NAME = "The Last of Us Part I";
 const GAME_NAME_SHORT = "TLOU Part I";

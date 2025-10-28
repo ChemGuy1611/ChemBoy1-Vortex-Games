@@ -13,9 +13,9 @@ const template = require('string-template');
 
 //Specify all the information about the game
 const STEAMAPP_ID = "1295660";
-const EPICAPP_ID = "";
-const XBOXAPP_ID = "";
-const XBOXEXECNAME = "";
+const EPICAPP_ID = ""; // not on egdata.app yet
+const XBOXAPP_ID = null;
+const XBOXEXECNAME = null;
 const GAME_ID = "civilizationvii";
 const EXEC = path.join("Base" , "Binaries", "Win64", "Civ7_Win64_DX12_FinalRelease.exe");
 const GAME_NAME = "Sid Meier's Civilization VII";

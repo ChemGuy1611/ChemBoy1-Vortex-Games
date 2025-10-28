@@ -16,7 +16,7 @@ const { download, findModByFile, findDownloadIdByFile, resolveVersionByPattern, 
 const GAME_ID = "oblivionremastered";
 const STEAMAPP_ID = "2623190";
 const EPICAPP_ID = null;
-const GOGAPP_ID = "";
+const GOGAPP_ID = null;
 const XBOXAPP_ID = "BethesdaSoftworks.ProjectAltar";
 const XBOXEXECNAME = "AppUEGameShipping";
 const GAME_NAME = "The Elder Scrolls IV: Oblivion Remastered";

@@ -1,5 +1,5 @@
 /*
-Name: Trepang 2 Vortex Extension
+Name: Trepang2 Vortex Extension
 Structure: UE4
 Author: ChemBoy1
 Version: 0.1.1
@@ -15,8 +15,8 @@ const template = require('string-template');
 const GAME_ID = "trepang2";
 const STEAMAPP_ID = "1164940";
 const GOGAPP_ID = "1599916752";
-const EPICAPP_ID = "";
-const XBOXAPP_ID = "";
+const EPICAPP_ID = ""; // not on egdata.app yet
+const XBOXAPP_ID = "";  // not on Game Pass anymore
 const XBOXEXECNAME = "";
 const EPIC_CODE_NAME = "CPPFPS";
 const EXEC_FOLDER_NAME = "Win64";

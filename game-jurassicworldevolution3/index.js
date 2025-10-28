@@ -21,7 +21,7 @@ const USER_HOME = util.getVortexPath("home");
 //Specify all the information about the game
 const GAME_ID = "jurassicworldevolution3";
 const STEAMAPP_ID = "2958130";
-const EPICAPP_ID = "XXX";
+const EPICAPP_ID = ""; // not on egdata.app yet
 const GOGAPP_ID  = null;
 const XBOXAPP_ID = null;
 const XBOXEXECNAME = null;

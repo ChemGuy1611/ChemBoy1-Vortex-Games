@@ -14,10 +14,10 @@ const template = require('string-template');
 //Specify all information about the game
 const GAME_ID = "mortalkombat";
 const STEAMAPP_ID = "1971870";
-const EPICAPP_ID = "";
-const GOGAPP_ID = "";
-const XBOXAPP_ID = "";
-const XBOXEXECNAME = "";
+const EPICAPP_ID = ""; //not on egdata.app yet
+const GOGAPP_ID = null;
+const XBOXAPP_ID = null;
+const XBOXEXECNAME = null;
 const EPIC_CODE_NAME = "MK12";
 const EXEC_FOLDER_NAME = "Win64";
 const GAME_NAME = "Mortal Kombat 1";

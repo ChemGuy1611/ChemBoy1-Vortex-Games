@@ -16,8 +16,8 @@ const STEAMAPP_ID_LEGACY = "412020";
 const STEAMAPP_ID = "1449560";
 const EPICAPP_ID = "153e4dd8955e452aa60ba9ba2d906bf1";
 const GOGAPP_ID = "1407287452";
-const XBOXAPP_ID = "";
-const XBOXEXECNAME = "";
+const XBOXAPP_ID = null;
+const XBOXEXECNAME = null;
 const GAME_ID = "metroexodus";
 const EXEC = "MetroExodus.exe";
 

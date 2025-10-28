@@ -14,7 +14,7 @@ const turbowalk = require('turbowalk');
 
 //Specify all the information about the game
 const STEAMAPP_ID = "403640";
-const EPICAPP_ID = "";
+const EPICAPP_ID = ""; // not on egdata.app yet
 const GOGAPP_ID = "1431426311";
 const XBOXAPP_ID = "BethesdaSoftworks.Dishonored2-PC";
 const XBOXEXECNAME = "App";

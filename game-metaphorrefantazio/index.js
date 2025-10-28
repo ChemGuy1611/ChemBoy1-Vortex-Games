@@ -15,7 +15,7 @@ const { parseStringPromise } = require('xml2js');
 //Specify all the information about the game
 const STEAMAPP_ID = "2679460";
 const EPICAPP_ID = null;
-const GOGAPP_ID = "";
+const GOGAPP_ID = null;
 const XBOXAPP_ID = "SEGAofAmericaInc.Pae22b02y";
 const XBOXEXECNAME = "METAPHOR";
 const GAME_ID = "metaphorrefantazio";

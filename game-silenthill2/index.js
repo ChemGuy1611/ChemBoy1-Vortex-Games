@@ -15,9 +15,9 @@ const template = require('string-template');
 const GAME_ID = "silenthill2";
 const STEAMAPP_ID = "2124490";
 const EPICAPP_ID = "c4dc308a1b69492aba4d47f7feaa1083";
-const GOGAPP_ID = "";
-const XBOXAPP_ID = "";
-const XBOXEXECNAME = "";
+const GOGAPP_ID = "2051029707";
+const XBOXAPP_ID = null;
+const XBOXEXECNAME = null;
 const EPIC_CODE_NAME = "SHProto";
 const EXEC_FOLDER_NAME = "Win64";
 //const EXEC_FOLDER_NAME = "WinGDK"; //XBOX Version
@@ -120,14 +120,14 @@ const spec = {
     ],
     "details": {
       "steamAppId": STEAMAPP_ID,
-      //"gogAppId": GOGAPP_ID,
+      "gogAppId": GOGAPP_ID,
       "epicAppId": EPICAPP_ID,
       //"xboxAppId": XBOXAPP_ID,
       "supportsSymlinks": SYM_LINKS,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
-      //"GogAPPId": GOGAPP_ID,
+      "GogAPPId": GOGAPP_ID,
       "EpicAPPId": EPICAPP_ID,
       //"XboxAPPId": XBOXAPP_ID,
     },

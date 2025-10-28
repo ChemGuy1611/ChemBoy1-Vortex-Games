@@ -15,10 +15,10 @@ const template = require('string-template');
 
 //Specify all the information about the game
 const STEAMAPP_ID = "1492070";
-const EPICAPP_ID = "";
-const GOGAPP_ID = "";
-const XBOXAPP_ID = "";
-const XBOXEXECNAME = "";
+const EPICAPP_ID = ""; //not on egdata.app yet
+const GOGAPP_ID = null;
+const XBOXAPP_ID = null;
+const XBOXEXECNAME = null;
 const GAME_ID = "skerritual";
 const GAME_NAME = "Sker Ritual"
 const GAME_NAME_SHORT = "Sker Ritual"

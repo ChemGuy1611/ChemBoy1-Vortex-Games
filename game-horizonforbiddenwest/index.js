@@ -13,7 +13,7 @@ const template = require('string-template');
 
 //Specify all the information about the game
 const STEAMAPP_ID = "2420110";
-const EPICAPP_ID = "";
+const EPICAPP_ID = "2efe99166b8847e9bcd80c571b05e1b6";
 const GAME_ID = "horizonforbiddenwest";
 const EXEC = "HorizonForbiddenWest.exe";
 
@@ -51,11 +51,11 @@ const spec = {
     ],
     "details": {
       "steamAppId": STEAMAPP_ID,
-      //"epicAppId": EPICAPP_ID,
+      "epicAppId": EPICAPP_ID,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
-      //"EpicAPPId": EPICAPP_ID,
+      "EpicAPPId": EPICAPP_ID,
     },
   },
   "modTypes": [
@@ -69,7 +69,7 @@ const spec = {
   "discovery": {
     "ids": [
       STEAMAPP_ID,
-      //EPICAPP_ID,
+      EPICAPP_ID,
     ],
     "names": []
   }
@@ -126,7 +126,6 @@ async function requiresLauncher() {
     return undefined;
   }
 
-  /*
   if (game.gameStoreId === "epic") {
     return {
       launcher: "epic",
@@ -135,7 +134,6 @@ async function requiresLauncher() {
       },
     };
   }
-  */
 
   return undefined;
 }

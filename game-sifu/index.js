@@ -14,7 +14,7 @@ const template = require('string-template');
 //Specify all information about the game
 const GAME_ID = "sifu";
 const STEAMAPP_ID = "2138710";
-const GOGAPP_ID = "";
+const GOGAPP_ID = null;
 const EPICAPP_ID = "d36336f190094951873ed6138ac208d8";
 const XBOXAPP_ID = "SLOCLAP.Sifu";
 const XBOXEXECNAME = "AppSifuShipping";
