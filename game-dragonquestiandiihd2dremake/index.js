@@ -1,5 +1,5 @@
 /*//////////////////////////////////////////////////
-Name: Dragon Quest I & II HD-2D Remake Vortex Extension
+Name: DRAGON QUEST I & II HD-2D Remake Vortex Extension
 Structure: UE5 (static exe)
 Author: ChemBoy1
 Version: 0.1.0
@@ -23,7 +23,7 @@ const STEAMAPP_ID_DEMO = null;
 const EPICAPP_ID = null;
 const GOGAPP_ID = null;
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
-const GAME_NAME = "Dragon Quest I & II HD-2D Remake";
+const GAME_NAME = "DRAGON QUEST I & II HD-2D Remake";
 const GAME_NAME_SHORT = "DQ I&II Remake";
 const EXEC = "DragonQuestIIHD2DRemake.exe";
 
