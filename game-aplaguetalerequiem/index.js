@@ -21,6 +21,7 @@ const GAME_ID = "aplaguetalerequiem";
 const GAME_NAME = "A Plague Tale: Requiem";
 const GAME_NAME_SHORT = "A Plague Tale: Requiem";
 const MOD_PATH = ".";
+const COMMON_FILE = path.join('DATAS', 'P_AMICIA.DPC');
 
 const gameFinderQuery = {
   steam: [{ id: STEAMAPP_ID, prefer: 0 }],
@@ -30,7 +31,7 @@ const gameFinderQuery = {
 };
 
 //Information for setting the executable and variable paths based on the game store version
-const requiredFiles = [];
+const requiredFiles = [COMMON_FILE];
 const EXEC = "APlagueTaleRequiem_x64.exe";
 const EPIC_EXEC = "APlagueTaleRequiem_x64.exe";
 const XBOX_EXEC = "APT2_WinStore.x64.Submission.exe";
@@ -124,7 +125,6 @@ function getExecutable(discoveryPath) {
   const isCorrectExec = (exec) => {
     try {
       fs.statSync(path.join(discoveryPath, exec));
-      requiredFiles.push(exec);
       return true;
     }
     catch (err) {
@@ -142,13 +142,7 @@ function getExecutable(discoveryPath) {
   /*
   if (isCorrectExec(EPIC_EXEC)) {
     return EPIC_EXEC;
-  };
-
-  if (isCorrectExec(GOG_EXEC)) {
-    return GOG_EXEC;
-  };
-  */
-
+  }; //*/
   return EXEC;
 }
 

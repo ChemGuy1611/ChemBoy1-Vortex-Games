@@ -31,7 +31,7 @@ const gameFinderQuery = {
 
 let MOD_PATH = "Boltgun\\Content\\Paks";
 let EXEC_TARGET = null;
-const requiredFiles = [];
+const requiredFiles = [EPIC_CODE_NAME];
 const STEAM_EXEC_FOLDER = "Win64";
 const GOG_EXEC_FOLDER = "Win64";
 const EPIC_EXEC_FOLDER = "Win64";
@@ -130,7 +130,6 @@ function getExecutable(discoveryPath) {
   const isCorrectExec = (exec) => {
     try {
       fs.statSync(path.join(discoveryPath, exec));
-      requiredFiles.push(exec);
       return true;
     }
     catch (err) {

@@ -1,9 +1,9 @@
 const path = require("path");
 const { fs, actions, util, selectors } = require("vortex-api");
 
-const GAME_ID = "warhammer40kdarktide"; // Nexus Mods domain for the game. e.g. nexusmods.com/warhammer40kdarktide
-const STEAMAPP_ID = "1361210"; // Steam app id
-const MS_APPID = "FatsharkAB.Warhammer40000DarktideNew"; // Microsoft Store app id (gamepass)
+const GAME_ID = "warhammer40kdarktide";
+const STEAMAPP_ID = "1361210";
+const MS_APPID = "FatsharkAB.Warhammer40000DarktideNew";
 const MOD_FILE_EXT = ".mod";
 const BAT_FILE_EXT = ".bat";
 let GAME_PATH = null;

@@ -14,7 +14,7 @@ const template = require('string-template');
 //Specify all information about the game
 const GAME_ID = "untildawn";
 const STEAMAPP_ID = "2172010";
-const EPICAPP_ID = "05153d489e6843a1b5b53363280cb141";
+const EPICAPP_ID = "05153d489e6843a1b5b53363280cb141"; //not added to discovery yet because this version does not have a top-level "Windows" folder
 const GOGAPP_ID = null;
 const XBOXAPP_ID = null;
 const XBOXEXECNAME = null;

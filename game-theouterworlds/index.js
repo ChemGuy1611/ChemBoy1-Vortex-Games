@@ -158,7 +158,6 @@ function getExecutable(discoveryPath) {
   const isCorrectExec = (exec) => {
     try {
       fs.statSync(path.join(discoveryPath, exec));
-      requiredFiles.push(exec);
       return true;
     }
     catch (err) {
