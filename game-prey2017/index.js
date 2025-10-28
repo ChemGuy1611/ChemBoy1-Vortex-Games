@@ -464,7 +464,6 @@ function main(context) {
       gogAppId: GOGAPP_ID,
       epicAppId: EPICAPP_ID,
       xboxAppId: XBOXAPP_ID,
-      nexusPageId: GAME_ID
     },
     environment: {
       SteamAPPId: STEAMAPP_ID,

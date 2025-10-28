@@ -80,7 +80,6 @@ const spec = {
       "steamAppId": STEAMAPP_ID,
       //"gogAppId": GOGAPP_ID,
       //"xboxAppId": XBOXAPP_ID,
-      "nexusPageId": GAME_ID,
       "customOpenModsPath": UNREALDATA.absModsPath || UNREALDATA.modsPath
     },
     "compatible": {

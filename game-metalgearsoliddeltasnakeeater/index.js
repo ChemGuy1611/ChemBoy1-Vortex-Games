@@ -1192,6 +1192,21 @@ async function modFoldersEnsureWritable(gamePath, relPaths) {
   }
 }
 
+async function resolveGameVersion(gamePath, exePath) {
+  //SHIPPING_EXE = getShippingExe(gamePath);
+  const READ_FILE = path.join(gamePath, SHIPPING_EXE);
+  let version = '0.0.0';
+  try {
+    const exeVersion = require('exe-version');
+    version = await exeVersion.getProductVersion(READ_FILE);
+    //log('warn', `Resolved game version for ${GAME_ID} to: ${version}`);
+    return Promise.resolve(version); 
+  } catch (err) {
+    log('error', `Could not read ${READ_FILE} file to get game version: ${err}`);
+    return Promise.resolve(version);
+  }
+}
+
 //Setup function
 async function setup(discovery, api, gameSpec) {
   // SYNCHRONOUS CODE ////////////////////////////////////

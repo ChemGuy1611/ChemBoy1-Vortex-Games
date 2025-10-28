@@ -45,7 +45,6 @@ const spec = {
     "details": {
       "steamAppId": STEAMAPP_ID,
       "uPlayAppId": UPLAYAPP_ID,
-      "nexusPageId": GAME_ID
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
@@ -211,7 +210,6 @@ async function downloadAnvil(discovery, api, gameSpec) {
     }
 
     const modPageId = 455;
-    //const modPageId = 38;
     try {
       //get the mod files information from Nexus
       const modFiles = await api.ext.nexusGetModFiles('site', modPageId);
@@ -225,7 +223,7 @@ async function downloadAnvil(discovery, api, gameSpec) {
       }
       //Download the mod
       const dlInfo = {
-        game: gameSpec.game.id,
+        game: 'site',
         name: MOD_NAME,
       };
       const nxmUrl = `nxm://site/mods/${modPageId}/files/${file.file_id}`;

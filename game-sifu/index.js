@@ -113,7 +113,6 @@ const spec = {
       //"gogAppId": GOGAPP_ID,
       "epicAppId": EPICAPP_ID,
       "xboxAppId": XBOXAPP_ID,
-      "nexusPageId": GAME_ID,
       "supportsSymlinks": true,
     },
     "environment": {

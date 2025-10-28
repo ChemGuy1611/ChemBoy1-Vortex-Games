@@ -323,11 +323,8 @@ async function downloadAnvil(discovery, api, gameSpec) {
     }
 
     const modPageId = 455;
-    //const modPageId = 38;
-    try {
-      //get the mod files information from Nexus
+    try { //get the mod files information from Nexus
       const modFiles = await api.ext.nexusGetModFiles('site', modPageId);
-      //const modFiles = await api.ext.nexusGetModFiles(gameSpec.game.id, modPageId);
       const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
       const file = modFiles
         .filter(file => file.category_id === 1)
@@ -337,7 +334,7 @@ async function downloadAnvil(discovery, api, gameSpec) {
       }
       //Download the mod
       const dlInfo = {
-        game: gameSpec.game.id,
+        game: 'site',
         name: MOD_NAME,
       };
       const nxmUrl = `nxm://site/mods/${modPageId}/files/${file.file_id}`;

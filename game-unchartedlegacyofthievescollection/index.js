@@ -50,7 +50,6 @@ const spec = {
     ],
     "details": {
       "steamAppId": STEAMAPP_ID,
-      "nexusPageId": GAME_ID,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
@@ -200,7 +199,7 @@ async function downloadFluffy(api, gameSpec) {
       }
       //Download the mod
       const dlInfo = {
-        game: gameSpec.game.id,
+        game: 'site',
         name: MOD_NAME,
       };
       const nxmUrl = `nxm://site/mods/${modPageId}/files/${file.file_id}`;

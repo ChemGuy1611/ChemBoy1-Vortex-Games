@@ -34,7 +34,6 @@ const spec = {
     ],
     "details": {
       "epicAppId": EPICAPP_ID,
-      "nexusPageId": GAME_ID
     },
     "environment": {
       "EpicAPPId": EPICAPP_ID,

@@ -93,6 +93,7 @@ const BINARIES_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_NAME);
 const SHIPPING_EXE_STEAM = path.join(BINARIES_PATH, `${EPIC_CODE_NAME}-${EXEC_FOLDER_NAME}Steam-Shipping.exe`);
 const SHIPPING_EXE_EPIC = path.join(BINARIES_PATH, `${EPIC_CODE_NAME}-${EXEC_FOLDER_NAME}EOS-Shipping.exe`);
 const SHIPPING_EXE_STEAMDEMO = path.join(BINARIES_PATH, `${EPIC_CODE_NAME}-${EXEC_FOLDER_NAME}SteamDemo-Shipping.exe`);
+let SHIPPING_EXE = SHIPPING_EXE_STEAM;
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Game Folder";
@@ -370,6 +371,31 @@ function getExecutable(discoveryPath) {
     return EXEC_DEMO;
   };
   return EXEC;
+}
+
+//Get correct shipping executable for game version
+async function getShippingExe(gamePath) {
+  const isCorrectExec = (exec) => {
+    try {
+      fs.statSync(path.join(gamePath, exec));
+      return true;
+    }
+    catch (err) {
+      return false;
+    }
+  };
+  if (isCorrectExec(SHIPPING_EXE_STEAM)) {
+    SHIPPING_EXE = SHIPPING_EXE_STEAM;
+    return SHIPPING_EXE;
+  };
+  if (isCorrectExec(SHIPPING_EXE_EPIC)) {
+    SHIPPING_EXE = SHIPPING_EXE_EPIC;
+    return SHIPPING_EXE;
+  };
+  if (isCorrectExec(SHIPPING_EXE_STEAMDEMO)) {
+    SHIPPING_EXE = SHIPPING_EXE_STEAMDEMO;
+    return SHIPPING_EXE;
+  };
 }
 
 const getDiscoveryPath = (api) => { //get the game's discovered path
@@ -1417,6 +1443,21 @@ function partitionCheckNotify(api, CHECK_DATA) {
       },
     ],
   });
+}
+
+async function resolveGameVersion(gamePath, exePath) {
+  SHIPPING_EXE = await getShippingExe(gamePath);
+  const READ_FILE = path.join(gamePath, SHIPPING_EXE);
+  let version = '0.0.0';
+  try {
+    const exeVersion = require('exe-version');
+    version = await exeVersion.getProductVersion(READ_FILE);
+    //log('warn', `Resolved game version for ${GAME_ID} to: ${version}`);
+    return Promise.resolve(version); 
+  } catch (err) {
+    log('error', `Could not read ${READ_FILE} file to get game version: ${err}`);
+    return Promise.resolve(version);
+  }
 }
 
 async function modFoldersEnsureWritable(gamePath, relPaths) {

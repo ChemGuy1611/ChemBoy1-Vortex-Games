@@ -52,7 +52,6 @@ const spec = {
     "details": {
       "steamAppId": STEAMAPP_ID,
       //"epicAppId": EPICAPP_ID,
-      "nexusPageId": GAME_ID
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,

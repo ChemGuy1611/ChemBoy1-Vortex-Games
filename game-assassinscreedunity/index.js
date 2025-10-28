@@ -123,8 +123,6 @@ const spec = {
       "steamAppId": STEAMAPP_ID,
       "uPlayAppId": UPLAYAPP_ID,
       "supportsSymlinks": true,
-      //"nexusPageId": GAME_ID,
-      //"compatibleDownloads": ['site'],
       "ignoreDeploy": IGNORE_DEPLOY,
       "ignoreConflicts": IGNORE_CONFLICTS,
     },
@@ -352,11 +350,10 @@ async function downloadAnvil(discovery, api, gameSpec) {
       //*/
       //Download the mod
       const dlInfo = {
-        game: gameSpec.game.id,
+        game: GAME_DOMAIN,
         name: MOD_NAME,
       };
       const nxmUrl = `nxm://${GAME_DOMAIN}/mods/${modPageId}/files/${file.file_id}`;
-      //const nxmUrl = `nxm://${GAME_DOMAIN}/mods/${modPageId}/files/${FILE_ID}`;
       const dlId = await util.toPromise(cb =>
         api.events.emit('start-download', [nxmUrl], dlInfo, undefined, cb, undefined, { allowInstall: false }));
       const modId = await util.toPromise(cb =>

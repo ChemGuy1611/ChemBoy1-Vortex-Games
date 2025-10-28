@@ -64,8 +64,6 @@ const spec = {
     ],
     "details": {
       "steamAppId": STEAMAPP_ID,
-      //"nexusPageId": GAME_ID,
-      //"compatibleDownloads": ['site'],
       "ignoreDeploy": IGNORE_DEPLOY,
       "ignoreConflicts": IGNORE_CONFLICTS,
     },
@@ -241,7 +239,7 @@ async function downloadFluffy(api, gameSpec) {
       }
       //Download the mod
       const dlInfo = {
-        game: gameSpec.game.id, // set to the game's ID so that they wil not get a game selection popup. Vortex will update the metadata automatically if the mod is from another domain, such as 'site'
+        game: GAME_DOMAIN,
         name: MOD_NAME,
       };
       const dlId = await util.toPromise(cb =>

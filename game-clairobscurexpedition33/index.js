@@ -10,6 +10,7 @@ Date: 2025-09-25
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
+const { parseStringPromise } = require('xml2js');
 
 //Specify all information about the game
 const GAME_ID = "clairobscurexpedition33";
@@ -21,6 +22,9 @@ const XBOXEXECNAME = "AppExpedition33Shipping";
 const GAME_NAME = "Clair Obscur: Expedition 33";
 const GAME_NAME_SHORT = "Clair Obscur E33";
 const DEFAULT_EXEC = "Expedition33_Steam.exe";
+const EXEC_EPIC = "Expedition33_EGS.exe";
+const EXEC_GOG = "SandFallGOG.exe";
+
 let GAME_PATH = null;
 let CHECK_DATA = false;
 let STAGING_FOLDER = '';
@@ -67,10 +71,6 @@ const EXEC_FOLDER_DEFAULT = "Win64";
 const EXEC_FOLDER_XBOX = "WinGDK";
 const EXEC_DEFAULT= DEFAULT_EXEC;
 const EXEC_XBOX = `gamelaunchhelper.exe`;
-const XBOX_FILE = `appxmanifest.xml`;
-
-const EXEC_EPIC = "Expedition33_EGS.exe";
-const EXEC_GOG = "SandFallGOG.exe";
 
 //Config and save paths
 //const USER_HOME = util.getVortexPath("home");
@@ -416,7 +416,7 @@ function getBinariesFolder(discoveryPath) {
 }
 
 //Get correct game version
-function setGameVersion(api) {
+async function setGameVersion(api) {
   GAME_PATH = getDiscoveryPath(api);
   const isCorrectExec = (exec) => {
     try {
@@ -435,8 +435,41 @@ function setGameVersion(api) {
     GAME_VERSION = 'steam';
     return GAME_VERSION;
   };
+  if (isCorrectExec(EXEC_GOG)) {
+    GAME_VERSION = 'gog';
+    return GAME_VERSION;
+  };
   if (isCorrectExec(EXEC_EPIC)) {
     GAME_VERSION = 'epic';
+    return GAME_VERSION;
+  };
+}
+
+//Get correct game version
+async function setGameVersionPath(gamePath) {
+  const isCorrectExec = (exec) => {
+    try {
+      fs.statSync(path.join(gamePath, exec));
+      return true;
+    }
+    catch (err) {
+      return false;
+    }
+  };
+  if (isCorrectExec(EXEC_XBOX)) {
+    GAME_VERSION = 'xbox';
+    return GAME_VERSION;
+  };
+  if (isCorrectExec(EXEC_DEFAULT)) {
+    GAME_VERSION = 'steam';
+    return GAME_VERSION;
+  };
+  if (isCorrectExec(EXEC_EPIC)) {
+    GAME_VERSION = 'epic';
+    return GAME_VERSION;
+  };
+  if (isCorrectExec(EXEC_GOG)) {
+    GAME_VERSION = 'gog';
     return GAME_VERSION;
   };
 }
@@ -1308,69 +1341,30 @@ function partitionCheckNotify(api, CHECK_DATA) {
   });
 }
 
-async function resolveGameVersion(gamePath) {
-  GAME_VERSION = setGameVersion(gamePath);
+async function resolveGameVersion(gamePath, exePath) {
+  GAME_VERSION = await setGameVersionPath(gamePath);
+  //SHIPPING_EXE = getShippingExe(gamePath);
+  const READ_FILE = path.join(gamePath, SHIPPING_EXE);
   let version = '0.0.0';
-  if (GAME_VERSION === 'xbox') {
-    try { //try to parse appmanifest.xml for Xbox version
+  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
+    try { //try to parse appxmanifest.xml
       const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
-      const parser = new DOMParser();
-      const XML = parser.parseFromString(appManifest, 'text/xml');
-      try { //try to get version from appmanifest.xml
-        /*
-        const ns = "http://schemas.microsoft.com/appx/manifest/foundation/windows10"; //must define namespace
-        const identity = XML.getElementsByTagNameNS(ns, 'Identity')[0]; 
-        //*/
-
-        /* Namespace resolver — important since default xmlns is in effect
-        const nsResolver = (prefix) => {
-          const ns = {
-            def: "http://schemas.microsoft.com/appx/manifest/foundation/windows10"
-          };
-          return ns[prefix] || null;
-        };
-        // This XPath selects only the "Version" attribute on the Identity element
-        const xpath = "/def:Package/def:Identity/@Version";
-        const result = XML.evaluate(
-          xpath,
-          XML,
-          nsResolver,
-          XPathResult.STRING_TYPE,
-          null
-        );
-        version = result.stringValue; 
-        //*/
-        //*
-        const identity = XML.getElementsByTagName('Identity')[0];
-        version = identity.getAttribute('Version'); 
-        //*/
-        return Promise.resolve(version);
-      } catch (err) { //could not get version
-        log('error', `Could not get version from appmanifest.xml file for Xbox game version: ${err}`);
-        return Promise.resolve(version);
-      }
-    } catch (err) { //mod.manifest could not be read. Try to overwrite with a clean one.
+      const parsed = await parseStringPromise(appManifest);
+      version = parsed?.Package?.Identity?.[0]?.$?.Version;
+      return Promise.resolve(version);
+    } catch (err) {
       log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
       return Promise.resolve(version);
     }
   }
-  if (GAME_VERSION === 'epic') { // use EXEC_EPIC for Epic
+  else { //use shipping exe (note that this only returns the UE engine version right now)
     try {
       const exeVersion = require('exe-version');
-      version = exeVersion.getProductVersion(path.join(gamePath, EXEC_EPIC));
+      version = await exeVersion.getProductVersion(READ_FILE);
+      //log('warn', `Resolved game version for ${GAME_ID} to: ${version}`);
       return Promise.resolve(version); 
     } catch (err) {
-      log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
-      return Promise.resolve(version);
-    }
-  }
-  if (GAME_VERSION === 'steam') { // use EXEC_DEFAULT for Steam
-    try {
-      const exeVersion = require('exe-version');
-      version = exeVersion.getProductVersion(path.join(gamePath, EXEC_DEFAULT));
-      return Promise.resolve(version); 
-    } catch (err) {
-      log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
+      log('error', `Could not read ${READ_FILE} file to get Steam game version: ${err}`);
       return Promise.resolve(version);
     }
   }

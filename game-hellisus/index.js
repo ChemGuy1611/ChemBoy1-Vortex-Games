@@ -1371,6 +1371,21 @@ function partitionCheckNotify(api, CHECK_DATA) {
   });
 }
 
+async function resolveGameVersion(gamePath, exePath) {
+  //SHIPPING_EXE = getShippingExe(gamePath);
+  const READ_FILE = path.join(gamePath, SHIPPING_EXE);
+  let version = '0.0.0';
+  try {
+    const exeVersion = require('exe-version');
+    version = await exeVersion.getProductVersion(READ_FILE);
+    //log('warn', `Resolved game version for ${GAME_ID} to: ${version}`);
+    return Promise.resolve(version); 
+  } catch (err) {
+    log('error', `Could not read ${READ_FILE} file to get game version: ${err}`);
+    return Promise.resolve(version);
+  }
+}
+
 async function modFoldersEnsureWritable(gamePath, relPaths) {
   for (let index = 0; index < relPaths.length; index++) {
     await fs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));

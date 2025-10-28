@@ -10,7 +10,7 @@ Date: 2025-XX-XX
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
-const process = require('node:process');
+const { parseStringPromise } = require('xml2js');
 
 //Specify all the information about the game
 const GAME_ID = "XXX";
@@ -204,7 +204,7 @@ async function requiresLauncher(gamePath, store) {
 }
 
 //Get correct executable, add to required files, set paths for mod types
-function setGameVersion(discoveryPath) {
+async function setGameVersion(discoveryPath) {
   const isCorrectExec = (exec) => {
     try {
       fs.statSync(path.join(discoveryPath, exec));
@@ -649,27 +649,20 @@ function runReloadedAdmin(api) {
 }
 
 async function resolveGameVersion(gamePath) {
-  GAME_VERSION = setGameVersion(gamePath);
+  GAME_VERSION = await setGameVersion(gamePath);
   let version = '0.0.0';
-  if (GAME_VERSION === 'xbox') {
-    try { //try to parse appmanifest.xml
+  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
+    try {
       const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
-      const parser = new DOMParser();
-      const XML = parser.parseFromString(appManifest, 'text/xml');
-      try { //try to get version from appmanifest.xml
-        const identity = XML.getElementsByTagName('Identity')[0];
-        version = identity.getAttribute('Version');
-        return Promise.resolve(version);
-      } catch (err) { //could not get version
-        log('error', `Could not get version from appmanifest.xml file for Xbox game version: ${err}`);
-        return Promise.resolve(version);
-      }
-    } catch (err) { //mod.manifest could not be read. Try to overwrite with a clean one.
+      const parsed = await parseStringPromise(appManifest);
+      version = parsed?.Package?.Identity?.[0]?.$?.Version;
+      return Promise.resolve(version);
+    } catch (err) {
       log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
       return Promise.resolve(version);
     }
   }
-  else { // use game exe for Steam
+  else { // use exe
     try {
       const exeVersion = require('exe-version');
       version = exeVersion.getProductVersion(path.join(gamePath, EXEC));

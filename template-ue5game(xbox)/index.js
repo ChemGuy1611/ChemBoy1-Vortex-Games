@@ -1600,7 +1600,7 @@ function partitionCheckNotify(api, CHECK_DATA) {
 
 async function resolveGameVersion(gamePath, exePath) {
   GAME_VERSION = await setGameVersionPath(gamePath);
-  SHIPPING_EXE = getShippingExe(gamePath);
+  //SHIPPING_EXE = getShippingExe(gamePath);
   const READ_FILE = path.join(gamePath, SHIPPING_EXE);
   let version = '0.0.0';
   if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version

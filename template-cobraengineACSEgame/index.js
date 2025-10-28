@@ -12,6 +12,7 @@ const path = require('path');
 const template = require('string-template');
 //const Bluebird = require('bluebird');
 //const winapi = require('winapi-bindings'); //gives access to the Windows registry
+//const { parseStringPromise } = require('xml2js');
 
 const USER_HOME = util.getVortexPath("home");
 //const DOCUMENTS = util.getVortexPath("documents");

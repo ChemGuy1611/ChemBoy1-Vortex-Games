@@ -13,6 +13,7 @@ const template = require('string-template');
 const { parseStringPromise } = require('xml2js');
 //const winapi = require('winapi-bindings');
 //const turbowalk = require('turbowalk');
+//const { parseStringPromise } = require('xml2js');
 
 //const USER_HOME = util.getVortexPath("home");
 const DOCUMENTS = util.getVortexPath("documents");

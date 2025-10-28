@@ -71,8 +71,6 @@ const spec = {
     ],
     "details": {
       "steamAppId": STEAMAPP_ID,
-      //"nexusPageId": GAME_ID,
-      //"compatibleDownloads": ['site'],
       "ignoreDeploy": IGNORE_DEPLOY,
       "ignoreConflicts": IGNORE_CONFLICTS,
     },

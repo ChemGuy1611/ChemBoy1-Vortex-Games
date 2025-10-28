@@ -109,7 +109,6 @@ function main(context) {
       steamAppId: +STEAM_ID,
       gogAppId: +GOG_ID,
       compatibleDownloads: ['vampirebloodlines'],
-      nexusPageId: 'vampirebloodlines',
     },
     supportedTools: tools,
     setup: async (discovery) => await setup(discovery, context.api),

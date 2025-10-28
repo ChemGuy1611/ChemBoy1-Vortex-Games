@@ -39,7 +39,6 @@ const spec = {
     "details": {
       "steamAppId": STEAMAPP_ID,
       "uPlayAppId": UPLAYAPP_ID,
-      "nexusPageId": GAME_ID
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
@@ -187,11 +186,10 @@ async function downloadAnvil(discovery, api, gameSpec) {
       await api.ext.ensureLoggedIn();
     }
 
-    const gameId = "assassinscreedunity";
-    const modPageId = 38;
+    const modPageId = 455;
     try {
       //get the mod files information from Nexus
-      const modFiles = await api.ext.nexusGetModFiles(gameId, modPageId);
+      const modFiles = await api.ext.nexusGetModFiles('site', modPageId);
       const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
       const file = modFiles
         .filter(file => file.category_id === 1)
@@ -201,10 +199,10 @@ async function downloadAnvil(discovery, api, gameSpec) {
       }
       //Download the mod
       const dlInfo = {
-        game: gameSpec.game.id,
+        game: 'site',
         name: 'AnvilToolkit',
       };
-      const nxmUrl = `nxm://${gameId}/mods/${modPageId}/files/${file.file_id}`;
+      const nxmUrl = `nxm://$site/mods/${modPageId}/files/${file.file_id}`;
       const dlId = await util.toPromise(cb =>
         api.events.emit('start-download', [nxmUrl], dlInfo, undefined, cb, undefined, { allowInstall: false }));
       const modId = await util.toPromise(cb =>
@@ -220,7 +218,7 @@ async function downloadAnvil(discovery, api, gameSpec) {
       util.batchDispatch(api.store, batched); // Will dispatch both actions.
     //Show the user the download page if the download/install process fails
     } catch (err) {
-      const errPage = `https://www.nexusmods.com/${gameId}/mods/${modPageId}/files/?tab=files`;
+      const errPage = `https://www.nexusmods.com/site/mods/${modPageId}/files/?tab=files`;
       api.showErrorNotification('Failed to download/install AnvilToolkit', err);
       util.opn(errPage).catch(() => null);
     } finally {

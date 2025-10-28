@@ -1464,7 +1464,6 @@ function applyGame(context, gameSpec) {
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     executable: () => gameSpec.game.executable,
-    //executable: getExecutable,
     //getGameVersion: resolveGameVersion,
     supportedTools: tools,
   };

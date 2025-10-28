@@ -86,7 +86,6 @@ const spec = {
       "gogAppId": GOGAPP_ID,
       "epicAppId": EPICAPP_ID,
       "xboxAppId": XBOXAPP_ID,
-      "nexusPageId": LEGACY_ID,
       "compatibleDownloads": [LEGACY_ID],
     },
     "environment": {

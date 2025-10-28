@@ -10,6 +10,7 @@ Date: 2025-07-17
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
+const { parseStringPromise } = require('xml2js');
 
 //for Rogue City
 const GAME_ID = "robocoproguecity";
@@ -1996,53 +1997,21 @@ function partitionCheckNotify(api, check, id, name, location, config, save) {
   });
 }
 
-async function resolveGameVersion(gamePath, api) {
+async function resolveGameVersion(gamePath) {
   GAME_VERSION = setGameVersion(api, GAME_ID);
   let version = '0.0.0';
   if (GAME_VERSION === 'xbox') {
-    try { //try to parse appmanifest.xml for Xbox version
+    try { //try to parse appxmanifest.xml
       const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
-      const parser = new DOMParser();
-      const XML = parser.parseFromString(appManifest, 'text/xml');
-      try { //try to get version from appmanifest.xml
-        /*
-        const ns = "http://schemas.microsoft.com/appx/manifest/foundation/windows10"; //must define namespace
-        const identity = XML.getElementsByTagNameNS(ns, 'Identity')[0]; 
-        //*/
-
-        /* Namespace resolver — important since default xmlns is in effect
-        const nsResolver = (prefix) => {
-          const ns = {
-            def: "http://schemas.microsoft.com/appx/manifest/foundation/windows10"
-          };
-          return ns[prefix] || null;
-        };
-        // This XPath selects only the "Version" attribute on the Identity element
-        const xpath = "/def:Package/def:Identity/@Version";
-        const result = XML.evaluate(
-          xpath,
-          XML,
-          nsResolver,
-          XPathResult.STRING_TYPE,
-          null
-        );
-        version = result.stringValue; 
-        //*/
-        //*
-        const identity = XML.getElementsByTagName('Identity')[0];
-        version = identity.getAttribute('Version'); 
-        //*/
-        return Promise.resolve(version);
-      } catch (err) { //could not get version
-        log('error', `Could not get version from appmanifest.xml file for Xbox game version: ${err}`);
-        return Promise.resolve(version);
-      }
-    } catch (err) { //mod.manifest could not be read. Try to overwrite with a clean one.
+      const parsed = await parseStringPromise(appManifest);
+      version = parsed?.Package?.Identity?.[0]?.$?.Version;
+      return Promise.resolve(version);
+    } catch (err) {
       log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
       return Promise.resolve(version);
     }
   }
-  if (GAME_VERSION === 'steam') { // use EXEC_DEFAULT for Steam
+  else { // use EXEC_DEFAULT for Steam
     try {
       const exeVersion = require('exe-version');
       version = exeVersion.getProductVersion(path.join(gamePath, EXEC_DEFAULT));
@@ -2110,7 +2079,7 @@ function applyGame(context, gameSpec) {
     requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     executable: getExecutable,
-    getGameVersion: (gamePath) => resolveGameVersion(gamePath, context.api),
+    getGameVersion: resolveGameVersion,
     supportedTools: tools,
   };
   context.registerGame(game);
@@ -2291,6 +2260,7 @@ function applyGameUnfinished(context, gameSpec) {
     requiresLauncher,
     setup: async (discovery) => await setupUnfinished(discovery, context.api, gameSpec),
     executable: () => gameSpec.game.executable,
+    //getGameVersion: resolveGameVersion,
     supportedTools: toolsUnfinished,
   };
   context.registerGame(game);

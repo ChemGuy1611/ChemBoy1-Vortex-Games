@@ -10,6 +10,7 @@ Date: 2025-09-27
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
+const { parseStringPromise } = require('xml2js');
 
 //const USER_HOME = util.getVortexPath("home");
 const DOCUMENTS = util.getVortexPath("documents");
@@ -34,6 +35,7 @@ const CONFIG_FOLDERNAME = 'theHunter Call of the Wild';
 const SAVEMOD_LOCATION = DOCUMENTS;
 const SAVE_FOLDERNAME = 'COTW';
 const EGS_FILE = 'versions.Paris-RC-Final.txt';
+const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 let GAME_PATH = null;
 let GAME_VERSION = '';
@@ -336,7 +338,7 @@ function getExecutable(discoveryPath) {
 }
 
 //Get correct game version
-function setGameVersion(gamePath) {
+async function setGameVersion(gamePath) {
   const isCorrectExec = (exec) => {
     try {
       fs.statSync(path.join(gamePath, exec));
@@ -508,6 +510,32 @@ function installSave(files) {
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
+async function resolveGameVersion(gamePath) {
+  GAME_VERSION = await setGameVersion(gamePath);
+  let version = '0.0.0';
+  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
+    try { //try to parse appxmanifest.xml
+      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
+      const parsed = await parseStringPromise(appManifest);
+      version = parsed?.Package?.Identity?.[0]?.$?.Version;
+      return Promise.resolve(version);
+    } catch (err) {
+      log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+  else { // use exe for Steam
+    try {
+      const exeVersion = require('exe-version');
+      version = exeVersion.getProductVersion(path.join(gamePath, EXEC));
+      return Promise.resolve(version); 
+    } catch (err) {
+      log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+}
+
 //Setup function
 async function setup(discovery, api, gameSpec) {
   // SYNCHRONOUS CODE ////////////////////////////////////
@@ -532,7 +560,7 @@ function applyGame(context, gameSpec) {
     //queryModPath: getModPath,
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
-    //getGameVersion: resolveGameVersion,
+    getGameVersion: resolveGameVersion,
     supportedTools: tools,
   };
   context.registerGame(game);

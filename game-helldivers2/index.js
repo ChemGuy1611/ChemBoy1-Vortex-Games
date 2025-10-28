@@ -79,7 +79,6 @@ const spec = {
     ],
     "details": {
       "steamAppId": STEAMAPP_ID,
-      "nexusPageId": GAME_ID,
       "ignoreConflicts": IGNORED_FILES,
     },
     "environment": {

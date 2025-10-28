@@ -351,7 +351,7 @@ async function downloadAnvil(discovery, api, gameSpec) {
         FILE = FILE_ID; 
       }
       const dlInfo = {
-        game: gameSpec.game.id,
+        game: GAME_DOMAIN,
         name: MOD_NAME,
       };
       URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;

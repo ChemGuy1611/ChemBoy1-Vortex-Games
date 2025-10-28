@@ -114,7 +114,6 @@ const spec = {
       "gogAppId": GOGAPP_ID,
       "epicAppId": EPICAPP_ID,
       "xboxAppId": XBOXAPP_ID,
-      "nexusPageId": GAME_ID,
       "customOpenModsPath": UNREALDATA.absModsPath || UNREALDATA.modsPath
     },
     "compatible": {
