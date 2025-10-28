@@ -1,9 +1,9 @@
 /*/////////////////////////////////////////////////
-Name: XXX Vortex Extension
+Name: FINAL FANTASY TACTICS - The Ivalice Chronicles Vortex Extension
 Structure: Reloaded-II Game (Mod Installer)
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2025-XX-XX
+Date: 2025-10-28
 /////////////////////////////////////////////////*/
 
 //Import libraries
@@ -18,29 +18,25 @@ const DOCUMENTS = util.getVortexPath("documents");
 //const LOCALAPPDATA = util.getVortexPath('localAppData');
 
 //Specify all the information about the game
-const GAME_ID = "XXX";
-const STEAMAPP_ID = "XXX";
-const STEAMAPP_ID_DEMO = "XXX";
+const GAME_ID = "finalfantasytacticstheivalicechronicles";
+const STEAMAPP_ID = "1004640";
+const STEAMAPP_ID_DEMO = null;
 const EPICAPP_ID = null;
-const GOGAPP_ID = "XXX";
-const XBOXAPP_ID = "XXX";
-const XBOXEXECNAME = "XXX";
+const GOGAPP_ID = null;
+const XBOXAPP_ID = null;
+const XBOXEXECNAME = null;
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID];
-const GAME_NAME = "XXX";
-const GAME_NAME_SHORT = "XXX";
-const EXEC = "XXX.exe";
+const GAME_NAME = "FINAL FANTASY TACTICS - The Ivalice Chronicles";
+const GAME_NAME_SHORT = "FF Tactics IVC";
+const EXEC = "FFT_enhanced.exe";
+const EXEC_CLASSIC = "FFT_classic.exe";
 const EXEC_XBOX = 'gamelaunchhelper.exe';
 const APPMANIFEST_FILE = 'appxmanifest.xml';
 
-const MOD_LOADER_FOLDER = "";
-const RELOADEDMODLOADER_FILE = "XXX.dll";
-const RELOADEDMODLOADER_PAGE_NO = 0;
-const RELOADEDMODLOADER_FILE_NO = 0;
-const RELOADEDMODLOADER_URL = `XXX`;
-const RELOADEDMODLOADER_URL_ERR = `XXX`;
-
-const PUBLISHER_FOLDER = "";
-const DATA_FOLDER = "";
+const MOD_LOADER_FOLDER = "FFTIVC_Mod_Loader";
+const RELOADEDMODLOADER_FILE = "fftivc.utility.modloader.dll";
+const RELOADEDMODLOADER_PAGE_NO = 4;
+const RELOADEDMODLOADER_FILE_NO = 91;
 
 let GAME_PATH = null;
 let GAME_VERSION = '';
@@ -70,7 +66,7 @@ const RELOADEDMODLOADER_PATH = path.join(RELOADEDMOD_PATH, MOD_LOADER_FOLDER);
 
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_NAME = "Save File";
-const SAVE_FOLDER = path.join('gamedata', 'savedata');
+const SAVE_FOLDER = path.join(DOCUMENTS, 'My Games', 'FINAL FANTASY TACTICS - The Ivalice Chronicles', 'Steam');
 let USERID_FOLDER = "";
 function isDir(folder, file) {
   const stats = fs.statSync(path.join(folder, file));
@@ -86,7 +82,6 @@ if (USERID_FOLDER === undefined) {
   USERID_FOLDER = "";
 } //*/
 const SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
-//const SAVE_PATH = path.join(DOCUMENTS, PUBLISHER_FOLDER, DATA_FOLDER, USERID_FOLDER);
 const SAVE_EXTS = ['.bin'];
 
 const MOD_PATH_DEFAULT = '.';
@@ -138,7 +133,7 @@ const spec = {
       "priority": "low",
       "targetPath": "{gamePath}"
     },
-    {
+    /*{
       "id": SAVE_ID,
       "name": SAVE_NAME,
       "priority": "high",
@@ -410,51 +405,6 @@ async function downloadModLoader(api, gameSpec) {
       util.batchDispatch(api.store, batched); // Will dispatch both actions
     } catch (err) { //Show the user the download page if the download, install process fails
       const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
-      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
-      util.opn(errPage).catch(() => null);
-    } finally {
-      api.dismissNotification(NOTIF_ID);
-    }
-  }
-} //*/
-
-//* Function to auto-download Mod Loader (From GitHub or other site)
-async function downloadModLoaderSite(api, gameSpec) {
-  let modLoaderInstalled = isModLoaderInstalled(api, gameSpec);
-  if (!modLoaderInstalled) {
-    const MOD_NAME = RELOADEDMODLOADER_NAME;
-    const NOTIF_ID = `${GAME_ID}-${MOD_NAME}-installing`;
-    api.sendNotification({ //notification indicating install process
-      id: NOTIF_ID,
-      message: `Installing-${MOD_NAME}`,
-      type: 'activity',
-      noDismiss: true,
-      allowSuppress: false,
-    });
-
-    try {
-      //Download the mod
-      const dlInfo = {
-        game: gameSpec.game.id,
-        name: MOD_NAME,
-      };
-      const URL = RELOADEDMODLOADER_URL;
-      const dlId = await util.toPromise(cb =>
-        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
-      const modId = await util.toPromise(cb =>
-        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
-      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
-      const batched = [
-        actions.setModsEnabled(api, profileId, [modId], true, {
-          allowAutoDeploy: true,
-          installed: true,
-        }),
-        actions.setModType(gameSpec.game.id, modId, RELOADEDMODLOADER_ID), // Set the mod type
-      ];
-      util.batchDispatch(api.store, batched); // Will dispatch both actions.
-    //Show the user the download page if the download, install process fails
-    } catch (err) {
-      const errPage = RELOADEDMODLOADER_URL_ERR;
       api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
       util.opn(errPage).catch(() => null);
     } finally {
@@ -745,9 +695,9 @@ async function setup(discovery, api, gameSpec) {
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   // ASYNC CODE //////////////////////////////////////////
   await fs.ensureDirWritableAsync(path.join(GAME_PATH, RELOADEDMODLOADER_PATH));
-  await fs.ensureDirWritableAsync(path.join(GAME_PATH, SAVE_PATH));
+  //await fs.ensureDirWritableAsync(path.join(GAME_PATH, SAVE_PATH));
   await downloadModManager(api, gameSpec);
-  //await downloadModLoader(api, gameSpec);
+  await downloadModLoader(api, gameSpec);
   return fs.ensureFileAsync(
     path.join(GAME_PATH, RELOADED_PATH, "portable.txt")
   );
@@ -818,9 +768,7 @@ function applyGame(context, gameSpec) {
     return gameId === GAME_ID;
   }); //*/
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', () => {
-    //const openPath = SAVE_PATH;
-    GAME_PATH = getDiscoveryPath(context.api);
-    const openPath = path.join(GAME_PATH, SAVE_PATH); //*/
+    const openPath = SAVE_PATH;
     util.opn(openPath).catch(() => null);
   }, () => {
     const state = context.api.getState();
