@@ -10,6 +10,7 @@ Date: 2025-04-01
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
+const { parseStringPromise } = require('xml2js');
 
 //Specify all the information about the game
 const STEAMAPP_ID = "870780";
@@ -23,6 +24,7 @@ const GAME_NAME = "Control Ultimate Edition"
 const GAME_NAME_SHORT = "Control UE";
 let GAME_VERSION = null;
 let GAME_PATH = null;
+const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 //executables for different stores
 const EXEC_DEFAULT = `Control.exe`;
@@ -217,6 +219,27 @@ function getExecutable(discoveredPath) {
     return EXEC_XBOX;
   };
   return EXEC_DEFAULT;
+}
+
+//Get correct game version
+async function setGameVersion(gamePath) {
+  const isCorrectExec = (exec) => {
+    try {
+      fs.statSync(path.join(gamePath, exec));
+      return true;
+    }
+    catch (err) {
+      return false;
+    }
+  };
+
+  if (isCorrectExec(EXEC_XBOX)) {
+    GAME_VERSION = 'xbox';
+    return GAME_VERSION;
+  };
+
+  GAME_VERSION = 'default';
+  return GAME_VERSION;
 }
 
 // AUTO-INSTALLER FUNCTIONS ////////////////////////////////////////////////////////////////////////////////////////
@@ -569,6 +592,34 @@ function setupNotify(api) {
   });    
 }
 
+//*
+async function resolveGameVersion(gamePath) {
+  GAME_VERSION = await setGameVersion(gamePath);
+  let version = '0.0.0';
+  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
+    try {
+      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
+      const parsed = await parseStringPromise(appManifest);
+      version = parsed?.Package?.Identity?.[0]?.$?.Version;
+      return Promise.resolve(version);
+    } catch (err) {
+      log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+  else { // use exe
+    try {
+      const exeVersion = require('exe-version');
+      version = exeVersion.getProductVersion(path.join(gamePath, EXEC_DEFAULT));
+      return Promise.resolve(version); 
+    } catch (err) {
+      log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+} //*/
+
+
 //Setup function
 async function setup(discovery, api, gameSpec) {
   GAME_PATH = discovery.path;
@@ -589,6 +640,7 @@ function applyGame(context, gameSpec) {
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     executable: getExecutable,
+    getGameVersion: resolveGameVersion,
     supportedTools: [ //3rd party tools and launchers
       {
         id: `${GAME_ID}-customlaunch`,

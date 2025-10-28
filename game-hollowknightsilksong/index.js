@@ -12,6 +12,7 @@ const path = require('path');
 const template = require('string-template');
 const winapi = require('winapi-bindings');
 //const turbowalk = require('turbowalk');
+const { parseStringPromise } = require('xml2js');
 
 const USER_HOME = util.getVortexPath("home");
 //const DOCUMENTS = util.getVortexPath("documents");
@@ -45,11 +46,12 @@ const downloadCfgMan = true; //should BepInExConfigManager be downloaded?
 let GAME_PATH = null;
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
+let GAME_VERSION = '';
+const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 //modtypes
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Game Folder";
-
 
 let BEPINEX_STRING = 'mono';
 if (BEPINEX_BUILD === 'unityil2cpp') {
@@ -275,6 +277,27 @@ function getSavePath(api) {
   };
 }
 
+//Get correct game version
+async function setGameVersion(gamePath) {
+  const isCorrectExec = (exec) => {
+    try {
+      fs.statSync(path.join(gamePath, exec));
+      return true;
+    }
+    catch (err) {
+      return false;
+    }
+  };
+
+  if (isCorrectExec(EXEC_XBOX)) {
+    GAME_VERSION = 'xbox';
+    return GAME_VERSION;
+  };
+
+  GAME_VERSION = 'default';
+  return GAME_VERSION;
+}
+
 const getDiscoveryPath = (api) => { //get the game's discovered path
   const state = api.getState();
   const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});
@@ -420,6 +443,33 @@ function installBepMod(files) {
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
+//*
+async function resolveGameVersion(gamePath) {
+  GAME_VERSION = await setGameVersion(gamePath);
+  let version = '0.0.0';
+  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
+    try {
+      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
+      const parsed = await parseStringPromise(appManifest);
+      version = parsed?.Package?.Identity?.[0]?.$?.Version;
+      return Promise.resolve(version);
+    } catch (err) {
+      log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+  else { // use exe
+    try {
+      const exeVersion = require('exe-version');
+      version = exeVersion.getProductVersion(path.join(gamePath, EXEC));
+      return Promise.resolve(version); 
+    } catch (err) {
+      log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+} //*/
+
 async function modFoldersEnsureWritable(gamePath, relPaths) {
   for (let index = 0; index < relPaths.length; index++) {
     await fs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
@@ -453,6 +503,7 @@ function applyGame(context, gameSpec) {
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     executable: () => gameSpec.game.executable,
+    getGameVersion: resolveGameVersion,
     supportedTools: tools,
   };
   context.registerGame(game);

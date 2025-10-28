@@ -11,6 +11,7 @@ const path = require('path');
 const template = require('string-template');
 const Bluebird = require('bluebird');
 //const winapi = require('winapi-bindings'); //gives access to the Windows registry
+const { parseStringPromise } = require('xml2js');
 
 //Specify all the information about the game
 const STEAMAPP_ID = "2300320";
@@ -25,6 +26,7 @@ const GAME_NAME = "Farming Simulator 25";
 const GAME_NAME_SHORT = "Farming Sim 25";
 
 let GAME_VERSION = '';
+const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 //Info for mod types and installers
 const DOCUMENTS = util.getVortexPath('documents');
@@ -173,7 +175,7 @@ async function requiresLauncher(gamePath, store) {
 }
 
 //Get correct game version
-function setGameVersion(gamePath) {
+async function setGameVersion(gamePath) {
   const isCorrectExec = (exec) => {
     try {
       fs.statSync(path.join(gamePath, exec));
@@ -187,10 +189,8 @@ function setGameVersion(gamePath) {
     GAME_VERSION = 'xbox';
     return GAME_VERSION;
   };
-  if (isCorrectExec(EXEC)) {
-    GAME_VERSION = 'default';
-    return GAME_VERSION;
-  };
+  GAME_VERSION = 'default';
+  return GAME_VERSION;
 }
 
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
@@ -293,6 +293,33 @@ function toBlue(func) {
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
+//*
+async function resolveGameVersion(gamePath) {
+  GAME_VERSION = await setGameVersion(gamePath);
+  let version = '0.0.0';
+  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
+    try {
+      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
+      const parsed = await parseStringPromise(appManifest);
+      version = parsed?.Package?.Identity?.[0]?.$?.Version;
+      return Promise.resolve(version);
+    } catch (err) {
+      log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+  else { // use exe
+    try {
+      const exeVersion = require('exe-version');
+      version = exeVersion.getProductVersion(path.join(gamePath, EXEC_X64));
+      return Promise.resolve(version); 
+    } catch (err) {
+      log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+} //*/
+
 //Setup function
 async function setup(discovery, api, gameSpec) {
   GAME_VERSION = setGameVersion(discovery.path);
@@ -312,6 +339,7 @@ function applyGame(context, gameSpec) {
     queryModPath: getModPath,
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
+    getGameVersion: resolveGameVersion,
     supportedTools: tools,
   };
   context.registerGame(game);

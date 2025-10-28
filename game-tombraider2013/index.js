@@ -11,6 +11,7 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 const Bluebird = require('bluebird');
+const { parseStringPromise } = require('xml2js');
 
 //Specify all the information about the game
 const STEAMAPP_ID = "203160";
@@ -22,9 +23,12 @@ const GAME_ID = "tombraider2013";
 const GAME_NAME = "Tomb Raider (2013)";
 const GAME_NAME_SHORT = "Tomb Raider";
 const EXEC = "TombRaider.exe";
+const EXEC_XBOX = "gamelaunchhelper.exe";
 let GAME_PATH = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
+let GAME_VERSION = '';
+const APPMANIFEST_FILE = "appxmanifest.xml";
 
 //Information for mod types and installers
 const DOCUMENTS = util.getVortexPath("documents");
@@ -233,6 +237,27 @@ async function requiresLauncher(gamePath, store) {
     });
   }
   return Promise.resolve(undefined);
+}
+
+//Get correct game version
+async function setGameVersion(gamePath) {
+  const isCorrectExec = (exec) => {
+    try {
+      fs.statSync(path.join(gamePath, exec));
+      return true;
+    }
+    catch (err) {
+      return false;
+    }
+  };
+
+  if (isCorrectExec(EXEC_XBOX)) {
+    GAME_VERSION = 'xbox';
+    return GAME_VERSION;
+  };
+
+  GAME_VERSION = 'default';
+  return GAME_VERSION;
 }
 
 const getDiscoveryPath = (api) => {
@@ -727,6 +752,33 @@ function runModManager(api) {
   }
 }
 
+//*
+async function resolveGameVersion(gamePath) {
+  GAME_VERSION = await setGameVersion(gamePath);
+  let version = '0.0.0';
+  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
+    try {
+      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
+      const parsed = await parseStringPromise(appManifest);
+      version = parsed?.Package?.Identity?.[0]?.$?.Version;
+      return Promise.resolve(version);
+    } catch (err) {
+      log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+  else { // use exe
+    try {
+      const exeVersion = require('exe-version');
+      version = exeVersion.getProductVersion(path.join(gamePath, EXEC));
+      return Promise.resolve(version); 
+    } catch (err) {
+      log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+} //*/
+
 //Setup function
 async function setup(discovery, api, gameSpec) {
   //SYNCHRONOUS CODE ////////////////////////////////////
@@ -754,6 +806,7 @@ function applyGame(context, gameSpec) {
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     executable: () => gameSpec.game.executable,
+    getGameVersion: resolveGameVersion,
     supportedTools: tools,
   };
   context.registerGame(game);

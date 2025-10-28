@@ -7,9 +7,10 @@ Date: 08/02/2024
 */
 
 //Import libraries
-const { actions, fs, util, selectors } = require('vortex-api');
+const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
+const { parseStringPromise } = require('xml2js');
 
 //Specify all information about the game
 const STEAMAPP_ID = "1182900";
@@ -31,10 +32,12 @@ const gameFinderQuery = {
 };
 
 //Information for setting the executable and variable paths based on the game store version
+let GAME_VERSION = '';
 const requiredFiles = [COMMON_FILE];
 const EXEC = "APlagueTaleRequiem_x64.exe";
 const EPIC_EXEC = "APlagueTaleRequiem_x64.exe";
 const XBOX_EXEC = "APT2_WinStore.x64.Submission.exe";
+const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 //This information will be filled in from the data above
 const spec = {
@@ -68,6 +71,8 @@ const spec = {
 const tools = [
   
 ];
+
+// BASIC EXTENSION FUNCTIONS ///////////////////////////////////////////////////
 
 //Set mod type priorities
 function modTypePriority(priority) {
@@ -146,6 +151,29 @@ function getExecutable(discoveryPath) {
   return EXEC;
 }
 
+//Get correct game version
+async function setGameVersion(gamePath) {
+  const isCorrectExec = (exec) => {
+    try {
+      fs.statSync(path.join(gamePath, exec));
+      return true;
+    }
+    catch (err) {
+      return false;
+    }
+  };
+
+  if (isCorrectExec(EXEC_XBOX)) {
+    GAME_VERSION = 'xbox';
+    return GAME_VERSION;
+  };
+
+  GAME_VERSION = 'default';
+  return GAME_VERSION;
+}
+
+// MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
+
 //Send notification for Reshade
 function reshadeNotify(api) {
   api.sendNotification({
@@ -174,6 +202,34 @@ function reshadeNotify(api) {
   });    
 }
 
+//*
+async function resolveGameVersion(gamePath) {
+  GAME_VERSION = await setGameVersion(gamePath);
+  let version = '0.0.0';
+  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
+    try {
+      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
+      const parsed = await parseStringPromise(appManifest);
+      version = parsed?.Package?.Identity?.[0]?.$?.Version;
+      return Promise.resolve(version);
+    } catch (err) {
+      log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+  else { // use exe
+    try {
+      const exeVersion = require('exe-version');
+      version = exeVersion.getProductVersion(path.join(gamePath, EXEC));
+      return Promise.resolve(version); 
+    } catch (err) {
+      log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+} //*/
+
+
 //Setup function
 async function setup(discovery, api, gameSpec){
   reshadeNotify(api);
@@ -192,6 +248,7 @@ function applyGame(context, gameSpec) {
     requiredFiles,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     supportedTools: tools,
+    getGameVersion: resolveGameVersion,
     requiresLauncher: requiresLauncher,
   };
   context.registerGame(game);

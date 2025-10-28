@@ -7,9 +7,10 @@ Date: 11/07/2024
 */
 
 //Import libraries
-const { actions, fs, util, selectors } = require('vortex-api');
+const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
+const { parseStringPromise } = require('xml2js');
 
 //Specify all the information about the game
 const STEAMAPP_ID = "1934680";
@@ -25,8 +26,6 @@ const COMMON_FOLDER = "game";
 //Discovery IDs
 const gameFinderQuery = {
   steam: [{ id: STEAMAPP_ID, prefer: 0 }],
-  //gog: [{ id: GOGAPP_ID }],
-  //epic: [{ id: EPICAPP_ID }],
   xbox: [{ id: XBOXAPP_ID }],
 };
 
@@ -34,6 +33,7 @@ const gameFinderQuery = {
 const EXEC_XBOX = "AoMRT.exe";
 const EXEC_STEAM = "AoMRT_s.exe";
 const requiredFiles = [COMMON_FOLDER];
+const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 //Info for mod types and installers
 const DATA_ID = `${GAME_ID}-data`;
@@ -52,6 +52,7 @@ const RESHADE_FOLDER = "reshade-shaders";
 const RESHADE_IDX = "reshade-shaders\\";
 const BINARIES_EXT = [".dll", ".ini"];
 
+let GAME_VERSION = '';
 let USERID_FOLDER = "";
 CONFIG_FOLDER = path.join(util.getVortexPath('home'), "Games", "Age of Mythology Retold");
 try {
@@ -83,14 +84,10 @@ const spec = {
     "mergeMods": true,
     "details": {
       "steamAppId": STEAMAPP_ID,
-      //"gogAppId": GOGAPP_ID,
-      //"epicAppId": EPICAPP_ID,
       "xboxAppId": XBOXAPP_ID,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
-      //"GogAPPId": GOGAPP_ID,
-      //"EpicAPPId": EPICAPP_ID,
       "XboxAPPId": XBOXAPP_ID
     }
   },
@@ -123,8 +120,6 @@ const spec = {
   "discovery": {
     "ids": [
       STEAMAPP_ID,
-      //EPICAPP_ID,
-      //GOGAPP_ID,
       XBOXAPP_ID
     ],
     "names": []
@@ -172,17 +167,6 @@ async function requiresLauncher(gamePath, store) {
       });
   }
 
-  /*
-  if (store === 'epic') {
-    return Promise.resolve({
-        launcher: 'epic',
-        addInfo: {
-            appId: EPICAPP_ID,
-        },
-    });
-  }
-  */
-  
   return Promise.resolve(undefined);
 }
 
@@ -208,6 +192,27 @@ function getExecutable(discoveryPath) {
   };
 
   return EXEC_STEAM;
+}
+
+//Get correct game version
+async function setGameVersion(gamePath) {
+  const isCorrectExec = (exec) => {
+    try {
+      fs.statSync(path.join(gamePath, exec));
+      return true;
+    }
+    catch (err) {
+      return false;
+    }
+  };
+
+  if (isCorrectExec(EXEC_XBOX)) {
+    GAME_VERSION = 'xbox';
+    return GAME_VERSION;
+  };
+
+  GAME_VERSION = 'default';
+  return GAME_VERSION;
 }
 
 /*
@@ -239,6 +244,8 @@ function setupNotify(api) {
   });    
 }
 */
+
+// MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
 
 //Installer test for Root folder files
 function testData(files, gameId) {
@@ -427,6 +434,35 @@ function installBinaries(files) {
   return Promise.resolve({ instructions });
 }
 
+// MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
+
+//*
+async function resolveGameVersion(gamePath) {
+  GAME_VERSION = await setGameVersion(gamePath);
+  let version = '0.0.0';
+  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
+    try {
+      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
+      const parsed = await parseStringPromise(appManifest);
+      version = parsed?.Package?.Identity?.[0]?.$?.Version;
+      return Promise.resolve(version);
+    } catch (err) {
+      log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+  else { // use exe
+    try {
+      const exeVersion = require('exe-version');
+      version = exeVersion.getProductVersion(path.join(gamePath, EXEC_STEAM));
+      return Promise.resolve(version); 
+    } catch (err) {
+      log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+} //*/
+
 //Setup function
 async function setup(discovery, api, gameSpec) {
   //setupNotify(api);
@@ -448,6 +484,7 @@ function applyGame(context, gameSpec) {
     requiredFiles,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     supportedTools: tools,
+    getGameVersion: resolveGameVersion,
     requiresLauncher: requiresLauncher,
   };
   context.registerGame(game);

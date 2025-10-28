@@ -524,7 +524,7 @@ async function resolveGameVersion(gamePath) {
       return Promise.resolve(version);
     }
   }
-  else { // use exe for Steam
+  else { // use exe
     try {
       const exeVersion = require('exe-version');
       version = exeVersion.getProductVersion(path.join(gamePath, EXEC));

@@ -1,15 +1,16 @@
-/*
+/*////////////////////////////////////////////////
 Name: Trepang2 Vortex Extension
 Structure: UE4
 Author: ChemBoy1
 Version: 0.1.1
 Date: 08/08/2024
-*/
+////////////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors } = require('vortex-api');
+const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
+const { parseStringPromise } = require('xml2js');
 
 //Specify all information about the game
 const GAME_ID = "trepang2";
@@ -24,7 +25,10 @@ const EXEC_FOLDER_NAME = "Win64";
 const GAME_NAME = "Trepang2";
 const GAME_NAME_SHORT = "Trepang2";
 const EXEC = "CPPFPS.exe";
-//const EXEC = XBOXEXECNAME; //XBOX Version
+const EXEC_XBOX = "gamelaunchhelper.exe";
+
+let GAME_VERSION = '';
+const APPMANIFEST_FILE = "appxmanifest.xml";
 
 /*
   Unreal Engine Game Data
@@ -139,6 +143,8 @@ const tools = [
   
 ];
 
+// BASIC EXTENSION FUNCTIONS ///////////////////////////////////////////////////
+
 //Set mod type priority
 function modTypePriority(priority) {
   return {
@@ -211,6 +217,27 @@ async function requiresLauncher() {
 
   return undefined;
 }
+
+//Get correct game version
+async function setGameVersionPath(gamePath) {
+  const isCorrectExec = (exec) => {
+    try {
+      fs.statSync(path.join(gamePath, exec));
+      return true;
+    }
+    catch (err) {
+      return false;
+    }
+  };
+  if (isCorrectExec(EXEC_XBOX)) {
+    GAME_VERSION = 'xbox';
+    return GAME_VERSION;
+  };
+  GAME_VERSION = 'default';
+  return GAME_VERSION;
+}
+
+// MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
 
 //Test for config files
 function testConfig(files, gameId) {
@@ -339,12 +366,7 @@ function installSave(files) {
   return Promise.resolve({ instructions });
 }
 
-//Setup function
-async function setup(discovery, api, gameSpec) {
-  await fs.ensureDirWritableAsync(path.join(process.env['LOCALAPPDATA'], CONFIG_PATH));
-  await fs.ensureDirWritableAsync(path.join(process.env['LOCALAPPDATA'], SAVE_PATH));
-  return fs.ensureDirWritableAsync(path.join(discovery.path, PAK_PATH));
-}
+// UNREAL FUNCTIONS ///////////////////////////////////////////////////////////////
 
 //Pre-sort function
 async function preSort(api, items, direction) {
@@ -367,6 +389,44 @@ async function preSort(api, items, direction) {
   return (direction === 'descending') ? Promise.resolve(loadOrder.reverse()) : Promise.resolve(loadOrder);
 }
 
+// MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
+
+async function resolveGameVersion(gamePath, exePath) {
+  GAME_VERSION = await setGameVersionPath(gamePath);
+  //SHIPPING_EXE = getShippingExe(gamePath);
+  const READ_FILE = path.join(gamePath, EXEC);
+  let version = '0.0.0';
+  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
+    try { //try to parse appxmanifest.xml
+      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
+      const parsed = await parseStringPromise(appManifest);
+      version = parsed?.Package?.Identity?.[0]?.$?.Version;
+      return Promise.resolve(version);
+    } catch (err) {
+      log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+  else { //use shipping exe (note that this only returns the UE engine version right now)
+    try {
+      const exeVersion = require('exe-version');
+      version = await exeVersion.getProductVersion(READ_FILE);
+      //log('warn', `Resolved game version for ${GAME_ID} to: ${version}`);
+      return Promise.resolve(version); 
+    } catch (err) {
+      log('error', `Could not read ${READ_FILE} file to get Steam game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+}
+
+//Setup function
+async function setup(discovery, api, gameSpec) {
+  await fs.ensureDirWritableAsync(path.join(process.env['LOCALAPPDATA'], CONFIG_PATH));
+  await fs.ensureDirWritableAsync(path.join(process.env['LOCALAPPDATA'], SAVE_PATH));
+  return fs.ensureDirWritableAsync(path.join(discovery.path, PAK_PATH));
+}
+
 //Let Vortex know about the game
 function applyGame(context, gameSpec) {
   //require other extensions
@@ -380,6 +440,7 @@ function applyGame(context, gameSpec) {
     requiresCleanup: true,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     executable: () => gameSpec.game.executable,
+    getGameVersion: resolveGameVersion,
     supportedTools: tools,
   };
   context.registerGame(game);

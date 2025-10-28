@@ -532,7 +532,7 @@ async function resolveGameVersion(gamePath) {
       return Promise.resolve(version);
     }
   }
-  if (GAME_VERSION = CLASSIC) { // use doom3.exe for Steam
+  if (GAME_VERSION = CLASSIC) { // use exe
     try {
       const exeVersion = require('exe-version');
       version = exeVersion.getProductVersion(path.join(gamePath, EXEC_CLASSIC));
@@ -542,7 +542,7 @@ async function resolveGameVersion(gamePath) {
       return Promise.resolve(version);
     }
   }
-  if (GAME_VERSION = BFG) { // use doom3.exe for Steam
+  if (GAME_VERSION = BFG) { // use exe
     try {
       const exeVersion = require('exe-version');
       version = exeVersion.getProductVersion(path.join(gamePath, EXEC_BFG));

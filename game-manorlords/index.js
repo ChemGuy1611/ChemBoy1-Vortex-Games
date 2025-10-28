@@ -7,9 +7,10 @@ Date: 11/07/2024
 */
 
 //Import libraries
-const { actions, fs, util, selectors } = require('vortex-api');
+const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
+const { parseStringPromise } = require('xml2js');
 
 //Specify all information about the game
 const GAME_ID = "manorlords";
@@ -49,6 +50,8 @@ let SAVE_TARGET = null;
 let CONFIG_PATH = null;
 let CONFIG_TARGET = null;
 let requiredFiles = [EPIC_CODE_NAME];
+let GAME_VERSION = '';
+const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 const CONFIG_PATH_DEFAULT = path.join(EPIC_CODE_NAME, "Saved", "Config", "WindowsNoEditor");
 const CONFIG_PATH_XBOX = path.join(EPIC_CODE_NAME, "Saved", "Config", "WinGDK"); //XBOX Version
@@ -246,6 +249,10 @@ function getExecutable(discoveryPath) {
 
   return EXEC_DEFAULT;
 }
+
+
+
+// MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
 
 //Test for save files
 function testUe4ssCombo(files, gameId) {
@@ -533,6 +540,8 @@ function installSave(files) {
   return Promise.resolve({ instructions });
 }
 
+// AUTO-DOWNLOAD FUNCTIONS ///////////////////////////////////////////////////
+
 //Check if UE4SS is installed
 function isUe4ssInstalled(api, spec) {
   const state = api.getState();
@@ -601,6 +610,8 @@ async function downloadUe4ss(api, gameSpec) {
   }
 }
 
+// UNREAL FUNCTIONS ///////////////////////////////////////////////////////////////
+
 //Pre-sort function
 async function preSort(api, items, direction) {
   const mods = util.getSafe(api.store.getState(), ['persistent', 'mods', spec.game.id], {});
@@ -622,11 +633,42 @@ async function preSort(api, items, direction) {
   return (direction === 'descending') ? Promise.resolve(loadOrder.reverse()) : Promise.resolve(loadOrder);
 }
 
+// MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
+
+async function resolveGameVersion(gamePath, exePath) {
+  GAME_VERSION = await setGameVersionPath(gamePath);
+  //SHIPPING_EXE = getShippingExe(gamePath);
+  const READ_FILE = path.join(gamePath, EXEC_DEFAULT);
+  let version = '0.0.0';
+  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
+    try { //try to parse appxmanifest.xml
+      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
+      const parsed = await parseStringPromise(appManifest);
+      version = parsed?.Package?.Identity?.[0]?.$?.Version;
+      return Promise.resolve(version);
+    } catch (err) {
+      log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+  else { //use shipping exe (note that this only returns the UE engine version right now)
+    try {
+      const exeVersion = require('exe-version');
+      version = await exeVersion.getProductVersion(READ_FILE);
+      //log('warn', `Resolved game version for ${GAME_ID} to: ${version}`);
+      return Promise.resolve(version); 
+    } catch (err) {
+      log('error', `Could not read ${READ_FILE} file to get Steam game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+}
+
 //Setup function
 async function setup(discovery, api, gameSpec) {
   //await downloadUe4ss(api, gameSpec);
-  await fs.ensureDirWritableAsync(path.join(process.env['LOCALAPPDATA'], CONFIG_PATH));
-  await fs.ensureDirWritableAsync(path.join(process.env['LOCALAPPDATA'], SAVE_PATH));
+  await fs.ensureDirWritableAsync(path.join(util.getVortexPath('localAppData'), CONFIG_PATH));
+  await fs.ensureDirWritableAsync(path.join(util.getVortexPath('localAppData'), SAVE_PATH));
   await fs.ensureDirWritableAsync(path.join(discovery.path, SCRIPTS_PATH));
   await fs.ensureDirWritableAsync(path.join(discovery.path, LOGICMODS_PATH));
   return fs.ensureDirWritableAsync(path.join(discovery.path, PAK_PATH));
@@ -647,6 +689,7 @@ function applyGame(context, gameSpec) {
     requiredFiles,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     supportedTools: tools,
+    getGameVersion: resolveGameVersion,
     requiresLauncher: requiresLauncher,
   };
   context.registerGame(game);

@@ -283,7 +283,7 @@ function getExecutable(discoveredPath) {
   return EXEC;
 }
 
-function setGameVersion(discoveryPath) {
+async function setGameVersion(discoveryPath) {
   const isCorrectExec = (exec) => {
     try {
       fs.statSync(path.join(discoveryPath, exec));
@@ -648,10 +648,11 @@ function setupNotify(api) {
   });    
 }
 
+//*
 async function resolveGameVersion(gamePath) {
-  GAME_VERSION = setGameVersion(gamePath);
+  GAME_VERSION = await setGameVersion(gamePath);
   let version = '0.0.0';
-  if (GAME_VERSION === 'xbox') {
+  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
     try {
       const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
       const parsed = await parseStringPromise(appManifest);
@@ -662,11 +663,17 @@ async function resolveGameVersion(gamePath) {
       return Promise.resolve(version);
     }
   }
-  else {
-    const exeVersion = require('exe-version');
-    return Promise.resolve(exeVersion.getProductVersion(path.join(gamePath, EXEC)));
+  else { // use exe
+    try {
+      const exeVersion = require('exe-version');
+      version = exeVersion.getProductVersion(path.join(gamePath, EXEC));
+      return Promise.resolve(version); 
+    } catch (err) {
+      log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
+      return Promise.resolve(version);
+    }
   }
-}
+} //*/
 
 //Setup function
 async function setup(discovery, api, gameSpec) {

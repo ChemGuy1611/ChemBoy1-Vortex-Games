@@ -13,6 +13,7 @@ const fsPromises = require('fs/promises');
 const template = require('string-template');
 //const Shell = require('node-powershell');
 const child_process = require("child_process");
+const { parseStringPromise } = require('xml2js');
 
 //Specify all information about the game
 const GAME_ID = "stalker2heartofchornobyl";
@@ -92,6 +93,7 @@ let SAVE_PATH_XBOX = path.join(LOCALAPPDATA, 'Packages', `${XBOXAPP_ID}_6fr1t1rw
 const EXEC_FOLDER_DEFAULT = "Win64";
 const EXEC_FOLDER_XBOX = "WinGDK";
 const EXEC_DEFAULT = DEFAULT_EXEC;
+const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 //Unreal Engine Game Data
 const UNREALDATA = {
@@ -360,6 +362,25 @@ function getExecutable(discoveryPath) {
     return EXEC_DEFAULT;
   };
   return EXEC_DEFAULT;
+}
+
+//Get correct game version
+async function setGameVersionPath(gamePath) {
+  const isCorrectExec = (exec) => {
+    try {
+      fs.statSync(path.join(gamePath, exec));
+      return true;
+    }
+    catch (err) {
+      return false;
+    }
+  };
+  if (isCorrectExec(EXEC_XBOX)) {
+    GAME_VERSION = 'xbox';
+    return GAME_VERSION;
+  };
+  GAME_VERSION = 'default';
+  return GAME_VERSION;
 }
 
 const getDiscoveryPath = (api) => {
@@ -1490,6 +1511,35 @@ function partitionCheckNotify(api, CHECK_CONFIG, CHECK_SAVE) {
   });
 }
 
+async function resolveGameVersion(gamePath, exePath) {
+  GAME_VERSION = await setGameVersionPath(gamePath);
+  //SHIPPING_EXE = getShippingExe(gamePath);
+  const READ_FILE = path.join(gamePath, EXEC_DEFAULT);
+  let version = '0.0.0';
+  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
+    try { //try to parse appxmanifest.xml
+      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
+      const parsed = await parseStringPromise(appManifest);
+      version = parsed?.Package?.Identity?.[0]?.$?.Version;
+      return Promise.resolve(version);
+    } catch (err) {
+      log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+  else { //use shipping exe (note that this only returns the UE engine version right now)
+    try {
+      const exeVersion = require('exe-version');
+      version = await exeVersion.getProductVersion(READ_FILE);
+      //log('warn', `Resolved game version for ${GAME_ID} to: ${version}`);
+      return Promise.resolve(version); 
+    } catch (err) {
+      log('error', `Could not read ${READ_FILE} file to get Steam game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+}
+
 //Setup function
 async function setup(discovery, api, gameSpec, store) {
   const state = api.getState();
@@ -1567,6 +1617,7 @@ function applyGame(context, gameSpec) {
     requiredFiles,
     setup: async (discovery, store) => await setup(discovery, context.api, gameSpec, store),
     supportedTools: tools,
+    getGameVersion: resolveGameVersion,
     requiresLauncher: requiresLauncher,
   };
   context.registerGame(game);

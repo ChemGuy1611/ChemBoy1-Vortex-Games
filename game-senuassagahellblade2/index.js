@@ -7,9 +7,10 @@ Date: 11/07/2024
 */
 
 //Import libraries
-const { actions, fs, util, selectors } = require('vortex-api');
+const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
+const { parseStringPromise } = require('xml2js');
 
 //Specify all information about the game
 const GAME_ID = "senuassagahellblade2";
@@ -35,6 +36,8 @@ let EXEC_TARGET = null;
 let CONFIG_PATH = null;
 let CONFIG_TARGET = null;
 let requiredFiles = [EPIC_CODE_NAME];
+let GAME_VERSION = '';
+const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 const CONFIG_PATH_DEFAULT = path.join(EPIC_CODE_NAME, "Saved", "Config", "Windows");
 const CONFIG_PATH_XBOX = path.join(EPIC_CODE_NAME, "Saved", "Config", "WinGDK"); //XBOX Version
@@ -49,6 +52,9 @@ const STEAM_EXEC= `Hellblade2.exe`;
 //const GOG_EXEC= `Hellblade2.exe`;
 //const EPIC_EXEC = `Hellblade2.exe`;
 const XBOX_EXEC = `gamelaunchhelper.exe`;
+
+const EXEC_XBOX = XBOX_EXEC;
+const EXEC_STEAM = STEAM_EXEC;
 
 /*
   Unreal Engine Game Data
@@ -142,6 +148,8 @@ const tools = [
 
 ];
 
+// BASIC EXTENSION FUNCTIONS ///////////////////////////////////////////////////
+
 //Set mod type priorities
 function modTypePriority(priority) {
   return {
@@ -221,6 +229,27 @@ function getExecutable(discoveryPath) {
 
   return STEAM_EXEC;
 }
+
+//Get correct game version
+async function setGameVersionPath(gamePath) {
+  const isCorrectExec = (exec) => {
+    try {
+      fs.statSync(path.join(gamePath, exec));
+      return true;
+    }
+    catch (err) {
+      return false;
+    }
+  };
+  if (isCorrectExec(EXEC_XBOX)) {
+    GAME_VERSION = 'xbox';
+    return GAME_VERSION;
+  };
+  GAME_VERSION = 'steam';
+  return GAME_VERSION;
+}
+
+// MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
 
 //Test for config files
 function testConfig(files, gameId) {
@@ -513,6 +542,37 @@ function UNREALEXTENSION(context) {
   });
 }
 
+// MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
+
+async function resolveGameVersion(gamePath, exePath) {
+  GAME_VERSION = await setGameVersionPath(gamePath);
+  //SHIPPING_EXE = getShippingExe(gamePath);
+  const READ_FILE = path.join(gamePath, EXEC_STEAM);
+  let version = '0.0.0';
+  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
+    try { //try to parse appxmanifest.xml
+      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
+      const parsed = await parseStringPromise(appManifest);
+      version = parsed?.Package?.Identity?.[0]?.$?.Version;
+      return Promise.resolve(version);
+    } catch (err) {
+      log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+  else { //use shipping exe (note that this only returns the UE engine version right now)
+    try {
+      const exeVersion = require('exe-version');
+      version = await exeVersion.getProductVersion(READ_FILE);
+      //log('warn', `Resolved game version for ${GAME_ID} to: ${version}`);
+      return Promise.resolve(version); 
+    } catch (err) {
+      log('error', `Could not read ${READ_FILE} file to get Steam game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+}
+
 //Setup function
 async function setup(discovery, api, gameSpec) {
   await fs.ensureDirWritableAsync(path.join(LOCALAPPDATA, CONFIG_PATH));
@@ -532,6 +592,7 @@ function applyGame(context, gameSpec) {
     requiredFiles,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     supportedTools: tools,
+    getGameVersion: resolveGameVersion,
     requiresLauncher: requiresLauncher,
   };
   context.registerGame(game);

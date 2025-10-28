@@ -6,10 +6,11 @@ Date: 03/09/2025
 */
 
 //Import libraries
-const { fs, util, actions, selectors } = require("vortex-api");
+const { fs, util, actions, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
 const Bluebird = require('bluebird');
+const { parseStringPromise } = require('xml2js');
 
 //Specify all the information about the game
 const STEAMAPP_ID = "480490";
@@ -22,6 +23,8 @@ const MOD_PATH = "GameSDK\\Precache";
 
 let execFolder = null;
 let EXEC_TARGET = null;
+let GAME_VERSION = '';
+const APPMANIFEST_FILE = 'appxmanifest.xml';
 const FIND_FILE = "GameSDK";
 const requiredFiles = [FIND_FILE];
 const STEAM_EXEC= "Binaries\\Danielle\\x64\\Release\\Prey.exe";
@@ -32,6 +35,11 @@ const STEAM_EXEC_FOLDER = "x64";
 const GOG_EXEC_FOLDER = "x64-GOG";
 const EPIC_EXEC_FOLDER = "x64-Epic";
 const XBOX_EXEC_FOLDER = "Gaming.Desktop.x64";
+
+const EXEC_STEAM = STEAM_EXEC;
+const EXEC_XBOX = XBOX_EXEC;
+const EXEC_EPIC = EPIC_EXEC;
+const EXEC_GOG = GOG_EXEC;
 
 const gameFinderQuery = {
   steam: [{ id: STEAMAPP_ID, prefer: 0 }],
@@ -173,6 +181,38 @@ function getExecutable(discoveryPath) {
 
   return STEAM_EXEC;
 }
+
+//Get correct game version
+async function setGameVersion(gamePath) {
+  const isCorrectExec = (exec) => {
+    try {
+      fs.statSync(path.join(gamePath, exec));
+      return true;
+    }
+    catch (err) {
+      return false;
+    }
+  };
+
+  if (isCorrectExec(EXEC_XBOX)) {
+    GAME_VERSION = 'xbox';
+    return GAME_VERSION;
+  };
+  if (isCorrectExec(EXEC_STEAM)) {
+    GAME_VERSION = 'steam';
+    return GAME_VERSION;
+  };
+  if (isCorrectExec(EXEC_GOG)) {
+    GAME_VERSION = 'gog';
+    return GAME_VERSION;
+  };
+  if (isCorrectExec(EXEC_EPIC)) {
+    GAME_VERSION = 'epic';
+    return GAME_VERSION;
+  };
+}
+
+// MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
 
 //Installer test for Fluffy Mod Manager files
 function testPric(files, gameId) {
@@ -408,6 +448,8 @@ function installRoot(files) {
   return Promise.resolve({ instructions });
 }
 
+// MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
+
 //Notify User of Setup instructions
 function setupNotify(api) {
   const NOTIF_ID = `${GAME_ID}-setup-notification`;
@@ -441,6 +483,53 @@ function setupNotify(api) {
     ],
   });    
 }
+
+//*
+async function resolveGameVersion(gamePath) {
+  GAME_VERSION = await setGameVersion(gamePath);
+  let version = '0.0.0';
+  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
+    try {
+      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
+      const parsed = await parseStringPromise(appManifest);
+      version = parsed?.Package?.Identity?.[0]?.$?.Version;
+      return Promise.resolve(version);
+    } catch (err) {
+      log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+  if (GAME_VERSION = 'steam') { // use exe
+    try {
+      const exeVersion = require('exe-version');
+      version = exeVersion.getProductVersion(path.join(gamePath, EXEC_STEAM));
+      return Promise.resolve(version); 
+    } catch (err) {
+      log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+  if (GAME_VERSION = 'gog') { // use exe
+    try {
+      const exeVersion = require('exe-version');
+      version = exeVersion.getProductVersion(path.join(gamePath, EXEC_GOG));
+      return Promise.resolve(version); 
+    } catch (err) {
+      log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+  if (GAME_VERSION = 'epic') { // use exe
+    try {
+      const exeVersion = require('exe-version');
+      version = exeVersion.getProductVersion(path.join(gamePath, EXEC_EPIC));
+      return Promise.resolve(version); 
+    } catch (err) {
+      log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+} //*/
 
 //Setup function
 async function setup(discovery, api) {
@@ -477,6 +566,7 @@ function main(context) {
     requiredFiles,
     setup: async (discovery) => await setup(discovery, context.api),
     supportedTools: tools,
+    getGameVersion: resolveGameVersion,
     requiresLauncher: requiresLauncher,
   };
   context.registerGame(game);

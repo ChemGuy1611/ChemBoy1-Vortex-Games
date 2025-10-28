@@ -12,6 +12,7 @@ const path = require('path');
 const template = require('string-template');
 //const turbowalk = require('turbowalk');
 //const winapi = require('winapi-bindings');
+const { parseStringPromise } = require('xml2js');
 
 //Specify all the information about the game
 const STEAMAPP_ID = "205100"; //also could be 217980?
@@ -26,6 +27,8 @@ const GAME_NAME_SHORT = "Dishonored";
 const MOD_PATH = ".";
 const COMMON_FOLDER = "DishonoredGame";
 let GAME_PATH = null; //patched in the setup function to the discovered game path
+let GAME_VERSION = '';
+const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 const gameFinderQuery = {
   steam: [{ id: STEAMAPP_ID, prefer: 0 }, { id: STEAMAPP_ID2 }],
@@ -39,10 +42,10 @@ const gameFinderQuery = {
 let EXEC_FOLDER = null;
 let EXEC_TARGET = null;
 const requiredFiles = [COMMON_FOLDER];
-const EXEC = "Binaries\\Win32\\Dishonored.exe";
 const EXEC_FOLDER_32 = "Binaries\\Win32";
-const EXEC_64 = "Binaries\\Win64\\Dishonored.exe";
+const EXEC = path.join(EXEC_FOLDER_32, 'Dishonored.exe');
 const EXEC_FOLDER_64 = "Binaries\\Win64";
+const EXEC_64 = path.join(EXEC_FOLDER_64, 'Dishonored.exe');
 
 //Information for mod types and installers
 const TFC_ID = `${GAME_ID}-tfcinstaller`;
@@ -198,21 +201,44 @@ function getExecutable(discoveryPath) {
       return false;
     }
   };
-
   if (isCorrectExec(EXEC)) {
     EXEC_FOLDER = EXEC_FOLDER_32;
-    EXEC_TARGET = `{gamePath}\\${EXEC_FOLDER_32}`;
+    EXEC_TARGET = path.join('{gamePath}', EXEC_FOLDER_32);
     return EXEC;
   };
-
   if (isCorrectExec(EXEC_64)) {
     EXEC_FOLDER = EXEC_FOLDER_64;
-    EXEC_TARGET = `{gamePath}\\${EXEC_FOLDER_64}`;
+    EXEC_TARGET = path.join('{gamePath}', EXEC_FOLDER_64);
     return EXEC_64;
   };
-
   //EXEC_TARGET = `{gamePath}\\Binaries\\Win32`;
   return EXEC;
+}
+
+//Get correct game version
+async function setGameVersion(gamePath) {
+  const isCorrectExec = (exec) => {
+    try {
+      fs.statSync(path.join(gamePath, exec));
+      return true;
+    }
+    catch (err) {
+      return false;
+    }
+  };
+
+  if (isCorrectExec(EXEC_XBOX)) {
+    GAME_VERSION = 'xbox';
+    return GAME_VERSION;
+  };
+  if (isCorrectExec(EXEC)) {
+      GAME_VERSION = 'classic';
+      return GAME_VERSION;
+  };
+  if (isCorrectExec(EXEC_64)) {
+      GAME_VERSION = 'definitive';
+      return GAME_VERSION;
+  };
 }
 
 // AUTOMATIC MOD DOWNLOADERS ///////////////////////////////////////////////////
@@ -519,6 +545,44 @@ function runModManager(api) {
   }
 }
 
+//*
+async function resolveGameVersion(gamePath) {
+  GAME_VERSION = await setGameVersion(gamePath);
+  let version = '0.0.0';
+  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
+    try {
+      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
+      const parsed = await parseStringPromise(appManifest);
+      version = parsed?.Package?.Identity?.[0]?.$?.Version;
+      return Promise.resolve(version);
+    } catch (err) {
+      log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+  if (GAME_VERSION = 'classic') { // use exe
+    try {
+      const exeVersion = require('exe-version');
+      version = exeVersion.getProductVersion(path.join(gamePath, EXEC));
+      return Promise.resolve(version); 
+    } catch (err) {
+      log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+  if (GAME_VERSION = 'definitive') { // use exe
+    try {
+      const exeVersion = require('exe-version');
+      version = exeVersion.getProductVersion(path.join(gamePath, EXEC_64));
+      return Promise.resolve(version); 
+    } catch (err) {
+      log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+} //*/
+
+
 //Setup function
 async function setup(discovery, api, gameSpec) {
   GAME_PATH = discovery.path;
@@ -543,6 +607,7 @@ function applyGame(context, gameSpec) {
     requiredFiles,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     supportedTools: tools,
+    getGameVersion: resolveGameVersion,
     requiresLauncher: requiresLauncher,
   };
   context.registerGame(game);

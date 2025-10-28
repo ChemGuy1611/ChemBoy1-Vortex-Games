@@ -10,6 +10,7 @@ Date: 2025-09-22
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
+const { parseStringPromise } = require('xml2js');
 
 //Specify all the information about the game
 const STEAMAPP_ID = "1145360";
@@ -22,6 +23,8 @@ const EXEC = "x64\\Hades.exe";
 const EXEC_VK = "x64Vk\\Hades.exe";
 //const EXEC_XBOX = "Hades.exe";
 const EXEC_XBOX = "gamelaunchhelper.exe";
+let GAME_VERSION = '';
+const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 //Data for mod types, tools, and installers
 const MOD_PATH = path.join("Content", "Mods");
@@ -242,6 +245,27 @@ function getExecutable(gamePath) {
     return EXEC_XBOX; 
   };
   return EXEC;
+}
+
+//Get correct game version
+async function setGameVersion(gamePath) {
+  const isCorrectExec = (exec) => {
+    try {
+      fs.statSync(path.join(gamePath, exec));
+      return true;
+    }
+    catch (err) {
+      return false;
+    }
+  };
+
+  if (isCorrectExec(EXEC_XBOX)) {
+    GAME_VERSION = 'xbox';
+    return GAME_VERSION;
+  };
+
+  GAME_VERSION = 'default';
+  return GAME_VERSION;
 }
 
 // AUTO-DOWNLOAD FUNCTIONS ///////////////////////////////////////////////////
@@ -622,6 +646,33 @@ function runModManager(api) {
   }
 }
 
+//*
+async function resolveGameVersion(gamePath) {
+  GAME_VERSION = await setGameVersion(gamePath);
+  let version = '0.0.0';
+  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
+    try {
+      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
+      const parsed = await parseStringPromise(appManifest);
+      version = parsed?.Package?.Identity?.[0]?.$?.Version;
+      return Promise.resolve(version);
+    } catch (err) {
+      log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+  else { // use exe
+    try {
+      const exeVersion = require('exe-version');
+      version = exeVersion.getProductVersion(path.join(gamePath, EXEC));
+      return Promise.resolve(version); 
+    } catch (err) {
+      log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+} //*/
+
 //Setup function
 async function setup(discovery, api, gameSpec) {
   setupNotify(api);
@@ -643,6 +694,7 @@ function applyGame(context, gameSpec) {
     requiresCleanup: true,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     executable: getExecutable,
+    getGameVersion: resolveGameVersion,
     supportedTools: tools,
   };
   context.registerGame(game);

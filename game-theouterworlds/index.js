@@ -7,9 +7,10 @@ Date: 11/07/2024
 */
 
 //Import libraries
-const { actions, fs, util, selectors } = require('vortex-api');
+const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
+const { parseStringPromise } = require('xml2js');
 
 //Specify all information about the game
 const GAME_ID = "theouterworlds";
@@ -51,7 +52,10 @@ const EXEC_FOLDER = "Win64";
 const XBOX_EXEC_FOLDER = "WinGDK";
 const EXEC_CLASSIC = `TheOuterWorlds.exe`;
 const EXEC_NEW = "TheOuterWorldsSpacersChoiceEdition.exe";
-const XBOX_EXEC = `gamelaunchhelper.exe`;
+const EXEC_XBOX = `gamelaunchhelper.exe`;
+
+let GAME_VERSION = '';
+const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 /*
   Unreal Engine Game Data
@@ -232,6 +236,33 @@ async function requiresLauncher(gamePath, store) {
   return Promise.resolve(undefined);
 }
 
+//Get correct game version
+async function setGameVersionPath(gamePath) {
+  const isCorrectExec = (exec) => {
+    try {
+      fs.statSync(path.join(gamePath, exec));
+      return true;
+    }
+    catch (err) {
+      return false;
+    }
+  };
+  if (isCorrectExec(EXEC_XBOX)) {
+    GAME_VERSION = 'xbox';
+    return GAME_VERSION;
+  };
+  if (isCorrectExec(EXEC_CLASSIC)) {
+    GAME_VERSION = 'classic';
+    return GAME_VERSION;
+  };
+  if (isCorrectExec(EXEC_NEW)) {
+    GAME_VERSION = 'spacers';
+    return GAME_VERSION;
+  };
+}
+
+// MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
+
 //Test for config files
 function testConfig(files, gameId) {
   // Make sure we're able to support this mod
@@ -315,11 +346,7 @@ function installRoot(files) {
   return Promise.resolve({ instructions });
 }
 
-//Setup function
-async function setup(discovery, api, gameSpec) {
-  await fs.ensureDirWritableAsync(path.join(process.env['LOCALAPPDATA'], CONFIG_PATH));
-  return fs.ensureDirWritableAsync(path.join(discovery.path, PAK_PATH));
-}
+// UNREAL FUNCTIONS ///////////////////////////////////////////////////////////////
 
 //Pre-sort function
 async function preSort(api, items, direction) {
@@ -342,6 +369,55 @@ async function preSort(api, items, direction) {
   return (direction === 'descending') ? Promise.resolve(loadOrder.reverse()) : Promise.resolve(loadOrder);
 }
 
+// MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
+
+async function resolveGameVersion(gamePath, exePath) {
+  GAME_VERSION = await setGameVersionPath(gamePath);
+  //SHIPPING_EXE = getShippingExe(gamePath);
+  let version = '0.0.0';
+  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
+    try { //try to parse appxmanifest.xml
+      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
+      const parsed = await parseStringPromise(appManifest);
+      version = parsed?.Package?.Identity?.[0]?.$?.Version;
+      return Promise.resolve(version);
+    } catch (err) {
+      log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+  if (GAME_VERSION = 'classic') { //use shipping exe (note that this only returns the UE engine version right now)
+    try {
+      const READ_FILE = path.join(gamePath, EXEC_CLASSIC);
+      const exeVersion = require('exe-version');
+      version = await exeVersion.getProductVersion(READ_FILE);
+      //log('warn', `Resolved game version for ${GAME_ID} to: ${version}`);
+      return Promise.resolve(version); 
+    } catch (err) {
+      log('error', `Could not read ${READ_FILE} file to get Steam game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+  if (GAME_VERSION = 'spacers') { //use shipping exe (note that this only returns the UE engine version right now)
+    try {
+      const READ_FILE = path.join(gamePath, EXEC_NEW);
+      const exeVersion = require('exe-version');
+      version = await exeVersion.getProductVersion(READ_FILE);
+      //log('warn', `Resolved game version for ${GAME_ID} to: ${version}`);
+      return Promise.resolve(version); 
+    } catch (err) {
+      log('error', `Could not read ${READ_FILE} file to get Steam game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+}
+
+//Setup function
+async function setup(discovery, api, gameSpec) {
+  await fs.ensureDirWritableAsync(path.join(process.env['LOCALAPPDATA'], CONFIG_PATH));
+  return fs.ensureDirWritableAsync(path.join(discovery.path, PAK_PATH));
+}
+
 //Let Vortex know about the game
 function applyGame(context, gameSpec) {
   //require other extensions
@@ -356,6 +432,7 @@ function applyGame(context, gameSpec) {
     requiredFiles,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     supportedTools: tools,
+    getGameVersion: resolveGameVersion,
     requiresLauncher: requiresLauncher,
   };
   context.registerGame(game);

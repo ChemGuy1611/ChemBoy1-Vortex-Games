@@ -11,6 +11,7 @@ const path = require('path');
 const template = require('string-template');
 const turbowalk = require('turbowalk');
 //const winapi = require('winapi-bindings');
+const { parseStringPromise } = require('xml2js');
 
 //Specify all the information about the game
 const STEAMAPP_ID = "403640";
@@ -23,6 +24,8 @@ const GAME_NAME = "Dishonored 2";
 const GAME_NAME_SHORT = "Dishonored 2";
 const MOD_PATH = ".";
 let GAME_PATH = null; //patched in the setup function to the discovered game path
+let GAME_VERSION = '';
+const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 const gameFinderQuery = {
   steam: [{ id: STEAMAPP_ID, prefer: 0 }],
@@ -194,25 +197,32 @@ function getExecutable(discoveryPath) {
       return false;
     }
   };
-
   if (isCorrectExec(XBOX_EXEC)) {
     return XBOX_EXEC;
   };
-
   if (isCorrectExec(EXEC)) {
     return EXEC;
   };
-  /*
-  if (isCorrectExec(EPIC_EXEC)) {
-    return EPIC_EXEC;
-  };
-
-  if (isCorrectExec(GOG_EXEC)) {
-    return GOG_EXEC;
-  };
-  */
-
   return EXEC;
+}
+
+//Get correct game version
+async function setGameVersion(gamePath) {
+  const isCorrectExec = (exec) => {
+    try {
+      fs.statSync(path.join(gamePath, exec));
+      return true;
+    }
+    catch (err) {
+      return false;
+    }
+  };
+  if (isCorrectExec(EXEC_XBOX)) {
+    GAME_VERSION = 'xbox';
+    return GAME_VERSION;
+  };
+  GAME_VERSION = 'default';
+  return GAME_VERSION;
 }
 
 // AUTOMATIC MOD DOWNLOADERS ///////////////////////////////////////////////////
@@ -579,6 +589,33 @@ function runModManager(api) {
   }
 }
 
+//*
+async function resolveGameVersion(gamePath) {
+  GAME_VERSION = await setGameVersion(gamePath);
+  let version = '0.0.0';
+  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
+    try {
+      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
+      const parsed = await parseStringPromise(appManifest);
+      version = parsed?.Package?.Identity?.[0]?.$?.Version;
+      return Promise.resolve(version);
+    } catch (err) {
+      log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+  else { // use exe
+    try {
+      const exeVersion = require('exe-version');
+      version = exeVersion.getProductVersion(path.join(gamePath, EXEC));
+      return Promise.resolve(version); 
+    } catch (err) {
+      log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+} //*/
+
 //Setup function
 async function setup(discovery, api, gameSpec) {
   GAME_PATH = discovery.path;
@@ -602,6 +639,7 @@ function applyGame(context, gameSpec) {
     requiredFiles,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     supportedTools: tools,
+    getGameVersion: resolveGameVersion,
     requiresLauncher: requiresLauncher,
   };
   context.registerGame(game);

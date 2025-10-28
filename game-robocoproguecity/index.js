@@ -483,6 +483,25 @@ function setGameVersion(api, id) {
   };
 }
 
+//Get correct game version
+async function setGameVersionPath(gamePath) {
+  const isCorrectExec = (exec) => {
+    try {
+      fs.statSync(path.join(gamePath, exec));
+      return true;
+    }
+    catch (err) {
+      return false;
+    }
+  };
+  if (isCorrectExec(EXEC_XBOX)) {
+    GAME_VERSION = 'xbox';
+    return GAME_VERSION;
+  };
+  GAME_VERSION = 'steam';
+  return GAME_VERSION;
+}
+
 const getDiscoveryPath = (api, id) => {
   const state = api.getState();
   const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, id], {});
@@ -1997,10 +2016,12 @@ function partitionCheckNotify(api, check, id, name, location, config, save) {
   });
 }
 
-async function resolveGameVersion(gamePath) {
-  GAME_VERSION = setGameVersion(api, GAME_ID);
+async function resolveGameVersion(gamePath, exePath) {
+  GAME_VERSION = await setGameVersionPath(gamePath);
+  //SHIPPING_EXE = getShippingExe(gamePath);
+  const READ_FILE = path.join(gamePath, EXEC_DEFAULT);
   let version = '0.0.0';
-  if (GAME_VERSION === 'xbox') {
+  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
     try { //try to parse appxmanifest.xml
       const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
       const parsed = await parseStringPromise(appManifest);
@@ -2011,13 +2032,14 @@ async function resolveGameVersion(gamePath) {
       return Promise.resolve(version);
     }
   }
-  else { // use EXEC_DEFAULT for Steam
+  else { //use shipping exe (note that this only returns the UE engine version right now)
     try {
       const exeVersion = require('exe-version');
-      version = exeVersion.getProductVersion(path.join(gamePath, EXEC_DEFAULT));
+      version = await exeVersion.getProductVersion(READ_FILE);
+      //log('warn', `Resolved game version for ${GAME_ID} to: ${version}`);
       return Promise.resolve(version); 
     } catch (err) {
-      log('error', `Could not read ${EXEC_DEFAULT} file to get Steam game version: ${err}`);
+      log('error', `Could not read ${READ_FILE} file to get Steam game version: ${err}`);
       return Promise.resolve(version);
     }
   }

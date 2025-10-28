@@ -7,9 +7,10 @@ Date: 08/05/2024
 */
 
 //Import libraries
-const { actions, fs, util, selectors } = require('vortex-api');
+const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
+const { parseStringPromise } = require('xml2js');
 
 //Specify all information about the game
 const STEAMAPP_ID = "2005010";
@@ -30,6 +31,7 @@ const gameFinderQuery = {
 };
 
 let MOD_PATH = "Boltgun\\Content\\Paks";
+let GAME_VERSION = '';
 let EXEC_TARGET = null;
 const requiredFiles = [EPIC_CODE_NAME];
 const STEAM_EXEC_FOLDER = "Win64";
@@ -40,6 +42,7 @@ const STEAM_EXEC= `${EPIC_CODE_NAME}\\Binaries\\${STEAM_EXEC_FOLDER}\\${EPIC_COD
 const GOG_EXEC= `${EPIC_CODE_NAME}\\Binaries\\${GOG_EXEC_FOLDER}\\${EPIC_CODE_NAME}-${GOG_EXEC_FOLDER}-Shipping.exe`;
 const EPIC_EXEC = `${EPIC_CODE_NAME}\\Binaries\\${EPIC_EXEC_FOLDER}\\${EPIC_CODE_NAME}-${EPIC_EXEC_FOLDER}-Shipping.exe`; //Need to confirm for Epic
 const XBOX_EXEC = `${EPIC_CODE_NAME}\\Binaries\\${XBOX_EXEC_FOLDER}\\${EPIC_CODE_NAME}-${XBOX_EXEC_FOLDER}-Shipping.exe`;
+const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_PATH = "{gamePath}";
@@ -160,6 +163,27 @@ function getExecutable(discoveryPath) {
   return STEAM_EXEC;
 }
 
+//Get correct game version
+async function setGameVersionPath(gamePath) {
+  const isCorrectExec = (exec) => {
+    try {
+      fs.statSync(path.join(gamePath, exec));
+      return true;
+    }
+    catch (err) {
+      return false;
+    }
+  };
+  if (isCorrectExec(EXEC_XBOX)) {
+    GAME_VERSION = 'xbox';
+    return GAME_VERSION;
+  };
+  GAME_VERSION = 'default';
+  return GAME_VERSION;
+}
+
+// MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
+
 //Installer test for Root folder files
 function testRoot(files, gameId) {
   //const isMod = files.some(file => path.basename(file).toLowerCase() === ROOT_FILE);
@@ -197,6 +221,37 @@ function installRoot(files) {
   return Promise.resolve({ instructions });
 }
 
+// MAIN FUNCTIONS //////////////////////////////////////////////////////////////////////
+
+async function resolveGameVersion(gamePath, exePath) {
+  GAME_VERSION = await setGameVersionPath(gamePath);
+  //SHIPPING_EXE = getShippingExe(gamePath);
+  const READ_FILE = path.join(gamePath, STEAM_EXEC);
+  let version = '0.0.0';
+  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
+    try { //try to parse appxmanifest.xml
+      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
+      const parsed = await parseStringPromise(appManifest);
+      version = parsed?.Package?.Identity?.[0]?.$?.Version;
+      return Promise.resolve(version);
+    } catch (err) {
+      log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+  else { //use shipping exe (note that this only returns the UE engine version right now)
+    try {
+      const exeVersion = require('exe-version');
+      version = await exeVersion.getProductVersion(READ_FILE);
+      //log('warn', `Resolved game version for ${GAME_ID} to: ${version}`);
+      return Promise.resolve(version); 
+    } catch (err) {
+      log('error', `Could not read ${READ_FILE} file to get Steam game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+}
+
 //Setup function
 async function setup(discovery, api, gameSpec) {
   return fs.ensureDirWritableAsync(path.join(discovery.path, MOD_PATH));
@@ -214,6 +269,7 @@ function applyGame(context, gameSpec) {
     requiredFiles,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     supportedTools: tools,
+    getGameVersion: resolveGameVersion,
     requiresLauncher: requiresLauncher,
   };
   context.registerGame(game);

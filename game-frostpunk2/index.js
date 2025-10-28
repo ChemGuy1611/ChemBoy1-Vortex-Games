@@ -7,9 +7,10 @@ Date: 09/20/2024
 */
 
 //Import libraries
-const { actions, fs, util, selectors } = require('vortex-api');
+const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
+const { parseStringPromise } = require('xml2js');
 
 //Specify all information about the game
 const GAME_ID = "frostpunk2";
@@ -41,6 +42,7 @@ let SAVE_PATH = null;
 let SAVE_TARGET = null;
 let CONFIG_PATH = null;
 let CONFIG_TARGET = null;
+let GAME_VERSION = '';
 const requiredFiles = [EPIC_CODE_NAME];
 let USERID_FOLDER = "";
 const CONFIG_PATH_DEFAULT = path.join("11bitstudios", EPIC_CODE_NAME, "Steam", "Saved", "Config", "Windows");
@@ -60,6 +62,7 @@ const EXEC_DEFAULT = DEFAULT_EXEC;
 //const GOG_EXEC= `Frostpunk2.exe`;
 //const EPIC_EXEC = `Frostpunk2.exe`;
 const EXEC_XBOX = `gamelaunchhelper.exe`;
+const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 const UNREALDATA_DEFAULT = path.join('Mods', 'Base', 'Windows');
 const UNREALDATA_XBOX = path.join('Mods', 'Base', 'WinGDK');
@@ -322,6 +325,27 @@ function getExecutable(discoveryPath) {
 
   return EXEC_DEFAULT;
 }
+
+//Get correct game version
+async function setGameVersionPath(gamePath) {
+  const isCorrectExec = (exec) => {
+    try {
+      fs.statSync(path.join(gamePath, exec));
+      return true;
+    }
+    catch (err) {
+      return false;
+    }
+  };
+  if (isCorrectExec(EXEC_XBOX)) {
+    GAME_VERSION = 'xbox';
+    return GAME_VERSION;
+  };
+  GAME_VERSION = 'default';
+  return GAME_VERSION;
+}
+
+// MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
 
 //Test for save files
 function testUe4ssCombo(files, gameId) {
@@ -647,18 +671,13 @@ function installSave(files) {
   return Promise.resolve({ instructions });
 }
 
+// AUTO-DOWNLOADER FUNCTIONS ///////////////////////////////////////////////////
+
 //Check if UE4SS is installed
 function isUe4ssInstalled(api, spec) {
   const state = api.getState();
   const mods = state.persistent.mods[spec.game.id] || {};
   return Object.keys(mods).some(id => mods[id]?.type === UE4SS_ID);
-}
-
-//Check if Signature Bypass is installed
-function isSigBypassInstalled(api, spec) {
-  const state = api.getState();
-  const mods = state.persistent.mods[spec.game.id] || {};
-  return Object.keys(mods).some(id => mods[id]?.type === SIGBYPASS_ID);
 }
 
 //Function to auto-download UE4SS from Nexus
@@ -722,78 +741,7 @@ async function downloadUe4ss(api, gameSpec) {
   }
 }
 
-//Function to auto-download Signature Bypass from Nexus
-async function downloadSigBypass(api, gameSpec) {
-  let modLoaderInstalled = isSigBypassInstalled(api, gameSpec);
-  
-  if (!modLoaderInstalled) {
-    //notification indicating install process
-    const MOD_NAME = `Signature Bypass`;
-    const NOTIF_ID = `${GAME_ID}-${MOD_NAME}-installing`;
-    api.sendNotification({
-      id: NOTIF_ID,
-      message: `Installing ${MOD_NAME}`,
-      type: 'activity',
-      noDismiss: true,
-      allowSuppress: false,
-    });
-    //make sure user is logged into Nexus Mods account in Vortex
-    if (api.ext?.ensureLoggedIn !== undefined) {
-      await api.ext.ensureLoggedIn();
-    }
-
-    const modPageId = 1;
-    try {
-      //get the mod files information from Nexus
-      const modFiles = await api.ext.nexusGetModFiles(gameSpec.game.id, modPageId);
-      const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
-      const file = modFiles
-        .filter(file => file.category_id === 1)
-        .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))[0];
-      if (file === undefined) {
-        throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
-      }
-      //Download the mod
-      const dlInfo = {
-        game: gameSpec.game.id,
-        name: MOD_NAME,
-      };
-      const nxmUrl = `nxm://${gameSpec.game.id}/mods/${modPageId}/files/${file.file_id}`;
-      const dlId = await util.toPromise(cb =>
-        api.events.emit('start-download', [nxmUrl], dlInfo, undefined, cb, undefined, { allowInstall: false }));
-      const modId = await util.toPromise(cb =>
-        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
-      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
-      const batched = [
-        actions.setModsEnabled(api, profileId, [modId], true, {
-          allowAutoDeploy: true,
-          installed: true,
-        }),
-        actions.setModType(gameSpec.game.id, modId, SIGBYPASS_ID), // Set the mod type
-      ];
-      util.batchDispatch(api.store, batched); // Will dispatch both actions.
-    //Show the user the download page if the download, install process fails
-    } catch (err) {
-      const errPage = `https://www.nexusmods.com/${gameSpec.game.id}/mods/${modPageId}/files/?tab=files`;
-      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
-      util.opn(errPage).catch(() => null);
-    } finally {
-      api.dismissNotification(NOTIF_ID);
-    }
-  }
-}
-
-//Setup function
-async function setup(discovery, api, gameSpec) {
-  //await downloadUe4ss(api, gameSpec);
-  //await downloadSigBypass(api, gameSpec);
-  await fs.ensureDirWritableAsync(path.join(process.env['LOCALAPPDATA'], CONFIG_PATH));
-  await fs.ensureDirWritableAsync(path.join(process.env['LOCALAPPDATA'], SAVE_PATH));
-  await fs.ensureDirWritableAsync(path.join(discovery.path, SCRIPTS_PATH));
-  await fs.ensureDirWritableAsync(path.join(discovery.path, LOGICMODS_PATH));
-  return fs.ensureDirWritableAsync(path.join(discovery.path, UE5_PATH));
-  //return fs.ensureDirWritableAsync(path.join(discovery.path, UNREALDATA.modsPath));
-}
+// UNREAL FUNCTIONS ///////////////////////////////////////////////////////////////
 
 ///*
 //UNREAL - Pre-sort function
@@ -959,6 +907,48 @@ function UNREALEXTENSION(context) {
   });
 }
 
+// MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
+
+async function resolveGameVersion(gamePath, exePath) {
+  GAME_VERSION = await setGameVersionPath(gamePath);
+  //SHIPPING_EXE = getShippingExe(gamePath);
+  const READ_FILE = path.join(gamePath, EXEC_DEFAULT);
+  let version = '0.0.0';
+  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
+    try { //try to parse appxmanifest.xml
+      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
+      const parsed = await parseStringPromise(appManifest);
+      version = parsed?.Package?.Identity?.[0]?.$?.Version;
+      return Promise.resolve(version);
+    } catch (err) {
+      log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+  else { //use shipping exe (note that this only returns the UE engine version right now)
+    try {
+      const exeVersion = require('exe-version');
+      version = await exeVersion.getProductVersion(READ_FILE);
+      //log('warn', `Resolved game version for ${GAME_ID} to: ${version}`);
+      return Promise.resolve(version); 
+    } catch (err) {
+      log('error', `Could not read ${READ_FILE} file to get Steam game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+}
+
+//Setup function
+async function setup(discovery, api, gameSpec) {
+  //await downloadUe4ss(api, gameSpec);
+  await fs.ensureDirWritableAsync(path.join(process.env['LOCALAPPDATA'], CONFIG_PATH));
+  await fs.ensureDirWritableAsync(path.join(process.env['LOCALAPPDATA'], SAVE_PATH));
+  await fs.ensureDirWritableAsync(path.join(discovery.path, SCRIPTS_PATH));
+  await fs.ensureDirWritableAsync(path.join(discovery.path, LOGICMODS_PATH));
+  return fs.ensureDirWritableAsync(path.join(discovery.path, UE5_PATH));
+  //return fs.ensureDirWritableAsync(path.join(discovery.path, UNREALDATA.modsPath));
+}
+
 //Let vortex know about the game
 function applyGame(context, gameSpec) {
   //register the game
@@ -971,6 +961,7 @@ function applyGame(context, gameSpec) {
     requiredFiles,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     supportedTools: tools,
+    getGameVersion: resolveGameVersion,
     requiresLauncher: requiresLauncher,
   };
   context.registerGame(game);
