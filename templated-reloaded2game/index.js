@@ -30,13 +30,12 @@ const GAME_NAME = "XXX";
 const GAME_NAME_SHORT = "XXX";
 const EXEC = "XXX.exe";
 const EXEC_XBOX = 'gamelaunchhelper.exe';
-const APPMANIFEST_FILE = 'appxmanifest.xml';
 
-const MOD_LOADER_FOLDER = "";
-const RELOADEDMODLOADER_FILE = "XXX.dll";
-const RELOADEDMODLOADER_PAGE_NO = 0;
+const MOD_LOADER_FOLDER = "XXX_Mod_Loader";
+const RELOADEDMODLOADER_FILE = "XXX.modloader.dll";
+const RELOADEDMODLOADER_PAGE_NO = 0; //if on Nexus
 const RELOADEDMODLOADER_FILE_NO = 0;
-const RELOADEDMODLOADER_URL = `XXX`;
+const RELOADEDMODLOADER_URL = `XXX`; //if from GitHub or another site
 const RELOADEDMODLOADER_URL_ERR = `XXX`;
 
 const PUBLISHER_FOLDER = "";
@@ -46,6 +45,7 @@ let GAME_PATH = null;
 let GAME_VERSION = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
+const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 //Data for mod types, tools, and installers
 const RELOADED_ID = `${GAME_ID}-reloadedmanager`;

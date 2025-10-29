@@ -6,7 +6,7 @@ Date: 11/07/2024
 */
 
 //import libraries
-const { actions, fs, util } = require('vortex-api');
+const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 //const winapi = require('winapi-bindings'); //gives access to the Windows registry

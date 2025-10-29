@@ -6,7 +6,7 @@ Date: 07/31/2024
 */
 
 //Import libraries
-const { actions, fs, util } = require('vortex-api');
+const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 

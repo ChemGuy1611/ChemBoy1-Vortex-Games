@@ -27,11 +27,10 @@ const XBOXAPP_ID = null;
 const XBOXEXECNAME = null;
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID];
 const GAME_NAME = "FINAL FANTASY TACTICS - The Ivalice Chronicles";
-const GAME_NAME_SHORT = "FF Tactics IVC";
+const GAME_NAME_SHORT = "FF TACTICS IVC";
 const EXEC = "FFT_enhanced.exe";
 const EXEC_CLASSIC = "FFT_classic.exe";
 const EXEC_XBOX = 'gamelaunchhelper.exe';
-const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 const MOD_LOADER_FOLDER = "FFTIVC_Mod_Loader";
 const RELOADEDMODLOADER_FILE = "fftivc.utility.modloader.dll";
@@ -42,6 +41,7 @@ let GAME_PATH = null;
 let GAME_VERSION = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
+const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 //Data for mod types, tools, and installers
 const RELOADED_ID = `${GAME_ID}-reloadedmanager`;
@@ -82,7 +82,7 @@ if (USERID_FOLDER === undefined) {
   USERID_FOLDER = "";
 } //*/
 const SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
-const SAVE_EXTS = ['.bin'];
+const SAVE_EXTS = ['.vdf'];
 
 const MOD_PATH_DEFAULT = '.';
 
