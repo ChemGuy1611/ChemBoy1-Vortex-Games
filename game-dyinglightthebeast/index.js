@@ -135,9 +135,8 @@ const spec = {
     "details": {
       "steamAppId": STEAMAPP_ID,
       "epicAppId": EPICAPP_ID,
-      "ignoreConflicts": IGNORED_FILES,
+      //"ignoreConflicts": IGNORED_FILES,
       //"ignoreDeploy": DEPLOY_IGNORE,
-      //"supportsSymlinks": false,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,

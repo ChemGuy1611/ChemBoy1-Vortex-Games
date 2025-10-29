@@ -152,7 +152,6 @@ const spec = {
     ],
     "details": {
       "steamAppId": STEAMAPP_ID,
-      //"supportsSymlinks": false,
       "ignoreConflicts": IGNORE_CONFLICTS,
     },
     "environment": {

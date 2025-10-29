@@ -87,7 +87,6 @@ const spec = {
     "details": {
       "steamAppId": STEAMAPP_ID,
       "xboxAppId": XBOXAPP_ID,
-      //"supportsSymlinks": false,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,

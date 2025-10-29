@@ -185,7 +185,6 @@ const spec = {
     "details": {
       "steamAppId": STEAMAPP_ID,
       "uPlayAppId": UPLAYAPP_ID,
-      //"supportsSymlinks": false,
       "ignoreDeploy": IGNORE_DEPLOY,
       "ignoreConflicts": IGNORE_CONFLICTS,
     },

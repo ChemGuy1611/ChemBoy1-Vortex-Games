@@ -106,7 +106,6 @@ const spec = {
       "gogAppId": GOGAPP_ID,
       "epicAppId": EPICAPP_ID,
       "xboxAppId": XBOXAPP_ID,
-      //"supportsSymlinks": false,
       "ignoreConflicts": IGNORE_CONFLICTS,
     },
     "environment": {

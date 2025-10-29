@@ -120,7 +120,6 @@ const spec = {
     ],
     "details": {
       "epicAppId": EPICAPP_ID,
-      //"supportsSymlinks": false,
       "ignoreConflicts": IGNORE_CONFLICTS,
     },
     "environment": {
