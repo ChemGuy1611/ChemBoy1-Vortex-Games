@@ -70,6 +70,7 @@ let STAGING_FOLDER = ''; //Vortex staging folder path
 let DOWNLOAD_FOLDER = ''; //Vortex download folder path
 let CONFIG_PATH = path.join(CONFIGMOD_LOCATION, DATA_FOLDER); //config path (variable on game store version)
 let SAVE_PATH = path.join(SAVEMOD_LOCATION, DATA_FOLDER); //save path (variable on game store version)
+let GAME_VERSION = '';
 
 //Unreal Engine Game Data
 const UNREALDATA = {
@@ -356,6 +357,15 @@ async function setConfigPath() {
   if (STORE_FOLDER === undefined) {
     STORE_FOLDER = '';
   } //*/
+  if (STORE_FOLDER === 'Steam') {
+    GAME_VERSION = 'steam';
+  }
+  if (STORE_FOLDER === 'GOG') {
+    GAME_VERSION = 'gog';
+  }
+  if (STORE_FOLDER === 'Epic') {
+    GAME_VERSION = 'epic';
+  }
   CONFIG_PATH = path.join(CONFIGMOD_LOCATION, DATA_FOLDER, STORE_FOLDER, "Saved", "Config", CONFIG_FOLDERNAME);
   return CONFIG_PATH;
 }
@@ -373,6 +383,15 @@ async function setSavePath() {
   if (STORE_FOLDER === undefined) {
     STORE_FOLDER = '';
   } //*/
+  if (STORE_FOLDER === 'Steam') {
+    GAME_VERSION = 'steam';
+  }
+  if (STORE_FOLDER === 'GOG') {
+    GAME_VERSION = 'gog';
+  }
+  if (STORE_FOLDER === 'Epic') {
+    GAME_VERSION = 'epic';
+  }
   SAVE_PATH = path.join(SAVEMOD_LOCATION, DATA_FOLDER, STORE_FOLDER, "Saved", "SaveGames");
   return SAVE_PATH;
 }

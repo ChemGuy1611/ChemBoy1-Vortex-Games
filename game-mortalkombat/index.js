@@ -60,7 +60,6 @@ const ROOT_IDX = `${EPIC_CODE_NAME}\\`;
 
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_PATH = path.join(EPIC_CODE_NAME, "Saved", "SaveGames");
-let USERID_FOLDER = "";
 const SAVE_EXT = ".sav";
 
 const SCRIPTS_ID = `${GAME_ID}-scripts`;

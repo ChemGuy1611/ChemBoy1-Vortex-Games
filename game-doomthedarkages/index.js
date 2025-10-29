@@ -301,6 +301,11 @@ const tools = [
 
 // BASIC FUNCTIONS ///////////////////////////////////////////////////////////////
 
+function isDir(folder, file) {
+  const stats = fs.statSync(path.join(folder, file));
+  return stats.isDirectory();
+}
+
 //set mod type priorities
 function modTypePriority(priority) {
   return {
@@ -400,9 +405,7 @@ async function setSavePath(discoveryPath) {
     let USERID_FOLDER = "";
     try {
       const SAVE_ARRAY = fs.readdirSync(STEAMDATA_PATH);
-      USERID_FOLDER = SAVE_ARRAY.find((element) => 
-      ((/[a-z]/i.test(element) === false))
-       );
+      USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(STEAMDATA_PATH, entry));
     } catch(err) {
       USERID_FOLDER = "";
     }

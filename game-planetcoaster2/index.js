@@ -63,18 +63,19 @@ const SAVE_NAME = "Saves";
 const SAVE_EXTS = ['.blpr2', '.prk2'];
 const SAVE_FOLDER = path.join(USER_HOME, 'Saved Games', DEV_FOLDER, GAME_FOLDER);
 let USERID_FOLDER = "";
+function isDir(folder, file) {
+  const stats = fs.statSync(path.join(folder, file));
+  return stats.isDirectory();
+}
 try {
   const SAVE_ARRAY = fs.readdirSync(SAVE_FOLDER);
-  USERID_FOLDER = SAVE_ARRAY.find((element) => 
-  //((/[a-z]/i.test(element) === false))
-  (element)
-  );
+  USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_FOLDER, entry));
 } catch(err) {
   USERID_FOLDER = "";
 }
 if (USERID_FOLDER === undefined) {
   USERID_FOLDER = "";
-}
+} //*/
 const SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER, 'Saves');
 
 const CONFIG_ID = `${GAME_ID}-config`;

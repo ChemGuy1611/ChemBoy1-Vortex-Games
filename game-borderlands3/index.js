@@ -94,11 +94,13 @@ const PAK_EXT = '.pak';
 const CONFIG_PATH = path.join(DOCUMENTS, 'My Games', DATA_FOLDER, 'Saved', 'Config', 'WindowsNoEditor');
 const SAVE_FOLDER = path.join(DOCUMENTS, 'My Games', DATA_FOLDER, 'Saved', 'SaveGames');
 let USERID_FOLDER = "";
+function isDir(folder, file) {
+  const stats = fs.statSync(path.join(folder, file));
+  return stats.isDirectory();
+}
 try {
   const SAVE_ARRAY = fs.readdirSync(SAVE_FOLDER);
-  USERID_FOLDER = SAVE_ARRAY.find((element) => 
-  ((/[a-z]/i.test(element) === false))
-  );
+  USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_FOLDER, entry));
 } catch(err) {
   USERID_FOLDER = "";
 }

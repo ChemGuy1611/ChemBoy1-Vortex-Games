@@ -29,7 +29,6 @@ const APPMANIFEST_FILE = 'appxmanifest.xml';
 //Info for mod types and installers
 const BINARIES_ID = `${GAME_ID}-binaries`;
 
-//let USERID_FOLDER = "";
 const USER_DOCS = util.getVortexPath("home");
 const CONFIG_ID = `${GAME_ID}-config`;
 const CONFIG_PATH = path.join(USER_DOCS, 'Saved Games', "MachineGames", "TheGreatCircle", "base");

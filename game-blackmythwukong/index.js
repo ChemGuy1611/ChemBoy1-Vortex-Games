@@ -43,32 +43,38 @@ const UNREALDATA = {
 const SHIPPING_EXE = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_NAME}\\${EPIC_CODE_NAME}-${EXEC_FOLDER_NAME}-Shipping.exe`;
 const BINARIES_ID = `${GAME_ID}-binaries`;
 const EXEC_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_NAME}`;
+
 const UE5_ID = `${GAME_ID}-ue5`;
 const UE5_ALT_ID = `${GAME_ID}-pakalt`;
 const UE5_EXT = UNREALDATA.fileExt;
 const UE5_PATH = UNREALDATA.modsPath;
 const UE5_ALT_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Paks');
+
 const LOGICMODS_ID = `${GAME_ID}-logicmods`;
 const UE4SSCOMBO_ID = `${GAME_ID}-ue4sscombo`;
 const LOGICMODS_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Paks', 'LogicMods');
 const LOGICMODS_FILE = "LogicMods";
 const LOGICMODS_EXT = ".pak";
+
 const CONFIG_ID = `${GAME_ID}-config`;
 const CONFIG_PATH = `${EPIC_CODE_NAME}\\Saved\\Config\\Windows`;
 const CONFIG_FILES = ["engine.ini", "scalability.ini", "input.ini"];
 const CONFIG_EXT = ".ini";
+
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_FILE = EPIC_CODE_NAME;
 const ROOT_IDX = `${EPIC_CODE_NAME}\\`;
+
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_PATH = path.join(EPIC_CODE_NAME, "Saved", "SaveGames");
-let USERID_FOLDER = "";
 const SAVE_EXT = ".sav";
+
 const SCRIPTS_ID = `${GAME_ID}-scripts`;
 const SCRIPTS_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_NAME}\\ue4ss\\Mods`;
 const SCRIPTS_EXT = ".lua";
 const SCRIPTS_FILE = "Scripts";
 const SCRIPTS_IDX = `Scripts\\`;
+
 const UE4SS_ID = `${GAME_ID}-ue4ss`;
 const UE4SS_FILE = "dwmapi.dll";
 

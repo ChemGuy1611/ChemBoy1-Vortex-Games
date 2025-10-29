@@ -81,15 +81,19 @@ const CONFIG_REGPATH_FULL = `${CONFIG_HIVE}\\${CONFIG_REGPATH}`;
 
 const SAVE_FOLDER_DEFAULT = path.join(USER_HOME, 'AppData', 'LocalLow', DEV_REGSTRING, GAME_REGSTRING, 'Saves', 'CloudDir');
 let USERID_FOLDER = "";
+function isDir(folder, file) {
+  const stats = fs.statSync(path.join(folder, file));
+  return stats.isDirectory();
+}
 try {
-  const ARRAY = fs.readdirSync(SAVE_FOLDER_DEFAULT);
-  USERID_FOLDER = ARRAY[0];
+  const SAVE_ARRAY = fs.readdirSync(SAVE_FOLDER_DEFAULT);
+  USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_FOLDER_DEFAULT, entry));
 } catch(err) {
   USERID_FOLDER = "";
 }
 if (USERID_FOLDER === undefined) {
   USERID_FOLDER = "";
-}
+} //*/
 let SAVE_PATH = path.join(SAVE_FOLDER_DEFAULT, USERID_FOLDER);
 const SAVE_EXTS = [".json"];
 

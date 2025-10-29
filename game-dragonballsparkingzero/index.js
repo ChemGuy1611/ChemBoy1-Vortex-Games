@@ -265,6 +265,11 @@ const tools = [
 
 // BASIC EXTENSION FUNCTIONS ///////////////////////////////////////////////////
 
+function isDir(folder, file) {
+  const stats = fs.statSync(path.join(folder, file));
+  return stats.isDirectory();
+}
+
 //Set mod type priorities
 function modTypePriority(priority) {
   return {
@@ -1322,16 +1327,13 @@ async function setup(discovery, api, gameSpec) {
   const SAVE_FOLDER = path.join(GAME_PATH, SAVE_PATH);
   try {
     const SAVE_ARRAY = fs.readdirSync(SAVE_FOLDER);
-    USERID_FOLDER = SAVE_ARRAY.find((element) => 
-    ((/[a-z]/i.test(element) === false))
-     );
+    USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_FOLDER, entry));
   } catch(err) {
     USERID_FOLDER = "";
   }
   if (USERID_FOLDER === undefined) {
     USERID_FOLDER = "";
-  }
-
+  } //*/
   const state = api.getState();
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);

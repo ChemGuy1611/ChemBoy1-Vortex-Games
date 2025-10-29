@@ -54,17 +54,19 @@ const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_NAME = "Save";
 const SAVE_FOLDER = path.join(USER_HOME, "Saved Games", "The Last of Us Part I", "users");
 let USERID_FOLDER = "";
+function isDir(folder, file) {
+  const stats = fs.statSync(path.join(folder, file));
+  return stats.isDirectory();
+}
 try {
   const SAVE_ARRAY = fs.readdirSync(SAVE_FOLDER);
-  USERID_FOLDER = SAVE_ARRAY.find((element) => 
-  ((/[a-z]/i.test(element) === false))
-  );
+  USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_FOLDER, entry));
 } catch(err) {
   USERID_FOLDER = "";
 }
 if (USERID_FOLDER === undefined) {
   USERID_FOLDER = "";
-}
+} //*/
 const SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER, "savedata");
 const SAVE_FILE = "USR-DATA";
 

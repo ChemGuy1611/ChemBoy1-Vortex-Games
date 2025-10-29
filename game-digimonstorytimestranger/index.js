@@ -63,9 +63,13 @@ const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_NAME = "Save File";
 const SAVE_FOLDER = path.join('gamedata', 'savedata');
 let USERID_FOLDER = "";
-/*try {
-  const ARRAY = fs.readdirSync(SAVE_FOLDER);
-  USERID_FOLDER = ARRAY[0];
+function isDir(folder, file) {
+  const stats = fs.statSync(path.join(folder, file));
+  return stats.isDirectory();
+}
+try {
+  const SAVE_ARRAY = fs.readdirSync(SAVE_FOLDER);
+  USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_FOLDER, entry));
 } catch(err) {
   USERID_FOLDER = "";
 }

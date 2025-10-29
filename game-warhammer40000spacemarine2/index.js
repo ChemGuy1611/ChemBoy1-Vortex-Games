@@ -30,23 +30,8 @@ let DOWNLOAD_FOLDER = '';
 //Info for mod types and installers
 const CONFIG_ID = `${GAME_ID}-config`;
 const CONFIG_NAME = "Config (LocalAppData)";
-let USERID_FOLDER = "";
 const LOCALAPPDATA = util.getVortexPath('localAppData');
 const CONFIG_PATH = path.join(LOCALAPPDATA, "Saber", "Space Marine 2");
-//const CONFIG_FOLDER = path.join(LOCALAPPDATA, "Saber", "Space Marine 2", "storage", "steam", "user");
-/*try {
-  const CONFIG_ARRAY = fs.readdirSync(CONFIG_FOLDER);
-  USERID_FOLDER = CONFIG_ARRAY.find((element) => 
-  ((/[a-z]/i.test(element) === false))
-   );
-} catch(err) {
-  USERID_FOLDER = "";
-}
-if (USERID_FOLDER === undefined) {
-  USERID_FOLDER = "";
-}
-const CONFIG_PATH =  path.join(CONFIG_FOLDER, USERID_FOLDER, "Main", "config");
-const CONFIG_EXT = ".cfg"; //*/
 
 const BINARIES_ID = `${GAME_ID}-binaries`;
 const BINARIES_NAME = "Binaries (Engine Injector)";

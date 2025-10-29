@@ -64,7 +64,6 @@ const CONFIG_EXT = ".ini";
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_NAME = "Saves";
 const SAVE_PATH = path.join(EPIC_CODE_NAME, "Saved", "SaveGames");
-let USERID_FOLDER = "";
 const SAVE_EXT = ".sav";
 
 const BINARIES_ID = `${GAME_ID}-binaries`;

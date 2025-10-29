@@ -351,6 +351,11 @@ const toolsUnfinished = [
 
 // BASIC EXTENSION FUNCTIONS ///////////////////////////////////////////////////
 
+function isDir(folder, file) {
+  const stats = fs.statSync(path.join(folder, file));
+  return stats.isDirectory();
+}
+
 //Set mod type priorities
 function modTypePriority(priority) {
   return {
@@ -431,15 +436,13 @@ function getExecutable(discoveryPath) {
     CONFIG_TARGET = CONFIG_PATH;
     try {
       const SAVE_ARRAY = fs.readdirSync(SAVE_PATH_XBOX);
-      USERID_FOLDER = SAVE_ARRAY.find((element) => 
-      ((element))
-       );
+      USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_PATH_XBOX, entry));
     } catch(err) {
       USERID_FOLDER = "";
     }
     if (USERID_FOLDER === undefined) {
       USERID_FOLDER = "";
-    }
+    } //*/
     SAVE_PATH = path.join(SAVE_PATH_XBOX, USERID_FOLDER);
     SAVE_TARGET = SAVE_PATH;
     return EXEC_XBOX;
@@ -453,7 +456,16 @@ function getExecutable(discoveryPath) {
     SCRIPTS_TARGET = `{gamePath}\\${SCRIPTS_PATH}`;
     CONFIG_PATH = CONFIG_PATH_DEFAULT;
     CONFIG_TARGET = CONFIG_PATH;
-    SAVE_PATH = SAVE_PATH_DEFAULT;
+    try {
+        const SAVE_ARRAY = fs.readdirSync(SAVE_PATH_DEFAULT);
+        USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_PATH_DEFAULT, entry));
+      } catch(err) {
+        USERID_FOLDER = "";
+      }
+      if (USERID_FOLDER === undefined) {
+        USERID_FOLDER = "";
+      } //*/
+    SAVE_PATH = path.join(SAVE_PATH_DEFAULT, USERID_FOLDER);
     SAVE_TARGET = SAVE_PATH;
     return EXEC_DEFAULT;
   };

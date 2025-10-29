@@ -53,19 +53,21 @@ const RESHADE_IDX = "reshade-shaders\\";
 const BINARIES_EXT = [".dll", ".ini"];
 
 let GAME_VERSION = '';
-let USERID_FOLDER = "";
 CONFIG_FOLDER = path.join(util.getVortexPath('home'), "Games", "Age of Mythology Retold");
+let USERID_FOLDER = "";
+function isDir(folder, file) {
+  const stats = fs.statSync(path.join(folder, file));
+  return stats.isDirectory();
+}
 try {
   const CONFIG_ARRAY = fs.readdirSync(CONFIG_FOLDER);
-  USERID_FOLDER = CONFIG_ARRAY.find((element) => 
-  ((/[a-z]/i.test(element) === false))
-   );
+  USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(CONFIG_FOLDER, entry));
 } catch(err) {
   USERID_FOLDER = "";
 }
 if (USERID_FOLDER === undefined) {
   USERID_FOLDER = "";
-}
+} //*/
 const CONFIG_ID = `${GAME_ID}-config`;
 CONFIG_PATH = path.join(CONFIG_FOLDER, USERID_FOLDER, "users")
 const CONFIG_EXT = ".xml";

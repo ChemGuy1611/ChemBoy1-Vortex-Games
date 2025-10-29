@@ -68,21 +68,24 @@ const CONFIG_FILES = ["engine.ini", "scalability.ini", "input.ini"];
 const CONFIG_EXT = ".ini";
 
 const SAVE_ID = `${GAME_ID}-save`;
-const SAVE_PATH = path.join(DOCS_PATH, 'My Games', EPIC_CODE_NAME, "Saved", "SaveGames");
+const SAVE_FOLDER = path.join(DOCS_PATH, 'My Games', EPIC_CODE_NAME, "Saved", "SaveGames");
 const SAVE_EXT = ".sav";
 //Read the save game directory to get the user ID folder name
 let USERID_FOLDER = "";
+function isDir(folder, file) {
+  const stats = fs.statSync(path.join(folder, file));
+  return stats.isDirectory();
+}
 try {
-  const SAVE_ARRAY = fs.readdirSync(SAVE_PATH);
-  USERID_FOLDER = SAVE_ARRAY.find((element) => 
-  ((/[a-z]/i.test(element) === false))
-    );
+  const SAVE_ARRAY = fs.readdirSync(SAVE_FOLDER);
+  USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_FOLDER, entry));
 } catch(err) {
   USERID_FOLDER = "";
 }
 if (USERID_FOLDER === undefined) {
   USERID_FOLDER = "";
-}
+} //*/
+const SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
 
 const SCRIPTS_ID = `${GAME_ID}-scripts`;
 const SCRIPTS_PATH = `Windows\\${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_NAME}\\ue4ss\\Mods`;

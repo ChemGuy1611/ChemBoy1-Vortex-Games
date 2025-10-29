@@ -26,6 +26,7 @@ let GAME_PATH = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 let GAME_VERSION = '';
+let USERID_FOLDER = "";
 const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 const gameFinderQuery = {
@@ -131,6 +132,11 @@ const tools = [
 
 // BASIC EXTENSION FUNCTIONS //////////////////////////////////////////////////////////////////////////////////////
 
+function isDir(folder, file) {
+  const stats = fs.statSync(path.join(folder, file));
+  return stats.isDirectory();
+}
+
 //Set mod type priority
 function modTypePriority(priority) {
   return {
@@ -192,19 +198,15 @@ function getExecutable(discoveryPath) {
   if (isCorrectExec(XBOX_EXEC)) {
     MOD_PATH = `${EPIC_CODE_NAME}\\Binaries\\${XBOX_EXEC_FOLDER}`;
     CONFIG_PATH = CONFIG_PATH_XBOX;
-    let USERID_FOLDER = "";
     try {
       const SAVE_ARRAY = fs.readdirSync(SAVE_FOLDER_XBOX);
-      USERID_FOLDER = SAVE_ARRAY.find((element) => 
-        //((/[a-z]/i.test(element) === false))
-        (element)
-      );
+      USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_FOLDER_XBOX, entry));
     } catch(err) {
       USERID_FOLDER = "";
     }
     if (USERID_FOLDER === undefined) {
       USERID_FOLDER = "";
-    }
+    } //*/
     SAVE_PATH = path.join(SAVE_FOLDER_XBOX, USERID_FOLDER);
     EXEC_PATH = `${EPIC_CODE_NAME}\\Binaries\\${XBOX_EXEC_FOLDER}`;
     EXEC_TARGET = `{gamePath}\\${EPIC_CODE_NAME}\\Binaries\\${XBOX_EXEC_FOLDER}`;
@@ -214,19 +216,15 @@ function getExecutable(discoveryPath) {
   if (isCorrectExec(STEAM_EXEC)) {
     MOD_PATH = `${EPIC_CODE_NAME}\\Binaries\\${STEAM_EXEC_FOLDER}`;
     CONFIG_PATH = path.join(discoveryPath, CONFIG_PATH_DEFAULT);
-    let USERID_FOLDER = "";
     try {
-      const SAVE_ARRAY = fs.readdirSync(path.join(discoveryPath, SAVE_FOLDER_DEFAULT));
-      USERID_FOLDER = SAVE_ARRAY.find((element) => 
-        ((/[a-z]/i.test(element) === false))
-        //(element)
-      );
+      const SAVE_ARRAY = fs.readdirSync(SAVE_FOLDER_DEFAULT);
+      USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_FOLDER_DEFAULT, entry));
     } catch(err) {
       USERID_FOLDER = "";
     }
     if (USERID_FOLDER === undefined) {
       USERID_FOLDER = "";
-    }
+    } //*/
     SAVE_PATH = path.join(discoveryPath, SAVE_FOLDER_DEFAULT, USERID_FOLDER);
     EXEC_PATH = `${EPIC_CODE_NAME}\\Binaries\\${STEAM_EXEC_FOLDER}`;
     EXEC_TARGET = `{gamePath}\\${EPIC_CODE_NAME}\\Binaries\\${STEAM_EXEC_FOLDER}`;
