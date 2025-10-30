@@ -1,8 +1,13 @@
 # Changelog
 
-## Future Changes (Not Implemented)
+## Future Changes (Not Implemented Yet)
 
-- None
+- None Planned
+
+## [0.5.0] - 2025-10-29
+
+- Improved handling of Mod Manager mods.
+- Fixed Xbox game version detection.
 
 ## [0.4.3] - 2025-06-01
 

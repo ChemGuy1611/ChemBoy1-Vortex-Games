@@ -2,15 +2,14 @@
 Name: Tomb Raider (2013) Vortex Extension
 Structure: Basic Game 
 Author: ChemBoy1
-Version: 0.4.3
-Date: 2025-06-01
+Version: 0.5.0
+Date: 2025-10-29
 ////////////////////////////////////////////////*/
 
 //Import libraries
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
-const Bluebird = require('bluebird');
 const { parseStringPromise } = require('xml2js');
 
 //Specify all the information about the game
@@ -32,9 +31,6 @@ const APPMANIFEST_FILE = "appxmanifest.xml";
 
 //Information for mod types and installers
 const DOCUMENTS = util.getVortexPath("documents");
-const USER_HOME = util.getVortexPath("home");
-
-const CONFIG_PATH = path.join(USER_HOME, "Software", "Crystal Dynamics", "Tomb Raider");
 const SAVE_FOLDER = path.join(DOCUMENTS, "Tomb Raider");
 let USERID_FOLDER = "";
 function isDir(folder, file) {
@@ -196,7 +192,7 @@ function pathPattern(api, game, pattern) {
   return template(pattern, {
     gamePath: (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0 ? void 0 : _a.path,
     documents: util.getVortexPath('documents'),
-    localAppData: process.env['LOCALAPPDATA'],
+    localAppData: util.getVortexPath('localAppData'),
     appData: util.getVortexPath('appData'),
   });
 }
@@ -216,11 +212,6 @@ function makeFindGame(api, gameSpec) {
 
 //Set launcher requirements
 async function requiresLauncher(gamePath, store) {
-  if (store === 'steam') {
-    return Promise.resolve(
-      undefined,
-    );
-  }
   if (store === 'epic') {
     return Promise.resolve({
       launcher: "epic",
@@ -574,9 +565,7 @@ function installTexModPack(files) {
 //Test Fallback installer for binaries folder
 function testManagerMod(files, gameId) {
   const isMod = files.some(file => MANAGERMOD_EXTS.includes(path.extname(file).toLowerCase()));
-  const isFolder = files.some(file => path.basename(file).includes('.drm'));
-  const TEST = isMod && isFolder;
-  let supported = (gameId === spec.game.id) && TEST;
+  let supported = (gameId === spec.game.id) && isMod;
 
   // Test for a mod installer.
   if (supported && files.find(file =>
@@ -592,13 +581,11 @@ function testManagerMod(files, gameId) {
 }
 //Fallback installer for binaries folder
 function installManagerMod(files, fileName) {
-  //const modFile = files.find(file => MANAGERMOD_EXTS.includes(path.extname(file).toLowerCase()));
-  const modFile = files.find(file => path.basename(file).includes('.drm'));
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
-  const rootPath = path.dirname(modFile);
+  const modFile = files.find(file => MANAGERMOD_EXTS.includes(path.extname(file).toLowerCase()));
+  const ROOT_PATH = path.basename(path.dirname(modFile));
   const MOD_NAME = path.basename(fileName);
-  let MOD_FOLDER = path.basename(rootPath);
-  if (MOD_FOLDER === '.') {
+  let MOD_FOLDER = '.';
+  if (ROOT_PATH === '.') {
     MOD_FOLDER = MOD_NAME.replace(/[\.]*(installing)*(zip)*/gi, '');
   }
   const setModTypeInstruction = { type: 'setmodtype', value: MANAGERMOD_ID };
@@ -617,40 +604,6 @@ function installManagerMod(files, fileName) {
   });
   instructions.push(setModTypeInstruction);
   return Promise.resolve({ instructions });
-}
-//Install zips
-async function installZipContent(files, destinationPath) {
-  const zipFiles = files.filter(file => ['.zip', '.7z', '.rar'].includes(path.extname(file)));
-  // If it's a double zip, we don't need to repack. 
-  if (zipFiles.length > 0) {
-    const instructions = zipFiles.map(file => {
-      return {
-        type: 'copy',
-        source: file,
-        destination: path.basename(file),
-      }
-    });
-    return Promise.resolve({ instructions });
-  }
-  // Repack the ZIP
-  else {
-    const szip = new util.SevenZip();
-    const archiveName = path.basename(destinationPath, '.installing') + '.zip';
-    const archivePath = path.join(destinationPath, archiveName);
-    const rootRelPaths = await fs.readdirAsync(destinationPath);
-    await szip.add(archivePath, rootRelPaths.map(relPath => path.join(destinationPath, relPath)), { raw: ['-r'] });
-    const instructions = [{
-      type: 'copy',
-      source: archiveName,
-      destination: path.basename(archivePath),
-    }];
-    return Promise.resolve({ instructions });
-  }
-}
-
-//convert installer functions to Bluebird promises
-function toBlue(func) {
-  return (...args) => Bluebird.Promise.resolve(func(...args));
 }
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
@@ -827,18 +780,8 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(TEXMOD_ID, 27, testTexMod, installTexMod);
   context.registerInstaller(TEXMODPACK_ID, 29, testTexModPack, installTexModPack);
   context.registerInstaller(MANAGERMOD_ID, 31, testManagerMod, installManagerMod);
-  //context.registerInstaller(MANAGERMOD_ID, 31, toBlue(testManagerMod), toBlue(installZipContent));
 
   //register actions
-  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
-    const openPath = path.join(CONFIG_PATH);
-    util.opn(openPath).catch(() => null);
-    }, () => {
-      const state = context.api.getState();
-      const gameId = selectors.activeGameId(state);
-      return gameId === GAME_ID;
-    }
-  ); //*/
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Logs and Crash Dumps Folder', () => {
     const openPath = path.join(SAVE_PATH);
     util.opn(openPath).catch(() => null);

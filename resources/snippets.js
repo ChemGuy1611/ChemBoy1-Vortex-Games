@@ -6,6 +6,9 @@ const template = require('string-template');
 const { parseStringPromise } = require('xml2js');
 const winapi = require('winapi-bindings');
 const turbowalk = require('turbowalk');
+const Bluebird = require('bluebird');
+const fsPromises = require('fs/promises');
+const exeVersion = require('exe-version');
 
 const USER_HOME = util.getVortexPath("home");
 const DOCUMENTS = util.getVortexPath("documents");
@@ -167,6 +170,42 @@ async function didPurge(api, profileId) { //run on mod purge
 
 // INSTALLER FUNCTIONS ///////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////
+
+// Re-zip installer //////////////////////////////////////////////////////
+const Bluebird = require('bluebird');
+//Install zips
+async function installZipContent(files, destinationPath) {
+  const zipFiles = files.filter(file => ['.zip', '.7z', '.rar'].includes(path.extname(file)));
+  // If it's a double zip, we don't need to repack. 
+  if (zipFiles.length > 0) {
+    const instructions = zipFiles.map(file => {
+      return {
+        type: 'copy',
+        source: file,
+        destination: path.basename(file),
+      }
+    });
+    return Promise.resolve({ instructions });
+  }
+  // Repack the ZIP
+  else {
+    const szip = new util.SevenZip();
+    const archiveName = path.basename(destinationPath, '.installing') + '.zip';
+    const archivePath = path.join(destinationPath, archiveName);
+    const rootRelPaths = await fs.readdirAsync(destinationPath);
+    await szip.add(archivePath, rootRelPaths.map(relPath => path.join(destinationPath, relPath)), { raw: ['-r'] });
+    const instructions = [{
+      type: 'copy',
+      source: archiveName,
+      destination: path.basename(archivePath),
+    }];
+    return Promise.resolve({ instructions });
+  }
+}
+//convert installer functions to Bluebird promises
+function toBlue(func) {
+  return (...args) => Bluebird.Promise.resolve(func(...args));
+}
 
 //Installer with dialogue selection //////////////////////////////////////////////////////
 function installPk4(api, files) {

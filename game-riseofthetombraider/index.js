@@ -2,8 +2,8 @@
 Name: Rise of the Tomb Raider Vortex Extension
 Structure: 3rd-Party Mod Installer
 Author: ChemBoy1
-Version: 0.4.2
-Date: 2025-09-26
+Version: 0.5.0
+Date: 2025-10-29
 ////////////////////////////////////////////*/
 
 //Import libraries
@@ -24,9 +24,13 @@ const GAME_NAME_SHORT = "ROTTR";
 const EXEC = "ROTTR.exe";
 const EXEC_XBOX = "ROTTR_UAP.exe";
 
+let GAME_PATH = '';
+let STAGING_FOLDER = '';
+let DOWNLOAD_FOLDER = '';
 let GAME_VERSION = '';
-const APPMANIFEST_FILE = 'appxmanifest.xml';
+const APPMANIFEST_FILE = "appxmanifest.xml";
 
+//info for mod types and installers
 const MANAGER_ID = "riseofthetombraider-manager";
 const MANAGER_EXEC = "rottrmodmanager.exe";
 
@@ -152,7 +156,7 @@ function pathPattern(api, game, pattern) {
   return template(pattern, {
     gamePath: (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0 ? void 0 : _a.path,
     documents: util.getVortexPath('documents'),
-    localAppData: process.env['LOCALAPPDATA'],
+    localAppData: util.getVortexPath('localAppData'),
     appData: util.getVortexPath('appData'),
   });
 }
@@ -164,51 +168,32 @@ function makeGetModPath(api, gameSpec) {
     : pathPattern(api, gameSpec.game, gameSpec.game.modPath);
 }
 
-//Find game information by API utility
-async function queryGame() {
-  let game = await util.GameStoreHelper.findByAppId(spec.discovery.ids);
-  return game;
-}
-
-//Find game install location 
-async function queryPath() {
-  let game = await queryGame();
-  return game.gamePath;
+//Find game installation directory
+function makeFindGame(api, gameSpec) {
+  return () => util.GameStoreHelper.findByAppId(gameSpec.discovery.ids)
+    .then((game) => game.gamePath);
 }
 
 //Set launcher requirements
 async function requiresLauncher(gamePath, store) {
-  if (store === 'steam') {
-    return Promise.resolve(
-      undefined,
-    );
-  }
-  else if (store === 'epic') {
+  if (store === 'epic') {
     return Promise.resolve({
       launcher: "epic",
       addInfo: {
         appId: EPICAPP_ID,
       },
     });
-  } //*/
-  /*else if (store === 'xbox') {
+  }
+  if (store === 'xbox') {
     return Promise.resolve({
       launcher: "xbox",
       addInfo: {
         appId: XBOXAPP_ID,
-        // appExecName is the <Application id="" in the appxmanifest.xml file
-        parameters: [{ appExecName: XBOXEXECNAME }],
+        parameters: [{ appExecName: XBOXEXECNAME }], // appExecName is the <Application id="" in the appxmanifest.xml file
       },
     });
-  } //*/
-  else if (store === undefined) {
-    return Promise.resolve(
-      undefined,
-    );
   }
-  else {
-    return Promise.resolve(undefined);
-  }
+  return Promise.resolve(undefined);
 }
 
 //Get correct game version
@@ -222,12 +207,10 @@ async function setGameVersion(gamePath) {
       return false;
     }
   };
-
   if (isCorrectExec(EXEC_XBOX)) {
     GAME_VERSION = 'xbox';
     return GAME_VERSION;
   };
-
   GAME_VERSION = 'default';
   return GAME_VERSION;
 }
@@ -592,6 +575,10 @@ async function resolveGameVersion(gamePath) {
 //Setup function
 async function setup(discovery, api, gameSpec) {
   setupNotify(api);
+  const state = api.getState();
+  GAME_PATH = discovery.path;
+  STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
+  DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   await downloadModManager(api, gameSpec);
   await (gameSpec.modTypes || []).forEach((type, idx, arr) => {
     fs.ensureDirWritableAsync(pathPattern(api, gameSpec.game, type.targetPath));
@@ -604,7 +591,7 @@ function applyGame(context, gameSpec) {
   //register game
   const game = {
     ...gameSpec.game,
-    queryPath,
+    queryPath: makeFindGame(context.api, gameSpec),
     queryModPath: makeGetModPath(context.api, gameSpec),
     requiresLauncher: requiresLauncher,
     requiresCleanup: true,
@@ -630,6 +617,23 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(BINARIES_ID, 35, testBinaries, installBinaries);
   context.registerInstaller(MANAGERMOD_ID, 40, testManagerMod, installManagerMod);
 
+  //register actions
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
+    const openPath = path.join(__dirname, 'CHANGELOG.md');
+    util.opn(openPath).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
+    const openPath = DOWNLOAD_FOLDER;
+    util.opn(openPath).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
 }
 
 //main function
