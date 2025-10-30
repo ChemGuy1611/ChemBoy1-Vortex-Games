@@ -32,11 +32,16 @@ const GAME_STRING = "Duckov" //string for exe and data folder (seem to always ma
 const EXEC = `${GAME_STRING}.exe`;
 const DATA_FOLDER = `${GAME_STRING}_Data`;
 
+//Data to determine BepinEx/MelonLoader versions and URLs
 const BEPINEX_BUILD = 'mono'; // 'mono' or 'il2cpp'
 const ARCH = 'x64'; //'x64' or 'x86' game architecture
 const BEP_VER = '5.4.23.4'; //set BepInEx version for mono URLs
 const BEP_BE_VER = '738'; //set BepInEx build for BE URLs
 const BEP_BE_COMMIT = 'af0cba7'; //git commit number for BE builds
+const allowBepCfgMan = false; //should BepInExConfigManager be downloaded?
+const allowMelPrefMan = false; //should MelonPreferencesManager be downloaded? False until figure out UniverseLib dependency
+const allowBepinexNexus = false; //set false until bugs are fixed
+const allowMelonNexus = false; //set false until bugs are fixed
 
 const DEV_REGSTRING = "TeamSoda";
 const GAME_REGSTRING = "Duckov";
@@ -71,6 +76,10 @@ if (BEPINEX_BUILD === 'mono') {
   BEPINEX_URL_ERR = `https://github.com/BepInEx/BepInEx/releases`;
 }
 
+let MELON_STRING = 'IL2CPP';
+if ( BEPINEX_BUILD === 'mono') {
+  MELON_STRING = 'Mono';
+}
 const MELON_ID = `${GAME_ID}-melonloader`;
 const MELON_NAME = "MelonLoader";
 const MELON_ZIP = `MelonLoader.${ARCH}.zip`;
@@ -83,12 +92,6 @@ const MEL_PLUGIN_STRING = 'MelonPlugin';
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Game Folder";
-
-const BEPCFGMAN_ID = `${GAME_ID}-bepcfgman`;
-const BEPCFGMAN_NAME = "BepInEx Config Manager";
-const BEPCFGMAN_PATH = 'Bepinex';
-const BEPCFGMAN_URL = `https://github.com/sinai-dev/BepInExConfigManager/releases/latest/download/BepInExConfigManager.${BEPINEX_BUILD}.zip`;
-const BEPCFGMAN_FILE = `bepinexconfigmanager.${BEPINEX_BUILD}.dll`; //lowercased
 
 const ASSEMBLY_ID = `${GAME_ID}-assemblydll`;
 const ASSEMBLY_NAME = "Assembly DLL Mod";
@@ -155,6 +158,20 @@ const MELON_CONFIG_ID = `${GAME_ID}-melonloader-config`;
 const MELON_CONFIG_NAME = "MelonLoader Config";
 const MELON_CONFIG_FOLDER = 'UserData';
 const MELON_CONFIG_PATH = MELON_CONFIG_FOLDER;
+
+const BEPCFGMAN_ID = `${GAME_ID}-bepcfgman`;
+const BEPCFGMAN_NAME = "BepInEx Config Manager";
+const BEPCFGMAN_PATH = BEPINEX_MOD_PATH;
+const BEPCFGMAN_URL = `https://github.com/sinai-dev/BepInExConfigManager/releases/latest/download/BepInExConfigManager.${BEPINEX_BUILD}.zip`;
+const BEPCFGMAN_URL_ERR = `https://github.com/sinai-dev/BepInExConfigManager/releases`;
+const BEPCFGMAN_FILE = `bepinexconfigmanager.${BEPINEX_BUILD}.dll`; //lowercased
+
+const MELONPREFMAN_ID = `${GAME_ID}-melonprefman`;
+const MELONPREFMAN_NAME = "MelonPreferences Manager";
+const MELONPREFMAN_PATH = MELON_MODS_PATH;
+const MELONPREFMAN_URL = `https://github.com/Bluscream/MelonPreferencesManager/releases/latest/download/MelonPrefManager.${MELON_STRING}.dll`;
+const MELONPREFMAN_URL_ERR = `https://github.com/Bluscream/MelonPreferencesManager/releases`;
+const MELONPREFMAN_FILE = `melonprefmanager.${BEPINEX_BUILD}.dll`; //lowercased
 
 const MOD_PATH_DEFAULT = ".";
 const MODTYPE_FOLDERS = [ASSEMBLY_PATH, ASSETS_PATH, BEPINEX_PATCHERS_PATH, BEPINEX_PLUGINS_PATH, BEPINEX_CONFIG_PATH, MELON_PLUGINS_PATH, MELON_MODS_PATH, MELON_CONFIG_PATH];
@@ -251,6 +268,12 @@ const spec = {
       "name": BEPCFGMAN_NAME,
       "priority": "high",
       "targetPath": path.join('{gamePath}', BEPCFGMAN_PATH)
+    },
+    {
+      "id": MELONPREFMAN_ID,
+      "name": MELONPREFMAN_NAME,
+      "priority": "high",
+      "targetPath": path.join('{gamePath}', MELONPREFMAN_PATH)
     },
     {
       "id": ASSETS_ID,
@@ -530,6 +553,48 @@ function testBepCfgMan(files, gameId) {
 function installBepCfgMan(files) {
   const MOD_TYPE = BEPCFGMAN_ID;
   const modFile = files.find(file => (path.basename(file).toLowerCase() === 'plugins'));
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file => (
+    (file.indexOf(rootPath) !== -1) &&
+    (!file.endsWith(path.sep))
+  ));
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Test for MelonPreferencesManager mod files
+function testMelonPrefMan(files, gameId) {
+  const isMod = files.some(file => (path.basename(file).toLowerCase() === MELONPREFMAN_FILE));
+  let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+      supported,
+      requiredFiles: [],
+  });
+}
+
+//Install MelonPreferencesManager mod files
+function installMelonPrefMan(files) {
+  const MOD_TYPE = MELONPREFMAN_ID;
+  const modFile = files.find(file => (path.basename(file).toLowerCase() === MELONPREFMAN_FILE));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
@@ -987,6 +1052,12 @@ async function setup(discovery, api, gameSpec) {
   if (bepinexInstalled && melonInstalled) {
     await deconflictModLoaders(api, gameSpec); //deconflict if both mod loaders are installed
   } //*/
+  if (bepinexInstalled && allowBepCfgMan) {
+    await downloadBepCfgMan(api, gameSpec); //download BepInExConfigManager
+  } //*/
+  if (melonInstalled && allowMelPrefMan) {
+    await downloadMelonPrefMan(api, gameSpec); //download MelonPreferencesManager
+  } //*/
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 
@@ -1019,6 +1090,7 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(MELON_ID, 26, testMelon, installMelon);
   context.registerInstaller(ROOT_ID, 27, testRoot, installRoot);
   context.registerInstaller(BEPCFGMAN_ID, 29, testBepCfgMan, installBepCfgMan);
+  context.registerInstaller(MELONPREFMAN_ID, 30, testMelonPrefMan, installMelonPrefMan);
   context.registerInstaller(ASSEMBLY_ID, 31, testAssembly, installAssembly);
   //if there are other known dll files that are not Unity plugins, add installers for them here
   context.registerInstaller(`${GAME_ID}-plugin`, 33, testPlugin, (files, workingDir) => installPlugin(context.api, gameSpec, files, workingDir));
@@ -1036,9 +1108,23 @@ function applyGame(context, gameSpec) {
       return gameId === GAME_ID;
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', () => {
-    //const openPath = SAVE_PATH;
-    const openPath = getSavePath(context.api);
+    const openPath = SAVE_PATH;
+    //const openPath = getSavePath(context.api);
     util.opn(openPath).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download BepInExConfigManager', async () => {
+    await downloadBepCfgMan(context.api, spec);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download MelonPreferencesManager', async () => {
+    await downloadMelonPrefMan(context.api, spec);
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
@@ -1077,6 +1163,12 @@ function main(context) {
       if (bepinexInstalled && melonInstalled) {
         await deconflictModLoaders(context.api, spec); //deconflict if both mod loaders are installed
       } //*/
+      if (bepinexInstalled && allowBepCfgMan) {
+        await downloadBepCfgMan(context.api, spec); //download BepInExConfigManager
+      } //*/
+      if (melonInstalled && allowMelPrefMan) {
+        await downloadMelonPrefMan(context.api, spec); //download MelonPreferencesManager
+      } //*/
     });
   });
   return true;
@@ -1094,6 +1186,20 @@ function isMelonInstalled(api, spec) {
   const state = api.getState();
   const mods = state.persistent.mods[spec.game.id] || {};
   return Object.keys(mods).some(id => mods[id]?.type === MELON_ID);
+}
+
+//Test if BepInExConfigManager is installed
+function isBepCfgManInstalled(api, spec) {
+  const state = api.getState();
+  const mods = state.persistent.mods[spec.game.id] || {};
+  return Object.keys(mods).some(id => mods[id]?.type === BEPCFGMAN_ID);
+}
+
+//Test if MelonPreferences Manager is installed
+function isMelonPrefManInstalled(api, spec) {
+  const state = api.getState();
+  const mods = state.persistent.mods[spec.game.id] || {};
+  return Object.keys(mods).some(id => mods[id]?.type === MELONPREFMAN_ID);
 }
 
 // Download BepInEx
@@ -1185,6 +1291,96 @@ async function downloadMelon(api, gameSpec) {
     }
   }
 }
+
+// Download BepInExConfigManager from GitHub
+async function downloadBepCfgMan(api, gameSpec) {
+  let isInstalled = isBepCfgManInstalled(api, gameSpec);
+  if (!isInstalled) {
+    const MOD_NAME = BEPCFGMAN_NAME;
+    const MOD_TYPE = BEPCFGMAN_ID;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
+    const GAME_DOMAIN = gameSpec.game.id;
+    const URL = BEPCFGMAN_URL;
+    const URL_ERR = BEPCFGMAN_URL_ERR;
+    api.sendNotification({ //notification indicating install process
+      id: NOTIF_ID,
+      message: `Installing ${MOD_NAME}`,
+      type: 'activity',
+      noDismiss: true,
+      allowSuppress: false,
+    });
+    try {
+      const dlInfo = { //Download the mod
+        game: GAME_DOMAIN,
+        name: MOD_NAME,
+      };
+      //const dlInfo = {};
+      const dlId = await util.toPromise(cb =>
+        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+      const modId = await util.toPromise(cb =>
+        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
+      const batched = [
+        actions.setModsEnabled(api, profileId, [modId], true, {
+          allowAutoDeploy: true,
+          installed: true,
+        }),
+        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
+      ];
+      util.batchDispatch(api.store, batched); // Will dispatch both actions
+    } catch (err) {
+      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
+      util.opn(URL_ERR).catch(() => null);
+    } finally {
+      api.dismissNotification(NOTIF_ID);
+    }
+  }
+} //*/
+
+// Download MelonPreferences Manager from GitHub
+async function downloadMelonPrefMan(api, gameSpec) {
+  let isInstalled = isMelonPrefManInstalled(api, gameSpec);
+  if (!isInstalled) {
+    const MOD_NAME = MELONPREFMAN_NAME;
+    const MOD_TYPE = MELONPREFMAN_ID;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
+    const GAME_DOMAIN = gameSpec.game.id;
+    const URL = MELONPREFMAN_URL;
+    const URL_ERR = MELONPREFMAN_URL_ERR;
+    api.sendNotification({ //notification indicating install process
+      id: NOTIF_ID,
+      message: `Installing ${MOD_NAME}`,
+      type: 'activity',
+      noDismiss: true,
+      allowSuppress: false,
+    });
+    try {
+      const dlInfo = { //Download the mod
+        game: GAME_DOMAIN,
+        name: MOD_NAME,
+      };
+      //const dlInfo = {};
+      const dlId = await util.toPromise(cb =>
+        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+      const modId = await util.toPromise(cb =>
+        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
+      const batched = [
+        actions.setModsEnabled(api, profileId, [modId], true, {
+          allowAutoDeploy: true,
+          installed: true,
+        }),
+        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
+      ];
+      util.batchDispatch(api.store, batched); // Will dispatch both actions
+    } catch (err) {
+      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
+      util.opn(URL_ERR).catch(() => null);
+    } finally {
+      api.dismissNotification(NOTIF_ID);
+    }
+  }
+} //*/
 
 //export to Vortex
 module.exports = {
