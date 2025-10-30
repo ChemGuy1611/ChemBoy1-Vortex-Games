@@ -1,9 +1,9 @@
 /*//////////////////////////////////////////
-Name: XXX Vortex Extension
+Name: Escape from Duckov Vortex Extension
 Structure: Unity BepinEx/MelonLoader Hybrid
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2025-XX-XX
+Date: 2025-10-30
 //////////////////////////////////////////*/
 
 //Import libraries
@@ -18,28 +18,29 @@ const USER_HOME = util.getVortexPath("home");
 const LOCALAPPDATA = util.getVortexPath("localAppData");
 
 //Specify all the information about the game
-const GAME_ID = "XXX";
-const STEAMAPP_ID = "XXX";
-const STEAMAPP_ID_DEMO = "XXX";
-const EPICAPP_ID = "XXX";
-const GOGAPP_ID = "XXX";
-const XBOXAPP_ID = "XXX";
-const XBOXEXECNAME = "XXX";
+const GAME_ID = "escapefromduckov";
+const STEAMAPP_ID = "3167020";
+const STEAMAPP_ID_DEMO = null;
+const EPICAPP_ID = ""; // not on egdata.app yet
+const GOGAPP_ID = null;
+const XBOXAPP_ID = null;
+const XBOXEXECNAME = null;
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
-const GAME_NAME = "XXX"
-const GAME_NAME_SHORT = "XXX"
-const GAME_STRING = "XXX" //string for exe and data folder (seem to always match)
+const GAME_NAME = "Escape from Duckov"
+const GAME_NAME_SHORT = "EFD"
+const GAME_STRING = "Duckov" //string for exe and data folder (seem to always match)
 const EXEC = `${GAME_STRING}.exe`;
 const DATA_FOLDER = `${GAME_STRING}_Data`;
-const DEV_REGSTRING = "XXX"; //developer name
-const GAME_REGSTRING = "XXX"; //game name
-const XBOX_SAVE_STRING = 'XXX'; //string after "ID_"
-//Data to determine BepinEx/MelonLoader versions and URLs
-const BEPINEX_BUILD = 'il2cpp'; // 'mono' or 'il2cpp'
-const ARCH = 'x64'; //'x64' or 'x86' game architecture (64-bit or 32-bit)
+
+const BEPINEX_BUILD = 'mono'; // 'mono' or 'il2cpp'
+const ARCH = 'x64'; //'x64' or 'x86' game architecture
 const BEP_VER = '5.4.23.4'; //set BepInEx version for mono URLs
 const BEP_BE_VER = '738'; //set BepInEx build for BE URLs
 const BEP_BE_COMMIT = 'af0cba7'; //git commit number for BE builds
+
+const DEV_REGSTRING = "TeamSoda";
+const GAME_REGSTRING = "Duckov";
+const XBOX_SAVE_STRING = '';
 
 let GAME_PATH = null;
 let STAGING_FOLDER = '';
