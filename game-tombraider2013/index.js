@@ -599,7 +599,7 @@ function installManagerMod(files, fileName) {
     return {
       type: 'copy',
       source: file,
-      destination: path.join(MOD_FOLDER, file.substr(idx)),
+      destination: path.join(MOD_FOLDER, file),
     };
   });
   instructions.push(setModTypeInstruction);
