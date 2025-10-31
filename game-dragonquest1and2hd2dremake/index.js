@@ -368,7 +368,7 @@ async function deploy(api) { //useful to deploy mods after doing some action
 //Test for save files
 function testUe4ssCombo(files, gameId) {
   const isMod = files.some(file => (path.extname(file).toLowerCase() === SCRIPTS_EXT));
-  const isModAlt = files.some(file => (path.basename(file).toLowerCase() === 'binaries'));
+  const isModAlt = files.some(file => (path.basename(file).toLowerCase() === 'binaries')); //added to catch mods packaged with paks and dll/asi, but no lua scripts.
   const isMod2 = files.some(file => (path.extname(file).toLowerCase() === LOGICMODS_EXT));
   const isFolder = files.some(file => (path.basename(file) === ROOT_FILE));
   let supported = (gameId === spec.game.id) && ( isMod || isModAlt ) && isMod2 && isFolder;
