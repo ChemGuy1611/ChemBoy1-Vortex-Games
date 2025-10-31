@@ -3,7 +3,7 @@ Name: DRAGON QUEST I & II HD-2D Remake Vortex Extension
 Structure: UE5 (static exe)
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2025-10-30
+Date: 2025-10-31
 //////////////////////////////////////////////////*/
 
 //Import libraries
@@ -25,7 +25,7 @@ const GOGAPP_ID = null;
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 const GAME_NAME = "DRAGON QUEST I & II HD-2D Remake";
 const GAME_NAME_SHORT = "DQ I&II Remake";
-const EXEC = "DragonQuestIIHD2DRemake.exe";
+const EXEC = "DQIandIIHD2DRemake.exe";
 
 //Unreal Engine specific
 const EPIC_CODE_NAME = "Game";
