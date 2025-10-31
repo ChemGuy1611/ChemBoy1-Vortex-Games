@@ -17,7 +17,7 @@ const template = require('string-template');
 const LOCALAPPDATA = util.getVortexPath('localAppData');
 
 //Specify all information about the game
-const GAME_ID = "dragonquestiandiihd2dremake";
+const GAME_ID = "dragonquest1and2hd2dremake";
 const STEAMAPP_ID = "2893570";
 const STEAMAPP_ID_DEMO = null;
 const EPICAPP_ID = null;
