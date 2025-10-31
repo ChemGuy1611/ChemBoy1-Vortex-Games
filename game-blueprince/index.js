@@ -1,16 +1,16 @@
 /*//////////////////////////////////////////
-Name: XXX Vortex Extension
+Name: Blue Prince Vortex Extension
 Structure: Unity BepinEx/MelonLoader Hybrid
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2025-XX-XX
+Date: 2025-10-31
 //////////////////////////////////////////*/
 
 //Import libraries
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
-//const { parseStringPromise } = require('xml2js');
+const { parseStringPromise } = require('xml2js');
 
 const USER_HOME = util.getVortexPath("home");
 //const DOCUMENTS = util.getVortexPath("documents");
@@ -18,22 +18,22 @@ const USER_HOME = util.getVortexPath("home");
 const LOCALAPPDATA = util.getVortexPath("localAppData");
 
 //Specify all the information about the game
-const GAME_ID = "XXX";
-const STEAMAPP_ID = "XXX";
-const STEAMAPP_ID_DEMO = "XXX";
-const EPICAPP_ID = "XXX";
-const GOGAPP_ID = "XXX";
-const XBOXAPP_ID = "XXX";
-const XBOXEXECNAME = "XXX";
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
-const GAME_NAME = "XXX";
-const GAME_NAME_SHORT = "XXX";
-const GAME_STRING = "XXX"; //string for exe and data folder (seem to always match)
+const GAME_ID = "blueprince";
+const STEAMAPP_ID = "1569580";
+const STEAMAPP_ID_DEMO = null;
+const EPICAPP_ID = null;
+const GOGAPP_ID = null;
+const XBOXAPP_ID = "RawFury.BluePrince";
+const XBOXEXECNAME = "Game";
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, XBOXAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const GAME_NAME = "Blue Prince";
+const GAME_NAME_SHORT = "Blue Prince";
+const GAME_STRING = "BLUE PRINCE" //string for exe and data folder (seem to always match)
 const EXEC = `${GAME_STRING}.exe`;
 const DATA_FOLDER = `${GAME_STRING}_Data`;
-const DEV_REGSTRING = "XXX"; //developer name
-const GAME_REGSTRING = "XXX"; //game name
-const XBOX_SAVE_STRING = 'XXX'; //string after "ID_"
+const DEV_REGSTRING = "Dogubomb"; //developer name
+const GAME_REGSTRING = "BLUE PRINCE"; //game name
+const XBOX_SAVE_STRING = '9s0pnehqffj7t'; //string after "ID_"
 
 //Data to determine BepinEx/MelonLoader versions and URLs
 const BEPINEX_BUILD = 'il2cpp'; // 'mono' or 'il2cpp'
@@ -106,7 +106,7 @@ const CONFIG_HIVE = 'HKEY_CURRENT_USER';
 const CONFIG_REGPATH = `Software\\${DEV_REGSTRING}\\${GAME_REGSTRING}`;
 const CONFIG_REGPATH_FULL = `${CONFIG_HIVE}\\${CONFIG_REGPATH}`;
 
-const SAVE_PATH_DEFAULT = path.join(USER_HOME, 'AppData', 'LocalLow', DEV_REGSTRING, GAME_REGSTRING);
+const SAVE_PATH_DEFAULT = path.join(USER_HOME, 'AppData', 'LocalLow', DEV_REGSTRING, GAME_REGSTRING, 'storage');
 const SAVE_PATH_XBOX = path.join(LOCALAPPDATA, "Packages", `${XBOXAPP_ID}_${XBOX_SAVE_STRING}`, "SystemAppData", "wgs"); //XBOX Version
 let SAVE_PATH = SAVE_PATH_DEFAULT;
 const SAVE_EXTS = [".json"];
@@ -1031,7 +1031,7 @@ async function removeMelon(api, gameSpec) {
   }
 }
 
-/*
+//*
 async function resolveGameVersion(gamePath) {
   GAME_VERSION = await setGameVersion(gamePath);
   let version = '0.0.0';
@@ -1097,9 +1097,8 @@ function applyGame(context, gameSpec) {
     queryModPath: makeGetModPath(context.api, gameSpec),
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
-    executable: () => gameSpec.game.executable,
-    //executable: getExecutable,
-    //getGameVersion: resolveGameVersion,
+    executable: getExecutable,
+    getGameVersion: resolveGameVersion,
     supportedTools: tools,
   };
   context.registerGame(game);
