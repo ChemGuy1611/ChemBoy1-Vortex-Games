@@ -36,7 +36,7 @@ const GAME_REGSTRING = "XXX"; //game name
 const XBOX_SAVE_STRING = 'XXX'; //string after "ID_"
 
 //Data to determine BepinEx/MelonLoader versions and URLs
-const BEPINEX_BUILD = 'il2cpp'; // 'mono' or 'il2cpp'
+const BEPINEX_BUILD = 'il2cpp'; // 'mono' or 'il2cpp' - check for "il2cpp_data" folder
 const ARCH = 'x64'; //'x64' or 'x86' game architecture (64-bit or 32-bit)
 const BEP_VER = '5.4.23.4'; //set BepInEx version for mono URLs
 const BEP_BE_VER = '738'; //set BepInEx build for BE URLs
@@ -54,6 +54,16 @@ let bepinexInstalled = false;
 let melonInstalled = false;
 const EXEC_XBOX = 'gamelaunchhelper.exe';
 const APPMANIFEST_FILE = 'appxmanifest.xml';
+
+//Config and save paths
+const CONFIG_HIVE = 'HKEY_CURRENT_USER';
+const CONFIG_REGPATH = `Software\\${DEV_REGSTRING}\\${GAME_REGSTRING}`;
+const CONFIG_REGPATH_FULL = `${CONFIG_HIVE}\\${CONFIG_REGPATH}`;
+
+const SAVE_PATH_DEFAULT = path.join(USER_HOME, 'AppData', 'LocalLow', DEV_REGSTRING, GAME_REGSTRING);
+const SAVE_PATH_XBOX = path.join(LOCALAPPDATA, "Packages", `${XBOXAPP_ID}_${XBOX_SAVE_STRING}`, "SystemAppData", "wgs"); //XBOX Version
+let SAVE_PATH = SAVE_PATH_DEFAULT;
+const SAVE_EXTS = [".json"];
 
 //info for modtypes, installers, and tools
 const BEPINEX_ID = `${GAME_ID}-bepinex`;
@@ -100,16 +110,6 @@ if (BEPINEX_BUILD === 'mono') {
   ASSEMBLY_PATH = path.join(DATA_FOLDER, 'Managed');
   ASSEMBLY_FILES = ["Assembly-CSharp.dll", "Assembly-CSharp-firstpass.dll"];
 }
-
-//Config and save paths
-const CONFIG_HIVE = 'HKEY_CURRENT_USER';
-const CONFIG_REGPATH = `Software\\${DEV_REGSTRING}\\${GAME_REGSTRING}`;
-const CONFIG_REGPATH_FULL = `${CONFIG_HIVE}\\${CONFIG_REGPATH}`;
-
-const SAVE_PATH_DEFAULT = path.join(USER_HOME, 'AppData', 'LocalLow', DEV_REGSTRING, GAME_REGSTRING);
-const SAVE_PATH_XBOX = path.join(LOCALAPPDATA, "Packages", `${XBOXAPP_ID}_${XBOX_SAVE_STRING}`, "SystemAppData", "wgs"); //XBOX Version
-let SAVE_PATH = SAVE_PATH_DEFAULT;
-const SAVE_EXTS = [".json"];
 
 const ASSETS_ID = `${GAME_ID}-assets`;
 const ASSETS_NAME = "Assets/Resources File";
@@ -159,14 +159,14 @@ const MELON_CONFIG_FOLDER = 'UserData';
 const MELON_CONFIG_PATH = MELON_CONFIG_FOLDER;
 
 const BEPCFGMAN_ID = `${GAME_ID}-bepcfgman`;
-const BEPCFGMAN_NAME = "BepInEx Config Manager";
+const BEPCFGMAN_NAME = "BepInExConfigManager";
 const BEPCFGMAN_PATH = BEPINEX_MOD_PATH;
 const BEPCFGMAN_URL = `https://github.com/sinai-dev/BepInExConfigManager/releases/latest/download/BepInExConfigManager.${BEPINEX_BUILD}.zip`;
 const BEPCFGMAN_URL_ERR = `https://github.com/sinai-dev/BepInExConfigManager/releases`;
 const BEPCFGMAN_FILE = `bepinexconfigmanager.${BEPINEX_BUILD}.dll`; //lowercased
 
 const MELONPREFMAN_ID = `${GAME_ID}-melonprefman`;
-const MELONPREFMAN_NAME = "MelonPreferences Manager";
+const MELONPREFMAN_NAME = "MelonPreferencesManager";
 const MELONPREFMAN_PATH = MELON_MODS_PATH;
 const MELONPREFMAN_URL = `https://github.com/Bluscream/MelonPreferencesManager/releases/latest/download/MelonPrefManager.${MELON_STRING}.dll`;
 const MELONPREFMAN_URL_ERR = `https://github.com/Bluscream/MelonPreferencesManager/releases`;
@@ -180,7 +180,7 @@ const MEL_CONFIG_FILEPATH = path.join(MELON_CONFIG_PATH, MEL_CONFIG_FILE);
 const BEP_LOG_FILE = 'LogOutput.log';
 const BEP_LOG_FILEPATH = path.join(BEPINEX_FOLDER, BEP_LOG_FILE);
 const MEL_LOG_FILE = 'Latest.log';
-const MEL_LOG_FILEPATH = path.join('MelonLoader', MEL_LOG_FILE);
+const MEL_LOG_FILEPATH = path.join(MELON_FOLDER, MEL_LOG_FILE);
 
 const MOD_PATH_DEFAULT = ".";
 const MODTYPE_FOLDERS = [ASSEMBLY_PATH, ASSETS_PATH, BEPINEX_PATCHERS_PATH, BEPINEX_PLUGINS_PATH, BEPINEX_CONFIG_PATH, MELON_PLUGINS_PATH, MELON_MODS_PATH, MELON_CONFIG_PATH];
@@ -400,7 +400,7 @@ async function requiresLauncher(gamePath, store) {
 }
 
 //Get correct save folder for game version
-function getSavePath(api) {
+async function getSavePath(api) {
   GAME_PATH = getDiscoveryPath(api);
   const isCorrectExec = (exec) => {
     try {
@@ -1058,6 +1058,104 @@ async function resolveGameVersion(gamePath) {
   }
 } //*/
 
+//Notify User to ask if they want to download BepInExConfigManager
+async function downloadBepCfgManNotify(api) {
+  let isInstalled = isBepCfgManInstalled(api, spec);
+  if (!isInstalled) { //*/
+    const NOTIF_ID = `${GAME_ID}-bepcfgman`;
+    const MOD_NAME = BEPCFGMAN_NAME;
+    const MESSAGE = `Would you like to download ${MOD_NAME}?`;
+    api.sendNotification({
+      id: NOTIF_ID,
+      type: 'warning',
+      message: MESSAGE,
+      allowSuppress: true,
+      actions: [
+        {
+          title: 'Download BepCfgMan',
+          action: (dismiss) => {
+            downloadBepCfgMan(api, spec);
+            dismiss();
+          },
+        },
+        {
+          title: 'More',
+          action: (dismiss) => {
+            api.showDialog('question', MESSAGE, {
+              text: `${MOD_NAME} is a mod that allows you to configure BepInEx mods with and in-game GUI.\n`
+                  + `Click the button below to download and install ${BEPCFGMAN_NAME}.\n`
+                  + `Once installed, the default key to show the configuration menu is F5.\n`
+            }, [
+                {
+                  label: `Download ${MOD_NAME}`, action: () => {
+                    downloadBepCfgMan(api, spec);
+                    dismiss();
+                  }
+                },
+                { label: 'Not Now', action: () => dismiss() },
+                {
+                  label: 'Never Show Again', action: () => {
+                    api.suppressNotification(NOTIF_ID);
+                    dismiss();
+                  }
+                },
+              ]);
+          },
+        },
+      ],
+    });  
+  }
+}
+
+//Notify User to ask if they want to download BepInExConfigManager
+async function downloadMelonPrefManNotify(api) {
+  let isInstalled = isMelonPrefManInstalled(api, spec);
+  if (!isInstalled) { //*/
+    const NOTIF_ID = `${GAME_ID}-melonprefman`;
+    const MOD_NAME = MELONPREFMAN_NAME;
+    const MESSAGE = `Would you like to download ${MOD_NAME}?`;
+    api.sendNotification({
+      id: NOTIF_ID,
+      type: 'warning',
+      message: MESSAGE,
+      allowSuppress: true,
+      actions: [
+        {
+          title: 'Download MelPrefMan',
+          action: (dismiss) => {
+            downloadMelonPrefMan(api, spec);
+            dismiss();
+          },
+        },
+        {
+          title: 'More',
+          action: (dismiss) => {
+            api.showDialog('question', MESSAGE, {
+              text: `${MOD_NAME} is a mod that allows you to configure BepInEx mods with and in-game GUI.\n`
+                  + `Click the button below to download and install ${BEPCFGMAN_NAME}.\n`
+                  + `Once installed, the default key to show the configuration menu is F5.\n`
+            }, [
+                {
+                  label: `Download ${MOD_NAME}`, action: () => {
+                    downloadMelonPrefMan(api, spec);
+                    dismiss();
+                  }
+                },
+                { label: 'Not Now', action: () => dismiss() },
+                {
+                  label: 'Never Show Again', action: () => {
+                    api.suppressNotification(NOTIF_ID);
+                    dismiss();
+                  }
+                },
+              ]);
+          },
+        },
+      ],
+    });  
+  }
+}
+
 async function modFoldersEnsureWritable(gamePath, relPaths) {
   for (let index = 0; index < relPaths.length; index++) {
     await fs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
@@ -1081,10 +1179,10 @@ async function setup(discovery, api, gameSpec) {
     await deconflictModLoaders(api, gameSpec); //deconflict if both mod loaders are installed
   } //*/
   if (bepinexInstalled && allowBepCfgMan) {
-    await downloadBepCfgMan(api, gameSpec); //download BepInExConfigManager
+    await downloadBepCfgManNotify(api, gameSpec); //notification to download BepInExConfigManager
   } //*/
   if (melonInstalled && allowMelPrefMan) {
-    await downloadMelonPrefMan(api, gameSpec); //download MelonPreferencesManager
+    await downloadMelonPrefManNotify(api, gameSpec); //notification to download MelonPreferencesManager
   } //*/
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
@@ -1135,9 +1233,9 @@ function applyGame(context, gameSpec) {
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', () => {
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', async () => {
+    //SAVE_PATH = await getSavePath(context.api);
     const openPath = SAVE_PATH;
-    //const openPath = getSavePath(context.api);
     util.opn(openPath).catch(() => null);
     }, () => {
       const state = context.api.getState();

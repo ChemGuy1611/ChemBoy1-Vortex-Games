@@ -2,8 +2,8 @@
 Name: Marvel's Spider-Man 2 Vortex Extension
 Structure: 3rd-Party Mod Manager (Overstrike)
 Author: ChemBoy1
-Version: 0.1.6
-Date: 2025-04-05
+Version: 0.1.7
+Date: 2025-10-31
 ////////////////////////////////////////////*/
 
 //Import libraries
@@ -144,7 +144,6 @@ async function requiresLauncher(gamePath, store) {
           launcher: 'steam',
       });
   }
-
   /*
   if (store === 'epic') {
     return Promise.resolve({
@@ -155,10 +154,21 @@ async function requiresLauncher(gamePath, store) {
     });
   }
   //*/
-  
   return Promise.resolve(undefined);
 }
 
+const getDiscoveryPath = (api) => { //get the game's discovered path
+  const state = api.getState();
+  const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});
+  return discovery === null || discovery === void 0 ? void 0 : discovery.path;
+};
+
+async function purge(api) { //useful to clear out mods prior to doing some action
+  return new Promise((resolve, reject) => api.events.emit('purge-mods', true, (err) => err ? reject(err) : resolve()));
+}
+async function deploy(api) { //useful to deploy mods after doing some action
+  return new Promise((resolve, reject) => api.events.emit('deploy-mods', (err) => err ? reject(err) : resolve()));
+}
 
 // AUTO-DOWNLOAD FUNCTIONS ////////////////////////////////////////////////////////////////////////////////////////
 
@@ -172,7 +182,6 @@ function isOverstrikeInstalled(api, spec) {
 //Function to auto-download Overstrike from Nexus Mods <-- This function gave an error when getting the file upload time, for some reason ????
 async function downloadOverstrike(api, gameSpec) {
   let isInstalled = isOverstrikeInstalled(api, gameSpec);
-  
   if (!isInstalled) {
     //notification indicating install process
     const MOD_NAME = OVERSTRIKE_NAME;
@@ -434,25 +443,28 @@ function runOverstrike(api) {
   }
 }
 
-function verifyGameFiles(api) {
+async function verifyGameFiles(api) {
+  GAME_PATH = await getDiscoveryPath(api);
   const FILE1 = 'toc';
   const FILE2 = 'toc.BAK';
   const parameters = {
-    FileList: `${FILE1}`,
-    InstallDirectory: GAME_PATH,
-    VerifyAll: false,
-    AppId: STEAMAPP_ID,
+    "FileList": `${FILE1}`,
+    "InstallDirectory": GAME_PATH,
+    "VerifyAll": false,
+    "AppId": +STEAMAPP_ID,
   };
 
   try {
-    fs.unlinkAsync(path.join(GAME_PATH, FILE1));
-    fs.unlinkAsync(path.join(GAME_PATH, FILE2));
+    await fs.unlinkAsync(path.join(GAME_PATH, FILE1));
+    await fs.unlinkAsync(path.join(GAME_PATH, FILE2));
   } catch (err) {
     return api.showErrorNotification('Failed to delete toc and toc.BAK files', err, { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 });
   }
 
   try {
-    return api.ext.steamkitVerifyFileIntegrity(parameters, GAME_ID);
+    await api.ext.steamkitVerifyFileIntegrity(parameters, GAME_ID);
+    log('warn', `Steam verification complete`);
+    return;
   } catch (err) {
     return api.showErrorNotification('Failed to verify game files through Steam', err, { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 });
   }
