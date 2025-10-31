@@ -3,7 +3,7 @@ Name: DRAGON QUEST I & II HD-2D Remake Vortex Extension
 Structure: UE5 (static exe)
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2025-10-30
+Date: 2025-10-31
 //////////////////////////////////////////////////*/
 
 //Import libraries
@@ -17,7 +17,7 @@ const template = require('string-template');
 const LOCALAPPDATA = util.getVortexPath('localAppData');
 
 //Specify all information about the game
-const GAME_ID = "dragonquestiandiihd2dremake";
+const GAME_ID = "dragonquest1and2hd2dremake";
 const STEAMAPP_ID = "2893570";
 const STEAMAPP_ID_DEMO = null;
 const EPICAPP_ID = null;
@@ -25,7 +25,7 @@ const GOGAPP_ID = null;
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 const GAME_NAME = "DRAGON QUEST I & II HD-2D Remake";
 const GAME_NAME_SHORT = "DQ I&II Remake";
-const EXEC = "DragonQuestIIHD2DRemake.exe";
+const EXEC = "DQIandIIHD2DRemake.exe";
 
 //Unreal Engine specific
 const EPIC_CODE_NAME = "Game";
@@ -46,7 +46,7 @@ const SAVEMOD_LOCATION = CONFIGMOD_LOCATION;
 const SHIPEXE_STRING_DEFAULT = '';
 const SHIPEXE_STRING_EGS = '';
 const SHIPEXE_PROJECTNAME = EPIC_CODE_NAME;
-const SHIPPING_EXE_FILENAME = `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_NAME}${SHIPEXE_STRING_DEFAULT}-Shipping.exe`;
+const SHIPPING_EXE_FILENAME = EXEC;
 
 //Settings related to the IO Store UE feature
 let PAKMOD_EXTS = ['.pak'];
@@ -368,9 +368,10 @@ async function deploy(api) { //useful to deploy mods after doing some action
 //Test for save files
 function testUe4ssCombo(files, gameId) {
   const isMod = files.some(file => (path.extname(file).toLowerCase() === SCRIPTS_EXT));
+  const isModAlt = files.some(file => (path.basename(file).toLowerCase() === 'binaries'));
   const isMod2 = files.some(file => (path.extname(file).toLowerCase() === LOGICMODS_EXT));
   const isFolder = files.some(file => (path.basename(file) === ROOT_FILE));
-  let supported = (gameId === spec.game.id) && isMod && isMod2 && isFolder;
+  let supported = (gameId === spec.game.id) && ( isMod || isModAlt ) && isMod2 && isFolder;
 
   // Test for a mod installer
   if (supported && files.find(file =>
