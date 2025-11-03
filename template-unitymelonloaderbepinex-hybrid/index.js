@@ -174,7 +174,7 @@ const MELONPREFMAN_FILE = `melonprefmanager.${BEPINEX_BUILD}.dll`; //lowercased
 
 const BEP_CONFIG_FILE = 'BepInEx.cfg';
 const BEP_CONFIG_FILEPATH = path.join(BEPINEX_CONFIG_PATH, BEP_CONFIG_FILE);
-const MEL_CONFIG_FILE = 'MelonPreferences.cfg';
+const MEL_CONFIG_FILE = 'Loader.cfg';
 const MEL_CONFIG_FILEPATH = path.join(MELON_CONFIG_PATH, MEL_CONFIG_FILE);
 
 const BEP_LOG_FILE = 'LogOutput.log';
@@ -1061,7 +1061,7 @@ async function resolveGameVersion(gamePath) {
 //Notify User to ask if they want to download BepInExConfigManager
 async function downloadBepCfgManNotify(api) {
   let isInstalled = isBepCfgManInstalled(api, spec);
-  if (!isInstalled) { //*/
+  if (!isInstalled) {
     const NOTIF_ID = `${GAME_ID}-bepcfgman`;
     const MOD_NAME = BEPCFGMAN_NAME;
     const MESSAGE = `Would you like to download ${MOD_NAME}?`;
@@ -1107,10 +1107,10 @@ async function downloadBepCfgManNotify(api) {
   }
 }
 
-//Notify User to ask if they want to download BepInExConfigManager
+//Notify User to ask if they want to download MelonPreferencesManager
 async function downloadMelonPrefManNotify(api) {
   let isInstalled = isMelonPrefManInstalled(api, spec);
-  if (!isInstalled) { //*/
+  if (!isInstalled) {
     const NOTIF_ID = `${GAME_ID}-melonprefman`;
     const MOD_NAME = MELONPREFMAN_NAME;
     const MESSAGE = `Would you like to download ${MOD_NAME}?`;
@@ -1134,6 +1134,9 @@ async function downloadMelonPrefManNotify(api) {
               text: `${MOD_NAME} is a mod that allows you to configure BepInEx mods with and in-game GUI.\n`
                   + `Click the button below to download and install ${BEPCFGMAN_NAME}.\n`
                   + `Once installed, the default key to show the configuration menu is F5.\n`
+                  + '\n'
+                  + `Note that due to the way the file is packaged on GitHub, you will see a popup asking if you want to create a new mod with the file.\n`
+                  + `Select the "Create Mod" option.\n`
             }, [
                 {
                   label: `Download ${MOD_NAME}`, action: () => {
@@ -1285,13 +1288,14 @@ function applyGame(context, gameSpec) {
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   });
+  /*
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download MelonPreferencesManager', async () => {
     await downloadMelonPrefMan(context.api, spec);
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
-  });
+  }); //*/
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
     const openPath = path.join(__dirname, 'CHANGELOG.md');
     util.opn(openPath).catch(() => null);

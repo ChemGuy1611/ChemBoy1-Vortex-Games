@@ -1672,6 +1672,7 @@ function main(context) {
         if (previousLO === undefined) previousLO = loadOrder;
         if (loadOrder === previousLO) return;
         context.api.store.dispatch(actions.setDeploymentNecessary(spec.game.id, true));
+        //deploy(context.api); //not desirable to deploy automatically since it happens the instant you drag a mod to a new position
         previousLO = loadOrder;
       },
       createInfoPanel: () =>

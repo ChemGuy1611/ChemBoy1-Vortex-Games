@@ -129,40 +129,27 @@ function checkPartitions(folder, discoveryPath) {
     return false;
   }
 }
-//* register modtypes with partition checks //////////////////////////////////////////////////////
-context.registerModType(CONFIG_ID, 60, 
-(gameId) => {
-    GAME_PATH = getDiscoveryPath(context.api);
-    if (GAME_PATH !== undefined) {
-    CHECK_DATA = checkPartitions(CONFIGMOD_LOCATION, GAME_PATH);
-    }
-    return ((gameId === GAME_ID) && (CHECK_DATA === true));
-},
-(game) => pathPattern(context.api, game, CONFIG_TARGET), 
-() => Promise.resolve(false), 
-{ name: CONFIG_NAME }
-); //*/
 
-// Did deploy/purge boilerplate //////////////////////////////////////////////////////
-async function didDeploy(api, profileId) { //run on mod deploy
-  const state = api.getState();
-  const profile = selectors.profileById(state, profileId);
-  const gameId = profile === null || profile === void 0 ? void 0 : profile.gameId;
-  if (gameId !== GAME_ID) {
-    return Promise.resolve();
+// verify files through Steam ////////////////////////////////////////////////////////////
+//in applyGame function
+context.requireExtension('Vortex Steam File Downloader');
+//verify files
+async function verifyGameFiles(api) {
+  GAME_PATH = await getDiscoveryPath(api);
+  const FILES = ['file'];
+  const parameters = {
+    "FileList": `${FILES.join('\n')}`,
+    "InstallDirectory": GAME_PATH,
+    "VerifyAll": false,
+    "AppId": +STEAMAPP_ID,
+  };
+  try {
+    await api.ext.steamkitVerifyFileIntegrity(parameters, GAME_ID);
+    log('warn', `Steam verification complete`);
+    return;
+  } catch (err) {
+    return api.showErrorNotification('Failed to verify game files through Steam', err, { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 });
   }
-  
-  return Promise.resolve();
-}
-async function didPurge(api, profileId) { //run on mod purge
-  const state = api.getState();
-  const profile = selectors.profileById(state, profileId);
-  const gameId = profile === null || profile === void 0 ? void 0 : profile.gameId;
-  if (gameId !== GAME_ID) {
-    return Promise.resolve();
-  }
-  
-  return Promise.resolve();
 }
 
 
@@ -1653,9 +1640,19 @@ function getExecutable(discoveryPath) {
   return EXEC;
 }
 
-//
-
-
+//* register modtypes with partition checks //////////////////////////////////////////////////////
+context.registerModType(CONFIG_ID, 60, 
+(gameId) => {
+    GAME_PATH = getDiscoveryPath(context.api);
+    if (GAME_PATH !== undefined) {
+      CHECK_DATA = checkPartitions(CONFIGMOD_LOCATION, GAME_PATH);
+    }
+    return ((gameId === GAME_ID) && (CHECK_DATA === true));
+},
+(game) => pathPattern(context.api, game, CONFIG_TARGET), 
+() => Promise.resolve(false), 
+{ name: CONFIG_NAME }
+); //*/
 
 
 
@@ -2263,6 +2260,28 @@ async function writeCfgPurge(api) {
     { encoding: "utf8" },
   );
 } //*/
+
+// Did deploy/purge boilerplate //////////////////////////////////////////////////////
+async function didDeploy(api, profileId) { //run on mod deploy
+  const state = api.getState();
+  const profile = selectors.profileById(state, profileId);
+  const gameId = profile === null || profile === void 0 ? void 0 : profile.gameId;
+  if (gameId !== GAME_ID) {
+    return Promise.resolve();
+  }
+  
+  return Promise.resolve();
+}
+async function didPurge(api, profileId) { //run on mod purge
+  const state = api.getState();
+  const profile = selectors.profileById(state, profileId);
+  const gameId = profile === null || profile === void 0 ? void 0 : profile.gameId;
+  if (gameId !== GAME_ID) {
+    return Promise.resolve();
+  }
+  
+  return Promise.resolve();
+}
 
 //Scan a folder for .json files and write there names to a list in a central .json file //////////////////////////////////////////////////////
 // in context.once
