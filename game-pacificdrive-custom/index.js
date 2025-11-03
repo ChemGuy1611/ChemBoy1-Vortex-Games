@@ -3,6 +3,7 @@ const MOD_FILE_EXT = ".pak";
 const STEAMAPP_ID = '1458140';
 const XBOXAPP_ID = 'KeplerInteractive.PacificDrive';
 const XBOXEXECNAME = 'AppPenDriverProShipping';
+const EXEC = 'PenDriverPro.exe';
 const EXEC_XBOX = 'gamelaunchhelper.exe';
 
 //Import some assets from Vortex we'll need.
