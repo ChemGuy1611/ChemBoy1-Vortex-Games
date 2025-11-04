@@ -4,8 +4,9 @@
 
 - None Planned
 
-## [2.0.6] - 2025-10-23
+## [2.0.6] - 2025-11-04
 
+- Improved .psarc extraction and cleanup functions to avoid errors and duplicate notifications.
 - Fixed UnPSARC update check not running on mod update check.
 
 ## [2.0.5] - 2025-05-28
