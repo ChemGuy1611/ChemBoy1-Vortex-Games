@@ -100,10 +100,12 @@ const SAVEMANAGER_NAME = "FC Save Manager";
 const SAVEMANAGER_EXEC = path.join(MI_PATH, "FCSavegameManager.exe");
 
 const MOD_PATH_DEFAULT = '.';
+const REQ_FILE = EXEC;
 const ROOT_FOLDERS = [BIN_PATH, DATA_PATH, 'Support'];
 const ROOT_FILES = [''];
 const PARAMETERS_STRING = '';
 const PARAMETERS = [PARAMETERS_STRING];
+const MODTYPE_FOLDERS = [MIMOD_PATH, BIN_PATH, DATA_PATH];
 
 const spec = {
   "game": {
@@ -118,7 +120,7 @@ const spec = {
     "modPath": MOD_PATH_DEFAULT,
     "modPathIsRelative": true,
     "requiredFiles": [
-      EXEC
+      REQ_FILE
     ],
     "details": {
       "steamAppId": STEAMAPP_ID,
@@ -171,7 +173,7 @@ const spec = {
       "name": XML_NAME,
       "priority": "high",
       "targetPath": XML_PATH
-    }, //*/
+    }, //*/ // outside of the game folder
   ],
   "discovery": {
     "ids": [
@@ -340,6 +342,7 @@ function installModInstaller(files) {
 
 //Installer Test for .a3 files
 async function testMiModA3(files, gameId) {
+  //xml file will be seen because Vortex extracts naked .a3 files as an archive. We need to repack them.
   const isMod = files.some(file => path.basename(file).toLowerCase() === MIMOD_FILEXML);
   let supported = (gameId === spec.game.id) && isMod;
 
@@ -789,6 +792,12 @@ function toBlue(func) {
   return (...args) => Bluebird.Promise.resolve(func(...args));
 }
 
+async function modFoldersEnsureWritable(gamePath, relPaths) {
+  for (let index = 0; index < relPaths.length; index++) {
+    await fs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
+  }
+}
+
 //Setup function
 async function setup(discovery, api, gameSpec) {
   // SYNCHRONOUS CODE ////////////////////////////////////
@@ -801,8 +810,8 @@ async function setup(discovery, api, gameSpec) {
   // ASYNC CODE //////////////////////////////////////////
   await downloadModInstaller(api, gameSpec);
   //await downloadXml(api, gameSpec);
-  await fs.ensureDirWritableAsync(XML_PATH); //*/
-  return fs.ensureDirWritableAsync(path.join(GAME_PATH, MIMOD_PATH));
+  await fs.ensureDirWritableAsync(XML_PATH);
+  return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 
 //Let Vortex know about the game

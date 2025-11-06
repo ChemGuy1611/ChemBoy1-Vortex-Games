@@ -29,16 +29,25 @@ const DVDROOTPS4_FOLDERS = ["action", "chr", "event", "facegen", "map", "menu", 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Folder";
 
+// Information for shadPS4 downloader and updater
 const SHADPS4_ID = `${GAME_ID}-shadps4`;
 const SHADPS4_NAME = "shadPS4";
 const SHADPS4_EXEC = "shadps4.exe";
-const SHADPS4_VERSION = '0.11.0';
+const SHADPS4_VERSION = '0.12.0';
 const SHADPS4_URL = `https://github.com/shadps4-emu/shadPS4/releases/download/v.${SHADPS4_VERSION}/shadps4-win64-qt-${SHADPS4_VERSION}.zip`;
-
-// Information for shadPS4 downloader and updater
 const SHADPS4_ARC_NAME = `shadps4-win64-qt-${SHADPS4_VERSION}.zip`;
 const SHADPS4_URL_MAIN = `https://api.github.com/repos/shadps4-emu/shadPS4`;
 const SHADPS4_FILE = 'shadPS4.exe'; // <-- CASE SENSITIVE! Must match name exactly or downloader will download the file again.
+
+const SHADLAUNCHER_ID = `${GAME_ID}-shadps4qtlauncher`;
+const SHADLAUNCHER_NAME = "shadPS4QtLauncher";
+const SHADLAUNCHER_EXEC = "shadps4qtlauncher.exe";
+const SHADLAUNCHER_VERSION = '2025-11-02-70ce5a7';
+const SHADLAUNCHER_URL = `https://github.com/shadps4-emu/shadPS4/releases/download/v.${SHADLAUNCHER_VERSION}/shadPS4QtLauncher-win64-qt-${SHADLAUNCHER_VERSION}.zip`;
+const SHADLAUNCHER_ARC_NAME = `shadPS4QtLauncher-win64-qt-${SHADLAUNCHER_VERSION}.zip`;
+const SHADLAUNCHER_URL_MAIN = `https://api.github.com/repos/shadps4-emu/shadps4-qtlauncher`;
+const SHADLAUNCHER_FILE = "shadPS4QtLauncher.exe"; // <-- CASE SENSITIVE! Must match name exactly or downloader will download the file again.
+
 const REQUIREMENTS = [
   { //shadPS4
     archiveFileName: SHADPS4_ARC_NAME,
@@ -50,6 +59,17 @@ const REQUIREMENTS = [
     findDownloadId: (api) => findDownloadIdByFile(api, SHADPS4_ARC_NAME),
     fileArchivePattern: new RegExp(/^shadps4-win64-qt-(\d+\.\d+\.\d+)/, 'i'),
     resolveVersion: (api) => resolveVersionByPattern(api, REQUIREMENTS[0]),
+  },
+  { //QtLauncher
+    archiveFileName: SHADLAUNCHER_ARC_NAME,
+    modType: SHADLAUNCHER_ID,
+    assemblyFileName: SHADLAUNCHER_FILE,
+    userFacingName: SHADLAUNCHER_NAME,
+    githubUrl: SHADLAUNCHER_URL_MAIN,
+    findMod: (api) => findModByFile(api, SHADLAUNCHER_ID, SHADLAUNCHER_FILE),
+    findDownloadId: (api) => findDownloadIdByFile(api, SHADLAUNCHER_ARC_NAME),
+    fileArchivePattern: new RegExp(/^shadPS4QtLauncher-win64-qt-(\d+\.\d+\.\d+)/, 'i'),
+    resolveVersion: (api) => resolveVersionByPattern(api, REQUIREMENTS[1]),
   },
 ];
 
@@ -122,6 +142,19 @@ const tools = [
     logo: `shadps4.png`,
     executable: () => SHADPS4_EXEC,
     requiredFiles: [SHADPS4_EXEC],
+    detach: true,
+    relative: true,
+    exclusive: true,
+    //shell: true,
+    //defaultPrimary: true,
+    //parameters: PARAMETERS,
+  }, //*/
+  {
+    id: `${GAME_ID}-shadps4qtlauncher`,
+    name: "shadPS4QtLauncher",
+    logo: `shadps4.png`,
+    executable: () => SHADLAUNCHER_EXEC,
+    requiredFiles: [SHADLAUNCHER_EXEC],
     detach: true,
     relative: true,
     exclusive: true,
@@ -369,18 +402,33 @@ function installSave(files) {
 
 // GITHUB AUTOMATIC DOWNLOAD FUNCTIONS /////////////////////////////////////////////////
 
-async function onCheckModVersion(api, gameId, mods, forced) {
-  try {
-    await testRequirementVersion(api, REQUIREMENTS[0]);
-  } catch (err) {
-    log('warn', `failed to test requirement version: ${err}`);
+async function asyncForEachTestVersion(api, requirements) {
+  for (let index = 0; index < requirements.length; index++) {
+    await testRequirementVersion(api, requirements[index]);
   }
 }
 
-async function checkForShadPs4(api) {
-  const mod = await REQUIREMENTS[0].findMod(api);
-  //const check = await isShadPS4Installed(api, spec);
-  return (mod !== undefined);
+async function asyncForEachCheck(api, requirements) {
+  let mod = [];
+  for (let index = 0; index < requirements.length; index++) {
+    mod[index] = await requirements[index].findMod(api);
+  }
+  let checker = mod.every((entry) => entry === true);
+  return checker;
+}
+
+async function onCheckModVersion(api, gameId, mods, forced) {
+  try {
+    await asyncForEachTestVersion(api, REQUIREMENTS);
+    log('warn', 'Checked requirements versions');
+  } catch (err) {
+    log('warn', `failed to test requirements versions: ${err}`);
+  }
+}
+
+async function checkForRequirements(api) {
+  const CHECK = await asyncForEachCheck(api, REQUIREMENTS);
+  return CHECK;
 }
 
 //* Old shadPS4 download method
@@ -396,7 +444,7 @@ async function isShadPS4Installed(api, spec) {
   } catch (err) {
     //do nothing
   }
-  const TEST = modIdCheck || statCheck;
+  const TEST = ( modIdCheck || statCheck );
   return TEST;
 }
 //Function to auto-download shadPS4 from Github
@@ -481,10 +529,12 @@ function setupNotify(api) {
 async function setup(discovery, api, gameSpec) {
   setupNotify(api);
   //await downloadShadPS4(api, gameSpec);
+  const requirementsInstalled = await checkForRequirements(api);
+  if (!requirementsInstalled) {
+    await download(api, REQUIREMENTS);
+  }
   await fs.ensureDirWritableAsync(path.join(discovery.path, SAVE_PATH));
-  await fs.ensureDirWritableAsync(path.join(discovery.path, DVDROOTPS4_PATH));
-  const shadPs4Installed = await checkForShadPs4(api);
-  return shadPs4Installed ? Promise.resolve() : download(api, REQUIREMENTS);
+  return fs.ensureDirWritableAsync(path.join(discovery.path, DVDROOTPS4_PATH));
 }
 
 //Let Vortex know about the game

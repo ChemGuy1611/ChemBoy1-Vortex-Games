@@ -73,6 +73,8 @@ const SAVE_PATH = path.join(DOCUMENTS, 'My Games', DATA_FOLDER, 'SaveData');
 
 const MOD_PATH_DEFAULT = '.';
 const REQ_FILE = EXEC;
+const PARAMETERS_STRING = '';
+const PARAMETERS = [PARAMETERS_STRING];
 const MODTYPE_FOLDERS = [TFCMOD_PATH, BINARIES_PATH];
 
 //Filled in from the data above
@@ -82,6 +84,7 @@ const spec = {
     "name": GAME_NAME,
     "shortName": GAME_NAME_SHORT,
     "executable": EXEC,
+    //"parameters": PARAMETERS,
     "logo": `${GAME_ID}.jpg`,
     "mergeMods": true,
     "modPath": MOD_PATH_DEFAULT,
@@ -109,7 +112,7 @@ const spec = {
       "id": TFCMOD_ID,
       "name": TFCMOD_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${TFCMOD_PATH}`
+      "targetPath": path.join('{gamePath}', TFCMOD_PATH)
     },
     {
       "id": ROOT_ID,
@@ -121,19 +124,19 @@ const spec = {
       "id": BINARIES_ID,
       "name": BINARIES_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${BINARIES_PATH}`
+      "targetPath": path.join('{gamePath}', BINARIES_PATH)
     },
     {
       "id": TFC_ID,
       "name": TFC_NAME,
       "priority": "low",
-      "targetPath": `{gamePath}\\${TFC_PATH}`
+      "targetPath": path.join('{gamePath}', TFC_PATH)
     },
     {
       "id": UPKEXPLORER_ID,
       "name": UPKEXPLORER_NAME,
       "priority": "low",
-      "targetPath": `{gamePath}\\${UPKEXPLORER_PATH}`
+      "targetPath": path.join('{gamePath}', UPKEXPLORER_PATH)
     },
   ],
   "discovery": {

@@ -152,8 +152,24 @@ async function verifyGameFiles(api) {
   }
 }
 
-
-
+//Run a function with an activity notification
+async function runActivity(api) {
+  const NOTIF_ID = `${GAME_ID}-activitynotification`
+  api.sendNotification({ //notification indicating install process
+    id: NOTIF_ID,
+    message: `Cleaning up extracted .psarc Files and restoring file names. This will take a few seconds.`,
+    type: 'activity',
+    noDismiss: true,
+    allowSuppress: false,
+  });
+  GAME_PATH = await getDiscoveryPath(api);
+  try {
+    //do something
+  } catch (err) {
+    log('error', `Could not do the thing: ${err}`);
+  }
+  api.dismissNotification(NOTIF_ID);
+}
 
 // INSTALLER FUNCTIONS ///////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////

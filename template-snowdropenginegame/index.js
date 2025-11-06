@@ -51,6 +51,11 @@ const MODLOADER_NAME = "Snowdrop ModLoader";
 const MODLOADER_FILE = `version.dll`;
 
 const MOD_PATH = ".";
+const MOD_PATH_DEFAULT = MOD_PATH;
+const REQ_FILE = EXEC;
+const PARAMETERS_STRING = '';
+const PARAMETERS = [PARAMETERS_STRING];
+const MODTYPE_FOLDERS = [DATASUB_PATH];
 
 const spec = {
   "game": {
@@ -58,13 +63,14 @@ const spec = {
     "name": GAME_NAME,
     "shortName": GAME_NAME_SHORT,
     "executable": EXEC,
+    //"parameters": PARAMETERS,
     "logo": `${GAME_ID}.jpg`,
     "mergeMods": true,
     "requiresCleanup": true,
-    "modPath": MOD_PATH,
+    "modPath": MOD_PATH_DEFAULT,
     "modPathIsRelative": true,
     "requiredFiles": [
-      EXEC
+      REQ_FILE
     ],
     "details": {
       "uPlayAppId": UPLAYAPP_ID,
@@ -81,7 +87,7 @@ const spec = {
       "name": CONFIG_NAME,
       "priority": "high",
       "targetPath": CONFIG_PATH
-    },
+    }, //*/ //outside of the game folder
     {
       "id": DATA_ID,
       "name": DATA_NAME,
@@ -413,6 +419,12 @@ async function downloadModLoader(api, gameSpec) {
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
+async function modFoldersEnsureWritable(gamePath, relPaths) {
+  for (let index = 0; index < relPaths.length; index++) {
+    await fs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
+  }
+}
+
 //Setup function
 async function setup(discovery, api, gameSpec) {
   // SYNCHRONOUS CODE ////////////////////////////////////
@@ -423,7 +435,7 @@ async function setup(discovery, api, gameSpec) {
   // ASYNC CODE //////////////////////////////////////////
   await downloadModLoader(api, gameSpec);
   await fs.ensureDirWritableAsync(path.join(CONFIG_PATH));
-  return fs.ensureDirWritableAsync(path.join(GAME_PATH, DATASUB_PATH));
+  return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 
 //Let Vortex know about the game

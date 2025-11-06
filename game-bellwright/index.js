@@ -1193,21 +1193,27 @@ function partitionCheckNotify(api, CHECK_DATA) {
 }
 
 //Get MODKit install path from Epic
-async function getModKitPath() {
+function getModKitPath() {
   /*
   return () => util.GameStoreHelper.findByAppId(MODKITAPP_ID, 'epic')
-    .then((game) => game.gamePath); //*/
+    .then((game) => log('warn', `ModKit path found at ${game.gamePath}`))
+    .then((game) => path.join(game.gamePath, MODKIT_FOLDER)); //*/
   //*
-  const game = await util.GameStoreHelper.findByAppId(MODKITAPP_ID, 'epic');
-  let path = game.gamePath;
-  if (path !== undefined) {
-    log('warn', `ModKit path found at ${path}`);
+  try {
+    const game = util.GameStoreHelper.findByAppId(MODKITAPP_ID, 'epic');
+    let path = game.gamePath;
+    if (path !== undefined) {
+      log('warn', `ModKit path found at ${path}`);
+    }
+    if (path === undefined) {
+      log('warn', `ModKit path not found`);
+    }
+    path = path.join(path, MODKIT_FOLDER);
+    return () => path; //*/
+  } catch (err) {
+    log('error', `Could not get ModKit path: ${err}`);
+    return () => undefined;
   }
-  if (path === undefined) {
-    log('warn', `ModKit path not found`);
-  }
-  path = path.join(path, MODKIT_FOLDER);
-  return () => path; //*/
 }
 
 //Setup function
@@ -1260,7 +1266,7 @@ function applyGame(context, gameSpec) {
         id: MODKIT_ID,
         name: MODKIT_NAME,
         logo: `modkit.png`,
-        queryPath: async () => await getModKitPath,
+        queryPath: () => getModKitPath,
         executable: () => MODKIT_EXEC_NAME,
         requiredFiles: [MODKIT_EXEC_NAME],
         detach: true,

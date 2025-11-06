@@ -168,9 +168,10 @@ const SIGBYPASS_FILE_NO = 5719;
 const SIGBYPASS_DOMAIN = 'site';
 
 const MOD_PATH_DEFAULT = PAK_PATH;
+const PARAMETERS_STRING = '';
+const PARAMETERS = [PARAMETERS_STRING];
+const REQ_FILE = EPIC_CODE_NAME;
 const MODTYPE_FOLDERS = [LOGICMODS_PATH, SCRIPTS_PATH, PAK_PATH];
-const PARAMETERS = [];
-const REQ_FILES = [EPIC_CODE_NAME];
 
 //Filled in from data above
 const spec = {
@@ -185,7 +186,9 @@ const spec = {
     "requiresCleanup": true,
     "modPath": MOD_PATH_DEFAULT,
     "modPathIsRelative": true,
-    "requiredFiles": REQ_FILES,
+    "requiredFiles": [
+      REQ_FILE
+    ],
     "details": {
       "epicAppId": EPICAPP_ID,
       "steamAppId": +STEAMAPP_ID,

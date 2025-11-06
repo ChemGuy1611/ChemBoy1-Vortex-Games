@@ -13,7 +13,6 @@ const template = require('string-template');
 const { parseStringPromise } = require('xml2js');
 //const winapi = require('winapi-bindings');
 //const turbowalk = require('turbowalk');
-//const { parseStringPromise } = require('xml2js');
 
 //const USER_HOME = util.getVortexPath("home");
 const DOCUMENTS = util.getVortexPath("documents");
@@ -98,6 +97,7 @@ const MOD_PATH_DEFAULT = '.';
 const REQ_FILE = EXEC;
 const PARAMETERS_STRING = '';
 const PARAMETERS = [PARAMETERS_STRING];
+const MODTYPE_FOLDERS = [MOD_PATH, BINARIES_PATH];
 
 const spec = {
   "game": {
@@ -474,6 +474,12 @@ async function resolveGameVersion(gamePath) {
   }
 } //*/
 
+async function modFoldersEnsureWritable(gamePath, relPaths) {
+  for (let index = 0; index < relPaths.length; index++) {
+    await fs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
+  }
+}
+
 //Setup function
 async function setup(discovery, api, gameSpec) {
   // SYNCHRONOUS CODE ////////////////////////////////////
@@ -483,7 +489,9 @@ async function setup(discovery, api, gameSpec) {
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   // ASYNC CODE //////////////////////////////////////////
-  return fs.ensureDirWritableAsync(path.join(GAME_PATH, MOD_PATH_DEFAULT));
+  /*await fs.ensureDirWritableAsync(CONFIG_PATH);
+  await fs.ensureDirWritableAsync(SAVE_PATH); //*/
+  return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 
 //Let Vortex know about the game

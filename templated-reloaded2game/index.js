@@ -71,6 +71,7 @@ const RELOADEDMODLOADER_PATH = path.join(RELOADEDMOD_PATH, MOD_LOADER_FOLDER);
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_NAME = "Save File";
 const SAVE_FOLDER = path.join('gamedata', 'savedata');
+//const SAVE_PATH = path.join(DOCUMENTS, PUBLISHER_FOLDER, DATA_FOLDER);
 let USERID_FOLDER = "";
 function isDir(folder, file) {
   const stats = fs.statSync(path.join(folder, file));
@@ -90,6 +91,10 @@ const SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
 const SAVE_EXTS = ['.bin'];
 
 const MOD_PATH_DEFAULT = '.';
+const REQ_FILE = EXEC;
+const PARAMETERS_STRING = '';
+const PARAMETERS = [PARAMETERS_STRING]; //for Reloaded-II
+const MODTYPE_FOLDERS = [RELOADEDMOD_PATH, SAVE_PATH];
 
 const spec = {
   "game": {
@@ -103,7 +108,7 @@ const spec = {
     "modPath": MOD_PATH_DEFAULT,
     "modPathIsRelative": true,
     "requiredFiles": [
-      EXEC
+      REQ_FILE
     ],
     "details": {
       "steamAppId": STEAMAPP_ID,
@@ -138,12 +143,12 @@ const spec = {
       "priority": "low",
       "targetPath": "{gamePath}"
     },
-    {
+    /*{
       "id": SAVE_ID,
       "name": SAVE_NAME,
       "priority": "high",
       "targetPath": path.join("{gamePath}", SAVE_PATH)
-    }, //*/
+    }, //*/  //could be outside of the game folder. seems about 50/50 chance of this happening
   ],
   "discovery": {
     "ids": DISCOVERY_IDS_ACTIVE,
@@ -205,7 +210,7 @@ async function requiresLauncher(gamePath, store) {
     });
   } //*/
   /*
-  if ((store === 'steam') && DISCOVERY_IDS_ACTIVE.includes(EPICAPP_ID)) {
+  if ((store === 'steam') && DISCOVERY_IDS_ACTIVE.includes(STEAMAPP_ID)) {
     return Promise.resolve({
         launcher: 'steam',
     });
@@ -735,6 +740,12 @@ async function resolveGameVersion(gamePath) {
   }
 } //*/
 
+async function modFoldersEnsureWritable(gamePath, relPaths) {
+  for (let index = 0; index < relPaths.length; index++) {
+    await fs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
+  }
+}
+
 //Setup function
 async function setup(discovery, api, gameSpec) {
   // SYNCHRONOUS CODE ////////////////////////////////////
@@ -775,7 +786,7 @@ function applyGame(context, gameSpec) {
         relative: true,
         exclusive: true,
         defaultPrimary: true,
-        //parameters: [],
+        //parameters: PARAMETERS,
       }, //*/
       /*{
         id: RELOADED_ID,

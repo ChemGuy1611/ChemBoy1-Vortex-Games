@@ -98,8 +98,11 @@ const ASSETS_PATH = DATA_FOLDER;
 const ASSETS_EXTS = ['.assets', '.resource', '.ress'];
 
 const MOD_PATH_DEFAULT = ".";
-const MODTYPE_FOLDERS = [BEPMOD_PATH, ASSEMBLY_PATH, ASSETS_PATH];
+const REQ_FILE = EXEC;
+const PARAMETERS_STRING = '';
+const PARAMETERS = [PARAMETERS_STRING];
 const IGNORE_CONFLICTS = [path.join('**', 'manifest.json'), path.join('**', 'icon.png'), path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
+const MODTYPE_FOLDERS = [BEPMOD_PATH, ASSEMBLY_PATH, ASSETS_PATH];
 
 //Filled in from info above
 const spec = {
@@ -108,14 +111,14 @@ const spec = {
     "name": GAME_NAME,
     "shortName": GAME_NAME_SHORT,
     "executable": EXEC,
-    //"parameters": [],
+    //"parameters": PARAMETERS,
     "logo": `${GAME_ID}.jpg`,
     "mergeMods": true,
     "requiresCleanup": true,
     "modPath": MOD_PATH_DEFAULT,
     "modPathIsRelative": true,
     "requiredFiles": [
-      EXEC
+      REQ_FILE
     ],
     "details": {
       "steamAppId": STEAMAPP_ID,

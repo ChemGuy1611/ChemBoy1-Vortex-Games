@@ -90,7 +90,7 @@ let SAVE_PATH = null;
 let SAVE_TARGET = null;
 let CONFIG_PATH = null;
 let CONFIG_TARGET = null;
-let requiredFiles = [EPIC_CODE_NAME];
+//let requiredFiles = [EPIC_CODE_NAME];
 let USERID_FOLDER = "";
 const EXEC_FOLDER_DEFAULT = "Win64";
 const EXEC_FOLDER_XBOX = "WinGDK";
@@ -120,6 +120,7 @@ const UE5_ALT_ID = `${GAME_ID}-pakalt`;
 const UE5_ALT_NAME = 'Paks (no "~mods")';
 const PAK_EXT = '.pak';
 const UE5_PATH = UNREALDATA.modsPath;
+const PAK_PATH = UE5_PATH;
 const UE5_ALT_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Paks');
 
 const LOGICMODS_ID = `${GAME_ID}-logicmods`;
@@ -179,8 +180,11 @@ const SIGBYPASS_PAGE_NO = 1416;
 const SIGBYPASS_FILE_NO = 5719;
 const SIGBYPASS_DOMAIN = 'site';
 
-const MOD_PATH_DEFAULT = UE5_PATH;
-const PARAMETERS = [];
+const MOD_PATH_DEFAULT = PAK_PATH;
+const REQ_FILE = EPIC_CODE_NAME;
+const PARAMETERS_STRING = '';
+const PARAMETERS = [PARAMETERS_STRING];
+const MODTYPE_FOLDERS = [LOGICMODS_PATH, PAK_PATH];
 
 //Filled in from data above
 const spec = {
@@ -191,6 +195,12 @@ const spec = {
     //"parameters": PARAMETERS,
     "logo": `${GAME_ID}.jpg`,
     "mergeMods": true,
+    "requiresCleanup": true,
+    "modPath": MOD_PATH_DEFAULT,
+    "modPathIsRelative": true,
+    "requiredFiles": [
+      REQ_FILE
+    ],
     "requiresCleanup": true,
     "details": {
       "steamAppId": +STEAMAPP_ID,
@@ -269,6 +279,13 @@ function pathPattern(api, game, pattern) {
   catch (err) { //this happens if the executable comes back as "undefined", usually caused by the Xbox app locking down the folder
     api.showErrorNotification('Failed to locate executable. Please launch the game at least once.', err);
   }
+}
+
+//Set mod path
+function makeGetModPath(api, gameSpec) {
+  return () => gameSpec.game.modPathIsRelative !== false
+    ? gameSpec.game.modPath || '.'
+    : pathPattern(api, gameSpec.game, gameSpec.game.modPath);
 }
 
 async function requiresLauncher(gamePath, store) {
@@ -404,7 +421,7 @@ function getExecutable(discoveryPath) {
   }; //*/
   /*
   if (isCorrectExec(EXEC_DEMO) {
-    GAME_VERSION = 'steam';
+    GAME_VERSION = 'demo';
     EXEC_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT);
     EXEC_TARGET = path.join('{gamePath}', EXEC_PATH);
     SHIPPING_EXE = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_DEMO}-Shipping.exe`);
@@ -1628,6 +1645,12 @@ async function resolveGameVersion(gamePath, exePath) {
   }
 }
 
+async function modFoldersEnsureWritable(gamePath, relPaths) {
+  for (let index = 0; index < relPaths.length; index++) {
+    await fs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
+  }
+}
+
 //Setup function
 async function setup(discovery, api, gameSpec) {
   //SYNCHRONOUS CODE ////////////////////////////////////
@@ -1647,7 +1670,6 @@ async function setup(discovery, api, gameSpec) {
   // ASYCRONOUS CODE ///////////////////////////////////
   if (CHECK_DATA) { //if game, staging folder, and config and save folders are on the same drive
     await fs.ensureDirWritableAsync(path.join(CONFIG_PATH));
-    //if (GAME_VERSION === 'steam' || GAME_VERSION === 'epic') {
     if (SAVE_COMPAT_VERSIONS.includes(GAME_VERSION)) {
       await fs.ensureDirWritableAsync(SAVE_PATH);
     }
@@ -1661,9 +1683,8 @@ async function setup(discovery, api, gameSpec) {
   if (SIGBYPASS_REQUIRED === true) {
     await downloadSigBypass(api, gameSpec, GAME_VERSION);
   }
-  await fs.ensureDirWritableAsync(path.join(GAME_PATH, SCRIPTS_PATH));
-  await fs.ensureDirWritableAsync(path.join(GAME_PATH, LOGICMODS_PATH));
-  return fs.ensureDirWritableAsync(path.join(GAME_PATH, UE5_PATH));
+  await modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
+  return fs.ensureDirWritableAsync(path.join(GAME_PATH, SCRIPTS_PATH));
 }
 
 //Let vortex know about the game
@@ -1673,8 +1694,7 @@ function applyGame(context, gameSpec) {
     ...gameSpec.game,
     queryArgs: gameFinderQuery,
     executable: getExecutable,
-    queryModPath: () => MOD_PATH_DEFAULT,
-    requiredFiles,
+    queryModPath: makeGetModPath(context.api, gameSpec),
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     requiresLauncher: requiresLauncher,
     getGameVersion: resolveGameVersion,
@@ -1694,7 +1714,7 @@ function applyGame(context, gameSpec) {
       }, //*/
       {
         id: `${GAME_ID}-customlaunchxbox`,
-        name: `Custom Launch (Xbox)`,
+        name: `Custom Launch`,
         logo: `exec.png`,
         executable: () => EXEC_XBOX,
         requiredFiles: [EXEC_XBOX],

@@ -47,7 +47,7 @@ const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Game Folder";
 
 const ACSE_ID = `${GAME_ID}-acse`;
-const ACSE_NAME = "ACSE";
+const ACSE_NAME = "ACSE (Script Extender)";
 const ACSE_PATH = path.join("Win64", "ovldata");
 const ACSE_FILE = "ACSE";
 
@@ -93,7 +93,11 @@ const CONFIG_ID = `${GAME_ID}-config`;
 const CONFIG_NAME = "Config";
 const CONFIG_PATH = path.join(SAVE_FOLDER, USERID_FOLDER, 'Config');
 
-const PARAMETERS = [];
+const MOD_PATH_DEFAULT = MOD_PATH;
+const REQ_FILE = EXEC;
+const PARAMETERS_STRING = '';
+const PARAMETERS = [PARAMETERS_STRING];
+const MODTYPE_FOLDERS = [MOD_PATH, LOCALISED_PATH, MOVIES_PATH];
 
 const spec = {
   "game": {
@@ -105,10 +109,10 @@ const spec = {
     "logo": `${GAME_ID}.jpg`,
     "mergeMods": true,
     "requiresCleanup": true,
-    "modPath": MOD_PATH,
+    "modPath": MOD_PATH_DEFAULT,
     "modPathIsRelative": true,
     "requiredFiles": [
-      EXEC
+      REQ_FILE
     ],
     "details": {
       "steamAppId": STEAMAPP_ID,
@@ -157,7 +161,7 @@ const spec = {
       "name": SAVE_NAME,
       "priority": "high",
       "targetPath": SAVE_PATH
-    },
+    }, //*/ //outside of the game folder
   ],
   "discovery": {
     "ids": DISCOVERY_IDS_ACTIVE,
@@ -635,6 +639,12 @@ async function resolveGameVersion(gamePath) {
     }
   }
 } //*/
+
+async function modFoldersEnsureWritable(gamePath, relPaths) {
+  for (let index = 0; index < relPaths.length; index++) {
+    await fs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
+  }
+}
 
 //Setup function
 async function setup(discovery, api, gameSpec) {

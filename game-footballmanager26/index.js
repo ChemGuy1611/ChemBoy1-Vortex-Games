@@ -1,16 +1,16 @@
 /*//////////////////////////////////////////
-Name: XXX Vortex Extension
+Name: Football Manager 26 Vortex Extension
 Structure: Unity BepinEx/MelonLoader Hybrid
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2025-XX-XX
+Date: 2025-11-04
 //////////////////////////////////////////*/
 
 //Import libraries
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
-//const { parseStringPromise } = require('xml2js');
+const { parseStringPromise } = require('xml2js');
 
 const USER_HOME = util.getVortexPath("home");
 //const DOCUMENTS = util.getVortexPath("documents");
@@ -18,22 +18,22 @@ const USER_HOME = util.getVortexPath("home");
 const LOCALAPPDATA = util.getVortexPath("localAppData");
 
 //Specify all the information about the game
-const GAME_ID = "XXX";
-const STEAMAPP_ID = "XXX";
-const STEAMAPP_ID_DEMO = "XXX";
-const EPICAPP_ID = "XXX";
-const GOGAPP_ID = "XXX";
-const XBOXAPP_ID = "XXX";
-const XBOXEXECNAME = "XXX";
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
-const GAME_NAME = "XXX";
-const GAME_NAME_SHORT = "XXX";
-const GAME_STRING = "XXX"; //string for exe and data folder (seem to always match)
+const GAME_ID = "footballmanager26";
+const STEAMAPP_ID = "3551340";
+const STEAMAPP_ID_DEMO = "3551360";
+const EPICAPP_ID = ""; //not on egdata.app yet
+const GOGAPP_ID = null;
+const XBOXAPP_ID = "SportsInteractive.FootballManager26";
+const XBOXEXECNAME = "App";
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, STEAMAPP_ID_DEMO, XBOXAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const GAME_NAME = "Football Manager 26";
+const GAME_NAME_SHORT = "FM26";
+const GAME_STRING = "fm"; //string for exe and data folder (seem to always match)
 const EXEC = `${GAME_STRING}.exe`;
 const DATA_FOLDER = `${GAME_STRING}_Data`;
-const DEV_REGSTRING = "XXX"; //developer name
-const GAME_REGSTRING = "XXX"; //game name
-const XBOX_SAVE_STRING = 'XXX'; //string after "ID_"
+const DEV_REGSTRING = "Sports Interactive"; //developer name
+const GAME_REGSTRING = "Football Manager 26"; //game name
+const XBOX_SAVE_STRING = '5w3tn6tb6stnm'; //string after "ID_"
 
 //Data to determine BepinEx/MelonLoader versions and URLs
 const BEPINEX_BUILD = 'il2cpp'; // 'mono' or 'il2cpp' - check for "il2cpp_data" folder
@@ -183,9 +183,6 @@ const MEL_LOG_FILE = 'Latest.log';
 const MEL_LOG_FILEPATH = path.join(MELON_FOLDER, MEL_LOG_FILE);
 
 const MOD_PATH_DEFAULT = ".";
-const REQ_FILE = EXEC;
-const PARAMETERS_STRING = '';
-const PARAMETERS = [PARAMETERS_STRING];
 const MODTYPE_FOLDERS = [ASSEMBLY_PATH, ASSETS_PATH, BEPINEX_PATCHERS_PATH, BEPINEX_PLUGINS_PATH, BEPINEX_CONFIG_PATH, MELON_PLUGINS_PATH, MELON_MODS_PATH, MELON_CONFIG_PATH];
 const IGNORE_CONFLICTS = [path.join('**', 'manifest.json'), path.join('**', 'icon.png'), path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
 
@@ -196,14 +193,14 @@ const spec = {
     "name": GAME_NAME,
     "shortName": GAME_NAME_SHORT,
     "executable": EXEC,
-    //"parameters": PARAMETERS,
+    //"parameters": [],
     "logo": `${GAME_ID}.jpg`,
     "mergeMods": true,
     "requiresCleanup": true,
     "modPath": MOD_PATH_DEFAULT,
     "modPathIsRelative": true,
     "requiredFiles": [
-      REQ_FILE
+      EXEC
     ],
     "details": {
       "steamAppId": STEAMAPP_ID,
@@ -268,7 +265,7 @@ const spec = {
       "name": MELON_CONFIG_NAME,
       "priority": "high",
       "targetPath": path.join('{gamePath}', MELON_CONFIG_PATH)
-    },
+    }, //*/
     {
       "id": ASSEMBLY_ID,
       "name": ASSEMBLY_NAME,
@@ -1034,7 +1031,7 @@ async function removeMelon(api, gameSpec) {
   }
 }
 
-/*
+//*
 async function resolveGameVersion(gamePath) {
   GAME_VERSION = await setGameVersion(gamePath);
   let version = '0.0.0';
@@ -1201,9 +1198,8 @@ function applyGame(context, gameSpec) {
     queryModPath: makeGetModPath(context.api, gameSpec),
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
-    executable: () => gameSpec.game.executable,
-    //executable: getExecutable,
-    //getGameVersion: resolveGameVersion,
+    executable: getExecutable,
+    getGameVersion: resolveGameVersion,
     supportedTools: tools,
   };
   context.registerGame(game);

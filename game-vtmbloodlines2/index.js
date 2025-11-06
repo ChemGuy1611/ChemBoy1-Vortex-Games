@@ -1039,6 +1039,7 @@ async function downloadUe4ss(api, gameSpec) {
       })
       .then((result) => {
         const dlInfo = {game: gameSpec.game.id, name: MOD_NAME};
+        //api.events.emit('start-download', result, dlInfo, undefined,
         api.events.emit('start-download', result, {}, undefined,
           async (error, id) => { //callback function to check for errors and pass id to and call 'start-install-download' event
             if (error !== null && (error.name !== 'AlreadyDownloaded')) {
