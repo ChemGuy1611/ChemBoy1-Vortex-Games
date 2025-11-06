@@ -487,7 +487,7 @@ function installFluffyMod(files, fileName) {
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: FLUFFYMOD_ID };
   const MOD_NAME = path.basename(fileName);
-  const MOD_FOLDER = MOD_NAME.replace(/[\-]*[\d]*[\.]*(installing)*(zip)*/gi, '');
+  const MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
@@ -532,7 +532,7 @@ function installFluffyPak(files, fileName) {
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: FLUFFYPAK_ID };
   const MOD_NAME = path.basename(fileName);
-  const MOD_FOLDER = MOD_NAME.replace(/[\-]*[\d]*[\.]*(installing)*(zip)*/gi, '');
+  const MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>

@@ -712,7 +712,7 @@ function installTfcMod(files, fileName) {
   const MOD_NAME = path.basename(fileName);
   let MOD_FOLDER = '.';
   if (ROOT_PATH === '.') {
-    MOD_FOLDER = MOD_NAME.replace(/[\.]*(installing)*(zip)*/gi, '');
+    MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
   }
   const setModTypeInstruction = { type: 'setmodtype', value: TFCMOD_ID };
   
@@ -848,7 +848,7 @@ function installSdkMod(files, fileName) {
   const ROOT_PATH = path.basename(path.dirname(modFile));
   const MOD_NAME = path.basename(fileName);
   if (ROOT_PATH === '.') {
-    MOD_FOLDER = MOD_NAME.replace(/[\.]*(installing)*(zip)*/gi, '');
+    MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
   }
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
   

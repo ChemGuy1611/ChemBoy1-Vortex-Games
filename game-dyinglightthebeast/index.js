@@ -487,7 +487,7 @@ function installPak(api, files, fileName) {
     : 0;
   
   const MOD_NAME = path.basename(fileName);
-  const MOD_FOLDER = MOD_NAME.replace(/[\.]*(installing)*(zip)*/gi, '');
+  const MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
 
   let hasVariants = false;
   const pakFiles = files.reduce((accum, iter) => {
@@ -576,7 +576,7 @@ async function installZipContent(files, destinationPath) {
   else { // Repack the ZIP
     const szip = new util.SevenZip();
     const MOD_NAME = path.basename(destinationPath);
-    const ZIP_NAME = MOD_NAME.replace(/[\-]*[\.]*[\d]*[ ]*(installing)*(zip)*/gi, '');
+    const ZIP_NAME = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
     const archiveName = ZIP_NAME + '.zip';
     const archivePath = path.join(destinationPath, archiveName);
     const rootRelPaths = await fs.readdirAsync(destinationPath);

@@ -698,7 +698,7 @@ async function installLegacy(files, destinationPath) {
   }
   const szip = new util.SevenZip();
   const MOD_NAME = path.basename(destinationPath, '.installing');
-  const MOD_NAME_TRIMMED = MOD_NAME.replace(/[\-]*[\.]*(installing)*(zip)*( )*/gi, '');
+  const MOD_NAME_TRIMMED = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
   const MOD_NAME_TRUNCATED = truncateString(MOD_NAME_TRIMMED, 29);
   const archiveName = MOD_NAME_TRUNCATED + '.zip';
   const convertName = MOD_NAME_TRUNCATED + '.kpf';
@@ -841,7 +841,7 @@ function installClassic(files, fileName) {
   const setModTypeInstruction = { type: 'setmodtype', value: CLASSIC_ID };
 
   const MOD_NAME = path.basename(fileName, '.installing');
-  const MOD_NAME_TRIMMED = MOD_NAME.replace(/[\-]*[\.]*(installing)*(zip)*( )*/gi, '');
+  const MOD_NAME_TRIMMED = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
   const MOD_NAME_TRUNCATED = truncateString(MOD_NAME_TRIMMED, 29);
   let MOD_FOLDER = MOD_NAME_TRUNCATED;
   

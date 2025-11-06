@@ -523,7 +523,7 @@ function installReloadedMod(files, fileName) {
     idx = modFile.indexOf(`${path.basename(ROOT_PATH)}${path.sep}`);
   }
   if (ROOT_PATH === '.') {
-    MOD_FOLDER = MOD_NAME.replace(/[\.]*(installing)*(zip)*/gi, '');
+    MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
   }
 
   // Remove directories and anything that isn't in the rootPath.

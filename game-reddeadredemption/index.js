@@ -487,7 +487,7 @@ function installMagicMod(files, fileName) {
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MAGICMOD_ID };
   const MOD_NAME = path.basename(fileName);
-  const MOD_FOLDER = MOD_NAME.replace(/[\-]*[\d]*[\.]*(installing)*/gi, '');;
+  const MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file => ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep))));

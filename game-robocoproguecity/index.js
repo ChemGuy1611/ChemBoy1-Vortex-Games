@@ -684,8 +684,7 @@ function installScripts(files, fileName) {
   const MOD_NAME = path.basename(fileName);
   let MOD_FOLDER = path.basename(rootPath);
   if (MOD_FOLDER === '.') {
-    MOD_FOLDER = MOD_NAME.replace(/[\-]*[\.]*(installing)*(zip)*/gi, '');
-    //MOD_FOLDER = MOD_NAME.replace(/[\-]*[\d]*[\.]*( )*(installing)*/gi, '');
+    MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
   }
   
   const ENABLEDTXT_FILE = 'enabled.txt'
@@ -749,8 +748,7 @@ function installDll(files, fileName) {
   const MOD_NAME = path.basename(fileName);
   let MOD_FOLDER = path.basename(rootPath);
   if (MOD_FOLDER === '.') {
-    MOD_FOLDER = MOD_NAME.replace(/[\-]*[\.]*(installing)*(zip)*/gi, '');
-    //MOD_FOLDER = MOD_NAME.replace(/[\-]*[\d]*[\.]*( )*(installing)*/gi, '');
+    MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
   }
   
   const ENABLEDTXT_FILE = 'enabled.txt'
@@ -1229,8 +1227,7 @@ function installScriptsUnfinished(files, fileName) {
   const MOD_NAME = path.basename(fileName);
   let MOD_FOLDER = path.basename(rootPath);
   if (MOD_FOLDER === '.') {
-    MOD_FOLDER = MOD_NAME.replace(/[\-]*[\.]*(installing)*(zip)*/gi, '');
-    //MOD_FOLDER = MOD_NAME.replace(/[\-]*[\d]*[\.]*( )*(installing)*/gi, '');
+    MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
   }
   
   const ENABLEDTXT_FILE = 'enabled.txt'
@@ -1294,8 +1291,7 @@ function installDllUnfinished(files, fileName) {
   const MOD_NAME = path.basename(fileName);
   let MOD_FOLDER = path.basename(rootPath);
   if (MOD_FOLDER === '.') {
-    MOD_FOLDER = MOD_NAME.replace(/[\-]*[\.]*(installing)*(zip)*/gi, '');
-    //MOD_FOLDER = MOD_NAME.replace(/[\-]*[\d]*[\.]*( )*(installing)*/gi, '');
+    MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
   }
   
   const ENABLEDTXT_FILE = 'enabled.txt'

@@ -370,7 +370,7 @@ function installEditorMod(files, fileName) {
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: EDITORMOD_ID };
   let MOD_NAME = path.basename(fileName);
-  let MOD_FOLDER = MOD_NAME.replace(/[\.]*(installing)*(zip)*/gi, '');
+  let MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
   if (rootPath !== '.') {
     MOD_NAME = path.basename(rootPath);
     MOD_FOLDER = MOD_NAME;
@@ -546,7 +546,7 @@ function installScripts(files, fileName) {
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: SCRIPTS_ID };
   const MOD_NAME = path.basename(fileName);
-  const MOD_FOLDER = MOD_NAME.replace(/[\-]*[\d]*[\.]*( )*(installing)*/gi, '');;
+  const MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>

@@ -368,7 +368,7 @@ function installModManagerMod(files, fileName) {
   const MOD_NAME = path.basename(fileName);
   let MOD_FOLDER = path.basename(rootPath);
   if (MOD_FOLDER === '.') {
-    MOD_FOLDER = MOD_NAME.replace(/[\.]*(installing)*(zip)*/gi, '');
+    MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
   }
 
   // Remove directories and anything that isn't in the rootPath.

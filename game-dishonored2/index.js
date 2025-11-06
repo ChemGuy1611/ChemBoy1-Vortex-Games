@@ -416,7 +416,7 @@ function installVoidMod(files, fileName) {
   const MOD_NAME = path.basename(fileName);
   let MOD_FOLDER = '.';
   if (ROOT_PATH === '.') {
-    MOD_FOLDER = MOD_NAME.replace(/[\.]*(installing)*(zip)*/gi, '');
+    MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
   }
   const setModTypeInstruction = { type: 'setmodtype', value: VOIDMOD_ID };
   

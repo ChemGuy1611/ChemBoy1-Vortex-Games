@@ -303,13 +303,13 @@ function installMod(files, fileName) {
       if (MOD_FOLDER === '.') { // If mod did not have a top level folder, make one from the mod name
         const modNameLower = MOD_NAME.toLowerCase();
         const modNameLower2 = modNameLower.replace(/ /gi, '_');
-        MOD_FOLDER = modNameLower2.replace(/[\-]*[\d]*[\.]*(installing)*(zip)*( )*/gi, '');
+        MOD_FOLDER = modNameLower2.replace(/[\-]*[\d]*[\.]*(installing)*(zip)*(rar)*(7z)*( )*/gi, '');
       }
       try { //write the mod.manifest file
         const MODMANIFEST_CONTENT = (`<?xml version="1.0" encoding="utf-8"?>\n`
                                     + `<kcd_mod>\n`
                                     + `  <info>\n`
-                                    + `    <name>${MOD_NAME.replace(/(.installing)*/gi, '')}</name>\n`
+                                    + `    <name>${MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '')}</name>\n`
                                     + `    <modid>${MOD_FOLDER}</modid>\n`
                                     + `  </info>\n`                                                                             
                                     + `</kcd_mod>`
@@ -334,13 +334,13 @@ function installMod(files, fileName) {
     if (MOD_FOLDER === '.') {
       const modNameLower = MOD_NAME.toLowerCase();
       const modNameLowerReplaced = modNameLower.replace(/ /gi, '_');
-      MOD_FOLDER = modNameLowerReplaced.replace(/[\-]*[\d]*[\.]*(installing)*(zip)*( )*/gi, '');
+      MOD_FOLDER = modNameLowerReplaced.replace(/[\-]*[\d]*[\.]*(installing)*(zip)*(rar)*(7z)*( )*/gi, '');
     }
     try { //Generate basic mod.manifest with modid=MOD_FOLDER
       const MODMANIFEST_CONTENT = (`<?xml version="1.0" encoding="utf-8"?>\n`
                                   + `<kcd_mod>\n`
                                   + `  <info>\n`
-                                  + `    <name>${MOD_NAME.replace(/(.installing)*/gi, '')}</name>\n`
+                                  + `    <name>${MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '')}</name>\n`
                                   + `    <modid>${MOD_FOLDER}</modid>\n`
                                   + `  </info>\n`                                                                             
                                   + `</kcd_mod>`
@@ -364,13 +364,13 @@ function installMod(files, fileName) {
     if (MOD_FOLDER === '.') {
       const modNameLower = MOD_NAME.toLowerCase();
       const modNameLowerReplaced = modNameLower.replace(/ /gi, '_');
-      MOD_FOLDER = modNameLowerReplaced.replace(/[\-]*[\d]*[\.]*(installing)*(zip)*( )*/gi, '');
+      MOD_FOLDER = modNameLowerReplaced.replace(/[\-]*[\d]*[\.]*(installing)*(zip)*(rar)*(7z)*( )*/gi, '');
     }
     try { //Generate basic mod.manifest with modid=MOD_FOLDER
       const MODMANIFEST_CONTENT = (`<?xml version="1.0" encoding="utf-8"?>\n`
                                   + `<kcd_mod>\n`
                                   + `  <info>\n`
-                                  + `    <name>${MOD_NAME.replace(/(.installing)*/gi, '')}</name>\n`
+                                  + `    <name>${MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '')}</name>\n`
                                   + `    <modid>${MOD_FOLDER}</modid>\n`
                                   + `  </info>\n`                                                                             
                                   + `</kcd_mod>`
