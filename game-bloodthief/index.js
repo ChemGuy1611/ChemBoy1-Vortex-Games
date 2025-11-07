@@ -137,7 +137,7 @@ let PARAMETERS_STRING = '';
 if (!customLoader) {
   PARAMETERS_STRING = '--script addons/mod_loader/mod_loader_setup.gd';
 }
-const PAR_STRING2 = '--setup-create-override-cfg'
+const PAR_STRING2 = '--setup-create-override-cfg';
 const PARAMETERS = [PARAMETERS_STRING];
 const MODTYPE_FOLDERS = [MOD_PATH, 'mods'];
 
@@ -203,7 +203,7 @@ const tools = [ //accepts: exe, jar, py, vbs, bat
     relative: true,
     exclusive: true,
     shell: true,
-    //defaultPrimary: true,
+    defaultPrimary: !customLoader,
     parameters: PARAMETERS,
   }, //*/
   {
@@ -325,7 +325,6 @@ function statCheckSync(gamePath, file) {
     return false;
   }
 }
-
 async function statCheckAsync(gamePath, file) {
   try {
     await fs.statAsync(path.join(gamePath, file));
@@ -335,10 +334,9 @@ async function statCheckAsync(gamePath, file) {
     return false;
   }
 }
-
 //Get correct game version
 async function setGameVersion(gamePath) {
-  const CHECK = statCheckAsync(gamePath, DEMO_FILE);
+  const CHECK = await statCheckAsync(gamePath, DEMO_FILE);
   if (CHECK) {
     GAME_VERSION = 'demo';
     return GAME_VERSION;
@@ -490,7 +488,7 @@ async function installModZip(files, destinationPath) {
     instructions.push(setModTypeInstruction);
     return Promise.resolve({ instructions });
   }
-} //*/
+}
 
 //convert installer functions to Bluebird promises
 function toBlue(func) {
@@ -544,7 +542,7 @@ async function downloadModLoader(api, gameSpec, version) {
     const NOTIF_ID = `${MOD_TYPE}-installing`;
     const GAME_DOMAIN = GAME_ID;
     let URL = LOADER_CUSTOM_URL;
-    if (version = 'demo') {
+    /*if (version = 'demo') {
       URL = LOADER_CUSTOM_URL_DEMO;
     } //*/
     const ERR_URL = LOADER_CUSTOM_URL_MANUAL;
@@ -601,9 +599,9 @@ async function setup(discovery, api, gameSpec) {
   // ASYNC CODE //////////////////////////////////////////
   /*await fs.ensureDirWritableAsync(CONFIG_PATH);
   await fs.ensureDirWritableAsync(SAVE_PATH); //*/
-  GAME_VERSION = await setGameVersion(GAME_PATH);
+  //GAME_VERSION = await setGameVersion(GAME_PATH);
   if (customLoader) {
-    await downloadModLoader(api, gameSpec, GAME_VERSION);
+    await downloadModLoader(api, gameSpec);
   } else {
     const requirementsInstalled = await checkForRequirements(api);
     if (!requirementsInstalled) {

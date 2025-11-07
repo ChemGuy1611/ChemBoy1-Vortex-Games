@@ -50,14 +50,18 @@ const SAVEMOD_LOCATION = DOCUMENTS;
 const SAVE_FOLDERNAME = 'XXX';
 
 let GAME_PATH = null;
-let GAME_VERSION = '';
+let GAME_VERSION = 'default';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 const MOD_ID = `${GAME_ID}-mod`;
 const MOD_NAME = "Godot Mod";
-const MOD_FOLDER = "mods";
+//const MOD_FOLDER = "mods";
+let MOD_FOLDER = "mods-unpacked";
+if (keepZips) {
+  MOD_FOLDER = "mods";
+}
 const MOD_PATH = path.join(MOD_FOLDER);
 const MOD_EXTS = ['.gd'];
 
@@ -128,7 +132,11 @@ const OVERRIDE_FILE = 'override.cfg';
 
 const MOD_PATH_DEFAULT = MOD_PATH;
 const REQ_FILE = EXEC;
-const PARAMETERS_STRING = '--script addons/mod_loader/mod_loader_setup.gd';
+let PARAMETERS_STRING = '';
+if (!customLoader) {
+  PARAMETERS_STRING = '--script addons/mod_loader/mod_loader_setup.gd';
+}
+const PAR_STRING2 = '--setup-create-override-cfg';
 const PARAMETERS = [PARAMETERS_STRING];
 const MODTYPE_FOLDERS = [MOD_PATH, 'mods'];
 
@@ -194,7 +202,7 @@ const tools = [ //accepts: exe, jar, py, vbs, bat
     relative: true,
     exclusive: true,
     shell: true,
-    defaultPrimary: true,
+    defaultPrimary: !customLoader,
     parameters: PARAMETERS,
   }, //*/
   {
@@ -324,25 +332,34 @@ function getExecutable(discoveryPath) {
   return EXEC;
 }
 
+function statCheckSync(gamePath, file) {
+  try {
+    fs.statSync(path.join(gamePath, file));
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}
+async function statCheckAsync(gamePath, file) {
+  try {
+    await fs.statAsync(path.join(gamePath, file));
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}
 //Get correct game version
 async function setGameVersion(gamePath) {
-  const isCorrectExec = (exec) => {
-    try {
-      fs.statSync(path.join(gamePath, exec));
-      return true;
-    }
-    catch (err) {
-      return false;
-    }
-  };
-
-  if (isCorrectExec(EXEC_XBOX)) {
+  const CHECK = await statCheckAsync(gamePath, EXEC_XBOX);
+  if (CHECK) {
     GAME_VERSION = 'xbox';
     return GAME_VERSION;
-  };
-
-  GAME_VERSION = 'default';
+  } else {
+    GAME_VERSION = 'default';
   return GAME_VERSION;
+  }
 }
 
 const getDiscoveryPath = (api) => { //get the game's discovered path
@@ -533,14 +550,17 @@ function isModLoaderInstalled(api, spec) {
 }
 
 //* Function to auto-download Mod Loader from GitHub
-async function downloadModLoader(api, gameSpec) {
+async function downloadModLoader(api, gameSpec, version) {
   let isInstalled = isModLoaderInstalled(api, gameSpec);
   if (!isInstalled) {
     const MOD_NAME = LOADER_NAME;
     const MOD_TYPE = LOADER_ID;
     const NOTIF_ID = `${MOD_TYPE}-installing`;
     const GAME_DOMAIN = GAME_ID;
-    const URL = LOADER_CUSTOM_URL;
+    let URL = LOADER_CUSTOM_URL;
+    /*if (version = 'demo') {
+      URL = LOADER_CUSTOM_URL_DEMO;
+    } //*/
     const ERR_URL = LOADER_CUSTOM_URL_MANUAL;
     api.sendNotification({ //notification indicating install process
       id: NOTIF_ID,
@@ -617,12 +637,12 @@ async function setup(discovery, api, gameSpec) {
   // SYNCHRONOUS CODE ////////////////////////////////////
   const state = api.getState();
   GAME_PATH = discovery.path;
-  //GAME_VERSION = setGameVersion(GAME_PATH);
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   // ASYNC CODE //////////////////////////////////////////
   /*await fs.ensureDirWritableAsync(CONFIG_PATH);
   await fs.ensureDirWritableAsync(SAVE_PATH); //*/
+  //GAME_VERSION = await setGameVersion(GAME_PATH);
   if (customLoader) {
     await downloadModLoader(api, gameSpec);
   } else {
