@@ -36,6 +36,7 @@ const EXEC = path.join(BINARIES_PATH, EXEC_NAME);
 const EXEC_EGS = EXEC;
 const EXEC_XBOX = 'gamelaunchhelper.exe';
 
+//can't install against these folders in game directory because they will be present in mod archives
 const ROOT_FOLDERS = ['builtin_dlc', 'common', 'decisions', 'dlc_metadata', 'events', 'gfx', 'history', 'hints', 'interface', 'localisation', 'map', 'missions', 'music', 'sound', 'soundtrack', 'tests', 'tutorial', 'tweakergui_assets'];
 
 const DATA_FOLDER = path.join('Paradox Interactive', 'Europa Universalis IV');

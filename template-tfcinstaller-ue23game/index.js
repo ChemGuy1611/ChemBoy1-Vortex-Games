@@ -10,6 +10,7 @@ Date: 2025-XX-XX
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
+const { parseStringPromise } = require('xml2js');
 //const turbowalk = require('turbowalk');
 //const winapi = require('winapi-bindings');
 
@@ -37,9 +38,12 @@ const DATA_FOLDER = path.join('XXX', 'XXX');
 const EXEC_XBOX = 'gamelaunchhelper.exe';
 const BINARIES_PATH = path.join("Binaries", `Win${BITS}`);
 const EXEC = path.join(BINARIES_PATH, EXEC_NAME);
+
 let GAME_PATH = null; //patched in the setup function to the discovered game path
+let GAME_VERSION = '';
 let STAGING_FOLDER = ''; //Vortex staging folder path
 let DOWNLOAD_FOLDER = ''; //Vortex download folder path
+const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 //Information for mod types and installers
 const TFC_ID = `${GAME_ID}-tfcinstaller`;
@@ -271,6 +275,27 @@ function getExecutable(gamePath) {
   return EXEC;
 }
 
+//Get correct game version
+async function setGameVersion(gamePath) {
+  const isCorrectExec = (exec) => {
+    try {
+      fs.statSync(path.join(gamePath, exec));
+      return true;
+    }
+    catch (err) {
+      return false;
+    }
+  };
+
+  if (isCorrectExec(EXEC_XBOX)) {
+    GAME_VERSION = 'xbox';
+    return GAME_VERSION;
+  };
+
+  GAME_VERSION = 'default';
+  return GAME_VERSION;
+}
+
 const getDiscoveryPath = (api) => { //get the game's discovered path
   const state = api.getState();
   const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});
@@ -442,7 +467,7 @@ function installUpkExplorer(files) {
   return Promise.resolve({ instructions });
 }
 
-//Test Fallback installer for Void Mods
+//Test Fallback installer for TFC Mods
 function testTfcMod(files, gameId) {
   const isExt = files.some(file => TFCMOD_EXTS.includes(path.extname(file).toLowerCase()));
   const isXml = files.some(file => TFCMOD_FILES.includes(path.basename(file).toLowerCase()));
@@ -461,7 +486,7 @@ function testTfcMod(files, gameId) {
   });
 }
 
-//Fallback installer for Void Mods
+//Fallback installer for TFC Mods
 function installTfcMod(files, fileName) {
   let modFile = files.find(file => TFCMOD_EXTS.includes(path.extname(file).toLowerCase()));
   if (modFile === undefined) {
@@ -646,6 +671,33 @@ function runModManager(api) {
   }
 }
 
+/*
+async function resolveGameVersion(gamePath) {
+  GAME_VERSION = await setGameVersion(gamePath);
+  let version = '0.0.0';
+  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
+    try {
+      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
+      const parsed = await parseStringPromise(appManifest);
+      version = parsed?.Package?.Identity?.[0]?.$?.Version;
+      return Promise.resolve(version);
+    } catch (err) {
+      log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+  else { // use exe
+    try {
+      const exeVersion = require('exe-version');
+      version = exeVersion.getProductVersion(path.join(gamePath, EXEC));
+      return Promise.resolve(version); 
+    } catch (err) {
+      log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+} //*/
+
 async function modFoldersEnsureWritable(gamePath, relPaths) {
   for (let index = 0; index < relPaths.length; index++) {
     await fs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
@@ -676,6 +728,7 @@ function applyGame(context, gameSpec) {
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     executable: () => gameSpec.game.executable,
     //executable: getExecutable,
+    //getGameVersion: resolveGameVersion,
     supportedTools: tools,
   };
   context.registerGame(game);

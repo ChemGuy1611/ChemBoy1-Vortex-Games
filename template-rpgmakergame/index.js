@@ -47,6 +47,7 @@ let GAME_PATH = null;
 let GAME_VERSION = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
+const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 const JSFOLDER_ID = `${GAME_ID}-jsfolder`;
 const JSFOLDER_NAME = "js folder";

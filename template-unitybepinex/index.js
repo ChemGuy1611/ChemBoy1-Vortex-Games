@@ -61,6 +61,7 @@ let GAME_PATH = null;
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 let GAME_VERSION = '';
+const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 //modtypes
 const ROOT_ID = `${GAME_ID}-root`;

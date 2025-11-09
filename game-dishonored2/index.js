@@ -23,6 +23,7 @@ const GAME_ID = "dishonored2";
 const GAME_NAME = "Dishonored 2";
 const GAME_NAME_SHORT = "Dishonored 2";
 const MOD_PATH = ".";
+
 let GAME_PATH = null; //patched in the setup function to the discovered game path
 let GAME_VERSION = '';
 const APPMANIFEST_FILE = 'appxmanifest.xml';
@@ -39,7 +40,7 @@ const requiredFiles = ['base'];
 const EXEC = "Dishonored2.exe";
 const EPIC_EXEC = "Dishonored2.exe";
 const XBOX_EXEC = "gamelaunchhelper.exe";
-//const EXEC = "Dishonored2_x64ShippingRetail.exe"; //XBOX Version
+const XBOX_EXEC_SHIPPING = "Dishonored2_x64ShippingRetail.exe";
 
 //Information for mod types and installers
 const SAVE_ID = `${GAME_ID}-save`;
@@ -162,7 +163,6 @@ function pathPattern(api, game, pattern) {
 }
 
 async function requiresLauncher(gamePath, store) {
-
   if (store === 'xbox') {
       return Promise.resolve({
           launcher: 'xbox',
@@ -172,7 +172,7 @@ async function requiresLauncher(gamePath, store) {
           },
       });
   }
-
+  /*
   if (store === 'epic') {
     return Promise.resolve({
         launcher: 'epic',
@@ -180,14 +180,12 @@ async function requiresLauncher(gamePath, store) {
             appId: EPICAPP_ID,
         },
     });
-  }
-  
+  } //*/
   return Promise.resolve(undefined);
 }
 
 //Get the executable and add to required files
 function getExecutable(discoveryPath) {
-
   const isCorrectExec = (exec) => {
     try {
       fs.statSync(path.join(discoveryPath, exec));
@@ -199,9 +197,6 @@ function getExecutable(discoveryPath) {
   };
   if (isCorrectExec(XBOX_EXEC)) {
     return XBOX_EXEC;
-  };
-  if (isCorrectExec(EXEC)) {
-    return EXEC;
   };
   return EXEC;
 }
@@ -227,18 +222,17 @@ async function setGameVersion(gamePath) {
 
 // AUTOMATIC MOD DOWNLOADERS ///////////////////////////////////////////////////
 
-//Check if ResoRep is installed
+//Check if Void is installed
 function isVoidInstalled(api, spec) {
   const state = api.getState();
   const mods = state.persistent.mods[spec.game.id] || {};
   return Object.keys(mods).some(id => mods[id]?.type === VOID_ID);
 }
 
-//Function to auto-download AnvilToolkit
+//Function to auto-download Void
 async function downloadVoid(api, gameSpec) {
-  //let isInstalled = isVoidInstalled(api, gameSpec);
-
-  //*
+  let isInstalled = isVoidInstalled(api, gameSpec);
+  /*
   const state = api.getState();
   const modLoaderFile = VOID_EXEC;
   const installPath = selectors.installPathForGame(state, gameSpec.game.id); // This retrieves the staging folder for the game.
@@ -255,16 +249,14 @@ async function downloadVoid(api, gameSpec) {
     }
   });
   //*/
-
   if (!isInstalled) {
-    //notification indicating install process
     const MOD_TYPE = VOID_ID;
     const MOD_NAME = VOID_NAME;
     const NOTIF_ID = `${GAME_ID}-${MOD_TYPE}-installing`;
     const modPageId = 31;
     const FILE_ID = 224;  //If using a specific file id because "input" below gives an error
     const GAME_DOMAIN = GAME_ID;
-    api.sendNotification({
+    api.sendNotification({ //notification indicating install process
       id: NOTIF_ID,
       message: `Installing ${MOD_NAME}`,
       type: 'activity',
@@ -520,7 +512,7 @@ function setupNotify(api) {
   });    
 }
 
-//Notify User to run ATK after deployment
+//Notify User to run Void after deployment
 function deployNotify(api) {
   const NOTIF_ID = `${GAME_ID}-deploy`;
   const MOD_NAME = VOID_NAME;
@@ -668,7 +660,6 @@ function main(context) {
     context.api.onAsync('did-deploy', async (profileId, deployment) => {
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;
-
       return deployNotify(context.api);
     });
   });
