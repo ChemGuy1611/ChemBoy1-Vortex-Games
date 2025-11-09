@@ -769,7 +769,7 @@ function installFallback(api, files, fileName) {
   return Promise.resolve({ instructions });
 }
 
-//Notify User of instructions for Mod Merger Tool
+//Notify User that folder renaming is required
 function renamingRequiredNotify(api, fileName) {
   const state = api.getState();
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
@@ -860,8 +860,12 @@ async function folderRenameDialog(api, mod) {
   }, [{ label: 'Cancel' }, { label: 'Rename', default: true }])
   .then(result => { //rename the folder in the mod staging folder
     if (result.action === 'Rename') {
-      const name = result.input[RENAME_INPUT_ID];
-      if ( ( name.trim() === ( '' || RENAME_FOLDER ) ) || !name.includes(FORGE_EXT) ) {
+      let name = result.input[RENAME_INPUT_ID];
+      if (!name.endsWith('.forge')) {
+        name = name + '.forge';
+      }
+      name = name.trim();
+      if ( name === '' ||  name === RENAME_FOLDER ) {
         api.showErrorNotification('Invalid name entered for .forge folder. You will have to rename the folder manually.', undefined, { allowReport: false });
         return Promise.resolve();
       }
@@ -871,9 +875,6 @@ async function folderRenameDialog(api, mod) {
       const EXISTING = path.join(FOLDER_PATH, RENAME_FOLDER);
       const NEW = path.join(FOLDER_PATH, name);
       rename(api, EXISTING, NEW);
-      /*purge(api); //purge mods before renaming folder
-      fs.renameAsync(EXISTING, NEW) //rename the folder
-      deploy(api); //redeploy mods after renaming folder //*/
     }
     return Promise.resolve();
   })
@@ -884,7 +885,7 @@ async function folderRenameDialog(api, mod) {
 }
 
 async function rename(api, EXISTING, NEW) {
-  await purge(api); //purge mods before renaming folder
+  await purge(api); //purge mods to avoid External Changes
   try {
     fs.statSync(EXISTING); //make sure the folder exists
     await fs.renameAsync(EXISTING, NEW); //rename the folder
