@@ -865,7 +865,7 @@ async function folderRenameDialog(api, mod) {
         name = name + '.forge';
       }
       name = name.trim();
-      if ( name === '' ||  name === RENAME_FOLDER ) {
+      if ( name === '' || name === RENAME_FOLDER ) {
         api.showErrorNotification('Invalid name entered for .forge folder. You will have to rename the folder manually.', undefined, { allowReport: false });
         return Promise.resolve();
       }
