@@ -480,7 +480,7 @@ function isMlSteamInstalled3(api, spec) {
 //Function to auto-download Xbox Mod Loader from Nexus Mods - same for all 3 games
 async function downloadMlXbox(api, gameSpec) {
   //added Steam versions to check for users who may have downloaded the Steam versions before they were removed from Nexus
-  let isInstalled = isMlXboxInstalled(api, gameSpec) || isMlSteamInstalled1(api, spec1) || isMlSteamInstalled2(api, spec2) || isMlSteamInstalled3(api, spec3);
+  let isInstalled = isMlXboxInstalled(api, gameSpec) || isMlSteamInstalled1(api, gameSpec) || isMlSteamInstalled2(api, gameSpec) || isMlSteamInstalled3(api, gameSpec);
   if (!isInstalled) {
     const MOD_NAME = MODLOADER_XBOX_NAME;
     const NOTIF_ID = `${GAME_NAME}-${MOD_NAME}-installing`;
