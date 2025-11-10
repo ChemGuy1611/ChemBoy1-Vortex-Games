@@ -104,25 +104,25 @@ const spec = {
       "id": ROOT_ID,
       "name": ROOT_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${ROOT_PATH}`
+      "targetPath": path.join('{gamePath}', ROOT_PATH)
     },
     {
       "id": UE5_ID,
       "name": UE5_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${UE5_PATH}`
+      "targetPath": path.join('{gamePath}', UE5_PATH)
     },
     {
       "id": UE5_ALT_ID,
       "name": UE5_ALT_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${UE5_ALT_PATH}`
+      "targetPath": path.join('{gamePath}', UE5_ALT_PATH)
     },
     {
       "id": SIGBYPASS_ID,
       "name": SIGBYPASS_NAME,
       "priority": "low",
-      "targetPath": `{gamePath}\\${SIGBYPASS_PATH}`
+      "targetPath": path.join('{gamePath}', SIGBYPASS_PATH)
     },
   ],
   "discovery": {
@@ -636,7 +636,6 @@ function checkPartitions(folder, discoveryPath) {
 function partitionCheckNotify(api, CHECK_CONFIG) {
   const NOTIF_ID = `${GAME_ID}-partioncheck`;
   const MESSAGE = 'Some Mods Installers are Not Available';
-  
   api.sendNotification({
     id: NOTIF_ID,
     type: 'warning',
