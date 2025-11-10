@@ -2,15 +2,14 @@
 Name: Marvel Rivals Vortex Extension
 Structure: UE5
 Author: ChemBoy1
-Version: 0.4.1
-Date: 2025-05-08
+Version: 0.4.2
+Date: 2025-11-10
 ////////////////////////////////////////*/
 
 //Import libraries
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
-const { config } = require('process');
 
 //Specify all information about the game
 const GAME_ID = "marvelrivals";
@@ -585,7 +584,6 @@ function UNREALEXTENSION(context) {
     });
   };
 
-
   const getUnrealModsPath = (game) => {
     const modsPath = UNREALDATA.modsPath;
     const state = context.api.getState();
@@ -638,6 +636,7 @@ function checkPartitions(folder, discoveryPath) {
 function partitionCheckNotify(api, CHECK_CONFIG) {
   const NOTIF_ID = `${GAME_ID}-partioncheck`;
   const MESSAGE = 'Some Mods Installers are Not Available';
+  
   api.sendNotification({
     id: NOTIF_ID,
     type: 'warning',
@@ -655,7 +654,9 @@ function partitionCheckNotify(api, CHECK_CONFIG) {
                 + `Here are your results for the partition check to enable these mod types:\n`
                 + `  - Config: ${CHECK_CONFIG ? 'ENABLED: Local AppData folders are on the same partition as the game and staging folder and the Config modtype is available' : 'DISABLED: Local AppData folders are NOT on the same partition as the game and staging folder and the Config modtype is NOT available'}\n`
                 + `\n`
-                + `Config Path: ${path.join(CONFIG_PATH)}\n`
+                + `Config Path: ${CONFIG_PATH}\n`
+                + `Staging Path: ${STAGING_FOLDER}\n`
+                + `Game Path: ${GAME_PATH}\n`
                 + `\n`             
                 + `If you want to use the disabled mod types, you must move the game and staging folder to the same partition as the Local AppData folder (typically C Drive).\n`
                 + `\n`
@@ -694,7 +695,6 @@ async function setup(discovery, api, gameSpec) {
     await fs.ensureDirWritableAsync(CONFIG_PATH);
   }
   await downloadSigBypass(api, gameSpec);
-  await fs.ensureDirWritableAsync(path.join(CONFIG_PATH));
   await fs.ensureDirWritableAsync(path.join(discovery.path, ROOT_PATH, "Marvel"));
   await fs.ensureDirWritableAsync(path.join(discovery.path, SIGBYPASS_PATH));
   return fs.ensureDirWritableAsync(path.join(discovery.path, UE5_PATH));
