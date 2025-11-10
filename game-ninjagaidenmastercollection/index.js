@@ -1,23 +1,39 @@
-/*
+/*///////////////////////////////////////////////////////
 Name: NINJA GAIDEN: Master Collection Vortex Extension
 Structure: Multi-Game, Mod Loader
 Author: ChemBoy1
-Version: 0.1.2
-Date: 02/03/2025
-*/
+Version: 0.2.0
+Date: 2025-11-10
+///////////////////////////////////////////////////////*/
 
 //Import libraries
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
+const { parseStringPromise } = require('xml2js');
+
+const DOCUMENTS = util.getVortexPath('documents');
 
 //Specify all information that`s the same for all 3 games
 const GAME_ID = "ninjagaidenmastercollection";
 const GAME_NAME = "NINJA GAIDEN: Master Collection";
-const GAME_NAME_SHORT = "NINJA GAIDEN: MC";
+const GAME_NAME_SHORT = "NGMC";
 const MODLOADER_STEAM_FILE = "dbghelp.dll";
+
 const XBOX_EXEC = "gamelaunchhelper.exe";
+const EXEC_XBOX = XBOX_EXEC;
 let GAME_STORE = "";
+let GAME_VERSION = '';
+let GAME_PATH1 = '';
+let GAME_PATH2 = '';
+let GAME_PATH3 = '';
+let STAGING_FOLDER1 = '';
+let STAGING_FOLDER2 = '';
+let STAGING_FOLDER3 = '';
+let DOWNLOAD_FOLDER1 = '';
+let DOWNLOAD_FOLDER2 = '';
+let DOWNLOAD_FOLDER3 = '';
+const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 //Game information for all 3 games we're adding ///////////////////////////////////////////////////
 
@@ -28,7 +44,7 @@ const XBOX_EXECNAME1 = "Game";
 const GAME_ID1 = "ninjagaidensigma";
 const EXEC1 = "ninja gaiden sigma.exe";
 const GAME_NAME1 = "NINJA GAIDEN Sigma";
-const GAME_NAME_SHORT1 = "NINJA GAIDEN Sigma";
+const GAME_NAME_SHORT1 = "NG Sigma";
 const MOD_PATH_DEFAULT1 = '.';
 
 const gameFinderQuery1 = {
@@ -45,6 +61,23 @@ const ML_STEAM_EXEC1 = EXEC1;
 const DATABINSUB_ID1 = `${GAME_ID}-databinsubfolder1`;
 const DATABINSUB_FOLDERS1 = ["bgm", "movie"];
 
+const CONFIG_FOLDER1 = path.join(DOCUMENTS, 'KoeiTecmo', 'NINJAGAIDENSIGMA');
+let USERID_FOLDER1 = "";
+function isDir(folder, file) {
+  const stats = fs.statSync(path.join(folder, file));
+  return stats.isDirectory();
+}
+try {
+  const CONFIG_ARRAY = fs.readdirSync(CONFIG_FOLDER1);
+  USERID_FOLDER1 = CONFIG_ARRAY.find((entry) => isDir(CONFIG_FOLDER1, entry));
+} catch(err) {
+  USERID_FOLDER1 = "";
+}
+if (USERID_FOLDER1 === undefined) {
+  USERID_FOLDER1 = "";
+} //*/
+const CONFIG_PATH1 = path.join(CONFIG_FOLDER1, USERID_FOLDER1);
+
 // For NGS2
 const STEAMAPP_ID2 = "1580790";
 const XBOXAPP_ID2 = "946B6A6E.NINJAGAIDENSIGMA2";
@@ -52,7 +85,7 @@ const XBOX_EXECNAME2 = "Game";
 const GAME_ID2 = "ninjagaidensigma2";
 const EXEC2 = "ninja gaiden sigma2.exe";
 const GAME_NAME2 = "NINJA GAIDEN Sigma 2";
-const GAME_NAME_SHORT2 = "NINJA GAIDEN Sigma 2";
+const GAME_NAME_SHORT2 = "NG Sigma 2";
 const MOD_PATH_DEFAULT2 = '.';
 
 const gameFinderQuery2 = {
@@ -69,6 +102,23 @@ const ML_STEAM_EXEC2 = EXEC2;
 const DATABINSUB_ID23 = `${GAME_ID}-databinsubfolder23`;
 const DATABINSUB_FOLDERS23 = ["sound", "movie"];
 
+const CONFIG_FOLDER2 = path.join(DOCUMENTS, 'KoeiTecmo', 'NINJAGAIDENSIGMA2');
+let USERID_FOLDER2 = "";
+function isDir(folder, file) {
+  const stats = fs.statSync(path.join(folder, file));
+  return stats.isDirectory();
+}
+try {
+  const CONFIG_ARRAY = fs.readdirSync(CONFIG_FOLDER2);
+  USERID_FOLDER2 = CONFIG_ARRAY.find((entry) => isDir(CONFIG_FOLDER2, entry));
+} catch(err) {
+  USERID_FOLDER2 = "";
+}
+if (USERID_FOLDER2 === undefined) {
+  USERID_FOLDER2 = "";
+} //*/
+const CONFIG_PATH2 = path.join(CONFIG_FOLDER2, USERID_FOLDER2);
+
 // For NG3RE
 const STEAMAPP_ID3 = "1369760";
 const XBOXAPP_ID3 = "946B6A6E.NINJAGAIDEN3RazorsEdge";
@@ -76,7 +126,7 @@ const XBOX_EXECNAME3 = "Game";
 const GAME_ID3 = "ninjagaiden3razorsedge";
 const EXEC3 = "ninja gaiden 3 razor's edge.exe";
 const GAME_NAME3 = "NINJA GAIDEN 3 Razor's Edge";
-const GAME_NAME_SHORT3 = "NINJA GAIDEN 3 RE";
+const GAME_NAME_SHORT3 = "NG3RE";
 const MOD_PATH_DEFAULT3 = '.';
 
 const gameFinderQuery3 = {
@@ -89,6 +139,23 @@ const MODLOADER_STEAM_NAME3 = "Essential Files for NG3RE";
 const ML_STEAM_PAGE3 = 243;
 const ML_STEAM_FILE3 = 1213;
 const ML_STEAM_EXEC3 = EXEC3;
+
+const CONFIG_FOLDER3 = path.join(DOCUMENTS, 'KoeiTecmo', 'NINJAGAIDEN3RE');
+let USERID_FOLDER3 = "";
+function isDir(folder, file) {
+  const stats = fs.statSync(path.join(folder, file));
+  return stats.isDirectory();
+}
+try {
+  const CONFIG_ARRAY = fs.readdirSync(CONFIG_FOLDER3);
+  USERID_FOLDER3 = CONFIG_ARRAY.find((entry) => isDir(CONFIG_FOLDER3, entry));
+} catch(err) {
+  USERID_FOLDER3 = "";
+}
+if (USERID_FOLDER3 === undefined) {
+  USERID_FOLDER3 = "";
+} //*/
+const CONFIG_PATH3 = path.join(CONFIG_FOLDER3, USERID_FOLDER3);
 
 // Common installer info (same for all 3 games) ///////////////////////////////////////////////////
 
@@ -104,7 +171,7 @@ const ML_XBOX_FILE = 444;
 const MLMOD_ID = `${GAME_ID}-mlmod`;
 const MLMOD_NAME = "Mod Loader Mod";
 const MLMOD_FOLDER = "mods";
-const MLMOD_PATH = `${MLMOD_FOLDER}`;
+const MLMOD_PATH = MLMOD_FOLDER;
 const MLMOD_EXT = '.dat';
 
 const DATABIN_ID = `${GAME_ID}-databinfolder`;
@@ -112,7 +179,7 @@ const DATABIN_NAME = "Databin Folder";
 const DATABIN_FOLDER = "databin";
 
 const DATABINSUB_NAME = "Databin Subfolder";
-const DATABINSUB_PATH = `${DATABIN_FOLDER}`;
+const DATABINSUB_PATH = DATABIN_FOLDER;
 
 // gameSpec data for all 3 games ///////////////////////////////////////////////////
 
@@ -150,7 +217,7 @@ const spec1 = {
       "id": MLMOD_ID,
       "name": MLMOD_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${MLMOD_PATH}`
+      "targetPath": path.join('{gamePath}', MLMOD_PATH)
     },
     {
       "id": DATABIN_ID,
@@ -162,7 +229,7 @@ const spec1 = {
       "id": DATABINSUB_ID1,
       "name": DATABINSUB_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${DATABINSUB_PATH}`
+      "targetPath": path.join('{gamePath}', DATABINSUB_PATH)
     },
     {
       "id": MODLOADER_XBOX_ID,
@@ -213,7 +280,7 @@ const spec2 = {
       "id": MLMOD_ID,
       "name": MLMOD_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${MLMOD_PATH}`
+      "targetPath": path.join('{gamePath}', MLMOD_PATH)
     },
     {
       "id": DATABIN_ID,
@@ -225,7 +292,7 @@ const spec2 = {
       "id": DATABINSUB_ID23,
       "name": DATABINSUB_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${DATABINSUB_PATH}`
+      "targetPath": path.join('{gamePath}', DATABINSUB_PATH)
     },
     {
       "id": MODLOADER_XBOX_ID,
@@ -276,7 +343,7 @@ const spec3 = {
       "id": MLMOD_ID,
       "name": MLMOD_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${MLMOD_PATH}`
+      "targetPath": path.join('{gamePath}', MLMOD_PATH)
     },
     {
       "id": DATABIN_ID,
@@ -288,7 +355,7 @@ const spec3 = {
       "id": DATABINSUB_ID23,
       "name": DATABINSUB_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${DATABINSUB_PATH}`
+      "targetPath": path.join('{gamePath}', DATABINSUB_PATH)
     },
     {
       "id": MODLOADER_XBOX_ID,
@@ -340,7 +407,6 @@ function pathPattern(api, game, pattern) {
 
 //Set launcher requirements - for NGS1
 async function requiresLauncher1(gamePath, store) { 
-
   if (store === 'xbox') {
       return Promise.resolve({
           launcher: 'xbox',
@@ -350,13 +416,11 @@ async function requiresLauncher1(gamePath, store) {
           },
       });
   }
-
   return Promise.resolve(undefined);
 }
 
 //Set launcher requirements - for NGS2
 async function requiresLauncher2(gamePath, store) { 
-
   if (store === 'xbox') {
       return Promise.resolve({
           launcher: 'xbox',
@@ -366,13 +430,11 @@ async function requiresLauncher2(gamePath, store) {
           },
       });
   }
-
   return Promise.resolve(undefined);
 }
 
 //Set launcher requirements - for NG3RE
 async function requiresLauncher3(gamePath, store) { 
-
   if (store === 'xbox') {
       return Promise.resolve({
           launcher: 'xbox',
@@ -382,7 +444,6 @@ async function requiresLauncher3(gamePath, store) {
           },
       });
   }
-
   return Promise.resolve(undefined);
 }
 
@@ -418,16 +479,15 @@ function isMlSteamInstalled3(api, spec) {
 
 //Function to auto-download Xbox Mod Loader from Nexus Mods - same for all 3 games
 async function downloadMlXbox(api, gameSpec) {
-  let isInstalled = isMlXboxInstalled(api, gameSpec);
-  
+  //added Steam versions to check for users who may have downloaded the Steam versions before they were removed from Nexus
+  let isInstalled = isMlXboxInstalled(api, gameSpec) || isMlSteamInstalled1(api, spec1) || isMlSteamInstalled2(api, spec2) || isMlSteamInstalled3(api, spec3);
   if (!isInstalled) {
-    //notification indicating install process
     const MOD_NAME = MODLOADER_XBOX_NAME;
     const NOTIF_ID = `${GAME_NAME}-${MOD_NAME}-installing`;
     const MOD_TYPE = MODLOADER_XBOX_ID;
     const modPageId = ML_XBOX_PAGE;
     const FILE_ID = ML_XBOX_FILE;  //Using a specific file id if "input" below gives an error 
-    api.sendNotification({
+    api.sendNotification({ //notification indicating install process
       id: NOTIF_ID,
       message: `Installing ${MOD_NAME}`,
       type: 'activity',
@@ -438,7 +498,6 @@ async function downloadMlXbox(api, gameSpec) {
     if (api.ext?.ensureLoggedIn !== undefined) {
       await api.ext.ensureLoggedIn();
     }
-
     try {
       //get the mod files information from Nexus
       //*
@@ -485,7 +544,6 @@ async function downloadMlXbox(api, gameSpec) {
 //Function to auto-download Steam Mod Loader from Nexus Mods - for NGS1
 async function downloadMlSteam1(api, gameSpec) {
   let isInstalled = isMlSteamInstalled1(api, gameSpec);
-  
   if (!isInstalled) {
     //notification indicating install process
     const MOD_NAME = MODLOADER_STEAM_NAME1;
@@ -504,7 +562,6 @@ async function downloadMlSteam1(api, gameSpec) {
     if (api.ext?.ensureLoggedIn !== undefined) {
       await api.ext.ensureLoggedIn();
     }
-
     try {
       //get the mod files information from Nexus
       ///*
@@ -551,7 +608,6 @@ async function downloadMlSteam1(api, gameSpec) {
 //Function to auto-download Steam Mod Loader from Nexus Mods - for NGS2
 async function downloadMlSteam2(api, gameSpec) {
   let isInstalled = isMlSteamInstalled2(api, gameSpec);
-  
   if (!isInstalled) {
     //notification indicating install process
     const MOD_NAME = MODLOADER_STEAM_NAME2;
@@ -570,7 +626,6 @@ async function downloadMlSteam2(api, gameSpec) {
     if (api.ext?.ensureLoggedIn !== undefined) {
       await api.ext.ensureLoggedIn();
     }
-
     try {
       //get the mod files information from Nexus
       ///*
@@ -617,7 +672,6 @@ async function downloadMlSteam2(api, gameSpec) {
 //Function to auto-download Steam Mod Loader from Nexus Mods - for NG3RE
 async function downloadMlSteam3(api, gameSpec) {
   let isInstalled = isMlSteamInstalled3(api, gameSpec);
-  
   if (!isInstalled) {
     //notification indicating install process
     const MOD_NAME = MODLOADER_STEAM_NAME3;
@@ -636,7 +690,6 @@ async function downloadMlSteam3(api, gameSpec) {
     if (api.ext?.ensureLoggedIn !== undefined) {
       await api.ext.ensureLoggedIn();
     }
-
     try {
       //get the mod files information from Nexus
       ///*
@@ -685,7 +738,7 @@ async function downloadMlSteam3(api, gameSpec) {
 //Installer test for Xbox Mod Loader
 function testModLoaderXbox(files, gameId) {
   const isMl = files.some(file => path.basename(file).toLowerCase() === MODLOADER_XBOX_EXEC);
-  let supported = (gameId === (spec1.game.id || spec2.game.id || spec3.game.id)) && isMl;
+  let supported = ( gameId === spec1.game.id || gameId === spec2.game.id || gameId === spec3.game.id ) && isMl;
 
   return Promise.resolve({
     supported,
@@ -821,7 +874,7 @@ function installModLoaderSteam3(files) {
 //Installer test for mod files
 function testMlMod(files, gameId) {
   const isMod = files.some(file => path.extname(file).toLowerCase() === MLMOD_EXT);
-  let supported = (gameId === (spec1.game.id || spec2.game.id || spec3.game.id)) && isMod;
+  let supported = ( gameId === spec1.game.id || gameId === spec2.game.id || gameId === spec3.game.id ) && isMod;
 
   // Test for a mod installer
   if (supported && files.find(file =>
@@ -862,7 +915,7 @@ function installMlMod(files, fileName) {
 //Installer test for mod files
 function testDatabin(files, gameId) {
   const isMod = files.some(file => path.basename(file) === DATABIN_FOLDER);
-  let supported = (gameId === (spec1.game.id || spec2.game.id || spec3.game.id)) && isMod;
+  let supported = ( gameId === spec1.game.id || gameId === spec2.game.id || gameId === spec3.game.id ) && isMod;
 
   // Test for a mod installer
   if (supported && files.find(file =>
@@ -937,7 +990,7 @@ function installDatabinSub1(files) {
 //Installer test for Root folder files
 function testDatabinSub23(files, gameId) {
   const isMod = files.some(file => DATABINSUB_FOLDERS23.includes(path.basename(file)));
-  let supported = (gameId === (spec2.game.id || spec3.game.id)) && isMod;
+  let supported = ( gameId === spec2.game.id || gameId === spec3.game.id ) && isMod;
 
   return Promise.resolve({
     supported,
@@ -1006,7 +1059,7 @@ function setupNotifySteam(api) {
 function setupNotifyXbox(api) {
   const NOTIF_ID = `${GAME_ID}-xboxsetup-notification`;
   const MOD_NAME = MODLOADER_XBOX_NAME;
-  const MESSAGE = `Xbox Mod Loader Installed`;
+  const MESSAGE = `Mod Loader Installed`;
   api.sendNotification({
     id: NOTIF_ID,
     type: 'warning',
@@ -1018,8 +1071,9 @@ function setupNotifyXbox(api) {
         action: (dismiss) => {
           api.showDialog('question', MESSAGE, {
             text: `You must run ${MOD_NAME} to enable mods after installing with Vortex.\n`
-                + `Use the included tool to launch ${MOD_NAME} after launching the game (in "Dashboard" tab).\n`
-                + `You will see an error popup about a failed hash check. You can safely ignore this error.\n`
+                + `Use the included tool to launch ${MOD_NAME} AFTER launching the game (in "Dashboard" tab).\n`
+                + `You may see an error popup about a failed hash check. You can safely ignore this error.\n`
+                + `REMEMBER: You MUST launch the tool AFTER launching the game.\n`
           }, [
             { label: 'Acknowledge', action: () => dismiss() },
             {
@@ -1045,49 +1099,113 @@ function getStore(discovery) {
   }
 }
 
+//Get correct game version
+async function setGameVersion(gamePath) {
+  const isCorrectExec = (exec) => {
+    try {
+      fs.statSync(path.join(gamePath, exec));
+      return true;
+    }
+    catch (err) {
+      return false;
+    }
+  };
+  if (isCorrectExec(EXEC_XBOX)) {
+    GAME_VERSION = 'xbox';
+    return GAME_VERSION;
+  };
+  GAME_VERSION = 'steam';
+  return GAME_VERSION;
+}
+
+//*
+async function resolveGameVersion(gamePath, gameSpec) {
+  GAME_VERSION = await setGameVersion(gamePath);
+  let version = '0.0.0';
+  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
+    try {
+      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
+      const parsed = await parseStringPromise(appManifest);
+      version = parsed?.Package?.Identity?.[0]?.$?.Version;
+      return Promise.resolve(version);
+    } catch (err) {
+      log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+  else { // use exe
+    try {
+      const exeVersion = require('exe-version');
+      version = exeVersion.getProductVersion(path.join(gamePath, gameSpec.game.executable));
+      return Promise.resolve(version); 
+    } catch (err) {
+      log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+} //*/
+
 //Setup function - for NGS1
 async function setup1(discovery, api, gameSpec) {
-  getStore(discovery);
-  if (GAME_STORE === 'xbox') {
+  /*
+  GAME_VERSION = await setGameVersion(discovery.path);
+  if (GAME_VERSION === 'xbox') {
     await downloadMlXbox(api, gameSpec);
     setupNotifyXbox(api);
   }
-  if (GAME_STORE === 'steam') {
+  if (GAME_VERSION === 'steam') {
     await downloadMlSteam1(api, gameSpec);
     setupNotifySteam(api);
-  }
-
-  return fs.ensureDirWritableAsync(path.join(discovery.path, MLMOD_PATH));
+  } //*/
+  const state = api.getState();
+  GAME_PATH1 = discovery.path;
+  STAGING_FOLDER1 = selectors.installPathForGame(state, gameSpec.game.id);
+  DOWNLOAD_FOLDER1 = selectors.downloadPathForGame(state, gameSpec.game.id);
+  await downloadMlXbox(api, gameSpec);
+  setupNotifyXbox(api); //*/
+  return fs.ensureDirWritableAsync(path.join(GAME_PATH1, MLMOD_PATH));
 }
 
 //Setup function - for NGS2
 async function setup2(discovery, api, gameSpec) {
-  getStore(discovery);
-  if (GAME_STORE === 'xbox') {
+  /*
+  GAME_VERSION = await setGameVersion(discovery.path);
+  if (GAME_VERSION === 'xbox') {
     await downloadMlXbox(api, gameSpec);
     setupNotifyXbox(api);
   }
-  if (GAME_STORE === 'steam') {
+  if (GAME_VERSION === 'steam') {
     await downloadMlSteam2(api, gameSpec);
     setupNotifySteam(api);
-  }
-
-  return fs.ensureDirWritableAsync(path.join(discovery.path, MLMOD_PATH));
+  } //*/
+  const state = api.getState();
+  GAME_PATH2 = discovery.path;
+  STAGING_FOLDER2 = selectors.installPathForGame(state, gameSpec.game.id);
+  DOWNLOAD_FOLDER2 = selectors.downloadPathForGame(state, gameSpec.game.id);
+  await downloadMlXbox(api, gameSpec);
+  setupNotifyXbox(api); //*/
+  return fs.ensureDirWritableAsync(path.join(GAME_PATH2, MLMOD_PATH));
 }
 
 //Setup function - for NG3RE
 async function setup3(discovery, api, gameSpec) {
-  getStore(discovery);
-  if (GAME_STORE === 'xbox') {
+  /*
+  GAME_VERSION = await setGameVersion(discovery.path);
+  if (GAME_VERSION === 'xbox') {
     await downloadMlXbox(api, gameSpec);
     setupNotifyXbox(api);
   }
-  if (GAME_STORE === 'steam') {
+  if (GAME_VERSION === 'steam') {
     await downloadMlSteam3(api, gameSpec);
     setupNotifySteam(api);
-  }
-
-  return fs.ensureDirWritableAsync(path.join(discovery.path, MLMOD_PATH));
+  } //*/
+  const state = api.getState();
+  GAME_PATH3 = discovery.path;
+  STAGING_FOLDER3 = selectors.installPathForGame(state, gameSpec.game.id);
+  DOWNLOAD_FOLDER3 = selectors.downloadPathForGame(state, gameSpec.game.id);
+  await downloadMlXbox(api, gameSpec);
+  setupNotifyXbox(api); //*/
+  return fs.ensureDirWritableAsync(path.join(GAME_PATH3, MLMOD_PATH));
 }
 
 //Let Vortex know about the game - for NGS1
@@ -1102,6 +1220,7 @@ function applyGame1(context, gameSpec) {
     setup: async (discovery) => await setup1(discovery, context.api, gameSpec),
     supportedTools: tools,
     requiresLauncher: requiresLauncher1,
+    getGameVersion: (gamePath) => resolveGameVersion(gamePath, gameSpec),
   };
   context.registerGame(game);
 
@@ -1112,6 +1231,32 @@ function applyGame1(context, gameSpec) {
       return (gameId === gameSpec.game.id)
         && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
     }, (game) => pathPattern(context.api, game, type.targetPath), () => Promise.resolve(false), { name: type.name });
+  });
+
+  //register actions
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config/Save Folder', () => {
+    const openPath = CONFIG_PATH1;
+    util.opn(openPath).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID1;
+    });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
+    const openPath = path.join(__dirname, 'CHANGELOG.md');
+    util.opn(openPath).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID1;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
+    const openPath = DOWNLOAD_FOLDER1;
+    util.opn(openPath).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID1;
   });
 }
 
@@ -1127,6 +1272,7 @@ function applyGame2(context, gameSpec) {
     setup: async (discovery) => await setup2(discovery, context.api, gameSpec),
     supportedTools: tools,
     requiresLauncher: requiresLauncher2,
+    getGameVersion: (gamePath) => resolveGameVersion(gamePath, gameSpec),
   };
   context.registerGame(game);
 
@@ -1137,6 +1283,32 @@ function applyGame2(context, gameSpec) {
       return (gameId === gameSpec.game.id)
         && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
     }, (game) => pathPattern(context.api, game, type.targetPath), () => Promise.resolve(false), { name: type.name });
+  });
+
+  //register actions
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config/Save Folder', () => {
+    const openPath = CONFIG_PATH2;
+    util.opn(openPath).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID2;
+    });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
+    const openPath = path.join(__dirname, 'CHANGELOG.md');
+    util.opn(openPath).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID2;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
+    const openPath = DOWNLOAD_FOLDER2;
+    util.opn(openPath).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID2;
   });
 }
 
@@ -1152,6 +1324,7 @@ function applyGame3(context, gameSpec) {
     setup: async (discovery) => await setup3(discovery, context.api, gameSpec),
     supportedTools: tools,
     requiresLauncher: requiresLauncher3,
+    getGameVersion: (gamePath) => resolveGameVersion(gamePath, gameSpec),
   };
   context.registerGame(game);
 
@@ -1162,6 +1335,32 @@ function applyGame3(context, gameSpec) {
       return (gameId === gameSpec.game.id)
         && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
     }, (game) => pathPattern(context.api, game, type.targetPath), () => Promise.resolve(false), { name: type.name });
+  });
+
+  //register actions
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config/Save Folder', () => {
+    const openPath = CONFIG_PATH3;
+    util.opn(openPath).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID3;
+    });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
+    const openPath = path.join(__dirname, 'CHANGELOG.md');
+    util.opn(openPath).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID3;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
+    const openPath = DOWNLOAD_FOLDER3;
+    util.opn(openPath).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID3;
   });
 }
 
@@ -1174,16 +1373,15 @@ function main(context) {
 
   //register mod installers
   context.registerInstaller(MODLOADER_XBOX_ID, 25, testModLoaderXbox, installModLoaderXbox);
-  context.registerInstaller(MODLOADER_STEAM_ID1, 30, testModLoaderSteam1, installModLoaderSteam1);
-  context.registerInstaller(MODLOADER_STEAM_ID2, 35, testModLoaderSteam2, installModLoaderSteam2);
-  context.registerInstaller(MODLOADER_STEAM_ID3, 40, testModLoaderSteam3, installModLoaderSteam3);
-  context.registerInstaller(MLMOD_ID, 45, testMlMod, installMlMod);
-  context.registerInstaller(DATABIN_ID, 50, testDatabin, installDatabin);
-  context.registerInstaller(DATABINSUB_ID1, 55, testDatabinSub1, installDatabinSub1);
-  context.registerInstaller(DATABINSUB_ID23, 60, testDatabinSub23, installDatabinSub23);
+  context.registerInstaller(MODLOADER_STEAM_ID1, 27, testModLoaderSteam1, installModLoaderSteam1);
+  context.registerInstaller(MODLOADER_STEAM_ID2, 29, testModLoaderSteam2, installModLoaderSteam2);
+  context.registerInstaller(MODLOADER_STEAM_ID3, 31, testModLoaderSteam3, installModLoaderSteam3);
+  context.registerInstaller(MLMOD_ID, 33, testMlMod, installMlMod);
+  context.registerInstaller(DATABIN_ID, 35, testDatabin, installDatabin);
+  context.registerInstaller(DATABINSUB_ID1, 37, testDatabinSub1, installDatabinSub1);
+  context.registerInstaller(DATABINSUB_ID23, 40, testDatabinSub23, installDatabinSub23);
 
-  context.once(() => {
-    // put code here that should be run (once) when Vortex starts up
+  context.once(() => { // put code here that should be run (once) when Vortex starts up
 
   });
   return true;
