@@ -470,8 +470,8 @@ function installUpkExplorer(files) {
 //Test Fallback installer for TFC Mods
 function testTfcMod(files, gameId) {
   const isExt = files.some(file => TFCMOD_EXTS.includes(path.extname(file).toLowerCase()));
-  const isXml = files.some(file => TFCMOD_FILES.includes(path.basename(file).toLowerCase()));
-  let supported = (gameId === spec.game.id) && ( isExt || isXml );
+  const isFile = files.some(file => TFCMOD_FILES.includes(path.basename(file).toLowerCase()));
+  let supported = (gameId === spec.game.id) && ( isExt || isFile );
 
   // Test for a mod installer.
   if (supported && files.find(file =>
@@ -488,9 +488,9 @@ function testTfcMod(files, gameId) {
 
 //Fallback installer for TFC Mods
 function installTfcMod(files, fileName) {
-  let modFile = files.find(file => TFCMOD_EXTS.includes(path.extname(file).toLowerCase()));
+  let modFile = files.find(file => TFCMOD_FILES.includes(path.basename(file).toLowerCase())); //try files first
   if (modFile === undefined) {
-    modFile = files.find(file => TFCMOD_FILES.includes(path.basename(file).toLowerCase()));
+    modFile = files.find(file => TFCMOD_EXTS.includes(path.extname(file).toLowerCase())); //exts fallback
   }
   const ROOT_PATH = path.basename(path.dirname(modFile));
   const MOD_NAME = path.basename(fileName);
@@ -733,7 +733,7 @@ function applyGame(context, gameSpec) {
   };
   context.registerGame(game);
 
-  //register mod types
+  //register mod types recursively
   (gameSpec.modTypes || []).forEach((type, idx) => {
     context.registerModType(type.id, modTypePriority(type.priority) + idx, (gameId) => {
       var _a;
@@ -741,6 +741,8 @@ function applyGame(context, gameSpec) {
         && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
     }, (game) => pathPattern(context.api, game, type.targetPath), () => Promise.resolve(false), { name: type.name });
   });
+
+  //register mod types explicitly
 
   //register mod installers
   context.registerInstaller(TFC_ID, 25, testTfc, installTfc);
