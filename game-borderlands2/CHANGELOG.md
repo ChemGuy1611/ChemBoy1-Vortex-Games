@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.3.4] - 2025-11-12
+
+- Improved TFC mod installer to better handle different packaging methods.
+
 ## [0.3.3] - 2025-09-21
 
 - Improved SDK mod installer to support both .py and .sdkmod files.

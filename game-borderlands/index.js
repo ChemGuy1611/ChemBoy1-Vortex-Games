@@ -2,8 +2,8 @@
 Name: Borderlands Vortex Extension
 Structure: UE2/3 Game (TFC Installer)
 Author: ChemBoy1
-Version: 0.2.1
-Date: 2025-09-23
+Version: 0.2.2
+Date: 2025-11-12
 /////////////////////////////////////////*/
 
 //Import libraries
@@ -62,7 +62,7 @@ const UPKEXPLORER_PATH = path.join('.');
 const TFCMOD_ID = `${GAME_ID}-tfcmod`;
 const TFCMOD_NAME = "TFC Mod";
 const TFCMOD_EXTS = ['.packagepatch', '.descriptor', '.tfcmapping', '.tfc', '.inipatch'];
-const TFCMOD_FILE = 'gameprofile.xml';
+const TFCMOD_FILES = ['gameprofile.xml', 'gameprofile.idremappings.xml', 'objectdescriptors.xml', 'packageextensions.xml', `texturepack`, 'game'];
 const TFCMOD_PATH = path.join(TFC_FOLDER, 'Mods');
 
 const SDK_ID = `${GAME_ID}-sdk`;
@@ -548,12 +548,11 @@ function installUpkExplorer(files) {
   return Promise.resolve({ instructions });
 }
 
-//Test Fallback installer for Void Mods
+//Test Fallback installer for TFC Mods
 function testTfcMod(files, gameId) {
-  const isMod = files.some(file => TFCMOD_EXTS.includes(path.extname(file).toLowerCase()));
-  //const isXml = files.some(file => (path.basename(file).toLowerCase() === TFCMOD_FILE));
-  //let supported = (gameId === spec.game.id) && ( isMod || isXml );
-  let supported = (gameId === spec.game.id) && isMod;
+  const isExt = files.some(file => TFCMOD_EXTS.includes(path.extname(file).toLowerCase()));
+  const isFile = files.some(file => TFCMOD_FILES.includes(path.basename(file).toLowerCase()));
+  let supported = (gameId === spec.game.id) && ( isExt || isFile );
 
   // Test for a mod installer.
   if (supported && files.find(file =>
@@ -568,14 +567,19 @@ function testTfcMod(files, gameId) {
   });
 }
 
-//Fallback installer for Void Mods
+//Fallback installer for TFC Mods
 function installTfcMod(files, fileName) {
-  const modFile = files.find(file => TFCMOD_EXTS.includes(path.extname(file).toLowerCase()));
+  let modFile = files.find(file => TFCMOD_FILES.includes(path.basename(file).toLowerCase())); //try files first
+  if (modFile === undefined) {
+    modFile = files.find(file => TFCMOD_EXTS.includes(path.extname(file).toLowerCase())); //exts fallback
+  }
   const ROOT_PATH = path.basename(path.dirname(modFile));
   const MOD_NAME = path.basename(fileName);
   let MOD_FOLDER = '.';
+  let idx = modFile.indexOf(`${ROOT_PATH}${path.sep}`);
   if (ROOT_PATH === '.') {
     MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
+    idx = modFile.indexOf(path.basename(modFile));
   }
   const setModTypeInstruction = { type: 'setmodtype', value: TFCMOD_ID };
   
@@ -588,7 +592,7 @@ function installTfcMod(files, fileName) {
     return {
       type: 'copy',
       source: file,
-      destination: path.join(MOD_FOLDER, file),
+      destination: path.join(MOD_FOLDER, file.substr(idx)),
     };
   });
   instructions.push(setModTypeInstruction);
@@ -800,19 +804,21 @@ function setupNotify(api) {
         title: 'More',
         action: (dismiss) => {
           api.showDialog('question', MESSAGE, {
-            text: `The ${MOD_NAME} tool downloaded by this extension requires setup.\n`
+            text: `TFC Installer:\n`
+                + `The ${MOD_NAME} tool downloaded by this extension requires setup.\n`
                 + `Please launch the tool and set the Game Folder.\n`
                 + `Mods to install with ${MOD_NAME} will be found at this folder: "[RootGameFolder]\\${TFC_FOLDER}\\Mods".\n`
                 + `If you don't see your mod's folder there, check in the root game folder.\n`              
                 + `You must use ${MOD_NAME} to install and uninstall those mods after installing with Vortex.\n`
+                + '\n'
           }, [
-            { label: 'Acknowledge', action: () => dismiss() },
             {
               label: 'Run TFC', action: () => {
                 runModManager(api);
                 dismiss();
               }
             },
+            { label: 'Continue', action: () => dismiss() },
             {
               label: 'Never Show Again', action: () => {
                 api.suppressNotification(NOTIF_ID);
@@ -909,10 +915,13 @@ async function setup(discovery, api, gameSpec) {
   GAME_PATH = discovery.path;
   STAGING_FOLDER = selectors.installPathForGame(state, gameSpec.game.id);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, gameSpec.game.id);
-  setupNotify(api);
+  //setupNotify(api);
   // ASYNC CODE //////////////////////////////////////////
   await downloadTfc(api, gameSpec);
   await downloadSdk(api, gameSpec);
+  await fs.ensureFileAsync(
+    path.join(GAME_PATH, TFCMOD_PATH, "TFC_Mods_Go_Here.txt")
+  );
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 
@@ -1002,7 +1011,6 @@ function main(context) {
     context.api.onAsync('did-deploy', async (profileId, deployment) => { // put code here that should be run (once) when Vortex starts up
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;
-
       return deployNotify(context.api);
     });
   });

@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.2.2] - 2025-11-12
+
+- Improved TFC mod installer to better handle different packaging methods.
+
 ## [0.2.1] - 2025-09-23
 
 - Added "-nostartupmovies" launch argument to all methods of launching the game - skips unskippable launch videos.
