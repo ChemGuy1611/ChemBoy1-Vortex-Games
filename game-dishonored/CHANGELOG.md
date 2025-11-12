@@ -1,9 +1,10 @@
 # Changelog
 
-## [0.5.5] - 2025-11-11
+## [0.6.0] - 2025-11-12
 
-- Improved TFC mod installer.
+- Improved TFC mod installer to handle different packaging methods.
 - Fixed game version detection for Xbox version.
+- Added installers for root folders ("DishonoredGame") and Movies files (.bik).
 
 ## [0.5.4] - 2025-09-18
 

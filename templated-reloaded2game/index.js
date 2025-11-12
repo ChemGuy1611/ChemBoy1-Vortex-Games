@@ -94,7 +94,7 @@ const MOD_PATH_DEFAULT = '.';
 const REQ_FILE = EXEC;
 const PARAMETERS_STRING = '';
 const PARAMETERS = [PARAMETERS_STRING]; //for Reloaded-II
-const MODTYPE_FOLDERS = [RELOADEDMOD_PATH, SAVE_PATH];
+let MODTYPE_FOLDERS = [RELOADEDMOD_PATH, SAVE_PATH];
 
 const spec = {
   "game": {
@@ -764,8 +764,7 @@ async function setup(discovery, api, gameSpec) {
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   // ASYNC CODE //////////////////////////////////////////
-  await fs.ensureDirWritableAsync(path.join(GAME_PATH, RELOADEDMODLOADER_PATH));
-  await fs.ensureDirWritableAsync(path.join(GAME_PATH, SAVE_PATH));
+  await modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
   await downloadModManager(api, gameSpec);
   //await downloadModLoader(api, gameSpec);
   return fs.ensureFileAsync(

@@ -184,7 +184,7 @@ const MOD_PATH_DEFAULT = PAK_PATH;
 const REQ_FILE = EPIC_CODE_NAME;
 const PARAMETERS_STRING = '';
 const PARAMETERS = [PARAMETERS_STRING];
-const MODTYPE_FOLDERS = [LOGICMODS_PATH, PAK_PATH];
+let MODTYPE_FOLDERS = [LOGICMODS_PATH, PAK_PATH];
 
 //Filled in from data above
 const spec = {
@@ -1691,8 +1691,8 @@ async function setup(discovery, api, gameSpec) {
   if (SIGBYPASS_REQUIRED === true) {
     await downloadSigBypass(api, gameSpec, GAME_VERSION);
   }
-  await modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
-  return fs.ensureDirWritableAsync(path.join(GAME_PATH, SCRIPTS_PATH));
+  MODTYPE_FOLDERS.push(SCRIPTS_PATH);
+  return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 
 //Let vortex know about the game
@@ -1824,9 +1824,9 @@ function applyGame(context, gameSpec) {
     { name: CONFIG_NAME }
   ); //*/
   context.registerModType(SAVE_ID, 62, 
-    async (gameId) => {
+    (gameId) => {
       GAME_PATH = getDiscoveryPath(context.api);
-      GAME_VERSION = await setGameVersion(context.api);
+      GAME_VERSION = setGameVersion(context.api);
       if (GAME_PATH !== undefined) {
         CHECK_DATA = checkPartitions(SAVEMOD_LOCATION, GAME_PATH);
       }

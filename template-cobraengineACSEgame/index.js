@@ -99,7 +99,7 @@ const MOD_PATH_DEFAULT = MOD_PATH;
 const REQ_FILE = EXEC;
 const PARAMETERS_STRING = '';
 const PARAMETERS = [PARAMETERS_STRING];
-const MODTYPE_FOLDERS = [MOD_PATH, LOCALISED_PATH, MOVIES_PATH];
+let MODTYPE_FOLDERS = [MOD_PATH, LOCALISED_PATH, MOVIES_PATH];
 
 const spec = {
   "game": {
@@ -669,7 +669,7 @@ async function setup(discovery, api, gameSpec) {
   // ASYNC CODE //////////////////////////////////////////
   await downloadACSE(api, gameSpec);
   await fs.ensureDirWritableAsync(SAVE_PATH);
-  return fs.ensureDirWritableAsync(path.join(GAME_PATH, LOCALISED_PATH));
+  return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 
 //Let Vortex know about the game

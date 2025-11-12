@@ -30,10 +30,11 @@ const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 const GAME_NAME = "XXX";
 const GAME_NAME_SHORT = "XXX";
 const EPIC_CODE_NAME = "XXX";
-const ROOT_FOLDERS = [EPIC_CODE_NAME, 'Engine', 'Binaries', 'DLC'];
+const ROOT_FOLDERS = [EPIC_CODE_NAME, 'Engine', 'Binaries'];
+const ROOTSUB_FOLDERS = ['Config', 'CookedPCConsole', 'DLC', 'Localization', 'Movies'];
 const BITS = '32'; //32 or 64
 const EXEC_NAME = 'XXX.exe';
-const DATA_FOLDER = path.join('XXX', 'XXX');
+const DATA_FOLDER = path.join('XXX', EPIC_CODE_NAME);
 
 const EXEC_XBOX = 'gamelaunchhelper.exe';
 const BINARIES_PATH = path.join("Binaries", `Win${BITS}`);
@@ -63,11 +64,20 @@ const UPKEXPLORER_PATH = path.join('.');
 const TFCMOD_ID = `${GAME_ID}-tfcmod`;
 const TFCMOD_NAME = "TFC Mod";
 const TFCMOD_EXTS = ['.packagepatch', '.descriptor', '.tfcmapping', '.tfc', '.inipatch'];
-const TFCMOD_FILES = ['gameprofile.xml', 'gameprofile.idremappings.xml', 'objectdescriptors.xml', 'packageextensions.xml'];
+const TFCMOD_FILES = ['gameprofile.xml', 'gameprofile.idremappings.xml', 'objectdescriptors.xml', 'packageextensions.xml', `texturepack`, 'game'];
 const TFCMOD_PATH = path.join(TFC_FOLDER, 'Mods');
+
+const MOVIES_ID = `${GAME_ID}-movies`;
+const MOVIES_NAME = "Movies Mod";
+const MOVIES_PATH = path.join(EPIC_CODE_NAME, 'Movies');
+const MOVIES_EXTS = ['.bik'];
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Folder";
+
+const ROOTSUB_ID = `${GAME_ID}-rootsub`;
+const ROOTSUB_NAME = "Root Sub Folder";
+const ROOTSUB_PATH = path.join(EPIC_CODE_NAME);
 
 const BINARIES_ID = `${GAME_ID}-binaries`;
 const BINARIES_NAME = "Binaries (Engine Injector)";
@@ -79,7 +89,7 @@ const MOD_PATH_DEFAULT = '.';
 const REQ_FILE = EXEC;
 const PARAMETERS_STRING = '';
 const PARAMETERS = [PARAMETERS_STRING];
-const MODTYPE_FOLDERS = [TFCMOD_PATH, BINARIES_PATH];
+let MODTYPE_FOLDERS = [TFCMOD_PATH, BINARIES_PATH, MOVIES_PATH];
 
 //Filled in from the data above
 const spec = {
@@ -124,11 +134,23 @@ const spec = {
       "priority": "high",
       "targetPath": `{gamePath}`
     },
+    { 
+      "id": ROOTSUB_ID,
+      "name": ROOTSUB_NAME,
+      "priority": "high",
+      "targetPath": path.join('{gamePath}', ROOTSUB_PATH)
+    },
     {
       "id": BINARIES_ID,
       "name": BINARIES_NAME,
       "priority": "high",
       "targetPath": path.join('{gamePath}', BINARIES_PATH)
+    },
+    { 
+      "id": MOVIES_ID,
+      "name": MOVIES_NAME,
+      "priority": "high",
+      "targetPath": path.join('{gamePath}', MOVIES_PATH)
     },
     {
       "id": TFC_ID,
@@ -504,8 +526,10 @@ function installTfcMod(files, fileName) {
   const ROOT_PATH = path.basename(path.dirname(modFile));
   const MOD_NAME = path.basename(fileName);
   let MOD_FOLDER = '.';
+  let idx = modFile.indexOf(`${ROOT_PATH}${path.sep}`);
   if (ROOT_PATH === '.') {
     MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
+    idx = modFile.indexOf(path.basename(modFile));
   }
   const setModTypeInstruction = { type: 'setmodtype', value: TFCMOD_ID };
   
@@ -518,7 +542,7 @@ function installTfcMod(files, fileName) {
     return {
       type: 'copy',
       source: file,
-      destination: path.join(MOD_FOLDER, file),
+      destination: path.join(MOD_FOLDER, file.substr(idx)),
     };
   });
   instructions.push(setModTypeInstruction);
@@ -528,7 +552,8 @@ function installTfcMod(files, fileName) {
 //Installer test for Root folder files
 function testRoot(files, gameId) {
   const isMod = files.some(file => ROOT_FOLDERS.includes(path.basename(file)));
-  let supported = (gameId === spec.game.id) && isMod;
+  const isSub = files.some(file => ROOTSUB_FOLDERS.includes(path.basename(file)));
+  let supported = (gameId === spec.game.id) && ( isMod || isSub );
 
   // Test for a mod installer.
   if (supported && files.find(file =>
@@ -545,17 +570,60 @@ function testRoot(files, gameId) {
 
 //Installer install Root folder files
 function installRoot(files) {
-  const modFile = files.find(file => ROOT_FOLDERS.includes(path.basename(file)));
+  let modFile = files.find(file => ROOT_FOLDERS.includes(path.basename(file)));
+  let setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
+  if (modFile === undefined) {
+    modFile = files.find(file => ROOTSUB_FOLDERS.includes(path.basename(file)));
+    setModTypeInstruction = { type: 'setmodtype', value: ROOTSUB_ID };
+  }
   const ROOT_IDX = `${path.basename(modFile)}${path.sep}`
   const idx = modFile.indexOf(ROOT_IDX);
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
     ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
   );
 
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//test whether to use mod installer
+function testMovies(files, gameId) {
+  const isMod = files.some(file => MOVIES_EXTS.includes(path.extname(file).toLowerCase()));
+  let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//mod installer instructions
+function installMovies(files) {
+  const modFile = files.find(file => MOVIES_EXTS.includes(path.extname(file).toLowerCase()));
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: MOVIES_ID };
+
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
   const instructions = filtered.map(file => {
     return {
       type: 'copy',
@@ -590,13 +658,13 @@ function setupNotify(api) {
                 + `If you don't see your mod's folder there, check in the root game folder.\n`              
                 + `You must use ${MOD_NAME} to install and uninstall those mods after installing with Vortex.\n`
           }, [
-            { label: 'Acknowledge', action: () => dismiss() },
             {
               label: 'Run TFC', action: () => {
                 runModManager(api);
                 dismiss();
               }
             },
+            { label: 'Continue', action: () => dismiss() },
             {
               label: 'Never Show Again', action: () => {
                 api.suppressNotification(NOTIF_ID);
@@ -609,7 +677,6 @@ function setupNotify(api) {
     ],
   });    
 }
-
 
 //Notify User to run TFC Installer after deployment
 function deployNotify(api) {
@@ -720,9 +787,12 @@ async function setup(discovery, api, gameSpec) {
   GAME_PATH = discovery.path;
   STAGING_FOLDER = selectors.installPathForGame(state, gameSpec.game.id);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, gameSpec.game.id);
-  setupNotify(api);
+  //setupNotify(api);
   // ASYNC CODE //////////////////////////////////////////
   await downloadTfc(api, gameSpec);
+  await fs.ensureFileAsync(
+    path.join(GAME_PATH, TFCMOD_PATH, "TFC_Mods_Go_Here.txt")
+  );
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 
@@ -758,6 +828,7 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(UPKEXPLORER_ID, 27, testUpkExplorer, installUpkExplorer);
   context.registerInstaller(TFCMOD_ID, 29, testTfcMod, installTfcMod);
   context.registerInstaller(ROOT_ID, 31, testRoot, installRoot);
+  context.registerInstaller(MOVIES_ID, 33, testMovies, installMovies);
 
   //register actions
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {

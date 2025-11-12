@@ -138,7 +138,7 @@ if (!customLoader) {
 }
 const PAR_STRING2 = '--setup-create-override-cfg';
 const PARAMETERS = [PARAMETERS_STRING];
-const MODTYPE_FOLDERS = [MOD_PATH, 'mods'];
+let MODTYPE_FOLDERS = [MOD_PATH, 'mods'];
 
 const spec = {
   "game": {

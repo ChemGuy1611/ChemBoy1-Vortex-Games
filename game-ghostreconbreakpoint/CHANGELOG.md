@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.2.5] - 2025-11-12
+
+- Quickfix to handle more edge cases with .forge folder rename dialog.
+
 ## [0.2.4] - 2025-11-09
 
 - Improved handling of user input in .forge folder rename dialog.

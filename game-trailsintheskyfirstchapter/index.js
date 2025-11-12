@@ -12,7 +12,6 @@ const path = require('path');
 const template = require('string-template');
 const winapi = require('winapi-bindings');
 const fsPromises = require('fs/promises');
-const { readFile } = require('fs');
 //const turbowalk = require('turbowalk');
 
 const USER_HOME = util.getVortexPath("home");
@@ -103,9 +102,6 @@ const DESTINATION_PACTOOL_PATH = path.join(PAC_PATH, PACTOOL_PY);
 let pythonInstalled = false;
 const runInShell = false;
 const BAK_EXT = '.bak';
-const CLEANUP_FOLDERS = [
-  DATA_FOLDER
-];
 
 const MOD_PATH_DEFAULT = '.';
 const REQ_FILE = EXEC;
@@ -524,7 +520,7 @@ async function pacSetup(api) { //run through setup notification or button
   const NOTIF_ID_SUC = `${GAME_ID}-gamesetupsuccess`;
   api.sendNotification({ //notification indicating setup process
     id: NOTIF_ID,
-    message: `Extracting and Renaming files and copying folders to game root. This will take a while.`,
+    message: `Extracting and Renaming ${PAC_EXT} files and copying data folders to game root. This will take a while.`,
     type: 'activity',
     noDismiss: true,
     allowSuppress: false,
@@ -534,9 +530,9 @@ async function pacSetup(api) { //run through setup notification or button
   await purge(api);
   let EXTRACTED = await pacExtract(GAME_PATH, api);
   if (EXTRACTED) { //copy folder and rename files
-    log('warn', `Extraction of all ${PAC_EXT} files complete. Copying "${DATA_FOLDER}" to game root...`);
+    log('warn', `Extraction of all ${PAC_EXT} files complete. Copying data folders to game root...`);
     await foldersCopy(GAME_PATH, WORK_PATH);
-    log('warn', `Copy of "${DATA_FOLDER}" to game root complete. Renaming files...`);
+    log('warn', `Copy of data folders to game root complete. Renaming files...`);
     try {
       let RENAME_FILES = await fs.readdirAsync(WORK_PATH);
       RENAME_FILES = RENAME_FILES.filter(file => file.endsWith(PAC_EXT));
@@ -553,7 +549,7 @@ async function pacSetup(api) { //run through setup notification or button
     api.dismissNotification(NOTIF_ID);
     api.sendNotification({ //notification indicating success
       id: NOTIF_ID_SUC,
-      message: `Successfully Extracted and Renamed ${PAC_EXT} Files and copied "${DATA_FOLDER}" to game root.`,
+      message: `Successfully Extracted and Renamed ${PAC_EXT} files and copied data folders to game root.`,
       type: 'success',
       noDismiss: false,
       allowSuppress: true,
@@ -581,10 +577,8 @@ async function pacCleanup(api) {
   GAME_PATH = await getDiscoveryPath(api);
   const WORK_PATH = path.join(GAME_PATH, PAC_PATH);
   try { //delete extracted folder and restore file names
-    //delete extracted folders in game root and pac path
-    log('warn', `Cleaning up extracted folders...`);
+    log('warn', `Cleaning up extracted data folders...`);
     await foldersCleanup(GAME_PATH, WORK_PATH);
-    //restore file names
     let RESTORE_FILES = await fs.readdirAsync(WORK_PATH);
     RESTORE_FILES = RESTORE_FILES.filter(file => file.endsWith(BAK_EXT));
     await filesRestore(WORK_PATH, RESTORE_FILES);
@@ -601,7 +595,7 @@ async function pacCleanup(api) {
   api.dismissNotification(NOTIF_ID);
   api.sendNotification({ //notification indicating success
     id: NOTIF_ID_SUC,
-    message: `Successfully Cleaned Extracted game data and restored ${PAC_EXT} file names.`,
+    message: `Successfully Cleaned Extracted game data folders and restored ${PAC_EXT} file names.`,
     type: 'success',
     noDismiss: false,
     allowSuppress: true,
@@ -614,7 +608,7 @@ async function pacCleanupPurge(api) {
   const NOTIF_ID = `${GAME_ID}-gamecleanup`
   api.sendNotification({ //notification indicating cleanup process
     id: NOTIF_ID,
-    message: `Cleaning up extracted "${DATA_FOLDER}" folder and restoring ${PAC_EXT} file names. This will take a few seconds.`,
+    message: `Cleaning up extracted data folders and restoring ${PAC_EXT} file names. This will take a few seconds.`,
     type: 'activity',
     noDismiss: true,
     allowSuppress: false,
@@ -622,9 +616,7 @@ async function pacCleanupPurge(api) {
   GAME_PATH = await getDiscoveryPath(api);
   const WORK_PATH = path.join(GAME_PATH, PAC_PATH);
   try { //delete extracted folders and restore file names
-    //delete extracted folders in game root and pac path
     await foldersCleanup(GAME_PATH, WORK_PATH);
-    //restore file names
     let RESTORE_FILES = await fs.readdirAsync(WORK_PATH);
     RESTORE_FILES = RESTORE_FILES.filter(file => file.endsWith(BAK_EXT));
     await filesRestore(WORK_PATH, RESTORE_FILES);

@@ -55,7 +55,7 @@ const MOD_PATH_DEFAULT = MOD_PATH;
 const REQ_FILE = EXEC;
 const PARAMETERS_STRING = '';
 const PARAMETERS = [PARAMETERS_STRING];
-const MODTYPE_FOLDERS = [DATASUB_PATH];
+let MODTYPE_FOLDERS = [DATASUB_PATH];
 
 const spec = {
   "game": {

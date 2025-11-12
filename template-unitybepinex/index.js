@@ -103,7 +103,7 @@ const REQ_FILE = EXEC;
 const PARAMETERS_STRING = '';
 const PARAMETERS = [PARAMETERS_STRING];
 const IGNORE_CONFLICTS = [path.join('**', 'manifest.json'), path.join('**', 'icon.png'), path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
-const MODTYPE_FOLDERS = [BEPMOD_PATH, ASSEMBLY_PATH, ASSETS_PATH];
+let MODTYPE_FOLDERS = [BEPMOD_PATH, ASSEMBLY_PATH, ASSETS_PATH];
 
 //Filled in from info above
 const spec = {

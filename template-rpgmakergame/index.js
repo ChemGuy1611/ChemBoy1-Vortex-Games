@@ -113,7 +113,7 @@ const REQ_FILE = EXEC; //NAME_FOLDER or EXEC
 const PARAMETERS_STRING = '';
 const PARAMETERS = [PARAMETERS_STRING];
 const IGNORE_CONFLICTS = [path.join('**', 'instructions.txt'), path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
-const MODTYPE_FOLDERS = [JSFILE_PATH, JSON_PATH];
+let MODTYPE_FOLDERS = [JSFILE_PATH, JSON_PATH];
 
 const spec = {
   "game": {

@@ -186,7 +186,8 @@ const MOD_PATH_DEFAULT = ".";
 const REQ_FILE = EXEC;
 const PARAMETERS_STRING = '';
 const PARAMETERS = [PARAMETERS_STRING];
-const MODTYPE_FOLDERS = [ASSEMBLY_PATH, ASSETS_PATH, BEPINEX_PATCHERS_PATH, BEPINEX_PLUGINS_PATH, BEPINEX_CONFIG_PATH, MELON_PLUGINS_PATH, MELON_MODS_PATH, MELON_CONFIG_PATH];
+let MODTYPE_FOLDERS = [ASSEMBLY_PATH, ASSETS_PATH, BEPINEX_PATCHERS_PATH, BEPINEX_PLUGINS_PATH, BEPINEX_CONFIG_PATH, MELON_PLUGINS_PATH, MELON_MODS_PATH, MELON_CONFIG_PATH];
+
 const IGNORE_CONFLICTS = [path.join('**', 'manifest.json'), path.join('**', 'icon.png'), path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
 
 //Filled in from info above

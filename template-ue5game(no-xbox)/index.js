@@ -175,7 +175,7 @@ const MOD_PATH_DEFAULT = PAK_PATH;
 const PARAMETERS_STRING = '';
 const PARAMETERS = [PARAMETERS_STRING];
 const REQ_FILE = EPIC_CODE_NAME;
-const MODTYPE_FOLDERS = [LOGICMODS_PATH, SCRIPTS_PATH, PAK_PATH];
+let MODTYPE_FOLDERS = [LOGICMODS_PATH, SCRIPTS_PATH, PAK_PATH];
 
 //Filled in from data above
 const spec = {
@@ -1579,7 +1579,6 @@ async function setup(discovery, api, gameSpec) {
   if (SIGBYPASS_REQUIRED === true) {
     await downloadSigBypass(api, gameSpec);
   }
-  //await fs.ensureDirWritableAsync(path.join(GAME_PATH, MENU_PATH));
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 

@@ -1,8 +1,8 @@
 /*////////////////////////////////////
 Name: Dishonored 2 Vortex Extension
 Author: ChemBoy1
-Version: 0.6.0
-Date: 2025-11-10
+Version: 0.6.1
+Date: 2025-11-12
 ////////////////////////////////////*/
 
 //Import libraries
@@ -577,7 +577,6 @@ function installVideo(files) {
       destination: path.join(file.substr(idx)),
     };
   });
-
   instructions.push(setModTypeInstruction);
   return Promise.resolve({ instructions });
 }
@@ -826,6 +825,9 @@ async function setup(discovery, api, gameSpec) {
   if (GAME_VERSION !== 'xbox') {
     await fs.ensureDirWritableAsync(SAVE_PATH);
   } //*/
+  await fs.ensureFileAsync(
+    path.join(GAME_PATH, VOIDMOD_PATH, "VoidInstaller_Mods_Go_Here.txt")
+  );
   await fs.ensureDirWritableAsync(CONFIG_PATH);
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
@@ -858,7 +860,7 @@ function applyGame(context, gameSpec) {
 
   //* register mod types explicitly
   context.registerModType(SAVE_ID, 62, 
-    async (gameId) => {
+    (gameId) => {
       /*GAME_PATH = getDiscoveryPath(context.api);
       GAME_VERSION = await setGameVersion(GAME_PATH);
       if (GAME_PATH !== undefined) {
@@ -933,8 +935,7 @@ function applyGame(context, gameSpec) {
 //main function
 function main(context) {
   applyGame(context, spec);
-  context.once(() => {
-    // put code here that should be run (once) when Vortex starts up
+  context.once(() => { // put code here that should be run (once) when Vortex starts up
     context.api.onAsync('did-deploy', async (profileId, deployment) => {
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;
