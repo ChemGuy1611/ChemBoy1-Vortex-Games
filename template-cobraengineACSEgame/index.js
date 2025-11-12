@@ -41,6 +41,7 @@ let GAME_PATH = null;
 let GAME_VERSION = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
+const EXEC_XBOX = 'gamelaunchhelper.exe';
 const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 //Info for mod types and installers
@@ -274,24 +275,34 @@ function getExecutable(discoveryPath) {
   return EXEC;
 }
 
+function statCheckSync(gamePath, file) {
+  try {
+    fs.statSync(path.join(gamePath, file));
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}
+async function statCheckAsync(gamePath, file) {
+  try {
+    await fs.statAsync(path.join(gamePath, file));
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}
 //Get correct game version
-function setGameVersion(gamePath) {
-  const isCorrectExec = (exec) => {
-    try {
-      fs.statSync(path.join(gamePath, exec));
-      return true;
-    }
-    catch (err) {
-      return false;
-    }
-  };
-  if (isCorrectExec(EXEC_XBOX)) {
+async function setGameVersion(gamePath) {
+  const CHECK = await statCheckAsync(gamePath, EXEC_XBOX);
+  if (CHECK) {
     GAME_VERSION = 'xbox';
     return GAME_VERSION;
-  };
-
-  GAME_VERSION = 'default';
-  return GAME_VERSION;
+  } else {
+    GAME_VERSION = 'default';
+    return GAME_VERSION;
+  }
 }
 
 const getDiscoveryPath = (api) => { //get the game's discovered path

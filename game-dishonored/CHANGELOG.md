@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.5.5] - 2025-11-11
+
+- Improved TFC mod installer.
+- Fixed game version detection for Xbox version.
+
 ## [0.5.4] - 2025-09-18
 
 - Improved TFC downloader to avoid potential issues.

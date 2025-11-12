@@ -12,7 +12,6 @@ const path = require('path');
 const template = require('string-template');
 const { download, findModByFile, findDownloadIdByFile, resolveVersionByPattern, testRequirementVersion } = require('./downloader');
 const fsPromises = require('fs/promises');
-const { get } = require('http');
 
 //Specify all information about the game
 const STEAMAPP_ID = "1888930";

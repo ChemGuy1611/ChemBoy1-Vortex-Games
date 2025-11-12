@@ -1,10 +1,10 @@
-/*
+/*////////////////////////////////////////////////
 Name: A Plague Tale Requiem Vortex Extension
 Structure: Basic Game (XBOX Integrated)
 Author: ChemBoy1
-Version: 1.2.0
-Date: 08/02/2024
-*/
+Version: 1.3.0
+Date: 2025-11-11
+////////////////////////////////////////////////*/
 
 //Import libraries
 const { actions, fs, util, selectors, log } = require('vortex-api');
@@ -13,14 +13,14 @@ const template = require('string-template');
 const { parseStringPromise } = require('xml2js');
 
 //Specify all information about the game
+const GAME_ID = "aplaguetalerequiem";
 const STEAMAPP_ID = "1182900";
 const EPICAPP_ID = ""; // not on egdata.app yet
 const GOGAPP_ID = "1552771812";
 const XBOXAPP_ID = "FocusHomeInteractiveSA.APlagueTaleRequiem-Windows";
 const XBOXEXECNAME = "Game";
-const GAME_ID = "aplaguetalerequiem";
 const GAME_NAME = "A Plague Tale: Requiem";
-const GAME_NAME_SHORT = "A Plague Tale: Requiem";
+const GAME_NAME_SHORT = "APT Requiem";
 const MOD_PATH = ".";
 const COMMON_FILE = path.join('DATAS', 'P_AMICIA.DPC');
 
@@ -32,12 +32,45 @@ const gameFinderQuery = {
 };
 
 //Information for setting the executable and variable paths based on the game store version
-let GAME_VERSION = '';
 const requiredFiles = [COMMON_FILE];
 const EXEC = "APlagueTaleRequiem_x64.exe";
 const EPIC_EXEC = "APlagueTaleRequiem_x64.exe";
-const XBOX_EXEC = "APT2_WinStore.x64.Submission.exe";
+const EXEC_XBOX_ALT = "gamelaunchhelper.exe";
+const EXEC_XBOX = "APT2_WinStore.x64.Submission.exe";
+
+let GAME_VERSION = '';
+let GAME_PATH = '';
+let STAGING_FOLDER = '';
+let DOWNLOAD_FOLDER = '';
 const APPMANIFEST_FILE = 'appxmanifest.xml';
+
+/* Config and Saves
+const CONFIG_ID = `${GAME_ID}-config`;
+const CONFIG_NAME = "Config";
+const CONFIG_PATH = path.join(DOCUMENTS, DATA_FOLDER, CONFIG_FOLDERNAME);
+const CONFIG_EXTS = [".ini"];
+const CONFIG_FILES = ["XXX"];
+
+const SAVE_ID = `${GAME_ID}-save`;
+const SAVE_NAME = "Save";
+const SAVE_FOLDER = path.join(SAVEMOD_LOCATION, DATA_FOLDER, SAVE_FOLDERNAME);
+let USERID_FOLDER = "";
+function isDir(folder, file) {
+  const stats = fs.statSync(path.join(folder, file));
+  return stats.isDirectory();
+}
+try {
+  const SAVE_ARRAY = fs.readdirSync(SAVE_FOLDER);
+  USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_FOLDER, entry));
+} catch(err) {
+  USERID_FOLDER = "";
+}
+if (USERID_FOLDER === undefined) {
+  USERID_FOLDER = "";
+} 
+const SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
+const SAVE_EXTS = [".sav"];
+//*/
 
 //This information will be filled in from the data above
 const spec = {
@@ -63,13 +96,43 @@ const spec = {
     }
   },
   "modTypes": [
-
+    /*{
+      "id": CONFIG_ID,
+      "name": CONFIG_NAME,
+      "priority": "high",
+      "targetPath": CONFIG_PATH
+    }, //*/
   ],
 };
 
 //3rd party tools and launchers
 const tools = [
-  
+  {
+    id: `${GAME_ID}-customlaunch`,
+    name: `Custom Launch`,
+    logo: `exec.png`,
+    executable: () => EXEC,
+    requiredFiles: [EXEC],
+    detach: true,
+    relative: true,
+    exclusive: true,
+    shell: true,
+    //defaultPrimary: true,
+    parameters: PARAMETERS,
+  }, //*/
+  {
+    id: `${GAME_ID}-xboxcustomlaunch`,
+    name: `Custom Launch`,
+    logo: `exec.png`,
+    executable: () => EXEC_XBOX,
+    requiredFiles: [EXEC_XBOX],
+    detach: true,
+    relative: true,
+    exclusive: true,
+    shell: true,
+    //defaultPrimary: true,
+    parameters: PARAMETERS,
+  }, //*/
 ];
 
 // BASIC EXTENSION FUNCTIONS ///////////////////////////////////////////////////
@@ -101,7 +164,6 @@ function makeGetModPath(api, gameSpec) {
 }
 
 async function requiresLauncher(gamePath, store) {
-
   if (store === 'xbox') {
       return Promise.resolve({
           launcher: 'xbox',
@@ -111,7 +173,7 @@ async function requiresLauncher(gamePath, store) {
           },
       });
   }
-
+  /*
   if (store === 'epic') {
     return Promise.resolve({
         launcher: 'epic',
@@ -119,14 +181,12 @@ async function requiresLauncher(gamePath, store) {
             appId: EPICAPP_ID,
         },
     });
-  }
-  
+  } //*/
   return Promise.resolve(undefined);
 }
 
 //Get the executable and add to required files
 function getExecutable(discoveryPath) {
-
   const isCorrectExec = (exec) => {
     try {
       fs.statSync(path.join(discoveryPath, exec));
@@ -136,13 +196,8 @@ function getExecutable(discoveryPath) {
       return false;
     }
   };
-
-  if (isCorrectExec(XBOX_EXEC)) {
-    return XBOX_EXEC;
-  };
-
-  if (isCorrectExec(EXEC)) {
-    return EXEC;
+  if (isCorrectExec(EXEC_XBOX)) {
+    return EXEC_XBOX;
   };
   /*
   if (isCorrectExec(EPIC_EXEC)) {
@@ -151,25 +206,34 @@ function getExecutable(discoveryPath) {
   return EXEC;
 }
 
+function statCheckSync(gamePath, file) {
+  try {
+    fs.statSync(path.join(gamePath, file));
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}
+async function statCheckAsync(gamePath, file) {
+  try {
+    await fs.statAsync(path.join(gamePath, file));
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}
 //Get correct game version
 async function setGameVersion(gamePath) {
-  const isCorrectExec = (exec) => {
-    try {
-      fs.statSync(path.join(gamePath, exec));
-      return true;
-    }
-    catch (err) {
-      return false;
-    }
-  };
-
-  if (isCorrectExec(EXEC_XBOX)) {
+  const CHECK = await statCheckAsync(gamePath, EXEC_XBOX);
+  if (CHECK) {
     GAME_VERSION = 'xbox';
     return GAME_VERSION;
-  };
-
-  GAME_VERSION = 'default';
-  return GAME_VERSION;
+  } else {
+    GAME_VERSION = 'default';
+    return GAME_VERSION;
+  }
 }
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////

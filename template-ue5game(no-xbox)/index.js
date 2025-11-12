@@ -30,6 +30,8 @@ const EXEC_EPIC = "XXX_EGS.exe";
 const EXEC_GOG = "XXXGOG.exe";
 const EXEC_DEMO = "XXXDemo.exe";
 
+const hasXbox = false; //toggle for Xbox version logic (to unify templates)
+
 //Unreal Engine specific
 const EPIC_CODE_NAME = "XXX";
 const SIGBYPASS_REQUIRED = false; //set true if there are .sig files in the Paks folder
@@ -69,6 +71,8 @@ let CHECK_DOCS = false; //secondary same as above (if save and config are in dif
 let STAGING_FOLDER = ''; //Vortex staging folder path
 let DOWNLOAD_FOLDER = ''; //Vortex download folder path
 let GAME_VERSION = '';
+const EXEC_XBOX = 'gamelaunchhelper.exe';
+const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 //Unreal Engine Game Data
 const UNREALDATA = {
@@ -411,6 +415,36 @@ function getShippingExe(gamePath) {
     SHIPPING_EXE = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_DEMO}-Shipping.exe`);
     return SHIPPING_EXE;
   };
+}
+
+function statCheckSync(gamePath, file) {
+  try {
+    fs.statSync(path.join(gamePath, file));
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}
+async function statCheckAsync(gamePath, file) {
+  try {
+    await fs.statAsync(path.join(gamePath, file));
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}
+//Get correct game version
+async function setGameVersion(gamePath) {
+  const CHECK = await statCheckAsync(gamePath, EXEC_XBOX);
+  if (CHECK) {
+    GAME_VERSION = 'xbox';
+    return GAME_VERSION;
+  } else {
+    GAME_VERSION = 'default';
+    return GAME_VERSION;
+  }
 }
 
 //Get correct config path for game version

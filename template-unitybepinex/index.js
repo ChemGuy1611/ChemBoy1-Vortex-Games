@@ -293,7 +293,7 @@ function getExecutable(discoveryPath) {
 }
 
 //Get correct save folder for game version
-function getSavePath(api) {
+async function getSavePath(api) {
   GAME_PATH = getDiscoveryPath(api);
   const isCorrectExec = (exec) => {
     try {
@@ -314,25 +314,34 @@ function getSavePath(api) {
   };
 } //*/
 
-//Get correct executable, add to required files, set paths for mod types
-async function setGameVersion(discoveryPath) {
-  const isCorrectExec = (exec) => {
-    try {
-      fs.statSync(path.join(discoveryPath, exec));
-      return true;
-    }
-    catch (err) {
-      return false;
-    }
-  };
-  if (isCorrectExec(EXEC_XBOX)) {
+function statCheckSync(gamePath, file) {
+  try {
+    fs.statSync(path.join(gamePath, file));
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}
+async function statCheckAsync(gamePath, file) {
+  try {
+    await fs.statAsync(path.join(gamePath, file));
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}
+//Get correct game version
+async function setGameVersion(gamePath) {
+  const CHECK = await statCheckAsync(gamePath, EXEC_XBOX);
+  if (CHECK) {
     GAME_VERSION = 'xbox';
     return GAME_VERSION;
-  }
-  else { 
-    GAME_VERSION = 'steam';
+  } else {
+    GAME_VERSION = 'default';
     return GAME_VERSION;
-  };
+  }
 }
 
 const getDiscoveryPath = (api) => { //get the game's discovered path

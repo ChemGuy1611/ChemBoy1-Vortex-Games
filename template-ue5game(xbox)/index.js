@@ -533,37 +533,47 @@ async function setGameVersion(api) {
   };
 }
 
+function statCheckSync(gamePath, file) {
+  try {
+    fs.statSync(path.join(gamePath, file));
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}
+async function statCheckAsync(gamePath, file) {
+  try {
+    await fs.statAsync(path.join(gamePath, file));
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}
+
 //Get correct game version
 async function setGameVersionPath(gamePath) {
-  const isCorrectExec = (exec) => {
-    try {
-      fs.statSync(path.join(gamePath, exec));
-      return true;
-    }
-    catch (err) {
-      return false;
-    }
-  };
-  if (isCorrectExec(EXEC_XBOX)) {
+  if (await statCheckAsync(gamePath, EXEC_XBOX)) {
     GAME_VERSION = 'xbox';
     return GAME_VERSION;
   };
-  if (isCorrectExec(EXEC_DEFAULT)) {
+  if (await statCheckAsync(gamePath, EXEC_DEFAULT)) {
     GAME_VERSION = 'steam';
     return GAME_VERSION;
   };
-  if (isCorrectExec(EXEC_EPIC)) {
+  if (await statCheckAsync(gamePath, EXEC_EPIC)) {
     GAME_VERSION = 'epic';
     return GAME_VERSION;
   };
-  if (isCorrectExec(EXEC_GOG)) {
+  if (await statCheckAsync(gamePath, EXEC_GOG)) {
     GAME_VERSION = 'gog';
     return GAME_VERSION;
   };
-  if (isCorrectExec(EXEC_DEMO)) {
+  if (await statCheckAsync(gamePath, EXEC_DEMO)) {
     GAME_VERSION = 'demo';
     return GAME_VERSION;
-  };
+  }; //*/
 }
 
 const getDiscoveryPath = (api) => {
@@ -1046,7 +1056,7 @@ function configInstallerNotify(api) {
 function testSave(api, files, gameId) {
   const isMod = files.some(file => (path.extname(file).toLowerCase() === SAVE_EXT));
   GAME_VERSION = setGameVersion(api);
-  const TEST = (GAME_VERSION === 'steam') || (GAME_VERSION === 'epic');
+  const TEST = SAVE_COMPAT_VERSIONS.includes(GAME_VERSION);
   let supported = (gameId === spec.game.id) && isMod && TEST;
   //let supported = (gameId === spec.game.id) && isMod;
 
@@ -1814,9 +1824,9 @@ function applyGame(context, gameSpec) {
     { name: CONFIG_NAME }
   ); //*/
   context.registerModType(SAVE_ID, 62, 
-    (gameId) => {
+    async (gameId) => {
       GAME_PATH = getDiscoveryPath(context.api);
-      GAME_VERSION = setGameVersion(context.api);
+      GAME_VERSION = await setGameVersion(context.api);
       if (GAME_PATH !== undefined) {
         CHECK_DATA = checkPartitions(SAVEMOD_LOCATION, GAME_PATH);
       }

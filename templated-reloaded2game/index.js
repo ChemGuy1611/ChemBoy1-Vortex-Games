@@ -218,25 +218,34 @@ async function requiresLauncher(gamePath, store) {
   return Promise.resolve(undefined);
 }
 
-//Get correct executable, add to required files, set paths for mod types
-async function setGameVersion(discoveryPath) {
-  const isCorrectExec = (exec) => {
-    try {
-      fs.statSync(path.join(discoveryPath, exec));
-      return true;
-    }
-    catch (err) {
-      return false;
-    }
-  };
-
-  if (isCorrectExec(EXEC_XBOX)) {
+function statCheckSync(gamePath, file) {
+  try {
+    fs.statSync(path.join(gamePath, file));
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}
+async function statCheckAsync(gamePath, file) {
+  try {
+    await fs.statAsync(path.join(gamePath, file));
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}
+//Get correct game version
+async function setGameVersion(gamePath) {
+  const CHECK = await statCheckAsync(gamePath, EXEC_XBOX);
+  if (CHECK) {
     GAME_VERSION = 'xbox';
     return GAME_VERSION;
+  } else {
+    GAME_VERSION = 'steam';
+    return GAME_VERSION;
   }
-
-  GAME_VERSION = 'steam';
-  return GAME_VERSION;
 }
 
 const getDiscoveryPath = (api) => {

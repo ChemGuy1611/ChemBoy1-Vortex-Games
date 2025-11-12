@@ -358,7 +358,7 @@ async function setGameVersion(gamePath) {
     return GAME_VERSION;
   } else {
     GAME_VERSION = 'default';
-  return GAME_VERSION;
+    return GAME_VERSION;
   }
 }
 

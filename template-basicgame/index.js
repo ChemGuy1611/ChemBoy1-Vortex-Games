@@ -65,7 +65,7 @@ const BINARIES_NAME = "Binaries (Engine Injector)";
 const CONFIG_ID = `${GAME_ID}-config`;
 const CONFIG_NAME = "Config";
 const CONFIG_PATH = path.join(CONFIGMOD_LOCATION, DATA_FOLDER, CONFIG_FOLDERNAME);
-const CONFIG_EXT = ".ini";
+const CONFIG_EXTS = [".ini"];
 const CONFIG_FILES = ["XXX"];
 
 const SAVE_ID = `${GAME_ID}-save`;
@@ -86,7 +86,7 @@ if (USERID_FOLDER === undefined) {
   USERID_FOLDER = "";
 } //*/
 const SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
-const SAVE_EXT = ".sav";
+const SAVE_EXTS = [".sav"];
 const SAVE_FILES = ["XXX"];
 
 const TOOL_ID = `${GAME_ID}-tool`;
@@ -290,25 +290,34 @@ function getExecutable(discoveryPath) {
   return EXEC;
 }
 
+function statCheckSync(gamePath, file) {
+  try {
+    fs.statSync(path.join(gamePath, file));
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}
+async function statCheckAsync(gamePath, file) {
+  try {
+    await fs.statAsync(path.join(gamePath, file));
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}
 //Get correct game version
 async function setGameVersion(gamePath) {
-  const isCorrectExec = (exec) => {
-    try {
-      fs.statSync(path.join(gamePath, exec));
-      return true;
-    }
-    catch (err) {
-      return false;
-    }
-  };
-
-  if (isCorrectExec(EXEC_XBOX)) {
+  const CHECK = await statCheckAsync(gamePath, EXEC_XBOX);
+  if (CHECK) {
     GAME_VERSION = 'xbox';
     return GAME_VERSION;
-  };
-
-  GAME_VERSION = 'default';
-  return GAME_VERSION;
+  } else {
+    GAME_VERSION = 'default';
+    return GAME_VERSION;
+  }
 }
 
 const getDiscoveryPath = (api) => { //get the game's discovered path
