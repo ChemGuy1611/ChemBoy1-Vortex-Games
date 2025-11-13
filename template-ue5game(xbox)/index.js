@@ -35,6 +35,7 @@ const EXEC_DEMO = "XXXDemo.exe";
 const EXEC_XBOX = 'gamelaunchhelper.exe';
 
 const hasXbox = true; //toggle for Xbox version logic (to unify templates)
+const multiExe = false; //toggle for multiple executables (to unify templates)
 const gameFinderQuery = { //Discovery IDs
   steam: [{ id: STEAMAPP_ID, prefer: 0 }],
   //steam: [{ id: STEAMAPP_ID, prefer: 0 }, { id: STEAMAPP_ID_DEMO }],
@@ -92,10 +93,8 @@ let DOWNLOAD_FOLDER = ''; //Vortex download folder path
 let GAME_VERSION = '';
 let BINARIES_PATH = null;
 let BINARIES_FOLDER = null;
-let BINARIES_TARGET = null;
 let SHIPPING_EXE = '';
 let SCRIPTS_PATH = null;
-let SCRIPTS_TARGET = null;
 let SAVE_PATH = null;
 let CONFIG_PATH = null;
 let USERID_FOLDER = "";
@@ -249,6 +248,25 @@ const spec = {
 
 // BASIC EXTENSION FUNCTIONS ///////////////////////////////////////////////////
 
+function statCheckSync(gamePath, file) {
+  try {
+    fs.statSync(path.join(gamePath, file));
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}
+async function statCheckAsync(gamePath, file) {
+  try {
+    await fs.statAsync(path.join(gamePath, file));
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}
+
 function isDir(folder, file) {
   const stats = fs.statSync(path.join(folder, file));
   return stats.isDirectory();
@@ -286,7 +304,7 @@ function makeGetModPath(api, gameSpec) {
 }
 
 async function requiresLauncher(gamePath, store) {
-  if (store === 'xbox') {
+  if (store === 'xbox' && DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID)) {
     return Promise.resolve({
       launcher: 'xbox',
       addInfo: {
@@ -315,23 +333,15 @@ async function requiresLauncher(gamePath, store) {
 
 //Get correct executable for game version
 function getExecutable(discoveryPath) {
-  const isCorrectExec = (exec) => {
-    try {
-      fs.statSync(path.join(discoveryPath, exec));
-      return true;
-    }
-    catch (err) {
-      return false;
-    }
-  };
-  if (isCorrectExec(EXEC_XBOX)) {
+  if (!hasXbox && !multiExe) {
+    return EXEC;
+  }
+  if (statCheckSync(discoveryPath, EXEC_XBOX)) {
     GAME_VERSION = 'xbox';
     BINARIES_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_XBOX);
     BINARIES_FOLDER = BINARIES_PATH;
-    BINARIES_TARGET = path.join('{gamePath}', BINARIES_PATH);
     SHIPPING_EXE = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_XBOX, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_XBOX}${SHIPEXE_STRING_XBOX}-Shipping.exe`);
     SCRIPTS_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_XBOX, UE4SS_MOD_PATH);
-    SCRIPTS_TARGET = path.join('{gamePath}', SCRIPTS_PATH);
     CONFIG_PATH = CONFIG_PATH_XBOX;
     try {
       const SAVE_ARRAY = fs.readdirSync(SAVE_PATH_XBOX);
@@ -345,14 +355,12 @@ function getExecutable(discoveryPath) {
     SAVE_PATH = path.join(SAVE_PATH_XBOX, USERID_FOLDER);
     return EXEC_XBOX;
   };
-  if (isCorrectExec(EXEC)) {
+  if (statCheckSync(discoveryPath, EXEC)) {
     GAME_VERSION = 'steam';
     BINARIES_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT);
     BINARIES_FOLDER = BINARIES_PATH;
-    BINARIES_TARGET = path.join('{gamePath}', BINARIES_PATH);
     SHIPPING_EXE = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_DEFAULT}-Shipping.exe`);
     SCRIPTS_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT, UE4SS_MOD_PATH);
-    SCRIPTS_TARGET = path.join('{gamePath}', SCRIPTS_PATH);
     CONFIG_PATH = CONFIG_PATH_DEFAULT;
     try {
       const SAVE_ARRAY = fs.readdirSync(SAVE_PATH_DEFAULT);
@@ -367,13 +375,11 @@ function getExecutable(discoveryPath) {
     return EXEC;
   }; //*/
   /*
-  if (isCorrectExec(EXEC_EPIC)) {
+  if (statCheckSync(discoveryPath, EXEC_EPIC)) {
     GAME_VERSION = 'epic';
     BINARIES_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT);
-    BINARIES_TARGET = path.join('{gamePath}', BINARIES_PATH);
     SHIPPING_EXE = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_EGS}-Shipping.exe`);
     SCRIPTS_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT, UE4SS_MOD_PATH);
-    SCRIPTS_TARGET = path.join('{gamePath}', SCRIPTS_PATH);
     CONFIG_PATH = CONFIG_PATH_DEFAULT;
     try {
       const SAVE_ARRAY = fs.readdirSync(SAVE_PATH_DEFAULT);
@@ -388,13 +394,11 @@ function getExecutable(discoveryPath) {
     return EXEC_EPIC;
   }; //*/
   /*
-  if (isCorrectExec(EXEC_GOG)) {
+  if (statCheckSync(discoveryPath, EXEC_GOG)) {
     GAME_VERSION = 'gog';
     BINARIES_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT);
-    BINARIES_TARGET = path.join('{gamePath}', BINARIES_PATH);
     SHIPPING_EXE = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_GOG}-Shipping.exe`);
     SCRIPTS_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT, UE4SS_MOD_PATH);
-    SCRIPTS_TARGET = path.join('{gamePath}', SCRIPTS_PATH);
     CONFIG_PATH = CONFIG_PATH_DEFAULT;
     try {
       const SAVE_ARRAY = fs.readdirSync(SAVE_PATH_DEFAULT);
@@ -409,13 +413,11 @@ function getExecutable(discoveryPath) {
     return EXEC_GOG;
   }; //*/
   /*
-  if (isCorrectExec(EXEC_DEMO)) {
+  if (statCheckSync(discoveryPath, EXEC_DEMO)) {
     GAME_VERSION = 'demo';
     BINARIES_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT);
-    BINARIES_TARGET = path.join('{gamePath}', BINARIES_PATH);
     SHIPPING_EXE = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_DEMO}-Shipping.exe`);
     SCRIPTS_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT, UE4SS_MOD_PATH);
-    SCRIPTS_TARGET = path.join('{gamePath}', SCRIPTS_PATH);
     CONFIG_PATH = CONFIG_PATH_DEFAULT;
     try {
       const SAVE_ARRAY = fs.readdirSync(SAVE_PATH_DEFAULT);
@@ -444,23 +446,25 @@ function getShippingExe(gamePath) {
       return false;
     }
   };
-  if (isCorrectExec(EXEC_XBOX)) {
-    SHIPPING_EXE = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_XBOX, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_XBOX}${SHIPEXE_STRING_XBOX}-Shipping.exe`);
-    return SHIPPING_EXE; 
-  };
-  if (isCorrectExec(EXEC)) {
+  if (hasXbox) {
+    if (statCheckSync(gamePath, EXEC_XBOX)) {
+      SHIPPING_EXE = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_XBOX, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_XBOX}${SHIPEXE_STRING_XBOX}-Shipping.exe`);
+      return SHIPPING_EXE; 
+    };
+  }
+  if (statCheckSync(gamePath, EXEC)) {
     SHIPPING_EXE = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_DEFAULT}-Shipping.exe`);
     return SHIPPING_EXE;
   };
-  if (isCorrectExec(EXEC_EPIC)) {
+  if (statCheckSync(gamePath, EXEC_EPIC)) {
     SHIPPING_EXE = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_EGS}-Shipping.exe`);
     return SHIPPING_EXE;
   };
-  if (isCorrectExec(EXEC_GOG)) {
+  if (statCheckSync(gamePath, EXEC_GOG)) {
     SHIPPING_EXE = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_GOG}-Shipping.exe`);
     return SHIPPING_EXE;
   };
-  if (isCorrectExec(EXEC_DEMO)) {
+  if (statCheckSync(gamePath, EXEC_DEMO)) {
     SHIPPING_EXE = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_DEMO}-Shipping.exe`);
     return SHIPPING_EXE;
   };
@@ -468,103 +472,24 @@ function getShippingExe(gamePath) {
 
 //Get correct shipping executable folder for game version (for tool pathing)
 function getBinariesFolder(discoveryPath) {
-  const isCorrectFolder = (folder) => {
-    try {
-      fs.statSync(path.join(discoveryPath, EPIC_CODE_NAME, 'Binaries', folder));
-      return true;
-    }
-    catch (err) {
-      return false;
-    }
-  };
-  if (isCorrectFolder(EXEC_FOLDER_XBOX)) {
+  if (statCheckSync(discoveryPath, EXEC_FOLDER_XBOX)) {
     BINARIES_FOLDER = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_XBOX);
     return BINARIES_FOLDER;
   };
-  if (isCorrectFolder(EXEC_FOLDER_DEFAULT)) {
+  if (statCheckSync(discoveryPath, EXEC_FOLDER_DEFAULT)) {
     BINARIES_FOLDER = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT);
     return BINARIES_FOLDER;
   };
 }
 
-function statCheckSync(gamePath, file) {
-  try {
-    fs.statSync(path.join(gamePath, file));
-    return true;
-  }
-  catch (err) {
-    return false;
-  }
-}
-async function statCheckAsync(gamePath, file) {
-  try {
-    await fs.statAsync(path.join(gamePath, file));
-    return true;
-  }
-  catch (err) {
-    return false;
-  }
-}
-
-//Get correct game version - using api argument
-async function setGameVersion(api) {
-  GAME_PATH = getDiscoveryPath(api);
-  const isCorrectExec = (exec) => {
-    try {
-      fs.statSync(path.join(GAME_PATH, exec));
-      return true;
-    }
-    catch (err) {
-      return false;
-    }
-  };
-  if (isCorrectExec(EXEC_XBOX)) {
-    GAME_VERSION = 'xbox';
-    return GAME_VERSION;
-  };
-  if (isCorrectExec(EXEC)) {
-    GAME_VERSION = 'steam';
-    return GAME_VERSION;
-  };
-  if (isCorrectExec(EXEC_EPIC)) {
-    GAME_VERSION = 'epic';
-    return GAME_VERSION;
-  };
-  if (isCorrectExec(EXEC_GOG)) {
-    GAME_VERSION = 'gog';
-    return GAME_VERSION;
-  };
-  if (isCorrectExec(EXEC_DEMO)) {
-    GAME_VERSION = 'demo';
-    return GAME_VERSION;
-  };
-}
-
-function statCheckSync(gamePath, file) {
-  try {
-    fs.statSync(path.join(gamePath, file));
-    return true;
-  }
-  catch (err) {
-    return false;
-  }
-}
-async function statCheckAsync(gamePath, file) {
-  try {
-    await fs.statAsync(path.join(gamePath, file));
-    return true;
-  }
-  catch (err) {
-    return false;
-  }
-}
-
-//Get correct game version - using path argument
+//Get correct game version - async
 async function setGameVersionPath(gamePath) {
-  if (await statCheckAsync(gamePath, EXEC_XBOX)) {
-    GAME_VERSION = 'xbox';
-    return GAME_VERSION;
-  };
+  if (hasXbox) {
+    if (await statCheckAsync(gamePath, EXEC_XBOX)) {
+      GAME_VERSION = 'xbox';
+      return GAME_VERSION;
+    };
+  }
   if (await statCheckAsync(gamePath, EXEC)) {
     GAME_VERSION = 'steam';
     return GAME_VERSION;
@@ -578,6 +503,32 @@ async function setGameVersionPath(gamePath) {
     return GAME_VERSION;
   };
   if (await statCheckAsync(gamePath, EXEC_DEMO)) {
+    GAME_VERSION = 'demo';
+    return GAME_VERSION;
+  }; //*/
+}
+
+//Get correct game version - synchronous
+function setGameVersionPathSync(gamePath) {
+  if (hasXbox) {
+    if (statCheckSync(gamePath, EXEC_XBOX)) {
+      GAME_VERSION = 'xbox';
+      return GAME_VERSION;
+    };
+  }
+  if (statCheckSync(gamePath, EXEC)) {
+    GAME_VERSION = 'steam';
+    return GAME_VERSION;
+  };
+  if (statCheckSync(gamePath, EXEC_EPIC)) {
+    GAME_VERSION = 'epic';
+    return GAME_VERSION;
+  };
+  if (statCheckSync(gamePath, EXEC_GOG)) {
+    GAME_VERSION = 'gog';
+    return GAME_VERSION;
+  };
+  if (statCheckSync(gamePath, EXEC_DEMO)) {
     GAME_VERSION = 'demo';
     return GAME_VERSION;
   }; //*/
@@ -599,6 +550,7 @@ async function setConfigPath() {
   CONFIG_PATH = path.join(CONFIGMOD_LOCATION, DATA_FOLDER, STORE_FOLDER, "Saved", "Config", CONFIG_FOLDERNAME);
   return CONFIG_PATH;
 }
+
 //Get correct save path for game version
 async function setSavePath() {
   const DATA_PATH = path.join(SAVEMOD_LOCATION, DATA_FOLDER);
@@ -1061,7 +1013,8 @@ function configInstallerNotify(api) {
 //Test for save files
 function testSave(api, files, gameId) {
   const isMod = files.some(file => (path.extname(file).toLowerCase() === SAVE_EXT));
-  GAME_VERSION = setGameVersion(api);
+  GAME_PATH = getDiscoveryPath(api);
+  GAME_VERSION = setGameVersionPathSync(GAME_PATH);
   const TEST = SAVE_COMPAT_VERSIONS.includes(GAME_VERSION);
   let supported = (gameId === spec.game.id) && isMod && TEST;
 
@@ -1608,8 +1561,10 @@ function partitionCheckNotify(api, CHECK_DATA) {
                 + `  - Config: ${CHECK_DATA ? `ENABLED: ${CONFIG_LOC} folder is on the same partition as the game and the Vortex staging folder, so the Config modtype is available` : `DISABLED: ${CONFIG_LOC} folder is NOT on the same partition as the game and the Vortex staging folder, so the Config modtype is NOT available`}\n`
                 + `  - Save: ${CHECK_DATA ? `ENABLED: ${SAVE_LOC} folder is on the same partition as the game and the Vortex staging folder, so the Save modtype is available` : `DISABLED: ${SAVE_LOC} folder is NOT on the same partition as the game and the Vortex staging folder, so the Save modtype is NOT available`}\n`
                 + `\n`
+                + `Game Path: ${GAME_PATH}\n`
+                + `Staging Path: ${STAGING_FOLDER}\n`
                 + `Config Path: ${CONFIG_PATH}\n`
-                + `Save Path (installer for Steam and Epic versions only): ${SAVE_PATH}\n`
+                + `Save Path (installer for Steam/Epic/GOG versions only): ${SAVE_PATH}\n`
                 + `\n`
                 + `If you want to use the disabled mod types, you must move the game and staging folder to the same partition as the folders shown above (typically C Drive).\n`
                 + `\n`
@@ -1679,7 +1634,7 @@ async function setup(discovery, api, gameSpec) {
     partitionCheckNotify(api, CHECK_DOCS);
   } //*/
   // ASYNC CODE ///////////////////////////////////
-  GAME_VERSION = await setGameVersion(api);
+  GAME_VERSION = await setGameVersionPath(GAME_PATH);
   if (CHECK_DATA) { //if game, staging folder, and config and save folders are on the same drive
     await fs.ensureDirWritableAsync(CONFIG_PATH);
     if (SAVE_COMPAT_VERSIONS.includes(GAME_VERSION)) {
@@ -1769,7 +1724,7 @@ function applyGame(context, gameSpec) {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
     }, 
-    (game) => pathPattern(context.api, game, SCRIPTS_TARGET), 
+    (game) => pathPattern(context.api, game, path.join('{gamePath}', SCRIPTS_PATH)), 
     () => Promise.resolve(false), 
     { name: SCRIPTS_NAME }
   );
@@ -1778,7 +1733,7 @@ function applyGame(context, gameSpec) {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
     }, 
-    (game) => pathPattern(context.api, game, SCRIPTS_TARGET), 
+    (game) => pathPattern(context.api, game, path.join('{gamePath}', SCRIPTS_PATH)), 
     () => Promise.resolve(false), 
     { name: DLL_NAME }
   );
@@ -1787,7 +1742,7 @@ function applyGame(context, gameSpec) {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
     }, 
-    (game) => pathPattern(context.api, game, BINARIES_TARGET), 
+    (game) => pathPattern(context.api, game, path.join('{gamePath}', BINARIES_PATH)), 
     () => Promise.resolve(false), 
     { name: BINARIES_NAME }
   );
@@ -1796,7 +1751,7 @@ function applyGame(context, gameSpec) {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
     }, 
-    (game) => pathPattern(context.api, game, BINARIES_TARGET), 
+    (game) => pathPattern(context.api, game, path.join('{gamePath}', BINARIES_PATH)), 
     () => Promise.resolve(false), 
     { name: UE4SS_NAME }
   );
@@ -1808,7 +1763,7 @@ function applyGame(context, gameSpec) {
         var _a;
         return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
       }, 
-      (game) => pathPattern(context.api, game, BINARIES_TARGET), 
+      (game) => pathPattern(context.api, game, path.join('{gamePath}', BINARIES_PATH)),
       () => Promise.resolve(false), 
       { name: SIGBYPASS_NAME }
     );
@@ -1830,7 +1785,7 @@ function applyGame(context, gameSpec) {
   context.registerModType(SAVE_ID, 62, 
     (gameId) => {
       GAME_PATH = getDiscoveryPath(context.api);
-      GAME_VERSION = setGameVersion(context.api);
+      GAME_VERSION = setGameVersionPathSync(GAME_PATH);
       if (GAME_PATH !== undefined) {
         CHECK_DATA = checkPartitions(SAVEMOD_LOCATION, GAME_PATH);
       }
