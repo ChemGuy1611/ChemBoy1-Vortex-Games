@@ -31,6 +31,7 @@ const EXEC = "XXX.exe";
 const EXEC_EPIC = "XXX_EGS.exe";
 const EXEC_GOG = EXEC;
 const EXEC_DEMO = "XXXDemo.exe";
+const EXEC_XBOX = 'gamelaunchhelper.exe';
 
 const hasXbox = false; //toggle for Xbox version logic (to unify templates)
 
@@ -43,9 +44,8 @@ const UE4SS_FILE_NO = 0;
 const UE4SS_MOD_PATH = path.join('ue4ss', 'Mods');
 const EXEC_FOLDER_NAME = "Win64";
 
-//config and save
+//config, save, shipping exe
 const DATA_FOLDER = EPIC_CODE_NAME;
-const XBOX_SAVE_STRING = 'XXX'; //'8wekyb3d8bbwe' if published by Microsoft
 const CONFIG_FOLDERNAME = 'Windows';
 const CONFIG_LOC = 'Local AppData';
 const SAVE_LOC = 'Local AppData';
@@ -76,7 +76,6 @@ let CHECK_DOCS = false; //secondary same as above (if save and config are in dif
 let STAGING_FOLDER = ''; //Vortex staging folder path
 let DOWNLOAD_FOLDER = ''; //Vortex download folder path
 let GAME_VERSION = '';
-const EXEC_XBOX = 'gamelaunchhelper.exe';
 const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 //Unreal Engine Game Data
@@ -356,7 +355,7 @@ function makeFindGame(api, gameSpec) {
 
 async function requiresLauncher(gamePath, store) {
   //*
-  if (store === 'epic' && (DISCOVERY_IDS_ACTIVE.includes(EPICAPP_ID))) {
+  if (store === 'epic' && DISCOVERY_IDS_ACTIVE.includes(EPICAPP_ID)) {
     return Promise.resolve({
         launcher: 'epic',
         addInfo: {

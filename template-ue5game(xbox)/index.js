@@ -25,14 +25,23 @@ const EPICAPP_ID = "XXX"; //from egdata.app
 const GOGAPP_ID = "XXX"; // from gogdb.org
 const XBOXAPP_ID = "XXX"; //from appxmanifest.xml
 const XBOXEXECNAME = "XXX"; //from appxmanifest.xml
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, XBOXAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 const GAME_NAME = "XXX";
 const GAME_NAME_SHORT = "XXX"; //Try for 8-10 characters
 const EXEC = "XXX.exe";
 const EXEC_EPIC = "XXX_EGS.exe";
 const EXEC_GOG = EXEC;
 const EXEC_DEMO = "XXXDemo.exe";
+const EXEC_XBOX = 'gamelaunchhelper.exe';
 
 const hasXbox = true; //toggle for Xbox version logic (to unify templates)
+const gameFinderQuery = { //Discovery IDs
+  steam: [{ id: STEAMAPP_ID, prefer: 0 }],
+  //steam: [{ id: STEAMAPP_ID, prefer: 0 }, { id: STEAMAPP_ID_DEMO }],
+  //gog: [{ id: GOGAPP_ID }],
+  //epic: [{ id: EPICAPP_ID }],
+  xbox: [{ id: XBOXAPP_ID }],
+};
 
 //Unreal Engine specific
 const EPIC_CODE_NAME = "XXX";
@@ -41,8 +50,10 @@ const IO_STORE = true; //true if the Paks folder contains .ucas and .utoc files
 const UE4SS_PAGE_NO = 0; //set if there is UE4SS Nexus page
 const UE4SS_FILE_NO = 0;
 const UE4SS_MOD_PATH = path.join('ue4ss', 'Mods');
+const EXEC_FOLDER_DEFAULT = "Win64";
+const EXEC_FOLDER_XBOX = "WinGDK";
 
-//config and save
+//config, save, shipping exe
 const DATA_FOLDER = EPIC_CODE_NAME;
 const XBOX_SAVE_STRING = 'XXX'; //'8wekyb3d8bbwe' if published by Microsoft
 const CONFIG_FOLDERNAME = 'Windows';
@@ -57,14 +68,10 @@ const SHIPEXE_STRING_XBOX = '';
 const SHIPEXE_STRING_DEMO = '';
 const SHIPEXE_PROJECTNAME = EPIC_CODE_NAME;
 
-//Discovery IDs
-const gameFinderQuery = {
-  steam: [{ id: STEAMAPP_ID, prefer: 0 }],
-  //steam: [{ id: STEAMAPP_ID, prefer: 0 }, { id: STEAMAPP_ID_DEMO }],
-  //gog: [{ id: GOGAPP_ID }],
-  //epic: [{ id: EPICAPP_ID }],
-  xbox: [{ id: XBOXAPP_ID }],
-};
+const CONFIG_PATH_DEFAULT = path.join(CONFIGMOD_LOCATION, DATA_FOLDER, "Saved", "Config", CONFIG_FOLDERNAME);
+const CONFIG_PATH_XBOX = path.join(CONFIGMOD_LOCATION, DATA_FOLDER, "Saved", "Config", "WinGDK"); //XBOX Version
+const SAVE_PATH_DEFAULT = path.join(SAVEMOD_LOCATION, DATA_FOLDER, "Saved", "SaveGames");
+const SAVE_PATH_XBOX = path.join(LOCALAPPDATA, "Packages", `${XBOXAPP_ID}_${XBOX_SAVE_STRING}`, "SystemAppData", "wgs"); //XBOX Version
 
 //Settings related to the IO Store UE feature
 let PAKMOD_EXTS = ['.pak'];
@@ -90,20 +97,9 @@ let SHIPPING_EXE = '';
 let SCRIPTS_PATH = null;
 let SCRIPTS_TARGET = null;
 let SAVE_PATH = null;
-let SAVE_TARGET = null;
 let CONFIG_PATH = null;
-let CONFIG_TARGET = null;
 let USERID_FOLDER = "";
-const EXEC_FOLDER_DEFAULT = "Win64";
-const EXEC_FOLDER_XBOX = "WinGDK";
-const EXEC_XBOX = 'gamelaunchhelper.exe';
 const APPMANIFEST_FILE = 'appxmanifest.xml';
-
-//Config and save paths
-const CONFIG_PATH_DEFAULT = path.join(CONFIGMOD_LOCATION, DATA_FOLDER, "Saved", "Config", CONFIG_FOLDERNAME);
-const CONFIG_PATH_XBOX = path.join(CONFIGMOD_LOCATION, DATA_FOLDER, "Saved", "Config", "WinGDK"); //XBOX Version
-const SAVE_PATH_DEFAULT = path.join(SAVEMOD_LOCATION, DATA_FOLDER, "Saved", "SaveGames");
-const SAVE_PATH_XBOX = path.join(LOCALAPPDATA, "Packages", `${XBOXAPP_ID}_${XBOX_SAVE_STRING}`, "SystemAppData", "wgs"); //XBOX Version
 
 //Unreal Engine Game Data
 const UNREALDATA = {
@@ -289,12 +285,6 @@ function makeGetModPath(api, gameSpec) {
     : pathPattern(api, gameSpec.game, gameSpec.game.modPath);
 }
 
-/* Find game installation directory
-function makeFindGame(api, gameSpec) {
-  return () => util.GameStoreHelper.findByAppId(gameSpec.discovery.ids)
-    .then((game) => game.gamePath);
-} //*/
-
 async function requiresLauncher(gamePath, store) {
   if (store === 'xbox') {
     return Promise.resolve({
@@ -306,7 +296,7 @@ async function requiresLauncher(gamePath, store) {
     });
   } //*/
   //*
-  if (store === 'epic' && (gameFinderQuery?.epic !== undefined)) {
+  if (store === 'epic' && DISCOVERY_IDS_ACTIVE.includes(EPICAPP_ID)) {
     return Promise.resolve({
         launcher: 'epic',
         addInfo: {
@@ -343,7 +333,6 @@ function getExecutable(discoveryPath) {
     SCRIPTS_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_XBOX, UE4SS_MOD_PATH);
     SCRIPTS_TARGET = path.join('{gamePath}', SCRIPTS_PATH);
     CONFIG_PATH = CONFIG_PATH_XBOX;
-    CONFIG_TARGET = CONFIG_PATH;
     try {
       const SAVE_ARRAY = fs.readdirSync(SAVE_PATH_XBOX);
       USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_PATH_XBOX, entry));
@@ -354,7 +343,6 @@ function getExecutable(discoveryPath) {
       USERID_FOLDER = "";
     }
     SAVE_PATH = path.join(SAVE_PATH_XBOX, USERID_FOLDER);
-    SAVE_TARGET = SAVE_PATH;
     return EXEC_XBOX;
   };
   if (isCorrectExec(EXEC)) {
@@ -366,7 +354,6 @@ function getExecutable(discoveryPath) {
     SCRIPTS_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT, UE4SS_MOD_PATH);
     SCRIPTS_TARGET = path.join('{gamePath}', SCRIPTS_PATH);
     CONFIG_PATH = CONFIG_PATH_DEFAULT;
-    CONFIG_TARGET = CONFIG_PATH;
     try {
       const SAVE_ARRAY = fs.readdirSync(SAVE_PATH_DEFAULT);
       USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_PATH_DEFAULT, entry));
@@ -377,7 +364,6 @@ function getExecutable(discoveryPath) {
       USERID_FOLDER = "";
     }
     SAVE_PATH = path.join(SAVE_PATH_DEFAULT, USERID_FOLDER);
-    SAVE_TARGET = SAVE_PATH;
     return EXEC;
   }; //*/
   /*
@@ -389,7 +375,6 @@ function getExecutable(discoveryPath) {
     SCRIPTS_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT, UE4SS_MOD_PATH);
     SCRIPTS_TARGET = path.join('{gamePath}', SCRIPTS_PATH);
     CONFIG_PATH = CONFIG_PATH_DEFAULT;
-    CONFIG_TARGET = CONFIG_PATH;
     try {
       const SAVE_ARRAY = fs.readdirSync(SAVE_PATH_DEFAULT);
       USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_PATH_DEFAULT, entry));
@@ -400,7 +385,6 @@ function getExecutable(discoveryPath) {
       USERID_FOLDER = "";
     }
     SAVE_PATH = path.join(SAVE_PATH_DEFAULT, USERID_FOLDER);
-    SAVE_TARGET = SAVE_PATH;
     return EXEC_EPIC;
   }; //*/
   /*
@@ -412,7 +396,6 @@ function getExecutable(discoveryPath) {
     SCRIPTS_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT, UE4SS_MOD_PATH);
     SCRIPTS_TARGET = path.join('{gamePath}', SCRIPTS_PATH);
     CONFIG_PATH = CONFIG_PATH_DEFAULT;
-    CONFIG_TARGET = CONFIG_PATH;
     try {
       const SAVE_ARRAY = fs.readdirSync(SAVE_PATH_DEFAULT);
       USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_PATH_DEFAULT, entry));
@@ -423,7 +406,6 @@ function getExecutable(discoveryPath) {
       USERID_FOLDER = "";
     }
     SAVE_PATH = path.join(SAVE_PATH_DEFAULT, USERID_FOLDER);
-    SAVE_TARGET = SAVE_PATH;
     return EXEC_GOG;
   }; //*/
   /*
@@ -435,7 +417,6 @@ function getExecutable(discoveryPath) {
     SCRIPTS_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT, UE4SS_MOD_PATH);
     SCRIPTS_TARGET = path.join('{gamePath}', SCRIPTS_PATH);
     CONFIG_PATH = CONFIG_PATH_DEFAULT;
-    CONFIG_TARGET = CONFIG_PATH;
     try {
       const SAVE_ARRAY = fs.readdirSync(SAVE_PATH_DEFAULT);
       USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_PATH_DEFAULT, entry));
@@ -446,7 +427,6 @@ function getExecutable(discoveryPath) {
       USERID_FOLDER = "";
     }
     SAVE_PATH = path.join(SAVE_PATH_DEFAULT, USERID_FOLDER);
-    SAVE_TARGET = SAVE_PATH;
     return EXEC_DEMO;
   }; //*/
   GAME_VERSION = 'default';
@@ -1843,7 +1823,7 @@ function applyGame(context, gameSpec) {
       }
       return ((gameId === GAME_ID) && (CHECK_DATA === true));
     },
-    (game) => pathPattern(context.api, game, CONFIG_TARGET), 
+    (game) => pathPattern(context.api, game, CONFIG_PATH), 
     () => Promise.resolve(false), 
     { name: CONFIG_NAME }
   ); //*/
@@ -1860,7 +1840,7 @@ function applyGame(context, gameSpec) {
       }
       return ((gameId === GAME_ID) && (CHECK_DOCS === true) && SAVE_COMPAT_VERSIONS.includes(GAME_VERSION)); //*/
     },
-    (game) => pathPattern(context.api, game, SAVE_TARGET), 
+    (game) => pathPattern(context.api, game, SAVE_PATH), 
     () => Promise.resolve(false), 
     { name: SAVE_NAME }
   ); //*/
