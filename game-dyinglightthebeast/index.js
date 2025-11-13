@@ -135,7 +135,7 @@ const spec = {
       REQ_FILE
     ],
     "details": {
-      "steamAppId": STEAMAPP_ID,
+      "steamAppId": +STEAMAPP_ID,
       "epicAppId": EPICAPP_ID,
       //"ignoreConflicts": IGNORED_FILES,
       //"ignoreDeploy": DEPLOY_IGNORE,

@@ -106,7 +106,7 @@ const spec = {
     "details": {
       "unrealEngine": UNREALDATA,
       "epicAppId": EPICAPP_ID,
-      "steamAppId": STEAMAPP_ID,
+      "steamAppId": +STEAMAPP_ID,
       //"gogAppId": GOGAPP_ID,
       "xboxAppId": XBOXAPP_ID,
       "customOpenModsPath": UNREALDATA.absModsPath || UNREALDATA.modsPath

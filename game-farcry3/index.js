@@ -115,7 +115,7 @@ const spec = {
       EXEC
     ],
     "details": {
-      "steamAppId": STEAMAPP_ID,
+      "steamAppId": +STEAMAPP_ID,
       "uPlayAppId": UPLAYAPP_ID,
     },
     "environment": {

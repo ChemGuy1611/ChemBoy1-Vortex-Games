@@ -153,7 +153,7 @@ const spec = {
     ],
     "details": {
       "epicAppId": EPICAPP_ID,
-      "steamAppId": STEAMAPP_ID,
+      "steamAppId": +STEAMAPP_ID,
       "supportsSymlinks": SYM_LINKS,
     },
     "environment": {

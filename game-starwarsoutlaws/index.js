@@ -66,7 +66,7 @@ const spec = {
     ],
     "details": {
       "uPlayAppId": UPLAYAPP_ID,
-      "steamAppId": STEAMAPP_ID,
+      "steamAppId": +STEAMAPP_ID,
     },
     "environment": {
       "UPlayAPPId": UPLAYAPP_ID,

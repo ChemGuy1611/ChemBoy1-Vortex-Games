@@ -29,7 +29,7 @@ const spec = {
       EXEC
     ],
     "details": {
-      "steamAppId": STEAMAPP_ID,
+      "steamAppId": +STEAMAPP_ID,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID

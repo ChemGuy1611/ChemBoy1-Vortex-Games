@@ -106,7 +106,7 @@ const ROOT_FOLDERS = [ROOT_FILE, 'Engine'];
 
 const ROOTSUB_ID = `${GAME_ID}-rootsubfolders`;
 const ROOTSUB_NAME = "Root Sub-Folders";
-const ROOTSUB_FOLDERS = ['Content', 'Binaries', 'Plugins'];
+const ROOTSUB_FOLDERS = ['Content', 'Binaries', 'Plugins', 'Mods'];
 const ROOTSUB_PATH = EPIC_CODE_NAME;
 
 const CONFIG_ID = `${GAME_ID}-config`;

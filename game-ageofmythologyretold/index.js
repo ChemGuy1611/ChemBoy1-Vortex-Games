@@ -85,7 +85,7 @@ const spec = {
     "logo": `${GAME_ID}.jpg`,
     "mergeMods": true,
     "details": {
-      "steamAppId": STEAMAPP_ID,
+      "steamAppId": +STEAMAPP_ID,
       "xboxAppId": XBOXAPP_ID,
     },
     "environment": {

@@ -123,7 +123,7 @@ const spec = {
       REQ_FILE
     ],
     "details": {
-      "steamAppId": STEAMAPP_ID,
+      "steamAppId": +STEAMAPP_ID,
       "uPlayAppId": UPLAYAPP_ID,
     },
     "environment": {

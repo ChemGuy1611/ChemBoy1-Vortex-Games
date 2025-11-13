@@ -62,7 +62,7 @@ const spec = {
       EXEC
     ],
     "details": {
-      "steamAppId": STEAMAPP_ID,
+      "steamAppId": +STEAMAPP_ID,
       "gogAppId": GOGAPP_ID,
       "xboxAppId": XBOXAPP_ID,
     },

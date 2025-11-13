@@ -61,7 +61,7 @@ const spec = {
       EXEC
     ],
     "details": {
-      "steamAppId": STEAMAPP_ID,
+      "steamAppId": +STEAMAPP_ID,
       "gogAppId": GOGAPP_ID,
       "compatibleDownloads": ['redfactionguerilla'],
     },

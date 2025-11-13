@@ -63,7 +63,7 @@ const spec = {
       EXEC,
     ],
     "details": {
-      "steamAppId": STEAMAPP_ID,
+      "steamAppId": +STEAMAPP_ID,
       "ignoreDeploy": IGNORE_DEPLOY,
       "ignoreConflicts": IGNORE_CONFLICTS,
     },
