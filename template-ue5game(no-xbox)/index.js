@@ -1,33 +1,35 @@
-/*//////////////////////////////////////////////////
+/*////////////////////////////////////////////////
 Name: XXX Vortex Extension
-Structure: UE5 (static exe)
+Structure: UE5 (no-Xbox)
 Author: ChemBoy1
 Version: 0.1.0
 Date: 2025-XX-XX
-//////////////////////////////////////////////////*/
+////////////////////////////////////////////////*/
 
 //Import libraries
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 
-//const USER_HOME = util.getVortexPath("home");
-//const DOCUMENTS = util.getVortexPath("documents");
+//const USER_HOME = util.getVortexPath('home');
+//const DOCUMENTS = util.getVortexPath('documents');
 //const ROAMINGAPPDATA = util.getVortexPath('appData');
 const LOCALAPPDATA = util.getVortexPath('localAppData');
 
 //Specify all information about the game
-const GAME_ID = "XXX";
-const STEAMAPP_ID = "XXX";
+const GAME_ID = "XXX"; //same as Nexus domain
+const STEAMAPP_ID = "XXX"; //from steamdb.info
 const STEAMAPP_ID_DEMO = "XXX";
-const EPICAPP_ID = "XXX";
-const GOGAPP_ID = "XXX";
+const EPICAPP_ID = "XXX"; //from egdata.app
+const GOGAPP_ID = "XXX"; // from gogdb.org
+const XBOXAPP_ID = null; //from appxmanifest.xml
+const XBOXEXECNAME = null; //from appxmanifest.xml
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 const GAME_NAME = "XXX";
-const GAME_NAME_SHORT = "XXX";
+const GAME_NAME_SHORT = "XXX"; //Try for 8-10 characters
 const EXEC = "XXX.exe";
 const EXEC_EPIC = "XXX_EGS.exe";
-const EXEC_GOG = "XXXGOG.exe";
+const EXEC_GOG = EXEC;
 const EXEC_DEMO = "XXXDemo.exe";
 
 const hasXbox = false; //toggle for Xbox version logic (to unify templates)
@@ -43,7 +45,8 @@ const EXEC_FOLDER_NAME = "Win64";
 
 //config and save
 const DATA_FOLDER = EPIC_CODE_NAME;
-const CONFIG_FOLDERNAME = "Windows";
+const XBOX_SAVE_STRING = 'XXX'; //'8wekyb3d8bbwe' if published by Microsoft
+const CONFIG_FOLDERNAME = 'Windows';
 const CONFIG_LOC = 'Local AppData';
 const SAVE_LOC = 'Local AppData';
 const CONFIGMOD_LOCATION = LOCALAPPDATA;
@@ -51,6 +54,7 @@ const SAVEMOD_LOCATION = CONFIGMOD_LOCATION;
 const SHIPEXE_STRING_DEFAULT = '';
 const SHIPEXE_STRING_EGS = '';
 const SHIPEXE_STRING_GOG = '';
+const SHIPEXE_STRING_XBOX = '';
 const SHIPEXE_STRING_DEMO = '';
 const SHIPEXE_PROJECTNAME = EPIC_CODE_NAME;
 const SHIPPING_EXE_FILENAME = `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_NAME}${SHIPEXE_STRING_DEFAULT}-Shipping.exe`;
@@ -65,6 +69,7 @@ if (IO_STORE) { //Set file number for pak installer file selection (needs to be 
   PAK_FILE_MIN = PAKMOD_EXTS.length;
 }
 
+//global variables to set later
 let GAME_PATH = null; //game installation path
 let CHECK_DATA = false; //boolean to check if game, staging folder, and config and save folders are on the same drive
 let CHECK_DOCS = false; //secondary same as above (if save and config are in different locations)
@@ -84,22 +89,16 @@ const UE5_SORTABLE_ID = `${GAME_ID}-uesortablepak`; //this should not be changed
 const UE5_SORTABLE_NAME = 'UE Sortable Pak Mod';
 
 //Information for modtypes, installers, tools, and actions
-const CONFIG_ID = `${GAME_ID}-config`;
-const CONFIG_NAME = "Config";
-let CONFIG_PATH = path.join(CONFIGMOD_LOCATION, DATA_FOLDER, "Saved", "Config", CONFIG_FOLDERNAME);
-const CONFIG_FILES = ["engine.ini", "scalability.ini", "input.ini", "game.ini", "gameusersettings.ini"];
-const CONFIG_EXT = ".ini";
-
-const PAK_ID = `${GAME_ID}-pakalt`;
-const PAK_NAME = "Paks (no ~mods)";
-const PAK_PATH = UNREALDATA.modsPath;
-const PAK_ALT_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Paks');
-const PAK_EXT = '.pak';
-
 const BINARIES_ID = `${GAME_ID}-binaries`;
 const BINARIES_NAME = "Binaries (Engine Injector)";
 const BINARIES_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_NAME);
 let SHIPPING_EXE = path.join(BINARIES_PATH, SHIPPING_EXE_FILENAME);
+
+const PAK_ALT_ID = `${GAME_ID}-pakalt`;
+const PAK_ALT_NAME = 'Paks (no "~mods")';
+const PAK_PATH = UNREALDATA.modsPath;
+const PAK_ALT_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Paks');
+const PAK_EXT = '.pak';
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Game Folder";
@@ -111,8 +110,14 @@ const ROOTSUB_NAME = "Root Sub-Folders";
 const ROOTSUB_FOLDERS = ['Content', 'Binaries', 'Plugins'];
 const ROOTSUB_PATH = EPIC_CODE_NAME;
 
+const CONFIG_ID = `${GAME_ID}-config`;
+const CONFIG_NAME = `Config (${CONFIG_LOC})`;
+let CONFIG_PATH = path.join(CONFIGMOD_LOCATION, DATA_FOLDER, "Saved", "Config", CONFIG_FOLDERNAME);
+const CONFIG_FILES = ["engine.ini", "scalability.ini", "input.ini", "game.ini", "gameusersettings.ini"];
+const CONFIG_EXT = ".ini";
+
 const SAVE_ID = `${GAME_ID}-save`;
-const SAVE_NAME = "Saves";
+const SAVE_NAME = `Saves (${SAVE_LOC})`;
 const SAVE_FOLDER = path.join(SAVEMOD_LOCATION, DATA_FOLDER, 'Saved', 'SaveGames');
 let USERID_FOLDER = "";
 function isDir(folder, file) {
@@ -172,9 +177,9 @@ const SIGBYPASS_FILE_NO = 5719;
 const SIGBYPASS_DOMAIN = 'site';
 
 const MOD_PATH_DEFAULT = PAK_PATH;
+const REQ_FILE = EPIC_CODE_NAME;
 const PARAMETERS_STRING = '';
 const PARAMETERS = [PARAMETERS_STRING];
-const REQ_FILE = EPIC_CODE_NAME;
 let MODTYPE_FOLDERS = [LOGICMODS_PATH, SCRIPTS_PATH, PAK_PATH];
 
 //Filled in from data above
@@ -194,13 +199,15 @@ const spec = {
       REQ_FILE
     ],
     "details": {
-      "epicAppId": EPICAPP_ID,
       "steamAppId": +STEAMAPP_ID,
+      //"gogAppId": GOGAPP_ID,
+      "epicAppId": EPICAPP_ID,
       "supportsSymlinks": SYM_LINKS,
     },
     "environment": {
-      "EpicAppId": EPICAPP_ID,
       "SteamAPPId": STEAMAPP_ID,
+      "GogAPPId": GOGAPP_ID,
+      "EpicAPPId": EPICAPP_ID,
     },
   },
   "modTypes": [
@@ -215,6 +222,12 @@ const spec = {
       "name": LOGICMODS_NAME,
       "priority": "high",
       "targetPath": path.join('{gamePath}', LOGICMODS_PATH)
+    },
+    {
+      "id": PAK_ALT_ID,
+      "name": PAK_ALT_NAME,
+      "priority": "high",
+      "targetPath": path.join('{gamePath}', PAK_ALT_PATH)
     },
     {
       "id": UE4SS_ID,
@@ -233,12 +246,6 @@ const spec = {
       "name": DLL_NAME,
       "priority": "high",
       "targetPath": path.join('{gamePath}', DLL_PATH)
-    },
-    {
-      "id": PAK_ID,
-      "name": PAK_NAME,
-      "priority": "low",
-      "targetPath": path.join('{gamePath}', PAK_ALT_PATH)
     },
     {
       "id": ROOT_ID,
@@ -318,15 +325,20 @@ function modTypePriority(priority) {
   }[priority];
 }
 
-//Convert path string placeholders to actual values
+//Replace folder path string placeholders with actual folder paths
 function pathPattern(api, game, pattern) {
-  var _a;
-  return template(pattern, {
-    gamePath: (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0 ? void 0 : _a.path,
-    documents: util.getVortexPath('documents'),
-    localAppData: util.getVortexPath('localAppData'),
-    appData: util.getVortexPath('appData'),
-  });
+  try {
+    var _a;
+    return template(pattern, {
+      gamePath: (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0 ? void 0 : _a.path,
+      documents: util.getVortexPath('documents'),
+      localAppData: util.getVortexPath('localAppData'),
+      appData: util.getVortexPath('appData'),
+    });
+  }
+  catch (err) { //this happens if the executable comes back as "undefined", usually caused by another app locking down the folder
+    api.showErrorNotification('Failed to locate executable. Please launch the game at least once.', err);
+  }
 }
 
 //Set mod path
@@ -375,11 +387,11 @@ function getExecutable(discoveryPath) {
   if (isCorrectExec(EXEC_EPIC)) {
     GAME_VERSION = 'epic';
     return EXEC_EPIC;
-  };
+  }; //*/
   if (isCorrectExec(EXEC_GOG)) {
     GAME_VERSION = 'gog';
     return EXEC_GOG;
-  }; 
+  }; //*/
   if (isCorrectExec(EXEC_DEMO)) {
     GAME_VERSION = 'demo';
     return EXEC_DEMO;
@@ -399,20 +411,20 @@ function getShippingExe(gamePath) {
       return false;
     }
   };
-  if (isCorrectExec(EXEC_DEFAULT)) {
-    SHIPPING_EXE = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_DEFAULT}-Shipping.exe`);
+  if (isCorrectExec(EXEC)) {
+    SHIPPING_EXE = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_NAME, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_DEFAULT}-Shipping.exe`);
     return SHIPPING_EXE;
   };
   if (isCorrectExec(EXEC_EPIC)) {
-    SHIPPING_EXE = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_EGS}-Shipping.exe`);
+    SHIPPING_EXE = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_NAME, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_EGS}-Shipping.exe`);
     return SHIPPING_EXE;
   };
   if (isCorrectExec(EXEC_GOG)) {
-    SHIPPING_EXE = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_GOG}-Shipping.exe`);
+    SHIPPING_EXE = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_NAME, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_GOG}-Shipping.exe`);
     return SHIPPING_EXE;
   };
   if (isCorrectExec(EXEC_DEMO)) {
-    SHIPPING_EXE = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_DEMO}-Shipping.exe`);
+    SHIPPING_EXE = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_NAME, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_DEMO}-Shipping.exe`);
     return SHIPPING_EXE;
   };
 }
@@ -435,16 +447,55 @@ async function statCheckAsync(gamePath, file) {
     return false;
   }
 }
-//Get correct game version
-async function setGameVersion(gamePath) {
-  const CHECK = await statCheckAsync(gamePath, EXEC_XBOX);
-  if (CHECK) {
-    GAME_VERSION = 'xbox';
+
+//Get correct game version - using api argument
+async function setGameVersion(api) {
+  GAME_PATH = getDiscoveryPath(api);
+  const isCorrectExec = (exec) => {
+    try {
+      fs.statSync(path.join(GAME_PATH, exec));
+      return true;
+    }
+    catch (err) {
+      return false;
+    }
+  };
+  if (isCorrectExec(EXEC)) {
+    GAME_VERSION = 'steam';
     return GAME_VERSION;
-  } else {
-    GAME_VERSION = 'default';
+  };
+  if (isCorrectExec(EXEC_EPIC)) {
+    GAME_VERSION = 'epic';
     return GAME_VERSION;
-  }
+  };
+  if (isCorrectExec(EXEC_GOG)) {
+    GAME_VERSION = 'gog';
+    return GAME_VERSION;
+  };
+  if (isCorrectExec(EXEC_DEMO)) {
+    GAME_VERSION = 'demo';
+    return GAME_VERSION;
+  };
+}
+
+//Get correct game version - using path argument
+async function setGameVersionPath(gamePath) {
+  if (await statCheckAsync(gamePath, EXEC)) {
+    GAME_VERSION = 'steam';
+    return GAME_VERSION;
+  };
+  if (await statCheckAsync(gamePath, EXEC_EPIC)) {
+    GAME_VERSION = 'epic';
+    return GAME_VERSION;
+  };
+  if (await statCheckAsync(gamePath, EXEC_GOG)) {
+    GAME_VERSION = 'gog';
+    return GAME_VERSION;
+  };
+  if (await statCheckAsync(gamePath, EXEC_DEMO)) {
+    GAME_VERSION = 'demo';
+    return GAME_VERSION;
+  }; //*/
 }
 
 //Get correct config path for game version
@@ -486,10 +537,10 @@ const getDiscoveryPath = (api) => { //get the game's discovered path
   return discovery === null || discovery === void 0 ? void 0 : discovery.path;
 };
 
-async function purge(api) { //useful to clear out mods prior to doing some action
+async function purge(api) {
   return new Promise((resolve, reject) => api.events.emit('purge-mods', true, (err) => err ? reject(err) : resolve()));
 }
-async function deploy(api) { //useful to deploy mods after doing some action
+async function deploy(api) {
   return new Promise((resolve, reject) => api.events.emit('deploy-mods', (err) => err ? reject(err) : resolve()));
 }
 
@@ -570,7 +621,6 @@ function installLogic(files) {
       (!file.endsWith(path.sep))
     )
   );
-
   const instructions = filtered.map(file => {
     return {
       type: 'copy',
@@ -587,7 +637,7 @@ function testUe4ss(files, gameId) {
   const isMod = files.some(file => (path.basename(file).toLowerCase() === UE4SS_FILE));
   let supported = (gameId === spec.game.id) && isMod;
 
-  // Test for a mod installer.
+  // Test for a mod installer
   if (supported && files.find(file =>
     (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
     (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
@@ -622,7 +672,6 @@ function installUe4ss(files) {
     };
   });
   instructions.push(setModTypeInstruction);
-
   return Promise.resolve({ instructions });
 }
 
@@ -882,7 +931,7 @@ function installConfig(api, files) {
   GAME_PATH = getDiscoveryPath(api);
   const IS_CONFIG = checkPartitions(CONFIGMOD_LOCATION, GAME_PATH);
   if (IS_CONFIG === false) {
-    //api.showErrorNotification(`Could not install mod as Config`, `You tried installing a Config mod, but the game, staging folder, and Local AppData folder are not all on the same drive. Please move the game and/or staging folder to the same drive as the Local AppData folder (typically C Drive) to install these types of mods with Vortex.`, { allowReport: false });
+    //api.showErrorNotification(`Could not install mod as Config`, `You tried installing a Config mod, but the game, staging folder, and ${CONFIG_LOC} folder are not all on the same drive. Please move the game and/or staging folder to the same drive as the ${CONFIG_LOC} folder (typically C Drive) to install these types of mods with Vortex.`, { allowReport: false });
     configInstallerNotify(api);
   }
   return Promise.resolve({ instructions });
@@ -964,7 +1013,7 @@ function installSave(api, files) {
   GAME_PATH = getDiscoveryPath(api);
   const IS_SAVE = checkPartitions(SAVEMOD_LOCATION, GAME_PATH);
   if (IS_SAVE === false) {
-    //api.showErrorNotification(`Could not install mod as Save`, `You tried installing a Save mod, but the game, staging folder, and Local AppData folder are not all on the same drive. Please move the game and/or staging folder to the same drive as the Local AppData folder (typically C Drive) to install these types of mods with Vortex.`, { allowReport: false });
+    //api.showErrorNotification(`Could not install mod as Save`, `You tried installing a Save mod, but the game, staging folder, and ${SAVE_LOC} folder are not all on the same drive. Please move the game and/or staging folder to the same drive as the ${SAVE_LOC} folder (typically C Drive) to install these types of mods with Vortex.`, { allowReport: false });
     saveInstallerNotify(api);
   } 
   return Promise.resolve({ instructions });
@@ -1006,7 +1055,7 @@ function saveInstallerNotify(api) {
   });
 }
 
-//Fallback installer to Binaries folder
+//Test Fallback installer to Binaries folder
 function testBinaries(files, gameId) {
   const isPak = files.some(file => (path.extname(file).toLowerCase() === PAK_EXT));
   let supported = (gameId === spec.game.id) && !isPak;
@@ -1129,7 +1178,7 @@ async function downloadUe4ss(api, gameSpec) {
   }
 } //*/
 
-//* Function to auto-download NoCableLauncher form Nexus Mods
+//* Function to auto-download UE4SS from Nexus Mods
 async function downloadUe4ssNexus(api, gameSpec) {
   let isInstalled = isUe4ssInstalled(api, gameSpec);
   if (!isInstalled) {
@@ -1168,7 +1217,7 @@ async function downloadUe4ssNexus(api, gameSpec) {
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
       }
       const dlInfo = { //Download the mod
-        game: gameSpec.game.id,
+        game: GAME_DOMAIN,
         name: MOD_NAME,
       };
       const dlId = await util.toPromise(cb =>
@@ -1304,8 +1353,7 @@ function makePrefix(input) {
 
 function loadOrderPrefix(api, mod) {
   const state = api.getState();
-  const gameId = GAME_ID;
-  const profile = selectors.lastActiveProfileForGame(state, gameId);
+  const profile = selectors.lastActiveProfileForGame(state, GAME_ID);
   const loadOrder = util.getSafe(state, ['persistent', 'loadOrder', profile], {});
   const loKeys = Object.keys(loadOrder);
   const pos = loKeys.indexOf(mod.id);
@@ -1467,12 +1515,11 @@ function partitionCheckNotify(api, CHECK_DATA) {
           api.showDialog('question', MESSAGE, {
             text: `Because ${GAME_NAME} includes the IO-Store Unreal Engine feature, Vortex must use hardlinks to install mods for the game.\n`
                 + `Because of this, the game, staging folder, and user folder (typically on C Drive) must all be on the same partition to install certain mods with Vortex.\n`
-                + `Vortex detected that one or more of the mod types listed below are not available because the game, staging folder, and user folder are not on the same partition.\n`
+                + `Vortex detected that one or more of the mod types listed below are not available because the game, staging folder, and ${CONFIG_LOC} folder are not on the same partition.\n`
                 + `\n`
                 + `Here are your results for the partition check to enable these mod types:\n`
                 + `  - Config: ${CHECK_DATA ? `ENABLED: ${CONFIG_LOC} folder is on the same partition as the game and the Vortex staging folder, so the Config modtype is available` : `DISABLED: ${CONFIG_LOC} folder is NOT on the same partition as the game and the Vortex staging folder, so the Config modtype is NOT available`}\n`
                 + `  - Save: ${CHECK_DATA ? `ENABLED: ${SAVE_LOC} folder is on the same partition as the game and the Vortex staging folder, so the Save modtype is available` : `DISABLED: ${SAVE_LOC} folder is NOT on the same partition as the game and the Vortex staging folder, so the Save modtype is NOT available`}\n`
-
                 + `\n`
                 + `Config Path: ${CONFIG_PATH}\n`
                 + `Save Path: ${SAVE_PATH}\n`
@@ -1495,6 +1542,7 @@ function partitionCheckNotify(api, CHECK_DATA) {
 }
 
 async function resolveGameVersion(gamePath, exePath) {
+  //GAME_VERSION = await setGameVersionPath(gamePath);
   //SHIPPING_EXE = getShippingExe(gamePath);
   const READ_FILE = path.join(gamePath, SHIPPING_EXE);
   let version = '0.0.0';
@@ -1523,18 +1571,18 @@ async function setup(discovery, api, gameSpec) {
   STAGING_FOLDER = selectors.installPathForGame(state, gameSpec.game.id);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, gameSpec.game.id);
   CHECK_DATA = checkPartitions(CONFIGMOD_LOCATION, GAME_PATH);
-  //CHECK_DOCS = checkPartitions(DOCUMENTS, GAME_PATH);
+  //CHECK_DOCS = checkPartitions(SAVEMOD_LOCATION, GAME_PATH);
   if (!CHECK_DATA) {
     partitionCheckNotify(api, CHECK_DATA);
   }
   /*if (!CHECK_DOCS) {
     partitionCheckNotify(api, CHECK_DOCS);
   } //*/
-  // ASYNC CODE //////////////////////////////////////////
+  // ASYNC CODE ///////////////////////////////////
   if (CHECK_DATA) { //if game, staging folder, and config and save folders are on the same drive
     await fs.ensureDirWritableAsync(CONFIG_PATH);
     await fs.ensureDirWritableAsync(SAVE_PATH);
-  }
+  } //*/
   /*if (CHECK_DOCS) { //if game, staging folder, and config and save folders are on the same drive
     await fs.ensureDirWritableAsync(SAVE_PATH);
   } //*/
@@ -1553,11 +1601,11 @@ function applyGame(context, gameSpec) {
   const game = {
     ...gameSpec.game,
     queryPath: makeFindGame(context.api, gameSpec),
-    queryModPath: makeGetModPath(context.api, gameSpec),
-    requiresLauncher: requiresLauncher,
-    setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     executable: () => gameSpec.game.executable,
     //executable: getExecutable,
+    queryModPath: makeGetModPath(context.api, gameSpec),
+    setup: async (discovery) => await setup(discovery, context.api, gameSpec),
+    requiresLauncher: requiresLauncher,
     //getGameVersion: resolveGameVersion,
     supportedTools: tools,
   };
@@ -1574,7 +1622,7 @@ function applyGame(context, gameSpec) {
 
   //register sigbypass modtype
   if (SIGBYPASS_REQUIRED === true) {
-    context.registerModType(SIGBYPASS_ID, 60, 
+    context.registerModType(SIGBYPASS_ID, 58, 
       (gameId) => {
         var _a;
         return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
@@ -1585,8 +1633,8 @@ function applyGame(context, gameSpec) {
     );
   }
 
-  //register mod types for Config and Saves (conditional on all folders being on same drive partition)
-  context.registerModType(CONFIG_ID, 45, 
+  //* register modtypes with partition checks
+  context.registerModType(CONFIG_ID, 60, 
     (gameId) => {
       GAME_PATH = getDiscoveryPath(context.api);
       if (GAME_PATH !== undefined) {
@@ -1597,14 +1645,14 @@ function applyGame(context, gameSpec) {
     (game) => pathPattern(context.api, game, CONFIG_PATH), 
     () => Promise.resolve(false), 
     { name: CONFIG_NAME }
-  );
-  context.registerModType(SAVE_ID, 47, 
+  ); //*/
+  context.registerModType(SAVE_ID, 62, 
     (gameId) => {
       GAME_PATH = getDiscoveryPath(context.api);
       if (GAME_PATH !== undefined) {
         CHECK_DATA = checkPartitions(SAVEMOD_LOCATION, GAME_PATH);
       }
-      return ((gameId === GAME_ID) && (CHECK_DATA === true));
+      return ((gameId === GAME_ID) && (CHECK_DATA === true)); //*/
       /*if (GAME_PATH !== undefined) {
         CHECK_DOCS = checkPartitions(DOCUMENTS, GAME_PATH);
       }
@@ -1613,7 +1661,7 @@ function applyGame(context, gameSpec) {
     (game) => pathPattern(context.api, game, SAVE_PATH), 
     () => Promise.resolve(false), 
     { name: SAVE_NAME }
-  );
+  ); //*/
   
   //register mod installers
   context.registerInstaller(UE4SSCOMBO_ID, 25, testUe4ssCombo, installUe4ssCombo);
