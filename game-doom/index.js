@@ -53,7 +53,7 @@ let DOWNLOAD_FOLDER = '';
 // Information for installers, modtypes, and tools
 //const USER_HOME = util.getVortexPath("home");
 //const LOCALAPPDATA = util.getVortexPath("localAppData");
-//const DOCUMENTS = path.join(USER_HOME, "Documents");
+//const DOCUMENTS = util.getVortexPath("documents");
 
 const BINARIES_ID = `${GAME_ID}-binaries`;
 const BINARIES_NAME = "Binaries / Root Folder";

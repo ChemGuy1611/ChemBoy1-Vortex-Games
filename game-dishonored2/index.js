@@ -825,11 +825,11 @@ async function setup(discovery, api, gameSpec) {
   if (GAME_VERSION !== 'xbox') {
     await fs.ensureDirWritableAsync(SAVE_PATH);
   } //*/
-  await fs.ensureFileAsync(
+  await fs.ensureDirWritableAsync(CONFIG_PATH);
+  await modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
+  return fs.ensureFileAsync(
     path.join(GAME_PATH, VOIDMOD_PATH, "VoidInstaller_Mods_Go_Here.txt")
   );
-  await fs.ensureDirWritableAsync(CONFIG_PATH);
-  return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 
 //Let Vortex know about the game
@@ -862,7 +862,7 @@ function applyGame(context, gameSpec) {
   context.registerModType(SAVE_ID, 62, 
     (gameId) => {
       /*GAME_PATH = getDiscoveryPath(context.api);
-      GAME_VERSION = await setGameVersion(GAME_PATH);
+      GAME_VERSION = setGameVersion(GAME_PATH);
       if (GAME_PATH !== undefined) {
         CHECK_DATA = checkPartitions(USERHOME, GAME_PATH);
       } //*/

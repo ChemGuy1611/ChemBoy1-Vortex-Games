@@ -4,6 +4,11 @@
 
 - None Planned
 
+## [0.6.0] - 2025-11-12
+
+- Improved TFC mod installer to better handle different packaging methods.
+- Technical fixes and improvements.
+
 ## [0.5.1] - 2025-09-17
 
 - Fixed potential issues with TFC Installer download.

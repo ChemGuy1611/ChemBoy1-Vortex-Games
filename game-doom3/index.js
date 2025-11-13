@@ -74,7 +74,7 @@ const XBOX = 'xbox';
 // Information for installers, modtypes, and tools
 const USER_HOME = util.getVortexPath("home");
 const LOCALAPPDATA = util.getVortexPath("localAppData");
-const DOCUMENTS = path.join(USER_HOME, "Documents");
+const DOCUMENTS =  util.getVortexPath("documents");
 
 const BASE_ID = `${GAME_ID}-base`;
 const BASE_NAME = '"base" Data';

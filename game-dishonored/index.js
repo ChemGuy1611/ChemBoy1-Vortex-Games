@@ -761,11 +761,11 @@ async function setup(discovery, api, gameSpec) {
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, gameSpec.game.id);
   //setupNotify(api);
   await downloadTfc(api, gameSpec);
-  await fs.ensureFileAsync(
+  MODTYPE_FOLDERS.push(EXEC_FOLDER);
+  await modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
+  return fs.ensureFileAsync(
     path.join(GAME_PATH, TFCMOD_PATH, "TFC_Mods_Go_Here.txt")
   );
-  MODTYPE_FOLDERS.push(EXEC_FOLDER);
-  return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 
 //Let Vortex know about the game
@@ -809,7 +809,7 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(UPKEXPLORER_ID, 27, testUpkExplorer, installUpkExplorer);
   context.registerInstaller(TFCMOD_ID, 29, testTfcMod, installTfcMod);
   context.registerInstaller(ROOT_ID, 31, testRoot, installRoot);
-  context.registerInstaller(MOVIES_ID, 31, testMovies, installMovies);
+  context.registerInstaller(MOVIES_ID, 33, testMovies, installMovies);
 
   //register actions
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {

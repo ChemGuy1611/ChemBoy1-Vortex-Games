@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.6.0] - 2025-11-12
+
+- Improved TFC mod installer to better handle different packaging methods.
+- Added buttons to open Config and Save folders (folder icon in Mods toolbar).
+- Technical fixes and improvements.
+
 ## [0.5.1] - 2025-09-18
 
 - Improved TFC downloader to avoid potential issues.
