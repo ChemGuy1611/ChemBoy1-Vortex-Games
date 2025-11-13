@@ -104,15 +104,15 @@ let SHIPPING_EXE = path.join(BINARIES_PATH, SHIPPING_EXE_FILENAME);
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Game Folder";
 const ROOT_FILE = EPIC_CODE_NAME;
+const ROOT_FOLDERS = [ROOT_FILE, 'Engine'];
 
-const CONTENT_ID = `${GAME_ID}-contentfolder`;
-const CONTENT_NAME = "Content Folder";
-const CONTENT_FILE = 'Content';
-const CONTENT_PATH = path.join(EPIC_CODE_NAME);
+const ROOTSUB_ID = `${GAME_ID}-rootsubfolders`;
+const ROOTSUB_NAME = "Root Sub-Folders";
+const ROOTSUB_FOLDERS = ['Content', 'Binaries', 'Plugins'];
+const ROOTSUB_PATH = EPIC_CODE_NAME;
 
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_NAME = "Saves";
-//const SAVE_FOLDER = path.join(DOCUMENTS, DATA_FOLDER);
 const SAVE_FOLDER = path.join(SAVEMOD_LOCATION, DATA_FOLDER, 'Saved', 'SaveGames');
 let USERID_FOLDER = "";
 function isDir(folder, file) {
@@ -247,10 +247,10 @@ const spec = {
       "targetPath": "{gamePath}"
     },
     {
-      "id": CONTENT_ID,
-      "name": CONTENT_NAME,
+      "id": ROOTSUB_ID,
+      "name": ROOTSUB_NAME,
       "priority": "high",
-      "targetPath": path.join('{gamePath}', CONTENT_PATH)
+      "targetPath": path.join('{gamePath}', ROOTSUB_PATH)
     },
     {
       "id": BINARIES_ID,
@@ -795,12 +795,13 @@ function installDll(files, fileName) {
   return Promise.resolve({ instructions });
 }
 
-//Installer test for root folder
+//Installer test for Root folder files
 function testRoot(files, gameId) {
-  const isMod = files.some(file => (path.basename(file) === ROOT_FILE));
-  let supported = (gameId === spec.game.id) && isMod;
+  const isMod = files.some(file => ROOT_FOLDERS.includes(path.basename(file)));
+  const isSub = files.some(file => ROOTSUB_FOLDERS.includes(path.basename(file)));
+  let supported = (gameId === spec.game.id) && ( isMod || isSub );
 
-  // Test for a mod installer
+  // Test for a mod installer.
   if (supported && files.find(file =>
     (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
     (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
@@ -813,59 +814,23 @@ function testRoot(files, gameId) {
   });
 }
 
-//Installer install root folder
-function installRoot(files) {
-  const modFile = files.find(file => (path.basename(file) === ROOT_FILE));
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
-  const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
-
-  // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    //((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
-    ((file.indexOf(rootPath) !== -1))
-  );
-  const instructions = filtered.map(file => {
-    return {
-      type: 'copy',
-      source: file,
-      destination: path.join(file.substr(idx)),
-    };
-  });
-  instructions.push(setModTypeInstruction);
-  return Promise.resolve({ instructions });
-}
-
-//Installer test for Root folder files
-function testContent(files, gameId) {
-  const isMod = files.some(file => path.basename(file) === CONTENT_FILE);
-  let supported = (gameId === spec.game.id) && isMod;
-
-  // Test for a mod installer
-  if (supported && files.find(file =>
-      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
-    supported = false;
-  }
-
-  return Promise.resolve({
-    supported,
-    requiredFiles: [],
-  });
-}
-
 //Installer install Root folder files
-function installContent(files) {
-  const modFile = files.find(file => path.basename(file) === CONTENT_FILE);
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+function installRoot(files) {
+  let modFile = files.find(file => ROOT_FOLDERS.includes(path.basename(file)));
+  let setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
+  if (modFile === undefined) {
+    modFile = files.find(file => ROOTSUB_FOLDERS.includes(path.basename(file)));
+    setModTypeInstruction = { type: 'setmodtype', value: ROOTSUB_ID };
+  }
+  const ROOT_IDX = `${path.basename(modFile)}${path.sep}`
+  const idx = modFile.indexOf(ROOT_IDX);
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: CONTENT_ID };
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
     ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
-    //((file.indexOf(rootPath) !== -1))
   );
+
   const instructions = filtered.map(file => {
     return {
       type: 'copy',
@@ -1661,7 +1626,6 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(SCRIPTS_ID, 33, testScripts, installScripts);
   context.registerInstaller(DLL_ID, 35, testDll, installDll);
   context.registerInstaller(ROOT_ID, 37, testRoot, installRoot);
-  context.registerInstaller(CONTENT_ID, 38, testContent, installContent);
   context.registerInstaller(CONFIG_ID, 39, testConfig, (files) => installConfig(context.api, files));
   context.registerInstaller(SAVE_ID, 41, testSave, (files) => installSave(context.api, files));
   context.registerInstaller(BINARIES_ID, 49, testBinaries, installBinaries);

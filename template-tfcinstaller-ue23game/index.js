@@ -526,8 +526,8 @@ function installTfcMod(files, fileName) {
   const ROOT_PATH = path.basename(path.dirname(modFile));
   const MOD_NAME = path.basename(fileName);
   let MOD_FOLDER = '.';
-  let idx = modFile.indexOf(`${ROOT_PATH}${path.sep}`);
-  if (ROOT_PATH === '.') {
+  let idx = modFile.indexOf(`${ROOT_PATH}${path.sep}`); //index on the folder if it exists
+  if (ROOT_PATH === '.') { //if the modFile is not in a folder, we need to make one
     MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
     idx = modFile.indexOf(path.basename(modFile));
   }
@@ -790,10 +790,10 @@ async function setup(discovery, api, gameSpec) {
   //setupNotify(api);
   // ASYNC CODE //////////////////////////////////////////
   await downloadTfc(api, gameSpec);
-  await fs.ensureFileAsync(
+  await modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
+  return fs.ensureFileAsync(
     path.join(GAME_PATH, TFCMOD_PATH, "TFC_Mods_Go_Here.txt")
   );
-  return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 
 //Let Vortex know about the game
