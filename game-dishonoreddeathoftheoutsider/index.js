@@ -1,8 +1,8 @@
 /*////////////////////////////////////
-Name: Dishonored 2 Vortex Extension
+Name: Dishonored: Death of the Outsider Vortex Extension
 Structure: Void Installer
 Author: ChemBoy1
-Version: 0.6.2
+Version: 0.1.0
 Date: 2025-11-13
 ////////////////////////////////////*/
 
@@ -18,14 +18,14 @@ const USERHOME = util.getVortexPath('home');
 const LOCALAPPDATA = util.getVortexPath('localAppData');
 
 //Specify all the information about the game
-const STEAMAPP_ID = "403640";
+const GAME_ID = "dishonoreddeathoftheoutsider";
+const STEAMAPP_ID = "614570";
 const EPICAPP_ID = ""; // not on egdata.app yet
-const GOGAPP_ID = "1431426311";
-const XBOXAPP_ID = "BethesdaSoftworks.Dishonored2-PC";
-const XBOXEXECNAME = "App";
-const GAME_ID = "dishonored2";
-const GAME_NAME = "Dishonored 2";
-const GAME_NAME_SHORT = "Dishonored 2";
+const GOGAPP_ID = "1707860700";
+const XBOXAPP_ID = "BethesdaSoftworks.DishonoredDeathoftheOutsiderPC";
+const XBOXEXECNAME = "Game";
+const GAME_NAME = "Dishonored: Death of the Outsider";
+const GAME_NAME_SHORT = "Dishonored DOTO";
 const MOD_PATH = ".";
 const XBOX_SAVE_STRING = '3275kfvn8vcwc'; //string after "ID_"
 const ROOT_FOLDER = "base";
@@ -47,11 +47,11 @@ const gameFinderQuery = {
 const requiredFiles = [ROOT_FOLDER];
 
 //Information for setting the executable and variable paths based on the game store version
-const EXEC = "Dishonored2.exe";
-const EXEC_EPIC = "Dishonored2.exe"; //confirm from egdata.app once available
+const EXEC = "Dishonored_DO.exe";
+const EXEC_EPIC = EXEC; //confirm from egdata.app once available
 const XBOX_EXEC = "gamelaunchhelper.exe";
 const EXEC_XBOX = XBOX_EXEC;
-const EXEC_XBOX_SHIPPING = "Dishonored2_x64ShippingRetail.exe";
+const EXEC_XBOX_SHIPPING = "Dishonored_DO_x64.exe";
 
 //Information for mod types and installers
 const ROOT_ID = `${GAME_ID}-root`;
@@ -59,9 +59,9 @@ const ROOT_NAME = "Root Game Folder";
 
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_NAME = "Save Game";
-const SAVE_PATH_DEFAULT = path.join(USERHOME, "Saved Games", "Arkane Studios", "Dishonored2", "base", "savegame");
+const SAVE_PATH_DEFAULT = path.join(USERHOME, "Saved Games", "Arkane Studios", "Dishonored_DO", "base", "savegame");
 //const SAVE_PATH_XBOX = path.join(LOCALAPPDATA, "Packages", `${XBOXAPP_ID}_${XBOX_SAVE_STRING}`, "SystemAppData", "wgs"); //XBOX Version
-let SAVE_PATH_XBOX = path.join(USERHOME, "Saved Games", "Arkane Studios", "Dishonored2", "base", "savegame", ".xbuser");
+let SAVE_PATH_XBOX = path.join(USERHOME, "Saved Games", "Arkane Studios", "Dishonored_DO", "base", "savegame", ".xbuser");
 let USERID_FOLDER = "";
 function isDir(folder, file) {
   const stats = fs.statSync(path.join(folder, file));
@@ -83,8 +83,8 @@ let SAVE_PATH = SAVE_PATH_DEFAULT;
 
 const CONFIG_ID = `${GAME_ID}-config`;
 const CONFIG_NAME = "Config";
-const CONFIG_PATH = path.join(USERHOME, "Saved Games", "Arkane Studios", "Dishonored2", "base");
-const CONFIG_FILES = ["dishonored2config.cfg"];
+const CONFIG_PATH = path.join(USERHOME, "Saved Games", "Arkane Studios", "Dishonored_DO", "base");
+const CONFIG_FILES = ["dishonored_doconfig.cfg"];
 
 const VOID_ID = `${GAME_ID}-voidinstaller`;
 const VOID_NAME = "Void Installer";
@@ -349,30 +349,13 @@ function isVoidInstalled(api, spec) {
 //Function to auto-download Void
 async function downloadVoid(api, gameSpec) {
   let isInstalled = isVoidInstalled(api, gameSpec);
-  /*
-  const state = api.getState();
-  const modLoaderFile = VOID_EXEC;
-  const installPath = selectors.installPathForGame(state, gameSpec.game.id); // This retrieves the staging folder for the game.
-  let isInstalled = false;
-  await turbowalk.default(installPath, async (entries) => { // Walk through the folders of the staging folder in an attempt to look for an identifiable file entry.
-    if (isInstalled === true) {
-      return Promise.resolve();
-    }
-    for (const entry of entries) {
-      if (path.basename(entry.filePath).toLowerCase() === modLoaderFile) {
-        isInstalled = true;
-        return Promise.resolve();
-      }
-    }
-  });
-  //*/
   if (!isInstalled) {
     const MOD_TYPE = VOID_ID;
     const MOD_NAME = VOID_NAME;
     const NOTIF_ID = `${GAME_ID}-${MOD_TYPE}-installing`;
     const modPageId = 31;
     const FILE_ID = 224;  //If using a specific file id because "input" below gives an error
-    const GAME_DOMAIN = GAME_ID;
+    const GAME_DOMAIN = 'dishonored2';
     api.sendNotification({ //notification indicating install process
       id: NOTIF_ID,
       message: `Installing ${MOD_NAME}`,
@@ -397,7 +380,7 @@ async function downloadVoid(api, gameSpec) {
       //*/
       //Download the mod
       const dlInfo = {
-        game: gameSpec.game.id,
+        game: GAME_DOMAIN,
         name: MOD_NAME,
       };
       const nxmUrl = `nxm://${GAME_DOMAIN}/mods/${modPageId}/files/${file.file_id}`;
