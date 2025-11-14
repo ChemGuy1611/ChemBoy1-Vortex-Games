@@ -72,6 +72,8 @@ const SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
 const SAVE_EXTS = [".sav"];
 //*/
 
+const PARAMETERS = [];
+
 //This information will be filled in from the data above
 const spec = {
   "game": {
