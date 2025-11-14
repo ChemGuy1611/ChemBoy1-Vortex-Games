@@ -1810,8 +1810,7 @@ function applyGame(context, gameSpec) {
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Binaries Folder', () => {
     GAME_PATH = getDiscoveryPath(context.api);
-    const openPath = path.join(GAME_PATH, BINARIES_PATH);
-    util.opn(openPath).catch(() => null);
+    util.opn(path.join(GAME_PATH, BINARIES_PATH)).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
@@ -1819,8 +1818,7 @@ function applyGame(context, gameSpec) {
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open UE4SS Mods Folder', () => {
     GAME_PATH = getDiscoveryPath(context.api);
-    const openPath = path.join(GAME_PATH, SCRIPTS_PATH);
-    util.opn(openPath).catch(() => null);
+    util.opn( path.join(GAME_PATH, SCRIPTS_PATH)).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
@@ -1835,19 +1833,17 @@ function applyGame(context, gameSpec) {
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', async () => {
     //CONFIG_PATH = await setConfigPath(GAME_VERSION);
-    const openPath = CONFIG_PATH;
-    util.opn(openPath).catch(() => null);
+    util.opn(CONFIG_PATH).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Saves Folder', () => {
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Saves Folder', async () => {
     //SAVE_PATH = await setSavePath();
-    const openPath = SAVE_PATH;
-    util.opn(openPath).catch(() => null);
+    util.opn(SAVE_PATH).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);

@@ -3,7 +3,7 @@ Name: A Plague Tale Requiem Vortex Extension
 Structure: Basic Game (XBOX Integrated)
 Author: ChemBoy1
 Version: 1.3.0
-Date: 2025-11-11
+Date: 2025-11-14
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -12,16 +12,19 @@ const path = require('path');
 const template = require('string-template');
 const { parseStringPromise } = require('xml2js');
 
+const DOCUMENTS = util.getVortexPath("documents");
+const LOCALAPPDATA = util.getVortexPath("localAppData");
+const APPDATA = util.getVortexPath("appData");
+
 //Specify all information about the game
 const GAME_ID = "aplaguetalerequiem";
 const STEAMAPP_ID = "1182900";
-const EPICAPP_ID = ""; // not on egdata.app yet
+const EPICAPP_ID = ""; // not on egdata.app yet - https://egdata.app/offers/28678d007f3d4440b7a7365b04c5fc2e/builds
 const GOGAPP_ID = "1552771812";
 const XBOXAPP_ID = "FocusHomeInteractiveSA.APlagueTaleRequiem-Windows";
 const XBOXEXECNAME = "Game";
 const GAME_NAME = "A Plague Tale: Requiem";
 const GAME_NAME_SHORT = "APT Requiem";
-const MOD_PATH = ".";
 const COMMON_FILE = path.join('DATAS', 'P_AMICIA.DPC');
 
 const gameFinderQuery = {
@@ -32,11 +35,15 @@ const gameFinderQuery = {
 };
 
 //Information for setting the executable and variable paths based on the game store version
-const requiredFiles = [COMMON_FILE];
 const EXEC = "APlagueTaleRequiem_x64.exe";
-const EPIC_EXEC = "APlagueTaleRequiem_x64.exe";
-const EXEC_XBOX_ALT = "gamelaunchhelper.exe";
+const EXEC_GOG = EXEC;
+const EXEC_EPIC = "APlagueTaleRequiem_x64.exe";
 const EXEC_XBOX = "APT2_WinStore.x64.Submission.exe";
+const EXEC_XBOX_ALT = "gamelaunchhelper.exe";
+const GOG_FILE = 'Galaxy64.dll';
+const STEAM_FILE = 'steam_api64.dll';
+const XBOX_FILE = EXEC_XBOX_ALT;
+const EPIC_FILE = EXEC;
 
 let GAME_VERSION = '';
 let GAME_PATH = '';
@@ -44,16 +51,22 @@ let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 const APPMANIFEST_FILE = 'appxmanifest.xml';
 
-/* Config and Saves
+//* Config
 const CONFIG_ID = `${GAME_ID}-config`;
 const CONFIG_NAME = "Config";
-const CONFIG_PATH = path.join(DOCUMENTS, DATA_FOLDER, CONFIG_FOLDERNAME);
 const CONFIG_EXTS = [".ini"];
-const CONFIG_FILES = ["XXX"];
+const CONFIG_FILES = ["ENGINESETTINGS"]; 
+const CONFIG_PATH_STEAM = path.join(APPDATA, 'A Plague Tale Requiem');
+const CONFIG_PATH_GOG = path.join(DOCUMENTS, 'My Games', 'A Plague Tale Requiem');
+const CONFIG_PATH_XBOX = CONFIG_PATH_GOG;
+const CONFIG_PATH_EPIC = CONFIG_PATH_GOG;
+let CONFIG_PATH = CONFIG_PATH_STEAM;
+//*/
 
+/*Save
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_NAME = "Save";
-const SAVE_FOLDER = path.join(SAVEMOD_LOCATION, DATA_FOLDER, SAVE_FOLDERNAME);
+const SAVE_FOLDER = path.join(DOCUMENTS, '');
 let USERID_FOLDER = "";
 function isDir(folder, file) {
   const stats = fs.statSync(path.join(folder, file));
@@ -69,10 +82,12 @@ if (USERID_FOLDER === undefined) {
   USERID_FOLDER = "";
 } 
 const SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
-const SAVE_EXTS = [".sav"];
-//*/
+const SAVE_EXTS = [".sav"]; //*/
 
+MOD_PATH_DEFAULT = ".";
+const REQ_FILE = COMMON_FILE;
 const PARAMETERS = [];
+let MODTYPE_FOLDERS = ['.'];
 
 //This information will be filled in from the data above
 const spec = {
@@ -83,8 +98,11 @@ const spec = {
     "logo": `${GAME_ID}.jpg`,
     //"parameters": PARAMETERS,
     "mergeMods": true,
-    "modPath": MOD_PATH,
+    "modPath": MOD_PATH_DEFAULT,
     "modPathIsRelative": true,
+    "requiredFiles": [
+      REQ_FILE
+    ],
     "details": {
       "steamAppId": +STEAMAPP_ID,
       "gogAppId": GOGAPP_ID,
@@ -140,6 +158,30 @@ const tools = [
 
 // BASIC EXTENSION FUNCTIONS ///////////////////////////////////////////////////
 
+function isDir(folder, file) {
+  const stats = fs.statSync(path.join(folder, file));
+  return stats.isDirectory();
+}
+
+function statCheckSync(gamePath, file) {
+  try {
+    fs.statSync(path.join(gamePath, file));
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}
+async function statCheckAsync(gamePath, file) {
+  try {
+    await fs.statAsync(path.join(gamePath, file));
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}
+
 //Set mod type priorities
 function modTypePriority(priority) {
   return {
@@ -148,15 +190,20 @@ function modTypePriority(priority) {
   }[priority];
 }
 
-//Convert path placeholders to actual values
+//Replace folder path string placeholders with actual folder paths
 function pathPattern(api, game, pattern) {
-  var _a;
-  return template(pattern, {
-    gamePath: (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0 ? void 0 : _a.path,
-    documents: util.getVortexPath('documents'),
-    localAppData: process.env['LOCALAPPDATA'],
-    appData: util.getVortexPath('appData'),
-  });
+  try {
+    var _a;
+    return template(pattern, {
+      gamePath: (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0 ? void 0 : _a.path,
+      documents: util.getVortexPath('documents'),
+      localAppData: util.getVortexPath('localAppData'),
+      appData: util.getVortexPath('appData'),
+    });
+  }
+  catch (err) { //this happens if the executable comes back as "undefined", usually caused by another app locking down the folder
+    api.showErrorNotification('Failed to locate executable. Please launch the game at least once.', err);
+  }
 }
 
 async function requiresLauncher(gamePath, store) {
@@ -181,63 +228,66 @@ async function requiresLauncher(gamePath, store) {
   return Promise.resolve(undefined);
 }
 
-//Get the executable and add to required files
+//Get the executable
 function getExecutable(discoveryPath) {
-  const isCorrectExec = (exec) => {
-    try {
-      fs.statSync(path.join(discoveryPath, exec));
-      return true;
-    }
-    catch (err) {
-      return false;
-    }
-  };
-  if (isCorrectExec(EXEC_XBOX)) {
+  if (statCheckSync(discoveryPath, EXEC_XBOX)) {
     return EXEC_XBOX;
   };
   /*
-  if (isCorrectExec(EPIC_EXEC)) {
-    return EPIC_EXEC;
+  if (statCheckSync(discoveryPath, EXEC_EPIC)) {
+    return EXEC_EPIC;
   }; //*/
   return EXEC;
 }
 
-function statCheckSync(gamePath, file) {
-  try {
-    fs.statSync(path.join(gamePath, file));
-    return true;
-  }
-  catch (err) {
-    return false;
-  }
-}
-async function statCheckAsync(gamePath, file) {
-  try {
-    await fs.statAsync(path.join(gamePath, file));
-    return true;
-  }
-  catch (err) {
-    return false;
-  }
-}
 //Get correct game version
 async function setGameVersion(gamePath) {
-  const CHECK = await statCheckAsync(gamePath, EXEC_XBOX);
-  if (CHECK) {
-    GAME_VERSION = 'xbox';
-    return GAME_VERSION;
-  } else {
-    GAME_VERSION = 'default';
+  if (await statCheckAsync(gamePath, STEAM_FILE)) {
+    GAME_VERSION = 'steam';
+    CONFIG_PATH = setConfigPath(GAME_VERSION);
     return GAME_VERSION;
   }
+  if (await statCheckAsync(gamePath, XBOX_FILE)) {
+    GAME_VERSION = 'xbox';
+    CONFIG_PATH = setConfigPath(GAME_VERSION);
+    return GAME_VERSION;
+  }
+  if (await statCheckAsync(gamePath, GOG_FILE)) {
+    GAME_VERSION = 'gog';
+    CONFIG_PATH = setConfigPath(GAME_VERSION);
+    return GAME_VERSION;
+  }
+  if (await statCheckAsync(gamePath, EPIC_FILE)) {
+    GAME_VERSION = 'epic';
+    CONFIG_PATH = setConfigPath(GAME_VERSION);
+    return GAME_VERSION;
+  }
+}
+
+//Get correct config path for game version
+async function setConfigPath(GAME_VERSION) {
+  if (GAME_VERSION === 'steam') {
+    CONFIG_PATH = CONFIG_PATH_STEAM;
+  }
+  if (GAME_VERSION === 'xbox') {
+    CONFIG_PATH = CONFIG_PATH_XBOX;
+  }
+  if (GAME_VERSION === 'gog') {
+    CONFIG_PATH = CONFIG_PATH_GOG;
+  }
+  if (GAME_VERSION === 'epic') {
+    CONFIG_PATH = CONFIG_PATH_EPIC;
+  }
+  return CONFIG_PATH;
 }
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
 //Send notification for Reshade
 function reshadeNotify(api) {
+  const NOTIF_ID = 'reshade-notification-aplaguetalerequiem';
   api.sendNotification({
-    id: 'reshade-notification-aplaguetalerequiem',
+    id: NOTIF_ID,
     type: 'warning',
     message: 'Reshade mod may be required.',
     allowSuppress: true,
@@ -246,7 +296,7 @@ function reshadeNotify(api) {
         title: 'More',
         action: (dismiss) => {
           api.showDialog('question', 'Action required', {
-            text: 'A Plague Tale: Requiem requires Reshades for most mods available on Nexus Mods.\n'
+            text: "A Plague Tale: Requiem requires Reshades for most mods available on Nexus Mods.\n"
                 + 'Please use the button below to download and install Reshade\n'
                 + 'if you haven\'t already and plan to use those mods.'
           }, [
@@ -255,6 +305,12 @@ function reshadeNotify(api) {
                 util.opn('https://www.reshade.me/').catch(err => undefined);
                 dismiss();
             }},
+            {
+              label: 'Never Show Again', action: () => {
+                api.suppressNotification(NOTIF_ID);
+                dismiss();
+              }
+            },
           ]);
         },
       },
@@ -289,11 +345,25 @@ async function resolveGameVersion(gamePath) {
   }
 } //*/
 
+async function modFoldersEnsureWritable(gamePath, relPaths) {
+  for (let index = 0; index < relPaths.length; index++) {
+    await fs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
+  }
+}
 
 //Setup function
 async function setup(discovery, api, gameSpec){
+  // SYNCHRONOUS CODE ////////////////////////////////////
+  const state = api.getState();
+  GAME_PATH = discovery.path;
+  STAGING_FOLDER = selectors.installPathForGame(state, gameSpec.game.id);
+  DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, gameSpec.game.id);
   reshadeNotify(api);
-  return fs.ensureDirWritableAsync(path.join(discovery.path, gameSpec.game.modPath));
+  // ASYNC CODE //////////////////////////////////////////
+  GAME_VERSION = await setGameVersion(GAME_PATH);
+  CONFIG_PATH = await setConfigPath(GAME_VERSION);
+  //MODTYPE_FOLDERS.push(CONFIG_PATH);
+  return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 
 //Let Vortex know about the game
@@ -305,7 +375,6 @@ function applyGame(context, gameSpec) {
     queryArgs: gameFinderQuery,
     executable: getExecutable,
     queryModPath: () => gameSpec.game.modPath,
-    requiredFiles,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     supportedTools: tools,
     getGameVersion: resolveGameVersion,
@@ -324,6 +393,40 @@ function applyGame(context, gameSpec) {
 
   //register mod installers
 
+
+  //register actions
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', async () => {
+    CONFIG_PATH = await setConfigPath(GAME_VERSION);
+    util.opn(CONFIG_PATH).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Saves Folder', async () => {
+    //SAVE_PATH = await setSavePath();
+    util.opn(SAVE_PATH).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  }); //*/
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
+    const openPath = path.join(__dirname, 'CHANGELOG.md');
+    util.opn(openPath).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
+    const openPath = DOWNLOAD_FOLDER;
+    util.opn(openPath).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
 }
 
 //Main function

@@ -2,14 +2,16 @@
 Name: Red Dead Redemption Vortex Extension
 Structure: 3rd-Party Mod Installer
 Author: ChemBoy1
-Version: 0.2.4
-Date: 2025-08-18
+Version: 0.2.5
+Date: 2025-11-14
 ////////////////////////////////////////////*/
 
 //Import libraries
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
+
+const DOCUMENTS = util.getVortexPath("documents");
 
 //Specify all the information about the game
 const STEAMAPP_ID = "2668510";
@@ -21,6 +23,7 @@ const GAME_ID = "reddeadredemption";
 const EXEC = "RDR.exe";
 const GAME_NAME = "Red Dead Redemption";
 const GAME_NAME_SHORT = "RDR";
+
 let GAME_PATH = null;
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
@@ -47,7 +50,33 @@ const ASIPLUGIN_PATH = ".";
 const ASIPLUGIN_EXT = ".asi";
 
 const MAGIC_ID = `${GAME_ID}-magicrdr`;
+const MAGIC_NAME = "Magic-RDR";
 const MAGIC_EXEC = "MagicRDR.exe";
+
+const CONFIG_ID = `${GAME_ID}-config`;
+const CONFIG_NAME = "Config";
+const CONFIG_PATH = path.join(DOCUMENTS, 'Rockstar Games', 'Red Dead Redemption');
+const CONFIG_FILES = ["gabindings.xml", "graphicsOptions.xml", "options.xml"];
+
+const SAVE_ID = `${GAME_ID}-save`;
+const SAVE_NAME = "Saves";
+const SAVE_FOLDER = path.join(CONFIG_PATH, "Profiles");
+let USERID_FOLDER = "";
+function isDir(folder, file) {
+  const stats = fs.statSync(path.join(folder, file));
+  return stats.isDirectory();
+}
+try {
+  const SAVE_ARRAY = fs.readdirSync(SAVE_FOLDER);
+  USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_FOLDER, entry));
+} catch(err) {
+  USERID_FOLDER = "";
+}
+if (USERID_FOLDER === undefined) {
+  USERID_FOLDER = "";
+} //*/
+const SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
+const SAVE_EXTS = [""];
 
 //Filled in from information above
 const spec = {
@@ -87,13 +116,13 @@ const spec = {
       "id": RPF_ID,
       "name": `RPF File`,
       "priority": "high",
-      "targetPath": `{gamePath}\\${RPF_PATH}`
+      "targetPath": path.join('{gamePath}', RPF_PATH)
     },
     {
       "id": MAGICMOD_ID,
       "name": `MagicRDR Mod (Loose)`,
       "priority": "high",
-      "targetPath": `{gamePath}\\${MAGICMOD_PATH}`
+      "targetPath": path.join('{gamePath}', MAGICMOD_PATH)
     },
     {
       "id": ASIPLUGIN_ID,
@@ -133,6 +162,19 @@ const spec = {
 
 //3rd party tools and launchers
 const tools = [
+  {
+    id: `${GAME_ID}-customlaunch`,
+    name: `Custom Launch`,
+    logo: `exec.png`,
+    executable: () => EXEC,
+    requiredFiles: [EXEC],
+    detach: true,
+    relative: true,
+    exclusive: true,
+    shell: true,
+    //defaultPrimary: true,
+    //parameters: [],
+  }, //*/
   {
     id: "MagicRDR",
     name: "Magic RDR",
@@ -242,7 +284,7 @@ async function downloadMagic(api, gameSpec) {
         game: gameSpec.game.id,
         name: MOD_NAME,
       };
-      const URL = `https://github.com/Foxxyyy/Magic-RDR/releases/download/v1.3.9/MagicRDR_v1.3.9.zip`;
+      const URL = `https://github.com/Foxxyyy/Magic-RDR/releases/download/v1.3.10/MagicRDR_v1.3.10.zip`;
       const dlId = await util.toPromise(cb =>
         api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
       const modId = await util.toPromise(cb =>
@@ -328,7 +370,7 @@ async function downloadScriptHook(api, gameSpec) {
   }
 }
 
-//Function to auto-download Signature Bypass from Nexus
+//Function to auto-download mod loader from Nexus
 async function downloadModLoader(api, gameSpec) {
   let isInstalled = isModLoaderInstalled(api, gameSpec);
   
@@ -397,6 +439,13 @@ function testScriptHook(files, gameId) {
   const isMod2 = files.some(file => path.basename(file).toLowerCase() === SCRIPTHOOK_FILE2);
   let supported = (gameId === spec.game.id) && isMod && isMod2;
 
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
   return Promise.resolve({
     supported,
     requiredFiles: [],
@@ -427,10 +476,17 @@ function installScriptHook(files) {
   return Promise.resolve({ instructions });
 }
 
-//Installer test for Fluffy Mod Manager files
+//Installer test for mod loader files
 function testModLoader(files, gameId) {
   const isMod = files.some(file => path.basename(file).toLowerCase() === MODLOADER_FILE);
   let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
 
   return Promise.resolve({
     supported,
@@ -438,7 +494,7 @@ function testModLoader(files, gameId) {
   });
 }
 
-//Installer install Fluffy Mod Manger files
+//Installer install mod loader files
 function installModLoader(files) {
   const modFile = files.find(file => path.basename(file).toLowerCase() === MODLOADER_FILE);
   const idx = modFile.indexOf(path.basename(modFile));
@@ -449,7 +505,6 @@ function installModLoader(files) {
   const filtered = files.filter(file =>
     ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
   );
-
   const instructions = filtered.map(file => {
     return {
       type: 'copy',
@@ -458,11 +513,10 @@ function installModLoader(files) {
     };
   });
   instructions.push(setModTypeInstruction);
-
   return Promise.resolve({ instructions });
 }
 
-//Test for .fbmod files
+//Test for loose files (installed with Magic-RDR)
 function testMagicMod(files, gameId) {
   const isMod = files.find(file => MAGICMOD_EXTS.includes(path.extname(file).toLowerCase())) !== undefined;
   let supported = (gameId === spec.game.id) && isMod;
@@ -480,7 +534,7 @@ function testMagicMod(files, gameId) {
   });
 }
 
-//Install .fbmod files
+//Install loose files (installed with Magic-RDR)
 function installMagicMod(files, fileName) {
   const modFile = files.find(file => MAGICMOD_EXTS.includes(path.extname(file).toLowerCase()));
   const idx = modFile.indexOf(path.basename(modFile));
@@ -491,7 +545,6 @@ function installMagicMod(files, fileName) {
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file => ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep))));
-
   const instructions = filtered.map(file => {
     return {
       type: 'copy',
@@ -500,14 +553,20 @@ function installMagicMod(files, fileName) {
     };
   });
   instructions.push(setModTypeInstruction);
-
   return Promise.resolve({ instructions });
 }
 
-//Installer test for Fluffy Mod Manager files
+//Installer test for Magic-RDR
 function testMagic(files, gameId) {
   const isMod = files.some(file => path.basename(file).toLowerCase() === MAGIC_EXEC);
   let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
 
   return Promise.resolve({
     supported,
@@ -515,7 +574,7 @@ function testMagic(files, gameId) {
   });
 }
 
-//Installer install Fluffy Mod Manger files
+//Installer install Magic-RDR
 function installMagic(files) {
   const modFile = files.find(file => path.basename(file).toLowerCase() === MAGIC_EXEC);
   const idx = modFile.indexOf(path.basename(modFile));
@@ -539,7 +598,7 @@ function installMagic(files) {
   return Promise.resolve({ instructions });
 }
 
-//Test for save files
+//Test for whole RPF files
 function testRPF(files, gameId) {
   const isMod = files.find(file => path.extname(file).toLowerCase() === RPF_EXT) !== undefined;
   let supported = (gameId === spec.game.id) && isMod;
@@ -557,7 +616,7 @@ function testRPF(files, gameId) {
   });
 }
 
-//Install save files
+//Install whole RPF files
 function installRPF(files) {
   const modFile = files.find(file => path.extname(file).toLowerCase() === RPF_EXT);
   const idx = modFile.indexOf(path.basename(modFile));
@@ -581,7 +640,7 @@ function installRPF(files) {
   return Promise.resolve({ instructions });
 }
 
-//Test for save files
+//Test for ASI plugin files
 function testAsiPlugin(files, gameId) {
   const isMod = files.find(file => path.extname(file).toLowerCase() === ASIPLUGIN_EXT) !== undefined;
   let supported = (gameId === spec.game.id) && isMod;
@@ -599,7 +658,7 @@ function testAsiPlugin(files, gameId) {
   });
 }
 
-//Install save files
+//Install ASI plugin files
 function installAsiPlugin(files) {
   const modFile = files.find(file => path.extname(file).toLowerCase() === ASIPLUGIN_EXT);
   const idx = modFile.indexOf(path.basename(modFile));
@@ -625,12 +684,13 @@ function installAsiPlugin(files) {
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
-//Notify User of Setup instructions for Mod Managers
+//Notify User of Setup instructions for Magic-RDR
 function setupNotify(api) {
-  const MOD_NAME = "Magic RDR";
-  const MOD_FOLDER = "MagicRDR_Mods";
+  const NOTIF_ID = `${GAME_ID}-setup-notification`;
+  const MOD_NAME = MAGIC_NAME;
+  const MOD_FOLDER = MAGICMOD_PATH;
   api.sendNotification({
-    id: `${GAME_ID}-setup-notification`,
+    id: NOTIF_ID,
     type: 'warning',
     message: `${MOD_NAME} required to install some mods`,
     allowSuppress: true,
@@ -644,6 +704,12 @@ function setupNotify(api) {
                 + `Mods that require ${MOD_NAME} are in indvidual folders within the "${MOD_FOLDER}" folder, located inside the game folder.\n`
           }, [
             { label: 'Acknowledge', action: () => dismiss() },
+            {
+              label: 'Never Show Again', action: () => {
+                api.suppressNotification(NOTIF_ID);
+                dismiss();
+              }
+            },
           ]);
         },
       },
@@ -693,13 +759,29 @@ function applyGame(context, gameSpec) {
 
   //register mod installers
   context.registerInstaller(SCRIPTHOOK_ID, 25, testScriptHook, installScriptHook);
-  context.registerInstaller(MODLOADER_ID, 30, testModLoader, installModLoader);
-  context.registerInstaller(MAGICMOD_ID, 35, testMagicMod, installMagicMod);
-  context.registerInstaller(MAGIC_ID, 40, testMagic, installMagic);
-  context.registerInstaller(RPF_ID, 45, testRPF, installRPF);
-  context.registerInstaller(ASIPLUGIN_ID, 50, testAsiPlugin, installAsiPlugin);
+  context.registerInstaller(MODLOADER_ID, 27, testModLoader, installModLoader);
+  context.registerInstaller(MAGICMOD_ID, 29, testMagicMod, installMagicMod);
+  context.registerInstaller(MAGIC_ID, 31, testMagic, installMagic);
+  context.registerInstaller(RPF_ID, 33, testRPF, installRPF);
+  context.registerInstaller(ASIPLUGIN_ID, 35, testAsiPlugin, installAsiPlugin);
 
   //register actions
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
+    const openPath = CONFIG_PATH;
+    util.opn(openPath).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Saves Folder', () => {
+    const openPath = SAVE_PATH;
+    util.opn(openPath).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
     const openPath = path.join(__dirname, 'CHANGELOG.md');
     util.opn(openPath).catch(() => null);
