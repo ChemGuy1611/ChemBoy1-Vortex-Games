@@ -72,6 +72,8 @@ const SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
 const SAVE_EXTS = [".sav"];
 //*/
 
+const PARAMETERS = [];
+
 //This information will be filled in from the data above
 const spec = {
   "game": {
@@ -79,6 +81,7 @@ const spec = {
     "name": GAME_NAME,
     "shortName": GAME_NAME_SHORT,
     "logo": `${GAME_ID}.jpg`,
+    //"parameters": PARAMETERS,
     "mergeMods": true,
     "modPath": MOD_PATH,
     "modPathIsRelative": true,
@@ -118,7 +121,7 @@ const tools = [
     exclusive: true,
     shell: true,
     //defaultPrimary: true,
-    parameters: PARAMETERS,
+    //parameters: PARAMETERS,
   }, //*/
   {
     id: `${GAME_ID}-xboxcustomlaunch`,
@@ -131,7 +134,7 @@ const tools = [
     exclusive: true,
     shell: true,
     //defaultPrimary: true,
-    parameters: PARAMETERS,
+    //parameters: PARAMETERS,
   }, //*/
 ];
 
@@ -156,22 +159,15 @@ function pathPattern(api, game, pattern) {
   });
 }
 
-//Set mod path
-function makeGetModPath(api, gameSpec) {
-  return () => gameSpec.game.modPathIsRelative !== false
-    ? gameSpec.game.modPath || '.'
-    : pathPattern(api, gameSpec.game, gameSpec.game.modPath);
-}
-
 async function requiresLauncher(gamePath, store) {
   if (store === 'xbox') {
-      return Promise.resolve({
-          launcher: 'xbox',
-          addInfo: {
-              appId: XBOXAPP_ID,
-              parameters: [{ appExecName: XBOXEXECNAME }],
-          },
-      });
+    return Promise.resolve({
+        launcher: 'xbox',
+        addInfo: {
+            appId: XBOXAPP_ID,
+            parameters: [{ appExecName: XBOXEXECNAME }],
+        },
+    });
   }
   /*
   if (store === 'epic') {
@@ -333,8 +329,7 @@ function applyGame(context, gameSpec) {
 //Main function
 function main(context) {
   applyGame(context, spec);
-  context.once(() => {
-    // put code here that should be run (once) when Vortex starts up
+  context.once(() => { // put code here that should be run (once) when Vortex starts up
 
   });
   return true;
