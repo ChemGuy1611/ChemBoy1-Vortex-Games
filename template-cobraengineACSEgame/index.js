@@ -198,15 +198,20 @@ function modTypePriority(priority) {
   }[priority];
 }
 
-//convert path placeholders to actual values
+//Convert string placeholders to actual paths
 function pathPattern(api, game, pattern) {
-  var _a;
-  return template(pattern, {
-    gamePath: (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0 ? void 0 : _a.path,
-    documents: util.getVortexPath('documents'),
-    localAppData: util.getVortexPath('localAppData'),
-    appData: util.getVortexPath('appData'),
-  });
+  try{
+    var _a;
+    return template(pattern, {
+      gamePath: (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0 ? void 0 : _a.path,
+      documents: util.getVortexPath('documents'),
+      localAppData: util.getVortexPath('localAppData'),
+      appData: util.getVortexPath('appData'),
+    });
+  }
+  catch(err){
+    api.showErrorNotification('Failed to locate executable. Please launch the game at least once.', err);
+  }
 }
 
 //Get mod path
