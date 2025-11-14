@@ -1,7 +1,13 @@
 # Changelog
 
-FUTURE CHANGES (NOT IMPLEMENTED YET):
+## FUTURE CHANGES (NOT IMPLEMENTED YET)
+
 - Config and save modtypes, installers, and open buttons.
+
+## [0.4.0] - 2025-11-14
+
+- Integrated support for BFG Edition into a single extension.
+- Technical fixes and improvements.
 
 ## [0.3.5] - 2025-05-30
 
