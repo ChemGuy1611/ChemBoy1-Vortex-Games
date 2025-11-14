@@ -85,6 +85,7 @@ let STAGING_FOLDER = ''; //Vortex staging folder path
 let DOWNLOAD_FOLDER = ''; //Vortex download folder path
 let GAME_VERSION = '';
 let USERID_FOLDER = "";
+let STORE_FOLDER = '';
 const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 //Unreal Engine Game Data
@@ -361,63 +362,62 @@ function getExecutable(discoveryPath) {
   if (!hasXbox && !multiExe) {
     return EXEC;
   }
-  if (statCheckSync(discoveryPath, EXEC_XBOX)) {
+  if (hasXbox) {
+    if (statCheckSync(discoveryPath, EXEC_XBOX)) {
       GAME_VERSION = 'xbox';
       BINARIES_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_XBOX);
-      SHIPPING_EXE = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_XBOX, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_XBOX}${SHIPEXE_STRING_XBOX}-Shipping.exe`);
-      SCRIPTS_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_XBOX, UE4SS_MOD_PATH);
+      SHIPPING_EXE = path.join(BINARIES_PATH, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_XBOX}${SHIPEXE_STRING_XBOX}-Shipping.exe`);
+      SCRIPTS_PATH = path.join(BINARIES_PATH, UE4SS_MOD_PATH);
       CONFIG_PATH = CONFIG_PATH_XBOX;
       //CONFIG_PATH = setConfigPath(GAME_VERSION); //if there's an intermediate store folder in the path
       SAVE_PATH = getUserIdFolder(SAVE_PATH_XBOX);
       return EXEC_XBOX;
-    };
-    if (statCheckSync(discoveryPath, EXEC)) {
-      GAME_VERSION = 'steam';
-      BINARIES_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT);
-      SHIPPING_EXE = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_DEFAULT}-Shipping.exe`);
-      SCRIPTS_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT, UE4SS_MOD_PATH);
-      CONFIG_PATH = CONFIG_PATH_DEFAULT;
-      //CONFIG_PATH = setConfigPath(GAME_VERSION); //if there's an intermediate store folder in the path
-      //SAVE_PATH = setSavePath;
-      SAVE_PATH = getUserIdFolder(SAVE_PATH_DEFAULT);
-      return EXEC;
-    }; //*/
-    /*
-    if (statCheckSync(discoveryPath, EXEC_EPIC)) {
-      GAME_VERSION = 'epic';
-      BINARIES_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT);
-      SHIPPING_EXE = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_EGS}-Shipping.exe`);
-      SCRIPTS_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT, UE4SS_MOD_PATH);
-      CONFIG_PATH = CONFIG_PATH_DEFAULT;
-      //CONFIG_PATH = setConfigPath(GAME_VERSION); //if there's an intermediate store folder in the path
-      //SAVE_PATH = setSavePath;
-      SAVE_PATH = getUserIdFolder(SAVE_PATH_DEFAULT);
-      return EXEC_EPIC;
-    }; //*/
-    /*
-    if (statCheckSync(discoveryPath, EXEC_GOG)) {
-      GAME_VERSION = 'gog';
-      BINARIES_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT);
-      SHIPPING_EXE = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_GOG}-Shipping.exe`);
-      SCRIPTS_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT, UE4SS_MOD_PATH);
-      CONFIG_PATH = CONFIG_PATH_DEFAULT;
-      //CONFIG_PATH = setConfigPath(GAME_VERSION); //if there's an intermediate store folder in the path
-      //SAVE_PATH = setSavePath;
-      SAVE_PATH = getUserIdFolder(SAVE_PATH_DEFAULT);
-      return EXEC_GOG;
-    }; //*/
-    /*
-    if (statCheckSync(discoveryPath, EXEC_DEMO)) {
-      GAME_VERSION = 'demo';
-      BINARIES_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT);
-      SHIPPING_EXE = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_DEMO}-Shipping.exe`);
-      SCRIPTS_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT, UE4SS_MOD_PATH);
-      CONFIG_PATH = CONFIG_PATH_DEFAULT;
-      //CONFIG_PATH = setConfigPath(GAME_VERSION); //if there's an intermediate store folder in the path
-      //SAVE_PATH = setSavePath;
-      SAVE_PATH = getUserIdFolder(SAVE_PATH_DEFAULT);
-      return EXEC_DEMO;
-    }; //*/
+    }
+  }
+  if (statCheckSync(discoveryPath, EXEC)) {
+    GAME_VERSION = 'steam';
+    BINARIES_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT);
+    SHIPPING_EXE = path.join(BINARIES_PATH, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_DEFAULT}-Shipping.exe`);
+    SCRIPTS_PATH = path.join(BINARIES_PATH, UE4SS_MOD_PATH);
+    CONFIG_PATH = CONFIG_PATH_DEFAULT;
+    //CONFIG_PATH = setConfigPath(GAME_VERSION); //if there's an intermediate store folder in the path
+    //SAVE_PATH = setSavePath;
+    SAVE_PATH = SAVE_PATH_DEFAULT;
+    return EXEC;
+  } //*/
+  if (statCheckSync(discoveryPath, EXEC_EPIC)) {
+    GAME_VERSION = 'epic';
+    BINARIES_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT);
+    SHIPPING_EXE = path.join(BINARIES_PATH, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_EGS}-Shipping.exe`);
+    SCRIPTS_PATH = path.join(BINARIES_PATH, UE4SS_MOD_PATH);
+    CONFIG_PATH = CONFIG_PATH_DEFAULT;
+    //CONFIG_PATH = setConfigPath(GAME_VERSION); //if there's an intermediate store folder in the path
+    //SAVE_PATH = setSavePath;
+    SAVE_PATH = SAVE_PATH_DEFAULT;
+    return EXEC_EPIC;
+  } //*/
+  if (statCheckSync(discoveryPath, EXEC_GOG)) {
+    GAME_VERSION = 'gog';
+    BINARIES_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT);
+    SHIPPING_EXE = path.join(BINARIES_PATH, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_GOG}-Shipping.exe`);
+    SCRIPTS_PATH = path.join(BINARIES_PATH, UE4SS_MOD_PATH);
+    CONFIG_PATH = CONFIG_PATH_DEFAULT;
+    //CONFIG_PATH = setConfigPath(GAME_VERSION); //if there's an intermediate store folder in the path
+    //SAVE_PATH = setSavePath;
+    SAVE_PATH = SAVE_PATH_DEFAULT;
+    return EXEC_GOG;
+  } //*/
+  if (statCheckSync(discoveryPath, EXEC_DEMO)) {
+    GAME_VERSION = 'demo';
+    BINARIES_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT);
+    SHIPPING_EXE = path.join(BINARIES_PATH, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_DEMO}-Shipping.exe`);
+    SCRIPTS_PATH = path.join(BINARIES_PATH, UE4SS_MOD_PATH);
+    CONFIG_PATH = CONFIG_PATH_DEFAULT;
+    //CONFIG_PATH = setConfigPath(GAME_VERSION); //if there's an intermediate store folder in the path
+    //SAVE_PATH = setSavePath;
+    SAVE_PATH = SAVE_PATH_DEFAULT;
+    return EXEC_DEMO;
+  } //*/
   GAME_VERSION = 'default';
   return EXEC;
 }
@@ -428,39 +428,39 @@ function getShippingExe(gamePath) {
     if (statCheckSync(gamePath, EXEC_XBOX)) {
       SHIPPING_EXE = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_XBOX, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_XBOX}${SHIPEXE_STRING_XBOX}-Shipping.exe`);
       return SHIPPING_EXE; 
-    };
+    }
   }
   if (statCheckSync(gamePath, EXEC)) {
     SHIPPING_EXE = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_DEFAULT}-Shipping.exe`);
     return SHIPPING_EXE;
-  };
+  }
   if (statCheckSync(gamePath, EXEC_EPIC)) {
     SHIPPING_EXE = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_EGS}-Shipping.exe`);
     return SHIPPING_EXE;
-  };
+  }
   if (statCheckSync(gamePath, EXEC_GOG)) {
     SHIPPING_EXE = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_GOG}-Shipping.exe`);
     return SHIPPING_EXE;
-  };
+  }
   if (statCheckSync(gamePath, EXEC_DEMO)) {
     SHIPPING_EXE = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_DEMO}-Shipping.exe`);
     return SHIPPING_EXE;
-  };
+  }
 }
 
 //Get correct shipping executable folder for game version (for tool pathing)
 function getBinariesFolder(discoveryPath) {
   if (!hasXbox) {
-      return BINARIES_PATH;
+    return BINARIES_PATH;
   }
   if (statCheckSync(discoveryPath, EXEC_FOLDER_XBOX)) {
     BINARIES_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_XBOX);
     return BINARIES_PATH;
-  };
+  }
   if (statCheckSync(discoveryPath, EXEC_FOLDER_DEFAULT)) {
     BINARIES_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT);
     return BINARIES_PATH;
-  };
+  }
 }
 
 //Get correct game version - async
@@ -469,24 +469,24 @@ async function setGameVersionAsync(gamePath) {
     if (await statCheckAsync(gamePath, EXEC_XBOX)) {
       GAME_VERSION = 'xbox';
       return GAME_VERSION;
-    };
+    }
   }
   if (await statCheckAsync(gamePath, EXEC)) {
     GAME_VERSION = 'steam';
     return GAME_VERSION;
-  };
+  }
   if (await statCheckAsync(gamePath, EXEC_EPIC)) {
     GAME_VERSION = 'epic';
     return GAME_VERSION;
-  };
+  }
   if (await statCheckAsync(gamePath, EXEC_GOG)) {
     GAME_VERSION = 'gog';
     return GAME_VERSION;
-  };
+  }
   if (await statCheckAsync(gamePath, EXEC_DEMO)) {
     GAME_VERSION = 'demo';
     return GAME_VERSION;
-  }; //*/
+  } //*/
 }
 
 //Get correct game version - synchronous
@@ -495,30 +495,29 @@ function setGameVersionSync(gamePath) {
     if (statCheckSync(gamePath, EXEC_XBOX)) {
       GAME_VERSION = 'xbox';
       return GAME_VERSION;
-    };
+    }
   }
   if (statCheckSync(gamePath, EXEC)) {
     GAME_VERSION = 'steam';
     return GAME_VERSION;
-  };
+  }
   if (statCheckSync(gamePath, EXEC_EPIC)) {
     GAME_VERSION = 'epic';
     return GAME_VERSION;
-  };
+  }
   if (statCheckSync(gamePath, EXEC_GOG)) {
     GAME_VERSION = 'gog';
     return GAME_VERSION;
-  };
+  }
   if (statCheckSync(gamePath, EXEC_DEMO)) {
     GAME_VERSION = 'demo';
     return GAME_VERSION;
-  }; //*/
+  } //*/
 }
 
 //Get correct config path for game version
 async function setConfigPath(version) {
   const DATA_PATH = path.join(CONFIGMOD_LOCATION, DATA_FOLDER);
-  let STORE_FOLDER = '';
   try {
     const ARRAY = await fs.readdirAsync(DATA_PATH);
     STORE_FOLDER = ARRAY.find(entry => isDir(DATA_PATH, entry));
@@ -538,7 +537,6 @@ async function setConfigPath(version) {
 //Get correct save path for game version
 async function setSavePath() {
   const DATA_PATH = path.join(SAVEMOD_LOCATION, DATA_FOLDER);
-  let STORE_FOLDER = '';
   try {
     const ARRAY = await fs.readdirAsync(DATA_PATH);
     STORE_FOLDER = ARRAY.find(entry => isDir(DATA_PATH, entry));
@@ -549,6 +547,7 @@ async function setSavePath() {
     STORE_FOLDER = '';
   }
   SAVE_PATH = path.join(SAVEMOD_LOCATION, DATA_FOLDER, STORE_FOLDER, "Saved", "SaveGames");
+  SAVE_PATH = getUserIdFolder(SAVE_PATH);
   return SAVE_PATH;
 } //*/
 
