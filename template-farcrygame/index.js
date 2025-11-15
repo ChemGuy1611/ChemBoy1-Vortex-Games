@@ -105,6 +105,9 @@ const ROOT_FOLDERS = [BIN_PATH, DATA_PATH, 'Support'];
 const ROOT_FILES = [''];
 const PARAMETERS_STRING = '';
 const PARAMETERS = [PARAMETERS_STRING];
+
+const IGNORE_CONFLICTS = [path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
+const IGNORE_DEPLOY = [path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
 let MODTYPE_FOLDERS = [MIMOD_PATH, BIN_PATH, DATA_PATH];
 
 const spec = {
@@ -125,6 +128,8 @@ const spec = {
     "details": {
       "steamAppId": +STEAMAPP_ID,
       "uPlayAppId": UPLAYAPP_ID,
+      "ignoreConflicts": IGNORE_CONFLICTS,
+      "ignoreDeploy": IGNORE_DEPLOY,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
@@ -865,8 +870,7 @@ function applyGame(context, gameSpec) {
       return gameId === GAME_ID;
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
-    const openPath = XML_PATH;
-    util.opn(openPath).catch(() => null);
+    util.opn(XML_PATH).catch(() => null);
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
@@ -874,8 +878,7 @@ function applyGame(context, gameSpec) {
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', async () => {
     SAVE_PATH = await getSavePath();
-    const openPath = SAVE_PATH;
-    util.opn(openPath).catch(() => null);
+    util.opn(SAVE_PATH).catch(() => null);
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
@@ -890,8 +893,7 @@ function applyGame(context, gameSpec) {
       return gameId === GAME_ID;
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
-    const openPath = DOWNLOAD_FOLDER;
-    util.opn(openPath).catch(() => null);
+    util.opn(DOWNLOAD_FOLDER).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);

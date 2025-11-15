@@ -112,7 +112,9 @@ const MOD_PATH_DEFAULT = '.';
 const REQ_FILE = EXEC; //NAME_FOLDER or EXEC
 const PARAMETERS_STRING = '';
 const PARAMETERS = [PARAMETERS_STRING];
+
 const IGNORE_CONFLICTS = [path.join('**', 'instructions.txt'), path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
+const IGNORE_DEPLOY = [path.join('**', 'instructions.txt'), path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
 let MODTYPE_FOLDERS = [JSFILE_PATH, JSON_PATH];
 
 const spec = {
@@ -137,6 +139,8 @@ const spec = {
       "xboxAppId": XBOXAPP_ID,
       "ignoreConflicts": IGNORE_CONFLICTS,
       //"supportsSymlinks": false,
+      "ignoreConflicts": IGNORE_CONFLICTS,
+      "ignoreDeploy": IGNORE_DEPLOY,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
@@ -756,8 +760,7 @@ function applyGame(context, gameSpec) {
       return gameId === GAME_ID;
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
-    const openPath = DOWNLOAD_FOLDER;
-    util.opn(openPath).catch(() => null);
+    util.opn(DOWNLOAD_FOLDER).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);

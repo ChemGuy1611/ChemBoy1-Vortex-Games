@@ -55,6 +55,9 @@ const MOD_PATH_DEFAULT = MOD_PATH;
 const REQ_FILE = EXEC;
 const PARAMETERS_STRING = '';
 const PARAMETERS = [PARAMETERS_STRING];
+
+const IGNORE_CONFLICTS = [path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
+const IGNORE_DEPLOY = [path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
 let MODTYPE_FOLDERS = [DATASUB_PATH];
 
 const spec = {
@@ -75,6 +78,8 @@ const spec = {
     "details": {
       "uPlayAppId": UPLAYAPP_ID,
       "steamAppId": +STEAMAPP_ID,
+      "ignoreConflicts": IGNORE_CONFLICTS,
+      "ignoreDeploy": IGNORE_DEPLOY,
     },
     "environment": {
       "UPlayAPPId": UPLAYAPP_ID,
@@ -469,8 +474,7 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(CONFIG_ID, 31, testConfig, installConfig);
 
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
-    const openPath = CONFIG_PATH;
-    util.opn(openPath).catch(() => null);
+    util.opn(CONFIG_PATH).catch(() => null);
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
@@ -485,8 +489,7 @@ function applyGame(context, gameSpec) {
       return gameId === GAME_ID;
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
-    const openPath = DOWNLOAD_FOLDER;
-    util.opn(openPath).catch(() => null);
+    util.opn(DOWNLOAD_FOLDER).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);

@@ -189,6 +189,9 @@ const MOD_PATH_DEFAULT = PAK_PATH;
 const REQ_FILE = EPIC_CODE_NAME;
 const PARAMETERS_STRING = '';
 const PARAMETERS = [PARAMETERS_STRING];
+
+const IGNORE_CONFLICTS = [path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
+const IGNORE_DEPLOY = [path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
 let MODTYPE_FOLDERS = [LOGICMODS_PATH, PAK_PATH];
 
 //Filled in from data above
@@ -212,6 +215,8 @@ const spec = {
       "epicAppId": EPICAPP_ID,
       "xboxAppId": XBOXAPP_ID,
       "supportsSymlinks": SYM_LINKS,
+      "ignoreConflicts": IGNORE_CONFLICTS,
+      "ignoreDeploy": IGNORE_DEPLOY,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,

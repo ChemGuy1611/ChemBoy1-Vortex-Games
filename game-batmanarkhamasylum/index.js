@@ -1,5 +1,5 @@
 /*/////////////////////////////////////////
-Name: XXX Vortex Extension
+Name: Batman: Arkham Asylum Vortex Extension
 Structure: UE2/3 Game (TFC Installer)
 Author: ChemBoy1
 Version: 0.1.0
@@ -20,29 +20,31 @@ const DOCUMENTS = util.getVortexPath("documents");
 //const LOCALAPPDATA = util.getVortexPath('localAppData');
 
 //Specify all the information about the game
-const GAME_ID = "XXX";
-const STEAMAPP_ID = "XXX";
-const EPICAPP_ID = "XXX";
-const GOGAPP_ID = "XXX";
-const XBOXAPP_ID = "XXX";
-const XBOXEXECNAME = "XXX";
+const GAME_ID = "batmanarkhamasylum";
+const STEAMAPP_ID = "35140";
+const EPICAPP_ID = "Godwit";
+const GOGAPP_ID = "1482504285";
+const XBOXAPP_ID = null;
+const XBOXEXECNAME = null;
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
-const GAME_NAME = "XXX";
-const GAME_NAME_SHORT = "XXX";
-const EPIC_CODE_NAME = "XXX";
+const GAME_NAME = "Batman: Arkham Asylum";
+const GAME_NAME_SHORT = "Batman AA";
+const EPIC_CODE_NAME = "BmGame";
 const COOKED_FOLDER = 'CookedPC';
 const ROOT_FOLDERS = [EPIC_CODE_NAME, 'Engine', 'Binaries'];
-const ROOTSUB_FOLDERS = ['Config', COOKED_FOLDER, 'DLC', 'Localization', 'Movies'];
+const ROOTSUB_FOLDERS = ['Config', COOKED_FOLDER, 'Splash', 'Localization', 'Movies'];
 const COOKEDSUB_FOLDERS = ['Maps', 'Packages'];
 const BITS = '32'; //32 or 64
-const EXEC_NAME = 'XXX.exe';
-const DATA_FOLDER = path.join('My Games', 'XXX', EPIC_CODE_NAME);
+const EXEC_NAME = 'BmLauncher.exe';
+const DATA_FOLDER = path.join('Square Enix', 'Batman Arkham Asylum GOTY', EPIC_CODE_NAME);
 
-const SPECIAL_TFCMOD_FOLDERS = ['XXX'];
+const SPECIAL_TFCMOD_FOLDERS = ['Asylum Reborn'];
 
 const EXEC_XBOX = 'gamelaunchhelper.exe';
-const BINARIES_PATH = path.join("Binaries", `Win${BITS}`);
+const BINARIES_PATH = path.join("Binaries");
 const EXEC = path.join(BINARIES_PATH, EXEC_NAME);
+const SHIPPING_EXE = path.join(BINARIES_PATH, 'ShippingPC-BmGame.exe');
+const SHIPPING_EXE_EPIC = path.join(BINARIES_PATH, 'Batman.exe');
 
 let GAME_PATH = null; //patched in the setup function to the discovered game path
 let GAME_VERSION = '';
@@ -67,7 +69,7 @@ const UPKEXPLORER_PATH = path.join('.');
 
 const TFCMOD_ID = `${GAME_ID}-tfcmod`;
 const TFCMOD_NAME = "TFC Mod";
-const TFCMOD_EXTS = ['.packagepatch', '.descriptor', '.tfcmapping', '.inipatch']; //removed .tfc because that can be in direct file mods
+const TFCMOD_EXTS = ['.packagepatch', '.descriptor', '.tfcmapping', '.inipatch'];
 const TFCMOD_FILES = ['gameprofile.xml', 'gameprofile.idremappings.xml', 'objectdescriptors.xml', 'packageextensions.xml', `texturepack`, 'game'];
 const TFCMOD_PATH = path.join(TFC_FOLDER, 'Mods');
 
@@ -95,6 +97,10 @@ const BINARIES_EXTS = ['.dll'];
 
 const CONFIG_PATH = path.join(DOCUMENTS, DATA_FOLDER, 'Config');
 const SAVE_PATH = path.join(DOCUMENTS, DATA_FOLDER, 'SaveData');
+
+const PATCHER_ID = `${GAME_ID}-patcher`;
+const PATCHER_NAME = " Joker DLC Patcher";
+const PATCHER_EXEC = "JokerDLCPatcher.exe";
 
 const MOD_PATH_DEFAULT = '.';
 const REQ_FILE = EXEC;
@@ -224,6 +230,16 @@ const tools = [
     logo: "tfc.png",
     executable: () => UPKEXPLORER_EXEC,
     requiredFiles: [UPKEXPLORER_EXEC],
+    detach: true,
+    relative: true,
+    exclusive: true,
+  },
+  {
+    id: PATCHER_ID,
+    name: PATCHER_NAME,
+    logo: "patcher.png",
+    executable: () => PATCHER_EXEC,
+    requiredFiles: [PATCHER_EXEC],
     detach: true,
     relative: true,
     exclusive: true,
@@ -554,7 +570,7 @@ function installTfcMod(files, fileName) {
   let ROOT_PATH = path.basename(path.dirname(modFile));
   const MOD_NAME = path.basename(fileName);
 
-  if (files.some(file => SPECIAL_TFCMOD_FOLDERS.includes(path.basename(file)))) { //special case folders
+  if (files.some(file => SPECIAL_TFCMOD_FOLDERS.includes(path.basename(file)))) { //special case for Asylum Reborn
     modFile = files.find(file => SPECIAL_TFCMOD_FOLDERS.includes(path.basename(file)));
     rootPath = path.dirname(modFile);
     ROOT_PATH = path.basename(modFile);
