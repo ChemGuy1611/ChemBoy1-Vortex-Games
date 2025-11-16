@@ -562,29 +562,33 @@ function testTfcMod(files, gameId) {
 
 //Fallback installer for TFC Mods
 function installTfcMod(files, fileName) {
+  const MOD_NAME = path.basename(fileName);
+  const setModTypeInstruction = { type: 'setmodtype', value: TFCMOD_ID };
   let modFile = files.find(file => TFCMOD_FILES.includes(path.basename(file).toLowerCase())); //try files first
   if (modFile === undefined) {
     modFile = files.find(file => TFCMOD_EXTS.includes(path.extname(file).toLowerCase())); //exts fallback
   }
+  //let idx = modFile.indexOf(path.basename(modFile));
+  let MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
   let rootPath = path.dirname(modFile);
-  let ROOT_PATH = path.basename(path.dirname(modFile));
-  const MOD_NAME = path.basename(fileName);
-
+  const ROOT_PATH = path.basename(rootPath);
+  if (ROOT_PATH !== '.') {
+    MOD_FOLDER = '.'; //no top level folder needed if it's already included in the archive
+    modFile = rootPath; //make the folder the targeted modFile so we can grab any other folders also in its directory
+    rootPath = path.dirname(modFile);
+    /*const indexFolder = path.basename(modFile); //index to catch other folders in the same directory
+    //idx = modFile.indexOf(`${indexFolder}${path.sep}`); //index on the folder with path separator //*/
+  }
+  //these are special cases for mods that have multiple levels of folders in the archive
   if (files.some(file => SPECIAL_TFCMOD_FOLDERS.includes(path.basename(file)))) { //special case for Asylum Reborn
     modFile = files.find(file => SPECIAL_TFCMOD_FOLDERS.includes(path.basename(file)));
     rootPath = path.dirname(modFile);
-    ROOT_PATH = path.basename(modFile);
+    /*const indexFolder = path.basename(modFile); //index to catch other folders in the same directory
+    //idx = modFile.indexOf(`${indexFolder}${path.sep}`); //index on the folder with path separator //*/
   }
+  const idx = modFile.indexOf(path.basename(modFile));
 
-  let MOD_FOLDER = '.';
-  let idx = modFile.indexOf(`${ROOT_PATH}${path.sep}`); //index on the folder if it exists
-  if (ROOT_PATH === '.') { //if the modFile is not in a folder, we need to make one
-    MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
-    idx = modFile.indexOf(path.basename(modFile));
-  }
-  const setModTypeInstruction = { type: 'setmodtype', value: TFCMOD_ID };
-  
-  // Remove empty directories
+  // Remove empty directories and anything that isn't in the rootPath
   const filtered = files.filter(file =>
     ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
   );

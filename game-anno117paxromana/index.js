@@ -327,22 +327,26 @@ function testMod(files, gameId) {
 
 //Fallback installer for Mods
 function installMod(files, fileName) {
+  const MOD_NAME = path.basename(fileName);
+  const setModTypeInstruction = { type: 'setmodtype', value: MOD_ID };
+  let MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
   let modFile = files.find(file => MOD_FOLDERS.includes(path.basename(file).toLowerCase())); //try folders first
   if (modFile === undefined) {
     modFile = files.find(file => MOD_EXTS.includes(path.extname(file).toLowerCase())); //exts fallback
   }
-  const rootPath = path.dirname(modFile);
-  const ROOT_PATH = path.basename(path.dirname(modFile));
-  const MOD_NAME = path.basename(fileName);
-  let MOD_FOLDER = '.';
-  let idx = modFile.indexOf(`${ROOT_PATH}${path.sep}`); //index on the folder if it exists
-  if (ROOT_PATH === '.') { //if the modFile is not in a folder, we need to make one
-    MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
-    idx = modFile.indexOf(path.basename(modFile));
+  //let idx = modFile.indexOf(path.basename(modFile));
+  let rootPath = path.dirname(modFile);
+  const ROOT_PATH = path.basename(rootPath);
+  if (ROOT_PATH !== '.') {
+    MOD_FOLDER = '.'; //no top level folder needed if it's already included in the archive
+    modFile = rootPath; //make the folder the targeted modFile so we can grab any other folders also in its directory
+    rootPath = path.dirname(modFile);
+    /*const indexFolder = path.basename(modFile); //index to catch other folders in the same directory
+    //idx = modFile.indexOf(`${indexFolder}${path.sep}`); //index on the folder with path separator //*/
   }
-  const setModTypeInstruction = { type: 'setmodtype', value: MOD_ID };
+  const idx = modFile.indexOf(path.basename(modFile));
   
-  // Remove empty directories
+  // Remove empty directories and anything that isn't in the rootPath
   const filtered = files.filter(file =>
     ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
   );

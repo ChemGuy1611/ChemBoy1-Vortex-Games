@@ -1,6 +1,6 @@
 /*////////////////////////////////////////////////
 Name: XXX Vortex Extension
-Structure: Unreal Engine Game (Unified)
+Structure: Unreal Engine Game
 Author: ChemBoy1
 Version: 0.1.0
 Date: 2025-XX-XX
@@ -35,7 +35,7 @@ const EXEC_DEMO = EXEC;
 const EXEC_XBOX = 'gamelaunchhelper.exe';
 
 const hasXbox = false; //toggle for Xbox version logic (to unify templates)
-const multiExe = false; //toggle for multiple executables (Epic/GOG/Demo)
+const multiExe = false; //toggle for multiple executables (Epic/GOG/Demo don't match Steam)
 
 //Unreal Engine specific
 const EPIC_CODE_NAME = "XXX";
@@ -148,21 +148,21 @@ const SAVE_COMPAT_VERSIONS = ['steam', 'epic', 'gog'];
 const SCRIPTS_ID = `${GAME_ID}-scripts`;
 const SCRIPTS_NAME = "UE4SS Script Mod";
 const SCRIPTS_EXT = ".lua";
-const SCRIPTS_FILE = "Scripts";
+const SCRIPTS_FOLDER = "Scripts";
 let SCRIPTS_PATH = path.join(BINARIES_PATH, UE4SS_MOD_PATH);
 
 const DLL_ID = `${GAME_ID}-ue4ssdll`;
 const DLL_NAME = "UE4SS DLL Mod";
 const DLL_EXT = ".dll";
-const DLL_FILE = "dlls";
+const DLL_FOLDER = "dlls";
 let DLL_PATH = SCRIPTS_PATH;
 
 const LOGICMODS_ID = `${GAME_ID}-logicmods`;
 const LOGICMODS_NAME = "UE4SS LogicMods (Blueprint)";
 const UE4SSCOMBO_ID = `${GAME_ID}-ue4sscombo`;
 const UE4SSCOMBO_NAME = "UE4SS Script-LogicMod Combo";
-const LOGICMODS_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Paks', 'LogicMods');
-const LOGICMODS_FILE = "LogicMods";
+const LOGICMODS_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Paks');
+const LOGICMODS_FOLDER = "LogicMods";
 const LOGICMODS_EXT = ".pak";
 
 const UE4SS_ID = `${GAME_ID}-ue4ss`;
@@ -192,7 +192,7 @@ const PARAMETERS = [PARAMETERS_STRING];
 
 const IGNORE_CONFLICTS = [path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
 const IGNORE_DEPLOY = [path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
-let MODTYPE_FOLDERS = [LOGICMODS_PATH, PAK_PATH];
+let MODTYPE_FOLDERS = [path.join(LOGICMODS_PATH, 'LogicMods'), PAK_PATH];
 
 //Filled in from data above
 const spec = {
@@ -617,7 +617,7 @@ function installUe4ssCombo(files, fileName) {
 
 //Test for save files
 function testLogic(files, gameId) {
-  const isMod = files.some(file => (path.basename(file) === LOGICMODS_FILE));
+  const isMod = files.some(file => (path.basename(file) === LOGICMODS_FOLDER));
   let supported = (gameId === spec.game.id) && isMod;
 
   // Test for a mod installer
@@ -635,7 +635,7 @@ function testLogic(files, gameId) {
 
 //Install save files
 function installLogic(files) {
-  const modFile = files.find(file => (path.extname(file).toLowerCase() === LOGICMODS_EXT));
+  const modFile = files.find(file => (path.basename(file) === LOGICMODS_FOLDER));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: LOGICMODS_ID };
@@ -744,7 +744,7 @@ function installSigBypass(files) {
 //Test for UE4SS Script files
 function testScripts(files, gameId) {
   const isMod = files.some(file => (path.extname(file).toLowerCase() === SCRIPTS_EXT));
-  const isFolder = files.some(file => (path.basename(file) === SCRIPTS_FILE));
+  const isFolder = files.some(file => (path.basename(file) === SCRIPTS_FOLDER));
   let supported = (gameId === spec.game.id) && isMod && isFolder;
 
   // Test for a mod installer
@@ -762,7 +762,7 @@ function testScripts(files, gameId) {
 
 //Install UE4SS Script files
 function installScripts(files, fileName) {
-  const modFile = files.find(file => (path.basename(file) === SCRIPTS_FILE));
+  const modFile = files.find(file => (path.basename(file) === SCRIPTS_FOLDER));
   const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: SCRIPTS_ID };
@@ -808,7 +808,7 @@ function installScripts(files, fileName) {
 //Test for UE4SS DLL files
 function testDll(files, gameId) {
   const isMod = files.some(file => (path.extname(file).toLowerCase() === DLL_EXT));
-  const isFolder = files.some(file => (path.basename(file) === DLL_FILE));
+  const isFolder = files.some(file => (path.basename(file) === DLL_FOLDER));
   let supported = (gameId === spec.game.id) && isMod && isFolder;
 
   // Test for a mod installer
@@ -826,7 +826,7 @@ function testDll(files, gameId) {
 
 //Install UE4SS DLL files
 function installDll(files, fileName) {
-  const modFile = files.find(file => (path.basename(file) === DLL_FILE));
+  const modFile = files.find(file => (path.basename(file) === DLL_FOLDER));
   const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: DLL_ID };
@@ -998,12 +998,28 @@ function configInstallerNotify(api) {
   });
 }
 
+function saveErrorNotify(api) {
+  const NOTIF_ID = `${GAME_ID}-saveinsterrxbox`;
+  const MESSAGE = `Save files are not supported by the Xbox version of ${GAME_NAME}`;
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'error',
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [],
+  });
+}
+
 //Test for save files
 function testSave(api, files, gameId) {
   const isMod = files.some(file => (path.extname(file).toLowerCase() === SAVE_EXT));
   GAME_PATH = getDiscoveryPath(api);
   GAME_VERSION = setGameVersionSync(GAME_PATH);
   const TEST = SAVE_COMPAT_VERSIONS.includes(GAME_VERSION);
+  if (!TEST) {
+    throw new Error(`Save files are not supported by the Xbox version of ${GAME_NAME}`);
+    //saveErrorNotify(api);
+  }
   let supported = (gameId === spec.game.id) && isMod && TEST;
 
   // Test for a mod installer
@@ -1898,21 +1914,42 @@ function main(context) {
       callback: (loadOrder) => {
         if (previousLO === undefined) previousLO = loadOrder;
         if (loadOrder === previousLO) return;
-        context.api.store.dispatch(actions.setDeploymentNecessary(spec.game.id, true));
+        //context.api.store.dispatch(actions.setDeploymentNecessary(spec.game.id, true));
+        requestDeployment(context, spec);
         previousLO = loadOrder;
       },
       createInfoPanel: () =>
-        context.api.translate(`Drag and drop the mods on the left to change the order in which they load. ${spec.game.name} loads mods in alphanumerical order, so Vortex prefixes `
-          + 'the folder names with "AAA, AAB, AAC, ..." to ensure they load in the order you set here. '
-          + 'The number in the left column represents the overwrite order. The changes from mods with higher numbers will take priority over other mods which make similar edits.'),
+        context.api.translate(`Drag and drop the mods on the left to change the order in which they load.\n` 
+          + `${spec.game.name} loads mods in alphanumerical order, so Vortex prefixes the folder names with "AAA, AAB, AAC, ..." to ensure they load in the order you set here.\n`
+          + 'The number in the left column represents the overwrite order. The changes from mods with higher numbers will take priority over other mods which make similar edits.\n'
+          + '\n'
+          + 'YOU MUST DEPLOY MODS AFTER CHANGING THE ORDER TO APPLY CHANGES.'
+        ),
     });
   }
   context.once(() => { // put code here that should be run (once) when Vortex starts up
-    //context.api.onAsync('did-deploy', (profileId) => didDeploy(context.api, profileId)); //*/
+    context.api.onAsync('did-deploy', (profileId) => didDeploy(context.api, profileId)); //*/
     //context.api.onAsync('did-purge', (profileId) => didPurge(context.api, profileId)); //*/
   });
   return true;
 }
+
+const requestDeployment = (context, spec) => {
+  context.api.store.dispatch(actions.setDeploymentNecessary(spec.game.id, true));
+
+  context.api.sendNotification({
+    id: `${spec.game.id}-loadorderdeploy-notif`,
+    type: 'warning',
+    message: 'Deployment Required to Apply Load Order Changes',
+    allowSuppress: true,
+    actions: [
+      {
+        title: 'Deploy',
+        action: () => deploy(context.api)
+      }
+    ],
+  });
+};
 
 async function didDeploy(api, profileId) { //run on mod deploy
   const state = api.getState();
@@ -1921,7 +1958,7 @@ async function didDeploy(api, profileId) { //run on mod deploy
   if (gameId !== GAME_ID) {
     return Promise.resolve();
   }
-  
+  api.dismissNotification(`${GAME_ID}-loadorderdeploy-notif`);
   return Promise.resolve();
 }
 

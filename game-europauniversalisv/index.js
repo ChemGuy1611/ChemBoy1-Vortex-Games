@@ -58,6 +58,7 @@ const MOD_NAME = "Mod (Documents)";
 const MOD_FOLDER = 'mod';
 const MOD_PATH = path.join(DOCUMENTS, DATA_FOLDER, MOD_FOLDER);
 const MOD_PATH_XBOX = MOD_PATH;
+const MOD_FOLDERS = ['in_game', 'main_menu', 'loading_screen'];
 const MOD_EXTS = ['.mod'];
 
 const ROOT_ID = `${GAME_ID}-root`;
@@ -332,7 +333,7 @@ async function deploy(api) { //useful to deploy mods after doing some action
 
 //Test for mod files
 function testMod(files, gameId) {
-  const isMod = files.some(file => MOD_EXTS.includes(path.extname(file).toLowerCase()));
+  const isMod = files.some(file => MOD_FOLDERS.includes(path.basename(file).toLowerCase()));
   let supported = (gameId === spec.game.id) && isMod;
 
   // Test for a mod installer
@@ -349,25 +350,38 @@ function testMod(files, gameId) {
 }
 
 //Install mod files
-function installMod(files) {
-  const MOD_TYPE = MOD_ID;
-  const modFile = files.find(file => MOD_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
-  const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+function installMod(files, fileName) {
+  const MOD_NAME = path.basename(fileName);
+  let MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
+  const setModTypeInstruction = { type: 'setmodtype', value: MOD_ID };
 
-  const folder = path.basename(modFile, path.extname(modFile)); //set folder name to .mod file name
+  let modFile = files.find(file => MOD_FOLDERS.includes(path.basename(file).toLowerCase())); //try folders first
+  /*if (modFile === undefined) {
+    modFile = files.find(file => MOD_EXTS.includes(path.extname(file).toLowerCase())); //exts fallback
+    MOD_FOLDER = path.basename(modFile, path.extname(modFile)); //set folder name to .mod file name
+  } //*/
+  //let idx = modFile.indexOf(path.basename(modFile));
+  let rootPath = path.dirname(modFile);
+  const ROOT_PATH = path.basename(rootPath);
+  if (ROOT_PATH !== '.') {
+    MOD_FOLDER = '.'; //no top level folder needed if it's already included in the archive
+    modFile = rootPath; //make the folder the targeted modFile so we can grab any other folders also in its directory
+    rootPath = path.dirname(modFile);
+    /*const indexFolder = path.basename(modFile); //index to catch other folders in the same directory
+    idx = modFile.indexOf(`${indexFolder}${path.sep}`); //index on the folder with path separator //*/
+  }
+  const idx = modFile.indexOf(path.basename(modFile));
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
   ((file.indexOf(rootPath) !== -1) &&
-    (!file.endsWith(path.sep))));
-
+    (!file.endsWith(path.sep)))
+  );
   const instructions = filtered.map(file => {
     return {
       type: 'copy',
       source: file,
-      destination: path.join(folder, file.substr(idx)),
+      destination: path.join(MOD_FOLDER, file.substr(idx)),
     };
   });
   instructions.push(setModTypeInstruction);
