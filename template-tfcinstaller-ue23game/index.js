@@ -917,7 +917,7 @@ async function setup(discovery, api, gameSpec) {
   await downloadTfc(api, gameSpec);
   await modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
   return fs.ensureFileAsync(
-    path.join(GAME_PATH, TFCMOD_PATH, "TFC_Mods_Go_Here.txt")
+    path.join(GAME_PATH, TFCMOD_PATH, "TFC_Mods_Go_Here.txt") //this is added to prevent TFC Installer from deleting an empty "Mods" folder.
   );
 }
 

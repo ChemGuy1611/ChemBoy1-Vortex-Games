@@ -331,6 +331,7 @@ function installMod(files, fileName) {
   if (modFile === undefined) {
     modFile = files.find(file => MOD_EXTS.includes(path.extname(file).toLowerCase())); //exts fallback
   }
+  const rootPath = path.dirname(modFile);
   const ROOT_PATH = path.basename(path.dirname(modFile));
   const MOD_NAME = path.basename(fileName);
   let MOD_FOLDER = '.';
@@ -343,7 +344,7 @@ function installMod(files, fileName) {
   
   // Remove empty directories
   const filtered = files.filter(file =>
-    (!file.endsWith(path.sep))
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
   );
   const instructions = filtered.map(file => {
     return {
