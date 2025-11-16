@@ -63,7 +63,7 @@ const UPKEXPLORER_ID = `${GAME_ID}-tfcexplorer`;
 const UPKEXPLORER_NAME = "UPK Explorer";
 const UPKEXPLORER_EXEC = "upk explorer.exe";
 const UPKEXPLORER_FOLDER = "UPK Explorer";
-const UPKEXPLORER_PATH = path.join('.');
+const UPKEXPLORER_PATH = '.';
 
 const TFCMOD_ID = `${GAME_ID}-tfcmod`;
 const TFCMOD_NAME = "TFC Mod";
@@ -85,7 +85,7 @@ const ROOTSUB_PATH = path.join(EPIC_CODE_NAME);
 
 const COOKEDSUB_ID = `${GAME_ID}-cookedsub`;
 const COOKEDSUB_NAME = "Cooked Sub Folder";
-const COOKEDSUB_PATH = path.join(EPIC_CODE_NAME, COOKED_FOLDER);
+const COOKEDSUB_PATH = path.join(ROOTSUB_PATH, COOKED_FOLDER);
 const COOKEDSUB_EXTS = ['.upk'];
 
 const BINARIES_ID = `${GAME_ID}-binaries`;
@@ -97,13 +97,13 @@ const CONFIG_PATH = path.join(DOCUMENTS, DATA_FOLDER, 'Config');
 const SAVE_PATH = path.join(DOCUMENTS, DATA_FOLDER, 'SaveData');
 
 const MOD_PATH_DEFAULT = '.';
-const REQ_FILE = EXEC;
+const REQ_FILE = EPIC_CODE_NAME;
 const PARAMETERS_STRING = '';
 const PARAMETERS = [PARAMETERS_STRING];
 
 const IGNORE_CONFLICTS = [path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
 const IGNORE_DEPLOY = [path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
-let MODTYPE_FOLDERS = [TFCMOD_PATH, BINARIES_PATH, MOVIES_PATH];
+let MODTYPE_FOLDERS = [TFCMOD_PATH, BINARIES_PATH, MOVIES_PATH, COOKEDSUB_PATH];
 
 //Filled in from the data above
 const spec = {
@@ -148,7 +148,7 @@ const spec = {
       "id": ROOT_ID,
       "name": ROOT_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}`
+      "targetPath": '{gamePath}'
     },
     { 
       "id": ROOTSUB_ID,
@@ -197,8 +197,8 @@ const spec = {
 const tools = [
   {
     id: `${GAME_ID}-customlaunch`,
-    name: `Custom Launch`,
-    logo: `exec.png`,
+    name: 'Custom Launch',
+    logo: 'exec.png',
     executable: () => EXEC,
     requiredFiles: [EXEC],
     detach: true,
@@ -306,21 +306,11 @@ async function requiresLauncher(gamePath, store) {
   return Promise.resolve(undefined);
 }
 
-//Get correct shipping executable for game version
+//Get the executable dynamically
 function getExecutable(gamePath) {
-  const isCorrectExec = (exec) => {
-    try {
-      fs.statSync(path.join(gamePath, exec));
-      return true;
-    }
-    catch (err) {
-      return false;
-    }
-  };
-  if (isCorrectExec(EXEC_XBOX)) {
-    return EXEC_XBOX; 
-  };
-
+  if (statCheckSync(gamePath, EXEC_XBOX)) {
+    return EXEC_XBOX;
+  }
   return EXEC;
 }
 
@@ -342,16 +332,21 @@ async function statCheckAsync(gamePath, file) {
     return false;
   }
 }
+
 //Get correct game version
 async function setGameVersion(gamePath) {
-  const CHECK = await statCheckAsync(gamePath, EXEC_XBOX);
-  if (CHECK) {
+  if (await statCheckAsync(gamePath, EXEC_XBOX)) {
     GAME_VERSION = 'xbox';
     return GAME_VERSION;
-  } else {
-    GAME_VERSION = 'default';
-    return GAME_VERSION;
   }
+  if (await statCheckAsync(gamePath, EXEC)) {
+      GAME_VERSION = 'classic';
+      return GAME_VERSION;
+  }
+  if (await statCheckAsync(gamePath, EXEC_64)) {
+      GAME_VERSION = 'definitive';
+      return GAME_VERSION;
+  } //*/
 }
 
 const getDiscoveryPath = (api) => { //get the game's discovered path
@@ -544,7 +539,7 @@ function testTfcMod(files, gameId) {
   });
 }
 
-//Fallback installer for TFC Mods
+//Installer for TFC Mods
 function installTfcMod(files, fileName) {
   const MOD_NAME = path.basename(fileName);
   let MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
@@ -569,7 +564,7 @@ function installTfcMod(files, fileName) {
     rootPath = path.dirname(modFile);
     /*const indexFolder = path.basename(modFile); //index to catch other folders in the same directory
     //idx = modFile.indexOf(`${indexFolder}${path.sep}`); //index on the folder with path separator //*/
-  }
+  } //*/
   const idx = modFile.indexOf(path.basename(modFile));
 
   // Remove empty directories and anything that isn't in the rootPath
@@ -950,7 +945,16 @@ function applyGame(context, gameSpec) {
     }, (game) => pathPattern(context.api, game, type.targetPath), () => Promise.resolve(false), { name: type.name });
   });
 
-  //register mod types explicitly
+  /*register mod types explicitly
+  context.registerModType(BINARIES_ID, 40, 
+    (gameId) => {
+      var _a;
+      return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
+    }, 
+    (game) => pathPattern(context.api, game, path.join('{gamePath}', BINARIES_PATH)),
+    () => Promise.resolve(false), 
+    { name: BINARIES_NAME }
+  ); //*/
 
   //register mod installers
   context.registerInstaller(TFC_ID, 25, testTfc, installTfc);

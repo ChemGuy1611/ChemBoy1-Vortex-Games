@@ -4,6 +4,12 @@
 
 - None Planned
 
+## [0.6.1] - 2025-11-16
+
+- Further improvements to TFC mod installer.
+- Add installer for .dll files to the "Binaries" folder.
+- Added installer for .upk/.xxx/.ucs files to the "CookedPCConsole" folder.
+
 ## [0.6.0] - 2025-11-12
 
 - Improved TFC mod installer to better handle different packaging methods.
