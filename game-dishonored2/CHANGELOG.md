@@ -5,6 +5,10 @@
 - Better installer for D2Fix mod - handle multiple folders + select options based on game version.
 - ? Disable Config/Save installers so that hardlinks will be available for more users? - symlinks seem fine.
 
+## [0.6.3] - 2025-11-13
+
+- Improved Void mod installer to better handle multiple folders.
+
 ## [0.6.2] - 2025-11-13
 
 - Fixed Xbox version Save path.

@@ -500,21 +500,29 @@ function testVoidMod(files, gameId) {
 
 //Installer for Void Mods
 function installVoidMod(files, fileName) {
+  const MOD_NAME = path.basename(fileName);
+  let MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
+  const setModTypeInstruction = { type: 'setmodtype', value: VOIDMOD_ID };
   let modFile = files.find(file => (path.basename(file).toLowerCase() === VOIDMOD_FILE)); //try xml file first
   if (modFile === undefined) {
     modFile = files.find(file => VOIDMOD_EXTS.includes(path.extname(file).toLowerCase())); //fallback to exts
   }
-  const ROOT_PATH = path.basename(path.dirname(modFile));
-  const MOD_NAME = path.basename(fileName);
-  let MOD_FOLDER = '.';
-  if (ROOT_PATH === '.') {
-    MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
+  let rootPath = path.dirname(modFile);
+  const ROOT_PATH = path.basename(rootPath);
+  if (ROOT_PATH !== '.') {
+    MOD_FOLDER = '.'; //no top level folder needed if it's already included in the archive
+    modFile = rootPath; //make the folder the targeted modFile so we can grab any other folders also in its directory
+    rootPath = path.dirname(modFile);
+    /*const indexFolder = path.basename(modFile); //index to catch other folders in the same directory
+    //idx = modFile.indexOf(`${indexFolder}${path.sep}`); //index on the folder with path separator //*/
   }
-  const setModTypeInstruction = { type: 'setmodtype', value: VOIDMOD_ID };
+  const idx = modFile.indexOf(path.basename(modFile));
   
-  // Remove empty directories
+  
+  // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
-    (!file.endsWith(path.sep))
+  ((file.indexOf(rootPath) !== -1) &&
+    (!file.endsWith(path.sep)))
   );
   const instructions = filtered.map(file => {
     return {

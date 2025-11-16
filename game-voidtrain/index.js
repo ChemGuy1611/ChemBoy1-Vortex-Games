@@ -1013,14 +1013,7 @@ function saveErrorNotify(api) {
 //Test for save files
 function testSave(api, files, gameId) {
   const isMod = files.some(file => (path.extname(file).toLowerCase() === SAVE_EXT));
-  GAME_PATH = getDiscoveryPath(api);
-  GAME_VERSION = setGameVersionSync(GAME_PATH);
-  const TEST = SAVE_COMPAT_VERSIONS.includes(GAME_VERSION);
-  if (!TEST) {
-    throw new Error(`Save files are not supported by the Xbox version of ${GAME_NAME}`);
-    //saveErrorNotify(api);
-  }
-  let supported = (gameId === spec.game.id) && isMod && TEST;
+  let supported = (gameId === spec.game.id) && isMod;
 
   // Test for a mod installer
   if (supported && files.find(file =>
@@ -1042,6 +1035,14 @@ function installSave(api, files) {
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: SAVE_ID };
 
+  GAME_PATH = getDiscoveryPath(api);
+  GAME_VERSION = setGameVersionSync(GAME_PATH);
+  const TEST = SAVE_COMPAT_VERSIONS.includes(GAME_VERSION);
+  if (!TEST) {
+    throw new Error(`Save files are not supported by the Xbox version of ${GAME_NAME}`);
+    //saveErrorNotify(api);
+  }
+  
   //Filter files and set instructions
   const filtered = files.filter(file =>
     ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))

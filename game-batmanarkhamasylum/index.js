@@ -563,13 +563,13 @@ function testTfcMod(files, gameId) {
 //Fallback installer for TFC Mods
 function installTfcMod(files, fileName) {
   const MOD_NAME = path.basename(fileName);
+  let MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
   const setModTypeInstruction = { type: 'setmodtype', value: TFCMOD_ID };
   let modFile = files.find(file => TFCMOD_FILES.includes(path.basename(file).toLowerCase())); //try files first
   if (modFile === undefined) {
     modFile = files.find(file => TFCMOD_EXTS.includes(path.extname(file).toLowerCase())); //exts fallback
   }
   //let idx = modFile.indexOf(path.basename(modFile));
-  let MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
   let rootPath = path.dirname(modFile);
   const ROOT_PATH = path.basename(rootPath);
   if (ROOT_PATH !== '.') {
