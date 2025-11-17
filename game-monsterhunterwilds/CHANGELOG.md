@@ -4,6 +4,12 @@
 
 - None Planned
 
+## [0.2.2] - 2025-11-16
+
+- Added buttons to open useful files and folder (inside folder icon in Mods page toolbar).
+- Added support for Benchmark demo.
+- Technical fixes and improvements.
+
 ## [0.2.1] - 2025-07-01
 
 - Fixed error during automatic download of Fluffy MM.

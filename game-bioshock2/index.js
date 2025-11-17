@@ -94,6 +94,7 @@ const ROOTSUB_FOLDERS = ['BinkMovies', COOKED_FOLDER, 'FlashMovies', 'Maps', 'So
 const COOKEDSUB_ID = `${GAME_ID}-cookedsub`;
 const COOKEDSUB_NAME = "Cooked Sub Folder";
 const COOKEDSUB_PATH = path.join(ROOTSUB_PATH, COOKED_FOLDER);
+const COOKEDSUB_FOLDERS = [];
 const COOKEDSUB_EXTS = ['.blk'];
 
 const BINARIES_ID = `${GAME_ID}-binaries`;
@@ -209,11 +210,24 @@ const tools = [
     exclusive: true,
   },
   {
-    id: `${GAME_ID}-customlaunch`,
+    id: `${GAME_ID}-customlaunchsteam`,
     name: 'Custom Launch',
     logo: 'exec.png',
-    executable: () => EXEC,
-    requiredFiles: [EXEC],
+    executable: () => EXEC_STEAM,
+    requiredFiles: [EXEC_STEAM],
+    detach: true,
+    relative: true,
+    exclusive: true,
+    shell: true,
+    //defaultPrimary: true,
+    parameters: []
+  }, //*/
+  {
+    id: `${GAME_ID}-customlaunchepic`,
+    name: 'Custom Launch',
+    logo: 'exec.png',
+    executable: () => EXEC_EPIC,
+    requiredFiles: [EXEC_EPIC],
     detach: true,
     relative: true,
     exclusive: true,

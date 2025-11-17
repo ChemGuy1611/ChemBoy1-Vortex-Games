@@ -81,6 +81,7 @@ const ROOTSUB_FOLDERS = ['Config', 'Content', COOKED_FOLDER, 'Localization', 'Mo
 const COOKEDSUB_ID = `${GAME_ID}-cookedsub`;
 const COOKEDSUB_NAME = "Cooked Sub Folder";
 const COOKEDSUB_PATH = path.join(ROOTSUB_PATH, COOKED_FOLDER);
+const COOKEDSUB_FOLDERS = [];
 const COOKEDSUB_EXTS = ['.tfc', '.xxx', '.ucs'];
 
 const BINARIES_ID = `${GAME_ID}-binaries`;
