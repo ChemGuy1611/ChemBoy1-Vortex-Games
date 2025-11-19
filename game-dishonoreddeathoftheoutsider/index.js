@@ -852,7 +852,7 @@ async function setup(discovery, api, gameSpec) {
   GAME_PATH = discovery.path;
   STAGING_FOLDER = selectors.installPathForGame(state, gameSpec.game.id);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, gameSpec.game.id);
-  setupNotify(api);
+  //setupNotify(api);
   // ASYNC CODE //////////////////////////////////////////
   GAME_VERSION = await setGameVersion(GAME_PATH);
   //SAVE_PATH = await getSavePath(api);

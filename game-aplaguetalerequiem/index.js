@@ -2,8 +2,8 @@
 Name: A Plague Tale Requiem Vortex Extension
 Structure: Basic Game (XBOX Integrated)
 Author: ChemBoy1
-Version: 1.3.0
-Date: 2025-11-14
+Version: 1.3.1
+Date: 2025-11-18
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -13,7 +13,7 @@ const template = require('string-template');
 const { parseStringPromise } = require('xml2js');
 
 const DOCUMENTS = util.getVortexPath("documents");
-const LOCALAPPDATA = util.getVortexPath("localAppData");
+//const LOCALAPPDATA = util.getVortexPath("localAppData");
 const APPDATA = util.getVortexPath("appData");
 
 //Specify all information about the game
@@ -26,6 +26,9 @@ const XBOXEXECNAME = "Game";
 const GAME_NAME = "A Plague Tale: Requiem";
 const GAME_NAME_SHORT = "APT Requiem";
 const COMMON_FILE = path.join('DATAS', 'P_AMICIA.DPC');
+
+const ROOT_FOLDERS = ['DATAS', 'FONT', 'INPUT', 'LEVELS', 'RTC', 'Shaders', 'SOUNDBANKS', 'TRTEXT', 'UPDATE', 'VIDEOS'];
+const ROOT_FOLDERS_LOWER = ROOT_FOLDERS.map(folder => folder.toLowerCase());
 
 const gameFinderQuery = {
   steam: [{ id: STEAMAPP_ID, prefer: 0 }],
@@ -50,6 +53,10 @@ let GAME_PATH = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 const APPMANIFEST_FILE = 'appxmanifest.xml';
+
+//Information for mod types and installers
+const ROOT_ID = `${GAME_ID}-root`;
+const ROOT_NAME = "Root Folder";
 
 //* Config
 const CONFIG_ID = `${GAME_ID}-config`;
@@ -117,6 +124,12 @@ const spec = {
     }
   },
   "modTypes": [
+    {
+      "id": ROOT_ID,
+      "name": ROOT_NAME,
+      "priority": "high",
+      "targetPath": "{gamePath}"
+    },
     /*{
       "id": CONFIG_ID,
       "name": CONFIG_NAME,
@@ -281,6 +294,62 @@ async function setConfigPath(GAME_VERSION) {
   return CONFIG_PATH;
 }
 
+const getDiscoveryPath = (api) => { //get the game's discovered path
+  const state = api.getState();
+  const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});
+  return discovery === null || discovery === void 0 ? void 0 : discovery.path;
+};
+
+async function purge(api) { //useful to clear out mods prior to doing some action
+  return new Promise((resolve, reject) => api.events.emit('purge-mods', true, (err) => err ? reject(err) : resolve()));
+}
+async function deploy(api) { //useful to deploy mods after doing some action
+  return new Promise((resolve, reject) => api.events.emit('deploy-mods', (err) => err ? reject(err) : resolve()));
+}
+
+// MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
+
+//Test for root folders
+function testRoot(files, gameId) {
+  const isFolder = files.some(file => ROOT_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
+  let supported = (gameId === spec.game.id) && isFolder;
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install root folders
+function installRoot(files) {
+  const modFile = files.find(file => ROOT_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
 //Send notification for Reshade
@@ -392,7 +461,7 @@ function applyGame(context, gameSpec) {
   });
 
   //register mod installers
-
+  context.registerInstaller(ROOT_ID, 25, testRoot, installRoot);
 
   //register actions
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', async () => {

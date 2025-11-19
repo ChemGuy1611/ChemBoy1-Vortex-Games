@@ -1,9 +1,9 @@
 /*////////////////////////////////////////////
-Name: Monster Hunter Wilds Vortex Extension
+Name: XXX Vortex Extension
 Structure: Fluffy + REFramework (RE Engine)
 Author: ChemBoy1
-Version: 0.2.2
-Date: 2025-11-18
+Version: 0.1.0
+Date: 2025-XX-XX
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -13,21 +13,21 @@ const template = require('string-template');
 const Bluebird = require('bluebird');
 
 //Specify all information about the game
-const GAME_ID = "monsterhunterwilds";
-const STEAMAPP_ID = "2246340";
-const STEAMAPP_ID_DEMO = "3424520";
+const GAME_ID = "XXX";
+const STEAMAPP_ID = "XXX";
+const STEAMAPP_ID_DEMO = "XXX";
 const EPICAPP_ID = null;
 const GOGAPP_ID = null;
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, STEAMAPP_ID_DEMO]; // UPDATE THIS WITH ALL VALID IDs
-const EXEC = "MonsterHunterWilds.exe";
-const GAME_NAME = "Monster Hunter Wilds";
-const GAME_NAME_SHORT = "MH Wilds";
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const EXEC = "XXX.exe";
+const GAME_NAME = "XXX";
+const GAME_NAME_SHORT = "XXX";
 
-const FLUFFY_FOLDER = "MonsterHunterWilds";
+const FLUFFY_FOLDER = "XXX";
 const ROOT_FILES = ['nvngx_dlss.dll', "dstoragecore.dll", "dstorage.dll", "amd_fidelityfx_dx12.dll", "amd_ags_x64.dll"];
 const ROOT_EXTS = [".exe"];
-const REF_PAGE_NO = 93;
-const REF_FILE_NO = 13531;
+const REF_PAGE_NO = 0;
+const REF_FILE_NO = 0;
 
 //global variables to set later
 let GAME_PATH = null; //game installation path

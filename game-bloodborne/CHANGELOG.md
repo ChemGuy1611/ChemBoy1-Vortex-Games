@@ -4,6 +4,10 @@ Future Changes (NOT IMPLEMENTED YET):
 
 - None
 
+## [0.2.6] - 2025-11-17
+
+- Updated for shadPS4 v0.12.0 and newer with Qt UI as a separate requiremnent download from the emulator core.
+
 ## [0.2.5] - 2025-10-24
 
 - Vortex now passes launch parameters to start Bloodborne automatically using the launch button, and NOT when launching via the shadPS4 tool. This lets the user get to the shadPS4 main menu using the tool without automatically launching Bloodborne.

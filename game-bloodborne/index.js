@@ -2,8 +2,8 @@
 Name: Bloodborne Vortex Extension
 Structure: Emulation Game
 Author: ChemBoy1
-Version: 0.2.5
-Date: 2025-10-24
+Version: 0.2.6
+Date: 2025-11-17
 ////////////////////////////////////////////////////*/
 
 //Import libraries
@@ -33,18 +33,18 @@ const ROOT_NAME = "Root Folder";
 const SHADPS4_ID = `${GAME_ID}-shadps4`;
 const SHADPS4_NAME = "shadPS4";
 const SHADPS4_EXEC = "shadps4.exe";
-const SHADPS4_VERSION = '0.12.0';
-const SHADPS4_URL = `https://github.com/shadps4-emu/shadPS4/releases/download/v.${SHADPS4_VERSION}/shadps4-win64-qt-${SHADPS4_VERSION}.zip`;
-const SHADPS4_ARC_NAME = `shadps4-win64-qt-${SHADPS4_VERSION}.zip`;
+const SHADPS4_VERSION = '0.12.5';
+const SHADPS4_ARC_NAME = `shadps4-win64-sdl-2025-${SHADPS4_VERSION}.zip`;
+const SHADPS4_URL = `https://github.com/shadps4-emu/shadPS4/releases/download/v.${SHADPS4_VERSION}/${SHADPS4_ARC_NAME}`;
 const SHADPS4_URL_MAIN = `https://api.github.com/repos/shadps4-emu/shadPS4`;
 const SHADPS4_FILE = 'shadPS4.exe'; // <-- CASE SENSITIVE! Must match name exactly or downloader will download the file again.
 
 const SHADLAUNCHER_ID = `${GAME_ID}-shadps4qtlauncher`;
 const SHADLAUNCHER_NAME = "shadPS4QtLauncher";
 const SHADLAUNCHER_EXEC = "shadps4qtlauncher.exe";
-const SHADLAUNCHER_VERSION = '2025-11-02-70ce5a7';
-const SHADLAUNCHER_URL = `https://github.com/shadps4-emu/shadPS4/releases/download/v.${SHADLAUNCHER_VERSION}/shadPS4QtLauncher-win64-qt-${SHADLAUNCHER_VERSION}.zip`;
+const SHADLAUNCHER_VERSION = '2025-11-16-d656964';
 const SHADLAUNCHER_ARC_NAME = `shadPS4QtLauncher-win64-qt-${SHADLAUNCHER_VERSION}.zip`;
+const SHADLAUNCHER_URL = `https://github.com/shadps4-emu/shadPS4/releases/download/v.${SHADLAUNCHER_VERSION}/${SHADLAUNCHER_ARC_NAME}`;
 const SHADLAUNCHER_URL_MAIN = `https://api.github.com/repos/shadps4-emu/shadps4-qtlauncher`;
 const SHADLAUNCHER_FILE = "shadPS4QtLauncher.exe"; // <-- CASE SENSITIVE! Must match name exactly or downloader will download the file again.
 
@@ -57,7 +57,7 @@ const REQUIREMENTS = [
     githubUrl: SHADPS4_URL_MAIN,
     findMod: (api) => findModByFile(api, SHADPS4_ID, SHADPS4_FILE),
     findDownloadId: (api) => findDownloadIdByFile(api, SHADPS4_ARC_NAME),
-    fileArchivePattern: new RegExp(/^shadps4-win64-qt-(\d+\.\d+\.\d+)/, 'i'),
+    fileArchivePattern: new RegExp(/^shadps4-win64-sdl-2025-(\d+\.\d+\.\d+)/, 'i'),
     resolveVersion: (api) => resolveVersionByPattern(api, REQUIREMENTS[0]),
   },
   { //QtLauncher
@@ -68,7 +68,7 @@ const REQUIREMENTS = [
     githubUrl: SHADLAUNCHER_URL_MAIN,
     findMod: (api) => findModByFile(api, SHADLAUNCHER_ID, SHADLAUNCHER_FILE),
     findDownloadId: (api) => findDownloadIdByFile(api, SHADLAUNCHER_ARC_NAME),
-    fileArchivePattern: new RegExp(/^shadPS4QtLauncher-win64-qt-(\d+\.\d+\.\d+)/, 'i'),
+    fileArchivePattern: new RegExp(/^shadPS4QtLauncher-win64-qt-(\d+-\d+-\d+)/, 'i'),
     resolveVersion: (api) => resolveVersionByPattern(api, REQUIREMENTS[1]),
   },
 ];
@@ -124,6 +124,12 @@ const spec = {
     {
       "id": SHADPS4_ID,
       "name": SHADPS4_NAME,
+      "priority": "low",
+      "targetPath": `{gamePath}`
+    },
+    {
+      "id": SHADLAUNCHER_ID,
+      "name": SHADLAUNCHER_NAME,
       "priority": "low",
       "targetPath": `{gamePath}`
     },
@@ -249,7 +255,6 @@ function installShadPs4(files) {
   const filtered = files.filter(file =>
     ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
   );
-
   const instructions = filtered.map(file => {
     return {
       type: 'copy',
@@ -258,7 +263,39 @@ function installShadPs4(files) {
     };
   });
   instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
 
+//Installer test for ShadPS4 Qt Launcherfiles
+function testShadLauncher(files, gameId) {
+  const isMod = files.some(file => (path.basename(file).toLowerCase() === SHADLAUNCHER_EXEC));
+  let supported = (gameId === spec.game.id) && isMod;
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Installer install ShadPS4 Qt Launcher files
+function installShadLauncher(files) {
+  const modFile = files.find(file => (path.basename(file).toLowerCase() === SHADLAUNCHER_EXEC));
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: SHADLAUNCHER_ID };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
   return Promise.resolve({ instructions });
 }
 
@@ -284,7 +321,6 @@ function installSmithbox(files) {
   const filtered = files.filter(file =>
     ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
   );
-
   const instructions = filtered.map(file => {
     return {
       type: 'copy',
@@ -318,7 +354,6 @@ function installFlver(files) {
   const filtered = files.filter(file =>
     ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
   );
-
   const instructions = filtered.map(file => {
     return {
       type: 'copy',
@@ -327,7 +362,6 @@ function installFlver(files) {
     };
   });
   //instructions.push(setModTypeInstruction);
-
   return Promise.resolve({ instructions });
 }
 
@@ -353,7 +387,6 @@ function installDvdRootPs4(files) {
   const filtered = files.filter(file =>
     ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
   );
-
   const instructions = filtered.map(file => {
     return {
       type: 'copy',
@@ -387,7 +420,6 @@ function installSave(files) {
   const filtered = files.filter(file =>
     ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
   );
-
   const instructions = filtered.map(file => {
     return {
       type: 'copy',
@@ -396,7 +428,6 @@ function installSave(files) {
     };
   });
   instructions.push(setModTypeInstruction);
-
   return Promise.resolve({ instructions });
 }
 
@@ -562,10 +593,11 @@ function applyGame(context, gameSpec) {
 
   //register mod installers
   context.registerInstaller(`${GAME_ID}-shadps4`, 25, testShadPs4, installShadPs4);
-  context.registerInstaller(`${GAME_ID}-smithbox`, 30, testSmithbox, installSmithbox);
-  context.registerInstaller(`${GAME_ID}-flver`, 35, testFlver, installFlver);
-  context.registerInstaller(`${GAME_ID}-dvdroot_ps4`, 40, testDvdRootPs4, installDvdRootPs4);
-  context.registerInstaller(`${GAME_ID}-save`, 45, testSave, installSave);
+  context.registerInstaller(`${GAME_ID}-shadlauncher`, 27, testShadLauncher, installShadLauncher);
+  context.registerInstaller(`${GAME_ID}-smithbox`, 29, testSmithbox, installSmithbox);
+  context.registerInstaller(`${GAME_ID}-flver`, 31, testFlver, installFlver);
+  context.registerInstaller(`${GAME_ID}-dvdroot_ps4`, 33, testDvdRootPs4, installDvdRootPs4);
+  context.registerInstaller(`${GAME_ID}-save`, 35, testSave, installSave);
 }
 
 //main function

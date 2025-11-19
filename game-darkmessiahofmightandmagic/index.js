@@ -1,10 +1,10 @@
-/*
+/*//////////////////////////////////////////////////////
 Name: Dark Messiah of Might & Magic Vortex Extension
 Structure: Basic (Launcher)
 Author: ChemBoy1
-Version: 0.2.2
-Date: 03/17/2025
-*/
+Version: 0.2.3
+Date: 2025-11-18
+//////////////////////////////////////////////////////*/
 
 //Import libraries
 const { actions, fs, util, selectors, log } = require('vortex-api');
@@ -12,51 +12,63 @@ const path = require('path');
 const template = require('string-template');
 
 //Specify all the information about the game
-const STEAMAPP_ID = "2100";
-const EPICAPP_ID = null;
-const GOGAPP_ID = null;
-const XBOXAPP_ID = null;
-const XBOXEXECNAME = null;
 const GAME_ID = "darkmessiahofmightandmagic";
+const STEAMAPP_ID = "2100";
 const GAME_NAME = "Dark Messiah \tof Might & Magic";
 const GAME_NAME_SHORT = "Dark Messiah MM";
 
-const MOD_PATH = ".";
 const EXEC = "mm.exe";
+const ROOT_FOLDER = "mm";
 
+let GAME_PATH = null;
+let STAGING_FOLDER = '';
+let DOWNLOAD_FOLDER = '';
+
+//info for modtypes, tools, and actions
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = `Root Folder`;
 const ROOT_FOLDERS = ['_mods']; // Cannot use 'bin' because that would conflict with some Launcher Mods
 
 const DATA_ID = `${GAME_ID}-data`;
 const DATA_NAME = `Game Data Folder`;
-const DATA_FILE = `mm`;
+const DATA_FILE = ROOT_FOLDER;
 
 const DATASUB_ID = `${GAME_ID}-datasub`;
 const DATASUB_NAME = `Data Subfolder`;
-const DATASUB_PATH = path.join("mm");
-const DATASUB_FOLDERS = ['materials', 'maps', 'bin', 'cfg', 'media', 'resource', 'scripts', 'SAVE'];
+const DATASUB_PATH = ROOT_FOLDER;
+const MATL_FOLDER = 'materials';
+const MAPS_FOLDER = 'maps';
+const SAVE_FOLDER = 'SAVE';
+const DATASUB_FOLDERS = [MATL_FOLDER, MAPS_FOLDER, 'bin', 'cfg', 'media', 'resource', 'scripts', SAVE_FOLDER];
 const DATASUB_FILE = `gameinfo.txt`;
 
 const MATERIALS_SUB_ID = `${GAME_ID}-materialssub`;
 const MATERIALS_SUB_NAME = `Materials Subfolder`;
-const MATERIALS_SUB_PATH = path.join("mm", "materials");
+const MATERIALS_SUB_PATH = path.join(ROOT_FOLDER, MATL_FOLDER);
 const MATERIALS_SUB_FOLDERS = ['models', 'fx', 'sprites', 'cloth', 'console', 'correction', 'decals', 'detail', 'effects', 'engine', 'envcubemaps', 'generic', 'hud', 'nature', 'overlays', 'sun', 'vgui', 'voice'];
 
 const VPK_ID = `${GAME_ID}-vpk`;
 const VPK_NAME = `VPK Files`;
-const VPK_PATH = path.join("vpks");
+const VPK_FOLDER = "vpks";
+const VPK_PATH = VPK_FOLDER;
 const VPK_EXT = `.vpk`;
 
 const MAPS_ID = `${GAME_ID}-maps`;
 const MAPS_NAME = `Maps (.bsp)`;
-const MAPS_PATH = path.join("mm", "maps");
+const MAPS_PATH = path.join(ROOT_FOLDER, MAPS_FOLDER);
 const MAPS_EXT = `.bsp`;
 
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_NAME = `Save`;
-const SAVE_PATH = path.join("mm", "SAVE");
+const SAVE_PATH = path.join(ROOT_FOLDER, SAVE_FOLDER);
 const SAVE_EXT = `.sav`;
+
+const CONFIG_ID = `${GAME_ID}-config`;
+const CONFIG_NAME = `Config`;
+const CONFIG_PATH = path.join(ROOT_FOLDER, 'cfg');
+const CONFIG_FILE = 'config.cfg';
+const CONFIG_FILES = [CONFIG_FILE];
+const CONFIG_EXTS = ['.cfg'];
 
 const LAUNCHER_ID = `${GAME_ID}-launcher`;
 const LAUNCHER_NAME = `wiltOS Mod Launcher`;
@@ -64,12 +76,23 @@ const LAUNCHER_EXEC = EXEC;
 
 const LAUNCHERMOD_ID = `${GAME_ID}-launchermod`;
 const LAUNCHERMOD_NAME = `Launcher Mod`;
-const LAUNCHERMOD_PATH = path.join(`_mods`);
+const LAUNCHERMOD_PATH = `_mods`;
 const LAUNCHERMOD_FILE = `info.json`;
 const UNLIMITED_FILE = `unlimited_edition`;
 
 const H_RES = "2560";
 const V_RES = "1440";
+
+const MOD_PATH_DEFAULT = '.';
+const REQ_FILE = EXEC;
+const PARAMETERS_STRING = '-novid';
+const PARAMETERS = [PARAMETERS_STRING];
+const PARAMETERS_STRING_RTX = `-tempcontent -novid -dev -windowed -w ${H_RES} -h ${V_RES} -dxlevel 70 +mat_dxlevel 70 +mat_softwarelighting 0 +sv_cheats 1 +r_frustumcullworld 0 +r_3dsky 0 +mat_drawwater 0 +map_background none +r_portalsopenall 1 +mat_very_high_texture 1 +mat_picmip 0`;
+const PARAMETERS_RTX = [PARAMETERS_STRING_RTX];
+
+const IGNORE_CONFLICTS = [path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
+const IGNORE_DEPLOY = [path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
+let MODTYPE_FOLDER = [LAUNCHERMOD_PATH, MATERIALS_SUB_PATH, MAPS_PATH, SAVE_PATH, VPK_PATH];
 
 const spec = {
   "game": {
@@ -79,22 +102,18 @@ const spec = {
     "executable": EXEC,
     "logo": `${GAME_ID}.jpg`,
     "mergeMods": true,
-    "modPath": MOD_PATH,
+    "modPath": MOD_PATH_DEFAULT,
     "modPathIsRelative": true,
     "requiredFiles": [
       EXEC
     ],
     "details": {
       "steamAppId": +STEAMAPP_ID,
-      //"gogAppId": GOGAPP_ID,
-      //"epicAppId": EPICAPP_ID,
-      //"xboxAppId": XBOXAPP_ID,
+      "ignoreConflicts": IGNORE_CONFLICTS,
+      "ignoreDeploy": IGNORE_DEPLOY,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
-      //"GogAPPId": GOGAPP_ID,
-      //"EpicAPPId": EPICAPP_ID,
-      //"XboxAPPId": XBOXAPP_ID
     }
   },
   "modTypes": [
@@ -114,37 +133,43 @@ const spec = {
       "id": DATASUB_ID,
       "name": DATASUB_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${DATASUB_PATH}`
+      "targetPath": path.join('{gamePath}', DATASUB_PATH)
     },
     {
       "id": MATERIALS_SUB_ID,
       "name": MATERIALS_SUB_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${MATERIALS_SUB_PATH}`
+      "targetPath": path.join('{gamePath}', MATERIALS_SUB_PATH)
     },
     {
       "id": VPK_ID,
       "name": VPK_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${VPK_PATH}`
+      "targetPath": path.join('{gamePath}', VPK_PATH)
     },
     {
       "id": MAPS_ID,
       "name": MAPS_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${MAPS_PATH}`
+      "targetPath": path.join('{gamePath}', MAPS_PATH)
     },
     {
       "id": SAVE_ID,
       "name": SAVE_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${SAVE_PATH}`
+      "targetPath": path.join('{gamePath}', SAVE_PATH)
+    },
+    { 
+      "id": CONFIG_ID,
+      "name": CONFIG_NAME,
+      "priority": "high",
+      "targetPath": path.join('{gamePath}', CONFIG_PATH)
     },
     {
       "id": LAUNCHERMOD_ID,
       "name": LAUNCHERMOD_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${LAUNCHERMOD_PATH}`
+      "targetPath": path.join('{gamePath}', LAUNCHERMOD_PATH)
     },
     {
       "id": LAUNCHER_ID,
@@ -156,9 +181,6 @@ const spec = {
   "discovery": {
     "ids": [
       STEAMAPP_ID,
-      //EPICAPP_ID,
-      //GOGAPP_ID,
-      //XBOXAPP_ID
     ],
     "names": []
   }
@@ -166,22 +188,6 @@ const spec = {
 
 //3rd party tools and launchers
 const tools = [
-  /*
-  {
-    id: LAUNCHER_ID,
-    name: LAUNCHERMOD_NAME,
-    logo: "exec.png",
-    executable: () => LAUNCHER_EXEC,
-    requiredFiles: [LAUNCHER_EXEC],
-    detach: true,
-    relative: true,
-    exclusive: true,
-    defaultPrimary: true,
-    parameters: [
-      `-novid`,
-    ],
-  },
-  //*/
   {
     id: "LaunchGame",
     name: "Launch Game",
@@ -192,9 +198,7 @@ const tools = [
     relative: true,
     exclusive: true,
     defaultPrimary: true,
-    parameters: [
-      `-novid`,
-    ],
+    parameters: PARAMETERS,
   },
   {
     id: "RTX Remix Launch",
@@ -205,11 +209,11 @@ const tools = [
     detach: true,
     relative: true,
     exclusive: true,
-    parameters: [
-      `-tempcontent -novid -dev -windowed -w ${H_RES} -h ${V_RES} -dxlevel 70 +mat_dxlevel 70 +mat_softwarelighting 0 +sv_cheats 1 +r_frustumcullworld 0 +r_3dsky 0 +mat_drawwater 0 +map_background none +r_portalsopenall 1 +mat_very_high_texture 1 +mat_picmip 0 `,
-    ],
+    parameters: PARAMETERS_RTX,
   },
 ];
+
+// BASIC EXTENSION FUNCTIONS ///////////////////////////////////////////////////
 
 //Set mod type priorities
 function modTypePriority(priority) {
@@ -225,7 +229,7 @@ function pathPattern(api, game, pattern) {
   return template(pattern, {
     gamePath: (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0 ? void 0 : _a.path,
     documents: util.getVortexPath('documents'),
-    localAppData: process.env['LOCALAPPDATA'],
+    localAppData: util.getVortexPath('localAppData'),
     appData: util.getVortexPath('appData'),
   });
 }
@@ -237,26 +241,33 @@ function makeGetModPath(api, gameSpec) {
     : pathPattern(api, gameSpec.game, gameSpec.game.modPath);
 }
 
-//Find game information by API utility
-async function queryGame() {
-  let game = await util.GameStoreHelper.findByAppId(spec.discovery.ids);
-  return game;
-}
-
-//Find game install location 
-async function queryPath() {
-  let game = await queryGame();
-  return game.gamePath;
+//Find game installation directory
+function makeFindGame(api, gameSpec) {
+  return () => util.GameStoreHelper.findByAppId(gameSpec.discovery.ids)
+    .then((game) => game.gamePath);
 }
 
 //Set launcher requirements
 async function requiresLauncher(gamePath, store) {
-  if (store === 'steam') {
+  /*if (store === 'steam') {
       return Promise.resolve({
           launcher: 'steam',
       });
-  }
+  } //*/
   return Promise.resolve(undefined);
+}
+
+const getDiscoveryPath = (api) => { //get the game's discovered path
+  const state = api.getState();
+  const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});
+  return discovery === null || discovery === void 0 ? void 0 : discovery.path;
+};
+
+async function purge(api) { //useful to clear out mods prior to doing some action
+  return new Promise((resolve, reject) => api.events.emit('purge-mods', true, (err) => err ? reject(err) : resolve()));
+}
+async function deploy(api) { //useful to deploy mods after doing some action
+  return new Promise((resolve, reject) => api.events.emit('deploy-mods', (err) => err ? reject(err) : resolve()));
 }
 
 // DOWNLOAD MOD FUNCTIONS //////////////////////////////////////////////////////////////////////////////////////////////
@@ -422,7 +433,6 @@ function installLauncher(files) {
   const filtered = files.filter(file =>
     ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
   );
-
   const instructions = filtered.map(file => {
     return {
       type: 'copy',
@@ -456,7 +466,6 @@ function installUnlimited(files) {
   const filtered = files.filter(file =>
     ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
   );
-
   const instructions = filtered.map(file => {
     return {
       type: 'copy',
@@ -497,7 +506,6 @@ function installRoot(files) {
   const filtered = files.filter(file =>
     ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
   );
-
   const instructions = filtered.map(file => {
     return {
       type: 'copy',
@@ -506,7 +514,6 @@ function installRoot(files) {
     };
   });
   instructions.push(setModTypeInstruction);
-
   return Promise.resolve({ instructions });
 }
 
@@ -545,7 +552,6 @@ function installLauncherMod(files, fileName) {
   const filtered = files.filter(file =>
     ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
   );
-
   const instructions = filtered.map(file => {
     return {
       type: 'copy',
@@ -586,7 +592,6 @@ function installData(files) {
   const filtered = files.filter(file =>
     ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
   );
-
   const instructions = filtered.map(file => {
     return {
       type: 'copy',
@@ -627,7 +632,6 @@ function installDataSub(files) {
   const filtered = files.filter(file =>
     ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
   );
-
   const instructions = filtered.map(file => {
     return {
       type: 'copy',
@@ -668,7 +672,6 @@ function installVpk(files) {
   const filtered = files.filter(file =>
     ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
   );
-
   const instructions = filtered.map(file => {
     return {
       type: 'copy',
@@ -710,7 +713,6 @@ function installMaterials(files) {
   const filtered = files.filter(file =>
     ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
   );
-
   const instructions = filtered.map(file => {
     return {
       type: 'copy',
@@ -719,7 +721,6 @@ function installMaterials(files) {
     };
   });
   instructions.push(setModTypeInstruction);
-
   return Promise.resolve({ instructions });
 }
 
@@ -752,7 +753,6 @@ function installMaps(files) {
   const filtered = files.filter(file =>
     ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
   );
-
   const instructions = filtered.map(file => {
     return {
       type: 'copy',
@@ -793,7 +793,46 @@ function installSave(files) {
   const filtered = files.filter(file =>
     ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
   );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
 
+//Test for config file
+function testConfig(files, gameId) {
+  const isMod = files.some(file => (path.basename(file).toLowerCase() === CONFIG_FILE));
+  let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install config file
+function installConfig(files) {
+  const modFile = files.find(file => path.basename(file).toLowerCase() === CONFIG_FILE);
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: CONFIG_ID };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
   const instructions = filtered.map(file => {
     return {
       type: 'copy',
@@ -807,113 +846,20 @@ function installSave(files) {
 
 // MAIN FUNCTIONS /////////////////////////////////////////////////////////////////////////////////////////////////
 
-//Notify User of Setup instructions for Mod Managers
-function setupNotify(api) {
-  api.sendNotification({
-    id: `${GAME_ID}-setup`,
-    type: 'warning',
-    message: 'Mod Installation and Setup Instructions',
-    allowSuppress: true,
-    actions: [
-      {
-        title: 'More',
-        action: (dismiss) => {
-          api.showDialog('question', 'Action required', {
-            text: 'TEXT.\n'
-                + 'TEXT.\n'
-          }, [
-            { label: 'Acknowledge', action: () => dismiss() },
-          ]);
-        },
-      },
-    ],
-  });    
-}
-
-//Notify User to run wiltOS Launcher after deployment
-function deployNotify(api) {
-  const NOTIF_ID = `${GAME_ID}-deploy`;
-  const MOD_NAME = LAUNCHER_NAME;
-  const MESSAGE = `Run ${MOD_NAME} after Deploy`;
-  api.sendNotification({
-    id: NOTIF_ID,
-    type: 'warning',
-    message: MESSAGE,
-    allowSuppress: true,
-    actions: [
-      {
-        title: 'Run wiltOS',
-        action: (dismiss) => {
-          runWilt(api);
-          dismiss();
-        },
-      },
-      {
-        title: 'More',
-        action: (dismiss) => {
-          api.showDialog('question', MESSAGE, {
-            text: `For some mods, you must use ${MOD_NAME} to enable mods after installing with Vortex.\n`
-                + `Use the included tool to launch ${MOD_NAME} (button on notification or in "Dashboard" tab).\n`
-          }, [
-            {
-              label: 'Run wiltOS', action: () => {
-                runWilt(api);
-                dismiss();
-              }
-            },
-            { label: 'Continue', action: () => dismiss() },
-            {
-              label: 'Never Show Again', action: () => {
-                api.suppressNotification(NOTIF_ID);
-                dismiss();
-              }
-            },
-          ]);
-        },
-      },
-    ],
-  });
-}
-
-function runWilt(api) {
-  const TOOL_ID = LAUNCHER_ID;
-  const TOOL_NAME = LAUNCHER_NAME;
-  const state = api.store.getState();
-  const tool = util.getSafe(state, ['settings', 'gameMode', 'discovered', GAME_ID, 'tools', TOOL_ID], undefined);
-
-  try {
-    const TOOL_PATH = tool.path;
-    if (TOOL_PATH !== undefined) {
-      return api.runExecutable(TOOL_PATH, [], { suggestDeploy: false })
-        .catch(err => api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err,
-          { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 })
-        );
-    }
-    else {
-      return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, `Path to ${TOOL_NAME} executable could not be found. Ensure ${TOOL_NAME} is installed through Vortex.`);
-    }
-  } catch (err) {
-    return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 });
+async function modFoldersEnsureWritable(gamePath, relPaths) {
+  for (let index = 0; index < relPaths.length; index++) {
+    await fs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
   }
 }
 
 //Setup function
 async function setup(discovery, api, gameSpec) {
-  //setupNotify(api);
+  const state = api.store.getState();
+  GAME_PATH = discovery.path;
+  STAGING_FOLDER = selectors.installPathForGame(state, gameSpec.game.id);
+  DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, gameSpec.game.id);
   await downloadLauncher(api, gameSpec);
-  //*
-  await (gameSpec.modTypes || []).forEach((type, idx, arr) => {
-    fs.ensureDirWritableAsync(pathPattern(api, gameSpec.game, type.targetPath));
-  });
-  //*/
-  /*
-  await fs.ensureDirWritableAsync(path.join(discovery.path, SAVE_PATH));
-  await fs.ensureDirWritableAsync(path.join(discovery.path, VPK_PATH));
-  await fs.ensureDirWritableAsync(path.join(discovery.path, MATERIALS_SUB_PATH));
-  await fs.ensureDirWritableAsync(path.join(discovery.path, MAPS_PATH));
-  return fs.ensureDirWritableAsync(path.join(discovery.path, LAUNCHERMOD_PATH));
-  //*/
-  return fs.ensureDirWritableAsync(path.join(discovery.path, MOD_PATH));
+  return modFoldersEnsureWritable(discovery.path, MODTYPE_FOLDER);
 }
 
 //Let Vortex know about the game
@@ -921,7 +867,7 @@ function applyGame(context, gameSpec) {
   //register game
   const game = {
     ...gameSpec.game,
-    queryPath,
+    queryPath: makeFindGame(context.api, gameSpec),
     queryModPath: makeGetModPath(context.api, gameSpec),
     requiresLauncher: requiresLauncher,
     requiresCleanup: true,
@@ -942,15 +888,49 @@ function applyGame(context, gameSpec) {
 
   //register mod installers
   context.registerInstaller(LAUNCHER_ID, 25, testLauncher, installLauncher);
-  context.registerInstaller(`${GAME_ID}-unlimited`, 30, testUnlimited, installUnlimited);
-  context.registerInstaller(ROOT_ID, 35, testRoot, installRoot);
-  context.registerInstaller(LAUNCHERMOD_ID, 40, testLauncherMod, installLauncherMod);
-  context.registerInstaller(DATA_ID, 45, testData, installData);
-  context.registerInstaller(DATASUB_ID, 50, testDataSub, installDataSub);
-  context.registerInstaller(VPK_ID, 55, testVpk, installVpk);
-  context.registerInstaller(MATERIALS_SUB_ID, 60, testMaterials, installMaterials);
-  context.registerInstaller(MAPS_ID, 65, testMaps, installMaps);
-  context.registerInstaller(SAVE_ID, 70, testSave, installSave);
+  context.registerInstaller(`${GAME_ID}-unlimited`, 27, testUnlimited, installUnlimited);
+  context.registerInstaller(ROOT_ID, 29, testRoot, installRoot);
+  context.registerInstaller(LAUNCHERMOD_ID, 31, testLauncherMod, installLauncherMod);
+  context.registerInstaller(DATA_ID, 33, testData, installData);
+  context.registerInstaller(DATASUB_ID, 35, testDataSub, installDataSub);
+  context.registerInstaller(VPK_ID, 37, testVpk, installVpk);
+  context.registerInstaller(MATERIALS_SUB_ID, 39, testMaterials, installMaterials);
+  context.registerInstaller(MAPS_ID, 41, testMaps, installMaps);
+  context.registerInstaller(SAVE_ID, 43, testSave, installSave);
+  context.registerInstaller(CONFIG_ID, 45, testConfig, installConfig);
+
+  //register actions
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open config.cfg', async () => {
+    GAME_PATH = getDiscoveryPath(context.api);
+    util.opn(path.join(GAME_PATH, CONFIG_PATH, CONFIG_FILE)).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Saves Folder', async () => {
+    GAME_PATH = getDiscoveryPath(context.api);
+    util.opn(path.join(GAME_PATH, SAVE_PATH)).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  }); //*/
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
+    const openPath = path.join(__dirname, 'CHANGELOG.md');
+    util.opn(openPath).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
+    util.opn(DOWNLOAD_FOLDER).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
 }
 
 //main function
