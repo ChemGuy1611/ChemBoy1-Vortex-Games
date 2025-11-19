@@ -442,7 +442,7 @@ function fallbackInstallerNotify(api, modName) {
   const MESSAGE = 'Fallback installer reached for ' + modName;
   api.sendNotification({
     id: NOTIF_ID,
-    type: 'error',
+    type: 'warning',
     message: MESSAGE,
     allowSuppress: true,
     actions: [
