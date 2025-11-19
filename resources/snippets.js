@@ -174,6 +174,28 @@ async function runActivity(api) {
 // INSTALLER FUNCTIONS ///////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////
 
+//Multiple folder destinations
+function installContent(files) {
+  const filtered = files.filter(file => !file.endsWith(path.sep));
+  const factionFiles = filtered.filter(file => file.endsWith(FACTION_EXT));
+  const nonFactionFiles = filtered.filter(file => !file.endsWith(FACTION_EXT));
+  const instructions = nonFactionFiles.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join('Mods', file),
+    };
+  }).concat(factionFiles.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join('Factions', file),
+    };
+  }));
+
+  return Promise.resolve({ instructions });
+}
+
 // Re-zip installer //////////////////////////////////////////////////////
 const Bluebird = require('bluebird');
 //Install zips

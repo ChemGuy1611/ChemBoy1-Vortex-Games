@@ -1129,7 +1129,7 @@ function installBinaries(files) {
     return {
       type: 'copy',
       source: file,
-      destination: path.join(file),
+      destination: file,
     };
   });
   instructions.push(setModTypeInstruction);
