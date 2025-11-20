@@ -1848,7 +1848,31 @@ async function modFoldersEnsureWritable(gamePath, relPaths) {
   }
 }
 
-//Choose between mutually-exclusive mod loaders / dependencies ////////////
+// swap mod loaders and restart extension
+async function relaunchExt(api) {
+  return api.showDialog('info', 'Restart Required', {
+    text: '\n'
+        + 'The extension requires a restart to complete the Mod Loader setup.\n'
+        + '\n'
+        + 'The extension will purge mods and then exit - please re-activate the game via the Games page or Dashboard page.\n'
+        + '\n'
+        + 'IMPORTANT: You may see an External Changes dialogue. Select "Revert change (use staging file)".\n'
+        + '\n',
+  }, [ { label: 'Restart Extension' } ])
+  .then(async () => {
+    try {
+      await purge(api);
+      const batched = [
+        actions.setDeploymentNecessary(GAME_ID, true),
+        actions.setNextProfile(undefined),
+      ];
+      util.batchDispatch(api.store, batched);
+    } catch (err) {
+      api.showErrorNotification('Failed to set up Mod Loader', err);
+    }
+  });
+}
+//Function to choose mod loader
 async function chooseModLoader(api, gameSpec) {
   const t = api.translate;
   const replace = {
@@ -1860,7 +1884,7 @@ async function chooseModLoader(api, gameSpec) {
       + 'Only one mod loader can be installed at a time.{{bl}}'
       + 'Make your choice based on which mods you would like to install and which loader they support.{{bl}}'
       + 'You can change which mod loader you have installed by Uninstalling the current one from Vortex, which will bring up this dialog again.{{bl}}'
-      + 'Which mod loader would you like to use for {{game}}?', 
+      + 'Which mod loader would you like to use for {{game}}?',
       { replace }
     ),
   }, [
@@ -1876,6 +1900,9 @@ async function chooseModLoader(api, gameSpec) {
     } else if (result.action === 'MelonLoader') {
       await downloadMelon(api, gameSpec);
     }
+    //* This is necessary to change CustomCharacters modType path
+    await deploy(api);
+    relaunchExt(api); //*/
   });
 }
 //Deconflict mod loaders
@@ -1888,7 +1915,7 @@ async function deconflictModLoaders(api, gameSpec) {
   return api.showDialog('info', 'Mod Loader Conflict', {
     bbcode: t('You have both BepInEx and MelonLoader installed.{{bl}}'
       + 'This will cause the game to crash at launch. Only one mod loader can be installed at a time.{{bl}}'
-      + 'You must choose which mod loader you would like to use for {{game}}.', 
+      + 'You must choose which mod loader you would like to use for {{game}}.',
       { replace }
     ),
   }, [
@@ -1904,9 +1931,11 @@ async function deconflictModLoaders(api, gameSpec) {
     } else if (result.action === 'MelonLoader') {
       await removeBepinex(api, gameSpec);
     }
+    //* This is necessary to change CustomCharacters modType path
+    await deploy(api);
+    relaunchExt(api); //*/
   });
 }
-//remove the non-selected mod loader
 async function removeBepinex(api, gameSpec) {
   const state = api.getState();
   const mods = state.persistent.mods[gameSpec.game.id] || {};
@@ -1917,6 +1946,18 @@ async function removeBepinex(api, gameSpec) {
     await util.removeMods(api, gameSpec.game.id, [modId]);
   } catch (err) {
     api.showErrorNotification('Failed to remove BepInEx', err);
+  }
+}
+async function removeMelon(api, gameSpec) {
+  const state = api.getState();
+  const mods = state.persistent.mods[gameSpec.game.id] || {};
+  const mod = Object.keys(mods).find(id => mods[id]?.type === MELON_ID);
+  const modId = mods[mod].id
+  log('warn', `Found MelonLoader mod to remove for deconfliction: ${modId}`);
+  try {
+    await util.removeMods(api, gameSpec.game.id, [modId]);
+  } catch (err) {
+    api.showErrorNotification('Failed to remove MelonLoader', err);
   }
 }
 
