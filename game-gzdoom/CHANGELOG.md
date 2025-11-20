@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.2.0] - 2025-11-19
+
+- Upgraded the extension to use UZDoom instead of GZDoom.
+
 ## [0.1.5] - 2025-10-23
 
 - Fixed update check for GZDoom not running on mod update check.

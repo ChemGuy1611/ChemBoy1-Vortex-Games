@@ -520,6 +520,20 @@ function fallbackInstallerNotify(api, modName) {
                 dismiss();
               }
             }, //*/
+            //*
+            { label: `Open Nexus Mods Page`, action: () => {
+              const mods = util.getSafe(api.store.getState(), ['persistent', 'mods', spec.game.id], {});
+              const modMatch = Object.values(mods).find(mod => mod.installationPath === modName);
+              log('warn', `Found ${modMatch?.id} for ${modName}`);
+              let PAGE = ``;
+              if (modMatch) {
+                const MOD_ID = modMatch.attributes.modId;
+                PAGE = `${MOD_ID}?tab=description`;
+              }
+              const MOD_PAGE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${PAGE}`;
+              util.opn(MOD_PAGE_URL).catch(err => undefined);
+              //dismiss();
+            }}, //*/
           ]);
         },
       },

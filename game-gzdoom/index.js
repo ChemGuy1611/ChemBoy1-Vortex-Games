@@ -1,9 +1,9 @@
 /*///////////////////////////////////////
-Name: Doom I & II (GZDoom) Vortex Extension
+Name: Doom I & II (UZDoom) Vortex Extension
 Structure: Mod Loader (Any Folder)
 Author: ChemBoy1
-Version: 0.1.5
-Date: 2025-10-23
+Version: 0.2.0
+Date: 2025-11-19
 ///////////////////////////////////////*/
 /*
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣀⣀⣠⣤⣤⣤⡴⣦⡴⣖⠶⣴⠶⡶⣖⡶⣶⢶⣲⡾⠿⢿⡷⣾⢿⣷⣦⢾⣷⣾⣶⣤⣀⣰⣤⣀⡀⠀⠀⢀⣴⣿⡿⡿⣿⣿⣦⣄⠀⠀⣠⣴⣿⡿⢿⡿⣷⣦⡄⠀⠀⢀⣀⣤⣦⣀⣤⣶⣶⣷⣦⣴⡿⢿⡷⣿⠿⡿⣿⣷⢶⣦⢴⡲⣦⢶⡶⢶⡲⣖⡶⣦⣤⣤⣤⣤⣤⣤⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
@@ -47,8 +47,9 @@ const GAME_ID = "gzdoom";
 const GAME_ID1 = "doom1993";
 const GAME_ID2 = "doom2";
 const GAME_ID3 = "doomplusdoom2";
-const GAME_NAME = "DOOM I & II (GZDoom)";
-const GAME_NAME_SHORT = "GZDoom";
+const GAME_NAME = "DOOM I & II (UZDoom)";
+const GAME_NAME_SHORT = "UZDoom";
+
 let GAME_PATH = '';
 let DOWNLOAD_FOLDER = '';
 let STAGING_FOLDER = '';
@@ -56,14 +57,14 @@ let STAGING_FOLDER = '';
 //Info for mod types, tools, and installers
 const USER_HOME = util.getVortexPath('home');
 const DOCUMENTS = util.getVortexPath('documents');
-const GZSAVE_PATH = path.join(USER_HOME, 'Saved Games', 'GZDoom');
-const GZCONFIG_PATH = path.join(DOCUMENTS, 'My Games', 'GZDoom');
-const GZDOOM_INI_FILE = 'gzdoom.ini';
-const GZDOOM_INI_PATH = path.join(GZCONFIG_PATH, GZDOOM_INI_FILE);
+const UZSAVE_PATH = path.join(USER_HOME, 'Saved Games', 'UZDoom');
+const UZCONFIG_PATH = path.join(DOCUMENTS, 'My Games', 'UZDoom');
+const UZDOOM_INI_FILE = 'uzdoom.ini';
+const UZDOOM_INI_PATH = path.join(UZCONFIG_PATH, UZDOOM_INI_FILE);
 
 const SAVE_ID = `${GAME_ID}-save`;
-const SAVE_NAME = "Saves (GZDoom)";
-const SAVE_PATH = GZSAVE_PATH;
+const SAVE_NAME = "Saves (UZDoom)";
+const SAVE_PATH = UZSAVE_PATH;
 const SAVE_EXT = ".zds";
 
 const DML_ID = `${GAME_ID}-dml`;
@@ -85,28 +86,30 @@ const WAD_FILENAMES = ["doom.wad",  "doom2.wad", "freedoom.wad", "nerve.wad"];
 const WAD_EXTS = [".iwad", ".ipk3"];
 const WAD_PATH = path.join(DML_TOP_FOLDER, 'FILE', "IWAD");
 
-const GZDOOM_ID = `${GAME_ID}-gzdoom`;
-const GZDOOM_NAME = "GZDoom";
-const GZDOOM_EXEC = "gzdoom.exe";
-const GZDOOM_PATH = path.join(DML_TOP_FOLDER, 'FILE', 'PORT', "gzdoom");
-const GZDOOM_EXEC_PATH = path.join(GZDOOM_PATH, GZDOOM_EXEC);
-const GZDOOM_URL = 'https://github.com/ZDoom/gzdoom/releases/download/g4.14.2/gzdoom-4-14-2-windows.zip';
-const GZDOOM_URL_MANUAL = 'https://github.com/ZDoom/gzdoom/releases';
-// Information for GZDoom downloader and updater
-const GZDOOM_ARC_NAME = 'gzdoom-4-14-2-windows.zip';
-const AUTHOR = 'ZDoom';
-const REPO = 'gzdoom';
-const GZDOOM_URL_API = `https://api.github.com/repos/${AUTHOR}/${REPO}`;
+const UZDOOM_ID = `${GAME_ID}-gzdoom`;
+const UZDOOM_NAME = "UZDoom";
+const UZDOOM_EXEC = "uzdoom.exe";
+const UZDOOM_PATH = path.join(DML_TOP_FOLDER, 'FILE', 'PORT', "gzdoom");
+const UZDOOM_EXEC_PATH = path.join(UZDOOM_PATH, UZDOOM_EXEC);
+
+// Information for UZDoom downloader and updater
+const AUTHOR = 'UZDoom';
+const REPO = 'UZDoom';
+const VER = '4.14.3';
+const UZDOOM_ARC_NAME = `Windows-UZDoom-${VER}.zip`;
+const UZDOOM_URL = `https://github.com/${AUTHOR}/${REPO}/releases/download/${VER}/${UZDOOM_ARC_NAME}`;
+const UZDOOM_URL_MANUAL = `https://github.com/${AUTHOR}/${REPO}/releases`;
+const UZDOOM_URL_API = `https://api.github.com/repos/${AUTHOR}/${REPO}`;
 const REQUIREMENTS = [
-  { //GZDoom
-    archiveFileName: GZDOOM_ARC_NAME,
-    modType: GZDOOM_ID,
-    assemblyFileName: GZDOOM_EXEC,
-    userFacingName: GZDOOM_NAME,
-    githubUrl: GZDOOM_URL_API,
-    findMod: (api) => findModByFile(api, GZDOOM_ID, GZDOOM_EXEC),
-    findDownloadId: (api) => findDownloadIdByFile(api, GZDOOM_ARC_NAME),
-    fileArchivePattern: new RegExp(/^gzdoom-(\d+-\d+-\d+)-windows/, 'i'),
+  { //UZDoom
+    archiveFileName: UZDOOM_ARC_NAME,
+    modType: UZDOOM_ID,
+    assemblyFileName: UZDOOM_EXEC,
+    userFacingName: UZDOOM_NAME,
+    githubUrl: UZDOOM_URL_API,
+    findMod: (api) => findModByFile(api, UZDOOM_ID, UZDOOM_EXEC),
+    findDownloadId: (api) => findDownloadIdByFile(api, UZDOOM_ARC_NAME),
+    fileArchivePattern: new RegExp(/^Windows-UZDoom-(\d+\.\d+\.\d+)\.zip/, 'i'),
     resolveVersion: (api) => resolveVersionByPattern(api, REQUIREMENTS[0]),
   },
 ];
@@ -139,19 +142,19 @@ const spec = {
       "id": MOD_ID,
       "name": MOD_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${MOD_PATH}`
+      "targetPath": path.join(`{gamePath}`, MOD_PATH)
     },
     {
       "id": WAD_ID,
       "name": WAD_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${WAD_PATH}`
+      "targetPath": path.join(`{gamePath}`, WAD_PATH)
     },
     {
-      "id": GZDOOM_ID,
-      "name": GZDOOM_NAME,
+      "id": UZDOOM_ID,
+      "name": UZDOOM_NAME,
       "priority": "low",
-      "targetPath": `{gamePath}\\${GZDOOM_PATH}`
+      "targetPath": path.join(`{gamePath}`, UZDOOM_PATH)
     },
     {
       "id": DML_ID,
@@ -169,11 +172,11 @@ const spec = {
 //3rd party tools and launchers
 const tools = [
   {
-    id: GZDOOM_ID,
-    name: GZDOOM_NAME,
-    logo: `gzdoom.png`,
-    executable: () => GZDOOM_EXEC_PATH,
-    requiredFiles: [GZDOOM_EXEC_PATH],
+    id: UZDOOM_ID,
+    name: UZDOOM_NAME,
+    logo: `uzdoom.png`,
+    executable: () => UZDOOM_EXEC_PATH,
+    requiredFiles: [UZDOOM_EXEC_PATH],
     detach: true,
     relative: true,
     exclusive: false,
@@ -271,9 +274,9 @@ function installDML(files) {
   return Promise.resolve({ instructions });
 }
 
-//Installer test for GZDOOM files
-function testGzdoom(files, gameId) {
-  const isMod = files.some(file => (path.basename(file).toLowerCase() === GZDOOM_EXEC));
+//Installer test for UZDOOM files
+function testUzdoom(files, gameId) {
+  const isMod = files.some(file => (path.basename(file).toLowerCase() === UZDOOM_EXEC));
   let supported = (gameId === spec.game.id) && isMod;
 
   // Test for a mod installer.
@@ -289,12 +292,12 @@ function testGzdoom(files, gameId) {
   });
 }
 
-//Installer install GZDOOM files
-function installGzdoom(files) {
-  const modFile = files.find(file => (path.basename(file).toLowerCase() === GZDOOM_EXEC));
+//Installer install UZDOOM files
+function installUzdoom(files) {
+  const modFile = files.find(file => (path.basename(file).toLowerCase() === UZDOOM_EXEC));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: GZDOOM_ID };
+  const setModTypeInstruction = { type: 'setmodtype', value: UZDOOM_ID };
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
@@ -312,7 +315,7 @@ function installGzdoom(files) {
   return Promise.resolve({ instructions });
 }
 
-//Installer test for GZDOOM files
+//Installer test for UZDOOM files
 function testWad(files, gameId) {
   const isMod = files.some(file => WAD_FILENAMES.includes(path.basename(file).toLowerCase()));
   const isExt = files.some(file => WAD_EXTS.includes(path.extname(file).toLowerCase()));
@@ -331,7 +334,7 @@ function testWad(files, gameId) {
   });
 }
 
-//Installer install GZDOOM files
+//Installer install UZDOOM files
 function installWad(files) {
   let modFile = files.find(file => WAD_FILENAMES.includes(path.basename(file).toLowerCase()));
   if (modFile === undefined) {
@@ -357,7 +360,7 @@ function installWad(files) {
   return Promise.resolve({ instructions });
 }
 
-//Installer test for GZDOOM files
+//Installer test for UZDOOM files
 function testMod(files, gameId) {
   const isMod = files.some(file => MOD_EXTS.includes(path.extname(file).toLowerCase()));
   let supported = (gameId === spec.game.id) && isMod;
@@ -375,7 +378,7 @@ function testMod(files, gameId) {
   });
 }
 
-//Installer install GZDOOM files
+//Installer install UZDOOM files
 function installMod(files) {
   const modFile = files.find(file => MOD_EXTS.includes(path.extname(file).toLowerCase()));
   const idx = modFile.indexOf(path.basename(modFile));
@@ -458,16 +461,16 @@ async function onCheckModVersion(api, gameId, mods, forced) {
   }
 }
 
-async function checkForGzdoom(api) {
+async function checkForUzdoom(api) {
   const mod = await REQUIREMENTS[0].findMod(api);
   return mod !== undefined;
 }
 
-//Check if GZDoom is installed
-function isGzdoomInstalled(api, spec) {
+//Check if UZDoom is installed
+function isUzdoomInstalled(api, spec) {
   const state = api.getState();
   const mods = state.persistent.mods[spec.game.id] || {};
-  return Object.keys(mods).some(id => mods[id]?.type === GZDOOM_ID);
+  return Object.keys(mods).some(id => mods[id]?.type === UZDOOM_ID);
 }
 
 //Check if DML is installed
@@ -477,12 +480,12 @@ function isDMLInstalled(api, spec) {
   return Object.keys(mods).some(id => mods[id]?.type === DML_ID);
 }
 
-//* Function to auto-download GZDoom from GitHub
-async function downloadGzdoom(api, gameSpec) {
-  let isInstalled = isGzdoomInstalled(api, gameSpec);
+//* Function to auto-download UZDoom from GitHub
+async function downloadUzdoom(api, gameSpec) {
+  let isInstalled = isUzdoomInstalled(api, gameSpec);
   if (!isInstalled) {
-    const MOD_NAME = GZDOOM_NAME;
-    const MOD_TYPE = GZDOOM_ID;
+    const MOD_NAME = UZDOOM_NAME;
+    const MOD_TYPE = UZDOOM_ID;
     const NOTIF_ID = `${GAME_ID}-${MOD_TYPE}-installing`;
     const GAME_DOMAIN = gameSpec.game.id;
     api.sendNotification({ //notification indicating install process
@@ -493,7 +496,7 @@ async function downloadGzdoom(api, gameSpec) {
       allowSuppress: false,
     });
     try {
-      const URL = GZDOOM_URL;
+      const URL = UZDOOM_URL;
       const dlInfo = { //Download the mod
         game: GAME_DOMAIN,
         name: MOD_NAME,
@@ -512,7 +515,7 @@ async function downloadGzdoom(api, gameSpec) {
       ];
       util.batchDispatch(api.store, batched); // Will dispatch both actions
     } catch (err) { //Show the user the download page if the download, install process fails
-      const errPage = GZDOOM_URL_MANUAL;
+      const errPage = UZDOOM_URL_MANUAL;
       api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
       util.opn(errPage).catch(() => null);
     } finally {
@@ -565,13 +568,13 @@ async function downloadDML(api, gameSpec) {
   }
 } //*/
 
-//* Download GZDoom from GitHub page (user browse for download, no check)
-async function downloadGzdoomManual(api, gameSpec) {
-  const URL = GZDOOM_URL_MANUAL;
-  const MOD_NAME = GZDOOM_NAME;
-  const MOD_TYPE = GZDOOM_ID;
+//* Download UZDoom from GitHub page (user browse for download, no check)
+async function downloadUzDoomManual(api, gameSpec) {
+  const URL = UZDOOM_URL_MANUAL;
+  const MOD_NAME = UZDOOM_NAME;
+  const MOD_TYPE = UZDOOM_ID;
   const GAME_DOMAIN = gameSpec.game.id;
-  const ARCHIVE_NAME = 'gzdoom-';
+  const ARCHIVE_NAME = 'uzdoom-';
   const instructions = api.translate(`Click on Continue below to open the browser. - `
     + `Navigate to the latest version of ${MOD_NAME} on the GitHub releases page and `
     + `click on the appropriate file to download and install the mod.`
@@ -707,11 +710,11 @@ async function resolveGameVersion(gamePath) {
   let version = '0.0.0';
   try {
     const exeVersion = require('exe-version');
-    const EXECUTABLE = path.join(gamePath, GZDOOM_EXEC_PATH);
+    const EXECUTABLE = path.join(gamePath, UZDOOM_EXEC_PATH);
     version = exeVersion.getProductVersion(EXECUTABLE);
     return Promise.resolve(version); 
   } catch (err) {
-    log('error', `Could not read GZDoom executable file to get version: ${err}`);
+    log('error', `Could not read UZDoom executable file to get version: ${err}`);
     return Promise.resolve(version);
   }
 }
@@ -775,19 +778,19 @@ async function setup(discovery, api, gameSpec) {
   await fs.ensureDirWritableAsync(path.join(GAME_PATH, MOD_PATH));
   await fs.ensureDirWritableAsync(path.join(GAME_PATH, WAD_PATH));
   await fs.ensureDirWritableAsync(path.join(GAME_PATH, CONFIG_PATH));
-  await fs.ensureDirWritableAsync(path.join(GAME_PATH, GZDOOM_PATH));
+  await fs.ensureDirWritableAsync(path.join(GAME_PATH, UZDOOM_PATH));
   await downloadDML(api, gameSpec);
 
   //write ini files for DML
   /*await fs.writeFileAsync(
     path.join(GAME_PATH, PORT_CONFIG_PATH),
-    `${GAME_PATH}\\${GZDOOM_EXEC_PATH}`,
+    `${GAME_PATH}\\${UZDOOM_EXEC_PATH}`,
     { encoding: "utf8" },
   ); //*/
 
-  //* Download/Update GZDoom from GitHub
-  const gzdoomInstalled = await checkForGzdoom(api);
-  return gzdoomInstalled ? Promise.resolve() : download(api, REQUIREMENTS); //*/
+  //* Download/Update UZDoom from GitHub
+  const uzdoomInstalled = await checkForUzdoom(api);
+  return uzdoomInstalled ? Promise.resolve() : download(api, REQUIREMENTS); //*/
 }
 
 //Let Vortex know about the game
@@ -815,7 +818,7 @@ function applyGame(context, gameSpec) {
 
   //register mod installers
   context.registerInstaller(DML_ID, 25, testDML, installDML);
-  context.registerInstaller(GZDOOM_ID, 27, testGzdoom, installGzdoom);
+  context.registerInstaller(UZDOOM_ID, 27, testUzdoom, installUzdoom);
   context.registerInstaller(WAD_ID, 29, testWad, installWad);
   context.registerInstaller(MOD_ID, 31, testMod, installMod);
   context.registerInstaller(`${GAME_ID}-zipmod`, 33, toBlue(testZipContent), toBlue(installZipContent));
@@ -830,8 +833,8 @@ function applyGame(context, gameSpec) {
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   }); //*/
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download GZDoom (Manual)', () => {
-    downloadGzdoomManual(context.api, gameSpec).catch(() => null);
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download UZDoom (Manual)', () => {
+    downloadUzdoomManual(context.api, gameSpec).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
@@ -844,24 +847,24 @@ function applyGame(context, gameSpec) {
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   }); //*/
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open GZDoom Save Folder', () => {
-    const openPath = path.join(GZSAVE_PATH);
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open UZDoom Save Folder', () => {
+    const openPath = path.join(UZSAVE_PATH);
     util.opn(openPath).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   }); //*/
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open GZDoom Config Folder', () => {
-    const openPath = path.join(GZCONFIG_PATH);
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open UZDoom Config Folder', () => {
+    const openPath = path.join(UZCONFIG_PATH);
     util.opn(openPath).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   }); //*/
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open gzdoom.ini', () => {
-    const openPath = path.join(GZDOOM_INI_PATH);
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open uzdoom.ini', () => {
+    const openPath = path.join(UZDOOM_INI_PATH);
     util.opn(openPath).catch(() => null);
   }, () => {
     const state = context.api.getState();
@@ -909,7 +912,7 @@ async function writePortIniDeploy(api) {
 
   await fs.writeFileAsync(
     PORT_CONFIG,
-    `${GAME_PATH}\\${GZDOOM_EXEC_PATH}`,
+    path.join(GAME_PATH, UZDOOM_EXEC_PATH),
     { encoding: "utf8" },
   );
 }

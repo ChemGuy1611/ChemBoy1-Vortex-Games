@@ -1,9 +1,9 @@
 /*///////////////////////////////////////////
-Name: Sacred 2 Remaster Vortex Extension
+Name: Red Dead Redemption 2 Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2025-11-19
+Date: 2025-11-20
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -11,88 +11,64 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 //const { parseStringPromise } = require('xml2js');
-//const winapi = require('winapi-bindings');
-//const turbowalk = require('turbowalk');
+const winapi = require('winapi-bindings');
+const turbowalk = require('turbowalk');
 
 //const USER_HOME = util.getVortexPath("home");
-//const DOCUMENTS = util.getVortexPath("documents");
+const DOCUMENTS = util.getVortexPath("documents");
 //const ROAMINGAPPDATA = util.getVortexPath("appData");
-const LOCALAPPDATA = util.getVortexPath("localAppData");
+//const LOCALAPPDATA = util.getVortexPath("localAppData");
 
 //Specify all the information about the game
-const GAME_ID = "sacred2remaster";
-const STEAMAPP_ID = "3906660";
+const GAME_ID = "reddeadredemption2";
+const STEAMAPP_ID = "1174180";
 const STEAMAPP_ID_DEMO = null;
-const EPICAPP_ID = null;
-const GOGAPP_ID = "2041849309";
+const EPICAPP_ID = "Heather";
+const GOGAPP_ID = null;
 const XBOXAPP_ID = null;
 const XBOXEXECNAME = null;
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, GOGAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
-const GAME_NAME = "Sacred 2 Remaster";
-const GAME_NAME_SHORT = "Sacred 2";
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const GAME_NAME = "Red Dead Redemption 2";
+const GAME_NAME_SHORT = "RDR2";
 const BINARIES_PATH = '.';
-const EXEC_NAME = "sacred2.exe";
+const EXEC_NAME = "RDR2.exe";
 const EXEC = path.join(BINARIES_PATH, EXEC_NAME);
+const EXEC_LAUNCHER = 'PlayRDR2.exe';
 
-const ROOT_FOLDER = 'Remaster';
-const PAK_FOLDER = 'pak';
-//removed ROOT_FOLDER since some mods end top level folder name with "Remaster", breaking indexing
-const ROOT_FOLDERS = ['scripts', 'video', PAK_FOLDER, 'locale']; 
-const ROOT_FOLDERS_LOWER = ROOT_FOLDERS.map(folder => folder.toLowerCase());
+const STEAM_FILE = 'steam_api64.dll';
+const EPIC_FILE = 'EOSSDK-Win64-Shipping.dll';
+const RS_FILE = 'uninstall.exe';
 
-const TEXTURE_FOLDER = 'Textures';
-const UI_FOLDER = 'ui';
-const ROOTSUB_FOLDERS = [TEXTURE_FOLDER, UI_FOLDER];
-const ROOTSUB_FOLDERS_LOWER = ROOTSUB_FOLDERS.map(folder => folder.toLowerCase());
+const ROOT_FOLDERS = [''];
 
-const TEXTURESUB_FOLDERS = ['data', 'Skills', 'Spells', 'Spritesheets'];
-const TEXTURESUB_FOLDERS_LOWER = TEXTURESUB_FOLDERS.map(folder => folder.toLowerCase());
-
-const UISUB_FOLDERS = ['Global', 'HUD', 'Ingame', 'MainMenu', 'Shared'];
-const UISUB_FOLDERS_LOWER = UISUB_FOLDERS.map(folder => folder.toLowerCase());
-
-const PAKSUB_FOLDERS = ['dummy', 'env', 'fx', 'gui',
-  'lensflares', 'maps', 'miniobj', 'particles', 'patches', 'physx', 'system',
-  'test', 'models', 'cluster', 'creature', 'footsteps', 'item', 'region',
-  'weapon', 'music', 'thumbnails', 'data', 'PhysXForceFields', 'PhysXParticles', 'worldmap', 
-  'Bitmaps', 'Fonts', 'Shaders', 'Sounds', 'Visuals', 'Windows', 'spawn'
-];
-const PAKSUB_FOLDERS_LOWER = PAKSUB_FOLDERS.map(folder => folder.toLowerCase());
-
-const DATA_FOLDER = 'Sacred2Remaster';
-const CONFIGMOD_LOCATION = LOCALAPPDATA;
-const CONFIG_FOLDERNAME = '';
-const SAVEMOD_LOCATION = LOCALAPPDATA;
-const SAVE_FOLDERNAME = 'user';
+const DATA_FOLDER = 'XXX';
+const CONFIGMOD_LOCATION = DOCUMENTS;
+const CONFIG_FOLDERNAME = 'XXX';
+const SAVEMOD_LOCATION = DOCUMENTS;
+const SAVE_FOLDERNAME = 'XXX';
 
 let GAME_PATH = null;
+let GAME_VERSION = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
+
+const MOD_ID = `${GAME_ID}-mod`;
+const MOD_NAME = "Mod";
+const MOD_PATH = "mods";
+const MOD_PATH_XBOX = MOD_PATH;
+const MOD_EXTS = [''];
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Folder";
 
-const ROOTSUB_ID = `${GAME_ID}-rootsub`;
-const ROOTSUB_NAME = "Root Sub-Folder";
-const ROOTSUB_PATH = path.join(ROOT_FOLDER);
-
-const TEXTURESUB_ID = `${GAME_ID}-texturesub`;
-const TEXTURESUB_NAME = "Textures Sub-Folder";
-const TEXTURESUB_PATH = path.join(ROOT_FOLDER, TEXTURE_FOLDER);
-
-const UISUB_ID = `${GAME_ID}-uisub`;
-const UISUB_NAME = "UI Sub-Folder";
-const UISUB_PATH = path.join(ROOT_FOLDER, UI_FOLDER);
-
-const PAKSUB_ID = `${GAME_ID}-paksub`;
-const PAKSUB_NAME = "Paks Sub-Folder";
-const PAKSUB_PATH = path.join(PAK_FOLDER);
+const BINARIES_ID = `${GAME_ID}-binaries`;
+const BINARIES_NAME = "Binaries (Engine Injector)";
 
 const CONFIG_ID = `${GAME_ID}-config`;
 const CONFIG_NAME = "Config";
 const CONFIG_PATH = path.join(CONFIGMOD_LOCATION, DATA_FOLDER, CONFIG_FOLDERNAME);
-const CONFIG_EXTS = [];
-const CONFIG_FILES = ["options.txt"];
+const CONFIG_EXTS = [".ini"];
+const CONFIG_FILES = ["XXX"];
 
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_NAME = "Save";
@@ -102,7 +78,7 @@ function isDir(folder, file) {
   const stats = fs.statSync(path.join(folder, file));
   return stats.isDirectory();
 }
-/*try {
+try {
   const SAVE_ARRAY = fs.readdirSync(SAVE_FOLDER);
   USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_FOLDER, entry));
 } catch(err) {
@@ -112,8 +88,8 @@ if (USERID_FOLDER === undefined) {
   USERID_FOLDER = "";
 } //*/
 const SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
-const SAVE_EXTS = [".sacred2save"];
-const SAVE_FILES = [];
+const SAVE_EXTS = [".sav"];
+const SAVE_FILES = ["XXX"];
 
 const TOOL_ID = `${GAME_ID}-tool`;
 const TOOL_NAME = "XXX";
@@ -126,7 +102,7 @@ const PARAMETERS = [PARAMETERS_STRING];
 
 const IGNORE_CONFLICTS = [path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
 const IGNORE_DEPLOY = [path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
-let MODTYPE_FOLDERS = [TEXTURESUB_PATH, UISUB_PATH, PAKSUB_PATH];
+let MODTYPE_FOLDERS = [MOD_PATH, BINARIES_PATH];
 
 const spec = {
   "game": {
@@ -161,34 +137,22 @@ const spec = {
   },
   "modTypes": [
     {
+      "id": MOD_ID,
+      "name": MOD_NAME,
+      "priority": "high",
+      "targetPath": path.join("{gamePath}", MOD_PATH)
+    },
+    {
       "id": ROOT_ID,
       "name": ROOT_NAME,
       "priority": "high",
       "targetPath": `{gamePath}`
     },
     {
-      "id": ROOTSUB_ID,
-      "name": ROOTSUB_NAME,
+      "id": BINARIES_ID,
+      "name": BINARIES_NAME,
       "priority": "high",
-      "targetPath": path.join("{gamePath}", ROOTSUB_PATH)
-    },
-    {
-      "id": TEXTURESUB_ID,
-      "name": TEXTURESUB_NAME,
-      "priority": "high",
-      "targetPath": path.join("{gamePath}", TEXTURESUB_PATH)
-    },
-    {
-      "id": UISUB_ID,
-      "name": UISUB_NAME,
-      "priority": "high",
-      "targetPath": path.join("{gamePath}", UISUB_PATH)
-    },
-    {
-      "id": PAKSUB_ID,
-      "name": PAKSUB_NAME,
-      "priority": "high",
-      "targetPath": path.join("{gamePath}", PAKSUB_PATH)
+      "targetPath": path.join("{gamePath}", BINARIES_PATH)
     },
   ],
   "discovery": {
@@ -262,10 +226,21 @@ function makeGetModPath(api, gameSpec) {
     : pathPattern(api, gameSpec.game, gameSpec.game.modPath);
 }
 
-//Find game installation directory
+//Find the game installation folder
 function makeFindGame(api, gameSpec) {
-  return () => util.GameStoreHelper.findByAppId(gameSpec.discovery.ids)
-    .then((game) => game.gamePath);
+  try {
+    const instPath = winapi.RegGetValue(
+      'HKEY_LOCAL_MACHINE',
+      `SOFTWARE\\WOW6432Node\\Rockstar Games\\Red Dead Redemption 2`,
+        'InstallFolder');
+    if (!instPath) {
+      throw new Error('empty registry key');
+    }
+    return () => Promise.resolve(instPath.value);
+  } catch (err) {
+    return () => util.GameStoreHelper.findByAppId(gameSpec.discovery.ids)
+      .then((game) => game.gamePath);
+  }
 }
 
 //Set launcher requirements
@@ -323,6 +298,21 @@ async function statCheckAsync(gamePath, file) {
     return false;
   }
 }
+//Get correct game version
+async function setGameVersion(gamePath) {
+  if (await statCheckAsync(gamePath, STEAM_FILE)) {
+    GAME_VERSION = 'steam';
+    return GAME_VERSION;
+  }
+  if (await statCheckAsync(gamePath, RS_FILE)) {
+    GAME_VERSION = 'rockstar';
+    return GAME_VERSION;
+  }
+  if (await statCheckAsync(gamePath, EPIC_FILE)) {
+    GAME_VERSION = 'epic';
+    return GAME_VERSION;
+  }
+}
 
 const getDiscoveryPath = (api) => { //get the game's discovered path
   const state = api.getState();
@@ -339,14 +329,51 @@ async function deploy(api) { //useful to deploy mods after doing some action
 
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
 
+//Test for mod files
+function testMod(files, gameId) {
+  const isMod = files.some(file => MOD_EXTS.includes(path.extname(file).toLowerCase()));
+  let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install mod files
+function installMod(files) {
+  const MOD_TYPE = MOD_ID;
+  const modFile = files.find(file => MOD_EXTS.includes(path.extname(file).toLowerCase()));
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
 //Installer test for Root folder files
 function testRoot(files, gameId) {
-  const isRoot = files.some(file => ROOT_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
-  const isRootSub = files.some(file => ROOTSUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
-  const isPakSub = files.some(file => PAKSUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
-  const isTexSub = files.some(file => TEXTURESUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
-  const isUiSub = files.some(file => UISUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
-  let supported = (gameId === spec.game.id) && (isRoot || isRootSub || isPakSub || isTexSub || isUiSub);
+  const isMod = files.some(file => ROOT_FOLDERS.includes(path.basename(file)));
+  let supported = (gameId === spec.game.id) && isMod;
 
   // Test for a mod installer.
   if (supported && files.find(file =>
@@ -363,27 +390,11 @@ function testRoot(files, gameId) {
 
 //Installer install Root folder files
 function installRoot(files) {
-  let modFile = files.find(file => ROOT_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
-  let setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
-  if (modFile === undefined) {
-    modFile = files.find(file => ROOTSUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
-    setModTypeInstruction = { type: 'setmodtype', value: ROOTSUB_ID };
-  }
-  if (modFile === undefined) {
-    modFile = files.find(file => PAKSUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
-    setModTypeInstruction = { type: 'setmodtype', value: PAKSUB_ID };
-  }
-  if (modFile === undefined) {
-    modFile = files.find(file => TEXTURESUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
-    setModTypeInstruction = { type: 'setmodtype', value: TEXTURESUB_ID };
-  }
-  if (modFile === undefined) {
-    modFile = files.find(file => UISUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
-    setModTypeInstruction = { type: 'setmodtype', value: UISUB_ID };
-  }
+  const modFile = files.find(file => ROOT_FOLDERS.includes(path.basename(file)));
   const ROOT_IDX = `${path.basename(modFile)}${path.sep}`
   const idx = modFile.indexOf(ROOT_IDX);
   const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
@@ -394,6 +405,41 @@ function installRoot(files) {
       type: 'copy',
       source: file,
       destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Fallback installer to Binaries folder
+function testBinaries(files, gameId) {
+  let supported = (gameId === spec.game.id);
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Fallback installer to Binaries folder
+function installBinaries(files) {
+  const setModTypeInstruction = { type: 'setmodtype', value: BINARIES_ID };
+  
+  const filtered = files.filter(file =>
+    (!file.endsWith(path.sep))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: file,
     };
   });
   instructions.push(setModTypeInstruction);
@@ -436,7 +482,7 @@ function installFallback(api, files, destinationPath) {
 
 function fallbackInstallerNotify(api, modName) {
   const state = api.getState();
-  STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
+  STAGING_FOLDER = selectors.installPathForGame(state, spec.game.id);
   const NOTIF_ID = `${GAME_ID}-fallbackinstaller`;
   modName = path.basename(modName, '.installing');
   const MESSAGE = 'Fallback installer reached for ' + modName;
@@ -486,6 +532,33 @@ function fallbackInstallerNotify(api, modName) {
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
+/*
+async function resolveGameVersion(gamePath) {
+  GAME_VERSION = await setGameVersion(gamePath);
+  let version = '0.0.0';
+  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
+    try {
+      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
+      const parsed = await parseStringPromise(appManifest);
+      version = parsed?.Package?.Identity?.[0]?.$?.Version;
+      return Promise.resolve(version);
+    } catch (err) {
+      log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+  else { // use exe
+    try {
+      const exeVersion = require('exe-version');
+      version = exeVersion.getProductVersion(path.join(gamePath, EXEC));
+      return Promise.resolve(version); 
+    } catch (err) {
+      log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+} //*/
+
 async function modFoldersEnsureWritable(gamePath, relPaths) {
   for (let index = 0; index < relPaths.length; index++) {
     await fs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
@@ -497,6 +570,7 @@ async function setup(discovery, api, gameSpec) {
   // SYNCHRONOUS CODE ////////////////////////////////////
   const state = api.getState();
   GAME_PATH = discovery.path;
+  GAME_VERSION = setGameVersion(GAME_PATH);
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   // ASYNC CODE //////////////////////////////////////////
@@ -512,9 +586,11 @@ function applyGame(context, gameSpec) {
     ...gameSpec.game,
     queryPath: makeFindGame(context.api, gameSpec),
     executable: () => gameSpec.game.executable,
+    //executable: getExecutable,
     queryModPath: makeGetModPath(context.api, gameSpec),
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
+    //getGameVersion: resolveGameVersion,
     supportedTools: tools,
   };
   context.registerGame(game);
@@ -549,13 +625,15 @@ function applyGame(context, gameSpec) {
   ); //*/
   
   //register mod installers
-  context.registerInstaller(ROOT_ID, 25, testRoot, installRoot);
-  //context.registerInstaller(CONFIG_ID, 30, testConfig, installConfig);
-  //context.registerInstaller(SAVE_ID, 35, testSave, installSave);
-  context.registerInstaller(`${GAME_ID}-fallback`, 40, testFallback, (files, destinationPath) => installFallback(context.api, files, destinationPath));
+  //context.registerInstaller(MOD_ID, 25, testMod, installMod);
+  //context.registerInstaller(CONFIG_ID, 43, testConfig, installConfig);
+  //context.registerInstaller(SAVE_ID, 45, testSave, installSave);
+  context.registerInstaller(ROOT_ID, 47, testRoot, installRoot);
+  //context.registerInstaller(BINARIES_ID, 49, testBinaries, installBinaries);
+  //context.registerInstaller(`${GAME_ID}-fallback`, 40, testFallback, (files, destinationPath) => installFallback(context.api, files, destinationPath));
 
   //register actions
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
+  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
     util.opn(CONFIG_PATH).catch(() => null);
     }, () => {
       const state = context.api.getState();
