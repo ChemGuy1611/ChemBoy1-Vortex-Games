@@ -528,7 +528,9 @@ function fallbackInstallerNotify(api, modName) {
               let PAGE = ``;
               if (modMatch) {
                 const MOD_ID = modMatch.attributes.modId;
-                PAGE = `${MOD_ID}?tab=description`;
+                if (MOD_ID !== undefined) {
+                  PAGE = `${MOD_ID}?tab=description`; 
+                }
               }
               const MOD_PAGE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${PAGE}`;
               util.opn(MOD_PAGE_URL).catch(err => undefined);
@@ -641,8 +643,8 @@ function applyGame(context, gameSpec) {
   //context.registerInstaller(CONFIG_ID, 43, testConfig, installConfig);
   //context.registerInstaller(SAVE_ID, 45, testSave, installSave);
   context.registerInstaller(ROOT_ID, 47, testRoot, installRoot);
-  //context.registerInstaller(BINARIES_ID, 49, testBinaries, installBinaries);
-  //context.registerInstaller(`${GAME_ID}-fallback`, 40, testFallback, (files, destinationPath) => installFallback(context.api, files, destinationPath));
+  //context.registerInstaller(BINARIES_ID, 48, testBinaries, installBinaries);
+  //context.registerInstaller(`${GAME_ID}-fallback`, 49, testFallback, (files, destinationPath) => installFallback(context.api, files, destinationPath));
 
   //register actions
   /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {

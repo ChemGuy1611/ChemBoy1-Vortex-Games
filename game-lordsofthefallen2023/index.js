@@ -86,7 +86,8 @@ const UNREALDATA = {
   fileExt: PAKMOD_EXTS,
   loadOrder: true,
 }
-const UE5_SORTABLE_ID = 'ue5-sortable-modtype'; //this should not be changed to be maintain consistency with other UE5 games
+const UE5_SORTABLE_ID = `${GAME_ID}-ue5-sortable-modtype`;
+const LEGACY_UE5_SORTABLE_ID = 'ue5-sortable-modtype';
 const UE5_SORTABLE_NAME = 'UE5 Sortable Mod';
 
 //Information for mod types and installers. This will be filled in from the data above
@@ -1097,6 +1098,14 @@ function UNREALEXTENSION(context) {
     if (fileExt)
       modFiles = files.filter(file => fileExt.includes(path.extname(file).toLowerCase()));
     const supported = (supportedGame && (gameId === spec.game.id) && modFiles.length > 0);
+
+    // Test for a mod installer
+    if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+      supported = false;
+    }
+
     return Promise.resolve({
       supported,
       requiredFiles: []
@@ -1117,6 +1126,14 @@ function UNREALEXTENSION(context) {
     name: UE5_SORTABLE_NAME,
     mergeMods: mod => loadOrderPrefix(context.api, mod) + mod.id
   });
+  context.registerModType(LEGACY_UE5_SORTABLE_ID, 65, 
+    (gameId) => testUnrealGame(gameId, true), 
+    getUnrealModsPath, 
+    () => Promise.resolve(false), 
+    { name: 'Legacy UE - REINSTALL TO SORT',
+      mergeMods: mod => 'ZZZZ-' + mod.id
+    }
+  );
 }
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
@@ -1261,10 +1278,60 @@ async function resolveGameVersion(gamePath, exePath) {
   }
 }
 
+//Notification if Config, Save, and Creations folders are not on the same partition
+function legacyModsNotify(api, legacyMods) {
+  const NOTIF_ID = `${GAME_ID}-legacymodsnotify`;
+  const MESSAGE = 'Reinstall Pak Mods to Make Sortable';
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'warning',
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: 'More',
+        action: (dismiss) => {
+          api.showDialog('question', MESSAGE, {
+            text: `\n\n`
+                + `Due to a bug in a handful of Unreal Engine Vortex game extensions, your pak mods were assigned a modType ID that was shared among several games.\n`
+                + `This bug can result in the Load Order tab not properly load ordering your pak mods.\n`
+                + `A list of the affected mods is shown below. You must Reinstall these mods to make them sortable.\n`
+                + `If you don't Reinstall thes mods, they will still function, but they will sit at the bottom of the loading order and will not be sortable.\n`
+                + `\n`
+                + `Perform the following steps to Reinstall the affected mods:\n
+                  1. Filter your Mods page by Mod Type "Legacy UE - REINSTALL TO SORT" using the categories at the top.\n
+                  2. Use the "CTRL + A" keyboard shortcut to select all displayed mods.\n
+                  3. Click the "Reinstall" button in the blue ribbon at the bottom of the Mods page.\n
+                  4. You can now sort all of your pak mods in the Load Order tab.\n`
+                + `\n`
+                + `Pak Mods to Reinstall:\n` 
+                + `${legacyMods.join('\n')}`
+                + `\n`
+                + `\n`
+          }, [
+            { label: 'Acknowledge', action: () => dismiss() },
+            {
+              label: 'Never Show Again', action: () => {
+                api.suppressNotification(NOTIF_ID);
+                dismiss();
+              }
+            },
+          ]);
+        },
+      },
+    ],
+  });
+}
+
 //Setup function
 async function setup(discovery, api, gameSpec) {
-  //SYNCHRONOUS CODE ////////////////////////////////////
+  //SYNCHRONOUS CODE //////////////////////////////////////
   const state = api.getState();
+  const mods = util.getSafe(state, ['persistent', 'mods', gameSpec.game.id], {});
+  const legacyMods = Object.keys(mods).filter(id => mods[id]?.type === LEGACY_UE5_SORTABLE_ID);
+  if (legacyMods.length > 0) {
+    legacyModsNotify(api, legacyMods);
+  }
   GAME_PATH = discovery.path;
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);

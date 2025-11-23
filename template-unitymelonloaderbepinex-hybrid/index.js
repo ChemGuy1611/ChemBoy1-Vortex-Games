@@ -42,8 +42,8 @@ const hasCustomMods = false; //set to true if there are modTypes with folder pat
 const BEPINEX_BUILD = 'il2cpp'; // 'mono' or 'il2cpp' - check for "il2cpp_data" folder
 const ARCH = 'x64'; //'x64' or 'x86' game architecture (64-bit or 32-bit)
 const BEP_VER = '5.4.23.4'; //set BepInEx version for mono URLs
-const BEP_BE_VER = '738'; //set BepInEx build for BE URLs
-const BEP_BE_COMMIT = 'af0cba7'; //git commit number for BE builds
+const BEP_BE_VER = '752'; //set BepInEx build for BE IL2CPP URLs
+const BEP_BE_COMMIT = 'dd0655f'; //git commit number for BE IL2CPP builds
 const allowBepCfgMan = false; //should BepInExConfigManager be downloaded?
 const allowMelPrefMan = false; //should MelonPreferencesManager be downloaded? False until figure out UniverseLib dependency
 const allowBepinexNexus = false; //set false until bugs are fixed
@@ -891,6 +891,92 @@ function installCustom(files) {
   return Promise.resolve({ instructions });
 }
 
+//Fallback installer to Binaries folder
+function testFallback(files, gameId) {
+  let supported = (gameId === spec.game.id);
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Fallback installer to Binaries folder
+function installFallback(api, files, destinationPath) {
+  fallbackInstallerNotify(api, destinationPath);
+  
+  const filtered = files.filter(file =>
+    (!file.endsWith(path.sep))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: file,
+    };
+  });
+  return Promise.resolve({ instructions });
+}
+
+function fallbackInstallerNotify(api, modName) {
+  const state = api.getState();
+  STAGING_FOLDER = selectors.installPathForGame(state, spec.game.id);
+  const NOTIF_ID = `${GAME_ID}-fallbackinstaller`;
+  modName = path.basename(modName, '.installing');
+  const MESSAGE = 'Fallback installer reached for ' + modName;
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'warning',
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: 'More',
+        action: (dismiss) => {
+          api.showDialog('question', MESSAGE, {
+            text: `The mod you just installed reached the fallback installer. This means Vortex could not determine where to place these mod files.\n`
+                + `Please check the mod page description and review the files in the mod staging folder to determine if manual file manipulation is required.\n`
+                + `\n`
+                + `Mod Name: ${modName}.\n`
+                + `\n`             
+          }, [
+            { label: 'Continue', action: () => dismiss() },
+            {
+              label: 'Open Staging Folder', action: () => {
+                util.opn(path.join(STAGING_FOLDER, modName)).catch(() => null);
+                dismiss();
+              }
+            }, //*/
+            //*
+            { label: `Open Nexus Mods Page`, action: () => {
+              const mods = util.getSafe(api.store.getState(), ['persistent', 'mods', spec.game.id], {});
+              const modMatch = Object.values(mods).find(mod => mod.installationPath === modName);
+              log('warn', `Found ${modMatch?.id} for ${modName}`);
+              let PAGE = ``;
+              if (modMatch) {
+                const MOD_ID = modMatch.attributes.modId;
+                if (MOD_ID !== undefined) {
+                  PAGE = `${MOD_ID}?tab=description`; 
+                }
+              }
+              const MOD_PAGE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${PAGE}`;
+              util.opn(MOD_PAGE_URL).catch(err => undefined);
+              //dismiss();
+            }}, //*/
+          ]);
+        },
+      },
+    ],
+  });
+}
+
 //Installer Test for plugin files
 function testPlugin(files, gameId) {
   const isMod = files.some(file => PLUGIN_EXTS.includes(path.extname(file).toLowerCase()));
@@ -1393,7 +1479,8 @@ function applyGame(context, gameSpec) {
   if (hasCustomMods) {
     context.registerInstaller(CUSTOM_ID, 39, testCustom, installCustom);
   }
-  //context.registerInstaller(SAVE_ID, 49, testSave, installSave); //best to only enable if saves are stored in the game's folder
+  //context.registerInstaller(SAVE_ID, 47, testSave, installSave); //best to only enable if saves are stored in the game's folder
+  context.registerInstaller(`${GAME_ID}-fallback`, 49, testFallback, (files, destinationPath) => installFallback(context.api, files, destinationPath));
   
   //register actions
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Data Folder', () => {

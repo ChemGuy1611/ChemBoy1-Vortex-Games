@@ -2,7 +2,16 @@
 
 ## FUTURE CHANGES (NOT YET IMPLEMENTED)
 
--
+- None Planned
+
+## [0.5.0] - 2025-11-22
+
+- Fixed issue with Load Order sorting not working if certain other UE game extensions were installed. You will need to reinstall all pak mods to be able to sort them properly. A notification will be sent reminding you to do this.
+- Added notification indicating deployment is required after changing the load order.
+- UE4SS downloader now has the user browse GitHub releases page for the file.
+- Fixed Xbox game version detection.
+- Fixed Saves path for GOG version.
+- Technical fixes and improvements
 
 ## [0.4.0] - 2025-07-02
 

@@ -1841,6 +1841,23 @@ function runModManager(api, toolId, toolName) {
 // SETUP FUNCTIONS ////////////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////
 
+//Set a primary tool if one is not already set
+const trySetPrimaryTool = async (api) => {
+  const state = api.getState();
+  const discovery = selectors.discoveryByGame(state, GAME_ID);
+  if (discovery === undefined || discovery.store === 'xbox') {
+      return Promise.resolve();
+  }
+  else {
+    await api.emitAndAwait('discover-tools', GAME_ID);
+    const tool = REQUIREMENTS[0].findMod(api);
+    const primaryTool = util.getSafe(api.getState(), ['settings', 'interface', 'primaryTool', GAME_ID], undefined);
+    if (tool && !primaryTool) {
+      api.store.dispatch(actions.setPrimaryTool(GAME_ID, TOOL_ID));
+    }
+  }
+};
+
 //Setup function - ensure modType Folders are writable /////////////////////
 async function modFoldersEnsureWritable(gamePath, relPaths) {
   for (let index = 0; index < relPaths.length; index++) {

@@ -41,7 +41,6 @@ const path = require('path');
 const template = require('string-template');
 const { download, findModByFile, findDownloadIdByFile, resolveVersionByPattern, testRequirementVersion } = require('./downloader');
 const { parseStringPromise } = require('xml2js');
-const { get } = require('http');
 
 //Specify all information about the game
 const GAME_ID = "doom3";

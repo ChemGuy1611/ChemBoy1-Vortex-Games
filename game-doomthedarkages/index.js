@@ -63,7 +63,7 @@ const APPMANIFEST_FILE = 'appxmanifest.xml';
 //Info for mod types and installers
 const USER_HOME = util.getVortexPath("home");
 const LOCALAPPDATA = util.getVortexPath("localAppData");
-const DOCUMENTS = util.getVortexPath("documents");
+//const DOCUMENTS = util.getVortexPath("documents");
 
 const BINARIES_ID = `${GAME_ID}-binaries`;
 const BINARIES_NAME = "Binaries / Root Folder";
@@ -77,8 +77,7 @@ const SOUND_EXTS = ['.snd', '.pck'];
 const CONFIG_ID = `${GAME_ID}-config`;
 const CONFIG_NAME = "Config";
 let CONFIG_PATH = 'base';
-//const CONFIG_PATH_STEAM = path.join(USER_HOME, 'Saved Games', 'id Software', 'DOOMTheDarkAges', 'base');
-//const CONFIG_PATH_XBOX = path.join(USER_HOME, 'Saved Games', 'id Software', 'DOOMTheDarkAges', 'base');
+const CONFIG_PATH_USER = path.join(USER_HOME, 'Saved Games', 'id Software', 'DOOMTheDarkAges', 'base');
 const CONFIG_EXTS = [".cfg"];
 const AUTOEXEC_CFG_FILE = "autoexec.cfg";
 //const CONFIG_INSTALL_PATH = path.join('base');
@@ -86,7 +85,6 @@ const AUTOEXEC_CFG_FILE = "autoexec.cfg";
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_NAME = "Saves";
 let SAVE_PATH = '';
-//const SAVE_PATH_STEAM = path.join(USER_HOME, 'Saved Games', 'id Software', 'DOOMTheDarkAges');
 const SAVE_PATH_XBOX = path.join(LOCALAPPDATA, "Packages", `${XBOXAPP_ID}_3275kfvn8vcwc`, "SystemAppData", "wgs");
 const SAVE_EXT = ".sav";
 
@@ -1150,10 +1148,8 @@ function applyGame(context, gameSpec) {
       return gameId === GAME_ID;
     }
   );
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
-    GAME_PATH = getDiscoveryPath(context.api);
-    const openPath = path.join(GAME_PATH, CONFIG_PATH);
-    util.opn(openPath).catch(() => null);
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder (User Profile)', () => {
+    util.opn(CONFIG_PATH_USER).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
@@ -1162,8 +1158,7 @@ function applyGame(context, gameSpec) {
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Saves Folder', async () => {
     GAME_PATH = await getDiscoveryPath(context.api);
     SAVE_PATH = await setSavePath(GAME_PATH);
-    const openPath = SAVE_PATH;
-    util.opn(openPath).catch(() => null);
+    util.opn(SAVE_PATH).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
@@ -1178,8 +1173,7 @@ function applyGame(context, gameSpec) {
       return gameId === GAME_ID;
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
-    const openPath = DOWNLOAD_FOLDER;
-    util.opn(openPath).catch(() => null);
+    util.opn(DOWNLOAD_FOLDER).catch(() => null);
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);

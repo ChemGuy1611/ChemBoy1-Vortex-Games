@@ -51,7 +51,7 @@ let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 
 // Information for installers, modtypes, and tools
-//const USER_HOME = util.getVortexPath("home");
+const USER_HOME = util.getVortexPath("home");
 //const LOCALAPPDATA = util.getVortexPath("localAppData");
 //const DOCUMENTS = util.getVortexPath("documents");
 
@@ -79,6 +79,9 @@ const ROLLBACK_NAME = "Version Rollback Files";
 const ROLLBACK_FILE = 'doomx64vk.exe';
 
 const COMMANDLINE_ARGS = "+devMode_enable 1 +com_skipIntroVideo 1";
+
+const CONFIG_PATH = path.join(USER_HOME, 'Saved Games', 'id Software', 'DOOM', 'base');
+const SAVE_PATH  = path.join(CONFIG_PATH, 'savegame');
 
 // Filled in from data above
 const spec = {
@@ -630,18 +633,15 @@ function applyGame(context, gameSpec) {
   //context.registerInstaller(`${GAME_ID}-zipmod`, 33, toBlue(testZipContent), toBlue(installZipContent)); //zip installer removed because mods did not work in zips
 
   //register buttons to open folders
-  /*
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
-    const openPath = CONFIG_PATH;
-    util.opn(openPath).catch(() => null);
+    util.opn(CONFIG_PATH).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Saves Folder', () => {
-    const openPath = SAVE_PATH;
-    util.opn(openPath).catch(() => null);
+    util.opn(SAVE_PATH).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
@@ -656,8 +656,7 @@ function applyGame(context, gameSpec) {
       return gameId === GAME_ID;
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
-    const openPath = DOWNLOAD_FOLDER;
-    util.opn(openPath).catch(() => null);
+    util.opn(DOWNLOAD_FOLDER).catch(() => null);
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);

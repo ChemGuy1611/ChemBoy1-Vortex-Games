@@ -20,7 +20,7 @@ const LOCALAPPDATA = util.getVortexPath('localAppData');
 //Specify all the information about the game
 const GAME_ID = "dishonoreddeathoftheoutsider";
 const STEAMAPP_ID = "614570";
-const EPICAPP_ID = ""; // not on egdata.app yet
+const EPICAPP_ID = "2fb8273dcf6f41e4899c0c881e047053";
 const GOGAPP_ID = "1707860700";
 const XBOXAPP_ID = "BethesdaSoftworks.DishonoredDeathoftheOutsiderPC";
 const XBOXEXECNAME = "Game";
@@ -41,7 +41,7 @@ const APPMANIFEST_FILE = 'appxmanifest.xml';
 const gameFinderQuery = {
   steam: [{ id: STEAMAPP_ID, prefer: 0 }],
   gog: [{ id: GOGAPP_ID }],
-  //epic: [{ id: EPICAPP_ID }],
+  epic: [{ id: EPICAPP_ID }],
   xbox: [{ id: XBOXAPP_ID }],
 };
 const requiredFiles = [ROOT_FOLDER];
@@ -249,7 +249,6 @@ async function requiresLauncher(gamePath, store) {
           },
       });
   }
-  /*
   if (store === 'epic') {
     return Promise.resolve({
         launcher: 'epic',

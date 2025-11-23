@@ -39,13 +39,13 @@ const STEAM_FILE = 'steam_api64.dll';
 const EPIC_FILE = 'EOSSDK-Win64-Shipping.dll';
 const RS_FILE = 'uninstall.exe';
 
-const ROOT_FOLDERS = [''];
+const ROOT_FOLDERS = [];
 
-const DATA_FOLDER = 'XXX';
+const DATA_FOLDER = path.join('Rockstar Games', 'Red Dead Redemption 2');
 const CONFIGMOD_LOCATION = DOCUMENTS;
-const CONFIG_FOLDERNAME = 'XXX';
+const CONFIG_FOLDERNAME = 'Settings';
 const SAVEMOD_LOCATION = DOCUMENTS;
-const SAVE_FOLDERNAME = 'XXX';
+const SAVE_FOLDERNAME = 'Profiles';
 
 let GAME_PATH = null;
 let GAME_VERSION = '';
@@ -67,8 +67,8 @@ const BINARIES_NAME = "Binaries (Engine Injector)";
 const CONFIG_ID = `${GAME_ID}-config`;
 const CONFIG_NAME = "Config";
 const CONFIG_PATH = path.join(CONFIGMOD_LOCATION, DATA_FOLDER, CONFIG_FOLDERNAME);
-const CONFIG_EXTS = [".ini"];
-const CONFIG_FILES = ["XXX"];
+const CONFIG_EXTS = [];
+const CONFIG_FILES = ["system.xml"];
 
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_NAME = "Save";
@@ -88,8 +88,8 @@ if (USERID_FOLDER === undefined) {
   USERID_FOLDER = "";
 } //*/
 const SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
-const SAVE_EXTS = [".sav"];
-const SAVE_FILES = ["XXX"];
+const SAVE_EXTS = [];
+const SAVE_FILES = ["PLAYER"];
 
 const TOOL_ID = `${GAME_ID}-tool`;
 const TOOL_NAME = "XXX";
@@ -147,12 +147,6 @@ const spec = {
       "name": ROOT_NAME,
       "priority": "high",
       "targetPath": `{gamePath}`
-    },
-    {
-      "id": BINARIES_ID,
-      "name": BINARIES_NAME,
-      "priority": "high",
-      "targetPath": path.join("{gamePath}", BINARIES_PATH)
     },
   ],
   "discovery": {
@@ -314,6 +308,22 @@ async function setGameVersion(gamePath) {
   }
 }
 
+//Get correct game version - synchronous
+function setGameVersionSync(gamePath) {
+  if (statCheckSync(gamePath, STEAM_FILE)) {
+    GAME_VERSION = 'steam';
+    return GAME_VERSION;
+  }
+  if (statCheckSync(gamePath, RS_FILE)) {
+    GAME_VERSION = 'rockstar';
+    return GAME_VERSION;
+  }
+  if (statCheckSync(gamePath, EPIC_FILE)) {
+    GAME_VERSION = 'epic';
+    return GAME_VERSION;
+  }
+}
+
 const getDiscoveryPath = (api) => { //get the game's discovered path
   const state = api.getState();
   const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});
@@ -405,41 +415,6 @@ function installRoot(files) {
       type: 'copy',
       source: file,
       destination: path.join(file.substr(idx)),
-    };
-  });
-  instructions.push(setModTypeInstruction);
-  return Promise.resolve({ instructions });
-}
-
-//Fallback installer to Binaries folder
-function testBinaries(files, gameId) {
-  let supported = (gameId === spec.game.id);
-
-  // Test for a mod installer.
-  if (supported && files.find(file =>
-    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
-    supported = false;
-  }
-
-  return Promise.resolve({
-    supported,
-    requiredFiles: [],
-  });
-}
-
-//Fallback installer to Binaries folder
-function installBinaries(files) {
-  const setModTypeInstruction = { type: 'setmodtype', value: BINARIES_ID };
-  
-  const filtered = files.filter(file =>
-    (!file.endsWith(path.sep))
-  );
-  const instructions = filtered.map(file => {
-    return {
-      type: 'copy',
-      source: file,
-      destination: file,
     };
   });
   instructions.push(setModTypeInstruction);
@@ -629,11 +604,10 @@ function applyGame(context, gameSpec) {
   //context.registerInstaller(CONFIG_ID, 43, testConfig, installConfig);
   //context.registerInstaller(SAVE_ID, 45, testSave, installSave);
   context.registerInstaller(ROOT_ID, 47, testRoot, installRoot);
-  //context.registerInstaller(BINARIES_ID, 49, testBinaries, installBinaries);
   //context.registerInstaller(`${GAME_ID}-fallback`, 40, testFallback, (files, destinationPath) => installFallback(context.api, files, destinationPath));
 
   //register actions
-  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
     util.opn(CONFIG_PATH).catch(() => null);
     }, () => {
       const state = context.api.getState();

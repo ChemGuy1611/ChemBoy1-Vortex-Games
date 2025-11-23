@@ -79,6 +79,9 @@ const ROLLBACK_FILE = "doometernalx64vk.exe";
 const KTDE_FILE = "keep the dead eternal - readme - install instructions.rtf";
 const MEAT_FILE = "xinput1_3.dll";
 
+const CONFIG_PATH = path.join(USER_HOME, 'Saved Games', 'id Software', 'DOOMEternal', 'base');
+const SAVE_PATH  = path.join(CONFIG_PATH);
+
 // Filled in from data above
 const spec = {
   "game": {
@@ -600,18 +603,15 @@ function applyGame(context, gameSpec) {
   context.registerInstaller('doometernal-zip-mod', 45, toBlue(testZipContent), toBlue(installZipContent));
 
   //register buttons to open folders
-  /*
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
-    const openPath = CONFIG_PATH;
-    util.opn(openPath).catch(() => null);
+    util.opn(CONFIG_PATH).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Saves Folder', () => {
-    const openPath = SAVE_PATH;
-    util.opn(openPath).catch(() => null);
+    util.opn(SAVE_PATH).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
@@ -626,8 +626,7 @@ function applyGame(context, gameSpec) {
       return gameId === GAME_ID;
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
-    const openPath = DOWNLOAD_FOLDER;
-    util.opn(openPath).catch(() => null);
+    util.opn(DOWNLOAD_FOLDER).catch(() => null);
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);

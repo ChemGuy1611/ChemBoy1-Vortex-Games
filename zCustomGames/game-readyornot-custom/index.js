@@ -43,23 +43,30 @@ const UNREALDATA = {
 const SHIPPING_EXE = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_NAME}\\${EPIC_CODE_NAME}-${EXEC_FOLDER_NAME}-Shipping.exe`;
 const EXEC_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_NAME}`;
 const BINARIES_ID = `${GAME_ID}-binaries`;
+
 const UE5_ID = `${GAME_ID}-ue5`;
 const UE5_ALT_ID = `${GAME_ID}-pakalt`;
 const UE5_EXT = UNREALDATA.fileExt;
 const UE5_PATH = UNREALDATA.modsPath;
 const UE5_ALT_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Paks');
+const UE5_SORTABLE_ID = `${GAME_ID}-ue5-sortable-modtype`;
+const UE5_SORTABLE_NAME = 'UE5 Sortable Mod';
+
 const CONFIG_ID = `${GAME_ID}-config`;
 const CONFIG_PATH = `${EPIC_CODE_NAME}\\Saved\\Config\\Windows`;
 const CONFIG_FILE1 = "engine.ini";
 const CONFIG_FILE2 = "scalability.ini";
 const CONFIG_FILE = [CONFIG_FILE1, CONFIG_FILE2];
 const CONFIG_EXT = ".ini";
+
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_FILE = EPIC_CODE_NAME;
 const ROOT_IDX = `${EPIC_CODE_NAME}\\`;
+
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_PATH = path.join(EPIC_CODE_NAME, "Saved", "SaveGames");
 const SAVE_EXT = ".sav";
+
 const VO_ID = `${GAME_ID}-vo`;
 const VO_PATH = path.join(EPIC_CODE_NAME, 'Content', 'VO');
 const VO_EXT = ['.ogg', '.wav'];
@@ -67,6 +74,7 @@ const VO_FOLDER_ID = `${GAME_ID}-vofolder`;
 const VO_FOLDER_PATH = path.join(EPIC_CODE_NAME, 'Content');
 const VO_FOLDER = "VO";
 const VO_IDX = "VO\\";
+
 const TOC_FOLDER = "TOC";
 const TOC_IDX = "TOC\\";
 const TOC_ID = `${GAME_ID}-toc`;
@@ -542,8 +550,6 @@ function makePrefix(input) {
 function loadOrderPrefix(api, mod) {
   const state = api.getState();
   const gameId = GAME_ID;
-  if (!gameId)
-      return 'ZZZZ-';
   const profile = selectors.lastActiveProfileForGame(state, gameId);
   const loadOrder = util.getSafe(state, ['persistent', 'loadOrder', profile], {});
   const loKeys = Object.keys(loadOrder);
@@ -563,7 +569,7 @@ function installUnrealMod(api, files, gameId) {
     const modFiles = files.filter(file => fileExt.includes(path.extname(file).toLowerCase()));
     const modType = {
       type: 'setmodtype',
-      value: 'ue5-sortable-modtype',
+      value: UE5_SORTABLE_ID,
     };
     const installFiles = (modFiles.length > 3)
       ? yield chooseFilesToInstall(api, modFiles, fileExt)
@@ -653,7 +659,7 @@ function UNREALEXTENSION(context) {
 
   context.registerInstaller('ue5-pak-installer', 25, testForUnrealMod, (files, __destinationPath, gameId) => installUnrealMod(context.api, files, gameId));
 
-  context.registerModType('ue5-sortable-modtype', 25, (gameId) => testUnrealGame(gameId, true), getUnrealModsPath, () => Promise.resolve(false), {
+  context.registerModType(UE5_SORTABLE_ID, 25, (gameId) => testUnrealGame(gameId, true), getUnrealModsPath, () => Promise.resolve(false), {
     name: 'UE5 Sortable Mod',
     mergeMods: mod => loadOrderPrefix(context.api, mod) + mod.id
   });
@@ -703,7 +709,7 @@ function main(context) {
       gameId: spec.game.id,
       gameArtURL: path.join(__dirname, spec.game.logo),
       preSort: (items, direction) => preSort(context.api, items, direction),
-      filter: mods => mods.filter(mod => mod.type === 'ue5-sortable-modtype'),
+      filter: mods => mods.filter(mod => mod.type === UE5_SORTABLE_ID),
       displayCheckboxes: true,
       callback: (loadOrder) => {
         if (previousLO === undefined) previousLO = loadOrder;

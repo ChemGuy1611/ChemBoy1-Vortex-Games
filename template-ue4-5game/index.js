@@ -103,6 +103,11 @@ const BINARIES_NAME = "Binaries (Engine Injector)";
 let BINARIES_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT);
 let SHIPPING_EXE = path.join(BINARIES_PATH, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_DEFAULT}-Shipping.exe`);
 
+const GOG_FILE = path.join('Plugins', 'OnlineSubsystemGOG', 'GalaxySDK', 'Galaxy64.dll');
+const STEAM_FILE = path.join('Engine', 'Binaries', 'ThirdParty', 'Steamworks', 'Steamv153', 'Win64', 'steam_api64.dll');
+const EPIC_FILE = path.join(EPIC_CODE_NAME, 'Binaries', 'Win64', SHIPPING_EXE); //not available on egdata.app yet. probably can use an EOSSDK dll file.
+const XBOX_FILE = EXEC_XBOX;
+
 const PAK_ALT_ID = `${GAME_ID}-pakalt`;
 const PAK_ALT_NAME = 'Paks (no "~mods")';
 const PAK_PATH = UNREALDATA.modsPath;
@@ -211,7 +216,7 @@ const spec = {
     ],
     "details": {
       "steamAppId": +STEAMAPP_ID,
-      //"gogAppId": GOGAPP_ID,
+      "gogAppId": GOGAPP_ID,
       "epicAppId": EPICAPP_ID,
       "xboxAppId": XBOXAPP_ID,
       "supportsSymlinks": SYM_LINKS,
@@ -684,11 +689,8 @@ function installUe4ss(files) {
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) &&
-      (!file.endsWith(path.sep))
-    )
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
   );
-
   const instructions = filtered.map(file => {
     return {
       type: 'copy',
@@ -904,7 +906,6 @@ function installRoot(files) {
   const filtered = files.filter(file =>
     ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
   );
-
   const instructions = filtered.map(file => {
     return {
       type: 'copy',
@@ -1485,7 +1486,15 @@ function UNREALEXTENSION(context) {
     if (fileExt) {
       modFiles = files.filter(file => fileExt.includes(path.extname(file).toLowerCase()));
     }
-    const supported = (supportedGame && (gameId === spec.game.id) && modFiles.length > 0 );
+    const supported = ( supportedGame && (gameId === spec.game.id) && modFiles.length > 0 );
+    
+    // Test for a mod installer
+    if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+      supported = false;
+    }
+    
     return Promise.resolve({
       supported,
       requiredFiles: []
@@ -1811,13 +1820,13 @@ function applyGame(context, gameSpec) {
   //29 is pak installer above
   context.registerInstaller(UE4SS_ID, 31, testUe4ss, installUe4ss);
   if (SIGBYPASS_REQUIRED === true) {
-    context.registerInstaller(SIGBYPASS_ID, 32, testSigBypass, installSigBypass);
+    context.registerInstaller(SIGBYPASS_ID, 33, testSigBypass, installSigBypass);
   }
-  context.registerInstaller(SCRIPTS_ID, 33, testScripts, installScripts);
-  context.registerInstaller(DLL_ID, 35, testDll, installDll);
-  context.registerInstaller(ROOT_ID, 37, testRoot, installRoot);
-  context.registerInstaller(CONFIG_ID, 39, testConfig, (files) => installConfig(context.api, files));
-  context.registerInstaller(SAVE_ID, 41, (files, gameId) => testSave(context.api, files, gameId), (files) => installSave(context.api, files));
+  context.registerInstaller(SCRIPTS_ID, 35, testScripts, installScripts);
+  context.registerInstaller(DLL_ID, 37, testDll, installDll);
+  context.registerInstaller(ROOT_ID, 39, testRoot, installRoot);
+  context.registerInstaller(CONFIG_ID, 41, testConfig, (files) => installConfig(context.api, files));
+  context.registerInstaller(SAVE_ID, 43, (files, gameId) => testSave(context.api, files, gameId), (files) => installSave(context.api, files));
   context.registerInstaller(BINARIES_ID, 49, testBinaries, installBinaries);
 
   //register buttons to open folders
@@ -1911,7 +1920,7 @@ function main(context) {
       gameArtURL: path.join(__dirname, spec.game.logo),
       preSort: (items, direction) => preSort(context.api, items, direction),
       filter: mods => mods.filter(mod => mod.type === UE5_SORTABLE_ID),
-      displayCheckboxes: true,
+      displayCheckboxes: false,
       callback: (loadOrder) => {
         if (previousLO === undefined) previousLO = loadOrder;
         if (loadOrder === previousLO) return;
