@@ -1,9 +1,9 @@
 /*/////////////////////////////////////////
-Name: Control Ultimate Edition Vortex Extension
+Name: Control Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.1.3
-Date: 2025-04-01
+Version: 2.0.0
+Date: 2025-11-24
 /////////////////////////////////////////*/
 
 //Import libraries
@@ -13,17 +13,19 @@ const template = require('string-template');
 const { parseStringPromise } = require('xml2js');
 
 //Specify all the information about the game
+const GAME_ID = "control";
 const STEAMAPP_ID = "870780";
 const EPICAPP_ID = "Calluna";
 const GOGAPP_ID = "2049187585";
 const XBOXAPP_ID = "505GAMESS.P.A.ControlPCGP";
 const XBOXEXECNAME = "Game";
-const GAME_ID = "controlultimateedition";
-const LEGACY_ID = "control";
-const GAME_NAME = "Control Ultimate Edition"
-const GAME_NAME_SHORT = "Control UE";
+const GAME_NAME = "Control"
+const GAME_NAME_SHORT = "Control";
+
 let GAME_VERSION = null;
 let GAME_PATH = null;
+let STAGING_FOLDER = '';
+let DOWNLOAD_FOLDER = '';
 const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 //executables for different stores
@@ -66,8 +68,10 @@ const SAVE_PATH = path.join(USER_DOCS);
 const CFG_EXT = ".cfg";
 //*/
 
-const MOD_PATH_DEFAULT = path.join(".");
-const REQ_FILE = MODFOLDER_PACK;
+const MOD_PATH_DEFAULT = ".";
+const REQ_FILE = MODFOLDER_DATA;
+
+let MODTYPE_FOLDERS = [MOD_PATH_DEFAULT, MODPACK_PATH];
 
 //Filled in from data above
 const spec = {
@@ -88,7 +92,6 @@ const spec = {
       "gogAppId": GOGAPP_ID,
       "epicAppId": EPICAPP_ID,
       "xboxAppId": XBOXAPP_ID,
-      "compatibleDownloads": [LEGACY_ID],
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
@@ -181,20 +184,20 @@ function makeGetModPath(api, gameSpec) {
 
 async function requiresLauncher(gamePath, store) {
   if (store === 'xbox') {
-      return Promise.resolve({
-          launcher: 'xbox',
-          addInfo: {
-              appId: XBOXAPP_ID,
-              parameters: [{ appExecName: XBOXEXECNAME }],
-          },
-      });
+    return Promise.resolve({
+      launcher: 'xbox',
+      addInfo: {
+        appId: XBOXAPP_ID,
+        parameters: [{ appExecName: XBOXEXECNAME }],
+      },
+    });
   }
   if (store === 'epic') {
     return Promise.resolve({
-        launcher: 'epic',
-        addInfo: {
-            appId: EPICAPP_ID,
-        },
+      launcher: 'epic',
+      addInfo: {
+        appId: EPICAPP_ID,
+      },
     });
   };
   return Promise.resolve(undefined);
@@ -210,19 +213,16 @@ function getExecutable(discoveredPath) {
       return false;
     }
   };
-  if (isCorrectExec(EXEC_DEFAULT)) {
-    GAME_VERSION = 'default';
-    return EXEC_DEFAULT;
-  };
   if (isCorrectExec(EXEC_XBOX)) {
     GAME_VERSION = 'xbox';
     return EXEC_XBOX;
   };
+  GAME_VERSION = 'default';
   return EXEC_DEFAULT;
 }
 
 //Get correct game version
-async function setGameVersion(gamePath) {
+function setGameVersion(gamePath) {
   const isCorrectExec = (exec) => {
     try {
       fs.statSync(path.join(gamePath, exec));
@@ -267,7 +267,7 @@ async function downloadLooseLoader(discovery, api, gameSpec) {
     const NOTIF_ID = `${GAME_ID}-${MOD_TYPE}-installing`;
     const PAGE_ID = LOOSELOADER_PAGE_NO;
     const FILE_ID = LOOSESLOADER_FILE_NO;  //If using a specific file id because "input" below gives an error
-    const GAME_DOMAIN = LEGACY_ID;
+    const GAME_DOMAIN = GAME_ID;
     api.sendNotification({ //notification indicating install process
       id: NOTIF_ID,
       message: `Installing ${MOD_NAME}`,
@@ -333,7 +333,7 @@ async function downloadPluginLoader(discovery, api, gameSpec) {
     const NOTIF_ID = `${GAME_ID}-${MOD_TYPE}-installing`;
     const PAGE_ID = PLUGINLOADER_PAGE_NO;
     const FILE_ID = PLUGINLOADER_FILE_NO;  //If using a specific file id because "input" below gives an error
-    const GAME_DOMAIN = LEGACY_ID;
+    const GAME_DOMAIN = GAME_ID;
     api.sendNotification({ //notification indicating install process
       id: NOTIF_ID,
       message: `Installing ${MOD_NAME}`,
@@ -560,37 +560,6 @@ function installPluginLoader(files) {
 
 // MAIN FUNCTIONS /////////////////////////////////////////////////////////////////////////////////////////////////
 
-//Notify User of Setup instructions
-function setupNotify(api) {
-  const NOTIF_ID = `${GAME_ID}-setup`;
-  const MESSAGE = `PLACEHOLDER`;
-  api.sendNotification({
-    id: NOTIF_ID,
-    type: 'warning',
-    message: MESSAGE,
-    allowSuppress: true,
-    actions: [
-      {
-        title: 'More',
-        action: (dismiss) => {
-          api.showDialog('question', MESSAGE, {
-            text: 'TEXT.\n'
-                + 'TEXT.\n'
-          }, [
-
-            { label: 'Acknowledge', action: () => dismiss() },
-            {
-              label: 'Never Show Again', action: () => {
-                api.suppressNotification(NOTIF_ID);
-                dismiss();
-              }
-            },
-          ]);
-        },
-      },
-    ],
-  });    
-}
 
 //*
 async function resolveGameVersion(gamePath) {
@@ -619,15 +588,21 @@ async function resolveGameVersion(gamePath) {
   }
 } //*/
 
+async function modFoldersEnsureWritable(gamePath, relPaths) {
+  for (let index = 0; index < relPaths.length; index++) {
+    await fs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
+  }
+}
 
 //Setup function
 async function setup(discovery, api, gameSpec) {
+  const state = api.getState();
+  STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
+  DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   GAME_PATH = discovery.path;
-  //setupNotify(api);
   await downloadLooseLoader(discovery, api, gameSpec);
   await downloadPluginLoader(discovery, api, gameSpec);
-  await fs.ensureDirWritableAsync(path.join(discovery.path, MODPACK_PATH));
-  return fs.ensureDirWritableAsync(path.join(discovery.path, MOD_PATH_DEFAULT));
+  return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 
 //Let Vortex know about the game
@@ -644,15 +619,27 @@ function applyGame(context, gameSpec) {
     supportedTools: [ //3rd party tools and launchers
       {
         id: `${GAME_ID}-customlaunch`,
-        name: `Control Custom Launch`,
+        name: `Custom Launch`,
         logo: `exec.png`,
-        executable: () => getExecutable(GAME_PATH),
-        requiredFiles: [getExecutable(GAME_PATH)],
+        executable: () => EXEC_DEFAULT,
+        requiredFiles: [EXEC_DEFAULT],
         detach: true,
         relative: true,
         exclusive: true,
-        //shell: true,
-        parameters: [],
+        shell: true,
+        //parameters: [],
+      },
+      {
+        id: `${GAME_ID}-customlaunchxbox`,
+        name: `Custom Launch`,
+        logo: `exec.png`,
+        executable: () => EXEC_XBOX,
+        requiredFiles: [EXEC_XBOX],
+        detach: true,
+        relative: true,
+        exclusive: true,
+        shell: true,
+        //parameters: [],
       },
     ],
   };
