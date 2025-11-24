@@ -706,6 +706,39 @@ async function resolveGameVersion(gamePath) {
   }
 } //*/
 
+//Send notification for Reshade
+function xboxNotify(api) {
+  const NOTIF_ID = `${GAME_ID}-xboxnotify`;
+  const MESSAGE = 'Some Mods Not Supported on Xbox Version';
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'warning',
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: 'More',
+        action: (dismiss) => {
+          api.showDialog('question', MESSAGE, {
+            text: '\n'
+                + 'Vortex detected that you are using the Xbox version of the game.\n'
+                + 'This version of the game does not support mods that depend on the Loose Files Loader.\n'
+                + 'Most Plugin mods will also not load because the memory signatures they look for may be different on Xbox.\n'
+          }, [
+            { label: 'Acknowledge', action: () => dismiss() },
+            {
+              label: 'Never Show Again', action: () => {
+                api.suppressNotification(NOTIF_ID);
+                dismiss();
+              }
+            },
+          ]);
+        },
+      },
+    ],
+  });    
+}
+
 async function modFoldersEnsureWritable(gamePath, relPaths) {
   for (let index = 0; index < relPaths.length; index++) {
     await fs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
@@ -719,6 +752,9 @@ async function setup(discovery, api, gameSpec) {
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   GAME_PATH = discovery.path;
   GAME_VERSION = await setGameVersionAsync(GAME_PATH);
+  if (GAME_VERSION === 'xbox') {
+    xboxNotify(api);
+  }
   await downloadLooseLoader(discovery, api, gameSpec);
   await downloadPluginLoader(discovery, api, gameSpec);
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
