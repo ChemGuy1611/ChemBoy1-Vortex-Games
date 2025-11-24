@@ -2,14 +2,15 @@
 Name: CloverPit Vortex Extension
 Structure: Unity BepinEx/MelonLoader Hybrid (Mono & x64)
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2025-10-16
+Version: 0.1.1
+Date: 2025-11-24
 //////////////////////////////////////////*/
 
 //Import libraries
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
+const { parseStringPromise } = require('xml2js');
 
 //Specify all the information about the game
 const GAME_ID = "cloverpit";
@@ -17,9 +18,9 @@ const STEAMAPP_ID = "3314790";
 const STEAMAPP_ID_DEMO = "3347820";
 const EPICAPP_ID = null;
 const GOGAPP_ID = null;
-const XBOXAPP_ID = null;
-const XBOXEXECNAME = null;
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, STEAMAPP_ID_DEMO]; // UPDATE THIS WITH ALL VALID IDs
+const XBOXAPP_ID = "FutureFriendsGames.CloverPit";
+const XBOXEXECNAME = "Game";
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, STEAMAPP_ID_DEMO, XBOXAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 const GAME_NAME = "CloverPit"
 const GAME_NAME_SHORT = "CloverPit"
 const EXEC = "CloverPit.exe";
@@ -39,6 +40,7 @@ let DOWNLOAD_FOLDER = '';
 let GAME_VERSION = '';
 let bepinexInstalled = false;
 let melonInstalled = false;
+const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 //info for modtypes, installers, and tools
 const BEPINEX_ID = `${GAME_ID}-bepinex`;
@@ -269,6 +271,30 @@ const tools = [
 
 // BASIC FUNCTIONS //////////////////////////////////////////////////////////////
 
+function statCheckSync(gamePath, file) {
+  try {
+    fs.statSync(path.join(gamePath, file));
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}
+async function statCheckAsync(gamePath, file) {
+  try {
+    await fs.statAsync(path.join(gamePath, file));
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}
+
+function isDir(folder, file) {
+  const stats = fs.statSync(path.join(folder, file));
+  return stats.isDirectory();
+}
+
 //Set mod type priorities
 function modTypePriority(priority) {
   return {
@@ -332,6 +358,18 @@ async function requiresLauncher(gamePath, store) {
     });
   } //*/
   return Promise.resolve(undefined);
+}
+
+//Get correct game version - async
+async function setGameVersionAsync(gamePath) {
+  if (await statCheckAsync(gamePath, EXEC_XBOX)) {
+    GAME_VERSION = 'xbox';
+    return GAME_VERSION;
+  }
+  if (await statCheckAsync(gamePath, EXEC)) {
+    GAME_VERSION = 'default';
+    return GAME_VERSION;
+  }
 }
 
 const getDiscoveryPath = (api) => { //get the game's discovered path
@@ -868,6 +906,33 @@ async function removeMelon(api, gameSpec) {
   }
 }
 
+//*
+async function resolveGameVersion(gamePath) {
+  GAME_VERSION = await setGameVersionAsync(gamePath);
+  let version = '0.0.0';
+  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
+    try {
+      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
+      const parsed = await parseStringPromise(appManifest);
+      version = parsed?.Package?.Identity?.[0]?.$?.Version;
+      return Promise.resolve(version);
+    } catch (err) {
+      log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+  else { // use exe
+    try {
+      const exeVersion = require('exe-version');
+      version = exeVersion.getProductVersion(path.join(gamePath, EXEC));
+      return Promise.resolve(version); 
+    } catch (err) {
+      log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+} //*/
+
 async function modFoldersEnsureWritable(gamePath, relPaths) {
   for (let index = 0; index < relPaths.length; index++) {
     await fs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
@@ -902,6 +967,7 @@ function applyGame(context, gameSpec) {
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     executable: () => gameSpec.game.executable,
+    getGameVersion: resolveGameVersion,
     supportedTools: tools,
   };
   context.registerGame(game);

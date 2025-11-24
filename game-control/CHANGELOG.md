@@ -6,7 +6,10 @@
 
 ## [2.0.0] - 2025-11-24
 
-- Full release for Vortex.
+- Full suport for all game versions.
+- Automatic download and install of Plugin Loader and Loose Files Loader.
+- Buttons to open Config and Save folders and Save Editor.
+- Added support for mods in the data_packfiles folder.
 - Technical fixes and improvements.
 
 ## [0.1.3] - 2025-04-01
