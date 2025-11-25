@@ -106,12 +106,12 @@ const spec = {
       "priority": "high",
       "targetPath": "{gamePath}"
     },
-    {
+    /*{
       "id": FLUFFYMOD_ID,
       "name": FLUFFYMOD_NAME,
       "priority": "high",
       "targetPath": path.join('{gamePath}', FLUFFYMOD_PATH)
-    },
+    }, //*/
     {
       "id": FLUFFYPAK_ID,
       "name": FLUFFYPAK_NAME,
@@ -515,48 +515,6 @@ function installREF(files) {
 }
 
 //Installer test for mod files
-function testFluffyMod(files, gameId) {
-  const isMod = files.some(file => path.basename(file).toLowerCase() === FLUFFYMOD_FILE);
-  let supported = (gameId === spec.game.id) && isMod;
-
-  // Test for a mod installer
-  if (supported && files.find(file =>
-      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
-    supported = false;
-  }
-
-  return Promise.resolve({
-    supported,
-    requiredFiles: [],
-  });
-}
-
-//Installer install mod files
-function installFluffyMod(files, fileName) {
-  const modFile = files.find(file => path.basename(file).toLowerCase() === FLUFFYMOD_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
-  const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: FLUFFYMOD_ID };
-  const MOD_NAME = path.basename(fileName);
-  const MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
-
-  // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
-  );
-  const instructions = filtered.map(file => {
-    return {
-      type: 'copy',
-      source: file,
-      destination: path.join(MOD_FOLDER, file.substr(idx)),
-    };
-  });
-  instructions.push(setModTypeInstruction);
-  return Promise.resolve({ instructions });
-}
-
-//Installer test for mod files
 function testFluffyPak(files, gameId) {
   const isMod = files.some(file => path.extname(file).toLowerCase() === PAK_EXT);
   let supported = (gameId === spec.game.id) && isMod;
@@ -736,6 +694,41 @@ function toBlue(func) {
   return (...args) => Bluebird.Promise.resolve(func(...args));
 }
 
+//Test Fallback installer to Binaries folder
+function testFluffyMod(files, gameId) {
+  let supported = (gameId === spec.game.id);
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Fallback installer to Binaries folder
+function installFluffyMod(files, fileName) {
+  const setModTypeInstruction = { type: 'setmodtype', value: FLUFFYMOD_ID };
+  
+  const filtered = files.filter(file =>
+    (!file.endsWith(path.sep))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: file,
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
 // MAIN FUNCTIONS ////////////////////////////////////////////////////////////////////////
 
 //Notify User of Setup instructions
@@ -880,14 +873,27 @@ function applyGame(context, gameSpec) {
     }, (game) => pathPattern(context.api, game, type.targetPath), () => Promise.resolve(false), { name: type.name });
   });
 
+  //register mod types explicitly
+  context.registerModType(FLUFFYMOD_ID, 60, 
+    (gameId) => {
+      var _a;
+      return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
+    }, 
+    (game) => pathPattern(context.api, game, path.join('{gamePath}', FLUFFYMOD_PATH)),
+    () => Promise.resolve(false), 
+    { name: FLUFFYMOD_NAME,
+      mergeMods: mod => mod.id
+    }
+  );
+
   //register mod installers
   context.registerInstaller(FLUFFY_ID, 25, testFluffy, installFluffy);
   context.registerInstaller(REF_ID, 27, testREF, installREF);
-  //context.registerInstaller(FLUFFYMOD_ID, 29, testFluffyMod, installFluffyMod); //disabled because the installer is too aggressive and breaks mods with lots of nested folders
   //context.registerInstaller(`${FLUFFYMOD_ID}pak`, 31, testFluffyPak, installFluffyPak);
   context.registerInstaller(LOOSELUA_ID, 33, testLooseLua, installLooseLua);
   context.registerInstaller(ROOT_ID, 35, testRoot, installRoot);
   context.registerInstaller(`${FLUFFYMOD_ID}zip`, 37, toBlue(testZipContent), toBlue(installZipContent));
+  //context.registerInstaller(FLUFFYMOD_ID, 37, testFluffyMod, installFluffyMod); //disabled because the installer is too aggressive and breaks mods with lots of nested folders
 
   //register actions
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config File', () => {

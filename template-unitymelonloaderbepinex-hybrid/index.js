@@ -11,7 +11,7 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 const fsExtra = require('fs-extra');
-//const { parseStringPromise } = require('xml2js');
+const { parseStringPromise } = require('xml2js');
 
 const USER_HOME = util.getVortexPath("home");
 //const DOCUMENTS = util.getVortexPath("documents");
@@ -364,6 +364,25 @@ const tools = [
 
 // BASIC FUNCTIONS //////////////////////////////////////////////////////////////
 
+function statCheckSync(gamePath, file) {
+  try {
+    fs.statSync(path.join(gamePath, file));
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}
+async function statCheckAsync(gamePath, file) {
+  try {
+    await fs.statAsync(path.join(gamePath, file));
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}
+
 //Set mod type priorities
 function modTypePriority(priority) {
   return {
@@ -432,16 +451,7 @@ async function requiresLauncher(gamePath, store) {
 //Get correct save folder for game version
 async function getSavePath(api) {
   GAME_PATH = getDiscoveryPath(api);
-  const isCorrectExec = (exec) => {
-    try {
-      fs.statSync(path.join(GAME_PATH, exec));
-      return true;
-    }
-    catch (err) {
-      return false;
-    }
-  };
-  if (isCorrectExec(EXEC_XBOX)) {
+  if (await statCheckAsync(GAME_PATH, EXEC_XBOX)) {
     SAVE_PATH = SAVE_PATH_XBOX;
     return SAVE_PATH;
   }
@@ -453,39 +463,12 @@ async function getSavePath(api) {
 
 //Get correct executable for game version
 function getExecutable(discoveryPath) {
-  const isCorrectExec = (exec) => {
-    try {
-      fs.statSync(path.join(discoveryPath, exec));
-      return true;
-    }
-    catch (err) {
-      return false;
-    }
-  };
-  if (isCorrectExec(EXEC_XBOX)) {
+  if (statCheckSync(discoveryPath, EXEC_XBOX)) {
     return EXEC_XBOX;
   };
   return EXEC;
 }
 
-function statCheckSync(gamePath, file) {
-  try {
-    fs.statSync(path.join(gamePath, file));
-    return true;
-  }
-  catch (err) {
-    return false;
-  }
-}
-async function statCheckAsync(gamePath, file) {
-  try {
-    await fs.statAsync(path.join(gamePath, file));
-    return true;
-  }
-  catch (err) {
-    return false;
-  }
-}
 //Get correct game version
 async function setGameVersion(gamePath) {
   const CHECK = await statCheckAsync(gamePath, EXEC_XBOX);
@@ -1269,7 +1252,7 @@ async function removeMelon(api, gameSpec) {
   }
 }
 
-/*
+//*
 async function resolveGameVersion(gamePath) {
   GAME_VERSION = await setGameVersion(gamePath);
   let version = '0.0.0';
