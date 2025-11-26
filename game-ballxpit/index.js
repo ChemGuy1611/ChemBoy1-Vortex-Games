@@ -31,6 +31,7 @@ const GAME_NAME_SHORT = "BALL x PIT";
 const GAME_STRING = "Balls"; //string for exe and data folder (seem to always match)
 const EXEC = `${GAME_STRING}.exe`;
 const DATA_FOLDER = `${GAME_STRING}_Data`;
+const DATA_FOLDER_XBOX = `BALL x PIT_Data`;
 const DEV_REGSTRING = "Kenny Sun"; //developer name
 const GAME_REGSTRING = "BALL x PIT"; //game name
 const XBOX_SAVE_STRING = '6kzv4j18v0c96'; //string after "ID_"
@@ -113,7 +114,7 @@ if (BEPINEX_BUILD === 'mono') {
 
 const ASSETS_ID = `${GAME_ID}-assets`;
 const ASSETS_NAME = "Assets/Resources File";
-const ASSETS_PATH = DATA_FOLDER;
+let ASSETS_PATH = DATA_FOLDER;
 const ASSETS_EXTS = ['.assets', '.resource', '.ress'];
 
 const PLUGIN_EXTS = ['.dll'];
@@ -183,7 +184,7 @@ const MEL_LOG_FILE = 'Latest.log';
 const MEL_LOG_FILEPATH = path.join(MELON_FOLDER, MEL_LOG_FILE);
 
 const MOD_PATH_DEFAULT = ".";
-const REQ_FILE = EXEC;
+const REQ_FILE = "GameAssembly.dll";
 const PARAMETERS_STRING = '';
 const PARAMETERS = [PARAMETERS_STRING];
 
@@ -290,12 +291,12 @@ const spec = {
       "priority": "high",
       "targetPath": path.join('{gamePath}', MELONPREFMAN_PATH)
     },
-    {
+    /*{
       "id": ASSETS_ID,
       "name": ASSETS_NAME,
       "priority": "high",
       "targetPath": path.join('{gamePath}', ASSETS_PATH)
-    },
+    }, //*/// register in applyGame due to variable path
     {
       "id": ROOT_ID,
       "name": ROOT_NAME,
@@ -439,6 +440,7 @@ function getExecutable(discoveryPath) {
     }
   };
   if (isCorrectExec(EXEC_XBOX)) {
+    ASSETS_PATH = DATA_FOLDER_XBOX;
     return EXEC_XBOX;
   };
   return EXEC;
@@ -1229,6 +1231,17 @@ function applyGame(context, gameSpec) {
         && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
     }, (game) => pathPattern(context.api, game, type.targetPath), () => Promise.resolve(false), { name: type.name });
   });
+
+  //register mod types explicitly
+  context.registerModType(ASSETS_ID, 60, 
+    (gameId) => {
+      var _a;
+      return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
+    }, 
+    (game) => pathPattern(context.api, game, path.join('{gamePath}', ASSETS_PATH)),
+    () => Promise.resolve(false),
+    { name: ASSETS_NAME }
+  );
 
   //register mod installers
   context.registerInstaller(BEPINEX_ID, 25, testBepinex, installBepinex);

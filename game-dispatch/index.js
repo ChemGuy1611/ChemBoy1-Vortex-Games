@@ -1,9 +1,9 @@
 /*////////////////////////////////////////////////
-Name: XXX Vortex Extension
+Name: Dispatch Vortex Extension
 Structure: Unreal Engine Game
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2025-XX-XX
+Date: 2025-11-25
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -18,30 +18,30 @@ const { parseStringPromise } = require('xml2js');
 const LOCALAPPDATA = util.getVortexPath('localAppData');
 
 //Specify all information about the game
-const GAME_ID = "XXX"; //same as Nexus domain
-const STEAMAPP_ID = "XXX"; //from steamdb.info
-const STEAMAPP_ID_DEMO = "XXX";
-const EPICAPP_ID = "XXX"; //from egdata.app
-const GOGAPP_ID = "XXX"; // from gogdb.org
-const XBOXAPP_ID = "XXX"; //from appxmanifest.xml
-const XBOXEXECNAME = "XXX"; //from appxmanifest.xml
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
-const GAME_NAME = "XXX";
-const GAME_NAME_SHORT = "XXX"; //Try for 8-10 characters
-const EXEC = "XXX.exe";
+const GAME_ID = "dispatch"; //same as Nexus domain
+const STEAMAPP_ID = "2592160"; //from steamdb.info
+const STEAMAPP_ID_DEMO = "3674060";
+const EPICAPP_ID = null; //from egdata.app
+const GOGAPP_ID = null; // from gogdb.org
+const XBOXAPP_ID = null; //from appxmanifest.xml
+const XBOXEXECNAME = null; //from appxmanifest.xml
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, STEAMAPP_ID_DEMO]; // UPDATE THIS WITH ALL VALID IDs
+const GAME_NAME = "Dispatch";
+const GAME_NAME_SHORT = "Dispatch"; //Try for 8-10 characters
+const EXEC = "Dispatch.exe";
 const EXEC_EPIC = EXEC;
 const EXEC_GOG = EXEC;
 const EXEC_DEMO = EXEC;
 const EXEC_XBOX = 'gamelaunchhelper.exe';
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Dispatch_(2025)";
 
 const hasXbox = false; //toggle for Xbox version logic (to unify templates)
 const multiExe = false; //toggle for multiple executables (Epic/GOG/Demo don't match Steam)
 
 //Unreal Engine specific
-const EPIC_CODE_NAME = "XXX";
+const EPIC_CODE_NAME = "Dispatch";
 const SIGBYPASS_REQUIRED = false; //set true if there are .sig files in the Paks folder
-const IO_STORE = true; //true if the Paks folder contains .ucas and .utoc files
+const IO_STORE = false; //true if the Paks folder contains .ucas and .utoc files
 const UE4SS_PAGE_NO = 0; //set if there is UE4SS Nexus page
 const UE4SS_FILE_NO = 0;
 const UE4SS_MOD_PATH = path.join('ue4ss', 'Mods');
@@ -49,8 +49,8 @@ const EXEC_FOLDER_DEFAULT = "Win64";
 const EXEC_FOLDER_XBOX = "WinGDK";
 
 //config, save, shipping exe
-const DATA_FOLDER = EPIC_CODE_NAME;
-const XBOX_SAVE_STRING = 'XXX'; //'8wekyb3d8bbwe' if published by Microsoft
+const DATA_FOLDER = EPIC_CODE_NAME; //confirm on pckgamingwiki.com
+const XBOX_SAVE_STRING = ''; //'8wekyb3d8bbwe' if published by Microsoft
 const CONFIG_FOLDERNAME = 'Windows';
 const CONFIG_LOC = 'Local AppData';
 const SAVE_LOC = 'Local AppData';
@@ -1013,7 +1013,7 @@ function saveErrorNotify(api) {
 }
 
 //Test for save files
-function testSave(files, gameId) {
+function testSave(api, files, gameId) {
   const isMod = files.some(file => (path.extname(file).toLowerCase() === SAVE_EXT));
   let supported = (gameId === spec.game.id) && isMod;
 
@@ -1827,7 +1827,7 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(DLL_ID, 37, testDll, installDll);
   context.registerInstaller(ROOT_ID, 39, testRoot, installRoot);
   context.registerInstaller(CONFIG_ID, 41, testConfig, (files) => installConfig(context.api, files));
-  context.registerInstaller(SAVE_ID, 43, testSave, (files) => installSave(context.api, files));
+  context.registerInstaller(SAVE_ID, 43, (files, gameId) => testSave(context.api, files, gameId), (files) => installSave(context.api, files));
   context.registerInstaller(BINARIES_ID, 49, testBinaries, installBinaries);
 
   //register buttons to open folders

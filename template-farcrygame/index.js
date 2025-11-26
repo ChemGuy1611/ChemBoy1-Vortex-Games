@@ -28,6 +28,7 @@ const EXEC_NAME = "XXX.exe";
 const FC = 'fcXXX';
 const MI_EXEC = "FCXXXModInstaller.exe";
 const MIMOD_FOLDER = "ModifiedFilesFCXXX";
+const PCGAMINGWIKI_URL = "XXX";
 
 const DATA_FOLDER = "Far Cry XXX";
 const XML_PAGE_NO = 0;
@@ -883,6 +884,13 @@ function applyGame(context, gameSpec) {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
+    util.opn(PCGAMINGWIKI_URL).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
     const openPath = path.join(__dirname, 'CHANGELOG.md');

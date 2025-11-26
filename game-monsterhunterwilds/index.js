@@ -22,6 +22,7 @@ const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, STEAMAPP_ID_DEMO]; // UPDATE THIS WIT
 const EXEC = "MonsterHunterWilds.exe";
 const GAME_NAME = "Monster Hunter Wilds";
 const GAME_NAME_SHORT = "MH Wilds";
+const PCGAMINGWIKI_URL = "XXX";
 
 const FLUFFY_FOLDER = "MonsterHunterWilds";
 const ROOT_FILES = ['nvngx_dlss.dll', "dstoragecore.dll", "dstorage.dll", "amd_fidelityfx_dx12.dll", "amd_ags_x64.dll"];

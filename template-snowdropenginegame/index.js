@@ -21,6 +21,7 @@ const EXEC = "XXX.exe";
 const EXEC_PLUS = "XXX_Plus.exe";
 const GAME_NAME = "XXX";
 const GAME_NAME_SHORT = "XXX";
+const PCGAMINGWIKI_URL = "XXX";
 
 const DATA_FILE = "XXX";
 const CONFIG_FOLDER = "XXX";
@@ -479,6 +480,13 @@ function applyGame(context, gameSpec) {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
+    util.opn(PCGAMINGWIKI_URL).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
     const openPath = path.join(__dirname, 'CHANGELOG.md');

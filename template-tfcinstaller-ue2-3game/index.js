@@ -37,6 +37,7 @@ const COOKEDSUB_FOLDERS = ['Maps', 'Packages'];
 const BITS = '32'; //32 or 64
 const EXEC_NAME = 'XXX.exe';
 const DATA_FOLDER = path.join('My Games', 'XXX', EPIC_CODE_NAME);
+const PCGAMINGWIKI_URL = "XXX";
 
 const SPECIAL_TFCMOD_FOLDERS = ['XXX'];
 
@@ -979,6 +980,13 @@ function applyGame(context, gameSpec) {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
+    util.opn(PCGAMINGWIKI_URL).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
     const openPath = path.join(__dirname, 'CHANGELOG.md');

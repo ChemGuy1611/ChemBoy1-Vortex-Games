@@ -36,6 +36,7 @@ const ACSE_PAGE_NO = 1;
 const ACSE_FILE_NO = 1;
 const DEV_FOLDER = 'Frontier Developments';
 const GAME_FOLDER = 'XXX';
+const PCGAMINGWIKI_URL = "XXX";
 
 let GAME_PATH = null;
 let GAME_VERSION = '';
@@ -729,6 +730,13 @@ function applyGame(context, gameSpec) {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
+    util.opn(PCGAMINGWIKI_URL).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
     const openPath = path.join(__dirname, 'CHANGELOG.md');

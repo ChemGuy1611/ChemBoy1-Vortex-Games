@@ -35,6 +35,7 @@ const GAME_NAME_SHORT = "XXX";
 const EXEC = "XXX.exe";
 const EXEC_CONSOLE = "XXX.console.exe";
 const EXEC_XBOX = 'gamelaunchhelper.exe';
+const PCGAMINGWIKI_URL = "XXX";
 
 const ENGINE_VERSION = '4'; // 4 or 3 - can see when running console.exe for game
 const customLoader = true;
@@ -738,6 +739,13 @@ function applyGame(context, gameSpec) {
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   }); //*/
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
+    util.opn(PCGAMINGWIKI_URL).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
     const openPath = path.join(__dirname, 'CHANGELOG.md');
     util.opn(openPath).catch(() => null);

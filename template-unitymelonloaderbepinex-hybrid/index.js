@@ -35,6 +35,7 @@ const DATA_FOLDER = `${GAME_STRING}_Data`;
 const DEV_REGSTRING = "XXX"; //developer name
 const GAME_REGSTRING = "XXX"; //game name
 const XBOX_SAVE_STRING = 'XXX'; //string after "ID_"
+const PCGAMINGWIKI_URL = "XXX";
 
 const hasCustomMods = false; //set to true if there are modTypes with folder paths dependent on which mod loader is installed
 
@@ -1534,6 +1535,13 @@ function applyGame(context, gameSpec) {
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   }); //*/
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
+    util.opn(PCGAMINGWIKI_URL).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
     const openPath = path.join(__dirname, 'CHANGELOG.md');
     util.opn(openPath).catch(() => null);
