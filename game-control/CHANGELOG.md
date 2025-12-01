@@ -4,6 +4,14 @@
 
 - None
 
+## [2.0.2] - 2025-12-01
+
+- Fixed another potential  undefined variable error for the Steam version.
+
+## [2.0.1] - 2025-11-30
+
+- Fixed undefined variable error on game management.
+
 ## [2.0.0] - 2025-11-24
 
 - Full suport for all game versions.

@@ -2,8 +2,8 @@
 Name: Control Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 2.0.0
-Date: 2025-11-24
+Version: 2.0.2
+Date: 2025-12-01
 /////////////////////////////////////////*/
 
 //Import libraries
@@ -290,19 +290,19 @@ function setGameVersion(gamePath) {
 
 //Get correct game version - async
 async function setGameVersionAsync(gamePath) {
-  if (await statCheckAsync(gamePath, EXEC_XBOX)) {
+  if (await statCheckAsync(gamePath, XBOX_FILE)) {
     GAME_VERSION = 'xbox';
     return GAME_VERSION;
   }
-  if (await statCheckAsync(gamePath, EXEC)) {
+  if (await statCheckAsync(gamePath, STEAM_FILE)) {
     GAME_VERSION = 'steam';
     return GAME_VERSION;
   }
-  if (await statCheckAsync(gamePath, EXEC_EPIC)) {
+  if (await statCheckAsync(gamePath, EPIC_FILE)) {
     GAME_VERSION = 'epic';
     return GAME_VERSION;
   }
-  if (await statCheckAsync(gamePath, EXEC_GOG)) {
+  if (await statCheckAsync(gamePath, GOG_FILE)) {
     GAME_VERSION = 'gog';
     return GAME_VERSION;
   }
