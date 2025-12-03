@@ -106,7 +106,7 @@ let SHIPPING_EXE = path.join(BINARIES_PATH, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDE
 
 const GOG_FILE = path.join('Plugins', 'OnlineSubsystemGOG', 'GalaxySDK', 'Galaxy64.dll');
 const STEAM_FILE = path.join('Engine', 'Binaries', 'ThirdParty', 'Steamworks', 'Steamv153', 'Win64', 'steam_api64.dll');
-const EPIC_FILE = path.join(EPIC_CODE_NAME, 'Binaries', 'Win64', SHIPPING_EXE); //not available on egdata.app yet. probably can use an EOSSDK dll file.
+const EPIC_FILE = path.join(EPIC_CODE_NAME, 'Binaries', 'Win64', SHIPPING_EXE);
 const XBOX_FILE = EXEC_XBOX;
 
 const PAK_ALT_ID = `${GAME_ID}-pakalt`;

@@ -34,7 +34,7 @@ let DOWNLOAD_FOLDER = '';
 const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 //executables for different stores
-const EXEC_DEFAULT = `Control.exe`;
+const EXEC = `Control.exe`;
 const EXEC_XBOX = "gamelaunchhelper.exe";
 
 const GOG_FILE = 'Galaxy64.dll';
@@ -265,7 +265,7 @@ function getExecutable(discoveredPath) {
     return EXEC_XBOX;
   };
   GAME_VERSION = 'default';
-  return EXEC_DEFAULT;
+  return EXEC;
 }
 
 //Get correct game version
@@ -697,10 +697,10 @@ async function resolveGameVersion(gamePath) {
   else { // use exe
     try {
       const exeVersion = require('exe-version');
-      version = exeVersion.getProductVersion(path.join(gamePath, EXEC_DEFAULT));
+      version = exeVersion.getProductVersion(path.join(gamePath, EXEC));
       return Promise.resolve(version); 
     } catch (err) {
-      log('error', `Could not read ${EXEC_DEFAULT} file to get Steam game version: ${err}`);
+      log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
       return Promise.resolve(version);
     }
   }
@@ -776,8 +776,8 @@ function applyGame(context, gameSpec) {
         id: `${GAME_ID}-customlaunch`,
         name: `Custom Launch`,
         logo: `exec.png`,
-        executable: () => EXEC_DEFAULT,
-        requiredFiles: [EXEC_DEFAULT],
+        executable: () => EXEC,
+        requiredFiles: [EXEC],
         detach: true,
         relative: true,
         exclusive: true,

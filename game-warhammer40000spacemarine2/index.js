@@ -347,6 +347,7 @@ async function installIntegrationStudio(files, tempFolder, api) {
     //await fsPromises.rmdir(source, { recursive: true });
     const paths = await getAllFiles(destination);
     files = [ ...files, ...paths.map(p => p.replace(`${tempFolder}${path.sep}`, ''))];
+    //files = [ ...paths.map(p => p.replace(`${tempFolder}${path.sep}`, ''))];
   }
   catch(err) {
     log('error', 'Error copying Integration Studio tools folder: ' + err);
@@ -376,7 +377,7 @@ async function installIntegrationStudio(files, tempFolder, api) {
     log('error', 'Error extracting Integration Studio server resources: ' + err);
   }
 
-  // Now we extract all the files from the IS archive, plus the unpacked PAK file into the staging folder.
+  // remove empty folders
   const filtered = files.filter(file =>
     (!file.endsWith(path.sep))
   );
@@ -398,12 +399,10 @@ async function getAllFiles(dirPath) {
     for (const entry of entries) {
       const fullPath = path.join(dirPath, entry);
       const stats = await fs.statAsync(fullPath);
-      if (stats.isDirectory()) {
-        // Recursively get files from subdirectories
+      if (stats.isDirectory()) { // Recursively get files from subdirectories
         const subDirFiles = await getAllFiles(fullPath);
         results = results.concat(subDirFiles);
-      } else {
-        // Add file to results
+      } else { // Add file to results
         results.push(fullPath);
       }
     }

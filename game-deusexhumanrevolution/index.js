@@ -103,19 +103,19 @@ const spec = {
       "id": HOOK_ID,
       "name": HOOK_NAME,
       "priority": "low",
-      "targetPath": `{gamePath}\\${HOOK_PATH}`
+      "targetPath": path.join(GAME_PATH, HOOK_PATH)
     },
     {
       "id": PATCHER_ID,
       "name": PATCHER_NAME,
       "priority": "low",
-      "targetPath": `{gamePath}\\${PATCHER_PATH}`
+      "targetPath": path.join(GAME_PATH, PATCHER_PATH)
     },
     {
       "id": MOD_ID,
       "name": MOD_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${MOD_PATH}`
+      "targetPath": path.join(GAME_PATH, MOD_PATH)
     },
   ],
   "discovery": {
@@ -520,9 +520,11 @@ async function installPatcher(files, tempFolder) {
     await fs.statAsync(source);
     const destination = path.join(tempFolder, HOOK_FILE);
     await fs.copyAsync(source, destination);
-    //await fsPromises.rmdir(source, { recursive: true });
-    const paths = [destination];
-    files = [ ...files, ...paths.map(p => p.replace(`${tempFolder}${path.sep}`, ''))];
+    await fsPromises.rmdir(path.join(tempFolder, 'compatable_modhook'), { recursive: true });
+    //const paths = [destination];
+    const paths = await getAllFiles(tempFolder);
+    //files = [ ...files, ...paths.map(p => p.replace(`${tempFolder}${path.sep}`, ''))];
+    files = [ ...paths.map(p => p.replace(`${tempFolder}${path.sep}`, ''))];
   }
   catch(err) {
     log('error', `Error copying ${HOOK_FILE} while installing ${PATCHER_NAME}: ${err}`);
@@ -530,9 +532,9 @@ async function installPatcher(files, tempFolder) {
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
-  ((file.indexOf(rootPath) !== -1) &&
-    (!file.endsWith(path.sep))));
-
+    ((file.indexOf(rootPath) !== -1) &&
+    (!file.endsWith(path.sep)))
+  );
   const instructions = filtered.map(file => {
     return {
       type: 'copy',
