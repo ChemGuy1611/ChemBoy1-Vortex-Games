@@ -2,8 +2,8 @@
 Name: inZOI Vortex Extension
 Structure: UE5
 Author: ChemBoy1
-Version: 0.4.0
-Date: 2025-10-07
+Version: 0.5.0
+Date: 2025-12-03
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -186,7 +186,7 @@ const MODKIT_NAME = "MODKit";
 const MODKITAPP_ID = "e61de4231c6b43349615781e737ad297";
 const MODKIT_EXEC_NAME = "inZOIModKit.exe";
 const MODKIT_FOLDER = path.join('inZOIModKit', 'Binaries', 'Win64');
-const MODKIT_PATH = path.join(MODKIT_FOLDER, MODKIT_EXEC_NAME);
+const MODKIT_EXEC_PATH = path.join(MODKIT_FOLDER, MODKIT_EXEC_NAME);
 
 const UE5KITMOD_ID = `${GAME_ID}-ue5modkitpak`;
 const UE5KITMOD_NAME = "UE5 MODKit Pak Mod";
@@ -1619,12 +1619,28 @@ function UNREALEXTENSION(context) {
 
   context.registerInstaller('ue5-pak-installer', 28, testForUnrealMod, (files, __destinationPath, gameId) => installUnrealMod(context.api, files, gameId));
 
-  context.registerModType(UE5_SORTABLE_ID, 25, (gameId) => testUnrealGame(gameId, true), getUnrealModsPath, () => Promise.resolve(false), {
-    name: 'UE5 Sortable Mod',
-    mergeMods: mod => loadOrderPrefix(context.api, mod) + mod.id
-  });
+  context.registerModType(UE5_SORTABLE_ID, 25, 
+    (gameId) => {
+      GAME_PATH = getDiscoveryPath(context.api);
+      if (GAME_PATH !== undefined) {
+        CHECK_DOCS = checkPartitions(DOCS_PATH, GAME_PATH);
+      }
+      return (testUnrealGame(gameId, true) && CHECK_DOCS);
+    }, 
+    getUnrealModsPath, 
+    () => Promise.resolve(false), 
+    { name: 'UE5 Sortable Mod',
+      mergeMods: mod => loadOrderPrefix(context.api, mod) + mod.id
+    }
+  );
   context.registerModType(LEGACY_UE5_SORTABLE_ID, 65, 
-    (gameId) => testUnrealGame(gameId, true), 
+    (gameId) => {
+      GAME_PATH = getDiscoveryPath(context.api);
+      if (GAME_PATH !== undefined) {
+        CHECK_DOCS = checkPartitions(DOCS_PATH, GAME_PATH);
+      }
+      return (testUnrealGame(gameId, true) && CHECK_DOCS);
+    },  
     getUnrealModsPath, 
     () => Promise.resolve(false), 
     { name: 'Legacy UE - REINSTALL TO SORT',
@@ -1873,7 +1889,7 @@ function applyGame(context, gameSpec) {
         shell: true,
         parameters: []
       }, //*/
-      //*
+      /*
       {
         id: MODKIT_ID,
         name: MODKIT_NAME,
@@ -1931,7 +1947,7 @@ function applyGame(context, gameSpec) {
       }
       return ((gameId === GAME_ID) && CHECK_DOCS);
     },
-    (game) => pathPattern(context.api, game, `{gamePath}\\${LOGICMODS_PATH}`), 
+    (game) => pathPattern(context.api, game, path.join("{gamePath}", LOGICMODS_PATH)),
     () => Promise.resolve(false), 
     { name: LOGICMODS_NAME }
   );
@@ -1943,7 +1959,7 @@ function applyGame(context, gameSpec) {
       }
       return ((gameId === GAME_ID) && CHECK_DOCS);
     },
-    (game) => pathPattern(context.api, game, `{gamePath}\\${BINARIES_PATH}`), 
+    (game) => pathPattern(context.api, game, path.join("{gamePath}", BINARIES_PATH)),
     () => Promise.resolve(false), 
     { name: UE4SS_NAME }
   );
@@ -1955,7 +1971,7 @@ function applyGame(context, gameSpec) {
       }
       return ((gameId === GAME_ID) && CHECK_DOCS);
     },
-    (game) => pathPattern(context.api, game, `{gamePath}\\${SCRIPTS_PATH}`), 
+    (game) => pathPattern(context.api, game, path.join("{gamePath}", SCRIPTS_PATH)),
     () => Promise.resolve(false), 
     { name: SCRIPTS_NAME }
   );
@@ -1967,7 +1983,7 @@ function applyGame(context, gameSpec) {
       }
       return ((gameId === GAME_ID) && CHECK_DOCS);
     },
-    (game) => pathPattern(context.api, game, `{gamePath}\\${DLL_PATH}`), 
+    (game) => pathPattern(context.api, game, path.join("{gamePath}", DLL_PATH)),
     () => Promise.resolve(false), 
     { name: DLL_NAME }
   );
@@ -1979,7 +1995,7 @@ function applyGame(context, gameSpec) {
       }
       return ((gameId === GAME_ID) && CHECK_DOCS);
     },
-    (game) => pathPattern(context.api, game, `{gamePath}\\${PAK_ALT_PATH}`), 
+    (game) => pathPattern(context.api, game, path.join("{gamePath}", PAK_ALT_PATH)),
     () => Promise.resolve(false), 
     { name: PAK_NAME }
   );
@@ -2015,10 +2031,27 @@ function applyGame(context, gameSpec) {
       }
       return ((gameId === GAME_ID) && CHECK_DOCS);
     },
-    (game) => pathPattern(context.api, game, `{gamePath}\\${BINARIES_PATH}`), 
+    (game) => pathPattern(context.api, game, path.join("{gamePath}", BINARIES_PATH)),
     () => Promise.resolve(false), 
     { name: BINARIES_NAME }
   );
+  /*
+  context.registerModType("dinput", 99, 
+    (gameId) => {
+      return false;
+    },
+    (game) => pathPattern(context.api, game, `{gamePath}`),
+    () => Promise.resolve(false), 
+    { name: BINARIES_NAME }
+  );
+  context.registerModType("enb", 100, 
+    (gameId) => {
+      return false;
+    },
+    (game) => pathPattern(context.api, game, `{gamePath}`),
+    () => Promise.resolve(false), 
+    { name: BINARIES_NAME }
+  ); //*/
 
   //Core installers
   context.registerInstaller(UE4SSCOMBO_ID, 25, testUe4ssCombo, (files) => installUe4ssCombo(context.api, files));
@@ -2161,7 +2194,8 @@ function main(context) {
       callback: (loadOrder) => {
         if (previousLO === undefined) previousLO = loadOrder;
         if (loadOrder === previousLO) return;
-        context.api.store.dispatch(actions.setDeploymentNecessary(spec.game.id, true));
+        //context.api.store.dispatch(actions.setDeploymentNecessary(spec.game.id, true));
+        requestDeployment(context, spec);
         previousLO = loadOrder;
       },
       createInfoPanel: () =>
@@ -2185,10 +2219,28 @@ function main(context) {
   return true;
 }
 
-async function didDeploy(api) { //run on mod purge
+async function didDeploy(api) { //run on mod deploy
+  api.dismissNotification(`${GAME_ID}-loadorderdeploy-notif`);
   await setModkitModsEnabled(api);
   return Promise.resolve();
 }
+
+const requestDeployment = (context, spec) => {
+  context.api.store.dispatch(actions.setDeploymentNecessary(spec.game.id, true));
+
+  context.api.sendNotification({
+    id: `${spec.game.id}-loadorderdeploy-notif`,
+    type: 'warning',
+    message: 'Deployment Required to Apply Load Order Changes',
+    allowSuppress: true,
+    actions: [
+      {
+        title: 'Deploy',
+        action: () => deploy(context.api)
+      }
+    ],
+  });
+};
 
 //export to Vortex
 module.exports = {

@@ -2,8 +2,8 @@
 Name: Deus Ex: Human Revolution Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2025-09-30
+Version: 0.1.1
+Date: 2025-12-03
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -103,19 +103,19 @@ const spec = {
       "id": HOOK_ID,
       "name": HOOK_NAME,
       "priority": "low",
-      "targetPath": path.join(GAME_PATH, HOOK_PATH)
+      "targetPath": path.join(`{gamePath}`, HOOK_PATH)
     },
     {
       "id": PATCHER_ID,
       "name": PATCHER_NAME,
       "priority": "low",
-      "targetPath": path.join(GAME_PATH, PATCHER_PATH)
+      "targetPath": path.join("{gamePath}", PATCHER_PATH)
     },
     {
       "id": MOD_ID,
       "name": MOD_NAME,
       "priority": "high",
-      "targetPath": path.join(GAME_PATH, MOD_PATH)
+      "targetPath": path.join("{gamePath}", MOD_PATH)
     },
   ],
   "discovery": {

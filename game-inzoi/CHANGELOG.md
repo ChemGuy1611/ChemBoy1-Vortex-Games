@@ -4,6 +4,14 @@
 
 - tool to launch inZOIMODKit (having difficulty with discovering the install location)
 
+## [0.5.0] - 2025-12-03
+
+- Added missing directory check for legacy pak mod types. This could prevent deployment if the game folder was on a secondary drive. Note that you still won't be able to deploy if the game is on a secondary drive due to a Vortex limitation (<https://github.com/Nexus-Mods/Vortex/issues/18945>).
+- Fixed issue with Load Order sorting of legacy pak mods not working if certain other UE game extensions were installed. You will need to reinstall all legacy pak mods to be able to sort them properly. A notification will be sent reminding you to do this.
+- Added notification indicating deployment is required after changing the load order.
+- Fixed missing FOMOD installer check for pak mods.
+- Technical fixes and improvements.
+
 ## [0.4.0] - 2025-10-07
 
 - Added functions to automatically set the "bEnable" flag to "true" in mod_manifest.json file for all MODKit mods on deployment.
