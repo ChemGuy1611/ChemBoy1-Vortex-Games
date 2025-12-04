@@ -75,7 +75,7 @@ const INTEGRTION_STUDIO_FILEID = 2544;
 const INTEGRATION_STUDIO_URL_OFFICIAL = 'https://prismray.io/games/spacemarine2/mods/modding-toolset-for-space-marine-2'; //requires PROS login
 const INTEGRATION_STUDIO_URL_NEXUS = 'https://www.nexusmods.com/warhammer40000spacemarine2/mods/280';
 const IS_PAGE_ID = 280;
-const IS_FILE_NO = 1;
+const IS_FILE_NO = 2771;
 
 const MOD_PATH = PAK_PATH;
 const REQ_FILE = EXEC;
@@ -263,7 +263,7 @@ async function deploy(api) {
   return new Promise((resolve, reject) => api.events.emit('deploy-mods', (err) => err ? reject(err) : resolve()));
 }
 
-// MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
+// AUTOMATIC MOD DOWNLOADERS ///////////////////////////////////////////////////
 
 //Check if Integration Studio is installed
 function isIntegrationStudioInstalled(api) {
@@ -271,6 +271,72 @@ function isIntegrationStudioInstalled(api) {
   const mods = state.persistent.mods[GAME_ID] || {};
   return Object.keys(mods).some(id => mods[id]?.type === INTEGRATION_STUDIO_ID);
 }
+
+//* Function to auto-download IS from Nexus Mods
+async function downloadIntegrationStudio(api, gameSpec) {
+  let isInstalled = isIntegrationStudioInstalled(api, gameSpec);
+  if (!isInstalled) {
+    const MOD_NAME = INTEGRATION_STUDIO_NAME;
+    const MOD_TYPE = INTEGRATION_STUDIO_ID;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
+    let FILE_ID = IS_FILE_NO;  //If using a specific file id because "input" below gives an error
+    const PAGE_ID = IS_PAGE_ID;
+    const GAME_DOMAIN = gameSpec.game.id;
+    api.sendNotification({ //notification indicating install process
+      id: NOTIF_ID,
+      message: `Installing ${MOD_NAME}`,
+      type: 'activity',
+      noDismiss: true,
+      allowSuppress: false,
+    });
+    if (api.ext?.ensureLoggedIn !== undefined) { //make sure user is logged into Nexus Mods account in Vortex
+      await api.ext.ensureLoggedIn();
+    }
+    try {
+      let FILE = FILE_ID; //use the FILE_ID directly for the correct game store version
+      let URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      try { //get the mod files information from Nexus
+        const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
+        const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
+        const file = modFiles
+          .filter(file => file.category_id === 1)
+          .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))[0];
+        if (file === undefined) {
+          throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
+        }
+        FILE = file.file_id;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      } catch (err) { // use defined file ID if input is undefined above
+        FILE = FILE_ID;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+        log('warn', `used fallback file id when downloading ${MOD_NAME}: ` + err);
+      } //*/
+      const dlInfo = { //Download the mod
+        game: GAME_DOMAIN,
+        name: MOD_NAME,
+      };
+      const dlId = await util.toPromise(cb =>
+        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+      const modId = await util.toPromise(cb =>
+        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
+      const batched = [
+        actions.setModsEnabled(api, profileId, [modId], true, {
+          allowAutoDeploy: true,
+          installed: true,
+        }),
+        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
+      ];
+      util.batchDispatch(api.store, batched); // Will dispatch both actions
+    } catch (err) { //Show the user the download page if the download, install process fails
+      const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
+      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
+      util.opn(errPage).catch(() => null);
+    } finally {
+      api.dismissNotification(NOTIF_ID);
+    }
+  }
+} //*/
 
 //Notification if Config, Save, and Creations folders are not on the same partition
 function notifyIntegrationStudio(api) {
@@ -298,7 +364,7 @@ function notifyIntegrationStudio(api) {
             }, [
               { label: 'Acknowledge', action: () => dismiss() },
               {
-                label: 'Open IS Download Page', action: () => {
+                label: 'Open IS Nexus Page', action: () => {
                   util.opn(INTEGRATION_STUDIO_URL_NEXUS).catch(() => null);
                   dismiss();
                 }
@@ -316,6 +382,8 @@ function notifyIntegrationStudio(api) {
     });
   }
 }
+
+// MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
 
 //Test for IS installer
 function testIntegrationStudio(files, gameId) {
@@ -666,9 +734,8 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(BINARIES_ID, 33, testBinaries, installBinaries); //fallback to binaries folder
 
   //register actions
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open IS Download Page (Login Required)', () => {
-    const openPath = INTEGRATION_STUDIO_URL_OFFICIAL;
-    util.opn(openPath).catch(() => null);
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download Integration Studio', () => {
+    downloadIntegrationStudio(context.api, spec);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);

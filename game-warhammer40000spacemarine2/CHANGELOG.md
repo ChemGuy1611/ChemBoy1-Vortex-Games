@@ -4,6 +4,11 @@
 
 - None Planned
 
+## [0.3.6] - 2025-12-03
+
+- Improved IS installer to remove unneccessary files and folders from the staging folder.
+- Updated IS download button to download directly from Nexus Mods.
+
 ## [0.3.5] - 2025-09-16
 
 - IS mod installer now extracts both the "client" and "server" default_other.pak files to "mods_source" and copies the "tools" folder to "root" during installation.

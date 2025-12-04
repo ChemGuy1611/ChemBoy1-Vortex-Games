@@ -4,6 +4,10 @@
 
 - tool to launch inZOIMODKit (having difficulty with discovering the install location)
 
+## [0.5.1] - 2025-12-04
+
+- Added compatibility flags to remove built-in Vortex modTypes. Users should now be able to deploy mods when the game folder is not on the C drive. Note that you still won't be able to install mods to the game folder if it is not on C drive.
+
 ## [0.5.0] - 2025-12-03
 
 - Added missing directory check for legacy pak mod types. This could prevent deployment if the game folder was on a secondary drive. Note that you still won't be able to deploy if the game is on a secondary drive due to a Vortex limitation (<https://github.com/Nexus-Mods/Vortex/issues/18945>).

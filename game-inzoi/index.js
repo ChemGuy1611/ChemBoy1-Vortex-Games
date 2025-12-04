@@ -2,8 +2,8 @@
 Name: inZOI Vortex Extension
 Structure: UE5
 Author: ChemBoy1
-Version: 0.5.0
-Date: 2025-12-03
+Version: 0.5.1
+Date: 2025-12-04
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -212,6 +212,10 @@ const spec = {
       EXEC,
       EPIC_CODE_NAME,
     ],
+    "compatible": {
+      "dinput": false,
+      "enb": false,
+    },
     "details": {
       "epicAppId": EPICAPP_ID,
       "steamAppId": +STEAMAPP_ID,
@@ -2035,22 +2039,22 @@ function applyGame(context, gameSpec) {
     () => Promise.resolve(false), 
     { name: BINARIES_NAME }
   );
-  //*Attempt to neuter Vortex built-in mod types
-  context.registerModType("dinput", 99, 
+  /*Attempt to neuter Vortex built-in mod types
+  context.registerModType("dinput", 100, 
     (gameId) => {
       return (gameId === gameSpec.game.id);
     },
-    (game) => pathPattern(context.api, game, DOCS_PATH),
+    (game) => DOCS_PATH,
     () => Promise.resolve(false), 
-    { name: BINARIES_NAME }
+    { name: 'Engine Injector' }
   );
   context.registerModType("enb", 100, 
     (gameId) => {
       return (gameId === gameSpec.game.id);
     },
-    (game) => pathPattern(context.api, game, DOCS_PATH),
+    (game) => DOCS_PATH,
     () => Promise.resolve(false), 
-    { name: BINARIES_NAME }
+    { name: 'ENB' }
   ); //*/
 
   //Core installers
@@ -2085,8 +2089,8 @@ function applyGame(context, gameSpec) {
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open MODKit Folder (Epic)', () => {
-    const openPath = getModKitPath;
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open MODKit Folder (Epic)', async () => {
+    const openPath = await getModKitPath;
     util.opn(openPath).catch(() => null);
   }, () => {
     const state = context.api.getState();
