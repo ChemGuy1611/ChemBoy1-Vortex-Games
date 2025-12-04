@@ -298,13 +298,16 @@ async function downloadIntegrationStudio(api, gameSpec) {
       try { //get the mod files information from Nexus
         const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
         const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
+        log('warn', `Files: ${FILE} found for ${MOD_NAME}`);
         const file = modFiles
           .filter(file => file.category_id === 1)
-          .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))[0];
+          .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
+          .reverse()[0];
         if (file === undefined) {
           throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
         }
         FILE = file.file_id;
+        log('warn', `latest file ${FILE} found for ${MOD_NAME}`);
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
       } catch (err) { // use defined file ID if input is undefined above
         FILE = FILE_ID;
@@ -405,6 +408,15 @@ function testIntegrationStudio(files, gameId) {
 
 //Install IS installer
 async function installIntegrationStudio(files, tempFolder, api) {
+  const NOTIF_ID = `${GAME_ID}-isinstaller-notif`;
+  api.sendNotification({ //notification indicating setup process
+    id: NOTIF_ID,
+    message: `Installing IS and Extracting resource files. This will take a while.`,
+    type: 'activity',
+    noDismiss: true,
+    allowSuppress: false,
+  });
+
   const setModTypeInstruction = { type: 'setmodtype', value: INTEGRATION_STUDIO_ID };
   GAME_PATH = getDiscoveryPath(api);
   const resourcePath = path.join(GAME_PATH, INTEGRATION_STUDIO_RESOURCE_PATH);
@@ -465,6 +477,7 @@ async function installIntegrationStudio(files, tempFolder, api) {
     };
   });
   instructions.push(setModTypeInstruction);
+  api.dismissNotification(NOTIF_ID);
   return Promise.resolve({ instructions });
 }
 
