@@ -603,12 +603,12 @@ function installModEnabler(api, files) {
   });
   instructions.push(setModTypeInstruction);
 
-  //Partition check for if mod can be installed
+  /*Partition check for if mod can be installed
   GAME_PATH = getDiscoveryPath(api);
   const CHECK = checkPartitions(DOCS_PATH, GAME_PATH);
   if (!CHECK) {
     api.showErrorNotification(`Could not install mod as "${MODENABLER_NAME}"`, `You tried installing a "${MODENABLER_NAME}" mod, but the game folder, Vortex Mod Staging folder, and ${DOCS_LOC} folder are not all on the same drive. Please move the game and/or Vortex Mod Staging Folder to the same drive as the ${DOCS_LOC} folder (typically C Drive) to install these types of mods with Vortex.`, { allowReport: false });
-  } 
+  }//*/ 
 
   return Promise.resolve({ instructions });
 }
@@ -1921,7 +1921,7 @@ function applyGame(context, gameSpec) {
       if (GAME_PATH !== undefined) {
         CHECK_CONFIG = checkPartitions(LOCALAPPDATA, GAME_PATH);
       }
-      return ((gameId === GAME_ID) && CHECK_CONFIG);
+      return ((gameId === gameSpec.game.id) && CHECK_CONFIG);
     },
     (game) => pathPattern(context.api, game, CONFIG_PATH), //getPath - mod install location
     () => Promise.resolve(false), //test - Is installed mod of this type?
@@ -1933,7 +1933,7 @@ function applyGame(context, gameSpec) {
       if (GAME_PATH !== undefined) {
         CHECK_DOCS = checkPartitions(DOCS_PATH, GAME_PATH);
       }
-      return ((gameId === GAME_ID) && CHECK_DOCS);
+      return ((gameId === gameSpec.game.id) && CHECK_DOCS);
     },
     (game) => pathPattern(context.api, game, "{gamePath}"), 
     () => Promise.resolve(false), 
@@ -1945,7 +1945,7 @@ function applyGame(context, gameSpec) {
       if (GAME_PATH !== undefined) {
         CHECK_DOCS = checkPartitions(DOCS_PATH, GAME_PATH);
       }
-      return ((gameId === GAME_ID) && CHECK_DOCS);
+      return ((gameId === gameSpec.game.id) && CHECK_DOCS);
     },
     (game) => pathPattern(context.api, game, path.join("{gamePath}", LOGICMODS_PATH)),
     () => Promise.resolve(false), 
@@ -1957,7 +1957,7 @@ function applyGame(context, gameSpec) {
       if (GAME_PATH !== undefined) {
         CHECK_DOCS = checkPartitions(DOCS_PATH, GAME_PATH);
       }
-      return ((gameId === GAME_ID) && CHECK_DOCS);
+      return ((gameId === gameSpec.game.id) && CHECK_DOCS);
     },
     (game) => pathPattern(context.api, game, path.join("{gamePath}", BINARIES_PATH)),
     () => Promise.resolve(false), 
@@ -1969,7 +1969,7 @@ function applyGame(context, gameSpec) {
       if (GAME_PATH !== undefined) {
         CHECK_DOCS = checkPartitions(DOCS_PATH, GAME_PATH);
       }
-      return ((gameId === GAME_ID) && CHECK_DOCS);
+      return ((gameId === gameSpec.game.id) && CHECK_DOCS);
     },
     (game) => pathPattern(context.api, game, path.join("{gamePath}", SCRIPTS_PATH)),
     () => Promise.resolve(false), 
@@ -1981,7 +1981,7 @@ function applyGame(context, gameSpec) {
       if (GAME_PATH !== undefined) {
         CHECK_DOCS = checkPartitions(DOCS_PATH, GAME_PATH);
       }
-      return ((gameId === GAME_ID) && CHECK_DOCS);
+      return ((gameId === gameSpec.game.id) && CHECK_DOCS);
     },
     (game) => pathPattern(context.api, game, path.join("{gamePath}", DLL_PATH)),
     () => Promise.resolve(false), 
@@ -1993,7 +1993,7 @@ function applyGame(context, gameSpec) {
       if (GAME_PATH !== undefined) {
         CHECK_DOCS = checkPartitions(DOCS_PATH, GAME_PATH);
       }
-      return ((gameId === GAME_ID) && CHECK_DOCS);
+      return ((gameId === gameSpec.game.id) && CHECK_DOCS);
     },
     (game) => pathPattern(context.api, game, path.join("{gamePath}", PAK_ALT_PATH)),
     () => Promise.resolve(false), 
@@ -2005,7 +2005,7 @@ function applyGame(context, gameSpec) {
       if (GAME_PATH !== undefined) {
         CHECK_DOCS = checkPartitions(DOCS_PATH, GAME_PATH);
       }
-      return ((gameId === GAME_ID) && CHECK_DOCS);
+      return ((gameId === gameSpec.game.id) && CHECK_DOCS);
     },
     (game) => pathPattern(context.api, game, `{gamePath}`), 
     () => Promise.resolve(false), 
@@ -2017,7 +2017,7 @@ function applyGame(context, gameSpec) {
       if (GAME_PATH !== undefined) {
         CHECK_DOCS = checkPartitions(DOCS_PATH, GAME_PATH);
       }
-      return ((gameId === GAME_ID) && CHECK_DOCS);
+      return ((gameId === gameSpec.game.id) && CHECK_DOCS);
     },
     (game) => pathPattern(context.api, game, `{gamePath}`), 
     () => Promise.resolve(false), 
@@ -2029,26 +2029,26 @@ function applyGame(context, gameSpec) {
       if (GAME_PATH !== undefined) {
         CHECK_DOCS = checkPartitions(DOCS_PATH, GAME_PATH);
       }
-      return ((gameId === GAME_ID) && CHECK_DOCS);
+      return ((gameId === gameSpec.game.id) && CHECK_DOCS);
     },
     (game) => pathPattern(context.api, game, path.join("{gamePath}", BINARIES_PATH)),
     () => Promise.resolve(false), 
     { name: BINARIES_NAME }
   );
-  /*
+  //*Attempt to neuter Vortex built-in mod types
   context.registerModType("dinput", 99, 
     (gameId) => {
-      return false;
+      return (gameId === gameSpec.game.id);
     },
-    (game) => pathPattern(context.api, game, `{gamePath}`),
+    (game) => pathPattern(context.api, game, DOCS_PATH),
     () => Promise.resolve(false), 
     { name: BINARIES_NAME }
   );
   context.registerModType("enb", 100, 
     (gameId) => {
-      return false;
+      return (gameId === gameSpec.game.id);
     },
-    (game) => pathPattern(context.api, game, `{gamePath}`),
+    (game) => pathPattern(context.api, game, DOCS_PATH),
     () => Promise.resolve(false), 
     { name: BINARIES_NAME }
   ); //*/
