@@ -74,6 +74,8 @@ const INTEGRTION_STUDIO_PAGEID = 280;
 const INTEGRTION_STUDIO_FILEID = 2544;
 const INTEGRATION_STUDIO_URL_OFFICIAL = 'https://prismray.io/games/spacemarine2/mods/modding-toolset-for-space-marine-2'; //requires PROS login
 const INTEGRATION_STUDIO_URL_NEXUS = 'https://www.nexusmods.com/warhammer40000spacemarine2/mods/280';
+const IS_PAGE_ID = 280;
+const IS_FILE_NO = 1;
 
 const MOD_PATH = PAK_PATH;
 const REQ_FILE = EXEC;
@@ -324,7 +326,7 @@ function testIntegrationStudio(files, gameId) {
   if (supported && files.find(file =>
     (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
     (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
-    return Promise.resolve({ supported: false, requiredFiles: [] })
+    return Promise.resolve({ supported: false, requiredFiles: [] });
   }
 
   return Promise.resolve({
@@ -342,12 +344,18 @@ async function installIntegrationStudio(files, tempFolder, api) {
   try { // copy tools folder to root
     const source = path.join(tempFolder, 'ModEditor');
     await fs.statAsync(source);
-    const destination = path.join(tempFolder);
+    try {
+      await fs.statAsync(path.join(source, 'mods_source'));
+      await fsPromises.rmdir(path.join(source, 'mods_source'), { recursive: true });
+    } catch(err) {
+      log('error', 'Error deleting Integration Studio bundled "mods_source" folder: ' + err);
+    }
+    const destination = tempFolder;
     await fs.copyAsync(source, destination);
-    //await fsPromises.rmdir(source, { recursive: true });
-    const paths = await getAllFiles(destination);
-    files = [ ...files, ...paths.map(p => p.replace(`${tempFolder}${path.sep}`, ''))];
-    //files = [ ...paths.map(p => p.replace(`${tempFolder}${path.sep}`, ''))];
+    await fsPromises.rmdir(source, { recursive: true });
+    const paths = await getAllFiles(tempFolder);
+    //files = [ ...files, ...paths.map(p => p.replace(`${tempFolder}${path.sep}`, ''))];
+    files = [ ...paths.map(p => p.replace(`${tempFolder}${path.sep}`, ''))];
   }
   catch(err) {
     log('error', 'Error copying Integration Studio tools folder: ' + err);
