@@ -11,6 +11,7 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 const fsPromises = require('fs/promises');
+const winapi = require('winapi-bindings');
 
 //Specify all information about the game
 const GAME_ID = "inzoi";
@@ -1728,23 +1729,32 @@ function partitionCheckNotify(api, CHECK_CONFIG, CHECK_DOCS) {
   });
 }
 
-//Get MODKit install path from Epic
+//*Get MODKit install path with GameStoreHelper
 async function getModKitPath() {
-  /*
-  return () => util.GameStoreHelper.findByAppId(MODKITAPP_ID, 'epic')
-    .then((game) => game.gamePath); //*/
-  //*
   const game = await util.GameStoreHelper.findByAppId(MODKITAPP_ID, 'epic');
-  let path = game.gamePath;
-  if (path !== undefined) {
-    log('warn', `ModKit path found at ${path}`);
-  }
-  if (path === undefined) {
+  if (game === undefined) {
     log('warn', `ModKit path not found`);
+    return Promise.resolve('.');
   }
+  let path = game.gamePath;
+  log('warn', `ModKit path found at ${path}`);
   path = path.join(path, MODKIT_FOLDER);
-  return () => path; //*/
-}
+  return Promise.resolve(path);
+} //*/
+
+//*Get MODKit (Epic) install path from registry
+function getModKitPathReg() {
+  const instPath = winapi.RegGetValue(
+    'HKEY_LOCAL_MACHINE',
+    `SOFTWARE\\WOW6432Node\\Ubisoft\\Launcher\\Installs\\${UPLAYAPP_ID}`,
+      'InstallDir');
+  if (!instPath) {
+    return Promise.resolve('.');
+  }
+  let path = instPath.value;
+  path = path.join(path, MODKIT_FOLDER);
+  return Promise.resolve(path);
+} //*/
 
 // Clean invalid characters from a string
 function cleanInvalidChars(string) {
@@ -1898,7 +1908,7 @@ function applyGame(context, gameSpec) {
         id: MODKIT_ID,
         name: MODKIT_NAME,
         logo: `modkit.png`,
-        queryPath: async () => await getModKitPath,
+        queryPath: () => getModKitPath,
         executable: () => MODKIT_EXEC_NAME,
         requiredFiles: [MODKIT_EXEC_NAME],
         detach: true,

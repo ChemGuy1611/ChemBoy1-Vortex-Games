@@ -4,9 +4,9 @@
 
 - None Planned
 
-## [0.3.6] - 2025-12-03
+## [0.3.6] - 2025-12-04
 
-- Improved IS installer to remove unneccessary files and folders from the staging folder.
+- Improved IS installer to remove unnecessary files and folders from the staging folder.
 - Updated IS download button to download directly from Nexus Mods.
 
 ## [0.3.5] - 2025-09-16
