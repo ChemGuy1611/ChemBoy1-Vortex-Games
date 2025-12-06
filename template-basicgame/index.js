@@ -495,12 +495,12 @@ function installFallback(api, files, destinationPath) {
 function fallbackInstallerNotify(api, modName) {
   const state = api.getState();
   STAGING_FOLDER = selectors.installPathForGame(state, spec.game.id);
-  const NOTIF_ID = `${GAME_ID}-fallbackinstaller`;
+  const NOTIF_ID = `${GAME_ID}-fallbackinstaller-notify`;
   modName = path.basename(modName, '.installing');
   const MESSAGE = 'Fallback installer reached for ' + modName;
   api.sendNotification({
     id: NOTIF_ID,
-    type: 'warning',
+    type: 'info',
     message: MESSAGE,
     allowSuppress: true,
     actions: [
@@ -508,11 +508,12 @@ function fallbackInstallerNotify(api, modName) {
         title: 'More',
         action: (dismiss) => {
           api.showDialog('question', MESSAGE, {
-            text: `The mod you just installed reached the fallback installer. This means Vortex could not determine where to place these mod files.\n`
+            text: `\n`
+                + `The mod you just installed reached the fallback installer. This means Vortex could not determine where to place these mod files.\n`
                 + `Please check the mod page description and review the files in the mod staging folder to determine if manual file manipulation is required.\n`
                 + `\n`
                 + `Mod Name: ${modName}.\n`
-                + `\n`             
+                + `\n`
           }, [
             { label: 'Continue', action: () => dismiss() },
             {

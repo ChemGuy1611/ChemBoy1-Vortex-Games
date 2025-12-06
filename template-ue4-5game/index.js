@@ -1121,7 +1121,8 @@ function testBinaries(files, gameId) {
 }
 
 //Fallback installer to Binaries folder
-function installBinaries(files) {
+function installBinaries(api, files, fileName) {
+  fallbackInstallerNotify(api, fileName);
   const setModTypeInstruction = { type: 'setmodtype', value: BINARIES_ID };
   
   const filtered = files.filter(file =>
@@ -1136,6 +1137,61 @@ function installBinaries(files) {
   });
   instructions.push(setModTypeInstruction);
   return Promise.resolve({ instructions });
+}
+
+function fallbackInstallerNotify(api, modName) {
+  const state = api.getState();
+  STAGING_FOLDER = selectors.installPathForGame(state, spec.game.id);
+  const NOTIF_ID = `${GAME_ID}-fallbackinstaller-notify`;
+  modName = path.basename(modName, '.installing');
+  const MESSAGE = 'Fallback installer reached for ' + modName;
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'info',
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: 'More',
+        action: (dismiss) => {
+          api.showDialog('question', MESSAGE, {
+            text: `\n`
+                + `The mod you just installed reached the fallback installer to the Binaries folder. This means Vortex could not determine where to place these mod files.\n`
+                + `Please check the mod page description and review the files in the mod staging folder to determine whether the mod was installed correctly.\n`
+                + `It may be necessary to perform manual file manipulation for the mod, or to manually change the Mod Type.\n`
+                + `It is also possible that the mod was installed correctly. For example a non-UE4SS dll mod, like Optiscaler, is installed correctly to the Binaries folder.\n`
+                + `\n`
+                + `Mod Name: ${modName}.\n`
+                + `\n`
+          }, [
+            { label: 'Continue', action: () => dismiss() },
+            {
+              label: 'Open Staging Folder', action: () => {
+                util.opn(path.join(STAGING_FOLDER, modName)).catch(() => null);
+                dismiss();
+              }
+            }, //*/
+            //*
+            { label: `Open Nexus Mods Page`, action: () => {
+              const mods = util.getSafe(api.store.getState(), ['persistent', 'mods', spec.game.id], {});
+              const modMatch = Object.values(mods).find(mod => mod.installationPath === modName);
+              log('warn', `Found ${modMatch?.id} for ${modName}`);
+              let PAGE = ``;
+              if (modMatch) {
+                const MOD_ID = modMatch.attributes.modId;
+                if (MOD_ID !== undefined) {
+                  PAGE = `${MOD_ID}?tab=description`; 
+                }
+              }
+              const MOD_PAGE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${PAGE}`;
+              util.opn(MOD_PAGE_URL).catch(err => undefined);
+              //dismiss();
+            }}, //*/
+          ]);
+        },
+      },
+    ],
+  });
 }
 
 // AUTOMATIC MOD DOWNLOADERS ///////////////////////////////////////////////////
@@ -1828,7 +1884,7 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(ROOT_ID, 39, testRoot, installRoot);
   context.registerInstaller(CONFIG_ID, 41, testConfig, (files) => installConfig(context.api, files));
   context.registerInstaller(SAVE_ID, 43, testSave, (files) => installSave(context.api, files));
-  context.registerInstaller(BINARIES_ID, 49, testBinaries, installBinaries);
+  context.registerInstaller(BINARIES_ID, 49, testBinaries, (files, fileName) => installBinaries(context.api, files, fileName));
 
   //register buttons to open folders
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Paks Folder', () => {

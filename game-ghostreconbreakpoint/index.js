@@ -916,7 +916,7 @@ function fallbackInstallerNotify(api, fileName) {
   const MESSAGE = `Fallback installer reached for ${MOD_NAME}`;
   api.sendNotification({
     id: NOTIF_ID,
-    type: 'warning',
+    type: 'info',
     message: MESSAGE,
     allowSuppress: true,
     actions: [
