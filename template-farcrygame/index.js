@@ -126,6 +126,10 @@ const spec = {
     "requiredFiles": [
       REQ_FILE
     ],
+    "compatible": {
+      "dinput": false,
+      "enb": false,
+    },
     "details": {
       "steamAppId": +STEAMAPP_ID,
       "uPlayAppId": UPLAYAPP_ID,

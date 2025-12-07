@@ -120,6 +120,10 @@ const spec = {
     "requiredFiles": [
       REQ_FILE
     ],
+    "compatible": {
+      "dinput": false,
+      "enb": false,
+    },
     "details": {
       "steamAppId": +STEAMAPP_ID,
       "epicAppId": EPICAPP_ID,
