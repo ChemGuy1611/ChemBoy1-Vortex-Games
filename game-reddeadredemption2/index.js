@@ -17,7 +17,7 @@ const turbowalk = require('turbowalk');
 //const USER_HOME = util.getVortexPath("home");
 const DOCUMENTS = util.getVortexPath("documents");
 //const ROAMINGAPPDATA = util.getVortexPath("appData");
-//const LOCALAPPDATA = util.getVortexPath("localAppData");
+const LOCALAPPDATA = util.getVortexPath("localAppData");
 
 //Specify all the information about the game
 const GAME_ID = "reddeadredemption2";
@@ -61,8 +61,7 @@ const MOD_EXTS = [''];
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Folder";
 
-const BINARIES_ID = `${GAME_ID}-binaries`;
-const BINARIES_NAME = "Binaries (Engine Injector)";
+const OPENIV_PATH = path.join(LOCALAPPDATA, 'New Technology Studio', 'Apps', 'OpenIV');
 
 const CONFIG_ID = `${GAME_ID}-config`;
 const CONFIG_NAME = "Config";

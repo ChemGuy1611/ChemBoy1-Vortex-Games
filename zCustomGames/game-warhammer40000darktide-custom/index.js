@@ -1,5 +1,5 @@
 const path = require("path");
-const { fs, actions, util, selectors } = require("vortex-api");
+const { fs, actions, util, selectors, log } = require("vortex-api");
 
 const GAME_ID = "warhammer40kdarktide";
 const STEAMAPP_ID = "1361210";
@@ -9,6 +9,9 @@ const BAT_FILE_EXT = ".bat";
 let GAME_PATH = null;
 
 //CHEMBOY1 CUSTOM CODE//////////////////////////////////////////////////////////////////
+
+const HEAP_SIZE = 1792; //1792 works, 2048 crashes on launch
+
 const template = require("string-template");
 const APPDATA = util.getVortexPath('appData');
 const CONFIG_PATH = path.join(APPDATA, "Fatshark", "Darktide");
@@ -17,6 +20,9 @@ const LO_FILE = "mod_load_order.txt";
 const MOD_FOLDER = "mods";
 const DMF_FOLDER = "dmf";
 const DML_FILE = "toggle_darktide_mods.bat";
+let DOWNLOAD_FOLDER = '';
+let STAGING_FOLDER = '';
+
 function pathPattern(api, game, pattern) {
   var _a;
   return template(pattern, {
@@ -33,6 +39,13 @@ const getDiscoveryPath = (api) => {
   return discovery === null || discovery === void 0 ? void 0 : discovery.path;
 };
 
+async function purge(api) {
+  return new Promise((resolve, reject) => api.events.emit('purge-mods', true, (err) => err ? reject(err) : resolve()));
+}
+async function deploy(api) {
+  return new Promise((resolve, reject) => api.events.emit('deploy-mods', (err) => err ? reject(err) : resolve()));
+}
+
 function isDirectory(file) {
     return file.endsWith(path.sep);
 }
@@ -46,10 +59,13 @@ let updatemodid = undefined;
 let updating_mod = false; // used to see if it's a mod update or not
 let mod_install_name = ""; // used to display the name of the currently installed mod
 let api = false; // useful where we can't access API
-const state = () => api.getState(); //get the state from anywhere
-const is_darktide_profile_active = () => selectors.activeGameId(state()) === GAME_ID;
+const is_darktide_profile_active = (api) => {
+  const state = api.getState();
+  const test = (selectors.activeGameId(state) === GAME_ID)
+  return test;
+};
 let warn_call = 0; // to avoid a notif not appearing due to having the same id
-function log(message) {
+/*function log(message) {
   if (!api) {
     console.log("Darktide-log : api is not defined could not send notif");
     return;
@@ -64,7 +80,8 @@ function log(message) {
 
 function api_warning(ID, message, supress) {
   if (!api) {
-    console.log(
+    log(
+      'warn',
       "Darktide-" + ID + " : api is not defined could not send notif",
     );
     return;
@@ -107,12 +124,14 @@ const tools = [
 ];
 
 async function prepareForModding(discovery, api) {
+  const state = api.getState();
   GAME_PATH = discovery.path;
-
-  await fs.ensureDirWritableAsync(path.join(discovery.path,  MOD_FOLDER)); // Ensure the mods directory exists
-  await fs.ensureFileAsync(path.join(discovery.path, MOD_FOLDER, LO_FILE)); // Ensure the mod load order file exists
-  await checkForDMF(api, path.join(discovery.path, MOD_FOLDER, DMF_FOLDER)); // Check if DMF is installed
-  await checkForDML(api, path.join(discovery.path, DML_FILE)); // Check if DML is installed
+  STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
+  DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
+  await fs.ensureDirWritableAsync(path.join(GAME_PATH,  MOD_FOLDER)); // Ensure the mods directory exists
+  await fs.ensureFileAsync(path.join(GAME_PATH, MOD_FOLDER, LO_FILE)); // Ensure the mod load order file exists
+  await checkForDMF(api, path.join(GAME_PATH, MOD_FOLDER, DMF_FOLDER)); // Check if DMF is installed
+  await checkForDML(api, path.join(GAME_PATH, DML_FILE)); // Check if DML is installed
 }
 
 function checkForDMF(api, mod_framework) {
@@ -156,16 +175,13 @@ function checkForDML(api, toggle_mods_path) {
 }
 
 function testSupportedContent(files, gameId) {
-  let supported =
-    gameId === GAME_ID &&
-    files.find(
-      (file) =>
-        path.extname(file).toLowerCase() === MOD_FILE_EXT ||
-        (path.extname(file).toLowerCase() === BAT_FILE_EXT &&
-          file.includes("toggle_darktide_mods")) ||
-        (path.extname(file).toLowerCase() === BAT_FILE_EXT &&
-          file.includes("_mod_load_order_file_maker")),
-    ) !== undefined;
+  let supported = (gameId === GAME_ID) && files.some((file) =>
+    path.extname(file).toLowerCase() === MOD_FILE_EXT ||
+    (path.extname(file).toLowerCase() === BAT_FILE_EXT &&
+      file.includes("toggle_darktide_mods")) ||
+    (path.extname(file).toLowerCase() === BAT_FILE_EXT &&
+      file.includes("_mod_load_order_file_maker")),
+  );
 
   // Do not resend the alert in case of updates
   if (gameId === GAME_ID && !supported && !updating_mod) {
@@ -231,7 +247,7 @@ async function root_game_install(files) {
     return {
       type: "copy",
       source: file,
-      destination: path.join("", file),
+      destination: path.join('binaries', file),  
     };
   });
   return { instructions };
@@ -322,8 +338,8 @@ async function deserializeLoadOrder(context) {
   }
 
   //read current LO file
-  let gameDir = getDiscoveryPath(context.api);
-  let loadOrderPath = path.join(gameDir, "mods", LO_FILE);
+  const gameDir = getDiscoveryPath(context.api);
+  const loadOrderPath = path.join(gameDir, "mods", LO_FILE);
   let loadOrderFile = await fs.readFileAsync(
     loadOrderPath, 
     { encoding: "utf8", }
@@ -416,8 +432,8 @@ async function serializeLoadOrder(context, loadOrder) {
     return;
   }
 
-  let gameDir = getDiscoveryPath(context.api);
-  let loadOrderPath = path.join(gameDir, MOD_FOLDER, LO_FILE);
+  const gameDir = getDiscoveryPath(context.api);
+  const loadOrderPath = path.join(gameDir, MOD_FOLDER, LO_FILE);
 
   let loadOrderOutput = loadOrder
     .map((mod) => (mod.enabled ? mod.id : `-- ${mod.id}`))
@@ -430,10 +446,11 @@ async function serializeLoadOrder(context, loadOrder) {
   );
 }
 
-async function toolbar() {
+async function toolbar(api) {
+  const state = api.getState();
   if (
     !util.getSafe(
-      state(),
+      state,
       ["settings", "interface", "tools", "addToolsToTitleBar"],
       false,
     )
@@ -466,13 +483,6 @@ async function toolbar() {
 }
 
 function main(context) {
-  context.registerInstaller(
-    "warhammer40kdarktide-mod",
-    25,
-    testSupportedContent,
-    installContent,
-  );
-
   context.registerGame({
     id: GAME_ID,
     name: "Warhammer 40,000: Darktide",
@@ -485,36 +495,48 @@ function main(context) {
     requiresCleanup: true,
     requiresLauncher,
     executable: () => "launcher/Launcher.exe",
-    /*parameters: [
-      "--bundle-dir",
-      "../bundle",
-      "--ini",
-      "settings",
-      "--backend-auth-service-url",
-      "https://bsp-auth-prod.atoma.cloud",
-      "--backend-title-service-url",
-      "https://bsp-td-prod.atoma.cloud",
-    ], //*/
+    parameters: [`--lua-heap-mb-size ${HEAP_SIZE}`],
     requiredFiles: ["launcher/Launcher.exe", "binaries/Darktide.exe"],
     setup: async (discovery) => await prepareForModding(discovery, context.api),
     environment: {
       SteamAPPId: STEAMAPP_ID,
     },
     details: {
-      steamAppId: STEAMAPP_ID,
+      steamAppId: +STEAMAPP_ID,
     },
   });
+
+  context.registerInstaller(
+    "warhammer40kdarktide-mod",
+    25,
+    testSupportedContent,
+    installContent,
+  );
 
   context.registerLoadOrder({
     gameId: GAME_ID,
     validate: async () => Promise.resolve(undefined), // no validation implemented yet
     deserializeLoadOrder: async () => await deserializeLoadOrder(context),
-    serializeLoadOrder: async (loadOrder) =>
-      await serializeLoadOrder(context, loadOrder),
+    serializeLoadOrder: async (loadOrder) => await serializeLoadOrder(context, loadOrder),
     toggleableEntries: true,
   });
 
+  //////////////////////////////////////////////////////////////////////////////////////////////
   //register mod types/////////////////////////////////////////////////
+  context.registerModType('darktide-binaries', 25, (gameId) => {
+    var _a;
+    return (gameId === GAME_ID)
+      && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
+    }, (game) => pathPattern(context.api, game, "{gamePath}\\binaries"), () => Promise.resolve(false), { name: 'Binaries' }
+  ); //*/
+  /*context.registerModType('darktide-config', 30, (gameId) => {
+    var _a;
+    return (gameId === GAME_ID)
+      && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
+    }, (game) => pathPattern(context.api, game, CONFIG_PATH), () => Promise.resolve(false), { name: 'Config' }
+  ); //*/
+
+  //register actions/////////////////////////////////////////////////
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
     util.opn(CONFIG_PATH).catch(() => null);
   }, () => {
@@ -547,39 +569,31 @@ function main(context) {
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   });
-  context.registerModType('darktide-binaries', 25, (gameId) => {
-    var _a;
-    return (gameId === GAME_ID)
-      && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, (game) => pathPattern(context.api, game, "{gamePath}\\binaries"), () => Promise.resolve(false), { name: 'Binaries' }
-  );
-  /*context.registerModType('darktide-config', 30, (gameId) => {
-    var _a;
-    return (gameId === GAME_ID)
-      && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, (game) => pathPattern(context.api, game, CONFIG_PATH), () => Promise.resolve(false), { name: 'Config' }
-  ); //*/
-  /////////////////////////////////////////////////////////////////////
-
-  // Didn't check if below events trigger on profiles for other games, so make sure it is for this
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
+    util.opn(DOWNLOAD_FOLDER).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  //////////////////////////////////////////////////////////////////////////////////////////////
 
   context.once(() => {
     api = context.api; //don't move from the top
-    if (is_darktide_profile_active()) {
-      toolbar();
+    if (is_darktide_profile_active(api)) {
+      toolbar(api);
     }
     context.api.events.on("profile-did-change", () => {
-      if (is_darktide_profile_active()) {
-        toolbar();
+      if (is_darktide_profile_active(api)) {
+        toolbar(api);
       }
     });
-
     // Patch on deploy
     context.api.onAsync("did-deploy", (profileId) => {
-      mod_update_all_profile = false;
-      updating_mod = false;
-      updatemodid = undefined;
-      if (is_darktide_profile_active() && GAME_PATH != null) {
+      mod_update_all_profile = false; //reset all-profile flag on deploy
+      updating_mod = false; //reset updating flag on deploy
+      updatemodid = undefined; //reset updated modId on deploy
+      if (is_darktide_profile_active(api) && GAME_PATH != null) {
         try {
           api.runExecutable(path.join(GAME_PATH, "tools", "dtkit-patch.exe"), ["--patch"], { shell: true, detached: true } )
         } catch (e) {}
@@ -587,23 +601,25 @@ function main(context) {
     });
     // Unpatch on purge
     context.api.events.on("will-purge", (profileId) => {
-      if (is_darktide_profile_active() && GAME_PATH != null) {
+      if (is_darktide_profile_active(api) && GAME_PATH != null) {
         try {
           api.runExecutable(path.join(GAME_PATH, "tools", "dtkit-patch.exe"), ["--unpatch"], { shell: true, detached: true } )
         } catch (e) {}
       }
     });
-
+    //detect mod update (to maintain LO position)
     context.api.events.on("mod-update", (gameId, modId, fileId) => {
       if (GAME_ID == gameId) {
         updatemodid = modId;
       }
     });
+    //detect mod removal (to maintain LO position)
     context.api.events.on("remove-mod", (gameMode, modId) => {
       if (modId.includes("-" + updatemodid + "-")) {
         mod_update_all_profile = true;
       }
     });
+    //detect mod installation (to maintain LO position)
     context.api.events.on("will-install-mod", (gameId, archiveId, modId) => {
       mod_install_name = modId.split("-")[0];
       if (GAME_ID == gameId && modId.includes("-" + updatemodid + "-")) {

@@ -115,10 +115,10 @@ async function writeFolonIni(api) {
       await parser.write(INI_PATH_DEFAULT, contents) //write the INI file
         .then(() => log('warn', `${EXTENSION_NAME} wrote FOLON INI settings to "${INI_FILE_DEFAULT}"`))
         .then(() => iniSuccessNotifyDefault(api))
-        .catch(err => api.showErrorNotification(`Error when writing FOLON INI settings to ${INI_FILE_DEFAULT}`, err, { allowReport: true }));
+        .catch(err => api.showErrorNotification(`Error when writing FOLON INI settings to ${INI_FILE_DEFAULT}`, err, { allowReport: false }));
     }
   } catch (err) {
-    api.showErrorNotification(`${EXTENSION_NAME} failed to write FOLON INI settings to ${INI_FILE_DEFAULT}`, err, { allowReport: true });
+    api.showErrorNotification(`${EXTENSION_NAME} failed to write FOLON INI settings to ${INI_FILE_DEFAULT}`, err, { allowReport: false });
   }
 
   try { //Fallout4Custom.ini (optional, only write if it exists)
@@ -159,7 +159,7 @@ async function makeLink(api, src, dest, type) {
       .then(() => linkSuccessNotify(api)) //notify user of linking success
       .then(() => changeFolonModTypeNotify(api)) //notify user of manual steps required
       .then(() => changeFolonModTypeAuto(api)) //attempt to automatically enable and change mod type for falloutlondon mod (relies on user responding to popup within 10 seconds)
-      .catch(err => api.showErrorNotification(`${EXTENSION_NAME} failed to create directory link for FOLON GOG files`, err, { allowReport: true }));
+      .catch(err => api.showErrorNotification(`${EXTENSION_NAME} failed to create directory link for FOLON GOG files`, err, { allowReport: false }));
   }
 }
 
@@ -316,7 +316,7 @@ async function changeFolonModTypeAuto(api) {
     ];
     util.batchDispatch(api.store, batched); //*/
   } catch (err) {
-    api.showErrorNotification(`${EXTENSION_NAME} failed to automatically enable and change Mod Type for "${STAGINGFOLDER_NAME}" mod.`, err, { allowReport: true });
+    api.showErrorNotification(`${EXTENSION_NAME} failed to automatically enable and change Mod Type for "${STAGINGFOLDER_NAME}" mod.`, err, { allowReport: false });
   }
   /* State change should mean that the user added the mod.
   api.onStateChange(['persistent', 'profiles'],
@@ -328,7 +328,7 @@ async function changeFolonModTypeAuto(api) {
         ];
         util.batchDispatch(api.store, batched);
       } catch (err) {
-        api.showErrorNotification(`${EXTENSION_NAME} failed to automatically enable and change Mod Type for "${STAGINGFOLDER_NAME}" mod.`, err, { allowReport: true });
+        api.showErrorNotification(`${EXTENSION_NAME} failed to automatically enable and change Mod Type for "${STAGINGFOLDER_NAME}" mod.`, err, { allowReport: false });
       }
     }
   ); //*/
@@ -376,7 +376,7 @@ function main(context) {
       try {
         setup(context.api, gameId);
       } catch (err) {
-        context.api.showErrorNotification(`${EXTENSION_NAME} failed to complete setup.`, err, { allowReport: true });
+        context.api.showErrorNotification(`${EXTENSION_NAME} failed to complete setup.`, err, { allowReport: false });
       }
     })
   });
@@ -394,8 +394,7 @@ function main(context) {
   );
 
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open FOLON GOG Folder', () => {
-    const openPath = FOLON_INSTALL_PATH;
-    util.opn(openPath).catch(() => null);
+    util.opn(FOLON_INSTALL_PATH).catch(() => null);
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
@@ -407,7 +406,7 @@ function main(context) {
     try {
       setup(context.api, gameId);
     } catch (err) {
-      context.api.showErrorNotification(`Failed to manually execute ${EXTENSION_NAME}.`, err, { allowReport: true });
+      context.api.showErrorNotification(`Failed to manually execute ${EXTENSION_NAME}.`, err, { allowReport: false });
     }
     }, () => {
       const state = context.api.getState();
