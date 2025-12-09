@@ -142,7 +142,7 @@ const tools = [
     relative: true,
     exclusive: true,
     //defaultPrimary: true,
-    parameters: ['+com_skipIntroVideo 1 +r_swapInterval 6']
+    parameters: PARAMETERS
   },
   {
     id: `${GAME_ID}-modinjector`,
