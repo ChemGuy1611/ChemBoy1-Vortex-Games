@@ -1,8 +1,14 @@
 # Changelog
 
-## FUTURE CHANGES (NOT IMPLEMENTED YET):
+## FUTURE CHANGES (NOT IMPLEMENTED YET)
 
 - Config and save modtypes, installers, and open buttons.
+
+## [0.3.2] - 2025-12-09
+
+- Fixed required files and executable since the launcher file was moved.
+- Fixed game version detection for Xbox version.
+- Technical fixes and improvements.
 
 ## [0.3.1] - 2025-09-27
 

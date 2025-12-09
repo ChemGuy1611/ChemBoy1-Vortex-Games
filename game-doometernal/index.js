@@ -2,8 +2,8 @@
 Name: DOOM Eternal Vortex Extension
 Structure: 3rd party mod loader
 Author: ChemBoy1
-Version: 0.3.1
-Date: 2025-09-27
+Version: 0.3.2
+Date: 2025-12-09
 ////////////////////////////////////////////////*/
 /*
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣀⣀⣠⣤⣤⣤⡴⣦⡴⣖⠶⣴⠶⡶⣖⡶⣶⢶⣲⡾⠿⢿⡷⣾⢿⣷⣦⢾⣷⣾⣶⣤⣀⣰⣤⣀⡀⠀⠀⢀⣴⣿⡿⡿⣿⣿⣦⣄⠀⠀⣠⣴⣿⡿⢿⡿⣷⣦⡄⠀⠀⢀⣀⣤⣦⣀⣤⣶⣶⣷⣦⣴⡿⢿⡷⣿⠿⡿⣿⣷⢶⣦⢴⡲⣦⢶⡶⢶⡲⣖⡶⣦⣤⣤⣤⣤⣤⣤⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
@@ -43,15 +43,18 @@ const Bluebird = require('bluebird');
 const { parseStringPromise } = require('xml2js');
 
 //Specify all the information about the game
+const GAME_ID = "doometernal";
 const STEAMAPP_ID = "782330";
 const XBOXAPP_ID = "BethesdaSoftworks.DOOMEternal-PC";
 const XBOXEXECNAME = "Game";
-const GAME_ID = "doometernal";
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, XBOXAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 const GAME_NAME = "DOOM Eternal";
-const EXEC = "idTechLauncher.exe";
-const EXEC_READ = "DOOMEternalx64vk.exe";
-const MOD_PATH_DEFAULT = path.join("Mods");
-//const EXEC = "DOOMEternalx64vk.exe";
+const EXEC = path.join('launcher', "idTechLauncher.exe");
+const EXEC_ALT = "DOOMEternalx64vk.exe";
+const EXEC_XBOX = "gamelaunchhelper.exe";
+
+const INJ_DL_ID = "1524087"; //update this file id when new version released on gamebanana
+
 let GAME_PATH = null;
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
@@ -73,7 +76,7 @@ const SANDBOX_PATH = path.join("doomSandBox");
 const INJECTOR_ID = "doometernal-injector";
 const INJECTOR_NAME = "EternalModInjector";
 const INJECTOR_FILE = "eternalmodmanager.exe";
-const INJ_DL_URL = `https://gamebanana.com/dl/1524087`;
+const INJ_DL_URL = `https://gamebanana.com/dl/${INJ_DL_ID}`;
 
 const ROLLBACK_FILE = "doometernalx64vk.exe";
 const KTDE_FILE = "keep the dead eternal - readme - install instructions.rtf";
@@ -81,6 +84,13 @@ const MEAT_FILE = "xinput1_3.dll";
 
 const CONFIG_PATH = path.join(USER_HOME, 'Saved Games', 'id Software', 'DOOMEternal', 'base');
 const SAVE_PATH  = path.join(CONFIG_PATH);
+
+const REQ_FILE = EXEC;
+const MOD_PATH_DEFAULT = "Mods";
+const PARAMETERS_STRING = '';
+const PARAMETERS = [PARAMETERS_STRING];
+const IGNORE_CONFLICTS = [path.join('**', 'changelog.txt'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
+const IGNORE_DEPLOY = [path.join('**', 'changelog.txt'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
 
 // Filled in from data above
 const spec = {
@@ -94,11 +104,13 @@ const spec = {
     "modPath": MOD_PATH_DEFAULT,
     "modPathIsRelative": true,
     "requiredFiles": [
-      EXEC
+      REQ_FILE
     ],
     "details": {
       "steamAppId": +STEAMAPP_ID,
       "xboxAppId": XBOXAPP_ID,
+      "ignoreDeploy": IGNORE_DEPLOY,
+      "ignoreConflicts": IGNORE_CONFLICTS,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
@@ -116,7 +128,7 @@ const spec = {
       "id": SANDBOX_ID,
       "name": SANDBOX_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${SANDBOX_PATH}`
+      "targetPath": path.join('{gamePath}', SANDBOX_PATH)
     },
     {
       "id": INJECTOR_ID,
@@ -126,10 +138,7 @@ const spec = {
     },
   ],
   "discovery": {
-    "ids": [
-      STEAMAPP_ID,
-      XBOXAPP_ID,
-    ],
+    "ids": DISCOVERY_IDS_ACTIVE,
     "names": []
   }
 };
@@ -213,23 +222,54 @@ async function requiresLauncher(gamePath, store) {
 
 //Get correct game version
 async function setGameVersion(gamePath) {
-  const isCorrectExec = (exec) => {
-    try {
-      fs.statSync(path.join(gamePath, exec));
-      return true;
-    }
-    catch (err) {
-      return false;
-    }
-  };
-
-  if (isCorrectExec(EXEC_XBOX)) {
+  if (await statCheckAsync(gamePath, EXEC_XBOX)) {
     GAME_VERSION = 'xbox';
     return GAME_VERSION;
   };
 
   GAME_VERSION = 'default';
   return GAME_VERSION;
+}
+
+//Get correct executable for game version
+function getExecutable(discoveryPath) {
+  if (statCheckSync(discoveryPath, EXEC_XBOX)) {
+    return EXEC_XBOX;
+  };
+
+  return EXEC;
+}
+
+function statCheckSync(gamePath, file) {
+  try {
+    fs.statSync(path.join(gamePath, file));
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}
+async function statCheckAsync(gamePath, file) {
+  try {
+    await fs.statAsync(path.join(gamePath, file));
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}
+
+const getDiscoveryPath = (api) => { //get the game's discovered path
+  const state = api.getState();
+  const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});
+  return discovery === null || discovery === void 0 ? void 0 : discovery.path;
+};
+
+async function purge(api) {
+  return new Promise((resolve, reject) => api.events.emit('purge-mods', true, (err) => err ? reject(err) : resolve()));
+}
+async function deploy(api) {
+  return new Promise((resolve, reject) => api.events.emit('deploy-mods', (err) => err ? reject(err) : resolve()));
 }
 
 // AUTO-DOWNLOADER FUNCTIONS ///////////////////////////////////////////////////
@@ -551,7 +591,7 @@ async function resolveGameVersion(gamePath) {
   else { // use exe
     try {
       const exeVersion = require('exe-version');
-      version = exeVersion.getProductVersion(path.join(gamePath, EXEC_READ));
+      version = exeVersion.getProductVersion(path.join(gamePath, EXEC));
       return Promise.resolve(version); 
     } catch (err) {
       log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
@@ -581,7 +621,7 @@ function applyGame(context, gameSpec) {
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     executable: () => gameSpec.game.executable,
-    getGameVersion: setGameVersion,
+    getGameVersion: resolveGameVersion,
     supportedTools: tools,
   };
   context.registerGame(game);

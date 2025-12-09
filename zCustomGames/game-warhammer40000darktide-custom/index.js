@@ -10,7 +10,7 @@ let GAME_PATH = null;
 
 //CHEMBOY1 CUSTOM CODE//////////////////////////////////////////////////////////////////
 
-const HEAP_SIZE = 1792; //1792 works, 2048 crashes on launch
+const HEAP_SIZE = 2048; //1792 works too if 2048 crashes on launch
 
 const template = require("string-template");
 const APPDATA = util.getVortexPath('appData');
