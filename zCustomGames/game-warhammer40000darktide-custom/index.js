@@ -49,7 +49,7 @@ const tools = [
   },
 ];
 
-const HEAP_SIZE = 2048; //1792 works too if 2048 crashes on launch
+const HEAP_SIZE = 1792; //1792, 2048 fails to apply it seems
 const APPDATA = util.getVortexPath('appData');
 const CONFIG_PATH = path.join(APPDATA, "Fatshark", "Darktide");
 const CONFIG_FILE = path.join(CONFIG_PATH, "user_settings.config");

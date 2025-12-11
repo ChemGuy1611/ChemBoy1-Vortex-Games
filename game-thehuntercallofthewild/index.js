@@ -2,8 +2,8 @@
 Name: theHunter: Call of the Wild Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.1.3
-Date: 2025-09-27
+Version: 0.2.0
+Date: 2025-12-11
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -48,15 +48,15 @@ const DROPZONE_PATH = ".";
 //const MOD_PATH_XBOX = MOD_PATH;
 const DROPZONE_FOLDER = "dropzone";
 
-let CONFIG_PATH = null;
-let SAVE_PATH = null;
 const CONFIG_ID = `${GAME_ID}-config`;
 const CONFIG_NAME = "Config";
 const CONFIG_FOLDER = path.join(CONFIGMOD_LOCATION, 'Avalanche Studios');
+let CONFIG_PATH = CONFIG_FOLDER;
 
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_NAME = "Save Data File";
 const SAVE_FOLDER = path.join(SAVEMOD_LOCATION, 'Avalanche Studios');
+let SAVE_PATH = SAVE_FOLDER;
 let USERID_FOLDER = "";
 const SAVE_STRINGS = [
   "found_icons_",
@@ -163,7 +163,7 @@ const spec = {
     "id": GAME_ID,
     "name": GAME_NAME,
     "shortName": GAME_NAME_SHORT,
-    //"executable": EXEC,
+    "executable": EXEC,
     "parameters": PARAMETERS,
     "logo": `${GAME_ID}.jpg`,
     "mergeMods": true,
@@ -191,7 +191,7 @@ const spec = {
       "id": DROPZONE_ID,
       "name": DROPZONE_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${DROPZONE_PATH}`
+      "targetPath": path.join('{gamePath}', DROPZONE_PATH)
     },
   ],
   "discovery": {
@@ -213,7 +213,7 @@ const tools = [
     relative: true,
     exclusive: true,
     shell: true,
-    //defaultPrimary: true,
+    defaultPrimary: true,
     parameters: PARAMETERS,
   }, //*/
   {
@@ -227,12 +227,35 @@ const tools = [
     relative: true,
     exclusive: true,
     //shell: true,
-    //defaultPrimary: true,
-    //parameters: PARAMETERS,
+    //parameters: [],
   }, //*/
 ];
 
 // BASIC EXTENSION FUNCTIONS ///////////////////////////////////////////////////
+
+function statCheckSync(gamePath, file) {
+  try {
+    fs.statSync(path.join(gamePath, file));
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}
+async function statCheckAsync(gamePath, file) {
+  try {
+    await fs.statAsync(path.join(gamePath, file));
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}
+
+function isDir(folder, file) {
+  const stats = fs.statSync(path.join(folder, file));
+  return stats.isDirectory();
+}
 
 //Set mod type priorities
 function modTypePriority(priority) {
@@ -265,17 +288,6 @@ function makeGetModPath(api, gameSpec) {
     : pathPattern(api, gameSpec.game, gameSpec.game.modPath);
 }
 
-//Get mod path dynamically for different game versions
-function getModPath(gamePath) {
-  GAME_VERSION = setGameVersion(gamePath);
-  if (GAME_VERSION === 'xbox') {
-    return MOD_PATH_XBOX;
-  }
-  else {
-    return MOD_PATH;
-  }
-} //*/
-
 //Find game installation directory
 function makeFindGame(api, gameSpec) {
   return () => util.GameStoreHelper.findByAppId(gameSpec.discovery.ids)
@@ -289,9 +301,9 @@ async function requiresLauncher(gamePath, store) {
         launcher: 'xbox',
         addInfo: {
           appId: XBOXAPP_ID,
-          //parameters: [{ appExecName: XBOXEXECNAME }],
-          parameters: [{ appExecName: XBOXEXECNAME }, PARAMETERS_STRING0, PARAMETERS_STRING1, PARAMETERS_STRING2, PARAMETERS_STRING3, PARAMETERS_STRING4],
-          launchType: 'gamestore',
+          parameters: [{ appExecName: XBOXEXECNAME }],
+          //parameters: [{ appExecName: XBOXEXECNAME }, PARAMETERS_STRING0, PARAMETERS_STRING1, PARAMETERS_STRING2, PARAMETERS_STRING3, PARAMETERS_STRING4],
+          //launchType: 'gamestore',
         },
       });
   } //*/
@@ -300,8 +312,8 @@ async function requiresLauncher(gamePath, store) {
         launcher: 'epic',
         addInfo: {
           appId: EPICAPP_ID,
-          parameters: PARAMETERS,
-          launchType: 'gamestore',
+          //parameters: PARAMETERS,
+          //launchType: 'gamestore',
         },
     });
   } //*/
@@ -311,8 +323,8 @@ async function requiresLauncher(gamePath, store) {
       launcher: 'steam',
       addInfo: {
         appId: STEAM_ID,
-        parameters: PARAMETERS,
-        launchType: 'gamestore',
+        //parameters: PARAMETERS,
+        //launchType: 'gamestore',
       } //
     });
   } //*/
@@ -321,41 +333,13 @@ async function requiresLauncher(gamePath, store) {
 
 //Get correct executable for game version
 function getExecutable(discoveryPath) {
-  const isCorrectExec = (exec) => {
-    try {
-      fs.statSync(path.join(discoveryPath, exec));
-      return true;
-    }
-    catch (err) {
-      return false;
-    }
-  };
-  if (isCorrectExec(EXEC_XBOX)) {
-    return EXEC_XBOX;
-  };
-  return EXEC;
-}
-
-//Get correct game version
-async function setGameVersion(gamePath) {
-  const isCorrectExec = (exec) => {
-    try {
-      fs.statSync(path.join(gamePath, exec));
-      return true;
-    }
-    catch (err) {
-      return false;
-    }
-  };
-  if (isCorrectExec(EXEC_XBOX)) {
+  if (statCheckSync(discoveryPath, EXEC_XBOX)) {
     GAME_VERSION = 'xbox';
     CONFIG_PATH = path.join(CONFIG_FOLDER, 'Microsoft Store', CONFIG_FOLDERNAME, 'Saves', 'settings');
     SAVE_PATH = path.join(SAVE_FOLDER, 'Microsoft Store', SAVE_FOLDERNAME, 'Saves');
     try {
       const SAVE_ARRAY = fs.readdirSync(SAVE_PATH);
-      USERID_FOLDER = SAVE_ARRAY.find((element) => 
-        ((/[a-z]/i.test(element) === false))
-      );
+      USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_PATH, entry));
     } catch(err) {
       USERID_FOLDER = "";
     }
@@ -363,17 +347,15 @@ async function setGameVersion(gamePath) {
       USERID_FOLDER = "";
     } //*/
     SAVE_PATH = path.join(SAVE_PATH, USERID_FOLDER);
-    return GAME_VERSION;
+    return EXEC;
   };
-  if (isCorrectExec(EGS_FILE)) {
+  if (statCheckSync(discoveryPath, EGS_FILE)) {
     GAME_VERSION = 'epic';
     CONFIG_PATH = path.join(CONFIG_FOLDER, 'Epic Games Store', CONFIG_FOLDERNAME, 'Saves');
     SAVE_PATH = path.join(SAVE_FOLDER, 'Epic Games Store', SAVE_FOLDERNAME, 'Saves');
     try {
       const SAVE_ARRAY = fs.readdirSync(SAVE_PATH);
-      USERID_FOLDER = SAVE_ARRAY.find((element) => 
-        ((/[a-z]/i.test(element) === false))
-      );
+      USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_PATH, entry));
     } catch(err) {
       USERID_FOLDER = "";
     }
@@ -381,17 +363,15 @@ async function setGameVersion(gamePath) {
       USERID_FOLDER = "";
     } //*/
     SAVE_PATH = path.join(SAVE_PATH, USERID_FOLDER);
-    return GAME_VERSION;
+    return EXEC;
   };
-  if (isCorrectExec(EXEC)) {
+  if (statCheckSync(discoveryPath, EXEC)) {
     GAME_VERSION = 'steam';
     CONFIG_PATH = path.join(CONFIG_FOLDER, '', CONFIG_FOLDERNAME, 'Saves');
     SAVE_PATH = path.join(SAVE_FOLDER, '', SAVE_FOLDERNAME, 'Saves');
     try {
       const SAVE_ARRAY = fs.readdirSync(SAVE_PATH);
-      USERID_FOLDER = SAVE_ARRAY.find((element) => 
-        ((/[a-z]/i.test(element) === false))
-      );
+      USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_PATH, entry));
     } catch(err) {
       USERID_FOLDER = "";
     }
@@ -399,7 +379,73 @@ async function setGameVersion(gamePath) {
       USERID_FOLDER = "";
     } //*/
     SAVE_PATH = path.join(SAVE_PATH, USERID_FOLDER);
+    return EXEC;
+  };
+}
+
+//Get correct game version
+async function setGameVersion(gamePath) {
+  if (await statCheckAsync(gamePath, EXEC_XBOX)) {
+    GAME_VERSION = 'xbox';
     return GAME_VERSION;
+  };
+  if (await statCheckAsync(gamePath, EGS_FILE)) {
+    GAME_VERSION = 'epic';
+    return GAME_VERSION;
+  };
+  if (await statCheckAsync(gamePath, EXEC)) {
+    GAME_VERSION = 'steam';
+    return GAME_VERSION;
+  };
+}
+
+//Get correct game version
+function getSavePath(api) {
+  GAME_PATH = getDiscoveryPath(api);
+  if (statCheckSync(GAME_PATH, EXEC_XBOX)) {
+    GAME_VERSION = 'xbox';
+    SAVE_PATH = path.join(SAVE_FOLDER, 'Microsoft Store', SAVE_FOLDERNAME, 'Saves');
+    try {
+      const SAVE_ARRAY = fs.readdirSync(SAVE_PATH);
+      USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_PATH, entry));
+    } catch(err) {
+      USERID_FOLDER = "";
+    }
+    if (USERID_FOLDER === undefined) {
+      USERID_FOLDER = "";
+    } //*/
+    SAVE_PATH = path.join(SAVE_PATH, USERID_FOLDER);
+    return SAVE_PATH;
+  };
+  if (statCheckSync(GAME_PATH, EGS_FILE)) {
+    GAME_VERSION = 'epic';
+    SAVE_PATH = path.join(SAVE_FOLDER, 'Epic Games Store', SAVE_FOLDERNAME, 'Saves');
+    try {
+      const SAVE_ARRAY = fs.readdirSync(SAVE_PATH);
+      USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_PATH, entry));
+    } catch(err) {
+      USERID_FOLDER = "";
+    }
+    if (USERID_FOLDER === undefined) {
+      USERID_FOLDER = "";
+    } //*/
+    SAVE_PATH = path.join(SAVE_PATH, USERID_FOLDER);
+    return SAVE_PATH;
+  };
+  if (statCheckSync(GAME_PATH, EXEC)) {
+    GAME_VERSION = 'steam';
+    SAVE_PATH = path.join(SAVE_FOLDER, '', SAVE_FOLDERNAME, 'Saves');
+    try {
+      const SAVE_ARRAY = fs.readdirSync(SAVE_PATH);
+      USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_PATH, entry));
+    } catch(err) {
+      USERID_FOLDER = "";
+    }
+    if (USERID_FOLDER === undefined) {
+      USERID_FOLDER = "";
+    } //*/
+    SAVE_PATH = path.join(SAVE_PATH, USERID_FOLDER);
+    return SAVE_PATH;
   };
 }
 
@@ -445,9 +491,10 @@ function installDropzone(files) {
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-  ((file.indexOf(rootPath) !== -1) &&
-    (!file.endsWith(path.sep))));
+  const filtered = files.filter(file => (
+    (file.indexOf(rootPath) !== -1) &&
+    (!file.endsWith(path.sep))
+  ));
 
   const instructions = filtered.map(file => {
     return {
@@ -487,20 +534,17 @@ function installSave(files) {
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    (
-      SAVE_FILES.includes(path.basename(file).toLowerCase())
-      //(file.indexOf(rootPath) !== -1)
-      //&& (!file.endsWith(path.sep))
-    )
-  );
+  const filtered = files.filter(file => (
+    SAVE_FILES.includes(path.basename(file).toLowerCase()) &&
+    (file.indexOf(rootPath) !== -1) &&
+    !file.endsWith(path.sep)
+  ));
 
   const instructions = filtered.map(file => {
     return {
       type: 'copy',
       source: file,
       destination: path.join(file.substr(idx)),
-      //destination: file,
     };
   });
   instructions.push(setModTypeInstruction);
@@ -540,23 +584,22 @@ async function setup(discovery, api, gameSpec) {
   // SYNCHRONOUS CODE ////////////////////////////////////
   const state = api.getState();
   GAME_PATH = discovery.path;
-  GAME_VERSION = setGameVersion(GAME_PATH);
-  STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
-  DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
+  STAGING_FOLDER = selectors.installPathForGame(state, gameSpec.game.id);
+  DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, gameSpec.game.id);
+  SAVE_PATH = getSavePath(api);
   // ASYNC CODE //////////////////////////////////////////
+  await fs.ensureDirWritableAsync(SAVE_PATH);
   return fs.ensureDirWritableAsync(path.join(GAME_PATH, DROPZONE_FOLDER));
 }
 
 //Let Vortex know about the game
 function applyGame(context, gameSpec) {
-  //register game
-  const game = {
+  const game = { //register game
     ...gameSpec.game,
     queryPath: makeFindGame(context.api, gameSpec),
-    //executable: () => gameSpec.game.executable,
-    executable: getExecutable,
+    executable: () => gameSpec.game.executable,
+    //executable: getExecutable,
     queryModPath: makeGetModPath(context.api, gameSpec),
-    //queryModPath: getModPath,
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     getGameVersion: resolveGameVersion,
@@ -574,24 +617,24 @@ function applyGame(context, gameSpec) {
   });
 
   //register mod types explicitly
-    /*context.registerModType(CONFIG_ID, 60, 
-      (gameId) => {
-        var _a;
-        return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-      }, 
-      (game) => pathPattern(context.api, game, CONFIG_PATH), 
-      () => Promise.resolve(false), 
-      { name: CONFIG_NAME }
-    ); //*/
-    context.registerModType(SAVE_ID, 60, 
-      (gameId) => {
-        var _a;
-        return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-      }, 
-      (game) => pathPattern(context.api, game, SAVE_PATH), 
-      () => Promise.resolve(false), 
-      { name: SAVE_NAME }
-    ); //*/
+  /*context.registerModType(CONFIG_ID, 60, 
+    (gameId) => {
+      var _a;
+      return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
+    }, 
+    (game) => pathPattern(context.api, game, CONFIG_PATH), 
+    () => Promise.resolve(false), 
+    { name: CONFIG_NAME }
+  ); //*/
+  context.registerModType(SAVE_ID, 60, 
+    (gameId) => {
+      var _a;
+      return (gameId === gameSpec.game.id) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
+    }, 
+    (game) => getSavePath(context.api),
+    () => Promise.resolve(false), 
+    { name: SAVE_NAME }
+  ); //*/
 
   //register mod installers
   context.registerInstaller(DROPZONE_ID, 25, testDropzone, installDropzone);
@@ -600,16 +643,14 @@ function applyGame(context, gameSpec) {
 
   //register actions
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Data Folder', () => {
-    const openPath = SAVE_PATH;
-    util.opn(openPath).catch(() => null);
+    util.opn(SAVE_PATH).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
-    const openPath = CONFIG_PATH;
-    util.opn(openPath).catch(() => null);
+    util.opn(CONFIG_PATH).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
@@ -624,8 +665,7 @@ function applyGame(context, gameSpec) {
       return gameId === GAME_ID;
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
-    const openPath = DOWNLOAD_FOLDER;
-    util.opn(openPath).catch(() => null);
+    util.opn(DOWNLOAD_FOLDER).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
