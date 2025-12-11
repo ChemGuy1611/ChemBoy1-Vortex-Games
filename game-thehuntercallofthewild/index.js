@@ -45,17 +45,22 @@ let DOWNLOAD_FOLDER = '';
 const DROPZONE_ID = `${GAME_ID}-dropzonefolder`;
 const DROPZONE_NAME = "Dropzone Folder";
 const DROPZONE_PATH = ".";
-//const MOD_PATH_XBOX = MOD_PATH;
 const DROPZONE_FOLDER = "dropzone";
 
 const CONFIG_ID = `${GAME_ID}-config`;
 const CONFIG_NAME = "Config";
 const CONFIG_FOLDER = path.join(CONFIGMOD_LOCATION, 'Avalanche Studios');
+const CONFIG_PATH_XBOX = path.join(CONFIG_FOLDER, 'Microsoft Store', CONFIG_FOLDERNAME, 'Saves', 'settings');
+const CONFIG_PATH_EPIC = path.join(CONFIG_FOLDER, 'Epic Games Store', CONFIG_FOLDERNAME, 'Saves', 'settings');
+const CONFIG_PATH_STEAM = path.join(CONFIG_FOLDER, CONFIG_FOLDERNAME, 'Saves', 'settings');
 let CONFIG_PATH = CONFIG_FOLDER;
 
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_NAME = "Save Data File";
 const SAVE_FOLDER = path.join(SAVEMOD_LOCATION, 'Avalanche Studios');
+const SAVE_PATH_XBOX = path.join(SAVE_FOLDER, 'Microsoft Store', SAVE_FOLDERNAME, 'Saves');
+const SAVE_PATH_EPIC = path.join(SAVE_FOLDER, 'Epic Games Store', SAVE_FOLDERNAME, 'Saves');
+const SAVE_PATH_STEAM = path.join(SAVE_FOLDER, SAVE_FOLDERNAME, 'Saves');
 let SAVE_PATH = SAVE_FOLDER;
 let USERID_FOLDER = "";
 const SAVE_STRINGS = [
@@ -335,8 +340,8 @@ async function requiresLauncher(gamePath, store) {
 function getExecutable(discoveryPath) {
   if (statCheckSync(discoveryPath, EXEC_XBOX)) {
     GAME_VERSION = 'xbox';
-    CONFIG_PATH = path.join(CONFIG_FOLDER, 'Microsoft Store', CONFIG_FOLDERNAME, 'Saves', 'settings');
-    SAVE_PATH = path.join(SAVE_FOLDER, 'Microsoft Store', SAVE_FOLDERNAME, 'Saves');
+    CONFIG_PATH = CONFIG_PATH_XBOX;
+    SAVE_PATH = SAVE_PATH_XBOX;
     try {
       const SAVE_ARRAY = fs.readdirSync(SAVE_PATH);
       USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_PATH, entry));
@@ -351,8 +356,8 @@ function getExecutable(discoveryPath) {
   };
   if (statCheckSync(discoveryPath, EGS_FILE)) {
     GAME_VERSION = 'epic';
-    CONFIG_PATH = path.join(CONFIG_FOLDER, 'Epic Games Store', CONFIG_FOLDERNAME, 'Saves');
-    SAVE_PATH = path.join(SAVE_FOLDER, 'Epic Games Store', SAVE_FOLDERNAME, 'Saves');
+    CONFIG_PATH = CONFIG_PATH_EPIC;
+    SAVE_PATH = SAVE_PATH_EPIC;
     try {
       const SAVE_ARRAY = fs.readdirSync(SAVE_PATH);
       USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_PATH, entry));
@@ -367,8 +372,8 @@ function getExecutable(discoveryPath) {
   };
   if (statCheckSync(discoveryPath, EXEC)) {
     GAME_VERSION = 'steam';
-    CONFIG_PATH = path.join(CONFIG_FOLDER, '', CONFIG_FOLDERNAME, 'Saves');
-    SAVE_PATH = path.join(SAVE_FOLDER, '', SAVE_FOLDERNAME, 'Saves');
+    CONFIG_PATH = CONFIG_PATH_STEAM;
+    SAVE_PATH = SAVE_PATH_STEAM;
     try {
       const SAVE_ARRAY = fs.readdirSync(SAVE_PATH);
       USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_PATH, entry));
@@ -404,7 +409,8 @@ function getSavePath(api) {
   GAME_PATH = getDiscoveryPath(api);
   if (statCheckSync(GAME_PATH, EXEC_XBOX)) {
     GAME_VERSION = 'xbox';
-    SAVE_PATH = path.join(SAVE_FOLDER, 'Microsoft Store', SAVE_FOLDERNAME, 'Saves');
+    CONFIG_PATH = CONFIG_PATH_XBOX;
+    SAVE_PATH = SAVE_PATH_XBOX;
     try {
       const SAVE_ARRAY = fs.readdirSync(SAVE_PATH);
       USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_PATH, entry));
@@ -419,7 +425,8 @@ function getSavePath(api) {
   };
   if (statCheckSync(GAME_PATH, EGS_FILE)) {
     GAME_VERSION = 'epic';
-    SAVE_PATH = path.join(SAVE_FOLDER, 'Epic Games Store', SAVE_FOLDERNAME, 'Saves');
+    CONFIG_PATH = CONFIG_PATH_EPIC;
+    SAVE_PATH = SAVE_PATH_EPIC;
     try {
       const SAVE_ARRAY = fs.readdirSync(SAVE_PATH);
       USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_PATH, entry));
@@ -434,7 +441,8 @@ function getSavePath(api) {
   };
   if (statCheckSync(GAME_PATH, EXEC)) {
     GAME_VERSION = 'steam';
-    SAVE_PATH = path.join(SAVE_FOLDER, '', SAVE_FOLDERNAME, 'Saves');
+    CONFIG_PATH = CONFIG_PATH_STEAM;
+    SAVE_PATH = SAVE_PATH_STEAM;
     try {
       const SAVE_ARRAY = fs.readdirSync(SAVE_PATH);
       USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_PATH, entry));
