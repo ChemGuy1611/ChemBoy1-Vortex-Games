@@ -401,7 +401,8 @@ async function deserializeLoadOrder(context) {
     try {//Mod installed by Vortex, find mod where atrribute (from installer) matches folder in the load order
       const modMatch = Object.values(mods).find(mod => (util.getSafe(mods[mod.id]?.attributes, ['modName'], '') === folder));
       if (modMatch) {
-        const name = modMatch.attributes.customFileName ?? modMatch.attributes.logicalFileName ?? modMatch.attributes.name;
+        let name = modMatch.attributes.customFileName ?? modMatch.attributes.logicalFileName ?? modMatch.attributes.name;
+        name = name.replace(/(.zip|.rar|.7z)/gi, '');
         if (name.includes('Mod List Dividers')) {
           return `____${folder}`;
         }
