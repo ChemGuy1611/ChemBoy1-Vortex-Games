@@ -12,7 +12,6 @@ let mod_update_all_profile = false; // for mod update to keep them in the load o
 let updatemodid = undefined;
 let updating_mod = false; // used to see if it's a mod update or not
 let mod_install_name = ""; // used to display the name of the currently installed mod
-//let api = false; // useful where we can't access API
 const is_darktide_profile_active = (api) => {
   const state = api.getState();
   const test = (selectors.activeGameId(state) === GAME_ID)
@@ -58,7 +57,10 @@ const MOD_FOLDER = "mods";
 const DMF_FOLDER = "dmf";
 const DML_FILE = "toggle_darktide_mods.bat";
 const BINARIES_ID = 'darktide-binaries';
+const BINARIES_NAME = 'Binaries';
 const BINARIES_PATH = "binaries";
+const ROOT_ID = 'darktide-root';
+const ROOT_FOLDERS = ['mods', 'binaries', 'bundle', 'launcher'];
 let DOWNLOAD_FOLDER = '';
 let STAGING_FOLDER = '';
 
@@ -94,46 +96,29 @@ function isFile(file) {
     return !file.endsWith(path.sep);
 }
 
-async function queryGame() {
-  let game = await util.GameStoreHelper.findByAppId([STEAMAPP_ID, MS_APPID]);
-  return game;
+//Find game installation directory
+function makeFindGame() {
+  return () => util.GameStoreHelper.findByAppId([STEAMAPP_ID, MS_APPID])
+    .then((game) => game.gamePath);
 }
 
-async function queryPath() {
-  let game = await queryGame();
-  return game.gamePath;
-}
-
-async function requiresLauncher() {
-  let game = await queryGame();
-  if (game.gameStoreId === "xbox") {
-    return {
-      launcher: "xbox",
+async function requiresLauncher(gamePath, store) {
+  if (store === 'xbox') {
+    return Promise.resolve({
+      launcher: 'xbox',
       addInfo: {
-        appId: MS_APPID,
-        // appExecName is the <Application id="" in the appxmanifest.xml file
-        parameters: [{ appExecName: "launcher.launcher" }],
+        appId: XBOXAPP_ID,
+        parameters: [{ appExecName: XBOXEXECNAME }],
       },
-    };
-  }
-
-  return undefined;
-}
-
-function api_warning(ID, message, supress, api) {
-  if (!api) {
-    log(
-      'warn',
-      "Darktide-" + ID + " : api is not defined could not send notif",
-    );
-    return;
-  }
-  api.sendNotification({
-    id: "Darktide-" + ID + "-" + warn_call++,
-    type: "warning",
-    message: message,
-    allowSuppress: supress === undefined || supress ? true : false,
-  });
+    });
+  } //*/
+  /*
+  if (store === 'steam') {
+    return Promise.resolve({
+        launcher: 'steam',
+    });
+  } //*/
+  return Promise.resolve(undefined);
 }
 
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
@@ -239,11 +224,58 @@ function installMod(files) {
     (file) => file.indexOf(rootPath) !== -1 && 
     !file.endsWith(path.sep)
   );
+
+  const MOD_ATTRIBUTE = {
+    type: 'attribute',
+    key: 'modName',
+    value: modName,
+  };
+
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
       source: file,
       destination: path.join("mods", modName, file.substr(idx)),
+    };
+  });
+  instructions.push(MOD_ATTRIBUTE);
+  return Promise.resolve({ instructions });
+}
+
+//Installer test for Root folder files
+function testRoot(files, gameId) {
+  const isMod = files.some(file => ROOT_FOLDERS.includes(path.basename(file)));
+  let supported = (gameId === GAME_ID) && isMod;
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Installer install Root folder files
+function installRoot(files) {
+  let modFile = files.find(file => ROOT_FOLDERS.includes(path.basename(file)));
+  const ROOT_IDX = `${path.basename(modFile)}${path.sep}`;
+  const idx = modFile.indexOf(ROOT_IDX);
+  const rootPath = path.dirname(modFile);
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
     };
   });
   return Promise.resolve({ instructions });
@@ -266,6 +298,18 @@ function testBinaries(files, gameId) {
   });
 }
 
+function fallbackNotify(api, modName) {
+  const NOTIF_ID = `${GAME_ID}-fallback-notify`;
+  const MESSAGE = `Fallback install to "binaries" folder for mod: "${modName}"`;
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'info',
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [],
+  });
+}
+
 //Fallback installer to Binaries folder
 function installBinaries(api, files, fileName) {
   const setModTypeInstruction = { type: 'setmodtype', value: BINARIES_ID };
@@ -273,11 +317,7 @@ function installBinaries(api, files, fileName) {
 
   //* Do not resend the alert in case of updates
   if (!updating_mod) {
-    api_warning(
-      "Binaries-Fallback-" + modName,
-      modName + "Mod will be installed in the binaries directory. If this is correct, you may ignore this warning",
-      api
-    );
+    fallbackNotify(api, modName);
   } //*/
   
   const filtered = files.filter(file =>
@@ -312,6 +352,7 @@ async function deserializeLoadOrder(context) {
 
   //read current LO file
   const gameDir = getDiscoveryPath(context.api);
+  const mods = util.getSafe(context.api.store.getState(), ['persistent', 'mods', GAME_ID], {});
   const loadOrderPath = path.join(gameDir, "mods", LO_FILE);
   let loadOrderFile = await fs.readFileAsync(
     loadOrderPath, 
@@ -351,6 +392,27 @@ async function deserializeLoadOrder(context) {
     }
   } //*/
 
+  // Get readable mod name using modFolderDerived attribute from mod installer
+  async function getModName(folder) {
+    const VORTEX = await isVortexManaged(folder);
+    if (!VORTEX) { //If not Steam Workshop, check if mod was not installed by Vortex
+      return ('Manual Mod');
+    }
+    try {//Mod installed by Vortex, find mod where atrribute (from installer) matches folder in the load order
+      const modMatch = Object.values(mods).find(mod => (util.getSafe(mods[mod.id]?.attributes, ['modName'], '') === folder));
+      if (modMatch) {
+        const name = modMatch.attributes.customFileName ?? modMatch.attributes.logicalFileName ?? modMatch.attributes.name;
+        if (name.includes('Mod List Dividers')) {
+          return `____${folder}`;
+        }
+        return name;
+      }
+      return folder;
+    } catch (err) {
+      return folder;
+    }
+  }
+
   //Determine if mod is managed by Vortex (async version)
   async function isVortexManaged(modId) {
     return fs.statAsync(path.join(modFolderPath, modId, `__folder_managed_by_vortex`))
@@ -359,8 +421,7 @@ async function deserializeLoadOrder(context) {
   };
 
   //create load order array
-  let loadOrder = await loadOrderFile
-    .split("\n")
+  let loadOrder = await loadOrderFile.split("\n")
     .reduce(async (accumP, line) => {
       const accum = await accumP;
       const folder = line.replace(/-- /g, "").trim();
@@ -370,6 +431,7 @@ async function deserializeLoadOrder(context) {
       accum.push(
         {
           id: folder,
+          name: `${await getModName(folder)} (${folder})`,
           modId: await isVortexManaged(folder) ? folder : undefined,
           enabled: !line.startsWith("--"),
         }
@@ -377,21 +439,13 @@ async function deserializeLoadOrder(context) {
       return Promise.resolve(accum);
       }, Promise.resolve([])
     )
-    /*.map((line) => {
-      const id = line.replace(/-- /g, "").trim();
-      return {
-        id,
-        modId: isVortexManaged(id) ? id : undefined,
-        enabled: !line.startsWith("--"),
-      };
-    }) 
-    .filter((mod) => modFolders.includes(mod.id))//*/
 
   //add new mods to load order
   for (let folder of modFolders) {
     if (!loadOrder.find((mod) => mod.id === folder)) {
       loadOrder.push({
         id: folder,
+        name: `${await getModName(folder)} (${folder})`,
         modId: await isVortexManaged(folder) ? folder : undefined,
         enabled: true,
       });
@@ -479,13 +533,13 @@ function main(context) {
     id: GAME_ID,
     name: "Warhammer 40,000: Darktide",
     logo: "gameart.png",
-    queryPath,
+    queryPath: makeFindGame,
     queryModPath: () => ".",
     supportedTools: tools,
     mergeMods: true,
     directoryCleaning: "tag",
     requiresCleanup: true,
-    requiresLauncher,
+    requiresLauncher: requiresLauncher,
     executable: () => "launcher/Launcher.exe",
     parameters: [`--lua-heap-mb-size ${HEAP_SIZE}`],
     requiredFiles: ["launcher/Launcher.exe", "binaries/Darktide.exe"],
@@ -511,7 +565,7 @@ function main(context) {
     var _a;
     return (gameId === GAME_ID)
       && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, (game) => pathPattern(context.api, game, path.join("{gamePath}", BINARIES_PATH)), () => Promise.resolve(false), { name: 'Binaries' }
+    }, (game) => pathPattern(context.api, game, path.join("{gamePath}", BINARIES_PATH)), () => Promise.resolve(false), { name: BINARIES_NAME }
   ); //*/
   context.registerModType('darktide-config', 30, (gameId) => {
     var _a;
@@ -533,9 +587,15 @@ function main(context) {
     testMod,
     installMod,
   );
+  context.registerInstaller( //root folders
+    ROOT_ID,
+    29,
+    testRoot,
+    installRoot,
+  );
   context.registerInstaller( //fallback installer to Binaries folder
     BINARIES_ID,
-    29,
+    31,
     testBinaries,
     (files, fileName) => installBinaries(context.api, files, fileName),
   );

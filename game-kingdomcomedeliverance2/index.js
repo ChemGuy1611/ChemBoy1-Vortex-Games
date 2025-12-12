@@ -776,7 +776,7 @@ async function deserializeLoadOrder(context) {
   //*/
 
   //Set load order (async version)
-  let loadOrder = await (loadOrderFile.split("\n"))
+  let loadOrder = await loadOrderFile.split("\n")
     .reduce(async (accumP, line) => {
       const accum = await accumP;
       const folder = line.replace(/#/g, '').trim();
