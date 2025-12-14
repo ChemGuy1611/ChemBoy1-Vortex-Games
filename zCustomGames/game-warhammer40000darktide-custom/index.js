@@ -11,13 +11,23 @@ let GAME_PATH = null;
 let mod_update_all_profile = false; // for mod update to keep them in the load order and not uncheck them
 let updatemodid = undefined;
 let updating_mod = false; // used to see if it's a mod update or not
-let mod_install_name = ""; // used to display the name of the currently installed mod
-const is_darktide_profile_active = (api) => {
-  const state = api.getState();
-  const test = (selectors.activeGameId(state) === GAME_ID)
-  return test;
-};
-let warn_call = 0; // to avoid a notif not appearing due to having the same id
+
+//1792 is known to work, ???2048 fails to apply (no crash)??? up to 3096 does not crash, but might cause blurry textures???
+const HEAP_SIZE = 2048;
+const APPDATA = util.getVortexPath('appData');
+const CONFIG_PATH = path.join(APPDATA, "Fatshark", "Darktide");
+const CONFIG_FILE = path.join(CONFIG_PATH, "user_settings.config");
+const LO_FILE = "mod_load_order.txt";
+const MOD_FOLDER = "mods";
+const DMF_FOLDER = "dmf";
+const DML_FILE = "toggle_darktide_mods.bat";
+const BINARIES_ID = 'darktide-binaries';
+const BINARIES_NAME = 'Binaries';
+const BINARIES_PATH = "binaries";
+const ROOT_ID = 'darktide-root';
+const ROOT_FOLDERS = ['mods', 'binaries', 'bundle', 'launcher'];
+let DOWNLOAD_FOLDER = '';
+let STAGING_FOLDER = '';
 
 const tools = [
   {
@@ -47,22 +57,6 @@ const tools = [
     exclusive: true,
   },
 ];
-
-const HEAP_SIZE = 1792; //1792, 2048 fails to apply it seems
-const APPDATA = util.getVortexPath('appData');
-const CONFIG_PATH = path.join(APPDATA, "Fatshark", "Darktide");
-const CONFIG_FILE = path.join(CONFIG_PATH, "user_settings.config");
-const LO_FILE = "mod_load_order.txt";
-const MOD_FOLDER = "mods";
-const DMF_FOLDER = "dmf";
-const DML_FILE = "toggle_darktide_mods.bat";
-const BINARIES_ID = 'darktide-binaries';
-const BINARIES_NAME = 'Binaries';
-const BINARIES_PATH = "binaries";
-const ROOT_ID = 'darktide-root';
-const ROOT_FOLDERS = ['mods', 'binaries', 'bundle', 'launcher'];
-let DOWNLOAD_FOLDER = '';
-let STAGING_FOLDER = '';
 
 // BASIC EXTENSION FUNCTIONS ///////////////////////////////////////////////////
 
@@ -300,7 +294,7 @@ function testBinaries(files, gameId) {
 
 function fallbackNotify(api, modName) {
   const NOTIF_ID = `${GAME_ID}-fallback-notify`;
-  const MESSAGE = `Fallback install to "binaries" folder for mod: "${modName}"`;
+  const MESSAGE = `Fallback install to "binaries" folder for mod:\n${modName}`;
   api.sendNotification({
     id: NOTIF_ID,
     type: 'info',
@@ -476,6 +470,12 @@ async function serializeLoadOrder(context, loadOrder) {
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
+const is_darktide_profile_active = (api) => {
+  const state = api.getState();
+  const test = (selectors.activeGameId(state) === GAME_ID)
+  return test;
+};
+
 function checkForDMF(api, mod_framework) {
   return fs.statAsync(mod_framework).catch(() => {
     api.sendNotification({
@@ -526,7 +526,7 @@ async function setup(discovery, api) {
   await fs.ensureDirWritableAsync(CONFIG_PATH);
   await fs.ensureFileAsync(path.join(GAME_PATH, MOD_FOLDER, LO_FILE)); // Ensure the mod load order file exists
   await checkForDMF(api, path.join(GAME_PATH, MOD_FOLDER, DMF_FOLDER)); // Check if DMF is installed
-  await checkForDML(api, path.join(GAME_PATH, DML_FILE)); // Check if DML is installed
+  return checkForDML(api, path.join(GAME_PATH, DML_FILE)); // Check if DML is installed
 }
 
 function main(context) {
@@ -588,13 +588,13 @@ function main(context) {
     testMod,
     installMod,
   );
-  context.registerInstaller( //root folders
+  context.registerInstaller( //root folders ("mods", "binaries", "bundle", "launcher")
     ROOT_ID,
     29,
     testRoot,
     installRoot,
   );
-  context.registerInstaller( //fallback installer to Binaries folder
+  context.registerInstaller( //fallback installer to Binaries folder (i.e. dll mods, Optiscaler)
     BINARIES_ID,
     31,
     testBinaries,
@@ -643,28 +643,22 @@ function main(context) {
   });
 
   context.once(() => {
-    api = context.api; //don't move from the top
-    if (is_darktide_profile_active(api)) {
-      toolbar(api);
-    }
-    context.api.events.on("profile-did-change", () => {
-      if (is_darktide_profile_active(api)) {
-        toolbar(api);
-      }
-    });
-    // Patch on deploy
+    const api = context.api; //don't move from the top
+    // Patch exe on deploy and reset mod update flags
     context.api.onAsync("did-deploy", (profileId) => {
       mod_update_all_profile = false; //reset all-profile flag on deploy
       updating_mod = false; //reset updating flag on deploy
       updatemodid = undefined; //reset updated modId on deploy
+      GAME_PATH = getDiscoveryPath(api);
       if (is_darktide_profile_active(api) && GAME_PATH != null) {
         try {
           api.runExecutable(path.join(GAME_PATH, "tools", "dtkit-patch.exe"), ["--patch"], { shell: true, detached: true } )
         } catch (e) {}
       }
     });
-    // Unpatch on purge
+    // Unpatch exe on purge
     context.api.events.on("will-purge", (profileId) => {
+      GAME_PATH = getDiscoveryPath(api);
       if (is_darktide_profile_active(api) && GAME_PATH != null) {
         try {
           api.runExecutable(path.join(GAME_PATH, "tools", "dtkit-patch.exe"), ["--unpatch"], { shell: true, detached: true } )
@@ -690,6 +684,14 @@ function main(context) {
         updating_mod = true;
       } else {
         updating_mod = false;
+      }
+    });
+    if (is_darktide_profile_active(api)) {
+      toolbar(api);
+    }
+    context.api.events.on("profile-did-change", () => {
+      if (is_darktide_profile_active(api)) {
+        toolbar(api);
       }
     });
   });
