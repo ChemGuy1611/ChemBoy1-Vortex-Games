@@ -327,16 +327,7 @@ async function requiresLauncher(gamePath, store) {
 
 //Get correct executable for game version
 function getExecutable(discoveryPath) {
-  const isCorrectExec = (exec) => {
-    try {
-      fs.statSync(path.join(discoveryPath, exec));
-      return true;
-    }
-    catch (err) {
-      return false;
-    }
-  };
-  if (isCorrectExec(EXEC_XBOX)) {
+  if (statCheckSync(discoveryPath, EXEC_XBOX)) {
     return EXEC_XBOX;
   };
   return EXEC;
@@ -360,6 +351,7 @@ async function statCheckAsync(gamePath, file) {
     return false;
   }
 }
+
 //Get correct game version
 async function setGameVersion(gamePath) {
   const CHECK = await statCheckAsync(gamePath, EXEC_XBOX);

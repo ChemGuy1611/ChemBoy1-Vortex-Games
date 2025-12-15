@@ -27,6 +27,18 @@ let GAME_VERSION = '';
 // BASIC FUNCTIONS ///////////////////////////////////////////////////////////////
 //////////////////////////////////////////////////////////////////////////////////
 
+function readRegistryKey(hive, key, name) {
+  try {
+    const instPath = winapi.RegGetValue(hive, key, name);
+    if (!instPath) {
+      throw new Error('empty registry key');
+    }
+    return Promise.resolve(instPath.value);
+  } catch (err) {
+    return Promise.resolve(undefined);
+  }
+}
+
 //get discovery.path from state
 const getDiscoveryPath = (api) => {
   const state = api.getState();

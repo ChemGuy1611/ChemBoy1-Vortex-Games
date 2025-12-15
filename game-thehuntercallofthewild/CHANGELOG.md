@@ -4,6 +4,14 @@
 
 - None Planned
 
+## [0.2.0] - 2025-12-11
+
+- Fixed folder path setting for the Save folder based on the game store version.
+- Changed to use the same executable for all game versions.
+- Removed troublesome parameters from requiresLauncher function.
+- Fixed Xbox game version detection.
+- Technical fixes and improvements.
+
 ## [0.1.3] - 2025-09-29
 
 - Version bump to fix incorrect files.
