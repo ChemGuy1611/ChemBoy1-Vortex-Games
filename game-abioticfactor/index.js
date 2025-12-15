@@ -652,7 +652,7 @@ function testScripts(files, gameId) {
 
 //Install UE4SS Script files
 function installScripts(files, fileName) {
-  const modFile = files.find(file => (path.basename(file) === SCRIPTS_FILE));
+  const modFile = files.find(file => (path.basename(file).toLowerCase() === SCRIPTS_FILE.toLowerCase()));
   const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: SCRIPTS_ID };
@@ -716,7 +716,7 @@ function testDll(files, gameId) {
 
 //Install UE4SS DLL files
 function installDll(files, fileName) {
-  const modFile = files.find(file => (path.basename(file) === DLL_FILE));
+  const modFile = files.find(file => (path.basename(file).toLowerCase() === DLL_FILE.toLowerCase()));
   const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: DLL_ID };
