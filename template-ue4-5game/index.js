@@ -751,7 +751,7 @@ function installSigBypass(files) {
 //Test for UE4SS Script files
 function testScripts(files, gameId) {
   const isMod = files.some(file => (path.extname(file).toLowerCase() === SCRIPTS_EXT));
-  const isFolder = files.some(file => (path.basename(file) === SCRIPTS_FOLDER));
+  const isFolder = files.some(file => (path.basename(file).toLowerCase() === SCRIPTS_FOLDER.toLowerCase()));
   let supported = (gameId === spec.game.id) && isMod && isFolder;
 
   // Test for a mod installer
@@ -815,7 +815,7 @@ function installScripts(files, fileName) {
 //Test for UE4SS DLL files
 function testDll(files, gameId) {
   const isMod = files.some(file => (path.extname(file).toLowerCase() === DLL_EXT));
-  const isFolder = files.some(file => (path.basename(file) === DLL_FOLDER));
+  const isFolder = files.some(file => (path.basename(file).toLowerCase() === DLL_FOLDER.toLowerCase()));
   let supported = (gameId === spec.game.id) && isMod && isFolder;
 
   // Test for a mod installer
