@@ -2,8 +2,8 @@
 Name: Abiotic Factor Vortex Extension
 Structure: UE5 (Xbox-Integrated)
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2025-07-28
+Version: 0.1.1
+Date: 2025-12-15
 ////////////////////////////////////////////////*/
 
 //Import libraries
