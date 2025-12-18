@@ -4,6 +4,10 @@
 
 - None
 
+## [0.1.6] - 2025-12-18
+
+- Fixed cannot deploy errors that could occur if the game was installed to C Drive and the user had never launched the game before.
+
 ## [0.1.5] - 2025-09-25
 
 - Added GOG version support.
@@ -15,7 +19,7 @@
 
 ## [0.1.3] - 2025-05-22
 
-- Improved the config installer notification. 
+- Improved the config installer notification.
 - Added save (.sav) installer - Steam and Epic versions only.
 
 ## [0.1.2] - 2025-05-16
