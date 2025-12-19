@@ -2,8 +2,8 @@
 Name: Clair Obscur: Expedition 33 Vortex Extension
 Structure: UE5 (Xbox-Integrated)
 Author: ChemBoy1
-Version: 0.1.5
-Date: 2025-09-25
+Version: 0.1.6
+Date: 2025-12-18
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -444,6 +444,34 @@ async function setGameVersion(api) {
 
 //Get correct game version
 async function setGameVersionPath(gamePath) {
+  const isCorrectExec = (exec) => {
+    try {
+      fs.statSync(path.join(gamePath, exec));
+      return true;
+    }
+    catch (err) {
+      return false;
+    }
+  };
+  if (isCorrectExec(EXEC_XBOX)) {
+    GAME_VERSION = 'xbox';
+    return GAME_VERSION;
+  };
+  if (isCorrectExec(EXEC_DEFAULT)) {
+    GAME_VERSION = 'steam';
+    return GAME_VERSION;
+  };
+  if (isCorrectExec(EXEC_EPIC)) {
+    GAME_VERSION = 'epic';
+    return GAME_VERSION;
+  };
+  if (isCorrectExec(EXEC_GOG)) {
+    GAME_VERSION = 'gog';
+    return GAME_VERSION;
+  };
+}
+
+function setGameVersionPathSync(gamePath) {
   const isCorrectExec = (exec) => {
     try {
       fs.statSync(path.join(gamePath, exec));
@@ -1385,9 +1413,12 @@ async function setup(discovery, api, gameSpec) {
     partitionCheckNotify(api, CHECK_DATA);
   }
   // ASYCRONOUS CODE ///////////////////////////////////
+  GAME_VERSION = await setGameVersionPath(GAME_PATH);
   if (CHECK_DATA) { //if game, staging folder, and config and save folders are on the same drive
     await fs.ensureDirWritableAsync(path.join(CONFIG_PATH));
-    //await fs.ensureDirWritableAsync(SAVE_PATH);
+    if (GAME_VERSION !== 'xbox') {
+      await fs.ensureDirWritableAsync(SAVE_PATH);
+    }
   } //*/
   //await downloadUe4ss(api, gameSpec);
   await fs.ensureDirWritableAsync(path.join(GAME_PATH, SCRIPTS_PATH));
@@ -1501,8 +1532,8 @@ function applyGame(context, gameSpec) {
   context.registerModType(SAVE_ID, 60, 
     (gameId) => {
       GAME_PATH = getDiscoveryPath(context.api);
-      GAME_VERSION = setGameVersion(context.api);
       if (GAME_PATH !== undefined) {
+        GAME_VERSION = setGameVersionPathSync(GAME_PATH);
         CHECK_DATA = checkPartitions(LOCALAPPDATA, GAME_PATH);
       }
       return ((gameId === GAME_ID) && (CHECK_DATA === true) && (GAME_VERSION === 'steam' || GAME_VERSION === 'epic' || GAME_VERSION === 'gog'));
