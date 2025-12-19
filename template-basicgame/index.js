@@ -273,11 +273,6 @@ async function requiresLauncher(gamePath, store) {
   if (store === 'steam') {
     return Promise.resolve({
       launcher: 'steam',
-      addInfo: {
-        appId: STEAM_ID,
-        //parameters: PARAMETERS,
-        //launchType: 'gamestore',
-      } //
     });
   } //*/
   return Promise.resolve(undefined);
@@ -592,8 +587,7 @@ async function setup(discovery, api, gameSpec) {
 
 //Let Vortex know about the game
 function applyGame(context, gameSpec) {
-  //register game
-  const game = {
+  const game = { //register game
     ...gameSpec.game,
     queryPath: makeFindGame(context.api, gameSpec),
     executable: () => gameSpec.game.executable,
