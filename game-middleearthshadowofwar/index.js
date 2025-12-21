@@ -88,7 +88,7 @@ const CONFIG_ID = `${GAME_ID}-configsave`;
 const CONFIG_NAME = "Config / Save";
 const CONFIG_PATH = path.join(CONFIGMOD_LOCATION, DATA_FOLDER);
 const CONFIG_EXTS = [".ini"];
-const CONFIG_FILES = ["XXX"];
+const CONFIG_FILES = ["render.cfg"];
 const SAVE_EXTS = [".sav"];
 
 const LO_FILE = "default.archcfg";

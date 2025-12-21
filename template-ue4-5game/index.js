@@ -37,6 +37,7 @@ const PCGAMINGWIKI_URL = "XXX";
 
 const hasXbox = false; //toggle for Xbox version logic (to unify templates)
 const multiExe = false; //toggle for multiple executables (Epic/GOG/Demo don't match Steam)
+const hasModKit = false; //toggle for UE ModKit mod support
 
 //Unreal Engine specific
 const EPIC_CODE_NAME = "XXX";
@@ -177,12 +178,12 @@ const UE4SS_FILE = "dwmapi.dll";
 const UE4SS_DLFILE_STRING = "ue4ss";
 const UE4SS_URL = "https://github.com/UE4SS-RE/RE-UE4SS/releases";
 
-//Save Editor
+//Save Editor (only used if one is available)
 const SAVE_EDITOR_ID = `${GAME_ID}-saveeditor`;
 const SAVE_EDITOR_NAME = "Save Editor";
 const SAVE_EDITOR_EXEC = "XXX.exe";
 
-//Signature Bypass
+//Signature Bypass (only used if game requires)
 const SIGBYPASS_ID = `${GAME_ID}-sigbypass`;
 const SIGBYPASS_NAME = "Sig Bypass";
 const SIGBYPASS_DLL = "dsound.dll";
@@ -190,6 +191,20 @@ const SIGBYPASS_LUA = "UniversalSigBypasser.asi";
 const SIGBYPASS_PAGE_NO = 1416;
 const SIGBYPASS_FILE_NO = 5719;
 const SIGBYPASS_DOMAIN = 'site';
+
+//ModKit (only used if game supports)
+const MODKITMOD_ID = `${GAME_ID}-modkitmod`;
+const MODKITMOD_NAME = "ModKit mod";
+const MODKITMOD_FILE = 'mod.json';
+const MODKITMOD_EXT = '.uplugin';
+const MODKITMOD_PATH = path.join(EPIC_CODE_NAME, 'Mods');
+
+const MODKIT_ID = `${GAME_ID}-modkit`;
+const MODKIT_NAME = "ModKit";
+const MODKITAPP_ID = "XXX";
+const MODKIT_EXEC_NAME = "ModKit.exe";
+const MODKIT_FOLDER = path.join('XXX', 'Binaries', 'Win64');
+const MODKIT_EXEC_PATH = path.join(MODKIT_FOLDER, MODKIT_EXEC_NAME);
 
 const MOD_PATH_DEFAULT = PAK_PATH;
 const REQ_FILE = EPIC_CODE_NAME;
@@ -580,6 +595,60 @@ async function deploy(api) {
 }
 
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
+
+//Installer test for mod files
+function testModKitMod(files, gameId) {
+  const isMod = files.some(file => (path.extname(file).toLowerCase() === MODKITMOD_EXT));
+  const isJson = files.some(file => (path.basename(file).toLowerCase() === MODKITMOD_FILE));
+  let supported = (gameId === spec.game.id) && ( isMod && isJson );
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Installer install mod files
+function installModKitMod(files, fileName) {
+  const modFile = files.find(file => (path.basename(file).toLowerCase() === MODKITMOD_FILE));
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: MODKITMOD_ID };
+  let MOD_NAME = path.basename(fileName);
+  let MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
+  if (rootPath !== '.') {
+    MOD_NAME = path.basename(rootPath);
+    MOD_FOLDER = MOD_NAME;
+  }
+  try { //read mod.json file to get folder name (game will crash if this doesn't match)
+    const JSON_OBJECT = JSON.parse(fs.readFileSync(path.join(fileName, rootPath, MODKITMOD_FILE)));
+    const JSON_MOD_NAME = JSON_OBJECT["modPluginName"];
+    MOD_FOLDER = JSON_MOD_NAME;
+  } catch (err) { //mod.json could not be read.
+    log('error', `Could not read mod.json file for mod ${MOD_NAME}.`);
+  }
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(MOD_FOLDER, file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
 
 //Test for save files
 function testUe4ssCombo(files, gameId) {
@@ -1844,6 +1913,19 @@ function applyGame(context, gameSpec) {
     );
   }
 
+  //register ModKit modtype
+  if (hasModKit === true) {
+    context.registerModType(MODKITMOD_ID, 60, 
+      (gameId) => {
+        var _a;
+        return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
+      }, 
+      (game) => pathPattern(context.api, game, path.join('{gamePath}', MODKITMOD_PATH)),
+      () => Promise.resolve(false), 
+      { name: MODKITMOD_NAME }
+    );
+  }
+
   //* register modtypes with partition checks
   context.registerModType(CONFIG_ID, 60, 
     (gameId) => {
@@ -1876,7 +1958,10 @@ function applyGame(context, gameSpec) {
   ); //*/
   
   //register mod installers
-  context.registerInstaller(UE4SSCOMBO_ID, 25, testUe4ssCombo, installUe4ssCombo);
+  if (hasModKit === true) {
+    context.registerInstaller(MODKITMOD_ID, 25, testModKitMod, installModKitMod);
+  }
+  context.registerInstaller(UE4SSCOMBO_ID, 26, testUe4ssCombo, installUe4ssCombo);
   context.registerInstaller(LOGICMODS_ID, 27, testLogic, installLogic);
   //29 is pak installer above
   context.registerInstaller(UE4SS_ID, 31, testUe4ss, installUe4ss);
