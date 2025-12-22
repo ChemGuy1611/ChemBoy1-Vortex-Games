@@ -12,7 +12,6 @@ const path = require('path');
 const template = require('string-template');
 //const { download, findModByFile, findDownloadIdByFile, resolveVersionByPattern, testRequirementVersion } = require('./downloader');
 const fsPromises = require('fs/promises');
-const { clear } = require('console');
 
 //Specify all information about the game
 const STEAMAPP_ID = "2531310";
@@ -1449,8 +1448,8 @@ function main(context) {
       validate: async () => Promise.resolve(undefined), // no validation implemented yet
       deserializeLoadOrder: async () => await deserializeLoadOrder(context),
       serializeLoadOrder: async (loadOrder) => await serializeLoadOrder(context, loadOrder),  
-      toggleableEntries: false,
-      usageInstructions:`Drag and drop the mods on the left to change the order in which they load.   \n` 
+      toggleableEntries: true,
+      usageInstructions:`Drag and drop the mods on the left to change the order in which they load.   \n`
                         +`${GAME_NAME} loads mods in the order you set from top to bottom.   \n`
                         +`\n`,
     });

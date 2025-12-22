@@ -2,8 +2,8 @@
 Name: Middle-earth: Shadow of War Vortex Extension
 Structure: Mod Loaders + Mods folder w/ LO support
 Author: ChemBoy1
-Version: 2.0.0
-Date: 2025-12-19
+Version: 2.1.0
+Date: 2025-12-22
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -37,6 +37,7 @@ const EXEC_GOG = EXEC; //matching exes
 const EXEC_XBOX = 'gamelaunchhelper.exe';
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Middle-earth:_Shadow_of_War";
 
+const LOAD_ORDER_ENABLED = true;
 const ROOT_FOLDERS = ['game', 'x64'];
 const DATA_FOLDER = path.join('WB Games', 'Shadow of War');
 const CONFIGMOD_LOCATION = LOCALAPPDATA;
@@ -50,7 +51,8 @@ const APPMANIFEST_FILE = 'appxmanifest.xml';
 const MOD_ID = `${GAME_ID}-arch06mod`;
 const MOD_NAME = ".arch06 Mod";
 const MOD_PATH = "Mods";
-const MOD_EXTS = ['.arch06'];
+const MOD_EXT = ".arch06";
+const MOD_EXTS = [MOD_EXT];
 
 const PLUGINS_ID = `${GAME_ID}-pluginsandpackets`;
 const PLUGINS_NAME = "Plugins / Packets";
@@ -95,8 +97,109 @@ const LO_FILE = "default.archcfg";
 const LO_FILE_PATH = path.join(BINARIES_PATH, LO_FILE);
 const LO_MOD_EXTS = MOD_EXTS;
 const LO_READ_PATH = MOD_PATH;
-const LO_FILE_SPLITSTRING = "../Mods";
-let LO_FILE_STARTUP = '';
+const LO_FILE_SPLITSTRING = "..\\Mods\\";
+let LO_FILE_STARTUP = `..\\Game
+
+; needed to support DLC content
+Game
+
+; file search order is from the bottom up
+..\\UI_Assets.Arch06
+..\\CoreCharacter.Arch06
+..\\Monsters.Arch06
+..\\Presentations.Arch06
+..\\Presentations_en.Arch06
+..\\Presentations_fr.Arch06
+..\\Presentations_it.Arch06
+..\\Presentations_de.Arch06
+..\\Presentations_esla.Arch06
+..\\Presentations_eses.Arch06
+..\\Presentations_ptbr.Arch06
+..\\Presentations_ja.Arch06
+..\\BlackGates_Lighting.Arch06
+..\\BlackGates.Arch06
+..\\BaradDur_Lighting.Arch06
+..\\BaradDur.Arch06
+..\\Great_Hall_Lighting.Arch06
+..\\Great_Hall.Arch06
+..\\Island_Lighting.Arch06
+..\\Island.Arch06
+..\\MinasIthil_Lighting.Arch06
+..\\MinasIthil.Arch06
+..\\MtnPass_Lighting.Arch06
+..\\MtnPass.Arch06
+..\\snowMtn_Lighting.Arch06
+..\\snowMtn.Arch06
+..\\Volcano_Lighting.Arch06
+..\\Volcano.Arch06
+..\\Benchmark.Arch06
+..\\Patch_00.Arch06
+..\\Patch_00_LC.Arch06
+..\\Patch_01.Arch06
+..\\Patch_01_LC.Arch06
+..\\Patch_02.Arch06
+..\\Patch_02_LC.Arch06
+..\\Patch_03.Arch06
+..\\Patch_03_LC.Arch06
+..\\Patch_04.Arch06
+..\\Patch_04_LC.Arch06
+..\\Patch_DLC1.Arch06
+..\\Patch_DLC1_LC.Arch06
+..\\Patch_05.Arch06
+..\\Patch_05_LC.Arch06
+..\\Patch_DLC2.Arch06
+..\\Patch_DLC2_LC.Arch06
+..\\Patch_06.Arch06
+..\\Patch_06_LC.Arch06
+..\\soundbundles.Arch06
+..\\Patch_DLC3.Arch06
+..\\Patch_DLC3_LC.Arch06
+..\\TextureArrayPatch.Arch06
+..\\Patch_07.Arch06
+..\\Patch_07_LC.Arch06
+..\\Patch_08.Arch06
+..\\Patch_08_LC.Arch06
+..\\Patch_DLC4.Arch06
+..\\Patch_DLC4_LC.Arch06
+..\\Patch_09.Arch06
+..\\Patch_09_LC.Arch06
+..\\Patch_10.Arch06
+..\\Patch_10_LC.Arch06
+..\\Patch_11.Arch06
+..\\Patch_11_LC.Arch06
+..\\Patch_DLC5.Arch06
+..\\Patch_DLC5_LC.Arch06
+..\\Patch_12.Arch06
+..\\Patch_12_LC.Arch06
+..\\Patch_13.Arch06
+..\\Patch_13_LC.Arch06
+..\\Global.Arch06
+..\\HotChunk.Arch06
+
+; DLC archives. '../' needed for steam, flat needed for UWP
+..\\HighMip.Arch06
+HighMip.Arch06
+..\\HighMipA.Arch06
+HighMipA.Arch06
+..\\uhdmip.Arch06
+uhdmip.Arch06
+..\\uhdmip_DLC1.Arch06
+uhdmip_DLC1.Arch06
+..\\uhdmip_DLC2.Arch06
+uhdmip_DLC2.Arch06
+..\\uhdmip_DLC3.Arch06
+uhdmip_DLC3.Arch06
+..\\uhdmip_DLC4.Arch06
+uhdmip_DLC4.Arch06
+..\\uhdmipA.Arch06
+uhdmipA.Arch06
+`;
+
+// for mod update to keep them in the load order and not uncheck them
+let mod_update_all_profile = false;
+let updatemodid = undefined;
+let updating_mod = false; // used to see if it's a mod update or not
+let mod_install_name = ""; // used to display the name of the currently installed mod
 
 const TOOL_ID = `${GAME_ID}-tool`;
 const TOOL_NAME = "XXX";
@@ -446,6 +549,14 @@ function installMod(files) {
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
 
+  //set a mod attribute to find the mod name in deserializeLoadOrder
+  const ARCH06_FILES = files.filter(file => MOD_EXTS.includes(path.extname(file).toLowerCase()));
+  const MOD_ATTRIBUTE = {
+    type: 'attribute',
+    key: 'arch06Files',
+    value: ARCH06_FILES,
+  };
+
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
     ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
@@ -458,6 +569,7 @@ function installMod(files) {
     };
   });
   instructions.push(setModTypeInstruction);
+  instructions.push(MOD_ATTRIBUTE);
   return Promise.resolve({ instructions });
 }
 
@@ -823,10 +935,155 @@ async function downloadPacketLoader(api, gameSpec) {
 
 // LOAD ORDER FUNCTIONS /////////////////////////////////////////////////////////
 
-//start from TLOUP2
+//remove load order list from default.archcfg on purge
+async function clearModOrder(api) {
+  let gameDir = getDiscoveryPath(api);
+  if (gameDir === undefined) {
+    return Promise.reject(new util.NotFound('Game not found'));
+  }
+  let loadOrderPath = path.join(gameDir, LO_FILE_PATH);
+  return fs.writeFileAsync(
+    loadOrderPath,
+    LO_FILE_STARTUP,
+    { encoding: "utf8" },
+  );
+}
 
+async function deserializeLoadOrder(context) {
+  //* on mod update for all profile it would cause the mod if it was selected to be unselected
+  if (mod_update_all_profile) {
+    let allMods = Array("mod_update");
 
+    return allMods.map((modId) => {
+      return {
+        id: "mod update in progress, please wait. Refresh when finished. \n To avoid this wait, only update current profile",
+        modId: modId,
+        enabled: false,
+      };
+    });
+  } //*/
 
+  //Set basic information for load order paths and data
+  let gameDir = getDiscoveryPath(context.api);
+  if (gameDir === undefined) {
+    return Promise.reject(new util.NotFound('Game not found'));
+  }
+  const mods = util.getSafe(context.api.store.getState(), ['persistent', 'mods', spec.game.id], {});
+  let modFolderPath = path.join(gameDir, MOD_PATH);
+  let loadOrderPath = path.join(gameDir, LO_FILE_PATH);
+  let loadOrderFile = await fs.readFileAsync(
+    loadOrderPath, 
+    { encoding: "utf8", }
+  );
+  let loadOrderSplit = loadOrderFile.split(LO_FILE_SPLITSTRING);
+  let MOD_ENTRIES = loadOrderSplit.slice(1);
+  MOD_ENTRIES = MOD_ENTRIES.map(entry => entry.split('\n')[0]);
+  let LO_MOD_ARRAY = MOD_ENTRIES
+  .map(entry => entry.replace(LO_FILE_SPLITSTRING, ''));
+  //log('warn', `LO_MOD_ARRAY: ${LO_MOD_ARRAY.join(', ')}`);
+  
+  //Get all .arch06 files from mods folder
+  let modFiles = [];
+  try {
+    modFiles = await fs.readdirAsync(modFolderPath);
+    modFiles = modFiles.filter((file) => MOD_EXTS.includes(path.extname(file).toLowerCase()));
+    modFiles = modFiles.sort((a,b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+  } catch {
+    return Promise.reject(new Error('Failed to read .arch06 "Mods" folder'));
+  }
+
+  // Get readable mod name using attribute from mod installer
+  async function getModName(file) {
+    try {//find mod where atrribute (from installer) matches file in the load order
+      const modMatch = Object.values(mods).find(mod => (util.getSafe(mods[mod.id]?.attributes, ['arch06Files'], '').includes(file))); //find mod that includes the .arch06 file
+      if (modMatch) {
+        return modMatch.attributes.customFileName ?? modMatch.attributes.logicalFileName ?? modMatch.attributes.name;
+      }
+      return file;
+    } catch (err) {
+      return file;
+    }
+  }
+
+  // Get Vortex mod id using attribute from mod installer
+  async function getModId(file) {
+    try {//find mod where atrribute (from installer) matches file in the load order
+      const modMatch = Object.values(mods).find(mod => (util.getSafe(mods[mod.id]?.attributes, ['arch06Files'], '').includes(file))); //find mod that includes the .arch06 file
+      if (modMatch) {
+        return modMatch.id;
+      }
+      return undefined;
+    } catch (err) {
+      return undefined;
+    }
+  }
+
+  //Set load order
+  let loadOrder = await LO_MOD_ARRAY
+    .reduce(async (accumP, entry) => {
+      const accum = await accumP;
+      const file = entry;
+      if (!modFiles.includes(file)) {
+        return Promise.resolve(accum);
+      }
+      accum.push(
+      {
+        id: file,
+        name: `${file.replace(MOD_EXT, '')} (${await getModName(file)})`,
+        modId: await getModId(file),
+        enabled: true,
+      }
+      );
+      return Promise.resolve(accum);
+    }, Promise.resolve([]));
+  
+  //push new mods to loadOrder
+  for (let file of modFiles) {
+    if (!loadOrder.find((mod) => (mod.id === file))) {
+      loadOrder.push({
+        id: file,
+        name: `${file.replace(MOD_EXT, '')} (${await getModName(file)})`,
+        modId: await getModId(file),
+        enabled: true,
+      });
+    }
+  }
+
+  return loadOrder;
+}
+
+function modToTemplate(mod) {
+  return `..\\Mods\\${mod}
+Mods\\${mod}`;
+}
+
+//Write load order to files
+async function serializeLoadOrder(context, loadOrder) {
+  //* don't write if all profiles are being updated
+  if (mod_update_all_profile) {
+    return;
+  } //*/
+
+  let gameDir = getDiscoveryPath(context.api);
+  if (gameDir === undefined) {
+    return Promise.reject(new util.NotFound('Game not found'));
+  }
+  let loadOrderPath = path.join(gameDir, LO_FILE_PATH);
+
+  let loadOrderMapped = loadOrder
+    .map((mod) => (mod.enabled ? modToTemplate(mod.id) : ``));
+  let loadOrderJoined = loadOrderMapped
+    .filter((entry) => (entry !== ``))
+    .join("\n");
+
+  //write to default.archcfg file
+  let loadOrderOutput = `${LO_FILE_STARTUP}` + `\n` + `${loadOrderJoined}`;
+  return fs.writeFileAsync(
+    loadOrderPath,
+    `${loadOrderOutput}`,
+    { encoding: "utf8" },
+  );
+}
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
@@ -872,7 +1129,18 @@ function applyGame(context, gameSpec) {
   context.registerGame(game);
 
   //register Load Order
-
+  if (LOAD_ORDER_ENABLED) {
+    context.registerLoadOrder({
+      gameId: GAME_ID,
+      validate: async () => Promise.resolve(undefined), // no validation implemented yet
+      deserializeLoadOrder: async () => await deserializeLoadOrder(context),
+      serializeLoadOrder: async (loadOrder) => await serializeLoadOrder(context, loadOrder),
+      toggleableEntries: true,
+      usageInstructions:`Drag and drop the mods on the left to change the order in which they load.   \n`
+                        +`${GAME_NAME} loads mods in the order you set from top to bottom.   \n`
+                        +`\n`,
+    });
+  }
 
   //register mod types
   (gameSpec.modTypes || []).forEach((type, idx) => {
@@ -939,9 +1207,43 @@ function applyGame(context, gameSpec) {
 function main(context) {
   applyGame(context, spec);
   context.once(() => { // put code here that should be run (once) when Vortex starts up
-
+    context.api.onAsync('did-purge', (profileId) => didPurge(context.api, profileId)); //*/
+    context.api.onAsync("did-deploy", (profileId) => {
+      mod_update_all_profile = false;
+      updating_mod = false;
+      updatemodid = undefined;
+    });
+    context.api.events.on("mod-update", (gameId, modId, fileId) => {
+      if (GAME_ID == gameId) {
+        updatemodid = modId;
+      }
+    });
+    context.api.events.on("remove-mod", (gameMode, modId) => {
+      if (modId.includes("-" + updatemodid + "-")) {
+        mod_update_all_profile = true;
+      }
+    });
+    context.api.events.on("will-install-mod", (gameId, archiveId, modId) => {
+      mod_install_name = modId.split("-")[0];
+      if (GAME_ID == gameId && modId.includes("-" + updatemodid + "-")) {
+        updating_mod = true;
+      } else {
+        updating_mod = false;
+      }
+    }); //*/
   });
   return true;
+}
+
+async function didPurge(api, profileId) { //run on mod purge
+  const state = api.getState();
+  const profile = selectors.profileById(state, profileId);
+  const gameId = profile === null || profile === void 0 ? void 0 : profile.gameId;
+  if (gameId !== GAME_ID) {
+    return Promise.resolve();
+  }
+  clearModOrder(api);
+  return Promise.resolve();
 }
 
 //export to Vortex
