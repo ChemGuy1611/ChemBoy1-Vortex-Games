@@ -1640,10 +1640,10 @@ function main(context) {
     context.registerLoadOrderPage({
       gameId: spec.game.id,
       gameArtURL: path.join(__dirname, spec.game.logo),
-      preSort: (items, direction) => preSort(context.api, items, direction),
+      preSort: (items, direction, updateType) => preSort(context.api, items, direction),
       filter: mods => mods.filter(mod => mod.type === UE5_SORTABLE_ID),
-      displayCheckboxes: true,
-      callback: (loadOrder) => {
+      displayCheckboxes: false,
+      callback: (loadOrder, updateType) => {
         if (previousLO === undefined) previousLO = loadOrder;
         if (loadOrder === previousLO) return;
         //context.api.store.dispatch(actions.setDeploymentNecessary(spec.game.id, true));
