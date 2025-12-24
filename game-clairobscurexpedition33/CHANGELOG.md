@@ -4,9 +4,15 @@
 
 - None
 
+## [0.1.7] - 2025-12-23
+
+- Added notification indicating deployment is required after changing the load order.
+
 ## [0.1.6] - 2025-12-18
 
 - Fixed cannot deploy errors that could occur if the game was installed to C Drive and the user had never launched the game before.
+- Fixed game version detection for Xbox game store version.
+- Technical fixes and improvements.
 
 ## [0.1.5] - 2025-09-25
 

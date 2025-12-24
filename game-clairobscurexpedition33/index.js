@@ -1646,7 +1646,8 @@ function main(context) {
       callback: (loadOrder) => {
         if (previousLO === undefined) previousLO = loadOrder;
         if (loadOrder === previousLO) return;
-        context.api.store.dispatch(actions.setDeploymentNecessary(spec.game.id, true));
+        //context.api.store.dispatch(actions.setDeploymentNecessary(spec.game.id, true));
+        requestDeployment(context, spec);
         previousLO = loadOrder;
       },
       createInfoPanel: () =>
@@ -1656,11 +1657,28 @@ function main(context) {
     });
   }
   context.once(() => { // put code here that should be run (once) when Vortex starts up
-    //context.api.onAsync('did-deploy', (profileId) => didDeploy(context.api, profileId)); //*/
+    context.api.onAsync('did-deploy', (profileId) => didDeploy(context.api, profileId)); //*/
     //context.api.onAsync('did-purge', (profileId) => didPurge(context.api, profileId)); //*/
   });
   return true;
 }
+
+const requestDeployment = (context, spec) => {
+  context.api.store.dispatch(actions.setDeploymentNecessary(spec.game.id, true));
+
+  context.api.sendNotification({
+    id: `${spec.game.id}-loadorderdeploy-notif`,
+    type: 'warning',
+    message: `Deployment Required to Apply Load Order Changes (${spec.game.id})`,
+    allowSuppress: true,
+    actions: [
+      {
+        title: 'Deploy',
+        action: () => deploy(context.api)
+      }
+    ],
+  });
+};
 
 async function didDeploy(api, profileId) { //run on mod deploy
   const state = api.getState();
@@ -1669,7 +1687,7 @@ async function didDeploy(api, profileId) { //run on mod deploy
   if (gameId !== GAME_ID) {
     return Promise.resolve();
   }
-  
+  api.dismissNotification(`${GAME_ID}-loadorderdeploy-notif`);
   return Promise.resolve();
 }
 

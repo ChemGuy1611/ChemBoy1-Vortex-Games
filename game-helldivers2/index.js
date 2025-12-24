@@ -809,7 +809,7 @@ function main(context) {
     createInfoPanel: () =>
       context.api.translate(`THIS LOAD ORDER IS FOR GRAPHICS MODS ONLY. Sound mods are not included here. Drag and drop the patch mods on the left to change the
         order in which they load. ${spec.game.name} loads patch mods in numerical 
-        order, so Vortex suffixes the file names with ".patch0, .patch1, .patch2, ..." 
+        order, so Vortex suffixes the file names with ".patch_0, .patch_1, .patch_2, etc." 
         to ensure they load in the order you set here. The number in the left column 
         represents the overwrite order. The changes from mods with higher numbers will 
         take priority over other mods which make similar edits.`
