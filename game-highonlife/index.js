@@ -1,9 +1,9 @@
 /*////////////////////////////////////////////////
-Name: XXX Vortex Extension
+Name: High On Life Vortex Extension
 Structure: Unreal Engine Game
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2026-XX-XX
+Date: 2026-01-04
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -18,31 +18,31 @@ const { parseStringPromise } = require('xml2js');
 const LOCALAPPDATA = util.getVortexPath('localAppData');
 
 //Specify all information about the game
-const GAME_ID = "XXX"; //same as Nexus domain
-const STEAMAPP_ID = "XXX"; //from steamdb.info
-const STEAMAPP_ID_DEMO = "XXX";
-const EPICAPP_ID = "XXX"; //from egdata.app
-const GOGAPP_ID = "XXX"; // from gogdb.org
-const XBOXAPP_ID = "XXX"; //from appxmanifest.xml
-const XBOXEXECNAME = "XXX"; //from appxmanifest.xml
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
-const GAME_NAME = "XXX";
-const GAME_NAME_SHORT = "XXX"; //Try for 8-10 characters
-const EPIC_CODE_NAME = "XXX";
+const GAME_ID = "highonlife"; //same as Nexus domain
+const STEAMAPP_ID = "1583230"; //from steamdb.info
+const STEAMAPP_ID_DEMO = null;
+const EPICAPP_ID = "XXX"; //NOT ON EGDATA.APP YET
+const GOGAPP_ID = null; // from gogdb.org
+const XBOXAPP_ID = "2637SquanchGamesInc.HighonLife"; //from appxmanifest.xml
+const XBOXEXECNAME = "AppHighonLifeShipping"; //from appxmanifest.xml
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, XBOXAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const GAME_NAME = "High On Life";
+const GAME_NAME_SHORT = "High On Life"; //Try for 8-10 characters
+const EPIC_CODE_NAME = "Oregon";
 const EXEC = `${EPIC_CODE_NAME}.exe`;
 const EXEC_EPIC = EXEC;
 const EXEC_GOG = EXEC;
 const EXEC_DEMO = EXEC;
 const EXEC_XBOX = 'gamelaunchhelper.exe';
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/High_on_Life";
 
 //feature toggles
-const hasXbox = false; //toggle for Xbox version logic (to unify templates)
+const hasXbox = true; //toggle for Xbox version logic (to unify templates)
 const multiExe = false; //toggle for multiple executables (Epic/GOG/Demo don't match Steam)
 const hasModKit = false; //toggle for UE ModKit mod support
 const autoDownloadUe4ss = false; //toggle for auto downloading UE4SS
 const SIGBYPASS_REQUIRED = false; //set true if there are .sig files in the Paks folder
-const IO_STORE = true; //true if the Paks folder contains .ucas and .utoc files
+const IO_STORE = false; //true if the Paks folder contains .ucas and .utoc files
 
 //UE specific
 const UE4SS_PAGE_NO = 0; //set if there is UE4SS Nexus page
@@ -54,8 +54,8 @@ const EXEC_FOLDER_XBOX = "WinGDK";
 
 //config, save, shipping exe
 const DATA_FOLDER = EPIC_CODE_NAME;
-const XBOX_SAVE_STRING = 'XXX'; //'8wekyb3d8bbwe' if published by Microsoft
-const CONFIG_FOLDERNAME = 'Windows';
+const XBOX_SAVE_STRING = 'mh7dg3tfmz2cj'; //'8wekyb3d8bbwe' if published by Microsoft
+const CONFIG_FOLDERNAME = 'WindowsNoEditor';
 const CONFIG_LOC = 'Local AppData';
 const SAVE_LOC = 'Local AppData';
 const CONFIGMOD_LOCATION = LOCALAPPDATA;

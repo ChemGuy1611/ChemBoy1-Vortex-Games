@@ -1,9 +1,9 @@
 /*////////////////////////////////////////////////
-Name: XXX Vortex Extension
+Name: Of Ash and Steel Vortex Extension
 Structure: Unreal Engine Game
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2026-XX-XX
+Date: 2026-01-04
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -18,23 +18,23 @@ const { parseStringPromise } = require('xml2js');
 const LOCALAPPDATA = util.getVortexPath('localAppData');
 
 //Specify all information about the game
-const GAME_ID = "XXX"; //same as Nexus domain
-const STEAMAPP_ID = "XXX"; //from steamdb.info
-const STEAMAPP_ID_DEMO = "XXX";
-const EPICAPP_ID = "XXX"; //from egdata.app
-const GOGAPP_ID = "XXX"; // from gogdb.org
-const XBOXAPP_ID = "XXX"; //from appxmanifest.xml
-const XBOXEXECNAME = "XXX"; //from appxmanifest.xml
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
-const GAME_NAME = "XXX";
-const GAME_NAME_SHORT = "XXX"; //Try for 8-10 characters
-const EPIC_CODE_NAME = "XXX";
+const GAME_ID = "ofashandsteel"; //same as Nexus domain
+const STEAMAPP_ID = "2893820"; //from steamdb.info
+const STEAMAPP_ID_DEMO = null;
+const EPICAPP_ID = null; //from egdata.app
+const GOGAPP_ID = "1113561740"; // from gogdb.org
+const XBOXAPP_ID = null; //from appxmanifest.xml
+const XBOXEXECNAME = null; //from appxmanifest.xml
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, GOGAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const GAME_NAME = "Of Ash and Steel";
+const GAME_NAME_SHORT = "Of Ash and Steel"; //Try for 8-10 characters
+const EPIC_CODE_NAME = "ofAshAndSteelGame";
 const EXEC = `${EPIC_CODE_NAME}.exe`;
 const EXEC_EPIC = EXEC;
 const EXEC_GOG = EXEC;
 const EXEC_DEMO = EXEC;
 const EXEC_XBOX = 'gamelaunchhelper.exe';
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Of_Ash_and_Steel";
 
 //feature toggles
 const hasXbox = false; //toggle for Xbox version logic (to unify templates)
@@ -42,7 +42,7 @@ const multiExe = false; //toggle for multiple executables (Epic/GOG/Demo don't m
 const hasModKit = false; //toggle for UE ModKit mod support
 const autoDownloadUe4ss = false; //toggle for auto downloading UE4SS
 const SIGBYPASS_REQUIRED = false; //set true if there are .sig files in the Paks folder
-const IO_STORE = true; //true if the Paks folder contains .ucas and .utoc files
+const IO_STORE = false; //true if the Paks folder contains .ucas and .utoc files
 
 //UE specific
 const UE4SS_PAGE_NO = 0; //set if there is UE4SS Nexus page
@@ -54,8 +54,8 @@ const EXEC_FOLDER_XBOX = "WinGDK";
 
 //config, save, shipping exe
 const DATA_FOLDER = EPIC_CODE_NAME;
-const XBOX_SAVE_STRING = 'XXX'; //'8wekyb3d8bbwe' if published by Microsoft
-const CONFIG_FOLDERNAME = 'Windows';
+const XBOX_SAVE_STRING = ''; //'8wekyb3d8bbwe' if published by Microsoft
+const CONFIG_FOLDERNAME = 'WindowsNoEditor';
 const CONFIG_LOC = 'Local AppData';
 const SAVE_LOC = 'Local AppData';
 const CONFIGMOD_LOCATION = LOCALAPPDATA;
