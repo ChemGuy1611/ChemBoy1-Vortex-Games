@@ -534,7 +534,7 @@ function main(context) {
     id: GAME_ID,
     name: "Warhammer 40,000: Darktide",
     logo: "gameart.png",
-    queryPath: makeFindGame,
+    queryPath: makeFindGame(),
     queryModPath: () => ".",
     supportedTools: tools,
     mergeMods: true,
