@@ -105,11 +105,12 @@ async function writeFolonIni(api) {
     let TEST = false;
     let TEST_LINE = '';
     try {
-      TEST_LINE = contents.data['Archive']['SCellResourceIndexFileList'];
+      TEST_LINE = contents.data['Archive']['sResourceIndexFileList'];
+      //log('warn', `FOLON Fallout4.ini test line: "${TEST_LINE}"`);
     } catch {
       TEST_LINE = '';
     }
-    TEST = TEST_LINE === INI_ARCHIVE_OBJECT.SCellResourceIndexFileList;
+    TEST = TEST_LINE === INI_ARCHIVE_OBJECT.sResourceIndexFileList;
     if (!TEST) {
       contents.data['Archive'] = INI_ARCHIVE_OBJECT; // Set the Archive section to the new value
       await parser.write(INI_PATH_DEFAULT, contents) //write the INI file
@@ -128,11 +129,12 @@ async function writeFolonIni(api) {
     let TEST = false;
     let TEST_LINE = '';
     try {
-      TEST_LINE = contents.data['Archive']['SCellResourceIndexFileList'];
+      TEST_LINE = contents.data['Archive']['sResourceIndexFileList'];
+      //log('warn', `FOLON Fallout4Custom.ini test line: "${TEST_LINE}"`);
     } catch {
       TEST_LINE = '';
     }
-    TEST = TEST_LINE === INI_ARCHIVE_OBJECT.SCellResourceIndexFileList;
+    TEST = TEST_LINE === INI_ARCHIVE_OBJECT.sResourceIndexFileList;
     if (!TEST) {
       contents.data['Archive'] = INI_ARCHIVE_OBJECT; // Set the Archive section to the new value
       await parser.write(INI_PATH_CUSTOM, contents) //write the INI file
@@ -218,8 +220,8 @@ function changeFolonModTypeNotify(api) {
         ],
       });
     }
-  } catch {
-    return;
+  } catch(err) {
+    //do nothing
   }
 }
 
