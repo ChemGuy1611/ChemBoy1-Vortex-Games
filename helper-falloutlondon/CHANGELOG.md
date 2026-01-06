@@ -2,7 +2,11 @@
 
 ## Future Improvements (Not Yet Released)
 
-- Enable plugins automatically (may be challenging) 
+- Enable plugins automatically (may be challenging).
+
+## [0.1.6] - 2026-01-06
+
+- Added a missing ini entry for "LondonWorldSpace - Textures14.ba2"
 
 ## [0.1.5] - 2025-07-09
 
