@@ -2,8 +2,8 @@
 Name: Of Ash and Steel Vortex Extension
 Structure: Unreal Engine Game
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2026-01-04
+Version: 0.1.1
+Date: 2026-01-07
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -95,7 +95,7 @@ const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 //Unreal Engine Game Data
 const UNREALDATA = {
-  modsPath: path.join(EPIC_CODE_NAME, 'Content', 'Paks', '~mods'),
+  modsPath: path.join(EPIC_CODE_NAME, 'Content', 'Paks'), //Don't use the "~mods" folder as some mods apparently don't work from that folder.
   fileExt: PAKMOD_EXTS,
   loadOrder: true,
 }
@@ -114,9 +114,9 @@ const EPIC_FILE = path.join(EPIC_CODE_NAME, 'Binaries', 'Win64', SHIPPING_EXE);
 const XBOX_FILE = EXEC_XBOX;
 
 const PAK_ALT_ID = `${GAME_ID}-pakalt`;
-const PAK_ALT_NAME = 'Paks (no "~mods")';
+const PAK_ALT_NAME = 'Paks (with "~mods")';
 const PAK_PATH = UNREALDATA.modsPath;
-const PAK_ALT_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Paks');
+const PAK_ALT_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Paks', '~mods');
 const PAK_EXT = '.pak';
 
 const ROOT_ID = `${GAME_ID}-root`;
@@ -216,7 +216,7 @@ const PARAMETERS = [PARAMETERS_STRING];
 
 const IGNORE_CONFLICTS = [path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
 const IGNORE_DEPLOY = [path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
-let MODTYPE_FOLDERS = [path.join(LOGICMODS_PATH, 'LogicMods'), PAK_PATH];
+let MODTYPE_FOLDERS = [path.join(LOGICMODS_PATH, 'LogicMods'), PAK_PATH, PAK_ALT_PATH];
 
 //Filled in from data above
 const spec = {

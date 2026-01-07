@@ -216,7 +216,7 @@ const PARAMETERS = [PARAMETERS_STRING];
 
 const IGNORE_CONFLICTS = [path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
 const IGNORE_DEPLOY = [path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
-let MODTYPE_FOLDERS = [path.join(LOGICMODS_PATH, 'LogicMods'), PAK_PATH];
+let MODTYPE_FOLDERS = [path.join(LOGICMODS_PATH, 'LogicMods'), PAK_PATH, PAK_ALT_PATH];
 
 //Filled in from data above
 const spec = {
@@ -1660,7 +1660,7 @@ function UNREALEXTENSION(context) {
 function checkPartitions(folder, discoveryPath) {
   if (!IO_STORE) { // true if IO-Store is not enabled for the game, since symlinks work fine in that case
     return true;
-  }
+  } //*/ Remove the check above if you need to allow hardlinks
   try {
     // Define paths
     const path1 = discoveryPath;
