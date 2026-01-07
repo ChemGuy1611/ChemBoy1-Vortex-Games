@@ -1609,7 +1609,7 @@ function UNREALEXTENSION(context) {
     const game = gameId === spec.game.id;
     const unrealModsPath = UNREALDATA.modsPath;
     const loadOrder = UNREALDATA.loadOrder;
-    return (!!unrealModsPath && game && loadOrder === true);
+    return (!!unrealModsPath && game);
   };
 
   const testForUnrealMod = (files, gameId) => {
@@ -1619,7 +1619,7 @@ function UNREALEXTENSION(context) {
     if (fileExt) {
       modFiles = files.filter(file => fileExt.includes(path.extname(file).toLowerCase()));
     }
-    const supported = ( supportedGame && (gameId === spec.game.id) && modFiles.length > 0 );
+    let supported = ( supportedGame && (gameId === spec.game.id) && modFiles.length > 0 );
     
     // Test for a mod installer
     if (supported && files.find(file =>
@@ -1649,7 +1649,7 @@ function UNREALEXTENSION(context) {
     getUnrealModsPath, 
     () => Promise.resolve(false), 
     { name: UE5_SORTABLE_NAME,
-      mergeMods: mod => loadOrderPrefix(context.api, mod) + mod.id
+      mergeMods: mod => loadOrderPrefix(context.api, mod) + mod.id //COMMENT OUT IF DISABLING LOAD ORDER
     }
   );
 }

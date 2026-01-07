@@ -97,7 +97,7 @@ const APPMANIFEST_FILE = 'appxmanifest.xml';
 const UNREALDATA = {
   modsPath: path.join(EPIC_CODE_NAME, 'Content', 'Paks'), //Don't use the "~mods" folder as some mods apparently don't work from that folder.
   fileExt: PAKMOD_EXTS,
-  loadOrder: true,
+  loadOrder: false,
 }
 const UE5_SORTABLE_ID = `${GAME_ID}-uesortablepak`; //this should not be changed to be maintain consistency with other UE5 games
 const UE5_SORTABLE_NAME = 'UE Sortable Pak Mod';
@@ -1609,7 +1609,7 @@ function UNREALEXTENSION(context) {
     const game = gameId === spec.game.id;
     const unrealModsPath = UNREALDATA.modsPath;
     const loadOrder = UNREALDATA.loadOrder;
-    return (!!unrealModsPath && game && loadOrder === true);
+    return (!!unrealModsPath && game);
   };
 
   const testForUnrealMod = (files, gameId) => {
@@ -1649,7 +1649,7 @@ function UNREALEXTENSION(context) {
     getUnrealModsPath, 
     () => Promise.resolve(false), 
     { name: UE5_SORTABLE_NAME,
-      mergeMods: mod => loadOrderPrefix(context.api, mod) + mod.id
+      //mergeMods: mod => loadOrderPrefix(context.api, mod) + mod.id
     }
   );
 }
