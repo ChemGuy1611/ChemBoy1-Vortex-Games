@@ -1,29 +1,37 @@
-/*
+/*//////////////////////////////////////////////////
 Name: Mortal Kombat 1 Vortex Extension
 Structure: UE5 (Sig Bypass)
 Author: ChemBoy1
-Version: 0.1.0
-Date: 10/15/2024
-*/
+Version: 0.2.0
+Date: 2026-01-07
+//////////////////////////////////////////////////*/
 
 //Import libraries
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
+const { parseStringPromise } = require('xml2js');
+
+const LOCALAPPDATA = util.getVortexPath("localAppData");
 
 //Specify all information about the game
 const GAME_ID = "mortalkombat";
 const STEAMAPP_ID = "1971870";
 const EPICAPP_ID = ""; //not on egdata.app yet
 const GOGAPP_ID = null;
-const XBOXAPP_ID = null;
-const XBOXEXECNAME = null;
+const XBOXAPP_ID = "WarnerBros.Interactive.K1Codename";
+const XBOXEXECNAME = "AppMortalKombat1Shipping";
 const EPIC_CODE_NAME = "MK12";
 const EXEC_FOLDER_NAME = "Win64";
 const GAME_NAME = "Mortal Kombat 1";
 const GAME_NAME_SHORT = "MK1";
 const EXEC = "MK12.exe";
 const IO_STORE = true; //true if the Paks folder contains .ucas and .utoc files
+
+const EXEC_XBOX = 'gamelaunchhelper.exe';
+const EXEC_FOLDER_XBOX = 'WinGDK';
+const APPMANIFEST_FILE = 'appxmanifest.xml';
+const UE4SS_MOD_PATH = path.join('ue4ss', 'Mods');
 
 //Data for Unreal Engine Mod Installer
 const UNREALDATA = {
@@ -33,9 +41,10 @@ const UNREALDATA = {
 }
 
 //This information will be filled in from the data above
-const SHIPPING_EXE = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_NAME}\\${EPIC_CODE_NAME}-MK12.exe`;
+let SHIPPING_EXE = path.join(`${EPIC_CODE_NAME}`, 'Binaries', `${EXEC_FOLDER_NAME}`, `MK12.exe`);
 const BINARIES_ID = `${GAME_ID}-binaries`;
-const EXEC_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_NAME}`;
+const BINARIES_NAME = "Binaries (Engine Injector)";
+let BINARIES_PATH = path.join(`${EPIC_CODE_NAME}`, 'Binaries', `${EXEC_FOLDER_NAME}`);
 
 const UE5_ID = `${GAME_ID}-ue5`;
 const UE5_ALT_ID = `${GAME_ID}-pakalt`;
@@ -53,29 +62,40 @@ const LOGICMODS_FILE = "LogicMods";
 const LOGICMODS_EXT = ".pak";
 
 const CONFIG_ID = `${GAME_ID}-config`;
-const CONFIG_PATH = `${EPIC_CODE_NAME}\\Saved\\Config\\Windows`;
+const CONFIG_PATH = path.join(`${EPIC_CODE_NAME}`, 'Saved', 'Config', 'Windows');
 const CONFIG_FILES = ["engine.ini", "scalability.ini", "input.ini"];
 const CONFIG_EXT = ".ini";
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_FILE = EPIC_CODE_NAME;
-const ROOT_IDX = `${EPIC_CODE_NAME}\\`;
+const ROOT_IDX = `${EPIC_CODE_NAME}${path.sep}`;
 
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_PATH = path.join(EPIC_CODE_NAME, "Saved", "SaveGames");
 const SAVE_EXT = ".sav";
 
 const SCRIPTS_ID = `${GAME_ID}-scripts`;
-const SCRIPTS_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_NAME}\\Mods`;
+const SCRIPTS_NAME = "UE4SS Scripts";
+let SCRIPTS_PATH = path.join(BINARIES_PATH, UE4SS_MOD_PATH);
 const SCRIPTS_EXT = ".lua";
 const SCRIPTS_FILE = "Scripts";
-const SCRIPTS_IDX = `Scripts\\`;
+const SCRIPTS_IDX = `Scripts${path.sep}`;
 
 const UE4SS_ID = `${GAME_ID}-ue4ss`;
+const UE4SS_NAME = "UE4SS";
 const UE4SS_FILE = "dwmapi.dll";
 
 const SIGBYPASS_ID = `${GAME_ID}-sigbypass`;
+const SIGBYPASS_NAME = "Signature Bypass";
 const SIGBYPASS_EXEC = "patch_proj.exe";
+
+const SIGBYPASS_DLL = "dsound.dll";
+const SIGBYPASS_PAGE = 62;
+
+const SIGBYPASS_LUA = "UniversalSigBypasser.asi";
+const SIGBYPASS_PAGE_NO = 1416;
+const SIGBYPASS_FILE_NO = 5719;
+const SIGBYPASS_DOMAIN = 'site';
 
 //Set file number for pak installer file selection (needs to be 3 if IO Store is used to accomodate .ucas and .utoc files)
 let PAK_FILE_MIN = 1;
@@ -89,18 +109,22 @@ else {
   SYM_LINKS = true;
 }
 
+const PARAMETERS_STRING = '-fileopenlog';
+const PARAMETERS = [PARAMETERS_STRING];
+
 const spec = {
   "game": {
     "id": GAME_ID,
     "name": GAME_NAME,
     "shortName": GAME_NAME_SHORT,
-    "executable": EXEC,
+    //"executable": EXEC,
+    "parameters": PARAMETERS,
     "logo": `${GAME_ID}.jpg`,
     "mergeMods": true,
-    "modPath": EXEC_PATH,
+    //"modPath": BINARIES_PATH,
     "modPathIsRelative": true,
     "requiredFiles": [
-      EXEC,
+      EPIC_CODE_NAME,
     ],
     "details": {
       "steamAppId": +STEAMAPP_ID,
@@ -118,16 +142,10 @@ const spec = {
   },
   "modTypes": [
     {
-      "id": SCRIPTS_ID,
-      "name": "UE4SS Scripts",
-      "priority": "high",
-      "targetPath": `{gamePath}\\${SCRIPTS_PATH}`
-    },
-    {
       "id": LOGICMODS_ID,
       "name": "UE4SS LogicMods (Blueprint)",
       "priority": "high",
-      "targetPath": `{gamePath}\\${LOGICMODS_PATH}`
+      "targetPath": path.join('{gamePath}', LOGICMODS_PATH)
     },
     {
       "id": UE4SSCOMBO_ID,
@@ -140,13 +158,13 @@ const spec = {
       "id": CONFIG_ID,
       "name": "Config (LocalAppData)",
       "priority": "high",
-      "targetPath": `{localAppData}\\${CONFIG_PATH}`
+      "targetPath": path.join('{localAppData}', CONFIG_PATH)
     },
     {
       "id": SAVE_ID,
       "name": "Saves (Game Directory)",
       "priority": "high",
-      "targetPath": `{localAppData}\\${SAVE_PATH}`
+      "targetPath": path.join('{localAppData}', SAVE_PATH)
     },
     */
     {
@@ -159,39 +177,46 @@ const spec = {
       "id": UE5_ID,
       "name": "UE5 Paks",
       "priority": "high",
-      "targetPath": `{gamePath}\\${UE5_PATH}`
+      "targetPath": path.join('{gamePath}', UE5_PATH)
     },
     {
       "id": UE5_ALT_ID,
       "name": 'UE5 Paks (no "~mods")',
       "priority": "high",
-      "targetPath": `{gamePath}\\${UE5_ALT_PATH}`
+      "targetPath": path.join('{gamePath}', UE5_ALT_PATH)
     },
+    /*
     {
       "id": BINARIES_ID,
       "name": "Binaries (Engine Injector)",
       "priority": "high",
-      "targetPath": `{gamePath}\\${EXEC_PATH}`
+      "targetPath": path.join('{gamePath}', BINARIES_PATH)
     },
     {
       "id": UE4SS_ID,
       "name": "UE4SS",
       "priority": "low",
-      "targetPath": `{gamePath}\\${EXEC_PATH}`
+      "targetPath": path.join('{gamePath}', BINARIES_PATH)
+    },
+    {
+      "id": SCRIPTS_ID,
+      "name": "UE4SS Scripts",
+      "priority": "high",
+      "targetPath": path.join('{gamePath}', SCRIPTS_PATH)
     },
     {
       "id": SIGBYPASS_ID,
       "name": "Signature Bypass",
       "priority": "low",
-      "targetPath": `{gamePath}\\${EXEC_PATH}`
-    },
+      "targetPath": path.join('{gamePath}', BINARIES_PATH)
+    }, //*/
   ],
   "discovery": {
     "ids": [
       STEAMAPP_ID,
       //EPICAPP_ID,
       //GOGAPP_ID,
-      //XBOXAPP_ID
+      XBOXAPP_ID
     ],
     "names": []
   }
@@ -208,10 +233,21 @@ const tools = [
     detach: true,
     relative: true,
     exclusive: true,
-    defaultPrimary: true,
-    isPrimary: true,
-    parameters: ['-fileopenlog']
+    //defaultPrimary: true,
+    parameters: PARAMETERS,
   },
+  /*{
+    id: "LaunchModdedGameXbox",
+    name: "Launch Modded Game",
+    logo: `exec.png`,
+    executable: () => EXEC_XBOX,
+    requiredFiles: [EXEC_XBOX],
+    detach: true,
+    relative: true,
+    exclusive: true,
+    defaultPrimary: true,
+    parameters: PARAMETERS,
+  }, //*/
   {
     id: "SigBypassPatch",
     name: "Sig Bypass Patch",
@@ -229,6 +265,27 @@ const tools = [
 
 ];
 
+// BASIC EXTENSION FUNCTIONS ///////////////////////////////////////////////////
+
+function statCheckSync(gamePath, file) {
+  try {
+    fs.statSync(path.join(gamePath, file));
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}
+async function statCheckAsync(gamePath, file) {
+  try {
+    await fs.statAsync(path.join(gamePath, file));
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}
+
 //Set mod type priorities
 function modTypePriority(priority) {
   return {
@@ -243,7 +300,7 @@ function pathPattern(api, game, pattern) {
   return template(pattern, {
     gamePath: (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0 ? void 0 : _a.path,
     documents: util.getVortexPath('documents'),
-    localAppData: process.env['LOCALAPPDATA'],
+    localAppData: util.getVortexPath('localAppData'),
     appData: util.getVortexPath('appData'),
   });
 }
@@ -255,59 +312,103 @@ function makeGetModPath(api, gameSpec) {
     : pathPattern(api, gameSpec.game, gameSpec.game.modPath);
 }
 
-//Find game information by API utility
-async function queryGame() {
-  let game = await util.GameStoreHelper.findByAppId(spec.discovery.ids);
-  return game;
-}
-
-//Find game install location 
-async function queryPath(api) {
-  let game = await queryGame();
-  return game.gamePath;
+//Find game installation directory
+function makeFindGame(api, gameSpec) {
+  return () => util.GameStoreHelper.findByAppId(gameSpec.discovery.ids)
+    .then((game) => game.gamePath);
 }
 
 //Set launcher requirements
-async function requiresLauncher() {
-//async function requiresLauncher(api) {
-  let game = await queryGame();
-
-  if (game.gameStoreId === "steam") {
-    return undefined;
-  }
-
-  if (game.gameStoreId === "gog") {
-    return undefined;
-  }
-
-  /*
-  if (game.gameStoreId === "epic") {
-    //api.showErrorNotification('Epic AppName needed to launch game', 'Please see the extension page on Nexus Mods for instructions and send the Epic AppName to the mod author.');
-    //return undefined;
-    return {
-      launcher: "epic",
-      addInfo: {
-        appId: EPICAPP_ID,
-      },
-    };
-  }
-  */
-
-  /*
-  if (game.gameStoreId === "xbox") {
-    return {
-      launcher: "xbox",
+async function requiresLauncher(gamePath, store) {
+  if (store === 'xbox') {
+    return Promise.resolve({
+      launcher: 'xbox',
       addInfo: {
         appId: XBOXAPP_ID,
-        // appExecName is the <Application id="" in the appxmanifest.xml file
         parameters: [{ appExecName: XBOXEXECNAME }],
       },
-    };
-  }
-  */
-
-  return undefined;
+    });
+  } //*/
+  /*
+  if (store === 'epic') {
+    return Promise.resolve({
+        launcher: 'epic',
+        addInfo: {
+            appId: EPICAPP_ID,
+        },
+    });
+  } //*/
+  /*
+  if (store === 'steam') {
+    return Promise.resolve({
+        launcher: 'steam',
+    });
+  } //*/
+  return Promise.resolve(undefined);
 }
+
+//Get correct executable for game version
+function getExecutable(discoveryPath) {
+  if (statCheckSync(discoveryPath, EXEC_XBOX)) {
+    SHIPPING_EXE = path.join(`${EPIC_CODE_NAME}`, 'Binaries', `${EXEC_FOLDER_XBOX}`, `MK12.exe`);
+    BINARIES_PATH = path.join(`${EPIC_CODE_NAME}`, 'Binaries', `${EXEC_FOLDER_XBOX}`);
+    SCRIPTS_PATH = path.join(BINARIES_PATH, UE4SS_MOD_PATH);
+    return EXEC_XBOX;
+  };
+
+  return EXEC;
+}
+
+//Get correct executable for game version
+function getModPath(discoveryPath) {
+  if (statCheckSync(discoveryPath, EXEC_XBOX)) {
+    BINARIES_PATH = path.join(`${EPIC_CODE_NAME}`, 'Binaries', `${EXEC_FOLDER_XBOX}`);
+    return BINARIES_PATH;
+  };
+
+  return BINARIES_PATH;
+}
+
+//Get correct game version - async
+async function setGameVersionAsync(gamePath) {
+  if (hasXbox) {
+    if (await statCheckAsync(gamePath, EXEC_XBOX)) {
+      GAME_VERSION = 'xbox';
+      return GAME_VERSION;
+    }
+  }
+  if (await statCheckAsync(gamePath, EXEC)) {
+    GAME_VERSION = 'steam';
+    return GAME_VERSION;
+  }
+  if (await statCheckAsync(gamePath, EXEC_EPIC)) {
+    GAME_VERSION = 'epic';
+    return GAME_VERSION;
+  }
+  if (await statCheckAsync(gamePath, EXEC_GOG)) {
+    GAME_VERSION = 'gog';
+    return GAME_VERSION;
+  }
+  if (await statCheckAsync(gamePath, EXEC_DEMO)) {
+    GAME_VERSION = 'demo';
+    return GAME_VERSION;
+  } //*/
+}
+
+const getDiscoveryPath = (api) => { //get the game's discovered path
+  const state = api.getState();
+  const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});
+  return discovery === null || discovery === void 0 ? void 0 : discovery.path;
+};
+
+async function purge(api) {
+  return new Promise((resolve, reject) => api.events.emit('purge-mods', true, (err) => err ? reject(err) : resolve()));
+}
+async function deploy(api) {
+  return new Promise((resolve, reject) => api.events.emit('deploy-mods', (err) => err ? reject(err) : resolve()));
+}
+
+// MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
 
 //Test for save files
 function testUe4ssCombo(files, gameId) {
@@ -433,7 +534,8 @@ function installUe4ss(files) {
 //Installer test for Signature Bypass files
 function testSigBypass(files, gameId) {
   const isMod = files.some(file => path.basename(file).toLowerCase() === SIGBYPASS_EXEC);
-  let supported = (gameId === spec.game.id) && isMod;
+  const isDll = files.some(file => path.basename(file).toLowerCase() === SIGBYPASS_DLL);
+  let supported = (gameId === spec.game.id) && ( isMod || isDll );
 
   return Promise.resolve({
     supported,
@@ -443,7 +545,10 @@ function testSigBypass(files, gameId) {
 
 //Installer install UE4SS files
 function installSigBypass(files) {
-  const modFile = files.find(file => path.basename(file).toLowerCase() === SIGBYPASS_EXEC);
+  let modFile = files.find(file => path.basename(file).toLowerCase() === SIGBYPASS_EXEC);
+  if (modFile === undefined) {
+    modFile = files.find(file => path.basename(file).toLowerCase() === SIGBYPASS_DLL);
+  }
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: SIGBYPASS_ID };
@@ -631,6 +736,8 @@ function installSave(files) {
   return Promise.resolve({ instructions });
 }
 
+// AUTO-DOWNLOADER FUNCTIONS ///////////////////////////////////////////////////
+
 //Check if UE4SS is installed
 function isUe4ssInstalled(api, spec) {
   const state = api.getState();
@@ -726,7 +833,7 @@ async function downloadSigBypass(api, gameSpec) {
       await api.ext.ensureLoggedIn();
     }
 
-    const modPageId = 7;
+    const modPageId = SIGBYPASS_PAGE;
     try {
       //get the mod files information from Nexus
       const modFiles = await api.ext.nexusGetModFiles(gameSpec.game.id, modPageId);
@@ -767,68 +874,72 @@ async function downloadSigBypass(api, gameSpec) {
   }
 }
 
-//Notification if Config, Save, and Creations folders are not on the same partition
-function legacyModsNotify(api, legacyMods) {
-  const NOTIF_ID = `${GAME_ID}-legacymodsnotify`;
-  const MESSAGE = 'Reinstall Pak Mods to Make Sortable';
-  api.sendNotification({
-    id: NOTIF_ID,
-    type: 'warning',
-    message: MESSAGE,
-    allowSuppress: true,
-    actions: [
-      {
-        title: 'More',
-        action: (dismiss) => {
-          api.showDialog('question', MESSAGE, {
-            text: `\n\n`
-                + `Due to a bug in a handful of Unreal Engine Vortex game extensions, your pak mods were assigned a modType ID that was shared among several games.\n`
-                + `This bug can result in the Load Order tab not properly load ordering your pak mods.\n`
-                + `A list of the affected mods is shown below. You must Reinstall these mods to make them sortable.\n`
-                + `If you don't Reinstall thes mods, they will still function, but they will sit at the bottom of the loading order and will not be sortable.\n`
-                + `\n`
-                + `Perform the following steps to Reinstall the affected mods:\n
-                  1. Filter your Mods page by Mod Type "Legacy UE - REINSTALL TO SORT" using the categories at the top.\n
-                  2. Use the "CTRL + A" keyboard shortcut to select all displayed mods.\n
-                  3. Click the "Reinstall" button in the blue ribbon at the bottom of the Mods page.\n
-                  4. You can now sort all of your pak mods in the Load Order tab.\n`
-                + `\n`
-                + `Pak Mods to Reinstall:\n` 
-                + `${legacyMods.join('\n')}`
-                + `\n`
-                + `\n`
-          }, [
-            { label: 'Acknowledge', action: () => dismiss() },
-            {
-              label: 'Never Show Again', action: () => {
-                api.suppressNotification(NOTIF_ID);
-                dismiss();
-              }
-            },
-          ]);
-        },
-      },
-    ],
-  });
-}
-
-//Setup function
-async function setup(discovery, api, gameSpec) {
-  //SYNCHRONOUS CODE //////////////////////////////////////
-  const state = api.getState();
-  const mods = util.getSafe(state, ['persistent', 'mods', gameSpec.game.id], {});
-  const legacyMods = Object.keys(mods).filter(id => mods[id]?.type === LEGACY_UE5_SORTABLE_ID);
-  if (legacyMods.length > 0) {
-    legacyModsNotify(api, legacyMods);
+//* Function to auto-download Universal Sig Bypass from Nexus Mods
+async function downloadSigBypassUniversal(api, gameSpec) {
+  let isInstalled = isSigBypassInstalled(api, gameSpec);
+  if (!isInstalled) {
+    const MOD_NAME = SIGBYPASS_NAME;
+    const MOD_TYPE = SIGBYPASS_ID;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
+    let FILE_ID = SIGBYPASS_FILE_NO;  //If using a specific file id because "input" below gives an error
+    const PAGE_ID = SIGBYPASS_PAGE_NO;
+    const GAME_DOMAIN = SIGBYPASS_DOMAIN;
+    api.sendNotification({ //notification indicating install process
+      id: NOTIF_ID,
+      message: `Installing ${MOD_NAME}`,
+      type: 'activity',
+      noDismiss: true,
+      allowSuppress: false,
+    });
+    if (api.ext?.ensureLoggedIn !== undefined) { //make sure user is logged into Nexus Mods account in Vortex
+      await api.ext.ensureLoggedIn();
+    }
+    try {
+      let FILE = FILE_ID; //use the FILE_ID directly for the correct game store version
+      let URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      try { //get the mod files information from Nexus
+        const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
+        const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
+        const file = modFiles
+          .filter(file => file.category_id === 1)
+          .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))[0];
+        if (file === undefined) {
+          throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
+        }
+        FILE = file.file_id;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      } catch (err) { // use defined file ID if input is undefined above
+        FILE = FILE_ID;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      } //*/
+      const dlInfo = { //Download the mod
+        game: GAME_DOMAIN,
+        name: MOD_NAME,
+      };
+      const dlId = await util.toPromise(cb =>
+        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+      const modId = await util.toPromise(cb =>
+        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
+      const batched = [
+        actions.setModsEnabled(api, profileId, [modId], true, {
+          allowAutoDeploy: true,
+          installed: true,
+        }),
+        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
+      ];
+      util.batchDispatch(api.store, batched); // Will dispatch both actions
+    } catch (err) { //Show the user the download page if the download, install process fails
+      const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
+      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
+      util.opn(errPage).catch(() => null);
+    } finally {
+      api.dismissNotification(NOTIF_ID);
+    }
   }
-  //await downloadUe4ss(api, gameSpec);
-  await downloadSigBypass(api, gameSpec);
-  //await fs.ensureDirWritableAsync(path.join(process.env['LOCALAPPDATA'], CONFIG_PATH));
-  //await fs.ensureDirWritableAsync(path.join(process.env['LOCALAPPDATA'], SAVE_PATH, USERID_FOLDER));
-  await fs.ensureDirWritableAsync(path.join(discovery.path, SCRIPTS_PATH));
-  await fs.ensureDirWritableAsync(path.join(discovery.path, LOGICMODS_PATH));
-  return fs.ensureDirWritableAsync(path.join(discovery.path, UE5_PATH));
-}
+} //*/
+
+// UNREAL FUNCTIONS ///////////////////////////////////////////////////////////////
 
 ///*
 //UNREAL - Pre-sort function
@@ -876,8 +987,7 @@ function makePrefix(input) {
 
 function loadOrderPrefix(api, mod) {
   const state = api.getState();
-  const gameId = GAME_ID;
-  const profile = selectors.lastActiveProfileForGame(state, gameId);
+  const profile = selectors.lastActiveProfileForGame(state, GAME_ID);
   const loadOrder = util.getSafe(state, ['persistent', 'loadOrder', profile], {});
   const loKeys = Object.keys(loadOrder);
   const pos = loKeys.indexOf(mod.id);
@@ -965,26 +1075,13 @@ function UNREALEXTENSION(context) {
       modFiles = files.filter(file => fileExt.includes(path.extname(file).toLowerCase()));
     const supported = (supportedGame && (gameId === spec.game.id) && modFiles.length > 0);
 
-    // Test for a mod installer
-    if (supported && files.find(file =>
-      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
-      supported = false;
-    }
-
     return Promise.resolve({
       supported,
       requiredFiles: []
     });
   };
 
-
   const getUnrealModsPath = (game) => {
-    /*
-    const absModsPath = UNREALDATA.absModsPath;
-    if (absModsPath)
-      return absModsPath;
-    */
     const modsPath = UNREALDATA.modsPath;
     const state = context.api.getState();
     const discoveryPath = util.getSafe(state.settings, ['gameMode', 'discovered', game.id, 'path'], undefined);
@@ -1008,18 +1105,112 @@ function UNREALEXTENSION(context) {
   );
 }
 
+// MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
+
+async function resolveGameVersion(gamePath, exePath) {
+  GAME_VERSION = await setGameVersionAsync(gamePath);
+  const READ_FILE = path.join(gamePath, SHIPPING_EXE);
+  let version = '0.0.0';
+  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
+    try { //try to parse appxmanifest.xml
+      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
+      const parsed = await parseStringPromise(appManifest);
+      version = parsed?.Package?.Identity?.[0]?.$?.Version;
+      return Promise.resolve(version);
+    } catch (err) {
+      log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+  else { //use shipping exe (note that this only returns the UE engine version right now)
+    try {
+      const exeVersion = require('exe-version');
+      version = await exeVersion.getProductVersion(READ_FILE);
+      //log('warn', `Resolved game version for ${GAME_ID} to: ${version}`);
+      return Promise.resolve(version); 
+    } catch (err) {
+      log('error', `Could not read ${READ_FILE} file to get game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+}
+
+//Notification if Config, Save, and Creations folders are not on the same partition
+function legacyModsNotify(api, legacyMods) {
+  const NOTIF_ID = `${GAME_ID}-legacymodsnotify`;
+  const MESSAGE = 'Reinstall Pak Mods to Make Sortable';
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'warning',
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: 'More',
+        action: (dismiss) => {
+          api.showDialog('question', MESSAGE, {
+            text: `\n\n`
+                + `Due to a bug in a handful of Unreal Engine Vortex game extensions, your pak mods were assigned a modType ID that was shared among several games.\n`
+                + `This bug can result in the Load Order tab not properly load ordering your pak mods.\n`
+                + `A list of the affected mods is shown below. You must Reinstall these mods to make them sortable.\n`
+                + `If you don't Reinstall thes mods, they will still function, but they will sit at the bottom of the loading order and will not be sortable.\n`
+                + `\n`
+                + `Perform the following steps to Reinstall the affected mods:\n
+                  1. Filter your Mods page by Mod Type "Legacy UE - REINSTALL TO SORT" using the categories at the top.\n
+                  2. Use the "CTRL + A" keyboard shortcut to select all displayed mods.\n
+                  3. Click the "Reinstall" button in the blue ribbon at the bottom of the Mods page.\n
+                  4. You can now sort all of your pak mods in the Load Order tab.\n`
+                + `\n`
+                + `Pak Mods to Reinstall:\n` 
+                + `${legacyMods.join('\n')}`
+                + `\n`
+                + `\n`
+          }, [
+            { label: 'Acknowledge', action: () => dismiss() },
+            {
+              label: 'Never Show Again', action: () => {
+                api.suppressNotification(NOTIF_ID);
+                dismiss();
+              }
+            },
+          ]);
+        },
+      },
+    ],
+  });
+}
+
+//Setup function
+async function setup(discovery, api, gameSpec) {
+  //SYNCHRONOUS CODE //////////////////////////////////////
+  const state = api.getState();
+  const mods = util.getSafe(state, ['persistent', 'mods', gameSpec.game.id], {});
+  const legacyMods = Object.keys(mods).filter(id => mods[id]?.type === LEGACY_UE5_SORTABLE_ID);
+  if (legacyMods.length > 0) {
+    legacyModsNotify(api, legacyMods);
+  }
+  //await downloadUe4ss(api, gameSpec);
+  await downloadSigBypass(api, gameSpec);
+  //await downloadSigBypassUniversal(api, gameSpec);
+  //await fs.ensureDirWritableAsync(path.join(LOCALAPPDATA, CONFIG_PATH));
+  //await fs.ensureDirWritableAsync(path.join(LOCALAPPDATA, SAVE_PATH, USERID_FOLDER));
+  await fs.ensureDirWritableAsync(path.join(discovery.path, SCRIPTS_PATH));
+  await fs.ensureDirWritableAsync(path.join(discovery.path, LOGICMODS_PATH));
+  return fs.ensureDirWritableAsync(path.join(discovery.path, UE5_PATH));
+}
+
 //Let vortex know about the game
 function applyGame(context, gameSpec) {
   //register the game
   const game = {
     ...gameSpec.game,
-    queryPath,
-    queryModPath: makeGetModPath(context.api, gameSpec),
-    requiresLauncher,
-    //requiresLauncher: async () => await requiresLauncher(context.api),
+    queryPath: makeFindGame(context.api, gameSpec),
+    executable: getExecutable,
+    queryModPath: getModPath,
+    requiresLauncher: requiresLauncher,
     requiresCleanup: true,
+    getGameVersion: resolveGameVersion,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
-    executable: () => gameSpec.game.executable,
     supportedTools: tools,
   };
   context.registerGame(game);
@@ -1032,6 +1223,44 @@ function applyGame(context, gameSpec) {
         && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
     }, (game) => pathPattern(context.api, game, type.targetPath), () => Promise.resolve(false), { name: type.name });
   });
+
+  //register mod types explicitly (due to potentially dynamic Binaries folder)
+  context.registerModType(SCRIPTS_ID, 50, 
+    (gameId) => {
+      var _a;
+      return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
+    }, 
+    (game) => pathPattern(context.api, game, path.join('{gamePath}', SCRIPTS_PATH)), 
+    () => Promise.resolve(false), 
+    { name: SCRIPTS_NAME }
+  );
+  context.registerModType(BINARIES_ID, 54, 
+    (gameId) => {
+      var _a;
+      return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
+    }, 
+    (game) => pathPattern(context.api, game, path.join('{gamePath}', BINARIES_PATH)), 
+    () => Promise.resolve(false), 
+    { name: BINARIES_NAME }
+  );
+  context.registerModType(UE4SS_ID, 56, 
+    (gameId) => {
+      var _a;
+      return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
+    }, 
+    (game) => pathPattern(context.api, game, path.join('{gamePath}', BINARIES_PATH)), 
+    () => Promise.resolve(false), 
+    { name: UE4SS_NAME }
+  );
+  context.registerModType(SIGBYPASS_ID, 58, 
+    (gameId) => {
+      var _a;
+      return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
+    }, 
+    (game) => pathPattern(context.api, game, path.join('{gamePath}', BINARIES_PATH)),
+    () => Promise.resolve(false), 
+    { name: SIGBYPASS_NAME }
+  );
 
   //register mod installers
   context.registerInstaller(`${GAME_ID}-ue4ss-logicscriptcombo`, 25, testUe4ssCombo, installUe4ssCombo);
@@ -1061,7 +1290,8 @@ function main(context) {
       callback: (loadOrder) => {
         if (previousLO === undefined) previousLO = loadOrder;
         if (loadOrder === previousLO) return;
-        context.api.store.dispatch(actions.setDeploymentNecessary(spec.game.id, true));
+        //context.api.store.dispatch(actions.setDeploymentNecessary(spec.game.id, true));
+        requestDeployment(context, spec);
         previousLO = loadOrder;
       },
       createInfoPanel: () =>
@@ -1071,11 +1301,38 @@ function main(context) {
     });
   }
 
-  context.once(() => {
-    // put code here that should be run (once) when Vortex starts up
-
+  context.once(() => { // put code here that should be run (once) when Vortex starts up
+    context.api.onAsync('did-deploy', (profileId) => didDeploy(context.api, profileId)); //*/
   });
   return true;
+}
+
+const requestDeployment = (context, spec) => {
+  context.api.store.dispatch(actions.setDeploymentNecessary(spec.game.id, true));
+
+  context.api.sendNotification({
+    id: `${spec.game.id}-loadorderdeploy-notif`,
+    type: 'warning',
+    message: 'Deployment Required to Apply Load Order Changes',
+    allowSuppress: true,
+    actions: [
+      {
+        title: 'Deploy',
+        action: () => deploy(context.api)
+      }
+    ],
+  });
+};
+
+async function didDeploy(api, profileId) { //run on mod deploy
+  const state = api.getState();
+  const profile = selectors.profileById(state, profileId);
+  const gameId = profile === null || profile === void 0 ? void 0 : profile.gameId;
+  if (gameId !== GAME_ID) {
+    return Promise.resolve();
+  }
+  api.dismissNotification(`${GAME_ID}-loadorderdeploy-notif`);
+  return Promise.resolve();
 }
 
 //export to Vortex

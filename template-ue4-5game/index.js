@@ -1422,7 +1422,7 @@ async function downloadUe4ssNexus(api, gameSpec) {
   }
 } //*/
 
-//* Function to auto-download Mod Enabler form Nexus Mods
+//* Function to auto-download Sig Bypass from Nexus Mods
 async function downloadSigBypass(api, gameSpec) {
   let isInstalled = isSigBypassInstalled(api, gameSpec);
   if (!isInstalled) {
