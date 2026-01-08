@@ -51,7 +51,7 @@ const EXEC_FOLDER_XBOX = "WinGDK";
 
 //config, save, shipping exe
 const DATA_FOLDER = EPIC_CODE_NAME;
-const XBOX_SAVE_STRING = 'XXX'; //'8wekyb3d8bbwe' if published by Microsoft
+const XBOX_SAVE_STRING = 'n746a19ndrrjg'; //'8wekyb3d8bbwe' if published by Microsoft
 const CONFIG_FOLDERNAME = 'Windows';
 const CONFIG_LOC = 'Local AppData';
 const SAVE_LOC = 'Local AppData';

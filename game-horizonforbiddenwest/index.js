@@ -53,7 +53,7 @@ const MODMANAGER_PAGE_NO = 137;
 const MODMANAGER_FILE_NO = 638;
 
 const MANAGERMOD_ID = `${GAME_ID}-managermod`;
-const MANAGERMOD_NAME = "Manager Mod";
+const MANAGERMOD_NAME = "HFW Manager Mod";
 const MANAGERMOD_PATH = path.join('mods');
 const MANAGERMOD_EXTS = ['.core', '.stream'];
 const MANAGERMOD_FILES = ['modinfo.json'];
@@ -107,11 +107,6 @@ const spec = {
     "names": []
   }
 };
-
-//3rd party tools and launchers
-const tools = [
-  
-];
 
 // BASIC EXTENSION FUNCTIONS ///////////////////////////////////////////////////
 
@@ -181,7 +176,7 @@ async function deploy(api) {
 
 // AUTO-DOWNLOADER FUNCTIONS ///////////////////////////////////////////////////
 
-async function isModManagerInstalled(api, spec) {
+async function isModManagerInstalled(api) {
   try {
     GAME_PATH = getDiscoveryPath(api);
     await fs.statAsync(path.join(GAME_PATH, MODMANAGER_EXEC));
@@ -192,10 +187,11 @@ async function isModManagerInstalled(api, spec) {
 }
 
 //* Function to auto-download HFW MM from Nexus Mods
-async function downloadModManager(api, gameSpec) {
+async function downloadModManager(api, check) {
   GAME_PATH = getDiscoveryPath(api);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(api.getState(), GAME_ID);
-  let isInstalled = await isModManagerInstalled(api, gameSpec);
+  let isInstalled = await isModManagerInstalled(api);
+  if (check === false) isInstalled = false;
   //isInstalled = false; //for debugging
   if (!isInstalled) {
     const MOD_NAME = MODMANAGER_NAME;
@@ -203,7 +199,7 @@ async function downloadModManager(api, gameSpec) {
     const NOTIF_ID = `${MOD_TYPE}-installing`;
     const PAGE_ID = MODMANAGER_PAGE_NO;
     const FILE_ID = MODMANAGER_FILE_NO;  //If using a specific file id because "input" below gives an error
-    const GAME_DOMAIN = gameSpec.game.id;
+    const GAME_DOMAIN = GAME_ID;
     api.sendNotification({ //notification indicating install process
       id: NOTIF_ID,
       message: `Installing ${MOD_NAME}`,
@@ -245,16 +241,31 @@ async function downloadModManager(api, gameSpec) {
             try {
               await fs.statAsync(path.join(GAME_PATH, MODMANAGER_EXEC));
             } catch (err) {
-              try {
-                //find the file in Downloads folder
+              try { //find the file in Downloads folder and copy it to the game folder
+                api.sendNotification({ //notification indicating copy process
+                  id: `${NOTIF_ID}-copy`,
+                  message: `Copying ${MOD_NAME} executable to game folder`,
+                  type: 'activity',
+                  noDismiss: true,
+                  allowSuppress: false,
+                });
                 let files = await fs.readdirAsync(DOWNLOAD_FOLDER);
                 const copyFile = files.find(file => path.basename(file).includes(MODMANAGER_STRING));
                 await fs.copyAsync(path.join(DOWNLOAD_FOLDER, copyFile), path.join(GAME_PATH, MODMANAGER_EXEC), { overwrite: true });
+                api.dismissNotification(NOTIF_ID);
+                api.dismissNotification(`${NOTIF_ID}-copy`);
+                api.sendNotification({ //notification copy success
+                  id: `${MOD_NAME}-success`,
+                  message: `Successfully copied ${MOD_NAME} executable to game folder`,
+                  type: 'success',
+                  noDismiss: false,
+                  allowSuppress: true,
+                });
+                //await fs.unlinkAsync(path.join(DOWNLOAD_FOLDER, copyFile)); //remove the downloaded file to avoid duplicates
               } catch (err) {
-                api.showErrorNotification(`Failed to copy HFW Mod Manager executable to game folder`, err, { allowReport: false });
+                api.showErrorNotification(`Failed to download and copy ${MOD_NAME} executable`, err, { allowReport: false });
               }
             }
-
             return resolve();
           }, 
           'never',
@@ -269,10 +280,11 @@ async function downloadModManager(api, gameSpec) {
       //*/
     } catch (err) { //Show the user the download page if the download and copy process fails
       const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
-      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
+      api.showErrorNotification(`Failed to download and copy ${MOD_NAME} executable`, err, { allowReport: false });
       util.opn(errPage).catch(() => null);
     } finally {
       api.dismissNotification(NOTIF_ID);
+      api.dismissNotification(`${NOTIF_ID}-copy`);
     }
   }
 } //*/
@@ -471,7 +483,7 @@ async function setup(discovery, api, gameSpec) {
   GAME_PATH = discovery.path;
   STAGING_FOLDER = selectors.installPathForGame(api.getState(), gameSpec.game.id);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(api.getState(), gameSpec.game.id);
-  await downloadModManager(api, gameSpec);
+  await downloadModManager(api, true);
   await fs.ensureDirWritableAsync(path.join(discovery.path, MANAGERMOD_PATH));
   return fs.ensureDirWritableAsync(SAVE_PATH);
 }
@@ -521,6 +533,13 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(`${GAME_ID}-save`, 25, testSave, installSave);
 
   //register actions
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download HFW Mod Manager', () => {
+    downloadModManager(context.api, false);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open HFW Mod Manager Page', () => {
     util.opn(`https://www.nexusmods.com/${GAME_ID}/mods/${MODMANAGER_PAGE_NO}`).catch(() => null);
   }, () => {

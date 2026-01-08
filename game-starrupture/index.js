@@ -1,5 +1,5 @@
 /*////////////////////////////////////////////////
-Name: XXX Vortex Extension
+Name: StarRupture Vortex Extension
 Structure: Unreal Engine Game
 Author: ChemBoy1
 Version: 0.1.0
@@ -15,30 +15,28 @@ const { parseStringPromise } = require('xml2js');
 // -- START EDIT ZONE -- ///////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-//const USER_HOME = util.getVortexPath('home'); //only uncomment the ones needed
+//const USER_HOME = util.getVortexPath('home');
 //const DOCUMENTS = util.getVortexPath('documents');
 //const ROAMINGAPPDATA = util.getVortexPath('appData');
 const LOCALAPPDATA = util.getVortexPath('localAppData');
 
 //Specify all information about the game
-const GAME_ID = "XXX"; //same as Nexus domain
-const STEAMAPP_ID = "XXX"; //from steamdb.info
-const STEAMAPP_ID_DEMO = "XXX";
-const EPICAPP_ID = "XXX"; //from egdata.app
-const GOGAPP_ID = "XXX"; // from gogdb.org
-const XBOXAPP_ID = "XXX"; //from appxmanifest.xml
-const XBOXEXECNAME = "XXX"; //from appxmanifest.xml
-const XBOX_PUB_ID = "XXX"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
+const GAME_ID = "starrupture"; //same as Nexus domain
+const STEAMAPP_ID = "1631270"; //from steamdb.info
+const STEAMAPP_ID_DEMO = null;
+const EPICAPP_ID = null; //from egdata.app
+const GOGAPP_ID = null; // from gogdb.org
+const XBOXAPP_ID = null; //from appxmanifest.xml
+const XBOXEXECNAME = null; //from appxmanifest.xml
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
-const GAME_NAME = "XXX";
-const GAME_NAME_SHORT = "XXX"; //Try for 8-10 characters
-const EPIC_CODE_NAME = "XXX"; //Folder in root
-const EXEC = `${EPIC_CODE_NAME}.exe`; //This is true ~80% of the time
-const EXEC_EPIC = EXEC; //change these 3 if different
+const GAME_NAME = "StarRupture";
+const GAME_NAME_SHORT = "StarRupture"; //Try for 8-10 characters
+const EPIC_CODE_NAME = "StarRupture";
+const EXEC = `StarRuptureGameSteam.exe`;
+const EXEC_EPIC = EXEC;
 const EXEC_GOG = EXEC;
 const EXEC_DEMO = EXEC;
-const PARAMETERS_STRING = '';
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com";
 
 //feature toggles
 const hasXbox = false; //toggle for Xbox version logic (to unify templates)
@@ -50,40 +48,32 @@ const IO_STORE = true; //true if the Paks folder contains .ucas and .utoc files
 
 //UE specific
 const ENGINE_VERSION = '5.X.X'; //Unreal Engine version - info only atm. usually '4.27.2.0' or '5.X.X'
-const ROOT_FOLDERS = [EPIC_CODE_NAME, 'Engine']; //addressable folders in root
-const ROOTSUB_FOLDERS = ['Content', 'Binaries', 'Plugins', 'Mods']; //subfolders of EPIC_CODE_NAME.
-const SAVE_EXT = ".sav";
 const PAKMOD_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Paks', '~mods'); //usually works. Some games don't work from "~mods".
 const PAKMOD_LOADORDER = true; //set to false if you don't want loadOrder. If must be in "Paks" root, also disable loadOrder.
 const UE4SS_PAGE_NO = 0; //set if there is UE4SS Nexus page
 const UE4SS_FILE_NO = 0;
-const UE4SS_DOMAIN = GAME_ID; //either GAME_ID or 'site'
+const UE4SS_DOMAIN = GAME_ID;
 const UE4SS_MOD_PATH = path.join('ue4ss', 'Mods');
 
 //config, save, shipping exe
-const DATA_FOLDER = EPIC_CODE_NAME; //almost always matches.
-const CONFIG_FOLDERNAME = 'Windows'; //UE 4 games are often 'WindowsNoEditor'
-const CONFIG_LOC = 'Local AppData'; //string for notification text.
-const SAVE_LOC = CONFIG_LOC; //string for notification text. Config and Save mods are almonst always in the same place
-const CONFIGMOD_LOCATION = LOCALAPPDATA; //almost always matches. Some are in game folder or Documents.
+const DATA_FOLDER = EPIC_CODE_NAME;
+const CONFIG_FOLDERNAME = 'Windows';
+const CONFIG_LOC = 'Local AppData';
+const SAVE_LOC = 'Local AppData';
+const CONFIGMOD_LOCATION = LOCALAPPDATA;
 const SAVEMOD_LOCATION = CONFIGMOD_LOCATION;
 const SHIPEXE_STRING_DEFAULT = '';
 const SHIPEXE_STRING_EGS = '';
 const SHIPEXE_STRING_GOG = '';
 const SHIPEXE_STRING_XBOX = '';
 const SHIPEXE_STRING_DEMO = '';
-const SHIPEXE_PROJECTNAME = EPIC_CODE_NAME; //almost always matches.
-
-//Save Editor (only used if one is available)
-const SAVE_EDITOR_ID = `${GAME_ID}-saveeditor`;
-const SAVE_EDITOR_NAME = "Save Editor";
-const SAVE_EDITOR_EXEC = "XXX.exe";
+const SHIPEXE_PROJECTNAME = EPIC_CODE_NAME;
 
 // -- END EDIT ZONE -- /////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //const ENGINE_VERSION_NO = +ENGINE_VERSION;
-const XBOX_SAVE_STRING = XBOX_PUB_ID;
+const XBOX_SAVE_STRING = 'XXX'; //'8wekyb3d8bbwe' if published by Microsoft
 const CONFIG_PATH_DEFAULT = path.join(CONFIGMOD_LOCATION, DATA_FOLDER, "Saved", "Config", CONFIG_FOLDERNAME);
 const CONFIG_PATH_XBOX = path.join(CONFIGMOD_LOCATION, DATA_FOLDER, "Saved", "Config", "WinGDK"); //XBOX Version
 const SAVE_PATH_DEFAULT = path.join(SAVEMOD_LOCATION, DATA_FOLDER, "Saved", "SaveGames");
@@ -112,8 +102,8 @@ let STORE_FOLDER = '';
 //other constants
 const APPMANIFEST_FILE = 'appxmanifest.xml';
 const EXEC_XBOX = 'gamelaunchhelper.exe';
-const EXEC_FOLDER_DEFAULT = "Win64"; //almost never changes
-const EXEC_FOLDER_XBOX = "WinGDK"; //almost never changes
+const EXEC_FOLDER_DEFAULT = "Win64";
+const EXEC_FOLDER_XBOX = "WinGDK";
 
 //Unreal Engine Game Data
 const UNREALDATA = {
@@ -136,21 +126,19 @@ const EPIC_FILE = path.join(EPIC_CODE_NAME, 'Binaries', 'Win64', SHIPPING_EXE);
 const XBOX_FILE = EXEC_XBOX;
 
 const PAK_ALT_ID = `${GAME_ID}-pakalt`;
-let PAK_ALT_NAME = 'Paks (no "~mods")';
-let PAK_ALT_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Paks');
-if (UNREALDATA.loadOrder === false) {
-  PAK_ALT_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Paks', '~mods');
-  PAK_ALT_NAME = 'Paks (with "~mods")';
-}
+const PAK_ALT_NAME = 'Paks (no "~mods")';
 const PAK_PATH = UNREALDATA.modsPath;
+const PAK_ALT_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Paks');
 const PAK_EXT = '.pak';
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Game Folder";
 const ROOT_FILE = EPIC_CODE_NAME;
+const ROOT_FOLDERS = [ROOT_FILE, 'Engine'];
 
 const ROOTSUB_ID = `${GAME_ID}-rootsubfolders`;
 const ROOTSUB_NAME = "Root Sub-Folders";
+const ROOTSUB_FOLDERS = ['Content', 'Binaries', 'Plugins', 'Mods'];
 const ROOTSUB_PATH = EPIC_CODE_NAME;
 
 const CONFIG_ID = `${GAME_ID}-config`;
@@ -176,6 +164,7 @@ if (USERID_FOLDER === undefined) {
   USERID_FOLDER = "";
 } //*/
 let SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
+const SAVE_EXT = ".sav";
 const SAVE_COMPAT_VERSIONS = ['steam', 'epic', 'gog'];
 
 const SCRIPTS_ID = `${GAME_ID}-scripts`;
@@ -204,6 +193,11 @@ const UE4SS_FILE = "dwmapi.dll";
 const UE4SS_DLFILE_STRING = "ue4ss";
 const UE4SS_URL = "https://github.com/UE4SS-RE/RE-UE4SS/releases";
 
+//Save Editor (only used if one is available)
+const SAVE_EDITOR_ID = `${GAME_ID}-saveeditor`;
+const SAVE_EDITOR_NAME = "Save Editor";
+const SAVE_EDITOR_EXEC = "XXX.exe";
+
 //Signature Bypass (only used if game requires)
 const SIGBYPASS_ID = `${GAME_ID}-sigbypass`;
 const SIGBYPASS_NAME = "Sig Bypass";
@@ -227,19 +221,14 @@ const MODKIT_EXEC_NAME = "ModKit.exe";
 const MODKIT_FOLDER = path.join('XXX', 'Binaries', 'Win64');
 const MODKIT_EXEC_PATH = path.join(MODKIT_FOLDER, MODKIT_EXEC_NAME);
 
-// -- START EDIT ZONE -- ///////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 const MOD_PATH_DEFAULT = PAK_PATH;
 const REQ_FILE = EPIC_CODE_NAME;
+const PARAMETERS_STRING = '';
 const PARAMETERS = [PARAMETERS_STRING];
 
 const IGNORE_CONFLICTS = [path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
 const IGNORE_DEPLOY = [path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
 let MODTYPE_FOLDERS = [path.join(LOGICMODS_PATH, 'LogicMods'), PAK_PATH, PAK_ALT_PATH];
-
-// -- END EDIT ZONE -- /////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //Filled in from data above
 const spec = {
@@ -247,7 +236,7 @@ const spec = {
     "id": GAME_ID,
     "name": GAME_NAME,
     "shortName": GAME_NAME_SHORT,
-    //"parameters": PARAMETERS, //must uncomment manually since we don't want to send empty string parameter
+    //"parameters": PARAMETERS,
     "logo": `${GAME_ID}.jpg`,
     "mergeMods": true,
     "requiresCleanup": true,
