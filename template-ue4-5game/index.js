@@ -1649,7 +1649,13 @@ function UNREALEXTENSION(context) {
     getUnrealModsPath, 
     () => Promise.resolve(false), 
     { name: UE5_SORTABLE_NAME,
-      mergeMods: mod => loadOrderPrefix(context.api, mod) + mod.id //COMMENT OUT IF DISABLING LOAD ORDER
+      mergeMods: mod => {
+        if (UNREALDATA.loadOrder === true) {
+          loadOrderPrefix(context.api, mod) + mod.id
+        } else {
+          return '';
+        }
+      }
     }
   );
 }
