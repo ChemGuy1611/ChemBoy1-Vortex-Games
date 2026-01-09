@@ -11,6 +11,7 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 const fsExtra = require('fs-extra');
+const fsPromises = require('fs/promises');
 const { parseStringPromise } = require('xml2js');
 
 // -- START EDIT ZONE -- ///////////////////////////////////////////////////////////////////////////////
@@ -1449,6 +1450,9 @@ async function chooseModLoader(api, gameSpec) {
 //Deconflict mod loaders
 async function deconflictModLoaders(api, gameSpec) {
   const MSC_LABEL = `${MSCLOADER_NAME} (Recommended)`;
+  bepinexInstalled = isBepinexInstalled(api, gameSpec);
+  melonInstalled = isMelonInstalled(api, gameSpec);
+  mscInstalled = isMscInstalled(api, spec);
   const t = api.translate;
   const replace = {
     game: gameSpec.game.name,
@@ -1470,15 +1474,27 @@ async function deconflictModLoaders(api, gameSpec) {
       return;
     }
     if (result.action === MSC_LABEL) {
-      await removeMelon(api, gameSpec);
-      await removeBepinex(api, gameSpec);
+      if (melonInstalled) {
+        await removeMelon(api, gameSpec);
+      }
+      if (bepinexInstalled) {
+        await removeBepinex(api, gameSpec);
+      }
     }
     if (result.action === 'BepInEx') {
-      await removeMelon(api, gameSpec);
-      await removeMsc(api, gameSpec);
+      if (melonInstalled) {
+        await removeMelon(api, gameSpec);
+      }
+      if (mscInstalled) {
+        await removeMsc(api, gameSpec);
+      }
     } else if (result.action === 'MelonLoader') {
-      await removeBepinex(api, gameSpec);
-      await removeMsc(api, gameSpec);
+      if (bepinexInstalled) {
+        await removeBepinex(api, gameSpec);
+      }
+      if (mscInstalled) {
+        await removeMsc(api, gameSpec);
+      }
     }
     if (hasCustomMods) { //Run this if need to change a modType path based on the mod loader installed
       await deploy(api);
@@ -1696,6 +1712,8 @@ async function mscInstallerFolderNotify(api) {
               + `IMPORTANT: Due to some unsavory programming in MSCLoader (not mine!), you must temporarily delete the "BepInEx" and "Plugins" folders in your game folder before running the MSCLoader installer.\n`
               + `Otherwise, the installer will throw an error and refuse to proceed. After the installer is finished, restart Vortex, otherwise you won't be able to deploy mods.\n`
               + `This is necessary because I did not want to take away the freedom to use BepInEx and MelonLoader, if you prefer them.\n`
+              + `\n`
+              + `You can use the buttons within the folder icon on the Mods page toolbar to quickly delete the folders and another button to restore them after the installer is finished.\n`
           }, [
               { label: 'OK', action: () => dismiss() },
               {
@@ -1799,6 +1817,48 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(`${GAME_ID}-fallback`, 49, testFallback, (files, destinationPath) => installFallback(context.api, files, destinationPath));
   
   //register actions
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Delete "BepInEx"+"Plugins" Folders (Pre-MSCLInstaller)', async () => {
+    GAME_PATH = getDiscoveryPath(context.api);
+    try {
+      await fs.statAsync(path.join(GAME_PATH, "BepInEx"));
+      await fs.statAsync(path.join(GAME_PATH, "Plugins"));
+      await fsPromises.rmdir(path.join(GAME_PATH, "BepInEx"), { recursive: true });
+      await fsPromises.rmdir(path.join(GAME_PATH, "Plugins"), { recursive: true });
+      const NOTIF_ID = `${GAME_ID}-folderdeletesuccess`;
+      const MESSAGE = `Successfully deleted "BepInEx"+"Plugins" folders. Don't forget to restore them after running the MSCLoader installer.`;
+      context.api.sendNotification({
+        id: NOTIF_ID,
+        type: 'success',
+        message: MESSAGE,
+        allowSuppress: true,
+        actions: [],
+      });
+    } catch (err) {
+      log('warn', `Failed to delete "BepInEx"+"Plugins" folders: ${err}`);
+    }
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Restore "BepInEx"+"Plugins" Folders (Post-MSCLInstaller)', async () => {
+    GAME_PATH = getDiscoveryPath(context.api);
+    modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS_BEPINEX);
+    modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS_MELON);
+    const NOTIF_ID = `${GAME_ID}-folderrestoresuccess`;
+      const MESSAGE = `Successfully restored "BepInEx"+"Plugins" folders.`;
+      context.api.sendNotification({
+        id: NOTIF_ID,
+        type: 'success',
+        message: MESSAGE,
+        allowSuppress: true,
+        actions: [],
+      });
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Data Folder', () => {
     GAME_PATH = getDiscoveryPath(context.api);
     const openPath = path.join(GAME_PATH, DATA_FOLDER);
@@ -1921,10 +1981,17 @@ function main(context) {
     context.api.onAsync('did-purge', (profileId) => { 
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;
-      mscInstalled = isMscInstalled(context.api, spec);
+      bepinexInstalled = isBepinexInstalled(context.api, spec);
+      melonInstalled = isMelonInstalled(context.api, spec);
+      mscInstalled = checkMscInstalled(context.api, spec);
       if (mscInstalled) {
         removeMscFiles(context.api, spec); //delete installed files to clean folder
       }
+      /*
+      mscInstalled = checkMscInstalled(context.api, spec);
+      if (!bepinexInstalled && !melonInstalled && !mscInstalled) {
+        chooseModLoader(context.api, spec); //dialog to choose mod loader
+      } //*/
       return Promise.resolve();
     });
   });
@@ -1998,10 +2065,13 @@ function mscInstallerNotify(api) {
           api.showDialog('question', MESSAGE, {
             text: `\n`
                 + `You must run the ${MOD_NAME} installer to install necessary files to the game folder.\n`
+                + `Use the default installation options for compatibility with Vortex.\n`
                 + `\n`
-                + `IMPORTANT: Use the default installation options for compatibility with Vortex.\n`
+                + `IMPORTANT: Due to some unsavory programming in MSCLoader (not mine!), you must temporarily delete the "BepInEx" and "Plugins" folders in your game folder before running the MSCLoader installer.\n`
+                + `Otherwise, the installer will throw an error and refuse to proceed. After the installer is finished, restart Vortex, otherwise you won't be able to deploy mods.\n`
+                + `This is necessary because I did not want to take away the freedom to use BepInEx and MelonLoader, if you prefer them.\n`
                 + `\n`
-                + `IMPORTANT2: Due to some unsavory programming in MSCLoader, you must temporarily delete the "Plugins" and "BepInEx" folders in the game folder before running the installer, then restart Vortex when you are done (otherwise, you won't be able to deploy mods). Otherwise the installer will throw an error.\n`
+                + `You can use the buttons within the folder icon on the Mods page toolbar to quickly delete the folders and another button to restore them after the installer is finished.\n`
                 + `\n`
                 + `Use the included tool to launch ${MOD_NAME} installer (button on this notification or in "Dashboard" tab).\n`
           }, [

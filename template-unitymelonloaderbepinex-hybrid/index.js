@@ -12,6 +12,7 @@ const path = require('path');
 const template = require('string-template');
 const fsExtra = require('fs-extra');
 const { parseStringPromise } = require('xml2js');
+const { is } = require('bluebird');
 
 // -- START EDIT ZONE -- ///////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1186,12 +1187,12 @@ async function installPlugin(api, gameSpec, files, workingDir) {
 
   // CANCEL INSTALL CONDITIONS
   if (hasCustomLoader) {
-    //if MelonLoader plugin is installed while using MSCLoader, cancel install
+    //if MelonLoader plugin is installed while using Custom Mod Loader, cancel install
     if (isCustom && ( bepinexInstalled || melonInstalled )) {
       const wrongLoader = await api.showDialog('error', 'Wrong Mod Loader', {
           bbcode: api.translate(`Vortex has detected that the ${MOD_NAME} archive has ${CUSTOMLOADER_NAME} plugins, but you have installed BepInEx or MelonLoader.[br][/br][br][/br]`
               + `The installation will be cancelled to avoid issues.[br][/br][br][/br]` 
-              + `Check the mod's page to see if there is a MSCLoader version of the mod, or change your mod loader to MelonLoader.[br][/br][br][/br]`),
+              + `Check the mod's page to see if there is a ${CUSTOMLOADER_NAME} version of the mod, or change your mod loader to MelonLoader.[br][/br][br][/br]`),
           options: { order: ['bbcode'], wrap: true },
       }, [
           { label: 'Ok' }
@@ -1423,6 +1424,11 @@ async function chooseModLoader(api, gameSpec) {
 //Deconflict mod loaders
 async function deconflictModLoaders(api, gameSpec) {
   CUSTOM_LABEL = CUSTOMLOADER_NAME;
+  bepinexInstalled = isBepinexInstalled(api, gameSpec);
+  melonInstalled = isMelonInstalled(api, gameSpec);
+  if (hasCustomLoader) {
+    customInstalled = checkCustomInstalled(api, gameSpec);
+  }
   const t = api.translate;
   let choices = [
     { label: t('BepInEx') },
@@ -1451,18 +1457,30 @@ async function deconflictModLoaders(api, gameSpec) {
       return;
     }
     if (hasCustomLoader && (result.action === CUSTOM_LABEL)) {
-      await removeMelon(api, gameSpec);
-      await removeBepinex(api, gameSpec);
+      if (melonInstalled) {
+        await removeMelon(api, gameSpec);
+      }
+      if (bepinexInstalled) {
+        await removeBepinex(api, gameSpec);
+      }
     }
     if (result.action === 'BepInEx') {
-      await removeMelon(api, gameSpec);
+      if (melonInstalled) {
+        await removeMelon(api, gameSpec);
+      }
       if (hasCustomLoader) {
-        await removeCustom(api, gameSpec);
+        if (customInstalled) {
+          await removeCustom(api, gameSpec);
+        }
       }
     } else if (result.action === 'MelonLoader') {
-      await removeBepinex(api, gameSpec);
+      if (bepinexInstalled) {
+        await removeBepinex(api, gameSpec);
+      }
       if (hasCustomLoader) {
-        await removeCustom(api, gameSpec);
+        if (customInstalled) {
+          await removeCustom(api, gameSpec);
+        }
       }
     }
     if (hasCustomMods) { //Run this if need to change a modType path based on the mod loader installed
@@ -1504,7 +1522,7 @@ async function removeCustom(api, gameSpec) {
   try {
     await util.removeMods(api, gameSpec.game.id, [modId]);
     if (customLoaderInstaller) { //remove files from installer here if there are any
-      await removeMscFiles(api, gameSpec);
+      await removeCustomFiles(api, gameSpec);
     }
   } catch (err) {
     api.showErrorNotification(`Failed to remove ${CUSTOMLOADER_NAME}`, err, { allowReport: false });
@@ -1900,10 +1918,17 @@ function main(context) {
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;
       if (hasCustomLoader) {
-        customInstalled = isCustomInstalled(context.api, spec);
+        bepinexInstalled = isBepinexInstalled(context.api, spec);
+        melonInstalled = isMelonInstalled(context.api, spec);
+        customInstalled = checkCustomInstalled(context.api, spec);
         if (customInstalled && customLoaderInstaller) {
-          removeCustomFiles(context.api, spec); //dialog to choose mod loader
+          removeCustomFiles(context.api, spec); //delete installed files to clean folder
         }
+        /*
+        customInstalled = checkCustomInstalled(context.api, spec);
+        if (!bepinexInstalled && !melonInstalled && !customInstalled) {
+          chooseModLoader(context.api, spec); //dialog to choose mod loader
+        } //*/
       }
       return Promise.resolve();
     });
@@ -1945,7 +1970,7 @@ function isCustomInstalled(api, spec) {
 }
 
 // Test if Custom Mod Loader installer was run (marker file exists)
-function isCustomInstalled(api, spec) {
+function checkCustomInstalled(api, spec) {
   GAME_PATH = getDiscoveryPath(api);
   let fileTest = false;
   try {
