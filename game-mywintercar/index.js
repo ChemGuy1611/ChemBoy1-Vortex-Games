@@ -1,9 +1,9 @@
 /*//////////////////////////////////////////
 Name: My Winter Car Vortex Extension
-Structure: Unity BepinEx/MelonLoader Hybrid
+Structure: Unity BepinEx/MelonLoader Hybrid + Custom Mod Loader (MSCLoader)
 Author: ChemBoy1
 Version: 0.2.0
-Date: 2026-01-03
+Date: 2026-01-09
 //////////////////////////////////////////*/
 
 //Import libraries
@@ -12,6 +12,9 @@ const path = require('path');
 const template = require('string-template');
 const fsExtra = require('fs-extra');
 const { parseStringPromise } = require('xml2js');
+
+// -- START EDIT ZONE -- ///////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 const USER_HOME = util.getVortexPath("home");
 //const DOCUMENTS = util.getVortexPath("documents");
@@ -38,6 +41,8 @@ const XBOX_SAVE_STRING = ''; //string after "ID_"
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/My_Winter_Car";
 
 const hasCustomMods = false; //set to true if there are modTypes with folder paths dependent on which mod loader is installed
+const hasCustomLoader = true; //set to true if there is a custom mod loader
+const customLoaderInstaller = true; //set true if the custom loader uses an installer
 
 //Data to determine BepinEx/MelonLoader versions and URLs
 const BEPINEX_BUILD = 'mono'; // 'mono' or 'il2cpp' - check for "il2cpp_data" folder
@@ -50,12 +55,16 @@ const allowMelPrefMan = false; //should MelonPreferencesManager be downloaded? F
 const allowBepinexNexus = false; //set false until bugs are fixed
 const allowMelonNexus = false; //set false until bugs are fixed
 
+// -- END EDIT ZONE -- /////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 let GAME_PATH = null;
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 let GAME_VERSION = '';
 let bepinexInstalled = false;
 let melonInstalled = false;
+let mscInstalled = false;
 const EXEC_XBOX = 'gamelaunchhelper.exe';
 const APPMANIFEST_FILE = 'appxmanifest.xml';
 
@@ -189,6 +198,7 @@ const BEP_LOG_FILEPATH = path.join(BEPINEX_FOLDER, BEP_LOG_FILE);
 const MEL_LOG_FILE = 'Latest.log';
 const MEL_LOG_FILEPATH = path.join(MELON_FOLDER, MEL_LOG_FILE);
 
+//custom mods (that change directory based on loader)
 const CUSTOM_ID = `${GAME_ID}-custommod`;
 const CUSTOM_NAME = "XXX";
 const CUSTOM_FOLDER = 'XXX';
@@ -204,7 +214,61 @@ const DEPLOY_FILE = `vortex.deployment.${CUSTOM_ID}.json`;
 const CUSTOM_DEPLOYFILE_BEPINEX = path.join(CUSTOM_PATH_BEPINEX, DEPLOY_FILE);
 const CUSTOM_DEPLOYFILE_MELON = path.join(CUSTOM_PATH_MELON, DEPLOY_FILE);
 
-const MWCEDITOR_ID = ''
+//Save Editor
+const MWCEDITOR_ID = `${GAME_ID}-mwceditor`;
+const MWCEDITOR_NAME = "MWCEditor";
+const MWCEDITOR_EXEC = 'MWCEditor.exe';
+
+//support for MSCLoader //////////////////////////////////////////////////
+
+const MSCLOADER_ID = `${GAME_ID}-mscloader`;
+const MSCLOADER_NAME = "MSCLoader";
+const MSCLOADER_EXEC = 'MSCLInstaller.exe';
+const MSCLOADER_MARKER_FILE = 'MSCLoader.dll';
+const MSCLOADER_MARKER_FOLDER = path.join(DATA_FOLDER, 'Managed');
+const MSCLOADER_MARKER_PATH = path.join(MSCLOADER_MARKER_FOLDER, MSCLOADER_MARKER_FILE);
+const MSCLOADER_FOLDER = 'MSCLoader';
+const MSCLOADER_PAGE_NO = 3;
+const MSCLOADER_FILE_NO = 1463;
+const MSCLOADER_DOMAIN = GAME_ID;
+const MSCLOADER_FILES_ARRAY = [
+  'winhttp.dll',
+  path.join(MSCLOADER_MARKER_FOLDER, '0Harmony.dll'),
+  path.join(MSCLOADER_MARKER_FOLDER, 'INIFileParser.dll'),
+  path.join(MSCLOADER_MARKER_FOLDER, 'Ionic.Zip.Reduced.dll'),
+  path.join(MSCLOADER_MARKER_FOLDER, 'MSCLoader.dll'),
+  path.join(MSCLOADER_MARKER_FOLDER, 'MSCLoader.Preloader.dll'),
+  path.join(MSCLOADER_MARKER_FOLDER, 'NAudio.dll'),
+  path.join(MSCLOADER_MARKER_FOLDER, 'NAudio.Flac.dll'),
+  path.join(MSCLOADER_MARKER_FOLDER, 'Newtonsoft.Json.dll'),
+  path.join(MSCLOADER_MARKER_FOLDER, 'NVorbis.dll'),
+  path.join(MSCLOADER_MARKER_FOLDER, 'System.Data.dll'),
+  path.join(MSCLOADER_MARKER_FOLDER, 'System.Runtime.Serialization.dll'),
+  path.join(MSCLOADER_MARKER_FOLDER, 'System.Xml.dll'),
+];
+//these folders need to be temporarily deleted to run the MSCLoader installer
+const INSTALLER_DELETE_FOLDERS = [ 
+  'Plugins',
+  'BepInEx',
+];
+
+const MSCLOADER_MOD_ID = `${GAME_ID}-mscloadermod`;
+const MSCLOADER_MOD_NAME = "MSCLoader Mod";
+const MSCLOADER_MOD_PATH = '.';
+const MSCLOADER_MOD_FOLDERS = ['mods'];
+
+const MSCLOADER_PLUGIN_ID = `${GAME_ID}-mscloaderplugin`;
+const MSCLOADER_PLUGIN_NAME = "MSCLoader Plugin";
+const MSCLOADER_PLUGIN_PATH = path.join('Mods');
+const MSC_STRING = 'MSCLoader'; //string to ID MSC plugin file
+
+const TEXTUREPACK_ID = `${GAME_ID}-texturepack`;
+const TEXTUREPACK_NAME = "Texture Pack (MSCLoader)";
+const TEXTUREPACK_PATH = path.join(MSCLOADER_PLUGIN_PATH, 'Assets', 'TexturePackLoader');
+const TEXTUREPACK_FILES = ['packinfo.json'];
+const TEXTUREPACK_EXTS = ['.png'];
+
+// EDIT ZONE //////////////////////////////////////////////////////////////
 
 const MOD_PATH_DEFAULT = ".";
 const REQ_FILE = EXEC;
@@ -213,10 +277,15 @@ const PARAMETERS = [PARAMETERS_STRING];
 
 const IGNORE_CONFLICTS = [path.join('**', 'manifest.json'), path.join('**', 'icon.png'), path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
 const IGNORE_DEPLOY = [path.join('**', 'manifest.json'), path.join('**', 'icon.png'), path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
-let MODTYPE_FOLDERS = [ASSEMBLY_PATH, ASSETS_PATH, BEPINEX_PATCHERS_PATH, BEPINEX_PLUGINS_PATH, BEPINEX_CONFIG_PATH, MELON_PLUGINS_PATH, MELON_MODS_PATH, MELON_CONFIG_PATH];
+//had to split BepInEx and Plugins folders into separate write check since MSCLoader author is a special kind of individual
+let MODTYPE_FOLDERS = [ASSEMBLY_PATH, MSCLOADER_PLUGIN_PATH, TEXTUREPACK_PATH];
+const MODTYPE_FOLDERS_BEPINEX = [BEPINEX_PATCHERS_PATH, BEPINEX_PLUGINS_PATH, BEPINEX_CONFIG_PATH];
+const MODTYPE_FOLDERS_MELON = [MELON_PLUGINS_PATH, MELON_MODS_PATH, MELON_CONFIG_PATH];
 if (hasCustomMods) {
   MODTYPE_FOLDERS.push(CUSTOM_PATH_BEPINEX, CUSTOM_PATH_MELON);
 }
+
+// EDIT ZONE //////////////////////////////////////////////////////////////
 
 //Filled in from info above
 const spec = {
@@ -255,6 +324,24 @@ const spec = {
     }
   },
   "modTypes": [
+    {
+      "id": MSCLOADER_MOD_ID,
+      "name": MSCLOADER_MOD_NAME,
+      "priority": "high",
+      "targetPath": path.join('{gamePath}', MSCLOADER_MOD_PATH)
+    }, //*/
+    {
+      "id": MSCLOADER_PLUGIN_ID,
+      "name": MSCLOADER_PLUGIN_NAME,
+      "priority": "high",
+      "targetPath": path.join('{gamePath}', MSCLOADER_PLUGIN_PATH)
+    }, //*/
+    {
+      "id": TEXTUREPACK_ID,
+      "name": TEXTUREPACK_NAME,
+      "priority": "high",
+      "targetPath": path.join('{gamePath}', TEXTUREPACK_PATH)
+    }, //*/
     {
       "id": BEPINEX_MOD_ID,
       "name": BEPINEX_MOD_NAME,
@@ -345,6 +432,12 @@ const spec = {
       "priority": "low",
       "targetPath": '{gamePath}'
     },
+    {
+      "id": MSCLOADER_ID,
+      "name": MSCLOADER_NAME,
+      "priority": "low",
+      "targetPath": '{gamePath}'
+    },
   ],
   "discovery": {
     "ids": DISCOVERY_IDS_ACTIVE,
@@ -365,7 +458,31 @@ const tools = [
     exclusive: true,
     shell: true,
     //defaultPrimary: true,
-    parameters: []
+    parameters: PARAMETERS,
+  }, //*/
+  {
+    id: MWCEDITOR_ID,
+    name: MWCEDITOR_NAME,
+    logo: `mwceditor.png`,
+    executable: () => MWCEDITOR_EXEC,
+    requiredFiles: [MWCEDITOR_EXEC],
+    detach: true,
+    relative: true,
+    exclusive: false,
+    //shell: true,
+    //parameters: [],
+  }, //*/
+  {
+    id: MSCLOADER_ID,
+    name: `${MSCLOADER_NAME} Installer`,
+    logo: `mscloader.png`,
+    executable: () => path.join(MSCLOADER_FOLDER, MSCLOADER_EXEC),
+    requiredFiles: [path.join(MSCLOADER_FOLDER, MSCLOADER_EXEC)],
+    detach: true,
+    relative: true,
+    exclusive: true,
+    //shell: true,
+    //parameters: [],
   }, //*/
 ];
 
@@ -613,6 +730,48 @@ function installMelon(files) {
       type: 'copy',
       source: file,
       destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Test for MSCLoader files (installer exe)
+function testMscLoader(files, gameId) {
+  const isMod = files.some(file => (path.basename(file) === MSCLOADER_EXEC));
+  let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+      supported,
+      requiredFiles: [],
+  });
+}
+
+//Install MSCLoader files (installer exe)
+function installMscLoader(files) {
+  const MOD_TYPE = MSCLOADER_ID;
+  const modFile = files.find(file => (path.basename(file) === MSCLOADER_EXEC));
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file => (
+    (file.indexOf(rootPath) !== -1) &&
+    (!file.endsWith(path.sep))
+  ));
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(MSCLOADER_FOLDER, file.substr(idx)),
     };
   });
   instructions.push(setModTypeInstruction);
@@ -881,6 +1040,44 @@ function installCustom(files) {
   return Promise.resolve({ instructions });
 }
 
+//Test for Texture Pack (MSCLoader) mod files
+function testTexturePack(files, gameId) {
+  const isMod = files.some(file => TEXTUREPACK_FILES.includes(path.basename(file).toLowerCase()));
+  let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+      supported,
+      requiredFiles: [],
+  });
+}
+
+//Install Texture Pack (MSCLoader) mod files
+function installTexturePack(files) {
+  const MOD_TYPE = TEXTUREPACK_ID;
+  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file => (
+    (!file.endsWith(path.sep))
+  ));
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
 //Fallback installer to Binaries folder
 function testFallback(files, gameId) {
   let supported = (gameId === spec.game.id);
@@ -993,20 +1190,24 @@ async function installPlugin(api, gameSpec, files, workingDir) {
   let setModTypeInstruction = {};
   const MOD_NAME = path.basename(workingDir).replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*/gi, '');
 
-  // logic to parse dll files to determine if they are MelonLoader plugins or BepInEx plugins
+  // logic to parse dll files to determine if they are MSCLoader/Melon/BepInEx plugins
   let isBepinex = false;
   let isBepinexPatcher = false;
   let isMelon = false;
   let isMelonPlugin = false;
+  let isMsc = false;
   bepinexInstalled = isBepinexInstalled(api, gameSpec);
   melonInstalled = isMelonInstalled(api, gameSpec);
+  mscInstalled = isMscInstalled(api, gameSpec);
 
   // detect plugin types by reading DLL contents
   await Promise.all(files.map(async file => {
     if (PLUGIN_EXTS.includes(path.extname(file).toLowerCase())) {
       try {
         const content = await fs.readFileAsync(path.join(workingDir, file), 'utf8');
-        if (content.includes(BEP_STRING)) {
+        if (content.includes(MSC_STRING)) {
+          isMsc = true;
+        } else if (content.includes(BEP_STRING)) {
             isBepinex = true;
             isBepinexPatcher = false; //temporary, find reliable string to id patchers
             //isBepinexPatcher = !content.includes(BEP_PATCHER_STRING) && !files.find(file => path.extname(file).toLowerCase() = BEPINEX_PLUGINS_FOLDER);
@@ -1015,12 +1216,39 @@ async function installPlugin(api, gameSpec, files, workingDir) {
           isMelonPlugin = content.includes(MEL_PLUGIN_STRING);
         }
       } catch (err) {
-        api.showErrorNotification(`Failed to read mod file "${file}" to determine if for BepInEx or MelonLoader`, err);
+        api.showErrorNotification(`Failed to read mod file "${file}" to determine if for BepInEx or MelonLoader`, err, { allowReport: false });
       }
     }
   }));
 
   // CANCEL INSTALL CONDITIONS
+  //if MelonLoader plugin is installed while using MSCLoader, cancel install
+  if (isMsc && ( bepinexInstalled || melonInstalled )) {
+    const wrongLoader = await api.showDialog('error', 'Wrong Mod Loader', {
+        bbcode: api.translate(`Vortex has detected that the ${MOD_NAME} archive has ${MSCLOADER_NAME} plugins, but you have installed BepInEx or MelonLoader.[br][/br][br][/br]`
+            + `The installation will be cancelled to avoid issues.[br][/br][br][/br]` 
+            + `Check the mod's page to see if there is a BepInEx/MelonLoader version of the mod, or change your mod loader to MSCLoader.[br][/br][br][/br]`),
+        options: { order: ['bbcode'], wrap: true },
+    }, [
+        { label: 'Ok' }
+    ]);
+    if (wrongLoader.action === 'Ok') {
+        throw new util.UserCanceled();
+    }
+  }
+  if ((isBepinex || isMelon) && mscInstalled) {
+    const wrongLoader = await api.showDialog('error', 'Wrong Mod Loader', {
+        bbcode: api.translate(`Vortex has detected that the ${MOD_NAME} archive has BepInEx/MelonLoader plugins, but you have installed MSCLoader.[br][/br][br][/br]`
+            + `The installation will be cancelled to avoid issues.[br][/br][br][/br]` 
+            + `Check the mod's page to see if there is a MSCLoader version of the mod, or change your mod loader to BepInEx/MelonLoader.[br][/br][br][/br]`),
+        options: { order: ['bbcode'], wrap: true },
+    }, [
+        { label: 'Ok' }
+    ]);
+    if (wrongLoader.action === 'Ok') {
+        throw new util.UserCanceled();
+    }
+  }
   // If both BepInEx and MelonLoader plugins are detected, cancel install
   if (isBepinex && isMelon) {
     const mixedModHandling = await api.showDialog('error', 'Mixed Mod Detected', {
@@ -1065,6 +1293,18 @@ async function installPlugin(api, gameSpec, files, workingDir) {
   }
 
   // Install method that attempts to index on folders, then dll files
+  if (isMsc) {
+    setModTypeInstruction = { type: 'setmodtype', value: MSCLOADER_MOD_ID };
+    const folder = files.find(file => MSCLOADER_MOD_FOLDERS.includes(path.basename(file).toLowerCase()));
+    if (folder !== undefined) {
+      idx = folder.indexOf(`${path.basename(folder)}${path.sep}`);
+      rootPath = path.dirname(folder);
+    }
+    if (folder === undefined) {
+      setModTypeInstruction = { type: 'setmodtype', value: MSCLOADER_PLUGIN_ID };
+    }
+  }
+
   if (isBepinex && !isBepinexPatcher) {
     setModTypeInstruction = { type: 'setmodtype', value: BEPINEX_MOD_ID };
     const folder = files.find(file => BEPINEX_MOD_FOLDERS.includes(path.basename(file).toLowerCase()));
@@ -1112,7 +1352,6 @@ async function installPlugin(api, gameSpec, files, workingDir) {
       setModTypeInstruction = { type: 'setmodtype', value: MELON_PLUGINS_ID };
     }
   } //*/
-
 
   /* NORMAL INSTALL - Assign mod types
   if (isBepinex && !isBepinexPatcher) {
@@ -1164,19 +1403,20 @@ async function relaunchExt(api) {
       ];
       util.batchDispatch(api.store, batched);
     } catch (err) {
-      api.showErrorNotification('Failed to set up Mod Loader', err);
+      api.showErrorNotification('Failed to set up Mod Loader', err, { allowReport: false });
     }
   });
 }
 //Function to choose mod loader
 async function chooseModLoader(api, gameSpec) {
+  const MSC_LABEL = `${MSCLOADER_NAME} (Recommended)`;
   const t = api.translate;
   const replace = {
     game: gameSpec.game.name,
     bl: '[br][/br][br][/br]',
   };
   return api.showDialog('info', 'Mod Loader Selection', {
-    bbcode: t('You must choose between BepInEx and MelonLoader to install mods.{{bl}}'
+    bbcode: t('You must choose a mod loader to install mods.{{bl}}'
       + 'Only one mod loader can be installed at a time.{{bl}}'
       + 'Make your choice based on which mods you would like to install and which loader they support.{{bl}}'
       + 'You can change which mod loader you have installed by Uninstalling the current one from Vortex, which will bring up this dialog again.{{bl}}'
@@ -1184,12 +1424,16 @@ async function chooseModLoader(api, gameSpec) {
       { replace }
     ),
   }, [
+    { label: t(MSC_LABEL) },
     { label: t('BepInEx') },
     { label: t('MelonLoader') },
   ])
   .then(async (result) => {
     if (result === undefined) {
       return;
+    }
+    if (result.action === MSC_LABEL) {
+      await downloadMsc(api, gameSpec);
     }
     if (result.action === 'BepInEx') {
       await downloadBepinex(api, gameSpec);
@@ -1204,18 +1448,20 @@ async function chooseModLoader(api, gameSpec) {
 }
 //Deconflict mod loaders
 async function deconflictModLoaders(api, gameSpec) {
+  const MSC_LABEL = `${MSCLOADER_NAME} (Recommended)`;
   const t = api.translate;
   const replace = {
     game: gameSpec.game.name,
     bl: '[br][/br][br][/br]',
   };
   return api.showDialog('info', 'Mod Loader Conflict', {
-    bbcode: t('You have both BepInEx and MelonLoader installed.{{bl}}'
+    bbcode: t('You have more than one mod loader installed.{{bl}}'
       + 'This will cause the game to crash at launch. Only one mod loader can be installed at a time.{{bl}}'
       + 'You must choose which mod loader you would like to use for {{game}}.',
       { replace }
     ),
   }, [
+    { label: t(MSC_LABEL) },
     { label: t('BepInEx') },
     { label: t('MelonLoader') },
   ])
@@ -1223,10 +1469,16 @@ async function deconflictModLoaders(api, gameSpec) {
     if (result === undefined) {
       return;
     }
+    if (result.action === MSC_LABEL) {
+      await removeMelon(api, gameSpec);
+      await removeBepinex(api, gameSpec);
+    }
     if (result.action === 'BepInEx') {
       await removeMelon(api, gameSpec);
+      await removeMsc(api, gameSpec);
     } else if (result.action === 'MelonLoader') {
       await removeBepinex(api, gameSpec);
+      await removeMsc(api, gameSpec);
     }
     if (hasCustomMods) { //Run this if need to change a modType path based on the mod loader installed
       await deploy(api);
@@ -1243,7 +1495,7 @@ async function removeBepinex(api, gameSpec) {
   try {
     await util.removeMods(api, gameSpec.game.id, [modId]);
   } catch (err) {
-    api.showErrorNotification('Failed to remove BepInEx', err);
+    api.showErrorNotification('Failed to remove BepInEx', err, { allowReport: false });
   }
 }
 async function removeMelon(api, gameSpec) {
@@ -1255,7 +1507,35 @@ async function removeMelon(api, gameSpec) {
   try {
     await util.removeMods(api, gameSpec.game.id, [modId]);
   } catch (err) {
-    api.showErrorNotification('Failed to remove MelonLoader', err);
+    api.showErrorNotification('Failed to remove MelonLoader', err, { allowReport: false });
+  }
+}
+async function removeMsc(api, gameSpec) {
+  const state = api.getState();
+  const mods = state.persistent.mods[gameSpec.game.id] || {};
+  const mod = Object.keys(mods).find(id => mods[id]?.type === MSCLOADER_ID);
+  const modId = mods[mod].id
+  log('warn', `Found MSCLoader mod to remove for deconfliction: ${modId}`);
+  try {
+    await util.removeMods(api, gameSpec.game.id, [modId]);
+    await removeMscFiles(api, gameSpec);
+  } catch (err) {
+    api.showErrorNotification('Failed to remove MSCLoader', err, { allowReport: false });
+  }
+}
+async function removeMscFiles(api, gameSpec) { //run on purge too
+  GAME_PATH = getDiscoveryPath(api);
+  let files = MSCLOADER_FILES_ARRAY;
+  log('warn', `Found MSCLoader files to remove for deconfliction/purge: [${files.join(', ')}]`);
+  await deleteFiles(GAME_PATH, files);
+}
+async function deleteFiles(gamePath, relPaths) {
+  for (let index = 0; index < relPaths.length; index++) {
+    try {
+      await fs.unlinkAsync(path.join(gamePath, relPaths[index]));
+    } catch (err) {
+      log('warn', `Failed to remove ${path.join(gamePath, relPaths[index])}: ${err}`);
+    }
   }
 }
 
@@ -1393,6 +1673,44 @@ async function modFoldersEnsureWritable(gamePath, relPaths) {
   }
 }
 
+//Notify MSCLoader Users about folders that must be deleted when running installer
+async function mscInstallerFolderNotify(api) {
+  const NOTIF_ID = `${GAME_ID}-mscinstallerfoldernotify`;
+  const MOD_NAME = MSCLOADER_NAME;
+  const MESSAGE = `IMPORTANT Note for ${MOD_NAME} Installer`;
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'warning',
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: 'More',
+        action: (dismiss) => {
+          api.showDialog('question', MESSAGE, {
+            text: `\n`
+              + `Vortex detected you have selected to use ${MOD_NAME}. You must run the ${MOD_NAME} installer to install necessary files to the game folder.\n`
+              + `\n`
+              + `Use the default installation options for compatibility with Vortex.\n`
+              + `\n`
+              + `IMPORTANT: Due to some unsavory programming in MSCLoader (not mine!), you must temporarily delete the "BepInEx" and "Plugins" folders in your game folder before running the MSCLoader installer.\n`
+              + `Otherwise, the installer will throw an error and refuse to proceed. After the installer is finished, restart Vortex, otherwise you won't be able to deploy mods.\n`
+              + `This is necessary because I did not want to take away the freedom to use BepInEx and MelonLoader, if you prefer them.\n`
+          }, [
+              { label: 'OK', action: () => dismiss() },
+              {
+                label: 'Never Show Again', action: () => {
+                  api.suppressNotification(NOTIF_ID);
+                  dismiss();
+                }
+              },
+            ]);
+        },
+      },
+    ],
+  });
+}
+
 //Setup function
 async function setup(discovery, api, gameSpec) {
   //SYNC CODE ////////////////////////////////////
@@ -1402,13 +1720,19 @@ async function setup(discovery, api, gameSpec) {
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   bepinexInstalled = isBepinexInstalled(api, gameSpec);
   melonInstalled = isMelonInstalled(api, gameSpec);
+  mscInstalled = isMscInstalled(api, spec);
   // ASYNC CODE ///////////////////////////////////
   await modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
-  if (!bepinexInstalled && !melonInstalled) {
-    chooseModLoader(api, gameSpec); //dialog to choose mod loader
+  await modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS_BEPINEX);
+  await modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS_MELON);
+  if (mscInstalled) {
+    mscInstallerFolderNotify(api);
   }
-  if (bepinexInstalled && melonInstalled) {
-    deconflictModLoaders(api, gameSpec); //deconflict if both mod loaders are installed
+  if (!bepinexInstalled && !melonInstalled && !mscInstalled) {
+    chooseModLoader(api, spec); //dialog to choose mod loader
+  }
+  if ( (bepinexInstalled && melonInstalled) || (bepinexInstalled && mscInstalled) || (melonInstalled && mscInstalled) ) {
+    deconflictModLoaders(api, spec); //deconflict if multiple mod loaders are installed
   } //*/
   if (bepinexInstalled && allowBepCfgMan) {
     downloadBepCfgManNotify(api, gameSpec); //notification to download BepInExConfigManager
@@ -1444,7 +1768,7 @@ function applyGame(context, gameSpec) {
 
   //register mod types explicitly
   if (hasCustomMods) {
-    context.registerModType(CUSTOM_ID, 60, 
+    context.registerModType(CUSTOM_ID, 58, 
       (gameId) => {
         var _a;
         return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
@@ -1457,9 +1781,10 @@ function applyGame(context, gameSpec) {
   }
 
   //register mod installers
-  context.registerInstaller(BEPINEX_ID, 25, testBepinex, installBepinex);
-  context.registerInstaller(MELON_ID, 26, testMelon, installMelon);
-  context.registerInstaller(ROOT_ID, 27, testRoot, installRoot);
+  context.registerInstaller(MSCLOADER_ID, 25, testMscLoader, installMscLoader);
+  context.registerInstaller(BEPINEX_ID, 26, testBepinex, installBepinex);
+  context.registerInstaller(MELON_ID, 27, testMelon, installMelon);
+  context.registerInstaller(ROOT_ID, 28, testRoot, installRoot);
   context.registerInstaller(BEPCFGMAN_ID, 29, testBepCfgMan, installBepCfgMan);
   context.registerInstaller(MELONPREFMAN_ID, 30, testMelonPrefMan, installMelonPrefMan);
   context.registerInstaller(ASSEMBLY_ID, 31, testAssembly, installAssembly);
@@ -1470,6 +1795,7 @@ function applyGame(context, gameSpec) {
     context.registerInstaller(CUSTOM_ID, 39, testCustom, installCustom);
   }
   //context.registerInstaller(SAVE_ID, 47, testSave, installSave); //best to only enable if saves are stored in the game's folder
+  context.registerInstaller(TEXTUREPACK_ID, 48, testTexturePack, installTexturePack);
   context.registerInstaller(`${GAME_ID}-fallback`, 49, testFallback, (files, destinationPath) => installFallback(context.api, files, destinationPath));
   
   //register actions
@@ -1574,11 +1900,12 @@ function main(context) {
       if (profileId !== LAST_ACTIVE_PROFILE) return;
       bepinexInstalled = isBepinexInstalled(context.api, spec);
       melonInstalled = isMelonInstalled(context.api, spec);
-      if (!bepinexInstalled && !melonInstalled) {
+      mscInstalled = isMscInstalled(context.api, spec);
+      if (!bepinexInstalled && !melonInstalled && !mscInstalled) {
         chooseModLoader(context.api, spec); //dialog to choose mod loader
       }
-      if (bepinexInstalled && melonInstalled) {
-        deconflictModLoaders(context.api, spec); //deconflict if both mod loaders are installed
+      if ( (bepinexInstalled && melonInstalled) || (bepinexInstalled && mscInstalled) || (melonInstalled && mscInstalled) ) {
+        deconflictModLoaders(context.api, spec); //deconflict if multiple mod loaders are installed
       } //*/
       if (bepinexInstalled && allowBepCfgMan) {
         downloadBepCfgMan(context.api, spec); //download BepInExConfigManager
@@ -1586,6 +1913,18 @@ function main(context) {
       if (melonInstalled && allowMelPrefMan) {
         downloadMelonPrefMan(context.api, spec); //download MelonPreferencesManager
       } //*/
+      if (mscInstalled) {
+        checkMscInstalled(context.api, spec); //check if user has run installer and notify if not
+      }
+      return Promise.resolve();
+    });
+    context.api.onAsync('did-purge', (profileId) => { 
+      const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
+      if (profileId !== LAST_ACTIVE_PROFILE) return;
+      mscInstalled = isMscInstalled(context.api, spec);
+      if (mscInstalled) {
+        removeMscFiles(context.api, spec); //delete installed files to clean folder
+      }
       return Promise.resolve();
     });
   });
@@ -1604,6 +1943,106 @@ function isMelonInstalled(api, spec) {
   const state = api.getState();
   const mods = state.persistent.mods[spec.game.id] || {};
   return Object.keys(mods).some(id => mods[id]?.type === MELON_ID);
+}
+
+// Test if MSCLoader is installed
+function isMscInstalled(api, spec) {
+  const state = api.getState();
+  const mods = state.persistent.mods[spec.game.id] || {};
+  const idTest = Object.keys(mods).some(id => mods[id]?.type === MSCLOADER_ID);
+  GAME_PATH = getDiscoveryPath(api);
+  let fileTest = false;
+  try {
+    fs.statSync(path.join(GAME_PATH, MSCLOADER_MARKER_PATH));
+    fileTest = true;
+  } catch (err) {
+    fileTest = false;
+  }
+  return (idTest || fileTest);
+}
+
+// Test if MSCLoader installer was run (marker file exists)
+function checkMscInstalled(api, spec) {
+  GAME_PATH = getDiscoveryPath(api);
+  let fileTest = false;
+  try {
+    fs.statSync(path.join(GAME_PATH, MSCLOADER_MARKER_PATH));
+    fileTest = true;
+  } catch (err) {
+    mscInstallerNotify(api);
+    fileTest = false;
+  }
+  return fileTest;
+}
+//Notify user to run MSCLoader Installer if marker file not found
+function mscInstallerNotify(api) {
+  const NOTIF_ID = `${GAME_ID}-mscinstaller`;
+  const MOD_NAME = MSCLOADER_NAME;
+  const MESSAGE = `Run ${MOD_NAME} Installer`;
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'warning',
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: `Run ${MOD_NAME}`,
+        action: (dismiss) => {
+          runMsc(api);
+          dismiss();
+        },
+      },
+      {
+        title: 'More',
+        action: (dismiss) => {
+          api.showDialog('question', MESSAGE, {
+            text: `\n`
+                + `You must run the ${MOD_NAME} installer to install necessary files to the game folder.\n`
+                + `\n`
+                + `IMPORTANT: Use the default installation options for compatibility with Vortex.\n`
+                + `\n`
+                + `IMPORTANT2: Due to some unsavory programming in MSCLoader, you must temporarily delete the "Plugins" and "BepInEx" folders in the game folder before running the installer, then restart Vortex when you are done (otherwise, you won't be able to deploy mods). Otherwise the installer will throw an error.\n`
+                + `\n`
+                + `Use the included tool to launch ${MOD_NAME} installer (button on this notification or in "Dashboard" tab).\n`
+          }, [
+            {
+              label: `Run ${MOD_NAME}`, action: () => {
+                runModManager(api);
+                dismiss();
+              }
+            },
+            { label: 'Continue', action: () => dismiss() },
+            {
+              label: 'Never Show Again', action: () => {
+                api.suppressNotification(NOTIF_ID);
+                dismiss();
+              }
+            },
+          ]);
+        },
+      },
+    ],
+  });
+}
+function runMsc(api) {
+  const TOOL_ID = MSCLOADER_ID;
+  const TOOL_NAME = `${MSCLOADER_NAME} Installer`;
+  const state = api.store.getState();
+  const tool = util.getSafe(state, ['settings', 'gameMode', 'discovered', GAME_ID, 'tools', TOOL_ID], undefined);
+  try {
+    const TOOL_PATH = tool.path;
+    if (TOOL_PATH !== undefined) {
+      return api.runExecutable(TOOL_PATH, [], { suggestDeploy: false })
+        .catch(err => api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err,
+          { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 })
+        );
+    }
+    else {
+      return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, `Path to ${TOOL_NAME} executable could not be found. Ensure ${TOOL_NAME} is installed through Vortex.`);
+    }
+  } catch (err) {
+    return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 });
+  }
 }
 
 //Test if BepInExConfigManager is installed
@@ -1657,7 +2096,7 @@ async function downloadBepinex(api, gameSpec) {
       util.batchDispatch(api.store, batched); // Will dispatch both actions
     } catch (err) { //Show the user the download page if the download, install process fails
       const errPage = BEPINEX_URL_ERR;
-      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
+      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err, { allowReport: false });
       util.opn(errPage).catch(() => null);
     } finally {
       api.dismissNotification(NOTIF_ID);
@@ -1702,13 +2141,86 @@ async function downloadMelon(api, gameSpec) {
       util.batchDispatch(api.store, batched); // Will dispatch both actions
     } catch (err) { //Show the user the download page if the download, install process fails
       const errPage = MELON_URL_ERR;
-      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
+      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err, { allowReport: false });
       util.opn(errPage).catch(() => null);
     } finally {
       api.dismissNotification(NOTIF_ID);
     }
   }
 }
+
+//* Function to auto-download MSCLoader from Nexus Mods
+async function downloadMsc(api, gameSpec) {
+  let isInstalled = isMscInstalled(api, gameSpec);
+  if (!isInstalled) {
+    const MOD_NAME = MSCLOADER_NAME;
+    const MOD_TYPE = MSCLOADER_ID;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
+    const PAGE_ID = MSCLOADER_PAGE_NO;
+    const FILE_ID = MSCLOADER_FILE_NO;  //If using a specific file id because "input" below gives an error
+    const GAME_DOMAIN = MSCLOADER_DOMAIN;
+    api.sendNotification({ //notification indicating install process
+      id: NOTIF_ID,
+      message: `Installing ${MOD_NAME}`,
+      type: 'activity',
+      noDismiss: true,
+      allowSuppress: false,
+    });
+    if (api.ext?.ensureLoggedIn !== undefined) { //make sure user is logged into Nexus Mods account in Vortex
+      await api.ext.ensureLoggedIn();
+    }
+    try {
+      let FILE = null;
+      let URL = null;
+      try { //get the mod files information from Nexus
+        const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
+        const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
+        const file = modFiles
+          .filter(file => file.category_id === 1)
+          .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))[0];
+        if (file === undefined) {
+          throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
+        }
+        FILE = file.file_id;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      } catch (err) { // use defined file ID if input is undefined above
+        FILE = FILE_ID;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      }
+      const dlInfo = { //Download the mod
+        game: GAME_DOMAIN,
+        name: MOD_NAME,
+      };
+      const dlId = await util.toPromise(cb =>
+        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+      const modId = await util.toPromise(cb =>
+        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
+      const batched = [
+        actions.setModsEnabled(api, profileId, [modId], true, {
+          allowAutoDeploy: true,
+          installed: true,
+        }),
+        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
+      ];
+      util.batchDispatch(api.store, batched); // Will dispatch both actions
+    } catch (err) { //Show the user the download page if the download, install process fails
+      const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
+      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err, { allowReport: false });
+      util.opn(errPage).catch(() => null);
+    } finally {
+      api.dismissNotification(NOTIF_ID);
+      /*
+      try { //run MSCLoader installer
+        GAME_PATH = getDiscoveryPath(api);
+        const executable = path.join(GAME_PATH, MSCLOADER_FOLDER, MSCLOADER_EXEC);
+        api.runExecutable(executable, [], { suggestDeploy: false });
+      } catch (err) {
+        api.showErrorNotification(`Failed to run ${MOD_NAME} installer. You must run it manually.`, err, { allowReport: false });
+      } //*/
+    }
+  }
+} //*/
 
 // Download BepInExConfigManager from GitHub
 async function downloadBepCfgMan(api, gameSpec) {
@@ -1747,7 +2259,7 @@ async function downloadBepCfgMan(api, gameSpec) {
       ];
       util.batchDispatch(api.store, batched); // Will dispatch both actions
     } catch (err) {
-      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
+      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err, { allowReport: false });
       util.opn(URL_ERR).catch(() => null);
     } finally {
       api.dismissNotification(NOTIF_ID);
@@ -1792,7 +2304,7 @@ async function downloadMelonPrefMan(api, gameSpec) {
       ];
       util.batchDispatch(api.store, batched); // Will dispatch both actions
     } catch (err) {
-      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
+      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err, { allowReport: false });
       util.opn(URL_ERR).catch(() => null);
     } finally {
       api.dismissNotification(NOTIF_ID);
