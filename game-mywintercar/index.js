@@ -2,7 +2,7 @@
 Name: My Winter Car Vortex Extension
 Structure: Unity BepinEx/MelonLoader Hybrid
 Author: ChemBoy1
-Version: 0.1.0
+Version: 0.2.0
 Date: 2026-01-03
 //////////////////////////////////////////*/
 
@@ -203,6 +203,8 @@ const CUSTOM_EXTS = ['.json'];
 const DEPLOY_FILE = `vortex.deployment.${CUSTOM_ID}.json`;
 const CUSTOM_DEPLOYFILE_BEPINEX = path.join(CUSTOM_PATH_BEPINEX, DEPLOY_FILE);
 const CUSTOM_DEPLOYFILE_MELON = path.join(CUSTOM_PATH_MELON, DEPLOY_FILE);
+
+const MWCEDITOR_ID = ''
 
 const MOD_PATH_DEFAULT = ".";
 const REQ_FILE = EXEC;

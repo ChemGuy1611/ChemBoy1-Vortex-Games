@@ -10,6 +10,7 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 const Bluebird = require('bluebird');
+const fsExtra = require('fs-extra');
 //const winapi = require('winapi-bindings'); //gives access to the Windows registry
 
 //Specify all the information about the game
@@ -192,7 +193,6 @@ async function downloadModManager(api, check) {
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(api.getState(), GAME_ID);
   let isInstalled = await isModManagerInstalled(api);
   if (check === false) isInstalled = false;
-  //isInstalled = false; //for debugging
   if (!isInstalled) {
     const MOD_NAME = MODMANAGER_NAME;
     const MOD_TYPE = MODMANAGER_ID;
@@ -232,57 +232,55 @@ async function downloadModManager(api, check) {
         game: GAME_DOMAIN,
         name: MOD_NAME,
       };
-      return new Promise((resolve, reject) => {
-        api.events.emit('start-download', [URL], dlInfo, undefined,
-          async (error, id) => { //callback function to check for errors and then copy exe from downloads folder to game folder
-            if (error !== null && (error.name !== 'AlreadyDownloaded')) {
-              return reject(error);
-            }
-            try {
-              await fs.statAsync(path.join(GAME_PATH, MODMANAGER_EXEC));
-            } catch (err) {
-              try { //find the file in Downloads folder and copy it to the game folder
-                api.sendNotification({ //notification indicating copy process
-                  id: `${NOTIF_ID}-copy`,
-                  message: `Copying ${MOD_NAME} executable to game folder`,
-                  type: 'activity',
-                  noDismiss: true,
-                  allowSuppress: false,
-                });
-                let files = await fs.readdirAsync(DOWNLOAD_FOLDER);
-                const copyFile = files.find(file => path.basename(file).includes(MODMANAGER_STRING));
-                await fs.copyAsync(path.join(DOWNLOAD_FOLDER, copyFile), path.join(GAME_PATH, MODMANAGER_EXEC), { overwrite: true });
-                api.dismissNotification(NOTIF_ID);
-                api.dismissNotification(`${NOTIF_ID}-copy`);
-                api.sendNotification({ //notification copy success
-                  id: `${MOD_NAME}-success`,
-                  message: `Successfully copied ${MOD_NAME} executable to game folder`,
-                  type: 'success',
-                  noDismiss: false,
-                  allowSuppress: true,
-                });
-                //await fs.unlinkAsync(path.join(DOWNLOAD_FOLDER, copyFile)); //remove the downloaded file to avoid duplicates
-              } catch (err) {
-                api.showErrorNotification(`Failed to download and copy ${MOD_NAME} executable`, err, { allowReport: false });
-              }
-            }
-            return resolve();
-          }, 
-          'never',
-          { allowInstall: false },
-        );
-      })
-      /*
-      const dlId = await util.toPromise(cb =>
-        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
-      const modId = await util.toPromise(cb =>
-        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
-      //*/
+      //download the file and copy in callback
+      api.events.emit('start-download', [URL], dlInfo, undefined,
+        async (error, id) => { //callback function to check for errors and then copy exe from downloads folder to game folder
+          if (error !== null && (error.name !== 'AlreadyDownloaded')) {
+            return;
+          }
+          try { //find the file in Downloads folder and copy it to the game folder
+            api.sendNotification({ //notification indicating copy process
+              id: `${NOTIF_ID}-copy`,
+              message: `Copying ${MOD_NAME} executable to game folder`,
+              type: 'activity',
+              noDismiss: true,
+              allowSuppress: false,
+            });
+            let files = await fs.readdirAsync(DOWNLOAD_FOLDER);
+            files = files.filter(file => ( path.basename(file).includes(MODMANAGER_STRING) && (path.extname(file).toLowerCase() === '.exe') ))
+              .sort((a,b) => a.toLowerCase().localeCompare(b.toLowerCase()))
+              .reverse();
+            const copyFile = files[0];
+            const source = path.join(DOWNLOAD_FOLDER, copyFile);
+            const destination = path.join(GAME_PATH, MODMANAGER_EXEC);
+            await fs.copyAsync(source, destination, { overwrite: true });
+            api.dismissNotification(NOTIF_ID);
+            api.dismissNotification(`${NOTIF_ID}-copy`);
+            api.sendNotification({ //notification copy success
+              id: `${NOTIF_ID}-success`,
+              message: `Successfully copied ${MOD_NAME} executable to game folder`,
+              type: 'success',
+              noDismiss: false,
+              allowSuppress: true,
+            });
+            //await fs.unlinkAsync(path.join(DOWNLOAD_FOLDER, copyFile)); //remove the downloaded file to avoid duplicates
+          } catch (err) {
+            const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
+            api.showErrorNotification(`Failed to download and copy ${MOD_NAME} executable`, err, { allowReport: false });
+            util.opn(errPage).catch(() => null);
+          }
+          finally {
+            api.dismissNotification(NOTIF_ID);
+            api.dismissNotification(`${NOTIF_ID}-copy`);
+          }
+        }, 
+        'never',
+        { allowInstall: false },
+      );
     } catch (err) { //Show the user the download page if the download and copy process fails
       const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
       api.showErrorNotification(`Failed to download and copy ${MOD_NAME} executable`, err, { allowReport: false });
       util.opn(errPage).catch(() => null);
-    } finally {
       api.dismissNotification(NOTIF_ID);
       api.dismissNotification(`${NOTIF_ID}-copy`);
     }
