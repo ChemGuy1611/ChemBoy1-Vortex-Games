@@ -1159,6 +1159,7 @@ async function installPlugin(api, gameSpec, files, workingDir) {
   let isMelon = false;
   let isMelonPlugin = false;
   let isCustom = false;
+  let unknown = false;
   bepinexInstalled = isBepinexInstalled(api, gameSpec);
   melonInstalled = isMelonInstalled(api, gameSpec);
   if (hasCustomLoader) {
@@ -1172,23 +1173,27 @@ async function installPlugin(api, gameSpec, files, workingDir) {
         const content = await fs.readFileAsync(path.join(workingDir, file), 'utf8');
         if (hasCustomLoader && content.includes(CUSTOM_PLUGIN_STRING)) {
           isCustom = true;
-        } else if (content.includes(BEP_STRING)) {
-            isBepinex = true;
-            isBepinexPatcher = false; //temporary, find reliable string to id patchers
-            //isBepinexPatcher = !content.includes(BEP_PATCHER_STRING) && !files.find(file => path.extname(file).toLowerCase() = BEPINEX_PLUGINS_FOLDER);
-        } else if (content.includes(MEL_STRING)) {
+        } 
+        else if (content.includes(BEP_STRING)) {
+          isBepinex = true;
+          isBepinexPatcher = false; //temporary, find reliable string to id patchers
+          //isBepinexPatcher = !content.includes(BEP_PATCHER_STRING) && !files.find(file => path.extname(file).toLowerCase() = BEPINEX_PLUGINS_FOLDER);
+        } 
+        else if (content.includes(MEL_STRING)) {
           isMelon = true;
           isMelonPlugin = content.includes(MEL_PLUGIN_STRING);
-        } 
+        }
+        else {
+          unknown = true;
+        }
       } catch (err) {
-        api.showErrorNotification(`Failed to read mod file "${file}" to determine if for BepInEx or MelonLoader`, err);
+        api.showErrorNotification(`Failed to read plugin file "${file}" to determine which mod loader it requires. Plugin is likely corrupted.`, err, { allowReport: false });
       }
     }
   }));
 
-  // CANCEL INSTALL CONDITIONS
+  // CANCEL INSTALL CONDITIONS //////////////////////////////////////////
   if (hasCustomLoader) {
-    //if MelonLoader plugin is installed while using Custom Mod Loader, cancel install
     if (isCustom && ( bepinexInstalled || melonInstalled )) {
       const wrongLoader = await api.showDialog('error', 'Wrong Mod Loader', {
           bbcode: api.translate(`Vortex has detected that the ${MOD_NAME} archive has ${CUSTOMLOADER_NAME} plugins, but you have installed BepInEx or MelonLoader.[br][/br][br][/br]`

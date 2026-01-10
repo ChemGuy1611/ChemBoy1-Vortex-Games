@@ -4,6 +4,10 @@
 
 - None
 
+## [0.2.1] - 2026-01-10
+
+- Added customized MSCLoader installer to remove unnecessary checks. No longer requires deleting "BepInEx" and "Plugins" folders.
+
 ## [0.2.0] - 2026-01-09
 
 - Added MSCLoader as mod loader option. Note that you still must choose only ONE loader.

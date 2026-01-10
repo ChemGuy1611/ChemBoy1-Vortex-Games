@@ -2,8 +2,8 @@
 Name: My Winter Car Vortex Extension
 Structure: Unity BepinEx/MelonLoader Hybrid + Custom Mod Loader (MSCLoader)
 Author: ChemBoy1
-Version: 0.2.0
-Date: 2026-01-09
+Version: 0.2.1
+Date: 2026-01-10
 //////////////////////////////////////////*/
 
 //Import libraries
@@ -13,6 +13,7 @@ const template = require('string-template');
 const fsExtra = require('fs-extra');
 const fsPromises = require('fs/promises');
 const { parseStringPromise } = require('xml2js');
+const { readdir } = require('fs');
 
 // -- START EDIT ZONE -- ///////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -229,11 +230,11 @@ const MSCLOADER_EXEC = 'MSCLInstaller.exe';
 const MSCLOADER_MARKER_FILE = 'MSCLoader.dll';
 const MSCLOADER_MARKER_FOLDER = path.join(DATA_FOLDER, 'Managed');
 const MSCLOADER_MARKER_PATH = path.join(MSCLOADER_MARKER_FOLDER, MSCLOADER_MARKER_FILE);
-const MSCLOADER_FOLDER = 'MSCLoader';
+const MSCLOADER_FOLDER = 'MSCLoader'; //folder to place the installer in so that the dlls are not next to game exe
 const MSCLOADER_PAGE_NO = 3;
 const MSCLOADER_FILE_NO = 1463;
 const MSCLOADER_DOMAIN = GAME_ID;
-const MSCLOADER_FILES_ARRAY = [
+const MSCLOADER_FILES_ARRAY = [ //delete these files on purge to remove MSCLoader
   'winhttp.dll',
   path.join(MSCLOADER_MARKER_FOLDER, '0Harmony.dll'),
   path.join(MSCLOADER_MARKER_FOLDER, 'INIFileParser.dll'),
@@ -757,12 +758,28 @@ function testMscLoader(files, gameId) {
 }
 
 //Install MSCLoader files (installer exe)
-function installMscLoader(files) {
+function installMscLoader(files, workingDir) {
   const MOD_TYPE = MSCLOADER_ID;
   const modFile = files.find(file => (path.basename(file) === MSCLOADER_EXEC));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+
+  //import customized installer files here
+  const source = path.join(__dirname, MSCLOADER_FOLDER);
+  const dest = workingDir;
+  try {
+    const copyFiles = fs.readdirSync(source);
+    copyFiles.forEach(file => {
+      const sourcePath = path.join(source, file);
+      const destPath = path.join(dest, file);
+      fsExtra.copyFileSync(sourcePath, destPath);
+      const paths = fs.readdirSync(dest);
+      files = [ ...files, ...paths.map(p => p.replace(`${workingDir}${path.sep}`, ''))];
+    });
+  } catch (err) {
+    log('error', `Failed to copy custom ${MSCLOADER_NAME} Installer files to ${workingDir} during install: ${err}`);
+  }
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file => (
@@ -1198,6 +1215,7 @@ async function installPlugin(api, gameSpec, files, workingDir) {
   let isMelon = false;
   let isMelonPlugin = false;
   let isMsc = false;
+  let unknown = false;
   bepinexInstalled = isBepinexInstalled(api, gameSpec);
   melonInstalled = isMelonInstalled(api, gameSpec);
   mscInstalled = isMscInstalled(api, gameSpec);
@@ -1209,22 +1227,26 @@ async function installPlugin(api, gameSpec, files, workingDir) {
         const content = await fs.readFileAsync(path.join(workingDir, file), 'utf8');
         if (content.includes(MSC_STRING)) {
           isMsc = true;
-        } else if (content.includes(BEP_STRING)) {
-            isBepinex = true;
-            isBepinexPatcher = false; //temporary, find reliable string to id patchers
-            //isBepinexPatcher = !content.includes(BEP_PATCHER_STRING) && !files.find(file => path.extname(file).toLowerCase() = BEPINEX_PLUGINS_FOLDER);
-        } else if (content.includes(MEL_STRING)) {
+        } 
+        else if (content.includes(BEP_STRING)) {
+          isBepinex = true;
+          isBepinexPatcher = false; //temporary, find reliable string to id patchers
+          //isBepinexPatcher = !content.includes(BEP_PATCHER_STRING) && !files.find(file => path.extname(file).toLowerCase() = BEPINEX_PLUGINS_FOLDER);
+        } 
+        else if (content.includes(MEL_STRING)) {
           isMelon = true;
           isMelonPlugin = content.includes(MEL_PLUGIN_STRING);
+        } 
+        else {
+          unknown = true;
         }
       } catch (err) {
-        api.showErrorNotification(`Failed to read mod file "${file}" to determine if for BepInEx or MelonLoader`, err, { allowReport: false });
+        api.showErrorNotification(`Failed to read plugin file "${file}" to determine which mod loader it requires. Plugin is likely corrupted.`, err, { allowReport: false });
       }
     }
   }));
 
-  // CANCEL INSTALL CONDITIONS
-  //if MelonLoader plugin is installed while using MSCLoader, cancel install
+  // CANCEL INSTALL CONDITIONS //////////////////////////////////////////
   if (isMsc && ( bepinexInstalled || melonInstalled )) {
     const wrongLoader = await api.showDialog('error', 'Wrong Mod Loader', {
         bbcode: api.translate(`Vortex has detected that the ${MOD_NAME} archive has ${MSCLOADER_NAME} plugins, but you have installed BepInEx or MelonLoader.[br][/br][br][/br]`
