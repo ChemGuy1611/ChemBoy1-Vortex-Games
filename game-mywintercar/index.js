@@ -2078,7 +2078,7 @@ function mscInstallerNotify(api) {
           }, [
             {
               label: `Run ${MOD_NAME}`, action: () => {
-                runModManager(api);
+                runMsc(api);
                 dismiss();
               }
             },

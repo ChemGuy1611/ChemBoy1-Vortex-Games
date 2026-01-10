@@ -1378,7 +1378,7 @@ async function relaunchExt(api) {
 }
 //Function to choose mod loader
 async function chooseModLoader(api, gameSpec) {
-  const CUSTOM_LABEL = CUSTOMLOADER_NAME;
+  const CUSTOM_LABEL = `${CUSTOMLOADER_NAME} (Recommended)`;
   const t = api.translate;
   let choices = [
     { label: t('BepInEx') },
@@ -1424,7 +1424,7 @@ async function chooseModLoader(api, gameSpec) {
 }
 //Deconflict mod loaders
 async function deconflictModLoaders(api, gameSpec) {
-  CUSTOM_LABEL = CUSTOMLOADER_NAME;
+  CUSTOM_LABEL = `${CUSTOMLOADER_NAME} (Recommended)`;
   bepinexInstalled = isBepinexInstalled(api, gameSpec);
   melonInstalled = isMelonInstalled(api, gameSpec);
   if (hasCustomLoader) {
