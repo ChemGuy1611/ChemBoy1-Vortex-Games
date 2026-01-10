@@ -41,6 +41,7 @@ const GAME_REGSTRING = "My Winter Car"; //game name
 const XBOX_SAVE_STRING = ''; //string after "ID_"
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/My_Winter_Car";
 
+//feature toggles
 const hasCustomMods = false; //set to true if there are modTypes with folder paths dependent on which mod loader is installed
 const hasCustomLoader = true; //set to true if there is a custom mod loader
 const customLoaderInstaller = true; //set true if the custom loader uses an installer
@@ -1983,12 +1984,12 @@ function main(context) {
       if (profileId !== LAST_ACTIVE_PROFILE) return;
       bepinexInstalled = isBepinexInstalled(context.api, spec);
       melonInstalled = isMelonInstalled(context.api, spec);
-      mscInstalled = checkMscInstalled(context.api, spec);
+      mscInstalled = checkMscInstalled(context.api, spec); //file check
       if (mscInstalled) {
         removeMscFiles(context.api, spec); //delete installed files to clean folder
       }
-      /*
-      mscInstalled = checkMscInstalled(context.api, spec);
+      //*
+      mscInstalled = isMscInstalled(context.api, spec);
       if (!bepinexInstalled && !melonInstalled && !mscInstalled) {
         chooseModLoader(context.api, spec); //dialog to choose mod loader
       } //*/

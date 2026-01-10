@@ -41,6 +41,7 @@ const GAME_REGSTRING = "XXX"; //game name
 const XBOX_SAVE_STRING = 'XXX'; //string after "ID_"
 const PCGAMINGWIKI_URL = "XXX";
 
+//feature toggles
 const hasCustomMods = false; //set to true if there are modTypes with folder paths dependent on which mod loader is installed
 const hasCustomLoader = false; //set to true if there is a custom mod loader
 const customLoaderInstaller = false; //set true if the custom loader uses an installer
@@ -1920,12 +1921,12 @@ function main(context) {
       if (hasCustomLoader) {
         bepinexInstalled = isBepinexInstalled(context.api, spec);
         melonInstalled = isMelonInstalled(context.api, spec);
-        customInstalled = checkCustomInstalled(context.api, spec);
+        customInstalled = checkCustomInstalled(context.api, spec); //file check
         if (customInstalled && customLoaderInstaller) {
           removeCustomFiles(context.api, spec); //delete installed files to clean folder
         }
-        /*
-        customInstalled = checkCustomInstalled(context.api, spec);
+        //*
+        customInstalled = isCustomInstalled(context.api, spec);
         if (!bepinexInstalled && !melonInstalled && !customInstalled) {
           chooseModLoader(context.api, spec); //dialog to choose mod loader
         } //*/
