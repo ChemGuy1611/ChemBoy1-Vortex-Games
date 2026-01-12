@@ -2,8 +2,8 @@
 Name: My Winter Car Vortex Extension
 Structure: Unity BepinEx/MelonLoader Hybrid + Custom Mod Loader (MSCLoader)
 Author: ChemBoy1
-Version: 0.2.1
-Date: 2026-01-10
+Version: 0.2.2
+Date: 2026-01-12
 //////////////////////////////////////////*/
 
 //Import libraries
@@ -1731,11 +1731,11 @@ async function mscInstallerFolderNotify(api) {
               + `\n`
               + `Use the default installation options for compatibility with Vortex.\n`
               + `\n`
-              + `IMPORTANT: Due to some unsavory programming in MSCLoader (not mine!), you must temporarily delete the "BepInEx" and "Plugins" folders in your game folder before running the MSCLoader installer.\n`
+              /*+ `IMPORTANT: Due to some unneccessary programming in the MSCLoader Installer, you must temporarily delete the "BepInEx" and "Plugins" folders in your game folder before running the MSCLoader installer.\n`
               + `Otherwise, the installer will throw an error and refuse to proceed. After the installer is finished, restart Vortex, otherwise you won't be able to deploy mods.\n`
               + `This is necessary because I did not want to take away the freedom to use BepInEx and MelonLoader, if you prefer them.\n`
               + `\n`
-              + `You can use the buttons within the folder icon on the Mods page toolbar to quickly delete the folders and another button to restore them after the installer is finished.\n`
+              + `You can use the buttons within the folder icon on the Mods page toolbar to quickly delete the folders and another button to restore them after the installer is finished.\n` //*/
           }, [
               { label: 'OK', action: () => dismiss() },
               {
@@ -1765,9 +1765,9 @@ async function setup(discovery, api, gameSpec) {
   await modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
   await modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS_BEPINEX);
   await modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS_MELON);
-  if (mscInstalled) {
+  /*if (mscInstalled) {
     mscInstallerFolderNotify(api);
-  }
+  } //*/
   if (!bepinexInstalled && !melonInstalled && !mscInstalled) {
     chooseModLoader(api, spec); //dialog to choose mod loader
   }
@@ -1988,32 +1988,34 @@ function main(context) {
       }
       if ( (bepinexInstalled && melonInstalled) || (bepinexInstalled && mscInstalled) || (melonInstalled && mscInstalled) ) {
         deconflictModLoaders(context.api, spec); //deconflict if multiple mod loaders are installed
-      } //*/
+      }
       if (bepinexInstalled && allowBepCfgMan) {
         downloadBepCfgMan(context.api, spec); //download BepInExConfigManager
       } //*/
       if (melonInstalled && allowMelPrefMan) {
         downloadMelonPrefMan(context.api, spec); //download MelonPreferencesManager
       } //*/
-      if (mscInstalled) {
+      if (mscInstalled) { //check for condition if MSC Installer mod is installed, but not installed to the game folder
         checkMscInstalled(context.api, spec); //check if user has run installer and notify if not
       }
       return Promise.resolve();
     });
-    context.api.onAsync('did-purge', (profileId) => { 
+    context.api.onAsync('did-purge', async (profileId) => { 
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;
       bepinexInstalled = isBepinexInstalled(context.api, spec);
       melonInstalled = isMelonInstalled(context.api, spec);
-      mscInstalled = checkMscInstalled(context.api, spec); //file check
+      mscInstalled = checkMscInstalled(context.api, spec); //game folder file check
       if (mscInstalled) {
-        removeMscFiles(context.api, spec); //delete installed files to clean folder
+        await removeMscFiles(context.api, spec); //delete installed MSC files to clean game folder
       }
-      //*
-      mscInstalled = isMscInstalled(context.api, spec);
-      if (!bepinexInstalled && !melonInstalled && !mscInstalled) {
-        chooseModLoader(context.api, spec); //dialog to choose mod loader
+      mscInstalled = isMscInstalled(context.api, spec); //check if MSC Installer mod is installed in Vortex
+      /*if (mscInstalled) {
+        mscInstallerNotify(context.api); //notify user if MSC Installer mod is installed but not installed to the game folder
       } //*/
+      if (!bepinexInstalled && !melonInstalled && !mscInstalled) {
+        chooseModLoader(context.api, spec);
+      }
       return Promise.resolve();
     });
   });
@@ -2088,12 +2090,12 @@ function mscInstallerNotify(api) {
             text: `\n`
                 + `You must run the ${MOD_NAME} installer to install necessary files to the game folder.\n`
                 + `Use the default installation options for compatibility with Vortex.\n`
-                + `\n`
+                /*+ `\n`
                 + `IMPORTANT: Due to some unsavory programming in MSCLoader (not mine!), you must temporarily delete the "BepInEx" and "Plugins" folders in your game folder before running the MSCLoader installer.\n`
                 + `Otherwise, the installer will throw an error and refuse to proceed. After the installer is finished, restart Vortex, otherwise you won't be able to deploy mods.\n`
                 + `This is necessary because I did not want to take away the freedom to use BepInEx and MelonLoader, if you prefer them.\n`
                 + `\n`
-                + `You can use the buttons within the folder icon on the Mods page toolbar to quickly delete the folders and another button to restore them after the installer is finished.\n`
+                + `You can use the buttons within the folder icon on the Mods page toolbar to quickly delete the folders and another button to restore them after the installer is finished.\n`//*/
                 + `\n`
                 + `Use the included tool to launch ${MOD_NAME} installer (button on this notification or in "Dashboard" tab).\n`
           }, [

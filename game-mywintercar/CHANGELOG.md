@@ -4,6 +4,10 @@
 
 - None
 
+## [0.2.2] - 2026-01-12
+
+- Removed some obsolete notification text related to MSCLoader installer.
+
 ## [0.2.1] - 2026-01-10
 
 - Added customized MSCLoader installer to remove unnecessary checks. No longer requires deleting "BepInEx" and "Plugins" folders.
