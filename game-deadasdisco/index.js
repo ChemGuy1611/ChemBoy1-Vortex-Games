@@ -1,9 +1,9 @@
 /*////////////////////////////////////////////////
-Name: The Last Caretaker Vortex Extension
+Name: Dead As Disco Vortex Extension
 Structure: Unreal Engine Game
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2026-01-12
+Date: 2026-01-13
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -21,44 +21,46 @@ const { parseStringPromise } = require('xml2js');
 const LOCALAPPDATA = util.getVortexPath('localAppData');
 
 //Specify all information about the game
-const GAME_ID = "thelastcaretaker"; //same as Nexus domain
-const STEAMAPP_ID = "1783560"; //from steamdb.info
-const STEAMAPP_ID_DEMO = "3916150";
-const EPICAPP_ID = "XXX"; //NOT on egdata.app yet
+const GAME_ID = "deadasdisco"; //same as Nexus domain
+const STEAMAPP_ID = "3404260"; //from steamdb.info
+const STEAMAPP_ID_DEMO = "3763830"; //VERIFY if the EPIC_CODE_NAME and EXEC_DEMO match Steam full game
+const EPICAPP_ID = null; //from egdata.app
 const GOGAPP_ID = null; // from gogdb.org
 const XBOXAPP_ID = null; //from appxmanifest.xml
 const XBOXEXECNAME = null; //from appxmanifest.xml
 const XBOX_PUB_ID = ""; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, STEAMAPP_ID_DEMO]; // UPDATE THIS WITH ALL VALID IDs
-const GAME_NAME = "The Last Caretaker";
-const GAME_NAME_SHORT = "The Last Caretaker"; //Try for 8-10 characters
-const EPIC_CODE_NAME = "Voyage"; //Folder in root
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID_DEMO, STEAMAPP_ID]; // Game is not full reased yet. Move full game to top on release
+const GAME_NAME = "Dead As Disco";
+const GAME_NAME_SHORT = GAME_NAME; //Try for 8-10 characters
+const EPIC_CODE_NAME = "Pagoda"; //Folder in root
 const EXEC = `${EPIC_CODE_NAME}.exe`; //This is true ~80% of the time
 const EXEC_EPIC = EXEC; //change these 3 if different
 const EXEC_GOG = EXEC;
 const EXEC_DEMO = EXEC;
 const PARAMETERS_STRING = ''; //launch arguments to pass when launching the game
-const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/The_Last_Caretaker";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Dead_as_Disco";
 
 //feature toggles
-const hasXbox = false; //toggle for Xbox version logic (to unify templates)
+const hasXbox = false; //toggle for Xbox version logic.
 const multiExe = false; //toggle for multiple executables (Epic/GOG/Demo don't match Steam)
 const hasModKit = false; //toggle for UE ModKit mod support
+const preferHardlinks = true; //set true to perform partition check for Config/Save modtypes so hardlinks are more available. Only matters if IO_STORE is false
 const autoDownloadUe4ss = false; //toggle for auto downloading UE4SS
 const SIGBYPASS_REQUIRED = false; //set true if there are .sig files in the Paks folder
 const IO_STORE = true; //true if the Paks folder contains .ucas and .utoc files
 
 //UE specific
-const ENGINE_VERSION = '5.7.0'; //Unreal Engine version - info only atm. usually '4.27.2.0' or '5.X.X'
+const ENGINE_VERSION = '5.5.4.0'; //Unreal Engine version - info only atm. usually '4.27.2.0' or '5.X.X.0'
 const ROOT_FOLDERS = [EPIC_CODE_NAME, 'Engine']; //addressable folders in root
 const ROOTSUB_FOLDERS = ['Content', 'Binaries', 'Plugins', 'Mods']; //subfolders of EPIC_CODE_NAME.
-const SAVE_EXT = ".sav"; //extension for save files. Usually .sav for UE5
+const SAVE_EXT = ".sav";
+const SAVE_COMPAT_VERSIONS = ['steam', 'epic', 'gog']; //game versions with installable save mods (never Xbox)
 const PAKMOD_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Paks', '~mods'); //usually works. Some games don't work from "~mods".
 const PAKMOD_LOADORDER = true; //set to false if you don't want loadOrder. If must be in "Paks" root, also disable loadOrder.
-const UE4SS_PAGE_NO = 0; //set if there is UE4SS Nexus page
+const UE4SS_PAGE_NO = 0; //set these if there is a customized UE4SS Nexus page
 const UE4SS_FILE_NO = 0;
 const UE4SS_DOMAIN = GAME_ID; //either GAME_ID or 'site'
-const UE4SS_MOD_PATH = path.join('ue4ss', 'Mods');
+const UE4SS_MOD_PATH = path.join('ue4ss', 'Mods'); //this should probably never change (unless UE4SS team changes it again lol)
 
 //config, save, shipping exe
 const DATA_FOLDER = EPIC_CODE_NAME; //almost always matches.
@@ -66,12 +68,13 @@ const CONFIG_FOLDERNAME = 'Windows'; //UE 4 games are often 'WindowsNoEditor'
 const CONFIG_LOC = 'Local AppData'; //string for notification text.
 const SAVE_LOC = CONFIG_LOC; //string for notification text. Config and Save mods are almonst always in the same place
 const CONFIGMOD_LOCATION = LOCALAPPDATA; //almost always matches. Some are in game folder or Documents.
+
 const SAVEMOD_LOCATION = CONFIGMOD_LOCATION;
-const SHIPEXE_STRING_DEFAULT = 'Steam';
+const SHIPEXE_STRING_DEFAULT = '';
 const SHIPEXE_STRING_EGS = '';
 const SHIPEXE_STRING_GOG = '';
 const SHIPEXE_STRING_XBOX = '';
-const SHIPEXE_STRING_DEMO = SHIPEXE_STRING_DEFAULT;
+const SHIPEXE_STRING_DEMO = '';
 const SHIPEXE_PROJECTNAME = EPIC_CODE_NAME; //almost always matches.
 
 //Save Editor (only used if one is available)
@@ -83,6 +86,7 @@ const SAVE_EDITOR_EXEC = "XXX.exe";
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //const ENGINE_VERSION_NO = +ENGINE_VERSION;
+let configSaveMatch = (CONFIGMOD_LOCATION === SAVEMOD_LOCATION); //true if the config and save mods are in the same folder
 const XBOX_SAVE_STRING = XBOX_PUB_ID;
 const CONFIG_PATH_DEFAULT = path.join(CONFIGMOD_LOCATION, DATA_FOLDER, "Saved", "Config", CONFIG_FOLDERNAME);
 const CONFIG_PATH_XBOX = path.join(CONFIGMOD_LOCATION, DATA_FOLDER, "Saved", "Config", "WinGDK"); //XBOX Version
@@ -101,8 +105,8 @@ if (IO_STORE) { //Set file number for pak installer file selection (needs to be 
 
 //global variables to set later
 let GAME_PATH = null; //game installation path
-let CHECK_DATA = false; //boolean to check if game, staging folder, and config and save folders are on the same drive
-let CHECK_DOCS = false; //secondary same as above (if save and config are in different locations)
+let CHECK_CONFIG = false; //boolean to check if game, staging folder, and config and save folders are on the same drive
+let CHECK_SAVE = false; //secondary same as above (if save and config are in different locations)
 let STAGING_FOLDER = ''; //Vortex staging folder path
 let DOWNLOAD_FOLDER = ''; //Vortex download folder path
 let GAME_VERSION = '';
@@ -176,7 +180,6 @@ if (USERID_FOLDER === undefined) {
   USERID_FOLDER = "";
 } //*/
 let SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
-const SAVE_COMPAT_VERSIONS = ['steam', 'epic', 'gog'];
 
 const SCRIPTS_ID = `${GAME_ID}-scripts`;
 const SCRIPTS_NAME = "UE4SS Script Mod";
@@ -1688,9 +1691,11 @@ function UNREALEXTENSION(context) {
 
 // Function to check if staging folder and game path are on same drive partition to enable modtypes + installers
 function checkPartitions(folder, discoveryPath) {
-  if (!IO_STORE) { // true if IO-Store is not enabled for the game, since symlinks work fine in that case
-    return true;
-  } //*/ Remove the check above if you need to allow hardlinks
+  if (!preferHardlinks) { //only do early return if hardlinks have no benefits
+    if (!IO_STORE) { // true if IO-Store is not enabled for the game, since symlinks work fine in that case
+      return true;
+    }
+  }
   try {
     // Define paths
     const path1 = discoveryPath;
@@ -1716,8 +1721,8 @@ function checkPartitions(folder, discoveryPath) {
   }
 }
 
-//Notification if Config, Save, and Creations folders are not on the same partition
-function partitionCheckNotify(api, CHECK_DATA) {
+//Notification if Config/Save folders are not on the same partition as the game and staging folder
+function partitionCheckNotify(api, CHECK_CONFIG, CHECK_SAVE) {
   const NOTIF_ID = `${GAME_ID}-partioncheck`;
   const MESSAGE = 'Some Mods Installers are Not Available';
   api.sendNotification({
@@ -1730,20 +1735,20 @@ function partitionCheckNotify(api, CHECK_DATA) {
         title: 'More',
         action: (dismiss) => {
           api.showDialog('question', MESSAGE, {
-            text: `Because ${GAME_NAME} includes the IO-Store Unreal Engine feature, Vortex must use hardlinks to install mods for the game.\n`
-                + `Because of this, the game, staging folder, and user folder (typically on C Drive) must all be on the same partition to install certain mods with Vortex.\n`
-                + `Vortex detected that one or more of the mod types listed below are not available because the game, staging folder, and ${CONFIG_LOC} folder are not on the same partition.\n`
+            text: `Because ${GAME_NAME} includes the IO-Store Unreal Engine feature (or because hardlinks are preferred), Vortex must use hardlinks to install mods for the game.\n`
+                + `As such, the game, staging folder, and user folder (typically on C Drive) must all be on the same drive partition to install certain mods with Vortex.\n`
+                + `Vortex detected that one or more of the mod types listed below are not available because the game, staging folder, and mod type folder(s) are not all on the same drive partition.\n`
                 + `\n`
-                + `Here are your results for the partition check to enable these mod types:\n`
-                + `  - Config: ${CHECK_DATA ? `ENABLED: ${CONFIG_LOC} folder is on the same partition as the game and the Vortex staging folder, so the Config modtype is available` : `DISABLED: ${CONFIG_LOC} folder is NOT on the same partition as the game and the Vortex staging folder, so the Config modtype is NOT available`}\n`
-                + `  - Save: ${CHECK_DATA ? `ENABLED: ${SAVE_LOC} folder is on the same partition as the game and the Vortex staging folder, so the Save modtype is available` : `DISABLED: ${SAVE_LOC} folder is NOT on the same partition as the game and the Vortex staging folder, so the Save modtype is NOT available`}\n`
+                + `Here are your results for the partition checks to enable these mod types:\n`
+                + `  - Config: ${CHECK_CONFIG ? `ENABLED: ${CONFIG_LOC} folder is on the same partition as the game and the Vortex staging folder, so the Config modtype is available` : `DISABLED: ${CONFIG_LOC} folder is NOT on the same partition as the game and the Vortex staging folder, so the Config modtype is NOT available`}\n`
+                + `  - Save: ${CHECK_SAVE ? `ENABLED: ${SAVE_LOC} folder is on the same partition as the game and the Vortex staging folder, so the Save modtype is available` : `DISABLED: ${SAVE_LOC} folder is NOT on the same partition as the game and the Vortex staging folder, so the Save modtype is NOT available`}\n`
                 + `\n`
                 + `Game Path: ${GAME_PATH}\n`
                 + `Staging Path: ${STAGING_FOLDER}\n`
                 + `Config Path: ${CONFIG_PATH}\n`
                 + `Save Path (installer for Steam/Epic/GOG versions only): ${SAVE_PATH}\n`
                 + `\n`
-                + `If you want to use the disabled mod types, you must move the game and staging folder to the same partition as the folders shown above (typically C Drive).\n`
+                + `If you want to use the disabled mod types, you must move the game and staging folder to the same partition as the folders shown above.\n`
                 + `\n`
           }, [
             { label: 'Acknowledge', action: () => dismiss() },
@@ -1802,27 +1807,37 @@ async function setup(discovery, api, gameSpec) {
   GAME_PATH = discovery.path;
   STAGING_FOLDER = selectors.installPathForGame(state, gameSpec.game.id);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, gameSpec.game.id);
-  CHECK_DATA = checkPartitions(CONFIGMOD_LOCATION, GAME_PATH);
-  //CHECK_DOCS = checkPartitions(SAVEMOD_LOCATION, GAME_PATH);
-  if (!CHECK_DATA) {
-    partitionCheckNotify(api, CHECK_DATA);
+  CHECK_CONFIG = checkPartitions(CONFIGMOD_LOCATION, GAME_PATH);
+  if (configSaveMatch) {
+    CHECK_SAVE = CHECK_CONFIG;
   }
-  /*if (!CHECK_DOCS) {
-    partitionCheckNotify(api, CHECK_DOCS);
-  } //*/
+  if (!configSaveMatch) {
+    CHECK_SAVE = checkPartitions(SAVEMOD_LOCATION, GAME_PATH);
+  }
+  if (!CHECK_CONFIG || !CHECK_SAVE) {
+    partitionCheckNotify(api, CHECK_CONFIG, CHECK_SAVE);
+  }
   // ASYNC CODE ///////////////////////////////////
   GAME_VERSION = await setGameVersionAsync(GAME_PATH);
-  if (CHECK_DATA) { //if game, staging folder, and config and save folders are on the same drive
+  if (CHECK_CONFIG) { //if game, staging folder, and config and save folders are on the same drive
     await fs.ensureDirWritableAsync(CONFIG_PATH);
     if (SAVE_COMPAT_VERSIONS.includes(GAME_VERSION)) {
-      await fs.ensureDirWritableAsync(SAVE_PATH);
+      if (configSaveMatch) {
+        await fs.ensureDirWritableAsync(SAVE_PATH);
+      }
     }
   } //*/
-  /*if (CHECK_DOCS) { //if game, staging folder, and config and save folders are on the same drive
-    await fs.ensureDirWritableAsync(SAVE_PATH);
-  } //*/
-  if (UE4SS_PAGE_NO !== 0 && autoDownloadUe4ss === true) {
-    await downloadUe4ssNexus(api, gameSpec);
+  if (!configSaveMatch) {
+    if (CHECK_SAVE) { //if game, staging folder, and config and save folders are on the same drive
+      await fs.ensureDirWritableAsync(SAVE_PATH);
+    }
+  }
+  if (autoDownloadUe4ss) {
+    if (UE4SS_PAGE_NO !== 0) {
+      await downloadUe4ssNexus(api, gameSpec);
+    } else {
+      await downloadUe4ss(api, gameSpec);
+    }
   } //*/
   if (SIGBYPASS_REQUIRED === true) {
     await downloadSigBypass(api, gameSpec);
@@ -1886,7 +1901,7 @@ function applyGame(context, gameSpec) {
   };
   context.registerGame(game);
 
-  //register mod types recursively
+  //register mod types recursively (types that are always the same)
   (gameSpec.modTypes || []).forEach((type, idx) => {
     context.registerModType(type.id, modTypePriority(type.priority) + idx, (gameId) => {
       var _a;
@@ -1896,42 +1911,42 @@ function applyGame(context, gameSpec) {
   });
 
   //register mod types explicitly (due to potentially dynamic Binaries folder)
-    context.registerModType(SCRIPTS_ID, 50, 
-      (gameId) => {
-        var _a;
-        return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-      }, 
-      (game) => pathPattern(context.api, game, path.join('{gamePath}', SCRIPTS_PATH)), 
-      () => Promise.resolve(false), 
-      { name: SCRIPTS_NAME }
-    );
-    context.registerModType(DLL_ID, 52, 
-      (gameId) => {
-        var _a;
-        return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-      }, 
-      (game) => pathPattern(context.api, game, path.join('{gamePath}', SCRIPTS_PATH)), 
-      () => Promise.resolve(false), 
-      { name: DLL_NAME }
-    );
-    context.registerModType(BINARIES_ID, 54, 
-      (gameId) => {
-        var _a;
-        return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-      }, 
-      (game) => pathPattern(context.api, game, path.join('{gamePath}', BINARIES_PATH)), 
-      () => Promise.resolve(false), 
-      { name: BINARIES_NAME }
-    );
-    context.registerModType(UE4SS_ID, 56, 
-      (gameId) => {
-        var _a;
-        return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-      }, 
-      (game) => pathPattern(context.api, game, path.join('{gamePath}', BINARIES_PATH)), 
-      () => Promise.resolve(false), 
-      { name: UE4SS_NAME }
-    );
+  context.registerModType(SCRIPTS_ID, 50, 
+    (gameId) => {
+      var _a;
+      return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
+    }, 
+    (game) => pathPattern(context.api, game, path.join('{gamePath}', SCRIPTS_PATH)), 
+    () => Promise.resolve(false), 
+    { name: SCRIPTS_NAME }
+  );
+  context.registerModType(DLL_ID, 52, 
+    (gameId) => {
+      var _a;
+      return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
+    }, 
+    (game) => pathPattern(context.api, game, path.join('{gamePath}', SCRIPTS_PATH)), 
+    () => Promise.resolve(false), 
+    { name: DLL_NAME }
+  );
+  context.registerModType(BINARIES_ID, 54, 
+    (gameId) => {
+      var _a;
+      return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
+    }, 
+    (game) => pathPattern(context.api, game, path.join('{gamePath}', BINARIES_PATH)), 
+    () => Promise.resolve(false), 
+    { name: BINARIES_NAME }
+  );
+  context.registerModType(UE4SS_ID, 56, 
+    (gameId) => {
+      var _a;
+      return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
+    }, 
+    (game) => pathPattern(context.api, game, path.join('{gamePath}', BINARIES_PATH)), 
+    () => Promise.resolve(false), 
+    { name: UE4SS_NAME }
+  );
 
   //register sigbypass modtype
   if (SIGBYPASS_REQUIRED === true) {
@@ -1964,9 +1979,9 @@ function applyGame(context, gameSpec) {
     (gameId) => {
       GAME_PATH = getDiscoveryPath(context.api);
       if (GAME_PATH !== undefined) {
-        CHECK_DATA = checkPartitions(CONFIGMOD_LOCATION, GAME_PATH);
+        CHECK_CONFIG = checkPartitions(CONFIGMOD_LOCATION, GAME_PATH);
       }
-      return ((gameId === GAME_ID) && (CHECK_DATA === true));
+      return ((gameId === GAME_ID) && (CHECK_CONFIG === true));
     },
     (game) => pathPattern(context.api, game, CONFIG_PATH), 
     () => Promise.resolve(false), 
@@ -1977,13 +1992,19 @@ function applyGame(context, gameSpec) {
       GAME_PATH = getDiscoveryPath(context.api);
       GAME_VERSION = setGameVersionSync(GAME_PATH);
       if (GAME_PATH !== undefined) {
-        CHECK_DATA = checkPartitions(SAVEMOD_LOCATION, GAME_PATH);
+        if (configSaveMatch) {
+          CHECK_CONFIG = checkPartitions(SAVEMOD_LOCATION, GAME_PATH);
+        }
+        if (!configSaveMatch) {
+          CHECK_SAVE = checkPartitions(SAVEMOD_LOCATION, GAME_PATH);
+        }
       }
-      return ((gameId === GAME_ID) && (CHECK_DATA === true) && SAVE_COMPAT_VERSIONS.includes(GAME_VERSION)); //*/
-      /*if (GAME_PATH !== undefined) {
-        CHECK_DOCS = checkPartitions(DOCUMENTS, GAME_PATH);
+      if (configSaveMatch) {
+        return ((gameId === GAME_ID) && (CHECK_CONFIG === true) && SAVE_COMPAT_VERSIONS.includes(GAME_VERSION));
       }
-      return ((gameId === GAME_ID) && (CHECK_DOCS === true) && SAVE_COMPAT_VERSIONS.includes(GAME_VERSION)); //*/
+      if (!configSaveMatch) {
+        return ((gameId === GAME_ID) && (CHECK_SAVE === true) && SAVE_COMPAT_VERSIONS.includes(GAME_VERSION));
+      }
     },
     (game) => pathPattern(context.api, game, SAVE_PATH), 
     () => Promise.resolve(false), 

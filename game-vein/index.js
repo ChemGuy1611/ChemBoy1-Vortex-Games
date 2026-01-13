@@ -1672,13 +1672,14 @@ function UNREALEXTENSION(context) {
     getUnrealModsPath, 
     () => Promise.resolve(false), 
     { name: UE5_SORTABLE_NAME,
-      mergeMods: mod => {
+      //mergeMods: mod => loadOrderPrefix(context.api, mod) + mod.id
+      mergeMods: (mod) => {
         if (UNREALDATA.loadOrder === true) {
-          loadOrderPrefix(context.api, mod) + mod.id
+          return loadOrderPrefix(context.api, mod) + mod.id
         } else {
           return '';
         }
-      }
+      } //*/
     }
   );
 }

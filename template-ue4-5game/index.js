@@ -50,17 +50,17 @@ const SIGBYPASS_REQUIRED = false; //set true if there are .sig files in the Paks
 const IO_STORE = true; //true if the Paks folder contains .ucas and .utoc files
 
 //UE specific
-const ENGINE_VERSION = '5.X.X'; //Unreal Engine version - info only atm. usually '4.27.2.0' or '5.X.X'
+const ENGINE_VERSION = '5.X.X.0'; //Unreal Engine version - info only atm. usually '4.27.2.0' or '5.X.X.0'
 const ROOT_FOLDERS = [EPIC_CODE_NAME, 'Engine']; //addressable folders in root
 const ROOTSUB_FOLDERS = ['Content', 'Binaries', 'Plugins', 'Mods']; //subfolders of EPIC_CODE_NAME.
 const SAVE_EXT = ".sav";
 const SAVE_COMPAT_VERSIONS = ['steam', 'epic', 'gog']; //game versions with installable save mods (never Xbox)
 const PAKMOD_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Paks', '~mods'); //usually works. Some games don't work from "~mods".
 const PAKMOD_LOADORDER = true; //set to false if you don't want loadOrder. If must be in "Paks" root, also disable loadOrder.
-const UE4SS_PAGE_NO = 0; //set if there is UE4SS Nexus page
+const UE4SS_PAGE_NO = 0; //set these if there is a customized UE4SS Nexus page
 const UE4SS_FILE_NO = 0;
 const UE4SS_DOMAIN = GAME_ID; //either GAME_ID or 'site'
-const UE4SS_MOD_PATH = path.join('ue4ss', 'Mods');
+const UE4SS_MOD_PATH = path.join('ue4ss', 'Mods'); //this should probably never change (unless UE4SS team changes it again lol)
 
 //config, save, shipping exe
 const DATA_FOLDER = EPIC_CODE_NAME; //almost always matches.
@@ -1675,13 +1675,14 @@ function UNREALEXTENSION(context) {
     getUnrealModsPath, 
     () => Promise.resolve(false), 
     { name: UE5_SORTABLE_NAME,
-      mergeMods: mod => {
+      //mergeMods: mod => loadOrderPrefix(context.api, mod) + mod.id
+      mergeMods: (mod) => {
         if (UNREALDATA.loadOrder === true) {
-          loadOrderPrefix(context.api, mod) + mod.id
+          return loadOrderPrefix(context.api, mod) + mod.id
         } else {
           return '';
         }
-      }
+      } //*/
     }
   );
 }
@@ -1831,8 +1832,12 @@ async function setup(discovery, api, gameSpec) {
       await fs.ensureDirWritableAsync(SAVE_PATH);
     }
   }
-  if (UE4SS_PAGE_NO !== 0 && autoDownloadUe4ss === true) {
-    await downloadUe4ssNexus(api, gameSpec);
+  if (autoDownloadUe4ss) {
+    if (UE4SS_PAGE_NO !== 0) {
+      await downloadUe4ssNexus(api, gameSpec);
+    } else {
+      await downloadUe4ss(api, gameSpec);
+    }
   } //*/
   if (SIGBYPASS_REQUIRED === true) {
     await downloadSigBypass(api, gameSpec);
@@ -1896,7 +1901,7 @@ function applyGame(context, gameSpec) {
   };
   context.registerGame(game);
 
-  //register mod types recursively
+  //register mod types recursively (types that are always the same)
   (gameSpec.modTypes || []).forEach((type, idx) => {
     context.registerModType(type.id, modTypePriority(type.priority) + idx, (gameId) => {
       var _a;
@@ -1906,42 +1911,42 @@ function applyGame(context, gameSpec) {
   });
 
   //register mod types explicitly (due to potentially dynamic Binaries folder)
-    context.registerModType(SCRIPTS_ID, 50, 
-      (gameId) => {
-        var _a;
-        return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-      }, 
-      (game) => pathPattern(context.api, game, path.join('{gamePath}', SCRIPTS_PATH)), 
-      () => Promise.resolve(false), 
-      { name: SCRIPTS_NAME }
-    );
-    context.registerModType(DLL_ID, 52, 
-      (gameId) => {
-        var _a;
-        return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-      }, 
-      (game) => pathPattern(context.api, game, path.join('{gamePath}', SCRIPTS_PATH)), 
-      () => Promise.resolve(false), 
-      { name: DLL_NAME }
-    );
-    context.registerModType(BINARIES_ID, 54, 
-      (gameId) => {
-        var _a;
-        return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-      }, 
-      (game) => pathPattern(context.api, game, path.join('{gamePath}', BINARIES_PATH)), 
-      () => Promise.resolve(false), 
-      { name: BINARIES_NAME }
-    );
-    context.registerModType(UE4SS_ID, 56, 
-      (gameId) => {
-        var _a;
-        return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-      }, 
-      (game) => pathPattern(context.api, game, path.join('{gamePath}', BINARIES_PATH)), 
-      () => Promise.resolve(false), 
-      { name: UE4SS_NAME }
-    );
+  context.registerModType(SCRIPTS_ID, 50, 
+    (gameId) => {
+      var _a;
+      return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
+    }, 
+    (game) => pathPattern(context.api, game, path.join('{gamePath}', SCRIPTS_PATH)), 
+    () => Promise.resolve(false), 
+    { name: SCRIPTS_NAME }
+  );
+  context.registerModType(DLL_ID, 52, 
+    (gameId) => {
+      var _a;
+      return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
+    }, 
+    (game) => pathPattern(context.api, game, path.join('{gamePath}', SCRIPTS_PATH)), 
+    () => Promise.resolve(false), 
+    { name: DLL_NAME }
+  );
+  context.registerModType(BINARIES_ID, 54, 
+    (gameId) => {
+      var _a;
+      return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
+    }, 
+    (game) => pathPattern(context.api, game, path.join('{gamePath}', BINARIES_PATH)), 
+    () => Promise.resolve(false), 
+    { name: BINARIES_NAME }
+  );
+  context.registerModType(UE4SS_ID, 56, 
+    (gameId) => {
+      var _a;
+      return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
+    }, 
+    (game) => pathPattern(context.api, game, path.join('{gamePath}', BINARIES_PATH)), 
+    () => Promise.resolve(false), 
+    { name: UE4SS_NAME }
+  );
 
   //register sigbypass modtype
   if (SIGBYPASS_REQUIRED === true) {

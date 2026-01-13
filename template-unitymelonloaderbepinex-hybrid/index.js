@@ -42,6 +42,9 @@ const XBOX_SAVE_STRING = 'XXX'; //string after "ID_"
 const PCGAMINGWIKI_URL = "XXX";
 
 //feature toggles
+const preventPluginInstall = false; //set to true if you want to prevent plugins not for the current mod loader from installing. Disable if using cross-compatibility plugins.
+const loaderSwitchRestart = false; //set to true if you need to restart the extension after switching mod loaders
+const enableSaveInstaller = false; //set to true if you want to enable the save installer (only recommended if saves are stored in the game's folder)
 const hasCustomMods = false; //set to true if there are modTypes with folder paths dependent on which mod loader is installed
 const hasCustomLoader = false; //set to true if there is a custom mod loader
 const customLoaderInstaller = false; //set true if the custom loader uses an installer
@@ -713,7 +716,7 @@ function testCustomLoader(files, gameId) {
 }
 
 //Install Custom Mod Loader files
-function installCustomloader(files) {
+function installCustomLoader(files) {
   const MOD_TYPE = CUSTOMLOADER_ID;
   const modFile = files.find(file => (path.basename(file) === CUSTOMLOADER_FILE));
   const idx = modFile.indexOf(path.basename(modFile));
@@ -1166,7 +1169,8 @@ async function installPlugin(api, gameSpec, files, workingDir) {
     customInstalled = isCustomInstalled(api, gameSpec);
   }
 
-  // detect plugin types by reading DLL contents
+  // STEP 1 - Detect plugin types by reading DLL contents //////////////////////////////////////////
+
   await Promise.all(files.map(async file => {
     if (PLUGIN_EXTS.includes(path.extname(file).toLowerCase())) {
       try {
@@ -1192,19 +1196,25 @@ async function installPlugin(api, gameSpec, files, workingDir) {
     }
   }));
 
-  // CANCEL INSTALL CONDITIONS //////////////////////////////////////////
+  // STEP 2 - CANCEL/WARN INSTALL CONDITIONS //////////////////////////////////////////
+
   if (hasCustomLoader) {
     if (isCustom && ( bepinexInstalled || melonInstalled )) {
       const wrongLoader = await api.showDialog('error', 'Wrong Mod Loader', {
           bbcode: api.translate(`Vortex has detected that the ${MOD_NAME} archive has ${CUSTOMLOADER_NAME} plugins, but you have installed BepInEx or MelonLoader.[br][/br][br][/br]`
               + `The installation will be cancelled to avoid issues.[br][/br][br][/br]` 
+              + `${preventPluginInstall ? `The installation will be cancelled to avoid issues.[br][/br][br][/br]` : `The mod will not be loaded unless the correct mod loader is installed.[br][/br][br][/br]`}`
               + `Check the mod's page to see if there is a ${CUSTOMLOADER_NAME} version of the mod, or change your mod loader to MelonLoader.[br][/br][br][/br]`),
           options: { order: ['bbcode'], wrap: true },
       }, [
           { label: 'Ok' }
       ]);
       if (wrongLoader.action === 'Ok') {
+        if (preventPluginInstall) {
           throw new util.UserCanceled();
+        } else {
+          //do nothing, proceed with install
+        }
       }
     }
     if ((isBepinex || isMelon) && customInstalled) {
@@ -1217,7 +1227,11 @@ async function installPlugin(api, gameSpec, files, workingDir) {
           { label: 'Ok' }
       ]);
       if (wrongLoader.action === 'Ok') {
+        if (preventPluginInstall) {
           throw new util.UserCanceled();
+        } else {
+          //do nothing, proceed with install
+        }
       }
     }
   }
@@ -1232,7 +1246,11 @@ async function installPlugin(api, gameSpec, files, workingDir) {
         { label: 'Ok' }
     ]);
     if (mixedModHandling.action === 'Ok') {
+      if (preventPluginInstall) {
         throw new util.UserCanceled();
+      } else {
+        //do nothing, proceed with install
+      }
     }
   }
   //if BepInEx plugin is installed while using MelonLoader, cancel install
@@ -1246,7 +1264,11 @@ async function installPlugin(api, gameSpec, files, workingDir) {
         { label: 'Ok' }
     ]);
     if (wrongLoader.action === 'Ok') {
+      if (preventPluginInstall) {
         throw new util.UserCanceled();
+      } else {
+        //do nothing, proceed with install
+      }
     }
   }
   //if MelonLoader plugin is installed while using BepInEx, cancel install
@@ -1260,9 +1282,15 @@ async function installPlugin(api, gameSpec, files, workingDir) {
         { label: 'Ok' }
     ]);
     if (wrongLoader.action === 'Ok') {
+      if (preventPluginInstall) {
         throw new util.UserCanceled();
+      } else {
+        //do nothing, proceed with install
+      }
     }
   }
+
+  // STEP 3 - INSTALL THE PLUGINS //////////////////////////////////////////
 
   // Install method that attempts to index on folders, then dll files
   if (hasCustomLoader) {
@@ -1421,7 +1449,7 @@ async function chooseModLoader(api, gameSpec) {
     } else if (result.action === 'MelonLoader') {
       await downloadMelon(api, gameSpec);
     }
-    if (hasCustomMods) { //Run this if need to change a modType path based on the mod loader installed
+    if (hasCustomMods || loaderSwitchRestart) { //Run this if need to change a modType path based on the mod loader installed
       await deploy(api);
       relaunchExt(api);
     }
@@ -1474,22 +1502,18 @@ async function deconflictModLoaders(api, gameSpec) {
       if (melonInstalled) {
         await removeMelon(api, gameSpec);
       }
-      if (hasCustomLoader) {
-        if (customInstalled) {
-          await removeCustom(api, gameSpec);
-        }
+      if (hasCustomLoader && customInstalled) {
+        await removeCustom(api, gameSpec);
       }
     } else if (result.action === 'MelonLoader') {
       if (bepinexInstalled) {
         await removeBepinex(api, gameSpec);
       }
-      if (hasCustomLoader) {
-        if (customInstalled) {
-          await removeCustom(api, gameSpec);
-        }
+      if (hasCustomLoader && customInstalled) {
+        await removeCustom(api, gameSpec);
       }
     }
-    if (hasCustomMods) { //Run this if need to change a modType path based on the mod loader installed
+    if (hasCustomMods || loaderSwitchRestart) { //Run this if need to change a modType path based on the mod loader installed
       await deploy(api);
       relaunchExt(api);
     }
@@ -1759,7 +1783,7 @@ function applyGame(context, gameSpec) {
       () => Promise.resolve(false), 
       { name: CUSTOMLOADER_PLUGIN_NAME }
     ); //*/
-    context.registerModType(CUSTOMLOADER_PLUGIN_ID, 25, 
+    context.registerModType(CUSTOMLOADER_PLUGIN_ID, 27, 
       (gameId) => {
         var _a;
         return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
@@ -1789,13 +1813,15 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(BEPCFGMAN_ID, 29, testBepCfgMan, installBepCfgMan);
   context.registerInstaller(MELONPREFMAN_ID, 30, testMelonPrefMan, installMelonPrefMan);
   context.registerInstaller(ASSEMBLY_ID, 31, testAssembly, installAssembly);
-  //if there are other known dll files that are not Unity plugins, add installers for them here
+  //if there are other known dll files that are not loader plugins, add installers for them here
   context.registerInstaller(`${GAME_ID}-plugin`, 33, testPlugin, (files, workingDir) => installPlugin(context.api, gameSpec, files, workingDir));
   context.registerInstaller(ASSETS_ID, 37, testAssets, installAssets);
   if (hasCustomMods) {
     context.registerInstaller(CUSTOM_ID, 39, testCustom, installCustom);
   }
-  //context.registerInstaller(SAVE_ID, 47, testSave, installSave); //best to only enable if saves are stored in the game's folder
+  if (enableSaveInstaller) {
+    context.registerInstaller(SAVE_ID, 47, testSave, installSave); //best to only enable if saves are stored in the game's folder
+  }
   context.registerInstaller(`${GAME_ID}-fallback`, 49, testFallback, (files, destinationPath) => installFallback(context.api, files, destinationPath));
   
   //register actions

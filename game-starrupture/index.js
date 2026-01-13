@@ -2,8 +2,8 @@
 Name: StarRupture Vortex Extension
 Structure: Unreal Engine Game
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2026-XX-XX
+Version: 0.1.1
+Date: 2026-01-13
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -1661,13 +1661,14 @@ function UNREALEXTENSION(context) {
     getUnrealModsPath, 
     () => Promise.resolve(false), 
     { name: UE5_SORTABLE_NAME,
-      mergeMods: mod => {
+      //mergeMods: mod => loadOrderPrefix(context.api, mod) + mod.id
+      mergeMods: (mod) => {
         if (UNREALDATA.loadOrder === true) {
-          loadOrderPrefix(context.api, mod) + mod.id
+          return loadOrderPrefix(context.api, mod) + mod.id
         } else {
           return '';
         }
-      }
+      } //*/
     }
   );
 }
