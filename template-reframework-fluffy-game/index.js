@@ -746,16 +746,17 @@ function toBlue(func) {
 //Notify User of Setup instructions
 function setupNotify(api) {
   const MOD_NAME = `Fluffy Mod Manager`;
+  const MESSAGE = `${MOD_NAME} Instructions`;
   api.sendNotification({
     id: `${GAME_ID}-setup-notification`,
     type: 'warning',
-    message: 'Mod Installation and Setup Instructions',
+    message: MESSAGE,
     allowSuppress: true,
     actions: [
       {
         title: 'More',
         action: (dismiss) => {
-          api.showDialog('question', 'Action required', {
+          api.showDialog('question', MESSAGE, {
             text: `You must use ${MOD_NAME} to enable mods after installing with Vortex.\n`
                 + `Use the included tool to launch ${MOD_NAME} (at top of window or in "Dashboard" tab).\n`
                 + `If your mod is not for ${MOD_NAME}, you must extract the zip file in the staging folder and change the mod type to "Binaries / Root Folder".\n`
@@ -778,7 +779,7 @@ function setupNotify(api) {
 function deployNotify(api) {
   const NOTIF_ID = `${GAME_ID}-deploy-notification`;
   const MOD_NAME = FLUFFY_NAME;
-  const MESSAGE = `Run Fluffy Mod Manager after Deploy`;
+  const MESSAGE = `Run ${MOD_NAME} after Deploy`;
   api.sendNotification({
     id: NOTIF_ID,
     type: 'warning',
@@ -795,7 +796,7 @@ function deployNotify(api) {
       {
         title: 'More',
         action: (dismiss) => {
-          api.showDialog('question', 'Run Fluffy Mod Manager to Enable Mods', {
+          api.showDialog('question', MESSAGE, {
             text: `You must use ${MOD_NAME} to enable most mods after installing with Vortex.\n`
                 + `Use the included tool to launch ${MOD_NAME} (button on notification or in "Dashboard" tab).\n`
                 + `If your mod is not for ${MOD_NAME}, you may need to change the mod type to "Binaries / Root Folder" and extract the zip in the staging folder manually.\n`

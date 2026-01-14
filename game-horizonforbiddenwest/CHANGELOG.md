@@ -4,6 +4,12 @@
 
 - None
 
+## [0.2.1] - 2026-01-14
+
+- Changed HFW Mod Manager to instruct the user to launch it from the game folder. This is due to some strange behavior in the app that I am still trying to sort out.
+- Added preliminary support for ModForge (alternative mod packer). Auto-download choice is deactivated for now.
+- Fixed issues with downloaded HFW MM executable not being downloaded properly.
+
 ## [0.2.0] - 2026-01-07
 
 - Added support for HFW Mod Manager and its mods.

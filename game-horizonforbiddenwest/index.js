@@ -1,8 +1,8 @@
 /*////////////////////////////////////////////////
 Name: Horizon Forbidden West Vortex Extension
 Author: ChemBoy1
-Version: 0.2.0
-Date: 2026-01-07
+Version: 0.2.1
+Date: 2026-01-14
 ////////////////////////////////////////////////*/
 
 //import libraries
@@ -11,6 +11,8 @@ const path = require('path');
 const template = require('string-template');
 const Bluebird = require('bluebird');
 const fsExtra = require('fs-extra');
+const { get } = require('http');
+const { cwd } = require('process');
 //const winapi = require('winapi-bindings'); //gives access to the Windows registry
 
 //Specify all the information about the game
@@ -45,6 +47,8 @@ const SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = ''; 
 let GAME_PATH = '';
+let modManagerInstalled = false;
+let modForgeInstalled = false;
 
 const MODMANAGER_ID = `${GAME_ID}-modmanager`;
 const MODMANAGER_NAME = "HFW Mod Manager";
@@ -52,6 +56,16 @@ const MODMANAGER_STRING = 'HFW Mod Manager';
 const MODMANAGER_EXEC = 'HFW_MM.exe';
 const MODMANAGER_PAGE_NO = 137;
 const MODMANAGER_FILE_NO = 638;
+const MODMANAGER_DOMAIN = GAME_ID;
+
+const MODFORGE_ID = `${GAME_ID}-modforge`;
+const MODFORGE_NAME = "ModForge";
+const MODFORGE_EXEC = 'ModForge.exe';
+const MODFORGE_PAGE_NO = 1615;
+const MODFORGE_FILE_NO = 6654;
+const MODFORGE_DOMAIN = 'site';
+
+const loaderChoice = false; //toggle for choice of mod packer
 
 const MANAGERMOD_ID = `${GAME_ID}-managermod`;
 const MANAGERMOD_NAME = "HFW Manager Mod";
@@ -90,6 +104,12 @@ const spec = {
     {
       "id": MODMANAGER_ID,
       "name": MODMANAGER_NAME,
+      "priority": "low",
+      "targetPath": '{gamePath}'
+    },
+    {
+      "id": MODFORGE_ID,
+      "name": MODFORGE_NAME,
       "priority": "low",
       "targetPath": '{gamePath}'
     },
@@ -177,6 +197,7 @@ async function deploy(api) {
 
 // AUTO-DOWNLOADER FUNCTIONS ///////////////////////////////////////////////////
 
+//Check if HFW ModManager is installed
 async function isModManagerInstalled(api) {
   try {
     GAME_PATH = getDiscoveryPath(api);
@@ -185,6 +206,13 @@ async function isModManagerInstalled(api) {
   } catch (err) {
     return false;
   }
+}
+
+//Check if ModForge is installed
+function isModForgeInstalled(api, spec) {
+  const state = api.getState();
+  const mods = state.persistent.mods[spec.game.id] || {};
+  return Object.keys(mods).some(id => mods[id]?.type === MODFORGE_ID);
 }
 
 //* Function to auto-download HFW MM from Nexus Mods
@@ -199,7 +227,7 @@ async function downloadModManager(api, check) {
     const NOTIF_ID = `${MOD_TYPE}-installing`;
     const PAGE_ID = MODMANAGER_PAGE_NO;
     const FILE_ID = MODMANAGER_FILE_NO;  //If using a specific file id because "input" below gives an error
-    const GAME_DOMAIN = GAME_ID;
+    const GAME_DOMAIN = MODMANAGER_DOMAIN;
     api.sendNotification({ //notification indicating install process
       id: NOTIF_ID,
       message: `Installing ${MOD_NAME}`,
@@ -232,51 +260,58 @@ async function downloadModManager(api, check) {
         game: GAME_DOMAIN,
         name: MOD_NAME,
       };
-      //download the file and copy in callback
-      api.events.emit('start-download', [URL], dlInfo, undefined,
-        async (error, id) => { //callback function to check for errors and then copy exe from downloads folder to game folder
-          if (error !== null && (error.name !== 'AlreadyDownloaded')) {
-            return;
-          }
-          try { //find the file in Downloads folder and copy it to the game folder
-            api.sendNotification({ //notification indicating copy process
-              id: `${NOTIF_ID}-copy`,
-              message: `Copying ${MOD_NAME} executable to game folder`,
-              type: 'activity',
-              noDismiss: true,
-              allowSuppress: false,
-            });
-            let files = await fs.readdirAsync(DOWNLOAD_FOLDER);
-            files = files.filter(file => ( path.basename(file).includes(MODMANAGER_STRING) && (path.extname(file).toLowerCase() === '.exe') ))
-              .sort((a,b) => a.toLowerCase().localeCompare(b.toLowerCase()))
-              .reverse();
-            const copyFile = files[0];
-            const source = path.join(DOWNLOAD_FOLDER, copyFile);
-            const destination = path.join(GAME_PATH, MODMANAGER_EXEC);
-            await fs.copyAsync(source, destination, { overwrite: true });
-            api.dismissNotification(NOTIF_ID);
-            api.dismissNotification(`${NOTIF_ID}-copy`);
-            api.sendNotification({ //notification copy success
-              id: `${NOTIF_ID}-success`,
-              message: `Successfully copied ${MOD_NAME} executable to game folder`,
-              type: 'success',
-              noDismiss: false,
-              allowSuppress: true,
-            });
-            //await fs.unlinkAsync(path.join(DOWNLOAD_FOLDER, copyFile)); //remove the downloaded file to avoid duplicates
-          } catch (err) {
-            const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
-            api.showErrorNotification(`Failed to download and copy ${MOD_NAME} executable`, err, { allowReport: false });
-            util.opn(errPage).catch(() => null);
-          }
-          finally {
-            api.dismissNotification(NOTIF_ID);
-            api.dismissNotification(`${NOTIF_ID}-copy`);
-          }
-        }, 
-        'never',
-        { allowInstall: false },
-      );
+      //*Only start-download with Promise
+      return new Promise((resolve, reject) => {
+        api.events.emit('start-download', [URL], dlInfo, undefined,
+          async (error, dlid) => { //callback function to check for errors and pass id to and call 'start-install-download' event
+            if (error !== null && (error.name !== 'AlreadyDownloaded')) {
+              return reject(error);
+            }
+            try { //find the file in Download and copy it to the game folder
+              api.sendNotification({ //notification indicating copy process
+                id: `${NOTIF_ID}-copy`,
+                message: `Copying ${MOD_NAME} executable to game folder`,
+                type: 'activity',
+                noDismiss: true,
+                allowSuppress: false,
+              });
+              let files = await fs.readdirAsync(DOWNLOAD_FOLDER);
+              //let files = fs.readdirSync(DOWNLOAD_FOLDER);
+              files = files.filter(file => ( path.basename(file).includes(MODMANAGER_STRING) && (path.extname(file).toLowerCase() === '.exe') ))
+                .sort((a,b) => a.toLowerCase().localeCompare(b.toLowerCase()))
+                .reverse();
+              const copyFile = files[0];
+              await fs.statAsync(path.join(DOWNLOAD_FOLDER, copyFile));
+              //fs.statSync(path.join(DOWNLOAD_FOLDER, copyFile));
+              const source = path.join(DOWNLOAD_FOLDER, copyFile);
+              const destination = path.join(GAME_PATH, MODMANAGER_EXEC);
+              await fs.copyAsync(source, destination, { overwrite: true });
+              //fs.copySync(source, destination, { overwrite: true });
+              api.dismissNotification(NOTIF_ID);
+              api.dismissNotification(`${NOTIF_ID}-copy`);
+              api.sendNotification({ //notification copy success
+                id: `${NOTIF_ID}-success`,
+                message: `Successfully copied ${MOD_NAME} executable to game folder`,
+                type: 'success',
+                noDismiss: false,
+                allowSuppress: true,
+              });
+            } catch (err) {
+              const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
+              api.showErrorNotification(`Failed to download and copy ${MOD_NAME} executable`, err, { allowReport: false });
+              util.opn(errPage).catch(() => null);
+              return reject(err);
+            }
+            finally {
+              api.dismissNotification(NOTIF_ID);
+              api.dismissNotification(`${NOTIF_ID}-copy`);
+              return resolve();
+            }
+          },
+          'never',
+          { allowInstall: false },
+        );
+      });
     } catch (err) { //Show the user the download page if the download and copy process fails
       const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
       api.showErrorNotification(`Failed to download and copy ${MOD_NAME} executable`, err, { allowReport: false });
@@ -287,7 +322,113 @@ async function downloadModManager(api, check) {
   }
 } //*/
 
+//* Function to auto-download ModForge from Nexus Mods
+async function downloadModForge(api, gameSpec) {
+  let isInstalled = isModForgeInstalled(api, gameSpec);
+  if (!isInstalled) {
+    const MOD_NAME = MODFORGE_NAME;
+    const MOD_TYPE = MODFORGE_ID;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
+    const PAGE_ID = MODFORGE_PAGE_NO;
+    const FILE_ID = MODFORGE_FILE_NO;  //If using a specific file id because "input" below gives an error
+    const GAME_DOMAIN = MODFORGE_DOMAIN;
+    api.sendNotification({ //notification indicating install process
+      id: NOTIF_ID,
+      message: `Installing ${MOD_NAME}`,
+      type: 'activity',
+      noDismiss: true,
+      allowSuppress: false,
+    });
+    if (api.ext?.ensureLoggedIn !== undefined) { //make sure user is logged into Nexus Mods account in Vortex
+      await api.ext.ensureLoggedIn();
+    }
+    try {
+      let FILE = null;
+      let URL = null;
+      try { //get the mod files information from Nexus
+        const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
+        const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
+        const file = modFiles
+          .filter(file => file.category_id === 1)
+          .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))[0];
+        if (file === undefined) {
+          throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
+        }
+        FILE = file.file_id;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      } catch (err) { // use defined file ID if input is undefined above
+        FILE = FILE_ID;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      }
+      const dlInfo = { //Download the mod
+        game: GAME_DOMAIN,
+        name: MOD_NAME,
+      };
+      const dlId = await util.toPromise(cb =>
+        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+      const modId = await util.toPromise(cb =>
+        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
+      const batched = [
+        actions.setModsEnabled(api, profileId, [modId], true, {
+          allowAutoDeploy: true,
+          installed: true,
+        }),
+        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
+      ];
+      util.batchDispatch(api.store, batched); // Will dispatch both actions
+    } catch (err) { //Show the user the download page if the download, install process fails
+      const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
+      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
+      util.opn(errPage).catch(() => null);
+    } finally {
+      api.dismissNotification(NOTIF_ID);
+    }
+  }
+} //*/
+
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
+
+//Test for ModForge files
+function testModForge(files, gameId) {
+  const isMod = files.some(file => path.basename(file) === MODFORGE_EXEC);
+  let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install ModForge files
+function installModForge(files) {
+  const MOD_TYPE = MODFORGE_ID;
+  const modFile = files.find(file => path.basename(file) === MODFORGE_EXEC);
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
 
 //test whether to use mod installer
 function testSave(files, gameId) {
@@ -412,34 +553,71 @@ function toBlue(func) {
 //Notify User to run Mod Manager after deployment
 function deployNotify(api) {
   const NOTIF_ID = `${GAME_ID}-deploy-notification`;
-  const MOD_NAME = MODMANAGER_NAME;
-  const MESSAGE = `Run ${MOD_NAME} after Deploy`;
+  const MOD_NAME = 'Mod Packer';
+  const MESSAGE = `Run Mod Packer after Deploy`;
   api.sendNotification({
     id: NOTIF_ID,
     type: 'warning',
     message: MESSAGE,
     allowSuppress: true,
     actions: [
-      {
-        title: 'Run HFW MM',
+      /*{
+        title: `Run ${MOD_NAME}`,
         action: (dismiss) => {
           runManager(api);
           dismiss();
         },
-      },
+      },//*/
+      {
+        title: `Open Game Folder`,
+        action: (dismiss) => {
+          /*const child_process = require('child_process');
+          const proc = child_process.spawn(
+            path.join(GAME_PATH, MODMANAGER_EXEC),
+            [""],
+            { 
+              cwd: path.join(GAME_PATH),
+              //shell: true, 
+              detached: true,
+            }
+          );
+          proc.on("error", () => {}); //*/
+          util.opn(GAME_PATH).catch(() => null);
+          dismiss();
+        },
+      },//*/
       {
         title: 'More',
         action: (dismiss) => {
-          api.showDialog('question', 'Run Fluffy Mod Manager to Enable Mods', {
+          api.showDialog('question', MESSAGE, {
             text: `You must use ${MOD_NAME} to install most mods after installing with Vortex.\n`
-                + `Use the included tool to launch ${MOD_NAME} (button on notification or in "Dashboard" tab).\n`
+                + `Due to some strange behavior in the app, you must launch it directly from the game's folder.\n`
+                + `Use the button below to open the game folder, then run "${MODMANAGER_EXEC}" from there.\n`
+                //+ `Use the included tool to launch ${MOD_NAME} (button on notification or in "Dashboard" tab).\n`
           }, [
             {
-              label: 'HFW Mod Manager', action: () => {
-                runManager(api);
+              label: `Open Game Folder`, action: () => {
+                /*const child_process = require('child_process');
+                const proc = child_process.spawn(
+                  path.join(GAME_PATH, MODMANAGER_EXEC),
+                  [""],
+                  { 
+                    cwd: path.join(GAME_PATH),
+                    //shell: true, 
+                    detached: true,
+                  }
+                );
+                proc.on("error", () => {}); //*/
+                util.opn(GAME_PATH).catch(() => null);
                 dismiss();
               }
             },
+            /*{ 
+              label: `Run ${MOD_NAME}`, action: () => {
+                runManager(api);
+                dismiss();
+              }
+            }, //*/
             { label: 'Continue', action: () => dismiss() },
             {
               label: 'Never Show Again', action: () => {
@@ -455,15 +633,26 @@ function deployNotify(api) {
 }
 
 function runManager(api) {
-  const TOOL_ID = MODMANAGER_ID;
-  const TOOL_NAME = MODMANAGER_NAME;
+  let TOOL_ID =  MODMANAGER_ID;
+  let TOOL_NAME = MODMANAGER_NAME;
+  if (modForgeInstalled && !modManagerInstalled) {
+    TOOL_ID = MODFORGE_ID;
+    TOOL_NAME = MODFORGE_NAME;
+  }
   const state = api.store.getState();
   const tool = util.getSafe(state, ['settings', 'gameMode', 'discovered', GAME_ID, 'tools', TOOL_ID], undefined);
 
   try {
     const TOOL_PATH = tool.path;
     if (TOOL_PATH !== undefined) {
-      return api.runExecutable(TOOL_PATH, [], { suggestDeploy: false })
+      return api.runExecutable(TOOL_PATH, [], 
+        { 
+          //cwd: path.dirname(TOOL_PATH),
+          detach: true, 
+          //env: { 'PATH': process.env.PATH },
+          //shell: true, 
+          suggestDeploy: false 
+        })
         .catch(err => api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err,
           { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 })
         );
@@ -481,7 +670,16 @@ async function setup(discovery, api, gameSpec) {
   GAME_PATH = discovery.path;
   STAGING_FOLDER = selectors.installPathForGame(api.getState(), gameSpec.game.id);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(api.getState(), gameSpec.game.id);
-  await downloadModManager(api, true);
+  modManagerInstalled = await isModManagerInstalled(api);
+  modForgeInstalled = isModForgeInstalled(api, gameSpec);
+  if (!modManagerInstalled && !modForgeInstalled) {
+    if (loaderChoice) {
+      await selectModPacker(api, gameSpec);
+    } else {
+      await downloadModManager(api, true);
+    }
+  }
+  //await downloadModManager(api, true);
   await fs.ensureDirWritableAsync(path.join(discovery.path, MANAGERMOD_PATH));
   return fs.ensureDirWritableAsync(SAVE_PATH);
 }
@@ -508,6 +706,23 @@ function applyGame(context, gameSpec) {
         detach: true,
         relative: true,
         exclusive: true,
+        //env: { 'PATH': process.env.PATH },
+        //shell: true,
+        //cwd: path.dirname(MODMANAGER_EXEC),
+        //defaultPrimary: true,
+        //parameters: [],
+      }, //*/
+      {
+        id: MODFORGE_ID,
+        name: MODFORGE_NAME,
+        logo: `modforge.png`,
+        //queryPath: getDownloadsPath(context.api),
+        executable: () => MODFORGE_EXEC,
+        requiredFiles: [MODFORGE_EXEC],
+        detach: true,
+        relative: true,
+        exclusive: true,
+        //env: { 'PATH': process.env.PATH },
         //shell: true,
         //defaultPrimary: true,
         //parameters: [],
@@ -526,13 +741,21 @@ function applyGame(context, gameSpec) {
   });
 
   //register mod installers
-  context.registerInstaller(MANAGERMOD_ID, 25, testManagerMod, installManagerMod);
+  context.registerInstaller(MODFORGE_ID, 25, testModForge, installModForge);
+  context.registerInstaller(MANAGERMOD_ID, 27, testManagerMod, installManagerMod);
   //context.registerInstaller(MANAGERMOD_ID, 25, testManagerMod, toBlue(installZipContent));
   context.registerInstaller(`${GAME_ID}-save`, 25, testSave, installSave);
 
   //register actions
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download HFW Mod Manager', () => {
     downloadModManager(context.api, false);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download ModForge', () => {
+    downloadModForge(context.api, spec);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
@@ -577,10 +800,63 @@ function main(context) {
     context.api.onAsync('did-deploy', async (profileId, deployment) => {
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;
+      modManagerInstalled = await isModManagerInstalled(context.api);
+      modForgeInstalled = isModForgeInstalled(context.api, spec);
+      if (!modManagerInstalled && !modForgeInstalled) {
+        if (loaderChoice) {
+          await selectModPacker(context.api, spec);
+        } else {
+          await downloadModManager(context.api, true);
+        }
+      }
       return deployNotify(context.api);
+    });
+    context.api.onAsync('did-purge', async (profileId) => { 
+      const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
+      if (profileId !== LAST_ACTIVE_PROFILE) return;
+      modManagerInstalled = await isModManagerInstalled(context.api);
+      modForgeInstalled = isModForgeInstalled(context.api, spec);
+      if (!modManagerInstalled && !modForgeInstalled) {
+        if (loaderChoice) {
+          await selectModPacker(context.api, spec);
+        } else {
+          await downloadModManager(context.api, true);
+        }
+      }
+      return Promise.resolve();
     });
   });
   return true;
+}
+
+//Function to select mod packer (HFW Mod Manager or ModForge)
+async function selectModPacker(api, gameSpec) {
+  const REC_LABEL = `${MODMANAGER_NAME} (Recommended)`;
+  const t = api.translate;
+  const replace = {
+    game: gameSpec.game.name,
+    bl: '[br][/br][br][/br]',
+  };
+  return api.showDialog('info', 'Mod Loader Selection', {
+    bbcode: t('You must choose a mod packer to install .core and .stream mods.{{bl}}'
+      + 'Either one is acceptable, but you should use only one at a time.{{bl}}'
+      + 'Which mod packer would you like to use for {{game}}?',
+      { replace }
+    ),
+  }, [
+    { label: t(REC_LABEL) },
+    { label: t(MODFORGE_NAME) },
+  ])
+  .then(async (result) => {
+    if (result === undefined) {
+      return;
+    }
+    if (result.action === REC_LABEL) {
+      await downloadModManager(api, true);
+    } else if (result.action === MODFORGE_NAME) {
+      await downloadModForge(api, gameSpec);
+    }
+  });
 }
 
 //export to Vortex
