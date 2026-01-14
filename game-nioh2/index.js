@@ -404,15 +404,16 @@ function testMod(files, gameId) {
 }
 
 //Install mod files
-function installMod(files) {
+function installMod(files, fileName) {
   const MOD_TYPE = MOD_ID;
-  let modFile = files.find(file => MOD_EXTS.includes(path.extname(file).toLowerCase()));
-  const ini = files.find(file => path.extname(file).toLowerCase() === MOD_MARKER_EXT);
-  let rootPath = path.dirname(ini);
+  let modFile = files.find(file => path.extname(file).toLowerCase() === MOD_MARKER_EXT);
+  let rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
 
+  let folder = path.basename(fileName, '.installing');
   const ROOT_PATH = path.basename(rootPath);
   if (ROOT_PATH !== '.') {
+    folder = '';
     modFile = rootPath; //make the folder the targeted modFile so we can grab any other folders also in its directory
     rootPath = path.dirname(modFile);
     /*const indexFolder = path.basename(modFile);
@@ -428,7 +429,7 @@ function installMod(files) {
     return {
       type: 'copy',
       source: file,
-      destination: path.join(file.substr(idx)),
+      destination: path.join(folder, file.substr(idx)),
     };
   });
   instructions.push(setModTypeInstruction);
