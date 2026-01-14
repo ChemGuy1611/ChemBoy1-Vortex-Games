@@ -730,7 +730,7 @@ async function deserializeLoadOrder(context) {
   }
   
   //Determine if mod is managed by Vortex (async version)
-  const isVortexManaged = (modId) => {
+  const isVortexManaged = async (modId) => {
     return fs.statAsync(path.join(modFolderPath, modId, `__folder_managed_by_vortex`))
       .then(() => true)
       .catch(() => false)
@@ -784,13 +784,13 @@ async function deserializeLoadOrder(context) {
         return Promise.resolve(accum);
       }
       accum.push(
-      {
-        id: folder,
-        name: `${await getModName(folder)} (${folder})`,
-        modId: await isVortexManaged(folder) ? folder : undefined,
-        enabled: !line.startsWith("#"),
-        //imgUrl: await getModImage(folder);
-      }
+        {
+          id: folder,
+          name: `${await getModName(folder)} (${folder})`,
+          modId: await isVortexManaged(folder) ? folder : undefined,
+          enabled: !line.startsWith("#"),
+          //imgUrl: await getModImage(folder);
+        }
       );
       return Promise.resolve(accum);
     }, Promise.resolve([])

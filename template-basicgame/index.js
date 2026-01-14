@@ -92,7 +92,9 @@ const SAVE_FILES = ["XXX"];
 
 const TOOL_ID = `${GAME_ID}-tool`;
 const TOOL_NAME = "XXX";
-const TOOL_EXEC = path.join('XXX', 'XXX.exe');
+const TOOL_EXEC_FOLDER = path.join('XXX');
+const TOOL_EXEC = 'XXX.exe';
+const TOOL_EXEC_PATH = path.join(TOOL_EXEC_FOLDER, TOOL_EXEC);
 
 const MOD_PATH_DEFAULT = '.';
 const REQ_FILE = EXEC;
@@ -184,6 +186,7 @@ const tools = [ //accepts: exe, jar, py, vbs, bat
     id: TOOL_ID,
     name: TOOL_NAME,
     logo: 'tool.png',
+    queryPath: () => TOOL_EXEC_FOLDER,
     executable: () => TOOL_EXEC,
     requiredFiles: [
       TOOL_EXEC,
@@ -197,6 +200,30 @@ const tools = [ //accepts: exe, jar, py, vbs, bat
 ];
 
 // BASIC EXTENSION FUNCTIONS ///////////////////////////////////////////////////
+
+function isDir(folder, file) {
+  const stats = fs.statSync(path.join(folder, file));
+  return stats.isDirectory();
+}
+
+function statCheckSync(gamePath, file) {
+  try {
+    fs.statSync(path.join(gamePath, file));
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}
+async function statCheckAsync(gamePath, file) {
+  try {
+    await fs.statAsync(path.join(gamePath, file));
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}
 
 //Set mod type priorities
 function modTypePriority(priority) {
@@ -287,24 +314,6 @@ function getExecutable(discoveryPath) {
   return EXEC;
 }
 
-function statCheckSync(gamePath, file) {
-  try {
-    fs.statSync(path.join(gamePath, file));
-    return true;
-  }
-  catch (err) {
-    return false;
-  }
-}
-async function statCheckAsync(gamePath, file) {
-  try {
-    await fs.statAsync(path.join(gamePath, file));
-    return true;
-  }
-  catch (err) {
-    return false;
-  }
-}
 //Get correct game version
 async function setGameVersion(gamePath) {
   const CHECK = await statCheckAsync(gamePath, EXEC_XBOX);
@@ -538,7 +547,7 @@ function fallbackInstallerNotify(api, modName) {
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
-/*
+//* Resolve game version dynamically for different game versions
 async function resolveGameVersion(gamePath) {
   GAME_VERSION = await setGameVersion(gamePath);
   let version = '0.0.0';
