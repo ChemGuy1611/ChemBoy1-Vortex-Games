@@ -56,12 +56,12 @@ const PLUGIN_PATH = path.join(DATA_FOLDER, PLUGIN_FOLDERNAME);
 const PLUGIN_EXTS = ['.dll'];
 
 const MOD_ID = `${GAME_ID}-mod`;
-const MOD_NAME = "Mod";
+const MOD_NAME = "Owlcat Mod";
 const MOD_FOLDERNAME = 'Modifications';
 const MOD_PATH = path.join(DATA_FOLDER, MOD_FOLDERNAME);
 const MOD_MANIFEST = 'owlcatmodificationmanifest.json';
 const MOD_FILES = [MOD_MANIFEST];
-const MOD_FOLDERS = ['Assemblies', 'Blueprints', 'Localization'];
+const MOD_FOLDERS = ['Assemblies', 'Blueprints', 'Bundles', 'Localization'];
 
 const PORTRAIT_ID = `${GAME_ID}-portrait`;
 const PORTRAIT_NAME = "Portraits";
@@ -1142,6 +1142,20 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(`${GAME_ID}-fallback`, 49, testFallback, (files, destinationPath) => installFallback(context.api, files, destinationPath));
 
   //register actions
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Owlcat Mod Folder', () => {
+    util.opn(MOD_PATH).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  }); //*/
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open UMM Plugin Folder', () => {
+    util.opn(PLUGIN_PATH).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  }); //*/
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Portraits Folder', () => {
     util.opn(PORTRAIT_PATH).catch(() => null);
     }, () => {

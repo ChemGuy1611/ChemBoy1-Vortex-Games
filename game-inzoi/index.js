@@ -1908,7 +1908,7 @@ function applyGame(context, gameSpec) {
         id: MODKIT_ID,
         name: MODKIT_NAME,
         logo: `modkit.png`,
-        queryPath: () => getModKitPath,
+        queryPath: async () => getModKitPath(),
         executable: () => MODKIT_EXEC_NAME,
         requiredFiles: [MODKIT_EXEC_NAME],
         detach: true,
