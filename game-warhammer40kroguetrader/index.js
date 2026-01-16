@@ -2,8 +2,8 @@
 Name: Warhammer 40,000: Rogue Trader Vortex Extension
 Structure: Game with Integrated Mod Loader (UnityModManager)
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2025-01-13
+Version: 0.1.1
+Date: 2025-01-16
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -62,6 +62,9 @@ const MOD_PATH = path.join(DATA_FOLDER, MOD_FOLDERNAME);
 const MOD_MANIFEST = 'owlcatmodificationmanifest.json';
 const MOD_FILES = [MOD_MANIFEST];
 const MOD_FOLDERS = ['Assemblies', 'Blueprints', 'Bundles', 'Localization'];
+const BUNDLE_STRING_1 = '_content';
+const BUNDLE_STRING_2 = '_BlueprintDirectReferences';
+const BUNDLE_STRINGS = [BUNDLE_STRING_1, BUNDLE_STRING_2];
 
 const PORTRAIT_ID = `${GAME_ID}-portrait`;
 const PORTRAIT_NAME = "Portraits";
@@ -621,22 +624,37 @@ function testMod(files, gameId) {
 //Install mod files
 function installMod(files, workingDir) {
   const MOD_TYPE = MOD_ID;
-  const modFile = files.find(file => MOD_FILES.includes(path.basename(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
-  const rootPath = path.dirname(modFile);
+  let modFile = files.find(file => MOD_FILES.includes(path.basename(file).toLowerCase()));
+  let idx = modFile.indexOf(path.basename(modFile));
+  let rootPath = path.dirname(modFile); //this is often "." because mods are frequently not in top-level folders
+  const ROOT_PATH = path.basename(rootPath);
+  let filtered = files.filter(file =>
+    (!file.endsWith(path.sep))
+  ); //*/
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
  
-  const manifest = files.find(file => (path.basename(file).toLowerCase() === MOD_MANIFEST.toLowerCase()));
-  const MOD_NAME = path.basename(workingDir);
-  let folder = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
+  //read manifest to get uniqueName and set folder name
+  //const manifest = files.find(file => (path.basename(file).toLowerCase() === MOD_MANIFEST.toLowerCase()));
+  const manifest = modFile;
+  const MOD_NAME = path.basename(workingDir, '.installing');
+  let folder = MOD_NAME;
+  let nameFolder = undefined;
   try {
     const contents = fs.readFileSync(path.join(workingDir, manifest));
     const json = JSON.parse(contents);
     folder = json.UniqueName;
+    //* index on the folder with the uniqueName if it is in the archive
+    nameFolder = files.find(file => (path.basename(file) === folder));
+    if (nameFolder !== undefined) {
+      modFile = nameFolder;
+      //idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+      idx = modFile.indexOf(path.basename(modFile));
+      folder = '';
+    } //*/
   } catch (err) {
-    api.showErrorNotification(`Could not read mod ${MOD_MANIFEST} file to get ${MOD_NAME} name`, err, { allowReport: false });
-  }
-
+    api.showErrorNotification(`Could not read mod ${MOD_MANIFEST} file to get ${MOD_NAME} name. Mod files are likely corrupted.`, err, { allowReport: false });
+  } //*/
+  
   //attribute for use in load order
   const MOD_ATTRIBUTE = {
     type: 'attribute',
@@ -644,17 +662,30 @@ function installMod(files, workingDir) {
     value: folder,
   };
 
-  // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
+  /* normal filtering - cannot do this if the rootPath is "." as it will remove the "Bundles" files without extensions
+  filtered = files.filter(file =>
     ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
-  );
-  const instructions = filtered.map(file => {
+  ); //*/
+  let instructions = filtered.map(file => {
     return {
       type: 'copy',
       source: file,
+      //destination: file,
+      //destination: file.substr(idx),
       destination: path.join(folder, file.substr(idx)),
     };
   });
+  /* if the mod is not in a top-level folder, we need to add the folder name to the destination
+  if (ROOT_PATH !== '.') {
+    instructions = filtered.map(file => {
+      return {
+        type: 'copy',
+        source: file,
+        //destination: file,
+        destination: path.join(folder, file.substr(idx)),
+      };
+    });
+  } //*/
   instructions.push(setModTypeInstruction);
   instructions.push(MOD_ATTRIBUTE);
   return Promise.resolve({ instructions });
@@ -1026,6 +1057,39 @@ async function serializeLoadOrder(context, loadOrder) {
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
+function portraitsNotify(api) {
+  const NOTIF_ID = `${GAME_ID}-xboxportraits-notify`;
+  const MESSAGE = 'Portrait Mods Don\'t Work on Xbox Version';
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'warning',
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: 'More',
+        action: (dismiss) => {
+          api.showDialog('question', MESSAGE, {
+            text: `\n`
+                + `Vortex detected that you are using the Xbox version of ${GAME_NAME}.\n`
+                + `Please note that custom Portraits mods do not work on the Xbox version of the game.\n`
+                + `This is a limitation of the game itself, and cannot be fixed by the extension developer.\n`
+                + `\n`
+          }, [
+            { label: 'Acknowledge', action: () => dismiss() },
+            {
+              label: 'Never Show Again', action: () => {
+                api.suppressNotification(NOTIF_ID);
+                dismiss();
+              }
+            },
+          ]);
+        },
+      },
+    ],
+  });
+}
+
 //* Resolve game version dynamically for different game versions
 async function resolveGameVersion(gamePath) {
   GAME_VERSION = await setGameVersion(gamePath);
@@ -1067,6 +1131,10 @@ async function setup(discovery, api, gameSpec) {
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   // ASYNC CODE //////////////////////////////////////////
+  GAME_VERSION = await setGameVersion(GAME_PATH);
+  if (GAME_VERSION === 'xbox') {
+    portraitsNotify(api);
+  }
   if (LOAD_ORDER_ENABLED) {
     try {
       await fs.statAsync(LO_FILE_PATH);
@@ -1142,6 +1210,13 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(`${GAME_ID}-fallback`, 49, testFallback, (files, destinationPath) => installFallback(context.api, files, destinationPath));
 
   //register actions
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open OwlcatModificationManagerSettings.json File', () => {
+    util.opn(LO_FILE_PATH).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  }); //*/
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Owlcat Mod Folder', () => {
     util.opn(MOD_PATH).catch(() => null);
     }, () => {

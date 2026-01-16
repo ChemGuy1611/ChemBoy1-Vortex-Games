@@ -729,7 +729,7 @@ function installCustomChars(files) {
     (file.indexOf(rootPath) !== -1) 
     && (!file.endsWith(path.sep))
   ));
-  //if no top level folder, don't do any filtering as this removes data files without extensions
+  //if no top level folder (naked DATA_FILE in the archive), don't do any filtering as this removes data files without extensions
   if (ROOT_PATH === '.') {
     filtered = files.filter(file => (
       file
