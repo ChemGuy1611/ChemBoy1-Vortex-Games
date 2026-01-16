@@ -11,8 +11,6 @@ const path = require('path');
 const template = require('string-template');
 const Bluebird = require('bluebird');
 const fsExtra = require('fs-extra');
-const { get } = require('http');
-const { cwd } = require('process');
 //const winapi = require('winapi-bindings'); //gives access to the Windows registry
 
 //Specify all the information about the game
@@ -565,12 +563,6 @@ function deployNotify(api) {
         title: `Run ${MOD_NAME}`,
         action: (dismiss) => {
           runManager(api);
-          dismiss();
-        },
-      },//*/
-      {
-        title: `Open Game Folder`,
-        action: (dismiss) => {
           /*const child_process = require('child_process');
           const proc = child_process.spawn(
             path.join(GAME_PATH, MODMANAGER_EXEC),
@@ -581,11 +573,17 @@ function deployNotify(api) {
               detached: true,
             }
           );
-          proc.on("error", () => {}); //*/
-          util.opn(GAME_PATH).catch(() => null);
+          proc.on("error", () => {}); //
           dismiss();
         },
       },//*/
+      {
+        title: `Open Game Folder`,
+        action: (dismiss) => {
+          util.opn(GAME_PATH).catch(() => null);
+          dismiss();
+        },
+      }, //*/
       {
         title: 'More',
         action: (dismiss) => {
@@ -597,6 +595,13 @@ function deployNotify(api) {
           }, [
             {
               label: `Open Game Folder`, action: () => {
+                util.opn(GAME_PATH).catch(() => null);
+                dismiss();
+              }
+            }, //*/
+            /*{ 
+              label: `Run ${MOD_NAME}`, action: () => {
+                runManager(api);
                 /*const child_process = require('child_process');
                 const proc = child_process.spawn(
                   path.join(GAME_PATH, MODMANAGER_EXEC),
@@ -607,14 +612,7 @@ function deployNotify(api) {
                     detached: true,
                   }
                 );
-                proc.on("error", () => {}); //*/
-                util.opn(GAME_PATH).catch(() => null);
-                dismiss();
-              }
-            },
-            /*{ 
-              label: `Run ${MOD_NAME}`, action: () => {
-                runManager(api);
+                proc.on("error", () => {}); //
                 dismiss();
               }
             }, //*/

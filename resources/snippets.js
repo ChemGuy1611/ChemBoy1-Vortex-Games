@@ -186,6 +186,32 @@ async function runActivity(api) {
 // INSTALLER FUNCTIONS ///////////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////////////////
 
+//slicer install looking for a folder (good for folder-based games)
+function installMod(files, destinationPath) {
+  const instructions = files.map(file => {
+    const segments = file.split(path.sep);
+    const offset = segments.findIndex(seg => seg.toLowerCase() === 'datalocal');
+    const outPath = offset !== -1
+      ? segments.slice(offset + 1).join(path.sep)
+      : file;
+
+    if (file.endsWith(path.sep)) {
+      return {
+        type: 'mkdir',
+        destination: outPath,
+      };
+    } else {
+      return {
+        type: 'copy',
+        source: file,
+        destination: outPath,
+      };
+    }
+  });
+
+  return Promise.resolve({ instructions });
+}
+
 //Multiple folder destinations
 function installContent(files) {
   const filtered = files.filter(file => !file.endsWith(path.sep));
