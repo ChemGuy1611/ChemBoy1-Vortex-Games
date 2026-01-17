@@ -4,6 +4,11 @@
 
 - Config and save modtypes, installers, and open buttons.
 
+## [0.4.1] - 2026-01-16
+
+- Added: icon for Dhem3 launch tool
+- Added: custom launch tool for classic executable
+
 ## [0.4.0] - 2025-11-14
 
 - Integrated support for BFG Edition into a single extension.

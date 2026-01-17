@@ -36,8 +36,10 @@ const EXEC = "XXX.exe";
 const EXEC_CONSOLE = "XXX.console.exe";
 const EXEC_XBOX = 'gamelaunchhelper.exe';
 const PCGAMINGWIKI_URL = "XXX";
-
 const ENGINE_VERSION = '4'; // 4 or 3 - can see when running console.exe for game
+
+//feature toggles
+const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
 const customLoader = true;
 const keepZips = false;
 
@@ -144,6 +146,7 @@ const IGNORE_CONFLICTS = [path.join('**', 'CHANGELOG.md'), path.join('**', 'read
 const IGNORE_DEPLOY = [path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
 let MODTYPE_FOLDERS = [MOD_PATH, 'mods'];
 
+//filled in from data above
 const spec = {
   "game": {
     "id": GAME_ID,
@@ -168,7 +171,7 @@ const spec = {
       "gogAppId": GOGAPP_ID,
       "epicAppId": EPICAPP_ID,
       "xboxAppId": XBOXAPP_ID,
-      //"supportsSymlinks": false,
+      "supportsSymlinks": allowSymlinks,
       "ignoreConflicts": IGNORE_CONFLICTS,
       "ignoreDeploy": IGNORE_DEPLOY,
     },

@@ -30,6 +30,9 @@ const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 const GAME_NAME = "XXX";
 const GAME_NAME_SHORT = "XXX";
 
+//feature toggles
+const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
+
 const EXEC = "XXX.exe";
 const ROOT_FOLDERS = ['Win64', 'Blueprints', 'TerrainSkirts', 'ProvidedCustomTextures', 'Parks', 'Movies'];
 const ACSE_PAGE_NO = 1;
@@ -128,6 +131,7 @@ const spec = {
       "steamAppId": +STEAMAPP_ID,
       "epicAppId": EPICAPP_ID,
       //"xboxAppId": XBOXAPP_ID,
+      "supportsSymlinks": allowSymlinks,
       "ignoreConflicts": IGNORE_CONFLICTS,
       "ignoreDeploy": IGNORE_DEPLOY,
     },

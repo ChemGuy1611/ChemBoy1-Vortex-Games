@@ -39,6 +39,9 @@ const EXEC_NAME = 'XXX.exe';
 const DATA_FOLDER = path.join('My Games', 'XXX', EPIC_CODE_NAME);
 const PCGAMINGWIKI_URL = "XXX";
 
+//feature toggles
+const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
+
 const SPECIAL_TFCMOD_FOLDERS = ['XXX'];
 
 const EXEC_XBOX = 'gamelaunchhelper.exe';

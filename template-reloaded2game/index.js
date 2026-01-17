@@ -123,7 +123,7 @@ const spec = {
       "gogAppId": GOGAPP_ID,
       "epicAppId": EPICAPP_ID,
       "xboxAppId": XBOXAPP_ID,
-      "supportsSymlinks": false,
+      "supportsSymlinks": false, //Reloaded does NOT like symlinks. Always set to false.
       "ignoreConflicts": IGNORE_CONFLICTS,
       "ignoreDeploy": IGNORE_DEPLOY,
     },

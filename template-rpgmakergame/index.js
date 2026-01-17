@@ -37,6 +37,10 @@ const EXEC_XBOX = 'gamelaunchhelper.exe';
 const NAME_FOLDER = 'XXX';
 const PCGAMINGWIKI_URL = "XXX";
 
+//feature toggles
+const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
+
+//info for modtypes, installers, tools, and actions
 const ROOT_FOLDERS = [NAME_FOLDER, 'audio', 'css', 'data', 'effects', 'fonts', 'icon', 'img', 'lib', 'locales', 'swiftshader'];
 const DATA_FOLDER = 'XXX';
 const CONFIGMOD_LOCATION = DOCUMENTS;
@@ -118,6 +122,7 @@ const IGNORE_CONFLICTS = [path.join('**', 'instructions.txt'), path.join('**', '
 const IGNORE_DEPLOY = [path.join('**', 'instructions.txt'), path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
 let MODTYPE_FOLDERS = [JSFILE_PATH, JSON_PATH];
 
+//filled in from data above
 const spec = {
   "game": {
     "id": GAME_ID,
@@ -142,8 +147,7 @@ const spec = {
       "gogAppId": GOGAPP_ID,
       "epicAppId": EPICAPP_ID,
       "xboxAppId": XBOXAPP_ID,
-      "ignoreConflicts": IGNORE_CONFLICTS,
-      //"supportsSymlinks": false,
+      "supportsSymlinks": allowSymlinks,
       "ignoreConflicts": IGNORE_CONFLICTS,
       "ignoreDeploy": IGNORE_DEPLOY,
     },

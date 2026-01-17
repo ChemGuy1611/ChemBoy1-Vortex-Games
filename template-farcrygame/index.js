@@ -30,11 +30,15 @@ const MI_EXEC = "FCXXXModInstaller.exe";
 const MIMOD_FOLDER = "ModifiedFilesFCXXX";
 const PCGAMINGWIKI_URL = "XXX";
 
+//feature toggles
+const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
+
 const DATA_FOLDER = "Far Cry XXX";
 const XML_PAGE_NO = 0;
 const XML_FILE_NO = 0;
 
 let GAME_PATH = null;
+let GAME_VERSION = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 let SAVE_PATH = null;
@@ -133,6 +137,7 @@ const spec = {
     "details": {
       "steamAppId": +STEAMAPP_ID,
       "uPlayAppId": UPLAYAPP_ID,
+      "supportsSymlinks": allowSymlinks,
       "ignoreConflicts": IGNORE_CONFLICTS,
       "ignoreDeploy": IGNORE_DEPLOY,
     },

@@ -23,6 +23,9 @@ const GAME_NAME = "XXX";
 const GAME_NAME_SHORT = "XXX";
 const PCGAMINGWIKI_URL = "XXX";
 
+//feature toggles
+const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
+
 const DATA_FILE = "XXX";
 const CONFIG_FOLDER = "XXX";
 const DATASUB_FOLDERS = ["baked", "graph objects", "game system data"]; // <-- Update to incorporate all subfolders 
@@ -33,7 +36,7 @@ let GAME_PATH = null;
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 
-//Info for mody types and installers
+//Info for modTypes and installers
 const CONFIG_ID = `${GAME_ID}-config`;
 const CONFIG_NAME = "Config (Documents)";
 const CONFIG_PATH = path.join(DOCUMENTS, "My Games", CONFIG_FOLDER);
@@ -83,6 +86,7 @@ const spec = {
     "details": {
       "uPlayAppId": UPLAYAPP_ID,
       "steamAppId": +STEAMAPP_ID,
+      "supportsSymlinks": allowSymlinks,
       "ignoreConflicts": IGNORE_CONFLICTS,
       "ignoreDeploy": IGNORE_DEPLOY,
     },

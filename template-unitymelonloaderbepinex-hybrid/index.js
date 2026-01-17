@@ -42,6 +42,7 @@ const XBOX_SAVE_STRING = 'XXX'; //string after "ID_"
 const PCGAMINGWIKI_URL = "XXX";
 
 //feature toggles
+const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
 const preventPluginInstall = false; //set to true if you want to prevent plugins not for the current mod loader from installing. Disable if using cross-compatibility plugins.
 const loaderSwitchRestart = false; //set to true if you need to restart the extension after switching mod loaders
 const enableSaveInstaller = false; //set to true if you want to enable the save installer (only recommended if saves are stored in the game's folder)
@@ -297,7 +298,7 @@ const spec = {
       "gogAppId": GOGAPP_ID,
       "epicAppId": EPICAPP_ID,
       "xboxAppId": XBOXAPP_ID,
-      //"supportsSymlinks": false,
+      "supportsSymlinks": allowSymlinks,
       "ignoreConflicts": IGNORE_CONFLICTS,
       "ignoreDeploy": IGNORE_DEPLOY,
     },

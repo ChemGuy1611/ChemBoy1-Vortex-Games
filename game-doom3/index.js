@@ -2,8 +2,8 @@
 Name: DOOM 3 & DOOM 3: BFG Edition Vortex Extension
 Structure: Basic multi-game with multiple exes
 Author: ChemBoy1
-Version: 0.4.0
-Date: 2025-11-14
+Version: 0.4.1
+Date: 2026-01-16
 /////////////////////////////////////////*/
 /*
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣀⣀⣠⣤⣤⣤⡴⣦⡴⣖⠶⣴⠶⡶⣖⡶⣶⢶⣲⡾⠿⢿⡷⣾⢿⣷⣦⢾⣷⣾⣶⣤⣀⣰⣤⣀⡀⠀⠀⢀⣴⣿⡿⡿⣿⣿⣦⣄⠀⠀⣠⣴⣿⡿⢿⡿⣷⣦⡄⠀⠀⢀⣀⣤⣦⣀⣤⣶⣶⣷⣦⣴⡿⢿⡷⣿⠿⡿⣿⣷⢶⣦⢴⡲⣦⢶⡶⢶⡲⣖⡶⣦⣤⣤⣤⣤⣤⣤⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
@@ -835,7 +835,7 @@ function applyGame(context, gameSpec) {
       {
         id: "Dhewm3Launch",
         name: "Launch Dhewm3",
-        logo: "exec.png",
+        logo: "dhewm3.png",
         executable: () => DHEWM3_EXEC,
         requiredFiles: [DHEWM3_EXEC],
         detach: true,
@@ -845,6 +845,19 @@ function applyGame(context, gameSpec) {
         defaultPrimary: true,
         parameters: PARAMETERS,
       },
+      {
+        id: `${GAME_ID}-customlaunch`,
+        name: `Custom Launch`,
+        logo: `exec.png`,
+        executable: () => EXEC_CLASSIC,
+        requiredFiles: [EXEC_CLASSIC],
+        detach: true,
+        relative: true,
+        exclusive: true,
+        shell: true,
+        //defaultPrimary: true,
+        parameters: PARAMETERS,
+      }, //*/
     ]
   };
   context.registerGame(game);

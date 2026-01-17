@@ -30,8 +30,12 @@ const ROOT_EXTS = [".exe"];
 const REF_PAGE_NO = 0;
 const REF_FILE_NO = 0;
 
+//feature toggles
+const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
+
 //global variables to set later
 let GAME_PATH = null; //game installation path
+let GAME_VERSION = '';
 let STAGING_FOLDER = ''; //Vortex staging folder path
 let DOWNLOAD_FOLDER = ''; //Vortex download folder path
 
@@ -96,7 +100,7 @@ const spec = {
     },
     "details": {
       "steamAppId": +STEAMAPP_ID,
-      //"supportsSymlinks": false,
+      "supportsSymlinks": allowSymlinks,
       "ignoreDeploy": IGNORE_DEPLOY,
       "ignoreConflicts": IGNORE_CONFLICTS,
     },

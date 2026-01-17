@@ -33,6 +33,9 @@ const GAME_NAME_SHORT = "XXX"
 const EXEC = "XXX.exe";
 const EXEC_XBOX = 'gamelaunchhelper.exe';
 
+//feature toggles
+const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
+
 const DATA_FOLDER = "XXX_Data";
 const ASSEMBLY_PATH = path.join(DATA_FOLDER, "Managed");
 const ASSEMBLY_FILE = "Assembly-CSharp.dll";
@@ -126,7 +129,7 @@ const spec = {
       "gogAppId": GOGAPP_ID,
       "epicAppId": EPICAPP_ID,
       "xboxAppId": XBOXAPP_ID,
-      //"supportsSymlinks": false,
+      "supportsSymlinks": allowSymlinks,
       "ignoreConflicts": IGNORE_CONFLICTS,
     },
     "environment": {
