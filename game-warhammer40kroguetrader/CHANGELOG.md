@@ -9,6 +9,7 @@
 - Fixed: Owlcat mod installer removing "Bundles" folder and files as they have no file extension
 - Added: Button to open the "OwlcatModificationManagerSettings.json" file
 - Added: Notification for Xbox users that custom Portaits mods will not be loaded by that version of the game
+- Added: Support for Portrait Manager (installer and launch tool)
 
 ## [0.1.0] - 2025-01-13
 

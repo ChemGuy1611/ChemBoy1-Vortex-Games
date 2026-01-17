@@ -105,6 +105,13 @@ const MODFINDER_FOLDER = MODFINDER_NAME;
 const MODFINDER_EXEC_FOLDER = path.join(DATA_FOLDER, MODFINDER_FOLDER);
 const MODFINDER_EXEC_PATH = path.join(MODFINDER_EXEC_FOLDER, MODFINDER_EXEC);
 
+const PORTMAN_ID = `${GAME_ID}-portraitmanager`;
+const PORTMAN_NAME = "Portrait Manager";
+const PORTMAN_EXEC = 'Portrait Manager Owlcat.exe';
+const PORTMAN_FOLDER = PORTMAN_NAME;
+const PORTMAN_EXEC_FOLDER = path.join(DATA_FOLDER, PORTMAN_FOLDER);
+const PORTMAN_EXEC_PATH = path.join(PORTMAN_EXEC_FOLDER, PORTMAN_EXEC);
+
 const LO_FILE = "OwlcatModificationManagerSettings.json";
 const LO_FILE_PATH = path.join(DATA_FOLDER, LO_FILE);
 const LO_FILE_EMPTY = {
@@ -279,6 +286,21 @@ const tools = [ //accepts: exe, jar, py, vbs, bat
     executable: () => SAVEEDITOR_EXEC,
     requiredFiles: [
       SAVEEDITOR_EXEC,
+    ],
+    relative: false,
+    exclusive: true,
+    //shell: true,
+    //defaultPrimary: true,
+    //parameters: PARAMETERS,
+  }, //*/
+  {
+    id: PORTMAN_ID,
+    name: PORTMAN_NAME,
+    logo: 'portman.png',
+    queryPath: () => PORTMAN_EXEC_FOLDER,
+    executable: () => PORTMAN_EXEC,
+    requiredFiles: [
+      PORTMAN_EXEC,
     ],
     relative: false,
     exclusive: true,
@@ -549,6 +571,44 @@ function installSaveEditor(files) {
       type: 'copy',
       source: file,
       destination: path.join(SAVEEDITOR_FOLDER, file.substr(idx)),
+    };
+  });
+  return Promise.resolve({ instructions });
+}
+
+//Test for Save Editor
+function testPortraitManager(files, gameId) {
+  const isMod = files.some(file => (path.basename(file).toLowerCase() === PORTMAN_EXEC.toLowerCase()));
+  let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install Save Editor
+function installPortraitManager(files) {
+  const modFile = files.find(file => (path.basename(file).toLowerCase() === PORTMAN_EXEC.toLowerCase()));
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+ 
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(PORTMAN_FOLDER, file.substr(idx)),
     };
   });
   return Promise.resolve({ instructions });
@@ -1202,7 +1262,8 @@ function applyGame(context, gameSpec) {
   //register mod installers
   context.registerInstaller(MICROPATCHES_ID, 25, testMicroPatches, installMicroPatches);
   context.registerInstaller(MODFINDER_ID, 27, testModFinder, installModFinder);
-  context.registerInstaller(SAVEEDITOR_ID, 29, testSaveEditor, installSaveEditor);
+  context.registerInstaller(SAVEEDITOR_ID, 28, testSaveEditor, installSaveEditor);
+  context.registerInstaller(PORTMAN_ID, 29, testPortraitManager, installPortraitManager);
   context.registerInstaller(MOD_ID, 31, testMod, installMod);
   context.registerInstaller(PLUGIN_ID, 33, testPlugin, installPlugin);
   context.registerInstaller(PORTRAIT_ID, 35, testPortrait, installPortrait);

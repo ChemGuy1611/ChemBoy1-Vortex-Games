@@ -44,7 +44,7 @@ const fallbackInstaller = true; //enable fallback installer. Usually disabled to
 const debug = false; //toggle for debug mode
 
 const DATA_FOLDER = 'Pathologic_Data';
-const ROOT_FOLDERS = [DATA_FOLDER, 'MonoBleedingEdge']; //root installer disabled for now
+const ROOT_FOLDERS = [DATA_FOLDER, 'MonoBleedingEdge']; //root installer uses files only for now
 const ROOT_FILES = ['dxgi.dll', 'version.dll', 'nvngx.dll', 'libxess.dll', 'amd_fidelityfx_dx12.dll'];
 const DATASUBS_FOLDERS = ['Managed', 'Plugins', 'Resources', 'StreamingAssets'];
 const DATA_EXTS = ['.ress', '.assets'];
