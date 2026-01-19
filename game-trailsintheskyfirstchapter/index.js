@@ -504,9 +504,9 @@ async function foldersCleanup(gamePath, workingPath) {
     const folderRoot = path.join(gamePath, folders[index]);
     try { //remove extracted folders
       await fs.statAsync(folder);
-      await fsPromises.rmdir(folder, { recursive: true });
+      await fsPromises.rm(folder, { recursive: true });
       await fs.statAsync(folderRoot);
-      await fsPromises.rmdir(folderRoot, { recursive: true });
+      await fsPromises.rm(folderRoot, { recursive: true });
       //log('warn', `Deleted extracted folders "${folder}" and "${folderRoot}"`);
     } catch (err) {
       log('error', `Could not delete extracted folder "${folder}": ${err}`);

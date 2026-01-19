@@ -2112,7 +2112,7 @@ async function didPurge(api, profileId) { //run on mod purge
   try { //Delete pakchunk0-Windows folder on purge
     log('info', `Deleting "${PAKCHUNK0_FOLDER_STEAM}" folder on purge`);
     const FOLDER = path.join(GAME_PATH, UE5_ALT_PATH, PAKCHUNK0_FOLDER_STEAM);
-    await fsPromises.rmdir(FOLDER, { recursive: true });
+    await fsPromises.rm(FOLDER, { recursive: true });
   }
   catch (err) {
     if (err.code === 'ENOENT') {
@@ -2125,7 +2125,7 @@ async function didPurge(api, profileId) { //run on mod purge
   try { //Delete pakchunk0-WinGDK folder on purge
     log('info', `Deleting "${PAKCHUNK0_FOLDER_XBOX}" folder on purge`);
     const FOLDER = path.join(GAME_PATH, UE5_ALT_PATH, PAKCHUNK0_FOLDER_XBOX);
-    await fsPromises.rmdir(FOLDER, { recursive: true });
+    await fsPromises.rm(FOLDER, { recursive: true });
   }
   catch (err) {
     if (err.code === 'ENOENT') {

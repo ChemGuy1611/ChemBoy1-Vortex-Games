@@ -1260,7 +1260,7 @@ async function psarcCleanup(api) {
   CLEANUP_FOLDERS.forEach((folder, idx, arr) => {
     try { //remove extracted .psarc folders
       fs.statSync(path.join(FOLDERS_PATH, folder));
-      fsPromises.rmdir(path.join(FOLDERS_PATH, folder), { recursive: true });
+      fsPromises.rm(path.join(FOLDERS_PATH, folder), { recursive: true });
       //log('warn', `Deleted extracted .psarc folder "${folder}"`);
     } catch (err) {
       log('error', `Could not delete extracted .psarc folder "${folder}": ${err}`);

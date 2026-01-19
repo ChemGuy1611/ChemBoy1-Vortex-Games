@@ -768,7 +768,7 @@ async function foldersCleanup(workingPath, folders) {
     const folder = path.join(workingPath, folders[index]);
     try { //remove extracted .psarc folders
       await fs.statAsync(folder);
-      await fsPromises.rmdir(folder, { recursive: true });
+      await fsPromises.rm(folder, { recursive: true });
     } catch (err) {
       log('error', `Could not delete extracted .psarc folder "${folder}": ${err}`);
     }
@@ -791,7 +791,7 @@ async function psarcCleanup(api) {
   /*CLEANUP_FOLDERS.forEach(async (folder, idx, arr) => {
     try { //remove extracted .psarc folders
       await fs.statAsync(path.join(FOLDERS_PATH, folder));
-      await fsPromises.rmdir(path.join(FOLDERS_PATH, folder), { recursive: true });
+      await fsPromises.rm(path.join(FOLDERS_PATH, folder), { recursive: true });
       //log('warn', `Deleted extracted .psarc folder "${folder}"`);
     } catch (err) {
       //log('error', `Could not delete extracted .psarc folder "${folder}": ${err}`);

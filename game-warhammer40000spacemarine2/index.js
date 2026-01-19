@@ -426,13 +426,13 @@ async function installIntegrationStudio(files, tempFolder, api) {
     await fs.statAsync(source);
     try {
       await fs.statAsync(path.join(source, 'mods_source'));
-      await fsPromises.rmdir(path.join(source, 'mods_source'), { recursive: true });
+      await fsPromises.rm(path.join(source, 'mods_source'), { recursive: true });
     } catch(err) {
       log('error', 'Error deleting Integration Studio bundled "mods_source" folder: ' + err);
     }
     const destination = tempFolder;
     await fs.copyAsync(source, destination);
-    await fsPromises.rmdir(source, { recursive: true });
+    await fsPromises.rm(source, { recursive: true });
     const paths = await getAllFiles(tempFolder);
     //files = [ ...files, ...paths.map(p => p.replace(`${tempFolder}${path.sep}`, ''))];
     files = [ ...paths.map(p => p.replace(`${tempFolder}${path.sep}`, ''))];

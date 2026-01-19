@@ -111,13 +111,14 @@ const TOOL_EXEC_PATH = path.join(TOOL_EXEC_FOLDER, TOOL_EXEC);
 
 const MOD_PATH_DEFAULT = MOD_PATH;
 const REQ_FILE = EXEC;
+const OPTION_PARAM = 'option1'; //not sure if this works. Saw a similar command on Halo MCC extension
 const PARAM_STRING = `-applaunch ${STEAMAPP_ID}`;
 const PARAM_STRING2 = `+fs_cachepath "${CACHE_PATH}"`;
-const OPTION_PARAM = 'option1'; //not sure if this works. Saw a similar command on Halo MCC extension
 const PARAM_STRING3 = '+com_skipIntroVideo 1';
 const PARAM_STRING4 = '+set com_allowConsole 1';
-const PARAM_STRING5 = '+com_allowMods 1';
-let PARAMETERS = [PARAM_STRING, OPTION_PARAM, PARAM_STRING2, PARAM_STRING3, PARAM_STRING4];
+const PARAM_STRING5 = '+com_allowMods 1'; //this doesn't actually work. Must use "option" parameter to make mods work
+const PARAM_STRING6 = '+logfile 0';
+let PARAMETERS = [OPTION_PARAM, PARAM_STRING2, PARAM_STRING3, PARAM_STRING4];
 const PARAMS_SHORT = [PARAM_STRING2, PARAM_STRING3, PARAM_STRING4];
 const LAUNCH_BAT = 'launch.bat';
 const LAUNCH_TXT = 'launch.txt';
@@ -347,7 +348,7 @@ async function requiresLauncher(gamePath, store) {
       launcher: 'steam',
       addInfo: { //this doesn't seem to pass the parameters to steam properly
         appId: STEAMAPP_ID,
-        parameters: ['option1'],
+        parameters: PARAMETERS,
         launchType: 'gamestore',
       }, //*/
     });
@@ -425,8 +426,8 @@ async function installLoader(files, tempFolder) {
     const destination2 = path.join(tempFolder, LOADER_INI);
     await fs.copyAsync(source, destination);
     await fs.copyAsync(source2, destination2);
-    await fsPromises.rmdir(path.join(tempFolder, 'id5Tweaker', LOADER_FOLDER), { recursive: true });
-    await fsPromises.rmdir(path.join(tempFolder, 'id5Tweaker', '32bit_RAGE'), { recursive: true });
+    await fsPromises.rm(path.join(tempFolder, 'id5Tweaker', LOADER_FOLDER), { recursive: true });
+    await fsPromises.rm(path.join(tempFolder, 'id5Tweaker', '32bit_RAGE'), { recursive: true });
     await fs.unlinkAsync(iniPath);
     const paths = await getAllFiles(tempFolder);
     files = paths.map(p => p.replace(`${tempFolder}${path.sep}`, ''));
@@ -478,7 +479,7 @@ function installMod(files) {
   const MOD_TYPE = MOD_ID;
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
 
-  // Remove directories and anything that isn't in the rootPath.
+  // Remove empty directories.
   const filtered = files.filter(file =>
     (!file.endsWith(path.sep))
   );

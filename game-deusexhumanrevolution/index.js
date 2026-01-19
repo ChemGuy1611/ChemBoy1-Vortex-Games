@@ -520,7 +520,7 @@ async function installPatcher(files, tempFolder) {
     await fs.statAsync(source);
     const destination = path.join(tempFolder, HOOK_FILE);
     await fs.copyAsync(source, destination);
-    await fsPromises.rmdir(path.join(tempFolder, 'compatable_modhook'), { recursive: true });
+    await fsPromises.rm(path.join(tempFolder, 'compatable_modhook'), { recursive: true });
     //const paths = [destination];
     const paths = await getAllFiles(tempFolder);
     //files = [ ...files, ...paths.map(p => p.replace(`${tempFolder}${path.sep}`, ''))];

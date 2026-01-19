@@ -1844,8 +1844,8 @@ function applyGame(context, gameSpec) {
     try {
       await fs.statAsync(path.join(GAME_PATH, "BepInEx"));
       await fs.statAsync(path.join(GAME_PATH, "Plugins"));
-      await fsPromises.rmdir(path.join(GAME_PATH, "BepInEx"), { recursive: true });
-      await fsPromises.rmdir(path.join(GAME_PATH, "Plugins"), { recursive: true });
+      await fsPromises.rm(path.join(GAME_PATH, "BepInEx"), { recursive: true });
+      await fsPromises.rm(path.join(GAME_PATH, "Plugins"), { recursive: true });
       const NOTIF_ID = `${GAME_ID}-folderdeletesuccess`;
       const MESSAGE = `Successfully deleted "BepInEx"+"Plugins" folders. Don't forget to restore them after running the MSCLoader installer.`;
       context.api.sendNotification({

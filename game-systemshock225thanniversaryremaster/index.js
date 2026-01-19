@@ -708,7 +708,7 @@ async function installLegacy(files, destinationPath) {
   if (rootPath !== '') {
     try {
       await asyncForEachCopy(relPaths, destinationPath, rootPath);
-      await fsPromises.rmdir(path.join(destinationPath, rootPath), { recursive: true });
+      await fsPromises.rm(path.join(destinationPath, rootPath), { recursive: true });
     } catch (err) {
       log('error', `Failed to convert legacy SS2 mod files to .kpf format: ${err}`);
     }
