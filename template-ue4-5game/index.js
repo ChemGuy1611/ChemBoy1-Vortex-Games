@@ -625,7 +625,7 @@ async function deploy(api) {
 
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
 
-//Installer test for mod files
+//Installer test for modkit mod files
 function testModKitMod(files, gameId) {
   const isMod = files.some(file => (path.extname(file).toLowerCase() === MODKITMOD_EXT));
   const isJson = files.some(file => (path.basename(file).toLowerCase() === MODKITMOD_FILE));
@@ -644,7 +644,7 @@ function testModKitMod(files, gameId) {
   });
 }
 
-//Installer install mod files
+//Installer install modkit mod files
 function installModKitMod(files, fileName) {
   const modFile = files.find(file => (path.basename(file).toLowerCase() === MODKITMOD_FILE));
   const idx = modFile.indexOf(path.basename(modFile));
@@ -679,7 +679,7 @@ function installModKitMod(files, fileName) {
   return Promise.resolve({ instructions });
 }
 
-//Test for save files
+//Test for UE4SS combo (pak and lua/dll) mod files
 function testUe4ssCombo(files, gameId) {
   const isMod = files.some(file => (path.extname(file).toLowerCase() === SCRIPTS_EXT));
   const isModAlt = files.some(file => (path.basename(file).toLowerCase() === 'binaries')); //added to catch mods packaged with paks and dll/asi, but no lua scripts.
@@ -700,7 +700,7 @@ function testUe4ssCombo(files, gameId) {
   });
 }
 
-//Install save files
+//Install UE4SS combo (pak and lua/dll) mod files
 async function installUe4ssCombo(files, workingDir) {
   const modFile = files.find(file => (path.basename(file) === ROOT_FILE));
   const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);

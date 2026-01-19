@@ -2,8 +2,8 @@
 Name: Whiskerwood Vortex Extension
 Structure: Unreal Engine Game (Unified)
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2025-11-13
+Version: 0.1.1
+Date: 2026-01-19
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -587,7 +587,7 @@ async function deploy(api) {
 
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
 
-//Test for save files
+//Test for UE4SS combo (pak and lua/dll) mod files
 function testUe4ssCombo(files, gameId) {
   const isMod = files.some(file => (path.extname(file).toLowerCase() === SCRIPTS_EXT));
   const isModAlt = files.some(file => (path.basename(file).toLowerCase() === 'binaries')); //added to catch mods packaged with paks and dll/asi, but no lua scripts.
@@ -608,12 +608,23 @@ function testUe4ssCombo(files, gameId) {
   });
 }
 
-//Install save files
-function installUe4ssCombo(files, fileName) {
+//Install UE4SS combo (pak and lua/dll) mod files
+async function installUe4ssCombo(files, workingDir) {
   const modFile = files.find(file => (path.basename(file) === ROOT_FILE));
   const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: UE4SSCOMBO_ID };
+
+  if (GAME_VERSION === 'xbox') {
+    try {
+      await fs.statAsync(path.join(workingDir, modFile, 'Binaries', 'Win64'));
+      await fs.renameAsync(path.join(workingDir, modFile, 'Binaries', 'Win64'), path.join(workingDir, modFile, 'Binaries', 'WinGDK'));
+      const paths = await getAllFiles(workingDir);
+      files = [...paths.map(p => p.replace(`${workingDir}${path.sep}`, ''))];
+    } catch (err) {
+      log('warn', `Failed to rename Win64 folder to WinGDK: ${err}`);
+    }
+  }
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
@@ -629,6 +640,26 @@ function installUe4ssCombo(files, fileName) {
   });
   instructions.push(setModTypeInstruction);
   return Promise.resolve({ instructions });
+}
+
+async function getAllFiles(dirPath) {
+  let results = [];
+  try {
+    const entries = await fs.readdirAsync(dirPath);
+    for (const entry of entries) {
+      const fullPath = path.join(dirPath, entry);
+      const stats = await fs.statAsync(fullPath);
+      if (stats.isDirectory()) { // Recursively get files from subdirectories
+        const subDirFiles = await getAllFiles(fullPath);
+        results = results.concat(subDirFiles);
+      } else { // Add file to results
+        results.push(fullPath);
+      }
+    }
+  } catch (err) {
+    log('warn', `Error reading directory ${dirPath}: ${err.message}`);
+  }
+  return results;
 }
 
 //Test for save files
