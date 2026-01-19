@@ -2,8 +2,8 @@
 Name: Trails in the Sky 1st Chapter Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2025-11-11
+Version: 0.1.1
+Date: 2026-01-19
 ///////////////////////////////////////////*/
 
 //Import libraries

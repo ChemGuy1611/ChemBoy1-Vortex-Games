@@ -2,8 +2,8 @@
 Name: System Shock 2 (Classic AND 25th Anniversary Remaster) Vortex Extension
 Structure: Basic game w/ mods folder
 Author: ChemBoy1
-Version: 0.4.6
-Date: 2025-09-28
+Version: 0.4.7
+Date: 2026-01-19
 ////////////////////////////////////////////////*/
 
 //Import libraries

@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [2.0.7] - 2026-01-19
+
+- Fixed: More reliable folder deletion operations - revised deprecated fsPromises.rmdir function to fsPromises.rm
+
 ## [2.0.6] - 2025-11-04
 
 - Improved .psarc extraction and cleanup functions to avoid errors and duplicate notifications.

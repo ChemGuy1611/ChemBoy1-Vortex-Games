@@ -2,8 +2,8 @@
 Name: The Last of Us Part I Vortex Extension
 Author: ChemBoy1
 Structure: Gemeric Game + Fluffy
-Version: 2.0.6
-Date: 2025-11-04
+Version: 2.0.7
+Date: 2026-01-19
 ////////////////////////////////////////////////*/
 
 //Import libraries

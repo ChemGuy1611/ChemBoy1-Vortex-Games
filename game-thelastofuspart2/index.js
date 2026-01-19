@@ -2,8 +2,8 @@
 Name: The Last of Us Part II Remastered Vortex Extension
 Author: ChemBoy1
 Structure: Generic Game
-Version: 0.6.1
-Date: 2025-07-14
+Version: 0.6.2
+Date: 2026-01-19
 ////////////////////////////////////////////////*/
 
 //Import libraries

@@ -4,6 +4,11 @@
 
 - Added check for if sp-common.psarc and bin.psarc files exist in the game folder (indicator of update and need to extract).
 
+## [0.6.2] - 2026-01-19
+
+- Fixed: More reliable folder deletion operations - revised deprecated fsPromises.rmdir function to fsPromises.rm
+- Added: Full Epic version support
+
 ## [0.6.1] - 2025-07-14
 
 - Slight optimization to the load order code.
@@ -39,8 +44,8 @@
 ## [0.4.0] - 2025-04-06
 
 - Changed .psarc extraction tool to ndarc, which will be downloaded automatically for the user.
-- Added support for the new mod loader, which will be downloaded automatically for the user. 
-- .psarc mods will be installed to the "mods" folder for the mod loader. 
+- Added support for the new mod loader, which will be downloaded automatically for the user.
+- .psarc mods will be installed to the "mods" folder for the mod loader.
 
 ## [0.3.0] - 2025-04-04
 
@@ -59,7 +64,7 @@
 
 ## [0.2.2] - 2025-04-04
 
-- Switched .psarc extraction tool to UnPSARC (https://github.com/rm-NoobInCoding/UnPSARC) since it has support for .psarc files without oodle compression and runs much faster.
+- Switched .psarc extraction tool to UnPSARC (<https://github.com/rm-NoobInCoding/UnPSARC>) since it has support for .psarc files without oodle compression and runs much faster.
 - Added notification with a button to run UnPSARC to extract .psarc files (sp-common.psarc and bin.psarc).
 - Added button to run .psarc extraction - folder icon in Mods toolbar.
 

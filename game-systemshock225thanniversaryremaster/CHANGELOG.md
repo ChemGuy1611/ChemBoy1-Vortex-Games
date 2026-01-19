@@ -4,6 +4,10 @@
 
 - None planned
 
+## [0.4.7] - 2026-01-19
+
+- Fixed: More reliable folder deletion operations - revised deprecated fsPromises.rmdir function to fsPromises.rm
+
 ## [0.4.6] - 2025-09-28
 
 - Fixed a Vortex crash that could occur for the classic version if the SS2Tool executable was not found in the downloads folder.
