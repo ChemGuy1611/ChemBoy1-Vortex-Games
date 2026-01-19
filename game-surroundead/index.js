@@ -1,5 +1,5 @@
 /*////////////////////////////////////////////////
-Name: XXX Vortex Extension
+Name: SurrounDead Vortex Extension
 Structure: Unreal Engine Game
 Author: ChemBoy1
 Version: 0.1.0
