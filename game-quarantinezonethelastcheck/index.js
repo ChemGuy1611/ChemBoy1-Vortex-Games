@@ -1,9 +1,9 @@
 /*////////////////////////////////////////////////
-Name: XXX Vortex Extension
+Name: Quarantine Zone: The Last Check Vortex Extension
 Structure: Unreal Engine Game
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2026-XX-XX
+Date: 2026-01-20
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -14,9 +14,6 @@ const { parseStringPromise } = require('xml2js');
 
 // -- START EDIT ZONE -- ///////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
-// -------------------------------------
-//#region Edit Zone
-// -------------------------------------
 
 //const USER_HOME = util.getVortexPath('home'); //only uncomment the ones needed
 //const DOCUMENTS = util.getVortexPath('documents');
@@ -24,27 +21,27 @@ const { parseStringPromise } = require('xml2js');
 const LOCALAPPDATA = util.getVortexPath('localAppData');
 
 //Specify all information about the game
-const GAME_ID = "XXX"; //same as Nexus domain
-const STEAMAPP_ID = "XXX"; //from steamdb.info
-const STEAMAPP_ID_DEMO = "XXX"; //VERIFY if the EPIC_CODE_NAME and EXEC_DEMO match Steam full game
-const EPICAPP_ID = "XXX"; //from egdata.app
-const GOGAPP_ID = "XXX"; // from gogdb.org
-const XBOXAPP_ID = "XXX"; //from appxmanifest.xml
+const GAME_ID = "quarantinezonethelastcheck"; //same as Nexus domain
+const STEAMAPP_ID = "3419520"; //from steamdb.info
+const STEAMAPP_ID_DEMO = null; //VERIFY if the EPIC_CODE_NAME and EXEC_DEMO match Steam full game
+const EPICAPP_ID = null; //from egdata.app
+const GOGAPP_ID = null; // from gogdb.org
+const XBOXAPP_ID = "DevolverDigital.QuarantineZoneTheLastCheck"; //from appxmanifest.xml
 const XBOXEXECNAME = "AppUEGameShipping"; //from appxmanifest.xml
-const XBOX_PUB_ID = "XXX"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
-const GAME_NAME = "XXX";
-const GAME_NAME_SHORT = "XXX"; //Try for 8-10 characters
-const EPIC_CODE_NAME = "XXX"; //Folder in root
+const XBOX_PUB_ID = "6kzv4j18v0c96"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, XBOXAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const GAME_NAME = "Quarantine Zone: The Last Check";
+const GAME_NAME_SHORT = "Quarantine Zone TLC"; //Try for 8-10 characters
+const EPIC_CODE_NAME = "QZSim"; //Folder in root
 const EXEC = `${EPIC_CODE_NAME}.exe`; //This is true ~80% of the time
 const EXEC_EPIC = EXEC; //change these 3 if different
 const EXEC_GOG = EXEC;
 const EXEC_DEMO = EXEC;
 const PARAMETERS_STRING = ''; //launch arguments to pass when launching the game
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Quarantine_Zone:_The_Last_Check";
 
 //feature toggles
-const hasXbox = false; //toggle for Xbox version logic.
+const hasXbox = true; //toggle for Xbox version logic.
 const multiExe = false; //toggle for multiple executables (Epic/GOG/Demo don't match Steam)
 const hasModKit = false; //toggle for UE ModKit mod support
 const preferHardlinks = true; //set true to perform partition check for Config/Save modtypes so that hardlinks available to more users
@@ -85,7 +82,6 @@ const SAVE_EDITOR_ID = `${GAME_ID}-saveeditor`;
 const SAVE_EDITOR_NAME = "Save Editor";
 const SAVE_EDITOR_EXEC = "XXX.exe";
 
-//#endregion
 // -- END EDIT ZONE -- /////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
