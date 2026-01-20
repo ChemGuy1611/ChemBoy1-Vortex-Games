@@ -119,7 +119,7 @@ const PARAM_STRING4 = '+set com_allowConsole 1';
 const PARAM_STRING5 = '+com_allowMods 1'; //this doesn't actually work. Must use "option" parameter to make mods work
 const PARAM_STRING6 = '+logfile 0';
 let PARAMETERS = [OPTION_PARAM, PARAM_STRING2, PARAM_STRING3, PARAM_STRING4];
-const PARAMS_SHORT = [PARAM_STRING2, PARAM_STRING3, PARAM_STRING4];
+const PARAMS_SHORT = [OPTION_PARAM, PARAM_STRING2, PARAM_STRING3, PARAM_STRING4];
 const LAUNCH_BAT = 'launch.bat';
 const LAUNCH_TXT = 'launch.txt';
 const LAUNCH_FOLDER = __dirname;
@@ -348,7 +348,8 @@ async function requiresLauncher(gamePath, store) {
       launcher: 'steam',
       addInfo: { //this doesn't seem to pass the parameters to steam properly
         appId: STEAMAPP_ID,
-        parameters: PARAMETERS,
+        //parameters: PARAMETERS,
+        parameters: PARAMS_SHORT,
         launchType: 'gamestore',
       }, //*/
     });
@@ -819,8 +820,8 @@ async function setup(discovery, api, gameSpec) {
   //fs.ensureDirWritableAsync(SAVE_PATH);
   await fs.ensureDirAsync(CACHE_PATH);
 
-  //*
-  /*try {
+  //* Make .bat file to launch the game (EXPERIMENTAL)
+  try {
     await fs.ensureFileAsync(LAUNCH_BAT_PATH);
     try {
       steamPath = await winapi.RegGetValue(
@@ -833,16 +834,17 @@ async function setup(discovery, api, gameSpec) {
     } catch (err) {
       steamPath = path.join('C:', 'Program Files (x86)', 'Steam');
     }
-    PARAMETERS = [`"${path.join(steamPath, 'steam.exe')}"`].concat(PARAMETERS);
+    PARAMETERS = [`steam.exe`].concat([PARAM_STRING]).concat(PARAMETERS);
     await fs.writeFileAsync(
       LAUNCH_BAT_PATH,
-      `cd ${steamPath}\n${PARAMETERS.join(' ')}\nexit`,
+      `cd "${steamPath}"\n${PARAMETERS.join(' ')}\nexit`,
       { encoding: 'utf-8' }
     );
   } catch (err) {
     api.showErrorNotification('Failed to write launch.bat', err, { allowReport: false });
   } //*/
 
+  //* Make .txt file with command line parameters to paste into Steam Launch Options
   try {
     await fs.ensureFileAsync(LAUNCH_TXT_PATH);
     await fs.writeFileAsync(
@@ -852,7 +854,7 @@ async function setup(discovery, api, gameSpec) {
     );
   } catch (err) {
     api.showErrorNotification('Failed to write launch.bat', err, { allowReport: false });
-  }
+  } //*/
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 
