@@ -738,7 +738,7 @@ async function installUe4ssCombo(files, workingDir) {
       const paths = await getAllFiles(workingDir);
       files = [...paths.map(p => p.replace(`${workingDir}${path.sep}`, ''))];
     } catch (err) {
-      log('warn', `Failed to rename Win64 folder to WinGDK for UE4SS combo mod ${workingDir} (or Win64 folder is not present): ${err}`);
+      log('warn', `Failed to rename "Win64" folder to "WinGDK" for UE4SS combo mod ${workingDir} (or "Win64" folder is not present): ${err}`);
     }
   }
 

@@ -730,7 +730,7 @@ function main(context) {
             gameId: GAME_ID,
             autoDownloadBepInEx: true,
             customPackDownloader: () => {
-              downloadBepinexBleedingEdge(context.api, spec);
+              return downloadBepinexBleedingEdge(context.api, spec);
               //return path.join(DOWNLOAD_FOLDER, BEPINEX_ZIP);
             },
           });

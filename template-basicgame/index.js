@@ -561,7 +561,7 @@ function installBinaries(files) {
   return Promise.resolve({ instructions });
 }
 
-//Fallback installer to Binaries folder
+//Fallback installer to root folder
 function testFallback(files, gameId) {
   let supported = (gameId === spec.game.id);
 
@@ -578,7 +578,7 @@ function testFallback(files, gameId) {
   });
 }
 
-//Fallback installer to Binaries folder
+//Fallback installer to root folder
 function installFallback(api, files, destinationPath) {
   fallbackInstallerNotify(api, destinationPath);
   const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };

@@ -63,7 +63,7 @@ const MOD_EXTS = ['.jar'];
 
 const LOADER_ID = `${GAME_ID}-loader`;
 const LOADER_NAME = "Mod Loader";
-const LOADER_PATH = BINARIES_PATH;
+const LOADER_PATH = '.';
 const LOADER_FILE = 'XXX.dll';
 const LOADER_PAGE_NO = 0;
 const LOADER_FILE_NO = 0;
@@ -577,33 +577,6 @@ function setupNotify(api) {
     ],
   });
 }
-
-//* Resolve game version dynamically for different game versions
-async function resolveGameVersion(gamePath) {
-  GAME_VERSION = await setGameVersion(gamePath);
-  let version = '0.0.0';
-  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
-    try {
-      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
-      const parsed = await parseStringPromise(appManifest);
-      version = parsed?.Package?.Identity?.[0]?.$?.Version;
-      return Promise.resolve(version);
-    } catch (err) {
-      log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
-      return Promise.resolve(version);
-    }
-  }
-  else { // use exe
-    try {
-      const exeVersion = require('exe-version');
-      version = exeVersion.getProductVersion(path.join(gamePath, EXEC));
-      return Promise.resolve(version); 
-    } catch (err) {
-      log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
-      return Promise.resolve(version);
-    }
-  }
-} //*/
 
 async function modFoldersEnsureWritable(gamePath, relPaths) {
   for (let index = 0; index < relPaths.length; index++) {
