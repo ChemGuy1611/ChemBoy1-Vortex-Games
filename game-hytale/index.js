@@ -1,16 +1,16 @@
 /*///////////////////////////////////////////
-Name: XXX Vortex Extension
+Name: Hytale Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2025-XX-XX
+Date: 2025-01-19
 ///////////////////////////////////////////*/
 
 //Import libraries
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
-const { parseStringPromise } = require('xml2js');
+//const { parseStringPromise } = require('xml2js');
 //const fsPromises = require('fs/promises');
 //const fsExtra = require('fs-extra');
 //const winapi = require('winapi-bindings');
@@ -31,8 +31,7 @@ const GOGAPP_ID = null;
 const XBOXAPP_ID = null;
 const XBOXEXECNAME = null;
 const XBOX_PUB_ID = ''; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
-const DISCOVERY_IDS_ACTIVE = []; // UPDATE THIS WITH ALL VALID IDs
-const GAME_NAME = "Hytale";
+const DISCOVERY_IDS_ACTIVE = []; // No valid IDs for this game since it is not on any of the stores (uses standalone launcher)
 const GAME_NAME_SHORT = "Hytale";
 const EXEC = 'HytaleClient.exe';
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Hytale";

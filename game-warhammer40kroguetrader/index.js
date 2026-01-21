@@ -2,8 +2,8 @@
 Name: Warhammer 40,000: Rogue Trader Vortex Extension
 Structure: Game with Integrated Mod Loader (UnityModManager)
 Author: ChemBoy1
-Version: 0.1.1
-Date: 2025-01-16
+Version: 0.1.2
+Date: 2025-01-21
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -54,6 +54,7 @@ const PLUGIN_NAME = "Plugin (UnityModManager)";
 const PLUGIN_FOLDERNAME = 'UnityModManager';
 const PLUGIN_PATH = path.join(DATA_FOLDER, PLUGIN_FOLDERNAME);
 const PLUGIN_EXTS = ['.dll'];
+const PLUGIN_IGNORE_NAMES = ['0Harmony'];
 
 const MOD_ID = `${GAME_ID}-mod`;
 const MOD_NAME = "Owlcat Mod";
@@ -640,7 +641,15 @@ function installPlugin(files) {
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
  
-  folder = path.basename(modFile, PLUGIN_EXTS[0]);
+  let folder = path.basename(modFile, PLUGIN_EXTS[0]);
+  if (PLUGIN_IGNORE_NAMES.includes(folder)) {
+    const file = files.find(file => ( PLUGIN_EXTS.includes(path.extname(file).toLowerCase()) && !PLUGIN_IGNORE_NAMES.includes(path.basename(file, PLUGIN_EXTS[0])) ));
+    if (file === undefined) {
+      folder = '' //don't use a top level folder if only ignored dll names are present
+    } else {
+      folder = path.basename(file, PLUGIN_EXTS[0]);
+    }
+  }
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
