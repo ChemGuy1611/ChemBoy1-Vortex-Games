@@ -32,6 +32,7 @@ const XBOXAPP_ID = null;
 const XBOXEXECNAME = null;
 const XBOX_PUB_ID = ''; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
 const DISCOVERY_IDS_ACTIVE = []; // No valid IDs for this game since it is not on any of the stores (uses standalone launcher)
+const GAME_NAME = "Hytale";
 const GAME_NAME_SHORT = "Hytale";
 const EXEC = 'HytaleClient.exe';
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Hytale";

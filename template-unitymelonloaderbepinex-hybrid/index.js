@@ -34,18 +34,12 @@ const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 const GAME_NAME = "XXX";
 const GAME_NAME_SHORT = "XXX";
 const GAME_STRING = "XXX"; //string for exe and data folder (seem to always match)
+const GAME_STRING_ALT = "XXX"; //
 const EXEC = `${GAME_STRING}.exe`;
 const EXEC_EGS = EXEC;
 const EXEC_GOG = EXEC;
 const EXEC_XBOX = 'gamelaunchhelper.exe';
-const EXEC_ALT = EXEC_XBOX;
-const DATA_FOLDER_DEFAULT = `${GAME_STRING}_Data`;
-const ALT_VERSION = 'xbox';
-const DATA_FOLDER_ALT  = `XXX_Data`;
-const ROOT_FOLDERS = [DATA_FOLDER, DATA_FOLDER_ALT];
-const DEV_REGSTRING = "XXX"; //developer name
-const GAME_REGSTRING = "XXX"; //game name
-const XBOX_SAVE_STRING = 'XXX'; //string after "ID_"
+const EXEC_ALT = EXEC_XBOX; //or `${GAME_STRING_ALT}.exe`
 const PCGAMINGWIKI_URL = "XXX";
 
 //feature toggles
@@ -57,6 +51,18 @@ const enableSaveInstaller = false; //set to true if you want to enable the save 
 const hasCustomMods = false; //set to true if there are modTypes with folder paths dependent on which mod loader is installed
 const hasCustomLoader = false; //set to true if there is a custom mod loader
 const customLoaderInstaller = false; //set true if the custom loader uses an installer
+
+const DATA_FOLDER_DEFAULT = `${GAME_STRING}_Data`;
+let DATA_FOLDER = DATA_FOLDER_DEFAULT;
+const ALT_VERSION = 'xbox';
+const DATA_FOLDER_ALT = `${GAME_STRING_ALT}_Data`; //don't always match
+const ROOT_FOLDERS = [DATA_FOLDER, DATA_FOLDER_ALT];
+const VERSION_FILE = 'Version.info';
+const VERSION_FILE_PATH = path.join(DATA_FOLDER, 'StreamingAssets', VERSION_FILE);
+
+const DEV_REGSTRING = "XXX"; //developer name
+const GAME_REGSTRING = "XXX"; //game name
+const XBOX_SAVE_STRING = 'XXX'; //string after "ID_"
 
 //Data to determine BepinEx/MelonLoader versions and URLs
 const BEPINEX_BUILD = 'il2cpp'; // 'mono' or 'il2cpp' - check for "il2cpp_data" folder
@@ -72,7 +78,6 @@ const allowMelonNexus = false; //set false until bugs are fixed
 // -- END EDIT ZONE -- /////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-let DATA_FOLDER = DATA_FOLDER_DEFAULT;
 let GAME_PATH = null;
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
@@ -84,8 +89,8 @@ const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 //Config and save paths
 const CONFIG_HIVE = 'HKEY_CURRENT_USER';
-const CONFIG_REGPATH = `Software\\${DEV_REGSTRING}\\${GAME_REGSTRING}`;
-const CONFIG_REGPATH_FULL = `${CONFIG_HIVE}\\${CONFIG_REGPATH}`;
+const CONFIG_KEY = `Software\\${DEV_REGSTRING}\\${GAME_REGSTRING}`;
+const CONFIG_REGPATH_FULL = `${CONFIG_HIVE}\\${CONFIG_KEY}`; //*/
 //const CONFIG_PATH = path.join(LOCALLOW, DEV_REGSTRING, GAME_REGSTRING, 'Settings');
 const CONFIG_FILES = ['settings.json'];
 const SAVE_PATH_DEFAULT = path.join(USER_HOME, 'AppData', 'LocalLow', DEV_REGSTRING, GAME_REGSTRING);
@@ -1641,7 +1646,6 @@ async function deleteFiles(gamePath, relPaths) {
   }
 }
 
-//*
 async function resolveGameVersion(gamePath) {
   GAME_VERSION = await setGameVersion(gamePath);
   let version = '0.0.0';
@@ -1655,15 +1659,16 @@ async function resolveGameVersion(gamePath) {
       log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
       return Promise.resolve(version);
     }
-  }
-  else { // use exe
+  } else {
+    const versionFilepath = path.join(gamePath, DATA_FOLDER, VERSION_FILE_PATH);
     try {
-      const exeVersion = require('exe-version');
-      version = exeVersion.getProductVersion(path.join(gamePath, EXEC));
-      return Promise.resolve(version); 
+      const data = await fs.readFileAsync(versionFilepath, { encoding: 'utf8' });
+      const segments = data.split(' ');
+      return (segments[3]) 
+        ? Promise.resolve(segments[3])
+        : Promise.reject(new util.DataInvalid('Failed to resolve version'));
     } catch (err) {
-      log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
-      return Promise.resolve(version);
+      return Promise.reject(err);
     }
   }
 } //*/

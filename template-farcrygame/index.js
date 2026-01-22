@@ -3,7 +3,7 @@ Name: Far Cry XXX Vortex Extension
 Structure: Far Cry Game (Mod Installer)
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2025-XX-XX
+Date: 2026-XX-XX
 ///////////////////////////////////////////*/
 
 //Import libraries
