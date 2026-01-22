@@ -12,7 +12,7 @@ const path = require('path');
 const template = require('string-template');
 const winapi = require('winapi-bindings');
 //const turbowalk = require('turbowalk');
-//const { parseStringPromise } = require('xml2js');
+const { parseStringPromise } = require('xml2js');
 
 const USER_HOME = util.getVortexPath("home");
 const LOCALLOW = path.join(USER_HOME, 'AppData', 'LocalLow');
@@ -50,7 +50,7 @@ const ALT_VERSION = 'xbox';
 const DATA_FOLDER_ALT = `${GAME_STRING_ALT}_Data`; //don't always match
 const ROOT_FOLDERS = [DATA_FOLDER, DATA_FOLDER_ALT];
 const VERSION_FILE = 'Version.info';
-const VERSION_FILE_PATH = path.join(DATA_FOLDER, 'StreamingAssets', VERSION_FILE);
+let VERSION_FILE_PATH = path.join(DATA_FOLDER, 'StreamingAssets', VERSION_FILE);
 
 const DEV_REGSTRING = "XXX";
 const GAME_REGSTRING = "XXX";
@@ -106,7 +106,7 @@ if (multiExe && (UNITY_BUILD === 'mono')) {
 const PARAMETERS_STRING = '';
 const PARAMETERS = [PARAMETERS_STRING];
 const IGNORE_CONFLICTS = [path.join('**', 'manifest.json'), path.join('**', 'icon.png'), path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
-let MODTYPE_FOLDERS = [BEPMOD_PATH];
+let MODTYPE_FOLDERS = [];
 
 //Filled in from info above
 const spec = {
@@ -518,6 +518,7 @@ function installAssets(files) {
 
 async function resolveGameVersion(gamePath) {
   GAME_VERSION = await setGameVersion(gamePath);
+  VERSION_FILE_PATH = path.join(DATA_FOLDER, 'StreamingAssets', VERSION_FILE);
   let version = '0.0.0';
   if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
     try {

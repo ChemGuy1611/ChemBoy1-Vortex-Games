@@ -58,7 +58,7 @@ const ALT_VERSION = 'xbox';
 const DATA_FOLDER_ALT = `${GAME_STRING_ALT}_Data`; //don't always match
 const ROOT_FOLDERS = [DATA_FOLDER, DATA_FOLDER_ALT];
 const VERSION_FILE = 'Version.info';
-const VERSION_FILE_PATH = path.join(DATA_FOLDER, 'StreamingAssets', VERSION_FILE);
+let VERSION_FILE_PATH = path.join(DATA_FOLDER, 'StreamingAssets', VERSION_FILE);
 
 const DEV_REGSTRING = "XXX"; //developer name
 const GAME_REGSTRING = "XXX"; //game name
@@ -1648,6 +1648,7 @@ async function deleteFiles(gamePath, relPaths) {
 
 async function resolveGameVersion(gamePath) {
   GAME_VERSION = await setGameVersion(gamePath);
+  VERSION_FILE_PATH = path.join(DATA_FOLDER, 'StreamingAssets', VERSION_FILE);
   let version = '0.0.0';
   if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
     try {
