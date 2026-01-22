@@ -23,6 +23,7 @@ const EXEC = "XXX.exe";
 const GAME_NAME = "XXX";
 const GAME_NAME_SHORT = "XXX";
 const PCGAMINGWIKI_URL = "XXX";
+const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
 
 const FLUFFY_FOLDER = "XXX";
 const ROOT_FILES = ['nvngx_dlss.dll', "dstoragecore.dll", "dstorage.dll", "amd_fidelityfx_dx12.dll", "amd_ags_x64.dll"];
@@ -932,6 +933,13 @@ function applyGame(context, gameSpec) {
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
     util.opn(DOWNLOAD_FOLDER).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
+    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);

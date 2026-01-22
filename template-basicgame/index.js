@@ -40,6 +40,7 @@ const EXEC_EGS = EXEC;
 const EXEC_GOG = EXEC;
 const EXEC_DEMO = EXEC;
 const PCGAMINGWIKI_URL = "XXX";
+const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
 
 //feature toggles
 const hasLoader = false; //true if game needs a mod loader
@@ -600,7 +601,7 @@ function installFallback(api, files, destinationPath) {
 function fallbackInstallerNotify(api, modName) {
   const state = api.getState();
   STAGING_FOLDER = selectors.installPathForGame(state, spec.game.id);
-  const NOTIF_ID = `${GAME_ID}-fallbackinstaller-notify`;
+  const NOTIF_ID = `${GAME_ID}-fallbackinstaller`;
   modName = path.basename(modName, '.installing');
   const MESSAGE = 'Fallback installer reached for ' + modName;
   api.sendNotification({
@@ -613,14 +614,21 @@ function fallbackInstallerNotify(api, modName) {
         title: 'More',
         action: (dismiss) => {
           api.showDialog('question', MESSAGE, {
-            text: `\n`
-                + `The mod you just installed reached the fallback installer. This means Vortex could not determine where to place these mod files.\n`
+            text: `The mod you just installed reached the fallback installer. This means Vortex could not determine where to place these mod files.\n`
                 + `Please check the mod page description and review the files in the mod staging folder to determine if manual file manipulation is required.\n`
                 + `\n`
-                + `Mod Name: ${modName}.\n`
+                + `If you think that Vortex should be capable to install this mod to a specific folder, please contact the extension developer for support at the link below.\n`
                 + `\n`
+                + `Mod Name: ${modName}.\n`
+                + `\n`             
           }, [
             { label: 'Continue', action: () => dismiss() },
+            {
+              label: 'Contact Ext. Developer', action: () => {
+                util.opn(`${EXTENSION_URL}?tab=posts`).catch(() => null);
+                dismiss();
+              }
+            }, //*/
             {
               label: 'Open Staging Folder', action: () => {
                 util.opn(path.join(STAGING_FOLDER, modName)).catch(() => null);
@@ -628,7 +636,7 @@ function fallbackInstallerNotify(api, modName) {
               }
             }, //*/
             //*
-            { label: `Open Nexus Mods Page`, action: () => {
+            { label: `Open Mod Page`, action: () => {
               const mods = util.getSafe(api.store.getState(), ['persistent', 'mods', spec.game.id], {});
               const modMatch = Object.values(mods).find(mod => mod.installationPath === modName);
               log('warn', `Found ${modMatch?.id} for ${modName}`);
@@ -916,6 +924,13 @@ function applyGame(context, gameSpec) {
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
     util.opn(DOWNLOAD_FOLDER).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
+    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
