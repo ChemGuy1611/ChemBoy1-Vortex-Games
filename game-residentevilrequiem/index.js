@@ -13,17 +13,17 @@ const template = require('string-template');
 const Bluebird = require('bluebird');
 
 //Specify all information about the game
-const GAME_ID = "XXX";
-const STEAMAPP_ID = "XXX";
+const GAME_ID = "residentevilrequiem";
+const STEAMAPP_ID = "3764200";
 const STEAMAPP_ID_DEMO = "XXX";
-const EPICAPP_ID = null;
+const EPICAPP_ID = "null"; //NOT on egdata.app yet
 const GOGAPP_ID = null;
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 const EXEC = "XXX.exe";
 const EXEC_DEMO = "XXXdemo.exe";
-const GAME_NAME = "XXX";
-const GAME_NAME_SHORT = "XXX";
-const PCGAMINGWIKI_URL = "XXX";
+const GAME_NAME = "Resident Evil Requiem";
+const GAME_NAME_SHORT = "RE Requiem";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Resident_Evil_Requiem";
 const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
 
 const FLUFFY_FOLDER = "XXX";
