@@ -39,10 +39,13 @@ const EXEC_GOG = EXEC;
 const EXEC_XBOX = 'gamelaunchhelper.exe';
 const EXEC_ALT = EXEC_XBOX; //or `${GAME_STRING_ALT}.exe`
 const PCGAMINGWIKI_URL = "https://railroader.fandom.com/wiki/Railroader_Wiki";
+const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
+
 
 //feature toggles
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
 const multiExe = false; //set to true if there are multiple executables (and conseq. DATA_FOLDERs) (typically for Xbox/EGS)
+const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
 
 const DATA_FOLDER_DEFAULT = `${GAME_STRING}_Data`;
 let DATA_FOLDER = DATA_FOLDER_DEFAULT;
@@ -66,6 +69,18 @@ let GAME_VERSION = '';
 const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 //modtypes
+const UMM_ID = `${GAME_ID}-umm`;
+const UMM_NAME = "Unity Mod Manager";
+const UMM_FOLDER = 'UnityModManagerInstaller';
+const UMM_INST_EXEC = 'UnityModManager.exe';
+const UMM_INST_PATH = path.join(UMM_FOLDER, UMM_INST_EXEC);
+const UMM_MARKER = '';  //check if present to determine if UMM is installed
+
+const PLUGIN_ID = `${GAME_ID}-plugin`;
+const PLUGIN_NAME = "UMM Plugin";
+const PLUGIN_FOLDER = 'Plugins';
+const PLUGIN_EXTS = ['.dll'];
+
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Game Folder";
 
@@ -518,6 +533,7 @@ function installAssets(files) {
 
 async function resolveGameVersion(gamePath) {
   GAME_VERSION = await setGameVersion(gamePath);
+  VERSION_FILE_PATH = path.join(DATA_FOLDER, 'StreamingAssets', VERSION_FILE);
   let version = '0.0.0';
   if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
     try {
@@ -614,6 +630,9 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(ASSEMBLY_ID, 25, testAssembly, installAssembly);
   context.registerInstaller(ASSETS_ID, 27, testAssets, installAssets);
   //context.registerInstaller(SAVE_ID, 49, testSave, installSave); //best to only enable if saves are stored in the game's folder
+  if (fallbackInstaller) {
+    context.registerInstaller(`${GAME_ID}-fallback`, 49, testFallback, (files, destinationPath) => installFallback(context.api, files, destinationPath));
+  }
   
   //register actions
   /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config (Registry)', () => {
@@ -659,6 +678,13 @@ function applyGame(context, gameSpec) {
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
     const openPath = DOWNLOAD_FOLDER;
     util.opn(openPath).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
+    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);

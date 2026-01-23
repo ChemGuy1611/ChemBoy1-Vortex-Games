@@ -752,13 +752,13 @@ function applyGame(context, gameSpec) {
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download ModForge', () => {
+  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download ModForge', () => {
     downloadModForge(context.api, spec);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
-  });
+  }); //*/
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open HFW Mod Manager Page', () => {
     util.opn(`https://www.nexusmods.com/${GAME_ID}/mods/${MODMANAGER_PAGE_NO}`).catch(() => null);
   }, () => {

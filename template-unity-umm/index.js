@@ -68,6 +68,18 @@ let GAME_VERSION = '';
 const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 //modtypes
+const UMM_ID = `${GAME_ID}-umm`;
+const UMM_NAME = "Unity Mod Manager";
+const UMM_FOLDER = 'UnityModManagerInstaller';
+const UMM_INST_EXEC = 'UnityModManager.exe';
+const UMM_INST_PATH = path.join(UMM_FOLDER, UMM_INST_EXEC);
+const UMM_MARKER = '';  //check if present to determine if UMM is installed
+
+const PLUGIN_ID = `${GAME_ID}-plugin`;
+const PLUGIN_NAME = "UMM Plugin";
+const PLUGIN_FOLDER = 'Plugins';
+const PLUGIN_EXTS = ['.dll'];
+
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Game Folder";
 
