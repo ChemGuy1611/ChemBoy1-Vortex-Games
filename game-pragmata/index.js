@@ -1,9 +1,9 @@
 /*////////////////////////////////////////////
-Name: XXX Vortex Extension
+Name: PRAGMATA Vortex Extension
 Structure: Fluffy + REFramework (RE Engine)
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2026-XX-XX
+Date: 2026-04-24
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -11,24 +11,23 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 const Bluebird = require('bluebird');
-const { get } = require('http');
 
 //Specify all information about the game
-const GAME_ID = "XXX";
-const STEAMAPP_ID = "XXX";
-const STEAMAPP_ID_DEMO = "XXX";
+const GAME_ID = "pragmata";
+const STEAMAPP_ID = "3357650";
+const STEAMAPP_ID_DEMO = "4003800";
 const EPICAPP_ID = null;
 const GOGAPP_ID = null;
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
-const EXEC = "XXX.exe";
-const EXEC_DEMO = "XXXdemo.exe";
-const GAME_NAME = "XXX";
-const GAME_NAME_SHORT = "XXX";
-const PCGAMINGWIKI_URL = "XXX";
-const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, STEAMAPP_ID_DEMO]; // UPDATE THIS WITH ALL VALID IDs
+const EXEC = "PRAGMATA.exe";
+const EXEC_DEMO = "PRAGMATA_SKETCHBOOK.exe";
+const GAME_NAME = "PRAGMATA";
+const GAME_NAME_SHORT = "PRAGMATA";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Pragmata";
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1652"; //Nexus link to this extension. Used for links
 
-const FLUFFY_FOLDER = "XXX";
-const FLUFFY_FOLDER_DEMO = "XXX_Demo";
+const FLUFFY_FOLDER = "PRAGMATA";
+const FLUFFY_FOLDER_DEMO = "Pragmata_Demo";
 const ROOT_FILES = ['nvngx_dlss.dll', "dstoragecore.dll", "dstorage.dll", "amd_fidelityfx_dx12.dll", "amd_ags_x64.dll"];
 const ROOT_EXTS = [".exe"];
 const REF_PAGE_NO = 0;
@@ -37,7 +36,7 @@ const REF_DOMAIN = GAME_ID;
 
 //feature toggles
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
-const multiExe = false; //set to true if there are multiple executables (and multiple FLUFFY_FOLDERs) (typically for Demo)
+const multiExe = true; //set to true if there are multiple executables (and multiple FLUFFY_FOLDERs) (typically for Demo)
 
 //global variables to set later
 let GAME_PATH = null; //game installation path

@@ -160,7 +160,8 @@ async function downloadNexus(api, requirement) {
         const file = modFiles
             .filter(file => requirement.fileFilter !== undefined ? requirement.fileFilter(file.file_name) : true)
             .filter(file => file.category_id === 1)
-            .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))[0];
+            .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
+            .reverse()[0];
         if (file === undefined) {
             throw new vortex_api_1.util.ProcessCanceled('File not found');
         }
