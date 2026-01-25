@@ -4,6 +4,10 @@
 
 - None
 
+## [0.2.3] - 2026-01-25
+
+- Changed HFW MM to launch directly from Vortex (fixed in v0.9.3 of HFW MM)
+
 ## [0.2.2] - 2026-01-22
 
 - Disabled all ModForge support. All users should use HFW MM instead. ModForge is not capable of handling mod variants, and is closed-source.

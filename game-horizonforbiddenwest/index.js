@@ -1,8 +1,8 @@
 /*////////////////////////////////////////////////
 Name: Horizon Forbidden West Vortex Extension
 Author: ChemBoy1
-Version: 0.2.1
-Date: 2026-01-14
+Version: 0.2.3
+Date: 2026-01-25
 ////////////////////////////////////////////////*/
 
 //import libraries
@@ -53,7 +53,7 @@ const MODMANAGER_NAME = "HFW Mod Manager";
 const MODMANAGER_STRING = 'HFW Mod Manager';
 const MODMANAGER_EXEC = 'HFW_MM.exe';
 const MODMANAGER_PAGE_NO = 137;
-const MODMANAGER_FILE_NO = 638;
+const MODMANAGER_FILE_NO = 683;
 const MODMANAGER_DOMAIN = GAME_ID;
 
 const MODFORGE_ID = `${GAME_ID}-modforge`;
@@ -244,7 +244,8 @@ async function downloadModManager(api, check) {
         const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
         const file = modFiles
           .filter(file => file.category_id === 1)
-          .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))[0];
+          .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
+          .reverse()[0];
         if (file === undefined) {
           throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
         }
@@ -551,33 +552,22 @@ function toBlue(func) {
 //Notify User to run Mod Manager after deployment
 function deployNotify(api) {
   const NOTIF_ID = `${GAME_ID}-deploy-notification`;
-  const MOD_NAME = 'Mod Packer';
-  const MESSAGE = `Run Mod Packer after Deploy`;
+  const MOD_NAME = 'HFW MM';
+  const MESSAGE = `Run ${MOD_NAME} after Deploy`;
   api.sendNotification({
     id: NOTIF_ID,
     type: 'warning',
     message: MESSAGE,
     allowSuppress: true,
     actions: [
-      /*{
+      {
         title: `Run ${MOD_NAME}`,
         action: (dismiss) => {
           runManager(api);
-          /*const child_process = require('child_process');
-          const proc = child_process.spawn(
-            path.join(GAME_PATH, MODMANAGER_EXEC),
-            [""],
-            { 
-              cwd: path.join(GAME_PATH),
-              //shell: true, 
-              detached: true,
-            }
-          );
-          proc.on("error", () => {}); //
           dismiss();
         },
-      },//*/
-      {
+      },//
+      /*{
         title: `Open Game Folder`,
         action: (dismiss) => {
           util.opn(GAME_PATH).catch(() => null);
@@ -588,31 +578,21 @@ function deployNotify(api) {
         title: 'More',
         action: (dismiss) => {
           api.showDialog('question', MESSAGE, {
-            text: `You must use ${MOD_NAME} to install most mods after installing with Vortex.\n`
-                + `Due to some strange behavior in the app, you must launch it directly from the game's folder.\n`
-                + `Use the button below to open the game folder, then run "${MODMANAGER_EXEC}" from there.\n`
-                //+ `Use the included tool to launch ${MOD_NAME} (button on notification or in "Dashboard" tab).\n`
+            text: `You must use ${MOD_NAME} to install .core/.stream mods after installing with Vortex.\n`
+                + `\n`
+                //+ `Due to some strange behavior in the app, you must launch it directly from the game's folder.\n`
+                //+ `Use the button below to open the game folder, then run "${MODMANAGER_EXEC}" from there.\n`
+                + `Use the included tool to launch ${MOD_NAME} (button on notification or in "Dashboard" tab).\n`
           }, [
-            {
+            /*{
               label: `Open Game Folder`, action: () => {
                 util.opn(GAME_PATH).catch(() => null);
                 dismiss();
               }
             }, //*/
-            /*{ 
+            { 
               label: `Run ${MOD_NAME}`, action: () => {
                 runManager(api);
-                /*const child_process = require('child_process');
-                const proc = child_process.spawn(
-                  path.join(GAME_PATH, MODMANAGER_EXEC),
-                  [""],
-                  { 
-                    cwd: path.join(GAME_PATH),
-                    //shell: true, 
-                    detached: true,
-                  }
-                );
-                proc.on("error", () => {}); //
                 dismiss();
               }
             }, //*/
@@ -703,7 +683,7 @@ function applyGame(context, gameSpec) {
         requiredFiles: [MODMANAGER_EXEC],
         detach: true,
         relative: true,
-        exclusive: true,
+        exclusive: false,
         //env: { 'PATH': process.env.PATH },
         //shell: true,
         //cwd: path.dirname(MODMANAGER_EXEC),
@@ -719,7 +699,7 @@ function applyGame(context, gameSpec) {
         requiredFiles: [MODFORGE_EXEC],
         detach: true,
         relative: true,
-        exclusive: true,
+        exclusive: false,
         //env: { 'PATH': process.env.PATH },
         //shell: true,
         //defaultPrimary: true,
