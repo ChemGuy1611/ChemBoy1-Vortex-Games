@@ -2,8 +2,8 @@
 Name: Hollow Knight: Silksong Vortex Extension
 Structure: Unity BepinEx
 Author: ChemBoy1
-Version: 0.1.3
-Date: 2025-09-08
+Version: 0.2.0
+Date: 2026-01-25
 //////////////////////////////////////////*/
 
 //Import libraries
@@ -71,6 +71,20 @@ const ASSEMBLY_ID = `${GAME_ID}-assemblydll`;
 const ASSEMBLY_NAME = "Assembly DLL Mod";
 const ASSEMBLY_PATH = path.join(DATA_FOLDER, "Managed");
 const ASSEMBLY_FILE = "Assembly-CSharp.dll";
+
+const MELONLOADER_ID = `${GAME_ID}-melonloader`;
+const MELONLOADER_NAME = "MelonLoader";
+const MELONLOADER_PATH = path.join("MelonLoader");
+const MELONLOADER_FILE = "BepInEx.MelonLoader.Loader.UnityMono.dll ";
+const MELONLOADER_PAGE_ID = 44;
+const MELONLOADER_FILE_ID = 305;
+const MELONLOADER_DOMAIN = GAME_ID;
+
+const MELONPLUGIN_ID = `${GAME_ID}-melonplugin`;
+const MELONPLUGIN_NAME = "MelonLoader Plugin";
+const MELONPLUGIN_PATH = path.join("MLLoader", "Mods");
+const MELPLUGIN_EXTS = ['.dll'];
+const MELONPLUGIN_STRING = "MelonLoader";
 
 //Config and save paths
 const CONFIG_HIVE = 'HKEY_CURRENT_USER';

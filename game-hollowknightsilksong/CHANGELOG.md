@@ -4,6 +4,10 @@
 
 - None
 
+## [0.2.0] - 2026-01-25
+
+- Added support for installing MelonLoader plugins. Note taht you need the compatibility loader for MelonLoader mods to work (<https://www.nexusmods.com/hollowknightsilksong/mods/44>)
+
 ## [0.1.3] - 2025-09-08
 
 - Added "CHANGELOG.md" filename to ignoreConflicts list.
