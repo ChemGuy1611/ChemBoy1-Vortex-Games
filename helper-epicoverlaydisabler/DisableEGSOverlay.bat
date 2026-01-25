@@ -1,3 +1,7 @@
+:: Author: ChemBoy1
+:: Version: 1.0.0
+:: Script Description: Disables the EGS Overlay by deleting "EOSOverlay" files.
+
 @echo off
 
 :: Check for administrator privileges and auto-elevate if needed
