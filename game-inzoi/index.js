@@ -188,6 +188,10 @@ const MODKITAPP_ID = "e61de4231c6b43349615781e737ad297";
 const MODKIT_EXEC_NAME = "inZOIModKit.exe";
 const MODKIT_FOLDER = path.join('inZOIModKit', 'Binaries', 'Win64');
 const MODKIT_EXEC_PATH = path.join(MODKIT_FOLDER, MODKIT_EXEC_NAME);
+let MODKIT_PATH = undefined;
+const MODKIT_REG_HIVE = '';
+const MODKIT_REG_KEY = '';
+const MODKIT_REG_VALUE = '';
 
 const UE5KITMOD_ID = `${GAME_ID}-ue5modkitpak`;
 const UE5KITMOD_NAME = "UE5 MODKit Pak Mod";
@@ -1729,33 +1733,6 @@ function partitionCheckNotify(api, CHECK_CONFIG, CHECK_DOCS) {
   });
 }
 
-//*Get MODKit install path with GameStoreHelper
-async function getModKitPath() {
-  const game = await util.GameStoreHelper.findByAppId(MODKITAPP_ID, 'epic');
-  if (game === undefined) {
-    log('warn', `ModKit path not found`);
-    return Promise.resolve('.');
-  }
-  let path = game.gamePath;
-  log('warn', `ModKit path found at ${path}`);
-  path = path.join(path, MODKIT_FOLDER);
-  return Promise.resolve(path);
-} //*/
-
-//*Get MODKit (Epic) install path from registry
-function getModKitPathReg() {
-  const instPath = winapi.RegGetValue(
-    'HKEY_LOCAL_MACHINE',
-    `SOFTWARE\\WOW6432Node\\Ubisoft\\Launcher\\Installs\\${UPLAYAPP_ID}`,
-      'InstallDir');
-  if (!instPath) {
-    return Promise.resolve('.');
-  }
-  let path = instPath.value;
-  path = path.join(path, MODKIT_FOLDER);
-  return Promise.resolve(path);
-} //*/
-
 // Clean invalid characters from a string
 function cleanInvalidChars(string) {
   // 1. Remove control characters (ASCII 0-31) & null character
@@ -1854,6 +1831,7 @@ async function setup(discovery, api, gameSpec) {
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   CHECK_CONFIG = checkPartitions(LOCALAPPDATA, GAME_PATH);
   CHECK_DOCS = checkPartitions(DOCS_PATH, GAME_PATH);
+  MODKIT_PATH = await getModKitPath();
   if (!CHECK_DOCS || !CHECK_CONFIG) {
     partitionCheckNotify(api, CHECK_CONFIG, CHECK_DOCS);
   }
@@ -1880,6 +1858,32 @@ async function setup(discovery, api, gameSpec) {
   return fs.ensureDirWritableAsync(path.join(MOD_PATH_DEFAULT));
 } //*/
 
+//*Get MODKit install path with GameStoreHelper
+async function getModKitPath() {
+  const game = await util.GameStoreHelper.findByAppId(MODKITAPP_ID, 'epic');
+  if (game === undefined) {
+    log('warn', `ModKit path not found`);
+    return undefined;
+  }
+  let instPath = game.gamePath;
+  log('warn', `ModKit path found at ${instPath}`);
+  instPath = path.join(instPath, MODKIT_FOLDER);
+  return instPath;
+} //*/
+
+//*Get MODKit (Epic) install path from registry
+function getModKitPathReg() {
+  let instPath = winapi.RegGetValue(MODKIT_REG_HIVE, MODKIT_REG_KEY, MODKIT_REG_VALUE);
+  if (!instPath) {
+    log('warn', `ModKit path not found`);
+    return undefined;
+  }
+  instPath = instPath.value;
+  instPath = path.join(instPath, MODKIT_FOLDER);
+  log('warn', `ModKit path found at ${instPath}`);
+  return instPath;
+} //*/
+
 //Let Vortex know about the game
 function applyGame(context, gameSpec) {
   //register the game
@@ -1903,18 +1907,19 @@ function applyGame(context, gameSpec) {
         shell: true,
         parameters: []
       }, //*/
-      /*
+      //*
       {
         id: MODKIT_ID,
         name: MODKIT_NAME,
         logo: `modkit.png`,
-        queryPath: async () => getModKitPath(),
+        queryPath: async () => await getModKitPath(),
+        //queryPath: () => getModKitPathReg(),
         executable: () => MODKIT_EXEC_NAME,
         requiredFiles: [MODKIT_EXEC_NAME],
         detach: true,
         relative: false,
         exclusive: false,
-        parameters: [],
+        //parameters: [],
       }, //*/
     ],
   };

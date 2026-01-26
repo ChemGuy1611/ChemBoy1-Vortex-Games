@@ -1,5 +1,5 @@
 /*//////////////////////////////////////////////////
-Name: Belwright Vortex Extension
+Name: Bellwright Vortex Extension
 Structure: UE4 + IO Store (Sig Bypass)
 Author: ChemBoy1
 Version: 0.3.0
@@ -1211,30 +1211,6 @@ function partitionCheckNotify(api, CHECK_DATA) {
   });
 }
 
-//Get MODKit install path from Epic
-function getModKitPath() {
-  /*
-  return () => util.GameStoreHelper.findByAppId(MODKITAPP_ID, 'epic')
-    .then((game) => log('warn', `ModKit path found at ${game.gamePath}`))
-    .then((game) => path.join(game.gamePath, MODKIT_FOLDER)); //*/
-  //*
-  try {
-    const game = util.GameStoreHelper.findByAppId(MODKITAPP_ID, 'epic');
-    let path = game.gamePath;
-    if (path !== undefined) {
-      log('warn', `ModKit path found at ${path}`);
-    }
-    if (path === undefined) {
-      log('warn', `ModKit path not found`);
-    }
-    path = path.join(path, MODKIT_FOLDER);
-    return () => path; //*/
-  } catch (err) {
-    log('error', `Could not get ModKit path: ${err}`);
-    return () => undefined;
-  }
-}
-
 //Notification if Config, Save, and Creations folders are not on the same partition
 function legacyModsNotify(api, legacyMods) {
   const NOTIF_ID = `${GAME_ID}-legacymodsnotify`;
@@ -1308,6 +1284,19 @@ async function setup(discovery, api, gameSpec) {
   return fs.ensureDirWritableAsync(path.join(discovery.path, UNREALDATA.modsPath));
 }
 
+//*Get MODKit install path with GameStoreHelper
+async function getModKitPath() {
+  const game = await util.GameStoreHelper.findByAppId(MODKITAPP_ID, 'epic');
+  if (game === undefined) {
+    log('warn', `ModKit path not found`);
+    return undefined;
+  }
+  let instPath = game.gamePath;
+  log('warn', `ModKit path found at ${instPath}`);
+  instPath = path.join(instPath, MODKIT_FOLDER);
+  return instPath;
+} //*/
+
 //Let vortex know about the game
 function applyGame(context, gameSpec) {
   //register the game
@@ -1335,13 +1324,14 @@ function applyGame(context, gameSpec) {
         id: MODKIT_ID,
         name: MODKIT_NAME,
         logo: `modkit.png`,
-        queryPath: () => getModKitPath,
+        queryPath: async () => await getModKitPath(),
+        //queryPath: () => getModKitPathReg(),
         executable: () => MODKIT_EXEC_NAME,
         requiredFiles: [MODKIT_EXEC_NAME],
         detach: true,
         relative: false,
         exclusive: false,
-        parameters: [],
+        //parameters: [],
       }, //*/
     ],
   };

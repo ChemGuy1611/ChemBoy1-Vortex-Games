@@ -78,6 +78,24 @@ const spec = {
   }
 };
 
+const REFORGER_ID = `${GAME_ID}-reforger`;
+const REFORGER_NAME = "ReForger";
+const REFORGER_EXEC = 'ReForger.exe';
+const REFORGER_REG_HIVE = 'HKEY_CLASSES_ROOT';
+const REFORGER_REG_KEY = 'Local Settings\\Software\\Microsoft\\Windows\\CurrentVersion\\AppModel\\Repository\\Packages\\6e7137e4-333c-4a34-9da6-f129f667b612_1.0.12.0_x64__9r43be93mcwwm';
+const REFORGER_REG_VALUE = 'PackageRootFolder';
+
+function getReforgerPath() {
+  const instPath = winapi.RegGetValue(REFORGER_REG_HIVE, REFORGER_REG_KEY, REFORGER_REG_VALUE);
+  if (!instPath) {
+    log('warn', `ReForger path not found`);
+    return undefined;
+  }
+  let path = instPath.value;
+  log('warn', `ReForger path found at ${path}`);
+  return path;
+}
+
 //3rd party tools and launchers
 const tools = [
   {
@@ -100,6 +118,18 @@ const tools = [
       FORGER_EXEC,
     ],
     relative: true,
+    exclusive: true,
+  },
+  {
+    id: REFORGER_ID,
+    name: REFORGER_NAME,
+    logo: 'reforger.png',
+    queryPath: getReforgerPath,
+    executable: () => REFORGER_EXEC,
+    requiredFiles: [
+      REFORGER_EXEC,
+    ],
+    relative: false,
     exclusive: true,
   },
 ];

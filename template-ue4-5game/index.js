@@ -433,6 +433,7 @@ function getExecutable(discoveryPath) {
       BINARIES_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_XBOX);
       SHIPPING_EXE = path.join(BINARIES_PATH, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_XBOX}${SHIPEXE_STRING_XBOX}-Shipping.exe`);
       SCRIPTS_PATH = path.join(BINARIES_PATH, UE4SS_MOD_PATH);
+      DLL_PATH = SCRIPTS_PATH;
       CONFIG_PATH = CONFIG_PATH_XBOX;
       //CONFIG_PATH = setConfigPath(GAME_VERSION); //if there's an intermediate store folder in the path
       SAVE_PATH = getUserIdFolder(SAVE_PATH_XBOX);
@@ -444,6 +445,7 @@ function getExecutable(discoveryPath) {
     BINARIES_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT);
     SHIPPING_EXE = path.join(BINARIES_PATH, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_DEFAULT}-Shipping.exe`);
     SCRIPTS_PATH = path.join(BINARIES_PATH, UE4SS_MOD_PATH);
+    DLL_PATH = SCRIPTS_PATH;
     CONFIG_PATH = CONFIG_PATH_DEFAULT;
     //CONFIG_PATH = setConfigPath(GAME_VERSION); //if there's an intermediate store folder in the path
     //SAVE_PATH = setSavePath;
@@ -455,6 +457,7 @@ function getExecutable(discoveryPath) {
     BINARIES_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT);
     SHIPPING_EXE = path.join(BINARIES_PATH, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_EGS}-Shipping.exe`);
     SCRIPTS_PATH = path.join(BINARIES_PATH, UE4SS_MOD_PATH);
+    DLL_PATH = SCRIPTS_PATH;
     CONFIG_PATH = CONFIG_PATH_DEFAULT;
     //CONFIG_PATH = setConfigPath(GAME_VERSION); //if there's an intermediate store folder in the path
     //SAVE_PATH = setSavePath;
@@ -466,6 +469,7 @@ function getExecutable(discoveryPath) {
     BINARIES_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT);
     SHIPPING_EXE = path.join(BINARIES_PATH, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_GOG}-Shipping.exe`);
     SCRIPTS_PATH = path.join(BINARIES_PATH, UE4SS_MOD_PATH);
+    DLL_PATH = SCRIPTS_PATH;
     CONFIG_PATH = CONFIG_PATH_DEFAULT;
     //CONFIG_PATH = setConfigPath(GAME_VERSION); //if there's an intermediate store folder in the path
     //SAVE_PATH = setSavePath;
@@ -477,6 +481,7 @@ function getExecutable(discoveryPath) {
     BINARIES_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT);
     SHIPPING_EXE = path.join(BINARIES_PATH, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_DEMO}-Shipping.exe`);
     SCRIPTS_PATH = path.join(BINARIES_PATH, UE4SS_MOD_PATH);
+    DLL_PATH = SCRIPTS_PATH;
     CONFIG_PATH = CONFIG_PATH_DEFAULT;
     //CONFIG_PATH = setConfigPath(GAME_VERSION); //if there's an intermediate store folder in the path
     //SAVE_PATH = setSavePath;
@@ -1893,6 +1898,19 @@ async function setup(discovery, api, gameSpec) {
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 
+//*Get ModKit install path with GameStoreHelper
+async function getModKitPath() {
+  const game = await util.GameStoreHelper.findByAppId(MODKITAPP_ID, 'epic');
+  if (game === undefined) {
+    log('warn', `ModKit path not found`);
+    return undefined;
+  }
+  let instPath = game.gamePath;
+  log('warn', `ModKit path found at ${instPath}`);
+  instPath = path.join(instPath, MODKIT_FOLDER);
+  return instPath;
+} //*/
+
 //Let Vortex know about the game
 function applyGame(context, gameSpec) {
   //register the game
@@ -1942,6 +1960,20 @@ function applyGame(context, gameSpec) {
         relative: true,
         exclusive: true,
         //shell: true,
+        //parameters: [],
+      }, //*/
+      /*
+      {
+        id: MODKIT_ID,
+        name: MODKIT_NAME,
+        logo: `modkit.png`,
+        queryPath: async () => await getModKitPath(),
+        //queryPath: () => getModKitPathReg(),
+        executable: () => MODKIT_EXEC_NAME,
+        requiredFiles: [MODKIT_EXEC_NAME],
+        detach: true,
+        relative: false,
+        exclusive: false,
         //parameters: [],
       }, //*/
     ],
