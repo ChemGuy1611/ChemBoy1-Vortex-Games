@@ -8,7 +8,7 @@
 net session >nul 2>&1
 if %errorlevel% neq 0 (
     echo Requesting administrator privileges...
-    powershell -Command "Start-Process cmd -ArgumentList '/k cd /d \"%~dp0\" && \"%~f0\"' -Verb RunAs"
+    powershell -Command "Start-Process cmd -ArgumentList '/k', '\"%~f0\"' -Verb RunAs"
     exit /b
 )
 
@@ -36,8 +36,10 @@ for /f "tokens=2*" %%a in ('reg query "%REG_KEY%" /v "%REG_VALUE%" 2^>nul ^| fin
 )
 
 :: Remove any surrounding quotes and trailing spaces from the path
-set "BASE_PATH=%BASE_PATH:"=%"
-for /f "tokens=* delims= " %%a in ("%BASE_PATH%") do set "BASE_PATH=%%a"
+if defined BASE_PATH (
+    set BASE_PATH=!BASE_PATH:"=!
+    for /f "tokens=*" %%a in ("!BASE_PATH!") do set "BASE_PATH=%%a"
+)
 
 :: Convert to short path (8.3 format) to avoid spaces and parentheses
 for %%i in ("!BASE_PATH!") do set "BASE_PATH=%%~si"
