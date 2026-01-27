@@ -651,18 +651,18 @@ function main(context) {
       updatemodid = undefined; //reset updated modId on deploy
       GAME_PATH = getDiscoveryPath(api);
       if (is_darktide_profile_active(api) && GAME_PATH != null) {
-        try {
+        /*try {
           api.runExecutable(path.join(GAME_PATH, "tools", "dtkit-patch.exe"), ["--patch"], { shell: true, detached: true } )
-        } catch (e) {}
+        } catch (e) {} //*/
       }
     });
     // Unpatch exe on purge
     context.api.events.on("will-purge", (profileId) => {
       GAME_PATH = getDiscoveryPath(api);
       if (is_darktide_profile_active(api) && GAME_PATH != null) {
-        try {
+        /*try {
           api.runExecutable(path.join(GAME_PATH, "tools", "dtkit-patch.exe"), ["--unpatch"], { shell: true, detached: true } )
-        } catch (e) {}
+        } catch (e) {} //*/
       }
     });
     //detect mod update (to maintain LO position)

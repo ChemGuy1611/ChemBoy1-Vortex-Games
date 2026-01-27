@@ -423,7 +423,7 @@ function installLoader(files) {
 
 //Test for mod files
 function testMod(files, gameId) {
-  const isMod = files.some(file => MOD_EXTS.includes(path.extname(file).toLowerCase()));
+  const isMod = files.some(file => MOD_FOLDERS.includes(path.basename(file).toLowerCase()));
   let supported = (gameId === spec.game.id) && isMod;
 
   // Test for a mod installer
@@ -442,7 +442,7 @@ function testMod(files, gameId) {
 //Install mod files
 function installMod(files) {
   const MOD_TYPE = MOD_ID;
-  const modFile = files.find(file => MOD_EXTS.includes(path.extname(file).toLowerCase()));
+  const modFile = files.find(file => MOD_FOLDERS.includes(path.basename(file).toLowerCase()));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
@@ -497,41 +497,6 @@ function installRoot(files) {
       type: 'copy',
       source: file,
       destination: path.join(file.substr(idx)),
-    };
-  });
-  instructions.push(setModTypeInstruction);
-  return Promise.resolve({ instructions });
-}
-
-//Fallback installer to Binaries folder
-function testBinaries(files, gameId) {
-  let supported = (gameId === spec.game.id);
-
-  // Test for a mod installer.
-  if (supported && files.find(file =>
-    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
-    supported = false;
-  }
-
-  return Promise.resolve({
-    supported,
-    requiredFiles: [],
-  });
-}
-
-//Fallback installer to Binaries folder
-function installBinaries(files) {
-  const setModTypeInstruction = { type: 'setmodtype', value: BINARIES_ID };
-  
-  const filtered = files.filter(file =>
-    (!file.endsWith(path.sep))
-  );
-  const instructions = filtered.map(file => {
-    return {
-      type: 'copy',
-      source: file,
-      destination: file,
     };
   });
   instructions.push(setModTypeInstruction);
