@@ -212,6 +212,12 @@ const UE4SS_NAME = "UE4SS";
 const UE4SS_FILE = "dwmapi.dll";
 const UE4SS_DLFILE_STRING = "ue4ss";
 const UE4SS_URL = "https://github.com/UE4SS-RE/RE-UE4SS/releases";
+const UE4SS_SETTINGS_FILE = 'UE4SS-settings.ini';
+const UE4SS_SETTINGS_FILEPATH = path.join('ue4ss', UE4SS_SETTINGS_FILE); //relative to Binaries folder
+const UE4SS_MODSJSON_FILE = 'mods.json';
+const UE4SS_MODSTXT_FILE = 'mods.txt';
+const UE4SS_MODSJSON_FILEPATH = path.join(UE4SS_MOD_PATH, UE4SS_MODSJSON_FILE); //relative to Binaries folder
+const UE4SS_MODSTXT_FILEPATH = path.join(UE4SS_MOD_PATH, UE4SS_MODSTXT_FILE);
 
 //Signature Bypass (only used if game requires)
 const SIGBYPASS_ID = `${GAME_ID}-sigbypass`;
@@ -2171,6 +2177,22 @@ function applyGame(context, gameSpec) {
     } else {
       downloadUe4ss(context.api, gameSpec).catch(() => null);
     }
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open UE4SS Settings INI', () => {
+    GAME_PATH = getDiscoveryPath(context.api);
+    util.opn(path.join(GAME_PATH, BINARIES_PATH, UE4SS_SETTINGS_FILEPATH)).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open UE4SS mods.json', () => {
+    GAME_PATH = getDiscoveryPath(context.api);
+    util.opn(path.join(GAME_PATH, BINARIES_PATH, UE4SS_MODSJSON_FILEPATH)).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
