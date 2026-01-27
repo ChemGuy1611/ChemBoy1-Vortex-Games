@@ -1898,7 +1898,7 @@ async function setup(discovery, api, gameSpec) {
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 
-//*Get MODKit install path with GameStoreHelper
+//* Get ModKit install path with GameStoreHelper
 async function getModKitPath() {
   let game = undefined;
   try {

@@ -41,6 +41,13 @@ if defined BASE_PATH (
     for /f "tokens=*" %%a in ("!BASE_PATH!") do set "BASE_PATH=%%a"
 )
 
+:: Check if registry value was found, if not use default path
+if not defined BASE_PATH (
+    echo WARNING: Registry key not found. Using default Epic Games path.
+    set "BASE_PATH=C:\Program Files (x86)\Epic Games\Epic Online Services\managedArtifacts\98bc04bc842e4906993fd6d6644ffb8d"
+    echo.
+)
+
 :: Convert to short path (8.3 format) to avoid spaces and parentheses
 for %%i in ("!BASE_PATH!") do set "BASE_PATH=%%~si"
 
