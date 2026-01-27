@@ -2,7 +2,7 @@
 Name: Farming Simulator 25 Vortex Extension
 Author: ChemBoy1
 Version: 0.2.0
-Date: 2025-08-30
+Date: 2026-01-27
 ////////////////////////////////////////////*/
 
 //import libraries
@@ -50,19 +50,21 @@ const spec = {
     "id": GAME_ID,
     "name": GAME_NAME,
     "shortName": GAME_NAME_SHORT,
-    "executable": EXEC_X64,
     "logo": `${GAME_ID}.jpg`,
     "mergeMods": true,
     "requiresCleanup": true,
-    //"modPath": MOD_PATH,
-    //"modPathIsRelative": false,
     "requiredFiles": [
       EXEC_X64
     ],
+    "compatible": {
+      "dinput": false,
+      "enb": false,
+    },
     "details": {
       "steamAppId": +STEAMAPP_ID,
       "epicAppId": EPICAPP_ID,
       "xboxAppId": XBOXAPP_ID,
+      //"supportsSymlinks": false,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
@@ -75,13 +77,13 @@ const spec = {
       "id": I3D_ID,
       "name": "Map Mod (Game Folder)",
       "priority": "high",
-      "targetPath": `{gamePath}\\${I3D_PATH}`
+      "targetPath": path.join('{gamePath}', I3D_PATH)
     },
     {
       "id": PDLC_ID,
       "name": "PDLC (Game Folder)",
       "priority": "high",
-      "targetPath": `{gamePath}\\${PDLC_PATH}`
+      "targetPath": path.join('{gamePath}', PDLC_PATH)
     },
     {
       "id": ROOT_ID,
@@ -124,28 +126,50 @@ function pathPattern(api, game, pattern) {
   });
 }
 
-/*Get mod path
-function makeGetModPath(api, gameSpec) {
-  return () => gameSpec.game.modPathIsRelative !== false
-    ? gameSpec.game.modPath || '.'
-    : pathPattern(api, gameSpec.game, gameSpec.game.modPath);
-} //*/
-
-//Get mod path dynamically for Xbox vs Steam/Epic
-function getModPath(gamePath) {
-  GAME_VERSION = setGameVersion(gamePath);
-  if (GAME_VERSION === 'xbox') {
-    return MOD_PATH_XBOX;
-  }
-  else {
-    return MOD_PATH;
-  }
-} //*/
-
 //Find game installation directory
 function makeFindGame(api, gameSpec) {
   return () => util.GameStoreHelper.findByAppId(gameSpec.discovery.ids)
     .then((game) => game.gamePath);
+}
+
+function statCheckSync(gamePath, file) {
+  try {
+    fs.statSync(path.join(gamePath, file));
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}
+async function statCheckAsync(gamePath, file) {
+  try {
+    await fs.statAsync(path.join(gamePath, file));
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}
+//* Get mod path dynamically for different game versions
+function getModPath(discoveryPath) {
+  if (statCheckSync(discoveryPath, EXEC_XBOX)) {
+    GAME_VERSION = 'xbox';
+    return MOD_PATH_XBOX;
+  };
+  //add GOG/EGS/Demo versions here if needed
+  GAME_VERSION = 'default';
+  return MOD_PATH;
+} //*/
+
+//Get correct executable for game version
+function getExecutable(discoveryPath) {
+  if (statCheckSync(discoveryPath, EXEC_XBOX)) {
+    GAME_VERSION = 'xbox';
+    return EXEC_XBOX;
+  };
+  //add GOG/EGS/Demo versions here if needed
+  GAME_VERSION = 'default';
+  return EXEC;
 }
 
 async function requiresLauncher(gamePath, store) {
@@ -176,21 +200,14 @@ async function requiresLauncher(gamePath, store) {
 
 //Get correct game version
 async function setGameVersion(gamePath) {
-  const isCorrectExec = (exec) => {
-    try {
-      fs.statSync(path.join(gamePath, exec));
-      return true;
-    }
-    catch (err) {
-      return false;
-    }
-  };
-  if (isCorrectExec(EXEC_XBOX)) {
+  const CHECK = await statCheckAsync(gamePath, EXEC_XBOX);
+  if (CHECK) {
     GAME_VERSION = 'xbox';
     return GAME_VERSION;
-  };
-  GAME_VERSION = 'default';
-  return GAME_VERSION;
+  } else {
+    GAME_VERSION = 'default';
+    return GAME_VERSION;
+  }
 }
 
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
@@ -334,8 +351,7 @@ function applyGame(context, gameSpec) {
   const game = {
     ...gameSpec.game,
     queryPath: makeFindGame(context.api, gameSpec),
-    executable: () => gameSpec.game.executable,
-    //queryModPath: makeGetModPath(context.api, gameSpec),
+    executable: getExecutable,
     queryModPath: getModPath,
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),

@@ -4,6 +4,6 @@
 
 - None Planned
 
-## [0.2.0] - 2025-08-30
+## [0.2.0] - 2026-01-27
 
 - Added Xbox Game Pass version support

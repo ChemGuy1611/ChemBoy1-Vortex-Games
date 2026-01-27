@@ -73,6 +73,17 @@ const MERGER_EXEC = "unleashthemods.exe";
 const MERGER_EXEC_PATH = path.join(MERGER_PATH, MERGER_EXEC);
 const MERGER_PAGE_NO = 140;
 const MERGER_FILE_NO = 1157;
+const MERGER_DOMAIN = GAME_ID;
+
+const SUPERMERGER_ID = `${GAME_ID}-supermerger`;
+const SUPERMERGER_NAME = "Super Mod Merger";
+const SUPERMERGER_PATH = 'ph_ft';
+const SUPERMERGER_EXEC_STRING = "SuperModMerger";
+const SUPERMERGER_EXEC = `${SUPERMERGER_EXEC_STRING}.exe`;
+const SUPERMERGER_EXEC_PATH = path.join(SUPERMERGER_PATH, SUPERMERGER_EXEC);
+const SUPERMERGER_PAGE_NO = 699;
+const SUPERMERGER_FILE_NO = 2477;
+const SUPERMERGER_DOMAIN = GAME_ID;
 
 /* Config and Save paths and modtypes
 const CONFIG_ID = `${GAME_ID}-config`;
@@ -150,13 +161,13 @@ const spec = {
       "id": PAK_ID,
       "name": PAK_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${PAK_PATH}`
+      "targetPath": path.join('{gamePath}', PAK_PATH)
     }, //*/
     {
       "id": MERGER_ID,
       "name": MERGER_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${MERGER_PATH}`
+      "targetPath": path.join('{gamePath}', MERGER_PATH)
     }, //*/
     {
       "id": ROOT_ID,
@@ -168,7 +179,7 @@ const spec = {
       "id": BINARIES_ID,
       "name": BINARIES_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${BINARIES_PATH}`
+      "targetPath": path.join('{gamePath}', BINARIES_PATH)
     },
   ],
   "discovery": {
@@ -894,7 +905,7 @@ function applyGame(context, gameSpec) {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
     }, //isSupported - Is this mod for this game
-    (game) => pathPattern(context.api, game, `{gamePath}\\${PAK_PATH}`), //getPath - mod install location
+    (game) => pathPattern(context.api, game, path.join('{gamePath}', PAK_PATH)), //getPath - mod install location
     () => Promise.resolve(false), //test - is installed mod of this type
     {
       name: PAK_NAME,
@@ -984,7 +995,7 @@ async function didPurge(api) {
   const PAK_DIRECTORY = path.join(GAME_PATH, VANILLA_PAK_PATH);
   let FILES = await fs.readdirAsync(PAK_DIRECTORY);
   
-  try { //clear pak non-vanilla pak files
+  try { //clear non-vanilla pak files
     FILES = FILES.filter(file => 
       path.extname(file).toLowerCase() === PAK_EXT &&
       !VANILLA_PAKS.includes(path.basename(file))

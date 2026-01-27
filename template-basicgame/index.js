@@ -296,16 +296,14 @@ function makeGetModPath(api, gameSpec) {
 }
 
 //* Get mod path dynamically for different game versions
-function getModPath(gamePath) {
-  GAME_VERSION = setGameVersion(gamePath);
-  if (GAME_VERSION === 'xbox') {
+function getModPath(discoveryPath) {
+  if (statCheckSync(discoveryPath, EXEC_XBOX)) {
     GAME_VERSION = 'xbox';
     return MOD_PATH_XBOX;
-  }
-  else {
-    GAME_VERSION = 'default';
-    return MOD_PATH;
-  }
+  };
+  //add GOG/EGS/Demo versions here if needed
+  GAME_VERSION = 'default';
+  return MOD_PATH;
 } //*/
 
 //Find game installation directory
