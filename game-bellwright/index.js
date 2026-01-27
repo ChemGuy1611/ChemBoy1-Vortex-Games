@@ -1284,9 +1284,15 @@ async function setup(discovery, api, gameSpec) {
   return fs.ensureDirWritableAsync(path.join(discovery.path, UNREALDATA.modsPath));
 }
 
-//*Get MODKit install path with GameStoreHelper
+//*Get ModKit install path with GameStoreHelper
 async function getModKitPath() {
-  const game = await util.GameStoreHelper.findByAppId(MODKITAPP_ID, 'epic');
+  let game = undefined;
+  try {
+    game = await util.GameStoreHelper.findByAppId(MODKITAPP_ID, 'epic');
+  } catch (err) {
+    log('warn', `ModKit path not found`);
+    return undefined;
+  }
   if (game === undefined) {
     log('warn', `ModKit path not found`);
     return undefined;

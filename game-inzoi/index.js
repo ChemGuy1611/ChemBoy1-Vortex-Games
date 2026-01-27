@@ -1831,7 +1831,6 @@ async function setup(discovery, api, gameSpec) {
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   CHECK_CONFIG = checkPartitions(LOCALAPPDATA, GAME_PATH);
   CHECK_DOCS = checkPartitions(DOCS_PATH, GAME_PATH);
-  MODKIT_PATH = await getModKitPath();
   if (!CHECK_DOCS || !CHECK_CONFIG) {
     partitionCheckNotify(api, CHECK_CONFIG, CHECK_DOCS);
   }
@@ -1860,7 +1859,13 @@ async function setup(discovery, api, gameSpec) {
 
 //*Get MODKit install path with GameStoreHelper
 async function getModKitPath() {
-  const game = await util.GameStoreHelper.findByAppId(MODKITAPP_ID, 'epic');
+  let game = undefined;
+  try {
+    game = await util.GameStoreHelper.findByAppId(MODKITAPP_ID, 'epic');
+  } catch (err) {
+    log('warn', `ModKit path not found`);
+    return undefined;
+  }
   if (game === undefined) {
     log('warn', `ModKit path not found`);
     return undefined;
