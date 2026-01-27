@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.2] - 2026-01-27
+
+- Added the ability to check both paths, even if the first does not exist
+
 ## [1.0.1] - 2026-01-26
 
 - small fix to better handle the path to the overlay files from the registry

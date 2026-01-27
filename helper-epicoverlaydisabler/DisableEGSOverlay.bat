@@ -48,31 +48,25 @@ if not defined BASE_PATH (
     echo.
 )
 
+echo Found EGS path: !BASE_PATH!
+echo.
+
 :: Convert to short path (8.3 format) to avoid spaces and parentheses
 for %%i in ("!BASE_PATH!") do set "BASE_PATH=%%~si"
 
 :: Build the Launcher path by going up to Epic Games folder and adding the rest
-for %%i in ("!BASE_PATH!\..\..\..\") do set "EPIC_GAMES_PATH=%%~fi"
+for %%i in ("!BASE_PATH!\..\..\..") do set "EPIC_GAMES_PATH=%%~fi"
 set "LAUNCHER_PATH=!EPIC_GAMES_PATH!\Launcher\Portal\Extras\Overlay"
 for %%i in ("!LAUNCHER_PATH!") do set "LAUNCHER_PATH=%%~si"
 
-:: Check if registry value was found
-if not defined BASE_PATH (
-    echo ERROR: EGS Overlay path not found in Registry!
-    echo Key: %REG_KEY%
-    echo Value: %REG_VALUE%
-    pause
-    exit /b 1
-)
-
-echo Found EGS Overlay path: %BASE_PATH%
-echo.
-
 :: Check if the EOS path exists
 if not exist "!BASE_PATH!" (
-    echo ERROR: EGS Overlay path does not exist: !BASE_PATH!
-    pause
-    exit /b 1
+    echo WARNING: EGS Overlay path does not exist: !BASE_PATH!
+    echo Will only check Launcher Overlay path.
+    set "EOS_EXISTS=0"
+    echo.
+) else (
+    set "EOS_EXISTS=1"
 )
 
 echo Launcher Overlay path: !LAUNCHER_PATH!
@@ -91,12 +85,14 @@ if not exist "!LAUNCHER_PATH!" (
 :: Display files to be deleted (confirmation)
 echo Files matching pattern "%FILE_PATTERN%":
 echo.
-echo In EOS Overlay path:
-call :ListFiles
-if "!FILES_FOUND!"=="0" (
-    echo No files found.
+if "!EOS_EXISTS!"=="1" (
+    echo In EOS Overlay path:
+    call :ListFiles
+    if "!FILES_FOUND!"=="0" (
+        echo No files found.
+    )
+    echo.
 )
-echo.
 if "!LAUNCHER_EXISTS!"=="1" (
     echo In Launcher Overlay path:
     call :ListLauncherFiles
@@ -107,6 +103,19 @@ if "!LAUNCHER_EXISTS!"=="1" (
 )
 
 :: Check if any files were found at all
+if "!EOS_EXISTS!"=="0" (
+    if "!LAUNCHER_EXISTS!"=="0" (
+        echo ERROR: Neither path exists. Cannot proceed.
+        timeout /t 30
+        exit
+    )
+    if "!LAUNCHER_FILES_FOUND!"=="0" (
+        echo No files to delete. Exiting in 30 seconds...
+        echo Press any key to close immediately.
+        timeout /t 30
+        exit
+    )
+)
 if "!FILES_FOUND!"=="0" (
     if "!LAUNCHER_EXISTS!"=="0" (
         echo No files to delete. Exiting in 30 seconds...
@@ -132,8 +141,10 @@ if /i not "!CONFIRM!"=="Y" (
 
 :: Delete the files
 echo.
-echo Deleting files from EOS Overlay path...
-call :DeleteFiles
+if "!EOS_EXISTS!"=="1" (
+    echo Deleting files from EOS Overlay path...
+    call :DeleteFiles
+)
 
 if "!LAUNCHER_EXISTS!"=="1" (
     echo Deleting files from Launcher Overlay path...
