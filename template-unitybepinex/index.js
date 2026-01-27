@@ -754,6 +754,7 @@ async function setup(discovery, api, gameSpec) {
     await fs.ensureDirWritableAsync(path.join(GAME_PATH, 'Bepinex')); //allows downloader to write files
     await downloadBepCfgMan(api, gameSpec);
   }
+  await fs.ensureDirWritableAsync(path.join(GAME_PATH, 'BepInEx', 'patchers')); //This might be missing from modtype-bepinex extension
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 
