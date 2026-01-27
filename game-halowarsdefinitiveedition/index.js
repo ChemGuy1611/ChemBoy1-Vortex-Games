@@ -1,5 +1,5 @@
 /*///////////////////////////////////////////
-Name: XXX Vortex Extension
+Name: Halo Wars: Definitive Edition Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
 Version: 0.1.0
@@ -20,59 +20,55 @@ const { parseStringPromise } = require('xml2js');
 const LOCALLOW = path.join(USER_HOME, 'AppData', 'LocalLow'); //*/
 const DOCUMENTS = util.getVortexPath("documents");
 //const ROAMINGAPPDATA = util.getVortexPath("appData");
-//const LOCALAPPDATA = util.getVortexPath("localAppData");
+const LOCALAPPDATA = util.getVortexPath("localAppData");
 
 //Specify all the information about the game
 const GAME_ID = "halowarsdefinitiveedition";
-const STEAMAPP_ID = "XXX";
-const STEAMAPP_ID_DEMO = "XXX";
-const EPICAPP_ID = "XXX";
-const GOGAPP_ID = "XXX";
-const XBOXAPP_ID = "XXX";
-const XBOXEXECNAME = "XXX";
-const XBOX_PUB_ID = "XXX"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
-const GAME_NAME = "XXX";
-const GAME_NAME_SHORT = "XXX";
-const BINARIES_PATH = path.join('.');
-const EXEC_NAME = "XXX.exe";
+const STEAMAPP_ID = "459220";
+const STEAMAPP_ID_DEMO = null;
+const EPICAPP_ID = null;
+const GOGAPP_ID = null;
+const XBOXAPP_ID = "Microsoft.BulldogThreshold";
+const XBOXEXECNAME = "";
+const XBOX_PUB_ID = "8wekyb3d8bbwe"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, XBOXAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const GAME_NAME = "Halo Wars: Definitive Edition";
+const GAME_NAME_SHORT = "Halo Wars DE";
+const BINARIES_PATH = '.';
+const EXEC_NAME = "xgameFinal.exe";
+const EXEC = path.join(BINARIES_PATH, EXEC_NAME);
 const EXEC_EGS = EXEC;
 const EXEC_GOG = EXEC;
 const EXEC_DEMO = EXEC;
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Halo_Wars:_Definitive_Edition";
 const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
 
 //feature toggles
 const hasLoader = false; //true if game needs a mod loader
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
-const rootInstaller = true; //enable root installer. Set false if you need to avoid installer collisions
-const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
+const rootInstaller = false; //enable root installer. Set false if you need to avoid installer collisions
+const fallbackInstaller = false; //enable fallback installer. Set false if you need to avoid installer collisions
 const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
 const debug = false; //toggle for debug mode
 
 //info for modtypes, installers, tools, and actions
-const DATA_FOLDER = 'XXX';
-const ROOT_FOLDERS = [DATA_FOLDER];
-
-const CONFIGMOD_LOCATION = DOCUMENTS;
-const SAVEMOD_LOCATION = DOCUMENTS;
-const APPDATA_FOLDER = path.join('XXX');
-const CONFIG_FOLDERNAME = 'XXX';
-const SAVE_FOLDERNAME = 'XXX';
-
 let GAME_PATH = null;
 let GAME_VERSION = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 const APPMANIFEST_FILE = 'appxmanifest.xml';
 const EXEC_XBOX = 'gamelaunchhelper.exe';
-const EXEC = path.join(BINARIES_PATH, EXEC_NAME);
+
+const MODMANIFEST_PATH = path.join(LOCALAPPDATA, 'Halo Wars');
+const MODMANIFEST_FILE = 'ModManifest.txt';
+const MODMANIFEST_FILEPATH = path.join(MODMANIFEST_PATH, MODMANIFEST_FILE);
 
 const MOD_ID = `${GAME_ID}-mod`;
 const MOD_NAME = "Mod";
-const MOD_PATH = "mods";
-const MOD_PATH_XBOX = MOD_PATH;
-const MOD_EXTS = ['.XXX'];
+let MOD_PATH = "Mods"; //in game folder
+const MOD_PATH_XBOX = path.join(LOCALAPPDATA, 'Packages', `${XBOXAPP_ID}_${XBOX_PUB_ID}`, 'LocalState'); //in game folder
+const DATA_FOLDER = 'data';
+const MOD_FOLDERS = [DATA_FOLDER, 'art', 'campaign', 'physics', 'scenario', 'sound', 'video'];
 
 const LOADER_ID = `${GAME_ID}-loader`;
 const LOADER_NAME = "Mod Loader";
@@ -88,26 +84,9 @@ const ROOT_NAME = "Root Folder";
 const BINARIES_ID = `${GAME_ID}-binaries`;
 const BINARIES_NAME = "Binaries (Engine Injector)";
 
-const CONFIG_ID = `${GAME_ID}-config`;
-const CONFIG_NAME = "Config";
-const CONFIG_PATH = path.join(CONFIGMOD_LOCATION, APPDATA_FOLDER, CONFIG_FOLDERNAME);
-const CONFIG_EXTS = [".XXX"];
-const CONFIG_FILES = ["XXX"];
-
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_NAME = "Save";
-const SAVE_FOLDER = path.join(SAVEMOD_LOCATION, APPDATA_FOLDER, SAVE_FOLDERNAME);
-let USERID_FOLDER = "";
-try {
-  const SAVE_ARRAY = fs.readdirSync(SAVE_FOLDER);
-  USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_FOLDER, entry));
-} catch(err) {
-  USERID_FOLDER = "";
-}
-if (USERID_FOLDER === undefined) {
-  USERID_FOLDER = "";
-} //*/
-const SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
+const SAVE_PATH = 'savegame';
 const SAVE_EXTS = [".XXX"];
 const SAVE_FILES = ["XXX"];
 
@@ -124,7 +103,7 @@ const REQ_FILE = EXEC;
 const PARAMETERS_STRING = '';
 const PARAMETERS = [PARAMETERS_STRING];
 
-let MODTYPE_FOLDERS = [MOD_PATH, BINARIES_PATH];
+let MODTYPE_FOLDERS = [MODMANIFEST_PATH];
 const IGNORE_CONFLICTS = [path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
 const IGNORE_DEPLOY = [path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
 
@@ -139,11 +118,8 @@ const spec = {
     "logo": `${GAME_ID}.jpg`,
     "mergeMods": true,
     "requiresCleanup": true,
-    "modPath": MOD_PATH_DEFAULT,
     "modPathIsRelative": true,
-    "requiredFiles": [
-      REQ_FILE
-    ],
+    "requiredFiles": [], //empty to accomodate Xbox version
     "compatible": {
       "dinput": false,
       "enb": false,
@@ -165,13 +141,13 @@ const spec = {
     }
   },
   "modTypes": [
-    {
+    /*{
       "id": MOD_ID,
       "name": MOD_NAME,
       "priority": "high",
       "targetPath": path.join("{gamePath}", MOD_PATH)
-    },
-    {
+    }, //*/
+    /*{
       "id": ROOT_ID,
       "name": ROOT_NAME,
       "priority": "high",
@@ -182,7 +158,7 @@ const spec = {
       "name": BINARIES_NAME,
       "priority": "high",
       "targetPath": path.join("{gamePath}", BINARIES_PATH)
-    },
+    }, //*/
   ],
   "discovery": {
     "ids": DISCOVERY_IDS_ACTIVE,
@@ -812,12 +788,14 @@ async function setup(discovery, api, gameSpec) {
   if (setupNotification) {
     setupNotify(api);
   }
-  /*await fs.ensureDirWritableAsync(CONFIG_PATH);
-  await fs.ensureDirWritableAsync(SAVE_PATH); //*/
+  //await fs.ensureDirWritableAsync(SAVE_PATH);
   if (hasLoader) {
     await downloadLoader(api, gameSpec);
   }
-  return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
+  await fs.ensureDirWritableAsync(MODMANIFEST_PATH);
+  await fs.ensureFileAsync(MODMANIFEST_FILEPATH);
+  return fs.ensureDirWritableAsync(MOD_PATH);
+  //return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 
 //Let Vortex know about the game
@@ -825,10 +803,8 @@ function applyGame(context, gameSpec) {
   const game = { //register game
     ...gameSpec.game,
     queryPath: makeFindGame(context.api, gameSpec),
-    executable: () => gameSpec.game.executable,
-    //executable: getExecutable,
-    queryModPath: makeGetModPath(context.api, gameSpec),
-    //queryModPath: getModPath,
+    executable: getExecutable,
+    queryModPath: getModPath,
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     //getGameVersion: resolveGameVersion,
@@ -845,16 +821,18 @@ function applyGame(context, gameSpec) {
     }, (game) => pathPattern(context.api, game, type.targetPath), () => Promise.resolve(false), { name: type.name });
   });
 
-  /*register mod types explicitly
-  context.registerModType(CONFIG_ID, 60, 
+  //*register mod types explicitly
+  context.registerModType(MOD_ID, 25, 
     (gameId) => {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
     }, 
-    (game) => pathPattern(context.api, game, CONFIG_PATH), 
+    (game) => pathPattern(context.api, game, MOD_PATH), 
     () => Promise.resolve(false), 
-    { name: CONFIG_NAME }
-  ); //
+    { name: MOD_NAME }
+  ); //*/
+
+  /*register mod types explicitly
   context.registerModType(SAVE_ID, 62, 
     (gameId) => {
       var _a;
@@ -881,13 +859,11 @@ function applyGame(context, gameSpec) {
   if (hasLoader) {
     context.registerInstaller(LOADER_ID, 25, testLoader, installLoader);
   }
-  //context.registerInstaller(MOD_ID, 27, testMod, installMod);
-  //context.registerInstaller(CONFIG_ID, 43, testConfig, installConfig);
+  context.registerInstaller(MOD_ID, 27, testMod, installMod);
   //context.registerInstaller(SAVE_ID, 45, testSave, installSave);
   if (rootInstaller) {
     context.registerInstaller(ROOT_ID, 47, testRoot, installRoot);
   }
-  //context.registerInstaller(BINARIES_ID, 48, testBinaries, installBinaries);
   if (fallbackInstaller) {
     context.registerInstaller(`${GAME_ID}-fallback`, 49, testFallback, (files, destinationPath) => installFallback(context.api, files, destinationPath));
   }

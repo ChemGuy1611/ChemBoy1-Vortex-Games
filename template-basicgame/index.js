@@ -36,6 +36,7 @@ const GAME_NAME = "XXX";
 const GAME_NAME_SHORT = "XXX";
 const BINARIES_PATH = path.join('.');
 const EXEC_NAME = "XXX.exe";
+const EXEC = path.join(BINARIES_PATH, EXEC_NAME);
 const EXEC_EGS = EXEC;
 const EXEC_GOG = EXEC;
 const EXEC_DEMO = EXEC;
@@ -66,7 +67,6 @@ let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 const APPMANIFEST_FILE = 'appxmanifest.xml';
 const EXEC_XBOX = 'gamelaunchhelper.exe';
-const EXEC = path.join(BINARIES_PATH, EXEC_NAME);
 
 const MOD_ID = `${GAME_ID}-mod`;
 const MOD_NAME = "Mod";
