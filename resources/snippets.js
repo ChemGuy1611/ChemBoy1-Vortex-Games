@@ -109,6 +109,13 @@ const reducer = { //reducers to register
 };
 //in main
 context.registerReducer(["settings", GAME_ID], reducer);
+context.registerSettings("Mods", Settings, () => ({
+  onSelectUDF: () => selectUDF(context).catch(() => null)
+}), () => {
+  const state = context.api.getState();
+  const activeGame = import_vortex_api7.selectors.activeGameId(state);
+  return activeGame === GAME_ID;
+});
 //in setup
 const isUDFSet = util.getSafe(
   api.getState(),
@@ -688,12 +695,23 @@ context.api.onAsync('check-mods-version', (gameId, mods, forced) => {
     return onCheckModVersion(context.api, gameId, mods, forced);
 }); //*/
 
-// Check if modType is installed by modId //////////////////////////////////////////////////////
-function isModInstalled(api, spec, modId) {
+//Check if modType is installed by modid, with fallback to a file check ///////////////////////////
+function isModLoaderInstalled(api, spec) {
   const state = api.getState();
   const mods = state.persistent.mods[spec.game.id] || {};
-  return Object.keys(mods).some(id => mods[id]?.type === modId);
-} //*/
+  let test =  Object.keys(mods).some(id => mods[id]?.type === MODLOADER_ID);
+  //* Fallback to file check
+  if (test === false) {
+    try {
+      GAME_PATH = getDiscoveryPath(api);
+      fs.statSync(path.join(GAME_PATH, BINARIES_PATH, MODLOADER_MARKER));
+      test = true;
+    } catch (err) {
+      test = false;
+    }
+  } //*/
+  return test;
+}
 
 //* Turbowalk method to check for a mod/tool in a known folder ///////////////////////////////
 const turbowalk = require('turbowalk');
@@ -890,6 +908,114 @@ async function downloadUe4ss(api, gameSpec) {
         return Promise.reject(err);
       }
     });
+  }
+} //*/
+
+//* Function to auto-download a naked .exe file from Nexus Mods and copy it to the game folder //////////////////
+async function downloadModManager(api, check) {
+  GAME_PATH = getDiscoveryPath(api);
+  DOWNLOAD_FOLDER = selectors.downloadPathForGame(api.getState(), GAME_ID);
+  let isInstalled = await isModManagerInstalled(api);
+  if (check === false) isInstalled = false;
+  if (!isInstalled) {
+    const MOD_NAME = MODMANAGER_NAME;
+    const MOD_TYPE = MODMANAGER_ID;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
+    const PAGE_ID = MODMANAGER_PAGE_NO;
+    const FILE_ID = MODMANAGER_FILE_NO;  //If using a specific file id because "input" below gives an error
+    const GAME_DOMAIN = MODMANAGER_DOMAIN;
+    api.sendNotification({ //notification indicating install process
+      id: NOTIF_ID,
+      message: `Installing ${MOD_NAME}`,
+      type: 'activity',
+      noDismiss: true,
+      allowSuppress: false,
+    });
+    if (api.ext?.ensureLoggedIn !== undefined) { //make sure user is logged into Nexus Mods account in Vortex
+      await api.ext.ensureLoggedIn();
+    }
+    try {
+      let FILE = null;
+      let URL = null;
+      try { //get the mod files information from Nexus
+        const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
+        const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
+        const file = modFiles
+          .filter(file => file.category_id === 1)
+          .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
+          .reverse()[0];
+        if (file === undefined) {
+          throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
+        }
+        FILE = file.file_id;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      } catch (err) { // use defined file ID if input is undefined above
+        FILE = FILE_ID;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      }
+      const dlInfo = { //Download the mod
+        game: GAME_DOMAIN,
+        name: MOD_NAME,
+      };
+      //*Only start-download with Promise
+      return new Promise((resolve, reject) => {
+        api.events.emit('start-download', [URL], dlInfo, undefined,
+          async (error, dlid) => { //callback function to check for errors and pass id to and call 'start-install-download' event
+            if (error !== null && (error.name !== 'AlreadyDownloaded')) {
+              return reject(error);
+            }
+            try { //find the file in Download and copy it to the game folder
+              api.sendNotification({ //notification indicating copy process
+                id: `${NOTIF_ID}-copy`,
+                message: `Copying ${MOD_NAME} executable to game folder`,
+                type: 'activity',
+                noDismiss: true,
+                allowSuppress: false,
+              });
+              let files = await fs.readdirAsync(DOWNLOAD_FOLDER);
+              //let files = fs.readdirSync(DOWNLOAD_FOLDER);
+              files = files.filter(file => ( path.basename(file).includes(MODMANAGER_STRING) && (path.extname(file).toLowerCase() === '.exe') ))
+                .sort((a,b) => a.toLowerCase().localeCompare(b.toLowerCase()))
+                .reverse();
+              const copyFile = files[0];
+              await fs.statAsync(path.join(DOWNLOAD_FOLDER, copyFile));
+              //fs.statSync(path.join(DOWNLOAD_FOLDER, copyFile));
+              const source = path.join(DOWNLOAD_FOLDER, copyFile);
+              const destination = path.join(GAME_PATH, MODMANAGER_EXEC);
+              await fs.copyAsync(source, destination, { overwrite: true });
+              //fs.copySync(source, destination, { overwrite: true });
+              api.dismissNotification(NOTIF_ID);
+              api.dismissNotification(`${NOTIF_ID}-copy`);
+              api.sendNotification({ //notification copy success
+                id: `${NOTIF_ID}-success`,
+                message: `Successfully copied ${MOD_NAME} executable to game folder`,
+                type: 'success',
+                noDismiss: false,
+                allowSuppress: true,
+              });
+            } catch (err) {
+              const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
+              api.showErrorNotification(`Failed to download and copy ${MOD_NAME} executable`, err, { allowReport: false });
+              util.opn(errPage).catch(() => null);
+              return reject(err);
+            }
+            finally {
+              api.dismissNotification(NOTIF_ID);
+              api.dismissNotification(`${NOTIF_ID}-copy`);
+              return resolve();
+            }
+          },
+          'never',
+          { allowInstall: false },
+        );
+      });
+    } catch (err) { //Show the user the download page if the download and copy process fails
+      const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
+      api.showErrorNotification(`Failed to download and copy ${MOD_NAME} executable`, err, { allowReport: false });
+      util.opn(errPage).catch(() => null);
+      api.dismissNotification(NOTIF_ID);
+      api.dismissNotification(`${NOTIF_ID}-copy`);
+    }
   }
 } //*/
 

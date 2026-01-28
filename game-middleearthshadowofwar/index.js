@@ -47,6 +47,8 @@ let GAME_VERSION = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 const APPMANIFEST_FILE = 'appxmanifest.xml';
+let dllLoaderInstalled = false;
+let modLoaderInstalled = false;
 
 const MOD_ID = `${GAME_ID}-arch06mod`;
 const MOD_NAME = ".arch06 Mod";
@@ -1230,8 +1232,12 @@ async function setup(discovery, api, gameSpec) {
     await fs.writeFileAsync(path.join(GAME_PATH, LO_FILE_PATH), LO_FILE_STARTUP, 'utf8');
     //api.showErrorNotification('Failed to read LO file. Please verify your game files.', err, { allowReport: false });
   }
-  await downloadDllLoader(api, gameSpec);
-  //await downloadModLoader(api, gameSpec);
+  dllLoaderInstalled = isDllLoaderInstalled(api, gameSpec);
+  modLoaderInstalled = isModLoaderInstalled(api, gameSpec);
+  if (!dllLoaderInstalled && !modLoaderInstalled) {
+    await downloadDllLoader(api, gameSpec);
+    //await downloadModLoader(api, gameSpec);
+  }
   return downloadPacketLoader(api, gameSpec);
 }
 
@@ -1345,6 +1351,14 @@ function main(context) {
   context.once(() => { // put code here that should be run (once) when Vortex starts up
     context.api.onAsync('did-purge', (profileId) => didPurge(context.api, profileId)); //*/
     context.api.onAsync("did-deploy", (profileId) => {
+      const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
+      if (profileId !== LAST_ACTIVE_PROFILE) return;
+      dllLoaderInstalled = isDllLoaderInstalled(context.api, spec);
+      modLoaderInstalled = isModLoaderInstalled(context.api, spec);
+      if (!dllLoaderInstalled && !modLoaderInstalled) {
+        downloadDllLoader(context.api, spec);
+        //downloadModLoader(context.api, spec);
+      }
       mod_update_all_profile = false;
       updating_mod = false;
       updatemodid = undefined;
@@ -1378,6 +1392,13 @@ async function didPurge(api, profileId) { //run on mod purge
   if (gameId !== GAME_ID) {
     return Promise.resolve();
   }
+  /* No need to run on purge
+  dllLoaderInstalled = isDllLoaderInstalled(api, spec);
+  modLoaderInstalled = isModLoaderInstalled(api, spec);
+  if (!dllLoaderInstalled && !modLoaderInstalled) {
+    downloadDllLoader(api, spec);
+    //downloadModLoader(api, spec);
+  } //*/
   clearModOrder(api);
   return Promise.resolve();
 }
