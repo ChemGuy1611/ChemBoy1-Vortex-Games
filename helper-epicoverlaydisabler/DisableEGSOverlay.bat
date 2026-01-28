@@ -1,7 +1,3 @@
-:: Author: ChemBoy1
-:: Version: 1.0.3
-:: Script Description: Disables the EGS Overlay by deleting "EOSOverlay" files.
-
 @echo off
 
 :: Check for admin privileges and elevate if needed
@@ -22,9 +18,14 @@ set "FILE_PATTERN2=*EOSOVH*"
 
 echo ========================================
 echo Epic Games Store Overlay Disable Script
+echo Author: ChemBoy1
+echo Version: 1.0.3
+echo Description: Disables the EGS Overlay by
+echo              deleting "EOSOverlay" and
+echo              "EOSOVH" files.
 echo ========================================
 echo.
-echo Requesting Required Administrator Privileges...
+echo Using Administrator Privileges...
 echo.
 
 :: Get EGS Overlay path from registry
@@ -55,12 +56,30 @@ echo Using EOS Overlay files path: !BASE_PATH!
 echo.
 
 :: Convert to short path to avoid spaces and parentheses
-for %%i in ("!BASE_PATH!") do set "BASE_PATH=%%~si"
+for %%i in ("!BASE_PATH!") do set "SHORT_PATH=%%~si"
+if "!SHORT_PATH!"=="" (
+    echo ERROR: Could not convert EOS path to short format.
+    echo Original path: !BASE_PATH!
+    echo.
+    echo Exiting in 30 seconds... Press any key to close immediately.
+    timeout /t 30
+    exit
+)
+set "BASE_PATH=!SHORT_PATH!"
 
 :: Build the Launcher path by going up 3 levels to Epic Games folder and adding the rest
 for %%i in ("!BASE_PATH!\..\..\..") do set "EPIC_GAMES_PATH=%%~fi"
 set "LAUNCHER_PATH=!EPIC_GAMES_PATH!\Launcher\Portal\Extras\Overlay"
-for %%i in ("!LAUNCHER_PATH!") do set "LAUNCHER_PATH=%%~si"
+for %%i in ("!LAUNCHER_PATH!") do set "SHORT_PATH=%%~si"
+if "!SHORT_PATH!"=="" (
+    echo ERROR: Could not convert Launcher path to short format.
+    echo Original path: !LAUNCHER_PATH!
+    echo.
+    echo Exiting in 30 seconds... Press any key to close immediately.
+    timeout /t 30
+    exit
+)
+set "LAUNCHER_PATH=!SHORT_PATH!"
 
 :: Check if the EOS path exists
 if not exist "!BASE_PATH!" (
