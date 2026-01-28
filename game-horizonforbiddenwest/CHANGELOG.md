@@ -4,18 +4,26 @@
 
 - None
 
+## [0.2.4] - 2026-01-27
+
+- Added: Button to open save folder
+- Added: Notification to run HFW MM to restore vanilla files on purge
+- Removed: Deprecated zip installer
+- Removed: Unpleasant strings
+- Removed: fsExtra import - no longer needed
+
 ## [0.2.3] - 2026-01-25
 
 - Changed HFW MM to launch directly from Vortex (fixed in v0.9.3 of HFW MM)
 
 ## [0.2.2] - 2026-01-22
 
-- Disabled all ModForge support. All users should use HFW MM instead. ModForge is not capable of handling mod variants, and is closed-source.
+- Disabled all Alternative repacker support. All users should use HFW MM instead. Alternative repacker is not capable of handling mod variants, and is closed-source.
 
 ## [0.2.1] - 2026-01-14
 
 - Changed HFW Mod Manager to instruct the user to launch it from the game folder. This is due to some strange behavior in the app that I am still trying to sort out.
-- Added preliminary support for ModForge (alternative mod packer). Auto-download choice is deactivated for now.
+- Added preliminary support for Alternative repacker (alternative mod packer). Auto-download choice is deactivated for now.
 - Fixed issues with downloaded HFW MM executable not being downloaded properly.
 
 ## [0.2.0] - 2026-01-07

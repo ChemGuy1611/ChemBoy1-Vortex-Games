@@ -1,17 +1,14 @@
 /*////////////////////////////////////////////////
 Name: Horizon Forbidden West Vortex Extension
 Author: ChemBoy1
-Version: 0.2.3
-Date: 2026-01-25
+Version: 0.2.4
+Date: 2026-01-27
 ////////////////////////////////////////////////*/
 
 //import libraries
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
-const Bluebird = require('bluebird');
-const fsExtra = require('fs-extra');
-//const winapi = require('winapi-bindings'); //gives access to the Windows registry
 
 //Specify all the information about the game
 const STEAMAPP_ID = "2420110";
@@ -46,7 +43,7 @@ let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = ''; 
 let GAME_PATH = '';
 let modManagerInstalled = false;
-let modForgeInstalled = false;
+let repackerInstalled = false;
 
 const MODMANAGER_ID = `${GAME_ID}-modmanager`;
 const MODMANAGER_NAME = "HFW Mod Manager";
@@ -56,12 +53,12 @@ const MODMANAGER_PAGE_NO = 137;
 const MODMANAGER_FILE_NO = 683;
 const MODMANAGER_DOMAIN = GAME_ID;
 
-const MODFORGE_ID = `${GAME_ID}-modforge`;
-const MODFORGE_NAME = "ModForge";
-const MODFORGE_EXEC = 'ModForge.exe';
-const MODFORGE_PAGE_NO = 1615;
-const MODFORGE_FILE_NO = 6654;
-const MODFORGE_DOMAIN = 'site';
+const REPACKER_ID = `${GAME_ID}-repacker`;
+const REPACKER_NAME = "Repacker";
+const REPACKER_EXEC = 'Repacker.exe';
+const REPACKER_PAGE_NO = 1;
+const REPACKER_FILE_NO = 1;
+const REPACKER_DOMAIN = GAME_ID;
 
 const loaderChoice = false; //toggle for choice of mod packer
 
@@ -106,8 +103,8 @@ const spec = {
       "targetPath": '{gamePath}'
     },
     {
-      "id": MODFORGE_ID,
-      "name": MODFORGE_NAME,
+      "id": REPACKER_ID,
+      "name": REPACKER_NAME,
       "priority": "low",
       "targetPath": '{gamePath}'
     },
@@ -206,11 +203,11 @@ async function isModManagerInstalled(api) {
   }
 }
 
-//Check if ModForge is installed
-function isModForgeInstalled(api, spec) {
+//Check if Repacker is installed
+function isRepackerInstalled(api, spec) {
   const state = api.getState();
   const mods = state.persistent.mods[spec.game.id] || {};
-  return Object.keys(mods).some(id => mods[id]?.type === MODFORGE_ID);
+  return Object.keys(mods).some(id => mods[id]?.type === REPACKER_ID);
 }
 
 //* Function to auto-download HFW MM from Nexus Mods
@@ -321,16 +318,16 @@ async function downloadModManager(api, check) {
   }
 } //*/
 
-//* Function to auto-download ModForge from Nexus Mods
-async function downloadModForge(api, gameSpec) {
-  let isInstalled = isModForgeInstalled(api, gameSpec);
+//* Function to auto-download Repacker from Nexus Mods
+async function downloadRepacker(api, gameSpec) {
+  let isInstalled = isRepackerInstalled(api, gameSpec);
   if (!isInstalled) {
-    const MOD_NAME = MODFORGE_NAME;
-    const MOD_TYPE = MODFORGE_ID;
+    const MOD_NAME = REPACKER_NAME;
+    const MOD_TYPE = REPACKER_ID;
     const NOTIF_ID = `${MOD_TYPE}-installing`;
-    const PAGE_ID = MODFORGE_PAGE_NO;
-    const FILE_ID = MODFORGE_FILE_NO;  //If using a specific file id because "input" below gives an error
-    const GAME_DOMAIN = MODFORGE_DOMAIN;
+    const PAGE_ID = REPACKER_PAGE_NO;
+    const FILE_ID = REPACKER_FILE_NO;  //If using a specific file id because "input" below gives an error
+    const GAME_DOMAIN = REPACKER_DOMAIN;
     api.sendNotification({ //notification indicating install process
       id: NOTIF_ID,
       message: `Installing ${MOD_NAME}`,
@@ -388,9 +385,9 @@ async function downloadModForge(api, gameSpec) {
 
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
 
-//Test for ModForge files
-function testModForge(files, gameId) {
-  const isMod = files.some(file => path.basename(file) === MODFORGE_EXEC);
+//Test for Repacker files
+function testRepacker(files, gameId) {
+  const isMod = files.some(file => path.basename(file) === REPACKER_EXEC);
   let supported = (gameId === spec.game.id) && isMod;
 
   // Test for a mod installer
@@ -406,10 +403,10 @@ function testModForge(files, gameId) {
   });
 }
 
-//Install ModForge files
-function installModForge(files) {
-  const MOD_TYPE = MODFORGE_ID;
-  const modFile = files.find(file => path.basename(file) === MODFORGE_EXEC);
+//Install Repacker files
+function installRepacker(files) {
+  const MOD_TYPE = REPACKER_ID;
+  const modFile = files.find(file => path.basename(file) === REPACKER_EXEC);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
@@ -472,7 +469,7 @@ function installSave(files) {
   return Promise.resolve({ instructions });
 }
 
-//test for zips for HFWMM (rezip to include all variants)
+//test for HFW MM files/exts
 function testManagerMod(files, gameId) {
   const isInfo = files.some(file => MANAGERMOD_FILES.includes(path.basename(file).toLowerCase()));
   const isExt = files.some(file => MANAGERMOD_EXTS.includes(path.extname(file).toLowerCase()));
@@ -512,41 +509,6 @@ function installManagerMod(files, fileName) {
   return Promise.resolve({ instructions });
 }
 
-//install zips for HFW MM
-async function installZipContent(files, destinationPath) {
-  const setModTypeInstruction = { type: 'setmodtype', value: MANAGERMOD_ID };
-  const zipFiles = files.filter(file => ['.zip', '.7z', '.rar'].includes(path.extname(file)));
-  if (zipFiles.length > 0) { // If it's a double zip, we don't need to repack. 
-    const instructions = zipFiles.map(file => {
-      return {
-        type: 'copy',
-        source: file,
-        destination: path.basename(file),
-      }
-    });
-    instructions.push(setModTypeInstruction);
-    return Promise.resolve({ instructions });
-  } else { // Repack the ZIP
-    const szip = new util.SevenZip();
-    const archiveName = path.basename(destinationPath, '.installing') + '.zip';
-    const archivePath = path.join(destinationPath, archiveName);
-    const rootRelPaths = await fs.readdirAsync(destinationPath);
-    await szip.add(archivePath, rootRelPaths.map(relPath => path.join(destinationPath, relPath)), { raw: ['-r'] });
-    const instructions = [{
-      type: 'copy',
-      source: archiveName,
-      destination: path.basename(archivePath),
-    }];
-    instructions.push(setModTypeInstruction);
-    return Promise.resolve({ instructions });
-  }
-}
-
-//convert installer functions to Bluebird promises
-function toBlue(func) {
-  return (...args) => Bluebird.Promise.resolve(func(...args));
-}
-
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
 //Notify User to run Mod Manager after deployment
@@ -566,22 +528,68 @@ function deployNotify(api) {
           runManager(api);
           dismiss();
         },
-      },//
-      /*{
-        title: `Open Game Folder`,
-        action: (dismiss) => {
-          util.opn(GAME_PATH).catch(() => null);
-          dismiss();
-        },
-      }, //*/
+      },
       {
         title: 'More',
         action: (dismiss) => {
           api.showDialog('question', MESSAGE, {
             text: `You must use ${MOD_NAME} to install .core/.stream mods after installing with Vortex.\n`
                 + `\n`
-                //+ `Due to some strange behavior in the app, you must launch it directly from the game's folder.\n`
-                //+ `Use the button below to open the game folder, then run "${MODMANAGER_EXEC}" from there.\n`
+                + `Use the included tool to launch ${MOD_NAME} (button on notification or in "Dashboard" tab).\n`
+                + `Select the mod options you want, then click the "Pack Mods" button.\n`
+          }, [
+            /*{
+              label: `Open Game Folder`, action: () => {
+                util.opn(GAME_PATH).catch(() => null);
+                dismiss();
+              }
+            }, //*/
+            { 
+              label: `Run ${MOD_NAME}`, action: () => {
+                runManager(api);
+                dismiss();
+              }
+            }, //*/
+            { label: 'Continue', action: () => dismiss() },
+            {
+              label: 'Never Show Again', action: () => {
+                api.suppressNotification(NOTIF_ID);
+                dismiss();
+              }
+            },
+          ]);
+        },
+      },
+    ],
+  });
+}
+
+//Notify User to run Mod Manager to restore vanilla files on purge
+function purgeNotify(api) {
+  const NOTIF_ID = `${GAME_ID}-purge-notification`;
+  const MOD_NAME = 'HFW MM';
+  const MESSAGE = `Run ${MOD_NAME} To Restore Files`;
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'warning',
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: `Run ${MOD_NAME}`,
+        action: (dismiss) => {
+          runManager(api);
+          dismiss();
+        },
+      },
+      {
+        title: 'More',
+        action: (dismiss) => {
+          api.showDialog('question', MESSAGE, {
+            text: `\n`
+                + `Vortex just detected that you have purged mods.\n`
+                + `If you wish to restore the game to a vanilla state, you must run ${MOD_NAME} and click the "Restore Files" button.\n`
+                + `\n`
                 + `Use the included tool to launch ${MOD_NAME} (button on notification or in "Dashboard" tab).\n`
           }, [
             /*{
@@ -613,9 +621,9 @@ function deployNotify(api) {
 function runManager(api) {
   let TOOL_ID =  MODMANAGER_ID;
   let TOOL_NAME = MODMANAGER_NAME;
-  if (modForgeInstalled && !modManagerInstalled) {
-    TOOL_ID = MODFORGE_ID;
-    TOOL_NAME = MODFORGE_NAME;
+  if (repackerInstalled && !modManagerInstalled) {
+    TOOL_ID = REPACKER_ID;
+    TOOL_NAME = REPACKER_NAME;
   }
   const state = api.store.getState();
   const tool = util.getSafe(state, ['settings', 'gameMode', 'discovered', GAME_ID, 'tools', TOOL_ID], undefined);
@@ -649,8 +657,8 @@ async function setup(discovery, api, gameSpec) {
   STAGING_FOLDER = selectors.installPathForGame(api.getState(), gameSpec.game.id);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(api.getState(), gameSpec.game.id);
   modManagerInstalled = await isModManagerInstalled(api);
-  modForgeInstalled = isModForgeInstalled(api, gameSpec);
-  if (!modManagerInstalled && !modForgeInstalled) {
+  repackerInstalled = isRepackerInstalled(api, gameSpec);
+  if (!modManagerInstalled && !repackerInstalled) {
     if (loaderChoice) {
       await selectModPacker(api, gameSpec);
     } else {
@@ -691,12 +699,12 @@ function applyGame(context, gameSpec) {
         //parameters: [],
       }, //*/
       {
-        id: MODFORGE_ID,
-        name: MODFORGE_NAME,
-        logo: `modforge.png`,
+        id: REPACKER_ID,
+        name: REPACKER_NAME,
+        logo: `repacker.png`,
         //queryPath: getDownloadsPath(context.api),
-        executable: () => MODFORGE_EXEC,
-        requiredFiles: [MODFORGE_EXEC],
+        executable: () => REPACKER_EXEC,
+        requiredFiles: [REPACKER_EXEC],
         detach: true,
         relative: true,
         exclusive: false,
@@ -719,10 +727,11 @@ function applyGame(context, gameSpec) {
   });
 
   //register mod installers
-  context.registerInstaller(MODFORGE_ID, 25, testModForge, installModForge);
+  if (loaderChoice) {
+    context.registerInstaller(REPACKER_ID, 25, testRepacker, installRepacker);
+  }
   context.registerInstaller(MANAGERMOD_ID, 27, testManagerMod, installManagerMod);
-  //context.registerInstaller(MANAGERMOD_ID, 25, testManagerMod, toBlue(installZipContent));
-  context.registerInstaller(`${GAME_ID}-save`, 25, testSave, installSave);
+  context.registerInstaller(SAVE_ID, 25, testSave, installSave);
 
   //register actions
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download HFW Mod Manager', () => {
@@ -732,8 +741,8 @@ function applyGame(context, gameSpec) {
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   });
-  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download ModForge', () => {
-    downloadModForge(context.api, spec);
+  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download Repacker', () => {
+    downloadRepacker(context.api, spec);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
@@ -741,6 +750,13 @@ function applyGame(context, gameSpec) {
   }); //*/
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open HFW Mod Manager Page', () => {
     util.opn(`https://www.nexusmods.com/${GAME_ID}/mods/${MODMANAGER_PAGE_NO}`).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Saves Folder', () => {
+    util.opn(SAVE_PATH).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
@@ -754,16 +770,14 @@ function applyGame(context, gameSpec) {
     return gameId === GAME_ID;
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
-    const openPath = path.join(__dirname, 'CHANGELOG.md');
-    util.opn(openPath).catch(() => null);
+    util.opn(path.join(__dirname, 'CHANGELOG.md')).catch(() => null);
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
-    const openPath = DOWNLOAD_FOLDER;
-    util.opn(openPath).catch(() => null);
+    util.opn(DOWNLOAD_FOLDER).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
@@ -779,35 +793,37 @@ function main(context) {
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;
       modManagerInstalled = await isModManagerInstalled(context.api);
-      modForgeInstalled = isModForgeInstalled(context.api, spec);
-      if (!modManagerInstalled && !modForgeInstalled) {
+      repackerInstalled = isRepackerInstalled(context.api, spec);
+      if (!modManagerInstalled && !repackerInstalled) {
         if (loaderChoice) {
           await selectModPacker(context.api, spec);
         } else {
           await downloadModManager(context.api, true);
         }
       }
-      return deployNotify(context.api);
+      deployNotify(context.api);
+      return Promise.resolve();
     });
     context.api.onAsync('did-purge', async (profileId) => { 
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;
       modManagerInstalled = await isModManagerInstalled(context.api);
-      modForgeInstalled = isModForgeInstalled(context.api, spec);
-      if (!modManagerInstalled && !modForgeInstalled) {
+      repackerInstalled = isRepackerInstalled(context.api, spec);
+      if (!modManagerInstalled && !repackerInstalled) {
         if (loaderChoice) {
           await selectModPacker(context.api, spec);
         } else {
           await downloadModManager(context.api, true);
         }
       }
+      purgeNotify(context.api);
       return Promise.resolve();
     });
   });
   return true;
 }
 
-//Function to select mod packer (HFW Mod Manager or ModForge)
+//Function to select mod packer (HFW Mod Manager or Repacker)
 async function selectModPacker(api, gameSpec) {
   const REC_LABEL = `${MODMANAGER_NAME} (Recommended)`;
   const t = api.translate;
@@ -823,7 +839,7 @@ async function selectModPacker(api, gameSpec) {
     ),
   }, [
     { label: t(REC_LABEL) },
-    { label: t(MODFORGE_NAME) },
+    { label: t(REPACKER_NAME) },
   ])
   .then(async (result) => {
     if (result === undefined) {
@@ -831,8 +847,8 @@ async function selectModPacker(api, gameSpec) {
     }
     if (result.action === REC_LABEL) {
       await downloadModManager(api, true);
-    } else if (result.action === MODFORGE_NAME) {
-      await downloadModForge(api, gameSpec);
+    } else if (result.action === REPACKER_NAME) {
+      await downloadRepacker(api, gameSpec);
     }
   });
 }
