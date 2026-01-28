@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.4.0] - 2026-01-28
+
+- Added: Initial support for Super Mod Merger (new merger utility) - Proper install, button to download, run it from notification if installed
+
 ## [0.3.1] - 2025-10-06
 
 - Added notification to install .NET8 if not found in the registry (required for Merger Utility).

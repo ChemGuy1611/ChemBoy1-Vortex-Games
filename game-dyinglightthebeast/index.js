@@ -2,8 +2,8 @@
 Name: Dying Light The Beast Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.3.0
-Date: 2025-09-27
+Version: 0.4.0
+Date: 2026-01-28
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -48,6 +48,8 @@ let GAME_PATH = null;
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 let DOTNET_INSTALLED = false;
+let superMergerInstalled = false;
+let mergerInstalled = false;
 
 const PAK_ID = `${GAME_ID}-pak`;
 const PAK_NAME = "Pak Mod (Merged)";
@@ -164,12 +166,6 @@ const spec = {
       "targetPath": path.join('{gamePath}', PAK_PATH)
     }, //*/
     {
-      "id": MERGER_ID,
-      "name": MERGER_NAME,
-      "priority": "high",
-      "targetPath": path.join('{gamePath}', MERGER_PATH)
-    }, //*/
-    {
       "id": ROOT_ID,
       "name": ROOT_NAME,
       "priority": "high",
@@ -181,6 +177,18 @@ const spec = {
       "priority": "high",
       "targetPath": path.join('{gamePath}', BINARIES_PATH)
     },
+    {
+      "id": MERGER_ID,
+      "name": MERGER_NAME,
+      "priority": "low",
+      "targetPath": path.join('{gamePath}', MERGER_PATH)
+    }, //*/
+    {
+      "id": SUPERMERGER_ID,
+      "name": SUPERMERGER_NAME,
+      "priority": "low",
+      "targetPath": path.join('{gamePath}', SUPERMERGER_PATH)
+    }, //*/
   ],
   "discovery": {
     "ids": DISCOVERY_IDS_ACTIVE,
@@ -222,9 +230,9 @@ const tools = [
     id: SUPERMERGER_ID,
     name: SUPERMERGER_NAME,
     logo: 'supermerger.png',
-    executable: () => MERGER_EXEC_PATH,
+    executable: () => SUPERMERGER_EXEC_PATH,
     requiredFiles: [
-      MERGER_EXEC_PATH,
+      SUPERMERGER_EXEC_PATH,
     ],
     relative: true,
     exclusive: true,
@@ -314,11 +322,18 @@ async function deploy(api) { //useful to deploy mods after doing some action
 
 // AUTOMATIC DOWNLOADER FUNCTIONS ///////////////////////////////////////////////////
 
-//Check if Mod Merger Utility is installed
+//Check if UTM is installed
 function isMergerUtilityInstalled(api, spec) {
   const state = api.getState();
   const mods = state.persistent.mods[spec.game.id] || {};
   return Object.keys(mods).some(id => mods[id]?.type === MERGER_ID);
+}
+
+//Check if Super Merger Utility is installed
+function isSuperMergerInstalled(api, spec) {
+  const state = api.getState();
+  const mods = state.persistent.mods[spec.game.id] || {};
+  return Object.keys(mods).some(id => mods[id]?.type === SUPERMERGER_ID);
 }
 
 //* Function to auto-download Mod Merger Utility from Nexus Mods
@@ -331,6 +346,71 @@ async function downloadMergerUtility(api, gameSpec) {
     let FILE_ID = MERGER_FILE_NO;  //If using a specific file id because "input" below gives an error
     const PAGE_ID = MERGER_PAGE_NO;
     const GAME_DOMAIN = GAME_ID;
+    api.sendNotification({ //notification indicating install process
+      id: NOTIF_ID,
+      message: `Installing ${MOD_NAME}`,
+      type: 'activity',
+      noDismiss: true,
+      allowSuppress: false,
+    });
+    if (api.ext?.ensureLoggedIn !== undefined) { //make sure user is logged into Nexus Mods account in Vortex
+      await api.ext.ensureLoggedIn();
+    }
+    try {
+      let FILE = FILE_ID; //use the FILE_ID directly for the correct game store version
+      let URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      try { //get the mod files information from Nexus
+        const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
+        const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
+        const file = modFiles
+          .filter(file => file.category_id === 1)
+          .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))[0];
+        if (file === undefined) {
+          throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
+        }
+        FILE = file.file_id;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      } catch (err) { // use defined file ID if input is undefined above
+        FILE = FILE_ID;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      } //
+      const dlInfo = { //Download the mod
+        game: GAME_DOMAIN,
+        name: MOD_NAME,
+      };
+      const dlId = await util.toPromise(cb =>
+        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+      const modId = await util.toPromise(cb =>
+        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
+      const batched = [
+        actions.setModsEnabled(api, profileId, [modId], true, {
+          allowAutoDeploy: true,
+          installed: true,
+        }),
+        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
+      ];
+      util.batchDispatch(api.store, batched); // Will dispatch both actions
+    } catch (err) { //Show the user the download page if the download, install process fails
+      const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
+      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
+      util.opn(errPage).catch(() => null);
+    } finally {
+      api.dismissNotification(NOTIF_ID);
+    }
+  }
+} //*/
+
+//* Function to auto-download Super Merger from Nexus Mods
+async function downloadSuperMerger(api, gameSpec) {
+  let isInstalled = isSuperMergerInstalled(api, gameSpec);
+  if (!isInstalled) {
+    const MOD_NAME = SUPERMERGER_NAME;
+    const MOD_TYPE = SUPERMERGER_ID;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
+    let FILE_ID = SUPERMERGER_FILE_NO;  //If using a specific file id because "input" below gives an error
+    const PAGE_ID = SUPERMERGER_PAGE_NO;
+    const GAME_DOMAIN = SUPERMERGER_DOMAIN;
     api.sendNotification({ //notification indicating install process
       id: NOTIF_ID,
       message: `Installing ${MOD_NAME}`,
@@ -406,8 +486,8 @@ function testPak(files, gameId) {
   });
 }
 
-/*Install pak files (Vortex merger function version)
-function installPak(api, files, fileName) {
+/* Install pak files (Vortex merger function version)
+function installPakInternal(api, files, fileName) {
   const rootCandidate = files.find(file => file.toLowerCase().split(path.sep).includes('ph_ft'));
   const idx = rootCandidate !== undefined
     ? rootCandidate.toLowerCase().split(path.sep).findIndex(seg => seg === 'ph_ft')
@@ -504,7 +584,7 @@ function installPak(api, files, fileName) {
     .then(() => Promise.resolve({ instructions: generateInstructions() }));
 } //*/
 
-//*Install pak files (Mod Merger Utility version)
+//*Install pak files (Merger version)
 function installPak(api, files, fileName) {
   const rootCandidate = files.find(file => file.toLowerCase().split(path.sep).includes('ph_ft'));
   const idx = rootCandidate !== undefined
@@ -583,48 +663,9 @@ function installPak(api, files, fileName) {
     .then(() => Promise.resolve({ instructions: generateInstructions() }));
 } //*/
 
-//* Install paks in zips for Mod Merger Utility
-async function installZipContent(files, destinationPath) {
-  const zipFiles = files.filter(file => ['.zip', '.7z', '.rar'].includes(path.extname(file)));
-  const setModTypeInstruction = { type: 'setmodtype', value: PAK_ID };
-  if (zipFiles.length > 0) { // If it's a double zip, we don't need to repack. 
-    const instructions = zipFiles.map(file => {
-      return {
-        type: 'copy',
-        source: file,
-        destination: path.basename(file),
-      }
-    });
-    instructions.push(setModTypeInstruction);
-    return Promise.resolve({ instructions });
-  }
-  else { // Repack the ZIP
-    const szip = new util.SevenZip();
-    const MOD_NAME = path.basename(destinationPath);
-    const ZIP_NAME = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
-    const archiveName = ZIP_NAME + '.zip';
-    const archivePath = path.join(destinationPath, archiveName);
-    const rootRelPaths = await fs.readdirAsync(destinationPath);
-    await szip.add(archivePath, rootRelPaths.map(relPath => path.join(destinationPath, relPath)), { raw: ['-r'] });
-    const instructions = [{
-      type: 'copy',
-      source: archiveName,
-      destination: path.basename(archivePath),
-    }];
-    instructions.push(setModTypeInstruction);
-    return Promise.resolve({ instructions });
-  }
-}
-
-const Bluebird = require('bluebird');
-//convert installer functions to Bluebird promises
-function toBlue(func) {
-  return (...args) => Bluebird.Promise.resolve(func(...args));
-} //*/
-
-//Installer test for Hotfix Merger files
+//Installer test for Merger files
 function testMergerUtility(files, gameId) {
-  const isMod = files.some(file => (path.basename(file).toLowerCase() === MERGER_EXEC));
+  const isMod = files.some(file => (path.basename(file).toLowerCase() === MERGER_EXEC.toLowerCase()));
   let supported = (gameId === spec.game.id) && isMod;
 
   /* Test for a mod installer.
@@ -640,10 +681,52 @@ function testMergerUtility(files, gameId) {
   });
 }
 
-//Installer install Hotfix Merger files
+//Installer install Merger files
 function installMergerUtility(files) {
   const MOD_TYPE = MERGER_ID;
-  const modFile = files.find(file => (path.basename(file).toLowerCase() === MERGER_EXEC));
+  const modFile = files.find(file => (path.basename(file).toLowerCase() === MERGER_EXEC.toLowerCase()));
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Installer test for Super Merger files
+function testSuperMerger(files, gameId) {
+  const isMod = files.some(file => (path.basename(file).toLowerCase() === SUPERMERGER_EXEC.toLowerCase()));
+  let supported = (gameId === spec.game.id) && isMod;
+
+  /* Test for a mod installer.
+  if (supported && files.find(file =>
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  } //*/
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Installer install Super Merger files
+function installSuperMerger(files) {
+  const MOD_TYPE = SUPERMERGER_ID;
+  const modFile = files.find(file => (path.basename(file).toLowerCase() === SUPERMERGER_EXEC.toLowerCase()));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
@@ -878,6 +961,8 @@ async function setup(discovery, api, gameSpec) {
     dotNetNotify(api);
   }
   // ASYNC CODE //////////////////////////////////////////
+  mergerInstalled = isMergerUtilityInstalled(api, gameSpec);
+  superMergerInstalled = isSuperMergerInstalled(api, gameSpec);
   await downloadMergerUtility(api, gameSpec);
   //* remove old merger folder if the user has it (temporary, remove after a few releases)
   const MERGER_FOLDER_OLD = path.join(STAGING_FOLDER, '__merged.dyinglightthebeast-pak');
@@ -928,14 +1013,21 @@ function applyGame(context, gameSpec) {
 
   //register mod installers
   context.registerInstaller(MERGER_ID, 25, testMergerUtility, installMergerUtility);
-  context.registerInstaller(PAK_ID, 27, testPak, (files, fileName) => installPak(context.api, files, fileName)); // Change back to this function once Mod Merger Utility is updated to look for paks in subfolders
-  //context.registerInstaller(PAK_ID, 25, toBlue(testPak), toBlue(installZipContent));
+  context.registerInstaller(SUPERMERGER_ID, 27, testSuperMerger, installSuperMerger);
+  context.registerInstaller(PAK_ID, 29, testPak, (files, fileName) => installPak(context.api, files, fileName)); // Change back to this function once Mod Merger Utility is updated to look for paks in subfolders
   //context.registerInstaller(CONFIG_ID, 43, testConfig, installConfig);
   //context.registerInstaller(SAVE_ID, 45, testSave, installSave);
   context.registerInstaller(ROOT_ID, 47, testRoot, installRoot);
   context.registerInstaller(BINARIES_ID, 49, testBinaries, installBinaries);
 
   //register actions
+  context.registerAction('mod-icons', 300, 'open-ext', {}, `Download ${SUPERMERGER_NAME} `, () => {
+    downloadSuperMerger(context.api, spec).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
     const openPath = path.join(__dirname, 'CHANGELOG.md');
     util.opn(openPath).catch(() => null);
@@ -963,17 +1055,20 @@ function main(context) {
     (filePath, mergeDir) => mergeOperation(context.api, filePath, mergeDir),
     PAK_ID
   ); //*/
-
   context.once(() => { // put code here that should be run (once) when Vortex starts up
     context.api.onAsync('did-deploy', async (profileId, deployment) => {
       const lastActiveProfile = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
       if (profileId !== lastActiveProfile) return;
       //await didDeploy(context.api); // commented out now that Mod Merger Utility updated to always output data7.pak
+      mergerInstalled = isMergerUtilityInstalled(context.api, spec);
+      superMergerInstalled = isSuperMergerInstalled(context.api, spec);
       return deployNotify(context.api);
     });
     context.api.onAsync('did-purge', async (profileId, deployment) => {
       const lastActiveProfile = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
       if (profileId !== lastActiveProfile) return;
+      mergerInstalled = isMergerUtilityInstalled(context.api, spec);
+      superMergerInstalled = isSuperMergerInstalled(context.api, spec);
       return didPurge(context.api);
     }); //*/
   });
@@ -1008,7 +1103,6 @@ async function didPurge(api) {
   GAME_PATH = getDiscoveryPath(api);
   const PAK_DIRECTORY = path.join(GAME_PATH, VANILLA_PAK_PATH);
   let FILES = await fs.readdirAsync(PAK_DIRECTORY);
-  
   try { //clear non-vanilla pak files
     FILES = FILES.filter(file => 
       path.extname(file).toLowerCase() === PAK_EXT &&
@@ -1024,11 +1118,11 @@ async function didPurge(api) {
   return Promise.resolve();
 }
 
-//Notify User to run Mod Merger Utility after deployment
+//Notify User to run Merger after deployment
 function deployNotify(api) {
   const NOTIF_ID = `${GAME_ID}-deploy`;
-  const MOD_NAME = MERGER_NAME;
-  const MESSAGE = `Use ${MOD_NAME} to Install Mods`;
+  const MOD_NAME = 'Merger';
+  const MESSAGE = `Run ${MOD_NAME} to Install Mods`;
   api.sendNotification({
     id: NOTIF_ID,
     type: 'warning',
@@ -1036,7 +1130,7 @@ function deployNotify(api) {
     allowSuppress: true,
     actions: [
       {
-        title: 'Run Merger',
+        title: `Run ${MOD_NAME}`,
         action: (dismiss) => {
           runModManager(api);
           dismiss();
@@ -1046,13 +1140,15 @@ function deployNotify(api) {
         title: 'More',
         action: (dismiss) => {
           api.showDialog('question', MESSAGE, {
-            text: `For pak mods, you must use ${MOD_NAME} to merge all your paks into a single pak after installing with Vortex.\n`
+            text: `\n`
+                + `For pak mods, you must use ${MOD_NAME} to merge all your paks into a single pak after installing with Vortex.\n`
                 + `Use the included tool to launch ${MOD_NAME} (button below, in "Dashboard" tab, or in notification shown after deployment).\n`
+                + `\n`
                 + `You can run ${MOD_NAME} using the button below, or using the button within the folder icon on the Mods toolbar.\n`
                 + `The use of this tool ensures that all your mods can work together when they make modifications to common files (such as "player_atributes.scr").\n`
           }, [
             {
-              label: 'Run UTM Mod Merger Utility', action: () => {
+              label: `Run ${MOD_NAME}`, action: () => {
                 runModManager(api);
                 dismiss();
               }
@@ -1072,8 +1168,14 @@ function deployNotify(api) {
 }
 
 function runModManager(api) {
-  const TOOL_ID = MERGER_ID;
-  const TOOL_NAME = MERGER_NAME;
+  mergerInstalled = isMergerUtilityInstalled(api, spec);
+  superMergerInstalled = isSuperMergerInstalled(api, spec);
+  let TOOL_ID = MERGER_ID;
+  let TOOL_NAME = MERGER_NAME;
+  if (superMergerInstalled) {
+    TOOL_ID = SUPERMERGER_ID;
+    TOOL_NAME = SUPERMERGER_NAME;
+  }
   const state = api.store.getState();
   const tool = util.getSafe(state, ['settings', 'gameMode', 'discovered', GAME_ID, 'tools', TOOL_ID], undefined);
 
