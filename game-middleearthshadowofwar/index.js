@@ -2,8 +2,8 @@
 Name: Middle-earth: Shadow of War Vortex Extension
 Structure: Mod Loaders + Mods folder w/ LO support
 Author: ChemBoy1
-Version: 2.1.0
-Date: 2025-12-22
+Version: 2.2.0
+Date: 2026-01-28
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -25,7 +25,7 @@ const STEAMAPP_ID = "356190";
 const STEAMAPP_ID_DEMO = null;
 const EPICAPP_ID = null;
 const GOGAPP_ID = "1324471032";
-const XBOXAPP_ID = "WarnerBros.Interactive.WB-Kraken";  //Xbox not supported due to folder permissions
+const XBOXAPP_ID = "WarnerBros.Interactive.WB-Kraken";  //Xbox NOT supported due to folder permissions
 const XBOXEXECNAME = "Kraken.D3D11.C";
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, GOGAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 const GAME_NAME = "Middle-earth: Shadow of War";
@@ -79,6 +79,14 @@ const DLLLOADER_PATH = BINARIES_PATH;
 const DLLLOADER_FILE = "ShadowOfWarDllLoader.dll";
 const DLLLOADER_PAGE_ID = 99;
 const DLLLOADER_FILE_NO = 275;
+
+const MODLOADER_ID = `${GAME_ID}-modloader`;
+const MODLOADER_NAME = "Middle-Earth-Mod-Loader";
+const MODLOADER_PATH = BINARIES_PATH;
+const MODLOADER_FILE = "bink2w64.dll";
+const MODLOADER_MARKER = "modloader";
+const MODLOADER_URL = "https://github.com/ReaperAnon/Middle-Earth-Mod-Loader/releases/download/loader/modloader.7z";
+const MODLOADER_URL_ERR = "https://github.com/ReaperAnon/Middle-Earth-Mod-Loader/releases";
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Folder";
@@ -286,6 +294,12 @@ const spec = {
       "priority": "low",
       "targetPath": path.join("{gamePath}", DLLLOADER_PATH)
     },
+    {
+      "id": MODLOADER_ID,
+      "name": MODLOADER_NAME,
+      "priority": "low",
+      "targetPath": path.join("{gamePath}", MODLOADER_PATH)
+    },
   ],
   "discovery": {
     "ids": DISCOVERY_IDS_ACTIVE,
@@ -307,7 +321,7 @@ const tools = [ //accepts: exe, jar, py, vbs, bat
     exclusive: true,
     shell: true,
     //defaultPrimary: true,
-    parameters: PARAMETERS,
+    //parameters: PARAMETERS,
   }, //*/
   /*{
     id: TOOL_ID,
@@ -463,6 +477,48 @@ function testDllLoader(files, gameId) {
 function installDllLoader(files) {
   const MOD_TYPE = DLLLOADER_ID;
   const modFile = files.find(file => (path.basename(file) === DLLLOADER_FILE));
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Test for Middle-Earth-Mod-Loader files
+function testModLoader(files, gameId) {
+  const isMod = files.some(file => (path.basename(file) === MODLOADER_FILE));
+  const isFolder = files.some(file => (path.basename(file) === MODLOADER_MARKER));
+  let supported = (gameId === spec.game.id) && isMod && isFolder;
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install Middle-Earth-Mod-Loader files
+function installModLoader(files) {
+  const MOD_TYPE = MODLOADER_ID;
+  const modFile = files.find(file => (path.basename(file) === MODLOADER_FILE));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
@@ -777,7 +833,7 @@ function isDllLoaderInstalled(api, spec) {
   if (test === false) {
     try {
       GAME_PATH = getDiscoveryPath(api);
-      fs.statSync(path.join(GAME_PATH, DLLLOADER_FILE));
+      fs.statSync(path.join(GAME_PATH, BINARIES_PATH, DLLLOADER_FILE));
       test = true;
     } catch (err) {
       test = false;
@@ -794,7 +850,24 @@ function isPacketLoaderInstalled(api, spec) {
   if (test === false) {
     try {
       GAME_PATH = getDiscoveryPath(api);
-      fs.statSync(path.join(GAME_PATH, PACKETLOADER_FILE));
+      fs.statSync(path.join(GAME_PATH, PLUGINS_PATH, PACKETLOADER_FILE));
+      test = true;
+    } catch (err) {
+      test = false;
+    }
+  }
+  return test;
+}
+
+//Check if Middle-Earth-Mod-Loader is installed
+function isModLoaderInstalled(api, spec) {
+  const state = api.getState();
+  const mods = state.persistent.mods[spec.game.id] || {};
+  let test =  Object.keys(mods).some(id => mods[id]?.type === MODLOADER_ID);
+  if (test === false) {
+    try {
+      GAME_PATH = getDiscoveryPath(api);
+      fs.statSync(path.join(GAME_PATH, BINARIES_PATH, MODLOADER_MARKER));
       test = true;
     } catch (err) {
       test = false;
@@ -925,6 +998,51 @@ async function downloadPacketLoader(api, gameSpec) {
       util.batchDispatch(api.store, batched); // Will dispatch both actions
     } catch (err) { //Show the user the download page if the download, install process fails
       const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
+      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
+      util.opn(errPage).catch(() => null);
+    } finally {
+      api.dismissNotification(NOTIF_ID);
+    }
+  }
+} //*/
+
+//* Function to auto-download Middle-Earth-Mod-Loader from GitHub
+async function downloadModLoader(api, gameSpec) {
+  let isInstalled = isModLoaderInstalled(api, gameSpec);
+  if (!isInstalled) {
+    const MOD_NAME = MODLOADER_NAME;
+    const MOD_TYPE = MODLOADER_ID;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
+    const GAME_DOMAIN = GAME_ID;
+    const URL = MODLOADER_URL;
+    const ERR_URL = MODLOADER_URL_ERR;
+    api.sendNotification({ //notification indicating install process
+      id: NOTIF_ID,
+      message: `Installing ${MOD_NAME}`,
+      type: 'activity',
+      noDismiss: true,
+      allowSuppress: false,
+    });
+    try {
+      const dlInfo = { //Download the mod
+        game: GAME_DOMAIN,
+        name: MOD_NAME,
+      };
+      const dlId = await util.toPromise(cb =>
+        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+      const modId = await util.toPromise(cb =>
+        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
+      const batched = [
+        actions.setModsEnabled(api, profileId, [modId], true, {
+          allowAutoDeploy: true,
+          installed: true,
+        }),
+        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
+      ];
+      util.batchDispatch(api.store, batched); // Will dispatch both actions
+    } catch (err) { //Show the user the download page if the download, install process fails
+      const errPage = ERR_URL;
       api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
       util.opn(errPage).catch(() => null);
     } finally {
@@ -1105,13 +1223,15 @@ async function setup(discovery, api, gameSpec) {
   await modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
   //await fs.ensureDirWritableAsync(CONFIG_PATH);
   try { //read contents of LO file
-    LO_FILE_STARTUP = await fs.readFileAsync(path.join(GAME_PATH, LO_FILE_PATH), 'utf8');
-    LO_FILE_STARTUP = LO_FILE_STARTUP.split(LO_FILE_SPLITSTRING)[0];
+    const LO_FILE_READ = await fs.readFileAsync(path.join(GAME_PATH, LO_FILE_PATH), 'utf8');
+    LO_FILE_STARTUP = LO_FILE_READ.split(LO_FILE_SPLITSTRING)[0];
   }
-  catch (err) {
-    api.showErrorNotification('Failed to read LO file. Please verify your game files.', err, { allowReport: false });
+  catch (err) { //write the file if it doesn't exist
+    await fs.writeFileAsync(path.join(GAME_PATH, LO_FILE_PATH), LO_FILE_STARTUP, 'utf8');
+    //api.showErrorNotification('Failed to read LO file. Please verify your game files.', err, { allowReport: false });
   }
   await downloadDllLoader(api, gameSpec);
+  //await downloadModLoader(api, gameSpec);
   return downloadPacketLoader(api, gameSpec);
 }
 
@@ -1165,6 +1285,7 @@ function applyGame(context, gameSpec) {
   //register mod installers
   context.registerInstaller(PACKETLOADER_ID, 25, testPacketLoader, installPacketLoader);
   context.registerInstaller(DLLLOADER_ID, 27, testDllLoader, installDllLoader);
+  context.registerInstaller(MODLOADER_ID, 29, testModLoader, installModLoader);
   context.registerInstaller(MOD_ID, 29, testMod, installMod);
   context.registerInstaller(PLUGINS_ID, 31, testPlugins, installPlugins);
   context.registerInstaller(ROOT_ID, 33, testRoot, installRoot);
@@ -1172,13 +1293,28 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(`${GAME_ID}-fallback`, 49, testFallback, (files, destinationPath) => installFallback(context.api, files, destinationPath));
 
   //register actions
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open default.archcfg File', () => {
+    GAME_PATH = getDiscoveryPath(context.api);
+    util.opn(path.join(GAME_PATH, LO_FILE_PATH)).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config / Save Folder', () => {
     util.opn(CONFIG_PATH).catch(() => null);
-    }, () => {
-      const state = context.api.getState();
-      const gameId = selectors.activeGameId(state);
-      return gameId === GAME_ID;
-    });
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download Middle-Earth-Mod-Loader', () => {
+    downloadModLoader(context.api, spec).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
     util.opn(PCGAMINGWIKI_URL).catch(() => null);
   }, () => {

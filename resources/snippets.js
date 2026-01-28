@@ -20,7 +20,102 @@ let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 let GAME_VERSION = '';
 
-
+//User-Defined Folder, stored in state "settings"
+const selectUDF = async (api) => { //user select folder
+  const launcherSettings = path.join(util.getVortexPath("appData"), "7DaysToDie", "launchersettings.json");
+  const res = await api.showDialog(
+    "info",
+    "Choose User Data Folder",
+    {
+      text: "Please select your User Data Folder (UDF) - Vortex will deploy mods to this location. NEVER set your UDF path to Vortex's staging folder."
+    },
+    [
+      { label: "Cancel" },
+      { label: "Select UDF" }
+    ]
+  );
+  if (res.action !== "Select UDF") {
+    return Promise.reject(new util.ProcessCanceled("Cannot proceed without UDF"));
+  }
+  await fs.ensureDirWritableAsync(path.dirname(launcherSettings));
+  await ensureLOFile(api);
+  let directory = await api.selectDir({
+    title: "Select User Data Folder",
+    defaultPath: path.default.join(path.dirname(launcherSettings))
+  });
+  if (!directory) {
+    return Promise.reject(new util.ProcessCanceled("Cannot proceed without UDF"));
+  }
+  let segments = directory.split(path.sep);
+  const lowered = segments.map((seg) => seg.toLowerCase());
+  if (lowered[lowered.length - 1] === "mods") {
+    segments.pop();
+    directory = segments.join(path.sep);
+  }
+  if (lowered.includes("vortex")) {
+    return api.showDialog("info", "Invalid User Data Folder", {
+      text: "The UDF cannot be set inside Vortex directories. Please select a different folder."
+    }, [
+      { label: "Try Again" }
+    ]).then(() => selectUDF(context));
+  }
+  await fs.ensureDirWritableAsync(path.join(directory, "Mods"));
+  const launcher = DEFAULT_LAUNCHER_SETTINGS;
+  launcher.DefaultRunConfig.AdditionalParameters = `-UserDataFolder="${directory}"`;
+  const launcherData = JSON.stringify(launcher, null, 2);
+  await fs.writeFileAsync(launcherSettings, launcherData, { encoding: "utf8" });
+  api.store.dispatch(setUDF(directory));
+  return relaunchExt(api);
+};
+async function relaunchExt(api) {
+  return api.showDialog('info', 'Restart Required', {
+    text: '\n'
+        + 'The extension requires a restart to complete setup.\n'
+        + 'The extension will purge mods and then exit - please re-activate the game via the Games page or Dashboard page.\n'
+        + '\n'
+        + 'IMPORTANT: You may see an External Changes dialogue. Select "Revert change (use staging file)".\n'
+        + '\n',
+  }, [ { label: 'Restart Extension' } ])
+  .then(async () => {
+    try {
+      await purge(api);
+      const batched = [
+        actions.setDeploymentNecessary(GAME_ID, true),
+        actions.setNextProfile(undefined),
+      ];
+      util.batchDispatch(api.store, batched);
+    } catch (err) {
+      api.showErrorNotification('Failed to properly relaunch extension', err);
+    }
+  });
+}
+let DEFAULT_LAUNCHER_SETTINGS = {
+  ShowLauncher: false,
+  DefaultRunConfig: {
+    UseEAC: true,
+    AdditionalParameters: ""
+  }
+};
+const createAction = require("redux-act");
+const setUDF = createAction('7DTD_SET_UDF', (udf) => ({ udf }));
+const reducer = { //reducers to register
+  reducers: {
+    [setUDF]: (state, payload) => {
+      const { udf } = payload;
+      return util.setSafe(state, ["udf"], udf);
+    },
+  },
+  defaults: {}
+};
+//in main
+context.registerReducer(["settings", GAME_ID], reducer);
+//in setup
+const isUDFSet = util.getSafe(
+  api.getState(),
+  ["settings", GAME_ID, "udf"],
+  void 0
+) != null;
+return !isUDFSet ? selectUDF(api) : Promise.resolve();
 
 
 

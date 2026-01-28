@@ -158,7 +158,7 @@ if !errorlevel! equ 0 (
 )
 
 echo.
-echo Operation complete.
+echo Operation complete. Note that you will need to run this script again if EGS updates the overlay.
 pause
 exit /b
 

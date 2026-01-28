@@ -77,7 +77,7 @@ const MERGER_DOMAIN = GAME_ID;
 
 const SUPERMERGER_ID = `${GAME_ID}-supermerger`;
 const SUPERMERGER_NAME = "Super Mod Merger";
-const SUPERMERGER_PATH = 'ph_ft';
+const SUPERMERGER_PATH = MERGER_PATH;
 const SUPERMERGER_EXEC_STRING = "SuperModMerger";
 const SUPERMERGER_EXEC = `${SUPERMERGER_EXEC_STRING}.exe`;
 const SUPERMERGER_EXEC_PATH = path.join(SUPERMERGER_PATH, SUPERMERGER_EXEC);
@@ -208,6 +208,20 @@ const tools = [
     id: MERGER_ID,
     name: MERGER_NAME,
     logo: 'merger.png',
+    executable: () => MERGER_EXEC_PATH,
+    requiredFiles: [
+      MERGER_EXEC_PATH,
+    ],
+    relative: true,
+    exclusive: true,
+    shell: true,
+    //defaultPrimary: true,
+    //parameters: [],
+  }, //*/
+  {
+    id: SUPERMERGER_ID,
+    name: SUPERMERGER_NAME,
+    logo: 'supermerger.png',
     executable: () => MERGER_EXEC_PATH,
     requiredFiles: [
       MERGER_EXEC_PATH,
