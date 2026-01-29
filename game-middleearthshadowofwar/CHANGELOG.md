@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [2.2.1] - 2026-01-29
+
+- Added: Button to open MEML Mods GitHub page
+
 ## [2.2.0] - 2026-01-28
 
 - Added: Support for Middle-earth-Mod-Loader - installer and button to download. Note that this loader has some bugs and is not recommended

@@ -2,8 +2,8 @@
 Name: Kingdom Come Deliverance II Vortex Extension
 Structure: Mod Folder and FBLO
 Author: ChemBoy1
-Version: 0.4.2
-Date: 2025-07-14
+Version: 0.4.3
+Date: 2026-01-29
 //////////////////////////////////////////////////*/
 
 //Import libraries
@@ -23,10 +23,15 @@ const GAME_NAME_SHORT = "KCD2";
 const MOD_PATH = path.join("Mods");
 const REQ_FILE = path.join('Data', 'Levels', 'trosecko', 'cestool.pak');
 const STEAMWORKSHOP_FOLDER = path.join("workshop", "content", STEAMAPP_ID);
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Kingdom_Come:_Deliverance_II";
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1146"; //Nexus link to this extension. Used for links
+
 let LOAD_ORDER_ENABLED = true;
 let GAME_PATH = null;
 let GAME_VERSION = null;
 let EXECUTABLE = null;
+let STAGING_FOLDER = '';
+let DOWNLOAD_FOLDER = '';
 
 //information for executable discovery and variable paths
 let BINARIES_PATH = null;
@@ -115,7 +120,7 @@ const spec = {
       "id": MOD_ID,
       "name": MOD_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${MOD_PATH}`
+      "targetPath": path.join(`{gamePath}`, MOD_PATH)
     },
     {
       "id": ROOT_ID,
@@ -136,6 +141,25 @@ const spec = {
 };
 
 // BASIC EXTENSION FUNCTIONS //////////////////////////////////////////////////////////////////////////////////
+
+function statCheckSync(gamePath, file) {
+  try {
+    fs.statSync(path.join(gamePath, file));
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}
+async function statCheckAsync(gamePath, file) {
+  try {
+    await fs.statAsync(path.join(gamePath, file));
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}
 
 //Set mod type priorities
 function modTypePriority(priority) {
@@ -203,41 +227,45 @@ async function requiresLauncher(gamePath, store) {
 }
 
 function getExecutable(discoveredPath) {
-  const isCorrectExec = (exec) => {
-    try {
-      fs.statSync(path.join(discoveredPath, exec));
-      return true;
-    }
-    catch (err) {
-      return false;
-    }
-  };
-  if (isCorrectExec(EXEC_STEAM)) {
+  if (statCheckSync(discoveredPath, EXEC_STEAM)) {
     GAME_VERSION = 'steam';
     BINARIES_PATH = BINPATH_STEAM;
-    BINARIES_TARGET = `{gamePath}\\${BINARIES_PATH}`;
+    BINARIES_TARGET = path.join(`{gamePath}`, BINARIES_PATH);
     return EXEC_STEAM;
   };
-  if (isCorrectExec(EXEC_EPIC)) {
+  if (statCheckSync(discoveredPath, EXEC_EPIC)) {
     GAME_VERSION = 'epic';
     BINARIES_PATH = BINPATH_EPIC;
-    BINARIES_TARGET = `{gamePath}\\${BINARIES_PATH}`;
+    BINARIES_TARGET = path.join(`{gamePath}`, BINARIES_PATH);
     return EXEC_EPIC;
   };
-  if (isCorrectExec(EXEC_GOG)) {
+  if (statCheckSync(discoveredPath, EXEC_GOG)) {
     GAME_VERSION = 'gog';
     BINARIES_PATH = BINPATH_GOG;
-    BINARIES_TARGET = `{gamePath}\\${BINARIES_PATH}`;
+    BINARIES_TARGET = path.join(`{gamePath}`, BINARIES_PATH);
     return EXEC_GOG;
   };
-  /*if (isCorrectExec(EXEC_XBOX)) {
-  GAME_VERSION = 'xbox';
+  /*if (statCheckSync(discoveredPath, EXEC_XBOX)) {
+    GAME_VERSION = 'xbox';
     BINARIES_PATH = BINPATH_XBOX;
-    BINARIES_TARGET = `{gamePath}\\${BINARIES_PATH}`;
+    BINARIES_TARGET = path.join(`{gamePath}`, BINARIES_PATH);
     return EXEC_XBOX;
   }; //*/
   //log('error', `Could not read game folder to set executable for ${GAME_NAME}`);
   return EXEC_STEAM;
+}
+
+const getDiscoveryPath = (api) => {
+  const state = api.getState();
+  const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});
+  return discovery === null || discovery === void 0 ? void 0 : discovery.path;
+};
+
+async function purge(api) { //useful to clear out mods prior to doing some action
+  return new Promise((resolve, reject) => api.events.emit('purge-mods', true, (err) => err ? reject(err) : resolve()));
+}
+async function deploy(api) { //useful to deploy mods after doing some action
+  return new Promise((resolve, reject) => api.events.emit('deploy-mods', (err) => err ? reject(err) : resolve()));
 }
 
 // MOD INSTALLER FUNCTIONS ////////////////////////////////////////////////////////////////////////////////////////
@@ -327,7 +355,7 @@ function installMod(files, fileName) {
     }
   }
   else if (modFile2 !== undefined) { //Archive contains valid mod folder, but no mod.manifest
-    idx = modFile2.indexOf(`${path.basename(modFile2)}\\`);
+    idx = modFile2.indexOf(`${path.basename(modFile2)}${path.sep}`);
     rootPath = path.dirname(modFile2);
     const rootPathLower = path.basename(rootPath).toLowerCase();
     MOD_FOLDER = rootPathLower.replace(/ /gi, '_');
@@ -544,12 +572,6 @@ function installBinaries(files) {
 }
 
 // LOAD ORDER FUNCTIONS /////////////////////////////////////////////////////////////////////////////////////////////////
-
-const getDiscoveryPath = (api) => {
-  const state = api.getState();
-  const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});
-  return discovery === null || discovery === void 0 ? void 0 : discovery.path;
-};
 
 async function deserializeLoadOrder(context) {
   //* on mod update for all profile it would cause the mod if it was selected to be unselected
@@ -913,6 +935,8 @@ function setupNotify(api) {
 async function setup(discovery, api, gameSpec) {
   GAME_PATH = discovery.path;
   EXECUTABLE = getExecutable;
+  STAGING_FOLDER = selectors.installPathForGame(api.getState(), GAME_ID);
+  DOWNLOAD_FOLDER = selectors.downloadPathForGame(api.getState(), GAME_ID);
   //setupNotify(api);
   if (LOAD_ORDER_ENABLED) {
     await fs.ensureFileAsync(path.join(discovery.path, LO_PATH));
@@ -926,10 +950,10 @@ function applyGame(context, gameSpec) {
   const game = {
     ...gameSpec.game,
     queryPath: makeFindGame(context.api, gameSpec),
+    executable: getExecutable,
     queryModPath: makeGetModPath(context.api, gameSpec),
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
-    executable: getExecutable,
     supportedTools: [ //3rd party tools and launchers
       {
         id: `${GAME_ID}-devmodelaunch`,
@@ -975,47 +999,65 @@ function applyGame(context, gameSpec) {
 
   //register buttons to open folders and logs
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Log - kcd.log', () => {
-    const state = context.api.getState();
-    const discovery = selectors.discoveryByGame(state, GAME_ID);
-    const openPath = path.join(discovery.path, LOG_FILE);
-    util.opn(openPath).catch(() => null);
+    GAME_PATH = getDiscoveryPath(context.api);
+    util.opn(path.join(GAME_PATH, LOG_FILE)).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open LO File - mod_order.txt', () => {
-    const state = context.api.getState();
-    const discovery = selectors.discoveryByGame(state, GAME_ID);
-    const openPath = path.join(discovery.path, LO_PATH);
-    util.opn(openPath).catch(() => null);
+    GAME_PATH = getDiscoveryPath(context.api);
+    util.opn(path.join(GAME_PATH, LO_PATH)).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Settings - attributes.xml', () => {
-    const state = context.api.getState();
-    const openPath = path.join(CONFIG_PATH, CONFIG_FILE);
-    util.opn(openPath).catch(() => null);
+    util.opn(path.join(CONFIG_PATH, CONFIG_FILE)).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
-    const state = context.api.getState();
-    const openPath = path.join(CONFIG_PATH);
-    util.opn(openPath).catch(() => null);
+    util.opn(CONFIG_PATH).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Saves Folder', () => {
+    util.opn(SAVE_PATH).catch(() => null);
+  }, () => {
     const state = context.api.getState();
-    const openPath = path.join(SAVE_PATH);
-    util.opn(openPath).catch(() => null);
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
+    util.opn(PCGAMINGWIKI_URL).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
+    util.opn(path.join(__dirname, 'CHANGELOG.md')).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
+    util.opn(DOWNLOAD_FOLDER).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
+    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);

@@ -2,8 +2,8 @@
 Name: WH40K Space Marine 2 Vortex Extension
 Structure: Custom Game Data
 Author: ChemBoy1
-Version: 0.4.0
-Date: 2025-01-28
+Version: 0.4.1
+Date: 2025-01-29
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -20,9 +20,13 @@ const XBOXAPP_ID = null;
 const XBOXEXECNAME = null;
 const GAME_ID = "warhammer40000spacemarine2";
 const EXEC = "Warhammer 40000 Space Marine 2.exe";
-const EXEC_BIN = path.join("client_pc", "root", "bin", "pc", "Warhammer 40000 Space Marine 2 - Retail.exe");
+const EXEC_RETAIL = "Warhammer 40000 Space Marine 2 - Retail.exe";
+const EXEC_BIN = path.join("client_pc", "root", "bin", "pc", EXEC_RETAIL);
 const GAME_NAME = "Warhammer 40,000: Space Marine 2";
 const GAME_NAME_SHORT = " WH40K Space Marine 2";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Warhammer_40,000:_Space_Marine_II";
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/961"; //Nexus link to this extension. Used for links
+
 let GAME_PATH = null;
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
@@ -96,6 +100,8 @@ const CUSTOMSTRAT_EXEC = "CustomStratagems.exe";
 const CUSTOMSTRAT_PAGE_NO = 375;
 const CUSTOMSTRAT_FILE_NO = 2892;
 const CUSTOMSTRAT_DOMAIN = GAME_ID;
+const CUSTOMSTRAT_PAK_PATH = path.join(CUSTOMSTRAT_PATH, "created_custom_stratagems");
+const CUSTOMSTRAT_PAK_STRING = 'cs_';
 
 //for Integration Studio
 const INTEGRATION_STUDIO_ID = `${GAME_ID}-integrationstudio`;
@@ -114,6 +120,18 @@ const IS_FILE_NO = 2771;
 
 const MOD_PATH = PAK_PATH;
 const REQ_FILE = EXEC;
+
+const NOEAC_LAUNCH_ID = `${GAME_ID}-noeaclaunch`;
+const NOEAC_LAUNCH_NAME = "No-EAC Launch";
+const NOEAC_LAUNCH_PATH = BINARIES_PATH;
+const NOEAC_LAUNCH_BAT = "rungame.bat";
+const NOEAC_LAUNCH_BAT_PATH = path.join(BINARIES_PATH, NOEAC_LAUNCH_BAT);
+const NOEAC_LAUNCH_SCRIPT = `@echo off
+set SteamAppId=${STEAMAPP_ID}
+set SteamGameId=${STEAMAPP_ID}
+"${EXEC_RETAIL}"
+echo Launching ${GAME_NAME_SHORT} without EAC...
+exit`;
 
 //Filled in from info above
 const spec = {
@@ -201,12 +219,26 @@ const spec = {
 
 //3rd party tools and launchers
 const tools = [
-  {
+  /*{
     id: "SkipLauncher",
     name: "Skip Launcher",
     logo: `exec.png`,
     executable: () => EXEC_BIN,
     requiredFiles: [EXEC_BIN],
+    detach: true,
+    relative: true,
+    exclusive: true,
+    //defaultPrimary: true,
+    //parameters: []
+  }, //*/
+  {
+    id: NOEAC_LAUNCH_ID,
+    name: NOEAC_LAUNCH_NAME,
+    logo: `noeac.png`,
+    queryPath: () => NOEAC_LAUNCH_PATH,
+    executable: () => NOEAC_LAUNCH_BAT,
+    requiredFiles: [NOEAC_LAUNCH_BAT],
+    shell: true,
     detach: true,
     relative: true,
     exclusive: true,
@@ -1207,7 +1239,7 @@ async function deserializeLoadOrder(context) {
 }
 
 function modToTemplate(mod) {
-  return `- pak: ${mod}`;
+  return `${LO_FILE_SPLITSTR}${mod}`;
 }
 
 //Write load order to files
@@ -1229,7 +1261,7 @@ async function serializeLoadOrder(context, loadOrder) {
     .filter((entry) => (entry !== ``))
     .join("\n");
 
-  //write to default.archcfg file
+  //write to file
   let loadOrderOutput = loadOrderJoined;
   return fs.writeFileAsync(
     loadOrderPath,
@@ -1240,17 +1272,56 @@ async function serializeLoadOrder(context, loadOrder) {
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
+async function copyCustomStratToPaks(api) {
+  try {
+    GAME_PATH = getDiscoveryPath(api);
+    const readFolder = path.join(GAME_PATH, CUSTOMSTRAT_PAK_PATH);
+    const paks = await fs.readdirAsync(readFolder);
+    log('warn', `Found CS pak files: ${paks.join(', ')}`);
+    const copyPak = paks.filter((file) => (
+      path.basename(file).startsWith(CUSTOMSTRAT_PAK_STRING)
+      && PAK_EXTS.includes(path.extname(file).toLowerCase())
+    ))
+    .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()))
+    .reverse()[0];
+    log('warn', `Copying newest CS pak file: ${copyPak}`);
+    const source = path.join(readFolder, copyPak);
+    const destination = path.join(GAME_PATH, PAK_PATH, copyPak);
+    await fs.copyAsync(source, destination);
+    deploy(api);
+  } catch(err) {
+    log('error', 'Could not copy Custom Stratagems to Pak Mods folder: ' + err);
+    return Promise.reject(new util.ProcessCanceled('Custom Stratagems folder not found'));
+  }
+}
+
 //Setup function
 async function setup(discovery, api, gameSpec) {
   const state = api.getState();
   GAME_PATH = discovery.path;
   STAGING_FOLDER = selectors.installPathForGame(state, gameSpec.game.id);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, gameSpec.game.id);
+  notifyIntegrationStudio(api);
   await fs.ensureDirWritableAsync(path.join(GAME_PATH, BINARIES_PATH));
   await fs.ensureDirWritableAsync(path.join(GAME_PATH, LOCALSUB_PATH));
-  notifyIntegrationStudio(api);
+  await fs.ensureDirWritableAsync(path.join(GAME_PATH, PAK_PATH));
   await fs.ensureFileAsync(path.join(GAME_PATH, LO_FILE_PATH), 'utf8');
-  return fs.ensureDirWritableAsync(path.join(GAME_PATH, PAK_PATH));
+  //* Make .bat file to launch the game (EXPERIMENTAL)
+  const batPath = path.join(GAME_PATH, NOEAC_LAUNCH_BAT_PATH);
+  try {
+    await fs.statAsync(batPath);
+  } catch (err) {
+    try {
+      await fs.writeFileAsync(
+        batPath,
+        NOEAC_LAUNCH_SCRIPT,
+        { encoding: 'utf-8' }
+      );
+    } catch (err) {
+      api.showErrorNotification('Failed to write No-EAC rungame.bat', err, { allowReport: false });
+    }
+  } //*/
+  return Promise.resolve();
 }
 
 //Let Vortex know about the game
@@ -1318,6 +1389,21 @@ function applyGame(context, gameSpec) {
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   }); //*/
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Custom Stratagems Folder', () => {
+    GAME_PATH = getDiscoveryPath(context.api);
+    util.opn(path.join(GAME_PATH, CUSTOMSTRAT_PAK_PATH)).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Copy Custom Strat to Paks', () => {
+    copyCustomStratToPaks(context.api).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  }); //*/
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download Index V2', () => {
     downloadIndex(context.api, spec).catch(() => null);
   }, () => {
@@ -1370,6 +1456,13 @@ function applyGame(context, gameSpec) {
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
+    util.opn(PCGAMINGWIKI_URL).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
     util.opn(path.join(__dirname, 'CHANGELOG.md')).catch(() => null);
     }, () => {
@@ -1379,6 +1472,13 @@ function applyGame(context, gameSpec) {
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
     util.opn(DOWNLOAD_FOLDER).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
+    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);

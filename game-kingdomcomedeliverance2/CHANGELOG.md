@@ -4,6 +4,11 @@
 
 - Changed launcher settings so that Steam version launches through Steam (so that Steam launch arguments are used).
 
+## [0.4.3] - 2026-01-29
+
+- Fixed: path strings
+- Added: Buttons to open PCGamingWiki page, view changelog, open downloads folder, and submit bug reports
+
 ## [0.4.2] - 2025-07-14
 
 - Mods will now maintain their load order postion and enable/disable state when updating. Thanks to infarctus.
@@ -28,4 +33,4 @@
 
 ## [0.3.0]
 
-- Added mods from Steam Workshop to load order. This obviously only applies to the Steam version of the game.
+- Added mods from Steam Workshop to load order. This obviously only applies to the Steam version of the game

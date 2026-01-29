@@ -2,8 +2,8 @@
 Name: Middle-earth: Shadow of War Vortex Extension
 Structure: Mod Loaders + Mods folder w/ LO support
 Author: ChemBoy1
-Version: 2.2.0
-Date: 2026-01-28
+Version: 2.2.1
+Date: 2026-01-29
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -36,6 +36,7 @@ const EXEC = path.join(BINARIES_PATH, EXEC_NAME);
 const EXEC_GOG = EXEC; //matching exes
 const EXEC_XBOX = 'gamelaunchhelper.exe';
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Middle-earth:_Shadow_of_War";
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/375"; //Nexus link to this extension. Used for links
 
 const LOAD_ORDER_ENABLED = true;
 const ROOT_FOLDERS = ['game', 'x64'];
@@ -91,6 +92,7 @@ const MODLOADER_FILE = "bink2w64.dll";
 const MODLOADER_MARKER = "modloader";
 const MODLOADER_URL = "https://github.com/ReaperAnon/Middle-Earth-Mod-Loader/releases/download/loader/modloader.7z";
 const MODLOADER_URL_ERR = "https://github.com/ReaperAnon/Middle-Earth-Mod-Loader/releases";
+const REAPERMODS_URL = "https://github.com/ReaperAnon/Shadow-Of-War-Mods/releases/tag/1.0.0";
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Folder";
@@ -1331,6 +1333,13 @@ function applyGame(context, gameSpec) {
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Get MEML Mods (GitHub)', () => {
+    util.opn(REAPERMODS_URL).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
     util.opn(PCGAMINGWIKI_URL).catch(() => null);
   }, () => {
@@ -1339,8 +1348,7 @@ function applyGame(context, gameSpec) {
     return gameId === GAME_ID;
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
-    const openPath = path.join(__dirname, 'CHANGELOG.md');
-    util.opn(openPath).catch(() => null);
+    util.opn(path.join(__dirname, 'CHANGELOG.md')).catch(() => null);
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
@@ -1348,6 +1356,13 @@ function applyGame(context, gameSpec) {
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
     util.opn(DOWNLOAD_FOLDER).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
+    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);

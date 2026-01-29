@@ -4,6 +4,10 @@
 
 - None
 
+## [0.1.8] - 2026-01-29
+
+- Fixed: path strings
+
 ## [0.1.7] - 2025-09-02
 
 - Added additional installer for CNS mods with only a .json file and no .pak file.

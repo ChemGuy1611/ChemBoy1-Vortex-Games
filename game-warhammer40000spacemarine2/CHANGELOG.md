@@ -4,6 +4,12 @@
 
 - None Planned
 
+## [0.4.1] - 2026-01-29
+
+- Added: Buttons to open Custom Stratagems paks folder and copy newest Custom Strat to Pak Mods folder
+- Added: Button to open PCGamingWiki page
+- Added: Launch tool to launch game without EAC (Offline play only!)
+
 ## [0.4.0] - 2026-01-28
 
 - Added: Load Order support for pak mods!
