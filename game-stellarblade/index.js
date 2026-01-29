@@ -10,6 +10,7 @@ Date: 2026-01-29
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
+const { request } = require('http');
 
 //Specify all information about the game
 const GAME_ID = "stellarblade";
@@ -22,6 +23,9 @@ const XBOXEXECNAME = null;
 const GAME_NAME = "Stellar Blade";
 const GAME_NAME_SHORT = "Stellar Blade";
 const EXEC = "SB.exe";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Stellar_Blade";
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1324"; //Nexus link to this extension. Used for links
+
 let GAME_PATH = null;
 let CHECK_DATA = false;
 let CHECK_DOCS = false;
@@ -194,31 +198,31 @@ const spec = {
       "id": LOGICMODS_ID,
       "name": LOGICMODS_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${LOGICMODS_PATH}`
+      "targetPath": path.join('{gamePath}', LOGICMODS_PATH)
     },
     {
       "id": UE4SS_ID,
       "name": UE4SS_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${BINARIES_PATH}`
+      "targetPath": path.join('{gamePath}', BINARIES_PATH)
     },
     {
       "id": SCRIPTS_ID,
       "name": SCRIPTS_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${SCRIPTS_PATH}`
+      "targetPath": path.join('{gamePath}', SCRIPTS_PATH)
     },
     {
       "id": DLL_ID,
       "name": DLL_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${DLL_PATH}`
+      "targetPath": path.join('{gamePath}', DLL_PATH)
     },
     {
       "id": PAK_ID,
       "name": PAK_NAME,
       "priority": "low",
-      "targetPath": `{gamePath}\\${PAK_ALT_PATH}`
+      "targetPath": path.join('{gamePath}', PAK_ALT_PATH)
     },
     {
       "id": ROOT_ID,
@@ -230,31 +234,31 @@ const spec = {
       "id": BINARIES_ID,
       "name": BINARIES_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${BINARIES_PATH}`
+      "targetPath": path.join('{gamePath}', BINARIES_PATH)
     },
     {
       "id": MOVIE_ID,
       "name": MOVIE_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${MOVIE_PATH}`
+      "targetPath": path.join('{gamePath}', MOVIE_PATH)
     },
     {
       "id": MENU_ID,
       "name": MENU_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${MENU_PATH}`
+      "targetPath": path.join('{gamePath}', MENU_PATH)
     },
     {
       "id": SPLASH_ID,
       "name": SPLASH_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${SPLASH_PATH}`
+      "targetPath": path.join('{gamePath}', SPLASH_PATH)
     },
     {
       "id": CNSJSON_ID,
       "name": CNSJSON_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${CNSJSON_PATH}`
+      "targetPath": path.join('{gamePath}', CNSJSON_PATH)
     },
   ],
   "discovery": {
@@ -1572,6 +1576,13 @@ function applyGame(context, gameSpec) {
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
+    util.opn(PCGAMINGWIKI_URL).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
     const openPath = path.join(__dirname, 'CHANGELOG.md');
     util.opn(openPath).catch(() => null);
@@ -1583,6 +1594,13 @@ function applyGame(context, gameSpec) {
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
     const openPath = DOWNLOAD_FOLDER;
     util.opn(openPath).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
+    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
@@ -1605,7 +1623,7 @@ function main(context) {
       callback: (loadOrder) => {
         if (previousLO === undefined) previousLO = loadOrder;
         if (loadOrder === previousLO) return;
-        context.api.store.dispatch(actions.setDeploymentNecessary(spec.game.id, true));
+        requestDeployment(context, spec);
         previousLO = loadOrder;
       },
       createInfoPanel: () =>
@@ -1619,6 +1637,23 @@ function main(context) {
   });
   return true;
 }
+
+const requestDeployment = (context, spec) => {
+  context.api.store.dispatch(actions.setDeploymentNecessary(spec.game.id, true));
+
+  context.api.sendNotification({
+    id: `${spec.game.id}-loadorderdeploy-notif`,
+    type: 'warning',
+    message: 'Deployment Required to Apply Load Order Changes',
+    allowSuppress: true,
+    actions: [
+      {
+        title: 'Deploy',
+        action: () => deploy(context.api)
+      }
+    ],
+  });
+};
 
 //export to Vortex
 module.exports = {

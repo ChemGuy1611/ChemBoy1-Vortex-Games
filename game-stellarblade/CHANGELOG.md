@@ -4,11 +4,13 @@
 
 - None
 
-## [0.1.8] - 2026-01-29
+## [0.1.9] - 2026-01-29
 
+- Added: Notification that deployment is required to apply load order changes
 - Fixed: path strings
+- Added: Buttons to open PCGamingWiki page and submit bug reports
 
-## [0.1.7] - 2025-09-02
+## [0.1.8] - 2025-09-02
 
 - Added additional installer for CNS mods with only a .json file and no .pak file.
 

@@ -86,14 +86,14 @@ const REFORGER_REG_KEY = 'Local Settings\\Software\\Microsoft\\Windows\\CurrentV
 const REFORGER_REG_VALUE = 'PackageRootFolder';
 
 function getReforgerPath() {
-  const instPath = winapi.RegGetValue(REFORGER_REG_HIVE, REFORGER_REG_KEY, REFORGER_REG_VALUE);
-  if (!instPath) {
+  const reg = winapi.RegGetValue(REFORGER_REG_HIVE, REFORGER_REG_KEY, REFORGER_REG_VALUE);
+  if (!reg) {
     log('warn', `ReForger path not found`);
     return undefined;
   }
-  let path = instPath.value;
-  log('warn', `ReForger path found at ${path}`);
-  return path;
+  let instPath = reg.value;
+  log('warn', `ReForger path found at ${instPath}`);
+  return instPath;
 }
 
 //3rd party tools and launchers
