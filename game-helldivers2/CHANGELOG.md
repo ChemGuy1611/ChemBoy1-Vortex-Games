@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.7.1] - 2026-01-28
+
+- Fixed: Path strings
+
 ## [0.7.0] - 2025-09-24
 
 - .patch_0 graphics mods installer will present the user a dialogue to select which variant to install if the mod archive has multiple variants. Currently, the user must select the same variant for each of the .patch_0, .stream, and .gpu_resources files.

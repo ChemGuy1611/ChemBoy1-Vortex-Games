@@ -4,6 +4,17 @@
 
 - None Planned
 
+## [0.4.0] - 2026-01-28
+
+- Added: Load Order support for pak mods!
+- Added: Handling of multiple pak files in one mod (file selection dialogue)
+- Added: Button to open Saves (Profiles) folder - Steam only
+- Added: Launch tool and download button for Custom Stratagems
+- Added: Launch tool and download button for Index V2
+- Fixed: Updated deprecated fsPromises.rmdir() to fsPromises.rm()
+- Fixed: Corrected path strings
+- Fixed: Always get latest version of IS when downloading
+
 ## [0.3.6] - 2025-12-04
 
 - Improved IS installer to remove unnecessary files and folders from the staging folder.

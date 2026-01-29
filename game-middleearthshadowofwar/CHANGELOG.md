@@ -8,6 +8,7 @@
 
 - Added: Support for Middle-earth-Mod-Loader - installer and button to download. Note that this loader has some bugs and is not recommended
 - Fixed: DLL Loader will now only auto-download if neither DLL Loader nor Middle-earth-Mod-Loader are installed (in Vortex or manually in the game folder)
+- Added: Button to open PacketLoader.ini file
 
 ## [2.1.0] - 2025-12-22
 

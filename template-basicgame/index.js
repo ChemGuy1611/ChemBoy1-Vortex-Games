@@ -50,6 +50,10 @@ const rootInstaller = true; //enable root installer. Set false if you need to av
 const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
 const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
 const debug = false; //toggle for debug mode
+let binariesInstaller = false;
+if (BINARIES_PATH !== '.') {
+    binariesInstaller = true;
+}
 
 //info for modtypes, installers, tools, and actions
 const DATA_FOLDER = 'XXX';
@@ -177,18 +181,21 @@ const spec = {
       "priority": "high",
       "targetPath": `{gamePath}`
     },
-    {
-      "id": BINARIES_ID,
-      "name": BINARIES_NAME,
-      "priority": "high",
-      "targetPath": path.join("{gamePath}", BINARIES_PATH)
-    },
   ],
   "discovery": {
     "ids": DISCOVERY_IDS_ACTIVE,
     "names": []
   }
 };
+//think of a way to tell if the mod path is not in the game folder, only add ROOT modType if it is
+if (binariesInstaller) {
+  spec.modTypes.push({
+    "id": BINARIES_ID,
+    "name": BINARIES_NAME,
+    "priority": "high",
+    "targetPath": path.join("{gamePath}", BINARIES_PATH)
+  });
+}
 
 //3rd party tools and launchers
 const tools = [ //accepts: exe, jar, py, vbs, bat
@@ -886,7 +893,9 @@ function applyGame(context, gameSpec) {
   if (rootInstaller) {
     context.registerInstaller(ROOT_ID, 47, testRoot, installRoot);
   }
-  //context.registerInstaller(BINARIES_ID, 48, testBinaries, installBinaries);
+  if (binariesInstaller) {
+    context.registerInstaller(BINARIES_ID, 48, testBinaries, installBinaries);
+  }
   if (fallbackInstaller) {
     context.registerInstaller(`${GAME_ID}-fallback`, 49, testFallback, (files, destinationPath) => installFallback(context.api, files, destinationPath));
   }

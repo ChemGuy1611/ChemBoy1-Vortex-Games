@@ -74,6 +74,8 @@ const PACKETLOADER_PATH = PLUGINS_PATH;
 const PACKETLOADER_FILE = "ShadowOfWarPacketLoader.dll";
 const PACKETLOADER_PAGE_ID = 49;
 const PACKETLOADER_FILE_NO = 366;
+const PACKETLOADER_INI = "PacketLoader.ini";
+const PACKETLOADER_INI_PATH = path.join(PLUGINS_PATH, PACKETLOADER_FOLDER, 'Internal', PACKETLOADER_INI);
 
 const DLLLOADER_ID = `${GAME_ID}-dllloader`;
 const DLLLOADER_NAME = "DLL Loader";
@@ -1302,6 +1304,14 @@ function applyGame(context, gameSpec) {
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open default.archcfg File', () => {
     GAME_PATH = getDiscoveryPath(context.api);
     util.opn(path.join(GAME_PATH, LO_FILE_PATH)).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, `Open ${PACKETLOADER_INI}`, () => {
+    GAME_PATH = getDiscoveryPath(context.api);
+    util.opn(path.join(GAME_PATH, PACKETLOADER_INI_PATH)).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);

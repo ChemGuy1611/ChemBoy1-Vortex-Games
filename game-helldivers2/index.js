@@ -2,8 +2,8 @@
 Name: Helldivers 2 Vortex Extension
 Structure: Custom Game Data
 Author: ChemBoy1
-Version: 0.7.0
-Date: 2025-09-24
+Version: 0.7.1
+Date: 2026-01-28
 /////////////////////////////////////////*/
 
 //Import libraries
@@ -16,7 +16,7 @@ const STEAMAPP_ID = "553850";
 const GAME_ID = "helldivers2";
 const GAME_NAME = "Helldivers 2";
 const GAME_NAME_SHORT = "Helldivers 2";
-const EXEC = "bin\\helldivers2.exe";
+const EXEC = path.join("bin", "helldivers2.exe");
 
 //Info for mod types and installers
 const DATA_ID = `${GAME_ID}-data`;
@@ -91,19 +91,19 @@ const spec = {
       "id": DATA_ID,
       "name": DATA_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${DATA_PATH}`
+      "targetPath": path.join('{gamePath}', DATA_PATH)
     },
     {
       "id": STREAM_ID,
       "name": STREAM_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${STREAM_PATH}`
+      "targetPath": path.join('{gamePath}', STREAM_PATH)
     },
     {
       "id": BINARIES_ID,
       "name": "Binaries (Engine Injector)",
       "priority": "high",
-      "targetPath": `{gamePath}\\${BINARIES_PATH}`
+      "targetPath": path.join('{gamePath}', BINARIES_PATH)
     },
   ],
   "discovery": {
@@ -243,7 +243,6 @@ function installPatch(files, gameSpec) {
       (PATCH_EXTS.includes(path.extname(file).toLowerCase()))
     )
   );
-
   const instructions = filtered.map((file, index) => {
     return {
       type: 'copy',
@@ -251,10 +250,8 @@ function installPatch(files, gameSpec) {
       destination: path.join(file.substr(idx)),
     };
   });
-
   instructions.push(setModTypeInstruction);
   instructions.push(patchModFiles);
-
   return Promise.resolve({ instructions });
 }
 
@@ -658,7 +655,7 @@ function applyGame(context, gameSpec) {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
     }, //isSupported - Is this mod for this game
-    (game) => pathPattern(context.api, game, `{gamePath}\\${PATCH_PATH}`), //getPath - mod install location
+    (game) => pathPattern(context.api, game, path.join('{gamePath}', PATCH_PATH)), //getPath - mod install location
     () => Promise.resolve(false), //test - is installed mod of this type
     {
       name: PATCH_NAME,
@@ -669,7 +666,7 @@ function applyGame(context, gameSpec) {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
     }, //isSupported - Is this mod for this game
-    (game) => pathPattern(context.api, game, `{gamePath}\\${PATCH_PATH}`), //getPath - mod install location
+    (game) => pathPattern(context.api, game, path.join('{gamePath}', PATCH_PATH)), //getPath - mod install location
     () => Promise.resolve(false), //test - is installed mod of this type
     {
       name: SOUNDPATCH_NAME,
@@ -773,11 +770,7 @@ const requestDeployment = (context) => {
       {
         title: 'Deploy',
         action: () => context.api.events.emit('deploy-mods', (err) => {
-          // Oops, this shows up all the time!
-          // if (err == null) {
-          //   sendReinstallAllModsNotification(context);
-          // }
-          console.warn(`Error deploying mods \n${err}`)
+          log('warn', `Error deploying mods: ${err}`);
         })
       }
     ],
@@ -797,12 +790,10 @@ function main(context) {
     displayCheckboxes: false,
     callback: (updatedLoadOrder, mods) => {
       if (currentLoadOrder == updatedLoadOrder) return;
-
       if (currentLoadOrder == undefined) {
         currentLoadOrder = updatedLoadOrder;
         return;
       }
-
       currentLoadOrder = updatedLoadOrder;
       requestDeployment(context);
     },
@@ -826,7 +817,6 @@ function main(context) {
     context.api.onAsync('did-deploy', async (profileId, deployment) => {
       const lastActiveHelldiverProfile = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
       if (profileId !== lastActiveHelldiverProfile) return;
-
       context.api.dismissNotification('deploy-notification-helldivers2');
       // Because we create a merged mod when deploying, Vortex thinks that all mods have duplicates and are redundant
       context.api.dismissNotification('redundant-mods');
@@ -849,7 +839,6 @@ function main(context) {
         requestDeployment(context);
       }
     }); //*/
-
   });
 
   return true;
