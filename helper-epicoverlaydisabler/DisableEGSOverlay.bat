@@ -16,12 +16,12 @@ set "REG_VALUE=OverlayPath"
 set "FILE_PATTERN1=*EOSOverlay*"
 set "FILE_PATTERN2=*EOSOVH*"
 
-echo =======================================================
+echo ===================================
 echo Epic Games Store Overlay Disable Script
 echo Author: ChemBoy1 - Version: 1.0.3
 echo Description: Disables the EGS Overlay by deleting
-echo    deleting "EOSOverlay" and "EOSOVH" files.
-echo =======================================================
+echo    "EOSOverlay" and "EOSOVH" files.
+echo ===================================
 echo.
 echo Using Administrator Privileges...
 echo.
