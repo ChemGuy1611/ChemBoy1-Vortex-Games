@@ -349,23 +349,6 @@ function isVoidInstalled(api, spec) {
 //Function to auto-download Void
 async function downloadVoid(api, gameSpec) {
   let isInstalled = isVoidInstalled(api, gameSpec);
-  /*
-  const state = api.getState();
-  const modLoaderFile = VOID_EXEC;
-  const installPath = selectors.installPathForGame(state, gameSpec.game.id); // This retrieves the staging folder for the game.
-  let isInstalled = false;
-  await turbowalk.default(installPath, async (entries) => { // Walk through the folders of the staging folder in an attempt to look for an identifiable file entry.
-    if (isInstalled === true) {
-      return Promise.resolve();
-    }
-    for (const entry of entries) {
-      if (path.basename(entry.filePath).toLowerCase() === modLoaderFile) {
-        isInstalled = true;
-        return Promise.resolve();
-      }
-    }
-  });
-  //*/
   if (!isInstalled) {
     const MOD_TYPE = VOID_ID;
     const MOD_NAME = VOID_NAME;

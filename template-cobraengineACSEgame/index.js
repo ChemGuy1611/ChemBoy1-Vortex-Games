@@ -10,7 +10,6 @@ Date: 2026-XX-XX
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
-//const Bluebird = require('bluebird');
 //const winapi = require('winapi-bindings'); //gives access to the Windows registry
 //const { parseStringPromise } = require('xml2js');
 

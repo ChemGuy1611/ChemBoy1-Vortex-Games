@@ -717,18 +717,20 @@ function isModLoaderInstalled(api, spec) {
 const turbowalk = require('turbowalk');
 async function turbowalkFind(folder, findFile) {
   let isInstalled = false;
+  const findFileLower = findFile.toLowerCase();
   await turbowalk.default(folder, async (entries) => {
-    if (isInstalled === true) {
-      return Promise.resolve();
+    if (isInstalled) {
+      return;
     }
     for (const entry of entries) {
-      if (path.basename(entry.filePath).toLowerCase() === findFile) {
+      if (path.basename(entry.filePath).toLowerCase() === findFileLower) {
         isInstalled = true;
-        return Promise.resolve();
+        return;
       }
     }
   });
-} //*/
+  return isInstalled;
+}
 
 // Function to automatically download from Nexus Mods //////////////////////////////////////////////////////
 async function downloadUe4ssNexus(api, gameSpec) {
