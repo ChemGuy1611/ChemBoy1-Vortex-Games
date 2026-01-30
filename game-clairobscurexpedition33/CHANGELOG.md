@@ -4,6 +4,10 @@
 
 - None
 
+## [0.1.8] - 2026-01-30
+
+- Fixed: path strings
+
 ## [0.1.7] - 2025-12-23
 
 - Added notification indicating deployment is required after changing the load order.

@@ -1,10 +1,10 @@
-/*
+/*////////////////////////////////////////////////
 Name: Dragon Age Inquisition Vortex Extension
 Structure: 3rd-Party Mod Manager (Frosty)
 Author: ChemBoy1
-Version: 0.2.3
-Date: 01/17/2025
-*/
+Version: 0.2.4
+Date: 2026-01-30
+/////////////////////////////////////////////////*/
 
 //Import libraries
 const { actions, fs, util, selectors, log } = require('vortex-api');
@@ -19,6 +19,8 @@ const GAME_ID = "dragonageinquisition";
 const GAME_NAME = "Dragon Age: Inquisition";
 const GAME_NAME_SHORT = "Dragon Age: Inquisition";
 const EXEC = "DragonAgeInquisition.exe";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Dragon_Age:_Inquisition";
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/876"; //Nexus link to this extension. Used for links
 
 const FROSTY_FOLDER = "dragonageinquisition";
 
@@ -50,6 +52,9 @@ const UPDATE_PATH = "Update";
 
 const FROSTYPLUGIN_ID = `${GAME_ID}-frostyplugin`;
 const FROSTYPLUGIN_PATH = path.join("FrostyModManager", "Plugins");
+
+let DOWNLOAD_FOLDER = '';
+let STAGING_FOLDER = '';
 
 //Specify all the information about the game
 const spec = {
@@ -87,31 +92,31 @@ const spec = {
       "id": FROSTYMOD_ID,
       "name": "Frosty Mod .fbmod",
       "priority": "high",
-      "targetPath": `{gamePath}\\${FROSTY_PATH}`
+      "targetPath": path.join('{gamePath}', FROSTY_PATH)
     },
     {
       "id": DAIMOD_ID,
       "name": "DAIMod .daimod",
       "priority": "high",
-      "targetPath": `{gamePath}\\${DAI_PATH}`
+      "targetPath": path.join('{gamePath}', DAI_PATH)
     },
     {
       "id": CONFIG_ID,
       "name": "Config / Save File",
       "priority": "high",
       "targetPath": CONFIG_PATH
-    },
+    }, //*/
     {
       "id": FROSTYPLUGIN_ID,
       "name": "Frosty Plugin",
       "priority": "high",
-      "targetPath": `{gamePath}\\${FROSTYPLUGIN_PATH}`
+      "targetPath": path.join('{gamePath}', FROSTYPLUGIN_PATH)
     },
     {
       "id": UPDATE_ID,
       "name": "Update Folder",
       "priority": "high",
-      "targetPath": `{gamePath}\\${UPDATE_PATH}`
+      "targetPath": path.join('{gamePath}', UPDATE_PATH)
     },
     {
       "id": DAI_ID,
@@ -223,26 +228,8 @@ function makeGetModPath(api, gameSpec) {
     : pathPattern(api, gameSpec.game, gameSpec.game.modPath);
 }
 
-/*
-//Set launcher requirements
-function makeRequiresLauncher(api, gameSpec) {
-
-  if (util.epicGamesLauncher.isGameInstalled(EPICAPP_ID)) {
-    return () => Promise.resolve({
-      launcher: "epic",
-      addInfo: {
-        appId: EPICAPP_ID,
-      },
-    });
-  }
-
-  return undefined;
-}
-*/
-
 //Setup launcher requirements (Steam, Epic, GOG, GamePass, etc.). More parameters required for Epic and GamePass
 async function requiresLauncher(gamePath, store) {
-
   if (store === 'epic') {
     return Promise.resolve({
         launcher: 'epic',
@@ -251,7 +238,6 @@ async function requiresLauncher(gamePath, store) {
         },
     });
   }
-  
   return Promise.resolve(undefined);
 }
 
@@ -656,6 +642,8 @@ function installSave(files) {
 
 //Setup function
 async function setup(discovery, api, gameSpec) {
+  DOWNLOAD_FOLDER = selectors.downloadPathForGame(api.getState(), GAME_ID);
+  STAGING_FOLDER = selectors.installPathForGame(api.getState(), GAME_ID);
   await downloadFrosty(discovery, api, gameSpec);
   await downloadDAIMod(discovery, api, gameSpec);
   setupNotify(api);
@@ -673,7 +661,6 @@ function applyGame(context, gameSpec) {
     ...gameSpec.game,
     queryPath: makeFindGame(context.api, gameSpec),
     queryModPath: makeGetModPath(context.api, gameSpec),
-    //requiresLauncher: makeRequiresLauncher(context.api, gameSpec),
     requiresLauncher: requiresLauncher,
     requiresCleanup: true,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
@@ -698,13 +685,48 @@ function applyGame(context, gameSpec) {
   context.registerInstaller('dragonageinquisition-daimod', 45, testDaiMod, installDaiMod);
   context.registerInstaller('dragonageinquisition-config', 50, testConfig, installConfig);
   context.registerInstaller('dragonageinquisition-save', 55, testSave, installSave);
+
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config/Save Folder', async () => {
+    util.opn(CONFIG_PATH).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
+    util.opn(PCGAMINGWIKI_URL).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
+    util.opn(path.join(__dirname, 'CHANGELOG.md')).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
+    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
+    util.opn(DOWNLOAD_FOLDER).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
 }
 
 //Main function
 function main(context) {
   applyGame(context, spec);
-  context.once(() => {
-    // put code here that should be run (once) when Vortex starts up
+  context.once(() => { // put code here that should be run (once) when Vortex starts up
 
   });
   return true;

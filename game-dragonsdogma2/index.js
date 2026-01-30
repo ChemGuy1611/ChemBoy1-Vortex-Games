@@ -1,10 +1,10 @@
-/*
+/*////////////////////////////////////////////////
 Name: Dragon's Dogma 2 Vortex Extension
 Structure: Fluffy + REFramework (RE Engine)
 Author: ChemBoy1
-Version: 0.4.3
-Date: 03/12/2025
-*/
+Version: 0.5.0
+Date: 2026-01-30
+/////////////////////////////////////////////////*/
 
 //Import libraries
 const { actions, fs, util, selectors, log } = require('vortex-api');
@@ -21,6 +21,11 @@ const GAME_NAME = "Dragon's Dogma 2";
 const GAME_NAME_SHORT = "DD2";
 const FLUFFY_FOLDER = "DragonsDogma2";
 const MOD_PATH = path.join("Games", FLUFFY_FOLDER, "Mods");
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Dragon%27s_Dogma_II";
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/851"; //Nexus link to this extension. Used for links
+
+let DOWNLOAD_FOLDER = '';
+let STAGING_FOLDER = '';
 
 //Information for mod types, tools, and installers
 const ROOT_ID = `${GAME_ID}-root`;
@@ -46,6 +51,13 @@ const FLUFFYPAK_NAME = "Fluffy Pak Mod";
 const FLUFFYMOD_PATH = path.join("Games", FLUFFY_FOLDER, "Mods");
 const FLUFFYMOD_FILE = "modinfo.ini";
 const PAK_EXT = '.pak';
+
+const LOOSELUA_ID = `${GAME_ID}-looselua`;
+const LOOSELUA_NAME = "Loose Lua (REFramework)";
+const LOOSELUA_PATH = path.join(".");
+const LUA_EXT = '.lua';
+const REF_FOLDERS = ['reframework', 'autorun'];
+
 const IGNORE_CONFLICTS = [path.join('**', 'screenshot.png'), path.join('**', 'screenshot.jpg'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
 const IGNORE_DEPLOY = [path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
 
@@ -80,6 +92,12 @@ const spec = {
       "targetPath": "{gamePath}"
     },
     {
+      "id": LOOSELUA_ID,
+      "name": LOOSELUA_NAME,
+      "priority": "high",
+      "targetPath": path.join('{gamePath}', LOOSELUA_PATH)
+    },
+    {
       "id": FLUFFY_ID,
       "name": FLUFFY_NAME,
       "priority": "low",
@@ -89,13 +107,13 @@ const spec = {
       "id": FLUFFYMOD_ID,
       "name": FLUFFYMOD_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${FLUFFYMOD_PATH}`
+      "targetPath": path.join('{gamePath}', FLUFFYMOD_PATH)
     },
     {
       "id": FLUFFYPAK_ID,
       "name": FLUFFYPAK_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${FLUFFYMOD_PATH}`
+      "targetPath": path.join('{gamePath}', FLUFFYMOD_PATH)
     },
     {
       "id": REF_ID,
@@ -162,22 +180,19 @@ function makeGetModPath(api, gameSpec) {
 
 //Set launcher requirements
 async function requiresLauncher(gamePath, store) {
-
   if (store === 'steam') {
     return Promise.resolve({
         launcher: 'steam',
     });
   }
-  /*
-  else if (store === 'epic') {
+  /*else if (store === 'epic') {
     return Promise.resolve({
         launcher: 'epic',
         addInfo: {
             appId: EPICAPP_ID,
         },
     });
-  }
-  //*/
+  } //*/
   else {
     return Promise.resolve(undefined);
   }
@@ -222,23 +237,31 @@ async function downloadFluffy(api, gameSpec) {
       await api.ext.ensureLoggedIn();
     }
     try {
-      //get the mod files information from Nexus
-      const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, modPageId);
-      const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
-      const file = modFiles
-        .filter(file => file.category_id === 1)
-        .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))[0];
-      if (file === undefined) {
-        throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
+      let FILE = null;
+      let URL = null;
+      try {
+        //get the mod files information from Nexus
+        const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, modPageId);
+        const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
+        const file = modFiles
+          .filter(file => file.category_id === 1)
+          .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))[0];
+        if (file === undefined) {
+          throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
+        }
+        FILE = file.file_id;
+        URL = `nxm://${GAME_DOMAIN}/mods/${modPageId}/files/${FILE}`;
+      } catch (err) {
+        FILE = FILE_ID;
+        URL = `nxm://${GAME_DOMAIN}/mods/${modPageId}/files/${FILE}`;
       }
       //Download the mod
       const dlInfo = {
         game: GAME_DOMAIN,
         name: MOD_NAME,
       };
-      const nxmUrl = `nxm://${GAME_DOMAIN}/mods/${modPageId}/files/${file.file_id}`;
       const dlId = await util.toPromise(cb =>
-        api.events.emit('start-download', [nxmUrl], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
       const modId = await util.toPromise(cb =>
         api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
       const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
@@ -259,7 +282,7 @@ async function downloadFluffy(api, gameSpec) {
       api.dismissNotification(NOTIF_ID);
     }
   }
-}
+} //*/
 
 //Function to auto-download REFramework from Nexus
 async function downloadREFramework(api, gameSpec) {
@@ -488,6 +511,47 @@ function installFluffyPak(files, fileName) {
   return Promise.resolve({ instructions });
 }
 
+//Installer test for mod files
+function testLooseLua(files, gameId) {
+  const isLua = files.some(file => path.extname(file).toLowerCase() === LUA_EXT);
+  const isRefFolder = files.some(file => REF_FOLDERS.includes(path.basename(file).toLowerCase()));
+  let supported = (gameId === spec.game.id) && ( isLua && !isRefFolder );
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Installer install mod files
+function installLooseLua(files) {
+  const modFile = files.find(file => path.extname(file).toLowerCase() === LUA_EXT);
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: LOOSELUA_ID };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join('reframework', 'autorun', file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
 
 //test for zips
 async function testZipContent(files, gameId) {
@@ -639,6 +703,8 @@ function runFluffy(api) {
 //Setup function
 async function setup(discovery, api, gameSpec) {
   //setupNotify(api);
+  DOWNLOAD_FOLDER = selectors.downloadPathForGame(api.getState(), GAME_ID);
+  STAGING_FOLDER = selectors.installPathForGame(api.getState(), GAME_ID);
   await downloadFluffy(api, gameSpec);
   await downloadREFramework(api, gameSpec);
   return fs.ensureDirWritableAsync(path.join(discovery.path, gameSpec.game.modPath));
@@ -673,19 +739,47 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(REF_ID, 30, testREF, installREF);
   //context.registerInstaller(FLUFFYMOD_ID, 35, testFluffyMod, installFluffyMod);
   //context.registerInstaller(FLUFFYPAK_ID, 40, testFluffyPak, installFluffyPak);
+  context.registerInstaller(LOOSELUA_ID, 43, testLooseLua, installLooseLua);
   context.registerInstaller(`${FLUFFYMOD_ID}zip`, 45, toBlue(testZipContent), toBlue(installZipContent));
   //context.registerInstaller(ROOT_ID, 50, testRoot, installRoot);
+
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
+    util.opn(PCGAMINGWIKI_URL).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
+    util.opn(path.join(__dirname, 'CHANGELOG.md')).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
+    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
+    util.opn(DOWNLOAD_FOLDER).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
 }
 
 //Main function
 function main(context) {
   applyGame(context, spec);
-  context.once(() => {
-    // put code here that should be run (once) when Vortex starts up
+  context.once(() => { // put code here that should be run (once) when Vortex starts up
     context.api.onAsync('did-deploy', async (profileId, deployment) => {
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;
-
       return deployNotify(context.api);
     });
   });

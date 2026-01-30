@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.1] - 2026-01-30
+
+- Fixed: paths strings
+- Added: Buttons to open Downloads folder, PCGamingWiki page, view changelog, and submit bug reports
+
 ## [0.3.0] - 2025-09-27
 
 - Fixed potential issues with Fluffy Mod Manager autodwonloader.

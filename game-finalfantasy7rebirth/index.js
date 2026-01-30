@@ -2,8 +2,8 @@
 Name: Final Fantasy VII Rebirth Vortex Extension
 Structure: UE4 with IO Store
 Author: ChemBoy1
-Version: 0.4.0
-Date: 2025-05-19
+Version: 0.5.0
+Date: 2026-01-30
 //////////////////////////////////////////////////*/
 
 //Import libraries
@@ -21,6 +21,9 @@ const XBOXEXECNAME = null;
 const GAME_NAME = "Final Fantasy VII Rebirth";
 const GAME_NAME_SHORT = "FFVII Rebirth";
 const EXEC = "ff7rebirth.exe";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Final_Fantasy_VII_Rebirth";
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1150"; //Nexus link to this extension. Used for links
+
 let GAME_PATH = null;
 let CHECK_DOCS = false;
 let STAGING_FOLDER = '';
@@ -173,7 +176,7 @@ const spec = {
       "id": MODLOADERMOD_ID,
       "name": MODLOADERMOD_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${MODLOADERMOD_PATH}`
+      "targetPath": path.join('{gamePath}', MODLOADERMOD_PATH)
     },
     {
       "id": UE4SSCOMBO_ID,
@@ -185,31 +188,31 @@ const spec = {
       "id": LOGICMODS_ID,
       "name": LOGICMODS_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${LOGICMODS_PATH}`
+      "targetPath": path.join('{gamePath}', LOGICMODS_PATH)
     },
     {
       "id": UE4SS_ID,
       "name": UE4SS_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${BINARIES_PATH}`
+      "targetPath": path.join('{gamePath}', BINARIES_PATH)
     },
     {
       "id": SCRIPTS_ID,
       "name": SCRIPTS_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${SCRIPTS_PATH}`
+      "targetPath": path.join('{gamePath}', SCRIPTS_PATH)
     },
     {
       "id": DLL_ID,
       "name": DLL_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${DLL_PATH}`
+      "targetPath": path.join('{gamePath}', DLL_PATH)
     },
     {
       "id": PAK_ID,
       "name": PAK_NAME,
       "priority": "low",
-      "targetPath": `{gamePath}\\${PAK_ALT_PATH}`
+      "targetPath": path.join('{gamePath}', PAK_ALT_PATH)
     },
     {
       "id": ROOT_ID,
@@ -221,13 +224,13 @@ const spec = {
       "id": BINARIES_ID,
       "name": BINARIES_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${BINARIES_PATH}`
+      "targetPath": path.join('{gamePath}', BINARIES_PATH)
     },
     {
       "id": MODLOADER_ID,
       "name": MODLOADER_NAME,
       "priority": "low",
-      "targetPath": `{gamePath}\\${MODLOADER_PATH}`
+      "targetPath": path.join('{gamePath}', MODLOADER_PATH)
     },
   ],
   "discovery": {
@@ -1496,13 +1499,26 @@ function applyGame(context, gameSpec) {
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
+    util.opn(PCGAMINGWIKI_URL).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
-    const openPath = path.join(__dirname, 'CHANGELOG.md');
-    util.opn(openPath).catch(() => null);
+    util.opn(path.join(__dirname, 'CHANGELOG.md')).catch(() => null);
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
+    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
     const openPath = DOWNLOAD_FOLDER;
@@ -1529,7 +1545,8 @@ function main(context) {
       callback: (loadOrder) => {
         if (previousLO === undefined) previousLO = loadOrder;
         if (loadOrder === previousLO) return;
-        context.api.store.dispatch(actions.setDeploymentNecessary(spec.game.id, true));
+        //context.api.store.dispatch(actions.setDeploymentNecessary(spec.game.id, true));
+        requestDeployment(context, spec);
         previousLO = loadOrder;
       },
       createInfoPanel: () =>
@@ -1543,6 +1560,23 @@ function main(context) {
   });
   return true;
 }
+
+const requestDeployment = (context, spec) => {
+  context.api.store.dispatch(actions.setDeploymentNecessary(spec.game.id, true));
+
+  context.api.sendNotification({
+    id: `${spec.game.id}-loadorderdeploy-notif`,
+    type: 'warning',
+    message: 'Deployment Required to Apply Load Order Changes',
+    allowSuppress: true,
+    actions: [
+      {
+        title: 'Deploy',
+        action: () => deploy(context.api)
+      }
+    ],
+  });
+};
 
 //export to Vortex
 module.exports = {

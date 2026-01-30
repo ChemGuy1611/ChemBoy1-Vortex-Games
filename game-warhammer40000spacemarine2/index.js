@@ -1,6 +1,6 @@
 /*////////////////////////////////////////////////
 Name: WH40K Space Marine 2 Vortex Extension
-Structure: Custom Game Data
+Structure: Mods Folder w/ LO
 Author: ChemBoy1
 Version: 0.4.1
 Date: 2025-01-29

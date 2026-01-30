@@ -2,8 +2,8 @@
 Name: Resident Evil 4 (2023) + Chainsaw Demo Vortex Extension
 Structure: 3rd Party Mod Manager (Fluffy)
 Author: ChemBoy1
-Version: 0.3.0
-Date: 2025-09-27
+Version: 0.3.1
+Date: 2026-01-30
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -20,6 +20,8 @@ const GAME_NAME = "Resident Evil 4 (2023)";
 const GAME_NAME_SHORT = "RE4";
 const EXEC = "re4.exe";
 const EXEC_DEMO = "re4demo.exe";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Resident_Evil_4_(2023)";
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/913"; //Nexus link to this extension. Used for links
 
 const FLUFFY_FOLDER = "RE4R";
 const FLUFFY_FOLDER_DEMO = "RE4R_Demo";
@@ -28,6 +30,8 @@ const MOD_PATH_DEMO = path.join("Games", FLUFFY_FOLDER_DEMO, "Mods");
 
 let MOD_PATH_USED = null;
 let GAME_PATH = '';
+let DOWNLOAD_FOLDER = '';
+let STAGING_FOLDER = '';
 
 //Information for mod types, tools, and installers
 const ROOT_ID = `re4-root`;
@@ -70,10 +74,8 @@ const spec = {
     "id": GAME_ID,
     "name": GAME_NAME,
     "shortName": GAME_NAME_SHORT,
-    //"executable": EXEC,
     "logo": `${GAME_ID}.jpg`,
     "mergeMods": true,
-    //"modPath": MOD_PATH,
     "modPathIsRelative": true,
     "requiredFiles": [
       REQ_FILE,
@@ -98,19 +100,13 @@ const spec = {
       "id": LOOSELUA_ID,
       "name": LOOSELUA_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${LOOSELUA_PATH}`
+      "targetPath": path.join('{gamePath}', LOOSELUA_PATH)
     },
-    /*{
-      "id": FLUFFYMOD_ID,
-      "name": FLUFFYMOD_NAME,
-      "priority": "high",
-      "targetPath": `{gamePath}\\${FLUFFYMOD_PATH}`
-    }, //*/
     {
       "id": FLUFFYPAK_ID,
       "name": FLUFFYPAK_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${FLUFFYMOD_PATH}`
+      "targetPath": path.join('{gamePath}', FLUFFYMOD_PATH)
     },
     {
       "id": FLUFFY_ID,
@@ -338,11 +334,9 @@ async function downloadFluffy(api, gameSpec) {
       api.dismissNotification(NOTIF_ID);
     }
   }
-}
-//*/
+} //*/
 
-/*
-//Function to auto-download REFramework from Github
+/* Function to auto-download REFramework from Github
 async function downloadREFramework(api, gameSpec) {
   let isInstalled = isREFInstalled(api, gameSpec);
   if (!isInstalled) {
@@ -388,11 +382,9 @@ async function downloadREFramework(api, gameSpec) {
       api.dismissNotification(NOTIF_ID);
     }
   }
-}
-//*/
+} //*/
 
-//*
-//Function to auto-download REFramework from Nexus Mods <-- This function gave an error when getting the file upload time, for some reason ????
+//* Function to auto-download REFramework from Nexus Mods <-- This function gave an error when getting the file upload time, for some reason ????
 async function downloadREFramework(api, gameSpec) {
   let isInstalled = isREFInstalled(api, gameSpec);
   if (!isInstalled) {
@@ -817,6 +809,8 @@ async function setup(discovery, api, gameSpec) {
   //setupNotify(api);
   GAME_PATH = discovery.path;
   MOD_PATH_USED = getModPath(GAME_PATH);
+  DOWNLOAD_FOLDER = selectors.downloadPathForGame(api.getState(), GAME_ID);
+  STAGING_FOLDER = selectors.installPathForGame(api.getState(), GAME_ID);
   await downloadFluffy(api, gameSpec);
   await downloadREFramework(api, gameSpec);
   return fs.ensureDirWritableAsync(path.join(GAME_PATH, MOD_PATH_USED));
@@ -828,12 +822,11 @@ function applyGame(context, gameSpec) {
   const game = {
     ...gameSpec.game,
     queryPath: makeFindGame(context.api, gameSpec),
+    executable: getExecutable,
     queryModPath: getModPath,
     requiresLauncher: requiresLauncher,
     requiresCleanup: true,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
-    executable: getExecutable,
-    //executable: () => EXEC,
     supportedTools: tools,
   };
   context.registerGame(game);
@@ -853,7 +846,7 @@ function applyGame(context, gameSpec) {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
     }, 
-    (game) => pathPattern(context.api, game, `{gamePath}\\${MOD_PATH_USED}`), 
+    (game) => pathPattern(context.api, game, path.join('{gamePath}', MOD_PATH_USED)),
     () => Promise.resolve(false), 
     { name: FLUFFYMOD_NAME }
   );
@@ -866,6 +859,35 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(LOOSELUA_ID, 43, testLooseLua, installLooseLua);
   context.registerInstaller(`${FLUFFYMOD_ID}zip`, 45, toBlue(testZipContent), toBlue(installZipContent));
   //context.registerInstaller(ROOT_ID, 50, testRoot, installRoot);
+
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
+    util.opn(PCGAMINGWIKI_URL).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
+    util.opn(path.join(__dirname, 'CHANGELOG.md')).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
+    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
+    util.opn(DOWNLOAD_FOLDER).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
 }
 
 //Main function
