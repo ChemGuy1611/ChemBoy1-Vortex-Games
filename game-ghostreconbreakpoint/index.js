@@ -2,8 +2,8 @@
 Name: Ghost Recon Breakpoint Vortex Extension
 Structure: Ubisoft AnvilToolkit
 Author: ChemBoy1
-Version: 0.2.5
-Date: 2025-04-11
+Version: 0.2.6
+Date: 2026-01-31
 //////////////////////////////////////////////////////////*/
 
 //Import libraries
@@ -21,6 +21,9 @@ const EXEC_PLUS = "GRB_UPP.exe";
 const EXEC_VULKAN = "GRB_vulkan.exe";
 const GAME_NAME = "Ghost Recon Breakpoint";
 const GAME_NAME_SHORT = "GR Breakpoint";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Tom_Clancy%27s_Ghost_Recon_Breakpoint";
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/972"; //Nexus link to this extension. Used for links
+
 let GAME_PATH = null; //patched in the setup function to the discovered game path
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
@@ -120,13 +123,13 @@ const spec = {
       "id": SOUND_ID,
       "name": SOUND_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${SOUND_PATH}`
+      "targetPath": path.join('{gamePath}', SOUND_PATH)
     },
     {
       "id": BUILDTABLE_ID,
       "name": BUILDTABLE_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${BUILDTABLE_PATH}`
+      "targetPath": path.join('{gamePath}', BUILDTABLE_PATH)
     },
     {
       "id": BINARIES_ID,
@@ -138,31 +141,31 @@ const spec = {
       "id": EXTRACTED_ID,
       "name": EXTRACTED_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${EXTRACTED_PATH}`
+      "targetPath": path.join('{gamePath}', EXTRACTED_PATH)
     },
     {
       "id": FORGEFOLDER_ID,
       "name": FORGEFOLDER_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${FORGEFOLDER_PATH}`
+      "targetPath": path.join('{gamePath}', FORGEFOLDER_PATH)
     },
     {
       "id": DATAFOLDER_ID,
       "name": DATAFOLDER_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${DATAFOLDER_PATH}`
+      "targetPath": path.join('{gamePath}', DATAFOLDER_PATH)
     },
     {
       "id": LOOSE_ID,
       "name": LOOSE_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${LOOSE_PATH}`
+      "targetPath": path.join('{gamePath}', LOOSE_PATH)
     },
     {
       "id": FORGE_ID,
       "name": FORGE_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${FORGE_PATH}`
+      "targetPath": path.join('{gamePath}', FORGE_PATH)
     },
     {
       "id": ROOT_ID,
@@ -301,46 +304,50 @@ function isAnvilInstalled(api, spec) {
   return Object.keys(mods).some(id => mods[id]?.type === ATK_ID);
 }
 
-//Function to auto-download AnvilToolkit
-async function downloadAnvil(discovery, api, gameSpec) {
-  let modLoaderInstalled = isAnvilInstalled(api, gameSpec);
-
-  if (!modLoaderInstalled) {
-    //notification indicating install process
-    const MOD_NAME = "AnvilToolkit";
-    const NOTIF_ID = `${GAME_ID}-${MOD_NAME}-installing`;
-    api.sendNotification({
+// Function to automatically download AnvilToolkit from Nexus Mods
+async function downloadAnvil(api, gameSpec) {
+  let isInstalled = isAnvilInstalled(api, gameSpec);
+  if (!isInstalled) {
+    const MOD_NAME = ATK_NAME;
+    const MOD_TYPE = ATK_ID;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
+    const PAGE_ID = ATK_PAGE;
+    const FILE_ID = ATK_FILE;  //If using a specific file id because "input" below gives an error
+    const GAME_DOMAIN = ATK_DOMAIN;
+    api.sendNotification({ //notification indicating install process
       id: NOTIF_ID,
       message: `Installing ${MOD_NAME}`,
       type: 'activity',
       noDismiss: true,
       allowSuppress: false,
     });
-
-    //make sure user is logged into Nexus Mods account in Vortex
-    if (api.ext?.ensureLoggedIn !== undefined) {
+    if (api.ext?.ensureLoggedIn !== undefined) { //make sure user is logged into Nexus Mods account in Vortex
       await api.ext.ensureLoggedIn();
     }
-
-    const modPageId = 455;
-    try { //get the mod files information from Nexus
-      const modFiles = await api.ext.nexusGetModFiles('site', modPageId);
-      const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
-      const file = modFiles
-        .filter(file => file.category_id === 1)
-        .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))[0];
-      if (file === undefined) {
-        throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
+    try {
+      let FILE = null;
+      let URL = null;
+      try { //get the mod files information from Nexus
+        const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
+        const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
+        const file = modFiles
+          .filter(file => file.category_id === 1)
+          .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))[0];
+        if (file === undefined) {
+          throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
+        }
+        FILE = file.file_id;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      } catch (err) { // use defined file ID if input is undefined above
+        FILE = FILE_ID;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
       }
-      //Download the mod
-      const dlInfo = {
-        game: 'site',
+      const dlInfo = { //Download the mod
+        game: gameSpec.game.id,
         name: MOD_NAME,
       };
-      const nxmUrl = `nxm://site/mods/${modPageId}/files/${file.file_id}`;
-      //const nxmUrl = `nxm://${gameSpec.game.id}/mods/${modPageId}/files/${file.file_id}`;
       const dlId = await util.toPromise(cb =>
-        api.events.emit('start-download', [nxmUrl], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
       const modId = await util.toPromise(cb =>
         api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
       const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
@@ -349,20 +356,18 @@ async function downloadAnvil(discovery, api, gameSpec) {
           allowAutoDeploy: true,
           installed: true,
         }),
-        actions.setModType(gameSpec.game.id, modId, ATK_ID), // Set the modType
+        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
       ];
-      util.batchDispatch(api.store, batched); // Will dispatch both actions.
-    //Show the user the download page if the download/install process fails
-    } catch (err) {
-      const errPage = `https://www.nexusmods.com/site/mods/${modPageId}/files/?tab=files`;
-      //const errPage = `https://www.nexusmods.com/${gameSpec.game.id}/mods/${modPageId}/files/?tab=files`;
+      util.batchDispatch(api.store, batched); // Will dispatch both actions
+    } catch (err) { //Show the user the download page if the download, install process fails
+      const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
       api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
       util.opn(errPage).catch(() => null);
     } finally {
       api.dismissNotification(NOTIF_ID);
     }
   }
-}
+} //*/
 
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
 
@@ -813,7 +818,9 @@ function renamingRequiredNotify(api, fileName) {
               let PAGE = ``;
               if (modMatch) {
                 const MOD_ID = modMatch.attributes.modId;
-                PAGE = `${MOD_ID}?tab=description`;
+                if (MOD_ID !== undefined) {
+                  PAGE = `${MOD_ID}?tab=description`; 
+                }
               }
               const MOD_PAGE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${PAGE}`;
               util.opn(MOD_PAGE_URL).catch(err => undefined);
@@ -898,7 +905,7 @@ async function rename(api, EXISTING, NEW) {
   return Promise.resolve();
 }
 
-//Notify User of instructions for Mod Merger Tool
+//Notify User of fallback installation
 function fallbackInstallerNotify(api, fileName) {
   const state = api.getState();
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
@@ -940,11 +947,13 @@ function fallbackInstallerNotify(api, fileName) {
               let PAGE = ``;
               if (modMatch) {
                 const MOD_ID = modMatch.attributes.modId;
-                PAGE = `${MOD_ID}?tab=description`;
+                if (MOD_ID !== undefined) {
+                  PAGE = `${MOD_ID}?tab=description`; 
+                }
               }
               const MOD_PAGE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${PAGE}`;
               util.opn(MOD_PAGE_URL).catch(err => undefined);
-              dismiss();
+              //dismiss();
             }}, //*/
             { label: `Open Staging Folder`, action: () => {
               util.opn(path.join(STAGING_FOLDER, MOD_NAME)).catch(err => undefined);
@@ -1038,10 +1047,10 @@ async function setup(discovery, api, gameSpec) {
   GAME_PATH = discovery.path;
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
-  await fs.ensureDirWritableAsync(path.join(discovery.path, BUILDTABLE_FOLDER));
-  await fs.ensureDirWritableAsync(path.join(discovery.path, SOUND_PATH));
-  await downloadAnvil(discovery, api, gameSpec);
-  return fs.ensureDirWritableAsync(path.join(discovery.path, EXTRACTED_FOLDER));
+  await fs.ensureDirWritableAsync(path.join(GAME_PATH, BUILDTABLE_PATH));
+  await fs.ensureDirWritableAsync(path.join(GAME_PATH, SOUND_PATH));
+  await downloadAnvil(api, gameSpec);
+  return fs.ensureDirWritableAsync(path.join(GAME_PATH, EXTRACTED_FOLDER));
 }
 
 //Let Vortex know about the game
@@ -1081,20 +1090,32 @@ function applyGame(context, gameSpec) {
 
   //register actions
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Settings INI', () => {
-    const openPath = SETTINGS_FILE;
-    util.opn(openPath).catch(() => null);
+    util.opn(SETTINGS_FILE).catch(() => null);
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
+    util.opn(PCGAMINGWIKI_URL).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
-    const openPath = path.join(__dirname, 'CHANGELOG.md');
-    util.opn(openPath).catch(() => null);
+    util.opn(path.join(__dirname, 'CHANGELOG.md')).catch(() => null);
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
+    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
     const openPath = DOWNLOAD_FOLDER;

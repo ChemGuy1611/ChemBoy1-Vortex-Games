@@ -2,8 +2,8 @@
 Name: State of Decay 2 Vortex Extension
 Structure: UE4 (Local AppData)
 Author: ChemBoy1
-Version: 2.1.1
-Date: 2025-05-28
+Version: 2.2.0
+Date: 2026-01-31
 /////////////////////////////////////////////////////*/
 
 //Import libraries
@@ -25,15 +25,17 @@ const GAME_NAME_SHORT = "State of Decay 2";
 const EXEC = `StateOfDecay2.exe`;
 const EXEC_XBOX = `gamelaunchhelper.exe`;
 const LOCALAPPDATA = util.getVortexPath('localAppData');
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/State_of_Decay_2";
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/946"; //Nexus link to this extension. Used for links
+
 let GAME_PATH = null;
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 let GAME_VERSION = '';
-const REQ_FILE = EPIC_CODE_NAME;
 const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 //Unreal Engine Game Data
-const XBOX_DATA_PATH = `Packages\\${XBOXAPP_ID}_8wekyb3d8bbwe\\LocalCache\\Local`;
+const XBOX_DATA_PATH = path.join('Packages', `${XBOXAPP_ID}_8wekyb3d8bbwe`, 'LocalCache', 'Local');
 const UNREALDATA = {
   absModsPath: path.join(LOCALAPPDATA, EPIC_CODE_NAME, 'Saved', 'Paks'),
   //absModsPath: path.join(LOCALAPPDATA, XBOX_DATA_PATH, 'Saved', 'Paks'), //XBOX Version
@@ -44,8 +46,8 @@ const UNREALDATA = {
 //Information for mod types and installers
 const COOKED_ID = `${GAME_ID}-cooked`;
 const COOKED_NAME = "Cooked Mods";
-//const COOKED_PATH = `${EPIC_CODE_NAME}\\Saved\\Cooked\\WindowsNoEditor\\${EPIC_CODE_NAME}`;
-const COOKED_PATH = `${EPIC_CODE_NAME}\\Saved`;
+//const COOKED_PATH = path.join(EPIC_CODE_NAME, 'Saved', 'Cooked', 'WindowsNoEditor', EPIC_CODE_NAME);
+const COOKED_PATH = path.join(EPIC_CODE_NAME, 'Saved');
 const XBOX_COOKED_PATH = path.join(XBOX_DATA_PATH, COOKED_PATH);
 const COOKED_FILE = "Cooked";
 const COOKED_EXT = ".uasset";
@@ -85,6 +87,8 @@ const COMMUNITYEDITOR_EXEC = "CommunityEditor.exe";
 
 const MOD_PATH_DEFAULT = path.join(LOCALAPPDATA, COOKED_PATH);
 const XBOX_MOD_PATH_DEFAULT = path.join(LOCALAPPDATA, XBOX_COOKED_PATH);
+
+const REQ_FILE = EPIC_CODE_NAME;
 
 // Filled in from info above
 const spec = {
@@ -126,22 +130,22 @@ const spec = {
       "id": CONFIG_ID,
       "name": "Config (LocalAppData)",
       "priority": "high",
-      "targetPath": `{localAppData}\\${CONFIG_PATH}`
-      //"targetPath": `{localAppData}\\${XBOX_CONFIG_PATH}` //XBOX Config path
+      "targetPath": path.join("{localAppData}", CONFIG_PATH)
+      //"targetPath": path.join("{localAppData}", XBOX_CONFIG_PATH) //XBOX Config path
     },
     {
       "id": PAK_ID,
       "name": PAK_NAME,
       "priority": "high",
-      "targetPath": `{localAppData}\\${PAK_PATH}`
-      //"targetPath": `{localAppData}\\${XBOX_PAK_PATH}` //XBOX Pak path
+      "targetPath": path.join("{localAppData}", PAK_PATH)
+      //"targetPath": path.join("{localAppData}", XBOX_PAK_PATH) //XBOX Pak path
     },
     {
       "id": COOKED_ID,
       "name": COOKED_NAME,
       "priority": "high",
-      "targetPath": `{localAppData}\\${COOKED_PATH}`
-      //"targetPath": `{localAppData}\\${XBOX_COOKED_PATH}` //XBOX Cooked path
+      "targetPath": path.join("{localAppData}", COOKED_PATH)
+      //"targetPath": path.join("{localAppData}", XBOX_COOKED_PATH) //XBOX Cooked path
     },
     {
       "id": ROOT_ID,
@@ -189,6 +193,32 @@ const tools = [
     relative: true,
     exclusive: true,
   },
+  {
+    id: `${GAME_ID}-customlaunch`,
+    name: `Custom Launch`,
+    logo: `exec.png`,
+    executable: () => EXEC,
+    requiredFiles: [EXEC],
+    detach: true,
+    relative: true,
+    exclusive: true,
+    shell: true,
+    //defaultPrimary: true,
+    //parameters: [],
+  }, //*/
+  /*{
+    id: `${GAME_ID}-customlaunchxbox`,
+    name: `Custom Launch`,
+    logo: `exec.png`,
+    executable: () => EXEC_XBOX,
+    requiredFiles: [EXEC_XBOX],
+    detach: true,
+    relative: true,
+    exclusive: true,
+    shell: true,
+    //defaultPrimary: true,
+    //parameters: [],
+  }, //*/
 ];
 
 // BASIC EXTENSION FUNCTIONS ///////////////////////////////////////////////////
@@ -265,21 +295,18 @@ function getExecutable(discoveredPath) {
   if (isCorrectExec(EXEC_XBOX)) {
     GAME_VERSION = 'xbox';
     BINARIES_PATH = BINPATH_XBOX;
-    BINARIES_TARGET = `{gamePath}\\${BINARIES_PATH}`;
+    BINARIES_TARGET = path.join("{gamePath}", BINARIES_PATH);
     return EXEC_XBOX;
   }; //*/
   /*if (isCorrectExec(EXEC_EPIC)) {
     GAME_VERSION = 'epic';
     BINARIES_PATH = BINPATH_EPIC;
-    BINARIES_TARGET = `{gamePath}\\${BINARIES_PATH}`;
+    BINARIES_TARGET = path.join("{gamePath}", BINARIES_PATH);
     return EXEC_EPIC;
   }; //*/
-  if (isCorrectExec(EXEC)) {
-    GAME_VERSION = 'steam';
-    BINARIES_PATH = BINPATH_STEAM;
-    BINARIES_TARGET = `{gamePath}\\${BINARIES_PATH}`;
-    return EXEC;
-  };
+  GAME_VERSION = 'steam';
+  BINARIES_PATH = BINPATH_STEAM;
+  BINARIES_TARGET = path.join("{gamePath}", BINARIES_PATH);
   return EXEC;
 }
 
@@ -698,7 +725,6 @@ function applyGame(context, gameSpec) {
   const game = {
     ...gameSpec.game,
     queryPath: makeFindGame(context.api, gameSpec),
-    //executable: () => gameSpec.game.executable,
     executable: getExecutable,
     queryModPath: makeGetModPath(context.api, gameSpec),
     requiresLauncher: requiresLauncher,
@@ -736,6 +762,13 @@ function applyGame(context, gameSpec) {
   //default mod installation to Cooked folder
 
   //register actions
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download SoD2 Mod Manager', () => {
+    downloadModManager(context.api, spec).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Paks Folder', () => {
     const openPath = path.join(LOCALAPPDATA, PAK_PATH);
     util.opn(openPath).catch(() => null);
@@ -745,20 +778,32 @@ function applyGame(context, gameSpec) {
     return gameId === GAME_ID;
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
-    const openPath = path.join(LOCALAPPDATA, CONFIG_PATH);
-    util.opn(openPath).catch(() => null);
+    util.opn(path.join(LOCALAPPDATA, CONFIG_PATH)).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
+    util.opn(PCGAMINGWIKI_URL).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
-    const openPath = path.join(__dirname, 'CHANGELOG.md');
-    util.opn(openPath).catch(() => null);
+    util.opn(path.join(__dirname, 'CHANGELOG.md')).catch(() => null);
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
+    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
     const openPath = DOWNLOAD_FOLDER;

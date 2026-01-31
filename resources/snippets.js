@@ -8,6 +8,7 @@ const winapi = require('winapi-bindings');
 const turbowalk = require('turbowalk');
 const Bluebird = require('bluebird');
 const fsPromises = require('fs/promises');
+const fsExtra = require('fs-extra');
 const exeVersion = require('exe-version');
 
 const USER_HOME = util.getVortexPath("home");

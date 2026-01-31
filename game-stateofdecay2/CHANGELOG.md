@@ -4,6 +4,11 @@ FUTURE CHANGES (NOT YET IMPLEMENTED)
 
 - None
 
+## [2.2.0] - 2026-01-31
+
+- Fixed: path strings
+- Added: Buttons to open PCGamingWiki page, view changelog, and submit bug reports
+
 ## [2.1.1] - 2025-05-28
 
 - Removed unnecessary error logging

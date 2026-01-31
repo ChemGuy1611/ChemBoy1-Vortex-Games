@@ -4,6 +4,13 @@
 
 - None Planned
 
+## [0.2.6] - 2026-01-31
+
+- Improved: Reliablity of ATK downloader function
+- Fixed: Incorrect folder write check path causing inability to deploy mods
+- Fixed: path strings
+- Fixed: Several minor bugs
+
 ## [0.2.5] - 2025-11-12
 
 - Quickfix to handle more edge cases with .forge folder rename dialog.

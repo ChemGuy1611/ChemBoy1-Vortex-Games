@@ -2124,8 +2124,7 @@ function applyGame(context, gameSpec) {
   //register buttons to open folders
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Paks Folder', () => {
     GAME_PATH = getDiscoveryPath(context.api);
-    const openPath = path.join(GAME_PATH, PAK_ALT_PATH);
-    util.opn(openPath).catch(() => null);
+    util.opn(path.join(GAME_PATH, PAK_ALT_PATH)).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
@@ -2149,8 +2148,7 @@ function applyGame(context, gameSpec) {
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open LogicMods Folder', () => {
     GAME_PATH = getDiscoveryPath(context.api);
-    const openPath = path.join(GAME_PATH, LOGICMODS_PATH);
-    util.opn(openPath).catch(() => null);
+    util.opn(path.join(GAME_PATH, LOGICMODS_PATH)).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
