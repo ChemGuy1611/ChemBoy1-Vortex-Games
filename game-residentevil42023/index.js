@@ -2,8 +2,8 @@
 Name: Resident Evil 4 (2023) + Chainsaw Demo Vortex Extension
 Structure: 3rd Party Mod Manager (Fluffy)
 Author: ChemBoy1
-Version: 0.3.1
-Date: 2026-01-30
+Version: 0.3.2
+Date: 2026-01-31
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -28,7 +28,7 @@ const FLUFFY_FOLDER_DEMO = "RE4R_Demo";
 const MOD_PATH = path.join("Games", FLUFFY_FOLDER, "Mods");
 const MOD_PATH_DEMO = path.join("Games", FLUFFY_FOLDER_DEMO, "Mods");
 
-let MOD_PATH_USED = null;
+let MOD_PATH_USED = MOD_PATH;
 let GAME_PATH = '';
 let DOWNLOAD_FOLDER = '';
 let STAGING_FOLDER = '';
@@ -224,8 +224,10 @@ function getExecutable(gamePath) {
     }
   };
   if (isCorrectExec(EXEC_DEMO)) {
+    MOD_PATH_USED = MOD_PATH_DEMO;
     return EXEC_DEMO; 
   };
+  MOD_PATH_USED = MOD_PATH;
   return EXEC;
 }
 
@@ -846,7 +848,11 @@ function applyGame(context, gameSpec) {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
     }, 
-    (game) => pathPattern(context.api, game, path.join('{gamePath}', MOD_PATH_USED)),
+    (game) => {
+      //GAME_PATH = getDiscoveryPath(context.api);
+      //MOD_PATH_USED = getModPath(GAME_PATH);
+      return pathPattern(context.api, game, path.join('{gamePath}', MOD_PATH_USED))
+    },
     () => Promise.resolve(false), 
     { name: FLUFFYMOD_NAME }
   );

@@ -63,6 +63,7 @@ const FLUFFYMOD_NAME = "Fluffy Mod";
 const FLUFFYPAK_ID = `${GAME_ID}-fluffypakmod`;
 const FLUFFYPAK_NAME = "Fluffy Pak Mod";
 let FLUFFYMOD_PATH = path.join("Games", FLUFFY_FOLDER, "Mods");
+const FLUFFYMOD_PATH_DEMO = path.join("Games", FLUFFY_FOLDER_DEMO, "Mods");
 const FLUFFYMOD_FILE = "modinfo.ini";
 const PAK_EXT = '.pak';
 
@@ -256,7 +257,7 @@ function getExecutable(discoveryPath) {
     return EXEC;
   }
   if (statCheckSync(discoveryPath, EXEC_DEMO)) {
-    FLUFFYMOD_PATH = path.join("Games", FLUFFY_FOLDER_DEMO, "Mods");
+    FLUFFYMOD_PATH = FLUFFYMOD_PATH_DEMO;
     return EXEC_DEMO;
   };
   return EXEC;
@@ -268,7 +269,7 @@ function getModPath(discoveryPath) {
     return FLUFFYMOD_PATH;
   }
   if (statCheckSync(discoveryPath, EXEC_DEMO)) {
-    FLUFFYMOD_PATH = path.join("Games", FLUFFY_FOLDER_DEMO, "Mods");
+    FLUFFYMOD_PATH = FLUFFYMOD_PATH_DEMO;
     return FLUFFYMOD_PATH;
   };
   return FLUFFYMOD_PATH;
@@ -279,7 +280,7 @@ async function setGameVersion(gamePath) {
   const CHECK = await statCheckAsync(gamePath, EXEC_DEMO);
   if (CHECK) {
     GAME_VERSION = 'demo';
-    FLUFFYMOD_PATH = path.join("Games", FLUFFY_FOLDER_DEMO, "Mods");
+    FLUFFYMOD_PATH = FLUFFYMOD_PATH_DEMO;
     return GAME_VERSION;
   } else {
     GAME_VERSION = 'default';

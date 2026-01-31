@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.3.2] - 2026-01-31
+
+- Fixed: Error related to "path" argument not being a string.
+
 ## [0.3.1] - 2026-01-30
 
 - Fixed: paths strings
