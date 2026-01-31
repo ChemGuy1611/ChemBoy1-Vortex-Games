@@ -10,6 +10,7 @@ Date: 2026-01-30
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
+const fsPromises = require('fs/promises'); //.readdir() for recursive folder reading
 
 //Specify all the information about the game
 const STEAMAPP_ID = "1593500";
@@ -46,10 +47,12 @@ const EXECSUB_FOLDERS = ["ActivityFeed", "cinematics", "dc", "languages", "sound
 const PACK_ID = `${GAME_ID}-pack`;
 const PACK_NAME = "Texpack/Lodpack";
 const PACK_PATH = path.join("exec", "patch", "pc_le");
+const READ_PAK_PATH = path.join("exec", "patch");
 const PACK_EXT = ".texpack";
 const LOD_EXT = ".lodpack";
 const PACK_EXTS = [PACK_EXT, LOD_EXT];
 const PACK_PATH_WAD = path.join("exec", "wad", "pc_le");
+const READ_WAD_PATH = path.join("exec", "wad");
 
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_NAME = "Save (User Home)";
@@ -73,9 +76,9 @@ const SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
 
 //For boot-options.json file
 const BOOT_OPTIONS_FILENAME = "boot-options.json";
-const BOOT_OPTIONS_FILEPATH = path.join(PATCH_PATH, BOOT_OPTIONS_FILENAME);
-const BOOT_TEX_KEY = `patch-texpacks`;
-const BOOT_LOD_KEY = `patch-lodpacks`;
+const BOOT_OPTIONS_FILEPATH = path.join(DATA_FILE, BOOT_OPTIONS_FILENAME);
+const BOOT_TEX_KEY = "patch-texpacks";
+const BOOT_LOD_KEY = "patch-lodpacks";
 let BOOT_OPTIONS_JSON = {};
 let BOOT_ORDER_TEX = [];
 let BOOT_ORDER_LOD = [];
@@ -88,8 +91,14 @@ const LUAMOD_PATH = path.join("mods");
 const LUAMOD_FOLDER = "lua";
 const LUAMOD_EXTS = ['.lua'];
 
+const LOADER_ID = `${GAME_ID}-scriptloader`;
+const LOADER_NAME = "Script Loader";
 const LOADER_CONFIG_FILE = "loader_config.toml"; 
 const LOADER_CONFIG_FILEPATH = path.join(LUAMOD_PATH, LOADER_CONFIG_FILE);
+const LOADER_FILE = 'version.dll';
+const LOADER_PAGE_NO = 89;
+const LOADER_FILE_NO = 475;
+const LOADER_DOMAIN = GAME_ID;
 
 // FILLED IN FROM DATA ABOVE
 const spec = {
@@ -157,6 +166,12 @@ const spec = {
       "name": SAVE_NAME,
       "priority": "high",
       "targetPath": SAVE_PATH
+    },
+    {
+      "id": LOADER_ID,
+      "name": LOADER_NAME,
+      "priority": "low",
+      "targetPath": `{gamePath}`
     },
   ],
   "discovery": {
@@ -240,6 +255,47 @@ async function requiresLauncher(gamePath, store) {
 }
 
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
+
+//test whether to use mod installer
+function testLoader(files, gameId) {
+  const isMod = files.some(file => (path.basename(file).toLowerCase() === LOADER_FILE.toLowerCase()));
+  const isConfig = files.some(file => (path.basename(file).toLowerCase() === LOADER_CONFIG_FILE.toLowerCase()));
+  let supported = (gameId === spec.game.id) && isMod && isConfig;
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//mod installer instructions
+function installLoader(files) {
+  const modFile = files.find(file => (path.basename(file).toLowerCase() === LOADER_FILE.toLowerCase()));
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: LOADER_ID };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
 
 //Installer test for Root folder files
 function testData(files, gameId) {
@@ -484,6 +540,74 @@ function installSave(files) {
   return Promise.resolve({ instructions });
 }
 
+// AUTO-DOWNLOAD FUNCTIONS /////////////////////////////////////////////////////////
+
+//* Function to auto-download UE4SS from Nexus Mods
+async function downloadLoader(api, gameSpec) {
+  //let isInstalled = isLoaderInstalled(api, gameSpec);
+ // if (!isInstalled) {
+    const MOD_NAME = LOADER_NAME;
+    const MOD_TYPE = LOADER_ID;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
+    const PAGE_ID = LOADER_PAGE_NO;
+    const FILE_ID = LOADER_FILE_NO;  //If using a specific file id because "input" below gives an error
+    const GAME_DOMAIN = LOADER_DOMAIN;
+    api.sendNotification({ //notification indicating install process
+      id: NOTIF_ID,
+      message: `Installing ${MOD_NAME}`,
+      type: 'activity',
+      noDismiss: true,
+      allowSuppress: false,
+    });
+    if (api.ext?.ensureLoggedIn !== undefined) { //make sure user is logged into Nexus Mods account in Vortex
+      await api.ext.ensureLoggedIn();
+    }
+    try {
+      let FILE = null;
+      let URL = null;
+      try { //get the mod files information from Nexus
+        const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
+        const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
+        const file = modFiles
+          .filter(file => file.category_id === 1)
+          .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
+          .reverse()[0];
+        if (file === undefined) {
+          throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
+        }
+        FILE = file.file_id;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      } catch (err) { // use defined file ID if input is undefined above
+        FILE = FILE_ID;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      }
+      const dlInfo = { //Download the mod
+        game: GAME_DOMAIN,
+        name: MOD_NAME,
+      };
+      const dlId = await util.toPromise(cb =>
+        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+      const modId = await util.toPromise(cb =>
+        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
+      const batched = [
+        actions.setModsEnabled(api, profileId, [modId], true, {
+          allowAutoDeploy: true,
+          installed: true,
+        }),
+        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
+      ];
+      util.batchDispatch(api.store, batched); // Will dispatch both actions
+    } catch (err) { //Show the user the download page if the download, install process fails
+      const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
+      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
+      util.opn(errPage).catch(() => null);
+    } finally {
+      api.dismissNotification(NOTIF_ID);
+    }
+  //}
+} //*/
+
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
 const getDiscoveryPath = (api) => {
@@ -496,18 +620,24 @@ async function updateBootOptions(api) { // Write texpack and lodpack file names 
   GAME_PATH = getDiscoveryPath(api);
   try { //write to boot-options.json file tex and lod order
     //.texpack files
-    const PATCH_FOLDER_FILES = await fs.readdirAsync(path.join(GAME_PATH, PACK_PATH));
+    //const PATCH_FOLDER_FILES = await fs.readdirAsync(path.join(GAME_PATH, PACK_PATH));
+    const PATCH_FOLDER_FILES = await fsPromises.readdir(path.join(GAME_PATH, READ_PAK_PATH), { recursive: true });
     const TEX_FILES = PATCH_FOLDER_FILES.filter(file => (path.extname(file).toLowerCase() === PACK_EXT));
-    const TEX_FILE_NAMES = TEX_FILES.map(file => path.basename(file, path.extname(file)));
-    const TEX_FILE_NAMES_CONV = TEX_FILE_NAMES.map(file => `../../patch/pc_le/${file}`);
+    /*const TEX_FILE_NAMES = TEX_FILES.map(file => path.basename(file, path.extname(file))); 
+    const TEX_FILE_NAMES_CONV = TEX_FILE_NAMES.map(file => `../../patch/pc_le/${file}`); //*/
+    const TEX_FILE_NAMES = TEX_FILES.map(file => file.replace(path.extname(file), '').replace("\\", "/"));
+    const TEX_FILE_NAMES_CONV = TEX_FILE_NAMES.map(file => `../../patch/${file}`); //*/
     BOOT_OPTIONS_JSON[BOOT_TEX_KEY] = TEX_FILE_NAMES_CONV;
     try {
-      await fs.statAsync(path.join(GAME_PATH, PACK_PATH_WAD));
-      try { //write to read from "wad" folder
-        const WAD_FOLDER_FILES = await fs.readdirAsync(path.join(GAME_PATH, PACK_PATH_WAD));
+      await fs.statAsync(path.join(GAME_PATH, READ_WAD_PATH));
+      try { //write to read .texpack in "wad" subfolders
+        //const WAD_FOLDER_FILES = await fs.readdirAsync(path.join(GAME_PATH, READ_WAD_PATH));
+        const WAD_FOLDER_FILES = await fsPromises.readdir(path.join(GAME_PATH, READ_WAD_PATH), { recursive: true });
         const WAD_TEX_FILES = WAD_FOLDER_FILES.filter(file => (path.extname(file).toLowerCase() === PACK_EXT));
-        const WAD_TEX_FILE_NAMES = WAD_TEX_FILES.map(file => path.basename(file, path.extname(file)));
-        const WAD_TEX_FILE_NAMES_CONV = WAD_TEX_FILE_NAMES.map(file => `../../wad/pc_le/${file}`);
+        /*const WAD_TEX_FILE_NAMES = WAD_TEX_FILES.map(file => path.basename(file, path.extname(file)));
+        const WAD_TEX_FILE_NAMES_CONV = WAD_TEX_FILE_NAMES.map(file => `../../wad/pc_le/${file}`); //*/
+        const WAD_TEX_FILE_NAMES = WAD_TEX_FILES.map(file => file.replace(path.extname(file), '').replace("\\", "/"));
+        const WAD_TEX_FILE_NAMES_CONV = WAD_TEX_FILE_NAMES.map(file => `../../wad/${file}`); //*/
         BOOT_OPTIONS_JSON[BOOT_TEX_KEY] = TEX_FILE_NAMES_CONV.concat(WAD_TEX_FILE_NAMES_CONV);
       } catch (err) {
         log('error', `Could not find ${PACK_EXT}  files in "${PACK_PATH_WAD}" folder.`);
@@ -517,16 +647,21 @@ async function updateBootOptions(api) { // Write texpack and lodpack file names 
     }
     //.lodpack files
     const LOD_FILES = PATCH_FOLDER_FILES.filter(file => (path.extname(file).toLowerCase() === LOD_EXT));
-    const LOD_FILE_NAMES = LOD_FILES.map(file => path.basename(file, path.extname(file)));
-    const LOD_FILE_NAMES_CONV = LOD_FILE_NAMES.map(file => `../../patch/pc_le/${file}`);
+    /*const LOD_FILE_NAMES = LOD_FILES.map(file => path.basename(file, path.extname(file)));
+    const LOD_FILE_NAMES_CONV = LOD_FILE_NAMES.map(file => `../../patch/pc_le/${file}`); //*/
+    const LOD_FILE_NAMES = LOD_FILES.map(file => file.replace(path.extname(file), '').replace("\\", "/"));
+    const LOD_FILE_NAMES_CONV = LOD_FILE_NAMES.map(file => `../../patch/${file}`); //*/
     BOOT_OPTIONS_JSON[BOOT_LOD_KEY] = LOD_FILE_NAMES_CONV;
-    try {
-      await fs.statAsync(path.join(GAME_PATH, PACK_PATH_WAD));
+    try { //write to read .lodpack in "wad" subfolders
+      await fs.statAsync(path.join(GAME_PATH, READ_WAD_PATH));
       try { //write to read from "wad" folder
-        const WAD_FOLDER_FILES = await fs.readdirAsync(path.join(GAME_PATH, PACK_PATH_WAD));
+        //const WAD_FOLDER_FILES = await fs.readdirAsync(path.join(GAME_PATH, PACK_PATH_WAD));
+        const WAD_FOLDER_FILES = await fsPromises.readdir(path.join(GAME_PATH, READ_WAD_PATH), { recursive: true });
         const WAD_LOD_FILES = WAD_FOLDER_FILES.filter(file => (path.extname(file).toLowerCase() === LOD_EXT));
-        const WAD_LOD_FILE_NAMES = WAD_LOD_FILES.map(file => path.basename(file, path.extname(file)));
-        const WAD_LOD_FILE_NAMES_CONV = WAD_LOD_FILE_NAMES.map(file => `../../wad/pc_le/${file}`);
+        /*const WAD_LOD_FILE_NAMES = WAD_LOD_FILES.map(file => path.basename(file, path.extname(file)));
+        const WAD_LOD_FILE_NAMES_CONV = WAD_LOD_FILE_NAMES.map(file => `../../wad/pc_le/${file}`); //*/
+        const WAD_LOD_FILE_NAMES = WAD_LOD_FILES.map(file => file.replace(path.extname(file), '').replace("\\", "/"));
+        const WAD_LOD_FILE_NAMES_CONV = WAD_LOD_FILE_NAMES.map(file => `../../wad/${file}`); //*/
         BOOT_OPTIONS_JSON[BOOT_LOD_KEY] = LOD_FILE_NAMES_CONV.concat(WAD_LOD_FILE_NAMES_CONV);
       } catch (err) {
         log('error', `Could not find ${LOD_EXT} files in "${PACK_PATH_WAD}" folder.`);
@@ -536,7 +671,7 @@ async function updateBootOptions(api) { // Write texpack and lodpack file names 
     }
     await fs.writeFileAsync(
       path.join(GAME_PATH, BOOT_OPTIONS_FILEPATH),
-      `${JSON.stringify(BOOT_OPTIONS_JSON, null, 2)}`,
+      JSON.stringify(BOOT_OPTIONS_JSON, null, 2),
       { encoding: "utf8" },
     );
   } catch (err) {
@@ -551,7 +686,7 @@ async function resetBootOptions(api) { // Reset boot-options.json file (on purge
     BOOT_OPTIONS_JSON[BOOT_LOD_KEY] = [];
     await fs.writeFileAsync(
       path.join(GAME_PATH, BOOT_OPTIONS_FILEPATH),
-      `${JSON.stringify(BOOT_OPTIONS_JSON, null, 2)}`,
+      JSON.stringify(BOOT_OPTIONS_JSON, null, 2),
       { encoding: "utf8" },
     );
   } catch (err) {
@@ -566,7 +701,8 @@ async function setup(discovery, api, gameSpec) {
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   try { //read boot-options.json file to get current tex and lod order
-    BOOT_OPTIONS_JSON = JSON.parse(fs.readFileSync(path.join(GAME_PATH, BOOT_OPTIONS_FILEPATH)));
+    const contents = await fs.readFileAsync(path.join(GAME_PATH, BOOT_OPTIONS_FILEPATH), 'utf8');
+    BOOT_OPTIONS_JSON = JSON.parse(contents);
     BOOT_ORDER_TEX = BOOT_OPTIONS_JSON[BOOT_TEX_KEY];
     BOOT_ORDER_LOD = BOOT_OPTIONS_JSON[BOOT_LOD_KEY];
   } catch (err) {
@@ -601,14 +737,22 @@ function applyGame(context, gameSpec) {
   });
   
   //register mod installers
-  context.registerInstaller(DATA_ID, 25, testData, installData);
-  context.registerInstaller(PATCH_ID, 30, testPatch, installPatch);
-  context.registerInstaller(EXECSUB_ID, 35, testExecsub, installExecsub);
-  context.registerInstaller(PACK_ID, 40, testPack, installPack);
-  context.registerInstaller(LUAMOD_ID, 45, testLuaMod, installLuaMod);
-  context.registerInstaller(SAVE_ID, 45, testSave, installSave);
+  context.registerInstaller(LOADER_ID, 25, testLoader, installLoader);
+  context.registerInstaller(DATA_ID, 27, testData, installData);
+  context.registerInstaller(PATCH_ID, 29, testPatch, installPatch);
+  context.registerInstaller(EXECSUB_ID, 31, testExecsub, installExecsub);
+  context.registerInstaller(PACK_ID, 33, testPack, installPack);
+  context.registerInstaller(LUAMOD_ID, 35, testLuaMod, installLuaMod);
+  context.registerInstaller(SAVE_ID, 37, testSave, installSave);
 
   //register actions
+  context.registerAction('mod-icons', 300, 'open-ext', {}, `Download ${LOADER_NAME}`, () => {
+    downloadLoader(context.api, spec).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Settings INI', () => {
     const state = context.api.getState();
     const discovery = selectors.discoveryByGame(state, GAME_ID);
@@ -677,22 +821,17 @@ function main(context) {
     context.api.onAsync('did-deploy', async (profileId, deployment) => { //update boot-options.json file on deployment
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;
-      return updateBootOptions(context.api);
+      await updateBootOptions(context.api);
+      return Promise.resolve();
     });
-    context.api.onAsync('did-purge', (profileId) => didPurge(context.api, profileId)); //*/
+    context.api.onAsync('did-purge', async (profileId) => {
+      const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
+      if (profileId !== LAST_ACTIVE_PROFILE) return;
+      await resetBootOptions(context.api);
+      return Promise.resolve();
+    }); //*/
   });
   return true;
-}
-
-async function didPurge(api, profileId) { //run on mod purge
-  const state = api.getState();
-  const profile = selectors.profileById(state, profileId);
-  const gameId = profile === null || profile === void 0 ? void 0 : profile.gameId;
-  if (gameId !== GAME_ID) {
-    return Promise.resolve();
-  }
-  resetBootOptions(api);
-  return Promise.resolve();
 }
 
 //export to Vortex

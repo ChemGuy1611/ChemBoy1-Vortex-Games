@@ -6,8 +6,9 @@
 
 ## [0.2.0] - 2026-01-30
 
+- Improved: Finds .texpack and .lodpack files in any subdirectory of the "exec\patch" or "exec\wad" folders
+- Added: Installer and download button for Script Loader
 - Added: Installer for Script Loader mods - indexed on "lua" folder
-- Added: Find .texpack and .lodpack files in the "wad" directory, in addition to "patch" directory
 - Fixed: path strings
 - Added: Buttons to open Script Loader config file, PCGamingWiki page, view changelog, and submit bug reports
 

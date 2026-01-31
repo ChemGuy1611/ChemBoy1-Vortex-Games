@@ -10,6 +10,7 @@ Date: 2025-04-10
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
+const fsPromises = require('fs/promises'); //.readdir() for recursive folder reading
 
 //Specify all the information about the game
 const STEAMAPP_ID = "2322010";
@@ -19,6 +20,9 @@ const EXEC = "GoWR.exe";
 const GAME_NAME = "God of War: Ragnarok";
 const GAME_NAME_SHORT = "GoW Ragnarok";
 const MOD_PATH = ".";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/God_of_War_Ragnar%C3%B6k";
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/959"; //Nexus link to this extension. Used for links
+
 let GAME_PATH = null;
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
@@ -41,6 +45,7 @@ const EXECSUB_FOLDERS = ["ActivityFeed", "cinematics", "dc", "languages", "sound
 const PACK_ID = `${GAME_ID}-pack`;
 const PACK_NAME = "Texpack/Lodpack";
 const PACK_PATH = path.join("exec", "patch", "pc_le");
+const READ_PAK_PATH = path.join("exec", "patch");
 const PACK_EXT = ".texpack";
 const LOD_EXT = ".lodpack";
 const PACK_EXTS = [PACK_EXT, LOD_EXT];
@@ -70,13 +75,28 @@ const SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
 //For boot-options.json file
 const BOOT_OPTIONS_FILENAME = "boot-options.json";
 const BOOT_OPTIONS_FILEPATH = path.join(DATA_FILE, BOOT_OPTIONS_FILENAME);
-const BOOT_TEX_KEY = `patch-texpacks`;
-const BOOT_LOD_KEY = `patch-lodpacks`;
+const BOOT_TEX_KEY = "patch-texpacks";
+const BOOT_LOD_KEY = "patch-lodpacks";
 let BOOT_OPTIONS_JSON = {};
 let BOOT_ORDER_TEX = [];
 let BOOT_ORDER_LOD = [];
 
 const SETTINGS_FILE = "settings.ini";
+
+const LUAMOD_ID = `${GAME_ID}-luamod`;
+const LUAMOD_NAME = "Lua Mod";
+const LUAMOD_PATH = path.join("mod");
+const LUAMOD_FOLDER = "int9";
+const LUAMOD_EXTS = ['.lua'];
+
+const LOADER_ID = `${GAME_ID}-scriptloader`;
+const LOADER_NAME = "GoWR-Script-Loader";
+const LOADER_ZIP = `God.of.War.Ragnarok.zip`;
+const LOADER_URL = `https://github.com/Eiton/GoWR-Script-Loader/releases/latest/download/${LOADER_ZIP}`;
+const LOADER_URL_ERR = "https://github.com/Eiton/GoWR-Script-Loader/releases";
+const LOADER_CONFIG_FILE = "GOWR-Script-Loader.ini"; 
+const LOADER_CONFIG_FILEPATH = path.join(LOADER_CONFIG_FILE);
+const LOADER_FILE = 'winmm.dll';
 
 // FILLED IN FROM DATA ABOVE
 const spec = {
@@ -113,25 +133,37 @@ const spec = {
       "id": PATCH_ID,
       "name": PATCH_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${PATCH_PATH}`
+      "targetPath": path.join('{gamePath}', PATCH_PATH)
     },
     {
       "id": EXECSUB_ID,
       "name": EXECSUB_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${EXECSUB_PATH}`
+      "targetPath": path.join('{gamePath}', EXECSUB_PATH)
     },
     {
       "id": PACK_ID,
       "name": PACK_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${PACK_PATH}`
+      "targetPath": path.join('{gamePath}', PACK_PATH)
+    },
+    {
+      "id": LUAMOD_ID,
+      "name": LUAMOD_NAME,
+      "priority": "high",
+      "targetPath": path.join('{gamePath}', LUAMOD_PATH)
     },
     {
       "id": SAVE_ID,
       "name": SAVE_NAME,
       "priority": "high",
       "targetPath": SAVE_PATH
+    },
+    {
+      "id": LOADER_ID,
+      "name": LOADER_NAME,
+      "priority": "low",
+      "targetPath": `{gamePath}`
     },
   ],
   "discovery": {
@@ -202,6 +234,47 @@ async function requiresLauncher(gamePath, store) {
 }
 
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
+
+//test whether to use mod installer
+function testLoader(files, gameId) {
+  const isMod = files.some(file => (path.basename(file).toLowerCase() === LOADER_FILE.toLowerCase()));
+  const isConfig = files.some(file => (path.basename(file).toLowerCase() === LOADER_CONFIG_FILE.toLowerCase()));
+  let supported = (gameId === spec.game.id) && isMod && isConfig;
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//mod installer instructions
+function installLoader(files) {
+  const modFile = files.find(file => (path.basename(file).toLowerCase() === LOADER_FILE.toLowerCase()));
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: LOADER_ID };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
 
 //Installer test for Root folder files
 function testData(files, gameId) {
@@ -369,6 +442,47 @@ function installPack(files) {
 }
 
 //test whether to use mod installer
+function testLuaMod(files, gameId) {
+  const isMod = files.some(file => LUAMOD_EXTS.includes(path.extname(file).toLowerCase()));
+  const isFolder = files.some(file => (path.basename(file).toLowerCase() === LUAMOD_FOLDER));
+  let supported = (gameId === spec.game.id) && isMod && isFolder;
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//mod installer instructions
+function installLuaMod(files) {
+  const modFile = files.find(file => (path.basename(file).toLowerCase() === LUAMOD_FOLDER));
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: LUAMOD_ID };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//test whether to use mod installer
 function testSave(files, gameId) {
   const isSave = files.some(file => path.basename(file).includes(SAVE_STRING));
   let supported = (gameId === spec.game.id) && isSave;
@@ -411,6 +525,53 @@ function installSave(files) {
   return Promise.resolve({ instructions });
 }
 
+// AUTO-DOWNLOAD FUNCTIONS /////////////////////////////////////////////////////////
+
+//* Function to auto-download from GitHub or external site //////////////////////////////////////////////////////
+async function downloadLoader(api, gameSpec) {
+  //let isInstalled = isLoaderInstalled(api, gameSpec);
+  //if (!isInstalled) {
+    const MOD_NAME = LOADER_NAME;
+    const MOD_TYPE = LOADER_ID;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
+    const GAME_DOMAIN = GAME_ID;
+    const URL = LOADER_URL;
+    const ERR_URL = LOADER_URL_ERR;
+    api.sendNotification({ //notification indicating install process
+      id: NOTIF_ID,
+      message: `Installing ${MOD_NAME}`,
+      type: 'activity',
+      noDismiss: true,
+      allowSuppress: false,
+    });
+    try {
+      const dlInfo = { //Download the mod
+        game: GAME_DOMAIN,
+        name: MOD_NAME,
+      };
+      const dlId = await util.toPromise(cb =>
+        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+      const modId = await util.toPromise(cb =>
+        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
+      const batched = [
+        actions.setModsEnabled(api, profileId, [modId], true, {
+          allowAutoDeploy: true,
+          installed: true,
+        }),
+        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
+      ];
+      util.batchDispatch(api.store, batched); // Will dispatch both actions
+    } catch (err) { //Show the user the download page if the download, install process fails
+      const errPage = ERR_URL;
+      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
+      util.opn(errPage).catch(() => null);
+    } finally {
+      api.dismissNotification(NOTIF_ID);
+    }
+  //}
+} //*/
+
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
 const getDiscoveryPath = (api) => {
@@ -419,21 +580,31 @@ const getDiscoveryPath = (api) => {
   return discovery === null || discovery === void 0 ? void 0 : discovery.path;
 };
 
-async function updateBootOptions(api) { //* Write texpack and lodpack file names to boot-options.json file (on deployment)
+//* Write texpack and lodpack file names to boot-options.json file (on deployment)
+async function updateBootOptions(api) { 
   GAME_PATH = getDiscoveryPath(api);
-  try { //read boot-options.json file to get tex and lod order
-    const PATCH_FOLDER_FILES = await fs.readdirAsync(path.join(GAME_PATH, PACK_PATH));
+  try { //read files and write to boot-options.json file
+    //.texpack files
+    //const PATCH_FOLDER_FILES = await fs.readdirAsync(path.join(GAME_PATH, PACK_PATH));
+    const PATCH_FOLDER_FILES = await fsPromises.readdir(path.join(GAME_PATH, READ_PAK_PATH), { recursive: true });
     const TEX_FILES = PATCH_FOLDER_FILES.filter(file => (path.extname(file).toLowerCase() === PACK_EXT));
-    const TEX_FILE_NAMES = TEX_FILES.map(file => path.basename(file, path.extname(file)));
-    const TEX_FILE_NAMES_CONV = TEX_FILE_NAMES.map(file => `../../patch/pc_le/${file}`);
+    /*const TEX_FILE_NAMES = TEX_FILES.map(file => path.basename(file, path.extname(file)));
+    const TEX_FILE_NAMES_CONV = TEX_FILE_NAMES.map(file => `../../patch/pc_le/${file}`); //*/
+    const TEX_FILE_NAMES = TEX_FILES.map(file => file.replace(path.extname(file), '').replace("\\", "/"));
+    const TEX_FILE_NAMES_CONV = TEX_FILE_NAMES.map(file => `../../patch/${file}`); //*/
+    //.lodpack files
     const LOD_FILES = PATCH_FOLDER_FILES.filter(file => (path.extname(file).toLowerCase() === LOD_EXT));
-    const LOD_FILE_NAMES = LOD_FILES.map(file => path.basename(file, path.extname(file)));
-    const LOD_FILE_NAMES_CONV = LOD_FILE_NAMES.map(file => `../../patch/pc_le/${file}`);
+    /*const LOD_FILE_NAMES = LOD_FILES.map(file => path.basename(file, path.extname(file)));
+    const LOD_FILE_NAMES_CONV = LOD_FILE_NAMES.map(file => `../../patch/pc_le/${file}`); //*/
+    const LOD_FILE_NAMES = LOD_FILES.map(file => file.replace(path.extname(file), '').replace("\\", "/"));
+    const LOD_FILE_NAMES_CONV = LOD_FILE_NAMES.map(file => `../../patch/${file}`); //*/
     BOOT_OPTIONS_JSON.allcontentidarray[0][BOOT_TEX_KEY] = TEX_FILE_NAMES_CONV;
     BOOT_OPTIONS_JSON.allcontentidarray[0][BOOT_LOD_KEY] = LOD_FILE_NAMES_CONV;
+    BOOT_ORDER_TEX = BOOT_OPTIONS_JSON.allcontentidarray[0][BOOT_TEX_KEY];
+    BOOT_ORDER_LOD = BOOT_OPTIONS_JSON.allcontentidarray[0][BOOT_LOD_KEY];
     await fs.writeFileAsync(
       path.join(GAME_PATH, BOOT_OPTIONS_FILEPATH),
-      `${JSON.stringify(BOOT_OPTIONS_JSON, null, 2)}`,
+      JSON.stringify(BOOT_OPTIONS_JSON, null, 2),
       { encoding: "utf8" },
     );
   } catch (err) {
@@ -446,9 +617,11 @@ async function resetBootOptions(api) { // Resetboot-options.json file (on purge)
   try { //reset boot-options.json file
     BOOT_OPTIONS_JSON.allcontentidarray[0][BOOT_TEX_KEY] = [];
     BOOT_OPTIONS_JSON.allcontentidarray[0][BOOT_LOD_KEY] = [];
+    BOOT_ORDER_TEX = BOOT_OPTIONS_JSON.allcontentidarray[0][BOOT_TEX_KEY];
+    BOOT_ORDER_LOD = BOOT_OPTIONS_JSON.allcontentidarray[0][BOOT_LOD_KEY];
     await fs.writeFileAsync(
       path.join(GAME_PATH, BOOT_OPTIONS_FILEPATH),
-      `${JSON.stringify(BOOT_OPTIONS_JSON, null, 2)}`,
+      JSON.stringify(BOOT_OPTIONS_JSON, null, 2),
       { encoding: "utf8" },
     );
   } catch (err) {
@@ -463,16 +636,18 @@ async function setup(discovery, api, gameSpec) {
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   try { //read boot-options.json file to get current tex and lod order
-    BOOT_OPTIONS_JSON = JSON.parse(fs.readFileSync(path.join(GAME_PATH, BOOT_OPTIONS_FILEPATH)));
+    const contents = await fs.readFileAsync(path.join(GAME_PATH, BOOT_OPTIONS_FILEPATH), 'utf8');
+    BOOT_OPTIONS_JSON = JSON.parse(contents);
     //log('warn', `Boot-options.json file read successfully: ${BOOT_OPTIONS_JSON}`);
     BOOT_ORDER_TEX = BOOT_OPTIONS_JSON.allcontentidarray[0][BOOT_TEX_KEY];
     BOOT_ORDER_LOD = BOOT_OPTIONS_JSON.allcontentidarray[0][BOOT_LOD_KEY];
-    //log('warn', `Texpacks: ${BOOT_ORDER_TEX}`);
-    //log('warn', `Lodpacks: ${BOOT_ORDER_LOD}`);
+    log('warn', `Texpacks: ${BOOT_ORDER_TEX}`);
+    log('warn', `Lodpacks: ${BOOT_ORDER_LOD}`);
   } catch (err) {
     api.showErrorNotification(`Could not read file "${BOOT_OPTIONS_FILEPATH}". Please verify your game files.`, err, { allowReport: false });
   }
   await fs.ensureDirWritableAsync(SAVE_PATH);
+  await fs.ensureDirWritableAsync(path.join(discovery.path, LUAMOD_PATH));
   return fs.ensureDirWritableAsync(path.join(discovery.path, PACK_PATH));
 }
 
@@ -500,13 +675,22 @@ function applyGame(context, gameSpec) {
   });
   
   //register mod installers
-  context.registerInstaller(DATA_ID, 25, testData, installData);
-  context.registerInstaller(PATCH_ID, 30, testPatch, installPatch);
-  context.registerInstaller(EXECSUB_ID, 35, testExecsub, installExecsub);
-  context.registerInstaller(PACK_ID, 40, testPack, installPack);
-  context.registerInstaller(SAVE_ID, 45, testSave, installSave);
+  context.registerInstaller(LOADER_ID, 25, testLoader, installLoader);
+  context.registerInstaller(DATA_ID, 27, testData, installData);
+  context.registerInstaller(PATCH_ID, 29, testPatch, installPatch);
+  context.registerInstaller(EXECSUB_ID, 31, testExecsub, installExecsub);
+  context.registerInstaller(PACK_ID, 33, testPack, installPack);
+  context.registerInstaller(LUAMOD_ID, 35, testLuaMod, installLuaMod);
+  context.registerInstaller(SAVE_ID, 37, testSave, installSave);
 
   //register actions
+  context.registerAction('mod-icons', 300, 'open-ext', {}, `Download ${LOADER_NAME}`, () => {
+    downloadLoader(context.api, spec).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Settings INI', () => {
     const state = context.api.getState();
     const discovery = selectors.discoveryByGame(state, GAME_ID);
@@ -527,6 +711,37 @@ function applyGame(context, gameSpec) {
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open GoWR-Script-Loader Config', () => {
+    const state = context.api.getState();
+    const discovery = selectors.discoveryByGame(state, GAME_ID);
+    const openPath = path.join(discovery.path, LOADER_CONFIG_FILEPATH);
+    util.opn(openPath).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
+    util.opn(PCGAMINGWIKI_URL).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
+    util.opn(path.join(__dirname, 'CHANGELOG.md')).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
+    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
     const openPath = DOWNLOAD_FOLDER;
     util.opn(openPath).catch(() => null);
@@ -544,22 +759,17 @@ function main(context) {
     context.api.onAsync('did-deploy', async (profileId, deployment) => {
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;
-      return await updateBootOptions(context.api);
+      await updateBootOptions(context.api);
+      return Promise.resolve();
     });
-    context.api.onAsync('did-purge', (profileId) => didPurge(context.api, profileId)); //*/
+    context.api.onAsync('did-purge', async (profileId) => {
+      const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
+      if (profileId !== LAST_ACTIVE_PROFILE) return;
+      await resetBootOptions(context.api);
+      return Promise.resolve();
+    }); //*/
   });
   return true;
-}
-
-async function didPurge(api, profileId) { //run on mod purge
-  const state = api.getState();
-  const profile = selectors.profileById(state, profileId);
-  const gameId = profile === null || profile === void 0 ? void 0 : profile.gameId;
-  if (gameId !== GAME_ID) {
-    return Promise.resolve();
-  }
-  resetBootOptions(api);
-  return Promise.resolve();
 }
 
 //export to Vortex
