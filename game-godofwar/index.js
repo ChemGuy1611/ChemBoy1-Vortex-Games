@@ -640,10 +640,10 @@ async function updateBootOptions(api) { // Write texpack and lodpack file names 
         const WAD_TEX_FILE_NAMES_CONV = WAD_TEX_FILE_NAMES.map(file => `../../wad/${file}`); //*/
         BOOT_OPTIONS_JSON[BOOT_TEX_KEY] = TEX_FILE_NAMES_CONV.concat(WAD_TEX_FILE_NAMES_CONV);
       } catch (err) {
-        log('error', `Could not find ${PACK_EXT}  files in "${PACK_PATH_WAD}" folder.`);
+        log('warn', `Could not find ${PACK_EXT}  files in "${PACK_PATH_WAD}" folder.`);
       }
     } catch (err) {
-      log('error', `Could not read "${PACK_PATH_WAD}" folder for ${PACK_EXT} files. Folder proably does not exist.`);
+      log('warn', `Could not read "${PACK_PATH_WAD}" folder for ${PACK_EXT} files. Folder proably does not exist.`);
     }
     //.lodpack files
     const LOD_FILES = PATCH_FOLDER_FILES.filter(file => (path.extname(file).toLowerCase() === LOD_EXT));
@@ -664,10 +664,10 @@ async function updateBootOptions(api) { // Write texpack and lodpack file names 
         const WAD_LOD_FILE_NAMES_CONV = WAD_LOD_FILE_NAMES.map(file => `../../wad/${file}`); //*/
         BOOT_OPTIONS_JSON[BOOT_LOD_KEY] = LOD_FILE_NAMES_CONV.concat(WAD_LOD_FILE_NAMES_CONV);
       } catch (err) {
-        log('error', `Could not find ${LOD_EXT} files in "${PACK_PATH_WAD}" folder.`);
+        log('warn', `Could not find ${LOD_EXT} files in "${PACK_PATH_WAD}" folder.`);
       }
     } catch (err) {
-      log('error', `Could not read "${PACK_PATH_WAD}" folder for ${LOD_EXT} files. Folder proably does not exist.`);
+      log('warn', `Could not read "${PACK_PATH_WAD}" folder for ${LOD_EXT} files. Folder proably does not exist.`);
     }
     await fs.writeFileAsync(
       path.join(GAME_PATH, BOOT_OPTIONS_FILEPATH),

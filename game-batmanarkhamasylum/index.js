@@ -2,8 +2,8 @@
 Name: Batman: Arkham Asylum Vortex Extension
 Structure: UE2/3 Game (TFC Installer)
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2025-XX-XX
+Version: 0.1.1
+Date: 2026-01-30
 /////////////////////////////////////////*/
 
 //Import libraries
@@ -892,30 +892,16 @@ function runModManager(api) {
   }
 }
 
-/*
+//*
 async function resolveGameVersion(gamePath) {
-  GAME_VERSION = await setGameVersion(gamePath);
   let version = '0.0.0';
-  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
-    try {
-      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
-      const parsed = await parseStringPromise(appManifest);
-      version = parsed?.Package?.Identity?.[0]?.$?.Version;
-      return Promise.resolve(version);
-    } catch (err) {
-      log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
-      return Promise.resolve(version);
-    }
-  }
-  else { // use exe
-    try {
-      const exeVersion = require('exe-version');
-      version = exeVersion.getProductVersion(path.join(gamePath, EXEC));
-      return Promise.resolve(version); 
-    } catch (err) {
-      log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
-      return Promise.resolve(version);
-    }
+  try {
+    const exeVersion = require('exe-version');
+    version = exeVersion.getProductVersion(path.join(gamePath, SHIPPING_EXE));
+    return Promise.resolve(version); 
+  } catch (err) {
+    log('error', `Could not read ${SHIPPING_EXE} file to get Steam game version: ${err}`);
+    return Promise.resolve(version);
   }
 } //*/
 
@@ -952,7 +938,7 @@ function applyGame(context, gameSpec) {
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     executable: () => gameSpec.game.executable,
     //executable: getExecutable,
-    //getGameVersion: resolveGameVersion,
+    getGameVersion: resolveGameVersion,
     supportedTools: tools,
   };
   context.registerGame(game);
