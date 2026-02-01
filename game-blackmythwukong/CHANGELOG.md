@@ -4,6 +4,10 @@
 
 - None planned
 
+## [0.3.1] - 2026-02-01
+
+- Fixed: Deploy notification not clearing on deploy
+
 ## [0.3.0] - 2026-01-30
 
 - Added: Epic version support

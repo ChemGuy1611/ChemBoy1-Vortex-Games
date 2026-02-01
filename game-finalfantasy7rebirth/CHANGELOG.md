@@ -4,6 +4,10 @@
 
 - None planned
 
+## [0.5.1] - 2026-02-01
+
+- Fixed: Deploy notification not clearing on deploy
+
 ## [0.5.0] - 2026-01-30
 
 - Fixed: Issue with Load Order sorting not working if certain other UE game extensions were installed. You will need to reinstall all pak mods to be able to sort them properly. A notification will be sent reminding you to do this.

@@ -2,8 +2,8 @@
 Name: Final Fantasy VII Rebirth Vortex Extension
 Structure: UE4 with IO Store
 Author: ChemBoy1
-Version: 0.5.0
-Date: 2026-01-30
+Version: 0.5.1
+Date: 2026-02-01
 //////////////////////////////////////////////////*/
 
 //Import libraries
@@ -1556,14 +1556,13 @@ function main(context) {
     });
   }
   context.once(() => { // put code here that should be run (once) when Vortex starts up
-    
+    context.api.onAsync('did-deploy', (profileId) => didDeploy(context.api, profileId)); //*/
   });
   return true;
 }
 
 const requestDeployment = (context, spec) => {
   context.api.store.dispatch(actions.setDeploymentNecessary(spec.game.id, true));
-
   context.api.sendNotification({
     id: `${spec.game.id}-loadorderdeploy-notif`,
     type: 'warning',
@@ -1572,11 +1571,25 @@ const requestDeployment = (context, spec) => {
     actions: [
       {
         title: 'Deploy',
-        action: () => deploy(context.api)
+        action: (dismiss) => {
+          deploy(context.api)
+          dismiss();
+        }
       }
     ],
   });
 };
+
+async function didDeploy(api, profileId) { //run on mod deploy
+  const state = api.getState();
+  const profile = selectors.profileById(state, profileId);
+  const gameId = profile === null || profile === void 0 ? void 0 : profile.gameId;
+  if (gameId !== GAME_ID) {
+    return Promise.resolve();
+  }
+  api.dismissNotification(`${GAME_ID}-loadorderdeploy-notif`);
+  return Promise.resolve();
+}
 
 //export to Vortex
 module.exports = {

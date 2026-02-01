@@ -1738,7 +1738,7 @@ function UNREALEXTENSION(context) {
       mergeMods: (mod) => {
         if (UNREALDATA.loadOrder === true) {
           return loadOrderPrefix(context.api, mod) + mod.id
-        } else {
+        } else { //If load order is disabled, don't use sorting folders
           return '';
         }
       } //*/
@@ -2264,7 +2264,6 @@ function main(context) {
 
 const requestDeployment = (context, spec) => {
   context.api.store.dispatch(actions.setDeploymentNecessary(spec.game.id, true));
-
   context.api.sendNotification({
     id: `${spec.game.id}-loadorderdeploy-notif`,
     type: 'warning',
@@ -2273,7 +2272,10 @@ const requestDeployment = (context, spec) => {
     actions: [
       {
         title: 'Deploy',
-        action: () => deploy(context.api)
+        action: (dismiss) => {
+          deploy(context.api)
+          dismiss();
+        }
       }
     ],
   });
