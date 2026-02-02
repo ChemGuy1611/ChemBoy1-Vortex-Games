@@ -2,8 +2,8 @@
 Name: Bellwright Vortex Extension
 Structure: UE4 + IO Store (Sig Bypass)
 Author: ChemBoy1
-Version: 0.3.0
-Date: 2025-06-26
+Version: 0.4.0
+Date: 2026-02-01
 //*//////////////////////////////////////////////////
 
 //Import libraries

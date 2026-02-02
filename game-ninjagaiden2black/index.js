@@ -2,8 +2,8 @@
 Name: Ninja Gaiden 2 Black Vortex Extension
 Structure: UE5 (Xbox-Integrated)
 Author: ChemBoy1
-Version: 0.3.0
-Date: 2025-04-23
+Version: 0.4.0
+Date: 2026-02-01
 ////////////////////////////////////////////////*/
 
 //Import libraries

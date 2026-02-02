@@ -2,8 +2,8 @@
 Name: RoboCop Rogue City and Unfinished Business Vortex Extension
 Structure: UE5
 Author: ChemBoy1
-Version: 0.6.0
-Date: 2025-07-17
+Version: 0.7.0
+Date: 2026-02-01
 ////////////////////////////////////////////*/
 
 //Import libraries

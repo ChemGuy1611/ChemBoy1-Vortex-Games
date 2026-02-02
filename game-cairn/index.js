@@ -1,9 +1,9 @@
 /*//////////////////////////////////////////
-Name: XXX Vortex Extension
+Name: Cairn Vortex Extension
 Structure: Unity BepinEx/MelonLoader Hybrid
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2026-XX-XX
+Date: 2026-02-01
 //////////////////////////////////////////*/
 
 //Import libraries
@@ -23,24 +23,24 @@ const LOCALLOW = path.join(USER_HOME, 'AppData', 'LocalLow');
 const LOCALAPPDATA = util.getVortexPath("localAppData");
 
 //Specify all the information about the game
-const GAME_ID = "XXX";
-const STEAMAPP_ID = "XXX";
-const STEAMAPP_ID_DEMO = "XXX";
-const EPICAPP_ID = "XXX";
-const GOGAPP_ID = "XXX";
-const XBOXAPP_ID = "XXX";
-const XBOXEXECNAME = "XXX";
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
-const GAME_NAME = "XXX";
-const GAME_NAME_SHORT = "XXX";
-const GAME_STRING = "XXX"; //string for exe and data folder (seem to always match)
-const GAME_STRING_ALT = "XXX"; //
+const GAME_ID = "cairn";
+const STEAMAPP_ID = "1588550";
+const STEAMAPP_ID_DEMO = "";
+const EPICAPP_ID = "b94ba8f135914605ad8bbc9083db427e";
+const GOGAPP_ID = "1300489906";
+const XBOXAPP_ID = "";
+const XBOXEXECNAME = "";
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, GOGAPP_ID, EPICAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const GAME_NAME = "Cairn";
+const GAME_NAME_SHORT = "Cairn";
+const GAME_STRING = "Cairn"; //string for exe and data folder (seem to always match)
+const GAME_STRING_ALT = ""; //
 const EXEC = `${GAME_STRING}.exe`;
 const EXEC_EGS = EXEC;
 const EXEC_GOG = EXEC;
 const EXEC_XBOX = 'gamelaunchhelper.exe';
 const EXEC_ALT = EXEC_XBOX; //or `${GAME_STRING_ALT}.exe`
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Cairn";
 const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
 
 //feature toggles
@@ -62,9 +62,9 @@ const ROOT_FOLDERS = [DATA_FOLDER, DATA_FOLDER_ALT];
 const VERSION_FILE = 'Version.info';
 let VERSION_FILE_PATH = path.join(DATA_FOLDER, 'StreamingAssets', VERSION_FILE);
 
-const DEV_REGSTRING = "XXX"; //developer name
-const GAME_REGSTRING = "XXX"; //game name
-const XBOX_SAVE_STRING = 'XXX'; //string after "ID_"
+const DEV_REGSTRING = "TheGameBakers"; //developer name
+const GAME_REGSTRING = "Cairn_RETAIL"; //game name
+const XBOX_SAVE_STRING = ''; //string after "ID_"
 
 //Data to determine BepinEx/MelonLoader versions and URLs
 const BEPINEX_BUILD = 'il2cpp'; // 'mono' or 'il2cpp' - check for "il2cpp_data" folder
@@ -90,12 +90,9 @@ let customInstalled = false;
 const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 //Config and save paths
-const CONFIG_HIVE = 'HKEY_CURRENT_USER';
-const CONFIG_KEY = `Software\\${DEV_REGSTRING}\\${GAME_REGSTRING}`;
-const CONFIG_REGPATH_FULL = `${CONFIG_HIVE}\\${CONFIG_KEY}`; //*/
-//const CONFIG_PATH = path.join(LOCALLOW, DEV_REGSTRING, GAME_REGSTRING, 'Settings');
+const CONFIG_PATH = path.join(USER_HOME, 'Saved Games', DEV_REGSTRING, GAME_REGSTRING, 'PERSISTENT', 'PLAYER');
 const CONFIG_FILES = ['settings.json'];
-const SAVE_PATH_DEFAULT = path.join(USER_HOME, 'AppData', 'LocalLow', DEV_REGSTRING, GAME_REGSTRING);
+const SAVE_PATH_DEFAULT = path.join(USER_HOME, 'Saved Games', DEV_REGSTRING, GAME_REGSTRING, 'SAVEGAMES', 'RETAIL', 'STORY');
 const SAVE_PATH_XBOX = path.join(LOCALAPPDATA, "Packages", `${XBOXAPP_ID}_${XBOX_SAVE_STRING}`, "SystemAppData", "wgs"); //XBOX Version
 let SAVE_PATH = SAVE_PATH_DEFAULT;
 const SAVE_FILES = ['XXX.XXX'];
@@ -432,43 +429,6 @@ const tools = [
     //defaultPrimary: true,
     parameters: PARAMETERS,
   }, //*/
-  {
-    id: `${GAME_ID}-customlaunchalt`,
-    name: `Custom Launch`,
-    logo: `exec.png`,
-    executable: () => EXEC_ALT,
-    requiredFiles: [EXEC_ALT],
-    detach: true,
-    relative: true,
-    exclusive: true,
-    shell: true,
-    //defaultPrimary: true,
-    parameters: PARAMETERS,
-  }, //*/
-  /*{
-    id: SAVEEDITOR_ID,
-    name: SAVEEDITOR_NAME,
-    logo: `saveeditor.png`,
-    executable: () => SAVEEDITOR_EXEC,
-    requiredFiles: [SAVEEDITOR_EXEC],
-    detach: true,
-    relative: true,
-    exclusive: false,
-    //shell: true,
-    //parameters: [],
-  }, //*/
-  /*{
-    id: CUSTOMLOADER_ID,
-    name: `${CUSTOMLOADER_NAME} Installer`,
-    logo: `customloader.png`,
-    executable: () => path.join(CUSTOMLOADER_FOLDER, CUSTOMLOADER_EXEC),
-    requiredFiles: [path.join(CUSTOMLOADER_FOLDER, CUSTOMLOADER_EXEC)],
-    detach: true,
-    relative: true,
-    exclusive: true,
-    //shell: true,
-    //parameters: [],
-  }, //*/
 ];
 
 // BASIC FUNCTIONS //////////////////////////////////////////////////////////////
@@ -531,7 +491,7 @@ function makeFindGame(api, gameSpec) {
 
 //Set launcher requirements
 async function requiresLauncher(gamePath, store) {
-  if (store === 'xbox' && (DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID))) {
+  /*if (store === 'xbox' && (DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID))) {
       return Promise.resolve({
           launcher: 'xbox',
           addInfo: {

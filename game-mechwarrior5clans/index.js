@@ -2,8 +2,8 @@
 Name: MechWarrior 5: Clans Vortex Extension
 Structure: UE5 (Xbox-Integrated)
 Author: ChemBoy1
-Version: 0.2.0
-Date: 2025-07-14
+Version: 0.3.0
+Date: 2026-02-01
 ////////////////////////////////////////////////*/
 
 //Import libraries

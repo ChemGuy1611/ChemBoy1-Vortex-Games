@@ -1,10 +1,10 @@
-/*
+/*////////////////////////////////////////////////
 Name: Nobody Wants to Die Vortex Extension
 Structure: UE5
 Author: ChemBoy1
-Version: 0.2.0
-Date: 10/11/2024
-*/
+Version: 0.3.0
+Date: 2026-02-01
+////////////////////////////////////////////////*/
 
 //Import libraries
 const { actions, fs, util, selectors, log } = require('vortex-api');

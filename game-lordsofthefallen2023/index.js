@@ -2,8 +2,8 @@
 Name: Lords of the Fallen (2023) Vortex Extension
 Structure: UE5 (Xbox-Integrated)
 Author: ChemBoy1
-Version: 0.1.1
-Date: 2025-08-17
+Version: 0.2.0
+Date: 2026-02-01
 ////////////////////////////////////////////////*/
 
 //Import libraries

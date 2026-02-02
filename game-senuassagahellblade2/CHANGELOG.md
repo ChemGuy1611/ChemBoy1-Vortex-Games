@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.4.0] - 2026-02-01
+## [0.5.0] - 2026-02-01
 
 - Fixed: Issue with Load Order sorting not working if certain other UE game extensions were installed. You will need to reinstall all pak mods to be able to sort them properly. A notification will be sent reminding you to do this.
 - Added: Notification indicating deployment is required after changing the load order.
@@ -8,8 +8,3 @@
 - Fixed: path strings
 - Added: Buttons to open PCGamingWiki page, view changelog, and submit bug reports
 - Fixed: Xbox game version detection
-
-## [0.3.0] - 2025-04-23
-
-- Added config installer - only available if the game, staging folder, and Documents folder are on the same partition
-- Included changelog file

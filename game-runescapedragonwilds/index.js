@@ -2,8 +2,8 @@
 Name: RuneScape: Dragonwilds Vortex Extension
 Structure: UE5
 Author: ChemBoy1
-Version: 0.1.1
-Date: 2025-04-22
+Version: 0.2.0
+Date: 2026-02-01
 //////////////////////////////////////////////////*/
 
 //Import libraries

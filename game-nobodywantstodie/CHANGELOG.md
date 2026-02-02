@@ -1,6 +1,10 @@
 # Changelog
 
-## [0.4.0] - 2026-02-01
+## Planned Improvements (Not Yet Released)
+
+- None Planned
+
+## [0.3.0] - 2026-02-01
 
 - Fixed: Issue with Load Order sorting not working if certain other UE game extensions were installed. You will need to reinstall all pak mods to be able to sort them properly. A notification will be sent reminding you to do this.
 - Added: Notification indicating deployment is required after changing the load order.
@@ -9,7 +13,11 @@
 - Added: Buttons to open PCGamingWiki page, view changelog, and submit bug reports
 - Fixed: Xbox game version detection
 
-## [0.3.0] - 2025-04-23
+## [0.2.0] - 2025-10-11
 
-- Added config installer - only available if the game, staging folder, and Documents folder are on the same partition
-- Included changelog file
+- Disabled symlinks as they don't work with this game (because of Unreal Engine IOStore)
+- Disabled config and save mod types and installers due to lack of symlinks support
+
+## [0.1.0] - 2025-01-14
+
+- Inital Release
