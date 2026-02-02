@@ -50,7 +50,7 @@ const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
 const hasXbox = false; //toggle for Xbox version logic.
 const multiExe = false; //toggle for multiple executables (Epic/GOG/Demo don't match Steam)
 const hasModKit = false; //toggle for UE ModKit mod support
-const preferHardlinks = true; //set true to perform partition check for Config/Save modtypes so that hardlinks available to more users
+const preferHardlinks = true; //set true to perform partition checks when IO-STORE=false for Config/Save modtypes so that hardlinks available to more users
 const autoDownloadUe4ss = false; //toggle for auto downloading UE4SS
 const SIGBYPASS_REQUIRED = false; //set true if there are .sig files in the Paks folder
 const IO_STORE = true; //true if the Paks folder contains .ucas and .utoc files
