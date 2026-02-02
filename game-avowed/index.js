@@ -617,6 +617,70 @@ function installScripts(files, fileName) {
   return Promise.resolve({ instructions });
 }
 
+//Test for UE4SS DLL files
+function testDll(files, gameId) {
+  const isMod = files.some(file => (path.extname(file).toLowerCase() === DLL_EXT));
+  const isFolder = files.some(file => (path.basename(file).toLowerCase() === DLL_FOLDER.toLowerCase()));
+  let supported = (gameId === spec.game.id) && isMod && isFolder;
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install UE4SS DLL files
+function installDll(files, fileName) {
+  const modFile = files.find(file => (path.basename(file).toLowerCase() === DLL_FOLDER.toLowerCase()));
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: DLL_ID };
+  const MOD_NAME = path.basename(fileName);
+  let MOD_FOLDER = path.basename(rootPath);
+  if (MOD_FOLDER === '.') {
+    MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
+  }
+  
+  const ENABLEDTXT_FILE = 'enabled.txt'
+  const ENABLEDTXT_PATH = path.join(fileName, rootPath, ENABLEDTXT_FILE);
+  try {
+    fs.statSync(ENABLEDTXT_PATH);
+  } catch (err) {
+    try {
+      fs.writeFileSync(
+        ENABLEDTXT_PATH,
+        ``,
+        { encoding: "utf8" },
+      );
+      files.push(path.join(rootPath, ENABLEDTXT_FILE));
+      log('info', `Successfully created enabled.txt for UE4SS DLL Mod: ${MOD_NAME}`);
+    } catch (err) {
+      log('error', `Could not create enabled.txt for UE4SS DLL Mod: ${MOD_NAME}`);
+    }
+  }
+
+  //Filter files and set instructions
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(MOD_FOLDER, file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
 //Test for config files
 function testConfig(files, gameId) {
   const isConfig = files.some(file => CONFIG_FILES.includes(path.basename(file).toLowerCase()));
@@ -1208,11 +1272,12 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(`${GAME_ID}-ue4ss-logicmod`, 30, testLogic, installLogic);
   //35 is pak installer above
   context.registerInstaller(`${GAME_ID}-ue4ss`, 40, testUe4ss, installUe4ss);
-  context.registerInstaller(`${GAME_ID}-ue4ss-scripts`, 45, testScripts, installScripts);
-  context.registerInstaller(`${GAME_ID}-root`, 50, testRoot, installRoot);
+  context.registerInstaller(`${GAME_ID}-ue4ss-scripts`, 43, testScripts, installScripts);
+  context.registerInstaller(DLL_ID, 45, testDll, installDll);
+  context.registerInstaller(`${GAME_ID}-root`, 47, testRoot, installRoot);
   //context.registerInstaller(`${GAME_ID}-config`, 55, testConfig, installConfig);
   //context.registerInstaller(`${GAME_ID}-save`, 60, testSave, installSave);
-  context.registerInstaller(BINARIES_ID, 60, testBinaries, installBinaries);
+  context.registerInstaller(BINARIES_ID, 49, testBinaries, installBinaries);
 
   //register buttons to open folders
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download UE4SS', () => {
