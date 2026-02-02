@@ -1275,9 +1275,9 @@ function applyGame(context, gameSpec) {
 
   //register mod installers
   context.registerInstaller(INTEGRATION_STUDIO_ID, 25, testIntegrationStudio, (files, temp) => installIntegrationStudio(files, temp, context.api));
-  context.registerInstaller(ROOT_ID, 27, testRoot, installRoot);
-  context.registerInstaller(LOCAL_ID, 29, testLocal, installLocal);
-  context.registerInstaller(PAK_ID, 31, testPak, (files) => installPak(context.api, files));
+  context.registerInstaller(PAK_ID, 27, testPak, (files) => installPak(context.api, files));
+  context.registerInstaller(ROOT_ID, 29, testRoot, installRoot);
+  context.registerInstaller(LOCAL_ID, 31, testLocal, installLocal);
   context.registerInstaller(LOCALSUB_ID, 33, testLocalSub, installLocalSub);
   context.registerInstaller(BINARIES_ID, 49, testBinaries, installBinaries); //fallback to binaries folder
 
