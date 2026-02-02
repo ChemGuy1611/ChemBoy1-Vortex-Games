@@ -17,11 +17,12 @@ const GAME_ID = "silenthill2";
 const STEAMAPP_ID = "2124490";
 const EPICAPP_ID = "c4dc308a1b69492aba4d47f7feaa1083";
 const GOGAPP_ID = "2051029707";
-const XBOXAPP_ID = ""; //There is an Xbox version, but not on Game Pass, so cannot get data
-const XBOXEXECNAME = "";
+const XBOXAPP_ID = "KonamiDigitalEntertainmen.SILENTHILL2"; //There is an Xbox version, but not on Game Pass, so cannot get data
+const XBOXEXECNAME = "AppUEGameShipping";
+const XBOX_PUB_ID = "168atcksx2mfc";
 const EPIC_CODE_NAME = "SHProto";
 const EXEC_FOLDER_NAME = "Win64";
-//const EXEC_FOLDER_NAME = "WinGDK"; //XBOX Version
+const EXEC_FOLDER_XBOX = "WinGDK"; //XBOX Version
 const GAME_NAME = "Silent Hill 2 (2024)";
 const GAME_NAME_SHORT = "Silent Hill 2";
 const EXEC = "SHProto.exe";
@@ -77,7 +78,8 @@ const LOGICMODS_EXT = ".pak";
 const LOCALAPPDATA = util.getVortexPath('localAppData');
 const LOCALDATA_FOLDER = 'SilentHill2';
 const CONFIG_ID = `${GAME_ID}-config`;
-const CONFIG_PATH = path.join(LOCALAPPDATA, LOCALDATA_FOLDER, "Saved", "Config", "Windows");
+let CONFIG_PATH = path.join(LOCALAPPDATA, LOCALDATA_FOLDER, "Saved", "Config", "Windows");
+const CONFIG_PATH_XBOX = path.join(LOCALAPPDATA, LOCALDATA_FOLDER, "Saved", "Config", "WinGDK"); //XBOX Version
 const CONFIG_FILES = ["engine.ini", "scalability.ini", "input.ini"];
 const CONFIG_EXT = ".ini";
 
@@ -239,7 +241,7 @@ const spec = {
       STEAMAPP_ID,
       EPICAPP_ID,
       GOGAPP_ID,
-      //XBOXAPP_ID
+      XBOXAPP_ID
     ],
     "names": []
   }
@@ -315,7 +317,7 @@ function makeFindGame(api, gameSpec) {
 }
 
 async function requiresLauncher(gamePath, store) {
-  /*if (store === 'xbox') {
+  if (store === 'xbox') {
       return Promise.resolve({
           launcher: 'xbox',
           addInfo: {
@@ -339,6 +341,7 @@ async function requiresLauncher(gamePath, store) {
 function getExecutable(discoveryPath) {
   if (statCheckSync(discoveryPath, EXEC_XBOX)) {
     GAME_VERSION = 'xbox';
+    CONFIG_PATH = CONFIG_PATH_XBOX;
     return EXEC_XBOX;
   };
   //add GOG/EGS/Demo versions here if needed
