@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.5.0] - 2026-02-02
+
+- Added: Xbox (Game Pass) version support
+
 ## [0.4.1] - 2026-01-29
 
 - Added: Buttons to open Custom Stratagems paks folder and copy newest Custom Strat to Pak Mods folder

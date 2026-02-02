@@ -2,8 +2,8 @@
 Name: WH40K Space Marine 2 Vortex Extension
 Structure: Mods Folder w/ LO
 Author: ChemBoy1
-Version: 0.4.1
-Date: 2025-01-29
+Version: 0.5.0
+Date: 2025-02-02
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -16,10 +16,13 @@ const fsPromises = require('fs/promises');
 const STEAMAPP_ID = "2183900";
 const EPICAPP_ID = "bb6054d614284c39bb203ebe134e5d79";
 const GOGAPP_ID = null;
-const XBOXAPP_ID = null;
-const XBOXEXECNAME = null;
+const XBOXAPP_ID = "FocusHomeInteractiveSA.Magnus";
+const XBOXEXECNAME = "start.protected.game";
+const XBOX_PUB_ID = "";
 const GAME_ID = "warhammer40000spacemarine2";
 const EXEC = "Warhammer 40000 Space Marine 2.exe";
+const EXEC_XBOX = `gamelaunchhelper.exe`;
+const APPMANIFEST_FILE = 'appxmanifest.xml';
 const EXEC_RETAIL = "Warhammer 40000 Space Marine 2 - Retail.exe";
 const EXEC_BIN = path.join("client_pc", "root", "bin", "pc", EXEC_RETAIL);
 const GAME_NAME = "Warhammer 40,000: Space Marine 2";
@@ -27,9 +30,10 @@ const GAME_NAME_SHORT = " WH40K Space Marine 2";
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Warhammer_40,000:_Space_Marine_II";
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/961"; //Nexus link to this extension. Used for links
 
-let GAME_PATH = null;
+let GAME_PATH = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
+let GAME_VERSION = '';
 
 //feature toggles
 const loadOrderEnabled = true;
@@ -122,7 +126,7 @@ const MOD_PATH = PAK_PATH;
 const REQ_FILE = EXEC;
 
 const NOEAC_LAUNCH_ID = `${GAME_ID}-noeaclaunch`;
-const NOEAC_LAUNCH_NAME = "No-EAC Launch";
+const NOEAC_LAUNCH_NAME = "No-EAC Launch (Steam)";
 const NOEAC_LAUNCH_PATH = BINARIES_PATH;
 const NOEAC_LAUNCH_BAT = "rungame.bat";
 const NOEAC_LAUNCH_BAT_PATH = path.join(BINARIES_PATH, NOEAC_LAUNCH_BAT);
@@ -211,7 +215,7 @@ const spec = {
       STEAMAPP_ID,
       EPICAPP_ID,
       //GOGAPP_ID,
-      //XBOXAPP_ID
+      XBOXAPP_ID
     ],
     "names": []
   }
@@ -219,18 +223,6 @@ const spec = {
 
 //3rd party tools and launchers
 const tools = [
-  /*{
-    id: "SkipLauncher",
-    name: "Skip Launcher",
-    logo: `exec.png`,
-    executable: () => EXEC_BIN,
-    requiredFiles: [EXEC_BIN],
-    detach: true,
-    relative: true,
-    exclusive: true,
-    //defaultPrimary: true,
-    //parameters: []
-  }, //*/
   {
     id: NOEAC_LAUNCH_ID,
     name: NOEAC_LAUNCH_NAME,
@@ -337,14 +329,14 @@ function makeFindGame(api, gameSpec) {
 }
 
 async function requiresLauncher(gamePath, store) {
-  /*if (store === 'xbox') {
-      return Promise.resolve({
-          launcher: 'xbox',
-          addInfo: {
-              appId: XBOXAPP_ID,
-              parameters: [{ appExecName: XBOXEXECNAME }],
-          },
-      });
+  if (store === 'xbox') {
+    return Promise.resolve({
+        launcher: 'xbox',
+        addInfo: {
+            appId: XBOXAPP_ID,
+            parameters: [{ appExecName: XBOXEXECNAME }],
+        },
+    });
   } //*/
   if (store === 'epic') {
     return Promise.resolve({
@@ -360,6 +352,27 @@ async function requiresLauncher(gamePath, store) {
     });
   } //*/
   return Promise.resolve(undefined);
+}
+
+//Get correct executable for game version
+function getExecutable(discoveryPath) {
+  if (statCheckSync(discoveryPath, EXEC_XBOX)) {
+    GAME_VERSION = 'xbox';
+    return EXEC_XBOX;
+  };
+  //add GOG/EGS/Demo versions here if needed
+  GAME_VERSION = 'default';
+  return EXEC;
+}
+
+//Get correct game version - async
+async function setGameVersionAsync(gamePath) {
+  if (await statCheckAsync(gamePath, EXEC_XBOX)) {
+    GAME_VERSION = 'xbox';
+    return GAME_VERSION;
+  }
+  GAME_VERSION = 'default';
+  return GAME_VERSION;
 }
 
 const getDiscoveryPath = (api) => {
@@ -619,7 +632,7 @@ function notifyIntegrationStudio(api) {
               text: `Vortex detected that you have installed the Integration Studio (IS) mod toolkit for Space Marine 2.\n`
                   + `Please note the following information related to using IS in Vortex:\n`
                   + `\n`
-                  + `- During installation of IS, Vortex will automatically extract the resource file "${RESOURCE_PAK}" and add it to the mod staging folder.\n`
+                  + `- During installation of IS, Vortex will automatically extract the resource files "${RESOURCE_PAK}" (both client and server) and add it to the mod staging folder.\n`
                   + `- After each game update, you must Reinstall the IS mod to refresh the extracted resource file.\n`
                   + `- You can use the button below to open the IS Nexus Mods page.\n`
                   + `\n`
@@ -901,134 +914,6 @@ function testPak(files, gameId) {
   });
 }
 
-/*Install save files
-function installPak(files) {
-  const modFile = files.find(file => PAK_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
-  const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: PAK_ID };
-  const pakFiles = files.filter(file => PAK_EXTS.includes(path.extname(file).toLowerCase()));
-  const pakModFiles = {
-    type: 'attribute',
-    key: 'pakModFiles',
-    value: pakFiles.map(f => path.basename(f))
-  };
-
-  // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    (
-      (file.indexOf(rootPath) !== -1) &&
-      (!file.endsWith(path.sep)) 
-      //&& (PAK_EXTS.includes(path.extname(file).toLowerCase()))
-    )
-  );
-  const instructions = filtered.map(file => {
-    return {
-      type: 'copy',
-      source: file,
-      destination: path.join(file.substr(idx)),
-    };
-  });
-  instructions.push(setModTypeInstruction);
-  instructions.push(pakModFiles);
-  return Promise.resolve({ instructions });
-} //*/
-
-/* install sound .pak mods with multiple variants
-function installPak(api, files) {
-  let hasVariants = false;
-  const pakFiles = files.reduce((accum, iter) => {
-    if (PAK_EXTS.includes(path.extname(iter).toLowerCase())) {
-      //const exists = accum[path.basename(iter)] !== undefined;
-      const exists = (accum.length > 1);
-      if (exists) {
-        hasVariants = true;
-      }
-      accum[path.basename(iter)] = exists
-        ? accum[path.basename(iter)].concat(iter)
-        : [iter];
-    }
-    return accum;
-  }, {});
-
-  let filtered = files.filter(file =>
-    (
-      (PAK_EXTS.includes(path.extname(file).toLowerCase()))
-    )
-  );
-
-  var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-    return new (P || (P = Promise))(function (resolve, reject) {
-        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-        step((generator = generator.apply(thisArg, _arguments || [])).next());
-    });
-  };
-
-  const queryVariant = () => {
-    const pak = Object.keys(pakFiles).filter(key => pakFiles[key].length > 1);
-    return Promise.map(pak, pakFile => {
-      return api.showDialog('question', 'Choose Variant', {
-        text: 'This mod has several pak files - please '
-            + 'choose the files you wish to install. (You can choose '
-            + 'different files by re-installing the mod)',
-        choices: pakFiles[pakFile].map((iter, idx) => ({ 
-          id: iter,
-          text: iter,
-          value: idx === 0,
-        })),
-        parameters: {
-          pak: pakFile,
-        },
-      }, [
-        { label: 'Cancel' },
-        { label: 'Confirm' },
-      ]).then(res => {
-        if (res.action === 'Confirm') {
-          const choice = Object.keys(res.input).find(choice => res.input[choice]);
-          filtered = filtered.filter(file => 
-            !PAK_EXTS.includes(path.extname(file).toLowerCase()) ||
-            ((path.basename(file) === pakFile) && file.includes(choice)) ||
-            (path.basename(file) !== pakFile)
-          );
-          return Promise.resolve();
-        } else {
-          return new util.UserCanceled();
-        }
-      });
-    })
-  };
-
-  const generateInstructions = () => {
-    const fileInstructions = filtered.reduce((accum, iter) => {
-      if (!iter.endsWith(path.sep)) {
-        accum.push({
-          type: 'attribute',
-          key: 'pakModFiles',
-          value: filtered.map(f => path.basename(f)),
-        });
-        accum.push({
-          type: 'copy',
-          source: iter,
-          destination: path.basename(iter),
-        });
-      }
-      return accum;
-    }, []);
-    const instructions = [{ 
-      type: 'setmodtype',
-      value: PAK_ID,
-    }].concat(fileInstructions);
-    return instructions;
-  }
-
-  const prom = hasVariants ? queryVariant : Promise.resolve;
-  return prom()
-    .then(() => Promise.resolve({ instructions: generateInstructions() }));
-} //*/
-
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
   function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
   return new (P || (P = Promise))(function (resolve, reject) {
@@ -1272,6 +1157,34 @@ async function serializeLoadOrder(context, loadOrder) {
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
+async function resolveGameVersion(gamePath, exePath) {
+  GAME_VERSION = await setGameVersionPath(gamePath);
+  const READ_FILE = path.join(gamePath, EXEC);
+  let version = '0.0.0';
+  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
+    try { //try to parse appxmanifest.xml
+      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
+      const parsed = await parseStringPromise(appManifest);
+      version = parsed?.Package?.Identity?.[0]?.$?.Version;
+      return Promise.resolve(version);
+    } catch (err) {
+      log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+  else { //use exe
+    try {
+      const exeVersion = require('exe-version');
+      version = await exeVersion.getProductVersion(READ_FILE);
+      //log('warn', `Resolved game version for ${GAME_ID} to: ${version}`);
+      return Promise.resolve(version); 
+    } catch (err) {
+      log('error', `Could not read ${READ_FILE} file to get Steam game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+}
+
 async function copyCustomStratToPaks(api) {
   try {
     GAME_PATH = getDiscoveryPath(api);
@@ -1301,6 +1214,7 @@ async function setup(discovery, api, gameSpec) {
   GAME_PATH = discovery.path;
   STAGING_FOLDER = selectors.installPathForGame(state, gameSpec.game.id);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, gameSpec.game.id);
+  GAME_VERSION = await setGameVersionAsync(GAME_PATH);
   notifyIntegrationStudio(api);
   await fs.ensureDirWritableAsync(path.join(GAME_PATH, BINARIES_PATH));
   await fs.ensureDirWritableAsync(path.join(GAME_PATH, LOCALSUB_PATH));
@@ -1330,10 +1244,11 @@ function applyGame(context, gameSpec) {
   const game = {
     ...gameSpec.game,
     queryPath: makeFindGame(context.api, gameSpec),
+    executable: getExecutable,
     queryModPath: makeGetModPath(context.api, gameSpec),
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
-    executable: () => gameSpec.game.executable,
+    getVersion: resolveGameVersion,
     supportedTools: tools,
   };
   context.registerGame(game);
@@ -1360,9 +1275,9 @@ function applyGame(context, gameSpec) {
 
   //register mod installers
   context.registerInstaller(INTEGRATION_STUDIO_ID, 25, testIntegrationStudio, (files, temp) => installIntegrationStudio(files, temp, context.api));
-  context.registerInstaller(PAK_ID, 27, testPak, (files) => installPak(context.api, files));
-  context.registerInstaller(ROOT_ID, 29, testRoot, installRoot);
-  context.registerInstaller(LOCAL_ID, 31, testLocal, installLocal);
+  context.registerInstaller(ROOT_ID, 27, testRoot, installRoot);
+  context.registerInstaller(LOCAL_ID, 29, testLocal, installLocal);
+  context.registerInstaller(PAK_ID, 31, testPak, (files) => installPak(context.api, files));
   context.registerInstaller(LOCALSUB_ID, 33, testLocalSub, installLocalSub);
   context.registerInstaller(BINARIES_ID, 49, testBinaries, installBinaries); //fallback to binaries folder
 
@@ -1486,119 +1401,6 @@ function applyGame(context, gameSpec) {
   });
 }
 
-//Functions for .pak file extension renaming and load ordering
-async function preSort(api, items, direction) {
-  const mods = util.getSafe(api.store.getState(), ['persistent', 'mods', spec.game.id], {});
-  const fileExt = PAK_EXTS[0];
-
-  const loadOrder = items.map(mod => {
-    const modInfo = mods[mod.id];
-    let name = modInfo ? modInfo.attributes.customFileName ?? modInfo.attributes.logicalFileName ?? modInfo.attributes.name : mod.name;
-    //*
-    const pak = util.getSafe(modInfo.attributes, ['pakModFiles'], []);
-    if (pak.length > 1) {
-      name = name + ` (${pak.length} ${fileExt} files)`; 
-    } //*/
-    return {
-      id: mod.id,
-      name,
-      imgUrl: util.getSafe(modInfo, ['attributes', 'pictureUrl'], path.join(__dirname, spec.game.logo))
-    }
-  });
-  return (direction === 'descending') ? Promise.resolve(loadOrder.reverse()) : Promise.resolve(loadOrder);
-}
-
-function isPak(filePath) {
-  return PAK_EXTS.includes(path.extname(filePath.toLowerCase()));
-}
-
-const mergeTest = (game, discovery, context) => {
-  if (game.id !== GAME_ID) return;
-  return {
-    baseFiles: () => [],
-    //filter: () => true,
-    filter: filePath => isPak(filePath),
-  }
-}
-
-const sendRefreshLoadOrderNotification = (context) => {
-  context.api.sendNotification({
-    id: `${GAME_ID}-loadorderrefresh-notify`,
-    type: 'error',
-    message: 'Refresh your load order',
-    allowSuppress: false,
-  });
-};
-
-function makePrefix(input) {
-  let res = '';
-  let rest = input;
-  while (rest > 0) {
-      res = String.fromCharCode(65 + (rest % 25)) + res;
-      rest = Math.floor(rest / 25);
-  }
-  return util.pad(res, 'A', 3);
-}
-
-function loadOrderPrefix(pos) {
-  return makePrefix(pos) + '-';
-}
-
-const mergeOperation = (filePath, mergePath, context, currentLoadOrder) => {
-
-  const state = context.api.getState();
-  const profile = selectors.lastActiveProfileForGame(state, GAME_ID);
-  const loadOrder = util.getSafe(state, ['persistent', 'loadOrder', profile], {});
-
-  const splitPath = filePath.split(path.sep);
-  const fileName = splitPath.pop();
-  const modName = splitPath.pop();
-
-  const modIsInLoadOrder = loadOrder[modName] != undefined;
-  const modPosition = modIsInLoadOrder ? loadOrder[modName].pos : Object.keys(loadOrder).length;
-
-  if (modPosition == undefined) {
-    sendRefreshLoadOrderNotification(context);
-  }
-  else {
-    const prefix = loadOrderPrefix(modPosition);
-    const targetFileName = `${prefix}${fileName}`;
-    const mergeTarget = path.join(mergePath, targetFileName);
-    //ADD - Sanity checks before file copy
-    fs.ensureDirWritableAsync(path.dirname(mergeTarget));
-    fs.ensureDirWritableAsync(path.dirname(filePath));
-    return util.copyFileAtomic(filePath, mergeTarget)
-    //return fs.copyAsync(filePath, mergeTarget)
-      .catch({ code: 'ENOENT' }, err => {
-        // not entirely sure whether "ENOENT" refers to the source file or the directory we're trying to copy into, the error object contains only one of those paths
-        context.api.showErrorNotification('Failed to rename .pak files from load order', err);
-        log('error', 'file not found upon copying merge base file', {
-          source: filePath,
-          destination: mergeTarget,
-        });
-        return Promise.reject(err);
-      });
-  }
-}
-
-const requestDeployment = (context) => {
-  context.api.store.dispatch(actions.setDeploymentNecessary(GAME_ID, true));
-  context.api.sendNotification({
-    id: `${GAME_ID}-deploy-notify`,
-    type: 'warning',
-    message: 'Deployment is needed',
-    allowSuppress: true,
-    actions: [
-      {
-        title: 'Deploy',
-        action: () => context.api.events.emit('deploy-mods', (err) => {
-          log('warn', `Error deploying mods: ${err}`);
-        })
-      }
-    ],
-  });
-};
-
 //main function
 function main(context) {
   applyGame(context, spec);
@@ -1613,38 +1415,6 @@ function main(context) {
                         +`${GAME_NAME} loads mods in the order you set from top to bottom.   \n`
                         +`\n`,
     });
-    /*
-    let currentLoadOrder;
-    context.registerLoadOrderPage({
-      gameId: spec.game.id,
-      gameArtURL: path.join(__dirname, spec.game.logo),
-      preSort: (items, direction) => preSort(context.api, items, direction),
-      filter: mods => mods.filter(mod => mod.type === PAK_ID),
-      displayCheckboxes: false,
-      callback: (updatedLoadOrder, mods) => {
-        if (currentLoadOrder == updatedLoadOrder) return;
-        if (currentLoadOrder == undefined) {
-          currentLoadOrder = updatedLoadOrder;
-          return;
-        }
-        currentLoadOrder = updatedLoadOrder;
-        requestDeployment(context);
-      },
-      createInfoPanel: () =>
-        context.api.translate(`Drag and drop the pak mods on the left to change the
-          order in which they load. ${spec.game.name} loads patch mods in numerical 
-          order, so Vortex prefixes the file names with "0001-, 0002-, 0003-, etc." 
-          to ensure they load in the order you set here. The number in the left column 
-          represents the overwrite order. The changes from mods with higher numbers will 
-          take priority over other mods which make similar edits.`
-        ),
-    });
-
-    context.registerMerge( //register merger for .pak mods
-      (game, discovery) => mergeTest(game, discovery, context),
-      (filePath, mergePath) => mergeOperation(filePath, mergePath, context, currentLoadOrder),
-      PAK_ID
-    ); //*/
   }
 
   context.once(() => { // put code here that should be run (once) when Vortex starts up
@@ -1652,28 +1422,10 @@ function main(context) {
       const lastActiveProfile = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
       if (profileId !== lastActiveProfile) return;
       //notifyIntegrationStudio(api);
-      context.api.dismissNotification(`${GAME_ID}-deploy-notify`);
       mod_update_all_profile = false;
       updating_mod = false;
       updatemodid = undefined;
-      //context.api.dismissNotification('redundant-mods'); // Because we create a merged mod when deploying, Vortex thinks that all mods have duplicates and are redundant
     });
-    //*
-    context.api.events.on('mods-enabled', (mods, enabled, gameId) => {
-      if (gameId !== GAME_ID) return;
-      const isAutoDeployOn = context.api.getState().settings.automation.deploy;
-      if (!isAutoDeployOn) {
-        requestDeployment(context);
-      }
-    }); //*/
-    context.api.events.on('mod-disabled', (profileId, modId) => {
-      const lastActiveProfile = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
-      if (profileId !== lastActiveProfile) return;
-      const isAutoDeployOn = context.api.getState().settings.automation.deploy;
-      if (!isAutoDeployOn) {
-        requestDeployment(context);
-      }
-    }); //*/
     context.api.events.on("mod-update", (gameId, modId, fileId) => {
       if (GAME_ID == gameId) {
         updatemodid = modId;
