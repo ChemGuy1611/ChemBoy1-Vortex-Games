@@ -2,8 +2,8 @@
 Name: Manor Lords Vortex Extension
 Structure: UE4 (XBOX Integrated)
 Author: ChemBoy1
-Version: 0.5.1
-Date: 2026-02-02
+Version: 0.5.2
+Date: 2026-02-03
 /////////////////////////////////////////////////////*/
 
 //Import libraries
