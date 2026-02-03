@@ -344,7 +344,6 @@ function applyGame(context, gameSpec) {
         relative: true,
         exclusive: true,
         defaultPrimary: true,
-        isPrimary: true,
         parameters: [`--launch "${path.join(gamePath, EXEC)}"`]
       },
       */
@@ -358,7 +357,6 @@ function applyGame(context, gameSpec) {
         relative: true,
         exclusive: true,
         defaultPrimary: true,
-        isPrimary: true,
       },
     ],
   };

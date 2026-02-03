@@ -257,7 +257,6 @@ const tools = [
     exclusive: true,
     shell: true,
     //defaultPrimary: true,
-    //isPrimary: true,
     parameters: []
   },
 

@@ -87,7 +87,7 @@ const spec = {
       "id": MANAGERMOD_ID,
       "name": MANAGERMOD_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${MANAGERMOD_PATH}`
+      "targetPath": path.join('{gamePath}', MANAGERMOD_PATH)
     },
     {
       "id": MANAGERUNIFIED_ID,

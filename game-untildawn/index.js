@@ -23,7 +23,7 @@ const EXEC_FOLDER_NAME = "Win64";
 //const EXEC_FOLDER_NAME = "WinGDK"; //XBOX Version
 const GAME_NAME = "Until Dawn";
 const GAME_NAME_SHORT = "Until Dawn";
-const EXEC = "Windows\\Bates.exe";
+const EXEC = path.join("Windows", "Bates.exe");
 //const EXEC = XBOXEXECNAME; //XBOX Version
 const IO_STORE = true; //true if the Paks folder contains .ucas and .utoc files
 
@@ -40,9 +40,9 @@ const UNREALDATA = {
 }
 
 //This information will be filled in from the data above
-const SHIPPING_EXE = `Windows\\${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_NAME}\\${EPIC_CODE_NAME}-${EXEC_FOLDER_NAME}-Shipping.exe`;
 const BINARIES_ID = `${GAME_ID}-binaries`;
-const EXEC_PATH = `Windows\\${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_NAME}`;
+const EXEC_PATH = path.join("Windows", EPIC_CODE_NAME, "Binaries", EXEC_FOLDER_NAME);
+const SHIPPING_EXE = path.join(EXEC_PATH, `${EPIC_CODE_NAME}-${EXEC_FOLDER_NAME}-Shipping.exe`);
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_FOLDER = EPIC_CODE_NAME;
@@ -90,7 +90,7 @@ if (USERID_FOLDER === undefined) {
 const SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
 
 const SCRIPTS_ID = `${GAME_ID}-scripts`;
-const SCRIPTS_PATH = `Windows\\${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_NAME}\\ue4ss\\Mods`;
+const SCRIPTS_PATH = path.join("Windows", EPIC_CODE_NAME, "Binaries", EXEC_FOLDER_NAME, "ue4ss", "Mods");
 const SCRIPTS_EXT = ".lua";
 const SCRIPTS_FOLDER = "Scripts";
 
@@ -141,19 +141,19 @@ const spec = {
       "id": SCRIPTS_ID,
       "name": "UE4SS Scripts",
       "priority": "high",
-      "targetPath": `{gamePath}\\${SCRIPTS_PATH}`
+      "targetPath": path.join('{gamePath}', SCRIPTS_PATH)
     },
     {
       "id": LOGICMODS_ID,
       "name": "UE4SS LogicMods (Blueprint)",
       "priority": "high",
-      "targetPath": `{gamePath}\\${LOGICMODS_PATH}`
+      "targetPath": path.join('{gamePath}', LOGICMODS_PATH)
     },
     {
       "id": UE4SSCOMBO_ID,
       "name": "UE4SS Script-LogicMod Combo",
       "priority": "high",
-      "targetPath": `{gamePath}\\${ROOT_PATH}`
+      "targetPath": path.join('{gamePath}', ROOT_PATH)
     },
     /*
     {
@@ -166,38 +166,38 @@ const spec = {
       "id": SAVE_ID,
       "name": "Saves (My Games)",
       "priority": "high",
-      "targetPath": `${SAVE_PATH}\\${USERID_FOLDER}`
+      "targetPath": path.join(SAVE_PATH, USERID_FOLDER)
     },
     */
     {
       "id": ROOT_ID,
       "name": "Root Game Folder",
       "priority": "high",
-      "targetPath": `{gamePath}\\${ROOT_PATH}`
+      "targetPath": path.join('{gamePath}', ROOT_PATH)
     },
     {
       "id": UE5_ID,
       "name": "UE5 Paks",
       "priority": "high",
-      "targetPath": `{gamePath}\\${UE5_PATH}`
+      "targetPath": path.join('{gamePath}', UE5_PATH)
     },
     {
       "id": UE5_ALT_ID,
       "name": 'UE5 Paks (no "~mods")',
       "priority": "high",
-      "targetPath": `{gamePath}\\${UE5_ALT_PATH}`
+      "targetPath": path.join('{gamePath}', UE5_ALT_PATH)
     },
     {
       "id": BINARIES_ID,
       "name": "Binaries (Engine Injector)",
       "priority": "high",
-      "targetPath": `{gamePath}\\${EXEC_PATH}`
+      "targetPath": path.join('{gamePath}', EXEC_PATH)
     },
     {
       "id": UE4SS_ID,
       "name": "UE4SS",
       "priority": "low",
-      "targetPath": `{gamePath}\\${EXEC_PATH}`
+      "targetPath": path.join('{gamePath}', EXEC_PATH)
     },
   ],
   "discovery": {
@@ -224,7 +224,6 @@ const tools = [
     relative: true,
     exclusive: true,
     defaultPrimary: true,
-    isPrimary: true,
     parameters: ['-fileopenlog']
   },
   */

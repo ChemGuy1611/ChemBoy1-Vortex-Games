@@ -123,19 +123,19 @@ const spec = {
       "id": SAVE_ID,
       "name": "Save (LocalAppData)",
       "priority": "high",
-      "targetPath": `{localAppData}\\${SAVE_PATH}`
+      "targetPath": path.join('{localAppData}', SAVE_PATH)
     },
     {
       "id": UE5_ID,
       "name": "UE5 Paks",
       "priority": "high",
-      "targetPath": `{gamePath}\\${UE5_PATH}`
+      "targetPath": path.join('{gamePath}', UE5_PATH)
     },
     {
       "id": UE5_ALT_ID,
       "name": 'Paks (Alt, no "~mods")',
       "priority": "high",
-      "targetPath": `{gamePath}\\${UE5_ALT_PATH}`
+      "targetPath": path.join('{gamePath}', UE5_ALT_PATH)
     },
     {
       "id": ROOT_ID,
@@ -215,18 +215,18 @@ function getExecutable(discoveryPath) {
   };
 
   if (isCorrectExec(XBOX_EXEC)) {
-    MOD_PATH = `${EPIC_CODE_NAME}\\Binaries\\${XBOX_EXEC_FOLDER}`;
+    MOD_PATH = path.join(EPIC_CODE_NAME, "Binaries", XBOX_EXEC_FOLDER);
     CONFIG_PATH = CONFIG_PATH_XBOX;
-    CONFIG_TARGET = `{localAppData}\\${CONFIG_PATH}`;
-    EXEC_TARGET = `{gamePath}\\${EPIC_CODE_NAME}\\Binaries\\${XBOX_EXEC_FOLDER}`;
+    CONFIG_TARGET = path.join('{localAppData}', CONFIG_PATH);
+    EXEC_TARGET = path.join('{gamePath}', EPIC_CODE_NAME, "Binaries", XBOX_EXEC_FOLDER);
     return XBOX_EXEC;
   };
 
   if (isCorrectExec(STEAM_EXEC)) {
-    MOD_PATH = `${EPIC_CODE_NAME}\\Binaries\\${STEAM_EXEC_FOLDER}`;
+    MOD_PATH = path.join(EPIC_CODE_NAME, "Binaries", STEAM_EXEC_FOLDER);
     CONFIG_PATH = CONFIG_PATH_DEFAULT;
-    CONFIG_TARGET = `{localAppData}\\${CONFIG_PATH}`;
-    EXEC_TARGET = `{gamePath}\\${EPIC_CODE_NAME}\\Binaries\\${STEAM_EXEC_FOLDER}`;
+    CONFIG_TARGET = path.join('{localAppData}', CONFIG_PATH);
+    EXEC_TARGET = path.join('{gamePath}', EPIC_CODE_NAME, "Binaries", STEAM_EXEC_FOLDER);
     return STEAM_EXEC;
   };
 

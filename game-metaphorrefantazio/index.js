@@ -73,13 +73,13 @@ const spec = {
       "id": RELOADEDMOD_ID,
       "name": "Reloaded Mod",
       "priority": "high",
-      "targetPath": `{gamePath}\\${RELOADEDMOD_PATH}`
+      "targetPath": path.join('{gamePath}', RELOADEDMOD_PATH)
     },
     {
       "id": RELOADEDMODLOADER_ID,
       "name": "MRFPC Mod Loader",
       "priority": "low",
-      "targetPath": `{gamePath}\\${RELOADEDMODLOADER_PATH}`
+      "targetPath": path.join('{gamePath}', RELOADEDMODLOADER_PATH)
     },
     {
       "id": RELOADED_ID,
@@ -620,7 +620,6 @@ function applyGame(context, gameSpec) {
         relative: true,
         exclusive: true,
         defaultPrimary: true,
-        isPrimary: true,
         parameters: [`--launch "${path.join(gamePath, EXEC)}"`]
       },
       */
@@ -634,7 +633,6 @@ function applyGame(context, gameSpec) {
         relative: true,
         exclusive: true,
         defaultPrimary: true,
-        isPrimary: true,
       },
     ],
   };

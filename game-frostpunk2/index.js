@@ -186,7 +186,6 @@ const tools = [
     relative: true,
     exclusive: true,
     defaultPrimary: true,
-    isPrimary: true,
     parameters: ['-fileopenlog']
   },
   */

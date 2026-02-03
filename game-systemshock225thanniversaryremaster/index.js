@@ -124,13 +124,13 @@ const spec = {
       "id": MOD_ID,
       "name": MOD_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${MOD_PATH}`
+      "targetPath": path.join('{gamePath}', MOD_PATH)
     },
     {
       "id": LEGACY_ID,
       "name": LEGACY_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${LEGACY_PATH}`
+      "targetPath": path.join('{gamePath}', LEGACY_PATH)
     },
     {
       "id": ROOT_ID,
@@ -181,7 +181,7 @@ const specClassic = {
       "id": CLASSIC_ID,
       "name": CLASSIC_NAME,
       "priority": "low",
-      "targetPath": `{gamePath}\\${CLASSIC_PATH}`
+      "targetPath": path.join('{gamePath}', CLASSIC_PATH)
     },
   ],
   "discovery": {

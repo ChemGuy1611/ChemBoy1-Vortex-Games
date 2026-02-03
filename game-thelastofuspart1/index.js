@@ -151,19 +151,19 @@ const spec = {
       "id": BUILD_ID,
       "name": BUILD_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${BUILD_PATH}`
+      "targetPath": path.join('{gamePath}', BUILD_PATH)
     },
     {
       "id": BIN_ID,
       "name": BIN_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${BIN_PATH}`
+      "targetPath": path.join('{gamePath}', BIN_PATH)
     },
     {
       "id": PAK_ID,
       "name": PAK_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${PAK_PATH}`
+      "targetPath": path.join('{gamePath}', PAK_PATH)
     },
     {
       "id": SAVE_ID,
@@ -181,7 +181,7 @@ const spec = {
       "id": PSARCTOOL_ID,
       "name": PSARCTOOL_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${PSARCTOOL_PATH}`
+      "targetPath": path.join('{gamePath}', PSARCTOOL_PATH)
     },
   ],
   "discovery": {
@@ -476,7 +476,7 @@ function testSave(files, gameId) {
 function installSave(files) {
   const modFile = files.find(file => (path.basename(file) === SAVE_FILE));
   const rootPath = path.dirname(modFile);
-  let idx = modFile.indexOf(`${path.basename(rootPath)}\\`);
+  let idx = modFile.indexOf(`${path.basename(rootPath)}${path.sep}`);
   const setModTypeInstruction = { type: 'setmodtype', value: SAVE_ID };
 
   // Remove directories and anything that isn't in the rootPath.

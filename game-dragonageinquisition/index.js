@@ -158,7 +158,6 @@ const tools = [
         '-launch Default',
     ],
     defaultPrimary: true,
-    isPrimary: true,
   },
   //*/
   {

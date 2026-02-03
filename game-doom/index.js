@@ -167,7 +167,6 @@ const tools = [
     relative: true,
     exclusive: true,
     defaultPrimary: true,
-    isPrimary: true,
     //requiresLauncher: "steam",
     parameters: [COMMANDLINE_ARGS]
   }, //*/

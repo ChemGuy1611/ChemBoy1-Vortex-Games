@@ -90,13 +90,13 @@ const spec = {
       "id": MANAGERMOD_ID,
       "name": MANAGERMOD_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${MANAGERMOD_PATH}`
+      "targetPath": path.join('{gamePath}', MANAGERMOD_PATH)
     },
     {
       "id": `${GAME_ID}-sktexture`,
       "name": "Special K Texture Mod",
       "priority": "high",
-      "targetPath": "{gamePath}\\SK_Res\\inject\\textures"
+      "targetPath": path.join("{gamePath}", "SK_Res", "inject", "textures")
     },
     {
       "id": MANAGER_ID,

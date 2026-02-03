@@ -131,7 +131,7 @@ const spec = {
       "id": LOGICMODS_ID,
       "name": "UE4SS LogicMods (Blueprint)",
       "priority": "high",
-      "targetPath": `{gamePath}\\${LOGICMODS_PATH}`
+      "targetPath": path.join('{gamePath}', LOGICMODS_PATH)
     },
     {
       "id": UE4SSCOMBO_ID,
@@ -149,7 +149,7 @@ const spec = {
       "id": PAK_ID,
       "name": "Paks",
       "priority": "high",
-      "targetPath": `{gamePath}\\${PAK_PATH}`
+      "targetPath": path.join('{gamePath}', PAK_PATH)
     },
   ],
 };
@@ -167,7 +167,6 @@ const tools = [
     relative: true,
     exclusive: true,
     defaultPrimary: true,
-    isPrimary: true,
     parameters: ['-fileopenlog']
   },
   */
@@ -242,12 +241,12 @@ function getExecutable(discoveryPath) {
   };
 
   if (isCorrectExec(EXEC_XBOX)) {
-    MOD_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_XBOX}`;
-    EXEC_TARGET = `{gamePath}\\${MOD_PATH}`;
+    MOD_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_XBOX);
+    EXEC_TARGET = path.join('{gamePath}', MOD_PATH);
     CONFIG_PATH = CONFIG_PATH_XBOX;
     CONFIG_TARGET = CONFIG_PATH;
-    SCRIPTS_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_XBOX}\\Mods`;
-    SCRIPTS_TARGET = `{gamePath}\\${SCRIPTS_PATH}`;
+    SCRIPTS_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_XBOX, 'Mods');
+    SCRIPTS_TARGET = path.join('{gamePath}', SCRIPTS_PATH);
     try {
       const SAVE_ARRAY = fs.readdirSync(SAVE_PATH_XBOX);
       USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_PATH_XBOX, entry));
@@ -258,17 +257,17 @@ function getExecutable(discoveryPath) {
       USERID_FOLDER = "";
     } //*/
     SAVE_PATH = SAVE_PATH_XBOX;
-    SAVE_TARGET = `${SAVE_PATH}\\${USERID_FOLDER}`;
+    SAVE_TARGET = path.join(SAVE_PATH, USERID_FOLDER);
     return EXEC_XBOX;
   };
 
   if (isCorrectExec(EXEC_DEFAULT)) {
-    MOD_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_DEFAULT}`;
-    EXEC_TARGET = `{gamePath}\\${MOD_PATH}`;
+    MOD_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT);
+    EXEC_TARGET = path.join('{gamePath}', MOD_PATH);
     CONFIG_PATH = CONFIG_PATH_DEFAULT;
     CONFIG_TARGET = CONFIG_PATH;
-    SCRIPTS_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_DEFAULT}\\Mods`;
-    SCRIPTS_TARGET = `{gamePath}\\${SCRIPTS_PATH}`;
+    SCRIPTS_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT, 'Mods');
+    SCRIPTS_TARGET = path.join('{gamePath}', SCRIPTS_PATH);
     try {
       const SAVE_ARRAY = fs.readdirSync(SAVE_PATH_DEFAULT);
       USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_PATH_DEFAULT, entry));
@@ -279,7 +278,7 @@ function getExecutable(discoveryPath) {
       USERID_FOLDER = "";
     } //*/
     SAVE_PATH = SAVE_PATH_DEFAULT;
-    SAVE_TARGET = `${SAVE_PATH}\\${USERID_FOLDER}`;
+    SAVE_TARGET = path.join(SAVE_PATH, USERID_FOLDER);
     return EXEC_DEFAULT;
   };
 

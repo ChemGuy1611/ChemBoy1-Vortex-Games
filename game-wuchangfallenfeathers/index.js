@@ -194,7 +194,7 @@ const spec = {
       "id": LOGICMODS_ID,
       "name": LOGICMODS_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${LOGICMODS_PATH}`
+      "targetPath": path.join('{gamePath}', LOGICMODS_PATH)
     },
     {
       "id": ROOT_ID,
@@ -206,13 +206,13 @@ const spec = {
       "id": CONTENT_ID,
       "name": CONTENT_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${CONTENT_PATH}`
+      "targetPath": path.join('{gamePath}', CONTENT_PATH)
     },
     {
       "id": UE5_ALT_ID,
       "name": UE5_ALT_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${UE5_ALT_PATH}`
+      "targetPath": path.join('{gamePath}', UE5_ALT_PATH)
     },
   ],
 };
@@ -282,13 +282,13 @@ function getExecutable(discoveryPath) {
   };
   if (isCorrectExec(EXEC_XBOX)) {
     GAME_VERSION = 'xbox';
-    EXEC_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_XBOX}`;
-    EXEC_TARGET = `{gamePath}\\${EXEC_PATH}`;
-    SHIPPING_EXE = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_XBOX}\\${EPIC_CODE_NAME}-${EXEC_FOLDER_XBOX}-Shipping.exe`;
-    SCRIPTS_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_XBOX}\\${UE4SS_MOD_PATH}`;
-    SCRIPTS_TARGET = `{gamePath}\\${SCRIPTS_PATH}`;
+    EXEC_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_XBOX);
+    EXEC_TARGET = path.join('{gamePath}', EXEC_PATH);
+    SHIPPING_EXE = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_XBOX, `${EPIC_CODE_NAME}-${EXEC_FOLDER_XBOX}-Shipping.exe`);
+    SCRIPTS_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_XBOX, UE4SS_MOD_PATH);
+    SCRIPTS_TARGET = path.join('{gamePath}', SCRIPTS_PATH);
     CONFIG_PATH = CONFIG_PATH_XBOX;
-    CONFIG_TARGET = `${CONFIG_PATH}`;
+    CONFIG_TARGET = CONFIG_PATH;
     try {
       const SAVE_ARRAY = fs.readdirSync(SAVE_PATH_XBOX);
       USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_PATH_XBOX, entry));
@@ -304,13 +304,13 @@ function getExecutable(discoveryPath) {
   };
   if (isCorrectExec(EXEC_DEFAULT)) {
     GAME_VERSION = 'steam';
-    EXEC_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_DEFAULT}`;
-    EXEC_TARGET = `{gamePath}\\${EXEC_PATH}`;
-    SHIPPING_EXE = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_DEFAULT}\\${EPIC_CODE_NAME}-${EXEC_FOLDER_DEFAULT}-Shipping.exe`;
-    SCRIPTS_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_DEFAULT}\\${UE4SS_MOD_PATH}`;
-    SCRIPTS_TARGET = `{gamePath}\\${SCRIPTS_PATH}`;
+    EXEC_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT);
+    EXEC_TARGET = path.join('{gamePath}', EXEC_PATH);
+    SHIPPING_EXE = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT, `${EPIC_CODE_NAME}-${EXEC_FOLDER_DEFAULT}-Shipping.exe`);
+    SCRIPTS_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT, UE4SS_MOD_PATH);
+    SCRIPTS_TARGET = path.join('{gamePath}', SCRIPTS_PATH);
     CONFIG_PATH = CONFIG_PATH_DEFAULT;
-    CONFIG_TARGET = `${CONFIG_PATH}`;
+    CONFIG_TARGET = CONFIG_PATH;
     try {
       const SAVE_ARRAY = fs.readdirSync(SAVE_PATH_DEFAULT);
       USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_PATH_DEFAULT, entry));
@@ -325,50 +325,6 @@ function getExecutable(discoveryPath) {
     return EXEC_DEFAULT;
   };
   return EXEC_DEFAULT;
-}
-
-//Get correct shipping executable for game version
-function getShippingExe(api) {
-  GAME_PATH = getDiscoveryPath(api);
-  const isCorrectExec = (exec) => {
-    try {
-      fs.statSync(path.join(GAME_PATH, exec));
-      return true;
-    }
-    catch (err) {
-      return false;
-    }
-  };
-  if (isCorrectExec(EXEC_XBOX)) {
-    SHIPPING_EXE = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_XBOX}\\${EPIC_CODE_NAME}-${EXEC_FOLDER_XBOX}-Shipping.exe`;
-    return SHIPPING_EXE; 
-  };
-  if (isCorrectExec(EXEC_DEFAULT)) {
-    SHIPPING_EXE = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_DEFAULT}\\${EPIC_CODE_NAME}-${EXEC_FOLDER_DEFAULT}-Shipping.exe`;
-    return SHIPPING_EXE;
-  };
-}
-
-//Get correct shipping executable folder for game version
-function getBinariesFolder(discoveryPath) {
-  let BINARIES_FOLDER = '';
-  const isCorrectFolder = (folder) => {
-    try {
-      fs.statSync(path.join(discoveryPath, EPIC_CODE_NAME, 'Binaries', folder));
-      return true;
-    }
-    catch (err) {
-      return false;
-    }
-  };
-  if (isCorrectFolder(EXEC_FOLDER_XBOX)) {
-    BINARIES_FOLDER = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_XBOX}`;
-    return BINARIES_FOLDER;
-  };
-  if (isCorrectFolder(EXEC_FOLDER_DEFAULT)) {
-    BINARIES_FOLDER = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_DEFAULT}`;
-    return BINARIES_FOLDER;
-  };
 }
 
 //Get correct game version

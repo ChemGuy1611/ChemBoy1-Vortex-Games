@@ -17,8 +17,8 @@ const STEAMAPP_ID = "10170";
 const GAME_ID = "wolfenstein2009";
 const GAME_NAME = "Wolfenstein (2009)";
 const GAME_NAME_SHORT = "Wolfenstein";
-const EXEC = "SP\\Wolf2.exe";
-const EXEC_MP = "MP\\Wolf2MP.exe";
+const EXEC = path.join("SP", "Wolf2.exe");
+const EXEC_MP = path.join("MP", "Wolf2MP.exe");
 const MOD_PATH = ".";
 const SP_ID = `${GAME_ID}-sp`;
 const MP_ID = `${GAME_ID}-mp`;
@@ -59,25 +59,25 @@ const spec = {
       "id": SPBASE_ID,
       "name": "SinglePlayer base Folder",
       "priority": "high",
-      "targetPath": "{gamePath}\\SP\\base"
+      "targetPath": path.join('{gamePath}', "SP", "base")
     },
     {
       "id": MPBASE_ID,
       "name": "MultiPlayer base Folder",
       "priority": "high",
-      "targetPath": "{gamePath}\\MP\\base"
+      "targetPath": path.join('{gamePath}', "MP", "base")
     },
     {
       "id": SP_ID,
       "name": "SP Folder",
       "priority": "high",
-      "targetPath": "{gamePath}\\SP"
+      "targetPath": path.join('{gamePath}', "SP")
     },
     {
       "id": MP_ID,
       "name": "MP Folder",
       "priority": "high",
-      "targetPath": "{gamePath}\\MP"
+      "targetPath": path.join('{gamePath}', "MP")
     },
   ],
   "discovery": {
@@ -105,7 +105,6 @@ const tools = [
       `+set com_allowconsole 1 +set com_skipIntro 1 +set com_SingleDeclFile 0 +set sys_lang "english"`,
     ],
     defaultPrimary: true,
-    isPrimary: true,
   },
   {
     id: 'LaunchGameMP',

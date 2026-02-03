@@ -19,18 +19,18 @@ const EPICAPP_ID = "52d88e9a6df248da913c8e99f1e4c526";
 const XBOXAPP_ID = "BethesdaSoftworks.LiluDallas-Multipass";
 const XBOXEXECNAME = "App";
 const GAME_ID = "prey2017";
-const MOD_PATH = "GameSDK\\Precache";
+const MOD_PATH = path.join("GameSDK", "Precache");
 
-let execFolder = null;
-let EXEC_TARGET = null;
+let execFolder = '';
+let EXEC_TARGET = '';
 let GAME_VERSION = '';
 const APPMANIFEST_FILE = 'appxmanifest.xml';
 const FIND_FILE = "GameSDK";
 const requiredFiles = [FIND_FILE];
-const STEAM_EXEC= "Binaries\\Danielle\\x64\\Release\\Prey.exe";
-const GOG_EXEC= "Binaries\\Danielle\\x64-GOG\\Release\\Prey.exe";
-const EPIC_EXEC = "Binaries\\Danielle\\x64-Epic\\Release\\Prey.exe";
-const XBOX_EXEC = "Binaries\\Danielle\\Gaming.Desktop.x64\\Release\\Prey.exe";
+const STEAM_EXEC= path.join("Binaries", "Danielle", "x64", "Release", "Prey.exe");
+const GOG_EXEC= path.join("Binaries", "Danielle", "x64-GOG", "Release", "Prey.exe");
+const EPIC_EXEC = path.join("Binaries", "Danielle", "x64-Epic", "Release", "Prey.exe");
+const XBOX_EXEC = path.join("Binaries", "Danielle", "Gaming.Desktop.x64", "Release", "Prey.exe");
 const STEAM_EXEC_FOLDER = "x64";
 const GOG_EXEC_FOLDER = "x64-GOG";
 const EPIC_EXEC_FOLDER = "x64-Epic";
@@ -67,12 +67,12 @@ const CHAIR_NAME = "Chairloader";
 const CHAIR_FILE = "chairmanager.exe";
 
 const CHAIRMOD_ID = `${GAME_ID}-chairloadermod`;
-const CHAIRMOD_PATH = "{gamePath}\\Mods";
+const CHAIRMOD_PATH = path.join("{gamePath}", "Mods");
 const CHAIRMOD_NAME = "Chairloader Mod";
 const CHAIRMOD_FILE = "modinfo.xml";
 
 const CHAIRMODLEGACY_ID = `${GAME_ID}-chairloadermodlegacy`;
-const CHAIRMODLEGACY_PATH = "{gamePath}\\Mods\\Legacy";
+const CHAIRMODLEGACY_PATH = path.join("{gamePath}", "Mods", "Legacy");
 const CHAIRMODLEGACY_NAME = "Chairloader Legacy Mod";
 const CHAIRMODLEGACY_EXT = ".pak";
 
@@ -157,25 +157,25 @@ function getExecutable(discoveryPath) {
 
   if (isCorrectExec(XBOX_EXEC)) {
     execFolder = XBOX_EXEC_FOLDER;
-    EXEC_TARGET = `{gamePath}\\Binaries\\Danielle\\${execFolder}\\Release`;
+    EXEC_TARGET = path.join('{gamePath}', path.join("Binaries", "Danielle", execFolder, "Release"));
     return XBOX_EXEC;
   };
 
   if (isCorrectExec(STEAM_EXEC)) {
     execFolder = STEAM_EXEC_FOLDER;
-    EXEC_TARGET = `{gamePath}\\Binaries\\Danielle\\${execFolder}\\Release`;
+    EXEC_TARGET = path.join('{gamePath}', path.join("Binaries", "Danielle", execFolder, "Release"));
     return STEAM_EXEC;
   };
 
   if (isCorrectExec(EPIC_EXEC)) {
     execFolder = EPIC_EXEC_FOLDER;
-    EXEC_TARGET = `{gamePath}\\Binaries\\Danielle\\${execFolder}\\Release`;
+    EXEC_TARGET = path.join('{gamePath}', path.join("Binaries", "Danielle", execFolder, "Release"));
     return EPIC_EXEC;
   };
 
   if (isCorrectExec(GOG_EXEC)) {
     execFolder = GOG_EXEC_FOLDER;
-    EXEC_TARGET = `{gamePath}\\Binaries\\Danielle\\${execFolder}\\Release`;
+    EXEC_TARGET = path.join('{gamePath}', path.join("Binaries", "Danielle", execFolder, "Release"));
     return GOG_EXEC;
   };
 

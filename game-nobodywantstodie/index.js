@@ -38,8 +38,8 @@ const UNREALDATA = {
 }
 
 //This information will be filled in from the data above
-const SHIPPING_EXE = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_NAME}\\${EPIC_CODE_NAME}-${EXEC_FOLDER_NAME}-Shipping.exe`;
-const EXEC_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_NAME}`;
+const EXEC_PATH = path.join(EPIC_CODE_NAME, "Binaries", EXEC_FOLDER_NAME);
+const SHIPPING_EXE = path.join(BINARIES_PATH, `${EPIC_CODE_NAME}-${EXEC_FOLDER_NAME}-Shipping.exe`);
 const BINARIES_ID = `${GAME_ID}-binaries`;
 
 const UE5_ID = `${GAME_ID}-ue5`;
@@ -52,7 +52,7 @@ const LEGACY_UE5_SORTABLE_ID = 'ue5-sortable-modtype';
 const UE5_SORTABLE_NAME = 'UE5 Sortable Mod';
 
 const CONFIG_ID = `${GAME_ID}-config`;
-const CONFIG_PATH = `${EPIC_CODE_NAME}\\Saved\\Config\\Windows`;
+const CONFIG_PATH = path.join(EPIC_CODE_NAME, "Saved", "Config", "Windows");
 const CONFIG_FILE1 = "engine.ini";
 const CONFIG_FILE2 = "scalability.ini";
 const CONFIG_FILE = [CONFIG_FILE1, CONFIG_FILE2];
@@ -110,33 +110,33 @@ const spec = {
       "id": BINARIES_ID,
       "name": "Binaries (Engine Injector)",
       "priority": "high",
-      "targetPath": `{gamePath}\\${EXEC_PATH}`
+      "targetPath": path.join('{gamePath}', EXEC_PATH)
     },
     /*
     {
       "id": CONFIG_ID,
       "name": "Config (LocalAppData)",
       "priority": "high",
-      "targetPath": `{localAppData}\\${CONFIG_PATH}`
+      "targetPath": path.join('{localAppData}', CONFIG_PATH)
     },
     {
       "id": SAVE_ID,
       "name": "Save Game",
       "priority": "high",
-      "targetPath": `{localAppData}\\${SAVE_PATH}`
+      "targetPath": path.join('{localAppData}', SAVE_PATH)
     },
     */
     {
       "id": UE5_ID,
       "name": "UE5 Paks",
       "priority": "high",
-      "targetPath": `{gamePath}\\${UE5_PATH}`
+      "targetPath": path.join('{gamePath}', UE5_PATH)
     },
     {
       "id": UE5_ALT_ID,
       "name": 'Paks (Alt, no "~mods")',
       "priority": "high",
-      "targetPath": `{gamePath}\\${UE5_ALT_PATH}`
+      "targetPath": path.join('{gamePath}', UE5_ALT_PATH)
     },
     {
       "id": ROOT_ID,

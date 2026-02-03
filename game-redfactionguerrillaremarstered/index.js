@@ -75,7 +75,7 @@ const spec = {
       "id": MOD_ID,
       "name": MOD_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${MOD_PATH}`
+      "targetPath": path.join('{gamePath}', MOD_PATH)
     },
     {
       "id": ROOT_ID,

@@ -201,8 +201,7 @@ const tools = [
     relative: true,
     exclusive: true,
     //defaultPrimary: true,
-    //isPrimary: true,
-    parameters: []
+    //parameters: []
   },
   {
     id: "LaunchVulkan",
@@ -214,8 +213,7 @@ const tools = [
     relative: true,
     exclusive: true,
     //defaultPrimary: true,
-    //isPrimary: true,
-    parameters: []
+    //parameters: []
   },
   {
     id: `${GAME_ID}-customlaunch`,
@@ -228,7 +226,7 @@ const tools = [
     exclusive: true,
     shell: true,
     //defaultPrimary: true,
-    parameters: []
+    //parameters: []
   },
   {
     id: ATK_ID,

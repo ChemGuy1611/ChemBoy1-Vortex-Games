@@ -77,8 +77,6 @@ const UNREALDATA = {
 }
 
 //This information will be filled in from the data above
-//const SHIPPING_EXE = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_NAME}\\${EPIC_CODE_NAME}-${EXEC_FOLDER_NAME}-Shipping.exe`;
-//const SHIPPING_EXE_EPIC= `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_NAME}\\${EPIC_CODE_NAME}EpicGameStore-${EXEC_FOLDER_NAME}-Shipping.exe`;
 const CONFIG_ID = `${GAME_ID}-config`;
 const CONFIG_NAME = `Config (LocalAppData)`;
 const CONFIG_FILE1 = "engine.ini";

@@ -79,7 +79,7 @@ const spec = {
       "id": BEPMOD_ID,
       "name": BEPMOD_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${BEPMOD_PATH}`
+      "targetPath": path.join('{gamePath}', BEPMOD_PATH)
     },
   ],
   "discovery": {

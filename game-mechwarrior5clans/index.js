@@ -35,14 +35,14 @@ const gameFinderQuery = {
 };
 
 //Information for setting the executable and variable paths based on the game store version
-let MOD_PATH = null;
-let EXEC_TARGET = null;
-let SCRIPTS_PATH = null;
-let SCRIPTS_TARGET = null;
-let SAVE_PATH = null;
-let SAVE_TARGET = null;
-let CONFIG_PATH = null;
-let CONFIG_TARGET = null;
+let MOD_PATH = "";
+let EXEC_TARGET = "";
+let SCRIPTS_PATH = "";
+let SCRIPTS_TARGET = "";
+let SAVE_PATH = "";
+let SAVE_TARGET = "";
+let CONFIG_PATH = "";
+let CONFIG_TARGET = "";
 let GAME_VERSION = '';
 const APPMANIFEST_FILE = 'appxmanifest.xml';
 const requiredFiles = [EPIC_CODE_NAME];
@@ -159,13 +159,13 @@ const spec = {
       "id": EDITORMOD_ID,
       "name": EDITORMOD_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${EDITORMOD_PATH}`
+      "targetPath": path.join('{gamePath}', EDITORMOD_PATH)
     },
     {
       "id": LOGICMODS_ID,
       "name": "UE4SS LogicMods (Blueprint)",
       "priority": "high",
-      "targetPath": `{gamePath}\\${LOGICMODS_PATH}`
+      "targetPath": path.join('{gamePath}', LOGICMODS_PATH)
     },
     {
       "id": UE4SSCOMBO_ID,
@@ -183,20 +183,20 @@ const spec = {
       "id": UE5_ID,
       "name": "UE5 Paks",
       "priority": "high",
-      "targetPath": `{gamePath}\\${UE5_PATH}`
+      "targetPath": path.join('{gamePath}', UE5_PATH)
     },
     {
       "id": UE5_ALT_ID,
       "name": 'UE5 Paks (no "~mods")',
       "priority": "high",
-      "targetPath": `{gamePath}\\${UE5_ALT_PATH}`
+      "targetPath": path.join('{gamePath}', UE5_ALT_PATH)
     },
   ],
 };
 
 //3rd party tools and launchers
 const tools = [
-  /*{
+  {
     id: "LaunchModdedGame",
     name: "Launch Modded Game",
     logo: `exec.png`,
@@ -205,9 +205,8 @@ const tools = [
     detach: true,
     relative: true,
     exclusive: true,
-    defaultPrimary: true,
-    isPrimary: true,
-    parameters: ['-fileopenlog']
+    //defaultPrimary: true,
+    //parameters: ['-fileopenlog']
   }, //*/
 ];
 
@@ -280,10 +279,10 @@ function getExecutable(discoveryPath) {
   };
 
   if (isCorrectExec(EXEC_XBOX)) {
-    MOD_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_XBOX}`;
-    EXEC_TARGET = `{gamePath}\\${MOD_PATH}`;
-    SCRIPTS_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_XBOX}\\ue4ss\\Mods`;
-    SCRIPTS_TARGET = `{gamePath}\\${SCRIPTS_PATH}`;
+    MOD_PATH = path.join(EPIC_CODE_NAME, "Binaries", EXEC_FOLDER_XBOX);
+    EXEC_TARGET = path.join('{gamePath}', MOD_PATH);
+    SCRIPTS_PATH = path.join(EPIC_CODE_NAME, "Binaries", EXEC_FOLDER_XBOX, "ue4ss", "Mods");
+    SCRIPTS_TARGET = path.join('{gamePath}', SCRIPTS_PATH);
     CONFIG_PATH = CONFIG_PATH_XBOX;
     CONFIG_TARGET = CONFIG_PATH;
     try {
@@ -301,10 +300,10 @@ function getExecutable(discoveryPath) {
   };
 
   if (isCorrectExec(EXEC_DEFAULT)) {
-    MOD_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_DEFAULT}`;
-    EXEC_TARGET = `{gamePath}\\${MOD_PATH}`;
-    SCRIPTS_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_DEFAULT}\\ue4ss\\Mods`;
-    SCRIPTS_TARGET = `{gamePath}\\${SCRIPTS_PATH}`;
+    MOD_PATH = path.join(EPIC_CODE_NAME, "Binaries", EXEC_FOLDER_DEFAULT);
+    EXEC_TARGET = path.join('{gamePath}', MOD_PATH);
+    SCRIPTS_PATH = path.join(EPIC_CODE_NAME, "Binaries", EXEC_FOLDER_DEFAULT, "ue4ss", "Mods");
+    SCRIPTS_TARGET = path.join('{gamePath}', SCRIPTS_PATH);
     CONFIG_PATH = CONFIG_PATH_DEFAULT;
     CONFIG_TARGET = CONFIG_PATH;
     try {

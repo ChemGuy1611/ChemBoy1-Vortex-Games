@@ -67,7 +67,7 @@ const spec = {
       "id": PREVIEW_ID,
       "name": PREVIEW_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${PREVIEW_PATH}`
+      "targetPath": path.join('{gamePath}', PREVIEW_PATH)
     },
   ],
   "discovery": {
@@ -99,7 +99,6 @@ const tools = [
       '-usepreview',
     ],
     defaultPrimary: true,
-    isPrimary: true,
   },
 ];
 

@@ -13,7 +13,7 @@ const template = require('string-template');
 //Specify all information about the game
 const STEAMAPP_ID = "552500";
 const GAME_ID = "vermintide2";
-const EXEC = "launcher\\Launcher.exe";
+const EXEC = path.join("launcher", "Launcher.exe");
 
 const spec = {
   "game": {
@@ -40,13 +40,13 @@ const spec = {
       "id": "vermintide2-binaries",
       "name": "Binaries",
       "priority": "high",
-      "targetPath": "{gamePath}\\binaries",
+      "targetPath": path.join('{gamePath}', "binaries"),
     },
     {
       "id": "vermintide2-binariesdx12",
       "name": "Binaries DX12",
       "priority": "high",
-      "targetPath": "{gamePath}\\binaries_dx12",
+      "targetPath": path.join('{gamePath}', "binaries_dx12"),
     }
   ],
   "discovery": {

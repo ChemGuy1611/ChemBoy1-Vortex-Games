@@ -77,13 +77,13 @@ const spec = {
       "id": PK3_ID,
       "name": PK3_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${PK3_PATH}`
+      "targetPath": path.join('{gamePath}', PK3_PATH)
     },
     {
       "id": MAIN_ID,
       "name": MAIN_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${MAIN_PATH}`
+      "targetPath": path.join('{gamePath}', MAIN_PATH)
     },
     {
       "id": REALRTCW_ID,
@@ -470,8 +470,8 @@ function testMainFolder(files, gameId) {
 
 //Installer install Main folder files
 function installMainFolder(files) {
-  const modFile = files.find(file => (path.basename(file) === MAIN_FOLDER));
-  const idx = modFile.indexOf(`${modFile}\\`);
+  const modFile = files.find(file => (path.basename(file).toLowerCase() === MAIN_FOLDER.toLowerCase()));
+  const idx = modFile.indexOf(`${modFile}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MAIN_ID };
 

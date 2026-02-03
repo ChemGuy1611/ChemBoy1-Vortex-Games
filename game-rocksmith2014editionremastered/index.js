@@ -161,7 +161,7 @@ const spec = {
       "id": CDLCMOD_ID,
       "name": CDLCMOD_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${CDLCMOD_PATH}`
+      "targetPath": path.join('{gamePath}', CDLCMOD_PATH)
     },
     {
       "id": NOCABLE_ID,
@@ -179,7 +179,7 @@ const spec = {
       "id": EOF_ID,
       "name": EOF_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${EOF_PATH}`
+      "targetPath": path.join('{gamePath}', EOF_PATH)
     },
     {
       "id": ROOT_ID,

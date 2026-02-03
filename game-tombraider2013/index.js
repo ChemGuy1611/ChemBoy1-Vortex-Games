@@ -114,13 +114,13 @@ const spec = {
       "id": MANAGERMOD_ID,
       "name": MANAGERMOD_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${MANAGERMOD_PATH}`
+      "targetPath": path.join(gamePath, MANAGERMOD_PATH)
     },
     {
       "id": TEXMODPACK_ID,
       "name": TEXMODPACK_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${TEXMODPACK_PATH}`
+      "targetPath": path.join(gamePath, TEXMODPACK_PATH)
     },
     {
       "id": MANAGER_ID,
