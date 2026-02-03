@@ -98,7 +98,7 @@ const UE5_SORTABLE_NAME = 'UE5 Sortable Mod';
 const LOGICMODS_ID = `${GAME_ID}-logicmods`;
 const UE4SSCOMBO_ID = `${GAME_ID}-ue4sscombo`;
 const LOGICMODS_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Paks', 'LogicMods');
-const LOGICMODS_FILE = "LogicMods";
+const LOGICMODS_FOLDER = "LogicMods";
 const LOGICMODS_EXT = ".pak";
 
 const CONFIG_ID = `${GAME_ID}-config`;
@@ -107,7 +107,7 @@ const CONFIG_FILES = ["engine.ini", "scalability.ini", "input.ini"];
 const CONFIG_EXT = ".ini";
 
 const ROOT_ID = `${GAME_ID}-root`;
-const ROOT_FILE = EPIC_CODE_NAME;
+const ROOT_FOLDER = EPIC_CODE_NAME;
 const ROOT_IDX = `${EPIC_CODE_NAME}${path.sep}`;
 
 const SAVE_ID = `${GAME_ID}-save`;
@@ -117,7 +117,7 @@ const SAVE_EXT = ".sav";
 const SCRIPTS_ID = `${GAME_ID}-scripts`;
 const SCRIPTS_NAME = "UE4SS Scripts";
 const SCRIPTS_EXT = ".lua";
-const SCRIPTS_FILE = "Scripts";
+const SCRIPTS_FOLDER = "Scripts";
 
 const DLL_ID = `${GAME_ID}-ue4ssdll`;
 const DLL_NAME = "UE4SS DLL Mod";
@@ -425,7 +425,7 @@ function testUe4ssCombo(files, gameId) {
   const isMod = files.some(file => (path.extname(file).toLowerCase() === SCRIPTS_EXT));
   const isModAlt = files.some(file => (path.basename(file).toLowerCase() === 'binaries')); //added to catch mods packaged with paks and dll/asi, but no lua scripts.
   const isMod2 = files.some(file => (path.extname(file).toLowerCase() === LOGICMODS_EXT));
-  const isFolder = files.some(file => (path.basename(file) === ROOT_FILE));
+  const isFolder = files.some(file => (path.basename(file).toLowerCase() === ROOT_FOLDER.toLowerCase()));
   let supported = (gameId === spec.game.id) && ( isMod || isModAlt ) && isMod2 && isFolder;
 
   // Test for a mod installer
@@ -443,8 +443,8 @@ function testUe4ssCombo(files, gameId) {
 
 //Install save files
 async function installUe4ssCombo(files, workingDir) {
-  const modFile = files.find(file => path.basename(file) === ROOT_FILE);
-  const idx = modFile.indexOf(ROOT_IDX);
+  const modFile = files.find(file => path.basename(file).toLowerCase() === ROOT_FOLDER.toLowerCase());
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: UE4SSCOMBO_ID };
 
@@ -477,7 +477,7 @@ async function installUe4ssCombo(files, workingDir) {
 
 //Test for save files
 function testLogic(files, gameId) {
-  const isMod = files.some(file => path.basename(file) === LOGICMODS_FILE);
+  const isMod = files.some(file => path.basename(file).toLowerCase() === LOGICMODS_FOLDER.toLowerCase());
   let supported = (gameId === spec.game.id) && isMod;
 
   // Test for a mod installer
@@ -556,7 +556,7 @@ function installUe4ss(files) {
 //Test for UE4SS Script files
 function testScripts(files, gameId) {
   const isMod = files.some(file => (path.extname(file).toLowerCase() === SCRIPTS_EXT));
-  const isFolder = files.some(file => (path.basename(file) === SCRIPTS_FILE));
+  const isFolder = files.some(file => (path.basename(file).toLowerCase() === SCRIPTS_FOLDER.toLowerCase()));
   let supported = (gameId === spec.game.id) && isMod && isFolder;
 
   // Test for a mod installer
@@ -574,7 +574,7 @@ function testScripts(files, gameId) {
 
 //Install UE4SS Script files
 function installScripts(files, fileName) {
-  const modFile = files.find(file => (path.basename(file) === SCRIPTS_FILE));
+  const modFile = files.find(file => (path.basename(file).toLowerCase() === SCRIPTS_FOLDER.toLowerCase()));
   const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: SCRIPTS_ID };
@@ -724,8 +724,7 @@ function installConfig(files) {
 
 //Installer test for Root folder files
 function testRoot(files, gameId) {
-  //const isMod = files.some(file => path.basename(file).toLowerCase() === ROOT_FILE);
-  const isMod = files.some(file => path.basename(file) === ROOT_FILE);
+  const isMod = files.some(file => path.basename(file).toLowerCase() === ROOT_FOLDER.toLowerCase());
   let supported = (gameId === spec.game.id) && isMod;
 
   return Promise.resolve({
@@ -736,16 +735,14 @@ function testRoot(files, gameId) {
 
 //Installer install Root folder files
 function installRoot(files) {
-  //const modFile = files.find(file => path.basename(file).toLowerCase() === ROOT_FILE);
-  const modFile = files.find(file => path.basename(file) === ROOT_FILE);
-  const idx = modFile.indexOf(ROOT_IDX);
+  const modFile = files.find(file => path.basename(file).toLowerCase() === ROOT_FOLDER.toLowerCase());
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
     ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
-    //((file.indexOf(rootPath) !== -1))
   );
 
   const instructions = filtered.map(file => {

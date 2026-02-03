@@ -16,7 +16,7 @@ const DOCUMENTS = util.getVortexPath("documents");
 const ROAMINGAPPDATA = util.getVortexPath('appData');
 const LOCALAPPDATA = util.getVortexPath('localAppData');
 
-let GAME_PATH = null;
+let GAME_PATH = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 let GAME_VERSION = '';

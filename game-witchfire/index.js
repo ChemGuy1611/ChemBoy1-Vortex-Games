@@ -59,7 +59,7 @@ const PAK_ID = `${GAME_ID}-pak`;
 const PAK_PATH = UNREALDATA.modsPath;
 
 const ROOT_ID = `${GAME_ID}-root`;
-const ROOT_FILE = EPIC_CODE_NAME;
+const ROOT_FOLDER = EPIC_CODE_NAME;
 
 const BINARIES_ID = `${GAME_ID}-binaries`;
 const BINARIES_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_NAME);
@@ -299,7 +299,7 @@ function testUe4ssCombo(files, gameId) {
   const isMod = files.some(file => (path.extname(file).toLowerCase() === SCRIPTS_EXT));
   const isModAlt = files.some(file => (path.basename(file).toLowerCase() === 'binaries')); //added to catch mods packaged with paks and dll/asi, but no lua scripts.
   const isMod2 = files.some(file => (path.extname(file).toLowerCase() === LOGICMODS_EXT));
-  const isFolder = files.some(file => (path.basename(file) === ROOT_FILE));
+  const isFolder = files.some(file => (path.basename(file).toLowerCase() === ROOT_FOLDER.toLowerCase()));
   let supported = (gameId === spec.game.id) && ( isMod || isModAlt ) && isMod2 && isFolder;
 
   // Test for a mod installer
@@ -317,7 +317,7 @@ function testUe4ssCombo(files, gameId) {
 
 //Install UE4SS combo (pak and lua/dll) mod files
 async function installUe4ssCombo(files, workingDir) {
-  const modFile = files.find(file => (path.basename(file) === ROOT_FILE));
+  const modFile = files.find(file => (path.basename(file).toLowerCase() === ROOT_FOLDER.toLowerCase()));
   const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: UE4SSCOMBO_ID };
@@ -340,7 +340,7 @@ async function installUe4ssCombo(files, workingDir) {
 
 //Test for save files
 function testLogic(files, gameId) {
-  const isMod = files.some(file => (path.basename(file) === LOGICMODS_FOLDER));
+  const isMod = files.some(file => (path.basename(file).toLowerCase() === LOGICMODS_FOLDER.toLowerCase()));
   let supported = (gameId === spec.game.id) && isMod;
 
   // Test for a mod installer
@@ -358,7 +358,7 @@ function testLogic(files, gameId) {
 
 //Install save files
 function installLogic(files) {
-  const modFile = files.find(file => (path.basename(file) === LOGICMODS_FOLDER));
+  const modFile = files.find(file => (path.basename(file).toLowerCase() === LOGICMODS_FOLDER.toLowerCase()));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: LOGICMODS_ID };
@@ -594,8 +594,8 @@ function installConfig(files) {
 
 //Installer test for Fluffy Mod Manager files
 function testRoot(files, gameId) {
-  //const isMod = files.some(file => path.basename(file).toLowerCase() === ROOT_FILE);
-  const isMod = files.some(file => path.basename(file) === ROOT_FILE);
+  //const isMod = files.some(file => path.basename(file).toLowerCase() === ROOT_FOLDER);
+  const isMod = files.some(file => path.basename(file).toLowerCase() === ROOT_FOLDER.toLowerCase());
   let supported = (gameId === spec.game.id) && isMod;
 
   return Promise.resolve({
@@ -606,8 +606,8 @@ function testRoot(files, gameId) {
 
 //Installer install Fluffy Mod Manger files
 function installRoot(files) {
-  //const modFile = files.find(file => path.basename(file).toLowerCase() === ROOT_FILE);
-  const modFile = files.find(file => path.basename(file) === ROOT_FILE);
+  //const modFile = files.find(file => path.basename(file).toLowerCase() === ROOT_FOLDER);
+  const modFile = files.find(file => path.basename(file).toLowerCase() === ROOT_FOLDER.toLowerCase());
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };

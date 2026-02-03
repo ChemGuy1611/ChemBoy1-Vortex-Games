@@ -63,7 +63,7 @@ const INI_ARCHIVE_OBJECT = {
 
 const FOLON_ID = `${GAME_ID}-folon`;
 const FOLON_NAME = "FOLON GOG Files";
-const ROOT_FILE = 'Data'; // The main data folder for FOLON (index for installer)
+const ROOT_FOLDER = 'Data'; // The main data folder for FOLON (index for installer)
 
 // MAIN FUNCTIONS ////////////////////////////////////////////////////////////////////////
 

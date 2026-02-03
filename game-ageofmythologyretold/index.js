@@ -251,7 +251,7 @@ function setupNotify(api) {
 
 //Installer test for Root folder files
 function testData(files, gameId) {
-  //const isMod = files.some(file => path.basename(file).toLowerCase() === ROOT_FILE);
+  //const isMod = files.some(file => path.basename(file).toLowerCase() === ROOT_FOLDER);
   const isMod = files.some(file => path.basename(file) === DATA_FOLDER);
   let supported = (gameId === spec.game.id) && isMod;
 

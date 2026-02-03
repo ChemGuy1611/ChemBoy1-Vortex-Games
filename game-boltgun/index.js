@@ -46,8 +46,8 @@ const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_PATH = "{gamePath}";
-const ROOT_FILE = "Boltgun";
-const ROOT_IDX = `${ROOT_FILE}\\`;
+const ROOT_FOLDER = "Boltgun";
+const ROOT_IDX = `${ROOT_FOLDER}\\`;
 const ROOT_NAME = "Root Game Folder";
 const BINARIES_ID = `${GAME_ID}-binaries`;
 const BINARIES_NAME = "Binaries (Engine Injector)";
@@ -186,8 +186,8 @@ async function setGameVersionPath(gamePath) {
 
 //Installer test for Root folder files
 function testRoot(files, gameId) {
-  //const isMod = files.some(file => path.basename(file).toLowerCase() === ROOT_FILE);
-  const isMod = files.some(file => path.basename(file) === ROOT_FILE);
+  //const isMod = files.some(file => path.basename(file).toLowerCase() === ROOT_FOLDER);
+  const isMod = files.some(file => path.basename(file).toLowerCase() === ROOT_FOLDER.toLowerCase());
   let supported = (gameId === spec.game.id) && isMod;
 
   return Promise.resolve({
@@ -198,9 +198,9 @@ function testRoot(files, gameId) {
 
 //Installer install Root folder files
 function installRoot(files) {
-  //const modFile = files.find(file => path.basename(file).toLowerCase() === ROOT_FILE);
-  const modFile = files.find(file => path.basename(file) === ROOT_FILE);
-  const idx = modFile.indexOf(ROOT_IDX);
+  //const modFile = files.find(file => path.basename(file).toLowerCase() === ROOT_FOLDER);
+  const modFile = files.find(file => path.basename(file).toLowerCase() === ROOT_FOLDER.toLowerCase());
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
 

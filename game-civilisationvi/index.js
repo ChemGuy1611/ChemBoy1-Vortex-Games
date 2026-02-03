@@ -38,7 +38,7 @@ const MOD_EXT = '.modinfo';
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Game Folder";
-const ROOT_FILE = "Base";
+const ROOT_FOLDER = "Base";
 
 const DXLAUNCH_ID = `${GAME_ID}-dxlaunch`;
 const DXLAUNCH_NAME = "DX12 Launch";
@@ -269,7 +269,7 @@ function installMod(files, fileName) {
 
 //Installer test for Root folder files
 function testRoot(files, gameId) {
-  const isMod = files.some(file => path.basename(file) === ROOT_FILE);
+  const isMod = files.some(file => path.basename(file).toLowerCase() === ROOT_FOLDER.toLowerCase());
   let supported = (gameId === spec.game.id) && isMod;
 
   // Test for a mod installer
@@ -287,7 +287,7 @@ function testRoot(files, gameId) {
 
 //Installer install Root folder files
 function installRoot(files) {
-  const modFile = files.find(file => path.basename(file) === ROOT_FILE);
+  const modFile = files.find(file => path.basename(file).toLowerCase() === ROOT_FOLDER.toLowerCase());
   const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };

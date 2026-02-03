@@ -572,8 +572,10 @@ function installTfcMod(files, fileName) {
 
 //Installer test for Root folder files
 function testRoot(files, gameId) {
-  const isMod = files.some(file => ROOT_FOLDERS.includes(path.basename(file)));
-  const isSub = files.some(file => ROOTSUB_FOLDERS.includes(path.basename(file)));
+  const ROOT_FOLDERS_LOWER = ROOT_FOLDERS.map(str => str.toLowerCase());
+  const ROOTSUB_FOLDERS_LOWER = ROOTSUB_FOLDERS.map(str => str.toLowerCase());
+  const isMod = files.some(file => ROOT_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
+  const isSub = files.some(file => ROOTSUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
   let supported = (gameId === spec.game.id) && ( isMod || isSub );
 
   // Test for a mod installer.
@@ -591,10 +593,12 @@ function testRoot(files, gameId) {
 
 //Installer install Root folder files
 function installRoot(files) {
-  let modFile = files.find(file => ROOT_FOLDERS.includes(path.basename(file)));
+  const ROOT_FOLDERS_LOWER = ROOT_FOLDERS.map(str => str.toLowerCase());
+  const ROOTSUB_FOLDERS_LOWER = ROOTSUB_FOLDERS.map(str => str.toLowerCase());
+  let modFile = files.find(file => ROOT_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
   let setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
   if (modFile === undefined) {
-    modFile = files.find(file => ROOTSUB_FOLDERS.includes(path.basename(file)));
+    modFile = files.find(file => ROOTSUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
     setModTypeInstruction = { type: 'setmodtype', value: ROOTSUB_ID };
   }
   const ROOT_IDX = `${path.basename(modFile)}${path.sep}`

@@ -51,8 +51,8 @@ const PAK_ID = `${GAME_ID}-pak`;
 const PAK_PATH = UNREALDATA.modsPath;
 
 const ROOT_ID = `${GAME_ID}-root`;
-const ROOT_FILE = EPIC_CODE_NAME;
-const ROOT_IDX = `${ROOT_FILE}\\`;
+const ROOT_FOLDER = EPIC_CODE_NAME;
+const ROOT_IDX = `${ROOT_FOLDER}\\`;
 
 const BINARIES_ID = `${GAME_ID}-binaries`;
 
@@ -294,10 +294,9 @@ function installSave(files) {
   return Promise.resolve({ instructions });
 }
 
-//Installer test for Fluffy Mod Manager files
+//Installer test for Root folder
 function testRoot(files, gameId) {
-  //const isMod = files.some(file => path.basename(file).toLowerCase() === ROOT_FILE);
-  const isMod = files.some(file => path.basename(file) === ROOT_FILE);
+  const isMod = files.some(file => path.basename(file).toLowerCase() === ROOT_FOLDER.toLowerCase());
   let supported = (gameId === spec.game.id) && isMod;
 
   return Promise.resolve({
@@ -306,18 +305,16 @@ function testRoot(files, gameId) {
   });
 }
 
-//Installer install Fluffy Mod Manger files
+//Installer Root folder
 function installRoot(files) {
-  //const modFile = files.find(file => path.basename(file).toLowerCase() === ROOT_FILE);
-  const modFile = files.find(file => path.basename(file) === ROOT_FILE);
-  const idx = modFile.indexOf(ROOT_IDX);
+  const modFile = files.find(file => path.basename(file).toLowerCase() === ROOT_FOLDER.toLowerCase());
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
-    //((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
-    ((file.indexOf(rootPath) !== -1))
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
   );
 
   const instructions = filtered.map(file => {

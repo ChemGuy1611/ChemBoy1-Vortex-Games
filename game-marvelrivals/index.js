@@ -47,7 +47,7 @@ const UNREALDATA = {
 //This information will be filled in from the data above
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Loose Data Files";
-const ROOT_FILE = EPIC_CODE_NAME;
+const ROOT_FOLDER = EPIC_CODE_NAME;
 const ROOT_PATH = path.join(TOP_FOLDER_NAME, EPIC_CODE_NAME, 'Content');
 
 const UE5_ID = `${GAME_ID}-ue5`;
@@ -284,7 +284,7 @@ async function downloadSigBypass(api, gameSpec) {
 
 //Installer test for Root folder files
 function testRoot(files, gameId) {
-  const isMod = files.some(file => (path.basename(file) === ROOT_FILE));
+  const isMod = files.some(file => (path.basename(file).toLowerCase() === ROOT_FOLDER.toLowerCase()));
   let supported = (gameId === spec.game.id) && isMod;
 
   // Test for a mod installer
@@ -302,7 +302,7 @@ function testRoot(files, gameId) {
 
 //Installer install Root folder files
 function installRoot(files) {
-  const modFile = files.find(file => (path.basename(file) === ROOT_FILE));
+  const modFile = files.find(file => (path.basename(file).toLowerCase() === ROOT_FOLDER.toLowerCase()));
   const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
@@ -326,7 +326,7 @@ function installRoot(files) {
 //Installer test for Signature Bypass files
 function testSigBypass(files, gameId) {
   const isDll = files.some(file => path.basename(file).toLowerCase() === SIGBYPASS_DLL);
-  const isLua = files.some(file => path.basename(file).toLowerCase() === SIGBYPASS_LUA);
+  const isLua = files.some(file => path.basename(file).toLowerCase() === SIGBYPASS_LUA.toLowerCase());
   const TEST = isDll && isLua;
   let supported = (gameId === spec.game.id) && TEST;
 

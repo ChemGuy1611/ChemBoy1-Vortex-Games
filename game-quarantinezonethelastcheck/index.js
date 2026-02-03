@@ -151,7 +151,7 @@ const PAK_EXT = '.pak';
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Game Folder";
-const ROOT_FILE = EPIC_CODE_NAME;
+const ROOT_FOLDER = EPIC_CODE_NAME;
 
 const ROOTSUB_ID = `${GAME_ID}-rootsubfolders`;
 const ROOTSUB_NAME = "Root Sub-Folders";
@@ -704,7 +704,7 @@ function testUe4ssCombo(files, gameId) {
   const isMod = files.some(file => (path.extname(file).toLowerCase() === SCRIPTS_EXT));
   const isModAlt = files.some(file => (path.basename(file).toLowerCase() === 'binaries')); //added to catch mods packaged with paks and dll/asi, but no lua scripts.
   const isMod2 = files.some(file => (path.extname(file).toLowerCase() === LOGICMODS_EXT));
-  const isFolder = files.some(file => (path.basename(file) === ROOT_FILE));
+  const isFolder = files.some(file => (path.basename(file).toLowerCase() === ROOT_FOLDER.toLowerCase()));
   let supported = (gameId === spec.game.id) && ( isMod || isModAlt ) && isMod2 && isFolder;
 
   // Test for a mod installer
@@ -722,7 +722,7 @@ function testUe4ssCombo(files, gameId) {
 
 //Install UE4SS combo (pak and lua/dll) mod files
 async function installUe4ssCombo(files, workingDir) {
-  const modFile = files.find(file => (path.basename(file) === ROOT_FILE));
+  const modFile = files.find(file => (path.basename(file).toLowerCase() === ROOT_FOLDER.toLowerCase()));
   const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: UE4SSCOMBO_ID };
@@ -756,7 +756,7 @@ async function installUe4ssCombo(files, workingDir) {
 
 //Test for save files
 function testLogic(files, gameId) {
-  const isMod = files.some(file => (path.basename(file) === LOGICMODS_FOLDER));
+  const isMod = files.some(file => (path.basename(file).toLowerCase() === LOGICMODS_FOLDER.toLowerCase()));
   let supported = (gameId === spec.game.id) && isMod;
 
   // Test for a mod installer
@@ -774,7 +774,7 @@ function testLogic(files, gameId) {
 
 //Install save files
 function installLogic(files) {
-  const modFile = files.find(file => (path.basename(file) === LOGICMODS_FOLDER));
+  const modFile = files.find(file => (path.basename(file).toLowerCase() === LOGICMODS_FOLDER.toLowerCase()));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: LOGICMODS_ID };
@@ -839,7 +839,7 @@ function installUe4ss(files) {
 //Installer test for Signature Bypass files
 function testSigBypass(files, gameId) {
   const isDll = files.some(file => path.basename(file).toLowerCase() === SIGBYPASS_DLL);
-  const isLua = files.some(file => path.basename(file).toLowerCase() === SIGBYPASS_LUA);
+  const isLua = files.some(file => path.basename(file).toLowerCase() === SIGBYPASS_LUA.toLowerCase());
   let supported = (gameId === spec.game.id) && isDll && isLua;
 
   // Test for a mod installer
@@ -1007,8 +1007,10 @@ function installDll(files, fileName) {
 
 //Installer test for Root folder files
 function testRoot(files, gameId) {
-  const isMod = files.some(file => ROOT_FOLDERS.includes(path.basename(file)));
-  const isSub = files.some(file => ROOTSUB_FOLDERS.includes(path.basename(file)));
+  const ROOT_FOLDERS_LOWER = ROOT_FOLDERS.map(str => str.toLowerCase());
+  const ROOTSUB_FOLDERS_LOWER = ROOTSUB_FOLDERS.map(str => str.toLowerCase());
+  const isMod = files.some(file => ROOT_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
+  const isSub = files.some(file => ROOTSUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
   let supported = (gameId === spec.game.id) && ( isMod || isSub );
 
   // Test for a mod installer.
@@ -1026,10 +1028,12 @@ function testRoot(files, gameId) {
 
 //Installer install Root folder files
 function installRoot(files) {
-  let modFile = files.find(file => ROOT_FOLDERS.includes(path.basename(file)));
+  const ROOT_FOLDERS_LOWER = ROOT_FOLDERS.map(str => str.toLowerCase());
+  const ROOTSUB_FOLDERS_LOWER = ROOTSUB_FOLDERS.map(str => str.toLowerCase());
+  let modFile = files.find(file => ROOT_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
   let setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
   if (modFile === undefined) {
-    modFile = files.find(file => ROOTSUB_FOLDERS.includes(path.basename(file)));
+    modFile = files.find(file => ROOTSUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
     setModTypeInstruction = { type: 'setmodtype', value: ROOTSUB_ID };
   }
   const ROOT_IDX = `${path.basename(modFile)}${path.sep}`

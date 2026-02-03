@@ -63,7 +63,7 @@ const MANAGER_EXEC = "modintegrator.exe";
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Game Folder";
-const ROOT_FILE = EPIC_CODE_NAME;
+const ROOT_FOLDER = EPIC_CODE_NAME;
 
 const CONFIG_ID = `${GAME_ID}-config`;
 const CONFIG_NAME = "Config (LocalAppData)";
@@ -540,7 +540,7 @@ function installCooked(files) {
 
 //Installer test for Cooked mods
 function testRoot(files, gameId) {
-  const isMod = files.some(file => (path.basename(file) === ROOT_FILE));
+  const isMod = files.some(file => (path.basename(file).toLowerCase() === ROOT_FOLDER.toLowerCase()));
   const isCooked = files.some(file => (path.extname(file) === COOKED_EXT)); //common file in Cooked mods. Author may have packaged without Cooked folder.
   let supported = (gameId === spec.game.id) && isMod && !isCooked;
 
@@ -559,7 +559,7 @@ function testRoot(files, gameId) {
 
 //Installer install Cooked mods
 function installRoot(files) {
-  const modFile = files.find(file => (path.basename(file) === ROOT_FILE));
+  const modFile = files.find(file => (path.basename(file).toLowerCase() === ROOT_FOLDER.toLowerCase()));
   const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
