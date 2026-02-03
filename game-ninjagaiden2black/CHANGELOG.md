@@ -8,6 +8,7 @@
 - Fixed: path strings
 - Added: Buttons to open PCGamingWiki page, view changelog, and submit bug reports
 - Fixed: Xbox game version detection
+- Improved: Made UE4SS Scripts, UE4SS DLL, LogicMods, and Root Folder mod installers case-insensitive to folder names
 
 ## [0.3.0] - 2025-04-23
 
