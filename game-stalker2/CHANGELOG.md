@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.5.2] - 2026-02-03
+
+- Improved: Made UE4SS Scripts, UE4SS DLL, LogicMods, and Root Folder mod installers case-insensitive to folder names
+
 ## [0.5.2] - 2026-02-02
 
 - Added: Automatic renaming of "Win64" folder to "WinGDK" for UE4SS combo mod installer
