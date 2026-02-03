@@ -245,7 +245,7 @@ function getExecutable(discoveryPath) {
     EXEC_TARGET = path.join('{gamePath}', MOD_PATH);
     CONFIG_PATH = CONFIG_PATH_XBOX;
     CONFIG_TARGET = CONFIG_PATH;
-    SCRIPTS_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_XBOX, 'Mods');
+    SCRIPTS_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_XBOX, 'ue4ss', 'Mods');
     SCRIPTS_TARGET = path.join('{gamePath}', SCRIPTS_PATH);
     try {
       const SAVE_ARRAY = fs.readdirSync(SAVE_PATH_XBOX);
@@ -266,7 +266,7 @@ function getExecutable(discoveryPath) {
     EXEC_TARGET = path.join('{gamePath}', MOD_PATH);
     CONFIG_PATH = CONFIG_PATH_DEFAULT;
     CONFIG_TARGET = CONFIG_PATH;
-    SCRIPTS_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT, 'Mods');
+    SCRIPTS_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT, 'ue4ss', 'Mods');
     SCRIPTS_TARGET = path.join('{gamePath}', SCRIPTS_PATH);
     try {
       const SAVE_ARRAY = fs.readdirSync(SAVE_PATH_DEFAULT);

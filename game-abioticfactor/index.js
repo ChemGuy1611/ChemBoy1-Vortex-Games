@@ -2,8 +2,8 @@
 Name: Abiotic Factor Vortex Extension
 Structure: UE5 (Xbox-Integrated)
 Author: ChemBoy1
-Version: 0.1.1
-Date: 2025-12-15
+Version: 0.2.0
+Date: 2026-02-03
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -22,7 +22,7 @@ const XBOXEXECNAME = "AppAbioticFactorShipping"; //from appxmanifest.xml
 const GAME_NAME = "Abiotic Factor";
 const GAME_NAME_SHORT = "Abiotic Factor"; //Try for 8-10 characters
 const EXEC_DEFAULT = "AbioticFactor.exe";
-let GAME_PATH = null;
+let GAME_PATH = '';
 let CHECK_DATA = false;
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
@@ -53,15 +53,15 @@ if (IO_STORE) { //Set file number for pak installer file selection (needs to be 
 
 //Information for setting the executable and variable paths based on the game store version
 let GAME_VERSION = '';
-let EXEC_PATH = null;
-let EXEC_TARGET = null;
+let EXEC_PATH = '';
+let EXEC_TARGET = '';
 let SHIPPING_EXE = '';
-let SCRIPTS_PATH = null;
-let SCRIPTS_TARGET = null;
-let SAVE_PATH = null;
-let SAVE_TARGET = null;
-let CONFIG_PATH = null;
-let CONFIG_TARGET = null;
+let SCRIPTS_PATH = '';
+let SCRIPTS_TARGET = '';
+let SAVE_PATH = '';
+let SAVE_TARGET = '';
+let CONFIG_PATH = '';
+let CONFIG_TARGET = '';
 let requiredFiles = [EPIC_CODE_NAME];
 let USERID_FOLDER = "";
 const EXEC_FOLDER_DEFAULT = "Win64";
