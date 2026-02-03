@@ -2,8 +2,8 @@
 Name: Manor Lords Vortex Extension
 Structure: UE4 (XBOX Integrated)
 Author: ChemBoy1
-Version: 0.5.0
-Date: 2026-01-31
+Version: 0.5.1
+Date: 2026-02-02
 /////////////////////////////////////////////////////*/
 
 //Import libraries
@@ -43,14 +43,14 @@ const gameFinderQuery = {
 };
 
 //Information for setting the executable and variable paths based on the game store version
-let MOD_PATH = null;
-let EXEC_TARGET = null;
-let SCRIPTS_PATH = null;
-let SCRIPTS_TARGET = null;
-let SAVE_PATH = null;
-let SAVE_TARGET = null;
-let CONFIG_PATH = null;
-let CONFIG_TARGET = null;
+let MOD_PATH = '';
+let EXEC_TARGET = '';
+let SCRIPTS_PATH = '';
+let SCRIPTS_TARGET = '';
+let SAVE_PATH = '';
+let SAVE_TARGET = '';
+let CONFIG_PATH = '';
+let CONFIG_TARGET = '';
 let requiredFiles = [EPIC_CODE_NAME];
 let GAME_VERSION = '';
 let GAME_PATH = '';
@@ -123,6 +123,13 @@ const UE4SS_MODSTXT_FILE = 'mods.txt';
 const UE4SS_MODSJSON_FILEPATH = path.join(UE4SS_MOD_PATH, UE4SS_MODSJSON_FILE); //relative to Binaries folder
 const UE4SS_MODSTXT_FILEPATH = path.join(UE4SS_MOD_PATH, UE4SS_MODSTXT_FILE);
 
+//repackage mods where LogicMods pak is in UE4SS mods folder, for no reason at all
+const MLUE4SS_ID = `${GAME_ID}-mlue4ss`;
+const MLUE4SS_NAME = "MLUE4SS Mod";
+const MLUE4SS_PATH = '.';
+const MLUE4SS_FOLDER = 'ae_bp';
+const MLUE4SS_EXT = '.pak';
+
 //This information will be filled in from the data above
 const spec = {
   "game": {
@@ -174,6 +181,12 @@ const spec = {
       "name": "Paks",
       "priority": "high",
       "targetPath": path.join('{gamePath}', PAK_PATH)
+    },
+    {
+      "id": MLUE4SS_ID,
+      "name": MLUE4SS_NAME,
+      "priority": "high",
+      "targetPath": path.join('{gamePath}', MLUE4SS_PATH)
     },
   ],
 };
@@ -273,6 +286,7 @@ function getExecutable(discoveryPath) {
     CONFIG_TARGET = path.join('{localAppData}', CONFIG_PATH);
     SCRIPTS_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_XBOX, UE4SS_MOD_PATH);
     SCRIPTS_TARGET = path.join('{gamePath}', SCRIPTS_PATH);
+    DLL_PATH = SCRIPTS_PATH;
     SAVE_PATH = SAVE_PATH_XBOX;
     SAVE_TARGET = path.join('{localAppData}', SAVE_PATH);
     return EXEC_XBOX;
@@ -284,11 +298,32 @@ function getExecutable(discoveryPath) {
     CONFIG_TARGET = path.join('{localAppData}', CONFIG_PATH);
     SCRIPTS_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT, UE4SS_MOD_PATH);
     SCRIPTS_TARGET = path.join('{gamePath}', SCRIPTS_PATH);
+    DLL_PATH = SCRIPTS_PATH;
     SAVE_PATH = SAVE_PATH_DEFAULT;
     SAVE_TARGET = path.join('{localAppData}', SAVE_PATH);
     return EXEC_DEFAULT;
   };
   return EXEC_DEFAULT;
+}
+
+async function getAllFiles(dirPath) {
+  let results = [];
+  try {
+    const entries = await fs.readdirAsync(dirPath);
+    for (const entry of entries) {
+      const fullPath = path.join(dirPath, entry);
+      const stats = await fs.statAsync(fullPath);
+      if (stats.isDirectory()) { // Recursively get files from subdirectories
+        const subDirFiles = await getAllFiles(fullPath);
+        results = results.concat(subDirFiles);
+      } else { // Add file to results
+        results.push(fullPath);
+      }
+    }
+  } catch (err) {
+    log('warn', `Error reading directory ${dirPath}: ${err.message}`);
+  }
+  return results;
 }
 
 const getDiscoveryPath = (api) => { //get the game's discovered path
@@ -306,17 +341,69 @@ async function deploy(api) {
 
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
 
-//Test for save files
-function testUe4ssCombo(files, gameId) {
-  const isMod = files.find(file => path.extname(file).toLowerCase() === SCRIPTS_EXT) !== undefined;
-  const isMod2 = files.find(file => path.extname(file).toLowerCase() === LOGICMODS_EXT) !== undefined;
-  const isFolder = files.find(file => path.basename(file) === ROOT_FILE) !== undefined;
-  let supported = (gameId === spec.game.id) && isMod && isMod2 && isFolder;
+//Test for MLUE4SS combo mod files
+function testMlUe4ss(files, gameId) {
+  const isMod = files.some(file => (path.basename(file).toLowerCase() === MLUE4SS_FOLDER));
+  const isModExt = files.some(file => (path.extname(file).toLowerCase() === MLUE4SS_EXT)); //added to catch mods packaged with paks and dll/asi, but no lua scripts.
+  let supported = (gameId === spec.game.id) && isMod && isModExt;
 
   // Test for a mod installer
   if (supported && files.find(file =>
-      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install MLUE4SS combo mod files (repackage to place pak in LogicMods folder)
+async function installMlUe4ss(files, workingDir) {
+  const modFile = files.find(file => path.basename(file).toLowerCase() === MLUE4SS_FOLDER);
+  const setModTypeInstruction = { type: 'setmodtype', value: MLUE4SS_ID };
+
+  //repackage to put pak in right place
+  let binFolder = EXEC_FOLDER_DEFAULT;
+  if (GAME_VERSION === 'xbox') {  
+    binFolder = EXEC_FOLDER_XBOX;
+  }
+  const UE4SS_PATH = path.join(EPIC_CODE_NAME, 'Binaries', binFolder, UE4SS_MOD_PATH);
+
+  const filtered = files.filter(file => !file.endsWith(path.sep));
+  const pakFiles = filtered.filter(file => (path.extname(file).toLowerCase() === MLUE4SS_EXT));
+  const nonPakFiles = filtered.filter(file => !(path.extname(file).toLowerCase() === MLUE4SS_EXT));
+  const instructions = nonPakFiles.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(UE4SS_PATH, file),
+    };
+  }).concat(pakFiles.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(LOGICMODS_PATH, path.basename(file)),
+    };
+  }));
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Test for UE4SS combo (pak and lua/dll) mod files
+function testUe4ssCombo(files, gameId) {
+  const isMod = files.some(file => (path.extname(file).toLowerCase() === SCRIPTS_EXT));
+  const isModAlt = files.some(file => (path.basename(file).toLowerCase() === 'binaries')); //added to catch mods packaged with paks and dll/asi, but no lua scripts.
+  const isMod2 = files.some(file => (path.extname(file).toLowerCase() === LOGICMODS_EXT));
+  const isFolder = files.some(file => (path.basename(file) === ROOT_FILE));
+  let supported = (gameId === spec.game.id) && ( isMod || isModAlt ) && isMod2 && isFolder;
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
     supported = false;
   }
 
@@ -327,11 +414,22 @@ function testUe4ssCombo(files, gameId) {
 }
 
 //Install save files
-function installUe4ssCombo(files, fileName) {
+async function installUe4ssCombo(files, workingDir) {
   const modFile = files.find(file => path.basename(file) === ROOT_FILE);
   const idx = modFile.indexOf(ROOT_IDX);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: UE4SSCOMBO_ID };
+
+  if (GAME_VERSION === 'xbox') {
+    try {
+      await fs.statAsync(path.join(workingDir, modFile, 'Binaries', 'Win64'));
+      await fs.renameAsync(path.join(workingDir, modFile, 'Binaries', 'Win64'), path.join(workingDir, modFile, 'Binaries', 'WinGDK'));
+      const paths = await getAllFiles(workingDir);
+      files = [...paths.map(p => p.replace(`${workingDir}${path.sep}`, ''))];
+    } catch (err) {
+      log('warn', `Failed to rename "Win64" folder to "WinGDK" for UE4SS combo mod ${workingDir} (or "Win64" folder is not present): ${err}`);
+    }
+  }
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
@@ -892,6 +990,7 @@ function applyGame(context, gameSpec) {
   );
 
   //register mod installers
+  context.registerInstaller(MLUE4SS_ID, 20, testMlUe4ss, installMlUe4ss);
   context.registerInstaller(`${GAME_ID}-ue4ss-logicscriptcombo`, 21, testUe4ssCombo, installUe4ssCombo);
   context.registerInstaller(`${GAME_ID}-ue4ss-logicmod`, 23, testLogic, installLogic);
   // 25 is Unreal Mod Installer
