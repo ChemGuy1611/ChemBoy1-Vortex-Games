@@ -16,9 +16,9 @@ const STEAMAPP_ID = "1145350";
 const EPICAPP_ID = "07c634c7291a49b5b2455e14b9a83950";
 const GAME_ID = "hades2";
 const GAME_NAME = "Hades II"
-const EXEC = "Ship\\Hades2.exe";
-//const EXEC_VK = "Ship\\Hades2.exe";
-//const EXEC_XBOX = "Ship\\Hades2.exe";
+const EXEC = path.join("Ship", "Hades2.exe");
+//const EXEC_VK = path.join("Ship", "Hades2.exe");
+//const EXEC_XBOX = path.join("Ship", "Hades2.exe");
 
 const MODUTIL_URL = 'https://github.com/SGG-Modding/ModUtil/releases/download/2.10.1/SGG_Modding-ModUtil-2.10.1.zip';
 
@@ -74,13 +74,13 @@ const spec = {
       "id": MOD_ID,
       "name": MOD_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${MOD_PATH}`
+      "targetPath": path.join('{gamePath}', MOD_PATH)
     },
     {
       "id": BINARIES_ID,
       "name": BINARIES_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${BINARIES_PATH}`
+      "targetPath": path.join('{gamePath}', BINARIES_PATH)
     },
     {
       "id": ROOT_ID,
@@ -92,14 +92,14 @@ const spec = {
       "id": MANAGER_ID,
       "name": MANAGER_NAME,
       "priority": "low",
-      "targetPath": `{gamePath}\\${MANAGER_PATH}`
+      "targetPath": path.join('{gamePath}', MANAGER_PATH)
     },
     //*
     {
       "id": UTILITY_ID,
       "name": UTILITY_NAME,
       "priority": "low",
-      "targetPath": `{gamePath}\\${UTILITY_PATH}`
+      "targetPath": path.join('{gamePath}', UTILITY_PATH)
     },
     //*/
   ],

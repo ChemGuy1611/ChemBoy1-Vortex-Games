@@ -137,13 +137,13 @@ const spec = {
       "id": FROSTYMOD_ID,
       "name": FROSTYMOD_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${FROSTYMOD_PATH}`
+      "targetPath": path.join('{gamePath}', FROSTYMOD_PATH)
     },
     {
       "id": FROSTYMANAGER_ID,
       "name": FROSTYMANAGER_NAME,
       "priority": "low",
-      "targetPath": `{gamePath}\\${FROSTYMANAGER_PATH}`
+      "targetPath": path.join('{gamePath}', FROSTYMANAGER_PATH)
     },
   ],
   "discovery": {

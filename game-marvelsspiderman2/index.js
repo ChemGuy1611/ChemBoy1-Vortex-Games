@@ -70,7 +70,7 @@ const spec = {
       "id": OSMOD_ID,
       "name": OSMOD_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${OSMOD_PATH}`
+      "targetPath": path.join('{gamePath}', OSMOD_PATH)
     },
     {
       "id": OVERSTRIKE_ID,

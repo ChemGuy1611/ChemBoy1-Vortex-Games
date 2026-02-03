@@ -910,7 +910,7 @@ function testMy3DPrinter(files, gameId) {
 function installMy3DPrinter(api, files) {
   const modFile = files.find(file => MY3DPRINTER_EXTS.includes(path.extname(file).toLowerCase()));
   const rootPath = path.dirname(modFile);
-  let idx = modFile.indexOf(`${path.basename(rootPath)}\\`);
+  let idx = modFile.indexOf(`${path.basename(rootPath)}${path.sep}`);
   let MOD_FOLDER = path.basename(rootPath);
   if (MOD_FOLDER === '.') {
     idx = modFile.indexOf(path.basename(modFile));
@@ -954,7 +954,7 @@ function testMyAppearances(files, gameId) {
 function installMyAppearances(api, files) {
   const modFile = files.find(file => (path.basename(file).toLowerCase() === MYAPPEARANCES_FILE));
   const rootPath = path.dirname(modFile);
-  let idx = modFile.indexOf(`${path.basename(rootPath)}\\`);
+  let idx = modFile.indexOf(`${path.basename(rootPath)}${path.sep}`);
   let MOD_FOLDER = path.basename(rootPath);
   if (MOD_FOLDER === '.') {
     idx = modFile.indexOf(path.basename(modFile));
@@ -998,7 +998,7 @@ function testAnimations(files, gameId) {
 function installAnimations(api, files) {
   const modFile = files.find(file => (path.basename(file).toLowerCase() === ANIMATIONS_FILE));
   const rootPath = path.dirname(modFile);
-  let idx = modFile.indexOf(`${path.basename(rootPath)}\\`);
+  let idx = modFile.indexOf(`${path.basename(rootPath)}${path.sep}`);
   let MOD_FOLDER = path.basename(rootPath);
   if (MOD_FOLDER === '.') {
     idx = modFile.indexOf(path.basename(modFile));
@@ -1042,7 +1042,7 @@ function testTextures(files, gameId) {
 function installTextures(api, files) {
   const modFile = files.find(file => (path.basename(file).toLowerCase() === TEXTURES_FILE));
   const rootPath = path.dirname(modFile);
-  let idx = modFile.indexOf(`${path.basename(rootPath)}\\`);
+  let idx = modFile.indexOf(`${path.basename(rootPath)}${path.sep}`);
   let MOD_FOLDER = path.basename(rootPath);
   if (MOD_FOLDER === '.') {
     idx = modFile.indexOf(path.basename(modFile));

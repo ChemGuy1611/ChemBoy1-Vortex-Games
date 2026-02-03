@@ -80,7 +80,7 @@ const spec = {
       "id": FROSTYMOD_ID,
       "name": FROSTYMOD_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${FROSTYMOD_PATH}`
+      "targetPath": path.join('{gamePath}', FROSTYMOD_PATH)
     },
     {
       "id": FROSTY_ID,

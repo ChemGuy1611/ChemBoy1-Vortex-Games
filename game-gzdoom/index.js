@@ -784,7 +784,7 @@ async function setup(discovery, api, gameSpec) {
   //write ini files for DML
   /*await fs.writeFileAsync(
     path.join(GAME_PATH, PORT_CONFIG_PATH),
-    `${GAME_PATH}\\${UZDOOM_EXEC_PATH}`,
+    path.join(GAME_PATH, UZDOOM_EXEC_PATH),
     { encoding: "utf8" },
   ); //*/
 

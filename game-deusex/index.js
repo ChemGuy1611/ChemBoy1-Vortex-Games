@@ -120,13 +120,13 @@ const spec = {
       "id": LAUNCHER_ID,
       "name": LAUNCHER_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${LAUNCHER_PATH}`
+      "targetPath": path.join('{gamePath}', LAUNCHER_PATH)
     },
     {
       "id": KNOWNMOD_ID,
       "name": KNOWNMOD_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${KNOWNMOD_PATH}`
+      "targetPath": path.join('{gamePath}', KNOWNMOD_PATH)
     },
     {
       "id": ROOT_ID,
@@ -138,7 +138,7 @@ const spec = {
       "id": BINARIES_ID,
       "name": BINARIES_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${BINARIES_PATH}`
+      "targetPath": path.join('{gamePath}', BINARIES_PATH)
     },
   ],
   "discovery": {

@@ -82,13 +82,13 @@ const spec = {
       "id": FLUFFYMOD_ID,
       "name": FLUFFYMOD_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${FLUFFYMOD_PATH}`
+      "targetPath": path.join('{gamePath}', FLUFFYMOD_PATH)
     },
     {
       "id": FLUFFYPAK_ID,
       "name": FLUFFYPAK_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${FLUFFYMOD_PATH}`
+      "targetPath": path.join('{gamePath}', FLUFFYPAK_PATH)
     },
     {
       "id": FLUFFY_ID,

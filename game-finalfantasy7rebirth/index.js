@@ -477,7 +477,7 @@ function testModLoaderMod(files, gameId) {
 function installModLoaderMod(files) {
   const modFile = files.find(file => (path.extname(file).toLowerCase() === MODLOADERMOD_EXT)); //.uplugin file
   const rootPath = path.dirname(modFile);
-  let idx = modFile.indexOf(`${path.basename(rootPath)}\\`); //index to the folder to accomodate mods with multiple folders
+  let idx = modFile.indexOf(`${path.basename(rootPath)}${path.sep}`); //index to the folder to accomodate mods with multiple folders
   let MOD_FOLDER = '';
   const setModTypeInstruction = { type: 'setmodtype', value: MODLOADERMOD_ID };
 

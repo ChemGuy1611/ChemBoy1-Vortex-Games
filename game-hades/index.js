@@ -19,8 +19,8 @@ const XBOXAPP_ID = "SupergiantGamesLLC.Hades";
 const XBOXEXECNAME = "Game";
 const GAME_ID = "hades";
 const GAME_NAME = "Hades"
-const EXEC = "x64\\Hades.exe";
-const EXEC_VK = "x64Vk\\Hades.exe";
+const EXEC = path.join("x64", "Hades.exe");
+const EXEC_VK = path.join("x64Vk", "Hades.exe");
 //const EXEC_XBOX = "Hades.exe";
 const EXEC_XBOX = "gamelaunchhelper.exe";
 let GAME_VERSION = '';
@@ -55,7 +55,7 @@ const UTILITY_PATH = MOD_PATH;
 const UTILITY_FILE = "ModUtil";
 
 const REQ_FILE = 'Content';
-const REQ_FILE2 = 'Content\\Game\\Animations\\CharacterAnim_EnemiesBosses_Hades.sjson';
+const REQ_FILE2 = path.join('Content', 'Game', 'Animations', 'CharacterAnim_EnemiesBosses_Hades.sjson');
 
 //Filled in from data above
 const spec = {
@@ -87,19 +87,19 @@ const spec = {
       "id": MOD_ID,
       "name": MOD_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${MOD_PATH}`
+      "targetPath": path.join('{gamePath}', MOD_PATH)
     },
     {
       "id": BINARIES_ID,
       "name": BINARIES_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${BINARIES_PATH}`
+      "targetPath": path.join('{gamePath}', BINARIES_PATH)
     },
     {
       "id": BINARIESVK_ID,
       "name": BINARIESVK_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${BINARIESVK_PATH}`
+      "targetPath": path.join('{gamePath}', BINARIESVK_PATH)
     },
     {
       "id": ROOT_ID,
@@ -111,13 +111,13 @@ const spec = {
       "id": MANAGER_ID,
       "name": MANAGER_NAME,
       "priority": "low",
-      "targetPath": `{gamePath}\\${MANAGER_PATH}`
+      "targetPath": path.join('{gamePath}', MANAGER_PATH)
     },
     {
       "id": UTILITY_ID,
       "name": UTILITY_NAME,
       "priority": "low",
-      "targetPath": `{gamePath}\\${UTILITY_PATH}`
+      "targetPath": path.join('{gamePath}', UTILITY_PATH)
     },
   ],
   "discovery": {

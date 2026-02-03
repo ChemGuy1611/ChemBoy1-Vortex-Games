@@ -142,19 +142,19 @@ const spec = {
       "id": ASSEMBLY_ID,
       "name": ASSEMBLY_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${ASSEMBLY_PATH}`
+      "targetPath": path.join('{gamePath}', ASSEMBLY_PATH)
     },
     {
       "id": BEPCFGMAN_ID,
       "name": BEPCFGMAN_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\Bepinex`
+      "targetPath": path.join('{gamePath}', 'Bepinex')
     },
     {
       "id": BEPMOD_ID,
       "name": BEPMOD_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${BEPMOD_PATH}`
+      "targetPath": path.join('{gamePath}', BEPMOD_PATH)
     },
   ],
   "discovery": {

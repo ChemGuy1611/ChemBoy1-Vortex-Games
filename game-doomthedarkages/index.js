@@ -182,13 +182,13 @@ const spec = {
       "id": MODS_ID,
       "name": MODS_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${MODS_PATH}`
+      "targetPath": path.join('{gamePath}', MODS_PATH)
     },
     {
       "id": CONFIG_ID,
       "name": CONFIG_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${CONFIG_PATH}`
+      "targetPath": path.join('{gamePath}', CONFIG_PATH)
     },
     {
       "id": BINARIES_ID,
@@ -200,7 +200,7 @@ const spec = {
       "id": SOUND_ID,
       "name": SOUND_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${SOUND_PATH}`
+      "targetPath": path.join('{gamePath}', SOUND_PATH)
     },
     {
       "id": INJECTOR_ID,
@@ -1111,7 +1111,7 @@ function applyGame(context, gameSpec) {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
     }, 
-    (game) => pathPattern(context.api, game, `{gamePath}\\${SAVE_PATH}`), 
+    (game) => pathPattern(context.api, game, path.join('{gamePath}', SAVE_PATH)),
     () => Promise.resolve(false), 
     { name: SAVE_NAME }
   ); //*/

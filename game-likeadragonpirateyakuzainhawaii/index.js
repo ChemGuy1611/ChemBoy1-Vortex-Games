@@ -75,25 +75,25 @@ const spec = {
       "id": ROOT_ID,
       "name": ROOT_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${ROOT_PATH}`
+      "targetPath": path.join('{gamePath}', ROOT_PATH)
     },
     {
       "id": MODMANAGERMOD_ID,
       "name": MODMANAGERMOD_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${MODMANAGERMOD_PATH}`
+      "targetPath": path.join('{gamePath}', MODMANAGERMOD_PATH)
     },
     {
       "id": DATAMOD_ID,
       "name": DATAMOD_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${DATAMOD_PATH}`
+      "targetPath": path.join('{gamePath}', DATAMOD_PATH)
     },
     {
       "id": MODMANAGER_ID,
       "name": MODMANAGER_NAME,
       "priority": "low",
-      "targetPath": `{gamePath}\\${MODMANAGER_PATH}`
+      "targetPath": path.join('{gamePath}', MODMANAGER_PATH)
     },
   ],
   "discovery": {

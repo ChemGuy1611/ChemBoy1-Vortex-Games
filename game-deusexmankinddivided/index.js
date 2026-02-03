@@ -135,13 +135,13 @@ const spec = {
       "id": RUNTIME_ID,
       "name": RUNTIME_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${RUNTIME_PATH}`
+      "targetPath": path.join('{gamePath}', RUNTIME_PATH)
     },
     {
       "id": DLCRUNTIME_ID,
       "name": DLCRUNTIME_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${DLCRUNTIME_PATH}`
+      "targetPath": path.join('{gamePath}', DLCRUNTIME_PATH)
     },
     {
       "id": ROOT_ID,
@@ -153,7 +153,7 @@ const spec = {
       "id": BINARIES_ID,
       "name": BINARIES_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${BINARIES_PATH}`
+      "targetPath": path.join('{gamePath}', BINARIES_PATH)
     },
   ],
   "discovery": {

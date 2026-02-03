@@ -79,7 +79,7 @@ const spec = {
       "id": PACKAGE_ID,
       "name": "Package (Game Data)",
       "priority": "high",
-      "targetPath": `{gamePath}\\${PACKAGE_PATH}`
+      "targetPath": path.join('{gamePath}', PACKAGE_PATH)
     },
   ],
   "discovery": {

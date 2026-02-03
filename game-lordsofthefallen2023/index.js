@@ -53,15 +53,15 @@ if (IO_STORE) { //Set file number for pak installer file selection (needs to be 
 
 //Information for setting the executable and variable paths based on the game store version
 let GAME_VERSION = '';
-let EXEC_PATH = null;
-let EXEC_TARGET = null;
+let EXEC_PATH = '';
+let EXEC_TARGET = '';
 let SHIPPING_EXE = '';
-let SCRIPTS_PATH = null;
-let SCRIPTS_TARGET = null;
-let SAVE_PATH = null;
-let SAVE_TARGET = null;
-let CONFIG_PATH = null;
-let CONFIG_TARGET = null;
+let SCRIPTS_PATH = '';
+let SCRIPTS_TARGET = '';
+let SAVE_PATH = '';
+let SAVE_TARGET = '';
+let CONFIG_PATH = '';
+let CONFIG_TARGET = '';
 let requiredFiles = [EPIC_CODE_NAME];
 let USERID_FOLDER = "";
 const EXEC_FOLDER_DEFAULT = "Win64";
@@ -182,7 +182,7 @@ const spec = {
       "id": LOGICMODS_ID,
       "name": LOGICMODS_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${LOGICMODS_PATH}`
+      "targetPath": path.join('{gamePath}', LOGICMODS_PATH)
     },
     {
       "id": ROOT_ID,
@@ -194,13 +194,13 @@ const spec = {
       "id": CONTENT_ID,
       "name": CONTENT_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${CONTENT_PATH}`
+      "targetPath": path.join('{gamePath}', CONTENT_PATH)
     },
     {
       "id": UE5_ALT_ID,
       "name": UE5_ALT_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${UE5_ALT_PATH}`
+      "targetPath": path.join('{gamePath}', UE5_ALT_PATH)
     },
   ],
 };
@@ -287,13 +287,13 @@ function getExecutable(discoveryPath) {
   };
   if (isCorrectExec(EXEC_XBOX)) {
     GAME_VERSION = 'xbox';
-    EXEC_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_XBOX}`;
-    EXEC_TARGET = `{gamePath}\\${EXEC_PATH}`;
-    SHIPPING_EXE = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_XBOX}\\${EPIC_CODE_NAME}-${EXEC_FOLDER_XBOX}-Shipping.exe`;
-    SCRIPTS_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_XBOX}\\${UE4SS_MOD_PATH}`;
-    SCRIPTS_TARGET = `{gamePath}\\${SCRIPTS_PATH}`;
+    EXEC_PATH = path.join(EPIC_CODE_NAME, "Binaries", EXEC_FOLDER_XBOX);
+    EXEC_TARGET = path.join('{gamePath}', EXEC_PATH);
+    SHIPPING_EXE = path.join(EPIC_CODE_NAME, "Binaries", EXEC_FOLDER_XBOX, `${EPIC_CODE_NAME}-${EXEC_FOLDER_XBOX}-Shipping.exe`);
+    SCRIPTS_PATH = path.join(EPIC_CODE_NAME, "Binaries", EXEC_FOLDER_XBOX, UE4SS_MOD_PATH);
+    SCRIPTS_TARGET = path.join('{gamePath}', SCRIPTS_PATH);
     CONFIG_PATH = CONFIG_PATH_XBOX;
-    CONFIG_TARGET = `${CONFIG_PATH}`;
+    CONFIG_TARGET = CONFIG_PATH;
     try {
       const SAVE_ARRAY = fs.readdirSync(SAVE_PATH_XBOX);
       USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_PATH_XBOX, entry));
@@ -304,19 +304,19 @@ function getExecutable(discoveryPath) {
       USERID_FOLDER = "";
     } //*/
     SAVE_PATH = path.join(SAVE_PATH_XBOX, USERID_FOLDER);
-    SAVE_TARGET = `${SAVE_PATH}`;
+    SAVE_TARGET = SAVE_PATH;
     //return EXEC_XBOX;
     return SHIPPING_EXE; //MUST use the Shipping exe for Xbox version to bypass EAC to allow modding
   };
   if (isCorrectExec(EXEC_DEFAULT)) {
     GAME_VERSION = 'default';
-    EXEC_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_DEFAULT}`;
-    EXEC_TARGET = `{gamePath}\\${EXEC_PATH}`;
-    SHIPPING_EXE = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_DEFAULT}\\${EPIC_CODE_NAME}-${EXEC_FOLDER_DEFAULT}-Shipping.exe`;
-    SCRIPTS_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_DEFAULT}\\${UE4SS_MOD_PATH}`;
-    SCRIPTS_TARGET = `{gamePath}\\${SCRIPTS_PATH}`;
+    EXEC_PATH = path.join(EPIC_CODE_NAME, "Binaries", EXEC_FOLDER_DEFAULT);
+    EXEC_TARGET = path.join('{gamePath}', EXEC_PATH);
+    SHIPPING_EXE = path.join(EPIC_CODE_NAME, "Binaries", EXEC_FOLDER_DEFAULT, `${EPIC_CODE_NAME}-${EXEC_FOLDER_DEFAULT}-Shipping.exe`);
+    SCRIPTS_PATH = path.join(EPIC_CODE_NAME, "Binaries", EXEC_FOLDER_DEFAULT, UE4SS_MOD_PATH);
+    SCRIPTS_TARGET = path.join('{gamePath}', SCRIPTS_PATH);
     CONFIG_PATH = CONFIG_PATH_DEFAULT;
-    CONFIG_TARGET = `${CONFIG_PATH}`;
+    CONFIG_TARGET = CONFIG_PATH;
     try {
       const SAVE_ARRAY = fs.readdirSync(SAVE_PATH_DEFAULT);
       USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_PATH_DEFAULT, entry));
@@ -327,7 +327,7 @@ function getExecutable(discoveryPath) {
       USERID_FOLDER = "";
     } //*/
     SAVE_PATH = path.join(SAVE_PATH_DEFAULT, USERID_FOLDER);
-    SAVE_TARGET = `${SAVE_PATH}`;
+    SAVE_TARGET = SAVE_PATH;
     //return EXEC_DEFAULT;
     return SHIPPING_EXE;
   };
@@ -348,7 +348,7 @@ function getShippingExe(api) {
     }
   };
   if (isCorrectExec(EXEC_XBOX)) {
-    SHIPPING_EXE = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_XBOX}\\${EPIC_CODE_NAME}-${EXEC_FOLDER_XBOX}-Shipping.exe`;
+    SHIPPING_EXE = path.join(EPIC_CODE_NAME, "Binaries", EXEC_FOLDER_XBOX, `${EPIC_CODE_NAME}-${EXEC_FOLDER_XBOX}-Shipping.exe`);
     return; 
     /*[
       {
@@ -367,7 +367,7 @@ function getShippingExe(api) {
     ]; //*/
   };
   if (isCorrectExec(EXEC_DEFAULT)) {
-    SHIPPING_EXE = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_DEFAULT}\\${EPIC_CODE_NAME}-${EXEC_FOLDER_DEFAULT}-Shipping.exe`;
+    SHIPPING_EXE = path.join(EPIC_CODE_NAME, "Binaries", EXEC_FOLDER_DEFAULT, `${EPIC_CODE_NAME}-${EXEC_FOLDER_DEFAULT}-Shipping.exe`);
     return antiCheatNotify(api);
     /*[
       {

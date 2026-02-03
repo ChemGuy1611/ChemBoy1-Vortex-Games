@@ -114,7 +114,7 @@ const spec = {
       "id": PAK_ID,
       "name": "Paks",
       "priority": "low",
-      "targetPath": `{gamePath}\\${PAK_PATH}`
+      "targetPath": path.join('{gamePath}', PAK_PATH)
     },
     {
       "id": ROOT_ID,
@@ -196,7 +196,7 @@ function getExecutable(discoveryPath) {
   };
 
   if (isCorrectExec(XBOX_EXEC)) {
-    MOD_PATH = `${EPIC_CODE_NAME}\\Binaries\\${XBOX_EXEC_FOLDER}`;
+    MOD_PATH = path.join(EPIC_CODE_NAME, "Binaries", XBOX_EXEC_FOLDER);
     CONFIG_PATH = CONFIG_PATH_XBOX;
     try {
       const SAVE_ARRAY = fs.readdirSync(SAVE_FOLDER_XBOX);
@@ -208,13 +208,13 @@ function getExecutable(discoveryPath) {
       USERID_FOLDER = "";
     } //*/
     SAVE_PATH = path.join(SAVE_FOLDER_XBOX, USERID_FOLDER);
-    EXEC_PATH = `${EPIC_CODE_NAME}\\Binaries\\${XBOX_EXEC_FOLDER}`;
-    EXEC_TARGET = `{gamePath}\\${EPIC_CODE_NAME}\\Binaries\\${XBOX_EXEC_FOLDER}`;
+    EXEC_PATH = path.join(EPIC_CODE_NAME, "Binaries", XBOX_EXEC_FOLDER);
+    EXEC_TARGET = path.join('{gamePath}', EPIC_CODE_NAME, "Binaries", XBOX_EXEC_FOLDER);
     return XBOX_EXEC;
   };
 
   if (isCorrectExec(STEAM_EXEC)) {
-    MOD_PATH = `${EPIC_CODE_NAME}\\Binaries\\${STEAM_EXEC_FOLDER}`;
+    MOD_PATH = path.join(EPIC_CODE_NAME, "Binaries", STEAM_EXEC_FOLDER);
     CONFIG_PATH = path.join(discoveryPath, CONFIG_PATH_DEFAULT);
     try {
       const SAVE_ARRAY = fs.readdirSync(SAVE_FOLDER_DEFAULT);
@@ -226,8 +226,8 @@ function getExecutable(discoveryPath) {
       USERID_FOLDER = "";
     } //*/
     SAVE_PATH = path.join(discoveryPath, SAVE_FOLDER_DEFAULT, USERID_FOLDER);
-    EXEC_PATH = `${EPIC_CODE_NAME}\\Binaries\\${STEAM_EXEC_FOLDER}`;
-    EXEC_TARGET = `{gamePath}\\${EPIC_CODE_NAME}\\Binaries\\${STEAM_EXEC_FOLDER}`;
+    EXEC_PATH = path.join(EPIC_CODE_NAME, "Binaries", STEAM_EXEC_FOLDER);
+    EXEC_TARGET = path.join('{gamePath}', EPIC_CODE_NAME, "Binaries", STEAM_EXEC_FOLDER);
     return STEAM_EXEC;
   };
 

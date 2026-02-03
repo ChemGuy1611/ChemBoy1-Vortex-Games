@@ -60,7 +60,7 @@ const spec = {
       "id": RELOADEDMOD_ID,
       "name": "Reloaded Mod",
       "priority": "high",
-      "targetPath": `{gamePath}\\${RELOADEDMOD_PATH}`
+      "targetPath": path.join('{gamePath}', RELOADED_PATH)
     },
     {
       "id": RELOADED_ID,

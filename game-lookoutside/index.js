@@ -107,13 +107,13 @@ const spec = {
       "id": JSFOLDER_ID,
       "name": JSFOLDER_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${JSFOLDER_PATH}`
+      "targetPath": path.join('{gamePath}', JSFOLDER_PATH)
     },
     {
       "id": JSFILE_ID,
       "name": JSFILE_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${JSFILE_PATH}`
+      "targetPath": path.join('{gamePath}', JSFILE_PATH)
     },
     {
       "id": ROOT_ID,
@@ -125,7 +125,7 @@ const spec = {
       "id": JSON_ID,
       "name": JSON_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${JSON_PATH}`
+      "targetPath": path.join('{gamePath}', JSON_PATH)
     },
   ],
   "discovery": {

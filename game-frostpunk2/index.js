@@ -144,7 +144,7 @@ const spec = {
       "id": LOGICMODS_ID,
       "name": "UE4SS LogicMods (Blueprint)",
       "priority": "high",
-      "targetPath": `{gamePath}\\${LOGICMODS_PATH}`
+      "targetPath": path.join('{gamePath}', LOGICMODS_PATH)
     },
     {
       "id": UE4SSCOMBO_ID,
@@ -162,13 +162,13 @@ const spec = {
       "id": UE5_ID,
       "name": "UE5 Paks",
       "priority": "high",
-      "targetPath": `{gamePath}\\${UE5_PATH}`
+      "targetPath": path.join('{gamePath}', UE5_PATH)
     },
     {
       "id": UE5_ALT_ID,
       "name": 'UE5 Paks (no "~mods")',
       "priority": "high",
-      "targetPath": `{gamePath}\\${UE5_ALT_PATH}`
+      "targetPath": path.join('{gamePath}', UE5_ALT_PATH)
     },
   ],
 };
@@ -233,7 +233,6 @@ function pathPattern(api, game, pattern) {
 }
 
 async function requiresLauncher(gamePath, store) {
-
   if (store === 'xbox') {
       return Promise.resolve({
           launcher: 'xbox',
@@ -243,13 +242,8 @@ async function requiresLauncher(gamePath, store) {
           },
       });
   }
-
   /*
   if (store === 'epic') {
-    CONFIG_PATH = CONFIG_PATH_EPIC;
-    CONFIG_TARGET = `{localAppData}\\${CONFIG_PATH}`;
-    SAVE_PATH = path.join(SAVE_PATH_EPIC, USERID_FOLDER);
-    SAVE_TARGET = `{localAppData}\\${SAVE_PATH}`;
     return Promise.resolve({
         launcher: 'epic',
         addInfo: {
@@ -258,17 +252,11 @@ async function requiresLauncher(gamePath, store) {
     });
   }
   */
-
   /*
   if (store === 'gog') {
-    CONFIG_PATH = CONFIG_PATH_GOG;
-    CONFIG_TARGET = `{localAppData}\\${CONFIG_PATH}`;
-    SAVE_PATH = path.join(SAVE_PATH_GOG, USERID_FOLDER);
-    SAVE_TARGET = `{localAppData}\\${SAVE_PATH}`;
     return Promise.resolve(undefined);
   }
   */
-  
   return Promise.resolve(undefined);
 }
 
@@ -286,12 +274,12 @@ function getExecutable(discoveryPath) {
   };
 
   if (isCorrectExec(EXEC_XBOX)) {
-    MOD_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_XBOX}`;
-    EXEC_TARGET = `{gamePath}\\${MOD_PATH}`;
-    SCRIPTS_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_XBOX}\\ue4ss\\Mods`;
-    SCRIPTS_TARGET = `{gamePath}\\${SCRIPTS_PATH}`;
+    MOD_PATH = path.join(EPIC_CODE_NAME, "Binaries", EXEC_FOLDER_XBOX);
+    EXEC_TARGET = path.join('{gamePath}', MOD_PATH);
+    SCRIPTS_PATH = path.join(EPIC_CODE_NAME, "Binaries", EXEC_FOLDER_XBOX, "ue4ss", "Mods");
+    SCRIPTS_TARGET = path.join('{gamePath}', SCRIPTS_PATH);
     CONFIG_PATH = CONFIG_PATH_XBOX;
-    CONFIG_TARGET = `{localAppData}\\${CONFIG_PATH}`;
+    CONFIG_TARGET = path.join('{localAppData}', CONFIG_PATH);
     //UNREALDATA.modsPath = UNREALDATA_XBOX;
     try {
       const SAVE_ARRAY = fs.readdirSync(SAVE_PATH_XBOX);
@@ -303,17 +291,17 @@ function getExecutable(discoveryPath) {
       USERID_FOLDER = "";
     } //*/
     SAVE_PATH = path.join(SAVE_PATH_XBOX, USERID_FOLDER);
-    SAVE_TARGET = `{localAppData}\\${SAVE_PATH}`;
+    SAVE_TARGET = path.join('{localAppData}', SAVE_PATH);
     return EXEC_XBOX;
   };
 
   if (isCorrectExec(EXEC_DEFAULT)) {
-    MOD_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_DEFAULT}`;
-    EXEC_TARGET = `{gamePath}\\${MOD_PATH}`;
-    SCRIPTS_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_DEFAULT}\\ue4ss\\Mods`;
-    SCRIPTS_TARGET = `{gamePath}\\${SCRIPTS_PATH}`;
+    MOD_PATH = path.join(EPIC_CODE_NAME, "Binaries", EXEC_FOLDER_DEFAULT);
+    EXEC_TARGET = path.join('{gamePath}', MOD_PATH);
+    SCRIPTS_PATH = path.join(EPIC_CODE_NAME, "Binaries", EXEC_FOLDER_DEFAULT, "ue4ss", "Mods");
+    SCRIPTS_TARGET = path.join('{gamePath}', SCRIPTS_PATH);
     CONFIG_PATH = CONFIG_PATH_DEFAULT;
-    CONFIG_TARGET = `{localAppData}\\${CONFIG_PATH}`;
+    CONFIG_TARGET = path.join('{localAppData}', CONFIG_PATH);
     //UNREALDATA.modsPath = UNREALDATA_DEFAULT;
     try {
       const SAVE_ARRAY = fs.readdirSync(SAVE_PATH_DEFAULT);
@@ -325,7 +313,7 @@ function getExecutable(discoveryPath) {
       USERID_FOLDER = "";
     } //*/
     SAVE_PATH = path.join(SAVE_PATH_DEFAULT, USERID_FOLDER);
-    SAVE_TARGET = `{localAppData}\\${SAVE_PATH}`;
+    SAVE_TARGET = path.join('{localAppData}', SAVE_PATH);
     return EXEC_DEFAULT;
   };
 

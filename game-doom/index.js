@@ -118,7 +118,7 @@ const spec = {
       "id": LOADERMOD_ID,
       "name": LOADERMOD_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${LOADERMOD_PATH}`
+      "targetPath": path.join('{gamePath}', LOADERMOD_PATH)
     },
     {
       "id": LEGACY_ID,

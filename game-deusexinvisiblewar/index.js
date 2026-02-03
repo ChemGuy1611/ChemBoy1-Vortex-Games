@@ -125,7 +125,7 @@ const spec = {
       "id": DATAMOD_ID,
       "name": DATAMOD_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${DATAMOD_PATH}`
+      "targetPath": path.join('{gamePath}', DATAMOD_PATH)
     },
     {
       "id": ROOT_ID,
@@ -137,7 +137,7 @@ const spec = {
       "id": BINARIES_ID,
       "name": BINARIES_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${BINARIES_PATH}`
+      "targetPath": path.join('{gamePath}', BINARIES_PATH)
     },
   ],
   "discovery": {
