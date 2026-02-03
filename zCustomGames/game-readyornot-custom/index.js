@@ -61,7 +61,6 @@ const CONFIG_EXT = ".ini";
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_FOLDER = EPIC_CODE_NAME;
-const ROOT_IDX = `${EPIC_CODE_NAME}\\`;
 
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_PATH = path.join(EPIC_CODE_NAME, "Saved", "SaveGames");
@@ -73,10 +72,8 @@ const VO_EXT = ['.ogg', '.wav'];
 const VO_FOLDER_ID = `${GAME_ID}-vofolder`;
 const VO_FOLDER_PATH = path.join(EPIC_CODE_NAME, 'Content');
 const VO_FOLDER = "VO";
-const VO_IDX = "VO\\";
 
 const TOC_FOLDER = "TOC";
-const TOC_IDX = "TOC\\";
 const TOC_ID = `${GAME_ID}-toc`;
 
 const spec = {
@@ -386,9 +383,8 @@ function testVoFolder(files, gameId) {
 
 //Installer install Fluffy Mod Manger files
 function installVoFolder(files) {
-  const modFile = files.find(file => path.basename(file) === VO_FOLDER);
-  //const idx = modFile.indexOf(path.basename(modFile));
-  const idx = modFile.indexOf(VO_IDX);
+  const modFile = files.find(file => path.basename(file).toLowerCase() === VO_FOLDER.toLowerCase());
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: VO_FOLDER_ID };
 
@@ -423,18 +419,14 @@ function testTocFolder(files, gameId) {
 
 //Installer install Fluffy Mod Manger files
 function installTocFolder(files) {
-  const modFile = files.find(file => path.basename(file) === TOC_FOLDER);
-  //const idx = modFile.indexOf(path.basename(modFile));
-  const idx = modFile.indexOf(TOC_IDX);
+  const modFile = files.find(file => path.basename(file).toLowerCase() === TOC_FOLDER.toLowerCase());
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
-  //const rootPath = path.basename(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: TOC_ID };
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
-    //(!file.endsWith(path.sep))
     ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
-    //((file.indexOf(rootPath) !== -1))
   );
 
   const instructions = filtered.map(file => {

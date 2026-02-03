@@ -21,7 +21,7 @@ const FROSTY_EXEC = 'frostymodmanager.exe';
 
 const FROSTYMOD_ID = `${GAME_ID}-frostymod`;
 const modFileExt = ".fbmod";
-const FROSTY_PATH = "FrostyModManager\\Mods\\bf1";
+const FROSTY_PATH = path.join("FrostyModManager", "Mods", "bf1");
 
 const spec = {
   "game": {
@@ -55,7 +55,7 @@ const spec = {
       "id": FROSTYMOD_ID,
       "name": "Frosty .fbmod",
       "priority": "high",
-      "targetPath": `{gamePath}\\${FROSTY_PATH}`
+      "targetPath": path.join('{gamePath}', FROSTY_PATH)
     },
   ],
   "discovery": {

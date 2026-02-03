@@ -68,7 +68,6 @@ const CONFIG_EXT = ".ini";
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_FOLDER = EPIC_CODE_NAME;
-const ROOT_IDX = `${EPIC_CODE_NAME}${path.sep}`;
 
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_PATH = path.join(EPIC_CODE_NAME, "Saved", "SaveGames");
@@ -79,7 +78,6 @@ const SCRIPTS_NAME = "UE4SS Scripts";
 let SCRIPTS_PATH = path.join(BINARIES_PATH, UE4SS_MOD_PATH);
 const SCRIPTS_EXT = ".lua";
 const SCRIPTS_FOLDER = "Scripts";
-const SCRIPTS_IDX = `Scripts${path.sep}`;
 
 const UE4SS_ID = `${GAME_ID}-ue4ss`;
 const UE4SS_NAME = "UE4SS";

@@ -97,7 +97,6 @@ let MOD_PATH = BINARIES_PATH;
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_FOLDER = EPIC_CODE_NAME;
-const ROOT_IDX = `${EPIC_CODE_NAME}${path.sep}`;
 
 const spec = {
   "game": {

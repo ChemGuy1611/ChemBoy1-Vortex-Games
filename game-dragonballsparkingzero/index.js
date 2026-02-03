@@ -56,7 +56,6 @@ const EXEC_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_NAME);
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_FOLDER = EPIC_CODE_NAME;
-const ROOT_IDX = `${EPIC_CODE_NAME}${path.sep}`;
 
 const UE5_ID = `${GAME_ID}-ue5`;
 const UE5_ALT_ID = `${GAME_ID}-pakalt`;
@@ -90,7 +89,6 @@ const SCRIPTS_ID = `${GAME_ID}-scripts`;
 const SCRIPTS_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_NAME, 'ue4ss', 'Mods');
 const SCRIPTS_EXT = ".lua";
 const SCRIPTS_FOLDER = "Scripts";
-const SCRIPTS_IDX = `Scripts${path.sep}`;
 
 const DLL_ID = `${GAME_ID}-ue4ssdll`;
 const DLL_NAME = "UE4SS DLL Mod";
@@ -112,14 +110,12 @@ const MODLOADER_ID = `${GAME_ID}-modloader`;
 const MODLOADER_NAME = "SZModLoader";
 const MODLOADER_PATH = path.join(EPIC_CODE_NAME, 'Mods');
 const MODLOADER_FILE = "SZModLib";
-const MODLOADER_IDX = `${MODLOADER_FILE}${path.sep}`;
 const MODLOADER_PAGE_NO = 348;
 const MODLOADER_FILE_NO = 1720;
 
 const LFSE_ID = `${GAME_ID}-lfse`;
 const LFSE_PATH = path.join(EPIC_CODE_NAME, 'Mods');
 const LFSE_FILE = "LFSE";
-const LFSE_IDX = `${LFSE_FILE}${path.sep}`;
 
 const MODLOADERMOD_ID = `${GAME_ID}-modloadermod`;
 const MODLOADERMOD_PATH = path.join(EPIC_CODE_NAME, 'Mods');
@@ -770,7 +766,7 @@ function testModLoader(files, gameId) {
 //Install Mod Loader
 function installModLoader(files) {
   const modFile = files.find(file => path.basename(file) === MODLOADER_FILE);
-  const idx = modFile.indexOf(MODLOADER_IDX);
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MODLOADER_ID };
 
@@ -812,7 +808,7 @@ function testLFSE(files, gameId) {
 //Install LFSE
 function installLFSE(files) {
   const modFile = files.find(file => path.basename(file) === LFSE_FILE);
-  const idx = modFile.indexOf(LFSE_IDX);
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: LFSE_ID };
 

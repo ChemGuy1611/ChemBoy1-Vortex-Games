@@ -53,7 +53,6 @@ const UTILITY_ID = `${GAME_ID}-modutility`;
 const UTILITY_NAME = `Mod Utility`;
 const UTILITY_PATH = MOD_PATH;
 const UTILITY_FILE = "ModUtil";
-const UTILITY_IDX = `${UTILITY_FILE}\\`;
 
 const REQ_FILE = 'Content';
 const REQ_FILE2 = 'Content\\Game\\Animations\\CharacterAnim_EnemiesBosses_Hades.sjson';
@@ -479,7 +478,7 @@ function testModUtility(files, gameId) {
 //Installer install Mod Utility
 function installModUtility(files) {
   const modFile = files.find(file => path.basename(file) === UTILITY_FILE);
-  const idx = modFile.indexOf(UTILITY_IDX);
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: UTILITY_ID };
 

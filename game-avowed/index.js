@@ -108,7 +108,6 @@ const CONFIG_EXT = ".ini";
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_FOLDER = EPIC_CODE_NAME;
-const ROOT_IDX = `${EPIC_CODE_NAME}${path.sep}`;
 
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_NAME = "Saves (LocalAppData)";

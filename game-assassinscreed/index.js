@@ -52,7 +52,7 @@ const spec = {
       "id": `${GAME_ID}-asi`,
       "name": "ASI Plugins",
       "priority": "high",
-      "targetPath": "{gamePath}\\scripts"
+      "targetPath": path.join("{gamePath}", "scripts")
     },
     {
       "id": ATK_ID,

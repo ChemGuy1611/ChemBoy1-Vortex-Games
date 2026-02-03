@@ -94,7 +94,6 @@ const CONFIG_EXT = ".ini";
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_FOLDER = EPIC_CODE_NAME;
-const ROOT_IDX = `${ROOT_FOLDER}\\`;
 
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_NAME = "Saves (LocalAppData)";
@@ -104,7 +103,6 @@ const SCRIPTS_ID = `${GAME_ID}-scripts`;
 const SCRIPTS_NAME = "UE4SS Scripts";
 const SCRIPTS_EXT = ".lua";
 const SCRIPTS_FOLDER = "Scripts";
-const SCRIPTS_IDX = `${SCRIPTS_FOLDER}\\`;
 
 const UE4SS_ID = `${GAME_ID}-ue4ss`;
 const UE4SS_NAME = "UE4SS";

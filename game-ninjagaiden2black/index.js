@@ -99,7 +99,6 @@ const CONFIG_EXT = ".ini";
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_FOLDER = EPIC_CODE_NAME;
-const ROOT_IDX = `${EPIC_CODE_NAME}\\`;
 
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_NAME = "Saves (LocalAppData)";
@@ -109,7 +108,6 @@ const SCRIPTS_ID = `${GAME_ID}-scripts`;
 const SCRIPTS_NAME = "UE4SS Scripts";
 const SCRIPTS_EXT = ".lua";
 const SCRIPTS_FOLDER = "Scripts";
-const SCRIPTS_IDX = `Scripts\\`;
 
 const UE4SS_ID = `${GAME_ID}-ue4ss`;
 const UE4SS_NAME = "UE4SS";
@@ -122,7 +120,6 @@ const MODLOADER_FILE = "d3d9.dll";
 const MLMOD_ID = `${GAME_ID}-mlmod`;
 const MLMOD_NAME = "ML Mod";
 const MLMOD_FILE = "mods";
-const MLMOD_IDX = `${MLMOD_FILE}\\`;
 const MLMOD_PATH = path.join('mods');
 
 //Set file number for pak installer file selection (needs to be 3 if IO Store is used to accomodate .ucas and .utoc files)
@@ -681,7 +678,7 @@ function testMlMod(files, gameId) {
 //Installer install Root folder files
 function installMlMod(files) {
   const modFile = files.find(file => path.basename(file) === MLMOD_FILE);
-  const idx = modFile.indexOf(MLMOD_IDX);
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MLMOD_ID };
 

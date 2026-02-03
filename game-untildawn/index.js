@@ -46,7 +46,6 @@ const EXEC_PATH = `Windows\\${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_NAME}`;
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_FOLDER = EPIC_CODE_NAME;
-const ROOT_IDX = `${EPIC_CODE_NAME}\\`;
 const ROOT_PATH = `Windows`;
 
 const UE5_ID = `${GAME_ID}-ue5`;
@@ -94,7 +93,6 @@ const SCRIPTS_ID = `${GAME_ID}-scripts`;
 const SCRIPTS_PATH = `Windows\\${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_NAME}\\ue4ss\\Mods`;
 const SCRIPTS_EXT = ".lua";
 const SCRIPTS_FOLDER = "Scripts";
-const SCRIPTS_IDX = `Scripts\\`;
 
 const UE4SS_ID = `${GAME_ID}-ue4ss`;
 const UE4SS_FILE = "dwmapi.dll";

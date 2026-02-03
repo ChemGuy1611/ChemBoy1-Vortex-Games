@@ -27,13 +27,9 @@ const MPBASE_ID = `${GAME_ID}-mpbase`;
 const SP_FOLDER = "SP";
 const MP_FOLDER = "MP";
 const BASE_FOLDER = "base";
-const BASE_IDX = "base\\";
 const STREAM_FOLDER = "streampacks";
-const STREAM_IDX = "streampacks\\";
 const VIDEOS_FOLDER = "videos";
-const VIDEOS_IDX = "videos\\";
 const MAPS_FOLDER = "maps";
-const MAPS_IDX = "maps\\";
 const modFileExt = ".pk4";
 const EXE_EXT = ".exe";
 
@@ -209,7 +205,7 @@ function testBase(files, gameId) {
 
 //Installer install base folder mod files
 function installBase(api, files) {
-  const modFile = files.find(file => path.basename(file) === BASE_FOLDER);
+  const modFile = files.find(file => path.basename(file).toLowerCase() === BASE_FOLDER.toLowerCase());
   const CANC_BUT = 'Cancel';
   const SP_BUT = 'Install to SP Folder';
   const MP_BUT = 'Install to MP Folder';
@@ -226,7 +222,7 @@ function installBase(api, files) {
             return Promise.reject(new util.ProcessCanceled('User cancelled.'));
           }
           if (result.action === SP_BUT) {
-            const idx = modFile.indexOf(BASE_IDX);
+            const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
             const rootPath = path.dirname(modFile);
             const setModTypeInstruction = { type: 'setmodtype', value: SP_ID };
             // Remove directories and anything that isn't in the rootPath.
@@ -244,7 +240,7 @@ function installBase(api, files) {
             return Promise.resolve({ instructions });
           }
           if (result.action === MP_BUT) {
-            const idx = modFile.indexOf(BASE_IDX);
+            const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
             const rootPath = path.dirname(modFile);
             const setModTypeInstruction = { type: 'setmodtype', value: MP_ID };
             // Remove directories and anything that isn't in the rootPath.
@@ -287,7 +283,7 @@ function testMaps(files, gameId) {
 
 //Installer install maps folder mod files
 function installMaps(api, files) {
-  const modFile = files.find(file => path.basename(file) === MAPS_FOLDER);
+  const modFile = files.find(file => path.basename(file).toLowerCase() === MAPS_FOLDER.toLowerCase());
   const CANC_BUT = 'Cancel';
   const SP_BUT = 'Install to SP Folder';
   const MP_BUT = 'Install to MP Folder';
@@ -304,7 +300,7 @@ function installMaps(api, files) {
             return Promise.reject(new util.ProcessCanceled('User cancelled.'));
           }
           if (result.action === SP_BUT) {
-            const idx = modFile.indexOf(MAPS_IDX);
+            const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
             const rootPath = path.dirname(modFile);
             const setModTypeInstruction = { type: 'setmodtype', value: SPBASE_ID };
             // Remove directories and anything that isn't in the rootPath.
@@ -322,7 +318,7 @@ function installMaps(api, files) {
             return Promise.resolve({ instructions });
           }
           if (result.action === MP_BUT) {
-            const idx = modFile.indexOf(MAPS_IDX);
+            const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
             const rootPath = path.dirname(modFile);
             const setModTypeInstruction = { type: 'setmodtype', value: MPBASE_ID };
             // Remove directories and anything that isn't in the rootPath.
@@ -365,7 +361,7 @@ function testStream(files, gameId) {
 
 //Installer install streampacks folder mod files
 function installStream(api, files) {
-  const modFile = files.find(file => path.basename(file) === STREAM_FOLDER);
+  const modFile = files.find(file => path.basename(file).toLowerCase() === STREAM_FOLDER.toLowerCase());
   const CANC_BUT = 'Cancel';
   const SP_BUT = 'Install to SP Folder';
   const MP_BUT = 'Install to MP Folder';
@@ -382,7 +378,7 @@ function installStream(api, files) {
             return Promise.reject(new util.ProcessCanceled('User cancelled.'));
           }
           if (result.action === SP_BUT) {
-            const idx = modFile.indexOf(STREAM_IDX);
+            const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
             const rootPath = path.dirname(modFile);
             const setModTypeInstruction = { type: 'setmodtype', value: SPBASE_ID };
             // Remove directories and anything that isn't in the rootPath.
@@ -400,7 +396,7 @@ function installStream(api, files) {
             return Promise.resolve({ instructions });
           }
           if (result.action === MP_BUT) {
-            const idx = modFile.indexOf(STREAM_IDX);
+            const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
             const rootPath = path.dirname(modFile);
             const setModTypeInstruction = { type: 'setmodtype', value: MPBASE_ID };
             // Remove directories and anything that isn't in the rootPath.
@@ -443,7 +439,7 @@ function testVideos(files, gameId) {
 
 //Installer install videos folder mod files
 function installVideos(api, files) {
-  const modFile = files.find(file => path.basename(file) === VIDEOS_FOLDER);
+  const modFile = files.find(file => path.basename(file).toLowerCase() === VIDEOS_FOLDER.toLowerCase());
   const CANC_BUT = 'Cancel';
   const SP_BUT = 'Install to SP Folder';
   const MP_BUT = 'Install to MP Folder';
@@ -460,7 +456,7 @@ function installVideos(api, files) {
             return Promise.reject(new util.ProcessCanceled('User cancelled.'));
           }
           if (result.action === SP_BUT) {
-            const idx = modFile.indexOf(VIDEOS_IDX);
+            const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
             const rootPath = path.dirname(modFile);
             const setModTypeInstruction = { type: 'setmodtype', value: SPBASE_ID };
             // Remove directories and anything that isn't in the rootPath.
@@ -478,7 +474,7 @@ function installVideos(api, files) {
             return Promise.resolve({ instructions });
           }
           if (result.action === MP_BUT) {
-            const idx = modFile.indexOf(VIDEOS_IDX);
+            const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
             const rootPath = path.dirname(modFile);
             const setModTypeInstruction = { type: 'setmodtype', value: MPBASE_ID };
             // Remove directories and anything that isn't in the rootPath.

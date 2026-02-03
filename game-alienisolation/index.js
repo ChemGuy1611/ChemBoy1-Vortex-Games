@@ -24,7 +24,6 @@ const EXEC = "AI.exe";
 //Mod types, installers, and tools data
 const DATA_ID = `${GAME_ID}-datafiles`;
 const DATA_FOLDER = "DATA";
-const DATA_IDX = `${DATA_FOLDER}\\`;
 const DATA_EXT = [".bin", ".bml", ".xml", ".pak"];
 
 const ROOT_ID = `${GAME_ID}-root`;
@@ -61,7 +60,7 @@ const spec = {
       "id": DATA_ID,
       "name": "Data Files",
       "priority": "high",
-      "targetPath": `{gamePath}\\${DATA_FOLDER}`
+      "targetPath": path.join('{gamePath}', DATA_FOLDER)
     },
     {
       "id": ROOT_ID,
@@ -159,7 +158,7 @@ async function requiresLauncher() {
 
 //Installer test for files packaged inside a "DATA" folder
 function testDataFolder(files, gameId) {
-  const isMod = files.some(file => path.basename(file) === DATA_FOLDER);
+  const isMod = files.some(file => path.basename(file).toLowerCase() === DATA_FOLDER.toLowerCase());
   let supported = (gameId === spec.game.id) && isMod;
 
   // Test for a mod installer
@@ -177,8 +176,8 @@ function testDataFolder(files, gameId) {
 
 //Installer install "DATA" folder
 function installDataFolder(files) {
-  const modFile = files.find(file => path.basename(file) === DATA_FOLDER);
-  const idx = modFile.indexOf(DATA_IDX);
+  const modFile = files.find(file => path.basename(file).toLowerCase() === DATA_FOLDER.toLowerCase());
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
 

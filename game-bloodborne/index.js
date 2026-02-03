@@ -107,13 +107,13 @@ const spec = {
       "id": DVDROOTPS4_ID,
       "name": DVDROOTPS4_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${DVDROOTPS4_PATH}`
+      "targetPath": path.join('{gamePath}', DVDROOTPS4_PATH)
     },
     {
       "id": SAVE_ID,
       "name": SAVE_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${SAVE_PATH}`
+      "targetPath": path.join('{gamePath}', SAVE_PATH)
     },
     {
       "id": ROOT_ID,

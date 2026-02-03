@@ -166,7 +166,6 @@ const SCRIPTS_ID = `${GAME_ID}-scripts`;
 const SCRIPTS_NAME = "UE4SS Scripts";
 const SCRIPTS_EXT = ".lua";
 const SCRIPTS_FOLDER = "Scripts";
-const SCRIPTS_IDX = `${SCRIPTS_FOLDER}${path.sep}`;
 
 const DLL_ID = `${GAME_ID}-ue4ssdll`;
 const DLL_NAME = "UE4SS DLL Mod";
@@ -181,8 +180,7 @@ const HERBATA_PAK = 'HerbatasDLCModLoader.pak';
 
 const HERBATAMOD_ID = `${GAME_ID}-herbatamod`;
 const HERBATAMOD_NAME = "Herbata Mod (GameLite)";
-const HERBATAMOD_FILE = "GameLite";
-const HERBATAMOD_IDX = `${HERBATAMOD_FILE}${path.sep}`;
+const HERBATAMOD_FOLDER = "GameLite";
 const HERBATAMOD_PATH = path.join(EPIC_CODE_NAME, 'Content');
 const HERBATAMOD_PATH_FULL = path.join(EPIC_CODE_NAME, 'Content', 'GameLite', 'DLCGameData');
 
@@ -732,7 +730,7 @@ function installLogic(files) {
 
 //Installer test for Root folder files
 function testHerbataMod(files, gameId) {
-  const isMod = files.some(file => (path.basename(file) === HERBATAMOD_FILE));
+  const isMod = files.some(file => (path.basename(file) === HERBATAMOD_FOLDER));
   let supported = (gameId === spec.game.id) && isMod;
 
   // Test for a mod installer
@@ -750,7 +748,7 @@ function testHerbataMod(files, gameId) {
 
 //Installer install Root folder files
 function installHerbataMod(files) {
-  const modFile = files.find(file => (path.basename(file) === HERBATAMOD_FILE));
+  const modFile = files.find(file => (path.basename(file) === HERBATAMOD_FOLDER));
   const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: HERBATAMOD_ID };

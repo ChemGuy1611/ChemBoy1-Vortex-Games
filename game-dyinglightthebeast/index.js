@@ -57,8 +57,8 @@ const PAK_NAME = "Pak Mod (Merged)";
 const PAK_PATH = path.join('ph_ft', 'mods');
 const PAK_EXT = '.pak';
 const PAK_STRING = 'data';
-const PAK_IDX_START = 2;
-const PAK_IDX_END = 7;
+const PAK_IDX_START = 2; //data0 and data1 are vanilla
+const PAK_IDX_END = 7; //cannot go above 7 or game won't load the file
 const VANILLA_PAKS = ['data0.pak', 'data1.pak'];
 const VANILLA_PAK_PATH = path.join('ph_ft', 'source');
 

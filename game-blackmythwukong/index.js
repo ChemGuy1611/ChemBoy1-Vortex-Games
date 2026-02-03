@@ -77,7 +77,6 @@ const CONFIG_EXT = ".ini";
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_FOLDER = EPIC_CODE_NAME;
-const ROOT_IDX = `${EPIC_CODE_NAME}${path.sep}`;
 
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_PATH = path.join(EPIC_CODE_NAME, "Saved", "SaveGames");
@@ -87,7 +86,6 @@ const SCRIPTS_ID = `${GAME_ID}-scripts`;
 const SCRIPTS_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_NAME, 'ue4ss', 'Mods');
 const SCRIPTS_EXT = ".lua";
 const SCRIPTS_FOLDER = "Scripts";
-const SCRIPTS_IDX = `Scripts${path.sep}`;
 
 const DLL_ID = `${GAME_ID}-ue4ssdll`;
 const DLL_NAME = "UE4SS DLL Mod";

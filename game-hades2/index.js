@@ -45,7 +45,6 @@ const UTILITY_NAME = `Mod Utility`;
 const UTILITY_PATH = path.join(MOD_PATH, 'ModUtil');
 const UTILITY_FILE = "modutil.lua";
 //const UTILITY_FILE = "ModUtil";
-//const UTILITY_IDX = `${UTILITY_FILE}\\`;
 
 //Filled in from data above
 const spec = {

@@ -149,31 +149,31 @@ const spec = {
       "id": SDK_ID,
       "name": SDK_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${SDK_PATH}`
+      "targetPath": path.join('{gamePath}', SDK_PATH)
     },
     {
       "id": SDKMOD_ID,
       "name": SDKMOD_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${SDKMOD_PATH}`
+      "targetPath": path.join('{gamePath}', SDKMOD_PATH)
     },
     {
       "id": MERGER_ID,
       "name": MERGER_NAME,
       "priority": "low",
-      "targetPath": `{gamePath}\\${MERGER_PATH}`
+      "targetPath": path.join('{gamePath}', MERGER_PATH)
     },
     {
       "id": PLUGINLOADER_ID,
       "name": PLUGINLOADER_NAME,
       "priority": "low",
-      "targetPath": `{gamePath}\\${PLUGINLOADER_PATH}`
+      "targetPath": path.join('{gamePath}', PLUGINLOADER_PATH)
     },
     {
       "id": HOTFIX_ID,
       "name": HOTFIX_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${HOTFIX_PATH}`
+      "targetPath": path.join('{gamePath}', HOTFIX_PATH)
     },
     {
       "id": ROOT_ID,
@@ -185,19 +185,19 @@ const spec = {
       "id": BINARIES_ID,
       "name": BINARIES_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${BINARIES_PATH}`
+      "targetPath": path.join('{gamePath}', BINARIES_PATH)
     },
     {
       "id": MOVIES_ID,
       "name": MOVIES_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${MOVIES_PATH}`
+      "targetPath": path.join('{gamePath}', MOVIES_PATH)
     },
     {
       "id": PAK_ID,
       "name": PAK_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${PAK_PATH}`
+      "targetPath": path.join('{gamePath}', PAK_PATH)
     },
   ],
   "discovery": {

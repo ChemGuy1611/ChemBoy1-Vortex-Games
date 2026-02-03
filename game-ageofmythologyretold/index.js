@@ -38,7 +38,6 @@ const APPMANIFEST_FILE = 'appxmanifest.xml';
 //Info for mod types and installers
 const DATA_ID = `${GAME_ID}-data`;
 const DATA_FOLDER = "game";
-const DATA_IDX = "game\\";
 const DATA_FOLDERS_LIST = ["ai", "art", "campaign", "config", "data", "modelcache", "movies", "random_maps", "render", "sound", "ui"];
 const BAR_EXT = ".bar";
 const XS_EXT = ".xs";
@@ -49,7 +48,6 @@ const DDT_EXT = ".ddt";
 
 const BINARIES_ID = `${GAME_ID}-binaries`;
 const RESHADE_FOLDER = "reshade-shaders";
-const RESHADE_IDX = "reshade-shaders\\";
 const BINARIES_EXT = [".dll", ".ini"];
 
 let GAME_VERSION = '';
@@ -98,7 +96,7 @@ const spec = {
       "id": DATA_ID,
       "name": "Game Data Folder",
       "priority": "high",
-      "targetPath": `{gamePath}\\${DATA_FOLDER}`
+      "targetPath": path.join('{gamePath}', DATA_FOLDER)
     },
     {
       "id": BINARIES_ID,
@@ -251,8 +249,7 @@ function setupNotify(api) {
 
 //Installer test for Root folder files
 function testData(files, gameId) {
-  //const isMod = files.some(file => path.basename(file).toLowerCase() === ROOT_FOLDER);
-  const isMod = files.some(file => path.basename(file) === DATA_FOLDER);
+  const isMod = files.some(file => path.basename(file).toLowerCase() === DATA_FOLDER);
   let supported = (gameId === spec.game.id) && isMod;
 
   return Promise.resolve({
@@ -263,9 +260,8 @@ function testData(files, gameId) {
 
 //Installer install Root folder files
 function installData(files) {
-  //const modFile = files.find(file => path.basename(file).toLowerCase() === DATA_FOLDER);
-  const modFile = files.find(file => path.basename(file) === DATA_FOLDER);
-  const idx = modFile.indexOf(DATA_IDX);
+  const modFile = files.find(file => path.basename(file).toLowerCase() === DATA_FOLDER);
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   //const setModTypeInstruction = { type: 'setmodtype', value: DATA_ID };
 
@@ -281,7 +277,6 @@ function installData(files) {
     };
   });
   //instructions.push(setModTypeInstruction);
-
   return Promise.resolve({ instructions });
 }
 
@@ -368,7 +363,6 @@ function installConfig(files) {
 
 //Installer test for Root folder files
 function testReshade(files, gameId) {
-  //const isMod = files.some(file => path.basename(file).toLowerCase() === RESHADE_FOLDER);
   const isReshade = files.some(file => path.basename(file) === RESHADE_FOLDER);
   let supported = (gameId === spec.game.id) && isReshade;
 
@@ -380,9 +374,8 @@ function testReshade(files, gameId) {
 
 //Installer install Root folder files
 function installReshade(files) {
-  //const modFile = files.find(file => path.basename(file).toLowerCase() === RESHADE_FOLDER);
-  const modFile = files.find(file => path.basename(file) === RESHADE_FOLDER);
-  const idx = modFile.indexOf(RESHADE_IDX);
+  const modFile = files.find(file => path.basename(file).toLowerCase() === RESHADE_FOLDER);
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: BINARIES_ID };
 
@@ -398,7 +391,6 @@ function installReshade(files) {
     };
   });
   instructions.push(setModTypeInstruction);
-
   return Promise.resolve({ instructions });
 }
 

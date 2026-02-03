@@ -57,7 +57,7 @@ const USER_HOME = util.getVortexPath("home");
 
 const CONFIG_ID = `${GAME_ID}-config`;
 const COFIG_NAME = "Config";
-const CONFIG_PATH = `${EPIC_CODE_NAME}\\Saved\\Config\\Windows`;
+const CONFIG_PATH = path.join(EPIC_CODE_NAME, "Saved", "Config", "Windows");
 const CONFIG_FILES = ["engine.ini", "scalability.ini", "input.ini", "game.ini"];
 const CONFIG_EXT = ".ini";
 
@@ -68,13 +68,12 @@ const SAVE_EXT = ".sav";
 
 const BINARIES_ID = `${GAME_ID}-binaries`;
 const BINARIES_NAME = "Binaries (Engine Injector)";
-const BINARIES_PATH = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_NAME}`;
-const SHIPPING_EXE = `${EPIC_CODE_NAME}\\Binaries\\${EXEC_FOLDER_NAME}\\${EPIC_CODE_NAME}-${EXEC_FOLDER_NAME}-Shipping.exe`;
+const BINARIES_PATH = path.join(EPIC_CODE_NAME, "Binaries", EXEC_FOLDER_NAME);
+const SHIPPING_EXE = path.join(BINARIES_PATH, `${EPIC_CODE_NAME}-${EXEC_FOLDER_NAME}-Shipping.exe`);
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Game Folder";
 const ROOT_FOLDER = EPIC_CODE_NAME;
-const ROOT_IDX = `${EPIC_CODE_NAME}\\`;
 
 const UE5_ID = `${GAME_ID}-ue5`;
 const UE5_NAME = "UE5 Paks (Legacy ~mods)";
@@ -169,19 +168,19 @@ const spec = {
       "id": SCRIPTS_ID,
       "name": SCRIPTS_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${SCRIPTS_PATH}`
+      "targetPath": path.join('{gamePath}', SCRIPTS_PATH)
     },
     {
       "id": DLL_ID,
       "name": DLL_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${DLL_PATH}`
+      "targetPath": path.join('{gamePath}', DLL_PATH)
     },
     {
       "id": LOGICMODS_ID,
       "name": LOGICMODS_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${LOGICMODS_PATH}`
+      "targetPath": path.join('{gamePath}', LOGICMODS_PATH)
     },
     {
       "id": UE4SSCOMBO_ID,
@@ -199,37 +198,37 @@ const spec = {
       "id": UE5KITMOD_ID,
       "name": UE5KITMOD_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${UE5KITMOD_PATH}`
+      "targetPath": path.join('{gamePath}', UE5KITMOD_PATH)
     },
     {
       "id": UE5_ID,
       "name": UE5_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${UE5_PATH}`
+      "targetPath": path.join('{gamePath}', UE5_PATH)
     },
     {
       "id": UE5_ALT_ID,
       "name": UE5_ALT_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${UE5_ALT_PATH}`
+      "targetPath": path.join('{gamePath}', UE5_ALT_PATH)
     },
     {
       "id": BINARIES_ID,
       "name": BINARIES_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${BINARIES_PATH}`
+      "targetPath": path.join('{gamePath}', BINARIES_PATH)
     },
     {
       "id": UE4SS_ID,
       "name": "UE4SS",
       "priority": "low",
-      "targetPath": `{gamePath}\\${BINARIES_PATH}`
+      "targetPath": path.join('{gamePath}', BINARIES_PATH)
     },
     {
       "id": SIGBYPASS_ID,
       "name": SIGBYPASS_NAME,
       "priority": "low",
-      "targetPath": `{gamePath}\\${BINARIES_PATH}`
+      "targetPath": path.join('{gamePath}', BINARIES_PATH)
     },
   ],
   "discovery": {

@@ -30,8 +30,6 @@ const FLUFFY_EXEC = "modmanager.exe";
 const PSARC_ID = `${GAME_ID}-psarc`;
 const PSARC_NAME = "PSARC Files";
 const PSARC_FOLDER = "Uncharted4_data";
-const PSARC_IDX = `${PSARC_FOLDER}\\`;
-
 const PSARC_EXT = `.psarc`;
 
 const spec = {
@@ -282,8 +280,8 @@ function testPsarc(files, gameId) {
 
 //PSARC mod installer instructions
 function installPsarc(files) {
-  const modFile = files.find(file => path.basename(file) === PSARC_FOLDER);
-  const idx = modFile.indexOf(PSARC_IDX);
+  const modFile = files.find(file => path.basename(file).toLowerCase() === PSARC_FOLDER.toLowerCase());
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: PSARC_ID };
 

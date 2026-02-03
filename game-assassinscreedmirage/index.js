@@ -53,7 +53,7 @@ const spec = {
       "id": PATCH_ID,
       "name": "Forger Patch",
       "priority": "high",
-      "targetPath": "{gamePath}\\ForgerPatches"
+      "targetPath": path.join("{gamePath}", "ForgerPatches")
     },
     {
       "id": ATK_ID,

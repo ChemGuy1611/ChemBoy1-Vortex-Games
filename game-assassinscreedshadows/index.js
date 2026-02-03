@@ -198,13 +198,13 @@ const spec = {
       "id": PATCH_ID,
       "name": PATCH_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${PATCH_PATH}`
+      "targetPath": path.join('{gamePath}', PATCH_PATH)
     },
     {
       "id": PATCH_TEXTURES_ID,
       "name": PATCH_TEXTURES_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${PATCH_TEXTURES_PATH}`
+      "targetPath": path.join('{gamePath}', PATCH_TEXTURES_PATH)
     },
     {
       "id": ROOT_ID,
@@ -216,67 +216,67 @@ const spec = {
       "id": DLC_ID,
       "name": DLC_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${DLC_PATH}`
+      "targetPath": path.join('{gamePath}', DLC_PATH)
     },
     {
       "id": EXTRACTED_ID,
       "name": EXTRACTED_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${EXTRACTED_PATH}`
+      "targetPath": path.join('{gamePath}', EXTRACTED_PATH)
     },
     {
       "id": FORGEFOLDER_ID,
       "name": FORGEFOLDER_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${FORGEFOLDER_PATH}`
+      "targetPath": path.join('{gamePath}', FORGEFOLDER_PATH)
     },
     {
       "id": DATAFOLDER_ID,
       "name": DATAFOLDER_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${DATAFOLDER_PATH}`
+      "targetPath": path.join('{gamePath}', DATAFOLDER_PATH)
     },
     {
       "id": LOOSE_ID,
       "name": LOOSE_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${LOOSE_PATH}`
+      "targetPath": path.join('{gamePath}', LOOSE_PATH)
     },
     {
       "id": FORGE_ID,
       "name": FORGE_NAME,
       "priority": "high",
-      "targetPath": `{gamePath}\\${FORGE_PATH}`
+      "targetPath": path.join('{gamePath}', FORGE_PATH)
     },
     {
       "id": FORGEDLC10_ID,
       "name": FORGEDLC10_NAME,
       "priority": "low",
-      "targetPath": `{gamePath}\\${FORGEDLC10_PATH}`
+      "targetPath": path.join('{gamePath}', FORGEDLC10_PATH)
     },
     {
       "id": FORGEDLC26_ID,
       "name": FORGEDLC26_NAME,
       "priority": "low",
-      "targetPath": `{gamePath}\\${FORGEDLC26_PATH}`
+      "targetPath": path.join('{gamePath}', FORGEDLC26_PATH)
     },
     {
       "id": FORGEDLC28_ID,
       "name": FORGEDLC28_NAME,
       "priority": "low",
-      "targetPath": `{gamePath}\\${FORGEDLC28_PATH}`
+      "targetPath": path.join('{gamePath}', FORGEDLC28_PATH)
     },
     {
       "id": FORGEDLC29_ID,
       "name": FORGEDLC29_NAME,
       "priority": "low",
-      "targetPath": `{gamePath}\\${FORGEDLC29_PATH}`
+      "targetPath": path.join('{gamePath}', FORGEDLC29_PATH)
     },
     {
       "id": FIXES_ID,
       "name": FIXES_NAME,
       "priority": "low",
-      "targetPath": `{gamePath}\\${FIXES_PATH}`
+      "targetPath": path.join('{gamePath}', FIXES_PATH)
     },
     {
       "id": ATK_ID,

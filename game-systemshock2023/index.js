@@ -52,7 +52,6 @@ const PAK_PATH = UNREALDATA.modsPath;
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_FOLDER = EPIC_CODE_NAME;
-const ROOT_IDX = `${ROOT_FOLDER}\\`;
 
 const BINARIES_ID = `${GAME_ID}-binaries`;
 

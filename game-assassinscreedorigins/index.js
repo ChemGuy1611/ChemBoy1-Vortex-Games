@@ -69,7 +69,7 @@ const spec = {
       "id": PATCH_ID,
       "name": "Forger Patch",
       "priority": "high",
-      "targetPath": "{gamePath}\\ForgerPatches"
+      "targetPath": path.join("{gamePath}", "ForgerPatches")
     },
     {
       "id": TEXTURE_ID,
@@ -81,7 +81,7 @@ const spec = {
       "id": "assassinscreedorigins-texturesgamefolder",
       "name": "Resorep Textures (Game Folder)",
       "priority": "high",
-      "targetPath": "{gamePath}\\Resorep"
+      "targetPath": path.join("{gamePath}", "Resorep")
     },
     {
       "id": ATK_ID,

@@ -30,24 +30,23 @@ const gameFinderQuery = {
   xbox: [{ id: XBOXAPP_ID }],
 };
 
-let MOD_PATH = "Boltgun\\Content\\Paks";
+let MOD_PATH = path.join(EPIC_CODE_NAME, "Content", "Paks");
 let GAME_VERSION = '';
-let EXEC_TARGET = null;
+let EXEC_TARGET = "";
 const requiredFiles = [EPIC_CODE_NAME];
 const STEAM_EXEC_FOLDER = "Win64";
 const GOG_EXEC_FOLDER = "Win64";
 const EPIC_EXEC_FOLDER = "Win64";
 const XBOX_EXEC_FOLDER = "WinGDK";
-const STEAM_EXEC= `${EPIC_CODE_NAME}\\Binaries\\${STEAM_EXEC_FOLDER}\\${EPIC_CODE_NAME}-${STEAM_EXEC_FOLDER}-Shipping.exe`;
-const GOG_EXEC= `${EPIC_CODE_NAME}\\Binaries\\${GOG_EXEC_FOLDER}\\${EPIC_CODE_NAME}-${GOG_EXEC_FOLDER}-Shipping.exe`;
-const EPIC_EXEC = `${EPIC_CODE_NAME}\\Binaries\\${EPIC_EXEC_FOLDER}\\${EPIC_CODE_NAME}-${EPIC_EXEC_FOLDER}-Shipping.exe`; //Need to confirm for Epic
-const XBOX_EXEC = `${EPIC_CODE_NAME}\\Binaries\\${XBOX_EXEC_FOLDER}\\${EPIC_CODE_NAME}-${XBOX_EXEC_FOLDER}-Shipping.exe`;
+const STEAM_EXEC= path.join(EPIC_CODE_NAME, "Binaries", STEAM_EXEC_FOLDER, `${EPIC_CODE_NAME}-${STEAM_EXEC_FOLDER}-Shipping.exe`);
+const GOG_EXEC= path.join(EPIC_CODE_NAME, "Binaries", GOG_EXEC_FOLDER, `${EPIC_CODE_NAME}-${GOG_EXEC_FOLDER}-Shipping.exe`);
+const EPIC_EXEC = path.join(EPIC_CODE_NAME, "Binaries", EPIC_EXEC_FOLDER, `${EPIC_CODE_NAME}-${EPIC_EXEC_FOLDER}-Shipping.exe`); //Need to confirm for Epic
+const XBOX_EXEC = path.join(EPIC_CODE_NAME, "Binaries", XBOX_EXEC_FOLDER, `${EPIC_CODE_NAME}-${XBOX_EXEC_FOLDER}-Shipping.exe`);
 const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_PATH = "{gamePath}";
 const ROOT_FOLDER = "Boltgun";
-const ROOT_IDX = `${ROOT_FOLDER}\\`;
 const ROOT_NAME = "Root Game Folder";
 const BINARIES_ID = `${GAME_ID}-binaries`;
 const BINARIES_NAME = "Binaries (Engine Injector)";
@@ -141,22 +140,22 @@ function getExecutable(discoveryPath) {
   };
 
   if (isCorrectExec(XBOX_EXEC)) {
-    EXEC_TARGET = `{gamePath}\\${EPIC_CODE_NAME}\\Binaries\\${XBOX_EXEC_FOLDER}`;
+    EXEC_TARGET = path.join('{gamePath}', EPIC_CODE_NAME, "Binaries", XBOX_EXEC_FOLDER);
     return XBOX_EXEC;
   };
 
   if (isCorrectExec(STEAM_EXEC)) {
-    EXEC_TARGET = `{gamePath}\\${EPIC_CODE_NAME}\\Binaries\\${STEAM_EXEC_FOLDER}`;
+    EXEC_TARGET = path.join('{gamePath}', EPIC_CODE_NAME, "Binaries", STEAM_EXEC_FOLDER);
     return STEAM_EXEC;
   };
 
   if (isCorrectExec(EPIC_EXEC)) {
-    EXEC_TARGET = `{gamePath}\\${EPIC_CODE_NAME}\\Binaries\\${EPIC_EXEC_FOLDER}`;
+    EXEC_TARGET = path.join('{gamePath}', EPIC_CODE_NAME, "Binaries", EPIC_EXEC_FOLDER);
     return EPIC_EXEC;
   };
 
   if (isCorrectExec(GOG_EXEC)) {
-    EXEC_TARGET = `{gamePath}\\${EPIC_CODE_NAME}\\Binaries\\${GOG_EXEC_FOLDER}`;
+    EXEC_TARGET = path.join('{gamePath}', EPIC_CODE_NAME, "Binaries", GOG_EXEC_FOLDER);
     return GOG_EXEC;
   };
 
