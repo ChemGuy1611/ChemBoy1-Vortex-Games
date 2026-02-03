@@ -223,6 +223,30 @@ const tools = [
 
 // BASIC EXTENSION FUNCTIONS ///////////////////////////////////////////////////
 
+function isDir(folder, file) {
+  const stats = fs.statSync(path.join(folder, file));
+  return stats.isDirectory();
+}
+
+function statCheckSync(gamePath, file) {
+  try {
+    fs.statSync(path.join(gamePath, file));
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}
+async function statCheckAsync(gamePath, file) {
+  try {
+    await fs.statAsync(path.join(gamePath, file));
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}
+
 //Set mod type priority
 function modTypePriority(priority) {
   return {
@@ -304,6 +328,16 @@ function getExecutable(discoveryPath) {
     return EXEC_DEFAULT;
   };
   return EXEC_DEFAULT;
+}
+
+//Get correct game version - async
+async function setGameVersionPath(gamePath) {
+  if (await statCheckAsync(gamePath, EXEC_XBOX)) {
+    GAME_VERSION = 'xbox';
+    return GAME_VERSION;
+  };
+  GAME_VERSION = 'default';
+  return GAME_VERSION;
 }
 
 async function getAllFiles(dirPath) {
@@ -900,8 +934,8 @@ async function setup(discovery, api, gameSpec) {
   STAGING_FOLDER = selectors.installPathForGame(api.getState(), GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(api.getState(), GAME_ID);
   await downloadUe4ss(api, gameSpec);
-  await fs.ensureDirWritableAsync(path.join(util.getVortexPath('localAppData'), CONFIG_PATH));
-  await fs.ensureDirWritableAsync(path.join(util.getVortexPath('localAppData'), SAVE_PATH));
+  await fs.ensureDirWritableAsync(path.join(LOCALAPPDATA, CONFIG_PATH));
+  await fs.ensureDirWritableAsync(path.join(LOCALAPPDATA, SAVE_PATH));
   await fs.ensureDirWritableAsync(path.join(GAME_PATH, SCRIPTS_PATH));
   await fs.ensureDirWritableAsync(path.join(GAME_PATH, LOGICMODS_PATH));
   return fs.ensureDirWritableAsync(path.join(GAME_PATH, PAK_PATH));

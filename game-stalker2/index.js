@@ -2,8 +2,8 @@
 Name: S.T.A.L.K.E.R. 2: Heart of Chornobyl Vortex Extension
 Structure: UE5 (Xbox-Integrated)
 Author: ChemBoy1
-Version: 0.5.1
-Date: 2026-01-19
+Version: 0.5.2
+Date: 2026-02-02
 //////////////////////////////////////////////////////////*/
 
 //Import libraries
@@ -29,8 +29,10 @@ const EXEC_EPIC = EXEC_DEFAULT;
 const EXEC_GOG = EXEC_DEFAULT;
 const EXEC_XBOX = `gamelaunchhelper.exe`;
 let SHIPPINGEXE_NAME = `Stalker2-Win64-Shipping.exe`;
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/S.T.A.L.K.E.R._2:_Heart_of_Chornobyl";
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/958"; //Nexus link to this extension. Used for links
 
-let GAME_PATH = undefined; //patched in the setup function to the discovered game path
+let GAME_PATH = ''; //patched in the setup function to the discovered game path
 let GAME_VERSION = '';
 let CHECK_CONFIG = false; 
 let STAGING_FOLDER = '';
@@ -82,12 +84,12 @@ const PAKCHUNK0_FOLDER_STEAM = "pakchunk0-Windows";
 const PAKCHUNK0_FOLDER_XBOX = "pakchunk0-WinGDK";
 
 //Information for setting the executable and variable paths based on the game store version
-let BIN_PATH = null;
-let EXEC_TARGET = null;
-let SCRIPTS_PATH = null;
-let SCRIPTS_TARGET = null;
-let SAVE_PATH = null;
-let CONFIG_PATH = null;
+let BIN_PATH = '';
+let EXEC_TARGET = '';
+let SCRIPTS_PATH = '';
+let SCRIPTS_TARGET = '';
+let SAVE_PATH = '';
+let CONFIG_PATH = '';
 let USERID_FOLDER = "";
 const LOCALAPPDATA = util.getVortexPath("localAppData");
 const CONFIG_PATH_DEFAULT = path.join(LOCALAPPDATA, EPIC_CODE_NAME, "Saved", "Config", "Windows");
@@ -153,6 +155,12 @@ const UE4SS_PAGE_NO = 560;
 const UE4SS_FILE_NO = 4003;
 const UE4SS_DLFILE_STRING = "ue4ss";
 const UE4SS_URL = "https://github.com/UE4SS-RE/RE-UE4SS/releases";
+const UE4SS_SETTINGS_FILE = 'UE4SS-settings.ini';
+const UE4SS_SETTINGS_FILEPATH = path.join('ue4ss', UE4SS_SETTINGS_FILE); //relative to Binaries folder
+const UE4SS_MODSJSON_FILE = 'mods.json';
+const UE4SS_MODSTXT_FILE = 'mods.txt';
+const UE4SS_MODSJSON_FILEPATH = path.join(UE4SS_MOD_PATH, UE4SS_MODSJSON_FILE); //relative to Binaries folder
+const UE4SS_MODSTXT_FILEPATH = path.join(UE4SS_MOD_PATH, UE4SS_MODSTXT_FILE);
 
 const SCRIPTS_ID = `${GAME_ID}-scripts`;
 const SCRIPTS_NAME = "UE4SS Scripts";
@@ -604,12 +612,14 @@ function installHerbata(files) {
   return Promise.resolve({ instructions });
 }
 
-//Test for save files
+
+//Test for UE4SS combo (pak and lua/dll) mod files
 function testUe4ssCombo(files, gameId) {
   const isMod = files.some(file => (path.extname(file).toLowerCase() === SCRIPTS_EXT));
+  const isModAlt = files.some(file => (path.basename(file).toLowerCase() === 'binaries')); //added to catch mods packaged with paks and dll/asi, but no lua scripts.
   const isMod2 = files.some(file => (path.extname(file).toLowerCase() === LOGICMODS_EXT));
   const isFolder = files.some(file => (path.basename(file) === ROOT_FILE));
-  let supported = (gameId === spec.game.id) && isMod && isMod2 && isFolder;
+  let supported = (gameId === spec.game.id) && ( isMod || isModAlt ) && isMod2 && isFolder;
 
   // Test for a mod installer
   if (supported && files.find(file =>
@@ -624,12 +634,23 @@ function testUe4ssCombo(files, gameId) {
   });
 }
 
-//Install save files
-function installUe4ssCombo(files, fileName) {
+//Install UE4SS combo (pak and lua/dll) mod files
+async function installUe4ssCombo(files, workingDir) {
   const modFile = files.find(file => (path.basename(file) === ROOT_FILE));
   const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: UE4SSCOMBO_ID };
+
+  if (GAME_VERSION === 'xbox') {
+    try {
+      await fs.statAsync(path.join(workingDir, modFile, 'Binaries', 'Win64'));
+      await fs.renameAsync(path.join(workingDir, modFile, 'Binaries', 'Win64'), path.join(workingDir, modFile, 'Binaries', 'WinGDK'));
+      const paths = await getAllFiles(workingDir);
+      files = [...paths.map(p => p.replace(`${workingDir}${path.sep}`, ''))];
+    } catch (err) {
+      log('warn', `Failed to rename "Win64" folder to "WinGDK" for UE4SS combo mod ${workingDir} (or "Win64" folder is not present): ${err}`);
+    }
+  }
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
@@ -1702,7 +1723,6 @@ async function setup(discovery, api, gameSpec) {
   if (legacyMods.length > 0) {
     legacyModsNotify(api, legacyMods);
   }
-
   GAME_PATH = discovery.path;
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
@@ -1755,7 +1775,8 @@ async function setup(discovery, api, gameSpec) {
     const STEAM_INSTALL_PATH = SPLIT_PATH.slice(0, SPLIT_PATH_LENGTH - 2).join(path.sep);
     STEAMWORKSHOP_PATH = path.join(STEAM_INSTALL_PATH, STEAMWORKSHOP_FOLDER);
   } //*/
-  MODTYPE_FOLDERS.push(SCRIPTS_PATH);
+  //MODTYPE_FOLDERS.push(SCRIPTS_PATH);
+  await fs.ensureDirWritableAsync(path.join(GAME_PATH, SCRIPTS_PATH));
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 
@@ -1954,17 +1975,45 @@ function applyGame(context, gameSpec) {
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open UE4SS Settings INI', () => {
+    GAME_PATH = getDiscoveryPath(context.api);
+    util.opn(path.join(GAME_PATH, BINARIES_PATH, UE4SS_SETTINGS_FILEPATH)).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open UE4SS mods.json', () => {
+    GAME_PATH = getDiscoveryPath(context.api);
+    util.opn(path.join(GAME_PATH, BINARIES_PATH, UE4SS_MODSJSON_FILEPATH)).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
+    util.opn(PCGAMINGWIKI_URL).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
-    const openPath = path.join(__dirname, 'CHANGELOG.md');
-    util.opn(openPath).catch(() => null);
+    util.opn(path.join(__dirname, 'CHANGELOG.md')).catch(() => null);
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
+    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
-    const openPath = DOWNLOAD_FOLDER;
-    util.opn(openPath).catch(() => null);
+    util.opn(DOWNLOAD_FOLDER).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);

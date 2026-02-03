@@ -4,6 +4,11 @@
 
 - None Planned
 
+## [0.5.2] - 2026-02-02
+
+- Added: Automatic renaming of "Win64" folder to "WinGDK" for UE4SS combo mod installer
+- Added: Buttons to open several additional files/folders/URLs
+
 ## [0.5.1] - 2026-01-19
 
 - Fixed: More reliable folder deletion operations - revised deprecated fsPromises.rmdir function to fsPromises.rm
