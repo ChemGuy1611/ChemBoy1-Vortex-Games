@@ -18,7 +18,7 @@ set "FILE_PATTERN2=*EOSOVH*"
 
 echo ===================================
 echo Epic Games Store Overlay Disable Script
-echo Author: ChemBoy1 - Version: 1.0.3
+echo Author: ChemBoy1 - Version: 1.0.4
 echo Description: Disables the EGS Overlay by deleting
 echo    "EOSOverlay" and "EOSOVH" files.
 echo ===================================
@@ -59,13 +59,13 @@ if "!SHORT_PATH!"=="" (
     echo ERROR: Could not convert EOS path to short format.
     echo Original path: !BASE_PATH!
     echo.
-    echo Exiting in 30 seconds... Press any key to close immediately.
+    ::echo Exiting in 30 seconds... Press any key to close immediately.
     timeout /t 30
     exit
 )
 set "BASE_PATH=!SHORT_PATH!"
 
-:: Build the Launcher path by going up 3 levels to Epic Games folder and adding the rest
+:: Build the Launcher path by going up to Epic Games folder and adding the rest
 for %%i in ("!BASE_PATH!\..\..\..") do set "EPIC_GAMES_PATH=%%~fi"
 set "LAUNCHER_PATH=!EPIC_GAMES_PATH!\Launcher\Portal\Extras\Overlay"
 for %%i in ("!LAUNCHER_PATH!") do set "SHORT_PATH=%%~si"
@@ -73,7 +73,7 @@ if "!SHORT_PATH!"=="" (
     echo ERROR: Could not convert Launcher path to short format.
     echo Original path: !LAUNCHER_PATH!
     echo.
-    echo Exiting in 30 seconds... Press any key to close immediately.
+    ::echo Exiting in 30 seconds... Press any key to close immediately.
     timeout /t 30
     exit
 )
@@ -131,7 +131,7 @@ if "!EOS_EXISTS!"=="0" if "!LAUNCHER_EXISTS!"=="0" (
     echo ERROR: Neither path exists. Cannot proceed. 
     echo It is likely that Epic Games Store is not installed.
     echo.
-    echo Exiting in 30 seconds... Press any key to close immediately.
+    ::echo Exiting in 30 seconds... Press any key to close immediately.
     timeout /t 30
     exit
 )
@@ -140,7 +140,7 @@ if "!FILES_FOUND!"=="0" if "!LAUNCHER_FILES_FOUND!"=="0" (
     echo No files to delete.
     echo Note that you will need to run this script again when Epic Games Store updates.
     echo.
-    echo Exiting in 30 seconds... Press any key to close immediately.
+    ::echo Exiting in 30 seconds... Press any key to close immediately.
     timeout /t 30
     exit
 )
@@ -150,7 +150,7 @@ set /p "CONFIRM=Delete these files? (Y/N): "
 if /i not "!CONFIRM!"=="Y" (
     echo Operation cancelled. No files deleted. Overlay will not be disabled.
     echo.
-    echo Exiting in 30 seconds... Press any key to close immediately.
+    ::echo Exiting in 30 seconds... Press any key to close immediately.
     timeout /t 30
     exit
 )
@@ -178,7 +178,7 @@ if "!DELETE_SUCCESS!"=="1" (
 ) else (
     echo WARNING: Some files could not be deleted or no files were found.
     echo.
-    echo Window will close in 30 seconds... Press any key to close immediately.
+    ::echo Window will close in 30 seconds... Press any key to close immediately.
     timeout /t 30
     exit
 )
@@ -186,9 +186,10 @@ if "!DELETE_SUCCESS!"=="1" (
 :: Completion message
 echo.
 echo OPERATION COMPLETE
-echo Note that you will need to run this script again when Epic Games Store updates.
 echo.
-echo Window will close in 30 seconds... Press any key to close immediately.
+echo Note that you will need to run this script again when Epic Games Store updates.
+::echo.
+::echo Window will close in 30 seconds... Press any key to close immediately.
 timeout /t 30
 exit
 

@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.0.4] - 2026-02-02
+
+- Cleaned up what's printed to the console
+
 ## [1.0.3] - 2026-01-28
 
 - Better exit condition checking
