@@ -61,8 +61,9 @@ const ROOT_FOLDERS = [EPIC_CODE_NAME, 'Engine']; //addressable folders in root
 const ROOTSUB_FOLDERS = ['Content', 'Binaries', 'Mods']; //subfolders of EPIC_CODE_NAME. Don't use "Plugins" here since it can conflict with plugin loader/asi mods
 const SAVE_EXT = ".sav";
 const SAVE_COMPAT_VERSIONS = ['steam', 'epic', 'gog']; //game versions with installable save mods (never Xbox)
-const PAKMOD_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Paks', '~mods'); //usually works. Some games don't work from "~mods".
-const PAKMOD_LOADORDER = true; //set to false if you don't want loadOrder. If must be in "Paks" root, also disable loadOrder.
+let PAKMOD_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Paks', '~mods'); //usually works. Some games don't work from "~mods".
+const PAKMOD_LOADORDER = true; //set to false if you don't want loadOrder. If must be in "Paks" root, disable loadOrder.
+const PAKMOD_EXTRA_EXTS = []; //extra extensions to include with paks (usually for custom modding frameworks, i.e .toml, .json, etc)
 const UE4SS_PAGE_NO = 0; //set these if there is a customized UE4SS Nexus page
 const UE4SS_FILE_NO = 0;
 const UE4SS_DOMAIN = GAME_ID; //either GAME_ID or 'site'
@@ -74,8 +75,9 @@ const CONFIG_FOLDERNAME = 'Windows'; //UE 4 games are often 'WindowsNoEditor'
 const CONFIG_LOC = 'Local AppData'; //string for notification text.
 const SAVE_LOC = CONFIG_LOC; //string for notification text. Config and Save mods are almonst always in the same place
 const CONFIGMOD_LOCATION = LOCALAPPDATA; //almost always matches. Some are in game folder or Documents.
-
 const SAVEMOD_LOCATION = CONFIGMOD_LOCATION;
+
+//shipping exe
 const SHIPEXE_STRING_DEFAULT = '';
 const SHIPEXE_STRING_EGS = '';
 const SHIPEXE_STRING_GOG = '';
@@ -101,17 +103,18 @@ const SAVE_PATH_DEFAULT = path.join(SAVEMOD_LOCATION, DATA_FOLDER, "Saved", "Sav
 const SAVE_PATH_XBOX = path.join(LOCALAPPDATA, "Packages", `${XBOXAPP_ID}_${XBOX_SAVE_STRING}`, "SystemAppData", "wgs"); //XBOX Version
 
 //Settings related to the IO Store UE feature
-let PAKMOD_EXTS = ['.pak'];
+if (!PAKMOD_LOADORDER) PAKMOD_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Paks'); //if loadOrder is disabled, Paks must be in root
+let PAKMOD_EXTS = ['.pak'].concat(PAKMOD_EXTRA_EXTS);
 let PAK_FILE_MIN = 1;
 let SYM_LINKS = true;
 if (IO_STORE) { //Set file number for pak installer file selection (needs to be 3 if IO Store is used to accomodate .ucas and .utoc files)
   SYM_LINKS = false;
-  PAKMOD_EXTS = ['.pak', '.ucas', '.utoc'];
+  PAKMOD_EXTS = ['.pak', '.ucas', '.utoc'].concat(PAKMOD_EXTRA_EXTS);
   PAK_FILE_MIN = PAKMOD_EXTS.length;
 }
 
 //global variables to set later
-let GAME_PATH = null; //game installation path
+let GAME_PATH = ''; //game installation path
 let CHECK_CONFIG = false; //boolean to check if game, staging folder, and config and save folders are on the same drive
 let CHECK_SAVE = false; //secondary same as above (if save and config are in different locations)
 let STAGING_FOLDER = ''; //Vortex staging folder path

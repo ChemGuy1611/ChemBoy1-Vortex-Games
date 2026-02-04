@@ -49,10 +49,11 @@ const allowSymlinks = true; //true if game can use symlinks without issues. Typi
 const rootInstaller = true; //enable root installer. Set false if you need to avoid installer collisions
 const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
 const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
+const hasUserIdFolder = false; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
 const debug = false; //toggle for debug mode
 let binariesInstaller = false;
 if (BINARIES_PATH !== '.') {
-    binariesInstaller = true;
+    binariesInstaller = true; //only enable Binaries installer if not in root
 }
 
 //info for modtypes, installers, tools, and actions
@@ -65,7 +66,7 @@ const APPDATA_FOLDER = path.join('XXX');
 const CONFIG_FOLDERNAME = 'XXX';
 const SAVE_FOLDERNAME = 'XXX';
 
-let GAME_PATH = null;
+let GAME_PATH = '';
 let GAME_VERSION = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
@@ -85,6 +86,7 @@ const LOADER_FILE = 'XXX.dll';
 const LOADER_PAGE_NO = 0;
 const LOADER_FILE_NO = 0;
 const LOADER_DOMAIN = GAME_ID;
+const LOADER_URL = `XXX`; //if not on Nexus
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Folder";
@@ -102,15 +104,17 @@ const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_NAME = "Save";
 const SAVE_FOLDER = path.join(SAVEMOD_LOCATION, APPDATA_FOLDER, SAVE_FOLDERNAME);
 let USERID_FOLDER = "";
-try {
-  const SAVE_ARRAY = fs.readdirSync(SAVE_FOLDER);
-  USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_FOLDER, entry));
-} catch(err) {
-  USERID_FOLDER = "";
+if (hasUserIdFolder) {
+  try {
+    const SAVE_ARRAY = fs.readdirSync(SAVE_FOLDER);
+    USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_FOLDER, entry));
+  } catch(err) {
+    USERID_FOLDER = "";
+  }
+  if (USERID_FOLDER === undefined) {
+    USERID_FOLDER = "";
+  }
 }
-if (USERID_FOLDER === undefined) {
-  USERID_FOLDER = "";
-} //*/
 const SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
 const SAVE_EXTS = [".XXX"];
 const SAVE_FILES = ["XXX"];
@@ -930,15 +934,15 @@ function applyGame(context, gameSpec) {
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
-    util.opn(DOWNLOAD_FOLDER).catch(() => null);
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
+    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
-    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
+    util.opn(DOWNLOAD_FOLDER).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
