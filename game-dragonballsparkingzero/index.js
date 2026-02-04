@@ -52,7 +52,7 @@ const UNREALDATA = {
 //Specify information for mod types and installers
 const SHIPPING_EXE = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_NAME, `${EPIC_CODE_NAME}-${EXEC_FOLDER_NAME}-Shipping.exe`);
 const BINARIES_ID = `${GAME_ID}-binaries`;
-const EXEC_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_NAME);
+const BINARIES_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_NAME);
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_FOLDER = EPIC_CODE_NAME;
@@ -133,7 +133,7 @@ let DEFAULT_JSON = {
 };
 const JSONFILES_KEY = "Default";
 
-const MOD_PATH_DEFAULT = EXEC_PATH;
+const MOD_PATH_DEFAULT = BINARIES_PATH;
 
 //This information will be filled in from the data above
 const spec = {
@@ -223,19 +223,19 @@ const spec = {
       "id": BINARIES_ID,
       "name": "Binaries (Engine Injector)",
       "priority": "high",
-      "targetPath": path.join(`{gamePath}`, EXEC_PATH)
+      "targetPath": path.join(`{gamePath}`, BINARIES_PATH)
     },
     {
       "id": UE4SS_ID,
       "name": "UE4SS",
       "priority": "low",
-      "targetPath": path.join(`{gamePath}`, EXEC_PATH)
+      "targetPath": path.join(`{gamePath}`, BINARIES_PATH)
     },
     {
       "id": SIGBYPASS_ID,
       "name": SIGBYPASS_NAME,
       "priority": "low",
-      "targetPath": path.join(`{gamePath}`, EXEC_PATH)
+      "targetPath": path.join(`{gamePath}`, BINARIES_PATH)
     },
     {
       "id": MODLOADER_ID,

@@ -84,8 +84,8 @@ const PAKCHUNK0_FOLDER_STEAM = "pakchunk0-Windows";
 const PAKCHUNK0_FOLDER_XBOX = "pakchunk0-WinGDK";
 
 //Information for setting the executable and variable paths based on the game store version
-let BIN_PATH = '';
-let EXEC_TARGET = '';
+let BINARIES_PATH = '';
+let BINARIES_TARGET = '';
 let SCRIPTS_PATH = '';
 let SCRIPTS_TARGET = '';
 let SAVE_PATH = '';
@@ -405,8 +405,8 @@ async function requiresLauncher(gamePath, store) {
 function getExecutable(discoveryPath) {
   if (statCheckSync(discoveryPath, EXEC_XBOX)) {
     GAME_VERSION = 'xbox';
-    BIN_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_XBOX);
-    EXEC_TARGET = path.join(`{gamePath}`, BIN_PATH);
+    BINARIES_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_XBOX);
+    BINARIES_TARGET = path.join(`{gamePath}`, BINARIES_PATH);
     SCRIPTS_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_XBOX, UE4SS_MOD_PATH);
     SCRIPTS_TARGET = path.join(`{gamePath}`, SCRIPTS_PATH);
     CONFIG_PATH = CONFIG_PATH_XBOX;
@@ -423,8 +423,8 @@ function getExecutable(discoveryPath) {
     return EXEC_XBOX;
   };
 
-  BIN_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT);
-  EXEC_TARGET = path.join(`{gamePath}`, BIN_PATH);
+  BINARIES_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT);
+  BINARIES_TARGET = path.join(`{gamePath}`, BINARIES_PATH);
   SCRIPTS_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT, UE4SS_MOD_PATH);
   SCRIPTS_TARGET = path.join(`{gamePath}`, SCRIPTS_PATH);
   CONFIG_PATH = CONFIG_PATH_DEFAULT;
@@ -1870,7 +1870,7 @@ function applyGame(context, gameSpec) {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
     },
-    (game) => pathPattern(context.api, game, EXEC_TARGET),
+    (game) => pathPattern(context.api, game, BINARIES_TARGET),
     () => Promise.resolve(false),
     { name: BINARIES_NAME }
   );
@@ -1879,7 +1879,7 @@ function applyGame(context, gameSpec) {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
     },
-    (game) => pathPattern(context.api, game, EXEC_TARGET),
+    (game) => pathPattern(context.api, game, BINARIES_TARGET),
     () => Promise.resolve(false),
     { name: UE4SS_NAME }
   );
@@ -1889,7 +1889,7 @@ function applyGame(context, gameSpec) {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
     },
-    (game) => pathPattern(context.api, game, EXEC_TARGET),
+    (game) => pathPattern(context.api, game, BINARIES_TARGET),
     () => Promise.resolve(false),
     { name: HERBATA_NAME }
   );
@@ -1930,7 +1930,7 @@ function applyGame(context, gameSpec) {
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Binaries Folder', () => {
     GAME_PATH = getDiscoveryPath(context.api);
-    const openPath = path.join(GAME_PATH, BIN_PATH);
+    const openPath = path.join(GAME_PATH, BINARIES_PATH);
     util.opn(openPath).catch(() => null);
   }, () => {
     const state = context.api.getState();
@@ -1995,7 +1995,7 @@ function applyGame(context, gameSpec) {
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open UE4SS Settings INI', () => {
     GAME_PATH = getDiscoveryPath(context.api);
-    util.opn(path.join(GAME_PATH, BIN_PATH, UE4SS_SETTINGS_FILEPATH)).catch(() => null);
+    util.opn(path.join(GAME_PATH, BINARIES_PATH, UE4SS_SETTINGS_FILEPATH)).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
@@ -2003,7 +2003,7 @@ function applyGame(context, gameSpec) {
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open UE4SS mods.json', () => {
     GAME_PATH = getDiscoveryPath(context.api);
-    util.opn(path.join(GAME_PATH, BIN_PATH, UE4SS_MODSJSON_FILEPATH)).catch(() => null);
+    util.opn(path.join(GAME_PATH, BINARIES_PATH, UE4SS_MODSJSON_FILEPATH)).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);

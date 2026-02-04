@@ -22,7 +22,7 @@ const GAME_ID = "prey2017";
 const MOD_PATH = path.join("GameSDK", "Precache");
 
 let execFolder = '';
-let EXEC_TARGET = '';
+let BINARIES_TARGET = '';
 let GAME_VERSION = '';
 const APPMANIFEST_FILE = 'appxmanifest.xml';
 const FIND_FILE = "GameSDK";
@@ -157,25 +157,25 @@ function getExecutable(discoveryPath) {
 
   if (isCorrectExec(XBOX_EXEC)) {
     execFolder = XBOX_EXEC_FOLDER;
-    EXEC_TARGET = path.join('{gamePath}', path.join("Binaries", "Danielle", execFolder, "Release"));
+    BINARIES_TARGET = path.join('{gamePath}', path.join("Binaries", "Danielle", execFolder, "Release"));
     return XBOX_EXEC;
   };
 
   if (isCorrectExec(STEAM_EXEC)) {
     execFolder = STEAM_EXEC_FOLDER;
-    EXEC_TARGET = path.join('{gamePath}', path.join("Binaries", "Danielle", execFolder, "Release"));
+    BINARIES_TARGET = path.join('{gamePath}', path.join("Binaries", "Danielle", execFolder, "Release"));
     return STEAM_EXEC;
   };
 
   if (isCorrectExec(EPIC_EXEC)) {
     execFolder = EPIC_EXEC_FOLDER;
-    EXEC_TARGET = path.join('{gamePath}', path.join("Binaries", "Danielle", execFolder, "Release"));
+    BINARIES_TARGET = path.join('{gamePath}', path.join("Binaries", "Danielle", execFolder, "Release"));
     return EPIC_EXEC;
   };
 
   if (isCorrectExec(GOG_EXEC)) {
     execFolder = GOG_EXEC_FOLDER;
-    EXEC_TARGET = path.join('{gamePath}', path.join("Binaries", "Danielle", execFolder, "Release"));
+    BINARIES_TARGET = path.join('{gamePath}', path.join("Binaries", "Danielle", execFolder, "Release"));
     return GOG_EXEC;
   };
 
@@ -586,7 +586,7 @@ function main(context) {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
     }, 
-    (game) => pathPattern(context.api, game, EXEC_TARGET), 
+    (game) => pathPattern(context.api, game, BINARIES_TARGET), 
     () => Promise.resolve(false), 
     { name: BINARIES_NAME }
   );
@@ -613,7 +613,7 @@ function main(context) {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
     }, 
-    (game) => pathPattern(context.api, game, EXEC_TARGET), 
+    (game) => pathPattern(context.api, game, BINARIES_TARGET), 
     () => Promise.resolve(false), 
     { name: PRIC_NAME }
   );

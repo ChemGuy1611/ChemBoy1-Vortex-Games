@@ -32,7 +32,7 @@ const gameFinderQuery = {
 
 let MOD_PATH = path.join(EPIC_CODE_NAME, "Content", "Paks");
 let GAME_VERSION = '';
-let EXEC_TARGET = "";
+let BINARIES_TARGET = "";
 const requiredFiles = [EPIC_CODE_NAME];
 const STEAM_EXEC_FOLDER = "Win64";
 const GOG_EXEC_FOLDER = "Win64";
@@ -140,22 +140,22 @@ function getExecutable(discoveryPath) {
   };
 
   if (isCorrectExec(XBOX_EXEC)) {
-    EXEC_TARGET = path.join('{gamePath}', EPIC_CODE_NAME, "Binaries", XBOX_EXEC_FOLDER);
+    BINARIES_TARGET = path.join('{gamePath}', EPIC_CODE_NAME, "Binaries", XBOX_EXEC_FOLDER);
     return XBOX_EXEC;
   };
 
   if (isCorrectExec(STEAM_EXEC)) {
-    EXEC_TARGET = path.join('{gamePath}', EPIC_CODE_NAME, "Binaries", STEAM_EXEC_FOLDER);
+    BINARIES_TARGET = path.join('{gamePath}', EPIC_CODE_NAME, "Binaries", STEAM_EXEC_FOLDER);
     return STEAM_EXEC;
   };
 
   if (isCorrectExec(EPIC_EXEC)) {
-    EXEC_TARGET = path.join('{gamePath}', EPIC_CODE_NAME, "Binaries", EPIC_EXEC_FOLDER);
+    BINARIES_TARGET = path.join('{gamePath}', EPIC_CODE_NAME, "Binaries", EPIC_EXEC_FOLDER);
     return EPIC_EXEC;
   };
 
   if (isCorrectExec(GOG_EXEC)) {
-    EXEC_TARGET = path.join('{gamePath}', EPIC_CODE_NAME, "Binaries", GOG_EXEC_FOLDER);
+    BINARIES_TARGET = path.join('{gamePath}', EPIC_CODE_NAME, "Binaries", GOG_EXEC_FOLDER);
     return GOG_EXEC;
   };
 
@@ -288,7 +288,7 @@ function applyGame(context, gameSpec) {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
     }, 
-    (game) => pathPattern(context.api, game, EXEC_TARGET), 
+    (game) => pathPattern(context.api, game, BINARIES_TARGET), 
     () => Promise.resolve(false), 
     { name: BINARIES_NAME }
   );

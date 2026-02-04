@@ -36,7 +36,7 @@ const gameFinderQuery = {
 
 //Information for setting the executable and variable paths based on the game store version
 let MOD_PATH = "";
-let EXEC_TARGET = "";
+let BINARIES_TARGET = "";
 let SCRIPTS_PATH = "";
 let SCRIPTS_TARGET = "";
 let SAVE_PATH = "";
@@ -280,7 +280,7 @@ function getExecutable(discoveryPath) {
 
   if (isCorrectExec(EXEC_XBOX)) {
     MOD_PATH = path.join(EPIC_CODE_NAME, "Binaries", EXEC_FOLDER_XBOX);
-    EXEC_TARGET = path.join('{gamePath}', MOD_PATH);
+    BINARIES_TARGET = path.join('{gamePath}', MOD_PATH);
     SCRIPTS_PATH = path.join(EPIC_CODE_NAME, "Binaries", EXEC_FOLDER_XBOX, "ue4ss", "Mods");
     SCRIPTS_TARGET = path.join('{gamePath}', SCRIPTS_PATH);
     CONFIG_PATH = CONFIG_PATH_XBOX;
@@ -301,7 +301,7 @@ function getExecutable(discoveryPath) {
 
   if (isCorrectExec(EXEC_DEFAULT)) {
     MOD_PATH = path.join(EPIC_CODE_NAME, "Binaries", EXEC_FOLDER_DEFAULT);
-    EXEC_TARGET = path.join('{gamePath}', MOD_PATH);
+    BINARIES_TARGET = path.join('{gamePath}', MOD_PATH);
     SCRIPTS_PATH = path.join(EPIC_CODE_NAME, "Binaries", EXEC_FOLDER_DEFAULT, "ue4ss", "Mods");
     SCRIPTS_TARGET = path.join('{gamePath}', SCRIPTS_PATH);
     CONFIG_PATH = CONFIG_PATH_DEFAULT;
@@ -1076,7 +1076,7 @@ function applyGame(context, gameSpec) {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
     }, 
-    (game) => pathPattern(context.api, game, EXEC_TARGET), 
+    (game) => pathPattern(context.api, game, BINARIES_TARGET), 
     () => Promise.resolve(false), 
     { name: BINARIES_NAME }
   );
@@ -1085,7 +1085,7 @@ function applyGame(context, gameSpec) {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
     }, 
-    (game) => pathPattern(context.api, game, EXEC_TARGET), 
+    (game) => pathPattern(context.api, game, BINARIES_TARGET), 
     () => Promise.resolve(false), 
     { name: UE4SS_NAME }
   );

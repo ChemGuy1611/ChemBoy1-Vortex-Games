@@ -32,7 +32,7 @@ const gameFinderQuery = {
 
 //Information for setting the executable and variable paths based on the game store version
 let MOD_PATH = null;
-let EXEC_TARGET = null;
+let BINARIES_TARGET = null;
 let CONFIG_PATH = null;
 let CONFIG_TARGET = null;
 let requiredFiles = [EPIC_CODE_NAME];
@@ -218,7 +218,7 @@ function getExecutable(discoveryPath) {
     MOD_PATH = path.join(EPIC_CODE_NAME, "Binaries", XBOX_EXEC_FOLDER);
     CONFIG_PATH = CONFIG_PATH_XBOX;
     CONFIG_TARGET = path.join('{localAppData}', CONFIG_PATH);
-    EXEC_TARGET = path.join('{gamePath}', EPIC_CODE_NAME, "Binaries", XBOX_EXEC_FOLDER);
+    BINARIES_TARGET = path.join('{gamePath}', EPIC_CODE_NAME, "Binaries", XBOX_EXEC_FOLDER);
     return XBOX_EXEC;
   };
 
@@ -226,7 +226,7 @@ function getExecutable(discoveryPath) {
     MOD_PATH = path.join(EPIC_CODE_NAME, "Binaries", STEAM_EXEC_FOLDER);
     CONFIG_PATH = CONFIG_PATH_DEFAULT;
     CONFIG_TARGET = path.join('{localAppData}', CONFIG_PATH);
-    EXEC_TARGET = path.join('{gamePath}', EPIC_CODE_NAME, "Binaries", STEAM_EXEC_FOLDER);
+    BINARIES_TARGET = path.join('{gamePath}', EPIC_CODE_NAME, "Binaries", STEAM_EXEC_FOLDER);
     return STEAM_EXEC;
   };
 
@@ -680,7 +680,7 @@ function applyGame(context, gameSpec) {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
     }, 
-    (game) => pathPattern(context.api, game, EXEC_TARGET), 
+    (game) => pathPattern(context.api, game, BINARIES_TARGET), 
     () => Promise.resolve(false), 
     { name: BINARIES_NAME }
   );

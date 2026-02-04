@@ -4,7 +4,11 @@
 
 - None Planned
 
-## [0.5.2] - 2026-02-03
+## [0.5.4] - 2026-02-04
+
+- Fixed: Wrong variable name in a couple open buttons
+
+## [0.5.3] - 2026-02-03
 
 - Improved: Made UE4SS Scripts, UE4SS DLL, LogicMods, and Root Folder mod installers case-insensitive to folder names
 

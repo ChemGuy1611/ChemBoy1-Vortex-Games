@@ -77,8 +77,8 @@ const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 //Information for setting the executable and variable paths based on the game store version
 let GAME_VERSION = '';
-let EXEC_PATH = null;
-let EXEC_TARGET = null;
+let BINARIES_PATH = null;
+let BINARIES_TARGET = null;
 let SHIPPING_EXE = '';
 let SCRIPTS_PATH = null;
 let SCRIPTS_TARGET = null;
@@ -307,8 +307,8 @@ function getExecutable(discoveryPath) {
   };
   if (isCorrectExec(EXEC_XBOX)) {
     GAME_VERSION = 'xbox';
-    EXEC_PATH = path.join(EPIC_CODE_NAME, "Binaries", EXEC_FOLDER_XBOX);
-    EXEC_TARGET = path.join('{gamePath}', EXEC_PATH);
+    BINARIES_PATH = path.join(EPIC_CODE_NAME, "Binaries", EXEC_FOLDER_XBOX);
+    BINARIES_TARGET = path.join('{gamePath}', BINARIES_PATH);
     SHIPPING_EXE = path.join(EPIC_CODE_NAME, "Binaries", EXEC_FOLDER_XBOX, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_XBOX}${SHIPEXE_STRING_XBOX}-Shipping.exe`);
     SCRIPTS_PATH = path.join(EPIC_CODE_NAME, "Binaries", EXEC_FOLDER_XBOX, UE4SS_MOD_PATH);
     SCRIPTS_TARGET = path.join('{gamePath}', SCRIPTS_PATH);
@@ -329,8 +329,8 @@ function getExecutable(discoveryPath) {
   };
   if (isCorrectExec(EXEC_DEFAULT)) {
     GAME_VERSION = 'steam';
-    EXEC_PATH = path.join(EPIC_CODE_NAME, "Binaries", EXEC_FOLDER_DEFAULT);
-    EXEC_TARGET = path.join('{gamePath}', EXEC_PATH);
+    BINARIES_PATH = path.join(EPIC_CODE_NAME, "Binaries", EXEC_FOLDER_DEFAULT);
+    BINARIES_TARGET = path.join('{gamePath}', BINARIES_PATH);
     SHIPPING_EXE = path.join(EPIC_CODE_NAME, "Binaries", EXEC_FOLDER_DEFAULT, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_DEFAULT}-Shipping.exe`);
     SCRIPTS_PATH = path.join(EPIC_CODE_NAME, "Binaries", EXEC_FOLDER_DEFAULT, UE4SS_MOD_PATH);
     SCRIPTS_TARGET = path.join('{gamePath}', SCRIPTS_PATH);
@@ -1644,7 +1644,7 @@ function applyGame(context, gameSpec) {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
     }, 
-    (game) => pathPattern(context.api, game, EXEC_TARGET), 
+    (game) => pathPattern(context.api, game, BINARIES_TARGET), 
     () => Promise.resolve(false), 
     { name: BINARIES_NAME }
   );
@@ -1653,7 +1653,7 @@ function applyGame(context, gameSpec) {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
     }, 
-    (game) => pathPattern(context.api, game, EXEC_TARGET), 
+    (game) => pathPattern(context.api, game, BINARIES_TARGET), 
     () => Promise.resolve(false), 
     { name: UE4SS_NAME }
   );
@@ -1665,7 +1665,7 @@ function applyGame(context, gameSpec) {
         var _a;
         return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
       }, 
-      (game) => pathPattern(context.api, game, EXEC_TARGET), 
+      (game) => pathPattern(context.api, game, BINARIES_TARGET), 
       () => Promise.resolve(false), 
       { name: SIGBYPASS_NAME }
     );
@@ -1727,7 +1727,7 @@ function applyGame(context, gameSpec) {
   );
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Binaries Folder', () => {
     GAME_PATH = getDiscoveryPath(context.api);
-    const openPath = path.join(GAME_PATH, EXEC_PATH);
+    const openPath = path.join(GAME_PATH, BINARIES_PATH);
     util.opn(openPath).catch(() => null);
     }, () => {
       const state = context.api.getState();

@@ -38,7 +38,7 @@ const UNREALDATA = {
 }
 
 //This information will be filled in from the data above
-const EXEC_PATH = path.join(EPIC_CODE_NAME, "Binaries", EXEC_FOLDER_NAME);
+const BINARIES_PATH = path.join(EPIC_CODE_NAME, "Binaries", EXEC_FOLDER_NAME);
 const SHIPPING_EXE = path.join(BINARIES_PATH, `${EPIC_CODE_NAME}-${EXEC_FOLDER_NAME}-Shipping.exe`);
 const BINARIES_ID = `${GAME_ID}-binaries`;
 
@@ -85,7 +85,7 @@ const spec = {
     "executable": EXEC,
     "logo": `${GAME_ID}.jpg`,
     "mergeMods": true,
-    "modPath": EXEC_PATH,
+    "modPath": BINARIES_PATH,
     "modPathIsRelative": true,
     "requiredFiles": [
       EXEC,
@@ -110,7 +110,7 @@ const spec = {
       "id": BINARIES_ID,
       "name": "Binaries (Engine Injector)",
       "priority": "high",
-      "targetPath": path.join('{gamePath}', EXEC_PATH)
+      "targetPath": path.join('{gamePath}', BINARIES_PATH)
     },
     /*
     {
