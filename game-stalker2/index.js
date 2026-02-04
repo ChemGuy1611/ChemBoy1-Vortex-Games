@@ -2,8 +2,8 @@
 Name: S.T.A.L.K.E.R. 2: Heart of Chornobyl Vortex Extension
 Structure: UE5 (Xbox-Integrated)
 Author: ChemBoy1
-Version: 0.5.3
-Date: 2026-02-03
+Version: 0.5.4
+Date: 2026-02-04
 //////////////////////////////////////////////////////////*/
 
 //Import libraries
