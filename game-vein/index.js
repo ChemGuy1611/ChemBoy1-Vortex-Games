@@ -51,7 +51,7 @@ const IO_STORE = false; //true if the Paks folder contains .ucas and .utoc files
 //UE specific
 const ENGINE_VERSION = '5.X.X'; //Unreal Engine version - info only atm. usually '4.27.2.0' or '5.X.X'
 const ROOT_FOLDERS = [EPIC_CODE_NAME, 'Engine']; //addressable folders in root
-const ROOTSUB_FOLDERS = ['Content', 'Binaries', 'Plugins', 'Mods']; //subfolders of EPIC_CODE_NAME.
+const ROOTSUB_FOLDERS = ['Content', 'Binaries', 'Mods']; //subfolders of EPIC_CODE_NAME.
 const SAVE_EXT = ".sav";
 const PAKMOD_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Paks', '~mods'); //usually works. Some games don't work from "~mods".
 const PAKMOD_LOADORDER = true; //set to false if you don't want loadOrder. If must be in "Paks" root, also disable loadOrder.
