@@ -4,6 +4,10 @@
 
 - None planned
 
+## [0.5.2] - 2026-02-03
+
+- Improved: Made UE4SS Scripts, UE4SS DLL, LogicMods, and Root Folder mod installers case-insensitive to folder names
+
 ## [0.5.1] - 2026-02-01
 
 - Fixed: Deploy notification not clearing on deploy

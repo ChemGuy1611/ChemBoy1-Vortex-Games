@@ -2,8 +2,8 @@
 Name: Final Fantasy VII Rebirth Vortex Extension
 Structure: UE4 with IO Store
 Author: ChemBoy1
-Version: 0.5.1
-Date: 2026-02-01
+Version: 0.5.2
+Date: 2026-02-03
 //////////////////////////////////////////////////*/
 
 //Import libraries
@@ -24,7 +24,7 @@ const EXEC = "ff7rebirth.exe";
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Final_Fantasy_VII_Rebirth";
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1150"; //Nexus link to this extension. Used for links
 
-let GAME_PATH = null;
+let GAME_PATH = '';
 let CHECK_DOCS = false;
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';

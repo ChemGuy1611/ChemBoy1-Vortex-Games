@@ -2,8 +2,8 @@
 Name: Black Myth Wukong Vortex Extension
 Structure: UE5
 Author: ChemBoy1
-Version: 0.3.0
-Date: 2026-01-30
+Version: 0.3.2
+Date: 2026-02-03
 //////////////////////////////////////////////////*/
 
 //Import libraries
