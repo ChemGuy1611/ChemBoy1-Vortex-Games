@@ -2,8 +2,8 @@
 Name: CODE VEIN II Vortex Extension
 Structure: Unreal Engine Game
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2026-01-29
+Version: 0.1.1
+Date: 2026-02-04
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -56,7 +56,7 @@ const IO_STORE = true; //true if the Paks folder contains .ucas and .utoc files
 //UE specific
 const ENGINE_VERSION = '5.4.4.0'; //Unreal Engine version - info only atm. usually '4.27.2.0' or '5.X.X.0'
 const ROOT_FOLDERS = [EPIC_CODE_NAME, 'Engine']; //addressable folders in root
-const ROOTSUB_FOLDERS = ['Content', 'Binaries', 'Plugins', 'Mods']; //subfolders of EPIC_CODE_NAME.
+const ROOTSUB_FOLDERS = ['Content', 'Binaries', 'Mods']; //subfolders of EPIC_CODE_NAME. Don't use "Plugins" here since it can conflict with plugin loader/asi mods
 const SAVE_EXT = ".sav";
 const SAVE_COMPAT_VERSIONS = ['steam', 'epic', 'gog']; //game versions with installable save mods (never Xbox)
 const PAKMOD_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Paks', '~mods'); //usually works. Some games don't work from "~mods".
@@ -104,7 +104,7 @@ let PAK_FILE_MIN = 1;
 let SYM_LINKS = true;
 if (IO_STORE) { //Set file number for pak installer file selection (needs to be 3 if IO Store is used to accomodate .ucas and .utoc files)
   SYM_LINKS = false;
-  PAKMOD_EXTS = ['.pak', '.ucas', '.utoc'];
+  PAKMOD_EXTS = ['.pak', '.ucas', '.utoc', '.toml']; //.toml for RHFF Framework mods
   PAK_FILE_MIN = PAKMOD_EXTS.length;
 }
 
@@ -235,6 +235,12 @@ const MODKIT_EXEC_NAME = "ModKit.exe";
 const MODKIT_FOLDER = path.join('XXX', 'Binaries', 'Win64');
 const MODKIT_EXEC_PATH = path.join(MODKIT_FOLDER, MODKIT_EXEC_NAME);
 
+const RHFF_ID = `${GAME_ID}-rhff`;
+const RHFF_NAME = "RHFF Framework";
+const RHFF_PATH = BINARIES_PATH;
+const RHFF_FILE = "RHFF.asi";
+const RHFF_DLL = "dsound.dll";
+
 // -- START EDIT ZONE -- ///////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -314,6 +320,12 @@ const spec = {
       "name": ROOTSUB_NAME,
       "priority": "high",
       "targetPath": path.join('{gamePath}', ROOTSUB_PATH)
+    },
+    {
+      "id": RHFF_ID,
+      "name": RHFF_NAME,
+      "priority": "high",
+      "targetPath": path.join('{gamePath}', RHFF_PATH)
     },
   ],
   "discovery": {
@@ -698,6 +710,47 @@ function installModKitMod(files, fileName) {
       type: 'copy',
       source: file,
       destination: path.join(MOD_FOLDER, file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Installer test for RHFF Framework files
+function testRhff(files, gameId) {
+  const isMod = files.some(file => (path.basename(file).toLowerCase() === RHFF_FILE.toLowerCase()));
+  const isDll = files.some(file => (path.basename(file).toLowerCase() === RHFF_DLL.toLowerCase()));
+  let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Installer install RHFF Framework files
+function installRhff(files) {
+  const modFile = files.find(file => (path.basename(file).toLowerCase() === RHFF_DLL.toLowerCase()));
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: RHFF_ID };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
     };
   });
   instructions.push(setModTypeInstruction);
@@ -1693,7 +1746,8 @@ function UNREALEXTENSION(context) {
     if (fileExt) {
       modFiles = files.filter(file => fileExt.includes(path.extname(file).toLowerCase()));
     }
-    let supported = ( supportedGame && (gameId === spec.game.id) && modFiles.length > 0 );
+    const isPak = files.some(file => (path.extname(file).toLowerCase() === PAK_EXT));
+    let supported = ( supportedGame && (gameId === spec.game.id) && modFiles.length > 0 && isPak );
     
     // Test for a mod installer
     if (supported && files.find(file =>
@@ -2063,8 +2117,9 @@ function applyGame(context, gameSpec) {
   if (hasModKit === true) {
     context.registerInstaller(MODKITMOD_ID, 25, testModKitMod, installModKitMod);
   }
-  context.registerInstaller(UE4SSCOMBO_ID, 26, testUe4ssCombo, installUe4ssCombo);
-  context.registerInstaller(LOGICMODS_ID, 27, testLogic, installLogic);
+  context.registerInstaller(RHFF_ID, 26, testRhff, installRhff);
+  context.registerInstaller(UE4SSCOMBO_ID, 27, testUe4ssCombo, installUe4ssCombo);
+  context.registerInstaller(LOGICMODS_ID, 28, testLogic, installLogic);
   //29 is pak installer above
   context.registerInstaller(UE4SS_ID, 31, testUe4ss, installUe4ss);
   if (SIGBYPASS_REQUIRED === true) {
