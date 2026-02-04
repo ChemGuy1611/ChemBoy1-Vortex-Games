@@ -4,6 +4,16 @@
 
 - tool to launch inZOIMODKit (having difficulty with discovering the install location)
 
+## [0.6.0] - 2026-02-03
+
+- Removed: Automatic download of Mod Enabler - users can still install it from a new Vortex button or the mod page
+- Fixed: Mod installs are properly cancelled if the modType is not deployable - This avoids confusion about if the mod will work
+- Fixed: Proper installer handling for all Documents folder mods (Creations, AIGenerated, Canvas, My3DPrinter, MyAppearances, Animations, Textures)
+- Fixed: Path checker reliablity
+- Added: Tool to launch inZOIMODKit, if installed.
+- Fixed: Path strings
+- Added: Buttons to open several files/folders/URLs
+
 ## [0.5.1] - 2025-12-04
 
 - Added compatibility flags to remove built-in Vortex modTypes. Users should now be able to deploy mods when the game folder is not on the C drive. Note that you still won't be able to install mods to the game folder if it is not on C drive.

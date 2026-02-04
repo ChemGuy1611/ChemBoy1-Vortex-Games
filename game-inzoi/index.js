@@ -2,8 +2,8 @@
 Name: inZOI Vortex Extension
 Structure: UE5
 Author: ChemBoy1
-Version: 0.5.1
-Date: 2025-12-04
+Version: 0.6.0
+Date: 2026-02-03
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -23,7 +23,10 @@ const XBOXEXECNAME = null;
 const GAME_NAME = "inZOI";
 const GAME_NAME_SHORT = "inZOI";
 const EXEC = "inZOI.exe";
-let GAME_PATH = null;
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/InZOI";
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1241"; //Nexus link to this extension. Used for links
+
+let GAME_PATH = '';
 let CHECK_CONFIG = false;
 let CHECK_DOCS = false; 
 let STAGING_FOLDER = '';
@@ -145,17 +148,17 @@ const MODENABLER_FILE_NO = 13;
 const CREATIONS_ID = `${GAME_ID}-creations`;
 const CREATIONS_NAME = "Creations (Documents)";
 const CREATIONS_PATH = path.join(DOCS_PATH);
-const CREATIONS_FILE = "Creations";
+const CREATIONS_FOLDER = "Creations";
 
 const AIGENERATED_ID = `${GAME_ID}-aigenerated`;
 const AIGENERATED_NAME = "AIGenerated (Documents)";
 const AIGENERATED_PATH = path.join(DOCS_PATH);
-const AIGENERATED_FILE = "AIGenerated";
+const AIGENERATED_FOLDER = "AIGenerated";
 
 const CANVAS_ID = `${GAME_ID}-canvas`;
 const CANVAS_NAME = "Canvas (Documents)";
 const CANVAS_PATH = path.join(DOCS_PATH);
-const CANVAS_FILE = "Canvas";
+const CANVAS_FOLDER = "Canvas";
 
 //Individual file installers (NO Creations/AIGenerated/Canvas folders)
 const MY3DPRINTER_ID = `${GAME_ID}-my3dprinter`;
@@ -409,9 +412,10 @@ function installUe4ssCombo(api, files) {
 
   //Partition check for if mod can be installed
   GAME_PATH = getDiscoveryPath(api);
-  const CHECK = checkPartitions(DOCS_PATH, GAME_PATH);
+  const CHECK = checkPartitions(DOCUMENTS, GAME_PATH);
   if (!CHECK) {
     api.showErrorNotification(`Could not install mod as "${UE4SSCOMBO_NAME}"`, `You tried installing a "${UE4SSCOMBO_NAME}" mod, but the game folder, Vortex Mod Staging folder, and ${DOCS_LOC} folder are not all on the same drive. Please move the game and/or Vortex Mod Staging Folder to the same drive as the ${DOCS_LOC} folder (typically C Drive) to install these types of mods with Vortex.`, { allowReport: false });
+    throw new util.ProcessCanceled(``);
   } 
 
   return Promise.resolve({ instructions });
@@ -420,7 +424,8 @@ function installUe4ssCombo(api, files) {
 //Test for LogicMods files
 function testLogic(files, gameId) {
   const isMod = files.some(file => (path.basename(file).toLowerCase() === LOGICMODS_FOLDER.toLowerCase()));
-  let supported = (gameId === spec.game.id) && isMod;
+  const isExt = files.some(file => (path.extname(file).toLowerCase() === LOGICMODS_EXT));
+  let supported = (gameId === spec.game.id) && isMod && isExt;
 
   // Test for a mod installer
   if (supported && files.find(file =>
@@ -459,9 +464,10 @@ function installLogic(api, files) {
 
   //Partition check for if mod can be installed
   GAME_PATH = getDiscoveryPath(api);
-  const CHECK = checkPartitions(DOCS_PATH, GAME_PATH);
+  const CHECK = checkPartitions(DOCUMENTS, GAME_PATH);
   if (!CHECK) {
     api.showErrorNotification(`Could not install mod as "${LOGICMODS_NAME}"`, `You tried installing a "${LOGICMODS_NAME}" mod, but the game folder, Vortex Mod Staging folder, and ${DOCS_LOC} folder are not all on the same drive. Please move the game and/or Vortex Mod Staging Folder to the same drive as the ${DOCS_LOC} folder (typically C Drive) to install these types of mods with Vortex.`, { allowReport: false });
+    throw new util.ProcessCanceled(``);
   } 
 
   return Promise.resolve({ instructions });
@@ -508,7 +514,14 @@ function installPak(api, files, fileName) {
     MOD_FOLDER = JSON_MOD_NAME;
   } catch (err) { //mod_manifest.json could not be read.
     log('error', `Could not read ${UE5KITMOD_FILE} file for mod ${MOD_NAME} - ${err}:${err.message}`);
-    api.showErrorNotification(`Could not get "ProjectName" from ${UE5KITMOD_FILE} file for mod ${MOD_NAME}`, `Could not get "ProjectName" from ${UE5KITMOD_FILE} file for mod ${MOD_NAME}. \n You must manually verify the folder above the mod files is named correctly.`, { allowReport: false });
+    api.sendNotification({
+      id: `${GAME_ID}-projectnamenotfound`,
+      type: 'error',
+      message: `Could not get "ProjectName" from ${UE5KITMOD_FILE} file for mod ${MOD_NAME}.\nYou must manually verify the folder above the mod files is named correctly.`,
+      allowSuppress: false,
+      actions: [],
+    });
+    //api.showErrorNotification(`Could not get "ProjectName" from ${UE5KITMOD_FILE} file for mod ${MOD_NAME}`, `Could not get "ProjectName" from ${UE5KITMOD_FILE} file for mod ${MOD_NAME}. \n You must manually verify the folder above the mod files is named correctly.`, { allowReport: false });
   }
 
   // Remove directories and anything that isn't in the rootPath.
@@ -568,9 +581,10 @@ function installUe4ss(api, files) {
 
   //Partition check for if mod can be installed
   GAME_PATH = getDiscoveryPath(api);
-  const CHECK = checkPartitions(DOCS_PATH, GAME_PATH);
+  const CHECK = checkPartitions(DOCUMENTS, GAME_PATH);
   if (!CHECK) {
     api.showErrorNotification(`Could not install mod as "${UE4SS_NAME}"`, `You tried installing a "${UE4SS_NAME}" mod, but the game folder, Vortex Mod Staging folder, and ${DOCS_LOC} folder are not all on the same drive. Please move the game and/or Vortex Mod Staging Folder to the same drive as the ${DOCS_LOC} folder (typically C Drive) to install these types of mods with Vortex.`, { allowReport: false });
+    throw new util.ProcessCanceled(``);
   } 
 
   return Promise.resolve({ instructions });
@@ -612,11 +626,12 @@ function installModEnabler(api, files) {
   });
   instructions.push(setModTypeInstruction);
 
-  /*Partition check for if mod can be installed
+  //*Partition check for if mod can be installed
   GAME_PATH = getDiscoveryPath(api);
-  const CHECK = checkPartitions(DOCS_PATH, GAME_PATH);
+  const CHECK = checkPartitions(DOCUMENTS, GAME_PATH);
   if (!CHECK) {
     api.showErrorNotification(`Could not install mod as "${MODENABLER_NAME}"`, `You tried installing a "${MODENABLER_NAME}" mod, but the game folder, Vortex Mod Staging folder, and ${DOCS_LOC} folder are not all on the same drive. Please move the game and/or Vortex Mod Staging Folder to the same drive as the ${DOCS_LOC} folder (typically C Drive) to install these types of mods with Vortex.`, { allowReport: false });
+    throw new util.ProcessCanceled(``);
   }//*/ 
 
   return Promise.resolve({ instructions });
@@ -686,9 +701,10 @@ function installScripts(api, files, fileName) {
 
   //Partition check for if mod can be installed
   GAME_PATH = getDiscoveryPath(api);
-  const CHECK = checkPartitions(DOCS_PATH, GAME_PATH);
+  const CHECK = checkPartitions(DOCUMENTS, GAME_PATH);
   if (!CHECK) {
-    api.showErrorNotification(`Could not install mod as "${SCRIPTS_NAME_NAME}"`, `You tried installing a "${SCRIPTS_NAME}" mod, but the game folder, Vortex Mod Staging folder, and ${DOCS_LOC} folder are not all on the same drive. Please move the game and/or Vortex Mod Staging Folder to the same drive as the ${DOCS_LOC} folder (typically C Drive) to install these types of mods with Vortex.`, { allowReport: false });
+    api.showErrorNotification(`Could not install mod as "${SCRIPTS_NAME}"`, `You tried installing a "${SCRIPTS_NAME}" mod, but the game folder, Vortex Mod Staging folder, and ${DOCS_LOC} folder are not all on the same drive. Please move the game and/or Vortex Mod Staging Folder to the same drive as the ${DOCS_LOC} folder (typically C Drive) to install these types of mods with Vortex.`, { allowReport: false });
+    throw new util.ProcessCanceled(``);
   } 
 
   return Promise.resolve({ instructions });
@@ -758,9 +774,10 @@ function installDll(api, files, fileName) {
 
   //Partition check for if mod can be installed
   GAME_PATH = getDiscoveryPath(api);
-  const CHECK = checkPartitions(DOCS_PATH, GAME_PATH);
+  const CHECK = checkPartitions(DOCUMENTS, GAME_PATH);
   if (!CHECK) {
     api.showErrorNotification(`Could not install mod as "${DLL_NAME}"`, `You tried installing a "${DLL_NAME}" mod, but the game folder, Vortex Mod Staging folder, and ${DOCS_LOC} folder are not all on the same drive. Please move the game and/or Vortex Mod Staging Folder to the same drive as the ${DOCS_LOC} folder (typically C Drive) to install these types of mods with Vortex.`, { allowReport: false });
+    throw new util.ProcessCanceled(``);
   } 
 
   return Promise.resolve({ instructions });
@@ -768,7 +785,7 @@ function installDll(api, files, fileName) {
 
 //Installer test for Creations folder
 function testCreations(files, gameId) {
-  const isMod = files.some(file => (path.basename(file) === CREATIONS_FILE));
+  const isMod = files.some(file => (path.basename(file).toLowerCase() === CREATIONS_FOLDER.toLowerCase()));
   let supported = (gameId === spec.game.id) && isMod;
 
   // Test for a mod installer.
@@ -786,7 +803,7 @@ function testCreations(files, gameId) {
 
 //Install Creations folder
 function installCreations(api, files) {
-  const modFile = files.find(file => (path.basename(file) === CREATIONS_FILE));
+  const modFile = files.find(file => (path.basename(file).toLowerCase() === CREATIONS_FOLDER.toLowerCase()));
   const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: CREATIONS_ID };
@@ -808,7 +825,7 @@ function installCreations(api, files) {
 
 //Installer test for Creations folder
 function testAiGenerated(files, gameId) {
-  const isMod = files.some(file => (path.basename(file) === AIGENERATED_FILE));
+  const isMod = files.some(file => (path.basename(file).toLowerCase() === AIGENERATED_FOLDER.toLowerCase()));
   let supported = (gameId === spec.game.id) && isMod;
 
   // Test for a mod installer.
@@ -826,7 +843,7 @@ function testAiGenerated(files, gameId) {
 
 //Install Creations folder
 function installAiGenerated(api, files) {
-  const modFile = files.find(file => (path.basename(file) === AIGENERATED_FILE));
+  const modFile = files.find(file => (path.basename(file).toLowerCase() === AIGENERATED_FOLDER.toLowerCase()));
   const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: AIGENERATED_ID };
@@ -848,7 +865,7 @@ function installAiGenerated(api, files) {
 
 //Installer test for Creations folder
 function testCanvas(files, gameId) {
-  const isMod = files.some(file => (path.basename(file) === CANVAS_FILE));
+  const isMod = files.some(file => (path.basename(file).toLowerCase() === CANVAS_FOLDER.toLowerCase()));
   let supported = (gameId === spec.game.id) && isMod;
 
   // Test for a mod installer.
@@ -866,7 +883,7 @@ function testCanvas(files, gameId) {
 
 //Install Creations folder
 function installCanvas(api, files) {
-  const modFile = files.find(file => (path.basename(file) === CANVAS_FILE));
+  const modFile = files.find(file => (path.basename(file).toLowerCase() === CANVAS_FOLDER.toLowerCase()));
   const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: CANVAS_ID };
@@ -907,25 +924,32 @@ function testMy3DPrinter(files, gameId) {
 }
 
 //Install My3DPrinter files
-function installMy3DPrinter(api, files) {
-  const modFile = files.find(file => MY3DPRINTER_EXTS.includes(path.extname(file).toLowerCase()));
-  const rootPath = path.dirname(modFile);
-  let idx = modFile.indexOf(`${path.basename(rootPath)}${path.sep}`);
-  let MOD_FOLDER = path.basename(rootPath);
-  if (MOD_FOLDER === '.') {
-    idx = modFile.indexOf(path.basename(modFile));
-  }
+function installMy3DPrinter(api, files, fileName) {
   const setModTypeInstruction = { type: 'setmodtype', value: MY3DPRINTER_ID };
+  const MOD_NAME = path.basename(fileName);
+  let MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
+  let modFile = files.find(file => MY3DPRINTER_EXTS.includes(path.extname(file).toLowerCase()));
+  let idx = modFile.indexOf(path.basename(modFile));
+  let rootPath = path.dirname(modFile);
+  const ROOT_PATH = path.basename(rootPath);
+  if (ROOT_PATH !== '.') {
+    MOD_FOLDER = '.'; //no top level folder needed if it's already included in the archive
+    modFile = rootPath; //make the folder the targeted modFile so we can grab any other folders also in its directory
+    rootPath = path.dirname(modFile);
+    /*const indexFolder = path.basename(modFile); //index to catch other folders in the same directory
+    idx = modFile.indexOf(`${indexFolder}${path.sep}`); //index on the folder with path separator //*/
+  }
+  idx = modFile.indexOf(path.basename(modFile));
   
-  //Filter files and set instructions
+  // Remove empty directories and anything that isn't in the rootPath
   const filtered = files.filter(file =>
-    (!file.endsWith(path.sep))
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
   );
   const instructions = filtered.map(file => {
     return {
       type: 'copy',
       source: file,
-      destination: path.join(file.substr(idx)),
+      destination: path.join(MOD_FOLDER, file.substr(idx)),
     };
   });
   instructions.push(setModTypeInstruction);
@@ -951,25 +975,31 @@ function testMyAppearances(files, gameId) {
 }
 
 //Install Canvas files
-function installMyAppearances(api, files) {
-  const modFile = files.find(file => (path.basename(file).toLowerCase() === MYAPPEARANCES_FILE));
-  const rootPath = path.dirname(modFile);
-  let idx = modFile.indexOf(`${path.basename(rootPath)}${path.sep}`);
-  let MOD_FOLDER = path.basename(rootPath);
-  if (MOD_FOLDER === '.') {
-    idx = modFile.indexOf(path.basename(modFile));
-  }
+function installMyAppearances(api, files, fileName) {
   const setModTypeInstruction = { type: 'setmodtype', value: MYAPPEARANCES_ID };
-  
-  //Filter files and set instructions
+  const MOD_NAME = path.basename(fileName);
+  let MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
+  let modFile = files.find(file => (path.basename(file).toLowerCase() === MYAPPEARANCES_FILE));
+  let idx = modFile.indexOf(path.basename(modFile));
+  let rootPath = path.dirname(modFile);
+  const ROOT_PATH = path.basename(rootPath);
+  if (ROOT_PATH !== '.') {
+    MOD_FOLDER = '.'; //no top level folder needed if it's already included in the archive
+    modFile = rootPath; //make the folder the targeted modFile so we can grab any other folders also in its directory
+    rootPath = path.dirname(modFile);
+    /*const indexFolder = path.basename(modFile); //index to catch other folders in the same directory
+    idx = modFile.indexOf(`${indexFolder}${path.sep}`); //index on the folder with path separator //*/
+  }
+  idx = modFile.indexOf(path.basename(modFile));
+  // Remove empty directories and anything that isn't in the rootPath
   const filtered = files.filter(file =>
-    (!file.endsWith(path.sep))
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
   );
   const instructions = filtered.map(file => {
     return {
       type: 'copy',
       source: file,
-      destination: path.join(file.substr(idx)),
+      destination: path.join(MOD_FOLDER, file.substr(idx)),
     };
   });
   instructions.push(setModTypeInstruction);
@@ -995,25 +1025,32 @@ function testAnimations(files, gameId) {
 }
 
 //Install Animations files
-function installAnimations(api, files) {
-  const modFile = files.find(file => (path.basename(file).toLowerCase() === ANIMATIONS_FILE));
-  const rootPath = path.dirname(modFile);
-  let idx = modFile.indexOf(`${path.basename(rootPath)}${path.sep}`);
-  let MOD_FOLDER = path.basename(rootPath);
-  if (MOD_FOLDER === '.') {
-    idx = modFile.indexOf(path.basename(modFile));
-  }
+function installAnimations(api, files, fileName) {
   const setModTypeInstruction = { type: 'setmodtype', value: ANIMATIONS_ID };
+  const MOD_NAME = path.basename(fileName);
+  let MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
+  let modFile = files.find(file => (path.basename(file).toLowerCase() === ANIMATIONS_FILE));
+  let idx = modFile.indexOf(path.basename(modFile));
+  let rootPath = path.dirname(modFile);
+  const ROOT_PATH = path.basename(rootPath);
+  if (ROOT_PATH !== '.') {
+    MOD_FOLDER = '.'; //no top level folder needed if it's already included in the archive
+    modFile = rootPath; //make the folder the targeted modFile so we can grab any other folders also in its directory
+    rootPath = path.dirname(modFile);
+    /*const indexFolder = path.basename(modFile); //index to catch other folders in the same directory
+    idx = modFile.indexOf(`${indexFolder}${path.sep}`); //index on the folder with path separator //*/
+  }
+  idx = modFile.indexOf(path.basename(modFile));
   
-  //Filter files and set instructions
+  // Remove empty directories and anything that isn't in the rootPath
   const filtered = files.filter(file =>
-    (!file.endsWith(path.sep))
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
   );
   const instructions = filtered.map(file => {
     return {
       type: 'copy',
       source: file,
-      destination: path.join(file.substr(idx)),
+      destination: path.join(MOD_FOLDER, file.substr(idx)),
     };
   });
   instructions.push(setModTypeInstruction);
@@ -1039,31 +1076,37 @@ function testTextures(files, gameId) {
 }
 
 //Install Animations files
-function installTextures(api, files) {
-  const modFile = files.find(file => (path.basename(file).toLowerCase() === TEXTURES_FILE));
-  const rootPath = path.dirname(modFile);
-  let idx = modFile.indexOf(`${path.basename(rootPath)}${path.sep}`);
-  let MOD_FOLDER = path.basename(rootPath);
-  if (MOD_FOLDER === '.') {
-    idx = modFile.indexOf(path.basename(modFile));
-  }
+function installTextures(api, files, fileName) {
   const setModTypeInstruction = { type: 'setmodtype', value: TEXTURES_ID };
+  const MOD_NAME = path.basename(fileName);
+  let MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
+  let modFile = files.find(file => (path.basename(file).toLowerCase() === TEXTURES_FILE));
+  let idx = modFile.indexOf(path.basename(modFile));
+  let rootPath = path.dirname(modFile);
+  const ROOT_PATH = path.basename(rootPath);
+  if (ROOT_PATH !== '.') {
+    MOD_FOLDER = '.'; //no top level folder needed if it's already included in the archive
+    modFile = rootPath; //make the folder the targeted modFile so we can grab any other folders also in its directory
+    rootPath = path.dirname(modFile);
+    /*const indexFolder = path.basename(modFile); //index to catch other folders in the same directory
+    idx = modFile.indexOf(`${indexFolder}${path.sep}`); //index on the folder with path separator //*/
+  }
+  idx = modFile.indexOf(path.basename(modFile));
   
-  //Filter files and set instructions
+  // Remove empty directories and anything that isn't in the rootPath
   const filtered = files.filter(file =>
-    (!file.endsWith(path.sep))
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
   );
   const instructions = filtered.map(file => {
     return {
       type: 'copy',
       source: file,
-      destination: path.join(file.substr(idx)),
+      destination: path.join(MOD_FOLDER, file.substr(idx)),
     };
   });
   instructions.push(setModTypeInstruction);
   return Promise.resolve({ instructions });
 }
-
 
 //Installer test for root folder files
 function testRoot(files, gameId) {
@@ -1105,9 +1148,10 @@ function installRoot(api, files) {
 
   //Partition check for if mod can be installed
   GAME_PATH = getDiscoveryPath(api);
-  const CHECK = checkPartitions(DOCS_PATH, GAME_PATH);
+  const CHECK = checkPartitions(DOCUMENTS, GAME_PATH);
   if (!CHECK) {
     api.showErrorNotification(`Could not install mod as "${ROOT_NAME}"`, `You tried installing a "${ROOT_NAME}" mod, but the game folder, Vortex Mod Staging folder, and ${DOCS_LOC} folder are not all on the same drive. Please move the game and/or Vortex Mod Staging Folder to the same drive as the ${DOCS_LOC} folder (typically C Drive) to install these types of mods with Vortex.`, { allowReport: false });
+    throw new util.ProcessCanceled(``);
   } 
 
   return Promise.resolve({ instructions });
@@ -1151,9 +1195,10 @@ function installConfig(api, files) {
   });
   instructions.push(setModTypeInstruction);
   GAME_PATH = getDiscoveryPath(api);
-  const IS_CONFIG = checkPartitions(CONFIG_PATH, GAME_PATH);
+  const IS_CONFIG = checkPartitions(LOCALAPPDATA, DOCUMENTS);
   if (IS_CONFIG === false) {
     api.showErrorNotification(`Could not install mod as "${CONFIG_NAME}"`, `You tried installing a "${CONFIG_NAME}" mod, but the game, Vortex Mod Staging folder, and ${CONFIG_LOC} folder are not all on the same drive. Please move the game and/or Vortex Mod Staging folder to the same drive as the ${CONFIG_LOC} folder (typically C Drive) to install these types of mods with Vortex.`, { allowReport: false });
+    throw new util.ProcessCanceled(``);
   }
   return Promise.resolve({ instructions });
 }
@@ -1196,12 +1241,13 @@ function installSave(api, files) {
   });
   instructions.push(setModTypeInstruction);
 
-  //Partition check for if mod can be installed
+  /*Partition check for if mod can be installed
   GAME_PATH = getDiscoveryPath(api);
-  const CHECK = checkPartitions(DOCS_PATH, GAME_PATH);
+  const CHECK = checkPartitions(DOCUMENTS, SAVE_PATH);
   if (!CHECK) {
     api.showErrorNotification(`Could not install mod as "${SAVE_NAME}"`, `You tried installing a "${SAVE_NAME}" mod, but the game folder, Vortex Mod Staging folder, and ${DOCS_LOC} folder are not all on the same drive. Please move the game and/or Vortex Mod Staging Folder to the same drive as the ${DOCS_LOC} folder (typically C Drive) to install these types of mods with Vortex.`, { allowReport: false });
-  } 
+    throw new util.ProcessCanceled(``);
+  } //*/
 
   return Promise.resolve({ instructions });
 }
@@ -1243,9 +1289,10 @@ function installBinaries(api, files) {
 
   //Partition check for if mod can be installed
   GAME_PATH = getDiscoveryPath(api);
-  const CHECK = checkPartitions(DOCS_PATH, GAME_PATH);
+  const CHECK = checkPartitions(DOCUMENTS, GAME_PATH);
   if (!CHECK) {
     api.showErrorNotification(`Could not install mod as "${BINARIES_NAME}"`, `You tried installing a "${BINARIES_NAME}" mod, but the game folder, Vortex Mod Staging folder, and ${DOCS_LOC} folder are not all on the same drive. Please move the game and/or Vortex Mod Staging Folder to the same drive as the ${DOCS_LOC} folder (typically C Drive) to install these types of mods with Vortex.`, { allowReport: false });
+    throw new util.ProcessCanceled(``);
   } 
 
   return Promise.resolve({ instructions });
@@ -1554,6 +1601,15 @@ function installUnrealMod(api, files, gameId) {
     });
     instructions.push(modType);
     instructions.push(unrealModFiles);
+
+    //Partition check for if mod can be installed
+    GAME_PATH = getDiscoveryPath(api);
+    const CHECK = checkPartitions(DOCUMENTS, GAME_PATH);
+    if (!CHECK) {
+      api.showErrorNotification(`Could not install legacy Pak mod`, `You tried installing a legacy Pak mod, but the game folder, Vortex Mod Staging folder, and ${DOCS_LOC} folder are not all on the same drive. Please move the game and/or Vortex Mod Staging Folder to the same drive as the ${DOCS_LOC} folder (typically C Drive) to install these types of mods with Vortex.`, { allowReport: false });
+      throw new util.ProcessCanceled(``);
+    } 
+
     return Promise.resolve({ instructions });
   });
 }
@@ -1632,7 +1688,7 @@ function UNREALEXTENSION(context) {
     (gameId) => {
       GAME_PATH = getDiscoveryPath(context.api);
       if (GAME_PATH !== undefined) {
-        CHECK_DOCS = checkPartitions(DOCS_PATH, GAME_PATH);
+        CHECK_DOCS = checkPartitions(DOCUMENTS, GAME_PATH);
       }
       return (testUnrealGame(gameId, true) && CHECK_DOCS);
     }, 
@@ -1646,7 +1702,7 @@ function UNREALEXTENSION(context) {
     (gameId) => {
       GAME_PATH = getDiscoveryPath(context.api);
       if (GAME_PATH !== undefined) {
-        CHECK_DOCS = checkPartitions(DOCS_PATH, GAME_PATH);
+        CHECK_DOCS = checkPartitions(DOCUMENTS, GAME_PATH);
       }
       return (testUnrealGame(gameId, true) && CHECK_DOCS);
     },  
@@ -1662,9 +1718,6 @@ function UNREALEXTENSION(context) {
 
 // Function to check if staging folder and game path are on same drive partition to enable modtypes + installers
 function checkPartitions(folder1, folder2) {
-  if (!IO_STORE) { // true if IO-Store is not enabled for the game, since symlinks work fine in that case
-    return true;
-  }
   try {
     // Define paths
     const path1 = folder1;
@@ -1709,11 +1762,12 @@ function partitionCheckNotify(api, CHECK_CONFIG, CHECK_DOCS) {
                 + `Vortex detected that one or more of the mod types listed below are not available because the game, staging folder, and user folder are not on the same partition.\n`
                 + `\n`
                 + `Here are your results for the partition check to enable these mod types:\n`
-                + `  - Config: ${CHECK_CONFIG ? 'ENABLED: Config Folder (Local AppData) is on the same partition as the game folder and the Vortex Staging folder and the modtype is available' : 'DISABLED: Config Folder (Local AppData) is NOT on the same partition as the game folder and the Vortex staging folder and the modtype is NOT available'}\n`
+                + `  - Config: ${CHECK_CONFIG ? 'ENABLED: Config Folder (Local AppData) is on the same partition as the Documents folder and the Vortex Staging folder and the modtype is available' : 'DISABLED: Config Folder (Local AppData) is NOT on the same partition as the Documents folder and the Vortex staging folder and the modtype is NOT available'}\n`
                 + `  - Game Folder: ${CHECK_DOCS ? 'ENABLED: Game folders are on the same partition as User Documents and the Vortex Staging folder. All modtypes that install to the game folder are available.' : 'DISABLED: Game folders are NOT on the same partition as User Documents and the Vortex Staging folder. All modtypes that install to the game folder are NOT available.'}\n`
                 + `\n`
                 + `Config Path: ${CONFIG_PATH}\n`
                 + `Documents Path: ${DOCS_PATH}\n`
+                + `Staging Path: ${STAGING_FOLDER}\n`
                 + `Game Path: ${GAME_PATH}\n`
                 + `\n`
                 + `If you want to use the disabled mod types, you must move the game and/or Vortex Staging folder to the same partition as the User Documents folder and/or Local AppData (typically C Drive).\n`
@@ -1829,8 +1883,8 @@ async function setup(discovery, api, gameSpec) {
   GAME_PATH = discovery.path;
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
-  CHECK_CONFIG = checkPartitions(LOCALAPPDATA, GAME_PATH);
-  CHECK_DOCS = checkPartitions(DOCS_PATH, GAME_PATH);
+  CHECK_CONFIG = checkPartitions(LOCALAPPDATA, DOCUMENTS);
+  CHECK_DOCS = checkPartitions(DOCUMENTS, GAME_PATH);
   if (!CHECK_DOCS || !CHECK_CONFIG) {
     partitionCheckNotify(api, CHECK_CONFIG, CHECK_DOCS);
   }
@@ -1851,7 +1905,7 @@ async function setup(discovery, api, gameSpec) {
   await fs.ensureDirWritableAsync(MYAPPEARANCES_PATH);
   await fs.ensureDirWritableAsync(ANIMATIONS_PATH);
   await fs.ensureDirWritableAsync(TEXTURES_PATH);
-  await downloadModEnabler(api, gameSpec);
+  //await downloadModEnabler(api, gameSpec); //Disabled due to mod installs properly cancelling now. Users can still install from the mod page
   //await downloadUe4ss(api, gameSpec);
   //await downloadUe4ssNexus(api, gameSpec);
   return fs.ensureDirWritableAsync(path.join(MOD_PATH_DEFAULT));
@@ -1943,7 +1997,7 @@ function applyGame(context, gameSpec) {
     (gameId) => { //isSupported - Is this mod for this game?
       GAME_PATH = getDiscoveryPath(context.api);
       if (GAME_PATH !== undefined) {
-        CHECK_CONFIG = checkPartitions(LOCALAPPDATA, GAME_PATH);
+        CHECK_CONFIG = checkPartitions(LOCALAPPDATA, DOCUMENTS);
       }
       return ((gameId === gameSpec.game.id) && CHECK_CONFIG);
     },
@@ -1955,7 +2009,7 @@ function applyGame(context, gameSpec) {
     (gameId) => {
       GAME_PATH = getDiscoveryPath(context.api);
       if (GAME_PATH !== undefined) {
-        CHECK_DOCS = checkPartitions(DOCS_PATH, GAME_PATH);
+        CHECK_DOCS = checkPartitions(DOCUMENTS, GAME_PATH);
       }
       return ((gameId === gameSpec.game.id) && CHECK_DOCS);
     },
@@ -1967,7 +2021,7 @@ function applyGame(context, gameSpec) {
     (gameId) => {
       GAME_PATH = getDiscoveryPath(context.api);
       if (GAME_PATH !== undefined) {
-        CHECK_DOCS = checkPartitions(DOCS_PATH, GAME_PATH);
+        CHECK_DOCS = checkPartitions(DOCUMENTS, GAME_PATH);
       }
       return ((gameId === gameSpec.game.id) && CHECK_DOCS);
     },
@@ -1979,7 +2033,7 @@ function applyGame(context, gameSpec) {
     (gameId) => {
       GAME_PATH = getDiscoveryPath(context.api);
       if (GAME_PATH !== undefined) {
-        CHECK_DOCS = checkPartitions(DOCS_PATH, GAME_PATH);
+        CHECK_DOCS = checkPartitions(DOCUMENTS, GAME_PATH);
       }
       return ((gameId === gameSpec.game.id) && CHECK_DOCS);
     },
@@ -1991,7 +2045,7 @@ function applyGame(context, gameSpec) {
     (gameId) => {
       GAME_PATH = getDiscoveryPath(context.api);
       if (GAME_PATH !== undefined) {
-        CHECK_DOCS = checkPartitions(DOCS_PATH, GAME_PATH);
+        CHECK_DOCS = checkPartitions(DOCUMENTS, GAME_PATH);
       }
       return ((gameId === gameSpec.game.id) && CHECK_DOCS);
     },
@@ -2003,7 +2057,7 @@ function applyGame(context, gameSpec) {
     (gameId) => {
       GAME_PATH = getDiscoveryPath(context.api);
       if (GAME_PATH !== undefined) {
-        CHECK_DOCS = checkPartitions(DOCS_PATH, GAME_PATH);
+        CHECK_DOCS = checkPartitions(DOCUMENTS, GAME_PATH);
       }
       return ((gameId === gameSpec.game.id) && CHECK_DOCS);
     },
@@ -2015,7 +2069,7 @@ function applyGame(context, gameSpec) {
     (gameId) => {
       GAME_PATH = getDiscoveryPath(context.api);
       if (GAME_PATH !== undefined) {
-        CHECK_DOCS = checkPartitions(DOCS_PATH, GAME_PATH);
+        CHECK_DOCS = checkPartitions(DOCUMENTS, GAME_PATH);
       }
       return ((gameId === gameSpec.game.id) && CHECK_DOCS);
     },
@@ -2027,7 +2081,7 @@ function applyGame(context, gameSpec) {
     (gameId) => {
       GAME_PATH = getDiscoveryPath(context.api);
       if (GAME_PATH !== undefined) {
-        CHECK_DOCS = checkPartitions(DOCS_PATH, GAME_PATH);
+        CHECK_DOCS = checkPartitions(DOCUMENTS, GAME_PATH);
       }
       return ((gameId === gameSpec.game.id) && CHECK_DOCS);
     },
@@ -2039,7 +2093,7 @@ function applyGame(context, gameSpec) {
     (gameId) => {
       GAME_PATH = getDiscoveryPath(context.api);
       if (GAME_PATH !== undefined) {
-        CHECK_DOCS = checkPartitions(DOCS_PATH, GAME_PATH);
+        CHECK_DOCS = checkPartitions(DOCUMENTS, GAME_PATH);
       }
       return ((gameId === gameSpec.game.id) && CHECK_DOCS);
     },
@@ -2051,7 +2105,7 @@ function applyGame(context, gameSpec) {
     (gameId) => {
       GAME_PATH = getDiscoveryPath(context.api);
       if (GAME_PATH !== undefined) {
-        CHECK_DOCS = checkPartitions(DOCS_PATH, GAME_PATH);
+        CHECK_DOCS = checkPartitions(DOCUMENTS, GAME_PATH);
       }
       return ((gameId === gameSpec.game.id) && CHECK_DOCS);
     },
@@ -2059,23 +2113,6 @@ function applyGame(context, gameSpec) {
     () => Promise.resolve(false), 
     { name: BINARIES_NAME }
   );
-  /*Attempt to neuter Vortex built-in mod types
-  context.registerModType("dinput", 100, 
-    (gameId) => {
-      return (gameId === gameSpec.game.id);
-    },
-    (game) => DOCS_PATH,
-    () => Promise.resolve(false), 
-    { name: 'Engine Injector' }
-  );
-  context.registerModType("enb", 100, 
-    (gameId) => {
-      return (gameId === gameSpec.game.id);
-    },
-    (game) => DOCS_PATH,
-    () => Promise.resolve(false), 
-    { name: 'ENB' }
-  ); //*/
 
   //Core installers
   context.registerInstaller(UE4SSCOMBO_ID, 25, testUe4ssCombo, (files) => installUe4ssCombo(context.api, files));
@@ -2090,10 +2127,10 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(CREATIONS_ID, 33, testCreations, (files) => installCreations(context.api, files));
   context.registerInstaller(AIGENERATED_ID, 24, testAiGenerated, (files) => installAiGenerated(context.api, files));
   context.registerInstaller(CANVAS_ID, 35, testCanvas, (files) => installCanvas(context.api, files));
-  context.registerInstaller(MY3DPRINTER_ID, 36, testMy3DPrinter, (files) => installMy3DPrinter(context.api, files));
-  context.registerInstaller(MYAPPEARANCES_ID, 37, testMyAppearances, (files) => installMyAppearances(context.api, files));
-  context.registerInstaller(ANIMATIONS_ID, 38, testAnimations, (files) => installAnimations(context.api, files)); 
-  context.registerInstaller(TEXTURES_ID, 39, testTextures, (files) => installTextures(context.api, files)); 
+  context.registerInstaller(MY3DPRINTER_ID, 36, testMy3DPrinter, (files, fileName) => installMy3DPrinter(context.api, files, fileName));
+  context.registerInstaller(MYAPPEARANCES_ID, 37, testMyAppearances, (files, fileName) => installMyAppearances(context.api, files, fileName));
+  context.registerInstaller(ANIMATIONS_ID, 38, testAnimations, (files, fileName) => installAnimations(context.api, files, fileName)); 
+  context.registerInstaller(TEXTURES_ID, 39, testTextures, (files, fileName) => installTextures(context.api, files, fileName));
   //Others
   context.registerInstaller(ROOT_ID, 40, testRoot, (files) => installRoot(context.api, files));
   context.registerInstaller(CONFIG_ID, 41, testConfig, (files) => installConfig(context.api, files));
@@ -2101,6 +2138,13 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(BINARIES_ID, 43, testBinaries, (files) => installBinaries(context.api, files));
 
   //register buttons to open folders
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download Mod Enabler (Legacy)', () => {
+    downloadModEnabler(context.api, gameSpec);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open MODKit Mods Folder (Documents)', () => {
     const openPath = UE5KITMOD_PATH;
     util.opn(openPath).catch(() => null);
@@ -2185,21 +2229,33 @@ function applyGame(context, gameSpec) {
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
+    util.opn(PCGAMINGWIKI_URL).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
-    const openPath = path.join(__dirname, 'CHANGELOG.md');
-    util.opn(openPath).catch(() => null);
+    util.opn(path.join(__dirname, 'CHANGELOG.md')).catch(() => null);
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
+    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
-    const openPath = DOWNLOAD_FOLDER;
-    util.opn(openPath).catch(() => null);
-    }, () => {
-      const state = context.api.getState();
-      const gameId = selectors.activeGameId(state);
-      return gameId === GAME_ID;
+    util.opn(DOWNLOAD_FOLDER).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
   });
 }
 
