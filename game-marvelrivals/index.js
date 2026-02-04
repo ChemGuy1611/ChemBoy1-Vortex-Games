@@ -2,8 +2,8 @@
 Name: Marvel Rivals Vortex Extension
 Structure: UE5
 Author: ChemBoy1
-Version: 0.5.0
-Date: 2025-11-22
+Version: 0.5.1
+Date: 2026-02-03
 ////////////////////////////////////////*/
 
 //Import libraries

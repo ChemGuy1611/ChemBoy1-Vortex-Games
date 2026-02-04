@@ -4,6 +4,10 @@
 
 - None
 
+## [0.2.0] - 2026-02-03
+
+- Improved: Made UE4SS Scripts, UE4SS DLL, LogicMods, and Root Folder mod installers case-insensitive to folder names
+
 ## [0.1.9] - 2026-01-29
 
 - Added: Notification that deployment is required to apply load order changes

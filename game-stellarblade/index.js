@@ -2,15 +2,14 @@
 Name: Stellar Blade Vortex Extension
 Structure: UE5 (static exe)
 Author: ChemBoy1
-Version: 0.1.9
-Date: 2026-01-29
+Version: 0.2.0
+Date: 2026-02-03
 //////////////////////////////////////////////////*/
 
 //Import libraries
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
-const { request } = require('http');
 
 //Specify all information about the game
 const GAME_ID = "stellarblade";
@@ -26,7 +25,7 @@ const EXEC = "SB.exe";
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Stellar_Blade";
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1324"; //Nexus link to this extension. Used for links
 
-let GAME_PATH = null;
+let GAME_PATH = '';
 let CHECK_DATA = false;
 let CHECK_DOCS = false;
 let STAGING_FOLDER = '';

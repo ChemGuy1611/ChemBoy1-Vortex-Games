@@ -2,8 +2,8 @@
 Name: Clair Obscur: Expedition 33 Vortex Extension
 Structure: UE5 (Xbox-Integrated)
 Author: ChemBoy1
-Version: 0.1.8
-Date: 2026-01-30
+Version: 0.2.0
+Date: 2026-02-03
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -24,8 +24,10 @@ const GAME_NAME_SHORT = "Clair Obscur E33";
 const DEFAULT_EXEC = "Expedition33_Steam.exe";
 const EXEC_EPIC = "Expedition33_EGS.exe";
 const EXEC_GOG = "SandFallGOG.exe";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Clair_Obscur:_Expedition_33";
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1279"; //Nexus link to this extension. Used for links
 
-let GAME_PATH = null;
+let GAME_PATH = '';
 let CHECK_DATA = false;
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
@@ -56,15 +58,15 @@ if (IO_STORE) { //Set file number for pak installer file selection (needs to be 
 
 //Information for setting the executable and variable paths based on the game store version
 let GAME_VERSION = '';
-let EXEC_PATH = null;
-let EXEC_TARGET = null;
+let EXEC_PATH = '';
+let EXEC_TARGET = '';
 let SHIPPING_EXE = '';
-let SCRIPTS_PATH = null;
-let SCRIPTS_TARGET = null;
-let SAVE_PATH = null;
-let SAVE_TARGET = null;
-let CONFIG_PATH = null;
-let CONFIG_TARGET = null;
+let SCRIPTS_PATH = '';
+let SCRIPTS_TARGET = '';
+let SAVE_PATH = '';
+let SAVE_TARGET = '';
+let CONFIG_PATH = '';
+let CONFIG_TARGET = '';
 let requiredFiles = [EPIC_CODE_NAME];
 let USERID_FOLDER = "";
 const EXEC_FOLDER_DEFAULT = "Win64";
@@ -145,6 +147,12 @@ const UE4SS_DLFILE_STRING = "ue4ss";
 const UE4SS_URL = "https://github.com/UE4SS-RE/RE-UE4SS/releases";
 const UE4SS_PAGE_NO = 0; // <-- No Nexus page currently
 const UE4SS_FILE_NO = 0;
+const UE4SS_SETTINGS_FILE = 'UE4SS-settings.ini';
+const UE4SS_SETTINGS_FILEPATH = path.join('ue4ss', UE4SS_SETTINGS_FILE); //relative to Binaries folder
+const UE4SS_MODSJSON_FILE = 'mods.json';
+const UE4SS_MODSTXT_FILE = 'mods.txt';
+const UE4SS_MODSJSON_FILEPATH = path.join(UE4SS_MOD_PATH, UE4SS_MODSJSON_FILE); //relative to Binaries folder
+const UE4SS_MODSTXT_FILEPATH = path.join(UE4SS_MOD_PATH, UE4SS_MODSTXT_FILE);
 
 const SAVE_EDITOR_ID = `${GAME_ID}-saveeditor`;
 const SAVE_EDITOR_NAME = "Save Editor";
@@ -1609,17 +1617,45 @@ function applyGame(context, gameSpec) {
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   }); //*/
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open UE4SS Settings INI', () => {
+    GAME_PATH = getDiscoveryPath(context.api);
+    util.opn(path.join(GAME_PATH, BINARIES_PATH, UE4SS_SETTINGS_FILEPATH)).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open UE4SS mods.json', () => {
+    GAME_PATH = getDiscoveryPath(context.api);
+    util.opn(path.join(GAME_PATH, BINARIES_PATH, UE4SS_MODSJSON_FILEPATH)).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
+    util.opn(PCGAMINGWIKI_URL).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
-    const openPath = path.join(__dirname, 'CHANGELOG.md');
-    util.opn(openPath).catch(() => null);
+    util.opn(path.join(__dirname, 'CHANGELOG.md')).catch(() => null);
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
+    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
-    const openPath = DOWNLOAD_FOLDER;
-    util.opn(openPath).catch(() => null);
+    util.opn(DOWNLOAD_FOLDER).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
