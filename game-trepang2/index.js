@@ -100,25 +100,25 @@ const spec = {
       "id": BINARIES_ID,
       "name": "Binaries (Engine Injector)",
       "priority": "high",
-      "targetPath": path.join(gamePath, BINARIES_PATH)
+      "targetPath": path.join("{gamePath}", BINARIES_PATH)
     },
     {
       "id": CONFIG_ID,
       "name": "Config (LocalAppData)",
       "priority": "high",
-      "targetPath": path.join(localAppData, CONFIG_PATH)
+      "targetPath": path.join("{localAppData}", CONFIG_PATH)
     },
     {
       "id": SAVE_ID,
       "name": "Saves (LocalAppData)",
       "priority": "high",
-      "targetPath": path.join(localAppData, SAVE_PATH)
+      "targetPath": path.join("{localAppData}", SAVE_PATH)
     },
     {
       "id": PAK_ID,
       "name": "Paks",
       "priority": "low",
-      "targetPath": path.join(gamePath, PAK_PATH)
+      "targetPath": path.join('{gamePath}', PAK_PATH)
     },
     {
       "id": ROOT_ID,
