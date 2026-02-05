@@ -2,8 +2,8 @@
 Name: WH40K Space Marine 2 Vortex Extension
 Structure: Mods Folder w/ LO
 Author: ChemBoy1
-Version: 0.5.0
-Date: 2025-02-02
+Version: 0.5.1
+Date: 2025-02-04
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -11,6 +11,7 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 const fsPromises = require('fs/promises');
+const { time } = require('console');
 
 //Specify all the information about the game
 const STEAMAPP_ID = "2183900";
@@ -56,6 +57,7 @@ if (USERID_FOLDER === undefined) {
   USERID_FOLDER = "";
 } //*/
 const SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER, "Main", "config");
+const SAVE_EXT = '.cfg';
 
 const BINARIES_ID = `${GAME_ID}-binaries`;
 const BINARIES_NAME = "Binaries (Engine Injector)";
@@ -613,51 +615,6 @@ async function downloadIndex(api, gameSpec) {
   });
 } //*/
 
-//Notification with IS info
-function notifyIntegrationStudio(api) {
-  let isInstalled = isIntegrationStudioInstalled(api);
-  const NOTIF_ID = `${GAME_ID}-integrationstudio`;
-  const MESSAGE = 'Integration Studio Important Info';
-  if (isInstalled) {
-    api.sendNotification({
-      id: NOTIF_ID,
-      type: 'warning',
-      message: MESSAGE,
-      allowSuppress: true,
-      actions: [
-        {
-          title: 'More',
-          action: (dismiss) => {
-            api.showDialog('question', MESSAGE, {
-              text: `Vortex detected that you have installed the Integration Studio (IS) mod toolkit for Space Marine 2.\n`
-                  + `Please note the following information related to using IS in Vortex:\n`
-                  + `\n`
-                  + `- During installation of IS, Vortex will automatically extract the resource files "${RESOURCE_PAK}" (both client and server) and add it to the mod staging folder.\n`
-                  + `- After each game update, you must Reinstall the IS mod to refresh the extracted resource file.\n`
-                  + `- You can use the button below to open the IS Nexus Mods page.\n`
-                  + `\n`
-            }, [
-              { label: 'Acknowledge', action: () => dismiss() },
-              {
-                label: 'Open IS Nexus Page', action: () => {
-                  util.opn(INTEGRATION_STUDIO_URL_NEXUS).catch(() => null);
-                  dismiss();
-                }
-              },
-              {
-                label: 'Never Show Again', action: () => {
-                  api.suppressNotification(NOTIF_ID);
-                  dismiss();
-                }
-              },
-            ]);
-          },
-        },
-      ],
-    });
-  }
-}
-
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
 
 //Test for IS installer
@@ -1157,8 +1114,101 @@ async function serializeLoadOrder(context, loadOrder) {
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
+//Notification with IS info
+function notifyIntegrationStudio(api) {
+  let isInstalled = isIntegrationStudioInstalled(api);
+  const NOTIF_ID = `${GAME_ID}-integrationstudio`;
+  const MESSAGE = 'Integration Studio Important Info';
+  if (isInstalled) {
+    api.sendNotification({
+      id: NOTIF_ID,
+      type: 'warning',
+      message: MESSAGE,
+      allowSuppress: true,
+      actions: [
+        {
+          title: 'More',
+          action: (dismiss) => {
+            api.showDialog('question', MESSAGE, {
+              text: `Vortex detected that you have installed the Integration Studio (IS) mod toolkit for Space Marine 2.\n`
+                  + `Please note the following information related to using IS in Vortex:\n`
+                  + `\n`
+                  + `- During installation of IS, Vortex will automatically extract the resource files "${RESOURCE_PAK}" (both client and server) and add it to the mod staging folder.\n`
+                  + `- After each game update, you must Reinstall the IS mod to refresh the extracted resource file.\n`
+                  + `- You can use the button below to open the IS Nexus Mods page.\n`
+                  + `\n`
+            }, [
+              { label: 'Acknowledge', action: () => dismiss() },
+              {
+                label: 'Open IS Nexus Page', action: () => {
+                  util.opn(INTEGRATION_STUDIO_URL_NEXUS).catch(() => null);
+                  dismiss();
+                }
+              },
+              {
+                label: 'Never Show Again', action: () => {
+                  api.suppressNotification(NOTIF_ID);
+                  dismiss();
+                }
+              },
+            ]);
+          },
+        },
+      ],
+    });
+  }
+}
+
+//Notification with save management info
+function notifySaves(api) {
+  let isInstalled = isIntegrationStudioInstalled(api);
+  const NOTIF_ID = `${GAME_ID}-saves`;
+  const MESSAGE = 'IMPORTANT: Save Management';
+  if (isInstalled) {
+    api.sendNotification({
+      id: NOTIF_ID,
+      type: 'info',
+      message: MESSAGE,
+      allowSuppress: true,
+      actions: [
+        {
+          title: 'More',
+          action: (dismiss) => {
+            api.showDialog('question', MESSAGE, {
+              text: '\n'
+                  + `Vortex has features to help you keep your modded save progress after purging and switching to vanilla online play.\n`
+                  + `Vortex will automatically backup your saves to a "Backup_<timestamp>" folder in the Saves folder after purging mods.\n`
+                  + `You can then play vanilla online without mods.\n`
+                  + `\n`
+                  + `When you are ready to play modded again, you can restore your saves, using the "=== RESTORE SAVES ===" button within the folder icon on the Mods page toolbar.\n`
+                  + `This will restore saves from the most recent backup folder. You can then pick up where you left off in your previous modded play session.\n`
+                  + `\n`
+                  + `NOTE: Only the Steam version of the game supports this feature at this time.\n`
+                  + `\n`
+            }, [
+              { label: 'Continue', action: () => dismiss() },
+              /*{
+                label: 'Restore Saves Now', action: () => {
+                  restoreSaves(api);
+                  dismiss();
+                }
+              }, //*/
+              {
+                label: 'Never Show Again', action: () => {
+                  api.suppressNotification(NOTIF_ID);
+                  dismiss();
+                }
+              },
+            ]);
+          },
+        },
+      ],
+    });
+  }
+}
+
 async function resolveGameVersion(gamePath, exePath) {
-  GAME_VERSION = await setGameVersionPath(gamePath);
+  GAME_VERSION = await setGameVersionAsync(gamePath);
   const READ_FILE = path.join(gamePath, EXEC);
   let version = '0.0.0';
   if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
@@ -1186,9 +1236,9 @@ async function resolveGameVersion(gamePath, exePath) {
 }
 
 async function copyCustomStratToPaks(api) {
+  GAME_PATH = getDiscoveryPath(api);
+  const readFolder = path.join(GAME_PATH, CUSTOMSTRAT_PAK_PATH);
   try {
-    GAME_PATH = getDiscoveryPath(api);
-    const readFolder = path.join(GAME_PATH, CUSTOMSTRAT_PAK_PATH);
     const paks = await fs.readdirAsync(readFolder);
     log('warn', `Found CS pak files: ${paks.join(', ')}`);
     const copyPak = paks.filter((file) => (
@@ -1197,14 +1247,123 @@ async function copyCustomStratToPaks(api) {
     ))
     .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase()))
     .reverse()[0];
+    if (copyPak === undefined) {
+      return api.showErrorNotification('No Custom Stratagems Pak files found', `No Custom Stratagems Pak files found in "${readFolder}"`, { allowReport: false });
+    }
     log('warn', `Copying newest CS pak file: ${copyPak}`);
     const source = path.join(readFolder, copyPak);
     const destination = path.join(GAME_PATH, PAK_PATH, copyPak);
     await fs.copyAsync(source, destination);
     deploy(api);
   } catch(err) {
-    log('error', 'Could not copy Custom Stratagems to Pak Mods folder: ' + err);
-    return Promise.reject(new util.ProcessCanceled('Custom Stratagems folder not found'));
+    //log('error', 'Could not copy Custom Stratagems to Pak Mods folder: ' + err);
+    return api.showErrorNotification('Custom Stratagems folder not found', `The Custom Stratagems folder does not exist at "${readFolder}"`, { allowReport: false });
+  }
+}
+
+async function clearCsPaks(api) {
+  try {
+    GAME_PATH = getDiscoveryPath(api);
+    const readFolder = path.join(GAME_PATH, PAK_PATH);
+    const files = await fs.readdirAsync(readFolder);
+    const csPaks = files.filter(file => (
+      path.basename(file).startsWith(CUSTOMSTRAT_PAK_STRING)
+      && PAK_EXTS.includes(path.extname(file).toLowerCase())
+    ));
+    log('warn', `Found CS pak files to delete on purge: ${csPaks.join(', ')}`);
+    for (let file of csPaks) {
+      const source = path.join(readFolder, file);
+      await fs.unlinkAsync(source);
+    }
+  } catch(err) {
+    log('error', 'Could not clear Custom Stratagems Paks from Mods folder: ' + err);
+  }
+}
+
+async function backupSaves(api) {
+  try {
+    const files = await fs.readdirAsync(SAVE_PATH);
+    const saveFiles = files.filter(file => path.extname(file).toLowerCase() === SAVE_EXT);
+    if (saveFiles.length === 0) {
+      api.showErrorNotification('No saves to backup', `No saves found in "${SAVE_PATH}"`, { allowReport: false });
+      return;
+    }
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-'); // Replace : and . with -
+    const backupFolder = path.join(SAVE_PATH, `Backup_${timestamp}`);
+    //log('warn', `Backup folder: ${backupFolder}`);
+    await fs.ensureDirWritableAsync(backupFolder);
+    for (let file of saveFiles) {
+      const source = path.join(SAVE_PATH, file);
+      const destination = path.join(backupFolder, file);
+      await fs.copyAsync(source, destination, { overwrite: true });
+    }
+    api.sendNotification({
+    id: `${GAME_ID}-backupsaves${timestamp}`,
+    type: 'success',
+    message: `Saves Backed Up to "${backupFolder}"`,
+    allowSuppress: true,
+    actions: [],
+  });
+  } catch(err) {
+    //log('error', 'Could not backup saves: ' + err);
+    api.showErrorNotification('Failed to backup saves', err);
+  }
+}
+
+async function restoreSaves(api) {
+  try {
+    //await backupSaves(api);
+    let files = await fs.readdirAsync(SAVE_PATH);
+    let backupFolders = files.filter(file => (
+      isDir(SAVE_PATH, file)
+      && file.startsWith('Backup_')
+    ));
+    if (backupFolders.length === 0) {
+      //await backupSaves(api);
+      api.showErrorNotification('No saves to restore', `No Backup folders found in "${SAVE_PATH}"`, { allowReport: false });
+      return; //*/
+    }
+    /*files = await fs.readdirAsync(SAVE_PATH);
+    backupFolders = files.filter(file => (
+      isDir(SAVE_PATH, file)
+      && file.startsWith('Backup_')
+    )); //*/
+    const restoreFolder = backupFolders.sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase())).reverse()[0];
+    //IDEA - Show user a popup list to choose which backup to restore
+    //log('warn', `Restore folder: ${restoreFolder}`);
+    let saveFiles = await fs.readdirAsync(path.join(SAVE_PATH, restoreFolder));
+    saveFiles = saveFiles.filter(file => path.extname(file).toLowerCase() === SAVE_EXT);
+    //show confirmation dialog
+    const t = api.translate;
+    let choices = [
+      { label: t("Continue") },
+      { label: t("Cancel") },
+    ];
+    const result = await api.showDialog('question', `Restore Saves`, {
+      text: `\n`
+        + `Are you sure you want to restore save files from "${restoreFolder}"?`
+        + `\n`
+        + `This process is not reversible and will overwrite the existing save files.`,
+    }, choices)
+    if (result === undefined  || result.action === "Cancel") {
+      return;
+    }
+    await fs.ensureDirWritableAsync(SAVE_PATH);
+    for (let file of saveFiles) {
+      const source = path.join(SAVE_PATH, restoreFolder, file);
+      const destination = path.join(SAVE_PATH, file);
+      await fs.copyAsync(source, destination, { overwrite: true });
+    }
+    api.sendNotification({
+      id: `${GAME_ID}-restoresaves${restoreFolder}`,
+      type: 'success',
+      message: `Saves Successfully Restored from "${restoreFolder}"`,
+      allowSuppress: true,
+      actions: [],
+    });
+} catch(err) {
+    //log('error', 'Could not restore saves: ' + err);
+    api.showErrorNotification('Failed to restore saves', err);
   }
 }
 
@@ -1215,6 +1374,7 @@ async function setup(discovery, api, gameSpec) {
   STAGING_FOLDER = selectors.installPathForGame(state, gameSpec.game.id);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, gameSpec.game.id);
   GAME_VERSION = await setGameVersionAsync(GAME_PATH);
+  //notifySaves(api);
   notifyIntegrationStudio(api);
   await fs.ensureDirWritableAsync(path.join(GAME_PATH, BINARIES_PATH));
   await fs.ensureDirWritableAsync(path.join(GAME_PATH, LOCALSUB_PATH));
@@ -1248,7 +1408,7 @@ function applyGame(context, gameSpec) {
     queryModPath: makeGetModPath(context.api, gameSpec),
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
-    getVersion: resolveGameVersion,
+    getGameVersion: resolveGameVersion,
     supportedTools: tools,
   };
   context.registerGame(game);
@@ -1282,6 +1442,20 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(BINARIES_ID, 49, testBinaries, installBinaries); //fallback to binaries folder
 
   //register actions
+  /*context.registerAction('mod-icons', 300, 'open-ext', {}, '=== BACKUP SAVES ===', () => {
+    backupSaves(context.api).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  }); //*/
+  context.registerAction('mod-icons', 300, 'open-ext', {}, '=== RESTORE SAVES ===', () => {
+    restoreSaves(context.api).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  }); //*/
   context.registerAction('mod-icons', 300, 'open-ext', {}, `Open ${LO_FILE} (Load Order)`, () => {
     GAME_PATH = getDiscoveryPath(context.api);
     util.opn(path.join(GAME_PATH, LO_FILE_PATH)).catch(() => null);
@@ -1422,9 +1596,17 @@ function main(context) {
       const lastActiveProfile = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
       if (profileId !== lastActiveProfile) return;
       //notifyIntegrationStudio(api);
+      //restoreSaves(context.api);
       mod_update_all_profile = false;
       updating_mod = false;
       updatemodid = undefined;
+    });
+    context.api.onAsync('did-purge', async (profileId) => {
+      const lastActiveProfile = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
+      if (profileId !== lastActiveProfile) return;
+      backupSaves(context.api); //always backup saves after purging so modded progress is preserved
+      notifySaves(context.api);
+      clearCsPaks(context.api);
     });
     context.api.events.on("mod-update", (gameId, modId, fileId) => {
       if (GAME_ID == gameId) {

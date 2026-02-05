@@ -4,6 +4,12 @@
 
 - None Planned
 
+## [0.5.1] - 2026-02-04
+
+- Added: Automatic save (profile) backup on mod purge
+- Added: Button to restore save (profile) from the most recent backup
+- Improved: Error handling for function to copy Custom Stratagems Paks to mods folder
+
 ## [0.5.0] - 2026-02-02
 
 - Added: Xbox (Game Pass) version support
