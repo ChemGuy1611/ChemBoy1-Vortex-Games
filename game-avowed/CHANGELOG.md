@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.2.1] - 2026-02-06
+
+- Improved: Made UE4SS Scripts, UE4SS DLL, LogicMods, and Root Folder mod installers case-insensitive to folder names
+
 ## [0.2.0] - 2026-02-01
 
 - Fixed: Issue with Load Order sorting not working if certain other UE game extensions were installed. You will need to reinstall all pak mods to be able to sort them properly. A notification will be sent reminding you to do this.

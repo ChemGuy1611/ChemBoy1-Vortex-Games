@@ -2,8 +2,8 @@
 Name: Avowed Vortex Extension
 Structure: UE5 (Xbox-Integrated)
 Author: ChemBoy1
-Version: 0.2.0
-Date: 2026-02-01
+Version: 0.2.1
+Date: 2026-02-06
 //////////////////////////////////////////////////*/
 
 //Import libraries
@@ -40,27 +40,27 @@ const gameFinderQuery = {
 };
 
 //Information for setting the executable and variable paths based on the game store version
+let GAME_VERSION = '';
+let GAME_PATH = '';
 let BINARIES_PATH = '';
 let BINARIES_TARGET = '';
 let SCRIPTS_PATH = '';
 let SCRIPTS_TARGET = '';
 let SAVE_PATH = '';
-let SAVE_TARGET = '';
 let CONFIG_PATH = '';
-let CONFIG_TARGET = '';
-let GAME_VERSION = '';
-let GAME_PATH = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
+let USERID_FOLDER = '';
 const requiredFiles = [EPIC_CODE_NAME];
-let USERID_FOLDER = "";
+
 const LOCALAPPDATA = util.getVortexPath("localAppData");
 const USER_HOME = util.getVortexPath("home");
-const CONFIG_PATH_DEFAULT = path.join(EPIC_CODE_NAME, "Saved", "Config", "Windows");
-const CONFIG_PATH_XBOX = path.join(EPIC_CODE_NAME, "Saved", "Config", "WinGDK"); //XBOX Version
+const CONFIG_PATH_DEFAULT = path.join(LOCALAPPDATA, EPIC_CODE_NAME, "Saved", "Config", "Windows");
+const CONFIG_PATH_XBOX = path.join(LOCALAPPDATA, EPIC_CODE_NAME, "Saved", "Config", "WinGDK"); //XBOX Version
 const SAVE_PATH_DEFAULT = path.join(USER_HOME, "Saved Games", "Avowed");
 //const SAVE_PATH_XBOX = path.join(EPIC_CODE_NAME, "Saved", "SaveGames"); //XBOX Version
-const SAVE_PATH_XBOX = path.join("Packages", `${XBOXAPP_ID}_8wekyb3d8bbwe`, "SystemAppData", "wgs"); //XBOX Version
+const SAVE_PATH_XBOX = path.join(LOCALAPPDATA, "Packages", `${XBOXAPP_ID}_8wekyb3d8bbwe`, "SystemAppData", "wgs"); //XBOX Version
+
 const EXEC_FOLDER_DEFAULT = "Win64";
 //const GOG_EXEC_FOLDER = "Win64";
 //const EPIC_EXEC_FOLDER = "Win64";
@@ -283,21 +283,21 @@ function pathPattern(api, game, pattern) {
 
 async function requiresLauncher(gamePath, store) {
   if (store === 'xbox') {
-      return Promise.resolve({
-          launcher: 'xbox',
-          addInfo: {
-              appId: XBOXAPP_ID,
-              parameters: [{ appExecName: XBOXEXECNAME }],
-          },
-      });
+    return Promise.resolve({
+      launcher: 'xbox',
+      addInfo: {
+        appId: XBOXAPP_ID,
+        parameters: [{ appExecName: XBOXEXECNAME }],
+      },
+    });
   }
   /*
   if (store === 'epic') {
     return Promise.resolve({
-        launcher: 'epic',
-        addInfo: {
-            appId: EPICAPP_ID,
-        },
+      launcher: 'epic',
+      addInfo: {
+        appId: EPICAPP_ID,
+      },
     });
   } //*/
   return Promise.resolve(undefined);
@@ -305,80 +305,52 @@ async function requiresLauncher(gamePath, store) {
 
 //Get correct executable, add to required files, set paths for mod types
 function getExecutable(discoveryPath) {
-
-  const isCorrectExec = (exec) => {
-    try {
-      fs.statSync(path.join(discoveryPath, exec));
-      return true;
-    }
-    catch (err) {
-      return false;
-    }
-  };
-
-  if (isCorrectExec(EXEC_XBOX)) {
+  if (statCheckSync(discoveryPath, EXEC_XBOX)) { //Xbox version paths
     BINARIES_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_XBOX);
     BINARIES_TARGET = path.join('{gamePath}', BINARIES_PATH);
     SCRIPTS_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_XBOX, UE4SS_MOD_PATH);
     SCRIPTS_TARGET = path.join('{gamePath}', SCRIPTS_PATH);
     DLL_PATH = SCRIPTS_PATH;
     CONFIG_PATH = CONFIG_PATH_XBOX;
-    CONFIG_TARGET = path.join('{localAppData}', CONFIG_PATH);
     try {
-      const SAVE_ARRAY = fs.readdirSync(path.join(LOCALAPPDATA, SAVE_PATH_XBOX));
-      USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(path.join(LOCALAPPDATA, SAVE_PATH_XBOX), entry));
+      const SAVE_ARRAY = fs.readdirSync(SAVE_PATH_XBOX);
+      USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_PATH_XBOX, entry));
     } catch(err) {
       USERID_FOLDER = "";
     }
     if (USERID_FOLDER === undefined) {
       USERID_FOLDER = "";
     }
-    SAVE_PATH = path.join(LOCALAPPDATA, SAVE_PATH_XBOX, USERID_FOLDER);
-    SAVE_TARGET = SAVE_PATH;
+    SAVE_PATH = path.join(SAVE_PATH_XBOX, USERID_FOLDER);
     return EXEC_XBOX;
   };
-
-  if (isCorrectExec(EXEC_DEFAULT)) {
-    BINARIES_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT);
-    BINARIES_TARGET = path.join('{gamePath}', BINARIES_PATH);
-    SCRIPTS_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT, UE4SS_MOD_PATH);
-    SCRIPTS_TARGET = path.join('{gamePath}', SCRIPTS_PATH);
-    DLL_PATH = SCRIPTS_PATH;
-    CONFIG_PATH = CONFIG_PATH_DEFAULT;
-    CONFIG_TARGET = path.join('{localAppData}', CONFIG_PATH);
-    try {
-      const SAVE_ARRAY = fs.readdirSync(SAVE_PATH_DEFAULT);
-      USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_PATH_DEFAULT, entry));
-    } catch(err) {
-      USERID_FOLDER = "";
-    }
-    if (USERID_FOLDER === undefined) {
-      USERID_FOLDER = "";
-    }
-    SAVE_PATH = path.join(SAVE_PATH_DEFAULT, USERID_FOLDER);
-    SAVE_TARGET = SAVE_PATH;
-    return EXEC_DEFAULT;
-  };
-
+  //default paths - Steam
+  BINARIES_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT);
+  BINARIES_TARGET = path.join('{gamePath}', BINARIES_PATH);
+  SCRIPTS_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT, UE4SS_MOD_PATH);
+  SCRIPTS_TARGET = path.join('{gamePath}', SCRIPTS_PATH);
+  DLL_PATH = SCRIPTS_PATH;
+  CONFIG_PATH = CONFIG_PATH_DEFAULT;
+  try {
+    const SAVE_ARRAY = fs.readdirSync(SAVE_PATH_DEFAULT);
+    USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_PATH_DEFAULT, entry));
+  } catch(err) {
+    USERID_FOLDER = "";
+  }
+  if (USERID_FOLDER === undefined) {
+    USERID_FOLDER = "";
+  }
+  SAVE_PATH = path.join(SAVE_PATH_DEFAULT, USERID_FOLDER);
   return EXEC_DEFAULT;
 }
 
 //Get correct game version
 async function setGameVersionPath(gamePath) {
-  const isCorrectExec = (exec) => {
-    try {
-      fs.statSync(path.join(gamePath, exec));
-      return true;
-    }
-    catch (err) {
-      return false;
-    }
-  };
-  if (isCorrectExec(EXEC_XBOX)) {
+  if (statCheckAsync(gamePath, EXEC_XBOX)) {
     GAME_VERSION = 'xbox';
     return GAME_VERSION;
   };
-  if (isCorrectExec(EXEC_DEFAULT)) {
+  if (statCheckAsync(gamePath, EXEC_DEFAULT)) {
     GAME_VERSION = 'steam';
     return GAME_VERSION;
   };
@@ -1090,7 +1062,6 @@ function UNREALEXTENSION(context) {
 
 async function resolveGameVersion(gamePath, exePath) {
   GAME_VERSION = await setGameVersionPath(gamePath);
-  //SHIPPING_EXE = getShippingExe(gamePath);
   const READ_FILE = path.join(gamePath, EXEC_DEFAULT);
   let version = '0.0.0';
   if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
@@ -1104,11 +1075,10 @@ async function resolveGameVersion(gamePath, exePath) {
       return Promise.resolve(version);
     }
   }
-  else { //use shipping exe (note that this only returns the UE engine version right now)
+  else { //use exe (note that this only returns the UE engine version right now)
     try {
       const exeVersion = require('exe-version');
       version = await exeVersion.getProductVersion(READ_FILE);
-      //log('warn', `Resolved game version for ${GAME_ID} to: ${version}`);
       return Promise.resolve(version); 
     } catch (err) {
       log('error', `Could not read ${READ_FILE} file to get Steam game version: ${err}`);
@@ -1230,7 +1200,7 @@ function applyGame(context, gameSpec) {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
     }, 
-    (game) => pathPattern(context.api, game, CONFIG_TARGET), 
+    (game) => pathPattern(context.api, game, CONFIG_PATH), 
     () => Promise.resolve(false), 
     { name: CONFIG_NAME }
   );
@@ -1239,7 +1209,7 @@ function applyGame(context, gameSpec) {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
     }, 
-    (game) => pathPattern(context.api, game, SAVE_TARGET), 
+    (game) => pathPattern(context.api, game, SAVE_PATH), 
     () => Promise.resolve(false), 
     { name: SAVE_NAME }
   );
@@ -1306,7 +1276,7 @@ function applyGame(context, gameSpec) {
     }
   );
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
-    util.opn(path.join(LOCALAPPDATA, CONFIG_PATH)).catch(() => null);
+    util.opn(CONFIG_PATH).catch(() => null);
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
