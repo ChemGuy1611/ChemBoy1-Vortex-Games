@@ -50,7 +50,7 @@ const EXEC_XBOX = 'gamelaunchhelper.exe';
 const BINARIES_PATH = path.join("Binaries", `Win${BITS}`);
 const EXEC = path.join(BINARIES_PATH, EXEC_NAME);
 
-let GAME_PATH = null; //patched in the setup function to the discovered game path
+let GAME_PATH = ''; //patched in the setup function to the discovered game path
 let GAME_VERSION = '';
 let STAGING_FOLDER = ''; //Vortex staging folder path
 let DOWNLOAD_FOLDER = ''; //Vortex download folder path

@@ -62,7 +62,7 @@ const XBOX_SAVE_STRING = '';
 const UNITY_ARCH = 'x64'; // 'x64' or 'x86'
 const UNITY_BUILD = 'mono'; // 'il2cpp' or 'mono' - IL2CPP will use bleeding edge builds
 
-let GAME_PATH = null;
+let GAME_PATH = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 let GAME_VERSION = '';

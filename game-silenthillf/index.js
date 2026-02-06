@@ -56,7 +56,7 @@ if (IO_STORE) { //Set file number for pak installer file selection (needs to be 
   PAK_FILE_MIN = PAKMOD_EXTS.length;
 }
 
-let GAME_PATH = null; //game installation path
+let GAME_PATH = ''; //game installation path
 let CHECK_DATA = false; //boolean to check if game, staging folder, and config and save folders are on the same drive
 let CHECK_DOCS = false; //secondary same as above (if save and config are in different locations)
 let STAGING_FOLDER = ''; //Vortex staging folder path

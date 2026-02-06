@@ -21,7 +21,7 @@ const GAME_NAME_SHORT = "RFG";
 const EXEC = "rfg.exe";
 const EXEC_LEGACY = "rfg_launcher.exe";
 
-let GAME_PATH = null; //game installation path
+let GAME_PATH = ''; //game installation path
 let GAME_VERSION = ''; //game version (remaster or legacy)
 let STAGING_FOLDER = ''; //Vortex staging folder path
 let DOWNLOAD_FOLDER = ''; //Vortex download folder path

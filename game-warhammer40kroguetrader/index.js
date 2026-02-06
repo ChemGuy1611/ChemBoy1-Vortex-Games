@@ -43,7 +43,7 @@ const debug = true;
 const DATA_FOLDER = path.join(USER_HOME, 'AppData', 'LocalLow', 'Owlcat Games', 'Warhammer 40000 Rogue Trader');
 const ROOT_FOLDERS = ['']; //not using root installer
 
-let GAME_PATH = null;
+let GAME_PATH = '';
 let GAME_VERSION = 'default';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';

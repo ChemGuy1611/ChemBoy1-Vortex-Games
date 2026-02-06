@@ -44,14 +44,14 @@ const EXEC_FOLDER_DEFAULT = "Win64";
 const EXEC_FOLDER_XBOX = "WinGDK";
 
 //Information for setting the executable and variable paths based on the game store version
-let MOD_PATH = null;
-let BINARIES_TARGET = null;
-let SCRIPTS_PATH = null;
-let SCRIPTS_TARGET = null;
-let SAVE_PATH = null;
-let SAVE_TARGET = null;
-let CONFIG_PATH = null;
-let CONFIG_TARGET = null;
+let MOD_PATH = '';
+let BINARIES_TARGET = '';
+let SCRIPTS_PATH = '';
+let SCRIPTS_TARGET = '';
+let SAVE_PATH = '';
+let SAVE_TARGET = '';
+let CONFIG_PATH = '';
+let CONFIG_TARGET = '';
 let USERID_FOLDER = "";
 const requiredFiles = [EPIC_CODE_NAME];
 let GAME_VERSION = '';

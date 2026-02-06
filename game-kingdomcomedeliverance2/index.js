@@ -27,15 +27,15 @@ const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Kingdom_Come:_Delive
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1146"; //Nexus link to this extension. Used for links
 
 let LOAD_ORDER_ENABLED = true;
-let GAME_PATH = null;
-let GAME_VERSION = null;
-let EXECUTABLE = null;
+let GAME_PATH = '';
+let GAME_VERSION = '';
+let EXECUTABLE = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 
 //information for executable discovery and variable paths
-let BINARIES_PATH = null;
-let BINARIES_TARGET = null;
+let BINARIES_PATH = '';
+let BINARIES_TARGET = '';
 const EXEC_FILENAME = "KingdomCome.exe";
 const BINPATH_STEAM = path.join("Bin", "Win64MasterMasterSteamPGO");
 const EXEC_STEAM = path.join(BINPATH_STEAM, EXEC_FILENAME);
@@ -613,8 +613,8 @@ async function deserializeLoadOrder(context) {
   //Get all mod folders from Steam Workshop folder
   let modFoldersSteamWorkshop = [];
   let steamWorkshopIds = [];
-  let SWFOLDER_FOUND = null;
-  let STEAMWORKSHOP_PATH = null;
+  let SWFOLDER_FOUND = '';
+  let STEAMWORKSHOP_PATH = '';
   if (GAME_VERSION === 'steam') { 
     try {
       const SPLIT_PATH = gameDir.split(path.sep);
@@ -674,10 +674,10 @@ async function deserializeLoadOrder(context) {
   //Make an array of all the modid's parsed from the Steam Workshop mods mod.manifest
   if (SWFOLDER_FOUND === true) {
     for (let folder of modFoldersSteamWorkshop) {
-      let MOD_ID = null;
-      let modManifest = null;
+      let MOD_ID = '';
+      let modManifest = '';
       let MOD_FOLDERS = [];
-      let FOLDER_PATH = null;
+      let FOLDER_PATH = '';
       const MOD_ID_ERROR = 'steamworkshop-error-read-modmanifest'
       try { //Read mod.manifest file to get modid
         /*

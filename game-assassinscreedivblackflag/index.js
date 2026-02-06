@@ -21,7 +21,7 @@ const GAME_ID = "assassinscreedivblackflag";
 const GAME_NAME = "Assassin's Creed IV Black Flag";
 const GAME_NAME_SHORT = "ACIV Black Flag";
 const EXEC = "AC4BFSP.exe";
-let GAME_PATH = null; //patched in the setup function to the discovered game path
+let GAME_PATH = ''; //patched in the setup function to the discovered game path
 
 const BITS = "BIT32"; // "BIT32" or "BIT64"
 const RESOREP_PAGE = 1215;

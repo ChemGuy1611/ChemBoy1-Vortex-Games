@@ -35,7 +35,7 @@ const NAME_FOLDER = 'LookOutside';
 
 const ROOT_FOLDERS = [NAME_FOLDER, 'audio', 'css', 'data', 'effects', 'fonts', 'icon', 'img', 'lib', 'locales', 'swiftshader'];
 
-let GAME_PATH = null;
+let GAME_PATH = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 

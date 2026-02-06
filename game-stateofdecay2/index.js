@@ -28,7 +28,7 @@ const LOCALAPPDATA = util.getVortexPath('localAppData');
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/State_of_Decay_2";
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/946"; //Nexus link to this extension. Used for links
 
-let GAME_PATH = null;
+let GAME_PATH = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 let GAME_VERSION = '';

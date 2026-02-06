@@ -42,7 +42,7 @@ const CONFIG_FOLDERNAME = 'System';
 const SAVEMOD_LOCATION = DOCUMENTS;
 const SAVE_FOLDERNAME = 'Save';
 
-let GAME_PATH = null;
+let GAME_PATH = '';
 let GAME_VERSION = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';

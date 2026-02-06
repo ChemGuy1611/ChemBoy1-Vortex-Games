@@ -65,7 +65,7 @@ const ROOT_FOLDERS = [DATA_FOLDER, 'pac',
   'voice_en',
 ];
 
-let GAME_PATH = null;
+let GAME_PATH = '';
 let GAME_VERSION = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';

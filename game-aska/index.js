@@ -49,7 +49,7 @@ const allowMelPrefMan = false; //should MelonPreferencesManager be downloaded? F
 const allowBepinexNexus = false; //set false until bugs are fixed
 const allowMelonNexus = false; //set false until bugs are fixed
 
-let GAME_PATH = null;
+let GAME_PATH = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 let GAME_VERSION = '';

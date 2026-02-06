@@ -36,7 +36,7 @@ const DATA_FOLDER = path.join('Dishonored', EPIC_CODE_NAME);
 const SPECIAL_TFCMOD_FOLDERS = [];
 
 
-let GAME_PATH = null; //patched in the setup function to the discovered game path
+let GAME_PATH = ''; //patched in the setup function to the discovered game path
 let GAME_VERSION = '';
 let STAGING_FOLDER = ''; //Vortex staging folder path
 let DOWNLOAD_FOLDER = ''; //Vortex download folder path

@@ -21,7 +21,7 @@ const GAME_NAME = "The Last of Us Part I";
 const GAME_NAME_SHORT = "TLOU Part I";
 const EXEC = "launcher.exe";
 const MOD_PATH_DEFAULT = path.join(".");
-let GAME_PATH = null;
+let GAME_PATH = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 

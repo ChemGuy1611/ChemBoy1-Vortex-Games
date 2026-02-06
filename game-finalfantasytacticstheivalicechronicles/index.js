@@ -37,7 +37,7 @@ const RELOADEDMODLOADER_FILE = "fftivc.utility.modloader.dll";
 const RELOADEDMODLOADER_PAGE_NO = 4;
 const RELOADEDMODLOADER_FILE_NO = 91;
 
-let GAME_PATH = null;
+let GAME_PATH = '';
 let GAME_VERSION = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';

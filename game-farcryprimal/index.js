@@ -36,10 +36,10 @@ const DATA_FOLDER = "Far Cry Primal";
 const XML_PAGE_NO = 0;
 const XML_FILE_NO = 0;
 
-let GAME_PATH = null;
+let GAME_PATH = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
-let SAVE_PATH = null;
+let SAVE_PATH = '';
 let USERID_FOLDER = "";
 
 //Info for mod types and installers

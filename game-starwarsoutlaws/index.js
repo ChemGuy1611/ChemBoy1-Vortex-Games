@@ -22,7 +22,7 @@ const EXEC_PLUS = "Outlaws_Plus.exe";
 const GAME_NAME = "Star Wars Outlaws";
 const GAME_NAME_SHORT = "SW Outlaws";
 
-let GAME_PATH = null;
+let GAME_PATH = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 

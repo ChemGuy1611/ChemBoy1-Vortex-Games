@@ -35,7 +35,7 @@ const ACSE_FILE_NO = 2;
 const DEV_FOLDER = 'Frontier Developments';
 const GAME_FOLDER = 'Planet Coaster 2';
 
-let GAME_PATH = null;
+let GAME_PATH = '';
 let GAME_VERSION = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';

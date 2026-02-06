@@ -47,7 +47,7 @@ const DEV_REGSTRING = "TeamSoda";
 const GAME_REGSTRING = "Duckov";
 const XBOX_SAVE_STRING = '';
 
-let GAME_PATH = null;
+let GAME_PATH = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 let GAME_VERSION = '';

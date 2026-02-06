@@ -40,7 +40,7 @@ const BEPINEX_VERSION = '5.4.23.4'; //force BepInEx version ('5.4.23.3' or '6.0.
 const allowBepinexNexus = false; //set false until bugs are fixed
 const downloadCfgMan = false; //should BepInExConfigManager be downloaded?
 
-let GAME_PATH = null;
+let GAME_PATH = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 let GAME_VERSION = '';

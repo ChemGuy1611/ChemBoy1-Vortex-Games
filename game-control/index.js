@@ -28,7 +28,7 @@ const GAME_NAME = "Control"
 const GAME_NAME_SHORT = "Control";
 
 let GAME_VERSION = null;
-let GAME_PATH = null;
+let GAME_PATH = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 const APPMANIFEST_FILE = 'appxmanifest.xml';

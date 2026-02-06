@@ -46,7 +46,7 @@ const fallbackInstaller = true; //enable fallback installer. Set false if you ne
 const PUBLISHER_FOLDER = "";
 const DATA_FOLDER = "";
 
-let GAME_PATH = null;
+let GAME_PATH = '';
 let GAME_VERSION = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';

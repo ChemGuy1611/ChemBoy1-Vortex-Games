@@ -48,7 +48,7 @@ const SHIPPING_EXE = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_NAME, `${
 const BINARIES_ID = `${GAME_ID}-binaries`;
 const BINARIES_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_NAME);
 
-let GAME_PATH = null;
+let GAME_PATH = '';
 let CHECK_CONFIG = false;
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';

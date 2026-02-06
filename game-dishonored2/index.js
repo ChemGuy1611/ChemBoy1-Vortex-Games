@@ -31,7 +31,7 @@ const XBOX_SAVE_STRING = '3275kfvn8vcwc'; //string after "ID_"
 const ROOT_FOLDER = "base";
 const ROOT_FOLDERS = [ROOT_FOLDER];
 
-let GAME_PATH = null; //patched in the setup function to the discovered game path
+let GAME_PATH = ''; //patched in the setup function to the discovered game path
 let GAME_VERSION = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';

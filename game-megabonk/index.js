@@ -33,7 +33,7 @@ const DATA_FOLDER = "Megabonk_Data";
 const DEV_REGSTRING = "Ved";
 const GAME_REGSTRING = "Megabonk";
 
-let GAME_PATH = null;
+let GAME_PATH = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 let GAME_VERSION = '';

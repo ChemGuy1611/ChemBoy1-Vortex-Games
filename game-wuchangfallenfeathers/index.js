@@ -22,7 +22,7 @@ const XBOXEXECNAME = "AppProjectPlagueShipping";
 const GAME_NAME = "WUCHANG: Fallen Feathers";
 const GAME_NAME_SHORT = "WUCHANG FF";
 const DEFAULT_EXEC = "Project_Plague.exe";
-let GAME_PATH = null;
+let GAME_PATH = '';
 let CHECK_DATA = false;
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
@@ -53,15 +53,15 @@ if (IO_STORE) { //Set file number for pak installer file selection (needs to be 
 
 //Information for setting the executable and variable paths based on the game store version
 let GAME_VERSION = '';
-let BINARIES_PATH = null;
-let BINARIES_TARGET = null;
+let BINARIES_PATH = '';
+let BINARIES_TARGET = '';
 let SHIPPING_EXE = '';
-let SCRIPTS_PATH = null;
-let SCRIPTS_TARGET = null;
-let SAVE_PATH = null;
-let SAVE_TARGET = null;
-let CONFIG_PATH = null;
-let CONFIG_TARGET = null;
+let SCRIPTS_PATH = '';
+let SCRIPTS_TARGET = '';
+let SAVE_PATH = '';
+let SAVE_TARGET = '';
+let CONFIG_PATH = '';
+let CONFIG_TARGET = '';
 let requiredFiles = [EPIC_CODE_NAME];
 let USERID_FOLDER = "";
 const EXEC_FOLDER_DEFAULT = "Win64";

@@ -28,7 +28,7 @@ const EXEC = "Witchfire.exe";
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Witchfire";
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1647"; //Nexus link to this extension. Used for links
 
-let GAME_PATH = null;
+let GAME_PATH = '';
 let GAME_VERSION = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';

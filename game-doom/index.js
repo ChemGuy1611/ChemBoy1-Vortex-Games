@@ -46,7 +46,7 @@ const STEAMAPP_ID = "379720";
 const GOGAPP_ID = "1390579243";
 const GAME_ID = "doom";
 const EXEC = "DOOMx64vk.exe";
-let GAME_PATH = null;
+let GAME_PATH = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 

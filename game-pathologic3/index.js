@@ -55,7 +55,7 @@ const APPDATA_FOLDER = path.join('Ice-Pick Lodge', 'Pathologic 3');
 const CONFIG_FOLDERNAME = 'Settings';
 const SAVE_FOLDERNAME = 'Saves';
 
-let GAME_PATH = null;
+let GAME_PATH = '';
 let GAME_VERSION = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';

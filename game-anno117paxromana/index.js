@@ -36,7 +36,7 @@ const EXEC = path.join(BINARIES_PATH, EXEC_NAME);
 
 const ROOT_FOLDERS = ['Bin', 'maindata', 'mods'];
 
-let GAME_PATH = null;
+let GAME_PATH = '';
 let GAME_VERSION = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';

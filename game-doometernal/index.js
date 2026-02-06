@@ -55,7 +55,7 @@ const EXEC_XBOX = "gamelaunchhelper.exe";
 
 const INJ_DL_ID = "1524087"; //update this file id when new version released on gamebanana
 
-let GAME_PATH = null;
+let GAME_PATH = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 let GAME_VERSION = '';

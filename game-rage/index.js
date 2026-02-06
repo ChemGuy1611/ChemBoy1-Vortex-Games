@@ -56,7 +56,7 @@ const SAVEMOD_LOCATION = USER_HOME;
 const CONFIG_FOLDERNAME = path.join('SAVES', 'base');
 const SAVE_FOLDERNAME = path.join('Saved Games', 'id Software', 'Rage', 'base', 'savegame');
 
-let GAME_PATH = null;
+let GAME_PATH = '';
 let GAME_VERSION = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';

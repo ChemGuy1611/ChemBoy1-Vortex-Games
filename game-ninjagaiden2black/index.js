@@ -36,14 +36,14 @@ const gameFinderQuery = {
 };
 
 //Information for setting the executable and variable paths based on the game store version
-let BINARIES_PATH = null;
-let BINARIES_TARGET = null;
-let SCRIPTS_PATH = null;
-let SCRIPTS_TARGET = null;
-let SAVE_PATH = null;
-let SAVE_TARGET = null;
-let CONFIG_PATH = null;
-let CONFIG_TARGET = null;
+let BINARIES_PATH = '';
+let BINARIES_TARGET = '';
+let SCRIPTS_PATH = '';
+let SCRIPTS_TARGET = '';
+let SAVE_PATH = '';
+let SAVE_TARGET = '';
+let CONFIG_PATH = '';
+let CONFIG_TARGET = '';
 let GAME_VERSION = '';
 const APPMANIFEST_FILE = 'appxmanifest.xml';
 const requiredFiles = [EPIC_CODE_NAME];

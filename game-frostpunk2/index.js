@@ -34,17 +34,17 @@ const gameFinderQuery = {
 };
 
 //Information for setting the executable and variable paths based on the game store version
-let MOD_PATH = null;
-let BINARIES_TARGET = null;
-let SCRIPTS_PATH = null;
-let SCRIPTS_TARGET = null;
-let SAVE_PATH = null;
-let SAVE_TARGET = null;
-let CONFIG_PATH = null;
-let CONFIG_TARGET = null;
+let MOD_PATH = '';
+let BINARIES_TARGET = '';
+let SCRIPTS_PATH = '';
+let SCRIPTS_TARGET = '';
+let SAVE_PATH = '';
+let SAVE_TARGET = '';
+let CONFIG_PATH = '';
+let CONFIG_TARGET = '';
 let GAME_VERSION = '';
 const requiredFiles = [EPIC_CODE_NAME];
-let USERID_FOLDER = "";
+let USERID_FOLDER = '';
 const CONFIG_PATH_DEFAULT = path.join("11bitstudios", EPIC_CODE_NAME, "Steam", "Saved", "Config", "Windows");
 const CONFIG_PATH_EPIC = path.join("11bitstudios", EPIC_CODE_NAME, "Epic", "Saved", "Config", "Windows");
 const CONFIG_PATH_GOG = path.join("11bitstudios", EPIC_CODE_NAME, "GOG", "Saved", "Config", "Windows");

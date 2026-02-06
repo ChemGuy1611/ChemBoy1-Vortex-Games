@@ -37,7 +37,7 @@ const SAVE_FOLDERNAME = 'COTW';
 const EGS_FILE = 'versions.Paris-RC-Final.txt';
 const APPMANIFEST_FILE = 'appxmanifest.xml';
 
-let GAME_PATH = null;
+let GAME_PATH = '';
 let GAME_VERSION = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';

@@ -23,7 +23,7 @@ const GAME_ID = "mirthwood";
 const GAME_NAME = "Mirthwood"
 const GAME_NAME_SHORT = "Mirthwood"
 const EXEC = "Mirthwood.exe";
-let GAME_PATH = null;
+let GAME_PATH = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 

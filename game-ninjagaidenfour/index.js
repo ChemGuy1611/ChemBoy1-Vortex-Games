@@ -41,7 +41,7 @@ const ROOT_FOLDERS = ['assets', 'blob', 'config', 'fonts', 'shaders', 'textures'
 const DATA_FOLDER = 'NINJAGAIDEN4';
 const DATA_FOLDER_XBOX = 'NINJAGAIDEN4_Windows';
 
-let GAME_PATH = null;
+let GAME_PATH = '';
 let GAME_VERSION = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';

@@ -24,7 +24,7 @@ const EXEC = "RDR.exe";
 const GAME_NAME = "Red Dead Redemption";
 const GAME_NAME_SHORT = "RDR";
 
-let GAME_PATH = null;
+let GAME_PATH = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 

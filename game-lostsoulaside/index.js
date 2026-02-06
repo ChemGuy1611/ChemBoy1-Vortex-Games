@@ -58,7 +58,7 @@ if (IO_STORE) { //Set file number for pak installer file selection (needs to be 
   PAK_FILE_MIN = PAKMOD_EXTS.length;
 }
 
-let GAME_PATH = null;
+let GAME_PATH = '';
 let CHECK_DATA = false;
 let CHECK_DOCS = false;
 let STAGING_FOLDER = '';

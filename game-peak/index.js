@@ -23,7 +23,7 @@ const GAME_ID = "peak";
 const GAME_NAME = "PEAK"
 const GAME_NAME_SHORT = "PEAK"
 const EXEC = "PEAK.exe";
-let GAME_PATH = null;
+let GAME_PATH = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 

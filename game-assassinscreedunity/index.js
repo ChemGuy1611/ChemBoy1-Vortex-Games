@@ -19,7 +19,7 @@ const GAME_ID = "assassinscreedunity";
 const GAME_NAME = "Assassin's Creed Unity";
 const GAME_NAME_SHORT = "AC Unity";
 const EXEC = "ACU.exe";
-let GAME_PATH = null; //patched in the setup function to the discovered game path
+let GAME_PATH = ''; //patched in the setup function to the discovered game path
 
 const BITS = "BIT64";
 const RESOREP_PAGE = 1215;

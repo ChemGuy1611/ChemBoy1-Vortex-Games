@@ -57,7 +57,7 @@ const GAME_NAME = "DOOM 3";
 const GAME_NAME_BFG = "DOOM 3: BFG Edition";
 const GAME_NAME_SHORT_BFG = "DOOM 3 BFG";
 
-let GAME_PATH = null;
+let GAME_PATH = '';
 let GAME_PATH_BFG = null;
 let STAGING_FOLDER = '';
 let STAGING_FOLDER_BFG = '';

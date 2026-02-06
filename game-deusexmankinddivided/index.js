@@ -38,7 +38,7 @@ const SAVE_PATH_GOG = path.join(DOCUMENTS, 'My Games', 'Deus Ex Mankind Divided'
 const SAVE_PATH_EPIC = path.join(LOCALAPPDATA, 'Eidos Montreal', 'Deus Ex Mankind Divided'); //Epic version
 const SAVE_PATH_STEAM = path.join('STEAM_FOLDER', 'userdata', 'USER_ID', STEAMAPP_ID, 'remote'); //Steam version
 
-let GAME_PATH = null;
+let GAME_PATH = '';
 let GAME_VERSION = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';

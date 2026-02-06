@@ -26,10 +26,10 @@ const EXEC = path.join(BIN_PATH, EXEC_NAME);
 const GAME_NAME = "Far Cry 3";
 const GAME_NAME_SHORT = "FC3";
 
-let GAME_PATH = null;
+let GAME_PATH = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
-let SAVE_PATH = null;
+let SAVE_PATH = '';
 let USERID_FOLDER = "";
 
 //Info for mod types and installers

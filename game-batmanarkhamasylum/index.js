@@ -46,7 +46,7 @@ const EXEC = path.join(BINARIES_PATH, EXEC_NAME);
 const SHIPPING_EXE = path.join(BINARIES_PATH, 'ShippingPC-BmGame.exe');
 const SHIPPING_EXE_EPIC = path.join(BINARIES_PATH, 'Batman.exe');
 
-let GAME_PATH = null; //patched in the setup function to the discovered game path
+let GAME_PATH = ''; //patched in the setup function to the discovered game path
 let GAME_VERSION = '';
 let STAGING_FOLDER = ''; //Vortex staging folder path
 let DOWNLOAD_FOLDER = ''; //Vortex download folder path

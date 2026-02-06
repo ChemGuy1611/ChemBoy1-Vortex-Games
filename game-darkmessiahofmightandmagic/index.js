@@ -20,7 +20,7 @@ const GAME_NAME_SHORT = "Dark Messiah MM";
 const EXEC = "mm.exe";
 const ROOT_FOLDER = "mm";
 
-let GAME_PATH = null;
+let GAME_PATH = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 

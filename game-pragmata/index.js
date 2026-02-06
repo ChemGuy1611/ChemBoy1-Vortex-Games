@@ -39,7 +39,7 @@ const allowSymlinks = true; //true if game can use symlinks without issues. Typi
 const multiExe = true; //set to true if there are multiple executables (and multiple FLUFFY_FOLDERs) (typically for Demo)
 
 //global variables to set later
-let GAME_PATH = null; //game installation path
+let GAME_PATH = ''; //game installation path
 let GAME_VERSION = '';
 let STAGING_FOLDER = ''; //Vortex staging folder path
 let DOWNLOAD_FOLDER = ''; //Vortex download folder path

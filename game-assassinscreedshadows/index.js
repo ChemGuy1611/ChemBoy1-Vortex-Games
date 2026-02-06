@@ -19,7 +19,7 @@ const STEAMAPP_ID = "3159330";
 const GAME_NAME = "Assassin's Creed Shadows";
 const GAME_NAME_SHORT = "AC Shadows";
 const EXEC = "ACShadows.exe";
-let GAME_PATH = null; //patched in the setup function to the discovered game path
+let GAME_PATH = ''; //patched in the setup function to the discovered game path
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 

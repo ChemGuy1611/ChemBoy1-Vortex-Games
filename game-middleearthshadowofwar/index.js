@@ -43,7 +43,7 @@ const ROOT_FOLDERS = ['game', 'x64'];
 const DATA_FOLDER = path.join('WB Games', 'Shadow of War');
 const CONFIGMOD_LOCATION = LOCALAPPDATA;
 
-let GAME_PATH = null;
+let GAME_PATH = '';
 let GAME_VERSION = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';

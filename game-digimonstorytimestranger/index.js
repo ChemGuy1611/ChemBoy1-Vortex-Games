@@ -28,7 +28,7 @@ const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 const MOD_LOADER_FOLDER = "";
 
-let GAME_PATH = null;
+let GAME_PATH = '';
 let GAME_VERSION = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';

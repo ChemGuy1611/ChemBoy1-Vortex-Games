@@ -23,7 +23,7 @@ const GAME_NAME = "RoboCop: Rogue City";
 const GAME_NAME_SHORT = "RoboCop: RC";
 const EXEC_DEFAULT = "RoboCop.exe";
 const EXEC_XBOX = "gamelaunchhelper.exe";
-let GAME_PATH = null;
+let GAME_PATH = '';
 let CHECK_DATA = false;
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
@@ -61,17 +61,17 @@ const SCRIPTS_PATH_UNFINISHED = path.join(BINARIES_PATH_UNFINISHED, UE4SS_MOD_PA
 //Information for setting the executable and variable paths based on the game store version
 let GAME_VERSION = '';
 let GAME_VERSION_UNFINISHED = '';
-let BINARIES_PATH = null;
+let BINARIES_PATH = '';
 let BINARIES_TARGET = null;
 let SHIPPING_EXE = ''; 
-let SCRIPTS_PATH = null;
-let SCRIPTS_TARGET = null;
-let SAVE_PATH = null;
-let SAVE_TARGET = null;
-let CONFIG_PATH = null;
-let CONFIG_TARGET = null;
+let SCRIPTS_PATH = '';
+let SCRIPTS_TARGET = '';
+let SAVE_PATH = '';
+let SAVE_TARGET = '';
+let CONFIG_PATH = '';
+let CONFIG_TARGET = '';
 let requiredFiles = [EPIC_CODE_NAME];
-let USERID_FOLDER = "";
+let USERID_FOLDER = '';
 
 const XBOX_FILE = `appxmanifest.xml`;
 

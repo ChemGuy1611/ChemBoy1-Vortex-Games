@@ -24,7 +24,7 @@ const GAME_ID = "indianajonesandthegreatcircle";
 const EXEC = "TheGreatCircle.exe";
 const EXEC_XBOX = "gamelaunchhelper.exe";
 
-let GAME_PATH = null;
+let GAME_PATH = '';
 let GAME_VERSION = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';

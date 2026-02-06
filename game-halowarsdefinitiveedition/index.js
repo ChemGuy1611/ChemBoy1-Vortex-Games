@@ -52,7 +52,7 @@ const setupNotification = false; //enable to show the user a notification with s
 const debug = false; //toggle for debug mode
 
 //info for modtypes, installers, tools, and actions
-let GAME_PATH = null;
+let GAME_PATH = '';
 let GAME_VERSION = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';

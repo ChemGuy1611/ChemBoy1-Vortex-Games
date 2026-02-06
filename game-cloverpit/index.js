@@ -34,7 +34,7 @@ const BEPINEX_BUILD = 'mono'; // 'mono' or 'il2cpp'
 const ARCH = 'x64'; //x64 or x86
 const BEP_VER = '5.4.23.4'; //set BepInEx version for mono URLs
 
-let GAME_PATH = null;
+let GAME_PATH = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 let GAME_VERSION = '';

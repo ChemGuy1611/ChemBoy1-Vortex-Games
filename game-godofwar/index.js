@@ -23,7 +23,7 @@ const MOD_PATH = ".";
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/God_of_War";
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/340"; //Nexus link to this extension. Used for links
 
-let GAME_PATH = null;
+let GAME_PATH = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 

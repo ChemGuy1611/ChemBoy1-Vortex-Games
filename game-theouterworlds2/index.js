@@ -70,7 +70,7 @@ if (IO_STORE) { //Set file number for pak installer file selection (needs to be 
   PAK_FILE_MIN = PAKMOD_EXTS.length;
 }
 
-let GAME_PATH = null; //game installation path
+let GAME_PATH = ''; //game installation path
 let CHECK_DATA = false; //boolean to check if game, staging folder, and config and save folders are on the same drive
 let CHECK_DOCS = false; //secondary same as above (if save and config are in different locations)
 let STAGING_FOLDER = ''; //Vortex staging folder path
@@ -79,16 +79,16 @@ const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 //Information for setting the executable and variable paths based on the game store version
 let GAME_VERSION = '';
-let BINARIES_PATH = null;
-let BINARIES_FOLDER = null;
-let BINARIES_TARGET = null;
+let BINARIES_PATH = '';
+let BINARIES_FOLDER = '';
+let BINARIES_TARGET = '';
 let SHIPPING_EXE = '';
-let SCRIPTS_PATH = null;
-let SCRIPTS_TARGET = null;
-let SAVE_PATH = null;
-let SAVE_TARGET = null;
-let CONFIG_PATH = null;
-let CONFIG_TARGET = null;
+let SCRIPTS_PATH = '';
+let SCRIPTS_TARGET = '';
+let SAVE_PATH = '';
+let SAVE_TARGET = '';
+let CONFIG_PATH = '';
+let CONFIG_TARGET = '';
 let requiredFiles = [EPIC_CODE_NAME];
 let USERID_FOLDER = "";
 const EXEC_FOLDER_DEFAULT = "Win64";

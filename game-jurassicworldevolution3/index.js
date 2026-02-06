@@ -35,7 +35,7 @@ const ACSE_FILE_NO = 10;
 const DEV_FOLDER = 'Frontier Developments';
 const GAME_FOLDER = 'Jurassic World Evolution 3';
 
-let GAME_PATH = null;
+let GAME_PATH = '';
 let GAME_VERSION = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';

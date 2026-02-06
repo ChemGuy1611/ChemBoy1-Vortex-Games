@@ -37,11 +37,11 @@ const gameFinderQuery = {
 };
 
 //Information for setting the executable and variable paths based on the game store version
-let MOD_PATH = null;
-let BINARIES_PATH = null;
-let BINARIES_TARGET = null;
-let CONFIG_PATH = null;
-let SAVE_PATH = null;
+let MOD_PATH = '';
+let BINARIES_PATH = '';
+let BINARIES_TARGET = '';
+let CONFIG_PATH = '';
+let SAVE_PATH = '';
 let requiredFiles = [EPIC_CODE_NAME];
 
 const STEAM_EXEC_FOLDER = "Win64";

@@ -34,7 +34,7 @@ const DATASUB_FOLDERS = ["baked", "graph objects", "game system data"]; // <-- U
 const MODLOADER_PAGE_NO = 24;
 const MODLOADER_FILE_NO = 294;
 
-let GAME_PATH = null;
+let GAME_PATH = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 

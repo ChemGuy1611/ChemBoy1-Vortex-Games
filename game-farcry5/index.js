@@ -33,10 +33,10 @@ const DATA_FOLDER = "Far Cry 5";
 const XML_PAGE_NO = 0;
 const XML_FILE_NO = 0;
 
-let GAME_PATH = null;
+let GAME_PATH = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
-let SAVE_PATH = null;
+let SAVE_PATH = '';
 
 const EXEC = path.join(BIN_PATH, EXEC_NAME);
 const DB_URL = `https://mods.farcry.info/${FC}`;

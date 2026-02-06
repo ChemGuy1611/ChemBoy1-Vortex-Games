@@ -26,7 +26,7 @@ const EXEC = "SELACO.exe";
 
 const ROOT_FOLDERS = ['fm_banks', 'Save', 'soundfonts', 'UltimateSelacoBuilder'];
 
-let GAME_PATH = null;
+let GAME_PATH = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 
