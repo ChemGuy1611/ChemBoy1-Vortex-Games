@@ -1456,6 +1456,13 @@ function applyGame(context, gameSpec) {
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   }); //*/
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Saves (Profile) Folder', () => {
+    util.opn(SAVE_PATH).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, `Open ${LO_FILE} (Load Order)`, () => {
     GAME_PATH = getDiscoveryPath(context.api);
     util.opn(path.join(GAME_PATH, LO_FILE_PATH)).catch(() => null);
@@ -1486,7 +1493,7 @@ function applyGame(context, gameSpec) {
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Copy Custom Strat to Paks', () => {
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Copy Custom Strat to mods', () => {
     copyCustomStratToPaks(context.api).catch(() => null);
   }, () => {
     const state = context.api.getState();
@@ -1516,7 +1523,7 @@ function applyGame(context, gameSpec) {
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Paks Mods Folder', () => {
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Pak Mods Folder', () => {
     GAME_PATH = getDiscoveryPath(context.api);
     util.opn(path.join(GAME_PATH, PAK_PATH)).catch(() => null);
   }, () => {
@@ -1526,13 +1533,6 @@ function applyGame(context, gameSpec) {
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Local AppData Folder', () => {
     util.opn(CONFIG_PATH).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Saves (Profiles) Folder', () => {
-    util.opn(SAVE_PATH).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
@@ -1559,15 +1559,15 @@ function applyGame(context, gameSpec) {
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
-    util.opn(DOWNLOAD_FOLDER).catch(() => null);
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
+    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
-    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
+    util.opn(DOWNLOAD_FOLDER).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);

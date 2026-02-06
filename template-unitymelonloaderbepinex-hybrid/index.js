@@ -67,6 +67,7 @@ const GAME_REGSTRING = "XXX"; //game name
 const XBOX_SAVE_STRING = 'XXX'; //string after "ID_"
 
 //Data to determine BepinEx/MelonLoader versions and URLs
+const recommendedLoader = ''; // bepinex/melon/'' - loader shows as "(Recommended)" in selector. '' if no recommendation.
 const BEPINEX_BUILD = 'il2cpp'; // 'mono' or 'il2cpp' - check for "il2cpp_data" folder
 const ARCH = 'x64'; //'x64' or 'x86' game architecture (64-bit or 32-bit)
 const BEP_VER = '5.4.23.4'; //set BepInEx version for mono URLs
@@ -1584,8 +1585,14 @@ async function relaunchExt(api) {
 //Function to choose mod loader
 async function chooseModLoader(api, gameSpec) {
   const CUSTOM_LABEL = `${CUSTOMLOADER_NAME} (Recommended)`;
-  const BEP_LABEL = `BepInEx`;
-  const MEL_LABEL = `MelonLoader`;
+  let BEP_LABEL = `BepInEx`;
+  if (recommendedLoader === 'bepinex') {
+    BEP_LABEL = `${BEPINEX_NAME} (Recommended)`;
+  }
+  let MEL_LABEL = `MelonLoader`;
+  if (recommendedLoader === 'melon') {
+    MEL_LABEL = `${MELON_NAME} (Recommended)`;
+  }
   const t = api.translate;
   let choices = [
     { label: t(BEP_LABEL) },

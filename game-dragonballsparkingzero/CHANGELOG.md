@@ -1,5 +1,11 @@
 # Changelog
 
+## [0.5.1] - 2026-02-05
+
+- Improved: Made UE4SS Scripts, UE4SS DLL, LogicMods, and Root Folder mod installers case-insensitive to folder names
+- Improved: Filter out JsonFiles.json file from SZModLoader, its mods, and JSON mods to avoid external changes popups
+- Fixed: Corrected error message text
+
 ## [0.5.0] - 2026-02-01
 
 - Fixed: Issue with Load Order sorting not working if certain other UE game extensions were installed. You will need to reinstall all pak mods to be able to sort them properly. A notification will be sent reminding you to do this.

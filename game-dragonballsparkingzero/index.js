@@ -2,8 +2,8 @@
 Name: Dragon Ball: Sparking! Zero Vortex Extension
 Structure: UE5
 Author: ChemBoy1
-Version: 0.5.0
-Date: 2026-02-01
+Version: 0.5.1
+Date: 2026-02-05
 /////////////////////////////////////////////////////*/
 
 //Import libraries
@@ -109,13 +109,13 @@ const SIGBYPASS_FILE_NO = 2175;
 const MODLOADER_ID = `${GAME_ID}-modloader`;
 const MODLOADER_NAME = "SZModLoader";
 const MODLOADER_PATH = path.join(EPIC_CODE_NAME, 'Mods');
-const MODLOADER_FILE = "SZModLib";
+const MODLOADER_FOLDER = "SZModLib";
 const MODLOADER_PAGE_NO = 348;
 const MODLOADER_FILE_NO = 1720;
 
 const LFSE_ID = `${GAME_ID}-lfse`;
 const LFSE_PATH = path.join(EPIC_CODE_NAME, 'Mods');
-const LFSE_FILE = "LFSE";
+const LFSE_FOLDER = "LFSE";
 
 const MODLOADERMOD_ID = `${GAME_ID}-modloadermod`;
 const MODLOADERMOD_PATH = path.join(EPIC_CODE_NAME, 'Mods');
@@ -350,17 +350,18 @@ async function deploy(api) {
 
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
 
-//Test for save files
+//Test for UE4SS combo (pak and lua/dll) mod files
 function testUe4ssCombo(files, gameId) {
-  const isMod = files.find(file => path.extname(file).toLowerCase() === SCRIPTS_EXT) !== undefined;
-  const isMod2 = files.find(file => path.extname(file).toLowerCase() === LOGICMODS_EXT) !== undefined;
-  const isFolder = files.find(file => path.basename(file).toLowerCase() === ROOT_FOLDER.toLowerCase()) !== undefined;
-  let supported = (gameId === spec.game.id) && isMod && isMod2 && isFolder;
+  const isMod = files.some(file => (path.extname(file).toLowerCase() === SCRIPTS_EXT));
+  const isModAlt = files.some(file => (path.basename(file).toLowerCase() === 'binaries')); //added to catch mods packaged with paks and dll/asi, but no lua scripts.
+  const isMod2 = files.some(file => (path.extname(file).toLowerCase() === LOGICMODS_EXT));
+  const isFolder = files.some(file => (path.basename(file).toLowerCase() === ROOT_FOLDER.toLowerCase()));
+  let supported = (gameId === spec.game.id) && ( isMod || isModAlt ) && isMod2 && isFolder;
 
   // Test for a mod installer
   if (supported && files.find(file =>
-      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
     supported = false;
   }
 
@@ -370,9 +371,9 @@ function testUe4ssCombo(files, gameId) {
   });
 }
 
-//Install save files
-function installUe4ssCombo(files, fileName) {
-  const modFile = files.find(file => path.basename(file).toLowerCase() === ROOT_FOLDER.toLowerCase());
+//Install UE4SS combo (pak and lua/dll) mod files
+async function installUe4ssCombo(files, workingDir) {
+  const modFile = files.find(file => (path.basename(file).toLowerCase() === ROOT_FOLDER.toLowerCase()));
   const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: UE4SSCOMBO_ID };
@@ -396,7 +397,8 @@ function installUe4ssCombo(files, fileName) {
 //Test for save files
 function testLogic(files, gameId) {
   const isMod = files.some(file => path.basename(file).toLowerCase() === LOGICMODS_FOLDER.toLowerCase());
-  let supported = (gameId === spec.game.id) && isMod;
+  const isPak = files.some(file => (path.extname(file).toLowerCase() === LOGICMODS_EXT));
+  let supported = (gameId === spec.game.id) && isMod && isPak;
 
   // Test for a mod installer
   if (supported && files.find(file =>
@@ -439,6 +441,13 @@ function installLogic(files) {
 function testUe4ss(files, gameId) {
   const isMod = files.some(file => path.basename(file).toLowerCase() === UE4SS_FILE);
   let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
 
   return Promise.resolve({
     supported,
@@ -622,7 +631,8 @@ function installConfig(api, files) {
   GAME_PATH = getDiscoveryPath(api);
   const IS_CONFIG = checkPartitions(CONFIG_PATH, GAME_PATH);
   if (IS_CONFIG === false) {
-    api.showErrorNotification(`Could not install mod as Config`, `You tried installing a Config file mod, but the game, staging folder, and Local AppData folder are not all on the same drive. Please move the game and/or staging folder to the same drive as the Local AppData folder (typically C Drive) to install these types of mods with Vortex.`, { allowReport: false });
+    api.showErrorNotification(`Could not install mod as Config`, `You tried installing a Config (${CONFIG_EXT}) file mod, but the game, staging folder, and Local AppData folder are not all on the same drive. Please move the game and/or staging folder to the same drive as the Local AppData folder (typically C Drive) to install these types of mods with Vortex.`, { allowReport: false });
+    throw new util.ProcessCanceled(``);
   }
   return Promise.resolve({ instructions });
 }
@@ -631,6 +641,13 @@ function installConfig(api, files) {
 function testRoot(files, gameId) {
   const isMod = files.some(file => path.basename(file).toLowerCase() === ROOT_FOLDER.toLowerCase());
   let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
 
   return Promise.resolve({
     supported,
@@ -747,7 +764,7 @@ function installSigBypass(files) {
 
 //Test for Mod Loader
 function testModLoader(files, gameId) {
-  const isMod = files.some(file => path.basename(file) === MODLOADER_FILE);
+  const isMod = files.some(file => path.basename(file) === MODLOADER_FOLDER);
   let supported = (gameId === spec.game.id) && isMod;
 
   // Test for a mod installer
@@ -765,17 +782,17 @@ function testModLoader(files, gameId) {
 
 //Install Mod Loader
 function installModLoader(files) {
-  const modFile = files.find(file => path.basename(file) === MODLOADER_FILE);
+  const modFile = files.find(file => path.basename(file) === MODLOADER_FOLDER);
   const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MODLOADER_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) &&
-      (!file.endsWith(path.sep)))
-  );
-
+  const filtered = files.filter(file => (
+    (file.indexOf(rootPath) !== -1) 
+    && (!file.endsWith(path.sep))
+    && (path.basename(file).toLowerCase() !== JSONFILES_FILE.toLowerCase())
+  ));
   const instructions = filtered.map(file => {
     return {
       type: 'copy',
@@ -789,7 +806,7 @@ function installModLoader(files) {
 
 //Test for LFSE
 function testLFSE(files, gameId) {
-  const isMod = files.some(file => path.basename(file) === LFSE_FILE);
+  const isMod = files.some(file => path.basename(file) === LFSE_FOLDER);
   let supported = (gameId === spec.game.id) && isMod;
 
   // Test for a mod installer
@@ -807,7 +824,7 @@ function testLFSE(files, gameId) {
 
 //Install LFSE
 function installLFSE(files) {
-  const modFile = files.find(file => path.basename(file) === LFSE_FILE);
+  const modFile = files.find(file => path.basename(file) === LFSE_FOLDER);
   const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: LFSE_ID };
@@ -855,9 +872,11 @@ function installModLoaderMod(files) {
   const setModTypeInstruction = { type: 'setmodtype', value: MODLOADERMOD_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) &&
-      (!file.endsWith(path.sep))));
+  const filtered = files.filter(file => (
+    (file.indexOf(rootPath) !== -1) 
+    && (!file.endsWith(path.sep))
+    && (path.basename(file).toLowerCase() !== JSONFILES_FILE.toLowerCase())
+  ));
 
   const instructions = filtered.map(file => {
     return {
@@ -896,10 +915,11 @@ function installJson(files) {
   const setModTypeInstruction = { type: 'setmodtype', value: JSON_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) &&
-      (!file.endsWith(path.sep))));
-
+  const filtered = files.filter(file => (
+    (file.indexOf(rootPath) !== -1) 
+    && (!file.endsWith(path.sep))
+    && (path.basename(file).toLowerCase() !== JSONFILES_FILE.toLowerCase())
+  ));
   const instructions = filtered.map(file => {
     return {
       type: 'copy',
@@ -1330,7 +1350,7 @@ async function updateJsonFiles(api) { // Write json file list to JsonFiles.json 
       { encoding: "utf8" },
     );
   } catch (err) {
-    api.showErrorNotification(`Could not update ${JSONFILES_FILE} file with texpack and lodpack file names. Please add entries manually.`, err, { allowReport: false });
+    api.showErrorNotification(`Could not update ${JSONFILES_FILE} file with .json mod file names. Please add entries manually.`, err, { allowReport: false });
   }
 }
 
