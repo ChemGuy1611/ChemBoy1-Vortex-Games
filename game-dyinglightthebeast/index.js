@@ -364,7 +364,8 @@ async function downloadMergerUtility(api, gameSpec) {
         const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
         const file = modFiles
           .filter(file => file.category_id === 1)
-          .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))[0];
+          .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
+          .reverse()[0];
         if (file === undefined) {
           throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
         }
@@ -429,7 +430,8 @@ async function downloadSuperMerger(api, gameSpec) {
         const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
         const file = modFiles
           .filter(file => file.category_id === 1)
-          .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))[0];
+          .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
+          .reverse()[0];
         if (file === undefined) {
           throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
         }
