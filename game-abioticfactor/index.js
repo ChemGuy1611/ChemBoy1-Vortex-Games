@@ -3,7 +3,7 @@ Name: Abiotic Factor Vortex Extension
 Structure: UE5 (Xbox-Integrated)
 Author: ChemBoy1
 Version: 0.2.0
-Date: 2026-02-03
+Date: 2026-02-06
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -22,11 +22,9 @@ const XBOXEXECNAME = "AppAbioticFactorShipping"; //from appxmanifest.xml
 const GAME_NAME = "Abiotic Factor";
 const GAME_NAME_SHORT = "Abiotic Factor"; //Try for 8-10 characters
 const EXEC_DEFAULT = "AbioticFactor.exe";
-let GAME_PATH = '';
-let CHECK_DATA = false;
-let STAGING_FOLDER = '';
-let DOWNLOAD_FOLDER = '';
 const APPMANIFEST_FILE = 'appxmanifest.xml';
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Abiotic_Factor";
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1392"; //Nexus link to this extension. Used for links
 
 //Unreal Engine specific
 const EPIC_CODE_NAME = "AbioticFactor";
@@ -52,6 +50,10 @@ if (IO_STORE) { //Set file number for pak installer file selection (needs to be 
 }
 
 //Information for setting the executable and variable paths based on the game store version
+let GAME_PATH = '';
+let CHECK_DATA = false;
+let STAGING_FOLDER = '';
+let DOWNLOAD_FOLDER = '';
 let GAME_VERSION = '';
 let BINARIES_PATH = '';
 let BINARIES_TARGET = '';
@@ -59,16 +61,14 @@ let SHIPPING_EXE = '';
 let SCRIPTS_PATH = '';
 let SCRIPTS_TARGET = '';
 let SAVE_PATH = '';
-let SAVE_TARGET = '';
 let CONFIG_PATH = '';
-let CONFIG_TARGET = '';
 let requiredFiles = [EPIC_CODE_NAME];
-let USERID_FOLDER = "";
+let USERID_FOLDER = '';
+
 const EXEC_FOLDER_DEFAULT = "Win64";
 const EXEC_FOLDER_XBOX = "WinGDK";
 const EXEC_XBOX = `gamelaunchhelper.exe`;
 const XBOX_FILE = `appxmanifest.xml`;
-
 const EXEC_EPIC = "AbioticFactor_EGS.exe";
 
 //Config and save paths
@@ -145,6 +145,12 @@ const UE4SS_DLFILE_STRING = "ue4ss";
 const UE4SS_URL = "https://github.com/UE4SS-RE/RE-UE4SS/releases";
 const UE4SS_PAGE_NO = 35; 
 const UE4SS_FILE_NO = 451;
+const UE4SS_SETTINGS_FILE = 'UE4SS-settings.ini';
+const UE4SS_SETTINGS_FILEPATH = path.join('ue4ss', UE4SS_SETTINGS_FILE); //relative to Binaries folder
+const UE4SS_MODSJSON_FILE = 'mods.json';
+const UE4SS_MODSTXT_FILE = 'mods.txt';
+const UE4SS_MODSJSON_FILEPATH = path.join(UE4SS_MOD_PATH, UE4SS_MODSJSON_FILE); //relative to Binaries folder
+const UE4SS_MODSTXT_FILEPATH = path.join(UE4SS_MOD_PATH, UE4SS_MODSTXT_FILE);
 
 //no save editor for this game, YET
 const SAVE_EDITOR_ID = `${GAME_ID}-saveeditor`;
@@ -290,7 +296,6 @@ function getExecutable(discoveryPath) {
     SCRIPTS_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_XBOX, UE4SS_MOD_PATH);
     SCRIPTS_TARGET = path.join('{gamePath}', SCRIPTS_PATH);
     CONFIG_PATH = CONFIG_PATH_XBOX;
-    CONFIG_TARGET = CONFIG_PATH;
     try {
       const SAVE_ARRAY = fs.readdirSync(SAVE_PATH_XBOX);
       USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_PATH_XBOX, entry));
@@ -301,7 +306,6 @@ function getExecutable(discoveryPath) {
       USERID_FOLDER = "";
     }
     SAVE_PATH = path.join(SAVE_PATH_XBOX, USERID_FOLDER);
-    SAVE_TARGET = SAVE_PATH;
     return EXEC_XBOX;
   };
   if (isCorrectExec(EXEC_DEFAULT)) {
@@ -312,7 +316,6 @@ function getExecutable(discoveryPath) {
     SCRIPTS_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT, UE4SS_MOD_PATH);
     SCRIPTS_TARGET = path.join('{gamePath}', SCRIPTS_PATH);
     CONFIG_PATH = CONFIG_PATH_DEFAULT;
-    CONFIG_TARGET = CONFIG_PATH;
     try {
       const SAVE_ARRAY = fs.readdirSync(SAVE_PATH_DEFAULT);
       USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_PATH_DEFAULT, entry));
@@ -323,31 +326,8 @@ function getExecutable(discoveryPath) {
       USERID_FOLDER = "";
     }
     SAVE_PATH = path.join(SAVE_PATH_DEFAULT, USERID_FOLDER);
-    SAVE_TARGET = SAVE_PATH;
     return EXEC_DEFAULT;
   };
-  if (isCorrectExec(EXEC_EPIC)) {
-    GAME_VERSION = 'epic';
-    BINARIES_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT);
-    BINARIES_TARGET = path.join('{gamePath}', BINARIES_PATH);
-    SHIPPING_EXE = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT, `${EPIC_CODE_NAME}-${EXEC_FOLDER_DEFAULT}-Shipping.exe`);
-    SCRIPTS_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT, UE4SS_MOD_PATH);
-    SCRIPTS_TARGET = path.join('{gamePath}', SCRIPTS_PATH);
-    CONFIG_PATH = CONFIG_PATH_DEFAULT;
-    CONFIG_TARGET = CONFIG_PATH;
-    try {
-      const SAVE_ARRAY = fs.readdirSync(SAVE_PATH_DEFAULT);
-      USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_PATH_DEFAULT, entry));
-    } catch(err) {
-      USERID_FOLDER = "";
-    }
-    if (USERID_FOLDER === undefined) {
-      USERID_FOLDER = "";
-    }
-    SAVE_PATH = path.join(SAVE_PATH_DEFAULT, USERID_FOLDER);
-    SAVE_TARGET = SAVE_PATH;
-    return EXEC_EPIC;
-  }; //*/
   return EXEC_DEFAULT;
 }
 
@@ -1162,7 +1142,8 @@ async function downloadUe4ssNexus(api, gameSpec) {
         const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
         const file = modFiles
           .filter(file => file.category_id === 1)
-          .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))[0];
+          .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
+          .reverse()[0];
         if (file === undefined) {
           throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
         }
@@ -1476,9 +1457,12 @@ function partitionCheckNotify(api, CHECK_DATA) {
                 + `\n`
                 + `Here are your results for the partition check to enable these mod types:\n`
                 + `  - Config: ${CHECK_DATA ? `ENABLED: ${CONFIG_LOC} folders are on the same partition as the game and staging folder and the Config modtypes are available` : `DISABLED: ${CONFIG_LOC} folders are NOT on the same partition as the game and staging folder and the Config modtypes are NOT available`}\n`
+                + `  - Save: ${CHECK_DATA ? `ENABLED: ${SAVE_LOC} folder is on the same partition as the game and staging folder and the Save modtype is available` : `DISABLED: ${SAVE_LOC} folder is NOT on the same partition as the game and staging folder and the Save modtype is NOT available`}\n`
                 + `\n`
                 + `Config Path: ${CONFIG_PATH}\n`
-                + `Save Path (installer for Steam and Epic versions only): ${SAVE_PATH}\n`
+                + `Save Path (installer for Steam version only): ${SAVE_PATH}\n`
+                + `Game Path: ${GAME_PATH}\n`
+                + `Staging Path: ${STAGING_FOLDER}\n`
                 + `\n`
                 + `If you want to use the disabled mod types, you must move the game and staging folder to the same partition as the ${CONFIG_LOC} folders (typically C Drive).\n`
                 + `\n`
@@ -1499,7 +1483,6 @@ function partitionCheckNotify(api, CHECK_DATA) {
 
 async function resolveGameVersion(gamePath, exePath) {
   GAME_VERSION = await setGameVersionPath(gamePath);
-  //SHIPPING_EXE = getShippingExe(gamePath);
   const READ_FILE = path.join(gamePath, SHIPPING_EXE);
   let version = '0.0.0';
   if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
@@ -1517,7 +1500,6 @@ async function resolveGameVersion(gamePath, exePath) {
     try {
       const exeVersion = require('exe-version');
       version = await exeVersion.getProductVersion(READ_FILE);
-      //log('warn', `Resolved game version for ${GAME_ID} to: ${version}`);
       return Promise.resolve(version); 
     } catch (err) {
       log('error', `Could not read ${READ_FILE} file to get Steam game version: ${err}`);
@@ -1540,7 +1522,7 @@ async function setup(discovery, api, gameSpec) {
   }
   // ASYCRONOUS CODE ///////////////////////////////////
   if (CHECK_DATA) { //if game, staging folder, and config and save folders are on the same drive
-    await fs.ensureDirWritableAsync(path.join(CONFIG_PATH));
+    await fs.ensureDirWritableAsync(CONFIG_PATH);
     if (GAME_VERSION === 'steam' || GAME_VERSION === 'epic') {
       await fs.ensureDirWritableAsync(SAVE_PATH);
     }
@@ -1642,15 +1624,6 @@ function applyGame(context, gameSpec) {
     () => Promise.resolve(false), 
     { name: UE4SS_NAME }
   );
-  /*context.registerModType(SIGBYPASS_ID, 58, 
-    (gameId) => {
-      var _a;
-      return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, 
-    (game) => pathPattern(context.api, game, BINARIES_TARGET), 
-    () => Promise.resolve(false), 
-    { name: SIGBYPASS_NAME }
-  ); //*/
 
   //* register modtypes with partition checks
   context.registerModType(CONFIG_ID, 60, 
@@ -1661,7 +1634,7 @@ function applyGame(context, gameSpec) {
       }
       return ((gameId === GAME_ID) && (CHECK_DATA === true));
     },
-    (game) => pathPattern(context.api, game, CONFIG_TARGET), 
+    (game) => pathPattern(context.api, game, CONFIG_PATH), 
     () => Promise.resolve(false), 
     { name: CONFIG_NAME }
   ); //*/
@@ -1674,7 +1647,7 @@ function applyGame(context, gameSpec) {
       }
       return ((gameId === GAME_ID) && (CHECK_DATA === true) && (GAME_VERSION === 'steam' || GAME_VERSION === 'epic'));
     },
-    (game) => pathPattern(context.api, game, SAVE_TARGET), 
+    (game) => pathPattern(context.api, game, SAVE_PATH), 
     () => Promise.resolve(false), 
     { name: SAVE_NAME }
   ); //*/
@@ -1684,7 +1657,6 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(LOGICMODS_ID, 27, testLogic, installLogic);
   //29 is pak installer above
   context.registerInstaller(UE4SS_ID, 31, testUe4ss, installUe4ss);
-  //context.registerInstaller(SIGBYPASS_ID, 32, testSigBypass, installSigBypass); //no sigbypass for this game
   context.registerInstaller(SCRIPTS_ID, 33, testScripts, installScripts);
   context.registerInstaller(DLL_ID, 35, testDll, installDll);
   context.registerInstaller(ROOT_ID, 37, testRoot, installRoot);
@@ -1750,17 +1722,45 @@ function applyGame(context, gameSpec) {
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   }); //*/
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open UE4SS Settings INI', () => {
+    GAME_PATH = getDiscoveryPath(context.api);
+    util.opn(path.join(GAME_PATH, BINARIES_PATH, UE4SS_SETTINGS_FILEPATH)).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open UE4SS mods.txt', () => {
+    GAME_PATH = getDiscoveryPath(context.api);
+    util.opn(path.join(GAME_PATH, BINARIES_PATH, UE4SS_MODSTXT_FILEPATH)).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
+    util.opn(PCGAMINGWIKI_URL).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
-    const openPath = path.join(__dirname, 'CHANGELOG.md');
-    util.opn(openPath).catch(() => null);
+    util.opn(path.join(__dirname, 'CHANGELOG.md')).catch(() => null);
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
+    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
-    const openPath = DOWNLOAD_FOLDER;
-    util.opn(openPath).catch(() => null);
+    util.opn(DOWNLOAD_FOLDER).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);

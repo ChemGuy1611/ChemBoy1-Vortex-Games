@@ -326,24 +326,24 @@ function makeFindGame(api, gameSpec) {
 //Set launcher requirements
 async function requiresLauncher(gamePath, store) {
   if (store === 'xbox' && (DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID))) {
-      return Promise.resolve({
-        launcher: 'xbox',
-        addInfo: {
-          appId: XBOXAPP_ID,
-          parameters: [{ appExecName: XBOXEXECNAME }],
-          //parameters: [{ appExecName: XBOXEXECNAME }, PARAMETERS_STRING],
-          //launchType: 'gamestore',
-        },
-      });
+    return Promise.resolve({
+      launcher: 'xbox',
+      addInfo: {
+        appId: XBOXAPP_ID,
+        parameters: [{ appExecName: XBOXEXECNAME }],
+        //parameters: [{ appExecName: XBOXEXECNAME }, PARAMETERS_STRING],
+        //launchType: 'gamestore',
+      },
+    });
   } //*/
   if (store === 'epic' && (DISCOVERY_IDS_ACTIVE.includes(EPICAPP_ID))) {
     return Promise.resolve({
-        launcher: 'epic',
-        addInfo: {
-          appId: EPICAPP_ID,
-          //parameters: PARAMETERS,
-          //launchType: 'gamestore',
-        },
+      launcher: 'epic',
+      addInfo: {
+        appId: EPICAPP_ID,
+        //parameters: PARAMETERS,
+        //launchType: 'gamestore',
+      },
     });
   } //*/
   /*
@@ -838,7 +838,7 @@ function applyGame(context, gameSpec) {
     executable: () => gameSpec.game.executable,
     //executable: getExecutable,
     queryModPath: makeGetModPath(context.api, gameSpec),
-    //queryModPath: getModPath,
+    //queryModPath: getModPath(),
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     //getGameVersion: resolveGameVersion,
