@@ -134,7 +134,7 @@ const LOGICMODS_EXT = ".pak";
 const UE4SS_ID = `${GAME_ID}-ue4ss`;
 const UE4SS_NAME = "UE4SS";
 const UE4SS_FILE = "dwmapi.dll";
-const UE4SS_DLFILE_STRING = "ue4ss";
+const UE4SS_DLFILE_STRING = "ue4ss_v";
 const UE4SS_URL = "https://github.com/UE4SS-RE/RE-UE4SS/releases";
 
 //Save Editor

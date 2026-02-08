@@ -11,7 +11,7 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 const fsPromises = require('fs/promises');
-const { time } = require('console');
+const yaml = require('yaml'); //yaml.parse and yaml.stringify
 
 //Specify all the information about the game
 const STEAMAPP_ID = "2183900";
