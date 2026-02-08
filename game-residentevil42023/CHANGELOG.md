@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.3.3] - 2026-02-08
+
+- Added: Upscaler and root file mod installers
+- Added: Custom launch tool
+
 ## [0.3.2] - 2026-01-31
 
 - Fixed: Error related to "path" argument not being a string.

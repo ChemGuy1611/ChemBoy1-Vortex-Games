@@ -2,8 +2,8 @@
 Name: Resident Evil 4 (2023) + Chainsaw Demo Vortex Extension
 Structure: 3rd Party Mod Manager (Fluffy)
 Author: ChemBoy1
-Version: 0.3.2
-Date: 2026-01-31
+Version: 0.3.3
+Date: 2026-02-08
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -11,6 +11,7 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 const Bluebird = require('bluebird');
+const { ref } = require('process');
 
 //Specify all information about the game
 const STEAMAPP_ID = "2050650";
@@ -36,6 +37,8 @@ let STAGING_FOLDER = '';
 //Information for mod types, tools, and installers
 const ROOT_ID = `re4-root`;
 const ROOT_NAME = "Binaries / Root Folder";
+const ROOT_FILES = ['dxgi.dll', 'nvngx_dlss.dll', "amd_fidelityfx_dx12.dll"];
+const ROOT_EXTS = [".exe"];
 
 const REF_ID = `re4-reframework`;
 const REF_NAME = "REFramework";
@@ -62,6 +65,11 @@ const LOOSELUA_NAME = "Loose Lua (REFramework)";
 const LOOSELUA_PATH = path.join(".");
 const LUA_EXT = '.lua';
 const REF_FOLDERS = ['reframework', 'autorun'];
+
+const UPSCALER_ID = `${GAME_ID}-upscaler`;
+const UPSCALER_NAME = "Upscaler";
+const UPSCALER_PATH = path.join('reframework', 'plugins');
+const UPSCALER_FILE = 'PDPerfPlugin.dll';
 
 const REQ_FILE = 're_chunk_000.pak';
 
@@ -120,6 +128,12 @@ const spec = {
       "priority": "low",
       "targetPath": "{gamePath}"
     },
+    {
+      "id": UPSCALER_ID,
+      "name": UPSCALER_NAME,
+      "priority": "low",
+      "targetPath": path.join('{gamePath}', UPSCALER_PATH)
+    },
   ],
   "discovery": {
     "ids": [
@@ -141,6 +155,19 @@ const tools = [
     detach: true,
     relative: true,
     exclusive: true,
+  },
+  {
+    id: `${GAME_ID}-customlaunch`,
+    name: `Custom Launch`,
+    logo: "exec.png",
+    executable: () => EXEC,
+    requiredFiles: [EXEC],
+    detach: true,
+    relative: true,
+    exclusive: true,
+    shell: true,
+    defaultPrimary: false,
+    parameters: [],
   },
   {
     id: `${GAME_ID}-demolaunch`,
@@ -463,7 +490,7 @@ async function downloadREFramework(api, gameSpec) {
 //Installer test for Fluffy Mod Manager files
 function testFluffy(files, gameId) {
   const isFluffy = files.some(file => path.basename(file).toLowerCase() === FLUFFY_EXEC);
-  let supported = (gameId === spec.game.id) && isFluffy
+  let supported = (gameId === spec.game.id) && isFluffy;
 
   return Promise.resolve({
     supported,
@@ -479,10 +506,10 @@ function installFluffy(files) {
   const setModTypeInstruction = { type: 'setmodtype', value: FLUFFY_ID };
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) &&
-      (!file.endsWith(path.sep))));
-
+  const filtered = files.filter(file => (
+    (file.indexOf(rootPath) !== -1)
+    && (!file.endsWith(path.sep))
+  ));
   const instructions = filtered.map(file => {
     return {
       type: 'copy',
@@ -491,7 +518,6 @@ function installFluffy(files) {
     };
   });
   instructions.push(setModTypeInstruction);
-
   return Promise.resolve({ instructions });
 }
 
@@ -620,6 +646,51 @@ function installFluffyPak(files, fileName) {
   return Promise.resolve({ instructions });
 }
 
+//Installer test for root folders/files
+function testRoot(files, gameId) {
+  const isFile = files.some(file => ROOT_FILES.includes(path.basename(file)));
+  const isExt = files.some(file => ROOT_EXTS.includes(path.extname(file).toLowerCase()));
+  const isFluffy = files.some(file => path.basename(file).toLowerCase() === FLUFFYMOD_FILE);
+  let supported = (gameId === spec.game.id) && ( isFile || isExt ) && !isFluffy;
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Installer install root folders/files
+function installRoot(files) {
+  let modFile = files.find(file => ROOT_FILES.includes(path.basename(file)));
+  if (modFile === undefined) {
+    modFile = files.find(file => ROOT_EXTS.includes(path.extname(file).toLowerCase()));
+  }
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
+  const idx = modFile.indexOf(path.basename(modFile));
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
 //Installer test for mod files
 function testLooseLua(files, gameId) {
   const isLua = files.some(file => path.extname(file).toLowerCase() === LUA_EXT);
@@ -656,6 +727,40 @@ function installLooseLua(files) {
       type: 'copy',
       source: file,
       destination: path.join('reframework', 'autorun', file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Installer test for Upscaler files
+function testUpscaler(files, gameId) {
+  const isMod = files.some(file => path.basename(file).toLowerCase() === UPSCALER_FILE.toLowerCase());
+  let supported = (gameId === spec.game.id) && isMod;
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Installer install Upscaler files
+function installUpscaler(files) {
+  const modFile = files.find(file => path.basename(file).toLowerCase() === UPSCALER_FILE.toLowerCase());
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: UPSCALER_ID };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file => (
+    (file.indexOf(rootPath) !== -1)
+    && (!file.endsWith(path.sep))
+  ));
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
     };
   });
   instructions.push(setModTypeInstruction);
@@ -817,6 +922,7 @@ async function setup(discovery, api, gameSpec) {
   STAGING_FOLDER = selectors.installPathForGame(api.getState(), GAME_ID);
   await downloadFluffy(api, gameSpec);
   await downloadREFramework(api, gameSpec);
+  await fs.ensureDirWritableAsync(path.join(GAME_PATH, UPSCALER_PATH));
   return fs.ensureDirWritableAsync(path.join(GAME_PATH, MOD_PATH_USED));
 }
 
@@ -864,9 +970,10 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(REF_ID, 27, testREF, installREF);
   //context.registerInstaller(FLUFFYMOD_ID, 35, testFluffyMod, installFluffyMod);
   //context.registerInstaller(`${FLUFFYMOD_ID}pak`, 40, testFluffyPak, installFluffyPak);
-  context.registerInstaller(LOOSELUA_ID, 43, testLooseLua, installLooseLua);
+  context.registerInstaller(LOOSELUA_ID, 29, testLooseLua, installLooseLua);
+  context.registerInstaller(ROOT_ID, 31, testRoot, installRoot);
+  context.registerInstaller(UPSCALER_ID, 33, testUpscaler, installUpscaler);
   context.registerInstaller(`${FLUFFYMOD_ID}zip`, 45, toBlue(testZipContent), toBlue(installZipContent));
-  //context.registerInstaller(ROOT_ID, 50, testRoot, installRoot);
 
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
     util.opn(PCGAMINGWIKI_URL).catch(() => null);
