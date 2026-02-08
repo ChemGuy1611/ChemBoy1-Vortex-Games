@@ -2,8 +2,8 @@
 Name: WH40K Space Marine 2 Vortex Extension
 Structure: Mods Folder w/ LO
 Author: ChemBoy1
-Version: 0.5.1
-Date: 2025-02-04
+Version: 0.5.2
+Date: 2025-02-08
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -11,7 +11,7 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 const fsPromises = require('fs/promises');
-const yaml = require('yaml'); //yaml.parse and yaml.stringify
+const YAML = require('js-yaml'); //YAML.load (parse) and YAML.dump (stringify)
 
 //Specify all the information about the game
 const STEAMAPP_ID = "2183900";
@@ -1004,11 +1004,15 @@ async function deserializeLoadOrder(context) {
     loadOrderPath, 
     { encoding: "utf8", }
   );
+
+  /* simple single line, no "disabled" parameter
   let loadOrderSplit = loadOrderFile.split('\n');
   let MOD_ENTRIES = loadOrderSplit
-  .map(entry => entry.replace(LO_FILE_SPLITSTR, ''));
+  .map(entry => entry.replace(LO_FILE_SPLITSTR, '')); //*/
+
+  //* yaml with "disabled" parameter
+  let MOD_ENTRIES = YAML.load(loadOrderFile);
   let LO_MOD_ARRAY = MOD_ENTRIES;
-  //log('warn', `LO_MOD_ARRAY: ${LO_MOD_ARRAY.join(', ')}`);
   
   //Get all .pak files from mods folder
   let modFiles = [];
@@ -1050,7 +1054,8 @@ async function deserializeLoadOrder(context) {
   let loadOrder = await LO_MOD_ARRAY
     .reduce(async (accumP, entry) => {
       const accum = await accumP;
-      const file = entry;
+      //const file = entry;
+      const file = entry.pak;
       if (!modFiles.includes(file)) {
         return Promise.resolve(accum);
       }
@@ -1059,7 +1064,8 @@ async function deserializeLoadOrder(context) {
         id: file,
         name: `${file.replace(PAK_EXT, '')} (${await getModName(file)})`,
         modId: await getModId(file),
-        enabled: true,
+        //enabled: true,
+        enabled: !entry.disabled,
       }
       );
       return Promise.resolve(accum);
@@ -1095,16 +1101,25 @@ async function serializeLoadOrder(context, loadOrder) {
   if (gameDir === undefined) {
     return Promise.reject(new util.NotFound('Game not found'));
   }
-  let loadOrderPath = path.join(gameDir, LO_FILE_PATH);
+  const loadOrderPath = path.join(gameDir, LO_FILE_PATH);
 
+  /* simple single line, no "disabled" parameter
   let loadOrderMapped = loadOrder
     .map((mod) => (mod.enabled ? modToTemplate(mod.id) : ``));
   let loadOrderJoined = loadOrderMapped
     .filter((entry) => (entry !== ``))
-    .join("\n");
+    .join("\n"); 
+  //let loadOrderOutput = loadOrderJoined + "\n"; //*/
+  
+  //* yaml with "disabled" parameter
+  let loadOrderMapped = loadOrder
+    .map((mod) => ({
+      pak: mod.id,
+      disabled: !mod.enabled,
+    }));
+  const loadOrderOutput = YAML.dump(loadOrderMapped); //*/
 
   //write to file
-  let loadOrderOutput = loadOrderJoined;
   return fs.writeFileAsync(
     loadOrderPath,
     loadOrderOutput,
@@ -1584,7 +1599,7 @@ function main(context) {
       validate: async () => Promise.resolve(undefined), // no validation implemented yet
       deserializeLoadOrder: async () => await deserializeLoadOrder(context),
       serializeLoadOrder: async (loadOrder) => await serializeLoadOrder(context, loadOrder),
-      toggleableEntries: false,
+      toggleableEntries: true,
       usageInstructions:`Drag and drop the mods on the left to change the order in which they load.   \n`
                         +`${GAME_NAME} loads mods in the order you set from top to bottom.   \n`
                         +`\n`,

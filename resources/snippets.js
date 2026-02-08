@@ -10,6 +10,7 @@ const Bluebird = require('bluebird');
 const fsPromises = require('fs/promises');
 const fsExtra = require('fs-extra');
 const exeVersion = require('exe-version');
+const YAML = require('js-yaml'); //YAML.load (parse) and YAML.dump (stringify)
 
 const USER_HOME = util.getVortexPath("home");
 const DOCUMENTS = util.getVortexPath("documents");

@@ -4,6 +4,11 @@
 
 - None Planned
 
+## [0.5.2] - 2026-02-08
+
+- Improved: Load Order deserialization and serialization now uses js-yaml for proper formatting
+- Added: Toggle buttons to Load Order to enable/disable mods (thanks to above improvement)
+
 ## [0.5.1] - 2026-02-04
 
 - Added: Automatic save (profile) backup on mod purge
