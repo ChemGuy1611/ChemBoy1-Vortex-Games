@@ -2,8 +2,8 @@
 Name: The Outer Worlds Vortex Extension
 Structure: UE4
 Author: ChemBoy1
-Version: 0.5.0
-Date: 2026-02-02
+Version: 0.5.1
+Date: 2026-02-07
 ////////////////////////////////////////////////*/
 
 //Import libraries

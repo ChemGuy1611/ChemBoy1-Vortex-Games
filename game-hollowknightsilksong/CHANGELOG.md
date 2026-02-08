@@ -2,11 +2,12 @@
 
 ## Future Improvements (Not Yet Released)
 
-- None
+- Add???: Support for installing MelonLoader plugins. Need the compatibility loader for MelonLoader mods to work (<https://www.nexusmods.com/hollowknightsilksong/mods/44>) - there are very few MelonLoader mods.
 
-## [0.2.0] - 2026-01-25
+## [0.2.0] - 2026-02-07
 
-- Added support for installing MelonLoader plugins. Note taht you need the compatibility loader for MelonLoader mods to work (<https://www.nexusmods.com/hollowknightsilksong/mods/44>)
+- Fixed: Path strings
+- Fixed: Xbox game version detection
 
 ## [0.1.3] - 2025-09-08
 

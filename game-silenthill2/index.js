@@ -2,8 +2,8 @@
 Name: Silent Hill 2 Remake Vortex Extension
 Structure: UE5
 Author: ChemBoy1
-Version: 0.3.0
-Date: 2026-02-02
+Version: 0.3.1
+Date: 2026-02-07
 //////////////////////////////////////////////////*/
 
 //Import libraries

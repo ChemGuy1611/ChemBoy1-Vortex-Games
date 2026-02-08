@@ -4,6 +4,10 @@
 
 - Add full Xbox version support (not on Game Pass) - discovery (need appxmanifest.xml), binaries folders
 
+## [0.3.1] - 2026-02-07
+
+- Improved: Made UE4SS Scripts, UE4SS DLL, LogicMods, and Root Folder mod installers case-insensitive to folder names
+
 ## [0.3.0] - 2026-02-02
 
 - Added: Basic Xbox version support (discovery and executable setting). Note that only pak mods will install properly for Xbox at this time (not binaries or UE4SS mods)

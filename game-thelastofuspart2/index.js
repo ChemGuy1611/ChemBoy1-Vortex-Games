@@ -1177,7 +1177,7 @@ async function psarcExtract(GAME_PATH, api) {
   try { //extract sp-common.psarc
     const TARGET_FILE = path.join(WORK_PATH, SPCOMPSARC_FILE);
     const EXTRACT_PATH = WORK_PATH;
-    fs.statSync(TARGET_FILE);
+    await fs.statAsync(TARGET_FILE);
     //const ARGUMENTS = `"${path.join(WORK_PATH, SPCOMPSARC_FILE)}" "${WORK_PATH}"`; //UnPSARC arguments
     const ARGUMENTS = `-e "${TARGET_FILE}" -o "${EXTRACT_PATH}"`; //ndarc arguments
     await api.runExecutable(RUN_PATH, [ARGUMENTS], { shell: true, detached: true, suggestDeploy: false });
@@ -1190,7 +1190,7 @@ async function psarcExtract(GAME_PATH, api) {
   try { //extract bin.psarc
     const TARGET_FILE = path.join(WORK_PATH, BINPSARC_FILE);
     const EXTRACT_PATH = path.join(WORK_PATH, BIN_FOLDER);
-    fs.statSync(TARGET_FILE);
+    await fs.statAsync(TARGET_FILE);
     //const ARGUMENTS = `"${path.join(WORK_PATH, BINPSARC_FILE)}" "${path.join(WORK_PATH, BIN_FOLDER)}"`; //UnPSARC arguments
     const ARGUMENTS = `-e "${TARGET_FILE}" -o "${EXTRACT_PATH}"`; //ndarc arguments
     await api.runExecutable(RUN_PATH, [ARGUMENTS], { shell: true, detached: true, suggestDeploy: false });
@@ -1201,8 +1201,8 @@ async function psarcExtract(GAME_PATH, api) {
   }
 
   try { //stat extracted folders to make sure they are there
-    fs.statSync(path.join(GAME_PATH, PSARCTOOL_PATH, BIN_FOLDER));
-    fs.statSync(path.join(GAME_PATH, PSARCTOOL_PATH, 'pak68'));
+    await fs.statAsync(path.join(GAME_PATH, PSARCTOOL_PATH, BIN_FOLDER));
+    await fs.statAsync(path.join(GAME_PATH, PSARCTOOL_PATH, 'pak68'));
     return true;
   } catch (err) { //if the folders aren't there, the user probably clossed the terminal windows
     return false;
@@ -1229,15 +1229,15 @@ async function psarcSetup(api) { //run on mod purge
   if (EXTRACTED) {
     log('warn', `Extraction of all .psarc files complete. Renaming files...`);
     try { //rename sp-common.psarc
-      fs.statSync(path.join(GAME_PATH, PSARCTOOL_PATH, SPCOMPSARC_FILE));
-      fs.renameAsync(path.join(GAME_PATH, PSARCTOOL_PATH, SPCOMPSARC_FILE), path.join(GAME_PATH, PSARCTOOL_PATH, BAK_SPCOMPSARC_FILE));
+      await fs.statAsync(path.join(GAME_PATH, PSARCTOOL_PATH, SPCOMPSARC_FILE));
+      await fs.renameAsync(path.join(GAME_PATH, PSARCTOOL_PATH, SPCOMPSARC_FILE), path.join(GAME_PATH, PSARCTOOL_PATH, BAK_SPCOMPSARC_FILE));
       log('warn', `Renamed .psarc file ${SPCOMPSARC_FILE} to ${BAK_SPCOMPSARC_FILE}`);
     } catch (err) {
       log('error', `Could not rename .psarc file ${SPCOMPSARC_FILE}: ${err}`);
     }
     try { //rename bin.psarc
-      fs.statSync(path.join(GAME_PATH, PSARCTOOL_PATH, BINPSARC_FILE));
-      fs.renameAsync(path.join(GAME_PATH, PSARCTOOL_PATH, BINPSARC_FILE), path.join(GAME_PATH, PSARCTOOL_PATH, BAK_BINPSARC_FILE));
+      await fs.statAsync(path.join(GAME_PATH, PSARCTOOL_PATH, BINPSARC_FILE));
+      await fs.renameAsync(path.join(GAME_PATH, PSARCTOOL_PATH, BINPSARC_FILE), path.join(GAME_PATH, PSARCTOOL_PATH, BAK_BINPSARC_FILE));
       log('warn', `Renamed .psarc file ${BINPSARC_FILE} to ${BAK_BINPSARC_FILE}`);
     } catch (err) {
       log('error', `Could not rename .psarc file ${BINPSARC_FILE}: ${err}`);

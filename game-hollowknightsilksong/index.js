@@ -3,7 +3,7 @@ Name: Hollow Knight: Silksong Vortex Extension
 Structure: Unity BepinEx
 Author: ChemBoy1
 Version: 0.2.0
-Date: 2026-01-25
+Date: 2026-02-07
 //////////////////////////////////////////*/
 
 //Import libraries
@@ -34,6 +34,8 @@ const DATA_FOLDER = "Hollow Knight Silksong_Data";
 const DEV_REGSTRING = "Team Cherry";
 const GAME_REGSTRING = "Hollow Knight Silksong";
 const XBOX_SAVE_STRING = 'y4jvztpgccj42';
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Hollow_Knight:_Silksong";
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1420";
 
 const BEPINEX_PAGE_ID = '26';
 const BEPINEX_FILE_ID = '40';
@@ -573,17 +575,29 @@ function applyGame(context, gameSpec) {
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
+    util.opn(PCGAMINGWIKI_URL).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
-    const openPath = path.join(__dirname, 'CHANGELOG.md');
-    util.opn(openPath).catch(() => null);
+    util.opn(path.join(__dirname, 'CHANGELOG.md')).catch(() => null);
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
+    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
-    const openPath = DOWNLOAD_FOLDER;
-    util.opn(openPath).catch(() => null);
+    util.opn(DOWNLOAD_FOLDER).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
