@@ -129,6 +129,7 @@ const MELON_ID = `${GAME_ID}-melonloader`;
 const MELON_NAME = "MelonLoader";
 const MELON_ZIP = `MelonLoader.${ARCH}.zip`;
 const MELON_URL = `https://github.com/LavaGang/MelonLoader/releases/latest/download/${MELON_ZIP}`;
+//const MELON_URL = `https://github.com/LavaGang/MelonLoader/actions/runs/21791509022/artifacts/5420365741/MelonLoader.Windows.x64.CI.Release.zip`;
 const MELON_URL_ERR = `https://github.com/LavaGang/MelonLoader/releases`;
 const MELON_FILE = 'MelonLoader.dll';
 const MELON_FOLDER = 'MelonLoader';
