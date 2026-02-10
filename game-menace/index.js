@@ -131,6 +131,9 @@ const MELON_ZIP = `MelonLoader.${ARCH}.zip`;
 const MELON_URL = `https://github.com/LavaGang/MelonLoader/releases/latest/download/${MELON_ZIP}`;
 //const MELON_URL = `https://github.com/LavaGang/MelonLoader/actions/runs/21791509022/artifacts/5420365741/MelonLoader.Windows.x64.CI.Release.zip`;
 const MELON_URL_ERR = `https://github.com/LavaGang/MelonLoader/releases`;
+const MELON_PAGE_NO = 9;
+const MELON_FILE_NO = 34;
+const MELON_DOMAIN = GAME_ID;
 const MELON_FILE = 'MelonLoader.dll';
 const MELON_FOLDER = 'MelonLoader';
 const MEL_STRING = 'MelonLoader';
@@ -2373,7 +2376,7 @@ async function downloadBepinex(api, gameSpec) {
   }
 }
 
-// Download MelonLoader
+/* Download MelonLoader (GitHub)
 async function downloadMelon(api, gameSpec) {
   let isInstalled = isMelonInstalled(api, gameSpec);
   if (!isInstalled) {
@@ -2416,7 +2419,73 @@ async function downloadMelon(api, gameSpec) {
       api.dismissNotification(NOTIF_ID);
     }
   }
-}
+} //*/
+
+//* Download MelonLoader Nightly (Nexus)
+async function downloadMelon(api, gameSpec) {
+  let isInstalled = isMelonInstalled(api, gameSpec);
+  if (!isInstalled) {
+    const MOD_NAME = MELON_NAME;
+    const MOD_TYPE = MELON_ID;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
+    const PAGE_ID = MELON_PAGE_NO;
+    const FILE_ID = MELON_FILE_NO;  //If using a specific file id because "input" below gives an error
+    const GAME_DOMAIN = MELON_DOMAIN;
+    api.sendNotification({ //notification indicating install process
+      id: NOTIF_ID,
+      message: `Installing ${MOD_NAME}`,
+      type: 'activity',
+      noDismiss: true,
+      allowSuppress: false,
+    });
+    if (api.ext?.ensureLoggedIn !== undefined) { //make sure user is logged into Nexus Mods account in Vortex
+      await api.ext.ensureLoggedIn();
+    }
+    try {
+      let FILE = null;
+      let URL = null;
+      try { //get the mod files information from Nexus
+        const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
+        const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
+        const file = modFiles
+          .filter(file => file.category_id === 1)
+          .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
+          .reverse()[0];
+        if (file === undefined) {
+          throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
+        }
+        FILE = file.file_id;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      } catch (err) { // use defined file ID if input is undefined above
+        FILE = FILE_ID;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      }
+      const dlInfo = { //Download the mod
+        game: GAME_DOMAIN,
+        name: MOD_NAME,
+      };
+      const dlId = await util.toPromise(cb =>
+        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+      const modId = await util.toPromise(cb =>
+        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
+      const batched = [
+        actions.setModsEnabled(api, profileId, [modId], true, {
+          allowAutoDeploy: true,
+          installed: true,
+        }),
+        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
+      ];
+      util.batchDispatch(api.store, batched); // Will dispatch both actions
+    } catch (err) { //Show the user the download page if the download, install process fails
+      const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
+      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err, { allowReport: false });
+      util.opn(errPage).catch(() => null);
+    } finally {
+      api.dismissNotification(NOTIF_ID);
+    }
+  }
+} //*/
 
 //* Function to auto-download Custom Mod Loader from Nexus Mods
 async function downloadCustom(api, gameSpec) {

@@ -1635,7 +1635,7 @@ function chooseFilesToInstall(api, files, fileExt) {
         { label: 'Install All_plural' }
     ]).then((result) => {
         if (result.action === 'Cancel') {
-          return Promise.reject(new util.ProcessCanceled('User cancelled.'));
+          return Promise.reject(new util.UserCanceled('User cancelled.'));
         }
         else {
           const installAll = (result.action === 'Install All' || result.action === 'Install All_plural');
