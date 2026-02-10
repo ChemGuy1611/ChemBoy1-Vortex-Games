@@ -63,11 +63,12 @@ const SAVE_EXT = ".sav";
 const SAVE_COMPAT_VERSIONS = ['steam', 'epic', 'gog']; //game versions with installable save mods (never Xbox)
 let PAKMOD_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Paks', '~mods'); //usually works. Some games don't work from "~mods".
 const PAKMOD_LOADORDER = true; //set to false if you don't want loadOrder. If must be in "Paks" root, disable loadOrder.
-const PAKMOD_EXTRA_EXTS = []; //extra extensions to include with paks (usually for custom modding frameworks, i.e .toml, .json, etc)
+const PAKMOD_EXTRA_EXTS = ['.txt']; //extra extensions to include with paks (usually for custom modding frameworks, i.e .toml, .json, etc)
 const UE4SS_PAGE_NO = 0; //set these if there is a customized UE4SS Nexus page
 const UE4SS_FILE_NO = 0;
 const UE4SS_DOMAIN = GAME_ID; //either GAME_ID or 'site'
 const UE4SS_MOD_PATH = path.join('ue4ss', 'Mods'); //this should probably never change (unless UE4SS team changes it again lol)
+const DBLIST_FILE = 'dblist.txt';
 
 //config, save, shipping exe
 const DATA_FOLDER = path.join('BANDAI NAMCO Entertainment', 'MY HERO ACADEMIA Alls Justice'); //almost always matches.
@@ -1690,7 +1691,7 @@ function chooseFilesToInstall(api, files, fileExt) {
         { label: 'Install All_plural' }
     ]).then((result) => {
         if (result.action === 'Cancel')
-            return Promise.reject(new util.ProcessCanceled('User cancelled.'));
+            return Promise.reject(new util.UserCanceled('User cancelled.'));
         else {
             const installAll = (result.action === 'Install All' || result.action === 'Install All_plural');
             const installPAKS = installAll ? files : Object.keys(result.input).filter(s => result.input[s])
