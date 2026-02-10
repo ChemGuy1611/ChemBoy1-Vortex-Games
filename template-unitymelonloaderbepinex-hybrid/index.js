@@ -1774,7 +1774,7 @@ async function resolveGameVersion(gamePath) {
       return Promise.resolve(version);
     }
   } 
-  /*else { // use exe
+  else { // use exe
     try {
       const exeVersion = require('exe-version');
       version = exeVersion.getProductVersion(path.join(gamePath, EXEC));
@@ -1784,7 +1784,7 @@ async function resolveGameVersion(gamePath) {
       return Promise.resolve(version);
     }
   } //*/
-  else {
+  /*else { use text file
     const versionFilepath = path.join(gamePath, VERSION_FILE_PATH);
     try {
       const data = await fs.readFileAsync(versionFilepath, { encoding: 'utf8' });
@@ -1795,7 +1795,7 @@ async function resolveGameVersion(gamePath) {
     } catch (err) {
       return Promise.reject(err);
     }
-  }
+  } //*/
 } //*/
 
 //Notify User to ask if they want to download BepInExConfigManager
@@ -1947,7 +1947,7 @@ function applyGame(context, gameSpec) {
     queryModPath: makeGetModPath(context.api, gameSpec),
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
-    //getGameVersion: resolveGameVersion,
+    getGameVersion: resolveGameVersion,
     supportedTools: tools,
   };
   context.registerGame(game);
