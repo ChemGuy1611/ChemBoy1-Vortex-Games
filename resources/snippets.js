@@ -6,23 +6,34 @@ const template = require('string-template');
 const { parseStringPromise } = require('xml2js');
 const winapi = require('winapi-bindings');
 const turbowalk = require('turbowalk');
-const Bluebird = require('bluebird');
+const Bluebird = require('bluebird'); //avoid using as it is deprecated
 const fsPromises = require('fs/promises');
 const fsExtra = require('fs-extra');
 const exeVersion = require('exe-version');
-const YAML = require('js-yaml'); //YAML.load (parse) and YAML.dump (stringify)
 
+//File parsers
+const XML = require('xml2js'); //XML.parseString(), XML.parseStringPromise() (async), and XML.Builder() (write)
+const builder = new XML.Builder();
+const xml = builder.buildObject({});
+const YAML = require('js-yaml'); //YAML.load() (parse) and YAML.dump() (stringify)
+const TOML = require('@iarna/toml'); //TOML.parse() and TOML.stringify()
+const { default: IniParser, WinapiFormat } = require('vortex-parse-ini'); //parser for .ini files
+const parser = new IniParser(new WinapiFormat()); //parser.read() and parser.write()
+
+//user data paths
 const USER_HOME = util.getVortexPath("home");
+const LOCALLOW = path.join(USER_HOME, 'AppData', 'LocalLow');
 const DOCUMENTS = util.getVortexPath("documents");
 const ROAMINGAPPDATA = util.getVortexPath('appData');
 const LOCALAPPDATA = util.getVortexPath('localAppData');
 
+//standard global variables to set in functions
 let GAME_PATH = '';
+let GAME_VERSION = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
-let GAME_VERSION = '';
 
-//User-Defined Folder, stored in state "settings"
+//User-Defined Folder, stored in state "settings" ////////////////////////////////////////////////////////////////
 const selectUDF = async (api) => { //user select folder
   const launcherSettings = path.join(util.getVortexPath("appData"), "7DaysToDie", "launchersettings.json");
   const res = await api.showDialog(

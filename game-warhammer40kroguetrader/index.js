@@ -972,13 +972,8 @@ async function checkForRequirements(api) {
 
 //remove load order list from default.archcfg on purge
 async function clearModOrder(api) {
-  let gameDir = getDiscoveryPath(api);
-  if (gameDir === undefined) {
-    return Promise.reject(new util.NotFound('Game not found'));
-  }
-  let loadOrderPath = path.join(LO_FILE_PATH);
   return fs.writeFileAsync(
-    loadOrderPath,
+    LO_FILE_PATH,
     JSON.stringify(LO_FILE_EMPTY, null, 2),
     { encoding: "utf8" },
   );
@@ -1107,16 +1102,16 @@ async function serializeLoadOrder(context, loadOrder) {
     .map((mod) => (mod.enabled ? mod.id : ``))
     .filter((mod) => (mod !== ``))
   let disabled = loadOrder
-    .map((mod) => (mod.enabled ? `` : `${mod.id}`))
+    .map((mod) => (mod.enabled ? `` : mod.id))
     .filter((mod) => (mod !== ``));
   let contents = await fs.readFileAsync(loadOrderPath, 'utf8');
   let json = JSON.parse(contents);
   json.EnabledModifications = loadOrderMapped;
-  json.ActiveModifications = loadOrderMapped;
+  json.ActiveModifications = loadOrderMapped; //??? Not sure if this needs to include disabled
   json.DisabledModifications = disabled;
-  contents = JSON.stringify(json, null, 2);
+
   //write to OwlcatModificationManagerSettings.json file
-  let loadOrderOutput = contents;
+  let loadOrderOutput = JSON.stringify(json, null, 2);
   return fs.writeFileAsync(
     loadOrderPath,
     loadOrderOutput,

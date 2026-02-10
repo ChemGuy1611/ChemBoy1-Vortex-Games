@@ -1,9 +1,9 @@
 /*//////////////////////////////////////////
-Name: XXX Vortex Extension
+Name: MENACE Vortex Extension
 Structure: Unity BepinEx/MelonLoader Hybrid
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2026-XX-XX
+Date: 2026-02-10
 //////////////////////////////////////////*/
 
 //Import libraries
@@ -23,25 +23,25 @@ const LOCALLOW = path.join(USER_HOME, 'AppData', 'LocalLow');
 const LOCALAPPDATA = util.getVortexPath("localAppData");
 
 //Specify all the information about the game
-const GAME_ID = "XXX";
-const STEAMAPP_ID = "XXX";
-const STEAMAPP_ID_DEMO = "XXX";
-const EPICAPP_ID = "XXX";
-const GOGAPP_ID = "XXX";
-const XBOXAPP_ID = "XXX";
-const XBOXEXECNAME = "XXX";
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
-const GAME_NAME = "XXX";
-const GAME_NAME_SHORT = "XXX";
-const GAME_STRING = "XXX"; //string for exe and data folder (seem to always match)
-const GAME_STRING_ALT = "XXX"; //
+const GAME_ID = "menace";
+const STEAMAPP_ID = "2432860";
+const STEAMAPP_ID_DEMO = "2432870";
+const EPICAPP_ID = ""; //not on egdata.app yet
+const GOGAPP_ID = "1812373738";
+const XBOXAPP_ID = "HoodedHorse.MENACE";
+const XBOXEXECNAME = "Game";
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, GOGAPP_ID, XBOXAPP_ID, STEAMAPP_ID_DEMO]; // UPDATE THIS WITH ALL VALID IDs
+const GAME_NAME = "MENACE";
+const GAME_NAME_SHORT = "MENACE";
+const GAME_STRING = "Menace"; //string for exe and data folder (seem to always match)
+const GAME_STRING_ALT = "Menace"; // N/A
 const EXEC = `${GAME_STRING}.exe`;
 const EXEC_EGS = EXEC;
 const EXEC_GOG = EXEC;
 const EXEC_XBOX = 'gamelaunchhelper.exe';
 const EXEC_ALT = EXEC_XBOX; //or `${GAME_STRING_ALT}.exe`
-const PCGAMINGWIKI_URL = "XXX";
-const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Menace";
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1686"; //Nexus link to this extension. Used for links
 
 //feature toggles
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
@@ -59,15 +59,15 @@ let DATA_FOLDER = DATA_FOLDER_DEFAULT;
 const ALT_VERSION = 'xbox';
 const DATA_FOLDER_ALT = `${GAME_STRING_ALT}_Data`; //don't always match
 const ROOT_FOLDERS = [DATA_FOLDER, DATA_FOLDER_ALT];
-const VERSION_FILE = path.join('Version.info'); //app.info
+const VERSION_FILE = 'app.info';
 let VERSION_FILE_PATH = path.join(DATA_FOLDER, VERSION_FILE);
 
-const DEV_REGSTRING = "XXX"; //developer name
-const GAME_REGSTRING = "XXX"; //game name
-const XBOX_SAVE_STRING = 'XXX'; //string after "ID_"
+const DEV_REGSTRING = "Overhype Studios"; //developer name
+const GAME_REGSTRING = "Menace"; //game name
+const XBOX_SAVE_STRING = 'znaey1dw2bdpr'; //string after "ID_"
 
 //Data to determine BepinEx/MelonLoader versions and URLs
-const recommendedLoader = ''; // bepinex/melon/'' - loader shows as "(Recommended)" in selector. '' if no recommendation.
+const recommendedLoader = 'melon'; // bepinex/melon/'' - loader shows as "(Recommended)" in selector. '' if no recommendation.
 const BEPINEX_BUILD = 'il2cpp'; // 'mono' or 'il2cpp' - check for "il2cpp_data" folder
 const ARCH = 'x64'; //'x64' or 'x86' game architecture (64-bit or 32-bit)
 const BEP_VER = '5.4.23.4'; //set BepInEx version for mono URLs
@@ -91,10 +91,7 @@ let customInstalled = false;
 const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 //Config and save paths
-const CONFIG_HIVE = 'HKEY_CURRENT_USER';
-const CONFIG_KEY = `Software\\${DEV_REGSTRING}\\${GAME_REGSTRING}`;
-const CONFIG_REGPATH_FULL = `${CONFIG_HIVE}\\${CONFIG_KEY}`; //*/
-//const CONFIG_PATH = path.join(LOCALLOW, DEV_REGSTRING, GAME_REGSTRING, 'Settings');
+const CONFIG_PATH = path.join(LOCALLOW, DEV_REGSTRING, GAME_REGSTRING);
 const CONFIG_FILES = ['settings.json'];
 const SAVE_PATH_DEFAULT = path.join(USER_HOME, 'AppData', 'LocalLow', DEV_REGSTRING, GAME_REGSTRING);
 const SAVE_PATH_XBOX = path.join(LOCALAPPDATA, "Packages", `${XBOXAPP_ID}_${XBOX_SAVE_STRING}`, "SystemAppData", "wgs"); //XBOX Version
@@ -275,8 +272,11 @@ const CUSTOM_PLUGIN_STRING = 'XXX'; //string to ID Custom plugin file
 
 const MOD_PATH_DEFAULT = ".";
 let REQ_FILE = EXEC;
-if (multiExe) {
-  REQ_FILE = path.join(ASSEMBLY_PATH, ASSEMBLY_FILES[0]);
+if (multiExe && (BEPINEX_BUILD === 'il2cpp')) {
+  REQ_FILE = ASSEMBLY_FILES[0];
+}
+if (multiExe && (BEPINEX_BUILD === 'mono')) {
+  REQ_FILE = ''; //find something that works in this case
 }
 const PARAMETERS_STRING = '';
 const PARAMETERS = [PARAMETERS_STRING];
@@ -430,7 +430,7 @@ const tools = [
     //defaultPrimary: true,
     parameters: PARAMETERS,
   }, //*/
-  {
+  /*{
     id: `${GAME_ID}-customlaunchalt`,
     name: `Custom Launch`,
     logo: `exec.png`,
@@ -570,7 +570,11 @@ async function getSavePath(api) {
 
 //Get correct executable for game version
 function getExecutable(discoveryPath) {
-  if (!multiExe) { //return immediately if only one exe filename for all versions
+  if (statCheckSync(discoveryPath, EXEC_XBOX)) {
+    SAVE_PATH = SAVE_PATH_XBOX;
+    return EXEC_XBOX;
+  }
+  /*if (!multiExe) { //return immediately if only one exe filename for all versions
     return EXEC;
   }
   if (statCheckSync(discoveryPath, EXEC_ALT)) {
@@ -579,25 +583,22 @@ function getExecutable(discoveryPath) {
     if (BEPINEX_BUILD === 'mono') {
       ASSEMBLY_PATH = path.join(DATA_FOLDER, "Managed");
     }
-    VERSION_FILE_PATH = path.join(DATA_FOLDER, VERSION_FILE);
-    //SAVE_PATH = SAVE_PATH_XBOX;
     return EXEC_ALT;
-  };
+  }; //*/
   return EXEC;
 }
 
 //Get correct game version
 async function setGameVersion(gamePath) {
-  const CHECK = await statCheckAsync(gamePath, EXEC_ALT);
+  const CHECK = await statCheckAsync(gamePath, EXEC_XBOX);
   if (CHECK) {
-    GAME_VERSION = ALT_VERSION;
-    DATA_FOLDER = DATA_FOLDER_ALT;
+    GAME_VERSION = 'xbox';
+    SAVE_PATH = SAVE_PATH_XBOX;
+    /*DATA_FOLDER = DATA_FOLDER_ALT;
     ASSETS_PATH = path.join(DATA_FOLDER, "Managed");
     if (BEPINEX_BUILD === 'mono') {
       ASSEMBLY_PATH = path.join(DATA_FOLDER, "Managed");
-    }
-    VERSION_FILE_PATH = path.join(DATA_FOLDER, VERSION_FILE);
-    //SAVE_PATH = SAVE_PATH_XBOX;
+    } //*/
     return GAME_VERSION;
   } else {
     GAME_VERSION = 'default';
@@ -994,7 +995,7 @@ async function installRoot(files, workingDir) {
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
 
-  if (GAME_VERSION === ALT_VERSION) {
+  /*if (GAME_VERSION === ALT_VERSION) {
     try {
       await fs.statAsync(path.join(workingDir, modFile));
       if (path.basename(modFile) === DATA_FOLDER_DEFAULT) {
@@ -1773,7 +1774,7 @@ async function resolveGameVersion(gamePath) {
       return Promise.resolve(version);
     }
   } 
-  /*else { // use exe
+  else { // use exe
     try {
       const exeVersion = require('exe-version');
       version = exeVersion.getProductVersion(path.join(gamePath, EXEC));
@@ -1782,19 +1783,19 @@ async function resolveGameVersion(gamePath) {
       log('error', `Could not read ${EXEC} file to get game version: ${err}`);
       return Promise.resolve(version);
     }
-  } //*/
-  else {
+  }
+  /*else {
     const versionFilepath = path.join(gamePath, VERSION_FILE_PATH);
     try {
       const data = await fs.readFileAsync(versionFilepath, { encoding: 'utf8' });
-      const segments = data.split(' ');
+      const segments = data.split('\n');
       return (segments[3]) 
         ? Promise.resolve(segments[3])
         : Promise.reject(new util.DataInvalid('Failed to resolve version'));
     } catch (err) {
       return Promise.reject(err);
     }
-  }
+  } //*/
 } //*/
 
 //Notify User to ask if they want to download BepInExConfigManager
