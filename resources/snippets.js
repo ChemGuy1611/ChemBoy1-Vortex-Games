@@ -48,7 +48,7 @@ const selectUDF = async (api) => { //user select folder
     ]
   );
   if (res.action !== "Select UDF") {
-    return Promise.reject(new util.ProcessCanceled("Cannot proceed without UDF"));
+    return Promise.reject(new util.UserCanceled("Cannot proceed without UDF"));
   }
   await fs.ensureDirWritableAsync(path.dirname(launcherSettings));
   await ensureLOFile(api);
@@ -57,7 +57,7 @@ const selectUDF = async (api) => { //user select folder
     defaultPath: path.default.join(path.dirname(launcherSettings))
   });
   if (!directory) {
-    return Promise.reject(new util.ProcessCanceled("Cannot proceed without UDF"));
+    return Promise.reject(new util.UserCanceled("Cannot proceed without UDF"));
   }
   let segments = directory.split(path.sep);
   const lowered = segments.map((seg) => seg.toLowerCase());
@@ -401,7 +401,7 @@ function installPk4(api, files) {
         { label: MP_BUT },
         ]).then((result) => {
           if (result.action === CANC_BUT) {
-            return Promise.reject(new util.ProcessCanceled('User cancelled.'));
+            return Promise.reject(new util.UserCanceled('User cancelled.'));
           }
           if (result.action === SP_BUT) {
             const idx = modFile.indexOf(path.basename(modFile));
@@ -876,7 +876,7 @@ async function downloadUe4ss(api, gameSpec) {
           return reject(new util.UserCanceled());
         }
         if (!result[0].toLowerCase().includes(ARCHIVE_NAME)) { //if user downloads the wrong file
-          return reject(new util.ProcessCanceled('Selected wrong download'));
+          return reject(new util.UserCanceled('Selected wrong download'));
         } //*/
         return Promise.resolve(result);
       })
@@ -1051,7 +1051,7 @@ async function browseForDownloadFunction(discovery, api, gameSpec, URL, instruct
           return reject(new util.UserCanceled());
         }
         if (!result[0].toLowerCase().includes(ARCHIVE_NAME)) { //if user downloads the wrong file
-          return reject(new util.ProcessCanceled('Selected wrong download'));
+          return reject(new util.UserCanceled('Selected wrong download'));
         }
         return Promise.resolve(result);
       })
@@ -1114,7 +1114,7 @@ async function browseForDownloadFunction(discovery, api, gameSpec, URL, instruct
           return reject(new util.UserCanceled());
         }
         if (!result[0].toLowerCase().includes(ARCHIVE_NAME)) { //if user downloads the wrong file
-          return reject(new util.ProcessCanceled('Selected wrong download'));
+          return reject(new util.UserCanceled('Selected wrong download'));
         }
         return Promise.resolve(result);
       })
@@ -1177,7 +1177,7 @@ async function browseForDownloadFunction(discovery, api, gameSpec, URL, instruct
           return reject(new util.UserCanceled());
         }
         if (!result[0].toLowerCase().includes(ARCHIVE_NAME)) { //if user downloads the wrong file
-          return reject(new util.ProcessCanceled('Selected wrong download'));
+          return reject(new util.UserCanceled('Selected wrong download'));
         }
         return Promise.resolve(result);
       })
@@ -1226,7 +1226,7 @@ async function browseForDownloadFunction(discovery, api, gameSpec, URL, instruct
           return reject(new util.UserCanceled());
         }
         if (!result[0].toLowerCase().includes(ARCHIVE_NAME)) { //if user downloads the wrong file
-          return reject(new util.ProcessCanceled('Selected wrong download'));
+          return reject(new util.UserCanceled('Selected wrong download'));
         }
         return Promise.resolve(result);
       })
@@ -1275,7 +1275,7 @@ async function browseForDownloadFunction(discovery, api, gameSpec, URL, instruct
           return reject(new util.UserCanceled());
         }
         if (!result[0].toLowerCase().includes(ARCHIVE_NAME)) { //if user downloads the wrong file
-          return reject(new util.ProcessCanceled('Selected wrong download'));
+          return reject(new util.UserCanceled('Selected wrong download'));
         }
         return Promise.resolve(result);
       })

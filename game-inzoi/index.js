@@ -415,7 +415,7 @@ function installUe4ssCombo(api, files) {
   const CHECK = checkPartitions(DOCUMENTS, GAME_PATH);
   if (!CHECK) {
     api.showErrorNotification(`Could not install mod as "${UE4SSCOMBO_NAME}"`, `You tried installing a "${UE4SSCOMBO_NAME}" mod, but the game folder, Vortex Mod Staging folder, and ${DOCS_LOC} folder are not all on the same drive. Please move the game and/or Vortex Mod Staging Folder to the same drive as the ${DOCS_LOC} folder (typically C Drive) to install these types of mods with Vortex.`, { allowReport: false });
-    throw new util.ProcessCanceled(``);
+    throw new util.UserCanceled(``);
   } 
 
   return Promise.resolve({ instructions });
@@ -467,7 +467,7 @@ function installLogic(api, files) {
   const CHECK = checkPartitions(DOCUMENTS, GAME_PATH);
   if (!CHECK) {
     api.showErrorNotification(`Could not install mod as "${LOGICMODS_NAME}"`, `You tried installing a "${LOGICMODS_NAME}" mod, but the game folder, Vortex Mod Staging folder, and ${DOCS_LOC} folder are not all on the same drive. Please move the game and/or Vortex Mod Staging Folder to the same drive as the ${DOCS_LOC} folder (typically C Drive) to install these types of mods with Vortex.`, { allowReport: false });
-    throw new util.ProcessCanceled(``);
+    throw new util.UserCanceled(``);
   } 
 
   return Promise.resolve({ instructions });
@@ -584,7 +584,7 @@ function installUe4ss(api, files) {
   const CHECK = checkPartitions(DOCUMENTS, GAME_PATH);
   if (!CHECK) {
     api.showErrorNotification(`Could not install mod as "${UE4SS_NAME}"`, `You tried installing a "${UE4SS_NAME}" mod, but the game folder, Vortex Mod Staging folder, and ${DOCS_LOC} folder are not all on the same drive. Please move the game and/or Vortex Mod Staging Folder to the same drive as the ${DOCS_LOC} folder (typically C Drive) to install these types of mods with Vortex.`, { allowReport: false });
-    throw new util.ProcessCanceled(``);
+    throw new util.UserCanceled(``);
   } 
 
   return Promise.resolve({ instructions });
@@ -631,7 +631,7 @@ function installModEnabler(api, files) {
   const CHECK = checkPartitions(DOCUMENTS, GAME_PATH);
   if (!CHECK) {
     api.showErrorNotification(`Could not install mod as "${MODENABLER_NAME}"`, `You tried installing a "${MODENABLER_NAME}" mod, but the game folder, Vortex Mod Staging folder, and ${DOCS_LOC} folder are not all on the same drive. Please move the game and/or Vortex Mod Staging Folder to the same drive as the ${DOCS_LOC} folder (typically C Drive) to install these types of mods with Vortex.`, { allowReport: false });
-    throw new util.ProcessCanceled(``);
+    throw new util.UserCanceled(``);
   }//*/ 
 
   return Promise.resolve({ instructions });
@@ -704,7 +704,7 @@ function installScripts(api, files, fileName) {
   const CHECK = checkPartitions(DOCUMENTS, GAME_PATH);
   if (!CHECK) {
     api.showErrorNotification(`Could not install mod as "${SCRIPTS_NAME}"`, `You tried installing a "${SCRIPTS_NAME}" mod, but the game folder, Vortex Mod Staging folder, and ${DOCS_LOC} folder are not all on the same drive. Please move the game and/or Vortex Mod Staging Folder to the same drive as the ${DOCS_LOC} folder (typically C Drive) to install these types of mods with Vortex.`, { allowReport: false });
-    throw new util.ProcessCanceled(``);
+    throw new util.UserCanceled(``);
   } 
 
   return Promise.resolve({ instructions });
@@ -777,7 +777,7 @@ function installDll(api, files, fileName) {
   const CHECK = checkPartitions(DOCUMENTS, GAME_PATH);
   if (!CHECK) {
     api.showErrorNotification(`Could not install mod as "${DLL_NAME}"`, `You tried installing a "${DLL_NAME}" mod, but the game folder, Vortex Mod Staging folder, and ${DOCS_LOC} folder are not all on the same drive. Please move the game and/or Vortex Mod Staging Folder to the same drive as the ${DOCS_LOC} folder (typically C Drive) to install these types of mods with Vortex.`, { allowReport: false });
-    throw new util.ProcessCanceled(``);
+    throw new util.UserCanceled(``);
   } 
 
   return Promise.resolve({ instructions });
@@ -1151,7 +1151,7 @@ function installRoot(api, files) {
   const CHECK = checkPartitions(DOCUMENTS, GAME_PATH);
   if (!CHECK) {
     api.showErrorNotification(`Could not install mod as "${ROOT_NAME}"`, `You tried installing a "${ROOT_NAME}" mod, but the game folder, Vortex Mod Staging folder, and ${DOCS_LOC} folder are not all on the same drive. Please move the game and/or Vortex Mod Staging Folder to the same drive as the ${DOCS_LOC} folder (typically C Drive) to install these types of mods with Vortex.`, { allowReport: false });
-    throw new util.ProcessCanceled(``);
+    throw new util.UserCanceled(``);
   } 
 
   return Promise.resolve({ instructions });
@@ -1198,7 +1198,7 @@ function installConfig(api, files) {
   const IS_CONFIG = checkPartitions(LOCALAPPDATA, DOCUMENTS);
   if (IS_CONFIG === false) {
     api.showErrorNotification(`Could not install mod as "${CONFIG_NAME}"`, `You tried installing a "${CONFIG_NAME}" mod, but the game, Vortex Mod Staging folder, and ${CONFIG_LOC} folder are not all on the same drive. Please move the game and/or Vortex Mod Staging folder to the same drive as the ${CONFIG_LOC} folder (typically C Drive) to install these types of mods with Vortex.`, { allowReport: false });
-    throw new util.ProcessCanceled(``);
+    throw new util.UserCanceled(``);
   }
   return Promise.resolve({ instructions });
 }
@@ -1246,7 +1246,7 @@ function installSave(api, files) {
   const CHECK = checkPartitions(DOCUMENTS, SAVE_PATH);
   if (!CHECK) {
     api.showErrorNotification(`Could not install mod as "${SAVE_NAME}"`, `You tried installing a "${SAVE_NAME}" mod, but the game folder, Vortex Mod Staging folder, and ${DOCS_LOC} folder are not all on the same drive. Please move the game and/or Vortex Mod Staging Folder to the same drive as the ${DOCS_LOC} folder (typically C Drive) to install these types of mods with Vortex.`, { allowReport: false });
-    throw new util.ProcessCanceled(``);
+    throw new util.UserCanceled(``);
   } //*/
 
   return Promise.resolve({ instructions });
@@ -1292,7 +1292,7 @@ function installBinaries(api, files) {
   const CHECK = checkPartitions(DOCUMENTS, GAME_PATH);
   if (!CHECK) {
     api.showErrorNotification(`Could not install mod as "${BINARIES_NAME}"`, `You tried installing a "${BINARIES_NAME}" mod, but the game folder, Vortex Mod Staging folder, and ${DOCS_LOC} folder are not all on the same drive. Please move the game and/or Vortex Mod Staging Folder to the same drive as the ${DOCS_LOC} folder (typically C Drive) to install these types of mods with Vortex.`, { allowReport: false });
-    throw new util.ProcessCanceled(``);
+    throw new util.UserCanceled(``);
   } 
 
   return Promise.resolve({ instructions });
@@ -1334,7 +1334,7 @@ async function downloadUe4ss(api, gameSpec) {
           return reject(new util.UserCanceled());
         }
         if (!result[0].toLowerCase().includes(ARCHIVE_NAME)) { //if user downloads the wrong file
-          return reject(new util.ProcessCanceled('Selected wrong download'));
+          return reject(new util.UserCanceled('Selected wrong download'));
         } //*/
         return Promise.resolve(result);
       })
@@ -1609,7 +1609,7 @@ function installUnrealMod(api, files, gameId) {
     const CHECK = checkPartitions(DOCUMENTS, GAME_PATH);
     if (!CHECK) {
       api.showErrorNotification(`Could not install legacy Pak mod`, `You tried installing a legacy Pak mod, but the game folder, Vortex Mod Staging folder, and ${DOCS_LOC} folder are not all on the same drive. Please move the game and/or Vortex Mod Staging Folder to the same drive as the ${DOCS_LOC} folder (typically C Drive) to install these types of mods with Vortex.`, { allowReport: false });
-      throw new util.ProcessCanceled(``);
+      throw new util.UserCanceled(``);
     } 
 
     return Promise.resolve({ instructions });

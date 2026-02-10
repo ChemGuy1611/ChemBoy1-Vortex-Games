@@ -399,7 +399,7 @@ async function browseForDownloadFunction(discovery, api, gameSpec, URL, instruct
           return reject(new util.UserCanceled());
         }
         if (!result[0].toLowerCase().includes(ARCHIVE_NAME)) { //if user downloads the wrong file
-          return reject(new util.ProcessCanceled('Selected wrong download'));
+          return reject(new util.UserCanceled('Selected wrong download'));
         }
         return Promise.resolve(result);
       })
@@ -465,7 +465,7 @@ async function browseForDownloadFunction(discovery, api, gameSpec, URL, instruct
           return reject(new util.UserCanceled());
         }
         if (!result[0].toLowerCase().includes(ARCHIVE_NAME)) { //if user downloads the wrong file
-          return reject(new util.ProcessCanceled('Selected wrong download'));
+          return reject(new util.UserCanceled('Selected wrong download'));
         }
         return Promise.resolve(result);
       })
@@ -528,7 +528,7 @@ async function browseForDownloadFunction(discovery, api, gameSpec, URL, instruct
           return reject(new util.UserCanceled());
         }
         if (!result[0].toLowerCase().includes(ARCHIVE_NAME)) { //if user downloads the wrong file
-          return reject(new util.ProcessCanceled('Selected wrong download'));
+          return reject(new util.UserCanceled('Selected wrong download'));
         }
         return Promise.resolve(result);
       })
@@ -580,7 +580,7 @@ async function browseForDownloadFunction(discovery, api, gameSpec, URL, instruct
           return reject(new util.UserCanceled());
         }
         if (!result[0].toLowerCase().includes(ARCHIVE_NAME)) { //if user downloads the wrong file
-          return reject(new util.ProcessCanceled('Selected wrong download'));
+          return reject(new util.UserCanceled('Selected wrong download'));
         }
         return Promise.resolve(result);
       })
@@ -629,7 +629,7 @@ async function browseForDownloadFunction(discovery, api, gameSpec, URL, instruct
           return reject(new util.UserCanceled());
         }
         if (!result[0].toLowerCase().includes(ARCHIVE_NAME)) { //if user downloads the wrong file
-          return reject(new util.ProcessCanceled('Selected wrong download'));
+          return reject(new util.UserCanceled('Selected wrong download'));
         }
         return Promise.resolve(result);
       })

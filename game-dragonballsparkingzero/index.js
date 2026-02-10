@@ -632,7 +632,7 @@ function installConfig(api, files) {
   const IS_CONFIG = checkPartitions(CONFIG_PATH, GAME_PATH);
   if (IS_CONFIG === false) {
     api.showErrorNotification(`Could not install mod as Config`, `You tried installing a Config (${CONFIG_EXT}) file mod, but the game, staging folder, and Local AppData folder are not all on the same drive. Please move the game and/or staging folder to the same drive as the Local AppData folder (typically C Drive) to install these types of mods with Vortex.`, { allowReport: false });
-    throw new util.ProcessCanceled(``);
+    throw new util.UserCanceled(``);
   }
   return Promise.resolve({ instructions });
 }

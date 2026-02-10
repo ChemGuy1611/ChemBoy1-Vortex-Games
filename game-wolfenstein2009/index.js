@@ -218,7 +218,7 @@ function installBase(api, files) {
         { label: MP_BUT },
         ]).then((result) => {
           if (result.action === CANC_BUT) {
-            return Promise.reject(new util.ProcessCanceled('User cancelled.'));
+            return Promise.reject(new util.UserCanceled('User cancelled.'));
           }
           if (result.action === SP_BUT) {
             const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
@@ -296,7 +296,7 @@ function installMaps(api, files) {
         { label: MP_BUT },
         ]).then((result) => {
           if (result.action === CANC_BUT) {
-            return Promise.reject(new util.ProcessCanceled('User cancelled.'));
+            return Promise.reject(new util.UserCanceled('User cancelled.'));
           }
           if (result.action === SP_BUT) {
             const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
@@ -374,7 +374,7 @@ function installStream(api, files) {
         { label: MP_BUT },
         ]).then((result) => {
           if (result.action === CANC_BUT) {
-            return Promise.reject(new util.ProcessCanceled('User cancelled.'));
+            return Promise.reject(new util.UserCanceled('User cancelled.'));
           }
           if (result.action === SP_BUT) {
             const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
@@ -452,7 +452,7 @@ function installVideos(api, files) {
         { label: MP_BUT },
         ]).then((result) => {
           if (result.action === CANC_BUT) {
-            return Promise.reject(new util.ProcessCanceled('User cancelled.'));
+            return Promise.reject(new util.UserCanceled('User cancelled.'));
           }
           if (result.action === SP_BUT) {
             const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
@@ -530,7 +530,7 @@ function installPk4(api, files) {
         { label: MP_BUT },
         ]).then((result) => {
           if (result.action === CANC_BUT) {
-            return Promise.reject(new util.ProcessCanceled('User cancelled.'));
+            return Promise.reject(new util.UserCanceled('User cancelled.'));
           }
           if (result.action === SP_BUT) {
             const idx = modFile.indexOf(path.basename(modFile));
@@ -608,7 +608,7 @@ function installExe(api, files) {
         { label: MP_BUT },
         ]).then((result) => {
           if (result.action === CANC_BUT) {
-            return Promise.reject(new util.ProcessCanceled('User cancelled.'));
+            return Promise.reject(new util.UserCanceled('User cancelled.'));
           }
           if (result.action === SP_BUT) {
             const idx = modFile.indexOf(path.basename(modFile));
