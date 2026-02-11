@@ -4,6 +4,10 @@
 
 - Added check for if sp-common.psarc and bin.psarc files exist in the game folder (indicator of update and need to extract).
 
+## [0.7.0] - 2026-02-11
+
+- Fixed: Several technical fixes and improvements
+
 ## [0.6.2] - 2026-01-19
 
 - Fixed: More reliable folder deletion operations - revised deprecated fsPromises.rmdir function to fsPromises.rm

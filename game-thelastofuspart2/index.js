@@ -1,9 +1,9 @@
 /*////////////////////////////////////////////////
 Name: The Last of Us Part II Remastered Vortex Extension
 Author: ChemBoy1
-Structure: Generic Game
-Version: 0.6.2
-Date: 2026-01-19
+Structure: Generic Game w/ File Extraction, Mod Loader, and Load Order
+Version: 0.7.0
+Date: 2026-02-11
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -25,6 +25,8 @@ let GAME_PATH = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 let LOAD_ORDER_ENABLED = true;
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/The_Last_of_Us_Part_II_Remastered";
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1250"; //Nexus link to this extension. Used for links
 
 const IGNORE_CONFLICTS = [path.join('**', 'modinfo.ini'), path.join('**', 'Preview.png'), path.join('**', 'screenshot.png'), path.join('**', 'screenshot.jpg'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
 const IGNORE_DEPLOY = [path.join('**', 'modinfo.ini'), path.join('**', 'Preview.png'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
@@ -183,7 +185,7 @@ const REQUIREMENTS = [
     githubUrl: PSARCTOOL_URL,
     findMod: (api) => findModByFile(api, PSARCTOOL_ID, PSARCTOOL_EXEC),
     findDownloadId: (api) => findDownloadIdByFile(api, PSARCTOOL_ARC_NAME),
-    fileArchivePattern: new RegExp(/^UnPSARC_v(\d+\.\d+\.)/, 'i'),
+    fileArchivePattern: new RegExp(/^UnPSARC_v(\d+\.\d+)/, 'i'),
     resolveVersion: (api) => resolveVersionByPattern(api, REQUIREMENTS[0]),
   },
 ]; //*/
@@ -296,7 +298,7 @@ const tools = [
     detach: true,
     relative: true,
     exclusive: true,
-    //shell: true,
+    shell: true,
     parameters: []
   }, //*/
 ];
@@ -360,39 +362,37 @@ async function deploy(api) {
 
 // AUTOMATIC INSTALLER FUNCTIONS /////////////////////////////////////////////////////////
 
-/*async function onCheckModVersion(api, gameId, mods, forced) {
-  const profile = selectors.activeProfile(api.getState());
-  if (profile.gameId !== gameId) {
-    return;
-  }
+/*
+async function onCheckModVersion(api, gameId, mods, forced) {
   try {
     await testRequirementVersion(api, REQUIREMENTS[0]);
   } catch (err) {
-    log('warn', 'failed to test requirement version', err);
+    log('warn', `failed to test requirement version: ${err}`);
   }
 }
+
 async function checkForTool(api) {
   const mod = await REQUIREMENTS[0].findMod(api);
   return mod !== undefined;
 } //*/
 
 //Check if Mod Loader is installed
-function isModLoaderInstalled(discovery, api, spec) {
+function isModLoaderInstalled(api, spec) {
   const state = api.getState();
   const mods = state.persistent.mods[spec.game.id] || {};
   return Object.keys(mods).some(id => mods[id]?.type === MODLOADER_ID);
 }
 
 //Check if PSARC Tool is installed
-function isPsarcToolInstalled(discovery, api, spec) {
+function isPsarcToolInstalled(api, spec) {
   const state = api.getState();
   const mods = state.persistent.mods[spec.game.id] || {};
   return Object.keys(mods).some(id => mods[id]?.type === PSARCTOOL_ID);
 }
 
 //* Function to auto-download Mod Enabler form Nexus Mods
-async function downloadModLoader(discovery, api, gameSpec) {
-  let isInstalled = isModLoaderInstalled(discovery, api, gameSpec);
+async function downloadModLoader(api, gameSpec) {
+  let isInstalled = isModLoaderInstalled(api, gameSpec);
   if (!isInstalled) {
     const MOD_NAME = MODLOADER_NAME;
     const MOD_TYPE = MODLOADER_ID;
@@ -458,8 +458,8 @@ async function downloadModLoader(discovery, api, gameSpec) {
 } //*/
 
 //* Function to auto-download Mod Enabler form Nexus Mods
-async function downloadPsarcTool(discovery, api, gameSpec) {
-  let isInstalled = isPsarcToolInstalled(discovery, api, gameSpec);
+async function downloadPsarcTool(api, gameSpec) {
+  let isInstalled = isPsarcToolInstalled(api, gameSpec);
   if (!isInstalled) {
     const MOD_NAME = PSARCTOOL_NAME;
     const MOD_TYPE = PSARCTOOL_ID;
@@ -903,7 +903,7 @@ function installPsarcTool(files) {
   return Promise.resolve({ instructions });
 }
 
-// LOAD ORDER FUNCTIONS /////////////////////////////////////////////////////////////////////////////////////////////////
+// LOAD ORDER FUNCTIONS ///////////////////////////////////////////////////////////////
 
 async function deserializeLoadOrder(context) {
   //* on mod update for all profile it would cause the mod if it was selected to be unselected
@@ -933,9 +933,10 @@ async function deserializeLoadOrder(context) {
   let loadOrderSplit = loadOrderFile.split("\n");
   let LO_LINE = loadOrderSplit.find(line => line.startsWith(LO_LINE_START)); //we are putting the list on one line. should be element [1], but doing find just in case that ever changes.
   LO_LINE = LO_LINE.replace(LO_LINE_START, '');
-  let modFolderPath = path.join(gameDir, PSARC_PATH);
+  let LO_MOD_ARRAY = LO_LINE.split(',');
 
   //Get all .psarc files from mods folder
+  let modFolderPath = path.join(gameDir, PSARC_PATH);
   let modFiles = [];
   try {
     modFiles = await fs.readdirAsync(modFolderPath);
@@ -972,7 +973,7 @@ async function deserializeLoadOrder(context) {
   }
 
   //Set load order
-  let loadOrder = await (LO_LINE.split(","))
+  let loadOrder = await LO_MOD_ARRAY
     .reduce(async (accumP, entry) => {
       const accum = await accumP;
       const file = entry;
@@ -980,17 +981,17 @@ async function deserializeLoadOrder(context) {
         return Promise.resolve(accum);
       }
       accum.push(
-      {
-        id: file,
-        name: `${file.replace(PSARC_EXT, '')} (${await getModName(file)})`,
-        modId: await getModId(file),
-        enabled: true,
-      }
+        {
+          id: file,
+          name: `${file.replace(PSARC_EXT, '')} (${await getModName(file)})`,
+          modId: await getModId(file),
+          enabled: true,
+        }
       );
       return Promise.resolve(accum);
     }, Promise.resolve([]));
   
-  //push new mod folders from Mods folder to loadOrder
+  //push new mod files to loadOrder
   for (let file of modFiles) {
     if (!loadOrder.find((mod) => (mod.id === file))) {
       loadOrder.push({
@@ -1026,7 +1027,6 @@ async function serializeLoadOrder(context, loadOrder) {
   let LO_LINE = loadOrderSplit.find(line => line.startsWith(LO_LINE_START)); //we are putting the list on one line. should be element [1], but doing find just in case that ever changes.
   let index = loadOrderSplit.indexOf(LO_LINE);
   let loadOrderMapped = loadOrder
-    //.map((mod) => (mod.id))
     .map((mod) => (mod.enabled ? mod.id : ``)); //this is used for chunks.txt also
   let loadOrderJoined = loadOrderMapped
     .filter((entry) => (entry !== ``))
@@ -1046,7 +1046,7 @@ async function serializeLoadOrder(context, loadOrder) {
   let loadOrderJoinedChunks = loadOrderName.join(`\n`);
   await fs.writeFileAsync(
     chunksPath,
-    `${CHUNKS_DEFAULT_CONTENT}` + `${loadOrderJoinedChunks}`,
+    CHUNKS_DEFAULT_CONTENT + loadOrderJoinedChunks,
     { encoding: "utf8" },
   );
 
@@ -1054,7 +1054,7 @@ async function serializeLoadOrder(context, loadOrder) {
   let loadOrderOutput = loadOrderSplit.join("\n");
   return fs.writeFileAsync(
     loadOrderPath,
-    `${loadOrderOutput}`,
+    loadOrderOutput,
     { encoding: "utf8" },
   );
 }
@@ -1079,7 +1079,7 @@ async function clearModOrder(api) {
   let loadOrderOutput = loadOrderSplit.join("\n");
   return fs.writeFileAsync(
     loadOrderPath,
-    `${loadOrderOutput}`,
+    loadOrderOutput,
     { encoding: "utf8" },
   );
 }
@@ -1101,18 +1101,11 @@ async function clearChunksTxt(api) {
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
-async function purge(api) {
-  return new Promise((resolve, reject) => api.events.emit('purge-mods', true, (err) => err ? reject(err) : resolve()));
-}
-async function deploy(api) {
-  return new Promise((resolve, reject) => api.events.emit('deploy-mods', (err) => err ? reject(err) : resolve()));
-}
-
 //Notify User of Setup instructions
-function setupNotify(api) {
+async function setupNotify(api) {
   GAME_PATH = getDiscoveryPath(api);
   try {
-    fs.statSync(path.join(GAME_PATH, PSARCTOOL_PATH, 'pak68'));
+    await fs.statAsync(path.join(GAME_PATH, PSARCTOOL_PATH, 'pak68'));
     log('warn', `Extracted folder found. Suppressing setup notification.`);
   }
   catch (err) { //*/
@@ -1166,19 +1159,19 @@ async function psarcExtract(GAME_PATH, api) {
   const state = api.getState();
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   const mods = state.persistent.mods[spec.game.id] || {};
-  const modMatch = Object.keys(mods).find(id => mods[id]?.type === PSARCTOOL_ID);
-  const EXEC_FOLDER = mods[modMatch].installationPath;
+  const modMatch = Object.values(mods).find(mod => mod.type === PSARCTOOL_ID);
+  const EXEC_FOLDER = modMatch.installationPath;
   if (EXEC_FOLDER !== undefined) {
     //const RUN_PATH = path.join(GAME_PATH, PSARCTOOL_PATH, PSARCTOOL_EXEC);
     RUN_PATH = path.join(STAGING_FOLDER, EXEC_FOLDER, PSARCTOOL_EXEC);
   } //*/
   const WORK_PATH = path.join(GAME_PATH, PSARCTOOL_PATH);
-
-  try { //extract sp-common.psarc
+  //extract sp-common.psarc
+  try { 
     const TARGET_FILE = path.join(WORK_PATH, SPCOMPSARC_FILE);
     const EXTRACT_PATH = WORK_PATH;
     await fs.statAsync(TARGET_FILE);
-    //const ARGUMENTS = `"${path.join(WORK_PATH, SPCOMPSARC_FILE)}" "${WORK_PATH}"`; //UnPSARC arguments
+    //const ARGUMENTS = `"${TARGET_FILE}" "${EXTRACT_PATH}"`; //unPSARC arguments
     const ARGUMENTS = `-e "${TARGET_FILE}" -o "${EXTRACT_PATH}"`; //ndarc arguments
     await api.runExecutable(RUN_PATH, [ARGUMENTS], { shell: true, detached: true, suggestDeploy: false });
     log('warn', `Ran extraction for .psarc file ${SPCOMPSARC_FILE}`);
@@ -1186,12 +1179,12 @@ async function psarcExtract(GAME_PATH, api) {
     log('error', `Could not extract .psarc file ${SPCOMPSARC_FILE}: ${err}`);
     return false;
   }
-
-  try { //extract bin.psarc
+  //extract bin.psarc
+  try { 
     const TARGET_FILE = path.join(WORK_PATH, BINPSARC_FILE);
     const EXTRACT_PATH = path.join(WORK_PATH, BIN_FOLDER);
     await fs.statAsync(TARGET_FILE);
-    //const ARGUMENTS = `"${path.join(WORK_PATH, BINPSARC_FILE)}" "${path.join(WORK_PATH, BIN_FOLDER)}"`; //UnPSARC arguments
+    //const ARGUMENTS = `"${TARGET_FILE}" "${EXTRACT_PATH}"`; //unPSARC arguments
     const ARGUMENTS = `-e "${TARGET_FILE}" -o "${EXTRACT_PATH}"`; //ndarc arguments
     await api.runExecutable(RUN_PATH, [ARGUMENTS], { shell: true, detached: true, suggestDeploy: false });
     log('warn', `Ran extraction for .psarc file ${BINPSARC_FILE}`);
@@ -1199,100 +1192,156 @@ async function psarcExtract(GAME_PATH, api) {
     log('error', `Could not extract .psarc file ${BINPSARC_FILE}: ${err}`);
     return false;
   }
-
-  try { //stat extracted folders to make sure they are there
-    await fs.statAsync(path.join(GAME_PATH, PSARCTOOL_PATH, BIN_FOLDER));
-    await fs.statAsync(path.join(GAME_PATH, PSARCTOOL_PATH, 'pak68'));
+  //stat extracted folders to make sure they are there
+  try { 
+    await fs.statAsync(path.join(WORK_PATH, BIN_FOLDER));
+    await fs.statAsync(path.join(WORK_PATH, 'pak68'));
     return true;
-  } catch (err) { //if the folders aren't there, the user probably clossed the terminal windows
+  } catch (err) { //if the folders aren't there, the user probably closed the terminal windows early
     return false;
   }
+}
+function extractSuccessNotify(api) {
+  const NOTIF_ID = `${GAME_ID}-extractsuccess`;
+  const MESSAGE = `Successfully extracted .psarc files`;
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'success',
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [],
+  });
 }
 
 //Setup .psarc files for modding
 async function psarcSetup(api) { //run on mod purge
   const NOTIF_ID = `${GAME_ID}-psarcsetup`
-  api.sendNotification({ //notification indicating install process
+  api.sendNotification({ //notification indicating process
     id: NOTIF_ID,
     message: `Extracting and Renaming .psarc Files. This will take a while. Do not close the terminal windows.`,
     type: 'activity',
     noDismiss: true,
     allowSuppress: false,
   });
-  const state = api.getState();
-  const discovery = selectors.discoveryByGame(state, GAME_ID);
-  GAME_PATH = discovery.path;
-  //await api.emitAndAwait('purge-mods-in-path', GAME_ID, '', path.join(GAME_PATH, PSARCTOOL_PATH));
+  GAME_PATH = await getDiscoveryPath(api);
+  const WORK_PATH = path.join(GAME_PATH, PSARCTOOL_PATH);
+  //await api.emitAndAwait('purge-mods-in-path', GAME_ID, '', WORK_PATH);
   await purge(api);
   //await api.emitAndAwait('deploy-single-mod', GAME_ID, modMatch.id, false);
   let EXTRACTED = await psarcExtract(GAME_PATH, api);
   if (EXTRACTED) {
     log('warn', `Extraction of all .psarc files complete. Renaming files...`);
-    try { //rename sp-common.psarc
-      await fs.statAsync(path.join(GAME_PATH, PSARCTOOL_PATH, SPCOMPSARC_FILE));
-      await fs.renameAsync(path.join(GAME_PATH, PSARCTOOL_PATH, SPCOMPSARC_FILE), path.join(GAME_PATH, PSARCTOOL_PATH, BAK_SPCOMPSARC_FILE));
+    //rename sp-common.psarc
+    try { 
+      await fs.statAsync(path.join(WORK_PATH, SPCOMPSARC_FILE));
+      await fs.renameAsync(path.join(WORK_PATH, SPCOMPSARC_FILE), path.join(WORK_PATH, BAK_SPCOMPSARC_FILE));
       log('warn', `Renamed .psarc file ${SPCOMPSARC_FILE} to ${BAK_SPCOMPSARC_FILE}`);
     } catch (err) {
       log('error', `Could not rename .psarc file ${SPCOMPSARC_FILE}: ${err}`);
     }
-    try { //rename bin.psarc
-      await fs.statAsync(path.join(GAME_PATH, PSARCTOOL_PATH, BINPSARC_FILE));
-      await fs.renameAsync(path.join(GAME_PATH, PSARCTOOL_PATH, BINPSARC_FILE), path.join(GAME_PATH, PSARCTOOL_PATH, BAK_BINPSARC_FILE));
+    //rename bin.psarc
+    try { 
+      await fs.statAsync(path.join(WORK_PATH, BINPSARC_FILE));
+      await fs.renameAsync(path.join(WORK_PATH, BINPSARC_FILE), path.join(WORK_PATH, BAK_BINPSARC_FILE));
       log('warn', `Renamed .psarc file ${BINPSARC_FILE} to ${BAK_BINPSARC_FILE}`);
     } catch (err) {
       log('error', `Could not rename .psarc file ${BINPSARC_FILE}: ${err}`);
     } //*/
-    //api.events.emit('deploy-mods', (err) => {log('error', `Failed to deploy mods! User will have to deploy manually: ${err}`)});
+    //finish up - success
     await deploy(api);
     api.dismissNotification(NOTIF_ID);
+    extractSuccessNotify(api);
     return;
   }
+  //finish up - failure
   await deploy(api);
   api.dismissNotification(NOTIF_ID);
-  api.showErrorNotification(`Could not complete extraction of .psarc files. Please try again.`, `Could not complete extraction of .psarc files. Please try again. This error likely occured due to closing the ndarc terminal windows before extraction was complete.`, { allowReport: false });
+  api.showErrorNotification(`Could not complete extraction of .psarc files. Please try again.`, 
+    `Could not complete extraction of .psarc files. Please try again. This error likely occured due to closing the ndarc terminal windows before extraction was complete.\n ${err}`,
+    { allowReport: false }
+  );
   return;
+}
+
+async function foldersCleanup(workingPath, folders) {
+  for (let index = 0; index < folders.length; index++) {
+    const folder = path.join(workingPath, folders[index]);
+    try { //remove extracted .psarc folders
+      await fs.statAsync(folder);
+      await fsPromises.rm(folder, { recursive: true });
+    } catch (err) {
+      log('error', `Could not delete extracted .psarc folder "${folder}": ${err}`);
+    }
+  }
+}
+function cleanupSuccessNotify(api) {
+  const NOTIF_ID = `${GAME_ID}-cleanupsuccess`;
+  const MESSAGE = `Successfully restored vanilla .psarc files and deleted extracted files`;
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'success',
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [],
+  });
 }
 
 //Cleanup extracted .psarc game files (called on purge)
 async function psarcCleanup(api) {
-  const state = api.getState();
-  const discovery = selectors.discoveryByGame(state, GAME_ID);
-  GAME_PATH = discovery.path;
-  const FOLDERS_PATH = path.join(GAME_PATH, PSARCTOOL_PATH);
-  CLEANUP_FOLDERS.forEach((folder, idx, arr) => {
-    try { //remove extracted .psarc folders
-      fs.statSync(path.join(FOLDERS_PATH, folder));
-      fsPromises.rm(path.join(FOLDERS_PATH, folder), { recursive: true });
-      //log('warn', `Deleted extracted .psarc folder "${folder}"`);
-    } catch (err) {
-      log('error', `Could not delete extracted .psarc folder "${folder}": ${err}`);
-    }
-  }); //*/
-  try { //restore name of sp-common.psarc
-    fs.statSync(path.join(GAME_PATH, PSARCTOOL_PATH, BAK_SPCOMPSARC_FILE));
+  const NOTIF_ID = `${GAME_ID}-psarccleanup`
+  api.sendNotification({ //notification indicating process
+    id: NOTIF_ID,
+    message: `Cleaning up extracted .psarc Files and restoring file names. This will take a few seconds.`,
+    type: 'activity',
+    noDismiss: true,
+    allowSuppress: false,
+  });
+  GAME_PATH = await getDiscoveryPath(api);
+  const WORK_PATH = path.join(GAME_PATH, PSARCTOOL_PATH);
+  await foldersCleanup(WORK_PATH, CLEANUP_FOLDERS);
+  //restore name of sp-common.psarc
+  try { 
+    await fs.statAsync(path.join(WORK_PATH, BAK_SPCOMPSARC_FILE));
     try { //make sure vanilla file is not in place - this usually means the game was updated
-      fs.statSync(path.join(GAME_PATH, PSARCTOOL_PATH, SPCOMPSARC_FILE));
-      fs.unlinkAsync(path.join(GAME_PATH, PSARCTOOL_PATH, BAK_SPCOMPSARC_FILE));
-    } catch (err) {
-      await fs.renameAsync(path.join(GAME_PATH, PSARCTOOL_PATH, BAK_SPCOMPSARC_FILE), path.join(GAME_PATH, PSARCTOOL_PATH, SPCOMPSARC_FILE));
-      //log('warn', `Renamed .psarc file ${BAK_SPCOMPSARC_FILE} to ${SPCOMPSARC_FILE}`);
+      await fs.statAsync(path.join(WORK_PATH, SPCOMPSARC_FILE));
+      await fs.unlinkAsync(path.join(WORK_PATH, BAK_SPCOMPSARC_FILE));
+    } catch (err) { //vanilla file not present, safe to rename
+      await fs.renameAsync(path.join(WORK_PATH, BAK_SPCOMPSARC_FILE), path.join(WORK_PATH, SPCOMPSARC_FILE));
+      log('warn', `Renamed .psarc file ${BAK_SPCOMPSARC_FILE} to ${SPCOMPSARC_FILE}`);
     }
   } catch (err) {
-    //log('error', `Could not restore name of .psarc file ${SPCOMPSARC_FILE}: ${err}`);
+    log('error', `Could not restore name of .psarc file ${SPCOMPSARC_FILE}: ${err}`);
   }
-  try { //restore name of bin.psarc
-    fs.statSync(path.join(GAME_PATH, PSARCTOOL_PATH, BAK_BINPSARC_FILE));
+  //restore name of bin.psarc
+  try { 
+    await fs.statAsync(path.join(WORK_PATH, BAK_BINPSARC_FILE));
     try { //make sure vanilla file is not in place - this usually means the game was updated
-      fs.statSync(path.join(GAME_PATH, PSARCTOOL_PATH, BINPSARC_FILE));
-      fs.unlinkAsync(path.join(GAME_PATH, PSARCTOOL_PATH, BAK_BINPSARC_FILE));
+      await fs.statAsync(path.join(WORK_PATH, BINPSARC_FILE));
+      await fs.unlinkAsync(path.join(WORK_PATH, BAK_BINPSARC_FILE));
     } catch (err) {
-      await fs.renameAsync(path.join(GAME_PATH, PSARCTOOL_PATH, BAK_BINPSARC_FILE), path.join(GAME_PATH, PSARCTOOL_PATH, BINPSARC_FILE));
-      //log('warn', `Renamed .psarc file ${BAK_BINPSARC_FILE} to ${BINPSARC_FILE}`);
+      await fs.renameAsync(path.join(WORK_PATH, BAK_BINPSARC_FILE), path.join(WORK_PATH, BINPSARC_FILE));
+      log('warn', `Renamed .psarc file ${BAK_BINPSARC_FILE} to ${BINPSARC_FILE}`);
     }
   } catch (err) {
-    //log('error', `Could not restore name of .psarc file ${BINPSARC_FILE}: ${err}`);
+    log('error', `Could not restore name of .psarc file ${BINPSARC_FILE}: ${err}`);
   }
-  setupNotify(api);
+  //stat vanilla files to make sure they are there
+  try { 
+    await fs.statAsync(path.join(WORK_PATH, BINPSARC_FILE));
+    await fs.statAsync(path.join(WORK_PATH, SPCOMPSARC_FILE));
+    api.dismissNotification(NOTIF_ID);
+    cleanupSuccessNotify(api);
+    setupNotify(api);
+    return;
+  } catch (err) { //if the files aren't there, cleanup did not succeed
+    api.dismissNotification(NOTIF_ID);
+    api.showErrorNotification(`Did Not Complete .psarc Cleanup. Please try again.`, 
+      `Could not complete cleanup of extracted .psarc files and restoration of vanilla files. Please verify your game files to ensure vanilla .psar files are present.\n ${err}`,
+      { allowReport: false }
+    );
+    setupNotify(api);
+    return;
+  }
 }
 
 //Setup function
@@ -1302,31 +1351,31 @@ async function setup(discovery, api, gameSpec) {
   GAME_PATH = discovery.path;
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
-  setupNotify(api);
   // ASYNCHRONOUS CODE ///////////////////////////////////
+  await setupNotify(api);
   await fs.ensureDirWritableAsync(CONFIG_PATH);
   await fs.ensureDirWritableAsync(SAVE_PATH);
   await fs.ensureDirWritableAsync(path.join(GAME_PATH, PAK_PATH));
   await fs.ensureDirWritableAsync(path.join(GAME_PATH, PSARC_PATH));
-  /*const isToolInstalled = await checkForTool(api);
-  //return isToolInstalled ? Promise.resolve() : download(api, REQUIREMENTS); //*/
-  await downloadModLoader(discovery, api, gameSpec);
-  if (LOAD_ORDER_ENABLED) {
+  await downloadModLoader(api, gameSpec);
+  if (LOAD_ORDER_ENABLED) { //ensure LO file present
     const LO_FILE_PATH = path.join(GAME_PATH, LO_FILE);
     try {
-      fs.statSync(LO_FILE_PATH);
+      await fs.statAsync(LO_FILE_PATH);
     } catch (err) {
       const modFolder = path.join(GAME_PATH, PSARC_PATH);
       const LO_FILE_LINES = [`[ModLoader]`, 'MountOrder=', 'ShowConsole=false', `ModFolder=${modFolder}`];
       const LO_FILE_CONTENT = LO_FILE_LINES.join('\n')
-      fs.writeFileAsync(
+      await fs.writeFileAsync(
         LO_FILE_PATH,
         LO_FILE_CONTENT,
         { encoding: "utf8" },
       );
     }
   }
-  return downloadPsarcTool(discovery, api, gameSpec);
+  /*const isToolInstalled = await checkForTool(api);
+  //return isToolInstalled ? Promise.resolve() : download(api, REQUIREMENTS); //*/
+  return downloadPsarcTool(api, gameSpec);
 }
 
 //Let vortex know about the game
@@ -1355,13 +1404,13 @@ function applyGame(context, gameSpec) {
   //register mod installers
   context.registerInstaller(MODLOADER_ID, 25, testModLoader, installModLoader);
   context.registerInstaller(PSARC_ID, 27, testPsarc, installPsarc);
-  context.registerInstaller(`${BUILD_ID}pakbin`, 30, testBuildPakBin, installBuildPakBin);
-  context.registerInstaller(BIN_ID, 35, testBin, installBin);
-  context.registerInstaller(PAK_ID, 40, testPak, installPak);
-  context.registerInstaller(BUILD_ID, 45, testBuild, installBuild);
-  context.registerInstaller(SAVE_ID, 50, testSave, installSave);
-  context.registerInstaller(CONFIG_ID, 55, testConfig, installConfig);
-  context.registerInstaller(PSARCTOOL_ID, 60, testPsarcTool, installPsarcTool);
+  context.registerInstaller(`${BUILD_ID}pakbin`, 29, testBuildPakBin, installBuildPakBin);
+  context.registerInstaller(BIN_ID, 31, testBin, installBin);
+  context.registerInstaller(PAK_ID, 33, testPak, installPak);
+  context.registerInstaller(BUILD_ID, 35, testBuild, installBuild);
+  context.registerInstaller(SAVE_ID, 37, testSave, installSave);
+  context.registerInstaller(CONFIG_ID, 39, testConfig, installConfig);
+  context.registerInstaller(PSARCTOOL_ID, 41, testPsarcTool, installPsarcTool);
 
   //register actions
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Extract .psarc Files', () => {
@@ -1371,10 +1420,16 @@ function applyGame(context, gameSpec) {
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Cleanup Extracted .psarc Files', () => {
+    psarcCleanup(context.api);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open "build\\pc\\main" Folder', () => {
     GAME_PATH = getDiscoveryPath(context.api);
-    const openPath = path.join(GAME_PATH, MAIN_PATH);
-    util.opn(openPath).catch(() => null);
+    util.opn(path.join(GAME_PATH, BIN_PATH)).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
@@ -1423,17 +1478,29 @@ function applyGame(context, gameSpec) {
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
+    util.opn(PCGAMINGWIKI_URL).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
-    const openPath = path.join(__dirname, 'CHANGELOG.md');
-    util.opn(openPath).catch(() => null);
+    util.opn(path.join(__dirname, 'CHANGELOG.md')).catch(() => null);
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Vortex Downloads Folder', () => {
-    const openPath = path.join(DOWNLOAD_FOLDER);
-    util.opn(openPath).catch(() => null);
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
+    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
+    util.opn(DOWNLOAD_FOLDER).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
@@ -1457,7 +1524,10 @@ function main(context) {
     });
   }
   context.once(() => { // put code here that should be run (once) when Vortex starts up
-    //context.api.onAsync('check-mods-version', (gameId, mods, forced) => onCheckModVersion(context.api, gameId, mods, forced));
+    /*context.api.onAsync('check-mods-version', (gameId, mods, forced) => {
+      if (gameId !== GAME_ID) return;
+      return onCheckModVersion(context.api, gameId, mods, forced);
+    }); //*/
     context.api.onAsync('did-purge', (profileId) => didPurge(context.api, profileId)); //*/
     context.api.onAsync("did-deploy", (profileId) => {
       mod_update_all_profile = false;
@@ -1486,6 +1556,7 @@ function main(context) {
   return true;
 }
 
+//on purge
 async function didPurge(api, profileId) { //run on mod purge
   const state = api.getState();
   const profile = selectors.profileById(state, profileId);
@@ -1493,7 +1564,14 @@ async function didPurge(api, profileId) { //run on mod purge
   if (gameId !== GAME_ID) {
     return Promise.resolve();
   }
-  psarcCleanup(api);
+  GAME_PATH = await getDiscoveryPath(api);
+  try {
+    await fs.statAsync(path.join(GAME_PATH, PSARCTOOL_PATH, 'pak68'));
+    await fs.statAsync(path.join(GAME_PATH, PSARCTOOL_PATH, BIN_FOLDER));
+    await psarcCleanup(api);
+  } catch (err) {
+    log('warn', `Skipping purge cleanup because cleanup folders not found.`);
+  }
   clearModOrder(api);
   clearChunksTxt(api);
   return Promise.resolve();

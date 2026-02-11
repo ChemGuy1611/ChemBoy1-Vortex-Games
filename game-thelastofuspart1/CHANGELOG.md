@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [2.1.0] - 2026-02-11
+
+- Fixed: Several technical fixes and improvements
+
 ## [2.0.7] - 2026-01-19
 
 - Fixed: More reliable folder deletion operations - revised deprecated fsPromises.rmdir function to fsPromises.rm
