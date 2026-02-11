@@ -1590,6 +1590,8 @@ async function relaunchExt(api) {
 }
 //Function to choose mod loader
 async function chooseModLoader(api, gameSpec) {
+  await downloadMelon(api, gameSpec);
+  /*
   const CUSTOM_LABEL = `${CUSTOMLOADER_NAME} (Recommended)`;
   let BEP_LABEL = `BepInEx`;
   if (recommendedLoader === 'bepinex') {
@@ -1601,7 +1603,7 @@ async function chooseModLoader(api, gameSpec) {
   }
   const t = api.translate;
   let choices = [
-    { label: t(BEP_LABEL) },
+    //{ label: t(BEP_LABEL) },
     { label: t(MEL_LABEL) },
   ];
   if (hasCustomLoader) {
@@ -1639,8 +1641,8 @@ async function chooseModLoader(api, gameSpec) {
     if (hasCustomMods || loaderSwitchRestart) { //Run this if need to change a modType path based on the mod loader installed
       await deploy(api);
       relaunchExt(api);
-    }
-  });
+    } 
+  }); //*/
 }
 //Deconflict mod loaders
 async function deconflictModLoaders(api, gameSpec) {
