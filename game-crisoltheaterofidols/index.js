@@ -1,9 +1,9 @@
 /*////////////////////////////////////////////////
-Name: XXX Vortex Extension
+Name: Crisol: Theater of Idols Vortex Extension
 Structure: Unreal Engine Game
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2026-XX-XX
+Date: 2026-02-11
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -25,33 +25,30 @@ const { parseStringPromise } = require('xml2js');
 const LOCALAPPDATA = util.getVortexPath('localAppData');
 
 //Specify all information about the game
-const GAME_ID = "XXX"; //same as Nexus domain
-const STEAMAPP_ID = "XXX"; //from steamdb.info
-const STEAMAPP_ID_DEMO = "XXX"; //VERIFY if the EPIC_CODE_NAME and EXEC_DEMO match Steam full game
-const EPICAPP_ID = "XXX"; //from egdata.app
-const GOGAPP_ID = "XXX"; // from gogdb.org
-const XBOXAPP_ID = "XXX"; //from appxmanifest.xml
+const GAME_ID = "crisoltheaterofidols"; //same as Nexus domain
+const STEAMAPP_ID = "1790930"; //from steamdb.info
+const STEAMAPP_ID_DEMO = "3989380"; //VERIFY if the EPIC_CODE_NAME and EXEC_DEMO match Steam full game
+const EPICAPP_ID = null; //from egdata.app
+const GOGAPP_ID = null; // from gogdb.org
+const XBOXAPP_ID = null; //from appxmanifest.xml
 const XBOXEXECNAME = "AppUEGameShipping"; //from appxmanifest.xml
-const XBOX_PUB_ID = "XXX"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const XBOX_PUB_ID = ""; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // Demo no longer available
 
-const GAME_NAME = "XXX";
-const GAME_NAME_SHORT = "XXX"; //Try for 8-10 characters
-const EPIC_CODE_NAME = "XXX"; //Folder in root
-const EXEC = `${EPIC_CODE_NAME}.exe`; //This is true ~80% of the time
+const GAME_NAME = "Crisol: Theater of Idols";
+const GAME_NAME_SHORT = "Crisol ToI"; //Try for 8-10 characters
+const EPIC_CODE_NAME = "CRToiPrototype"; //Folder in root
+const EXEC = `CrisolTheaterOfIdols.exe`; //This is true ~80% of the time
 const EXEC_EPIC = EXEC; //change these 3 if different
 const EXEC_GOG = EXEC;
-const EXEC_DEMO = EXEC;
+const EXEC_DEMO = 'CrisolTheaterOfIdolsDemo.exe';
 const PARAMETERS_STRING = ''; //launch arguments to pass when launching the game
-const PCGAMINGWIKI_URL = "XXX";
-const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Crisol:_Theater_of_Idols";
+const EXTENSION_URL = ""; //Nexus link to this extension. Used for links
 
 //feature toggles
 const hasXbox = false; //toggle for Xbox version logic.
 let multiExe = false; //toggle for multiple executables (Epic/GOG/Demo don't match Steam)
-if ( (EXEC !== EXEC_EPIC) || (EXEC !== EXEC_GOG) || (EXEC !== EXEC_DEMO) ) {
-  multiExe = true;
-} //*/
 const hasModKit = false; //toggle for UE ModKit mod support
 const preferHardlinks = true; //set true to perform partition checks when IO-STORE=false for Config/Save modtypes so that hardlinks available to more users
 const autoDownloadUe4ss = false; //toggle for auto downloading UE4SS
@@ -59,7 +56,7 @@ const SIGBYPASS_REQUIRED = false; //set true if there are .sig files in the Paks
 const IO_STORE = true; //true if the Paks folder contains .ucas and .utoc files
 
 //UE specific
-const ENGINE_VERSION = '5.X.X.0'; //Unreal Engine version - info only atm. usually '4.27.2.0' or '5.X.X.0'
+const ENGINE_VERSION = '5.5.4.0'; //Unreal Engine version - info only atm. usually '4.27.2.0' or '5.X.X.0'
 const ROOT_FOLDERS = [EPIC_CODE_NAME, 'Engine']; //addressable folders in root
 const ROOTSUB_FOLDERS = ['Content', 'Binaries', 'Mods']; //subfolders of EPIC_CODE_NAME. Don't use "Plugins" here since it can conflict with plugin loader/asi mods
 const SAVE_EXT = ".sav";
@@ -453,52 +450,8 @@ function getExecutable(discoveryPath) {
       return EXEC_XBOX;
     }
   }
-  if (statCheckSync(discoveryPath, EXEC)) {
-    GAME_VERSION = 'steam';
-    BINARIES_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT);
-    SHIPPING_EXE = path.join(BINARIES_PATH, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_DEFAULT}-Shipping.exe`);
-    SCRIPTS_PATH = path.join(BINARIES_PATH, UE4SS_MOD_PATH);
-    DLL_PATH = SCRIPTS_PATH;
-    CONFIG_PATH = CONFIG_PATH_DEFAULT;
-    //CONFIG_PATH = setConfigPath(GAME_VERSION); //if there's an intermediate store folder in the path
-    //SAVE_PATH = setSavePath;
-    SAVE_PATH = SAVE_PATH_DEFAULT;
-    return EXEC;
-  } //*/
-  if (statCheckSync(discoveryPath, EXEC_EPIC)) {
-    GAME_VERSION = 'epic';
-    BINARIES_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT);
-    SHIPPING_EXE = path.join(BINARIES_PATH, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_EGS}-Shipping.exe`);
-    SCRIPTS_PATH = path.join(BINARIES_PATH, UE4SS_MOD_PATH);
-    DLL_PATH = SCRIPTS_PATH;
-    CONFIG_PATH = CONFIG_PATH_DEFAULT;
-    //CONFIG_PATH = setConfigPath(GAME_VERSION); //if there's an intermediate store folder in the path
-    //SAVE_PATH = setSavePath;
-    SAVE_PATH = SAVE_PATH_DEFAULT;
-    return EXEC_EPIC;
-  } //*/
-  if (statCheckSync(discoveryPath, EXEC_GOG)) {
-    GAME_VERSION = 'gog';
-    BINARIES_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT);
-    SHIPPING_EXE = path.join(BINARIES_PATH, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_GOG}-Shipping.exe`);
-    SCRIPTS_PATH = path.join(BINARIES_PATH, UE4SS_MOD_PATH);
-    DLL_PATH = SCRIPTS_PATH;
-    CONFIG_PATH = CONFIG_PATH_DEFAULT;
-    //CONFIG_PATH = setConfigPath(GAME_VERSION); //if there's an intermediate store folder in the path
-    //SAVE_PATH = setSavePath;
-    SAVE_PATH = SAVE_PATH_DEFAULT;
-    return EXEC_GOG;
-  } //*/
   if (statCheckSync(discoveryPath, EXEC_DEMO)) {
     GAME_VERSION = 'demo';
-    BINARIES_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT);
-    SHIPPING_EXE = path.join(BINARIES_PATH, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_DEMO}-Shipping.exe`);
-    SCRIPTS_PATH = path.join(BINARIES_PATH, UE4SS_MOD_PATH);
-    DLL_PATH = SCRIPTS_PATH;
-    CONFIG_PATH = CONFIG_PATH_DEFAULT;
-    //CONFIG_PATH = setConfigPath(GAME_VERSION); //if there's an intermediate store folder in the path
-    //SAVE_PATH = setSavePath;
-    SAVE_PATH = SAVE_PATH_DEFAULT;
     return EXEC_DEMO;
   } //*/
   GAME_VERSION = 'default';
@@ -515,14 +468,6 @@ function getShippingExe(gamePath) {
   }
   if (statCheckSync(gamePath, EXEC)) {
     SHIPPING_EXE = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_DEFAULT}-Shipping.exe`);
-    return SHIPPING_EXE;
-  }
-  if (statCheckSync(gamePath, EXEC_EPIC)) {
-    SHIPPING_EXE = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_EGS}-Shipping.exe`);
-    return SHIPPING_EXE;
-  }
-  if (statCheckSync(gamePath, EXEC_GOG)) {
-    SHIPPING_EXE = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_GOG}-Shipping.exe`);
     return SHIPPING_EXE;
   }
   if (statCheckSync(gamePath, EXEC_DEMO)) {
@@ -558,14 +503,6 @@ async function setGameVersionAsync(gamePath) {
     GAME_VERSION = 'steam';
     return GAME_VERSION;
   }
-  if (await statCheckAsync(gamePath, EXEC_EPIC)) {
-    GAME_VERSION = 'epic';
-    return GAME_VERSION;
-  }
-  if (await statCheckAsync(gamePath, EXEC_GOG)) {
-    GAME_VERSION = 'gog';
-    return GAME_VERSION;
-  }
   if (await statCheckAsync(gamePath, EXEC_DEMO)) {
     GAME_VERSION = 'demo';
     return GAME_VERSION;
@@ -582,14 +519,6 @@ function setGameVersionSync(gamePath) {
   }
   if (statCheckSync(gamePath, EXEC)) {
     GAME_VERSION = 'steam';
-    return GAME_VERSION;
-  }
-  if (statCheckSync(gamePath, EXEC_EPIC)) {
-    GAME_VERSION = 'epic';
-    return GAME_VERSION;
-  }
-  if (statCheckSync(gamePath, EXEC_GOG)) {
-    GAME_VERSION = 'gog';
     return GAME_VERSION;
   }
   if (statCheckSync(gamePath, EXEC_DEMO)) {
@@ -1766,8 +1695,10 @@ function UNREALEXTENSION(context) {
 
 // Function to check if staging folder and game path are on same drive partition to enable modtypes + installers
 function checkPartitions(folder, discoveryPath) {
-  if (!preferHardlinks && !IO_STORE) { //only do early return if hardlinks have no benefits and aren't required
-    return true;
+  if (!preferHardlinks) { //only do early return if hardlinks have no benefits
+    if (!IO_STORE) { // true if IO-Store is not enabled for the game, since symlinks work fine in that case
+      return true;
+    }
   }
   try {
     // Define paths

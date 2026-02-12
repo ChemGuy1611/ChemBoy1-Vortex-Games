@@ -2,8 +2,8 @@
 Name: Mass Effect: Andromeda Vortex Extension
 Structure: 3rd Party Mod Manager (Frosty)
 Author: ChemBoy1
-Version: 0.2.1
-Date: 2025-04-10
+Version: 0.3.0
+Date: 2026-02-11
 /////////////////////////////////////////////*/
 
 //Import libraries

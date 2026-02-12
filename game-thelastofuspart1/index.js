@@ -778,7 +778,7 @@ async function psarcSetup(api) { //run on mod purge
   await deploy(api);
   api.dismissNotification(NOTIF_ID);
   api.showErrorNotification(`Could not complete extraction of .psarc files. Please try again.`, 
-    `Could not complete extraction of .psarc files. Please try again. This error likely occured due to closing the ndarc terminal windows before extraction was complete.\n ${err}`, 
+    `Could not complete extraction of .psarc files. Please try again. This error likely occured due to closing the ndarc terminal windows before extraction was complete.`, 
     { allowReport: false }
   );
   return;
@@ -857,7 +857,7 @@ async function psarcCleanup(api) {
   } catch (err) { //if the files aren't there, cleanup did not succeed
     api.dismissNotification(NOTIF_ID);
     api.showErrorNotification(`Did Not Complete .psarc Cleanup. Please try again.`, 
-      `Could not complete cleanup of extracted .psarc files and restoration of vanilla files. Please verify your game files to ensure vanilla .psar files are present.\n ${err}`,
+      `Could not complete cleanup of extracted .psarc files and restoration of vanilla files. Please verify your game files to ensure vanilla .psarc files are present.\n ${err}`,
       { allowReport: false }
     );
     setupNotify(api);

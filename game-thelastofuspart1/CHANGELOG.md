@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [2.1.1] - 2026-02-12
+
+- Fixed: Crash on undefined "err" variable if file extraction process fails
+
 ## [2.1.0] - 2026-02-11
 
 - Fixed: Several technical fixes and improvements
