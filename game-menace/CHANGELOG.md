@@ -4,6 +4,10 @@
 
 - None
 
+## [0.3.0] - 2026-02-12
+
+- Added: Load Order support for ModPackLoader mods
+
 ## [0.2.0] - 2026-02-12
 
 - Added: support for ModPackLoader mods not packaged with loader dll

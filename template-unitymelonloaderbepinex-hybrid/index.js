@@ -472,6 +472,11 @@ const tools = [
 
 // BASIC FUNCTIONS //////////////////////////////////////////////////////////////
 
+function isDir(folder, file) {
+  const stats = fs.statSync(path.join(folder, file));
+  return stats.isDirectory();
+}
+
 function statCheckSync(gamePath, file) {
   try {
     fs.statSync(path.join(gamePath, file));

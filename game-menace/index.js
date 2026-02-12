@@ -2,7 +2,7 @@
 Name: MENACE Vortex Extension
 Structure: Unity BepinEx/MelonLoader Hybrid
 Author: ChemBoy1
-Version: 0.2.0
+Version: 0.3.0
 Date: 2026-02-12
 //////////////////////////////////////////*/
 
@@ -44,7 +44,7 @@ const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Menace";
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1686"; //Nexus link to this extension. Used for links
 
 //feature toggles
-const enableLoadOrder = false; //true if you want to use load order sorting
+const enableLoadOrder = true; //true if you want to use load order sorting
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
 const multiExe = false; //set to true if there are multiple executables (typically for Xbox/EGS)
 const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
@@ -292,8 +292,15 @@ const MODPACKMOD_NAME = "Modpack Mod";
 const MODPACKMOD_PATH = MELON_MODS_PATH;
 const MODPACKMOD_FILE = "modpack.json";
 
-const LO_FILE = "ModSettings.json";
-const LO_FILE_PATH = path.join(MELON_CONFIG_PATH, LO_FILE);
+const LO_FILE = MODPACKMOD_FILE;
+const LO_JSON_KEY = "loadOrder";
+const LO_INCREMENT = 10;
+const LO_ATTRIBUTE = "modName";
+// for mod update to keep them in the load order and not uncheck them
+let mod_update_all_profile = false;
+let updatemodid = undefined;
+let updating_mod = false; // used to see if it's a mod update or not
+let mod_install_name = ""; // used to display the name of the currently installed mod
 
 // -- START EDIT ZONE -- ///////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -510,6 +517,11 @@ const tools = [
 ];
 
 // BASIC FUNCTIONS //////////////////////////////////////////////////////////////
+
+function isDir(folder, file) {
+  const stats = fs.statSync(path.join(folder, file));
+  return stats.isDirectory();
+}
 
 function statCheckSync(gamePath, file) {
   try {
@@ -1328,6 +1340,11 @@ function installModpackMod(files, fileName) {
     //idx = modFile.indexOf(`${indexFolder}${path.sep}`);  //index on the folder with path separator
   } //*/
   const idx = modFile.indexOf(path.basename(modFile));
+  const MOD_ATTRIBUTE = { //attribute for use in load order
+    type: 'attribute',
+    key: LO_ATTRIBUTE,
+    value: folder,
+  };
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
@@ -1342,6 +1359,7 @@ function installModpackMod(files, fileName) {
     };
   });
   instructions.push(setModTypeInstruction);
+  instructions.push(MOD_ATTRIBUTE);
   return Promise.resolve({ instructions });
 }
 
@@ -1692,6 +1710,209 @@ function fallbackInstallerNotify(api, modName) {
     ],
   });
 }
+
+// LOAD ORDER FUNCTIONS /////////////////////////////////////////////////////////
+
+function getIndex(number) {
+  if (number === 10) {
+    return 1;
+  }
+  return ( (number - LO_INCREMENT) / 10 ) + 1;
+}
+
+async function readFromFiles(loadOrderPaths, modFolders) {
+  let posArray = [];
+  for (let index = 0; index < loadOrderPaths.length; index++) {
+    const contents = await fs.readFileAsync(loadOrderPaths[index], 'utf8');
+    const json = JSON.parse(contents);
+    const number = json.loadOrder;
+    const pos = getIndex(number);
+    posArray[index] = {
+      pos: pos,
+      mod: modFolders[index] 
+    };
+  }
+  const modArray = posArray
+    .sort((a, b) => a.pos - b.pos)
+    .map(entry => entry.mod);
+  return modArray;
+}
+
+async function deserializeLoadOrder(context) {
+  //* on mod update for all profile it would cause the mod if it was selected to be unselected
+  if (mod_update_all_profile) {
+    let allMods = Array("mod_update");
+
+    return allMods.map((modId) => {
+      return {
+        id: "mod update in progress, please wait. Refresh when finished. \n To avoid this wait, only update current profile",
+        modId: modId,
+        enabled: false,
+      };
+    });
+  } //*/
+
+  //Set basic information for load order paths and data
+  const mods = util.getSafe(context.api.store.getState(), ['persistent', 'mods', spec.game.id], {});
+  GAME_PATH = getDiscoveryPath(context.api);
+  const modFolderPath = path.join(GAME_PATH, MODPACKMOD_PATH);
+
+  //Get all mod files from mods folder
+  let modFolders = [];
+  try {
+    modFolders = await fs.readdirAsync(modFolderPath);
+    modFolders = modFolders.filter((file) => isDir(modFolderPath, file));
+    modFolders = modFolders.sort((a,b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+  } catch {
+    return Promise.reject(new Error('Failed to read "Mods" folder'));
+  }
+
+  // sort by existing load order
+  const loadOrderPaths = modFolders
+    .map((mod) => path.join(GAME_PATH, MODPACKMOD_PATH, mod, LO_FILE));
+  const LO_MOD_ARRAY = await readFromFiles(loadOrderPaths, modFolders);
+
+  //Determine if mod is managed by Vortex (async version)
+  const isVortexManaged = async (modId) => {
+    return fs.statAsync(path.join(modFolderPath, modId, `__folder_managed_by_vortex`))
+      .then(() => true)
+      .catch(() => false)
+  };
+  
+  // Get readable mod name using attribute from mod installer
+  async function getModName(folder) {
+    const VORTEX = await isVortexManaged(folder);
+    if (!VORTEX) {
+      return ('Manual Mod');
+    }
+    try {//Mod installed by Vortex, find mod where atrribute (from installer) matches folder in the load order
+      const modMatch = Object.values(mods).find(mod => (util.getSafe(mods[mod.id]?.attributes, [LO_ATTRIBUTE], '') === folder));
+      if (modMatch) {
+        return modMatch.attributes.customFileName ?? modMatch.attributes.logicalFileName ?? modMatch.attributes.name;
+      }
+      return folder;
+    } catch (err) {
+      return folder;
+    }
+  }
+
+  // Get Vortex mod id using attribute from mod installer
+  async function getModId(folder) {
+    try {//find mod where atrribute (from installer) matches file in the load order
+      const modMatch = Object.values(mods).find(mod => (util.getSafe(mods[mod.id]?.attributes, [LO_ATTRIBUTE], '').includes(folder))); //find mod by folder name attribute
+      if (modMatch) {
+        return modMatch.id;
+      }
+      return undefined;
+    } catch (err) {
+      return undefined;
+    }
+  }
+
+  //Set load order
+  let loadOrder = await LO_MOD_ARRAY
+    .reduce(async (accumP, entry) => {
+      const accum = await accumP;
+      const folder = entry;
+      if (!modFolders.includes(folder)) {
+        return Promise.resolve(accum);
+      }
+      accum.push(
+        {
+          id: folder,
+          name: `${await getModName(folder)} (${folder})`,
+          modId: await isVortexManaged(folder) ? folder : undefined,
+          enabled: true,
+        }
+      );
+      return Promise.resolve(accum);
+    }, Promise.resolve([]));
+  
+  //push new mods to loadOrder
+  for (let folder of modFolders) {
+    if (!loadOrder.find((mod) => (mod.id === folder))) {
+      loadOrder.push({
+        id: folder,
+        name: `${await getModName(folder)} (${folder})`,
+        modId: await isVortexManaged(folder) ? folder : undefined,
+        enabled: true,
+      });
+    }
+  }
+
+  return loadOrder;
+}
+
+function setNumber(index) {
+  if (index === 0) {
+    return LO_INCREMENT;
+  }
+  return (index * 10) + LO_INCREMENT;
+}
+
+async function writeToFiles(loadOrderPaths) {
+  for (let index = 0; index < loadOrderPaths.length; index++) {
+    const contents = await fs.readFileAsync(loadOrderPaths[index], 'utf8');
+    const json = JSON.parse(contents);
+    json.loadOrder = setNumber(index);
+    const loadOrderOutput = JSON.stringify(json, null, 2);
+    await fs.writeFileAsync(
+    loadOrderPaths[index],
+    loadOrderOutput,
+    { encoding: "utf8" },
+  );
+  }
+}
+
+//Write load order to files
+async function serializeLoadOrder(context, loadOrder) {
+  //* don't write if all profiles are being updated
+  if (mod_update_all_profile) {
+    return;
+  } //*/
+  GAME_PATH = getDiscoveryPath(context.api);
+  const loadOrderMapped = loadOrder
+    .map((mod) => (mod.id));
+  const loadOrderPaths = loadOrderMapped
+    .map((mod) => path.join(GAME_PATH, MODPACKMOD_PATH, mod, LO_FILE));
+  await writeToFiles(loadOrderPaths);
+  return;
+}
+
+/* Functions for folder-based merger load order (does NOT seem to work)
+function makePrefix(input) {
+  let res = '';
+  let rest = input;
+  while (rest > 0) {
+      res = String.fromCharCode(65 + (rest % 25)) + res;
+      rest = Math.floor(rest / 25);
+  }
+  return util.pad(res, 'A', 3);
+}
+function loadOrderPrefix(api, mod) {
+  const state = api.getState();
+  const profile = selectors.lastActiveProfileForGame(state, GAME_ID);
+  const loadOrder = util.getSafe(state, ['persistent', 'loadOrder', profile], {});
+  const loKeys = Object.keys(loadOrder);
+  const pos = loKeys.indexOf(mod.id);
+  if (pos === -1) {
+      return 'ZZZZ-';
+  }
+  return makePrefix(pos) + '-';
+}
+async function preSort(api, items, direction) {
+  const mods = util.getSafe(api.store.getState(), ['persistent', 'mods', spec.game.id], {});
+  const loadOrder = items.map(mod => {
+    const modInfo = mods[mod.id];
+    let name = modInfo ? modInfo.attributes.customFileName ?? modInfo.attributes.logicalFileName ?? modInfo.attributes.name : mod.name;
+    return {
+      id: mod.id,
+      name,
+      imgUrl: util.getSafe(modInfo, ['attributes', 'pictureUrl'], path.join(__dirname, spec.game.logo))
+    }
+  });
+  return (direction === 'descending') ? Promise.resolve(loadOrder.reverse()) : Promise.resolve(loadOrder);
+} //*/
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
@@ -2130,41 +2351,6 @@ async function setup(discovery, api, gameSpec) {
   } //*/
 }
 
-/* Functions for folder-based merger load order (does NOT seem to work)
-function makePrefix(input) {
-  let res = '';
-  let rest = input;
-  while (rest > 0) {
-      res = String.fromCharCode(65 + (rest % 25)) + res;
-      rest = Math.floor(rest / 25);
-  }
-  return util.pad(res, 'A', 3);
-}
-function loadOrderPrefix(api, mod) {
-  const state = api.getState();
-  const profile = selectors.lastActiveProfileForGame(state, GAME_ID);
-  const loadOrder = util.getSafe(state, ['persistent', 'loadOrder', profile], {});
-  const loKeys = Object.keys(loadOrder);
-  const pos = loKeys.indexOf(mod.id);
-  if (pos === -1) {
-      return 'ZZZZ-';
-  }
-  return makePrefix(pos) + '-';
-}
-async function preSort(api, items, direction) {
-  const mods = util.getSafe(api.store.getState(), ['persistent', 'mods', spec.game.id], {});
-  const loadOrder = items.map(mod => {
-    const modInfo = mods[mod.id];
-    let name = modInfo ? modInfo.attributes.customFileName ?? modInfo.attributes.logicalFileName ?? modInfo.attributes.name : mod.name;
-    return {
-      id: mod.id,
-      name,
-      imgUrl: util.getSafe(modInfo, ['attributes', 'pictureUrl'], path.join(__dirname, spec.game.logo))
-    }
-  });
-  return (direction === 'descending') ? Promise.resolve(loadOrder.reverse()) : Promise.resolve(loadOrder);
-} //*/
-
 //Let Vortex know about the game
 function applyGame(context, gameSpec) {
   const game = { //register game
@@ -2396,7 +2582,16 @@ function applyGame(context, gameSpec) {
 function main(context) {
   applyGame(context, spec);
   if (enableLoadOrder) { //ModpackLaoder mods load order
-
+    context.registerLoadOrder({
+      gameId: GAME_ID,
+      validate: async () => Promise.resolve(undefined), // no validation implemented yet
+      deserializeLoadOrder: async () => await deserializeLoadOrder(context),
+      serializeLoadOrder: async (loadOrder) => await serializeLoadOrder(context, loadOrder),
+      toggleableEntries: false,
+      usageInstructions:`Drag and drop the mods on the left to change the order in which they load.   \n`
+                        +`${GAME_NAME} loads mods in the order you set from top to bottom.   \n`
+                        +`\n`,
+    });
     /*
     let previousLO;
     context.registerLoadOrderPage({
@@ -2424,6 +2619,9 @@ function main(context) {
   context.once(() => { // put code here that should be run (once) when Vortex starts up
     const api = context.api;
     api.onAsync('did-deploy', async (profileId, deployment) => { 
+      mod_update_all_profile = false;
+      updating_mod = false;
+      updatemodid = undefined;
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;
       api.dismissNotification(`${spec.game.id}-loadorderdeploy-notif`);
@@ -2468,6 +2666,24 @@ function main(context) {
       }
       return Promise.resolve();
     });
+    api.events.on("mod-update", (gameId, modId, fileId) => {
+      if (GAME_ID == gameId) {
+        updatemodid = modId;
+      }
+    });
+    api.events.on("remove-mod", (gameMode, modId) => {
+      if (modId.includes("-" + updatemodid + "-")) {
+        mod_update_all_profile = true;
+      }
+    });
+    api.events.on("will-install-mod", (gameId, archiveId, modId) => {
+      mod_install_name = modId.split("-")[0];
+      if (GAME_ID == gameId && modId.includes("-" + updatemodid + "-")) {
+        updating_mod = true;
+      } else {
+        updating_mod = false;
+      }
+    }); //*/
   });
   return true;
 }
