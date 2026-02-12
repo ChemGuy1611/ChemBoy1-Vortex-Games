@@ -890,6 +890,7 @@ function applyGame(context, gameSpec) {
 function main(context) {
   applyGame(context, spec);
   context.once(() => {
+    const api = context.api;
     if (context.api.ext.bepinexAddGame !== undefined) {
       if (BEPINEX_PAGE_ID !== '0' && allowBepinexNexus === true) { //if Nexus page exists and is allowed, download from Nexus
         context.api.ext.bepinexAddGame({

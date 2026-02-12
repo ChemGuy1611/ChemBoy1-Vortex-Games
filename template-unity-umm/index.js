@@ -793,6 +793,7 @@ function applyGame(context, gameSpec) {
 function main(context) {
   applyGame(context, spec);
   context.once(() => {
+    const api = context.api;
     if (context.api.ext.ummAddGame !== undefined) {
       context.api.ext.ummAddGame({
         gameId: GAME_ID,

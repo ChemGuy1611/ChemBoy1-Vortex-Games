@@ -868,6 +868,7 @@ function applyGame(context, gameSpec) {
 function main(context) {
   applyGame(context, spec);
   context.once(() => { // put code here that should be run (once) when Vortex starts up
+    const api = context.api;
     if (!customLoader) {
       context.api.onAsync('check-mods-version', (gameId, mods, forced) => {
         if (gameId !== GAME_ID) return;
