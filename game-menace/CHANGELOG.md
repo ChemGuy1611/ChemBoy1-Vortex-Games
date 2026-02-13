@@ -4,6 +4,11 @@
 
 - None
 
+## [0.3.1] - 2026-02-13
+
+- Fixed: Added error handling for reading/writing failures in modpack.json files
+- Fixed: Prevented adding non-ModpackLoader mod entries to load order
+
 ## [0.3.0] - 2026-02-12
 
 - Added: Load Order support for ModPackLoader mods

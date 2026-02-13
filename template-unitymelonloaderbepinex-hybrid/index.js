@@ -46,7 +46,9 @@ const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
 
 //feature toggles
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
+const hasXbox = false; //toggle for Xbox version logic
 const multiExe = false; //set to true if there are multiple executables (typically for Xbox/EGS)
+const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
 const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
 const preventPluginInstall = true; //set to true if you want to prevent plugins not for the current mod loader from installing. Disable if using cross-compatibility plugins.
 const loaderSwitchRestart = false; //set to true if you need to restart the extension after switching mod loaders
@@ -60,7 +62,7 @@ let DATA_FOLDER = DATA_FOLDER_DEFAULT;
 const ALT_VERSION = 'xbox';
 const DATA_FOLDER_ALT = `${GAME_STRING_ALT}_Data`; //don't always match
 const ROOT_FOLDERS = [DATA_FOLDER, DATA_FOLDER_ALT];
-const VERSION_FILE = path.join('Version.info'); //app.info
+const VERSION_FILE = path.join('Version.info'); // LIKELY to change - usually .txt or .info file, i.e. - app.info/app.txt, Version.info, etc.
 let VERSION_FILE_PATH = path.join(DATA_FOLDER, VERSION_FILE);
 
 const DEV_REGSTRING = "XXX"; //developer name
@@ -586,7 +588,9 @@ function getExecutable(discoveryPath) {
       ASSEMBLY_PATH = path.join(DATA_FOLDER, "Managed");
     }
     VERSION_FILE_PATH = path.join(DATA_FOLDER, VERSION_FILE);
-    //SAVE_PATH = SAVE_PATH_XBOX;
+    if (hasXbox) {
+      SAVE_PATH = SAVE_PATH_XBOX;
+    }
     return EXEC_ALT;
   };
   return EXEC;
@@ -603,7 +607,9 @@ async function setGameVersion(gamePath) {
       ASSEMBLY_PATH = path.join(DATA_FOLDER, "Managed");
     }
     VERSION_FILE_PATH = path.join(DATA_FOLDER, VERSION_FILE);
-    //SAVE_PATH = SAVE_PATH_XBOX;
+    if (hasXbox) {
+      SAVE_PATH = SAVE_PATH_XBOX;
+    }
     return GAME_VERSION;
   } else {
     GAME_VERSION = 'default';
@@ -611,15 +617,15 @@ async function setGameVersion(gamePath) {
   }
 }
 
-//Get correct custom folder for installed mod loader
+//Get correct custom mod path for installed mod loader
 function getCustomFolder(api, game) {
   GAME_PATH = getDiscoveryPath(api);
   if (GAME_PATH === undefined) {
-    return '.';
+    return '.'; //fallback to root
   }
   bepinexInstalled = isBepinexInstalled(api, spec);
   melonInstalled = isMelonInstalled(api, spec);
-  if (bepinexInstalled) {
+  if (bepinexInstalled) { //remove melon deployment json file
     CUSTOM_PATH = CUSTOM_PATH_BEPINEX;
     try {
       fs.statSync(path.join(GAME_PATH, CUSTOM_DEPLOYFILE_MELON));
@@ -628,7 +634,7 @@ function getCustomFolder(api, game) {
       //log('warn', `Failed to remove ${CUSTOMCHAR_DEPLOYFILE_MELON}: ${err.message}`);
     }
   };
-  if (melonInstalled) {
+  if (melonInstalled) { //remove BepInEx deployment json file
     CUSTOM_PATH = CUSTOM_PATH_MELON;
     try {
       fs.statSync(path.join(GAME_PATH, CUSTOM_DEPLOYFILE_BEPINEX));
@@ -637,7 +643,7 @@ function getCustomFolder(api, game) {
       //log('warn', `Failed to remove ${CUSTOMCHAR_DEPLOYFILE_BEPINEX}: ${err.message}`);
     }
   };
-  const folderPath = path.join(GAME_PATH, CUSTOM_PATH);
+  const folderPath = path.join(GAME_PATH, CUSTOM_PATH); //set the correct mod path
   return folderPath;
 }
 
@@ -1904,6 +1910,39 @@ async function downloadMelonPrefManNotify(api) {
   }
 }
 
+function setupNotify(api) {
+  const NOTIF_ID = `${GAME_ID}-setup-notify`;
+  const MESSAGE = 'Special Setup Instructions';
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'warning',
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: 'More',
+        action: (dismiss) => {
+          api.showDialog('question', MESSAGE, {
+            text: `\n`
+                + `TEXT HERE.\n`
+                + `\n`
+                + `TEXT HERE.\n`
+                + `\n`
+          }, [
+            { label: 'Acknowledge', action: () => dismiss() },
+            {
+              label: 'Never Show Again', action: () => {
+                api.suppressNotification(NOTIF_ID);
+                dismiss();
+              }
+            },
+          ]);
+        },
+      },
+    ],
+  });
+}
+
 async function modFoldersEnsureWritable(gamePath, relPaths) {
   for (let index = 0; index < relPaths.length; index++) {
     await fs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
@@ -1921,6 +1960,9 @@ async function setup(discovery, api, gameSpec) {
   melonInstalled = isMelonInstalled(api, gameSpec);
   if (hasCustomLoader) {
     customInstalled = isCustomInstalled(api, spec);
+  }
+  if (setupNotification) {
+    setupNotify(api);
   }
   // ASYNC CODE ///////////////////////////////////
   if (multiExe) {

@@ -2,8 +2,8 @@
 Name: MENACE Vortex Extension
 Structure: Unity BepinEx/MelonLoader Hybrid
 Author: ChemBoy1
-Version: 0.3.0
-Date: 2026-02-12
+Version: 0.3.1
+Date: 2026-02-13
 //////////////////////////////////////////*/
 
 //Import libraries
@@ -1791,12 +1791,23 @@ function getIndex(number) {
 async function readFromFiles(loadOrderPaths, modFolders) {
   let posArray = [];
   for (let index = 0; index < loadOrderPaths.length; index++) {
-    const contents = await fs.readFileAsync(loadOrderPaths[index], 'utf8');
+    let contents;
+    try {
+      await fs.statAsync(loadOrderPaths[index]);
+      contents = await fs.readFileAsync(loadOrderPaths[index], 'utf8');
+    } catch (err) {
+      log('error', `Failed to read load order file or it does not exist: ${loadOrderPaths[index]}: ${err}`);
+      continue;
+    }
     const json = JSON.parse(contents);
-    const number = json.loadOrder;
-    const pos = getIndex(number);
+    let number = json.loadOrder;
+    if (number === undefined) { //if loadOrder is undefined, put it at the end
+      log('warn', `Mod "${modFolders[index]}" loadOrder is undefined. Placing at 99th position.`);
+      number = 990;
+    }
+    //const pos = getIndex(number);
     posArray[index] = {
-      pos: pos,
+      pos: number,
       mod: modFolders[index] 
     };
   }
@@ -1825,7 +1836,7 @@ async function deserializeLoadOrder(context) {
   GAME_PATH = getDiscoveryPath(context.api);
   const modFolderPath = path.join(GAME_PATH, MODPACKMOD_PATH);
 
-  //Get all mod files from mods folder
+  //Get all mod folders from MelonLoader "Mods" folder
   let modFolders = [];
   try {
     modFolders = await fs.readdirAsync(modFolderPath);
@@ -1835,7 +1846,7 @@ async function deserializeLoadOrder(context) {
     return Promise.reject(new Error('Failed to read "Mods" folder'));
   }
 
-  // sort by existing load order
+  // Each mod has its own json file where the load order is stored. Need to read each one to get the load order.
   const loadOrderPaths = modFolders
     .map((mod) => path.join(GAME_PATH, MODPACKMOD_PATH, mod, LO_FILE));
   const LO_MOD_ARRAY = await readFromFiles(loadOrderPaths, modFolders);
@@ -1897,7 +1908,7 @@ async function deserializeLoadOrder(context) {
       return Promise.resolve(accum);
     }, Promise.resolve([]));
   
-  //push new mods to loadOrder
+  /*push new mods to loadOrder - DISABLED since there's no central LO file.
   for (let folder of modFolders) {
     if (!loadOrder.find((mod) => (mod.id === folder))) {
       loadOrder.push({
@@ -1908,7 +1919,7 @@ async function deserializeLoadOrder(context) {
         enabled: true,
       });
     }
-  }
+  } //*/
 
   return loadOrder;
 }
@@ -1922,7 +1933,14 @@ function setNumber(index) {
 
 async function writeToFiles(loadOrderPaths) {
   for (let index = 0; index < loadOrderPaths.length; index++) {
-    const contents = await fs.readFileAsync(loadOrderPaths[index], 'utf8');
+    let contents;
+    try {
+      await fs.statAsync(loadOrderPaths[index]);
+      contents = await fs.readFileAsync(loadOrderPaths[index], 'utf8');
+    } catch (err) {
+      log('error', `Failed to write load order file or it does not exist: ${loadOrderPaths[index]}: ${err}`);
+      continue;
+    }
     const json = JSON.parse(contents);
     json.loadOrder = setNumber(index);
     const loadOrderOutput = JSON.stringify(json, null, 2);
@@ -1941,10 +1959,11 @@ async function serializeLoadOrder(context, loadOrder) {
     return;
   } //*/
   GAME_PATH = getDiscoveryPath(context.api);
-  const loadOrderMapped = loadOrder
+  const loadOrderMapped = loadOrder //get an array of folder names (mod.id)
     .map((mod) => (mod.id));
-  const loadOrderPaths = loadOrderMapped
+  const loadOrderPaths = loadOrderMapped //path to each mod's json file
     .map((mod) => path.join(GAME_PATH, MODPACKMOD_PATH, mod, LO_FILE));
+  //must write to each mod's json file
   await writeToFiles(loadOrderPaths);
   return;
 }

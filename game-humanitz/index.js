@@ -55,6 +55,7 @@ if ( (EXEC !== EXEC_EPIC) || (EXEC !== EXEC_GOG) || (EXEC !== EXEC_DEMO) ) {
 const hasModKit = false; //toggle for UE ModKit mod support
 const preferHardlinks = true; //set true to perform partition checks when IO-STORE=false for Config/Save modtypes so that hardlinks available to more users
 const autoDownloadUe4ss = false; //toggle for auto downloading UE4SS
+const setupNotification = true; //toggle for notifying user of setup progress
 const SIGBYPASS_REQUIRED = false; //set true if there are .sig files in the Paks folder
 const IO_STORE = true; //true if the Paks folder contains .ucas and .utoc files
 
@@ -1873,6 +1874,39 @@ async function modFoldersEnsureWritable(gamePath, relPaths) {
   }
 }
 
+function setupNotify(api) {
+  const NOTIF_ID = `${GAME_ID}-setup-notify`;
+  const MESSAGE = 'Special Setup Instructions';
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'warning',
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: 'More',
+        action: (dismiss) => {
+          api.showDialog('question', MESSAGE, {
+            text: `\n`
+                + `TEXT HERE.\n`
+                + `\n`
+                + `TEXT HERE.\n`
+                + `\n`
+          }, [
+            { label: 'Acknowledge', action: () => dismiss() },
+            {
+              label: 'Never Show Again', action: () => {
+                api.suppressNotification(NOTIF_ID);
+                dismiss();
+              }
+            },
+          ]);
+        },
+      },
+    ],
+  });
+}
+
 //Setup function
 async function setup(discovery, api, gameSpec) {
   // SYNCHRONOUS CODE ////////////////////////////////////
@@ -1889,6 +1923,9 @@ async function setup(discovery, api, gameSpec) {
   }
   if (!CHECK_CONFIG || !CHECK_SAVE) {
     partitionCheckNotify(api, CHECK_CONFIG, CHECK_SAVE);
+  }
+  if (setupNotification) {
+    setupNotify(api);
   }
   // ASYNC CODE ///////////////////////////////////
   GAME_VERSION = await setGameVersionAsync(GAME_PATH);
