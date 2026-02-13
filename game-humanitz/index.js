@@ -1,9 +1,9 @@
 /*////////////////////////////////////////////////
-Name: XXX Vortex Extension
+Name: HumanitZ Vortex Extension
 Structure: Unreal Engine Game
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2026-XX-XX
+Date: 2026-02-12
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -25,26 +25,26 @@ const { parseStringPromise } = require('xml2js');
 const LOCALAPPDATA = util.getVortexPath('localAppData');
 
 //Specify all information about the game
-const GAME_ID = "XXX"; //same as Nexus domain
-const STEAMAPP_ID = "XXX"; //from steamdb.info
-const STEAMAPP_ID_DEMO = "XXX"; //VERIFY if the EPIC_CODE_NAME and EXEC_DEMO match Steam full game
-const EPICAPP_ID = "XXX"; //from egdata.app
-const GOGAPP_ID = "XXX"; // from gogdb.org
-const XBOXAPP_ID = "XXX"; //from appxmanifest.xml
+const GAME_ID = "humanitz"; //same as Nexus domain
+const STEAMAPP_ID = "1766060"; //from steamdb.info
+const STEAMAPP_ID_DEMO = "1773210"; //VERIFY if the EPIC_CODE_NAME and EXEC_DEMO match Steam full game
+const EPICAPP_ID = ""; // NOT on egdata.app yet
+const GOGAPP_ID = "1249249337"; // NOT AVAILABLE in store. Not used!
+const XBOXAPP_ID = null; //from appxmanifest.xml
 const XBOXEXECNAME = "AppUEGameShipping"; //from appxmanifest.xml
-const XBOX_PUB_ID = "XXX"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const XBOX_PUB_ID = ""; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, STEAMAPP_ID_DEMO]; // UPDATE THIS WITH ALL VALID IDs
 
-const GAME_NAME = "XXX";
-const GAME_NAME_SHORT = "XXX"; //Try for 8-10 characters
-const EPIC_CODE_NAME = "XXX"; //Folder in root
+const GAME_NAME = "HumanitZ";
+const GAME_NAME_SHORT = GAME_NAME; //Try for 8-10 characters
+const EPIC_CODE_NAME = "Humanitz"; //Folder in root
 const EXEC = `${EPIC_CODE_NAME}.exe`; //This is true ~80% of the time
 const EXEC_EPIC = EXEC; //change these 3 if different
 const EXEC_GOG = EXEC;
-const EXEC_DEMO = EXEC;
+const EXEC_DEMO = `${EPIC_CODE_NAME}_Demo.exe`;
 const PARAMETERS_STRING = ''; //launch arguments to pass when launching the game
-const PCGAMINGWIKI_URL = "XXX";
-const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "";
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/691"; //Nexus link to this extension. Used for links
 
 //feature toggles
 const hasXbox = false; //toggle for Xbox version logic.
@@ -74,7 +74,7 @@ const UE4SS_MOD_PATH = path.join('ue4ss', 'Mods'); //this should probably never 
 
 //config, save, shipping exe
 const DATA_FOLDER = EPIC_CODE_NAME; //almost always matches.
-const CONFIG_FOLDERNAME = 'Windows'; //UE 4 games are often 'WindowsNoEditor'
+const CONFIG_FOLDERNAME = 'WindowsNoEditor'; //UE 4 games are often 'WindowsNoEditor'
 const CONFIG_LOC = 'Local AppData'; //string for notification text.
 const SAVE_LOC = CONFIG_LOC; //string for notification text. Config and Save mods are almonst always in the same place
 const CONFIGMOD_LOCATION = LOCALAPPDATA; //almost always matches. Some are in game folder or Documents.
@@ -453,6 +453,18 @@ function getExecutable(discoveryPath) {
       return EXEC_XBOX;
     }
   }
+  if (statCheckSync(discoveryPath, EXEC_DEMO)) {
+    GAME_VERSION = 'demo';
+    BINARIES_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT);
+    SHIPPING_EXE = path.join(BINARIES_PATH, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_DEMO}-Shipping.exe`);
+    SCRIPTS_PATH = path.join(BINARIES_PATH, UE4SS_MOD_PATH);
+    DLL_PATH = SCRIPTS_PATH;
+    CONFIG_PATH = CONFIG_PATH_DEFAULT;
+    //CONFIG_PATH = setConfigPath(GAME_VERSION); //if there's an intermediate store folder in the path
+    //SAVE_PATH = setSavePath;
+    SAVE_PATH = SAVE_PATH_DEFAULT;
+    return EXEC_DEMO;
+  } //*/
   if (statCheckSync(discoveryPath, EXEC)) {
     GAME_VERSION = 'steam';
     BINARIES_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT);
@@ -488,18 +500,6 @@ function getExecutable(discoveryPath) {
     //SAVE_PATH = setSavePath;
     SAVE_PATH = SAVE_PATH_DEFAULT;
     return EXEC_GOG;
-  } //*/
-  if (statCheckSync(discoveryPath, EXEC_DEMO)) {
-    GAME_VERSION = 'demo';
-    BINARIES_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT);
-    SHIPPING_EXE = path.join(BINARIES_PATH, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_DEMO}-Shipping.exe`);
-    SCRIPTS_PATH = path.join(BINARIES_PATH, UE4SS_MOD_PATH);
-    DLL_PATH = SCRIPTS_PATH;
-    CONFIG_PATH = CONFIG_PATH_DEFAULT;
-    //CONFIG_PATH = setConfigPath(GAME_VERSION); //if there's an intermediate store folder in the path
-    //SAVE_PATH = setSavePath;
-    SAVE_PATH = SAVE_PATH_DEFAULT;
-    return EXEC_DEMO;
   } //*/
   GAME_VERSION = 'default';
   return EXEC;
@@ -1964,16 +1964,16 @@ function applyGame(context, gameSpec) {
         //parameters: [],
       }, //*/
       {
-        id: `${GAME_ID}-customlaunchxbox`,
+        id: `${GAME_ID}-customlaunchdemo`,
         name: `Custom Launch`,
         logo: `exec.png`,
-        executable: () => EXEC_XBOX,
-        requiredFiles: [EXEC_XBOX],
+        executable: () => EXEC_DEMO,
+        requiredFiles: [EXEC_DEMO],
         detach: true,
         relative: true,
         exclusive: true,
         shell: true,
-        //defaultPrimary: true,
+        defaultPrimary: true,
         //parameters: [],
       }, //*/
       /*{

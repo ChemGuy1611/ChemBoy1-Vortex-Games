@@ -292,6 +292,13 @@ const MODPACKMOD_NAME = "Modpack Mod";
 const MODPACKMOD_PATH = MELON_MODS_PATH;
 const MODPACKMOD_FILE = "modpack.json";
 
+const MODKIT_ID = `${GAME_ID}-modkit`;
+const MODKIT_NAME = "Menace ModKit";
+const MODKIT_EXEC = 'Menace.Modkit.App.exe';
+const MODKIT_PATH = '.';
+const MODKIT_URL = 'https://github.com/p0ss/MenaceAssetPacker/releases/latest/download/menace-modkit-win-x64.zip';
+const MODKIT_URL_ERR = 'https://github.com/p0ss/MenaceAssetPacker/releases';
+
 const LO_FILE = MODPACKMOD_FILE;
 const LO_JSON_KEY = "loadOrder";
 const LO_INCREMENT = 10;
@@ -377,6 +384,12 @@ const spec = {
       "priority": "high",
       "targetPath": path.join('{gamePath}', MODPACKMOD_PATH)
     }, //*/
+    {
+      "id": MODKIT_ID,
+      "name": MODKIT_NAME,
+      "priority": "low",
+      "targetPath": path.join('{gamePath}', MODKIT_PATH)
+    },
     {
       "id": BEPINEX_MOD_ID,
       "name": BEPINEX_MOD_NAME,
@@ -476,6 +489,19 @@ const tools = [
     shell: true,
     //defaultPrimary: true,
     parameters: PARAMETERS,
+  }, //*/
+  {
+    id: MODKIT_ID,
+    name: MODKIT_NAME,
+    logo: `modkit.png`,
+    executable: () => MODKIT_EXEC,
+    requiredFiles: [MODKIT_EXEC],
+    detach: true,
+    relative: true,
+    exclusive: true,
+    //shell: true,
+    //defaultPrimary: true,
+    //parameters: PARAMETERS,
   }, //*/
   /*{
     id: `${GAME_ID}-customlaunchalt`,
@@ -790,6 +816,48 @@ function installMelon(files) {
   const MOD_TYPE = MELON_ID;
   const modFile = files.find(file => (path.basename(file) === MELON_FOLDER));
   const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file => (
+    (file.indexOf(rootPath) !== -1) &&
+    (!file.endsWith(path.sep))
+  ));
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Test for ModpackLoader files
+function testModkit(files, gameId) {
+  const isMod = files.some(file => (path.basename(file) === MODKIT_EXEC));
+  let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+      supported,
+      requiredFiles: [],
+  });
+}
+
+//Install ModpackLoader files
+function installModkit(files) {
+  const MOD_TYPE = MODKIT_ID;
+  const modFile = files.find(file => (path.basename(file) === MODKIT_EXEC));
+  const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
 
@@ -1820,7 +1888,8 @@ async function deserializeLoadOrder(context) {
       accum.push(
         {
           id: folder,
-          name: `${await getModName(folder)} (${folder})`,
+          //name: `${await getModName(folder)} (${folder})`,
+          name: await getModName(folder),
           modId: await isVortexManaged(folder) ? folder : undefined,
           enabled: true,
         }
@@ -1833,7 +1902,8 @@ async function deserializeLoadOrder(context) {
     if (!loadOrder.find((mod) => (mod.id === folder))) {
       loadOrder.push({
         id: folder,
-        name: `${await getModName(folder)} (${folder})`,
+        //name: `${await getModName(folder)} (${folder})`,
+        name: await getModName(folder),
         modId: await isVortexManaged(folder) ? folder : undefined,
         enabled: true,
       });
@@ -2460,16 +2530,17 @@ function applyGame(context, gameSpec) {
   }
   context.registerInstaller(MELON_ID, 26, testMelon, installMelon);
   context.registerInstaller(BEPINEX_ID, 27, testBepinex, installBepinex);
-  context.registerInstaller(MODPACKMOD_ID, 28, testModpackMod, installModpackMod);
-  context.registerInstaller(MODPACKLOADER_ID, 29, testModpackLoader, installModpackLoader);
-  context.registerInstaller(ROOT_ID, 30, testRoot, installRoot);
-  context.registerInstaller(BEPCFGMAN_ID, 31, testBepCfgMan, installBepCfgMan);
-  context.registerInstaller(MELONPREFMAN_ID, 33, testMelonPrefMan, installMelonPrefMan);
+  context.registerInstaller(MODKIT_ID, 28, testModkit, installModkit);
+  context.registerInstaller(MODPACKMOD_ID, 29, testModpackMod, installModpackMod);
+  context.registerInstaller(MODPACKLOADER_ID, 30, testModpackLoader, installModpackLoader);
+  context.registerInstaller(ROOT_ID, 31, testRoot, installRoot);
+  context.registerInstaller(BEPCFGMAN_ID, 33, testBepCfgMan, installBepCfgMan);
+  context.registerInstaller(MELONPREFMAN_ID, 34, testMelonPrefMan, installMelonPrefMan);
   context.registerInstaller(ASSEMBLY_ID, 35, testAssembly, installAssembly);
-  context.registerInstaller(`${GAME_ID}-plugin`, 37, testPlugin, (files, workingDir) => installPlugin(context.api, gameSpec, files, workingDir));
-  context.registerInstaller(ASSETS_ID, 38, testAssets, installAssets);
+  context.registerInstaller(`${GAME_ID}-plugin`, 36, testPlugin, (files, workingDir) => installPlugin(context.api, gameSpec, files, workingDir));
+  context.registerInstaller(ASSETS_ID, 37, testAssets, installAssets);
   if (hasCustomMods) {
-    context.registerInstaller(CUSTOM_ID, 39, testCustom, installCustom);
+    context.registerInstaller(CUSTOM_ID, 45, testCustom, installCustom);
   }
   if (enableSaveInstaller) {
     context.registerInstaller(SAVE_ID, 47, testSave, installSave); //best to only enable if saves are stored in the game's folder
@@ -2479,6 +2550,13 @@ function applyGame(context, gameSpec) {
   }
   
   //register actions
+  context.registerAction('mod-icons', 300, 'open-ext', {}, `Download ${MODKIT_NAME}`, () => {
+    downloadModkit(context.api, spec);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  }); //*/
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Data Folder', () => {
     GAME_PATH = getDiscoveryPath(context.api);
     const openPath = path.join(GAME_PATH, DATA_FOLDER);
@@ -2719,6 +2797,13 @@ function isMelonInstalled(api, spec) {
   const state = api.getState();
   const mods = state.persistent.mods[spec.game.id] || {};
   return Object.keys(mods).some(id => mods[id]?.type === MELON_ID);
+}
+
+// Test if MelonLoader is installed
+function isModkitInstalled(api, spec) {
+  const state = api.getState();
+  const mods = state.persistent.mods[spec.game.id] || {};
+  return Object.keys(mods).some(id => mods[id]?.type === MODKIT_ID);
 }
 
 // Test if Custom Mod Loader is installed
@@ -2984,6 +3069,51 @@ async function downloadMelon(api, gameSpec) {
       util.batchDispatch(api.store, batched); // Will dispatch both actions
     } catch (err) { //Show the user the download page if the download, install process fails
       const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
+      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err, { allowReport: false });
+      util.opn(errPage).catch(() => null);
+    } finally {
+      api.dismissNotification(NOTIF_ID);
+    }
+  }
+} //*/
+
+//* Download Menace Modkit (GitHub)
+async function downloadModkit(api, gameSpec) {
+  let isInstalled = isModkitInstalled(api, gameSpec);
+  if (!isInstalled) {
+    const MOD_NAME = MODKIT_NAME;
+    const MOD_TYPE = MODKIT_ID;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
+    const GAME_DOMAIN = gameSpec.game.id;
+    api.sendNotification({ //notification indicating install process
+      id: NOTIF_ID,
+      message: `Installing ${MOD_NAME}`,
+      type: 'activity',
+      noDismiss: true,
+      allowSuppress: false,
+    });
+    try {
+      const URL = MODKIT_URL;
+      const dlInfo = { //Download the mod
+        game: GAME_DOMAIN,
+        name: MOD_NAME,
+      };
+      //const dlInfo = {};
+      const dlId = await util.toPromise(cb =>
+        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+      const modId = await util.toPromise(cb =>
+        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
+      const batched = [
+        actions.setModsEnabled(api, profileId, [modId], true, {
+          allowAutoDeploy: true,
+          installed: true,
+        }),
+        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
+      ];
+      util.batchDispatch(api.store, batched); // Will dispatch both actions
+    } catch (err) { //Show the user the download page if the download, install process fails
+      const errPage = MODKIT_URL_ERR;
       api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err, { allowReport: false });
       util.opn(errPage).catch(() => null);
     } finally {

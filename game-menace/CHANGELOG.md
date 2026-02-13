@@ -7,6 +7,7 @@
 ## [0.3.0] - 2026-02-12
 
 - Added: Load Order support for ModPackLoader mods
+- Added: Installer and launch tool for Menace ModKit app (<https://github.com/p0ss/MenaceAssetPacker>)
 
 ## [0.2.0] - 2026-02-12
 
