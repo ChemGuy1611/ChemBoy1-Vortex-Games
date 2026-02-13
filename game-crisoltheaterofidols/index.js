@@ -3,7 +3,7 @@ Name: Crisol: Theater of Idols Vortex Extension
 Structure: Unreal Engine Game
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2026-02-11
+Date: 2026-02-13
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -27,13 +27,13 @@ const LOCALAPPDATA = util.getVortexPath('localAppData');
 //Specify all information about the game
 const GAME_ID = "crisoltheaterofidols"; //same as Nexus domain
 const STEAMAPP_ID = "1790930"; //from steamdb.info
-const STEAMAPP_ID_DEMO = "3989380"; //VERIFY if the EPIC_CODE_NAME and EXEC_DEMO match Steam full game
+const STEAMAPP_ID_DEMO = "3989380"; //DEMO NO LONGER AVAILABLE
 const EPICAPP_ID = null; //from egdata.app
 const GOGAPP_ID = null; // from gogdb.org
 const XBOXAPP_ID = null; //from appxmanifest.xml
 const XBOXEXECNAME = "AppUEGameShipping"; //from appxmanifest.xml
 const XBOX_PUB_ID = ""; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // Demo no longer available
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; //DEMO NO LONGER AVAILABLE
 
 const GAME_NAME = "Crisol: Theater of Idols";
 const GAME_NAME_SHORT = "Crisol ToI"; //Try for 8-10 characters
@@ -48,7 +48,7 @@ const EXTENSION_URL = ""; //Nexus link to this extension. Used for links
 
 //feature toggles
 const hasXbox = false; //toggle for Xbox version logic.
-let multiExe = false; //toggle for multiple executables (Epic/GOG/Demo don't match Steam)
+let multiExe = false; //DEMO NO LONGER AVAILABLE
 const hasModKit = false; //toggle for UE ModKit mod support
 const preferHardlinks = true; //set true to perform partition checks when IO-STORE=false for Config/Save modtypes so that hardlinks available to more users
 const autoDownloadUe4ss = false; //toggle for auto downloading UE4SS
