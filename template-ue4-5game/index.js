@@ -466,6 +466,18 @@ function getExecutable(discoveryPath) {
     SAVE_PATH = SAVE_PATH_DEFAULT;
     return EXEC;
   } //*/
+  if (statCheckSync(discoveryPath, EXEC_DEMO)) {
+    GAME_VERSION = 'demo';
+    BINARIES_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT);
+    SHIPPING_EXE = path.join(BINARIES_PATH, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_DEMO}-Shipping.exe`);
+    SCRIPTS_PATH = path.join(BINARIES_PATH, UE4SS_MOD_PATH);
+    DLL_PATH = SCRIPTS_PATH;
+    CONFIG_PATH = CONFIG_PATH_DEFAULT;
+    //CONFIG_PATH = setConfigPath(GAME_VERSION); //if there's an intermediate store folder in the path
+    //SAVE_PATH = setSavePath;
+    SAVE_PATH = SAVE_PATH_DEFAULT;
+    return EXEC_DEMO;
+  } //*/
   if (statCheckSync(discoveryPath, EXEC_EPIC)) {
     GAME_VERSION = 'epic';
     BINARIES_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT);
@@ -489,18 +501,6 @@ function getExecutable(discoveryPath) {
     //SAVE_PATH = setSavePath;
     SAVE_PATH = SAVE_PATH_DEFAULT;
     return EXEC_GOG;
-  } //*/
-  if (statCheckSync(discoveryPath, EXEC_DEMO)) {
-    GAME_VERSION = 'demo';
-    BINARIES_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT);
-    SHIPPING_EXE = path.join(BINARIES_PATH, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_DEMO}-Shipping.exe`);
-    SCRIPTS_PATH = path.join(BINARIES_PATH, UE4SS_MOD_PATH);
-    DLL_PATH = SCRIPTS_PATH;
-    CONFIG_PATH = CONFIG_PATH_DEFAULT;
-    //CONFIG_PATH = setConfigPath(GAME_VERSION); //if there's an intermediate store folder in the path
-    //SAVE_PATH = setSavePath;
-    SAVE_PATH = SAVE_PATH_DEFAULT;
-    return EXEC_DEMO;
   } //*/
   GAME_VERSION = 'default';
   return EXEC;

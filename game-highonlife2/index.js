@@ -26,16 +26,17 @@ const LOCALAPPDATA = util.getVortexPath('localAppData');
 //Specify all information about the game
 const GAME_ID = "highonlife2"; //same as Nexus domain
 const STEAMAPP_ID = "2069250"; //from steamdb.info
-const STEAMAPP_ID_DEMO = "XXX"; //VERIFY if the EPIC_CODE_NAME and EXEC_DEMO match Steam full game
+const STEAMAPP_ID_DEMO = null; //VERIFY if the EPIC_CODE_NAME and EXEC_DEMO match Steam full game
 const EPICAPP_ID = ""; //NOT ON egdata.app yet
 const GOGAPP_ID = null; // from gogdb.org
 const XBOXAPP_ID = "2637SquanchGamesInc.HighOnLife2"; //from appxmanifest.xml
-const XBOXEXECNAME = "AppUEGameShipping"; //from appxmanifest.xml
-const XBOX_PUB_ID = "XXX"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
+const XBOXEXECNAME = "AppHighOnLife2Shipping"; //from appxmanifest.xml
+const XBOX_PUB_ID = "mh7dg3tfmz2cj"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, XBOXAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 const GAME_NAME = "High On Life 2";
 const GAME_NAME_SHORT = "High On Life 2"; //Try for 8-10 characters
-const EPIC_CODE_NAME = "XXX"; //Folder in root
+const EPIC_CODE_NAME = "HighOnLife2"; //Folder in root
+
 const EXEC = `${EPIC_CODE_NAME}.exe`; //This is true ~80% of the time
 const EXEC_EPIC = EXEC; //change these 3 if different
 const EXEC_GOG = EXEC;
@@ -54,7 +55,7 @@ const SIGBYPASS_REQUIRED = false; //set true if there are .sig files in the Paks
 const IO_STORE = true; //true if the Paks folder contains .ucas and .utoc files
 
 //UE specific
-const ENGINE_VERSION = '5.X.X.0'; //Unreal Engine version - info only atm. usually '4.27.2.0' or '5.X.X.0'
+const ENGINE_VERSION = '5.5.4.0'; //Unreal Engine version - info only atm. usually '4.27.2.0' or '5.X.X.0'
 const ROOT_FOLDERS = [EPIC_CODE_NAME, 'Engine']; //addressable folders in root
 const ROOTSUB_FOLDERS = ['Content', 'Binaries', 'Mods']; //subfolders of EPIC_CODE_NAME.
 const SAVE_EXT = ".sav";
@@ -1921,7 +1922,7 @@ function applyGame(context, gameSpec) {
         //defaultPrimary: true,
         //parameters: [],
       }, //*/
-      {
+      /*{
         id: `${GAME_ID}-customlaunchxbox`,
         name: `Custom Launch`,
         logo: `exec.png`,

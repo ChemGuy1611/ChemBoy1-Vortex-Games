@@ -37,7 +37,7 @@ const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, GOGAPP_ID, STEAMAPP_ID_DEMO]; // UPDA
 const GAME_NAME = "REANIMAL";
 const GAME_NAME_SHORT = "REANIMAL"; //Try for 8-10 characters
 const EPIC_CODE_NAME = "Everholm"; //Folder in root
-const EXEC = path.join(EPIC_CODE_NAME, 'Binaries', 'Win64', `${EPIC_CODE_NAME}.exe`); //!!! THERE IS NO .exe in the root folder
+const EXEC = path.join(EPIC_CODE_NAME, 'Binaries', 'Win64', `REANIMAL.exe`); //!!! THERE IS NO .exe in the root folder
 const EXEC_EPIC = EXEC; //change these 3 if different
 const EXEC_GOG = EXEC;
 const EXEC_DEMO = EXEC;
@@ -68,19 +68,19 @@ const UE4SS_DOMAIN = GAME_ID; //either GAME_ID or 'site'
 const UE4SS_MOD_PATH = path.join('ue4ss', 'Mods'); //this should probably never change (unless UE4SS team changes it again lol)
 
 //config, save, shipping exe
-const DATA_FOLDER = EPIC_CODE_NAME; //almost always matches.
+const DATA_FOLDER = 'REANIMAL'; //almost always matches.
 const CONFIG_FOLDERNAME = 'Windows'; //UE 4 games are often 'WindowsNoEditor'
 const CONFIG_LOC = 'Local AppData'; //string for notification text.
 const SAVE_LOC = CONFIG_LOC; //string for notification text. Config and Save mods are almonst always in the same place
 const CONFIGMOD_LOCATION = LOCALAPPDATA; //almost always matches. Some are in game folder or Documents.
-
 const SAVEMOD_LOCATION = CONFIGMOD_LOCATION;
+
 const SHIPEXE_STRING_DEFAULT = '';
 const SHIPEXE_STRING_EGS = '';
 const SHIPEXE_STRING_GOG = '';
 const SHIPEXE_STRING_XBOX = '';
 const SHIPEXE_STRING_DEMO = '';
-const SHIPEXE_PROJECTNAME = EPIC_CODE_NAME; //almost always matches.
+const SHIPEXE_PROJECTNAME = 'REANIMAL'; //almost always matches.
 
 //Save Editor (only used if one is available)
 const SAVE_EDITOR_ID = `${GAME_ID}-saveeditor`;
@@ -450,6 +450,17 @@ function getExecutable(discoveryPath) {
     SAVE_PATH = SAVE_PATH_DEFAULT;
     return EXEC;
   } //*/
+  if (statCheckSync(discoveryPath, EXEC_DEMO)) {
+    GAME_VERSION = 'demo';
+    BINARIES_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT);
+    SHIPPING_EXE = path.join(BINARIES_PATH, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_DEMO}-Shipping.exe`);
+    SCRIPTS_PATH = path.join(BINARIES_PATH, UE4SS_MOD_PATH);
+    CONFIG_PATH = CONFIG_PATH_DEFAULT;
+    //CONFIG_PATH = setConfigPath(GAME_VERSION); //if there's an intermediate store folder in the path
+    //SAVE_PATH = setSavePath;
+    SAVE_PATH = SAVE_PATH_DEFAULT;
+    return EXEC_DEMO;
+  } //*/
   if (statCheckSync(discoveryPath, EXEC_EPIC)) {
     GAME_VERSION = 'epic';
     BINARIES_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT);
@@ -471,17 +482,6 @@ function getExecutable(discoveryPath) {
     //SAVE_PATH = setSavePath;
     SAVE_PATH = SAVE_PATH_DEFAULT;
     return EXEC_GOG;
-  } //*/
-  if (statCheckSync(discoveryPath, EXEC_DEMO)) {
-    GAME_VERSION = 'demo';
-    BINARIES_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT);
-    SHIPPING_EXE = path.join(BINARIES_PATH, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_DEMO}-Shipping.exe`);
-    SCRIPTS_PATH = path.join(BINARIES_PATH, UE4SS_MOD_PATH);
-    CONFIG_PATH = CONFIG_PATH_DEFAULT;
-    //CONFIG_PATH = setConfigPath(GAME_VERSION); //if there's an intermediate store folder in the path
-    //SAVE_PATH = setSavePath;
-    SAVE_PATH = SAVE_PATH_DEFAULT;
-    return EXEC_DEMO;
   } //*/
   GAME_VERSION = 'default';
   return EXEC;
