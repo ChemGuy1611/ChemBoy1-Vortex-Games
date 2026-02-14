@@ -43,11 +43,12 @@ const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Mewgenics";
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1691"; //Nexus link to this extension. Used for links
 
 //feature toggles
-const hasLoader = true; //true if game needs a mod loader
+const enableLoadOrder = true; //true if you want to use load order sorting
+const hasLoader = false; //Disabled since it is not actually necessary. Installer and modType still works.
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
 const rootInstaller = false; //enable root installer. Set false if you need to avoid installer collisions
 const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
-const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
+const setupNotification = true; //enable to show the user a notification with special instructions (specify below)
 const hasUserIdFolder = true; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
 const debug = false; //toggle for debug mode
 let binariesInstaller = false;
@@ -77,6 +78,15 @@ const MOD_NAME = "Mod";
 const MOD_PATH = "mods";
 const MOD_PATH_XBOX = MOD_PATH;
 const MOD_FILES = ['description.json'];
+const MOD_FOLDERS = ['data', 'audio', 'levels', 'shaders', 'swfs', 'textures'];
+
+const LO_FILE = 'modlist.txt';
+const LO_FILE_PATH = path.join(MOD_PATH, LO_FILE);
+// for mod update to keep them in the load order and not uncheck them
+let mod_update_all_profile = false;
+let updatemodid = undefined;
+let updating_mod = false; // used to see if it's a mod update or not
+let mod_install_name = ""; // used to display the name of the currently installed mod
 
 const LOADER_ID = `${GAME_ID}-mewtator`;
 const LOADER_NAME = "Mewtator";
@@ -119,20 +129,12 @@ const SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER, "saves");
 const SAVE_EXTS = [".sav"];
 const SAVE_FILES = ["XXX"];
 
-/* tool info (i.e. save editor)
-const TOOL_ID = `${GAME_ID}-tool`;
-const TOOL_NAME = "XXX";
-const TOOL_EXEC_FOLDER = path.join('XXX');
-const TOOL_EXEC = 'XXX.exe';
-const TOOL_EXEC_PATH = path.join(TOOL_EXEC_FOLDER, TOOL_EXEC);
-//*/
-
 const MOD_PATH_DEFAULT = '.';
 const REQ_FILE = EXEC;
-const PARAMETERS_STRING = '';
-const PARAMETERS = [PARAMETERS_STRING];
+let PARAMETERS = [];
+const LAUNCH_BAT = 'launch.bat';
 
-let MODTYPE_FOLDERS = [MOD_PATH, BINARIES_PATH];
+let MODTYPE_FOLDERS = [MOD_PATH];
 const IGNORE_CONFLICTS = [path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
 const IGNORE_DEPLOY = [path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
 
@@ -143,7 +145,6 @@ const spec = {
     "name": GAME_NAME,
     "shortName": GAME_NAME_SHORT,
     "executable": EXEC,
-    //"parameters": PARAMETERS, //commented out by default to avoid passing empty string parameter
     "logo": `${GAME_ID}.jpg`,
     "mergeMods": true,
     "requiresCleanup": true,
@@ -200,69 +201,6 @@ if (binariesInstaller) {
     "targetPath": path.join("{gamePath}", BINARIES_PATH)
   });
 }
-
-//3rd party tools and launchers
-const tools = [ //accepts: exe, jar, py, vbs, bat
-  {
-    id: LOADER_ID,
-    name: LOADER_NAME,
-    logo: 'mewtator.png',
-    executable: () => LOADER_EXEC,
-    requiredFiles: [
-      LOADER_EXEC,
-    ],
-    relative: true,
-    exclusive: true,
-    //shell: true,
-    detach: true,
-    defaultPrimary: true,
-    //parameters: PARAMETERS,
-  }, //*/
-  /*{
-    id: `${GAME_ID}-customlaunch`,
-    name: 'Custom Launch',
-    logo: 'exec.png',
-    executable: () => EXEC,
-    requiredFiles: [
-      EXEC,
-    ],
-    relative: true,
-    exclusive: true,
-    shell: true,
-    detach: true,
-    //defaultPrimary: true,
-    parameters: PARAMETERS,
-  }, //*/
-  /*{
-    id: `${GAME_ID}-customlaunchxbox`,
-    name: 'Custom Launch',
-    logo: 'exec.png',
-    executable: () => EXEC_XBOX,
-    requiredFiles: [
-      EXEC_XBOX,
-    ],
-    relative: true,
-    exclusive: true,
-    shell: true,
-    //defaultPrimary: true,
-    parameters: PARAMETERS,
-  }, //*/
-  /*{
-    id: TOOL_ID,
-    name: TOOL_NAME,
-    logo: 'tool.png',
-    //queryPath: () => TOOL_EXEC_FOLDER,
-    executable: () => TOOL_EXEC,
-    requiredFiles: [
-      TOOL_EXEC,
-    ],
-    relative: true,
-    exclusive: true,
-    //shell: true,
-    //defaultPrimary: true,
-    //parameters: PARAMETERS,
-  }, //*/
-];
 
 // BASIC EXTENSION FUNCTIONS ///////////////////////////////////////////////////
 
@@ -472,7 +410,8 @@ function installLoader(files) {
 //Test for mod files
 function testMod(files, gameId) {
   const isMod = files.some(file => MOD_FILES.includes(path.basename(file).toLowerCase()));
-  let supported = (gameId === spec.game.id) && isMod;
+  const isFolder = files.some(file => MOD_FOLDERS.includes(path.basename(file).toLowerCase()));
+  let supported = (gameId === spec.game.id) && (isMod || isFolder);
 
   // Test for a mod installer
   if (supported && files.find(file =>
@@ -492,6 +431,9 @@ function installMod(files, fileName) {
   const MOD_TYPE = MOD_ID;
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
   let modFile = files.find(file => MOD_FILES.includes(path.basename(file).toLowerCase()));
+  if (modFile === undefined) {
+    modFile = files.find(file => MOD_FOLDERS.includes(path.basename(file).toLowerCase()));
+  }
   let rootPath = path.dirname(modFile);
   //*
   let folder = path.basename(fileName).split('-')[0];
@@ -768,11 +710,170 @@ async function downloadLoader(api, gameSpec) {
   }
 } //*/
 
+// LOAD ORDER FUNCTIONS /////////////////////////////////////////////////////////
+
+async function deserializeLoadOrder(context) {
+  //* on mod update for all profile it would cause the mod if it was selected to be unselected
+  if (mod_update_all_profile) {
+    let allMods = Array("mod_update");
+
+    return allMods.map((modId) => {
+      return {
+        id: "mod update in progress, please wait. Refresh when finished. \n To avoid this wait, only update current profile",
+        modId: modId,
+        enabled: false,
+      };
+    });
+  } //*/
+
+  //Set basic information for load order paths and data
+  GAME_PATH = getDiscoveryPath(context.api);
+  const mods = util.getSafe(context.api.store.getState(), ['persistent', 'mods', spec.game.id], {});
+  let modFolderPath = path.join(GAME_PATH, MOD_PATH);
+  let loadOrderPath = path.join(GAME_PATH, LO_FILE_PATH);
+  let loadOrderFile = await fs.readFileAsync(
+    loadOrderPath, 
+    { encoding: "utf8", }
+  );
+  let LO_MOD_ARRAY = loadOrderFile.split('\n');
+  if (debug) {
+    log('warn', `LO_MOD_ARRAY: ${LO_MOD_ARRAY.join(', ')}`);
+  }
+  
+  //Get all mod files from mods folder
+  let modFolders = [];
+  try {
+    modFolders = await fs.readdirAsync(modFolderPath);
+    modFolders = modFolders.filter((file) => isDir(modFolderPath, file))
+      .filter((file) => path.basename(file) !== 'modexample1');
+    modFolders = modFolders.sort((a,b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+  } catch {
+    return Promise.reject(new Error('Failed to read "mods" folder'));
+  }
+
+  //Determine if mod is managed by Vortex (async version)
+  const isVortexManaged = async (modId) => {
+    return fs.statAsync(path.join(modFolderPath, modId, `__folder_managed_by_vortex`))
+      .then(() => true)
+      .catch(() => false)
+  };
+  
+  // Get readable mod name using attribute from mod installer
+  async function getModName(folder) {
+    const VORTEX = await isVortexManaged(folder);
+    if (!VORTEX) {
+      return ('Manual Mod');
+    }
+    try {//Mod installed by Vortex, find mod where atrribute (from installer) matches folder in the load order
+      const modMatch = Object.values(mods).find(mod => (util.getSafe(mods[mod.id]?.attributes, [LO_ATTRIBUTE], '') === folder));
+      if (modMatch) {
+        return modMatch.attributes.customFileName ?? modMatch.attributes.logicalFileName ?? modMatch.attributes.name;
+      }
+      return folder;
+    } catch (err) {
+      return folder;
+    }
+  }
+
+  // Get Vortex mod id using attribute from mod installer
+  async function getModId(folder) {
+    try {//find mod where atrribute (from installer) matches file in the load order
+      const modMatch = Object.values(mods).find(mod => (util.getSafe(mods[mod.id]?.attributes, [LO_ATTRIBUTE], '').includes(folder))); //find mod by folder name attribute
+      if (modMatch) {
+        return modMatch.id;
+      }
+      return undefined;
+    } catch (err) {
+      return undefined;
+    }
+  }
+
+  //Set load order
+  let loadOrder = await LO_MOD_ARRAY
+    .reduce(async (accumP, entry) => {
+      const accum = await accumP;
+      const folder = entry.replace('#', '');
+      if (!modFolders.includes(folder)) {
+        return Promise.resolve(accum);
+      }
+      accum.push(
+        {
+          id: folder,
+          name: `${await getModName(folder)} (${folder})`,
+          modId: await isVortexManaged(folder) ? folder : undefined,
+          enabled: !entry.startsWith('#'),
+        }
+      );
+      return Promise.resolve(accum);
+    }, Promise.resolve([]));
+  
+  //push new mods to loadOrder
+  for (let folder of modFolders) {
+    if (!loadOrder.find((mod) => (mod.id === folder))) {
+      loadOrder.push({
+        id: folder,
+        name: `${await getModName(folder)} (${folder})`,
+        modId: await isVortexManaged(folder) ? folder : undefined,
+        enabled: true,
+      });
+    }
+  }
+
+  return loadOrder;
+}
+
+async function setParameters(loadOrder) {
+  const count = loadOrder.length;
+  const param1 = `-modcount ${count}`;
+  const modPaths = loadOrder.map(mod => `"${path.join(GAME_PATH, MOD_PATH, mod)}"`);
+  const param2 = `-modpaths ${modPaths.join(' ')}`;
+  //log ('warn', `Params: ${param1} ${param2}`);
+  PARAMETERS = [param1, param2];
+  const contents = `@echo off
+"${path.join(GAME_PATH, EXEC)}" ${param1} ${param2}
+echo Launching ${GAME_NAME} with mods...
+exit`;
+  await fs.writeFileAsync(
+    path.join(GAME_PATH, LAUNCH_BAT),
+    contents,
+    { encoding: "utf8" },
+  );
+}
+
+//Write load order to files
+async function serializeLoadOrder(context, loadOrder) {
+  //* don't write if all profiles are being updated
+  if (mod_update_all_profile) {
+    return;
+  } //*/
+
+  GAME_PATH = getDiscoveryPath(context.api);
+  let loadOrderPath = path.join(GAME_PATH, LO_FILE_PATH);
+
+  //map the load order
+  let loadOrderMapped = loadOrder
+    /*.map((mod) => (mod.enabled ? mod.id : ``))
+    .filter((mod) => (mod !== ``)) //*/
+    .map((mod) => (mod.enabled ? mod.id : `#${mod.id}`))
+  
+  const loadOrderEnabled = loadOrderMapped
+    .filter((mod) => (!mod.startsWith('#')))
+  await setParameters(loadOrderEnabled);
+
+  //write to modlist.txt file
+  let loadOrderOutput = loadOrderMapped.join('\n');
+  return fs.writeFileAsync(
+    loadOrderPath,
+    loadOrderOutput,
+    { encoding: "utf8" },
+  );
+}
+
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
 function setupNotify(api) {
   const NOTIF_ID = `${GAME_ID}-setup-notify`;
-  const MESSAGE = 'Special Setup Instructions';
+  const MESSAGE = 'NOTE: Must launch game using default launch tool';
   api.sendNotification({
     id: NOTIF_ID,
     type: 'warning',
@@ -784,9 +885,9 @@ function setupNotify(api) {
         action: (dismiss) => {
           api.showDialog('question', MESSAGE, {
             text: `\n`
-                + `TEXT HERE.\n`
-                + `\n`
-                + `TEXT HERE.\n`
+                + `Note that you must launch the game using the default launch tool included with Vortex.\n`
+                + `Vortex creates the command line arguments needed to tell the game to load each mod.\n`
+                + `Launching the game by any other means will not load your mods.\n`
                 + `\n`
           }, [
             { label: 'Acknowledge', action: () => dismiss() },
@@ -921,6 +1022,33 @@ async function setup(discovery, api, gameSpec) {
   await fs.ensureDirWritableAsync(SAVE_PATH); //*/
   if (hasLoader) {
     await downloadLoader(api, gameSpec);
+  } //*/
+  //ensure LO file
+  await fs.ensureFileAsync(
+    path.join(GAME_PATH, LO_FILE_PATH),
+    { encoding: "utf8" },
+  );
+  if (hasLoader) {
+    //set paths in config.json
+    const configPath = path.join(GAME_PATH, 'config.json');
+    try {
+      await fs.ensureFileAsync(
+        configPath,
+        { encoding: "utf8" },
+      );
+      const contents = await fs.readFileAsync(configPath, 'utf8');
+      const json = JSON.parse(contents);
+      json.game_install_dir = GAME_PATH;
+      json.mod_folder = path.join(GAME_PATH, MOD_PATH);
+      const configOutput = JSON.stringify(json, null, 2);
+      await fs.writeFileAsync(
+      configPath,
+      configOutput,
+      { encoding: "utf8" },
+    );
+    } catch (err) {
+      log('error', `Could not write paths to config.json file: ${err}`);
+    }
   }
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
@@ -937,7 +1065,38 @@ function applyGame(context, gameSpec) {
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     //getGameVersion: resolveGameVersion,
-    supportedTools: tools,
+    parameters: PARAMETERS,
+    supportedTools: [
+      {
+        id: `${GAME_ID}-customlaunch`,
+        name: 'Custom Launch',
+        logo: 'exec.png',
+        executable: () => LAUNCH_BAT,
+        requiredFiles: [
+          LAUNCH_BAT,
+        ],
+        relative: true,
+        exclusive: true,
+        shell: true,
+        detach: true,
+        defaultPrimary: true,
+        //parameters: PARAMETERS,
+      }, //*/
+      {
+        id: LOADER_ID,
+        name: LOADER_NAME,
+        logo: 'mewtator.png',
+        executable: () => LOADER_EXEC,
+        requiredFiles: [
+          LOADER_EXEC,
+        ],
+        relative: true,
+        exclusive: true,
+        //shell: true,
+        detach: true,
+        //defaultPrimary: true,
+      }, //*/
+    ],
   };
   context.registerGame(game);
 
@@ -970,22 +1129,18 @@ function applyGame(context, gameSpec) {
     { name: SAVE_NAME }
   ); //*/
 
-  if (hasLoader) {
-    context.registerModType(LOADER_ID, 70, 
-      (gameId) => {
-        var _a;
-        return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-      }, 
-      (game) => pathPattern(context.api, game, path.join('{gamePath}', LOADER_PATH)), 
-      () => Promise.resolve(false), 
-      { name: LOADER_NAME }
-    );
-  }
+  context.registerModType(LOADER_ID, 70, 
+    (gameId) => {
+      var _a;
+      return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
+    }, 
+    (game) => pathPattern(context.api, game, path.join('{gamePath}', LOADER_PATH)), 
+    () => Promise.resolve(false), 
+    { name: LOADER_NAME }
+  );
   
   //register mod installers
-  if (hasLoader) {
-    context.registerInstaller(LOADER_ID, 25, testLoader, installLoader);
-  }
+  context.registerInstaller(LOADER_ID, 25, testLoader, installLoader);
   context.registerInstaller(MOD_ID, 27, testMod, installMod);
   //context.registerInstaller(CONFIG_ID, 43, testConfig, installConfig);
   //context.registerInstaller(SAVE_ID, 45, testSave, installSave);
@@ -1007,6 +1162,14 @@ function applyGame(context, gameSpec) {
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   }); //*/
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open modlist.txt (Load Order)', () => {
+    GAME_PATH = getDiscoveryPath(context.api);
+    util.opn(path.join(GAME_PATH, LO_FILE_PATH)).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  }); 
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', () => {
     util.opn(SAVE_PATH).catch(() => null);
     }, () => {
@@ -1048,13 +1211,49 @@ function applyGame(context, gameSpec) {
 //main function
 function main(context) {
   applyGame(context, spec);
+  //register Load Order
+  if (enableLoadOrder) {
+    context.registerLoadOrder({
+      gameId: GAME_ID,
+      validate: async () => Promise.resolve(undefined), // no validation implemented yet
+      deserializeLoadOrder: async () => await deserializeLoadOrder(context),
+      serializeLoadOrder: async (loadOrder) => await serializeLoadOrder(context, loadOrder),
+      toggleableEntries: true,
+      usageInstructions:`Drag and drop the mods on the left to change the order in which they load.   \n`
+                        +`${GAME_NAME} loads mods in the order you set from top to bottom.   \n`
+                        +`\n`,
+    });
+  }
   context.once(() => { // put code here that should be run (once) when Vortex starts up
     const api = context.api;
     api.onAsync('did-deploy', async (profileId, deployment) => { 
+      mod_update_all_profile = false;
+      updating_mod = false;
+      updatemodid = undefined;
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;
-      return deployNotify(api);
+      if (hasLoader) {
+        deployNotify(api);
+      }
     });
+    api.events.on("mod-update", (gameId, modId, fileId) => {
+      if (GAME_ID == gameId) {
+        updatemodid = modId;
+      }
+    });
+    api.events.on("remove-mod", (gameMode, modId) => {
+      if (modId.includes("-" + updatemodid + "-")) {
+        mod_update_all_profile = true;
+      }
+    });
+    api.events.on("will-install-mod", (gameId, archiveId, modId) => {
+      mod_install_name = modId.split("-")[0];
+      if (GAME_ID == gameId && modId.includes("-" + updatemodid + "-")) {
+        updating_mod = true;
+      } else {
+        updating_mod = false;
+      }
+    }); //*/
   });
   return true;
 }

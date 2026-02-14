@@ -1336,7 +1336,9 @@ async function deleteMarkerFile(api) {
     await fs.statAsync(TOYBOX_LOC_MARKER_FILE);
     await fs.unlinkAsync(TOYBOX_LOC_MARKER_FILE);
   } catch (err) {
-    log('warn', `Failed to delete ToyBox Localization folder marker file, This may cause ToyBox to throw an error: ${err}`);
+    if (err.code !== 'ENOENT') {
+      log('warn', `Failed to delete ToyBox Localization folder marker file, This may cause ToyBox to throw an error: ${err}`);
+    }
   }
 }
 
