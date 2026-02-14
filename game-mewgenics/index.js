@@ -831,6 +831,7 @@ async function setParameters(loadOrder) {
   PARAMETERS = [param1, param2];
   const contents = `@echo off
 echo Launching ${GAME_NAME} with mods...
+echo Using parameters: ${param1} ${param2}
 "${path.join(GAME_PATH, EXEC)}" ${param1} ${param2}
 exit`; //*/
   //const contents = `"${path.join(GAME_PATH, EXEC)}" ${param1} ${param2}`;
