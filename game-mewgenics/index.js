@@ -1,9 +1,9 @@
 /*///////////////////////////////////////////
-Name: XXX Vortex Extension
+Name: Mewgenics Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2026-XX-XX
+Date: 2026-02-13
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -830,9 +830,10 @@ async function setParameters(loadOrder) {
   //log ('warn', `Params: ${param1} ${param2}`);
   PARAMETERS = [param1, param2];
   const contents = `@echo off
-"${path.join(GAME_PATH, EXEC)}" ${param1} ${param2}
 echo Launching ${GAME_NAME} with mods...
-exit`;
+"${path.join(GAME_PATH, EXEC)}" ${param1} ${param2}
+exit`; //*/
+  //const contents = `"${path.join(GAME_PATH, EXEC)}" ${param1} ${param2}`;
   await fs.writeFileAsync(
     path.join(GAME_PATH, LAUNCH_BAT),
     contents,
