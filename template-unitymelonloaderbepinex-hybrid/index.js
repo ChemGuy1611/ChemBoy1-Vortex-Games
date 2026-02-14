@@ -1795,7 +1795,7 @@ async function resolveGameVersion(gamePath) {
       return Promise.resolve(version);
     }
   } //*/
-  /*else { use text file
+  /*else { //use text file
     const versionFilepath = path.join(gamePath, VERSION_FILE_PATH);
     try {
       const data = await fs.readFileAsync(versionFilepath, { encoding: 'utf8' });

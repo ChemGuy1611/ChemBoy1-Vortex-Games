@@ -4,6 +4,12 @@
 
 - None Planned
 
+## [0.2.0] - 2026-02-13
+
+- Fixed: Files without extensions dropping from plugin installer - missing checksum file when ToyBox installed
+- Fixed: Game version detection unified for all versions using Version.info file
+- Fixed: Vortex marker file deleted from ToyBox Localization folder on deploy - avoid causing an exception
+
 ## [0.1.2] - 2026-01-21
 
 - Fixed: UMM plugin mod installer could use wrong plugin name for folder (i.e. "0Harmony")

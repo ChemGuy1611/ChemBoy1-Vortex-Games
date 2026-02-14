@@ -2,8 +2,8 @@
 Name: Warhammer 40,000: Rogue Trader Vortex Extension
 Structure: Game with Integrated Mod Loader (UnityModManager)
 Author: ChemBoy1
-Version: 0.1.2
-Date: 2025-01-21
+Version: 0.2.0
+Date: 2025-02-13
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -42,6 +42,10 @@ const debug = true;
 
 const DATA_FOLDER = path.join(USER_HOME, 'AppData', 'LocalLow', 'Owlcat Games', 'Warhammer 40000 Rogue Trader');
 const ROOT_FOLDERS = ['']; //not using root installer
+const VERSION_FILE = 'Version.info'; 
+let GAME_DATA_FOLDER = 'WH40KRT_Data_Data';
+const GAME_DATA_FOLDER_XBOX = 'Warhammer 40000 Rogue Trader_Data';
+let VERSION_FILE_PATH = path.join(GAME_DATA_FOLDER, 'StreamingAssets', VERSION_FILE);
 
 let GAME_PATH = '';
 let GAME_VERSION = 'default';
@@ -55,6 +59,7 @@ const PLUGIN_FOLDERNAME = 'UnityModManager';
 const PLUGIN_PATH = path.join(DATA_FOLDER, PLUGIN_FOLDERNAME);
 const PLUGIN_EXTS = ['.dll'];
 const PLUGIN_IGNORE_NAMES = ['0Harmony'];
+const TOYBOX_LOC_MARKER_FILE = path.join(PLUGIN_PATH, 'ToyBox', 'Localization', '__folder_managed_by_vortex');
 
 const MOD_ID = `${GAME_ID}-mod`;
 const MOD_NAME = "Owlcat Mod";
@@ -436,6 +441,8 @@ async function setGameVersion(gamePath) {
   const CHECK = await statCheckAsync(gamePath, EXEC_XBOX);
   if (CHECK) {
     GAME_VERSION = 'xbox';
+    GAME_DATA_FOLDER = GAME_DATA_FOLDER_XBOX;
+    VERSION_FILE_PATH = path.join(GAME_DATA_FOLDER, 'StreamingAssets', VERSION_FILE);
     return GAME_VERSION;
   } else {
     GAME_VERSION = 'default';
@@ -615,57 +622,6 @@ function installPortraitManager(files) {
   return Promise.resolve({ instructions });
 }
 
-//Test for .dll plugin mod files
-function testPlugin(files, gameId) {
-  const isMod = files.some(file => PLUGIN_EXTS.includes(path.extname(file).toLowerCase()));
-  let supported = (gameId === spec.game.id) && isMod;
-
-  // Test for a mod installer
-  if (supported && files.find(file =>
-      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
-    supported = false;
-  }
-
-  return Promise.resolve({
-    supported,
-    requiredFiles: [],
-  });
-}
-
-//Install .dll plugin mod files
-function installPlugin(files) {
-  const MOD_TYPE = PLUGIN_ID;
-  const modFile = files.find(file => PLUGIN_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
-  const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
- 
-  let folder = path.basename(modFile, PLUGIN_EXTS[0]);
-  if (PLUGIN_IGNORE_NAMES.includes(folder)) {
-    const file = files.find(file => ( PLUGIN_EXTS.includes(path.extname(file).toLowerCase()) && !PLUGIN_IGNORE_NAMES.includes(path.basename(file, PLUGIN_EXTS[0])) ));
-    if (file === undefined) {
-      folder = '' //don't use a top level folder if only ignored dll names are present
-    } else {
-      folder = path.basename(file, PLUGIN_EXTS[0]);
-    }
-  }
-
-  // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
-  );
-  const instructions = filtered.map(file => {
-    return {
-      type: 'copy',
-      source: file,
-      destination: path.join(folder, file.substr(idx)),
-    };
-  });
-  instructions.push(setModTypeInstruction);
-  return Promise.resolve({ instructions });
-}
-
 //Test for mod files
 function testMod(files, gameId) {
   const isMod = files.some(file => MOD_FILES.includes(path.basename(file).toLowerCase()));
@@ -757,6 +713,59 @@ function installMod(files, workingDir) {
   } //*/
   instructions.push(setModTypeInstruction);
   instructions.push(MOD_ATTRIBUTE);
+  return Promise.resolve({ instructions });
+}
+
+//Test for .dll plugin mod files
+function testPlugin(files, gameId) {
+  const isMod = files.some(file => PLUGIN_EXTS.includes(path.extname(file).toLowerCase()));
+  let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install .dll plugin mod files
+function installPlugin(files) {
+  const MOD_TYPE = PLUGIN_ID;
+  const modFile = files.find(file => PLUGIN_EXTS.includes(path.extname(file).toLowerCase()));
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+ 
+  let folder = path.basename(modFile, PLUGIN_EXTS[0]);
+  if (PLUGIN_IGNORE_NAMES.includes(folder)) {
+    const file = files.find(file => ( PLUGIN_EXTS.includes(path.extname(file).toLowerCase()) && !PLUGIN_IGNORE_NAMES.includes(path.basename(file, PLUGIN_EXTS[0])) ));
+    if (file === undefined) {
+      folder = '' //don't use a top level folder if only ignored dll names are present
+    } else {
+      folder = path.basename(file, PLUGIN_EXTS[0]);
+    }
+  }
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file => (
+    //(file.indexOf(rootPath) !== -1) && 
+    (!file.endsWith(path.sep))
+  )
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(folder, file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
   return Promise.resolve({ instructions });
 }
 
@@ -1157,29 +1166,17 @@ function portraitsNotify(api) {
 //* Resolve game version dynamically for different game versions
 async function resolveGameVersion(gamePath) {
   GAME_VERSION = await setGameVersion(gamePath);
-  let version = '0.0.0';
-  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
-    try {
-      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
-      const parsed = await parseStringPromise(appManifest);
-      version = parsed?.Package?.Identity?.[0]?.$?.Version;
-      return Promise.resolve(version);
-    } catch (err) {
-      log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
-      return Promise.resolve(version);
-    }
+  const versionFilepath = path.join(gamePath, VERSION_FILE_PATH);
+  try {
+    const data = await fs.readFileAsync(versionFilepath, { encoding: 'utf8' });
+    const segments = data.split(' ');
+    return (segments[3]) 
+      ? Promise.resolve(segments[3])
+      : Promise.reject(new util.DataInvalid('Failed to resolve version'));
+  } catch (err) {
+    return Promise.reject(err);
   }
-  else { // use exe. Note this just returns the Unity Engine version right now
-    try {
-      const exeVersion = require('exe-version');
-      version = exeVersion.getProductVersion(path.join(gamePath, EXEC));
-      return Promise.resolve(version); 
-    } catch (err) {
-      log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
-      return Promise.resolve(version);
-    }
-  }
-} //*/
+} 
 
 async function modFoldersEnsureWritable(paths) {
   for (let index = 0; index < paths.length; index++) {
@@ -1334,10 +1331,20 @@ function applyGame(context, gameSpec) {
   });
 }
 
+async function deleteMarkerFile(api) {
+  try {
+    await fs.statAsync(TOYBOX_LOC_MARKER_FILE);
+    await fs.unlinkAsync(TOYBOX_LOC_MARKER_FILE);
+  } catch (err) {
+    log('warn', `Failed to delete ToyBox Localization folder marker file, This may cause ToyBox to throw an error: ${err}`);
+  }
+}
+
 //main function
 function main(context) {
   applyGame(context, spec);
   context.once(() => { // put code here that should be run (once) when Vortex starts up
+    const api = context.api;
     context.api.onAsync('check-mods-version', (gameId, mods, forced) => {
       if (gameId !== GAME_ID) return;
       return onCheckModVersion(context.api, gameId, mods, forced);
@@ -1347,6 +1354,7 @@ function main(context) {
       mod_update_all_profile = false;
       updating_mod = false;
       updatemodid = undefined;
+      deleteMarkerFile(api);
     });
     context.api.events.on("mod-update", (gameId, modId, fileId) => {
       if (GAME_ID == gameId) {
