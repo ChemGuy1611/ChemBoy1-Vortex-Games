@@ -105,7 +105,7 @@ const REQ_FILE = path.join('MonoBleedingEdge');
 const PARAMETERS_STRING = '';
 const PARAMETERS = [PARAMETERS_STRING];
 const IGNORE_CONFLICTS = [path.join('**', 'manifest.json'), path.join('**', 'icon.png'), path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
-let MODTYPE_FOLDERS = [BEPMOD_PATH, ASSEMBLY_PATH, ASSETS_PATH];
+let MODTYPE_FOLDERS = [BEPMOD_PATH];
 
 //Filled in from info above
 const spec = {
@@ -336,10 +336,17 @@ async function statCheckAsync(gamePath, file) {
 async function setGameVersion(gamePath) {
   if (await statCheckAsync(gamePath, EXEC_XBOX)) {
     GAME_VERSION = 'xbox';
+    DATA_FOLDER = DATA_FOLDER_XBOX;
+    ASSEMBLY_PATH = path.join(DATA_FOLDER, 'Managed');
+    ASSETS_PATH = DATA_FOLDER;
+    SAVE_PATH = SAVE_PATH_XBOX;
     return GAME_VERSION;
   }
   if (await statCheckAsync(gamePath, EXEC_GOG)) {
     GAME_VERSION = 'gog';
+    DATA_FOLDER = DATA_FOLDER_GOG;
+    ASSEMBLY_PATH = path.join(DATA_FOLDER, 'Managed');
+    ASSETS_PATH = DATA_FOLDER;
     return GAME_VERSION;
   }
 
@@ -583,6 +590,9 @@ async function setup(discovery, api, gameSpec) {
   GAME_PATH = discovery.path;
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
+  GAME_VERSION = await setGameVersion(GAME_PATH);
+  MODTYPE_FOLDERS.push(ASSEMBLY_PATH);
+  MODTYPE_FOLDERS.push(ASSETS_PATH);
   // ASYNC CODE ///////////////////////////////////
   if (downloadCfgMan === true) {
     await fs.ensureDirWritableAsync(path.join(GAME_PATH, 'Bepinex')); //allows downloader to write files

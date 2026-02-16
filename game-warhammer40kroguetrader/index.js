@@ -36,9 +36,10 @@ const EXEC_GOG = EXEC;
 const EXEC_EGS = EXEC;
 const EXEC_XBOX = 'gamelaunchhelper.exe';
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Warhammer_40,000:_Rogue_Trader";
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1627"; //Nexus link to this extension. Used for links
 
 const LOAD_ORDER_ENABLED = true;
-const debug = true;
+const debug = false;
 
 const DATA_FOLDER = path.join(USER_HOME, 'AppData', 'LocalLow', 'Owlcat Games', 'Warhammer 40000 Rogue Trader');
 const ROOT_FOLDERS = ['']; //not using root installer
@@ -1321,6 +1322,13 @@ function applyGame(context, gameSpec) {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
+    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
     util.opn(DOWNLOAD_FOLDER).catch(() => null);

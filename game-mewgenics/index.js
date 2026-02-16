@@ -835,7 +835,7 @@ echo Using parameters: ${param1} ${param2}
 "${path.join(GAME_PATH, EXEC)}" ${param1} ${param2}
 exit`; //*/
   //const contents = `"${path.join(GAME_PATH, EXEC)}" ${param1} ${param2}`;
-  await fs.writeFileAsync(
+  await fs.writeFileAsync( //write to .bat file
     path.join(GAME_PATH, LAUNCH_BAT),
     contents,
     { encoding: "utf8" },
