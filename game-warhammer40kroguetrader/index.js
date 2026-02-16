@@ -24,7 +24,7 @@ const USER_HOME = util.getVortexPath("home");
 const GAME_ID = "warhammer40kroguetrader";
 const STEAMAPP_ID = "2186680";
 const STEAMAPP_ID_DEMO = null;
-const EPICAPP_ID = "XXX"; //NOT on egdata.app yet
+const EPICAPP_ID = ""; //NOT on egdata.app yet
 const GOGAPP_ID = "1347700224";
 const XBOXAPP_ID = "OwlcatGames.3387926822CE4";
 const XBOXEXECNAME = "Game";
@@ -148,7 +148,7 @@ const MICROPATCHES_URL_API = `https://api.github.com/repos/${AUTHOR}/${REPO}`;
 const MICROPATCHES_FILE = 'MicroPatches.dll'; // <-- CASE SENSITIVE! Must match name exactly or downloader will download the file again.
 
 const REQUIREMENTS = [
-  { //MICROPATCHESer
+  { //MICROPATCHES
     archiveFileName: MICROPATCHES_ARC_NAME,
     modType: MICROPATCHES_ID,
     assemblyFileName: MICROPATCHES_FILE,
@@ -431,6 +431,8 @@ async function requiresLauncher(gamePath, store) {
 function getExecutable(discoveryPath) {
   if (statCheckSync(discoveryPath, EXEC_XBOX)) {
     GAME_VERSION = 'xbox';
+    GAME_DATA_FOLDER = GAME_DATA_FOLDER_XBOX;
+    VERSION_FILE_PATH = path.join(GAME_DATA_FOLDER, 'StreamingAssets', VERSION_FILE);
     return EXEC_XBOX;
   };
   GAME_VERSION = 'default';
@@ -1345,7 +1347,7 @@ async function deleteMarkerFile(api) {
     await fs.unlinkAsync(TOYBOX_LOC_MARKER_FILE);
   } catch (err) {
     if (err.code !== 'ENOENT') {
-      log('warn', `Failed to delete ToyBox Localization folder marker file, This may cause ToyBox to throw an error: ${err}`);
+      log('error', `Failed to delete ToyBox Localization folder marker file, This may cause ToyBox to throw an error: ${err}`);
     }
   }
 }
