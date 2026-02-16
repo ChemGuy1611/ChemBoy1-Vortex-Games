@@ -4,9 +4,11 @@ Future Changes (NOT IMPLEMENTED YET):
 
 - None
 
-## [0.2.6] - 2025-11-17
+## [0.3.0] - 2026-02-16
 
-- Updated for shadPS4 v0.12.0 and newer with Qt UI as a separate requiremnent download from the emulator core.
+- Fixed: Updated for shadPS4 v0.12.0 and newer with Qt Launcher as a separate download from the emulator core
+- Added: Button to download shadPS4 Qt Launcher
+- Fixed: File name for shadPS4 on GitHub
 
 ## [0.2.5] - 2025-10-24
 

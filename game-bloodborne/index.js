@@ -2,8 +2,8 @@
 Name: Bloodborne Vortex Extension
 Structure: Emulation Game
 Author: ChemBoy1
-Version: 0.2.6
-Date: 2025-11-17
+Version: 0.3.0
+Date: 2026-02-16
 ////////////////////////////////////////////////////*/
 
 //Import libraries
@@ -19,6 +19,9 @@ const GAME_FILE = path.join(PS_ID, "eboot.bin");
 const GAME_NAME = "Bloodborne";
 const GAME_NAME_SHORT = "Bloodborne";
 const MOD_PATH = "."; //Set default mod path
+const EXTENSION_URL = "https://www.nexusmods.com/bloodborne/mods/64"; //Nexus link to this extension. Used for links
+
+let GAME_PATH = '';
 
 //Info for mod types and installers
 const DVDROOTPS4_ID = `${GAME_ID}-dvdroot_ps4`;
@@ -48,6 +51,9 @@ const SHADLAUNCHER_URL = `https://github.com/shadps4-emu/shadPS4/releases/downlo
 const SHADLAUNCHER_URL_MAIN = `https://api.github.com/repos/shadps4-emu/shadps4-qtlauncher`;
 const SHADLAUNCHER_FILE = "shadPS4QtLauncher.exe"; // <-- CASE SENSITIVE! Must match name exactly or downloader will download the file again.
 
+const SHADLAUNCHER_URL_REL = `https://github.com/shadps4-emu/shadps4-qtlauncher/releases`;
+const SHADLAUNCHER_DL_STRING = 'shadPS4QtLauncher-win64-qt-';
+
 const REQUIREMENTS = [
   { //shadPS4
     archiveFileName: SHADPS4_ARC_NAME,
@@ -57,10 +63,10 @@ const REQUIREMENTS = [
     githubUrl: SHADPS4_URL_MAIN,
     findMod: (api) => findModByFile(api, SHADPS4_ID, SHADPS4_FILE),
     findDownloadId: (api) => findDownloadIdByFile(api, SHADPS4_ARC_NAME),
-    fileArchivePattern: new RegExp(/^shadps4-win64-sdl-2025-(\d+\.\d+\.\d+)/, 'i'),
+    fileArchivePattern: new RegExp(/^shadps4-win64-sdl-(\d+\.\d+\.\d+)/, 'i'),
     resolveVersion: (api) => resolveVersionByPattern(api, REQUIREMENTS[0]),
   },
-  { //QtLauncher
+  /*{ //QtLauncher
     archiveFileName: SHADLAUNCHER_ARC_NAME,
     modType: SHADLAUNCHER_ID,
     assemblyFileName: SHADLAUNCHER_FILE,
@@ -70,7 +76,7 @@ const REQUIREMENTS = [
     findDownloadId: (api) => findDownloadIdByFile(api, SHADLAUNCHER_ARC_NAME),
     fileArchivePattern: new RegExp(/^shadPS4QtLauncher-win64-qt-(\d+-\d+-\d+)/, 'i'),
     resolveVersion: (api) => resolveVersionByPattern(api, REQUIREMENTS[1]),
-  },
+  }, //*/
 ];
 
 const SAVE_ID = `${GAME_ID}-save`;
@@ -142,9 +148,9 @@ const spec = {
 
 //3rd party tools and launchers
 const tools = [
-  {
+  /*{
     id: "shadPS4",
-    name: "shadPS4",
+    name: "shadPS4 (No-GUI)",
     logo: `shadps4.png`,
     executable: () => SHADPS4_EXEC,
     requiredFiles: [SHADPS4_EXEC],
@@ -229,6 +235,19 @@ function makeFindGame(api, gameSpec) {
 //Set launcher requirements
 async function requiresLauncher() {
   return Promise.resolve(undefined);
+}
+
+const getDiscoveryPath = (api) => { //get the game's discovered path
+  const state = api.getState();
+  const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});
+  return discovery === null || discovery === void 0 ? void 0 : discovery.path;
+};
+
+async function purge(api) {
+  return new Promise((resolve, reject) => api.events.emit('purge-mods', true, (err) => err ? reject(err) : resolve()));
+}
+async function deploy(api) {
+  return new Promise((resolve, reject) => api.events.emit('deploy-mods', (err) => err ? reject(err) : resolve()));
 }
 
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
@@ -466,21 +485,21 @@ async function checkForRequirements(api) {
 async function isShadPS4Installed(api, spec) {
   const state = api.getState();
   const mods = state.persistent.mods[spec.game.id] || {};
-  const modIdCheck = Object.keys(mods).some(id => mods[id]?.type === SHADPS4_ID);
-  const discovery = selectors.discoveryByGame(state, spec.game.id);
-  let statCheck = false;
-  try {
-    fs.statSync(path.join(discovery.path, SHADPS4_EXEC));
-    statCheck = true;
-  } catch (err) {
-    //do nothing
+  let check = Object.keys(mods).some(id => mods[id]?.type === SHADPS4_ID);
+  if (!check) {
+    try {
+      GAME_PATH = getDiscoveryPath(api);
+      await fs.statAsync(path.join(GAME_PATH, SHADPS4_EXEC));
+      check = true;
+    } catch (err) {
+      //do nothing
+    }
   }
-  const TEST = ( modIdCheck || statCheck );
-  return TEST;
+  return check;
 }
 //Function to auto-download shadPS4 from Github
 async function downloadShadPS4(api, gameSpec) {
-  let modLoaderInstalled = isShadPS4Installed(api, gameSpec);
+  let modLoaderInstalled = await isShadPS4Installed(api, gameSpec);
   if (!modLoaderInstalled) {
     //notification indicating install process
     NOTIF_ID = 'bloodborne-shadps4-installing';
@@ -523,6 +542,93 @@ async function downloadShadPS4(api, gameSpec) {
   }
 } //*/
 
+async function isShadLauncherInstalled(api, spec) {
+  const state = api.getState();
+  const mods = state.persistent.mods[spec.game.id] || {};
+  let check = Object.keys(mods).some(id => mods[id]?.type === SHADLAUNCHER_ID);
+  if (!check) {
+    try {
+      GAME_PATH = getDiscoveryPath(api);
+      await fs.statAsync(path.join(discovery.path, SHADLAUNCHER_EXEC));
+      check = true;
+    } catch (err) {
+      //do nothing
+    }
+  }
+  return check;
+}
+
+//* Download ShadPS4 Launcher from GitHub page (user browse for download - necessary for now until stable release)
+async function downloadShadLauncher(api, gameSpec, check) {
+  let isInstalled = await isShadLauncherInstalled(api, gameSpec);
+  const URL = SHADLAUNCHER_URL_REL;
+  const MOD_NAME = SHADLAUNCHER_NAME;
+  const MOD_TYPE = SHADLAUNCHER_ID;
+  const ARCHIVE_NAME = SHADLAUNCHER_DL_STRING;
+  const instructions = api.translate(`Click on Continue below to open the browser. - `
+    + `Navigate to the latest experimental version of ${MOD_NAME} on the GitHub releases page and `
+    + `click on the appropriate file to download and install the mod.`
+  );
+
+  if (!isInstalled || !check) {
+    return new Promise((resolve, reject) => { //Browse and download the mod
+      return api.emitAndAwait('browse-for-download', URL, instructions)
+      .then((result) => { //result is an array with the URL to the downloaded file as the only element
+        if (!result || !result.length) { //user clicks outside the window without downloading
+          return reject(new util.UserCanceled());
+        }
+        if (!result[0].includes(ARCHIVE_NAME)) { //if user downloads the wrong file
+          return reject(new util.UserCanceled('Selected wrong download'));
+        } //*/
+        return Promise.resolve(result);
+      })
+      .catch((error) => {
+        return reject(error);
+      })
+      .then((result) => {
+        const dlInfo = {game: gameSpec.game.id, name: MOD_NAME};
+        api.events.emit('start-download', result, {}, undefined,
+          async (error, id) => { //callback function to check for errors and pass id to and call 'start-install-download' event
+            if (error !== null && (error.name !== 'AlreadyDownloaded')) {
+              return reject(error);
+            }
+            api.events.emit('start-install-download', id, { allowAutoEnable: true }, async (error) => { //callback function to complete the installation
+              if (error !== null) {
+                return reject(error);
+              }
+              const profileId = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
+              const batched = [
+                actions.setModsEnabled(api, profileId, result, true, {
+                  allowAutoDeploy: true,
+                  installed: true,
+                }),
+                actions.setModType(GAME_ID, result[0], MOD_TYPE), // Set the mod type
+              ];
+              util.batchDispatch(api.store, batched); // Will dispatch both actions.
+              return resolve();
+            });
+          }, 
+          'never',
+          { allowInstall: false },
+        );
+      });
+    })
+    .catch(err => {
+      if (err instanceof util.UserCanceled) {
+        api.showErrorNotification(`User cancelled download/install of ${MOD_NAME}. Please re-launch Vortex and try again.`, err, { allowReport: false });
+        //util.opn(URL).catch(() => null);
+        return Promise.resolve();
+      } else if (err instanceof util.ProcessCanceled) {
+        api.showErrorNotification(`Failed to download/install ${MOD_NAME}. Please re-launch Vortex and try again or download manually from modDB at the opened paged and install the zip in Vortex.`, err, { allowReport: false });
+        util.opn(URL).catch(() => null);
+        return Promise.reject(err);
+      } else {
+        return Promise.reject(err);
+      }
+    });
+  }
+} //*/
+
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
 //Notify User of Setup instructions
@@ -539,8 +645,8 @@ function setupNotify(api) {
         title: 'More',
         action: (dismiss) => {
           api.showDialog('question', MESSAGE, {
-            text: 'Neither the mod author nor Nexus Mods endorse piracy. You must own a legitimate copy of Bloodborne to use this extension.\n'
-                + 'You must have the Bloodorne game (CUSA03173) files installed from your PS4 or a .pkg file for the extension to work.\n'
+            text: 'Neither the extension developer nor Nexus Mods endorse piracy. You must own a legitimate copy of Bloodborne to use this extension.\n'
+                + 'You must have the extracted Bloodorne game (CUSA03173) files installed from your PS4 or a .pkg file for the extension to work.\n'
           }, [
             { label: 'Acknowledge', action: () => dismiss() },
             {
@@ -559,11 +665,13 @@ function setupNotify(api) {
 //Setup function
 async function setup(discovery, api, gameSpec) {
   setupNotify(api);
+  GAME_PATH = discovery.path;
   //await downloadShadPS4(api, gameSpec);
   const requirementsInstalled = await checkForRequirements(api);
   if (!requirementsInstalled) {
     await download(api, REQUIREMENTS);
   }
+  await downloadShadLauncher(api, gameSpec, true);
   await fs.ensureDirWritableAsync(path.join(discovery.path, SAVE_PATH));
   return fs.ensureDirWritableAsync(path.join(discovery.path, DVDROOTPS4_PATH));
 }
@@ -598,6 +706,36 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(`${GAME_ID}-flver`, 31, testFlver, installFlver);
   context.registerInstaller(`${GAME_ID}-dvdroot_ps4`, 33, testDvdRootPs4, installDvdRootPs4);
   context.registerInstaller(`${GAME_ID}-save`, 35, testSave, installSave);
+
+  //register actions
+  context.registerAction('mod-icons', 300, 'open-ext', {}, `Download ${SHADLAUNCHER_NAME}`, () => {
+    downloadShadLauncher(context.api, spec, false);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
+    util.opn(path.join(__dirname, 'CHANGELOG.md')).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
+    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
+    util.opn(DOWNLOAD_FOLDER).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
 }
 
 //main function
