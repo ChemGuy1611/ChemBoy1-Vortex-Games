@@ -2,15 +2,15 @@
 Name: Warhammer 40,000: Rogue Trader Vortex Extension
 Structure: Game with Integrated Mod Loader (UnityModManager)
 Author: ChemBoy1
-Version: 0.2.0
-Date: 2025-02-13
+Version: 0.2.1
+Date: 2026-02-13
 ///////////////////////////////////////////*/
 
 //Import libraries
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
-const { parseStringPromise } = require('xml2js');
+//const { parseStringPromise } = require('xml2js');
 //const winapi = require('winapi-bindings');
 //const turbowalk = require('turbowalk');
 const { download, findModByFile, findDownloadIdByFile, resolveVersionByPattern, testRequirementVersion } = require('./downloader');
@@ -44,7 +44,7 @@ const debug = false;
 const DATA_FOLDER = path.join(USER_HOME, 'AppData', 'LocalLow', 'Owlcat Games', 'Warhammer 40000 Rogue Trader');
 const ROOT_FOLDERS = ['']; //not using root installer
 const VERSION_FILE = 'Version.info'; 
-let GAME_DATA_FOLDER = 'WH40KRT_Data_Data';
+let GAME_DATA_FOLDER = `WH40KRT_Data`;
 const GAME_DATA_FOLDER_XBOX = 'Warhammer 40000 Rogue Trader_Data';
 let VERSION_FILE_PATH = path.join(GAME_DATA_FOLDER, 'StreamingAssets', VERSION_FILE);
 

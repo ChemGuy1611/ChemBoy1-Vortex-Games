@@ -4,6 +4,11 @@
 
 - None
 
+## [0.3.2] - 2026-02-16
+
+- Updated: DLL file package
+- Improved: ModpackLoader dlls are copied with overwrite at setup to ensure they are updated
+
 ## [0.3.1] - 2026-02-13
 
 - Fixed: Added error handling for reading/writing failures in modpack.json files

@@ -2,8 +2,8 @@
 Name: MENACE Vortex Extension
 Structure: Unity BepinEx/MelonLoader Hybrid
 Author: ChemBoy1
-Version: 0.3.1
-Date: 2026-02-13
+Version: 0.3.2
+Date: 2026-02-16
 //////////////////////////////////////////*/
 
 //Import libraries
@@ -281,6 +281,7 @@ const MODPACKLOADER_DLLS = [
   //'Menace.DataExtractor.dll',
   'Microsoft.CodeAnalysis.CSharp.dll',
   'Microsoft.CodeAnalysis.dll',
+  'MoonSharp.Interpreter.dll',
   'Newtonsoft.Json.dll',
   'SharpGLTF.Core.dll',
   'System.Collections.Immutable.dll',
@@ -2352,57 +2353,54 @@ async function modFoldersEnsureWritable(gamePath, relPaths) {
 }
 
 async function dllFilesCopy(gamePath, files) {
-  fs.ensureDirWritableAsync(path.join(gamePath, 'UserLibs'));
+  await fs.ensureDirWritableAsync(path.join(gamePath, 'UserLibs'));
   for (let index = 0; index < files.length; index++) {
     const source = path.join(__dirname, 'ModpackLoader', files[index]);
     let destination;
-    if (index < 1) {
+    if (index < 1) { 
       destination = path.join(gamePath, MODPACKLOADER_PATH, files[index]);
     } else {
       destination = path.join(gamePath, 'UserLibs', files[index]);
     }
     try {
-      await fs.copyAsync(source, destination);
+      await fs.copyAsync(source, destination, { overwrite: true });
     } catch (err) {
-      api.showErrorNotification('Failed to copy ModPackLoader dll to game folder. Please deploy mods to try again.', err, { allowReport: false });
+      api.showErrorNotification('Failed to copy ModPackLoader dlls to game folder. Please deploy mods to try again.', err, { allowReport: false });
     }
   }
 }
 
-async function ensureModpackLoader(api) {
+async function ensureModpackLoader(api, check) {
   GAME_PATH = getDiscoveryPath(api);
-  const dllPath = path.join(GAME_PATH, MODPACKLOADER_PATH, MODPACKLOADER_FILE);
-  const libPath = path.join(GAME_PATH, 'UserLibs', MODPACKLOADER_DLLS[1]);
-  /*const state = api.getState();
-  const mods = state.persistent.mods[GAME_ID] || {};
-  let test =  Object.keys(mods).some(id => mods[id]?.type === MODPACKLOADER_ID); //*/
-  let test = false;
-  let testLib = false;
-  if (!test) {
-    try {
-      await fs.statAsync(dllPath);
-      test = true;
-    } catch (err) {
-      test = false;
+  if (check) {
+    const dllPath = path.join(GAME_PATH, MODPACKLOADER_PATH, MODPACKLOADER_FILE);
+    const libPath = path.join(GAME_PATH, 'UserLibs', MODPACKLOADER_DLLS[1]);
+    //const state = api.getState();
+    //const mods = state.persistent.mods[GAME_ID] || {};
+    //let test =  Object.keys(mods).some(id => mods[id]?.type === MODPACKLOADER_ID);
+    let test = false;
+    let testLib = false;
+    if (!test) {
+      try {
+        await fs.statAsync(dllPath);
+        test = true;
+      } catch (err) {
+        test = false;
+      }
     }
-  }
-  if (!testLib) {
-    try {
-      await fs.statAsync(libPath);
-      testLib = true;
-    } catch (err) {
-      testLib = false;
+    if (!testLib) {
+      try {
+        await fs.statAsync(libPath);
+        testLib = true;
+      } catch (err) {
+        testLib = false;
+      }
     }
-  }
-  if (!test && !testLib) {
+    if (!test && !testLib) { //*/
+      await dllFilesCopy(GAME_PATH, MODPACKLOADER_DLLS);
+    }
+  } else {
     await dllFilesCopy(GAME_PATH, MODPACKLOADER_DLLS);
-    /*const source = path.join(__dirname, 'ModpackLoader', MODPACKLOADER_FILE);
-    const destination = path.join(GAME_PATH, MODPACKLOADER_PATH, MODPACKLOADER_FILE);
-    try {
-      await fs.copyAsync(source, destination);
-    } catch (err) {
-      api.showErrorNotification('Failed to copy ModPackLoader dll to game folder. Please deploy mods to try again.', err, { allowReport: false });
-    } //*/
   }
 }
 
@@ -2425,7 +2423,7 @@ async function setup(discovery, api, gameSpec) {
   MODTYPE_FOLDERS.push(ASSEMBLY_PATH);
   MODTYPE_FOLDERS.push(ASSETS_PATH);
   await modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
-  await ensureModpackLoader(api);
+  await ensureModpackLoader(api, false);
   if (!bepinexInstalled && !melonInstalled && !customInstalled) {
     chooseModLoader(api, spec); //dialog to choose mod loader
   }
@@ -2722,7 +2720,7 @@ function main(context) {
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;
       api.dismissNotification(`${spec.game.id}-loadorderdeploy-notif`);
-      await ensureModpackLoader(api);
+      await ensureModpackLoader(api, true);
       bepinexInstalled = isBepinexInstalled(api, spec);
       melonInstalled = isMelonInstalled(api, spec);
       if (hasCustomLoader) {

@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.2.1] - 2026-02-16
+
+- Fixed: A typo and a few small technical issues
+
 ## [0.2.0] - 2026-02-13
 
 - Fixed: Files without extensions dropping from plugin installer - missing checksum file when ToyBox installed
