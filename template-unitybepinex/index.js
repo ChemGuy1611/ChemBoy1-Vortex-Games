@@ -71,7 +71,7 @@ const BEPINEX_FILE_ID = '0';
 const BEPINEX_ARCH = 'x64'; // 'x64' or 'x86'
 const BEPINEX_BUILD = 'mono'; // 'il2cpp' or 'mono' - IL2CPP will use bleeding edge builds
 let BEPINEX_VERSION = '5.4.23.5'; //force BepInEx version ('5.4.23.4' or '6.0.0')
-const BEP_BE_VER = '752'; //set BepInEx build for BE IL2CPP URLs
+const BEP_BE_VER = '753'; //set BepInEx build for BE IL2CPP URLs
 const BEP_BE_COMMIT = 'dd0655f'; //git commit number for BE IL2CPP builds
 if (BEPINEX_VERSION == '6.0.0') {
     BEPINEX_VERSION = `${BEPINEX_VERSION}-be.${BEP_BE_VER}+${BEP_BE_COMMIT}`;
