@@ -82,9 +82,9 @@ const CONFIGMOD_LOCATION = LOCALAPPDATA; //almost always matches. Some are in ga
 const SAVEMOD_LOCATION = CONFIGMOD_LOCATION;
 
 //shipping exe
-const SHIPEXE_STRING_DEFAULT = '';
+const SHIPEXE_STRING_DEFAULT = 'Steam';
 const SHIPEXE_STRING_EGS = '';
-const SHIPEXE_STRING_GOG = '';
+const SHIPEXE_STRING_GOG = 'Steam';
 const SHIPEXE_STRING_XBOX = '';
 const SHIPEXE_STRING_DEMO = '';
 const SHIPEXE_PROJECTNAME = EPIC_CODE_NAME; //almost always matches.

@@ -1,9 +1,9 @@
 /*//////////////////////////////////////////
-Name: XXX Vortex Extension
+Name: Starsand Island Vortex Extension
 Structure: Unity BepinEx/MelonLoader Hybrid
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2026-XX-XX
+Date: 2026-02-18
 //////////////////////////////////////////*/
 
 //Import libraries
@@ -23,30 +23,30 @@ const LOCALLOW = path.join(USER_HOME, 'AppData', 'LocalLow');
 const LOCALAPPDATA = util.getVortexPath("localAppData");
 
 //Specify all the information about the game
-const GAME_ID = "XXX";
-const STEAMAPP_ID = "XXX";
-const STEAMAPP_ID_DEMO = "XXX";
-const EPICAPP_ID = "XXX";
-const GOGAPP_ID = "XXX";
-const XBOXAPP_ID = "XXX";
+const GAME_ID = "starsandisland";
+const STEAMAPP_ID = "2966320";
+const STEAMAPP_ID_DEMO = "3864220"; //NOT AVAILABLE - NOT USED
+const EPICAPP_ID = null;
+const GOGAPP_ID = null;
+const XBOXAPP_ID = "Seasun.StarsandIsland";
 const XBOXEXECNAME = "Game";
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, XBOXAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
-const GAME_NAME = "XXX";
-const GAME_NAME_SHORT = "XXX";
-const GAME_STRING = "XXX"; //string for exe and data folder (seem to always match)
-const GAME_STRING_ALT = GAME_STRING; //CHANGE THIS IF IT DOESN'T MATCH
+const GAME_NAME = "Starsand Island";
+const GAME_NAME_SHORT = "Starsand Island";
+const GAME_STRING = "StarsandIsland"; //string for exe and data folder (seem to always match)
+const GAME_STRING_ALT = GAME_STRING; //Xbox matches
 const EXEC = `${GAME_STRING}.exe`;
 const EXEC_EGS = EXEC;
 const EXEC_GOG = EXEC;
 const EXEC_XBOX = 'gamelaunchhelper.exe';
 const EXEC_ALT = EXEC_XBOX; //or `${GAME_STRING_ALT}.exe`
-const PCGAMINGWIKI_URL = "XXX";
-const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Starsand_Island";
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1701"; //Nexus link to this extension. Used for links
 
 //feature toggles
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
-const hasXbox = false; //toggle for Xbox version logic
+const hasXbox = true; //toggle for Xbox version logic
 const multiExe = false; //set to true if there are multiple executables (typically for Xbox/EGS)
 const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
 const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
@@ -62,12 +62,12 @@ let DATA_FOLDER = DATA_FOLDER_DEFAULT;
 const ALT_VERSION = 'xbox';
 const DATA_FOLDER_ALT = `${GAME_STRING_ALT}_Data`; //don't always match
 const ROOT_FOLDERS = [DATA_FOLDER, DATA_FOLDER_ALT];
-const VERSION_FILE = path.join('Version.info'); // LIKELY to change - usually .txt or .info file, i.e. - app.info/app.txt, Version.info, etc.
+const VERSION_FILE = path.join('StreamingAssets', 'Version.json'); // LIKELY to change - usually .txt or .info file, i.e. - app.info/app.txt, Version.info, etc.
 let VERSION_FILE_PATH = path.join(DATA_FOLDER, VERSION_FILE);
 
-const DEV_REGSTRING = "XXX"; //developer name
-const GAME_REGSTRING = "XXX"; //game name
-const XBOX_SAVE_STRING = 'XXX'; //string after "ID_"
+const DEV_REGSTRING = "SeedLab"; //developer name
+const GAME_REGSTRING = "StarsandIsland"; //game name
+const XBOX_SAVE_STRING = ''; //string after "ID_"
 
 //Data to determine BepinEx/MelonLoader versions and URLs
 const recommendedLoader = ''; // bepinex/melon/'' - loader shows as "(Recommended)" in selector. '' if no recommendation.
@@ -78,10 +78,10 @@ const BEP_BE_VER = '753'; //set BepInEx build for BE IL2CPP URLs
 const BEP_BE_COMMIT = 'dd0655f'; //git commit number for BE IL2CPP builds
 const allowBepCfgMan = false; //should BepInExConfigManager be downloaded?
 const allowMelPrefMan = false; //should MelonPreferencesManager be downloaded? False until figure out UniverseLib dependency
-const allowBepinexNexus = true; //allow Nexus Mods download of BepInEx/MelonLoader
-const allowMelonNexus = true; 
-const BEPINEX_PAGE_NO = 0;
-const BEPINEX_FILE_NO = 0;
+const allowBepinexNexus = true; //set false until bugs are fixed
+const allowMelonNexus = true; //set false until bugs are fixed
+const BEPINEX_PAGE_NO = 4;
+const BEPINEX_FILE_NO = 7;
 const BEPINEX_DOMAIN = GAME_ID;
 const MELON_PAGE_NO = 0;
 const MELON_FILE_NO = 0;
@@ -100,12 +100,27 @@ let customInstalled = false;
 const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 //Config and save paths
-const CONFIG_HIVE = 'HKEY_CURRENT_USER';
+/*const CONFIG_HIVE = 'HKEY_CURRENT_USER';
 const CONFIG_KEY = `Software\\${DEV_REGSTRING}\\${GAME_REGSTRING}`;
 const CONFIG_REGPATH_FULL = `${CONFIG_HIVE}\\${CONFIG_KEY}`; //*/
-//const CONFIG_PATH = path.join(LOCALLOW, DEV_REGSTRING, GAME_REGSTRING, 'Settings');
+const CONFIG_FOLDER = path.join(LOCALLOW, DEV_REGSTRING, GAME_REGSTRING, 'steam.pre');
+let USERID_FOLDER = "";
+function isDir(folder, file) {
+  const stats = fs.statSync(path.join(folder, file));
+  return stats.isDirectory();
+}
+try {
+  const CONFIG_ARRAY = fs.readdirSync(CONFIG_FOLDER);
+  USERID_FOLDER = CONFIG_ARRAY.find((entry) => isDir(CONFIG_FOLDER, entry));
+} catch(err) {
+  USERID_FOLDER = "";
+}
+if (USERID_FOLDER === undefined) {
+  USERID_FOLDER = "";
+} //*/
+const CONFIG_PATH = path.join(CONFIG_FOLDER, USERID_FOLDER);
 const CONFIG_FILES = ['settings.json'];
-const SAVE_PATH_DEFAULT = path.join(USER_HOME, 'AppData', 'LocalLow', DEV_REGSTRING, GAME_REGSTRING);
+const SAVE_PATH_DEFAULT = path.join(CONFIG_PATH, 'Save');
 const SAVE_PATH_XBOX = path.join(LOCALAPPDATA, "Packages", `${XBOXAPP_ID}_${XBOX_SAVE_STRING}`, "SystemAppData", "wgs"); //XBOX Version
 let SAVE_PATH = SAVE_PATH_DEFAULT;
 const SAVE_FILES = ['XXX.XXX'];
@@ -439,7 +454,7 @@ const tools = [
     //defaultPrimary: true,
     parameters: PARAMETERS,
   }, //*/
-  {
+  /*{
     id: `${GAME_ID}-customlaunchalt`,
     name: `Custom Launch`,
     logo: `exec.png`,
@@ -479,11 +494,6 @@ const tools = [
 ];
 
 // BASIC FUNCTIONS //////////////////////////////////////////////////////////////
-
-function isDir(folder, file) {
-  const stats = fs.statSync(path.join(folder, file));
-  return stats.isDirectory();
-}
 
 function statCheckSync(gamePath, file) {
   try {
@@ -711,7 +721,7 @@ function testBepinex(files, gameId) {
 function installBepinex(files) {
   const MOD_TYPE = BEPINEX_ID;
   const modFile = files.find(file => (path.basename(file) === BEPINEX_FOLDER));
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`); //find the index of the folder name
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
 
@@ -1603,6 +1613,8 @@ async function relaunchExt(api) {
 }
 //Function to choose mod loader
 async function chooseModLoader(api, gameSpec) {
+  await downloadBepinexNexus(api, gameSpec);
+  /*
   const CUSTOM_LABEL = `${CUSTOMLOADER_NAME} (Recommended)`;
   let BEP_LABEL = `BepInEx`;
   if (recommendedLoader === 'bepinex') {
@@ -1645,23 +1657,16 @@ async function chooseModLoader(api, gameSpec) {
       await downloadCustom(api, gameSpec);
     }
     if (result.action === BEP_LABEL) {
-      if (BEPINEX_PAGE_NO !== 0 && allowBepinexNexus) {
-        await downloadBepinex(api, gameSpec);
-      } else {
-        await downloadBepinexNexus(api, gameSpec);
-      }
+      await downloadBepinex(api, gameSpec);
     } else if (result.action === MEL_LABEL) {
-      if (MELON_PAGE_NO !== 0 && allowMelonNexus) {
-        await downloadMelon(api, gameSpec);
-      } else {
-        await downloadMelonNexus(api, gameSpec);
-      }
+      await downloadMelon(api, gameSpec);
     }
     if (hasCustomMods || loaderSwitchRestart) { //Run this if need to change a modType path based on the mod loader installed
       await deploy(api);
       relaunchExt(api);
     }
   });
+  //*/
 }
 //Deconflict mod loaders
 async function deconflictModLoaders(api, gameSpec) {
@@ -1799,7 +1804,7 @@ async function resolveGameVersion(gamePath) {
       return Promise.resolve(version);
     }
   } 
-  else { // use exe - just returns Unity version for now
+  else { // use exe
     try {
       const exeVersion = require('exe-version');
       version = exeVersion.getProductVersion(path.join(gamePath, EXEC));
@@ -1809,7 +1814,7 @@ async function resolveGameVersion(gamePath) {
       return Promise.resolve(version);
     }
   } //*/
-  /*else { //use text file - Not many games have a file with the version in it
+  /*else { //use text file
     const versionFilepath = path.join(gamePath, VERSION_FILE_PATH);
     try {
       const data = await fs.readFileAsync(versionFilepath, { encoding: 'utf8' });
@@ -2500,7 +2505,7 @@ async function downloadBepinexNexus(api, gameSpec) {
   }
 } //*/
 
-// Download MelonLoader latest from GitHub
+// Download MelonLoader
 async function downloadMelon(api, gameSpec) {
   let isInstalled = isMelonInstalled(api, gameSpec);
   if (!isInstalled) {
