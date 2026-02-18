@@ -1,9 +1,9 @@
 /*////////////////////////////////////////////////
-Name: XXX Vortex Extension
+Name: NORSE: Oath of Blood Vortex Extension
 Structure: Unreal Engine Game
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2026-XX-XX
+Date: 2026-02-18
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -25,25 +25,25 @@ const { parseStringPromise } = require('xml2js');
 const LOCALAPPDATA = util.getVortexPath('localAppData');
 
 //Specify all information about the game
-const GAME_ID = "XXX"; //same as Nexus domain
-const STEAMAPP_ID = "XXX"; //from steamdb.info
-const STEAMAPP_ID_DEMO = "XXX"; //VERIFY if the EPIC_CODE_NAME and EXEC_DEMO match Steam full game
-const EPICAPP_ID = "XXX"; //from egdata.app
-const GOGAPP_ID = "XXX"; // from gogdb.org
-const XBOXAPP_ID = "XXX"; //from appxmanifest.xml
+const GAME_ID = "norse"; //same as Nexus domain
+const STEAMAPP_ID = "3054690"; //from steamdb.info
+const STEAMAPP_ID_DEMO = "3920000"; //NOT AVAILABLE - NOT USED
+const EPICAPP_ID = ""; //NOT on egdata.app yet
+const GOGAPP_ID = "1225623266"; // from gogdb.org
+const XBOXAPP_ID = null; //from appxmanifest.xml
 const XBOXEXECNAME = "AppUEGameShipping"; //from appxmanifest.xml
-const XBOX_PUB_ID = "XXX"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const XBOX_PUB_ID = ""; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, GOGAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
-const GAME_NAME = "XXX";
-const GAME_NAME_SHORT = "XXX"; //Try for 8-10 characters
-const EPIC_CODE_NAME = "XXX"; //Folder in root
+const GAME_NAME = "NORSE: Oath of Blood";
+const GAME_NAME_SHORT = "NORSE OoB"; //Try for 8-10 characters
+const EPIC_CODE_NAME = "Norse"; //Folder in root
 const EXEC = `${EPIC_CODE_NAME}.exe`; //This is true ~80% of the time
 const EXEC_EPIC = EXEC; //change these 3 if different
 const EXEC_GOG = EXEC;
 const EXEC_DEMO = EXEC;
 const PARAMETERS_STRING = ''; //launch arguments to pass when launching the game
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Norse:_Oath_of_Blood";
 const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
 
 //feature toggles
