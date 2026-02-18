@@ -3,7 +3,7 @@ Name: HumanitZ Vortex Extension
 Structure: Unreal Engine Game
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2026-02-12
+Date: 2026-02-18
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -44,7 +44,7 @@ const EXEC_GOG = EXEC;
 const EXEC_DEMO = `${EPIC_CODE_NAME}_Demo.exe`;
 const PARAMETERS_STRING = ''; //launch arguments to pass when launching the game
 const PCGAMINGWIKI_URL = "";
-const EXTENSION_URL = "https://www.nexusmods.com/site/mods/691"; //Nexus link to this extension. Used for links
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1699"; //Nexus link to this extension. Used for links
 
 //feature toggles
 const hasXbox = false; //toggle for Xbox version logic.
@@ -55,9 +55,9 @@ if ( (EXEC !== EXEC_EPIC) || (EXEC !== EXEC_GOG) || (EXEC !== EXEC_DEMO) ) {
 const hasModKit = false; //toggle for UE ModKit mod support
 const preferHardlinks = true; //set true to perform partition checks when IO-STORE=false for Config/Save modtypes so that hardlinks available to more users
 const autoDownloadUe4ss = false; //toggle for auto downloading UE4SS
-const setupNotification = true; //toggle for notifying user of setup progress
+const setupNotification = false; //toggle for notifying user of setup progress
 const SIGBYPASS_REQUIRED = false; //set true if there are .sig files in the Paks folder
-const IO_STORE = true; //true if the Paks folder contains .ucas and .utoc files
+const IO_STORE = false; //true if the Paks folder contains .ucas and .utoc files
 
 //UE specific
 const ENGINE_VERSION = '5.X.X.0'; //Unreal Engine version - info only atm. usually '4.27.2.0' or '5.X.X.0'
@@ -2248,13 +2248,13 @@ function applyGame(context, gameSpec) {
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
+  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
     util.opn(PCGAMINGWIKI_URL).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
-  });
+  }); //*/
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
     util.opn(path.join(__dirname, 'CHANGELOG.md')).catch(() => null);
     }, () => {

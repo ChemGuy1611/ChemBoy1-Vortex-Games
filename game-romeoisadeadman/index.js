@@ -60,7 +60,7 @@ const SIGBYPASS_REQUIRED = false; //set true if there are .sig files in the Paks
 const IO_STORE = true; //true if the Paks folder contains .ucas and .utoc files
 
 //UE specific
-const ENGINE_VERSION = '5.X.X.0'; //Unreal Engine version - info only atm. usually '4.27.2.0' or '5.X.X.0'
+const ENGINE_VERSION = '5.6.1.0'; //Unreal Engine version - info only atm. usually '4.27.2.0' or '5.X.X.0'
 const ROOT_FOLDERS = [EPIC_CODE_NAME, 'Engine']; //addressable folders in root
 const ROOTSUB_FOLDERS = ['Content', 'Binaries', 'Mods']; //subfolders of EPIC_CODE_NAME. Don't use "Plugins" here since it can conflict with plugin loader/asi mods
 const SAVE_EXT = ".sav";

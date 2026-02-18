@@ -3,7 +3,7 @@ Name: Mass Effect: Andromeda Vortex Extension
 Structure: 3rd Party Mod Manager (Frosty)
 Author: ChemBoy1
 Version: 0.3.0
-Date: 2026-02-11
+Date: 2026-02-18
 /////////////////////////////////////////////*/
 
 //Import libraries
@@ -12,18 +12,23 @@ const path = require('path');
 const template = require('string-template');
 const winapi = require('winapi-bindings');
 
+const DOCUMENTS = util.getVortexPath("documents");
+
 //Specify all the information about the game
 const EAAPP_ID = "";
 const STEAMAPP_ID = "1238000";
+const EPICAPP_ID = ""; //NOT on egdata.app yet
 const GAME_ID = "masseffectandromeda";
 const GAME_NAME = "Mass Effect: Andromeda";
 const GAME_NAME_SHORT = "ME Andromeda";
 const EXEC = "MassEffectAndromeda.exe";
 const MOD_PATH_DEFAULT = path.join(".");
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Mass_Effect:_Andromeda";
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/877";
+
 let GAME_PATH = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
-const DOCUMENTS = util.getVortexPath("documents");
 
 //Info for modtypes, installers, and tools
 const BINARIES_ID = "masseffectandromeda-binaries";
@@ -63,10 +68,12 @@ const spec = {
     "details": {
       "steamAppId": +STEAMAPP_ID,
       //"EAAppId": EAAPP_ID,
+      "epicAppId": EPICAPP_ID,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
       //"EAAPPId": EAAPP_ID
+      "EpicAPPId": EPICAPP_ID,
     }
   },
   "modTypes": [
@@ -92,6 +99,7 @@ const spec = {
   "discovery": {
     "ids": [
       STEAMAPP_ID,
+      //EPICAPP_ID,
       //EAAPP_ID
     ],
     "names": []
@@ -111,6 +119,7 @@ const tools = [
     relative: true,
     detach: true,
     exclusive: true,
+    //shell: true,
     parameters: [
       '-launch Default',
     ],
@@ -127,9 +136,7 @@ const tools = [
     relative: true,
     detach: true,
     exclusive: true,
-    parameters: [
-      
-    ],
+    //parameters: [],
   }
 ];
 
@@ -149,7 +156,7 @@ function pathPattern(api, game, pattern) {
   return template(pattern, {
     gamePath: (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0 ? void 0 : _a.path,
     documents: util.getVortexPath('documents'),
-    localAppData: process.env['LOCALAPPDATA'],
+    localAppData: util.getVortexPath('localAppData'),
     appData: util.getVortexPath('appData'),
   });
 }
@@ -447,30 +454,42 @@ function applyGame(context, gameSpec) {
     return gameId === GAME_ID;
   }); //*/
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Frosty Mods Folder', () => {
-      const state = context.api.getState();
-      const discovery = selectors.discoveryByGame(state, GAME_ID);
-      const openPath = path.join(discovery.path, FROSTYMOD_PATH);
-      util.opn(openPath).catch(() => null);
-    }, () => {
-      const state = context.api.getState();
-      const gameId = selectors.activeGameId(state);
-      return gameId === GAME_ID;
-    });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
-    const openPath = path.join(__dirname, 'CHANGELOG.md');
+    const state = context.api.getState();
+    const discovery = selectors.discoveryByGame(state, GAME_ID);
+    const openPath = path.join(discovery.path, FROSTYMOD_PATH);
     util.opn(openPath).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
+    util.opn(PCGAMINGWIKI_URL).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
+    util.opn(path.join(__dirname, 'CHANGELOG.md')).catch(() => null);
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
+    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
-    const openPath = DOWNLOAD_FOLDER;
-    util.opn(openPath).catch(() => null);
-    }, () => {
-      const state = context.api.getState();
-      const gameId = selectors.activeGameId(state);
-      return gameId === GAME_ID;
+    util.opn(DOWNLOAD_FOLDER).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
   });
 }
 

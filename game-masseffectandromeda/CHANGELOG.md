@@ -4,7 +4,7 @@
 
 - None Planned
 
-## [0.3.0] - 2026-02-12
+## [0.3.0] - 2026-02-18
 
 - Fixed: Path strings
 - Added: Buttons to open several files/folders/URLs
