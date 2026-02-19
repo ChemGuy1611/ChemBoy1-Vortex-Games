@@ -1,9 +1,9 @@
 /*//////////////////////////////////////////
-Name: XXX Vortex Extension
+Name: Burglin' Gnomes Vortex Extension
 Structure: Unity BepinEx/MelonLoader Hybrid
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2026-XX-XX
+Date: 2026-02-18
 //////////////////////////////////////////*/
 
 //Import libraries
@@ -23,18 +23,18 @@ const LOCALLOW = path.join(USER_HOME, 'AppData', 'LocalLow');
 const LOCALAPPDATA = util.getVortexPath("localAppData");
 
 //Specify all the information about the game
-const GAME_ID = "XXX";
-const STEAMAPP_ID = "XXX";
-const STEAMAPP_ID_DEMO = "XXX";
-const EPICAPP_ID = "XXX";
-const GOGAPP_ID = "XXX";
-const XBOXAPP_ID = "XXX";
+const GAME_ID = "burglingnomes";
+const STEAMAPP_ID = "3844970";
+const STEAMAPP_ID_DEMO = "4356080";
+const EPICAPP_ID = null;
+const GOGAPP_ID = null;
+const XBOXAPP_ID = null;
 const XBOXEXECNAME = "Game";
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, STEAMAPP_ID_DEMO]; // UPDATE THIS WITH ALL VALID IDs
 
-const GAME_NAME = "XXX";
-const GAME_NAME_SHORT = "XXX";
-const GAME_STRING = "XXX"; //string for exe and data folder (seem to always match)
+const GAME_NAME = "Burglin' Gnomes";
+const GAME_NAME_SHORT = "Burglin' Gnomes";
+const GAME_STRING = "Gnomium"; //string for exe and data folder (seem to always match)
 const GAME_STRING_ALT = GAME_STRING; //CHANGE THIS IF IT DOESN'T MATCH
 const EXEC = `${GAME_STRING}.exe`;
 const EXEC_EGS = EXEC;
@@ -42,8 +42,8 @@ const EXEC_GOG = EXEC;
 const EXEC_DEMO = EXEC;
 const EXEC_XBOX = 'gamelaunchhelper.exe';
 const EXEC_ALT = EXEC_XBOX; //or `${GAME_STRING_ALT}.exe`
-const PCGAMINGWIKI_URL = "XXX";
-const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "";
+const EXTENSION_URL = ""; //Nexus link to this extension. Used for links
 
 //feature toggles
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
@@ -63,22 +63,16 @@ let DATA_FOLDER = DATA_FOLDER_DEFAULT;
 const ALT_VERSION = 'xbox';
 const DATA_FOLDER_ALT = `${GAME_STRING_ALT}_Data`; //don't always match
 const ROOT_FOLDERS = [DATA_FOLDER, DATA_FOLDER_ALT];
-const VERSION_FILE = path.join('Version.info'); // LIKELY to change - usually .txt or .info file, i.e. Version.info. app.info typically does NOT contain version number
+const VERSION_FILE = path.join('Version.info'); // LIKELY to change - usually .txt or .info file, i.e. - app.info/app.txt, Version.info, etc.
 let VERSION_FILE_PATH = path.join(DATA_FOLDER, VERSION_FILE);
-const hasVersionFile = false; //set to true if there is a Version.info file that contains the game version number
-const VER_IDX = 3; //index of the version number in the Version.info file
-const VER_SPLIT = ' '; //split character for the Version.info file - typically a space
 
-const DEV_REGSTRING = "XXX"; //developer name
-const GAME_REGSTRING = "XXX"; //game name
-const XBOX_SAVE_STRING = "XXX"; //string after "ID_"
-const CONFIG_FOLDERNAME = "XXX";
-const SAVE_FOLDERNAME = "XXX";
-const hasUserIdFolder = false; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
+const DEV_REGSTRING = ""; //developer name
+const GAME_REGSTRING = ""; //game name
+const XBOX_SAVE_STRING = ""; //string after "ID_"
 
 //Data to determine BepinEx/MelonLoader versions and URLs
 const recommendedLoader = ''; // bepinex/melon/'' - loader shows as "(Recommended)" in selector. '' if no recommendation.
-const BEPINEX_BUILD = 'il2cpp'; // 'mono' or 'il2cpp' - check for "il2cpp_data" folder
+const BEPINEX_BUILD = 'mono'; // 'mono' or 'il2cpp' - check for "il2cpp_data" folder
 const ARCH = 'x64'; //'x64' or 'x86' game architecture (64-bit or 32-bit)
 const BEP_VER = '5.4.23.5'; //set BepInEx version for mono URLs
 const BEP_BE_VER = '753'; //set BepInEx build for BE IL2CPP URLs
@@ -110,22 +104,9 @@ const APPMANIFEST_FILE = 'appxmanifest.xml';
 const CONFIG_HIVE = 'HKEY_CURRENT_USER';
 const CONFIG_KEY = `Software\\${DEV_REGSTRING}\\${GAME_REGSTRING}`;
 const CONFIG_REGPATH_FULL = `${CONFIG_HIVE}\\${CONFIG_KEY}`; //*/
-const CONFIG_FOLDER = path.join(LOCALLOW, DEV_REGSTRING, GAME_REGSTRING);
-let USERID_FOLDER = "";
-if (hasUserIdFolder) {
-  try {
-    const CONFIG_ARRAY = fs.readdirSync(CONFIG_FOLDER);
-    USERID_FOLDER = CONFIG_ARRAY.find((entry) => isDir(CONFIG_FOLDER, entry));
-  } catch(err) {
-    USERID_FOLDER = "";
-  }
-  if (USERID_FOLDER === undefined) {
-    USERID_FOLDER = "";
-  } //*/
-}
-const CONFIG_PATH = path.join(CONFIG_FOLDER, USERID_FOLDER, CONFIG_FOLDERNAME);
+//const CONFIG_PATH = path.join(LOCALLOW, DEV_REGSTRING, GAME_REGSTRING, 'Settings');
 const CONFIG_FILES = ['settings.json'];
-const SAVE_PATH_DEFAULT = path.join(LOCALLOW, DEV_REGSTRING, GAME_REGSTRING, USERID_FOLDER, SAVE_FOLDERNAME);
+const SAVE_PATH_DEFAULT = path.join(USER_HOME, 'AppData', 'LocalLow', DEV_REGSTRING, GAME_REGSTRING);
 const SAVE_PATH_XBOX = path.join(LOCALAPPDATA, "Packages", `${XBOXAPP_ID}_${XBOX_SAVE_STRING}`, "SystemAppData", "wgs"); //XBOX Version
 let SAVE_PATH = SAVE_PATH_DEFAULT;
 const SAVE_FILES = ['XXX.XXX'];
@@ -445,13 +426,26 @@ const spec = {
 };
 
 //3rd party tools and launchers
-let tools = [
+const tools = [
   {
     id: `${GAME_ID}-customlaunch`,
     name: `Custom Launch`,
     logo: `exec.png`,
     executable: () => EXEC,
     requiredFiles: [EXEC],
+    detach: true,
+    relative: true,
+    exclusive: true,
+    shell: true,
+    //defaultPrimary: true,
+    parameters: PARAMETERS,
+  }, //*/
+  /*{
+    id: `${GAME_ID}-customlaunchalt`,
+    name: `Custom Launch`,
+    logo: `exec.png`,
+    executable: () => EXEC_ALT,
+    requiredFiles: [EXEC_ALT],
     detach: true,
     relative: true,
     exclusive: true,
@@ -471,41 +465,19 @@ let tools = [
     //shell: true,
     //parameters: [],
   }, //*/
+  /*{
+    id: CUSTOMLOADER_ID,
+    name: `${CUSTOMLOADER_NAME} Installer`,
+    logo: `customloader.png`,
+    executable: () => path.join(CUSTOMLOADER_FOLDER, CUSTOMLOADER_EXEC),
+    requiredFiles: [path.join(CUSTOMLOADER_FOLDER, CUSTOMLOADER_EXEC)],
+    detach: true,
+    relative: true,
+    exclusive: true,
+    //shell: true,
+    //parameters: [],
+  }, //*/
 ];
-
-if (multiExe) {
-  tools.push(
-    {
-      id: `${GAME_ID}-customlaunchalt`,
-      name: `Custom Launch`,
-      logo: `exec.png`,
-      executable: () => EXEC_ALT,
-      requiredFiles: [EXEC_ALT],
-      detach: true,
-      relative: true,
-      exclusive: true,
-      shell: true,
-      //defaultPrimary: true,
-      parameters: PARAMETERS,
-    },
-  );
-}
-if (customLoaderInstaller) {
-  tools.push(
-    {
-      id: CUSTOMLOADER_ID,
-      name: `${CUSTOMLOADER_NAME} Installer`,
-      logo: `customloader.png`,
-      executable: () => path.join(CUSTOMLOADER_FOLDER, CUSTOMLOADER_EXEC),
-      requiredFiles: [path.join(CUSTOMLOADER_FOLDER, CUSTOMLOADER_EXEC)],
-      detach: true,
-      relative: true,
-      exclusive: true,
-      //shell: true,
-      //parameters: [],
-    },
-  );
-}
 
 // BASIC FUNCTIONS //////////////////////////////////////////////////////////////
 
@@ -1817,19 +1789,6 @@ async function resolveGameVersion(gamePath) {
   GAME_VERSION = await setGameVersion(gamePath);
   VERSION_FILE_PATH = path.join(DATA_FOLDER, VERSION_FILE);
   let version = '0.0.0';
-  if (hasVersionFile) { //use text file - Not many games have a Version.info file with the version in it
-    const versionFilePath = path.join(gamePath, VERSION_FILE_PATH);
-    try {
-      const data = await fs.readFileAsync(versionFilePath, { encoding: 'utf8' });
-      const segments = data.split(VER_SPLIT); //space is usually the split for Version.info files
-      return (segments[VER_IDX]) 
-        ? Promise.resolve(segments[VER_IDX])
-        : Promise.reject(new util.DataInvalid('Failed to resolve version'));
-    } catch (err) {
-      log('error', `Could not read ${VERSION_FILE} file to get game version: ${err}`);
-      return Promise.resolve(version);
-    }
-  } //*/
   if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
     try {
       const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
@@ -1841,7 +1800,7 @@ async function resolveGameVersion(gamePath) {
       return Promise.resolve(version);
     }
   } 
-  else { // use exe - only returns Unity version
+  else { // use exe - just returns Unity version for now
     try {
       const exeVersion = require('exe-version');
       version = exeVersion.getProductVersion(path.join(gamePath, EXEC));
@@ -1849,6 +1808,18 @@ async function resolveGameVersion(gamePath) {
     } catch (err) {
       log('error', `Could not read ${EXEC} file to get game version: ${err}`);
       return Promise.resolve(version);
+    }
+  } //*/
+  /*else { //use text file - Not many games have a file with the version in it
+    const versionFilepath = path.join(gamePath, VERSION_FILE_PATH);
+    try {
+      const data = await fs.readFileAsync(versionFilepath, { encoding: 'utf8' });
+      const segments = data.split(' ');
+      return (segments[3]) 
+        ? Promise.resolve(segments[3])
+        : Promise.reject(new util.DataInvalid('Failed to resolve version'));
+    } catch (err) {
+      return Promise.reject(err);
     }
   } //*/
 } //*/
@@ -2125,7 +2096,7 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(BEPCFGMAN_ID, 29, testBepCfgMan, installBepCfgMan);
   context.registerInstaller(MELONPREFMAN_ID, 30, testMelonPrefMan, installMelonPrefMan);
   context.registerInstaller(ASSEMBLY_ID, 31, testAssembly, installAssembly);
-  //32 - if there are other known dll files that are not loader plugins, add installers for them here
+  //if there are other known dll files that are not loader plugins, add installers for them here
   context.registerInstaller(`${GAME_ID}-plugin`, 33, testPlugin, (files, workingDir) => installPlugin(context.api, gameSpec, files, workingDir));
   context.registerInstaller(ASSETS_ID, 37, testAssets, installAssets);
   if (hasCustomMods) {
