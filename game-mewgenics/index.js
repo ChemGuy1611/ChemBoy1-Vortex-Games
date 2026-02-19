@@ -129,6 +129,10 @@ const SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER, "saves");
 const SAVE_EXTS = [".sav"];
 const SAVE_FILES = ["XXX"];
 
+const SAVE_EDITOR_ID = `${GAME_ID}-saveeeditor`;
+const SAVE_EDITOR_NAME = `MewgenicsSaveEditor`;
+const SAVE_EDITOR_EXEC = "MewgenicsSaveEditor.exe";
+
 const MOD_PATH_DEFAULT = '.';
 const REQ_FILE = EXEC;
 let PARAMETERS = [];
@@ -184,6 +188,12 @@ const spec = {
       "id": ROOT_ID,
       "name": ROOT_NAME,
       "priority": "high",
+      "targetPath": `{gamePath}`
+    },
+    {
+      "id": SAVE_EDITOR_ID,
+      "name": SAVE_EDITOR_NAME,
+      "priority": "low",
       "targetPath": `{gamePath}`
     },
   ],
@@ -401,6 +411,47 @@ function installLoader(files) {
       type: 'copy',
       source: file,
       destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Test for Save Editor files
+function testSaveEditor(files, gameId) {
+  const isMod = files.some(file => path.basename(file) === SAVE_EDITOR_EXEC);
+  let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install Save Editor files
+function installSaveEditor(files) {
+  const MOD_TYPE = SAVE_EDITOR_ID;
+  const modFile = files.find(file => path.basename(file) === SAVE_EDITOR_EXEC);
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join('MewgenicsSaveEditor', file.substr(idx)),
     };
   });
   instructions.push(setModTypeInstruction);
@@ -828,11 +879,11 @@ async function setParameters(loadOrder) {
   const modPaths = loadOrder.map(mod => `"${path.join(GAME_PATH, MOD_PATH, mod)}"`);
   const param2 = `-modpaths ${modPaths.join(' ')}`;
   //log ('warn', `Params: ${param1} ${param2}`);
-  PARAMETERS = [param1, param2];
+  PARAMETERS = [param2];
   const contents = `@echo off
 echo Launching ${GAME_NAME} with mods...
-echo Using parameters: ${param1} ${param2}
-"${path.join(GAME_PATH, EXEC)}" ${param1} ${param2}
+echo Using parameters: ${PARAMETERS.join(' ')}
+"${path.join(GAME_PATH, EXEC)}" ${PARAMETERS.join(' ')}
 exit`; //*/
   //const contents = `"${path.join(GAME_PATH, EXEC)}" ${param1} ${param2}`;
   await fs.writeFileAsync( //write to .bat file
@@ -1098,6 +1149,20 @@ function applyGame(context, gameSpec) {
         detach: true,
         //defaultPrimary: true,
       }, //*/
+      {
+        id: SAVE_EDITOR_ID,
+        name: SAVE_EDITOR_NAME,
+        logo: 'saveeditor.png',
+        executable: () => SAVE_EDITOR_EXEC,
+        requiredFiles: [
+          SAVE_EDITOR_EXEC,
+        ],
+        relative: true,
+        exclusive: true,
+        //shell: true,
+        detach: true,
+        //defaultPrimary: true,
+      }, //*/
     ],
   };
   context.registerGame(game);
@@ -1143,6 +1208,7 @@ function applyGame(context, gameSpec) {
   
   //register mod installers
   context.registerInstaller(LOADER_ID, 25, testLoader, installLoader);
+  context.registerInstaller(SAVE_EDITOR_ID, 26, testSaveEditor, installSaveEditor);
   context.registerInstaller(MOD_ID, 27, testMod, installMod);
   //context.registerInstaller(CONFIG_ID, 43, testConfig, installConfig);
   //context.registerInstaller(SAVE_ID, 45, testSave, installSave);
@@ -1223,6 +1289,7 @@ function main(context) {
       toggleableEntries: true,
       usageInstructions:`Drag and drop the mods on the left to change the order in which they load.   \n`
                         +`${GAME_NAME} loads mods in the order you set from top to bottom.   \n`
+                        +`Note that mods at the TOP take priority of mods at the BOTTOM.   \n`
                         +`\n`,
     });
   }
