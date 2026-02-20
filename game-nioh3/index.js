@@ -2,8 +2,8 @@
 Name: Nioh 3 Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2026-02-04
+Version: 0.2.0
+Date: 2026-02-20
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -11,6 +11,7 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 const { parseStringPromise } = require('xml2js');
+const { copy } = require('fs-extra');
 //const fsPromises = require('fs/promises'); //.rm() for recursive folder deletion
 //const fsExtra = require('fs-extra');
 //const winapi = require('winapi-bindings');
@@ -34,9 +35,7 @@ const XBOX_PUB_ID = ""; //get from Save folder. '8wekyb3d8bbwe' if published by 
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, STEAMAPP_ID_DEMO]; // UPDATE THIS WITH ALL VALID IDs
 const GAME_NAME = "Nioh 3";
 const GAME_NAME_SHORT = "Nioh 3";
-const BINARIES_PATH = path.join('.');
-const EXEC_NAME = "Nioh3.exe";
-const EXEC = path.join(BINARIES_PATH, EXEC_NAME);
+const EXEC = "Nioh3.exe";
 const EXEC_EGS = EXEC;
 const EXEC_GOG = EXEC;
 const EXEC_DEMO = EXEC;
@@ -45,21 +44,17 @@ const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1676"; //Nexus link t
 
 //feature toggles
 const modInstallerEnabled = false; //enable mod installer (once mod loader is added)
-const hasLoader = false; //Set true once mod loader is added
+const hasLoader = true; //for DLL Loader
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
 const rootInstaller = false; //enable root installer. Set false if you need to avoid installer collisions
-const fallbackInstaller = false; //enable fallback installer. Set false if you need to avoid installer collisions
+const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
 const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
 const hasUserIdFolder = false; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
-const debug = false; //toggle for debug mode
-let binariesInstaller = false;
-if (BINARIES_PATH !== '.') {
-    binariesInstaller = true; //only enable Binaries installer if not in root
-}
+const debug = true; //toggle for debug mode
 
 //info for modtypes, installers, tools, and actions
 const DATA_FOLDER = 'archive';
-const ROOT_FOLDERS = [DATA_FOLDER, 'package'];
+const ROOT_FOLDERS = [DATA_FOLDER]; // "package" not included as it's in a separate installer
 
 const CONFIGMOD_LOCATION = LOCALAPPDATA;
 const SAVEMOD_LOCATION = LOCALAPPDATA;
@@ -81,19 +76,34 @@ const MOD_PATH_XBOX = MOD_PATH;
 const MOD_MARKER_EXT = '.ini';
 const MOD_EXTS = ['.fmt', '.vb', '.ib', '.dds'];
 
-const LOADER_ID = `${GAME_ID}-loader`;
-const LOADER_NAME = "Mod Loader";
-const LOADER_PATH = BINARIES_PATH;
-const LOADER_FILE = 'd3d11.dll';
-const LOADER_PAGE_NO = 0;
-const LOADER_FILE_NO = 0;
+const LOADER_ID = `${GAME_ID}-dllloader`;
+const LOADER_NAME = "DLL Plugin Loader";
+const LOADER_PATH = '.';
+const LOADER_FILE = 'dinput8.dll';
+const LOADER_PAGE_NO = 49;
+const LOADER_FILE_NO = 101;
 const LOADER_DOMAIN = GAME_ID;
+
+const LOADER_MOD_ID = `${GAME_ID}-loadermod`;
+const LOADER_MOD_NAME = "Plugin Mod";
+const LOADER_MOD_PATH = 'plugins';
+const LOADER_MOD_EXTS = ['.dll', '.asi'];
+
+const YUMIA_ID = `${GAME_ID}-yumia`;
+const YUMIA_NAME = "Yumia fdata Tools";
+const YUMIA_PATH = 'package';
+const YUMIA_FILE = 'yumia_mod_insert_into_rdb.exe';
+const YUMIA_URL = `https://github.com/eArmada8/yumia_fdata_tools/releases/latest/download/${YUMIA_FILE}`;
+const YUMIA_URL_ERR = `https://github.com/eArmada8/yumia_fdata_tools/releases`;
+
+const YUMIA_MOD_ID = `${GAME_ID}-fdatayumia`;
+const YUMIA_MOD_NAME = ".fdata Package (Yumia)";
+const YUMIA_MOD_PATH = '.';
+const YUMIA_MOD_FOLDER = 'package';
+const YUMIA_MOD_EXTS = ['.fdata', '.yumiamod.json'];
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Folder";
-
-const BINARIES_ID = `${GAME_ID}-binaries`;
-const BINARIES_NAME = "Binaries (Engine Injector)";
 
 const CONFIG_ID = `${GAME_ID}-config`;
 const CONFIG_NAME = "Config";
@@ -120,20 +130,12 @@ const SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
 const SAVE_EXTS = [".XXX"];
 const SAVE_FILES = ["XXX"];
 
-/* tool info (i.e. save editor)
-const TOOL_ID = `${GAME_ID}-tool`;
-const TOOL_NAME = "XXX";
-const TOOL_EXEC_FOLDER = path.join('XXX');
-const TOOL_EXEC = 'XXX.exe';
-const TOOL_EXEC_PATH = path.join(TOOL_EXEC_FOLDER, TOOL_EXEC);
-//*/
-
 const MOD_PATH_DEFAULT = '.';
 const REQ_FILE = EXEC;
 const PARAMETERS_STRING = '';
 const PARAMETERS = [PARAMETERS_STRING];
 
-let MODTYPE_FOLDERS = [MOD_PATH, BINARIES_PATH];
+let MODTYPE_FOLDERS = [MOD_PATH, LOADER_MOD_PATH, YUMIA_PATH];
 const IGNORE_CONFLICTS = [path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
 const IGNORE_DEPLOY = [path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
 
@@ -186,21 +188,30 @@ const spec = {
       "priority": "high",
       "targetPath": `{gamePath}`
     },
+    {
+      "id": LOADER_MOD_ID,
+      "name": LOADER_MOD_NAME,
+      "priority": "high",
+      "targetPath": path.join("{gamePath}", LOADER_MOD_PATH)
+    },
+    {
+      "id": YUMIA_MOD_ID,
+      "name": YUMIA_MOD_NAME,
+      "priority": "high",
+      "targetPath": path.join("{gamePath}", YUMIA_MOD_PATH)
+    },
+    {
+      "id": YUMIA_ID,
+      "name": YUMIA_NAME,
+      "priority": "low",
+      "targetPath": path.join("{gamePath}", YUMIA_PATH)
+    },
   ],
   "discovery": {
     "ids": DISCOVERY_IDS_ACTIVE,
     "names": []
   }
 };
-//think of a way to tell if the mod path is not in the game folder, only add ROOT modType if it is
-if (binariesInstaller) {
-  spec.modTypes.push({
-    "id": BINARIES_ID,
-    "name": BINARIES_NAME,
-    "priority": "high",
-    "targetPath": path.join("{gamePath}", BINARIES_PATH)
-  });
-}
 
 //3rd party tools and launchers
 const tools = [ //accepts: exe, jar, py, vbs, bat
@@ -220,33 +231,17 @@ const tools = [ //accepts: exe, jar, py, vbs, bat
     parameters: PARAMETERS,
   }, //*/
   {
-    id: `${GAME_ID}-customlaunchxbox`,
-    name: 'Custom Launch',
-    logo: 'exec.png',
-    executable: () => EXEC_XBOX,
+    id: YUMIA_ID,
+    name: YUMIA_NAME,
+    logo: 'yumia.png',
+    executable: () => YUMIA_FILE,
     requiredFiles: [
-      EXEC_XBOX,
+      YUMIA_FILE,
     ],
     relative: true,
     exclusive: true,
     shell: true,
-    //defaultPrimary: true,
-    parameters: PARAMETERS,
-  }, //*/
-  /*{
-    id: TOOL_ID,
-    name: TOOL_NAME,
-    logo: 'tool.png',
-    //queryPath: () => TOOL_EXEC_FOLDER,
-    executable: () => TOOL_EXEC,
-    requiredFiles: [
-      TOOL_EXEC,
-    ],
-    relative: true,
-    exclusive: true,
-    //shell: true,
-    //defaultPrimary: true,
-    //parameters: PARAMETERS,
+    //parameters: [],
   }, //*/
 ];
 
@@ -306,17 +301,6 @@ function makeGetModPath(api, gameSpec) {
     ? gameSpec.game.modPath || '.'
     : pathPattern(api, gameSpec.game, gameSpec.game.modPath);
 }
-
-//* Get mod path dynamically for different game versions
-function getModPath(discoveryPath) {
-  if (statCheckSync(discoveryPath, EXEC_XBOX)) {
-    GAME_VERSION = 'xbox';
-    return MOD_PATH_XBOX;
-  };
-  //add GOG/EGS/Demo versions here if needed
-  GAME_VERSION = 'default';
-  return MOD_PATH;
-} //*/
 
 //Find game installation directory
 function makeFindGame(api, gameSpec) {
@@ -455,6 +439,226 @@ function installLoader(files) {
   return Promise.resolve({ instructions });
 }
 
+//Test for Yumia executable
+function testYumia(files, gameId) {
+  const isMod = files.some(file => path.basename(file).toLowerCase() === YUMIA_FILE);
+  let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install Yumia executable
+function installYumia(files) {
+  const MOD_TYPE = YUMIA_ID;
+  const modFile = files.find(file => path.basename(file).toLowerCase() === YUMIA_FILE);
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Test for Plugin Mod
+function testLoaderMod(files, gameId) {
+  const isMod = files.some(file => LOADER_MOD_EXTS.includes(path.extname(file).toLowerCase()));
+  let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install Plugin Mod
+function installLoaderMod(files) {
+  const MOD_TYPE = LOADER_MOD_ID;
+  const modFile = files.find(file => LOADER_MOD_EXTS.includes(path.extname(file).toLowerCase()));
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Test for Yumia mod (.fdata)
+function testYumiaMod(files, gameId) {
+  //const isMod = files.some(file => path.basename(file).toLowerCase() === YUMIA_MOD_FOLDER);
+  const isMod = files.some(file => YUMIA_MOD_EXTS.includes(path.extname(file).toLowerCase()));
+  let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install Yumia mod (.fdata)
+function installYumiaMod(files, api) {
+  const MOD_TYPE = YUMIA_MOD_ID;
+
+  const hasFolder = files.some(file => path.basename(file).toLowerCase() === YUMIA_MOD_FOLDER);
+  if (!hasFolder) { //if no "package" folder, install normally
+    const modFile = files.find(file => YUMIA_MOD_EXTS.includes(path.extname(file).toLowerCase()));
+    const idx = modFile.indexOf(path.basename(modFile));
+    const rootPath = path.dirname(modFile);
+    const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+
+    // Remove directories and anything that isn't in the rootPath.
+    const filtered = files.filter(file =>
+      ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+    );
+    const instructions = filtered.map(file => {
+      return {
+        type: 'copy',
+        source: file,
+        destination: path.join(YUMIA_MOD_FOLDER, file.substr(idx)),
+      };
+    });
+    instructions.push(setModTypeInstruction);
+    return Promise.resolve({ instructions });
+  }
+
+  //USE variant handler
+  let hasVariants = false;
+  const packageFolders = files.reduce((accum, file) => {
+    if (path.basename(file).toLowerCase() === YUMIA_MOD_FOLDER) {
+      const exists = accum[path.basename(file)] !== undefined;
+      if (exists) {
+        hasVariants = true;
+      }
+      accum[path.basename(file)] = exists
+        ? accum[path.basename(file)].concat(file)
+        : [file];
+    }
+    return accum;
+  }, {});
+
+  let filtered = files.filter(file => (
+    file.includes(YUMIA_MOD_FOLDER)
+    && !file.endsWith(path.sep)
+  ));
+
+  const queryVariant = () => {
+    const package = Object.keys(packageFolders).filter(key => packageFolders[key].length > 1);
+    return Promise.map(package, idx => {
+      return api.showDialog('question', 'Choose Variant', {
+        text: 'This mod has several variants for the the "package" folder - please '
+            + 'choose one or more variants you wish to install. (You can change your selection '
+            + 'by re-installing the mod)',
+        checkboxes: packageFolders[idx].map((iter) => ({ 
+          id: iter,
+          text: iter,
+          value: false,
+        })),
+        }, [
+          { label: 'Cancel' },
+          { label: 'Install Selected' },
+          { label: 'Install All_plural' }
+        ]).then((result) => {
+          if (result.action === 'Cancel')
+            return Promise.reject(new util.UserCanceled('User cancelled.'));
+          else {
+            const installAll = (result.action === 'Install All' || result.action === 'Install All_plural');
+            filtered = installAll 
+            ? filtered
+            : createFileArray(result.input); //need to tease the data out to a simple array of all files that contain selcted folder(s)
+            /*
+            : Object.keys(result.input).filter(s => result.input[s]) 
+              //.map(file => file);
+              //.map(folder => filtered.filter(file => file.includes(folder)));
+              .forEach(folder => filtered.filter(file => file.includes(folder))); //*/
+            return Promise.resolve();
+          }
+        });
+    })
+  };
+
+  const createFileArray = (input) => {
+    const selectedFolders = Object.keys(input).filter(s => input[s]); //array of paths to each selected "package" folder
+    if (debug) log('warn', `selectedFolders: ${selectedFolders.join(', ')}`);
+    let filesArray = [];
+    selectedFolders.forEach(folder => {
+      const folderFiles = filtered.filter(file => file.includes(folder));
+      if (debug) log('warn', `folderFiles: ${folderFiles.join(', ')}`);
+      filesArray = [...filesArray, ...folderFiles]; //Spread operator works fine
+      //filesArray = Array.from(new Set(filesArray)); //didn't try this
+      //filesArray = filesArray.concat(folderFiles); //does NOT work for some reason...
+    });
+    if (debug) log('warn', `filesArray: ${filesArray.join(', ')}`);
+    return filesArray;
+  }
+
+  const generateInstructions = () => {
+    const fileInstructions = filtered.reduce((accum, file) => {
+      const idx = file.indexOf(YUMIA_MOD_FOLDER);
+      accum.push({
+        type: 'copy',
+        source: file,
+        destination: path.join(file.substr(idx)),
+        //destination: file,
+      });
+      return accum;
+    }, []);
+    const instructions = [{ 
+      type: 'setmodtype',
+      value: MOD_TYPE,
+    }].concat(fileInstructions);
+    return instructions;
+  }
+
+  const prom = hasVariants ? queryVariant : Promise.resolve;
+  return prom()
+    .then(() => Promise.resolve({ instructions: generateInstructions() }));
+}
+
 //Test for mod files
 function testMod(files, gameId) {
   const isMod = files.some(file => MOD_EXTS.includes(path.extname(file).toLowerCase()));
@@ -542,41 +746,6 @@ function installRoot(files) {
       type: 'copy',
       source: file,
       destination: path.join(file.substr(idx)),
-    };
-  });
-  instructions.push(setModTypeInstruction);
-  return Promise.resolve({ instructions });
-}
-
-//Fallback installer to Binaries folder
-function testBinaries(files, gameId) {
-  let supported = (gameId === spec.game.id);
-
-  // Test for a mod installer.
-  if (supported && files.find(file =>
-    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
-    supported = false;
-  }
-
-  return Promise.resolve({
-    supported,
-    requiredFiles: [],
-  });
-}
-
-//Fallback installer to Binaries folder
-function installBinaries(files) {
-  const setModTypeInstruction = { type: 'setmodtype', value: BINARIES_ID };
-  
-  const filtered = files.filter(file =>
-    (!file.endsWith(path.sep))
-  );
-  const instructions = filtered.map(file => {
-    return {
-      type: 'copy',
-      source: file,
-      destination: file,
     };
   });
   instructions.push(setModTypeInstruction);
@@ -688,6 +857,13 @@ function isLoaderInstalled(api, spec) {
   return Object.keys(mods).some(id => mods[id]?.type === LOADER_ID);
 }
 
+//Check if Yumia is installed
+function isYumiaInstalled(api, spec) {
+  const state = api.getState();
+  const mods = state.persistent.mods[spec.game.id] || {};
+  return Object.keys(mods).some(id => mods[id]?.type === YUMIA_ID);
+}
+
 //* Function to auto-download mod loader from Nexus Mods
 async function downloadLoader(api, gameSpec) {
   let isInstalled = isLoaderInstalled(api, gameSpec);
@@ -753,6 +929,51 @@ async function downloadLoader(api, gameSpec) {
     }
   }
 } //*/
+
+// Download Yumia from GitHub
+async function downloadYumia(api, gameSpec) {
+  let isInstalled = isYumiaInstalled(api, gameSpec);
+  if (!isInstalled) {
+    const MOD_NAME = YUMIA_NAME;
+    const MOD_TYPE = YUMIA_ID;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
+    const GAME_DOMAIN = gameSpec.game.id;
+    api.sendNotification({ //notification indicating install process
+      id: NOTIF_ID,
+      message: `Installing ${MOD_NAME}`,
+      type: 'activity',
+      noDismiss: true,
+      allowSuppress: false,
+    });
+    try {
+      const URL = YUMIA_URL;
+      const dlInfo = { //Download the mod
+        game: GAME_DOMAIN,
+        name: MOD_NAME,
+      };
+      //const dlInfo = {};
+      const dlId = await util.toPromise(cb =>
+        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+      const modId = await util.toPromise(cb =>
+        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
+      const batched = [
+        actions.setModsEnabled(api, profileId, [modId], true, {
+          allowAutoDeploy: true,
+          installed: true,
+        }),
+        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
+      ];
+      util.batchDispatch(api.store, batched); // Will dispatch both actions
+    } catch (err) { //Show the user the download page if the download, install process fails
+      const errPage = YUMIA_URL_ERR;
+      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err, { allowReport: false });
+      util.opn(errPage).catch(() => null);
+    } finally {
+      api.dismissNotification(NOTIF_ID);
+    }
+  }
+}
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
@@ -839,6 +1060,14 @@ async function setup(discovery, api, gameSpec) {
   if (hasLoader) {
     await downloadLoader(api, gameSpec);
   }
+  //await downloadYumia(api, gameSpec);
+  const source = path.join(__dirname, 'yumia', YUMIA_FILE);
+  const destination = path.join(GAME_PATH, YUMIA_MOD_FOLDER, YUMIA_FILE);
+  try {
+    await fs.copyAsync(source, destination, { overwrite: true });
+  } catch (err) {
+    api.showErrorNotification('Failed to copy Yumia executable to game folder', err, { allowReport: false });
+  }
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 
@@ -850,7 +1079,6 @@ function applyGame(context, gameSpec) {
     executable: () => gameSpec.game.executable,
     //executable: getExecutable,
     queryModPath: makeGetModPath(context.api, gameSpec),
-    //queryModPath: getModPath,
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     //getGameVersion: resolveGameVersion,
@@ -903,16 +1131,17 @@ function applyGame(context, gameSpec) {
   if (hasLoader) {
     context.registerInstaller(LOADER_ID, 25, testLoader, installLoader);
   }
+  //context.registerInstaller(MODLOADER_ID, 26, testModLoader, installModLoader); //FUTURE - for data mods, like Nioh 2
+  context.registerInstaller(YUMIA_ID, 27, testYumia, installYumia);
   if (modInstallerEnabled) {
-    context.registerInstaller(MOD_ID, 27, testMod, installMod);
+    context.registerInstaller(MOD_ID, 29, testMod, installMod); //FUTURE - for data mods, like Nioh 2
   }
+  context.registerInstaller(LOADER_MOD_ID, 31, testLoaderMod, installLoaderMod);
+  context.registerInstaller(YUMIA_MOD_ID, 33, testYumiaMod, (files) => installYumiaMod(files, context.api));
   //context.registerInstaller(CONFIG_ID, 43, testConfig, installConfig);
   //context.registerInstaller(SAVE_ID, 45, testSave, installSave);
   if (rootInstaller) {
     context.registerInstaller(ROOT_ID, 47, testRoot, installRoot);
-  }
-  if (binariesInstaller) {
-    context.registerInstaller(BINARIES_ID, 48, testBinaries, installBinaries);
   }
   if (fallbackInstaller) {
     context.registerInstaller(`${GAME_ID}-fallback`, 49, testFallback, (files, destinationPath) => installFallback(context.api, files, destinationPath));
@@ -968,9 +1197,68 @@ function applyGame(context, gameSpec) {
 function main(context) {
   applyGame(context, spec);
   context.once(() => { // put code here that should be run (once) when Vortex starts up
-
+    const api = context.api;
+    api.onAsync('did-deploy', async (profileId, deployment) => { 
+      const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
+      if (profileId !== LAST_ACTIVE_PROFILE) return;
+      return runMerge(api);
+    });
+    api.onAsync('did-purge', async (profileId) => {
+      const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
+      if (profileId !== LAST_ACTIVE_PROFILE) return;
+      return resetRdb(api);
+    });
   });
   return true;
+}
+
+async function copyRdbFiles(folder, files, target) {
+  for (let index = 0; index < files.length; index++) {
+    const source = path.join(folder, files[index]);
+    const dest = path.join(folder, target[index]);
+    try {
+      await fs.statAsync(source);
+      await fs.copyAsync(source, dest, { overwrite: true });
+      await fs.unlinkAsync(source);
+    } catch (err) {
+      api.showErrorNotification('Failed to restore root.rdb/rdx files', err);
+    }
+  }
+}
+
+async function resetRdb(api) { //on purge
+  GAME_PATH = getDiscoveryPath(api);
+  const folder = path.join(GAME_PATH, YUMIA_MOD_FOLDER);
+  const rootFiles = [
+    'root.rdb',
+    'root.rdx',
+  ];
+  const originalFiles = [
+    'root.rdb.original',
+    'root.rdx.original',
+  ];
+  return copyRdbFiles(folder, originalFiles, rootFiles);
+}
+
+function runMerge(api) { //on deploy
+  const TOOL_ID = YUMIA_ID;
+  const TOOL_NAME = YUMIA_NAME;
+  const state = api.store.getState();
+  const tool = util.getSafe(state, ['settings', 'gameMode', 'discovered', GAME_ID, 'tools', TOOL_ID], undefined);
+  try {
+    const TOOL_PATH = tool.path;
+    if (TOOL_PATH !== undefined) {
+      return api.runExecutable(TOOL_PATH, [], { suggestDeploy: false })
+        .catch(err => api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err,
+          { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 })
+        );
+    }
+    else {
+      return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, `Path to ${TOOL_NAME} executable could not be found. Ensure ${TOOL_NAME} is installed through Vortex.`);
+    }
+  } catch (err) {
+    return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 });
+  }
 }
 
 //export to Vortex
