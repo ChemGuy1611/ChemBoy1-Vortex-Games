@@ -42,6 +42,10 @@ const EXEC_GOG = EXEC;
 const EXEC_DEMO = EXEC;
 const PCGAMINGWIKI_URL = "XXX";
 const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
+//for finding install in registry - requires winapi-bindings
+const INSTALL_HIVE = 'HKEY_LOCAL_MACHINE'; //typically HKEY_LOCAL_MACHINE or HKEY_CURRENT_USER
+const INSTALL_KEY = `SOFTWARE\\WOW6432Node\\XXX\\XXX`; //fill in path
+const INSTALL_VALUE = "XXX"; //often InstallDir
 
 //feature toggles
 const hasLoader = false; //true if game needs a mod loader
@@ -230,7 +234,7 @@ const tools = [ //accepts: exe, jar, py, vbs, bat
     exclusive: true,
     shell: true,
     //defaultPrimary: true,
-    parameters: PARAMETERS,
+    //parameters: PARAMETERS,
   }, //*/
   /*{
     id: TOOL_ID,
@@ -319,8 +323,21 @@ function getModPath(discoveryPath) {
 
 //Find game installation directory
 function makeFindGame(api, gameSpec) {
-  return () => util.GameStoreHelper.findByAppId(gameSpec.discovery.ids)
-    .then((game) => game.gamePath);
+  /*using registry - requires winapi-bindings
+  try {
+      const instPath = winapi.RegGetValue(
+        INSTALL_HIVE,
+        INSTALL_KEY,
+        INSTALL_VALUE);
+      if (!instPath) {
+        throw new Error('empty registry key');
+      }
+      return () => Promise.resolve(instPath.value);
+    } catch (err) { //*/
+      return () => util.GameStoreHelper.findByAppId(gameSpec.discovery.ids)
+        .then((game) => game.gamePath);
+    //}
+  //*/
 }
 
 //Set launcher requirements
