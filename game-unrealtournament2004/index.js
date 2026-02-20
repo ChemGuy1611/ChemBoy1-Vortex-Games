@@ -66,7 +66,7 @@ const SYSTEM_EXTS = ['.u', '.ucl', '.dll', '.ini'];
 const TEXTURES_FOLDER = 'Textures';
 const TEXTURES_EXTS = ['.utx'];
 const SAVES_FOLDER = 'Saves';
-const SAVES_EXTS = ['.uss'];
+const SAVES_EXTS = ['.uvx'];
 const CONFIG_FILES = ["default.ini", "defuser.ini"];
 
 const ROOT_FOLDERS = [
@@ -87,7 +87,7 @@ const ROOT_FOLDERS = [
   SAVES_FOLDER,
 ];
 const ROOT_FOLDERS_LOWER = ROOT_FOLDERS.map(folder => folder.toLowerCase());
-const ALL_EXTS = [...ANIMATIONS_EXTS, ...KARMADATA_EXTS, ...MAPS_EXTS, ...MUSIC_EXTS, ...SOUNDS_EXTS, ...SPEECH_EXTS, ...STATICMESHES_EXTS, ...SYSTEM_EXTS, ...TEXTURES_EXTS];
+const ALL_EXTS = [...ANIMATIONS_EXTS, ...KARMADATA_EXTS, ...MAPS_EXTS, ...MUSIC_EXTS, ...SOUNDS_EXTS, ...SPEECH_EXTS, ...STATICMESHES_EXTS, ...SYSTEM_EXTS, ...TEXTURES_EXTS, ...SAVES_EXTS];
 
 let GAME_PATH = '';
 let GAME_VERSION = '';
@@ -527,14 +527,15 @@ function setupNotify(api) {
 //* Resolve game version dynamically for different game versions
 async function resolveGameVersion(gamePath) {
   const versionFile = path.join(gamePath, BINARIES_PATH, 'Build.ini');
+  let data = '';
   try {
-    const data = await fs.readFileAsync(versionFile, { encoding: 'utf8' });
+    data = await fs.readFileAsync(versionFile, { encoding: 'utf8' });
   } catch (err) {
     log('error', `Could not read ${BINARIES_PATH}/Build.ini file to get game version: ${err}`);
     return Promise.resolve(undefined);
   }
   const segments = data.split('_');
-  const v1 = segments[0].replace('v', ''); //3374
+  const v1 = segments[1].replace('v', ''); //3374
   const v2 = segments[4]; //e777cc6e
   const version = `${v1}-${v2}`;
   return Promise.resolve(version);
