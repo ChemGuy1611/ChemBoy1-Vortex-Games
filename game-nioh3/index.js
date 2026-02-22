@@ -69,12 +69,13 @@ let DOWNLOAD_FOLDER = '';
 const APPMANIFEST_FILE = 'appxmanifest.xml';
 const EXEC_XBOX = 'gamelaunchhelper.exe';
 
+//not used for now
 const MOD_ID = `${GAME_ID}-mod`;
 const MOD_NAME = "Mod";
 const MOD_PATH = "mods";
-const MOD_PATH_XBOX = MOD_PATH;
 const MOD_MARKER_EXT = '.ini';
 const MOD_EXTS = ['.fmt', '.vb', '.ib', '.dds'];
+//*/
 
 const LOADER_ID = `${GAME_ID}-dllloader`;
 const LOADER_NAME = "DLL Plugin Loader";
@@ -88,6 +89,7 @@ const LOADER_MOD_ID = `${GAME_ID}-loadermod`;
 const LOADER_MOD_NAME = "Plugin Mod";
 const LOADER_MOD_PATH = 'plugins';
 const LOADER_MOD_EXTS = ['.dll', '.asi'];
+const NIOHFIX_FILE = 'Nioh3Fix.asi';
 
 const YUMIA_ID = `${GAME_ID}-yumia`;
 const YUMIA_NAME = "Yumia fdata Tools";
@@ -101,6 +103,16 @@ const YUMIA_MOD_NAME = ".fdata Package (Yumia)";
 const YUMIA_MOD_PATH = '.';
 const YUMIA_MOD_FOLDER = 'package';
 const YUMIA_MOD_EXTS = ['.fdata', '.yumiamod.json'];
+
+const RDBEXPLORER_ID = `${GAME_ID}-rdbexplorer`;
+const RDBEXPLORER_NAME = "RDBExplorer";
+const RDBEXPLORER_PATH = YUMIA_MOD_FOLDER;
+const RDBEXPLORER_EXEC = 'RDBExplorer.exe';
+const RDBEXPLORER_URL = `https://github.com/MrIkso/RDBExplorer/releases`;
+const RDBEXPLORER_DLFILE_STRING = "RDBExplorer_v";
+const RDBEXPLORER_PAGE_NO = 83;
+const RDBEXPLORER_FILE_NO = 168;
+const RDBEXPLORER_DOMAIN = GAME_ID;
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Folder";
@@ -206,6 +218,12 @@ const spec = {
       "priority": "low",
       "targetPath": path.join("{gamePath}", YUMIA_PATH)
     },
+    {
+      "id": RDBEXPLORER_ID,
+      "name": RDBEXPLORER_NAME,
+      "priority": "low",
+      "targetPath": path.join("{gamePath}", RDBEXPLORER_PATH)
+    },
   ],
   "discovery": {
     "ids": DISCOVERY_IDS_ACTIVE,
@@ -241,6 +259,19 @@ const tools = [ //accepts: exe, jar, py, vbs, bat
     relative: true,
     exclusive: true,
     shell: true,
+    //parameters: [],
+  }, //*/
+  {
+    id: RDBEXPLORER_ID,
+    name: RDBEXPLORER_NAME,
+    logo: 'rdbexplorer.png',
+    executable: () => RDBEXPLORER_EXEC,
+    requiredFiles: [
+      RDBEXPLORER_EXEC,
+    ],
+    relative: true,
+    exclusive: true,
+    //shell: true,
     //parameters: [],
   }, //*/
 ];
@@ -420,6 +451,47 @@ function testLoader(files, gameId) {
 function installLoader(files) {
   const MOD_TYPE = LOADER_ID;
   const modFile = files.find(file => path.basename(file) === LOADER_FILE);
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Test for mod loader files
+function testRdbExplorer(files, gameId) {
+  const isMod = files.some(file => path.basename(file) === RDBEXPLORER_EXEC);
+  let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install mod loader files
+function installRdbExplorer(files) {
+  const MOD_TYPE = RDBEXPLORER_ID;
+  const modFile = files.find(file => path.basename(file) === RDBEXPLORER_EXEC);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
@@ -864,6 +936,13 @@ function isYumiaInstalled(api, spec) {
   return Object.keys(mods).some(id => mods[id]?.type === YUMIA_ID);
 }
 
+//Check if RDBExplorer is installed
+function isRdbExplorerInstalled(api, spec) {
+  const state = api.getState();
+  const mods = state.persistent.mods[spec.game.id] || {};
+  return Object.keys(mods).some(id => mods[id]?.type === RDBEXPLORER_ID);
+}
+
 //* Function to auto-download mod loader from Nexus Mods
 async function downloadLoader(api, gameSpec) {
   let isInstalled = isLoaderInstalled(api, gameSpec);
@@ -975,6 +1054,143 @@ async function downloadYumia(api, gameSpec) {
   }
 }
 
+//* Function to download RDBExplorer from Nexus Mods
+async function downloadRdbExplorer(api, gameSpec, check) {
+  let isInstalled = isRdbExplorerInstalled(api, gameSpec);
+  if (!isInstalled || !check) {
+    const MOD_NAME = RDBEXPLORER_NAME;
+    const MOD_TYPE = RDBEXPLORER_ID;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
+    const PAGE_ID = RDBEXPLORER_PAGE_NO;
+    const FILE_ID = RDBEXPLORER_FILE_NO;  //If using a specific file id because "input" below gives an error
+    const GAME_DOMAIN = RDBEXPLORER_DOMAIN;
+    api.sendNotification({ //notification indicating install process
+      id: NOTIF_ID,
+      message: `Installing ${MOD_NAME}`,
+      type: 'activity',
+      noDismiss: true,
+      allowSuppress: false,
+    });
+    if (api.ext?.ensureLoggedIn !== undefined) { //make sure user is logged into Nexus Mods account in Vortex
+      await api.ext.ensureLoggedIn();
+    }
+    try {
+      let FILE = null;
+      let URL = null;
+      try { //get the mod files information from Nexus
+        const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
+        const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
+        const file = modFiles
+          .filter(file => file.category_id === 1)
+          .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
+          .reverse()[0];
+        if (file === undefined) {
+          throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
+        }
+        FILE = file.file_id;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      } catch (err) { // use defined file ID if input is undefined above
+        FILE = FILE_ID;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      }
+      const dlInfo = { //Download the mod
+        game: GAME_DOMAIN,
+        name: MOD_NAME,
+      };
+      const dlId = await util.toPromise(cb =>
+        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+      const modId = await util.toPromise(cb =>
+        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
+      const batched = [
+        actions.setModsEnabled(api, profileId, [modId], true, {
+          allowAutoDeploy: true,
+          installed: true,
+        }),
+        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
+      ];
+      util.batchDispatch(api.store, batched); // Will dispatch both actions
+    } catch (err) { //Show the user the download page if the download, install process fails
+      const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
+      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
+      util.opn(errPage).catch(() => null);
+    } finally {
+      api.dismissNotification(NOTIF_ID);
+    }
+  }
+} //*/
+
+//* Download RDBExplorer from GitHub page (user browse for download)
+async function downloadRdbExplorerGithub(api, gameSpec, check) {
+  let isInstalled = isRdbExplorerInstalled(api, gameSpec);
+  const URL = RDBEXPLORER_URL;
+  const MOD_NAME = RDBEXPLORER_NAME;
+  const MOD_TYPE = RDBEXPLORER_ID;
+  const ARCHIVE_NAME = RDBEXPLORER_DLFILE_STRING;
+  const instructions = api.translate(`Click on Continue below to open the browser. - `
+    + `Navigate to the latest experimental version of ${MOD_NAME} on the GitHub releases page and `
+    + `click on the appropriate file to download and install the mod.`
+  );
+
+  if (!isInstalled || !check) {
+    return new Promise((resolve, reject) => { //Browse and download the mod
+      return api.emitAndAwait('browse-for-download', URL, instructions)
+      .then((result) => { //result is an array with the URL to the downloaded file as the only element
+        if (!result || !result.length) { //user clicks outside the window without downloading
+          return reject(new util.UserCanceled());
+        }
+        if (!result[0].includes(ARCHIVE_NAME)) { //if user downloads the wrong file
+          return reject(new util.UserCanceled('Selected wrong download'));
+        } //*/
+        return Promise.resolve(result);
+      })
+      .catch((error) => {
+        return reject(error);
+      })
+      .then((result) => {
+        const dlInfo = {game: gameSpec.game.id, name: MOD_NAME};
+        api.events.emit('start-download', result, {}, undefined,
+          async (error, id) => { //callback function to check for errors and pass id to and call 'start-install-download' event
+            if (error !== null && (error.name !== 'AlreadyDownloaded')) {
+              return reject(error);
+            }
+            api.events.emit('start-install-download', id, { allowAutoEnable: true }, async (error) => { //callback function to complete the installation
+              if (error !== null) {
+                return reject(error);
+              }
+              const profileId = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
+              const batched = [
+                actions.setModsEnabled(api, profileId, result, true, {
+                  allowAutoDeploy: true,
+                  installed: true,
+                }),
+                actions.setModType(GAME_ID, result[0], MOD_TYPE), // Set the mod type
+              ];
+              util.batchDispatch(api.store, batched); // Will dispatch both actions.
+              return resolve();
+            });
+          }, 
+          'never',
+          { allowInstall: false },
+        );
+      });
+    })
+    .catch(err => {
+      if (err instanceof util.UserCanceled) {
+        api.showErrorNotification(`User cancelled download/install of ${MOD_NAME}. Please try again.`, err, { allowReport: false });
+        //util.opn(URL).catch(() => null);
+        return Promise.resolve();
+      } else if (err instanceof util.ProcessCanceled) {
+        api.showErrorNotification(`Failed to download/install ${MOD_NAME}. Please re-launch Vortex and try again or download manually from modDB at the opened paged and install the zip in Vortex.`, err, { allowReport: false });
+        util.opn(URL).catch(() => null);
+        return Promise.reject(err);
+      } else {
+        return Promise.reject(err);
+      }
+    });
+  }
+} //*/
+
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
 function setupNotify(api) {
@@ -1061,6 +1277,7 @@ async function setup(discovery, api, gameSpec) {
     await downloadLoader(api, gameSpec);
   }
   //await downloadYumia(api, gameSpec);
+  //await downloadRdbExplorer(api, gameSpec, true);
   const source = path.join(__dirname, 'yumia', YUMIA_FILE);
   const destination = path.join(GAME_PATH, YUMIA_MOD_FOLDER, YUMIA_FILE);
   try {
@@ -1129,15 +1346,16 @@ function applyGame(context, gameSpec) {
   
   //register mod installers
   if (hasLoader) {
-    context.registerInstaller(LOADER_ID, 25, testLoader, installLoader);
+    context.registerInstaller(LOADER_ID, 25, testLoader, installLoader); //DLL Loader
   }
   //context.registerInstaller(MODLOADER_ID, 26, testModLoader, installModLoader); //FUTURE - for data mods, like Nioh 2
+  context.registerInstaller(RDBEXPLORER_ID, 26, testRdbExplorer, installRdbExplorer);
   context.registerInstaller(YUMIA_ID, 27, testYumia, installYumia);
   if (modInstallerEnabled) {
     context.registerInstaller(MOD_ID, 29, testMod, installMod); //FUTURE - for data mods, like Nioh 2
   }
-  context.registerInstaller(LOADER_MOD_ID, 31, testLoaderMod, installLoaderMod);
-  context.registerInstaller(YUMIA_MOD_ID, 33, testYumiaMod, (files) => installYumiaMod(files, context.api));
+  context.registerInstaller(LOADER_MOD_ID, 31, testLoaderMod, installLoaderMod); // dll/asi
+  context.registerInstaller(YUMIA_MOD_ID, 33, testYumiaMod, (files) => installYumiaMod(files, context.api)); //.fdata "package"
   //context.registerInstaller(CONFIG_ID, 43, testConfig, installConfig);
   //context.registerInstaller(SAVE_ID, 45, testSave, installSave);
   if (rootInstaller) {
@@ -1148,6 +1366,13 @@ function applyGame(context, gameSpec) {
   }
 
   //register actions
+  context.registerAction('mod-icons', 300, 'open-ext', {}, `Download ${RDBEXPLORER_NAME}`, () => {
+    downloadRdbExplorer(context.api, spec, false).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
     util.opn(CONFIG_PATH).catch(() => null);
     }, () => {

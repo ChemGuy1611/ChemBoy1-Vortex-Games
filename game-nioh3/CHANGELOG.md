@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.2.1] - 2026-02-22
+
+- Added: Basic support for RDBExplorer - installer, download button, launch tool
+
 ## [0.2.0] - 2026-02-20
 
 - Added: Automatic install and support for DLL Loader and .dll/.asi mods

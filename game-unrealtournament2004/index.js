@@ -37,6 +37,7 @@ const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1703"; //Nexus link t
 const UNREALARCHIVE_URL = "https://unrealarchive.org/unreal-tournament-2004/index.html";
 const UNREALWIKI_URL = "https://unreal.fandom.com/wiki/Unreal_Tournament_2004";
 const OLDUNREAL_URL = "https://www.oldunreal.com/downloads/ut2004/full-game-installers/";
+const MODDB_URL = "https://www.moddb.com/games/unreal-tournament-2004/mods";
 
 const INSTALL_HIVE = 'HKEY_LOCAL_MACHINE';
 const INSTALL_KEY = `SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\OldUnreal_ut2004`;
@@ -634,6 +635,13 @@ function applyGame(context, gameSpec) {
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open OldUnreal Page', () => {
     util.opn(OLDUNREAL_URL).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open ModDB Page', () => {
+    util.opn(MODDB_URL).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
