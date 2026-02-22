@@ -33,7 +33,10 @@ const BINARIES_PATH = 'System';
 const EXEC_NAME = "UT2004.exe";
 const EXEC = path.join(BINARIES_PATH, EXEC_NAME);
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Unreal_Tournament_2004";
-const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1703"; //Nexus link to this extension. Used for links
+const UNREALARCHIVE_URL = "https://unrealarchive.org/unreal-tournament-2004/index.html";
+const UNREALWIKI_URL = "https://unreal.fandom.com/wiki/Unreal_Tournament_2004";
+const OLDUNREAL_URL = "https://www.oldunreal.com/downloads/ut2004/full-game-installers/";
 
 const INSTALL_HIVE = 'HKEY_LOCAL_MACHINE';
 const INSTALL_KEY = `SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\OldUnreal_ut2004`;
@@ -109,8 +112,8 @@ const REQ_FILE = EXEC;
 const PARAMETERS_STRING = '';
 const PARAMETERS = [PARAMETERS_STRING];
 
-const IGNORE_CONFLICTS = [path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
-const IGNORE_DEPLOY = [path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
+const IGNORE_CONFLICTS = [path.join('**', 'Preview - *'), path.join('**', 'changelog*'), path.join('**', 'readme*')];
+const IGNORE_DEPLOY = [path.join('**', 'Preview - *'), path.join('**', 'changelog*'), path.join('**', 'readme*')];
 
 //filled in from data above
 const spec = {
@@ -608,8 +611,29 @@ function applyGame(context, gameSpec) {
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   }); //*/
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Unreal Archive Page', () => {
+    util.opn(UNREALARCHIVE_URL).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
     util.opn(PCGAMINGWIKI_URL).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Unreal Wiki Page', () => {
+    util.opn(UNREALWIKI_URL).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open OldUnreal Page', () => {
+    util.opn(OLDUNREAL_URL).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
