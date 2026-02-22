@@ -108,6 +108,10 @@ const ROOT_NAME = "Root Folder";
 const BINARIES_ID = `${GAME_ID}-binaries`;
 const BINARIES_NAME = "Binaries (Engine Injector)";
 
+const EDITOR_ID = `${GAME_ID}-editor`;
+const EDITOR_NAME = "Editor";
+const EDITOR_EXEC = path.join(BINARIES_PATH, 'UnrealEd.exe');
+
 const MOD_PATH_DEFAULT = '.';
 const REQ_FILE = EXEC;
 const PARAMETERS_STRING = '';
@@ -185,6 +189,21 @@ const tools = [ //accepts: exe, jar, py, vbs, bat
     relative: true,
     exclusive: true,
     shell: true,
+    detach: true,
+    //defaultPrimary: true,
+    //parameters: PARAMETERS,
+  }, //*/
+  {
+    id: EDITOR_ID,
+    name: EDITOR_NAME,
+    logo: 'editor.png',
+    executable: () => EDITOR_EXEC,
+    requiredFiles: [
+      EDITOR_EXEC,
+    ],
+    relative: true,
+    exclusive: true,
+    //shell: true,
     detach: true,
     //defaultPrimary: true,
     //parameters: PARAMETERS,
