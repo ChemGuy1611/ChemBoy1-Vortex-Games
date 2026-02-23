@@ -2,8 +2,8 @@
 Name: HumanitZ Vortex Extension
 Structure: Unreal Engine Game
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2026-02-18
+Version: 2.0.0
+Date: 2026-02-23
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -44,7 +44,7 @@ const EXEC_GOG = EXEC;
 const EXEC_DEMO = `${EPIC_CODE_NAME}_Demo.exe`;
 const PARAMETERS_STRING = ''; //launch arguments to pass when launching the game
 const PCGAMINGWIKI_URL = "";
-const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1699"; //Nexus link to this extension. Used for links
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/691"; //Nexus link to this extension. Used for links
 
 //feature toggles
 const hasXbox = false; //toggle for Xbox version logic.
