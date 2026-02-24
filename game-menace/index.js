@@ -2,8 +2,8 @@
 Name: MENACE Vortex Extension
 Structure: Unity BepinEx/MelonLoader Hybrid
 Author: ChemBoy1
-Version: 0.3.2
-Date: 2026-02-16
+Version: 0.4.0
+Date: 2026-02-24
 //////////////////////////////////////////*/
 
 //Import libraries
@@ -34,7 +34,7 @@ const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, GOGAPP_ID, XBOXAPP_ID, STEAMAPP_ID_DE
 const GAME_NAME = "MENACE";
 const GAME_NAME_SHORT = "MENACE";
 const GAME_STRING = "Menace"; //string for exe and data folder (seem to always match)
-const GAME_STRING_ALT = "Menace"; // N/A
+const GAME_STRING_ALT = "Menace"; // matches Steam
 const EXEC = `${GAME_STRING}.exe`;
 const EXEC_EGS = EXEC;
 const EXEC_GOG = EXEC;
@@ -274,8 +274,9 @@ const CUSTOM_PLUGIN_STRING = 'XXX'; //string to ID Custom plugin file
 
 const MODPACKLOADER_ID = `${GAME_ID}-modpackloader`;
 const MODPACKLOADER_NAME = "ModpackLoader";
-const MODPACKLOADER_PATH = MELON_MODS_PATH;
+const MODPACKLOADER_PATH = '.';
 const MODPACKLOADER_FILE = "Menace.ModpackLoader.dll";
+const MODPACKLOADER_FOLDER = "UserLibs";
 const MODPACKLOADER_DLLS = [
   MODPACKLOADER_FILE,
   //'Menace.DataExtractor.dll',
@@ -287,6 +288,9 @@ const MODPACKLOADER_DLLS = [
   'System.Collections.Immutable.dll',
   'System.Reflection.Metadata.dll'
 ];
+const MODPACKLOADER_PAGE_NO = 56;
+const MODPACKLOADER_FILE_NO = 168;
+const MODPACKLOADER_DOMAIN = GAME_ID;
 
 const MODPACKMOD_ID = `${GAME_ID}-modpackmod`;
 const MODPACKMOD_NAME = "Modpack Mod";
@@ -881,7 +885,8 @@ function installModkit(files) {
 //Test for ModpackLoader files
 function testModpackLoader(files, gameId) {
   const isMod = files.some(file => (path.basename(file) === MODPACKLOADER_FILE));
-  let supported = (gameId === spec.game.id) && isMod;
+  const isFolder = files.some(file => (path.basename(file) === MODPACKLOADER_FOLDER));
+  let supported = (gameId === spec.game.id) && isMod && isFolder;
 
   // Test for a mod installer.
   if (supported && files.find(file =>
@@ -899,7 +904,7 @@ function testModpackLoader(files, gameId) {
 //Install ModpackLoader files
 function installModpackLoader(files) {
   const MOD_TYPE = MODPACKLOADER_ID;
-  const modFile = files.find(file => (path.basename(file) === MODPACKLOADER_FILE));
+  const modFile = files.find(file => (path.basename(file) === MODPACKLOADER_FOLDER));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
@@ -2358,7 +2363,7 @@ async function dllFilesCopy(gamePath, files) {
     const source = path.join(__dirname, 'ModpackLoader', files[index]);
     let destination;
     if (index < 1) { 
-      destination = path.join(gamePath, MODPACKLOADER_PATH, files[index]);
+      destination = path.join(gamePath, 'Mods', files[index]);
     } else {
       destination = path.join(gamePath, 'UserLibs', files[index]);
     }
@@ -2373,7 +2378,7 @@ async function dllFilesCopy(gamePath, files) {
 async function ensureModpackLoader(api, check) {
   GAME_PATH = getDiscoveryPath(api);
   if (check) {
-    const dllPath = path.join(GAME_PATH, MODPACKLOADER_PATH, MODPACKLOADER_FILE);
+    const dllPath = path.join(GAME_PATH, 'Mods', MODPACKLOADER_FILE);
     const libPath = path.join(GAME_PATH, 'UserLibs', MODPACKLOADER_DLLS[1]);
     //const state = api.getState();
     //const mods = state.persistent.mods[GAME_ID] || {};
@@ -2423,7 +2428,8 @@ async function setup(discovery, api, gameSpec) {
   MODTYPE_FOLDERS.push(ASSEMBLY_PATH);
   MODTYPE_FOLDERS.push(ASSETS_PATH);
   await modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
-  await ensureModpackLoader(api, false);
+  //await ensureModpackLoader(api, false);
+  await downloadModpackLoader(api, gameSpec);
   if (!bepinexInstalled && !melonInstalled && !customInstalled) {
     chooseModLoader(api, spec); //dialog to choose mod loader
   }
@@ -2548,8 +2554,8 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(MELON_ID, 26, testMelon, installMelon);
   context.registerInstaller(BEPINEX_ID, 27, testBepinex, installBepinex);
   context.registerInstaller(MODKIT_ID, 28, testModkit, installModkit);
-  context.registerInstaller(MODPACKMOD_ID, 29, testModpackMod, installModpackMod);
-  context.registerInstaller(MODPACKLOADER_ID, 30, testModpackLoader, installModpackLoader);
+  context.registerInstaller(MODPACKLOADER_ID, 29, testModpackLoader, installModpackLoader);
+  context.registerInstaller(MODPACKMOD_ID, 30, testModpackMod, installModpackMod);
   context.registerInstaller(ROOT_ID, 31, testRoot, installRoot);
   context.registerInstaller(BEPCFGMAN_ID, 33, testBepCfgMan, installBepCfgMan);
   context.registerInstaller(MELONPREFMAN_ID, 34, testMelonPrefMan, installMelonPrefMan);
@@ -2687,28 +2693,6 @@ function main(context) {
                         +`${GAME_NAME} loads mods in the order you set from top to bottom.   \n`
                         +`\n`,
     });
-    /*
-    let previousLO;
-    context.registerLoadOrderPage({
-      gameId: spec.game.id,
-      gameArtURL: path.join(__dirname, spec.game.logo),
-      preSort: (items, direction) => preSort(context.api, items, direction),
-      filter: mods => mods.filter(mod => mod.type === MODPACKMOD_ID),
-      displayCheckboxes: false,
-      callback: (loadOrder) => {
-        if (previousLO === undefined) previousLO = loadOrder;
-        if (loadOrder === previousLO) return;
-        requestDeployment(context.api, spec);
-        previousLO = loadOrder;
-      },
-      createInfoPanel: () =>
-        context.api.translate(`Drag and drop the mods on the left to change the order in which they load.\n` 
-          + `${spec.game.name} loads mods in alphanumerical order, so Vortex prefixes the folder names with "AAA, AAB, AAC, ..." to ensure they load in the order you set here.\n`
-          + 'The number in the left column represents the overwrite order. The changes from mods with higher numbers will take priority over other mods which make similar edits.\n'
-          + '\n'
-          + 'YOU MUST DEPLOY MODS AFTER CHANGING THE ORDER TO APPLY CHANGES.'
-        ),
-    }); //*/
   }
 
   context.once(() => { // put code here that should be run (once) when Vortex starts up
@@ -2719,8 +2703,7 @@ function main(context) {
       updatemodid = undefined;
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;
-      api.dismissNotification(`${spec.game.id}-loadorderdeploy-notif`);
-      await ensureModpackLoader(api, true);
+      //await ensureModpackLoader(api, true);
       bepinexInstalled = isBepinexInstalled(api, spec);
       melonInstalled = isMelonInstalled(api, spec);
       if (hasCustomLoader) {
@@ -2783,25 +2766,6 @@ function main(context) {
   return true;
 }
 
-const requestDeployment = (api, spec) => {
-  api.store.dispatch(actions.setDeploymentNecessary(spec.game.id, true));
-  api.sendNotification({
-    id: `${spec.game.id}-loadorderdeploy-notif`,
-    type: 'warning',
-    message: 'Deployment Required to Apply Load Order Changes',
-    allowSuppress: true,
-    actions: [
-      {
-        title: 'Deploy',
-        action: (dismiss) => {
-          deploy(api);
-          dismiss();
-        }
-      }
-    ],
-  });
-};
-
 // Test if BepInEx is installed
 function isBepinexInstalled(api, spec) {
   const state = api.getState();
@@ -2816,11 +2780,18 @@ function isMelonInstalled(api, spec) {
   return Object.keys(mods).some(id => mods[id]?.type === MELON_ID);
 }
 
-// Test if MelonLoader is installed
+// Test if ModKit is installed
 function isModkitInstalled(api, spec) {
   const state = api.getState();
   const mods = state.persistent.mods[spec.game.id] || {};
   return Object.keys(mods).some(id => mods[id]?.type === MODKIT_ID);
+}
+
+// Test if ModpackLoader is installed
+function isModpackLoaderInstalled(api, spec) {
+  const state = api.getState();
+  const mods = state.persistent.mods[spec.game.id] || {};
+  return Object.keys(mods).some(id => mods[id]?.type === MODPACKLOADER_ID);
 }
 
 // Test if Custom Mod Loader is installed
@@ -3038,6 +3009,72 @@ async function downloadMelon(api, gameSpec) {
     const PAGE_ID = MELON_PAGE_NO;
     const FILE_ID = MELON_FILE_NO;  //If using a specific file id because "input" below gives an error
     const GAME_DOMAIN = MELON_DOMAIN;
+    api.sendNotification({ //notification indicating install process
+      id: NOTIF_ID,
+      message: `Installing ${MOD_NAME}`,
+      type: 'activity',
+      noDismiss: true,
+      allowSuppress: false,
+    });
+    if (api.ext?.ensureLoggedIn !== undefined) { //make sure user is logged into Nexus Mods account in Vortex
+      await api.ext.ensureLoggedIn();
+    }
+    try {
+      let FILE = null;
+      let URL = null;
+      try { //get the mod files information from Nexus
+        const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
+        const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
+        const file = modFiles
+          .filter(file => file.category_id === 1)
+          .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
+          .reverse()[0];
+        if (file === undefined) {
+          throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
+        }
+        FILE = file.file_id;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      } catch (err) { // use defined file ID if input is undefined above
+        FILE = FILE_ID;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      }
+      const dlInfo = { //Download the mod
+        game: GAME_DOMAIN,
+        name: MOD_NAME,
+      };
+      const dlId = await util.toPromise(cb =>
+        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+      const modId = await util.toPromise(cb =>
+        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
+      const batched = [
+        actions.setModsEnabled(api, profileId, [modId], true, {
+          allowAutoDeploy: true,
+          installed: true,
+        }),
+        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
+      ];
+      util.batchDispatch(api.store, batched); // Will dispatch both actions
+    } catch (err) { //Show the user the download page if the download, install process fails
+      const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
+      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err, { allowReport: false });
+      util.opn(errPage).catch(() => null);
+    } finally {
+      api.dismissNotification(NOTIF_ID);
+    }
+  }
+} //*/
+
+//* Download MelonLoader Nightly (Nexus)
+async function downloadModpackLoader(api, gameSpec) {
+  let isInstalled = isModpackLoaderInstalled(api, gameSpec);
+  if (!isInstalled) {
+    const MOD_NAME = MODPACKLOADER_NAME;
+    const MOD_TYPE = MODPACKLOADER_ID;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
+    const PAGE_ID = MODPACKLOADER_PAGE_NO;
+    const FILE_ID = MODPACKLOADER_FILE_NO;  //If using a specific file id because "input" below gives an error
+    const GAME_DOMAIN = MODPACKLOADER_DOMAIN;
     api.sendNotification({ //notification indicating install process
       id: NOTIF_ID,
       message: `Installing ${MOD_NAME}`,

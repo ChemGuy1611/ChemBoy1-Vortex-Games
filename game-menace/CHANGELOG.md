@@ -2,7 +2,11 @@
 
 ## Future Improvements (Not Yet Released)
 
-- None
+- None planned at this time
+
+## [0.3.3] - 2026-02-24
+
+- Changed: ModpackLoader now downloads from a Nexus Mods page, and is no longer bundled with the extension
 
 ## [0.3.2] - 2026-02-16
 
