@@ -109,7 +109,7 @@ const BINARIES_ID = `${GAME_ID}-binaries`;
 const BINARIES_NAME = "Binaries (Engine Injector)";
 
 const EDITOR_ID = `${GAME_ID}-editor`;
-const EDITOR_NAME = "Editor";
+const EDITOR_NAME = "Unreal Editor";
 const EDITOR_EXEC = path.join(BINARIES_PATH, 'UnrealEd.exe');
 
 const MOD_PATH_DEFAULT = '.';
