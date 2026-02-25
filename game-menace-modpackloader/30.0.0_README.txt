@@ -1,0 +1,6 @@
+Source Available At: https://github.com/p0ss/MenaceAssetPacker/
+- Build Instructions and scripts are included on the GitHub page.
+- These DLL files have NOT been modified from the released Source.
+- Retrieved from the 30.0.0 release on February 25, 2026. - https://github.com/p0ss/MenaceAssetPacker/releases/tag/v30.0.0
+- Menace.ModpackLoader.dll SHA256: f33ecc3591cff0353bf7fd9d4c739c42a0e43f7cf5086d326e804f47a7c83f16
+- All credit to p0ss and collaborators.

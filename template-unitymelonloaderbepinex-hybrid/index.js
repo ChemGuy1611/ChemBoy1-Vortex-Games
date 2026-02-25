@@ -142,7 +142,7 @@ if (BEPINEX_BUILD === 'mono') {
 }
 const BEPINEX_FOLDER = 'BepInEx';
 const BEP_STRING = 'BepInEx';
-const BEP_PATCHER_STRING = 'BaseUnityPlugin';
+const BEP_PATCHER_STRING = 'BepInEx.Preloader.Core.Patching';
 
 let BEPINEX_ZIP = `BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.${BEP_BE_VER}+${BEP_BE_COMMIT}.zip`;
 let BEPINEX_URL = `https://builds.bepinex.dev/projects/bepinex_be/${BEP_BE_VER}/BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.${BEP_BE_VER}%2B${BEP_BE_COMMIT}.zip`;
@@ -1307,8 +1307,7 @@ async function installPlugin(api, gameSpec, files, workingDir) {
         } 
         else if (content.includes(BEP_STRING)) {
           isBepinex = true;
-          isBepinexPatcher = false; //temporary, find reliable string to id patchers
-          //isBepinexPatcher = !content.includes(BEP_PATCHER_STRING) && !files.find(file => path.extname(file).toLowerCase() = BEPINEX_PLUGINS_FOLDER);
+          isBepinexPatcher = content.includes(BEP_PATCHER_STRING);
         } 
         else if (content.includes(MEL_STRING)) {
           isMelon = true;
@@ -1427,8 +1426,7 @@ async function installPlugin(api, gameSpec, files, workingDir) {
       if (folder !== undefined) {
         idx = folder.indexOf(`${path.basename(folder)}${path.sep}`);
         rootPath = path.dirname(folder);
-      }
-      if (folder === undefined) {
+      } else {
         setModTypeInstruction = { type: 'setmodtype', value: CUSTOMLOADER_PLUGIN_ID };
       }
     }
@@ -1440,8 +1438,7 @@ async function installPlugin(api, gameSpec, files, workingDir) {
     if (folder !== undefined) {
       idx = folder.indexOf(`${path.basename(folder)}${path.sep}`);
       rootPath = path.dirname(folder);
-    }
-    if (folder === undefined) {
+    } else {
       setModTypeInstruction = { type: 'setmodtype', value: BEPINEX_PLUGINS_ID };
     }
   }
@@ -1452,8 +1449,7 @@ async function installPlugin(api, gameSpec, files, workingDir) {
     if (folder !== undefined) {
       idx = folder.indexOf(`${path.basename(folder)}${path.sep}`);
       rootPath = path.dirname(folder);
-    }
-    if (folder === undefined) {
+    } else {
       setModTypeInstruction = { type: 'setmodtype', value: BEPINEX_PATCHERS_ID };
     }
   }
@@ -1464,8 +1460,7 @@ async function installPlugin(api, gameSpec, files, workingDir) {
     if (folder !== undefined) {
       idx = folder.indexOf(`${path.basename(folder)}${path.sep}`);
       rootPath = path.dirname(folder);
-    }
-    if (folder === undefined) {
+    } else {
       setModTypeInstruction = { type: 'setmodtype', value: MELON_MODS_ID };
     }
   }
@@ -1476,8 +1471,7 @@ async function installPlugin(api, gameSpec, files, workingDir) {
     if (folder !== undefined) {
       idx = folder.indexOf(`${path.basename(folder)}${path.sep}`);
       rootPath = path.dirname(folder);
-    }
-    if (folder === undefined) {
+    } else {
       setModTypeInstruction = { type: 'setmodtype', value: MELON_PLUGINS_ID };
     }
   } //*/
