@@ -1,9 +1,9 @@
 /*////////////////////////////////////////////
-Name: XXX Vortex Extension
+Name: Resident Evil Requiem Vortex Extension
 Structure: Fluffy + REFramework (RE Engine)
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2026-XX-XX
+Date: 2026-02-27
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -16,7 +16,7 @@ const Bluebird = require('bluebird');
 const GAME_ID = "residentevilrequiem";
 const STEAMAPP_ID = "3764200";
 const STEAMAPP_ID_DEMO = "XXX";
-const EPICAPP_ID = "null"; //NOT on egdata.app yet
+const EPICAPP_ID = ""; //NOT on egdata.app yet - https://egdata.app/offers/03c9e4679725466891f8d72c832dcc01
 const GOGAPP_ID = null;
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 const EXEC = "XXX.exe";
@@ -82,8 +82,8 @@ if (multiExe) {
 const PARAMETERS_STRING = '';
 const PARAMETERS = [PARAMETERS_STRING];
 
-const IGNORE_CONFLICTS = [path.join('**', 'screenshot.png'), path.join('**', 'screenshot.jpg'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
-const IGNORE_DEPLOY = [path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
+const IGNORE_CONFLICTS = [path.join('**', 'screenshot*'), path.join('**', 'changelog*'), path.join('**', 'readme*')];
+const IGNORE_DEPLOY = [path.join('**', 'screenshot*'), path.join('**', 'changelog*'), path.join('**', 'readme*')];
 let MODTYPE_FOLDERS = [];
 
 //Filled in from data above

@@ -127,7 +127,8 @@ if (multiExe && (UNITY_BUILD === 'mono')) {
 }
 const PARAMETERS_STRING = '';
 const PARAMETERS = [PARAMETERS_STRING];
-const IGNORE_CONFLICTS = [path.join('**', 'manifest.json'), path.join('**', 'icon.png'), path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
+const IGNORE_CONFLICTS = [path.join('**', 'manifest.json'), path.join('**', 'icon.png'), path.join('**', 'changelog*'), path.join('**', 'readme*')];
+const IGNORE_DEPLOY = [path.join('**', 'manifest.json'), path.join('**', 'icon.png'), path.join('**', 'changelog*'), path.join('**', 'readme*')];
 let MODTYPE_FOLDERS = [];
 
 //Filled in from info above
@@ -156,6 +157,7 @@ const spec = {
       "xboxAppId": XBOXAPP_ID,
       "supportsSymlinks": allowSymlinks,
       "ignoreConflicts": IGNORE_CONFLICTS,
+      "ignoreDeploy": IGNORE_DEPLOY,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,

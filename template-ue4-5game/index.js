@@ -257,8 +257,8 @@ const MOD_PATH_DEFAULT = PAK_PATH;
 const REQ_FILE = EPIC_CODE_NAME;
 const PARAMETERS = [PARAMETERS_STRING];
 
-const IGNORE_CONFLICTS = [path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
-const IGNORE_DEPLOY = [path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
+const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
+const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 let MODTYPE_FOLDERS = [path.join(LOGICMODS_PATH, LOGICMODS_FOLDER), PAK_PATH, PAK_ALT_PATH];
 
 // -- END EDIT ZONE -- /////////////////////////////////////////////////////////////////////////////////
