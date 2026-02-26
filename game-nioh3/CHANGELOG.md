@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.2.2] - 2026-02-25
+
+- Added: Installer for .g1t and .g1m files to "package\RDBExplorer_Mods" folder
+
 ## [0.2.1] - 2026-02-22
 
 - Added: Basic support for RDBExplorer - installer, download button, launch tool
