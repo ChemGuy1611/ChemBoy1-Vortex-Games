@@ -53,8 +53,23 @@ async function download(api, requirements, force) {
             if (!!mod && req.resolveVersion) {
                 const version = await req.resolveVersion(api);
                 asset = await getLatestGithubReleaseAsset(api, req);
-                const coerced = semver_1.default.coerce(asset.release.tag_name);
-                if (semver_1.default.gt(coerced.version, version)) {
+                //const coerced = semver_1.default.coerce(asset.release.tag_name);
+                let coerced = asset.release.tag_name;
+                if (coerced !== null && coerced !== void 0) {
+                  let versionSplit = coerced.split('.');
+                  versionSplit[0] = versionSplit[0].replace('20', '');
+                  if (versionSplit[1].startsWith('0')) {
+                    versionSplit[1] = versionSplit[1].replace('0', '');
+                  }
+                  if (versionSplit[2].startsWith('0')) {
+                    versionSplit[2] = versionSplit[2].replace('0', '');
+                  }
+                  versionSplit.pop();
+                  //coercedVersion.version = versionSplit.join('.');
+                  coerced = versionSplit.join('.');
+                }
+                //if (semver_1.default.gt(coerced.version, version)) {
+                if (semver_1.default.gt(coerced, version)) {
                     versionMismatch = true;
                     batchActions.push(vortex_api_1.actions.setModEnabled(profileId, mod.id, false));
                 }
@@ -304,14 +319,32 @@ async function testRequirementVersion(api, requirement) {
     if (!latest) {
         return;
     }
-    const coercedVersion = semver_1.default.coerce(latest.release.tag_name);
-    if (!semver_1.default.gt(coercedVersion.version, currentVersion)) {
+    //let coercedVersion = semver_1.default.coerce(latest.release.tag_name);
+    let coercedVersion = latest.release.tag_name;
+    //if (coercedVersion !== null && coercedVersion !== void 0 && coercedVersion.version) {
+    if (coercedVersion !== null && coercedVersion !== void 0) {
+      //let versionSplit = coercedVersion.version.split('.');
+      let versionSplit = coercedVersion.split('.');
+      versionSplit[0] = versionSplit[0].replace('20', '');
+      if (versionSplit[1].startsWith('0')) {
+        versionSplit[1] = versionSplit[1].replace('0', '');
+      }
+      if (versionSplit[2].startsWith('0')) {
+        versionSplit[2] = versionSplit[2].replace('0', '');
+      }
+      versionSplit.pop();
+      //coercedVersion.version = versionSplit.join('.');
+      coercedVersion = versionSplit.join('.');
+    }
+    //if (!semver_1.default.gt(coercedVersion.version, currentVersion)) {
+    if (!semver_1.default.gt(coercedVersion, currentVersion)) {
         return;
     }
     const more = (dismiss) => {
         api.showDialog('question', 'Update Requirement', {
             bbcode: t('A new "{{reqName}}" update has been released "v{{latestVersion}}" - your modding environment is currently set to "v{{currentVersion}}".[br][/br][br][/br]'
-                + 'Would you like to update? (if your modding environment is functioning correctly, there may be no reason to update.)', { replace: { reqName: requirement.userFacingName, currentVersion, latestVersion: coercedVersion.version } }),
+                //+ 'Would you like to update? (if your modding environment is functioning correctly, there may be no reason to update.)', { replace: { reqName: requirement.userFacingName, currentVersion, latestVersion: coercedVersion.version } }),
+                + 'Would you like to update? (if your modding environment is functioning correctly, there may be no reason to update.)', { replace: { reqName: requirement.userFacingName, currentVersion, latestVersion: coercedVersion } }),
         }, [
             {
                 label: 'Download', default: true, action: () => {
@@ -398,11 +431,23 @@ async function resolveVersionByPattern(api, requirement) {
     const state = api.getState();
     const files = vortex_api_1.util.getSafe(state, ['persistent', 'downloads', 'files'], []);
     const latestVersion = Object.values(files).reduce((prev, file) => {
-        const match = requirement.fileArchivePattern.exec(file.localPath);
-        if ((match === null || match === void 0 ? void 0 : match[1]) && semver_1.default.gt(match[1], prev)) {
-            prev = match[1];
+      let match = requirement.fileArchivePattern.exec(file.localPath);
+      if (match !== null && match !== void 0 && match[1]) {
+        let versionSplit = match[1].split('.');
+        versionSplit[0] = versionSplit[0].replace('20', '');
+        if (versionSplit[1].startsWith('0')) {
+          versionSplit[1] = versionSplit[1].replace('0', '');
         }
-        return prev;
+        if (versionSplit[2].startsWith('0')) {
+          versionSplit[2] = versionSplit[2].replace('0', '');
+        }
+        versionSplit.pop();
+        match[1] = versionSplit.join('.');
+      }
+      if ((match === null || match === void 0 ? void 0 : match[1]) && semver_1.default.gt(match[1], prev)) {
+          prev = match[1];
+      }
+      return prev;
     }, '0.0.0');
     return latestVersion;
 }

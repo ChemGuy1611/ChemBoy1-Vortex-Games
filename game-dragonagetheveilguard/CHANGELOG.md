@@ -4,6 +4,14 @@
 
 - Config and save installers (partition check)
 
+## [0.3.0] - 2026-02-26
+
+- Added: SDK patch will be automatically installed for EA game version (not needed for Steam)
+- Fixed: Frosty Mod Manager update checker - fixing versions to be semver compliant - should find newest versions now
+- Added: DAVExtender support - Installer and button to download
+- Fixed: path strings
+- Added: Buttons to go to FMM GitHub page and to delete the ModData folder (with confirmation) and several other files/folders/URLs
+
 ## [0.2.4] - 2025-10-23
 
 - Fixed new version check for Frosty Mod Manager (for real this time!).
