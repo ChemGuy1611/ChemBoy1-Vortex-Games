@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.4.0] - 2026-02-27
+
+- Improved: Fluffy Mods no longer need to be re-zipped - MUST UPDATE FLUFFY to v3.069 or higher
+
 ## [0.3.3] - 2026-02-08
 
 - Added: Upscaler and root file mod installers

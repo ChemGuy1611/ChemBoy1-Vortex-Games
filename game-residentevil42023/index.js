@@ -2,8 +2,8 @@
 Name: Resident Evil 4 (2023) + Chainsaw Demo Vortex Extension
 Structure: 3rd Party Mod Manager (Fluffy)
 Author: ChemBoy1
-Version: 0.3.3
-Date: 2026-02-08
+Version: 0.4.0
+Date: 2026-02-27
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -11,7 +11,6 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 const Bluebird = require('bluebird');
-const { ref } = require('process');
 
 //Specify all information about the game
 const STEAMAPP_ID = "2050650";
@@ -28,6 +27,8 @@ const FLUFFY_FOLDER = "RE4R";
 const FLUFFY_FOLDER_DEMO = "RE4R_Demo";
 const MOD_PATH = path.join("Games", FLUFFY_FOLDER, "Mods");
 const MOD_PATH_DEMO = path.join("Games", FLUFFY_FOLDER_DEMO, "Mods");
+
+const reZip = true; //NOT WORKING YET - KEEP AS TRUE FOR NOW - set to true to re-zip Fluffy Mods (possibly not necessary for FLUFFY v3.069+)
 
 let MOD_PATH_USED = MOD_PATH;
 let GAME_PATH = '';
@@ -70,6 +71,12 @@ const UPSCALER_ID = `${GAME_ID}-upscaler`;
 const UPSCALER_NAME = "Upscaler";
 const UPSCALER_PATH = path.join('reframework', 'plugins');
 const UPSCALER_FILE = 'PDPerfPlugin.dll';
+
+const CONFIG_ID = `${GAME_ID}-config`;
+const CONFIG_NAME = "Config File";
+const CONFIG_PATH = '.';
+const CONFIG_FILE = 'config.ini';
+const CONFIG_FILEPATH = path.join(CONFIG_PATH, CONFIG_FILE);
 
 const REQ_FILE = 're_chunk_000.pak';
 
@@ -189,7 +196,7 @@ const tools = [
 //Set mod type priorities
 function modTypePriority(priority) {
   return {
-    high: 25,
+    high: 35,
     low: 75,
   }[priority];
 }
@@ -556,10 +563,12 @@ function installREF(files) {
   return Promise.resolve({ instructions });
 }
 
-//Installer test for mod files
+//Installer test for Fluffy Mod files (no test as any mod not caught by previous installer is assumed to be a Fluffy Mod)
 function testFluffyMod(files, gameId) {
-  const isMod = files.some(file => path.basename(file).toLowerCase() === FLUFFYMOD_FILE);
-  let supported = (gameId === spec.game.id) && isMod;
+  //const isNatives = files.some(file => path.basename(file).toLowerCase() === NATIVES_FOLDER);
+  //const isPak = files.some(file => path.extname(file).toLowerCase() === PAK_EXT);
+  //const isMod = files.some(file => path.basename(file).toLowerCase() === FLUFFYMOD_FILE);
+  let supported = (gameId === spec.game.id);
 
   // Test for a mod installer
   if (supported && files.find(file =>
@@ -574,75 +583,26 @@ function testFluffyMod(files, gameId) {
   });
 }
 
-//Installer install mod files
-function installFluffyMod(files, fileName) {
-  const modFile = files.find(file => path.basename(file).toLowerCase() === FLUFFYMOD_FILE);
-  const idx = modFile.indexOf(path.basename(modFile));
-  const rootPath = path.dirname(modFile);
+//Installer install Fluffy mod files
+function installFluffyMod(files) {
+  //const modFile = files.find(file => path.basename(file).toLowerCase() === FLUFFYMOD_FILE);
+  //const idx = modFile.indexOf(path.basename(modFile));
+  //const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: FLUFFYMOD_ID };
-  const MOD_NAME = path.basename(fileName);
-  const MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
 
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
-  );
-
+  const filtered = files.filter(file => (
+    //(file.indexOf(rootPath) !== -1) && 
+    (!file.endsWith(path.sep))
+  ));
   const instructions = filtered.map(file => {
     return {
       type: 'copy',
       source: file,
-      destination: path.join(MOD_FOLDER, file.substr(idx)),
-      //destination: path.join(file.substr(idx)),
+      destination: file,
     };
   });
   instructions.push(setModTypeInstruction);
-
-  return Promise.resolve({ instructions });
-}
-
-//Installer test for mod files
-function testFluffyPak(files, gameId) {
-  const isMod = files.some(file => path.extname(file).toLowerCase() === PAK_EXT);
-  let supported = (gameId === spec.game.id) && isMod;
-
-  // Test for a mod installer
-  if (supported && files.find(file =>
-      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
-    supported = false;
-  }
-
-  return Promise.resolve({
-    supported,
-    requiredFiles: [],
-  });
-}
-
-//Installer install mod files
-function installFluffyPak(files, fileName) {
-  const modFile = files.find(file => path.extname(file).toLowerCase() === PAK_EXT);
-  const idx = modFile.indexOf(path.basename(modFile));
-  const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: FLUFFYPAK_ID };
-  const MOD_NAME = path.basename(fileName);
-  const MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
-
-  // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
-  );
-
-  const instructions = filtered.map(file => {
-    return {
-      type: 'copy',
-      source: file,
-      //destination: path.join(MOD_FOLDER, file.substr(idx)),
-      destination: path.join(file.substr(idx)),
-    };
-  });
-  instructions.push(setModTypeInstruction);
-
   return Promise.resolve({ instructions });
 }
 
@@ -951,30 +911,47 @@ function applyGame(context, gameSpec) {
   });
 
   //register mod types explicitly
-  context.registerModType(FLUFFYMOD_ID, 35, 
+  context.registerModType(FLUFFYMOD_ID, 25, 
     (gameId) => {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
     }, 
-    (game) => {
-      //GAME_PATH = getDiscoveryPath(context.api);
-      //MOD_PATH_USED = getModPath(GAME_PATH);
-      return pathPattern(context.api, game, path.join('{gamePath}', MOD_PATH_USED))
-    },
+    (game) => pathPattern(context.api, game, path.join('{gamePath}', FLUFFYMOD_PATH)), 
     () => Promise.resolve(false), 
-    { name: FLUFFYMOD_NAME }
+    { 
+      name: FLUFFYMOD_NAME, 
+      mergeMods: false,
+    }
   );
 
   //register mod installers
   context.registerInstaller(FLUFFY_ID, 25, testFluffy, installFluffy);
   context.registerInstaller(REF_ID, 27, testREF, installREF);
-  //context.registerInstaller(FLUFFYMOD_ID, 35, testFluffyMod, installFluffyMod);
-  //context.registerInstaller(`${FLUFFYMOD_ID}pak`, 40, testFluffyPak, installFluffyPak);
   context.registerInstaller(LOOSELUA_ID, 29, testLooseLua, installLooseLua);
   context.registerInstaller(ROOT_ID, 31, testRoot, installRoot);
   context.registerInstaller(UPSCALER_ID, 33, testUpscaler, installUpscaler);
-  context.registerInstaller(`${FLUFFYMOD_ID}zip`, 45, toBlue(testZipContent), toBlue(installZipContent));
+  if (!reZip) {
+    context.registerInstaller(FLUFFYMOD_ID, 45, testFluffyMod, installFluffyMod);
+  } else {
+    context.registerInstaller(`${FLUFFYMOD_ID}zip`, 45, toBlue(testZipContent), toBlue(installZipContent));
+  }
 
+  //register actions
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config File', () => {
+    GAME_PATH = getDiscoveryPath(context.api);
+    util.opn(path.join(GAME_PATH, CONFIG_FILEPATH)).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    });
+  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', () => {
+    util.opn(SAVE_PATH).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  }); //*/
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
     util.opn(PCGAMINGWIKI_URL).catch(() => null);
   }, () => {
