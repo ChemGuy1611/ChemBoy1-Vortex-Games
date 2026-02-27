@@ -11,6 +11,7 @@
 - Added: DAVExtender support - Installer and button to download
 - Fixed: path strings
 - Added: Buttons to go to FMM GitHub page and to delete the ModData folder (with confirmation) and several other files/folders/URLs
+- Added: Tool to launch game .exe directly, not through Frosty - useful for when you need to rebuild the SDK after a patch
 
 ## [0.2.4] - 2025-10-23
 

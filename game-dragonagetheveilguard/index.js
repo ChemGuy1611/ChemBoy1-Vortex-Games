@@ -221,9 +221,21 @@ const tools = [
     relative: true,
     detached: true,
     exclusive: true,
-    parameters: [
-      
+    //parameters: [],
+  }, //*/
+  {
+    id: `${GAME_ID}-directlaunch`,
+    name: 'Direct Launch',
+    logo: 'executable.png',
+    executable: () => EXEC,
+    requiredFiles: [
+      EXEC,
     ],
+    relative: true,
+    detached: true,
+    exclusive: true,
+    //defaultPrimary: true,
+    //parameters: [],
   }, //*/
 ];
 

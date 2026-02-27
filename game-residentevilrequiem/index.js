@@ -56,7 +56,7 @@ const FLUFFY_ID = `${GAME_ID}-fluffymanager`;
 const FLUFFY_NAME = "Fluffy Mod Manager";
 const FLUFFY_EXEC = "modmanager.exe";
 const FLUFFY_PAGE_NO = 818;
-const FLUFFY_FILE_NO = 6491;
+const FLUFFY_FILE_NO = 7071;
 
 const FLUFFYMOD_ID = `${GAME_ID}-fluffymod`;
 const FLUFFYMOD_NAME = "Fluffy Mod";
