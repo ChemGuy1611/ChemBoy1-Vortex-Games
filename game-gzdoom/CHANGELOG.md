@@ -4,9 +4,10 @@
 
 - None Planned
 
-## [0.2.0] - 2025-11-19
+## [0.2.0] - 2026-02-27
 
-- Upgraded the extension to use UZDoom instead of GZDoom.
+- Upgraded: To UZDoom! - Note that the folder name where everything is placed has changed from "DMLv2.5[WINDOWS]" to "DML". You may need to copy some files (config, save) over manually.
+- Improved: DML is now checked for updates from GitHub automatically. Vortex will update you to v2.6 automatically.
 
 ## [0.1.5] - 2025-10-23
 

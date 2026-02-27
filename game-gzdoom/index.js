@@ -3,7 +3,7 @@ Name: Doom I & II (UZDoom) Vortex Extension
 Structure: Mod Loader (Any Folder)
 Author: ChemBoy1
 Version: 0.2.0
-Date: 2025-11-19
+Date: 2026-02-27
 ///////////////////////////////////////*/
 /*
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣀⣀⣠⣤⣤⣤⡴⣦⡴⣖⠶⣴⠶⡶⣖⡶⣶⢶⣲⡾⠿⢿⡷⣾⢿⣷⣦⢾⣷⣾⣶⣤⣀⣰⣤⣀⡀⠀⠀⢀⣴⣿⡿⡿⣿⣿⣦⣄⠀⠀⣠⣴⣿⡿⢿⡿⣷⣦⡄⠀⠀⢀⣀⣤⣦⣀⣤⣶⣶⣷⣦⣴⡿⢿⡷⣿⠿⡿⣿⣷⢶⣦⢴⡲⣦⢶⡶⢶⡲⣖⡶⣦⣤⣤⣤⣤⣤⣤⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
@@ -69,11 +69,14 @@ const SAVE_EXT = ".zds";
 
 const DML_ID = `${GAME_ID}-dml`;
 const DML_NAME = "Doom Mod Loader";
-const DML_TOP_FOLDER = "DMLv2.5[WINDOWS]";
-const DML_EXEC = 'DML v2.5 [Windows].exe';
+const DML_TOP_FOLDER = "DML"; //No longer a top folder included in the archive in v2.6
+const DML_EXEC_STRING = 'DML_v';
+const VER_DML = '2.6';
+const DML_EXEC = `${DML_EXEC_STRING}${VER_DML}.exe`;
 const DML_EXEC_PATH = path.join(DML_TOP_FOLDER, DML_EXEC);
-const DML_URL = 'https://github.com/Premo36/DML2.X/releases/download/v2.5-windows/DMLv2.5_WINDOWS.zip';
-const DML_URL_MANUAL = 'https://github.com/Premo36/DML2.X/releases';
+const DML_README_FILE = 'HELP.txt';
+//const DML_URL = 'https://github.com/Premo36/DML2.X/releases/download/v2.6/DML_v2.6.zip';
+//const DML_URL_MANUAL = 'https://github.com/Premo36/DML2.X/releases/';
 
 const MOD_ID = `${GAME_ID}-mod`;
 const MOD_NAME = "Mod";
@@ -100,6 +103,14 @@ const UZDOOM_ARC_NAME = `Windows-UZDoom-${VER}.zip`;
 const UZDOOM_URL = `https://github.com/${AUTHOR}/${REPO}/releases/download/${VER}/${UZDOOM_ARC_NAME}`;
 const UZDOOM_URL_MANUAL = `https://github.com/${AUTHOR}/${REPO}/releases`;
 const UZDOOM_URL_API = `https://api.github.com/repos/${AUTHOR}/${REPO}`;
+
+const AUTHOR_DML = 'Premo36';
+const REPO_DML = 'DML2.X';
+const DML_ARC_NAME = `DML_v${VER_DML}.zip`;
+const DML_URL = `https://github.com/${AUTHOR_DML}/${REPO_DML}/releases/download/${VER_DML}/${DML_ARC_NAME}`;
+const DML_URL_MANUAL = `https://github.com/${AUTHOR_DML}/${REPO_DML}/releases`;
+const DML_URL_API = `https://api.github.com/repos/${AUTHOR_DML}/${REPO_DML}`;
+
 const REQUIREMENTS = [
   { //UZDoom
     archiveFileName: UZDOOM_ARC_NAME,
@@ -109,9 +120,20 @@ const REQUIREMENTS = [
     githubUrl: UZDOOM_URL_API,
     findMod: (api) => findModByFile(api, UZDOOM_ID, UZDOOM_EXEC),
     findDownloadId: (api) => findDownloadIdByFile(api, UZDOOM_ARC_NAME),
-    fileArchivePattern: new RegExp(/^Windows-UZDoom-(\d+\.\d+\.\d+)\.zip/, 'i'),
+    fileArchivePattern: new RegExp(/^Windows-UZDoom-(\d+\.\d+\.\d+)/, 'i'),
     resolveVersion: (api) => resolveVersionByPattern(api, REQUIREMENTS[0]),
-  },
+  }, //*/
+  { //DML
+    archiveFileName: DML_ARC_NAME,
+    modType: DML_ID,
+    assemblyFileName: DML_EXEC,
+    userFacingName: DML_NAME,
+    githubUrl: DML_URL_API,
+    findMod: (api) => findModByFile(api, DML_ID, DML_EXEC),
+    findDownloadId: (api) => findDownloadIdByFile(api, DML_ARC_NAME),
+    fileArchivePattern: new RegExp(/^DML_v(\d+\.\d+)/, 'i'),
+    resolveVersion: (api) => resolveVersionByPattern(api, REQUIREMENTS[0]),
+  }, //*/
 ];
 
 const CONFIG_PATH = path.join(DML_TOP_FOLDER, 'CONFIG');
@@ -160,7 +182,7 @@ const spec = {
       "id": DML_ID,
       "name": DML_NAME,
       "priority": "low",
-      "targetPath": `{gamePath}`
+      "targetPath": path.join(`{gamePath}`, DML_TOP_FOLDER)
     },
   ],
   "discovery": {
@@ -235,7 +257,7 @@ async function deploy(api) {
 
 //Installer test for DML files
 function testDML(files, gameId) {
-  const isMod = files.some(file => (path.basename(file) === DML_TOP_FOLDER));
+  const isMod = files.some(file => (path.basename(file).includes(DML_EXEC_STRING)));
   let supported = (gameId === spec.game.id) && isMod;
 
   // Test for a mod installer.
@@ -253,8 +275,8 @@ function testDML(files, gameId) {
 
 //Installer install DML files
 function installDML(files) {
-  const modFile = files.find(file => (path.basename(file) === DML_TOP_FOLDER));
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const modFile = files.find(file => (path.basename(file).includes(DML_EXEC_STRING)));
+  const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: DML_ID };
 
@@ -452,7 +474,7 @@ function toBlue(func) {
 }
 
 // AUTOMATIC DOWNLOAD FUNCTIONS /////////////////////////////////////////////////
-
+/*
 async function onCheckModVersion(api, gameId, mods, forced) {
   try {
     await testRequirementVersion(api, REQUIREMENTS[0]);
@@ -464,6 +486,35 @@ async function onCheckModVersion(api, gameId, mods, forced) {
 async function checkForUzdoom(api) {
   const mod = await REQUIREMENTS[0].findMod(api);
   return mod !== undefined;
+} //*/
+
+async function asyncForEachTestVersion(api, requirements) {
+  for (let index = 0; index < requirements.length; index++) {
+    await testRequirementVersion(api, requirements[index]);
+  }
+}
+
+async function asyncForEachCheck(api, requirements) {
+  let mod = [];
+  for (let index = 0; index < requirements.length; index++) {
+    mod[index] = await requirements[index].findMod(api);
+  }
+  let checker = mod.every((entry) => entry === true);
+  return checker;
+}
+
+async function onCheckModVersion(api, gameId, mods, forced) {
+  try {
+    await asyncForEachTestVersion(api, REQUIREMENTS);
+    log('warn', 'Checked requirements versions');
+  } catch (err) {
+    log('warn', `failed to test requirements versions: ${err}`);
+  }
+}
+
+async function checkForRequirements(api) {
+  const CHECK = await asyncForEachCheck(api, REQUIREMENTS);
+  return CHECK;
 }
 
 //Check if UZDoom is installed
@@ -721,7 +772,7 @@ async function resolveGameVersion(gamePath) {
 
 //Notification if Config, Save, and Creations folders are not on the same partition
 function setupNotify(api) {
-  const NOTIF_ID = `${GAME_ID}-setup`;
+  const NOTIF_ID = `${GAME_ID}-setupudzoom`;
   const MESSAGE = 'DML Setup Required';
   api.sendNotification({
     id: NOTIF_ID,
@@ -743,11 +794,15 @@ function setupNotify(api) {
                 + `\n`
                 + `For more info, you can open the DML ReadMe by clicking on the "Open DML ReadMe" button below.\n`
                 + `\n`
+                + `IMPORTANT NOTE: Due to upgrading DML to v2.6+, the folder containing DML has changed to "DML" from "DMLv2.5[WINDOWS]".\n`
+                + `- You may need to copy over your config files if you still need them.\n`
+                + `- Saves and Config files from GZDoom must be copied manually to the UZDoom folders as well, if you want to carry them over. You can open the folders using the buttons within the folder icon on the Mods page toolbar.\n`
+                + `\n`
           }, [
             {
               label: 'Open DML ReadMe', action: () => {
                 GAME_PATH = getDiscoveryPath(api);
-                const openPath = path.join(GAME_PATH, DML_TOP_FOLDER, 'README v2.5.txt');
+                const openPath = path.join(GAME_PATH, DML_TOP_FOLDER, DML_README_FILE);
                 util.opn(openPath).catch(() => null);
                 dismiss();
               }
@@ -789,8 +844,13 @@ async function setup(discovery, api, gameSpec) {
   ); //*/
 
   //* Download/Update UZDoom from GitHub
-  const uzdoomInstalled = await checkForUzdoom(api);
-  return uzdoomInstalled ? Promise.resolve() : download(api, REQUIREMENTS); //*/
+  const requirementsInstalled = await checkForRequirements(api);
+  if (!requirementsInstalled) {
+    await download(api, REQUIREMENTS);
+  }
+  return Promise.resolve();
+  //const uzdoomInstalled = await checkForUzdoom(api);
+  //return uzdoomInstalled ? Promise.resolve() : download(api, REQUIREMENTS); //*/
 }
 
 //Let Vortex know about the game
