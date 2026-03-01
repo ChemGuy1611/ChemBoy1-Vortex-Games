@@ -30,8 +30,8 @@ const FLUFFY_FOLDER = "RE9";
 const FLUFFY_FOLDER_DEMO = "RE9_Demo";
 const ROOT_FILES = ['nvngx_dlss.dll', "sl.dlss.dll", 'libxess.dll', "dstoragecore.dll", "dstorage.dll", "amd_fidelityfx_dx12.dll", "amd_fidelityfx_loader_dx12.dll", "amd_ags_x64.dll"];
 const ROOT_EXTS = [".exe"];
-const REF_PAGE_NO = 0;
-const REF_FILE_NO = 0;
+const REF_PAGE_NO = 13;
+const REF_FILE_NO = 27;
 const REF_DOMAIN = GAME_ID;
 
 //feature toggles
