@@ -2,15 +2,15 @@
 Name: Resident Evil Requiem Vortex Extension
 Structure: Fluffy + REFramework (RE Engine)
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2026-02-27
+Version: 0.1.1
+Date: 2026-02-28
 ///////////////////////////////////////////*/
 
 //Import libraries
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
-const Bluebird = require('bluebird');
+//const Bluebird = require('bluebird');
 
 //Specify all information about the game
 const GAME_ID = "residentevilrequiem";
@@ -33,6 +33,11 @@ const ROOT_EXTS = [".exe"];
 const REF_PAGE_NO = 13;
 const REF_FILE_NO = 27;
 const REF_DOMAIN = GAME_ID;
+const REF_URL_LATEST = "https://github.com/praydog/REFramework-nightly/releases/latest/download/RE9.zip"; //latest release of REFramework Nightly
+const REF_URL_ERR = "https://github.com/praydog/REFramework-nightly/releases";
+const EMVENGINE_URL = "https://github.com/SilverEzredes/EMV-Engine-SILVER/archive/refs/heads/main.zip"; //tools for modders
+const EMVENGINE_URL_ERR = "https://github.com/SilverEzredes/EMV-Engine-SILVER"; //tools for modders
+const EMVENGINE_NAME = "EMV-Engine-SILVER";
 
 //feature toggles
 const reZip = true; //NOT WORKING YET - KEEP AS TRUE FOR NOW - set to true to re-zip Fluffy Mods (possibly not necessary for FLUFFY v3.069+)
@@ -385,58 +390,7 @@ async function downloadFluffy(api, gameSpec) {
       api.dismissNotification(NOTIF_ID);
     }
   }
-}
-//*/
-
-/*
-//Function to auto-download REFramework from Github
-async function downloadREFramework(api, gameSpec) {
-  let isInstalled = isREFInstalled(api, gameSpec);
-  if (!isInstalled) {
-    //notification indicating install process
-    const MOD_NAME = REF_NAME;
-    const NOTIF_ID = `${GAME_ID}-${MOD_NAME}-installing`;
-    const MOD_TYPE = REF_ID;
-    api.sendNotification({
-      id: NOTIF_ID,
-      message: `Installing ${MOD_NAME}`,
-      type: 'activity',
-      noDismiss: true,
-      allowSuppress: false,
-    });
-    try {
-      //Download the mod
-      const dlInfo = {
-        game: gameSpec.game.id,
-        name: MOD_NAME,
-      };
-      const URL = `https://github.com/praydog/REFramework-nightly/releases/download/nightly-01069-3d533b69ca87ed5f5cd020ba2353b04c0b9bfdb8/MHWILDS.zip`;
-      //const URL = `https://github.com/praydog/REFramework/releases/latest/download/RE4.zip`;
-      const dlId = await util.toPromise(cb =>
-        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
-      const modId = await util.toPromise(cb =>
-        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
-      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
-      const batched = [
-        actions.setModsEnabled(api, profileId, [modId], true, {
-          allowAutoDeploy: true,
-          installed: true,
-        }),
-        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
-      ];
-      util.batchDispatch(api.store, batched); // Will dispatch both actions.
-    //Show the user the download page if the download, install process fails
-    } catch (err) {
-      //const errPage = `https://github.com/praydog/REFramework/releases`;
-      const errPage = `https://github.com/praydog/REFramework-nightly/releases`;
-      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
-      util.opn(errPage).catch(() => null);
-    } finally {
-      api.dismissNotification(NOTIF_ID);
-    }
-  }
-}
-//*/
+} //*/
 
 //* Function to auto-download REFramework from Nexus Mods <-- This function gave an error when getting the file upload time, for some reason ????
 async function downloadREFramework(api, gameSpec) {
@@ -501,6 +455,91 @@ async function downloadREFramework(api, gameSpec) {
     }
   }
 }
+
+//Function to auto-download REFramework from Github
+async function downloadRefNightly(api, gameSpec, check) {
+  let isInstalled = isREFInstalled(api, gameSpec);
+  if (!isInstalled || !check) {
+    const MOD_NAME = REF_NAME;
+    const MOD_TYPE = REF_ID;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
+    const URL = REF_URL_LATEST;
+    const URL_ERR = REF_URL_ERR;
+    api.sendNotification({ //notification indicating install process
+      id: NOTIF_ID,
+      message: `Installing ${MOD_NAME}`,
+      type: 'activity',
+      noDismiss: true,
+      allowSuppress: false,
+    });
+    try {
+      //Download the mod
+      const dlInfo = {
+        game: gameSpec.game.id,
+        name: MOD_NAME,
+      };
+      const dlId = await util.toPromise(cb =>
+        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+      const modId = await util.toPromise(cb =>
+        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
+      const batched = [
+        actions.setModsEnabled(api, profileId, [modId], true, {
+          allowAutoDeploy: true,
+          installed: true,
+        }),
+        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
+      ];
+      util.batchDispatch(api.store, batched); // Will dispatch both actions.
+    //Show the user the download page if the download, install process fails
+    } catch (err) {
+      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
+      util.opn(URL_ERR).catch(() => null);
+    } finally {
+      api.dismissNotification(NOTIF_ID);
+    }
+  }
+} //*/
+
+//Function to download EMV Engine (Modding Tools) from GitHub
+async function downloadEmvEngine(api, gameSpec) {
+  const MOD_NAME = EMVENGINE_NAME;
+  const NOTIF_ID = `${GAME_ID}-emv-installing`;
+  const URL = EMVENGINE_URL;
+  const URL_ERR = EMVENGINE_URL_ERR;
+  api.sendNotification({ //notification indicating install process
+    id: NOTIF_ID,
+    message: `Installing ${MOD_NAME}`,
+    type: 'activity',
+    noDismiss: true,
+    allowSuppress: false,
+  });
+  try {
+    //Download the mod
+    const dlInfo = {
+      game: gameSpec.game.id,
+      name: MOD_NAME,
+    };
+    const dlId = await util.toPromise(cb =>
+      api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+    const modId = await util.toPromise(cb =>
+      api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+    const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
+    const batched = [
+      actions.setModsEnabled(api, profileId, [modId], true, {
+        allowAutoDeploy: true,
+        installed: true,
+      }),
+    ];
+    util.batchDispatch(api.store, batched); // Will dispatch both actions.
+  //Show the user the download page if the download, install process fails
+  } catch (err) {
+    api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
+    util.opn(URL_ERR).catch(() => null);
+  } finally {
+    api.dismissNotification(NOTIF_ID);
+  }
+} //*/
 
 // MOD INSTALLER FUNCTIONS //////////////////////////////////////////////////////////////
 
@@ -763,10 +802,10 @@ async function installZipContent(files, destinationPath) {
   }
 }
 
-//convert installer functions to Bluebird promises
+/* convert installer functions to Bluebird promises
 function toBlue(func) {
   return (...args) => Bluebird.Promise.resolve(func(...args));
-}
+} //*/
 
 // MAIN FUNCTIONS ////////////////////////////////////////////////////////////////////////
 
@@ -937,24 +976,39 @@ function applyGame(context, gameSpec) {
   if (!reZip) {
     context.registerInstaller(FLUFFYMOD_ID, 45, testFluffyMod, installFluffyMod);
   } else {
-    context.registerInstaller(`${FLUFFYMOD_ID}zip`, 45, toBlue(testZipContent), toBlue(installZipContent));
+    context.registerInstaller(`${FLUFFYMOD_ID}zip`, 45, testZipContent, installZipContent);
+    //context.registerInstaller(`${FLUFFYMOD_ID}zip`, 45, toBlue(testZipContent), toBlue(installZipContent));
   }
 
   //register actions
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download Latest REFramework Nightly', () => {
+    downloadRefNightly(context.api, gameSpec, false);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download EMV Engine (Modding Tools)', () => {
+    downloadEmvEngine(context.api, gameSpec);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  }); //*/
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config File', () => {
     GAME_PATH = getDiscoveryPath(context.api);
     util.opn(path.join(GAME_PATH, CONFIG_FILEPATH)).catch(() => null);
-    }, () => {
-      const state = context.api.getState();
-      const gameId = selectors.activeGameId(state);
-      return gameId === GAME_ID;
-    });
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
   /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', () => {
     util.opn(SAVE_PATH).catch(() => null);
-    }, () => {
-      const state = context.api.getState();
-      const gameId = selectors.activeGameId(state);
-      return gameId === GAME_ID;
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
   }); //*/
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
     util.opn(PCGAMINGWIKI_URL).catch(() => null);
