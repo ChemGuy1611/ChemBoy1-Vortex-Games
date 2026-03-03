@@ -129,8 +129,8 @@ if ( BEPINEX_BUILD === 'mono') {
 const MELON_ID = `${GAME_ID}-melonloader`;
 const MELON_NAME = "MelonLoader";
 const MELON_ZIP = `MelonLoader.${ARCH}.zip`;
-const MELON_URL = `https://github.com/LavaGang/MelonLoader/releases/latest/download/${MELON_ZIP}`;
-//const MELON_URL = `https://github.com/LavaGang/MelonLoader/actions/runs/21791509022/artifacts/5420365741/MelonLoader.Windows.x64.CI.Release.zip`;
+//const MELON_URL = `https://github.com/LavaGang/MelonLoader/releases/latest/download/${MELON_ZIP}`;
+const MELON_URL = `https://nightly.link/LavaGang/MelonLoader/workflows/build/alpha-development/MelonLoader.Windows.x64.CI.Release.zip`;
 const MELON_URL_ERR = `https://github.com/LavaGang/MelonLoader/releases`;
 const MELON_PAGE_NO = 9;
 const MELON_FILE_NO = 34;
