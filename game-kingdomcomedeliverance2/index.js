@@ -2,8 +2,8 @@
 Name: Kingdom Come Deliverance II Vortex Extension
 Structure: Mod Folder and FBLO
 Author: ChemBoy1
-Version: 0.4.3
-Date: 2026-01-29
+Version: 0.5.0
+Date: 2026-03-03
 //////////////////////////////////////////////////*/
 
 //Import libraries
@@ -15,8 +15,8 @@ const template = require('string-template');
 const STEAMAPP_ID = "1771300";
 const EPICAPP_ID = "278984b84235407d922da634b9d7d247";
 const GOGAPP_ID = "1248083010";
-const XBOXAPP_ID = null;
-const XBOXEXECNAME = null;
+const XBOXAPP_ID = "DeepSilver.77536C3FE941";
+const XBOXEXECNAME = "App";
 const GAME_ID = "kingdomcomedeliverance2";
 const GAME_NAME = "Kingdom Come:\tDeliverance II"
 const GAME_NAME_SHORT = "KCD2";
@@ -29,9 +29,11 @@ const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1146"; //Nexus link t
 let LOAD_ORDER_ENABLED = true;
 let GAME_PATH = '';
 let GAME_VERSION = '';
+let EXEC = '';
 let EXECUTABLE = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
+const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 //information for executable discovery and variable paths
 let BINARIES_PATH = '';
@@ -45,6 +47,7 @@ const BINPATH_GOG = path.join("Bin", "Win64MasterMasterGogPGO");
 const EXEC_GOG = path.join(BINPATH_GOG, EXEC_FILENAME);
 const BINPATH_XBOX = ".";
 const EXEC_XBOX = "gamelaunchhelper.exe";
+//const EXEC_XBOX = EXEC_FILENAME;
 
 //Data for mod types, tools, load order, and installers
 const USER_DOCS = util.getVortexPath('home');
@@ -106,13 +109,13 @@ const spec = {
       "steamAppId": +STEAMAPP_ID,
       "gogAppId": GOGAPP_ID,
       "epicAppId": EPICAPP_ID,
-      //"xboxAppId": XBOXAPP_ID,
+      "xboxAppId": XBOXAPP_ID,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
       "GogAPPId": GOGAPP_ID,
       "EpicAPPId": EPICAPP_ID,
-      //"XboxAPPId": XBOXAPP_ID,
+      "XboxAPPId": XBOXAPP_ID,
     }
   },
   "modTypes": [
@@ -134,13 +137,18 @@ const spec = {
       STEAMAPP_ID,
       EPICAPP_ID,
       GOGAPP_ID,
-      //XBOXAPP_ID,
+      XBOXAPP_ID,
     ],
     "names": []
   }
 };
 
 // BASIC EXTENSION FUNCTIONS //////////////////////////////////////////////////////////////////////////////////
+
+function isDir(folder, file) {
+  const stats = fs.statSync(path.join(folder, file));
+  return stats.isDirectory();
+}
 
 function statCheckSync(gamePath, file) {
   try {
@@ -199,7 +207,6 @@ function makeFindGame(api, gameSpec) {
 }
 
 async function requiresLauncher(gamePath, store) {
-  /*
   if (store === 'xbox') {
       return Promise.resolve({
           launcher: 'xbox',
@@ -212,7 +219,7 @@ async function requiresLauncher(gamePath, store) {
   /*
   if (store === 'steam') {
     return Promise.resolve({
-      launcher: 'epic',
+      launcher: 'steam',
     });
   } //*/
   if (store === 'epic') {
@@ -230,29 +237,56 @@ function getExecutable(discoveredPath) {
   if (statCheckSync(discoveredPath, EXEC_STEAM)) {
     GAME_VERSION = 'steam';
     BINARIES_PATH = BINPATH_STEAM;
+    EXEC = EXEC_STEAM;
     BINARIES_TARGET = path.join(`{gamePath}`, BINARIES_PATH);
     return EXEC_STEAM;
   };
   if (statCheckSync(discoveredPath, EXEC_EPIC)) {
     GAME_VERSION = 'epic';
     BINARIES_PATH = BINPATH_EPIC;
+    EXEC = EXEC_EPIC;
     BINARIES_TARGET = path.join(`{gamePath}`, BINARIES_PATH);
     return EXEC_EPIC;
   };
   if (statCheckSync(discoveredPath, EXEC_GOG)) {
     GAME_VERSION = 'gog';
     BINARIES_PATH = BINPATH_GOG;
+    EXEC = EXEC_GOG;
     BINARIES_TARGET = path.join(`{gamePath}`, BINARIES_PATH);
     return EXEC_GOG;
   };
-  /*if (statCheckSync(discoveredPath, EXEC_XBOX)) {
+  if (statCheckSync(discoveredPath, EXEC_XBOX)) {
     GAME_VERSION = 'xbox';
     BINARIES_PATH = BINPATH_XBOX;
+    EXEC = EXEC_XBOX;
     BINARIES_TARGET = path.join(`{gamePath}`, BINARIES_PATH);
     return EXEC_XBOX;
   }; //*/
   //log('error', `Could not read game folder to set executable for ${GAME_NAME}`);
   return EXEC_STEAM;
+}
+
+async function setGameVersion(discoveredPath) {
+  if (statCheckAsync(discoveredPath, EXEC_STEAM)) {
+    GAME_VERSION = 'steam';
+    EXEC = EXEC_STEAM;
+    return GAME_VERSION;
+  };
+  if (statCheckAsync(discoveredPath, EXEC_EPIC)) {
+    GAME_VERSION = 'epic';
+    EXEC = EXEC_EPIC;
+    return GAME_VERSION;
+  };
+  if (statCheckAsync(discoveredPath, EXEC_GOG)) {
+    GAME_VERSION = 'gog';
+    EXEC = EXEC_GOG;
+    return GAME_VERSION;
+  };
+  if (statCheckAsync(discoveredPath, EXEC_XBOX)) {
+    GAME_VERSION = 'xbox';
+    EXEC = EXEC_XBOX;
+    return GAME_VERSION;
+  }; //*/
 }
 
 const getDiscoveryPath = (api) => {
@@ -592,6 +626,7 @@ async function deserializeLoadOrder(context) {
   if (gameDir === undefined) {
     return Promise.reject(new util.NotFound('Game not found'));
   }
+  GAME_VERSION = await setGameVersion(gameDir);
   const mods = util.getSafe(context.api.store.getState(), ['persistent', 'mods', spec.game.id], {});
   let loadOrderPath = path.join(gameDir, LO_PATH);
   let loadOrderFile = await fs.readFileAsync(
@@ -604,7 +639,8 @@ async function deserializeLoadOrder(context) {
   let modFolders = [];
   try {
     modFolders = await fs.readdirAsync(modFolderPath);
-    modFolders = modFolders.filter((folderName) => !IGNORED_EXTS.includes(path.extname(folderName)));
+    //modFolders = modFolders.filter((folderName) => !IGNORED_EXTS.includes(path.extname(folderName)));
+    modFolders = modFolders.filter((folderName) => isDir(modFolderPath, folderName));
     modFolders.sort((a,b) => a.toLowerCase().localeCompare(b.toLowerCase()));
   } catch {
     return Promise.reject(new Error('Failed to read Mods folder'));
@@ -931,6 +967,33 @@ function setupNotify(api) {
   });    
 }
 
+//* Resolve game version dynamically for different game versions
+async function resolveGameVersion(gamePath) {
+  GAME_VERSION = await setGameVersion(gamePath);
+  let version = '0.0.0';
+  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
+    try {
+      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
+      const parsed = await parseStringPromise(appManifest);
+      version = parsed?.Package?.Identity?.[0]?.$?.Version;
+      return Promise.resolve(version);
+    } catch (err) {
+      log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+  else { // use exe
+    try {
+      const exeVersion = require('exe-version');
+      version = exeVersion.getProductVersion(path.join(gamePath, EXEC));
+      return Promise.resolve(version); 
+    } catch (err) {
+      log('error', `Could not read ${EXEC} file to get game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+} //*/
+
 //Setup function
 async function setup(discovery, api, gameSpec) {
   GAME_PATH = discovery.path;
@@ -954,13 +1017,53 @@ function applyGame(context, gameSpec) {
     queryModPath: makeGetModPath(context.api, gameSpec),
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
+    getGameVersion: resolveGameVersion,
     supportedTools: [ //3rd party tools and launchers
       {
         id: `${GAME_ID}-devmodelaunch`,
         name: `KCD2 DevMode Launch`,
         logo: `exec.png`,
-        executable: () => getExecutable(GAME_PATH),
-        requiredFiles: [getExecutable(GAME_PATH)],
+        executable: () => EXEC_STEAM,
+        requiredFiles: [EXEC_STEAM],
+        detach: true,
+        relative: true,
+        exclusive: true,
+        //shell: true,
+        //defaultPrimary: true,
+        parameters: ['-devmode +exec user.cfg']
+      },
+      {
+        id: `${GAME_ID}-devmodelaunch-epic`,
+        name: `KCD2 DevMode Launch`,
+        logo: `exec.png`,
+        executable: () => EXEC_EPIC,
+        requiredFiles: [EXEC_EPIC],
+        detach: true,
+        relative: true,
+        exclusive: true,
+        //shell: true,
+        //defaultPrimary: true,
+        parameters: ['-devmode +exec user.cfg']
+      },
+      {
+        id: `${GAME_ID}-devmodelaunch-gog`,
+        name: `KCD2 DevMode Launch`,
+        logo: `exec.png`,
+        executable: () => EXEC_GOG,
+        requiredFiles: [EXEC_GOG],
+        detach: true,
+        relative: true,
+        exclusive: true,
+        //shell: true,
+        //defaultPrimary: true,
+        parameters: ['-devmode +exec user.cfg']
+      },
+      {
+        id: `${GAME_ID}-devmodelaunch-xbox`,
+        name: `KCD2 DevMode Launch`,
+        logo: `exec.png`,
+        executable: () => EXEC_XBOX,
+        requiredFiles: [EXEC_XBOX],
         detach: true,
         relative: true,
         exclusive: true,

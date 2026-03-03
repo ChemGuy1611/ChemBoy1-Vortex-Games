@@ -4,6 +4,13 @@
 
 - Changed launcher settings so that Steam version launches through Steam (so that Steam launch arguments are used).
 
+## [0.5.0] - 2026-03-03
+
+- Added: Xbox version support
+- Improved: Filtering of the mod folder read to prevent invalid load order entries
+- Added: Launch tools for each game version
+- Fixed: Steam-related load order code no longer running on non-Steam versions
+
 ## [0.4.3] - 2026-01-29
 
 - Fixed: path strings
