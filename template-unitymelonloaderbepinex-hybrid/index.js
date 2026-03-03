@@ -93,6 +93,7 @@ const BEPINEX_DOMAIN = GAME_ID;
 const MELON_PAGE_NO = 0;
 const MELON_FILE_NO = 0;
 const MELON_DOMAIN = GAME_ID;
+const useMelonNightly = false; //use Nightly build of MelonLoader?
 
 // -- END EDIT ZONE -- /////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -161,6 +162,7 @@ const MELON_ID = `${GAME_ID}-melonloader`;
 const MELON_NAME = "MelonLoader";
 const MELON_ZIP = `MelonLoader.${ARCH}.zip`;
 const MELON_URL = `https://github.com/LavaGang/MelonLoader/releases/latest/download/${MELON_ZIP}`;
+const MELON_URL_NIGHTLY = `https://nightly.link/LavaGang/MelonLoader/workflows/build/alpha-development/MelonLoader.Windows.x64.CI.Release.zip`;
 const MELON_URL_ERR = `https://github.com/LavaGang/MelonLoader/releases`;
 const MELON_FILE = 'MelonLoader.dll';
 const MELON_FOLDER = 'MelonLoader';
@@ -2540,7 +2542,10 @@ async function downloadMelon(api, gameSpec) {
       allowSuppress: false,
     });
     try {
-      const URL = MELON_URL;
+      let URL = MELON_URL;
+      if (useMelonNightly) {
+        URL = MELON_URL_NIGHTLY;
+      }
       const dlInfo = { //Download the mod
         game: GAME_DOMAIN,
         name: MOD_NAME,
