@@ -2,8 +2,8 @@
 Name: Resident Evil Requiem Vortex Extension
 Structure: Fluffy + REFramework (RE Engine)
 Author: ChemBoy1
-Version: 0.1.1
-Date: 2026-02-28
+Version: 0.1.2
+Date: 2026-03-02
 ///////////////////////////////////////////*/
 
 //Import libraries
