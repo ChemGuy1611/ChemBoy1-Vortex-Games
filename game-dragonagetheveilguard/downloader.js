@@ -54,19 +54,19 @@ async function download(api, requirements, force) {
                 const version = await req.resolveVersion(api);
                 asset = await getLatestGithubReleaseAsset(api, req);
                 //const coerced = semver_1.default.coerce(asset.release.tag_name);
-                let coerced = asset.release.tag_name;
+                let coerced = asset.release.tag_name; //2026.02.01.0
                 if (coerced !== null && coerced !== void 0) {
-                  let versionSplit = coerced.split('.');
-                  versionSplit[0] = versionSplit[0].replace('20', '');
+                  let versionSplit = coerced.split('.'); //['2026', '02', '01', '0']
+                  versionSplit[0] = versionSplit[0].replace('20', ''); //['26', '02', '01', '0']
                   if (versionSplit[1].startsWith('0')) {
-                    versionSplit[1] = versionSplit[1].replace('0', '');
+                    versionSplit[1] = versionSplit[1].replace('0', ''); //['26', '2', '01', '0']
                   }
                   if (versionSplit[2].startsWith('0')) {
-                    versionSplit[2] = versionSplit[2].replace('0', '');
+                    versionSplit[2] = versionSplit[2].replace('0', ''); //['26', '2', '1', '0']
                   }
-                  versionSplit.pop();
+                  versionSplit.pop(); //['26', '2', '1']
                   //coercedVersion.version = versionSplit.join('.');
-                  coerced = versionSplit.join('.');
+                  coerced = versionSplit.join('.'); //'26.2.1'
                 }
                 //if (semver_1.default.gt(coerced.version, version)) {
                 if (semver_1.default.gt(coerced, version)) {
@@ -320,21 +320,21 @@ async function testRequirementVersion(api, requirement) {
         return;
     }
     //let coercedVersion = semver_1.default.coerce(latest.release.tag_name);
-    let coercedVersion = latest.release.tag_name;
+    let coercedVersion = latest.release.tag_name; //2026.02.01.0
     //if (coercedVersion !== null && coercedVersion !== void 0 && coercedVersion.version) {
     if (coercedVersion !== null && coercedVersion !== void 0) {
       //let versionSplit = coercedVersion.version.split('.');
-      let versionSplit = coercedVersion.split('.');
-      versionSplit[0] = versionSplit[0].replace('20', '');
+      let versionSplit = coercedVersion.split('.'); //['2026', '02', '01', '0']
+      versionSplit[0] = versionSplit[0].replace('20', ''); //['26', '02', '01', '0']
       if (versionSplit[1].startsWith('0')) {
-        versionSplit[1] = versionSplit[1].replace('0', '');
+        versionSplit[1] = versionSplit[1].replace('0', ''); //['26', '2', '01', '0']
       }
       if (versionSplit[2].startsWith('0')) {
-        versionSplit[2] = versionSplit[2].replace('0', '');
+        versionSplit[2] = versionSplit[2].replace('0', ''); //['26', '2', '1', '0']
       }
-      versionSplit.pop();
+      versionSplit.pop(); //['26', '2', '1']
       //coercedVersion.version = versionSplit.join('.');
-      coercedVersion = versionSplit.join('.');
+      coercedVersion = versionSplit.join('.'); //'26.2.1'
     }
     //if (!semver_1.default.gt(coercedVersion.version, currentVersion)) {
     if (!semver_1.default.gt(coercedVersion, currentVersion)) {
@@ -431,18 +431,18 @@ async function resolveVersionByPattern(api, requirement) {
     const state = api.getState();
     const files = vortex_api_1.util.getSafe(state, ['persistent', 'downloads', 'files'], []);
     const latestVersion = Object.values(files).reduce((prev, file) => {
-      let match = requirement.fileArchivePattern.exec(file.localPath);
+      let match = requirement.fileArchivePattern.exec(file.localPath); //[???, '2026.02.01.0']
       if (match !== null && match !== void 0 && match[1]) {
-        let versionSplit = match[1].split('.');
-        versionSplit[0] = versionSplit[0].replace('20', '');
+        let versionSplit = match[1].split('.'); //['2026', '02', '01', '0']
+        versionSplit[0] = versionSplit[0].replace('20', ''); //['26', '02', '01', '0']
         if (versionSplit[1].startsWith('0')) {
-          versionSplit[1] = versionSplit[1].replace('0', '');
+          versionSplit[1] = versionSplit[1].replace('0', ''); //['26', '2', '01', '0']
         }
         if (versionSplit[2].startsWith('0')) {
-          versionSplit[2] = versionSplit[2].replace('0', '');
+          versionSplit[2] = versionSplit[2].replace('0', ''); //['26', '2', '1', '0']
         }
-        versionSplit.pop();
-        match[1] = versionSplit.join('.');
+        versionSplit.pop(); //['26', '2', '1']
+        match[1] = versionSplit.join('.'); //'26.2.1'
       }
       if ((match === null || match === void 0 ? void 0 : match[1]) && semver_1.default.gt(match[1], prev)) {
           prev = match[1];
