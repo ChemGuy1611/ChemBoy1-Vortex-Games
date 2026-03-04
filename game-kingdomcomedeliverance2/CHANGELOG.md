@@ -4,6 +4,10 @@
 
 - Changed launcher settings so that Steam version launches through Steam (so that Steam launch arguments are used).
 
+## [0.5.1] - 2026-03-04
+
+- Fixed: Corrected mod path for Xbox version (Documents)
+
 ## [0.5.0] - 2026-03-03
 
 - Added: Xbox version support
