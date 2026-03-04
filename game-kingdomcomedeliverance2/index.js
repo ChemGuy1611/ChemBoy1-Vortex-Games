@@ -1045,11 +1045,11 @@ async function setup(discovery, api, gameSpec) {
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(api.getState(), gameSpec.game.id);
   //setupNotify(api);
   GAME_VERSION = await setGameVersion(GAME_PATH);
-  //if (GAME_VERSION === 'xbox') {
+  if (GAME_VERSION === 'xbox') {
     await fs.ensureDirWritableAsync(MOD_PATH_XBOX);
-  //} else {
+  } else {
     await fs.ensureDirWritableAsync(path.join(discovery.path, MOD_PATH));
-  //}
+  }
   if (LOAD_ORDER_ENABLED) {
     if (GAME_VERSION === 'xbox') {
       await fs.ensureFileAsync(LO_PATH_XBOX);
