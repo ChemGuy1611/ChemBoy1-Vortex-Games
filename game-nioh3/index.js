@@ -2,8 +2,8 @@
 Name: Nioh 3 Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.2.2
-Date: 2026-02-25
+Version: 0.2.3
+Date: 2026-03-04
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -372,7 +372,6 @@ async function requiresLauncher(gamePath, store) {
         },
     });
   } //*/
-  /*
   if (store === 'steam') {
     return Promise.resolve({
       launcher: 'steam',
