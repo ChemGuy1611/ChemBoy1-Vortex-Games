@@ -363,7 +363,6 @@ async function requiresLauncher(gamePath, store) {
       },
     });
   } //*/
-  /*
   if (store === 'steam') {
     return Promise.resolve({
       launcher: 'steam',

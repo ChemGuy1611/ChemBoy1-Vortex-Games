@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.2.3] - 2026-02-25
+
+- Changed: Launch game directly through Steam
+
 ## [0.2.2] - 2026-02-25
 
 - Added: Installer for .g1t and .g1m files to "package\RDBExplorer_Mods" folder
