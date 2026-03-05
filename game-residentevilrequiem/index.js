@@ -2,8 +2,8 @@
 Name: Resident Evil Requiem Vortex Extension
 Structure: Fluffy + REFramework (RE Engine)
 Author: ChemBoy1
-Version: 0.1.2
-Date: 2026-03-02
+Version: 0.1.3
+Date: 2026-03-05
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -71,6 +71,12 @@ let FLUFFYMOD_PATH = path.join("Games", FLUFFY_FOLDER, "Mods");
 const FLUFFYMOD_FILE = "modinfo.ini";
 const PAK_EXT = '.pak';
 const NATIVES_FOLDER = 'natives';
+
+const PRESET_ID = `${GAME_ID}-preset`;
+const PRESET_NAME = "Fluffy Preset";
+let PRESET_PATH = path.join("Games", FLUFFY_FOLDER, "Presets");
+const PRESET_PATH_DEMO = path.join("Games", FLUFFY_FOLDER_DEMO, "Presets");
+const PRESET_EXTS = [".prt"];
 
 const LOOSELUA_ID = `${GAME_ID}-looselua`;
 const LOOSELUA_NAME = "Loose Lua (REFramework)";
@@ -267,6 +273,7 @@ function getExecutable(discoveryPath) {
   }
   if (statCheckSync(discoveryPath, EXEC_DEMO)) {
     FLUFFYMOD_PATH = path.join("Games", FLUFFY_FOLDER_DEMO, "Mods");
+    PRESET_PATH = PRESET_PATH_DEMO;
     return EXEC_DEMO;
   };
   return EXEC;
@@ -279,6 +286,7 @@ function getModPath(discoveryPath) {
   }
   if (statCheckSync(discoveryPath, EXEC_DEMO)) {
     FLUFFYMOD_PATH = path.join("Games", FLUFFY_FOLDER_DEMO, "Mods");
+    PRESET_PATH = PRESET_PATH_DEMO;
     return FLUFFYMOD_PATH;
   };
   return FLUFFYMOD_PATH;
@@ -290,6 +298,7 @@ async function setGameVersion(gamePath) {
   if (CHECK) {
     GAME_VERSION = 'demo';
     FLUFFYMOD_PATH = path.join("Games", FLUFFY_FOLDER_DEMO, "Mods");
+    PRESET_PATH = PRESET_PATH_DEMO;
     return GAME_VERSION;
   } else {
     GAME_VERSION = 'default';
@@ -754,6 +763,48 @@ function installRoot(files) {
   return Promise.resolve({ instructions });
 }
 
+//Installer test for Fluffy Preset files
+function testPreset(files, gameId) {
+  const isMod = files.some(file => PRESET_EXTS.includes(path.extname(file).toLowerCase()));
+  const isFluffy = files.some(file => path.basename(file).toLowerCase() === FLUFFYMOD_FILE);
+  let supported = (gameId === spec.game.id) && isMod && !isFluffy;
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install Fluffy Preset files
+function installPreset(files) {
+  const modFile = files.find(file => PRESET_EXTS.includes(path.extname(file).toLowerCase()));
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: PRESET_ID };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) &&
+      (!file.endsWith(path.sep))));
+
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
 //test for zips for Fluffy (all mods will be re-zipped for Fluffy to avoid install failures)
 async function testZipContent(files, gameId) {
   const isFluffy = files.some(file => (path.basename(file).toLowerCase() === FLUFFY_EXEC));
@@ -920,6 +971,7 @@ async function setup(discovery, api, gameSpec) {
   // ASYNC CODE //////////////////////////////////////////
   GAME_VERSION = await setGameVersion(GAME_PATH);
   MODTYPE_FOLDERS.push(FLUFFYMOD_PATH);
+  MODTYPE_FOLDERS.push(PRESET_PATH);
   await downloadFluffy(api, gameSpec);
   await downloadREFramework(api, gameSpec);
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
@@ -958,15 +1010,27 @@ function applyGame(context, gameSpec) {
     () => Promise.resolve(false), 
     { 
       name: FLUFFYMOD_NAME, 
-      mergeMods: false,
+      mergeMods: reZip,
+    }
+  );
+  context.registerModType(PRESET_ID, 40, 
+    (gameId) => {
+      var _a;
+      return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
+    }, 
+    (game) => pathPattern(context.api, game, path.join('{gamePath}', PRESET_PATH)), 
+    () => Promise.resolve(false), 
+    { 
+      name: PRESET_NAME, 
     }
   );
 
   //register mod installers
   context.registerInstaller(FLUFFY_ID, 25, testFluffy, installFluffy);
   context.registerInstaller(REF_ID, 27, testREF, installREF);
-  context.registerInstaller(LOOSELUA_ID, 33, testLooseLua, installLooseLua);
-  context.registerInstaller(ROOT_ID, 35, testRoot, installRoot);
+  context.registerInstaller(LOOSELUA_ID, 29, testLooseLua, installLooseLua);
+  context.registerInstaller(ROOT_ID, 31, testRoot, installRoot);
+  context.registerInstaller(PRESET_ID, 33, testPreset, installPreset);
   if (!reZip) {
     context.registerInstaller(FLUFFYMOD_ID, 45, testFluffyMod, installFluffyMod);
   } else {

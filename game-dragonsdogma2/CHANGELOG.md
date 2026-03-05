@@ -1,5 +1,10 @@
 # Changelog
 
+## [0.6.0] - 2026-03-05
+
+- Improved: Mod installer performance by removing Bluebird.
+- Added: Installer for Fluffy Preset files (.prt) - useful for collections
+
 ## [0.5.0] - 2026-01-30
 
 - Added: Installer for loose lua files - not installed properly by Fluffy

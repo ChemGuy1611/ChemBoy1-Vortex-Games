@@ -4,6 +4,12 @@
 
 - None Planned
 
+## [0.3.0] - 2026-03-05
+
+- Improved: Mod installer performance by removing Bluebird.
+- Added: Installer for Fluffy Preset files (.prt) - useful for collections
+- Added: Buttons to open PCGamingWiki page and submit bug reports
+
 ## [0.2.2] - 2025-11-18
 
 - Added a Root Folder installer to try and filter mods that are not for Fluffy from being re-zipped. Targets any mod with a .exe file and a few dlls for now.

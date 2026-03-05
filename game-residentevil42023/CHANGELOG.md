@@ -1,8 +1,9 @@
 # Changelog
 
-## [0.4.0] - 2026-02-27
+## [0.4.0] - 2026-03-05
 
-- Improved: Fluffy Mods no longer need to be re-zipped - MUST UPDATE FLUFFY to v3.069 or higher
+- Improved: Mod installer performance by removing Bluebird.
+- Added: Installer for Fluffy Preset files (.prt) - useful for collections
 
 ## [0.3.3] - 2026-02-08
 

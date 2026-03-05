@@ -2,8 +2,8 @@
 Name: Dragon's Dogma 2 Vortex Extension
 Structure: Fluffy + REFramework (RE Engine)
 Author: ChemBoy1
-Version: 0.5.0
-Date: 2026-01-30
+Version: 0.6.0
+Date: 2026-03-05
 /////////////////////////////////////////////////*/
 
 //Import libraries
@@ -23,6 +23,8 @@ const MOD_PATH = path.join("Games", FLUFFY_FOLDER, "Mods");
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Dragon%27s_Dogma_II";
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/851"; //Nexus link to this extension. Used for links
 
+let GAME_PATH = '';
+let GAME_VERSION = '';
 let DOWNLOAD_FOLDER = '';
 let STAGING_FOLDER = '';
 
@@ -50,6 +52,11 @@ const FLUFFYPAK_NAME = "Fluffy Pak Mod";
 const FLUFFYMOD_PATH = path.join("Games", FLUFFY_FOLDER, "Mods");
 const FLUFFYMOD_FILE = "modinfo.ini";
 const PAK_EXT = '.pak';
+
+const PRESET_ID = `${GAME_ID}-preset`;
+const PRESET_NAME = "Fluffy Preset";
+const PRESET_PATH = path.join("Games", FLUFFY_FOLDER, "Presets");
+const PRESET_EXTS = [".prt"];
 
 const LOOSELUA_ID = `${GAME_ID}-looselua`;
 const LOOSELUA_NAME = "Loose Lua (REFramework)";
@@ -95,6 +102,12 @@ const spec = {
       "name": LOOSELUA_NAME,
       "priority": "high",
       "targetPath": path.join('{gamePath}', LOOSELUA_PATH)
+    },
+    {
+      "id": PRESET_ID,
+      "name": PRESET_NAME,
+      "priority": "high",
+      "targetPath": path.join('{gamePath}', PRESET_PATH)
     },
     {
       "id": FLUFFY_ID,
@@ -553,6 +566,48 @@ function installLooseLua(files) {
   return Promise.resolve({ instructions });
 }
 
+//Installer test for Fluffy Preset files
+function testPreset(files, gameId) {
+  const isMod = files.some(file => PRESET_EXTS.includes(path.extname(file).toLowerCase()));
+  const isFluffy = files.some(file => path.basename(file).toLowerCase() === FLUFFYMOD_FILE);
+  let supported = (gameId === spec.game.id) && isMod && !isFluffy;
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install Fluffy Preset files
+function installPreset(files) {
+  const modFile = files.find(file => PRESET_EXTS.includes(path.extname(file).toLowerCase()));
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: PRESET_ID };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) &&
+      (!file.endsWith(path.sep))));
+
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
 //test for zips
 async function testZipContent(files, gameId) {
   const isFluffy = files.some(file => path.basename(file).toLowerCase() === FLUFFY_EXEC);
@@ -698,11 +753,13 @@ function runFluffy(api) {
 //Setup function
 async function setup(discovery, api, gameSpec) {
   //setupNotify(api);
+  GAME_PATH = discovery.path;
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(api.getState(), GAME_ID);
   STAGING_FOLDER = selectors.installPathForGame(api.getState(), GAME_ID);
   await downloadFluffy(api, gameSpec);
   await downloadREFramework(api, gameSpec);
-  return fs.ensureDirWritableAsync(path.join(discovery.path, gameSpec.game.modPath));
+  await fs.ensureDirWritableAsync(path.join(GAME_PATH, PRESET_PATH));
+  return fs.ensureDirWritableAsync(path.join(GAME_PATH, gameSpec.game.modPath));
 }
 
 //Let Vortex know about the game
@@ -734,10 +791,12 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(REF_ID, 30, testREF, installREF);
   //context.registerInstaller(FLUFFYMOD_ID, 35, testFluffyMod, installFluffyMod);
   //context.registerInstaller(FLUFFYPAK_ID, 40, testFluffyPak, installFluffyPak);
-  context.registerInstaller(LOOSELUA_ID, 43, testLooseLua, installLooseLua);
-  context.registerInstaller(`${FLUFFYMOD_ID}zip`, 45, testZipContent, installZipContent);
+  context.registerInstaller(LOOSELUA_ID, 41, testLooseLua, installLooseLua);
   //context.registerInstaller(ROOT_ID, 50, testRoot, installRoot);
+  context.registerInstaller(PRESET_ID, 43, testPreset, installPreset);
+  context.registerInstaller(`${FLUFFYMOD_ID}zip`, 45, testZipContent, installZipContent);
 
+  //register actions
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
     util.opn(PCGAMINGWIKI_URL).catch(() => null);
   }, () => {

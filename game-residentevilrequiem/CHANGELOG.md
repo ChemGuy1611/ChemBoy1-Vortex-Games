@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.1.3] - 2026-03-05
+
+- Added: Installer for Fluffy Preset files (.prt) - useful for collections
+
 ## [0.1.2] - 2026-02-28
 
 - Added: Epic version support.
