@@ -9,7 +9,6 @@ Date: 2026-01-27
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
-const Bluebird = require('bluebird');
 //const winapi = require('winapi-bindings'); //gives access to the Windows registry
 const { parseStringPromise } = require('xml2js');
 
@@ -303,11 +302,6 @@ async function installZip(files, destinationPath) {
   }
 }
 
-//convert installer functions to Bluebird promises
-function toBlue(func) {
-  return (...args) => Bluebird.Promise.resolve(func(...args));
-}
-
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
 //*
@@ -371,7 +365,7 @@ function applyGame(context, gameSpec) {
 
   //register mod installers
   //context.registerInstaller(I3D_ID, 25, testI3d, installI3d);
-  context.registerInstaller(ZIP_ID, 30, toBlue(testZip), toBlue(installZip));
+  context.registerInstaller(ZIP_ID, 30, testZip, installZip);
 }
 
 //Main function

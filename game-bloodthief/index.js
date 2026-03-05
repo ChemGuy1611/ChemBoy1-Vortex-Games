@@ -11,7 +11,6 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 const { download, findModByFile, findDownloadIdByFile, resolveVersionByPattern, testRequirementVersion } = require('./downloader');
-const Bluebird = require('bluebird');
 //const winapi = require('winapi-bindings');
 //const turbowalk = require('turbowalk');
 
@@ -490,11 +489,6 @@ async function installModZip(files, destinationPath) {
   }
 }
 
-//convert installer functions to Bluebird promises
-function toBlue(func) {
-  return (...args) => Bluebird.Promise.resolve(func(...args));
-}
-
 // AUTOMATIC MOD DOWNLOADERS ///////////////////////////////////////////////////
 
 async function asyncForEachTestVersion(api, requirements) {
@@ -657,7 +651,7 @@ function applyGame(context, gameSpec) {
   //register mod installers
   context.registerInstaller(LOADER_ID, 25, testLoader, installLoader);
   if (keepZips) {
-    context.registerInstaller(MOD_ID, 27, toBlue(testMod), toBlue(installModZip)); //keep in zips
+    context.registerInstaller(MOD_ID, 27, testMod, installModZip); //keep in zips
   } else {
     context.registerInstaller(MOD_ID, 27, testMod, installMod); //unzip
   }

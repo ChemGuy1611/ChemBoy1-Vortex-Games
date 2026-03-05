@@ -39,7 +39,6 @@ Date: 2025-12-09
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
-const Bluebird = require('bluebird');
 const { parseStringPromise } = require('xml2js');
 
 //Specify all the information about the game
@@ -498,11 +497,6 @@ async function installZipContent(files, destinationPath) {
   }
 }
 
-//convert installer functions to Bluebird promises
-function toBlue(func) {
-  return (...args) => Bluebird.Promise.resolve(func(...args));
-}
-
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
 //Notify User to run ATK after deployment
@@ -640,7 +634,7 @@ function applyGame(context, gameSpec) {
   context.registerInstaller('doometernal-injector', 30, testInjector, installInjector);
   context.registerInstaller('doometernal-ktde', 35, testKTDE, installKTDE);
   context.registerInstaller('doometernal-meathook', 40, testMeat, installMeat);
-  context.registerInstaller('doometernal-zip-mod', 45, toBlue(testZipContent), toBlue(installZipContent));
+  context.registerInstaller('doometernal-zip-mod', 45, testZipContent, installZipContent);
 
   //register buttons to open folders
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {

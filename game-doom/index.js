@@ -39,7 +39,6 @@ Date: 2025-05-28
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
-const Bluebird = require('bluebird');
 
 //Specify all the information about the game
 const STEAMAPP_ID = "379720";
@@ -515,11 +514,6 @@ async function installZipContent(files, destinationPath) {
   }
 }
 
-//convert installer functions to Bluebird promises
-function toBlue(func) {
-  return (...args) => Bluebird.Promise.resolve(func(...args));
-}
-
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
 //Notify User to run ATK after deployment
@@ -629,7 +623,7 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(LAUNCHER_ID, 27, testLauncher, installLauncher);
   context.registerInstaller(LEGACY_ID, 29, testLegacy, installLegacy);
   context.registerInstaller(ROLLBACK_ID, 31, testRollback, installRollback);
-  //context.registerInstaller(`${GAME_ID}-zipmod`, 33, toBlue(testZipContent), toBlue(installZipContent)); //zip installer removed because mods did not work in zips
+  //context.registerInstaller(`${GAME_ID}-zipmod`, 33, testZipContent, installZipContent); //zip installer removed because mods did not work in zips
 
   //register buttons to open folders
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {

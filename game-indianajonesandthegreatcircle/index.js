@@ -10,7 +10,6 @@ Date: 2025-12-09
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
-const Bluebird = require('bluebird');
 const { parseStringPromise } = require('xml2js');
 
 //Specify all the information about the game
@@ -493,11 +492,6 @@ function installSound(files) {
   return Promise.resolve({ instructions });
 }
 
-//convert installer functions to Bluebird promises
-function toBlue(func) {
-  return (...args) => Bluebird.Promise.resolve(func(...args));
-}
-
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
 //*
@@ -568,7 +562,7 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(CONFIG_ID, 30, testConfig, installConfig);
   context.registerInstaller(SAVE_ID, 35, testSave, installSave);
   context.registerInstaller(SOUND_ID, 40, testSound, installSound);
-  //context.registerInstaller(`${GAME_ID}-zip-mod`, 45, toBlue(testZipContent), toBlue(installZipContent));
+  //context.registerInstaller(`${GAME_ID}-zip-mod`, 45, testZipContent, installZipContent);
 
   //register buttons to open folders
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {

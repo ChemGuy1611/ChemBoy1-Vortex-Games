@@ -39,7 +39,6 @@ Date: 2025-10-22
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
-const Bluebird = require('bluebird');
 const { download, findModByFile, findDownloadIdByFile, resolveVersionByPattern, testRequirementVersion } = require('./downloader');
 const { parseStringPromise } = require('xml2js');
 
@@ -915,11 +914,6 @@ async function installZipContent(files, destinationPath) {
   }
 }
 
-//convert installer functions to Bluebird promises
-function toBlue(func) {
-  return (...args) => Bluebird.Promise.resolve(func(...args));
-}
-
 //Test Fallback installer for binaries folder
 function testBinaries(files, gameId) {
   let supported = (gameId === spec.game.id);
@@ -1125,7 +1119,7 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(SOUND_ID, 31, testSound, installSound);
   context.registerInstaller(CONFIG_ID, 33, testConfig, installConfig);
   //context.registerInstaller(SAVE_ID, 35, testSave, installSave);
-  context.registerInstaller(`${GAME_ID}-zipmod`, 37, toBlue(testZipContent), toBlue(installZipContent));
+  context.registerInstaller(`${GAME_ID}-zipmod`, 37, testZipContent, installZipContent);
   context.registerInstaller(BINARIES_ID, 39, testBinaries, installBinaries); //fallback installer
 
   //register buttons to open folders

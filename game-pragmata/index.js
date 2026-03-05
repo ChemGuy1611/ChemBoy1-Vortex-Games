@@ -10,7 +10,6 @@ Date: 2026-04-24
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
-const Bluebird = require('bluebird');
 
 //Specify all information about the game
 const GAME_ID = "pragmata";
@@ -797,11 +796,6 @@ async function installZipContent(files, destinationPath) {
   }
 }
 
-//convert installer functions to Bluebird promises
-function toBlue(func) {
-  return (...args) => Bluebird.Promise.resolve(func(...args));
-}
-
 // MAIN FUNCTIONS ////////////////////////////////////////////////////////////////////////
 
 //Notify User of Setup instructions
@@ -976,7 +970,7 @@ function applyGame(context, gameSpec) {
   //context.registerInstaller(`${FLUFFYMOD_ID}pak`, 31, testFluffyPak, installFluffyPak);
   context.registerInstaller(LOOSELUA_ID, 33, testLooseLua, installLooseLua);
   context.registerInstaller(ROOT_ID, 35, testRoot, installRoot);
-  context.registerInstaller(`${FLUFFYMOD_ID}zip`, 37, toBlue(testZipContent), toBlue(installZipContent));
+  context.registerInstaller(`${FLUFFYMOD_ID}zip`, 37, testZipContent, installZipContent);
 
   //register actions
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config File', () => {

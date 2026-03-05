@@ -10,7 +10,6 @@ Date: 03/13/2025
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
-const Bluebird = require('bluebird');
 
 //Specify all information about the game
 const STEAMAPP_ID = "1364780";
@@ -592,11 +591,6 @@ async function installZipContent(files, destinationPath) {
   }
 }
 
-//convert installer functions to Bluebird promises
-function toBlue(func) {
-  return (...args) => Bluebird.Promise.resolve(func(...args));
-}
-
 // MAIN FUNCTIONS ////////////////////////////////////////////////////////////////////////
 
 //Notify User of Setup instructions
@@ -735,7 +729,7 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(REF_ID, 30, testREF, installREF);
   //context.registerInstaller(FLUFFYMOD_ID, 35, testFluffyMod, installFluffyMod);
   //context.registerInstaller(`${FLUFFYMOD_ID}pak`, 40, testFluffyPak, installFluffyPak);
-  context.registerInstaller(`${FLUFFYMOD_ID}zip`, 45, toBlue(testZipContent), toBlue(installZipContent));
+  context.registerInstaller(`${FLUFFYMOD_ID}zip`, 45, testZipContent, installZipContent);
   //context.registerInstaller(ROOT_ID, 50, testRoot, installRoot);
 }
 

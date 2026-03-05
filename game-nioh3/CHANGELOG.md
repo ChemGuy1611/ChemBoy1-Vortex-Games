@@ -4,7 +4,7 @@
 
 - None Planned
 
-## [0.2.3] - 2026-02-25
+## [0.2.3] - 2026-03-04
 
 - Changed: Launch game directly through Steam
 

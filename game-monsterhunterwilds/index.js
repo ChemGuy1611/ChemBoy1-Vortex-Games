@@ -10,7 +10,6 @@ Date: 2025-11-18
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
-const Bluebird = require('bluebird');
 
 //Specify all information about the game
 const GAME_ID = "monsterhunterwilds";
@@ -690,11 +689,6 @@ async function installZipContent(files, destinationPath) {
   }
 }
 
-//convert installer functions to Bluebird promises
-function toBlue(func) {
-  return (...args) => Bluebird.Promise.resolve(func(...args));
-}
-
 //Test Fallback installer to Binaries folder
 function testFluffyMod(files, gameId) {
   let supported = (gameId === spec.game.id);
@@ -893,7 +887,7 @@ function applyGame(context, gameSpec) {
   //context.registerInstaller(`${FLUFFYMOD_ID}pak`, 31, testFluffyPak, installFluffyPak);
   context.registerInstaller(LOOSELUA_ID, 33, testLooseLua, installLooseLua);
   context.registerInstaller(ROOT_ID, 35, testRoot, installRoot);
-  context.registerInstaller(`${FLUFFYMOD_ID}zip`, 37, toBlue(testZipContent), toBlue(installZipContent));
+  context.registerInstaller(`${FLUFFYMOD_ID}zip`, 37, testZipContent, installZipContent);
   //context.registerInstaller(FLUFFYMOD_ID, 37, testFluffyMod, installFluffyMod); //disabled because the installer is too aggressive and breaks mods with lots of nested folders
 
   //register actions

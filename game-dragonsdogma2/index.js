@@ -10,7 +10,6 @@ Date: 2026-01-30
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
-const Bluebird = require('bluebird');
 
 //Specify all information about the game
 const STEAMAPP_ID = "2054970";
@@ -594,11 +593,6 @@ async function installZipContent(files, destinationPath) {
   }
 }
 
-//convert installer functions to Bluebird promises
-function toBlue(func) {
-  return (...args) => Bluebird.Promise.resolve(func(...args));
-}
-
 // MAIN FUNCTIONS ////////////////////////////////////////////////////////////////////////
 
 //Notify User of Setup instructions
@@ -741,7 +735,7 @@ function applyGame(context, gameSpec) {
   //context.registerInstaller(FLUFFYMOD_ID, 35, testFluffyMod, installFluffyMod);
   //context.registerInstaller(FLUFFYPAK_ID, 40, testFluffyPak, installFluffyPak);
   context.registerInstaller(LOOSELUA_ID, 43, testLooseLua, installLooseLua);
-  context.registerInstaller(`${FLUFFYMOD_ID}zip`, 45, toBlue(testZipContent), toBlue(installZipContent));
+  context.registerInstaller(`${FLUFFYMOD_ID}zip`, 45, testZipContent, installZipContent);
   //context.registerInstaller(ROOT_ID, 50, testRoot, installRoot);
 
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {

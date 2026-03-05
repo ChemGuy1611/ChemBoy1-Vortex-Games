@@ -40,7 +40,6 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 const { download, findModByFile, findDownloadIdByFile, resolveVersionByPattern, testRequirementVersion } = require('./downloader');
-const Bluebird = require('bluebird');
 
 //Specify all the information about the game
 const GAME_ID = "gzdoom";
@@ -468,11 +467,6 @@ async function installZipContent(files, destinationPath) {
   }
 }
 
-//convert installer functions to Bluebird promises
-function toBlue(func) {
-  return (...args) => Bluebird.Promise.resolve(func(...args));
-}
-
 // AUTOMATIC DOWNLOAD FUNCTIONS /////////////////////////////////////////////////
 /*
 async function onCheckModVersion(api, gameId, mods, forced) {
@@ -881,7 +875,7 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(UZDOOM_ID, 27, testUzdoom, installUzdoom);
   context.registerInstaller(WAD_ID, 29, testWad, installWad);
   context.registerInstaller(MOD_ID, 31, testMod, installMod);
-  context.registerInstaller(`${GAME_ID}-zipmod`, 33, toBlue(testZipContent), toBlue(installZipContent));
+  context.registerInstaller(`${GAME_ID}-zipmod`, 33, testZipContent, installZipContent);
 
   //register actions
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open DML ReadMe', () => {

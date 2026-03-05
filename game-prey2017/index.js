@@ -9,7 +9,6 @@ Date: 03/09/2025
 const { fs, util, actions, selectors, log } = require("vortex-api");
 const path = require("path");
 const template = require("string-template");
-const Bluebird = require('bluebird');
 const { parseStringPromise } = require('xml2js');
 
 //Specify all the information about the game
@@ -326,11 +325,6 @@ async function installChairModZip(files, destinationPath) {
   }
 }
 
-//convert installer functions to Bluebird promises
-function toBlue(func) {
-  return (...args) => Bluebird.Promise.resolve(func(...args));
-}
-
 //Installer test for Fluffy Mod Manager files
 function testChairMod(files, gameId) {
   const isMod = files.some(file => path.basename(file).toLowerCase() === CHAIRMOD_FILE);
@@ -630,7 +624,7 @@ function main(context) {
   //register mod installers
   context.registerInstaller(`${GAME_ID}-pric`, 25, testPric, installPric);
   context.registerInstaller(`${GAME_ID}-chairloader`, 30, testChair, installChair);
-  context.registerInstaller(`${GAME_ID}-chairmodzip`, 35, toBlue(testChairModZip), toBlue(installChairModZip));
+  context.registerInstaller(`${GAME_ID}-chairmodzip`, 35, testChairModZip, installChairModZip);
   //context.registerInstaller(`${GAME_ID}-chairmod`, 35, testChairMod, installChairMod);
   context.registerInstaller(`${GAME_ID}-root`, 40, testRoot, installRoot);
   //context.registerInstaller(`${GAME_ID}-chairmodlegacy`, 45, testChairModLegacy, installChairModLegacy);

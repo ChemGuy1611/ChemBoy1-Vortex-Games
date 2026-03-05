@@ -10,7 +10,6 @@ Date: 2026-XX-XX
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
-const Bluebird = require('bluebird');
 
 //Specify all information about the game
 const GAME_ID = "XXX";
@@ -764,11 +763,6 @@ async function installZipContent(files, destinationPath) {
   }
 }
 
-//convert installer functions to Bluebird promises
-function toBlue(func) {
-  return (...args) => Bluebird.Promise.resolve(func(...args));
-}
-
 // MAIN FUNCTIONS ////////////////////////////////////////////////////////////////////////
 
 //Notify User of Setup instructions
@@ -938,7 +932,7 @@ function applyGame(context, gameSpec) {
   if (!reZip) {
     context.registerInstaller(FLUFFYMOD_ID, 29, testFluffyMod, installFluffyMod);
   } else {
-    context.registerInstaller(`${FLUFFYMOD_ID}zip`, 37, toBlue(testZipContent), toBlue(installZipContent)); //no longer need to rezip as of Fluffy MM v3.069
+    context.registerInstaller(`${FLUFFYMOD_ID}zip`, 37, testZipContent, installZipContent); //no longer need to rezip as of Fluffy MM v3.069
   }
   //register actions
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config File', () => {

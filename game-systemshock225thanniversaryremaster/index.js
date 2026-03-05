@@ -10,7 +10,6 @@ Date: 2026-01-19
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
-const Bluebird = require('bluebird');
 const fsPromises = require('fs/promises');
 const child_process = require("child_process");
 const winapi = require('winapi-bindings');
@@ -659,11 +658,6 @@ function testLegacy(files, gameId) {
   });
 }
 
-//convert installer functions to Bluebird promises
-function toBlue(func) {
-  return (...args) => Bluebird.Promise.resolve(func(...args));
-}
-
 //Success notifications
 function convertSuccessNotify(api, name, file) {
   const NOTIF_ID = `${GAME_ID}-legacyconvertsuccess`;
@@ -987,8 +981,8 @@ function applyGame(context, gameSpec) {
 
   //register mod installers
   context.registerInstaller(MOD_ID, 25, testMod, installMod);
-  context.registerInstaller(LEGACY_ID, 27, toBlue(testLegacy), toBlue(installLegacy));
-  //context.registerInstaller(LEGACY_ID, 27, toBlue(testLegacy), (files, destinationPath) => toBlue(installLegacy(files, destinationPath, context.api))); //with api passed in for notifications
+  context.registerInstaller(LEGACY_ID, 27, testLegacy, installLegacy);
+  //context.registerInstaller(LEGACY_ID, 27, testLegacy, (files, destinationPath) => installLegacy(files, destinationPath, context.api)); //with api passed in for notifications
   context.registerInstaller(`${ROOT_ID}folder`, 29, testRootFolder, installRootFolder);
   context.registerInstaller(ROOT_ID, 31, testRoot, installRoot); //fallback to root folder
 
@@ -1094,7 +1088,7 @@ function applyGameClassic(context, gameSpec) {
   });
 
   //register mod installers
-  context.registerInstaller(CLASSIC_ID, 33, toBlue(testClassic), toBlue(installClassic)); //fallback to root folder
+  context.registerInstaller(CLASSIC_ID, 33, testClassic, installClassic); //fallback to root folder
 
   //register actions
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download and/or Run SS2Tool', () => {

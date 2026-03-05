@@ -10,7 +10,6 @@ Date: 2026-XX-XX
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
-const Bluebird = require('bluebird');
 const winapi = require('winapi-bindings');
 
 const DOCUMENTS = util.getVortexPath("documents");
@@ -899,11 +898,6 @@ function setupNotify(api) {
   });    
 }
 
-//convert installer functions to Bluebird promises
-function toBlue(func) {
-  return (...args) => Bluebird.Promise.resolve(func(...args));
-}
-
 async function modFoldersEnsureWritable(gamePath, relPaths) {
   for (let index = 0; index < relPaths.length; index++) {
     await fs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
@@ -954,7 +948,7 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(ROOT_ID, 27, testRoot, installRoot);
   context.registerInstaller(DATA_ID, 29, testData, installData);
   context.registerInstaller(BIN_ID, 31, testBin, installBin);
-  context.registerInstaller(MIMODA3_ID, 33, toBlue(testMiModA3), toBlue(installMiModA3));
+  context.registerInstaller(MIMODA3_ID, 33, testMiModA3, installMiModA3);
   context.registerInstaller(MIMOD_ID, 35, testMiMod, installMiMod);
   context.registerInstaller(XML_ID, 37, testXml, installXml);
   if (fallbackInstaller) {
