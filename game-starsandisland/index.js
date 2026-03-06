@@ -2,8 +2,8 @@
 Name: Starsand Island Vortex Extension
 Structure: Unity BepinEx/MelonLoader Hybrid
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2026-02-18
+Version: 0.1.1
+Date: 2026-03-06
 //////////////////////////////////////////*/
 
 //Import libraries
@@ -80,8 +80,8 @@ const allowBepCfgMan = false; //should BepInExConfigManager be downloaded?
 const allowMelPrefMan = false; //should MelonPreferencesManager be downloaded? False until figure out UniverseLib dependency
 const allowBepinexNexus = true; //set false until bugs are fixed
 const allowMelonNexus = true; //set false until bugs are fixed
-const BEPINEX_PAGE_NO = 4;
-const BEPINEX_FILE_NO = 7;
+const BEPINEX_PAGE_NO = 9;
+const BEPINEX_FILE_NO = 23;
 const BEPINEX_DOMAIN = GAME_ID;
 const MELON_PAGE_NO = 0;
 const MELON_FILE_NO = 0;
@@ -227,7 +227,10 @@ const BEPCFGMAN_NAME = "BepInExConfigManager";
 const BEPCFGMAN_PATH = BEPINEX_MOD_PATH;
 const BEPCFGMAN_URL = `https://github.com/sinai-dev/BepInExConfigManager/releases/latest/download/BepInExConfigManager.${BEPINEX_BUILD}.zip`;
 const BEPCFGMAN_URL_ERR = `https://github.com/sinai-dev/BepInExConfigManager/releases`;
-const BEPCFGMAN_FILE = `bepinexconfigmanager.${BEPINEX_BUILD}.dll`; //lowercased
+const BEPCFGMAN_FILE = `ConfigManager.Il2Cpp.CoreCLR.dll`;
+const BEPCFGMAN_PAGE_NO = 10;
+const BEPCFGMAN_FILE_NO = 26;
+const BEPCFGMAN_DOMAIN = GAME_ID;
 
 const MELONPREFMAN_ID = `${GAME_ID}-melonprefman`;
 const MELONPREFMAN_NAME = "MelonPreferencesManager";
@@ -871,7 +874,7 @@ if (customLoaderInstaller) {
 
 //Test for BepinExConfigManager mod files
 function testBepCfgMan(files, gameId) {
-  const isMod = files.some(file => (path.basename(file).toLowerCase() === BEPCFGMAN_FILE));
+  const isMod = files.some(file => (path.basename(file).toLowerCase() === BEPCFGMAN_FILE.toLowerCase()));
   const isFolder = files.some(file => (path.basename(file).toLowerCase() === 'plugins'));
   let supported = (gameId === spec.game.id) && isMod && isFolder;
 
@@ -2692,7 +2695,73 @@ async function downloadCustom(api, gameSpec) {
   }
 } //*/
 
-// Download BepInExConfigManager from GitHub
+//* Function to auto-download BepInExCfgMan from a Nexus Mods page
+async function downloadBepCfgMan(api, gameSpec) {
+  let isInstalled = isBepCfgManInstalled(api, gameSpec);
+  if (!isInstalled) {
+    const MOD_NAME = BEPCFGMAN_NAME;
+    const MOD_TYPE = BEPCFGMAN_ID;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
+    const PAGE_ID = BEPCFGMAN_PAGE_NO;
+    const FILE_ID = BEPCFGMAN_FILE_NO;  //If using a specific file id because "input" below gives an error
+    const GAME_DOMAIN = BEPCFGMAN_DOMAIN;
+    api.sendNotification({ //notification indicating install process
+      id: NOTIF_ID,
+      message: `Installing ${MOD_NAME}`,
+      type: 'activity',
+      noDismiss: true,
+      allowSuppress: false,
+    });
+    if (api.ext?.ensureLoggedIn !== undefined) { //make sure user is logged into Nexus Mods account in Vortex
+      await api.ext.ensureLoggedIn();
+    }
+    try {
+      let FILE = null;
+      let URL = null;
+      try { //get the mod files information from Nexus
+        const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
+        const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
+        const file = modFiles
+          .filter(file => file.category_id === 1)
+          .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
+          .reverse()[0];
+        if (file === undefined) {
+          throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
+        }
+        FILE = file.file_id;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      } catch (err) { // use defined file ID if input is undefined above
+        FILE = FILE_ID;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      }
+      const dlInfo = { //Download the mod
+        game: GAME_DOMAIN,
+        name: MOD_NAME,
+      };
+      const dlId = await util.toPromise(cb =>
+        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+      const modId = await util.toPromise(cb =>
+        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
+      const batched = [
+        actions.setModsEnabled(api, profileId, [modId], true, {
+          allowAutoDeploy: true,
+          installed: true,
+        }),
+        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
+      ];
+      util.batchDispatch(api.store, batched); // Will dispatch both actions
+    } catch (err) { //Show the user the download page if the download, install process fails
+      const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
+      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err, { allowReport: false });
+      util.opn(errPage).catch(() => null);
+    } finally {
+      api.dismissNotification(NOTIF_ID);
+    }
+  }
+} //*/
+
+/* Download BepInExConfigManager from GitHub
 async function downloadBepCfgMan(api, gameSpec) {
   let isInstalled = isBepCfgManInstalled(api, gameSpec);
   if (!isInstalled) {

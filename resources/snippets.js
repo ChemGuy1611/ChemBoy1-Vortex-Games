@@ -350,7 +350,7 @@ function installContent(files) {
 }
 
 // Re-zip installer //////////////////////////////////////////////////////
-const Bluebird = require('bluebird');
+const Bluebird = require('bluebird'); //DEPRECATED
 //Install zips
 async function installZipContent(files, destinationPath) {
   const zipFiles = files.filter(file => ['.zip', '.7z', '.rar'].includes(path.extname(file)));
@@ -380,7 +380,7 @@ async function installZipContent(files, destinationPath) {
     return Promise.resolve({ instructions });
   }
 }
-//convert installer functions to Bluebird promises
+//convert installer functions to Bluebird promises - DEPRECATED
 function toBlue(func) {
   return (...args) => Bluebird.Promise.resolve(func(...args));
 }

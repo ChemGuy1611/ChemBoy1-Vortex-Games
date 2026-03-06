@@ -2,16 +2,14 @@
 Name: Hollow Knight Vortex Extension
 Structure: Unity BepinEx
 Author: ChemBoy1
-Version: 2.0.0
-Date: 2025-12-23
+Version: 2.0.1
+Date: 2026-03-06
 //////////////////////////////////////////*/
 
 //Import libraries
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
-const winapi = require('winapi-bindings');
-//const turbowalk = require('turbowalk');
 const { parseStringPromise } = require('xml2js');
 
 const USER_HOME = util.getVortexPath("home");
@@ -33,6 +31,8 @@ const GAME_NAME_SHORT = "Hollow Knight"
 const EXEC = "hollow_knight.exe";
 const EXEC_XBOX = 'gamelaunchhelper.exe';
 const EXEC_GOG = 'Hollow Knight.exe';
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Hollow_Knight";
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/376";
 
 let DATA_FOLDER = "hollow_knight_Data";
 const DATA_FOLDER_XBOX = "Hollow Knight_Data";
@@ -247,23 +247,6 @@ async function requiresLauncher(gamePath, store) {
   } //*/
   return Promise.resolve(undefined);
 }
-
-//Find the game installation folder
-function openConfigRegistry(api) {
-  GAME_PATH = getDiscoveryPath(api);
-  try {
-    api.runExecutable(path.join(GAME_PATH, 'regjump.exe'), [`${CONFIG_REGPATH_FULL}`], { shell: true, detached: true } )
-    /*winapi.WithRegOpen(
-      CONFIG_HIVE,
-      CONFIG_REGPATH,
-      hkey => {
-        util.opn(hkey);
-      }
-    ); //*/
-  } catch (err) {
-    log('error', `Could not open ${GAME_NAME} config in registry: ${err}`);
-  }
-} //*/
 
 //Get correct executable for game version
 function getExecutable(discoveryPath) {
@@ -653,13 +636,6 @@ function applyGame(context, gameSpec) {
   //context.registerInstaller(SAVE_ID, 49, testSave, installSave); //best to only enable if saves are stored in the game's folder
   
   //register actions
-  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config (Registry)', () => {
-    openConfigRegistry;
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  }); //*/
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open BepInEx.cfg', () => {
     GAME_PATH = getDiscoveryPath(context.api);
     const openPath = path.join(GAME_PATH, 'BepinEx', 'config', 'BepInEx.cfg');

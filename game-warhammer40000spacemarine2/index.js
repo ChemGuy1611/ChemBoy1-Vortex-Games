@@ -1493,13 +1493,14 @@ function applyGame(context, gameSpec) {
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   });
+  /* Disable Custom Stratagems buttons since this feature is no in the base game
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download Custom Stratagems', () => {
     downloadCustomStratagems(context.api, spec).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
-  }); //*/
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Custom Stratagems Folder', () => {
     GAME_PATH = getDiscoveryPath(context.api);
     util.opn(path.join(GAME_PATH, CUSTOMSTRAT_PAK_PATH)).catch(() => null);
