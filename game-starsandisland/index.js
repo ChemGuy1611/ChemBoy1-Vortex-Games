@@ -127,7 +127,7 @@ const SAVE_FILES = ['XXX.XXX'];
 const SAVE_EXTS = [".XXX"];
 
 //info for modtypes, installers, and tools
-const BEPINEX_ID = `${GAME_ID}-bepinex`;
+const BEPINEX_ID = `${GAME_ID}-bepinex-new`;
 const BEPINEX_NAME = "BepInEx Injector";
 let BEPINEX_FILE = 'BepInEx.Core.dll';
 let BEP_INDICATOR_FILE = path.join('BepInEx', 'core', BEPINEX_FILE);
