@@ -2,8 +2,8 @@
 Name: Marvel's Spider-Man 2 Vortex Extension
 Structure: 3rd-Party Mod Manager (Overstrike)
 Author: ChemBoy1
-Version: 0.1.7
-Date: 2025-10-31
+Version: 0.2.0
+Date: 2026-03-06
 ////////////////////////////////////////////*/
 
 //Import libraries
@@ -11,18 +11,25 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 
+const DOCUMENTS = util.getVortexPath("documents");
+
 //Specify all information about the game
 const STEAMAPP_ID = "2651280";
-const EPICAPP_ID = ""; // not on egdata.app yet
+const EPICAPP_ID = ""; // not on egdata.app yet - https://egdata.app/offers/5143c451be9b4e1ab9f3a0296d0bf5e7/builds
 const GAME_ID = "marvelsspiderman2";
 const EXEC = "Spider-Man2.exe";
 const GAME_NAME = "Marvel's Spider-Man 2";
 const GAME_NAME_SHORT = "Spider-Man 2";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Marvel's_Spider-Man_2";
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1166"; //Nexus link to this extension. Used for links
 
 let GAME_PATH = "";
+let GAME_VERSION = "";
+let STAGING_FOLDER = "";
+let DOWNLOAD_FOLDER = "";
+let USERID_FOLDER = "";
 
-const OS_PAGE_NO = 1;
-const OS_FILE_NO = 30;
+const STEAM_FILE = 'steam_api64.dll';
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Binaries / Root Folder";
@@ -30,12 +37,29 @@ const ROOT_NAME = "Binaries / Root Folder";
 const OVERSTRIKE_ID = `${GAME_ID}-overstrike`;
 const OVERSTRIKE_NAME = "Overstrike";
 const OVERSTRIKE_EXEC = "overstrike.exe";
+const OS_PAGE_NO = 1;
+const OS_FILE_NO = 2206;
 
 const OSMOD_ID = `${GAME_ID}-osmod`;
 const OSMOD_NAME = "Overstrike Mod";
 const OSMOD_FOLDER = "Mods Library";
-const OSMOD_PATH = path.join(OSMOD_FOLDER);
+const OSMOD_PATH = OSMOD_FOLDER;
 const OSMOD_EXTS = ['.smpcmod', '.suit', '.suit_style', '.stage', '.modular', '.script']; //add new exts as needed
+
+const TOC_FILE = "toc";
+const TOC_FILE_BAK = "toc.BAK";
+
+const SAVE_FOLDER = path.join(DOCUMENTS, 'Marvel\'s Spider-Man 2');
+try {
+  const SAVE_ARRAY = fs.readdirSync(SAVE_FOLDER);
+  USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_FOLDER, entry));
+} catch(err) {
+  USERID_FOLDER = "";
+}
+if (USERID_FOLDER === undefined) {
+  USERID_FOLDER = "";
+} //*/
+const SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
 
 const spec = {
   "game": {
@@ -104,6 +128,30 @@ const tools = [
 
 // BASIC EXTENSION FUNCTIONS ////////////////////////////////////////////////////////////////////////////////////////
 
+function isDir(folder, file) {
+  const stats = fs.statSync(path.join(folder, file));
+  return stats.isDirectory();
+}
+
+function statCheckSync(gamePath, file) {
+  try {
+    fs.statSync(path.join(gamePath, file));
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}
+async function statCheckAsync(gamePath, file) {
+  try {
+    await fs.statAsync(path.join(gamePath, file));
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}
+
 //Set mod type priorities
 function modTypePriority(priority) {
   return {
@@ -157,6 +205,16 @@ async function requiresLauncher(gamePath, store) {
   return Promise.resolve(undefined);
 }
 
+async function setGameVersion(gamePath) {
+  const CHECK = await statCheckAsync(gamePath, STEAM_FILE);
+  if (CHECK) {
+    GAME_VERSION = 'steam';
+    return GAME_VERSION;
+  }
+  GAME_VERSION = 'other';
+  return GAME_VERSION;
+}
+
 const getDiscoveryPath = (api) => { //get the game's discovered path
   const state = api.getState();
   const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});
@@ -179,49 +237,51 @@ function isOverstrikeInstalled(api, spec) {
   return Object.keys(mods).some(id => mods[id]?.type === OVERSTRIKE_ID);
 }
 
-//Function to auto-download Overstrike from Nexus Mods <-- This function gave an error when getting the file upload time, for some reason ????
+//* Function to auto-download BepInExCfgMan from a Nexus Mods page
 async function downloadOverstrike(api, gameSpec) {
   let isInstalled = isOverstrikeInstalled(api, gameSpec);
   if (!isInstalled) {
-    //notification indicating install process
     const MOD_NAME = OVERSTRIKE_NAME;
-    const NOTIF_ID = `${GAME_NAME}-${MOD_NAME}-installing`;
     const MOD_TYPE = OVERSTRIKE_ID;
-    const modPageId = OS_PAGE_NO;
-    //const FILE_ID = OS_FILE_NO;  //Using a specific file id because "input" below gives an error 
-    api.sendNotification({
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
+    const PAGE_ID = OS_PAGE_NO;
+    const FILE_ID = OS_FILE_NO;  //If using a specific file id because "input" below gives an error
+    const GAME_DOMAIN = GAME_ID;
+    api.sendNotification({ //notification indicating install process
       id: NOTIF_ID,
       message: `Installing ${MOD_NAME}`,
       type: 'activity',
       noDismiss: true,
       allowSuppress: false,
     });
-    //make sure user is logged into Nexus Mods account in Vortex
-    if (api.ext?.ensureLoggedIn !== undefined) {
+    if (api.ext?.ensureLoggedIn !== undefined) { //make sure user is logged into Nexus Mods account in Vortex
       await api.ext.ensureLoggedIn();
     }
-
     try {
-      //get the mod files information from Nexus
-      ///*
-      const modFiles = await api.ext.nexusGetModFiles(gameSpec.game.id, modPageId);
-      const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
-      const file = modFiles
-        .filter(file => file.category_id === 1)
-        .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))[0];
-      if (file === undefined) {
-        throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
+      let FILE = null;
+      let URL = null;
+      try { //get the mod files information from Nexus
+        const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
+        const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
+        const file = modFiles
+          .filter(file => file.category_id === 1)
+          .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
+          .reverse()[0];
+        if (file === undefined) {
+          throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
+        }
+        FILE = file.file_id;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      } catch (err) { // use defined file ID if input is undefined above
+        FILE = FILE_ID;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
       }
-      //*/
-      //Download the mod
-      const dlInfo = {
-        game: gameSpec.game.id,
+      const dlInfo = { //Download the mod
+        game: GAME_DOMAIN,
         name: MOD_NAME,
       };
-      const nxmUrl = `nxm://${gameSpec.game.id}/mods/${modPageId}/files/${file.file_id}`;
-      //const nxmUrl = `nxm://${gameSpec.game.id}/mods/${modPageId}/files/${FILE_ID}`;
       const dlId = await util.toPromise(cb =>
-        api.events.emit('start-download', [nxmUrl], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
       const modId = await util.toPromise(cb =>
         api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
       const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
@@ -232,18 +292,16 @@ async function downloadOverstrike(api, gameSpec) {
         }),
         actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
       ];
-      util.batchDispatch(api.store, batched); // Will dispatch both actions.
-    //Show the user the download page if the download, install process fails
-    } catch (err) {
-      const errPage = `https://www.nexusmods.com/${gameSpec.game.id}/mods/${modPageId}/files/?tab=files`;
-      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
+      util.batchDispatch(api.store, batched); // Will dispatch both actions
+    } catch (err) { //Show the user the download page if the download, install process fails
+      const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
+      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err, { allowReport: false });
       util.opn(errPage).catch(() => null);
     } finally {
       api.dismissNotification(NOTIF_ID);
     }
   }
-}
-//*/
+} //*/
 
 // MOD INSTALLER FUNCTIONS ////////////////////////////////////////////////////////////////////////////////////////
 
@@ -445,35 +503,47 @@ function runOverstrike(api) {
 
 async function verifyGameFiles(api) {
   GAME_PATH = await getDiscoveryPath(api);
-  const FILE1 = 'toc';
-  const FILE2 = 'toc.BAK';
+  GAME_VERSION = await setGameVersion(GAME_PATH);
   const parameters = {
-    "FileList": `${FILE1}`,
+    "FileList": `${TOC_FILE}`,
     "InstallDirectory": GAME_PATH,
     "VerifyAll": false,
     "AppId": +STEAMAPP_ID,
   };
 
   try {
-    await fs.unlinkAsync(path.join(GAME_PATH, FILE1));
-    await fs.unlinkAsync(path.join(GAME_PATH, FILE2));
+    await fs.statAsync(path.join(GAME_PATH, TOC_FILE));
+    await fs.unlinkAsync(path.join(GAME_PATH, TOC_FILE));
+    await fs.statAsync(path.join(GAME_PATH, TOC_FILE_BAK));
+    await fs.unlinkAsync(path.join(GAME_PATH, TOC_FILE_BAK));
   } catch (err) {
     return api.showErrorNotification('Failed to delete toc and toc.BAK files', err, { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 });
   }
-
-  try {
-    await api.ext.steamkitVerifyFileIntegrity(parameters, GAME_ID);
-    log('warn', `Steam verification complete`);
-    return;
-  } catch (err) {
-    return api.showErrorNotification('Failed to verify game files through Steam', err, { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 });
+  if (GAME_VERSION === 'steam') {
+    try {
+      await api.ext.steamkitVerifyFileIntegrity(parameters, GAME_ID);
+      log('warn', `Steam verification complete`);
+      return;
+    } catch (err) {
+      return api.showErrorNotification('Failed to verify game files through Steam. Do it in the Steam app instead.', err, { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 });
+    }
   }
+  api.sendNotification({ //success notification
+    id: `${GAME_ID}-tocreset-success`,
+    message: `Successfully performed TOC reset. You may need to verify the game files again.`,
+    type: 'success',
+    noDismiss: false,
+    allowSuppress: true,
+  });
 }
 
 //Setup function
 async function setup(discovery, api, gameSpec) {
   GAME_PATH = discovery.path;
-  updateNotify(api);
+  STAGING_FOLDER = selectors.installPathForGame(api.getState(), GAME_ID);
+  DOWNLOAD_FOLDER = selectors.downloadPathForGame(api.getState(), GAME_ID);
+  GAME_VERSION = await setGameVersion(GAME_PATH);
+  //updateNotify(api);
   await downloadOverstrike(api, gameSpec);
   return fs.ensureDirWritableAsync(path.join(discovery.path, OSMOD_PATH));
 }
@@ -508,7 +578,56 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(OSMOD_ID, 30, testOsMod, installOsMod);
   
   //register actions
-  
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'TOC Reset (After Update)', () => {
+    verifyGameFiles(context.api);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  }); //*/
+   context.registerAction('mod-icons', 300, 'open-ext', {}, '.NET 7 Download Page', () => {
+    util.opn('https://dotnet.microsoft.com/en-us/download/dotnet/7.0').catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  }); //*/
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', () => {
+    util.opn(SAVE_PATH).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  }); //*/
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
+    util.opn(PCGAMINGWIKI_URL).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
+    const openPath = path.join(__dirname, 'CHANGELOG.md');
+    util.opn(openPath).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
+    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
+    util.opn(DOWNLOAD_FOLDER).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
 }
 
 //Main function
