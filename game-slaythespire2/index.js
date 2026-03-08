@@ -1,9 +1,11 @@
 /*///////////////////////////////////////////
-Name: XXX Vortex Extension
-Structure: Basic Game
+Name: Slay the Spire 2 Vortex Extension
+Structure: Basic Game - GODOT Engine
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2026-XX-XX
+Date: 2026-03-08
+Notes:
+- Game is GODOT Engine with a built-in mod loader
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -18,29 +20,29 @@ const { parseStringPromise } = require('xml2js');
 
 /*const USER_HOME = util.getVortexPath("home");
 const LOCALLOW = path.join(USER_HOME, 'AppData', 'LocalLow'); //*/
-const DOCUMENTS = util.getVortexPath("documents");
-//const ROAMINGAPPDATA = util.getVortexPath("appData");
+//const DOCUMENTS = util.getVortexPath("documents");
+const ROAMINGAPPDATA = util.getVortexPath("appData");
 //const LOCALAPPDATA = util.getVortexPath("localAppData");
 
 //Specify all the information about the game
-const GAME_ID = "XXX";
-const STEAMAPP_ID = "XXX";
-const STEAMAPP_ID_DEMO = "XXX";
-const EPICAPP_ID = "XXX";
-const GOGAPP_ID = "XXX";
-const XBOXAPP_ID = "XXX";
-const XBOXEXECNAME = "XXX";
-const XBOX_PUB_ID = "XXX"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
+const GAME_ID = "slaythespire2";
+const STEAMAPP_ID = "2868840"; //https://steamdb.info/depot/2868841/
+const STEAMAPP_ID_DEMO = null;
+const EPICAPP_ID = null;
+const GOGAPP_ID = null;
+const XBOXAPP_ID = null;
+const XBOXEXECNAME = null;
+const XBOX_PUB_ID = ""; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
-const GAME_NAME = "XXX";
-const GAME_NAME_SHORT = "XXX";
-const BINARIES_PATH = path.join('.');
-const EXEC_NAME = "XXX.exe";
-const EXEC = path.join(BINARIES_PATH, EXEC_NAME);
+const GAME_NAME = "Slay the Spire 2";
+const GAME_NAME_SHORT = "Slay the Spire 2";
+const BINARIES_PATH = '.';
+const EXEC_NAME = "SlayTheSpire2.exe";
+const EXEC = EXEC_NAME;
 const EXEC_EGS = EXEC;
 const EXEC_GOG = EXEC;
 const EXEC_DEMO = EXEC;
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Slay_the_Spire_2";
 const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
 //for finding install in registry - requires winapi-bindings
 const INSTALL_HIVE = 'HKEY_LOCAL_MACHINE'; //typically HKEY_LOCAL_MACHINE or HKEY_CURRENT_USER
@@ -53,20 +55,14 @@ const allowSymlinks = true; //true if game can use symlinks without issues. Typi
 const rootInstaller = true; //enable root installer. Set false if you need to avoid installer collisions
 const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
 const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
-const hasUserIdFolder = false; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
+const hasUserIdFolder = true; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
 const debug = false; //toggle for debug mode
 let binariesInstaller = false;
-if (BINARIES_PATH !== '.') {
-    binariesInstaller = true; //only enable Binaries installer if not in root
-}
 
 //info for modtypes, installers, tools, and actions
-const DATA_FOLDER = 'XXX';
-const ROOT_FOLDERS = [DATA_FOLDER];
-
-const CONFIGMOD_LOCATION = DOCUMENTS;
-const SAVEMOD_LOCATION = DOCUMENTS;
-const APPDATA_FOLDER = path.join('XXX');
+const CONFIGMOD_LOCATION = ROAMINGAPPDATA;
+const SAVEMOD_LOCATION = ROAMINGAPPDATA;
+const APPDATA_FOLDER = path.join('SlayTheSpire2');
 const CONFIG_FOLDERNAME = 'XXX';
 const SAVE_FOLDERNAME = 'XXX';
 
@@ -81,7 +77,13 @@ const MOD_ID = `${GAME_ID}-mod`;
 const MOD_NAME = "Mod";
 const MOD_PATH = "mods";
 const MOD_PATH_XBOX = MOD_PATH;
-const MOD_EXTS = ['.XXX'];
+const MOD_EXTS = ['.dll', '.pck'];
+
+const DATA_FOLDER = 'data_sts2_windows_x86_64';
+const ROOT_FOLDERS = [DATA_FOLDER, MOD_PATH];
+const DATA_FOLDER_FILES= [
+  'sts2.dll',
+];
 
 const LOADER_ID = `${GAME_ID}-loader`;
 const LOADER_NAME = "Mod Loader";
@@ -131,12 +133,12 @@ const TOOL_EXEC = 'XXX.exe';
 const TOOL_EXEC_PATH = path.join(TOOL_EXEC_FOLDER, TOOL_EXEC);
 //*/
 
-const MOD_PATH_DEFAULT = '.';
+const MOD_PATH_DEFAULT = MOD_PATH;
 const REQ_FILE = EXEC;
 const PARAMETERS_STRING = '';
 const PARAMETERS = [PARAMETERS_STRING];
 
-let MODTYPE_FOLDERS = [MOD_PATH, BINARIES_PATH];
+let MODTYPE_FOLDERS = [MOD_PATH, DATA_FOLDER];
 const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 
@@ -195,15 +197,6 @@ const spec = {
     "names": []
   }
 };
-//think of a way to tell if the mod path is not in the game folder, only add ROOT modType if it is
-if (binariesInstaller) {
-  spec.modTypes.push({
-    "id": BINARIES_ID,
-    "name": BINARIES_NAME,
-    "priority": "high",
-    "targetPath": path.join("{gamePath}", BINARIES_PATH)
-  });
-}
 
 //3rd party tools and launchers
 const tools = [ //accepts: exe, jar, py, vbs, bat
@@ -222,7 +215,7 @@ const tools = [ //accepts: exe, jar, py, vbs, bat
     //defaultPrimary: true,
     parameters: PARAMETERS,
   }, //*/
-  {
+  /*{
     id: `${GAME_ID}-customlaunchxbox`,
     name: 'Custom Launch',
     logo: 'exec.png',
@@ -552,41 +545,6 @@ function installRoot(files) {
   return Promise.resolve({ instructions });
 }
 
-//Fallback installer to Binaries folder
-function testBinaries(files, gameId) {
-  let supported = (gameId === spec.game.id);
-
-  // Test for a mod installer.
-  if (supported && files.find(file =>
-    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
-    supported = false;
-  }
-
-  return Promise.resolve({
-    supported,
-    requiredFiles: [],
-  });
-}
-
-//Fallback installer to Binaries folder
-function installBinaries(files) {
-  const setModTypeInstruction = { type: 'setmodtype', value: BINARIES_ID };
-  
-  const filtered = files.filter(file =>
-    (!file.endsWith(path.sep))
-  );
-  const instructions = filtered.map(file => {
-    return {
-      type: 'copy',
-      source: file,
-      destination: file,
-    };
-  });
-  instructions.push(setModTypeInstruction);
-  return Promise.resolve({ instructions });
-}
-
 //Fallback installer to root folder
 function testFallback(files, gameId) {
   let supported = (gameId === spec.game.id);
@@ -910,12 +868,7 @@ function applyGame(context, gameSpec) {
   if (rootInstaller) {
     context.registerInstaller(ROOT_ID, 27, testRoot, installRoot);
   }
-  if (binariesInstaller) {
-    context.registerInstaller(BINARIES_ID, 29, testBinaries, installBinaries);
-  }
-  //context.registerInstaller(CONFIG_ID, 31, testConfig, installConfig);
-  //context.registerInstaller(SAVE_ID, 33, testSave, installSave);
-  //context.registerInstaller(MOD_ID, 35, testMod, installMod);
+  context.registerInstaller(MOD_ID, 29, testMod, installMod);
   if (fallbackInstaller) {
     context.registerInstaller(`${GAME_ID}-fallback`, 49, testFallback, (files, destinationPath) => installFallback(context.api, files, destinationPath));
   }
