@@ -717,6 +717,17 @@ export interface IExtensionContext {
      * @param {InstallFunc} install function called to actually install a mod
      */
     registerInstaller: (id: string, priority: number, testSupported: TestSupported, install: InstallFunc) => void;
+    TestSupported = (files: string[], gameId: string, archivePath?: string, details?: ITestSupportedDetails) => Promise<ISupportedResult>;
+    InstallFunc = (
+        files: string[],
+        destinationPath: string,
+        gameId: string,
+        progressDelegate: ProgressDelegate,
+        choices?: any,
+        unattended?: boolean,
+        archivePath?: string,
+        options?: IInstallationDetails,
+    ) => PromiseBB<IInstallResult>;
     /**
      * register an action (can be a button or a menu item)
      *
