@@ -50,6 +50,7 @@ const INSTALL_VALUE = "XXX"; //often InstallDir
 //feature toggles
 const hasLoader = false; //true if game needs a mod loader
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
+const needsModInstaller = true; //set to true if standard mods should run through an installer - set false to have mods installed to the mods folder without any processing
 const rootInstaller = true; //enable root installer. Set false if you need to avoid installer collisions
 const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
 const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
@@ -131,7 +132,7 @@ const TOOL_EXEC = 'XXX.exe';
 const TOOL_EXEC_PATH = path.join(TOOL_EXEC_FOLDER, TOOL_EXEC);
 //*/
 
-const MOD_PATH_DEFAULT = '.';
+const MOD_PATH_DEFAULT = MOD_PATH;
 const REQ_FILE = EXEC;
 const PARAMETERS_STRING = '';
 const PARAMETERS = [PARAMETERS_STRING];
@@ -915,7 +916,9 @@ function applyGame(context, gameSpec) {
   }
   //context.registerInstaller(CONFIG_ID, 31, testConfig, installConfig);
   //context.registerInstaller(SAVE_ID, 33, testSave, installSave);
-  //context.registerInstaller(MOD_ID, 35, testMod, installMod);
+  if (needsModInstaller) {
+    context.registerInstaller(MOD_ID, 35, testMod, installMod);
+  }
   if (fallbackInstaller) {
     context.registerInstaller(`${GAME_ID}-fallback`, 49, testFallback, (files, destinationPath) => installFallback(context.api, files, destinationPath));
   }
