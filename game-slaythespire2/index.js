@@ -6,6 +6,7 @@ Version: 0.1.0
 Date: 2026-03-08
 Notes:
 - Game is GODOT Engine with a built-in mod loader
+- Separate save folders for vanilla and modded saves
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -62,9 +63,9 @@ let binariesInstaller = false;
 //info for modtypes, installers, tools, and actions
 const CONFIGMOD_LOCATION = ROAMINGAPPDATA;
 const SAVEMOD_LOCATION = ROAMINGAPPDATA;
-const APPDATA_FOLDER = path.join('SlayTheSpire2');
-const CONFIG_FOLDERNAME = 'XXX';
-const SAVE_FOLDERNAME = 'XXX';
+const APPDATA_FOLDER = path.join('SlayTheSpire2', 'steam');
+const CONFIG_FOLDERNAME = '';
+const SAVE_FOLDERNAME = '';
 
 let GAME_PATH = '';
 let GAME_VERSION = '';
@@ -81,7 +82,7 @@ const MOD_EXTS = ['.dll', '.pck'];
 
 const DATA_FOLDER = 'data_sts2_windows_x86_64';
 const ROOT_FOLDERS = [DATA_FOLDER, MOD_PATH];
-const DATA_FOLDER_FILES= [
+const DATA_FOLDER_FILES = [
   'sts2.dll',
 ];
 
@@ -121,7 +122,8 @@ if (hasUserIdFolder) {
     USERID_FOLDER = "";
   }
 }
-const SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
+const SAVE_PATH_MODDED = path.join(SAVE_FOLDER, USERID_FOLDER, 'modded', 'profile1', 'saves');
+const SAVE_PATH_VANILLA = path.join(SAVE_FOLDER, USERID_FOLDER, 'profile1', 'saves');
 const SAVE_EXTS = [".XXX"];
 const SAVE_FILES = ["XXX"];
 
@@ -880,9 +882,16 @@ function applyGame(context, gameSpec) {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', () => {
-    util.opn(SAVE_PATH).catch(() => null);
+  }); //*/
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder (Modded)', () => {
+    util.opn(SAVE_PATH_MODDED).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  }); //*/
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder (Vanilla)', () => {
+    util.opn(SAVE_PATH_VANILLA).catch(() => null);
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);

@@ -37,7 +37,7 @@ const GAME_NAME_SHORT = "XXX";
 const BINARIES_PATH = path.join('.');
 const EXEC_NAME = "XXX.exe";
 const EXEC = path.join(BINARIES_PATH, EXEC_NAME);
-const EXEC_EGS = EXEC;
+const EXEC_EGS = EXEC; //change other versions if different than Steam/default
 const EXEC_GOG = EXEC;
 const EXEC_DEMO = EXEC;
 const PCGAMINGWIKI_URL = "XXX";
@@ -99,12 +99,6 @@ const ROOT_NAME = "Root Folder";
 const BINARIES_ID = `${GAME_ID}-binaries`;
 const BINARIES_NAME = "Binaries (Engine Injector)";
 
-const CONFIG_ID = `${GAME_ID}-config`;
-const CONFIG_NAME = "Config";
-const CONFIG_PATH = path.join(CONFIGMOD_LOCATION, APPDATA_FOLDER, CONFIG_FOLDERNAME);
-const CONFIG_EXTS = [".XXX"];
-const CONFIG_FILES = ["XXX"];
-
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_NAME = "Save";
 const SAVE_FOLDER = path.join(SAVEMOD_LOCATION, APPDATA_FOLDER, SAVE_FOLDERNAME);
@@ -123,6 +117,12 @@ if (hasUserIdFolder) {
 const SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
 const SAVE_EXTS = [".XXX"];
 const SAVE_FILES = ["XXX"];
+
+const CONFIG_ID = `${GAME_ID}-config`;
+const CONFIG_NAME = "Config";
+const CONFIG_PATH = path.join(CONFIGMOD_LOCATION, APPDATA_FOLDER, CONFIG_FOLDERNAME);
+const CONFIG_EXTS = [".XXX"];
+const CONFIG_FILES = ["XXX"];
 
 /* tool info (i.e. save editor)
 const TOOL_ID = `${GAME_ID}-tool`;
