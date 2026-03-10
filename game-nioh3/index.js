@@ -2,8 +2,8 @@
 Name: Nioh 3 Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.2.3
-Date: 2026-03-04
+Version: 0.3.0
+Date: 2026-03-09
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -11,6 +11,7 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 const { parseStringPromise } = require('xml2js');
+const { load } = require('js-yaml');
 //const fsPromises = require('fs/promises'); //.rm() for recursive folder deletion
 //const fsExtra = require('fs-extra');
 //const winapi = require('winapi-bindings');
@@ -42,14 +43,17 @@ const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Nioh_3";
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1676"; //Nexus link to this extension. Used for links
 
 //feature toggles
-const modInstallerEnabled = false; //enable mod installer (once mod loader is added)
+const reZip = true; //rezip mods for ModManager
+const loadOrderEnabled = false; //true to use load order sorting
+const modInstallerEnabled = true; //enable mod installer (once mod loader is added)
 const hasLoader = true; //for DLL Loader
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
 const rootInstaller = false; //enable root installer. Set false if you need to avoid installer collisions
 const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
-const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
+const setupNotification = true; //enable to show the user a notification with special instructions (specify below)
 const hasUserIdFolder = false; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
-const debug = true; //toggle for debug mode
+
+const debug = false; //toggle for debug mode
 
 //info for modtypes, installers, tools, and actions
 const DATA_FOLDER = 'archive';
@@ -68,14 +72,24 @@ let DOWNLOAD_FOLDER = '';
 const APPMANIFEST_FILE = 'appxmanifest.xml';
 const EXEC_XBOX = 'gamelaunchhelper.exe';
 
-//not used for now
+//Loose File Mods
 const MOD_ID = `${GAME_ID}-mod`;
-const MOD_NAME = "Mod";
-const MOD_PATH = "mods";
-const MOD_MARKER_EXT = '.ini';
-const MOD_EXTS = ['.fmt', '.vb', '.ib', '.dds'];
-//*/
+const MOD_NAME = "ModManager Loose Mod";
+let MOD_PATH = "mods";
+if (reZip) {
+  MOD_PATH = "ModArchives";
+}
+const MOD_EXTS = [".g1t", ".g1m", ".g1ts"];
 
+const MOD_MANAGER_ID = `${GAME_ID}-modmanager`;
+const MOD_MANAGER_NAME = "Mod Manager";
+const MOD_MANAGER_PATH = ".";
+const MOD_MANAGER_EXEC = 'Nioh3ModManager.exe';
+const MOD_MANAGER_PAGE_NO = 84;
+const MOD_MANAGER_FILE_NO = 229;
+const MOD_MANAGER_DOMAIN = GAME_ID;
+
+//DLL Plugin Loader
 const LOADER_ID = `${GAME_ID}-dllloader`;
 const LOADER_NAME = "DLL Plugin Loader";
 const LOADER_PATH = '.';
@@ -84,12 +98,23 @@ const LOADER_PAGE_NO = 49;
 const LOADER_FILE_NO = 101;
 const LOADER_DOMAIN = GAME_ID;
 
+//Plugin Mods
 const LOADER_MOD_ID = `${GAME_ID}-loadermod`;
 const LOADER_MOD_NAME = "Plugin Mod";
 const LOADER_MOD_PATH = 'plugins';
 const LOADER_MOD_EXTS = ['.dll', '.asi'];
 const NIOHFIX_FILE = 'Nioh3Fix.asi';
 
+//Loose File Loader
+const LOOSELOADER_ID = `${GAME_ID}-looseloader`;
+const LOOSELOADER_NAME = "Loose File Loader";
+const LOOSELOADER_PATH = LOADER_MOD_PATH;
+const LOOSELOADER_FILE = 'LooseFileLoader.dll';
+const LOOSELOADER_PAGE_NO = 90;
+const LOOSELOADER_FILE_NO = 219;
+const LOOSELOADER_DOMAIN = GAME_ID;
+
+//Yumia
 const YUMIA_ID = `${GAME_ID}-yumia`;
 const YUMIA_NAME = "Yumia fdata Tools";
 const YUMIA_PATH = 'package';
@@ -97,12 +122,14 @@ const YUMIA_FILE = 'yumia_mod_insert_into_rdb.exe';
 const YUMIA_URL = `https://github.com/eArmada8/yumia_fdata_tools/releases/latest/download/${YUMIA_FILE}`;
 const YUMIA_URL_ERR = `https://github.com/eArmada8/yumia_fdata_tools/releases`;
 
+//Yumia Mods (.fdata)
 const YUMIA_MOD_ID = `${GAME_ID}-fdatayumia`;
 const YUMIA_MOD_NAME = ".fdata Package (Yumia)";
 const YUMIA_MOD_PATH = '.';
 const YUMIA_MOD_FOLDER = 'package';
 const YUMIA_MOD_EXTS = ['.fdata', '.yumiamod.json'];
 
+//RDBExplorer
 const RDBEXPLORER_ID = `${GAME_ID}-rdbexplorer`;
 const RDBEXPLORER_NAME = "RDBExplorer";
 const RDBEXPLORER_PATH = YUMIA_MOD_FOLDER;
@@ -113,6 +140,7 @@ const RDBEXPLORER_PAGE_NO = 83;
 const RDBEXPLORER_FILE_NO = 168;
 const RDBEXPLORER_DOMAIN = GAME_ID;
 
+//Loose Mods (RDBExplorer) - NO LONGER USED
 const RDB_MOD_ID = `${GAME_ID}-rdbmod`;
 const RDB_MOD_NAME = "Loose Mod (RDBExplorer)";
 const RDB_MOD_PATH = path.join(YUMIA_MOD_FOLDER, 'RDBExplorer_Mods');
@@ -193,12 +221,6 @@ const spec = {
   },
   "modTypes": [
     {
-      "id": MOD_ID,
-      "name": MOD_NAME,
-      "priority": "high",
-      "targetPath": path.join("{gamePath}", MOD_PATH)
-    },
-    {
       "id": ROOT_ID,
       "name": ROOT_NAME,
       "priority": "high",
@@ -209,6 +231,12 @@ const spec = {
       "name": LOADER_MOD_NAME,
       "priority": "high",
       "targetPath": path.join("{gamePath}", LOADER_MOD_PATH)
+    },
+    {
+      "id": LOOSELOADER_ID,
+      "name": LOOSELOADER_NAME,
+      "priority": "low",
+      "targetPath": path.join("{gamePath}", LOOSELOADER_PATH)
     },
     {
       "id": YUMIA_MOD_ID,
@@ -234,6 +262,12 @@ const spec = {
       "priority": "low",
       "targetPath": path.join("{gamePath}", RDBEXPLORER_PATH)
     },
+    {
+      "id": MOD_MANAGER_ID,
+      "name": MOD_MANAGER_NAME,
+      "priority": "low",
+      "targetPath": path.join("{gamePath}", MOD_MANAGER_PATH)
+    },
   ],
   "discovery": {
     "ids": DISCOVERY_IDS_ACTIVE,
@@ -256,7 +290,20 @@ const tools = [ //accepts: exe, jar, py, vbs, bat
     shell: true,
     detach: true,
     //defaultPrimary: true,
-    parameters: PARAMETERS,
+    //parameters: PARAMETERS,
+  }, //*/
+  {
+    id: MOD_MANAGER_ID,
+    name: MOD_MANAGER_NAME,
+    logo: 'modmanager.png',
+    executable: () => MOD_MANAGER_EXEC,
+    requiredFiles: [
+      MOD_MANAGER_EXEC,
+    ],
+    relative: true,
+    exclusive: false,
+    //shell: true,
+    //parameters: [],
   }, //*/
   {
     id: YUMIA_ID,
@@ -280,7 +327,7 @@ const tools = [ //accepts: exe, jar, py, vbs, bat
       RDBEXPLORER_EXEC,
     ],
     relative: true,
-    exclusive: true,
+    exclusive: false,
     //shell: true,
     //parameters: [],
   }, //*/
@@ -315,7 +362,7 @@ async function statCheckAsync(gamePath, file) {
 //Set mod type priorities
 function modTypePriority(priority) {
   return {
-    high: 25,
+    high: 30,
     low: 75,
   }[priority];
 }
@@ -438,7 +485,7 @@ async function deploy(api) { //useful to deploy mods after doing some action
 
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
 
-//Test for mod loader files
+//Test for plugin mod loader files
 function testLoader(files, gameId) {
   const isMod = files.some(file => path.basename(file) === LOADER_FILE);
   let supported = (gameId === spec.game.id) && isMod;
@@ -456,10 +503,92 @@ function testLoader(files, gameId) {
   });
 }
 
-//Install mod loader files
+//Install plugin mod loader files
 function installLoader(files) {
   const MOD_TYPE = LOADER_ID;
   const modFile = files.find(file => path.basename(file) === LOADER_FILE);
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Test for loose mod loader files
+function testLooseLoader(files, gameId) {
+  const isMod = files.some(file => path.basename(file) === LOOSELOADER_FILE);
+  let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install loose mod loader files
+function installLooseLoader(files) {
+  const MOD_TYPE = LOOSELOADER_ID;
+  const modFile = files.find(file => path.basename(file) === LOOSELOADER_FILE);
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Test for loose mod loader files
+function testModManager(files, gameId) {
+  const isMod = files.some(file => path.basename(file) === MOD_MANAGER_EXEC);
+  let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install loose mod loader files
+function installModManager(files) {
+  const MOD_TYPE = MOD_MANAGER_ID;
+  const modFile = files.find(file => path.basename(file) === MOD_MANAGER_EXEC);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
@@ -781,11 +910,10 @@ function installRdbMod(files) {
   return Promise.resolve({ instructions });
 }
 
-//Test for mod files
+//Test for Loose .g1t/.g1m mod files
 function testMod(files, gameId) {
   const isMod = files.some(file => MOD_EXTS.includes(path.extname(file).toLowerCase()));
-  const isIni = files.some(file => path.extname(file).toLowerCase() === MOD_MARKER_EXT);
-  let supported = (gameId === spec.game.id) && isMod && isIni;
+  let supported = (gameId === spec.game.id) && isMod;
 
   // Test for a mod installer
   if (supported && files.find(file =>
@@ -800,37 +928,56 @@ function testMod(files, gameId) {
   });
 }
 
-//Install mod files
+//Install Loose .g1t/.g1m mod files
 function installMod(files, fileName) {
   const MOD_TYPE = MOD_ID;
-  let modFile = files.find(file => path.extname(file).toLowerCase() === MOD_MARKER_EXT);
-  let rootPath = path.dirname(modFile);
+  const modFile = files.find(file => MOD_EXTS.includes(path.extname(file).toLowerCase()));
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
 
-  let folder = path.basename(fileName, '.installing');
-  const ROOT_PATH = path.basename(rootPath);
-  if (ROOT_PATH !== '.') {
-    folder = '';
-    modFile = rootPath; //make the folder the targeted modFile so we can grab any other folders also in its directory
-    rootPath = path.dirname(modFile);
-    /*const indexFolder = path.basename(modFile);
-    //idx = modFile.indexOf(`${indexFolder}${path.sep}`); //*/ //index on the folder with path separator
-  }
-  const idx = modFile.indexOf(path.basename(modFile));
-
   // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
-  );
+  const filtered = files.filter(file => (
+    //(file.indexOf(rootPath) !== -1) && 
+    !file.endsWith(path.sep)
+  ));
   const instructions = filtered.map(file => {
     return {
       type: 'copy',
       source: file,
-      destination: path.join(folder, file.substr(idx)),
+      destination: file,
     };
   });
   instructions.push(setModTypeInstruction);
   return Promise.resolve({ instructions });
+}
+
+//Install Loose .g1t/.g1m mod files
+async function installModZip(files, destinationPath) {
+  const setModTypeInstruction = { type: 'setmodtype', value: MOD_ID };
+  const zipFiles = files.filter(file => ['.zip', '.7z', '.rar'].includes(path.extname(file)));
+  if (zipFiles.length > 0) { // If it's a double zip, we don't need to repack. 
+    const instructions = zipFiles.map(file => {
+      return {
+        type: 'copy',
+        source: file,
+        destination: path.basename(file),
+      }
+    });
+    return Promise.resolve({ instructions });
+  }
+  else { // Repack the ZIP
+    const szip = new util.SevenZip();
+    const archiveName = path.basename(destinationPath, '.installing') + '.zip';
+    const archivePath = path.join(destinationPath, archiveName);
+    const rootRelPaths = await fs.readdirAsync(destinationPath);
+    await szip.add(archivePath, rootRelPaths.map(relPath => path.join(destinationPath, relPath)), { raw: ['-r'] });
+    const instructions = [{
+      type: 'copy',
+      source: archiveName,
+      destination: path.basename(archivePath),
+    }];
+    instructions.push(setModTypeInstruction);
+    return Promise.resolve({ instructions });
+  }
 }
 
 //Installer test for Root folder files
@@ -972,11 +1119,25 @@ function fallbackInstallerNotify(api, modName) {
 
 // AUTOMATIC MOD DOWNLOADERS ///////////////////////////////////////////////////
 
-//Check if mod loader is installed
+//Check if plugin mod loader is installed
 function isLoaderInstalled(api, spec) {
   const state = api.getState();
   const mods = state.persistent.mods[spec.game.id] || {};
   return Object.keys(mods).some(id => mods[id]?.type === LOADER_ID);
+}
+
+//Check if loose mod loader is installed
+function isLooseLoaderInstalled(api, spec) {
+  const state = api.getState();
+  const mods = state.persistent.mods[spec.game.id] || {};
+  return Object.keys(mods).some(id => mods[id]?.type === LOOSELOADER_ID);
+}
+
+//Check if Mod Manager is installed
+function isModManagerInstalled(api, spec) {
+  const state = api.getState();
+  const mods = state.persistent.mods[spec.game.id] || {};
+  return Object.keys(mods).some(id => mods[id]?.type === MOD_MANAGER_ID);
 }
 
 //Check if Yumia is installed
@@ -1003,6 +1164,138 @@ async function downloadLoader(api, gameSpec) {
     const PAGE_ID = LOADER_PAGE_NO;
     const FILE_ID = LOADER_FILE_NO;  //If using a specific file id because "input" below gives an error
     const GAME_DOMAIN = LOADER_DOMAIN;
+    api.sendNotification({ //notification indicating install process
+      id: NOTIF_ID,
+      message: `Installing ${MOD_NAME}`,
+      type: 'activity',
+      noDismiss: true,
+      allowSuppress: false,
+    });
+    if (api.ext?.ensureLoggedIn !== undefined) { //make sure user is logged into Nexus Mods account in Vortex
+      await api.ext.ensureLoggedIn();
+    }
+    try {
+      let FILE = null;
+      let URL = null;
+      try { //get the mod files information from Nexus
+        const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
+        const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
+        const file = modFiles
+          .filter(file => file.category_id === 1)
+          .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
+          .reverse()[0];
+        if (file === undefined) {
+          throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
+        }
+        FILE = file.file_id;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      } catch (err) { // use defined file ID if input is undefined above
+        FILE = FILE_ID;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      }
+      const dlInfo = { //Download the mod
+        game: GAME_DOMAIN,
+        name: MOD_NAME,
+      };
+      const dlId = await util.toPromise(cb =>
+        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+      const modId = await util.toPromise(cb =>
+        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
+      const batched = [
+        actions.setModsEnabled(api, profileId, [modId], true, {
+          allowAutoDeploy: true,
+          installed: true,
+        }),
+        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
+      ];
+      util.batchDispatch(api.store, batched); // Will dispatch both actions
+    } catch (err) { //Show the user the download page if the download, install process fails
+      const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
+      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
+      util.opn(errPage).catch(() => null);
+    } finally {
+      api.dismissNotification(NOTIF_ID);
+    }
+  }
+} //*/
+
+//* Function to auto-download mod loader from Nexus Mods
+async function downloadLooseLoader(api, gameSpec) {
+  let isInstalled = isLooseLoaderInstalled(api, gameSpec);
+  if (!isInstalled) {
+    const MOD_NAME = LOOSELOADER_NAME;
+    const MOD_TYPE = LOOSELOADER_ID;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
+    const PAGE_ID = LOOSELOADER_PAGE_NO;
+    const FILE_ID = LOOSELOADER_FILE_NO;  //If using a specific file id because "input" below gives an error
+    const GAME_DOMAIN = LOOSELOADER_DOMAIN;
+    api.sendNotification({ //notification indicating install process
+      id: NOTIF_ID,
+      message: `Installing ${MOD_NAME}`,
+      type: 'activity',
+      noDismiss: true,
+      allowSuppress: false,
+    });
+    if (api.ext?.ensureLoggedIn !== undefined) { //make sure user is logged into Nexus Mods account in Vortex
+      await api.ext.ensureLoggedIn();
+    }
+    try {
+      let FILE = null;
+      let URL = null;
+      try { //get the mod files information from Nexus
+        const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
+        const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
+        const file = modFiles
+          .filter(file => file.category_id === 1)
+          .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
+          .reverse()[0];
+        if (file === undefined) {
+          throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
+        }
+        FILE = file.file_id;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      } catch (err) { // use defined file ID if input is undefined above
+        FILE = FILE_ID;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      }
+      const dlInfo = { //Download the mod
+        game: GAME_DOMAIN,
+        name: MOD_NAME,
+      };
+      const dlId = await util.toPromise(cb =>
+        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+      const modId = await util.toPromise(cb =>
+        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
+      const batched = [
+        actions.setModsEnabled(api, profileId, [modId], true, {
+          allowAutoDeploy: true,
+          installed: true,
+        }),
+        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
+      ];
+      util.batchDispatch(api.store, batched); // Will dispatch both actions
+    } catch (err) { //Show the user the download page if the download, install process fails
+      const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
+      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
+      util.opn(errPage).catch(() => null);
+    } finally {
+      api.dismissNotification(NOTIF_ID);
+    }
+  }
+} //*/
+
+//* Function to auto-download mod manager from Nexus Mods
+async function downloadModManager(api, gameSpec) {
+  let isInstalled = isModManagerInstalled(api, gameSpec);
+  if (!isInstalled) {
+    const MOD_NAME = MOD_MANAGER_NAME;
+    const MOD_TYPE = MOD_MANAGER_ID;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
+    const PAGE_ID = MOD_MANAGER_PAGE_NO;
+    const FILE_ID = MOD_MANAGER_FILE_NO;  //If using a specific file id because "input" below gives an error
+    const GAME_DOMAIN = MOD_MANAGER_DOMAIN;
     api.sendNotification({ //notification indicating install process
       id: NOTIF_ID,
       message: `Installing ${MOD_NAME}`,
@@ -1241,11 +1534,56 @@ async function downloadRdbExplorerGithub(api, gameSpec, check) {
   }
 } //*/
 
+// LOAD ORDER /////////////////////////////////////////////////////////////////////
+
+function makePrefix(input) {
+  let res = '';
+  let rest = input;
+  while (rest > 0) {
+      res = String.fromCharCode(65 + (rest % 25)) + res;
+      rest = Math.floor(rest / 25);
+  }
+  return util.pad(res, 'A', 3);
+}
+
+function loadOrderPrefix(api, mod) {
+  const state = api.getState();
+  const profile = selectors.lastActiveProfileForGame(state, GAME_ID);
+  const loadOrder = util.getSafe(state, ['persistent', 'loadOrder', profile], {});
+  const loKeys = Object.keys(loadOrder);
+  const pos = loKeys.indexOf(mod.id);
+  if (pos === -1) {
+      return 'ZZZZ-';
+  }
+  return makePrefix(pos) + '-';
+}
+
+//Pre-sort function
+async function preSort(api, items, direction) {
+  const mods = util.getSafe(api.store.getState(), ['persistent', 'mods', spec.game.id], {});
+  //const fileExt = MOD_EXTS.join(', ');
+
+  const loadOrder = items.map(mod => {
+    const modInfo = mods[mod.id];
+    let name = modInfo ? modInfo.attributes.customFileName ?? modInfo.attributes.logicalFileName ?? modInfo.attributes.name : mod.name;
+    /*const files = util.getSafe(modInfo.attributes, ['modFiles'], []);
+    if (files.length > 1) name = name + ` (${files.length} ${fileExt} files)`; //*/
+
+    return {
+      id: mod.id,
+      name,
+      imgUrl: util.getSafe(modInfo, ['attributes', 'pictureUrl'], path.join(__dirname, spec.game.logo))
+    }
+  });
+
+  return (direction === 'descending') ? Promise.resolve(loadOrder.reverse()) : Promise.resolve(loadOrder);
+}
+
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
 function setupNotify(api) {
   const NOTIF_ID = `${GAME_ID}-setup-notify`;
-  const MESSAGE = 'Special Setup Instructions';
+  const MESSAGE = 'ModManager Setup Instructions';
   api.sendNotification({
     id: NOTIF_ID,
     type: 'warning',
@@ -1257,12 +1595,18 @@ function setupNotify(api) {
         action: (dismiss) => {
           api.showDialog('question', MESSAGE, {
             text: `\n`
-                + `TEXT HERE.\n`
-                + `\n`
-                + `TEXT HERE.\n`
-                + `\n`
+                + `Nioh3ModManager is required to install loose file mods.\n`
+                + `Vortex will send you a notification on each deployment to launch the app.\n`
+                + `The first time you launch ModManager, you will need to set the "Mods Directory" to the "ModArchives" folder (in game root).\n`
+                + `Note that only loose file mods require ModManager. Other mods are installed directly by Vortex.\n`
           }, [
-            { label: 'Acknowledge', action: () => dismiss() },
+            { label: 'Continue', action: () => dismiss() },
+            {
+              label: 'Run ModManager', action: () => {
+                runModManager(api);
+                dismiss();
+              }
+            },
             {
               label: 'Never Show Again', action: () => {
                 api.suppressNotification(NOTIF_ID);
@@ -1326,6 +1670,9 @@ async function setup(discovery, api, gameSpec) {
   if (hasLoader) {
     await downloadLoader(api, gameSpec);
   }
+  await fs.ensureDirWritableAsync(GAME_PATH, LOOSELOADER_PATH);
+  await downloadLooseLoader(api, gameSpec);
+  await downloadModManager(api, gameSpec);
   //await downloadYumia(api, gameSpec);
   //await downloadRdbExplorer(api, gameSpec, true);
   const source = path.join(__dirname, 'yumia', YUMIA_FILE);
@@ -1393,20 +1740,44 @@ function applyGame(context, gameSpec) {
       { name: LOADER_NAME }
     );
   }
+
+  context.registerModType(MOD_ID, 25, 
+    (gameId) => {
+      var _a;
+      return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
+    }, 
+    (game) => pathPattern(context.api, game, path.join('{gamePath}', MOD_PATH)), 
+    () => Promise.resolve(false), 
+    { 
+    name: MOD_NAME,
+    mergeMods: (mod) => {
+      if (loadOrderEnabled) {
+        return loadOrderPrefix(context.api, mod) + mod.id;
+      } else { //If load order is disabled, don't use sorting folders
+        return "";
+      }
+    },
+    }
+  );
   
   //register mod installers
   if (hasLoader) {
     context.registerInstaller(LOADER_ID, 25, testLoader, installLoader); //DLL Loader
   }
-  //context.registerInstaller(MODLOADER_ID, 26, testModLoader, installModLoader); //FUTURE - for data mods, like Nioh 2
   context.registerInstaller(RDBEXPLORER_ID, 26, testRdbExplorer, installRdbExplorer);
-  context.registerInstaller(YUMIA_ID, 27, testYumia, installYumia);
+  context.registerInstaller(YUMIA_ID, 27, testYumia, installYumia); //.fdata mods
+  context.registerInstaller(LOOSELOADER_ID, 28, testLooseLoader, installLooseLoader); // Loose Files Loader
+  context.registerInstaller(MOD_MANAGER_ID, 29, testModManager, installModManager);
   if (modInstallerEnabled) {
-    context.registerInstaller(MOD_ID, 29, testMod, installMod); //FUTURE - for data mods, like Nioh 2
+    if (loadOrderEnabled) {
+      context.registerInstaller(MOD_ID, 31, testMod, installMod); //.g1t/.g1m Loose File mods
+    } else {
+      context.registerInstaller(MOD_ID, 31, testMod, installModZip); //.g1t/.g1m Loose File mods - REZIPPED for ModManager
+    }
   }
-  context.registerInstaller(LOADER_MOD_ID, 31, testLoaderMod, installLoaderMod); // dll/asi
-  context.registerInstaller(YUMIA_MOD_ID, 33, testYumiaMod, (files) => installYumiaMod(files, context.api)); //.fdata "package"
-  context.registerInstaller(RDB_MOD_ID, 35, testRdbMod, installRdbMod);
+  context.registerInstaller(LOADER_MOD_ID, 33, testLoaderMod, installLoaderMod); // dll/asi
+  context.registerInstaller(YUMIA_MOD_ID, 35, testYumiaMod, (files) => installYumiaMod(files, context.api)); //.fdata "package"
+  //context.registerInstaller(RDB_MOD_ID, 35, testRdbMod, installRdbMod);
   //context.registerInstaller(CONFIG_ID, 43, testConfig, installConfig);
   //context.registerInstaller(SAVE_ID, 45, testSave, installSave);
   if (rootInstaller) {
@@ -1417,13 +1788,27 @@ function applyGame(context, gameSpec) {
   }
 
   //register actions
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Run Merge (Yumia)', () => {
+    runMerge(context.api).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Reset root.rdb Files (Yumia)', () => {
+    resetRdb(context.api).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, `Download ${RDBEXPLORER_NAME}`, () => {
     downloadRdbExplorer(context.api, spec, false).catch(() => null);
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
-  });
+  }); //*/
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
     util.opn(CONFIG_PATH).catch(() => null);
     }, () => {
@@ -1472,21 +1857,68 @@ function applyGame(context, gameSpec) {
 //main function
 function main(context) {
   applyGame(context, spec);
+  //Load Order
+  if (loadOrderEnabled) {
+    let previousLO;
+    context.registerLoadOrderPage({
+      gameId: spec.game.id,
+      gameArtURL: path.join(__dirname, spec.game.logo),
+      preSort: (items, direction) => preSort(context.api, items, direction),
+      filter: mods => mods.filter(mod => mod.type === MOD_ID),
+      displayCheckboxes: false,
+      callback: (loadOrder) => {
+        if (previousLO === undefined) previousLO = loadOrder;
+        if (loadOrder === previousLO) return;
+        requestDeployment(context.api, spec);
+        previousLO = loadOrder;
+      },
+      createInfoPanel: () =>
+        context.api.translate(`Drag and drop the mods on the left to change the order in which they load.\n` 
+          + `${spec.game.name} loads mods in alphanumerical order, so Vortex prefixes the folder names with "AAA, AAB, AAC, ..." to ensure they load in the order you set here.\n`
+          + 'The number in the left column represents the overwrite order. The changes from mods with higher numbers will take priority over other mods which make similar edits.\n'
+          + '\n'
+          + 'YOU MUST DEPLOY MODS AFTER CHANGING THE ORDER TO APPLY CHANGES.'
+        ),
+    });
+  }
+
   context.once(() => { // put code here that should be run (once) when Vortex starts up
     const api = context.api;
     api.onAsync('did-deploy', async (profileId, deployment) => { 
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;
-      return runMerge(api);
+      //return runMerge(api);
+      api.dismissNotification(`${GAME_ID}-loadorderdeploy-notif`);
+      deployNotify(api);
+      setManagerSettings(api);
     });
     api.onAsync('did-purge', async (profileId) => {
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;
-      return resetRdb(api);
+      //return resetRdb(api);
     });
   });
   return true;
 }
+
+const requestDeployment = (api, spec) => {
+  api.store.dispatch(actions.setDeploymentNecessary(spec.game.id, true));
+  api.sendNotification({
+    id: `${spec.game.id}-loadorderdeploy-notif`,
+    type: 'warning',
+    message: 'Deployment Required to Apply Load Order Changes',
+    allowSuppress: true,
+    actions: [
+      {
+        title: 'Deploy',
+        action: (dismiss) => {
+          deploy(api);
+          dismiss();
+        }
+      }
+    ],
+  });
+};
 
 async function copyRdbFiles(folder, files, target) {
   for (let index = 0; index < files.length; index++) {
@@ -1524,7 +1956,80 @@ function runMerge(api) { //on deploy
   try {
     const TOOL_PATH = tool.path;
     if (TOOL_PATH !== undefined) {
-      return api.runExecutable(TOOL_PATH, [], { suggestDeploy: false })
+      return api.runExecutable(TOOL_PATH, [], { shell: true, detached: true, suggestDeploy: false })
+        .catch(err => api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err,
+          { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 })
+        );
+    }
+    else {
+      return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, `Path to ${TOOL_NAME} executable could not be found. Ensure ${TOOL_NAME} is installed through Vortex.`);
+    }
+  } catch (err) {
+    return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 });
+  }
+}
+
+//Notify User to run Mod Manager after deployment
+function deployNotify(api) {
+  const NOTIF_ID = `${GAME_ID}-deploy-notification`;
+  const MOD_NAME = MOD_MANAGER_NAME;
+  const MESSAGE = `Run ${MOD_NAME} after Deploy`;
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'warning',
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: 'Run ModManager',
+        action: (dismiss) => {
+          runModManager(api);
+          dismiss();
+        },
+      },
+      {
+        title: 'More',
+        action: (dismiss) => {
+          api.showDialog('question', MESSAGE, {
+            text: `You must use ModManager to enable most mods after installing with Vortex.\n`
+                + `Use the included tool to launch ModManager (button on notification or in "Dashboard" tab).\n`
+                + `Set the "Mods Directory" to the "ModArchives" folder (in game root).\n`
+          }, [
+            {
+              label: 'Run ModManager', action: () => {
+                runModManager(api);
+                dismiss();
+              }
+            },
+            { label: 'Continue', action: () => dismiss() },
+            {
+              label: 'Never Show Again', action: () => {
+                api.suppressNotification(NOTIF_ID);
+                dismiss();
+              }
+            },
+          ]);
+        },
+      },
+    ],
+  });
+}
+
+async function setManagerSettings(api) { //on deploy
+  GAME_PATH = getDiscoveryPath(api);
+  const file = path.join(GAME_PATH, "_internal");
+  //need to find file where folder paths are set
+}
+
+function runModManager(api) { //on deploy
+  const TOOL_ID = MOD_MANAGER_ID;
+  const TOOL_NAME = MOD_MANAGER_NAME;
+  const state = api.store.getState();
+  const tool = util.getSafe(state, ['settings', 'gameMode', 'discovered', GAME_ID, 'tools', TOOL_ID], undefined);
+  try {
+    const TOOL_PATH = tool.path;
+    if (TOOL_PATH !== undefined) {
+      return api.runExecutable(TOOL_PATH, [], { detached: true, suggestDeploy: false })
         .catch(err => api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err,
           { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 })
         );

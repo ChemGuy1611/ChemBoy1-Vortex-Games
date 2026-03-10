@@ -4,6 +4,13 @@
 
 - None Planned
 
+## [0.3.0] - 2026-03-10
+
+- Added: Integrated Nioh3ModManager for Loose File mods installation
+- Added: Support for Loose file loader
+- Added: Loose File mods are now installed to the "ModArchives" folder to be installed with ModManager
+- Added: Notification to run ModManager after deployment
+
 ## [0.2.3] - 2026-03-04
 
 - Changed: Launch game directly through Steam
