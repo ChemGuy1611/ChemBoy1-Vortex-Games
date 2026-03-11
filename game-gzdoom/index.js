@@ -2,8 +2,8 @@
 Name: Doom I & II (UZDoom) Vortex Extension
 Structure: Mod Loader (Any Folder)
 Author: ChemBoy1
-Version: 0.2.0
-Date: 2026-02-27
+Version: 0.2.1
+Date: 2026-03-11
 ///////////////////////////////////////*/
 /*
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣀⣀⣠⣤⣤⣤⡴⣦⡴⣖⠶⣴⠶⡶⣖⡶⣶⢶⣲⡾⠿⢿⡷⣾⢿⣷⣦⢾⣷⣾⣶⣤⣀⣰⣤⣀⡀⠀⠀⢀⣴⣿⡿⡿⣿⣿⣦⣄⠀⠀⣠⣴⣿⡿⢿⡿⣷⣦⡄⠀⠀⢀⣀⣤⣦⣀⣤⣶⣶⣷⣦⣴⡿⢿⡷⣿⠿⡿⣿⣷⢶⣦⢴⡲⣦⢶⡶⢶⡲⣖⡶⣦⣤⣤⣤⣤⣤⣤⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
@@ -131,7 +131,7 @@ const REQUIREMENTS = [
     findMod: (api) => findModByFile(api, DML_ID, DML_EXEC),
     findDownloadId: (api) => findDownloadIdByFile(api, DML_ARC_NAME),
     fileArchivePattern: new RegExp(/^DML_v(\d+\.\d+)/, 'i'),
-    resolveVersion: (api) => resolveVersionByPattern(api, REQUIREMENTS[0]),
+    resolveVersion: (api) => resolveVersionByPattern(api, REQUIREMENTS[1]),
   }, //*/
 ];
 

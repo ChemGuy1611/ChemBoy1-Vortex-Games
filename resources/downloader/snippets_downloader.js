@@ -71,3 +71,10 @@ async function checkForRequirements(api) {
   const CHECK = await asyncForEachCheck(api, REQUIREMENTS);
   return CHECK;
 }
+
+// In setup function ////////////////////
+
+const requirementsInstalled = await checkForRequirements(api);
+if (!requirementsInstalled) {
+await download(api, REQUIREMENTS);
+}

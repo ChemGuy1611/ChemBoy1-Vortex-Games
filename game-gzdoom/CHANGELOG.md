@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.2.1] - 2026-03-11
+
+- Fixed: Typo in DML updater.
+
 ## [0.2.0] - 2026-02-27
 
 - Upgraded: To UZDoom! - Note that the folder name where everything is placed has changed from "DMLv2.5[WINDOWS]" to "DML". You may need to copy some files (config, save) over manually.
