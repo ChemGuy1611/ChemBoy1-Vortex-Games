@@ -4,6 +4,12 @@ FUTURE CHANGES (NOT IMPLEMENTED YET):
 
 - None Planned
 
+## [0.3.0] - 2026-03-11
+
+- Improved: Mod installer performance by removing Bluebird Promises.
+- Fixed: Mod Loader update check properly parses the version number (replacing "_" with ".").
+- Added: Create "DisabledMods" folder to avoid popup on first launch of Atlan Mod Loader.
+
 ## [0.2.1] - 2025-10-22
 
 - Fixed game version detection for Xbox version (for real this time!).

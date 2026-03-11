@@ -53,7 +53,9 @@ async function download(api, requirements, force) {
             if (!!mod && req.resolveVersion) {
                 const version = await req.resolveVersion(api);
                 asset = await getLatestGithubReleaseAsset(api, req);
-                const coerced = semver_1.default.coerce(asset.release.tag_name);
+                const tagName = asset.release.tag_name;
+                const normalized = tagName.replace(/(\d)[-_](\d)/i, '$1.$2');
+                const coerced = semver_1.default.coerce(normalized);
                 if (semver_1.default.gt(coerced.version, version)) {
                     versionMismatch = true;
                     batchActions.push(vortex_api_1.actions.setModEnabled(profileId, mod.id, false));
@@ -304,7 +306,9 @@ async function testRequirementVersion(api, requirement) {
     if (!latest) {
         return;
     }
-    const coercedVersion = semver_1.default.coerce(latest.release.tag_name);
+    const tagName = latest.release.tag_name;
+    const normalized = tagName.replace(/(\d)[-_](\d)/i, '$1.$2'); //replace "-" and "_" with "." in version number (between digits) i.e. v1-2-3-pre.4 -> v1.2.3-pre.4
+    const coercedVersion = semver_1.default.coerce(normalized);
     if (!semver_1.default.gt(coercedVersion.version, currentVersion)) {
         return;
     }
@@ -398,7 +402,10 @@ async function resolveVersionByPattern(api, requirement) {
     const state = api.getState();
     const files = vortex_api_1.util.getSafe(state, ['persistent', 'downloads', 'files'], []);
     const latestVersion = Object.values(files).reduce((prev, file) => {
-        const match = requirement.fileArchivePattern.exec(file.localPath);
+        let match = requirement.fileArchivePattern.exec(file.localPath);
+        if (match !== null && match !== void 0 && match[1]) {
+          match[1] = match[1].replace(/(\d)[-_](\d)/i, '$1.$2'); //replace "-" and "_" with "." in version number (between digits) i.e. v1-2-3-pre.4 -> v1.2.3-pre.4
+        }
         if ((match === null || match === void 0 ? void 0 : match[1]) && semver_1.default.gt(match[1], prev)) {
             prev = match[1];
         }

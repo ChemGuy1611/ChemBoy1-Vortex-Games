@@ -2,8 +2,8 @@
 Name: DOOM: The Dark Ages Vortex Extension
 Structure: 3rd-Party Mod Loader
 Author: ChemBoy1
-Version: 0.2.1
-Date: 2025-10-22
+Version: 0.3.0
+Date: 2026-03-11
 /////////////////////////////////////////*/
 /*
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣀⣀⣠⣤⣤⣤⡴⣦⡴⣖⠶⣴⠶⡶⣖⡶⣶⢶⣲⡾⠿⢿⡷⣾⢿⣷⣦⢾⣷⣾⣶⣤⣀⣰⣤⣀⡀⠀⠀⢀⣴⣿⡿⡿⣿⣿⣦⣄⠀⠀⣠⣴⣿⡿⢿⡿⣷⣦⡄⠀⠀⢀⣀⣤⣦⣀⣤⣶⣶⣷⣦⣴⡿⢿⡷⣿⠿⡿⣿⣷⢶⣦⢴⡲⣦⢶⡶⢶⡲⣖⡶⣦⣤⣤⣤⣤⣤⣤⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
@@ -121,7 +121,7 @@ const PATCHER_NXM_PAGE_NO = 28;
 const PATCHER_NXM_FILE_NO = 79;
 
 // Information for downloader and updater
-const INJECTOR_ARC_NAME = 'AtlanModLoader_v_3_1.zip';
+const INJECTOR_ARC_NAME = 'AtlanModLoader_v_4_0_1.zip';
 const INJECTOR_URL_API = `https://api.github.com/repos/FlavorfulGecko5/EntityAtlan`;
 const REQUIREMENTS = [
   { //ModManager
@@ -132,24 +132,10 @@ const REQUIREMENTS = [
     githubUrl: INJECTOR_URL_API,
     findMod: (api) => findModByFile(api, INJECTOR_ID, INJECTOR_FILE),
     findDownloadId: (api) => findDownloadIdByFile(api, INJECTOR_ARC_NAME),
-    fileArchivePattern: new RegExp(/^AtlanModLoader_v_(\d+_\d+)/, 'i'),
+    fileArchivePattern: new RegExp(/^AtlanModLoader_v_(\d+_\d+_\d+)/, 'i'),
     resolveVersion: (api) => resolveVersionByPattern(api, REQUIREMENTS[0]),
   }, //*/
 ];
-
-//* Function to resolve version by a means other than the archive name
-async function resolveVersionByFile(api, requirement) {
-  const state = api.getState();
-  const files = util.getSafe(state, ['persistent', 'downloads', 'files'], []);
-  const latestVersion = Object.values(files).reduce((prev, file) => {
-    const match = requirement.fileArchivePattern.exec(file.localPath);
-    if ((match === null || match === void 0 ? void 0 : match[1]) && semver.gt(match[1], prev)) {
-        prev = match[1];
-    }
-    return prev;
-  }, '0.0.0');
-  return latestVersion;
-} //*/
 
 // Filled in from data above
 const spec = {
@@ -158,7 +144,7 @@ const spec = {
     "name": GAME_NAME,
     "shortName": GAME_NAME_SHORT,
     "executable": EXEC_LAUNCHER,
-    "parameters": [`+com_skipIntroVideo 1 +exec ${AUTOEXEC_CFG_FILE}`],
+    "parameters": PARAMETERS,
     "logo": `${GAME_ID}.jpg`,
     "mergeMods": true,
     "requiresCleanup": true,
@@ -292,7 +278,7 @@ const tools = [
     exclusive: true,
     shell: true,
     defaultPrimary: true,
-    parameters: [`+com_skipIntroVideo 1 +exec ${AUTOEXEC_CFG_FILE}`],
+    parameters: PARAMETERS,
   }, //*/
 ];
 
@@ -1071,6 +1057,7 @@ async function setup(discovery, api, gameSpec) {
     }
     //await downloadPatcher(api, gameSpec);
   }
+  await fs.ensureDirAsync(path.join(GAME_PATH, 'DisabledMods')); //avoid popup from Atlan Mod Loader
   await fs.ensureDirWritableAsync(path.join(GAME_PATH, SOUND_PATH));
   //await fs.ensureDirWritableAsync(path.join(SAVE_PATH));
   return fs.ensureDirWritableAsync(path.join(GAME_PATH, MOD_PATH_DEFAULT));
