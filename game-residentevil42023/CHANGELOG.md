@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.4.1] - 2026-03-11
+
+- Fixed: Missing function crash when clicking the "Open Config File" button
+
 ## [0.4.0] - 2026-03-05
 
 - Improved: Mod installer performance by removing Bluebird.

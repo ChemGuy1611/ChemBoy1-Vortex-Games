@@ -2,8 +2,8 @@
 Name: Resident Evil 4 (2023) + Chainsaw Demo Vortex Extension
 Structure: 3rd Party Mod Manager (Fluffy)
 Author: ChemBoy1
-Version: 0.4.0
-Date: 2026-02-27
+Version: 0.4.1
+Date: 2026-03-11
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -80,7 +80,7 @@ const UPSCALER_FILE = 'PDPerfPlugin.dll';
 const CONFIG_ID = `${GAME_ID}-config`;
 const CONFIG_NAME = "Config File";
 const CONFIG_PATH = '.';
-const CONFIG_FILE = 'config.ini';
+const CONFIG_FILE = 'local_config.ini';
 const CONFIG_FILEPATH = path.join(CONFIG_PATH, CONFIG_FILE);
 
 const REQ_FILE = 're_chunk_000.pak';
@@ -289,6 +289,19 @@ function getModPath(gamePath) {
   };
   MOD_PATH_USED = MOD_PATH;
   return MOD_PATH;
+}
+
+const getDiscoveryPath = (api) => { //get the game's discovered path
+  const state = api.getState();
+  const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});
+  return discovery === null || discovery === void 0 ? void 0 : discovery.path;
+};
+
+async function purge(api) { //useful to clear out mods prior to doing some action
+  return new Promise((resolve, reject) => api.events.emit('purge-mods', true, (err) => err ? reject(err) : resolve()));
+}
+async function deploy(api) { //useful to deploy mods after doing some action
+  return new Promise((resolve, reject) => api.events.emit('deploy-mods', (err) => err ? reject(err) : resolve()));
 }
 
 // AUTOMATIC INSTALLER FUNCTIONS /////////////////////////////////////////////////////////
@@ -1001,7 +1014,7 @@ function applyGame(context, gameSpec) {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
-    });
+  });
   /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', () => {
     util.opn(SAVE_PATH).catch(() => null);
     }, () => {
