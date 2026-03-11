@@ -941,7 +941,7 @@ function installBinaries(files) {
 //Notify User to run injector after deployment
 function deployNotify(api) {
   const NOTIF_ID = `${GAME_ID}-deploy-notification`;
-  const MOD_NAME = INJECTOR_NAME;
+  const MOD_NAME = 'DarkAgesModManager';
   const MESSAGE = `Run ${MOD_NAME}`;
   api.sendNotification({
     id: NOTIF_ID,
@@ -950,7 +950,7 @@ function deployNotify(api) {
     allowSuppress: true,
     actions: [
       {
-        title: 'Run Injector',
+        title: 'Run DAMM',
         action: (dismiss) => {
           runInjector(api);
           dismiss();
@@ -965,7 +965,7 @@ function deployNotify(api) {
                 + `The process of installing the mods may take a few minutes.\n`
           }, [
             {
-              label: 'Run Injector', action: () => {
+              label: 'Run DAMM', action: () => {
                 runInjector(api);
                 dismiss();
               }
