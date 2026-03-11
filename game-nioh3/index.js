@@ -82,7 +82,7 @@ if (reZip) {
 const MOD_EXTS = [".g1t", ".g1m", ".g1ts"];
 
 const MOD_MANAGER_ID = `${GAME_ID}-modmanager`;
-const MOD_MANAGER_NAME = "Mod Manager";
+const MOD_MANAGER_NAME = "ModManager";
 const MOD_MANAGER_PATH = ".";
 const MOD_MANAGER_EXEC = 'Nioh3ModManager.exe';
 const MOD_MANAGER_PAGE_NO = 84;
