@@ -2018,7 +2018,7 @@ function dotNetMelonNotify(api) {
         action: (dismiss) => {
           api.showDialog('question', MESSAGE, {
             text: `\n`
-                + `MelonLoader requires .NET ${MELON_DOTNET_VER}to be installed on your system for IL2CPP build Unity games, like this game.\n`
+                + `MelonLoader requires .NET ${MELON_DOTNET_VER} to be installed on your system for IL2CPP build Unity games, like this game.\n`
                 + `\n`
                 + `Please install .NET ${MELON_DOTNET_VER} so that MelonLoader can function. Your game may crash at launch if the correct version of .NET is not installed.\n`
                 + `\n`
