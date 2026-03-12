@@ -326,20 +326,20 @@ function getModPath(discoveryPath) {
 function makeFindGame(api, gameSpec) {
   /*using registry - requires winapi-bindings
   try {
-      const instPath = winapi.RegGetValue(
-        INSTALL_HIVE,
-        INSTALL_KEY,
-        INSTALL_VALUE);
-      if (!instPath) {
-        throw new Error('empty registry key');
-      }
-      return () => Promise.resolve(instPath.value);
-    } catch (err) { //*/
-      return () => util.GameStoreHelper.findByAppId(gameSpec.discovery.ids)
-        .then((game) => game.gamePath);
-    //}
-  //*/
-}
+    const instPath = winapi.RegGetValue(
+      INSTALL_HIVE,
+      INSTALL_KEY,
+      INSTALL_VALUE
+    );
+    if (!instPath) {
+      throw new Error('empty registry key');
+    }
+    return () => Promise.resolve(instPath.value);
+  } catch (err) { //*/
+    return () => util.GameStoreHelper.findByAppId(gameSpec.discovery.ids)
+      .then((game) => game.gamePath);
+  //}
+} //*/
 
 //Set launcher requirements
 async function requiresLauncher(gamePath, store) {

@@ -10,6 +10,7 @@ const Bluebird = require('bluebird'); //avoid using as it is deprecated
 const fsPromises = require('fs/promises');
 const fsExtra = require('fs-extra');
 const exeVersion = require('exe-version');
+const semver = require('semver');
 
 //File parsers
 const XML = require('xml2js'); //XML.parseString(), XML.parseStringPromise() (async), and XML.Builder() (write)

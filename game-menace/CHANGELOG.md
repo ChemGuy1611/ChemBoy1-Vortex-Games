@@ -4,7 +4,11 @@
 
 - None planned at this time
 
-## [0.3.3] - 2026-02-24
+## [0.4.1] - 2026-02-24
+
+- Added: Checks and notifications for .NET 6/10 installations required by MelonLoader/ModpackLoader
+
+## [0.4.0] - 2026-02-24
 
 - Changed: ModpackLoader now downloads from a Nexus Mods page, and is no longer bundled with the extension
 

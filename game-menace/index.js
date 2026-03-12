@@ -2,8 +2,8 @@
 Name: MENACE Vortex Extension
 Structure: Unity BepinEx/MelonLoader Hybrid
 Author: ChemBoy1
-Version: 0.4.0
-Date: 2026-02-24
+Version: 0.4.1
+Date: 2026-03-12
 //////////////////////////////////////////*/
 
 //Import libraries
@@ -12,6 +12,7 @@ const path = require('path');
 const template = require('string-template');
 const fsExtra = require('fs-extra');
 const { parseStringPromise } = require('xml2js');
+const winapi = require('winapi-bindings');
 
 // -- START EDIT ZONE -- ///////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -26,7 +27,7 @@ const LOCALAPPDATA = util.getVortexPath("localAppData");
 const GAME_ID = "menace";
 const STEAMAPP_ID = "2432860";
 const STEAMAPP_ID_DEMO = "2432870";
-const EPICAPP_ID = ""; //not on egdata.app yet
+const EPICAPP_ID = ""; //not on egdata.app yet - https://egdata.app/offers/14cf222f40d049d89734a2da1dcd154d/builds
 const GOGAPP_ID = "1812373738";
 const XBOXAPP_ID = "HoodedHorse.MENACE";
 const XBOXEXECNAME = "Game";
@@ -140,6 +141,10 @@ const MELON_FOLDER = 'MelonLoader';
 const MEL_STRING = 'MelonLoader';
 const MEL_PLUGIN_STRING = 'MelonPlugin';
 const MELON_INDICATOR_FILE = path.join('MelonLoader', 'net6', MELON_FILE);
+const MELON_DOTNET_VER = '6';
+const MELON_DOTNET_URL = `https://dotnet.microsoft.com/download/dotnet/${MELON_DOTNET_VER}.0`;
+const DOTNET_REG_HIVE = 'HKEY_LOCAL_MACHINE';
+const DOTNET_REG_KEY = `SOFTWARE\\WOW6432Node\\dotnet\\Setup\\InstalledVersions\\x64\\sharedfx\\Microsoft.WindowsDesktop.App`;
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Game Folder";
@@ -291,6 +296,8 @@ const MODPACKLOADER_DLLS = [
 const MODPACKLOADER_PAGE_NO = 56;
 const MODPACKLOADER_FILE_NO = 168;
 const MODPACKLOADER_DOMAIN = GAME_ID;
+const MPL_DOTNET_VER = '10';
+const MPL_DOTNET_URL = `https://dotnet.microsoft.com/download/dotnet/${MPL_DOTNET_VER}.0`;
 
 const MODPACKMOD_ID = `${GAME_ID}-modpackmod`;
 const MODPACKMOD_NAME = "Modpack Mod";
@@ -2409,6 +2416,148 @@ async function ensureModpackLoader(api, check) {
   }
 }
 
+function dotNetMelonNotify(api) {
+  const NOTIF_ID = `${GAME_ID}-dotnetmelon-notify`;
+  const MESSAGE = `.NET ${MELON_DOTNET_VER} Required`;
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'warning',
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: `Download .NET ${MELON_DOTNET_VER}`,
+        action: (dismiss) => {
+          util.opn(MELON_DOTNET_URL).catch(() => null);
+          dismiss();
+        }
+      },
+      {
+        title: 'More',
+        action: (dismiss) => {
+          api.showDialog('question', MESSAGE, {
+            text: `\n`
+                + `MelonLoader requires .NET ${MELON_DOTNET_VER}to be installed on your system for IL2CPP build Unity games, like this game.\n`
+                + `\n`
+                + `Please install .NET ${MELON_DOTNET_VER} so that MelonLoader can function. Your game may crash at launch if the correct version of .NET is not installed.\n`
+                + `\n`
+          }, [
+            { label: `Download .NET ${MELON_DOTNET_VER}`, action: () => {
+              util.opn(MELON_DOTNET_URL).catch(() => null);
+              dismiss();
+            }},
+            { label: 'Not Now', action: () => dismiss() },
+            {
+              label: 'Never Show Again', action: () => {
+                api.suppressNotification(NOTIF_ID);
+                dismiss();
+              }
+            },
+          ]);
+        },
+      },
+    ],
+  });
+}
+
+function dotNetModpackNotify(api) {
+  const NOTIF_ID = `${GAME_ID}-dotnetmodpack-notify`;
+  const MESSAGE = `.NET ${MPL_DOTNET_VER} Required`;
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'warning',
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: `Download .NET ${MPL_DOTNET_VER}`,
+        action: (dismiss) => {
+          util.opn(MPL_DOTNET_URL).catch(() => null);
+          dismiss();
+        }
+      },
+      {
+        title: 'More',
+        action: (dismiss) => {
+          api.showDialog('question', MESSAGE, {
+            text: `\n`
+                + `The MENACE ModPackLoader requires .NET ${MPL_DOTNET_VER}to be installed on your system.\n`
+                + `\n`
+                + `Please install .NET ${MPL_DOTNET_VER} so that ModpackLoader can function. Your game may crash at launch if the correct version of .NET is not installed.\n`
+                + `\n`
+          }, [
+            { label: `Download .NET ${MPL_DOTNET_VER}`, action: () => {
+              util.opn(MPL_DOTNET_URL).catch(() => null);
+              dismiss();
+            }},
+            { label: 'Not Now', action: () => dismiss() },
+            {
+              label: 'Never Show Again', action: () => {
+                api.suppressNotification(NOTIF_ID);
+                dismiss();
+              }
+            },
+          ]);
+        },
+      },
+    ],
+  });
+}
+
+async function checkDotNetMelon(api) {
+  const version = MELON_DOTNET_VER;
+  let values = undefined;
+  try {
+    const buffer = winapi.WithRegOpen( //array of objects with values.type and values.key
+      DOTNET_REG_HIVE,
+      DOTNET_REG_KEY,
+      (hkey) => {
+        values = winapi.RegEnumValues(hkey); //array of objects with values.type and values.key
+      }
+    );
+    if (!values) {
+      dotNetMelonNotify(api); //assume not installed if key not found
+    }
+    values = values.map(value => value.key); //map array to only keys
+    const found = values.some(value => value.startsWith(version)); //find entry starting with correct version number
+    if (found) {
+      //log('warn', `Found .NET ${version} installation`);
+    } else {
+      dotNetMelonNotify(api); //assume not installed if key not found
+    }
+  } catch (err) { //*/
+    log('warn', `Failed to read .NET registry key: ${err}`);
+    dotNetMelonNotify(api)
+  }
+}
+
+async function checkDotNetModpack(api) {
+  const version = MPL_DOTNET_VER;
+  let values = undefined;
+  try {
+    const buffer = winapi.WithRegOpen( //array of objects with values.type and values.key
+      DOTNET_REG_HIVE,
+      DOTNET_REG_KEY,
+      (hkey) => {
+        values = winapi.RegEnumValues(hkey); //array of objects with values.type and values.key
+      }
+    );
+    if (!values) {
+      dotNetModpackNotify(api); //assume not installed if key not found
+    }
+    values = values.map(value => value.key); //map array to only keys
+    const found = values.some(value => value.startsWith(version)); //find entry starting with correct version number
+    if (found) {
+      //log('warn', `Found .NET ${version} installation`);
+    } else {
+      dotNetModpackNotify(api); //assume not installed if key not found
+    }
+  } catch (err) { //*/
+    log('warn', `Failed to read .NET registry key: ${err}`);
+    dotNetModpackNotify(api)
+  }
+}
+
 //Setup function
 async function setup(discovery, api, gameSpec) {
   //SYNC CODE ////////////////////////////////////
@@ -2431,10 +2580,10 @@ async function setup(discovery, api, gameSpec) {
   //await ensureModpackLoader(api, false);
   await downloadModpackLoader(api, gameSpec);
   if (!bepinexInstalled && !melonInstalled && !customInstalled) {
-    chooseModLoader(api, spec); //dialog to choose mod loader
+    await chooseModLoader(api, spec); //dialog to choose mod loader
   }
   if ( (bepinexInstalled && melonInstalled) || (bepinexInstalled && customInstalled) || (melonInstalled && customInstalled)) {
-    deconflictModLoaders(api, spec); //deconflict if multiple mod loaders are installed
+    await deconflictModLoaders(api, spec); //deconflict if multiple mod loaders are installed
   } //*/
   if (bepinexInstalled && allowBepCfgMan) {
     downloadBepCfgManNotify(api, gameSpec); //notification to download BepInExConfigManager
@@ -2442,6 +2591,10 @@ async function setup(discovery, api, gameSpec) {
   if (melonInstalled && allowMelPrefMan) {
     downloadMelonPrefManNotify(api, gameSpec); //notification to download MelonPreferencesManager
   } //*/
+  if (isMelonInstalled(api, gameSpec)) {
+    checkDotNetMelon(api);
+  }
+  checkDotNetModpack(api);
 }
 
 //Let Vortex know about the game
@@ -2710,10 +2863,10 @@ function main(context) {
         customInstalled = isCustomInstalled(api, spec);
       }
       if (!bepinexInstalled && !melonInstalled && !customInstalled) {
-        chooseModLoader(api, spec); //dialog to choose mod loader
+        await chooseModLoader(api, spec); //dialog to choose mod loader
       }
       if ( (bepinexInstalled && melonInstalled) || (bepinexInstalled && customInstalled) || (melonInstalled && customInstalled)) {
-        deconflictModLoaders(api, spec); //deconflict if multiple mod loaders are installed
+        await deconflictModLoaders(api, spec); //deconflict if multiple mod loaders are installed
       } //*/
       if (bepinexInstalled && allowBepCfgMan) {
         downloadBepCfgMan(api, spec); //download BepInExConfigManager
@@ -2723,6 +2876,9 @@ function main(context) {
       } //*/
       if (hasCustomLoader && customLoaderInstaller && customInstalled) {
         checkCustomInstalled(api, spec); //check if user has run installer and notify if not
+      }
+      if (isMelonInstalled(api, spec) && BEPINEX_BUILD === 'il2cpp') {
+        checkDotNetMelon(api); //check for .NET 6 installation
       }
       return Promise.resolve();
     });
@@ -2734,12 +2890,12 @@ function main(context) {
         melonInstalled = isMelonInstalled(api, spec);
         customInstalled = checkCustomInstalled(api, spec); //file check
         if (customInstalled && customLoaderInstaller) {
-          removeCustomFiles(api, spec); //delete installed files to clean folder
+          await removeCustomFiles(api, spec); //delete installed files to clean folder
         }
         //*
         customInstalled = isCustomInstalled(api, spec);
         if (!bepinexInstalled && !melonInstalled && !customInstalled) {
-          chooseModLoader(api, spec); //dialog to choose mod loader
+          await chooseModLoader(api, spec); //dialog to choose mod loader
         } //*/
       }
       return Promise.resolve();
