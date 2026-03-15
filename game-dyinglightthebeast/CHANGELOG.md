@@ -4,6 +4,11 @@
 
 - None Planned
 
+## [0.5.0] - 2026-03-16
+
+- Users are now presented a choice of which mod loader to use (Unleashed or Super).
+- Improved: .NET 8 check for Unleashed users.
+
 ## [0.4.0] - 2026-01-28
 
 - Added: Initial support for Super Mod Merger (new merger utility) - Proper install, button to download, run it from notification if installed

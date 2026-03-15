@@ -80,7 +80,7 @@ if (BEPINEX_BUILD === 'mono') {
 }
 const BEPINEX_FOLDER = 'BepInEx';
 const BEP_STRING = 'BepInEx';
-const BEP_PATCHER_STRING = 'BaseUnityPlugin';
+const BEP_PATCHER_STRING = 'BepInEx.Preloader.Core.Patching';
 
 let BEPINEX_URL = `https://builds.bepinex.dev/projects/bepinex_be/${BEP_BE_VER}/BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.${BEP_BE_VER}%2B${BEP_BE_COMMIT}.zip`;
 let BEPINEX_URL_ERR = `https://builds.bepinex.dev/projects/bepinex_be`;
@@ -1019,8 +1019,7 @@ async function installPlugin(api, gameSpec, files, workingDir) {
         const content = await fs.readFileAsync(path.join(workingDir, file), 'utf8');
         if (content.includes(BEP_STRING)) {
             isBepinex = true;
-            isBepinexPatcher = false; //temporary, find reliable string to id patchers
-            //isBepinexPatcher = !content.includes(BEP_PATCHER_STRING) && !files.find(file => path.extname(file).toLowerCase() = BEPINEX_PLUGINS_FOLDER);
+            isBepinexPatcher = content.includes(BEP_PATCHER_STRING);
         } else if (content.includes(MEL_STRING)) {
           isMelon = true;
           isMelonPlugin = content.includes(MEL_PLUGIN_STRING);
@@ -1195,7 +1194,7 @@ async function chooseModLoader(api, gameSpec) {
       { replace }
     ),
   }, [
-    { label: t('BepInEx') },
+    { label: t('BepInEx (Recommended)') },
     { label: t('MelonLoader') },
   ])
   .then(async (result) => {

@@ -2,8 +2,8 @@
 Name: Dying Light The Beast Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.4.0
-Date: 2026-01-28
+Version: 0.5.0
+Date: 2026-03-16
 ///////////////////////////////////////////*/
 
 //Import libraries
