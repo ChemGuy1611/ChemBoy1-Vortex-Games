@@ -116,14 +116,10 @@ const SAVE_EXT = ".sav";
 const SAVE_FILES = ["XXX"];
 //*/
 
-const DN_REL = "8.0";
-const DN_VER = "8.0.20";
-const DOTNET_URL = `https://dotnet.microsoft.com/en-us/download/dotnet/${DN_REL}`;
-const DOTNET_URL_DIRECT = `https://builds.dotnet.microsoft.com/dotnet/WindowsDesktop/${DN_VER}/windowsdesktop-runtime-${DN_VER}-win-x64.exe`;
-const DOTNET_EXEC = `windowsdesktop-runtime-${DN_VER}-win-x64.exe`;
-const DOTNET_CHECK_PATH = `C:\\Program Files\\dotnet\\shared\\Microsoft.WindowsDesktop.App\\${DN_VER}\\System.Windows.Forms.dll`;
-const DOTNET_CHECK_REGPATH = `SOFTWARE\\Microsoft\\dotnet\\InstalledManifests\\x64\\Microsoft.NET.Workload.Mono.ToolChain.Current.Manifest-${DN_REL}.100\\${DN_VER}`;
-const DOTNET_CHECK_REGKEY = `ProductVersion`;
+const DOTNET_VER = "8.0";
+const DOTNET_URL = `https://dotnet.microsoft.com/en-us/download/dotnet/${DOTNET_VER}`;
+const DOTNET_REG_HIVE = 'HKEY_LOCAL_MACHINE';
+const DOTNET_REG_KEY = `SOFTWARE\\WOW6432Node\\dotnet\\Setup\\InstalledVersions\\x64\\sharedfx\\Microsoft.WindowsDesktop.App`;
 
 const MOD_PATH_DEFAULT = PAK_PATH;
 const REQ_FILE = EXEC;
@@ -907,7 +903,7 @@ function dotNetNotify(api) {
         title: 'More',
         action: (dismiss) => {
           api.showDialog('question', MESSAGE, {
-            text: `.NET ${DN_REL} Desktop Runtime is required run the ${MERGER_NAME}.\n`
+            text: `.NET ${DN_REL} Desktop Runtime is required to run the ${MERGER_NAME}.\n`
                 + `You can download and install the runtime from the Microsoft website using the button below.\n`
                 + `If you don\'t install the correct version of .NET, the Merger window will open and close immediately when launched, without doing anything.\n`
                 + `Mods must be merged by the utility in order to be loaded by the game.\n`
@@ -932,20 +928,31 @@ function dotNetNotify(api) {
   });    
 }
 
-//Determine if .NET Desktop Runtime is installed
 function checkForDotNet() {
+  const version = DOTNET_VER;
+  let values = undefined;
   try {
-    const dotNetPath = winapi.RegGetValue(
-      'HKEY_LOCAL_MACHINE',
-      DOTNET_CHECK_REGPATH,
-        DOTNET_CHECK_REGKEY);
-    if (!dotNetPath) {
-      throw new Error('empty registry key');
+    const buffer = winapi.WithRegOpen( //array of objects with values.type and values.key
+      DOTNET_REG_HIVE,
+      DOTNET_REG_KEY,
+      (hkey) => { //have to enum in the callback - https://github.com/Nexus-Mods/node-winapi-bindings/blob/master/index.d.ts
+        values = winapi.RegEnumValues(hkey); //array of objects with values.type and values.key
+      }
+    );
+    if (!values) {
+      return false;
     }
-    return true;
-  } catch (err) {
-    log('warn', `Could not read registry entry for .NET ${DN_REL} installation: ${err}`);
-    return false
+    values = values.map(value => value.key); //map array to only keys
+    const found = values.some(value => value.startsWith(version)); //find entry starting with correct version number
+    if (found) {
+      //log('warn', `Found .NET ${version} installation`);
+      return true;
+    } else {
+      return false;
+    }
+  } catch (err) { //*/
+    log('warn', `Failed to read .NET registry key: ${err}`);
+    return false;
   }
 }
 
@@ -958,7 +965,7 @@ async function setup(discovery, api, gameSpec) {
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
 
   DOTNET_INSTALLED = checkForDotNet();
-  log('warn', `DLTB Check - .NET ${DN_REL} Desktop Runtime Installed?: ${DOTNET_INSTALLED}`);
+  //log('warn', `DLTB Check - .NET ${DN_REL} Desktop Runtime Installed?: ${DOTNET_INSTALLED}`);
   if (!DOTNET_INSTALLED) {
     dotNetNotify(api);
   }
@@ -966,7 +973,7 @@ async function setup(discovery, api, gameSpec) {
   mergerInstalled = isMergerUtilityInstalled(api, gameSpec);
   superMergerInstalled = isSuperMergerInstalled(api, gameSpec);
   await downloadMergerUtility(api, gameSpec);
-  //* remove old merger folder if the user has it (temporary, remove after a few releases)
+  /* remove old merger folder if the user has it (temporary, remove after a few releases)
   const MERGER_FOLDER_OLD = path.join(STAGING_FOLDER, '__merged.dyinglightthebeast-pak');
   try {
     await fs.statAsync(MERGER_FOLDER_OLD);

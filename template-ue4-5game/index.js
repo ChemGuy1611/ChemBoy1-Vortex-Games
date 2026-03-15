@@ -38,7 +38,7 @@ const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 const GAME_NAME = "XXX";
 const GAME_NAME_SHORT = "XXX"; //Try for 8-10 characters
 const EPIC_CODE_NAME = "XXX"; //Folder in root
-const EXEC = `${EPIC_CODE_NAME}.exe`; //This is true ~80% of the time
+const EXEC = `${EPIC_CODE_NAME}.exe`; //This is true ~80% of the time. Change if different
 const EXEC_EPIC = EXEC; //change these 3 if different
 const EXEC_GOG = EXEC;
 const EXEC_DEMO = EXEC;
@@ -58,6 +58,7 @@ const preferHardlinks = true; //set true to perform partition checks when IO-STO
 const autoDownloadUe4ss = false; //toggle for auto downloading UE4SS
 const SIGBYPASS_REQUIRED = false; //set true if there are .sig files in the Paks folder
 const IO_STORE = true; //true if the Paks folder contains .ucas and .utoc files
+const hasUserIdFolder = true; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
 
 //UE specific
 const ENGINE_VERSION = '5.X.X.0'; //Unreal Engine version - info only atm. usually '4.27.2.0' or '5.X.X.0'
@@ -180,19 +181,17 @@ const CONFIG_EXT = ".ini";
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_NAME = `Saves (${SAVE_LOC})`;
 const SAVE_FOLDER = SAVE_PATH_DEFAULT;
-function isDir(folder, file) {
-  const stats = fs.statSync(path.join(folder, file));
-  return stats.isDirectory();
+if (hasUserIdFolder) {
+  try {
+    const SAVE_ARRAY = fs.readdirSync(SAVE_FOLDER);
+    USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_FOLDER, entry));
+  } catch(err) {
+    USERID_FOLDER = "";
+  }
+  if (USERID_FOLDER === undefined) {
+    USERID_FOLDER = "";
+  } //*/
 }
-try {
-  const SAVE_ARRAY = fs.readdirSync(SAVE_FOLDER);
-  USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_FOLDER, entry));
-} catch(err) {
-  USERID_FOLDER = "";
-}
-if (USERID_FOLDER === undefined) {
-  USERID_FOLDER = "";
-} //*/
 let SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
 
 const SCRIPTS_ID = `${GAME_ID}-scripts`;
@@ -338,6 +337,11 @@ const spec = {
 };
 
 // BASIC EXTENSION FUNCTIONS ///////////////////////////////////////////////////
+
+function isDir(folder, file) {
+  const stats = fs.statSync(path.join(folder, file));
+  return stats.isDirectory();
+}
 
 function statCheckSync(gamePath, file) {
   try {
