@@ -2,8 +2,8 @@
 Name: Disco Elysium Vortex Extension
 Structure: Unity BepinEx
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2026-01-20
+Version: 0.1.2
+Date: 2026-03-16
 //////////////////////////////////////////*/
 
 //Import libraries
@@ -11,7 +11,6 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 const winapi = require('winapi-bindings');
-const { constants } = require('vm');
 //const turbowalk = require('turbowalk');
 //const { parseStringPromise } = require('xml2js');
 
@@ -61,8 +60,9 @@ const BEPINEX_FILE_ID = '0';
 const BEPINEX_ARCH = 'x64'; // 'x64' or 'x86'
 const BEPINEX_BUILD = 'unityil2cpp'; // 'unityil2cpp' or 'unitymono' - IL2CPP will use bleeding edge builds
 let BEPINEX_VERSION = '6.0.0'; //force BepInEx version ('5.4.23.3' or '6.0.0')
-const BEP_BE_VER = '752'; //set BepInEx build for BE IL2CPP URLs
-const BEP_BE_COMMIT = 'dd0655f'; //git commit number for BE IL2CPP builds
+const BEP_BE_VER = '755'; //set BepInEx build for BE URLs
+const BEP_BE_COMMIT = '3fab71a'; //git commit number for BE builds
+const BEPCFGMAN_VER = '18.4.1'; //set BepInExConfigManager version for direct URLs
 if (BEPINEX_VERSION == '6.0.0') {
     BEPINEX_VERSION = `${BEPINEX_VERSION}-be.${BEP_BE_VER}+${BEP_BE_COMMIT}`;
 }
@@ -90,8 +90,14 @@ if (BEPINEX_BUILD === 'unityil2cpp') {
 const BEPCFGMAN_ID = `${GAME_ID}-bepcfgman`;
 const BEPCFGMAN_NAME = "BepInEx Configuration Manager";
 const BEPCFGMAN_PATH = 'Bepinex';
-const BEPCFGMAN_URL = `https://github.com/sinai-dev/BepInExConfigManager/releases/latest/download/BepInExConfigManager.${BEPINEX_STRING}.zip`;
-const BEPCFGMAN_FILE = `bepinexconfigmanager.${BEPINEX_STRING}.dll`; //lowercased
+const BEPCFGMAN_FILE = `configurationmanager.dll`; //lowercased
+let BEPCFGMAN_ARCHIVE_NAME = `BepInEx.ConfigurationManager_BepInEx5_v`;
+let BEPCFGMAN_URL= `https://github.com/BepInEx/BepInEx.ConfigurationManager/releases/download/v${BEPCFGMAN_VER}/BepInEx.ConfigurationManager_BepInEx5_v${BEPCFGMAN_VER}.zip`;
+const BEPCFGMAN_URL_ERR = `https://github.com/BepInEx/BepInEx.ConfigurationManager/releases`;
+if (BEPINEX_BUILD === 'unityil2cpp') {
+  BEPCFGMAN_ARCHIVE_NAME = `BepInEx.ConfigurationManager_IL2CPP_v`;
+  BEPCFGMAN_URL = `https://github.com/BepInEx/BepInEx.ConfigurationManager/releases/download/v${BEPCFGMAN_VER}/BepInEx.ConfigurationManager_IL2CPP_v${BEPCFGMAN_VER}.zip`;
+}
 
 const BEPMOD_ID = `${GAME_ID}-bepmods`;
 const BEPMOD_NAME = "BepInEx Mod";
@@ -718,8 +724,8 @@ function applyGame(context, gameSpec) {
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download BepInExConfigManager', async () => {
-    await downloadBepCfgMan(context.api, spec);
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download BepInExConfigManager', () => {
+    downloadBepCfgMan(context.api, spec);
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
@@ -866,6 +872,7 @@ async function downloadBepCfgMan(api, gameSpec) {
       util.batchDispatch(api.store, batched); // Will dispatch both actions
     } catch (err) {
       api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
+      util.open(BEPCFGMAN_URL_ERR).catch(() => null);
     } finally {
       api.dismissNotification(NOTIF_ID);
     }

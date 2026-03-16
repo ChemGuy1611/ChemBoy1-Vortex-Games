@@ -74,7 +74,8 @@ const BEPINEX_ARCH = 'x64'; // 'x64' or 'x86'
 const BEPINEX_BUILD = 'mono'; // 'il2cpp' or 'mono' - IL2CPP will use bleeding edge builds
 let BEPINEX_VERSION = '5.4.23.5'; //force BepInEx version ('5.4.23.4' or '6.0.0')
 const BEP_BE_VER = '755'; //set BepInEx build for BE IL2CPP URLs
-const BEP_BE_COMMIT = 'dd0655f'; //git commit number for BE IL2CPP builds
+const BEP_BE_COMMIT = '3fab71a'; //git commit number for BE IL2CPP builds
+const BEPCFGMAN_VER = '18.4.1'; //set BepInExConfigManager version for direct URLs
 if (BEPINEX_VERSION == '6.0.0') {
     BEPINEX_VERSION = `${BEPINEX_VERSION}-be.${BEP_BE_VER}+${BEP_BE_COMMIT}`;
 }
@@ -105,8 +106,14 @@ if (BEPINEX_BUILD === 'il2cpp') {
 const BEPCFGMAN_ID = `${GAME_ID}-bepcfgman`;
 const BEPCFGMAN_NAME = "BepInEx Configuration Manager";
 const BEPCFGMAN_PATH = 'Bepinex';
-const BEPCFGMAN_URL = `https://github.com/sinai-dev/BepInExConfigManager/releases/latest/download/BepInExConfigManager.${BEPINEX_STRING}.zip`;
-const BEPCFGMAN_FILE = `bepinexconfigmanager.${BEPINEX_STRING}.dll`; //lowercased
+const BEPCFGMAN_FILE = `configurationmanager.dll`; //lowercased
+let BEPCFGMAN_ARCHIVE_NAME = `BepInEx.ConfigurationManager_BepInEx5_v`;
+let BEPCFGMAN_URL= `https://github.com/BepInEx/BepInEx.ConfigurationManager/releases/download/v${BEPCFGMAN_VER}/BepInEx.ConfigurationManager_BepInEx5_v${BEPCFGMAN_VER}.zip`;
+const BEPCFGMAN_URL_ERR = `https://github.com/BepInEx/BepInEx.ConfigurationManager/releases`;
+if (BEPINEX_BUILD === 'il2cpp') {
+  BEPCFGMAN_ARCHIVE_NAME = `BepInEx.ConfigurationManager_IL2CPP_v`;
+  BEPCFGMAN_URL = `https://github.com/BepInEx/BepInEx.ConfigurationManager/releases/download/v${BEPCFGMAN_VER}/BepInEx.ConfigurationManager_IL2CPP_v${BEPCFGMAN_VER}.zip`;
+}
 
 const BEPMOD_ID = `${GAME_ID}-bepmods`;
 const BEPMOD_NAME = "BepInEx Mod";
@@ -141,11 +148,8 @@ const ASSETS_EXTS = ['.assets', '.resource', '.ress'];
 
 const MOD_PATH_DEFAULT = ".";
 let REQ_FILE = EXEC;
-if (multiExe && (BEPINEX_BUILD === 'il2cpp')) {
-  REQ_FILE = ASSEMBLY_FILES[0];
-}
-if (multiExe && (BEPINEX_BUILD === 'mono')) {
-  REQ_FILE = ''; //find something that works in this case
+if (multiExe) {
+  REQ_FILE = path.join(ASSEMBLY_PATH, ASSEMBLY_FILES[0]);
 }
 const PARAMETERS_STRING = '';
 const PARAMETERS = [PARAMETERS_STRING];
@@ -887,17 +891,17 @@ function applyGame(context, gameSpec) {
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   }); //*/
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open BepInEx.cfg', () => {
-    GAME_PATH = getDiscoveryPath(context.api);
-    const openPath = path.join(GAME_PATH, 'BepinEx', 'config', 'BepInEx.cfg');
-    util.opn(openPath).catch(() => null);
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download BepInExConfigManager', () => {
+    downloadBepCfgMan(context.api, spec);
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download BepInExConfigManager', async () => {
-    await downloadBepCfgMan(context.api, spec);
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open BepInEx.cfg', () => {
+    GAME_PATH = getDiscoveryPath(context.api);
+    const openPath = path.join(GAME_PATH, 'BepinEx', 'config', 'BepInEx.cfg');
+    util.opn(openPath).catch(() => null);
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
@@ -1016,6 +1020,8 @@ async function downloadBepCfgMan(api, gameSpec) {
     const MOD_TYPE = BEPCFGMAN_ID;
     const NOTIF_ID = `${MOD_TYPE}-installing`;
     const GAME_DOMAIN = gameSpec.game.id;
+    const URL = BEPCFGMAN_URL;
+    const URL_ERR = BEPCFGMAN_URL_ERR;
     api.sendNotification({ //notification indicating install process
       id: NOTIF_ID,
       message: `Installing ${MOD_NAME}`,
@@ -1024,7 +1030,6 @@ async function downloadBepCfgMan(api, gameSpec) {
       allowSuppress: false,
     });
     try {
-      const URL = BEPCFGMAN_URL;
       const dlInfo = { //Download the mod
         game: GAME_DOMAIN,
         name: MOD_NAME,
@@ -1045,6 +1050,7 @@ async function downloadBepCfgMan(api, gameSpec) {
       util.batchDispatch(api.store, batched); // Will dispatch both actions
     } catch (err) {
       api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
+      util.opn(URL_ERR).catch(() => null);
     } finally {
       api.dismissNotification(NOTIF_ID);
     }

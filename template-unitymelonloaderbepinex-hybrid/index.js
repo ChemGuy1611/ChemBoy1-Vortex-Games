@@ -258,7 +258,7 @@ const MELONPREFMAN_NAME = "MelonPreferencesManager";
 const MELONPREFMAN_PATH = MELON_MODS_PATH;
 const MELONPREFMAN_URL = `https://github.com/Bluscream/MelonPreferencesManager/releases/latest/download/MelonPrefManager.${MELON_STRING}.dll`;
 const MELONPREFMAN_URL_ERR = `https://github.com/Bluscream/MelonPreferencesManager/releases`;
-const MELONPREFMAN_FILE = `melonprefmanager.${BEPINEX_BUILD}.dll`; //lowercased
+const MELONPREFMAN_FILE = `melonprefmanager.${BEPINEX_BUILD}.dll`; //lowercased - naked dll on GitHub
 
 const BEP_CONFIG_FILE = 'BepInEx.cfg';
 const BEP_CONFIG_FILEPATH = path.join(BEPINEX_CONFIG_PATH, BEP_CONFIG_FILE);
@@ -2532,6 +2532,8 @@ async function downloadBepinex(api, gameSpec) {
     const MOD_TYPE = BEPINEX_ID;
     const NOTIF_ID = `${MOD_TYPE}-installing`;
     const GAME_DOMAIN = gameSpec.game.id;
+    const URL = BEPINEX_URL;
+    const URL_ERR = BEPINEX_URL_ERR;
     api.sendNotification({ //notification indicating install process
       id: NOTIF_ID,
       message: `Installing ${MOD_NAME}`,
@@ -2540,7 +2542,6 @@ async function downloadBepinex(api, gameSpec) {
       allowSuppress: false,
     });
     try {
-      const URL = BEPINEX_URL;
       const dlInfo = { //Download the mod
         game: GAME_DOMAIN,
         name: MOD_NAME,
@@ -2560,9 +2561,8 @@ async function downloadBepinex(api, gameSpec) {
       ];
       util.batchDispatch(api.store, batched); // Will dispatch both actions
     } catch (err) { //Show the user the download page if the download, install process fails
-      const errPage = BEPINEX_URL_ERR;
       api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err, { allowReport: false });
-      util.opn(errPage).catch(() => null);
+      util.opn(URL_ERR).catch(() => null);
     } finally {
       api.dismissNotification(NOTIF_ID);
     }
@@ -2643,7 +2643,7 @@ async function downloadBepinexManual(api, gameSpec) {
   const MOD_TYPE = BEPINEX_ID;
   const ARCHIVE_NAME = BEPINEX_ARCHIVE_NAME;
   const instructions = api.translate(`Click on Continue below to open the browser. - `
-    + `Navigate to the latest experimental version of ${MOD_NAME} on the GitHub releases page and `
+    + `Navigate to the latest version of "${BEPINEX_ARCHIVE_NAME}" on the next page and `
     + `click on the appropriate file to download and install the mod.`
   );
 
@@ -2714,6 +2714,11 @@ async function downloadMelon(api, gameSpec, check) {
     const MOD_TYPE = MELON_ID;
     const NOTIF_ID = `${MOD_TYPE}-installing`;
     const GAME_DOMAIN = gameSpec.game.id;
+    let URL = MELON_URL;
+    if (useMelonNightly) {
+      URL = MELON_URL_NIGHTLY;
+    }
+    const URL_ERR = MELON_URL_ERR;
     api.sendNotification({ //notification indicating install process
       id: NOTIF_ID,
       message: `Installing ${MOD_NAME}`,
@@ -2722,10 +2727,6 @@ async function downloadMelon(api, gameSpec, check) {
       allowSuppress: false,
     });
     try {
-      let URL = MELON_URL;
-      if (useMelonNightly) {
-        URL = MELON_URL_NIGHTLY;
-      }
       const dlInfo = { //Download the mod
         game: GAME_DOMAIN,
         name: MOD_NAME,
@@ -2745,9 +2746,8 @@ async function downloadMelon(api, gameSpec, check) {
       ];
       util.batchDispatch(api.store, batched); // Will dispatch both actions
     } catch (err) { //Show the user the download page if the download, install process fails
-      const errPage = MELON_URL_ERR;
       api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err, { allowReport: false });
-      util.opn(errPage).catch(() => null);
+      util.opn(URL_ERR).catch(() => null);
     } finally {
       api.dismissNotification(NOTIF_ID);
     }

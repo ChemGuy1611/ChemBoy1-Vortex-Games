@@ -1770,7 +1770,7 @@ async function downloadBepinexManual(api, gameSpec) {
   const MOD_TYPE = BEPINEX_ID;
   const ARCHIVE_NAME = BEPINEX_ARCHIVE_NAME;
   const instructions = api.translate(`Click on Continue below to open the browser. - `
-    + `Navigate to the latest experimental version of ${MOD_NAME} on the GitHub releases page and `
+    + `Navigate to the latest version of "${BEPINEX_ARCHIVE_NAME}" on the next page and `
     + `click on the appropriate file to download and install the mod.`
   );
 
