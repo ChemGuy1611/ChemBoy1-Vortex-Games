@@ -1717,7 +1717,7 @@ function main(context) {
       gameArtURL: path.join(__dirname, spec.game.logo),
       preSort: (items, direction) => preSort(context.api, items, direction),
       filter: mods => mods.filter(mod => mod.type === UE5_SORTABLE_ID),
-      displayCheckboxes: true,
+      displayCheckboxes: false,
       callback: (loadOrder) => {
         if (previousLO === undefined) previousLO = loadOrder;
         if (loadOrder === previousLO) return;

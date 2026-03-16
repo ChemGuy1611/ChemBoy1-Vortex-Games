@@ -593,7 +593,7 @@ function main(context) {
       gameArtURL: path.join(__dirname, spec.game.logo),
       preSort: (items, direction) => preSort(context.api, items, direction),
       filter: mods => mods.filter(mod => mod.type === 'ue4-sortable-modtype'),
-      displayCheckboxes: true,
+      displayCheckboxes: false,
       callback: (loadOrder) => {
         if (previousLO === undefined) previousLO = loadOrder;
         if (loadOrder === previousLO) return;

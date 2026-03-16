@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.5.2] - 2026-03-16
+
+- Fixed: Removed checkboxes from Load Order as they are not functional
+
 ## [0.5.1] - 2026-02-03
 
 - Fixed: path strings
