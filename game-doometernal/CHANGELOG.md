@@ -4,6 +4,11 @@
 
 - Config and save modtypes, installers, and open buttons.
 
+## [0.3.3] - 2026-03-16
+
+- Updated: EternalModInjector download link for game version 6.66 Rev3 I
+- Added: Notification for Xbox users linking to manual file dump instructions
+
 ## [0.3.2] - 2025-12-09
 
 - Fixed required files and executable since the launcher file was moved.

@@ -2,8 +2,8 @@
 Name: DOOM Eternal Vortex Extension
 Structure: 3rd party mod loader
 Author: ChemBoy1
-Version: 0.3.2
-Date: 2025-12-09
+Version: 0.3.3
+Date: 2026-03-16
 ////////////////////////////////////////////////*/
 /*
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣀⣀⣠⣤⣤⣤⡴⣦⡴⣖⠶⣴⠶⡶⣖⡶⣶⢶⣲⡾⠿⢿⡷⣾⢿⣷⣦⢾⣷⣾⣶⣤⣀⣰⣤⣀⡀⠀⠀⢀⣴⣿⡿⡿⣿⣿⣦⣄⠀⠀⣠⣴⣿⡿⢿⡿⣷⣦⡄⠀⠀⢀⣀⣤⣦⣀⣤⣶⣶⣷⣦⣴⡿⢿⡷⣿⠿⡿⣿⣷⢶⣦⢴⡲⣦⢶⡶⢶⡲⣖⡶⣦⣤⣤⣤⣤⣤⣤⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
@@ -52,7 +52,8 @@ const EXEC = path.join('launcher', "idTechLauncher.exe");
 const EXEC_ALT = "DOOMEternalx64vk.exe";
 const EXEC_XBOX = "gamelaunchhelper.exe";
 
-const INJ_DL_ID = "1524087"; //update this file id when new version released on gamebanana
+const INJ_DL_ID = "1624186"; //6.66 Rev 3 I - update this file id when new version released on gamebanana
+const INJ_INSTR_URL = `https://gamebanana.com/posts/10737067`;
 
 let GAME_PATH = '';
 let STAGING_FOLDER = '';
@@ -123,7 +124,7 @@ const spec = {
       "priority": "high",
       "targetPath": "{gamePath}"
     },
-    {
+    { //manual assignment only
       "id": SANDBOX_ID,
       "name": SANDBOX_NAME,
       "priority": "high",
@@ -499,7 +500,7 @@ async function installZipContent(files, destinationPath) {
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
-//Notify User to run ATK after deployment
+//Notify User to run EternalModInjector after deployment
 function deployNotify(api) {
   const NOTIF_ID = `${GAME_ID}-deploy-notification`;
   const MOD_NAME = INJECTOR_NAME;
@@ -594,12 +595,53 @@ async function resolveGameVersion(gamePath) {
   }
 } //*/
 
+//Notify Xbox users they need to dump game files
+function xboxNotify(api) {
+  const NOTIF_ID = `${GAME_ID}-xbox-notification`;
+  const MESSAGE = `Manual Setup Required for Xbox Version`;
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'warning',
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: 'More',
+        action: (dismiss) => {
+          api.showDialog('question', MESSAGE, {
+            text: `Vortex does not support Xbox version of DOOM Eternal. You must manually dump the game files according to the instructions below.\n`
+                + `This extension has already installed the ModInjector for you. You only need to dump the files.\n`
+          }, [
+            {
+              label: 'Open Instructions', action: () => {
+                util.opn(INJ_INSTR_URL).catch(() => null);
+                dismiss();
+              }
+            },
+            { label: 'Continue', action: () => dismiss() },
+            {
+              label: 'Never Show Again', action: () => {
+                api.suppressNotification(NOTIF_ID);
+                dismiss();
+              }
+            },
+          ]);
+        },
+      },
+    ],
+  });
+}
+
 //Setup function
 async function setup(discovery, api, gameSpec) {
   const state = api.getState();
   GAME_PATH = discovery.path;
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
+  GAME_VERSION = await setGameVersion(GAME_PATH);
+  if (GAME_VERSION === 'xbox') {
+    xboxNotify(api);
+  }
   await downloadEternalModInjector(api, gameSpec);
   await fs.ensureDirWritableAsync(path.join(discovery.path, "doomSandBox"));
   return fs.ensureDirWritableAsync(path.join(discovery.path, gameSpec.game.modPath));
