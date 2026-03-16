@@ -24,7 +24,7 @@ const STEAMAPP_ID_DEMO = null;
 const EPICAPP_ID = null;
 const GOGAPP_ID = "1308320804";
 const XBOXAPP_ID = "TeamCherry.15373CD61C66B";
-const XBOXEXECNAME = "Hollow.Knight";
+const XBOXEXECNAME = "Game";
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, GOGAPP_ID, XBOXAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 const GAME_NAME = "Hollow Knight"
 const GAME_NAME_SHORT = "Hollow Knight"
@@ -113,7 +113,7 @@ const spec = {
     "id": GAME_ID,
     "name": GAME_NAME,
     "shortName": GAME_NAME_SHORT,
-    "executable": EXEC,
+    //"executable": EXEC,
     //"parameters": PARAMETERS,
     "logo": `${GAME_ID}.jpg`,
     "mergeMods": true,
@@ -172,6 +172,19 @@ const tools = [
     logo: `exec.png`,
     executable: () => EXEC,
     requiredFiles: [EXEC],
+    detach: true,
+    relative: true,
+    exclusive: true,
+    shell: true,
+    //defaultPrimary: true,
+    parameters: []
+  }, //*/
+  {
+    id: `${GAME_ID}-customlaunch-alt`,
+    name: `Custom Launch`,
+    logo: `exec.png`,
+    executable: () => EXEC_GOG,
+    requiredFiles: [EXEC_GOG],
     detach: true,
     relative: true,
     exclusive: true,
