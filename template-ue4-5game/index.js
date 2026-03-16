@@ -1446,11 +1446,11 @@ async function downloadUe4ss(api, gameSpec) {
     })
     .catch(err => {
       if (err instanceof util.UserCanceled) {
-        api.showErrorNotification(`User cancelled download/install of ${MOD_NAME}. Please re-launch Vortex and try again.`, err, { allowReport: false });
+        api.showErrorNotification(`User cancelled download/install of ${MOD_NAME}. Please try again.`, err, { allowReport: false });
         //util.opn(URL).catch(() => null);
         return Promise.resolve();
       } else if (err instanceof util.ProcessCanceled) {
-        api.showErrorNotification(`Failed to download/install ${MOD_NAME}. Please re-launch Vortex and try again or download manually from modDB at the opened paged and install the zip in Vortex.`, err, { allowReport: false });
+        api.showErrorNotification(`Failed to download/install ${MOD_NAME}. Please try again or download manually.`, err, { allowReport: false });
         util.opn(URL).catch(() => null);
         return Promise.reject(err);
       } else {
