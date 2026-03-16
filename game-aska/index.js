@@ -70,7 +70,7 @@ let SAVE_PATH = SAVE_PATH_DEFAULT;
 const SAVE_EXTS = [".json"];
 
 //info for modtypes, installers, and tools
-const BEPINEX_ID = `${GAME_ID}-bepinex`;
+const BEPINEX_ID = `${GAME_ID}-bepinex-new`;
 const BEPINEX_NAME = "BepInEx Injector";
 let BEPINEX_FILE = 'BepInEx.Core.dll';
 let BEP_INDICATOR_FILE = path.join('BepInEx', 'core', BEPINEX_FILE);
@@ -105,6 +105,10 @@ const MELON_FOLDER = 'MelonLoader';
 const MEL_STRING = 'MelonLoader';
 const MEL_PLUGIN_STRING = 'MelonPlugin';
 const MELON_INDICATOR_FILE = path.join('MelonLoader', 'net6', MELON_FILE);
+const MELON_DOTNET_VER = '6';
+const MELON_DOTNET_URL = `https://dotnet.microsoft.com/download/dotnet/${MELON_DOTNET_VER}.0`; //required for MelonLoader on IL2CPP games
+const DOTNET_REG_HIVE = 'HKEY_LOCAL_MACHINE';
+const DOTNET_REG_KEY = `SOFTWARE\\WOW6432Node\\dotnet\\Setup\\InstalledVersions\\x64\\sharedfx\\Microsoft.WindowsDesktop.App`;
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Game Folder";
@@ -1201,7 +1205,7 @@ async function chooseModLoader(api, gameSpec) {
     if (result === undefined) {
       return;
     }
-    if (result.action === 'BepInEx') {
+    if (result.action === 'BepInEx (Recommended)') {
       await downloadBepinex(api, gameSpec);
     } else if (result.action === 'MelonLoader') {
       await downloadMelon(api, gameSpec);
@@ -1226,14 +1230,14 @@ async function deconflictModLoaders(api, gameSpec) {
       { replace }
     ),
   }, [
-    { label: t('BepInEx') },
+    { label: t('BepInEx (Recommended)') },
     { label: t('MelonLoader') },
   ])
   .then(async (result) => {
     if (result === undefined) {
       return;
     }
-    if (result.action === 'BepInEx') {
+    if (result.action === 'BepInEx (Recommended)') {
       await removeMelon(api, gameSpec);
     } else if (result.action === 'MelonLoader') {
       await removeBepinex(api, gameSpec);
@@ -1497,7 +1501,7 @@ async function setup(discovery, api, gameSpec) {
   if (melonInstalled && allowMelPrefMan) {
     downloadMelonPrefManNotify(api, gameSpec); //notification to download MelonPreferencesManager
   } //*/
-  if (isMelonInstalled(api, gameSpec) && BEPINEX_BUILD === 'il2cpp') {
+  if (isMelonInstalled(api, gameSpec)) {
     checkDotNetMelon(api); //check for .NET 6 installation
   } //*/
 }
@@ -1664,8 +1668,8 @@ function main(context) {
       if (melonInstalled && allowMelPrefMan) {
         downloadMelonPrefMan(context.api, spec); //download MelonPreferencesManager
       } //*/
-      if (isMelonInstalled(api, spec) && BEPINEX_BUILD === 'il2cpp') {
-        checkDotNetMelon(api); //check for .NET 6 installation
+      if (isMelonInstalled(context.api, spec)) {
+        checkDotNetMelon(context.api); //check for .NET 6 installation
       } //*/
       return Promise.resolve();
     });

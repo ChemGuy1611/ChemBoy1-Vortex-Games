@@ -2,8 +2,8 @@
 Name: Megabonk Vortex Extension
 Structure: Unity BepinEx/MelonLoader Hybrid (IL2CPP & x64)
 Author: ChemBoy1
-Version: 0.1.1
-Date: 2025-11-20
+Version: 0.1.2
+Date: 2026-03-15
 //////////////////////////////////////////*/
 
 //Import libraries
@@ -11,6 +11,7 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 const fsExtra = require('fs-extra');
+const winapi = require('winapi-bindings');
 
 const USER_HOME = util.getVortexPath("home");
 //const DOCUMENTS = util.getVortexPath("documents");
@@ -43,13 +44,15 @@ let melonInstalled = false;
 //info for modtypes, installers, and tools
 const BEPINEX_ID = `${GAME_ID}-bepinex`;
 const BEPINEX_NAME = "BepInEx Injector";
-const BEPINEX_URL = `https://builds.bepinex.dev/projects/bepinex_be/738/BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.738%2Baf0cba7.zip`;
+const BEP_BE_VER = '755'; //set BepInEx build for BE URLs
+const BEP_BE_COMMIT = '3fab71a'; //git commit number for BE builds
+const BEPINEX_URL = `https://builds.bepinex.dev/projects/bepinex_be/${BEP_BE_VER}/BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.${BEP_BE_VER}%2B${BEP_BE_COMMIT}.zip`;
 const BEPINEX_URL_ERR = `https://builds.bepinex.dev/projects/bepinex_be`;
-const BEPINEX_ZIP = 'BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.738+af0cba7.zip';
+const BEPINEX_ZIP = `BepInEx-Unity.IL2CPP-win-x64-6.0.0-be.${BEP_BE_VER}+${BEP_BE_COMMIT}.zip`;
 const BEPINEX_FILE = 'BepInEx.Core.dll';
 const BEPINEX_FOLDER = 'BepInEx';
 const BEP_STRING = 'BepInEx';
-const BEP_PATCHER_STRING = 'BaseUnityPlugin';
+const BEP_PATCHER_STRING = 'BepInEx.Preloader.Core.Patching';
 const BEP_INDICATOR_FILE = path.join('BepInEx', 'core', BEPINEX_FILE);
 
 const MELON_ID = `${GAME_ID}-melonloader`;
@@ -62,6 +65,10 @@ const MELON_FOLDER = 'MelonLoader';
 const MEL_STRING = 'MelonLoader';
 const MEL_PLUGIN_STRING = 'MelonPlugin';
 const MELON_INDICATOR_FILE = path.join('MelonLoader', 'net6', MELON_FILE);
+const MELON_DOTNET_VER = '6';
+const MELON_DOTNET_URL = `https://dotnet.microsoft.com/download/dotnet/${MELON_DOTNET_VER}.0`; //required for MelonLoader on IL2CPP games
+const DOTNET_REG_HIVE = 'HKEY_LOCAL_MACHINE';
+const DOTNET_REG_KEY = `SOFTWARE\\WOW6432Node\\dotnet\\Setup\\InstalledVersions\\x64\\sharedfx\\Microsoft.WindowsDesktop.App`;
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Game Folder";
@@ -788,8 +795,7 @@ async function installPlugin(api, gameSpec, files, workingDir) {
         const content = await fs.readFileAsync(path.join(workingDir, file), 'utf8');
         if (content.includes(BEP_STRING)) {
             isBepinex = true;
-            isBepinexPatcher = false; //temporary, find reliable string to id patchers
-            //isBepinexPatcher = !content.includes(BEP_PATCHER_STRING) && !files.find(file => path.extname(file).toLowerCase() = BEPINEX_PLUGINS_FOLDER);
+            isBepinexPatcher = content.includes(BEP_PATCHER_STRING);
         } else if (content.includes(MEL_STRING)) {
           isMelon = true;
           isMelonPlugin = content.includes(MEL_PLUGIN_STRING);
@@ -1043,6 +1049,77 @@ async function modFoldersEnsureWritable(gamePath, relPaths) {
   }
 }
 
+function dotNetMelonNotify(api) {
+  const NOTIF_ID = `${GAME_ID}-dotnetmelon-notify`;
+  const MESSAGE = `.NET ${MELON_DOTNET_VER} Required`;
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'warning',
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: `Download .NET ${MELON_DOTNET_VER}`,
+        action: (dismiss) => {
+          util.opn(MELON_DOTNET_URL).catch(() => null);
+          dismiss();
+        }
+      },
+      {
+        title: 'More',
+        action: (dismiss) => {
+          api.showDialog('question', MESSAGE, {
+            text: `\n`
+                + `MelonLoader requires .NET ${MELON_DOTNET_VER} to be installed on your system for IL2CPP build Unity games, like this game.\n`
+                + `\n`
+                + `Please install .NET ${MELON_DOTNET_VER} so that MelonLoader can function. Your game may crash at launch if the correct version of .NET is not installed.\n`
+                + `\n`
+          }, [
+            { label: `Download .NET ${MELON_DOTNET_VER}`, action: () => {
+              util.opn(MELON_DOTNET_URL).catch(() => null);
+              dismiss();
+            }},
+            { label: 'Not Now', action: () => dismiss() },
+            {
+              label: 'Never Show Again', action: () => {
+                api.suppressNotification(NOTIF_ID);
+                dismiss();
+              }
+            },
+          ]);
+        },
+      },
+    ],
+  });
+}
+
+async function checkDotNetMelon(api) {
+  const version = MELON_DOTNET_VER;
+  let values = undefined;
+  try {
+    const buffer = winapi.WithRegOpen( //array of objects with values.type and values.key
+      DOTNET_REG_HIVE,
+      DOTNET_REG_KEY,
+      (hkey) => { //have to enum in the callback - https://github.com/Nexus-Mods/node-winapi-bindings/blob/master/index.d.ts
+        values = winapi.RegEnumValues(hkey); //array of objects with values.type and values.key
+      }
+    );
+    if (!values) {
+      dotNetMelonNotify(api); //assume not installed if key not found
+    }
+    values = values.map(value => value.key); //map array to only keys
+    const found = values.some(value => value.startsWith(version)); //find entry starting with correct version number
+    if (found) {
+      //log('warn', `Found .NET ${version} installation`);
+    } else {
+      dotNetMelonNotify(api); //assume not installed if key not found
+    }
+  } catch (err) { //*/
+    log('warn', `Failed to read .NET registry key: ${err}`);
+    dotNetMelonNotify(api)
+  }
+}
+
 //Setup function
 async function setup(discovery, api, gameSpec) {
   //SYNC CODE ////////////////////////////////////
@@ -1056,10 +1133,13 @@ async function setup(discovery, api, gameSpec) {
   // ASYNC CODE ///////////////////////////////////
   await modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
   if (!bepinexInstalled && !melonInstalled) {
-    chooseModLoader(api, gameSpec); //dialog to choose mod loader
+    await chooseModLoader(api, gameSpec); //dialog to choose mod loader
   }
   if (bepinexInstalled && melonInstalled) {
-    deconflictModLoaders(api, gameSpec); //deconflict if both mod loaders are installed
+    await deconflictModLoaders(api, gameSpec); //deconflict if both mod loaders are installed
+  } //*/
+  if (isMelonInstalled(api, gameSpec)) {
+    checkDotNetMelon(api); //check for .NET 6 installation
   } //*/
 }
 
@@ -1147,16 +1227,19 @@ function applyGame(context, gameSpec) {
 function main(context) {
   applyGame(context, spec);
   context.once(() => { // put code here that should be run (once) when Vortex starts up
-    context.api.onAsync('did-deploy', (profileId, deployment) => { 
+    context.api.onAsync('did-deploy', async (profileId, deployment) => { 
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;
       bepinexInstalled = isBepinexInstalled(context.api, spec);
       melonInstalled = isMelonInstalled(context.api, spec);
       if (!bepinexInstalled && !melonInstalled) {
-        chooseModLoader(context.api, spec); //dialog to choose mod loader
+        await chooseModLoader(context.api, spec); //dialog to choose mod loader
       }
       if (bepinexInstalled && melonInstalled) {
-        deconflictModLoaders(context.api, spec); //deconflict if both mod loaders are installed
+        await deconflictModLoaders(context.api, spec); //deconflict if both mod loaders are installed
+      } //*/
+      if (isMelonInstalled(context.api, spec)) {
+        checkDotNetMelon(context.api); //check for .NET 6 installation
       } //*/
       return Promise.resolve();
     });
