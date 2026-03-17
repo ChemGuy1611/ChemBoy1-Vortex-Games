@@ -17,6 +17,7 @@ const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 //1792 is known to work, ???2048 fails to apply (no crash)??? up to 3096 does not crash, but might cause blurry textures???
 const HEAP_SIZE = 2048;
+const HEAP_PARAMETER = `--lua-heap-mb-size ${HEAP_SIZE}`;
 const APPDATA = util.getVortexPath('appData');
 const CONFIG_PATH = path.join(APPDATA, "Fatshark", "Darktide");
 const CONFIG_FILE = path.join(CONFIG_PATH, "user_settings.config");
@@ -609,7 +610,7 @@ function main(context) {
     requiresCleanup: true,
     requiresLauncher: requiresLauncher,
     executable: () => "launcher/Launcher.exe",
-    parameters: [`--lua-heap-mb-size ${HEAP_SIZE}`],
+    //parameters: [`--lua-heap-mb-size ${HEAP_SIZE}`],
     requiredFiles: ["launcher/Launcher.exe", "binaries/Darktide.exe"],
     setup: async (discovery) => await setup(discovery, context.api),
     getGameVersion: resolveGameVersion,
@@ -696,6 +697,15 @@ function main(context) {
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open win32_settings.ini', () => {
     GAME_PATH = getDiscoveryPath(context.api);
     const openPath = path.join(GAME_PATH, "bundle", "application_settings", 'win32_settings.ini');
+    util.opn(openPath).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Launcher.exe.config', () => {
+    GAME_PATH = getDiscoveryPath(context.api);
+    const openPath = path.join(GAME_PATH, "launcher", "Launcher.exe.config");
     util.opn(openPath).catch(() => null);
   }, () => {
     const state = context.api.getState();
