@@ -5,12 +5,15 @@ const template = require("string-template");
 const GAME_ID = "warhammer40kdarktide";
 const STEAMAPP_ID = "1361210";
 const MS_APPID = "FatsharkAB.Warhammer40000DarktideNew";
+const XBOXEXECNAME = "launcher.launcher";
 const MOD_FILE_EXT = ".mod";
 const BAT_FILE_EXT = ".bat";
 let GAME_PATH = '';
+let GAME_VERSION = '';
 let mod_update_all_profile = false; // for mod update to keep them in the load order and not uncheck them
 let updatemodid = undefined;
 let updating_mod = false; // used to see if it's a mod update or not
+const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 //1792 is known to work, ???2048 fails to apply (no crash)??? up to 3096 does not crash, but might cause blurry textures???
 const HEAP_SIZE = 2048;
@@ -24,6 +27,7 @@ const DML_FILE = "toggle_darktide_mods.bat";
 const BINARIES_ID = 'darktide-binaries';
 const BINARIES_NAME = 'Binaries';
 const BINARIES_PATH = "binaries";
+const EXEC = path.join(BINARIES_PATH, 'Darktide.exe');
 const ROOT_ID = 'darktide-root';
 const ROOT_FOLDERS = ['mods', 'binaries', 'bundle', 'launcher'];
 let DOWNLOAD_FOLDER = '';
@@ -75,6 +79,42 @@ const getDiscoveryPath = (api) => {
   const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});
   return discovery === null || discovery === void 0 ? void 0 : discovery.path;
 };
+
+function isDir(folder, file) {
+  const stats = fs.statSync(path.join(folder, file));
+  return stats.isDirectory();
+}
+
+function statCheckSync(gamePath, file) {
+  try {
+    fs.statSync(path.join(gamePath, file));
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}
+async function statCheckAsync(gamePath, file) {
+  try {
+    await fs.statAsync(path.join(gamePath, file));
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}
+
+//Get correct game version
+async function setGameVersion(gamePath) {
+  const CHECK = await statCheckAsync(gamePath, APPMANIFEST_FILE);
+  if (CHECK) {
+    GAME_VERSION = 'xbox';
+    return GAME_VERSION;
+  } else {
+    GAME_VERSION = 'steam';
+    return GAME_VERSION;
+  }
+}
 
 async function purge(api) {
   return new Promise((resolve, reject) => api.events.emit('purge-mods', true, (err) => err ? reject(err) : resolve()));
@@ -516,6 +556,33 @@ function checkForDML(api, toggle_mods_path) {
   });
 }
 
+//* Resolve game version dynamically for different game versions
+async function resolveGameVersion(gamePath) {
+  GAME_VERSION = await setGameVersion(gamePath);
+  let version = '0.0.0';
+  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
+    try {
+      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
+      const parsed = await parseStringPromise(appManifest);
+      version = parsed?.Package?.Identity?.[0]?.$?.Version;
+      return Promise.resolve(version);
+    } catch (err) {
+      log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+  else { // use exe
+    try {
+      const exeVersion = require('exe-version');
+      version = exeVersion.getFileVersion(path.join(gamePath, EXEC));
+      return Promise.resolve(version); 
+    } catch (err) {
+      log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+} //*/
+
 //setup function
 async function setup(discovery, api) {
   const state = api.getState();
@@ -545,6 +612,7 @@ function main(context) {
     parameters: [`--lua-heap-mb-size ${HEAP_SIZE}`],
     requiredFiles: ["launcher/Launcher.exe", "binaries/Darktide.exe"],
     setup: async (discovery) => await setup(discovery, context.api),
+    getGameVersion: resolveGameVersion,
     environment: {
       SteamAPPId: STEAMAPP_ID,
     },
