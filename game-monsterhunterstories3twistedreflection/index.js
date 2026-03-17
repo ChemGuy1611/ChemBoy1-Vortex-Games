@@ -1,9 +1,9 @@
 /*////////////////////////////////////////////
-Name: XXX Vortex Extension
+Name: Monster Hunter Stories 3: Twisted Reflection Vortex Extension
 Structure: Fluffy + REFramework (RE Engine)
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2026-XX-XX
+Date: 2026-03-17
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -12,29 +12,26 @@ const path = require('path');
 const template = require('string-template');
 const winapi = require('winapi-bindings');
 
-// -- START EDIT ZONE -- ///////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 //Specify all information about the game
-const GAME_ID = "XXX";
-const STEAMAPP_ID = "XXX";
-const STEAMAPP_ID_DEMO = "XXX";
+const GAME_ID = "monsterhunterstories3twistedreflection";
+const STEAMAPP_ID = "2852190";
+const STEAMAPP_ID_DEMO = "3470630";
 const EPICAPP_ID = null;
 const GOGAPP_ID = null;
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
-const EXEC = "XXX.exe";
-const EXEC_DEMO = "XXXdemo.exe";
-const GAME_NAME = "XXX";
-const GAME_NAME_SHORT = "XXX";
-const PCGAMINGWIKI_URL = "XXX";
-const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, STEAMAPP_ID_DEMO]; // UPDATE THIS WITH ALL VALID IDs
+const EXEC = "MONSTER_HUNTER_STORIES_3_TWISTED_REFLECTION.exe";
+const EXEC_DEMO = "MONSTER_HUNTER_STORIES_3_TWISTED_REFLECTION_TRIAL.exe";
+const GAME_NAME = "Monster Hunter Stories 3: Twisted Reflection";
+const GAME_NAME_SHORT = "MH Stories 3: TR";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Monster_Hunter_Stories_3:_Twisted_Reflection";
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1740"; //Nexus link to this extension. Used for links
 
-const FLUFFY_FOLDER = "XXX";
-const FLUFFY_FOLDER_DEMO = "XXX_Demo";
+const FLUFFY_FOLDER = "Monster Hunter Stories 3";
+const FLUFFY_FOLDER_DEMO = "Monster Hunter Stories 3 Demo";
 const ROOT_FILES = ['nvngx_dlss.dll', "dstoragecore.dll", "dstorage.dll", "amd_fidelityfx_dx12.dll", "amd_ags_x64.dll"];
 const ROOT_EXTS = [".exe"];
-const REF_PAGE_NO = 0;
-const REF_FILE_NO = 0;
+const REF_PAGE_NO = 12;
+const REF_FILE_NO = 28;
 const REF_DOMAIN = GAME_ID;
 const CONFIG_PATH = '.';
 const CONFIG_FILE = 'config.ini';
@@ -43,10 +40,7 @@ const CONFIG_FILE = 'config.ini';
 const reZip = true; //NOT WORKING YET - KEEP AS TRUE FOR NOW - set to true to re-zip Fluffy Mods (possibly not necessary for FLUFFY v3.069+)
 //could index on modinfo.ini to avoid extra top level folder. should work?
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
-const multiExe = false; //set to true if there are multiple executables (and multiple FLUFFY_FOLDERs) (typically for Demo)
-
-// -- END EDIT ZONE -- /////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
+const multiExe = true; //set to true if there are multiple executables (and multiple FLUFFY_FOLDERs) (typically for Demo)
 
 //global variables to set later
 let GAME_PATH = ''; //game installation path
@@ -136,9 +130,6 @@ async function getSavePath() {
   return SAVE_PATH;
 }
 
-// -- START EDIT ZONE -- ///////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
-
 let REQ_FILE = EXEC;
 if (multiExe) {
   REQ_FILE = 're_chunk_000.pak';
@@ -149,9 +140,6 @@ const PARAMETERS = [PARAMETERS_STRING];
 const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 let MODTYPE_FOLDERS = [PRESET_PATH];
-
-// -- END EDIT ZONE -- /////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //Filled in from data above
 const spec = {
