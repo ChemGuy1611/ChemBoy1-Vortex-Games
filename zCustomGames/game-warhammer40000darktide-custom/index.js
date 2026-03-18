@@ -15,8 +15,8 @@ let updatemodid = undefined;
 let updating_mod = false; // used to see if it's a mod update or not
 const APPMANIFEST_FILE = 'appxmanifest.xml';
 
-//1792 is known to work, ???2048 fails to apply (no crash)??? up to 3096 does not crash, but might cause blurry textures???
-const HEAP_SIZE = 2048;
+//1792 is known to work, 2048 crashes on launch.
+const HEAP_SIZE = 1792;
 const HEAP_PARAMETER = `--lua-heap-mb-size ${HEAP_SIZE}`;
 const APPDATA = util.getVortexPath('appData');
 const CONFIG_PATH = path.join(APPDATA, "Fatshark", "Darktide");
@@ -28,9 +28,11 @@ const DML_FILE = "toggle_darktide_mods.bat";
 const BINARIES_ID = 'darktide-binaries';
 const BINARIES_NAME = 'Binaries';
 const BINARIES_PATH = "binaries";
+const LAUNCHER_PATH = "launcher";
 const EXEC = path.join(BINARIES_PATH, 'Darktide.exe');
+const EXEC_LAUNCHER = path.join(LAUNCHER_PATH, 'Launcher.exe');
 const ROOT_ID = 'darktide-root';
-const ROOT_FOLDERS = ['mods', 'binaries', 'bundle', 'launcher'];
+const ROOT_FOLDERS = [MOD_FOLDER, BINARIES_PATH, 'bundle', LAUNCHER_PATH];
 let DOWNLOAD_FOLDER = '';
 let STAGING_FOLDER = '';
 
@@ -590,6 +592,7 @@ async function setup(discovery, api) {
   GAME_PATH = discovery.path;
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
+  toolbar(api);
   await fs.ensureDirWritableAsync(path.join(GAME_PATH,  MOD_FOLDER)); // Ensure the mods directory exists
   await fs.ensureDirWritableAsync(CONFIG_PATH);
   await fs.ensureFileAsync(path.join(GAME_PATH, MOD_FOLDER, LO_FILE)); // Ensure the mod load order file exists
@@ -609,9 +612,9 @@ function main(context) {
     directoryCleaning: "tag",
     requiresCleanup: true,
     requiresLauncher: requiresLauncher,
-    executable: () => "launcher/Launcher.exe",
+    executable: () => EXEC_LAUNCHER,
     //parameters: [`--lua-heap-mb-size ${HEAP_SIZE}`],
-    requiredFiles: ["launcher/Launcher.exe", "binaries/Darktide.exe"],
+    requiredFiles: [EXEC_LAUNCHER, EXEC],
     setup: async (discovery) => await setup(discovery, context.api),
     getGameVersion: resolveGameVersion,
     environment: {
@@ -727,22 +730,23 @@ function main(context) {
       mod_update_all_profile = false; //reset all-profile flag on deploy
       updating_mod = false; //reset updating flag on deploy
       updatemodid = undefined; //reset updated modId on deploy
+      /* DISABLED since a mod automates this - Patch exe on deploy
       GAME_PATH = getDiscoveryPath(api);
       if (is_darktide_profile_active(api) && GAME_PATH != null) {
-        /*try {
+        try {
           api.runExecutable(path.join(GAME_PATH, "tools", "dtkit-patch.exe"), ["--patch"], { shell: true, detached: true } )
-        } catch (e) {} //*/
-      }
+        } catch (e) {}
+      } //*/
     });
-    // Unpatch exe on purge
+    /* DISABLED since a mod automates this - Unpatch exe on purge
     context.api.events.on("will-purge", (profileId) => {
       GAME_PATH = getDiscoveryPath(api);
       if (is_darktide_profile_active(api) && GAME_PATH != null) {
-        /*try {
+        try {
           api.runExecutable(path.join(GAME_PATH, "tools", "dtkit-patch.exe"), ["--unpatch"], { shell: true, detached: true } )
-        } catch (e) {} //*/
-      }
-    });
+        } catch (e) {}
+      } 
+    }); //*/
     //detect mod update (to maintain LO position)
     context.api.events.on("mod-update", (gameId, modId, fileId) => {
       if (GAME_ID == gameId) {
@@ -764,14 +768,12 @@ function main(context) {
         updating_mod = false;
       }
     });
-    if (is_darktide_profile_active(api)) {
-      toolbar(api);
-    }
+    /* Notification to Enable Toolbar
     context.api.events.on("profile-did-change", () => {
       if (is_darktide_profile_active(api)) {
         toolbar(api);
       }
-    });
+    }); //*/
   });
 
   return true;
@@ -779,13 +781,7 @@ function main(context) {
 
 async function toolbar(api) {
   const state = api.getState();
-  if (
-    !util.getSafe(
-      state,
-      ["settings", "interface", "tools", "addToolsToTitleBar"],
-      false,
-    )
-  ) {
+  if (!util.getSafe(state, ["settings", "interface", "tools", "addToolsToTitleBar"], false)) {
     api.sendNotification({
       id: "Darktide-enable-toolbar",
       type: "warning",
@@ -802,8 +798,7 @@ async function toolbar(api) {
             api.sendNotification({
               id: "enabled toolbar",
               type: "success",
-              message:
-                "Activated the toolbar. At the top of your screen you now can patch the game",
+              message: "Activated the toolbar. At the top of your screen you now can patch the game",
               supress: true,
             });
           },
