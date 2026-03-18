@@ -4,6 +4,8 @@ Structure: Far Cry Game (Mod Installer)
 Author: ChemBoy1
 Version: 0.1.0
 Date: 2026-XX-XX
+Notes:
+- 
 ///////////////////////////////////////////*/
 
 //Import libraries

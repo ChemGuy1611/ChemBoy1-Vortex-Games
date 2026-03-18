@@ -1919,11 +1919,11 @@ async function getModKitPath() {
   try {
     game = await util.GameStoreHelper.findByAppId(MODKITAPP_ID, 'epic');
   } catch (err) {
-    log('warn', `ModKit path not found`);
+    //log('warn', `ModKit path not found`);
     return undefined;
   }
   if (game === undefined) {
-    log('warn', `ModKit path not found`);
+    //log('warn', `ModKit path not found`);
     return undefined;
   }
   let instPath = game.gamePath;
