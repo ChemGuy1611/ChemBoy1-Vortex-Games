@@ -4,6 +4,10 @@
 
 - Config and save modtypes, installers, and open buttons.
 
+## [0.3.4] - 2026-03-19
+
+- Added: Button to download EternalModInjector - provides a means to update
+
 ## [0.3.3] - 2026-03-16
 
 - Updated: EternalModInjector download link for game version 6.66 Rev3 I

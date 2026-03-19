@@ -2,8 +2,8 @@
 Name: DOOM Eternal Vortex Extension
 Structure: 3rd party mod loader
 Author: ChemBoy1
-Version: 0.3.3
-Date: 2026-03-16
+Version: 0.3.4
+Date: 2026-03-19
 ////////////////////////////////////////////////*/
 /*
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣀⣀⣠⣤⣤⣤⡴⣦⡴⣖⠶⣴⠶⡶⣖⡶⣶⢶⣲⡾⠿⢿⡷⣾⢿⣷⣦⢾⣷⣾⣶⣤⣀⣰⣤⣀⡀⠀⠀⢀⣴⣿⡿⡿⣿⣿⣦⣄⠀⠀⣠⣴⣿⡿⢿⡿⣷⣦⡄⠀⠀⢀⣀⣤⣦⣀⣤⣶⣶⣷⣦⣴⡿⢿⡷⣿⠿⡿⣿⣷⢶⣦⢴⡲⣦⢶⡶⢶⡲⣖⡶⣦⣤⣤⣤⣤⣤⣤⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
@@ -52,7 +52,9 @@ const EXEC = path.join('launcher', "idTechLauncher.exe");
 const EXEC_ALT = "DOOMEternalx64vk.exe";
 const EXEC_XBOX = "gamelaunchhelper.exe";
 
-const INJ_DL_ID = "1624186"; //6.66 Rev 3 I - update this file id when new version released on gamebanana
+const INJ_REV = "6.66 Rev 3I";
+const INJ_DL_ID = "1624186"; //update this file id when new version released on gamebanana - https://gamebanana.com/tools/7475
+const INJ_URL = `https://gamebanana.com/tools/7475`;
 const INJ_INSTR_URL = `https://gamebanana.com/posts/10737067`;
 
 let GAME_PATH = '';
@@ -282,9 +284,9 @@ function isEternalModInjectorInstalled(api, spec) {
 }
 
 //Function to auto-download Mod Loader
-async function downloadEternalModInjector(api, gameSpec) {
+async function downloadEternalModInjector(api, gameSpec, check = true) {
   let modLoaderInstalled = isEternalModInjectorInstalled(api, gameSpec);
-  if (!modLoaderInstalled) {
+  if (!modLoaderInstalled || !check) {
     const NOTIF_ID = 'doometernal-eternalmodinjector-installing';
     api.sendNotification({ //notification indicating install process
       id: NOTIF_ID,
@@ -679,6 +681,13 @@ function applyGame(context, gameSpec) {
   context.registerInstaller('doometernal-zip-mod', 45, testZipContent, installZipContent);
 
   //register buttons to open folders
+  context.registerAction('mod-icons', 300, 'open-ext', {}, `Download EternalModInjector v${INJ_REV} (${INJ_DL_ID})`, () => {
+    downloadEternalModInjector(context.api, spec, false);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
     util.opn(CONFIG_PATH).catch(() => null);
   }, () => {

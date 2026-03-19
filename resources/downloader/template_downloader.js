@@ -10,14 +10,14 @@ const XXX_ARC_NAME = `XXX${VER}.zip`;
 const XXX_FILE = 'XXX.exe'; // <-- CASE SENSITIVE! Must match name exactly or downloader will download the file again.
 const AUTHOR = 'XXX'; // Author of the repo
 const REPO = 'XXX'; // Repository name on GitHub
-const XXX_URL_MAIN = `https://api.github.com/repos/${AUTHOR}/${REPO}`; //api url
+const XXX_URL_API = `https://api.github.com/repos/${AUTHOR}/${REPO}`; //api url
 const REQUIREMENTS = [
   {
     archiveFileName: XXX_ARC_NAME,
     modType: XXX_ID,
     assemblyFileName: XXX_FILE,
     userFacingName: XXX_NAME,
-    githubUrl: XXX_URL_MAIN, 
+    githubUrl: XXX_URL_API, 
     findMod: (api) => findModByFile(api, XXX_ID, XXX_FILE),
     findDownloadId: (api) => findDownloadIdByFile(api, XXX_ARC_NAME),
     fileArchivePattern: new RegExp(/^XXX(\d+\.\d+\.\d+)/, 'i'), //from ARC_NAME
@@ -38,6 +38,7 @@ async function resolveVersionByFile(api, requirement) {
         if (match !== null && match !== undefined && match[0]) {
             const checkFile = path.join(file.localPath, requirement.versionFile);
             version = exeVersion.getProductVersion(checkFile);
+            log('warn', `Resolved version ${version} from file ${file.localPath}`);
         }//
         if ((match === null || match === void 0 ? void 0 : match[0]) && semver.gt(version, prev)) {
             prev = version;
