@@ -1262,8 +1262,8 @@ function chooseFilesToInstall(api, files, fileExt) {
             `This can be because the author intended for you to chose one of several options. Please select which files to install below:`,
         checkboxes: files.map((pak) => {
             return {
-                id: path.basename(pak),
-                text: path.basename(pak),
+                id: pak,
+                text: pak,
                 value: false
             };
         })
@@ -1277,7 +1277,7 @@ function chooseFilesToInstall(api, files, fileExt) {
         else {
             const installAll = (result.action === 'Install All' || result.action === 'Install All_plural');
             const installPAKS = installAll ? files : Object.keys(result.input).filter(s => result.input[s])
-                .map(file => files.find(f => path.basename(f) === file));
+                .map(file => files.find(f => f === file));
             return installPAKS;
         }
     });
