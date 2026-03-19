@@ -2,8 +2,8 @@
 Name: Disco Elysium Vortex Extension
 Structure: Unity BepinEx
 Author: ChemBoy1
-Version: 0.1.2
-Date: 2026-03-16
+Version: 0.1.3
+Date: 2026-03-19
 //////////////////////////////////////////*/
 
 //Import libraries
@@ -12,7 +12,8 @@ const path = require('path');
 const template = require('string-template');
 const winapi = require('winapi-bindings');
 //const turbowalk = require('turbowalk');
-//const { parseStringPromise } = require('xml2js');
+const { parseStringPromise } = require('xml2js');
+const { get } = require('http');
 
 const USER_HOME = util.getVortexPath("home");
 const LOCALLOW = path.join(USER_HOME, 'AppData', 'LocalLow');
@@ -26,9 +27,9 @@ const STEAMAPP_ID = "632470";
 const STEAMAPP_ID_DEMO = null;
 const EPICAPP_ID = "7334aba246154b63857435cb9c7eecd5";
 const GOGAPP_ID = "1771589310";
-const XBOXAPP_ID = "";
-const XBOXEXECNAME = "";
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, GOGAPP_ID, EPICAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const XBOXAPP_ID = "ZAUMStudioDiscoElysiumUKL.DiscoElysium-TheFinalCut";
+const XBOXEXECNAME = "Game";
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, GOGAPP_ID, EPICAPP_ID, XBOXAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 const GAME_NAME = "Disco Elysium";
 const GAME_NAME_SHORT = "Disco Elysium";
 const EXEC = "disco.exe"; //steam
@@ -605,7 +606,7 @@ function installAssets(files) {
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
-/*
+//*
 async function resolveGameVersion(gamePath) {
   GAME_VERSION = await setGameVersion(gamePath);
   let version = '0.0.0';
@@ -620,9 +621,10 @@ async function resolveGameVersion(gamePath) {
       return Promise.resolve(version);
     }
   }
-  else { // use exe
+  else { // use exe - just returns Unity engine version for now
     try {
       const exeVersion = require('exe-version');
+      const EXEC = getExecutable(gamePath); //need to read to account for the Epic version
       version = exeVersion.getProductVersion(path.join(gamePath, EXEC));
       return Promise.resolve(version); 
     } catch (err) {
@@ -667,7 +669,7 @@ function applyGame(context, gameSpec) {
     queryModPath: makeGetModPath(context.api, gameSpec),
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
-    //getGameVersion: resolveGameVersion,
+    getGameVersion: resolveGameVersion,
     supportedTools: tools,
   };
   context.registerGame(game);

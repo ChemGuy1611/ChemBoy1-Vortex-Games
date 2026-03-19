@@ -4,6 +4,10 @@
 
 - None
 
+## [0.1.3] - 2026-03-19
+
+- Added: Xbox Game Pass version support
+
 ## [0.1.2] - 2026-03-16
 
 - Fixed: Bump BepInEx BE to version 755
