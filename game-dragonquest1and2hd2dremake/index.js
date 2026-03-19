@@ -2,8 +2,8 @@
 Name: DRAGON QUEST I & II HD-2D Remake Vortex Extension
 Structure: UE5 (static exe)
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2025-10-31
+Version: 0.2.0
+Date: 2026-03-19
 //////////////////////////////////////////////////*/
 
 //Import libraries
@@ -67,9 +67,9 @@ let GAME_VERSION = '';
 
 //Unreal Engine Game Data
 const UNREALDATA = {
-  modsPath: path.join(EPIC_CODE_NAME, 'Content', 'Paks', '~mods'),
+  modsPath: path.join(EPIC_CODE_NAME, 'Content', 'Paks'),
   fileExt: PAKMOD_EXTS,
-  loadOrder: true,
+  loadOrder: false,
 }
 const UE5_SORTABLE_ID = `${GAME_ID}-uesortablepak`; //this should not be changed to be maintain consistency with other UE5 games
 const UE5_SORTABLE_NAME = 'UE Sortable Pak Mod';
@@ -1288,8 +1288,8 @@ function UNREALEXTENSION(context) {
   const testUnrealGame = (gameId, withLoadOrder) => {
     const game = gameId === spec.game.id;
     const unrealModsPath = UNREALDATA.modsPath;
-    const loadOrder = UNREALDATA.loadOrder;
-    return (!!unrealModsPath && game && loadOrder === true);
+    //const loadOrder = UNREALDATA.loadOrder;
+    return (!!unrealModsPath && game);
   };
 
   const testForUnrealMod = (files, gameId) => {
@@ -1318,7 +1318,7 @@ function UNREALEXTENSION(context) {
 
   context.registerModType(UE5_SORTABLE_ID, 25, (gameId) => testUnrealGame(gameId, true), getUnrealModsPath, () => Promise.resolve(false), {
     name: UE5_SORTABLE_NAME,
-    mergeMods: mod => loadOrderPrefix(context.api, mod) + mod.id
+    //mergeMods: mod => loadOrderPrefix(context.api, mod) + mod.id
   });
 }
 
