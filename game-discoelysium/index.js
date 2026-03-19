@@ -329,6 +329,11 @@ function openConfigRegistry(api) {
 
 //Get correct executable for game version
 function getExecutable(discoveryPath) {
+  if (statCheckSync(discoveryPath, EXEC_XBOX)) {
+    DATA_FOLDER = DATA_FOLDER_ALT;
+    ASSETS_PATH = path.join(DATA_FOLDER, "Managed");
+    return EXEC_XBOX;
+  };
   if (statCheckSync(discoveryPath, EXEC_ALT)) {
     DATA_FOLDER = DATA_FOLDER_ALT;
     ASSETS_PATH = path.join(DATA_FOLDER, "Managed");
@@ -361,6 +366,12 @@ async function getSavePath(api) {
 
 //Get correct game version
 async function setGameVersion(gamePath) {
+  if (await statCheckAsync(gamePath, EXEC_XBOX)) {
+    GAME_VERSION = 'xbox';
+    DATA_FOLDER = DATA_FOLDER_ALT;
+    ASSETS_PATH = path.join(DATA_FOLDER, "Managed");
+    return GAME_VERSION;
+  }
   const CHECK = await statCheckAsync(gamePath, EXEC_ALT);
   if (CHECK) {
     GAME_VERSION = ALT_VERSION;
@@ -533,7 +544,7 @@ async function installRoot(files, workingDir) {
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
 
-  if (GAME_VERSION === ALT_VERSION) {
+  if (GAME_VERSION === ALT_VERSION || GAME_VERSION === 'xbox') {
     try {
       await fs.statAsync(path.join(workingDir, modFile));
       if (path.basename(modFile) === DATA_FOLDER_DEFAULT) {
