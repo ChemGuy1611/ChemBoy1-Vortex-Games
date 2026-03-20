@@ -1,6 +1,6 @@
 /*//////////////////////////////////////////
 Name: XXX Vortex Extension
-Structure: Unity BepinEx/MelonLoader Hybrid
+Structure: Unity BepinEx/MelonLoader/Custom Loader Hybrid
 Author: ChemBoy1
 Version: 0.1.0
 Date: 2026-XX-XX
@@ -47,14 +47,17 @@ const EXEC_EGS = EXEC;
 const EXEC_GOG = EXEC;
 const EXEC_DEMO = EXEC;
 const EXEC_XBOX = 'gamelaunchhelper.exe';
-const EXEC_ALT = EXEC_XBOX; //or `${GAME_STRING_ALT}.exe`
+const EXEC_ALT = `${GAME_STRING_ALT}.exe`;
 const PCGAMINGWIKI_URL = "XXX";
 const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
 
 //feature toggles
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
 const hasXbox = false; //toggle for Xbox version logic
-const multiExe = false; //set to true if there are multiple executables (typically for Xbox/EGS)
+let multiExe = false; //set to true if there are multiple executables (typically for Xbox/EGS)
+if (GAME_STRING_ALT !== GAME_STRING) {
+  multiExe = true;
+} //*/
 const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
 const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
 const preventPluginInstall = true; //set to true if you want to prevent plugins not for the current mod loader from installing. Disable if using cross-compatibility plugins.
@@ -94,7 +97,7 @@ const allowBepCfgMan = true; //should BepInExConfigManager be downloaded?
 const allowMelPrefMan = false; //should MelonPreferencesManager be downloaded? False until figure out UniverseLib dependency
 const allowBepinexNexus = true; //allow Nexus Mods download of BepInEx/MelonLoader
 const allowMelonNexus = true; 
-const BEPINEX_PAGE_NO = 0;
+const BEPINEX_PAGE_NO = 0; //Only specify if there is a Nexus page for BepInEx/MelonLoader
 const BEPINEX_FILE_NO = 0;
 const BEPINEX_DOMAIN = GAME_ID;
 const MELON_PAGE_NO = 0;
@@ -619,10 +622,20 @@ async function requiresLauncher(gamePath, store) {
   return Promise.resolve(undefined);
 }
 
+/*open Config entries in Registry
+function openConfigRegistry(api) {
+  GAME_PATH = getDiscoveryPath(api);
+  try {
+    api.runExecutable(path.join(GAME_PATH, 'regjump.exe'), [`${CONFIG_REGPATH_FULL}`], { shell: true, detached: true } )
+  } catch (err) {
+    log('error', `Could not open ${GAME_NAME} config in registry: ${err}`);
+  }
+} //*/
+
 //Get correct save folder for game version
 async function getSavePath(api) {
   GAME_PATH = getDiscoveryPath(api);
-  if (await statCheckAsync(GAME_PATH, EXEC_XBOX)) {
+  if (hasXbox && await statCheckAsync(GAME_PATH, EXEC_XBOX)) {
     SAVE_PATH = SAVE_PATH_XBOX;
     return SAVE_PATH;
   }
@@ -637,25 +650,18 @@ function getExecutable(discoveryPath) {
   if (!multiExe && !hasXbox) { //return immediately if only one exe filename for all versions
     return EXEC;
   }
-  if (statCheckSync(discoveryPath, EXEC_ALT)) {
+  if (hasXbox && statCheckSync(discoveryPath, EXEC_XBOX)) {
+    GAME_VERSION = 'xbox';
     DATA_FOLDER = DATA_FOLDER_ALT;
     ASSETS_PATH = path.join(DATA_FOLDER, "Managed");
     if (BEPINEX_BUILD === 'mono') {
       ASSEMBLY_PATH = path.join(DATA_FOLDER, "Managed");
     }
     VERSION_FILE_PATH = path.join(DATA_FOLDER, VERSION_FILE);
-    if (hasXbox) {
-      SAVE_PATH = SAVE_PATH_XBOX;
-    }
-    return EXEC_ALT;
+    SAVE_PATH = SAVE_PATH_XBOX;
+    return EXEC_XBOX;
   };
-  return EXEC;
-}
-
-//Get correct game version
-async function setGameVersion(gamePath) {
-  const CHECK = await statCheckAsync(gamePath, EXEC_ALT);
-  if (CHECK) {
+  if (multiExe && statCheckSync(discoveryPath, EXEC_ALT)) { // Epic/GOG
     GAME_VERSION = ALT_VERSION;
     DATA_FOLDER = DATA_FOLDER_ALT;
     ASSETS_PATH = path.join(DATA_FOLDER, "Managed");
@@ -663,9 +669,32 @@ async function setGameVersion(gamePath) {
       ASSEMBLY_PATH = path.join(DATA_FOLDER, "Managed");
     }
     VERSION_FILE_PATH = path.join(DATA_FOLDER, VERSION_FILE);
-    if (hasXbox) {
-      SAVE_PATH = SAVE_PATH_XBOX;
+    return EXEC_ALT;
+  };
+  return EXEC;
+}
+
+//Get correct game version
+async function setGameVersion(gamePath) {
+  if (hasXbox && statCheckAsync(gamePath, EXEC_XBOX)) {
+    GAME_VERSION = 'xbox';
+    DATA_FOLDER = DATA_FOLDER_ALT;
+    ASSETS_PATH = path.join(DATA_FOLDER, "Managed");
+    if (BEPINEX_BUILD === 'mono') {
+      ASSEMBLY_PATH = path.join(DATA_FOLDER, "Managed");
     }
+    VERSION_FILE_PATH = path.join(DATA_FOLDER, VERSION_FILE);
+    SAVE_PATH = SAVE_PATH_XBOX;
+    return GAME_VERSION;
+  };
+  if (multiExe && await statCheckAsync(gamePath, EXEC_ALT)) { // Epic/GOG
+    GAME_VERSION = ALT_VERSION;
+    DATA_FOLDER = DATA_FOLDER_ALT;
+    ASSETS_PATH = path.join(DATA_FOLDER, "Managed");
+    if (BEPINEX_BUILD === 'mono') {
+      ASSEMBLY_PATH = path.join(DATA_FOLDER, "Managed");
+    }
+    VERSION_FILE_PATH = path.join(DATA_FOLDER, VERSION_FILE);
     return GAME_VERSION;
   } else {
     GAME_VERSION = 'default';
@@ -1859,7 +1888,8 @@ async function resolveGameVersion(gamePath) {
   else { // use exe - only returns Unity version
     try {
       const exeVersion = require('exe-version');
-      version = exeVersion.getProductVersion(path.join(gamePath, EXEC));
+      const EXEC = getExecutable(gamePath); //need to read to account for multiple exe
+      version = exeVersion.getProductVersion(path.join(gamePath, EXEC)); //getFileVersion may need to be used in some cases
       return Promise.resolve(version); 
     } catch (err) {
       log('error', `Could not read ${EXEC} file to get game version: ${err}`);
@@ -2095,7 +2125,7 @@ async function setup(discovery, api, gameSpec) {
     setupNotify(api);
   }
   // ASYNC CODE ///////////////////////////////////
-  if (multiExe) {
+  if (multiExe || hasXbox) {
     GAME_VERSION = await setGameVersion(GAME_PATH);
   }
   MODTYPE_FOLDERS.push(ASSEMBLY_PATH);
@@ -2252,7 +2282,7 @@ function applyGame(context, gameSpec) {
       return gameId === GAME_ID;
   });
   /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download MelonPreferencesManager', () => {
-    await downloadMelonPrefMan(context.api, spec);
+    downloadMelonPrefMan(context.api, spec);
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
@@ -2275,6 +2305,20 @@ function applyGame(context, gameSpec) {
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   });
+  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
+    util.opn(CONFIG_PATH).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  }); //*/
+  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config (Registry)', () => {
+    openConfigRegistry;
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  }); //*/
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open BepInEx Config', () => {
     GAME_PATH = getDiscoveryPath(context.api);
     const openPath = path.join(GAME_PATH, BEP_CONFIG_FILEPATH);

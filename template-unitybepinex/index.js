@@ -39,19 +39,22 @@ const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 const GAME_NAME = "XXX";
 const GAME_NAME_SHORT = "XXX";
 const GAME_STRING = "XXX"; //string for exe and data folder (seem to always match)
-const GAME_STRING_ALT = "XXX"; //
+const GAME_STRING_ALT = GAME_STRING; //CHANGE THIS IF IT DOESN'T MATCH
 const EXEC = `${GAME_STRING}.exe`;
 const EXEC_EGS = EXEC;
 const EXEC_GOG = EXEC;
 const EXEC_XBOX = 'gamelaunchhelper.exe';
-const EXEC_ALT = EXEC_XBOX;
+const EXEC_ALT = `${GAME_STRING_ALT}.exe`;
 const PCGAMINGWIKI_URL = "XXX";
 const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
 
 //feature toggles
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
 const hasXbox = false; //toggle for Xbox version logic
-const multiExe = false; //set to true if there are multiple executables (and conseq. DATA_FOLDERs) (typically for Xbox/EGS)
+let multiExe = false; //set to true if there are multiple executables (and conseq. DATA_FOLDERs) (typically for Xbox/EGS)
+if (GAME_STRING_ALT !== GAME_STRING) {
+  multiExe = true;
+} //*/
 const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
 const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
 const allowBepinexNexus = false; //set false until bugs are fixed
@@ -65,10 +68,16 @@ const DATA_FOLDER_ALT = `${GAME_STRING_ALT}_Data`; //don't always match
 const ROOT_FOLDERS = [DATA_FOLDER, DATA_FOLDER_ALT];
 const VERSION_FILE = path.join('Version.info'); // LIKELY to change - usually .txt or .info file, i.e. - app.info/app.txt, Version.info, etc.
 let VERSION_FILE_PATH = path.join(DATA_FOLDER, VERSION_FILE);
+const hasVersionFile = false; //set to true if there is a Version.info file that contains the game version number
+const VER_IDX = 3; //index of the version number in the Version.info file
+const VER_SPLIT = ' '; //split character for the Version.info file - typically a space
 
-const DEV_REGSTRING = "XXX";
-const GAME_REGSTRING = "XXX";
-const XBOX_SAVE_STRING = 'XXX';
+const DEV_REGSTRING = "XXX"; //developer name
+const GAME_REGSTRING = "XXX"; //game name
+const XBOX_SAVE_STRING = "XXX"; //string after "ID_"
+const CONFIG_FOLDERNAME = "XXX";
+const SAVE_FOLDERNAME = "XXX";
+const hasUserIdFolder = false; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
 
 const BEPINEX_PAGE_ID = '0'; //only specify if there is a Nexus page for BepInEx
 const BEPINEX_FILE_ID = '0';
@@ -135,13 +144,26 @@ if (BEPINEX_BUILD === 'il2cpp') {
 const CONFIG_HIVE = 'HKEY_CURRENT_USER';
 const CONFIG_KEY = `Software\\${DEV_REGSTRING}\\${GAME_REGSTRING}`;
 const CONFIG_REGPATH_FULL = `${CONFIG_HIVE}\\${CONFIG_KEY}`; //*/
-//const CONFIG_PATH = path.join(LOCALLOW, DEV_REGSTRING, GAME_REGSTRING, 'Settings');
+const CONFIG_FOLDER = path.join(LOCALLOW, DEV_REGSTRING, GAME_REGSTRING);
+let USERID_FOLDER = "";
+if (hasUserIdFolder) {
+  try {
+    const CONFIG_ARRAY = fs.readdirSync(CONFIG_FOLDER);
+    USERID_FOLDER = CONFIG_ARRAY.find((entry) => isDir(CONFIG_FOLDER, entry));
+  } catch(err) {
+    USERID_FOLDER = "";
+  }
+  if (USERID_FOLDER === undefined) {
+    USERID_FOLDER = "";
+  } //*/
+}
+const CONFIG_PATH = path.join(CONFIG_FOLDER, USERID_FOLDER, CONFIG_FOLDERNAME);
 const CONFIG_FILES = ['settings.json'];
-const SAVE_PATH_DEFAULT = path.join(LOCALLOW, DEV_REGSTRING, GAME_REGSTRING, 'SaveGames');
+const SAVE_PATH_DEFAULT = path.join(LOCALLOW, DEV_REGSTRING, GAME_REGSTRING, USERID_FOLDER, SAVE_FOLDERNAME);
 const SAVE_PATH_XBOX = path.join(LOCALAPPDATA, "Packages", `${XBOXAPP_ID}_${XBOX_SAVE_STRING}`, "SystemAppData", "wgs"); //XBOX Version
 let SAVE_PATH = SAVE_PATH_DEFAULT;
 const SAVE_FILES = ['XXX.XXX'];
-const SAVE_EXTS = ['.XXX'];
+const SAVE_EXTS = [".XXX"];
 
 const ASSETS_ID = `${GAME_ID}-assets`;
 const ASSETS_NAME = "Assets/Resources File";
@@ -252,6 +274,11 @@ const tools = [
 
 // BASIC FUNCTIONS //////////////////////////////////////////////////////////////
 
+function isDir(folder, file) {
+  const stats = fs.statSync(path.join(folder, file));
+  return stats.isDirectory();
+}
+
 function statCheckSync(gamePath, file) {
   try {
     fs.statSync(path.join(gamePath, file));
@@ -336,56 +363,20 @@ async function requiresLauncher(gamePath, store) {
   return Promise.resolve(undefined);
 }
 
-//Find the game installation folder
+/*open Config entries in Registry
 function openConfigRegistry(api) {
   GAME_PATH = getDiscoveryPath(api);
   try {
     api.runExecutable(path.join(GAME_PATH, 'regjump.exe'), [`${CONFIG_REGPATH_FULL}`], { shell: true, detached: true } )
-    /*winapi.WithRegOpen(
-      CONFIG_HIVE,
-      CONFIG_REGPATH,
-      hkey => {
-        util.opn(hkey);
-      }
-    ); //*/
   } catch (err) {
     log('error', `Could not open ${GAME_NAME} config in registry: ${err}`);
   }
 } //*/
 
-//Get correct executable for game version
-function getExecutable(discoveryPath) {
-  if (!multiExe) { //return immediately if only one exe filename for all versions
-    return EXEC;
-  }
-  if (statCheckSync(discoveryPath, EXEC_ALT)) {
-    DATA_FOLDER = DATA_FOLDER_ALT;
-    ASSETS_PATH = path.join(DATA_FOLDER, "Managed");
-    if (BEPINEX_BUILD === 'mono') {
-      ASSEMBLY_PATH = path.join(DATA_FOLDER, "Managed");
-    }
-    VERSION_FILE_PATH = path.join(DATA_FOLDER, VERSION_FILE);
-    if (hasXbox) {
-      SAVE_PATH = SAVE_PATH_XBOX;
-    }
-    return EXEC_ALT;
-  };
-  return EXEC;
-}
-
 //Get correct save folder for game version
 async function getSavePath(api) {
   GAME_PATH = getDiscoveryPath(api);
-  const isCorrectExec = (exec) => {
-    try {
-      fs.statSync(path.join(GAME_PATH, exec));
-      return true;
-    }
-    catch (err) {
-      return false;
-    }
-  };
-  if (isCorrectExec(EXEC_XBOX)) {
+  if (hasXbox && await statCheckAsync(GAME_PATH, EXEC_XBOX)) {
     SAVE_PATH = SAVE_PATH_XBOX;
     return SAVE_PATH;
   }
@@ -395,10 +386,47 @@ async function getSavePath(api) {
   };
 } //*/
 
+//Get correct executable for game version
+function getExecutable(discoveryPath) {
+  if (!multiExe && !hasXbox) { //return immediately if only one exe filename for all versions
+    return EXEC;
+  }
+  if (hasXbox && statCheckSync(discoveryPath, EXEC_XBOX)) {
+    DATA_FOLDER = DATA_FOLDER_ALT;
+    ASSETS_PATH = path.join(DATA_FOLDER, "Managed");
+    if (BEPINEX_BUILD === 'mono') {
+      ASSEMBLY_PATH = path.join(DATA_FOLDER, "Managed");
+    }
+    VERSION_FILE_PATH = path.join(DATA_FOLDER, VERSION_FILE);
+    SAVE_PATH = SAVE_PATH_XBOX;
+    return EXEC_XBOX;
+  };
+  if (multiExe && statCheckSync(discoveryPath, EXEC_ALT)) { // Epic/GOG
+    DATA_FOLDER = DATA_FOLDER_ALT;
+    ASSETS_PATH = path.join(DATA_FOLDER, "Managed");
+    if (BEPINEX_BUILD === 'mono') {
+      ASSEMBLY_PATH = path.join(DATA_FOLDER, "Managed");
+    }
+    VERSION_FILE_PATH = path.join(DATA_FOLDER, VERSION_FILE);
+    return EXEC_ALT;
+  };
+  return EXEC;
+}
+
 //Get correct game version
 async function setGameVersion(gamePath) {
-  const CHECK = await statCheckAsync(gamePath, EXEC_ALT);
-  if (CHECK) {
+  if (hasXbox && statCheckAsync(gamePath, EXEC_XBOX)) {
+    GAME_VERSION = 'xbox';
+    DATA_FOLDER = DATA_FOLDER_ALT;
+    ASSETS_PATH = path.join(DATA_FOLDER, "Managed");
+    if (BEPINEX_BUILD === 'mono') {
+      ASSEMBLY_PATH = path.join(DATA_FOLDER, "Managed");
+    }
+    VERSION_FILE_PATH = path.join(DATA_FOLDER, VERSION_FILE);
+    SAVE_PATH = SAVE_PATH_XBOX;
+    return GAME_VERSION;
+  };
+  if (multiExe && await statCheckAsync(gamePath, EXEC_ALT)) { // Epic/GOG
     GAME_VERSION = ALT_VERSION;
     DATA_FOLDER = DATA_FOLDER_ALT;
     ASSETS_PATH = path.join(DATA_FOLDER, "Managed");
@@ -406,9 +434,6 @@ async function setGameVersion(gamePath) {
       ASSEMBLY_PATH = path.join(DATA_FOLDER, "Managed");
     }
     VERSION_FILE_PATH = path.join(DATA_FOLDER, VERSION_FILE);
-    if (hasXbox) {
-      SAVE_PATH = SAVE_PATH_XBOX;
-    }
     return GAME_VERSION;
   } else {
     GAME_VERSION = 'default';
@@ -733,6 +758,19 @@ async function resolveGameVersion(gamePath) {
   GAME_VERSION = await setGameVersion(gamePath);
   VERSION_FILE_PATH = path.join(DATA_FOLDER, VERSION_FILE);
   let version = '0.0.0';
+  if (hasVersionFile) { //use text file - Not many games have a Version.info file with the version in it
+    const versionFilePath = path.join(gamePath, VERSION_FILE_PATH);
+    try {
+      const data = await fs.readFileAsync(versionFilePath, { encoding: 'utf8' });
+      const segments = data.split(VER_SPLIT); //space is usually the split for Version.info files
+      return (segments[VER_IDX]) 
+        ? Promise.resolve(segments[VER_IDX])
+        : Promise.reject(new util.DataInvalid('Failed to resolve version'));
+    } catch (err) {
+      log('error', `Could not read ${VERSION_FILE} file to get game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  } //*/
   if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
     try {
       const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
@@ -744,26 +782,15 @@ async function resolveGameVersion(gamePath) {
       return Promise.resolve(version);
     }
   } 
-  else { // use exe
+  else { // use exe - only returns Unity version
     try {
       const exeVersion = require('exe-version');
-      version = exeVersion.getProductVersion(path.join(gamePath, EXEC));
+      const EXEC = getExecutable(gamePath); //need to read to account for multiple exe
+      version = exeVersion.getProductVersion(path.join(gamePath, EXEC)); //getFileVersion may need to be used in some cases
       return Promise.resolve(version); 
     } catch (err) {
       log('error', `Could not read ${EXEC} file to get game version: ${err}`);
       return Promise.resolve(version);
-    }
-  } //*/
-  /*else { use text file
-    const versionFilepath = path.join(gamePath, VERSION_FILE_PATH);
-    try {
-      const data = await fs.readFileAsync(versionFilepath, { encoding: 'utf8' });
-      const segments = data.split(' ');
-      return (segments[3]) 
-        ? Promise.resolve(segments[3])
-        : Promise.reject(new util.DataInvalid('Failed to resolve version'));
-    } catch (err) {
-      return Promise.reject(err);
     }
   } //*/
 } //*/
@@ -818,12 +845,12 @@ async function setup(discovery, api, gameSpec) {
     setupNotify(api);
   }
   // ASYNC CODE ///////////////////////////////////
-  if (multiExe) {
+  if (multiExe || hasXbox) {
     GAME_VERSION = await setGameVersion(GAME_PATH);
   }
   MODTYPE_FOLDERS.push(ASSEMBLY_PATH);
   MODTYPE_FOLDERS.push(ASSETS_PATH);
-  if (downloadCfgMan === true) {
+  if (downloadCfgMan) {
     await fs.ensureDirWritableAsync(path.join(GAME_PATH, 'Bepinex')); //allows downloader to write files
     await downloadBepCfgMan(api, gameSpec);
   }
@@ -886,13 +913,6 @@ function applyGame(context, gameSpec) {
   }
   
   //register actions
-  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config (Registry)', () => {
-    openConfigRegistry;
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  }); //*/
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download BepInExConfigManager', () => {
     downloadBepCfgMan(context.api, spec);
     }, () => {
@@ -927,6 +947,20 @@ function applyGame(context, gameSpec) {
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   });
+  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
+    util.opn(CONFIG_PATH).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  }); //*/
+  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config (Registry)', () => {
+    openConfigRegistry;
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  }); //*/
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
     util.opn(PCGAMINGWIKI_URL).catch(() => null);
   }, () => {
