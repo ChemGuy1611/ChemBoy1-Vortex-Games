@@ -150,7 +150,7 @@ const PARAMETERS = [PARAMETERS_STRING];
 
 const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
-let MODTYPE_FOLDERS = [PRESET_PATH];
+let MODTYPE_FOLDERS = [];
 
 // -- END EDIT ZONE -- /////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -399,14 +399,13 @@ function isREFInstalled(api, spec) {
 async function downloadFluffy(api, gameSpec) {
   let isInstalled = isFluffyInstalled(api, gameSpec);
   if (!isInstalled) {
-    //notification indicating install process
     const MOD_NAME = FLUFFY_NAME;
     const MOD_TYPE = FLUFFY_ID;
-    const NOTIF_ID = `${GAME_ID}-${MOD_TYPE}-installing`;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
     const modPageId = FLUFFY_PAGE_NO;
     const FILE_ID = FLUFFY_FILE_NO;  //If using a specific file id because "input" below gives an error
     const GAME_DOMAIN = 'site';
-    api.sendNotification({
+    api.sendNotification({ //notification indicating install process
       id: NOTIF_ID,
       message: `Installing ${MOD_NAME}`,
       type: 'activity',
@@ -418,24 +417,32 @@ async function downloadFluffy(api, gameSpec) {
       await api.ext.ensureLoggedIn();
     }
     try {
-      //get the mod files information from Nexus
-      const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, modPageId);
-      const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
-      const file = modFiles
-        .filter(file => file.category_id === 1)
-        .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
-        .reverse()[0];
-      if (file === undefined) {
-        throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
+      let FILE = null;
+      let URL = null;
+      try {
+        //get the mod files information from Nexus
+        const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, modPageId);
+        const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
+        const file = modFiles
+          .filter(file => file.category_id === 1)
+          .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
+          .reverse()[0];
+        if (file === undefined) {
+          throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
+        }
+        FILE = file.file_id;
+        URL = `nxm://${GAME_DOMAIN}/mods/${modPageId}/files/${FILE}`;
+      } catch (err) {
+        FILE = FILE_ID;
+        URL = `nxm://${GAME_DOMAIN}/mods/${modPageId}/files/${FILE}`;
       }
       //Download the mod
       const dlInfo = {
         game: GAME_DOMAIN,
         name: MOD_NAME,
       };
-      const nxmUrl = `nxm://${GAME_DOMAIN}/mods/${modPageId}/files/${file.file_id}`;
       const dlId = await util.toPromise(cb =>
-        api.events.emit('start-download', [nxmUrl], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
       const modId = await util.toPromise(cb =>
         api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
       const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
@@ -456,8 +463,7 @@ async function downloadFluffy(api, gameSpec) {
       api.dismissNotification(NOTIF_ID);
     }
   }
-}
-//*/
+} //*/
 
 /*
 //Function to auto-download REFramework from Github
@@ -466,8 +472,8 @@ async function downloadREFramework(api, gameSpec) {
   if (!isInstalled) {
     //notification indicating install process
     const MOD_NAME = REF_NAME;
-    const NOTIF_ID = `${GAME_ID}-${MOD_NAME}-installing`;
     const MOD_TYPE = REF_ID;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
     api.sendNotification({
       id: NOTIF_ID,
       message: `Installing ${MOD_NAME}`,
@@ -506,20 +512,19 @@ async function downloadREFramework(api, gameSpec) {
       api.dismissNotification(NOTIF_ID);
     }
   }
-}
-//*/
+} //*/
 
-//* Function to auto-download REFramework from Nexus Mods <-- This function gave an error when getting the file upload time, for some reason ????
+//Function to auto-download REFramework from Nexus Mods
 async function downloadREFramework(api, gameSpec) {
   let isInstalled = isREFInstalled(api, gameSpec);
   if (!isInstalled) {
     //notification indicating install process
     const MOD_NAME = REF_NAME;
     const MOD_TYPE = REF_ID;
-    const NOTIF_ID = `${GAME_ID}-${MOD_TYPE}-installing`;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
     const modPageId = REF_PAGE_NO;
     const FILE_ID = REF_FILE_NO;  //If using a specific file id because "input" below gives an error
-    const GAME_DOMAIN = REF_DOMAIN;
+    const GAME_DOMAIN = gameSpec.game.id;
     api.sendNotification({
       id: NOTIF_ID,
       message: `Installing ${MOD_NAME}`,
@@ -532,25 +537,32 @@ async function downloadREFramework(api, gameSpec) {
       await api.ext.ensureLoggedIn();
     }
     try {
-      //* get the mod files information from Nexus
-      const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, modPageId);
-      const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
-      const file = modFiles
-        .filter(file => file.category_id === 1)
-        .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
-        .reverse()[0];
-      if (file === undefined) {
-        throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
-      } //*/
+      let FILE = null;
+      let URL = null;
+      try {
+        //get the mod files information from Nexus
+        const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, modPageId);
+        const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
+        const file = modFiles
+          .filter(file => file.category_id === 1)
+          .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
+          .reverse()[0];
+        if (file === undefined) {
+          throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
+        }
+        FILE = file.file_id;
+        URL = `nxm://${GAME_DOMAIN}/mods/${modPageId}/files/${FILE}`;
+      } catch (err) {
+        FILE = FILE_ID;
+        URL = `nxm://${GAME_DOMAIN}/mods/${modPageId}/files/${FILE}`;
+      }
       //Download the mod
       const dlInfo = {
         game: GAME_DOMAIN,
         name: MOD_NAME,
       };
-      const nxmUrl = `nxm://${GAME_DOMAIN}/mods/${modPageId}/files/${file.file_id}`;
-      //const nxmUrl = `nxm://${gameSpec.game.id}/mods/${modPageId}/files/${FILE_ID}`;
       const dlId = await util.toPromise(cb =>
-        api.events.emit('start-download', [nxmUrl], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
       const modId = await util.toPromise(cb =>
         api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
       const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
@@ -571,7 +583,7 @@ async function downloadREFramework(api, gameSpec) {
       api.dismissNotification(NOTIF_ID);
     }
   }
-}
+} //*/
 
 // MOD INSTALLER FUNCTIONS //////////////////////////////////////////////////////////////
 
@@ -1068,7 +1080,7 @@ function applyGame(context, gameSpec) {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
-    });
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder (Steam)', async () => {
     SAVE_PATH = await getSavePath();
     util.opn(SAVE_PATH).catch(() => null);
