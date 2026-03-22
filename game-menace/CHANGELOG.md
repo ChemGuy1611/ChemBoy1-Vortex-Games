@@ -4,6 +4,10 @@
 
 - None planned at this time
 
+## [0.4.2] - 2026-03-22
+
+- Added: Installer for Custom Leaders mods
+
 ## [0.4.1] - 2026-02-24
 
 - Added: Checks and notifications for .NET 6/10 installations required by MelonLoader/ModpackLoader

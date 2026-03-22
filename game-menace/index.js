@@ -2,8 +2,8 @@
 Name: MENACE Vortex Extension
 Structure: Unity BepinEx/MelonLoader Hybrid
 Author: ChemBoy1
-Version: 0.4.1
-Date: 2026-03-12
+Version: 0.4.2
+Date: 2026-03-22
 //////////////////////////////////////////*/
 
 //Import libraries
@@ -304,6 +304,12 @@ const MODPACKMOD_NAME = "Modpack Mod";
 const MODPACKMOD_PATH = MELON_MODS_PATH;
 const MODPACKMOD_FILE = "modpack.json";
 
+const CUSTOMLEADERS_ID = `${GAME_ID}-customleaders`;
+const CUSTOMLEADERS_NAME = "Custom Leaders Mod";
+const CUSTOMLEADERS_FOLDER = "customleaders";
+const CUSTOMLEADERS_PATH = path.join(MELON_MODS_PATH, CUSTOMLEADERS_FOLDER);
+const CUSTOMLEADERS_STRING = "_clone.json";
+
 const MODKIT_ID = `${GAME_ID}-modkit`;
 const MODKIT_NAME = "Menace ModKit";
 const MODKIT_EXEC = 'Menace.Modkit.App.exe';
@@ -337,7 +343,7 @@ const PARAMETERS = [PARAMETERS_STRING];
 
 const IGNORE_CONFLICTS = [path.join('**', 'Menace.ModpackLoader.dll'), path.join('**', 'manifest.json'), path.join('**', 'icon.png'), path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
 const IGNORE_DEPLOY = [path.join('**', 'manifest.json'), path.join('**', 'icon.png'), path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
-let MODTYPE_FOLDERS = [BEPINEX_PATCHERS_PATH, BEPINEX_PLUGINS_PATH, BEPINEX_CONFIG_PATH, MELON_PLUGINS_PATH, MELON_MODS_PATH, MELON_CONFIG_PATH];
+let MODTYPE_FOLDERS = [BEPINEX_PATCHERS_PATH, BEPINEX_PLUGINS_PATH, BEPINEX_CONFIG_PATH, MELON_PLUGINS_PATH, MELON_MODS_PATH, MELON_CONFIG_PATH, CUSTOMLEADERS_PATH];
 if (hasCustomMods) {
   MODTYPE_FOLDERS.push(CUSTOM_PATH_BEPINEX, CUSTOM_PATH_MELON);
 }
@@ -395,6 +401,12 @@ const spec = {
       "name": MODPACKMOD_NAME,
       "priority": "high",
       "targetPath": path.join('{gamePath}', MODPACKMOD_PATH)
+    }, //*/
+    {
+      "id": CUSTOMLEADERS_ID,
+      "name": CUSTOMLEADERS_NAME,
+      "priority": "high",
+      "targetPath": path.join('{gamePath}', CUSTOMLEADERS_PATH)
     }, //*/
     {
       "id": MODKIT_ID,
@@ -1441,6 +1453,58 @@ function installModpackMod(files, fileName) {
   });
   instructions.push(setModTypeInstruction);
   instructions.push(MOD_ATTRIBUTE);
+  return Promise.resolve({ instructions });
+}
+
+//Test for Custom Leaders mod files
+function testCustomLeaders(files, gameId) {
+  const isMod = files.some(file => (path.basename(file).toLowerCase().includes(CUSTOMLEADERS_STRING)));
+  let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install Custom Leaders mod files
+function installCustomLeaders(files, fileName) {
+  const MOD_TYPE = CUSTOMLEADERS_ID;
+  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+  let modFile = files.find(file => (path.basename(file).toLowerCase().includes(CUSTOMLEADERS_STRING)));
+  let rootPath = path.dirname(modFile);
+  //*
+  let folder = path.basename(modFile).replace(CUSTOMLEADERS_STRING, '');
+  const ROOT_PATH = path.basename(rootPath);
+  if (ROOT_PATH !== '.') {
+    folder = ROOT_PATH;
+    //modFile = rootPath; //make the folder the targeted modFile so we can grab any other folders also in its directory
+    //rootPath = path.dirname(modFile);
+    //const indexFolder = path.basename(modFile);
+    //idx = modFile.indexOf(`${indexFolder}${path.sep}`);  //index on the folder with path separator
+  } //*/
+  const idx = modFile.indexOf(path.basename(modFile));
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(folder, file.substr(idx)),
+      //destination: file.substr(idx),
+    };
+  });
+  instructions.push(setModTypeInstruction);
   return Promise.resolve({ instructions });
 }
 
@@ -2710,10 +2774,11 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(MODPACKLOADER_ID, 29, testModpackLoader, installModpackLoader);
   context.registerInstaller(MODPACKMOD_ID, 30, testModpackMod, installModpackMod);
   context.registerInstaller(ROOT_ID, 31, testRoot, installRoot);
-  context.registerInstaller(BEPCFGMAN_ID, 33, testBepCfgMan, installBepCfgMan);
-  context.registerInstaller(MELONPREFMAN_ID, 34, testMelonPrefMan, installMelonPrefMan);
-  context.registerInstaller(ASSEMBLY_ID, 35, testAssembly, installAssembly);
-  context.registerInstaller(`${GAME_ID}-plugin`, 36, testPlugin, (files, workingDir) => installPlugin(context.api, gameSpec, files, workingDir));
+  context.registerInstaller(BEPCFGMAN_ID, 32, testBepCfgMan, installBepCfgMan);
+  context.registerInstaller(MELONPREFMAN_ID, 33, testMelonPrefMan, installMelonPrefMan);
+  context.registerInstaller(ASSEMBLY_ID, 34, testAssembly, installAssembly);
+  context.registerInstaller(`${GAME_ID}-plugin`, 35, testPlugin, (files, workingDir) => installPlugin(context.api, gameSpec, files, workingDir));
+  context.registerInstaller(CUSTOMLEADERS_ID, 36, testCustomLeaders, installCustomLeaders);
   context.registerInstaller(ASSETS_ID, 37, testAssets, installAssets);
   if (hasCustomMods) {
     context.registerInstaller(CUSTOM_ID, 45, testCustom, installCustom);
