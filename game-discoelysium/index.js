@@ -885,7 +885,7 @@ async function downloadBepCfgMan(api, gameSpec) {
       util.batchDispatch(api.store, batched); // Will dispatch both actions
     } catch (err) {
       api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
-      util.open(BEPCFGMAN_URL_ERR).catch(() => null);
+      util.opn(BEPCFGMAN_URL_ERR).catch(() => null);
     } finally {
       api.dismissNotification(NOTIF_ID);
     }
