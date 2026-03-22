@@ -2,8 +2,8 @@
 Name: PC Building Simulator 2 Vortex Extension
 Structure: Unity BepinEx (IL2CPP)
 Author: ChemBoy1
-Version: 0.1.1
-Date: 2026-03-16
+Version: 0.1.2
+Date: 2026-03-22
 //////////////////////////////////////////*/
 
 //Import libraries

@@ -2,8 +2,8 @@
 Name: Disco Elysium Vortex Extension
 Structure: Unity BepinEx
 Author: ChemBoy1
-Version: 0.1.3
-Date: 2026-03-19
+Version: 0.1.4
+Date: 2026-03-22
 //////////////////////////////////////////*/
 
 //Import libraries
@@ -13,7 +13,6 @@ const template = require('string-template');
 const winapi = require('winapi-bindings');
 //const turbowalk = require('turbowalk');
 const { parseStringPromise } = require('xml2js');
-const { get } = require('http');
 
 const USER_HOME = util.getVortexPath("home");
 const LOCALLOW = path.join(USER_HOME, 'AppData', 'LocalLow');

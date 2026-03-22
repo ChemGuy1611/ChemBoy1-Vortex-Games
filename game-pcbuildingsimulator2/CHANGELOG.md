@@ -4,6 +4,10 @@
 
 - None
 
+## [0.1.2] - 2026-03-22
+
+- Fixed: Typo in a function name
+
 ## [0.1.1] - 2026-03-16
 
 - Fixed: Bump BepInEx BE to version 755 and corrected displayed version

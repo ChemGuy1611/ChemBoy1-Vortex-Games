@@ -4,6 +4,10 @@
 
 - None
 
+## [0.1.4] - 2026-03-22
+
+- Fixed: Typo in a function name
+
 ## [0.1.3] - 2026-03-19
 
 - Added: Xbox Game Pass version support
