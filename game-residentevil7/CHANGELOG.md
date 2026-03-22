@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.3.1] - 2026-03-30
+
+- Added: Xbox Game Pass version support
+
 ## [0.3.0] - 2026-03-21
 
 - Added: Steam Demo version support

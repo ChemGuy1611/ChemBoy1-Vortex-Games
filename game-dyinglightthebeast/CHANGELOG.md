@@ -2,11 +2,12 @@
 
 ## Planned Improvements (Not Yet Released)
 
-- None Planned
+- ? handle .rpack files? - <https://www.nexusmods.com/dyinglightthebeast/mods/99>
+- ? handle dataen.pak file?
 
-## [0.5.0] - 2026-03-16
+## [0.5.0] - 2026-03-22
 
-- Users are now presented a choice of which mod loader to use (Unleashed or Super).
+- Improved: Users are now presented a choice of which merger to use (Super or Unleashed) when no merger is installed.
 - Improved: .NET 8 check for Unleashed users.
 
 ## [0.4.0] - 2026-01-28

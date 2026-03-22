@@ -198,6 +198,30 @@ const tools = [
 
 // BASIC FUNCTIONS //////////////////////////////////////////////////////////////////////
 
+function isDir(folder, file) {
+  const stats = fs.statSync(path.join(folder, file));
+  return stats.isDirectory();
+}
+
+function statCheckSync(gamePath, file) {
+  try {
+    fs.statSync(path.join(gamePath, file));
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}
+async function statCheckAsync(gamePath, file) {
+  try {
+    await fs.statAsync(path.join(gamePath, file));
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}
+
 //Set mod type priorities
 function modTypePriority(priority) {
   return {
@@ -253,16 +277,7 @@ async function requiresLauncher(gamePath, store) {
 
 //Get correct executable for game version
 function getExecutable(gamePath) {
-  const isCorrectExec = (exec) => {
-    try {
-      fs.statSync(path.join(gamePath, exec));
-      return true;
-    }
-    catch (err) {
-      return false;
-    }
-  };
-  if (isCorrectExec(EXEC_DEMO)) {
+  if (statCheckSync(gamePath, EXEC_DEMO)) {
     MOD_PATH_USED = MOD_PATH_DEMO;
     PRESET_PATH = PRESET_PATH_DEMO;
     return EXEC_DEMO; 
@@ -273,16 +288,7 @@ function getExecutable(gamePath) {
 
 //Get correct mod path for game version
 function getModPath(gamePath) {
-  const isCorrectExec = (exec) => {
-    try {
-      fs.statSync(path.join(gamePath, exec));
-      return true;
-    }
-    catch (err) {
-      return false;
-    }
-  };
-  if (isCorrectExec(EXEC_DEMO)) {
+  if (statCheckSync(gamePath, EXEC_DEMO)) {
     MOD_PATH_USED = MOD_PATH_DEMO;
     PRESET_PATH = PRESET_PATH_DEMO;
     return MOD_PATH_DEMO; 

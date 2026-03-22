@@ -1,10 +1,10 @@
-/*
+/*////////////////////////////////////////////////
 Name: Resident Evil 7 Biohazard Vortex Extension
 Structure: 3rd Party Mod Manager (Fluffy)
 Author: ChemBoy1
-Version: 0.3.0
-Date: 2026-03-21
-*/
+Version: 0.3.1
+Date: 2026-03-30
+////////////////////////////////////////////////*/
 
 //Import libraries
 const { actions, fs, util, selectors, log } = require('vortex-api');
@@ -14,6 +14,8 @@ const template = require('string-template');
 //Specify all information about the game
 const STEAMAPP_ID = "418370";
 const STEAMAPP_ID_DEMO = "530620";
+const XBOXAPP_ID = "XXX";
+const XBOXEXECNAME = "XXX";
 const GAME_ID = "residentevil7";
 const GAME_NAME = "Resident Evil 7";
 const GAME_NAME_SHORT = "RE7";
@@ -35,6 +37,8 @@ let GAME_VERSION = '';
 let GAME_PATH = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
+const EXEC_XBOX = 'gamelaunchhelper.exe';
+const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 //Information for mod types, tools, and installers
 const ROOT_ID = `re4-root`;
@@ -133,6 +137,7 @@ const spec = {
     "ids": [
       STEAMAPP_ID,
       STEAMAPP_ID_DEMO,
+      XBOXAPP_ID,
     ],
     "names": []
   }
@@ -236,8 +241,18 @@ async function requiresLauncher(gamePath, store) {
           launcher: 'steam',
       });
   }
-  /*
-  if (store === 'epic') {
+  if (store === 'xbox') {
+    return Promise.resolve({
+      launcher: 'xbox',
+      addInfo: {
+        appId: XBOXAPP_ID,
+        parameters: [{ appExecName: XBOXEXECNAME }],
+        //parameters: [{ appExecName: XBOXEXECNAME }, PARAMETERS_STRING],
+        //launchType: 'gamestore',
+      },
+    });
+  } //*/
+  /*if (store === 'epic') {
     return Promise.resolve({
         launcher: 'epic',
         addInfo: {
@@ -250,6 +265,9 @@ async function requiresLauncher(gamePath, store) {
 
 //Get correct executable for game version
 function getExecutable(discoveryPath) {
+  if (statCheckSync(discoveryPath, EXEC_XBOX)) {
+    return EXEC_XBOX;
+  };
   if (statCheckSync(discoveryPath, EXEC_DEMO)) {
     FLUFFYMOD_PATH = FLUFFYMOD_PATH_DEMO;
     PRESET_PATH = PRESET_PATH_DEMO;
@@ -270,16 +288,18 @@ function getModPath(discoveryPath) {
 
 //Get correct game version
 async function setGameVersion(gamePath) {
-  const CHECK = await statCheckAsync(gamePath, EXEC_DEMO);
-  if (CHECK) {
+  if (await statCheckAsync(gamePath, EXEC_XBOX)) {
+    GAME_VERSION = 'xbox';
+    return GAME_VERSION;
+  } 
+  if (await statCheckAsync(gamePath, EXEC_DEMO)) {
     GAME_VERSION = 'demo';
     FLUFFYMOD_PATH = FLUFFYMOD_PATH_DEMO;
     PRESET_PATH = PRESET_PATH_DEMO;
     return GAME_VERSION;
-  } else {
-    GAME_VERSION = 'default';
-    return GAME_VERSION;
   }
+  GAME_VERSION = 'default';
+  return GAME_VERSION;
 }
 
 const getDiscoveryPath = (api) => { //get the game's discovered path
@@ -853,6 +873,34 @@ function runFluffy(api) {
   }
 }
 
+//* Resolve game version dynamically for different game versions
+async function resolveGameVersion(gamePath) {
+  GAME_VERSION = await setGameVersion(gamePath);
+  let version = '0.0.0';
+  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
+    try {
+      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
+      const parsed = await parseStringPromise(appManifest);
+      version = parsed?.Package?.Identity?.[0]?.$?.Version;
+      return Promise.resolve(version);
+    } catch (err) {
+      log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+  else { // use exe
+    try {
+      const exeVersion = require('exe-version');
+      const EXEC = getExecutable(gamePath);
+      version = exeVersion.getProductVersion(path.join(gamePath, EXEC)); //can also use getFileVersion if this doesn't return the correct number (rare)
+      return Promise.resolve(version); 
+    } catch (err) {
+      log('error', `Could not read executable file to get game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+} //*/
+
 //Setup function
 async function setup(discovery, api, gameSpec) {
   //setupNotify(api);
@@ -879,6 +927,7 @@ function applyGame(context, gameSpec) {
     requiresLauncher: requiresLauncher,
     requiresCleanup: true,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
+    getGameVersion: resolveGameVersion,
     supportedTools: tools,
   };
   context.registerGame(game);

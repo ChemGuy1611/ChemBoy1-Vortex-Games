@@ -70,7 +70,7 @@ async function onCheckModVersion(api, gameId, mods, forced) {
     await asyncForEachTestVersion(api, REQUIREMENTS);
     log('warn', 'Checked requirements versions');
   } catch (err) {
-    log('warn', `failed to test requirement version: ${err}`);
+    log('warn', `Failed to test requirement version: ${err}`);
   }
 }
 

@@ -9,7 +9,7 @@ Date: 2026-03-16
 //Import libraries
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
-const shortid = require('shortid');
+//const shortid = require('shortid');
 const template = require('string-template');
 const winapi = require('winapi-bindings');
 //const turbowalk = require('turbowalk');
@@ -330,6 +330,39 @@ function isSuperMergerInstalled(api, spec) {
   const state = api.getState();
   const mods = state.persistent.mods[spec.game.id] || {};
   return Object.keys(mods).some(id => mods[id]?.type === SUPERMERGER_ID);
+}
+
+//Function to choose mod loader
+async function chooseMerger(api, gameSpec) {
+  const UNLEASHED_LABEL = `Unleash The Mods`;
+  const SUPER_LABEL = `Super Mod Merger (Recommended)`;
+  const t = api.translate;
+  let choices = [
+    { label: t(SUPER_LABEL) },
+    { label: t(UNLEASHED_LABEL) },
+  ];
+  const replace = {
+    game: gameSpec.game.name,
+    bl: '[br][/br][br][/br]',
+  };
+  return api.showDialog('info', 'Mod Merger Selection', {
+    bbcode: t('You must choose a mod merger to install mods.{{bl}}'
+      + 'You can change which merger you have installed by Uninstalling the current one from Vortex, which will bring up this dialog again.{{bl}}'
+      + `Note that ${SUPERMERGER_NAME} is recommended as it can merge more file types and has no external dependencies.{{bl}}`
+      + 'Which mod loader would you like to use for {{game}}?',
+      { replace }
+    ),
+  }, choices)
+  .then(async (result) => {
+    if (result === undefined) {
+      return;
+    }
+    if (result.action === SUPER_LABEL) {
+      await downloadSuperMerger(api, gameSpec);
+    } else if (result.action === UNLEASHED_LABEL) {
+      await downloadMergerUtility(api, gameSpec);
+    }
+  });
 }
 
 //* Function to auto-download Mod Merger Utility from Nexus Mods
@@ -823,7 +856,7 @@ function installBinaries(files) {
   return Promise.resolve({ instructions });
 }
 
-// MERGER FUNCTIONS ///////////////////////////////////////////////////////////
+/* MERGER FUNCTIONS ///////////////////////////////////////////////////////////
 
 function isPak(filePath) {
   return path.extname(filePath.toLowerCase()) === PAK_EXT;
@@ -847,7 +880,7 @@ function mergeTest(api, game, discovery) {
   };
 }
 
-//merger file operations - filePath points to the mod file - mergeDir points to the __merged directory
+merger file operations - filePath points to the mod file - mergeDir points to the __merged directory
 function mergeOperation(api, filePath, mergeDir) {
   const state = api.getState();
   const modId = Object.keys(state.persistent.mods[GAME_ID]).find(id => filePath.includes(id));
@@ -879,13 +912,14 @@ function mergeOperation(api, filePath, mergeDir) {
     .then(() => fs.readdirAsync(tempDir))
     .then(entries => sevenzip.add(zipFile, entries.map(entry => path.join(tempDir, entry)),
       { raw: ['-r'] }))
-    .then(() => fs.removeAsync(tempDir))
-    .then(() => fs.removeAsync(mergeFilePath)
+    .then(() => fs.unlinkAsync(tempDir))
+    .then(() => fs.unlinkAsync(mergeFilePath)
       .catch(err => err.code === 'ENOENT')
         ? Promise.resolve()
         : Promise.reject(err))
     .then(() => fs.moveAsync(zipFile, mergeFilePath, { overwrite: true }));
-}
+} 
+//*/
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
@@ -963,21 +997,24 @@ async function setup(discovery, api, gameSpec) {
   GAME_PATH = discovery.path;
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
-
-  DOTNET_INSTALLED = checkForDotNet();
-  //log('warn', `DLTB Check - .NET ${DN_REL} Desktop Runtime Installed?: ${DOTNET_INSTALLED}`);
-  if (!DOTNET_INSTALLED) {
-    dotNetNotify(api);
-  }
   // ASYNC CODE //////////////////////////////////////////
   mergerInstalled = isMergerUtilityInstalled(api, gameSpec);
   superMergerInstalled = isSuperMergerInstalled(api, gameSpec);
-  await downloadMergerUtility(api, gameSpec);
+  if (!superMergerInstalled && !mergerInstalled) {
+    await chooseMerger(api, gameSpec);
+  }
+  //await downloadMergerUtility(api, gameSpec);
+  if (isMergerUtilityInstalled(api, gameSpec)) {
+    DOTNET_INSTALLED = checkForDotNet();
+    if (!DOTNET_INSTALLED) {
+      dotNetNotify(api);
+    }
+  }
   /* remove old merger folder if the user has it (temporary, remove after a few releases)
   const MERGER_FOLDER_OLD = path.join(STAGING_FOLDER, '__merged.dyinglightthebeast-pak');
   try {
     await fs.statAsync(MERGER_FOLDER_OLD);
-    await fs.removeAsync(MERGER_FOLDER_OLD);
+    await fs.unlinkAsync(MERGER_FOLDER_OLD);
   } catch (err) {
     //do nothing
   } //*/
@@ -1065,50 +1102,33 @@ function main(context) {
     PAK_ID
   ); //*/
   context.once(() => { // put code here that should be run (once) when Vortex starts up
-    context.api.onAsync('did-deploy', async (profileId, deployment) => {
-      const lastActiveProfile = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
+    const api = context.api;
+    api.onAsync('did-deploy', async (profileId, deployment) => {
+      const lastActiveProfile = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
       if (profileId !== lastActiveProfile) return;
-      //await didDeploy(context.api); // commented out now that Mod Merger Utility updated to always output data7.pak
-      mergerInstalled = isMergerUtilityInstalled(context.api, spec);
-      superMergerInstalled = isSuperMergerInstalled(context.api, spec);
-      return deployNotify(context.api);
+      mergerInstalled = isMergerUtilityInstalled(api, spec);
+      superMergerInstalled = isSuperMergerInstalled(api, spec);
+      if (!superMergerInstalled && !mergerInstalled) {
+        await chooseMerger(api, spec);
+      }
+      if (isMergerUtilityInstalled(api, spec)) {
+        DOTNET_INSTALLED = checkForDotNet();
+        if (!DOTNET_INSTALLED) {
+          dotNetNotify(api);
+        }
+      }
+      return deployNotify(api);
     });
-    context.api.onAsync('did-purge', async (profileId, deployment) => {
+    api.onAsync('did-purge', async (profileId, deployment) => {
       const lastActiveProfile = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
       if (profileId !== lastActiveProfile) return;
-      mergerInstalled = isMergerUtilityInstalled(context.api, spec);
-      superMergerInstalled = isSuperMergerInstalled(context.api, spec);
-      return didPurge(context.api);
+      return didPurge(api);
     }); //*/
   });
   return true;
 }
 
-async function didDeploy(api) {
-  const state = api.getState();
-  GAME_PATH = getDiscoveryPath(api);
-  const PAK_DIRECTORY = path.join(GAME_PATH, VANILLA_PAK_PATH);
-  let FILES = await fs.readdirAsync(PAK_DIRECTORY);
-  
-  try { //clear pak non-vanilla pak files
-    FILES = FILES.filter(file => 
-      path.extname(file).toLowerCase() === PAK_EXT &&
-      !VANILLA_PAKS.includes(path.basename(file))
-    );
-    //log('warn', `Removing pak files on deploy: ${FILES.join(', ')}`);
-    FILES.forEach(async file => {
-      await fs.removeAsync(path.join(PAK_DIRECTORY, file));
-    });
-  } catch (err) {
-    log('error', `Failed to remove merged pak files: ${FILES.join(', ')} - ${err.message}`);
-  }
-
-  //runModManager(api); //run merger executable once files are cleared - not executed for technical reasons
-  return Promise.resolve();
-}
-
 async function didPurge(api) {
-  const state = api.getState();
   GAME_PATH = getDiscoveryPath(api);
   const PAK_DIRECTORY = path.join(GAME_PATH, VANILLA_PAK_PATH);
   let FILES = await fs.readdirAsync(PAK_DIRECTORY);
@@ -1118,8 +1138,8 @@ async function didPurge(api) {
       !VANILLA_PAKS.includes(path.basename(file))
     );
     //log('warn', `Removing pak files on purge: ${FILES.join(', ')}`);
-    FILES.forEach(async file => {
-      await fs.removeAsync(path.join(PAK_DIRECTORY, file));
+    FILES.forEach(async (file) => {
+      await fs.unlinkAsync(path.join(PAK_DIRECTORY, file));
     });
   } catch (err) {
     log('error', `Failed to remove merged pak files: ${FILES.join(', ')} - ${err.message}`);
@@ -1153,7 +1173,7 @@ function deployNotify(api) {
                 + `For pak mods, you must use ${MOD_NAME} to merge all your paks into a single pak after installing with Vortex.\n`
                 + `Use the included tool to launch ${MOD_NAME} (button below, in "Dashboard" tab, or in notification shown after deployment).\n`
                 + `\n`
-                + `You can run ${MOD_NAME} using the button below, or using the button within the folder icon on the Mods toolbar.\n`
+                + `You can run ${MOD_NAME} using the button below, or using the button on the Dashboard tab.\n`
                 + `The use of this tool ensures that all your mods can work together when they make modifications to common files (such as "player_atributes.scr").\n`
           }, [
             {

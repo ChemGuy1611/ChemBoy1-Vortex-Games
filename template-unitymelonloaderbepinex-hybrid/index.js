@@ -661,7 +661,7 @@ function getExecutable(discoveryPath) {
     SAVE_PATH = SAVE_PATH_XBOX;
     return EXEC_XBOX;
   };
-  if (multiExe && statCheckSync(discoveryPath, EXEC_ALT)) { // Epic/GOG
+  if (multiExe && statCheckSync(discoveryPath, EXEC_ALT)) { // Epic/GOG/Demo
     GAME_VERSION = ALT_VERSION;
     DATA_FOLDER = DATA_FOLDER_ALT;
     ASSETS_PATH = path.join(DATA_FOLDER, "Managed");

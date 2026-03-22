@@ -13,9 +13,9 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 const { parseStringPromise } = require('xml2js');
+//const winapi = require('winapi-bindings');
 //const fsPromises = require('fs/promises'); //.rm() for recursive folder deletion
 //const fsExtra = require('fs-extra');
-//const winapi = require('winapi-bindings');
 //const turbowalk = require('turbowalk');
 
 /*const USER_HOME = util.getVortexPath("home");
@@ -51,6 +51,9 @@ const INSTALL_VALUE = "XXX"; //often InstallDir or InstallPath
 
 //feature toggles
 const hasLoader = false; //true if game needs a mod loader
+const hasXbox = false; //toggle for Xbox version logic
+const multiExe = false; //set to true if there are multiple executable names
+const multiModPath = false; //set to true if there are multiple possible mod paths (i.e. different path for Xbox version)
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
 const needsModInstaller = true; //set to true if standard mods should run through an installer - set false to have mods installed to the mods folder without any processing
 const rootInstaller = true; //enable root installer. Set false if you need to avoid installer collisions
@@ -149,13 +152,10 @@ const spec = {
     "id": GAME_ID,
     "name": GAME_NAME,
     "shortName": GAME_NAME_SHORT,
-    "executable": EXEC,
     //"parameters": PARAMETERS, //commented out by default to avoid passing empty string parameter
     "logo": `${GAME_ID}.jpg`,
     "mergeMods": true,
     "requiresCleanup": true,
-    "modPath": MOD_PATH_DEFAULT,
-    "modPathIsRelative": true,
     "requiredFiles": [
       REQ_FILE
     ],
@@ -306,22 +306,18 @@ function pathPattern(api, game, pattern) {
   }
 }
 
-//Set the mod path for the game
-function makeGetModPath(api, gameSpec) {
-  return () => gameSpec.game.modPathIsRelative !== false
-    ? gameSpec.game.modPath || '.'
-    : pathPattern(api, gameSpec.game, gameSpec.game.modPath);
-}
-
 //* Get mod path dynamically for different game versions
 function getModPath(discoveryPath) {
+  if (!multiModPath) {
+    return MOD_PATH_DEFAULT;
+  }
   if (statCheckSync(discoveryPath, EXEC_XBOX)) {
     GAME_VERSION = 'xbox';
     return MOD_PATH_XBOX;
   };
   //add GOG/EGS/Demo versions here if needed
   GAME_VERSION = 'default';
-  return MOD_PATH;
+  return MOD_PATH_DEFAULT;
 } //*/
 
 //Find game installation directory
@@ -376,6 +372,9 @@ async function requiresLauncher(gamePath, store) {
 
 //Get correct executable for game version
 function getExecutable(discoveryPath) {
+  if (!multiExe && !hasXbox) {
+    return EXEC;
+  }
   if (statCheckSync(discoveryPath, EXEC_XBOX)) {
     GAME_VERSION = 'xbox';
     return EXEC_XBOX;
@@ -387,8 +386,11 @@ function getExecutable(discoveryPath) {
 
 //Get correct game version
 async function setGameVersion(gamePath) {
-  const CHECK = await statCheckAsync(gamePath, EXEC_XBOX);
-  if (CHECK) {
+  if (!multiExe && !hasXbox) {
+    GAME_VERSION = 'default';
+    return GAME_VERSION;
+  }
+  if (await statCheckAsync(gamePath, EXEC_XBOX)) {
     GAME_VERSION = 'xbox';
     return GAME_VERSION;
   } else {
@@ -814,10 +816,11 @@ async function resolveGameVersion(gamePath) {
   else { // use exe
     try {
       const exeVersion = require('exe-version');
-      version = exeVersion.getProductVersion(path.join(gamePath, EXEC));
+      const EXEC = getExecutable(gamePath);
+      version = exeVersion.getProductVersion(path.join(gamePath, EXEC)); //can also use getFileVersion if this doesn't return the correct number (rare)
       return Promise.resolve(version); 
     } catch (err) {
-      log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
+      log('error', `Could not read executable file to get game version: ${err}`);
       return Promise.resolve(version);
     }
   }
@@ -854,13 +857,11 @@ function applyGame(context, gameSpec) {
   const game = { //register game
     ...gameSpec.game,
     queryPath: makeFindGame(context.api, gameSpec),
-    executable: () => gameSpec.game.executable,
-    //executable: getExecutable,
-    queryModPath: makeGetModPath(context.api, gameSpec),
-    //queryModPath: getModPath(),
+    executable: getExecutable,
+    queryModPath: getModPath(),
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
-    //getGameVersion: resolveGameVersion,
+    getGameVersion: resolveGameVersion,
     supportedTools: tools,
   };
   context.registerGame(game);
