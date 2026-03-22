@@ -1,31 +1,45 @@
-/*
+/*//////////////////////////////////////////////////
 Name: Alan Wake 2 Vortex Extension
 Structure: Root Folder Mod Loader
 Author: ChemBoy1
-Version: 1.1.3
-Date: 07/23/2024
-*/
+Version: 1.2.0
+Date: 2026-03-22
+//////////////////////////////////////////////////*/
 
 //Import libraries
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
-//const turbowalk = require('turbowalk');
 
 //Specify all information about the game
-const EPICAPP_ID = "dc9d2e595d0e4650b35d659f90d41059";
+const EPICAPP_ID = "dc9d2e595d0e4650b35d659f90d41059"; //probably will only ever be an epic version
 const GAME_ID = "alanwake2";
+const GAME_NAME = "Alan Wake 2";
 const EXEC = "AlanWake2.exe";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Alan_Wake_2";
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/836"; //Nexus link to this extension. Used for links
+
 const MODLOADER_ID = "alanwake2-modloader";
+const MODLOADER_NAME = "Mod Loader";
 const MODLOADER_FILE = "version.dll";
+const MODLOADER_PAGE_NO = 19;
+const MODLOADER_FILE_NO = 45;
+
+const ROOT_FOLDERS = ['data_pc', 'data'];
+const ROOT_SUBFOLDERS = ['textures'];
+
 const RMDTOC_EXEC = "alan wake 2 rmdtoc tool.exe";
+
+let GAME_PATH = '';
+let STAGING_FOLDER = '';
+let DOWNLOAD_FOLDER = '';
 
 const spec = {
   "game": {
     "id": GAME_ID,
-    "name": "Alan Wake 2",
+    "name": GAME_NAME,
     "executable": EXEC,
-    "logo": "alanwake2.jpg",
+    "logo": `${GAME_ID}.jpg`,
     "mergeMods": true,
     "modPath": ".",
     "modPathIsRelative": true,
@@ -38,19 +52,18 @@ const spec = {
     "environment": {
       "EpicAPPId": EPICAPP_ID,
     },
-    "requiresLauncher": "epic"
   },
   "modTypes": [
     {
       "id": MODLOADER_ID,
-      "name": "Mod Loader",
+      "name": MODLOADER_NAME,
       "priority": "low",
       "targetPath": "{gamePath}"
     },
   ],
   "discovery": {
     "ids": [
-      EPICAPP_ID
+      EPICAPP_ID,
     ],
     "names": []
   }
@@ -69,22 +82,19 @@ const tools = [
     relative: true,
     exclusive: true,
   },
-  /*
   {
-    id: "AlanWake2",
-    name: "Alan Wake 2",
-    logo: "icon.png",
+    id: `${GAME_ID}-customlaunch`,
+    name: 'Custom Launch',
+    logo: 'exec.png',
     executable: () => EXEC,
-    parameters: [
-       '-EpicPortal',
+    requiredFiles: [
+      EXEC,
     ],
-    requiredFiles: [EXEC],
-    detach: true,
     relative: true,
     exclusive: true,
-    defaultPrimary: true,
-  },
-  */
+    shell: true,
+    detach: true,
+  }, //*/
 ];
 
 //Set mod type priorities
@@ -101,7 +111,7 @@ function pathPattern(api, game, pattern) {
   return template(pattern, {
     gamePath: (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0 ? void 0 : _a.path,
     documents: util.getVortexPath('documents'),
-    localAppData: process.env['LOCALAPPDATA'],
+    localAppData: util.getVortexPath('localAppData'),
     appData: util.getVortexPath('appData'),
   });
 }
@@ -120,16 +130,38 @@ function makeGetModPath(api, gameSpec) {
 }
 
 //Set launcher requirements
-function makeRequiresLauncher(api, gameSpec) {
-  return () => Promise.resolve((gameSpec.game.requiresLauncher !== undefined)
-    ? { 
-      launcher: gameSpec.game.requiresLauncher,
+async function requiresLauncher(gamePath, store) {
+  /*if (store === 'xbox') {
+    return Promise.resolve({
+      launcher: 'xbox',
+      addInfo: {
+        appId: XBOXAPP_ID,
+        parameters: [{ appExecName: XBOXEXECNAME }],
+      },
+    });
+  } //*/
+  /*if (store === 'epic') {
+    return Promise.resolve({
+      launcher: 'epic',
       addInfo: {
         appId: EPICAPP_ID,
-      }
-      }
-    : undefined);
+      },
+    });
+  } //*/
+  /*if (store === 'steam') {
+    return Promise.resolve({
+      launcher: 'steam',
+    });
+  } //*/
+  return Promise.resolve({
+      launcher: 'epic',
+      addInfo: {
+        appId: EPICAPP_ID,
+      },
+    });
 }
+
+// AUTO-DOWNLOADER FUNCTIONS ///////////////////////////////////////////////
 
 //Check if Mod Loader is installed
 function isModLoaderInstalled(api, spec) {
@@ -138,64 +170,73 @@ function isModLoaderInstalled(api, spec) {
   return Object.keys(mods).some(id => mods[id]?.type === MODLOADER_ID);
 }
 
-//Function to auto-download Mod Loader
+//* Function to auto-download UE4SS from Nexus Mods
 async function downloadModLoader(api, gameSpec) {
-  let modLoaderInstalled = isModLoaderInstalled(api, gameSpec);
-  if (!modLoaderInstalled) {
-    NOTIF_ID = 'alanwake2-modloader-installing';
+  let isInstalled = isModLoaderInstalled(api, gameSpec);
+  if (!isInstalled) {
+    const MOD_NAME = MODLOADER_NAME;
+    const MOD_TYPE = MODLOADER_ID;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
+    const PAGE_ID = MODLOADER_PAGE_NO;
+    const FILE_ID = MODLOADER_FILE_NO;  //If using a specific file id because "input" below gives an error
+    const GAME_DOMAIN = GAME_ID;
     api.sendNotification({ //notification indicating install process
       id: NOTIF_ID,
-      message: 'Installing Alan Wake 2 Mod Loader',
+      message: `Installing ${MOD_NAME}`,
       type: 'activity',
       noDismiss: true,
       allowSuppress: false,
     });
-
-    //make sure user is logged into Nexus Mods account in Vortex
-    if (api.ext?.ensureLoggedIn !== undefined) {
+    if (api.ext?.ensureLoggedIn !== undefined) { //make sure user is logged into Nexus Mods account in Vortex
       await api.ext.ensureLoggedIn();
     }
-
-    const modPageId = 19;
     try {
-      //get the mod files information from Nexus
-      const modFiles = await api.ext.nexusGetModFiles(gameSpec.game.id, modPageId);
-      const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
-      const file = modFiles
-        .filter(file => file.category_id === 1)
-        .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))[0];
-      if (file === undefined) {
-        throw new util.ProcessCanceled('No Alan Wake 2 Mod Loader main file found');
+      let FILE = null;
+      let URL = null;
+      try { //get the mod files information from Nexus
+        const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
+        const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
+        const file = modFiles
+          .filter(file => file.category_id === 1)
+          .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
+          .reverse()[0];
+        if (file === undefined) {
+          throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
+        }
+        FILE = file.file_id;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      } catch (err) { // use defined file ID if input is undefined above
+        FILE = FILE_ID;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
       }
-      //Download the mod
-      const dlInfo = {
-        game: gameSpec.game.id,
-        name: 'Alan Wake 2 Mod Loader',
+      const dlInfo = { //Download the mod
+        game: GAME_DOMAIN,
+        name: MOD_NAME,
       };
-      const nxmUrl = `nxm://${gameSpec.game.id}/mods/${modPageId}/files/${file.file_id}`;
       const dlId = await util.toPromise(cb =>
-        api.events.emit('start-download', [nxmUrl], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
       const modId = await util.toPromise(cb =>
         api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
-      const profileId = selectors.lastActiveProfileForGame(api.getState(), spec.game.id);
+      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
       const batched = [
         actions.setModsEnabled(api, profileId, [modId], true, {
           allowAutoDeploy: true,
           installed: true,
         }),
-        actions.setModType(gameSpec.game.id, modId, MODLOADER_ID), // Set the mod type
+        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
       ];
-      util.batchDispatch(api.store, batched); // Will dispatch both actions.
-    //Show the user the download page if the download, install process fails
-    } catch (err) {
-      const errPage = `https://www.nexusmods.com/${gameSpec.game.id}/mods/${modPageId}/files/?tab=files`;
-      api.showErrorNotification('Failed to download/install Alan Wake 2 Mod Loader', err);
+      util.batchDispatch(api.store, batched); // Will dispatch both actions
+    } catch (err) { //Show the user the download page if the download, install process fails
+      const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
+      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
       util.opn(errPage).catch(() => null);
     } finally {
       api.dismissNotification(NOTIF_ID);
     }
   }
-}
+} //*/
+
+// MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
 
 //Installer test for Fluffy Mod Manager files
 function testModLoader(files, gameId) {
@@ -232,9 +273,55 @@ function installModLoader(files) {
   return Promise.resolve({ instructions });
 }
 
+//Installer test for Root folder files
+function testFolders(files, gameId) {
+  const isFolder = files.some(file => ROOT_FOLDERS.includes(path.basename(file).toLowerCase()));
+  let supported = (gameId === spec.game.id) && isFolder;
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Installer install Root folder files
+function installFolders(files) {
+  const modFile = files.find(file => ROOT_FOLDERS.includes(path.basename(file).toLowerCase()));
+  const ROOT_IDX = `${path.basename(modFile)}${path.sep}`
+  const idx = modFile.indexOf(ROOT_IDX);
+  const rootPath = path.dirname(modFile);
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  return Promise.resolve({ instructions });
+}
+
+// MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
+
 //Setup function
 async function setup(discovery, api, gameSpec) {
-  await downloadModLoader(api, gameSpec)
+  const state = api.getState();
+  GAME_PATH = discovery.path;
+  STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
+  DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
+  // ASYNC CODE //////////////////////////////////////////////////////////////////
+  await downloadModLoader(api, gameSpec);
   return fs.ensureDirWritableAsync(path.join(discovery.path, gameSpec.game.modPath));
 }
 
@@ -245,10 +332,10 @@ function applyGame(context, gameSpec) {
     ...gameSpec.game,
     queryPath: makeFindGame(context.api, gameSpec),
     queryModPath: makeGetModPath(context.api, gameSpec),
-    requiresLauncher: makeRequiresLauncher(context.api, gameSpec),
     requiresCleanup: true,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     executable: () => gameSpec.game.executable,
+    requiresLauncher: requiresLauncher,
     supportedTools: tools,
   };
   context.registerGame(game);
@@ -264,6 +351,52 @@ function applyGame(context, gameSpec) {
 
   //register mod installers
   context.registerInstaller(`${GAME_ID}-modloader`, 25, testModLoader, installModLoader);
+  context.registerInstaller(`${GAME_ID}-folders`, 27, testFolders, installFolders);
+
+  //register actions
+  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
+    util.opn(CONFIG_PATH).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', () => {
+    util.opn(SAVE_PATH).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  }); //*/
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
+    util.opn(PCGAMINGWIKI_URL).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
+    const openPath = path.join(__dirname, 'CHANGELOG.md');
+    util.opn(openPath).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
+    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
+    util.opn(DOWNLOAD_FOLDER).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
 }
 
 //Main function

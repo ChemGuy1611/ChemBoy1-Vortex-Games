@@ -332,7 +332,7 @@ function isSuperMergerInstalled(api, spec) {
   return Object.keys(mods).some(id => mods[id]?.type === SUPERMERGER_ID);
 }
 
-//Function to choose mod loader
+//Function to choose merger utility
 async function chooseMerger(api, gameSpec) {
   const UNLEASHED_LABEL = `Unleash The Mods`;
   const SUPER_LABEL = `Super Mod Merger (Recommended)`;
