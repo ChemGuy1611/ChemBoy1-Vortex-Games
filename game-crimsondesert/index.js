@@ -64,7 +64,46 @@ if (BINARIES_PATH !== '.') {
 }
 
 //info for modtypes, installers, tools, and actions
-const ROOT_FOLDERS = [BINARIES_PATH, '0000', '0001', '0002', '0003'];
+const ROOT_FOLDERS = [BINARIES_PATH, 
+  '0000', 
+  '0001', 
+  '0002', 
+  '0003',
+  '0004',
+  '0005',
+  '0006',
+  '0007',
+  '0008',
+  '0009',
+  '0010',
+  '0011',
+  '0012',
+  '0013',
+  '0014',
+  '0015',
+  '0016',
+  '0017',
+  '0018',
+  '0019',
+  '0020',
+  '0021',
+  '0022',
+  '0023',
+  '0024',
+  '0025',
+  '0026',
+  '0027',
+  '0028',
+  '0029',
+  '0030',
+  '0031',
+  '0032',
+  '0033',
+  '0034',
+  '0035',
+];
+
+const FILE_EXTENSIONS = ['.paz', '.pamt'];
 
 const CONFIGMOD_LOCATION = LOCALAPPDATA;
 const SAVEMOD_LOCATION = LOCALAPPDATA;
@@ -99,7 +138,7 @@ const ROOT_NAME = "Root Folder";
 
 const BINARIES_ID = `${GAME_ID}-binaries`;
 const BINARIES_NAME = "Binaries (Engine Injector)";
-const BINARIES_EXTS = [".dll", ".asi", ".exe"];
+const BINARIES_EXTS = [".dll", ".asi"];
 
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_NAME = "Save";
@@ -126,20 +165,18 @@ const CONFIG_PATH = path.join(CONFIGMOD_LOCATION, APPDATA_FOLDER, CONFIG_FOLDERN
 const CONFIG_EXTS = [".XXX"];
 const CONFIG_FILES = ["user_engine_option_save.xml"];
 
-//* tool info (i.e. save editor)
-const TOOL_ID = `${GAME_ID}-unpacker`;
-const TOOL_NAME = "Unpacker";
-const TOOL_EXEC_FOLDER = '.';
-const TOOL_EXEC = 'PazGui.exe';
-const TOOL_EXEC_PATH = path.join(TOOL_EXEC_FOLDER, TOOL_EXEC);
-//*/
+// tool info (i.e. save editor)
+const UNPACKER_ID = `${GAME_ID}-unpacker`;
+const UNPACKER_NAME = "Unpacker";
+const UNPACKER_EXEC = 'PazGui.exe';
+const UNPACKER_PATH = '.';
 
 const MOD_PATH_DEFAULT = '.';
 const REQ_FILE = EXEC;
 const PARAMETERS_STRING = '';
 const PARAMETERS = [PARAMETERS_STRING];
 
-let MODTYPE_FOLDERS = [MOD_PATH, BINARIES_PATH];
+let MODTYPE_FOLDERS = [BINARIES_PATH];
 const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 
@@ -179,17 +216,23 @@ const spec = {
     }
   },
   "modTypes": [
-    {
+    /*{
       "id": MOD_ID,
       "name": MOD_NAME,
       "priority": "high",
       "targetPath": path.join("{gamePath}", MOD_PATH)
-    },
+    }, //*/
     {
       "id": ROOT_ID,
       "name": ROOT_NAME,
       "priority": "high",
       "targetPath": `{gamePath}`
+    },
+    {
+      "id": UNPACKER_ID,
+      "name": UNPACKER_NAME,
+      "priority": "low",
+      "targetPath": path.join("{gamePath}", UNPACKER_PATH)
     },
   ],
   "discovery": {
@@ -239,13 +282,12 @@ const tools = [ //accepts: exe, jar, py, vbs, bat
     //parameters: PARAMETERS,
   }, //*/
   {
-    id: TOOL_ID,
-    name: TOOL_NAME,
+    id: UNPACKER_ID,
+    name: UNPACKER_NAME,
     logo: 'unpacker.png',
-    //queryPath: () => TOOL_EXEC_FOLDER,
-    executable: () => TOOL_EXEC,
+    executable: () => UNPACKER_EXEC,
     requiredFiles: [
-      TOOL_EXEC,
+      UNPACKER_EXEC,
     ],
     relative: true,
     exclusive: true,
@@ -538,6 +580,47 @@ function installRoot(files) {
   const idx = modFile.indexOf(ROOT_IDX);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Test for Unpacker files
+function testUnpacker(files, gameId) {
+  const isMod = files.some(file => path.basename(file) === UNPACKER_EXEC);
+  let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install Unpacker files
+function installUnpacker(files) {
+  const MOD_TYPE = UNPACKER_ID;
+  const modFile = files.find(file => path.basename(file) === UNPACKER_EXEC);
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
@@ -917,11 +1000,12 @@ function applyGame(context, gameSpec) {
   if (rootInstaller) {
     context.registerInstaller(ROOT_ID, 27, testRoot, installRoot);
   }
+  context.registerInstaller(UNPACKER_ID, 28, testUnpacker, installUnpacker);
   if (binariesInstaller) {
-    context.registerInstaller(BINARIES_ID, 29, testBinaries, installBinaries);
+    context.registerInstaller(BINARIES_ID, 31, testBinaries, installBinaries);
   }
-  //context.registerInstaller(CONFIG_ID, 31, testConfig, installConfig);
-  //context.registerInstaller(SAVE_ID, 33, testSave, installSave);
+  //context.registerInstaller(CONFIG_ID, 33, testConfig, installConfig);
+  //context.registerInstaller(SAVE_ID, 34, testSave, installSave);
   if (needsModInstaller) {
     context.registerInstaller(MOD_ID, 35, testMod, installMod);
   }
