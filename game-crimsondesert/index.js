@@ -2,8 +2,8 @@
 Name: Crimson Desert Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2026-03-21
+Version: 0.1.1
+Date: 2026-03-23
 Notes:
 - Mostly plugin mods at this point
 ///////////////////////////////////////////*/
@@ -53,8 +53,8 @@ const INSTALL_VALUE = "XXX"; //often InstallDir or InstallPath
 const hasLoader = false; //true if game needs a mod loader
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
 const needsModInstaller = false; //set to true if standard mods should run through an installer - set false to have mods installed to the mods folder without any processing
-const rootInstaller = false; //enable root installer. Set false if you need to avoid installer collisions
-const fallbackInstaller = false; //enable fallback installer. Set false if you need to avoid installer collisions
+const rootInstaller = true; //enable root installer. Set false if you need to avoid installer collisions
+const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
 const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
 const hasUserIdFolder = true; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
 const debug = false; //toggle for debug mode
@@ -64,8 +64,7 @@ if (BINARIES_PATH !== '.') {
 }
 
 //info for modtypes, installers, tools, and actions
-const DATA_FOLDER = 'XXX';
-const ROOT_FOLDERS = [DATA_FOLDER];
+const ROOT_FOLDERS = [BINARIES_PATH, '0000', '0001', '0002', '0003'];
 
 const CONFIGMOD_LOCATION = LOCALAPPDATA;
 const SAVEMOD_LOCATION = LOCALAPPDATA;
