@@ -5,7 +5,7 @@ Author: ChemBoy1
 Version: 0.1.0
 Date: 2026-03-21
 Notes:
-- 
+- Mostly plugin mods at this point
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -26,14 +26,14 @@ const LOCALAPPDATA = util.getVortexPath("localAppData");
 
 //Specify all the information about the game
 const GAME_ID = "crimsondesert";
-const STEAMAPP_ID = "3321460";
+const STEAMAPP_ID = "3321460"; //https://steamdb.info/app/3321460/depots/
 const STEAMAPP_ID_DEMO = null;
-const EPICAPP_ID = ""; // NOT on egdata.app yet - https://egdata.app/offers/93fa632bf25b4361abb3a79c86e3f822/builds
+const EPICAPP_ID = "0230d0150e9f45d49dce401e1103c9fc"; // https://egdata.app/offers/93fa632bf25b4361abb3a79c86e3f822/builds
 const GOGAPP_ID = null;
-const XBOXAPP_ID = null;
-const XBOXEXECNAME = null;
+const XBOXAPP_ID = "XXX"; //not on Game Pass. Cannot get info
+const XBOXEXECNAME = "XXX";
 const XBOX_PUB_ID = ""; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 const GAME_NAME = "Crimson Desert";
 const GAME_NAME_SHORT = "Crimson Desert";
 const BINARIES_PATH = 'bin64';
@@ -43,7 +43,7 @@ const EXEC_EGS = EXEC; //change other versions if different than Steam/default
 const EXEC_GOG = EXEC;
 const EXEC_DEMO = EXEC;
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Crimson_Desert";
-const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1746"; //Nexus link to this extension. Used for links
 //for finding install in registry - requires winapi-bindings
 const INSTALL_HIVE = 'HKEY_LOCAL_MACHINE'; //typically HKEY_LOCAL_MACHINE or HKEY_CURRENT_USER
 const INSTALL_KEY = `SOFTWARE\\WOW6432Node\\XXX\\XXX`; //fill in path
@@ -150,7 +150,6 @@ const spec = {
     "id": GAME_ID,
     "name": GAME_NAME,
     "shortName": GAME_NAME_SHORT,
-    "executable": EXEC,
     //"parameters": PARAMETERS, //commented out by default to avoid passing empty string parameter
     "logo": `${GAME_ID}.jpg`,
     "mergeMods": true,
@@ -577,7 +576,7 @@ function testBinaries(files, gameId) {
 //Fallback installer to Binaries folder
 function installBinaries(files) {
   const MOD_TYPE = BINARIES_ID;
-  const modFile = files.find(file => MOD_EXTS.includes(path.extname(file).toLowerCase()));
+  const modFile = files.find(file => BINARIES_EXTS.includes(path.extname(file).toLowerCase()));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
@@ -861,13 +860,12 @@ function applyGame(context, gameSpec) {
   const game = { //register game
     ...gameSpec.game,
     queryPath: makeFindGame(context.api, gameSpec),
-    executable: () => gameSpec.game.executable,
-    //executable: getExecutable,
+    executable: getExecutable,
     queryModPath: makeGetModPath(context.api, gameSpec),
     //queryModPath: getModPath(),
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
-    //getGameVersion: resolveGameVersion,
+    getGameVersion: resolveGameVersion,
     supportedTools: tools,
   };
   context.registerGame(game);
@@ -982,7 +980,7 @@ function applyGame(context, gameSpec) {
 function main(context) {
   applyGame(context, spec);
   context.once(() => { // put code here that should be run (once) when Vortex starts up
-    const api = context.api;
+    //const api = context.api;
   });
   return true;
 }
