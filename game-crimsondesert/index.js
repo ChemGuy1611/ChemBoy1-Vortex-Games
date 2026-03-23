@@ -126,11 +126,11 @@ const CONFIG_PATH = path.join(CONFIGMOD_LOCATION, APPDATA_FOLDER, CONFIG_FOLDERN
 const CONFIG_EXTS = [".XXX"];
 const CONFIG_FILES = ["user_engine_option_save.xml"];
 
-/* tool info (i.e. save editor)
-const TOOL_ID = `${GAME_ID}-tool`;
-const TOOL_NAME = "XXX";
-const TOOL_EXEC_FOLDER = path.join('XXX');
-const TOOL_EXEC = 'XXX.exe';
+//* tool info (i.e. save editor)
+const TOOL_ID = `${GAME_ID}-unpacker`;
+const TOOL_NAME = "Unpacker";
+const TOOL_EXEC_FOLDER = '.';
+const TOOL_EXEC = 'PazGui.exe';
 const TOOL_EXEC_PATH = path.join(TOOL_EXEC_FOLDER, TOOL_EXEC);
 //*/
 
@@ -238,10 +238,10 @@ const tools = [ //accepts: exe, jar, py, vbs, bat
     //defaultPrimary: true,
     //parameters: PARAMETERS,
   }, //*/
-  /*{
+  {
     id: TOOL_ID,
     name: TOOL_NAME,
-    logo: 'tool.png',
+    logo: 'unpacker.png',
     //queryPath: () => TOOL_EXEC_FOLDER,
     executable: () => TOOL_EXEC,
     requiredFiles: [
