@@ -6,4 +6,4 @@
 
 ## [0.1.0] - 2026-XX-XX
 
-- Inital Release
+- Initial Release
