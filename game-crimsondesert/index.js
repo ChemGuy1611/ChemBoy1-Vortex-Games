@@ -48,6 +48,7 @@ const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1746"; //Nexus link t
 const INSTALL_HIVE = 'HKEY_LOCAL_MACHINE'; //typically HKEY_LOCAL_MACHINE or HKEY_CURRENT_USER
 const INSTALL_KEY = `SOFTWARE\\WOW6432Node\\XXX\\XXX`; //fill in path
 const INSTALL_VALUE = "XXX"; //often InstallDir or InstallPath
+const RESHADE_URL = "https://reshade.me/#download";
 
 //feature toggles
 const hasLoader = false; //true if game needs a mod loader
@@ -710,7 +711,7 @@ function installFallback(api, files, destinationPath) {
       destination: file,
     };
   });
-  instructions.push(setModTypeInstruction);
+  //instructions.push(setModTypeInstruction);
   return Promise.resolve({ instructions });
 }
 
@@ -732,6 +733,8 @@ function fallbackInstallerNotify(api, modName) {
           api.showDialog('question', MESSAGE, {
             text: `The mod you just installed reached the fallback installer. This means Vortex could not determine where to place these mod files.\n`
                 + `Please check the mod page description and review the files in the mod staging folder to determine if manual file manipulation is required.\n`
+                + `\n`
+                + `IF THE MOD YOU INSTALLED IS A RESHADE PRESET: You must download ReShade, run the installer, and select the preset\'s .ini file to activate the preset. The preset .ini will be found in the game folder or a subfolder of it.\n`
                 + `\n`
                 + `If you think that Vortex should be capable to install this mod to a specific folder, please contact the extension developer for support at the link below.\n`
                 + `\n`
@@ -767,6 +770,12 @@ function fallbackInstallerNotify(api, modName) {
               util.opn(MOD_PAGE_URL).catch(err => undefined);
               //dismiss();
             }}, //*/
+            {
+              label: 'Download ReShade', action: () => {
+                util.opn(RESHADE_URL).catch(() => null);
+                dismiss();
+              }
+            }, //*/
           ]);
         },
       },
