@@ -308,7 +308,8 @@ const CUSTOMLEADERS_ID = `${GAME_ID}-customleaders`;
 const CUSTOMLEADERS_NAME = "Custom Leaders Mod";
 const CUSTOMLEADERS_FOLDER = "customleaders";
 const CUSTOMLEADERS_PATH = path.join(MELON_MODS_PATH, CUSTOMLEADERS_FOLDER);
-const CUSTOMLEADERS_STRING = "_clone.json";
+const CUSTOMLEADERS_STRING_CLONE = "_clone.json";
+const CUSTOMLEADERS_STRING_REPL = "_replace.json";
 
 const MODKIT_ID = `${GAME_ID}-modkit`;
 const MODKIT_NAME = "Menace ModKit";
@@ -1458,8 +1459,9 @@ function installModpackMod(files, fileName) {
 
 //Test for Custom Leaders mod files
 function testCustomLeaders(files, gameId) {
-  const isMod = files.some(file => (path.basename(file).toLowerCase().includes(CUSTOMLEADERS_STRING)));
-  let supported = (gameId === spec.game.id) && isMod;
+  const isClone = files.some(file => (path.basename(file).toLowerCase().includes(CUSTOMLEADERS_STRING_CLONE)));
+  const isReplace = files.some(file => (path.basename(file).toLowerCase().includes(CUSTOMLEADERS_STRING_REPL)));
+  let supported = (gameId === spec.game.id) && ( isClone || isReplace );
 
   // Test for a mod installer
   if (supported && files.find(file =>
@@ -1478,15 +1480,21 @@ function testCustomLeaders(files, gameId) {
 function installCustomLeaders(files, fileName) {
   const MOD_TYPE = CUSTOMLEADERS_ID;
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
-  let modFile = files.find(file => (path.basename(file).toLowerCase().includes(CUSTOMLEADERS_STRING)));
+  let modFile = files.find(file => (path.basename(file).toLowerCase().includes(CUSTOMLEADERS_STRING_CLONE)));
+  if (modFile === undefined) {
+    modFile = files.find(file => (path.basename(file).toLowerCase().includes(CUSTOMLEADERS_STRING_REPL)));
+  }
   let rootPath = path.dirname(modFile);
   //*
-  let folder = path.basename(modFile).replace(CUSTOMLEADERS_STRING, '');
+  let folder = path.basename(modFile).replace(CUSTOMLEADERS_STRING_CLONE, '');
+  if (folder.includes('.json')) {
+    folder = path.basename(modFile).replace(CUSTOMLEADERS_STRING_REPL, '');
+  }
   const ROOT_PATH = path.basename(rootPath);
   if (ROOT_PATH !== '.') {
-    folder = ROOT_PATH;
-    //modFile = rootPath; //make the folder the targeted modFile so we can grab any other folders also in its directory
-    //rootPath = path.dirname(modFile);
+    folder = '';
+    modFile = rootPath; //make the folder the targeted modFile so we can grab any other folders also in its directory
+    rootPath = path.dirname(modFile);
     //const indexFolder = path.basename(modFile);
     //idx = modFile.indexOf(`${indexFolder}${path.sep}`);  //index on the folder with path separator
   } //*/
