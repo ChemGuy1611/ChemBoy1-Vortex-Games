@@ -598,7 +598,8 @@ function fallbackInstallerNotify(api, fileName) {
     PAGE = `${MOD_ID}?tab=description`;
   }
   const MOD_PAGE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${PAGE}`;
-  const NOTIF_ID = `${GAME_ID}-fallbackinstaller`;
+  const id = MOD_NAME.replace(/[^a-zA-Z0-9\s]*( )*/gi, '');
+  const NOTIF_ID = `${GAME_ID}-${id}-fallback`;
   const MESSAGE = `Fallback installer reached for ${MOD_NAME}`;
   api.sendNotification({
     id: NOTIF_ID,

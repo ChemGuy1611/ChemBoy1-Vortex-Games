@@ -103,9 +103,11 @@ const ROOT_FOLDERS = [BINARIES_PATH,
   '0033',
   '0034',
   '0035',
+  '0036',
 ];
 
 const FILE_EXTS = ['.paz', '.pamt'];
+const META_FILE_EXTS = ['.papgt', '.pathc', '.paver'];
 
 const CONFIGMOD_LOCATION = LOCALAPPDATA;
 const SAVEMOD_LOCATION = LOCALAPPDATA;
@@ -273,7 +275,7 @@ const tools = [ //accepts: exe, jar, py, vbs, bat
     //defaultPrimary: true,
     parameters: PARAMETERS,
   }, //*/
-  {
+  /*{
     id: `${GAME_ID}-customlaunchxbox`,
     name: 'Custom Launch',
     logo: 'exec.png',
