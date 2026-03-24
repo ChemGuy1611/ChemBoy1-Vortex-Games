@@ -2,8 +2,8 @@
 Name: Dark Messiah of Might & Magic Vortex Extension
 Structure: Basic (Launcher)
 Author: ChemBoy1
-Version: 0.2.3
-Date: 2025-11-18
+Version: 0.3.0
+Date: 2026-03-23
 //////////////////////////////////////////////////////*/
 
 //Import libraries
@@ -19,6 +19,8 @@ const GAME_NAME_SHORT = "Dark Messiah MM";
 
 const EXEC = "mm.exe";
 const ROOT_FOLDER = "mm";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Dark_Messiah_of_Might_%26_Magic";
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1056"; //Nexus link to this extension. Used for links
 
 let GAME_PATH = '';
 let STAGING_FOLDER = '';
@@ -73,6 +75,7 @@ const CONFIG_EXTS = ['.cfg'];
 const LAUNCHER_ID = `${GAME_ID}-launcher`;
 const LAUNCHER_NAME = `wiltOS Mod Launcher`;
 const LAUNCHER_EXEC = EXEC;
+const LAUNCHER_URL = "https://www.moddb.com/games/dark-messiah-of-might-magic/downloads";
 
 const LAUNCHERMOD_ID = `${GAME_ID}-launchermod`;
 const LAUNCHERMOD_NAME = `Launcher Mod`;
@@ -280,17 +283,16 @@ function isLauncherInstalled(api, spec) {
 }
 
 //* Function to have user browse to download Mod Launcher from modDB
-async function downloadLauncher(api, gameSpec) {
+async function downloadLauncher(api, gameSpec, check = true) {
   let isInstalled = isLauncherInstalled(api, gameSpec);
-  const URL = "https://www.moddb.com/games/dark-messiah-of-might-magic/downloads";
-  const MOD_NAME = "wiltOS Mod Launcher";
+  const URL = LAUNCHER_URL;
+  const MOD_NAME = "[wOS] Dark Messiah Mod Launcher";
   const ARCHIVE_NAME = "wos_dm_modlauncher";
   const instructions = api.translate(`Once you allow Vortex to browse to modDB - `
     + `Navigate to the latest version of the ${MOD_NAME} in the Files list`
     + `and click on "Download Now" button to download and install the mod.`
   );
-
-  if (!isInstalled) {
+  if (!isInstalled || !check) {
     //*
     return new Promise((resolve, reject) => { //Browse to modDB and download the mod
       return api.emitAndAwait('browse-for-download', URL, instructions)
@@ -900,6 +902,13 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(CONFIG_ID, 45, testConfig, installConfig);
 
   //register actions
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download wOS Mod Launcher (Manual)', () => {
+      downloadLauncher(context.api, gameSpec, false);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open config.cfg', async () => {
     GAME_PATH = getDiscoveryPath(context.api);
     util.opn(path.join(GAME_PATH, CONFIG_PATH, CONFIG_FILE)).catch(() => null);
@@ -916,6 +925,13 @@ function applyGame(context, gameSpec) {
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   }); //*/
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
+    util.opn(PCGAMINGWIKI_URL).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
     const openPath = path.join(__dirname, 'CHANGELOG.md');
     util.opn(openPath).catch(() => null);
@@ -923,6 +939,13 @@ function applyGame(context, gameSpec) {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
+    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
     util.opn(DOWNLOAD_FOLDER).catch(() => null);

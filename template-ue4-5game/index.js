@@ -70,7 +70,7 @@ const SAVE_EXT = ".sav";
 const SAVE_COMPAT_VERSIONS = ['steam', 'epic', 'gog']; //game versions with installable save mods (never Xbox)
 let PAKMOD_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Paks', '~mods'); //usually works. Some games don't work from "~mods".
 const PAKMOD_LOADORDER = true; //set to false if you don't want loadOrder. If must be in "Paks" root, disable loadOrder.
-const PAKMOD_EXTRA_EXTS = []; //extra extensions to include with paks (usually for custom modding frameworks, i.e .toml, .json, etc)
+const PAKMOD_EXTRA_EXTS = []; //extra extensions to include with paks (usually for custom modding frameworks, i.e .toml, .json)
 const UE4SS_PAGE_NO = 0; //set these if there is a customized UE4SS Nexus page
 const UE4SS_FILE_NO = 0;
 const UE4SS_DOMAIN = GAME_ID; //either GAME_ID or 'site'
@@ -80,7 +80,7 @@ const UE4SS_MOD_PATH = path.join('ue4ss', 'Mods'); //this should probably never 
 const DATA_FOLDER = EPIC_CODE_NAME; //almost always matches.
 const CONFIG_FOLDERNAME = 'Windows'; //UE 4 games are often 'WindowsNoEditor'
 const CONFIG_LOC = 'Local AppData'; //string for notification text.
-const SAVE_LOC = CONFIG_LOC; //string for notification text. Config and Save mods are almonst always in the same place
+const SAVE_LOC = CONFIG_LOC; //string for notification text. Config and Save mods are almost always in the same place
 const CONFIGMOD_LOCATION = LOCALAPPDATA; //almost always matches. Some are in game folder or Documents.
 const SAVEMOD_LOCATION = CONFIGMOD_LOCATION;
 
@@ -1926,8 +1926,7 @@ async function setup(discovery, api, gameSpec) {
   CHECK_CONFIG = checkPartitions(CONFIGMOD_LOCATION, GAME_PATH);
   if (configSaveMatch) {
     CHECK_SAVE = CHECK_CONFIG;
-  }
-  if (!configSaveMatch) {
+  } else {
     CHECK_SAVE = checkPartitions(SAVEMOD_LOCATION, GAME_PATH);
   }
   if (!CHECK_CONFIG || !CHECK_SAVE) {

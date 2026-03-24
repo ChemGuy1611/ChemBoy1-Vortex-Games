@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.3.1] - 2026-03-24
+
+- version bump to fix missing main file
+
 ## [0.3.0] - 2026-03-21
 
 - Added: Steam Demo version support

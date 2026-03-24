@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.3.0] - 2026-03-23
+
+- Added: Button to download wiltOS Mod Launcher from ModDB - provides a means to update
+
 ## [0.2.3] - 2025-11-18
 
 - Added config.cfg file installer.

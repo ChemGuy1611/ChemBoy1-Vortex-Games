@@ -4,6 +4,11 @@
 
 - None Planned
 
+## [0.1.2] - 2026-03-24
+
+- Added: "meta" folder to Root Installer
+- Added: Launch tool for Save Editor
+
 ## [0.1.1] - 2026-03-23
 
 - Added: Root Folder installer (bin64, 0000, 0001, ..., 0035)

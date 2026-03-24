@@ -2,10 +2,10 @@
 Name: Crimson Desert Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.1.1
-Date: 2026-03-23
+Version: 0.1.2
+Date: 2026-03-24
 Notes:
-- Mostly plugin mods at this point
+- Supports plugin mods and data mods with "00XX" folders
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -65,7 +65,8 @@ if (BINARIES_PATH !== '.') {
 }
 
 //info for modtypes, installers, tools, and actions
-const ROOT_FOLDERS = [BINARIES_PATH, 
+const ROOT_FOLDERS = [BINARIES_PATH,
+  'meta',
   '0000', 
   '0001', 
   '0002', 
@@ -104,7 +105,7 @@ const ROOT_FOLDERS = [BINARIES_PATH,
   '0035',
 ];
 
-const FILE_EXTENSIONS = ['.paz', '.pamt'];
+const FILE_EXTS = ['.paz', '.pamt'];
 
 const CONFIGMOD_LOCATION = LOCALAPPDATA;
 const SAVEMOD_LOCATION = LOCALAPPDATA;
@@ -171,6 +172,10 @@ const UNPACKER_ID = `${GAME_ID}-unpacker`;
 const UNPACKER_NAME = "Unpacker";
 const UNPACKER_EXEC = 'PazGui.exe';
 const UNPACKER_PATH = '.';
+
+const SAVEEDITOR_ID = `${GAME_ID}-saveeditor`;
+const SAVEEDITOR_NAME = "Save Editor";
+const SAVEEDITOR_EXEC = 'CrimsonSaveEditor.exe';
 
 const MOD_PATH_DEFAULT = '.';
 const REQ_FILE = EXEC;
@@ -291,10 +296,22 @@ const tools = [ //accepts: exe, jar, py, vbs, bat
       UNPACKER_EXEC,
     ],
     relative: true,
-    exclusive: true,
+    exclusive: false,
     //shell: true,
-    //defaultPrimary: true,
-    //parameters: PARAMETERS,
+    //parameters: [],
+  }, //*/
+  {
+    id: SAVEEDITOR_ID,
+    name: SAVEEDITOR_NAME,
+    logo: 'saveeditor.png',
+    executable: () => SAVEEDITOR_EXEC,
+    requiredFiles: [
+      SAVEEDITOR_EXEC,
+    ],
+    relative: true,
+    exclusive: false,
+    //shell: true,
+    //parameters: [],
   }, //*/
 ];
 
