@@ -2,8 +2,8 @@
 Name: Middle-earth: Shadow of War Vortex Extension
 Structure: Mod Loaders + Mods folder w/ LO support
 Author: ChemBoy1
-Version: 2.2.1
-Date: 2026-01-29
+Version: 2.3.0
+Date: 2026-03-24
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -603,8 +603,64 @@ function testMod(files, gameId) {
   });
 }
 
-//Install mod files
-function installMod(files) {
+async function installMod(api, files) {
+  const fileExt = MOD_EXT;
+  const modFiles = files.filter(file => path.extname(file).toLowerCase() === fileExt);
+  const modType = {
+    type: 'setmodtype',
+    value: MOD_ID,
+  };
+  const installFiles = (modFiles.length > 1)
+    ? await chooseFilesToInstall(api, modFiles, fileExt)
+    : modFiles;
+  const ARCH06_FILES = installFiles.map(file => path.basename(file));
+  const MOD_ATTRIBUTE = {
+    type: 'attribute',
+    key: 'arch06Files',
+    value: ARCH06_FILES,
+  };
+  let instructions = installFiles.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.basename(file)
+    };
+  });
+  instructions.push(modType);
+  instructions.push(MOD_ATTRIBUTE);
+  return Promise.resolve({ instructions });
+}
+
+async function chooseFilesToInstall(api, files, fileExt) {
+  const t = api.translate;
+  return api.showDialog('question', t('Multiple {{ext}} files', { replace: { ext: fileExt } }), {
+      text: t('The mod you are installing contains {{x}} {{ext}} files.', { replace: { x: files.length, ext: fileExt } }) +
+          `This can be because the author intended for you to chose one of several options. Please select which files to install below:`,
+      checkboxes: files.map((arch) => {
+          return {
+              id: arch,
+              text: arch,
+              value: false
+          };
+      })
+  }, [
+      { label: 'Cancel' },
+      { label: 'Install Selected' },
+      { label: 'Install All_plural' }
+  ]).then((result) => {
+      if (result.action === 'Cancel')
+          return Promise.reject(new util.UserCanceled('User cancelled.'));
+      else {
+        const installAll = (result.action === 'Install All' || result.action === 'Install All_plural');
+        const installFiles = installAll ? files : Object.keys(result.input).filter(s => result.input[s])
+          .map(file => files.find(f => f === file));
+        return installFiles;
+      }
+  });
+}
+
+/*Install mod files - Simple version
+function installMod(api, files) {
   const MOD_TYPE = MOD_ID;
   const modFile = files.find(file => MOD_EXTS.includes(path.extname(file).toLowerCase()));
   const idx = modFile.indexOf(path.basename(modFile));
@@ -612,7 +668,8 @@ function installMod(files) {
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
 
   //set a mod attribute to find the mod name in deserializeLoadOrder
-  const ARCH06_FILES = files.filter(file => MOD_EXTS.includes(path.extname(file).toLowerCase()));
+  const ARCH06_FILES = files.filter(file => MOD_EXTS.includes(path.extname(file).toLowerCase()))
+    .map(file => path.basename(file));
   const MOD_ATTRIBUTE = {
     type: 'attribute',
     key: 'arch06Files',
@@ -633,7 +690,7 @@ function installMod(files) {
   instructions.push(setModTypeInstruction);
   instructions.push(MOD_ATTRIBUTE);
   return Promise.resolve({ instructions });
-}
+} //*/
 
 //Test for plugins mod files
 function testPlugins(files, gameId) {
@@ -1298,7 +1355,7 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(PACKETLOADER_ID, 25, testPacketLoader, installPacketLoader);
   context.registerInstaller(DLLLOADER_ID, 27, testDllLoader, installDllLoader);
   context.registerInstaller(MODLOADER_ID, 29, testModLoader, installModLoader);
-  context.registerInstaller(MOD_ID, 29, testMod, installMod);
+  context.registerInstaller(MOD_ID, 29, testMod, (files) => installMod(context.api, files));
   context.registerInstaller(PLUGINS_ID, 31, testPlugins, installPlugins);
   context.registerInstaller(ROOT_ID, 33, testRoot, installRoot);
   //context.registerInstaller(CONFIG_ID, 43, testConfig, installConfig);

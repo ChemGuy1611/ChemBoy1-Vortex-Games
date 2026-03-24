@@ -4,6 +4,11 @@
 
 - None Planned
 
+## [2.2.2] - 2026-03-24
+
+- Improved: .arch06 mod installer can now handle mods with multiple .arch06 files and variants
+- Fixed: Mods no longer incorrectly marked as "Not Managed by Vortex" if the .arch06 files in the mod archive were nested in a folder
+
 ## [2.2.1] - 2026-01-29
 
 - Added: Button to open MEML Mods GitHub page
