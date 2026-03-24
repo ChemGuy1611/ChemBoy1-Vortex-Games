@@ -1315,8 +1315,9 @@ function installBinaries(api, files, fileName) {
 function fallbackInstallerNotify(api, modName) {
   const state = api.getState();
   STAGING_FOLDER = selectors.installPathForGame(state, spec.game.id);
-  const NOTIF_ID = `${GAME_ID}-fallbackinstaller-notify`;
   modName = path.basename(modName, '.installing');
+  const id = modName.replace(/[^a-zA-Z0-9\s]*( )*/gi, '');
+  const NOTIF_ID = `${GAME_ID}-${id}-fallback`;
   const MESSAGE = 'Fallback installer reached for ' + modName;
   api.sendNotification({
     id: NOTIF_ID,
@@ -1617,16 +1618,7 @@ async function preSort(api, items, direction) {
   return (direction === 'descending') ? Promise.resolve(loadOrder.reverse()) : Promise.resolve(loadOrder);
 }
 
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-  function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-  return new (P || (P = Promise))(function (resolve, reject) {
-      function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-      function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-      function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-      step((generator = generator.apply(thisArg, _arguments || [])).next());
-  });
-};
-
+//Make prefix based on loadOrder index
 function makePrefix(input) {
   let res = '';
   let rest = input;
@@ -1637,6 +1629,7 @@ function makePrefix(input) {
   return util.pad(res, 'A', 3);
 }
 
+//Find the loadOrder index and convert to prefix
 function loadOrderPrefix(api, mod) {
   const state = api.getState();
   const profile = selectors.lastActiveProfileForGame(state, GAME_ID);
@@ -1649,127 +1642,80 @@ function loadOrderPrefix(api, mod) {
   return makePrefix(pos) + '-';
 }
 
-function installUnrealMod(api, files, gameId) {
-  return __awaiter(this, void 0, void 0, function* () {
-    const game = gameId;
-    const fileExt = UNREALDATA.fileExt;
-    if (!fileExt)
-      Promise.reject('Unsupported game - UE5 installer failed.');
-    const modFiles = files.filter(file => fileExt.includes(path.extname(file).toLowerCase()));
-    const modType = {
-      type: 'setmodtype',
-      value: UE5_SORTABLE_ID,
+//Test for pak mods
+function testPak(files, gameId) {
+  const supportedGame = gameId === spec.game.id;
+  const isPak = files.some(file => (path.extname(file).toLowerCase() === PAK_EXT));
+  let supported = supportedGame && isPak;
+  
+  // Test for a mod installer
+  if (supported && files.find(file =>
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+  
+  return Promise.resolve({
+    supported,
+    requiredFiles: []
+  });
+};
+
+//install pak mods
+async function installPak(api, files) {
+  const fileExt = UNREALDATA.fileExt;
+  const modFiles = files.filter(file => fileExt.includes(path.extname(file).toLowerCase()));
+  const modType = {
+    type: 'setmodtype',
+    value: UE5_SORTABLE_ID,
+  };
+  const installFiles = (modFiles.length > PAK_FILE_MIN)
+    ? await chooseFilesToInstall(api, modFiles, fileExt)
+    : modFiles;
+  const unrealModFiles = {
+    type: 'attribute',
+    key: 'unrealModFiles',
+    value: installFiles.map(f => path.basename(f))
+  };
+  let instructions = installFiles.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.basename(file)
     };
-    const installFiles = (modFiles.length > PAK_FILE_MIN)
-      ? yield chooseFilesToInstall(api, modFiles, fileExt)
-      : modFiles;
-    const unrealModFiles = {
-      type: 'attribute',
-      key: 'unrealModFiles',
-      value: modFiles.map(f => path.basename(f))
-    };
-    let instructions = installFiles.map(file => {
+  });
+  instructions.push(modType);
+  instructions.push(unrealModFiles);
+  return Promise.resolve({ instructions });
+}
+
+//file selection dialog for pak mods
+async function chooseFilesToInstall(api, files, fileExt) {
+  const t = api.translate;
+  return api.showDialog('question', t('Multiple {{PAK}} files', { replace: { PAK: fileExt } }), {
+    text: t('The mod you are installing contains {{x}} {{ext}} files.', { replace: { x: files.length, ext: fileExt } }) +
+        `This can be because the author intended for you to chose one of several options. Please select which files to install below:`,
+    checkboxes: files.map((pak) => {
       return {
-        type: 'copy',
-        source: file,
-        destination: path.basename(file)
+          id: pak,
+          text: pak,
+          value: false
       };
-    });
-    instructions.push(modType);
-    instructions.push(unrealModFiles);
-    return Promise.resolve({ instructions });
-  });
-}
-
-function chooseFilesToInstall(api, files, fileExt) {
-  return __awaiter(this, void 0, void 0, function* () {
-    const t = api.translate;
-    return api.showDialog('question', t('Multiple {{PAK}} files', { replace: { PAK: fileExt } }), {
-        text: t('The mod you are installing contains {{x}} {{ext}} files.', { replace: { x: files.length, ext: fileExt } }) +
-            `This can be because the author intended for you to chose one of several options. Please select which files to install below:`,
-        checkboxes: files.map((pak) => {
-            return {
-                //id: path.basename(pak),
-                id: pak,
-                //text: path.basename(pak),
-                text: pak,
-                value: false
-            };
-        })
+    })
     }, [
-        { label: 'Cancel' },
-        { label: 'Install Selected' },
-        { label: 'Install All_plural' }
-    ]).then((result) => {
-        if (result.action === 'Cancel')
-            return Promise.reject(new util.UserCanceled('User cancelled.'));
-        else {
-            const installAll = (result.action === 'Install All' || result.action === 'Install All_plural');
-            const installPAKS = installAll ? files : Object.keys(result.input).filter(s => result.input[s])
-              //.map(file => files.find(f => path.basename(f) === file));
-              .map(file => files.find(f => f === file));
-            return installPAKS;
-        }
-    });
+      { label: 'Cancel' },
+      { label: 'Install Selected' },
+      { label: 'Install All_plural' }
+  ]).then((result) => {
+      if (result.action === 'Cancel')
+          return Promise.reject(new util.UserCanceled('User cancelled.'));
+      else {
+          const installAll = (result.action === 'Install All' || result.action === 'Install All_plural');
+          const installPAKS = installAll ? files : Object.keys(result.input).filter(s => result.input[s])
+            .map(file => files.find(f => f === file));
+          return installPAKS;
+      }
   });
-}
-
-function UNREALEXTENSION(context) {
-  const testUnrealGame = (gameId, withLoadOrder) => {
-    const game = gameId === spec.game.id;
-    const unrealModsPath = UNREALDATA.modsPath;
-    //const loadOrder = UNREALDATA.loadOrder;
-    return (!!unrealModsPath && game);
-  };
-
-  const testForUnrealMod = (files, gameId) => {
-    const supportedGame = testUnrealGame(gameId);
-    const fileExt = UNREALDATA.fileExt;
-    let modFiles = [];
-    if (fileExt) {
-      modFiles = files.filter(file => fileExt.includes(path.extname(file).toLowerCase()));
-    }
-    const isPak = files.some(file => (path.extname(file).toLowerCase() === PAK_EXT));
-    let supported = ( supportedGame && (gameId === spec.game.id) && modFiles.length > 0 && isPak );
-    
-    // Test for a mod installer
-    if (supported && files.find(file =>
-      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
-      supported = false;
-    }
-    
-    return Promise.resolve({
-      supported,
-      requiredFiles: []
-    });
-  };
-
-  const getUnrealModsPath = (game) => {
-    const modsPath = UNREALDATA.modsPath;
-    const state = context.api.getState();
-    const discoveryPath = util.getSafe(state.settings, ['gameMode', 'discovered', game.id, 'path'], undefined);
-    const installPath = [discoveryPath].concat(modsPath.split(path.sep));
-    return discoveryPath ? path.join.apply(null, installPath) : undefined;
-  };
-
-  context.registerInstaller('ue5-pak-installer', 29, testForUnrealMod, (files, __destinationPath, gameId) => installUnrealMod(context.api, files, gameId));
-
-  context.registerModType(UE5_SORTABLE_ID, 25, 
-    (gameId) => testUnrealGame(gameId, true), 
-    getUnrealModsPath, 
-    () => Promise.resolve(false), 
-    { name: UE5_SORTABLE_NAME,
-      //mergeMods: mod => loadOrderPrefix(context.api, mod) + mod.id
-      mergeMods: (mod) => {
-        if (UNREALDATA.loadOrder === true) {
-          return loadOrderPrefix(context.api, mod) + mod.id
-        } else { //If load order is disabled, don't use sorting folders
-          return '';
-        }
-      } //*/
-    }
-  );
 }
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
@@ -2061,6 +2007,25 @@ function applyGame(context, gameSpec) {
     }, (game) => pathPattern(context.api, game, type.targetPath), () => Promise.resolve(false), { name: type.name });
   });
 
+  //Pak modType
+  context.registerModType(UE5_SORTABLE_ID, 25, 
+    (gameId) => {
+      var _a;
+      return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
+    },
+    (game) => pathPattern(context.api, game, path.join('{gamePath}', UNREALDATA.modsPath)), 
+    () => Promise.resolve(false), 
+    { name: UE5_SORTABLE_NAME,
+      mergeMods: (mod) => {
+        if (UNREALDATA.loadOrder === true) {
+          return loadOrderPrefix(context.api, mod) + mod.id
+        } else { //If load order is disabled, don't use sorting folders
+          return '';
+        }
+      } //*/
+    }
+  );
+
   //register mod types explicitly (due to potentially dynamic Binaries folder)
   context.registerModType(SCRIPTS_ID, 50, 
     (gameId) => {
@@ -2168,7 +2133,7 @@ function applyGame(context, gameSpec) {
   }
   context.registerInstaller(UE4SSCOMBO_ID, 26, testUe4ssCombo, installUe4ssCombo);
   context.registerInstaller(LOGICMODS_ID, 27, testLogic, installLogic);
-  //29 is pak installer above
+  context.registerInstaller(UE5_SORTABLE_ID, 29, testPak, (files) => installPak(context.api, files)); //Pak installer
   context.registerInstaller(UE4SS_ID, 31, testUe4ss, installUe4ss);
   if (SIGBYPASS_REQUIRED === true) {
     context.registerInstaller(SIGBYPASS_ID, 33, testSigBypass, installSigBypass);
@@ -2288,7 +2253,6 @@ function applyGame(context, gameSpec) {
 
 //Main function
 function main(context) {
-  UNREALEXTENSION(context);
   applyGame(context, spec);
   if (UNREALDATA.loadOrder === true) { //UNREAL - mod load order
     let previousLO;

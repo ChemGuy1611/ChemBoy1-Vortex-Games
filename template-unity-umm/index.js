@@ -589,8 +589,9 @@ function installFallback(api, files, destinationPath) {
 function fallbackInstallerNotify(api, modName) {
   const state = api.getState();
   STAGING_FOLDER = selectors.installPathForGame(state, spec.game.id);
-  const NOTIF_ID = `${GAME_ID}-fallbackinstaller`;
   modName = path.basename(modName, '.installing');
+  const id = modName.replace(/[^a-zA-Z0-9\s]*( )*/gi, '');
+  const NOTIF_ID = `${GAME_ID}-${id}-fallback`;
   const MESSAGE = 'Fallback installer reached for ' + modName;
   api.sendNotification({
     id: NOTIF_ID,
