@@ -721,16 +721,16 @@ function installPlugins(files) {
   const MOD_TYPE = PLUGINS_ID;
 
   let FOLDERS = '';
-  let modFile = files.find(file => PLUGINS_EXTS.includes(path.extname(file).toLowerCase()));
+  let modFile = files.find(file => PLUGINS_EXTS.includes(path.extname(file).toLowerCase())); //.dll file
   if (modFile === undefined) {
-    modFile = files.find(file => PLUGINS_SUBFOLDERS.includes(path.basename(file)));
+    modFile = files.find(file => PLUGINS_SUBFOLDERS.includes(path.basename(file))); //"PacketLoader" folder
   }
   if (modFile === undefined) {
-    modFile = files.find(file => PACKETLOADER_SUBFOLDERS.includes(path.basename(file)));
+    modFile = files.find(file => PACKETLOADER_SUBFOLDERS.includes(path.basename(file))); //"Internal" folder
     FOLDERS = PACKETLOADER_FOLDER;
   }
   if (modFile === undefined) {
-    modFile = files.find(file => (
+    modFile = files.find(file => ( //
       path.basename(file).includes(PLFOLDER_STRING1) &&
       path.basename(file).includes(PLFOLDER_STRING2)
     ));

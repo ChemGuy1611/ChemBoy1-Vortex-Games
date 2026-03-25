@@ -60,13 +60,11 @@ const fallbackInstaller = true; //enable fallback installer. Set false if you ne
 const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
 const hasUserIdFolder = true; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
 const debug = false; //toggle for debug mode
-let binariesInstaller = false;
-if (BINARIES_PATH !== '.') {
-    binariesInstaller = true; //only enable Binaries installer if not in root
-}
+const binariesInstaller = true; //only enable Binaries installer if not in root
 
 //info for modtypes, installers, tools, and actions
 const ROOT_FOLDERS = [BINARIES_PATH];
+const BINARIES_EXTS = [".dll", ".asi"];
 
 const CONFIGMOD_LOCATION = LOCALAPPDATA;
 const SAVEMOD_LOCATION = LOCALAPPDATA;
@@ -135,20 +133,52 @@ const DATA_FOLDERS = ['meta',
   //'0036',
 ];
 
-const PATCH_MANAGER_ID = `${GAME_ID}-patchmanager`;
-const PATCH_MANAGER_NAME = "PATCH Mod Manager";
-const PATCH_MANAGER_PATH = '.';
-const PATCH_MANAGER_EXEC = 'mod_manager.exe';
-const PATCH_MANAGER_PAGE_NO = 113;
-const PATCH_MANAGER_FILE_NO = 0;
-const PATCH_MANAGER_DOMAIN = GAME_ID;
+const BROWSER_ID = `${GAME_ID}-browser`;
+const BROWSER_NAME = "Crimson Browser";
+const BROWSER_PY = 'crimson_browser.py';
+const BROWSER_BAT = 'run.bat';
 
-const PATCH_MOD_ID = `${GAME_ID}-jsonmod`;
-const PATCH_MOD_NAME = "PATCH Mod";
+const BROWSER_MOD_ID = `${GAME_ID}-browsermod`;
+const BROWSER_MOD_NAME = "Crimson Browser Mod";
+const BROWSER_MOD_PATH = 'mods';
+const BROWSER_MOD_MANIFEST = 'manifest.json';
+const BROWSER_MOD_FOLDER = 'files';
+const BROWSER_MOD_FILES = [BROWSER_MOD_MANIFEST, BROWSER_MOD_FOLDER];
+
+const CD_MANAGER_ID = `${GAME_ID}-cdmodmanager`;
+const CD_MANAGER_NAME = "CD Mod Manager";
+const CD_MANAGER_EXEC = 'CDModManager.exe';
+
+const JSON_MANAGER_ID = `${GAME_ID}-jsonmodmanager`;
+const JSON_MANAGER_NAME = "JSON Mod Manager";
+const JSON_MANAGER_EXEC = 'CD Mod Manager.exe';
+
+const PATCH_MOD_ID = `${GAME_ID}-patchmod`;
+const PATCH_MOD_NAME = "Patch Mod";
 const PATCH_MOD_FOLDER = 'mods';
-const PATCH_MOD_PATH = path.join(PATCH_MOD_FOLDER);
+const PATCH_MOD_PATH = PATCH_MOD_FOLDER;
 const PATCH_MOD_EXTS = ['.json', '.cdmod'];
 
+// tool info (i.e. save editor)
+const UNPACKER_ID = `${GAME_ID}-unpacker`;
+const UNPACKER_NAME = "Unpacker";
+const UNPACKER_EXEC = 'PazGui.exe';
+
+const SAVEEDITOR_ID = `${GAME_ID}-saveeditor`;
+const SAVEEDITOR_NAME = "Save Editor";
+const SAVEEDITOR_EXEC = 'CrimsonSaveEditor.exe';
+
+const TOOLS_ID = `${GAME_ID}-tools`;
+const TOOLS_NAME = "Tools";
+const KNOWN_TOOLS_FILES = [
+  UNPACKER_EXEC,
+  BROWSER_PY,
+  CD_MANAGER_EXEC,
+  JSON_MANAGER_EXEC,
+  SAVEEDITOR_EXEC,
+];
+
+//DISABLED for now
 const LOADER_ID = `${GAME_ID}-loader`;
 const LOADER_NAME = "Mod Loader";
 const LOADER_PATH = BINARIES_PATH;
@@ -163,7 +193,6 @@ const ROOT_NAME = "Root Folder";
 
 const BINARIES_ID = `${GAME_ID}-binaries`;
 const BINARIES_NAME = "Binaries (Engine Injector)";
-const BINARIES_EXTS = [".dll", ".asi"];
 
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_NAME = "Save";
@@ -187,18 +216,7 @@ const SAVE_FILES = ["slot0"];
 const CONFIG_ID = `${GAME_ID}-config`;
 const CONFIG_NAME = "Config";
 const CONFIG_PATH = path.join(CONFIGMOD_LOCATION, APPDATA_FOLDER, CONFIG_FOLDERNAME);
-const CONFIG_EXTS = [".XXX"];
 const CONFIG_FILES = ["user_engine_option_save.xml"];
-
-// tool info (i.e. save editor)
-const UNPACKER_ID = `${GAME_ID}-unpacker`;
-const UNPACKER_NAME = "Unpacker";
-const UNPACKER_EXEC = 'PazGui.exe';
-const UNPACKER_PATH = '.';
-
-const SAVEEDITOR_ID = `${GAME_ID}-saveeditor`;
-const SAVEEDITOR_NAME = "Save Editor";
-const SAVEEDITOR_EXEC = 'CrimsonSaveEditor.exe';
 
 const MOD_PATH_DEFAULT = '.';
 const REQ_FILE = EXEC;
@@ -252,6 +270,12 @@ const spec = {
       "targetPath": path.join("{gamePath}", MOD_PATH)
     }, //*/
     {
+      "id": BROWSER_MOD_ID,
+      "name": BROWSER_MOD_NAME,
+      "priority": "high",
+      "targetPath": path.join("{gamePath}", BROWSER_MOD_PATH)
+    }, //*/
+    {
       "id": PATCH_MOD_ID,
       "name": PATCH_MOD_NAME,
       "priority": "high",
@@ -264,16 +288,10 @@ const spec = {
       "targetPath": `{gamePath}`
     },
     {
-      "id": UNPACKER_ID,
-      "name": UNPACKER_NAME,
+      "id": TOOLS_ID,
+      "name": TOOLS_NAME,
       "priority": "low",
-      "targetPath": path.join("{gamePath}", UNPACKER_PATH)
-    },
-    {
-      "id": PATCH_MANAGER_ID,
-      "name": PATCH_MANAGER_NAME,
-      "priority": "low",
-      "targetPath": path.join("{gamePath}", PATCH_MANAGER_PATH)
+      "targetPath": "{gamePath}"
     },
   ],
   "discovery": {
@@ -308,27 +326,40 @@ const tools = [ //accepts: exe, jar, py, vbs, bat
     //defaultPrimary: true,
     parameters: PARAMETERS,
   }, //*/
-  /*{
-    id: `${GAME_ID}-customlaunchxbox`,
-    name: 'Custom Launch',
-    logo: 'exec.png',
-    executable: () => EXEC_XBOX,
+  {
+    id: BROWSER_ID,
+    name: BROWSER_NAME,
+    logo: 'browser.png',
+    executable: () => BROWSER_BAT,
     requiredFiles: [
-      EXEC_XBOX,
+      BROWSER_PY,
+      BROWSER_BAT,
     ],
     relative: true,
-    exclusive: true,
+    exclusive: false,
     shell: true,
-    //defaultPrimary: true,
-    //parameters: PARAMETERS,
+    //parameters: [],
   }, //*/
   {
-    id: PATCH_MANAGER_ID,
-    name: PATCH_MANAGER_NAME,
-    logo: 'jsonmanager.png',
-    executable: () => PATCH_MANAGER_EXEC,
+    id: CD_MANAGER_ID,
+    name: CD_MANAGER_NAME,
+    logo: 'cdmanager.png',
+    executable: () => CD_MANAGER_EXEC,
     requiredFiles: [
-      PATCH_MANAGER_EXEC,
+      CD_MANAGER_EXEC,
+    ],
+    relative: true,
+    exclusive: false,
+    //shell: true,
+    //parameters: [],
+  }, //*/
+  {
+    id: JSON_MANAGER_ID,
+    name: JSON_MANAGER_NAME,
+    logo: 'jsonmanager.png',
+    executable: () => JSON_MANAGER_EXEC,
+    requiredFiles: [
+      JSON_MANAGER_EXEC,
     ],
     relative: true,
     exclusive: false,
@@ -569,6 +600,232 @@ function installLoader(files) {
   return Promise.resolve({ instructions });
 }
 
+//Installer test for Root folder files
+function testRoot(files, gameId) {
+  const isMod = files.some(file => ROOT_FOLDERS.includes(path.basename(file)));
+  let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Installer install Root folder files
+function installRoot(files) {
+  const modFile = files.find(file => ROOT_FOLDERS.includes(path.basename(file)));
+  const ROOT_IDX = `${path.basename(modFile)}${path.sep}`
+  const idx = modFile.indexOf(ROOT_IDX);
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Test for Unpacker files
+function testTools(files, gameId) {
+  const isMod = files.some(file => KNOWN_TOOLS_FILES.includes(path.basename(file)));
+  let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install Unpacker files
+function installTools(files) {
+  const MOD_TYPE = TOOLS_ID;
+  const modFile = files.find(file => KNOWN_TOOLS_FILES.includes(path.basename(file)));
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Test for Crimson Browser mod files
+function testBrowserMod(files, gameId) {
+  const isJson = files.some(file => path.basename(file).toLowerCase() === BROWSER_MOD_MANIFEST);
+  const isFolder = files.some(file => path.basename(file).toLowerCase() === BROWSER_MOD_FOLDER);
+  let supported = (gameId === spec.game.id) && ( isJson && isFolder );
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install Crimson Browser mod files
+function installBrowserMod(files, fileName) {
+  const MOD_TYPE = BROWSER_MOD_ID;
+  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+  let modFile = files.find(file => path.basename(file).toLowerCase() === BROWSER_MOD_MANIFEST);
+  let rootPath = path.dirname(modFile);
+  //*
+  let folder = path.basename(fileName).replace('.installing', '');
+  //??? Read manifest.json to get folder name???
+  const ROOT_PATH = path.basename(rootPath);
+  if (ROOT_PATH !== '.') {
+    folder = ''; //no folder needed if already present
+    modFile = rootPath; //make the folder the targeted modFile so we can grab any other folders also in its directory
+    rootPath = path.dirname(modFile);
+    //const indexFolder = path.basename(modFile);
+    //idx = modFile.indexOf(`${indexFolder}${path.sep}`);  //index on the folder with path separator
+  } //*/
+  const idx = modFile.indexOf(path.basename(modFile));
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(folder, file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Test for patch mod files
+function testPatchMod(files, gameId) {
+  const isMod = files.some(file => PATCH_MOD_EXTS.includes(path.extname(file).toLowerCase()));
+  let supported = (gameId === spec.game.id) && ( isMod );
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+/*Install patch mod files - SIMPLE VERSION
+function installPatchMod(files) {
+  const MOD_TYPE = PATCH_MOD_ID;
+  const modFile = files.find(file => PATCH_MOD_EXTS.includes(path.extname(file).toLowerCase()));
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+} //*/
+
+//Install patch mod files - file selection popup
+async function installPatchMod(api, files) {
+  const fileExt = PATCH_MOD_EXTS;
+  const modFiles = files.filter(file => fileExt.includes(path.extname(file).toLowerCase()));
+  const modType = {
+    type: 'setmodtype',
+    value: PATCH_MOD_ID,
+  };
+  const installFiles = (modFiles.length > 1)
+    ? await chooseFilesToInstall(api, modFiles, fileExt)
+    : modFiles;
+  let instructions = installFiles.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.basename(file)
+    };
+  });
+  instructions.push(modType);
+  return Promise.resolve({ instructions });
+}
+
+async function chooseFilesToInstall(api, files, fileExt) {
+  const t = api.translate;
+  return api.showDialog('question', t('Multiple {{ext}} files', { replace: { ext: path.extname(files[0]) } }), {
+      text: t('The mod you are installing contains {{x}} {{ext}} files.', { replace: { x: files.length, ext: path.extname(files[0]) } }) +
+          `This can be because the author intended for you to chose one of several options. Please select which files to install below:`,
+      checkboxes: files.map((file) => {
+          return {
+              id: file,
+              text: file,
+              value: false
+          };
+      })
+  }, [
+      { label: 'Cancel' },
+      { label: 'Install Selected' },
+      { label: 'Install All_plural' }
+  ]).then((result) => {
+      if (result.action === 'Cancel')
+          return Promise.reject(new util.UserCanceled('User cancelled.'));
+      else {
+        const installAll = (result.action === 'Install All' || result.action === 'Install All_plural');
+        const installFiles = installAll ? files : Object.keys(result.input).filter(s => result.input[s])
+          .map(file => files.find(f => f === file));
+        return installFiles;
+      }
+  });
+}
+
 //Test for data mod files
 function testMod(files, gameId) {
   //const isMod = files.some(file => MOD_EXTS.includes(path.extname(file).toLowerCase()));
@@ -613,92 +870,11 @@ function installMod(files) {
   return Promise.resolve({ instructions });
 }
 
-//Installer test for Root folder files
-function testRoot(files, gameId) {
-  const isMod = files.some(file => ROOT_FOLDERS.includes(path.basename(file)));
-  let supported = (gameId === spec.game.id) && isMod;
-
-  // Test for a mod installer.
-  if (supported && files.find(file =>
-    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
-    supported = false;
-  }
-
-  return Promise.resolve({
-    supported,
-    requiredFiles: [],
-  });
-}
-
-//Installer install Root folder files
-function installRoot(files) {
-  const modFile = files.find(file => ROOT_FOLDERS.includes(path.basename(file)));
-  const ROOT_IDX = `${path.basename(modFile)}${path.sep}`
-  const idx = modFile.indexOf(ROOT_IDX);
-  const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
-
-  // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
-  );
-  const instructions = filtered.map(file => {
-    return {
-      type: 'copy',
-      source: file,
-      destination: path.join(file.substr(idx)),
-    };
-  });
-  instructions.push(setModTypeInstruction);
-  return Promise.resolve({ instructions });
-}
-
-//Test for Unpacker files
-function testUnpacker(files, gameId) {
-  const isMod = files.some(file => path.basename(file) === UNPACKER_EXEC);
-  let supported = (gameId === spec.game.id) && isMod;
-
-  // Test for a mod installer
-  if (supported && files.find(file =>
-      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
-    supported = false;
-  }
-
-  return Promise.resolve({
-    supported,
-    requiredFiles: [],
-  });
-}
-
-//Install Unpacker files
-function installUnpacker(files) {
-  const MOD_TYPE = UNPACKER_ID;
-  const modFile = files.find(file => path.basename(file) === UNPACKER_EXEC);
-  const idx = modFile.indexOf(path.basename(modFile));
-  const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
-
-  // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
-  );
-  const instructions = filtered.map(file => {
-    return {
-      type: 'copy',
-      source: file,
-      destination: path.join(file.substr(idx)),
-    };
-  });
-  instructions.push(setModTypeInstruction);
-  return Promise.resolve({ instructions });
-}
-
 //Fallback installer to Binaries folder
 function testBinaries(files, gameId) {
   const isMod = files.some(file => BINARIES_EXTS.includes(path.extname(file).toLowerCase()));
-  let supported = (gameId === spec.game.id) && isMod;
+  const isExe = files.some(file => path.extname(file).toLowerCase() === '.exe');
+  let supported = (gameId === spec.game.id) && ( isMod && !isExe );
 
   // Test for a mod installer.
   if (supported && files.find(file =>
@@ -1066,13 +1242,14 @@ function applyGame(context, gameSpec) {
   if (rootInstaller) {
     context.registerInstaller(ROOT_ID, 27, testRoot, installRoot);
   }
-  context.registerInstaller(UNPACKER_ID, 28, testUnpacker, installUnpacker);
-  if (binariesInstaller) {
-    context.registerInstaller(BINARIES_ID, 31, testBinaries, installBinaries);
-  }
-  
+  context.registerInstaller(TOOLS_ID, 29, testTools, installTools);
+  context.registerInstaller(BROWSER_MOD_ID, 31, testBrowserMod, installBrowserMod);
+  context.registerInstaller(PATCH_MOD_ID, 33, testPatchMod, (files) => installPatchMod(context.api, files));
   if (needsModInstaller) {
     context.registerInstaller(MOD_ID, 35, testMod, installMod);
+  }
+  if (binariesInstaller) {
+    context.registerInstaller(BINARIES_ID, 37, testBinaries, installBinaries);
   }
   //context.registerInstaller(CONFIG_ID, 33, testConfig, installConfig);
   //context.registerInstaller(SAVE_ID, 34, testSave, installSave);

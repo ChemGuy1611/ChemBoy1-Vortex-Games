@@ -4,6 +4,13 @@
 
 - None Planned
 
+## [0.2.0] - 2026-03-25
+
+- Added: Support for multiple new mod installers and formats, including launch tools:
+- Crimson Browser (manifest.json and "files" folder)
+- CD Mod Manager (.cdmod files)
+- JSON Mod Manager (.json files)
+
 ## [0.1.2] - 2026-03-24
 
 - Added: "meta" folder to Root Installer
