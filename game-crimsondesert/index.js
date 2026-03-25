@@ -146,7 +146,7 @@ const PATCH_MANAGER_DOMAIN = GAME_ID;
 const PATCH_MOD_ID = `${GAME_ID}-jsonmod`;
 const PATCH_MOD_NAME = "PATCH Mod";
 const PATCH_MOD_FOLDER = 'mods';
-const PATCH_MOD_PATH = path.join(PATCH_MOD_FOLDER, 'enabled');
+const PATCH_MOD_PATH = path.join(PATCH_MOD_FOLDER);
 const PATCH_MOD_EXTS = ['.json', '.cdmod'];
 
 const LOADER_ID = `${GAME_ID}-loader`;
@@ -205,7 +205,7 @@ const REQ_FILE = EXEC;
 const PARAMETERS_STRING = '';
 const PARAMETERS = [PARAMETERS_STRING];
 
-let MODTYPE_FOLDERS = [BINARIES_PATH];
+let MODTYPE_FOLDERS = [BINARIES_PATH, PATCH_MOD_PATH];
 const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 
@@ -775,8 +775,9 @@ function installFallback(api, files, destinationPath) {
 function fallbackInstallerNotify(api, modName) {
   const state = api.getState();
   STAGING_FOLDER = selectors.installPathForGame(state, spec.game.id);
-  const NOTIF_ID = `${GAME_ID}-fallbackinstaller`;
   modName = path.basename(modName, '.installing');
+  const id = modName.replace(/[^a-zA-Z0-9\s]*( )*/gi, '').slice(0, 20);
+  const NOTIF_ID = `${GAME_ID}-${id}-fallback`;
   const MESSAGE = 'Fallback installer reached for ' + modName;
   api.sendNotification({
     id: NOTIF_ID,

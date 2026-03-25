@@ -2,8 +2,8 @@
 Name: Mewgenics Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2026-02-13
+Version: 0.1.2
+Date: 2026-03-25
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -132,6 +132,10 @@ const SAVE_FILES = ["XXX"];
 const SAVE_EDITOR_ID = `${GAME_ID}-saveeeditor`;
 const SAVE_EDITOR_NAME = `MewgenicsSaveEditor`;
 const SAVE_EDITOR_EXEC = "MewgenicsSaveEditor.exe";
+
+const LEVEL_EDITOR_ID = `${GAME_ID}-leveleditor`;
+const LEVEL_EDITOR_NAME = `Mewgenics Level Editor`;
+const LEVEL_EDITOR_EXEC = "Mewgenics Level Editor.exe";
 
 const MOD_PATH_DEFAULT = '.';
 const REQ_FILE = EXEC;
@@ -1144,7 +1148,7 @@ function applyGame(context, gameSpec) {
           LOADER_EXEC,
         ],
         relative: true,
-        exclusive: true,
+        exclusive: false,
         //shell: true,
         detach: true,
         //defaultPrimary: true,
@@ -1158,7 +1162,21 @@ function applyGame(context, gameSpec) {
           SAVE_EDITOR_EXEC,
         ],
         relative: true,
-        exclusive: true,
+        exclusive: false,
+        //shell: true,
+        detach: true,
+        //defaultPrimary: true,
+      }, //*/
+      {
+        id: LEVEL_EDITOR_ID,
+        name: LEVEL_EDITOR_NAME,
+        logo: 'leveleditor.png',
+        executable: () => LEVEL_EDITOR_EXEC,
+        requiredFiles: [
+          LEVEL_EDITOR_EXEC,
+        ],
+        relative: true,
+        exclusive: false,
         //shell: true,
         detach: true,
         //defaultPrimary: true,
