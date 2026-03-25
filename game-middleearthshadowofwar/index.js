@@ -1355,9 +1355,9 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(PACKETLOADER_ID, 25, testPacketLoader, installPacketLoader);
   context.registerInstaller(DLLLOADER_ID, 27, testDllLoader, installDllLoader);
   context.registerInstaller(MODLOADER_ID, 29, testModLoader, installModLoader);
-  context.registerInstaller(MOD_ID, 29, testMod, (files) => installMod(context.api, files));
-  context.registerInstaller(PLUGINS_ID, 31, testPlugins, installPlugins);
-  context.registerInstaller(ROOT_ID, 33, testRoot, installRoot);
+  context.registerInstaller(MOD_ID, 31, testMod, (files) => installMod(context.api, files));
+  context.registerInstaller(PLUGINS_ID, 33, testPlugins, installPlugins);
+  context.registerInstaller(ROOT_ID, 35, testRoot, installRoot);
   //context.registerInstaller(CONFIG_ID, 43, testConfig, installConfig);
   context.registerInstaller(`${GAME_ID}-fallback`, 49, testFallback, (files, destinationPath) => installFallback(context.api, files, destinationPath));
 

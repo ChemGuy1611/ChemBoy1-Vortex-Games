@@ -51,9 +51,10 @@ const INSTALL_VALUE = "XXX"; //often InstallDir or InstallPath
 const RESHADE_URL = "https://reshade.me/#download";
 
 //feature toggles
+const loadOrder = true; //true if game needs a load order
 const hasLoader = false; //true if game needs a mod loader
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
-const needsModInstaller = false; //set to true if standard mods should run through an installer - set false to have mods installed to the mods folder without any processing
+const needsModInstaller = true; //set to true if standard mods should run through an installer - set false to have mods installed to the mods folder without any processing
 const rootInstaller = true; //enable root installer. Set false if you need to avoid installer collisions
 const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
 const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
@@ -65,8 +66,36 @@ if (BINARIES_PATH !== '.') {
 }
 
 //info for modtypes, installers, tools, and actions
-const ROOT_FOLDERS = [BINARIES_PATH,
-  'meta',
+const ROOT_FOLDERS = [BINARIES_PATH];
+
+const CONFIGMOD_LOCATION = LOCALAPPDATA;
+const SAVEMOD_LOCATION = LOCALAPPDATA;
+const APPDATA_FOLDER = path.join('Pearl Abyss', 'CD');
+const CONFIG_FOLDERNAME = 'save';
+const SAVE_FOLDERNAME = 'save';
+
+let GAME_PATH = '';
+let GAME_VERSION = '';
+let STAGING_FOLDER = '';
+let DOWNLOAD_FOLDER = '';
+const APPMANIFEST_FILE = 'appxmanifest.xml';
+const EXEC_XBOX = 'gamelaunchhelper.exe';
+
+const MOD_ID = `${GAME_ID}-mod`;
+const MOD_NAME = "Data Mod";
+const MOD_PATH = ".";
+const MOD_EXTS = ['.paz', '.pamt'];
+const META_FILE_EXTS = ['.papgt', '.pathc', '.paver'];
+const METADATA_FILE = path.join('meta', '0.papgt'); //This seems to require updating for each mod. Need a community tool to run on deploy.
+/*Test for naming mod folders
+const VANILLA_ENDING_FOLDERNAME = '0035';
+const FOLDER_INDEX = +VANILLA_ENDING_FOLDERNAME;
+log('warn', `FOLDER_INDEX: ${FOLDER_INDEX}`);
+const FOLDER_NAME = util.pad(FOLDER_INDEX, '0', VANILLA_ENDING_FOLDERNAME.length);
+log('warn', `FOLDER_NAME: ${FOLDER_NAME}`);
+const MOD_STARTING_INDEX = +VANILLA_ENDING_FOLDERNAME + 1; //Naming folders subsequent will load the mod data after vanilla, so you don't have to repack the ENTIRE game file.
+//*/
+const DATA_FOLDERS = ['meta',
   '0000', 
   '0001', 
   '0002', 
@@ -105,28 +134,6 @@ const ROOT_FOLDERS = [BINARIES_PATH,
   '0035',
   '0036',
 ];
-
-const FILE_EXTS = ['.paz', '.pamt'];
-const META_FILE_EXTS = ['.papgt', '.pathc', '.paver'];
-
-const CONFIGMOD_LOCATION = LOCALAPPDATA;
-const SAVEMOD_LOCATION = LOCALAPPDATA;
-const APPDATA_FOLDER = path.join('Pearl Abyss', 'CD');
-const CONFIG_FOLDERNAME = 'save';
-const SAVE_FOLDERNAME = 'save';
-
-let GAME_PATH = '';
-let GAME_VERSION = '';
-let STAGING_FOLDER = '';
-let DOWNLOAD_FOLDER = '';
-const APPMANIFEST_FILE = 'appxmanifest.xml';
-const EXEC_XBOX = 'gamelaunchhelper.exe';
-
-const MOD_ID = `${GAME_ID}-mod`;
-const MOD_NAME = "Mod";
-const MOD_PATH = "mods";
-const MOD_PATH_XBOX = MOD_PATH;
-const MOD_EXTS = ['.XXX'];
 
 const LOADER_ID = `${GAME_ID}-loader`;
 const LOADER_NAME = "Mod Loader";
@@ -224,7 +231,7 @@ const spec = {
     }
   },
   "modTypes": [
-    /*{
+    {
       "id": MOD_ID,
       "name": MOD_NAME,
       "priority": "high",
@@ -373,17 +380,6 @@ function makeGetModPath(api, gameSpec) {
     ? gameSpec.game.modPath || '.'
     : pathPattern(api, gameSpec.game, gameSpec.game.modPath);
 }
-
-//* Get mod path dynamically for different game versions
-function getModPath(discoveryPath) {
-  if (statCheckSync(discoveryPath, EXEC_XBOX)) {
-    GAME_VERSION = 'xbox';
-    return MOD_PATH_XBOX;
-  };
-  //add GOG/EGS/Demo versions here if needed
-  GAME_VERSION = 'default';
-  return MOD_PATH;
-} //*/
 
 //Find game installation directory
 function makeFindGame(api, gameSpec) {
@@ -534,10 +530,12 @@ function installLoader(files) {
   return Promise.resolve({ instructions });
 }
 
-//Test for mod files
+//Test for data mod files
 function testMod(files, gameId) {
-  const isMod = files.some(file => MOD_EXTS.includes(path.extname(file).toLowerCase()));
-  let supported = (gameId === spec.game.id) && isMod;
+  //const isMod = files.some(file => MOD_EXTS.includes(path.extname(file).toLowerCase()));
+  //const isMeta = files.some(file => META_FILE_EXTS.includes(path.extname(file).toLowerCase()));
+  const isFolder = files.some(file => DATA_FOLDERS.includes(path.basename(file)));
+  let supported = (gameId === spec.game.id) && ( isFolder );
 
   // Test for a mod installer
   if (supported && files.find(file =>
@@ -552,10 +550,11 @@ function testMod(files, gameId) {
   });
 }
 
-//Install mod files
+//Install data mod files
 function installMod(files) {
   const MOD_TYPE = MOD_ID;
-  const modFile = files.find(file => MOD_EXTS.includes(path.extname(file).toLowerCase()));
+  let folder = '';
+  let modFile = files.find(file => DATA_FOLDERS.includes(path.basename(file)));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
@@ -568,7 +567,7 @@ function installMod(files) {
     return {
       type: 'copy',
       source: file,
-      destination: path.join(file.substr(idx)),
+      destination: path.join(folder, file.substr(idx)),
     };
   });
   instructions.push(setModTypeInstruction);
@@ -972,7 +971,6 @@ function applyGame(context, gameSpec) {
     queryPath: makeFindGame(context.api, gameSpec),
     executable: getExecutable,
     queryModPath: makeGetModPath(context.api, gameSpec),
-    //queryModPath: getModPath(),
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     getGameVersion: resolveGameVersion,
@@ -1032,11 +1030,11 @@ function applyGame(context, gameSpec) {
   if (binariesInstaller) {
     context.registerInstaller(BINARIES_ID, 31, testBinaries, installBinaries);
   }
-  //context.registerInstaller(CONFIG_ID, 33, testConfig, installConfig);
-  //context.registerInstaller(SAVE_ID, 34, testSave, installSave);
   if (needsModInstaller) {
     context.registerInstaller(MOD_ID, 35, testMod, installMod);
   }
+  //context.registerInstaller(CONFIG_ID, 33, testConfig, installConfig);
+  //context.registerInstaller(SAVE_ID, 34, testSave, installSave);
   if (fallbackInstaller) {
     context.registerInstaller(`${GAME_ID}-fallback`, 49, testFallback, (files, destinationPath) => installFallback(context.api, files, destinationPath));
   }
@@ -1090,10 +1088,38 @@ function applyGame(context, gameSpec) {
 //main function
 function main(context) {
   applyGame(context, spec);
+  //Load Order
+  if (loadOrder) {
+    
+  }
   context.once(() => { // put code here that should be run (once) when Vortex starts up
-    //const api = context.api;
+    const api = context.api;
+    //api.onAsync('did-deploy', (profileId) => didDeploy(api, profileId));
+    //api.onAsync('did-purge', (profileId) => didPurge(api, profileId));
   });
   return true;
+}
+
+async function didDeploy(api, profileId) { //run on mod deploy
+  const state = api.getState();
+  const profile = selectors.profileById(state, profileId);
+  const gameId = profile === null || profile === void 0 ? void 0 : profile.gameId;
+  if (gameId !== GAME_ID) {
+    return Promise.resolve();
+  }
+  //patch metadata - NO METHOD YET
+  return Promise.resolve();
+}
+
+async function didPurge(api, profileId) { //run on mod purge
+  const state = api.getState();
+  const profile = selectors.profileById(state, profileId);
+  const gameId = profile === null || profile === void 0 ? void 0 : profile.gameId;
+  if (gameId !== GAME_ID) {
+    return Promise.resolve();
+  }
+  //restore metadata - NO METHOD YET
+  return Promise.resolve();
 }
 
 //export to Vortex

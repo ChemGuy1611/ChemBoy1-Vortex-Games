@@ -1623,8 +1623,8 @@ function makePrefix(input) {
   let res = '';
   let rest = input;
   while (rest > 0) {
-      res = String.fromCharCode(65 + (rest % 25)) + res;
-      rest = Math.floor(rest / 25);
+    res = String.fromCharCode(65 + (rest % 25)) + res;
+    rest = Math.floor(rest / 25);
   }
   return util.pad(res, 'A', 3);
 }
@@ -1636,8 +1636,9 @@ function loadOrderPrefix(api, mod) {
   const loadOrder = util.getSafe(state, ['persistent', 'loadOrder', profile], {});
   const loKeys = Object.keys(loadOrder);
   const pos = loKeys.indexOf(mod.id);
+  //const pos = loKeys.findIndex((entry) => entry.id === mod.id); //for FBLO
   if (pos === -1) {
-      return 'ZZZZ-';
+    return 'ZZZZ-';
   }
   return makePrefix(pos) + '-';
 }
