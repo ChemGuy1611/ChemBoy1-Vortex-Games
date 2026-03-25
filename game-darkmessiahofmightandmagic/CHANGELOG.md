@@ -1,8 +1,9 @@
 # Changelog
 
-## [0.3.0] - 2026-03-23
+## [0.3.0] - 2026-03-25
 
 - Added: Button to download wiltOS Mod Launcher from ModDB - provides a means to update
+- Added: Buttons to open several useful files/folders/URLs - folder icon on Mods page toolbar
 
 ## [0.2.3] - 2025-11-18
 

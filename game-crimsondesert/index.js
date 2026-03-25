@@ -132,8 +132,22 @@ const DATA_FOLDERS = ['meta',
   '0033',
   '0034',
   '0035',
-  '0036',
+  //'0036',
 ];
+
+const PATCH_MANAGER_ID = `${GAME_ID}-patchmanager`;
+const PATCH_MANAGER_NAME = "PATCH Mod Manager";
+const PATCH_MANAGER_PATH = '.';
+const PATCH_MANAGER_EXEC = 'mod_manager.exe';
+const PATCH_MANAGER_PAGE_NO = 113;
+const PATCH_MANAGER_FILE_NO = 0;
+const PATCH_MANAGER_DOMAIN = GAME_ID;
+
+const PATCH_MOD_ID = `${GAME_ID}-jsonmod`;
+const PATCH_MOD_NAME = "PATCH Mod";
+const PATCH_MOD_FOLDER = 'mods';
+const PATCH_MOD_PATH = path.join(PATCH_MOD_FOLDER, 'enabled');
+const PATCH_MOD_EXTS = ['.json', '.cdmod'];
 
 const LOADER_ID = `${GAME_ID}-loader`;
 const LOADER_NAME = "Mod Loader";
@@ -238,6 +252,12 @@ const spec = {
       "targetPath": path.join("{gamePath}", MOD_PATH)
     }, //*/
     {
+      "id": PATCH_MOD_ID,
+      "name": PATCH_MOD_NAME,
+      "priority": "high",
+      "targetPath": path.join("{gamePath}", PATCH_MOD_PATH)
+    }, //*/
+    {
       "id": ROOT_ID,
       "name": ROOT_NAME,
       "priority": "high",
@@ -248,6 +268,12 @@ const spec = {
       "name": UNPACKER_NAME,
       "priority": "low",
       "targetPath": path.join("{gamePath}", UNPACKER_PATH)
+    },
+    {
+      "id": PATCH_MANAGER_ID,
+      "name": PATCH_MANAGER_NAME,
+      "priority": "low",
+      "targetPath": path.join("{gamePath}", PATCH_MANAGER_PATH)
     },
   ],
   "discovery": {
@@ -295,6 +321,19 @@ const tools = [ //accepts: exe, jar, py, vbs, bat
     shell: true,
     //defaultPrimary: true,
     //parameters: PARAMETERS,
+  }, //*/
+  {
+    id: PATCH_MANAGER_ID,
+    name: PATCH_MANAGER_NAME,
+    logo: 'jsonmanager.png',
+    executable: () => PATCH_MANAGER_EXEC,
+    requiredFiles: [
+      PATCH_MANAGER_EXEC,
+    ],
+    relative: true,
+    exclusive: false,
+    //shell: true,
+    //parameters: [],
   }, //*/
   {
     id: UNPACKER_ID,
@@ -1030,6 +1069,7 @@ function applyGame(context, gameSpec) {
   if (binariesInstaller) {
     context.registerInstaller(BINARIES_ID, 31, testBinaries, installBinaries);
   }
+  
   if (needsModInstaller) {
     context.registerInstaller(MOD_ID, 35, testMod, installMod);
   }

@@ -3,7 +3,7 @@ Name: Dark Messiah of Might & Magic Vortex Extension
 Structure: Basic (Launcher)
 Author: ChemBoy1
 Version: 0.3.0
-Date: 2026-03-23
+Date: 2026-03-25
 //////////////////////////////////////////////////////*/
 
 //Import libraries
@@ -289,8 +289,8 @@ async function downloadLauncher(api, gameSpec, check = true) {
   const MOD_NAME = "[wOS] Dark Messiah Mod Launcher";
   const ARCHIVE_NAME = "wos_dm_modlauncher";
   const instructions = api.translate(`Once you allow Vortex to browse to modDB - `
-    + `Navigate to the latest version of the ${MOD_NAME} in the Files list`
-    + `and click on "Download Now" button to download and install the mod.`
+    + `Navigate to the latest version of the "${MOD_NAME}" in the Files list `
+    + `and click on "Download Now" button to download and install the mod. `
   );
   if (!isInstalled || !check) {
     //*
