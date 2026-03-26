@@ -288,18 +288,18 @@ const spec = {
       "enb": false,
     },
     "details": {
-      "steamAppId": +STEAMAPP_ID,
+      "steamAppId": +STEAMAPP_ID_DEMO,
       "gogAppId": GOGAPP_ID,
-      "epicAppId": EPICAPP_ID,
+      "epicAppId": EPICAPP_ID_DEMO,
       "xboxAppId": XBOXAPP_ID,
       "supportsSymlinks": SYM_LINKS,
       "ignoreConflicts": IGNORE_CONFLICTS,
       "ignoreDeploy": IGNORE_DEPLOY,
     },
     "environment": {
-      "SteamAPPId": STEAMAPP_ID,
+      "SteamAPPId": STEAMAPP_ID_DEMO,
       "GogAPPId": GOGAPP_ID,
-      "EpicAPPId": EPICAPP_ID,
+      "EpicAPPId": EPICAPP_ID_DEMO,
       "XboxAPPId": XBOXAPP_ID,
     },
   },
@@ -423,7 +423,7 @@ async function requiresLauncher(gamePath, store) {
         },
     });
   } //*/
-  /*
+  //*
   if (store === 'steam') {
     return Promise.resolve({
         launcher: 'steam',
