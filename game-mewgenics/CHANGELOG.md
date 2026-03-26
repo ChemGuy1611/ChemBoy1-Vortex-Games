@@ -6,6 +6,7 @@
 
 ## [0.1.2] - 2026-03-25
 
+- Added: Mewjector support
 - Added: Level Editor support (launch tool)
 
 ## [0.1.1] - 2026-02-19

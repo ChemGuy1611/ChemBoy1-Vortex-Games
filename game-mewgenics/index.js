@@ -51,14 +51,10 @@ const fallbackInstaller = true; //enable fallback installer. Set false if you ne
 const setupNotification = true; //enable to show the user a notification with special instructions (specify below)
 const hasUserIdFolder = true; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
 const debug = false; //toggle for debug mode
-let binariesInstaller = false;
-if (BINARIES_PATH !== '.') {
-    binariesInstaller = true; //only enable Binaries installer if not in root
-}
 
 //info for modtypes, installers, tools, and actions
 const DATA_FOLDER = '';
-const ROOT_FOLDERS = [];
+const ROOT_FOLDERS = ['mods'];
 
 const CONFIGMOD_LOCATION = ROAMINGAPPDATA;
 const SAVEMOD_LOCATION = ROAMINGAPPDATA;
@@ -87,6 +83,19 @@ let mod_update_all_profile = false;
 let updatemodid = undefined;
 let updating_mod = false; // used to see if it's a mod update or not
 let mod_install_name = ""; // used to display the name of the currently installed mod
+
+const MEWJECTOR_ID = `${GAME_ID}-mewjector`;
+const MEWJECTOR_NAME = "Mewjector";
+const MEWJECTOR_PATH = '.';
+const MEWJECTOR_FILE = 'version.dll';
+const MEWJECTOR_PAGE_NO = 218;
+const MEWJECTOR_FILE_NO = 780;
+const MEWJECTOR_DOMAIN = GAME_ID;
+
+const MEWJECTOR_MOD_ID = `${GAME_ID}-mewjectormod`;
+const MEWJECTOR_MOD_NAME = "Mewjector Mod";
+const MEWJECTOR_MOD_PATH = 'mods';
+const MEWJECTOR_MOD_EXTS = ['.dll'];
 
 const LOADER_ID = `${GAME_ID}-mewtator`;
 const LOADER_NAME = "Mewtator";
@@ -189,10 +198,22 @@ const spec = {
       "targetPath": path.join("{gamePath}", MOD_PATH)
     },
     {
+      "id": MEWJECTOR_MOD_ID,
+      "name": MEWJECTOR_MOD_NAME,
+      "priority": "high",
+      "targetPath": path.join("{gamePath}", MEWJECTOR_MOD_PATH)
+    },
+    {
       "id": ROOT_ID,
       "name": ROOT_NAME,
       "priority": "high",
       "targetPath": `{gamePath}`
+    },
+    {
+      "id": MEWJECTOR_ID,
+      "name": MEWJECTOR_NAME,
+      "priority": "low",
+      "targetPath": path.join("{gamePath}", MEWJECTOR_PATH)
     },
     {
       "id": SAVE_EDITOR_ID,
@@ -206,15 +227,6 @@ const spec = {
     "names": []
   }
 };
-//think of a way to tell if the mod path is not in the game folder, only add ROOT modType if it is
-if (binariesInstaller) {
-  spec.modTypes.push({
-    "id": BINARIES_ID,
-    "name": BINARIES_NAME,
-    "priority": "high",
-    "targetPath": path.join("{gamePath}", BINARIES_PATH)
-  });
-}
 
 // BASIC EXTENSION FUNCTIONS ///////////////////////////////////////////////////
 
@@ -421,6 +433,47 @@ function installLoader(files) {
   return Promise.resolve({ instructions });
 }
 
+//Test for Mewjector files
+function testMewjector(files, gameId) {
+  const isMod = files.some(file => path.basename(file) === MEWJECTOR_FILE);
+  let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install Mewjector files
+function installMewjector(files) {
+  const MOD_TYPE = MEWJECTOR_ID;
+  const modFile = files.find(file => path.basename(file) === MEWJECTOR_FILE);
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
 //Test for Save Editor files
 function testSaveEditor(files, gameId) {
   const isMod = files.some(file => path.basename(file) === SAVE_EDITOR_EXEC);
@@ -559,14 +612,15 @@ function installRoot(files) {
   return Promise.resolve({ instructions });
 }
 
-//Fallback installer to Binaries folder
-function testBinaries(files, gameId) {
-  let supported = (gameId === spec.game.id);
+//Test for Mewjector dll mod files
+function testMewjectorMod(files, gameId) {
+  const isMod = files.some(file => MEWJECTOR_MOD_EXTS.includes(path.extname(file).toLowerCase()));
+  let supported = (gameId === spec.game.id) && isMod;
 
-  // Test for a mod installer.
+  // Test for a mod installer
   if (supported && files.find(file =>
-    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
     supported = false;
   }
 
@@ -576,18 +630,23 @@ function testBinaries(files, gameId) {
   });
 }
 
-//Fallback installer to Binaries folder
-function installBinaries(files) {
-  const setModTypeInstruction = { type: 'setmodtype', value: BINARIES_ID };
-  
+//Install Mewjector dll mod files
+function installMewjectorMod(files) {
+  const MOD_TYPE = MEWJECTOR_MOD_ID;
+  const modFile = files.find(file => MEWJECTOR_MOD_EXTS.includes(path.extname(file).toLowerCase()));
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+
+  // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
-    (!file.endsWith(path.sep))
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
   );
   const instructions = filtered.map(file => {
     return {
       type: 'copy',
       source: file,
-      destination: file,
+      destination: path.join(file.substr(idx)),
     };
   });
   instructions.push(setModTypeInstruction);
@@ -1227,15 +1286,14 @@ function applyGame(context, gameSpec) {
   //register mod installers
   context.registerInstaller(LOADER_ID, 25, testLoader, installLoader);
   context.registerInstaller(SAVE_EDITOR_ID, 26, testSaveEditor, installSaveEditor);
-  context.registerInstaller(MOD_ID, 27, testMod, installMod);
-  //context.registerInstaller(CONFIG_ID, 43, testConfig, installConfig);
-  //context.registerInstaller(SAVE_ID, 45, testSave, installSave);
+  context.registerInstaller(MEWJECTOR_ID, 27, testMewjector, installMewjector);
+  context.registerInstaller(MOD_ID, 28, testMod, installMod);
+  //context.registerInstaller(CONFIG_ID, 29, testConfig, installConfig);
+  //context.registerInstaller(SAVE_ID, 30, testSave, installSave);
   if (rootInstaller) {
-    context.registerInstaller(ROOT_ID, 47, testRoot, installRoot);
+    context.registerInstaller(ROOT_ID, 31, testRoot, installRoot);
   }
-  if (binariesInstaller) {
-    context.registerInstaller(BINARIES_ID, 48, testBinaries, installBinaries);
-  }
+  context.registerInstaller(MEWJECTOR_MOD_ID, 33, testMewjectorMod, installMewjectorMod);
   if (fallbackInstaller) {
     context.registerInstaller(`${GAME_ID}-fallback`, 49, testFallback, (files, destinationPath) => installFallback(context.api, files, destinationPath));
   }

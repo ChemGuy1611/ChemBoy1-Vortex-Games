@@ -1,11 +1,11 @@
 /*////////////////////////////////////////////////
-Name: XXX Vortex Extension
+Name: Windrose Vortex Extension
 Structure: Unreal Engine Game
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2026-XX-XX
+Date: 2026-03-25
 Notes:
-- 
+- Only demo out now. Update for full release when available, if needed.
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -27,25 +27,26 @@ const { parseStringPromise } = require('xml2js');
 const LOCALAPPDATA = util.getVortexPath('localAppData');
 
 //Specify all information about the game
-const GAME_ID = "XXX"; //same as Nexus domain
-const STEAMAPP_ID = "XXX"; //from steamdb.info
-const STEAMAPP_ID_DEMO = "XXX"; //VERIFY if the EPIC_CODE_NAME and EXEC_DEMO match Steam full game
-const EPICAPP_ID = "XXX"; //from egdata.app
-const GOGAPP_ID = "XXX"; // from gogdb.org
-const XBOXAPP_ID = "XXX"; //from appxmanifest.xml
+const GAME_ID = "windrose"; //same as Nexus domain
+const STEAMAPP_ID = "3041230"; //from steamdb.info
+const STEAMAPP_ID_DEMO = "4291770"; //VERIFY if the EPIC_CODE_NAME and EXEC_DEMO match Steam full game
+const EPICAPP_ID = "XXX"; //NOT released yet - https://egdata.app/offers/2cef0862649140d1b000e0fcdd76f4c8/builds
+const EPICAPP_ID_DEMO = "a8fc3e1cd0504d549ed1bbfa11b5e5ff"; //https://egdata.app/offers/4b0484bbe3334ef099180022019612ea/builds
+const GOGAPP_ID = null; // from gogdb.org
+const XBOXAPP_ID = null; //from appxmanifest.xml
 const XBOXEXECNAME = "AppUEGameShipping"; //from appxmanifest.xml
 const XBOX_PUB_ID = "XXX"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, STEAMAPP_ID_DEMO, EPICAPP_ID_DEMO]; // UPDATE THIS WITH ALL VALID IDs
 
-const GAME_NAME = "XXX";
-const GAME_NAME_SHORT = "XXX"; //Try for 8-10 characters
-const EPIC_CODE_NAME = "XXX"; //Folder in root
-const EXEC = `${EPIC_CODE_NAME}.exe`; //This is true ~80% of the time. Change if different
+const GAME_NAME = "Windrose";
+const GAME_NAME_SHORT = GAME_NAME; //Try for 8-10 characters
+const EPIC_CODE_NAME = "R5"; //Folder in root
+const EXEC = `Windrose.exe`; //This is true ~80% of the time. Change if different
 const EXEC_EPIC = EXEC; //change these 3 if different
 const EXEC_GOG = EXEC;
 const EXEC_DEMO = EXEC;
 const PARAMETERS_STRING = ''; //launch arguments to pass when launching the game
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Windrose";
 const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
 
 //feature toggles
@@ -63,14 +64,14 @@ const IO_STORE = true; //true if the Paks folder contains .ucas and .utoc files
 const hasUserIdFolder = false; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
 
 //UE specific
-const ENGINE_VERSION = '5.X.X.0'; //Unreal Engine version - info only atm. usually '4.27.2.0' or '5.X.X.0'
+const ENGINE_VERSION = '5.6.1.0'; //Unreal Engine version - info only atm. usually '4.27.2.0' or '5.X.X.0'
 const ROOT_FOLDERS = [EPIC_CODE_NAME, 'Engine']; //addressable folders in root
 const ROOTSUB_FOLDERS = ['Content', 'Binaries', 'Mods']; //subfolders of EPIC_CODE_NAME. Don't use "Plugins" here since it can conflict with plugin loader/asi mods
 const SAVE_EXT = ".sav";
 const SAVE_COMPAT_VERSIONS = ['steam', 'epic', 'gog']; //game versions with installable save mods (never Xbox)
 let PAKMOD_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Paks', '~mods'); //usually works. Some games don't work from "~mods".
 const PAKMOD_LOADORDER = true; //set to false if you don't want loadOrder. If must be in "Paks" root, disable loadOrder.
-const FBLO = false; //set to false to use legacy load order page
+const FBLO = true; //set to false to use legacy load order page
 const PAKMOD_EXTRA_EXTS = []; //extra extensions to include with paks (usually for custom modding frameworks, i.e .toml, .json)
 const UE4SS_PAGE_NO = 0; //set these if there is a customized UE4SS Nexus page
 const UE4SS_FILE_NO = 0;
@@ -255,7 +256,7 @@ const MODKIT_EXEC_PATH = path.join(MODKIT_FOLDER, MODKIT_EXEC_NAME);
 // -- START EDIT ZONE -- ///////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-const LO_FILE_NAME = 'loadOrder.json';
+const LO_FILE_NAME = 'loadOrder.txt';
 const MOD_PATH_DEFAULT = PAK_PATH;
 const REQ_FILE = EPIC_CODE_NAME;
 const PARAMETERS = [PARAMETERS_STRING];
@@ -414,15 +415,15 @@ async function requiresLauncher(gamePath, store) {
     });
   } //*/
   //*
-  if (store === 'epic' && DISCOVERY_IDS_ACTIVE.includes(EPICAPP_ID)) {
+  if (store === 'epic' && DISCOVERY_IDS_ACTIVE.includes(EPICAPP_ID_DEMO)) {
     return Promise.resolve({
         launcher: 'epic',
         addInfo: {
-            appId: EPICAPP_ID,
+            appId: EPICAPP_ID_DEMO,
         },
     });
   } //*/
-  //*
+  /*
   if (store === 'steam') {
     return Promise.resolve({
         launcher: 'steam',
@@ -1653,10 +1654,10 @@ async function deserializeLoadOrder(context) {
       ['persistent', 'mods', GAME_ID], {});
   const loFilePath = await ensureLOFile(context, props.profile.gameId, props);
   const fileData = await fs.readFileAsync(loFilePath, { encoding: 'utf8' });
-  let data = [];
+  let data = fileData.split('\n');;
   try {
-    try {
-      data = JSON.parse(fileData);
+    /*try {
+      data = fileData.split('\n');
     } catch (err) {
       await new Promise((resolve, reject) => {
         props.api.showDialog('error', 'Corrupt load order file', {
@@ -1675,24 +1676,22 @@ async function deserializeLoadOrder(context) {
           ]
         )
       })
-    }
+    } //*/
 
     // User may have disabled/removed a mod - we need to filter out any existing entries from the data we parsed.
-    const filteredData = data.filter(entry => enabledModIds.includes(entry.id));
+    let filteredData = data.filter(entry => enabledModIds.includes(entry));
     // Check if the user added any new mods
     const diff = enabledModIds.filter((id) => 
       (mods[id]?.type === UE5_SORTABLE_ID)
-      && !filteredData.some((loEntry) => (loEntry.id === id))
+      && !filteredData.some((entry) => (entry === id))
     );
     // Add any newly added mods to the bottom of the loadOrder.
-    diff.forEach(missingEntry => {
+    diff.forEach(id => {
       filteredData.push({
-        id: missingEntry,
-        modId: missingEntry,
+        id: id,
+        modId: id,
         enabled: true,
-        name: mods[missingEntry] !== undefined
-          ? util.renderModName(mods[missingEntry])
-          : missingEntry,
+        name: id
       });
     });
     return Promise.resolve(filteredData);
@@ -1708,7 +1707,8 @@ async function serializeLoadOrder(context, loadOrder) {
   }
   // Make sure the LO file is created and ready to be written to.
   const loFilePath = await ensureLOFile(context, props.profile.id, props);
-  // Write the prefixed LO to file.
+  loadOrder = loadOrder.map(mod => mod.id);
+  // Write the prefixed LO to file
   await fs.writeFileAsync(loFilePath, loadOrder.join('\n'), { encoding: 'utf8' });
   // something has changed so we need to tell vortex that a deployment will be necessary
   requestDeployment(context.api, spec);
