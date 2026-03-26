@@ -1654,8 +1654,11 @@ async function deserializeLoadOrder(context) {
   const loFilePath = await ensureLOFile(context, props.profile.gameId, props);
   const fileData = await fs.readFileAsync(loFilePath, { encoding: 'utf8' });
   let data = [];
+  if (fileData.length > 0) {
+    data = JSON.parse(fileData);
+  }
   try {
-    try {
+    /*try {
       data = JSON.parse(fileData);
     } catch (err) {
       await new Promise((resolve, reject) => {
@@ -1675,24 +1678,24 @@ async function deserializeLoadOrder(context) {
           ]
         )
       })
-    }
+    } //*/
 
     // User may have disabled/removed a mod - we need to filter out any existing entries from the data we parsed.
-    const filteredData = data.filter(entry => enabledModIds.includes(entry.id));
+    let filteredData = data.filter(entry => enabledModIds.includes(entry.id));
     // Check if the user added any new mods
     const diff = enabledModIds.filter((id) => 
       (mods[id]?.type === UE5_SORTABLE_ID)
       && !filteredData.some((loEntry) => (loEntry.id === id))
     );
     // Add any newly added mods to the bottom of the loadOrder.
-    diff.forEach(missingEntry => {
+    diff.forEach(id => {
       filteredData.push({
-        id: missingEntry,
-        modId: missingEntry,
+        id: id,
+        modId: id,
         enabled: true,
-        name: mods[missingEntry] !== undefined
-          ? util.renderModName(mods[missingEntry])
-          : missingEntry,
+        name: mods[id] !== undefined
+          ? util.renderModName(mods[id])
+          : id,
       });
     });
     return Promise.resolve(filteredData);
@@ -1708,8 +1711,8 @@ async function serializeLoadOrder(context, loadOrder) {
   }
   // Make sure the LO file is created and ready to be written to.
   const loFilePath = await ensureLOFile(context, props.profile.id, props);
-  // Write the prefixed LO to file.
-  await fs.writeFileAsync(loFilePath, loadOrder.join('\n'), { encoding: 'utf8' });
+  // Write the prefixed LO to file
+  await fs.writeFileAsync(loFilePath, JSON.stringify(loadOrder, null, 4), { encoding: 'utf8' });
   // something has changed so we need to tell vortex that a deployment will be necessary
   requestDeployment(context.api, spec);
   return Promise.resolve();
