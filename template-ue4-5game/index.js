@@ -70,6 +70,7 @@ const SAVE_EXT = ".sav";
 const SAVE_COMPAT_VERSIONS = ['steam', 'epic', 'gog']; //game versions with installable save mods (never Xbox)
 let PAKMOD_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Paks', '~mods'); //usually works. Some games don't work from "~mods".
 const PAKMOD_LOADORDER = true; //set to false if you don't want loadOrder. If must be in "Paks" root, disable loadOrder.
+const FBLO = false; //set to false to use legacy load order page
 const PAKMOD_EXTRA_EXTS = []; //extra extensions to include with paks (usually for custom modding frameworks, i.e .toml, .json)
 const UE4SS_PAGE_NO = 0; //set these if there is a customized UE4SS Nexus page
 const UE4SS_FILE_NO = 0;
@@ -254,6 +255,7 @@ const MODKIT_EXEC_PATH = path.join(MODKIT_FOLDER, MODKIT_EXEC_NAME);
 // -- START EDIT ZONE -- ///////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+const LO_FILE_NAME = 'loadOrder.json';
 const MOD_PATH_DEFAULT = PAK_PATH;
 const REQ_FILE = EPIC_CODE_NAME;
 const PARAMETERS = [PARAMETERS_STRING];
@@ -1597,7 +1599,126 @@ async function downloadSigBypass(api, gameSpec) {
 
 // UNREAL FUNCTIONS ///////////////////////////////////////////////////////////////
 
-//UNREAL - Pre-sort function
+//* FBLO Functions
+function generateProps(context, profileId) {
+  const api = context.api;
+  const state = api.getState();
+  const profile = (profileId !== undefined)
+    ? selectors.profileById(state, profileId)
+    : selectors.activeProfile(state);
+  if (profile?.gameId !== GAME_ID) {
+      return undefined;
+  }
+
+  const discovery = util.getSafe(state, ['settings', 'gameMode', 'discovered', GAME_ID], undefined);
+  if (discovery?.path === undefined) {
+    return undefined;
+  }
+
+  const mods = util.getSafe(state, ['persistent', 'mods', GAME_ID], {});
+  return { api, state, profile, mods, discovery };
+}
+
+async function ensureLOFile(context, profileId, props) {
+  if (props === undefined) {
+    props = generateProps(context, profileId);
+  }
+  if (props === undefined) {
+    return Promise.reject(new util.ProcessCanceled('failed to generate game props'));
+  }
+  const targetPath = path.join(props.discovery.path, props.profile.id + '_' + LO_FILE_NAME);
+  try {
+    await fs.ensureFileAsync(targetPath);
+    return targetPath;
+  } catch (err) {
+    return Promise.reject(err);
+  }
+}
+
+async function deserializeLoadOrder(context) {
+  const props = generateProps(context, undefined);
+  if (props?.profile?.gameId !== GAME_ID) {
+    return Promise.reject(new util.ProcessCanceled('invalid props'));
+  }
+
+  // The deserialization function should be used to filter and insert wanted data into Vortex's
+  //  loadOrder application state, once that's done, Vortex will trigger a serialization event
+  //  which will ensure that the data is written to the LO file.
+  const currentModsState = util.getSafe(props.profile, ['modState'], {});
+
+  // we only want to insert enabled mods.
+  const enabledModIds = Object.keys(currentModsState)
+      .filter(modId => util.getSafe(currentModsState, [modId, 'enabled'], false));
+  const mods = util.getSafe(props.state,
+      ['persistent', 'mods', GAME_ID], {});
+  const loFilePath = await ensureLOFile(context, props.profile.gameId, props);
+  const fileData = await fs.readFileAsync(loFilePath, { encoding: 'utf8' });
+  let data = [];
+  try {
+    try {
+      data = JSON.parse(fileData);
+    } catch (err) {
+      await new Promise((resolve, reject) => {
+        props.api.showDialog('error', 'Corrupt load order file', {
+          bbcode: props.api.translate('The load order file is in a corrupt state. You can try to fix it yourself '
+              + 'or Vortex can regenerate the file for you, but that may result in loss of data ' +
+              '(Will only affect load order items you added manually, if any).')
+          },
+          [
+            { label: 'Cancel', action: () => reject(err) },
+            {
+              label: 'Regenerate File', action: () => {
+                data = [];
+                return resolve();
+              }
+            }
+          ]
+        )
+      })
+    }
+
+    // User may have disabled/removed a mod - we need to filter out any existing entries from the data we parsed.
+    const filteredData = data.filter(entry => enabledModIds.includes(entry.id));
+    // Check if the user added any new mods
+    const diff = enabledModIds.filter((id) => 
+      (mods[id]?.type === UE5_SORTABLE_ID)
+      && !filteredData.some((loEntry) => (loEntry.id === id))
+    );
+    // Add any newly added mods to the bottom of the loadOrder.
+    diff.forEach(missingEntry => {
+      filteredData.push({
+        id: missingEntry,
+        modId: missingEntry,
+        enabled: true,
+        name: mods[missingEntry] !== undefined
+          ? util.renderModName(mods[missingEntry])
+          : missingEntry,
+      });
+    });
+    return Promise.resolve(filteredData);
+  } catch (err) {
+    return Promise.reject(err);
+  }
+}
+
+async function serializeLoadOrder(context, loadOrder) {
+  const props = generateProps(context, undefined);
+  if (props === undefined) {
+    return Promise.reject(new util.ProcessCanceled('invalid props'));
+  }
+  // Make sure the LO file is created and ready to be written to.
+  const loFilePath = await ensureLOFile(context, props.profile.id, props);
+  const filteredLO = loadOrder.filter(lo => props.mods?.[lo?.modId]?.type == UE5_SORTABLE_ID);
+  // Write the prefixed LO to file.
+  await fs.removeAsync(loFilePath).catch({ code: 'ENOENT' }, () => Promise.resolve());
+  await fs.writeFileAsync(loFilePath, JSON.stringify(filteredLO, null, 4), { encoding: 'utf8' });
+  // something has changed so we need to tell vortex that a deployment will be necessary
+  context.api.store.dispatch(actions.setDeploymentNecessary(GAME_ID, true));
+  return Promise.resolve();
+}
+//*/
+
+//UNREAL - Pre-sort function - legacy load order page
 async function preSort(api, items, direction) {
   const mods = util.getSafe(api.store.getState(), ['persistent', 'mods', spec.game.id], {});
   const fileExt = UNREALDATA.fileExt;
@@ -1634,9 +1755,14 @@ function loadOrderPrefix(api, mod) {
   const state = api.getState();
   const profile = selectors.lastActiveProfileForGame(state, GAME_ID);
   const loadOrder = util.getSafe(state, ['persistent', 'loadOrder', profile], {});
-  const loKeys = Object.keys(loadOrder);
-  const pos = loKeys.indexOf(mod.id);
-  //const pos = loKeys.findIndex((entry) => entry.id === mod.id); //for FBLO
+  let pos;
+  if (FBLO) {
+    pos = loadOrder.findIndex((entry) => entry.id === mod.id); //for FBLO
+  } else {
+    const loKeys = Object.keys(loadOrder);
+    pos = loKeys.indexOf(mod.id); //for legacy load order page
+  }
+  //
   if (pos === -1) {
     return 'ZZZZ-';
   }
@@ -2256,28 +2382,43 @@ function applyGame(context, gameSpec) {
 function main(context) {
   applyGame(context, spec);
   if (UNREALDATA.loadOrder === true) { //UNREAL - mod load order
-    let previousLO;
-    context.registerLoadOrderPage({
-      gameId: spec.game.id,
-      gameArtURL: path.join(__dirname, spec.game.logo),
-      preSort: (items, direction) => preSort(context.api, items, direction),
-      filter: mods => mods.filter(mod => mod.type === UE5_SORTABLE_ID),
-      displayCheckboxes: false,
-      callback: (loadOrder) => {
-        if (previousLO === undefined) previousLO = loadOrder;
-        if (loadOrder === previousLO) return;
-        //context.api.store.dispatch(actions.setDeploymentNecessary(spec.game.id, true));
-        requestDeployment(context.api, spec);
-        previousLO = loadOrder;
-      },
-      createInfoPanel: () =>
-        context.api.translate(`Drag and drop the mods on the left to change the order in which they load.\n` 
-          + `${spec.game.name} loads mods in alphanumerical order, so Vortex prefixes the folder names with "AAA, AAB, AAC, ..." to ensure they load in the order you set here.\n`
-          + 'The number in the left column represents the overwrite order. The changes from mods with higher numbers will take priority over other mods which make similar edits.\n'
-          + '\n'
-          + 'YOU MUST DEPLOY MODS AFTER CHANGING THE ORDER TO APPLY CHANGES.'
-        ),
-    });
+    if (FBLO) {
+      context.registerLoadOrder({
+        gameId: spec.game.id,
+        validate: async () => Promise.resolve(undefined), // no validation implemented yet
+        deserializeLoadOrder: async () => await deserializeLoadOrder(context),
+        serializeLoadOrder: async (loadOrder) => await serializeLoadOrder(context, loadOrder),
+        toggleableEntries: false,
+        usageInstructions: `Drag and drop the mods on the left to change the order in which they load. RoN loads mods in alphanumerical order, so Vortex prefixes `
+                + 'the folder names with "AAA, AAB, AAC, ..." to ensure they load in the order you set here. '
+                + 'The number in the left column represents the overwrite order. The changes from mods with higher numbers will take priority over other mods which make similar edits.'
+                + '\n'
+                + 'YOU MUST DEPLOY MODS AFTER CHANGING THE ORDER TO APPLY CHANGES.'
+      }); //*/
+    } else { //legacy Load Order
+      let previousLO;
+      context.registerLoadOrderPage({
+        gameId: spec.game.id,
+        gameArtURL: path.join(__dirname, spec.game.logo),
+        preSort: (items, direction) => preSort(context.api, items, direction),
+        filter: mods => mods.filter(mod => mod.type === UE5_SORTABLE_ID),
+        displayCheckboxes: false,
+        callback: (loadOrder) => {
+          if (previousLO === undefined) previousLO = loadOrder;
+          if (loadOrder === previousLO) return;
+          //context.api.store.dispatch(actions.setDeploymentNecessary(spec.game.id, true));
+          requestDeployment(context.api, spec);
+          previousLO = loadOrder;
+        },
+        createInfoPanel: () =>
+          context.api.translate(`Drag and drop the mods on the left to change the order in which they load.\n` 
+            + `${spec.game.name} loads mods in alphanumerical order, so Vortex prefixes the folder names with "AAA, AAB, AAC, ..." to ensure they load in the order you set here.\n`
+            + 'The number in the left column represents the overwrite order. The changes from mods with higher numbers will take priority over other mods which make similar edits.\n'
+            + '\n'
+            + 'YOU MUST DEPLOY MODS AFTER CHANGING THE ORDER TO APPLY CHANGES.'
+          ),
+      }); //*/
+    }
   }
   context.once(() => { // put code here that should be run (once) when Vortex starts up
     const api = context.api;

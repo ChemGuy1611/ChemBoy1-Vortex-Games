@@ -133,40 +133,42 @@ const DATA_FOLDERS = ['meta',
   //'0036',
 ];
 
+// tool info (i.e. save editor)
 const BROWSER_ID = `${GAME_ID}-browser`;
 const BROWSER_NAME = "Crimson Browser";
 const BROWSER_PY = 'crimson_browser.py';
 const BROWSER_BAT = 'run.bat';
-
-const BROWSER_MOD_ID = `${GAME_ID}-browsermod`;
-const BROWSER_MOD_NAME = "Crimson Browser Mod";
-const BROWSER_MOD_PATH = 'mods';
-const BROWSER_MOD_MANIFEST = 'manifest.json';
-const BROWSER_MOD_FOLDER = 'files';
-const BROWSER_MOD_FILES = [BROWSER_MOD_MANIFEST, BROWSER_MOD_FOLDER];
+const BROWSER_PAGE_NO = '84';
+const BROWSER_FILE_NO = '355';
+const BROWSER_DOMAIN = GAME_ID;
 
 const CD_MANAGER_ID = `${GAME_ID}-cdmodmanager`;
 const CD_MANAGER_NAME = "CD Mod Manager";
 const CD_MANAGER_EXEC = 'CDModManager.exe';
+const CD_MANAGER_PAGE_NO = '114';
+const CD_MANAGER_FILE_NO = '292';
+const CD_MANAGER_DOMAIN = GAME_ID;
 
 const JSON_MANAGER_ID = `${GAME_ID}-jsonmodmanager`;
 const JSON_MANAGER_NAME = "JSON Mod Manager";
 const JSON_MANAGER_EXEC = 'CD Mod Manager.exe';
+const JSON_MANAGER_PAGE_NO = '113';
+const JSON_MANAGER_FILE_NO = '324';
+const JSON_MANAGER_DOMAIN = GAME_ID;
 
-const PATCH_MOD_ID = `${GAME_ID}-patchmod`;
-const PATCH_MOD_NAME = "Patch Mod";
-const PATCH_MOD_FOLDER = 'mods';
-const PATCH_MOD_PATH = PATCH_MOD_FOLDER;
-const PATCH_MOD_EXTS = ['.json', '.cdmod'];
-
-// tool info (i.e. save editor)
 const UNPACKER_ID = `${GAME_ID}-unpacker`;
 const UNPACKER_NAME = "Unpacker";
 const UNPACKER_EXEC = 'PazGui.exe';
+const UNPACKER_PAGE_NO = '62';
+const UNPACKER_FILE_NO = '138';
+const UNPACKER_DOMAIN = GAME_ID;
 
 const SAVEEDITOR_ID = `${GAME_ID}-saveeditor`;
 const SAVEEDITOR_NAME = "Save Editor";
 const SAVEEDITOR_EXEC = 'CrimsonSaveEditor.exe';
+const SAVEEDITOR_PAGE_NO = '20';
+const SAVEEDITOR_FILE_NO = '314';
+const SAVEEDITOR_DOMAIN = GAME_ID;
 
 const TOOLS_ID = `${GAME_ID}-tools`;
 const TOOLS_NAME = "Tools";
@@ -177,6 +179,21 @@ const KNOWN_TOOLS_FILES = [
   JSON_MANAGER_EXEC,
   SAVEEDITOR_EXEC,
 ];
+
+//Crimson Browser mods
+const BROWSER_MOD_ID = `${GAME_ID}-browsermod`;
+const BROWSER_MOD_NAME = "Crimson Browser Mod";
+const BROWSER_MOD_PATH = 'mods';
+const BROWSER_MOD_MANIFEST = 'manifest.json';
+const BROWSER_MOD_FOLDER = 'files';
+const BROWSER_MOD_FILES = [BROWSER_MOD_MANIFEST, BROWSER_MOD_FOLDER];
+
+//combined CD Mod Manager and JSON Mod Manager
+const PATCH_MOD_ID = `${GAME_ID}-patchmod`;
+const PATCH_MOD_NAME = "Patch Mod";
+const PATCH_MOD_FOLDER = 'mods';
+const PATCH_MOD_PATH = PATCH_MOD_FOLDER;
+const PATCH_MOD_EXTS = ['.json', '.cdmod'];
 
 //DISABLED for now
 const LOADER_ID = `${GAME_ID}-loader`;
