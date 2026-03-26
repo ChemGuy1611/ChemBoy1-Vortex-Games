@@ -4,6 +4,11 @@
 
 - None Planned
 
+## [0.2.1] - 2026-03-26
+
+- Added: Download buttons and setup scripts for tools
+- Crimson Browser - will attempt to install dependencies and add game path to config file - Python 3.10+ REQUIRED
+
 ## [0.2.0] - 2026-03-25
 
 - Added: Support for multiple new mod installers and formats, including launch tools:
