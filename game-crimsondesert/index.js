@@ -139,8 +139,8 @@ const BROWSER_ID = `${GAME_ID}-browser`;
 const BROWSER_NAME = "Crimson Browser";
 const BROWSER_PY = 'crimson_browser.py';
 const BROWSER_BAT = 'run.bat';
-const BROWSER_PAGE_NO = '84';
-const BROWSER_FILE_NO = '355';
+const BROWSER_PAGE_NO = 84;
+const BROWSER_FILE_NO = 355;
 const BROWSER_DOMAIN = GAME_ID;
 
 const BROWSER_CONFIG_FILE = 'config.txt';
@@ -152,29 +152,29 @@ const PYTHON_MIN_VER = 3.10;
 const CD_MANAGER_ID = `${GAME_ID}-cdmodmanager`;
 const CD_MANAGER_NAME = "CD Mod Manager";
 const CD_MANAGER_EXEC = 'CDModManager.exe';
-const CD_MANAGER_PAGE_NO = '114';
-const CD_MANAGER_FILE_NO = '292';
+const CD_MANAGER_PAGE_NO = 114;
+const CD_MANAGER_FILE_NO = 292;
 const CD_MANAGER_DOMAIN = GAME_ID;
 
 const JSON_MANAGER_ID = `${GAME_ID}-jsonmodmanager`;
 const JSON_MANAGER_NAME = "JSON Mod Manager";
 const JSON_MANAGER_EXEC = 'CD Mod Manager.exe';
-const JSON_MANAGER_PAGE_NO = '113';
-const JSON_MANAGER_FILE_NO = '324';
+const JSON_MANAGER_PAGE_NO = 113;
+const JSON_MANAGER_FILE_NO = 324;
 const JSON_MANAGER_DOMAIN = GAME_ID;
 
 const UNPACKER_ID = `${GAME_ID}-unpacker`;
 const UNPACKER_NAME = "Unpacker";
 const UNPACKER_EXEC = 'PazGui.exe';
-const UNPACKER_PAGE_NO = '62';
-const UNPACKER_FILE_NO = '138';
+const UNPACKER_PAGE_NO = 62;
+const UNPACKER_FILE_NO = 138;
 const UNPACKER_DOMAIN = GAME_ID;
 
 const SAVE_EDITOR_ID = `${GAME_ID}-saveeditor`;
 const SAVE_EDITOR_NAME = "Save Editor";
 const SAVE_EDITOR_EXEC = 'CrimsonSaveEditor.exe';
-const SAVE_EDITOR_PAGE_NO = '20';
-const SAVE_EDITOR_FILE_NO = '314';
+const SAVE_EDITOR_PAGE_NO = 20;
+const SAVE_EDITOR_FILE_NO = 314;
 const SAVE_EDITOR_DOMAIN = GAME_ID;
 
 const TOOLS_ID = `${GAME_ID}-tools`;
@@ -1232,6 +1232,23 @@ async function isSaveEditorInstalled(api, spec) {
   return test;
 }
 
+//Check if Unpacker is installed
+async function isUnpackerInstalled(api, spec) {
+  const state = api.getState();
+  const mods = state.persistent.mods[spec.game.id] || {};
+  let test =  Object.keys(mods).some(id => mods[id]?.type === UNPACKER_ID);
+  if (test === false) {
+    try {
+      GAME_PATH = getDiscoveryPath(api);
+      await fs.statAsync(path.join(GAME_PATH, UNPACKER_EXEC));
+      test = true;
+    } catch (err) {
+      test = false;
+    }
+  }
+  return test;
+}
+
 //* Function to auto-download mod loader from Nexus Mods
 async function downloadLoader(api, gameSpec, check = true) {
   let isInstalled = isLoaderInstalled(api, gameSpec);
@@ -1562,6 +1579,73 @@ async function downloadSaveEditor(api, gameSpec, check = true) {
   }
 } //*/
 
+//* Function to auto-download Save Editor from Nexus Mods
+async function downloadUnpacker(api, gameSpec, check = true) {
+  let isInstalled = await isUnpackerInstalled(api, gameSpec);
+  if (!isInstalled || !check) {
+    const MOD_NAME = UNPACKER_NAME;
+    const MOD_TYPE = TOOLS_ID;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
+    const PAGE_ID = UNPACKER_PAGE_NO;
+    const FILE_ID = UNPACKER_FILE_NO;  //If using a specific file id because "input" below gives an error
+    const GAME_DOMAIN = UNPACKER_DOMAIN;
+    api.sendNotification({ //notification indicating install process
+      id: NOTIF_ID,
+      message: `Installing ${MOD_NAME}`,
+      type: 'activity',
+      noDismiss: true,
+      allowSuppress: false,
+    });
+    if (api.ext?.ensureLoggedIn !== undefined) { //make sure user is logged into Nexus Mods account in Vortex
+      await api.ext.ensureLoggedIn();
+    }
+    try {
+      let FILE = null;
+      let URL = null;
+      try { //get the mod files information from Nexus
+        const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
+        const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
+        const file = modFiles
+          .filter(file => file.category_id === 1)
+          .find(file => file.file_name.toLowerCase().includes('gui'))
+          //.sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
+          //.reverse()[0];
+        if (file === undefined) {
+          throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
+        }
+        FILE = file.file_id;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      } catch (err) { // use defined file ID if input is undefined above
+        FILE = FILE_ID;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      }
+      const dlInfo = { //Download the mod
+        game: GAME_DOMAIN,
+        name: MOD_NAME,
+      };
+      const dlId = await util.toPromise(cb =>
+        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+      const modId = await util.toPromise(cb =>
+        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
+      const batched = [
+        actions.setModsEnabled(api, profileId, [modId], true, {
+          allowAutoDeploy: true,
+          installed: true,
+        }),
+        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
+      ];
+      util.batchDispatch(api.store, batched); // Will dispatch both actions
+    } catch (err) { //Show the user the download page if the download, install process fails
+      const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
+      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
+      util.opn(errPage).catch(() => null);
+    } finally {
+      api.dismissNotification(NOTIF_ID);
+    }
+  }
+} //*/
+
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
 function setupNotify(api) {
@@ -1730,6 +1814,7 @@ function applyGame(context, gameSpec) {
   //register actions
   context.registerAction('mod-icons', 300, 'open-ext', {}, `Download ${BROWSER_NAME} + Setup`, async () => {
     await downloadBrowser(context.api, spec);
+    await deploy(context.api);
     await setupBrowser(context.api);
     }, () => {
       const state = context.api.getState();
@@ -1759,6 +1844,13 @@ function applyGame(context, gameSpec) {
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, `Download ${SAVE_EDITOR_NAME}`, async () => {
     await downloadSaveEditor(context.api, spec);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, `Download ${UNPACKER_NAME}`, async () => {
+    await downloadUnpacker(context.api, spec);
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
