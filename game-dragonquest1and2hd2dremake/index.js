@@ -2,8 +2,8 @@
 Name: DRAGON QUEST I & II HD-2D Remake Vortex Extension
 Structure: UE5 (static exe)
 Author: ChemBoy1
-Version: 0.2.0
-Date: 2026-03-19
+Version: 0.2.1
+Date: 2026-03-27
 //////////////////////////////////////////////////*/
 
 //Import libraries
@@ -12,9 +12,9 @@ const path = require('path');
 const template = require('string-template');
 
 //const USER_HOME = util.getVortexPath("home");
-//const DOCUMENTS = util.getVortexPath("documents");
+const DOCUMENTS = util.getVortexPath("documents");
 //const ROAMINGAPPDATA = util.getVortexPath('appData');
-const LOCALAPPDATA = util.getVortexPath('localAppData');
+//const LOCALAPPDATA = util.getVortexPath('localAppData');
 
 //Specify all information about the game
 const GAME_ID = "dragonquest1and2hd2dremake";
@@ -26,6 +26,8 @@ const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 const GAME_NAME = "DRAGON QUEST I & II HD-2D Remake";
 const GAME_NAME_SHORT = "DQ I&II Remake";
 const EXEC = "DQIandIIHD2DRemake.exe";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Dragon_Quest_I_%26_II_HD-2D_Remake";
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1514"; //Nexus link to this extension. Used for links
 
 //Unreal Engine specific
 const EPIC_CODE_NAME = "Game";
@@ -37,11 +39,11 @@ const UE4SS_MOD_PATH = path.join('ue4ss', 'Mods');
 const EXEC_FOLDER_NAME = "Win64";
 
 //config and save
-const DATA_FOLDER = EPIC_CODE_NAME;
+const DATA_FOLDER = 'DRAGON QUEST I and II HD-2D Remake';
 const CONFIG_FOLDERNAME = "Windows";
-const CONFIG_LOC = 'Local AppData';
-const SAVE_LOC = 'Local AppData';
-const CONFIGMOD_LOCATION = LOCALAPPDATA;
+const CONFIG_LOC = 'Documents';
+const SAVE_LOC = CONFIG_LOC;
+const CONFIGMOD_LOCATION = DOCUMENTS;
 const SAVEMOD_LOCATION = CONFIGMOD_LOCATION;
 const SHIPEXE_STRING_DEFAULT = '';
 const SHIPEXE_STRING_EGS = '';
@@ -77,7 +79,7 @@ const UE5_SORTABLE_NAME = 'UE Sortable Pak Mod';
 //Information for modtypes, installers, tools, and actions
 const CONFIG_ID = `${GAME_ID}-config`;
 const CONFIG_NAME = "Config";
-const CONFIG_PATH = path.join(CONFIGMOD_LOCATION, DATA_FOLDER, "Saved", "Config", CONFIG_FOLDERNAME);
+const CONFIG_PATH = path.join(CONFIGMOD_LOCATION, 'My Games', DATA_FOLDER);
 const CONFIG_FILES = ["engine.ini", "scalability.ini", "input.ini", "game.ini", "gameusersettings.ini"];
 const CONFIG_EXT = ".ini";
 
@@ -104,7 +106,7 @@ const CONTENT_PATH = path.join(EPIC_CODE_NAME);
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_NAME = "Saves";
 //const SAVE_FOLDER = path.join(DOCUMENTS, DATA_FOLDER);
-const SAVE_FOLDER = path.join(SAVEMOD_LOCATION, DATA_FOLDER, 'Saved', 'SaveGames');
+const SAVE_FOLDER = path.join(SAVEMOD_LOCATION, 'My Games', DATA_FOLDER, 'Steam');
 let USERID_FOLDER = "";
 function isDir(folder, file) {
   const stats = fs.statSync(path.join(folder, file));
@@ -119,7 +121,7 @@ try {
 if (USERID_FOLDER === undefined) {
   USERID_FOLDER = "";
 } //*/
-const SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
+const SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER, 'SaveGames');
 const SAVE_EXT = ".sav";
 
 const SCRIPTS_ID = `${GAME_ID}-scripts`;
@@ -1326,9 +1328,9 @@ function UNREALEXTENSION(context) {
 
 // Function to check if staging folder and game path are on same drive partition to enable modtypes + installers
 function checkPartitions(folder, discoveryPath) {
-  if (!IO_STORE) { // true if IO-Store is not enabled for the game, since symlinks work fine in that case
+  /*if (!IO_STORE) { // true if IO-Store is not enabled for the game, since symlinks work fine in that case
     return true;
-  }
+  } //*/
   try {
     // Define paths
     const path1 = discoveryPath;
@@ -1368,8 +1370,7 @@ function partitionCheckNotify(api, CHECK_DATA) {
         title: 'More',
         action: (dismiss) => {
           api.showDialog('question', MESSAGE, {
-            text: `Because ${GAME_NAME} includes the IO-Store Unreal Engine feature, Vortex must use hardlinks to install mods for the game.\n`
-                + `Because of this, the game, staging folder, and user folder (typically on C Drive) must all be on the same partition to install certain mods with Vortex.\n`
+            text: `The game, staging folder, and user folder (typically on C Drive) must all be on the same partition to install certain mods with Vortex.\n`
                 + `Vortex detected that one or more of the mod types listed below are not available because the game, staging folder, and user folder are not on the same partition.\n`
                 + `\n`
                 + `Here are your results for the partition check to enable these mod types:\n`
@@ -1395,21 +1396,6 @@ function partitionCheckNotify(api, CHECK_DATA) {
       },
     ],
   });
-}
-
-async function resolveGameVersion(gamePath, exePath) {
-  //SHIPPING_EXE = getShippingExe(gamePath);
-  const READ_FILE = path.join(gamePath, SHIPPING_EXE);
-  let version = '0.0.0';
-  try {
-    const exeVersion = require('exe-version');
-    version = await exeVersion.getProductVersion(READ_FILE);
-    //log('warn', `Resolved game version for ${GAME_ID} to: ${version}`);
-    return Promise.resolve(version); 
-  } catch (err) {
-    log('error', `Could not read ${READ_FILE} file to get game version: ${err}`);
-    return Promise.resolve(version);
-  }
 }
 
 async function modFoldersEnsureWritable(gamePath, relPaths) {
@@ -1461,7 +1447,6 @@ function applyGame(context, gameSpec) {
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     executable: () => gameSpec.game.executable,
-    //executable: getExecutable,
     supportedTools: tools,
   };
   context.registerGame(game);
@@ -1598,17 +1583,29 @@ function applyGame(context, gameSpec) {
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
+    util.opn(PCGAMINGWIKI_URL).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
-    const openPath = path.join(__dirname, 'CHANGELOG.md');
-    util.opn(openPath).catch(() => null);
+    util.opn(path.join(__dirname, 'CHANGELOG.md')).catch(() => null);
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
+    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
-    const openPath = DOWNLOAD_FOLDER;
-    util.opn(openPath).catch(() => null);
+    util.opn(DOWNLOAD_FOLDER).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
