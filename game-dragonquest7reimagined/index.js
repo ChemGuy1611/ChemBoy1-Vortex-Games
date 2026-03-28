@@ -19,7 +19,7 @@ const { parseStringPromise } = require('xml2js');
 // -------------------------------------
 
 //const USER_HOME = util.getVortexPath('home'); //only uncomment the ones needed
-//const DOCUMENTS = util.getVortexPath('documents');
+const DOCUMENTS = util.getVortexPath('documents');
 //const ROAMINGAPPDATA = util.getVortexPath('appData');
 const LOCALAPPDATA = util.getVortexPath('localAppData');
 
@@ -68,11 +68,11 @@ const UE4SS_DOMAIN = GAME_ID; //either GAME_ID or 'site'
 const UE4SS_MOD_PATH = path.join('ue4ss', 'Mods'); //this should probably never change (unless UE4SS team changes it again lol)
 
 //config, save, shipping exe
-const DATA_FOLDER = EPIC_CODE_NAME; //almost always matches.
+const DATA_FOLDER = 'DRAGON QUEST VII'; //almost always matches.
 const CONFIG_FOLDERNAME = 'WindowsNoEditor'; //UE 4 games are often 'WindowsNoEditor'
-const CONFIG_LOC = 'Local AppData'; //string for notification text.
+const CONFIG_LOC = 'Documents'; //string for notification text.
 const SAVE_LOC = CONFIG_LOC; //string for notification text. Config and Save mods are almonst always in the same place
-const CONFIGMOD_LOCATION = LOCALAPPDATA; //almost always matches. Some are in game folder or Documents.
+const CONFIGMOD_LOCATION = DOCUMENTS; //almost always matches. Some are in game folder or Documents.
 
 const SAVEMOD_LOCATION = CONFIGMOD_LOCATION;
 const SHIPEXE_STRING_DEFAULT = '';
@@ -94,9 +94,9 @@ const SAVE_EDITOR_EXEC = "XXX.exe";
 //const ENGINE_VERSION_NO = +ENGINE_VERSION;
 let configSaveMatch = (CONFIGMOD_LOCATION === SAVEMOD_LOCATION); //true if the config and save mods are in the same folder
 const XBOX_SAVE_STRING = XBOX_PUB_ID;
-const CONFIG_PATH_DEFAULT = path.join(CONFIGMOD_LOCATION, DATA_FOLDER, "Saved", "Config", CONFIG_FOLDERNAME);
-const CONFIG_PATH_XBOX = path.join(CONFIGMOD_LOCATION, DATA_FOLDER, "Saved", "Config", "WinGDK"); //XBOX Version
-const SAVE_PATH_DEFAULT = path.join(SAVEMOD_LOCATION, DATA_FOLDER, "Saved", "SaveGames");
+const CONFIG_PATH_DEFAULT = path.join(CONFIGMOD_LOCATION,'My Games', DATA_FOLDER);
+const CONFIG_PATH_XBOX = CONFIG_PATH_DEFAULT; //XBOX Version
+const SAVE_PATH_DEFAULT = path.join(CONFIGMOD_LOCATION,'My Games', DATA_FOLDER, "Steam");
 const SAVE_PATH_XBOX = path.join(LOCALAPPDATA, "Packages", `${XBOXAPP_ID}_${XBOX_SAVE_STRING}`, "SystemAppData", "wgs"); //XBOX Version
 
 //Settings related to the IO Store UE feature
@@ -185,7 +185,7 @@ try {
 if (USERID_FOLDER === undefined) {
   USERID_FOLDER = "";
 } //*/
-let SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
+let SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER, "release", "Saved", "SaveGames");
 
 const SCRIPTS_ID = `${GAME_ID}-scripts`;
 const SCRIPTS_NAME = "UE4SS Script Mod";

@@ -2,8 +2,8 @@
 Name: Crimson Desert Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.2.1
-Date: 2026-03-26
+Version: 0.2.2
+Date: 2026-03-27
 Notes:
 - Supports plugin mods and data mods with "00XX" folders
 - Supports Crimson Browser (manifest.json and files folder), CD Mod Manager (.cdmod), and JSON Mod Manager (.json) mods
@@ -131,7 +131,7 @@ const DATA_FOLDERS = ['meta',
   '0033',
   '0034',
   '0035',
-  //'0036',
+  //'0036', //this folder is used by patch mods, so we don't want to put it in root
 ];
 
 // tool info (i.e. save editor)
@@ -195,18 +195,20 @@ const BROWSER_MOD_MANIFEST = 'manifest.json';
 const BROWSER_MOD_FOLDER = 'files';
 const BROWSER_MOD_FILES = [BROWSER_MOD_MANIFEST, BROWSER_MOD_FOLDER];
 
-//combined CD Mod Manager and JSON Mod Manager
+//patch mods - multiple mod managers
+//don't really NEED an external manager. Just a script to run on deploy to patch the meta\0.papgt file
 const PATCH_MOD_ID = `${GAME_ID}-patchmod`;
 const PATCH_MOD_NAME = "Patch Mod";
 const PATCH_MOD_FOLDER = 'mods';
 const PATCH_MOD_PATH = PATCH_MOD_FOLDER;
+const PATCH_MOD_FILES = ['modinfo.json'];
 const PATCH_MOD_EXTS = ['.json', '.cdmod'];
 
-//DISABLED for now
+//DISABLED for now - reserved for a runtime or script patcher that updates the meta\0.papgt file
 const LOADER_ID = `${GAME_ID}-loader`;
 const LOADER_NAME = "Mod Loader";
-const LOADER_PATH = BINARIES_PATH;
-const LOADER_FILE = 'XXX.dll';
+const LOADER_PATH = '.';
+const LOADER_FILE = 'XXX.dll'; //probably a dll or python script
 const LOADER_PAGE_NO = 0;
 const LOADER_FILE_NO = 0;
 const LOADER_DOMAIN = GAME_ID;
@@ -1906,7 +1908,7 @@ function main(context) {
   applyGame(context, spec);
   //Load Order
   if (loadOrder) {
-    
+    //use load order to set folder names for mods, starting from 0036
   }
   context.once(() => { // put code here that should be run (once) when Vortex starts up
     const api = context.api;

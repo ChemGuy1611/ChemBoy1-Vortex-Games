@@ -2,8 +2,8 @@
 Name: Unreal Tournament 2004 Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2026-02-20
+Version: 0.1.1
+Date: 2026-03-27
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -38,6 +38,7 @@ const UNREALARCHIVE_URL = "https://unrealarchive.org/unreal-tournament-2004/inde
 const UNREALWIKI_URL = "https://unreal.fandom.com/wiki/Unreal_Tournament_2004";
 const OLDUNREAL_URL = "https://www.oldunreal.com/downloads/ut2004/full-game-installers/";
 const MODDB_URL = "https://www.moddb.com/games/unreal-tournament-2004/mods";
+const PATCHES_URL = "https://github.com/OldUnreal/UT2004Patches/releases";
 
 const INSTALL_HIVE = 'HKEY_LOCAL_MACHINE';
 const INSTALL_KEY = `SOFTWARE\\WOW6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\OldUnreal_ut2004`;
@@ -510,7 +511,73 @@ function fallbackInstallerNotify(api, modName) {
 
 // AUTOMATIC MOD DOWNLOADERS ///////////////////////////////////////////////////
 
+//* Download UE4SS from GitHub page (user browse for download)
+async function downloadPatches(api, gameSpec) {
+  const URL = PATCHES_URL;
+  const MOD_NAME = 'OldUnreal Patch';
+  const MOD_TYPE = MOD_ID;
+  const ARCHIVE_NAME = 'OldUnreal-UT2004Patch';
+  const instructions = api.translate(`Click on Continue below to open the browser. - `
+    + `Navigate to the a version of ${ARCHIVE_NAME} on the GitHub releases page and `
+    + `click on the "Windows" version file to download and install the mod.`
+  );
 
+  return new Promise((resolve, reject) => { //Browse and download the mod
+    return api.emitAndAwait('browse-for-download', URL, instructions)
+    .then((result) => { //result is an array with the URL to the downloaded file as the only element
+      if (!result || !result.length) { //user clicks outside the window without downloading
+        return reject(new util.UserCanceled());
+      }
+      if (!result[0].includes(ARCHIVE_NAME)) { //if user downloads the wrong file
+        return reject(new util.UserCanceled('Selected wrong download'));
+      } //*/
+      return Promise.resolve(result);
+    })
+    .catch((error) => {
+      return reject(error);
+    })
+    .then((result) => {
+      const dlInfo = {game: gameSpec.game.id, name: MOD_NAME};
+      api.events.emit('start-download', result, {}, undefined,
+        async (error, id) => { //callback function to check for errors and pass id to and call 'start-install-download' event
+          if (error !== null && (error.name !== 'AlreadyDownloaded')) {
+            return reject(error);
+          }
+          api.events.emit('start-install-download', id, { allowAutoEnable: true }, async (error) => { //callback function to complete the installation
+            if (error !== null) {
+              return reject(error);
+            }
+            const profileId = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
+            const batched = [
+              actions.setModsEnabled(api, profileId, result, true, {
+                allowAutoDeploy: true,
+                installed: true,
+              }),
+              actions.setModType(GAME_ID, result[0], MOD_TYPE), // Set the mod type
+            ];
+            util.batchDispatch(api.store, batched); // Will dispatch both actions.
+            return resolve();
+          });
+        }, 
+        'never',
+        { allowInstall: false },
+      );
+    });
+  })
+  .catch(err => {
+    if (err instanceof util.UserCanceled) {
+      api.showErrorNotification(`User cancelled download/install of ${MOD_NAME}. Please try again.`, err, { allowReport: false });
+      //util.opn(URL).catch(() => null);
+      return Promise.resolve();
+    } else if (err instanceof util.ProcessCanceled) {
+      api.showErrorNotification(`Failed to download/install ${MOD_NAME}. Please try again or download manually.`, err, { allowReport: false });
+      util.opn(URL).catch(() => null);
+      return Promise.reject(err);
+    } else {
+      return Promise.reject(err);
+    }
+  });
+} //*/
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
@@ -607,6 +674,20 @@ function applyGame(context, gameSpec) {
   }
 
   //register actions
+  context.registerAction('mod-icons', 300, 'open-ext', {}, `Download OldUnreal Patches (Browse)`, () => {
+    downloadPatches(context.api, spec);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open OldUnreal Page', () => {
+    util.opn(UNREALARCHIVE_URL).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, `Open Engine Settings File`, () => {
     GAME_PATH = getDiscoveryPath(context.api);
     util.opn(path.join(GAME_PATH, BINARIES_PATH, CONFIG_FILES[0])).catch(() => null);
@@ -631,13 +712,6 @@ function applyGame(context, gameSpec) {
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   }); //*/
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Unreal Archive Page', () => {
-    util.opn(UNREALARCHIVE_URL).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
     util.opn(PCGAMINGWIKI_URL).catch(() => null);
   }, () => {

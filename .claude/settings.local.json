@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "WebFetch(domain:steamdb.info)",
+      "WebFetch(domain:gogdb.org)",
+      "WebFetch(domain:egdata.app)",
+      "WebFetch(domain:www.pcgamingwiki.com)",
+      "WebFetch(domain:www.github.com)",
+      "WebFetch(domain:store.epicgames.com)",
+      "WebFetch(domain:gog.com)",
+      "WebFetch(domain:xbox.com)",
+      "WebFetch(domain:www.nexusmods.com)"
+    ]
+  }
+}
