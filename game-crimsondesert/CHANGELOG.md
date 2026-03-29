@@ -4,6 +4,11 @@
 
 - None Planned
 
+## [0.2.3] - 2026-03-29
+
+- Added: Deployment notifications with buttons to run Crimson Browser and/or JSON Mod Manager
+- Fixed: Removed attempt to install Python dependencies for Crimson Browser - no longer required
+
 ## [0.2.2] - 2026-03-28
 
 - Changed: Patch mod installer updated for new modding patterns (JSON/QT Mod Managers) - "0036+" folders

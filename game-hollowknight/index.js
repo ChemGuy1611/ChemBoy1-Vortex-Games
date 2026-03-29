@@ -2,8 +2,8 @@
 Name: Hollow Knight Vortex Extension
 Structure: Unity BepinEx
 Author: ChemBoy1
-Version: 2.1.0
-Date: 2026-03-28
+Version: 2.1.1
+Date: 2026-03-29
 //////////////////////////////////////////*/
 
 //Import libraries
@@ -196,6 +196,30 @@ const tools = [
 
 // BASIC FUNCTIONS //////////////////////////////////////////////////////////////
 
+function isDir(folder, file) {
+  const stats = fs.statSync(path.join(folder, file));
+  return stats.isDirectory();
+}
+
+function statCheckSync(gamePath, file) {
+  try {
+    fs.statSync(path.join(gamePath, file));
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}
+async function statCheckAsync(gamePath, file) {
+  try {
+    await fs.statAsync(path.join(gamePath, file));
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}
+
 //Set mod type priorities
 function modTypePriority(priority) {
   return {
@@ -263,23 +287,14 @@ async function requiresLauncher(gamePath, store) {
 
 //Get correct executable for game version
 function getExecutable(discoveryPath) {
-  const isCorrectExec = (exec) => {
-    try {
-      fs.statSync(path.join(discoveryPath, exec));
-      return true;
-    }
-    catch (err) {
-      return false;
-    }
-  };
-  if (isCorrectExec(EXEC_XBOX)) {
+  if (statCheckSync(discoveryPath, EXEC_XBOX)) {
     DATA_FOLDER = DATA_FOLDER_XBOX;
     ASSEMBLY_PATH = path.join(DATA_FOLDER, 'Managed');
     ASSETS_PATH = DATA_FOLDER;
     SAVE_PATH = SAVE_PATH_XBOX;
     return EXEC_XBOX;
   };
-  if (isCorrectExec(EXEC_GOG)) {
+  if (statCheckSync(discoveryPath, EXEC_GOG)) {
     DATA_FOLDER = DATA_FOLDER_GOG;
     ASSEMBLY_PATH = path.join(DATA_FOLDER, 'Managed');
     ASSETS_PATH = DATA_FOLDER;
@@ -291,43 +306,15 @@ function getExecutable(discoveryPath) {
 //Get correct save folder for game version
 async function getSavePath(api) {
   GAME_PATH = getDiscoveryPath(api);
-  const isCorrectExec = (exec) => {
-    try {
-      fs.statSync(path.join(GAME_PATH, exec));
-      return true;
-    }
-    catch (err) {
-      return false;
-    }
-  };
-  if (isCorrectExec(EXEC_XBOX)) {
+  if (await statCheckAsync(GAME_PATH, EXEC_XBOX)) {
     SAVE_PATH = SAVE_PATH_XBOX;
     return SAVE_PATH;
-  }
-  else {
+  } else {
     SAVE_PATH = SAVE_PATH_DEFAULT;
     return SAVE_PATH;
   };
 } //*/
 
-function statCheckSync(gamePath, file) {
-  try {
-    fs.statSync(path.join(gamePath, file));
-    return true;
-  }
-  catch (err) {
-    return false;
-  }
-}
-async function statCheckAsync(gamePath, file) {
-  try {
-    await fs.statAsync(path.join(gamePath, file));
-    return true;
-  }
-  catch (err) {
-    return false;
-  }
-}
 //Get correct game version
 async function setGameVersion(gamePath) {
   if (await statCheckAsync(gamePath, EXEC_XBOX)) {
@@ -345,7 +332,6 @@ async function setGameVersion(gamePath) {
     ASSETS_PATH = DATA_FOLDER;
     return GAME_VERSION;
   }
-
   GAME_VERSION = 'steam';
   return GAME_VERSION;
 }
@@ -510,6 +496,104 @@ function testAssets(files, gameId) {
   });
 }
 
+//Fallback installer to root folder
+function testFallback(files, gameId) {
+  const isPlugin = files.some(file => path.extname(file).toLowerCase() === '.dll');
+  let supported = (gameId === spec.game.id) && !isPlugin;
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Fallback installer to root folder
+function installFallback(api, files, destinationPath) {
+  fallbackInstallerNotify(api, destinationPath);
+  const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
+  
+  const filtered = files.filter(file =>
+    (!file.endsWith(path.sep))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: file,
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+function fallbackInstallerNotify(api, modName) {
+  const state = api.getState();
+  STAGING_FOLDER = selectors.installPathForGame(state, spec.game.id);
+  modName = path.basename(modName, '.installing');
+  const id = modName.replace(/[^a-zA-Z0-9\s]*( )*/gi, '').slice(0, 20);
+  const NOTIF_ID = `${GAME_ID}-${id}-fallback`;
+  const MESSAGE = 'Fallback installer reached for ' + modName;
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'info',
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: 'More',
+        action: (dismiss) => {
+          api.showDialog('question', MESSAGE, {
+            text: `The mod you just installed reached the fallback installer. This means Vortex could not determine where to place these mod files.\n`
+                + `Please check the mod page description and review the files in the mod staging folder to determine if manual file manipulation is required.\n`
+                + `\n`
+                + `If you think that Vortex should be capable to install this mod to a specific folder, please contact the extension developer for support at the link below.\n`
+                + `\n`
+                + `Mod Name: ${modName}.\n`
+                + `\n`             
+          }, [
+            { label: 'Continue', action: () => dismiss() },
+            {
+              label: 'Contact Ext. Developer', action: () => {
+                util.opn(`${EXTENSION_URL}?tab=posts`).catch(() => null);
+                dismiss();
+              }
+            }, //*/
+            {
+              label: 'Open Staging Folder', action: () => {
+                util.opn(path.join(STAGING_FOLDER, modName)).catch(() => null);
+                dismiss();
+              }
+            }, //*/
+            //*
+            { label: `Open Mod Page`, action: () => {
+              const mods = util.getSafe(api.store.getState(), ['persistent', 'mods', spec.game.id], {});
+              const modMatch = Object.values(mods).find(mod => mod.installationPath === modName);
+              log('warn', `Found ${modMatch?.id} for ${modName}`);
+              let PAGE = ``;
+              if (modMatch) {
+                const MOD_ID = modMatch.attributes.modId;
+                if (MOD_ID !== undefined) {
+                  PAGE = `${MOD_ID}?tab=description`; 
+                }
+              }
+              const MOD_PAGE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${PAGE}`;
+              util.opn(MOD_PAGE_URL).catch(err => undefined);
+              //dismiss();
+            }}, //*/
+          ]);
+        },
+      },
+    ],
+  });
+}
+
 //Installer install assets files
 function installAssets(files) {
   const modFile = files.find(file => ASSETS_EXTS.includes(path.extname(file).toLowerCase()));
@@ -646,8 +730,9 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(BEPCFGMAN_ID, 9, testBepCfgMan, installBepCfgMan); //must be set to 9 since bepinex extension modtypes start at 10 and would hijack
   context.registerInstaller(ASSEMBLY_ID, 25, testAssembly, installAssembly);
   context.registerInstaller(ASSETS_ID, 27, testAssets, installAssets);
-  //context.registerInstaller(SAVE_ID, 49, testSave, installSave); //best to only enable if saves are stored in the game's folder
-  
+  //context.registerInstaller(SAVE_ID, 47, testSave, installSave); //best to only enable if saves are stored in the game's folder
+  context.registerInstaller(`${GAME_ID}-fallback`, 49, testFallback, (files, destinationPath) => installFallback(context.api, files, destinationPath));
+
   //register actions
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download BepInExConfigManager', () => {
     downloadBepCfgMan(context.api, spec, false);
@@ -785,7 +870,7 @@ async function downloadBepCfgMan(api, gameSpec, check = true) {
       const dlInfo = { //Download the mod
         game: GAME_DOMAIN,
         name: MOD_NAME,
-      };
+      }; //*/
       //const dlInfo = {};
       const dlId = await util.toPromise(cb =>
         api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));

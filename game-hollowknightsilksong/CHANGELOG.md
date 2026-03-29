@@ -6,9 +6,10 @@
 
 ## [0.3.0] - 2026-03-29
 
-- Added: Support for skin mod packs that install to the "Hollow Knight Silksong_Data\Mods\Customizer" folder.
+- Added: Support for .png skin mod packs that install to the "Hollow Knight Silksong_Data\Mods\Customizer" folder.
+- Added: Root installer ("Hollow Knight Silksong_Data" folder)
 - Added: Fallback installer with notification if Vortex could not determine how to install the mod.
-- Updated: BepInEx to latest 5.4.23.5
+- Updated: BepInEx to latest 5.4.23.5 - fixes log writer errors
 - Updated: BepInExConfigManager to latest 18.4.1 and added download button
 
 ## [0.2.0] - 2026-02-07

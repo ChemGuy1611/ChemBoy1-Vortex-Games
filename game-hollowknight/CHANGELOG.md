@@ -4,6 +4,10 @@
 
 - None
 
+## [2.1.1] - 2026-03-29
+
+- Added: Fallback installer with notification if Vortex could not determine how to install a mod.
+
 ## [2.1.0] - 2026-03-28
 
 - Updated: BepInEx to latest 5.4.23.5

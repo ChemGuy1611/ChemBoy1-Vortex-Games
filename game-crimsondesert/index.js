@@ -2,13 +2,13 @@
 Name: Crimson Desert Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.2.2
-Date: 2026-03-27
+Version: 0.2.3
+Date: 2026-03-29
 Notes:
 - Supports plugin mods and data mods with "00XX" folders
-- Supports Crimson Browser (manifest.json and files folder), CD Mod Manager (.cdmod), and JSON Mod Manager (.json) mods
+- Supports Crimson Browser (manifest.json and files folder) and JSON Mod Manager (.json or "0036+" folder) mods
 ///////////////////////////////////////////*/
-
+ 
 //Import libraries
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
@@ -17,6 +17,7 @@ const { parseStringPromise } = require('xml2js');
 //const fsPromises = require('fs/promises'); //.rm() for recursive folder deletion
 //const fsExtra = require('fs-extra');
 const winapi = require('winapi-bindings');
+const { is } = require('bluebird');
 //const turbowalk = require('turbowalk');
 
 /*const USER_HOME = util.getVortexPath("home");
@@ -139,6 +140,7 @@ const BROWSER_ID = `${GAME_ID}-browser`;
 const BROWSER_NAME = "Crimson Browser";
 const BROWSER_PY = 'crimson_browser.py';
 const BROWSER_BAT = 'run_mod_manager.bat';
+const BROWSER_ARGS = ['--mod-manager'];
 const BROWSER_PAGE_NO = 84;
 const BROWSER_FILE_NO = 355;
 const BROWSER_DOMAIN = GAME_ID;
@@ -147,7 +149,7 @@ const BROWSER_CONFIG_FILE = 'config.txt';
 const BROWSER_REQ_FILE = 'requirements.txt';
 const BROWSER_CONFIG_STRING = 'archives_path=';
 const PYTHON_URL = 'https://www.python.org/downloads/';
-const PYTHON_MIN_VER = 3.10;
+const PYTHON_MIN_VER = '3.10';
 
 const CD_MANAGER_ID = `${GAME_ID}-cdmanager`;
 const CD_MANAGER_NAME = "CD Mod Manager";
@@ -159,6 +161,7 @@ const CD_MANAGER_DOMAIN = GAME_ID;
 const JSON_MANAGER_ID = `${GAME_ID}-jsonmanager`;
 const JSON_MANAGER_NAME = "JSON Mod Manager";
 const JSON_MANAGER_EXEC = 'CD JSON Mod Manager.exe';
+const JSON_ARGS = [];
 const JSON_MANAGER_PAGE_NO = 113;
 const JSON_MANAGER_FILE_NO = 760;
 const JSON_MANAGER_DOMAIN = GAME_ID;
@@ -386,15 +389,15 @@ const tools = [ //accepts: exe, jar, py, vbs, bat
     id: BROWSER_ID,
     name: BROWSER_NAME,
     logo: 'browser.png',
-    executable: () => BROWSER_BAT,
+    executable: () => BROWSER_PY,
     requiredFiles: [
       BROWSER_PY,
-      BROWSER_BAT,
+      //BROWSER_BAT,
     ],
     relative: true,
     exclusive: false,
     shell: true,
-    //parameters: ['--mod-manager'],
+    //parameters: BROWSER_ARGS,
   }, //*/
   /*{
     id: CD_MANAGER_ID,
@@ -420,7 +423,7 @@ const tools = [ //accepts: exe, jar, py, vbs, bat
     relative: true,
     exclusive: false,
     //shell: true,
-    //parameters: [],
+    //parameters: JSON_ARGS,
   }, //*/
   {
     id: QT_MANAGER_ID,
@@ -1241,8 +1244,8 @@ async function isPythonInstalled(api) {
     }
     keys = keys.map(key => key.key); //map array to only keys
     keys = keys.map(key => parseFloat(key)); //convert to number
-    log('warn', `Python versions found: ${keys.join(', ')}`);
-    const found = keys.some(key => (key >= version)); //find entry starting with correct version number
+    log('info', `Python versions found: ${keys.join(', ')}`);
+    const found = keys.some(key => (key >= parseFloat(version))); //find entry starting with correct version number
     if (found) {
       return true;
     } else {
@@ -1303,13 +1306,13 @@ async function setupBrowser(api) {
       pythonNotify(api);
       throw new util.UserCanceled();
     }
-    const REQ_PATH = path.join(GAME_PATH, BROWSER_REQ_FILE);
+    /*const REQ_PATH = path.join(GAME_PATH, BROWSER_REQ_FILE); //disabled since no dependency install is required anymore
     await fs.statAsync(REQ_PATH);
-    await api.runExecutable('pip', [`install -r "${REQ_PATH}"`], { shell: true, detached: true })
+    await api.runExecutable('pip', [`install -r "${REQ_PATH}"`], { shell: true, detached: true }) //*/
     //log('warn', `Installed ${BROWSER_NAME} python dependencies`);
     success1 = true;
   } catch (err) {
-    api.showErrorNotification(`Could not install ${BROWSER_NAME} dependencies. See mod page for manual instructions.`, err, { allowReport: false });
+    api.showErrorNotification(`Required Python ${PYTHON_MIN_VER}+ installation for ${BROWSER_NAME} not found. Please install Python.`, err, { allowReport: false });
   }
   try { //write game path to config file
     const newLine = `${BROWSER_CONFIG_STRING}${GAME_PATH}`;
@@ -1333,27 +1336,10 @@ async function setupBrowser(api) {
     return api.sendNotification({
       id: `${BROWSER_ID}-setupsuccess`,
       type: 'success',
-      message: `Successfully installed ${BROWSER_NAME} dependencies and added game path to config file.`,
+      message: `Successfully verified Python ${PYTHON_MIN_VER}+ is installed and added game path to config file.`,
       allowSuppress: true,
     })
   }
-}
-
-//Check if CD Mod Manager is installed
-async function isCdManagerInstalled(api, spec) {
-  const state = api.getState();
-  const mods = state.persistent.mods[spec.game.id] || {};
-  let test =  Object.keys(mods).some(id => mods[id]?.type === CD_MANAGER_ID);
-  if (test === false) {
-    try {
-      GAME_PATH = getDiscoveryPath(api);
-      await fs.statAsync(path.join(GAME_PATH, CD_MANAGER_EXEC));
-      test = true;
-    } catch (err) {
-      test = false;
-    }
-  }
-  return test;
 }
 
 //Check if JSON Mod Manager is installed
@@ -1372,24 +1358,6 @@ async function isJsonManagerInstalled(api, spec) {
   }
   return test;
 }
-
-//Check if QT Mod Manager is installed
-async function isQtManagerInstalled(api, spec) {
-  const state = api.getState();
-  const mods = state.persistent.mods[spec.game.id] || {};
-  let test =  Object.keys(mods).some(id => mods[id]?.type === QT_MANAGER_ID);
-  if (test === false) {
-    try {
-      GAME_PATH = getDiscoveryPath(api);
-      await fs.statAsync(path.join(GAME_PATH, QT_MANAGER_EXEC));
-      test = true;
-    } catch (err) {
-      test = false;
-    }
-  }
-  return test;
-}
-
 
 //Check if Save Editor is installed
 async function isSaveEditorInstalled(api, spec) {
@@ -1861,7 +1829,7 @@ function applyGame(context, gameSpec) {
   context.registerAction('mod-icons', 300, 'open-ext', {}, `Download ${BROWSER_NAME} + Setup`, async () => {
     await downloadBrowser(context.api, spec);
     await deploy(context.api);
-    await setupBrowser(context.api);
+    await setupBrowser(context.api); //*/
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
@@ -1873,7 +1841,7 @@ function applyGame(context, gameSpec) {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
-  });
+  }); //*/
   context.registerAction('mod-icons', 300, 'open-ext', {}, `Download ${JSON_MANAGER_NAME}`, async () => {
     await downloadJsonManager(context.api, spec);
     }, () => {
@@ -1936,38 +1904,145 @@ function applyGame(context, gameSpec) {
 //main function
 function main(context) {
   applyGame(context, spec);
-  //Load Order
-  if (loadOrder) {
-    //use load order to set folder names for mods, starting from 0036
+  if (loadOrder) { //Load Order
+    //use load order to set folder names for mods, starting from 0036+
   }
   context.once(() => { // put code here that should be run (once) when Vortex starts up
     const api = context.api;
-    //api.onAsync('did-deploy', (profileId) => didDeploy(api, profileId));
-    //api.onAsync('did-purge', (profileId) => didPurge(api, profileId));
+    api.onAsync('did-deploy', async (profileId, deployment) => { 
+      const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
+      if (profileId !== LAST_ACTIVE_PROFILE) return;
+      //patch metadata - NO METHOD YET
+      return deployNotify(api);
+    });
+    /*api.onAsync('did-purge', async (profileId) => { 
+      const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
+      if (profileId !== LAST_ACTIVE_PROFILE) return;
+      //restore metadata - NO METHOD YET
+    }); //*/
   });
   return true;
 }
 
-async function didDeploy(api, profileId) { //run on mod deploy
-  const state = api.getState();
-  const profile = selectors.profileById(state, profileId);
-  const gameId = profile === null || profile === void 0 ? void 0 : profile.gameId;
-  if (gameId !== GAME_ID) {
-    return Promise.resolve();
-  }
-  //patch metadata - NO METHOD YET
-  return Promise.resolve();
+//Notify User to run TFC Installer after deployment
+function deployNotify(api) {
+  const NOTIF_ID = `${GAME_ID}-deploy`;
+  const MOD_NAME = JSON_MANAGER_NAME;
+  const MESSAGE = `Run ${MOD_NAME} or ${BROWSER_NAME} to Install Mods`;
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'warning',
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: 'Run JSON',
+        action: async (dismiss) => {
+          if (await isJsonManagerInstalled(api, spec)) {
+            runJsonManager(api);
+          }
+          dismiss();
+        },
+      },
+      {
+        title: 'Run Browser',
+        action: async (dismiss) => {
+          if (await isBrowserInstalled(api, spec)) {
+            runBrowser(api);
+          }
+          dismiss();
+        },
+      },
+      {
+        title: 'More',
+        action: (dismiss) => {
+          api.showDialog('question', MESSAGE, {
+            text: `For mods that patch the game's data files, rather than replacing them, you must use either ${MOD_NAME} or ${BROWSER_NAME} to complete installation.\n`
+                + `You can use the buttons below to launch one or both of those managers. The managers will patch the "${METADATA_FILE}" file.\n`
+          }, [
+            {
+              label: `Run ${JSON_MANAGER_NAME}`, action: async () => {
+                if (await isJsonManagerInstalled(api, spec)) {
+                  runJsonManager(api);
+                }
+                dismiss();
+              }
+            },
+            {
+              label: `Run ${BROWSER_NAME}`, action: async () => {
+                if (await isBrowserInstalled(api, spec)) {
+                  runBrowser(api);
+                }
+                dismiss();
+              }
+            },
+            {
+              label: `Run BOTH!`, action: async () => {
+                if (await isJsonManagerInstalled(api, spec)) {
+                  runJsonManager(api);
+                }
+                if (await isBrowserInstalled(api, spec)) {
+                  runBrowser(api);
+                }
+                dismiss();
+              }
+            },
+            { label: 'Continue', action: () => dismiss() },
+            {
+              label: 'Never Show Again', action: () => {
+                api.suppressNotification(NOTIF_ID);
+                dismiss();
+              }
+            },
+          ]);
+        },
+      },
+    ],
+  });
 }
 
-async function didPurge(api, profileId) { //run on mod purge
-  const state = api.getState();
-  const profile = selectors.profileById(state, profileId);
-  const gameId = profile === null || profile === void 0 ? void 0 : profile.gameId;
-  if (gameId !== GAME_ID) {
-    return Promise.resolve();
+function runBrowser(api) {
+  const TOOL_ID = BROWSER_ID;
+  const TOOL_NAME = BROWSER_NAME;
+  const state = api.store.getState();
+  const tool = util.getSafe(state, ['settings', 'gameMode', 'discovered', GAME_ID, 'tools', TOOL_ID], undefined);
+
+  try {
+    const TOOL_PATH = tool.path;
+    if (TOOL_PATH !== undefined) {
+      return api.runExecutable(TOOL_PATH, BROWSER_ARGS, { suggestDeploy: false })
+        .catch(err => api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err,
+          { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 })
+        );
+    }
+    else {
+      return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, `Path to ${TOOL_NAME} executable could not be found. Ensure ${TOOL_NAME} is installed through Vortex.`);
+    }
+  } catch (err) {
+    return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 });
   }
-  //restore metadata - NO METHOD YET
-  return Promise.resolve();
+}
+
+function runJsonManager(api) {
+  const TOOL_ID = JSON_MANAGER_ID;
+  const TOOL_NAME = JSON_MANAGER_NAME;
+  const state = api.store.getState();
+  const tool = util.getSafe(state, ['settings', 'gameMode', 'discovered', GAME_ID, 'tools', TOOL_ID], undefined);
+
+  try {
+    const TOOL_PATH = tool.path;
+    if (TOOL_PATH !== undefined) {
+      return api.runExecutable(TOOL_PATH, JSON_ARGS, { suggestDeploy: false })
+        .catch(err => api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err,
+          { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 })
+        );
+    }
+    else {
+      return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, `Path to ${TOOL_NAME} executable could not be found. Ensure ${TOOL_NAME} is installed through Vortex.`);
+    }
+  } catch (err) {
+    return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 });
+  }
 }
 
 //export to Vortex
