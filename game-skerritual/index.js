@@ -274,7 +274,7 @@ function main(context) {
         architecture: 'x64', // <--- This will download version for 64-bit games
         //architecture: 'x86', // <--- This will download version for 32-bit games
         //installRelPath: "bin/x64" // <--- Specify install location if not the root game folder
-        //bepinexVersion: '5.4.23.1', // <--- Force BepinEx version
+        //bepinexVersion: '5.4.23.5', // <--- Force BepinEx version
         forceGithubDownload: true, // <--- This will force Vortex to download directly from Github
         unityBuild: 'unityil2cpp', // <--- This will default to version 6.0.0 of BepInEx that supports IL2CPP
         //unityBuild: 'unitymono', // <--- This will default to version of BepInEx that supports Mono

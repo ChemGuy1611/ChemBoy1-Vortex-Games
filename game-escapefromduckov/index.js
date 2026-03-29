@@ -35,9 +35,9 @@ const DATA_FOLDER = `${GAME_STRING}_Data`;
 //Data to determine BepinEx/MelonLoader versions and URLs
 const BEPINEX_BUILD = 'mono'; // 'mono' or 'il2cpp'
 const ARCH = 'x64'; //'x64' or 'x86' game architecture
-const BEP_VER = '5.4.23.4'; //set BepInEx version for mono URLs
-const BEP_BE_VER = '738'; //set BepInEx build for BE URLs
-const BEP_BE_COMMIT = 'af0cba7'; //git commit number for BE builds
+const BEP_VER = '5.4.23.5'; //set BepInEx version for mono URLs
+const BEP_BE_VER = '755'; //set BepInEx build for BE URLs
+const BEP_BE_COMMIT = '3fab71a'; //git commit number for BE builds
 const allowBepCfgMan = false; //should BepInExConfigManager be downloaded?
 const allowMelPrefMan = false; //should MelonPreferencesManager be downloaded? False until figure out UniverseLib dependency
 const allowBepinexNexus = false; //set false until bugs are fixed
@@ -162,9 +162,9 @@ const MELON_CONFIG_PATH = MELON_CONFIG_FOLDER;
 const BEPCFGMAN_ID = `${GAME_ID}-bepcfgman`;
 const BEPCFGMAN_NAME = "BepInEx Config Manager";
 const BEPCFGMAN_PATH = BEPINEX_MOD_PATH;
-const BEPCFGMAN_URL = `https://github.com/sinai-dev/BepInExConfigManager/releases/latest/download/BepInExConfigManager.${BEPINEX_BUILD}.zip`;
-const BEPCFGMAN_URL_ERR = `https://github.com/sinai-dev/BepInExConfigManager/releases`;
-const BEPCFGMAN_FILE = `bepinexconfigmanager.${BEPINEX_BUILD}.dll`; //lowercased
+const BEPCFGMAN_URL = `https://github.com/BepInEx/BepInEx.ConfigurationManager/releases/download/v18.4.1/BepInEx.ConfigurationManager_BepInEx5_v18.4.1.zip`;
+const BEPCFGMAN_URL_ERR = `https://github.com/BepInEx/BepInEx.ConfigurationManager/releases`;
+const BEPCFGMAN_FILE = `configurationmanager.dll`; //lowercased
 
 const MELONPREFMAN_ID = `${GAME_ID}-melonprefman`;
 const MELONPREFMAN_NAME = "MelonPreferences Manager";

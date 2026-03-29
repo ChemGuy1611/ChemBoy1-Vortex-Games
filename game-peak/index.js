@@ -256,7 +256,7 @@ function applyGame(context, gameSpec) {
   });
 }
 
-//* Functions to download BepInEx 5.4.23.3 from GitHub (temporary due to error)
+//* Functions to download BepInEx 5.4.23.x from GitHub (temporary due to error)
 function isBepinexInstalled(api, spec) {
   const state = api.getState();
   const mods = state.persistent.mods[spec.game.id] || {};
@@ -329,7 +329,7 @@ function main(context) {
         //*
         architecture: 'x64', // <--- Select version for 64-bit or 32-bit game ('x64' or 'x86')
         //installRelPath: "bin/x64" // <--- Specify install location (next to game .exe) if not the root game folder
-        bepinexVersion: '5.4.23.4', // <--- Force BepinEx version
+        bepinexVersion: '5.4.23.5', // <--- Force BepinEx version
         forceGithubDownload: true, // <--- Force Vortex to download directly from Github (recommended)
         unityBuild: 'unitymono', // <--- Download version 6.0.0 of BepInEx that supports IL2CPP or 5.4.23 Mono ('unityil2cpp' or 'unitymono') 
         //*/

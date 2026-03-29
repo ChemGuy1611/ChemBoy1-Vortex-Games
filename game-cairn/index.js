@@ -70,7 +70,7 @@ const XBOX_SAVE_STRING = ''; //string after "ID_"
 //Data to determine BepinEx/MelonLoader versions and URLs
 const BEPINEX_BUILD = 'il2cpp'; // 'mono' or 'il2cpp' - check for "il2cpp_data" folder
 const ARCH = 'x64'; //'x64' or 'x86' game architecture (64-bit or 32-bit)
-const BEP_VER = '5.4.23.4'; //set BepInEx version for mono URLs
+const BEP_VER = '5.4.23.5'; //set BepInEx version for mono URLs
 const BEP_BE_VER = '755'; //set BepInEx build for BE URLs
 const BEP_BE_COMMIT = '3fab71a'; //git commit number for BE builds
 const allowBepCfgMan = false; //should BepInExConfigManager be downloaded?
@@ -202,9 +202,9 @@ const MELON_CONFIG_PATH = MELON_CONFIG_FOLDER;
 const BEPCFGMAN_ID = `${GAME_ID}-bepcfgman`;
 const BEPCFGMAN_NAME = "BepInExConfigManager";
 const BEPCFGMAN_PATH = BEPINEX_MOD_PATH;
-const BEPCFGMAN_URL = `https://github.com/sinai-dev/BepInExConfigManager/releases/latest/download/BepInExConfigManager.${BEPINEX_BUILD}.zip`;
-const BEPCFGMAN_URL_ERR = `https://github.com/sinai-dev/BepInExConfigManager/releases`;
-const BEPCFGMAN_FILE = `bepinexconfigmanager.${BEPINEX_BUILD}.dll`; //lowercased
+const BEPCFGMAN_URL = `https://github.com/BepInEx/BepInEx.ConfigurationManager/releases/download/v18.4.1/BepInEx.ConfigurationManager_IL2CPP_v18.4.1.zip`;
+const BEPCFGMAN_URL_ERR = `https://github.com/BepInEx/BepInEx.ConfigurationManager/releases`;
+const BEPCFGMAN_FILE = `configurationmanager.dll`; //lowercased
 
 const MELONPREFMAN_ID = `${GAME_ID}-melonprefman`;
 const MELONPREFMAN_NAME = "MelonPreferencesManager";

@@ -32,7 +32,7 @@ const ASSEMBLY_FILES = ["Assembly-CSharp.dll", "Assembly-CSharp-firstpass.dll"];
 
 const BEPINEX_BUILD = 'mono'; // 'mono' or 'il2cpp'
 const ARCH = 'x64'; //x64 or x86
-const BEP_VER = '5.4.23.4'; //set BepInEx version for mono URLs
+const BEP_VER = '5.4.23.5'; //set BepInEx version for mono URLs
 
 let GAME_PATH = '';
 let STAGING_FOLDER = '';
@@ -75,8 +75,9 @@ const ROOT_NAME = "Root Game Folder";
 const BEPCFGMAN_ID = `${GAME_ID}-bepcfgman`;
 const BEPCFGMAN_NAME = "BepInEx Configuration Manager";
 const BEPCFGMAN_PATH = 'Bepinex';
-const BEPCFGMAN_URL = `https://github.com/sinai-dev/BepInExConfigManager/releases/latest/download/BepInExConfigManager.il2cpp.zip`;
-const BEPCFGMAN_FILE = `bepinexconfigmanager.il2cpp.dll`; //lowercased
+const BEPCFGMAN_URL = `https://github.com/BepInEx/BepInEx.ConfigurationManager/releases/download/v18.4.1/BepInEx.ConfigurationManager_BepInEx5_v18.4.1.zip`;
+const BEPCFGMAN_URL_ERR = `https://github.com/BepInEx/BepInEx.ConfigurationManager/releases`;
+const BEPCFGMAN_FILE = `configurationmanager.dll`; //lowercased
 
 const ASSEMBLY_ID = `${GAME_ID}-assemblydll`;
 const ASSEMBLY_NAME = "Assembly DLL Mod";

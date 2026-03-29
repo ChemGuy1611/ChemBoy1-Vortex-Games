@@ -59,7 +59,7 @@ const BEPINEX_PAGE_ID = '0'; //only specify if there is a Nexus page for BepInEx
 const BEPINEX_FILE_ID = '0';
 const BEPINEX_ARCH = 'x64'; // 'x64' or 'x86'
 const BEPINEX_BUILD = 'unityil2cpp'; // 'unityil2cpp' or 'unitymono' - IL2CPP will use bleeding edge builds
-let BEPINEX_VERSION = '6.0.0'; //force BepInEx version ('5.4.23.3' or '6.0.0')
+let BEPINEX_VERSION = '6.0.0'; //force BepInEx version ('5.4.23.5' or '6.0.0')
 const BEP_BE_VER = '755'; //set BepInEx build for BE URLs
 const BEP_BE_COMMIT = '3fab71a'; //git commit number for BE builds
 const BEPCFGMAN_VER = '18.4.1'; //set BepInExConfigManager version for direct URLs
@@ -891,7 +891,7 @@ async function downloadBepCfgMan(api, gameSpec) {
   }
 } //*/
 
-//* Functions to download BepInEx 5.4.23.3 from GitHub (temporary due to error)
+//* Functions to download BepInEx 5.4.23.x from GitHub (temporary due to error)
 function isBepinexInstalled(api, spec) {
   const state = api.getState();
   const mods = state.persistent.mods[spec.game.id] || {};

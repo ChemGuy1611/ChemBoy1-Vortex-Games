@@ -211,9 +211,9 @@ const MELON_CONFIG_PATH = MELON_CONFIG_FOLDER;
 const BEPCFGMAN_ID = `${GAME_ID}-bepcfgman`;
 const BEPCFGMAN_NAME = "BepInExConfigManager";
 const BEPCFGMAN_PATH = BEPINEX_MOD_PATH;
-const BEPCFGMAN_URL = `https://github.com/sinai-dev/BepInExConfigManager/releases/latest/download/BepInExConfigManager.${BEPINEX_BUILD}.zip`;
-const BEPCFGMAN_URL_ERR = `https://github.com/sinai-dev/BepInExConfigManager/releases`;
-const BEPCFGMAN_FILE = `bepinexconfigmanager.${BEPINEX_BUILD}.dll`; //lowercased
+const BEPCFGMAN_URL = `https://github.com/BepInEx/BepInEx.ConfigurationManager/releases/download/v18.4.1/BepInEx.ConfigurationManager_BepInEx5_v18.4.1.zip`;
+const BEPCFGMAN_URL_ERR = `https://github.com/BepInEx/BepInEx.ConfigurationManager/releases`;
+const BEPCFGMAN_FILE = `configurationmanager.dll`; //lowercased
 
 const MELONPREFMAN_ID = `${GAME_ID}-melonprefman`;
 const MELONPREFMAN_NAME = "MelonPreferencesManager";

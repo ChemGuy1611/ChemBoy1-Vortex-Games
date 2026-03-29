@@ -46,7 +46,7 @@ const BEPINEX_PAGE_ID = '0'; //only specify if there is a Nexus page for BepInEx
 const BEPINEX_FILE_ID = '0';
 const BEPINEX_ARCH = 'x64'; // 'x64' or 'x86'
 const BEPINEX_BUILD = 'unitymono'; // 'unityil2cpp' or 'unitymono' - IL2CPP will use bleeding edge builds
-const BEPINEX_VERSION = '5.4.23.4'; //force BepInEx version ('5.4.23.3' or '6.0.0')
+const BEPINEX_VERSION = '5.4.23.5'; //force BepInEx version ('5.4.23.5' or '6.0.0')
 const allowBepinexNexus = false; //set false until bugs are fixed
 const downloadCfgMan = true; //should BepInExConfigManager be downloaded?
 const bleedingEdge = false; //set to true to download bleeding edge builds of BepInEx (IL2CPP only)
@@ -74,8 +74,9 @@ if (BEPINEX_BUILD === 'unityil2cpp') {
 const BEPCFGMAN_ID = `${GAME_ID}-bepcfgman`;
 const BEPCFGMAN_NAME = "BepInEx Configuration Manager";
 const BEPCFGMAN_PATH = 'Bepinex';
-const BEPCFGMAN_URL = `https://github.com/sinai-dev/BepInExConfigManager/releases/latest/download/BepInExConfigManager.${BEPINEX_STRING}.zip`;
-const BEPCFGMAN_FILE = `bepinexconfigmanager.${BEPINEX_STRING}.dll`; //lowercased
+const BEPCFGMAN_URL = `https://github.com/BepInEx/BepInEx.ConfigurationManager/releases/download/v18.4.1/BepInEx.ConfigurationManager_BepInEx5_v18.4.1.zip`;
+const BEPCFGMAN_URL_ERR = `https://github.com/BepInEx/BepInEx.ConfigurationManager/releases`;
+const BEPCFGMAN_FILE = `configurationmanager.dll`; //lowercased
 
 const BEPMOD_ID = `${GAME_ID}-bepmods`;
 const BEPMOD_NAME = "BepInEx Mod";
@@ -759,7 +760,7 @@ async function downloadBepCfgMan(api, gameSpec) {
   }
 } //*/
 
-//* Functions to download BepInEx 5.4.23.3 from GitHub (temporary due to error)
+//* Functions to download BepInEx 5.4.23.x from GitHub (temporary due to error)
 function isBepinexInstalled(api, spec) {
   const state = api.getState();
   const mods = state.persistent.mods[spec.game.id] || {};

@@ -42,7 +42,7 @@ const hasCustomMods = false; //set to true if there are modTypes with folder pat
 //Data to determine BepinEx/MelonLoader versions and URLs
 const BEPINEX_BUILD = 'il2cpp'; // 'mono' or 'il2cpp' - check for "il2cpp_data" folder
 const ARCH = 'x64'; //'x64' or 'x86' game architecture (64-bit or 32-bit)
-const BEP_VER = '5.4.23.4'; //set BepInEx version for mono URLs
+const BEP_VER = '5.4.23.5'; //set BepInEx version for mono URLs
 const BEP_BE_VER = '755'; //set BepInEx build for BE URLs
 const BEP_BE_COMMIT = '3fab71a'; //git commit number for BE builds
 const BEPCFGMAN_VER = '18.4.1'; //set BepInExConfigManager version for direct URLs

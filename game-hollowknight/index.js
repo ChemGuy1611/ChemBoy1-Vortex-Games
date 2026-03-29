@@ -631,15 +631,15 @@ function applyGame(context, gameSpec) {
     () => Promise.resolve(false),
     { name: ASSEMBLY_NAME }
   );
-    context.registerModType(ASSETS_ID, 62, 
-      (gameId) => {
-        var _a;
-        return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-      }, 
-      (game) => pathPattern(context.api, game, path.join('{gamePath}', ASSETS_PATH)),
-      () => Promise.resolve(false),
-      { name: ASSETS_NAME }
-    );
+  context.registerModType(ASSETS_ID, 62, 
+    (gameId) => {
+      var _a;
+      return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
+    }, 
+    (game) => pathPattern(context.api, game, path.join('{gamePath}', ASSETS_PATH)),
+    () => Promise.resolve(false),
+    { name: ASSETS_NAME }
+  );
 
   //register mod installers
   context.registerInstaller(ROOT_ID, 8, testRoot, installRoot);
@@ -808,7 +808,7 @@ async function downloadBepCfgMan(api, gameSpec, check = true) {
   }
 } //*/
 
-//* Functions to download BepInEx 5.4.23.3 from GitHub (temporary due to error)
+//* Functions to download BepInEx 5.4.23.x from GitHub (temporary due to error)
 function isBepinexInstalled(api, spec) {
   const state = api.getState();
   const mods = state.persistent.mods[spec.game.id] || {};

@@ -687,7 +687,7 @@ function main(context) {
 }
 
 
-//* Functions to download BepInEx 5.4.23.3 from GitHub (temporary due to error)
+//* Functions to download BepInEx 5.4.23.x from GitHub (temporary due to error)
 function isBepinexInstalled(api, spec) {
   const state = api.getState();
   const mods = state.persistent.mods[spec.game.id] || {};
