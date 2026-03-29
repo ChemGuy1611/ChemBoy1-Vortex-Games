@@ -170,6 +170,7 @@ const QT_MANAGER_PAGE_NO = 218;
 const QT_MANAGER_FILE_NO = 504;
 const QT_MANAGER_DOMAIN = GAME_ID;
 
+//deprecated
 const ULTIMATE_MANAGER_ID = `${GAME_ID}-ultimatemanager`;
 const ULTIMATE_MANAGER_NAME = "Ultimate Mod Manager";
 const ULTIMATE_MANAGER_EXEC = 'CrimsonDesertModManager.exe';  //not actual name since naked exe - will not support
@@ -177,6 +178,7 @@ const ULTIMATE_MANAGER_PAGE_NO = 207;
 const ULTIMATE_MANAGER_FILE_NO = 766;
 const ULTIMATE_MANAGER_DOMAIN = GAME_ID;
 
+//deprecated
 const UNPACKER_ID = `${GAME_ID}-unpacker`;
 const UNPACKER_NAME = "Unpacker";
 const UNPACKER_EXEC = 'PazGui.exe';
@@ -194,13 +196,13 @@ const SAVE_EDITOR_DOMAIN = GAME_ID;
 const TOOLS_ID = `${GAME_ID}-tools`;
 const TOOLS_NAME = "Tools";
 const KNOWN_TOOLS_FILES = [
-  UNPACKER_EXEC,
-  BROWSER_PY,
-  CD_MANAGER_EXEC,
   JSON_MANAGER_EXEC,
-  QT_MANAGER_EXEC,
-  //ULTIMATE_MANAGER_EXEC,
+  BROWSER_PY,
   SAVE_EDITOR_EXEC,
+  UNPACKER_EXEC,
+  CD_MANAGER_EXEC,
+  QT_MANAGER_EXEC,
+  ULTIMATE_MANAGER_EXEC,
 ];
 
 //Crimson Browser mods
@@ -1388,22 +1390,6 @@ async function isQtManagerInstalled(api, spec) {
   return test;
 }
 
-//Check if Ultimate Mod Manager is installed
-async function isUltimateManagerInstalled(api, spec) {
-  const state = api.getState();
-  const mods = state.persistent.mods[spec.game.id] || {};
-  let test =  Object.keys(mods).some(id => mods[id]?.type === ULTIMATE_MANAGER_ID);
-  if (test === false) {
-    try {
-      GAME_PATH = getDiscoveryPath(api);
-      await fs.statAsync(path.join(GAME_PATH, ULTIMATE_MANAGER_EXEC));
-      test = true;
-    } catch (err) {
-      test = false;
-    }
-  }
-  return test;
-}
 
 //Check if Save Editor is installed
 async function isSaveEditorInstalled(api, spec) {
@@ -1414,23 +1400,6 @@ async function isSaveEditorInstalled(api, spec) {
     try {
       GAME_PATH = getDiscoveryPath(api);
       await fs.statAsync(path.join(GAME_PATH, SAVE_EDITOR_EXEC));
-      test = true;
-    } catch (err) {
-      test = false;
-    }
-  }
-  return test;
-}
-
-//Check if Unpacker is installed
-async function isUnpackerInstalled(api, spec) {
-  const state = api.getState();
-  const mods = state.persistent.mods[spec.game.id] || {};
-  let test =  Object.keys(mods).some(id => mods[id]?.type === UNPACKER_ID);
-  if (test === false) {
-    try {
-      GAME_PATH = getDiscoveryPath(api);
-      await fs.statAsync(path.join(GAME_PATH, UNPACKER_EXEC));
       test = true;
     } catch (err) {
       test = false;
@@ -1571,72 +1540,6 @@ async function downloadBrowser(api, gameSpec, check = true) {
   }
 } //*/
 
-//* Function to auto-download CD Mod Manager from Nexus Mods
-async function downloadCdManager(api, gameSpec, check = true) {
-  let isInstalled = await isCdManagerInstalled(api, gameSpec);
-  if (!isInstalled || !check) {
-    const MOD_NAME = CD_MANAGER_ID;
-    const MOD_TYPE = TOOLS_ID;
-    const NOTIF_ID = `${MOD_TYPE}-installing`;
-    const PAGE_ID = CD_MANAGER_PAGE_NO;
-    const FILE_ID = CD_MANAGER_FILE_NO;  //If using a specific file id because "input" below gives an error
-    const GAME_DOMAIN = CD_MANAGER_DOMAIN;
-    api.sendNotification({ //notification indicating install process
-      id: NOTIF_ID,
-      message: `Installing ${MOD_NAME}`,
-      type: 'activity',
-      noDismiss: true,
-      allowSuppress: false,
-    });
-    if (api.ext?.ensureLoggedIn !== undefined) { //make sure user is logged into Nexus Mods account in Vortex
-      await api.ext.ensureLoggedIn();
-    }
-    try {
-      let FILE = null;
-      let URL = null;
-      try { //get the mod files information from Nexus
-        const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
-        const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
-        const file = modFiles
-          .filter(file => file.category_id === 1)
-          .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
-          .reverse()[0];
-        if (file === undefined) {
-          throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
-        }
-        FILE = file.file_id;
-        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      } catch (err) { // use defined file ID if input is undefined above
-        FILE = FILE_ID;
-        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      }
-      const dlInfo = { //Download the mod
-        game: GAME_DOMAIN,
-        name: MOD_NAME,
-      };
-      const dlId = await util.toPromise(cb =>
-        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
-      const modId = await util.toPromise(cb =>
-        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
-      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
-      const batched = [
-        actions.setModsEnabled(api, profileId, [modId], true, {
-          allowAutoDeploy: true,
-          installed: true,
-        }),
-        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
-      ];
-      util.batchDispatch(api.store, batched); // Will dispatch both actions
-    } catch (err) { //Show the user the download page if the download, install process fails
-      const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
-      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
-      util.opn(errPage).catch(() => null);
-    } finally {
-      api.dismissNotification(NOTIF_ID);
-    }
-  }
-} //*/
-
 //* Function to auto-download JSON Mod Manager from Nexus Mods
 async function downloadJsonManager(api, gameSpec, check = true) {
   let isInstalled = await isJsonManagerInstalled(api, gameSpec);
@@ -1647,139 +1550,6 @@ async function downloadJsonManager(api, gameSpec, check = true) {
     const PAGE_ID = JSON_MANAGER_PAGE_NO;
     const FILE_ID = JSON_MANAGER_FILE_NO;  //If using a specific file id because "input" below gives an error
     const GAME_DOMAIN = JSON_MANAGER_DOMAIN;
-    api.sendNotification({ //notification indicating install process
-      id: NOTIF_ID,
-      message: `Installing ${MOD_NAME}`,
-      type: 'activity',
-      noDismiss: true,
-      allowSuppress: false,
-    });
-    if (api.ext?.ensureLoggedIn !== undefined) { //make sure user is logged into Nexus Mods account in Vortex
-      await api.ext.ensureLoggedIn();
-    }
-    try {
-      let FILE = null;
-      let URL = null;
-      try { //get the mod files information from Nexus
-        const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
-        const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
-        const file = modFiles
-          .filter(file => file.category_id === 1)
-          .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
-          .reverse()[0];
-        if (file === undefined) {
-          throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
-        }
-        FILE = file.file_id;
-        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      } catch (err) { // use defined file ID if input is undefined above
-        FILE = FILE_ID;
-        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      }
-      const dlInfo = { //Download the mod
-        game: GAME_DOMAIN,
-        name: MOD_NAME,
-      };
-      const dlId = await util.toPromise(cb =>
-        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
-      const modId = await util.toPromise(cb =>
-        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
-      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
-      const batched = [
-        actions.setModsEnabled(api, profileId, [modId], true, {
-          allowAutoDeploy: true,
-          installed: true,
-        }),
-        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
-      ];
-      util.batchDispatch(api.store, batched); // Will dispatch both actions
-    } catch (err) { //Show the user the download page if the download, install process fails
-      const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
-      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
-      util.opn(errPage).catch(() => null);
-    } finally {
-      api.dismissNotification(NOTIF_ID);
-    }
-  }
-} //*/
-
-//* Function to auto-download QT Mod Manager from Nexus Mods
-async function downloadQtManager(api, gameSpec, check = true) {
-  let isInstalled = await isQtManagerInstalled(api, gameSpec);
-  if (!isInstalled || !check) {
-    const MOD_NAME = QT_MANAGER_ID;
-    const MOD_TYPE = TOOLS_ID;
-    const NOTIF_ID = `${MOD_TYPE}-installing`;
-    const PAGE_ID = QT_MANAGER_PAGE_NO;
-    const FILE_ID = QT_MANAGER_FILE_NO;  //If using a specific file id because "input" below gives an error
-    const GAME_DOMAIN = QT_MANAGER_DOMAIN;
-    api.sendNotification({ //notification indicating install process
-      id: NOTIF_ID,
-      message: `Installing ${MOD_NAME}`,
-      type: 'activity',
-      noDismiss: true,
-      allowSuppress: false,
-    });
-    if (api.ext?.ensureLoggedIn !== undefined) { //make sure user is logged into Nexus Mods account in Vortex
-      await api.ext.ensureLoggedIn();
-    }
-    try {
-      let FILE = null;
-      let URL = null;
-      try { //get the mod files information from Nexus
-        const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
-        const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
-        const file = modFiles
-          .find(file => (
-            file.category_id === 1 
-            && !file.file_name.includes('SourceCode')
-          ));
-        if (file === undefined) {
-          throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
-        }
-        FILE = file.file_id;
-        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      } catch (err) { // use defined file ID if input is undefined above
-        FILE = FILE_ID;
-        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      }
-      const dlInfo = { //Download the mod
-        game: GAME_DOMAIN,
-        name: MOD_NAME,
-      };
-      const dlId = await util.toPromise(cb =>
-        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
-      const modId = await util.toPromise(cb =>
-        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
-      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
-      const batched = [
-        actions.setModsEnabled(api, profileId, [modId], true, {
-          allowAutoDeploy: true,
-          installed: true,
-        }),
-        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
-      ];
-      util.batchDispatch(api.store, batched); // Will dispatch both actions
-    } catch (err) { //Show the user the download page if the download, install process fails
-      const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
-      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
-      util.opn(errPage).catch(() => null);
-    } finally {
-      api.dismissNotification(NOTIF_ID);
-    }
-  }
-} //*/
-
-//* Function to auto-download Ultimate Mod Manager from Nexus Mods
-async function downloadUltimateManager(api, gameSpec, check = true) {
-  let isInstalled = await isUltimateManagerInstalled(api, gameSpec);
-  if (!isInstalled || !check) {
-    const MOD_NAME = ULTIMATE_MANAGER_ID;
-    const MOD_TYPE = TOOLS_ID;
-    const NOTIF_ID = `${MOD_TYPE}-installing`;
-    const PAGE_ID = ULTIMATE_MANAGER_PAGE_NO;
-    const FILE_ID = ULTIMATE_MANAGER_FILE_NO;  //If using a specific file id because "input" below gives an error
-    const GAME_DOMAIN = ULTIMATE_MANAGER_DOMAIN;
     api.sendNotification({ //notification indicating install process
       id: NOTIF_ID,
       message: `Installing ${MOD_NAME}`,
@@ -1866,73 +1636,6 @@ async function downloadSaveEditor(api, gameSpec, check = true) {
           .filter(file => file.category_id === 1)
           .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
           .reverse()[0];
-        if (file === undefined) {
-          throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
-        }
-        FILE = file.file_id;
-        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      } catch (err) { // use defined file ID if input is undefined above
-        FILE = FILE_ID;
-        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      }
-      const dlInfo = { //Download the mod
-        game: GAME_DOMAIN,
-        name: MOD_NAME,
-      };
-      const dlId = await util.toPromise(cb =>
-        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
-      const modId = await util.toPromise(cb =>
-        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
-      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
-      const batched = [
-        actions.setModsEnabled(api, profileId, [modId], true, {
-          allowAutoDeploy: true,
-          installed: true,
-        }),
-        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
-      ];
-      util.batchDispatch(api.store, batched); // Will dispatch both actions
-    } catch (err) { //Show the user the download page if the download, install process fails
-      const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
-      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
-      util.opn(errPage).catch(() => null);
-    } finally {
-      api.dismissNotification(NOTIF_ID);
-    }
-  }
-} //*/
-
-//* Function to auto-download Save Editor from Nexus Mods
-async function downloadUnpacker(api, gameSpec, check = true) {
-  let isInstalled = await isUnpackerInstalled(api, gameSpec);
-  if (!isInstalled || !check) {
-    const MOD_NAME = UNPACKER_NAME;
-    const MOD_TYPE = TOOLS_ID;
-    const NOTIF_ID = `${MOD_TYPE}-installing`;
-    const PAGE_ID = UNPACKER_PAGE_NO;
-    const FILE_ID = UNPACKER_FILE_NO;  //If using a specific file id because "input" below gives an error
-    const GAME_DOMAIN = UNPACKER_DOMAIN;
-    api.sendNotification({ //notification indicating install process
-      id: NOTIF_ID,
-      message: `Installing ${MOD_NAME}`,
-      type: 'activity',
-      noDismiss: true,
-      allowSuppress: false,
-    });
-    if (api.ext?.ensureLoggedIn !== undefined) { //make sure user is logged into Nexus Mods account in Vortex
-      await api.ext.ensureLoggedIn();
-    }
-    try {
-      let FILE = null;
-      let URL = null;
-      try { //get the mod files information from Nexus
-        const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
-        const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
-        const file = modFiles
-          .filter(file => file.category_id === 1)
-          .find(file => file.file_name.toLowerCase().includes('gui'))
-          //.sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
-          //.reverse()[0];
         if (file === undefined) {
           throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
         }
@@ -2178,36 +1881,8 @@ function applyGame(context, gameSpec) {
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, `Download ${QT_MANAGER_NAME}`, async () => {
-    await downloadQtManager(context.api, spec);
-    }, () => {
-      const state = context.api.getState();
-      const gameId = selectors.activeGameId(state);
-      return gameId === GAME_ID;
-  });
-  /*context.registerAction('mod-icons', 300, 'open-ext', {}, `Download ${ULTIMATE_MANAGER_NAME}`, async () => {
-    await downloadUltimateManager(context.api, spec);
-    }, () => {
-      const state = context.api.getState();
-      const gameId = selectors.activeGameId(state);
-      return gameId === GAME_ID;
-  }); //*/
-  /*context.registerAction('mod-icons', 300, 'open-ext', {}, `Download ${CD_MANAGER_NAME}`, async () => {
-    await downloadCdManager(context.api, spec);
-    }, () => {
-      const state = context.api.getState();
-      const gameId = selectors.activeGameId(state);
-      return gameId === GAME_ID;
-  }); //*/
   context.registerAction('mod-icons', 300, 'open-ext', {}, `Download ${SAVE_EDITOR_NAME}`, async () => {
     await downloadSaveEditor(context.api, spec);
-    }, () => {
-      const state = context.api.getState();
-      const gameId = selectors.activeGameId(state);
-      return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, `Download ${UNPACKER_NAME}`, async () => {
-    await downloadUnpacker(context.api, spec);
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
