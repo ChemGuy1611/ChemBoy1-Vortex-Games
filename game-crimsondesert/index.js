@@ -52,7 +52,7 @@ const INSTALL_VALUE = "XXX"; //often InstallDir or InstallPath
 const RESHADE_URL = "https://reshade.me/#download";
 
 //feature toggles
-const loadOrder = true; //true if game needs a load order
+const loadOrder = false; //true if game needs a load order
 const hasLoader = false; //true if game needs a mod loader
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
 const needsModInstaller = true; //set to true if standard mods should run through an installer - set false to have mods installed to the mods folder without any processing
@@ -138,7 +138,7 @@ const DATA_FOLDERS = ['meta',
 const BROWSER_ID = `${GAME_ID}-browser`;
 const BROWSER_NAME = "Crimson Browser";
 const BROWSER_PY = 'crimson_browser.py';
-const BROWSER_BAT = 'run.bat';
+const BROWSER_BAT = 'run_mod_manager.bat';
 const BROWSER_PAGE_NO = 84;
 const BROWSER_FILE_NO = 355;
 const BROWSER_DOMAIN = GAME_ID;
@@ -149,19 +149,33 @@ const BROWSER_CONFIG_STRING = 'archives_path=';
 const PYTHON_URL = 'https://www.python.org/downloads/';
 const PYTHON_MIN_VER = 3.10;
 
-const CD_MANAGER_ID = `${GAME_ID}-cdmodmanager`;
+const CD_MANAGER_ID = `${GAME_ID}-cdmanager`;
 const CD_MANAGER_NAME = "CD Mod Manager";
 const CD_MANAGER_EXEC = 'CDModManager.exe';
 const CD_MANAGER_PAGE_NO = 114;
 const CD_MANAGER_FILE_NO = 292;
 const CD_MANAGER_DOMAIN = GAME_ID;
 
-const JSON_MANAGER_ID = `${GAME_ID}-jsonmodmanager`;
+const JSON_MANAGER_ID = `${GAME_ID}-jsonmanager`;
 const JSON_MANAGER_NAME = "JSON Mod Manager";
 const JSON_MANAGER_EXEC = 'CD Mod Manager.exe';
 const JSON_MANAGER_PAGE_NO = 113;
 const JSON_MANAGER_FILE_NO = 324;
 const JSON_MANAGER_DOMAIN = GAME_ID;
+
+const QT_MANAGER_ID = `${GAME_ID}-qtmanager`;
+const QT_MANAGER_NAME = "QT Mod Manager";
+const QT_MANAGER_EXEC = 'QT_ModManager.exe';
+const QT_MANAGER_PAGE_NO = 218;
+const QT_MANAGER_FILE_NO = 504;
+const QT_MANAGER_DOMAIN = GAME_ID;
+
+const ULTIMATE_MANAGER_ID = `${GAME_ID}-ultimatemanager`;
+const ULTIMATE_MANAGER_NAME = "Ultimate Mod Manager";
+const ULTIMATE_MANAGER_EXEC = 'CrimsonDesertModManager.exe';  //not actual name since naked exe - will not support
+const ULTIMATE_MANAGER_PAGE_NO = 207;
+const ULTIMATE_MANAGER_FILE_NO = 766;
+const ULTIMATE_MANAGER_DOMAIN = GAME_ID;
 
 const UNPACKER_ID = `${GAME_ID}-unpacker`;
 const UNPACKER_NAME = "Unpacker";
@@ -184,6 +198,8 @@ const KNOWN_TOOLS_FILES = [
   BROWSER_PY,
   CD_MANAGER_EXEC,
   JSON_MANAGER_EXEC,
+  QT_MANAGER_EXEC,
+  //ULTIMATE_MANAGER_EXEC,
   SAVE_EDITOR_EXEC,
 ];
 
@@ -203,6 +219,12 @@ const PATCH_MOD_FOLDER = 'mods';
 const PATCH_MOD_PATH = PATCH_MOD_FOLDER;
 const PATCH_MOD_FILES = ['modinfo.json'];
 const PATCH_MOD_EXTS = ['.json', '.cdmod'];
+
+//Mod type to use with future Vortex built-in LO and patch on deploy
+const VORTEX_MOD_ID = `${GAME_ID}-vortexmod`;
+const VORTEX_MOD_NAME = "Vortex Mod";
+const VORTEX_MOD_FOLDER = '.';
+const VORTEX_MOD_PATH = VORTEX_MOD_FOLDER;
 
 //DISABLED for now - reserved for a runtime or script patcher that updates the meta\0.papgt file
 const LOADER_ID = `${GAME_ID}-loader`;
@@ -308,6 +330,12 @@ const spec = {
       "targetPath": path.join("{gamePath}", PATCH_MOD_PATH)
     }, //*/
     {
+      "id": VORTEX_MOD_ID,
+      "name": VORTEX_MOD_NAME,
+      "priority": "high",
+      "targetPath": path.join("{gamePath}", VORTEX_MOD_PATH)
+    },
+    {
       "id": ROOT_ID,
       "name": ROOT_NAME,
       "priority": "high",
@@ -356,17 +384,17 @@ const tools = [ //accepts: exe, jar, py, vbs, bat
     id: BROWSER_ID,
     name: BROWSER_NAME,
     logo: 'browser.png',
-    executable: () => BROWSER_PY,
+    executable: () => BROWSER_BAT,
     requiredFiles: [
       BROWSER_PY,
-      //BROWSER_BAT,
+      BROWSER_BAT,
     ],
     relative: true,
     exclusive: false,
     shell: true,
-    //parameters: [],
+    //parameters: ['--mod-manager'],
   }, //*/
-  {
+  /*{
     id: CD_MANAGER_ID,
     name: CD_MANAGER_NAME,
     logo: 'cdmanager.png',
@@ -386,6 +414,32 @@ const tools = [ //accepts: exe, jar, py, vbs, bat
     executable: () => JSON_MANAGER_EXEC,
     requiredFiles: [
       JSON_MANAGER_EXEC,
+    ],
+    relative: true,
+    exclusive: false,
+    //shell: true,
+    //parameters: [],
+  }, //*/
+  {
+    id: QT_MANAGER_ID,
+    name: QT_MANAGER_NAME,
+    logo: 'qtmanager.png',
+    executable: () => QT_MANAGER_EXEC,
+    requiredFiles: [
+      QT_MANAGER_EXEC,
+    ],
+    relative: true,
+    exclusive: false,
+    //shell: true,
+    //parameters: [],
+  }, //*/
+  /*{
+    id: ULTIMATE_MANAGER_ID,
+    name: ULTIMATE_MANAGER_NAME,
+    logo: 'ultimatemanager.png',
+    executable: () => ULTIMATE_MANAGER_EXEC,
+    requiredFiles: [
+      ULTIMATE_MANAGER_EXEC,
     ],
     relative: true,
     exclusive: false,
@@ -449,7 +503,7 @@ async function statCheckAsync(gamePath, file) {
 //Set mod type priorities
 function modTypePriority(priority) {
   return {
-    high: 25,
+    high: 30,
     low: 75,
   }[priority];
 }
@@ -710,8 +764,8 @@ function installTools(files) {
 
 //Test for Crimson Browser mod files
 function testBrowserMod(files, gameId) {
-  const isJson = files.some(file => path.basename(file).toLowerCase() === BROWSER_MOD_MANIFEST);
-  const isFolder = files.some(file => path.basename(file).toLowerCase() === BROWSER_MOD_FOLDER);
+  const isJson = files.some(file => path.basename(file).toLowerCase() === BROWSER_MOD_MANIFEST); //manifest.json
+  const isFolder = files.some(file => path.basename(file).toLowerCase() === BROWSER_MOD_FOLDER); //"files" folder
   let supported = (gameId === spec.game.id) && ( isJson && isFolder );
 
   // Test for a mod installer
@@ -762,9 +816,15 @@ function installBrowserMod(files, fileName) {
 }
 
 //Test for patch mod files
-function testPatchMod(files, gameId) {
-  const isMod = files.some(file => PATCH_MOD_EXTS.includes(path.extname(file).toLowerCase()));
-  let supported = (gameId === spec.game.id) && ( isMod );
+function testPatchMod(files, gameId, archivePath) {
+  const isMod = files.some(file => PATCH_MOD_FILES.includes(path.basename(file).toLowerCase())); //modinfo.json
+  const isFolder = files.some(file => ( //i.e. "0036" folder
+    path.basename(file).startsWith('00')
+    && path.basename(file).length === 4
+    && parseFloat(path.basename(file).replace('00', '')) > 35
+    //&& isDir(archivePath, file)
+  )); //*/
+  let supported = (gameId === spec.game.id) && ( isFolder );
 
   // Test for a mod installer
   if (supported && files.find(file =>
@@ -779,13 +839,30 @@ function testPatchMod(files, gameId) {
   });
 }
 
-/*Install patch mod files - SIMPLE VERSION
-function installPatchMod(files) {
+//*Install patch mod files - SIMPLE VERSION
+function installPatchMod(api, files, fileName) {
   const MOD_TYPE = PATCH_MOD_ID;
-  const modFile = files.find(file => PATCH_MOD_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
-  const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+  //let modFile = files.find(file => PATCH_MOD_FILES.includes(path.basename(file).toLowerCase())); //modinfo.json
+  let modFile = files.find(file => ( //i.e. "0036" folder
+    path.basename(file).startsWith('00')
+    && path.basename(file).length === 4
+    && parseFloat(path.basename(file).replace('00', '')) > 35
+    //&& isDir(archivePath, file)
+  )); //*/
+  let rootPath = path.dirname(modFile);
+  //*
+  let folder = path.basename(fileName).replace('.installing', '');
+  //??? Read modinfo.json to get folder name???
+  const ROOT_PATH = path.basename(rootPath);
+  if (ROOT_PATH !== '.') {
+    folder = ''; //no folder needed if already present
+    modFile = rootPath; //make the folder the targeted modFile so we can grab any other folders also in its directory
+    rootPath = path.dirname(modFile);
+    //const indexFolder = path.basename(modFile);
+    //idx = modFile.indexOf(`${indexFolder}${path.sep}`);  //index on the folder with path separator
+  } //*/
+  const idx = modFile.indexOf(path.basename(modFile));
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
@@ -795,15 +872,40 @@ function installPatchMod(files) {
     return {
       type: 'copy',
       source: file,
-      destination: path.join(file.substr(idx)),
+      destination: path.join(folder, file.substr(idx)),
     };
   });
   instructions.push(setModTypeInstruction);
   return Promise.resolve({ instructions });
 } //*/
 
+//Test for json mod files
+function testJsonMod(files, gameId) {
+  const isModInfo = files.some(file => PATCH_MOD_FILES.includes(path.basename(file).toLowerCase())); //modinfo.json
+  const isJson = files.some(file => path.extname(file).toLowerCase() === '.json');
+  const isFolder = files.some(file => ( //i.e. "0036" folder
+    path.basename(file).startsWith('00')
+    && path.basename(file).length === 4
+    //&& isDir(archivePath, file)
+  )); //*/
+  let supported = (gameId === spec.game.id) && ( !isModInfo && isJson && !isFolder );
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+
 //Install patch mod files - file selection popup
-async function installPatchMod(api, files) {
+async function installJsonMod(api, files) {
   const fileExt = PATCH_MOD_EXTS;
   const modFiles = files.filter(file => fileExt.includes(path.extname(file).toLowerCase()));
   const modType = {
@@ -822,7 +924,7 @@ async function installPatchMod(api, files) {
   });
   instructions.push(modType);
   return Promise.resolve({ instructions });
-}
+} //*/
 
 async function chooseFilesToInstall(api, files, fileExt) {
   const t = api.translate;
@@ -850,6 +952,58 @@ async function chooseFilesToInstall(api, files, fileExt) {
         return installFiles;
       }
   });
+}
+
+//Test for data mod files
+function testVortex(files, gameId) {
+  //const isMod = files.some(file => MOD_EXTS.includes(path.extname(file).toLowerCase()));
+  //const isMeta = files.some(file => META_FILE_EXTS.includes(path.extname(file).toLowerCase()));
+  const isFolder = files.some(file => ( //i.e. "0036" folder
+    path.basename(file).startsWith('00')
+    && path.basename(file).length === 4
+    //&& isDir(archivePath, file)
+  ));
+  let supported = (gameId === spec.game.id) && ( isFolder );
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install data mod files using Vortex load order and metadata patch on deploy
+function installVortex(files) {
+  const MOD_TYPE = VORTEX_MOD_ID;
+  let folder = '';
+  let modFile = files.findfiles.some(file => { //i.e. "0036" folder
+    path.basename(file).startsWith('00')
+    && path.basename(file).length === 4
+    //&& isDir(archivePath, file)
+  });
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(folder, file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
 }
 
 //Test for data mod files
@@ -1217,6 +1371,40 @@ async function isJsonManagerInstalled(api, spec) {
   return test;
 }
 
+//Check if QT Mod Manager is installed
+async function isQtManagerInstalled(api, spec) {
+  const state = api.getState();
+  const mods = state.persistent.mods[spec.game.id] || {};
+  let test =  Object.keys(mods).some(id => mods[id]?.type === QT_MANAGER_ID);
+  if (test === false) {
+    try {
+      GAME_PATH = getDiscoveryPath(api);
+      await fs.statAsync(path.join(GAME_PATH, QT_MANAGER_EXEC));
+      test = true;
+    } catch (err) {
+      test = false;
+    }
+  }
+  return test;
+}
+
+//Check if Ultimate Mod Manager is installed
+async function isUltimateManagerInstalled(api, spec) {
+  const state = api.getState();
+  const mods = state.persistent.mods[spec.game.id] || {};
+  let test =  Object.keys(mods).some(id => mods[id]?.type === ULTIMATE_MANAGER_ID);
+  if (test === false) {
+    try {
+      GAME_PATH = getDiscoveryPath(api);
+      await fs.statAsync(path.join(GAME_PATH, ULTIMATE_MANAGER_EXEC));
+      test = true;
+    } catch (err) {
+      test = false;
+    }
+  }
+  return test;
+}
+
 //Check if Save Editor is installed
 async function isSaveEditorInstalled(api, spec) {
   const state = api.getState();
@@ -1459,6 +1647,139 @@ async function downloadJsonManager(api, gameSpec, check = true) {
     const PAGE_ID = JSON_MANAGER_PAGE_NO;
     const FILE_ID = JSON_MANAGER_FILE_NO;  //If using a specific file id because "input" below gives an error
     const GAME_DOMAIN = JSON_MANAGER_DOMAIN;
+    api.sendNotification({ //notification indicating install process
+      id: NOTIF_ID,
+      message: `Installing ${MOD_NAME}`,
+      type: 'activity',
+      noDismiss: true,
+      allowSuppress: false,
+    });
+    if (api.ext?.ensureLoggedIn !== undefined) { //make sure user is logged into Nexus Mods account in Vortex
+      await api.ext.ensureLoggedIn();
+    }
+    try {
+      let FILE = null;
+      let URL = null;
+      try { //get the mod files information from Nexus
+        const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
+        const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
+        const file = modFiles
+          .filter(file => file.category_id === 1)
+          .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
+          .reverse()[0];
+        if (file === undefined) {
+          throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
+        }
+        FILE = file.file_id;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      } catch (err) { // use defined file ID if input is undefined above
+        FILE = FILE_ID;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      }
+      const dlInfo = { //Download the mod
+        game: GAME_DOMAIN,
+        name: MOD_NAME,
+      };
+      const dlId = await util.toPromise(cb =>
+        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+      const modId = await util.toPromise(cb =>
+        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
+      const batched = [
+        actions.setModsEnabled(api, profileId, [modId], true, {
+          allowAutoDeploy: true,
+          installed: true,
+        }),
+        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
+      ];
+      util.batchDispatch(api.store, batched); // Will dispatch both actions
+    } catch (err) { //Show the user the download page if the download, install process fails
+      const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
+      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
+      util.opn(errPage).catch(() => null);
+    } finally {
+      api.dismissNotification(NOTIF_ID);
+    }
+  }
+} //*/
+
+//* Function to auto-download QT Mod Manager from Nexus Mods
+async function downloadQtManager(api, gameSpec, check = true) {
+  let isInstalled = await isQtManagerInstalled(api, gameSpec);
+  if (!isInstalled || !check) {
+    const MOD_NAME = QT_MANAGER_ID;
+    const MOD_TYPE = TOOLS_ID;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
+    const PAGE_ID = QT_MANAGER_PAGE_NO;
+    const FILE_ID = QT_MANAGER_FILE_NO;  //If using a specific file id because "input" below gives an error
+    const GAME_DOMAIN = QT_MANAGER_DOMAIN;
+    api.sendNotification({ //notification indicating install process
+      id: NOTIF_ID,
+      message: `Installing ${MOD_NAME}`,
+      type: 'activity',
+      noDismiss: true,
+      allowSuppress: false,
+    });
+    if (api.ext?.ensureLoggedIn !== undefined) { //make sure user is logged into Nexus Mods account in Vortex
+      await api.ext.ensureLoggedIn();
+    }
+    try {
+      let FILE = null;
+      let URL = null;
+      try { //get the mod files information from Nexus
+        const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
+        const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
+        const file = modFiles
+          .find(file => (
+            file.category_id === 1 
+            && !file.file_name.includes('SourceCode')
+          ));
+        if (file === undefined) {
+          throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
+        }
+        FILE = file.file_id;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      } catch (err) { // use defined file ID if input is undefined above
+        FILE = FILE_ID;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      }
+      const dlInfo = { //Download the mod
+        game: GAME_DOMAIN,
+        name: MOD_NAME,
+      };
+      const dlId = await util.toPromise(cb =>
+        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+      const modId = await util.toPromise(cb =>
+        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
+      const batched = [
+        actions.setModsEnabled(api, profileId, [modId], true, {
+          allowAutoDeploy: true,
+          installed: true,
+        }),
+        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
+      ];
+      util.batchDispatch(api.store, batched); // Will dispatch both actions
+    } catch (err) { //Show the user the download page if the download, install process fails
+      const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
+      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
+      util.opn(errPage).catch(() => null);
+    } finally {
+      api.dismissNotification(NOTIF_ID);
+    }
+  }
+} //*/
+
+//* Function to auto-download Ultimate Mod Manager from Nexus Mods
+async function downloadUltimateManager(api, gameSpec, check = true) {
+  let isInstalled = await isUltimateManagerInstalled(api, gameSpec);
+  if (!isInstalled || !check) {
+    const MOD_NAME = ULTIMATE_MANAGER_ID;
+    const MOD_TYPE = TOOLS_ID;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
+    const PAGE_ID = ULTIMATE_MANAGER_PAGE_NO;
+    const FILE_ID = ULTIMATE_MANAGER_FILE_NO;  //If using a specific file id because "input" below gives an error
+    const GAME_DOMAIN = ULTIMATE_MANAGER_DOMAIN;
     api.sendNotification({ //notification indicating install process
       id: NOTIF_ID,
       message: `Installing ${MOD_NAME}`,
@@ -1790,6 +2111,21 @@ function applyGame(context, gameSpec) {
       { name: LOADER_NAME }
     );
   }
+
+  //Vortex mod type - merger from LO and patch on deploy
+  if (loadOrder) {
+    context.registerModType(VORTEX_MOD_ID, 25, 
+      (gameId) => {
+        var _a;
+        return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
+      }, 
+      (game) => pathPattern(context.api, game, path.join('{gamePath}', VORTEX_MOD_PATH)), 
+      () => Promise.resolve(false), 
+      { name: VORTEX_MOD_NAME
+        //mergeMods: (mod) => loadOrderPrefix(context.api, mod)
+       }
+    );
+  }
   
   //register mod installers
   if (hasLoader) {
@@ -1800,7 +2136,12 @@ function applyGame(context, gameSpec) {
   }
   context.registerInstaller(TOOLS_ID, 29, testTools, installTools);
   context.registerInstaller(BROWSER_MOD_ID, 31, testBrowserMod, installBrowserMod);
-  context.registerInstaller(PATCH_MOD_ID, 33, testPatchMod, (files) => installPatchMod(context.api, files));
+  if (!loadOrder) {
+    context.registerInstaller(PATCH_MOD_ID, 33, testPatchMod, (files, fileName) => installPatchMod(context.api, files, fileName));
+  } else {
+    context.registerInstaller(`${GAME_ID}-vortexmod`, 33, testVortex, (files, fileName) => installVortex(context.api, files, fileName));
+  }
+  context.registerInstaller(`${GAME_ID}-json`, 35, testJsonMod, (files) => installJsonMod(context.api, files)); //.json patches, no data files
   if (needsModInstaller) {
     context.registerInstaller(MOD_ID, 35, testMod, installMod);
   }
@@ -1830,13 +2171,6 @@ function applyGame(context, gameSpec) {
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, `Download ${CD_MANAGER_NAME}`, async () => {
-    await downloadCdManager(context.api, spec);
-    }, () => {
-      const state = context.api.getState();
-      const gameId = selectors.activeGameId(state);
-      return gameId === GAME_ID;
-  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, `Download ${JSON_MANAGER_NAME}`, async () => {
     await downloadJsonManager(context.api, spec);
     }, () => {
@@ -1844,6 +2178,27 @@ function applyGame(context, gameSpec) {
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, `Download ${QT_MANAGER_NAME}`, async () => {
+    await downloadQtManager(context.api, spec);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  });
+  /*context.registerAction('mod-icons', 300, 'open-ext', {}, `Download ${ULTIMATE_MANAGER_NAME}`, async () => {
+    await downloadUltimateManager(context.api, spec);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  }); //*/
+  /*context.registerAction('mod-icons', 300, 'open-ext', {}, `Download ${CD_MANAGER_NAME}`, async () => {
+    await downloadCdManager(context.api, spec);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  }); //*/
   context.registerAction('mod-icons', 300, 'open-ext', {}, `Download ${SAVE_EDITOR_NAME}`, async () => {
     await downloadSaveEditor(context.api, spec);
     }, () => {
