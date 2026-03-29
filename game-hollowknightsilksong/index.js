@@ -2,8 +2,8 @@
 Name: Hollow Knight: Silksong Vortex Extension
 Structure: Unity BepinEx
 Author: ChemBoy1
-Version: 0.2.0
-Date: 2026-02-07
+Version: 0.3.0
+Date: 2026-03-29
 //////////////////////////////////////////*/
 
 //Import libraries
@@ -41,7 +41,7 @@ const BEPINEX_PAGE_ID = '26';
 const BEPINEX_FILE_ID = '40';
 const BEPINEX_ARCH = 'x64'; // 'x64' or 'x86'
 const BEPINEX_BUILD = 'unitymono'; // 'unityil2cpp' or 'unitymono' 
-const BEPINEX_VERSION = '5.4.23.4'; //force BepInEx version ('5.4.23.4' or '6.0.0')
+const BEPINEX_VERSION = '5.4.23.5'; //force BepInEx version ('5.4.23.5' or '6.0.0')
 const allowBepinexNexus = false; //set false until bugs are fixed
 const downloadCfgMan = true; //should BepInExConfigManager be downloaded?
 
@@ -61,8 +61,8 @@ if (BEPINEX_BUILD === 'unityil2cpp') {
 }
 const BEPCFGMAN_ID = `${GAME_ID}-bepcfgman`;
 const BEPCFGMAN_NAME = "BepInEx Configuration Manager";
-const BEPCFGMAN_URL = `https://github.com/sinai-dev/BepInExConfigManager/releases/download/1.3.0/BepInExConfigManager.${BEPINEX_STRING}.zip`;
-const BEPCFGMAN_FILE = `bepinexconfigmanager.${BEPINEX_STRING}.dll`; //lowercased
+const BEPCFGMAN_URL = `https://github.com/BepInEx/BepInEx.ConfigurationManager/releases/download/v18.4.1/BepInEx.ConfigurationManager_BepInEx5_v18.4.1.zip`;
+const BEPCFGMAN_FILE = `configurationmanager.dll`; //lowercased
 
 const BEPMOD_ID = `${GAME_ID}-bepmods`;
 const BEPMOD_NAME = "BepinEx Mod";
@@ -73,6 +73,14 @@ const ASSEMBLY_ID = `${GAME_ID}-assemblydll`;
 const ASSEMBLY_NAME = "Assembly DLL Mod";
 const ASSEMBLY_PATH = path.join(DATA_FOLDER, "Managed");
 const ASSEMBLY_FILE = "Assembly-CSharp.dll";
+
+const SKIN_ID = `${GAME_ID}-skin`;
+const SKIN_NAME = "Skin Mod";
+const SKIN_PATH = path.join(DATA_FOLDER, "Mods", "Customizer");
+const SKIN_IGNORE_FILES = ["icon.png"];
+const SKIN_EXTS = [".png"];
+const SKINS_FOLDER = "Texture2D";
+const SKINS_STRING = "atlas";
 
 const MELONLOADER_ID = `${GAME_ID}-melonloader`;
 const MELONLOADER_NAME = "MelonLoader";
@@ -101,7 +109,7 @@ const BEPINEXIL2CPP_BE_URL = `https://builds.bepinex.dev/projects/bepinex_be/738
 const LOADER_ID = `${GAME_ID}-modloader`;
 
 const MOD_PATH_DEFAULT = ".";
-const MODTYPE_FOLDERS = [BEPMOD_PATH, ASSEMBLY_PATH];
+const MODTYPE_FOLDERS = [BEPMOD_PATH, ASSEMBLY_PATH, SKIN_PATH];
 const IGNORE_CONFLICTS = [path.join('**', 'manifest.json'), path.join('**', 'icon.png'), path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
 
 //Filled in from info above
@@ -456,6 +464,163 @@ function installBepMod(files) {
   return Promise.resolve({ instructions });
 }
 
+//Test for .png skin mod files
+function testSkin(files, gameId) {
+  const isMod = files.some(file => (
+    SKIN_EXTS.includes(path.extname(file).toLowerCase())
+    && path.basename(file).toLowerCase().includes(SKINS_STRING)
+  ));
+  const isExcluded = files.some(file => (
+    path.extname(file).toLowerCase() === '.exe'
+    || path.extname(file).toLowerCase() === '.dll'
+    //|| SKIN_IGNORE_FILES.includes(path.basename(file).toLowerCase())
+  )); //*/
+  let supported = (gameId === spec.game.id) && isMod && !isExcluded;
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+      supported,
+      requiredFiles: [],
+  });
+}
+
+//Install .png skin mod files
+function installSkin(files, fileName) {
+  const MOD_TYPE = SKIN_ID;
+  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+  let modFile = files.find(file => (
+    SKIN_EXTS.includes(path.extname(file).toLowerCase())
+    && path.basename(file).toLowerCase().includes(SKINS_STRING)
+  ));
+  let rootPath = path.dirname(modFile);
+  const ROOT_PATH = path.basename(rootPath);
+  if (ROOT_PATH !== '.') {
+    modFile = rootPath; //make the folder the targeted modFile so we can grab any other folders also in its directory
+    rootPath = path.dirname(modFile);
+    //const indexFolder = path.basename(modFile);
+    //idx = modFile.indexOf(`${indexFolder}${path.sep}`);  //index on the folder with path separator
+  } //*/
+  const idx = modFile.indexOf(path.basename(modFile));
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Fallback installer to root folder
+function testFallback(files, gameId) {
+  const isPlugin = files.some(file => path.extname(file).toLowerCase() === '.dll');
+  let supported = (gameId === spec.game.id) && !isPlugin;
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Fallback installer to root folder
+function installFallback(api, files, destinationPath) {
+  fallbackInstallerNotify(api, destinationPath);
+  const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
+  
+  const filtered = files.filter(file =>
+    (!file.endsWith(path.sep))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: file,
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+function fallbackInstallerNotify(api, modName) {
+  const state = api.getState();
+  STAGING_FOLDER = selectors.installPathForGame(state, spec.game.id);
+  modName = path.basename(modName, '.installing');
+  const id = modName.replace(/[^a-zA-Z0-9\s]*( )*/gi, '').slice(0, 20);
+  const NOTIF_ID = `${GAME_ID}-${id}-fallback`;
+  const MESSAGE = 'Fallback installer reached for ' + modName;
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'info',
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: 'More',
+        action: (dismiss) => {
+          api.showDialog('question', MESSAGE, {
+            text: `The mod you just installed reached the fallback installer. This means Vortex could not determine where to place these mod files.\n`
+                + `Please check the mod page description and review the files in the mod staging folder to determine if manual file manipulation is required.\n`
+                + `\n`
+                + `If you think that Vortex should be capable to install this mod to a specific folder, please contact the extension developer for support at the link below.\n`
+                + `\n`
+                + `Mod Name: ${modName}.\n`
+                + `\n`             
+          }, [
+            { label: 'Continue', action: () => dismiss() },
+            {
+              label: 'Contact Ext. Developer', action: () => {
+                util.opn(`${EXTENSION_URL}?tab=posts`).catch(() => null);
+                dismiss();
+              }
+            }, //*/
+            {
+              label: 'Open Staging Folder', action: () => {
+                util.opn(path.join(STAGING_FOLDER, modName)).catch(() => null);
+                dismiss();
+              }
+            }, //*/
+            //*
+            { label: `Open Mod Page`, action: () => {
+              const mods = util.getSafe(api.store.getState(), ['persistent', 'mods', spec.game.id], {});
+              const modMatch = Object.values(mods).find(mod => mod.installationPath === modName);
+              log('warn', `Found ${modMatch?.id} for ${modName}`);
+              let PAGE = ``;
+              if (modMatch) {
+                const MOD_ID = modMatch.attributes.modId;
+                if (MOD_ID !== undefined) {
+                  PAGE = `${MOD_ID}?tab=description`; 
+                }
+              }
+              const MOD_PAGE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${PAGE}`;
+              util.opn(MOD_PAGE_URL).catch(err => undefined);
+              //dismiss();
+            }}, //*/
+          ]);
+        },
+      },
+    ],
+  });
+}
+
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
 //*
@@ -531,16 +696,38 @@ function applyGame(context, gameSpec) {
     }, (game) => pathPattern(context.api, game, type.targetPath), () => Promise.resolve(false), { name: type.name });
   });
 
+  //Skin modType with mergeMods
+  context.registerModType(SKIN_ID, 50, 
+    (gameId) => {
+      var _a;
+      return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
+    },
+    (game) => pathPattern(context.api, game, path.join('{gamePath}', SKIN_PATH)), 
+    () => Promise.resolve(false), 
+    { name: SKIN_NAME,
+      mergeMods: (mod) => mod.id.split('-')[0]
+    } //*/
+  );
+
   //register mod installers
   context.registerInstaller(BEPCFGMAN_ID, 9, testBepCfgMan, installBepCfgMan);
   //context.registerInstaller(BEPINEX_ID, 25, testBepinex, installBepinex);
-  //context.registerInstaller(MELON_ID, 25, testMelon, installMelon);
-  //context.registerInstaller(BEPMOD_ID, 25, testBepMod, installBepMod);
-  //context.registerInstaller(MELONMOD_ID, 25, testMelonMod, installMelonMod);
-  context.registerInstaller(ASSEMBLY_ID, 48, testAssembly, installAssembly);
-  //context.registerInstaller(SAVE_ID, 49, testSave, installSave);
+  //context.registerInstaller(MELON_ID, 27, testMelon, installMelon);
+  //context.registerInstaller(BEPMOD_ID, 29, testBepMod, installBepMod);
+  //context.registerInstaller(MELONMOD_ID, 31, testMelonMod, installMelonMod);
+  context.registerInstaller(ASSEMBLY_ID, 33, testAssembly, installAssembly);
+  context.registerInstaller(SKIN_ID, 35, testSkin, installSkin);
+  //context.registerInstaller(SAVE_ID, 47, testSave, installSave);
+  context.registerInstaller(`${GAME_ID}-fallback`, 49, testFallback, (files, destinationPath) => installFallback(context.api, files, destinationPath));
   
   //register actions
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download BepInExConfigManager', () => {
+    downloadBepCfgMan(context.api, spec, false);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  });
   /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config (Registry)', () => {
     openConfigRegistry(context.api);
   }, () => {
@@ -650,9 +837,9 @@ function isBepCfgManInstalled(api, spec) {
   return Object.keys(mods).some(id => mods[id]?.type === BEPCFGMAN_ID);
 }
 
-async function downloadBepCfgMan(api, gameSpec) {
+async function downloadBepCfgMan(api, gameSpec, check = true) {
   let isInstalled = isBepCfgManInstalled(api, gameSpec);
-  if (!isInstalled) {
+  if (!isInstalled || !check) {
     const MOD_NAME = BEPCFGMAN_NAME;
     const MOD_TYPE = BEPCFGMAN_ID;
     const NOTIF_ID = `${MOD_TYPE}-installing`;

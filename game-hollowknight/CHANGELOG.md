@@ -4,6 +4,11 @@
 
 - None
 
+## [2.1.0] - 2026-03-28
+
+- Updated: BepInEx to latest 5.4.23.5
+- Updated: BepInExConfigManager to latest 18.4.1 and added download button
+
 ## [2.0.2] - 2026-03-16
 
 - Fixed: Correctly launch Xbox version

@@ -4,6 +4,13 @@
 
 - Add???: Support for installing MelonLoader plugins. Need the compatibility loader for MelonLoader mods to work (<https://www.nexusmods.com/hollowknightsilksong/mods/44>) - there are very few MelonLoader mods.
 
+## [0.3.0] - 2026-03-29
+
+- Added: Support for skin mod packs that install to the "Hollow Knight Silksong_Data\Mods\Customizer" folder.
+- Added: Fallback installer with notification if Vortex could not determine how to install the mod.
+- Updated: BepInEx to latest 5.4.23.5
+- Updated: BepInExConfigManager to latest 18.4.1 and added download button
+
 ## [0.2.0] - 2026-02-07
 
 - Fixed: Path strings

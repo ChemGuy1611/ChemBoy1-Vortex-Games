@@ -2,8 +2,8 @@
 Name: Hollow Knight Vortex Extension
 Structure: Unity BepinEx
 Author: ChemBoy1
-Version: 2.0.1
-Date: 2026-03-06
+Version: 2.1.0
+Date: 2026-03-28
 //////////////////////////////////////////*/
 
 //Import libraries
@@ -48,7 +48,7 @@ const BEPINEX_PAGE_ID = '0'; //only specify if there is a Nexus page for BepInEx
 const BEPINEX_FILE_ID = '0';
 const BEPINEX_ARCH = 'x64'; // 'x64' or 'x86'
 const BEPINEX_BUILD = 'unitymono'; // 'unityil2cpp' or 'unitymono' - IL2CPP will use bleeding edge builds
-const BEPINEX_VERSION = '5.4.23.4'; //force BepInEx version ('5.4.23.3' or '6.0.0')
+const BEPINEX_VERSION = '5.4.23.5'; //force BepInEx version ('5.4.23.5' or '6.0.0')
 const allowBepinexNexus = false; //set false until bugs are fixed
 const downloadCfgMan = true; //should BepInExConfigManager be downloaded?
 const bleedingEdge = false; //set to true to download bleeding edge builds of BepInEx (IL2CPP only)
@@ -76,8 +76,8 @@ if (BEPINEX_BUILD === 'unityil2cpp') {
 const BEPCFGMAN_ID = `${GAME_ID}-bepcfgman`;
 const BEPCFGMAN_NAME = "BepInEx Configuration Manager";
 const BEPCFGMAN_PATH = 'Bepinex';
-const BEPCFGMAN_URL = `https://github.com/sinai-dev/BepInExConfigManager/releases/latest/download/BepInExConfigManager.${BEPINEX_STRING}.zip`;
-const BEPCFGMAN_FILE = `bepinexconfigmanager.${BEPINEX_STRING}.dll`; //lowercased
+const BEPCFGMAN_URL = `https://github.com/BepInEx/BepInEx.ConfigurationManager/releases/download/v18.4.1/BepInEx.ConfigurationManager_BepInEx5_v18.4.1.zip`;
+const BEPCFGMAN_FILE = `configurationmanager.dll`; //lowercased
 
 const BEPMOD_ID = `${GAME_ID}-bepmods`;
 const BEPMOD_NAME = "BepInEx Mod";
@@ -649,6 +649,13 @@ function applyGame(context, gameSpec) {
   //context.registerInstaller(SAVE_ID, 49, testSave, installSave); //best to only enable if saves are stored in the game's folder
   
   //register actions
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download BepInExConfigManager', () => {
+    downloadBepCfgMan(context.api, spec, false);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open BepInEx.cfg', () => {
     GAME_PATH = getDiscoveryPath(context.api);
     const openPath = path.join(GAME_PATH, 'BepinEx', 'config', 'BepInEx.cfg');
@@ -675,17 +682,29 @@ function applyGame(context, gameSpec) {
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
+    util.opn(PCGAMINGWIKI_URL).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
-    const openPath = path.join(__dirname, 'CHANGELOG.md');
-    util.opn(openPath).catch(() => null);
+    util.opn(path.join(__dirname, 'CHANGELOG.md')).catch(() => null);
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
+    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
-    const openPath = DOWNLOAD_FOLDER;
-    util.opn(openPath).catch(() => null);
+    util.opn(DOWNLOAD_FOLDER).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
@@ -747,9 +766,9 @@ function isBepCfgManInstalled(api, spec) {
   return Object.keys(mods).some(id => mods[id]?.type === BEPCFGMAN_ID);
 }
 
-async function downloadBepCfgMan(api, gameSpec) {
+async function downloadBepCfgMan(api, gameSpec, check = true) {
   let isInstalled = isBepCfgManInstalled(api, gameSpec);
-  if (!isInstalled) {
+  if (!isInstalled || !check) {
     const MOD_NAME = BEPCFGMAN_NAME;
     const MOD_TYPE = BEPCFGMAN_ID;
     const NOTIF_ID = `${MOD_TYPE}-installing`;
@@ -796,9 +815,9 @@ function isBepinexInstalled(api, spec) {
   return Object.keys(mods).some(id => mods[id]?.type === BEPINEX_ID);
 }
 
-async function downloadBepinexBleedingEdge(api, gameSpec) {
+async function downloadBepinexBleedingEdge(api, gameSpec, check = true) {
   let isInstalled = isBepinexInstalled(api, gameSpec);
-  if (!isInstalled) {
+  if (!isInstalled || !check) {
     const MOD_NAME = BEPINEX_ZIP;
     const MOD_TYPE = BEPINEX_ID;
     const NOTIF_ID = `${MOD_TYPE}-installing`;
