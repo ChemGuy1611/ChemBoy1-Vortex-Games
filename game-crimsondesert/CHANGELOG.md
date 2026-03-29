@@ -7,6 +7,7 @@
 ## [0.2.2] - 2026-03-28
 
 - Changed: Patch mod installer updated for new modding patterns (JSON/QT Mod Managers) - "0036+" folders
+- Fixed: New name for JSON Mod Manager executable v7.5+
 - Added: Separate installer for JSON mods with no data files
 - Added: Support for QT Mod Manager
 - Removed: CD Mod Manager tool and download button (not currently available)

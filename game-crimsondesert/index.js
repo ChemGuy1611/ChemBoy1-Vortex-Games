@@ -158,9 +158,9 @@ const CD_MANAGER_DOMAIN = GAME_ID;
 
 const JSON_MANAGER_ID = `${GAME_ID}-jsonmanager`;
 const JSON_MANAGER_NAME = "JSON Mod Manager";
-const JSON_MANAGER_EXEC = 'CD Mod Manager.exe';
+const JSON_MANAGER_EXEC = 'CD JSON Mod Manager.exe';
 const JSON_MANAGER_PAGE_NO = 113;
-const JSON_MANAGER_FILE_NO = 324;
+const JSON_MANAGER_FILE_NO = 760;
 const JSON_MANAGER_DOMAIN = GAME_ID;
 
 const QT_MANAGER_ID = `${GAME_ID}-qtmanager`;
