@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.2.7] - 2026-03-28
+
+- Fixed: Handle case where user clicks "Rename" button in the folder rename dialog without entering anything in the text box.
+
 ## [0.2.6] - 2026-01-31
 
 - Improved: Reliablity of ATK downloader function

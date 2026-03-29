@@ -2,8 +2,8 @@
 Name: Ghost Recon Breakpoint Vortex Extension
 Structure: Ubisoft AnvilToolkit
 Author: ChemBoy1
-Version: 0.2.6
-Date: 2026-01-31
+Version: 0.2.7
+Date: 2026-03-28
 //////////////////////////////////////////////////////////*/
 
 //Import libraries
@@ -867,6 +867,9 @@ async function folderRenameDialog(api, mod) {
   .then(result => { //rename the folder in the mod staging folder
     if (result.action === 'Rename') {
       let name = result.input[RENAME_INPUT_ID];
+      if (name === undefined) {
+        name = RENAME_FOLDER;
+      }
       name = name.trim();
       if (!name.endsWith('.forge')) {
         name = name + '.forge';
