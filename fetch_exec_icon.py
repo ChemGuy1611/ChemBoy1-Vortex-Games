@@ -3,8 +3,7 @@
 fetch_exec_icon.py
 ------------------
 Downloads and resizes a 64x64 exec.png icon for one or more Vortex game
-extension folders using the official Steam CDN icon (extracted from the
-game's executable by Steam).
+extension folders.
 
 Usage:
     python fetch_exec_icon.py game-foo game-bar ...
@@ -12,9 +11,16 @@ Usage:
 Skips any folder that already has exec.png or executable.png.
 Use --force to overwrite existing icons.
 
-Source:
-    Steam CDN icon extracted from the game executable via Steam Community.
-    Tries 184x184 (_full) version first, falls back to 32x32.
+API key:
+    Set environment variable STEAMGRIDDB_API_KEY for SteamGridDB access.
+    Steam CDN is always tried as a fallback without any key.
+
+Source priority:
+    1. SteamGridDB official client ICO  (mime=image/vnd.microsoft.icon, style=official)
+       These are the actual Steam client icons extracted from the game exe, up to 256x256.
+    2. SteamGridDB official PNG         (mime=image/png, style=official)
+    3. Steam CDN _full.jpg              (184x184 exe icon)
+    4. Steam CDN .jpg                   (32x32 exe icon, last resort)
 
 Requirements:
     pip install Pillow
@@ -29,6 +35,7 @@ import urllib.request
 from io import BytesIO
 from PIL import Image
 
+SGDB_BASE = "https://www.steamgriddb.com/api/v2"
 STEAM_COMMUNITY_SEARCH = "https://steamcommunity.com/actions/SearchApps/{}"
 REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
 
@@ -37,6 +44,16 @@ def http_get_bytes(url):
     req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
     with urllib.request.urlopen(req, timeout=15) as resp:
         return resp.read()
+
+
+def sgdb_get(path, api_key):
+    url = SGDB_BASE + path
+    req = urllib.request.Request(url, headers={
+        "Authorization": f"Bearer {api_key}",
+        "User-Agent": "ChemBoy1-VortexExtensions/1.0",
+    })
+    with urllib.request.urlopen(req, timeout=15) as resp:
+        return json.loads(resp.read())
 
 
 def extract_steam_id(index_js_path):
@@ -80,20 +97,53 @@ def clean_for_search(name):
     return name
 
 
+def fetch_icon_sgdb(appid, api_key):
+    """
+    Fetch the best official icon from SteamGridDB.
+    Returns (img_bytes, source_desc) or (None, None).
+
+    Prefers official client ICO (multi-res, up to 256x256) over official PNG.
+    Ignores custom/community icons entirely.
+    """
+    try:
+        data = sgdb_get(f"/icons/steam/{appid}", api_key)
+        items = data.get("data", [])
+
+        # Only accept official ICO files — these are the actual Steam client icons
+        # extracted from the game executable. Official PNGs are self-labeled by
+        # community uploaders and are not reliably from the developer.
+        icos = [
+            i for i in items
+            if i.get("style") == "official"
+            and i.get("mime") == "image/vnd.microsoft.icon"
+        ]
+        if not icos:
+            return None, None
+
+        icos.sort(key=lambda i: i.get("width", 0), reverse=True)
+        url = icos[0]["url"]
+        img_bytes = http_get_bytes(url)
+        return img_bytes, f"SteamGridDB official ICO ({icos[0].get('width') or '?'}px)"
+
+    except Exception as e:
+        print(f"    SteamGridDB failed: {e}")
+
+    return None, None
+
+
 def fetch_icon_steam_cdn(appid, game_name):
     """
-    Fetch the official Steam icon (extracted from the game exe by Steam).
+    Fetch the official Steam CDN exe icon.
     Returns (img_bytes, source_desc) or (None, None).
     Tries 184x184 (_full) first, falls back to 32x32.
     """
-    # Use Steam store API to get the canonical game name for searching
     try:
         store_url = f"https://store.steampowered.com/api/appdetails?appids={appid}"
         store_data = json.loads(http_get_bytes(store_url))
         if store_data.get(appid, {}).get("success"):
             game_name = store_data[appid]["data"]["name"]
     except Exception:
-        pass  # Fall through using the name from info.json
+        pass
 
     search_name = clean_for_search(game_name)
 
@@ -112,9 +162,8 @@ def fetch_icon_steam_cdn(appid, game_name):
             return None, None
 
         # Try _full (184x184) first
-        full_url = icon_url.replace(".jpg", "_full.jpg")
         try:
-            data = http_get_bytes(full_url)
+            data = http_get_bytes(icon_url.replace(".jpg", "_full.jpg"))
             return data, "Steam CDN 184x184"
         except Exception:
             pass
@@ -128,20 +177,33 @@ def fetch_icon_steam_cdn(appid, game_name):
         return None, None
 
 
-def download_and_save(img_bytes, out_path):
-    """Resize to 64x64 and save as RGB PNG."""
-    img = Image.open(BytesIO(img_bytes)).convert("RGB")
+def open_best_size(img_bytes):
+    """
+    Open image bytes. For ICO files, extracts the largest available size.
+    Returns a PIL Image.
+    """
+    img = Image.open(BytesIO(img_bytes))
+    if hasattr(img, "ico"):
+        sizes = img.ico.sizes()
+        if sizes:
+            largest = max(sizes, key=lambda s: s[0])
+            img = img.ico.getimage(largest)
+    return img.convert("RGB")
+
+
+def save_icon(img_bytes, out_path):
+    """Extract best size from image bytes, resize to 64x64, save as RGB PNG."""
+    img = open_best_size(img_bytes)
     img = img.resize((64, 64), Image.LANCZOS)
     img.save(out_path, "PNG")
 
 
-def process_folder(folder_name, force=False):
+def process_folder(folder_name, api_key, force=False):
     folder_path = os.path.join(REPO_ROOT, folder_name)
     if not os.path.isdir(folder_path):
         print(f"  ERROR: Directory not found: {folder_path}")
         return False
 
-    # Skip if already has either icon file
     if not force:
         if os.path.exists(os.path.join(folder_path, "exec.png")):
             print(f"  SKIP: exec.png already exists")
@@ -161,15 +223,23 @@ def process_folder(folder_name, force=False):
         print(f"  FAILED: No Steam App ID found.")
         return False
 
-    img_bytes, source = fetch_icon_steam_cdn(appid, game_name)
+    img_bytes, source = None, None
+
+    # 1. SteamGridDB official client ICO / PNG
+    if api_key:
+        img_bytes, source = fetch_icon_sgdb(appid, api_key)
+
+    # 2. Steam CDN (184x184 or 32x32 fallback)
+    if not img_bytes:
+        img_bytes, source = fetch_icon_steam_cdn(appid, game_name)
 
     if not img_bytes:
-        print(f"  FAILED: No icon found on Steam CDN.")
+        print(f"  FAILED: No icon found from any source.")
         return False
 
     out_path = os.path.join(folder_path, "exec.png")
     print(f"  Source    : {source}")
-    download_and_save(img_bytes, out_path)
+    save_icon(img_bytes, out_path)
     print(f"  Saved     : exec.png")
     return True
 
@@ -181,11 +251,18 @@ def main():
 
     force = "--force" in sys.argv
     targets = [a for a in sys.argv[1:] if not a.startswith("--")]
+
+    api_key = os.environ.get("STEAMGRIDDB_API_KEY", "").strip()
+    if not api_key:
+        try:
+            api_key = input("SteamGridDB API key (leave blank to use Steam CDN only): ").strip()
+        except EOFError:
+            api_key = ""
+
     results = {"ok": [], "skip": [], "fail": []}
 
     for folder in targets:
         print(f"\n[{folder}]")
-        # Check skip conditions before calling process_folder for cleaner reporting
         folder_path = os.path.join(REPO_ROOT, folder)
         if not force:
             if os.path.exists(os.path.join(folder_path, "exec.png")):
@@ -197,7 +274,7 @@ def main():
                 results["skip"].append(folder)
                 continue
 
-        ok = process_folder(folder, force)
+        ok = process_folder(folder, api_key, force)
         time.sleep(0.3)
         (results["ok"] if ok else results["fail"]).append(folder)
 

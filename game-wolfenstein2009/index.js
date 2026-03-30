@@ -93,7 +93,7 @@ const tools = [
   {
     id: 'LaunchGameSP',
     name: 'Launch SP Game',
-    logo: 'executable.png',
+    logo: 'exec.png',
     executable: () => EXEC,
     requiredFiles: [
       EXEC,
@@ -109,7 +109,7 @@ const tools = [
   {
     id: 'LaunchGameMP',
     name: 'Launch MP Game',
-    logo: 'executable.png',
+    logo: 'exec.png',
     executable: () => EXEC_MP,
     requiredFiles: [
       EXEC_MP,

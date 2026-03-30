@@ -197,7 +197,7 @@ const tools = [
   {
     id: 'FrostyModManagerLaunch',
     name: 'Launch Modded Game',
-    logo: 'executable.png',
+    logo: 'exec.png',
     executable: () => FROSTY_EXEC,
     requiredFiles: [
       FROSTY_EXEC,
@@ -226,7 +226,7 @@ const tools = [
   {
     id: `${GAME_ID}-directlaunch`,
     name: 'Direct Launch',
-    logo: 'executable.png',
+    logo: 'exec.png',
     executable: () => EXEC,
     requiredFiles: [
       EXEC,

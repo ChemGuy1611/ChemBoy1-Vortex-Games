@@ -88,7 +88,7 @@ const tools = [
   {
     id: 'UsePreviewLaunch',
     name: 'Launch Modded Game',
-    logo: 'executable.png',
+    logo: 'exec.png',
     executable: () => EXEC,
     requiredFiles: [
       EXEC,
