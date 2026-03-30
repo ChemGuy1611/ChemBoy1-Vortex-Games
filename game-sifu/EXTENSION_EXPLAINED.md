@@ -15,7 +15,7 @@
 | Property | Value |
 |---|---|
 | Game ID | `sifu` |
-| Executable | `N/A` |
+| Executable | `Sifu.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 
 ## Supported Stores

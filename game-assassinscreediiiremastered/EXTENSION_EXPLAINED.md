@@ -1,4 +1,4 @@
-# AC III Remastered — Vortex Extension Explained
+# Assassin's Creed III Remastered — Vortex Extension Explained
 
 ## Overview
 

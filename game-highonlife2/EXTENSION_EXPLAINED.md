@@ -49,7 +49,7 @@ Mod types define where each category of mod gets deployed:
 |---|---|---|---|
 | UE4SSCOMBO_NAME | `UE4SSCOMBO_ID` | high | `{gamePath}` |
 | LOGICMODS_NAME | `LOGICMODS_ID` | high | `{gamePath}/LOGICMODS_PATH` |
-| PAK_ALT_NAME | `highonlife2-pakalt` | high | `{gamePath}/HighOnLife2/Content/Paks` |
+| Paks (no "~mods") | `highonlife2-pakalt` | high | `{gamePath}/HighOnLife2/Content/Paks` |
 | Root Game Folder | `highonlife2-root` | high | `{gamePath}` |
 | Root Sub-Folders | `highonlife2-rootsubfolders` | high | `{gamePath}/HighOnLife2` |
 

@@ -48,7 +48,7 @@ Mod types define where each category of mod gets deployed:
 |---|---|---|---|
 | UE4SSCOMBO_NAME | `UE4SSCOMBO_ID` | high | `{gamePath}` |
 | LOGICMODS_NAME | `LOGICMODS_ID` | high | `{gamePath}/LOGICMODS_PATH` |
-| PAK_ALT_NAME | `crisoltheaterofidols-pakalt` | high | `{gamePath}/CRToiPrototype/Content/Paks` |
+| Paks (no "~mods") | `crisoltheaterofidols-pakalt` | high | `{gamePath}/CRToiPrototype/Content/Paks` |
 | Root Game Folder | `crisoltheaterofidols-root` | high | `{gamePath}` |
 | Root Sub-Folders | `crisoltheaterofidols-rootsubfolders` | high | `{gamePath}/CRToiPrototype` |
 

@@ -1,4 +1,4 @@
-# SS: Hellblade 2 — Vortex Extension Explained
+# Senua's Saga: Hellblade 2 — Vortex Extension Explained
 
 ## Overview
 

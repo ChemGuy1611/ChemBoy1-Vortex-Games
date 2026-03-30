@@ -48,7 +48,7 @@ Mod types define where each category of mod gets deployed:
 |---|---|---|---|
 | UE4SSCOMBO_NAME | `UE4SSCOMBO_ID` | high | `{gamePath}` |
 | LOGICMODS_NAME | `LOGICMODS_ID` | high | `{gamePath}/LOGICMODS_PATH` |
-| PAK_ALT_NAME | `styxbladesofgreed-pakalt` | high | `{gamePath}/Styx3/Content/Paks` |
+| Paks (no "~mods") | `styxbladesofgreed-pakalt` | high | `{gamePath}/Styx3/Content/Paks` |
 | Root Game Folder | `styxbladesofgreed-root` | high | `{gamePath}` |
 | Root Sub-Folders | `styxbladesofgreed-rootsubfolders` | high | `{gamePath}/Styx3` |
 

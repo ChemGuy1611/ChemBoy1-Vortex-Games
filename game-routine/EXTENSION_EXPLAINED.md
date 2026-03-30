@@ -45,7 +45,7 @@ Mod types define where each category of mod gets deployed:
 |---|---|---|---|
 | UE4SSCOMBO_NAME | `UE4SSCOMBO_ID` | high | `{gamePath}` |
 | LOGICMODS_NAME | `LOGICMODS_ID` | high | `{gamePath}/LOGICMODS_PATH` |
-| PAK_ALT_NAME | `routine-pakalt` | high | `{gamePath}/Routine/Content/Paks` |
+| Paks (no "~mods") | `routine-pakalt` | high | `{gamePath}/Routine/Content/Paks` |
 | Root Game Folder | `routine-root` | high | `{gamePath}` |
 | Root Sub-Folders | `routine-rootsubfolders` | high | `{gamePath}/Routine` |
 

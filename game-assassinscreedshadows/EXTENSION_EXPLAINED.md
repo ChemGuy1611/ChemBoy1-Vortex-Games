@@ -1,4 +1,4 @@
-# AC Shadows — Vortex Extension Explained
+# Assassin's Creed Shadows — Vortex Extension Explained
 
 ## Overview
 

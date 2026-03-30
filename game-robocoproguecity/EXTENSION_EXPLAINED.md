@@ -15,7 +15,7 @@
 | Property | Value |
 |---|---|
 | Game ID | `robocoproguecity` |
-| Executable | `N/A` |
+| Executable | `RoboCop.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 
 ## Supported Stores
@@ -43,7 +43,7 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `robocoproguecity-logicmods` | high | `{gamePath}/Game/Content/Paks/LogicMods` |
 | Root Game Folder | `robocoproguecity-root` | high | `{gamePath}` |
 | Content Folder | `robocoproguecity-contentfolder` | high | `{gamePath}/Game` |
-| UE5_ALT_NAME | `robocoproguecity-pakalt` | high | `{gamePath}/Game/Content/Paks` |
+| UE5 Paks (no "~mods") | `robocoproguecity-pakalt` | high | `{gamePath}/Game/Content/Paks` |
 
 ## Toolbar Actions
 

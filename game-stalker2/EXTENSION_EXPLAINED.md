@@ -15,7 +15,7 @@
 | Property | Value |
 |---|---|
 | Game ID | `stalker2heartofchornobyl` |
-| Executable | `N/A` |
+| Executable | `Stalker2.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 | Executable (GOG) | `Stalker2.exe` |
 

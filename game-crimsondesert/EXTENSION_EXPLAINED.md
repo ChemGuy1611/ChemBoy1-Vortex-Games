@@ -14,6 +14,8 @@
 
 - Supports plugin mods and data mods with "00XX" folders
 - Supports Crimson Browser (manifest.json and files folder) and JSON Mod Manager (.json or "0036+" folder) mods
+- FUTURE: May be able to update to use Vortex LO ("0036"+ folders and patch metadata on deploy)
+- Would not handle .json patches without data files. Still need JSON Manager for that.
 
 ## Key Identifiers
 

@@ -47,7 +47,7 @@ Mod types define where each category of mod gets deployed:
 |---|---|---|---|
 | UE4SSCOMBO_NAME | `UE4SSCOMBO_ID` | high | `{gamePath}` |
 | LOGICMODS_NAME | `LOGICMODS_ID` | high | `{gamePath}/LOGICMODS_PATH` |
-| PAK_ALT_NAME | `vein-pakalt` | high | `{gamePath}/Vein/Content/Paks` |
+| Paks (no "~mods") | `vein-pakalt` | high | `{gamePath}/Vein/Content/Paks` |
 | Root Game Folder | `vein-root` | high | `{gamePath}` |
 | Root Sub-Folders | `vein-rootsubfolders` | high | `{gamePath}/Vein` |
 

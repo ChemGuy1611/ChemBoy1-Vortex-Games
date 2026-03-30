@@ -48,7 +48,7 @@ Mod types define where each category of mod gets deployed:
 |---|---|---|---|
 | UE4SSCOMBO_NAME | `UE4SSCOMBO_ID` | high | `{gamePath}` |
 | LOGICMODS_NAME | `LOGICMODS_ID` | high | `{gamePath}/LOGICMODS_PATH` |
-| PAK_ALT_NAME | `codevein2-pakalt` | high | `{gamePath}/CodeVein2/Content/Paks` |
+| Paks (no "~mods") | `codevein2-pakalt` | high | `{gamePath}/CodeVein2/Content/Paks` |
 | Root Game Folder | `codevein2-root` | high | `{gamePath}` |
 | Root Sub-Folders | `codevein2-rootsubfolders` | high | `{gamePath}/CodeVein2` |
 | RHFF_NAME | `RHFF_ID` | high | `{gamePath}/RHFF_PATH` |

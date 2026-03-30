@@ -15,7 +15,8 @@
       "WebFetch(domain:xbox.com)",
       "WebFetch(domain:nexusmods.com)",
       "WebFetch(domain:npmjs.com)",
-      "Bash(python:*)"
+      "Bash(python:*)",
+      "Bash(python3 -c \":*)"
     ]
   }
 }

@@ -1,4 +1,4 @@
-# MY HERO ACADEMIA: All's Justice Vortex Extension — Vortex Extension Explained
+# MY HERO ACADEMIA: All\'s Justice — Vortex Extension Explained
 
 ## Overview
 
@@ -48,7 +48,7 @@ Mod types define where each category of mod gets deployed:
 |---|---|---|---|
 | UE4SSCOMBO_NAME | `UE4SSCOMBO_ID` | high | `{gamePath}` |
 | LOGICMODS_NAME | `LOGICMODS_ID` | high | `{gamePath}/LOGICMODS_PATH` |
-| PAK_ALT_NAME | `myheroacademiaallsjustice-pakalt` | high | `{gamePath}/HeroGame/Content/Paks` |
+| Paks (no "~mods") | `myheroacademiaallsjustice-pakalt` | high | `{gamePath}/HeroGame/Content/Paks` |
 | Root Game Folder | `myheroacademiaallsjustice-root` | high | `{gamePath}` |
 | Root Sub-Folders | `myheroacademiaallsjustice-rootsubfolders` | high | `{gamePath}/HeroGame` |
 

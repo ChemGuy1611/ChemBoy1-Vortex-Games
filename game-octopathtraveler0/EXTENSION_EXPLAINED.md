@@ -45,7 +45,7 @@ Mod types define where each category of mod gets deployed:
 |---|---|---|---|
 | UE4SSCOMBO_NAME | `UE4SSCOMBO_ID` | high | `{gamePath}` |
 | LOGICMODS_NAME | `LOGICMODS_ID` | high | `{gamePath}/LOGICMODS_PATH` |
-| PAK_ALT_NAME | `octopathtraveler0-pakalt` | high | `{gamePath}/Octopath_Traveler0/Content/Paks` |
+| Paks (no "~mods") | `octopathtraveler0-pakalt` | high | `{gamePath}/Octopath_Traveler0/Content/Paks` |
 | Root Game Folder | `octopathtraveler0-root` | high | `{gamePath}` |
 | Root Sub-Folders | `octopathtraveler0-rootsubfolders` | high | `{gamePath}/Octopath_Traveler0` |
 

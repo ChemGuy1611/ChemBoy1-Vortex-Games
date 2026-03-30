@@ -15,7 +15,7 @@
 | Property | Value |
 |---|---|
 | Game ID | `frostpunk2` |
-| Executable | `N/A` |
+| Executable | `Frostpunk2.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 
 ## Supported Stores

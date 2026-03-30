@@ -15,7 +15,7 @@
 | Property | Value |
 |---|---|
 | Game ID | `keeper` |
-| Executable | `N/A` |
+| Executable | `Keeper.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 | Executable (GOG) | `Keeper.exe` |
 
@@ -44,7 +44,7 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `keeper-logicmods` | high | `{gamePath}/PaganIdol/Content/Paks/LogicMods` |
 | Root Game Folder | `keeper-root` | high | `{gamePath}` |
 | Content Folder | `keeper-contentfolder` | high | `{gamePath}/PaganIdol` |
-| UE5_ALT_NAME | `keeper-pakalt` | high | `{gamePath}/PaganIdol/Content/Paks` |
+| Paks (no "~mods") | `keeper-pakalt` | high | `{gamePath}/PaganIdol/Content/Paks` |
 
 ## Auto-Downloaded Dependencies
 

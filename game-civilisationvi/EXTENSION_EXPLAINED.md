@@ -1,4 +1,4 @@
-# Civ VI — Vortex Extension Explained
+# Sid Meier's Civilization VI — Vortex Extension Explained
 
 ## Overview
 

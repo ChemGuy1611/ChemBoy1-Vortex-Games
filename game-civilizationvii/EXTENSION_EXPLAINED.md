@@ -1,4 +1,4 @@
-# Civ VII — Vortex Extension Explained
+# Sid Meier's Civilization VII — Vortex Extension Explained
 
 ## Overview
 

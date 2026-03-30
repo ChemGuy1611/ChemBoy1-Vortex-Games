@@ -1,4 +1,4 @@
-# AC Revelations — Vortex Extension Explained
+# Assassin's Creed Revelations — Vortex Extension Explained
 
 ## Overview
 

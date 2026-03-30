@@ -15,7 +15,7 @@
 | Property | Value |
 |---|---|
 | Game ID | `theouterworlds2` |
-| Executable | `N/A` |
+| Executable | `TheOuterWorlds2.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 
 ## Supported Stores
@@ -43,7 +43,7 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `theouterworlds2-logicmods` | high | `{gamePath}/Arkansas/Content/Paks/LogicMods` |
 | Root Game Folder | `theouterworlds2-root` | high | `{gamePath}` |
 | Content Folder | `theouterworlds2-contentfolder` | high | `{gamePath}/Arkansas` |
-| UE5_ALT_NAME | `theouterworlds2-pakalt` | high | `{gamePath}/Arkansas/Content/Paks` |
+| UE5 Paks (no "~mods") | `theouterworlds2-pakalt` | high | `{gamePath}/Arkansas/Content/Paks` |
 
 ## Auto-Downloaded Dependencies
 

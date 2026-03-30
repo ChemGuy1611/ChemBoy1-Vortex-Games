@@ -7,8 +7,8 @@
 | Name | Megabonk Vortex Extension |
 | Engine / Structure | Unity BepinEx/MelonLoader Hybrid (IL2CPP & x64) |
 | Author | ChemBoy1 |
-| Version | 0.1.2 |
-| Date | 2026-03-15 |
+| Version | 0.1.3 |
+| Date | 2026-03-30 |
 
 ## Key Identifiers
 

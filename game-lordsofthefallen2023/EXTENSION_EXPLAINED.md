@@ -15,7 +15,7 @@
 | Property | Value |
 |---|---|
 | Game ID | `lordsofthefallen2023` |
-| Executable | `N/A` |
+| Executable | `LOTF2.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 
 ## Supported Stores
@@ -42,7 +42,7 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `lordsofthefallen2023-logicmods` | high | `{gamePath}/LOTF2/Content/Paks/LogicMods` |
 | Root Game Folder | `lordsofthefallen2023-root` | high | `{gamePath}` |
 | Content Folder | `lordsofthefallen2023-contentfolder` | high | `{gamePath}/LOTF2` |
-| UE5_ALT_NAME | `lordsofthefallen2023-pakalt` | high | `{gamePath}/LOTF2/Content/Paks` |
+| UE5 Paks (no "~mods") | `lordsofthefallen2023-pakalt` | high | `{gamePath}/LOTF2/Content/Paks` |
 
 ## Mod Installers
 

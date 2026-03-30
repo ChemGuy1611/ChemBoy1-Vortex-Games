@@ -31,7 +31,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 |---|---|---|---|
 | Binaries / Root Folder | `doom3-binaries` | high | `{gamePath}` |
-| BASE_NAME | `doom3-base` | high | `{gamePath}/base` |
+| "base" Data | `doom3-base` | high | `{gamePath}/base` |
 | d3xp (RoE) Folder | `doom3-d3xp` | high | `{gamePath}//d3xp` |
 | d3le (Lost Mission) Folder | `doom3-d3le` | high | `{gamePath}//d3le` |
 | Dhewm3 | `doom3-dhewm3` | low | `{gamePath}` |

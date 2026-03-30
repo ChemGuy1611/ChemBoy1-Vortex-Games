@@ -15,7 +15,7 @@
 | Property | Value |
 |---|---|
 | Game ID | `manorlords` |
-| Executable | `N/A` |
+| Executable | `ManorLords.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 
 ## Supported Stores

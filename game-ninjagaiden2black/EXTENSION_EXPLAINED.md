@@ -15,7 +15,7 @@
 | Property | Value |
 |---|---|
 | Game ID | `ninjagaiden2black` |
-| Executable | `N/A` |
+| Executable | `NINJAGAIDEN2BLACK.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 
 ## Supported Stores

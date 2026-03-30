@@ -1,4 +1,4 @@
-# AC Rogue — Vortex Extension Explained
+# Assassin's Creed Rogue — Vortex Extension Explained
 
 ## Overview
 

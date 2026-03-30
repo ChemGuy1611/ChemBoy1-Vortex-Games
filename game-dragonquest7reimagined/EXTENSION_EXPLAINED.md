@@ -48,7 +48,7 @@ Mod types define where each category of mod gets deployed:
 |---|---|---|---|
 | UE4SSCOMBO_NAME | `UE4SSCOMBO_ID` | high | `{gamePath}` |
 | LOGICMODS_NAME | `LOGICMODS_ID` | high | `{gamePath}/LOGICMODS_PATH` |
-| PAK_ALT_NAME | `dragonquest7reimagined-pakalt` | high | `{gamePath}/DQ7R/Content/Paks` |
+| Paks (no "~mods") | `dragonquest7reimagined-pakalt` | high | `{gamePath}/DQ7R/Content/Paks` |
 | Root Game Folder | `dragonquest7reimagined-root` | high | `{gamePath}` |
 | Root Sub-Folders | `dragonquest7reimagined-rootsubfolders` | high | `{gamePath}/DQ7R` |
 

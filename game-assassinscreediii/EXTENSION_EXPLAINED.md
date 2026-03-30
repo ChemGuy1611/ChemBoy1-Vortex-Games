@@ -1,4 +1,4 @@
-# AC III — Vortex Extension Explained
+# Assassin's Creed III — Vortex Extension Explained
 
 ## Overview
 

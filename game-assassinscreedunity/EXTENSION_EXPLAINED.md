@@ -1,4 +1,4 @@
-# AC Unity — Vortex Extension Explained
+# Assassin's Creed Unity — Vortex Extension Explained
 
 ## Overview
 

@@ -15,7 +15,7 @@
 | Property | Value |
 |---|---|
 | Game ID | `wuchangfallenfeathers` |
-| Executable | `N/A` |
+| Executable | `Project_Plague.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 
 ## Supported Stores
@@ -42,7 +42,7 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `wuchangfallenfeathers-logicmods` | high | `{gamePath}/Project_Plague/Content/Paks/LogicMods` |
 | Root Game Folder | `wuchangfallenfeathers-root` | high | `{gamePath}` |
 | Content Folder | `wuchangfallenfeathers-contentfolder` | high | `{gamePath}/Project_Plague` |
-| UE5_ALT_NAME | `wuchangfallenfeathers-pakalt` | high | `{gamePath}/Project_Plague/Content/Paks` |
+| UE5 Paks (no "~mods") | `wuchangfallenfeathers-pakalt` | high | `{gamePath}/Project_Plague/Content/Paks` |
 
 ## Toolbar Actions
 

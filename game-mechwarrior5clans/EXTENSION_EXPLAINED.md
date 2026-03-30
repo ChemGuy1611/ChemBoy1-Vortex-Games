@@ -15,7 +15,7 @@
 | Property | Value |
 |---|---|
 | Game ID | `mechwarrior5clans` |
-| Executable | `N/A` |
+| Executable | `MechWarrior.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 
 ## Supported Stores

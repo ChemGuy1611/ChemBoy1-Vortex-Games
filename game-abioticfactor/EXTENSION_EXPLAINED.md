@@ -15,7 +15,7 @@
 | Property | Value |
 |---|---|
 | Game ID | `abioticfactor` |
-| Executable | `N/A` |
+| Executable | `AbioticFactor.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 
 ## Supported Stores
@@ -41,7 +41,7 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `abioticfactor-logicmods` | high | `{gamePath}/AbioticFactor/Content/Paks/LogicMods` |
 | Root Game Folder | `abioticfactor-root` | high | `{gamePath}` |
 | Content Folder | `abioticfactor-contentfolder` | high | `{gamePath}/AbioticFactor` |
-| UE5_ALT_NAME | `abioticfactor-pakalt` | high | `{gamePath}/AbioticFactor/Content/Paks` |
+| UE5 Paks (no "~mods") | `abioticfactor-pakalt` | high | `{gamePath}/AbioticFactor/Content/Paks` |
 
 ## Toolbar Actions
 

@@ -15,7 +15,7 @@
 | Property | Value |
 |---|---|
 | Game ID | `clairobscurexpedition33` |
-| Executable | `N/A` |
+| Executable | `Expedition33_Steam.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 | Executable (GOG) | `SandFallGOG.exe` |
 
@@ -44,7 +44,7 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `clairobscurexpedition33-logicmods` | high | `{gamePath}/Sandfall/Content/Paks/LogicMods` |
 | Root Game Folder | `clairobscurexpedition33-root` | high | `{gamePath}` |
 | Content Folder | `clairobscurexpedition33-contentfolder` | high | `{gamePath}/Sandfall` |
-| UE5_ALT_NAME | `clairobscurexpedition33-pakalt` | high | `{gamePath}/Sandfall/Content/Paks` |
+| UE5 Paks (no "~mods") | `clairobscurexpedition33-pakalt` | high | `{gamePath}/Sandfall/Content/Paks` |
 
 ## Toolbar Actions
 

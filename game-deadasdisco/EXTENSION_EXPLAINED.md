@@ -48,7 +48,7 @@ Mod types define where each category of mod gets deployed:
 |---|---|---|---|
 | UE4SSCOMBO_NAME | `UE4SSCOMBO_ID` | high | `{gamePath}` |
 | LOGICMODS_NAME | `LOGICMODS_ID` | high | `{gamePath}/LOGICMODS_PATH` |
-| PAK_ALT_NAME | `deadasdisco-pakalt` | high | `{gamePath}/Pagoda/Content/Paks` |
+| Paks (no "~mods") | `deadasdisco-pakalt` | high | `{gamePath}/Pagoda/Content/Paks` |
 | Root Game Folder | `deadasdisco-root` | high | `{gamePath}` |
 | Root Sub-Folders | `deadasdisco-rootsubfolders` | high | `{gamePath}/Pagoda` |
 

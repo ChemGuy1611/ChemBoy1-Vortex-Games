@@ -1,4 +1,4 @@
-# AC Syndicate — Vortex Extension Explained
+# Assassin's Creed Syndicate — Vortex Extension Explained
 
 ## Overview
 

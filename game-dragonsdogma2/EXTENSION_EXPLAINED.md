@@ -1,4 +1,4 @@
-# DD2 — Vortex Extension Explained
+# Dragon's Dogma 2 — Vortex Extension Explained
 
 ## Overview
 

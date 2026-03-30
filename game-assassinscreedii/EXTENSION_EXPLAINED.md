@@ -1,4 +1,4 @@
-# AC II — Vortex Extension Explained
+# Assassin's Creed II — Vortex Extension Explained
 
 ## Overview
 

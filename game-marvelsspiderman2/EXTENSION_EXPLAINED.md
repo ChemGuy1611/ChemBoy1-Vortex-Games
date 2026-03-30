@@ -1,4 +1,4 @@
-# Spider-Man 2 — Vortex Extension Explained
+# Marvel's Spider-Man 2 — Vortex Extension Explained
 
 ## Overview
 

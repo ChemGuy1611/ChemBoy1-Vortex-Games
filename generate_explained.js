@@ -59,8 +59,10 @@ function buildSymbolTable(src) {
   // Pass 1: resolve simple literals
   for (const decl of raw) {
     const v = decl.rawValue;
-    // String literal: '...' or "..."
-    const strMatch = v.match(/^['"]([^'"]*)['"]\s*$/);
+    // String literal: '...' or "..." (each allows the other quote type inside)
+    const sqMatch = v.match(/^'([^']*)'$/);
+    const dqMatch = v.match(/^"([^"]*)"$/);
+    const strMatch = sqMatch || dqMatch;
     if (strMatch) { table.set(decl.name, strMatch[1]); continue; }
     // Numeric literal
     if (/^\d+$/.test(v)) { table.set(decl.name, v); continue; }
@@ -753,7 +755,7 @@ function buildMarkdown(dirName, src) {
 
   const gameId = table.get('GAME_ID') || dirName;
   const gameName = table.get('GAME_NAME') || table.get('GAME_NAME_SHORT') || header.name || gameId;
-  const execName = table.get('EXEC') || table.get('EXEC_NAME') || 'N/A';
+  const execName = table.get('EXEC') || table.get('EXEC_NAME') || table.get('EXEC_DEFAULT') || 'N/A';
   const nexusUrl = table.get('EXTENSION_URL');
   const pcgwUrl = table.get('PCGAMINGWIKI_URL');
 

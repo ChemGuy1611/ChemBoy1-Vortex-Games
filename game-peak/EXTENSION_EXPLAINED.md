@@ -7,8 +7,8 @@
 | Name | PEAK Vortex Extension |
 | Engine / Structure | Unity BepinEx |
 | Author | ChemBoy1 |
-| Version | 0.1.1 |
-| Date | 2025-07-02 |
+| Version | 0.1.2 |
+| Date | 2026-03-30 |
 
 ## Key Identifiers
 

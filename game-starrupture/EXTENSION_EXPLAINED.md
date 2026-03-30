@@ -47,7 +47,7 @@ Mod types define where each category of mod gets deployed:
 |---|---|---|---|
 | UE4SSCOMBO_NAME | `UE4SSCOMBO_ID` | high | `{gamePath}` |
 | LOGICMODS_NAME | `LOGICMODS_ID` | high | `{gamePath}/LOGICMODS_PATH` |
-| PAK_ALT_NAME | `starrupture-pakalt` | high | `{gamePath}/StarRupture/Content/Paks` |
+| Paks (no "~mods") | `starrupture-pakalt` | high | `{gamePath}/StarRupture/Content/Paks` |
 | Root Game Folder | `starrupture-root` | high | `{gamePath}` |
 | Root Sub-Folders | `starrupture-rootsubfolders` | high | `{gamePath}/StarRupture` |
 

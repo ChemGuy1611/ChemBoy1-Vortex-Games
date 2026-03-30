@@ -47,7 +47,7 @@ Mod types define where each category of mod gets deployed:
 |---|---|---|---|
 | UE4SSCOMBO_NAME | `UE4SSCOMBO_ID` | high | `{gamePath}` |
 | LOGICMODS_NAME | `LOGICMODS_ID` | high | `{gamePath}/LOGICMODS_PATH` |
-| PAK_ALT_NAME | `thelastcaretaker-pakalt` | high | `{gamePath}/Voyage/Content/Paks` |
+| Paks (no "~mods") | `thelastcaretaker-pakalt` | high | `{gamePath}/Voyage/Content/Paks` |
 | Root Game Folder | `thelastcaretaker-root` | high | `{gamePath}` |
 | Root Sub-Folders | `thelastcaretaker-rootsubfolders` | high | `{gamePath}/Voyage` |
 

@@ -46,7 +46,7 @@ Mod types define where each category of mod gets deployed:
 |---|---|---|---|
 | UE4SSCOMBO_NAME | `UE4SSCOMBO_ID` | high | `{gamePath}` |
 | LOGICMODS_NAME | `LOGICMODS_ID` | high | `{gamePath}/LOGICMODS_PATH` |
-| PAK_ALT_NAME | `voidtrain-pakalt` | high | `{gamePath}/VoidTrain/Content/Paks` |
+| Paks (no "~mods") | `voidtrain-pakalt` | high | `{gamePath}/VoidTrain/Content/Paks` |
 | Root Game Folder | `voidtrain-root` | high | `{gamePath}` |
 | Root Sub-Folders | `voidtrain-rootsubfolders` | high | `{gamePath}/VoidTrain` |
 

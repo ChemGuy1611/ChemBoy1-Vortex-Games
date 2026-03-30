@@ -1,4 +1,4 @@
-# AC Brotherhood — Vortex Extension Explained
+# Assassin's Creed Brotherhood — Vortex Extension Explained
 
 ## Overview
 
