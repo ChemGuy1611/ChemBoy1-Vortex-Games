@@ -1,61 +1,52 @@
-# warhammer40000spacemarine — Vortex Extension Explained
+# WH40k Space Marine Vortex Extension — Vortex Extension Explained
 
 ## Overview
 
-```
-///////////////////////////////////////////
-Name: WH40k Space Marine Vortex Extension
-Structure: Basic Game
-Author: ChemBoy1
-Version: 0.2.0
-Date: 2025-07-30
-///////////////////////////////////////////
-```
+| Property | Value |
+|---|---|
+| Name | WH40k Space Marine Vortex Extension |
+| Engine / Structure | Basic Game |
+| Author | ChemBoy1 |
+| Version | 0.2.0 |
+| Date | 2025-07-30 |
 
 ## Key Identifiers
 
 | Property | Value |
 |---|---|
 | Game ID | `warhammer40000spacemarine` |
-| Extension Version | 0.2.0 |
-| Steam App ID | 55150 |
-| Epic App ID | N/A |
-| GOG App ID | 1668484481 |
-| Xbox App ID | N/A |
 | Executable | `SpaceMarine.exe` |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
 
-## Feature Flags
+## Supported Stores
 
-| Flag | Value | Meaning |
-|---|---|---|
+- **Steam** — `55150`
+- **GOG** — `1668484481`
 
-## Mod Installers
+## Mod Types
 
-Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
+Mod types define where each category of mod gets deployed:
 
-| Installer ID | Priority |
-|---|---|
-| `PREVIEW_ID` | 25 |
-
-Each installer has a paired **test** function (detects the archive type) and an **install** function (produces `copy` instructions telling Vortex where to place each file).
+| Name | ID | Priority | Target Path |
+|---|---|---|---|
+| Preview Folder | `warhammer40000spacemarine-preview` | high | `{gamePath}/preview` |
 
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- Launch Modded Game
+- **Launch Modded Game**
 
 ## Toolbar Actions
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- **View Changelog**
-- **Open Downloads Folder**
+- View Changelog
+- Open Downloads Folder
 
 ## Special Features
 
-- **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
-- **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
+- **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
 ## How Mod Installation Works
 
@@ -66,15 +57,9 @@ User drops archive into Vortex
             └── install() returns copy instructions + setmodtype
                  └── Vortex stages files
                       └── User deploys
-                           └── Vortex symlinks/copies to game folder
+                           └── Vortex links/copies to game folder
 ```
 
 ## Entry Point
 
-The extension is registered via:
-
-```js
-module.exports = { default: main };
-```
-
-The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.
+The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

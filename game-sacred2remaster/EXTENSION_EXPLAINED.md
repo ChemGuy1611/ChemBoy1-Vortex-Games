@@ -2,32 +2,37 @@
 
 ## Overview
 
-```
-///////////////////////////////////////////
-Name: Sacred 2 Remaster Vortex Extension
-Structure: Basic Game
-Author: ChemBoy1
-Version: 0.1.0
-Date: 2025-11-19
-///////////////////////////////////////////
-```
+| Property | Value |
+|---|---|
+| Name | Sacred 2 Remaster Vortex Extension |
+| Engine / Structure | Basic Game |
+| Author | ChemBoy1 |
+| Version | 0.1.0 |
+| Date | 2025-11-19 |
 
 ## Key Identifiers
 
 | Property | Value |
 |---|---|
 | Game ID | `sacred2remaster` |
-| Extension Version | 0.1.0 |
-| Steam App ID | 3906660 |
-| Epic App ID | N/A |
-| GOG App ID | 2041849309 |
-| Xbox App ID | N/A |
-| Executable | `sacred2.exe` |
+| Executable | `./sacred2.exe` |
 
-## Feature Flags
+## Supported Stores
 
-| Flag | Value | Meaning |
-|---|---|---|
+- **Steam** — `3906660`
+- **GOG** — `2041849309`
+
+## Mod Types
+
+Mod types define where each category of mod gets deployed:
+
+| Name | ID | Priority | Target Path |
+|---|---|---|---|
+| Root Folder | `sacred2remaster-root` | high | `{gamePath}` |
+| Root Sub-Folder | `sacred2remaster-rootsub` | high | `{gamePath}/Remaster` |
+| Textures Sub-Folder | `sacred2remaster-texturesub` | high | `{gamePath}/Remaster/Textures` |
+| UI Sub-Folder | `sacred2remaster-uisub` | high | `{gamePath}/Remaster/ui` |
+| Paks Sub-Folder | `sacred2remaster-paksub` | high | `{gamePath}/pak` |
 
 ## Mod Installers
 
@@ -35,33 +40,28 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 |---|---|
-| `ROOT_ID` | 25 |
-| `CONFIG_ID` | 30 |
-| `SAVE_ID` | 35 |
-| ``${GAME_ID}-fallback`` | 40 |
-
-Each installer has a paired **test** function (detects the archive type) and an **install** function (produces `copy` instructions telling Vortex where to place each file).
+| `sacred2remaster-root` | 25 |
+| `sacred2remaster-fallback` | 40 |
 
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- Custom Launch
+- **Custom Launch**
 
 ## Toolbar Actions
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- **Open Config Folder**
-- **Open Save Folder**
-- **View Changelog**
-- **Open Downloads Folder**
+- Open Config Folder
+- Open Save Folder
+- View Changelog
+- Open Downloads Folder
 
 ## Special Features
 
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
-- **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
-- **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
+- **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 
 ## How Mod Installation Works
 
@@ -72,15 +72,9 @@ User drops archive into Vortex
             └── install() returns copy instructions + setmodtype
                  └── Vortex stages files
                       └── User deploys
-                           └── Vortex symlinks/copies to game folder
+                           └── Vortex links/copies to game folder
 ```
 
 ## Entry Point
 
-The extension is registered via:
-
-```js
-module.exports = { default: main };
-```
-
-The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.
+The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

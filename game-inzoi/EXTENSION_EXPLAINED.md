@@ -2,34 +2,49 @@
 
 ## Overview
 
-```
-////////////////////////////////////////////////
-Name: inZOI Vortex Extension
-Structure: UE5
-Author: ChemBoy1
-Version: 0.6.0
-Date: 2026-02-03
-////////////////////////////////////////////////
-```
+| Property | Value |
+|---|---|
+| Name | inZOI Vortex Extension |
+| Engine / Structure | UE5 |
+| Author | ChemBoy1 |
+| Version | 0.6.0 |
+| Date | 2026-02-03 |
 
 ## Key Identifiers
 
 | Property | Value |
 |---|---|
 | Game ID | `inzoi` |
-| Extension Version | 0.6.0 |
-| Steam App ID | 2456740 |
-| Epic App ID | N/A |
-| GOG App ID | N/A |
-| Xbox App ID | N/A |
 | Executable | `inZOI.exe` |
-| Extension Page | https://www.nexusmods.com/site/mods/1241 |
-| PCGamingWiki | https://www.pcgamingwiki.com/wiki/InZOI |
+
+## Supported Stores
+
+- **Steam** — `2456740`
 
 ## Feature Flags
 
-| Flag | Value | Meaning |
+| Flag | Value | Description |
 |---|---|---|
+| `CHECK_CONFIG` | `false` |  |
+| `CHECK_DOCS` | `false` |  |
+| `IO_STORE` | `true` | true if the Paks folder contains .ucas and .utoc files |
+| `SYM_LINKS` | `true` |  |
+
+## Mod Types
+
+Mod types define where each category of mod gets deployed:
+
+| Name | ID | Priority | Target Path |
+|---|---|---|---|
+| UE5KITMOD_NAME | `UE5KITMOD_ID` | high | `UE5KITMOD_PATH` |
+| Save | `inzoi-save` | high | `SAVE_PATH` |
+| CREATIONS_NAME | `CREATIONS_ID` | high | `CREATIONS_PATH` |
+| AIGENERATED_NAME | `AIGENERATED_ID` | high | `AIGENERATED_PATH` |
+| CANVAS_NAME | `CANVAS_ID` | high | `CANVAS_PATH` |
+| MY3DPRINTER_NAME | `MY3DPRINTER_ID` | high | `MY3DPRINTER_PATH` |
+| MYAPPEARANCES_NAME | `MYAPPEARANCES_ID` | high | `MYAPPEARANCES_PATH` |
+| ANIMATIONS_NAME | `ANIMATIONS_ID` | high | `ANIMATIONS_PATH` |
+| TEXTURES_NAME | `TEXTURES_ID` | high | `TEXTURES_PATH` |
 
 ## Mod Installers
 
@@ -37,55 +52,20 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 |---|---|
-| `'ue5-pak-installer'` | 28 |
-| `UE4SSCOMBO_ID` | 25 |
-| `LOGICMODS_ID` | 26 |
-| `UE5KITMOD_ID` | 27 |
-| `UE4SS_ID` | 29 |
-| `MODENABLER_ID` | 30 |
-| `SCRIPTS_ID` | 31 |
-| `DLL_ID` | 32 |
-| `CREATIONS_ID` | 33 |
-| `AIGENERATED_ID` | 24 |
-| `CANVAS_ID` | 35 |
-| `MY3DPRINTER_ID` | 36 |
-| `MYAPPEARANCES_ID` | 37 |
-| `ANIMATIONS_ID` | 38 |
-| `TEXTURES_ID` | 39 |
-| `ROOT_ID` | 40 |
-| `CONFIG_ID` | 41 |
-| `SAVE_ID` | 42 |
-| `BINARIES_ID` | 43 |
+| `ue5-pak-installer` | 28 |
 
-Each installer has a paired **test** function (detects the archive type) and an **install** function (produces `copy` instructions telling Vortex where to place each file).
+## Auto-Downloaded Dependencies
 
-## Toolbar Actions
-
-These buttons appear in the Vortex mod-icons toolbar when this game is active:
-
-- **Download Mod Enabler (Legacy)**
-- **Open MODKit Mods Folder (Documents)**
-- **Open MODKit Folder (Epic)**
-- **Open Legacy Pak Mods Folder**
-- **Open Binaries Folder**
-- **Open UE4SS Mods Folder**
-- **Open LogicMods Folder**
-- **Open Config Folder (Local AppData)**
-- **Open Saves Folder (Documents)**
-- **Open inZOI Documents Folder**
-- **Download UE4SS**
-- **Open PCGamingWiki Page**
-- **View Changelog**
-- **Submit Bug Report**
-- **Open Downloads Folder**
+| Dependency | Version | Details |
+|---|---|---|
+| UE4SS | — | — |
 
 ## Special Features
 
 - **Deploy Hook** (`did-deploy`) — runs custom logic (e.g., notifications, metadata patching) every time mods are deployed.
-- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.) from Nexus Mods.
+- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
-- **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
-- **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
+- **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 
 ## How Mod Installation Works
 
@@ -96,16 +76,10 @@ User drops archive into Vortex
             └── install() returns copy instructions + setmodtype
                  └── Vortex stages files
                       └── User deploys
-                           └── Vortex symlinks/copies to game folder
+                           └── Vortex links/copies to game folder
                                 └── did-deploy fires → post-deploy logic runs
 ```
 
 ## Entry Point
 
-The extension is registered via:
-
-```js
-module.exports = { default: main };
-```
-
-The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.
+The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

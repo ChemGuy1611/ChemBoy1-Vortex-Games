@@ -2,32 +2,26 @@
 
 ## Overview
 
-```
-/////////////////////////////////////////////////
-Name: Metaphor: ReFantazio Vortex Extension
-Structure: 3rd-Party Mod Installer (Reloaded-II)
-Author: ChemBoy1
-Version: 0.2.1
-Date: 2025-10-05
-/////////////////////////////////////////////////
-```
+| Property | Value |
+|---|---|
+| Name | Metaphor: ReFantazio Vortex Extension |
+| Engine / Structure | 3rd-Party Mod Installer (Reloaded-II) |
+| Author | ChemBoy1 |
+| Version | 0.2.1 |
+| Date | 2025-10-05 |
 
 ## Key Identifiers
 
 | Property | Value |
 |---|---|
 | Game ID | `metaphorrefantazio` |
-| Extension Version | 0.2.1 |
-| Steam App ID | 2679460 |
-| Epic App ID | N/A |
-| GOG App ID | N/A |
-| Xbox App ID | SEGAofAmericaInc.Pae22b02y |
 | Executable | `METAPHOR.exe` |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
 
-## Feature Flags
+## Supported Stores
 
-| Flag | Value | Meaning |
-|---|---|---|
+- **Steam** — `2679460`
+- **Xbox / Microsoft Store** — `SEGAofAmericaInc.Pae22b02y`
 
 ## Mod Types
 
@@ -35,9 +29,9 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 |---|---|---|---|
-| Reloaded Mod | `?` | high | '{gamePath}', RELOADEDMOD_PATH |
-| MRFPC Mod Loader | `?` | low | '{gamePath}', RELOADEDMODLOADER_PATH |
-| Reloaded Mod Manager | `?` | low | {gamePath} |
+| Reloaded Mod | `metaphorrefantazio-reloadedmod` | high | `{gamePath}/Reloaded/Mods` |
+| MRFPC Mod Loader | `metaphorrefantazio-reloadedmodloader` | low | `{gamePath}/Reloaded/Mods/MRFPC_Mod_Loader` |
+| Reloaded Mod Manager | `metaphorrefantazio-reloadedmanager` | low | `{gamePath}` |
 
 ## Mod Installers
 
@@ -45,24 +39,28 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 |---|---|
-| `RELOADED_ID` | 25 |
-| `RELOADEDMODLOADER_ID` | 30 |
-| `RELOADEDMOD_ID` | 35 |
-
-Each installer has a paired **test** function (detects the archive type) and an **install** function (produces `copy` instructions telling Vortex where to place each file).
+| `metaphorrefantazio-reloadedmanager` | 25 |
+| `metaphorrefantazio-reloadedmodloader` | 30 |
+| `metaphorrefantazio-reloadedmod` | 35 |
 
 ## Toolbar Actions
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- **Download Reloaded Mod Manager**
+- Download Reloaded Mod Manager
+
+## Auto-Downloaded Dependencies
+
+| Dependency | Version | Details |
+|---|---|---|
+| Reloaded-II | — | — |
 
 ## Special Features
 
-- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.) from Nexus Mods.
+- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
-- **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
+- **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
 ## How Mod Installation Works
 
@@ -73,15 +71,9 @@ User drops archive into Vortex
             └── install() returns copy instructions + setmodtype
                  └── Vortex stages files
                       └── User deploys
-                           └── Vortex symlinks/copies to game folder
+                           └── Vortex links/copies to game folder
 ```
 
 ## Entry Point
 
-The extension is registered via:
-
-```js
-module.exports = { default: main };
-```
-
-The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.
+The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

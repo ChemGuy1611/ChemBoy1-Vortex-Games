@@ -2,58 +2,46 @@
 
 ## Overview
 
-```
-//////////////////////////////////////////
-Name: Mirthwood Vortex Extension
-Structure: Unity BepinEx
-Author: ChemBoy1
-Version: 0.1.1
-Date: 2025-05-14
-//////////////////////////////////////////
-```
+| Property | Value |
+|---|---|
+| Name | Mirthwood Vortex Extension |
+| Engine / Structure | Unity BepinEx |
+| Author | ChemBoy1 |
+| Version | 0.1.1 |
+| Date | 2025-05-14 |
 
 ## Key Identifiers
 
 | Property | Value |
 |---|---|
 | Game ID | `mirthwood` |
-| Extension Version | 0.1.1 |
-| Steam App ID | 2272900 |
-| Epic App ID | N/A |
-| GOG App ID | N/A |
-| Xbox App ID | N/A |
 | Executable | `Mirthwood.exe` |
 
-## Feature Flags
+## Supported Stores
 
-| Flag | Value | Meaning |
-|---|---|---|
+- **Steam** — `2272900`
 
-## Mod Installers
+## Mod Types
 
-Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
+Mod types define where each category of mod gets deployed:
 
-| Installer ID | Priority |
-|---|---|
-| `BEPINEX_ID` | 25 |
-| `MELON_ID` | 25 |
-| `BEPMOD_ID` | 25 |
-| `MELONMOD_ID` | 25 |
-
-Each installer has a paired **test** function (detects the archive type) and an **install** function (produces `copy` instructions telling Vortex where to place each file).
+| Name | ID | Priority | Target Path |
+|---|---|---|---|
+| Root Game Folder | `mirthwood-root` | high | `{gamePath}` |
+| BepinEx Mod | `mirthwood-bepmods` | high | `{gamePath}/BepinEx/plugins` |
 
 ## Toolbar Actions
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- **View Changelog**
-- **Open Downloads Folder**
+- View Changelog
+- Open Downloads Folder
 
 ## Special Features
 
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
-- **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
-- **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
+- **Registry Lookup** — uses Windows registry for game detection or configuration paths.
+- **Required Extensions** — depends on: `modtype-bepinex`.
 
 ## How Mod Installation Works
 
@@ -64,15 +52,9 @@ User drops archive into Vortex
             └── install() returns copy instructions + setmodtype
                  └── Vortex stages files
                       └── User deploys
-                           └── Vortex symlinks/copies to game folder
+                           └── Vortex links/copies to game folder
 ```
 
 ## Entry Point
 
-The extension is registered via:
-
-```js
-module.exports = { default: main };
-```
-
-The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.
+The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

@@ -1,33 +1,48 @@
-# Assassin — Vortex Extension Explained
+# AC Shadows — Vortex Extension Explained
 
 ## Overview
 
-```
-////////////////////////////////////////////////
-Name: AC Shadows Vortex Extension
-Structure: Ubisoft AnvilToolkit & Forger Patch Manager
-Author: ChemBoy1
-Version: 0.2.0
-Date: 2025-10-07
-////////////////////////////////////////////////
-```
+| Property | Value |
+|---|---|
+| Name | AC Shadows Vortex Extension |
+| Engine / Structure | Ubisoft AnvilToolkit & Forger Patch Manager |
+| Author | ChemBoy1 |
+| Version | 0.2.0 |
+| Date | 2025-10-07 |
 
 ## Key Identifiers
 
 | Property | Value |
 |---|---|
 | Game ID | `assassinscreedshadows` |
-| Extension Version | 0.2.0 |
-| Steam App ID | 3159330 |
-| Epic App ID | N/A |
-| GOG App ID | N/A |
-| Xbox App ID | N/A |
 | Executable | `ACShadows.exe` |
 
-## Feature Flags
+## Supported Stores
 
-| Flag | Value | Meaning |
-|---|---|---|
+- **Steam** — `3159330`
+
+## Mod Types
+
+Mod types define where each category of mod gets deployed:
+
+| Name | ID | Priority | Target Path |
+|---|---|---|---|
+| Forger Patch | `assassinscreedshadows-forgerpatch` | high | `{gamePath}/ForgerPatches` |
+| Forger Patch Textures | `assassinscreedshadows-forgerpatchtextures` | high | `{gamePath}/ForgerPatches` |
+| Root Folder | `assassinscreedshadows-root` | high | `{gamePath}` |
+| DLC Folder | `assassinscreedshadows-dlcfolder` | high | `{gamePath}/.` |
+| Extracted Folder | `assassinscreedshadows-extractedfolder` | high | `{gamePath}/.` |
+| .forge Folder | `assassinscreedshadows-forgefolder` | high | `{gamePath}/.` |
+| .data Folder | `assassinscreedshadows-datafolder` | high | `{gamePath}/.` |
+| Loose .data File | `assassinscreedshadows-loosedata` | high | `{gamePath}/.` |
+| Forge Replacement (root) | `assassinscreedshadows-forgefile` | high | `{gamePath}/.` |
+| Forge Replacement (dlc_10) | `assassinscreedshadows-forgefiledlc10` | low | `{gamePath}/dlc_10` |
+| Forge Replacement (dlc_26) | `assassinscreedshadows-forgefiledlc26` | low | `{gamePath}/dlc_26` |
+| Forge Replacement (dlc_28) | `assassinscreedshadows-forgefiledlc28` | low | `{gamePath}/dlc_28` |
+| Forge Replacement (dlc_29) | `assassinscreedshadows-forgefiledlc29` | low | `{gamePath}/dlc_29` |
+| Fixes | `assassinscreedshadows-fixes` | low | `{gamePath}/.` |
+| AnvilToolkit | `assassinscreedshadows-atk` | low | `{gamePath}` |
+| Forger Patch Manager | `assassinscreedshadows-forgerpatchmanager` | low | `{gamePath}` |
 
 ## Mod Installers
 
@@ -35,26 +50,24 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 |---|---|
-| `ATK_ID` | 25 |
-| `FORGER_ID` | 30 |
-| `PATCH_ID` | 35 |
-| `PATCH_TEXTURES_ID` | 37 |
-| `DLC_ID` | 40 |
-| `EXTRACTED_ID` | 45 |
-| `FORGEFOLDER_ID` | 50 |
-| `DATAFOLDER_ID` | 55 |
-| `LOOSE_ID` | 60 |
-| `FIXES_ID` | 62 |
-| `FORGE_ID` | 65 |
-| `ROOT_ID` | 69 |
+| `assassinscreedshadows-atk` | 25 |
+| `assassinscreedshadows-forgerpatchmanager` | 30 |
+| `assassinscreedshadows-dlcfolder` | 40 |
+| `assassinscreedshadows-forgefile` | 65 |
+| `assassinscreedshadows-root` | 69 |
 
-Each installer has a paired **test** function (detects the archive type) and an **install** function (produces `copy` instructions telling Vortex where to place each file).
+## Auto-Downloaded Dependencies
+
+| Dependency | Version | Details |
+|---|---|---|
+| Forger Patch Manager | — | — |
 
 ## Special Features
 
 - **Deploy Hook** (`did-deploy`) — runs custom logic (e.g., notifications, metadata patching) every time mods are deployed.
-- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.) from Nexus Mods.
+- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
+- **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 
 ## How Mod Installation Works
 
@@ -65,16 +78,10 @@ User drops archive into Vortex
             └── install() returns copy instructions + setmodtype
                  └── Vortex stages files
                       └── User deploys
-                           └── Vortex symlinks/copies to game folder
+                           └── Vortex links/copies to game folder
                                 └── did-deploy fires → post-deploy logic runs
 ```
 
 ## Entry Point
 
-The extension is registered via:
-
-```js
-module.exports = { default: main };
-```
-
-The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.
+The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

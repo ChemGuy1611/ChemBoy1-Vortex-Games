@@ -2,80 +2,72 @@
 
 ## Overview
 
-```
-////////////////////////////////////////////////
-Name: Abiotic Factor Vortex Extension
-Structure: UE5 (Xbox-Integrated)
-Author: ChemBoy1
-Version: 0.2.0
-Date: 2026-02-06
-////////////////////////////////////////////////
-```
+| Property | Value |
+|---|---|
+| Name | Abiotic Factor Vortex Extension |
+| Engine / Structure | UE5 (Xbox-Integrated) |
+| Author | ChemBoy1 |
+| Version | 0.2.0 |
+| Date | 2026-02-06 |
 
 ## Key Identifiers
 
 | Property | Value |
 |---|---|
 | Game ID | `abioticfactor` |
-| Extension Version | 0.2.0 |
-| Steam App ID | 427410 |
-| Epic App ID | N/A |
-| GOG App ID | N/A |
-| Xbox App ID | PlayStack.AbioticFactor |
 | Executable | `N/A` |
-| Extension Page | https://www.nexusmods.com/site/mods/1392 |
-| PCGamingWiki | https://www.pcgamingwiki.com/wiki/Abiotic_Factor |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
+
+## Supported Stores
+
+- **Steam** — `427410`
+- **Xbox / Microsoft Store** — `PlayStack.AbioticFactor`
 
 ## Feature Flags
 
-| Flag | Value | Meaning |
+| Flag | Value | Description |
 |---|---|---|
+| `IO_STORE` | `true` | true if the Paks folder contains .ucas and .utoc files |
+| `SYM_LINKS` | `true` |  |
+| `CHECK_DATA` | `false` |  |
 
-## Mod Installers
+## Mod Types
 
-Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
+Mod types define where each category of mod gets deployed:
 
-| Installer ID | Priority |
-|---|---|
-| `'ue5-pak-installer'` | 29 |
-| `UE4SSCOMBO_ID` | 25 |
-| `LOGICMODS_ID` | 27 |
-| `UE4SS_ID` | 31 |
-| `SCRIPTS_ID` | 33 |
-| `DLL_ID` | 35 |
-| `ROOT_ID` | 37 |
-| `CONTENT_ID` | 39 |
-| `CONFIG_ID` | 41 |
-| `SAVE_ID` | 43 |
-| `BINARIES_ID` | 45 |
-
-Each installer has a paired **test** function (detects the archive type) and an **install** function (produces `copy` instructions telling Vortex where to place each file).
+| Name | ID | Priority | Target Path |
+|---|---|---|---|
+| UE4SS Script-LogicMod Combo | `abioticfactor-ue4sscombo` | high | `{gamePath}` |
+| UE4SS LogicMods (Blueprint) | `abioticfactor-logicmods` | high | `{gamePath}/AbioticFactor/Content/Paks/LogicMods` |
+| Root Game Folder | `abioticfactor-root` | high | `{gamePath}` |
+| Content Folder | `abioticfactor-contentfolder` | high | `{gamePath}/AbioticFactor` |
+| UE5_ALT_NAME | `abioticfactor-pakalt` | high | `{gamePath}/AbioticFactor/Content/Paks` |
 
 ## Toolbar Actions
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- **Open Paks Folder**
-- **Open Binaries Folder**
-- **Open UE4SS Mods Folder**
-- **Open Config Folder**
-- **Open Saves Folder**
-- **Download UE4SS**
-- **Open UE4SS Settings INI**
-- **Open UE4SS mods.txt**
-- **Open PCGamingWiki Page**
-- **View Changelog**
-- **Submit Bug Report**
-- **Open Downloads Folder**
+- Open UE4SS Settings INI
+- Open UE4SS mods.txt
+- Open PCGamingWiki Page
+- View Changelog
+- Submit Bug Report
+- Open Downloads Folder
+
+## Auto-Downloaded Dependencies
+
+| Dependency | Version | Details |
+|---|---|---|
+| UE4SS | — | — |
 
 ## Special Features
 
 - **Deploy Hook** (`did-deploy`) — runs custom logic (e.g., notifications, metadata patching) every time mods are deployed.
 - **Purge Hook** (`did-purge`) — runs custom logic when mods are purged.
-- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.) from Nexus Mods.
+- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
-- **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
+- **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
 ## How Mod Installation Works
 
@@ -86,16 +78,10 @@ User drops archive into Vortex
             └── install() returns copy instructions + setmodtype
                  └── Vortex stages files
                       └── User deploys
-                           └── Vortex symlinks/copies to game folder
+                           └── Vortex links/copies to game folder
                                 └── did-deploy fires → post-deploy logic runs
 ```
 
 ## Entry Point
 
-The extension is registered via:
-
-```js
-module.exports = { default: main };
-```
-
-The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.
+The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

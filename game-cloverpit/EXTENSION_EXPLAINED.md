@@ -2,70 +2,83 @@
 
 ## Overview
 
-```
-//////////////////////////////////////////
-Name: CloverPit Vortex Extension
-Structure: Unity BepinEx/MelonLoader Hybrid (Mono & x64)
-Author: ChemBoy1
-Version: 0.1.1
-Date: 2025-11-24
-//////////////////////////////////////////
-```
+| Property | Value |
+|---|---|
+| Name | CloverPit Vortex Extension |
+| Engine / Structure | Unity BepinEx/MelonLoader Hybrid (Mono & x64) |
+| Author | ChemBoy1 |
+| Version | 0.1.1 |
+| Date | 2025-11-24 |
 
 ## Key Identifiers
 
 | Property | Value |
 |---|---|
 | Game ID | `cloverpit` |
-| Extension Version | 0.1.1 |
-| Steam App ID | 3314790 |
-| Epic App ID | N/A |
-| GOG App ID | N/A |
-| Xbox App ID | FutureFriendsGames.CloverPit |
 | Executable | `CloverPit.exe` |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
+
+## Supported Stores
+
+- **Steam** — `3314790`
+- **Xbox / Microsoft Store** — `FutureFriendsGames.CloverPit`
 
 ## Feature Flags
 
-| Flag | Value | Meaning |
+| Flag | Value | Description |
 |---|---|---|
+| `bepinexInstalled` | `false` |  |
+| `melonInstalled` | `false` |  |
+| `isBepinex` | `false` |  |
+| `isBepinexPatcher` | `false` |  |
+| `isMelon` | `false` |  |
+| `isMelonPlugin` | `false` |  |
 
-## Mod Installers
+## Mod Types
 
-Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
+Mod types define where each category of mod gets deployed:
 
-| Installer ID | Priority |
-|---|---|
-| `BEPINEX_ID` | 25 |
-| `MELON_ID` | 26 |
-| `ROOT_ID` | 27 |
-| `BEPCFGMAN_ID` | 29 |
-| `ASSEMBLY_ID` | 31 |
-| ``${GAME_ID}-plugin`` | 33 |
-| `ASSETS_ID` | 37 |
-
-Each installer has a paired **test** function (detects the archive type) and an **install** function (produces `copy` instructions telling Vortex where to place each file).
+| Name | ID | Priority | Target Path |
+|---|---|---|---|
+| BepInEx Mod | `cloverpit-bepinexmod` | high | `{gamePath}/BepInEx` |
+| MelonLoader Mod | `cloverpit-melonmod` | high | `{gamePath}/.` |
+| BepInEx Plugins | `cloverpit-bepinex-plugins` | high | `{gamePath}/BepInEx/plugins` |
+| BepInEx Patchers | `cloverpit-bepinex-patchers` | high | `{gamePath}/BepInEx/patchers` |
+| BepInEx Config | `cloverpit-bepinex-config` | high | `{gamePath}/BepInEx/config` |
+| MelonLoader Plugins | `cloverpit-melonloader-plugins` | high | `{gamePath}/Plugins` |
+| MelonLoader Mods | `cloverpit-melonloader-mods` | high | `{gamePath}/Mods` |
+| MelonLoader Config | `cloverpit-melonloader-config` | high | `{gamePath}/UserData` |
+| Assembly DLL Mod | `cloverpit-assemblydll` | high | `{gamePath}/CloverPit_Data/Managed` |
+| BepInEx Configuration Manager | `cloverpit-bepcfgman` | high | `{gamePath}/Bepinex` |
+| Assets/Resources File | `cloverpit-assets` | high | `{gamePath}/CloverPit_Data` |
+| Root Game Folder | `cloverpit-root` | high | `{gamePath}` |
+| BepInEx Injector | `cloverpit-bepinex` | low | `{gamePath}` |
+| MelonLoader | `cloverpit-melonloader` | low | `{gamePath}` |
 
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- Custom Launch
+- **Custom Launch**
 
-## Toolbar Actions
+## Auto-Downloaded Dependencies
 
-These buttons appear in the Vortex mod-icons toolbar when this game is active:
+| Dependency | Version | Details |
+|---|---|---|
+| BepInEx | 5.4.23.5 | mono |
 
-- **Open Saves Folder**
-- **Open Data Folder**
-- **View Changelog**
-- **Open Downloads Folder**
+## Config & Save Paths
+
+| Type | Path |
+|---|---|
+| Save | `SaveData/GameData` |
 
 ## Special Features
 
 - **Deploy Hook** (`did-deploy`) — runs custom logic (e.g., notifications, metadata patching) every time mods are deployed.
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
-- **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
+- **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
 ## How Mod Installation Works
 
@@ -76,16 +89,10 @@ User drops archive into Vortex
             └── install() returns copy instructions + setmodtype
                  └── Vortex stages files
                       └── User deploys
-                           └── Vortex symlinks/copies to game folder
+                           └── Vortex links/copies to game folder
                                 └── did-deploy fires → post-deploy logic runs
 ```
 
 ## Entry Point
 
-The extension is registered via:
-
-```js
-module.exports = { default: main };
-```
-
-The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.
+The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

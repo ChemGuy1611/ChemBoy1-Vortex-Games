@@ -2,34 +2,32 @@
 
 ## Overview
 
-```
-//////////////////////////////////////////////////
-Name: Black Myth Wukong Vortex Extension
-Structure: UE5
-Author: ChemBoy1
-Version: 0.3.2
-Date: 2026-02-03
-//////////////////////////////////////////////////
-```
+| Property | Value |
+|---|---|
+| Name | Black Myth Wukong Vortex Extension |
+| Engine / Structure | UE5 |
+| Author | ChemBoy1 |
+| Version | 0.3.2 |
+| Date | 2026-02-03 |
 
 ## Key Identifiers
 
 | Property | Value |
 |---|---|
 | Game ID | `blackmythwukong` |
-| Extension Version | 0.3.2 |
-| Steam App ID | 2358720 |
-| Epic App ID | f53c5471fd0e47619e72b6d21a527abe |
-| GOG App ID | N/A |
-| Xbox App ID | N/A |
 | Executable | `b1.exe` |
-| Extension Page | https://www.nexusmods.com/site/mods/957 |
-| PCGamingWiki | https://www.pcgamingwiki.com/wiki/Black_Myth:_Wukong |
+
+## Supported Stores
+
+- **Steam** — `2358720`
+- **Epic Games Store** — `f53c5471fd0e47619e72b6d21a527abe`
 
 ## Feature Flags
 
-| Flag | Value | Meaning |
+| Flag | Value | Description |
 |---|---|---|
+| `IO_STORE` | `false` | true if the Paks folder contains .ucas and .utoc files |
+| `CHECK_CONFIG` | `false` |  |
 
 ## Mod Types
 
@@ -37,15 +35,16 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 |---|---|---|---|
-| UE4SS Scripts | `?` | high | '{gamePath}', SCRIPTS_PATH |
-| UE4SS LogicMods (Blueprint) | `?` | high | '{gamePath}', LOGICMODS_PATH |
-| UE4SS Script-LogicMod Combo | `?` | high | {gamePath} |
-| Root Game Folder | `?` | high | {gamePath} |
-| UE5 Paks | `?` | high | '{gamePath}', UE5_PATH |
-| UE5 Paks (no | `?` | high | '{gamePath}', UE5_ALT_PATH |
-| Binaries (Engine Injector) | `?` | high | '{gamePath}', BINARIES_PATH |
-| UE4SS | `?` | low | '{gamePath}', BINARIES_PATH |
-| Signature Bypass | `?` | low | '{gamePath}', BINARIES_PATH |
+| UE4SS Scripts | `blackmythwukong-scripts` | high | `{gamePath}/b1/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `blackmythwukong-ue4ssdll` | high | `{gamePath}/b1/Binaries/Win64/ue4ss/Mods` |
+| UE4SS LogicMods (Blueprint) | `blackmythwukong-logicmods` | high | `{gamePath}/b1/Content/Paks/LogicMods` |
+| UE4SS Script-LogicMod Combo | `blackmythwukong-ue4sscombo` | high | `{gamePath}` |
+| Root Game Folder | `blackmythwukong-root` | high | `{gamePath}` |
+| UE5 Paks | `blackmythwukong-ue5` | high | `{gamePath}/b1/Content/Paks/~mods` |
+| UE5 Paks (no "~mods") | `blackmythwukong-pakalt` | high | `{gamePath}/b1/Content/Paks` |
+| Binaries (Engine Injector) | `blackmythwukong-binaries` | high | `{gamePath}/b1/Binaries/Win64` |
+| UE4SS | `blackmythwukong-ue4ss` | low | `{gamePath}/b1/Binaries/Win64` |
+| Signature Bypass | `blackmythwukong-sigbypass` | low | `{gamePath}/b1/Binaries/Win64` |
 
 ## Mod Installers
 
@@ -53,46 +52,54 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 |---|---|
-| `'ue5-pak-installer'` | 35 |
-| ``${GAME_ID}-ue4ss-logicscriptcombo`` | 25 |
-| ``${GAME_ID}-ue4ss-logicmod`` | 30 |
-| ``${GAME_ID}-ue4ss`` | 40 |
-| ``${GAME_ID}-sigbypass`` | 45 |
-| ``${GAME_ID}-ue4ss-scripts`` | 50 |
-| `DLL_ID` | 53 |
-| ``${GAME_ID}-root`` | 55 |
-| ``${GAME_ID}-config`` | 60 |
-| ``${GAME_ID}-save`` | 65 |
-
-Each installer has a paired **test** function (detects the archive type) and an **install** function (produces `copy` instructions telling Vortex where to place each file).
+| `blackmythwukong-ue4ss-logicscriptcombo` | 25 |
+| `blackmythwukong-ue4ss-logicmod` | 30 |
+| `blackmythwukong-ue4ss` | 40 |
+| `blackmythwukong-sigbypass` | 45 |
+| `blackmythwukong-ue4ss-scripts` | 50 |
+| `blackmythwukong-ue4ssdll` | 53 |
+| `blackmythwukong-root` | 55 |
+| `blackmythwukong-config` | 60 |
+| `blackmythwukong-save` | 65 |
 
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- Launch Modded Game
+- **Launch Modded Game**
 
 ## Toolbar Actions
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- **Open Paks Folder**
-- **Open Binaries Folder**
-- **Open UE4SS Mods Folder**
-- **Open LogicMods Folder**
-- **Open Config Folder**
-- **Open Saves Folder**
-- **Open PCGamingWiki Page**
-- **View Changelog**
-- **Submit Bug Report**
-- **Open Downloads Folder**
+- Open Paks Folder
+- Open Binaries Folder
+- Open UE4SS Mods Folder
+- Open LogicMods Folder
+- Open Config Folder
+- Open Saves Folder
+- Open PCGamingWiki Page
+- View Changelog
+- Submit Bug Report
+- Open Downloads Folder
+
+## Auto-Downloaded Dependencies
+
+| Dependency | Version | Details |
+|---|---|---|
+| UE4SS | — | — |
+
+## Config & Save Paths
+
+| Type | Path |
+|---|---|
+| Save | `b1/Saved/SaveGames` |
 
 ## Special Features
 
 - **Deploy Hook** (`did-deploy`) — runs custom logic (e.g., notifications, metadata patching) every time mods are deployed.
-- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.) from Nexus Mods.
+- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
-- **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 
 ## How Mod Installation Works
@@ -104,16 +111,10 @@ User drops archive into Vortex
             └── install() returns copy instructions + setmodtype
                  └── Vortex stages files
                       └── User deploys
-                           └── Vortex symlinks/copies to game folder
+                           └── Vortex links/copies to game folder
                                 └── did-deploy fires → post-deploy logic runs
 ```
 
 ## Entry Point
 
-The extension is registered via:
-
-```js
-module.exports = { default: main };
-```
-
-The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.
+The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

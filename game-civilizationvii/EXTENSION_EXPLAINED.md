@@ -1,30 +1,33 @@
-# Sid Meier — Vortex Extension Explained
+# Civ VII — Vortex Extension Explained
 
 ## Overview
 
-```
-Name: Civilization VII Vortex Extension
-Author: ChemBoy1
-Version: 0.1.1
-Date: 02/12/2025
-```
+| Property | Value |
+|---|---|
+| Name | Civilization VII Vortex Extension |
+| Author | ChemBoy1 |
+| Version | 0.1.1 |
+| Date | 02/12/2025 |
 
 ## Key Identifiers
 
 | Property | Value |
 |---|---|
 | Game ID | `civilizationvii` |
-| Extension Version | 0.1.1 |
-| Steam App ID | 1295660 |
-| Epic App ID | N/A |
-| GOG App ID | N/A |
-| Xbox App ID | N/A |
-| Executable | `N/A` |
+| Executable | `Base/Binaries/Win64/Civ7_Win64_DX12_FinalRelease.exe` |
 
-## Feature Flags
+## Supported Stores
 
-| Flag | Value | Meaning |
-|---|---|---|
+- **Steam** — `1295660`
+
+## Mod Types
+
+Mod types define where each category of mod gets deployed:
+
+| Name | ID | Priority | Target Path |
+|---|---|---|---|
+| Mod | `civilizationvii-mod` | high | `MOD_PATH` |
+| Root Game Folder | `civilizationvii-root` | high | `{gamePath}` |
 
 ## Mod Installers
 
@@ -32,16 +35,12 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 |---|---|
-| `MOD_ID` | 25 |
-| `ROOT_ID` | 30 |
-
-Each installer has a paired **test** function (detects the archive type) and an **install** function (produces `copy` instructions telling Vortex where to place each file).
+| `civilizationvii-mod` | 25 |
 
 ## Special Features
 
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
-- **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
-- **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
+- **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 
 ## How Mod Installation Works
 
@@ -52,15 +51,9 @@ User drops archive into Vortex
             └── install() returns copy instructions + setmodtype
                  └── Vortex stages files
                       └── User deploys
-                           └── Vortex symlinks/copies to game folder
+                           └── Vortex links/copies to game folder
 ```
 
 ## Entry Point
 
-The extension is registered via:
-
-```js
-module.exports = { default: main };
-```
-
-The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.
+The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

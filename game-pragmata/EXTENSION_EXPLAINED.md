@@ -2,35 +2,43 @@
 
 ## Overview
 
-```
-////////////////////////////////////////////
-Name: PRAGMATA Vortex Extension
-Structure: Fluffy + REFramework (RE Engine)
-Author: ChemBoy1
-Version: 0.1.0
-Date: 2026-04-24
-///////////////////////////////////////////
-```
+| Property | Value |
+|---|---|
+| Name | PRAGMATA Vortex Extension |
+| Engine / Structure | Fluffy + REFramework (RE Engine) |
+| Author | ChemBoy1 |
+| Version | 0.1.0 |
+| Date | 2026-04-24 |
 
 ## Key Identifiers
 
 | Property | Value |
 |---|---|
 | Game ID | `pragmata` |
-| Extension Version | 0.1.0 |
-| Steam App ID | 3357650 |
-| Epic App ID | N/A |
-| GOG App ID | N/A |
-| Xbox App ID | N/A |
 | Executable | `PRAGMATA.exe` |
-| Extension Page | https://www.nexusmods.com/site/mods/1652 |
-| PCGamingWiki | https://www.pcgamingwiki.com/wiki/Pragmata |
+| Executable (Demo) | `PRAGMATA_SKETCHBOOK.exe` |
+
+## Supported Stores
+
+- **Steam** — `3357650`
 
 ## Feature Flags
 
-| Flag | Value | Meaning |
+| Flag | Value | Description |
 |---|---|---|
-| `allowSymlinks` | true | Symlink deployment allowed |
+| `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
+| `multiExe` | `true` | set to true if there are multiple executables (and multiple FLUFFY_FOLDERs) (typically for Demo) |
+
+## Mod Types
+
+Mod types define where each category of mod gets deployed:
+
+| Name | ID | Priority | Target Path |
+|---|---|---|---|
+| Binaries / Root Folder | `pragmata-root` | high | `{gamePath}` |
+| Loose Lua (REFramework) | `pragmata-looselua` | high | `{gamePath}/.` |
+| Fluffy Mod Manager | `pragmata-fluffymanager` | low | `{gamePath}` |
+| REFramework | `pragmata-reframework` | low | `{gamePath}` |
 
 ## Mod Installers
 
@@ -38,40 +46,48 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 |---|---|
-| `FLUFFY_ID` | 25 |
-| `REF_ID` | 27 |
-| `FLUFFYMOD_ID` | 29 |
-| ``${FLUFFYMOD_ID}pak`` | 31 |
-| `LOOSELUA_ID` | 33 |
-| `ROOT_ID` | 35 |
-| ``${FLUFFYMOD_ID}zip`` | 37 |
-
-Each installer has a paired **test** function (detects the archive type) and an **install** function (produces `copy` instructions telling Vortex where to place each file).
+| `pragmata-fluffymanager` | 25 |
+| `pragmata-reframework` | 27 |
+| `pragmata-looselua` | 33 |
+| `pragmata-root` | 35 |
+| `pragmata-fluffymodzip` | 37 |
 
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- Custom Launch
-- Custom Launch
+- **Custom Launch** (`PRAGMATA.exe`)
+- **Custom Launch** (`PRAGMATA_SKETCHBOOK.exe`)
 
 ## Toolbar Actions
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- **Open Config File**
-- **Open Save Folder**
-- **Open PCGamingWiki Page**
-- **View Changelog**
-- **Open Downloads Folder**
-- **Submit Bug Report**
+- Open Config File
+- Open PCGamingWiki Page
+- View Changelog
+- Open Downloads Folder
+- Submit Bug Report
+
+## Auto-Downloaded Dependencies
+
+| Dependency | Version | Details |
+|---|---|---|
+| Fluffy Mod Manager | — | — |
+| REFramework | — | — |
+
+## Config & Save Paths
+
+| Type | Path |
+|---|---|
+| Config | `config.ini` |
 
 ## Special Features
 
 - **Deploy Hook** (`did-deploy`) — runs custom logic (e.g., notifications, metadata patching) every time mods are deployed.
-- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.) from Nexus Mods.
+- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
-- **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
+- **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
 ## How Mod Installation Works
 
@@ -82,16 +98,10 @@ User drops archive into Vortex
             └── install() returns copy instructions + setmodtype
                  └── Vortex stages files
                       └── User deploys
-                           └── Vortex symlinks/copies to game folder
+                           └── Vortex links/copies to game folder
                                 └── did-deploy fires → post-deploy logic runs
 ```
 
 ## Entry Point
 
-The extension is registered via:
-
-```js
-module.exports = { default: main };
-```
-
-The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.
+The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

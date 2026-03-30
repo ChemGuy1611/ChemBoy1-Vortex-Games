@@ -2,44 +2,55 @@
 
 ## Overview
 
-```
-///////////////////////////////////////////
-Name: Slay the Spire 2 Vortex Extension
-Structure: Basic Game - GODOT Engine
-Author: ChemBoy1
-Version: 0.1.1
-Date: 2026-03-16
-Notes:
+| Property | Value |
+|---|---|
+| Name | Slay the Spire 2 Vortex Extension |
+| Engine / Structure | Basic Game - GODOT Engine |
+| Author | ChemBoy1 |
+| Version | 0.1.1 |
+| Date | 2026-03-16 |
+
+### Notes
+
 - Game is GODOT Engine with a built-in mod loader
 - Separate save folders for vanilla and modded saves
-///////////////////////////////////////////
-```
 
 ## Key Identifiers
 
 | Property | Value |
 |---|---|
 | Game ID | `slaythespire2` |
-| Extension Version | 0.1.1 |
-| Steam App ID | 2868840 |
-| Epic App ID | N/A |
-| GOG App ID | N/A |
-| Xbox App ID | N/A |
 | Executable | `SlayTheSpire2.exe` |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
+| Executable (GOG) | `SlayTheSpire2.exe` |
+| Executable (Demo) | `SlayTheSpire2.exe` |
 | Extension Page | XXX |
-| PCGamingWiki | https://www.pcgamingwiki.com/wiki/Slay_the_Spire_2 |
+
+## Supported Stores
+
+- **Steam** — `2868840`
 
 ## Feature Flags
 
-| Flag | Value | Meaning |
+| Flag | Value | Description |
 |---|---|---|
-| `hasLoader` | false | No mod loader |
-| `allowSymlinks` | true | Symlink deployment allowed |
-| `rootInstaller` | true | Root folder installer active |
-| `fallbackInstaller` | true | Catch-all fallback installer active |
-| `setupNotification` | false | No setup notification |
-| `hasUserIdFolder` | true | Save path includes a user ID subfolder |
-| `debug` | false | Debug logging disabled |
+| `hasLoader` | `false` | true if game needs a mod loader |
+| `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
+| `rootInstaller` | `true` | enable root installer. Set false if you need to avoid installer collisions |
+| `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |
+| `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below) |
+| `hasUserIdFolder` | `true` | true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID) |
+| `debug` | `false` | toggle for debug mode |
+| `binariesInstaller` | `false` |  |
+
+## Mod Types
+
+Mod types define where each category of mod gets deployed:
+
+| Name | ID | Priority | Target Path |
+|---|---|---|---|
+| Mod | `slaythespire2-mod` | high | `{gamePath}/mods` |
+| Root Folder | `slaythespire2-root` | high | `{gamePath}` |
 
 ## Mod Installers
 
@@ -47,38 +58,40 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 |---|---|
-| `LOADER_ID` | 25 |
-| `ROOT_ID` | 27 |
-| `MOD_ID` | 29 |
-| ``${GAME_ID}-fallback`` | 49 |
-
-Each installer has a paired **test** function (detects the archive type) and an **install** function (produces `copy` instructions telling Vortex where to place each file).
+| `slaythespire2-loader` | 25 |
+| `slaythespire2-root` | 27 |
+| `slaythespire2-mod` | 29 |
+| `slaythespire2-fallback` | 49 |
 
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- Custom Launch
-- Custom Launch
+- **Custom Launch** (`SlayTheSpire2.exe`)
+- **Custom Launch** (`gamelaunchhelper.exe`)
 
 ## Toolbar Actions
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- **Open Config Folder**
-- **Open Save Folder (Modded)**
-- **Open Save Folder (Vanilla)**
-- **Open PCGamingWiki Page**
-- **View Changelog**
-- **Submit Bug Report**
-- **Open Downloads Folder**
+- Open Save Folder (Modded)
+- Open PCGamingWiki Page
+- View Changelog
+- Submit Bug Report
+- Open Downloads Folder
+
+## Auto-Downloaded Dependencies
+
+| Dependency | Version | Details |
+|---|---|---|
+| Mod Loader | — | — |
 
 ## Special Features
 
-- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.) from Nexus Mods.
+- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
-- **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
-- **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
+- **Registry Lookup** — uses Windows registry for game detection or configuration paths.
+- **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
 ## How Mod Installation Works
 
@@ -89,15 +102,9 @@ User drops archive into Vortex
             └── install() returns copy instructions + setmodtype
                  └── Vortex stages files
                       └── User deploys
-                           └── Vortex symlinks/copies to game folder
+                           └── Vortex links/copies to game folder
 ```
 
 ## Entry Point
 
-The extension is registered via:
-
-```js
-module.exports = { default: main };
-```
-
-The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.
+The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

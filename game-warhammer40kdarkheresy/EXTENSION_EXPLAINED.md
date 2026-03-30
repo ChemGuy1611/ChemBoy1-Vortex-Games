@@ -2,82 +2,79 @@
 
 ## Overview
 
-```
-///////////////////////////////////////////
-Name: Warhammer 40,000: Dark Heresy Vortex Extension
-Structure: Game with Integrated Mod Loader (UnityModManager)
-Author: ChemBoy1
-Version: 0.1.0
-Date: 2026-XX-XX
-///////////////////////////////////////////
-```
+| Property | Value |
+|---|---|
+| Name | Warhammer 40,000: Dark Heresy Vortex Extension |
+| Engine / Structure | Game with Integrated Mod Loader (UnityModManager) |
+| Author | ChemBoy1 |
+| Version | 0.1.0 |
+| Date | 2026-XX-XX |
 
 ## Key Identifiers
 
 | Property | Value |
 |---|---|
 | Game ID | `warhammer40kdarkheresy` |
-| Extension Version | 0.1.0 |
-| Steam App ID | 3710600 |
-| Epic App ID | XXX |
-| GOG App ID | XXX |
-| Xbox App ID | OwlcatGames.XXX |
 | Executable | `WH40KDH.exe` |
-| Extension Page | https://www.nexusmods.com/site/mods/XXX |
-| PCGamingWiki | https://www.pcgamingwiki.com/wiki/Warhammer_40,000:_Dark_Heresy |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
+| Executable (GOG) | `WH40KDH.exe` |
+
+## Supported Stores
+
+- **Steam** — `3710600`
+- **Xbox / Microsoft Store** — `OwlcatGames.XXX`
 
 ## Feature Flags
 
-| Flag | Value | Meaning |
+| Flag | Value | Description |
 |---|---|---|
-| `debug` | false | Debug logging disabled |
+| `LOAD_ORDER_ENABLED` | `true` |  |
+| `debug` | `false` |  |
+| `mod_update_all_profile` | `false` |  |
+| `updating_mod` | `false` | used to see if it's a mod update or not |
+| `dllInRoot` | `false` |  |
 
-## Mod Installers
+## Mod Types
 
-Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
+Mod types define where each category of mod gets deployed:
 
-| Installer ID | Priority |
-|---|---|
-| `MICROPATCHES_ID` | 25 |
-| `MODFINDER_ID` | 27 |
-| `SAVEEDITOR_ID` | 28 |
-| `PORTMAN_ID` | 29 |
-| `MOD_ID` | 31 |
-| `PLUGIN_ID` | 33 |
-| `PORTRAIT_ID` | 35 |
-| `SAVE_ID` | 47 |
-| ``${GAME_ID}-fallback`` | 49 |
-
-Each installer has a paired **test** function (detects the archive type) and an **install** function (produces `copy` instructions telling Vortex where to place each file).
+| Name | ID | Priority | Target Path |
+|---|---|---|---|
+| Plugin (UnityModManager) | `warhammer40kdarkheresy-plugin` | high | `PLUGIN_PATH` |
+| Owlcat Mod | `warhammer40kdarkheresy-mod` | high | `MOD_PATH` |
+| Portraits | `warhammer40kdarkheresy-portrait` | high | `PORTRAIT_PATH` |
+| Save | `warhammer40kdarkheresy-save` | high | `SAVE_PATH` |
+| MicroPatches | `warhammer40kdarkheresy-micropatches` | low | `MICROPATCHES_PATH` |
+| Root Folder | `warhammer40kdarkheresy-root` | high | `{gamePath}` |
+| Binaries (Engine Injector) | `warhammer40kdarkheresy-binaries` | high | `{gamePath}/BINARIES_PATH` |
 
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- Custom Launch
-- Custom Launch
+- **Custom Launch** (`WH40KDH.exe`)
+- **Custom Launch** (`gamelaunchhelper.exe`)
 
 ## Toolbar Actions
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- **Open OwlcatModificationManagerSettings.json File**
-- **Open Owlcat Mod Folder**
-- **Open UMM Plugin Folder**
-- **Open Portraits Folder**
-- **Open Save Folder**
-- **Open PCGamingWiki Page**
-- **View Changelog**
-- **Submit Bug Report**
-- **Open Downloads Folder**
+- Open Owlcat Mod Folder
+- Open Portraits Folder
+- Open PCGamingWiki Page
+- View Changelog
+- Submit Bug Report
+- Open Downloads Folder
 
 ## Special Features
 
 - **Deploy Hook** (`did-deploy`) — runs custom logic (e.g., notifications, metadata patching) every time mods are deployed.
 - **Purge Hook** (`did-purge`) — runs custom logic when mods are purged.
+- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
-- **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
+- **Registry Lookup** — uses Windows registry for game detection or configuration paths.
+- **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
 ## How Mod Installation Works
 
@@ -88,16 +85,10 @@ User drops archive into Vortex
             └── install() returns copy instructions + setmodtype
                  └── Vortex stages files
                       └── User deploys
-                           └── Vortex symlinks/copies to game folder
+                           └── Vortex links/copies to game folder
                                 └── did-deploy fires → post-deploy logic runs
 ```
 
 ## Entry Point
 
-The extension is registered via:
-
-```js
-module.exports = { default: main };
-```
-
-The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.
+The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

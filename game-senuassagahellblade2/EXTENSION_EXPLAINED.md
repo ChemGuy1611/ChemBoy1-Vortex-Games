@@ -1,33 +1,27 @@
-# Senua — Vortex Extension Explained
+# SS: Hellblade 2 — Vortex Extension Explained
 
 ## Overview
 
-```
-//////////////////////////////////////////////////
-Name: Hellblade 2 Vortex Extension
-Structure: UE5 (XBOX Integrated)
-Author: ChemBoy1
-Version: 0.5.0
-Date: 2026-02-01
-//////////////////////////////////////////////////
-```
+| Property | Value |
+|---|---|
+| Name | Hellblade 2 Vortex Extension |
+| Engine / Structure | UE5 (XBOX Integrated) |
+| Author | ChemBoy1 |
+| Version | 0.5.0 |
+| Date | 2026-02-01 |
 
 ## Key Identifiers
 
 | Property | Value |
 |---|---|
 | Game ID | `senuassagahellblade2` |
-| Extension Version | 0.5.0 |
-| Steam App ID | 2461850 |
-| Epic App ID | N/A |
-| GOG App ID | N/A |
-| Xbox App ID | Microsoft.Superb |
 | Executable | `N/A` |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
 
-## Feature Flags
+## Supported Stores
 
-| Flag | Value | Meaning |
-|---|---|---|
+- **Steam** — `2461850`
+- **Xbox / Microsoft Store** — `Microsoft.Superb`
 
 ## Mod Types
 
@@ -35,10 +29,10 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 |---|---|---|---|
-| Save (LocalAppData) | `?` | high | '{localAppData}', SAVE_PATH |
-| UE5 Paks | `?` | high | '{gamePath}', UE5_PATH |
-| Paks (Alt, no | `?` | high | '{gamePath}', UE5_ALT_PATH |
-| Root Game Folder | `?` | high | {gamePath} |
+| Save (LocalAppData) | `senuassagahellblade2-save` | high | `{localAppData}/Hellblade2/Saved/SaveGames` |
+| UE5 Paks | `senuassagahellblade2-ue5` | high | `{gamePath}/Hellblade2/Content/Paks/~mods` |
+| Paks (Alt, no "~mods") | `senuassagahellblade2-pakalt` | high | `{gamePath}/Hellblade2/Content/Paks` |
+| Root Game Folder | `senuassagahellblade2-root` | high | `{gamePath}` |
 
 ## Mod Installers
 
@@ -46,18 +40,23 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 |---|---|
-| `'ue5-pak-installer'` | 25 |
-| ``${GAME_ID}-config`` | 30 |
-| ``${GAME_ID}-save`` | 35 |
-| ``${GAME_ID}-root`` | 40 |
+| `ue5-pak-installer` | 25 |
+| `senuassagahellblade2-config` | 30 |
+| `senuassagahellblade2-save` | 35 |
+| `senuassagahellblade2-root` | 40 |
 
-Each installer has a paired **test** function (detects the archive type) and an **install** function (produces `copy` instructions telling Vortex where to place each file).
+## Config & Save Paths
+
+| Type | Path |
+|---|---|
+| Config | `Hellblade2/Saved/Config/Windows` |
+| Save | `Hellblade2/Saved/SaveGames` |
 
 ## Special Features
 
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
-- **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
+- **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
 ## How Mod Installation Works
 
@@ -68,15 +67,9 @@ User drops archive into Vortex
             └── install() returns copy instructions + setmodtype
                  └── Vortex stages files
                       └── User deploys
-                           └── Vortex symlinks/copies to game folder
+                           └── Vortex links/copies to game folder
 ```
 
 ## Entry Point
 
-The extension is registered via:
-
-```js
-module.exports = { default: main };
-```
-
-The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.
+The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

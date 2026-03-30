@@ -2,75 +2,70 @@
 
 ## Overview
 
-```
-////////////////////////////////////////////////
-Name: WUCHANG: Fallen Feathers Vortex Extension
-Structure: UE5 (Xbox-Integrated)
-Author: ChemBoy1
-Version: 0.1.2
-Date: 2025-07-28
-////////////////////////////////////////////////
-```
+| Property | Value |
+|---|---|
+| Name | WUCHANG: Fallen Feathers Vortex Extension |
+| Engine / Structure | UE5 (Xbox-Integrated) |
+| Author | ChemBoy1 |
+| Version | 0.1.2 |
+| Date | 2025-07-28 |
 
 ## Key Identifiers
 
 | Property | Value |
 |---|---|
 | Game ID | `wuchangfallenfeathers` |
-| Extension Version | 0.1.2 |
-| Steam App ID | 2277560 |
-| Epic App ID | ebfa14ea910a4e55a48ccf5daf6c2607 |
-| GOG App ID | N/A |
-| Xbox App ID | 505GAMESS.P.A.WuchangPCGP |
 | Executable | `N/A` |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
+
+## Supported Stores
+
+- **Steam** — `2277560`
+- **Epic Games Store** — `ebfa14ea910a4e55a48ccf5daf6c2607`
+- **Xbox / Microsoft Store** — `505GAMESS.P.A.WuchangPCGP`
 
 ## Feature Flags
 
-| Flag | Value | Meaning |
+| Flag | Value | Description |
 |---|---|---|
+| `CHECK_DATA` | `false` |  |
+| `IO_STORE` | `false` | true if the Paks folder contains .ucas and .utoc files |
+| `SYM_LINKS` | `true` |  |
 
-## Mod Installers
+## Mod Types
 
-Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
+Mod types define where each category of mod gets deployed:
 
-| Installer ID | Priority |
-|---|---|
-| `'ue5-pak-installer'` | 29 |
-| `UE4SSCOMBO_ID` | 25 |
-| `LOGICMODS_ID` | 27 |
-| `UE4SS_ID` | 31 |
-| `SIGBYPASS_ID` | 32 |
-| `SCRIPTS_ID` | 33 |
-| `DLL_ID` | 35 |
-| `ROOT_ID` | 37 |
-| `CONTENT_ID` | 39 |
-| `CONFIG_ID` | 41 |
-| `SAVE_ID` | 43 |
-| `BINARIES_ID` | 45 |
-
-Each installer has a paired **test** function (detects the archive type) and an **install** function (produces `copy` instructions telling Vortex where to place each file).
+| Name | ID | Priority | Target Path |
+|---|---|---|---|
+| UE4SS Script-LogicMod Combo | `wuchangfallenfeathers-ue4sscombo` | high | `{gamePath}` |
+| UE4SS LogicMods (Blueprint) | `wuchangfallenfeathers-logicmods` | high | `{gamePath}/Project_Plague/Content/Paks/LogicMods` |
+| Root Game Folder | `wuchangfallenfeathers-root` | high | `{gamePath}` |
+| Content Folder | `wuchangfallenfeathers-contentfolder` | high | `{gamePath}/Project_Plague` |
+| UE5_ALT_NAME | `wuchangfallenfeathers-pakalt` | high | `{gamePath}/Project_Plague/Content/Paks` |
 
 ## Toolbar Actions
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- **Open Paks Folder**
-- **Open Binaries Folder**
-- **Open UE4SS Mods Folder**
-- **Open Config Folder**
-- **Open Saves Folder**
-- **Download UE4SS**
-- **View Changelog**
-- **Open Downloads Folder**
+- View Changelog
+- Open Downloads Folder
+
+## Auto-Downloaded Dependencies
+
+| Dependency | Version | Details |
+|---|---|---|
+| UE4SS | — | — |
 
 ## Special Features
 
 - **Deploy Hook** (`did-deploy`) — runs custom logic (e.g., notifications, metadata patching) every time mods are deployed.
 - **Purge Hook** (`did-purge`) — runs custom logic when mods are purged.
-- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.) from Nexus Mods.
+- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
+- **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
 ## How Mod Installation Works
 
@@ -81,16 +76,10 @@ User drops archive into Vortex
             └── install() returns copy instructions + setmodtype
                  └── Vortex stages files
                       └── User deploys
-                           └── Vortex symlinks/copies to game folder
+                           └── Vortex links/copies to game folder
                                 └── did-deploy fires → post-deploy logic runs
 ```
 
 ## Entry Point
 
-The extension is registered via:
-
-```js
-module.exports = { default: main };
-```
-
-The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.
+The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

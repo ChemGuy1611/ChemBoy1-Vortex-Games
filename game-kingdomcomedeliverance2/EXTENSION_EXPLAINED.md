@@ -2,61 +2,46 @@
 
 ## Overview
 
-```
-//////////////////////////////////////////////////
-Name: Kingdom Come Deliverance II Vortex Extension
-Structure: Mod Folder and FBLO
-Author: ChemBoy1
-Version: 0.5.1
-Date: 2026-03-03
-//////////////////////////////////////////////////
-```
+| Property | Value |
+|---|---|
+| Name | Kingdom Come Deliverance II Vortex Extension |
+| Engine / Structure | Mod Folder and FBLO |
+| Author | ChemBoy1 |
+| Version | 0.5.1 |
+| Date | 2026-03-03 |
 
 ## Key Identifiers
 
 | Property | Value |
 |---|---|
 | Game ID | `kingdomcomedeliverance2` |
-| Extension Version | 0.5.1 |
-| Steam App ID | 1771300 |
-| Epic App ID | 278984b84235407d922da634b9d7d247 |
-| GOG App ID | 1248083010 |
-| Xbox App ID | DeepSilver.77536C3FE941 |
 | Executable | `N/A` |
-| Extension Page | https://www.nexusmods.com/site/mods/1146 |
-| PCGamingWiki | https://www.pcgamingwiki.com/wiki/Kingdom_Come:_Deliverance_II |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
+| Executable (GOG) | `Bin/Win64MasterMasterGogPGO/KingdomCome.exe` |
+
+## Supported Stores
+
+- **Steam** — `1771300`
+- **Epic Games Store** — `278984b84235407d922da634b9d7d247`
+- **GOG** — `1248083010`
+- **Xbox / Microsoft Store** — `DeepSilver.77536C3FE941`
 
 ## Feature Flags
 
-| Flag | Value | Meaning |
+| Flag | Value | Description |
 |---|---|---|
+| `LOAD_ORDER_ENABLED` | `true` |  |
+| `mod_update_all_profile` | `false` |  |
+| `updating_mod` | `false` | used to see if it's a mod update or not |
 
-## Mod Installers
+## Mod Types
 
-Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
+Mod types define where each category of mod gets deployed:
 
-| Installer ID | Priority |
-|---|---|
-| `MOD_ID` | 25 |
-| `ROOT_ID` | 30 |
-| ``${GAME_ID}-cfg`` | 35 |
-| `BINARIES_ID` | 40 |
-
-Each installer has a paired **test** function (detects the archive type) and an **install** function (produces `copy` instructions telling Vortex where to place each file).
-
-## Toolbar Actions
-
-These buttons appear in the Vortex mod-icons toolbar when this game is active:
-
-- **Open Log - kcd.log**
-- **Open LO File - mod_order.txt**
-- **Open Settings - attributes.xml**
-- **Open Config Folder**
-- **Open Saves Folder**
-- **Open PCGamingWiki Page**
-- **View Changelog**
-- **Submit Bug Report**
-- **Open Downloads Folder**
+| Name | ID | Priority | Target Path |
+|---|---|---|---|
+| Mod | `MOD_ID` | high | `{gamePath}/Mods` |
+| Root Game Folder | `kingdomcomedeliverance2-root` | high | `{gamePath}` |
 
 ## Special Features
 
@@ -64,6 +49,8 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
+- **GOG Support** — detects GOG version with adjusted executable/data paths.
+- **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
 ## How Mod Installation Works
 
@@ -74,16 +61,10 @@ User drops archive into Vortex
             └── install() returns copy instructions + setmodtype
                  └── Vortex stages files
                       └── User deploys
-                           └── Vortex symlinks/copies to game folder
+                           └── Vortex links/copies to game folder
                                 └── did-deploy fires → post-deploy logic runs
 ```
 
 ## Entry Point
 
-The extension is registered via:
-
-```js
-module.exports = { default: main };
-```
-
-The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.
+The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

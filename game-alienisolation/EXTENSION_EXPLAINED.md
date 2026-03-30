@@ -2,31 +2,25 @@
 
 ## Overview
 
-```
-//
-Name: Alien Isolation Vortex Extension
-Author: ChemBoy1
-Version: 0.1.2
-Date: 01/06/2025
-/
-```
+| Property | Value |
+|---|---|
+| Name | Alien Isolation Vortex Extension |
+| Author | ChemBoy1 |
+| Version | 0.1.2 |
+| Date | 01/06/2025 |
 
 ## Key Identifiers
 
 | Property | Value |
 |---|---|
 | Game ID | `alienisolation` |
-| Extension Version | 0.1.2 |
-| Steam App ID | 214490 |
-| Epic App ID | 8935bb3e1420443a9789fe01758039a5 |
-| GOG App ID | 1744178250 |
-| Xbox App ID | N/A |
 | Executable | `AI.exe` |
 
-## Feature Flags
+## Supported Stores
 
-| Flag | Value | Meaning |
-|---|---|---|
+- **Steam** — `214490`
+- **Epic Games Store** — `8935bb3e1420443a9789fe01758039a5`
+- **GOG** — `1744178250`
 
 ## Mod Types
 
@@ -34,8 +28,8 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 |---|---|---|---|
-| Data Files | `?` | high | '{gamePath}', DATA_FOLDER |
-| Binaries / Root Game Folder | `?` | high | {gamePath} |
+| Data Files | `alienisolation-datafiles` | high | `{gamePath}/DATA` |
+| Binaries / Root Game Folder | `alienisolation-root` | high | `{gamePath}` |
 
 ## Mod Installers
 
@@ -43,15 +37,12 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 |---|---|
-| ``${GAME_ID}-datafolder`` | 25 |
-| ``${GAME_ID}-datafiles`` | 30 |
-
-Each installer has a paired **test** function (detects the archive type) and an **install** function (produces `copy` instructions telling Vortex where to place each file).
+| `alienisolation-datafolder` | 25 |
+| `alienisolation-datafiles` | 30 |
 
 ## Special Features
 
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
-- **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 
 ## How Mod Installation Works
@@ -63,15 +54,9 @@ User drops archive into Vortex
             └── install() returns copy instructions + setmodtype
                  └── Vortex stages files
                       └── User deploys
-                           └── Vortex symlinks/copies to game folder
+                           └── Vortex links/copies to game folder
 ```
 
 ## Entry Point
 
-The extension is registered via:
-
-```js
-module.exports = { default: main };
-```
-
-The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.
+The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

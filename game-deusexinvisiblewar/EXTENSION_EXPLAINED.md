@@ -2,32 +2,35 @@
 
 ## Overview
 
-```
-///////////////////////////////////////////
-Name: Deus Ex: Invisible War Vortex Extension
-Structure: Basic Game
-Author: ChemBoy1
-Version: 0.1.0
-Date: 2025-09-26
-///////////////////////////////////////////
-```
+| Property | Value |
+|---|---|
+| Name | Deus Ex: Invisible War Vortex Extension |
+| Engine / Structure | Basic Game |
+| Author | ChemBoy1 |
+| Version | 0.1.0 |
+| Date | 2025-09-26 |
 
 ## Key Identifiers
 
 | Property | Value |
 |---|---|
 | Game ID | `deusexinvisiblewar` |
-| Extension Version | 0.1.0 |
-| Steam App ID | 6920 |
-| Epic App ID | N/A |
-| GOG App ID | 1207659068 |
-| Xbox App ID | N/A |
-| Executable | `dx2.exe` |
+| Executable | `System/dx2.exe` |
 
-## Feature Flags
+## Supported Stores
 
-| Flag | Value | Meaning |
-|---|---|---|
+- **Steam** — `6920`
+- **GOG** — `1207659068`
+
+## Mod Types
+
+Mod types define where each category of mod gets deployed:
+
+| Name | ID | Priority | Target Path |
+|---|---|---|---|
+| Data Mod Folder | `deusexinvisiblewar-datamodfolder` | high | `{gamePath}/content/DX2` |
+| Root Folder | `deusexinvisiblewar-root` | high | `{gamePath}` |
+| Binaries (Engine Injector) | `deusexinvisiblewar-binaries` | high | `{gamePath}/System` |
 
 ## Mod Installers
 
@@ -35,38 +38,33 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 |---|---|
-| `ROOT_ID` | 25 |
-| `DATAMOD_ID` | 27 |
-| `LAUNCHER_ID` | 29 |
-| `CONFIG_ID` | 43 |
-| `SAVE_ID` | 45 |
-| `BINARIES_ID` | 49 |
-
-Each installer has a paired **test** function (detects the archive type) and an **install** function (produces `copy` instructions telling Vortex where to place each file).
+| `deusexinvisiblewar-root` | 25 |
+| `deusexinvisiblewar-datamodfolder` | 27 |
+| `deusexinvisiblewar-binaries` | 49 |
 
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- Custom Launch
+- **Custom Launch**
 
 ## Toolbar Actions
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- **Open Config Folder**
-- **Open user.ini File**
-- **Open Save Folder**
-- **Open moddb.com Page**
-- **View Changelog**
-- **Open Downloads Folder**
+- Open Config Folder
+- Open user.ini File
+- Open Save Folder
+- Open moddb.com Page
+- View Changelog
+- Open Downloads Folder
 
 ## Special Features
 
-- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.) from Nexus Mods.
+- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
-- **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
-- **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
+- **Registry Lookup** — uses Windows registry for game detection or configuration paths.
+- **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
 ## How Mod Installation Works
 
@@ -77,15 +75,9 @@ User drops archive into Vortex
             └── install() returns copy instructions + setmodtype
                  └── Vortex stages files
                       └── User deploys
-                           └── Vortex symlinks/copies to game folder
+                           └── Vortex links/copies to game folder
 ```
 
 ## Entry Point
 
-The extension is registered via:
-
-```js
-module.exports = { default: main };
-```
-
-The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.
+The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

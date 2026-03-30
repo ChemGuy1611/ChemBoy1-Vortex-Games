@@ -2,32 +2,36 @@
 
 ## Overview
 
-```
-/////////////////////////////////////////////////
-Name: Digimon Story Time Stranger Vortex Extension
-Structure: Reloaded-II Game (Mod Installer)
-Author: ChemBoy1
-Version: 0.1.2
-Date: 2025-10-14
-/////////////////////////////////////////////////
-```
+| Property | Value |
+|---|---|
+| Name | Digimon Story Time Stranger Vortex Extension |
+| Engine / Structure | Reloaded-II Game (Mod Installer) |
+| Author | ChemBoy1 |
+| Version | 0.1.2 |
+| Date | 2025-10-14 |
 
 ## Key Identifiers
 
 | Property | Value |
 |---|---|
 | Game ID | `digimonstorytimestranger` |
-| Extension Version | 0.1.2 |
-| Steam App ID | 1984270 |
-| Epic App ID | N/A |
-| GOG App ID | N/A |
-| Xbox App ID | N/A |
 | Executable | `Digimon Story Time Stranger.exe` |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
 
-## Feature Flags
+## Supported Stores
 
-| Flag | Value | Meaning |
-|---|---|---|
+- **Steam** — `1984270`
+
+## Mod Types
+
+Mod types define where each category of mod gets deployed:
+
+| Name | ID | Priority | Target Path |
+|---|---|---|---|
+| Reloaded Mod | `digimonstorytimestranger-reloadedmod` | high | `{gamePath}/Reloaded/Mods` |
+| Mod Loader | `digimonstorytimestranger-reloadedmodloader` | low | `{gamePath}/Reloaded/Mods/` |
+| Reloaded-II Mod Manager | `digimonstorytimestranger-reloadedmanager` | low | `{gamePath}` |
+| Save File | `digimonstorytimestranger-save` | high | `{gamePath}/SAVE_PATH` |
 
 ## Mod Installers
 
@@ -35,29 +39,36 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 |---|---|
-| `RELOADED_ID` | 25 |
-| `RELOADEDMODLOADER_ID` | 27 |
-| `RELOADEDMOD_ID` | 29 |
-| `SAVE_ID` | 49 |
-
-Each installer has a paired **test** function (detects the archive type) and an **install** function (produces `copy` instructions telling Vortex where to place each file).
+| `digimonstorytimestranger-reloadedmanager` | 25 |
+| `digimonstorytimestranger-reloadedmodloader` | 27 |
+| `digimonstorytimestranger-reloadedmod` | 29 |
 
 ## Toolbar Actions
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- **Download Reloaded Mod Manager**
-- **Open Save Folder**
-- **View Changelog**
-- **Open Downloads Folder**
+- Download Reloaded Mod Manager
+- View Changelog
+- Open Downloads Folder
+
+## Auto-Downloaded Dependencies
+
+| Dependency | Version | Details |
+|---|---|---|
+| Reloaded-II | — | — |
+
+## Config & Save Paths
+
+| Type | Path |
+|---|---|
+| Save | `gamedata/savedata` |
 
 ## Special Features
 
 - **Deploy Hook** (`did-deploy`) — runs custom logic (e.g., notifications, metadata patching) every time mods are deployed.
-- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.) from Nexus Mods.
+- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
-- **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
-- **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
+- **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
 ## How Mod Installation Works
 
@@ -68,16 +79,10 @@ User drops archive into Vortex
             └── install() returns copy instructions + setmodtype
                  └── Vortex stages files
                       └── User deploys
-                           └── Vortex symlinks/copies to game folder
+                           └── Vortex links/copies to game folder
                                 └── did-deploy fires → post-deploy logic runs
 ```
 
 ## Entry Point
 
-The extension is registered via:
-
-```js
-module.exports = { default: main };
-```
-
-The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.
+The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

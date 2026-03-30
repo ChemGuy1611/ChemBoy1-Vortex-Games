@@ -2,32 +2,38 @@
 
 ## Overview
 
-```
-////////////////////////////////////////////////////////
-Name: Return to Castle Wolfenstein Vortex Extension
-Structure: Generic Game with Custom Engine Mod (RealRTCW)
-Author: ChemBoy1
-Version: 0.4.1
-Date: 03/20/2025
-////////////////////////////////////////////////////////
-```
+| Property | Value |
+|---|---|
+| Name | Return to Castle Wolfenstein Vortex Extension |
+| Engine / Structure | Generic Game with Custom Engine Mod (RealRTCW) |
+| Author | ChemBoy1 |
+| Version | 0.4.1 |
+| Date | 03/20/2025 |
 
 ## Key Identifiers
 
 | Property | Value |
 |---|---|
 | Game ID | `returntocastlewolfenstein` |
-| Extension Version | 0.4.1 |
-| Steam App ID | 9010 |
-| Epic App ID | N/A |
-| GOG App ID | 1441704976 |
-| Xbox App ID | BethesdaSoftworks.ReturntoCastleWolfenstein |
 | Executable | `WolfSP.exe` |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
 
-## Feature Flags
+## Supported Stores
 
-| Flag | Value | Meaning |
-|---|---|---|
+- **Steam** — `9010`
+- **GOG** — `1441704976`
+- **Xbox / Microsoft Store** — `BethesdaSoftworks.ReturntoCastleWolfenstein`
+
+## Mod Types
+
+Mod types define where each category of mod gets deployed:
+
+| Name | ID | Priority | Target Path |
+|---|---|---|---|
+| .pk3 Data (Main) | `returntocastlewolfenstein-main` | high | `{gamePath}/Main` |
+| Main Folder | `returntocastlewolfenstein-mainfolder` | high | `{gamePath}/.` |
+| RealRTCW | `returntocastlewolfenstein-realrtcw` | low | `{gamePath}` |
+| ioRTCW | `returntocastlewolfenstein-iortcw` | low | `{gamePath}` |
 
 ## Mod Installers
 
@@ -35,32 +41,30 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 |---|---|
-| `IORTCW_ID` | 25 |
-| `REALRTCW_ID` | 30 |
-| `MAIN_ID` | 35 |
-| `PK3_ID` | 40 |
-
-Each installer has a paired **test** function (detects the archive type) and an **install** function (produces `copy` instructions telling Vortex where to place each file).
+| `returntocastlewolfenstein-iortcw` | 25 |
+| `returntocastlewolfenstein-realrtcw` | 30 |
+| `returntocastlewolfenstein-mainfolder` | 35 |
+| `returntocastlewolfenstein-main` | 40 |
 
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- Launch RealRTCW
-- Launch ioRTCW
+- **Launch RealRTCW**
+- **Launch ioRTCW**
 
 ## Toolbar Actions
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- **Download RealRTCW**
-- **Download ioRTCW**
+- Download RealRTCW
+- Download ioRTCW
 
 ## Special Features
 
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
-- **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
+- **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
 ## How Mod Installation Works
 
@@ -71,15 +75,9 @@ User drops archive into Vortex
             └── install() returns copy instructions + setmodtype
                  └── Vortex stages files
                       └── User deploys
-                           └── Vortex symlinks/copies to game folder
+                           └── Vortex links/copies to game folder
 ```
 
 ## Entry Point
 
-The extension is registered via:
-
-```js
-module.exports = { default: main };
-```
-
-The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.
+The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

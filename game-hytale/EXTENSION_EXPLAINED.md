@@ -2,39 +2,41 @@
 
 ## Overview
 
-```
-///////////////////////////////////////////
-Name: Hytale Vortex Extension
-Structure: Basic Game
-Author: ChemBoy1
-Version: 0.1.0
-Date: 2025-01-19
-///////////////////////////////////////////
-```
+| Property | Value |
+|---|---|
+| Name | Hytale Vortex Extension |
+| Engine / Structure | Basic Game |
+| Author | ChemBoy1 |
+| Version | 0.1.0 |
+| Date | 2025-01-19 |
 
 ## Key Identifiers
 
 | Property | Value |
 |---|---|
 | Game ID | `hytale` |
-| Extension Version | 0.1.0 |
-| Steam App ID | N/A |
-| Epic App ID | N/A |
-| GOG App ID | N/A |
-| Xbox App ID | N/A |
 | Executable | `HytaleClient.exe` |
-| PCGamingWiki | https://www.pcgamingwiki.com/wiki/Hytale |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
 
 ## Feature Flags
 
-| Flag | Value | Meaning |
+| Flag | Value | Description |
 |---|---|---|
-| `hasLoader` | false | No mod loader |
-| `allowSymlinks` | true | Symlink deployment allowed |
-| `rootInstaller` | false | Root installer disabled |
-| `fallbackInstaller` | false | No fallback installer |
-| `setupNotification` | false | No setup notification |
-| `debug` | false | Debug logging disabled |
+| `hasLoader` | `false` | true if game needs a mod loader |
+| `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
+| `rootInstaller` | `false` | enable root installer. Set false if you need to avoid installer collisions |
+| `fallbackInstaller` | `false` | enable fallback installer. Set false if you need to avoid installer collisions |
+| `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below) |
+| `debug` | `false` | toggle for debug mode |
+
+## Mod Types
+
+Mod types define where each category of mod gets deployed:
+
+| Name | ID | Priority | Target Path |
+|---|---|---|---|
+| Mod | `hytale-mod` | high | `{gamePath}/UserData/Mods` |
+| Root Folder | `hytale-root` | low | `{gamePath}` |
 
 ## Mod Installers
 
@@ -42,34 +44,44 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 |---|---|
-| `MOD_ID` | 27 |
-| `ROOT_ID` | 47 |
-| ``${GAME_ID}-fallback`` | 49 |
-
-Each installer has a paired **test** function (detects the archive type) and an **install** function (produces `copy` instructions telling Vortex where to place each file).
+| `hytale-root` | 47 |
+| `hytale-fallback` | 49 |
 
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- Custom Launch
+- **Custom Launch**
 
 ## Toolbar Actions
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- **Open Config Folder**
-- **Open Save Folder**
-- **Open PCGamingWiki Page**
-- **View Changelog**
-- **Open Downloads Folder**
+- Open Config Folder
+- Open Save Folder
+- Open PCGamingWiki Page
+- View Changelog
+- Open Downloads Folder
+
+## Auto-Downloaded Dependencies
+
+| Dependency | Version | Details |
+|---|---|---|
+| Mod Loader | — | — |
+
+## Config & Save Paths
+
+| Type | Path |
+|---|---|
+| Config | `UserData` |
+| Save | `UserData/Saves` |
 
 ## Special Features
 
-- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.) from Nexus Mods.
+- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
-- **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
-- **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
+- **Registry Lookup** — uses Windows registry for game detection or configuration paths.
+- **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
 ## How Mod Installation Works
 
@@ -80,15 +92,9 @@ User drops archive into Vortex
             └── install() returns copy instructions + setmodtype
                  └── Vortex stages files
                       └── User deploys
-                           └── Vortex symlinks/copies to game folder
+                           └── Vortex links/copies to game folder
 ```
 
 ## Entry Point
 
-The extension is registered via:
-
-```js
-module.exports = { default: main };
-```
-
-The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.
+The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

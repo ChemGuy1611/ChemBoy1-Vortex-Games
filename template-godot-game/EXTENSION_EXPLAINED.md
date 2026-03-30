@@ -2,38 +2,41 @@
 
 ## Overview
 
-```
-///////////////////////////////////////////
-Name: XXX Vortex Extension
-Structure: Godot Engine Game
-Author: ChemBoy1
-Version: 0.1.0
-Date: 2026-XX-XX
-Notes:
--
-///////////////////////////////////////////
-```
+| Property | Value |
+|---|---|
+| Name | XXX Vortex Extension |
+| Engine / Structure | Godot Engine Game |
+| Author | ChemBoy1 |
+| Version | 0.1.0 |
+| Date | 2026-XX-XX |
 
 ## Key Identifiers
 
 | Property | Value |
 |---|---|
 | Game ID | `XXX` |
-| Extension Version | 0.1.0 |
-| Steam App ID | XXX |
-| Epic App ID | XXX |
-| GOG App ID | XXX |
-| Xbox App ID | XXX |
 | Executable | `XXX.exe` |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
 | Extension Page | XXX |
 | PCGamingWiki | XXX |
 
 ## Feature Flags
 
-| Flag | Value | Meaning |
+| Flag | Value | Description |
 |---|---|---|
-| `allowSymlinks` | true | Symlink deployment allowed |
-| `fallbackInstaller` | true | Catch-all fallback installer active |
+| `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
+| `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |
+| `customLoader` | `true` |  |
+| `keepZips` | `false` |  |
+
+## Mod Types
+
+Mod types define where each category of mod gets deployed:
+
+| Name | ID | Priority | Target Path |
+|---|---|---|---|
+| Godot Mod | `XXX-mod` | high | `{gamePath}/mods-unpacked` |
+| Godot Mod Loader | `XXX-godotmodloader` | low | `{gamePath}` |
 
 ## Mod Installers
 
@@ -41,40 +44,36 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 |---|---|
-| `LOADER_ID` | 25 |
-| `MOD_ID` | 27 |
-| `MOD_ID` | 27 |
-| `CONFIG_ID` | 43 |
-| `SAVE_ID` | 45 |
-| ``${GAME_ID}-fallback`` | 49 |
-
-Each installer has a paired **test** function (detects the archive type) and an **install** function (produces `copy` instructions telling Vortex where to place each file).
+| `XXX-godotmodloader` | 25 |
+| `XXX-mod` | 27 |
+| `XXX-mod` | 27 |
+| `XXX-fallback` | 49 |
 
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- Custom Launch
-- Console Launch
+- **Custom Launch**
+- **Console Launch**
 
 ## Toolbar Actions
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- **Open Config Folder**
-- **Open Save Folder**
-- **Open override.cfg**
-- **Open PCGamingWiki Page**
-- **View Changelog**
-- **Open Downloads Folder**
-- **Submit Bug Report**
+- Open override.cfg
+
+## Auto-Downloaded Dependencies
+
+| Dependency | Version | Details |
+|---|---|---|
+| Godot Mod Loader | — | — |
 
 ## Special Features
 
-- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.) from Nexus Mods.
+- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
-- **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
-- **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
+- **Registry Lookup** — uses Windows registry for game detection or configuration paths.
+- **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
 ## How Mod Installation Works
 
@@ -85,15 +84,9 @@ User drops archive into Vortex
             └── install() returns copy instructions + setmodtype
                  └── Vortex stages files
                       └── User deploys
-                           └── Vortex symlinks/copies to game folder
+                           └── Vortex links/copies to game folder
 ```
 
 ## Entry Point
 
-The extension is registered via:
-
-```js
-module.exports = { default: main };
-```
-
-The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.
+The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

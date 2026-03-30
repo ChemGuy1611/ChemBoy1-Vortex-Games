@@ -2,32 +2,56 @@
 
 ## Overview
 
-```
-//////////////////////////////////////////
-Name: Megabonk Vortex Extension
-Structure: Unity BepinEx/MelonLoader Hybrid (IL2CPP & x64)
-Author: ChemBoy1
-Version: 0.1.2
-Date: 2026-03-15
-//////////////////////////////////////////
-```
+| Property | Value |
+|---|---|
+| Name | Megabonk Vortex Extension |
+| Engine / Structure | Unity BepinEx/MelonLoader Hybrid (IL2CPP & x64) |
+| Author | ChemBoy1 |
+| Version | 0.1.2 |
+| Date | 2026-03-15 |
 
 ## Key Identifiers
 
 | Property | Value |
 |---|---|
 | Game ID | `megabonk` |
-| Extension Version | 0.1.2 |
-| Steam App ID | 3405340 |
-| Epic App ID | N/A |
-| GOG App ID | N/A |
-| Xbox App ID | N/A |
 | Executable | `Megabonk.exe` |
+
+## Supported Stores
+
+- **Steam** — `3405340`
 
 ## Feature Flags
 
-| Flag | Value | Meaning |
+| Flag | Value | Description |
 |---|---|---|
+| `bepinexInstalled` | `false` |  |
+| `melonInstalled` | `false` |  |
+| `isBepinex` | `false` |  |
+| `isBepinexPatcher` | `false` |  |
+| `isMelon` | `false` |  |
+| `isMelonPlugin` | `false` |  |
+
+## Mod Types
+
+Mod types define where each category of mod gets deployed:
+
+| Name | ID | Priority | Target Path |
+|---|---|---|---|
+| BEPINEX_MOD_NAME | `BEPINEX_MOD_ID` | high | `{gamePath}/BEPINEX_MOD_PATH` |
+| MELON_MOD_NAME | `MELON_MOD_ID` | high | `{gamePath}/MELON_MOD_PATH` |
+| BEPINEX_PLUGINS_NAME | `BEPINEX_PLUGINS_ID` | high | `{gamePath}/BEPINEX_PLUGINS_PATH` |
+| BEPINEX_PATCHERS_NAME | `BEPINEX_PATCHERS_ID` | high | `{gamePath}/BEPINEX_PATCHERS_PATH` |
+| BEPINEX_CONFIG_NAME | `BEPINEX_CONFIG_ID` | high | `{gamePath}/BEPINEX_CONFIG_PATH` |
+| MELON_PLUGINS_NAME | `MELON_PLUGINS_ID` | high | `{gamePath}/MELON_PLUGINS_PATH` |
+| MELON_MODS_NAME | `MELON_MODS_ID` | high | `{gamePath}/MELON_MODS_PATH` |
+| MELON_CONFIG_NAME | `MELON_CONFIG_ID` | high | `{gamePath}/MELON_CONFIG_PATH` |
+| Assembly DLL Mod | `megabonk-assemblydll` | high | `{gamePath}/.` |
+| BepInEx Configuration Manager | `megabonk-bepcfgman` | high | `{gamePath}/Bepinex` |
+| ASSETS_NAME | `ASSETS_ID` | high | `{gamePath}/ASSETS_PATH` |
+| Root Game Folder | `megabonk-root` | high | `{gamePath}` |
+| BepInEx Injector | `megabonk-bepinex` | low | `{gamePath}` |
+| MelonLoader | `megabonk-melonloader` | low | `{gamePath}` |
 
 ## Mod Installers
 
@@ -35,39 +59,41 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 |---|---|
-| `BEPINEX_ID` | 25 |
-| `MELON_ID` | 26 |
-| `ROOT_ID` | 27 |
-| `BEPCFGMAN_ID` | 29 |
-| `ASSEMBLY_ID` | 31 |
-| ``${GAME_ID}-plugin`` | 33 |
+| `megabonk-bepinex` | 25 |
+| `megabonk-melonloader` | 26 |
+| `megabonk-root` | 27 |
+| `megabonk-bepcfgman` | 29 |
+| `megabonk-assemblydll` | 31 |
+| `megabonk-plugin` | 33 |
 | `ASSETS_ID` | 37 |
 | `CUSTOMCHAR_ID` | 39 |
-| `SAVE_ID` | 49 |
-
-Each installer has a paired **test** function (detects the archive type) and an **install** function (produces `copy` instructions telling Vortex where to place each file).
 
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- Custom Launch
+- **Custom Launch**
 
 ## Toolbar Actions
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- **Open Data Folder**
-- **Open Save Folder**
-- **View Changelog**
-- **Open Downloads Folder**
+- Open Data Folder
+- Open Save Folder
+- View Changelog
+- Open Downloads Folder
+
+## Config & Save Paths
+
+| Type | Path |
+|---|---|
+| Config (Registry) | `HKEY_CURRENT_USER\\Software\\Ved\\Megabonk` |
 
 ## Special Features
 
 - **Deploy Hook** (`did-deploy`) — runs custom logic (e.g., notifications, metadata patching) every time mods are deployed.
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
-- **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
-- **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
+- **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 
 ## How Mod Installation Works
 
@@ -78,16 +104,10 @@ User drops archive into Vortex
             └── install() returns copy instructions + setmodtype
                  └── Vortex stages files
                       └── User deploys
-                           └── Vortex symlinks/copies to game folder
+                           └── Vortex links/copies to game folder
                                 └── did-deploy fires → post-deploy logic runs
 ```
 
 ## Entry Point
 
-The extension is registered via:
-
-```js
-module.exports = { default: main };
-```
-
-The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.
+The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

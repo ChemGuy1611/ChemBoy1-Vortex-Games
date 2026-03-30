@@ -2,34 +2,41 @@
 
 ## Overview
 
-```
-Name: Dead Rising Deluxe Remaster Vortex Extension
-Structure: 3rd Party Mod Manager (Fluffy)
-Author: ChemBoy1
-Version: 0.3.1
-Date: 2026-03-24
-Notes:
+| Property | Value |
+|---|---|
+| Name | Dead Rising Deluxe Remaster Vortex Extension |
+| Engine / Structure | 3rd Party Mod Manager (Fluffy) |
+| Author | ChemBoy1 |
+| Version | 0.3.1 |
+| Date | 2026-03-24 |
+
+### Notes
+
 - Demo version has same exe name and same Fluffy folder name
-```
 
 ## Key Identifiers
 
 | Property | Value |
 |---|---|
 | Game ID | `deadrisingdeluxeremaster` |
-| Extension Version | 0.3.1 |
-| Steam App ID | 2527390 |
-| Epic App ID | N/A |
-| GOG App ID | N/A |
-| Xbox App ID | N/A |
 | Executable | `DRDR.exe` |
-| Extension Page | https://www.pcgamingwiki.com/wiki/Dead_Rising_Deluxe_Remaster |
-| PCGamingWiki | https://www.nexusmods.com/site/mods/1046 |
+| Executable (Demo) | `DRDR.exe` |
 
-## Feature Flags
+## Supported Stores
 
-| Flag | Value | Meaning |
-|---|---|---|
+- **Steam** — `2527390`
+
+## Mod Types
+
+Mod types define where each category of mod gets deployed:
+
+| Name | ID | Priority | Target Path |
+|---|---|---|---|
+| Binaries / Root Folder | `deadrisingdeluxeremaster-root` | high | `{gamePath}` |
+| Fluffy Mod | `deadrisingdeluxeremaster-fluffymod` | high | `{gamePath}/Games/DeadRisingRemaster/Mods` |
+| Fluffy Preset | `deadrisingdeluxeremaster-preset` | high | `{gamePath}/Games/DeadRisingRemaster/Presets` |
+| Fluffy Mod Manager | `deadrisingdeluxeremaster-fluffymodmanager` | low | `{gamePath}` |
+| REFramework | `deadrisingdeluxeremaster-reframework` | low | `{gamePath}` |
 
 ## Mod Installers
 
@@ -37,37 +44,47 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 |---|---|
-| `FLUFFY_ID` | 25 |
-| `REF_ID` | 30 |
-| `LOOSELUA_ID` | 29 |
-| `ROOT_ID` | 31 |
-| `PRESET_ID` | 33 |
-| ``${FLUFFYMOD_ID}zip`` | 45 |
-
-Each installer has a paired **test** function (detects the archive type) and an **install** function (produces `copy` instructions telling Vortex where to place each file).
+| `deadrisingdeluxeremaster-fluffymodmanager` | 25 |
+| `deadrisingdeluxeremaster-reframework` | 30 |
+| `deadrisingdeluxeremaster-looselua` | 29 |
+| `deadrisingdeluxeremaster-root` | 31 |
+| `deadrisingdeluxeremaster-preset` | 33 |
+| `deadrisingdeluxeremaster-fluffymodzip` | 45 |
 
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- Custom Launch
+- **Custom Launch**
 
 ## Toolbar Actions
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- **Open Config File**
-- **Open PCGamingWiki Page**
-- **View Changelog**
-- **Submit Bug Report**
-- **Open Downloads Folder**
+- Open Config File
+- Open PCGamingWiki Page
+- View Changelog
+- Submit Bug Report
+- Open Downloads Folder
+
+## Auto-Downloaded Dependencies
+
+| Dependency | Version | Details |
+|---|---|---|
+| Fluffy Mod Manager | — | — |
+| REFramework | — | — |
+
+## Config & Save Paths
+
+| Type | Path |
+|---|---|
+| Config | `.` |
 
 ## Special Features
 
 - **Deploy Hook** (`did-deploy`) — runs custom logic (e.g., notifications, metadata patching) every time mods are deployed.
-- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.) from Nexus Mods.
+- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
-- **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 
 ## How Mod Installation Works
 
@@ -78,16 +95,10 @@ User drops archive into Vortex
             └── install() returns copy instructions + setmodtype
                  └── Vortex stages files
                       └── User deploys
-                           └── Vortex symlinks/copies to game folder
+                           └── Vortex links/copies to game folder
                                 └── did-deploy fires → post-deploy logic runs
 ```
 
 ## Entry Point
 
-The extension is registered via:
-
-```js
-module.exports = { default: main };
-```
-
-The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.
+The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

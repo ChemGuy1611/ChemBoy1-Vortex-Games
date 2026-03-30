@@ -2,32 +2,39 @@
 
 ## Overview
 
-```
-//////////////////////////////////////////
-Name: DOOM 3 & DOOM 3: BFG Edition Vortex Extension
-Structure: Basic multi-game with multiple exes
-Author: ChemBoy1
-Version: 0.4.1
-Date: 2026-01-16
-/////////////////////////////////////////
-```
+| Property | Value |
+|---|---|
+| Name | DOOM 3 & DOOM 3: BFG Edition Vortex Extension |
+| Engine / Structure | Basic multi-game with multiple exes |
+| Author | ChemBoy1 |
+| Version | 0.4.1 |
+| Date | 2026-01-16 |
 
 ## Key Identifiers
 
 | Property | Value |
 |---|---|
 | Game ID | `doom3` |
-| Extension Version | 0.4.1 |
-| Steam App ID | 9050 |
-| Epic App ID | N/A |
-| GOG App ID | 1492054092 |
-| Xbox App ID | BethesdaSoftworks.Doom32004 |
 | Executable | `N/A` |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
 
-## Feature Flags
+## Supported Stores
 
-| Flag | Value | Meaning |
-|---|---|---|
+- **Steam** — `9050`
+- **GOG** — `1492054092`
+- **Xbox / Microsoft Store** — `BethesdaSoftworks.Doom32004`
+
+## Mod Types
+
+Mod types define where each category of mod gets deployed:
+
+| Name | ID | Priority | Target Path |
+|---|---|---|---|
+| Binaries / Root Folder | `doom3-binaries` | high | `{gamePath}` |
+| BASE_NAME | `doom3-base` | high | `{gamePath}/base` |
+| d3xp (RoE) Folder | `doom3-d3xp` | high | `{gamePath}//d3xp` |
+| d3le (Lost Mission) Folder | `doom3-d3le` | high | `{gamePath}//d3le` |
+| Dhewm3 | `doom3-dhewm3` | low | `{gamePath}` |
 
 ## Mod Installers
 
@@ -35,29 +42,23 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 |---|---|
-| `DHEWM3_ID` | 25 |
-| `ROOT_ID` | 27 |
-| `ROOT_ID_BFG` | 25 |
-
-Each installer has a paired **test** function (detects the archive type) and an **install** function (produces `copy` instructions telling Vortex where to place each file).
+| `doom3bfgedition-root` | 25 |
 
 ## Toolbar Actions
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- **Open Config Folder**
-- **Open Saves Folder**
-- **View Changelog**
-- **Open Downloads Folder**
-- **Open Config Folder**
-- **Open Saves Folder**
-- **View Changelog**
-- **Open Downloads Folder**
+- View Changelog
+- Open Downloads Folder
+- View Changelog
+- Open Downloads Folder
 
 ## Special Features
 
+- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
+- **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
 ## How Mod Installation Works
 
@@ -68,15 +69,9 @@ User drops archive into Vortex
             └── install() returns copy instructions + setmodtype
                  └── Vortex stages files
                       └── User deploys
-                           └── Vortex symlinks/copies to game folder
+                           └── Vortex links/copies to game folder
 ```
 
 ## Entry Point
 
-The extension is registered via:
-
-```js
-module.exports = { default: main };
-```
-
-The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.
+The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

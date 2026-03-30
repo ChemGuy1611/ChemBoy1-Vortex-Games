@@ -2,34 +2,38 @@
 
 ## Overview
 
-```
-///////////////////////////////////////
-Name: Balatro Vortex Extension
-Structure: Mod Loader (Mods in AppData Folder)
-Author: ChemBoy1
-Version: 0.2.0
-Date: 2026-02-24
-///////////////////////////////////////
-```
+| Property | Value |
+|---|---|
+| Name | Balatro Vortex Extension |
+| Engine / Structure | Mod Loader (Mods in AppData Folder) |
+| Author | ChemBoy1 |
+| Version | 0.2.0 |
+| Date | 2026-02-24 |
 
 ## Key Identifiers
 
 | Property | Value |
 |---|---|
 | Game ID | `balatro` |
-| Extension Version | 0.2.0 |
-| Steam App ID | 2379780 |
-| Epic App ID | N/A |
-| GOG App ID | N/A |
-| Xbox App ID | PlayStack.Balatro |
 | Executable | `N/A` |
-| Extension Page | https://www.nexusmods.com/site/mods/1315 |
-| PCGamingWiki | https://www.pcgamingwiki.com/wiki/Balatro |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
 
-## Feature Flags
+## Supported Stores
 
-| Flag | Value | Meaning |
-|---|---|---|
+- **Steam** — `2379780`
+- **Xbox / Microsoft Store** — `PlayStack.Balatro`
+
+## Mod Types
+
+Mod types define where each category of mod gets deployed:
+
+| Name | ID | Priority | Target Path |
+|---|---|---|---|
+| Mod | `balatro-mod` | high | `MOD_PATH` |
+| ROOT_NAME | `ROOT_ID` | high | `{gamePath}` |
+| LOVELY_NAME | `LOVELY_ID` | low | `{gamePath}` |
+| SteamModded | `balatro-steammodded` | low | `STEAMMODDED_PATH` |
+| MALVERK_NAME | `MALVERK_ID` | low | `MALVERK_PATH` |
 
 ## Mod Installers
 
@@ -38,31 +42,27 @@ Installers run in priority order (lower number = tested first). The first instal
 | Installer ID | Priority |
 |---|---|
 | `LOVELY_ID` | 25 |
-| `STEAMMODDED_ID` | 27 |
+| `balatro-steammodded` | 27 |
 | `MALVERK_ID` | 29 |
-| `MOD_ID` | 29 |
-| `CONFIG_ID` | 31 |
-
-Each installer has a paired **test** function (detects the archive type) and an **install** function (produces `copy` instructions telling Vortex where to place each file).
+| `balatro-mod` | 29 |
 
 ## Toolbar Actions
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- **Open Config File**
-- **Open Save Folder (Steam)**
-- **Download Lovely-Injector Latest**
-- **Download ${MALVERK_NAME} Latest**
-- **Open PCGamingWiki Page**
-- **View Changelog**
-- **Submit Bug Report**
-- **Open Downloads Folder**
+- Open Config File
+- Download Lovely-Injector Latest
+- Open PCGamingWiki Page
+- View Changelog
+- Submit Bug Report
+- Open Downloads Folder
 
 ## Special Features
 
-- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.) from Nexus Mods.
+- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
+- **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
 ## How Mod Installation Works
 
@@ -73,15 +73,9 @@ User drops archive into Vortex
             └── install() returns copy instructions + setmodtype
                  └── Vortex stages files
                       └── User deploys
-                           └── Vortex symlinks/copies to game folder
+                           └── Vortex links/copies to game folder
 ```
 
 ## Entry Point
 
-The extension is registered via:
-
-```js
-module.exports = { default: main };
-```
-
-The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.
+The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

@@ -2,32 +2,37 @@
 
 ## Overview
 
-```
-/////////////////////////////////
-Name: Hades II Vortex Extension
-Structure: 3rd-Party Mod Installer
-Author: ChemBoy1
-Version: 0.1.3
-Date: 2025-09-26
-////////////////////////////////
-```
+| Property | Value |
+|---|---|
+| Name | Hades II Vortex Extension |
+| Engine / Structure | 3rd-Party Mod Installer |
+| Author | ChemBoy1 |
+| Version | 0.1.3 |
+| Date | 2025-09-26 |
 
 ## Key Identifiers
 
 | Property | Value |
 |---|---|
 | Game ID | `hades2` |
-| Extension Version | 0.1.3 |
-| Steam App ID | 1145350 |
-| Epic App ID | 07c634c7291a49b5b2455e14b9a83950 |
-| GOG App ID | N/A |
-| Xbox App ID | N/A |
-| Executable | `N/A` |
+| Executable | `Ship/Hades2.exe` |
 
-## Feature Flags
+## Supported Stores
 
-| Flag | Value | Meaning |
-|---|---|---|
+- **Steam** — `1145350`
+- **Epic Games Store** — `07c634c7291a49b5b2455e14b9a83950`
+
+## Mod Types
+
+Mod types define where each category of mod gets deployed:
+
+| Name | ID | Priority | Target Path |
+|---|---|---|---|
+| Mod | `hades2-mod` | high | `{gamePath}/Content/Mods` |
+| Binaries | `hades2-binaries` | high | `{gamePath}/Ship` |
+| Root Game Folder | `hades2-root` | high | `{gamePath}` |
+| Mod Importer | `hades2-manager` | low | `{gamePath}/Content` |
+| Mod Utility | `hades2-modutility` | low | `{gamePath}/Content/Mods/ModUtil` |
 
 ## Mod Installers
 
@@ -35,24 +40,20 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 |---|---|
-| `MANAGER_ID` | 25 |
-| `UTILITY_ID` | 27 |
-| `MOD_ID` | 35 |
-
-Each installer has a paired **test** function (detects the archive type) and an **install** function (produces `copy` instructions telling Vortex where to place each file).
+| `hades2-manager` | 25 |
+| `hades2-modutility` | 27 |
 
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- Mod Importer
-- Vulkan Launch
+- **Mod Importer**
+- **Vulkan Launch**
 
 ## Special Features
 
-- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.) from Nexus Mods.
+- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
-- **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 
 ## How Mod Installation Works
@@ -64,15 +65,9 @@ User drops archive into Vortex
             └── install() returns copy instructions + setmodtype
                  └── Vortex stages files
                       └── User deploys
-                           └── Vortex symlinks/copies to game folder
+                           └── Vortex links/copies to game folder
 ```
 
 ## Entry Point
 
-The extension is registered via:
-
-```js
-module.exports = { default: main };
-```
-
-The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.
+The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

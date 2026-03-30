@@ -2,32 +2,44 @@
 
 ## Overview
 
-```
-////////////////////////////////////////
-Name: Marvel Rivals Vortex Extension
-Structure: UE5
-Author: ChemBoy1
-Version: 0.5.2
-Date: 2026-03-16
-////////////////////////////////////////
-```
+| Property | Value |
+|---|---|
+| Name | Marvel Rivals Vortex Extension |
+| Engine / Structure | UE5 |
+| Author | ChemBoy1 |
+| Version | 0.5.2 |
+| Date | 2026-03-16 |
 
 ## Key Identifiers
 
 | Property | Value |
 |---|---|
 | Game ID | `marvelrivals` |
-| Extension Version | 0.5.2 |
-| Steam App ID | 2767030 |
-| Epic App ID | 575efd0b5dd54429b035ffc8fe2d36d0 |
-| GOG App ID | N/A |
-| Xbox App ID | N/A |
-| Executable | `N/A` |
+| Executable | `MarvelGame/Marvel.exe` |
+
+## Supported Stores
+
+- **Steam** — `2767030`
+- **Epic Games Store** — `575efd0b5dd54429b035ffc8fe2d36d0`
 
 ## Feature Flags
 
-| Flag | Value | Meaning |
+| Flag | Value | Description |
 |---|---|---|
+| `CHECK_CONFIG` | `false` |  |
+| `IO_STORE` | `true` | true if the Paks folder contains .ucas and .utoc files |
+| `SYM_LINKS` | `true` |  |
+
+## Mod Types
+
+Mod types define where each category of mod gets deployed:
+
+| Name | ID | Priority | Target Path |
+|---|---|---|---|
+| Loose Data Files | `marvelrivals-root` | high | `{gamePath}/MarvelGame/Marvel/Content` |
+| UE5 Paks | `marvelrivals-ue5` | high | `{gamePath}/MarvelGame/Marvel/Content/Paks/~mods` |
+| UE5 Paks (no ~mods) | `marvelrivals-pakalt` | high | `{gamePath}/MarvelGame/Marvel/Content/Paks` |
+| Signature Bypass | `marvelrivals-sigbypass` | low | `{gamePath}/MarvelGame/Marvel/Binaries/Win64` |
 
 ## Mod Installers
 
@@ -35,25 +47,23 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 |---|---|
-| `'ue5-pak-installer'` | 35 |
-| `ROOT_ID` | 30 |
-| `SIGBYPASS_ID` | 37 |
-| `CONFIG_ID` | 40 |
-
-Each installer has a paired **test** function (detects the archive type) and an **install** function (produces `copy` instructions telling Vortex where to place each file).
+| `ue5-pak-installer` | 35 |
+| `marvelrivals-root` | 30 |
+| `marvelrivals-sigbypass` | 37 |
+| `marvelrivals-config` | 40 |
 
 ## Toolbar Actions
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- **Open Config Folder (LocalAppData)**
-- **View Changelog**
-- **Open Downloads Folder**
+- Open Config Folder (LocalAppData)
+- View Changelog
+- Open Downloads Folder
 
 ## Special Features
 
 - **Deploy Hook** (`did-deploy`) — runs custom logic (e.g., notifications, metadata patching) every time mods are deployed.
-- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.) from Nexus Mods.
+- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 
@@ -66,16 +76,10 @@ User drops archive into Vortex
             └── install() returns copy instructions + setmodtype
                  └── Vortex stages files
                       └── User deploys
-                           └── Vortex symlinks/copies to game folder
+                           └── Vortex links/copies to game folder
                                 └── did-deploy fires → post-deploy logic runs
 ```
 
 ## Entry Point
 
-The extension is registered via:
-
-```js
-module.exports = { default: main };
-```
-
-The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.
+The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

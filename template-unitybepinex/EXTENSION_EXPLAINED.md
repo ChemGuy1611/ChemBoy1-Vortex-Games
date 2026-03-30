@@ -2,83 +2,65 @@
 
 ## Overview
 
-```
-//////////////////////////////////////////
-Name: XXX Vortex Extension
-Structure: Unity BepinEx
-Author: ChemBoy1
-Version: 0.1.0
-Date: 2026-XX-XX
-Notes:
--
-//////////////////////////////////////////
-```
+| Property | Value |
+|---|---|
+| Name | XXX Vortex Extension |
+| Engine / Structure | Unity BepinEx |
+| Author | ChemBoy1 |
+| Version | 0.1.0 |
+| Date | 2026-XX-XX |
 
 ## Key Identifiers
 
 | Property | Value |
 |---|---|
 | Game ID | `XXX` |
-| Extension Version | 0.1.0 |
-| Steam App ID | XXX |
-| Epic App ID | XXX |
-| GOG App ID | XXX |
-| Xbox App ID | XXX |
-| Executable | `${GAME_STRING}.exe` |
+| Executable | `XXX.exe` |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
+| Executable (GOG) | `XXX.exe` |
 | Extension Page | XXX |
 | PCGamingWiki | XXX |
 
 ## Feature Flags
 
-| Flag | Value | Meaning |
+| Flag | Value | Description |
 |---|---|---|
-| `allowSymlinks` | true | Symlink deployment allowed |
-| `fallbackInstaller` | true | Catch-all fallback installer active |
-| `setupNotification` | false | No setup notification |
-| `hasUserIdFolder` | false | No user ID subfolder |
+| `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
+| `hasXbox` | `false` | toggle for Xbox version logic |
+| `multiExe` | `false` | set to true if there are multiple executables (and conseq. DATA_FOLDERs) (typically for Xbox/EGS) |
 
-## Mod Installers
+## Mod Types
 
-Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
+Mod types define where each category of mod gets deployed:
 
-| Installer ID | Priority |
-|---|---|
-| `ROOT_ID` | 8 |
-| `BEPCFGMAN_ID` | 9 |
-| `ASSEMBLY_ID` | 25 |
-| `ASSETS_ID` | 27 |
-| `SAVE_ID` | 49 |
-| ``${GAME_ID}-fallback`` | 49 |
-
-Each installer has a paired **test** function (detects the archive type) and an **install** function (produces `copy` instructions telling Vortex where to place each file).
+| Name | ID | Priority | Target Path |
+|---|---|---|---|
+| ROOT_NAME | `ROOT_ID` | high | `{gamePath}` |
+| BEPCFGMAN_NAME | `BEPCFGMAN_ID` | high | `{gamePath}/BEPCFGMAN_PATH` |
+| BEPMOD_NAME | `BEPMOD_ID` | high | `{gamePath}/BEPMOD_PATH` |
 
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- Custom Launch
-- Custom Launch
+- **Custom Launch** (`XXX.exe`)
+- **Custom Launch** (`XXX.exe`)
 
 ## Toolbar Actions
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- **Download BepInExConfigManager**
-- **Open BepInEx.cfg**
-- **Open Data Folder**
-- **Open Save Folder**
-- **Open Config Folder**
-- **Open Config (Registry)**
-- **Open PCGamingWiki Page**
-- **View Changelog**
-- **Submit Bug Report**
-- **Open Downloads Folder**
+- Open PCGamingWiki Page
+- View Changelog
+- Submit Bug Report
+- Open Downloads Folder
 
 ## Special Features
 
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
-- **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
-- **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
+- **Registry Lookup** — uses Windows registry for game detection or configuration paths.
+- **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
+- **Required Extensions** — depends on: `modtype-bepinex`.
 
 ## How Mod Installation Works
 
@@ -89,15 +71,9 @@ User drops archive into Vortex
             └── install() returns copy instructions + setmodtype
                  └── Vortex stages files
                       └── User deploys
-                           └── Vortex symlinks/copies to game folder
+                           └── Vortex links/copies to game folder
 ```
 
 ## Entry Point
 
-The extension is registered via:
-
-```js
-module.exports = { default: main };
-```
-
-The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.
+The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

@@ -2,31 +2,25 @@
 
 ## Overview
 
-```
-////////////////////////////////////////////
-Name: Farming Simulator 25 Vortex Extension
-Author: ChemBoy1
-Version: 0.2.0
-Date: 2026-01-27
-////////////////////////////////////////////
-```
+| Property | Value |
+|---|---|
+| Name | Farming Simulator 25 Vortex Extension |
+| Author | ChemBoy1 |
+| Version | 0.2.0 |
+| Date | 2026-01-27 |
 
 ## Key Identifiers
 
 | Property | Value |
 |---|---|
 | Game ID | `farmingsimulator25` |
-| Extension Version | 0.2.0 |
-| Steam App ID | 2300320 |
-| Epic App ID | N/A |
-| GOG App ID | N/A |
-| Xbox App ID | GIANTSSoftware.FarmingSimulator25PC |
 | Executable | `FarmingSimulator2025.exe` |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
 
-## Feature Flags
+## Supported Stores
 
-| Flag | Value | Meaning |
-|---|---|---|
+- **Steam** — `2300320`
+- **Xbox / Microsoft Store** — `GIANTSSoftware.FarmingSimulator25PC`
 
 ## Mod Types
 
@@ -34,9 +28,9 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 |---|---|---|---|
-| Map Mod (Game Folder) | `?` | high | '{gamePath}', I3D_PATH |
-| PDLC (Game Folder) | `?` | high | '{gamePath}', PDLC_PATH |
-| Root Game Folder | `?` | high | {gamePath} |
+| Map Mod (Game Folder) | `farmingsimulator25-i3d` | high | `{gamePath}/data/maps/mapUS` |
+| PDLC (Game Folder) | `farmingsimulator25-pdlc` | high | `{gamePath}/pdlc` |
+| Root Game Folder | `farmingsimulator25-root` | high | `{gamePath}` |
 
 ## Mod Installers
 
@@ -44,16 +38,14 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 |---|---|
-| `I3D_ID` | 25 |
-| `ZIP_ID` | 30 |
-
-Each installer has a paired **test** function (detects the archive type) and an **install** function (produces `copy` instructions telling Vortex where to place each file).
+| `farmingsimulator25-zip` | 30 |
 
 ## Special Features
 
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
-- **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
+- **Registry Lookup** — uses Windows registry for game detection or configuration paths.
+- **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
 ## How Mod Installation Works
 
@@ -64,15 +56,9 @@ User drops archive into Vortex
             └── install() returns copy instructions + setmodtype
                  └── Vortex stages files
                       └── User deploys
-                           └── Vortex symlinks/copies to game folder
+                           └── Vortex links/copies to game folder
 ```
 
 ## Entry Point
 
-The extension is registered via:
-
-```js
-module.exports = { default: main };
-```
-
-The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.
+The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

@@ -2,32 +2,34 @@
 
 ## Overview
 
-```
-////////////////////////////////////////////////
-Name: MechWarrior 5: Clans Vortex Extension
-Structure: UE5 (Xbox-Integrated)
-Author: ChemBoy1
-Version: 0.3.0
-Date: 2026-02-01
-////////////////////////////////////////////////
-```
+| Property | Value |
+|---|---|
+| Name | MechWarrior 5: Clans Vortex Extension |
+| Engine / Structure | UE5 (Xbox-Integrated) |
+| Author | ChemBoy1 |
+| Version | 0.3.0 |
+| Date | 2026-02-01 |
 
 ## Key Identifiers
 
 | Property | Value |
 |---|---|
 | Game ID | `mechwarrior5clans` |
-| Extension Version | 0.3.0 |
-| Steam App ID | 2000890 |
-| Epic App ID | d97001f0a24b46afa65b42b2ceb5f1bc |
-| GOG App ID | N/A |
-| Xbox App ID | PiranhaGamesInc.MechWarrior5Clans |
 | Executable | `N/A` |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
+
+## Supported Stores
+
+- **Steam** — `2000890`
+- **Epic Games Store** — `d97001f0a24b46afa65b42b2ceb5f1bc`
+- **Xbox / Microsoft Store** — `PiranhaGamesInc.MechWarrior5Clans`
 
 ## Feature Flags
 
-| Flag | Value | Meaning |
+| Flag | Value | Description |
 |---|---|---|
+| `IO_STORE` | `true` | true if the Paks folder contains .ucas and .utoc files |
+| `SYM_LINKS` | `true` |  |
 
 ## Mod Types
 
@@ -35,11 +37,12 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 |---|---|---|---|
-| UE4SS LogicMods (Blueprint) | `?` | high | '{gamePath}', LOGICMODS_PATH |
-| UE4SS Script-LogicMod Combo | `?` | high | {gamePath} |
-| Root Game Folder | `?` | high | {gamePath} |
-| UE5 Paks | `?` | high | '{gamePath}', UE5_PATH |
-| UE5 Paks (no | `?` | high | '{gamePath}', UE5_ALT_PATH |
+| Modding Editor Mod | `mechwarrior5clans-moddingeditormod` | high | `{gamePath}/MW5Clans/Mods` |
+| UE4SS LogicMods (Blueprint) | `mechwarrior5clans-logicmods` | high | `{gamePath}/MW5Clans/Content/Paks/LogicMods` |
+| UE4SS Script-LogicMod Combo | `mechwarrior5clans-ue4sscombo` | high | `{gamePath}` |
+| Root Game Folder | `mechwarrior5clans-root` | high | `{gamePath}` |
+| UE5 Paks | `mechwarrior5clans-ue5` | high | `{gamePath}/MW5Clans/Content/Paks/~mods` |
+| UE5 Paks (no "~mods") | `mechwarrior5clans-pakalt` | high | `{gamePath}/MW5Clans/Content/Paks` |
 
 ## Mod Installers
 
@@ -47,30 +50,33 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 |---|---|
-| `'ue5-pak-installer'` | 31 |
-| `EDITORMOD_ID` | 25 |
-| ``${GAME_ID}-ue4ss-logicscriptcombo`` | 27 |
-| ``${GAME_ID}-ue4ss-logicmod`` | 29 |
-| ``${GAME_ID}-ue4ss`` | 33 |
-| ``${GAME_ID}-ue4ss-scripts`` | 35 |
-| ``${GAME_ID}-root`` | 37 |
-| ``${GAME_ID}-config`` | 39 |
-| ``${GAME_ID}-save`` | 41 |
-
-Each installer has a paired **test** function (detects the archive type) and an **install** function (produces `copy` instructions telling Vortex where to place each file).
+| `ue5-pak-installer` | 31 |
+| `mechwarrior5clans-moddingeditormod` | 25 |
+| `mechwarrior5clans-ue4ss-logicscriptcombo` | 27 |
+| `mechwarrior5clans-ue4ss-logicmod` | 29 |
+| `mechwarrior5clans-ue4ss` | 33 |
+| `mechwarrior5clans-ue4ss-scripts` | 35 |
+| `mechwarrior5clans-root` | 37 |
 
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- Launch Modded Game
+- **Launch Modded Game**
+
+## Auto-Downloaded Dependencies
+
+| Dependency | Version | Details |
+|---|---|---|
+| UE4SS | — | — |
 
 ## Special Features
 
-- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.) from Nexus Mods.
+- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
+- **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
 ## How Mod Installation Works
 
@@ -81,15 +87,9 @@ User drops archive into Vortex
             └── install() returns copy instructions + setmodtype
                  └── Vortex stages files
                       └── User deploys
-                           └── Vortex symlinks/copies to game folder
+                           └── Vortex links/copies to game folder
 ```
 
 ## Entry Point
 
-The extension is registered via:
-
-```js
-module.exports = { default: main };
-```
-
-The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.
+The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

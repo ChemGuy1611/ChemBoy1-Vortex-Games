@@ -2,32 +2,36 @@
 
 ## Overview
 
-```
-///////////////////////////////////////////
-Name: Europa Universalis IV Vortex Extension
-Structure: Basic Game
-Author: ChemBoy1
-Version: 0.1.0
-Date: 2025-11-04
-///////////////////////////////////////////
-```
+| Property | Value |
+|---|---|
+| Name | Europa Universalis IV Vortex Extension |
+| Engine / Structure | Basic Game |
+| Author | ChemBoy1 |
+| Version | 0.1.0 |
+| Date | 2025-11-04 |
 
 ## Key Identifiers
 
 | Property | Value |
 |---|---|
 | Game ID | `europauniversalisiv` |
-| Extension Version | 0.1.0 |
-| Steam App ID | 236850 |
-| Epic App ID | N/A |
-| GOG App ID | 2057001589 |
-| Xbox App ID | N/A |
-| Executable | `eu4.exe` |
+| Executable | `./eu4.exe` |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
 
-## Feature Flags
+## Supported Stores
 
-| Flag | Value | Meaning |
-|---|---|---|
+- **Steam** — `236850`
+- **GOG** — `2057001589`
+
+## Mod Types
+
+Mod types define where each category of mod gets deployed:
+
+| Name | ID | Priority | Target Path |
+|---|---|---|---|
+| Mod (Documents) | `europauniversalisiv-mod` | high | `MOD_PATH` |
+| Root Folder | `europauniversalisiv-root` | high | `{gamePath}` |
+| Binaries (Engine Injector) | `europauniversalisiv-binaries` | high | `{gamePath}/.` |
 
 ## Mod Installers
 
@@ -35,34 +39,26 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 |---|---|
-| `MOD_ID` | 25 |
-| `CONFIG_ID` | 43 |
-| `SAVE_ID` | 45 |
-| `ROOT_ID` | 47 |
-| `BINARIES_ID` | 49 |
-
-Each installer has a paired **test** function (detects the archive type) and an **install** function (produces `copy` instructions telling Vortex where to place each file).
+| `europauniversalisiv-mod` | 25 |
 
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- Custom Launch
+- **Custom Launch**
 
 ## Toolbar Actions
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- **Open Config Folder**
-- **Open Save Folder**
-- **View Changelog**
-- **Open Downloads Folder**
+- View Changelog
+- Open Downloads Folder
 
 ## Special Features
 
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
-- **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
-- **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
+- **Registry Lookup** — uses Windows registry for game detection or configuration paths.
+- **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
 ## How Mod Installation Works
 
@@ -73,15 +69,9 @@ User drops archive into Vortex
             └── install() returns copy instructions + setmodtype
                  └── Vortex stages files
                       └── User deploys
-                           └── Vortex symlinks/copies to game folder
+                           └── Vortex links/copies to game folder
 ```
 
 ## Entry Point
 
-The extension is registered via:
-
-```js
-module.exports = { default: main };
-```
-
-The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.
+The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

@@ -2,47 +2,60 @@
 
 ## Overview
 
-```
-///////////////////////////////////////////
-Name: Crimson Desert Vortex Extension
-Structure: Basic Game
-Author: ChemBoy1
-Version: 0.2.3
-Date: 2026-03-29
-Notes:
+| Property | Value |
+|---|---|
+| Name | Crimson Desert Vortex Extension |
+| Engine / Structure | Basic Game |
+| Author | ChemBoy1 |
+| Version | 0.2.3 |
+| Date | 2026-03-29 |
+
+### Notes
+
 - Supports plugin mods and data mods with "00XX" folders
 - Supports Crimson Browser (manifest.json and files folder) and JSON Mod Manager (.json or "0036+" folder) mods
-///////////////////////////////////////////
-```
 
 ## Key Identifiers
 
 | Property | Value |
 |---|---|
 | Game ID | `crimsondesert` |
-| Extension Version | 0.2.3 |
-| Steam App ID | 3321460 |
-| Epic App ID | 0230d0150e9f45d49dce401e1103c9fc |
-| GOG App ID | N/A |
-| Xbox App ID | XXX |
-| Executable | `CrimsonDesert.exe` |
-| Extension Page | https://www.nexusmods.com/site/mods/1746 |
-| PCGamingWiki | https://www.pcgamingwiki.com/wiki/Crimson_Desert |
+| Executable | `bin64/CrimsonDesert.exe` |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
+| Executable (GOG) | `bin64/CrimsonDesert.exe` |
+| Executable (Demo) | `bin64/CrimsonDesert.exe` |
+
+## Supported Stores
+
+- **Steam** — `3321460`
+- **Epic Games Store** — `0230d0150e9f45d49dce401e1103c9fc`
 
 ## Feature Flags
 
-| Flag | Value | Meaning |
+| Flag | Value | Description |
 |---|---|---|
-| `loadOrder` | false | No load ordering |
-| `hasLoader` | false | No mod loader |
-| `allowSymlinks` | true | Symlink deployment allowed |
-| `needsModInstaller` | true | Mods go through a custom installer |
-| `rootInstaller` | true | Root folder installer active |
-| `fallbackInstaller` | true | Catch-all fallback installer active |
-| `setupNotification` | false | No setup notification |
-| `hasUserIdFolder` | true | Save path includes a user ID subfolder |
-| `binariesInstaller` | true | Binaries (engine injector) installer active |
-| `debug` | false | Debug logging disabled |
+| `loadOrder` | `false` | true if game needs a load order |
+| `hasLoader` | `false` | true if game needs a mod loader |
+| `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
+| `needsModInstaller` | `true` | set to true if standard mods should run through an installer - set false to have mods installed to the mods folder without any processing |
+| `rootInstaller` | `true` | enable root installer. Set false if you need to avoid installer collisions |
+| `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |
+| `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below) |
+| `hasUserIdFolder` | `true` | true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID) |
+| `debug` | `false` | toggle for debug mode |
+| `binariesInstaller` | `true` | only enable Binaries installer if not in root |
+
+## Mod Types
+
+Mod types define where each category of mod gets deployed:
+
+| Name | ID | Priority | Target Path |
+|---|---|---|---|
+| Data Mod | `crimsondesert-mod` | high | `{gamePath}/.` |
+| Crimson Browser Mod | `crimsondesert-browsermod` | high | `{gamePath}/mods` |
+| Patch Mod | `crimsondesert-patchmod` | high | `{gamePath}/mods` |
+| Root Folder | `crimsondesert-root` | high | `{gamePath}` |
+| Tools | `crimsondesert-tools` | low | `{gamePath}` |
 
 ## Mod Installers
 
@@ -50,50 +63,48 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 |---|---|
-| `LOADER_ID` | 25 |
-| `ROOT_ID` | 27 |
-| `TOOLS_ID` | 29 |
-| `BROWSER_MOD_ID` | 31 |
-| `PATCH_MOD_ID` | 33 |
-| ``${GAME_ID}-vortexmod`` | 33 |
-| ``${GAME_ID}-json`` | 35 |
-| `MOD_ID` | 35 |
-| `BINARIES_ID` | 37 |
-| `CONFIG_ID` | 33 |
-| `SAVE_ID` | 34 |
-| ``${GAME_ID}-fallback`` | 49 |
-
-Each installer has a paired **test** function (detects the archive type) and an **install** function (produces `copy` instructions telling Vortex where to place each file).
+| `crimsondesert-loader` | 25 |
+| `crimsondesert-root` | 27 |
+| `crimsondesert-tools` | 29 |
+| `crimsondesert-browsermod` | 31 |
+| `crimsondesert-patchmod` | 33 |
+| `crimsondesert-vortexmod` | 33 |
+| `crimsondesert-json` | 35 |
+| `crimsondesert-mod` | 35 |
+| `crimsondesert-binaries` | 37 |
+| `crimsondesert-fallback` | 49 |
 
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- Custom Launch
+- **Custom Launch**
 
 ## Toolbar Actions
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- **Download ${BROWSER_NAME} + Setup**
-- **Run ${BROWSER_NAME} Setup**
-- **Download ${JSON_MANAGER_NAME}**
-- **Download ${SAVE_EDITOR_NAME}**
-- **Open Config File**
-- **Open Save Folder**
-- **Open PCGamingWiki Page**
-- **View Changelog**
-- **Submit Bug Report**
-- **Open Downloads Folder**
+- Download ${BROWSER_NAME} + Setup
+- Download ${JSON_MANAGER_NAME}
+- Download ${SAVE_EDITOR_NAME}
+- Open Config File
+- Open Save Folder
+
+## Auto-Downloaded Dependencies
+
+| Dependency | Version | Details |
+|---|---|---|
+| Mod Loader | — | — |
 
 ## Special Features
 
 - **Deploy Hook** (`did-deploy`) — runs custom logic (e.g., notifications, metadata patching) every time mods are deployed.
 - **Purge Hook** (`did-purge`) — runs custom logic when mods are purged.
-- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.) from Nexus Mods.
+- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
-- **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
+- **Registry Lookup** — uses Windows registry for game detection or configuration paths.
+- **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
 ## How Mod Installation Works
 
@@ -104,16 +115,10 @@ User drops archive into Vortex
             └── install() returns copy instructions + setmodtype
                  └── Vortex stages files
                       └── User deploys
-                           └── Vortex symlinks/copies to game folder
+                           └── Vortex links/copies to game folder
                                 └── did-deploy fires → post-deploy logic runs
 ```
 
 ## Entry Point
 
-The extension is registered via:
-
-```js
-module.exports = { default: main };
-```
-
-The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.
+The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

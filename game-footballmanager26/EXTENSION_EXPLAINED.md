@@ -2,78 +2,95 @@
 
 ## Overview
 
-```
-//////////////////////////////////////////
-Name: Football Manager 26 Vortex Extension
-Structure: Unity BepinEx/MelonLoader Hybrid
-Author: ChemBoy1
-Version: 0.1.0
-Date: 2025-11-04
-//////////////////////////////////////////
-```
+| Property | Value |
+|---|---|
+| Name | Football Manager 26 Vortex Extension |
+| Engine / Structure | Unity BepinEx/MelonLoader Hybrid |
+| Author | ChemBoy1 |
+| Version | 0.1.0 |
+| Date | 2025-11-04 |
 
 ## Key Identifiers
 
 | Property | Value |
 |---|---|
 | Game ID | `footballmanager26` |
-| Extension Version | 0.1.0 |
-| Steam App ID | 3551340 |
-| Epic App ID | N/A |
-| GOG App ID | N/A |
-| Xbox App ID | SportsInteractive.FootballManager26 |
-| Executable | `${GAME_STRING}.exe` |
+| Executable | `fm.exe` |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
+
+## Supported Stores
+
+- **Steam** — `3551340`
+- **Xbox / Microsoft Store** — `SportsInteractive.FootballManager26`
 
 ## Feature Flags
 
-| Flag | Value | Meaning |
+| Flag | Value | Description |
 |---|---|---|
+| `allowBepCfgMan` | `false` | should BepInExConfigManager be downloaded? |
+| `allowMelPrefMan` | `false` | should MelonPreferencesManager be downloaded? False until figure out UniverseLib dependency |
+| `allowBepinexNexus` | `false` | set false until bugs are fixed |
+| `allowMelonNexus` | `false` | set false until bugs are fixed |
+| `bepinexInstalled` | `false` |  |
+| `melonInstalled` | `false` |  |
+| `isBepinex` | `false` |  |
+| `isBepinexPatcher` | `false` |  |
+| `isMelon` | `false` |  |
+| `isMelonPlugin` | `false` |  |
 
-## Mod Installers
+## Mod Types
 
-Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
+Mod types define where each category of mod gets deployed:
 
-| Installer ID | Priority |
-|---|---|
-| `BEPINEX_ID` | 25 |
-| `MELON_ID` | 26 |
-| `ROOT_ID` | 27 |
-| `BEPCFGMAN_ID` | 29 |
-| `MELONPREFMAN_ID` | 30 |
-| `ASSEMBLY_ID` | 31 |
-| ``${GAME_ID}-plugin`` | 33 |
-| `ASSETS_ID` | 37 |
-| `SAVE_ID` | 49 |
-
-Each installer has a paired **test** function (detects the archive type) and an **install** function (produces `copy` instructions telling Vortex where to place each file).
+| Name | ID | Priority | Target Path |
+|---|---|---|---|
+| BepInEx Mod | `footballmanager26-bepinexmod` | high | `{gamePath}/BepInEx` |
+| MelonLoader Mod | `footballmanager26-melonmod` | high | `{gamePath}/.` |
+| BepInEx Plugins | `footballmanager26-bepinex-plugins` | high | `{gamePath}/BepInEx/plugins` |
+| BepInEx Patchers | `footballmanager26-bepinex-patchers` | high | `{gamePath}/BepInEx/patchers` |
+| BepInEx Config | `footballmanager26-bepinex-config` | high | `{gamePath}/BepInEx/config` |
+| MelonLoader Mods | `footballmanager26-melonloader-mods` | high | `{gamePath}/Mods` |
+| MelonLoader Plugins | `footballmanager26-melonloader-plugins` | high | `{gamePath}/Plugins` |
+| MelonLoader Config | `footballmanager26-melonloader-config` | high | `{gamePath}/UserData` |
+| Assembly DLL Mod | `footballmanager26-assemblydll` | high | `{gamePath}/.` |
+| BepInExConfigManager | `footballmanager26-bepcfgman` | high | `{gamePath}/BepInEx` |
+| MelonPreferencesManager | `footballmanager26-melonprefman` | high | `{gamePath}/Mods` |
+| Assets/Resources File | `footballmanager26-assets` | high | `{gamePath}/fm_Data` |
+| Root Game Folder | `footballmanager26-root` | high | `{gamePath}` |
+| BepInEx Injector | `footballmanager26-bepinex` | low | `{gamePath}` |
+| MelonLoader | `footballmanager26-melonloader` | low | `{gamePath}` |
 
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- Custom Launch
+- **Custom Launch**
 
 ## Toolbar Actions
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- **Open Data Folder**
-- **Open Save Folder**
-- **Open BepInEx Config**
-- **Open BepInEx Log**
-- **Download BepInExConfigManager**
-- **Open MelonLoader Config**
-- **Open MelonLoader Log**
-- **Download MelonPreferencesManager**
-- **View Changelog**
-- **Open Downloads Folder**
+- View Changelog
+- Open Downloads Folder
+
+## Auto-Downloaded Dependencies
+
+| Dependency | Version | Details |
+|---|---|---|
+| BepInEx | 5.4.23.5 | il2cpp |
+
+## Config & Save Paths
+
+| Type | Path |
+|---|---|
+| Config (Registry) | `HKEY_CURRENT_USER\\Software\\Sports Interactive\\Football Manager 26` |
 
 ## Special Features
 
 - **Deploy Hook** (`did-deploy`) — runs custom logic (e.g., notifications, metadata patching) every time mods are deployed.
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
-- **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
+- **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
 ## How Mod Installation Works
 
@@ -84,16 +101,10 @@ User drops archive into Vortex
             └── install() returns copy instructions + setmodtype
                  └── Vortex stages files
                       └── User deploys
-                           └── Vortex symlinks/copies to game folder
+                           └── Vortex links/copies to game folder
                                 └── did-deploy fires → post-deploy logic runs
 ```
 
 ## Entry Point
 
-The extension is registered via:
-
-```js
-module.exports = { default: main };
-```
-
-The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.
+The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

@@ -2,32 +2,63 @@
 
 ## Overview
 
-```
-//////////////////////////////////////////
-Name: ASKA Vortex Extension
-Structure: Unity BepinEx/MelonLoader Hybrid
-Author: ChemBoy1
-Version: 0.1.2
-Date: 2026-03-16
-//////////////////////////////////////////
-```
+| Property | Value |
+|---|---|
+| Name | ASKA Vortex Extension |
+| Engine / Structure | Unity BepinEx/MelonLoader Hybrid |
+| Author | ChemBoy1 |
+| Version | 0.1.2 |
+| Date | 2026-03-16 |
 
 ## Key Identifiers
 
 | Property | Value |
 |---|---|
 | Game ID | `aska` |
-| Extension Version | 0.1.2 |
-| Steam App ID | 1898300 |
-| Epic App ID | N/A |
-| GOG App ID | N/A |
-| Xbox App ID | N/A |
-| Executable | `${GAME_STRING}.exe` |
+| Executable | `Aska.exe` |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
+
+## Supported Stores
+
+- **Steam** — `1898300`
 
 ## Feature Flags
 
-| Flag | Value | Meaning |
+| Flag | Value | Description |
 |---|---|---|
+| `hasCustomMods` | `false` | set to true if there are modTypes with folder paths dependent on which mod loader is installed |
+| `allowBepCfgMan` | `true` | should BepInExConfigManager be downloaded? |
+| `allowMelPrefMan` | `false` | should MelonPreferencesManager be downloaded? False until figure out UniverseLib dependency |
+| `allowBepinexNexus` | `false` | set false until bugs are fixed |
+| `allowMelonNexus` | `false` | set false until bugs are fixed |
+| `bepinexInstalled` | `false` |  |
+| `melonInstalled` | `false` |  |
+| `isBepinex` | `false` |  |
+| `isBepinexPatcher` | `false` |  |
+| `isMelon` | `false` |  |
+| `isMelonPlugin` | `false` |  |
+
+## Mod Types
+
+Mod types define where each category of mod gets deployed:
+
+| Name | ID | Priority | Target Path |
+|---|---|---|---|
+| BepInEx Mod | `aska-bepinexmod` | high | `{gamePath}/BepInEx` |
+| MelonLoader Mod | `aska-melonmod` | high | `{gamePath}/.` |
+| BepInEx Plugins | `aska-bepinex-plugins` | high | `{gamePath}/BepInEx/plugins` |
+| BepInEx Patchers | `aska-bepinex-patchers` | high | `{gamePath}/BepInEx/patchers` |
+| BepInEx Config | `aska-bepinex-config` | high | `{gamePath}/BepInEx/config` |
+| MelonLoader Mods | `aska-melonloader-mods` | high | `{gamePath}/Mods` |
+| MelonLoader Plugins | `aska-melonloader-plugins` | high | `{gamePath}/Plugins` |
+| MelonLoader Config | `aska-melonloader-config` | high | `{gamePath}/UserData` |
+| Assembly DLL Mod | `aska-assemblydll` | high | `{gamePath}/.` |
+| BepInExConfigManager | `aska-bepcfgman` | high | `{gamePath}/BepInEx` |
+| MelonPreferencesManager | `aska-melonprefman` | high | `{gamePath}/Mods` |
+| Assets/Resources File | `aska-assets` | high | `{gamePath}/Aska_Data` |
+| Root Game Folder | `aska-root` | high | `{gamePath}` |
+| BepInEx Injector | `aska-bepinex-new` | low | `{gamePath}` |
+| MelonLoader | `aska-melonloader` | low | `{gamePath}` |
 
 ## Mod Installers
 
@@ -35,48 +66,54 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 |---|---|
-| `BEPINEX_ID` | 25 |
-| `MELON_ID` | 26 |
-| `ROOT_ID` | 27 |
-| `BEPCFGMAN_ID` | 29 |
-| `MELONPREFMAN_ID` | 30 |
-| `ASSEMBLY_ID` | 31 |
-| ``${GAME_ID}-plugin`` | 33 |
-| `ASSETS_ID` | 37 |
-| `CUSTOM_ID` | 39 |
-| `SAVE_ID` | 47 |
-| ``${GAME_ID}-fallback`` | 49 |
-
-Each installer has a paired **test** function (detects the archive type) and an **install** function (produces `copy` instructions telling Vortex where to place each file).
+| `aska-bepinex-new` | 25 |
+| `aska-melonloader` | 26 |
+| `aska-root` | 27 |
+| `aska-bepcfgman` | 29 |
+| `aska-melonprefman` | 30 |
+| `aska-assemblydll` | 31 |
+| `aska-plugin` | 33 |
+| `aska-assets` | 37 |
+| `aska-custommod` | 39 |
+| `aska-fallback` | 49 |
 
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- Custom Launch
+- **Custom Launch**
 
 ## Toolbar Actions
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- **Download Latest BepInEx BE (Browse)**
-- **Download BepInExConfigManager**
-- **Open Data Folder**
-- **Open Save Folder**
-- **Open BepInEx Config**
-- **Open BepInEx Log**
-- **Open MelonLoader Config**
-- **Open MelonLoader Log**
-- **Download MelonPreferencesManager**
-- **View Changelog**
-- **Open Downloads Folder**
+- Download Latest BepInEx BE (Browse)
+- Download BepInExConfigManager
+- Open Data Folder
+- Open Save Folder
+- Open BepInEx Config
+- Open BepInEx Log
+- View Changelog
+- Open Downloads Folder
+
+## Auto-Downloaded Dependencies
+
+| Dependency | Version | Details |
+|---|---|---|
+| BepInEx | 5.4.23.5 | il2cpp |
+
+## Config & Save Paths
+
+| Type | Path |
+|---|---|
+| Config (Registry) | `HKEY_CURRENT_USER\\Software\\Sand Sailor Studio\\Aska` |
 
 ## Special Features
 
 - **Deploy Hook** (`did-deploy`) — runs custom logic (e.g., notifications, metadata patching) every time mods are deployed.
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
-- **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
-- **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
+- **Registry Lookup** — uses Windows registry for game detection or configuration paths.
+- **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
 ## How Mod Installation Works
 
@@ -87,16 +124,10 @@ User drops archive into Vortex
             └── install() returns copy instructions + setmodtype
                  └── Vortex stages files
                       └── User deploys
-                           └── Vortex symlinks/copies to game folder
+                           └── Vortex links/copies to game folder
                                 └── did-deploy fires → post-deploy logic runs
 ```
 
 ## Entry Point
 
-The extension is registered via:
-
-```js
-module.exports = { default: main };
-```
-
-The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.
+The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

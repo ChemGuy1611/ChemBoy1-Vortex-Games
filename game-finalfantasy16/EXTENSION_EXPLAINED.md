@@ -1,31 +1,25 @@
-# finalfantasy16 — Vortex Extension Explained
+# Final Fantasy XVI Vortex Extension — Vortex Extension Explained
 
 ## Overview
 
-```
-Name: Final Fantasy XVI Vortex Extension
-Structure: 3rd-Party Mod Installer
-Author: ChemBoy1
-Version: 0.1.1
-Date: 09/18/2024
-```
+| Property | Value |
+|---|---|
+| Name | Final Fantasy XVI Vortex Extension |
+| Engine / Structure | 3rd-Party Mod Installer |
+| Author | ChemBoy1 |
+| Version | 0.1.1 |
+| Date | 09/18/2024 |
 
 ## Key Identifiers
 
 | Property | Value |
 |---|---|
 | Game ID | `finalfantasy16` |
-| Extension Version | 0.1.1 |
-| Steam App ID | 2515020 |
-| Epic App ID | N/A |
-| GOG App ID | N/A |
-| Xbox App ID | N/A |
 | Executable | `ffxvi.exe` |
 
-## Feature Flags
+## Supported Stores
 
-| Flag | Value | Meaning |
-|---|---|---|
+- **Steam** — `2515020`
 
 ## Mod Types
 
@@ -33,8 +27,8 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 |---|---|---|---|
-| Reloaded Mod | `?` | high | '{gamePath}', RELOADED_PATH |
-| Reloaded Mod Manager | `?` | low | {gamePath} |
+| Reloaded Mod | `finalfantasy16-reloadedmod` | high | `{gamePath}/Reloaded` |
+| Reloaded Mod Manager | `finalfantasy16-reloadedmanager` | low | `{gamePath}` |
 
 ## Mod Installers
 
@@ -42,17 +36,19 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 |---|---|
-| ``${GAME_ID}-reloadedmanager`` | 25 |
-| ``${GAME_ID}-reloadedmod`` | 30 |
+| `finalfantasy16-reloadedmanager` | 25 |
+| `finalfantasy16-reloadedmod` | 30 |
 
-Each installer has a paired **test** function (detects the archive type) and an **install** function (produces `copy` instructions telling Vortex where to place each file).
+## Auto-Downloaded Dependencies
+
+| Dependency | Version | Details |
+|---|---|---|
+| Reloaded-II | — | — |
 
 ## Special Features
 
-- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.) from Nexus Mods.
+- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
-- **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
-- **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 
 ## How Mod Installation Works
 
@@ -63,15 +59,9 @@ User drops archive into Vortex
             └── install() returns copy instructions + setmodtype
                  └── Vortex stages files
                       └── User deploys
-                           └── Vortex symlinks/copies to game folder
+                           └── Vortex links/copies to game folder
 ```
 
 ## Entry Point
 
-The extension is registered via:
-
-```js
-module.exports = { default: main };
-```
-
-The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.
+The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

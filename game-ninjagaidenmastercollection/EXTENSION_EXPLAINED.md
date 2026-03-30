@@ -2,32 +2,34 @@
 
 ## Overview
 
-```
-///////////////////////////////////////////////////////
-Name: NINJA GAIDEN: Master Collection Vortex Extension
-Structure: Multi-Game, Mod Loader
-Author: ChemBoy1
-Version: 0.2.0
-Date: 2025-11-10
-///////////////////////////////////////////////////////
-```
+| Property | Value |
+|---|---|
+| Name | NINJA GAIDEN: Master Collection Vortex Extension |
+| Engine / Structure | Multi-Game, Mod Loader |
+| Author | ChemBoy1 |
+| Version | 0.2.0 |
+| Date | 2025-11-10 |
 
 ## Key Identifiers
 
 | Property | Value |
 |---|---|
 | Game ID | `ninjagaidenmastercollection` |
-| Extension Version | 0.2.0 |
-| Steam App ID | N/A |
-| Epic App ID | N/A |
-| GOG App ID | N/A |
-| Xbox App ID | N/A |
 | Executable | `N/A` |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
 
-## Feature Flags
+## Mod Types
 
-| Flag | Value | Meaning |
-|---|---|---|
+Mod types define where each category of mod gets deployed:
+
+| Name | ID | Priority | Target Path |
+|---|---|---|---|
+| ROOT_NAME | `ROOT_ID` | high | `{gamePath}` |
+| MLMOD_NAME | `MLMOD_ID` | high | `{gamePath}/MLMOD_PATH` |
+| DATABIN_NAME | `DATABIN_ID` | high | `{gamePath}` |
+| DATABINSUB_NAME | `ninjagaidenmastercollection-databinsubfolder1` | high | `{gamePath}/DATABINSUB_PATH` |
+| MODLOADER_XBOX_NAME | `MODLOADER_XBOX_ID` | low | `{gamePath}` |
+| Essential Files for NGS1 | `ninjagaidensigma-steammodloader` | low | `{gamePath}` |
 
 ## Mod Installers
 
@@ -36,35 +38,33 @@ Installers run in priority order (lower number = tested first). The first instal
 | Installer ID | Priority |
 |---|---|
 | `MODLOADER_XBOX_ID` | 25 |
-| `MODLOADER_STEAM_ID1` | 27 |
+| `ninjagaidensigma-steammodloader` | 27 |
 | `MODLOADER_STEAM_ID2` | 29 |
-| `MODLOADER_STEAM_ID3` | 31 |
+| `ninjagaiden3razorsedge-steammodloader` | 31 |
 | `MLMOD_ID` | 33 |
 | `DATABIN_ID` | 35 |
-| `DATABINSUB_ID1` | 37 |
+| `ninjagaidenmastercollection-databinsubfolder1` | 37 |
 | `DATABINSUB_ID23` | 40 |
-
-Each installer has a paired **test** function (detects the archive type) and an **install** function (produces `copy` instructions telling Vortex where to place each file).
 
 ## Toolbar Actions
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- **Open Config/Save Folder**
-- **View Changelog**
-- **Open Downloads Folder**
-- **Open Config/Save Folder**
-- **View Changelog**
-- **Open Downloads Folder**
-- **Open Config/Save Folder**
-- **View Changelog**
-- **Open Downloads Folder**
+- Open Config/Save Folder
+- View Changelog
+- Open Downloads Folder
+- Open Config/Save Folder
+- View Changelog
+- Open Downloads Folder
+- Open Config/Save Folder
+- View Changelog
+- Open Downloads Folder
 
 ## Special Features
 
-- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.) from Nexus Mods.
+- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
-- **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
+- **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
 ## How Mod Installation Works
 
@@ -75,15 +75,9 @@ User drops archive into Vortex
             └── install() returns copy instructions + setmodtype
                  └── Vortex stages files
                       └── User deploys
-                           └── Vortex symlinks/copies to game folder
+                           └── Vortex links/copies to game folder
 ```
 
 ## Entry Point
 
-The extension is registered via:
-
-```js
-module.exports = { default: main };
-```
-
-The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.
+The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

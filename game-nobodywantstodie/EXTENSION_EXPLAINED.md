@@ -2,32 +2,32 @@
 
 ## Overview
 
-```
-////////////////////////////////////////////////
-Name: Nobody Wants to Die Vortex Extension
-Structure: UE5
-Author: ChemBoy1
-Version: 0.3.0
-Date: 2026-02-01
-////////////////////////////////////////////////
-```
+| Property | Value |
+|---|---|
+| Name | Nobody Wants to Die Vortex Extension |
+| Engine / Structure | UE5 |
+| Author | ChemBoy1 |
+| Version | 0.3.0 |
+| Date | 2026-02-01 |
 
 ## Key Identifiers
 
 | Property | Value |
 |---|---|
 | Game ID | `nobodywantstodie` |
-| Extension Version | 0.3.0 |
-| Steam App ID | 1939970 |
-| Epic App ID | N/A |
-| GOG App ID | 1484887196 |
-| Xbox App ID | N/A |
 | Executable | `detnoir.exe` |
+
+## Supported Stores
+
+- **Steam** — `1939970`
+- **GOG** — `1484887196`
 
 ## Feature Flags
 
-| Flag | Value | Meaning |
+| Flag | Value | Description |
 |---|---|---|
+| `IO_STORE` | `true` | true if the Paks folder contains .ucas and .utoc files |
+| `SYM_LINKS` | `true` |  |
 
 ## Mod Types
 
@@ -35,10 +35,12 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 |---|---|---|---|
-| Binaries (Engine Injector) | `?` | high | '{gamePath}', BINARIES_PATH |
-| Save Game | `?` | high | '{localAppData}', SAVE_PATH |
-| Paks (Alt, no | `?` | high | '{gamePath}', UE5_ALT_PATH |
-| Root Game Folder | `?` | high | {gamePath} |
+| Binaries (Engine Injector) | `nobodywantstodie-binaries` | high | `{gamePath}/detnoir/Binaries/Win64` |
+| Config (LocalAppData) | `nobodywantstodie-config` | high | `{localAppData}/detnoir/Saved/Config/Windows` |
+| Save Game | `nobodywantstodie-save` | high | `{localAppData}/detnoir/Saved/SaveGames` |
+| UE5 Paks | `nobodywantstodie-ue5` | high | `{gamePath}/detnoir/Content/Paks/~mods` |
+| Paks (Alt, no "~mods") | `nobodywantstodie-pakalt` | high | `{gamePath}/detnoir/Content/Paks` |
+| Root Game Folder | `nobodywantstodie-root` | high | `{gamePath}` |
 
 ## Mod Installers
 
@@ -46,18 +48,19 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 |---|---|
-| `'ue5-pak-installer'` | 25 |
-| ``${GAME_ID}-root`` | 35 |
-| ``${GAME_ID}-config`` | 45 |
-| ``${GAME_ID}-save`` | 55 |
+| `ue5-pak-installer` | 25 |
+| `nobodywantstodie-root` | 35 |
 
-Each installer has a paired **test** function (detects the archive type) and an **install** function (produces `copy` instructions telling Vortex where to place each file).
+## Config & Save Paths
+
+| Type | Path |
+|---|---|
+| Config | `detnoir/Saved/Config/Windows` |
+| Save | `detnoir/Saved/SaveGames` |
 
 ## Special Features
 
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
-- **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
-- **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 
 ## How Mod Installation Works
 
@@ -68,15 +71,9 @@ User drops archive into Vortex
             └── install() returns copy instructions + setmodtype
                  └── Vortex stages files
                       └── User deploys
-                           └── Vortex symlinks/copies to game folder
+                           └── Vortex links/copies to game folder
 ```
 
 ## Entry Point
 
-The extension is registered via:
-
-```js
-module.exports = { default: main };
-```
-
-The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.
+The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

@@ -1,31 +1,25 @@
-# Assassin — Vortex Extension Explained
+# AC III Remastered — Vortex Extension Explained
 
 ## Overview
 
-```
-Name: AC III Remastered Vortex Extension
-Structure: Ubisoft AnvilToolkit
-Author: ChemBoy1
-Version: 0.1.0
-Date: 07/25/2024
-```
+| Property | Value |
+|---|---|
+| Name | AC III Remastered Vortex Extension |
+| Engine / Structure | Ubisoft AnvilToolkit |
+| Author | ChemBoy1 |
+| Version | 0.1.0 |
+| Date | 07/25/2024 |
 
 ## Key Identifiers
 
 | Property | Value |
 |---|---|
 | Game ID | `assassinscreediiiremastered` |
-| Extension Version | 0.1.0 |
-| Steam App ID | 911400 |
-| Epic App ID | N/A |
-| GOG App ID | N/A |
-| Xbox App ID | N/A |
 | Executable | `ACIII.exe` |
 
-## Feature Flags
+## Supported Stores
 
-| Flag | Value | Meaning |
-|---|---|---|
+- **Steam** — `911400`
 
 ## Mod Types
 
@@ -33,29 +27,19 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 |---|---|---|---|
-| Binaries / Root Game Folder | `assassinscreediii-binaries` | high | {gamePath} |
-| AnvilToolKit | `?` | low | {gamePath} |
-
-## Mod Installers
-
-Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
-
-| Installer ID | Priority |
-|---|---|
-| `'assassinscreedivblackflag-mod'` | 25 |
-| ``${GAME_ID}-atk`` | 25 |
-
-Each installer has a paired **test** function (detects the archive type) and an **install** function (produces `copy` instructions telling Vortex where to place each file).
+| Binaries / Root Game Folder | `assassinscreediii-binaries` | high | `{gamePath}` |
+| AnvilToolKit | `assassinscreediiiremastered-atk` | low | `{gamePath}` |
 
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- AnvilToolkit
+- **AnvilToolkit**
 
 ## Special Features
 
-- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.) from Nexus Mods.
+- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
+- **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 
 ## How Mod Installation Works
 
@@ -66,15 +50,9 @@ User drops archive into Vortex
             └── install() returns copy instructions + setmodtype
                  └── Vortex stages files
                       └── User deploys
-                           └── Vortex symlinks/copies to game folder
+                           └── Vortex links/copies to game folder
 ```
 
 ## Entry Point
 
-The extension is registered via:
-
-```js
-module.exports = { default: main };
-```
-
-The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.
+The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

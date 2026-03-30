@@ -2,32 +2,28 @@
 
 ## Overview
 
-```
-///////////////////////////////////////////
-Name: Shadow of the Tomb Raider Vortex Extension
-Structure: 3rd-Party Mod Installer
-Author: ChemBoy1
-Version: 0.5.0
-Date: 2025-10-29
-////////////////////////////////////////////
-```
+| Property | Value |
+|---|---|
+| Name | Shadow of the Tomb Raider Vortex Extension |
+| Engine / Structure | 3rd-Party Mod Installer |
+| Author | ChemBoy1 |
+| Version | 0.5.0 |
+| Date | 2025-10-29 |
 
 ## Key Identifiers
 
 | Property | Value |
 |---|---|
 | Game ID | `shadowofthetombraider` |
-| Extension Version | 0.5.0 |
-| Steam App ID | 750920 |
-| Epic App ID | 890d9cf396d04922a1559333df419fed |
-| GOG App ID | 1356518037 |
-| Xbox App ID | 39C668CD.TombRaider11BaseGame |
 | Executable | `SOTTR.exe` |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
 
-## Feature Flags
+## Supported Stores
 
-| Flag | Value | Meaning |
-|---|---|---|
+- **Steam** — `750920`
+- **Epic Games Store** — `890d9cf396d04922a1559333df419fed`
+- **GOG** — `1356518037`
+- **Xbox / Microsoft Store** — `39C668CD.TombRaider11BaseGame`
 
 ## Mod Types
 
@@ -35,8 +31,12 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 |---|---|---|---|
-| Special K Texture Mod | `${GAME_ID}-sktexture` | high | "{gamePath}", "SK_Res", "inject", "textures" |
-| SOTTR Mod Manager | `?` | low | {gamePath} |
+| Binaries / Root Folder | `shadowofthetombraider-binaries` | high | `{gamePath}` |
+| Mod Manager Mod | `shadowofthetombraider-modmanagermod` | high | `{gamePath}/Mods` |
+| Special K Texture Mod | `shadowofthetombraider-sktexture` | high | `{gamePath}/SK_Res/inject/textures` |
+| SOTTR Mod Manager | `shadowofthetombraider-manager` | low | `{gamePath}` |
+| TR Reboot Mod Manager | `shadowofthetombraider-trmodmanager` | low | `{gamePath}` |
+| Special K Plugin | `shadowofthetombraider-sk` | low | `{gamePath}` |
 
 ## Mod Installers
 
@@ -44,33 +44,32 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 |---|---|
-| `MANAGER_ID` | 25 |
-| `MANAGERUNIFIED_ID` | 30 |
-| `BINARIES_ID` | 35 |
-| `MANAGERMOD_ID` | 40 |
-
-Each installer has a paired **test** function (detects the archive type) and an **install** function (produces `copy` instructions telling Vortex where to place each file).
+| `shadowofthetombraider-manager` | 25 |
+| `shadowofthetombraider-trmodmanager` | 30 |
+| `shadowofthetombraider-binaries` | 35 |
+| `shadowofthetombraider-modmanagermod` | 40 |
 
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- SOTTR Mod Manager
+- **SOTTR Mod Manager**
 
 ## Toolbar Actions
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- **View Changelog**
-- **Open Downloads Folder**
+- View Changelog
+- Open Downloads Folder
 
 ## Special Features
 
 - **Deploy Hook** (`did-deploy`) — runs custom logic (e.g., notifications, metadata patching) every time mods are deployed.
-- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.) from Nexus Mods.
+- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
+- **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
 ## How Mod Installation Works
 
@@ -81,16 +80,10 @@ User drops archive into Vortex
             └── install() returns copy instructions + setmodtype
                  └── Vortex stages files
                       └── User deploys
-                           └── Vortex symlinks/copies to game folder
+                           └── Vortex links/copies to game folder
                                 └── did-deploy fires → post-deploy logic runs
 ```
 
 ## Entry Point
 
-The extension is registered via:
-
-```js
-module.exports = { default: main };
-```
-
-The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.
+The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

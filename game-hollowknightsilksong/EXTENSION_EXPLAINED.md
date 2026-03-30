@@ -2,78 +2,70 @@
 
 ## Overview
 
-```
-//////////////////////////////////////////
-Name: Hollow Knight: Silksong Vortex Extension
-Structure: Unity BepinEx
-Author: ChemBoy1
-Version: 0.3.0
-Date: 2026-03-29
-//////////////////////////////////////////
-```
+| Property | Value |
+|---|---|
+| Name | Hollow Knight: Silksong Vortex Extension |
+| Engine / Structure | Unity BepinEx |
+| Author | ChemBoy1 |
+| Version | 0.3.0 |
+| Date | 2026-03-29 |
 
 ## Key Identifiers
 
 | Property | Value |
 |---|---|
 | Game ID | `hollowknightsilksong` |
-| Extension Version | 0.3.0 |
-| Steam App ID | 1030300 |
-| Epic App ID | N/A |
-| GOG App ID | 1558393671 |
-| Xbox App ID | TeamCherry.HollowKnightSilksong |
 | Executable | `Hollow Knight Silksong.exe` |
-| Extension Page | https://www.nexusmods.com/site/mods/1420 |
-| PCGamingWiki | https://www.pcgamingwiki.com/wiki/Hollow_Knight:_Silksong |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
+
+## Supported Stores
+
+- **Steam** — `1030300`
+- **GOG** — `1558393671`
+- **Xbox / Microsoft Store** — `TeamCherry.HollowKnightSilksong`
 
 ## Feature Flags
 
-| Flag | Value | Meaning |
+| Flag | Value | Description |
 |---|---|---|
+| `allowBepinexNexus` | `false` | set false until bugs are fixed |
+| `downloadCfgMan` | `true` | should BepInExConfigManager be downloaded? |
 
-## Mod Installers
+## Mod Types
 
-Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
+Mod types define where each category of mod gets deployed:
 
-| Installer ID | Priority |
-|---|---|
-| `ROOT_ID` | 8 |
-| `BEPCFGMAN_ID` | 9 |
-| `BEPINEX_ID` | 25 |
-| `MELON_ID` | 27 |
-| `BEPMOD_ID` | 29 |
-| `MELONMOD_ID` | 31 |
-| `ASSEMBLY_ID` | 33 |
-| `SKIN_ID` | 35 |
-| `SAVE_ID` | 47 |
-| ``${GAME_ID}-fallback`` | 49 |
-
-Each installer has a paired **test** function (detects the archive type) and an **install** function (produces `copy` instructions telling Vortex where to place each file).
+| Name | ID | Priority | Target Path |
+|---|---|---|---|
+| Root Game Folder | `hollowknightsilksong-root` | high | `{gamePath}` |
+| Assembly DLL Mod | `hollowknightsilksong-assemblydll` | high | `{gamePath}/Hollow Knight Silksong_Data/Managed` |
+| BepInEx Configuration Manager | `hollowknightsilksong-bepcfgman` | high | `{gamePath}/Bepinex` |
+| BepinEx Mod | `hollowknightsilksong-bepmods` | high | `{gamePath}/BepinEx/plugins` |
 
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- Custom Launch
+- **Custom Launch**
 
-## Toolbar Actions
+## Auto-Downloaded Dependencies
 
-These buttons appear in the Vortex mod-icons toolbar when this game is active:
+| Dependency | Version | Details |
+|---|---|---|
+| BepInEx | 5.4.23.5 | unitymono, x64 |
 
-- **Download BepInExConfigManager**
-- **Open BepInEx.cfg**
-- **Open Data Folder**
-- **Open Save Folder**
-- **Open PCGamingWiki Page**
-- **View Changelog**
-- **Submit Bug Report**
-- **Open Downloads Folder**
+## Config & Save Paths
+
+| Type | Path |
+|---|---|
+| Config (Registry) | `HKEY_CURRENT_USER\\Software\\Team Cherry\\Hollow Knight Silksong` |
 
 ## Special Features
 
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
-- **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
+- **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
+- **Required Extensions** — depends on: `modtype-bepinex`.
 
 ## How Mod Installation Works
 
@@ -84,15 +76,9 @@ User drops archive into Vortex
             └── install() returns copy instructions + setmodtype
                  └── Vortex stages files
                       └── User deploys
-                           └── Vortex symlinks/copies to game folder
+                           └── Vortex links/copies to game folder
 ```
 
 ## Entry Point
 
-The extension is registered via:
-
-```js
-module.exports = { default: main };
-```
-
-The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.
+The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

@@ -1,31 +1,25 @@
-# assassinscreedorigins — Vortex Extension Explained
+# AC Origins Vortex Extension — Vortex Extension Explained
 
 ## Overview
 
-```
-Name: AC Origins Vortex Extension
-Structure: Ubisoft AnvilToolkit
-Author: ChemBoy1
-Version: 0.2.2
-Date: 07/31/2024
-```
+| Property | Value |
+|---|---|
+| Name | AC Origins Vortex Extension |
+| Engine / Structure | Ubisoft AnvilToolkit |
+| Author | ChemBoy1 |
+| Version | 0.2.2 |
+| Date | 07/31/2024 |
 
 ## Key Identifiers
 
 | Property | Value |
 |---|---|
 | Game ID | `assassinscreedorigins` |
-| Extension Version | 0.2.2 |
-| Steam App ID | 582160 |
-| Epic App ID | N/A |
-| GOG App ID | N/A |
-| Xbox App ID | N/A |
 | Executable | `ACOrigins.exe` |
 
-## Feature Flags
+## Supported Stores
 
-| Flag | Value | Meaning |
-|---|---|---|
+- **Steam** — `582160`
 
 ## Mod Types
 
@@ -33,12 +27,12 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 |---|---|---|---|
-| Binaries / Root Game Folder | `assassinscreedorigins-binaries` | high | {gamePath} |
-| Forger Patch | `?` | high | "{gamePath}", "ForgerPatches" |
-| Resorep Textures (Documents) | `?` | high | ? |
-| Resorep Textures (Game Folder) | `assassinscreedorigins-texturesgamefolder` | high | "{gamePath}", "Resorep" |
-| AnvilToolKit | `?` | low | {gamePath} |
-| Forger Patch Manager | `?` | low | {gamePath} |
+| Binaries / Root Game Folder | `assassinscreedorigins-binaries` | high | `{gamePath}` |
+| Forger Patch | `assassinscreedorigins-forgerpatch` | high | `{gamePath}/ForgerPatches` |
+| Resorep Textures (Documents) | `assassinscreedorigins-textures` | high | `ddsModPath` |
+| Resorep Textures (Game Folder) | `assassinscreedorigins-texturesgamefolder` | high | `{gamePath}/Resorep` |
+| AnvilToolKit | `assassinscreedorigins-ATK` | low | `{gamePath}` |
+| Forger Patch Manager | `assassinscreedorigins-forger` | low | `{gamePath}` |
 
 ## Mod Installers
 
@@ -46,23 +40,21 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 |---|---|
-| `'assassinscreedorigins-dds'` | 25 |
-| `'assassinscreedorigins-forger'` | 25 |
-| ``${GAME_ID}-atk`` | 25 |
-
-Each installer has a paired **test** function (detects the archive type) and an **install** function (produces `copy` instructions telling Vortex where to place each file).
+| `assassinscreedorigins-forger` | 25 |
+| `assassinscreedorigins-atk` | 25 |
 
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- AnvilToolkit
-- Forger Patch Manager
+- **AnvilToolkit**
+- **Forger Patch Manager**
 
 ## Special Features
 
-- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.) from Nexus Mods.
+- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
+- **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 
 ## How Mod Installation Works
 
@@ -73,15 +65,9 @@ User drops archive into Vortex
             └── install() returns copy instructions + setmodtype
                  └── Vortex stages files
                       └── User deploys
-                           └── Vortex symlinks/copies to game folder
+                           └── Vortex links/copies to game folder
 ```
 
 ## Entry Point
 
-The extension is registered via:
-
-```js
-module.exports = { default: main };
-```
-
-The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.
+The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

@@ -2,78 +2,70 @@
 
 ## Overview
 
-```
-////////////////////////////////////////////////
-Name: Dead As Disco Vortex Extension
-Structure: Unreal Engine Game
-Author: ChemBoy1
-Version: 0.1.0
-Date: 2026-01-13
-////////////////////////////////////////////////
-```
+| Property | Value |
+|---|---|
+| Name | Dead As Disco Vortex Extension |
+| Engine / Structure | Unreal Engine Game |
+| Author | ChemBoy1 |
+| Version | 0.1.0 |
+| Date | 2026-01-13 |
 
 ## Key Identifiers
 
 | Property | Value |
 |---|---|
 | Game ID | `deadasdisco` |
-| Extension Version | 0.1.0 |
-| Steam App ID | 3404260 |
-| Epic App ID | N/A |
-| GOG App ID | N/A |
-| Xbox App ID | N/A |
-| Executable | `${EPIC_CODE_NAME}.exe` |
-| PCGamingWiki | https://www.pcgamingwiki.com/wiki/Dead_as_Disco |
+| Executable | `Pagoda.exe` |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
+| Executable (GOG) | `Pagoda.exe` |
+| Executable (Demo) | `Pagoda.exe` |
+
+## Supported Stores
+
+- **Steam** — `3404260`
 
 ## Feature Flags
 
-| Flag | Value | Meaning |
+| Flag | Value | Description |
 |---|---|---|
+| `hasXbox` | `false` | toggle for Xbox version logic. |
+| `multiExe` | `false` | toggle for multiple executables (Epic/GOG/Demo don't match Steam) |
+| `hasModKit` | `false` | toggle for UE ModKit mod support |
+| `preferHardlinks` | `true` | set true to perform partition check for Config/Save modtypes so hardlinks are more available. Only matters if IO_STORE is false |
+| `autoDownloadUe4ss` | `false` | toggle for auto downloading UE4SS |
+| `SIGBYPASS_REQUIRED` | `false` | set true if there are .sig files in the Paks folder |
+| `IO_STORE` | `true` | true if the Paks folder contains .ucas and .utoc files |
+| `PAKMOD_LOADORDER` | `true` | set to false if you don't want loadOrder. If must be in "Paks" root, also disable loadOrder. |
+| `SYM_LINKS` | `true` |  |
+| `CHECK_CONFIG` | `false` | boolean to check if game, staging folder, and config and save folders are on the same drive |
+| `CHECK_SAVE` | `false` | secondary same as above (if save and config are in different locations) |
 
-## Mod Installers
+## Mod Types
 
-Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
+Mod types define where each category of mod gets deployed:
 
-| Installer ID | Priority |
-|---|---|
-| `'ue5-pak-installer'` | 29 |
-| `MODKITMOD_ID` | 25 |
-| `UE4SSCOMBO_ID` | 26 |
-| `LOGICMODS_ID` | 27 |
-| `UE4SS_ID` | 31 |
-| `SIGBYPASS_ID` | 33 |
-| `SCRIPTS_ID` | 35 |
-| `DLL_ID` | 37 |
-| `ROOT_ID` | 39 |
-| `CONFIG_ID` | 41 |
-| `SAVE_ID` | 43 |
-| `BINARIES_ID` | 49 |
+| Name | ID | Priority | Target Path |
+|---|---|---|---|
+| UE4SSCOMBO_NAME | `UE4SSCOMBO_ID` | high | `{gamePath}` |
+| LOGICMODS_NAME | `LOGICMODS_ID` | high | `{gamePath}/LOGICMODS_PATH` |
+| PAK_ALT_NAME | `deadasdisco-pakalt` | high | `{gamePath}/Pagoda/Content/Paks` |
+| Root Game Folder | `deadasdisco-root` | high | `{gamePath}` |
+| Root Sub-Folders | `deadasdisco-rootsubfolders` | high | `{gamePath}/Pagoda` |
 
-Each installer has a paired **test** function (detects the archive type) and an **install** function (produces `copy` instructions telling Vortex where to place each file).
+## Auto-Downloaded Dependencies
 
-## Toolbar Actions
-
-These buttons appear in the Vortex mod-icons toolbar when this game is active:
-
-- **Open Paks Folder**
-- **Open Binaries Folder**
-- **Open UE4SS Mods Folder**
-- **Open LogicMods Folder**
-- **Open Config Folder**
-- **Open Saves Folder**
-- **Download UE4SS**
-- **Open PCGamingWiki Page**
-- **View Changelog**
-- **Open Downloads Folder**
+| Dependency | Version | Details |
+|---|---|---|
+| UE4SS | — | — |
 
 ## Special Features
 
+- **Load Order** — mods are assigned numbered folder names or sorted based on their position in the load order.
 - **Deploy Hook** (`did-deploy`) — runs custom logic (e.g., notifications, metadata patching) every time mods are deployed.
 - **Purge Hook** (`did-purge`) — runs custom logic when mods are purged.
-- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.) from Nexus Mods.
+- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
-- **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
-- **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
+- **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
 ## How Mod Installation Works
 
@@ -84,16 +76,10 @@ User drops archive into Vortex
             └── install() returns copy instructions + setmodtype
                  └── Vortex stages files
                       └── User deploys
-                           └── Vortex symlinks/copies to game folder
+                           └── Vortex links/copies to game folder
                                 └── did-deploy fires → post-deploy logic runs
 ```
 
 ## Entry Point
 
-The extension is registered via:
-
-```js
-module.exports = { default: main };
-```
-
-The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.
+The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

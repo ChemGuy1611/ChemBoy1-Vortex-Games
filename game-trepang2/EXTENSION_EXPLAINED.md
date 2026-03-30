@@ -2,32 +2,26 @@
 
 ## Overview
 
-```
-////////////////////////////////////////////////
-Name: Trepang2 Vortex Extension
-Structure: UE4
-Author: ChemBoy1
-Version: 0.1.1
-Date: 08/08/2024
-////////////////////////////////////////////////
-```
+| Property | Value |
+|---|---|
+| Name | Trepang2 Vortex Extension |
+| Engine / Structure | UE4 |
+| Author | ChemBoy1 |
+| Version | 0.1.1 |
+| Date | 08/08/2024 |
 
 ## Key Identifiers
 
 | Property | Value |
 |---|---|
 | Game ID | `trepang2` |
-| Extension Version | 0.1.1 |
-| Steam App ID | 1164940 |
-| Epic App ID | N/A |
-| GOG App ID | 1599916752 |
-| Xbox App ID | N/A |
 | Executable | `CPPFPS.exe` |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
 
-## Feature Flags
+## Supported Stores
 
-| Flag | Value | Meaning |
-|---|---|---|
+- **Steam** — `1164940`
+- **GOG** — `1599916752`
 
 ## Mod Types
 
@@ -35,11 +29,11 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 |---|---|---|---|
-| Binaries (Engine Injector) | `?` | high | "{gamePath}", BINARIES_PATH |
-| Config (LocalAppData) | `?` | high | "{localAppData}", CONFIG_PATH |
-| Saves (LocalAppData) | `?` | high | "{localAppData}", SAVE_PATH |
-| Paks | `?` | low | '{gamePath}', PAK_PATH |
-| Root Game Folder | `?` | high | {gamePath} |
+| Binaries (Engine Injector) | `trepang2-binaries` | high | `{gamePath}/CPPFPS/Binaries/Win64` |
+| Config (LocalAppData) | `trepang2-config` | high | `{localAppData}/CPPFPS/Saved/Config/WindowsNoEditor` |
+| Saves (LocalAppData) | `trepang2-save` | high | `{localAppData}/CPPFPS/Saved/SaveGames` |
+| Paks | `trepang2-pak` | low | `{gamePath}/CPPFPS/Content/Paks/~mods` |
+| Root Game Folder | `trepang2-root` | high | `{gamePath}` |
 
 ## Mod Installers
 
@@ -47,17 +41,22 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 |---|---|
-| ``${GAME_ID}-config`` | 35 |
-| ``${GAME_ID}-root`` | 45 |
-| ``${GAME_ID}-save`` | 55 |
+| `trepang2-config` | 35 |
+| `trepang2-root` | 45 |
+| `trepang2-save` | 55 |
 
-Each installer has a paired **test** function (detects the archive type) and an **install** function (produces `copy` instructions telling Vortex where to place each file).
+## Config & Save Paths
+
+| Type | Path |
+|---|---|
+| Config | `CPPFPS/Saved/Config/WindowsNoEditor` |
+| Save | `CPPFPS/Saved/SaveGames` |
 
 ## Special Features
 
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
-- **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
-- **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
+- **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
+- **Required Extensions** — depends on: `Unreal Engine Mod Installer`.
 
 ## How Mod Installation Works
 
@@ -68,15 +67,9 @@ User drops archive into Vortex
             └── install() returns copy instructions + setmodtype
                  └── Vortex stages files
                       └── User deploys
-                           └── Vortex symlinks/copies to game folder
+                           └── Vortex links/copies to game folder
 ```
 
 ## Entry Point
 
-The extension is registered via:
-
-```js
-module.exports = { default: main };
-```
-
-The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.
+The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

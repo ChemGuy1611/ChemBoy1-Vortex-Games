@@ -2,30 +2,26 @@
 
 ## Overview
 
-```
-Name: Age of Mythology: Retold Vortex Extension
-Structure: Generic Game
-Author: ChemBoy1
-Version: 0.1.6
-Date: 11/07/2024
-```
+| Property | Value |
+|---|---|
+| Name | Age of Mythology: Retold Vortex Extension |
+| Engine / Structure | Generic Game |
+| Author | ChemBoy1 |
+| Version | 0.1.6 |
+| Date | 11/07/2024 |
 
 ## Key Identifiers
 
 | Property | Value |
 |---|---|
 | Game ID | `ageofmythologyretold` |
-| Extension Version | 0.1.6 |
-| Steam App ID | 1934680 |
-| Epic App ID | N/A |
-| GOG App ID | N/A |
-| Xbox App ID | Microsoft.AthensStandardEdition |
 | Executable | `N/A` |
+| Executable (Xbox) | `AoMRT.exe` |
 
-## Feature Flags
+## Supported Stores
 
-| Flag | Value | Meaning |
-|---|---|---|
+- **Steam** — `1934680`
+- **Xbox / Microsoft Store** — `Microsoft.AthensStandardEdition`
 
 ## Mod Types
 
@@ -33,10 +29,10 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 |---|---|---|---|
-| Game Data Folder | `?` | high | '{gamePath}', DATA_FOLDER |
-| Binaries / Root Game Folder | `?` | high | {gamePath} |
-| Config (UserGames) | `?` | high | ? |
-| Save (UserGames) | `?` | high | ? |
+| Game Data Folder | `ageofmythologyretold-data` | high | `{gamePath}/game` |
+| Binaries / Root Game Folder | `ageofmythologyretold-binaries` | high | `{gamePath}` |
+| Config (UserGames) | `CONFIG_ID` | high | `CONFIG_PATH` |
+| Save (UserGames) | `SAVE_ID` | high | `SAVE_PATH` |
 
 ## Mod Installers
 
@@ -44,19 +40,16 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 |---|---|
-| ``${GAME_ID}-data`` | 25 |
-| ``${GAME_ID}-save`` | 30 |
-| ``${GAME_ID}-config`` | 35 |
-| ``${GAME_ID}-reshade`` | 40 |
-| ``${GAME_ID}-binaries`` | 45 |
-
-Each installer has a paired **test** function (detects the archive type) and an **install** function (produces `copy` instructions telling Vortex where to place each file).
+| `ageofmythologyretold-save` | 30 |
+| `ageofmythologyretold-config` | 35 |
+| `ageofmythologyretold-reshade` | 40 |
+| `ageofmythologyretold-binaries` | 45 |
 
 ## Special Features
 
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
-- **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
+- **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
 ## How Mod Installation Works
 
@@ -67,15 +60,9 @@ User drops archive into Vortex
             └── install() returns copy instructions + setmodtype
                  └── Vortex stages files
                       └── User deploys
-                           └── Vortex symlinks/copies to game folder
+                           └── Vortex links/copies to game folder
 ```
 
 ## Entry Point
 
-The extension is registered via:
-
-```js
-module.exports = { default: main };
-```
-
-The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.
+The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

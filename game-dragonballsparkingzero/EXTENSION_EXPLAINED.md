@@ -2,34 +2,32 @@
 
 ## Overview
 
-```
-/////////////////////////////////////////////////////
-Name: Dragon Ball: Sparking! Zero Vortex Extension
-Structure: UE5
-Author: ChemBoy1
-Version: 0.5.1
-Date: 2026-02-05
-/////////////////////////////////////////////////////
-```
+| Property | Value |
+|---|---|
+| Name | Dragon Ball: Sparking! Zero Vortex Extension |
+| Engine / Structure | UE5 |
+| Author | ChemBoy1 |
+| Version | 0.5.1 |
+| Date | 2026-02-05 |
 
 ## Key Identifiers
 
 | Property | Value |
 |---|---|
 | Game ID | `dragonballsparkingzero` |
-| Extension Version | 0.5.1 |
-| Steam App ID | 1790600 |
-| Epic App ID | N/A |
-| GOG App ID | N/A |
-| Xbox App ID | N/A |
 | Executable | `SparkingZERO.exe` |
-| Extension Page | https://www.nexusmods.com/site/mods/1055 |
-| PCGamingWiki | https://www.pcgamingwiki.com/wiki/Dragon_Ball:_Sparking!_Zero |
+
+## Supported Stores
+
+- **Steam** — `1790600`
 
 ## Feature Flags
 
-| Flag | Value | Meaning |
+| Flag | Value | Description |
 |---|---|---|
+| `IO_STORE` | `true` | true if the Paks folder contains .ucas and .utoc files |
+| `CHECK_DATA` | `false` |  |
+| `SYM_LINKS` | `true` |  |
 
 ## Mod Types
 
@@ -37,17 +35,20 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 |---|---|---|---|
-| UE4SS Scripts | `?` | high | `{gamePath}`, SCRIPTS_PATH |
-| UE4SS LogicMods (Blueprint) | `?` | high | `{gamePath}`, LOGICMODS_PATH |
-| UE4SS Script-LogicMod Combo | `?` | high | {gamePath} |
-| SZModLoader Mod | `?` | high | `{gamePath}`, MODLOADERMOD_PATH |
-| SZModLoader JSON | `?` | high | `{gamePath}`, JSON_PATH |
-| Root Game Folder | `?` | high | {gamePath} |
-| UE5 Paks | `?` | high | `{gamePath}`, UE5_PATH |
-| UE5 Paks (no | `?` | high | `{gamePath}`, UE5_ALT_PATH |
-| Binaries (Engine Injector) | `?` | high | `{gamePath}`, BINARIES_PATH |
-| UE4SS | `?` | low | `{gamePath}`, BINARIES_PATH |
-| LFSE | `?` | low | `{gamePath}`, LFSE_PATH |
+| UE4SS Scripts | `dragonballsparkingzero-scripts` | high | `{gamePath}/SparkingZERO/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `dragonballsparkingzero-ue4ssdll` | high | `{gamePath}/SparkingZERO/Binaries/Win64/ue4ss/Mods` |
+| UE4SS LogicMods (Blueprint) | `dragonballsparkingzero-logicmods` | high | `{gamePath}/SparkingZERO/Content/Paks/LogicMods` |
+| UE4SS Script-LogicMod Combo | `dragonballsparkingzero-ue4sscombo` | high | `{gamePath}` |
+| SZModLoader Mod | `dragonballsparkingzero-modloadermod` | high | `{gamePath}/SparkingZERO/Mods` |
+| SZModLoader JSON | `dragonballsparkingzero-json` | high | `{gamePath}/SparkingZERO/Mods/ZeroSpark/Json` |
+| Root Game Folder | `dragonballsparkingzero-root` | high | `{gamePath}` |
+| UE5 Paks | `dragonballsparkingzero-ue5` | high | `{gamePath}/SparkingZERO/Content/Paks/~mods` |
+| UE5 Paks (no "~mods") | `dragonballsparkingzero-pakalt` | high | `{gamePath}/SparkingZERO/Content/Paks` |
+| Binaries (Engine Injector) | `dragonballsparkingzero-binaries` | high | `{gamePath}/SparkingZERO/Binaries/Win64` |
+| UE4SS | `dragonballsparkingzero-ue4ss` | low | `{gamePath}/SparkingZERO/Binaries/Win64` |
+| Signature Bypass | `dragonballsparkingzero-sigbypass` | low | `{gamePath}/SparkingZERO/Binaries/Win64` |
+| SZModLoader | `dragonballsparkingzero-modloader` | low | `{gamePath}/SparkingZERO/Mods` |
+| LFSE | `dragonballsparkingzero-lfse` | low | `{gamePath}/SparkingZERO/Mods` |
 
 ## Mod Installers
 
@@ -55,52 +56,60 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 |---|---|
-| `'ue5-pak-installer'` | 37 |
-| `MODLOADER_ID` | 25 |
-| `LFSE_ID` | 27 |
-| `MODLOADERMOD_ID` | 29 |
-| `JSON_ID` | 31 |
-| ``${GAME_ID}-ue4ss-logicscriptcombo`` | 33 |
-| ``${GAME_ID}-ue4ss-logicmod`` | 35 |
-| ``${GAME_ID}-ue4ss`` | 39 |
-| ``${GAME_ID}-ue4ss-scripts`` | 41 |
-| `DLL_ID` | 42 |
-| ``${GAME_ID}-root`` | 43 |
-| ``${GAME_ID}-config`` | 45 |
-| ``${GAME_ID}-save`` | 47 |
-| ``${GAME_ID}-sigbypass`` | 49 |
-
-Each installer has a paired **test** function (detects the archive type) and an **install** function (produces `copy` instructions telling Vortex where to place each file).
+| `ue5-pak-installer` | 37 |
+| `dragonballsparkingzero-modloader` | 25 |
+| `dragonballsparkingzero-lfse` | 27 |
+| `dragonballsparkingzero-modloadermod` | 29 |
+| `dragonballsparkingzero-json` | 31 |
+| `dragonballsparkingzero-ue4ss-logicscriptcombo` | 33 |
+| `dragonballsparkingzero-ue4ss-logicmod` | 35 |
+| `dragonballsparkingzero-ue4ss` | 39 |
+| `dragonballsparkingzero-ue4ss-scripts` | 41 |
+| `dragonballsparkingzero-ue4ssdll` | 42 |
+| `dragonballsparkingzero-root` | 43 |
+| `dragonballsparkingzero-config` | 45 |
+| `dragonballsparkingzero-save` | 47 |
+| `dragonballsparkingzero-sigbypass` | 49 |
 
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- Custom Launch
+- **Custom Launch**
 
 ## Toolbar Actions
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- **Open JsonFiles.json File**
-- **Open Paks Folder**
-- **Open ModLoader Folder**
-- **Open JSON Folder**
-- **Open Config Folder**
-- **Open Saves Folder**
-- **Open PCGamingWiki Page**
-- **View Changelog**
-- **Submit Bug Report**
-- **Open Downloads Folder**
+- Open JsonFiles.json File
+- Open Paks Folder
+- Open ModLoader Folder
+- Open JSON Folder
+- Open Config Folder
+- Open Saves Folder
+- Open PCGamingWiki Page
+- View Changelog
+- Submit Bug Report
+- Open Downloads Folder
+
+## Auto-Downloaded Dependencies
+
+| Dependency | Version | Details |
+|---|---|---|
+| UE4SS | — | — |
+
+## Config & Save Paths
+
+| Type | Path |
+|---|---|
+| Save | `SaveGame` |
 
 ## Special Features
 
 - **Deploy Hook** (`did-deploy`) — runs custom logic (e.g., notifications, metadata patching) every time mods are deployed.
 - **Purge Hook** (`did-purge`) — runs custom logic when mods are purged.
-- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.) from Nexus Mods.
+- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
-- **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
-- **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 
 ## How Mod Installation Works
 
@@ -111,16 +120,10 @@ User drops archive into Vortex
             └── install() returns copy instructions + setmodtype
                  └── Vortex stages files
                       └── User deploys
-                           └── Vortex symlinks/copies to game folder
+                           └── Vortex links/copies to game folder
                                 └── did-deploy fires → post-deploy logic runs
 ```
 
 ## Entry Point
 
-The extension is registered via:
-
-```js
-module.exports = { default: main };
-```
-
-The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.
+The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

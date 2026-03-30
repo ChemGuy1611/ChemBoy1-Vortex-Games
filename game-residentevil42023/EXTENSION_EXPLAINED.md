@@ -2,76 +2,79 @@
 
 ## Overview
 
-```
-////////////////////////////////////////////
-Name: Resident Evil 4 (2023) + Chainsaw Demo Vortex Extension
-Structure: 3rd Party Mod Manager (Fluffy)
-Author: ChemBoy1
-Version: 0.4.1
-Date: 2026-03-11
-///////////////////////////////////////////
-```
+| Property | Value |
+|---|---|
+| Name | Resident Evil 4 (2023) + Chainsaw Demo Vortex Extension |
+| Engine / Structure | 3rd Party Mod Manager (Fluffy) |
+| Author | ChemBoy1 |
+| Version | 0.4.1 |
+| Date | 2026-03-11 |
 
 ## Key Identifiers
 
 | Property | Value |
 |---|---|
 | Game ID | `residentevil42023` |
-| Extension Version | 0.4.1 |
-| Steam App ID | 2050650 |
-| Epic App ID | N/A |
-| GOG App ID | N/A |
-| Xbox App ID | N/A |
 | Executable | `re4.exe` |
-| Extension Page | https://www.nexusmods.com/site/mods/913 |
-| PCGamingWiki | https://www.pcgamingwiki.com/wiki/Resident_Evil_4_(2023) |
+| Executable (Demo) | `re4demo.exe` |
+
+## Supported Stores
+
+- **Steam** — `2050650`
 
 ## Feature Flags
 
-| Flag | Value | Meaning |
+| Flag | Value | Description |
 |---|---|---|
+| `reZip` | `true` | NOT WORKING YET - KEEP AS TRUE FOR NOW - set to true to re-zip Fluffy Mods (possibly not necessary for FLUFFY v3.069+) |
 
-## Mod Installers
+## Mod Types
 
-Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
+Mod types define where each category of mod gets deployed:
 
-| Installer ID | Priority |
-|---|---|
-| `FLUFFY_ID` | 25 |
-| `REF_ID` | 27 |
-| `LOOSELUA_ID` | 29 |
-| `ROOT_ID` | 31 |
-| `UPSCALER_ID` | 33 |
-| `PRESET_ID` | 35 |
-| `FLUFFYMOD_ID` | 45 |
-| ``${FLUFFYMOD_ID}zip`` | 45 |
-
-Each installer has a paired **test** function (detects the archive type) and an **install** function (produces `copy` instructions telling Vortex where to place each file).
+| Name | ID | Priority | Target Path |
+|---|---|---|---|
+| Binaries / Root Folder | `re4-root` | high | `{gamePath}` |
+| Loose Lua (REFramework) | `residentevil42023-looselua` | high | `{gamePath}/.` |
+| Fluffy Pak Mod | `residentevil42023-fluffypakmod` | high | `{gamePath}/Games/RE4R/Mods` |
+| Fluffy Mod Manager | `re4-fluffymodmanager` | low | `{gamePath}` |
+| REFramework | `re4-reframework` | low | `{gamePath}` |
+| Upscaler | `residentevil42023-upscaler` | low | `{gamePath}/reframework/plugins` |
 
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- Custom Launch
-- Steam Demo Launch
+- **Custom Launch**
+- **Steam Demo Launch**
 
 ## Toolbar Actions
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- **Open Config File**
-- **Open Save Folder**
-- **Open PCGamingWiki Page**
-- **View Changelog**
-- **Submit Bug Report**
-- **Open Downloads Folder**
+- Open PCGamingWiki Page
+- View Changelog
+- Submit Bug Report
+- Open Downloads Folder
+
+## Auto-Downloaded Dependencies
+
+| Dependency | Version | Details |
+|---|---|---|
+| Fluffy Mod Manager | — | — |
+| REFramework | — | — |
+
+## Config & Save Paths
+
+| Type | Path |
+|---|---|
+| Config | `.` |
 
 ## Special Features
 
 - **Deploy Hook** (`did-deploy`) — runs custom logic (e.g., notifications, metadata patching) every time mods are deployed.
-- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.) from Nexus Mods.
+- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
-- **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 
 ## How Mod Installation Works
 
@@ -82,16 +85,10 @@ User drops archive into Vortex
             └── install() returns copy instructions + setmodtype
                  └── Vortex stages files
                       └── User deploys
-                           └── Vortex symlinks/copies to game folder
+                           └── Vortex links/copies to game folder
                                 └── did-deploy fires → post-deploy logic runs
 ```
 
 ## Entry Point
 
-The extension is registered via:
-
-```js
-module.exports = { default: main };
-```
-
-The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.
+The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.
