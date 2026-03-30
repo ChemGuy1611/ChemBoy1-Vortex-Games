@@ -3,14 +3,19 @@
     "allow": [
       "WebSearch",
       "WebFetch(domain:steamdb.info)",
+      "WebFetch(domain:www.steamgriddb.com)",
       "WebFetch(domain:gogdb.org)",
       "WebFetch(domain:egdata.app)",
-      "WebFetch(domain:www.pcgamingwiki.com)",
-      "WebFetch(domain:www.github.com)",
-      "WebFetch(domain:store.epicgames.com)",
+      "WebFetch(domain:pcgamingwiki.com)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:github.io)",
+      "WebFetch(domain:github.com)",
+      "WebFetch(domain:epicgames.com)",
       "WebFetch(domain:gog.com)",
       "WebFetch(domain:xbox.com)",
-      "WebFetch(domain:www.nexusmods.com)"
+      "WebFetch(domain:nexusmods.com)",
+      "WebFetch(domain:npmjs.com)",
+      "Bash(python:*)"
     ]
   }
 }
