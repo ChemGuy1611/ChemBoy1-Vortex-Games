@@ -2,7 +2,7 @@
 Name: AC Shadows Vortex Extension
 Structure: Ubisoft AnvilToolkit & Forger Patch Manager
 Author: ChemBoy1
-Version: 0.2.0
+Version: 0.1.1
 Date: 2025-10-07
 ////////////////////////////////////////////////*/
 

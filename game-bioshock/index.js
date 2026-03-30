@@ -2,7 +2,7 @@
 Name: BioShock Remastered Vortex Extension
 Structure: UE2/3 TFC
 Author: ChemBoy1
-Version: 0.6.0
+Version: 0.6.1
 Date: 2025-11-12
 /////////////////////////////////////////*/
 

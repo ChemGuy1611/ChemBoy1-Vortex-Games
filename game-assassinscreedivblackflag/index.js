@@ -2,7 +2,7 @@
 Name: AC IV Black Flag Vortex Extension
 Structure: Ubisoft AnvilToolkit
 Author: ChemBoy1
-Version: 0.4.3
+Version: 0.4.2
 Date: 03/18/2025
 */
 

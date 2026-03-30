@@ -2,7 +2,7 @@
 Name: Metal Gear Solid Delta: Snake Eater Vortex Extension
 Structure: UE5 (static exe)
 Author: ChemBoy1
-Version: 0.1.0
+Version: 0.1.7
 Date: 2025-08-26
 //////////////////////////////////////////////////*/
 

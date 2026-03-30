@@ -2,7 +2,7 @@
 Name: Hades Vortex Extension
 Structure: 3rd-Party Mod Installer
 Author: ChemBoy1
-Version: 0.2.0
+Version: 0.2.1
 Date: 2025-09-22
 ////////////////////////////////*/
 
