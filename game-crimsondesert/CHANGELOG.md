@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.2.4] - 2026-03-29
+
+- Fixed: Better checks for Python installation when setting up Crimson Browser
+
 ## [0.2.3] - 2026-03-29
 
 - Added: Deployment notifications with buttons to run Crimson Browser and/or JSON Mod Manager

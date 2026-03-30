@@ -2,7 +2,7 @@
 
 ## Future Improvements (Not Yet Released)
 
-- Add???: Support for installing MelonLoader plugins. Need the compatibility loader for MelonLoader mods to work (<https://www.nexusmods.com/hollowknightsilksong/mods/44>) - there are very few MelonLoader mods.
+- Add???: Support for installing MelonLoader plugins. Need the compatibility loader for MelonLoader mods to work (<https://github.com/BepInEx/BepInEx.MelonLoader.Loader>) - there are very few MelonLoader mods.
 
 ## [0.3.0] - 2026-03-29
 

@@ -17,7 +17,7 @@ const { parseStringPromise } = require('xml2js');
 //const fsPromises = require('fs/promises'); //.rm() for recursive folder deletion
 //const fsExtra = require('fs-extra');
 const winapi = require('winapi-bindings');
-const { is } = require('bluebird');
+const semver = require('semver');
 //const turbowalk = require('turbowalk');
 
 /*const USER_HOME = util.getVortexPath("home");
@@ -334,12 +334,6 @@ const spec = {
       "priority": "high",
       "targetPath": path.join("{gamePath}", PATCH_MOD_PATH)
     }, //*/
-    {
-      "id": VORTEX_MOD_ID,
-      "name": VORTEX_MOD_NAME,
-      "priority": "high",
-      "targetPath": path.join("{gamePath}", VORTEX_MOD_PATH)
-    },
     {
       "id": ROOT_ID,
       "name": ROOT_NAME,
@@ -1231,6 +1225,7 @@ async function isBrowserInstalled(api, spec) {
 async function isPythonInstalled(api) {
   const version = PYTHON_MIN_VER;
   let keys = undefined;
+  let found = false;
   try {
     const buffer = winapi.WithRegOpen( //array of objects with values.type and values.key
       'HKEY_LOCAL_MACHINE',
@@ -1240,18 +1235,83 @@ async function isPythonInstalled(api) {
       }
     );
     if (!keys) {
-      return false; //assume not installed if key not found
+      try {
+        const buffer = winapi.WithRegOpen( //array of objects with values.type and values.key
+          'HKEY_LOCAL_USER',
+          'SOFTWARE\\Python\\PythonCore',
+          (hkey) => { //have to enum in the callback - https://github.com/Nexus-Mods/node-winapi-bindings/blob/master/index.d.ts
+            keys = winapi.RegEnumKeys(hkey); //array of objects with values.class, values.key, values.lastWritten
+          }
+        );
+        if (!keys) {
+          return false; //assume not installed if key not found
+        }
+        keys = keys.map(key => key.key); //map array to only keys
+        keys = keys.map(key => semver.coerce(key)); //convert to semver
+        log('info', `Python versions found: ${keys.join(', ')}`);
+        found = keys.some(key => (semver.gt(key, semver.coerce(version)))); //find any with version greater than minimum
+        let latest = undefined;
+        if (found) {
+          latest = keys.filter(key => (semver.gt(key, semver.coerce(version))));
+          latest = latest.sort((a,b) => parseFloat(a) - parseFloat(b))
+            .reverse(); //*/
+          latest = latest[0];
+          log('warn', `Python version found: ${latest}`);
+          return true;
+        } else {
+          return false;
+        }
+      } catch (err) { //*/
+        log('warn', `Python version check failed: ${err}`);
+        return false;
+      }
     }
     keys = keys.map(key => key.key); //map array to only keys
-    keys = keys.map(key => parseFloat(key)); //convert to number
+    keys = keys.map(key => semver.coerce(key)); //convert to semver
     log('info', `Python versions found: ${keys.join(', ')}`);
-    const found = keys.some(key => (key >= parseFloat(version))); //find entry starting with correct version number
+    found = keys.some(key => (semver.gt(key, semver.coerce(version)))); //find any with version greater than minimum
+    let latest = undefined;
     if (found) {
+      latest = keys.filter(key => (semver.gt(key, semver.coerce(version))));
+      latest = latest.sort((a,b) => parseFloat(a) - parseFloat(b))
+        .reverse(); //*/
+      latest = latest[0];
+      log('warn', `Python version found: ${latest}`);
       return true;
     } else {
-      return false;
+      try {
+        const buffer = winapi.WithRegOpen( //array of objects with values.type and values.key
+          'HKEY_LOCAL_USER',
+          'SOFTWARE\\Python\\PythonCore',
+          (hkey) => { //have to enum in the callback - https://github.com/Nexus-Mods/node-winapi-bindings/blob/master/index.d.ts
+            keys = winapi.RegEnumKeys(hkey); //array of objects with values.class, values.key, values.lastWritten
+          }
+        );
+        if (!keys) {
+          return false; //assume not installed if key not found
+        }
+        keys = keys.map(key => key.key); //map array to only keys
+        keys = keys.map(key => semver.coerce(key)); //convert to semver
+        log('info', `Python versions found: ${keys.join(', ')}`);
+        found = keys.some(key => (semver.gt(key, semver.coerce(version)))); //find any with version greater than minimum
+        let latest = undefined;
+        if (found) {
+          latest = keys.filter(key => (semver.gt(key, semver.coerce(version))));
+          latest = latest.sort((a,b) => parseFloat(a) - parseFloat(b))
+            .reverse(); //*/
+          latest = latest[0];
+          log('warn', `Python version found: ${latest}`);
+          return true;
+        } else {
+          return false;
+        }
+      } catch (err) { //*/
+        log('warn', `Python version check failed: ${err}`);
+        return false;
+      }
     }
   } catch (err) { //*/
+    log('warn', `Python version check failed: ${err}`);
     return false;
   }
 }
