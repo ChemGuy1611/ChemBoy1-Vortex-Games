@@ -1,48 +1,35 @@
-# Crimson Desert — Vortex Extension Explained
+# S.T.A.L.K.E.R. 2 \tHeart of Chornobyl — Vortex Extension Explained
 
 ## Overview
 
 ```
-///////////////////////////////////////////
-Name: Crimson Desert Vortex Extension
-Structure: Basic Game
+//////////////////////////////////////////////////////////
+Name: S.T.A.L.K.E.R. 2: Heart of Chornobyl Vortex Extension
+Structure: UE5 (Xbox-Integrated)
 Author: ChemBoy1
-Version: 0.2.3
-Date: 2026-03-29
-Notes:
-- Supports plugin mods and data mods with "00XX" folders
-- Supports Crimson Browser (manifest.json and files folder) and JSON Mod Manager (.json or "0036+" folder) mods
-///////////////////////////////////////////
+Version: 0.5.4
+Date: 2026-02-04
+//////////////////////////////////////////////////////////
 ```
 
 ## Key Identifiers
 
 | Property | Value |
 |---|---|
-| Game ID | `crimsondesert` |
-| Extension Version | 0.2.3 |
-| Steam App ID | 3321460 |
-| Epic App ID | 0230d0150e9f45d49dce401e1103c9fc |
-| GOG App ID | N/A |
-| Xbox App ID | XXX |
-| Executable | `CrimsonDesert.exe` |
-| Extension Page | https://www.nexusmods.com/site/mods/1746 |
-| PCGamingWiki | https://www.pcgamingwiki.com/wiki/Crimson_Desert |
+| Game ID | `stalker2heartofchornobyl` |
+| Extension Version | 0.5.4 |
+| Steam App ID | 1643320 |
+| Epic App ID | c04ba25a0e674b1ab3ea79e50c24a722 |
+| GOG App ID | 1529799785 |
+| Xbox App ID | GSCGameWorld.S.T.A.L.K.E.R.2HeartofChernobyl |
+| Executable | `N/A` |
+| Extension Page | https://www.nexusmods.com/site/mods/958 |
+| PCGamingWiki | https://www.pcgamingwiki.com/wiki/S.T.A.L.K.E.R._2:_Heart_of_Chornobyl |
 
 ## Feature Flags
 
 | Flag | Value | Meaning |
 |---|---|---|
-| `loadOrder` | false | No load ordering |
-| `hasLoader` | false | No mod loader |
-| `allowSymlinks` | true | Symlink deployment allowed |
-| `needsModInstaller` | true | Mods go through a custom installer |
-| `rootInstaller` | true | Root folder installer active |
-| `fallbackInstaller` | true | Catch-all fallback installer active |
-| `setupNotification` | false | No setup notification |
-| `hasUserIdFolder` | true | Save path includes a user ID subfolder |
-| `binariesInstaller` | true | Binaries (engine injector) installer active |
-| `debug` | false | Debug logging disabled |
 
 ## Mod Installers
 
@@ -50,18 +37,18 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 |---|---|
-| `LOADER_ID` | 25 |
-| `ROOT_ID` | 27 |
-| `TOOLS_ID` | 29 |
-| `BROWSER_MOD_ID` | 31 |
-| `PATCH_MOD_ID` | 33 |
-| ``${GAME_ID}-vortexmod`` | 33 |
-| ``${GAME_ID}-json`` | 35 |
-| `MOD_ID` | 35 |
-| `BINARIES_ID` | 37 |
-| `CONFIG_ID` | 33 |
-| `SAVE_ID` | 34 |
-| ``${GAME_ID}-fallback`` | 49 |
+| `MERGER_ID` | 25 |
+| `HERBATA_ID` | 27 |
+| `UE4SSCOMBO_ID` | 29 |
+| `LOGICMODS_ID` | 31 |
+| `HERBATAMOD_ID` | 33 |
+| `UE4SS_ID` | 37 |
+| `SCRIPTS_ID` | 39 |
+| `DLL_ID` | 41 |
+| `ROOT_ID` | 43 |
+| `CONFIG_ID` | 45 |
+| `SAVE_ID` | 47 |
+| `BINARIES_ID` | 49 |
 
 Each installer has a paired **test** function (detects the archive type) and an **install** function (produces `copy` instructions telling Vortex where to place each file).
 
@@ -70,17 +57,26 @@ Each installer has a paired **test** function (detects the archive type) and an 
 These tools appear in Vortex's Tools panel when this game is active:
 
 - Custom Launch
+- Custom Launch
+- Simple Mod Merger
+- Herbata
 
 ## Toolbar Actions
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- **Download ${BROWSER_NAME} + Setup**
-- **Run ${BROWSER_NAME} Setup**
-- **Download ${JSON_MANAGER_NAME}**
-- **Download ${SAVE_EDITOR_NAME}**
-- **Open Config File**
-- **Open Save Folder**
+- **Open Steam Workshop Mods Folder**
+- **Open Paks Folder**
+- **Open Binaries Folder**
+- **Open UE4SS Mods Folder**
+- **Open LogicMods Folder**
+- **Open GameLite (Herbata) Folder**
+- **Open Config Folder**
+- **Open Saves Folder**
+- **Download UE4SS**
+- **Download Simple Mod Merger**
+- **Open UE4SS Settings INI**
+- **Open UE4SS mods.json**
 - **Open PCGamingWiki Page**
 - **View Changelog**
 - **Submit Bug Report**

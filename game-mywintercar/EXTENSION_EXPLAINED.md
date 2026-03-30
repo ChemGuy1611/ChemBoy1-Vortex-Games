@@ -1,48 +1,34 @@
-# Crimson Desert — Vortex Extension Explained
+# My Winter Car — Vortex Extension Explained
 
 ## Overview
 
 ```
-///////////////////////////////////////////
-Name: Crimson Desert Vortex Extension
-Structure: Basic Game
+//////////////////////////////////////////
+Name: My Winter Car Vortex Extension
+Structure: Unity BepinEx/MelonLoader Hybrid + Custom Mod Loader (MSCLoader)
 Author: ChemBoy1
-Version: 0.2.3
-Date: 2026-03-29
-Notes:
-- Supports plugin mods and data mods with "00XX" folders
-- Supports Crimson Browser (manifest.json and files folder) and JSON Mod Manager (.json or "0036+" folder) mods
-///////////////////////////////////////////
+Version: 0.2.2
+Date: 2026-01-12
+//////////////////////////////////////////
 ```
 
 ## Key Identifiers
 
 | Property | Value |
 |---|---|
-| Game ID | `crimsondesert` |
-| Extension Version | 0.2.3 |
-| Steam App ID | 3321460 |
-| Epic App ID | 0230d0150e9f45d49dce401e1103c9fc |
+| Game ID | `mywintercar` |
+| Extension Version | 0.2.2 |
+| Steam App ID | 4164420 |
+| Epic App ID | N/A |
 | GOG App ID | N/A |
-| Xbox App ID | XXX |
-| Executable | `CrimsonDesert.exe` |
-| Extension Page | https://www.nexusmods.com/site/mods/1746 |
-| PCGamingWiki | https://www.pcgamingwiki.com/wiki/Crimson_Desert |
+| Xbox App ID | N/A |
+| Executable | `${GAME_STRING}.exe` |
+| PCGamingWiki | https://www.pcgamingwiki.com/wiki/My_Winter_Car |
 
 ## Feature Flags
 
 | Flag | Value | Meaning |
 |---|---|---|
-| `loadOrder` | false | No load ordering |
-| `hasLoader` | false | No mod loader |
-| `allowSymlinks` | true | Symlink deployment allowed |
-| `needsModInstaller` | true | Mods go through a custom installer |
-| `rootInstaller` | true | Root folder installer active |
-| `fallbackInstaller` | true | Catch-all fallback installer active |
-| `setupNotification` | false | No setup notification |
-| `hasUserIdFolder` | true | Save path includes a user ID subfolder |
-| `binariesInstaller` | true | Binaries (engine injector) installer active |
-| `debug` | false | Debug logging disabled |
 
 ## Mod Installers
 
@@ -50,17 +36,18 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 |---|---|
-| `LOADER_ID` | 25 |
-| `ROOT_ID` | 27 |
-| `TOOLS_ID` | 29 |
-| `BROWSER_MOD_ID` | 31 |
-| `PATCH_MOD_ID` | 33 |
-| ``${GAME_ID}-vortexmod`` | 33 |
-| ``${GAME_ID}-json`` | 35 |
-| `MOD_ID` | 35 |
-| `BINARIES_ID` | 37 |
-| `CONFIG_ID` | 33 |
-| `SAVE_ID` | 34 |
+| `MSCLOADER_ID` | 25 |
+| `BEPINEX_ID` | 26 |
+| `MELON_ID` | 27 |
+| `ROOT_ID` | 28 |
+| `BEPCFGMAN_ID` | 29 |
+| `MELONPREFMAN_ID` | 30 |
+| `ASSEMBLY_ID` | 31 |
+| ``${GAME_ID}-plugin`` | 33 |
+| `ASSETS_ID` | 37 |
+| `CUSTOM_ID` | 39 |
+| `SAVE_ID` | 47 |
+| `TEXTUREPACK_ID` | 48 |
 | ``${GAME_ID}-fallback`` | 49 |
 
 Each installer has a paired **test** function (detects the archive type) and an **install** function (produces `copy` instructions telling Vortex where to place each file).
@@ -70,20 +57,24 @@ Each installer has a paired **test** function (detects the archive type) and an 
 These tools appear in Vortex's Tools panel when this game is active:
 
 - Custom Launch
+- ${MSCLOADER_NAME} Installer
 
 ## Toolbar Actions
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- **Download ${BROWSER_NAME} + Setup**
-- **Run ${BROWSER_NAME} Setup**
-- **Download ${JSON_MANAGER_NAME}**
-- **Download ${SAVE_EDITOR_NAME}**
-- **Open Config File**
+- **Delete **
+- **Restore **
+- **Open Data Folder**
 - **Open Save Folder**
+- **Open BepInEx Config**
+- **Open BepInEx Log**
+- **Download BepInExConfigManager**
+- **Open MelonLoader Config**
+- **Open MelonLoader Log**
+- **Download MelonPreferencesManager**
 - **Open PCGamingWiki Page**
 - **View Changelog**
-- **Submit Bug Report**
 - **Open Downloads Folder**
 
 ## Special Features

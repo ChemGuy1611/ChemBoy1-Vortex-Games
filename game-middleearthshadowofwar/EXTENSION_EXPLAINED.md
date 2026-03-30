@@ -1,17 +1,14 @@
-# Crimson Desert — Vortex Extension Explained
+# Middle-earth: Shadow of War — Vortex Extension Explained
 
 ## Overview
 
 ```
 ///////////////////////////////////////////
-Name: Crimson Desert Vortex Extension
-Structure: Basic Game
+Name: Middle-earth: Shadow of War Vortex Extension
+Structure: Mod Loaders + Mods folder w/ LO support
 Author: ChemBoy1
-Version: 0.2.3
-Date: 2026-03-29
-Notes:
-- Supports plugin mods and data mods with "00XX" folders
-- Supports Crimson Browser (manifest.json and files folder) and JSON Mod Manager (.json or "0036+" folder) mods
+Version: 2.3.0
+Date: 2026-03-24
 ///////////////////////////////////////////
 ```
 
@@ -19,30 +16,20 @@ Notes:
 
 | Property | Value |
 |---|---|
-| Game ID | `crimsondesert` |
-| Extension Version | 0.2.3 |
-| Steam App ID | 3321460 |
-| Epic App ID | 0230d0150e9f45d49dce401e1103c9fc |
-| GOG App ID | N/A |
-| Xbox App ID | XXX |
-| Executable | `CrimsonDesert.exe` |
-| Extension Page | https://www.nexusmods.com/site/mods/1746 |
-| PCGamingWiki | https://www.pcgamingwiki.com/wiki/Crimson_Desert |
+| Game ID | `middleearthshadowofwar` |
+| Extension Version | 2.3.0 |
+| Steam App ID | 356190 |
+| Epic App ID | N/A |
+| GOG App ID | 1324471032 |
+| Xbox App ID | WarnerBros.Interactive.WB-Kraken |
+| Executable | `ShadowOfWar.exe` |
+| Extension Page | https://www.nexusmods.com/site/mods/375 |
+| PCGamingWiki | https://www.pcgamingwiki.com/wiki/Middle-earth:_Shadow_of_War |
 
 ## Feature Flags
 
 | Flag | Value | Meaning |
 |---|---|---|
-| `loadOrder` | false | No load ordering |
-| `hasLoader` | false | No mod loader |
-| `allowSymlinks` | true | Symlink deployment allowed |
-| `needsModInstaller` | true | Mods go through a custom installer |
-| `rootInstaller` | true | Root folder installer active |
-| `fallbackInstaller` | true | Catch-all fallback installer active |
-| `setupNotification` | false | No setup notification |
-| `hasUserIdFolder` | true | Save path includes a user ID subfolder |
-| `binariesInstaller` | true | Binaries (engine injector) installer active |
-| `debug` | false | Debug logging disabled |
 
 ## Mod Installers
 
@@ -50,17 +37,13 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 |---|---|
-| `LOADER_ID` | 25 |
-| `ROOT_ID` | 27 |
-| `TOOLS_ID` | 29 |
-| `BROWSER_MOD_ID` | 31 |
-| `PATCH_MOD_ID` | 33 |
-| ``${GAME_ID}-vortexmod`` | 33 |
-| ``${GAME_ID}-json`` | 35 |
-| `MOD_ID` | 35 |
-| `BINARIES_ID` | 37 |
-| `CONFIG_ID` | 33 |
-| `SAVE_ID` | 34 |
+| `PACKETLOADER_ID` | 25 |
+| `DLLLOADER_ID` | 27 |
+| `MODLOADER_ID` | 29 |
+| `MOD_ID` | 31 |
+| `PLUGINS_ID` | 33 |
+| `ROOT_ID` | 35 |
+| `CONFIG_ID` | 43 |
 | ``${GAME_ID}-fallback`` | 49 |
 
 Each installer has a paired **test** function (detects the archive type) and an **install** function (produces `copy` instructions telling Vortex where to place each file).
@@ -75,16 +58,15 @@ These tools appear in Vortex's Tools panel when this game is active:
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- **Download ${BROWSER_NAME} + Setup**
-- **Run ${BROWSER_NAME} Setup**
-- **Download ${JSON_MANAGER_NAME}**
-- **Download ${SAVE_EDITOR_NAME}**
-- **Open Config File**
-- **Open Save Folder**
+- **Open default.archcfg File**
+- **Open ${PACKETLOADER_INI}**
+- **Open Config / Save Folder**
+- **Download Middle-Earth-Mod-Loader**
+- **Get MEML Mods (GitHub)**
 - **Open PCGamingWiki Page**
 - **View Changelog**
-- **Submit Bug Report**
 - **Open Downloads Folder**
+- **Submit Bug Report**
 
 ## Special Features
 

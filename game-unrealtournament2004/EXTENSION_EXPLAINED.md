@@ -1,17 +1,14 @@
-# Crimson Desert — Vortex Extension Explained
+# Unreal Tournament 2004 — Vortex Extension Explained
 
 ## Overview
 
 ```
 ///////////////////////////////////////////
-Name: Crimson Desert Vortex Extension
+Name: Unreal Tournament 2004 Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.2.3
-Date: 2026-03-29
-Notes:
-- Supports plugin mods and data mods with "00XX" folders
-- Supports Crimson Browser (manifest.json and files folder) and JSON Mod Manager (.json or "0036+" folder) mods
+Version: 0.1.1
+Date: 2026-03-27
 ///////////////////////////////////////////
 ```
 
@@ -19,29 +16,24 @@ Notes:
 
 | Property | Value |
 |---|---|
-| Game ID | `crimsondesert` |
-| Extension Version | 0.2.3 |
-| Steam App ID | 3321460 |
-| Epic App ID | 0230d0150e9f45d49dce401e1103c9fc |
+| Game ID | `unrealtournament2004` |
+| Extension Version | 0.1.1 |
+| Steam App ID | N/A |
+| Epic App ID | N/A |
 | GOG App ID | N/A |
-| Xbox App ID | XXX |
-| Executable | `CrimsonDesert.exe` |
-| Extension Page | https://www.nexusmods.com/site/mods/1746 |
-| PCGamingWiki | https://www.pcgamingwiki.com/wiki/Crimson_Desert |
+| Xbox App ID | N/A |
+| Executable | `UT2004.exe` |
+| Extension Page | https://www.nexusmods.com/site/mods/1703 |
+| PCGamingWiki | https://www.pcgamingwiki.com/wiki/Unreal_Tournament_2004 |
 
 ## Feature Flags
 
 | Flag | Value | Meaning |
 |---|---|---|
-| `loadOrder` | false | No load ordering |
 | `hasLoader` | false | No mod loader |
 | `allowSymlinks` | true | Symlink deployment allowed |
-| `needsModInstaller` | true | Mods go through a custom installer |
-| `rootInstaller` | true | Root folder installer active |
 | `fallbackInstaller` | true | Catch-all fallback installer active |
 | `setupNotification` | false | No setup notification |
-| `hasUserIdFolder` | true | Save path includes a user ID subfolder |
-| `binariesInstaller` | true | Binaries (engine injector) installer active |
 | `debug` | false | Debug logging disabled |
 
 ## Mod Installers
@@ -50,17 +42,7 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 |---|---|
-| `LOADER_ID` | 25 |
-| `ROOT_ID` | 27 |
-| `TOOLS_ID` | 29 |
-| `BROWSER_MOD_ID` | 31 |
-| `PATCH_MOD_ID` | 33 |
-| ``${GAME_ID}-vortexmod`` | 33 |
-| ``${GAME_ID}-json`` | 35 |
-| `MOD_ID` | 35 |
-| `BINARIES_ID` | 37 |
-| `CONFIG_ID` | 33 |
-| `SAVE_ID` | 34 |
+| `MOD_ID` | 27 |
 | ``${GAME_ID}-fallback`` | 49 |
 
 Each installer has a paired **test** function (detects the archive type) and an **install** function (produces `copy` instructions telling Vortex where to place each file).
@@ -75,22 +57,21 @@ These tools appear in Vortex's Tools panel when this game is active:
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- **Download ${BROWSER_NAME} + Setup**
-- **Run ${BROWSER_NAME} Setup**
-- **Download ${JSON_MANAGER_NAME}**
-- **Download ${SAVE_EDITOR_NAME}**
-- **Open Config File**
+- **Download OldUnreal Patches (Browse)**
+- **Open OldUnreal Page**
+- **Open Engine Settings File**
+- **Open User Settings File**
 - **Open Save Folder**
 - **Open PCGamingWiki Page**
+- **Open Unreal Wiki Page**
+- **Open OldUnreal Page**
+- **Open ModDB Page**
 - **View Changelog**
 - **Submit Bug Report**
 - **Open Downloads Folder**
 
 ## Special Features
 
-- **Deploy Hook** (`did-deploy`) — runs custom logic (e.g., notifications, metadata patching) every time mods are deployed.
-- **Purge Hook** (`did-purge`) — runs custom logic when mods are purged.
-- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.) from Nexus Mods.
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
@@ -105,7 +86,6 @@ User drops archive into Vortex
                  └── Vortex stages files
                       └── User deploys
                            └── Vortex symlinks/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
 ```
 
 ## Entry Point

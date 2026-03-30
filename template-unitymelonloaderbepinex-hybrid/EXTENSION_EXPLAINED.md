@@ -1,48 +1,41 @@
-# Crimson Desert — Vortex Extension Explained
+# XXX — Vortex Extension Explained
 
 ## Overview
 
 ```
-///////////////////////////////////////////
-Name: Crimson Desert Vortex Extension
-Structure: Basic Game
+//////////////////////////////////////////
+Name: XXX Vortex Extension
+Structure: Unity BepinEx/MelonLoader/Custom Loader Hybrid
 Author: ChemBoy1
-Version: 0.2.3
-Date: 2026-03-29
+Version: 0.1.0
+Date: 2026-XX-XX
 Notes:
-- Supports plugin mods and data mods with "00XX" folders
-- Supports Crimson Browser (manifest.json and files folder) and JSON Mod Manager (.json or "0036+" folder) mods
-///////////////////////////////////////////
+-
+//////////////////////////////////////////
 ```
 
 ## Key Identifiers
 
 | Property | Value |
 |---|---|
-| Game ID | `crimsondesert` |
-| Extension Version | 0.2.3 |
-| Steam App ID | 3321460 |
-| Epic App ID | 0230d0150e9f45d49dce401e1103c9fc |
-| GOG App ID | N/A |
+| Game ID | `XXX` |
+| Extension Version | 0.1.0 |
+| Steam App ID | XXX |
+| Epic App ID | XXX |
+| GOG App ID | XXX |
 | Xbox App ID | XXX |
-| Executable | `CrimsonDesert.exe` |
-| Extension Page | https://www.nexusmods.com/site/mods/1746 |
-| PCGamingWiki | https://www.pcgamingwiki.com/wiki/Crimson_Desert |
+| Executable | `${GAME_STRING}.exe` |
+| Extension Page | XXX |
+| PCGamingWiki | XXX |
 
 ## Feature Flags
 
 | Flag | Value | Meaning |
 |---|---|---|
-| `loadOrder` | false | No load ordering |
-| `hasLoader` | false | No mod loader |
 | `allowSymlinks` | true | Symlink deployment allowed |
-| `needsModInstaller` | true | Mods go through a custom installer |
-| `rootInstaller` | true | Root folder installer active |
 | `fallbackInstaller` | true | Catch-all fallback installer active |
 | `setupNotification` | false | No setup notification |
-| `hasUserIdFolder` | true | Save path includes a user ID subfolder |
-| `binariesInstaller` | true | Binaries (engine injector) installer active |
-| `debug` | false | Debug logging disabled |
+| `hasUserIdFolder` | false | No user ID subfolder |
 
 ## Mod Installers
 
@@ -50,37 +43,37 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 |---|---|
-| `LOADER_ID` | 25 |
-| `ROOT_ID` | 27 |
-| `TOOLS_ID` | 29 |
-| `BROWSER_MOD_ID` | 31 |
-| `PATCH_MOD_ID` | 33 |
-| ``${GAME_ID}-vortexmod`` | 33 |
-| ``${GAME_ID}-json`` | 35 |
-| `MOD_ID` | 35 |
-| `BINARIES_ID` | 37 |
-| `CONFIG_ID` | 33 |
-| `SAVE_ID` | 34 |
+| `CUSTOMLOADER_ID` | 25 |
+| `BEPINEX_ID` | 26 |
+| `MELON_ID` | 27 |
+| `ROOT_ID` | 28 |
+| `BEPCFGMAN_ID` | 29 |
+| `MELONPREFMAN_ID` | 30 |
+| `ASSEMBLY_ID` | 31 |
+| ``${GAME_ID}-plugin`` | 33 |
+| `ASSETS_ID` | 37 |
+| `CUSTOM_ID` | 39 |
+| `SAVE_ID` | 47 |
 | ``${GAME_ID}-fallback`` | 49 |
 
 Each installer has a paired **test** function (detects the archive type) and an **install** function (produces `copy` instructions telling Vortex where to place each file).
-
-## Registered Tools
-
-These tools appear in Vortex's Tools panel when this game is active:
-
-- Custom Launch
 
 ## Toolbar Actions
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- **Download ${BROWSER_NAME} + Setup**
-- **Run ${BROWSER_NAME} Setup**
-- **Download ${JSON_MANAGER_NAME}**
-- **Download ${SAVE_EDITOR_NAME}**
-- **Open Config File**
+- **Download Latest BepInEx BE (Browse)**
+- **Download BepInExConfigManager**
+- **Download Latest MelonLoader**
+- **Download MelonPreferencesManager**
+- **Open Data Folder**
 - **Open Save Folder**
+- **Open Config Folder**
+- **Open Config (Registry)**
+- **Open BepInEx Config**
+- **Open BepInEx Log**
+- **Open MelonLoader Config**
+- **Open MelonLoader Log**
 - **Open PCGamingWiki Page**
 - **View Changelog**
 - **Submit Bug Report**
