@@ -7,17 +7,19 @@ Date: 2026-03-29
 Notes:
 - Supports plugin mods and data mods with "00XX" folders
 - Supports Crimson Browser (manifest.json and files folder) and JSON Mod Manager (.json or "0036+" folder) mods
+- FUTURE: May be able to update to use Vortex LO ("0036"+ folders and patch metadata on deploy)
+    - Would not handle .json patches without data files. Still need JSON Manager for that.
 ///////////////////////////////////////////*/
- 
+
 //Import libraries
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 const { parseStringPromise } = require('xml2js');
-//const fsPromises = require('fs/promises'); //.rm() for recursive folder deletion
-//const fsExtra = require('fs-extra');
 const winapi = require('winapi-bindings');
 const semver = require('semver');
+//const fsPromises = require('fs/promises'); //.rm() for recursive folder deletion
+//const fsExtra = require('fs-extra');
 //const turbowalk = require('turbowalk');
 
 /*const USER_HOME = util.getVortexPath("home");

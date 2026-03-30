@@ -2,8 +2,8 @@
 Name: CloverPit Vortex Extension
 Structure: Unity BepinEx/MelonLoader Hybrid (Mono & x64)
 Author: ChemBoy1
-Version: 0.1.1
-Date: 2025-11-24
+Version: 0.1.2
+Date: 2026-03-30
 //////////////////////////////////////////*/
 
 //Import libraries

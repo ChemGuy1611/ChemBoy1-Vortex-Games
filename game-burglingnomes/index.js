@@ -2,8 +2,8 @@
 Name: Burglin' Gnomes Vortex Extension
 Structure: Unity BepinEx/MelonLoader Hybrid
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2026-02-18
+Version: 0.1.1
+Date: 2026-03-30
 //////////////////////////////////////////*/
 
 //Import libraries

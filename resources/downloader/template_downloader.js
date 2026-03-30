@@ -38,7 +38,8 @@ async function resolveVersionByFile(api, requirement) {
         if (match !== null && match !== undefined && match[0]) {
             const checkFile = path.join(file.localPath, requirement.versionFile);
             version = exeVersion.getProductVersion(checkFile);
-            log('warn', `Resolved version ${version} from file ${file.localPath}`);
+            version = semver.coerce(version);
+            log('warn', `Resolved version ${version} from file ${checkFile}`);
         }//
         if ((match === null || match === void 0 ? void 0 : match[0]) && semver.gt(version, prev)) {
             prev = version;

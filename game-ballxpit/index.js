@@ -2,8 +2,8 @@
 Name: BALL x PIT Vortex Extension
 Structure: Unity BepinEx/MelonLoader Hybrid
 Author: ChemBoy1
-Version: 0.1.1
-Date: 2026-03-15
+Version: 0.1.2
+Date: 2026-03-30
 //////////////////////////////////////////*/
 
 //Import libraries
