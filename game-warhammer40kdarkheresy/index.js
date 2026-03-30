@@ -2,7 +2,7 @@
 Name: Warhammer 40,000: Dark Heresy Vortex Extension
 Structure: Game with Integrated Mod Loader (UnityModManager)
 Author: ChemBoy1
-Version: 0.2.0
+Version: 0.1.0
 Date: 2026-XX-XX
 ///////////////////////////////////////////*/
 
