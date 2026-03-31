@@ -2,8 +2,8 @@
 Name: Resident Evil 7 Biohazard Vortex Extension
 Structure: 3rd Party Mod Manager (Fluffy)
 Author: ChemBoy1
-Version: 0.3.1
-Date: 2026-03-30
+Version: 0.3.0
+Date: 2026-03-21
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -14,8 +14,8 @@ const template = require('string-template');
 //Specify all information about the game
 const STEAMAPP_ID = "418370";
 const STEAMAPP_ID_DEMO = "530620";
-const XBOXAPP_ID = "XXX";
-const XBOXEXECNAME = "XXX";
+const XBOXAPP_ID = "F024294D.RESIDENTEVIL7biohazard"; //there is an xbox version, but it will never be moddable because it is in protected WindowsApps folder.
+const XBOXEXECNAME = "runtime";
 const GAME_ID = "residentevil7";
 const GAME_NAME = "Resident Evil 7";
 const GAME_NAME_SHORT = "RE7";
@@ -137,7 +137,7 @@ const spec = {
     "ids": [
       STEAMAPP_ID,
       STEAMAPP_ID_DEMO,
-      XBOXAPP_ID,
+      //XBOXAPP_ID,
     ],
     "names": []
   }
@@ -241,7 +241,7 @@ async function requiresLauncher(gamePath, store) {
           launcher: 'steam',
       });
   }
-  if (store === 'xbox') {
+  /*if (store === 'xbox') {
     return Promise.resolve({
       launcher: 'xbox',
       addInfo: {
@@ -265,9 +265,9 @@ async function requiresLauncher(gamePath, store) {
 
 //Get correct executable for game version
 function getExecutable(discoveryPath) {
-  if (statCheckSync(discoveryPath, EXEC_XBOX)) {
+  /*if (statCheckSync(discoveryPath, EXEC_XBOX)) {
     return EXEC_XBOX;
-  };
+  }; //*/
   if (statCheckSync(discoveryPath, EXEC_DEMO)) {
     FLUFFYMOD_PATH = FLUFFYMOD_PATH_DEMO;
     PRESET_PATH = PRESET_PATH_DEMO;
@@ -288,10 +288,10 @@ function getModPath(discoveryPath) {
 
 //Get correct game version
 async function setGameVersion(gamePath) {
-  if (await statCheckAsync(gamePath, EXEC_XBOX)) {
+  /*if (await statCheckAsync(gamePath, EXEC_XBOX)) {
     GAME_VERSION = 'xbox';
     return GAME_VERSION;
-  } 
+  } //*/
   if (await statCheckAsync(gamePath, EXEC_DEMO)) {
     GAME_VERSION = 'demo';
     FLUFFYMOD_PATH = FLUFFYMOD_PATH_DEMO;
