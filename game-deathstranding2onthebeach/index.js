@@ -3,7 +3,7 @@ Name: DEATH STRANDING 2: ON THE BEACH Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2026-03-30
+Date: 2026-03-31
 Notes:
 - 
 ///////////////////////////////////////////*/
@@ -26,11 +26,11 @@ const DOCUMENTS = util.getVortexPath("documents");
 
 //Specify all the information about the game
 const GAME_ID = "deathstranding2onthebeach";
-const STEAMAPP_ID = "3280350";
+const STEAMAPP_ID = "3280350"; // https://steamdb.info/app/3280350/
 const STEAMAPP_ID_DEMO = null;
-const EPICAPP_ID = "0099fdb24c5442b09486de5feb33aa8d";
+const EPICAPP_ID = "0099fdb24c5442b09486de5feb33aa8d"; // https://store.epicgames.com/en-US/p/death-stranding-2-on-the-beach-7773ec
 const GOGAPP_ID = null;
-const XBOXAPP_ID = "XXX";
+const XBOXAPP_ID = null;
 const XBOXEXECNAME = "XXX";
 const XBOX_PUB_ID = "XXX"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID]; // UPDATE THIS WITH ALL VALID IDs

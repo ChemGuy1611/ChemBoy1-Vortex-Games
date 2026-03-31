@@ -1,9 +1,9 @@
 /*//////////////////////////////////////////
-Name: XXX Vortex Extension
+Name: Prodeus Vortex Extension
 Structure: Unity BepinEx/MelonLoader/Custom Loader Hybrid
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2026-XX-XX
+Date: 2026-03-31
 Notes:
 - 
 //////////////////////////////////////////*/
@@ -29,17 +29,17 @@ const LOCALLOW = path.join(USER_HOME, 'AppData', 'LocalLow');
 const LOCALAPPDATA = util.getVortexPath("localAppData");
 
 //Specify all the information about the game
-const GAME_ID = "XXX";
-const STEAMAPP_ID = "XXX";
-const STEAMAPP_ID_DEMO = "XXX";
+const GAME_ID = "prodeus";
+const STEAMAPP_ID = "964800"; // https://steamdb.info/app/964800/
+const STEAMAPP_ID_DEMO = null;
 const EPICAPP_ID = "XXX";
-const GOGAPP_ID = "XXX";
+const GOGAPP_ID = null;
 const XBOXAPP_ID = "XXX";
 const XBOXEXECNAME = "Game";
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
-const GAME_NAME = "XXX";
-const GAME_NAME_SHORT = "XXX";
+const GAME_NAME = "Prodeus";
+const GAME_NAME_SHORT = "Prodeus";
 const GAME_STRING = "XXX"; //string for exe and data folder (seem to always match)
 const GAME_STRING_ALT = GAME_STRING; //CHANGE THIS IF IT DOESN'T MATCH
 const EXEC = `${GAME_STRING}.exe`;
@@ -48,7 +48,7 @@ const EXEC_GOG = EXEC;
 const EXEC_DEMO = EXEC;
 const EXEC_XBOX = 'gamelaunchhelper.exe';
 const EXEC_ALT = `${GAME_STRING_ALT}.exe`;
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Prodeus";
 const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
 
 //feature toggles
@@ -80,7 +80,7 @@ const VER_SPLIT = ' '; //split character for the Version.info file - typically a
 
 const DEV_REGSTRING = "XXX"; //developer name
 const GAME_REGSTRING = "XXX"; //game name
-const XBOX_PUB_ID = "XXX"; //string after "ID_"
+const XBOX_SAVE_STRING = "XXX"; //string after "ID_"
 const CONFIG_FOLDERNAME = "XXX";
 const SAVE_FOLDERNAME = "XXX";
 const hasUserIdFolder = false; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
@@ -137,7 +137,7 @@ if (hasUserIdFolder) {
 const CONFIG_PATH = path.join(CONFIG_FOLDER, USERID_FOLDER, CONFIG_FOLDERNAME);
 const CONFIG_FILES = ['settings.json'];
 const SAVE_PATH_DEFAULT = path.join(LOCALLOW, DEV_REGSTRING, GAME_REGSTRING, USERID_FOLDER, SAVE_FOLDERNAME);
-const SAVE_PATH_XBOX = path.join(LOCALAPPDATA, "Packages", `${XBOXAPP_ID}_${XBOX_PUB_ID}`, "SystemAppData", "wgs"); //XBOX Version
+const SAVE_PATH_XBOX = path.join(LOCALAPPDATA, "Packages", `${XBOXAPP_ID}_${XBOX_SAVE_STRING}`, "SystemAppData", "wgs"); //XBOX Version
 let SAVE_PATH = SAVE_PATH_DEFAULT;
 const SAVE_FILES = ['XXX.XXX'];
 const SAVE_EXTS = [".XXX"];

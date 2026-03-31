@@ -4,6 +4,7 @@
  * and writes an EXTENSION_EXPLAINED.md describing how the extension works.
  *
  * Run with:  node generate_explained.js
+ *            node generate_explained.js --game game-thelongdark
  */
 
 const fs   = require('fs');
@@ -914,13 +915,27 @@ function buildMarkdown(dirName, src) {
 
 // ── main ──────────────────────────────────────────────────────────────────────
 
+const gameArg = (() => {
+  const idx = process.argv.indexOf('--game');
+  return idx !== -1 ? process.argv[idx + 1] : null;
+})();
+
 const entries = fs.readdirSync(ROOT, { withFileTypes: true });
 const extDirs = entries
   .filter(e => e.isDirectory() && (e.name.startsWith('game-') || e.name.startsWith('template-')))
   .map(e => e.name)
-  .sort();
+  .sort()
+  .filter(name => !gameArg || name === gameArg);
 
-console.log(`Found ${extDirs.length} extension directories.\n`);
+if (gameArg) {
+  if (extDirs.length === 0) {
+    console.error(`Error: directory "${gameArg}" not found.`);
+    process.exit(1);
+  }
+  console.log(`Processing single extension: ${gameArg}\n`);
+} else {
+  console.log(`Found ${extDirs.length} extension directories.\n`);
+}
 
 let created = 0;
 let skipped = 0;

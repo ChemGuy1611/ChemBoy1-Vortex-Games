@@ -35,6 +35,7 @@ import json
 import time
 import shutil
 import argparse
+import subprocess
 import urllib.request
 import urllib.parse
 from datetime import date
@@ -107,18 +108,50 @@ def steam_appdetails(appid):
     return None
 
 
-def get_exec_name(steam_data):
-    """Extract the primary executable filename from Steam launch options."""
+def scrape_steamdb_info(appid):
+    """Scrape steamdb.info/app/{appid}/info/ once. Returns dict with installdir and
+    launch executables. Called once in create_extension() and shared across helpers."""
+    result = {'installdir': None, 'launch_exes': []}
+    try:
+        html = http_get(f"https://steamdb.info/app/{appid}/info/")
+        m = re.search(r"installdir\s*</td>\s*<td[^>]*>\s*([^<]+?)\s*</td>", html, re.IGNORECASE)
+        if m:
+            result['installdir'] = m.group(1).strip()
+        exes = re.findall(r'executable\s*</td>\s*<td[^>]*>\s*([^<]+?)\s*</td>', html, re.IGNORECASE)
+        for exe in exes:
+            exe = exe.strip().replace("\\", "/")
+            if exe and exe.lower().endswith(".exe"):
+                parts = exe.split("/")
+                result['launch_exes'].append({'filename': parts[-1], 'dir_parts': parts[:-1]})
+    except Exception as e:
+        print(f"    SteamDB info page error: {e}")
+    return result
+
+
+def get_exec_info(steam_data, steamdb_data):
+    """Extract the primary executable filename and directory parts.
+    Returns (exec_filename, dir_parts) or (None, []).
+
+    Method 1: Parse Steam launch options for the full exe path.
+    Method 2: Use launch executables from the SteamDB info page scrape."""
+    # Method 1: Steam launch options (most reliable — full path available)
     launch = (steam_data or {}).get("launch", [])
-    # Sort: 'default' type first, skip VR/tool categories
     for entry in sorted(launch, key=lambda x: 0 if x.get("type") == "default" else 1):
         cat = entry.get("category", "")
         if "vr" in cat.lower() or "tool" in cat.lower():
             continue
-        exe = entry.get("executable", "")
+        exe = entry.get("executable", "").replace("\\", "/")
         if exe:
-            return os.path.basename(exe.replace("\\", "/"))
-    return None
+            parts = exe.split("/")
+            return parts[-1], parts[:-1] if len(parts) > 1 else []
+
+    # Method 2: SteamDB launch executables
+    exes = (steamdb_data or {}).get("launch_exes", [])
+    if exes:
+        e = exes[0]
+        return e['filename'], e['dir_parts']
+
+    return None, []
 
 
 def get_demo_appid(steam_data):
@@ -130,13 +163,11 @@ def get_demo_appid(steam_data):
     return None
 
 
-def get_epic_code_name(steam_data, appid):
-    """Try to find the Unreal Engine project code name (EPIC_CODE_NAME).
-    This is the folder that contains both the Binaries/ and Content/ subfolders.
+def get_epic_code_name(steam_data, steamdb_data):
+    """Find the Unreal Engine project code name (folder containing Binaries/ and Content/).
 
-    Method 1: Parse Steam launch executable paths for a folder before /Binaries/.
-      e.g. 'ProjectName/Binaries/Win64/Game.exe' -> 'ProjectName'
-    Method 2: Scrape the installdir from the steamdb.info app info page.
+    Method 1: Parse Steam launch executable paths for ([^/]+)/Binaries/ pattern.
+    Method 2: Use the installdir from the already-scraped SteamDB info page.
     Returns the code name string, or None if not found."""
 
     # Method 1: launch executable path contains folder structure
@@ -146,16 +177,10 @@ def get_epic_code_name(steam_data, appid):
         if m:
             return m.group(1)
 
-    # Method 2: installdir from steamdb.info (often matches the code name)
-    try:
-        html = http_get(f"https://steamdb.info/app/{appid}/info/")
-        m = re.search(r"installdir\s*</td>\s*<td[^>]*>\s*([^<]+?)\s*</td>", html, re.IGNORECASE)
-        if m:
-            val = m.group(1).strip()
-            if val:
-                return val
-    except Exception:
-        pass
+    # Method 2: installdir from SteamDB (already scraped, no extra request)
+    installdir = (steamdb_data or {}).get("installdir")
+    if installdir:
+        return installdir
 
     return None
 
@@ -198,6 +223,34 @@ def steam_icon_search(appid, game_name):
 
 # ── Store lookups ─────────────────────────────────────────────────────────────
 
+_nexus_games_cache = None
+
+def lookup_nexus_domain(game_name, api_key):
+    """Look up the Nexus Mods domain name for a game using the v1 games list.
+    Fetches all games once and caches the result for the session.
+    Uses startswith matching to avoid false positives from sequels/subtitles.
+    Returns the domain_name string, or None if not found."""
+    global _nexus_games_cache
+    if not api_key:
+        return None
+    try:
+        if _nexus_games_cache is None:
+            req = urllib.request.Request(
+                "https://api.nexusmods.com/v1/games.json?include_unapproved=false",
+                headers={"apikey": api_key, "User-Agent": "Mozilla/5.0", "Accept": "application/json"}
+            )
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                _nexus_games_cache = json.loads(resp.read())
+        name_lower = game_name.lower()
+        for game in _nexus_games_cache:
+            t = game.get("name", "").lower()
+            if t == name_lower or t.startswith(name_lower) or name_lower.startswith(t):
+                return game["domain_name"]
+    except Exception as e:
+        print(f"    Nexus domain lookup error: {e}")
+    return None
+
+
 def lookup_gog(game_name):
     """Search GOG catalog for a matching game. Returns GOG ID string or None.
     Only returns a result when the title genuinely matches — never falls back
@@ -219,22 +272,25 @@ def lookup_gog(game_name):
 
 def check_epic(game_name):
     """Check whether the game has a page on the Epic Games Store.
-    Returns True if found (EPICAPP_ID left as XXX for manual entry),
-    False if not found (EPICAPP_ID set to null).
-    Derives a URL slug from the game name and checks for a 404."""
+    Returns (found: bool, url: str | None).
+    found=True → EPICAPP_ID left as XXX for manual entry.
+    found=False → EPICAPP_ID set to null."""
     slug = re.sub(r"[^a-z0-9]+", "-", game_name.lower()).strip("-")
     url = f"https://store.epicgames.com/en-US/p/{slug}"
     try:
-        http_get(url)
-        return True
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            final_url = resp.geturl()
+        return True, final_url
     except urllib.error.HTTPError as e:
-        return e.code != 404
+        found = e.code != 404
+        return found, url if found else None
     except Exception:
-        return True  # Network error — be conservative, leave as XXX
+        return True, url  # Network error — be conservative, leave as XXX
 
 
 def lookup_pcgamingwiki(game_name):
-    """Search PCGamingWiki and return the page URL or None."""
+    """Search PCGamingWiki and return (page_url, page_title) or (None, None)."""
     url = (
         "https://www.pcgamingwiki.com/w/api.php"
         f"?action=query&list=search&srsearch={urllib.parse.quote(game_name)}"
@@ -244,12 +300,64 @@ def lookup_pcgamingwiki(game_name):
         data = json.loads(http_get(url))
         pages = data.get("query", {}).get("search", [])
         if pages:
-            title = pages[0]["title"]
+            # Prefer a result whose title closely matches the game name over an unrelated first result
+            name_lower = game_name.lower()
+            title = pages[0]["title"]  # default to first result
+            for page in pages:
+                t = page["title"].lower()
+                if t == name_lower or t.startswith(name_lower) or name_lower.startswith(t):
+                    title = page["title"]
+                    break
             slug = urllib.parse.quote(title.replace(" ", "_"))
-            return f"https://www.pcgamingwiki.com/wiki/{slug}"
+            return f"https://www.pcgamingwiki.com/wiki/{slug}", title
     except Exception as e:
         print(f"    PCGamingWiki lookup error: {e}")
-    return None
+    return None, None
+
+
+def fetch_pcgw_availability(page_title):
+    """Fetch PCGamingWiki page wikitext and check the Availability section for store presence.
+    Returns dict: {'xbox': bool}."""
+    result = {'xbox': False, 'xbox_url': None, 'epic_url': None}
+    if not page_title:
+        return result
+    try:
+        url = (
+            "https://www.pcgamingwiki.com/w/api.php"
+            f"?action=parse&page={urllib.parse.quote(page_title)}"
+            "&prop=wikitext&format=json"
+        )
+        data = json.loads(http_get(url))
+        wikitext = data.get("parse", {}).get("wikitext", {}).get("*", "")
+        # Follow redirect if the title resolved to a redirect page
+        if wikitext.strip().startswith("#REDIRECT"):
+            m_redirect = re.search(r'#REDIRECT\s*\[\[(.+?)\]\]', wikitext, re.IGNORECASE)
+            if m_redirect:
+                redirect_title = m_redirect.group(1).strip()
+                url = (
+                    "https://www.pcgamingwiki.com/w/api.php"
+                    f"?action=parse&page={urllib.parse.quote(redirect_title)}"
+                    "&prop=wikitext&format=json"
+                )
+                data = json.loads(http_get(url))
+                wikitext = data.get("parse", {}).get("wikitext", {}).get("*", "")
+        if re.search(r'microsoft\s*store|xbox\s*(game\s*pass|store|app)', wikitext, re.IGNORECASE):
+            result['xbox'] = True
+        m_xbox = re.search(
+            r'\{\{Availability/row\|\s*Microsoft Store\s*\|\s*([^|{}\n]+?)\s*\|',
+            wikitext, re.IGNORECASE
+        )
+        if m_xbox:
+            result['xbox_url'] = f"https://apps.microsoft.com/detail/{m_xbox.group(1).strip()}"
+        m = re.search(
+            r'\{\{Availability/row\|\s*(?:Epic Games Store|EGS)\s*\|\s*([^|{}\n]+?)\s*\|',
+            wikitext, re.IGNORECASE
+        )
+        if m:
+            result['epic_url'] = f"https://store.epicgames.com/en-US/p/{m.group(1).strip()}"
+    except Exception as e:
+        print(f"    PCGamingWiki availability error: {e}")
+    return result
 
 
 # ── Assets ────────────────────────────────────────────────────────────────────
@@ -351,7 +459,7 @@ def sub(src, var_name, value):
     Only targets lines where the RHS is exactly "XXX" or 'XXX'.
     Lines already set to null or a real value are untouched.
     """
-    pattern = rf'((?:const|let)\s+{re.escape(var_name)}\s*=\s*)["\']XXX["\']'
+    pattern = rf'((?:const|let)\s+{re.escape(var_name)}\s*=\s*)["\']XXX(?:\.exe)?["\']'
     if value is None:
         return re.sub(pattern, r"\1null", src)
     escaped = value.replace("\\", "\\\\")
@@ -377,15 +485,43 @@ def apply_substitutions(src, fields):
     return src
 
 
-def update_discovery_ids(src, gog_id, epic_found):
+def add_line_comment(src, var_name, comment):
+    """Add or replace the trailing // comment on the const/let VAR_NAME = ...; line."""
+    pattern = rf'((?:const|let)\s+{re.escape(var_name)}\s*=[^;\n]*;?)[ \t]*(?://[^\n]*)?\n'
+    return re.sub(pattern, rf'\1 // {comment}\n', src)
+
+
+def sub_binaries_path(src, dir_parts):
+    """Replace BINARIES_PATH = path.join('.') with the actual path from dir_parts.
+    Only acts when dir_parts is non-empty (exe is in a subdirectory)."""
+    if not dir_parts:
+        return src
+    args = ", ".join(f'"{p}"' for p in dir_parts)
+    return re.sub(
+        r"(const\s+BINARIES_PATH\s*=\s*)path\.join\s*\(\s*['\"]\.['\"]\s*\)",
+        rf'\1path.join({args})',
+        src
+    )
+
+
+def sub_toggle(src, toggle_name, value):
+    """Set a boolean feature toggle (const NAME = false/true;) to the given value.
+    Only acts if the toggle currently holds the opposite value."""
+    val_str = "true" if value else "false"
+    opposite = "false" if value else "true"
+    pattern = rf'(const\s+{re.escape(toggle_name)}\s*=\s*){re.escape(opposite)}(\s*;)'
+    return re.sub(pattern, rf'\g<1>{val_str}\2', src)
+
+
+def update_discovery_ids(src, gog_id, demo_appid):
     """Update DISCOVERY_IDS_ACTIVE to include all found store IDs.
-    Always includes STEAMAPP_ID. Adds GOGAPP_ID if GOG found, EPICAPP_ID if
-    Epic found (still XXX for user to fill in, but the variable ref is wired in)."""
+    Always includes STEAMAPP_ID. Adds STEAMAPP_ID_DEMO if a demo was found,
+    GOGAPP_ID if GOG was found."""
     ids = ["STEAMAPP_ID"]
+    if demo_appid:
+        ids.append("STEAMAPP_ID_DEMO")
     if gog_id:
         ids.append("GOGAPP_ID")
-    if epic_found:
-        ids.append("EPICAPP_ID")
     array_str = ", ".join(ids)
     return re.sub(
         r'(const\s+DISCOVERY_IDS_ACTIVE\s*=\s*\[)[^\]]*(\])',
@@ -420,6 +556,28 @@ def edit_changelog(path, today):
 
 def create_extension(template_name, game_input, force=False):
     sgdb_key = os.environ.get("STEAMGRIDDB_API_KEY")
+    if not sgdb_key:
+        try:
+            from winreg import OpenKey, QueryValueEx, HKEY_CURRENT_USER
+            with OpenKey(HKEY_CURRENT_USER, "Environment") as reg_key:
+                sgdb_key, _ = QueryValueEx(reg_key, "STEAMGRIDDB_API_KEY")
+        except Exception:
+            pass
+    nexus_key = os.environ.get("NEXUS_API_KEY")
+    if not nexus_key:
+        try:
+            from winreg import OpenKey, QueryValueEx, HKEY_CURRENT_USER
+            with OpenKey(HKEY_CURRENT_USER, "Environment") as reg_key:
+                nexus_key, _ = QueryValueEx(reg_key, "NEXUS_API_KEY")
+        except Exception:
+            pass
+    if not nexus_key:
+        try:
+            from winreg import OpenKey, QueryValueEx, HKEY_LOCAL_MACHINE
+            with OpenKey(HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\Session Manager\Environment") as reg_key:
+                nexus_key, _ = QueryValueEx(reg_key, "NEXUS_API_KEY")
+        except Exception:
+            pass
     today = date.today().strftime("%Y-%m-%d")
 
     # ── 1. Resolve Steam ID and canonical name ────────────────────────────────
@@ -440,8 +598,13 @@ def create_extension(template_name, game_input, force=False):
     print(f"  Name     : {game_name}")
     print(f"  Steam ID : {appid}")
 
-    game_id = derive_game_id(game_name)
-    print(f"  Game ID  : {game_id}")
+    nexus_domain = lookup_nexus_domain(game_name, nexus_key)
+    if nexus_domain:
+        game_id = nexus_domain
+        print(f"  Game ID  : {game_id} (from Nexus Mods)")
+    else:
+        game_id = derive_game_id(game_name)
+        print(f"  Game ID  : {game_id} (derived — verify Nexus domain manually)")
 
     # ── 2. Check destination ──────────────────────────────────────────────────
     dest = os.path.join(REPO_ROOT, f"game-{game_id}")
@@ -459,24 +622,32 @@ def create_extension(template_name, game_input, force=False):
     gog_id = lookup_gog(game_name)
     print(f"  GOG      : {gog_id or 'not found'}")
     time.sleep(0.3)
-    epic_found = check_epic(game_name)
+    epic_found, epic_url = check_epic(game_name)
     print(f"  Epic     : {'found (set ID manually)' if epic_found else 'not found'}")
 
-    # ── 4. Executable, demo ID, and UE code name ─────────────────────────────
-    exec_name = get_exec_name(steam_data)
-    game_string = exec_name.replace(".exe", "").replace(".EXE", "") if exec_name else None
+    # ── 4. SteamDB data, executable, demo ID, and UE code name ───────────────
+    print("\n[SteamDB]")
+    time.sleep(0.3)
+    steamdb_data = scrape_steamdb_info(appid)
+    exec_filename, dir_parts = get_exec_info(steam_data, steamdb_data)
+    game_string = exec_filename.replace(".exe", "").replace(".EXE", "") if exec_filename else None
     demo_appid = get_demo_appid(steam_data)
-    epic_code_name = get_epic_code_name(steam_data, appid)
-    print(f"\n[Executable]")
-    print(f"  Exec     : {exec_name or 'not found (left as XXX)'}")
+    epic_code_name = get_epic_code_name(steam_data, steamdb_data)
+    print(f"  Exec     : {exec_filename or 'not found (left as XXX)'}")
+    if dir_parts:
+        print(f"  Bin path : {'/'.join(dir_parts)}")
     print(f"  Demo ID  : {demo_appid or 'none found'}")
     print(f"  UE code  : {epic_code_name or 'not found (left as XXX)'}")
 
     # ── 5. PCGamingWiki ───────────────────────────────────────────────────────
     time.sleep(0.3)
-    pcgw_url = lookup_pcgamingwiki(game_name)
+    pcgw_url, pcgw_title = lookup_pcgamingwiki(game_name)
     print(f"\n[PCGamingWiki]")
     print(f"  {pcgw_url or 'not found'}")
+    time.sleep(0.3)
+    availability = fetch_pcgw_availability(pcgw_title)
+    xbox_found = availability['xbox']
+    print(f"  Xbox     : {'found (set ID manually)' if xbox_found else 'not found'}")
 
     # ── 6. Copy template folder ───────────────────────────────────────────────
     print(f"\n[Creating game-{game_id}/]")
@@ -502,20 +673,18 @@ def create_extension(template_name, game_input, force=False):
         "STEAMAPP_ID_DEMO": demo_appid,                        # from Steam demos array
         "EPICAPP_ID":       None if not epic_found else "XXX", # null if not on Epic
         "GOGAPP_ID":        gog_id,
-        # XBOXAPP_ID, XBOXEXECNAME, XBOX_PUB_ID — left as XXX (cannot automate)
+        "XBOXAPP_ID":       None if not xbox_found else "XXX", # null if not on Xbox PC store
         "GAME_NAME":        game_name,
         "GAME_NAME_SHORT":  short_name,
-        "PCGAMINGWIKI_URL": pcgw_url,
-        "EPIC_CODE_NAME":   epic_code_name,                    # UE4/5 and TFC templates
-        "GAME_STRING":      game_string,                       # Unity templates (exe base name)
-        "GAME_STRING_ALT":  game_string,                       # Unity UMM template
-        "GAME_FOLDER":      game_string,                       # Cobra/ACSE template
-        "FLUFFY_FOLDER":    game_string,                       # RE Engine template (best guess)
+        **({"PCGAMINGWIKI_URL": pcgw_url} if pcgw_url else {}),
+        **({"EPIC_CODE_NAME": epic_code_name} if epic_code_name else {}),
+        **({"GAME_STRING": game_string, "GAME_STRING_ALT": game_string,
+            "GAME_FOLDER": game_string, "FLUFFY_FOLDER": game_string} if game_string else {}),
     }
     # Direct EXEC/EXEC_NAME assignments (for templates that use a literal)
-    if exec_name:
-        fields["EXEC"] = exec_name
-        fields["EXEC_NAME"] = exec_name
+    if exec_filename:
+        fields["EXEC"] = exec_filename
+        fields["EXEC_NAME"] = exec_filename
         fields["EXEC_DEMO"] = None
 
     # ── 8. Apply substitutions to index.js ───────────────────────────────────
@@ -523,7 +692,22 @@ def create_extension(template_name, game_input, force=False):
     src = open(index_path, encoding="utf-8").read()
     src = sub_header(src, game_name, today)
     src = apply_substitutions(src, fields)
-    src = update_discovery_ids(src, gog_id, epic_found)
+    src = update_discovery_ids(src, gog_id, demo_appid)
+    src = sub_binaries_path(src, dir_parts)
+    # Add store lookup links as comments on the const declaration lines
+    src = add_line_comment(src, "STEAMAPP_ID", f"https://steamdb.info/app/{appid}/")
+    if demo_appid:
+        src = add_line_comment(src, "STEAMAPP_ID_DEMO", f"https://steamdb.info/app/{demo_appid}/")
+    if gog_id:
+        src = add_line_comment(src, "GOGAPP_ID", f"https://www.gogdb.org/product/{gog_id}")
+    xbox_url = availability.get('xbox_url')
+    if xbox_found:
+        src = sub_toggle(src, "hasXbox", True)
+        if xbox_url:
+            src = add_line_comment(src, "XBOXAPP_ID", xbox_url)
+    pcgw_epic_url = availability.get('epic_url')
+    if epic_found and pcgw_epic_url:
+        src = add_line_comment(src, "EPICAPP_ID", pcgw_epic_url)
     with open(index_path, "w", encoding="utf-8") as f:
         f.write(src)
     print("  index.js written")
@@ -571,6 +755,10 @@ def create_extension(template_name, game_input, force=False):
     else:
         print("  All XXX fields resolved.")
 
+    if epic_found and not pcgw_epic_url:
+        print("\n  Note: Epic store page found but canonical URL not in PCGamingWiki.")
+        print("        Add the correct URL as a comment on the EPICAPP_ID line manually.")
+
     missing_files = []
     if not icon_ok:
         missing_files.append("exec.png (64x64 PNG)")
@@ -582,6 +770,32 @@ def create_extension(template_name, game_input, force=False):
             print(f"    - {f}")
 
     print(f"{'=' * 60}\n")
+
+    # ── 14. Generate EXTENSION_EXPLAINED.md ───────────────────────────────────
+    print("[generate_explained.js]")
+    result = subprocess.run(
+        ["node", "generate_explained.js", "--game", f"game-{game_id}"],
+        cwd=REPO_ROOT, capture_output=True, text=True
+    )
+    if result.returncode == 0:
+        print(f"  EXTENSION_EXPLAINED.md written.\n")
+    else:
+        print(f"  FAILED — run manually: node generate_explained.js --game game-{game_id}")
+        if result.stderr:
+            print(f"  {result.stderr.strip()}\n")
+
+    # ── 15. Update engine category lists ─────────────────────────────────────
+    print("[categorize_games.py]")
+    result = subprocess.run(
+        ["python", "categorize_games.py", "--game", game_id],
+        cwd=REPO_ROOT, capture_output=True, text=True
+    )
+    if result.returncode == 0:
+        print(f"  {result.stdout.strip()}\n")
+    else:
+        print(f"  FAILED — run manually: python categorize_games.py --game {game_id}")
+        if result.stderr:
+            print(f"  {result.stderr.strip()}\n")
 
 
 # ── CLI ───────────────────────────────────────────────────────────────────────

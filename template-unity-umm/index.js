@@ -63,7 +63,7 @@ let VERSION_FILE_PATH = path.join(DATA_FOLDER, VERSION_FILE);
 
 const DEV_REGSTRING = "XXX";
 const GAME_REGSTRING = "XXX";
-const XBOX_SAVE_STRING = 'XXX';
+const XBOX_PUB_ID = 'XXX';
 
 const UNITY_ARCH = 'x64'; // 'x64' or 'x86'
 const UNITY_BUILD = 'mono'; // 'il2cpp' or 'mono' - IL2CPP will use bleeding edge builds
@@ -109,7 +109,7 @@ const CONFIG_REGPATH_FULL = `${CONFIG_HIVE}\\${CONFIG_KEY}`; //*/
 //const CONFIG_PATH = path.join(LOCALLOW, DEV_REGSTRING, GAME_REGSTRING, 'Settings');
 const CONFIG_FILES = ['settings.json'];
 const SAVE_PATH_DEFAULT = path.join(LOCALLOW, DEV_REGSTRING, GAME_REGSTRING, 'SaveGames');
-const SAVE_PATH_XBOX = path.join(LOCALAPPDATA, "Packages", `${XBOXAPP_ID}_${XBOX_SAVE_STRING}`, "SystemAppData", "wgs"); //XBOX Version
+const SAVE_PATH_XBOX = path.join(LOCALAPPDATA, "Packages", `${XBOXAPP_ID}_${XBOX_PUB_ID}`, "SystemAppData", "wgs"); //XBOX Version
 let SAVE_PATH = SAVE_PATH_DEFAULT;
 const SAVE_FILES = ['XXX.XXX'];
 const SAVE_EXTS = ['.XXX'];

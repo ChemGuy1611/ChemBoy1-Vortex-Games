@@ -1,9 +1,9 @@
 /*//////////////////////////////////////////
-Name: XXX Vortex Extension
+Name: The Long Dark Vortex Extension
 Structure: Unity BepinEx/MelonLoader/Custom Loader Hybrid
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2026-XX-XX
+Date: 2026-03-31
 Notes:
 - 
 //////////////////////////////////////////*/
@@ -29,17 +29,17 @@ const LOCALLOW = path.join(USER_HOME, 'AppData', 'LocalLow');
 const LOCALAPPDATA = util.getVortexPath("localAppData");
 
 //Specify all the information about the game
-const GAME_ID = "XXX";
-const STEAMAPP_ID = "XXX";
-const STEAMAPP_ID_DEMO = "XXX";
-const EPICAPP_ID = "XXX";
-const GOGAPP_ID = "XXX";
-const XBOXAPP_ID = "XXX";
+const GAME_ID = "thelongdark";
+const STEAMAPP_ID = "305620"; // https://steamdb.info/app/305620/
+const STEAMAPP_ID_DEMO = null;
+const EPICAPP_ID = "XXX"; // https://store.epicgames.com/en-US/p/the-long-dark
+const GOGAPP_ID = null;
+const XBOXAPP_ID = "XXX"; // https://apps.microsoft.com/detail/9nfkn56zbmr0
 const XBOXEXECNAME = "Game";
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
-const GAME_NAME = "XXX";
-const GAME_NAME_SHORT = "XXX";
+const GAME_NAME = "The Long Dark";
+const GAME_NAME_SHORT = "The Long Dark";
 const GAME_STRING = "XXX"; //string for exe and data folder (seem to always match)
 const GAME_STRING_ALT = GAME_STRING; //CHANGE THIS IF IT DOESN'T MATCH
 const EXEC = `${GAME_STRING}.exe`;
@@ -48,12 +48,12 @@ const EXEC_GOG = EXEC;
 const EXEC_DEMO = EXEC;
 const EXEC_XBOX = 'gamelaunchhelper.exe';
 const EXEC_ALT = `${GAME_STRING_ALT}.exe`;
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/The_Long_Dark";
 const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
 
 //feature toggles
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
-const hasXbox = false; //toggle for Xbox version logic
+const hasXbox = true; //toggle for Xbox version logic
 let multiExe = false; //set to true if there are multiple executables (typically for Xbox/EGS)
 if (GAME_STRING_ALT !== GAME_STRING) {
   multiExe = true;

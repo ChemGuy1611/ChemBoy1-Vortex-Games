@@ -74,7 +74,7 @@ const VER_SPLIT = ' '; //split character for the Version.info file - typically a
 
 const DEV_REGSTRING = "XXX"; //developer name
 const GAME_REGSTRING = "XXX"; //game name
-const XBOX_SAVE_STRING = "XXX"; //string after "ID_"
+const XBOX_PUB_ID = "XXX"; //string after "ID_"
 const CONFIG_FOLDERNAME = "XXX";
 const SAVE_FOLDERNAME = "XXX";
 const hasUserIdFolder = false; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
@@ -160,7 +160,7 @@ if (hasUserIdFolder) {
 const CONFIG_PATH = path.join(CONFIG_FOLDER, USERID_FOLDER, CONFIG_FOLDERNAME);
 const CONFIG_FILES = ['settings.json'];
 const SAVE_PATH_DEFAULT = path.join(LOCALLOW, DEV_REGSTRING, GAME_REGSTRING, USERID_FOLDER, SAVE_FOLDERNAME);
-const SAVE_PATH_XBOX = path.join(LOCALAPPDATA, "Packages", `${XBOXAPP_ID}_${XBOX_SAVE_STRING}`, "SystemAppData", "wgs"); //XBOX Version
+const SAVE_PATH_XBOX = path.join(LOCALAPPDATA, "Packages", `${XBOXAPP_ID}_${XBOX_PUB_ID}`, "SystemAppData", "wgs"); //XBOX Version
 let SAVE_PATH = SAVE_PATH_DEFAULT;
 const SAVE_FILES = ['XXX.XXX'];
 const SAVE_EXTS = [".XXX"];
