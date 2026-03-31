@@ -1391,3 +1391,7 @@ function main(context) {
 module.exports = {
   default: main,
 };
+
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1171"; //Nexus link to this extension. Used for links
+
+const PCGAMINGWIKI_URL = "XXX";

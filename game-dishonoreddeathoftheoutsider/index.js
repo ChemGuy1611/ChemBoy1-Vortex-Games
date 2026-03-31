@@ -112,6 +112,8 @@ const VIDEO_EXTS = ['.bk2'];
 const MODTYPE_FOLDERS = [VOIDMOD_PATH, VIDEO_PATH];
 
 //Filled in from the data above
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1532"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "XXX";
 const spec = {
   "game": {
     "id": GAME_ID,

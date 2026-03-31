@@ -135,6 +135,8 @@ const MODKIT_FOLDER = path.join('Engine', 'Binaries', 'Win64');
 const MODKIT_PATH = path.join(MODKIT_FOLDER, MODKIT_EXEC_NAME);
 
 // Filled in from data above
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1065"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "XXX";
 const spec = {
   "game": {
     "id": GAME_ID,

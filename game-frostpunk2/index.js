@@ -119,6 +119,8 @@ const SIGBYPASS_NAME = "Signature Bypass";
 const SIGBYPASS_DLL = "dsound.dll";
 const SIGBYPASS_LUA = "sig.lua";
 
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/960"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "XXX";
 const spec = {
   "game": {
     "id": GAME_ID,

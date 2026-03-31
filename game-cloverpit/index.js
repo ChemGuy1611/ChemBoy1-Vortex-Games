@@ -138,6 +138,8 @@ const MODTYPE_FOLDERS = [ASSEMBLY_PATH, ASSETS_PATH, BEPINEX_PATCHERS_PATH, BEPI
 const IGNORE_CONFLICTS = [path.join('**', 'manifest.json'), path.join('**', 'icon.png'), path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
 
 //Filled in from info above
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1496"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "XXX";
 const spec = {
   "game": {
     "id": GAME_ID,

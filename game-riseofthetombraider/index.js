@@ -50,6 +50,8 @@ const MANAGERMOD_PATH = path.join("Mods");
 const MANAGERMOD_EXTS = ['tr2mesh', '.tr2pcd', '.drm', '.skl',  '.tr10dtp', '.tr10material', '.tr10modeldata', '.t10script', '.t10shaderlib', '.tr10sound', '.dds', '.tr10objectref', '.tr10dtp', '.tr10anim'];
 
 //Filled in from information above
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/905"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "XXX";
 const spec = {
   "game": {
     "id": GAME_ID,

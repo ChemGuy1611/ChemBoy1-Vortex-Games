@@ -168,6 +168,8 @@ const ROOT_NAME = "Root Folder";
 const MOD_PATH_DEFAULT = path.join(".");
 
 //Filled from data above
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/973"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "XXX";
 const spec = {
   "game": {
     "id": GAME_ID,

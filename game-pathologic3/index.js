@@ -123,6 +123,7 @@ let MODTYPE_FOLDERS = [MOD_PATH];
 const IGNORE_CONFLICTS = [path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
 const IGNORE_DEPLOY = [path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
 
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1629"; //Nexus link to this extension. Used for links
 const spec = {
   "game": {
     "id": GAME_ID,

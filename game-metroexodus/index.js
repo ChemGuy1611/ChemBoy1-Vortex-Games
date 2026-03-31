@@ -21,6 +21,8 @@ const XBOXEXECNAME = null;
 const GAME_ID = "metroexodus";
 const EXEC = "MetroExodus.exe";
 
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/907"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "XXX";
 const spec = {
   "game": {
     "id": GAME_ID,

@@ -44,7 +44,7 @@ const EXEC_GOG = EXEC;
 const EXEC_DEMO = 'CrisolTheaterOfIdolsDemo.exe';
 const PARAMETERS_STRING = ''; //launch arguments to pass when launching the game
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Crisol:_Theater_of_Idols";
-const EXTENSION_URL = ""; //Nexus link to this extension. Used for links
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1690"; //Nexus link to this extension. Used for links
 
 //feature toggles
 const hasXbox = false; //toggle for Xbox version logic.

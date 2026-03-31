@@ -36,6 +36,8 @@ const PREVIEW_ID = `${GAME_ID}-preview`;
 const PREVIEW_NAME = "Preview Folder";
 const PREVIEW_PATH = "preview";
 
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/894"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "XXX";
 const spec = {
   "game": {
     "id": GAME_ID,

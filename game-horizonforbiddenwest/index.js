@@ -68,6 +68,7 @@ const MANAGERMOD_PATH = path.join('mods');
 const MANAGERMOD_EXTS = ['.core', '.stream'];
 const MANAGERMOD_FILES = ['modinfo.json'];
 
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/844"; //Nexus link to this extension. Used for links
 const spec = {
   "game": {
     "id": GAME_ID,

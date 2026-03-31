@@ -23,6 +23,8 @@ const FORGER_EXEC = 'Forger.exe';
 const forgerModFileExt = ".forger2";
 const PATCH_ID = "assassinscreedvalhalla-forgerpatch";
 
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/931"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "XXX";
 const spec = {
   "game": {
     "id": GAME_ID,

@@ -29,6 +29,8 @@ const DATA_EXT = [".bin", ".bml", ".xml", ".pak"];
 const ROOT_ID = `${GAME_ID}-root`;
 
 //This will all be filled in from the information above
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/968"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "XXX";
 const spec = {
   "game": {
     "id": GAME_ID,

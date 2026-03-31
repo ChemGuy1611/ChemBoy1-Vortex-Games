@@ -22,6 +22,8 @@ const EXEC = "ACS.exe";
 const ATK_ID = `${GAME_ID}-atk`;
 const ATK_EXEC = 'anviltoolkit.exe';
 
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/987"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "XXX";
 const spec = {
   "game": {
     "id": GAME_ID,

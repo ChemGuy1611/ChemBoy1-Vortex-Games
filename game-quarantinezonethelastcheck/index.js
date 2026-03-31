@@ -245,6 +245,7 @@ let MODTYPE_FOLDERS = [path.join(LOGICMODS_PATH, 'LogicMods'), PAK_PATH, PAK_ALT
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //Filled in from data above
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1641"; //Nexus link to this extension. Used for links
 const spec = {
   "game": {
     "id": GAME_ID,

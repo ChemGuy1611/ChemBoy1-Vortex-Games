@@ -33,6 +33,8 @@ const MAPS_FOLDER = "maps";
 const modFileExt = ".pk4";
 const EXE_EXT = ".exe";
 
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/985"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "XXX";
 const spec = {
   "game": {
     "id": GAME_ID,

@@ -78,6 +78,8 @@ const SIGBYPASS_PAGE_NO = 2940;
 const SIGBYPASS_FILE_NO = 7106;
 
 // FILLED IN FROM DATA ABOVE
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1132"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "XXX";
 const spec = {
   "game": {
     "id": GAME_ID,

@@ -45,7 +45,7 @@ def const_value(src, var_name):
     Returns the raw matched string (e.g. '"XXX"', 'null', '"https://..."').
     """
     m = re.search(
-        rf'(?:const|let)\s+{re.escape(var_name)}\s*=\s*(.+?)(?:\s*;|\s*//)',
+        rf'(?:const|let)\s+{re.escape(var_name)}\s*=\s*(.+?)(?:\s*;|\s*//|$)',
         src
     )
     return m.group(1).strip() if m else None
@@ -190,16 +190,17 @@ def patch_pcgamingwiki_url(game_id, src, context):
         return src, False, "already set"
 
     game_name = get_game_name_from_src(src)
-    if not game_name:
-        return src, False, "GAME_NAME not found in source"
+    page_url = None
 
-    time.sleep(0.2)  # be polite to PCGW
-    page_url, _title = lookup_pcgamingwiki(game_name)
+    if game_name:
+        time.sleep(0.2)  # be polite to PCGW
+        page_url, _title = lookup_pcgamingwiki(game_name)
 
     if not page_url:
         if is_missing(src, "PCGAMINGWIKI_URL"):
             new_src = set_or_insert(src, "PCGAMINGWIKI_URL", "XXX")
-            return new_src, True, "inserted as XXX (not found on PCGamingWiki)"
+            reason = "no GAME_NAME in source" if not game_name else "not found on PCGamingWiki"
+            return new_src, True, f"inserted as XXX ({reason})"
         return src, False, "not found on PCGamingWiki"
 
     new_src = set_or_insert(src, "PCGAMINGWIKI_URL", page_url)

@@ -75,6 +75,8 @@ const SAVE_EXT = ".mythsav";
 const MOD_PATH = path.join(CONFIG_FOLDER, USERID_FOLDER, "mods", "local");
 
 //This will fill in from the info above
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1028"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "XXX";
 const spec = {
   "game": {
     "id": GAME_ID,

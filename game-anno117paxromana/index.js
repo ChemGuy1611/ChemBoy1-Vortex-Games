@@ -98,6 +98,8 @@ const PARAMETERS_STRING = '';
 const PARAMETERS = [PARAMETERS_STRING];
 let MODTYPE_FOLDERS = [MOD_PATH, BINARIES_PATH];
 
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1531"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "XXX";
 const spec = {
   "game": {
     "id": GAME_ID,

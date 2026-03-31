@@ -95,6 +95,8 @@ const IGNORE_CONFLICTS = [path.join('**', 'changelog.txt'), path.join('**', 'rea
 const IGNORE_DEPLOY = [path.join('**', 'changelog.txt'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
 
 // Filled in from data above
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/865"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "XXX";
 const spec = {
   "game": {
     "id": GAME_ID,

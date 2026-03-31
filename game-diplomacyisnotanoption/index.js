@@ -32,6 +32,8 @@ const modFileExt = ".dll";
 
 const LOADER_ID = `${GAME_ID}-modloader`;
 
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1070"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "XXX";
 const spec = {
   "game": {
     "id": GAME_ID,

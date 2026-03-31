@@ -47,13 +47,15 @@ const PK3_PATH = path.join(MAIN_FOLDER);
 const PK3_EXT = ".pk3";
 
 //Filled in from data above
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/937"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "XXX";
 const spec = {
   "game": {
     "id": GAME_ID,
     "name": GAME_NAME,
     "shortName": GAME_NAME_SHORT,
     "executable": EXEC,
-    "logo": "rtcw.jpg",
+    "logo": `${GAME_ID}.jpg`,
     "mergeMods": true,
     "modPath": ".",
     "requiresCleanup": true,

@@ -192,6 +192,8 @@ const PARAMETERS = [PARAMETERS_STRING];
 let MODTYPE_FOLDERS = [LOGICMODS_PATH, PAK_PATH];
 
 //Filled in from data above
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1534"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "XXX";
 const spec = {
   "game": {
     "id": GAME_ID,

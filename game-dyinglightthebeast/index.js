@@ -128,6 +128,8 @@ const PARAMETERS = [PARAMETERS_STRING];
 const IGNORED_FILES = [path.join('**', '**.pak')];
 const DEPLOY_IGNORE = [path.join('**', 'data0.pak'), path.join('**', 'data1.pak')];
 
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1456"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "XXX";
 const spec = {
   "game": {
     "id": GAME_ID,

@@ -41,6 +41,8 @@ const BEPINEX_FILE_ID = '1';
 const LOADER_ID = `${GAME_ID}-modloader`;
 
 //Filled in from info above
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1272"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "XXX";
 const spec = {
   "game": {
     "id": GAME_ID,

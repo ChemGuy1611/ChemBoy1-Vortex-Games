@@ -36,6 +36,8 @@ const VKLAUNCH_NAME = "Vulkan Launch";
 const EXEC_VK = path.join("Base" , "Binaries", "Win64", "Civ7_Win64_Vulkan_FinalRelease.exe");
 
 //Filled in from data above
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1182"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "XXX";
 const spec = {
   "game": {
     "id": GAME_ID,

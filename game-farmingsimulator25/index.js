@@ -44,6 +44,8 @@ const I3D_ID = `${GAME_ID}-i3d`;
 const I3D_EXTS = ['.i3d'];
 const I3D_PATH = path.join("data", "maps", 'mapUS');
 
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1102"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "XXX";
 const spec = {
   "game": {
     "id": GAME_ID,

@@ -139,6 +139,8 @@ const RSMODS_SETTINGS_FILE = "RSMods.ini";
 const NOCABLE_SETTINGS_FILE = "NCL_Settings.xml";
 
 //This information will be filled in from the data above
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1240"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "XXX";
 const spec = {
   "game": {
     "id": GAME_ID,

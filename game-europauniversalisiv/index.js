@@ -103,6 +103,7 @@ const PARAMETERS_STRING = '';
 const PARAMETERS = [PARAMETERS_STRING];
 const MODTYPE_FOLDERS = [BINARIES_PATH];
 
+const PCGAMINGWIKI_URL = "XXX";
 const spec = {
   "game": {
     "id": GAME_ID,

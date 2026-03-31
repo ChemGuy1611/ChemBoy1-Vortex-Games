@@ -47,6 +47,8 @@ const EXEC_DX = path.join("Base" , "Binaries", "Win64Steam", "CivilizationVI_DX1
 const REQ_FILE = `Base`;
 
 //Filled in from data above
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1183"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "XXX";
 const spec = {
   "game": {
     "id": GAME_ID,

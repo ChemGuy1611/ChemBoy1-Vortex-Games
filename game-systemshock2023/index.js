@@ -59,6 +59,8 @@ const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_PATH = path.join(EPIC_CODE_NAME, "Saved", "SaveGames");
 const SAVE_EXT = ".sav";
 
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/923"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "XXX";
 const spec = {
   "game": {
     "id": GAME_ID,

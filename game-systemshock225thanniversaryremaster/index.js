@@ -90,6 +90,8 @@ const CLASSIC_EXTS = LEGACY_EXTS;
 const REQ_FILE_CLASSIC = EXEC_CLASSIC;
 
 //Filled in from info above
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1359"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "XXX";
 const spec = {
   "game": {
     "id": GAME_ID,

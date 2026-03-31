@@ -23,6 +23,8 @@ const FROSTYMOD_ID = `${GAME_ID}-frostymod`;
 const modFileExt = ".fbmod";
 const FROSTY_PATH = path.join("FrostyModManager", "Mods", "bf1");
 
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/847"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "XXX";
 const spec = {
   "game": {
     "id": GAME_ID,

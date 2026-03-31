@@ -137,6 +137,8 @@ const UE4SS_FILE_NO = 20;
 const MOD_PATH_DEFAULT = PAK_PATH;
 
 //Filled in from data above
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1273"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "XXX";
 const spec = {
   "game": {
     "id": GAME_ID,

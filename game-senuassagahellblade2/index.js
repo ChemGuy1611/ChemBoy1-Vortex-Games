@@ -98,6 +98,8 @@ const SAVE_PATH = path.join(EPIC_CODE_NAME, "Saved", "SaveGames");
 //const SAVE_PATH = path.join("Packages", `${XBOXAPP_ID}_8wekyb3d8bbwe`, "SystemAppData", "wgs", USER_ID); //XBOX Version
 const SAVE_EXT = ".sav";
 
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/888"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "XXX";
 const spec = {
   "game": {
     "id": GAME_ID,

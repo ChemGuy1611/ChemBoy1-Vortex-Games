@@ -198,6 +198,8 @@ const IGNORE_DEPLOY = [path.join('**', 'manifest.json'), path.join('**', 'icon.p
 let MODTYPE_FOLDERS = [ASSEMBLY_PATH, ASSETS_PATH, BEPINEX_PATCHERS_PATH, BEPINEX_PLUGINS_PATH, BEPINEX_CONFIG_PATH, MELON_PLUGINS_PATH, MELON_MODS_PATH, MELON_CONFIG_PATH];
 
 //Filled in from info above
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1545"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "XXX";
 const spec = {
   "game": {
     "id": GAME_ID,

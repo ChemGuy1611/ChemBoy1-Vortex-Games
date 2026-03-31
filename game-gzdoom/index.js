@@ -140,6 +140,7 @@ const PORT_CONFIG_FILE = 'PORT.ini';
 const PORT_CONFIG_PATH = path.join(CONFIG_PATH, PORT_CONFIG_FILE);
 
 //Filled in from info above
+const PCGAMINGWIKI_URL = "XXX";
 const spec = {
   "game": {
     "id": GAME_ID,

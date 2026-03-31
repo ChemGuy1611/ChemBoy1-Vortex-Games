@@ -46,6 +46,8 @@ const MANAGER_URL_LEGACY = "https://www.factionfiles.com/ffdownload.php?id=3863"
 const MANAGER_URL_LEGACY_ERR = "https://www.factionfiles.com/ff.php?action=file&id=3863";
 
 //Filled in from data above
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1145"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "XXX";
 const spec = {
   "game": {
     "id": GAME_ID,

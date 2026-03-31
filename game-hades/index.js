@@ -58,6 +58,8 @@ const REQ_FILE = 'Content';
 const REQ_FILE2 = path.join('Content', 'Game', 'Animations', 'CharacterAnim_EnemiesBosses_Hades.sjson');
 
 //Filled in from data above
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1137"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "XXX";
 const spec = {
   "game": {
     "id": GAME_ID,

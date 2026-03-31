@@ -87,6 +87,17 @@ python new_extension.py --template template-unitymelonloaderbepinex-hybrid "The 
 - `EXTENSION_URL` — can only be set after creating the Nexus Mods page
 - Any game-specific paths (`DATA_FOLDER`, `CONFIG_FOLDERNAME`, `SAVE_FOLDERNAME`, etc.)
 
+### new_extension.py — Null vs XXX
+
+Only store ID fields are set to `null` when not found (`EPICAPP_ID`, `GOGAPP_ID`, `XBOXAPP_ID`, `STEAMAPP_ID_DEMO`). All other fields that could not be resolved (`PCGAMINGWIKI_URL`, `EPIC_CODE_NAME`, `GAME_STRING` variants) are left as `"XXX"` so they remain obvious manual-entry placeholders.
+
+### new_extension.py — Auto-Run Steps
+
+After writing `index.js`, the script automatically runs:
+
+1. `generate_explained.js --game game-{GAME_ID}` — generates `EXTENSION_EXPLAINED.md`
+2. `categorize_games.py --game {GAME_ID}` — adds the game to the correct engine category file in `resources/`
+
 ---
 
 ## generate_explained.js
@@ -234,8 +245,107 @@ python nexus_games_report.py 60 --new-only
 
 ### nexus_games_report.py — Output
 
-Writes `nexus_games_report.md` in the repo root. The table includes game name (with Nexus link), domain, mod count, downloads, approval date, and a **Supported** column indicating whether a Vortex extension already exists for that game.
+Writes `nexus_games_report.md` in the repo root. The table includes: row number, supported status, game name (as a Nexus Mods link), mod count, downloads in thousands (one decimal place), and approval date. Games with fewer than 500 downloads are excluded.
 
 ### nexus_games_report.py — Manifest Path
 
 The extensions manifest is read from `C:\ProgramData\vortex\temp\extensions-manifest.json`. This file is written by Vortex when it fetches the extensions list. If not found, the Supported column will be blank and a warning is printed.
+
+---
+
+## release_extension.py
+
+Packages a game extension folder into a `.zip` archive using 7-Zip and opens the extension's Nexus Mods page in the default browser.
+
+### release_extension.py — Requirements
+
+7-Zip must be installed at `C:\Program Files\7-Zip\7z.exe`.
+
+### release_extension.py — Usage
+
+```sh
+python release_extension.py GAME_ID [GAME_ID ...]
+python release_extension.py GAME_ID --no-open
+```
+
+Pass one or more `GAME_ID` values to release multiple extensions in one run.
+Use `--no-open` to skip opening the browser (useful for testing or bulk releases).
+
+### release_extension.py — Examples
+
+```sh
+python release_extension.py hollowknight
+python release_extension.py assassinscreedorigins assassinscreedvalhalla --no-open
+```
+
+### release_extension.py — Output
+
+Creates `game-{GAME_ID}.zip` inside the extension folder, overwriting any existing zip. Reads `EXTENSION_URL` from `index.js` — if set to a valid URL, opens it in the default browser so the file can be uploaded. Skips the browser open if `EXTENSION_URL` is `"XXX"` or not present.
+
+---
+
+## patch_extensions.py
+
+Generic framework for making repo-wide changes to all `game-*/index.js` files. Each patch is a named, independently-enabled function registered in the `PATCHES` list. New patches can be added without touching the runner logic.
+
+### patch_extensions.py — Requirements
+
+No additional packages required (Python stdlib only).
+
+### patch_extensions.py — Usage
+
+```sh
+python patch_extensions.py
+python patch_extensions.py --game GAME_ID
+python patch_extensions.py --dry-run
+python patch_extensions.py --game GAME_ID --dry-run
+```
+
+Run without arguments to apply all enabled patches to every `game-*` folder.
+Use `--game` to run on a single game. Use `--dry-run` to preview changes without writing.
+
+### patch_extensions.py — Built-in Patches
+
+| Patch | Description |
+| --- | --- |
+| `extension_url` | Sets `EXTENSION_URL` from the Vortex extensions manifest (`modId` → Nexus URL). Inserts the constant if missing. |
+| `pcgamingwiki_url` | Sets `PCGAMINGWIKI_URL` by looking up the game on PCGamingWiki. Inserts as `"XXX"` if not found or API unreachable. |
+
+Each patch skips a game if the value is already set to a real URL. Both patches insert the constant before `const spec = {` if it does not exist in the file.
+
+### patch_extensions.py — Adding New Patches
+
+Add an entry to the `PATCHES` list at the bottom of the script:
+
+```python
+{"name": "my_patch", "enabled": True, "fn": my_patch_function}
+```
+
+Each patch function receives `(game_id, src, context)` and returns `(new_src, changed: bool, message: str)`.
+
+---
+
+## setup_test_folder.py
+
+Creates a minimal fake game installation for testing a Vortex extension. Reads `GAME_NAME`, `EXEC`/`EXEC_NAME`, and `BINARIES_PATH` from `index.js` and creates an empty `.exe` file at the correct path so Vortex can detect the game.
+
+### setup_test_folder.py — Requirements
+
+No additional packages required (Python stdlib only).
+
+### setup_test_folder.py — Usage
+
+```sh
+python setup_test_folder.py GAME_ID [GAME_ID ...]
+```
+
+### setup_test_folder.py — Examples
+
+```sh
+python setup_test_folder.py hollowknight
+python setup_test_folder.py helldivers2 reddeadredemption2
+```
+
+### setup_test_folder.py — Output
+
+Creates `D:\Game_Tools_D\!TestGameFolders_D\{GAME_NAME}\{BINARIES_PATH}\{EXEC_NAME}` as an empty file with all parent directories. If the file already exists it reports so and skips creation. Uses a symbol table built from `index.js` to resolve template literals, `path.join()` expressions, and variable references. Falls back to `STEAM_EXEC` / `EXEC_STEAM` for games that use store-specific exec constants instead of a single `EXEC`.

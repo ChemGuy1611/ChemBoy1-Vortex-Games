@@ -509,7 +509,7 @@ def sub_toggle(src, toggle_name, value):
     Only acts if the toggle currently holds the opposite value."""
     val_str = "true" if value else "false"
     opposite = "false" if value else "true"
-    pattern = rf'(const\s+{re.escape(toggle_name)}\s*=\s*){re.escape(opposite)}(\s*;)'
+    pattern = rf'(const\s+{re.escape(toggle_name)}\s*=\s*){re.escape(opposite)}(\s*;?)'
     return re.sub(pattern, rf'\g<1>{val_str}\2', src)
 
 

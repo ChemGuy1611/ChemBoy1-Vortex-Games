@@ -32,6 +32,7 @@ const modFileExt = ".dll";
 
 const LOADER_ID = `${GAME_ID}-modloader`;
 
+const PCGAMINGWIKI_URL = "XXX";
 const spec = {
   "game": {
     "id": GAME_ID,

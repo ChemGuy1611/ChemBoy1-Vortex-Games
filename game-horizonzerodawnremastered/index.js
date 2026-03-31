@@ -45,6 +45,8 @@ const PACKAGE_ID = `${GAME_ID}-package`
 const PACKAGE_EXTS = ['.core', '.stream']
 const PACKAGE_PATH = path.join("LocalCacheDX12", "package");
 
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1077"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "XXX";
 const spec = {
   "game": {
     "id": GAME_ID,

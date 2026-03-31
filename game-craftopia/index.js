@@ -107,6 +107,7 @@ const IGNORE_CONFLICTS = [path.join('**', 'manifest.json'), path.join('**', 'ico
 let MODTYPE_FOLDERS = [BEPMOD_PATH, ASSEMBLY_PATH, ASSETS_PATH];
 
 //Filled in from info above
+const PCGAMINGWIKI_URL = "XXX";
 const spec = {
   "game": {
     "id": GAME_ID,

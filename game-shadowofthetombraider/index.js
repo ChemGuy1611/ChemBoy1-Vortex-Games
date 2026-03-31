@@ -53,6 +53,8 @@ const MANAGERMOD_PATH = path.join("Mods");
 const MANAGERMOD_EXTS = ['.tr11dtp', '.tr11material', '.tr11modeldata', '.t11script', '.t11shaderlib', '.tr11sound', '.dds', '.tr11objectref', '.tr11dtp', '.tr11anim'];
 
 //Filled in from information above
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/906"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "XXX";
 const spec = {
   "game": {
     "id": GAME_ID,

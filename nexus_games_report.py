@@ -70,8 +70,17 @@ def main():
     games = nexus_get("/games.json?include_unapproved=false", api_key)
     print(f"  Total games: {len(games)}")
 
-    filtered = [g for g in games if g.get("approved_date", 0) >= cutoff_ts]
-    print(f"  Games added in window: {len(filtered)}")
+    # Determine sort field from the full list before filtering
+    sort_field = "unique_downloads" if games and "unique_downloads" in games[0] else "downloads"
+    sort_label = sort_field.replace("_", " ").title()
+    print(f"  Sorting by: {sort_field}")
+
+    filtered = [
+        g for g in games
+        if g.get("approved_date", 0) >= cutoff_ts
+        and g.get(sort_field, 0) >= 500
+    ]
+    print(f"  Games added in window (>=500 downloads): {len(filtered)}")
 
     if new_only:
         filtered = [g for g in filtered if g.get("domain_name") not in supported_ids]
@@ -81,11 +90,6 @@ def main():
         print("No games found. Nothing to write.")
         return
 
-    sample = filtered[0]
-    sort_field = "unique_downloads" if "unique_downloads" in sample else "downloads"
-    sort_label = sort_field.replace("_", " ").title()
-    print(f"  Sorting by: {sort_field}")
-
     filtered.sort(key=lambda g: g.get(sort_field, 0), reverse=True)
 
     filter_note = " (unsupported only)" if new_only else ""
@@ -94,8 +98,8 @@ def main():
         "",
         f"_Generated {now.strftime('%Y-%m-%d')} — {len(filtered)} games added in the last {days} days (since {cutoff_str}){filter_note}, sorted by {sort_label} descending._",
         "",
-        f"| # | Game | Domain | Mods | {sort_label} | Approved Date | Supported |",
-        "| --- | --- | --- | --- | --- | --- | --- |",
+        f"| # | Supported | Game | Mods | {sort_label} (k) | Approved Date |",
+        "| --- | --- | --- | --- | --- | --- |",
     ]
 
     for i, g in enumerate(filtered, 1):
@@ -106,9 +110,8 @@ def main():
         approved = datetime.datetime.fromtimestamp(
             g["approved_date"], tz=datetime.timezone.utc
         ).strftime("%Y-%m-%d")
-        supported = "Yes" if domain in supported_ids else ""
-        lines.append(f"| {i} | {name} | {domain} | {mods:,} | {dl:,} | {approved} | {supported} |")
-        lines.append(f"| | [nexusmods.com/{domain}](https://www.nexusmods.com/{domain}) | | | | | |")
+        supported = "Yes" if domain in supported_ids else "No"
+        lines.append(f"| {i} | {supported} | [{name}](https://www.nexusmods.com/{domain}) | {mods:,} | {dl / 1000:,.1f} | {approved} |")
 
     lines.append("")
     output = "\n".join(lines)

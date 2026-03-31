@@ -81,6 +81,8 @@ const SAVE_EXTS = ['.bin'];
 
 const MOD_PATH_DEFAULT = '.';
 
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1480"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "XXX";
 const spec = {
   "game": {
     "id": GAME_ID,

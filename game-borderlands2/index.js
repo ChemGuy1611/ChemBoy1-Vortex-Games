@@ -131,6 +131,8 @@ const MODTYPE_FOLDERS = [TFCMOD_PATH, SDKMOD_PATH, MOVIES_PATH, BINARIES_PATH];
 const IGNORE_CONFLICTS = [path.join('**', 'LICENSE.txt'), path.join('**', 'instructions.txt'), path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
 
 //Filled in from the data above
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1448"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "XXX";
 const spec = {
   "game": {
     "id": GAME_ID,

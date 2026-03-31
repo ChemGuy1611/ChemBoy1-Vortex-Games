@@ -138,6 +138,7 @@ const IGNORE_CONFLICTS = [path.join('**', 'manifest.json'), path.join('**', 'ico
 let MODTYPE_FOLDERS = [BEPMOD_PATH];
 
 //Filled in from info above
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1643"; //Nexus link to this extension. Used for links
 const spec = {
   "game": {
     "id": GAME_ID,

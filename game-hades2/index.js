@@ -47,6 +47,8 @@ const UTILITY_FILE = "modutil.lua";
 //const UTILITY_FILE = "ModUtil";
 
 //Filled in from data above
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1138"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "XXX";
 const spec = {
   "game": {
     "id": GAME_ID,

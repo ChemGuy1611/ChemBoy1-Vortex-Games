@@ -290,6 +290,7 @@ if (hasCustomMods) {
 // EDIT ZONE //////////////////////////////////////////////////////////////
 
 //Filled in from info above
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1600"; //Nexus link to this extension. Used for links
 const spec = {
   "game": {
     "id": GAME_ID,

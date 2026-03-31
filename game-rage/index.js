@@ -131,6 +131,7 @@ const IGNORE_CONFLICTS = [path.join('**', 'CHANGELOG.md'), path.join('**', 'read
 const IGNORE_DEPLOY = [path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
 
 //filled in from data above
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1639"; //Nexus link to this extension. Used for links
 const spec = {
   "game": {
     "id": GAME_ID,
