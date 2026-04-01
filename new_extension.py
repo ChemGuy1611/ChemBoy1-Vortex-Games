@@ -312,7 +312,7 @@ def lookup_pcgamingwiki(game_name):
     url = (
         "https://www.pcgamingwiki.com/w/api.php"
         f"?action=query&list=search&srsearch={urllib.parse.quote(game_name)}"
-        "&format=json&srlimit=10"
+        "&srwhat=title&format=json&srlimit=20"
     )
     try:
         data = json.loads(http_get(url))

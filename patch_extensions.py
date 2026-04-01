@@ -134,34 +134,58 @@ def lookup_pcgamingwiki(game_name):
     """
     Return (page_url, page_title) for the game, or (None, None).
     Results are cached in _pcgw_cache by game_name.
-    Follows #REDIRECT pages. Uses startswith matching to avoid sequels.
+    Stage 1: direct title lookup with redirect following for exact matches.
+    Stage 2: title search fallback for disambiguation suffixes like "Keeper (video game)".
     """
     if game_name in _pcgw_cache:
         return _pcgw_cache[game_name]
 
+    norm = lambda s: s.lower().replace('\u2019', "'").replace(':', '').replace('  ', ' ').strip()
+    name_variants = [game_name]
+    converted = roman_to_arabic(game_name)
+    if converted != game_name:
+        name_variants.append(converted)
+
     try:
+        # Stage 1: direct title lookup (handles exact matches and redirects)
+        for variant in name_variants:
+            time.sleep(0.2)
+            variant_encoded = urllib.request.quote(variant)
+            url = f"{PCGW_API}?action=query&titles={variant_encoded}&redirects=1&format=json"
+            req = urllib.request.Request(url, headers={"User-Agent": "vortex-ext-dev/1.0"})
+            with urllib.request.urlopen(req, timeout=10) as r:
+                data = json.loads(r.read())
+            pages = data.get("query", {}).get("pages", {})
+            for page_id, page in pages.items():
+                if page_id != "-1" and "missing" not in page:
+                    title = page["title"]
+                    if _debug:
+                        print(f"    [debug] direct lookup: {repr(variant)} → {repr(title)}")
+                    page_url = f"https://www.pcgamingwiki.com/wiki/{urllib.request.quote(title.replace(' ', '_'))}"
+                    _pcgw_cache[game_name] = (page_url, title)
+                    return page_url, title
+
+        # Stage 2: title search fallback for disambiguation suffixes
+        time.sleep(0.2)
         name_encoded = urllib.request.quote(game_name)
-        url = f"{PCGW_API}?action=query&list=search&srsearch={name_encoded}&format=json&srlimit=10"
+        url = f"{PCGW_API}?action=query&list=search&srsearch={name_encoded}&srwhat=title&format=json&srlimit=20"
         req = urllib.request.Request(url, headers={"User-Agent": "vortex-ext-dev/1.0"})
         with urllib.request.urlopen(req, timeout=10) as r:
             data = json.loads(r.read())
 
         results = data.get("query", {}).get("search", [])
-        norm = lambda s: s.lower().replace('\u2019', "'").replace(':', '').replace('  ', ' ').strip()
-        name_variants = {norm(game_name)}
-        converted = roman_to_arabic(game_name)
-        if converted != game_name:
-            name_variants.add(norm(converted))
+        name_variants_norm = {norm(v) for v in name_variants}
         if _debug:
-            print(f"    [debug] searching for: {repr(game_name)} variants={name_variants}")
-            for r in results:
-                t = norm(r["title"])
-                match = t in name_variants or any(t.startswith(v + " (") for v in name_variants)
-                print(f"    [debug]   result: {repr(r['title'])}  match={match}")
+            print(f"    [debug] search fallback: {repr(game_name)} variants={name_variants_norm}")
+            for result in results:
+                t = norm(result["title"])
+                match = any(t.startswith(v + " (") for v in name_variants_norm)
+                print(f"    [debug]   result: {repr(result['title'])}  match={match}")
+
         title = None
         for result in results:
             t = norm(result["title"])
-            if t in name_variants or any(t.startswith(v + " (") for v in name_variants):
+            if any(t.startswith(v + " (") for v in name_variants_norm):
                 title = result["title"]
                 break
 
@@ -169,7 +193,8 @@ def lookup_pcgamingwiki(game_name):
             _pcgw_cache[game_name] = (None, None)
             return None, None
 
-        # Fetch wikitext to check for redirect
+        # Fetch wikitext to check for redirect on disambiguation-matched pages
+        time.sleep(0.2)
         wt_url = f"{PCGW_API}?action=parse&page={urllib.request.quote(title)}&prop=wikitext&format=json"
         req2 = urllib.request.Request(wt_url, headers={"User-Agent": "vortex-ext-dev/1.0"})
         with urllib.request.urlopen(req2, timeout=10) as r2:
