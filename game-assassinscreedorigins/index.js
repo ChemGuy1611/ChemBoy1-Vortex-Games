@@ -16,6 +16,7 @@ const winapi = require('winapi-bindings');
 const UPLAYAPP_ID = "3539";
 const STEAMAPP_ID = "582160";
 const GAME_ID = "assassinscreedorigins";
+const GAME_NAME = "Assassin's Creed Origins";
 const EXEC = "ACOrigins.exe";
 const modFileExt = ".dds";
 const forgerModFileExt = ".forger2";

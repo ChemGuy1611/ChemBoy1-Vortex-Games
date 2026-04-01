@@ -20,6 +20,7 @@ const XBOXAPP_ID = "BethesdaSoftworks.ProjectRelic"; // <Identity Name="" in the
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, GOGAPP_ID, XBOXAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 const XBOXEXECNAME = "Game"; // <Application id="" in the appxmanifest.xml file
 const GAME_ID = "indianajonesandthegreatcircle";
+const GAME_NAME = "Indiana Jones and the Great Circle";
 const EXEC = "TheGreatCircle.exe";
 const EXEC_XBOX = "gamelaunchhelper.exe";
 

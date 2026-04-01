@@ -18,6 +18,7 @@ const EPICAPP_ID = "52d88e9a6df248da913c8e99f1e4c526";
 const XBOXAPP_ID = "BethesdaSoftworks.LiluDallas-Multipass";
 const XBOXEXECNAME = "App";
 const GAME_ID = "prey2017";
+const GAME_NAME = "Prey (2017)";
 const MOD_PATH = path.join("GameSDK", "Precache");
 
 let execFolder = '';
@@ -644,4 +645,4 @@ module.exports = {
 
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/711"; //Nexus link to this extension. Used for links
 
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Prey_%282017%29";

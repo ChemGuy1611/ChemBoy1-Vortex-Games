@@ -17,10 +17,11 @@ const GOGAPP_ID = null;
 const XBOXAPP_ID = null;
 const XBOXEXECNAME = null;
 const GAME_ID = "residentevil5goldedition";
+const GAME_NAME = "Resident Evil 5 Gold Edition";
 const EXEC = "Launcher.exe";
 
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/915"; //Nexus link to this extension. Used for links
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Resident_Evil_5";
 const spec = {
   "game": {
     "id": GAME_ID,

@@ -14,6 +14,7 @@ const template = require('string-template');
 const STEAMAPP_ID = "2420110";
 const EPICAPP_ID = "2efe99166b8847e9bcd80c571b05e1b6";
 const GAME_ID = "horizonforbiddenwest";
+const GAME_NAME = "Horizon Forbidden West";
 const EXEC = "HorizonForbiddenWest.exe";
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Horizon_Forbidden_West";
 

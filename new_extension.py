@@ -230,11 +230,76 @@ _ROMAN = [
     (r'\bV\b', '5'),
 ]
 
+_ARABIC_TO_ROMAN = [
+    ('11', 'XI'), ('10', 'X'), ('9', 'IX'), ('8', 'VIII'),
+    ('7', 'VII'), ('6', 'VI'), ('5', 'V'), ('4', 'IV'),
+    ('3', 'III'), ('2', 'II'),
+]
+
+_EDITION_SUFFIXES = [
+    ' Gold Edition', ' GOTY Edition', ' Game of the Year Edition',
+    ' Definitive Edition', ' Complete Edition', ' Deluxe Edition',
+    ' Ultimate Edition', ' Anniversary Edition', ' Remastered Edition',
+    ' Edition REMASTERED', ' REMASTERED', ' Remastered',
+    ' Gold', ' Plus Edition',
+]
+
 def roman_to_arabic(name):
     """Convert standalone Roman numeral words in a game title to Arabic digits."""
     for pattern, replacement in _ROMAN:
         name = re.sub(pattern, replacement, name)
     return name
+
+
+def arabic_to_roman(name):
+    """Convert standalone Arabic digit words in a game title to Roman numerals."""
+    for arabic, roman in _ARABIC_TO_ROMAN:
+        name = re.sub(rf'\b{arabic}\b', roman, name)
+    return name
+
+
+def name_lookup_variants(game_name):
+    """
+    Return a list of name strings to try for PCGW direct title lookup.
+    Includes the original, title-cased (for all-caps names), roman↔arabic
+    numeral alternates, and edition-suffix-stripped variants of all the above.
+    """
+    candidates = [game_name]
+
+    # Title-case variant: covers all-caps names ("FINAL FANTASY TACTICS") and
+    # names with lowercase prepositions ("Escape from Duckov" → "Escape From Duckov")
+    titled = game_name.title()
+    if titled != game_name:
+        candidates.append(titled)
+
+    # Arabic ↔ Roman numeral alternates
+    extra = []
+    for c in candidates:
+        r2a = roman_to_arabic(c)
+        if r2a != c:
+            extra.append(r2a)
+        a2r = arabic_to_roman(c)
+        if a2r != c:
+            extra.append(a2r)
+    candidates.extend(extra)
+
+    # Edition-suffix-stripped variants
+    stripped = []
+    for c in candidates:
+        for suffix in _EDITION_SUFFIXES:
+            if c.endswith(suffix):
+                stripped.append(c[: -len(suffix)].rstrip())
+                break
+    candidates.extend(stripped)
+
+    # Deduplicate while preserving order
+    seen = set()
+    result = []
+    for c in candidates:
+        if c not in seen:
+            seen.add(c)
+            result.append(c)
+    return result
 
 
 _nexus_games_cache = None
@@ -312,11 +377,8 @@ def lookup_pcgamingwiki(game_name):
     Stage 1: direct title lookup with redirect following for exact matches.
     Stage 2: title search fallback for disambiguation suffixes like "Keeper (video game)"."""
     PCGW_API = "https://www.pcgamingwiki.com/w/api.php"
-    norm = lambda s: s.lower().replace('\u2019', "'").replace(':', '').replace('  ', ' ').strip()
-    name_variants = [game_name]
-    converted = roman_to_arabic(game_name)
-    if converted != game_name:
-        name_variants.append(converted)
+    norm = lambda s: s.lower().replace('\u2019', "'").replace(':', '').replace(' - ', ' ').replace('  ', ' ').strip()
+    name_variants = name_lookup_variants(game_name)
 
     try:
         # Stage 1: direct title lookup (handles exact matches and redirects)
@@ -344,7 +406,7 @@ def lookup_pcgamingwiki(game_name):
         title = None
         for result in results:
             t = norm(result["title"])
-            if any(t.startswith(v + " (") for v in name_variants_norm):
+            if t in name_variants_norm or any(t.startswith(v + " (") for v in name_variants_norm):
                 title = result["title"]
                 break
         if not title:

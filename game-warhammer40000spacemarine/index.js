@@ -24,6 +24,7 @@ const XBOXEXECNAME = null;
 const XBOXAPP_ID_MCE = "7904SEGAEuropeLtd.SpaceMarine40k";
 const XBOXEXECNAME_MCE = "SpaceMarineBootstrapper";
 const GAME_ID = "warhammer40000spacemarine";
+const GAME_NAME = "Warhammer 40,000: Space Marine";
 const EXEC = "SpaceMarine.exe"; //same for MCE (nice)
 const EXEC_XBOX = 'gamelaunchhelper.exe';
 let GAME_PATH = '';

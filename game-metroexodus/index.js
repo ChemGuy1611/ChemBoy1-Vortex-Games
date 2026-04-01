@@ -19,6 +19,7 @@ const GOGAPP_ID = "1407287452";
 const XBOXAPP_ID = null;
 const XBOXEXECNAME = null;
 const GAME_ID = "metroexodus";
+const GAME_NAME = "Metro Exodus";
 const EXEC = "MetroExodus.exe";
 
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/907"; //Nexus link to this extension. Used for links

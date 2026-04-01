@@ -16,6 +16,7 @@ const UPLAYAPP_ID = "6100";
 const STEAMAPP_ID = "3035570";
 const EPICAPP_ID = null;
 const GAME_ID = "assassinscreedmirage";
+const GAME_NAME = "Assassin's Creed Mirage";
 const EXEC = "ACMirage.exe";
 const FORGER_ID = "assassinscreedmirage-forger";
 const FORGER_EXEC = 'Forger.exe';

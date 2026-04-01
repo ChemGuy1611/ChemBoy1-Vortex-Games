@@ -15,6 +15,7 @@ const winapi = require('winapi-bindings');
 const UPLAYAPP_ID = "13504";
 const STEAMAPP_ID = "2208920";
 const GAME_ID = "assassinscreedvalhalla";
+const GAME_NAME = "Assassin's Creed Valhalla";
 const EXEC = "ACValhalla.exe";
 const ATK_ID = "assassinscreedvalhalla-ATK";
 const ATK_EXEC = 'AnvilToolkit.exe';

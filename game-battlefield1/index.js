@@ -15,6 +15,7 @@ const winapi = require('winapi-bindings');
 const EAAPP_ID = "";
 const STEAMAPP_ID = "1238840";
 const GAME_ID = "battlefield1";
+const GAME_NAME = "Battlefield 1";
 const EXEC = "bf1.exe";
 const BINARIES_ID = "battlefield1-binaries";
 const FROSTY_EXEC = 'frostymodmanager.exe';

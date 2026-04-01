@@ -87,7 +87,7 @@ const SAVE_EXTS = ['.vdf'];
 const MOD_PATH_DEFAULT = '.';
 
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1515"; //Nexus link to this extension. Used for links
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Final_Fantasy_Tactics_-_The_Ivalice_Chronicles";
 const spec = {
   "game": {
     "id": GAME_ID,

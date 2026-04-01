@@ -31,11 +31,16 @@ PCGW_API = "https://www.pcgamingwiki.com/w/api.php"
 
 def get_game_name_from_src(src):
     """Extract the game name from index.js source, or None.
-    Tries GAME_NAME constant first, then falls back to spec.game.name."""
+    Tries GAME_NAME constant first, then quoted 'name': in spec, then
+    name: following id: GAME_ID in the context.registerGame call."""
     m = re.search(r'const\s+GAME_NAME\s*=\s*(["\'])(.+?)\1', src)
     if m:
         return m.group(2)
     m = re.search(r'"name":\s*(["\'])(.+?)\1', src)
+    if m:
+        return m.group(2)
+    # Fallback: name: field immediately following id: GAME_ID in registerGame object
+    m = re.search(r'\bid\s*:\s*GAME_ID\b.+?\bname\s*:\s*(["\'])(.+?)\1', src, re.DOTALL)
     return m.group(2) if m else None
 
 
@@ -120,11 +125,76 @@ _ROMAN = [
     (r'\bV\b', '5'),
 ]
 
+_ARABIC_TO_ROMAN = [
+    ('11', 'XI'), ('10', 'X'), ('9', 'IX'), ('8', 'VIII'),
+    ('7', 'VII'), ('6', 'VI'), ('5', 'V'), ('4', 'IV'),
+    ('3', 'III'), ('2', 'II'),
+]
+
+_EDITION_SUFFIXES = [
+    ' Gold Edition', ' GOTY Edition', ' Game of the Year Edition',
+    ' Definitive Edition', ' Complete Edition', ' Deluxe Edition',
+    ' Ultimate Edition', ' Anniversary Edition', ' Remastered Edition',
+    ' Edition REMASTERED', ' REMASTERED', ' Remastered',
+    ' Gold', ' Plus Edition',
+]
+
 def roman_to_arabic(name):
     """Convert standalone Roman numeral words in a game title to Arabic digits."""
     for pattern, replacement in _ROMAN:
         name = re.sub(pattern, replacement, name)
     return name
+
+
+def arabic_to_roman(name):
+    """Convert standalone Arabic digit words in a game title to Roman numerals."""
+    for arabic, roman in _ARABIC_TO_ROMAN:
+        name = re.sub(rf'\b{arabic}\b', roman, name)
+    return name
+
+
+def name_lookup_variants(game_name):
+    """
+    Return a list of name strings to try for PCGW direct title lookup.
+    Includes the original, title-cased (for all-caps names), roman↔arabic
+    numeral alternates, and edition-suffix-stripped variants of all the above.
+    """
+    candidates = [game_name]
+
+    # Title-case variant: covers all-caps names ("FINAL FANTASY TACTICS") and
+    # names with lowercase prepositions ("Escape from Duckov" → "Escape From Duckov")
+    titled = game_name.title()
+    if titled != game_name:
+        candidates.append(titled)
+
+    # Arabic ↔ Roman numeral alternates
+    extra = []
+    for c in candidates:
+        r2a = roman_to_arabic(c)
+        if r2a != c:
+            extra.append(r2a)
+        a2r = arabic_to_roman(c)
+        if a2r != c:
+            extra.append(a2r)
+    candidates.extend(extra)
+
+    # Edition-suffix-stripped variants
+    stripped = []
+    for c in candidates:
+        for suffix in _EDITION_SUFFIXES:
+            if c.endswith(suffix):
+                stripped.append(c[: -len(suffix)].rstrip())
+                break
+    candidates.extend(stripped)
+
+    # Deduplicate while preserving order
+    seen = set()
+    result = []
+    for c in candidates:
+        if c not in seen:
+            seen.add(c)
+            result.append(c)
+    return result
 
 
 _pcgw_cache = {}
@@ -140,11 +210,8 @@ def lookup_pcgamingwiki(game_name):
     if game_name in _pcgw_cache:
         return _pcgw_cache[game_name]
 
-    norm = lambda s: s.lower().replace('\u2019', "'").replace(':', '').replace('  ', ' ').strip()
-    name_variants = [game_name]
-    converted = roman_to_arabic(game_name)
-    if converted != game_name:
-        name_variants.append(converted)
+    norm = lambda s: s.lower().replace('\u2019', "'").replace(':', '').replace(' - ', ' ').replace('  ', ' ').strip()
+    name_variants = name_lookup_variants(game_name)
 
     try:
         # Stage 1: direct title lookup (handles exact matches and redirects)
@@ -185,7 +252,7 @@ def lookup_pcgamingwiki(game_name):
         title = None
         for result in results:
             t = norm(result["title"])
-            if any(t.startswith(v + " (") for v in name_variants_norm):
+            if t in name_variants_norm or any(t.startswith(v + " (") for v in name_variants_norm):
                 title = result["title"]
                 break
 
@@ -264,10 +331,37 @@ def patch_pcgamingwiki_url(game_id, src, context):
     return new_src, True, f"set to {page_url}"
 
 
+def patch_game_name(game_id, src, context):
+    """
+    Insert `const GAME_NAME = "...";` after the GAME_ID line for extensions
+    that don't already define it. The name is extracted from the source:
+    spec.game.name (quoted 'name':), or the name: field in context.registerGame.
+    """
+    if not is_missing(src, "GAME_NAME"):
+        return src, False, "already set"
+
+    name = get_game_name_from_src(src)
+    if not name:
+        return src, False, "could not extract game name from source"
+
+    escaped = name.replace("\\", "\\\\").replace('"', '\\"')
+    new_line = f'const GAME_NAME = "{escaped}";'
+
+    # Insert immediately after the GAME_ID line
+    m = re.search(r'^((?:const|let)\s+GAME_ID\s*=\s*[^\n]+)', src, re.MULTILINE)
+    if m:
+        pos = m.end()
+        new_src = src[:pos] + "\n" + new_line + src[pos:]
+        return new_src, True, f'inserted as "{name}"'
+
+    return src, False, "could not find GAME_ID line to insert after"
+
+
 # ── Patch registry ────────────────────────────────────────────────────────────
 # Add new patches here. Set enabled=False to skip without removing.
 
 PATCHES = [
+    {"name": "game_name",        "enabled": True, "fn": patch_game_name},
     {"name": "extension_url",    "enabled": True, "fn": patch_extension_url},
     {"name": "pcgamingwiki_url", "enabled": True, "fn": patch_pcgamingwiki_url},
 ]

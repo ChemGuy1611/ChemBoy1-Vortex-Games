@@ -44,6 +44,7 @@ const template = require('string-template');
 const STEAMAPP_ID = "379720";
 const GOGAPP_ID = "1390579243";
 const GAME_ID = "doom";
+const GAME_NAME = "DOOM (2016)";
 const EXEC = "DOOMx64vk.exe";
 let GAME_PATH = '';
 let STAGING_FOLDER = '';

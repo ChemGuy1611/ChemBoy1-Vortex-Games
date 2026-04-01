@@ -18,6 +18,7 @@ const GOGAPP_ID = null;
 const XBOXAPP_ID = null;
 const XBOXEXECNAME = null;
 const GAME_ID = "finalfantasy16";
+const GAME_NAME = "Final Fantasy XVI";
 const EXEC = "ffxvi.exe";
 
 const RELOADED_ID = `${GAME_ID}-reloadedmanager`;

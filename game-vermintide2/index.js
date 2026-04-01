@@ -13,6 +13,7 @@ const template = require('string-template');
 //Specify all information about the game
 const STEAMAPP_ID = "552500";
 const GAME_ID = "vermintide2";
+const GAME_NAME = "Warhammer - Vermintide 2";
 const EXEC = path.join("launcher", "Launcher.exe");
 
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/838"; //Nexus link to this extension. Used for links
