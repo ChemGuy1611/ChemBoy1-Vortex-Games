@@ -40,6 +40,13 @@ const BEPINEX_FILE_ID = '1';
 
 const LOADER_ID = `${GAME_ID}-modloader`;
 
+const BEPCFGMAN_ID = `${GAME_ID}-bepcfgman`;
+const BEPCFGMAN_NAME = "BepInEx Configuration Manager";
+const BEPCFGMAN_PATH = 'Bepinex';
+const BEPCFGMAN_URL = `https://github.com/BepInEx/BepInEx.ConfigurationManager/releases/download/v18.4.1/BepInEx.ConfigurationManager_BepInEx5_v18.4.1.zip`;
+const BEPCFGMAN_URL_ERR = `https://github.com/BepInEx/BepInEx.ConfigurationManager/releases`;
+const BEPCFGMAN_FILE = `configurationmanager.dll`; //lowercased
+
 //Filled in from info above
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1356"; //Nexus link to this extension. Used for links
 const PCGAMINGWIKI_URL = "XXX";
@@ -76,6 +83,12 @@ const spec = {
       "name": ROOT_NAME,
       "priority": "high",
       "targetPath": "{gamePath}"
+    },
+    {
+      "id": BEPCFGMAN_ID,
+      "name": BEPCFGMAN_NAME,
+      "priority": "high",
+      "targetPath": path.join('{gamePath}', BEPCFGMAN_PATH)
     },
     {
       "id": BEPMOD_ID,
@@ -153,6 +166,49 @@ async function requiresLauncher(gamePath, store) {
 }
 
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
+
+//Test for BepinExConfigManager mod files
+function testBepCfgMan(files, gameId) {
+  const isMod = files.some(file => (path.basename(file).toLowerCase() === BEPCFGMAN_FILE));
+  const isFolder = files.some(file => (path.basename(file).toLowerCase() === 'plugins'));
+  let supported = (gameId === spec.game.id) && isMod && isFolder;
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+      supported,
+      requiredFiles: [],
+  });
+}
+
+//Install BepinExConfigManager mod files
+function installBepCfgMan(files) {
+  const MOD_TYPE = BEPCFGMAN_ID;
+  const modFile = files.find(file => (path.basename(file).toLowerCase() === 'plugins'));
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file => (
+    (file.indexOf(rootPath) !== -1) &&
+    (!file.endsWith(path.sep))
+  ));
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
 
 //Test for .dll BepinEx mod files
 function testBepMod(files, gameId) {
@@ -234,12 +290,20 @@ function applyGame(context, gameSpec) {
   });
 
   //register mod installers
+  context.registerInstaller(BEPCFGMAN_ID, 9, testBepCfgMan, installBepCfgMan);
   //context.registerInstaller(BEPINEX_ID, 25, testBepinex, installBepinex);
   //context.registerInstaller(MELON_ID, 25, testMelon, installMelon);
   //context.registerInstaller(BEPMOD_ID, 25, testBepMod, installBepMod);
   //context.registerInstaller(MELONMOD_ID, 25, testMelonMod, installMelonMod);
   
   //register actions
+  context.registerAction('mod-icons', 300, 'open-ext', {}, `Download ${BEPCFGMAN_NAME}`, () => {
+    downloadBepCfgMan(context.api, spec, false);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
     const openPath = path.join(__dirname, 'CHANGELOG.md');
     util.opn(openPath).catch(() => null);
@@ -340,6 +404,57 @@ function main(context) {
   });
   return true;
 }
+
+//Download BepInExConfigManager from GitHub
+function isBepCfgManInstalled(api, spec) {
+  const state = api.getState();
+  const mods = state.persistent.mods[spec.game.id] || {};
+  return Object.keys(mods).some(id => mods[id]?.type === BEPCFGMAN_ID);
+}
+
+async function downloadBepCfgMan(api, gameSpec, check = true) {
+  let isInstalled = isBepCfgManInstalled(api, gameSpec);
+  if (!isInstalled || !check) {
+    const MOD_NAME = BEPCFGMAN_NAME;
+    const MOD_TYPE = BEPCFGMAN_ID;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
+    const GAME_DOMAIN = gameSpec.game.id;
+    const URL = BEPCFGMAN_URL;
+    const URL_ERR = BEPCFGMAN_URL_ERR;
+    api.sendNotification({ //notification indicating install process
+      id: NOTIF_ID,
+      message: `Installing ${MOD_NAME}`,
+      type: 'activity',
+      noDismiss: true,
+      allowSuppress: false,
+    });
+    try {
+      const dlInfo = { //Download the mod
+        game: GAME_DOMAIN,
+        name: MOD_NAME,
+      };
+      //const dlInfo = {};
+      const dlId = await util.toPromise(cb =>
+        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+      const modId = await util.toPromise(cb =>
+        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
+      const batched = [
+        actions.setModsEnabled(api, profileId, [modId], true, {
+          allowAutoDeploy: true,
+          installed: true,
+        }),
+        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
+      ];
+      util.batchDispatch(api.store, batched); // Will dispatch both actions
+    } catch (err) {
+      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
+      util.opn(URL_ERR).catch(() => null);
+    } finally {
+      api.dismissNotification(NOTIF_ID);
+    }
+  }
+} //*/
 
 //export to Vortex
 module.exports = {

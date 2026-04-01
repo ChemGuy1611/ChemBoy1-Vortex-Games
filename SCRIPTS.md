@@ -132,38 +132,6 @@ Writes `EXTENSION_EXPLAINED.md` into each processed extension folder. Skips fold
 
 ---
 
-## fetch_exec_icon.py
-
-Downloads and resizes a 64×64 `exec.png` icon for one or more extension folders using the Steam CDN icon for that game.
-
-### fetch_exec_icon.py — Requirements
-
-```sh
-pip install Pillow
-```
-
-### fetch_exec_icon.py — Usage
-
-```sh
-python fetch_exec_icon.py game-foo game-bar ...
-python fetch_exec_icon.py game-foo --force
-```
-
-Pass one or more extension folder names as arguments. Skips any folder that already has `exec.png` or `executable.png`. Use `--force` to overwrite existing icons.
-
-### fetch_exec_icon.py — Examples
-
-```sh
-python fetch_exec_icon.py game-thelongdark
-python fetch_exec_icon.py game-prodeus game-deathstranding2onthebeach --force
-```
-
-### fetch_exec_icon.py — Source
-
-Tries the Steam CDN 184×184 icon (`_full.jpg`) first. Falls back to the 32×32 version (upscaled). The game's Steam App ID is read from `STEAMAPP_ID` in the extension's `index.js`.
-
----
-
 ## categorize_games.py
 
 Scans all `game-*` extension folders and categorizes them by engine or framework based on the `Structure:` header comment and key code markers in each `index.js`. Writes one `.txt` file per category into `resources/`. Each line in the file is a `GAME_ID`.
