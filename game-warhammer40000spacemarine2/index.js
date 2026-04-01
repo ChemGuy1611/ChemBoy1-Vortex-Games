@@ -1608,6 +1608,7 @@ function main(context) {
   }
 
   context.once(() => { // put code here that should be run (once) when Vortex starts up
+    const api = context.api;
     context.api.onAsync('did-deploy', async (profileId, deployment) => {
       const lastActiveProfile = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
       if (profileId !== lastActiveProfile) return;

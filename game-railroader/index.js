@@ -219,6 +219,11 @@ async function statCheckAsync(gamePath, file) {
 }
 
 //Set mod type priorities
+function isDir(folder, file) {
+  const stats = fs.statSync(path.join(folder, file));
+  return stats.isDirectory();
+}
+
 function modTypePriority(priority) {
   return {
     high: 25,
@@ -696,6 +701,7 @@ function applyGame(context, gameSpec) {
 function main(context) {
   applyGame(context, spec);
   context.once(() => {
+    const api = context.api;
     if (context.api.ext.ummAddGame !== undefined) {
       context.api.ext.ummAddGame({
         gameId: GAME_ID,

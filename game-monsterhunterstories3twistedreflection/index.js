@@ -267,6 +267,26 @@ async function statCheckAsync(gamePath, file) {
 }
 
 //Set mod type priorities
+async function getAllFiles(dirPath) {
+  let results = [];
+  try {
+    const entries = await fs.readdirAsync(dirPath);
+    for (const entry of entries) {
+      const fullPath = path.join(dirPath, entry);
+      const stats = await fs.statAsync(fullPath);
+      if (stats.isDirectory()) { // Recursively get files from subdirectories
+        const subDirFiles = await getAllFiles(fullPath);
+        results = results.concat(subDirFiles);
+      } else { // Add file to results
+        results.push(fullPath);
+      }
+    }
+  } catch (err) {
+    log('warn', `Error reading directory ${dirPath}: ${err.message}`);
+  }
+  return results;
+}
+
 function modTypePriority(priority) {
   return {
     high: 35,

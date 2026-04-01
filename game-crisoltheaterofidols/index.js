@@ -2201,6 +2201,7 @@ function main(context) {
     });
   }
   context.once(() => { // put code here that should be run (once) when Vortex starts up
+    const api = context.api;
     context.api.onAsync('did-deploy', (profileId) => didDeploy(context.api, profileId)); //*/
     //context.api.onAsync('did-purge', (profileId) => didPurge(context.api, profileId)); //*/
   });

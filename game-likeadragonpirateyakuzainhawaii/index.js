@@ -725,6 +725,7 @@ function applyGame(context, gameSpec) {
 function main(context) {
   applyGame(context, spec);
   context.once(() => {
+    const api = context.api;
     // put code here that should be run (once) when Vortex starts up
     context.api.onAsync('did-deploy', async (profileId, deployment) => {
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);

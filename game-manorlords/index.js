@@ -929,6 +929,7 @@ async function resolveGameVersion(gamePath, exePath) {
 
 //Setup function
 async function setup(discovery, api, gameSpec) {
+  const state = api.getState();
   GAME_PATH = discovery.path;
   STAGING_FOLDER = selectors.installPathForGame(api.getState(), GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(api.getState(), GAME_ID);
@@ -1152,6 +1153,7 @@ function main(context) {
     });
   }
   context.once(() => { // put code here that should be run (once) when Vortex starts up
+    const api = context.api;
     context.api.onAsync('did-deploy', (profileId) => didDeploy(context.api, profileId)); //*/
   });
   return true;

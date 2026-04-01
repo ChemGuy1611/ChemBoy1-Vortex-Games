@@ -420,14 +420,239 @@ def patch_game_name(game_id, src, context):
     return src, False, "could not find GAME_ID line to insert after"
 
 
+# Each entry: (name, detection_pattern, source_code)
+# Source code must end with a trailing newline; a blank line is added between inserted functions.
+_UTILITY_FUNCTIONS = [
+    (
+        "isDir",
+        r'\bfunction\s+isDir\b',
+        "function isDir(folder, file) {\n"
+        "  const stats = fs.statSync(path.join(folder, file));\n"
+        "  return stats.isDirectory();\n"
+        "}\n"
+    ),
+    (
+        "statCheckSync",
+        r'\bfunction\s+statCheckSync\b',
+        "function statCheckSync(gamePath, file) {\n"
+        "  try {\n"
+        "    fs.statSync(path.join(gamePath, file));\n"
+        "    return true;\n"
+        "  }\n"
+        "  catch (err) {\n"
+        "    return false;\n"
+        "  }\n"
+        "}\n"
+    ),
+    (
+        "statCheckAsync",
+        r'\bfunction\s+statCheckAsync\b',
+        "async function statCheckAsync(gamePath, file) {\n"
+        "  try {\n"
+        "    await fs.statAsync(path.join(gamePath, file));\n"
+        "    return true;\n"
+        "  }\n"
+        "  catch (err) {\n"
+        "    return false;\n"
+        "  }\n"
+        "}\n"
+    ),
+    (
+        "getAllFiles",
+        r'\bfunction\s+getAllFiles\b',
+        "async function getAllFiles(dirPath) {\n"
+        "  let results = [];\n"
+        "  try {\n"
+        "    const entries = await fs.readdirAsync(dirPath);\n"
+        "    for (const entry of entries) {\n"
+        "      const fullPath = path.join(dirPath, entry);\n"
+        "      const stats = await fs.statAsync(fullPath);\n"
+        "      if (stats.isDirectory()) { // Recursively get files from subdirectories\n"
+        "        const subDirFiles = await getAllFiles(fullPath);\n"
+        "        results = results.concat(subDirFiles);\n"
+        "      } else { // Add file to results\n"
+        "        results.push(fullPath);\n"
+        "      }\n"
+        "    }\n"
+        "  } catch (err) {\n"
+        "    log('warn', `Error reading directory ${dirPath}: ${err.message}`);\n"
+        "  }\n"
+        "  return results;\n"
+        "}\n"
+    ),
+    (
+        "getDiscoveryPath",
+        r'\bgetDiscoveryPath\b',
+        "const getDiscoveryPath = (api) => { //get the game's discovered path\n"
+        "  const state = api.getState();\n"
+        "  const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});\n"
+        "  return discovery === null || discovery === void 0 ? void 0 : discovery.path;\n"
+        "};\n"
+    ),
+    (
+        "purge",
+        r'\basync\s+function\s+purge\b',
+        "async function purge(api) {\n"
+        "  return new Promise((resolve, reject) => api.events.emit('purge-mods', true, (err) => err ? reject(err) : resolve()));\n"
+        "}\n"
+    ),
+    (
+        "deploy",
+        r'\basync\s+function\s+deploy\b',
+        "async function deploy(api) {\n"
+        "  return new Promise((resolve, reject) => api.events.emit('deploy-mods', (err) => err ? reject(err) : resolve()));\n"
+        "}\n"
+    ),
+]
+
+
+def patch_utility_functions(game_id, src, context):
+    """
+    Insert standard utility functions (isDir, statCheckSync, statCheckAsync,
+    getAllFiles, getDiscoveryPath, purge, deploy) before `function modTypePriority`
+    for any extension missing them. Only missing functions are inserted.
+    """
+    missing = [(name, code) for name, pattern, code in _UTILITY_FUNCTIONS
+               if not re.search(pattern, src)]
+    if not missing:
+        return src, False, "already set"
+
+    m = re.search(r'^function\s+modTypePriority\b', src, re.MULTILINE)
+    if not m:
+        return src, False, "could not find modTypePriority anchor"
+
+    block = "\n".join(code for _, code in missing)
+    new_src = src[:m.start()] + block + "\n" + src[m.start():]
+    return new_src, True, f"inserted {', '.join(name for name, _ in missing)}"
+
+
+def _extract_function_body(src, func_start):
+    """
+    Given the index of a function declaration's opening `{` in src,
+    return (body_start, body_end) where src[body_start:body_end] is the
+    content between the braces (exclusive), or (None, None) on failure.
+    """
+    brace_pos = src.find('{', func_start)
+    if brace_pos == -1:
+        return None, None
+    depth = 0
+    for i in range(brace_pos, len(src)):
+        if src[i] == '{':
+            depth += 1
+        elif src[i] == '}':
+            depth -= 1
+            if depth == 0:
+                return brace_pos + 1, i
+    return None, None
+
+
+def patch_setup_vars(game_id, src, context):
+    """
+    Ensure the setup() function sets GAME_PATH, STAGING_FOLDER, DOWNLOAD_FOLDER
+    (and GAME_VERSION if setGameVersion is defined) at the top of its body.
+    Lines already present in the setup body are not duplicated.
+    """
+    m_setup = re.search(r'^async\s+function\s+setup\b', src, re.MULTILINE)
+    if not m_setup:
+        return src, False, "no setup function found"
+
+    body_start, body_end = _extract_function_body(src, m_setup.start())
+    if body_start is None:
+        return src, False, "could not parse setup function body"
+
+    body = src[body_start:body_end]
+    # Determine which lines are missing from the setup body
+    needed = [
+        ("const state",     r'\bconst\s+state\s*=\s*api\.getState\b',
+         "  const state = api.getState();"),
+        ("GAME_PATH",       r'\bGAME_PATH\s*=\s*discovery\.path\b',
+         "  GAME_PATH = discovery.path;"),
+        ("STAGING_FOLDER",  r'\bSTAGING_FOLDER\s*=\s*selectors\.installPathForGame\b',
+         "  STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);"),
+        ("DOWNLOAD_FOLDER", r'\bDOWNLOAD_FOLDER\s*=\s*selectors\.downloadPathForGame\b',
+         "  DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);"),
+    ]
+
+    missing_lines = []
+    missing_names = []
+    for name, pattern, line in needed:
+        if not re.search(pattern, body):
+            missing_lines.append(line)
+            missing_names.append(name)
+
+    if not missing_lines:
+        return src, False, "already set"
+
+    # If const state already exists, insert missing lines right after it.
+    # Otherwise insert everything at the top of the body.
+    m_state = re.search(r'\bconst\s+state\s*=\s*api\.getState\(\)\s*;?[^\n]*\n', src[body_start:body_end])
+    if m_state and "const state" not in missing_names:
+        insert_pos = body_start + m_state.end()
+        insert = "\n".join(missing_lines) + "\n"
+        new_src = src[:insert_pos] + insert + src[insert_pos:]
+    else:
+        insert = "\n".join(missing_lines) + "\n"
+        new_body_start = body_start
+        if src[body_start] == '\n':
+            new_body_start = body_start + 1
+        new_src = src[:new_body_start] + insert + src[new_body_start:]
+    return new_src, True, f"inserted {', '.join(missing_names)} in setup()"
+
+
+def patch_context_once_api(game_id, src, context):
+    """
+    Insert `const api = context.api;` as the first statement inside every
+    `context.once(() => { ... })` body that doesn't already have it.
+    """
+    insert_line = "    const api = context.api;"
+    pattern = re.compile(r'\bcontext\.once\s*\(', )
+    inserted = 0
+    offset = 0
+    new_src = src
+
+    while True:
+        m = pattern.search(new_src, offset)
+        if not m:
+            break
+        # Find the arrow function opening brace
+        arrow = re.search(r'=>\s*\{', new_src[m.start():m.start() + 80])
+        if not arrow:
+            offset = m.end()
+            continue
+        brace_pos = m.start() + arrow.end() - 1  # position of {
+        body_start, body_end = _extract_function_body(new_src, brace_pos)
+        if body_start is None:
+            offset = m.end()
+            continue
+
+        body = new_src[body_start:body_end]
+        if re.search(r'\bconst\s+api\s*=\s*context\.api\b', body):
+            offset = body_end
+            continue
+
+        # Insert at the start of the line after the opening brace
+        newline = new_src.find('\n', body_start)
+        ins_pos = newline + 1 if newline != -1 else body_start
+        new_src = new_src[:ins_pos] + insert_line + "\n" + new_src[ins_pos:]
+        inserted += 1
+        offset = ins_pos + len(insert_line) + 1
+
+    if inserted == 0:
+        return src, False, "already set"
+    return new_src, True, f"inserted const api in {inserted} context.once block(s)"
+
+
 # ── Patch registry ────────────────────────────────────────────────────────────
 # Add new patches here. Set enabled=False to skip without removing.
 
 PATCHES = [
-    {"name": "game_name",        "enabled": True, "fn": patch_game_name},
-    {"name": "folder_vars",      "enabled": True, "fn": patch_folder_vars},
-    {"name": "extension_url",    "enabled": True, "fn": patch_extension_url},
-    {"name": "pcgamingwiki_url", "enabled": True, "fn": patch_pcgamingwiki_url},
+    {"name": "game_name",           "enabled": True, "fn": patch_game_name},
+    {"name": "folder_vars",         "enabled": True, "fn": patch_folder_vars},
+    {"name": "utility_functions",   "enabled": True, "fn": patch_utility_functions},
+    {"name": "setup_vars",          "enabled": True, "fn": patch_setup_vars},
+    {"name": "context_once_api",    "enabled": True, "fn": patch_context_once_api},
+    {"name": "extension_url",       "enabled": True, "fn": patch_extension_url},
+    {"name": "pcgamingwiki_url",    "enabled": True, "fn": patch_pcgamingwiki_url},
 ]
 
 

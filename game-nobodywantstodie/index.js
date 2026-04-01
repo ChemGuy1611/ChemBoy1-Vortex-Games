@@ -168,6 +168,65 @@ const tools = [
 ];
 
 //Set mod type priorities
+function isDir(folder, file) {
+  const stats = fs.statSync(path.join(folder, file));
+  return stats.isDirectory();
+}
+
+function statCheckSync(gamePath, file) {
+  try {
+    fs.statSync(path.join(gamePath, file));
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}
+
+async function statCheckAsync(gamePath, file) {
+  try {
+    await fs.statAsync(path.join(gamePath, file));
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}
+
+async function getAllFiles(dirPath) {
+  let results = [];
+  try {
+    const entries = await fs.readdirAsync(dirPath);
+    for (const entry of entries) {
+      const fullPath = path.join(dirPath, entry);
+      const stats = await fs.statAsync(fullPath);
+      if (stats.isDirectory()) { // Recursively get files from subdirectories
+        const subDirFiles = await getAllFiles(fullPath);
+        results = results.concat(subDirFiles);
+      } else { // Add file to results
+        results.push(fullPath);
+      }
+    }
+  } catch (err) {
+    log('warn', `Error reading directory ${dirPath}: ${err.message}`);
+  }
+  return results;
+}
+
+const getDiscoveryPath = (api) => { //get the game's discovered path
+  const state = api.getState();
+  const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});
+  return discovery === null || discovery === void 0 ? void 0 : discovery.path;
+};
+
+async function purge(api) {
+  return new Promise((resolve, reject) => api.events.emit('purge-mods', true, (err) => err ? reject(err) : resolve()));
+}
+
+async function deploy(api) {
+  return new Promise((resolve, reject) => api.events.emit('deploy-mods', (err) => err ? reject(err) : resolve()));
+}
+
 function modTypePriority(priority) {
   return {
     high: 25,
@@ -414,6 +473,9 @@ function legacyModsNotify(api, legacyMods) {
 async function setup(discovery, api, gameSpec) {
   //SYNCHRONOUS CODE //////////////////////////////////////
   const state = api.getState();
+  GAME_PATH = discovery.path;
+  STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
+  DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   const mods = util.getSafe(state, ['persistent', 'mods', gameSpec.game.id], {});
   const legacyMods = Object.keys(mods).filter(id => mods[id]?.type === LEGACY_UE5_SORTABLE_ID);
   if (legacyMods.length > 0) {
@@ -659,6 +721,7 @@ function main(context) {
   }
 
   context.once(() => {
+    const api = context.api;
     // put code here that should be run (once) when Vortex starts up
 
   });

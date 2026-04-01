@@ -528,6 +528,10 @@ async function resolveGameVersion(gamePath) {
 
 //Setup function
 async function setup(discovery, api) {
+  const state = api.getState();
+  GAME_PATH = discovery.path;
+  STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
+  DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   setupNotify(api);
   await fs.ensureDirWritableAsync(path.join(discovery.path, "Mods", "Legacy"));
   return fs.ensureDirWritableAsync(path.join(discovery.path, MOD_PATH));
@@ -631,6 +635,7 @@ function main(context) {
   //context.registerInstaller(`${GAME_ID}-chairmodlegacy`, 45, testChairModLegacy, installChairModLegacy);
 
   context.once(() => {
+    const api = context.api;
     // put code here that should be run (once) when Vortex starts up
     
   });

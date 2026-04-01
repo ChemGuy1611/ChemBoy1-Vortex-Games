@@ -244,6 +244,26 @@ function truncateString(str, num) {
 }
 
 //Set mod type priorities
+async function getAllFiles(dirPath) {
+  let results = [];
+  try {
+    const entries = await fs.readdirAsync(dirPath);
+    for (const entry of entries) {
+      const fullPath = path.join(dirPath, entry);
+      const stats = await fs.statAsync(fullPath);
+      if (stats.isDirectory()) { // Recursively get files from subdirectories
+        const subDirFiles = await getAllFiles(fullPath);
+        results = results.concat(subDirFiles);
+      } else { // Add file to results
+        results.push(fullPath);
+      }
+    }
+  } catch (err) {
+    log('warn', `Error reading directory ${dirPath}: ${err.message}`);
+  }
+  return results;
+}
+
 function modTypePriority(priority) {
   return {
     high: 25,
@@ -708,6 +728,7 @@ function applyGame(context, gameSpec) {
 function main(context) {
   applyGame(context, spec);
   context.once(() => { // put code here that should be run (once) when Vortex starts up
+    const api = context.api;
     if (!customLoader) {
       context.api.onAsync('check-mods-version', (gameId, mods, forced) => {
         if (gameId !== GAME_ID) return;

@@ -458,6 +458,11 @@ async function statCheckAsync(gamePath, file) {
 }
 
 //Set mod type priorities
+function isDir(folder, file) {
+  const stats = fs.statSync(path.join(folder, file));
+  return stats.isDirectory();
+}
+
 function modTypePriority(priority) {
   return {
     high: 30,
@@ -2169,6 +2174,7 @@ function applyGame(context, gameSpec) {
 function main(context) {
   applyGame(context, spec);
   context.once(() => { // put code here that should be run (once) when Vortex starts up
+    const api = context.api;
     context.api.onAsync('did-deploy', async (profileId, deployment) => { 
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;
