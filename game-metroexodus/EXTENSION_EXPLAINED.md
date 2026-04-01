@@ -1,4 +1,4 @@
-# Metro Exodus Vortex Extension — Vortex Extension Explained
+# Metro Exodus — Vortex Extension Explained
 
 ## Overview
 

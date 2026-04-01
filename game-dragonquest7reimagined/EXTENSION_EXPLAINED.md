@@ -7,7 +7,7 @@
 | Name | DRAGON QUEST VII Reimagined Vortex Extension |
 | Engine / Structure | Unreal Engine Game |
 | Author | ChemBoy1 |
-| Version | 0.1.0 |
+| Version | 0.1.1 |
 | Date | 2026-02-03 |
 
 ## Key Identifiers

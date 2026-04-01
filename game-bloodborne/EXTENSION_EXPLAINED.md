@@ -16,6 +16,7 @@
 |---|---|
 | Game ID | `bloodborne` |
 | Executable | `N/A` |
+| PCGamingWiki | XXX |
 
 ## Mod Types
 

@@ -1,4 +1,4 @@
-# Prey Vortex Extension (Alt version) — Vortex Extension Explained
+# Prey (2017) — Vortex Extension Explained
 
 ## Overview
 

@@ -7,7 +7,7 @@
 | Name | Deus Ex: Human Revolution Vortex Extension |
 | Engine / Structure | Basic Game |
 | Author | ChemBoy1 |
-| Version | 0.1.1 |
+| Version | 0.1.2 |
 | Date | 2025-12-03 |
 
 ## Key Identifiers

@@ -1,4 +1,4 @@
-# AC Valhalla Vortex Extension — Vortex Extension Explained
+# Assassin's Creed Valhalla — Vortex Extension Explained
 
 ## Overview
 

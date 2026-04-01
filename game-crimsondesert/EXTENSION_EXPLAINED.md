@@ -7,7 +7,7 @@
 | Name | Crimson Desert Vortex Extension |
 | Engine / Structure | Basic Game |
 | Author | ChemBoy1 |
-| Version | 0.2.3 |
+| Version | 0.2.4 |
 | Date | 2026-03-29 |
 
 ### Notes

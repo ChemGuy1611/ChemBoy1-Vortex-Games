@@ -4,6 +4,14 @@
 
 - Change CDLC Song Downloader to open a free-roam browser window so that domain switching to file hosting sites for the .psarc files does not cause exit errors and allows downloading multiple files in one session.
 
+## [0.3.0] - 2026-04-01
+
+- Fixed: ASIO4ALL install function causing a crash due to hardcoded version in exe filename.
+- Fixed: DLC Builder installer not running due to hardcoded version in exe filename.
+- Improved: The download buttons in the folder icon on the Mods page toolbar now execute the non-Nexus downloads even if they are already installed. This allows the buttons to be used to update those mods and tools.
+- Improved: All executables now launch using api.runExecutable()
+- Added: Buttons to open PCGamingWiki page and make bug reports.
+
 ## [0.2.1] - 2025-10-21
 
 - Corrected a logic issue in the Root modtype installer.

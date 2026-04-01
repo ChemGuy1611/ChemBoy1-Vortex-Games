@@ -1,4 +1,4 @@
-# WH40k Space Marine Vortex Extension — Vortex Extension Explained
+# Warhammer 40,000: Space Marine — Vortex Extension Explained
 
 ## Overview
 

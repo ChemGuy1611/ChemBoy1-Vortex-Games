@@ -1,4 +1,4 @@
-# AC Odyssey Vortex Extension — Vortex Extension Explained
+# Assassin's Creed Odyssey — Vortex Extension Explained
 
 ## Overview
 

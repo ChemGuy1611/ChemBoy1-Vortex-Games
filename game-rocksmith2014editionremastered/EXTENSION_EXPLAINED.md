@@ -7,8 +7,8 @@
 | Name | Rocksmith 2014 Edition REMASTERED Vortex Extension |
 | Engine / Structure | Basic Game with Tools & Launchers |
 | Author | ChemBoy1 |
-| Version | 0.2.1 |
-| Date | 2025-10-21 |
+| Version | 0.3.0 |
+| Date | 2026-04-01 |
 
 ## Key Identifiers
 
@@ -80,10 +80,15 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Download ASIO4ALL
 - Download Editor On Fire
 - Download DLC Builder
+- ------------------
+- Open PCGamingWiki Page
+- View Changelog
+- Submit Bug Report
 - Open Downloads Folder
 
 ## Special Features
 
+- **Deploy Hook** (`did-deploy`) — runs custom logic (e.g., notifications, metadata patching) every time mods are deployed.
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
@@ -98,6 +103,7 @@ User drops archive into Vortex
                  └── Vortex stages files
                       └── User deploys
                            └── Vortex links/copies to game folder
+                                └── did-deploy fires → post-deploy logic runs
 ```
 
 ## Entry Point

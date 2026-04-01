@@ -1,4 +1,4 @@
-# Resident Evil 5 Gold Edition Vortex Extension — Vortex Extension Explained
+# Resident Evil 5 Gold Edition — Vortex Extension Explained
 
 ## Overview
 

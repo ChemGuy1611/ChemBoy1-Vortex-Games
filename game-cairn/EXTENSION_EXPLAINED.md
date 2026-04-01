@@ -18,7 +18,6 @@
 | Executable | `Cairn.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 | Executable (GOG) | `Cairn.exe` |
-| Extension Page | XXX |
 
 ## Supported Stores
 

@@ -28,12 +28,22 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 |---|---|---|---|
 | Root Game Folder | `peak-root` | high | `{gamePath}` |
+| BepInEx Configuration Manager | `peak-bepcfgman` | high | `{gamePath}/Bepinex` |
 | BepinEx Mod | `peak-bepmods` | high | `{gamePath}/BepinEx/plugins` |
+
+## Mod Installers
+
+Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
+
+| Installer ID | Priority |
+|---|---|
+| `peak-bepcfgman` | 9 |
 
 ## Toolbar Actions
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
+- Download ${BEPCFGMAN_NAME}
 - View Changelog
 - Open Downloads Folder
 

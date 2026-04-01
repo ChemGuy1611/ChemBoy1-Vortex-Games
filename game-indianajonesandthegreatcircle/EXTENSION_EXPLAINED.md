@@ -1,4 +1,4 @@
-# Indiana Jones and the Great Circle Vortex Extension — Vortex Extension Explained
+# Indiana Jones and the Great Circle — Vortex Extension Explained
 
 ## Overview
 

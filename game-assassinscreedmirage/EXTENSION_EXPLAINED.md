@@ -1,4 +1,4 @@
-# AC Mirage Vortex Extension — Vortex Extension Explained
+# Assassin's Creed Mirage — Vortex Extension Explained
 
 ## Overview
 

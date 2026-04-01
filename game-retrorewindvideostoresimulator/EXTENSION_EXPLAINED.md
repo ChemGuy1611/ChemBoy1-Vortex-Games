@@ -15,10 +15,11 @@
 | Property | Value |
 |---|---|
 | Game ID | `retrorewindvideostoresimulator` |
-| Executable | `null.exe` |
-| Executable (GOG) | `null.exe` |
-| Executable (Demo) | `null.exe` |
+| Executable | `RetroRewind.exe` |
+| Executable (GOG) | `RetroRewind.exe` |
+| Executable (Demo) | `RetroRewind.exe` |
 | Extension Page | XXX |
+| PCGamingWiki | XXX |
 
 ## Supported Stores
 
@@ -38,7 +39,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 |---|---|---|---|
 | UE4SS Script-LogicMod Combo | `retrorewindvideostoresimulator-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `retrorewindvideostoresimulator-logicmods` | high | `{gamePath}/null/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `retrorewindvideostoresimulator-logicmods` | high | `{gamePath}/RetroRewind/Content/Paks` |
 | PAK_ALT_NAME | `PAK_ALT_ID` | high | `{gamePath}/PAK_ALT_PATH` |
 | ROOT_NAME | `ROOT_ID` | high | `{gamePath}` |
 | ROOTSUB_NAME | `ROOTSUB_ID` | high | `{gamePath}/ROOTSUB_PATH` |

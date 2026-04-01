@@ -248,7 +248,7 @@ python release_extension.py assassinscreedorigins assassinscreedvalhalla --no-op
 
 ### release_extension.py — Output
 
-Creates `game-{GAME_ID}.zip` inside the extension folder, overwriting any existing zip. Reads `EXTENSION_URL` from `index.js` — if set to a valid URL, opens it in the default browser so the file can be uploaded. Skips the browser open if `EXTENSION_URL` is `"XXX"` or not present.
+Runs `generate_explained.js` first to regenerate `EXTENSION_EXPLAINED.md`, then creates `game-{GAME_ID}.zip` inside the extension folder, overwriting any existing zip. Reads `EXTENSION_URL` from `index.js` — if set to a valid URL, opens it in the default browser so the file can be uploaded. Skips the browser open if `EXTENSION_URL` is `"XXX"` or not present.
 
 ---
 
@@ -280,10 +280,12 @@ Use `--debug` to print raw PCGamingWiki search results and match status for each
 
 | Patch | Description |
 | --- | --- |
+| `game_name` | Inserts `const GAME_NAME = "...";` after the `GAME_ID` line for extensions that don't define it. Name extracted from spec or `context.registerGame`. |
+| `folder_vars` | Inserts `let STAGING_FOLDER = '';` and/or `let DOWNLOAD_FOLDER = '';` for extensions missing either declaration. Inserted after `GAME_PATH` or before `const spec = {`. |
 | `extension_url` | Sets `EXTENSION_URL` from the Vortex extensions manifest (`modId` → Nexus URL). Inserts the constant if missing. |
 | `pcgamingwiki_url` | Sets `PCGAMINGWIKI_URL` by looking up the game on PCGamingWiki. Inserts as `"XXX"` if not found or API unreachable. |
 
-Each patch skips a game if the value is already set to a real URL (unless `--force-pcgw` is used). Both patches insert the constant before `const spec = {` if it does not exist in the file. Games that fail to find a URL (but are not skipped) are always printed in the output so failures are visible.
+Each patch skips a game if the value is already set (unless `--force-pcgw` is used for `pcgamingwiki_url`). Games that fail a non-trivial step are always printed in the output so failures are visible. After writing any changed `index.js`, `generate_explained.js` is run automatically to keep `EXTENSION_EXPLAINED.md` in sync.
 
 ### patch_extensions.py — Adding New Patches
 

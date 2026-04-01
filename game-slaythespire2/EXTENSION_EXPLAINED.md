@@ -24,7 +24,6 @@
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 | Executable (GOG) | `SlayTheSpire2.exe` |
 | Executable (Demo) | `SlayTheSpire2.exe` |
-| Extension Page | XXX |
 
 ## Supported Stores
 

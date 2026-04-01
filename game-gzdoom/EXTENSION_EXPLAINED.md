@@ -16,6 +16,7 @@
 |---|---|
 | Game ID | `gzdoom` |
 | Executable | `N/A` |
+| PCGamingWiki | XXX |
 
 ## Mod Types
 

@@ -7,7 +7,7 @@
 | Name | Bellwright Vortex Extension |
 | Engine / Structure | UE4 + IO Store (Sig Bypass) |
 | Author | ChemBoy1 |
-| Version | 0.4.0 |
+| Version | 0.3.0 |
 | Date | 2026-02-01 |
 
 ## Key Identifiers
@@ -16,6 +16,7 @@
 |---|---|
 | Game ID | `bellwright` |
 | Executable | `BellwrightGame.exe` |
+| PCGamingWiki | XXX |
 
 ## Supported Stores
 

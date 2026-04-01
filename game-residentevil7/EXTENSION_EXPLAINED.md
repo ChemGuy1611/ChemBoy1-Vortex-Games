@@ -7,8 +7,8 @@
 | Name | Resident Evil 7 Biohazard Vortex Extension |
 | Engine / Structure | 3rd Party Mod Manager (Fluffy) |
 | Author | ChemBoy1 |
-| Version | 0.3.1 |
-| Date | 2026-03-30 |
+| Version | 0.3.0 |
+| Date | 2026-03-21 |
 
 ## Key Identifiers
 
@@ -22,6 +22,7 @@
 ## Supported Stores
 
 - **Steam** — `418370`
+- **Xbox / Microsoft Store** — `F024294D.RESIDENTEVIL7biohazard`
 
 ## Mod Types
 
@@ -88,6 +89,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Deploy Hook** (`did-deploy`) — runs custom logic (e.g., notifications, metadata patching) every time mods are deployed.
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
+- **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
 ## How Mod Installation Works

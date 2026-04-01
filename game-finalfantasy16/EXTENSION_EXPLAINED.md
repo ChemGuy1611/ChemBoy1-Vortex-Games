@@ -1,4 +1,4 @@
-# Final Fantasy XVI Vortex Extension — Vortex Extension Explained
+# Final Fantasy XVI — Vortex Extension Explained
 
 ## Overview
 

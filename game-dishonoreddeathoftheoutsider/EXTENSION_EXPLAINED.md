@@ -7,7 +7,7 @@
 | Name | Dishonored: Death of the Outsider Vortex Extension |
 | Engine / Structure | Void Installer |
 | Author | ChemBoy1 |
-| Version | 0.1.0 |
+| Version | 0.1.1 |
 | Date | 2025-11-13 |
 
 ## Key Identifiers

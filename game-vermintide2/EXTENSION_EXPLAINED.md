@@ -1,4 +1,4 @@
-# Warhammer Vermintide 2 Vortex Extension — Vortex Extension Explained
+# Warhammer - Vermintide 2 — Vortex Extension Explained
 
 ## Overview
 

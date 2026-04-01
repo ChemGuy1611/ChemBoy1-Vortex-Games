@@ -20,6 +20,7 @@ import re
 import json
 import time
 import urllib.request
+import subprocess
 
 REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
 MANIFEST_PATH = r"C:\ProgramData\vortex\temp\extensions-manifest.json"
@@ -331,6 +332,43 @@ def patch_pcgamingwiki_url(game_id, src, context):
     return new_src, True, f"set to {page_url}"
 
 
+def patch_folder_vars(game_id, src, context):
+    """
+    Insert `let STAGING_FOLDER = '';` and/or `let DOWNLOAD_FOLDER = '';` for
+    extensions that are missing either declaration. Both are inserted together
+    after `let GAME_PATH`, or before `const spec = {` if GAME_PATH is absent.
+    """
+    missing_staging  = is_missing(src, "STAGING_FOLDER")
+    missing_download = is_missing(src, "DOWNLOAD_FOLDER")
+    if not missing_staging and not missing_download:
+        return src, False, "already set"
+
+    lines_to_add = []
+    if missing_staging:
+        lines_to_add.append("let STAGING_FOLDER = ''; //Vortex staging folder path")
+    if missing_download:
+        lines_to_add.append("let DOWNLOAD_FOLDER = ''; //Vortex download folder path")
+    block = "\n".join(lines_to_add)
+
+    # Insert after GAME_PATH declaration if present
+    m = re.search(r'^((?:const|let)\s+GAME_PATH\s*=\s*[^\n]+)', src, re.MULTILINE)
+    if m:
+        pos = m.end()
+        new_src = src[:pos] + "\n" + block + src[pos:]
+        missing = [v for v, b in [("STAGING_FOLDER", missing_staging), ("DOWNLOAD_FOLDER", missing_download)] if b]
+        return new_src, True, f"inserted {', '.join(missing)}"
+
+    # Fallback: insert before const spec = {
+    insert_marker = re.search(r'^const\s+spec\s*=\s*\{', src, re.MULTILINE)
+    if insert_marker:
+        pos = insert_marker.start()
+        new_src = src[:pos] + block + "\n" + src[pos:]
+        missing = [v for v, b in [("STAGING_FOLDER", missing_staging), ("DOWNLOAD_FOLDER", missing_download)] if b]
+        return new_src, True, f"inserted {', '.join(missing)}"
+
+    return src, False, "could not find insertion point"
+
+
 def patch_game_name(game_id, src, context):
     """
     Insert `const GAME_NAME = "...";` after the GAME_ID line for extensions
@@ -362,6 +400,7 @@ def patch_game_name(game_id, src, context):
 
 PATCHES = [
     {"name": "game_name",        "enabled": True, "fn": patch_game_name},
+    {"name": "folder_vars",      "enabled": True, "fn": patch_folder_vars},
     {"name": "extension_url",    "enabled": True, "fn": patch_extension_url},
     {"name": "pcgamingwiki_url", "enabled": True, "fn": patch_pcgamingwiki_url},
 ]
@@ -411,6 +450,12 @@ def run_patches(game_ids, dry_run, context):
             if not dry_run:
                 with open(index_path, "w", encoding="utf-8") as f:
                     f.write(src)
+                result = subprocess.run(
+                    ["node", "generate_explained.js", "--game", f"game-{game_id}"],
+                    cwd=REPO_ROOT, capture_output=True, text=True
+                )
+                if result.returncode != 0:
+                    print(f"    ! generate_explained.js failed: {result.stderr.strip()}")
         else:
             if fail_msgs:
                 print(f"  [{game_id}] — {'; '.join(fail_msgs)}")

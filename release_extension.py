@@ -41,6 +41,14 @@ def release(game_id, open_browser):
         with open(index_path, encoding="utf-8") as f:
             extension_url = get_extension_url(f.read())
 
+    print(f"  [{game_id}] Generating EXTENSION_EXPLAINED.md...")
+    result = subprocess.run(
+        ["node", "generate_explained.js", "--game", f"game-{game_id}"],
+        cwd=REPO_ROOT, capture_output=True, text=True
+    )
+    if result.returncode != 0:
+        print(f"  [{game_id}] WARNING — generate_explained.js failed: {result.stderr.strip()}")
+
     zip_path = os.path.join(folder, f"game-{game_id}.zip")
 
     # Remove existing zip so 7-Zip creates a fresh one

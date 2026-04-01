@@ -18,7 +18,6 @@
 | Executable | `Norse.exe` |
 | Executable (GOG) | `Norse.exe` |
 | Executable (Demo) | `Norse.exe` |
-| Extension Page | XXX |
 
 ## Supported Stores
 

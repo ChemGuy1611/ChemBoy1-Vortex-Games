@@ -26,6 +26,7 @@
 
 | Flag | Value | Description |
 |---|---|---|
+| `reZip` | `true` | NOT WORKING YET - KEEP AS TRUE FOR NOW - set to true to re-zip Fluffy Mods (possibly not necessary for FLUFFY v3.069+) |
 | `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
 | `multiExe` | `true` | set to true if there are multiple executables (and multiple FLUFFY_FOLDERs) (typically for Demo) |
 
@@ -40,34 +41,21 @@ Mod types define where each category of mod gets deployed:
 | Fluffy Mod Manager | `pragmata-fluffymanager` | low | `{gamePath}` |
 | REFramework | `pragmata-reframework` | low | `{gamePath}` |
 
-## Mod Installers
-
-Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
-
-| Installer ID | Priority |
-|---|---|
-| `pragmata-fluffymanager` | 25 |
-| `pragmata-reframework` | 27 |
-| `pragmata-looselua` | 33 |
-| `pragmata-root` | 35 |
-| `pragmata-fluffymodzip` | 37 |
-
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch** (`PRAGMATA.exe`)
-- **Custom Launch** (`PRAGMATA_SKETCHBOOK.exe`)
+- **Custom Launch**
+- **Custom Launch (Demo)**
 
 ## Toolbar Actions
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- Open Config File
 - Open PCGamingWiki Page
 - View Changelog
-- Open Downloads Folder
 - Submit Bug Report
+- Open Downloads Folder
 
 ## Auto-Downloaded Dependencies
 
@@ -80,13 +68,14 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 | Type | Path |
 |---|---|
-| Config | `config.ini` |
+| Config | `.` |
 
 ## Special Features
 
 - **Deploy Hook** (`did-deploy`) — runs custom logic (e.g., notifications, metadata patching) every time mods are deployed.
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
+- **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
 ## How Mod Installation Works

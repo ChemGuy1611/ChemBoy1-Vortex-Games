@@ -1,4 +1,4 @@
-# Horizon Forbidden West Vortex Extension — Vortex Extension Explained
+# Horizon Forbidden West — Vortex Extension Explained
 
 ## Overview
 

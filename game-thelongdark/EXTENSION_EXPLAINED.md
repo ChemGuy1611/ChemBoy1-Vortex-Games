@@ -15,10 +15,10 @@
 | Property | Value |
 |---|---|
 | Game ID | `thelongdark` |
-| Executable | `null.exe` |
+| Executable | `XXX.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
-| Executable (GOG) | `null.exe` |
-| Executable (Demo) | `null.exe` |
+| Executable (GOG) | `XXX.exe` |
+| Executable (Demo) | `XXX.exe` |
 | Extension Page | XXX |
 
 ## Supported Stores

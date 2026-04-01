@@ -16,6 +16,7 @@
 |---|---|
 | Game ID | `mirthwood` |
 | Executable | `Mirthwood.exe` |
+| PCGamingWiki | XXX |
 
 ## Supported Stores
 

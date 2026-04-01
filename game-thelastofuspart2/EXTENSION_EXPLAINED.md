@@ -7,7 +7,7 @@
 | Name | The Last of Us Part II Remastered Vortex Extension |
 | Engine / Structure | Generic Game w/ File Extraction, Mod Loader, and Load Order |
 | Author | ChemBoy1 |
-| Version | 0.7.0 |
+| Version | 0.7.1 |
 | Date | 2026-02-11 |
 
 ## Key Identifiers

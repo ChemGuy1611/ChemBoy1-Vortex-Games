@@ -13,11 +13,11 @@ const template = require('string-template');
 //Specify all information about the game
 const STEAMAPP_ID = "552500";
 const GAME_ID = "vermintide2";
-const GAME_NAME = "Warhammer - Vermintide 2";
+const GAME_NAME = "Warhammer - Vermintide 2"; //this name is technically wrong (should be ":"), but it is what's used on Nexus Mods site
 const EXEC = path.join("launcher", "Launcher.exe");
 
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/838"; //Nexus link to this extension. Used for links
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Warhammer:_Vermintide_2";
 const spec = {
   "game": {
     "id": GAME_ID,

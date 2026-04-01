@@ -1,4 +1,4 @@
-# Battlefield 1 Vortex Extension — Vortex Extension Explained
+# Battlefield 1 — Vortex Extension Explained
 
 ## Overview
 

@@ -1,4 +1,4 @@
-# DOOM (2016) Vortex Extension — Vortex Extension Explained
+# DOOM (2016) — Vortex Extension Explained
 
 ## Overview
 

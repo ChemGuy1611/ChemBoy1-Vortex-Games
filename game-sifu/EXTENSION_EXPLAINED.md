@@ -7,7 +7,7 @@
 | Name | Sifu Vortex Extension |
 | Engine / Structure | UE4 (XBOX Integrated) with .sig files |
 | Author | ChemBoy1 |
-| Version | 0.1.2 |
+| Version | 0.2.0 |
 | Date | 01/01/2025 |
 
 ## Key Identifiers

@@ -2,15 +2,14 @@
 Name: Rocksmith 2014 Edition REMASTERED Vortex Extension
 Structure: Basic Game with Tools & Launchers
 Author: ChemBoy1
-Version: 0.2.1
-Date: 2025-10-21
+Version: 0.3.0
+Date: 2026-04-01
 /////////////////////////////////////////////////////////*/
 
 //Import libraries
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
-const child_process = require("child_process");
 const winapi = require('winapi-bindings');
 
 //Specify all information about the game
@@ -82,11 +81,14 @@ const RSASIO_URL = "https://github.com/mdias/rs_asio/releases";
 
 const ASIO4ALL_ID = `${GAME_ID}-asio4all`;
 const ASIO4ALL_NAME = "ASIO4ALL";
-const ASIO4ALL_INSTALLER = "ASIO4ALL_2_16.exe";
+
+const ASIO4ALL_INST_STR = "ASIO4ALL_";
+const ASIO4ALL_VER_STR = "2_18";
+const ASIO4ALL_INSTALLER = `${ASIO4ALL_INST_STR}${ASIO4ALL_VER_STR}.exe`;
 const ASIO4ALL_IS_ARCHIVE = false;
 const ASIO4ALL_IS_INSTALLER = true;
 const ASIO4ALL_IS_ELEVATED = true;
-const ASIO4ALL_DLFILE_STRING = "asio4all";
+const ASIO4ALL_DLFILE_STRING = "asio4all"; //lowercased
 const ASIO4ALL_URL = "https://asio4all.org/about/download-asio4all/";
 const ASIO4ALL_REGISTRY_KEY = {
   "key": "HKEY_LOCAL_MACHINE",
@@ -108,7 +110,9 @@ const DLCBUILDER_ID = `${GAME_ID}-dlcbuilder`;
 const DLCBUILDER_NAME = "DLC Builder";
 const DLCBUILDER_EXEC = 'DLCBuilder.exe';
 const DLCBUILDER_PATH = path.join("Rocksmith 2014 DLC Builder");
-const DLCBUILDER_INSTALLER = "dlcbuilder-win-3.4.0.exe";
+const DLCBUILDER_INST_STR = "dlcbuilder-win-";
+const DLCBUILDER_VERSION_STR = "3.4.0";
+const DLCBUILDER_INSTALLER = `${DLCBUILDER_INST_STR}${DLCBUILDER_VERSION_STR}.exe`;
 const DLCBUILDER_IS_ARCHIVE = false;
 const DLCBUILDER_IS_INSTALLER = true;
 const DLCBUILDER_IS_ELEVATED = false;
@@ -429,10 +433,7 @@ async function browseForDownloadFunction(discovery, api, gameSpec, URL, instruct
               util.batchDispatch(api.store, batched); // Will dispatch both actions.
               try {
                 const RUN_PATH = path.join(STAGING_FOLDER, STAGING_PATH, INSTALLER);
-                child_process.spawnSync( //run installer from staging folder
-                  RUN_PATH,
-                  []
-                );
+                await api.runExecutable(RUN_PATH, [], { suggestDeploy: false });
                 log('warn', `${MOD_NAME} installer started from staging folder`);
               } catch (err) {
                 log('error', `Running ${MOD_NAME} installer from staging folder failed: ${err}`);
@@ -495,7 +496,7 @@ async function browseForDownloadFunction(discovery, api, gameSpec, URL, instruct
               util.batchDispatch(api.store, batched); // Will dispatch both actions.
               try { //run installer from staging folder with elevation
                 const RUN_PATH = path.join(STAGING_FOLDER, STAGING_PATH, INSTALLER);
-                api.runExecutable(RUN_PATH, [], { suggestDeploy: false });
+                await api.runExecutable(RUN_PATH, [], { suggestDeploy: false });
                 log('warn', `${MOD_NAME} installer started from staging folder`);
               } catch (err) {
                 log('error', `Running ${MOD_NAME} installer from staging folder failed: ${err}`);
@@ -545,10 +546,7 @@ async function browseForDownloadFunction(discovery, api, gameSpec, URL, instruct
             }
             try {
               const RUN_PATH = path.join(DOWNLOAD_FOLDER, INSTALLER);
-              child_process.spawnSync( //run installer from downloads folder
-                RUN_PATH,
-                []
-              );
+              await api.runExecutable(RUN_PATH, [], { suggestDeploy: false });
               log('warn', `${MOD_NAME} installer started from downloads folder`);
             } catch (err) {
               log('error', `Running ${MOD_NAME} installer frown downloads folder failed: ${err}`);
@@ -597,7 +595,7 @@ async function browseForDownloadFunction(discovery, api, gameSpec, URL, instruct
             }
             try { //run installer from downloads folder with elevation
               const RUN_PATH = path.join(DOWNLOAD_FOLDER, INSTALLER);
-              api.runExecutable(RUN_PATH, [], { suggestDeploy: false });
+              await api.runExecutable(RUN_PATH, [], { suggestDeploy: false });
               log('warn', `${MOD_NAME} installer started from downloads folder`);
             } catch (err) {
               log('error', `Running ${MOD_NAME} installer frown downloads folder failed: ${err}`);
@@ -640,11 +638,11 @@ async function browseForDownloadFunction(discovery, api, gameSpec, URL, instruct
       })
       .then((result) => {
         api.events.emit('start-download', result, dlInfo, undefined,
-          async (error, id) => { //callback function to check for errors and pass id to and call 'start-install-download' event
+          (error, id) => { //callback function to check for errors and pass id to and call 'start-install-download' event
             if (error !== null && (error.name !== 'AlreadyDownloaded')) {
               return reject(error);
             }
-            api.events.emit('start-install-download', id, { allowAutoEnable: true }, async (error) => { //callback function to complete the installation
+            api.events.emit('start-install-download', id, { allowAutoEnable: true }, (error) => { //callback function to complete the installation
               if (error !== null) {
                 return reject(error);
               }
@@ -870,8 +868,9 @@ async function downloadOptional(discovery, api, gameSpec) {
 }
 
 //* Function to have user browse to download RSMods
-async function downloadRsMods(discovery, api, gameSpec) {
+async function downloadRsMods(discovery, api, gameSpec, check = true) {
   let isInstalled = isRsModsInstalled(discovery, api, gameSpec);
+  if (!check) isInstalled = false;
   const URL = RSMODS_URL;
   const MOD_NAME = RSMODS_NAME;
   const MOD_TYPE = RSMODS_ID;
@@ -889,8 +888,9 @@ async function downloadRsMods(discovery, api, gameSpec) {
 }
 
 //* Function to have user browse to download CDLC Enabler
-async function downloadCdlc(discovery, api, gameSpec) {
+async function downloadCdlc(discovery, api, gameSpec, check = true) {
   let isInstalled = isCdlcInstalled(discovery, api, gameSpec);
+  if (!check) isInstalled = false;
   const URL = CDLC_URL;
   const MOD_NAME = CDLC_NAME;
   const MOD_TYPE = CDLC_ID;
@@ -908,8 +908,9 @@ async function downloadCdlc(discovery, api, gameSpec) {
 }
 
 //* Function to have user browse to download CFSM
-async function downloadCfsm(discovery, api, gameSpec) {
+async function downloadCfsm(discovery, api, gameSpec, check = true) {
   let isInstalled = isCfsmInstalled(discovery, api, gameSpec);
+  if (!check) isInstalled = false;
   const URL = CFSM_URL;
   const MOD_NAME = CFSM_NAME;
   const MOD_TYPE = CFSM_ID;
@@ -999,8 +1000,9 @@ async function downloadNoCable(discovery, api, gameSpec) {
 } //*/
 
 //* Function to have user browse to download RS_ASIO
-async function downloadRsAsio(discovery, api, gameSpec) {
+async function downloadRsAsio(discovery, api, gameSpec, check = true) {
   let isInstalled = isRsAsioInstalled(discovery, api, gameSpec);
+  if (!check) isInstalled = false;
   const URL = RSASIO_URL;
   const MOD_NAME = RSASIO_NAME;
   const MOD_TYPE = RSASIO_ID;
@@ -1018,8 +1020,9 @@ async function downloadRsAsio(discovery, api, gameSpec) {
 }
 
 //* Function to have user browse to download RS_ASIO
-async function downloadAsio4all(discovery, api, gameSpec) {
+async function downloadAsio4all(discovery, api, gameSpec, check = true) {
   let isInstalled = isAsio4allInstalled();
+  if (!check) isInstalled = false;
   const URL = ASIO4ALL_URL;
   const MOD_NAME = ASIO4ALL_NAME;
   const MOD_TYPE = ASIO4ALL_ID;
@@ -1033,12 +1036,83 @@ async function downloadAsio4all(discovery, api, gameSpec) {
     + `2. Navigate to the latest version of ${MOD_NAME} on the site.\n`
     + `3. Click on the appropriate file to download and install the mod.\n`
   );
-  await browseForDownloadFunction(discovery, api, gameSpec, URL, instructions, ARCHIVE_NAME, MOD_NAME, isArchive, isInstaller, INSTALLER, STAGING_PATH, MOD_TYPE, isInstalled, isElevated);
+  await browseForAsio4all(discovery, api, gameSpec, URL, instructions, ARCHIVE_NAME, MOD_NAME, isArchive, isInstaller, INSTALLER, STAGING_PATH, MOD_TYPE, isInstalled, isElevated);
 }
 
+//* Specific code for ASIO4ALL since the version number is in the exe filename
+async function browseForAsio4all(discovery, api, gameSpec, URL, instructions, ARCHIVE_NAME, MOD_NAME, isArchive, isInstaller, INSTALLER, STAGING_PATH, MOD_TYPE, isInstalled, isElevated) {
+  const state = api.getState();
+  STAGING_FOLDER = selectors.installPathForGame(state, gameSpec.game.id);
+  DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, gameSpec.game.id);
+  //const dlInfo = {game: gameSpec.game.id, name: MOD_NAME};
+  const dlInfo = {};
+
+  if (!isInstalled) { // mod is not installed, is NOT an archive, and is an installer exe that requires elevation. Can launch from Downloads folder
+    return new Promise((resolve, reject) => { //Browse to modDB and download the mod
+      return api.emitAndAwait('browse-for-download', URL, instructions)
+      .then((result) => { //result is an array with the URL to the downloaded file as the only element
+        if (!result || !result.length) { //user clicks outside the window without downloading
+          return reject(new util.UserCanceled());
+        }
+        if (!result[0].toLowerCase().includes(ARCHIVE_NAME)) { //if user downloads the wrong file
+          return reject(new util.UserCanceled('Selected wrong download'));
+        }
+        return Promise.resolve(result);
+      })
+      .catch((err) => {
+        return reject(err);
+      })
+      .then((result) => {
+        log('warn', `Found ASIO4ALL result ${result.join(', ')}`);
+        api.events.emit('start-download', result, dlInfo, undefined,
+          async (error, id) => { //callback function to check for errors and then run installer from downloads folder
+            if (error !== null && (error.name !== 'AlreadyDownloaded')) {
+              return reject(error);
+            }
+            try { //run installer from downloads folder with elevation
+              const dlFiles = await fs.readdirAsync(DOWNLOAD_FOLDER);
+              const FOUND_INSTALLER = dlFiles.find(file => ( //need to find file since exe name will change on updates
+                path.basename(file).includes(ASIO4ALL_INST_STR)
+                && path.extname(file).toLowerCase() === '.exe'
+              ));
+              if (!FOUND_INSTALLER) {
+                throw new Error('No ASIO4ALL installer found');
+              }
+              const RUN_PATH = path.join(DOWNLOAD_FOLDER, FOUND_INSTALLER);
+              await api.runExecutable(RUN_PATH, [], { suggestDeploy: false });
+              log('warn', `${MOD_NAME} installer started from downloads folder`);
+            } catch (err) {
+              log('error', `Running ${MOD_NAME} installer frown downloads folder failed: ${err}`);
+            }
+            return resolve();
+          }, 
+          'never',
+          { allowInstall: false },
+        );
+      });
+    })
+    .catch(err => {
+      if (err instanceof util.UserCanceled) {
+        api.showErrorNotification(`User cancelled download/install of ${MOD_NAME}. Please re-launch Vortex and try again.`, err, { allowReport: false });
+        return Promise.resolve();
+      } else if (err instanceof util.ProcessCanceled) {
+        api.showErrorNotification(`Failed to download/install ${MOD_NAME}. Please re-launch Vortex and try again or download manually from the opened page.`, err, { allowReport: false });
+        util.opn(URL).catch(() => null);
+        return Promise.reject(err);
+      } else {
+        return Promise.reject(err);
+      }
+    });
+  }
+
+  log('warn', `Could not download/install ${MOD_NAME}. Cannot be downloaded with this function.`);
+  return api.showErrorNotification(`${MOD_NAME} is already installed. Please remove the exisitng mod if you want to try again.`, undefined, { allowReport: false });
+} //*/
+
 //* Function to have user browse to download Editor On Fire
-async function downloadEof(discovery, api, gameSpec) {
+async function downloadEof(discovery, api, gameSpec, check = true) {
   let isInstalled = isEofInstalled(discovery, api, gameSpec);
+  if (!check) isInstalled = false;
   const URL = EOF_URL;
   const MOD_NAME = EOF_NAME;
   const MOD_TYPE = EOF_ID;
@@ -1056,8 +1130,9 @@ async function downloadEof(discovery, api, gameSpec) {
 }
 
 //* Function to have user browse to download DLC Builder
-async function downloadDlcBuilder(discovery, api, gameSpec) {
+async function downloadDlcBuilder(discovery, api, gameSpec, check = true) {
   let isInstalled = isDlcBuilderInstalled(discovery, api, gameSpec);
+  if (!check) isInstalled = false;
   const URL = DLCBUILDER_URL;
   const MOD_NAME = DLCBUILDER_NAME;
   const MOD_TYPE = DLCBUILDER_ID;
@@ -1066,13 +1141,83 @@ async function downloadDlcBuilder(discovery, api, gameSpec) {
   const isArchive = DLCBUILDER_IS_ARCHIVE;
   const isInstaller = DLCBUILDER_IS_INSTALLER;
   const isElevated = DLCBUILDER_IS_ELEVATED;
-  const ARCHIVE_NAME = DLCBUILDER_DLFILE_STRING;
+  const ARCHIVE_NAME = DLCBUILDER_INST_STR;
   const instructions = api.translate(`1. Click on Continue below to open the browser.\n`
     + `2. Navigate to the latest version of ${MOD_NAME} on the site.\n`
     + `3. Click on the appropriate file to download and install the mod.\n`
   );
-  await browseForDownloadFunction(discovery, api, gameSpec, URL, instructions, ARCHIVE_NAME, MOD_NAME, isArchive, isInstaller, INSTALLER, STAGING_PATH, MOD_TYPE, isInstalled, isElevated);
+  await browseForDlcBuilder(discovery, api, gameSpec, URL, instructions, ARCHIVE_NAME, MOD_NAME, isArchive, isInstaller, INSTALLER, STAGING_PATH, MOD_TYPE, isInstalled, isElevated);
 }
+
+//* Specific code for ASIO4ALL since the version number is in the exe filename
+async function browseForDlcBuilder(discovery, api, gameSpec, URL, instructions, ARCHIVE_NAME, MOD_NAME, isArchive, isInstaller, INSTALLER, STAGING_PATH, MOD_TYPE, isInstalled, isElevated) {
+  const state = api.getState();
+  STAGING_FOLDER = selectors.installPathForGame(state, gameSpec.game.id);
+  DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, gameSpec.game.id);
+  //const dlInfo = {game: gameSpec.game.id, name: MOD_NAME};
+  const dlInfo = {};
+
+  if (!isInstalled) { // mod is not installed, is NOT an archive, and is an installer exe that requires elevation. Can launch from Downloads folder
+    return new Promise((resolve, reject) => { //Browse to modDB and download the mod
+      return api.emitAndAwait('browse-for-download', URL, instructions)
+      .then((result) => { //result is an array with the URL to the downloaded file as the only element
+        if (!result || !result.length) { //user clicks outside the window without downloading
+          return reject(new util.UserCanceled());
+        }
+        if (!result[0].toLowerCase().includes(ARCHIVE_NAME)) { //if user downloads the wrong file
+          return reject(new util.UserCanceled('Selected wrong download'));
+        }
+        return Promise.resolve(result);
+      })
+      .catch((err) => {
+        return reject(err);
+      })
+      .then((result) => {
+        log('warn', `Found DLC Builder result ${result.join(', ')}`);
+        api.events.emit('start-download', result, dlInfo, undefined,
+          async (error, id) => { //callback function to check for errors and then run installer from downloads folder
+            if (error !== null && (error.name !== 'AlreadyDownloaded')) {
+              return reject(error);
+            }
+            try { //run installer from downloads folder with elevation
+              const dlFiles = await fs.readdirAsync(DOWNLOAD_FOLDER);
+              const FOUND_INSTALLER = dlFiles.find(file => ( //need to find file since exe name will change on updates
+                path.basename(file).includes(DLCBUILDER_INST_STR)
+                && path.extname(file).toLowerCase() === '.exe'
+              ));
+              if (!FOUND_INSTALLER) {
+                throw new Error('No DLC Builder installer found');
+              }
+              const RUN_PATH = path.join(DOWNLOAD_FOLDER, FOUND_INSTALLER);
+              await api.runExecutable(RUN_PATH, [], { suggestDeploy: false });
+              log('warn', `${MOD_NAME} installer started from downloads folder`);
+            } catch (err) {
+              log('error', `Running ${MOD_NAME} installer frown downloads folder failed: ${err}`);
+            }
+            return resolve();
+          }, 
+          'never',
+          { allowInstall: false },
+        );
+      });
+    })
+    .catch(err => {
+      if (err instanceof util.UserCanceled) {
+        api.showErrorNotification(`User cancelled download/install of ${MOD_NAME}. Please re-launch Vortex and try again.`, err, { allowReport: false });
+        return Promise.resolve();
+      } else if (err instanceof util.ProcessCanceled) {
+        api.showErrorNotification(`Failed to download/install ${MOD_NAME}. Please re-launch Vortex and try again or download manually from the opened page.`, err, { allowReport: false });
+        util.opn(URL).catch(() => null);
+        return Promise.reject(err);
+      } else {
+        return Promise.reject(err);
+      }
+    });
+  }
+
+  log('warn', `Could not download/install ${MOD_NAME}. Cannot be downloaded with this function.`);
+  return api.showErrorNotification(`${MOD_NAME} is already installed. Please remove the exisitng mod if you want to try again.`, undefined, { allowReport: false });
+} //*/
 
 //* Function to have user browse to download CDLC Songs from the catalogue
 async function downloadCdlcSongs(discovery, api, gameSpec) {
@@ -1082,7 +1227,7 @@ async function downloadCdlcSongs(discovery, api, gameSpec) {
   const instructions = api.translate(`\n`
     + `1. Click on Continue below to open the browser.\n`
     + `2. Navigate to the songs you want and click the download button.\n`
-    + `3. Vortex will install songs for you in the bakcground.\n`
+    + `3. Vortex will install songs for you in the background.\n`
     + `\n`
     + `NOTE: You will get a Vortex popup to "Create Mod" to install the songs as a mod if they are not zipped.\n`
   );
@@ -1284,7 +1429,7 @@ function setupNotify(discovery, api, gameSpec) {
 }
 
 //Setup function
-async function setup(discovery, api, gameSpec){
+async function setup(discovery, api, gameSpec) {
   const state = api.getState();
   GAME_PATH = discovery.path;
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
@@ -1358,10 +1503,14 @@ function applyGame(context, gameSpec) {
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, '------------------', () => {
+    
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download CDLC Songs', () => {
-    const openPath = CDLCMOD_URL;
-    //util.opn(openPath).catch(() => null);
-    //*
     const state = context.api.getState();
     const discovery = selectors.discoveryByGame(state, GAME_ID);
     downloadCdlcSongs(discovery, context.api, gameSpec); //*/
@@ -1373,7 +1522,7 @@ function applyGame(context, gameSpec) {
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download RSMods', () => {
     const state = context.api.getState();
     const discovery = selectors.discoveryByGame(state, GAME_ID);
-    downloadRsMods(discovery, context.api, gameSpec);
+    downloadRsMods(discovery, context.api, gameSpec, false);
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
@@ -1382,7 +1531,7 @@ function applyGame(context, gameSpec) {
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download CDLC Enabler', () => {
     const state = context.api.getState();
     const discovery = selectors.discoveryByGame(state, GAME_ID);
-    downloadCdlc(discovery, context.api, gameSpec);
+    downloadCdlc(discovery, context.api, gameSpec, false);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
@@ -1391,7 +1540,7 @@ function applyGame(context, gameSpec) {
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download CustomsForge Song Manager', () => {
     const state = context.api.getState();
     const discovery = selectors.discoveryByGame(state, GAME_ID);
-    downloadCfsm(discovery, context.api, gameSpec);
+    downloadCfsm(discovery, context.api, gameSpec, false);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
@@ -1400,7 +1549,7 @@ function applyGame(context, gameSpec) {
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download NoCableLauncher', () => {
     const state = context.api.getState();
     const discovery = selectors.discoveryByGame(state, GAME_ID);
-    downloadNoCable(discovery, context.api, gameSpec);
+    downloadNoCable(discovery, context.api, gameSpec); //from Nexus Mods
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
@@ -1409,7 +1558,7 @@ function applyGame(context, gameSpec) {
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download RS_ASIO', () => {
     const state = context.api.getState();
     const discovery = selectors.discoveryByGame(state, GAME_ID);
-    downloadRsAsio(discovery, context.api, gameSpec);
+    downloadRsAsio(discovery, context.api, gameSpec, false);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
@@ -1418,7 +1567,7 @@ function applyGame(context, gameSpec) {
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download ASIO4ALL', () => {
     const state = context.api.getState();
     const discovery = selectors.discoveryByGame(state, GAME_ID);
-    downloadAsio4all(discovery, context.api, gameSpec);
+    downloadAsio4all(discovery, context.api, gameSpec, false);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
@@ -1427,7 +1576,7 @@ function applyGame(context, gameSpec) {
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download Editor On Fire', () => {
     const state = context.api.getState();
     const discovery = selectors.discoveryByGame(state, GAME_ID);
-    downloadEof(discovery, context.api, gameSpec);
+    downloadEof(discovery, context.api, gameSpec, false);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
@@ -1436,19 +1585,46 @@ function applyGame(context, gameSpec) {
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download DLC Builder', () => {
     const state = context.api.getState();
     const discovery = selectors.discoveryByGame(state, GAME_ID);
-    downloadDlcBuilder(discovery, context.api, gameSpec);
+    downloadDlcBuilder(discovery, context.api, gameSpec, false);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, '------------------', () => {
+    
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
+    util.opn(PCGAMINGWIKI_URL).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
+    util.opn(path.join(__dirname, 'CHANGELOG.md')).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
+    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
-    const openPath = path.join(DOWNLOAD_FOLDER);
-    util.opn(openPath).catch(() => null);
-    }, () => {
-      const state = context.api.getState();
-      const gameId = selectors.activeGameId(state);
-      return gameId === GAME_ID;
+    util.opn(DOWNLOAD_FOLDER).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
   });
 }
 
@@ -1456,8 +1632,12 @@ function applyGame(context, gameSpec) {
 function main(context) {
   applyGame(context, spec);
   context.once(() => {
-    // put code here that should be run (once) when Vortex starts up
-    
+    /*const api = context.api;
+    context.api.onAsync("did-deploy", (profileId) => {
+      const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
+      if (profileId !== LAST_ACTIVE_PROFILE) return;
+      //downloadRequired(discovery, api, gameSpec);
+    }); //*/
   });
   return true;
 }

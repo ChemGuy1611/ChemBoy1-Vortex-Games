@@ -7,7 +7,7 @@
 | Name | Planet Coaster 2 Vortex Extension |
 | Engine / Structure | Cobra Engine (ACSE) |
 | Author | ChemBoy1 |
-| Version | 0.3.0 |
+| Version | 0.2.0 |
 | Date | 2025-10-22 |
 
 ## Key Identifiers
