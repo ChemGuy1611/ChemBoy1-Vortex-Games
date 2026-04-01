@@ -113,7 +113,7 @@ const MODTYPE_FOLDERS = [VOIDMOD_PATH, VIDEO_PATH];
 
 //Filled in from the data above
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/925"; //Nexus link to this extension. Used for links
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Dishonored_2";
 const spec = {
   "game": {
     "id": GAME_ID,

@@ -103,7 +103,7 @@ const PARAMETERS_STRING = '';
 const PARAMETERS = [PARAMETERS_STRING];
 const MODTYPE_FOLDERS = [BINARIES_PATH];
 
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Europa_Universalis_IV";
 const spec = {
   "game": {
     "id": GAME_ID,

@@ -90,6 +90,7 @@ const FLVER_EXEC = "flver_editor.exe";
 const PARAMETERS = [GAME_FILE];
 
 //Filled in from info above
+const PCGAMINGWIKI_URL = "XXX";
 const spec = {
   "game": {
     "id": GAME_ID,

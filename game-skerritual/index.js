@@ -32,7 +32,7 @@ const modFileExt = ".dll";
 
 const LOADER_ID = `${GAME_ID}-modloader`;
 
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Sker_Ritual";
 const spec = {
   "game": {
     "id": GAME_ID,

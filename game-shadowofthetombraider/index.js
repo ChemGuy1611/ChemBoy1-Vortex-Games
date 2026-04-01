@@ -54,7 +54,7 @@ const MANAGERMOD_EXTS = ['.tr11dtp', '.tr11material', '.tr11modeldata', '.t11scr
 
 //Filled in from information above
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/906"; //Nexus link to this extension. Used for links
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Shadow_of_the_Tomb_Raider";
 const spec = {
   "game": {
     "id": GAME_ID,

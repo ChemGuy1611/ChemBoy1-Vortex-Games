@@ -129,7 +129,7 @@ const IGNORE_DEPLOY = [path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.
 let MODTYPE_FOLDERS = [TEXTURESUB_PATH, UISUB_PATH, PAKSUB_PATH];
 
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1544"; //Nexus link to this extension. Used for links
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Sacred_2%3A_Remaster";
 const spec = {
   "game": {
     "id": GAME_ID,

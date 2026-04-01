@@ -51,7 +51,8 @@ const ROOT_NAME = "Root Game Folder";
 const BINARIES_ID = `${GAME_ID}-binaries`;
 const BINARIES_NAME = "Binaries (Engine Injector)";
 
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Warhammer_40%2C000%3A_Boltgun";
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/679"; //Nexus link to this extension. Used for links
 const spec = {
   "game": {
     "id": GAME_ID,

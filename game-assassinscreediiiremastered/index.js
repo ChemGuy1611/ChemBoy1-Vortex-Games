@@ -23,7 +23,7 @@ const ATK_ID = "assassinscreediiiremastered-atk";
 const ATK_EXEC = 'anviltoolkit.exe';
 
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/979"; //Nexus link to this extension. Used for links
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Assassin%27s_Creed_III_Remastered";
 const spec = {
   "game": {
     "id": GAME_ID,

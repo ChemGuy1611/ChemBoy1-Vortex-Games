@@ -37,7 +37,7 @@ const EXEC_VK = path.join("Base" , "Binaries", "Win64", "Civ7_Win64_Vulkan_Final
 
 //Filled in from data above
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1182"; //Nexus link to this extension. Used for links
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Sid_Meier%27s_Civilization_VII";
 const spec = {
   "game": {
     "id": GAME_ID,

@@ -45,7 +45,7 @@ const I3D_EXTS = ['.i3d'];
 const I3D_PATH = path.join("data", "maps", 'mapUS');
 
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1102"; //Nexus link to this extension. Used for links
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Farming_Simulator_25";
 const spec = {
   "game": {
     "id": GAME_ID,

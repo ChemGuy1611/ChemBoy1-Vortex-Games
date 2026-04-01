@@ -267,10 +267,14 @@ python patch_extensions.py
 python patch_extensions.py --game GAME_ID
 python patch_extensions.py --dry-run
 python patch_extensions.py --game GAME_ID --dry-run
+python patch_extensions.py --force-pcgw
+python patch_extensions.py --game GAME_ID --debug
 ```
 
 Run without arguments to apply all enabled patches to every `game-*` folder.
-Use `--game` to run on a single game. Use `--dry-run` to preview changes without writing.
+Use `--game` to target a single game. Use `--dry-run` to preview without writing.
+Use `--force-pcgw` to re-evaluate `PCGAMINGWIKI_URL` values that are already set (e.g. to correct wrong URLs from a previous run).
+Use `--debug` to print raw PCGamingWiki search results and match status for each game (useful for diagnosing lookup failures).
 
 ### patch_extensions.py — Built-in Patches
 
@@ -279,7 +283,7 @@ Use `--game` to run on a single game. Use `--dry-run` to preview changes without
 | `extension_url` | Sets `EXTENSION_URL` from the Vortex extensions manifest (`modId` → Nexus URL). Inserts the constant if missing. |
 | `pcgamingwiki_url` | Sets `PCGAMINGWIKI_URL` by looking up the game on PCGamingWiki. Inserts as `"XXX"` if not found or API unreachable. |
 
-Each patch skips a game if the value is already set to a real URL. Both patches insert the constant before `const spec = {` if it does not exist in the file.
+Each patch skips a game if the value is already set to a real URL (unless `--force-pcgw` is used). Both patches insert the constant before `const spec = {` if it does not exist in the file. Games that fail to find a URL (but are not skipped) are always printed in the output so failures are visible.
 
 ### patch_extensions.py — Adding New Patches
 

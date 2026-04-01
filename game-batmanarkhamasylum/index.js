@@ -113,7 +113,7 @@ let MODTYPE_FOLDERS = [TFCMOD_PATH, BINARIES_PATH, MOVIES_PATH, COOKEDSUB_PATH];
 
 //Filled in from the data above
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1536"; //Nexus link to this extension. Used for links
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Batman%3A_Arkham_Asylum";
 const spec = {
   "game": {
     "id": GAME_ID,

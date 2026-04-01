@@ -51,7 +51,7 @@ const MANAGERMOD_EXTS = ['tr2mesh', '.tr2pcd', '.drm', '.skl',  '.tr10dtp', '.tr
 
 //Filled in from information above
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/905"; //Nexus link to this extension. Used for links
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Rise_of_the_Tomb_Raider";
 const spec = {
   "game": {
     "id": GAME_ID,

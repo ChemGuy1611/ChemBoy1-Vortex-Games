@@ -162,7 +162,7 @@ const MOD_PATH_DEFAULT = UE5_PATH;
 
 //Filled in from data above
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1385"; //Nexus link to this extension. Used for links
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Wuchang%3A_Fallen_Feathers";
 const spec = {
   "game": {
     "id": GAME_ID,

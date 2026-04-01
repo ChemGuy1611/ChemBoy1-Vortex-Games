@@ -142,7 +142,7 @@ const MOD_PATH_DEFAULT = PAK_PATH;
 
 //Filled in from data above
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1284"; //Nexus link to this extension. Used for links
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Mandragora%3A_Whispers_of_the_Witch_Tree";
 const spec = {
   "game": {
     "id": GAME_ID,

@@ -29,7 +29,7 @@ const RELOADEDMOD_PATH = path.join("Reloaded", "Mods");
 const RELOADEDMOD_FILE = "modconfig.json";
 
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1041"; //Nexus link to this extension. Used for links
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Final_Fantasy_XVI";
 const spec = {
   "game": {
     "id": GAME_ID,

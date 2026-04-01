@@ -88,7 +88,7 @@ const PARAMETERS_STRING = '';
 const PARAMETERS = [PARAMETERS_STRING];
 
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1462"; //Nexus link to this extension. Used for links
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Deus_Ex";
 const spec = {
   "game": {
     "id": GAME_ID,

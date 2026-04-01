@@ -48,7 +48,7 @@ const REQ_FILE = `Base`;
 
 //Filled in from data above
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1183"; //Nexus link to this extension. Used for links
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Sid_Meier%27s_Civilization_VI";
 const spec = {
   "game": {
     "id": GAME_ID,

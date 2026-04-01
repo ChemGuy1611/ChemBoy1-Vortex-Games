@@ -34,7 +34,7 @@ const modFileExt = ".pk4";
 const EXE_EXT = ".exe";
 
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/985"; //Nexus link to this extension. Used for links
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Wolfenstein";
 const spec = {
   "game": {
     "id": GAME_ID,

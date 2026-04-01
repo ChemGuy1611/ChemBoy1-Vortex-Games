@@ -223,12 +223,26 @@ def steam_icon_search(appid, game_name):
 
 # ── Store lookups ─────────────────────────────────────────────────────────────
 
+_ROMAN = [
+    (r'\bVIII\b', '8'), (r'\bVII\b', '7'), (r'\bVI\b', '6'),
+    (r'\bIX\b', '9'), (r'\bIV\b', '4'), (r'\bXI\b', '11'),
+    (r'\bIII\b', '3'), (r'\bII\b', '2'), (r'\bX\b', '10'),
+    (r'\bV\b', '5'),
+]
+
+def roman_to_arabic(name):
+    """Convert standalone Roman numeral words in a game title to Arabic digits."""
+    for pattern, replacement in _ROMAN:
+        name = re.sub(pattern, replacement, name)
+    return name
+
+
 _nexus_games_cache = None
 
 def lookup_nexus_domain(game_name, api_key):
     """Look up the Nexus Mods domain name for a game using the v1 games list.
     Fetches all games once and caches the result for the session.
-    Uses startswith matching to avoid false positives from sequels/subtitles.
+    Uses exact matching with Roman numeral fallback (e.g. 'II' -> '2').
     Returns the domain_name string, or None if not found."""
     global _nexus_games_cache
     if not api_key:
@@ -241,10 +255,14 @@ def lookup_nexus_domain(game_name, api_key):
             )
             with urllib.request.urlopen(req, timeout=15) as resp:
                 _nexus_games_cache = json.loads(resp.read())
-        name_lower = game_name.lower()
+        norm = lambda s: s.lower().replace('\u2019', "'").replace(':', '').replace('  ', ' ').strip()
+        name_variants = {norm(game_name)}
+        converted = roman_to_arabic(game_name)
+        if converted != game_name:
+            name_variants.add(norm(converted))
         for game in _nexus_games_cache:
-            t = game.get("name", "").lower()
-            if t == name_lower or t.startswith(name_lower) or name_lower.startswith(t):
+            t = norm(game.get("name", ""))
+            if t in name_variants or any(t.startswith(v + " (") for v in name_variants):
                 return game["domain_name"]
     except Exception as e:
         print(f"    Nexus domain lookup error: {e}")
@@ -294,20 +312,25 @@ def lookup_pcgamingwiki(game_name):
     url = (
         "https://www.pcgamingwiki.com/w/api.php"
         f"?action=query&list=search&srsearch={urllib.parse.quote(game_name)}"
-        "&format=json&srlimit=3"
+        "&format=json&srlimit=10"
     )
     try:
         data = json.loads(http_get(url))
         pages = data.get("query", {}).get("search", [])
         if pages:
-            # Prefer a result whose title closely matches the game name over an unrelated first result
-            name_lower = game_name.lower()
-            title = pages[0]["title"]  # default to first result
+            norm = lambda s: s.lower().replace('\u2019', "'").replace(':', '').replace('  ', ' ').strip()
+            name_variants = {norm(game_name)}
+            converted = roman_to_arabic(game_name)
+            if converted != game_name:
+                name_variants.add(norm(converted))
+            title = None
             for page in pages:
-                t = page["title"].lower()
-                if t == name_lower or t.startswith(name_lower) or name_lower.startswith(t):
+                t = norm(page["title"])
+                if t in name_variants or any(t.startswith(v + " (") for v in name_variants):
                     title = page["title"]
                     break
+            if not title:
+                return None, None
             slug = urllib.parse.quote(title.replace(" ", "_"))
             return f"https://www.pcgamingwiki.com/wiki/{slug}", title
     except Exception as e:

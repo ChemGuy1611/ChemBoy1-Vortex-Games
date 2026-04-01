@@ -79,7 +79,7 @@ const SIGBYPASS_FILE_NO = 7106;
 
 // FILLED IN FROM DATA ABOVE
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1132"; //Nexus link to this extension. Used for links
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Marvel_Rivals";
 const spec = {
   "game": {
     "id": GAME_ID,

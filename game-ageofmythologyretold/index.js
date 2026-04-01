@@ -76,7 +76,7 @@ const MOD_PATH = path.join(CONFIG_FOLDER, USERID_FOLDER, "mods", "local");
 
 //This will fill in from the info above
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1028"; //Nexus link to this extension. Used for links
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Age_of_Mythology%3A_Retold";
 const spec = {
   "game": {
     "id": GAME_ID,

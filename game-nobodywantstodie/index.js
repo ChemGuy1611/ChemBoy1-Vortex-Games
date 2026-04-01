@@ -78,7 +78,7 @@ else {
 }
 
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/975"; //Nexus link to this extension. Used for links
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Nobody_Wants_to_Die";
 const spec = {
   "game": {
     "id": GAME_ID,

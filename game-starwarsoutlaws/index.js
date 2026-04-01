@@ -51,7 +51,7 @@ const MODLOADER_FILE_NO = 294;
 const MOD_PATH = ".";
 
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/970"; //Nexus link to this extension. Used for links
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Star_Wars_Outlaws";
 const spec = {
   "game": {
     "id": GAME_ID,

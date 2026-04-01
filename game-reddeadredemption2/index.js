@@ -104,7 +104,7 @@ const IGNORE_DEPLOY = [path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.
 let MODTYPE_FOLDERS = [MOD_PATH, BINARIES_PATH];
 
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/68"; //Nexus link to this extension. Used for links
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Red_Dead_Redemption_2";
 const spec = {
   "game": {
     "id": GAME_ID,

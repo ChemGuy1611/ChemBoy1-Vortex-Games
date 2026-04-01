@@ -164,7 +164,7 @@ const PARAMETERS_STRING4 = '--vfs-fs.';
 const PARAMETERS = [PARAMETERS_STRING0, PARAMETERS_STRING1, PARAMETERS_STRING2, PARAMETERS_STRING3, PARAMETERS_STRING4];
 
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1432"; //Nexus link to this extension. Used for links
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/The_Hunter%3A_Call_of_the_Wild";
 const spec = {
   "game": {
     "id": GAME_ID,

@@ -135,7 +135,7 @@ const MODTYPE_FOLDERS = [LOGICMODS_PATH, SCRIPTS_PATH, PAK_PATH];
 
 //Filled in from data above
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1411"; //Nexus link to this extension. Used for links
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Metal_Gear_Solid_%CE%94%3A_Snake_Eater";
 const spec = {
   "game": {
     "id": GAME_ID,

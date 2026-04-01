@@ -65,7 +65,7 @@ const IGNORED_FILES = [path.join('**', PATCH_FILE1), path.join('**', PATCH_FILE2
 
 //Filled in from info above
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/845"; //Nexus link to this extension. Used for links
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Helldivers_2";
 const spec = {
   "game": {
     "id": GAME_ID,

@@ -117,7 +117,7 @@ let MODTYPE_FOLDERS = [TFCMOD_PATH, MOVIES_PATH, COOKEDSUB_PATH];
 
 //This fills in from info above
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/920"; //Nexus link to this extension. Used for links
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/BioShock";
 const spec = {
   "game": {
     "id": GAME_ID,

@@ -163,7 +163,7 @@ const MODTYPE_FOLDERS = [LOGICMODS_PATH, SCRIPTS_PATH, PAK_PATH];
 
 //Filled in from data above
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1429"; //Nexus link to this extension. Used for links
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Daemon_X_Machina%3A_Titanic_Scion";
 const spec = {
   "game": {
     "id": GAME_ID,

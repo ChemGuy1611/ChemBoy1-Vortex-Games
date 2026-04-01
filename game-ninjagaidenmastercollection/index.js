@@ -1394,4 +1394,4 @@ module.exports = {
 
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1171"; //Nexus link to this extension. Used for links
 
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Series%3ANinja_Gaiden%3A_Master_Collection";

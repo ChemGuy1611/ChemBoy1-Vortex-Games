@@ -120,7 +120,7 @@ const SIGBYPASS_DLL = "dsound.dll";
 const SIGBYPASS_LUA = "sig.lua";
 
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/960"; //Nexus link to this extension. Used for links
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Frostpunk_2";
 const spec = {
   "game": {
     "id": GAME_ID,

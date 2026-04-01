@@ -85,7 +85,7 @@ const SAVE_FOLDER_DEFAULT = path.join(EPIC_CODE_NAME, "Saved", "SaveGames");
 const SAVE_FOLDER_XBOX = path.join(LOCALAPPDATA, "Packages", `${XBOXAPP_ID}_r4z3116tdh636`, "SystemAppData", "wgs"); //XBOX Version
 
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/852"; //Nexus link to this extension. Used for links
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Lies_of_P";
 const spec = {
   "game": {
     "id": GAME_ID,

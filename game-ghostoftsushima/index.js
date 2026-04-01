@@ -68,7 +68,7 @@ const PARAMETERS = [];
 
 //Filled in from the data above
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/879"; //Nexus link to this extension. Used for links
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Ghost_of_Tsushima_Director%27s_Cut";
 const spec = {
   "game": {
     "id": GAME_ID,

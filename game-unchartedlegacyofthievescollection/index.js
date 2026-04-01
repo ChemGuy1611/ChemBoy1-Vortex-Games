@@ -32,7 +32,7 @@ const PSARC_FOLDER = "Uncharted4_data";
 const PSARC_EXT = `.psarc`;
 
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1048"; //Nexus link to this extension. Used for links
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Uncharted%3A_Legacy_of_Thieves_Collection";
 const spec = {
   "game": {
     "id": GAME_ID,

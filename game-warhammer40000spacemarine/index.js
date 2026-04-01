@@ -37,7 +37,7 @@ const PREVIEW_NAME = "Preview Folder";
 const PREVIEW_PATH = "preview";
 
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/894"; //Nexus link to this extension. Used for links
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Warhammer_40%2C000%3A_Space_Marine";
 const spec = {
   "game": {
     "id": GAME_ID,

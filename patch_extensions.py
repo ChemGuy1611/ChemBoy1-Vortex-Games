@@ -10,6 +10,8 @@ Usage:
     python patch_extensions.py --game GAME_ID         # run on a single game
     python patch_extensions.py --dry-run              # preview changes without writing
     python patch_extensions.py --game GAME_ID --dry-run
+    python patch_extensions.py --force-pcgw                # re-evaluate all PCGAMINGWIKI_URL values, overwriting wrong ones
+    python patch_extensions.py --game GAME_ID --debug      # print raw PCGW search results for diagnosis
 """
 
 import os
@@ -28,15 +30,19 @@ PCGW_API = "https://www.pcgamingwiki.com/w/api.php"
 # ── Shared utilities ──────────────────────────────────────────────────────────
 
 def get_game_name_from_src(src):
-    """Extract the GAME_NAME constant value from index.js source, or None."""
-    m = re.search(r'const\s+GAME_NAME\s*=\s*["\'](.+?)["\']', src)
-    return m.group(1) if m else None
+    """Extract the game name from index.js source, or None.
+    Tries GAME_NAME constant first, then falls back to spec.game.name."""
+    m = re.search(r'const\s+GAME_NAME\s*=\s*(["\'])(.+?)\1', src)
+    if m:
+        return m.group(2)
+    m = re.search(r'"name":\s*(["\'])(.+?)\1', src)
+    return m.group(2) if m else None
 
 
 def get_game_id_from_src(src):
     """Extract the GAME_ID constant value from index.js source, or None."""
-    m = re.search(r'const\s+GAME_ID\s*=\s*["\'](.+?)["\']', src)
-    return m.group(1) if m else None
+    m = re.search(r'const\s+GAME_ID\s*=\s*(["\'])(.+?)\1', src)
+    return m.group(2) if m else None
 
 
 def const_value(src, var_name):
@@ -107,7 +113,22 @@ def load_manifest():
         return {}
 
 
+_ROMAN = [
+    (r'\bVIII\b', '8'), (r'\bVII\b', '7'), (r'\bVI\b', '6'),
+    (r'\bIX\b', '9'), (r'\bIV\b', '4'), (r'\bXI\b', '11'),
+    (r'\bIII\b', '3'), (r'\bII\b', '2'), (r'\bX\b', '10'),
+    (r'\bV\b', '5'),
+]
+
+def roman_to_arabic(name):
+    """Convert standalone Roman numeral words in a game title to Arabic digits."""
+    for pattern, replacement in _ROMAN:
+        name = re.sub(pattern, replacement, name)
+    return name
+
+
 _pcgw_cache = {}
+_debug = False
 
 def lookup_pcgamingwiki(game_name):
     """
@@ -120,17 +141,27 @@ def lookup_pcgamingwiki(game_name):
 
     try:
         name_encoded = urllib.request.quote(game_name)
-        url = f"{PCGW_API}?action=query&list=search&srsearch={name_encoded}&format=json"
+        url = f"{PCGW_API}?action=query&list=search&srsearch={name_encoded}&format=json&srlimit=10"
         req = urllib.request.Request(url, headers={"User-Agent": "vortex-ext-dev/1.0"})
         with urllib.request.urlopen(req, timeout=10) as r:
             data = json.loads(r.read())
 
         results = data.get("query", {}).get("search", [])
-        name_lower = game_name.lower()
+        norm = lambda s: s.lower().replace('\u2019', "'").replace(':', '').replace('  ', ' ').strip()
+        name_variants = {norm(game_name)}
+        converted = roman_to_arabic(game_name)
+        if converted != game_name:
+            name_variants.add(norm(converted))
+        if _debug:
+            print(f"    [debug] searching for: {repr(game_name)} variants={name_variants}")
+            for r in results:
+                t = norm(r["title"])
+                match = t in name_variants or any(t.startswith(v + " (") for v in name_variants)
+                print(f"    [debug]   result: {repr(r['title'])}  match={match}")
         title = None
         for result in results:
-            t = result["title"].lower()
-            if t.startswith(name_lower) or name_lower.startswith(t):
+            t = norm(result["title"])
+            if t in name_variants or any(t.startswith(v + " (") for v in name_variants):
                 title = result["title"]
                 break
 
@@ -184,10 +215,12 @@ def patch_pcgamingwiki_url(game_id, src, context):
     """
     Set PCGAMINGWIKI_URL by looking up the game name on PCGamingWiki.
     Skips if PCGW is unreachable or no match found, or value already set.
+    Use --force-pcgw to overwrite already-set values (e.g. to correct wrong URLs).
     """
     current = const_value(src, "PCGAMINGWIKI_URL")
     if current and not is_unset(current) and current != "null":
-        return src, False, "already set"
+        if not context.get("force_pcgw"):
+            return src, False, "already set"
 
     game_name = get_game_name_from_src(src)
     page_url = None
@@ -236,30 +269,33 @@ def run_patches(game_ids, dry_run, context):
 
         original_src = src
         game_changed = False
-        messages = []
+        changed_msgs = []
+        fail_msgs = []  # non-trivial skips worth showing (excludes "already set")
 
         for patch in active_patches:
             try:
                 src, changed, msg = patch["fn"](game_id, src, context)
                 if changed:
-                    messages.append(f"{patch['name']}: {msg}")
+                    changed_msgs.append(f"{patch['name']}: {msg}")
                     game_changed = True
+                elif msg != "already set":
+                    fail_msgs.append(f"{patch['name']}: {msg}")
             except Exception as ex:
-                messages.append(f"{patch['name']}: ERROR — {ex}")
+                fail_msgs.append(f"{patch['name']}: ERROR — {ex}")
                 total_errors += 1
 
         if game_changed:
             total_changed += 1
             prefix = "[DRY RUN] " if dry_run else ""
             print(f"  {prefix}[{game_id}] CHANGED")
-            for msg in messages:
+            for msg in changed_msgs:
                 print(f"    • {msg}")
             if not dry_run:
                 with open(index_path, "w", encoding="utf-8") as f:
                     f.write(src)
         else:
-            if messages:
-                print(f"  [{game_id}] skipped — {'; '.join(messages)}")
+            if fail_msgs:
+                print(f"  [{game_id}] — {'; '.join(fail_msgs)}")
             total_skipped += 1
 
     print(f"\nDone. {total_changed} changed, {total_skipped} skipped, {total_errors} errors.")
@@ -268,7 +304,10 @@ def run_patches(game_ids, dry_run, context):
 def main():
     args = sys.argv[1:]
     dry_run = "--dry-run" in args
-    args = [a for a in args if a != "--dry-run"]
+    force_pcgw = "--force-pcgw" in args
+    global _debug
+    _debug = "--debug" in args
+    args = [a for a in args if a not in ("--dry-run", "--force-pcgw", "--debug")]
 
     single_game = None
     if "--game" in args:
@@ -281,6 +320,7 @@ def main():
     print("Loading context...")
     context = {
         "manifest": load_manifest(),
+        "force_pcgw": force_pcgw,
     }
 
     if single_game:

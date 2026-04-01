@@ -175,7 +175,7 @@ const MOD_PATH_DEFAULT_UNFINISHED = UE5_PATH;
 
 //Filled in from data above
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/892"; //Nexus link to this extension. Used for links
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/RoboCop%3A_Rogue_City";
 const spec = {
   "game": {
     "id": GAME_ID,

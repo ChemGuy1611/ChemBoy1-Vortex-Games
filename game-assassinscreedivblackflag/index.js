@@ -111,7 +111,7 @@ application_to_hook={gamePath}\\${EXEC}|${BITS}`
 
 //Filled from data above
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/971"; //Nexus link to this extension. Used for links
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Assassin%27s_Creed_IV%3A_Black_Flag";
 const spec = {
   "game": {
     "id": GAME_ID,

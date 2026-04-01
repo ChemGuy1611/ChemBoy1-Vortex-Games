@@ -84,7 +84,7 @@ const CONFIG_PATH = path.join(SAVE_FOLDER, USERID_FOLDER, 'Config');
 const PARAMETERS = [];
 
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1103"; //Nexus link to this extension. Used for links
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Planet_Coaster_2";
 const spec = {
   "game": {
     "id": GAME_ID,

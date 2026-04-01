@@ -59,7 +59,7 @@ const PARFILE_NAMES = ["ui.spr.common", "ui.spr.de"];
 
 //Filled in from data above
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1191"; //Nexus link to this extension. Used for links
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Like_a_Dragon%3A_Pirate_Yakuza_in_Hawaii";
 const spec = {
   "game": {
     "id": GAME_ID,

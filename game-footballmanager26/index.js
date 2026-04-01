@@ -188,7 +188,7 @@ const IGNORE_CONFLICTS = [path.join('**', 'manifest.json'), path.join('**', 'ico
 
 //Filled in from info above
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1523"; //Nexus link to this extension. Used for links
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Football_Manager_26";
 const spec = {
   "game": {
     "id": GAME_ID,

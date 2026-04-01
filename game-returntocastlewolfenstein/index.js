@@ -48,7 +48,7 @@ const PK3_EXT = ".pk3";
 
 //Filled in from data above
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/937"; //Nexus link to this extension. Used for links
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Return_to_Castle_Wolfenstein";
 const spec = {
   "game": {
     "id": GAME_ID,

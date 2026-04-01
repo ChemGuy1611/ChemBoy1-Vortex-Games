@@ -150,7 +150,7 @@ const INSTR_URL = `https://www.pcgamingwiki.com/wiki/Lords_of_the_Fallen_(2023)#
 
 //Filled in from data above
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1276"; //Nexus link to this extension. Used for links
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Lords_of_the_Fallen_%282023%29";
 const spec = {
   "game": {
     "id": GAME_ID,

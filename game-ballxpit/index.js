@@ -199,7 +199,7 @@ let MODTYPE_FOLDERS = [ASSEMBLY_PATH, ASSETS_PATH, BEPINEX_PATCHERS_PATH, BEPINE
 
 //Filled in from info above
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1545"; //Nexus link to this extension. Used for links
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Ball_X_Pit";
 const spec = {
   "game": {
     "id": GAME_ID,

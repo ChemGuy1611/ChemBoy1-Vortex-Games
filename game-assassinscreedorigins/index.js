@@ -38,7 +38,7 @@ const userDocsPath = winapi.RegGetValue(
 const ddsModPath = path.join(userDocsPathString, "Resorep", "modded");
 
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/887"; //Nexus link to this extension. Used for links
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Assassin%27s_Creed_Origins";
 const spec = {
   "game": {
     "id": GAME_ID,

@@ -135,7 +135,7 @@ else {
 }
 
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1159"; //Nexus link to this extension. Used for links
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Ninja_Gaiden_2_Black";
 const spec = {
   "game": {
     "id": GAME_ID,

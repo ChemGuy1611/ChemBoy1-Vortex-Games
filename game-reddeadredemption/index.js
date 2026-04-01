@@ -80,7 +80,7 @@ const SAVE_EXTS = [""];
 
 //Filled in from information above
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1079"; //Nexus link to this extension. Used for links
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Red_Dead_Redemption";
 const spec = {
   "game": {
     "id": GAME_ID,
