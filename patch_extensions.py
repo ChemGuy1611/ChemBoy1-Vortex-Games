@@ -251,7 +251,6 @@ def patch_pcgamingwiki_url(game_id, src, context):
     page_url = None
 
     if game_name:
-        time.sleep(0.2)  # be polite to PCGW
         page_url, _title = lookup_pcgamingwiki(game_name)
 
     if not page_url:

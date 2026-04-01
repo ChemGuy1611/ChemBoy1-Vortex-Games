@@ -308,31 +308,61 @@ def check_epic(game_name):
 
 
 def lookup_pcgamingwiki(game_name):
-    """Search PCGamingWiki and return (page_url, page_title) or (None, None)."""
-    url = (
-        "https://www.pcgamingwiki.com/w/api.php"
-        f"?action=query&list=search&srsearch={urllib.parse.quote(game_name)}"
-        "&srwhat=title&format=json&srlimit=20"
-    )
+    """Search PCGamingWiki and return (page_url, page_title) or (None, None).
+    Stage 1: direct title lookup with redirect following for exact matches.
+    Stage 2: title search fallback for disambiguation suffixes like "Keeper (video game)"."""
+    PCGW_API = "https://www.pcgamingwiki.com/w/api.php"
+    norm = lambda s: s.lower().replace('\u2019', "'").replace(':', '').replace('  ', ' ').strip()
+    name_variants = [game_name]
+    converted = roman_to_arabic(game_name)
+    if converted != game_name:
+        name_variants.append(converted)
+
     try:
-        data = json.loads(http_get(url))
-        pages = data.get("query", {}).get("search", [])
-        if pages:
-            norm = lambda s: s.lower().replace('\u2019', "'").replace(':', '').replace('  ', ' ').strip()
-            name_variants = {norm(game_name)}
-            converted = roman_to_arabic(game_name)
-            if converted != game_name:
-                name_variants.add(norm(converted))
-            title = None
-            for page in pages:
-                t = norm(page["title"])
-                if t in name_variants or any(t.startswith(v + " (") for v in name_variants):
+        # Stage 1: direct title lookup (handles exact matches and redirects)
+        for variant in name_variants:
+            url = (
+                f"{PCGW_API}?action=query&titles={urllib.parse.quote(variant)}"
+                "&redirects=1&format=json"
+            )
+            data = json.loads(http_get(url))
+            pages = data.get("query", {}).get("pages", {})
+            for page_id, page in pages.items():
+                if page_id != "-1" and "missing" not in page:
                     title = page["title"]
-                    break
-            if not title:
-                return None, None
-            slug = urllib.parse.quote(title.replace(" ", "_"))
-            return f"https://www.pcgamingwiki.com/wiki/{slug}", title
+                    slug = urllib.parse.quote(title.replace(" ", "_"))
+                    return f"https://www.pcgamingwiki.com/wiki/{slug}", title
+
+        # Stage 2: title search fallback for disambiguation suffixes
+        url = (
+            f"{PCGW_API}?action=query&list=search&srsearch={urllib.parse.quote(game_name)}"
+            "&srwhat=title&format=json&srlimit=20"
+        )
+        data = json.loads(http_get(url))
+        results = data.get("query", {}).get("search", [])
+        name_variants_norm = {norm(v) for v in name_variants}
+        title = None
+        for result in results:
+            t = norm(result["title"])
+            if any(t.startswith(v + " (") for v in name_variants_norm):
+                title = result["title"]
+                break
+        if not title:
+            return None, None
+
+        # Fetch wikitext to check for redirect on disambiguation-matched pages
+        wt_url = (
+            f"{PCGW_API}?action=parse&page={urllib.parse.quote(title)}"
+            "&prop=wikitext&format=json"
+        )
+        wt_data = json.loads(http_get(wt_url))
+        wikitext = wt_data.get("parse", {}).get("wikitext", {}).get("*", "")
+        redirect = re.search(r'#REDIRECT\s*\[\[(.+?)\]\]', wikitext)
+        if redirect:
+            title = redirect.group(1)
+        slug = urllib.parse.quote(title.replace(" ", "_"))
+        return f"https://www.pcgamingwiki.com/wiki/{slug}", title
+
     except Exception as e:
         print(f"    PCGamingWiki lookup error: {e}")
     return None, None
@@ -340,8 +370,9 @@ def lookup_pcgamingwiki(game_name):
 
 def fetch_pcgw_availability(page_title):
     """Fetch PCGamingWiki page wikitext and check the Availability section for store presence.
-    Returns dict: {'xbox': bool}."""
-    result = {'xbox': False, 'xbox_url': None, 'epic_url': None}
+    Returns dict: {'xbox': bool, 'xbox_url': str|None, 'epic_url': str|None, 'engine_version': str|None}.
+    engine_version is a 4-part string like '5.4.4.0' parsed from {{Infobox game/row/engine|...|build=X.Y.Z}}."""
+    result = {'xbox': False, 'xbox_url': None, 'epic_url': None, 'engine_version': None}
     if not page_title:
         return result
     try:
@@ -378,6 +409,14 @@ def fetch_pcgw_availability(page_title):
         )
         if m:
             result['epic_url'] = f"https://store.epicgames.com/en-US/p/{m.group(1).strip()}"
+        m_eng = re.search(
+            r'\{\{Infobox game/row/engine\|Unreal Engine [45]\|build=(\d+\.\d+(?:\.\d+)?)',
+            wikitext
+        )
+        if m_eng:
+            build = m_eng.group(1)
+            # Normalise to 4-part format (e.g. '5.4.4' → '5.4.4.0')
+            result['engine_version'] = build if build.count('.') >= 3 else build + '.0'
     except Exception as e:
         print(f"    PCGamingWiki availability error: {e}")
     return result
@@ -670,7 +709,10 @@ def create_extension(template_name, game_input, force=False):
     time.sleep(0.3)
     availability = fetch_pcgw_availability(pcgw_title)
     xbox_found = availability['xbox']
+    engine_version = availability['engine_version']
     print(f"  Xbox     : {'found (set ID manually)' if xbox_found else 'not found'}")
+    if engine_version:
+        print(f"  UE build : {engine_version}")
 
     # ── 6. Copy template folder ───────────────────────────────────────────────
     print(f"\n[Creating game-{game_id}/]")
@@ -731,6 +773,12 @@ def create_extension(template_name, game_input, force=False):
     pcgw_epic_url = availability.get('epic_url')
     if epic_found and pcgw_epic_url:
         src = add_line_comment(src, "EPICAPP_ID", pcgw_epic_url)
+    if engine_version:
+        src = re.sub(
+            r"(const\s+ENGINE_VERSION\s*=\s*)['\"]5\.X\.X(?:\.0)?['\"]",
+            rf"\g<1>'{engine_version}'",
+            src
+        )
     with open(index_path, "w", encoding="utf-8") as f:
         f.write(src)
     print("  index.js written")
