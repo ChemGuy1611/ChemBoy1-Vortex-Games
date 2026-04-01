@@ -3,16 +3,14 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Civilization VII Vortex Extension |
 | Author | ChemBoy1 |
-| Version | 0.1.1 |
-| Date | 02/12/2025 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `civilizationvii` |
 | Executable | `Base/Binaries/Win64/Civ7_Win64_DX12_FinalRelease.exe` |
 
@@ -25,7 +23,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Mod | `civilizationvii-mod` | high | `MOD_PATH` |
 | Root Game Folder | `civilizationvii-root` | high | `{gamePath}` |
 
@@ -34,7 +32,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `civilizationvii-mod` | 25 |
 
 ## Special Features

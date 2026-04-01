@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Civilization VI Vortex Extension |
 | Engine / Structure | User Folder Mod Location |
 | Author | ChemBoy1 |
-| Version | 0.1.3 |
-| Date | 2025-07-31 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `civilisationvi` |
 | Executable | `Base/Binaries/Win64Steam/CivilizationVI.exe` |
 
@@ -27,7 +25,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Root Game Folder | `civilisationvi-root` | high | `{gamePath}` |
 
 ## Mod Installers
@@ -35,7 +33,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `civilisationvi-mod` | 25 |
 | `civilisationvi-root` | 30 |
 

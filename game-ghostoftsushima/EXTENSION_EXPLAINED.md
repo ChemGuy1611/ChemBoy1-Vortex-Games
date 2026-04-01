@@ -3,16 +3,14 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Ghost of Tsushima Vortex Extension |
 | Author | ChemBoy1 |
-| Version | 0.2.0 |
-| Date | 2025-10-02 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `ghostoftsushima` |
 | Executable | `GhostOfTsushima.exe` |
 
@@ -26,7 +24,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | PSARC (Archive) | `ghostoftsushima-psarc` | high | `{gamePath}/cache_pc/psarc` |
 | Save Game (Documents) | `ghostoftsushima-save` | high | `SAVE_PATH` |
 
@@ -35,7 +33,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `ghostoftsushima-psarc` | 25 |
 | `ghostoftsushima-save` | 25 |
 

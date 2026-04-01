@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Deus Ex: Invisible War Vortex Extension |
 | Engine / Structure | Basic Game |
 | Author | ChemBoy1 |
-| Version | 0.1.0 |
-| Date | 2025-09-26 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `deusexinvisiblewar` |
 | Executable | `System/dx2.exe` |
 
@@ -27,7 +25,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Data Mod Folder | `deusexinvisiblewar-datamodfolder` | high | `{gamePath}/content/DX2` |
 | Root Folder | `deusexinvisiblewar-root` | high | `{gamePath}` |
 | Binaries (Engine Injector) | `deusexinvisiblewar-binaries` | high | `{gamePath}/System` |
@@ -37,7 +35,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `deusexinvisiblewar-root` | 25 |
 | `deusexinvisiblewar-datamodfolder` | 27 |
 | `deusexinvisiblewar-binaries` | 49 |

@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | DOOM 3 & DOOM 3: BFG Edition Vortex Extension |
 | Engine / Structure | Basic multi-game with multiple exes |
 | Author | ChemBoy1 |
-| Version | 0.4.1 |
-| Date | 2026-01-16 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `doom3` |
 | Executable | `N/A` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -29,7 +27,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Binaries / Root Folder | `doom3-binaries` | high | `{gamePath}` |
 | "base" Data | `doom3-base` | high | `{gamePath}/base` |
 | d3xp (RoE) Folder | `doom3-d3xp` | high | `{gamePath}//d3xp` |
@@ -41,7 +39,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `doom3bfgedition-root` | 25 |
 
 ## Toolbar Actions

@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Dark Messiah of Might & Magic Vortex Extension |
 | Engine / Structure | Basic (Launcher) |
 | Author | ChemBoy1 |
-| Version | 0.3.0 |
-| Date | 2026-03-25 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `darkmessiahofmightandmagic` |
 | Executable | `mm.exe` |
 
@@ -26,7 +24,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Root Folder | `darkmessiahofmightandmagic-root` | high | `{gamePath}` |
 | Game Data Folder | `darkmessiahofmightandmagic-data` | high | `{gamePath}` |
 | Data Subfolder | `darkmessiahofmightandmagic-datasub` | high | `{gamePath}/mm` |
@@ -43,7 +41,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `darkmessiahofmightandmagic-launcher` | 25 |
 | `darkmessiahofmightandmagic-unlimited` | 27 |
 | `darkmessiahofmightandmagic-root` | 29 |
@@ -74,7 +72,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Config & Save Paths
 
 | Type | Path |
-|---|---|
+| --- | --- |
 | Config | `mm/cfg` |
 | Save | `mm/SAVE` |
 

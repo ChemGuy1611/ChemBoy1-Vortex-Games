@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Nioh 3 Vortex Extension |
 | Engine / Structure | Basic Game |
 | Author | ChemBoy1 |
-| Version | 0.3.0 |
-| Date | 2026-03-09 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `nioh3` |
 | Executable | `Nioh3.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -27,7 +25,7 @@
 ## Feature Flags
 
 | Flag | Value | Description |
-|---|---|---|
+| --- | --- | --- |
 | `reZip` | `true` | rezip mods for ModManager |
 | `loadOrderEnabled` | `false` | true to use load order sorting |
 | `modInstallerEnabled` | `true` | enable mod installer (once mod loader is added) |
@@ -44,7 +42,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Root Folder | `nioh3-root` | high | `{gamePath}` |
 | Plugin Mod | `nioh3-loadermod` | high | `{gamePath}/plugins` |
 | Loose File Loader | `nioh3-looseloader` | low | `{gamePath}/plugins` |
@@ -59,7 +57,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `nioh3-dllloader` | 25 |
 | `nioh3-rdbexplorer` | 26 |
 | `nioh3-yumia` | 27 |
@@ -95,7 +93,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | DLL Plugin Loader | — | — |
 
 ## Special Features

@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Batman: Arkham Asylum Vortex Extension |
 | Engine / Structure | UE2/3 Game (TFC Installer) |
 | Author | ChemBoy1 |
-| Version | 0.1.1 |
-| Date | 2026-01-30 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `batmanarkhamasylum` |
 | Executable | `Binaries/BmLauncher.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -29,7 +27,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | TFC Mod | `batmanarkhamasylum-tfcmod` | high | `{gamePath}/TFCInstaller/Mods` |
 | Root Folder | `batmanarkhamasylum-root` | high | `{gamePath}` |
 | Root Sub Folder | `batmanarkhamasylum-rootsub` | high | `{gamePath}/BmGame` |
@@ -44,7 +42,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `batmanarkhamasylum-tfcinstaller` | 25 |
 | `batmanarkhamasylum-tfcexplorer` | 27 |
 | `batmanarkhamasylum-tfcmod` | 29 |

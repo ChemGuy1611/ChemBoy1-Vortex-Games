@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Mass Effect: Andromeda Vortex Extension |
 | Engine / Structure | 3rd Party Mod Manager (Frosty) |
 | Author | ChemBoy1 |
-| Version | 0.3.0 |
-| Date | 2026-02-18 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `masseffectandromeda` |
 | Executable | `MassEffectAndromeda.exe` |
 
@@ -26,7 +24,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Binaries / Root Folder | `masseffectandromeda-binaries` | high | `{gamePath}` |
 | Frosty .fbmod/.archive | `masseffectandromeda-frostymod` | high | `{gamePath}/FrostyModManager/Mods/MassEffectAndromeda` |
 | Frosty Mod Manager | `masseffectandromeda-frostymodmanager` | low | `{gamePath}` |
@@ -36,7 +34,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `masseffectandromeda-frostymodmanager` | 25 |
 | `masseffectandromeda-frostymod` | 30 |
 

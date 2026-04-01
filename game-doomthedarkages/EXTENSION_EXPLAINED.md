@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | DOOM: The Dark Ages Vortex Extension |
 | Engine / Structure | 3rd-Party Mod Loader |
 | Author | ChemBoy1 |
-| Version | 0.3.0 |
-| Date | 2026-03-11 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `doomthedarkages` |
 | Executable | `DOOMTheDarkAges.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -28,7 +26,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Injector Mod | `doomthedarkages-mods` | high | `{gamePath}/mods` |
 | Config | `doomthedarkages-config` | high | `{gamePath}/base` |
 | Binaries / Root Folder | `doomthedarkages-binaries` | high | `{gamePath}` |
@@ -43,7 +41,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `doomthedarkages-modmanager` | 25 |
 | `doomthedarkages-atlanextractor` | 27 |
 | `doomthedarkages-valen` | 28 |
@@ -71,7 +69,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Config & Save Paths
 
 | Type | Path |
-|---|---|
+| --- | --- |
 | Config | `base` |
 
 ## Special Features

@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Dying Light The Beast Vortex Extension |
 | Engine / Structure | Basic Game |
 | Author | ChemBoy1 |
-| Version | 0.5.0 |
-| Date | 2026-03-16 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `dyinglightthebeast` |
 | Executable | `ph_ft/work/bin/x64/DyingLightGame_TheBeast_x64_rwdi.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -26,7 +24,7 @@
 ## Feature Flags
 
 | Flag | Value | Description |
-|---|---|---|
+| --- | --- | --- |
 | `DOTNET_INSTALLED` | `false` |  |
 | `superMergerInstalled` | `false` |  |
 | `mergerInstalled` | `false` |  |
@@ -37,7 +35,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Pak Mod (Merged) | `dyinglightthebeast-pak` | high | `{gamePath}/ph_ft/mods` |
 | Root Folder | `dyinglightthebeast-root` | high | `{gamePath}` |
 | Binaries (Engine Injector) | `dyinglightthebeast-binaries` | high | `{gamePath}/ph_ft/work/bin/x64` |
@@ -49,7 +47,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `dyinglightthebeast-mergerutility` | 25 |
 | `dyinglightthebeast-supermerger` | 27 |
 | `dyinglightthebeast-pak` | 29 |

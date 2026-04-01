@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Witchfire Vortex Extension |
 | Engine / Structure | UE4 |
 | Author | ChemBoy1 |
-| Version | 0.4.0 |
-| Date | 2026-01-31 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `witchfire` |
 | Executable | `Witchfire.exe` |
 
@@ -27,7 +25,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Binaries (Engine Injector) | `witchfire-binaries` | high | `{gamePath}/Witchfire/Binaries/Win64` |
 | Config (LocalAppData) | `witchfire-config` | high | `{localAppData}/Witchfire/Saved/Config/WindowsNoEditor` |
 | Save Game | `witchfire-save` | high | `{localAppData}/Witchfire/Saved/SaveGames` |
@@ -44,7 +42,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `witchfire-ue4sscombo` | 21 |
 | `witchfire-logicmods` | 23 |
 | `witchfire-ue4ss` | 27 |
@@ -81,13 +79,13 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | UE4SS | — | — |
 
 ## Config & Save Paths
 
 | Type | Path |
-|---|---|
+| --- | --- |
 | Config | `Witchfire/Saved/Config/WindowsNoEditor` |
 | Save | `Witchfire/Saved/SaveGames` |
 

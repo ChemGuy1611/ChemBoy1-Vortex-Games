@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Borderlands 2 Vortex Extension |
 | Engine / Structure | UE2/3 Game (TFC Installer) |
 | Author | ChemBoy1 |
-| Version | 0.3.5 |
-| Date | 2025-11-16 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `borderlands2` |
 | Executable | `Binaries/Win32/Borderlands2.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -28,7 +26,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | OpenBLCMM | `borderlands2-blcmm` | high | `{gamePath}/.` |
 | BLCMM Mod | `borderlands2-blcmmmod` | high | `{gamePath}/.` |
 | .blcm file (OpenBLCMM) | `borderlands2-blcmfile` | high | `{gamePath}/Binaries` |
@@ -49,7 +47,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `borderlands2-tfcinstaller` | 25 |
 | `borderlands2-blcmm` | 27 |
 | `borderlands2-tfcmod` | 29 |

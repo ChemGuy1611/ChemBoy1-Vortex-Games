@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | God of War: Ragnarok Vortex Extension |
 | Engine / Structure | Sony Port, Custom Game Data |
 | Author | ChemBoy1 |
-| Version | 0.2.2 |
-| Date | 2025-04-10 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `godofwarragnarok` |
 | Executable | `GoWR.exe` |
 
@@ -26,7 +24,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | exec folder | `godofwarragnarok-data` | high | `{gamePath}` |
 | patch Folder | `godofwarragnarok-patchfolder` | high | `{gamePath}/exec` |
 | exec subfolder | `godofwarragnarok-execsub` | high | `{gamePath}/exec` |

@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Stellar Blade Vortex Extension |
 | Engine / Structure | UE5 (static exe) |
 | Author | ChemBoy1 |
-| Version | 0.2.0 |
-| Date | 2026-02-03 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `stellarblade` |
 | Executable | `SB.exe` |
 
@@ -25,11 +23,11 @@
 ## Feature Flags
 
 | Flag | Value | Description |
-|---|---|---|
-| `CHECK_DATA` | `false` |  |
+| --- | --- | --- |
+| `CHECK_DATA` | `false` | true if game, staging, and save folders are all on the same drive (partition check) |
 | `CHECK_DOCS` | `false` |  |
 | `IO_STORE` | `true` | true if the Paks folder contains .ucas and .utoc files |
-| `SYM_LINKS` | `true` |  |
+| `SYM_LINKS` | `true` | true if symlink deployment is enabled for this game |
 | `isPak` | `false` |  |
 
 ## Mod Types
@@ -37,7 +35,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | UE4SSCOMBO_NAME | `UE4SSCOMBO_ID` | high | `{gamePath}` |
 | LOGICMODS_NAME | `LOGICMODS_ID` | high | `{gamePath}/LOGICMODS_PATH` |
 | UE4SS_NAME | `UE4SS_ID` | high | `{gamePath}/SB/Binaries/Win64` |
@@ -56,7 +54,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `ue5-pak-installer` | 35 |
 | `UE4SSCOMBO_ID` | 25 |
 | `LOGICMODS_ID` | 27 |
@@ -97,7 +95,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | UE4SS | — | — |
 
 ## Special Features

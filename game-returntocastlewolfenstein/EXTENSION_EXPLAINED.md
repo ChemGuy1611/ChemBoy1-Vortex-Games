@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Return to Castle Wolfenstein Vortex Extension |
 | Engine / Structure | Generic Game with Custom Engine Mod (RealRTCW) |
 | Author | ChemBoy1 |
-| Version | 0.4.1 |
-| Date | 03/20/2025 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `returntocastlewolfenstein` |
 | Executable | `WolfSP.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -29,7 +27,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | .pk3 Data (Main) | `returntocastlewolfenstein-main` | high | `{gamePath}/Main` |
 | Main Folder | `returntocastlewolfenstein-mainfolder` | high | `{gamePath}/.` |
 | RealRTCW | `returntocastlewolfenstein-realrtcw` | low | `{gamePath}` |
@@ -40,7 +38,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `returntocastlewolfenstein-iortcw` | 25 |
 | `returntocastlewolfenstein-realrtcw` | 30 |
 | `returntocastlewolfenstein-mainfolder` | 35 |

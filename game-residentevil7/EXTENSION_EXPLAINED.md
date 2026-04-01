@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Resident Evil 7 Biohazard Vortex Extension |
 | Engine / Structure | 3rd Party Mod Manager (Fluffy) |
 | Author | ChemBoy1 |
-| Version | 0.3.0 |
-| Date | 2026-03-21 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `residentevil7` |
 | Executable | `re7.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -29,7 +27,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Binaries / Root Folder | `re4-root` | high | `{gamePath}` |
 | Fluffy Mod Manager | `re7-fluffymodmanager` | low | `{gamePath}` |
 | REFramework | `re7-reframework` | low | `{gamePath}` |
@@ -40,7 +38,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `re7-fluffymodmanager` | 25 |
 | `re7-reframework` | 30 |
 | `residentevil7-looselua` | 29 |
@@ -74,14 +72,14 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | Fluffy Mod Manager | — | — |
 | REFramework | — | — |
 
 ## Config & Save Paths
 
 | Type | Path |
-|---|---|
+| --- | --- |
 | Config | `.` |
 
 ## Special Features

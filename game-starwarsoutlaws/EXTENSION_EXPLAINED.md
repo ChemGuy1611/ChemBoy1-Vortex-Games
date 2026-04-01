@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Star Wars Outlaws Vortex Extension |
 | Engine / Structure | Snowdrop Mod Loader |
 | Author | ChemBoy1 |
-| Version | 0.2.4 |
-| Date | 2025-10-03 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `starwarsoutlaws` |
 | Executable | `Outlaws.exe` |
 
@@ -26,7 +24,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Config (Documents) | `starwarsoutlaws-config` | high | `CONFIG_PATH` |
 | Game Data Folder | `starwarsoutlaws-data` | high | `{gamePath}` |
 | Game Data Subfolder | `starwarsoutlaws-datasub` | high | `{gamePath}/helix` |
@@ -37,7 +35,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `starwarsoutlaws-modloader` | 25 |
 | `starwarsoutlaws-data` | 27 |
 | `starwarsoutlaws-datasub` | 29 |

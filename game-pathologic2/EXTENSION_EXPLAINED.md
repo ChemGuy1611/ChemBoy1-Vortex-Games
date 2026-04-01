@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Pathologic 2 Vortex Extension |
 | Engine / Structure | Basic Game |
 | Author | ChemBoy1 |
-| Version | 0.1.0 |
-| Date | 2025-01-14 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `game-pathologic2` |
 | Executable | `N/A` |
 
@@ -22,7 +20,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | MOD_NAME | `MOD_ID` | high | `{gamePath}/MOD_PATH` |
 | ROOT_NAME | `ROOT_ID` | high | `{gamePath}` |
 | BINARIES_NAME | `BINARIES_ID` | high | `{gamePath}/BINARIES_PATH` |
@@ -32,7 +30,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `LOADER_ID` | 25 |
 | `MOD_ID` | 27 |
 | `ROOT_ID` | 29 |

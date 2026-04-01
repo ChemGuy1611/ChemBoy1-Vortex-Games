@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Middle-earth: Shadow of War Vortex Extension |
 | Engine / Structure | Mod Loaders + Mods folder w/ LO support |
 | Author | ChemBoy1 |
-| Version | 2.3.0 |
-| Date | 2026-03-24 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `middleearthshadowofwar` |
 | Executable | `x64/ShadowOfWar.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -28,8 +26,8 @@
 ## Feature Flags
 
 | Flag | Value | Description |
-|---|---|---|
-| `LOAD_ORDER_ENABLED` | `true` |  |
+| --- | --- | --- |
+| `LOAD_ORDER_ENABLED` | `true` | enables load order sorting |
 | `dllLoaderInstalled` | `false` |  |
 | `modLoaderInstalled` | `false` |  |
 | `mod_update_all_profile` | `false` |  |
@@ -40,7 +38,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | .arch06 Mod | `middleearthshadowofwar-arch06mod` | high | `{gamePath}/Mods` |
 | Plugins / Packets | `middleearthshadowofwar-pluginsandpackets` | high | `{gamePath}/x64/plugins` |
 | Root Folder | `middleearthshadowofwar-root` | high | `{gamePath}` |
@@ -54,7 +52,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `middleearthshadowofwar-packetloader` | 25 |
 | `middleearthshadowofwar-dllloader` | 27 |
 | `middleearthshadowofwar-modloader` | 29 |

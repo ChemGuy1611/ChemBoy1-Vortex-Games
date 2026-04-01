@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Dragon Ball: Sparking! Zero Vortex Extension |
 | Engine / Structure | UE5 |
 | Author | ChemBoy1 |
-| Version | 0.5.1 |
-| Date | 2026-02-05 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `dragonballsparkingzero` |
 | Executable | `SparkingZERO.exe` |
 
@@ -24,17 +22,17 @@
 ## Feature Flags
 
 | Flag | Value | Description |
-|---|---|---|
+| --- | --- | --- |
 | `IO_STORE` | `true` | true if the Paks folder contains .ucas and .utoc files |
-| `CHECK_DATA` | `false` |  |
-| `SYM_LINKS` | `true` |  |
+| `CHECK_DATA` | `false` | true if game, staging, and save folders are all on the same drive (partition check) |
+| `SYM_LINKS` | `true` | true if symlink deployment is enabled for this game |
 
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | UE4SS Scripts | `dragonballsparkingzero-scripts` | high | `{gamePath}/SparkingZERO/Binaries/Win64/ue4ss/Mods` |
 | UE4SS DLL Mod | `dragonballsparkingzero-ue4ssdll` | high | `{gamePath}/SparkingZERO/Binaries/Win64/ue4ss/Mods` |
 | UE4SS LogicMods (Blueprint) | `dragonballsparkingzero-logicmods` | high | `{gamePath}/SparkingZERO/Content/Paks/LogicMods` |
@@ -55,7 +53,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `ue5-pak-installer` | 37 |
 | `dragonballsparkingzero-modloader` | 25 |
 | `dragonballsparkingzero-lfse` | 27 |
@@ -95,13 +93,13 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | UE4SS | — | — |
 
 ## Config & Save Paths
 
 | Type | Path |
-|---|---|
+| --- | --- |
 | Save | `SaveGame` |
 
 ## Special Features

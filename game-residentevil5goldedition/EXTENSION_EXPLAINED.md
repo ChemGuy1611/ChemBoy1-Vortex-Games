@@ -3,16 +3,14 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Resident Evil 5 Gold Edition Vortex Extension |
 | Author | ChemBoy1 |
-| Version | 0.1.1 |
-| Date | 08/10/2024 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `residentevil5goldedition` |
 | Executable | `Launcher.exe` |
 

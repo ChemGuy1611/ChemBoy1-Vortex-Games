@@ -3,12 +3,10 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Crimson Desert Vortex Extension |
 | Engine / Structure | Basic Game |
 | Author | ChemBoy1 |
-| Version | 0.2.4 |
-| Date | 2026-03-29 |
 
 ### Notes
 
@@ -20,7 +18,7 @@
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `crimsondesert` |
 | Executable | `bin64/CrimsonDesert.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -35,7 +33,7 @@
 ## Feature Flags
 
 | Flag | Value | Description |
-|---|---|---|
+| --- | --- | --- |
 | `loadOrder` | `false` | true if game needs a load order |
 | `hasLoader` | `false` | true if game needs a mod loader |
 | `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
@@ -52,7 +50,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Data Mod | `crimsondesert-mod` | high | `{gamePath}/.` |
 | Crimson Browser Mod | `crimsondesert-browsermod` | high | `{gamePath}/mods` |
 | Patch Mod | `crimsondesert-patchmod` | high | `{gamePath}/mods` |
@@ -64,7 +62,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `crimsondesert-loader` | 25 |
 | `crimsondesert-root` | 27 |
 | `crimsondesert-tools` | 29 |
@@ -95,7 +93,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | Mod Loader | — | — |
 
 ## Special Features

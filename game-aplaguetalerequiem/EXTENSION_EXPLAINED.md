@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | A Plague Tale Requiem Vortex Extension |
 | Engine / Structure | Basic Game (XBOX Integrated) |
 | Author | ChemBoy1 |
-| Version | 1.3.1 |
-| Date | 2025-11-18 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `aplaguetalerequiem` |
 | Executable | `APlagueTaleRequiem_x64.exe` |
 | Executable (Xbox) | `APT2_WinStore.x64.Submission.exe` |
@@ -30,7 +28,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Root Folder | `aplaguetalerequiem-root` | high | `{gamePath}` |
 | CONFIG_NAME | `CONFIG_ID` | high | `CONFIG_PATH` |
 
@@ -39,7 +37,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `aplaguetalerequiem-root` | 25 |
 
 ## Registered Tools

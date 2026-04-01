@@ -259,6 +259,79 @@ function parseHeader(src) {
   return result;
 }
 
+// Fallback descriptions for known flags that lack an inline comment.
+// Suffix patterns (*_IS_ARCHIVE etc.) are matched programmatically below.
+const FLAG_DESCRIPTIONS = {
+  // UE / Pak flags
+  IO_STORE:              'true if the Paks folder contains .ucas and .utoc files',
+  SIGBYPASS_REQUIRED:    'true if .sig files are present in the Paks folder and must be bypassed',
+  PAKMOD_LOADORDER:      'enables load order sorting for pak mods',
+  FBLO:                  'enables the full-featured load order page (false uses the legacy page)',
+  LOAD_ORDER_ENABLED:    'enables load order sorting',
+  // Store / platform
+  hasXbox:               'enables Xbox Game Pass version detection and launcher logic',
+  multiExe:              'the game has multiple executables for different store versions',
+  // Loader flags
+  hasLoader:             'true if the game requires a mod loader to be downloaded and installed',
+  hasCustomLoader:       'the game uses a custom mod loader',
+  customLoader:          'enables custom mod loader support',
+  customLoaderInstaller: 'the custom loader is distributed as an installer executable',
+  loaderChoice:          'the user can choose between multiple mod loaders',
+  loaderSwitchRestart:   'switching mod loaders requires a Vortex restart',
+  useMelonNightly:       'uses nightly builds of MelonLoader instead of stable releases',
+  bleedingEdge:          'downloads bleeding edge builds of BepInEx (IL2CPP only)',
+  // Download toggles
+  allowBepinexNexus:     'allows BepInEx/MelonLoader to be downloaded from Nexus Mods',
+  allowMelonNexus:       'allows MelonLoader to be downloaded from Nexus Mods',
+  allowBepCfgMan:        'enables auto-download of BepInEx Configuration Manager',
+  allowMelPrefMan:       'enables auto-download of MelonLoader Preferences Manager',
+  downloadCfgMan:        'enables auto-download of BepInEx Configuration Manager',
+  // Installer flags
+  rootInstaller:         'enables the root game folder installer',
+  binariesInstaller:     'enables the Binaries folder installer (for engine injectors)',
+  fallbackInstaller:     'enables a catch-all fallback installer for unrecognised mod structures',
+  enableSaveInstaller:   'enables the save file installer (only recommended if saves are in the game folder)',
+  modInstallerEnabled:   'enables the mod installer',
+  needsModInstaller:     'the game requires a specific mod installer',
+  preventPluginInstall:  'prevents automatic plugin installation',
+  // Mod path / structure
+  hasCustomMods:         'mod type target paths depend on which mod loader is installed',
+  multiModPath:          'the game has multiple mod path configurations',
+  hasModKit:             'enables UE ModKit mod support',
+  // Save / config
+  hasUserIdFolder:       'a user ID folder (Steam ID, username) exists in the save path and must be detected at runtime',
+  hasVersionFile:        'a Version.info file exists containing the game version number',
+  // Deployment
+  allowSymlinks:         'true if the game supports symlink deployment; false forces hardlinks or copies',
+  preferHardlinks:       'hardlinks are preferred over symlinks for deployment',
+  reZip:                 'mod archives are re-zipped after installation',
+  keepZips:              'downloaded tool archives are kept on disk after extraction',
+  // Load order
+  loadOrder:             'enables load order sorting for mods',
+  loadOrderEnabled:      'enables load order sorting for mods',
+  enableLoadOrder:       'enables load order sorting for mods',
+  // Misc
+  setupNotification:     'shows an informational notification when the game is first set up',
+  runInShell:            'the game executable is launched through a shell',
+  debug:                 'enables verbose debug logging',
+  CHECK_DATA:            'true if game, staging, and save folders are all on the same drive (partition check)',
+  SYM_LINKS:             'true if symlink deployment is enabled for this game',
+};
+
+/**
+ * Return a description for a flag, using its inline comment or the lookup table.
+ * For *_IS_ARCHIVE / *_IS_ELEVATED / *_IS_INSTALLER suffixes a generic description
+ * is derived from the suffix so individual tool variants don't need explicit entries.
+ */
+function getFlagDescription(name, comment) {
+  if (comment) return comment;
+  if (FLAG_DESCRIPTIONS[name]) return FLAG_DESCRIPTIONS[name];
+  if (name.endsWith('_IS_ARCHIVE'))   return 'the tool is distributed as an archive (zip/7z)';
+  if (name.endsWith('_IS_ELEVATED'))  return 'the tool requires elevated/admin privileges to install';
+  if (name.endsWith('_IS_INSTALLER')) return 'the tool is distributed as an installer executable';
+  return '';
+}
+
 /**
  * Dynamically discover all boolean feature flags.
  */
@@ -274,7 +347,8 @@ function discoverFlags(src) {
     if (m) {
       // Skip well-known non-flag booleans
       const name = m[1];
-      const skipNames = ['supported', 'allResolved', 'changed', 'isInstalled'];
+      const skipNames = ['supported', 'allResolved', 'changed', 'isInstalled',
+        'bepinexInstalled', 'melonInstalled', 'isBepinex', 'isBepinexPatcher', 'isMelon', 'isMelonPlugin'];
       if (skipNames.includes(name)) continue;
       flags.push({
         name: name,
@@ -764,12 +838,10 @@ function buildMarkdown(dirName, src) {
 
   // Overview
   md += `## Overview\n\n`;
-  md += `| Property | Value |\n|---|---|\n`;
+  md += `| Property | Value |\n| --- | --- |\n`;
   if (header.name) md += `| Name | ${header.name} |\n`;
   if (header.structure) md += `| Engine / Structure | ${header.structure} |\n`;
   if (header.author) md += `| Author | ${header.author} |\n`;
-  if (header.version) md += `| Version | ${header.version} |\n`;
-  if (header.date) md += `| Date | ${header.date} |\n`;
   md += `\n`;
 
   if (header.notes && header.notes.length > 0) {
@@ -780,7 +852,7 @@ function buildMarkdown(dirName, src) {
 
   // Key Identifiers
   md += `## Key Identifiers\n\n`;
-  md += `| Property | Value |\n|---|---|\n`;
+  md += `| Property | Value |\n| --- | --- |\n`;
   md += `| Game ID | \`${gameId}\` |\n`;
   md += `| Executable | \`${execName}\` |\n`;
   // Additional executables
@@ -806,9 +878,9 @@ function buildMarkdown(dirName, src) {
   // Feature Flags
   if (flags.length > 0) {
     md += `## Feature Flags\n\n`;
-    md += `| Flag | Value | Description |\n|---|---|---|\n`;
+    md += `| Flag | Value | Description |\n| --- | --- | --- |\n`;
     for (const f of flags) {
-      md += `| \`${f.name}\` | \`${f.value}\` | ${f.comment || ''} |\n`;
+      md += `| \`${f.name}\` | \`${f.value}\` | ${getFlagDescription(f.name, f.comment)} |\n`;
     }
     md += `\n`;
   }
@@ -817,7 +889,7 @@ function buildMarkdown(dirName, src) {
   if (modTypes.length > 0) {
     md += `## Mod Types\n\n`;
     md += `Mod types define where each category of mod gets deployed:\n\n`;
-    md += `| Name | ID | Priority | Target Path |\n|---|---|---|---|\n`;
+    md += `| Name | ID | Priority | Target Path |\n| --- | --- | --- | --- |\n`;
     for (const mt of modTypes) {
       md += `| ${mt.name || '?'} | \`${mt.id || '?'}\` | ${mt.priority || '?'} | \`${mt.targetPath || '?'}\` |\n`;
     }
@@ -828,7 +900,7 @@ function buildMarkdown(dirName, src) {
   if (installers.length > 0) {
     md += `## Mod Installers\n\n`;
     md += `Installers run in priority order (lower number = tested first). The first installer whose test returns \`supported: true\` handles the archive.\n\n`;
-    md += `| Installer ID | Priority |\n|---|---|\n`;
+    md += `| Installer ID | Priority |\n| --- | --- |\n`;
     for (const inst of installers) {
       md += `| \`${inst.id}\` | ${inst.priority} |\n`;
     }
@@ -865,7 +937,7 @@ function buildMarkdown(dirName, src) {
   // Auto-Downloaded Dependencies
   if (deps.length > 0) {
     md += `## Auto-Downloaded Dependencies\n\n`;
-    md += `| Dependency | Version | Details |\n|---|---|---|\n`;
+    md += `| Dependency | Version | Details |\n| --- | --- | --- |\n`;
     for (const d of deps) {
       md += `| ${d.name} | ${d.version || '—'} | ${d.detail || '—'} |\n`;
     }
@@ -876,7 +948,7 @@ function buildMarkdown(dirName, src) {
   const hasPaths = configSave.configPath || configSave.configRegistry || configSave.savePath || configSave.savePathXbox;
   if (hasPaths) {
     md += `## Config & Save Paths\n\n`;
-    md += `| Type | Path |\n|---|---|\n`;
+    md += `| Type | Path |\n| --- | --- |\n`;
     if (configSave.configPath) md += `| Config | \`${configSave.configPath}\` |\n`;
     if (configSave.configRegistry) md += `| Config (Registry) | \`${configSave.configRegistry}\` |\n`;
     if (configSave.savePath) md += `| Save | \`${configSave.savePath}\` |\n`;

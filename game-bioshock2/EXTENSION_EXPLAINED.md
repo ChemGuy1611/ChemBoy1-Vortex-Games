@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | BioShock 2 Remastered Vortex Extension |
 | Engine / Structure | UE2/3 TFC |
 | Author | ChemBoy1 |
-| Version | 0.6.1 |
-| Date | 2025-11-12 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `bioshock2` |
 | Executable | `Bioshock2HD.exe` |
 
@@ -28,7 +26,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | TFC Mod | `bioshock2-tfcmod` | high | `{gamePath}/TFCInstaller/Mods` |
 | Movies Mod | `bioshock2-movies` | high | `{gamePath}/ContentBaked/pc/BinkMovies` |
 | Root Folder | `bioshock2-root` | high | `{gamePath}` |
@@ -42,7 +40,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `bioshock2-tfcinstaller` | 25 |
 | `bioshock2-tfcexplorer` | 27 |
 | `bioshock2-tfcmod` | 29 |

@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | WH40k Space Marine Vortex Extension |
 | Engine / Structure | Basic Game |
 | Author | ChemBoy1 |
-| Version | 0.2.0 |
-| Date | 2025-07-30 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `warhammer40000spacemarine` |
 | Executable | `SpaceMarine.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -28,7 +26,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Preview Folder | `warhammer40000spacemarine-preview` | high | `{gamePath}/preview` |
 
 ## Registered Tools

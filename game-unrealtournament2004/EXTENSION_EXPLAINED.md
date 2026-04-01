@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Unreal Tournament 2004 Vortex Extension |
 | Engine / Structure | Basic Game |
 | Author | ChemBoy1 |
-| Version | 0.1.1 |
-| Date | 2026-03-27 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `unrealtournament2004` |
 | Executable | `System/UT2004.exe` |
 
@@ -22,7 +20,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | MOD_NAME | `MOD_ID` | high | `{gamePath}` |
 | BINARIES_NAME | `BINARIES_ID` | high | `{gamePath}/System` |
 
@@ -31,7 +29,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `MOD_ID` | 27 |
 | `unrealtournament2004-fallback` | 49 |
 

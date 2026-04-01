@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Lies of P Vortex Extension |
 | Engine / Structure | UE4 (XBOX Integrated) |
 | Author | ChemBoy1 |
-| Version | 0.4.0 |
-| Date | 2025-06-17 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `liesofp` |
 | Executable | `N/A` |
 
@@ -27,7 +25,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Paks | `liesofp-pak` | low | `{gamePath}/LiesofP/Content/Paks/~mods` |
 | Root Game Folder | `liesofp-root` | high | `{gamePath}` |
 
@@ -36,7 +34,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `liesofp-config` | 27 |
 | `liesofp-save` | 29 |
 | `liesofp-root` | 31 |
@@ -55,13 +53,13 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | UE4SS | — | — |
 
 ## Config & Save Paths
 
 | Type | Path |
-|---|---|
+| --- | --- |
 | Config | `LiesofP/Saved/Config/WindowsNoEditor` |
 
 ## Special Features

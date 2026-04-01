@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Shadow of the Tomb Raider Vortex Extension |
 | Engine / Structure | 3rd-Party Mod Installer |
 | Author | ChemBoy1 |
-| Version | 0.5.0 |
-| Date | 2025-10-29 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `shadowofthetombraider` |
 | Executable | `SOTTR.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -30,7 +28,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Binaries / Root Folder | `shadowofthetombraider-binaries` | high | `{gamePath}` |
 | Mod Manager Mod | `shadowofthetombraider-modmanagermod` | high | `{gamePath}/Mods` |
 | Special K Texture Mod | `shadowofthetombraider-sktexture` | high | `{gamePath}/SK_Res/inject/textures` |
@@ -43,7 +41,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `shadowofthetombraider-manager` | 25 |
 | `shadowofthetombraider-trmodmanager` | 30 |
 | `shadowofthetombraider-binaries` | 35 |

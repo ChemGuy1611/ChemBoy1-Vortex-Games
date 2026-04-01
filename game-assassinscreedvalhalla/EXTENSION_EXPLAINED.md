@@ -3,16 +3,14 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | AC Valhalla Vortex Extension |
 | Author | ChemBoy1 |
-| Version | 0.1.3 |
-| Date | 07/31/2024 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `assassinscreedvalhalla` |
 | Executable | `ACValhalla.exe` |
 
@@ -25,7 +23,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Forger Patch | `assassinscreedvalhalla-forgerpatch` | high | `{gamePath}/ForgerPatches` |
 | AnvilToolKit | `assassinscreedvalhalla-ATK` | low | `{gamePath}` |
 | Forger Patch Manager | `assassinscreedvalhalla-forger` | low | `{gamePath}` |
@@ -35,7 +33,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `assassinscreedvalhalla-forger` | 25 |
 
 ## Registered Tools

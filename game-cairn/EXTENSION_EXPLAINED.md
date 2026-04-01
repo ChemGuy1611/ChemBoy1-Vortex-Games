@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Cairn Vortex Extension |
 | Engine / Structure | Unity BepinEx/MelonLoader Hybrid |
 | Author | ChemBoy1 |
-| Version | 0.1.2 |
-| Date | 2026-03-30 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `cairn` |
 | Executable | `Cairn.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -28,7 +26,7 @@
 ## Feature Flags
 
 | Flag | Value | Description |
-|---|---|---|
+| --- | --- | --- |
 | `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
 | `multiExe` | `false` | set to true if there are multiple executables (typically for Xbox/EGS) |
 | `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |
@@ -42,13 +40,7 @@
 | `allowMelPrefMan` | `false` | should MelonPreferencesManager be downloaded? False until figure out UniverseLib dependency |
 | `allowBepinexNexus` | `false` | set false until bugs are fixed |
 | `allowMelonNexus` | `false` | set false until bugs are fixed |
-| `bepinexInstalled` | `false` |  |
-| `melonInstalled` | `false` |  |
 | `customInstalled` | `false` |  |
-| `isBepinex` | `false` |  |
-| `isBepinexPatcher` | `false` |  |
-| `isMelon` | `false` |  |
-| `isMelonPlugin` | `false` |  |
 | `isCustom` | `false` |  |
 | `unknown` | `false` |  |
 | `fileTest` | `false` |  |
@@ -59,7 +51,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | BepInEx Mod | `cairn-bepinexmod` | high | `{gamePath}/BepInEx` |
 | MelonLoader Mod | `cairn-melonmod` | high | `{gamePath}/.` |
 | BepInEx Plugins | `cairn-bepinex-plugins` | high | `{gamePath}/BepInEx/plugins` |
@@ -79,7 +71,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `cairn-customloader` | 25 |
 | `cairn-bepinex` | 26 |
 | `cairn-melonloader` | 27 |
@@ -118,7 +110,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | BepInEx | 5.4.23.5 | il2cpp |
 
 ## Special Features

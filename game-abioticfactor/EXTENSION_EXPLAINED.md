@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Abiotic Factor Vortex Extension |
 | Engine / Structure | UE5 (Xbox-Integrated) |
 | Author | ChemBoy1 |
-| Version | 0.2.0 |
-| Date | 2026-02-06 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `abioticfactor` |
 | Executable | `AbioticFactor.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -26,17 +24,17 @@
 ## Feature Flags
 
 | Flag | Value | Description |
-|---|---|---|
+| --- | --- | --- |
 | `IO_STORE` | `true` | true if the Paks folder contains .ucas and .utoc files |
-| `SYM_LINKS` | `true` |  |
-| `CHECK_DATA` | `false` |  |
+| `SYM_LINKS` | `true` | true if symlink deployment is enabled for this game |
+| `CHECK_DATA` | `false` | true if game, staging, and save folders are all on the same drive (partition check) |
 
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `abioticfactor-ue4sscombo` | high | `{gamePath}` |
 | UE4SS LogicMods (Blueprint) | `abioticfactor-logicmods` | high | `{gamePath}/AbioticFactor/Content/Paks/LogicMods` |
 | Root Game Folder | `abioticfactor-root` | high | `{gamePath}` |
@@ -57,7 +55,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | UE4SS | — | — |
 
 ## Special Features

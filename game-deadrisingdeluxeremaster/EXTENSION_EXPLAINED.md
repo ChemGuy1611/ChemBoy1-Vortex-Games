@@ -3,12 +3,10 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Dead Rising Deluxe Remaster Vortex Extension |
 | Engine / Structure | 3rd Party Mod Manager (Fluffy) |
 | Author | ChemBoy1 |
-| Version | 0.3.1 |
-| Date | 2026-03-24 |
 
 ### Notes
 
@@ -17,7 +15,7 @@
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `deadrisingdeluxeremaster` |
 | Executable | `DRDR.exe` |
 | Executable (Demo) | `DRDR.exe` |
@@ -31,7 +29,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Binaries / Root Folder | `deadrisingdeluxeremaster-root` | high | `{gamePath}` |
 | Fluffy Mod | `deadrisingdeluxeremaster-fluffymod` | high | `{gamePath}/Games/DeadRisingRemaster/Mods` |
 | Fluffy Preset | `deadrisingdeluxeremaster-preset` | high | `{gamePath}/Games/DeadRisingRemaster/Presets` |
@@ -43,7 +41,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `deadrisingdeluxeremaster-fluffymodmanager` | 25 |
 | `deadrisingdeluxeremaster-reframework` | 30 |
 | `deadrisingdeluxeremaster-looselua` | 29 |
@@ -70,14 +68,14 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | Fluffy Mod Manager | — | — |
 | REFramework | — | — |
 
 ## Config & Save Paths
 
 | Type | Path |
-|---|---|
+| --- | --- |
 | Config | `.` |
 
 ## Special Features

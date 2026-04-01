@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Uncharted: Legacy of Thieves Collection Vortex Extension |
 | Engine / Structure | 3rd Party Mod Manager (Fluffy) |
 | Author | ChemBoy1 |
-| Version | 0.2.0 |
-| Date | 03/18/2025 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `unchartedlegacyofthievescollection` |
 | Executable | `u4-l.exe` |
 
@@ -26,7 +24,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Binaries / Game Root Folder | `unchartedlegacyofthievescollection-root` | high | `{gamePath}` |
 | PSARC Files | `unchartedlegacyofthievescollection-psarc` | high | `{gamePath}` |
 | Fluffy Mod Manager | `unchartedlegacyofthievescollection-fluffymodmanager` | low | `{gamePath}` |
@@ -36,7 +34,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `unchartedlegacyofthievescollection-fluffymodmanager` | 25 |
 | `unchartedlegacyofthievescollection-psarc` | 30 |
 | `unchartedlegacyofthievescollection-mods` | 40 |
@@ -52,7 +50,7 @@ These tools appear in Vortex's Tools panel when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | Fluffy Mod Manager | — | — |
 
 ## Special Features

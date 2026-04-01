@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Until Dawn Vortex Extension |
 | Engine / Structure | UE5 |
 | Author | ChemBoy1 |
-| Version | 0.3.0 |
-| Date | 2026-02-01 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `untildawn` |
 | Executable | `Windows/Bates.exe` |
 
@@ -25,7 +23,7 @@
 ## Feature Flags
 
 | Flag | Value | Description |
-|---|---|---|
+| --- | --- | --- |
 | `IO_STORE` | `true` | true if the Paks folder contains .ucas and .utoc files |
 
 ## Mod Types
@@ -33,7 +31,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | UE4SS Scripts | `SCRIPTS_ID` | high | `{gamePath}/SCRIPTS_PATH` |
 | UE4SS LogicMods (Blueprint) | `untildawn-logicmods` | high | `{gamePath}/Windows/Bates/Content/Paks/LogicMods` |
 | UE4SS Script-LogicMod Combo | `untildawn-ue4sscombo` | high | `{gamePath}/Windows` |
@@ -50,7 +48,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `ue5-pak-installer` | 35 |
 | `untildawn-ue4ss-logicscriptcombo` | 25 |
 | `untildawn-ue4ss-logicmod` | 30 |
@@ -67,7 +65,7 @@ These tools appear in Vortex's Tools panel when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | UE4SS | — | — |
 
 ## Special Features

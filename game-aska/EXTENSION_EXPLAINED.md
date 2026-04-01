@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | ASKA Vortex Extension |
 | Engine / Structure | Unity BepinEx/MelonLoader Hybrid |
 | Author | ChemBoy1 |
-| Version | 0.1.2 |
-| Date | 2026-03-16 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `aska` |
 | Executable | `Aska.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -25,25 +23,19 @@
 ## Feature Flags
 
 | Flag | Value | Description |
-|---|---|---|
+| --- | --- | --- |
 | `hasCustomMods` | `false` | set to true if there are modTypes with folder paths dependent on which mod loader is installed |
 | `allowBepCfgMan` | `true` | should BepInExConfigManager be downloaded? |
 | `allowMelPrefMan` | `false` | should MelonPreferencesManager be downloaded? False until figure out UniverseLib dependency |
 | `allowBepinexNexus` | `false` | set false until bugs are fixed |
 | `allowMelonNexus` | `false` | set false until bugs are fixed |
-| `bepinexInstalled` | `false` |  |
-| `melonInstalled` | `false` |  |
-| `isBepinex` | `false` |  |
-| `isBepinexPatcher` | `false` |  |
-| `isMelon` | `false` |  |
-| `isMelonPlugin` | `false` |  |
 
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | BepInEx Mod | `aska-bepinexmod` | high | `{gamePath}/BepInEx` |
 | MelonLoader Mod | `aska-melonmod` | high | `{gamePath}/.` |
 | BepInEx Plugins | `aska-bepinex-plugins` | high | `{gamePath}/BepInEx/plugins` |
@@ -65,7 +57,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `aska-bepinex-new` | 25 |
 | `aska-melonloader` | 26 |
 | `aska-root` | 27 |
@@ -99,13 +91,13 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | BepInEx | 5.4.23.5 | il2cpp |
 
 ## Config & Save Paths
 
 | Type | Path |
-|---|---|
+| --- | --- |
 | Config (Registry) | `HKEY_CURRENT_USER\\Software\\Sand Sailor Studio\\Aska` |
 
 ## Special Features

@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Diplomacy Is Not An Option Vortex Extension |
 | Engine / Structure | Unity BepinEx (Custom Nexus Download) |
 | Author | ChemBoy1 |
-| Version | 0.1.0 |
-| Date | 10/18/2024 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `diplomacyisnotanoption` |
 | Executable | `Diplomacy is Not an Option.exe` |
 
@@ -27,7 +25,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Root Game Folder | `diplomacyisnotanoption-root` | high | `{gamePath}` |
 | BepinEx Mod | `diplomacyisnotanoption-bepmods` | high | `{gamePath}/BepinEx/plugins` |
 

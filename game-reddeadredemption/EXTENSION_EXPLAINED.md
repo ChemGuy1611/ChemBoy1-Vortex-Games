@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Red Dead Redemption Vortex Extension |
 | Engine / Structure | 3rd-Party Mod Installer |
 | Author | ChemBoy1 |
-| Version | 0.2.5 |
-| Date | 2025-11-14 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `reddeadredemption` |
 | Executable | `RDR.exe` |
 
@@ -27,7 +25,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Root Game Folder | `reddeadredemption-root` | high | `{gamePath}` |
 | RPF File | `reddeadredemption-rpf` | high | `{gamePath}/kml/rpf` |
 | MagicRDR Mod (Loose) | `reddeadredemption-magicmod` | high | `{gamePath}/MagicRDR_Mods` |
@@ -41,7 +39,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `reddeadredemption-scripthook` | 25 |
 | `reddeadredemption-modloader` | 27 |
 | `reddeadredemption-magicmod` | 29 |

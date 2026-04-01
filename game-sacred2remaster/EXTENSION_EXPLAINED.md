@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Sacred 2 Remaster Vortex Extension |
 | Engine / Structure | Basic Game |
 | Author | ChemBoy1 |
-| Version | 0.1.0 |
-| Date | 2025-11-19 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `sacred2remaster` |
 | Executable | `./sacred2.exe` |
 
@@ -27,7 +25,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Root Folder | `sacred2remaster-root` | high | `{gamePath}` |
 | Root Sub-Folder | `sacred2remaster-rootsub` | high | `{gamePath}/Remaster` |
 | Textures Sub-Folder | `sacred2remaster-texturesub` | high | `{gamePath}/Remaster/Textures` |
@@ -39,7 +37,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `sacred2remaster-root` | 25 |
 | `sacred2remaster-fallback` | 40 |
 

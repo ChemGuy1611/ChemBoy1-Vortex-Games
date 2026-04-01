@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | AC I Vortex Extension |
 | Engine / Structure | Ubisoft AnvilToolkit |
 | Author | ChemBoy1 |
-| Version | 0.1.0 |
-| Date | 07/25/2024 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `assassinscreed` |
 | Executable | `AssassinsCreed_Game.exe` |
 
@@ -27,7 +25,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | ASI Plugins | `assassinscreed-asi` | high | `{gamePath}/scripts` |
 | AnvilToolKit | `assassinscreed-atk` | low | `{gamePath}` |
 
@@ -36,7 +34,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `assassinscreed-atk` | 25 |
 
 ## Registered Tools

@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Look Outside Vortex Extension |
 | Engine / Structure | RPGMaker Engine Game |
 | Author | ChemBoy1 |
-| Version | 0.1.1 |
-| Date | 2025-09-18 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `lookoutside` |
 | Executable | `Game.exe` |
 
@@ -26,7 +24,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | js folder | `lookoutside-jsfolder` | high | `{gamePath}/.` |
 | js file | `lookoutside-jsfile` | high | `{gamePath}/js/plugins` |
 | Root Folder | `lookoutside-root` | high | `{gamePath}` |
@@ -37,7 +35,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `lookoutside-jsfolder` | 25 |
 | `lookoutside-jsfile` | 27 |
 | `lookoutside-root` | 29 |

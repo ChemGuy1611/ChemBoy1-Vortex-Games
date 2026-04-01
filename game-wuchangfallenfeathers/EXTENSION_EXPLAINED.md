@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | WUCHANG: Fallen Feathers Vortex Extension |
 | Engine / Structure | UE5 (Xbox-Integrated) |
 | Author | ChemBoy1 |
-| Version | 0.1.2 |
-| Date | 2025-07-28 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `wuchangfallenfeathers` |
 | Executable | `Project_Plague.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -27,17 +25,17 @@
 ## Feature Flags
 
 | Flag | Value | Description |
-|---|---|---|
-| `CHECK_DATA` | `false` |  |
+| --- | --- | --- |
+| `CHECK_DATA` | `false` | true if game, staging, and save folders are all on the same drive (partition check) |
 | `IO_STORE` | `false` | true if the Paks folder contains .ucas and .utoc files |
-| `SYM_LINKS` | `true` |  |
+| `SYM_LINKS` | `true` | true if symlink deployment is enabled for this game |
 
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `wuchangfallenfeathers-ue4sscombo` | high | `{gamePath}` |
 | UE4SS LogicMods (Blueprint) | `wuchangfallenfeathers-logicmods` | high | `{gamePath}/Project_Plague/Content/Paks/LogicMods` |
 | Root Game Folder | `wuchangfallenfeathers-root` | high | `{gamePath}` |
@@ -54,7 +52,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | UE4SS | — | — |
 
 ## Special Features

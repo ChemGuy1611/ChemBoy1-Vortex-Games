@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | AC IV Black Flag Vortex Extension |
 | Engine / Structure | Ubisoft AnvilToolkit |
 | Author | ChemBoy1 |
-| Version | 0.4.2 |
-| Date | 03/18/2025 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `assassinscreedivblackflag` |
 | Executable | `AC4BFSP.exe` |
 
@@ -26,7 +24,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Binaries / Root Folder | `assassinscreedivblackflag-binaries` | high | `{gamePath}` |
 | DLC Folder | `assassinscreedivblackflag-dlcfolder` | high | `{gamePath}/.` |
 | Extracted Folder | `assassinscreedivblackflag-extractedfolder` | high | `{gamePath}/.` |
@@ -45,7 +43,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `assassinscreedivblackflag-atk` | 25 |
 | `assassinscreedivblackflag-dlcfolder` | 30 |
 | `assassinscreedivblackflag-extractedfolder` | 35 |

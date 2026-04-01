@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Trepang2 Vortex Extension |
 | Engine / Structure | UE4 |
 | Author | ChemBoy1 |
-| Version | 0.1.1 |
-| Date | 08/08/2024 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `trepang2` |
 | Executable | `CPPFPS.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -28,7 +26,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Binaries (Engine Injector) | `trepang2-binaries` | high | `{gamePath}/CPPFPS/Binaries/Win64` |
 | Config (LocalAppData) | `trepang2-config` | high | `{localAppData}/CPPFPS/Saved/Config/WindowsNoEditor` |
 | Saves (LocalAppData) | `trepang2-save` | high | `{localAppData}/CPPFPS/Saved/SaveGames` |
@@ -40,7 +38,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `trepang2-config` | 35 |
 | `trepang2-root` | 45 |
 | `trepang2-save` | 55 |
@@ -48,7 +46,7 @@ Installers run in priority order (lower number = tested first). The first instal
 ## Config & Save Paths
 
 | Type | Path |
-|---|---|
+| --- | --- |
 | Config | `CPPFPS/Saved/Config/WindowsNoEditor` |
 | Save | `CPPFPS/Saved/SaveGames` |
 

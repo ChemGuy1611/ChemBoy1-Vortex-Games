@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Bloodthief Vortex Extension |
 | Engine / Structure | Godot Engine Game |
 | Author | ChemBoy1 |
-| Version | 0.1.0 |
-| Date | 2025-11-05 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `bloodthief` |
 | Executable | `bloodthief.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -25,16 +23,16 @@
 ## Feature Flags
 
 | Flag | Value | Description |
-|---|---|---|
-| `customLoader` | `true` |  |
-| `keepZips` | `false` |  |
+| --- | --- | --- |
+| `customLoader` | `true` | enables custom mod loader support |
+| `keepZips` | `false` | downloaded tool archives are kept on disk after extraction |
 
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Godot Mod | `bloodthief-mod` | high | `{gamePath}/mods-unpacked` |
 | Godot Mod Loader | `bloodthief-godotmodloader` | low | `{gamePath}` |
 
@@ -43,7 +41,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `bloodthief-godotmodloader` | 25 |
 | `bloodthief-mod` | 27 |
 | `bloodthief-mod` | 27 |
@@ -64,7 +62,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | Godot Mod Loader | — | — |
 
 ## Special Features

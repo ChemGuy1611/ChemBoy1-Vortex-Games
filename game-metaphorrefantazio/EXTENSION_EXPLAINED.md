@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Metaphor: ReFantazio Vortex Extension |
 | Engine / Structure | 3rd-Party Mod Installer (Reloaded-II) |
 | Author | ChemBoy1 |
-| Version | 0.2.1 |
-| Date | 2025-10-05 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `metaphorrefantazio` |
 | Executable | `METAPHOR.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -28,7 +26,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Reloaded Mod | `metaphorrefantazio-reloadedmod` | high | `{gamePath}/Reloaded/Mods` |
 | MRFPC Mod Loader | `metaphorrefantazio-reloadedmodloader` | low | `{gamePath}/Reloaded/Mods/MRFPC_Mod_Loader` |
 | Reloaded Mod Manager | `metaphorrefantazio-reloadedmanager` | low | `{gamePath}` |
@@ -38,7 +36,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `metaphorrefantazio-reloadedmanager` | 25 |
 | `metaphorrefantazio-reloadedmodloader` | 30 |
 | `metaphorrefantazio-reloadedmod` | 35 |
@@ -52,7 +50,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | Reloaded-II | — | — |
 
 ## Special Features

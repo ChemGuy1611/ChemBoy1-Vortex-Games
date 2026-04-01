@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Football Manager 26 Vortex Extension |
 | Engine / Structure | Unity BepinEx/MelonLoader Hybrid |
 | Author | ChemBoy1 |
-| Version | 0.1.0 |
-| Date | 2025-11-04 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `footballmanager26` |
 | Executable | `fm.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -26,24 +24,18 @@
 ## Feature Flags
 
 | Flag | Value | Description |
-|---|---|---|
+| --- | --- | --- |
 | `allowBepCfgMan` | `false` | should BepInExConfigManager be downloaded? |
 | `allowMelPrefMan` | `false` | should MelonPreferencesManager be downloaded? False until figure out UniverseLib dependency |
 | `allowBepinexNexus` | `false` | set false until bugs are fixed |
 | `allowMelonNexus` | `false` | set false until bugs are fixed |
-| `bepinexInstalled` | `false` |  |
-| `melonInstalled` | `false` |  |
-| `isBepinex` | `false` |  |
-| `isBepinexPatcher` | `false` |  |
-| `isMelon` | `false` |  |
-| `isMelonPlugin` | `false` |  |
 
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | BepInEx Mod | `footballmanager26-bepinexmod` | high | `{gamePath}/BepInEx` |
 | MelonLoader Mod | `footballmanager26-melonmod` | high | `{gamePath}/.` |
 | BepInEx Plugins | `footballmanager26-bepinex-plugins` | high | `{gamePath}/BepInEx/plugins` |
@@ -76,13 +68,13 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | BepInEx | 5.4.23.5 | il2cpp |
 
 ## Config & Save Paths
 
 | Type | Path |
-|---|---|
+| --- | --- |
 | Config (Registry) | `HKEY_CURRENT_USER\\Software\\Sports Interactive\\Football Manager 26` |
 
 ## Special Features

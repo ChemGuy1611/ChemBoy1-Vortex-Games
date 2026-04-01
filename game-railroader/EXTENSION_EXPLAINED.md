@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Railroader Vortex Extension |
 | Engine / Structure | Unity UMM (Unity Mod Manager) |
 | Author | ChemBoy1 |
-| Version | 0.1.0 |
-| Date | 2026-XX-XX |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `railroader` |
 | Executable | `Railroader.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -27,7 +25,7 @@
 ## Feature Flags
 
 | Flag | Value | Description |
-|---|---|---|
+| --- | --- | --- |
 | `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
 | `multiExe` | `false` | set to true if there are multiple executables (and conseq. DATA_FOLDERs) (typically for Xbox/EGS) |
 | `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |
@@ -37,7 +35,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Root Game Folder | `railroader-root` | high | `{gamePath}` |
 
 ## Registered Tools
@@ -61,7 +59,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | Unity Mod Manager (UMM) | — | — |
 
 ## Special Features

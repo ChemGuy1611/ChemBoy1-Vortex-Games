@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Megabonk Vortex Extension |
 | Engine / Structure | Unity BepinEx/MelonLoader Hybrid (IL2CPP & x64) |
 | Author | ChemBoy1 |
-| Version | 0.1.3 |
-| Date | 2026-03-30 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `megabonk` |
 | Executable | `Megabonk.exe` |
 
@@ -21,23 +19,12 @@
 
 - **Steam** — `3405340`
 
-## Feature Flags
-
-| Flag | Value | Description |
-|---|---|---|
-| `bepinexInstalled` | `false` |  |
-| `melonInstalled` | `false` |  |
-| `isBepinex` | `false` |  |
-| `isBepinexPatcher` | `false` |  |
-| `isMelon` | `false` |  |
-| `isMelonPlugin` | `false` |  |
-
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | BEPINEX_MOD_NAME | `BEPINEX_MOD_ID` | high | `{gamePath}/BEPINEX_MOD_PATH` |
 | MELON_MOD_NAME | `MELON_MOD_ID` | high | `{gamePath}/MELON_MOD_PATH` |
 | BEPINEX_PLUGINS_NAME | `BEPINEX_PLUGINS_ID` | high | `{gamePath}/BEPINEX_PLUGINS_PATH` |
@@ -58,7 +45,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `megabonk-bepinex` | 25 |
 | `megabonk-melonloader` | 26 |
 | `megabonk-root` | 27 |
@@ -86,7 +73,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Config & Save Paths
 
 | Type | Path |
-|---|---|
+| --- | --- |
 | Config (Registry) | `HKEY_CURRENT_USER\\Software\\Ved\\Megabonk` |
 
 ## Special Features

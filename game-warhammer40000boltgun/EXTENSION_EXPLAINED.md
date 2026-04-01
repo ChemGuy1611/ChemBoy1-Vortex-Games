@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | WH40K Boltgun Vortex Extension |
 | Engine / Structure | UE4 (Basic) |
 | Author | ChemBoy1 |
-| Version | 0.3.0 |
-| Date | 08/05/2024 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `warhammer40000boltgun` |
 | Executable | `N/A` |
 
@@ -29,7 +27,7 @@
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `warhammer40000boltgun-root` | 25 |
 
 ## Special Features

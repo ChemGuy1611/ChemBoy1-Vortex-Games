@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | State of Decay 2 Vortex Extension |
 | Engine / Structure | UE4 (Local AppData) |
 | Author | ChemBoy1 |
-| Version | 2.2.0 |
-| Date | 2026-01-31 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `stateofdecay2` |
 | Executable | `StateOfDecay2.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -29,7 +27,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Config (LocalAppData) | `stateofdecay2-config` | high | `{localAppData}/StateOfDecay2/Saved/Config/WindowsNoEditor` |
 | Paks | `stateofdecay2-pak` | high | `{localAppData}/StateOfDecay2/Saved/Paks` |
 | Cooked Mods | `stateofdecay2-cooked` | high | `{localAppData}/StateOfDecay2/Saved` |
@@ -41,7 +39,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `stateofdecay2-modmanager` | 30 |
 | `stateofdecay2-config` | 35 |
 | `stateofdecay2-cooked` | 40 |
@@ -71,7 +69,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Config & Save Paths
 
 | Type | Path |
-|---|---|
+| --- | --- |
 | Config | `StateOfDecay2/Saved/Config/WindowsNoEditor` |
 
 ## Special Features

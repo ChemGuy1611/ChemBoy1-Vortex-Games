@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | S.T.A.L.K.E.R. 2: Heart of Chornobyl Vortex Extension |
 | Engine / Structure | UE5 (Xbox-Integrated) |
 | Author | ChemBoy1 |
-| Version | 0.5.4 |
-| Date | 2026-02-04 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `stalker2heartofchornobyl` |
 | Executable | `Stalker2.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -29,17 +27,17 @@
 ## Feature Flags
 
 | Flag | Value | Description |
-|---|---|---|
+| --- | --- | --- |
 | `CHECK_CONFIG` | `false` |  |
 | `IO_STORE` | `true` | true if the Paks folder contains .ucas and .utoc files |
-| `SYM_LINKS` | `true` |  |
+| `SYM_LINKS` | `true` | true if symlink deployment is enabled for this game |
 
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | UE4SS LogicMods (Blueprint) | `stalker2heartofchornobyl-logicmods` | high | `{gamePath}/Stalker2/Content/Paks/LogicMods` |
 | UE4SS Script-LogicMod Combo | `stalker2heartofchornobyl-ue4sscombo` | high | `{gamePath}` |
 | Root Game Folder | `stalker2heartofchornobyl-root` | high | `{gamePath}` |
@@ -53,7 +51,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `stalker2heartofchornobyl-merger` | 25 |
 | `stalker2heartofchornobyl-ue4sscombo` | 29 |
 | `stalker2heartofchornobyl-logicmods` | 31 |
@@ -99,7 +97,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | UE4SS | — | — |
 
 ## Special Features

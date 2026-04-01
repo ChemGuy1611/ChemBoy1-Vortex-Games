@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | MENACE Vortex Extension |
 | Engine / Structure | Unity BepinEx/MelonLoader Hybrid |
 | Author | ChemBoy1 |
-| Version | 0.4.2 |
-| Date | 2026-03-22 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `menace` |
 | Executable | `Menace.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -28,7 +26,7 @@
 ## Feature Flags
 
 | Flag | Value | Description |
-|---|---|---|
+| --- | --- | --- |
 | `enableLoadOrder` | `true` | true if you want to use load order sorting |
 | `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
 | `multiExe` | `false` | set to true if there are multiple executables (typically for Xbox/EGS) |
@@ -43,15 +41,9 @@
 | `allowMelPrefMan` | `false` | should MelonPreferencesManager be downloaded? False until figure out UniverseLib dependency |
 | `allowBepinexNexus` | `false` | set false until bugs are fixed |
 | `allowMelonNexus` | `false` | set false until bugs are fixed |
-| `bepinexInstalled` | `false` |  |
-| `melonInstalled` | `false` |  |
 | `customInstalled` | `false` |  |
 | `mod_update_all_profile` | `false` |  |
 | `updating_mod` | `false` | used to see if it's a mod update or not |
-| `isBepinex` | `false` |  |
-| `isBepinexPatcher` | `false` |  |
-| `isMelon` | `false` |  |
-| `isMelonPlugin` | `false` |  |
 | `isCustom` | `false` |  |
 | `unknown` | `false` |  |
 
@@ -60,7 +52,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | ModpackLoader | `menace-modpackloader` | low | `{gamePath}/.` |
 | Modpack Mod | `menace-modpackmod` | high | `{gamePath}/Mods` |
 | Custom Leaders Mod | `menace-customleaders` | high | `{gamePath}/Mods/customleaders` |
@@ -84,7 +76,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `menace-customloader` | 25 |
 | `menace-melonloader` | 26 |
 | `menace-bepinex` | 27 |
@@ -125,7 +117,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | BepInEx | 5.4.23.5 | il2cpp |
 
 ## Special Features

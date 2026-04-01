@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Far Cry 3 Vortex Extension |
 | Engine / Structure | Basic Game (Mod Installer) |
 | Author | ChemBoy1 |
-| Version | 0.2.3 |
-| Date | 2025-10-24 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `farcry3` |
 | Executable | `bin/farcry3_d3d11.exe` |
 
@@ -26,7 +24,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Root Folder | `farcry3-root` | high | `{gamePath}` |
 | Binaries (Engine Injector) | `farcry3-binaries` | high | `{gamePath}/bin` |
 | Game Data | `farcry3-data` | high | `{gamePath}/data_win32` |
@@ -41,7 +39,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `farcry3-modinstaller` | 25 |
 | `farcry3-ziggy` | 26 |
 | `farcry3-root` | 27 |
@@ -72,7 +70,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | FC3 Mod Installer | — | — |
 
 ## Special Features

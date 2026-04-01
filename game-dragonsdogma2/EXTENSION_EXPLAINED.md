@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Dragon's Dogma 2 Vortex Extension |
 | Engine / Structure | Fluffy + REFramework (RE Engine) |
 | Author | ChemBoy1 |
-| Version | 0.6.0 |
-| Date | 2026-03-05 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `dragonsdogma2` |
 | Executable | `DD2.exe` |
 
@@ -26,7 +24,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Binaries / Root Folder | `dragonsdogma2-root` | high | `{gamePath}` |
 | Loose Lua (REFramework) | `dragonsdogma2-looselua` | high | `{gamePath}/.` |
 | Fluffy Preset | `dragonsdogma2-preset` | high | `{gamePath}/Games/DragonsDogma2/Presets` |
@@ -40,7 +38,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `dragonsdogma2-fluffymodmanager` | 25 |
 | `dragonsdogma2-reframework` | 30 |
 | `dragonsdogma2-looselua` | 41 |
@@ -59,7 +57,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | Fluffy Mod Manager | — | — |
 | REFramework | — | — |
 

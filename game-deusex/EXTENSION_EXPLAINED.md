@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Deus Ex Vortex Extension |
 | Engine / Structure | Basic Game |
 | Author | ChemBoy1 |
-| Version | 0.1.0 |
-| Date | 2025-09-26 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `deusex` |
 | Executable | `System/DeusEx.exe` |
 
@@ -27,7 +25,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Deus Exe (Launcher) | `deusex-launcher` | high | `{gamePath}/System` |
 | Mod Folder | `deusex-mod` | high | `{gamePath}/.` |
 | Root Folder | `deusex-root` | high | `{gamePath}` |
@@ -38,7 +36,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `deusex-mod` | 25 |
 | `deusex-root` | 27 |
 | `deusex-launcher` | 29 |

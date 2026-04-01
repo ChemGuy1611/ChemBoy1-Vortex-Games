@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Resident Evil Requiem Vortex Extension |
 | Engine / Structure | Fluffy + REFramework (RE Engine) |
 | Author | ChemBoy1 |
-| Version | 0.1.3 |
-| Date | 2026-03-05 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `residentevilrequiem` |
 | Executable | `re9.exe` |
 | Executable (Demo) | `re9demo.exe` |
@@ -26,7 +24,7 @@
 ## Feature Flags
 
 | Flag | Value | Description |
-|---|---|---|
+| --- | --- | --- |
 | `reZip` | `true` | NOT WORKING YET - KEEP AS TRUE FOR NOW - set to true to re-zip Fluffy Mods (possibly not necessary for FLUFFY v3.069+) |
 | `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
 | `multiExe` | `false` | set to true if there are multiple executables (and multiple FLUFFY_FOLDERs) (typically for Demo) |
@@ -36,7 +34,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Binaries / Root Folder | `residentevilrequiem-root` | high | `{gamePath}` |
 | Loose Lua (REFramework) | `residentevilrequiem-looselua` | high | `{gamePath}/.` |
 | Fluffy Mod Manager | `residentevilrequiem-fluffymanager` | low | `{gamePath}` |
@@ -47,7 +45,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `residentevilrequiem-fluffymanager` | 25 |
 | `residentevilrequiem-reframework` | 27 |
 | `residentevilrequiem-looselua` | 29 |
@@ -77,14 +75,14 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | Fluffy Mod Manager | — | — |
 | REFramework | — | — |
 
 ## Config & Save Paths
 
 | Type | Path |
-|---|---|
+| --- | --- |
 | Config | `.` |
 
 ## Special Features

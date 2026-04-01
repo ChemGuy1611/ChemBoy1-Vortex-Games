@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Resident Evil 4 (2023) + Chainsaw Demo Vortex Extension |
 | Engine / Structure | 3rd Party Mod Manager (Fluffy) |
 | Author | ChemBoy1 |
-| Version | 0.4.1 |
-| Date | 2026-03-11 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `residentevil42023` |
 | Executable | `re4.exe` |
 | Executable (Demo) | `re4demo.exe` |
@@ -25,7 +23,7 @@
 ## Feature Flags
 
 | Flag | Value | Description |
-|---|---|---|
+| --- | --- | --- |
 | `reZip` | `true` | NOT WORKING YET - KEEP AS TRUE FOR NOW - set to true to re-zip Fluffy Mods (possibly not necessary for FLUFFY v3.069+) |
 
 ## Mod Types
@@ -33,7 +31,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Binaries / Root Folder | `re4-root` | high | `{gamePath}` |
 | Loose Lua (REFramework) | `residentevil42023-looselua` | high | `{gamePath}/.` |
 | Fluffy Pak Mod | `residentevil42023-fluffypakmod` | high | `{gamePath}/Games/RE4R/Mods` |
@@ -60,14 +58,14 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | Fluffy Mod Manager | — | — |
 | REFramework | — | — |
 
 ## Config & Save Paths
 
 | Type | Path |
-|---|---|
+| --- | --- |
 | Config | `.` |
 
 ## Special Features

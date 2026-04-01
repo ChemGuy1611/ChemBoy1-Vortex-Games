@@ -3,12 +3,10 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Windrose Vortex Extension |
 | Engine / Structure | Unreal Engine Game |
 | Author | ChemBoy1 |
-| Version | 0.1.0 |
-| Date | 2026-03-25 |
 
 ### Notes
 
@@ -17,7 +15,7 @@
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `windrose` |
 | Executable | `Windrose.exe` |
 | Executable (GOG) | `Windrose.exe` |
@@ -30,7 +28,7 @@
 ## Feature Flags
 
 | Flag | Value | Description |
-|---|---|---|
+| --- | --- | --- |
 | `hasXbox` | `false` | toggle for Xbox version logic. |
 | `multiExe` | `false` | toggle for multiple executables (Epic/GOG/Demo don't match Steam) |
 
@@ -39,7 +37,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `windrose-ue4sscombo` | high | `{gamePath}` |
 | UE4SS LogicMods (Blueprint) | `windrose-logicmods` | high | `{gamePath}/R5/Content/Paks` |
 | PAK_ALT_NAME | `PAK_ALT_ID` | high | `{gamePath}/PAK_ALT_PATH` |
@@ -49,7 +47,7 @@ Mod types define where each category of mod gets deployed:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | UE4SS | — | — |
 
 ## Special Features

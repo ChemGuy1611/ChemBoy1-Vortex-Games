@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Deus Ex: Human Revolution Vortex Extension |
 | Engine / Structure | Basic Game |
 | Author | ChemBoy1 |
-| Version | 0.1.2 |
-| Date | 2025-12-03 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `deusexhumanrevolution` |
 | Executable | `DXHRDC.exe` |
 
@@ -27,7 +25,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | DXHRDC-ModHook | `deusexhumanrevolution-modhook` | low | `{gamePath}/.` |
 | DXHR Patcher | `deusexhumanrevolution-patcher` | low | `{gamePath}/.` |
 | Mod .000 File | `deusexhumanrevolution-mod000` | high | `{gamePath}/mods` |
@@ -37,7 +35,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `deusexhumanrevolution-mod000` | 25 |
 | `deusexhumanrevolution-patcher` | 27 |
 | `deusexhumanrevolution-modhook` | 29 |

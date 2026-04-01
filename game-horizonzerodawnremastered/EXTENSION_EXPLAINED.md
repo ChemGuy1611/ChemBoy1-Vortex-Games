@@ -3,16 +3,14 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Horizon Zero Dawn Remastered Vortex Extension |
 | Author | ChemBoy1 |
-| Version | 0.1.2 |
-| Date | 11/07/2024 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `horizonzerodawnremastered` |
 | Executable | `HorizonZeroDawnRemastered.exe` |
 
@@ -25,7 +23,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Save Game (Documents) | `horizonzerodawnremastered-save` | high | `SAVE_PATH` |
 | Package (Game Data) | `PACKAGE_ID` | high | `{gamePath}/PACKAGE_PATH` |
 
@@ -34,7 +32,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `horizonzerodawnremastered-save` | 25 |
 | `horizonzerodawnremastered-package` | 30 |
 

@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Clair Obscur: Expedition 33 Vortex Extension |
 | Engine / Structure | UE5 (Xbox-Integrated) |
 | Author | ChemBoy1 |
-| Version | 0.2.1 |
-| Date | 2026-02-03 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `clairobscurexpedition33` |
 | Executable | `Expedition33_Steam.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -29,17 +27,17 @@
 ## Feature Flags
 
 | Flag | Value | Description |
-|---|---|---|
-| `CHECK_DATA` | `false` |  |
+| --- | --- | --- |
+| `CHECK_DATA` | `false` | true if game, staging, and save folders are all on the same drive (partition check) |
 | `IO_STORE` | `true` | true if the Paks folder contains .ucas and .utoc files |
-| `SYM_LINKS` | `true` |  |
+| `SYM_LINKS` | `true` | true if symlink deployment is enabled for this game |
 
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `clairobscurexpedition33-ue4sscombo` | high | `{gamePath}` |
 | UE4SS LogicMods (Blueprint) | `clairobscurexpedition33-logicmods` | high | `{gamePath}/Sandfall/Content/Paks/LogicMods` |
 | Root Game Folder | `clairobscurexpedition33-root` | high | `{gamePath}` |
@@ -60,7 +58,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | UE4SS | — | — |
 
 ## Special Features

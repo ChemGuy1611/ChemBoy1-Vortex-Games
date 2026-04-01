@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Bloodborne Vortex Extension |
 | Engine / Structure | Emulation Game |
 | Author | ChemBoy1 |
-| Version | 0.3.0 |
-| Date | 2026-02-16 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `bloodborne` |
 | Executable | `N/A` |
 | PCGamingWiki | XXX |
@@ -23,7 +21,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Game Data (dvdroot_ps4) | `bloodborne-dvdroot_ps4` | high | `{gamePath}/CUSA03173/dvdroot_ps4` |
 | Save | `bloodborne-save` | high | `{gamePath}/user/savedata/1/CUSA03173/SPRJ0005` |
 | Root Folder | `bloodborne-root` | high | `{gamePath}` |
@@ -42,7 +40,7 @@ These tools appear in Vortex's Tools panel when this game is active:
 ## Config & Save Paths
 
 | Type | Path |
-|---|---|
+| --- | --- |
 | Save | `user/savedata/1/CUSA03173/SPRJ0005` |
 
 ## Special Features

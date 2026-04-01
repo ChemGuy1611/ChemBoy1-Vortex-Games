@@ -3,16 +3,14 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Horizon Forbidden West Vortex Extension |
 | Author | ChemBoy1 |
-| Version | 0.2.4 |
-| Date | 2026-01-27 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `horizonforbiddenwest` |
 | Executable | `HorizonForbiddenWest.exe` |
 
@@ -26,7 +24,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | MANAGERMOD_NAME | `MANAGERMOD_ID` | high | `{gamePath}/MANAGERMOD_PATH` |
 | MODMANAGER_NAME | `MODMANAGER_ID` | low | `{gamePath}` |
 | REPACKER_NAME | `REPACKER_ID` | low | `{gamePath}` |

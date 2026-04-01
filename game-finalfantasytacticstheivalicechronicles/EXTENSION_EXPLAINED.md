@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | FINAL FANTASY TACTICS - The Ivalice Chronicles Vortex Extension |
 | Engine / Structure | Reloaded-II Game (Mod Installer) |
 | Author | ChemBoy1 |
-| Version | 0.1.0 |
-| Date | 2025-10-28 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `finalfantasytacticstheivalicechronicles` |
 | Executable | `FFT_enhanced.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -27,7 +25,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Reloaded Mod | `finalfantasytacticstheivalicechronicles-reloadedmod` | high | `{gamePath}/Reloaded/Mods` |
 | Mod Loader | `finalfantasytacticstheivalicechronicles-reloadedmodloader` | low | `{gamePath}/Reloaded/Mods/FFTIVC_Mod_Loader` |
 | Reloaded-II Mod Manager | `finalfantasytacticstheivalicechronicles-reloadedmanager` | low | `{gamePath}` |
@@ -38,7 +36,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `finalfantasytacticstheivalicechronicles-reloadedmanager` | 25 |
 | `finalfantasytacticstheivalicechronicles-reloadedmodloader` | 27 |
 | `finalfantasytacticstheivalicechronicles-reloadedmod` | 29 |
@@ -54,7 +52,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | Reloaded-II | — | — |
 
 ## Special Features

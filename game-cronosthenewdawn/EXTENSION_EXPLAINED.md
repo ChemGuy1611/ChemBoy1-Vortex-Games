@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Cronos: The New Dawn Vortex Extension |
 | Engine / Structure | UE5 (static exe) |
 | Author | ChemBoy1 |
-| Version | 0.1.1 |
-| Date | 2025-10-26 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `cronosthenewdawn` |
 | Executable | `Cronos.exe` |
 
@@ -26,9 +24,9 @@
 ## Feature Flags
 
 | Flag | Value | Description |
-|---|---|---|
+| --- | --- | --- |
 | `IO_STORE` | `true` | true if the Paks folder contains .ucas and .utoc files |
-| `SYM_LINKS` | `true` |  |
+| `SYM_LINKS` | `true` | true if symlink deployment is enabled for this game |
 | `CHECK_DATA` | `false` | boolean to check if game, staging folder, and config and save folders are on the same drive |
 | `CHECK_DOCS` | `false` | secondary same as above (if save and config are in different locations) |
 
@@ -37,7 +35,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | UE4SSCOMBO_NAME | `UE4SSCOMBO_ID` | high | `{gamePath}` |
 | LOGICMODS_NAME | `LOGICMODS_ID` | high | `{gamePath}/LOGICMODS_PATH` |
 | UE4SS_NAME | `UE4SS_ID` | high | `{gamePath}/Cronos/Binaries/Win64` |
@@ -53,7 +51,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `UE4SSCOMBO_ID` | 25 |
 | `LOGICMODS_ID` | 27 |
 | `UE4SS_ID` | 31 |
@@ -89,7 +87,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | UE4SS | — | — |
 
 ## Special Features

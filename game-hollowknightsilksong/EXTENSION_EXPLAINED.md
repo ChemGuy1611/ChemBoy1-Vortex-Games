@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Hollow Knight: Silksong Vortex Extension |
 | Engine / Structure | Unity BepinEx |
 | Author | ChemBoy1 |
-| Version | 0.3.0 |
-| Date | 2026-03-29 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `hollowknightsilksong` |
 | Executable | `Hollow Knight Silksong.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -27,7 +25,7 @@
 ## Feature Flags
 
 | Flag | Value | Description |
-|---|---|---|
+| --- | --- | --- |
 | `allowBepinexNexus` | `false` | set false until bugs are fixed |
 | `downloadCfgMan` | `true` | should BepInExConfigManager be downloaded? |
 
@@ -36,7 +34,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Root Game Folder | `hollowknightsilksong-root` | high | `{gamePath}` |
 | Assembly DLL Mod | `hollowknightsilksong-assemblydll` | high | `{gamePath}/Hollow Knight Silksong_Data/Managed` |
 | BepInEx Configuration Manager | `hollowknightsilksong-bepcfgman` | high | `{gamePath}/Bepinex` |
@@ -51,13 +49,13 @@ These tools appear in Vortex's Tools panel when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | BepInEx | 5.4.23.5 | unitymono, x64 |
 
 ## Config & Save Paths
 
 | Type | Path |
-|---|---|
+| --- | --- |
 | Config (Registry) | `HKEY_CURRENT_USER\\Software\\Team Cherry\\Hollow Knight Silksong` |
 
 ## Special Features

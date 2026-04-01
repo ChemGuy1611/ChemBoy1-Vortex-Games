@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Far Cry Primal Vortex Extension |
 | Engine / Structure | Far Cry Game (Mod Installer) |
 | Author | ChemBoy1 |
-| Version | 0.1.2 |
-| Date | 2025-10-24 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `farcryprimal` |
 | Executable | `bin/FCPrimal.exe` |
 
@@ -26,7 +24,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Root Folder | `farcryprimal-root` | high | `{gamePath}` |
 | Binaries (Engine Injector) | `farcryprimal-binaries` | high | `{gamePath}/bin` |
 | Game Data | `farcryprimal-data` | high | `{gamePath}/data_win32` |
@@ -40,7 +38,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `farcryprimal-modinstaller` | 25 |
 | `farcryprimal-root` | 27 |
 | `farcryprimal-data` | 29 |
@@ -69,7 +67,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | FC Mod Installer | — | — |
 
 ## Special Features

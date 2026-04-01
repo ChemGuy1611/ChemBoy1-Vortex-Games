@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Ghost Recon Breakpoint Vortex Extension |
 | Engine / Structure | Ubisoft AnvilToolkit |
 | Author | ChemBoy1 |
-| Version | 0.2.7 |
-| Date | 2026-03-28 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `ghostreconbreakpoint` |
 | Executable | `GRB.exe` |
 
@@ -26,7 +24,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Sound Data .pck | `ghostreconbreakpoint-sound` | high | `{gamePath}/sounddata/pc` |
 | Individual Buildtables | `ghostreconbreakpoint-buildtable` | high | `{gamePath}/Extracted/DataPC_patch_01.forge/Extracted/23_-_TEAMMATE_Template.data` |
 | Binaries / Root Folder | `ghostreconbreakpoint-binaries` | high | `{gamePath}` |
@@ -43,7 +41,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `ghostreconbreakpoint-atk` | 25 |
 | `ghostreconbreakpoint-sound` | 27 |
 | `ghostreconbreakpoint-buildtable` | 29 |

@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Deus Ex: Mankind Divided Vortex Extension |
 | Engine / Structure | Basic Game |
 | Author | ChemBoy1 |
-| Version | 0.1.0 |
-| Date | 2025-09-30 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `deusexmankinddivided` |
 | Executable | `retail/DXMD.exe` |
 
@@ -27,7 +25,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | runtime file | `deusexmankinddivided-runtime` | high | `{gamePath}/runtime` |
 | DLC runtime file | `deusexmankinddivided-dlcruntime` | high | `{gamePath}/DLC/runtime` |
 | Root Folder | `deusexmankinddivided-root` | high | `{gamePath}` |
@@ -38,7 +36,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `deusexmankinddivided-root` | 25 |
 | `deusexmankinddivided-runtime` | 27 |
 | `deusexmankinddivided-dlcruntime` | 29 |

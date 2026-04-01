@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Warhammer 40,000: Rogue Trader Vortex Extension |
 | Engine / Structure | Game with Integrated Mod Loader (UnityModManager) |
 | Author | ChemBoy1 |
-| Version | 0.2.1 |
-| Date | 2026-02-13 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `warhammer40kroguetrader` |
 | Executable | `WH40KRT.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -28,9 +26,9 @@
 ## Feature Flags
 
 | Flag | Value | Description |
-|---|---|---|
-| `LOAD_ORDER_ENABLED` | `true` |  |
-| `debug` | `false` |  |
+| --- | --- | --- |
+| `LOAD_ORDER_ENABLED` | `true` | enables load order sorting |
+| `debug` | `false` | enables verbose debug logging |
 | `mod_update_all_profile` | `false` |  |
 | `updating_mod` | `false` | used to see if it's a mod update or not |
 | `dllInRoot` | `false` |  |
@@ -40,7 +38,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Plugin (UnityModManager) | `warhammer40kroguetrader-plugin` | high | `PLUGIN_PATH` |
 | Owlcat Mod | `warhammer40kroguetrader-mod` | high | `MOD_PATH` |
 | Portraits | `warhammer40kroguetrader-portrait` | high | `PORTRAIT_PATH` |

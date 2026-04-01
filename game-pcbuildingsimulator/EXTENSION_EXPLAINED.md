@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | PC Building Simulator Vortex Extension |
 | Engine / Structure | Unity BepinEx |
 | Author | ChemBoy1 |
-| Version | 0.1.1 |
-| Date | 2026-03-30 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `pcbuildingsimulator` |
 | Executable | `PCBS.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -27,7 +25,7 @@
 ## Feature Flags
 
 | Flag | Value | Description |
-|---|---|---|
+| --- | --- | --- |
 | `allowBepinexNexus` | `false` | set false until bugs are fixed |
 | `downloadCfgMan` | `false` | should BepInExConfigManager be downloaded? |
 
@@ -36,7 +34,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Root Game Folder | `pcbuildingsimulator-root` | high | `{gamePath}` |
 | Assembly DLL Mod | `pcbuildingsimulator-assemblydll` | high | `{gamePath}/PCBS_Data/Managed` |
 | BepInEx Configuration Manager | `pcbuildingsimulator-bepcfgman` | high | `{gamePath}/Bepinex` |
@@ -62,13 +60,13 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | BepInEx | 5.4.23.5 | unitymono, x64 |
 
 ## Config & Save Paths
 
 | Type | Path |
-|---|---|
+| --- | --- |
 | Config (Registry) | `HKEY_CURRENT_USER\\Software\\The Irregular Corp\\PC Building Simulator` |
 | Save | `Saves` |
 

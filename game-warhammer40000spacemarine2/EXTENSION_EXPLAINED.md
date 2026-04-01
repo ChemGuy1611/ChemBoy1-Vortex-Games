@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | WH40K Space Marine 2 Vortex Extension |
 | Engine / Structure | Mods Folder w/ LO |
 | Author | ChemBoy1 |
-| Version | 0.5.2 |
-| Date | 2025-02-08 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `warhammer40000spacemarine2` |
 | Executable | `Warhammer 40000 Space Marine 2.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -27,15 +25,15 @@
 ## Feature Flags
 
 | Flag | Value | Description |
-|---|---|---|
-| `loadOrderEnabled` | `true` |  |
+| --- | --- | --- |
+| `loadOrderEnabled` | `true` | enables load order sorting for mods |
 
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | BINARIES_NAME | `BINARIES_ID` | high | `{gamePath}/BINARIES_PATH` |
 | Config (LocalAppData) | `warhammer40000spacemarine2-config` | high | `CONFIG_PATH` |
 | PAK_NAME | `PAK_ID` | high | `{gamePath}/PAK_PATH` |
@@ -49,7 +47,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `INTEGRATION_STUDIO_ID` | 25 |
 | `PAK_ID` | 27 |
 | `ROOT_ID` | 29 |

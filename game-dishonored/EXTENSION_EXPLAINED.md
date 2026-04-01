@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Dishonored Vortex Extension |
 | Engine / Structure | UE2/3 TFC |
 | Author | ChemBoy1 |
-| Version | 0.6.1 |
-| Date | 2025-11-16 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `dishonored` |
 | Executable | `Binaries/Win32/Dishonored.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -30,7 +28,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | TFC Mod | `dishonored-tfcmod` | high | `{gamePath}/TFCInstaller/Mods` |
 | Root Folder | `dishonored-root` | high | `{gamePath}` |
 | Root Sub Folder | `dishonored-rootsub` | high | `{gamePath}/DishonoredGame` |
@@ -44,7 +42,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `dishonored-tfcinstaller` | 25 |
 | `dishonored-tfcexplorer` | 27 |
 | `dishonored-tfcmod` | 29 |

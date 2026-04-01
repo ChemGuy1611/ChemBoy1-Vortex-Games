@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Alan Wake 2 Vortex Extension |
 | Engine / Structure | Root Folder Mod Loader |
 | Author | ChemBoy1 |
-| Version | 1.2.0 |
-| Date | 2026-03-22 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `alanwake2` |
 | Executable | `AlanWake2.exe` |
 
@@ -26,7 +24,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Mod Loader | `alanwake2-modloader` | low | `{gamePath}` |
 
 ## Mod Installers
@@ -34,7 +32,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `alanwake2-modloader` | 25 |
 | `alanwake2-folders` | 27 |
 

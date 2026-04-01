@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Whiskerwood Vortex Extension |
 | Engine / Structure | Unreal Engine Game (Unified) |
 | Author | ChemBoy1 |
-| Version | 0.1.1 |
-| Date | 2026-01-19 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `whiskerwood` |
 | Executable | `Whiskerwood.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -30,12 +28,12 @@
 ## Feature Flags
 
 | Flag | Value | Description |
-|---|---|---|
+| --- | --- | --- |
 | `hasXbox` | `true` | toggle for Xbox version logic (to unify templates) |
 | `multiExe` | `false` | toggle for multiple executables (to unify templates) |
 | `SIGBYPASS_REQUIRED` | `false` | set true if there are .sig files in the Paks folder |
 | `IO_STORE` | `false` | true if the Paks folder contains .ucas and .utoc files |
-| `SYM_LINKS` | `true` |  |
+| `SYM_LINKS` | `true` | true if symlink deployment is enabled for this game |
 | `CHECK_DATA` | `false` | boolean to check if game, staging folder, and config and save folders are on the same drive |
 | `CHECK_DOCS` | `false` | secondary same as above (if save and config are in different locations) |
 
@@ -44,7 +42,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | UE4SSCOMBO_NAME | `UE4SSCOMBO_ID` | high | `{gamePath}` |
 | LOGICMODS_NAME | `LOGICMODS_ID` | high | `{gamePath}/LOGICMODS_PATH` |
 | Paks (no "~mods") | `whiskerwood-pakalt` | high | `{gamePath}/Whiskerwood/Content/Paks` |
@@ -54,7 +52,7 @@ Mod types define where each category of mod gets deployed:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | UE4SS | — | — |
 
 ## Special Features

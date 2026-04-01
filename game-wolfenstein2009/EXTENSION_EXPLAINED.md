@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Wolfenstein (2009) Vortex Extension |
 | Engine / Structure | Basic Game |
 | Author | ChemBoy1 |
-| Version | 0.2.2 |
-| Date | 08/07/2024 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `wolfenstein2009` |
 | Executable | `SP/Wolf2.exe` |
 
@@ -26,7 +24,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | SinglePlayer base Folder | `wolfenstein2009-spbase` | high | `{gamePath}/SP/base` |
 | MultiPlayer base Folder | `wolfenstein2009-mpbase` | high | `{gamePath}/MP/base` |
 | SP Folder | `wolfenstein2009-sp` | high | `{gamePath}/SP` |
@@ -37,7 +35,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `wolfenstein2009-base` | 25 |
 | `wolfenstein2009-maps` | 30 |
 | `wolfenstein2009-streampacks` | 35 |

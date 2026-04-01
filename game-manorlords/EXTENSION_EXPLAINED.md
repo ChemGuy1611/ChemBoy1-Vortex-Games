@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Manor Lords Vortex Extension |
 | Engine / Structure | UE4 (XBOX Integrated) |
 | Author | ChemBoy1 |
-| Version | 0.5.2 |
-| Date | 2026-02-03 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `manorlords` |
 | Executable | `ManorLords.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -29,7 +27,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | UE4SS LogicMods (Blueprint) | `manorlords-logicmods` | high | `{gamePath}/ManorLords/Content/Paks/LogicMods` |
 | UE4SS Script-LogicMod Combo | `manorlords-ue4sscombo` | high | `{gamePath}` |
 | Root Game Folder | `manorlords-root` | high | `{gamePath}` |
@@ -41,7 +39,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `manorlords-mlue4ss` | 20 |
 | `manorlords-ue4ss-logicscriptcombo` | 21 |
 | `manorlords-ue4ss-logicmod` | 23 |
@@ -79,13 +77,13 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | UE4SS | — | — |
 
 ## Config & Save Paths
 
 | Type | Path |
-|---|---|
+| --- | --- |
 | Config | `ManorLords/Saved/Config/WindowsNoEditor` |
 | Save | `ManorLords/Saved/SaveGames` |
 | Save (Xbox) | `ManorLords/Saved/SaveGames` |

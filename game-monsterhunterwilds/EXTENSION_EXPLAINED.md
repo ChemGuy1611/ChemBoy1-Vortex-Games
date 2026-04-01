@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Monster Hunter Wilds Vortex Extension |
 | Engine / Structure | Fluffy + REFramework (RE Engine) |
 | Author | ChemBoy1 |
-| Version | 0.3.0 |
-| Date | 2026-03-05 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `monsterhunterwilds` |
 | Executable | `MonsterHunterWilds.exe` |
 
@@ -26,7 +24,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Binaries / Root Folder | `monsterhunterwilds-root` | high | `{gamePath}` |
 | Fluffy Mod | `monsterhunterwilds-fluffymod` | high | `{gamePath}/Games/MonsterHunterWilds/Mods` |
 | Fluffy Pak Mod | `monsterhunterwilds-fluffypakmod` | high | `{gamePath}/Games/MonsterHunterWilds/Mods` |
@@ -40,7 +38,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `monsterhunterwilds-fluffymanager` | 25 |
 | `monsterhunterwilds-reframework` | 27 |
 | `monsterhunterwilds-looselua` | 33 |
@@ -67,14 +65,14 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | Fluffy Mod Manager | — | — |
 | REFramework | — | — |
 
 ## Config & Save Paths
 
 | Type | Path |
-|---|---|
+| --- | --- |
 | Config | `config.ini` |
 
 ## Special Features

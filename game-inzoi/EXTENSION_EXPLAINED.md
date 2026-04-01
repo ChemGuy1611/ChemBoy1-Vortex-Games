@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | inZOI Vortex Extension |
 | Engine / Structure | UE5 |
 | Author | ChemBoy1 |
-| Version | 0.6.0 |
-| Date | 2026-02-03 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `inzoi` |
 | Executable | `inZOI.exe` |
 
@@ -24,18 +22,18 @@
 ## Feature Flags
 
 | Flag | Value | Description |
-|---|---|---|
+| --- | --- | --- |
 | `CHECK_CONFIG` | `false` |  |
 | `CHECK_DOCS` | `false` |  |
 | `IO_STORE` | `true` | true if the Paks folder contains .ucas and .utoc files |
-| `SYM_LINKS` | `true` |  |
+| `SYM_LINKS` | `true` | true if symlink deployment is enabled for this game |
 
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | UE5KITMOD_NAME | `UE5KITMOD_ID` | high | `UE5KITMOD_PATH` |
 | Save | `inzoi-save` | high | `SAVE_PATH` |
 | CREATIONS_NAME | `CREATIONS_ID` | high | `CREATIONS_PATH` |
@@ -51,13 +49,13 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `ue5-pak-installer` | 28 |
 
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | UE4SS | — | — |
 
 ## Special Features

@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Rise of the Tomb Raider Vortex Extension |
 | Engine / Structure | 3rd-Party Mod Installer |
 | Author | ChemBoy1 |
-| Version | 0.5.0 |
-| Date | 2025-10-29 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `riseofthetombraider` |
 | Executable | `ROTTR.exe` |
 | Executable (Xbox) | `ROTTR_UAP.exe` |
@@ -30,7 +28,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Binaries / Root Folder | `riseofthetombraider-binaries` | high | `{gamePath}` |
 | Mod Manager Mod | `riseofthetombraider-modmanagermod` | high | `{gamePath}/Mods` |
 | TR Reboot Mod Manager | `riseofthetombraider-trmodmanager` | low | `{gamePath}` |
@@ -41,7 +39,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `riseofthetombraider-manager` | 25 |
 | `riseofthetombraider-trmodmanager` | 30 |
 | `riseofthetombraider-binaries` | 35 |

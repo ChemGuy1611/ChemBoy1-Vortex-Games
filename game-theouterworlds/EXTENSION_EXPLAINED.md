@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | The Outer Worlds Vortex Extension |
 | Engine / Structure | UE4 |
 | Author | ChemBoy1 |
-| Version | 0.5.1 |
-| Date | 2026-02-07 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `theouterworlds` |
 | Executable | `N/A` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -30,7 +28,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Paks | `theouterworlds-pak` | low | `{gamePath}/Indiana/Content/Paks/~mods` |
 | Root Game Folder | `theouterworlds-root` | high | `{gamePath}` |
 

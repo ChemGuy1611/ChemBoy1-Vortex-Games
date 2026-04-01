@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Hades II Vortex Extension |
 | Engine / Structure | 3rd-Party Mod Installer |
 | Author | ChemBoy1 |
-| Version | 0.1.3 |
-| Date | 2025-09-26 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `hades2` |
 | Executable | `Ship/Hades2.exe` |
 
@@ -27,7 +25,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Mod | `hades2-mod` | high | `{gamePath}/Content/Mods` |
 | Binaries | `hades2-binaries` | high | `{gamePath}/Ship` |
 | Root Game Folder | `hades2-root` | high | `{gamePath}` |
@@ -39,7 +37,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `hades2-manager` | 25 |
 | `hades2-modutility` | 27 |
 

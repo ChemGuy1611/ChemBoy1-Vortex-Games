@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | AC Syndicate Vortex Extension |
 | Engine / Structure | Ubisoft AnvilToolkit |
 | Author | ChemBoy1 |
-| Version | 0.1.0 |
-| Date | 07/29/2024 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `assassinscreedsyndicate` |
 | Executable | `ACS.exe` |
 
@@ -26,7 +24,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Binaries / Root Game Folder | `assassinscreediii-binaries` | high | `{gamePath}` |
 | AnvilToolKit | `assassinscreedsyndicate-atk` | low | `{gamePath}` |
 
@@ -35,7 +33,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `assassinscreedsyndicate-atk` | 25 |
 
 ## Registered Tools

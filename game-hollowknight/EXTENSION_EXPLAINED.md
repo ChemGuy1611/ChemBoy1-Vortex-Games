@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Hollow Knight Vortex Extension |
 | Engine / Structure | Unity BepinEx |
 | Author | ChemBoy1 |
-| Version | 2.1.1 |
-| Date | 2026-03-29 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `hollowknight` |
 | Executable | `hollow_knight.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -28,7 +26,7 @@
 ## Feature Flags
 
 | Flag | Value | Description |
-|---|---|---|
+| --- | --- | --- |
 | `allowBepinexNexus` | `false` | set false until bugs are fixed |
 | `downloadCfgMan` | `true` | should BepInExConfigManager be downloaded? |
 | `bleedingEdge` | `false` | set to true to download bleeding edge builds of BepInEx (IL2CPP only) |
@@ -38,7 +36,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Root Game Folder | `hollowknight-root` | high | `{gamePath}` |
 | BepInEx Configuration Manager | `hollowknight-bepcfgman` | high | `{gamePath}/Bepinex` |
 | BepInEx Mod | `hollowknight-bepmods` | high | `{gamePath}/BepinEx/plugins` |
@@ -48,7 +46,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `hollowknight-root` | 8 |
 | `hollowknight-bepcfgman` | 9 |
 | `hollowknight-assemblydll` | 25 |
@@ -78,13 +76,13 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | BepInEx | 5.4.23.5 | unitymono, x64 |
 
 ## Config & Save Paths
 
 | Type | Path |
-|---|---|
+| --- | --- |
 | Config (Registry) | `HKEY_CURRENT_USER\\Software\\Team Cherry\\Hollow Knight` |
 
 ## Special Features

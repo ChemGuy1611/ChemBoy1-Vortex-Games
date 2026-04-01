@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Trails in the Sky 1st Chapter Vortex Extension |
 | Engine / Structure | Basic Game |
 | Author | ChemBoy1 |
-| Version | 0.1.1 |
-| Date | 2026-01-19 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `trailsintheskyfirstchapter` |
 | Executable | `./sora_1st.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -27,7 +25,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Pac Files | `trailsintheskyfirstchapter-pac` | high | `{gamePath}/pac/steam` |
 | Root Folder | `trailsintheskyfirstchapter-root` | high | `{gamePath}` |
 
@@ -36,7 +34,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `trailsintheskyfirstchapter-pac` | 25 |
 | `trailsintheskyfirstchapter-root` | 27 |
 

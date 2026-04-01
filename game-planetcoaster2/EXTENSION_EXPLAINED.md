@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Planet Coaster 2 Vortex Extension |
 | Engine / Structure | Cobra Engine (ACSE) |
 | Author | ChemBoy1 |
-| Version | 0.2.0 |
-| Date | 2025-10-22 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `planetcoaster2` |
 | Executable | `PlanetCoaster2.exe` |
 
@@ -27,7 +25,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | ACSE | `planetcoaster2-acse` | high | `{gamePath}/Win64/ovldata` |
 | Root Game Folder | `planetcoaster2-root` | high | `{gamePath}` |
 | ovldata Subfolder | `planetcoaster2-ovldata` | high | `{gamePath}/Win64` |
@@ -38,7 +36,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `planetcoaster2-acse` | 25 |
 | `planetcoaster2-root` | 27 |
 | `planetcoaster2-ovldata` | 29 |
@@ -62,7 +60,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | ACSE | — | — |
 
 ## Special Features

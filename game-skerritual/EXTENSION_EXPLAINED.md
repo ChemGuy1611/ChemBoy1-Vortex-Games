@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Sker Ritual Vortex Extension |
 | Engine / Structure | Unity BepinEx |
 | Author | ChemBoy1 |
-| Version | 0.1.0 |
-| Date | 10/16/2024 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `skerritual` |
 | Executable | `SkerRitual.exe` |
 
@@ -26,7 +24,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Root Game Folder | `skerritual-root` | high | `{gamePath}` |
 | BepinEx Mod | `skerritual-bepmods` | high | `{gamePath}/BepinEx/plugins` |
 

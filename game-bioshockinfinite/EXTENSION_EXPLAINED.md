@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | BioShock Infinite Vortex Extension |
 | Engine / Structure | UE2/3 Game (TFC Installer) |
 | Author | ChemBoy1 |
-| Version | 0.6.1 |
-| Date | 2025-11-12 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `bioshockinfinite` |
 | Executable | `Binaries/Win32/BioShockInfinite.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -29,7 +27,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | TFC Mod | `bioshockinfinite-tfcmod` | high | `{gamePath}/TFCInstaller/Mods` |
 | Movies Mod | `bioshockinfinite-movies` | high | `{gamePath}/XGame/Movies` |
 | Root Folder | `bioshockinfinite-root` | high | `{gamePath}` |
@@ -44,7 +42,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `bioshockinfinite-tfcinstaller` | 25 |
 | `bioshockinfinite-tfcexplorer` | 27 |
 | `bioshockinfinite-tfcmod` | 29 |

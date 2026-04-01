@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Anno 117: Pax Romana Vortex Extension |
 | Engine / Structure | Basic Game |
 | Author | ChemBoy1 |
-| Version | 0.1.0 |
-| Date | 2025-11-13 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `anno117paxromana` |
 | Executable | `Bin/Win64/Anno117.exe` |
 
@@ -26,7 +24,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Mod | `anno117paxromana-mod` | high | `{gamePath}/mods` |
 | Root Folder | `anno117paxromana-root` | high | `{gamePath}` |
 | Binaries (Engine Injector) | `anno117paxromana-binaries` | high | `{gamePath}/Bin/Win64` |
@@ -36,7 +34,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `anno117paxromana-mod` | 25 |
 | `anno117paxromana-root` | 47 |
 | `anno117paxromana-binaries` | 49 |

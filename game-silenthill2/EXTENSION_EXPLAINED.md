@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Silent Hill 2 Remake Vortex Extension |
 | Engine / Structure | UE5 |
 | Author | ChemBoy1 |
-| Version | 0.3.1 |
-| Date | 2026-02-07 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `silenthill2` |
 | Executable | `SHProto.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -28,7 +26,7 @@
 ## Feature Flags
 
 | Flag | Value | Description |
-|---|---|---|
+| --- | --- | --- |
 | `IO_STORE` | `true` | true if the Paks folder contains .ucas and .utoc files |
 
 ## Mod Types
@@ -36,7 +34,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | UE4SS Scripts | `SCRIPTS_ID` | high | `{gamePath}/SCRIPTS_PATH` |
 | DLL_NAME | `DLL_ID` | high | `{gamePath}/DLL_PATH` |
 | UE4SS LogicMods (Blueprint) | `silenthill2-logicmods` | high | `{gamePath}/SHProto/Content/Paks/LogicMods` |
@@ -58,7 +56,7 @@ These tools appear in Vortex's Tools panel when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | UE4SS | — | — |
 
 ## Special Features

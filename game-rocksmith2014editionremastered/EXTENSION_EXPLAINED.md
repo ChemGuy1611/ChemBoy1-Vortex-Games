@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Rocksmith 2014 Edition REMASTERED Vortex Extension |
 | Engine / Structure | Basic Game with Tools & Launchers |
 | Author | ChemBoy1 |
-| Version | 0.3.0 |
-| Date | 2026-04-01 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `rocksmith2014editionremastered` |
 | Executable | `Rocksmith2014.exe` |
 
@@ -24,38 +22,38 @@
 ## Feature Flags
 
 | Flag | Value | Description |
-|---|---|---|
-| `RSMODS_IS_ARCHIVE` | `false` |  |
-| `RSMODS_IS_INSTALLER` | `true` |  |
-| `RSMODS_IS_ELEVATED` | `false` |  |
-| `CDLC_IS_ARCHIVE` | `false` |  |
-| `CDLC_IS_INSTALLER` | `true` |  |
-| `CDLC_IS_ELEVATED` | `false` |  |
-| `CFSM_IS_ARCHIVE` | `true` |  |
-| `CFSM_IS_INSTALLER` | `true` |  |
-| `CFSM_IS_ELEVATED` | `false` |  |
-| `NOCABLE_IS_ARCHIVE` | `true` |  |
-| `NOCABLE_IS_INSTALLER` | `false` |  |
-| `NOCABLE_IS_ELEVATED` | `false` |  |
-| `RSASIO_IS_ARCHIVE` | `true` |  |
-| `RSASIO_IS_INSTALLER` | `false` |  |
-| `RSASIO_IS_ELEVATED` | `false` |  |
-| `ASIO4ALL_IS_ARCHIVE` | `false` |  |
-| `ASIO4ALL_IS_INSTALLER` | `true` |  |
-| `ASIO4ALL_IS_ELEVATED` | `true` |  |
-| `EOF_IS_ARCHIVE` | `true` |  |
-| `EOF_IS_INSTALLER` | `false` |  |
-| `EOF_IS_ELEVATED` | `false` |  |
-| `DLCBUILDER_IS_ARCHIVE` | `false` |  |
-| `DLCBUILDER_IS_INSTALLER` | `true` |  |
-| `DLCBUILDER_IS_ELEVATED` | `false` |  |
+| --- | --- | --- |
+| `RSMODS_IS_ARCHIVE` | `false` | the tool is distributed as an archive (zip/7z) |
+| `RSMODS_IS_INSTALLER` | `true` | the tool is distributed as an installer executable |
+| `RSMODS_IS_ELEVATED` | `false` | the tool requires elevated/admin privileges to install |
+| `CDLC_IS_ARCHIVE` | `false` | the tool is distributed as an archive (zip/7z) |
+| `CDLC_IS_INSTALLER` | `true` | the tool is distributed as an installer executable |
+| `CDLC_IS_ELEVATED` | `false` | the tool requires elevated/admin privileges to install |
+| `CFSM_IS_ARCHIVE` | `true` | the tool is distributed as an archive (zip/7z) |
+| `CFSM_IS_INSTALLER` | `true` | the tool is distributed as an installer executable |
+| `CFSM_IS_ELEVATED` | `false` | the tool requires elevated/admin privileges to install |
+| `NOCABLE_IS_ARCHIVE` | `true` | the tool is distributed as an archive (zip/7z) |
+| `NOCABLE_IS_INSTALLER` | `false` | the tool is distributed as an installer executable |
+| `NOCABLE_IS_ELEVATED` | `false` | the tool requires elevated/admin privileges to install |
+| `RSASIO_IS_ARCHIVE` | `true` | the tool is distributed as an archive (zip/7z) |
+| `RSASIO_IS_INSTALLER` | `false` | the tool is distributed as an installer executable |
+| `RSASIO_IS_ELEVATED` | `false` | the tool requires elevated/admin privileges to install |
+| `ASIO4ALL_IS_ARCHIVE` | `false` | the tool is distributed as an archive (zip/7z) |
+| `ASIO4ALL_IS_INSTALLER` | `true` | the tool is distributed as an installer executable |
+| `ASIO4ALL_IS_ELEVATED` | `true` | the tool requires elevated/admin privileges to install |
+| `EOF_IS_ARCHIVE` | `true` | the tool is distributed as an archive (zip/7z) |
+| `EOF_IS_INSTALLER` | `false` | the tool is distributed as an installer executable |
+| `EOF_IS_ELEVATED` | `false` | the tool requires elevated/admin privileges to install |
+| `DLCBUILDER_IS_ARCHIVE` | `false` | the tool is distributed as an archive (zip/7z) |
+| `DLCBUILDER_IS_INSTALLER` | `true` | the tool is distributed as an installer executable |
+| `DLCBUILDER_IS_ELEVATED` | `false` | the tool requires elevated/admin privileges to install |
 
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | CDLC Mod | `rocksmith2014editionremastered-cdlcmod` | high | `{gamePath}/dlc` |
 | NoCableLauncher | `rocksmith2014editionremastered-nocable` | high | `{gamePath}` |
 | RS ASIO | `rocksmith2014editionremastered-rsasio` | high | `{gamePath}` |

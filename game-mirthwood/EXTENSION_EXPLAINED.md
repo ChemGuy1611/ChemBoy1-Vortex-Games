@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Mirthwood Vortex Extension |
 | Engine / Structure | Unity BepinEx |
 | Author | ChemBoy1 |
-| Version | 0.1.1 |
-| Date | 2025-05-14 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `mirthwood` |
 | Executable | `Mirthwood.exe` |
 | PCGamingWiki | XXX |
@@ -27,7 +25,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Root Game Folder | `mirthwood-root` | high | `{gamePath}` |
 | BepinEx Mod | `mirthwood-bepmods` | high | `{gamePath}/BepinEx/plugins` |
 

@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Frostpunk 2 Vortex Extension |
 | Engine / Structure | UE5 (Xbox-Integrated) |
 | Author | ChemBoy1 |
-| Version | 0.2.0 |
-| Date | 2026-02-01 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `frostpunk2` |
 | Executable | `Frostpunk2.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -27,7 +25,7 @@
 ## Feature Flags
 
 | Flag | Value | Description |
-|---|---|---|
+| --- | --- | --- |
 | `IO_STORE` | `false` | true if the Paks folder contains .ucas and .utoc files |
 
 ## Mod Types
@@ -35,7 +33,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | UE4SS LogicMods (Blueprint) | `frostpunk2-logicmods` | high | `{gamePath}/Frostpunk2/Content/Paks/LogicMods` |
 | UE4SS Script-LogicMod Combo | `frostpunk2-ue4sscombo` | high | `{gamePath}` |
 | Root Game Folder | `frostpunk2-root` | high | `{gamePath}` |
@@ -47,7 +45,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `ue5-pak-installer` | 35 |
 | `frostpunk2-ue4ss-logicscriptcombo` | 25 |
 | `frostpunk2-ue4ss-logicmod` | 30 |
@@ -67,13 +65,13 @@ These tools appear in Vortex's Tools panel when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | UE4SS | — | — |
 
 ## Config & Save Paths
 
 | Type | Path |
-|---|---|
+| --- | --- |
 | Config | `11bitstudios/Frostpunk2/Steam/Saved/Config/Windows` |
 | Save | `11bitstudios/Frostpunk2/Steam/Saved/SaveGames` |
 | Save (Xbox) | `11bitstudios/Frostpunk2/MS/Saved/SaveGames` |

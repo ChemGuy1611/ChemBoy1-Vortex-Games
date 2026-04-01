@@ -3,16 +3,14 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Warhammer Vermintide 2 Vortex Extension |
 | Author | ChemBoy1 |
-| Version | 1.0.5 |
-| Date | 07/31/2024 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `vermintide2` |
 | Executable | `launcher/Launcher.exe` |
 
@@ -25,7 +23,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Binaries | `vermintide2-binaries` | high | `{gamePath}/binaries` |
 | Binaries DX12 | `vermintide2-binariesdx12` | high | `{gamePath}/binaries_dx12` |
 

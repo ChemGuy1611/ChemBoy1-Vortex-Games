@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | HumanitZ Vortex Extension |
 | Engine / Structure | Unreal Engine Game |
 | Author | ChemBoy1 |
-| Version | 2.0.0 |
-| Date | 2026-02-23 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `humanitz` |
 | Executable | `Humanitz.exe` |
 | Executable (GOG) | `Humanitz.exe` |
@@ -27,7 +25,7 @@
 ## Feature Flags
 
 | Flag | Value | Description |
-|---|---|---|
+| --- | --- | --- |
 | `hasXbox` | `false` | toggle for Xbox version logic. |
 | `multiExe` | `false` | toggle for multiple executables (Epic/GOG/Demo don't match Steam) |
 
@@ -36,7 +34,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `humanitz-ue4sscombo` | high | `{gamePath}` |
 | UE4SS LogicMods (Blueprint) | `humanitz-logicmods` | high | `{gamePath}/Humanitz/Content/Paks` |
 | PAK_ALT_NAME | `PAK_ALT_ID` | high | `{gamePath}/PAK_ALT_PATH` |
@@ -54,7 +52,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | UE4SS | — | — |
 
 ## Special Features

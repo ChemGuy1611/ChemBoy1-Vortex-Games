@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | PC Building Simulator 2 Vortex Extension |
 | Engine / Structure | Unity BepinEx (IL2CPP) |
 | Author | ChemBoy1 |
-| Version | 0.1.2 |
-| Date | 2026-03-22 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `pcbuildingsimulator2` |
 | Executable | `PCBS2.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -25,7 +23,7 @@
 ## Feature Flags
 
 | Flag | Value | Description |
-|---|---|---|
+| --- | --- | --- |
 | `allowBepinexNexus` | `false` | set false until bugs are fixed |
 | `downloadCfgMan` | `false` | should BepInExConfigManager be downloaded? |
 
@@ -34,7 +32,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Root Game Folder | `pcbuildingsimulator2-root` | high | `{gamePath}` |
 | Assembly DLL Mod | `pcbuildingsimulator2-assemblydll` | high | `{gamePath}/.` |
 | BepInEx Configuration Manager | `pcbuildingsimulator2-bepcfgman` | high | `{gamePath}/Bepinex` |
@@ -63,13 +61,13 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | BepInEx | 6.0.0 | il2cpp, x64 |
 
 ## Config & Save Paths
 
 | Type | Path |
-|---|---|
+| --- | --- |
 | Config (Registry) | `HKEY_CURRENT_USER\\Software\\Epic Games Publishing\\PCBS2` |
 | Save | `Saves` |
 

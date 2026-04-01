@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Borderlands 3 Vortex Extension |
 | Engine / Structure | UE4 Game (Custom) |
 | Author | ChemBoy1 |
-| Version | 0.2.0 |
-| Date | 2025-09-29 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `borderlands3` |
 | Executable | `OakGame/Binaries/Win64/Borderlands3.exe` |
 
@@ -27,7 +25,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Python SDK | `borderlands3-sdk` | high | `{gamePath}/.` |
 | SDK Mod | `borderlands3-sdkmod` | high | `{gamePath}/sdk_mods` |
 | OpenHotfixLoader | `borderlands3-openhotfixloader` | low | `{gamePath}/OakGame/Binaries/Win64/Plugins` |
@@ -43,7 +41,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `borderlands3-openhotfixloader` | 25 |
 | `borderlands3-sdk` | 27 |
 | `borderlands3-sdkmod` | 28 |

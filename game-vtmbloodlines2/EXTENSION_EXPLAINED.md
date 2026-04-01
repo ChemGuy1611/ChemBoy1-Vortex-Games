@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Vampire: The Masquerade - Bloodlines 2 Vortex Extension |
 | Engine / Structure | UE5 (static exe) |
 | Author | ChemBoy1 |
-| Version | 0.1.0 |
-| Date | 2025-10-21 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `vtmbloodlines2` |
 | Executable | `Bloodlines2.exe` |
 
@@ -25,10 +23,10 @@
 ## Feature Flags
 
 | Flag | Value | Description |
-|---|---|---|
+| --- | --- | --- |
 | `SIGBYPASS_REQUIRED` | `false` | set true if there are .sig files in the Paks folder |
 | `IO_STORE` | `true` | true if the Paks folder contains .ucas and .utoc files |
-| `SYM_LINKS` | `true` |  |
+| `SYM_LINKS` | `true` | true if symlink deployment is enabled for this game |
 | `CHECK_DATA` | `false` | boolean to check if game, staging folder, and config and save folders are on the same drive |
 | `CHECK_DOCS` | `false` | secondary same as above (if save and config are in different locations) |
 
@@ -37,7 +35,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `vtmbloodlines2-ue4sscombo` | high | `{gamePath}` |
 | UE4SS LogicMods (Blueprint) | `vtmbloodlines2-logicmods` | high | `{gamePath}/Bloodlines2/Content/Paks/LogicMods` |
 | UE4SS | `vtmbloodlines2-ue4ss` | high | `{gamePath}/Bloodlines2/Binaries/Win64` |
@@ -53,7 +51,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `vtmbloodlines2-ue4sscombo` | 25 |
 | `vtmbloodlines2-logicmods` | 27 |
 | `vtmbloodlines2-ue4ss` | 31 |
@@ -90,7 +88,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | UE4SS | — | — |
 
 ## Special Features

@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Warhammer 40,000: Dark Heresy Vortex Extension |
 | Engine / Structure | Game with Integrated Mod Loader (UnityModManager) |
 | Author | ChemBoy1 |
-| Version | 0.1.0 |
-| Date | 2026-XX-XX |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `warhammer40kdarkheresy` |
 | Executable | `WH40KDH.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -27,9 +25,9 @@
 ## Feature Flags
 
 | Flag | Value | Description |
-|---|---|---|
-| `LOAD_ORDER_ENABLED` | `true` |  |
-| `debug` | `false` |  |
+| --- | --- | --- |
+| `LOAD_ORDER_ENABLED` | `true` | enables load order sorting |
+| `debug` | `false` | enables verbose debug logging |
 | `mod_update_all_profile` | `false` |  |
 | `updating_mod` | `false` | used to see if it's a mod update or not |
 | `dllInRoot` | `false` |  |
@@ -39,7 +37,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Plugin (UnityModManager) | `warhammer40kdarkheresy-plugin` | high | `PLUGIN_PATH` |
 | Owlcat Mod | `warhammer40kdarkheresy-mod` | high | `MOD_PATH` |
 | Portraits | `warhammer40kdarkheresy-portrait` | high | `PORTRAIT_PATH` |

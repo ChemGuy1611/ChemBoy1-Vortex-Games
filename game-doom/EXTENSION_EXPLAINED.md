@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | DOOM (2016) Vortex Extension |
 | Engine / Structure | 3rd party mod loader |
 | Author | ChemBoy1 |
-| Version | 0.5.1 |
-| Date | 2025-05-28 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `doom` |
 | Executable | `DOOMx64vk.exe` |
 
@@ -27,7 +25,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Binaries / Root Folder | `doom-binaries` | high | `{gamePath}` |
 | Loader Mods | `doom-mods` | high | `{gamePath}/Mods` |
 | DOOM Legacy Mod | `doom-legacy` | high | `{gamePath}` |
@@ -52,7 +50,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | DOOMModLoader | — | — |
 
 ## Special Features

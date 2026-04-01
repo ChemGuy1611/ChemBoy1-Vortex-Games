@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Like a Dragon: Pirate Yakuza in Hawaii Vortex Extension |
 | Engine / Structure | SRMM Game |
 | Author | ChemBoy1 |
-| Version | 0.1.4 |
-| Date | 2026-02-04 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `likeadragonpirateyakuzainhawaii` |
 | Executable | `runtime/media/startup.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -28,7 +26,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Binaries / Root Folder | `likeadragonpirateyakuzainhawaii-root` | high | `{gamePath}/runtime/media` |
 | Mod | `likeadragonpirateyakuzainhawaii-mod` | high | `{gamePath}/runtime/media/mods` |
 | .par Data File | `likeadragonpirateyakuzainhawaii-data` | high | `{gamePath}/runtime/media/data` |
@@ -39,7 +37,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `likeadragonpirateyakuzainhawaii-modmanager` | 25 |
 | `likeadragonpirateyakuzainhawaii-data` | 29 |
 

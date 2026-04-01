@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Bellwright Vortex Extension |
 | Engine / Structure | UE4 + IO Store (Sig Bypass) |
 | Author | ChemBoy1 |
-| Version | 0.3.0 |
-| Date | 2026-02-01 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `bellwright` |
 | Executable | `BellwrightGame.exe` |
 | PCGamingWiki | XXX |
@@ -25,17 +23,17 @@
 ## Feature Flags
 
 | Flag | Value | Description |
-|---|---|---|
-| `CHECK_DATA` | `false` |  |
+| --- | --- | --- |
+| `CHECK_DATA` | `false` | true if game, staging, and save folders are all on the same drive (partition check) |
 | `IO_STORE` | `true` | true if the Paks folder contains .ucas and .utoc files |
-| `SYM_LINKS` | `true` |  |
+| `SYM_LINKS` | `true` | true if symlink deployment is enabled for this game |
 
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | UE4SS Script Mod | `bellwright-scripts` | high | `{gamePath}/Bellwright/Binaries/Win64/Mods` |
 | UE4SS DLL Mod | `bellwright-ue4ssdll` | high | `{gamePath}/Bellwright/Binaries/Win64/Mods` |
 | UE4SS LogicMods (Blueprint) | `bellwright-logicmods` | high | `{gamePath}/Bellwright/Content/Paks/LogicMods` |
@@ -53,7 +51,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `bellwright-ue4sscombo` | 25 |
 | `bellwright-logicmods` | 27 |
 | `bellwright-ue5modkitpak` | 29 |
@@ -85,13 +83,13 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | UE4SS | — | — |
 
 ## Config & Save Paths
 
 | Type | Path |
-|---|---|
+| --- | --- |
 | Config | `Bellwright/Saved/Config/Windows` |
 | Save | `Bellwright/Saved/SaveGames` |
 

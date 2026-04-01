@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | AC Origins Vortex Extension |
 | Engine / Structure | Ubisoft AnvilToolkit |
 | Author | ChemBoy1 |
-| Version | 0.2.2 |
-| Date | 07/31/2024 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `assassinscreedorigins` |
 | Executable | `ACOrigins.exe` |
 
@@ -26,7 +24,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Binaries / Root Game Folder | `assassinscreedorigins-binaries` | high | `{gamePath}` |
 | Forger Patch | `assassinscreedorigins-forgerpatch` | high | `{gamePath}/ForgerPatches` |
 | Resorep Textures (Documents) | `assassinscreedorigins-textures` | high | `ddsModPath` |
@@ -39,7 +37,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `assassinscreedorigins-forger` | 25 |
 | `assassinscreedorigins-atk` | 25 |
 

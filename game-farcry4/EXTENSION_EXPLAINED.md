@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Far Cry 4 Vortex Extension |
 | Engine / Structure | Far Cry Game (Mod Installer) |
 | Author | ChemBoy1 |
-| Version | 0.1.1 |
-| Date | 2025-10-24 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `farcry4` |
 | Executable | `bin/FarCry4.exe` |
 
@@ -26,7 +24,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Root Folder | `farcry4-root` | high | `{gamePath}` |
 | Binaries (Engine Injector) | `farcry4-binaries` | high | `{gamePath}/bin` |
 | Game Data | `farcry4-data` | high | `{gamePath}/data_win32` |
@@ -40,7 +38,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `farcry4-modinstaller` | 25 |
 | `farcry4-root` | 27 |
 | `farcry4-data` | 29 |
@@ -69,7 +67,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | FC Mod Installer | — | — |
 
 ## Special Features

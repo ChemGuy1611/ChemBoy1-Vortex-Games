@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | CloverPit Vortex Extension |
 | Engine / Structure | Unity BepinEx/MelonLoader Hybrid (Mono & x64) |
 | Author | ChemBoy1 |
-| Version | 0.1.2 |
-| Date | 2026-03-30 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `cloverpit` |
 | Executable | `CloverPit.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -23,23 +21,12 @@
 - **Steam** — `3314790`
 - **Xbox / Microsoft Store** — `FutureFriendsGames.CloverPit`
 
-## Feature Flags
-
-| Flag | Value | Description |
-|---|---|---|
-| `bepinexInstalled` | `false` |  |
-| `melonInstalled` | `false` |  |
-| `isBepinex` | `false` |  |
-| `isBepinexPatcher` | `false` |  |
-| `isMelon` | `false` |  |
-| `isMelonPlugin` | `false` |  |
-
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | BepInEx Mod | `cloverpit-bepinexmod` | high | `{gamePath}/BepInEx` |
 | MelonLoader Mod | `cloverpit-melonmod` | high | `{gamePath}/.` |
 | BepInEx Plugins | `cloverpit-bepinex-plugins` | high | `{gamePath}/BepInEx/plugins` |
@@ -64,13 +51,13 @@ These tools appear in Vortex's Tools panel when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | BepInEx | 5.4.23.5 | mono |
 
 ## Config & Save Paths
 
 | Type | Path |
-|---|---|
+| --- | --- |
 | Save | `SaveData/GameData` |
 
 ## Special Features

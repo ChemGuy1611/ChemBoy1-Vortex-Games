@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | XXX Vortex Extension |
 | Engine / Structure | Fluffy + REFramework (RE Engine) |
 | Author | ChemBoy1 |
-| Version | 0.1.0 |
-| Date | 2026-XX-XX |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `XXX` |
 | Executable | `XXX.exe` |
 | Executable (Demo) | `XXXdemo.exe` |
@@ -23,7 +21,7 @@
 ## Feature Flags
 
 | Flag | Value | Description |
-|---|---|---|
+| --- | --- | --- |
 | `reZip` | `true` | NOT WORKING YET - KEEP AS TRUE FOR NOW - set to true to re-zip Fluffy Mods (possibly not necessary for FLUFFY v3.069+) |
 | `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
 | `multiExe` | `false` | set to true if there are multiple executables (and multiple FLUFFY_FOLDERs) (typically for Demo) |
@@ -33,7 +31,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Binaries / Root Folder | `XXX-root` | high | `{gamePath}` |
 | Loose Lua (REFramework) | `XXX-looselua` | high | `{gamePath}/.` |
 | Fluffy Mod Manager | `XXX-fluffymanager` | low | `{gamePath}` |
@@ -58,14 +56,14 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | Fluffy Mod Manager | — | — |
 | REFramework | — | — |
 
 ## Config & Save Paths
 
 | Type | Path |
-|---|---|
+| --- | --- |
 | Config | `.` |
 
 ## Special Features

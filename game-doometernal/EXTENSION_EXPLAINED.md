@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | DOOM Eternal Vortex Extension |
 | Engine / Structure | 3rd party mod loader |
 | Author | ChemBoy1 |
-| Version | 0.3.4 |
-| Date | 2026-03-19 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `doometernal` |
 | Executable | `launcher/idTechLauncher.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -28,7 +26,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Binaries / Root Folder | `doometernal-binaries` | high | `{gamePath}` |
 | SandBox (Modded Binaries) | `doometernal-sandbox` | high | `{gamePath}/doomSandBox` |
 | EternalModInjector | `doometernal-injector` | low | `{gamePath}` |
@@ -38,7 +36,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `doometernal-rollback` | 25 |
 | `doometernal-injector` | 30 |
 | `doometernal-ktde` | 35 |

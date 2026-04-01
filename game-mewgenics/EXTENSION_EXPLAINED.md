@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Mewgenics Vortex Extension |
 | Engine / Structure | Basic Game |
 | Author | ChemBoy1 |
-| Version | 0.1.2 |
-| Date | 2026-03-25 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `mewgenics` |
 | Executable | `Mewgenics.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -27,7 +25,7 @@
 ## Feature Flags
 
 | Flag | Value | Description |
-|---|---|---|
+| --- | --- | --- |
 | `enableLoadOrder` | `true` | true if you want to use load order sorting |
 | `hasLoader` | `false` | Disabled since it is not actually necessary. Installer and modType still works. |
 | `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
@@ -44,7 +42,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Mod | `mewgenics-mod` | high | `{gamePath}/mods` |
 | Mewjector Mod | `mewgenics-mewjectormod` | high | `{gamePath}/mods` |
 | Root Folder | `mewgenics-root` | high | `{gamePath}` |
@@ -56,7 +54,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `mewgenics-mewtator` | 25 |
 | `mewgenics-saveeeditor` | 26 |
 | `mewgenics-mewjector` | 27 |
@@ -79,7 +77,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | Mewtator | — | — |
 
 ## Special Features

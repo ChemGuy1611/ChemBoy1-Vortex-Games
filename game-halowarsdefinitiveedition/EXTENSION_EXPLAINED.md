@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Halo Wars: Definitive Edition Vortex Extension |
 | Engine / Structure | Basic Game |
 | Author | ChemBoy1 |
-| Version | 0.1.0 |
-| Date | 2026-XX-XX |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `halowarsdefinitiveedition` |
 | Executable | `./xgameFinal.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -29,7 +27,7 @@
 ## Feature Flags
 
 | Flag | Value | Description |
-|---|---|---|
+| --- | --- | --- |
 | `hasLoader` | `false` | true if game needs a mod loader |
 | `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
 | `rootInstaller` | `false` | enable root installer. Set false if you need to avoid installer collisions |
@@ -42,7 +40,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Mod | `halowarsdefinitiveedition-mod` | high | `{gamePath}/Mods` |
 | Root Folder | `halowarsdefinitiveedition-root` | high | `{gamePath}` |
 | Binaries (Engine Injector) | `halowarsdefinitiveedition-binaries` | high | `{gamePath}/.` |
@@ -52,7 +50,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `halowarsdefinitiveedition-loader` | 25 |
 | `halowarsdefinitiveedition-mod` | 27 |
 | `halowarsdefinitiveedition-root` | 47 |
@@ -77,13 +75,13 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | Mod Loader | — | — |
 
 ## Config & Save Paths
 
 | Type | Path |
-|---|---|
+| --- | --- |
 | Save | `savegame` |
 
 ## Special Features

@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Dishonored 2 Vortex Extension |
 | Engine / Structure | Void Installer |
 | Author | ChemBoy1 |
-| Version | 0.6.3 |
-| Date | 2025-11-16 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `dishonored2` |
 | Executable | `Dishonored2.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -27,15 +25,15 @@
 ## Feature Flags
 
 | Flag | Value | Description |
-|---|---|---|
-| `CHECK_DATA` | `false` |  |
+| --- | --- | --- |
+| `CHECK_DATA` | `false` | true if game, staging, and save folders are all on the same drive (partition check) |
 
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | VOIDMOD_NAME | `VOIDMOD_ID` | high | `{gamePath}/VOIDMOD_PATH` |
 | VOID_NAME | `VOID_ID` | low | `{gamePath}/VOID_PATH` |
 | Root Game Folder | `dishonored2-root` | high | `{gamePath}` |
@@ -47,7 +45,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `CONFIG_ID` | 37 |
 
 ## Registered Tools

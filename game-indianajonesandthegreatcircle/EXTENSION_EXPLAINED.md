@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Indiana Jones and the Great Circle Vortex Extension |
 | Engine / Structure | Basic Game (with Xbox) - Future Mod Injector |
 | Author | ChemBoy1 |
-| Version | 0.2.0 |
-| Date | 2025-12-09 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `indianajonesandthegreatcircle` |
 | Executable | `TheGreatCircle.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -29,7 +27,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Sounds | `indianajonesandthegreatcircle-sounds` | high | `{gamePath}/base/sound/soundbanks/pc` |
 | Binaries (Engine Injector) | `indianajonesandthegreatcircle-binaries` | high | `{gamePath}` |
 | Mod Injector | `indianajonesandthegreatcircle-modinjector` | low | `{gamePath}` |
@@ -41,7 +39,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `indianajonesandthegreatcircle-config` | 30 |
 | `indianajonesandthegreatcircle-saves` | 35 |
 | `indianajonesandthegreatcircle-sounds` | 40 |

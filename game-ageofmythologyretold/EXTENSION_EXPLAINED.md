@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Age of Mythology: Retold Vortex Extension |
 | Engine / Structure | Generic Game |
 | Author | ChemBoy1 |
-| Version | 0.1.6 |
-| Date | 11/07/2024 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `ageofmythologyretold` |
 | Executable | `N/A` |
 | Executable (Xbox) | `AoMRT.exe` |
@@ -28,7 +26,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Game Data Folder | `ageofmythologyretold-data` | high | `{gamePath}/game` |
 | Binaries / Root Game Folder | `ageofmythologyretold-binaries` | high | `{gamePath}` |
 | Config (UserGames) | `CONFIG_ID` | high | `CONFIG_PATH` |
@@ -39,7 +37,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `ageofmythologyretold-save` | 30 |
 | `ageofmythologyretold-config` | 35 |
 | `ageofmythologyretold-reshade` | 40 |

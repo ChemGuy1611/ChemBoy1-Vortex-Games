@@ -3,16 +3,14 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | AC Mirage Vortex Extension |
 | Author | ChemBoy1 |
-| Version | 0.3.0 |
-| Date | 10/14/2024 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `assassinscreedmirage` |
 | Executable | `ACMirage.exe` |
 
@@ -25,7 +23,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Forger Patch | `assassinscreedmirage-forgerpatch` | high | `{gamePath}/ForgerPatches` |
 | AnvilToolKit | `assassinscreedmirage-atk` | low | `{gamePath}` |
 | Forger Patch Manager | `assassinscreedmirage-forger` | low | `{gamePath}` |
@@ -35,7 +33,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `assassinscreedmirage-atk` | 25 |
 | `assassinscreedmirage-forger` | 35 |
 

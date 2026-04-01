@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Black Myth Wukong Vortex Extension |
 | Engine / Structure | UE5 |
 | Author | ChemBoy1 |
-| Version | 0.3.2 |
-| Date | 2026-02-03 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `blackmythwukong` |
 | Executable | `b1.exe` |
 
@@ -25,7 +23,7 @@
 ## Feature Flags
 
 | Flag | Value | Description |
-|---|---|---|
+| --- | --- | --- |
 | `IO_STORE` | `false` | true if the Paks folder contains .ucas and .utoc files |
 | `CHECK_CONFIG` | `false` |  |
 
@@ -34,7 +32,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | UE4SS Scripts | `blackmythwukong-scripts` | high | `{gamePath}/b1/Binaries/Win64/ue4ss/Mods` |
 | UE4SS DLL Mod | `blackmythwukong-ue4ssdll` | high | `{gamePath}/b1/Binaries/Win64/ue4ss/Mods` |
 | UE4SS LogicMods (Blueprint) | `blackmythwukong-logicmods` | high | `{gamePath}/b1/Content/Paks/LogicMods` |
@@ -51,7 +49,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `blackmythwukong-ue4ss-logicscriptcombo` | 25 |
 | `blackmythwukong-ue4ss-logicmod` | 30 |
 | `blackmythwukong-ue4ss` | 40 |
@@ -86,13 +84,13 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | UE4SS | — | — |
 
 ## Config & Save Paths
 
 | Type | Path |
-|---|---|
+| --- | --- |
 | Save | `b1/Saved/SaveGames` |
 
 ## Special Features

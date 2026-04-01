@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | God of War (2018) Vortex Extension |
 | Engine / Structure | Sony Port, Custom Game Data |
 | Author | ChemBoy1 |
-| Version | 0.2.0 |
-| Date | 2026-01-30 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `godofwar` |
 | Executable | `GoW.exe` |
 
@@ -26,7 +24,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | exec folder | `godofwar-data` | high | `{gamePath}` |
 | patch Folder | `godofwar-patchfolder` | high | `{gamePath}/exec` |
 | exec subfolder | `godofwar-execsub` | high | `{gamePath}/exec` |

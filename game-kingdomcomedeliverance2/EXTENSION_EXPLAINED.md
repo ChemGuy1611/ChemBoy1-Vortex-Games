@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Kingdom Come Deliverance II Vortex Extension |
 | Engine / Structure | Mod Folder and FBLO |
 | Author | ChemBoy1 |
-| Version | 0.5.1 |
-| Date | 2026-03-03 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `kingdomcomedeliverance2` |
 | Executable | `N/A` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -29,8 +27,8 @@
 ## Feature Flags
 
 | Flag | Value | Description |
-|---|---|---|
-| `LOAD_ORDER_ENABLED` | `true` |  |
+| --- | --- | --- |
+| `LOAD_ORDER_ENABLED` | `true` | enables load order sorting |
 | `mod_update_all_profile` | `false` |  |
 | `updating_mod` | `false` | used to see if it's a mod update or not |
 
@@ -39,7 +37,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Mod | `MOD_ID` | high | `{gamePath}/Mods` |
 | Root Game Folder | `kingdomcomedeliverance2-root` | high | `{gamePath}` |
 

@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | NINJA GAIDEN 4 Vortex Extension |
 | Engine / Structure | Basic Game |
 | Author | ChemBoy1 |
-| Version | 0.1.0 |
-| Date | 2025-10-20 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `ninjagaidenfour` |
 | Executable | `./NINJAGAIDEN4-Steam.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -28,7 +26,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Asset Mod | `ninjagaidenfour-asset` | high | `{gamePath}/Assets` |
 | Root Folder | `ninjagaidenfour-root` | high | `{gamePath}` |
 | Binaries (Engine Injector) | `ninjagaidenfour-binaries` | high | `{gamePath}/.` |
@@ -38,7 +36,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `ninjagaidenfour-root` | 25 |
 | `ninjagaidenfour-asset` | 27 |
 

@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | The Last of Us Part II Remastered Vortex Extension |
 | Engine / Structure | Generic Game w/ File Extraction, Mod Loader, and Load Order |
 | Author | ChemBoy1 |
-| Version | 0.7.1 |
-| Date | 2026-02-11 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `thelastofuspart2` |
 | Executable | `launcher.exe` |
 
@@ -25,8 +23,8 @@
 ## Feature Flags
 
 | Flag | Value | Description |
-|---|---|---|
-| `LOAD_ORDER_ENABLED` | `true` |  |
+| --- | --- | --- |
+| `LOAD_ORDER_ENABLED` | `true` | enables load order sorting |
 | `mod_update_all_profile` | `false` |  |
 | `updating_mod` | `false` | used to see if it's a mod update or not |
 
@@ -35,7 +33,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | .psarc (Mod Loader) | `thelastofuspart2-psarc` | high | `{gamePath}/mods` |
 | Build Folder | `thelastofuspart2-buildfolder` | high | `{gamePath}/.` |
 | bin Folder | `thelastofuspart2-binfolder` | high | `{gamePath}/build/pc/main` |
@@ -50,7 +48,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `thelastofuspart2-modloader` | 25 |
 | `thelastofuspart2-psarc` | 27 |
 | `thelastofuspart2-buildfolderpakbin` | 29 |

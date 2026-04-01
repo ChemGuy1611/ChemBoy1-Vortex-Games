@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Control Vortex Extension |
 | Engine / Structure | Basic Game |
 | Author | ChemBoy1 |
-| Version | 2.0.2 |
-| Date | 2025-12-01 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `control` |
 | Executable | `Control.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -30,7 +28,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Mod Folder | `control-modfolder` | high | `{gamePath}` |
 | Mod Files (data_packfiles) | `control-modpack` | high | `{gamePath}/data_packfiles` |
 | Root Folder | `control-root` | high | `{gamePath}` |
@@ -42,7 +40,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `control-modfolder` | 25 |
 | `control-modpack` | 30 |
 | `control-loosefileloader` | 35 |

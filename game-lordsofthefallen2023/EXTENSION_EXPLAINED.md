@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Lords of the Fallen (2023) Vortex Extension |
 | Engine / Structure | UE5 (Xbox-Integrated) |
 | Author | ChemBoy1 |
-| Version | 0.2.0 |
-| Date | 2026-02-01 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `lordsofthefallen2023` |
 | Executable | `LOTF2.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -27,17 +25,17 @@
 ## Feature Flags
 
 | Flag | Value | Description |
-|---|---|---|
-| `CHECK_DATA` | `false` |  |
+| --- | --- | --- |
+| `CHECK_DATA` | `false` | true if game, staging, and save folders are all on the same drive (partition check) |
 | `IO_STORE` | `true` | true if the Paks folder contains .ucas and .utoc files |
-| `SYM_LINKS` | `true` |  |
+| `SYM_LINKS` | `true` | true if symlink deployment is enabled for this game |
 
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `lordsofthefallen2023-ue4sscombo` | high | `{gamePath}` |
 | UE4SS LogicMods (Blueprint) | `lordsofthefallen2023-logicmods` | high | `{gamePath}/LOTF2/Content/Paks/LogicMods` |
 | Root Game Folder | `lordsofthefallen2023-root` | high | `{gamePath}` |
@@ -49,7 +47,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `lordsofthefallen2023-ue4sscombo` | 25 |
 | `lordsofthefallen2023-logicmods` | 27 |
 | `lordsofthefallen2023-ue4ss` | 31 |
@@ -80,7 +78,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | UE4SS | — | — |
 
 ## Special Features

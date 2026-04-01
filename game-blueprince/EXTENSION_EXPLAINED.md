@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Blue Prince Vortex Extension |
 | Engine / Structure | Unity BepinEx/MelonLoader Hybrid |
 | Author | ChemBoy1 |
-| Version | 0.1.2 |
-| Date | 2026-03-30 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `blueprince` |
 | Executable | `BLUE PRINCE.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -26,24 +24,18 @@
 ## Feature Flags
 
 | Flag | Value | Description |
-|---|---|---|
+| --- | --- | --- |
 | `allowBepCfgMan` | `false` | should BepInExConfigManager be downloaded? |
 | `allowMelPrefMan` | `false` | should MelonPreferencesManager be downloaded? False until figure out UniverseLib dependency |
 | `allowBepinexNexus` | `false` | set false until bugs are fixed |
 | `allowMelonNexus` | `false` | set false until bugs are fixed |
-| `bepinexInstalled` | `false` |  |
-| `melonInstalled` | `false` |  |
-| `isBepinex` | `false` |  |
-| `isBepinexPatcher` | `false` |  |
-| `isMelon` | `false` |  |
-| `isMelonPlugin` | `false` |  |
 
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | BepInEx Mod | `blueprince-bepinexmod` | high | `{gamePath}/BepInEx` |
 | MelonLoader Mod | `blueprince-melonmod` | high | `{gamePath}/.` |
 | BepInEx Plugins | `blueprince-bepinex-plugins` | high | `{gamePath}/BepInEx/plugins` |
@@ -76,13 +68,13 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | BepInEx | 5.4.23.5 | il2cpp |
 
 ## Config & Save Paths
 
 | Type | Path |
-|---|---|
+| --- | --- |
 | Config (Registry) | `HKEY_CURRENT_USER\\Software\\Dogubomb\\BLUE PRINCE` |
 
 ## Special Features

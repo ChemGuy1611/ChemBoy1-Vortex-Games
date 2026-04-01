@@ -3,16 +3,14 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Battlefield 1 Vortex Extension |
 | Author | ChemBoy1 |
-| Version | 0.2.2 |
-| Date | 09/13/2024 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `battlefield1` |
 | Executable | `bf1.exe` |
 
@@ -25,7 +23,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Binaries (Engine Injector) | `battlefield1-binaries` | high | `{gamePath}` |
 | Frosty .fbmod | `battlefield1-frostymod` | high | `{gamePath}/FrostyModManager/Mods/bf1` |
 
@@ -34,7 +32,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `masseffectandromeda-frostymodmanager` | 25 |
 | `masseffectandromeda-fbmod` | 30 |
 

@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Tomb Raider (2013) Vortex Extension |
 | Engine / Structure | Basic Game |
 | Author | ChemBoy1 |
-| Version | 0.5.0 |
-| Date | 2025-10-29 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `tombraider2013` |
 | Executable | `TombRaider.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -30,7 +28,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | BINARIES_NAME | `BINARIES_ID` | high | `{gamePath}` |
 | MANAGERMOD_NAME | `MANAGERMOD_ID` | high | `{gamePath}/MANAGERMOD_PATH` |
 | TEXMODPACK_NAME | `TEXMODPACK_ID` | high | `{gamePath}/TEXMODPACK_PATH` |
@@ -42,7 +40,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `MANAGER_ID` | 25 |
 | `TEXMOD_ID` | 27 |
 | `TEXMODPACK_ID` | 29 |

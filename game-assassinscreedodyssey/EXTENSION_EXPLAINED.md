@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | AC Odyssey Vortex Extension |
 | Engine / Structure | Ubisoft AnvilToolkit |
 | Author | ChemBoy1 |
-| Version | 0.2.1 |
-| Date | 07/31/2024 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `assassinscreedodyssey` |
 | Executable | `ACOdyssey.exe` |
 
@@ -26,7 +24,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Binaries / Root Game Folder | `assassinscreedodyssey-binaries` | high | `{gamePath}` |
 | Forger Patch | `assassinscreedodyssey-forgerpatch` | high | `{gamePath}/ForgerPatches` |
 | Resorep Textures (Documents) | `assassinscreedodyssey-textures` | high | `ddsModPath` |
@@ -39,7 +37,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `assassinscreedodyssey-forger` | 25 |
 | `assassinscreedodyssey-atk` | 25 |
 

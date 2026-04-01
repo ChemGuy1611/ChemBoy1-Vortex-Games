@@ -3,16 +3,14 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Prey Vortex Extension (Alt version) |
 | Author | ChemBoy1 |
-| Version | 0.5.0 |
-| Date | 03/09/2025 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `prey2017` |
 | Executable | `N/A` |
 | Executable (Xbox) | `Binaries/Danielle/Gaming.Desktop.x64/Release/Prey.exe` |
@@ -30,7 +28,7 @@
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `prey2017-pric` | 25 |
 | `prey2017-chairloader` | 30 |
 | `prey2017-chairmodzip` | 35 |

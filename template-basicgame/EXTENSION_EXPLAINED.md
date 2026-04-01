@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | XXX Vortex Extension |
 | Engine / Structure | Basic Game |
 | Author | ChemBoy1 |
-| Version | 0.1.0 |
-| Date | 2026-XX-XX |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `XXX` |
 | Executable | `./XXX.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -25,7 +23,7 @@
 ## Feature Flags
 
 | Flag | Value | Description |
-|---|---|---|
+| --- | --- | --- |
 | `hasLoader` | `false` | true if game needs a mod loader |
 | `hasXbox` | `false` | toggle for Xbox version logic |
 | `multiExe` | `false` | set to true if there are multiple executable names |
@@ -37,14 +35,14 @@
 | `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below) |
 | `hasUserIdFolder` | `false` | true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID) |
 | `debug` | `false` | toggle for debug mode |
-| `binariesInstaller` | `false` |  |
+| `binariesInstaller` | `false` | enables the Binaries folder installer (for engine injectors) |
 
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Mod | `XXX-mod` | high | `{gamePath}/mods` |
 | Root Folder | `XXX-root` | high | `{gamePath}` |
 
@@ -53,7 +51,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `XXX-loader` | 25 |
 | `XXX-root` | 27 |
 | `XXX-binaries` | 29 |
@@ -79,7 +77,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | Mod Loader | — | — |
 
 ## Special Features

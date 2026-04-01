@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Avowed Vortex Extension |
 | Engine / Structure | UE5 (Xbox-Integrated) |
 | Author | ChemBoy1 |
-| Version | 0.2.1 |
-| Date | 2026-02-06 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `avowed` |
 | Executable | `Avowed.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -26,16 +24,16 @@
 ## Feature Flags
 
 | Flag | Value | Description |
-|---|---|---|
+| --- | --- | --- |
 | `IO_STORE` | `true` | true if the Paks folder contains .ucas and .utoc files |
-| `SYM_LINKS` | `true` |  |
+| `SYM_LINKS` | `true` | true if symlink deployment is enabled for this game |
 
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | UE4SS LogicMods (Blueprint) | `avowed-logicmods` | high | `{gamePath}/Alabama/Content/Paks/LogicMods` |
 | UE4SS Script-LogicMod Combo | `avowed-ue4sscombo` | high | `{gamePath}` |
 | Root Game Folder | `avowed-root` | high | `{gamePath}` |
@@ -47,7 +45,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `avowed-ue4ss-logicscriptcombo` | 25 |
 | `avowed-ue4ss-logicmod` | 30 |
 | `avowed-ue4ss` | 40 |
@@ -80,7 +78,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | UE4SS | — | — |
 
 ## Special Features

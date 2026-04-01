@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Mortal Kombat 1 Vortex Extension |
 | Engine / Structure | UE5 (Sig Bypass) |
 | Author | ChemBoy1 |
-| Version | 0.2.0 |
-| Date | 2026-01-07 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `mortalkombat` |
 | Executable | `MK12.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -26,16 +24,16 @@
 ## Feature Flags
 
 | Flag | Value | Description |
-|---|---|---|
+| --- | --- | --- |
 | `IO_STORE` | `true` | true if the Paks folder contains .ucas and .utoc files |
-| `SYM_LINKS` | `true` |  |
+| `SYM_LINKS` | `true` | true if symlink deployment is enabled for this game |
 
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | UE4SS LogicMods (Blueprint) | `mortalkombat-logicmods` | high | `{gamePath}/MK12/Content/Paks/LogicMods` |
 | UE4SS Script-LogicMod Combo | `mortalkombat-ue4sscombo` | high | `{gamePath}` |
 | Config (LocalAppData) | `mortalkombat-config` | high | `{localAppData}/MK12/Saved/Config/Windows` |
@@ -59,13 +57,13 @@ These tools appear in Vortex's Tools panel when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | UE4SS | — | — |
 
 ## Config & Save Paths
 
 | Type | Path |
-|---|---|
+| --- | --- |
 | Config | `MK12/Saved/Config/Windows` |
 | Save | `MK12/Saved/SaveGames` |
 

@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | ROMEO IS A DEAD MAN Vortex Extension |
 | Engine / Structure | Unreal Engine Game |
 | Author | ChemBoy1 |
-| Version | 0.1.0 |
-| Date | 2026-02-16 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `romeoisadeadman` |
 | Executable | `SevGame.exe` |
 | Executable (GOG) | `SevGame.exe` |
@@ -26,7 +24,7 @@
 ## Feature Flags
 
 | Flag | Value | Description |
-|---|---|---|
+| --- | --- | --- |
 | `hasXbox` | `true` | NOT ON GAME PASS |
 | `multiExe` | `false` | toggle for multiple executables (Epic/GOG/Demo don't match Steam) |
 
@@ -35,7 +33,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `romeoisadeadman-ue4sscombo` | high | `{gamePath}` |
 | UE4SS LogicMods (Blueprint) | `romeoisadeadman-logicmods` | high | `{gamePath}/SevGame/Content/Paks` |
 | PAK_ALT_NAME | `PAK_ALT_ID` | high | `{gamePath}/PAK_ALT_PATH` |
@@ -45,7 +43,7 @@ Mod types define where each category of mod gets deployed:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | UE4SS | — | — |
 
 ## Special Features

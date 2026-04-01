@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Balatro Vortex Extension |
 | Engine / Structure | Mod Loader (Mods in AppData Folder) |
 | Author | ChemBoy1 |
-| Version | 0.2.0 |
-| Date | 2026-02-24 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `balatro` |
 | Executable | `N/A` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -28,7 +26,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Mod | `balatro-mod` | high | `MOD_PATH` |
 | ROOT_NAME | `ROOT_ID` | high | `{gamePath}` |
 | LOVELY_NAME | `LOVELY_ID` | low | `{gamePath}` |
@@ -40,7 +38,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `LOVELY_ID` | 25 |
 | `balatro-steammodded` | 27 |
 | `MALVERK_ID` | 29 |

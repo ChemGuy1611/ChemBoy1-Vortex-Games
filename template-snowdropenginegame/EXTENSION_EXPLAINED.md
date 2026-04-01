@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | XXX Vortex Extension |
 | Engine / Structure | Snowdrop Mod Loader |
 | Author | ChemBoy1 |
-| Version | 0.1.0 |
-| Date | 2026-XX-XX |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `XXX` |
 | Executable | `XXX.exe` |
 | Extension Page | XXX |
@@ -22,7 +20,7 @@
 ## Feature Flags
 
 | Flag | Value | Description |
-|---|---|---|
+| --- | --- | --- |
 | `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
 | `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |
 
@@ -31,7 +29,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Config (Documents) | `XXX-config` | high | `CONFIG_PATH` |
 | Game Data Folder | `XXX-data` | high | `{gamePath}` |
 | Game Data Subfolder | `XXX-datasub` | high | `{gamePath}/XXX` |
@@ -42,7 +40,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `XXX-modloader` | 25 |
 | `XXX-data` | 27 |
 | `XXX-datasub` | 29 |
@@ -68,7 +66,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Config & Save Paths
 
 | Type | Path |
-|---|---|
+| --- | --- |
 | Config | `XXX` |
 
 ## Special Features

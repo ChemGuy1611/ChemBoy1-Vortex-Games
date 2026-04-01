@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Hellblade 2 Vortex Extension |
 | Engine / Structure | UE5 (XBOX Integrated) |
 | Author | ChemBoy1 |
-| Version | 0.5.0 |
-| Date | 2026-02-01 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `senuassagahellblade2` |
 | Executable | `N/A` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -28,7 +26,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Save (LocalAppData) | `senuassagahellblade2-save` | high | `{localAppData}/Hellblade2/Saved/SaveGames` |
 | UE5 Paks | `senuassagahellblade2-ue5` | high | `{gamePath}/Hellblade2/Content/Paks/~mods` |
 | Paks (Alt, no "~mods") | `senuassagahellblade2-pakalt` | high | `{gamePath}/Hellblade2/Content/Paks` |
@@ -39,7 +37,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `ue5-pak-installer` | 25 |
 | `senuassagahellblade2-config` | 30 |
 | `senuassagahellblade2-save` | 35 |
@@ -48,7 +46,7 @@ Installers run in priority order (lower number = tested first). The first instal
 ## Config & Save Paths
 
 | Type | Path |
-|---|---|
+| --- | --- |
 | Config | `Hellblade2/Saved/Config/Windows` |
 | Save | `Hellblade2/Saved/SaveGames` |
 

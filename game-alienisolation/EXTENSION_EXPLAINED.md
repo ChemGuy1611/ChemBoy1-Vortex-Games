@@ -3,16 +3,14 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Alien Isolation Vortex Extension |
 | Author | ChemBoy1 |
-| Version | 0.1.2 |
-| Date | 01/06/2025 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `alienisolation` |
 | Executable | `AI.exe` |
 
@@ -27,7 +25,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Data Files | `alienisolation-datafiles` | high | `{gamePath}/DATA` |
 | Binaries / Root Game Folder | `alienisolation-root` | high | `{gamePath}` |
 
@@ -36,7 +34,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `alienisolation-datafolder` | 25 |
 | `alienisolation-datafiles` | 30 |
 

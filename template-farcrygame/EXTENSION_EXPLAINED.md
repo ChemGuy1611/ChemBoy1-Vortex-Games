@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Far Cry XXX Vortex Extension |
 | Engine / Structure | Far Cry Game (Mod Installer) |
 | Author | ChemBoy1 |
-| Version | 0.1.0 |
-| Date | 2026-XX-XX |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `farcryXXX` |
 | Executable | `bin/XXX.exe` |
 | Extension Page | XXX |
@@ -22,7 +20,7 @@
 ## Feature Flags
 
 | Flag | Value | Description |
-|---|---|---|
+| --- | --- | --- |
 | `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
 | `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |
 
@@ -31,7 +29,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Root Folder | `farcryXXX-root` | high | `{gamePath}` |
 | Binaries (Engine Injector) | `farcryXXX-binaries` | high | `{gamePath}/bin` |
 | Game Data | `farcryXXX-data` | high | `{gamePath}/data_win32` |
@@ -45,7 +43,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `farcryXXX-modinstaller` | 25 |
 | `farcryXXX-root` | 27 |
 | `farcryXXX-data` | 29 |
@@ -77,7 +75,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | FC Mod Installer | — | — |
 
 ## Special Features

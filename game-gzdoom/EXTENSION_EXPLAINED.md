@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Doom I & II (UZDoom) Vortex Extension |
 | Engine / Structure | Mod Loader (Any Folder) |
 | Author | ChemBoy1 |
-| Version | 0.2.1 |
-| Date | 2026-03-11 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `gzdoom` |
 | Executable | `N/A` |
 | PCGamingWiki | XXX |
@@ -23,7 +21,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Mod | `gzdoom-mod` | high | `{gamePath}/DML/FILE/PWAD` |
 | IWAD (Game) | `gzdoom-wad` | high | `{gamePath}/DML/FILE/IWAD` |
 | UZDoom | `gzdoom-gzdoom` | low | `{gamePath}/DML/FILE/PORT/gzdoom` |
@@ -34,7 +32,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `gzdoom-dml` | 25 |
 | `gzdoom-gzdoom` | 27 |
 | `gzdoom-wad` | 29 |
@@ -53,7 +51,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Config & Save Paths
 
 | Type | Path |
-|---|---|
+| --- | --- |
 | Config | `DML/CONFIG` |
 
 ## Special Features

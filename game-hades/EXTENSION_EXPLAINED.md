@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Hades Vortex Extension |
 | Engine / Structure | 3rd-Party Mod Installer |
 | Author | ChemBoy1 |
-| Version | 0.2.1 |
-| Date | 2025-09-22 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `hades` |
 | Executable | `x64/Hades.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -29,7 +27,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Mod | `hades-mod` | high | `{gamePath}/Content/Mods` |
 | Binaries | `hades-binaries` | high | `{gamePath}/x64` |
 | Binaries (Vulkan) | `hades-binariesvk` | high | `{gamePath}/x64Vk` |
@@ -42,7 +40,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `hades-manager` | 25 |
 | `hades-modutility` | 30 |
 

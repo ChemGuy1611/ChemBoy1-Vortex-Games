@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | RoboCop Rogue City and Unfinished Business Vortex Extension |
 | Engine / Structure | UE5 |
 | Author | ChemBoy1 |
-| Version | 0.6.0 |
-| Date | 2026-02-01 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `robocoproguecity` |
 | Executable | `RoboCop.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -27,18 +25,18 @@
 ## Feature Flags
 
 | Flag | Value | Description |
-|---|---|---|
-| `CHECK_DATA` | `false` |  |
+| --- | --- | --- |
+| `CHECK_DATA` | `false` | true if game, staging, and save folders are all on the same drive (partition check) |
 | `IO_STORE` | `true` | true if the Paks folder contains .ucas and .utoc files |
 | `CHECK_DATA_UNFINISHED` | `false` |  |
-| `SYM_LINKS` | `true` |  |
+| `SYM_LINKS` | `true` | true if symlink deployment is enabled for this game |
 
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `robocoproguecity-ue4sscombo` | high | `{gamePath}` |
 | UE4SS LogicMods (Blueprint) | `robocoproguecity-logicmods` | high | `{gamePath}/Game/Content/Paks/LogicMods` |
 | Root Game Folder | `robocoproguecity-root` | high | `{gamePath}` |
@@ -57,7 +55,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | UE4SS | — | — |
 
 ## Special Features

@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Borderlands Vortex Extension |
 | Engine / Structure | UE2/3 Game (TFC Installer) |
 | Author | ChemBoy1 |
-| Version | 0.2.3 |
-| Date | 2025-11-16 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `borderlands` |
 | Executable | `Binaries/Borderlands.exe` |
 
@@ -26,7 +24,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Python SDK | `borderlands-sdk` | high | `{gamePath}/.` |
 | SDK Mod | `borderlands-sdkmod` | high | `{gamePath}/sdk_mods` |
 | TFC Mod | `borderlands-tfcmod` | high | `{gamePath}/TFCInstaller/Mods` |
@@ -42,7 +40,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `borderlands-tfcinstaller` | 25 |
 | `borderlands-tfcexplorer` | 27 |
 | `borderlands-tfcmod` | 29 |

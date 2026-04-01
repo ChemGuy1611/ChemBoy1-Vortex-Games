@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | The Last of Us Part I Vortex Extension |
 | Engine / Structure | Gemeric Game w/ File Extraction |
 | Author | ChemBoy1 |
-| Version | 2.1.1 |
-| Date | 2026-02-11 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `thelastofuspart1` |
 | Executable | `launcher.exe` |
 
@@ -26,7 +24,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Build Folder | `thelastofuspart1-buildfolder` | high | `{gamePath}/.` |
 | bin Folder | `thelastofuspart1-binfolder` | high | `{gamePath}/build/pc/main` |
 | Pak (actor97) | `thelastofuspart1-pak` | high | `{gamePath}/build/pc/main` |
@@ -39,7 +37,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `thelastofuspart1-buildfolderpakbin` | 29 |
 | `thelastofuspart1-binfolder` | 31 |
 | `thelastofuspart1-pak` | 33 |

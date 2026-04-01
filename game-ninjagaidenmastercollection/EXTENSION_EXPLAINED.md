@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | NINJA GAIDEN: Master Collection Vortex Extension |
 | Engine / Structure | Multi-Game, Mod Loader |
 | Author | ChemBoy1 |
-| Version | 0.2.0 |
-| Date | 2025-11-10 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `ninjagaidenmastercollection` |
 | Executable | `N/A` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -23,7 +21,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | ROOT_NAME | `ROOT_ID` | high | `{gamePath}` |
 | MLMOD_NAME | `MLMOD_ID` | high | `{gamePath}/MLMOD_PATH` |
 | DATABIN_NAME | `DATABIN_ID` | high | `{gamePath}` |
@@ -36,7 +34,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `MODLOADER_XBOX_ID` | 25 |
 | `ninjagaidensigma-steammodloader` | 27 |
 | `MODLOADER_STEAM_ID2` | 29 |

@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | My Winter Car Vortex Extension |
 | Engine / Structure | Unity BepinEx/MelonLoader Hybrid + Custom Mod Loader (MSCLoader) |
 | Author | ChemBoy1 |
-| Version | 0.2.2 |
-| Date | 2026-01-12 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `mywintercar` |
 | Executable | `mywintercar.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -25,7 +23,7 @@
 ## Feature Flags
 
 | Flag | Value | Description |
-|---|---|---|
+| --- | --- | --- |
 | `hasCustomMods` | `false` | set to true if there are modTypes with folder paths dependent on which mod loader is installed |
 | `hasCustomLoader` | `true` | set to true if there is a custom mod loader |
 | `customLoaderInstaller` | `true` | set true if the custom loader uses an installer |
@@ -33,13 +31,7 @@
 | `allowMelPrefMan` | `false` | should MelonPreferencesManager be downloaded? False until figure out UniverseLib dependency |
 | `allowBepinexNexus` | `false` | set false until bugs are fixed |
 | `allowMelonNexus` | `false` | set false until bugs are fixed |
-| `bepinexInstalled` | `false` |  |
-| `melonInstalled` | `false` |  |
 | `mscInstalled` | `false` |  |
-| `isBepinex` | `false` |  |
-| `isBepinexPatcher` | `false` |  |
-| `isMelon` | `false` |  |
-| `isMelonPlugin` | `false` |  |
 | `isMsc` | `false` |  |
 | `unknown` | `false` |  |
 | `fileTest` | `false` |  |
@@ -50,7 +42,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | MSCLoader Mod | `mywintercar-mscloadermod` | high | `{gamePath}/.` |
 | MSCLoader Plugin | `mywintercar-mscloaderplugin` | high | `{gamePath}/Mods` |
 | Texture Pack (MSCLoader) | `mywintercar-texturepack` | high | `{gamePath}/Mods/Assets/TexturePackLoader` |
@@ -76,7 +68,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `mywintercar-mscloader` | 25 |
 | `mywintercar-bepinex` | 26 |
 | `mywintercar-melonloader` | 27 |
@@ -117,13 +109,13 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | BepInEx | 5.4.23.5 | mono |
 
 ## Config & Save Paths
 
 | Type | Path |
-|---|---|
+| --- | --- |
 | Config (Registry) | `HKEY_CURRENT_USER\\Software\\amistech\\My Winter Car` |
 
 ## Special Features

@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Sifu Vortex Extension |
 | Engine / Structure | UE4 (XBOX Integrated) with .sig files |
 | Author | ChemBoy1 |
-| Version | 0.2.0 |
-| Date | 01/01/2025 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `sifu` |
 | Executable | `Sifu.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -29,7 +27,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | UE4SS LogicMods (Blueprint) | `sifu-logicmods` | high | `{gamePath}/Sifu/Content/Paks/LogicMods` |
 | UE4SS Script-LogicMod Combo | `sifu-ue4sscombo` | high | `{gamePath}` |
 | Root Game Folder | `sifu-root` | high | `{gamePath}` |
@@ -40,7 +38,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `ue5-pak-installer` | 35 |
 | `sifu-ue4ss-logicscriptcombo` | 25 |
 | `sifu-ue4ss-logicmod` | 30 |
@@ -60,7 +58,7 @@ These tools appear in Vortex's Tools panel when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | UE4SS | — | — |
 
 ## Special Features

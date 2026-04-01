@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Far Cry 5 Vortex Extension |
 | Engine / Structure | Far Cry Game (Mod Installer) |
 | Author | ChemBoy1 |
-| Version | 0.1.1 |
-| Date | 2025-10-24 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `farcry5` |
 | Executable | `bin/FarCry5.exe` |
 
@@ -26,7 +24,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Root Folder | `farcry5-root` | high | `{gamePath}` |
 | Binaries (Engine Injector) | `farcry5-binaries` | high | `{gamePath}/bin` |
 | Game Data | `farcry5-data` | high | `{gamePath}/data_final/pc` |
@@ -40,7 +38,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `farcry5-modinstaller` | 25 |
 | `farcry5-root` | 27 |
 | `farcry5-data` | 29 |
@@ -69,7 +67,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | FC Mod Installer | — | — |
 
 ## Special Features

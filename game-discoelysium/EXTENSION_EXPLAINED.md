@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | Disco Elysium Vortex Extension |
 | Engine / Structure | Unity BepinEx |
 | Author | ChemBoy1 |
-| Version | 0.1.4 |
-| Date | 2026-03-22 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `discoelysium` |
 | Executable | `disco.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
@@ -29,7 +27,7 @@
 ## Feature Flags
 
 | Flag | Value | Description |
-|---|---|---|
+| --- | --- | --- |
 | `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
 | `multiExe` | `true` | set to true if there are multiple executables (e.g. for Xbox and PC) |
 | `allowBepinexNexus` | `false` | set false until bugs are fixed |
@@ -41,7 +39,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Root Game Folder | `discoelysium-root` | high | `{gamePath}` |
 | BepInEx Configuration Manager | `discoelysium-bepcfgman` | high | `{gamePath}/Bepinex` |
 | BepInEx Mod | `discoelysium-bepmods` | high | `{gamePath}/BepinEx/plugins` |
@@ -51,7 +49,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `discoelysium-root` | 8 |
 | `discoelysium-bepcfgman` | 9 |
 | `discoelysium-assemblydll` | 25 |
@@ -76,7 +74,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
-|---|---|---|
+| --- | --- | --- |
 | BepInEx | 6.0.0 | unityil2cpp, x64 |
 
 ## Special Features

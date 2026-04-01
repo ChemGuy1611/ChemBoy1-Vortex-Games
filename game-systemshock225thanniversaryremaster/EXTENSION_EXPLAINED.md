@@ -3,17 +3,15 @@
 ## Overview
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Name | System Shock 2 (Classic AND 25th Anniversary Remaster) Vortex Extension |
 | Engine / Structure | Basic game w/ mods folder |
 | Author | ChemBoy1 |
-| Version | 0.4.7 |
-| Date | 2026-01-19 |
 
 ## Key Identifiers
 
 | Property | Value |
-|---|---|
+| --- | --- |
 | Game ID | `systemshock225thanniversaryremaster` |
 | Executable | `N/A` |
 | Executable (GOG) | `hathor_Shipping_Playfab_Galaxy_x64.exe` |
@@ -29,7 +27,7 @@
 Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | Mod .kpf | `systemshock225thanniversaryremaster-kpfmod` | high | `{gamePath}/mods` |
 | Converted Legacy Mod | `systemshock225thanniversaryremaster-convertedlegacy` | high | `{gamePath}/mods` |
 | Binaries / Root Folder | `systemshock225thanniversaryremaster-root` | high | `{gamePath}` |
@@ -39,7 +37,7 @@ Mod types define where each category of mod gets deployed:
 Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
 
 | Installer ID | Priority |
-|---|---|
+| --- | --- |
 | `systemshock225thanniversaryremaster-kpfmod` | 25 |
 | `systemshock225thanniversaryremaster-convertedlegacy` | 27 |
 | `systemshock225thanniversaryremaster-rootfolder` | 29 |
