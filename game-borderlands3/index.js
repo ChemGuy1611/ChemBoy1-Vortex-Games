@@ -33,6 +33,7 @@ const EXEC = path.join(BINARIES_PATH, 'Borderlands3.exe');
 const DATA_FOLDER = 'Borderlands 3';
 
 let GAME_PATH = ''; //patched in the setup function to the discovered game path
+let GAME_VERSION = ''; //Game version
 let STAGING_FOLDER = ''; //Vortex staging folder path
 let DOWNLOAD_FOLDER = ''; //Vortex download folder path
 

@@ -21,6 +21,7 @@ const MOD_PATH_DEFAULT = ".";
 const EXEC = "Rocksmith2014.exe";
 const requiredFiles = [EXEC];
 let GAME_PATH = '';
+let GAME_VERSION = ''; //Game version
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 

@@ -33,6 +33,10 @@ const modFileExt = ".dll";
 const LOADER_ID = `${GAME_ID}-modloader`;
 
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Sker_Ritual";
+let STAGING_FOLDER = ''; //Vortex staging folder path
+let DOWNLOAD_FOLDER = ''; //Vortex download folder path
+let GAME_PATH = ''; //Game installation path
+let GAME_VERSION = ''; //Game version
 const spec = {
   "game": {
     "id": GAME_ID,

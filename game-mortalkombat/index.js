@@ -112,6 +112,10 @@ const PARAMETERS = [PARAMETERS_STRING];
 
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1066"; //Nexus link to this extension. Used for links
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Mortal_Kombat_1";
+let STAGING_FOLDER = ''; //Vortex staging folder path
+let DOWNLOAD_FOLDER = ''; //Vortex download folder path
+let GAME_PATH = ''; //Game installation path
+let GAME_VERSION = ''; //Game version
 const spec = {
   "game": {
     "id": GAME_ID,

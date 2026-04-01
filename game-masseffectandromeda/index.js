@@ -27,6 +27,7 @@ const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Mass_Effect:_Androme
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/877";
 
 let GAME_PATH = '';
+let GAME_VERSION = ''; //Game version
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 

@@ -23,6 +23,7 @@ const GAME_NAME = "Star Wars Outlaws";
 const GAME_NAME_SHORT = "SW Outlaws";
 
 let GAME_PATH = '';
+let GAME_VERSION = ''; //Game version
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 

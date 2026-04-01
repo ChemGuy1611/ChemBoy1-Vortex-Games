@@ -26,6 +26,7 @@ const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Stellar_Blade";
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1324"; //Nexus link to this extension. Used for links
 
 let GAME_PATH = '';
+let GAME_VERSION = ''; //Game version
 let CHECK_DATA = false;
 let CHECK_DOCS = false;
 let STAGING_FOLDER = '';

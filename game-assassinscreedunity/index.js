@@ -20,6 +20,9 @@ const GAME_NAME = "Assassin's Creed Unity";
 const GAME_NAME_SHORT = "AC Unity";
 const EXEC = "ACU.exe";
 let GAME_PATH = ''; //patched in the setup function to the discovered game path
+let GAME_VERSION = ''; //Game version
+let STAGING_FOLDER = ''; //Vortex staging folder path
+let DOWNLOAD_FOLDER = ''; //Vortex download folder path
 
 const BITS = "BIT64";
 const RESOREP_PAGE = 1215;

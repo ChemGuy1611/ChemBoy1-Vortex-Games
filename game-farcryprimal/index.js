@@ -36,6 +36,7 @@ const XML_PAGE_NO = 0;
 const XML_FILE_NO = 0;
 
 let GAME_PATH = '';
+let GAME_VERSION = ''; //Game version
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 let SAVE_PATH = '';

@@ -22,6 +22,7 @@ const GAME_NAME = "Marvel Rivals";
 const GAME_NAME_SHORT = "Marvel Rivals";
 const EXEC = path.join(TOP_FOLDER_NAME, "Marvel.exe");
 let GAME_PATH = '';
+let GAME_VERSION = ''; //Game version
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 let CHECK_CONFIG = false;

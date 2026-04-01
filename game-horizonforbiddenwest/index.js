@@ -43,6 +43,7 @@ const SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = ''; 
 let GAME_PATH = '';
+let GAME_VERSION = ''; //Game version
 let modManagerInstalled = false;
 let repackerInstalled = false;
 

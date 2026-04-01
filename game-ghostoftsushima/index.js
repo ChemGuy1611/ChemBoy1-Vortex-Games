@@ -26,6 +26,7 @@ const EXEC = "GhostOfTsushima.exe";
 const DATA_FOLDER = "Ghost of Tsushima DIRECTOR'S CUT";
 
 let GAME_PATH = '';
+let GAME_VERSION = ''; //Game version
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 

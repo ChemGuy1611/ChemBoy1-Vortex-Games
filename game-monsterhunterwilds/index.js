@@ -32,6 +32,7 @@ const REF_FILE_NO = 13531;
 
 //global variables to set later
 let GAME_PATH = ''; //game installation path
+let GAME_VERSION = ''; //Game version
 let STAGING_FOLDER = ''; //Vortex staging folder path
 let DOWNLOAD_FOLDER = ''; //Vortex download folder path
 

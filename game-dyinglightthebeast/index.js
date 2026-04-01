@@ -45,6 +45,7 @@ const SAVE_FOLDERNAME = CONFIG_FOLDERNAME;
 //*/
 
 let GAME_PATH = '';
+let GAME_VERSION = ''; //Game version
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 let DOTNET_INSTALLED = false;

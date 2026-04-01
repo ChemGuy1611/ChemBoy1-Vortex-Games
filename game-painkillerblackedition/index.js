@@ -28,6 +28,7 @@ const EXEC = path.join(BINARIES_PATH, EXEC_NAME);
 const ROOT_FOLDERS = ['Bin', 'Data'];
 
 let GAME_PATH = '';
+let GAME_VERSION = ''; //Game version
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 

@@ -57,6 +57,8 @@ let DOWNLOAD_FOLDER = '';
 let STAGING_FOLDER = '';
 
 //Specify all the information about the game
+let GAME_PATH = ''; //Game installation path
+let GAME_VERSION = ''; //Game version
 const spec = {
   "game": {
     "id": GAME_ID,

@@ -49,6 +49,7 @@ const BINARIES_ID = `${GAME_ID}-binaries`;
 const BINARIES_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_NAME);
 
 let GAME_PATH = '';
+let GAME_VERSION = ''; //Game version
 let CHECK_CONFIG = false;
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';

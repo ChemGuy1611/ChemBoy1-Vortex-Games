@@ -59,6 +59,7 @@ if (IO_STORE) { //Set file number for pak installer file selection (needs to be 
 }
 
 let GAME_PATH = '';
+let GAME_VERSION = ''; //Game version
 let CHECK_DATA = false;
 let CHECK_DOCS = false;
 let STAGING_FOLDER = '';

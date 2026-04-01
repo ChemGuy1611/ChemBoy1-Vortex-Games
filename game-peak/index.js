@@ -24,6 +24,7 @@ const GAME_NAME = "PEAK"
 const GAME_NAME_SHORT = "PEAK"
 const EXEC = "PEAK.exe";
 let GAME_PATH = '';
+let GAME_VERSION = ''; //Game version
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 

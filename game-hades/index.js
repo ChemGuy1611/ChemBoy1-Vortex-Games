@@ -60,6 +60,9 @@ const REQ_FILE2 = path.join('Content', 'Game', 'Animations', 'CharacterAnim_Enem
 //Filled in from data above
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1137"; //Nexus link to this extension. Used for links
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Hades";
+let STAGING_FOLDER = ''; //Vortex staging folder path
+let DOWNLOAD_FOLDER = ''; //Vortex download folder path
+let GAME_PATH = ''; //Game installation path
 const spec = {
   "game": {
     "id": GAME_ID,

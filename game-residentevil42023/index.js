@@ -31,6 +31,7 @@ const reZip = true; //NOT WORKING YET - KEEP AS TRUE FOR NOW - set to true to re
 
 let MOD_PATH_USED = MOD_PATH;
 let GAME_PATH = '';
+let GAME_VERSION = ''; //Game version
 let DOWNLOAD_FOLDER = '';
 let STAGING_FOLDER = '';
 

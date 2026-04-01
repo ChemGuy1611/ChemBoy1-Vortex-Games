@@ -22,6 +22,7 @@ const GAME_NAME_SHORT = "TLOU Part I";
 const EXEC = "launcher.exe";
 const MOD_PATH_DEFAULT = path.join(".");
 let GAME_PATH = '';
+let GAME_VERSION = ''; //Game version
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/The_Last_of_Us_Part_I";

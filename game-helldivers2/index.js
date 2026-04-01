@@ -33,6 +33,7 @@ const BINARIES_ID = `${GAME_ID}-binaries`;
 const BINARIES_PATH = path.join("bin");
 
 let GAME_PATH = '';
+let GAME_VERSION = ''; //Game version
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 

@@ -43,6 +43,7 @@ const EXEC_XBOX = 'gamelaunchhelper.exe';
 const DATA_FOLDER = path.join('Borderlands 2', EPIC_CODE_NAME);
 
 let GAME_PATH = ''; //patched in the setup function to the discovered game path
+let GAME_VERSION = ''; //Game version
 let STAGING_FOLDER = ''; //Vortex staging folder path
 let DOWNLOAD_FOLDER = ''; //Vortex download folder path
 

@@ -46,6 +46,9 @@ const I3D_PATH = path.join("data", "maps", 'mapUS');
 
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1102"; //Nexus link to this extension. Used for links
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Farming_Simulator_25";
+let STAGING_FOLDER = ''; //Vortex staging folder path
+let DOWNLOAD_FOLDER = ''; //Vortex download folder path
+let GAME_PATH = ''; //Game installation path
 const spec = {
   "game": {
     "id": GAME_ID,

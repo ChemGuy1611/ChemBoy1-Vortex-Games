@@ -20,6 +20,7 @@ const GAME_NAME = "Assassin's Creed Shadows";
 const GAME_NAME_SHORT = "AC Shadows";
 const EXEC = "ACShadows.exe";
 let GAME_PATH = ''; //patched in the setup function to the discovered game path
+let GAME_VERSION = ''; //Game version
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 

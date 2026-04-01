@@ -47,6 +47,10 @@ const PACKAGE_PATH = path.join("LocalCacheDX12", "package");
 
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1077"; //Nexus link to this extension. Used for links
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Horizon_Zero_Dawn_Remastered";
+let STAGING_FOLDER = ''; //Vortex staging folder path
+let DOWNLOAD_FOLDER = ''; //Vortex download folder path
+let GAME_PATH = ''; //Game installation path
+let GAME_VERSION = ''; //Game version
 const spec = {
   "game": {
     "id": GAME_ID,

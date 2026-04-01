@@ -23,6 +23,7 @@ const GAME_NAME = "Metal Gear Solid Delta: Snake Eater";
 const GAME_NAME_SHORT = "MGS Delta: Snake Eater";
 const EXEC = "MGSDelta.exe";
 let GAME_PATH = '';
+let GAME_VERSION = ''; //Game version
 let CHECK_DATA = false;
 let CHECK_DOCS = false;
 let STAGING_FOLDER = '';

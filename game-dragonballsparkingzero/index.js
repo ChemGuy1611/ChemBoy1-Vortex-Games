@@ -30,6 +30,7 @@ const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Dragon_Ball:_Sparkin
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1055";
 
 let GAME_PATH = '';
+let GAME_VERSION = ''; //Game version
 let CHECK_DATA = false;
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';

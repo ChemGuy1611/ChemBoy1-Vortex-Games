@@ -24,6 +24,7 @@ const GAME_NAME = "Mirthwood"
 const GAME_NAME_SHORT = "Mirthwood"
 const EXEC = "Mirthwood.exe";
 let GAME_PATH = '';
+let GAME_VERSION = ''; //Game version
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 

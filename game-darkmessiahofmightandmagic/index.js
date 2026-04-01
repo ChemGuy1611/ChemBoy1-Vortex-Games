@@ -23,6 +23,7 @@ const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Dark_Messiah_of_Migh
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1056"; //Nexus link to this extension. Used for links
 
 let GAME_PATH = '';
+let GAME_VERSION = ''; //Game version
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 

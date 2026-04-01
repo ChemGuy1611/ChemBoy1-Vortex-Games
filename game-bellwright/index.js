@@ -22,6 +22,7 @@ const GAME_NAME = "Bellwright";
 const GAME_NAME_SHORT = "Bellwright";
 const EXEC = "BellwrightGame.exe";
 let GAME_PATH = '';
+let GAME_VERSION = ''; //Game version
 let CHECK_DATA = false;
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';

@@ -26,6 +26,7 @@ const GAME_NAME = "Far Cry 3";
 const GAME_NAME_SHORT = "FC3";
 
 let GAME_PATH = '';
+let GAME_VERSION = ''; //Game version
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 let SAVE_PATH = '';

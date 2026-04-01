@@ -22,6 +22,9 @@ const MOD_PATH = "."; //Set default mod path
 const EXTENSION_URL = "https://www.nexusmods.com/bloodborne/mods/64"; //Nexus link to this extension. Used for links
 
 let GAME_PATH = '';
+let GAME_VERSION = ''; //Game version
+let STAGING_FOLDER = ''; //Vortex staging folder path
+let DOWNLOAD_FOLDER = ''; //Vortex download folder path
 
 //Info for mod types and installers
 const DVDROOTPS4_ID = `${GAME_ID}-dvdroot_ps4`;

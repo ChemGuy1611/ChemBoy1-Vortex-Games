@@ -25,6 +25,7 @@ const GAME_NAME = "Red Dead Redemption";
 const GAME_NAME_SHORT = "RDR";
 
 let GAME_PATH = '';
+let GAME_VERSION = ''; //Game version
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 

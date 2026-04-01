@@ -26,6 +26,10 @@ const FROSTY_PATH = path.join("FrostyModManager", "Mods", "bf1");
 
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/847"; //Nexus link to this extension. Used for links
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Battlefield_1";
+let STAGING_FOLDER = ''; //Vortex staging folder path
+let DOWNLOAD_FOLDER = ''; //Vortex download folder path
+let GAME_PATH = ''; //Game installation path
+let GAME_VERSION = ''; //Game version
 const spec = {
   "game": {
     "id": GAME_ID,

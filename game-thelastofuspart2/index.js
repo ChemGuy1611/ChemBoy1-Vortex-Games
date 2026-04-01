@@ -22,6 +22,7 @@ const GAME_NAME_SHORT = "TLOU Part II";
 const EXEC = "launcher.exe";
 const MOD_PATH_DEFAULT = path.join(".");
 let GAME_PATH = '';
+let GAME_VERSION = ''; //Game version
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 let LOAD_ORDER_ENABLED = true;

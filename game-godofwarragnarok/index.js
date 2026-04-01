@@ -24,6 +24,7 @@ const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/God_of_War_Ragnar%C3
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/959"; //Nexus link to this extension. Used for links
 
 let GAME_PATH = '';
+let GAME_VERSION = ''; //Game version
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 

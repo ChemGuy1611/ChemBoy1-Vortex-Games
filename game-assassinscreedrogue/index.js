@@ -24,6 +24,10 @@ const ATK_EXEC = 'anviltoolkit.exe';
 
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/988"; //Nexus link to this extension. Used for links
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Assassin%27s_Creed_Rogue";
+let STAGING_FOLDER = ''; //Vortex staging folder path
+let DOWNLOAD_FOLDER = ''; //Vortex download folder path
+let GAME_PATH = ''; //Game installation path
+let GAME_VERSION = ''; //Game version
 const spec = {
   "game": {
     "id": GAME_ID,

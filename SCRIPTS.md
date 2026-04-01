@@ -281,7 +281,7 @@ Use `--debug` to print raw PCGamingWiki search results and match status for each
 | Patch | Description |
 | --- | --- |
 | `game_name` | Inserts `const GAME_NAME = "...";` after the `GAME_ID` line for extensions that don't define it. Name extracted from spec or `context.registerGame`. |
-| `folder_vars` | Inserts `let STAGING_FOLDER = '';` and/or `let DOWNLOAD_FOLDER = '';` for extensions missing either declaration. Inserted after `GAME_PATH` or before `const spec = {`. |
+| `folder_vars` | Inserts any missing declarations from `GAME_PATH`, `GAME_VERSION`, `STAGING_FOLDER`, `DOWNLOAD_FOLDER`. Inserted in template order after `GAME_PATH`, or all together before `const spec = {` if `GAME_PATH` is also missing. |
 | `extension_url` | Sets `EXTENSION_URL` from the Vortex extensions manifest (`modId` → Nexus URL). Inserts the constant if missing. |
 | `pcgamingwiki_url` | Sets `PCGAMINGWIKI_URL` by looking up the game on PCGamingWiki. Inserts as `"XXX"` if not found or API unreachable. |
 

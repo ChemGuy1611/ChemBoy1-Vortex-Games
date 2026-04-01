@@ -22,6 +22,7 @@ const GAME_NAME = "Mandragora: Whispers of the Witch Tree";
 const GAME_NAME_SHORT = "Mandragora WotWT";
 const EXEC = "man.exe";
 let GAME_PATH = '';
+let GAME_VERSION = ''; //Game version
 let CHECK_DATA = false;
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';

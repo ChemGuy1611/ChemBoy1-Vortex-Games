@@ -31,6 +31,7 @@ const ROOT_SUBFOLDERS = ['textures'];
 const RMDTOC_EXEC = "alan wake 2 rmdtoc tool.exe";
 
 let GAME_PATH = '';
+let GAME_VERSION = ''; //Game version
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 

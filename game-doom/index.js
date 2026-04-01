@@ -47,6 +47,7 @@ const GAME_ID = "doom";
 const GAME_NAME = "DOOM (2016)";
 const EXEC = "DOOMx64vk.exe";
 let GAME_PATH = '';
+let GAME_VERSION = ''; //Game version
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 

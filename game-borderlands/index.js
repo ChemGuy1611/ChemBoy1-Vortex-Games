@@ -46,6 +46,7 @@ const EXEC_GOTY = path.join(BINARIES_PATH, BINARIES_PATH_GOTY);
 const DATA_FOLDER = path.join('Borderlands', 'WillowGame');
 
 let GAME_PATH = ''; //patched in the setup function to the discovered game path
+let GAME_VERSION = ''; //Game version
 let STAGING_FOLDER = ''; //Vortex staging folder path
 let DOWNLOAD_FOLDER = ''; //Vortex download folder path
 let BINARIES_TARGET = '';

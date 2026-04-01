@@ -25,6 +25,7 @@ const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Tom_Clancy%27s_Ghost
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/972"; //Nexus link to this extension. Used for links
 
 let GAME_PATH = ''; //patched in the setup function to the discovered game path
+let GAME_VERSION = ''; //Game version
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 

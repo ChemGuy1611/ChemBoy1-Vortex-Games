@@ -50,6 +50,7 @@ const GAME_NAME = "DOOM I & II (UZDoom)";
 const GAME_NAME_SHORT = "UZDoom";
 
 let GAME_PATH = '';
+let GAME_VERSION = ''; //Game version
 let DOWNLOAD_FOLDER = '';
 let STAGING_FOLDER = '';
 

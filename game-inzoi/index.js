@@ -27,6 +27,7 @@ const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/InZOI";
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1241"; //Nexus link to this extension. Used for links
 
 let GAME_PATH = '';
+let GAME_VERSION = ''; //Game version
 let CHECK_CONFIG = false;
 let CHECK_DOCS = false; 
 let STAGING_FOLDER = '';

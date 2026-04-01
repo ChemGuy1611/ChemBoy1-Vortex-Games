@@ -66,6 +66,7 @@ const SAVEMOD_LOCATION = LOCALAPPDATA;
 const SAVE_FOLDERNAME = 'user';
 
 let GAME_PATH = '';
+let GAME_VERSION = ''; //Game version
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 

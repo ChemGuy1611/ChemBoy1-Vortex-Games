@@ -334,37 +334,62 @@ def patch_pcgamingwiki_url(game_id, src, context):
 
 def patch_folder_vars(game_id, src, context):
     """
-    Insert `let STAGING_FOLDER = '';` and/or `let DOWNLOAD_FOLDER = '';` for
-    extensions that are missing either declaration. Both are inserted together
-    after `let GAME_PATH`, or before `const spec = {` if GAME_PATH is absent.
+    Insert any missing declarations from the set:
+      let GAME_PATH = '';
+      let GAME_VERSION = '';
+      let STAGING_FOLDER = '';
+      let DOWNLOAD_FOLDER = '';
+    When GAME_PATH is missing all four are inserted together before `const spec = {`.
+    When GAME_PATH exists the missing subset is inserted after it, in template order.
     """
+    missing_game     = is_missing(src, "GAME_PATH")
+    missing_version  = is_missing(src, "GAME_VERSION")
     missing_staging  = is_missing(src, "STAGING_FOLDER")
     missing_download = is_missing(src, "DOWNLOAD_FOLDER")
-    if not missing_staging and not missing_download:
+    if not any([missing_game, missing_version, missing_staging, missing_download]):
         return src, False, "already set"
 
-    lines_to_add = []
+    # Lines to insert after GAME_PATH (in template order)
+    after_game_path_lines = []
+    if missing_version:
+        after_game_path_lines.append("let GAME_VERSION = ''; //Game version")
     if missing_staging:
-        lines_to_add.append("let STAGING_FOLDER = ''; //Vortex staging folder path")
+        after_game_path_lines.append("let STAGING_FOLDER = ''; //Vortex staging folder path")
     if missing_download:
-        lines_to_add.append("let DOWNLOAD_FOLDER = ''; //Vortex download folder path")
-    block = "\n".join(lines_to_add)
+        after_game_path_lines.append("let DOWNLOAD_FOLDER = ''; //Vortex download folder path")
 
-    # Insert after GAME_PATH declaration if present
+    missing_names = (
+        (["GAME_PATH"]      if missing_game     else []) +
+        (["GAME_VERSION"]   if missing_version  else []) +
+        (["STAGING_FOLDER"] if missing_staging  else []) +
+        (["DOWNLOAD_FOLDER"]if missing_download else [])
+    )
+
+    if missing_game:
+        full_block = "\n".join(
+            ["let GAME_PATH = ''; //Game installation path"] + after_game_path_lines
+        )
+        insert_marker = re.search(r'^const\s+spec\s*=\s*\{', src, re.MULTILINE)
+        if insert_marker:
+            pos = insert_marker.start()
+            new_src = src[:pos] + full_block + "\n" + src[pos:]
+            return new_src, True, f"inserted {', '.join(missing_names)}"
+        return src, False, "could not find insertion point"
+
+    # GAME_PATH exists — insert missing vars after it
+    block = "\n".join(after_game_path_lines)
     m = re.search(r'^((?:const|let)\s+GAME_PATH\s*=\s*[^\n]+)', src, re.MULTILINE)
     if m:
         pos = m.end()
         new_src = src[:pos] + "\n" + block + src[pos:]
-        missing = [v for v, b in [("STAGING_FOLDER", missing_staging), ("DOWNLOAD_FOLDER", missing_download)] if b]
-        return new_src, True, f"inserted {', '.join(missing)}"
+        return new_src, True, f"inserted {', '.join(missing_names)}"
 
     # Fallback: insert before const spec = {
     insert_marker = re.search(r'^const\s+spec\s*=\s*\{', src, re.MULTILINE)
     if insert_marker:
         pos = insert_marker.start()
         new_src = src[:pos] + block + "\n" + src[pos:]
-        missing = [v for v, b in [("STAGING_FOLDER", missing_staging), ("DOWNLOAD_FOLDER", missing_download)] if b]
-        return new_src, True, f"inserted {', '.join(missing)}"
+        return new_src, True, f"inserted {', '.join(missing_names)}"
 
     return src, False, "could not find insertion point"
 
