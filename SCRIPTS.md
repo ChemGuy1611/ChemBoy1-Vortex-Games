@@ -4,6 +4,76 @@ Developer scripts for creating and documenting Vortex game extensions.
 
 ---
 
+## fetch_exec_icon.py
+
+Scans all `game-*` extension folders and downloads a 64x64 PNG icon for any extension missing its `exec.png` file. Reads `STEAMAPP_ID` and `GAME_NAME` directly from each `index.js`. Imports icon-download logic from `new_extension.py`.
+
+### fetch_exec_icon.py — Requirements
+
+```sh
+pip install Pillow
+```
+
+### fetch_exec_icon.py — Usage
+
+```sh
+python fetch_exec_icon.py
+python fetch_exec_icon.py --game GAME_ID
+python fetch_exec_icon.py --dry-run
+python fetch_exec_icon.py --force
+```
+
+- No arguments — scans all `game-*` folders and downloads missing icons.
+- `--game GAME_ID` — only processes the extension with that game ID.
+- `--dry-run` — lists missing files without downloading anything.
+- `--force` — re-downloads `exec.png` even if it already exists.
+
+### fetch_exec_icon.py — Output
+
+- Saved files are written as `exec.png` (64x64 PNG) into each extension folder.
+- Extensions without a `STEAMAPP_ID` in `index.js` are skipped with a note.
+- A summary of saved / failed / skipped counts is printed at the end.
+
+---
+
+## fetch_cover_art.py
+
+Scans all `game-*` extension folders and downloads a 640x360 JPG cover art image for any extension missing its `{GAME_ID}.jpg` file. Reads `STEAMAPP_ID` directly from each `index.js` to look up art. Imports image-download logic from `new_extension.py`.
+
+### fetch_cover_art.py — Requirements
+
+```sh
+pip install Pillow
+```
+
+### fetch_cover_art.py — Environment Variables
+
+| Variable | Required | Description |
+| --- | --- | --- |
+| `STEAMGRIDDB_API_KEY` | Optional | SteamGridDB API key. Used for higher-quality hero art. Falls back to Steam `library_hero.jpg` if not set. |
+
+### fetch_cover_art.py — Usage
+
+```sh
+python fetch_cover_art.py
+python fetch_cover_art.py --game GAME_ID
+python fetch_cover_art.py --dry-run
+python fetch_cover_art.py --force
+```
+
+- No arguments — scans all `game-*` folders and downloads missing art.
+- `--game GAME_ID` — only processes the extension with that game ID.
+- `--dry-run` — lists missing files without downloading anything.
+- `--force` — re-downloads cover art even if `{GAME_ID}.jpg` already exists.
+
+### fetch_cover_art.py — Output
+
+- Saved files are written as `{GAME_ID}.jpg` (640x360 JPEG) into each extension folder.
+- Extensions without a `STEAMAPP_ID` in `index.js` are skipped with a note.
+- A summary of saved / failed / skipped counts is printed at the end.
+
+---
+
 ## new_extension.py
 
 Bootstraps a new Vortex game extension folder from a template. Looks up game information automatically from Steam, GOG, Epic Games Store, and PCGamingWiki, then fills in as many fields as possible in `index.js`, `info.json`, and `CHANGELOG.md`. Downloads `exec.png` and cover art. Runs `generate_explained.js` at the end.
@@ -27,10 +97,12 @@ pip install Pillow
 python new_extension.py --template TEMPLATE_NAME "Game Name"
 python new_extension.py --template TEMPLATE_NAME STEAM_APP_ID
 python new_extension.py --template TEMPLATE_NAME "Game Name" --force
+python new_extension.py --template TEMPLATE_NAME "Game Name" --dry-run
 ```
 
 The game input can be a quoted game name (searched on Steam) or a numeric Steam App ID.
 Use `--force` to overwrite an existing folder.
+Use `--dry-run` to run all lookups and print what would be created without writing any files.
 
 ### new_extension.py — Examples
 
@@ -147,10 +219,12 @@ No additional packages required (Python stdlib only).
 ```sh
 python categorize_games.py
 python categorize_games.py --game GAME_ID
+python categorize_games.py --dry-run
 ```
 
 Run without arguments to rebuild all category files from scratch by scanning every `game-*` folder.
 Use `--game` to add or update a single game (adds to its correct file, removes from any others).
+Use `--dry-run` to print what would be written without modifying any `.txt` files.
 
 ### categorize_games.py — Examples
 
@@ -199,10 +273,12 @@ Fetches the full Nexus Mods games list and filters to games approved within a gi
 ```sh
 python nexus_games_report.py DAYS
 python nexus_games_report.py DAYS --new-only
+python nexus_games_report.py DAYS --dry-run
 ```
 
 `DAYS` is the size of the time window in days (counting back from today). Defaults to `90` if omitted.
 Use `--new-only` to exclude games that already have a Vortex extension in the manifest.
+Use `--dry-run` to print the report to the console instead of writing `nexus_games_report.md`.
 
 ### nexus_games_report.py — Examples
 
@@ -234,10 +310,12 @@ Packages a game extension folder into a `.zip` archive using 7-Zip and opens the
 ```sh
 python release_extension.py GAME_ID [GAME_ID ...]
 python release_extension.py GAME_ID --no-open
+python release_extension.py GAME_ID --dry-run
 ```
 
 Pass one or more `GAME_ID` values to release multiple extensions in one run.
 Use `--no-open` to skip opening the browser (useful for testing or bulk releases).
+Use `--dry-run` to print what would be generated and zipped without running 7-Zip.
 
 ### release_extension.py — Examples
 
@@ -267,12 +345,14 @@ python patch_extensions.py
 python patch_extensions.py --game GAME_ID
 python patch_extensions.py --dry-run
 python patch_extensions.py --game GAME_ID --dry-run
+python patch_extensions.py --force
 python patch_extensions.py --force-pcgw
 python patch_extensions.py --game GAME_ID --debug
 ```
 
 Run without arguments to apply all enabled patches to every `game-*` folder.
 Use `--game` to target a single game. Use `--dry-run` to preview without writing.
+Use `--force` to re-run all URL patches even if values are already set (implies `--force-pcgw`).
 Use `--force-pcgw` to re-evaluate `PCGAMINGWIKI_URL` values that are already set (e.g. to correct wrong URLs from a previous run).
 Use `--debug` to print raw PCGamingWiki search results and match status for each game (useful for diagnosing lookup failures).
 
@@ -314,7 +394,12 @@ No additional packages required (Python stdlib only).
 
 ```sh
 python setup_test_folder.py GAME_ID [GAME_ID ...]
+python setup_test_folder.py GAME_ID --dry-run
+python setup_test_folder.py GAME_ID --force
 ```
+
+Use `--dry-run` to print what would be created without making any directories or files.
+Use `--force` to recreate the `.exe` stub even if it already exists.
 
 ### setup_test_folder.py — Examples
 

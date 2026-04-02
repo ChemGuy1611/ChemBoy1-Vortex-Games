@@ -9,6 +9,7 @@ Writes one .txt file per category to resources/. Each line is a GAME_ID.
 Usage:
     python categorize_games.py              # rebuild all category files from scratch
     python categorize_games.py --game GAME_ID  # add/update a single game only
+    python categorize_games.py --dry-run    # print categorizations without writing files
 """
 
 import os
@@ -135,7 +136,7 @@ def write_list(filepath, game_ids):
             f.write(gid + "\n")
 
 
-def rebuild_all():
+def rebuild_all(dry_run=False):
     """Scan all game-* folders and rebuild every category file from scratch."""
     buckets = {filename: [] for filename, _, _ in CATEGORIES}
 
@@ -153,14 +154,18 @@ def rebuild_all():
             print(f"  Warning: no index.js found for {d}, skipping.")
 
     for filename, label, _ in CATEGORIES:
-        filepath = os.path.join(RESOURCES_DIR, filename)
-        write_list(filepath, buckets[filename])
-        print(f"  {filename}: {len(buckets[filename])} games")
+        if dry_run:
+            print(f"  {filename}: {len(buckets[filename])} games")
+        else:
+            filepath = os.path.join(RESOURCES_DIR, filename)
+            write_list(filepath, buckets[filename])
+            print(f"  {filename}: {len(buckets[filename])} games")
 
-    print(f"\nDone. {sum(len(v) for v in buckets.values())} games categorized across {len(CATEGORIES)} categories.")
+    label = " [DRY RUN]" if dry_run else ""
+    print(f"\nDone{label}. {sum(len(v) for v in buckets.values())} games categorized across {len(CATEGORIES)} categories.")
 
 
-def update_single(game_id):
+def update_single(game_id, dry_run=False):
     """Add game_id to its correct category file and remove it from all others."""
     target = categorize(game_id)
     if target is None:
@@ -172,31 +177,40 @@ def update_single(game_id):
         ids = read_list(filepath)
         if filename == target:
             if game_id not in ids:
-                ids.append(game_id)
-                write_list(filepath, ids)
-                print(f"  Added {game_id} → {filename} ({label})")
+                if dry_run:
+                    print(f"  [DRY RUN] Would add {game_id} → {filename} ({label})")
+                else:
+                    ids.append(game_id)
+                    write_list(filepath, ids)
+                    print(f"  Added {game_id} → {filename} ({label})")
             else:
                 print(f"  {game_id} already in {filename} ({label})")
         else:
             if game_id in ids:
-                ids.remove(game_id)
-                write_list(filepath, ids)
-                print(f"  Removed {game_id} from {filename}")
+                if dry_run:
+                    print(f"  [DRY RUN] Would remove {game_id} from {filename}")
+                else:
+                    ids.remove(game_id)
+                    write_list(filepath, ids)
+                    print(f"  Removed {game_id} from {filename}")
 
 
 def main():
     args = sys.argv[1:]
+    dry_run = "--dry-run" in args
+    args = [a for a in args if a not in ("--dry-run", "--force")]
+
     if "--game" in args:
         idx = args.index("--game")
         if idx + 1 >= len(args):
             print("ERROR: --game requires a GAME_ID argument.")
             sys.exit(1)
         game_id = args[idx + 1]
-        print(f"Updating category for game-{game_id}...")
-        update_single(game_id)
+        print(f"Updating category for game-{game_id}{'  [DRY RUN]' if dry_run else ''}...")
+        update_single(game_id, dry_run)
     else:
-        print("Rebuilding all category files...")
-        rebuild_all()
+        print(f"Rebuilding all category files{'  [DRY RUN]' if dry_run else ''}...")
+        rebuild_all(dry_run)
 
 
 if __name__ == "__main__":

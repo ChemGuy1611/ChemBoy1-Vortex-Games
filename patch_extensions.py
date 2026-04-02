@@ -11,6 +11,7 @@ Usage:
     python patch_extensions.py --dry-run              # preview changes without writing
     python patch_extensions.py --game GAME_ID --dry-run
     python patch_extensions.py --force-pcgw                # re-evaluate all PCGAMINGWIKI_URL values, overwriting wrong ones
+    python patch_extensions.py --force                     # re-run all URL patches even if values are already set
     python patch_extensions.py --game GAME_ID --debug      # print raw PCGW search results for diagnosis
 """
 
@@ -296,8 +297,8 @@ def patch_extension_url(game_id, src, context):
 
     current = const_value(src, "EXTENSION_URL")
     if current and not is_unset(current) and current != "null":
-        # Already set to a real value
-        return src, False, "already set"
+        if not context.get("force"):
+            return src, False, "already set"
 
     url = f"{NEXUS_SITE_BASE}/{mod_id}"
     new_src = set_or_insert(src, "EXTENSION_URL", url, comment="Nexus link to this extension. Used for links")
@@ -718,9 +719,10 @@ def main():
     args = sys.argv[1:]
     dry_run = "--dry-run" in args
     force_pcgw = "--force-pcgw" in args
+    force = "--force" in args
     global _debug
     _debug = "--debug" in args
-    args = [a for a in args if a not in ("--dry-run", "--force-pcgw", "--debug")]
+    args = [a for a in args if a not in ("--dry-run", "--force-pcgw", "--force", "--debug")]
 
     single_game = None
     if "--game" in args:
@@ -733,7 +735,8 @@ def main():
     print("Loading context...")
     context = {
         "manifest": load_manifest(),
-        "force_pcgw": force_pcgw,
+        "force_pcgw": force_pcgw or force,
+        "force": force,
     }
 
     if single_game:

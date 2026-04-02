@@ -7,6 +7,7 @@ extension page in the browser.
 Usage:
     python release_extension.py GAME_ID [GAME_ID ...]
     python release_extension.py GAME_ID --no-open
+    python release_extension.py GAME_ID --dry-run
 """
 
 import os
@@ -29,7 +30,7 @@ def get_extension_url(src):
     return val
 
 
-def release(game_id, open_browser):
+def release(game_id, open_browser, dry_run=False):
     folder = os.path.join(REPO_ROOT, f"game-{game_id}")
     if not os.path.isdir(folder):
         print(f"  [{game_id}] ERROR — folder not found: {folder}")
@@ -40,6 +41,16 @@ def release(game_id, open_browser):
     if os.path.isfile(index_path):
         with open(index_path, encoding="utf-8") as f:
             extension_url = get_extension_url(f.read())
+
+    if dry_run:
+        zip_path = os.path.join(folder, f"game-{game_id}.zip")
+        print(f"  [{game_id}] [DRY RUN] Would generate EXTENSION_EXPLAINED.md")
+        print(f"  [{game_id}] [DRY RUN] Would create: {zip_path}")
+        if extension_url:
+            print(f"  [{game_id}] [DRY RUN] Would open: {extension_url}")
+        else:
+            print(f"  [{game_id}] [DRY RUN] EXTENSION_URL not set — browser open would be skipped.")
+        return True
 
     print(f"  [{game_id}] Generating EXTENSION_EXPLAINED.md...")
     result = subprocess.run(
@@ -82,20 +93,22 @@ def release(game_id, open_browser):
 def main():
     args = sys.argv[1:]
     open_browser = "--no-open" not in args
-    args = [a for a in args if a != "--no-open"]
+    dry_run = "--dry-run" in args
+    args = [a for a in args if a not in ("--no-open", "--dry-run", "--force")]
 
     if not args:
-        print("Usage: python release_extension.py GAME_ID [GAME_ID ...] [--no-open]")
+        print("Usage: python release_extension.py GAME_ID [GAME_ID ...] [--no-open] [--dry-run]")
         sys.exit(1)
 
-    if not os.path.isfile(SEVENZIP):
+    if not dry_run and not os.path.isfile(SEVENZIP):
         print(f"ERROR: 7-Zip not found at {SEVENZIP}")
         sys.exit(1)
 
-    print(f"Releasing {len(args)} extension(s)...\n")
+    label = " [DRY RUN]" if dry_run else ""
+    print(f"Releasing {len(args)} extension(s){label}...\n")
     success = 0
     for game_id in args:
-        if release(game_id, open_browser):
+        if release(game_id, open_browser, dry_run):
             success += 1
 
     print(f"\nDone. {success}/{len(args)} succeeded.")

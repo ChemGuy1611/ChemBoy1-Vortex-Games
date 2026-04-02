@@ -9,6 +9,8 @@ Test folders are created under: D:\\Game_Tools_D\\!TestGameFolders_D\\{GAME_NAME
 
 Usage:
     python setup_test_folder.py GAME_ID [GAME_ID ...]
+    python setup_test_folder.py GAME_ID --dry-run
+    python setup_test_folder.py GAME_ID --force
 """
 
 import os
@@ -116,7 +118,7 @@ def resolve_exec(table):
 
 # ── Main logic ────────────────────────────────────────────────────────────────
 
-def setup(game_id):
+def setup(game_id, dry_run=False, force=False):
     folder = os.path.join(REPO_ROOT, f"game-{game_id}")
     index_path = os.path.join(folder, "index.js")
 
@@ -147,9 +149,13 @@ def setup(game_id):
         exec_dir = game_folder
     exec_file = os.path.join(exec_dir, exec_name)
 
+    if dry_run:
+        print(f"  [{game_id}] [DRY RUN] Would create: {exec_file}")
+        return True
+
     # Create directories and empty exe file
     os.makedirs(exec_dir, exist_ok=True)
-    if not os.path.exists(exec_file):
+    if not os.path.exists(exec_file) or force:
         open(exec_file, "w").close()
         print(f"  [{game_id}] Created: {exec_file}")
     else:
@@ -160,18 +166,23 @@ def setup(game_id):
 
 def main():
     args = sys.argv[1:]
+    dry_run = "--dry-run" in args
+    force = "--force" in args
+    args = [a for a in args if a not in ("--dry-run", "--force")]
+
     if not args:
-        print("Usage: python setup_test_folder.py GAME_ID [GAME_ID ...]")
+        print("Usage: python setup_test_folder.py GAME_ID [GAME_ID ...] [--dry-run] [--force]")
         sys.exit(1)
 
-    if not os.path.isdir(TEST_ROOT):
+    if not dry_run and not os.path.isdir(TEST_ROOT):
         print(f"ERROR: Test root directory not found: {TEST_ROOT}")
         sys.exit(1)
 
-    print(f"Setting up test folder(s) in {TEST_ROOT}...\n")
+    label = " [DRY RUN]" if dry_run else ""
+    print(f"Setting up test folder(s) in {TEST_ROOT}{label}...\n")
     success = 0
     for game_id in args:
-        if setup(game_id):
+        if setup(game_id, dry_run, force):
             success += 1
 
     print(f"\nDone. {success}/{len(args)} succeeded.")

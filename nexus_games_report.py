@@ -42,7 +42,8 @@ def load_supported_game_ids():
 def main():
     args = sys.argv[1:]
     new_only = "--new-only" in args
-    args = [a for a in args if a != "--new-only"]
+    dry_run = "--dry-run" in args
+    args = [a for a in args if a not in ("--new-only", "--dry-run", "--force")]
 
     days = DEFAULT_DAYS
     if args:
@@ -116,10 +117,13 @@ def main():
     lines.append("")
     output = "\n".join(lines)
 
-    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
-        f.write(output)
-
-    print(f"Written to {OUTPUT_FILE}")
+    if dry_run:
+        print(output)
+        print(f"\n[DRY RUN] Would write to {OUTPUT_FILE}")
+    else:
+        with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
+            f.write(output)
+        print(f"Written to {OUTPUT_FILE}")
 
 
 if __name__ == "__main__":

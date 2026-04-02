@@ -678,7 +678,7 @@ def edit_changelog(path, today):
 
 # ── Orchestration ─────────────────────────────────────────────────────────────
 
-def create_extension(template_name, game_input, force=False):
+def create_extension(template_name, game_input, force=False, dry_run=False):
     sgdb_key = os.environ.get("STEAMGRIDDB_API_KEY")
     if not sgdb_key:
         try:
@@ -732,7 +732,7 @@ def create_extension(template_name, game_input, force=False):
 
     # ── 2. Check destination ──────────────────────────────────────────────────
     dest = os.path.join(REPO_ROOT, f"game-{game_id}")
-    if os.path.exists(dest):
+    if os.path.exists(dest) and not dry_run:
         if force:
             shutil.rmtree(dest)
         else:
@@ -777,6 +777,17 @@ def create_extension(template_name, game_input, force=False):
         print(f"  UE build : {engine_version}")
 
     # ── 6. Copy template folder ───────────────────────────────────────────────
+    if dry_run:
+        print(f"\n{'=' * 60}")
+        print(f"  [DRY RUN] Would create: game-{game_id}/")
+        print(f"  Template : {template_name}")
+        print(f"  Steam ID : {appid}  |  GOG: {gog_id or '—'}  |  Epic: {'yes' if epic_found else '—'}  |  Xbox: {'yes' if xbox_found else '—'}")
+        print(f"  Exec     : {exec_filename or 'XXX'}")
+        if engine_version:
+            print(f"  UE build : {engine_version}")
+        print(f"{'=' * 60}\n")
+        return
+
     print(f"\n[Creating game-{game_id}/]")
     template_dir = os.path.join(REPO_ROOT, template_name)
     shutil.copytree(template_dir, dest)
@@ -955,8 +966,12 @@ def main():
         "--force", action="store_true",
         help="Overwrite existing folder if it already exists",
     )
+    parser.add_argument(
+        "--dry-run", action="store_true",
+        help="Run all lookups and print what would be created, without writing any files",
+    )
     args = parser.parse_args()
-    create_extension(args.template, args.game, args.force)
+    create_extension(args.template, args.game, args.force, args.dry_run)
 
 
 if __name__ == "__main__":
