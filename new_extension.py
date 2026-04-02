@@ -214,8 +214,6 @@ def steam_icon_search(appid, game_name):
         for r in results:
             if str(r.get("appid")) == str(appid):
                 return r.get("icon")
-        if results:
-            return results[0].get("icon")
     except Exception:
         pass
     return None
@@ -487,25 +485,53 @@ def fetch_pcgw_availability(page_title):
 # ── Assets ────────────────────────────────────────────────────────────────────
 
 def download_exec_icon(appid, game_name, out_path):
-    """Download and save a 64x64 exec.png from Steam CDN."""
+    """Download and save a 64x64 exec.png.
+
+    Tries in order:
+    1. Steam CDN icon via exact appid match in SearchApps results
+    2. SteamGridDB icons endpoint (requires STEAMGRIDDB_API_KEY env var)
+    """
+    # 1. Steam CDN — exact appid match only, no name-based fallback
     icon_url = steam_icon_search(appid, game_name)
-    if not icon_url:
-        return False, None
-    try:
-        # Try 184x184 _full first, fall back to 32x32
+    if icon_url:
         try:
-            data = http_get_bytes(icon_url.replace(".jpg", "_full.jpg"))
-            source = "Steam CDN 184x184"
+            try:
+                data = http_get_bytes(icon_url.replace(".jpg", "_full.jpg"))
+                source = "Steam CDN 184x184"
+            except Exception:
+                data = http_get_bytes(icon_url)
+                source = "Steam CDN 32x32"
+            img = Image.open(BytesIO(data)).convert("RGB")
+            img = img.resize((64, 64), Image.LANCZOS)
+            img.save(out_path, "PNG")
+            return True, source
+        except Exception as e:
+            print(f"    Steam CDN error: {e}")
+
+    # 2. SteamGridDB icons
+    sgdb_key = os.environ.get("STEAMGRIDDB_API_KEY")
+    if not sgdb_key:
+        try:
+            from winreg import OpenKey, QueryValueEx, HKEY_CURRENT_USER
+            with OpenKey(HKEY_CURRENT_USER, "Environment") as reg_key:
+                sgdb_key, _ = QueryValueEx(reg_key, "STEAMGRIDDB_API_KEY")
         except Exception:
-            data = http_get_bytes(icon_url)
-            source = "Steam CDN 32x32"
-        img = Image.open(BytesIO(data)).convert("RGB")
-        img = img.resize((64, 64), Image.LANCZOS)
-        img.save(out_path, "PNG")
-        return True, source
-    except Exception as e:
-        print(f"    exec.png error: {e}")
-        return False, None
+            pass
+    if sgdb_key:
+        try:
+            url = f"https://www.steamgriddb.com/api/v2/icons/steam/{appid}"
+            resp = json.loads(http_get(url, {"Authorization": f"Bearer {sgdb_key}"}))
+            icons = resp.get("data", [])
+            if icons:
+                img_data = http_get_bytes(icons[0]["url"])
+                img = Image.open(BytesIO(img_data)).convert("RGB")
+                img = img.resize((64, 64), Image.LANCZOS)
+                img.save(out_path, "PNG")
+                return True, "SteamGridDB icon"
+        except Exception as e:
+            print(f"    SteamGridDB icon error: {e}")
+
+    return False, None
 
 
 def download_cover_art(appid, game_name, out_path, sgdb_key=None):

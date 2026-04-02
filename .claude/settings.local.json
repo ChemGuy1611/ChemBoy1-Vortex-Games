@@ -3,7 +3,7 @@
     "allow": [
       "WebSearch",
       "WebFetch(domain:steamdb.info)",
-      "WebFetch(domain:www.steamgriddb.com)",
+      "WebFetch(domain:steamgriddb.com)",
       "WebFetch(domain:gogdb.org)",
       "WebFetch(domain:egdata.app)",
       "WebFetch(domain:pcgamingwiki.com)",
