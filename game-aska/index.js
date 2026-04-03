@@ -2,8 +2,8 @@
 Name: ASKA Vortex Extension
 Structure: Unity BepinEx/MelonLoader Hybrid
 Author: ChemBoy1
-Version: 0.1.2
-Date: 2026-03-16
+Version: 0.1.3
+Date: 2026-04-03
 //////////////////////////////////////////*/
 
 //Import libraries
@@ -1690,7 +1690,6 @@ function main(context) {
   applyGame(context, spec);
   context.once(() => { // put code here that should be run (once) when Vortex starts up
     const api = context.api;
-    api = context.api;
     context.api.onAsync('did-deploy', async (profileId, deployment) => { 
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;

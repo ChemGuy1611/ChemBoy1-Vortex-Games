@@ -4,6 +4,10 @@
 
 - None
 
+## [0.1.3] - 2026-04-03
+
+- Fixed: Typo that would cause Vortex startup to fail on 2.0.0-alpha.3
+
 ## [0.1.2] - 2026-03-16
 
 - Added: Notification and button to download latest BepInExConfigurationManager

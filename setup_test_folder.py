@@ -183,8 +183,9 @@ def setup(game_id, dry_run=False, force=False):
 
     req_file = resolve_req_file(table)
 
-    # Build the target paths
-    game_folder = os.path.join(TEST_ROOT, game_name)
+    # Build the target paths — strip characters invalid in Windows folder names
+    safe_game_name = re.sub(r'[<>:"/\\|?*]', '', game_name).strip()
+    game_folder = os.path.join(TEST_ROOT, safe_game_name)
     exec_dir = os.path.join(game_folder, bin_path) if bin_path else game_folder
     exec_file = os.path.join(exec_dir, exec_name)
 

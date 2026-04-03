@@ -994,8 +994,11 @@ def create_extension(template_name, game_input, force=False, dry_run=False):
     # ── 11. exec.png ──────────────────────────────────────────────────────────
     print("\n[exec.png]")
     time.sleep(0.3)
-    icon_ok, icon_source = download_exec_icon(appid, game_name, os.path.join(dest, "exec.png"))
+    icon_path = os.path.join(dest, "exec.png")
+    icon_ok, icon_source = download_exec_icon(appid, game_name, icon_path)
     print(f"  {'Saved  : ' + icon_source if icon_ok else 'FAILED — add exec.png manually (64x64 PNG)'}")
+    if icon_ok:
+        os.startfile(icon_path)
 
     # ── 12. Cover art ─────────────────────────────────────────────────────────
     print(f"\n[{game_id}.jpg]")
@@ -1004,6 +1007,7 @@ def create_extension(template_name, game_input, force=False, dry_run=False):
     art_ok, art_source = download_cover_art(appid, game_name, art_path, sgdb_key)
     if art_ok:
         print(f"  Saved  : {art_source}")
+        os.startfile(art_path)
     else:
         print(f"  FAILED — add {game_id}.jpg manually (640x360 JPG, no title text)")
 
