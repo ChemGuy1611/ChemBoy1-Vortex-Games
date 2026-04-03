@@ -22,7 +22,11 @@
       "Bash(python3 -c \":*)",
       "WebFetch(domain:api.egdata.app)",
       "WebFetch(domain:www.pcgamingwiki.com)",
-      "WebFetch(domain:api-docs.nexusmods.com)"
+      "WebFetch(domain:api-docs.nexusmods.com)",
+      "WebFetch(domain:store.steampowered.com)",
+      "WebFetch(domain:www.nexusmods.com)",
+      "WebFetch(domain:steamcommunity.com)",
+      "WebFetch(domain:www.steamdb.info)"
     ]
   }
 }

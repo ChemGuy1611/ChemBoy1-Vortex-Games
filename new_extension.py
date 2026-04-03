@@ -436,7 +436,7 @@ def fetch_pcgw_availability(page_title):
     """Fetch PCGamingWiki page wikitext and check the Availability section for store presence.
     Returns dict: {'xbox': bool, 'xbox_url': str|None, 'epic_url': str|None, 'engine_version': str|None}.
     engine_version is a 4-part string like '5.4.4.0' parsed from {{Infobox game/row/engine|...|build=X.Y.Z}}."""
-    result = {'xbox': False, 'xbox_url': None, 'epic_url': None, 'engine_version': None}
+    result = {'xbox': False, 'xbox_url': None, 'epic_url': None, 'engine_version': None, 'unity_paths': {}}
     if not page_title:
         return result
     try:
@@ -481,8 +481,65 @@ def fetch_pcgw_availability(page_title):
             build = m_eng.group(1)
             # Normalise to 4-part format (e.g. '5.4.4' → '5.4.4.0')
             result['engine_version'] = build if build.count('.') >= 3 else build + '.0'
+        result['unity_paths'] = parse_unity_data_paths(wikitext)
     except Exception as e:
         print(f"    PCGamingWiki availability error: {e}")
+    return result
+
+
+def parse_unity_data_paths(wikitext):
+    """
+    Parse DEV_REGSTRING, GAME_REGSTRING, SAVE_FOLDERNAME, and CONFIG_FOLDERNAME
+    from PCGamingWiki wikitext for Unity games that store data under AppData\\LocalLow.
+
+    PCGW save/config entries look like:
+      {{Game data/saves|Windows|{{p|userprofile}}\\AppData\\LocalLow\\Dev\\Game\\SavesFolder}}
+      {{Game data/config|Windows|{{p|userprofile}}\\AppData\\LocalLow\\Dev\\Game\\ConfigFolder}}
+
+    Returns dict with keys: dev_folder, game_folder, save_folder, config_folder.
+    All values are str or None.
+    """
+    result = {'dev_folder': None, 'game_folder': None, 'save_folder': None, 'config_folder': None}
+
+    def extract_windows_path(data_type):
+        m = re.search(
+            rf'\{{{{Game data/{data_type}\s*\|[^|]*Windows[^|]*\|([^}}]+)\}}}}',
+            wikitext, re.IGNORECASE | re.DOTALL
+        )
+        return m.group(1).strip() if m else None
+
+    def parse_locallow(path_str):
+        """Return (dev, game, subfolder) from a LocalLow path string, or (None, None, None)."""
+        if not path_str or 'locallow' not in path_str.lower():
+            return None, None, None
+        # Strip leading {{p|...}} token
+        cleaned = re.sub(r'^\{\{p\|[^}]+\}\}', '', path_str).strip()
+        parts = [p.strip() for p in re.split(r'[/\\]', cleaned) if p.strip()]
+        try:
+            idx = next(i for i, p in enumerate(parts) if p.lower() == 'locallow')
+            dev   = parts[idx + 1] if idx + 1 < len(parts) else None
+            game  = parts[idx + 2] if idx + 2 < len(parts) else None
+            sub   = parts[idx + 3] if idx + 3 < len(parts) else None
+            return dev, game, sub
+        except StopIteration:
+            return None, None, None
+
+    save_path   = extract_windows_path('saves')
+    config_path = extract_windows_path('config')
+
+    dev, game, sub = parse_locallow(save_path)
+    if dev:
+        result['dev_folder']  = dev
+        result['game_folder'] = game
+        result['save_folder'] = sub
+
+    dev2, game2, sub2 = parse_locallow(config_path)
+    if dev2:
+        if not result['dev_folder']:
+            result['dev_folder']  = dev2
+            result['game_folder'] = game2
+        result['config_folder'] = sub2
+
     return result
 
 
@@ -873,6 +930,22 @@ def create_extension(template_name, game_input, force=False, dry_run=False):
         **({"GAME_STRING": game_string, "GAME_STRING_ALT": game_string,
             "GAME_FOLDER": game_string, "FLUFFY_FOLDER": game_string} if game_string else {}),
     }
+    # For Unity templates, populate registry/AppData path fields from PCGamingWiki save paths
+    UNITY_TEMPLATES = {
+        'template-unitybepinex',
+        'template-unitymelonloaderbepinex-hybrid',
+        'template-unity-umm',
+    }
+    if template_name in UNITY_TEMPLATES:
+        up = availability.get('unity_paths', {})
+        if up.get('dev_folder'):
+            fields['DEV_REGSTRING']   = up['dev_folder']
+        if up.get('game_folder'):
+            fields['GAME_REGSTRING']  = up['game_folder']
+        if up.get('save_folder'):
+            fields['SAVE_FOLDERNAME'] = up['save_folder']
+        if up.get('config_folder'):
+            fields['CONFIG_FOLDERNAME'] = up['config_folder']
     # Direct EXEC/EXEC_NAME assignments (for templates that use a literal)
     if exec_filename:
         fields["EXEC"] = exec_filename

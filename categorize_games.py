@@ -178,11 +178,11 @@ def update_single(game_id, dry_run=False):
         if filename == target:
             if game_id not in ids:
                 if dry_run:
-                    print(f"  [DRY RUN] Would add {game_id} → {filename} ({label})")
+                    print(f"  [DRY RUN] Would add {game_id} -> {filename} ({label})")
                 else:
                     ids.append(game_id)
                     write_list(filepath, ids)
-                    print(f"  Added {game_id} → {filename} ({label})")
+                    print(f"  Added {game_id} -> {filename} ({label})")
             else:
                 print(f"  {game_id} already in {filename} ({label})")
         else:

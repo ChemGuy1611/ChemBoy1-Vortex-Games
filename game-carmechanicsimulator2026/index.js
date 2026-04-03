@@ -1,9 +1,9 @@
 /*//////////////////////////////////////////
-Name: XXX Vortex Extension
+Name: Car Mechanic Simulator 2026 Vortex Extension
 Structure: Unity BepinEx/MelonLoader/Custom Loader Hybrid
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2026-XX-XX
+Date: 2026-04-03
 Notes:
 - 
 //////////////////////////////////////////*/
@@ -29,35 +29,32 @@ const LOCALLOW = path.join(USER_HOME, 'AppData', 'LocalLow');
 const LOCALAPPDATA = util.getVortexPath("localAppData");
 
 //Specify all the information about the game
-const GAME_ID = "XXX";
-const STEAMAPP_ID = "XXX";
-const STEAMAPP_ID_DEMO = "XXX";
-const EPICAPP_ID = "XXX";
-const GOGAPP_ID = "XXX";
-const XBOXAPP_ID = "XXX";
+const GAME_ID = "carmechanicsimulator2026";
+const STEAMAPP_ID = "2692660"; // https://steamdb.info/app/2692660/
+const STEAMAPP_ID_DEMO = "4307740"; // https://steamdb.info/app/4307740/
+const EPICAPP_ID = null;
+const GOGAPP_ID = null;
+const XBOXAPP_ID = null;
 const XBOXEXECNAME = "Game";
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, STEAMAPP_ID_DEMO]; // UPDATE THIS WITH ALL VALID IDs
 
-const GAME_NAME = "XXX";
-const GAME_NAME_SHORT = "XXX";
-const GAME_STRING = "XXX"; //string for exe and data folder (seem to always match)
-const GAME_STRING_ALT = GAME_STRING; //CHANGE THIS IF IT DOESN'T MATCH
+const GAME_NAME = "Car Mechanic Simulator 2026";
+const GAME_NAME_SHORT = "Car Mechanic Simulator 2026";
+const GAME_STRING = "Car Mechanic Simulator 2026"; //string for exe and data folder (seem to always match)
+const GAME_STRING_ALT = 'Car Mechanic Simulator 2026 Demo'; //CHANGE THIS IF IT DOESN'T MATCH
 const EXEC = `${GAME_STRING}.exe`;
 const EXEC_EGS = EXEC;
 const EXEC_GOG = EXEC;
-const EXEC_DEMO = EXEC;
+const EXEC_DEMO = `${GAME_STRING_ALT}.exe`;
 const EXEC_XBOX = 'gamelaunchhelper.exe';
 const EXEC_ALT = `${GAME_STRING_ALT}.exe`;
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Car_Mechanic_Simulator_2026";
 const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
 
 //feature toggles
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
 const hasXbox = false; //toggle for Xbox version logic
-let multiExe = false; //set to true if there are multiple executables (typically for Xbox/EGS)
-if (GAME_STRING_ALT !== GAME_STRING) {
-  multiExe = true;
-} //*/
+let multiExe = true; //set to true if there are multiple executables (typically for Xbox/EGS)
 const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
 const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
 const preventPluginInstall = true; //set to true if you want to prevent plugins not for the current mod loader from installing. Disable if using cross-compatibility plugins.
@@ -69,7 +66,7 @@ const customLoaderInstaller = false; //set true if the custom loader uses an ins
 
 const DATA_FOLDER_DEFAULT = `${GAME_STRING}_Data`;
 let DATA_FOLDER = DATA_FOLDER_DEFAULT;
-const ALT_VERSION = 'xbox';
+const ALT_VERSION = 'demo';
 const DATA_FOLDER_ALT = `${GAME_STRING_ALT}_Data`; //don't always match
 const ROOT_FOLDERS = [DATA_FOLDER, DATA_FOLDER_ALT];
 const VERSION_FILE = path.join('Version.info'); // LIKELY to change - usually .txt or .info file, i.e. Version.info. app.info typically does NOT contain version number
@@ -78,8 +75,8 @@ const hasVersionFile = false; //set to true if there is a Version.info file that
 const VER_IDX = 3; //index of the version number in the Version.info file
 const VER_SPLIT = ' '; //split character for the Version.info file - typically a space
 
-const DEV_REGSTRING = "XXX"; //developer name
-const GAME_REGSTRING = "XXX"; //game name
+const DEV_REGSTRING = "Red Dot Games"; //developer name
+const GAME_REGSTRING = "Car Mechanic Simulator 2026"; //game name
 const XBOX_PUB_ID = "XXX"; //string after "ID_"
 const CONFIG_FOLDERNAME = "XXX";
 const SAVE_FOLDERNAME = "XXX";
@@ -2220,7 +2217,7 @@ function applyGame(context, gameSpec) {
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', async () => {
+  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', async () => {
     //SAVE_PATH = await getSavePath(context.api);
     util.opn(SAVE_PATH).catch(() => null);
     }, () => {
