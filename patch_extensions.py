@@ -6,13 +6,13 @@ Each patch is a named, independently-enabled function. New patches can be added
 to the PATCHES list without touching the runner logic.
 
 Usage:
-    python patch_extensions.py                        # run all enabled patches on all games
-    python patch_extensions.py --game GAME_ID         # run on a single game
-    python patch_extensions.py --dry-run              # preview changes without writing
-    python patch_extensions.py --game GAME_ID --dry-run
+    python patch_extensions.py                              # run all enabled patches on all games
+    python patch_extensions.py GAME_ID [GAME_ID ...]       # run on one or more games
+    python patch_extensions.py --dry-run                   # preview changes without writing
+    python patch_extensions.py GAME_ID [GAME_ID ...] --dry-run
     python patch_extensions.py --force-pcgw                # re-evaluate all PCGAMINGWIKI_URL values, overwriting wrong ones
     python patch_extensions.py --force                     # re-run all URL patches even if values are already set
-    python patch_extensions.py --game GAME_ID --debug      # print raw PCGW search results for diagnosis
+    python patch_extensions.py GAME_ID [GAME_ID ...] --debug  # print raw PCGW search results for diagnosis
 """
 
 import os
@@ -724,13 +724,8 @@ def main():
     _debug = "--debug" in args
     args = [a for a in args if a not in ("--dry-run", "--force-pcgw", "--force", "--debug")]
 
-    single_game = None
-    if "--game" in args:
-        idx = args.index("--game")
-        if idx + 1 >= len(args):
-            print("ERROR: --game requires a GAME_ID argument.")
-            sys.exit(1)
-        single_game = args[idx + 1]
+    # Remaining positional args (if any) are the GAME_IDs to target
+    target_ids = args if args else None
 
     print("Loading context...")
     context = {
@@ -739,8 +734,8 @@ def main():
         "force": force,
     }
 
-    if single_game:
-        game_ids = [single_game]
+    if target_ids:
+        game_ids = target_ids
     else:
         game_ids = sorted(
             d[len("game-"):]

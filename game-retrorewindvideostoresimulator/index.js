@@ -3,7 +3,7 @@ Name: Retro Rewind - Video Store Simulator Vortex Extension
 Structure: Unreal Engine Game
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2026-03-31
+Date: 2026-04-02
 Notes:
 - 
 ////////////////////////////////////////////////*/
@@ -45,7 +45,7 @@ const EXEC_EPIC = EXEC; //change these 3 if different
 const EXEC_GOG = EXEC;
 const EXEC_DEMO = EXEC;
 const PARAMETERS_STRING = ''; //launch arguments to pass when launching the game
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Retro_Rewind";
 const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
 
 //feature toggles
@@ -59,7 +59,7 @@ const hasModKit = false; //toggle for UE ModKit mod support
 const preferHardlinks = true; //set true to perform partition checks when IO-STORE=false for Config/Save modtypes so that hardlinks available to more users
 const autoDownloadUe4ss = false; //toggle for auto downloading UE4SS
 const SIGBYPASS_REQUIRED = false; //set true if there are .sig files in the Paks folder
-const IO_STORE = true; //true if the Paks folder contains .ucas and .utoc files
+const IO_STORE = false; //true if the Paks folder contains .ucas and .utoc files
 const hasUserIdFolder = false; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
 
 //UE specific

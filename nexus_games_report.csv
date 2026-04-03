@@ -1,0 +1,150 @@
+rank,supported,name,domain,mods,downloads,dl_per_mod_day,approved_date
+1,Yes,Resident Evil Requiem,residentevilrequiem,1165,5450415,136.6873,2/27/2026
+2,Yes,Borderlands 2,borderlands2,377,5282592,68.9934,9/11/2025
+3,Yes,Hollow Knight: Silksong,hollowknightsilksong,709,4210369,28.279,9/4/2025
+4,Yes,My Winter Car,mywintercar,1255,2291908,19.4047,12/29/2025
+5,Yes,Crimson Desert,crimsondesert,254,1407724,411.3056,3/20/2026
+6,Yes,Dying Light: The Beast,dyinglightthebeast,562,1255048,11.364,9/18/2025
+7,No,EA Sports FC 26,easportsfc26,336,982928,15.5449,9/26/2025
+8,Yes,Borderlands 4,borderlands4,187,905410,23.84,9/11/2025
+9,Yes,Silent Hill f,silenthillf,193,605428,16.3782,9/23/2025
+10,Yes,The Outer Worlds 2,theouterworlds2,83,553099,41.0463,10/22/2025
+11,Yes,Slay The Spire II,slaythespire2,254,392666,58.7137,3/7/2026
+12,Yes,Mewgenics,mewgenics,209,369218,36.4818,2/13/2026
+13,Yes,Metal Gear Solid Delta: Snake Eater,metalgearsoliddeltasnakeeater,198,358929,8.2959,8/27/2025
+14,Yes,Vampire: The Masquerade - Bloodlines 2,vtmbloodlines2,121,284857,14.4392,10/21/2025
+15,Yes,Megabonk,megabonk,107,248107,12.1848,9/24/2025
+16,Yes,The Last Caretaker,thelastcaretaker,113,226948,12.5416,10/24/2025
+17,Yes,Nioh 3,nioh3,86,205766,39.6493,2/1/2026
+18,Yes,Anno 117: Pax Romana,anno117paxromana,109,197952,8.8885,9/10/2025
+19,No,Story of Seasons: Grand Bazaar,storyofseasonsgrandbazaar,110,186047,8.0027,9/3/2025
+20,Yes,StarRupture,starrupture,85,181050,24.9055,1/7/2026
+21,Yes,Code Vein II,codevein2,130,178316,20.0856,1/24/2026
+22,Yes,Jurassic World Evolution 3,jurassicworldevolution3,164,164436,6.1497,10/21/2025
+23,Yes,Monster Hunter Stories 3 Twisted Reflection,monsterhunterstories3twistedreflection,103,129937,31.4483,2/21/2026
+24,Yes,Cronos: The New Dawn,cronosthenewdawn,71,128485,8.5707,9/3/2025
+25,Yes,MENACE,menace,134,127059,18.437,2/10/2026
+26,Yes,Digimon Story: Time Stranger,digimonstorytimestranger,122,124556,5.6658,10/4/2025
+27,Yes,Escape from Duckov,escapefromduckov,54,119905,13.9516,10/25/2025
+28,Yes,Of Ash and Steel,ofashandsteel,45,107640,18.369,11/23/2025
+29,Yes,Vein,vein,130,90834,3.6355,9/22/2025
+30,Yes,Daemon X Machina: Titanic Scion,daemonxmachinatitanicscion,47,80316,8.2049,9/6/2025
+31,No,Yakuza Kiwami 3 & Dark Ties,yakuzakiwami3,284,79602,3.9415,1/21/2026
+32,Yes,FINAL FANTASY TACTICS - The Ivalice Chronicles,finalfantasytacticstheivalicechronicles,68,72096,5.8186,10/2/2025
+33,Yes,DRAGON QUEST I & II HD-2D Remake,dragonquest1and2hd2dremake,37,63160,10.9211,10/28/2025
+34,Yes,CloverPit,cloverpit,42,58817,7.601,9/30/2025
+35,Yes,Octopath Traveler 0,octopathtraveler0,102,56183,4.4703,11/30/2025
+36,Yes,RV There Yet,rvthereyet,29,55942,12.0475,10/24/2025
+37,Yes,Dispatch,dispatch,23,55721,15.5968,10/29/2025
+38,Yes,Trails in the Sky 1st Chapter,trailsintheskyfirstchapter,34,53649,7.4656,9/3/2025
+39,Yes,Dragon Quest VII Reimagined,dragonquest7reimagined,60,43884,11.5654,1/29/2026
+40,No,Sonic Racing: CrossWorlds,sonicracingcrossworlds,67,35092,2.4452,8/31/2025
+41,No,Mafia: The Old Country,mafiatheoldcountry,40,34757,3.6766,8/9/2025
+42,Yes,Quarantine Zone: The Last Check,quarantinezonethelastcheck,15,34080,30.2635,1/17/2026
+43,Yes,Ninja Gaiden 4,ninjagaidenfour,27,30560,6.9353,10/21/2025
+44,No,Star Trek: Voyager - Across the Unknown,startrekvyageracrosstheunknown,35,30449,5.1401,10/15/2025
+45,No,ARC Raiders,arcraiders,11,28834,18.1795,11/9/2025
+46,No,Retro Rewind - Video Store Simulator,retrorewindvideostoresimulator,45,26154,43.6864,3/20/2026
+47,Yes,Duet Night Abyss,duetnightabyss,23,25159,7.0438,10/29/2025
+48,Yes,Burglin' Gnomes,burglingnomes,19,23932,23.2743,2/7/2026
+49,No,Megastore Simulator,megastoresimulator,30,23670,8.5476,12/31/2025
+50,No,Hytale,hytale,101,21563,2.73,1/14/2026
+51,Yes,MineMogul,minemogul,91,20955,2.167,12/17/2025
+52,No,DEATH STRANDING 2: ON THE BEACH,deathstranding2onthebeach,21,20793,64.2662,3/18/2026
+53,Yes,Lost Soul Aside,lostsoulaside,28,17797,2.94,8/29/2025
+54,No,"Warhammer 40,000: Dawn of War - Definitive Edition",warhammerdawnofwarddefinitiveedtion,35,17100,2.1591,8/19/2025
+55,Yes,BALL x PIT,ballxpit,14,16613,7.4108,10/24/2025
+56,No,Arknight Endfield,arknightendfield,34,15651,7.5351,1/31/2026
+57,No,YAPYAP,yapyap,16,12453,5.7895,11/19/2025
+58,Yes,Starsand Island,starsandisland,25,12293,10.8852,2/16/2026
+59,No,Yakuza 0 Director's Cut,yakuza0directorscut,25,11886,4.2387,12/11/2025
+60,No,Pokemon Legends: Z-A,pokemonlegendsza,12,10407,6.0566,11/10/2025
+61,Yes,Sacred 2: Remaster,sacred2remaster,30,10041,2.3886,11/13/2025
+62,No,Tormented Souls 2,tormentedsouls2,9,9852,6.9641,10/27/2025
+63,No,MISERY,misery,17,9821,4.0578,11/11/2025
+64,Yes,High On Life 2,highonlife2,17,9142,11.6369,2/15/2026
+65,No,Wicked Seed,wickedseed,4,8728,39.614,2/6/2026
+66,No,Yakuza Kiwami 2 (2025),yakuzakiwami22025,30,7542,2.301,12/14/2025
+67,No,Where Winds Meet,wherewindsmeet,9,7344,6.0699,11/19/2025
+68,No,FATAL FRAME II: Crimson Butterfly REMAKE,fatalframe2crimsonbutterflyremake,10,6855,25.1414,3/6/2026
+69,No,Battlefield 6,battlefield6,6,5982,5.7558,10/11/2025
+70,No,Shape of Dreams,shapeofdreams,4,5915,8.44,10/9/2025
+71,No,Chill with You : Lo-Fi Story,chillwithyoulofistory,4,5548,10.3168,11/19/2025
+72,No,John Carpenter's Toxic Commando,johncarpenterstoxiccommando,14,5300,9.6542,2/22/2026
+73,Yes,ROUTINE,routine,15,5242,2.9573,12/5/2025
+74,No,The Walking Trade,thewalkingtrade,12,5066,18.1768,3/10/2026
+75,No,Yakuza Kiwami (2025),yakuzakiwami2025,20,5043,2.3083,12/14/2025
+76,Yes,REANIMAL,reanimal,17,5025,1.8684,10/26/2025
+77,No,Car Dealer Simulator,cardealersimulator,8,4867,2.6996,8/20/2025
+78,No,Echoes of the End,echoesoftheend,16,4851,1.3054,8/13/2025
+79,Yes,MY HERO ACADEMIA: Alls Justice,myheroacademiaallsjustice,18,4705,4.8312,2/7/2026
+80,No,Heartopia,heartopia,5,4658,12.409,1/17/2026
+81,Yes,Windrose,windrose,23,4310,6.3709,3/4/2026
+82,No,Little Witch in the Woods,littlewitchinthewoods,11,4185,2.3761,10/24/2025
+83,No,Plants vs Zombies: Replanted,plantsvszombiesreplanted,5,3965,5.2121,11/1/2025
+84,Yes,Roadside Research,roadsideresearch,13,3835,3.3733,1/5/2026
+85,No,Grimshire,grimshire,21,3688,2.1121,1/9/2026
+86,Yes,Crisol: Theater of Idols,crisoltheaterofidols,7,3443,9.7988,2/11/2026
+87,No,Solasta II,solasta2,20,3133,7.4042,3/12/2026
+88,No,Scav Prototype,scavprototype,17,2916,1.157,11/5/2025
+89,No,Little Nightmares III,littlenightmares3,17,2892,0.9766,10/10/2025
+90,No,Hachishaku,hachishaku,5,2646,3.4783,11/1/2025
+91,No,Restaurats,restaurats,9,2639,2.0954,11/13/2025
+92,Yes,Cairn,cairn,14,2534,1.5981,12/10/2025
+93,No,"No, I'm not a Human",noimnotahuman,4,2389,3.4091,10/9/2025
+94,No,Little Rocket Lab,littlerocketlab,13,2322,1.0863,10/20/2025
+95,No,Mall Simulator,mallsimulator,4,2321,4.2924,11/18/2025
+96,No,MateEngine,mateengine,4,2266,3.1777,10/6/2025
+97,No,Crime Scene Cleaner,crimescenecleaner,8,2087,1.7366,11/3/2025
+98,No,Plants vs. Zombies: Battle for Neighborville,plantsvszombiesbattleforneighborville,16,2025,0.5671,8/22/2025
+99,No,Esoteric Ebb,esotericebb,13,1947,2.1947,1/24/2026
+100,No,Gears of War: Reloaded,gearsofwarreloaded,19,1878,0.4527,8/27/2025
+101,No,Cloudheim,cloudheim,7,1864,2.2715,12/6/2025
+102,No,Ultimate Theater Simulator,ultimatetheatersimulator,7,1807,1.4557,10/7/2025
+103,No,Absolum,absolum,6,1797,3.0169,12/24/2025
+104,No,Baby Steps,babysteps,2,1772,4.9966,10/7/2025
+105,No,INAZUMA ELEVEN Victory Road,inazumaelevenvictoryroad,3,1642,9.5768,2/4/2026
+106,No,Roboquest,roboquest,1,1617,14.9058,12/15/2025
+107,No,Nested Lands,nestedlands,13,1541,3.6752,3/1/2026
+108,No,Sniper Elite: Resistance,snipereliteresistance,14,1504,0.4969,8/29/2025
+109,No,SpongeBob SquarePants: Titans of the Tide,spongebobsquarepantstitansofthetide,11,1487,1.023,11/21/2025
+110,No,Heroes of Might and Magic: Olden Era,heroesofmightandmagicoldenera,8,1467,1.1234,10/21/2025
+111,No,Flotsam,flotsam,7,1461,1.9662,12/17/2025
+112,No,MARVEL Cosmic Invasion,marvelcosmicinvasion,11,1382,0.7047,10/6/2025
+113,No,Big Ambitions,bigambitions,3,1339,6.3343,1/22/2026
+114,No,Poker Night at the Inventory (2026 Remaster),pokernightattheinventory,16,1339,3.0568,3/6/2026
+115,No,Front Mission 3: Remake,frontmission3remake,3,1301,7.872,2/6/2026
+116,No,Styx: Master of Shadows,styxmasterofshadows,6,1266,1.3586,10/29/2025
+117,Yes,Styx: Blades of Greed,styxbladesofgreed,9,1241,1.8364,1/17/2026
+118,No,Everwind,everwind,5,1095,21.4526,3/23/2026
+119,No,SCUM,scum,8,1084,0.6016,8/20/2025
+120,No,Life is Strange: Reunion,lifeisstrangereunion,9,1056,16.9543,3/26/2026
+121,No,Horizon Walker,horizonwalker,13,1010,0.3898,9/15/2025
+122,Yes,NORSE: Oath of Blood,norse,4,948,5.4506,2/18/2026
+123,No,The King Is Watching,thekingiswatching,5,931,0.7916,8/10/2025
+124,No,Mandate of Heaven,mandateofheaven,1,925,6.46,11/10/2025
+125,No,Alien: Rogue Incursion Evolved Edition,alienrogueincursionevolvededition,5,924,1.0142,10/2/2025
+126,No,PowerWash Simulator 2,powerwashsimulator2,3,891,1.952,11/1/2025
+127,No,Z.A.T.O.  I Love the World and Everything In It,zato,1,867,6.4491,11/19/2025
+128,No,WWE2K26,wwe2k26,2,856,19.108,3/11/2026
+129,No,Lego Harry Potter Collection,legoharrypottercollection,3,843,1.3301,9/3/2025
+130,No,Jump Space,jumpspace,12,798,0.3424,9/20/2025
+131,No,Easy Delivery Co,easydeliveryco,13,770,0.3288,10/4/2025
+132,No,1348 Ex Voto,1348exvoto,8,760,2.6151,2/25/2026
+133,No,Vanguard Galaxy,vanguardgalaxy,11,750,0.6486,12/18/2025
+134,Yes,ROMEO IS A DEAD MAN,romeoisadeadman,11,747,1.4702,2/15/2026
+135,No,Worms Ultimate Mayhem,wormsultimatemayhem,14,733,0.3632,11/9/2025
+136,No,Deadly Days: Roadtrip,deadlydaysroadtrip,3,721,1.062,8/19/2025
+137,Yes,Europa Universalis V,europauniversalisv,7,700,0.6739,11/5/2025
+138,No,OPERATOR,operator,36,659,0.3437,2/8/2026
+139,No,Vietnam War,vietnamwar,6,655,0.5194,9/4/2025
+140,No,AETHUS,aethus,4,651,6.0462,3/6/2026
+141,No,Tinkerlands,tinkerlands,4,650,1.2088,11/19/2025
+142,No,Double Dragon Revive,doubledragonrevive,2,633,2.0254,10/28/2025
+143,No,"Warhammer 40,000: Dark Heresy",warhammer40000darkheresy,1,629,5.919,12/17/2025
+144,No,The Farmer Was Replaced,thefarmerwasreplaced,6,596,0.58,10/13/2025
+145,No,Startup Company,startupcompany,5,585,1.4547,1/12/2026
+147,No,Egging On,eggingon,3,572,1.5242,11/28/2025
+146,No,Junkyard Truck,junkyardtruck,9,572,0.3731,10/14/2025
+148,No,Street Racing Syndicate,streetracingsyndicate,5,545,0.7164,11/1/2025
+149,No,Assetto Corsa Rally,assettocorsarally,9,533,0.4405,11/19/2025

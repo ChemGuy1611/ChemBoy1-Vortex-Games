@@ -41,6 +41,7 @@ import urllib.parse
 from datetime import date
 from io import BytesIO
 from PIL import Image
+import setup_test_folder as stf
 
 REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
 
@@ -59,6 +60,9 @@ TEMPLATES = [
     "template-unitymelonloaderbepinex-hybrid",
     "template-unity-umm",
 ]
+
+# Short names accepted on the command line (strip the "template-" prefix)
+TEMPLATE_SHORT_NAMES = [t[len("template-"):] for t in TEMPLATES]
 
 # ── HTTP ──────────────────────────────────────────────────────────────────────
 
@@ -536,13 +540,35 @@ def download_exec_icon(appid, game_name, out_path):
 
 def download_cover_art(appid, game_name, out_path, sgdb_key=None):
     """Download and save a 640x360 cover art JPG with no title text.
-    Tries SteamGridDB heroes first, then Steam library_hero.jpg."""
+
+    All sources used are strictly title-free. Sources with baked-in title text
+    (Steam capsule, Steam header, SteamGridDB alternate/white_logo grids) are
+    never used.
+
+    Priority order:
+    1. SteamGridDB 920x430 grid, no_logo style only — native aspect ratio, no text
+    2. SteamGridDB heroes — title-free wide art, center-cropped from 3:1 to 16:9
+    3. Steam library_hero.jpg — title-free wide art, center-cropped from 3:1 to 16:9
+    """
 
     img_data = None
     source = None
 
-    # 1. SteamGridDB heroes (curated text-free wide art)
+    # 1. SteamGridDB 920x430 no_logo grids only — skip if style not available
     if sgdb_key:
+        try:
+            url = f"https://www.steamgriddb.com/api/v2/grids/steam/{appid}?dimensions=920x430&styles=no_logo"
+            resp = json.loads(http_get(url, {"Authorization": f"Bearer {sgdb_key}"}))
+            grids = resp.get("data", [])
+            if grids:
+                best = sorted(grids, key=lambda x: x.get("width", 0), reverse=True)[0]
+                img_data = http_get_bytes(best["url"])
+                source = "SteamGridDB grid 920x430 no_logo"
+        except Exception as e:
+            print(f"    SteamGridDB grid error: {e}")
+
+    # 2. SteamGridDB heroes (title-free, wide art — requires crop)
+    if not img_data and sgdb_key:
         try:
             url = f"https://www.steamgriddb.com/api/v2/heroes/steam/{appid}"
             resp = json.loads(http_get(url, {"Authorization": f"Bearer {sgdb_key}"}))
@@ -550,25 +576,26 @@ def download_cover_art(appid, game_name, out_path, sgdb_key=None):
             if heroes:
                 best = sorted(heroes, key=lambda x: x.get("width", 0), reverse=True)[0]
                 img_data = http_get_bytes(best["url"])
-                source = f"SteamGridDB hero ({best.get('width')}x{best.get('height')})"
+                source = f"SteamGridDB hero ({best.get('width')}x{best.get('height')}) [cropped]"
         except Exception as e:
             print(f"    SteamGridDB hero error: {e}")
 
-    # 2. Steam library_hero.jpg (1920x620, no title text)
+    # 3. Steam library_hero.jpg (1920x620, title-free — requires crop)
     if not img_data:
         try:
             url = f"https://cdn.fastly.steamstatic.com/steam/apps/{appid}/library_hero.jpg"
             img_data = http_get_bytes(url)
-            source = "Steam library_hero.jpg"
+            source = "Steam library_hero.jpg [cropped]"
         except Exception as e:
             print(f"    Steam library_hero error: {e}")
 
     if not img_data:
         return False, None
 
-    # Center-crop to 16:9, then resize to 640x360
     img = Image.open(BytesIO(img_data)).convert("RGB")
     w, h = img.size
+
+    # Crop to 16:9 if the source is wider than 16:9 (heroes and library_hero are ~3:1)
     target_ratio = 640 / 360
     current_ratio = w / h
     if current_ratio > target_ratio:
@@ -579,6 +606,7 @@ def download_cover_art(appid, game_name, out_path, sgdb_key=None):
         new_h = int(w / target_ratio)
         top = (h - new_h) // 2
         img = img.crop((0, top, w, top + new_h))
+
     img = img.resize((640, 360), Image.LANCZOS)
     img.save(out_path, "JPEG", quality=92)
     return True, source
@@ -957,15 +985,23 @@ def create_extension(template_name, game_input, force=False, dry_run=False):
     # ── 15. Update engine category lists ─────────────────────────────────────
     print("[categorize_games.py]")
     result = subprocess.run(
-        ["python", "categorize_games.py", "--game", game_id],
+        ["python", "categorize_games.py", game_id],
         cwd=REPO_ROOT, capture_output=True, text=True
     )
     if result.returncode == 0:
         print(f"  {result.stdout.strip()}\n")
     else:
-        print(f"  FAILED — run manually: python categorize_games.py --game {game_id}")
+        print(f"  FAILED — run manually: python categorize_games.py {game_id}")
         if result.stderr:
             print(f"  {result.stderr.strip()}\n")
+
+    # ── 16. Create test game folder ───────────────────────────────────────────
+    print("[setup_test_folder.py]")
+    try:
+        stf.setup(game_id)
+    except Exception as exc:
+        print(f"  FAILED — run manually: python setup_test_folder.py {game_id}")
+        print(f"  {exc}\n")
 
 
 # ── CLI ───────────────────────────────────────────────────────────────────────
@@ -975,14 +1011,17 @@ def main():
         description="Bootstrap a new Vortex game extension from a template.",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=(
+            "Templates:\n  " + "\n  ".join(TEMPLATE_SHORT_NAMES) + "\n\n"
             "Examples:\n"
-            '  python new_extension.py --template template-unitybepinex "Hollow Knight"\n'
-            "  python new_extension.py --template template-ue4-5game 1954200\n"
+            '  python new_extension.py unitybepinex "Hollow Knight"\n'
+            "  python new_extension.py ue4-5game 1954200\n"
         ),
     )
     parser.add_argument(
-        "--template", required=True, choices=TEMPLATES,
-        help="Template to base the extension on",
+        "template",
+        choices=TEMPLATE_SHORT_NAMES,
+        metavar="TEMPLATE",
+        help=f"Template short name. One of: {', '.join(TEMPLATE_SHORT_NAMES)}",
     )
     parser.add_argument(
         "game",
@@ -997,7 +1036,8 @@ def main():
         help="Run all lookups and print what would be created, without writing any files",
     )
     args = parser.parse_args()
-    create_extension(args.template, args.game, args.force, args.dry_run)
+    full_template = f"template-{args.template}"
+    create_extension(full_template, args.game, args.force, args.dry_run)
 
 
 if __name__ == "__main__":

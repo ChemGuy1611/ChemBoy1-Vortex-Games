@@ -42,19 +42,8 @@ def build_symbol_table(src):
     ):
         table[m.group(1)] = m.group(2)
 
-    # Pass 2: collect path.join(...) constants
-    for m in re.finditer(
-        r'^(?:const|let)\s+(\w+)\s*=\s*path\.join\((.+?)\)\s*;?',
-        src, re.MULTILINE
-    ):
-        name = m.group(1)
-        args_str = m.group(2)
-        # Extract quoted string parts only (skip variable refs for simplicity)
-        parts = re.findall(r'["\']([^"\']+)["\']', args_str)
-        if parts:
-            table[name] = "/".join(parts)
-
-    # Pass 3: resolve template literals  `${VAR}suffix` or `prefix${VAR}`
+    # Pass 2: resolve template literals  `${VAR}suffix` or `prefix${VAR}`
+    # (run before path.join() pass so template vars are available for substitution)
     for m in re.finditer(
         r'^(?:const|let)\s+(\w+)\s*=\s*`(.*?)`\s*;?',
         src, re.MULTILINE
@@ -68,6 +57,42 @@ def build_symbol_table(src):
         )
         if '${' not in resolved:
             table[name] = resolved
+
+    # Pass 3: collect path.join(...) constants, resolving variable refs from table
+    for m in re.finditer(
+        r'^(?:const|let)\s+(\w+)\s*=\s*path\.join\((.+?)\)\s*;?',
+        src, re.MULTILINE
+    ):
+        name = m.group(1)
+        args_str = m.group(2)
+        parts = []
+        for arg in re.split(r',', args_str):
+            arg = arg.strip()
+            # Quoted string literal
+            qm = re.match(r'^["\']([^"\']*)["\']$', arg)
+            if qm:
+                parts.append(qm.group(1))
+                continue
+            # Template literal  `Win${BITS}`
+            tm = re.match(r'^`(.*)`$', arg)
+            if tm:
+                resolved = re.sub(
+                    r'\$\{(\w+)\}',
+                    lambda r: table.get(r.group(1), r.group(0)),
+                    tm.group(1)
+                )
+                if '${' not in resolved:
+                    parts.append(resolved)
+                continue
+            # Variable reference
+            if re.match(r'^\w+$', arg) and arg in table:
+                parts.append(table[arg])
+                continue
+            # Unresolvable — abort this join
+            parts = None
+            break
+        if parts:
+            table[name] = "/".join(parts)
 
     # Pass 4: resolve variable-to-variable refs
     for m in re.finditer(
@@ -116,6 +141,21 @@ def resolve_exec(table):
     return exec_name, bin_path
 
 
+def resolve_req_file(table):
+    """
+    Return the REQ_FILE value from the symbol table, or None.
+    REQ_FILE is either a folder name (e.g. EPIC_CODE_NAME) or a file path
+    (e.g. EXEC). Normalise separators but do not strip anything.
+    """
+    def valid(val):
+        return val and val != "XXX" and not val.startswith("${")
+
+    val = table.get("REQ_FILE")
+    if not valid(val):
+        return None
+    return val.replace("/", os.sep)
+
+
 # ── Main logic ────────────────────────────────────────────────────────────────
 
 def setup(game_id, dry_run=False, force=False):
@@ -141,25 +181,44 @@ def setup(game_id, dry_run=False, force=False):
         print(f"  [{game_id}] ERROR — could not resolve executable name from index.js")
         return False
 
-    # Build the target path
+    req_file = resolve_req_file(table)
+
+    # Build the target paths
     game_folder = os.path.join(TEST_ROOT, game_name)
-    if bin_path:
-        exec_dir = os.path.join(game_folder, bin_path)
-    else:
-        exec_dir = game_folder
+    exec_dir = os.path.join(game_folder, bin_path) if bin_path else game_folder
     exec_file = os.path.join(exec_dir, exec_name)
 
+    # REQ_FILE path — relative to game_folder
+    req_path = os.path.join(game_folder, req_file) if req_file else None
+    # If REQ_FILE has no extension it is a folder (e.g. EPIC_CODE_NAME)
+    req_is_dir = req_path and not os.path.splitext(req_file)[1]
+
     if dry_run:
-        print(f"  [{game_id}] [DRY RUN] Would create: {exec_file}")
+        print(f"  [{game_id}] [DRY RUN] Would create:")
+        print(f"    exe:      {exec_file}")
+        if req_path and req_path != exec_file:
+            kind = "dir" if req_is_dir else "file"
+            print(f"    req_file: {req_path}  ({kind})")
         return True
 
-    # Create directories and empty exe file
+    # Create the exe
     os.makedirs(exec_dir, exist_ok=True)
     if not os.path.exists(exec_file) or force:
         open(exec_file, "w").close()
-        print(f"  [{game_id}] Created: {exec_file}")
+        print(f"  [{game_id}] Created exe:      {exec_file}")
     else:
-        print(f"  [{game_id}] Already exists: {exec_file}")
+        print(f"  [{game_id}] Already exists:   {exec_file}")
+
+    # Create REQ_FILE if it differs from the exe
+    if req_path and req_path != exec_file:
+        if req_is_dir:
+            os.makedirs(req_path, exist_ok=True)
+            print(f"  [{game_id}] Created req dir:  {req_path}")
+        else:
+            os.makedirs(os.path.dirname(req_path), exist_ok=True)
+            if not os.path.exists(req_path) or force:
+                open(req_path, "w").close()
+                print(f"  [{game_id}] Created req file: {req_path}")
 
     return True
 

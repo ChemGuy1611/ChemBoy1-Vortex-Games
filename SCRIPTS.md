@@ -18,13 +18,13 @@ pip install Pillow
 
 ```sh
 python fetch_exec_icon.py
-python fetch_exec_icon.py --game GAME_ID
+python fetch_exec_icon.py GAME_ID [GAME_ID ...]
 python fetch_exec_icon.py --dry-run
 python fetch_exec_icon.py --force
 ```
 
 - No arguments — scans all `game-*` folders and downloads missing icons.
-- `--game GAME_ID` — only processes the extension with that game ID.
+- `GAME_ID [GAME_ID ...]` — only processes the listed game IDs.
 - `--dry-run` — lists missing files without downloading anything.
 - `--force` — re-downloads `exec.png` even if it already exists.
 
@@ -56,13 +56,13 @@ pip install Pillow
 
 ```sh
 python fetch_cover_art.py
-python fetch_cover_art.py --game GAME_ID
+python fetch_cover_art.py GAME_ID [GAME_ID ...]
 python fetch_cover_art.py --dry-run
 python fetch_cover_art.py --force
 ```
 
 - No arguments — scans all `game-*` folders and downloads missing art.
-- `--game GAME_ID` — only processes the extension with that game ID.
+- `GAME_ID [GAME_ID ...]` — only processes the listed game IDs.
 - `--dry-run` — lists missing files without downloading anything.
 - `--force` — re-downloads cover art even if `{GAME_ID}.jpg` already exists.
 
@@ -94,12 +94,13 @@ pip install Pillow
 ### new_extension.py — Usage
 
 ```sh
-python new_extension.py --template TEMPLATE_NAME "Game Name"
-python new_extension.py --template TEMPLATE_NAME STEAM_APP_ID
-python new_extension.py --template TEMPLATE_NAME "Game Name" --force
-python new_extension.py --template TEMPLATE_NAME "Game Name" --dry-run
+python new_extension.py TEMPLATE "Game Name"
+python new_extension.py TEMPLATE STEAM_APP_ID
+python new_extension.py TEMPLATE "Game Name" --force
+python new_extension.py TEMPLATE "Game Name" --dry-run
 ```
 
+`TEMPLATE` is the short template name — omit the `template-` prefix (e.g. `basicgame`, `ue4-5game`).
 The game input can be a quoted game name (searched on Steam) or a numeric Steam App ID.
 Use `--force` to overwrite an existing folder.
 Use `--dry-run` to run all lookups and print what would be created without writing any files.
@@ -107,9 +108,9 @@ Use `--dry-run` to run all lookups and print what would be created without writi
 ### new_extension.py — Examples
 
 ```sh
-python new_extension.py --template template-basicgame "Death Stranding 2"
-python new_extension.py --template template-ue4-5game 3552140
-python new_extension.py --template template-unitymelonloaderbepinex-hybrid "The Long Dark" --force
+python new_extension.py basicgame "Death Stranding 2"
+python new_extension.py ue4-5game 3552140
+python new_extension.py unitymelonloaderbepinex-hybrid "The Long Dark" --force
 ```
 
 ### Available Templates
@@ -218,7 +219,7 @@ No additional packages required (Python stdlib only).
 
 ```sh
 python categorize_games.py
-python categorize_games.py --game GAME_ID
+python categorize_games.py GAME_ID [GAME_ID ...]
 python categorize_games.py --dry-run
 ```
 
@@ -260,7 +261,7 @@ Each game is matched against categories in order — the first match wins. Detec
 
 ## nexus_games_report.py
 
-Fetches the full Nexus Mods games list and filters to games approved within a given time window. Sorts by downloads descending and writes a Markdown table to `nexus_games_report.md`. Checks the local Vortex extensions manifest to flag games that already have a Vortex extension.
+Fetches the full Nexus Mods games list and filters to games approved within a given time window. Sorts by downloads descending and writes a Markdown table to `nexus_games_report.md` and a CSV to `nexus_games_report.csv`. Checks the local Vortex extensions manifest to flag games that already have a Vortex extension.
 
 ### nexus_games_report.py — Requirements
 
@@ -278,7 +279,7 @@ python nexus_games_report.py DAYS --dry-run
 
 `DAYS` is the size of the time window in days (counting back from today). Defaults to `90` if omitted.
 Use `--new-only` to exclude games that already have a Vortex extension in the manifest.
-Use `--dry-run` to print the report to the console instead of writing `nexus_games_report.md`.
+Use `--dry-run` to print the report to the console instead of writing `nexus_games_report.md` and `nexus_games_report.csv`.
 
 ### nexus_games_report.py — Examples
 
@@ -289,7 +290,7 @@ python nexus_games_report.py 60 --new-only
 
 ### nexus_games_report.py — Output
 
-Writes `nexus_games_report.md` in the repo root. The table includes: row number, supported status, game name (as a Nexus Mods link), mod count, downloads in thousands (one decimal place), and approval date. Games with fewer than 500 downloads are excluded.
+Writes `nexus_games_report.md` and `nexus_games_report.csv` in the repo root. The table includes: row number, supported status, game name (as a Nexus Mods link), mod count, downloads in thousands (one decimal place), DL/Mod/Day (total downloads ÷ mod count ÷ days since approval), and approval date. Games with fewer than 500 downloads are excluded. The CSV includes the same columns plus raw download and DL/Mod/Day values to 4 decimal places.
 
 ### nexus_games_report.py — Manifest Path
 
@@ -342,12 +343,12 @@ No additional packages required (Python stdlib only).
 
 ```sh
 python patch_extensions.py
-python patch_extensions.py --game GAME_ID
+python patch_extensions.py GAME_ID [GAME_ID ...]
 python patch_extensions.py --dry-run
-python patch_extensions.py --game GAME_ID --dry-run
+python patch_extensions.py GAME_ID [GAME_ID ...] --dry-run
 python patch_extensions.py --force
 python patch_extensions.py --force-pcgw
-python patch_extensions.py --game GAME_ID --debug
+python patch_extensions.py GAME_ID [GAME_ID ...] --debug
 ```
 
 Run without arguments to apply all enabled patches to every `game-*` folder.

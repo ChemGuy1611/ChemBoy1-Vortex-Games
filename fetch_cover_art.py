@@ -69,11 +69,11 @@ def extract_steamapp_id(src):
 
 # ── Core logic ────────────────────────────────────────────────────────────────
 
-def find_targets(target_game_id=None, force=False):
+def find_targets(target_game_ids=None, force=False):
     """
     Yields (folder_path, game_id, steamapp_id) for extensions to process.
     Without --force, skips extensions that already have a {GAME_ID}.jpg.
-    If target_game_id is set, only that extension is checked.
+    If target_game_ids is set, only those extensions are checked.
     """
     entries = sorted(os.listdir(REPO_ROOT))
     for entry in entries:
@@ -91,7 +91,7 @@ def find_targets(target_game_id=None, force=False):
         if not game_id:
             continue
 
-        if target_game_id and game_id != target_game_id:
+        if target_game_ids and game_id not in target_game_ids:
             continue
 
         jpg_path = os.path.join(folder, f"{game_id}.jpg")
@@ -102,7 +102,7 @@ def find_targets(target_game_id=None, force=False):
         yield folder, game_id, steamapp_id
 
 
-def fetch_all(target_game_id=None, dry_run=False, force=False):
+def fetch_all(target_game_ids=None, dry_run=False, force=False):
     sgdb_key = get_sgdb_key()
     if not dry_run and sgdb_key:
         print("SteamGridDB API key found — will try heroes first.")
@@ -113,7 +113,7 @@ def fetch_all(target_game_id=None, dry_run=False, force=False):
     failed = []
     skipped = []
 
-    targets = list(find_targets(target_game_id, force))
+    targets = list(find_targets(target_game_ids, force))
     if not targets:
         print("No missing cover art files found.")
         return
@@ -164,9 +164,10 @@ def main():
         description="Download missing {GAME_ID}.jpg cover art for Vortex game extensions."
     )
     parser.add_argument(
-        "--game",
+        "game",
+        nargs="*",
         metavar="GAME_ID",
-        help="Only process the extension with this game ID.",
+        help="One or more game IDs to process. Omit to process all.",
     )
     parser.add_argument(
         "--dry-run",
@@ -179,7 +180,7 @@ def main():
         help="Re-download cover art even if {GAME_ID}.jpg already exists.",
     )
     args = parser.parse_args()
-    fetch_all(target_game_id=args.game, dry_run=args.dry_run, force=args.force)
+    fetch_all(target_game_ids=set(args.game) or None, dry_run=args.dry_run, force=args.force)
 
 
 if __name__ == "__main__":

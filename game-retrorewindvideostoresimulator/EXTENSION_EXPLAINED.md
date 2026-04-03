@@ -17,7 +17,6 @@
 | Executable (GOG) | `RetroRewind.exe` |
 | Executable (Demo) | `RetroRewind.exe` |
 | Extension Page | XXX |
-| PCGamingWiki | XXX |
 
 ## Supported Stores
 

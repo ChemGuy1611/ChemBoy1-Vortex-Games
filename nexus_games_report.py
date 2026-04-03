@@ -1,3 +1,4 @@
+import csv
 import os
 import sys
 import json
@@ -7,6 +8,7 @@ import urllib.request
 NEXUS_V1 = "https://api.nexusmods.com/v1"
 MANIFEST_PATH = r"C:\ProgramData\vortex\temp\extensions-manifest.json"
 OUTPUT_FILE = "nexus_games_report.md"
+OUTPUT_CSV  = "nexus_games_report.csv"
 DEFAULT_DAYS = 90
 
 
@@ -72,14 +74,14 @@ def main():
     print(f"  Total games: {len(games)}")
 
     # Determine sort field from the full list before filtering
-    sort_field = "unique_downloads" if games and "unique_downloads" in games[0] else "downloads"
+    sort_field = "unique_downloads" if any("unique_downloads" in g for g in games) else "downloads"
     sort_label = sort_field.replace("_", " ").title()
     print(f"  Sorting by: {sort_field}")
 
     filtered = [
         g for g in games
         if g.get("approved_date", 0) >= cutoff_ts
-        and g.get(sort_field, 0) >= 500
+        and max(g.get("unique_downloads", 0), g.get("downloads", 0)) >= 500
     ]
     print(f"  Games added in window (>=500 downloads): {len(filtered)}")
 
@@ -99,31 +101,64 @@ def main():
         "",
         f"_Generated {now.strftime('%Y-%m-%d')} — {len(filtered)} games added in the last {days} days (since {cutoff_str}){filter_note}, sorted by {sort_label} descending._",
         "",
-        f"| # | Supported | Game | Mods | {sort_label} (k) | Approved Date |",
-        "| --- | --- | --- | --- | --- | --- |",
+        f"| # | Supported | Game | Mods | {sort_label} (k) | DL/Mod/Day | Approved Date |",
+        "| --- | --- | --- | --- | --- | --- | --- |",
     ]
+
+    csv_rows = []
 
     for i, g in enumerate(filtered, 1):
         name = g.get("name", "?")
         domain = g.get("domain_name", "?")
         mods = g.get("mods", 0)
         dl = g.get(sort_field, 0)
-        approved = datetime.datetime.fromtimestamp(
-            g["approved_date"], tz=datetime.timezone.utc
-        ).strftime("%Y-%m-%d")
+        approved_ts = g.get("approved_date", 0)
+        approved_dt = datetime.datetime.fromtimestamp(approved_ts, tz=datetime.timezone.utc)
+        approved = approved_dt.strftime("%Y-%m-%d")
         supported = "Yes" if domain in supported_ids else "No"
-        lines.append(f"| {i} | {supported} | [{name}](https://www.nexusmods.com/{domain}) | {mods:,} | {dl / 1000:,.1f} | {approved} |")
+
+        days_since = (now.timestamp() - approved_ts) / 86400
+        if mods > 0 and days_since > 0:
+            dl_per_mod_day = dl / mods / days_since
+            dl_pmd_md  = f"{dl_per_mod_day:.2f}"
+            dl_pmd_csv = f"{dl_per_mod_day:.4f}"
+        else:
+            dl_per_mod_day = None
+            dl_pmd_md  = "—"
+            dl_pmd_csv = ""
+
+        lines.append(
+            f"| {i} | {supported} | [{name}](https://www.nexusmods.com/{domain}) "
+            f"| {mods:,} | {dl / 1000:,.1f} | {dl_pmd_md} | {approved} |"
+        )
+        csv_rows.append({
+            "rank":           i,
+            "supported":      supported,
+            "name":           name,
+            "domain":         domain,
+            "mods":           mods,
+            "downloads":      dl,
+            "dl_per_mod_day": dl_pmd_csv,
+            "approved_date":  approved,
+        })
 
     lines.append("")
     output = "\n".join(lines)
 
     if dry_run:
         print(output)
-        print(f"\n[DRY RUN] Would write to {OUTPUT_FILE}")
+        print(f"\n[DRY RUN] Would write to {OUTPUT_FILE} and {OUTPUT_CSV}")
     else:
         with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
             f.write(output)
         print(f"Written to {OUTPUT_FILE}")
+
+        csv_fields = ["rank", "supported", "name", "domain", "mods", "downloads", "dl_per_mod_day", "approved_date"]
+        with open(OUTPUT_CSV, "w", newline="", encoding="utf-8") as f:
+            writer = csv.DictWriter(f, fieldnames=csv_fields)
+            writer.writeheader()
+            writer.writerows(csv_rows)
+        print(f"Written to {OUTPUT_CSV}")
 
 
 if __name__ == "__main__":

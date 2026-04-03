@@ -61,11 +61,11 @@ def extract_game_name(src):
 
 # ── Core logic ────────────────────────────────────────────────────────────────
 
-def find_targets(target_game_id=None, force=False):
+def find_targets(target_game_ids=None, force=False):
     """
     Yields (folder_path, game_id, steamapp_id, game_name) for extensions to process.
     Without --force, skips extensions that already have an exec.png.
-    If target_game_id is set, only that extension is checked.
+    If target_game_ids is set, only those extensions are checked.
     """
     entries = sorted(os.listdir(REPO_ROOT))
     for entry in entries:
@@ -83,7 +83,7 @@ def find_targets(target_game_id=None, force=False):
         if not game_id:
             continue
 
-        if target_game_id and game_id != target_game_id:
+        if target_game_ids and game_id not in target_game_ids:
             continue
 
         icon_path = os.path.join(folder, "exec.png")
@@ -95,12 +95,12 @@ def find_targets(target_game_id=None, force=False):
         yield folder, game_id, steamapp_id, game_name
 
 
-def fetch_all(target_game_id=None, dry_run=False, force=False):
+def fetch_all(target_game_ids=None, dry_run=False, force=False):
     saved = []
     failed = []
     skipped = []
 
-    targets = list(find_targets(target_game_id, force))
+    targets = list(find_targets(target_game_ids, force))
     if not targets:
         print("No missing exec.png files found.")
         return
@@ -151,9 +151,10 @@ def main():
         description="Download missing exec.png icons for Vortex game extensions."
     )
     parser.add_argument(
-        "--game",
+        "game",
+        nargs="*",
         metavar="GAME_ID",
-        help="Only process the extension with this game ID.",
+        help="One or more game IDs to process. Omit to process all.",
     )
     parser.add_argument(
         "--dry-run",
@@ -166,7 +167,7 @@ def main():
         help="Re-download exec.png even if it already exists.",
     )
     args = parser.parse_args()
-    fetch_all(target_game_id=args.game, dry_run=args.dry_run, force=args.force)
+    fetch_all(target_game_ids=set(args.game) or None, dry_run=args.dry_run, force=args.force)
 
 
 if __name__ == "__main__":
