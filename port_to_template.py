@@ -207,7 +207,9 @@ def apply_port(template_src, game_consts, game_src):
             if game_rhs is not None and not is_xxx_value(game_rhs):
                 if replace_single(name, tmpl_rhs, game_rhs):
                     substituted.append((name, tmpl_rhs, game_rhs))
-            else:
+            elif tmpl_rhs.strip('"\'` ') != '':
+                # Only flag as skipped if the template had a real placeholder (e.g. "XXX"),
+                # not an empty string — empty strings are always-empty by design.
                 skipped_names.add(name)
             continue
 
@@ -262,10 +264,10 @@ def apply_port(template_src, game_consts, game_src):
                 new_src = replaced
                 substituted.append((name, tmpl_array.strip(), game_array.strip()))
 
-    # --- Pass 4: header comment (Name / Version / Date) ---
+    # --- Pass 4: header comment Name field ---
+    game_name = game_consts.get('GAME_NAME', 'XXX').strip('"\'')
     new_src = re.sub(r'(Name:\s+)XXX(\s+Vortex Extension)',
-                     rf'\g<1>{game_consts.get("GAME_NAME", "XXX").strip(chr(34))}\2', new_src)
-    new_src = re.sub(r'(Date:\s+)2026-XX-XX', r'\g<1>2026-XX-XX', new_src)  # keep placeholder
+                     rf'\g<1>{game_name}\2', new_src)
 
     # --- Build review list: game consts not covered by any template constant ---
     template_names = set(template_consts.keys()) | ARRAY_CONSTS | {'DISCOVERY_IDS_ACTIVE'}

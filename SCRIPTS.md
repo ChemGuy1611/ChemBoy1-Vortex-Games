@@ -95,9 +95,9 @@ The first `GAME_ID` is the primary source — its `index.js` is copied and strip
 ### new_template.py — Examples
 
 ```sh
-python new_template.py anvilengine-game ghostreconbreakpoint
-python new_template.py anvilengine-game ghostreconbreakpoint assassinscreedorigins
-python new_template.py myengine-game mygame --dry-run
+python new_template.py anvilengine ghostreconbreakpoint
+python new_template.py anvilengine ghostreconbreakpoint assassinscreedorigins
+python new_template.py myengine mygame --dry-run
 ```
 
 ### new_template.py — What It Creates
@@ -129,24 +129,22 @@ Inline strings inside `path.join()` calls and `winapi.RegGetValue()` arguments a
 
 ### new_template.py — Fixup Passes
 
-After substitutions, the processed `index.js` is augmented with standard structure and utility code that may be missing from older game extensions. Each pass is idempotent — it checks whether the item already exists before injecting anything. Applied fixups are printed in the output.
+After substitutions, the processed `index.js` is augmented with standard structure and utility code that may be missing from older game extensions. Each pass is idempotent — it checks whether the item already exists before injecting. Applied fixups are listed in the output; already-present items are silently skipped.
 
-| # | Fixup | Injection point |
-| --- | --- | --- |
-| 1 | Feature toggles block (`hasLoader`, `hasXbox`, `multiExe`, `multiModPath`, `allowSymlinks`, `needsModInstaller`, `rootInstaller`, `fallbackInstaller`, `setupNotification`, `hasUserIdFolder`, `debug`) | After `EXTENSION_URL` constant |
-| 2 | Missing store ID constants: `GOGAPP_ID = null`, `XBOXAPP_ID = null`, `XBOXEXECNAME = "XXX"` | After `EPICAPP_ID` or `STEAMAPP_ID` |
-| 3 | `DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]` | After store ID constants |
-| 4 | `PARAMETERS_STRING = ''` and `PARAMETERS = [PARAMETERS_STRING]` | After `REQ_FILE` or `MOD_PATH_DEFAULT` |
-| 5 | `MODTYPE_FOLDERS = [MOD_PATH]` | After `PARAMETERS` |
-| 6 | `IGNORE_CONFLICTS` and `IGNORE_DEPLOY` arrays | After `MODTYPE_FOLDERS` |
-| 7 | Spec completeness: `"compatible"` in game object; `"gogAppId"`, `"epicAppId"`, `"xboxAppId"`, `"supportsSymlinks"`, `"ignoreConflicts"`, `"ignoreDeploy"` in `details`; `"GogAPPId"`, `"EpicAPPId"`, `"XboxAPPId"` in `environment`; `DISCOVERY_IDS_ACTIVE` in `discovery.ids` | Inside `spec` object |
-| 8 | `modFoldersEnsureWritable` function | Before `setup()` |
-| 9 | `return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);` call in `setup()` | Before `setup()`'s closing `}` |
-| 10 | `pathPattern` try/catch wrapper (replaces function body if try/catch is absent; injects full function if missing) | Before `modTypePriority` or `makeFindGame` |
-| 11 | `requiresLauncher` with full `DISCOVERY_IDS_ACTIVE.includes` Xbox/Epic/Steam logic | Replaces existing body, or injected before `getExecutable` |
-| 12 | `testFallback`, `installFallback`, `fallbackInstallerNotify` functions + gated `registerInstaller` call at priority 49. Also injects `ROOT_ID` constant if missing (required by `installFallback`). | Functions injected before `applyGame`; registration injected before `//register actions` or first `context.registerAction` |
-
-Passes that find the target already present are silently skipped and not listed in the output.
+| Fixup | Injection point |
+| --- | --- |
+| Feature toggles block (`hasLoader`, `hasXbox`, `multiExe`, `multiModPath`, `allowSymlinks`, `needsModInstaller`, `rootInstaller`, `fallbackInstaller`, `setupNotification`, `hasUserIdFolder`, `debug`) | After `EXTENSION_URL` constant |
+| Missing store ID constants: `GOGAPP_ID = null`, `XBOXAPP_ID = null`, `XBOXEXECNAME = "XXX"` | After `EPICAPP_ID` or `STEAMAPP_ID` |
+| `DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]` | After store ID constants |
+| `PARAMETERS_STRING = ''` and `PARAMETERS = [PARAMETERS_STRING]` | After `REQ_FILE` or `MOD_PATH_DEFAULT` |
+| `MODTYPE_FOLDERS = [MOD_PATH]` | After `PARAMETERS` |
+| `IGNORE_CONFLICTS` and `IGNORE_DEPLOY` arrays | After `MODTYPE_FOLDERS` |
+| Spec completeness: `"compatible"` in game object; `"gogAppId"`, `"epicAppId"`, `"xboxAppId"`, `"supportsSymlinks"`, `"ignoreConflicts"`, `"ignoreDeploy"` in `details`; `"GogAPPId"`, `"EpicAPPId"`, `"XboxAPPId"` in `environment`; `DISCOVERY_IDS_ACTIVE` in `discovery.ids` | Inside `spec` object |
+| `modFoldersEnsureWritable` function | Before `setup()` |
+| `return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);` call in `setup()` | Before `setup()`'s closing `}` |
+| `pathPattern` try/catch wrapper (replaces body if absent; injects full function if missing) | Before `modTypePriority` or `makeFindGame` |
+| `requiresLauncher` with full `DISCOVERY_IDS_ACTIVE.includes` Xbox/Epic/Steam logic | Replaces existing body, or injected before `getExecutable` |
+| `testFallback`, `installFallback`, `fallbackInstallerNotify` functions + gated `registerInstaller` at priority 49. Injects `ROOT_ID` if missing. | Functions before `applyGame`; registration before `//register actions` or first `context.registerAction` |
 
 ### new_template.py — After Running
 

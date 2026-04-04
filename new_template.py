@@ -34,6 +34,8 @@ Fixup passes (apply_fixups):
   9.  setup() modFoldersEnsureWritable call
   10. pathPattern try/catch wrapper
   11. requiresLauncher with full DISCOVERY_IDS_ACTIVE logic
+  12. testFallback / installFallback / fallbackInstallerNotify functions +
+      gated registerInstaller call at priority 49; ROOT_ID if missing
 
 Usage:
     python new_template.py TEMPLATE_NAME GAME_ID [GAME_ID ...]
@@ -43,7 +45,7 @@ Usage:
 Examples:
     python new_template.py anvilengine ghostreconbreakpoint
     python new_template.py anvilengine ghostreconbreakpoint assassinscreedorigins
-    python new_template.py myengine-game mygame --dry-run
+    python new_template.py myengine mygame --dry-run
 
 Requirements:
     No additional packages required (Python stdlib only).
