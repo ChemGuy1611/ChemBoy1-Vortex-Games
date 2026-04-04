@@ -347,45 +347,6 @@ Each game is matched against categories in order — the first match wins. Detec
 
 ---
 
-## nexus_games_report.py
-
-Fetches the full Nexus Mods games list and filters to games approved within a given time window. Sorts by downloads descending and writes a Markdown table to `nexus_games_report.md` and a CSV to `nexus_games_report.csv`. Checks the local Vortex extensions manifest to flag games that already have a Vortex extension.
-
-### nexus_games_report.py — Requirements
-
-| Variable | Required | Description |
-| --- | --- | --- |
-| `NEXUS_API_KEY` | Required | Nexus Mods API key. Read from environment or Windows registry fallback. |
-
-### nexus_games_report.py — Usage
-
-```sh
-python nexus_games_report.py DAYS
-python nexus_games_report.py DAYS --new-only
-python nexus_games_report.py DAYS --dry-run
-```
-
-`DAYS` is the size of the time window in days (counting back from today). Defaults to `90` if omitted.
-Use `--new-only` to exclude games that already have a Vortex extension in the manifest.
-Use `--dry-run` to print the report to the console instead of writing `nexus_games_report.md` and `nexus_games_report.csv`.
-
-### nexus_games_report.py — Examples
-
-```sh
-python nexus_games_report.py 120
-python nexus_games_report.py 60 --new-only
-```
-
-### nexus_games_report.py — Output
-
-Writes `nexus_games_report.md` and `nexus_games_report.csv` in the repo root. The table includes: row number, supported status, game name (as a Nexus Mods link), mod count, downloads in thousands (one decimal place), DL/Mod/Day (total downloads ÷ mod count ÷ days since approval), and approval date. Games with fewer than 500 downloads are excluded. The CSV includes the same columns plus raw download and DL/Mod/Day values to 4 decimal places.
-
-### nexus_games_report.py — Manifest Path
-
-The extensions manifest is read from `C:\ProgramData\vortex\temp\extensions-manifest.json`. This file is written by Vortex when it fetches the extensions list. If not found, the Supported column will be blank and a warning is printed.
-
----
-
 ## release_extension.py
 
 Packages a game extension folder into a `.zip` archive using 7-Zip and opens the extension's Nexus Mods page in the default browser.
