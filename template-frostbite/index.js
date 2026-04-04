@@ -1,9 +1,11 @@
 /*/////////////////////////////////////////////
 Name: XXX Vortex Extension
-Structure: 3rd Party Mod Manager (Frosty)
+Structure: Frostbite Engine - Frosty Mod Manager
 Author: ChemBoy1
 Version: 0.1.0
 Date: 2026-XX-XX
+Notes:
+-
 /////////////////////////////////////////////*/
 
 //Import libraries
@@ -19,8 +21,8 @@ const EAAPP_ID = "XXX";
 const STEAMAPP_ID = "XXX";
 const EPICAPP_ID = null;
 const GOGAPP_ID = null;
-const XBOXAPP_ID = null;
-const XBOXEXECNAME = "XXX";
+const REGISTRY_KEY = 'XXX'; // e.g. 'SOFTWARE\\WOW6432Node\\BioWare\\Mass Effect Andromeda'
+const REGISTRY_VALUE = 'XXX'; // e.g. 'Install Dir'
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EAAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 const GAME_ID = "XXX";
 const GAME_NAME = "XXX";
@@ -31,12 +33,6 @@ const EXTENSION_URL = "XXX";
 
 //feature toggles
 const allowSymlinks = false; // Frosty handles its own deployment; symlinks not typical
-const hasLoader = false; //true if game needs a mod loader
-const hasXbox = false; //toggle for Xbox version logic
-const multiExe = false; //set to true if there are multiple executable names
-const multiModPath = false; //set to true if there are multiple possible mod paths (i.e. different path for Xbox version)
-const needsModInstaller = true; //set to true if standard mods should run through an installer - set false to have mods installed to the mods folder without any processing
-const rootInstaller = true; //enable root installer. Set false if you need to avoid installer collisions
 const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
 const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
 const hasUserIdFolder = false; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
@@ -48,8 +44,8 @@ let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 
 //Info for modtypes, installers, and tools
-const BINARIES_ID = `${GAME_ID}-binaries`;
-const BINARIES_NAME = "Binaries / Root Folder";
+const ROOT_ID = `${GAME_ID}-root`;
+const ROOT_NAME = "Binaries / Root Folder";
 
 const FROSTYMOD_FOLDER = "XXX"; // Game-specific folder name inside FrostyModManager/Mods/
 const FROSTYMOD_ID = `${GAME_ID}-frostymod`;
@@ -61,16 +57,15 @@ const FROSTY_ID = `${GAME_ID}-frostymodmanager`;
 const FROSTY_NAME = "Frosty Mod Manager";
 const FROSTY_FOLDER = "FrostyModManager";
 const FROSTY_EXEC = 'frostymodmanager.exe';
+const FROSTY_URL = "https://github.com/CadeEvs/FrostyToolsuite/releases/download/v1.0.6.3/FrostyModManager.zip";
+const FROSTY_URL_ERR = `https://github.com/CadeEvs/FrostyToolsuite/releases`;
 
 const CONFIG_ID = `${GAME_ID}-config`;
 const CONFIG_NAME = "Config Folder";
 const CONFIG_FOLDER = path.join("XXX", "XXX"); // Developer folder, game subfolder (e.g. "BioWare", "Mass Effect Andromeda")
 const CONFIG_PATH = path.join(DOCUMENTS, CONFIG_FOLDER);
 
-const REGISTRY_KEY = 'XXX'; // e.g. 'SOFTWARE\\WOW6432Node\\BioWare\\Mass Effect Andromeda'
-const REGISTRY_VALUE = 'XXX'; // e.g. 'Install Dir'
-
-const MOD_PATH_DEFAULT = path.join(".");
+const MOD_PATH_DEFAULT = FROSTYMOD_PATH; //default here to accommodate FOMODs
 const PARAMETERS_STRING = '';
 const PARAMETERS = [PARAMETERS_STRING];
 let MODTYPE_FOLDERS = [FROSTYMOD_PATH]; // Folders to ensure are writable on setup
@@ -113,8 +108,8 @@ const spec = {
   },
   "modTypes": [
     {
-      "id": BINARIES_ID,
-      "name": BINARIES_NAME,
+      "id": ROOT_ID,
+      "name": ROOT_NAME,
       "priority": "high",
       "targetPath": "{gamePath}"
     },
@@ -277,17 +272,6 @@ function makeGetModPath(api, gameSpec) {
 
 //Set launcher requirements
 async function requiresLauncher(gamePath, store) {
-  if (store === 'xbox' && (DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID))) {
-    return Promise.resolve({
-      launcher: 'xbox',
-      addInfo: {
-        appId: XBOXAPP_ID,
-        parameters: [{ appExecName: XBOXEXECNAME }],
-        //parameters: [{ appExecName: XBOXEXECNAME }, PARAMETERS_STRING],
-        //launchType: 'gamestore',
-      },
-    });
-  } //*/
   if (store === 'epic' && (DISCOVERY_IDS_ACTIVE.includes(EPICAPP_ID))) {
     return Promise.resolve({
       launcher: 'epic',
@@ -318,7 +302,7 @@ const getDiscoveryPath = (api) => {
 function isFrostyInstalled(api, spec) {
   const state = api.getState();
   const mods = state.persistent.mods[spec.game.id] || {};
-  return Object.keys(mods).some(id => mods[id]?.type === BINARIES_ID);
+  return Object.keys(mods).some(id => mods[id]?.type === FROSTY_ID);
 }
 
 //Function to auto-download Frosty Mod Manager
@@ -338,7 +322,8 @@ async function downloadFrosty(discovery, api, gameSpec) {
         game: gameSpec.game.id,
         name: 'Frosty Mod Manager',
       };
-      const URL = `https://github.com/CadeEvs/FrostyToolsuite/releases/download/v1.0.6.3/FrostyModManager.zip`;
+      //dlInfo = {};
+      const URL = FROSTY_URL;
       const dlId = await util.toPromise(cb =>
         api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
       const modId = await util.toPromise(cb =>
@@ -349,13 +334,12 @@ async function downloadFrosty(discovery, api, gameSpec) {
           allowAutoDeploy: true,
           installed: true,
         }),
-        actions.setModType(gameSpec.game.id, modId, BINARIES_ID), // Set the modType
+        actions.setModType(gameSpec.game.id, modId, FROSTY_ID), // Set the modType
       ];
       util.batchDispatch(api.store, batched); // Will dispatch both actions.
     } catch (err) { //Show the user the download page if the download and install process fails
-      const errPage = `https://github.com/CadeEvs/FrostyToolsuite/releases/tag/v1.0.6.3`;
       api.showErrorNotification('Failed to download/install Frosty Mod Manager', err);
-      util.opn(errPage).catch(() => null);
+      util.opn(FROSTY_URL_ERR).catch(() => null);
     } finally {
       api.dismissNotification(NOTIF_ID);
     }
@@ -387,7 +371,7 @@ function installFrosty(files) {
   const modFile = files.find(file => (path.basename(file).toLowerCase() === FROSTY_EXEC));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: BINARIES_ID };
+  const setModTypeInstruction = { type: 'setmodtype', value: FROSTY_ID };
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
@@ -440,6 +424,103 @@ function installFbmod(files) {
   });
   instructions.push(setModTypeInstruction);
   return Promise.resolve({ instructions });
+}
+
+//Fallback installer to root folder
+function testFallback(files, gameId) {
+  let supported = (gameId === spec.game.id);
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Fallback installer to root folder
+function installFallback(api, files, destinationPath) {
+  fallbackInstallerNotify(api, destinationPath);
+  const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
+  
+  const filtered = files.filter(file =>
+    (!file.endsWith(path.sep))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: file,
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+function fallbackInstallerNotify(api, modName) {
+  const state = api.getState();
+  STAGING_FOLDER = selectors.installPathForGame(state, spec.game.id);
+  modName = path.basename(modName, '.installing');
+  const id = modName.replace(/[^a-zA-Z0-9\s]*( )*/gi, '').slice(0, 20);
+  const NOTIF_ID = `${GAME_ID}-${id}-fallback`;
+  const MESSAGE = 'Fallback installer reached for ' + modName;
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'info',
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: 'More',
+        action: (dismiss) => {
+          api.showDialog('question', MESSAGE, {
+            text: `The mod you just installed reached the fallback installer. This means Vortex could not determine where to place these mod files.\n`
+                + `Please check the mod page description and review the files in the mod staging folder to determine if manual file manipulation is required.\n`
+                + `\n`
+                + `If you think that Vortex should be capable to install this mod to a specific folder, please contact the extension developer for support at the link below.\n`
+                + `\n`
+                + `Mod Name: ${modName}.\n`
+                + `\n`             
+          }, [
+            { label: 'Continue', action: () => dismiss() },
+            {
+              label: 'Contact Ext. Developer', action: () => {
+                util.opn(`${EXTENSION_URL}?tab=posts`).catch(() => null);
+                dismiss();
+              }
+            }, //*/
+            {
+              label: 'Open Staging Folder', action: () => {
+                util.opn(path.join(STAGING_FOLDER, modName)).catch(() => null);
+                dismiss();
+              }
+            }, //*/
+            //*
+            { label: `Open Mod Page`, action: () => {
+              const mods = util.getSafe(api.store.getState(), ['persistent', 'mods', spec.game.id], {});
+              const modMatch = Object.values(mods).find(mod => mod.installationPath === modName);
+              log('warn', `Found ${modMatch?.id} for ${modName}`);
+              let PAGE = ``;
+              if (modMatch) {
+                const MOD_ID = modMatch.attributes.modId;
+                if (MOD_ID !== undefined) {
+                  PAGE = `${MOD_ID}?tab=description`; 
+                }
+              }
+              const MOD_PAGE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${PAGE}`;
+              util.opn(MOD_PAGE_URL).catch(err => undefined);
+              //dismiss();
+            }}, //*/
+          ]);
+        },
+      },
+    ],
+  });
 }
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
@@ -553,6 +634,9 @@ function applyGame(context, gameSpec) {
   //register mod installers
   context.registerInstaller(FROSTY_ID, 25, testFrosty, installFrosty);
   context.registerInstaller(FROSTYMOD_ID, 30, testFbmod, installFbmod);
+  if (fallbackInstaller) {
+    context.registerInstaller(`${GAME_ID}-fallback`, 49, testFallback, (files, destinationPath) => installFallback(context.api, files, destinationPath));
+  }
 
   //register actions
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {

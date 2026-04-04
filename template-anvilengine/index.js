@@ -1,6 +1,6 @@
 /*//////////////////////////////////////////////////////////
 Name: XXX Vortex Extension
-Structure: Ubisoft Anvil Engine
+Structure: Anvil Engine - AnvilToolkit/ForgerPatchManager
 Author: ChemBoy1
 Version: 0.1.0
 Date: 2026-XX-XX
@@ -17,8 +17,8 @@ const winapi = require('winapi-bindings');
 //Specify all the information about the game
 const UPLAYAPP_ID = "XXX"; //Ubisoft Connect App ID — from SOFTWARE\WOW6432Node\Ubisoft\Launcher\Installs\
 const STEAMAPP_ID = "XXX"; //https://steamdb.info/app/XXX/
-const GOGAPP_ID = null; //Ubisoft games are UC-exclusive
-const EPICAPP_ID = null;
+const GOGAPP_ID = null; //not typically available for Ubisoft games
+const EPICAPP_ID = null; //not typically available for Ubisoft games
 const GAME_ID = "XXX";
 const GAME_NAME = "XXX";
 const GAME_NAME_SHORT = "XXX";
@@ -38,12 +38,11 @@ const hasAtk = true; //true if game supports AnvilToolkit — set to false for g
 const hasForger = false; //true if game supports Forger Patch Manager (.forger2 files) — typically older AC games
 const setupNotification = false; //enable to show the user a notification with special instructions on first setup
 const allowSymlinks = false; //symlinks can cause issues when repacking with ATK — set to false when hasAtk = true
+const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
 
 //Info for mod types and installers
 const ROOT_FOLDERS = ["videos"]; //XXX — update to match game (e.g. ["videos", "resources"])
 const LOOSE_EXTS = [".data"];
-const IGNORE_DEPLOY = [path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
-const IGNORE_CONFLICTS = [path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
 
 const ATK_ID = `${GAME_ID}-atk`;
 const ATK_NAME = "AnvilToolkit";
@@ -73,7 +72,7 @@ const FORGE_NAME = "Forge Replacement";
 const FORGE_EXT = ".forge";
 
 const ROOT_ID = `${GAME_ID}-root`;
-const ROOT_NAME = "Root Folder";
+const ROOT_NAME = "Binaries / Root Folder";
 
 //Forger Patch Manager — used when hasForger = true (older AC games)
 const FORGER_ID = `${GAME_ID}-forger`;
@@ -91,6 +90,8 @@ const MOD_PATH_DEFAULT = '.';
 const REQ_FILE = EXEC;
 const PARAMETERS_STRING = '';
 const PARAMETERS = [PARAMETERS_STRING];
+const IGNORE_DEPLOY = [path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
+const IGNORE_CONFLICTS = [path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
 
 let MODTYPE_FOLDERS = [EXTRACTED_FOLDER]; //XXX — add any other folders that need to be writable (e.g. SOUND_PATH)
 
@@ -1274,7 +1275,9 @@ function applyGame(context, gameSpec) {
     context.registerInstaller(FORGER_ID, 41, testForger, installForger);
     context.registerInstaller(FORGERPATCH_ID, 43, testForgerPatch, installForgerPatch);
   }
-  context.registerInstaller(`${GAME_ID}-fallback`, 49, testFallback, (files, fileName) => installFallback(context.api, files, fileName));
+  if (fallbackInstaller) {
+    context.registerInstaller(`${GAME_ID}-fallback`, 49, testFallback, (files, destinationPath) => installFallback(context.api, files, destinationPath));
+  }
 
   //register actions
   /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Settings INI', () => {

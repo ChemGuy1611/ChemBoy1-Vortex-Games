@@ -144,6 +144,7 @@ After substitutions, the processed `index.js` is augmented with standard structu
 | 9 | `return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);` call in `setup()` | Before `setup()`'s closing `}` |
 | 10 | `pathPattern` try/catch wrapper (replaces function body if try/catch is absent; injects full function if missing) | Before `modTypePriority` or `makeFindGame` |
 | 11 | `requiresLauncher` with full `DISCOVERY_IDS_ACTIVE.includes` Xbox/Epic/Steam logic | Replaces existing body, or injected before `getExecutable` |
+| 12 | `testFallback`, `installFallback`, `fallbackInstallerNotify` functions + gated `registerInstaller` call at priority 49. Also injects `ROOT_ID` constant if missing (required by `installFallback`). | Functions injected before `applyGame`; registration injected before `//register actions` or first `context.registerAction` |
 
 Passes that find the target already present are silently skipped and not listed in the output.
 

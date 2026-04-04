@@ -597,6 +597,157 @@ def _fixup_requires_launcher(src):
     return src[:m_start.start()] + new_fn + src[fn_end:]
 
 
+_FALLBACK_INSTALLER_FNS = (
+    '//Fallback installer to root folder\n'
+    'function testFallback(files, gameId) {\n'
+    '  let supported = (gameId === spec.game.id);\n'
+    '\n'
+    '  // Test for a mod installer.\n'
+    '  if (supported && files.find(file =>\n'
+    "    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&\n"
+    "    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {\n"
+    '    supported = false;\n'
+    '  }\n'
+    '\n'
+    '  return Promise.resolve({\n'
+    '    supported,\n'
+    '    requiredFiles: [],\n'
+    '  });\n'
+    '}\n'
+    '\n'
+    '//Fallback installer to root folder\n'
+    'function installFallback(api, files, destinationPath) {\n'
+    '  fallbackInstallerNotify(api, destinationPath);\n'
+    '  const setModTypeInstruction = { type: \'setmodtype\', value: ROOT_ID };\n'
+    '  \n'
+    '  const filtered = files.filter(file =>\n'
+    '    (!file.endsWith(path.sep))\n'
+    '  );\n'
+    '  const instructions = filtered.map(file => {\n'
+    '    return {\n'
+    "      type: 'copy',\n"
+    '      source: file,\n'
+    '      destination: file,\n'
+    '    };\n'
+    '  });\n'
+    '  instructions.push(setModTypeInstruction);\n'
+    '  return Promise.resolve({ instructions });\n'
+    '}\n'
+    '\n'
+    'function fallbackInstallerNotify(api, modName) {\n'
+    '  const state = api.getState();\n'
+    '  STAGING_FOLDER = selectors.installPathForGame(state, spec.game.id);\n'
+    "  modName = path.basename(modName, '.installing');\n"
+    "  const id = modName.replace(/[^a-zA-Z0-9\\s]*( )*/gi, '').slice(0, 20);\n"
+    '  const NOTIF_ID = `${GAME_ID}-${id}-fallback`;\n'
+    "  const MESSAGE = 'Fallback installer reached for ' + modName;\n"
+    '  api.sendNotification({\n'
+    '    id: NOTIF_ID,\n'
+    "    type: 'info',\n"
+    '    message: MESSAGE,\n'
+    '    allowSuppress: true,\n'
+    '    actions: [\n'
+    '      {\n'
+    "        title: 'More',\n"
+    '        action: (dismiss) => {\n'
+    "          api.showDialog('question', MESSAGE, {\n"
+    '            text: `The mod you just installed reached the fallback installer. This means Vortex could not determine where to place these mod files.\\n`\n'
+    '                + `Please check the mod page description and review the files in the mod staging folder to determine if manual file manipulation is required.\\n`\n'
+    '                + `\\n`\n'
+    '                + `If you think that Vortex should be capable to install this mod to a specific folder, please contact the extension developer for support at the link below.\\n`\n'
+    '                + `\\n`\n'
+    '                + `Mod Name: ${modName}.\\n`\n'
+    '                + `\\n`             \n'
+    '          }, [\n'
+    "            { label: 'Continue', action: () => dismiss() },\n"
+    '            {\n'
+    "              label: 'Contact Ext. Developer', action: () => {\n"
+    '                util.opn(`${EXTENSION_URL}?tab=posts`).catch(() => null);\n'
+    '                dismiss();\n'
+    '              }\n'
+    '            }, //*/\n'
+    '            {\n'
+    "              label: 'Open Staging Folder', action: () => {\n"
+    '                util.opn(path.join(STAGING_FOLDER, modName)).catch(() => null);\n'
+    '                dismiss();\n'
+    '              }\n'
+    '            }, //*/\n'
+    '            //*\n'
+    "            { label: `Open Mod Page`, action: () => {\n"
+    "              const mods = util.getSafe(api.store.getState(), ['persistent', 'mods', spec.game.id], {});\n"
+    '              const modMatch = Object.values(mods).find(mod => mod.installationPath === modName);\n'
+    '              log(\'warn\', `Found ${modMatch?.id} for ${modName}`);\n'
+    '              let PAGE = ``;\n'
+    '              if (modMatch) {\n'
+    '                const MOD_ID = modMatch.attributes.modId;\n'
+    '                if (MOD_ID !== undefined) {\n'
+    '                  PAGE = `${MOD_ID}?tab=description`; \n'
+    '                }\n'
+    '              }\n'
+    '              const MOD_PAGE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${PAGE}`;\n'
+    '              util.opn(MOD_PAGE_URL).catch(err => undefined);\n'
+    '              //dismiss();\n'
+    '            }}, //*/\n'
+    '          ]);\n'
+    '        },\n'
+    '      },\n'
+    '    ],\n'
+    '  });\n'
+    '}\n'
+)
+
+_FALLBACK_REGISTRATION = (
+    '  if (fallbackInstaller) {\n'
+    '    context.registerInstaller(`${GAME_ID}-fallback`, 49, testFallback, '
+    '(files, destinationPath) => installFallback(context.api, files, destinationPath));\n'
+    '  }\n'
+)
+
+
+def _fixup_fallback_installer(src):
+    """
+    Inject testFallback, installFallback, fallbackInstallerNotify functions and the
+    gated registerInstaller call (priority 49) if missing. Also injects ROOT_ID if absent,
+    since installFallback sets the mod type to ROOT_ID.
+    """
+    if re.search(r'function\s+testFallback\b', src):
+        return src  # already present
+
+    # Ensure ROOT_ID is defined (installFallback references it)
+    if not re.search(r'(?:const|let)\s+ROOT_ID\s*=', src):
+        root_id_line = 'const ROOT_ID = `${GAME_ID}-root`;\n'
+        for pat in [r'(?:const|let)\s+BINARIES_ID\s*=[^\n]+\n',
+                    r'(?:const|let)\s+GAME_ID\s*=[^\n]+\n']:
+            m = re.search(pat, src)
+            if m:
+                src = src[:m.end()] + root_id_line + src[m.end():]
+                break
+
+    # Inject the three functions before applyGame
+    for pat in [r'\nfunction applyGame\b', r'\nasync function applyGame\b']:
+        m = re.search(pat, src)
+        if m:
+            src = src[:m.start()] + '\n' + _FALLBACK_INSTALLER_FNS + src[m.start():]
+            break
+
+    # Inject the registration inside applyGame: before //register actions or
+    # before the first context.registerAction call
+    for pat in [r'(\n[ \t]*//register actions\b)', r'(\n[ \t]*context\.registerAction\b)']:
+        m = re.search(pat, src)
+        if m:
+            src = src[:m.start(1)] + '\n' + _FALLBACK_REGISTRATION + src[m.start(1):]
+            return src
+
+    # Fallback: before the closing } of applyGame
+    m = re.search(r'\nfunction applyGame\b[^{]*\{|\nasync function applyGame\b[^{]*\{', src)
+    if m:
+        fn_end = _find_fn_end(src, m.end())
+        if fn_end != -1:
+            src = src[:fn_end - 1] + _FALLBACK_REGISTRATION + src[fn_end - 1:]
+
+    return src
+
+
 def apply_fixups(src):
     """
     Post-process augmentation: inject standard structure and utility code that is
@@ -628,6 +779,8 @@ def apply_fixups(src):
          _fixup_path_pattern),
         ('requiresLauncher (DISCOVERY_IDS_ACTIVE)',
          _fixup_requires_launcher),
+        ('fallback installer (testFallback / installFallback / registration)',
+         _fixup_fallback_installer),
     ]
     applied = []
     for name, fn in fixups:
