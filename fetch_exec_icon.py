@@ -7,12 +7,14 @@ it from the Steam CDN (64x64 PNG).
 
 Usage:
     python fetch_exec_icon.py
-    python fetch_exec_icon.py --game abioticfactor
+    python fetch_exec_icon.py GAME_ID [GAME_ID ...]
     python fetch_exec_icon.py --dry-run
+    python fetch_exec_icon.py --force
 
 Options:
-    --game GAME_ID   Only process the single extension with this game ID.
+    GAME_ID          One or more game IDs to process. Omit to process all.
     --dry-run        List missing exec.png files without downloading anything.
+    --force          Re-download exec.png even if it already exists.
 
 Requirements:
     pip install Pillow

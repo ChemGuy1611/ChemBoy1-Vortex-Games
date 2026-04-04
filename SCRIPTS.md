@@ -74,6 +74,89 @@ python fetch_cover_art.py --force
 
 ---
 
+## new_template.py
+
+Creates a new Vortex extension template from one or more existing game extensions. The primary game's `index.js` is copied and all game-specific constants are replaced with `"XXX"` placeholders. Tool icon PNGs (excluding `exec.png`) are copied. Adds the new template to the `TEMPLATES` list in `new_extension.py` automatically.
+
+### new_template.py — Requirements
+
+No additional packages required (Python stdlib only).
+
+### new_template.py — Usage
+
+```sh
+python new_template.py TEMPLATE_NAME GAME_ID [GAME_ID ...]
+python new_template.py TEMPLATE_NAME GAME_ID [GAME_ID ...] --dry-run
+python new_template.py TEMPLATE_NAME GAME_ID [GAME_ID ...] --force
+```
+
+The first `GAME_ID` is the primary source — its `index.js` is copied and stripped. Additional `GAME_ID`s are listed in the output as reference sources but not processed.
+
+### new_template.py — Examples
+
+```sh
+python new_template.py anvilengine-game ghostreconbreakpoint
+python new_template.py anvilengine-game ghostreconbreakpoint assassinscreedorigins
+python new_template.py myengine-game mygame --dry-run
+```
+
+### new_template.py — What It Creates
+
+```text
+template-{TEMPLATE_NAME}/
+    index.js          primary game's index.js with XXX substitutions
+    info.json         fresh standard template format
+    CHANGELOG.md      fresh standard format
+    *.png             tool icon PNGs from primary game (exec.png excluded)
+```
+
+### new_template.py — XXX Substitutions Applied
+
+| Constant | Rule |
+| --- | --- |
+| `GAME_ID`, `GAME_NAME`, `GAME_NAME_SHORT` | Always -> `"XXX"` |
+| `EXEC`, `EXEC_NAME` | Always -> `"XXX"` |
+| `STEAMAPP_ID`, `PCGAMINGWIKI_URL`, `EXTENSION_URL` | Always -> `"XXX"` |
+| `EAAPP_ID`, `UPLAYAPP_ID`, `GOGAPP_ID`, `EPICAPP_ID`, `XBOXAPP_ID` | Non-empty string -> `"XXX"`; empty string `""` -> `null`; already `null` -> left as `null` |
+| Header comment `Name`, `Version`, `Date` | Reset to `XXX`, `0.1.0`, `2026-XX-XX` |
+
+After substitution the script prints two review sections:
+
+- **Contains original GAME_ID** — string constants whose value embeds the original GAME_ID (e.g. `"gameid-binaries"`). These should be converted to a JS template literal using `${GAME_ID}` or replaced with `"XXX"`.
+- **Manual review** — other string constants with values over 10 characters that aren't path fragments, globs, or executable names. Confirm each is intentional (framework-generic) or replace with `"XXX"`.
+
+Inline strings inside `path.join()` calls and `winapi.RegGetValue()` arguments are not auto-detected — check those manually.
+
+### new_template.py — Fixup Passes
+
+After substitutions, the processed `index.js` is augmented with standard structure and utility code that may be missing from older game extensions. Each pass is idempotent — it checks whether the item already exists before injecting anything. Applied fixups are printed in the output.
+
+| # | Fixup | Injection point |
+| --- | --- | --- |
+| 1 | Feature toggles block (`hasLoader`, `hasXbox`, `multiExe`, `multiModPath`, `allowSymlinks`, `needsModInstaller`, `rootInstaller`, `fallbackInstaller`, `setupNotification`, `hasUserIdFolder`, `debug`) | After `EXTENSION_URL` constant |
+| 2 | Missing store ID constants: `GOGAPP_ID = null`, `XBOXAPP_ID = null`, `XBOXEXECNAME = "XXX"` | After `EPICAPP_ID` or `STEAMAPP_ID` |
+| 3 | `DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]` | After store ID constants |
+| 4 | `PARAMETERS_STRING = ''` and `PARAMETERS = [PARAMETERS_STRING]` | After `REQ_FILE` or `MOD_PATH_DEFAULT` |
+| 5 | `MODTYPE_FOLDERS = [MOD_PATH]` | After `PARAMETERS` |
+| 6 | `IGNORE_CONFLICTS` and `IGNORE_DEPLOY` arrays | After `MODTYPE_FOLDERS` |
+| 7 | Spec completeness: `"compatible"` in game object; `"gogAppId"`, `"epicAppId"`, `"xboxAppId"`, `"supportsSymlinks"`, `"ignoreConflicts"`, `"ignoreDeploy"` in `details`; `"GogAPPId"`, `"EpicAPPId"`, `"XboxAPPId"` in `environment`; `DISCOVERY_IDS_ACTIVE` in `discovery.ids` | Inside `spec` object |
+| 8 | `modFoldersEnsureWritable` function | Before `setup()` |
+| 9 | `return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);` call in `setup()` | Before `setup()`'s closing `}` |
+| 10 | `pathPattern` try/catch wrapper (replaces function body if try/catch is absent; injects full function if missing) | Before `modTypePriority` or `makeFindGame` |
+| 11 | `requiresLauncher` with full `DISCOVERY_IDS_ACTIVE.includes` Xbox/Epic/Steam logic | Replaces existing body, or injected before `getExecutable` |
+
+Passes that find the target already present are silently skipped and not listed in the output.
+
+### new_template.py — After Running
+
+After the script completes, do these steps manually:
+
+1. Update `SCRIPTS.md` — add the new template to the templates table in the `new_extension.py` section
+2. Update `CLAUDE.md` — add `template-{name}` to the available templates list
+3. Update memory — `reference_templates_overview.md` and `reference_templates_detail.md`
+
+---
+
 ## new_extension.py
 
 Bootstraps a new Vortex game extension folder from a template. Looks up game information automatically from Steam, GOG, Epic Games Store, and PCGamingWiki, then fills in as many fields as possible in `index.js`, `info.json`, and `CHANGELOG.md`. Downloads `exec.png` and cover art. Runs `generate_explained.js` at the end.
@@ -98,18 +181,20 @@ python new_extension.py TEMPLATE "Game Name"
 python new_extension.py TEMPLATE STEAM_APP_ID
 python new_extension.py TEMPLATE "Game Name" --force
 python new_extension.py TEMPLATE "Game Name" --dry-run
+python new_extension.py TEMPLATE "Game Name" --no-images
 ```
 
-`TEMPLATE` is the short template name — omit the `template-` prefix (e.g. `basicgame`, `ue4-5game`).
+`TEMPLATE` is the short template name — omit the `template-` prefix (e.g. `basic`, `ue4-5`).
 The game input can be a quoted game name (searched on Steam) or a numeric Steam App ID.
 Use `--force` to overwrite an existing folder.
 Use `--dry-run` to run all lookups and print what would be created without writing any files.
+Use `--no-images` to skip downloading `exec.png` and cover art (useful when re-running on an existing extension).
 
 ### new_extension.py — Examples
 
 ```sh
-python new_extension.py basicgame "Death Stranding 2"
-python new_extension.py ue4-5game 3552140
+python new_extension.py basic "Death Stranding 2"
+python new_extension.py ue4-5 3552140
 python new_extension.py unitymelonloaderbepinex-hybrid "The Long Dark" --force
 ```
 
@@ -117,19 +202,21 @@ python new_extension.py unitymelonloaderbepinex-hybrid "The Long Dark" --force
 
 | Template | Engine / Framework |
 | --- | --- |
-| `template-basicgame` | Proprietary engines and older games |
-| `template-ue4-5game` | Unreal Engine 4/5 |
+| `template-basic` | Proprietary engines and older games |
+| `template-ue4-5` | Unreal Engine 4/5 |
 | `template-unitybepinex` | Unity + BepInEx |
 | `template-unitymelonloaderbepinex-hybrid` | Unity + MelonLoader / BepInEx hybrid |
 | `template-unity-umm` | Unity + UMM |
-| `template-reframework-fluffy-game` | RE Engine |
-| `template-reloaded2game` | Reloaded-II |
-| `template-rpgmakergame` | RPG Maker |
-| `template-godot-game` | Godot |
-| `template-snowdropenginegame` | Snowdrop Engine |
-| `template-farcrygame` | Far Cry / Dunia Engine |
-| `template-cobraengineACSEgame` | Cobra Engine / ACSE |
-| `template-tfcinstaller-ue2-3game` | Unreal Engine 2/3 |
+| `template-reframework-fluffy` | RE Engine |
+| `template-reloaded2` | Reloaded-II |
+| `template-rpgmaker` | RPG Maker |
+| `template-godot` | Godot |
+| `template-snowdropengine` | Snowdrop Engine |
+| `template-farcry` | Far Cry / Dunia Engine |
+| `template-cobraengineACSE` | Cobra Engine / ACSE |
+| `template-tfcinstaller-ue2-3` | Unreal Engine 2/3 |
+| `template-anvilengine` | Ubisoft Anvil Engine (AC series, Ghost Recon, etc.) |
+| `template-frostbite` | Frostbite Engine (EA games, Frosty Mod Manager) |
 
 ### What It Automates
 
@@ -168,8 +255,8 @@ Only store ID fields are set to `null` when not found (`EPICAPP_ID`, `GOGAPP_ID`
 
 After writing `index.js`, the script automatically runs:
 
-1. `generate_explained.js --game game-{GAME_ID}` — generates `EXTENSION_EXPLAINED.md`
-2. `categorize_games.py --game {GAME_ID}` — adds the game to the correct engine category file in `resources/`
+1. `node generate_explained.js {GAME_ID}` — generates `EXTENSION_EXPLAINED.md`
+2. `python categorize_games.py {GAME_ID}` — adds the game to the correct engine category file in `resources/`
 
 ---
 
@@ -185,18 +272,18 @@ Node.js (no additional packages required).
 
 ```sh
 node generate_explained.js
-node generate_explained.js --game game-thelongdark
+node generate_explained.js GAME_ID [GAME_ID ...]
 ```
 
 Run without arguments to process all `game-*` and `template-*` folders.
-Use `--game` to process a single extension folder by name.
+Pass one or more bare `GAME_ID` values to target specific extensions (e.g. `thelongdark`).
 
 ### generate_explained.js — Examples
 
 ```sh
 node generate_explained.js
-node generate_explained.js --game game-deathstranding2onthebeach
-node generate_explained.js --game template-ue4-5game
+node generate_explained.js deathstranding2onthebeach
+node generate_explained.js thelongdark hogwartslegacy
 ```
 
 ### generate_explained.js — Output
@@ -224,14 +311,14 @@ python categorize_games.py --dry-run
 ```
 
 Run without arguments to rebuild all category files from scratch by scanning every `game-*` folder.
-Use `--game` to add or update a single game (adds to its correct file, removes from any others).
+Pass one or more positional `GAME_ID` args to add or update specific games (adds each to its correct file, removes from any others).
 Use `--dry-run` to print what would be written without modifying any `.txt` files.
 
 ### categorize_games.py — Examples
 
 ```sh
 python categorize_games.py
-python categorize_games.py --game hogwartslegacy
+python categorize_games.py hogwartslegacy
 ```
 
 ### categorize_games.py — Output Files
@@ -327,7 +414,7 @@ python release_extension.py assassinscreedorigins assassinscreedvalhalla --no-op
 
 ### release_extension.py — Output
 
-Runs `generate_explained.js` first to regenerate `EXTENSION_EXPLAINED.md`, then creates `game-{GAME_ID}.zip` inside the extension folder, overwriting any existing zip. Reads `EXTENSION_URL` from `index.js` — if set to a valid URL, opens it in the default browser so the file can be uploaded. Skips the browser open if `EXTENSION_URL` is `"XXX"` or not present.
+Runs `generate_explained.js` first to regenerate `EXTENSION_EXPLAINED.md`, then creates `game-{GAME_ID}.zip` inside the extension folder, overwriting any existing zip. Reads `EXTENSION_URL` from `index.js` — if set to a valid URL, opens it in the default browser so the file can be uploaded. If `EXTENSION_URL` is `"XXX"` or not present, opens `https://www.nexusmods.com/games/site` instead.
 
 ---
 
@@ -335,9 +422,11 @@ Runs `generate_explained.js` first to regenerate `EXTENSION_EXPLAINED.md`, then 
 
 Generic framework for making repo-wide changes to all `game-*/index.js` files. Each patch is a named, independently-enabled function registered in the `PATCHES` list. New patches can be added without touching the runner logic.
 
+Also resizes all non-64x64 PNG files in `game-*` and `template-*` folders to 64x64 after the patch run.
+
 ### patch_extensions.py — Requirements
 
-No additional packages required (Python stdlib only).
+- `Pillow` — for PNG resizing (`pip install Pillow`). Patches still run without it; only PNG resize is skipped.
 
 ### patch_extensions.py — Usage
 
@@ -352,7 +441,7 @@ python patch_extensions.py GAME_ID [GAME_ID ...] --debug
 ```
 
 Run without arguments to apply all enabled patches to every `game-*` folder.
-Use `--game` to target a single game. Use `--dry-run` to preview without writing.
+Pass `GAME_ID [GAME_ID ...]` to target specific games. Use `--dry-run` to preview without writing.
 Use `--force` to re-run all URL patches even if values are already set (implies `--force-pcgw`).
 Use `--force-pcgw` to re-evaluate `PCGAMINGWIKI_URL` values that are already set (e.g. to correct wrong URLs from a previous run).
 Use `--debug` to print raw PCGamingWiki search results and match status for each game (useful for diagnosing lookup failures).
@@ -370,6 +459,8 @@ Use `--debug` to print raw PCGamingWiki search results and match status for each
 | `pcgamingwiki_url` | Sets `PCGAMINGWIKI_URL` by looking up the game on PCGamingWiki. Inserts as `"XXX"` if not found or API unreachable. |
 
 Each patch skips a game if the value is already set (unless `--force-pcgw` is used for `pcgamingwiki_url`). Games that fail a non-trivial step are always printed in the output so failures are visible. After writing any changed `index.js`, `generate_explained.js` is run automatically to keep `EXTENSION_EXPLAINED.md` in sync.
+
+After all patches run, PNGs are resized to 64x64 (requires Pillow). When targeting specific games, only those `game-{id}` folders are checked. When running on all, all `game-*` and `template-*` folders are checked.
 
 ### patch_extensions.py — Adding New Patches
 

@@ -8,7 +8,7 @@ Writes one .txt file per category to resources/. Each line is a GAME_ID.
 
 Usage:
     python categorize_games.py              # rebuild all category files from scratch
-    python categorize_games.py GAME_ID     # add/update a single game only
+    python categorize_games.py GAME_ID [GAME_ID ...]  # add/update specific games
     python categorize_games.py --dry-run   # print categorizations without writing files
 """
 
@@ -198,7 +198,7 @@ def update_single(game_id, dry_run=False):
 def main():
     args = sys.argv[1:]
     dry_run = "--dry-run" in args
-    args = [a for a in args if a not in ("--dry-run", "--force")]
+    args = [a for a in args if a != "--dry-run"]
 
     # Remaining positional args (if any) are the GAME_IDs to target
     target_ids = args if args else None

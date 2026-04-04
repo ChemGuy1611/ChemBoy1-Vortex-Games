@@ -7,12 +7,14 @@ downloads it from SteamGridDB (heroes) or Steam library_hero.jpg.
 
 Usage:
     python fetch_cover_art.py
-    python fetch_cover_art.py --game abioticfactor
+    python fetch_cover_art.py GAME_ID [GAME_ID ...]
     python fetch_cover_art.py --dry-run
+    python fetch_cover_art.py --force
 
 Options:
-    --game GAME_ID   Only process the single extension with this game ID.
+    GAME_ID          One or more game IDs to process. Omit to process all.
     --dry-run        List missing cover art files without downloading anything.
+    --force          Re-download cover art even if {GAME_ID}.jpg already exists.
 
 Requirements:
     pip install Pillow

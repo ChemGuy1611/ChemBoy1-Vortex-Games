@@ -4,7 +4,7 @@
  * and writes an EXTENSION_EXPLAINED.md describing how the extension works.
  *
  * Run with:  node generate_explained.js
- *            node generate_explained.js --game game-thelongdark
+ *            node generate_explained.js thelongdark [GAME_ID ...]
  */
 
 const fs   = require('fs');
@@ -987,24 +987,21 @@ function buildMarkdown(dirName, src) {
 
 // ── main ──────────────────────────────────────────────────────────────────────
 
-const gameArg = (() => {
-  const idx = process.argv.indexOf('--game');
-  return idx !== -1 ? process.argv[idx + 1] : null;
-})();
+const gameArgs = process.argv.slice(2).filter(a => !a.startsWith('-'));
 
 const entries = fs.readdirSync(ROOT, { withFileTypes: true });
 const extDirs = entries
   .filter(e => e.isDirectory() && (e.name.startsWith('game-') || e.name.startsWith('template-')))
   .map(e => e.name)
   .sort()
-  .filter(name => !gameArg || name === gameArg);
+  .filter(name => gameArgs.length === 0 || gameArgs.includes(name.replace(/^game-/, '')));
 
-if (gameArg) {
+if (gameArgs.length > 0) {
   if (extDirs.length === 0) {
-    console.error(`Error: directory "${gameArg}" not found.`);
+    console.error(`Error: no matching directories found for: ${gameArgs.join(', ')}`);
     process.exit(1);
   }
-  console.log(`Processing single extension: ${gameArg}\n`);
+  console.log(`Processing ${extDirs.length} extension(s): ${extDirs.join(', ')}\n`);
 } else {
   console.log(`Found ${extDirs.length} extension directories.\n`);
 }

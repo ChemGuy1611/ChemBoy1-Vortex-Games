@@ -5,9 +5,12 @@ Generic framework for making repo-wide changes to all game-*/index.js files.
 Each patch is a named, independently-enabled function. New patches can be added
 to the PATCHES list without touching the runner logic.
 
+Also resizes all non-64x64 PNG files in game-* and template-* folders to 64x64
+(requires Pillow: pip install Pillow).
+
 Usage:
-    python patch_extensions.py                              # run all enabled patches on all games
-    python patch_extensions.py GAME_ID [GAME_ID ...]       # run on one or more games
+    python patch_extensions.py                              # run all enabled patches on all games + resize PNGs
+    python patch_extensions.py GAME_ID [GAME_ID ...]       # run on one or more games (no template PNG resize)
     python patch_extensions.py --dry-run                   # preview changes without writing
     python patch_extensions.py GAME_ID [GAME_ID ...] --dry-run
     python patch_extensions.py --force-pcgw                # re-evaluate all PCGAMINGWIKI_URL values, overwriting wrong ones
@@ -657,6 +660,62 @@ PATCHES = [
 ]
 
 
+# ── PNG resize ───────────────────────────────────────────────────────────────
+
+def _get_png_size(path):
+    """Return (width, height) from a PNG IHDR chunk, or None on failure."""
+    import struct
+    try:
+        with open(path, 'rb') as f:
+            if f.read(8) != b'\x89PNG\r\n\x1a\n':
+                return None
+            f.read(4)  # chunk length
+            if f.read(4) != b'IHDR':
+                return None
+            w = struct.unpack('>I', f.read(4))[0]
+            h = struct.unpack('>I', f.read(4))[0]
+            return (w, h)
+    except Exception:
+        return None
+
+
+def run_png_resize(folders, dry_run):
+    """Resize all non-64x64 PNGs in the given folders to 64x64 using Pillow."""
+    try:
+        from PIL import Image
+    except ImportError:
+        print("PNG resize skipped -- Pillow not installed (pip install Pillow)\n")
+        return
+
+    TARGET = (64, 64)
+    total_resized = 0
+    total_already = 0
+
+    for folder in folders:
+        if not os.path.isdir(folder):
+            continue
+        folder_name = os.path.basename(folder)
+        pngs = sorted(f for f in os.listdir(folder) if f.lower().endswith('.png'))
+        for png in pngs:
+            png_path = os.path.join(folder, png)
+            size = _get_png_size(png_path)
+            if size is None:
+                print(f"  [{folder_name}/{png}] SKIP -- could not read PNG")
+                continue
+            if size == TARGET:
+                total_already += 1
+                continue
+            prefix = "[DRY RUN] " if dry_run else ""
+            print(f"  {prefix}[{folder_name}/{png}] {size[0]}x{size[1]} -> 64x64")
+            if not dry_run:
+                img = Image.open(png_path).convert("RGBA")
+                img = img.resize(TARGET, Image.LANCZOS)
+                img.save(png_path)
+            total_resized += 1
+
+    print(f"\nPNG resize: {total_resized} resized, {total_already} already 64x64.\n")
+
+
 # ── Runner ────────────────────────────────────────────────────────────────────
 
 def run_patches(game_ids, dry_run, context):
@@ -702,7 +761,7 @@ def run_patches(game_ids, dry_run, context):
                 with open(index_path, "w", encoding="utf-8") as f:
                     f.write(src)
                 result = subprocess.run(
-                    ["node", "generate_explained.js", "--game", f"game-{game_id}"],
+                    ["node", "generate_explained.js", game_id],
                     cwd=REPO_ROOT, capture_output=True, text=True
                 )
                 if result.returncode != 0:
@@ -745,6 +804,19 @@ def main():
 
     print(f"Running {len([p for p in PATCHES if p['enabled']])} patch(es) on {len(game_ids)} game(s){' [DRY RUN]' if dry_run else ''}...\n")
     run_patches(game_ids, dry_run, context)
+
+    # PNG resize — all game-* and template-* folders when running on all,
+    # or just the targeted game folders when specific IDs are given
+    if target_ids:
+        png_folders = [os.path.join(REPO_ROOT, f"game-{gid}") for gid in target_ids]
+    else:
+        png_folders = [
+            os.path.join(REPO_ROOT, d) for d in sorted(os.listdir(REPO_ROOT))
+            if (d.startswith("game-") or d.startswith("template-"))
+            and os.path.isdir(os.path.join(REPO_ROOT, d))
+        ]
+    print(f"Checking PNGs in {len(png_folders)} folder(s){' [DRY RUN]' if dry_run else ''}...\n")
+    run_png_resize(png_folders, dry_run)
 
 
 if __name__ == "__main__":

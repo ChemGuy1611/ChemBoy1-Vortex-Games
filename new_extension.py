@@ -5,12 +5,15 @@ new_extension.py
 Bootstraps a new Vortex game extension from a template.
 
 Usage:
-    python new_extension.py --template TEMPLATE_NAME "Game Name"
-    python new_extension.py --template TEMPLATE_NAME 1234567
+    python new_extension.py TEMPLATE "Game Name"
+    python new_extension.py TEMPLATE STEAM_APP_ID
+    python new_extension.py TEMPLATE "Game Name" --force
+    python new_extension.py TEMPLATE "Game Name" --dry-run
+    python new_extension.py TEMPLATE "Game Name" --no-images
 
 Examples:
     python new_extension.py --template template-unitybepinex "Hollow Knight"
-    python new_extension.py --template template-ue4-5game 1954200
+    python new_extension.py --template template-ue4-5 1954200
 
 Fills in all XXX fields it can resolve automatically from Steam, GOG, Epic,
 and PCGamingWiki. Remaining XXX fields are reported at the end for manual entry.
@@ -46,19 +49,22 @@ import setup_test_folder as stf
 REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
 
 TEMPLATES = [
-    "template-basicgame",
-    "template-cobraengineACSEgame",
-    "template-farcrygame",
-    "template-godot-game",
-    "template-reframework-fluffy-game",
-    "template-reloaded2game",
-    "template-rpgmakergame",
-    "template-snowdropenginegame",
-    "template-tfcinstaller-ue2-3game",
-    "template-ue4-5game",
+    "template-anvilengine",
+    "template-basic",
+    "template-cobraengineACSE",
+    "template-farcry",
+    "template-frostbite",
+    "template-godot",
+    "template-masseffectandromeda",
+    "template-reframework-fluffy",
+    "template-reloaded2",
+    "template-rpgmaker",
+    "template-snowdropengine",
+    "template-tfcinstaller-ue2-3",
+    "template-ue4-5",
+    "template-unity-umm",
     "template-unitybepinex",
     "template-unitymelonloaderbepinex-hybrid",
-    "template-unity-umm",
 ]
 
 # Short names accepted on the command line (strip the "template-" prefix)
@@ -354,24 +360,6 @@ def lookup_gog(game_name):
         print(f"    GOG lookup error: {e}")
     return None
 
-
-def check_epic(game_name):
-    """Check whether the game has a page on the Epic Games Store.
-    Returns (found: bool, url: str | None).
-    found=True → EPICAPP_ID left as XXX for manual entry.
-    found=False → EPICAPP_ID set to null."""
-    slug = re.sub(r"[^a-z0-9]+", "-", game_name.lower()).strip("-")
-    url = f"https://store.epicgames.com/en-US/p/{slug}"
-    try:
-        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
-        with urllib.request.urlopen(req, timeout=15) as resp:
-            final_url = resp.geturl()
-        return True, final_url
-    except urllib.error.HTTPError as e:
-        found = e.code != 404
-        return found, url if found else None
-    except Exception:
-        return True, url  # Network error — be conservative, leave as XXX
 
 
 def lookup_pcgamingwiki(game_name):
@@ -789,7 +777,7 @@ def edit_changelog(path, today):
 
 # ── Orchestration ─────────────────────────────────────────────────────────────
 
-def create_extension(template_name, game_input, force=False, dry_run=False):
+def create_extension(template_name, game_input, force=False, dry_run=False, no_images=False):
     sgdb_key = os.environ.get("STEAMGRIDDB_API_KEY")
     if not sgdb_key:
         try:
@@ -830,6 +818,9 @@ def create_extension(template_name, game_input, force=False, dry_run=False):
         if steam_data:
             game_name = steam_data.get("name", game_name)
 
+    # Strip trademark/copyright symbols that Steam sometimes includes in game names
+    game_name = re.sub(r'[®™©]', '', game_name).strip()
+
     print(f"  Name     : {game_name}")
     print(f"  Steam ID : {appid}")
 
@@ -856,9 +847,6 @@ def create_extension(template_name, game_input, force=False, dry_run=False):
     time.sleep(0.3)
     gog_id = lookup_gog(game_name)
     print(f"  GOG      : {gog_id or 'not found'}")
-    time.sleep(0.3)
-    epic_found, epic_url = check_epic(game_name)
-    print(f"  Epic     : {'found (set ID manually)' if epic_found else 'not found'}")
 
     # ── 4. SteamDB data, executable, demo ID, and UE code name ───────────────
     print("\n[SteamDB]")
@@ -882,7 +870,9 @@ def create_extension(template_name, game_input, force=False, dry_run=False):
     time.sleep(0.3)
     availability = fetch_pcgw_availability(pcgw_title)
     xbox_found = availability['xbox']
+    epic_found = bool(availability.get('epic_url'))
     engine_version = availability['engine_version']
+    print(f"  Epic     : {'found (set ID manually)' if epic_found else 'not found'}")
     print(f"  Xbox     : {'found (set ID manually)' if xbox_found else 'not found'}")
     if engine_version:
         print(f"  UE build : {engine_version}")
@@ -992,24 +982,30 @@ def create_extension(template_name, game_input, force=False, dry_run=False):
     print("  CHANGELOG.md updated")
 
     # ── 11. exec.png ──────────────────────────────────────────────────────────
-    print("\n[exec.png]")
-    time.sleep(0.3)
-    icon_path = os.path.join(dest, "exec.png")
-    icon_ok, icon_source = download_exec_icon(appid, game_name, icon_path)
-    print(f"  {'Saved  : ' + icon_source if icon_ok else 'FAILED — add exec.png manually (64x64 PNG)'}")
-    if icon_ok:
-        os.startfile(icon_path)
+    if no_images:
+        print("\n[exec.png] Skipped (--no-images)")
+    else:
+        print("\n[exec.png]")
+        time.sleep(0.3)
+        icon_path = os.path.join(dest, "exec.png")
+        icon_ok, icon_source = download_exec_icon(appid, game_name, icon_path)
+        print(f"  {'Saved  : ' + icon_source if icon_ok else 'FAILED — add exec.png manually (64x64 PNG)'}")
+        if icon_ok:
+            os.startfile(icon_path)
 
     # ── 12. Cover art ─────────────────────────────────────────────────────────
-    print(f"\n[{game_id}.jpg]")
-    time.sleep(0.3)
-    art_path = os.path.join(dest, f"{game_id}.jpg")
-    art_ok, art_source = download_cover_art(appid, game_name, art_path, sgdb_key)
-    if art_ok:
-        print(f"  Saved  : {art_source}")
-        os.startfile(art_path)
+    if no_images:
+        print(f"\n[{game_id}.jpg] Skipped (--no-images)")
     else:
-        print(f"  FAILED — add {game_id}.jpg manually (640x360 JPG, no title text)")
+        print(f"\n[{game_id}.jpg]")
+        time.sleep(0.3)
+        art_path = os.path.join(dest, f"{game_id}.jpg")
+        art_ok, art_source = download_cover_art(appid, game_name, art_path, sgdb_key)
+        if art_ok:
+            print(f"  Saved  : {art_source}")
+            os.startfile(art_path)
+        else:
+            print(f"  FAILED — add {game_id}.jpg manually (640x360 JPG, no title text)")
 
     # ── 13. Summary ───────────────────────────────────────────────────────────
     print(f"\n{'=' * 60}")
@@ -1049,13 +1045,13 @@ def create_extension(template_name, game_input, force=False, dry_run=False):
     # ── 14. Generate EXTENSION_EXPLAINED.md ───────────────────────────────────
     print("[generate_explained.js]")
     result = subprocess.run(
-        ["node", "generate_explained.js", "--game", f"game-{game_id}"],
+        ["node", "generate_explained.js", game_id],
         cwd=REPO_ROOT, capture_output=True, text=True
     )
     if result.returncode == 0:
         print(f"  EXTENSION_EXPLAINED.md written.\n")
     else:
-        print(f"  FAILED — run manually: node generate_explained.js --game game-{game_id}")
+        print(f"  FAILED — run manually: node generate_explained.js {game_id}")
         if result.stderr:
             print(f"  {result.stderr.strip()}\n")
 
@@ -1112,9 +1108,13 @@ def main():
         "--dry-run", action="store_true",
         help="Run all lookups and print what would be created, without writing any files",
     )
+    parser.add_argument(
+        "--no-images", action="store_true",
+        help="Skip downloading exec.png and cover art (useful when re-running on an existing extension)",
+    )
     args = parser.parse_args()
     full_template = f"template-{args.template}"
-    create_extension(full_template, args.game, args.force, args.dry_run)
+    create_extension(full_template, args.game, args.force, args.dry_run, args.no_images)
 
 
 if __name__ == "__main__":

@@ -1,3 +1,24 @@
+"""
+nexus_games_report.py
+
+Fetches the Nexus Mods games list and filters to games approved within a given
+time window. Writes a Markdown table and CSV sorted by downloads descending.
+Flags games that already have a Vortex extension in the local manifest.
+
+Usage:
+    python nexus_games_report.py DAYS
+    python nexus_games_report.py DAYS --new-only
+    python nexus_games_report.py DAYS --dry-run
+
+Options:
+    DAYS         Time window in days counting back from today. Defaults to 90.
+    --new-only   Exclude games that already have a Vortex extension.
+    --dry-run    Print report to console instead of writing files.
+
+Requirements:
+    NEXUS_API_KEY environment variable (or Windows registry fallback).
+"""
+
 import csv
 import os
 import sys
@@ -113,11 +134,14 @@ def main():
         mods = g.get("mods", 0)
         dl = g.get(sort_field, 0)
         approved_ts = g.get("approved_date", 0)
-        approved_dt = datetime.datetime.fromtimestamp(approved_ts, tz=datetime.timezone.utc)
-        approved = approved_dt.strftime("%Y-%m-%d")
+        if approved_ts:
+            approved_dt = datetime.datetime.fromtimestamp(approved_ts, tz=datetime.timezone.utc)
+            approved = approved_dt.strftime("%Y-%m-%d")
+        else:
+            approved = "—"
         supported = "Yes" if domain in supported_ids else "No"
 
-        days_since = (now.timestamp() - approved_ts) / 86400
+        days_since = (now.timestamp() - approved_ts) / 86400 if approved_ts else 0
         if mods > 0 and days_since > 0:
             dl_per_mod_day = dl / mods / days_since
             dl_pmd_md  = f"{dl_per_mod_day:.2f}"

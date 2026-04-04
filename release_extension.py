@@ -17,6 +17,7 @@ import subprocess
 
 REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
 SEVENZIP = r"C:\Program Files\7-Zip\7z.exe"
+NEXUS_SITE_URL = "https://www.nexusmods.com/games/site"
 
 
 def get_extension_url(src):
@@ -49,12 +50,12 @@ def release(game_id, open_browser, dry_run=False):
         if extension_url:
             print(f"  [{game_id}] [DRY RUN] Would open: {extension_url}")
         else:
-            print(f"  [{game_id}] [DRY RUN] EXTENSION_URL not set — browser open would be skipped.")
+            print(f"  [{game_id}] [DRY RUN] EXTENSION_URL not set — would open: {NEXUS_SITE_URL}")
         return True
 
     print(f"  [{game_id}] Generating EXTENSION_EXPLAINED.md...")
     result = subprocess.run(
-        ["node", "generate_explained.js", "--game", f"game-{game_id}"],
+        ["node", "generate_explained.js", game_id],
         cwd=REPO_ROOT, capture_output=True, text=True
     )
     if result.returncode != 0:
@@ -80,12 +81,11 @@ def release(game_id, open_browser, dry_run=False):
     size_kb = os.path.getsize(zip_path) / 1024
     print(f"  [{game_id}] Created: {zip_path} ({size_kb:.1f} KB)")
 
-    if extension_url:
-        print(f"  [{game_id}] Opening: {extension_url}")
-        if open_browser:
-            subprocess.run(["cmd", "/c", "start", "", extension_url], check=False)
-    else:
-        print(f"  [{game_id}] EXTENSION_URL not set — skipping browser open.")
+    url_to_open = extension_url or NEXUS_SITE_URL
+    label = "" if extension_url else " (EXTENSION_URL not set)"
+    print(f"  [{game_id}] Opening: {url_to_open}{label}")
+    if open_browser:
+        subprocess.run(["cmd", "/c", "start", "", url_to_open], check=False)
 
     return True
 
