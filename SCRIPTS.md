@@ -347,6 +347,62 @@ Each game is matched against categories in order — the first match wins. Detec
 
 ---
 
+## port_to_template.py
+
+Ports an existing game extension to a target template's structure. Reads the template's `index.js` as the base and transplants the game's constant values into all `"XXX"` placeholders, `null` fields, and numeric `0` sentinels. Writes the result back to the game's `index.js` (with a `.bak` backup).
+
+The core rule: mod type IDs (e.g. `FLUFFY_ID`, `MOD_ID`, `ROOT_ID`) are **always preserved from the game**. Vortex stores mod assignments by these IDs — changing them would break existing user setups. If the game uses a different suffix than the template (e.g. `${GAME_ID}-fluffymodmanager` vs the template's `${GAME_ID}-fluffymanager`), the template literal is rewritten to keep the game's suffix.
+
+### port_to_template.py — Requirements
+
+No additional packages required (Python stdlib only). `node` must be on `PATH` for JS syntax validation.
+
+### port_to_template.py — Usage
+
+```sh
+python port_to_template.py GAME_ID TEMPLATE_NAME
+python port_to_template.py GAME_ID TEMPLATE_NAME --dry-run
+python port_to_template.py GAME_ID TEMPLATE_NAME --force
+```
+
+`GAME_ID` is the folder name without the `game-` prefix. `TEMPLATE_NAME` is the folder name without the `template-` prefix.
+
+### port_to_template.py — Examples
+
+```sh
+python port_to_template.py dragonsdogma2 reframework-fluffy --dry-run
+python port_to_template.py dragonsdogma2 reframework-fluffy
+```
+
+### port_to_template.py — Substitution Rules
+
+| Template value | Condition | Action |
+| --- | --- | --- |
+| `"XXX"` / `"XXX.exe"` / etc. | Game has a non-`"XXX"` value for the same name | Substitute game value |
+| `` `${GAME_ID}-SUFFIX` `` | Game uses a different suffix | Rewrite to `` `${GAME_ID}-GAME_SUFFIX` `` |
+| `` `${GAME_ID}-SUFFIX` `` | Suffix matches | Leave as-is |
+| `null` | Game has a non-null, non-`"XXX"` value | Substitute game value |
+| `0` (numeric) | Game has a non-zero value | Substitute game value |
+| `DISCOVERY_IDS_ACTIVE` | Always | Rebuilt from game's `discovery.ids` references |
+| `IGNORE_CONFLICTS` / `IGNORE_DEPLOY` | Game has different values | Substitute game's array literal |
+| Boolean toggles | Always | Left at template defaults |
+| Not found in game | — | Left at template default (listed as skipped) |
+
+Game constants that have no mapping in the template are printed as **manual review** items.
+
+### port_to_template.py — Output
+
+Prints a substitution report before writing anything:
+
+- **N substitution(s) applied** — name, old template value, new game value
+- **N constant(s) left as template default** — names not found in the game source
+- **Manual review** — game constants with no template counterpart (check if inline use in `path.join()` or spec fields needs updating)
+- **Reminders** — remaining XXX check, inline string check, `node --check` command
+
+A `.bak` file is written alongside `index.js` before overwriting. Use `--force` to overwrite an existing `.bak`.
+
+---
+
 ## release_extension.py
 
 Packages a game extension folder into a `.zip` archive using 7-Zip and opens the extension's Nexus Mods page in the default browser.
