@@ -1,6 +1,6 @@
 /*////////////////////////////////////////////////
 Name: XXX Vortex Extension
-Structure: Unreal Engine Game
+Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
 Version: 0.1.0
 Date: 2026-XX-XX
@@ -21,7 +21,8 @@ const { parseStringPromise } = require('xml2js');
 //#region Edit Zone
 // -------------------------------------
 
-//const USER_HOME = util.getVortexPath('home'); //only uncomment the ones needed
+/*const USER_HOME = util.getVortexPath("home");
+const LOCALLOW = path.join(USER_HOME, 'AppData', 'LocalLow'); //*/
 //const DOCUMENTS = util.getVortexPath('documents');
 //const ROAMINGAPPDATA = util.getVortexPath('appData');
 const LOCALAPPDATA = util.getVortexPath('localAppData');
@@ -77,7 +78,7 @@ const UE4SS_FILE_NO = 0;
 const UE4SS_DOMAIN = GAME_ID; //either GAME_ID or 'site'
 const UE4SS_MOD_PATH = path.join('ue4ss', 'Mods'); //this should probably never change (unless UE4SS team changes it again lol)
 
-//config, save, shipping exe
+//config and save
 const DATA_FOLDER = EPIC_CODE_NAME; //almost always matches.
 const CONFIG_FOLDERNAME = 'Windows'; //UE 4 games are often 'WindowsNoEditor'
 const CONFIG_LOC = 'Local AppData'; //string for notification text.

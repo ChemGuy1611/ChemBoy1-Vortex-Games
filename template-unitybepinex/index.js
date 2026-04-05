@@ -257,20 +257,25 @@ const tools = [
     //defaultPrimary: true,
     parameters: PARAMETERS
   }, //*/
-  {
-    id: `${GAME_ID}-customlaunchalt`,
-    name: `Custom Launch`,
-    logo: `exec.png`,
-    executable: () => EXEC_ALT,
-    requiredFiles: [EXEC_ALT],
-    detach: true,
-    relative: true,
-    exclusive: true,
-    shell: true,
-    //defaultPrimary: true,
-    parameters: PARAMETERS
-  }, //*/
 ];
+
+if (multiExe) {
+  tools.push(
+    {
+      id: `${GAME_ID}-customlaunchalt`,
+      name: `Custom Launch`,
+      logo: `exec.png`,
+      executable: () => EXEC_ALT,
+      requiredFiles: [EXEC_ALT],
+      detach: true,
+      relative: true,
+      exclusive: true,
+      shell: true,
+      //defaultPrimary: true,
+      parameters: PARAMETERS,
+    },
+  );
+}
 
 // BASIC FUNCTIONS //////////////////////////////////////////////////////////////
 

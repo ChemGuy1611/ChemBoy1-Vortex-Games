@@ -13,9 +13,9 @@
 | Property | Value |
 | --- | --- |
 | Game ID | `storyofseasonsgrandbazaar` |
-| Executable | `XXX.exe` |
+| Executable | `SOSGrandBazaar.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
-| Executable (GOG) | `XXX.exe` |
+| Executable (GOG) | `SOSGrandBazaar.exe` |
 | Extension Page | XXX |
 
 ## Supported Stores
@@ -44,8 +44,8 @@ Mod types define where each category of mod gets deployed:
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch** (`XXX.exe`)
-- **Custom Launch** (`XXX.exe`)
+- **Custom Launch** (`SOSGrandBazaar.exe`)
+- **Custom Launch** (`SOSGrandBazaar.exe`)
 
 ## Toolbar Actions
 

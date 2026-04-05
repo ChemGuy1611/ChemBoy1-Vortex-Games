@@ -24,7 +24,7 @@ const { parseStringPromise } = require('xml2js');
 const USER_HOME = util.getVortexPath("home");
 const LOCALLOW = path.join(USER_HOME, 'AppData', 'LocalLow');
 //const DOCUMENTS = util.getVortexPath("documents");
-//const ROAMINGAPPDATA = util.getVortexPath("appData");
+const ROAMINGAPPDATA = util.getVortexPath("appData");
 const LOCALAPPDATA = util.getVortexPath("localAppData");
 
 //Specify all the information about the game
@@ -37,8 +37,8 @@ const XBOXAPP_ID = null;
 const XBOXEXECNAME = "Game";
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 const GAME_NAME = "STORY OF SEASONS: Grand Bazaar";
-const GAME_NAME_SHORT = "STORY OF SEASONS";
-const GAME_STRING = "XXX"; //string for exe and data folder (seem to always match)
+const GAME_NAME_SHORT = "STORY OF SEASONS GB";
+const GAME_STRING = "SOSGrandBazaar"; //string for exe and data folder (seem to always match)
 const GAME_STRING_ALT = GAME_STRING; //CHANGE THIS IF IT DOESN'T MATCH
 const EXEC = `${GAME_STRING}.exe`;
 const EXEC_EGS = EXEC;
@@ -46,7 +46,7 @@ const EXEC_GOG = EXEC;
 const EXEC_XBOX = 'gamelaunchhelper.exe';
 const EXEC_ALT = `${GAME_STRING_ALT}.exe`;
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Story_Of_Seasons%3A_Grand_Bazaar";
-const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1784"; //Nexus link to this extension. Used for links
 
 //feature toggles
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
@@ -72,17 +72,17 @@ const hasVersionFile = false; //set to true if there is a Version.info file that
 const VER_IDX = 3; //index of the version number in the Version.info file
 const VER_SPLIT = ' '; //split character for the Version.info file - typically a space
 
-const DEV_REGSTRING = "XXX"; //developer name
-const GAME_REGSTRING = "XXX"; //game name
+const DEV_REGSTRING = ""; //developer name
+const GAME_REGSTRING = "STORY OF SEASONS Grand Bazaar"; //game name
 const XBOX_PUB_ID = "XXX"; //string after "ID_"
-const CONFIG_FOLDERNAME = "XXX";
-const SAVE_FOLDERNAME = "XXX";
-const hasUserIdFolder = false; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
+const CONFIG_FOLDERNAME = "";
+const SAVE_FOLDERNAME = "";
+const hasUserIdFolder = true; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
 
 const BEPINEX_PAGE_ID = '0'; //only specify if there is a Nexus page for BepInEx
 const BEPINEX_FILE_ID = '0';
 const BEPINEX_ARCH = 'x64'; // 'x64' or 'x86'
-const BEPINEX_BUILD = 'mono'; // 'il2cpp' or 'mono' - IL2CPP will use bleeding edge builds
+const BEPINEX_BUILD = 'il2cpp'; // 'il2cpp' or 'mono' - IL2CPP will use bleeding edge builds
 let BEPINEX_VERSION = '5.4.23.5'; //force BepInEx version ('5.4.23.5' or '6.0.0')
 const BEP_BE_VER = '755'; //set BepInEx build for BE IL2CPP URLs
 const BEP_BE_COMMIT = '3fab71a'; //git commit number for BE IL2CPP builds
@@ -144,7 +144,7 @@ if (BEPINEX_BUILD === 'il2cpp') {
 const CONFIG_HIVE = 'HKEY_CURRENT_USER';
 const CONFIG_KEY = `Software\\${DEV_REGSTRING}\\${GAME_REGSTRING}`;
 const CONFIG_REGPATH_FULL = `${CONFIG_HIVE}\\${CONFIG_KEY}`; //*/
-const CONFIG_FOLDER = path.join(LOCALLOW, DEV_REGSTRING, GAME_REGSTRING);
+const CONFIG_FOLDER = path.join(ROAMINGAPPDATA, GAME_REGSTRING);
 let USERID_FOLDER = "";
 if (hasUserIdFolder) {
   try {
@@ -157,9 +157,9 @@ if (hasUserIdFolder) {
     USERID_FOLDER = "";
   } //*/
 }
-const CONFIG_PATH = path.join(CONFIG_FOLDER, USERID_FOLDER, CONFIG_FOLDERNAME);
+const CONFIG_PATH = path.join(CONFIG_FOLDER, USERID_FOLDER);
 const CONFIG_FILES = ['settings.json'];
-const SAVE_PATH_DEFAULT = path.join(LOCALLOW, DEV_REGSTRING, GAME_REGSTRING, USERID_FOLDER, SAVE_FOLDERNAME);
+const SAVE_PATH_DEFAULT = path.join(LOCALLOW, DEV_REGSTRING, GAME_REGSTRING, USERID_FOLDER);
 const SAVE_PATH_XBOX = path.join(LOCALAPPDATA, "Packages", `${XBOXAPP_ID}_${XBOX_PUB_ID}`, "SystemAppData", "wgs"); //XBOX Version
 let SAVE_PATH = SAVE_PATH_DEFAULT;
 const SAVE_FILES = ['XXX.XXX'];
@@ -257,7 +257,7 @@ const tools = [
     //defaultPrimary: true,
     parameters: PARAMETERS
   }, //*/
-  {
+  /*{
     id: `${GAME_ID}-customlaunchalt`,
     name: `Custom Launch`,
     logo: `exec.png`,

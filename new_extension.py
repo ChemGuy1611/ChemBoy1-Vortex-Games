@@ -18,9 +18,10 @@ Examples:
 Fills in all XXX fields it can resolve automatically from Steam, GOG, Epic,
 and PCGamingWiki. Remaining XXX fields are reported at the end for manual entry.
 
-Downloads exec.png (64x64, Steam CDN) and a 640x360 cover art JPG with no
-title text (SteamGridDB heroes if STEAMGRIDDB_API_KEY is set, else Steam
-library_hero.jpg).
+Downloads exec.png (64x64, Steam CDN), a 640x360 cover art JPG with no title
+text (SteamGridDB heroes if STEAMGRIDDB_API_KEY is set, else Steam
+library_hero.jpg), and a 1920x1080 title image (SteamGridDB grids, requires
+STEAMGRIDDB_API_KEY) saved to resources/title-images/.
 
 Copies all template assets as-is (tfc.png, fluffy.png, reloaded.png, etc.).
 Skips EXTENSION_EXPLAINED.md (generated separately via generate_explained.js).
@@ -657,6 +658,131 @@ def download_cover_art(appid, game_name, out_path, sgdb_key=None):
     return True, source
 
 
+def download_title_image(appid, game_name, out_path, sgdb_key=None):
+    """Download and save a 1920x1080 title image (with game logo/title text).
+
+    Priority order:
+    1. SteamGridDB hero + logo composite — hero as background, logo centered in
+       the lower portion (Steam library convention). Requires STEAMGRIDDB_API_KEY.
+       Heroes and logos prefer is_official=True; logos exclude white/black styles.
+    2. SteamGridDB 920x430 grid (no style filter — usually has title text baked in).
+       Prefers is_official=True, sorted by score. Requires STEAMGRIDDB_API_KEY.
+    3. Steam capsule_616x353.jpg — official art, always has title text. No key needed.
+    """
+
+    result_img = None
+    source = None
+
+    def _en(items):
+        """Keep only English/language-neutral items; fall back to all if none."""
+        en = [i for i in items if i.get("language", "en") in ("en", "all")]
+        return en if en else items
+
+    def _pick(items, sort_key="score"):
+        """Return the best official item if any exist, else best overall."""
+        official = [i for i in items if i.get("is_official", False)]
+        pool = official if official else items
+        return sorted(pool, key=lambda x: x.get(sort_key, 0), reverse=True)[0]
+
+    # ── 1. SteamGridDB hero + logo composite ──────────────────────────────────
+    if sgdb_key:
+        hero_data = None
+        logo_data = None
+
+        try:
+            url = f"https://www.steamgriddb.com/api/v2/heroes/steam/{appid}"
+            resp = json.loads(http_get(url, {"Authorization": f"Bearer {sgdb_key}"}))
+            heroes = resp.get("data", [])
+            if heroes:
+                hero_data = http_get_bytes(_pick(_en(heroes), "width")["url"])
+        except Exception as e:
+            print(f"    SteamGridDB hero error: {e}")
+
+        try:
+            url = f"https://www.steamgriddb.com/api/v2/logos/steam/{appid}"
+            resp = json.loads(http_get(url, {"Authorization": f"Bearer {sgdb_key}"}))
+            logos = resp.get("data", [])
+            if logos:
+                # Prefer colored logos — exclude white and black styles
+                colored = [l for l in _en(logos) if l.get("style", "") not in ("white", "black")]
+                pool = colored if colored else _en(logos)
+                logo_data = http_get_bytes(_pick(pool, "score")["url"])
+        except Exception as e:
+            print(f"    SteamGridDB logo error: {e}")
+
+        if hero_data and logo_data:
+            try:
+                # Build hero background: crop to 16:9, resize to 1920x1080
+                hero = Image.open(BytesIO(hero_data)).convert("RGB")
+                w, h = hero.size
+                tr = 1920 / 1080
+                cr = w / h
+                if cr > tr:
+                    nw = int(h * tr)
+                    hero = hero.crop(((w - nw) // 2, 0, (w - nw) // 2 + nw, h))
+                elif cr < tr:
+                    nh = int(w / tr)
+                    hero = hero.crop((0, (h - nh) // 2, w, (h - nh) // 2 + nh))
+                hero = hero.resize((1920, 1080), Image.LANCZOS)
+
+                # Scale logo: max 65% canvas width, 40% canvas height
+                logo = Image.open(BytesIO(logo_data)).convert("RGBA")
+                logo.thumbnail((int(1920 * 0.65), int(1080 * 0.40)), Image.LANCZOS)
+                lw, lh = logo.size
+
+                # Position: horizontally centered, bottom edge at 88% canvas height
+                x = (1920 - lw) // 2
+                y = int(1080 * 0.88) - lh
+
+                hero.paste(logo, (x, y), mask=logo.split()[3])
+                result_img = hero
+                source = "SteamGridDB hero + logo composite"
+            except Exception as e:
+                print(f"    Composite error: {e}")
+
+    # ── 2. SteamGridDB 920x430 grid (no style filter, official preferred) ────────
+    if result_img is None and sgdb_key:
+        try:
+            url = f"https://www.steamgriddb.com/api/v2/grids/steam/{appid}?dimensions=920x430"
+            resp = json.loads(http_get(url, {"Authorization": f"Bearer {sgdb_key}"}))
+            grids = resp.get("data", [])
+            if grids:
+                raw = http_get_bytes(_pick(_en(grids), "score")["url"])
+                result_img = Image.open(BytesIO(raw)).convert("RGB")
+                source = "SteamGridDB grid 920x430 [upscaled]"
+        except Exception as e:
+            print(f"    SteamGridDB grid error: {e}")
+
+    # ── 3. Steam capsule_616x353.jpg (official, always has title text) ─────────
+    if result_img is None:
+        try:
+            url = f"https://cdn.fastly.steamstatic.com/steam/apps/{appid}/capsule_616x353.jpg"
+            raw = http_get_bytes(url)
+            result_img = Image.open(BytesIO(raw)).convert("RGB")
+            source = "Steam capsule_616x353.jpg [upscaled]"
+        except Exception as e:
+            print(f"    Steam capsule error: {e}")
+
+    if result_img is None:
+        return False, None
+
+    # Crop to 16:9 if needed, then resize to 1920x1080 (composite is already sized)
+    if source != "SteamGridDB hero + logo composite":
+        w, h = result_img.size
+        tr = 1920 / 1080
+        cr = w / h
+        if cr > tr:
+            nw = int(h * tr)
+            result_img = result_img.crop(((w - nw) // 2, 0, (w - nw) // 2 + nw, h))
+        elif cr < tr:
+            nh = int(w / tr)
+            result_img = result_img.crop((0, (h - nh) // 2, w, (h - nh) // 2 + nh))
+        result_img = result_img.resize((1920, 1080), Image.LANCZOS)
+
+    result_img.save(out_path, "JPEG", quality=92)
+    return True, source
+
+
 # ── Derivation helpers ────────────────────────────────────────────────────────
 
 def derive_game_id(name):
@@ -803,7 +929,7 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
             pass
     today = date.today().strftime("%Y-%m-%d")
 
-    # ── 1. Resolve Steam ID and canonical name ────────────────────────────────
+    # ── Resolve Steam ID and canonical name ──────────────────────────────────
     print("\n[Steam]")
     if game_input.isdigit():
         appid = game_input
@@ -832,7 +958,7 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
         game_id = derive_game_id(game_name)
         print(f"  Game ID  : {game_id} (derived — verify Nexus domain manually)")
 
-    # ── 2. Check destination ──────────────────────────────────────────────────
+    # ── Check destination ─────────────────────────────────────────────────────
     dest = os.path.join(REPO_ROOT, f"game-{game_id}")
     if os.path.exists(dest) and not dry_run:
         if force:
@@ -842,13 +968,13 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
             print("  Use --force to overwrite.")
             sys.exit(1)
 
-    # ── 3. Store IDs ──────────────────────────────────────────────────────────
+    # ── Store IDs ─────────────────────────────────────────────────────────────
     print("\n[Store IDs]")
     time.sleep(0.3)
     gog_id = lookup_gog(game_name)
     print(f"  GOG      : {gog_id or 'not found'}")
 
-    # ── 4. SteamDB data, executable, demo ID, and UE code name ───────────────
+    # ── SteamDB data, executable, demo ID, and UE code name ──────────────────
     print("\n[SteamDB]")
     time.sleep(0.3)
     steamdb_data = scrape_steamdb_info(appid)
@@ -981,7 +1107,7 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
     edit_changelog(os.path.join(dest, "CHANGELOG.md"), today)
     print("  CHANGELOG.md updated")
 
-    # ── 11. exec.png ──────────────────────────────────────────────────────────
+    # ── exec.png ──────────────────────────────────────────────────────────────
     if no_images:
         print("\n[exec.png] Skipped (--no-images)")
     else:
@@ -993,7 +1119,7 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
         if icon_ok:
             os.startfile(icon_path)
 
-    # ── 12. Cover art ─────────────────────────────────────────────────────────
+    # ── Cover art ─────────────────────────────────────────────────────────────
     if no_images:
         print(f"\n[{game_id}.jpg] Skipped (--no-images)")
     else:
@@ -1007,7 +1133,22 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
         else:
             print(f"  FAILED — add {game_id}.jpg manually (640x360 JPG, no title text)")
 
-    # ── 13. Summary ───────────────────────────────────────────────────────────
+    # ── Title image ───────────────────────────────────────────────────────────
+    title_ok = False
+    if no_images:
+        print(f"\n[{game_id}_title.jpg] Skipped (--no-images)")
+    else:
+        print(f"\n[{game_id}_title.jpg]")
+        title_dir = os.path.join(REPO_ROOT, "resources", "title-images")
+        os.makedirs(title_dir, exist_ok=True)
+        title_path = os.path.join(title_dir, f"{game_id}_title.jpg")
+        title_ok, title_source = download_title_image(appid, game_name, title_path, sgdb_key)
+        if title_ok:
+            print(f"  Saved  : {title_source}")
+        else:
+            print(f"  FAILED -- add {game_id}_title.jpg manually to resources/title-images/ (1920x1080 JPG, with title text)")
+
+    # ── Summary ───────────────────────────────────────────────────────────────
     print(f"\n{'=' * 60}")
     print(f"  Created  : game-{game_id}/")
     print(f"  Template : {template_name}")
@@ -1035,6 +1176,8 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
         missing_files.append("exec.png (64x64 PNG)")
     if not art_ok:
         missing_files.append(f"{game_id}.jpg (640x360 JPG, no title text)")
+    if not title_ok:
+        missing_files.append(f"{game_id}_title.jpg (1920x1080 JPG, with title text) -> resources/title-images/")
     if missing_files:
         print("\n  Files to add manually:")
         for f in missing_files:
@@ -1042,7 +1185,7 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
 
     print(f"{'=' * 60}\n")
 
-    # ── 14. Generate EXTENSION_EXPLAINED.md ───────────────────────────────────
+    # ── Generate EXTENSION_EXPLAINED.md ───────────────────────────────────────
     print("[generate_explained.js]")
     result = subprocess.run(
         ["node", "generate_explained.js", game_id],
@@ -1055,7 +1198,7 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
         if result.stderr:
             print(f"  {result.stderr.strip()}\n")
 
-    # ── 15. Update engine category lists ─────────────────────────────────────
+    # ── Update engine category lists ─────────────────────────────────────────
     print("[categorize_games.py]")
     result = subprocess.run(
         ["python", "categorize_games.py", game_id],
@@ -1068,7 +1211,7 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
         if result.stderr:
             print(f"  {result.stderr.strip()}\n")
 
-    # ── 16. Create test game folder ───────────────────────────────────────────
+    # ── Create test game folder ───────────────────────────────────────────────
     print("[setup_test_folder.py]")
     try:
         stf.setup(game_id)

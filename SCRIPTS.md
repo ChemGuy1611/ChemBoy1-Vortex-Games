@@ -38,7 +38,10 @@ python fetch_exec_icon.py --force
 
 ## fetch_cover_art.py
 
-Scans all `game-*` extension folders and downloads a 640x360 JPG cover art image for any extension missing its `{GAME_ID}.jpg` file. Reads `STEAMAPP_ID` directly from each `index.js` to look up art. Imports image-download logic from `new_extension.py`.
+Scans all `game-*` extension folders and downloads missing cover art or title images. Reads `STEAMAPP_ID` directly from each `index.js` to look up art. Imports image-download logic from `new_extension.py`.
+
+- Default mode: downloads `{GAME_ID}.jpg` (640x360, no title text) into each extension folder.
+- `--title` mode: downloads `{GAME_ID}_title.jpg` (1920x1080, with title text) to `resources/title-images/`.
 
 ### fetch_cover_art.py — Requirements
 
@@ -50,7 +53,7 @@ pip install Pillow
 
 | Variable | Required | Description |
 | --- | --- | --- |
-| `STEAMGRIDDB_API_KEY` | Optional | SteamGridDB API key. Used for higher-quality hero art. Falls back to Steam `library_hero.jpg` if not set. |
+| `STEAMGRIDDB_API_KEY` | Optional | SteamGridDB API key. Used for higher-quality hero art in default mode. Required for `--title` mode (no fallback available). Falls back to Steam `library_hero.jpg` in default mode if not set. |
 
 ### fetch_cover_art.py — Usage
 
@@ -59,16 +62,20 @@ python fetch_cover_art.py
 python fetch_cover_art.py GAME_ID [GAME_ID ...]
 python fetch_cover_art.py --dry-run
 python fetch_cover_art.py --force
+python fetch_cover_art.py --title
+python fetch_cover_art.py --title GAME_ID [GAME_ID ...]
 ```
 
-- No arguments — scans all `game-*` folders and downloads missing art.
+- No arguments — scans all `game-*` folders and downloads missing cover art.
 - `GAME_ID [GAME_ID ...]` — only processes the listed game IDs.
 - `--dry-run` — lists missing files without downloading anything.
-- `--force` — re-downloads cover art even if `{GAME_ID}.jpg` already exists.
+- `--force` — re-downloads even if the target file already exists.
+- `--title` — fetches title images (1920x1080) to `resources/title-images/` instead of cover art.
 
 ### fetch_cover_art.py — Output
 
-- Saved files are written as `{GAME_ID}.jpg` (640x360 JPEG) into each extension folder.
+- Cover art saved as `{GAME_ID}.jpg` (640x360 JPEG) in each extension folder.
+- Title images saved as `{GAME_ID}_title.jpg` (1920x1080 JPEG) in `resources/title-images/`.
 - Extensions without a `STEAMAPP_ID` in `index.js` are skipped with a note.
 - A summary of saved / failed / skipped counts is printed at the end.
 
@@ -158,7 +165,7 @@ After the script completes, do these steps manually:
 
 ## new_extension.py
 
-Bootstraps a new Vortex game extension folder from a template. Looks up game information automatically from Steam, GOG, Epic Games Store, and PCGamingWiki, then fills in as many fields as possible in `index.js`, `info.json`, and `CHANGELOG.md`. Downloads `exec.png` and cover art. Runs `generate_explained.js` at the end.
+Bootstraps a new Vortex game extension folder from a template. Looks up game information automatically from Steam, GOG, Epic Games Store, and PCGamingWiki, then fills in as many fields as possible in `index.js`, `info.json`, and `CHANGELOG.md`. Downloads `exec.png`, cover art, and a title image. Runs `generate_explained.js` at the end.
 
 ### new_extension.py — Requirements
 
@@ -171,7 +178,7 @@ pip install Pillow
 | Variable | Required | Description |
 | --- | --- | --- |
 | `NEXUS_API_KEY` | Optional | Nexus Mods API key. Used to look up the correct `GAME_ID` domain name. Falls back to a derived name if not set. |
-| `STEAMGRIDDB_API_KEY` | Optional | SteamGridDB API key. Used for higher-quality cover art (heroes). Falls back to Steam `library_hero.jpg` if not set. |
+| `STEAMGRIDDB_API_KEY` | Optional | SteamGridDB API key. Used for higher-quality cover art (heroes) and required for title images. Falls back to Steam `library_hero.jpg` for cover art if not set; title image step is skipped entirely without this key. |
 
 ### new_extension.py — Usage
 
@@ -187,7 +194,7 @@ python new_extension.py TEMPLATE "Game Name" --no-images
 The game input can be a quoted game name (searched on Steam) or a numeric Steam App ID.
 Use `--force` to overwrite an existing folder.
 Use `--dry-run` to run all lookups and print what would be created without writing any files.
-Use `--no-images` to skip downloading `exec.png` and cover art (useful when re-running on an existing extension).
+Use `--no-images` to skip downloading `exec.png`, cover art, and title image (useful when re-running on an existing extension).
 
 ### new_extension.py — Examples
 
@@ -238,6 +245,7 @@ python new_extension.py unitymelonloaderbepinex-hybrid "The Long Dark" --force
 | `DISCOVERY_IDS_ACTIVE` | Populated with all resolved store ID variables |
 | `exec.png` | Steam CDN icon, resized to 64×64 |
 | `{game_id}.jpg` | SteamGridDB hero or Steam `library_hero.jpg`, cropped to 640×360 |
+| `{game_id}_title.jpg` | SteamGridDB hero+logo composite (or 920x430 grid, or Steam capsule fallback), saved to `resources/title-images/` |
 | `EXTENSION_EXPLAINED.md` | Generated by `generate_explained.js` |
 
 ### Fields Always Left for Manual Entry
@@ -295,7 +303,7 @@ Writes `EXTENSION_EXPLAINED.md` into each processed extension folder. Skips fold
 
 Scans all `game-*` extension folders and categorizes them by engine or framework based on the `Structure:` header comment and key code markers in each `index.js`. Writes one `.txt` file per category into `resources/`. Each line in the file is a `GAME_ID`.
 
-Also called automatically by `new_extension.py` (step 15) to add a newly created extension to the correct category file.
+Also called automatically by `new_extension.py` to add a newly created extension to the correct category file.
 
 ### categorize_games.py — Requirements
 

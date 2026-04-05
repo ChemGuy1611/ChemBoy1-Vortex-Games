@@ -21,7 +21,8 @@ const { parseStringPromise } = require('xml2js');
 //#region Edit Zone
 // -------------------------------------
 
-//const USER_HOME = util.getVortexPath('home'); //only uncomment the ones needed
+const USER_HOME = util.getVortexPath("home");
+const LOCALLOW = path.join(USER_HOME, 'AppData', 'LocalLow'); //*/
 //const DOCUMENTS = util.getVortexPath('documents');
 //const ROAMINGAPPDATA = util.getVortexPath('appData');
 const LOCALAPPDATA = util.getVortexPath('localAppData');
@@ -38,9 +39,9 @@ const XBOX_PUB_ID = "XXX"; //get from Save folder. '8wekyb3d8bbwe' if published 
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
 const GAME_NAME = "FANTASY LIFE i: The Girl Who Steals Time";
-const GAME_NAME_SHORT = "FANTASY LIFE i"; //Try for 8-10 characters
-const EPIC_CODE_NAME = "XXX"; //Folder in root
-const EXEC = `${EPIC_CODE_NAME}.exe`; //This is true ~80% of the time. Change if different
+const GAME_NAME_SHORT = "FANTASY LIFE i TGWST"; //Try for 8-10 characters
+const EPIC_CODE_NAME = "Game"; //Folder in root
+const EXEC = `NFL1.exe`; //CUSTOMIZED
 const EXEC_EPIC = EXEC; //change these 3 if different
 const EXEC_GOG = EXEC;
 const EXEC_DEMO = EXEC;
@@ -77,12 +78,12 @@ const UE4SS_FILE_NO = 0;
 const UE4SS_DOMAIN = GAME_ID; //either GAME_ID or 'site'
 const UE4SS_MOD_PATH = path.join('ue4ss', 'Mods'); //this should probably never change (unless UE4SS team changes it again lol)
 
-//config, save, shipping exe
-const DATA_FOLDER = EPIC_CODE_NAME; //almost always matches.
-const CONFIG_FOLDERNAME = 'Windows'; //UE 4 games are often 'WindowsNoEditor'
-const CONFIG_LOC = 'Local AppData'; //string for notification text.
+//config and save
+const DATA_FOLDER = path.join('LEVEL5 Inc_', 'FANTASY LIFE i'); //CUSTOMIZED
+const CONFIG_FOLDERNAME = ''; //UE 4 games are often 'WindowsNoEditor'
+const CONFIG_LOC = 'LocalLow AppData'; //string for notification text
 const SAVE_LOC = CONFIG_LOC; //string for notification text. Config and Save mods are almost always in the same place
-const CONFIGMOD_LOCATION = LOCALAPPDATA; //almost always matches. Some are in game folder or Documents.
+const CONFIGMOD_LOCATION = LOCALLOW; //almost always matches. Some are in game folder or Documents.
 const SAVEMOD_LOCATION = CONFIGMOD_LOCATION;
 
 //shipping exe
@@ -91,7 +92,7 @@ const SHIPEXE_STRING_EGS = '';
 const SHIPEXE_STRING_GOG = '';
 const SHIPEXE_STRING_XBOX = '';
 const SHIPEXE_STRING_DEMO = '';
-const SHIPEXE_PROJECTNAME = EPIC_CODE_NAME; //almost always matches.
+const SHIPEXE_PROJECTNAME = 'NFL1'; //CUSTOMIZED
 
 //Save Editor (only used if one is available)
 const SAVE_EDITOR_ID = `${GAME_ID}-saveeditor`;
@@ -105,9 +106,9 @@ const SAVE_EDITOR_EXEC = "XXX.exe";
 //const ENGINE_VERSION_NO = +ENGINE_VERSION;
 let configSaveMatch = (CONFIGMOD_LOCATION === SAVEMOD_LOCATION); //true if the config and save mods are in the same folder
 const XBOX_SAVE_STRING = XBOX_PUB_ID;
-const CONFIG_PATH_DEFAULT = path.join(CONFIGMOD_LOCATION, DATA_FOLDER, "Saved", "Config", CONFIG_FOLDERNAME);
-const CONFIG_PATH_XBOX = path.join(CONFIGMOD_LOCATION, DATA_FOLDER, "Saved", "Config", "WinGDK"); //XBOX Version
-const SAVE_PATH_DEFAULT = path.join(SAVEMOD_LOCATION, DATA_FOLDER, "Saved", "SaveGames");
+const CONFIG_PATH_DEFAULT = path.join(CONFIGMOD_LOCATION, DATA_FOLDER); //CUSTOMIZED
+const CONFIG_PATH_XBOX = path.join(CONFIGMOD_LOCATION, DATA_FOLDER); //XBOX Version
+const SAVE_PATH_DEFAULT = path.join(SAVEMOD_LOCATION, DATA_FOLDER, 'Users'); //CUSTOMIZED
 const SAVE_PATH_XBOX = path.join(LOCALAPPDATA, "Packages", `${XBOXAPP_ID}_${XBOX_SAVE_STRING}`, "SystemAppData", "wgs"); //XBOX Version
 
 //Settings related to the IO Store UE feature
@@ -303,7 +304,7 @@ const spec = {
     },
   },
   "modTypes": [
-    {
+    /*{
       "id": UE4SSCOMBO_ID,
       "name": UE4SSCOMBO_NAME,
       "priority": "high",
@@ -314,7 +315,7 @@ const spec = {
       "name": LOGICMODS_NAME,
       "priority": "high",
       "targetPath": path.join('{gamePath}', LOGICMODS_PATH)
-    },
+    }, //*/
     {
       "id": PAK_ALT_ID,
       "name": PAK_ALT_NAME,
@@ -1997,7 +1998,7 @@ async function setup(discovery, api, gameSpec) {
   GAME_PATH = discovery.path;
   STAGING_FOLDER = selectors.installPathForGame(state, gameSpec.game.id);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, gameSpec.game.id);
-  CHECK_CONFIG = checkPartitions(CONFIGMOD_LOCATION, GAME_PATH);
+  /*CHECK_CONFIG = checkPartitions(CONFIGMOD_LOCATION, GAME_PATH);
   if (configSaveMatch) {
     CHECK_SAVE = CHECK_CONFIG;
   } else {
@@ -2005,25 +2006,25 @@ async function setup(discovery, api, gameSpec) {
   }
   if (!CHECK_CONFIG || !CHECK_SAVE) {
     partitionCheckNotify(api, CHECK_CONFIG, CHECK_SAVE);
-  }
+  } //*/
   if (setupNotification) {
     setupNotify(api);
   }
   // ASYNC CODE ///////////////////////////////////
   GAME_VERSION = await setGameVersionAsync(GAME_PATH);
-  if (CHECK_CONFIG) { //if game, staging folder, and config and save folders are on the same drive
+  /*if (CHECK_CONFIG) { //if game, staging folder, and config and save folders are on the same drive
     await fs.ensureDirWritableAsync(CONFIG_PATH);
     if (SAVE_COMPAT_VERSIONS.includes(GAME_VERSION)) {
       if (configSaveMatch) {
         await fs.ensureDirWritableAsync(SAVE_PATH);
       }
     }
-  } //*/
+  } //
   if (!configSaveMatch) {
     if (CHECK_SAVE) { //if game, staging folder, and config and save folders are on the same drive
       await fs.ensureDirWritableAsync(SAVE_PATH);
     }
-  }
+  } //*/
   if (autoDownloadUe4ss) {
     if (UE4SS_PAGE_NO !== 0) {
       await downloadUe4ssNexus(api, gameSpec);
@@ -2155,7 +2156,7 @@ function applyGame(context, gameSpec) {
   );
 
   //register mod types explicitly (due to potentially dynamic Binaries folder)
-  context.registerModType(SCRIPTS_ID, 50, 
+  /*context.registerModType(SCRIPTS_ID, 50, 
     (gameId) => {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
@@ -2172,7 +2173,7 @@ function applyGame(context, gameSpec) {
     (game) => pathPattern(context.api, game, path.join('{gamePath}', SCRIPTS_PATH)), 
     () => Promise.resolve(false), 
     { name: DLL_NAME }
-  );
+  ); //*/
   context.registerModType(BINARIES_ID, 54, 
     (gameId) => {
       var _a;
@@ -2182,7 +2183,7 @@ function applyGame(context, gameSpec) {
     () => Promise.resolve(false), 
     { name: BINARIES_NAME }
   );
-  context.registerModType(UE4SS_ID, 56, 
+  /*context.registerModType(UE4SS_ID, 56, 
     (gameId) => {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
@@ -2190,7 +2191,7 @@ function applyGame(context, gameSpec) {
     (game) => pathPattern(context.api, game, path.join('{gamePath}', BINARIES_PATH)), 
     () => Promise.resolve(false), 
     { name: UE4SS_NAME }
-  );
+  ); //*/
 
   //register sigbypass modtype
   if (SIGBYPASS_REQUIRED === true) {
@@ -2218,7 +2219,7 @@ function applyGame(context, gameSpec) {
     );
   }
 
-  //* register modtypes with partition checks
+  /* register modtypes with partition checks
   context.registerModType(CONFIG_ID, 62, 
     (gameId) => {
       GAME_PATH = getDiscoveryPath(context.api);
@@ -2230,7 +2231,7 @@ function applyGame(context, gameSpec) {
     (game) => pathPattern(context.api, game, CONFIG_PATH), 
     () => Promise.resolve(false), 
     { name: CONFIG_NAME }
-  ); //*/
+  ); //
   context.registerModType(SAVE_ID, 64, 
     (gameId) => {
       GAME_PATH = getDiscoveryPath(context.api);
@@ -2259,18 +2260,18 @@ function applyGame(context, gameSpec) {
   if (hasModKit === true) {
     context.registerInstaller(MODKITMOD_ID, 25, testModKitMod, installModKitMod);
   }
-  context.registerInstaller(UE4SSCOMBO_ID, 26, testUe4ssCombo, installUe4ssCombo);
-  context.registerInstaller(LOGICMODS_ID, 27, testLogic, installLogic);
+  //context.registerInstaller(UE4SSCOMBO_ID, 26, testUe4ssCombo, installUe4ssCombo);
+  //context.registerInstaller(LOGICMODS_ID, 27, testLogic, installLogic);
   context.registerInstaller(UE5_SORTABLE_ID, 29, testPak, (files) => installPak(context.api, files)); //Pak installer
-  context.registerInstaller(UE4SS_ID, 31, testUe4ss, installUe4ss);
+  //context.registerInstaller(UE4SS_ID, 31, testUe4ss, installUe4ss);
   if (SIGBYPASS_REQUIRED === true) {
     context.registerInstaller(SIGBYPASS_ID, 33, testSigBypass, installSigBypass);
   }
-  context.registerInstaller(SCRIPTS_ID, 35, testScripts, installScripts);
-  context.registerInstaller(DLL_ID, 37, testDll, installDll);
+  //context.registerInstaller(SCRIPTS_ID, 35, testScripts, installScripts);
+  //context.registerInstaller(DLL_ID, 37, testDll, installDll);
   context.registerInstaller(ROOT_ID, 39, testRoot, installRoot);
-  context.registerInstaller(CONFIG_ID, 41, testConfig, (files) => installConfig(context.api, files));
-  context.registerInstaller(SAVE_ID, 43, testSave, (files) => installSave(context.api, files));
+  //context.registerInstaller(CONFIG_ID, 41, testConfig, (files) => installConfig(context.api, files));
+  //context.registerInstaller(SAVE_ID, 43, testSave, (files) => installSave(context.api, files));
   context.registerInstaller(BINARIES_ID, 49, testBinaries, (files, fileName) => installBinaries(context.api, files, fileName));
 
   //register buttons to open folders
@@ -2290,7 +2291,7 @@ function applyGame(context, gameSpec) {
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open UE4SS Mods Folder', () => {
+  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open UE4SS Mods Folder', () => {
     GAME_PATH = getDiscoveryPath(context.api);
     util.opn( path.join(GAME_PATH, SCRIPTS_PATH)).catch(() => null);
   }, () => {
@@ -2305,7 +2306,7 @@ function applyGame(context, gameSpec) {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
-  });
+  }); //*/
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', async () => {
     //CONFIG_PATH = await setConfigPath(GAME_VERSION);
     util.opn(CONFIG_PATH).catch(() => null);
@@ -2322,7 +2323,7 @@ function applyGame(context, gameSpec) {
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download UE4SS', () => {
+  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download UE4SS', () => {
     if (UE4SS_PAGE_NO !== 0) { //download from Nexus if the page exists
       downloadUe4ssNexus(context.api, gameSpec).catch(() => null);
     } else {
@@ -2348,7 +2349,7 @@ function applyGame(context, gameSpec) {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
-  });
+  }); //*/
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
     util.opn(PCGAMINGWIKI_URL).catch(() => null);
   }, () => {
