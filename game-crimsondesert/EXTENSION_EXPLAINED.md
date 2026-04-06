@@ -68,6 +68,7 @@ Installers run in priority order (lower number = tested first). The first instal
 | `crimsondesert-tools` | 29 |
 | `crimsondesert-browsermod` | 31 |
 | `crimsondesert-patchmod` | 33 |
+| `crimsondesert-texture` | 34 |
 | `crimsondesert-vortexmod` | 33 |
 | `crimsondesert-json` | 35 |
 | `crimsondesert-mod` | 35 |

@@ -2,8 +2,8 @@
 Name: Crimson Desert Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.2.4
-Date: 2026-03-29
+Version: 0.2.5
+Date: 2026-04-06
 Notes:
 - Supports plugin mods and data mods with "00XX" folders
 - Supports Crimson Browser (manifest.json and files folder) and JSON Mod Manager (.json or "0036+" folder) mods
@@ -226,6 +226,7 @@ const PATCH_MOD_FOLDER = 'mods';
 const PATCH_MOD_PATH = PATCH_MOD_FOLDER;
 const PATCH_MOD_FILES = ['modinfo.json'];
 const PATCH_MOD_EXTS = ['.json', '.cdmod'];
+const EXCEPTION_EXTS = ['.dds'];
 
 //Mod type to use with future Vortex built-in LO and patch on deploy
 const VORTEX_MOD_ID = `${GAME_ID}-vortexmod`;
@@ -880,6 +881,60 @@ function installPatchMod(api, files, fileName) {
   return Promise.resolve({ instructions });
 } //*/
 
+//Test for texture mod files
+function testTextureMod(files, gameId) {
+  const isFolder = files.some(file => DATA_FOLDERS.includes(path.basename(file)));
+  const isExt = files.some(file => EXCEPTION_EXTS.includes(path.extname(file).toLowerCase()));
+  let supported = (gameId === spec.game.id) && ( isFolder && isExt );
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//*Install texture mod files
+function installTextureMod(files, fileName) {
+  const MOD_TYPE = PATCH_MOD_ID;
+  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+  //let modFile = files.find(file => PATCH_MOD_FILES.includes(path.basename(file).toLowerCase())); //modinfo.json
+  let modFile = files.find(file => DATA_FOLDERS.includes(path.basename(file)));
+  let rootPath = path.dirname(modFile);
+  //*
+  let folder = path.basename(fileName).replace('.installing', '');
+  //??? Read modinfo.json to get folder name???
+  const ROOT_PATH = path.basename(rootPath);
+  if (ROOT_PATH !== '.') {
+    folder = ''; //no folder needed if already present
+    modFile = rootPath; //make the folder the targeted modFile so we can grab any other folders also in its directory
+    rootPath = path.dirname(modFile);
+    //const indexFolder = path.basename(modFile);
+    //idx = modFile.indexOf(`${indexFolder}${path.sep}`);  //index on the folder with path separator
+  } //*/
+  const idx = modFile.indexOf(path.basename(modFile));
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(folder, file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+} //*/
+
 //Test for json mod files
 function testJsonMod(files, gameId) {
   const isModInfo = files.some(file => PATCH_MOD_FILES.includes(path.basename(file).toLowerCase())); //modinfo.json
@@ -1012,7 +1067,8 @@ function testMod(files, gameId) {
   //const isMod = files.some(file => MOD_EXTS.includes(path.extname(file).toLowerCase()));
   //const isMeta = files.some(file => META_FILE_EXTS.includes(path.extname(file).toLowerCase()));
   const isFolder = files.some(file => DATA_FOLDERS.includes(path.basename(file)));
-  let supported = (gameId === spec.game.id) && ( isFolder );
+  const isExcluded = files.some(file => EXCEPTION_EXTS.includes(path.extname(file).toLowerCase()));
+  let supported = (gameId === spec.game.id) && ( isFolder && !isExcluded );
 
   // Test for a mod installer
   if (supported && files.find(file =>
@@ -1871,6 +1927,7 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(BROWSER_MOD_ID, 31, testBrowserMod, installBrowserMod);
   if (!loadOrder) {
     context.registerInstaller(PATCH_MOD_ID, 33, testPatchMod, (files, fileName) => installPatchMod(context.api, files, fileName));
+    context.registerInstaller(`${GAME_ID}-texture`, 34, testTextureMod, installTextureMod);
   } else {
     context.registerInstaller(`${GAME_ID}-vortexmod`, 33, testVortex, (files, fileName) => installVortex(context.api, files, fileName));
   }

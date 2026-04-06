@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.2.5] - 2026-04-06
+
+- Added: Support for .dds texture mods - installed via JSON Mod Manager
+
 ## [0.2.4] - 2026-03-29
 
 - Fixed: Better checks for Python installation when setting up Crimson Browser
