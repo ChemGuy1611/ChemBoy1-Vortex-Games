@@ -51,7 +51,7 @@ senuassagahellblade2
 sifu
 silenthill2
 silenthillf
-stalker2
+stalker2heartofchornobyl
 starrupture
 stateofdecay2
 stellarblade
@@ -68,6 +68,7 @@ untildawn
 vein
 voidtrain
 vtmbloodlines2
+warhammer40000boltgun
 whiskerwood
 windrose
 witchfire
