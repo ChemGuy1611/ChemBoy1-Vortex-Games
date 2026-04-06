@@ -4,7 +4,7 @@ categorize_games.py
 Scans all game-* extension folders and categorizes them by engine/framework
 based on the Structure: header comment and key code markers in index.js.
 
-Writes one .txt file per category to resources/. Each line is a GAME_ID.
+Writes one .txt file per category to resources/lists/. Each line is a GAME_ID.
 
 Usage:
     python categorize_games.py              # rebuild all category files from scratch
@@ -17,7 +17,7 @@ import sys
 import re
 
 REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
-RESOURCES_DIR = os.path.join(REPO_ROOT, "resources")
+LISTS_DIR = os.path.join(REPO_ROOT, "resources", "lists")
 
 # Output file name → detection logic (applied in order; first match wins)
 # Each entry: (filename, label, detector_fn)
@@ -153,11 +153,14 @@ def rebuild_all(dry_run=False):
         else:
             print(f"  Warning: no index.js found for {d}, skipping.")
 
+    if not dry_run:
+        os.makedirs(LISTS_DIR, exist_ok=True)
+
     for filename, label, _ in CATEGORIES:
         if dry_run:
             print(f"  {filename}: {len(buckets[filename])} games")
         else:
-            filepath = os.path.join(RESOURCES_DIR, filename)
+            filepath = os.path.join(LISTS_DIR, filename)
             write_list(filepath, buckets[filename])
             print(f"  {filename}: {len(buckets[filename])} games")
 
@@ -172,8 +175,11 @@ def update_single(game_id, dry_run=False):
         print(f"  Warning: no index.js found for game-{game_id}, skipping.")
         return
 
+    if not dry_run:
+        os.makedirs(LISTS_DIR, exist_ok=True)
+
     for filename, label, _ in CATEGORIES:
-        filepath = os.path.join(RESOURCES_DIR, filename)
+        filepath = os.path.join(LISTS_DIR, filename)
         ids = read_list(filepath)
         if filename == target:
             if game_id not in ids:
