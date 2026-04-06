@@ -119,8 +119,10 @@ def find_targets(target_game_ids=None, force=False, title_mode=False):
 def fetch_all(target_game_ids=None, dry_run=False, force=False, title_mode=False):
     sgdb_key = get_sgdb_key()
     if title_mode:
-        if not dry_run and not sgdb_key:
+        if not sgdb_key:
             print("No SteamGridDB API key — title images require STEAMGRIDDB_API_KEY.")
+            if not dry_run:
+                return
     else:
         if not dry_run and sgdb_key:
             print("SteamGridDB API key found — will try heroes first.")
@@ -180,7 +182,7 @@ def fetch_all(target_game_ids=None, dry_run=False, force=False, title_mode=False
     if dry_run:
         return
 
-    print(f"\n{'─' * 50}")
+    print(f"\n{'-' * 50}")
     print(f"Saved : {len(saved)}")
     if failed:
         print(f"Failed: {len(failed)}")

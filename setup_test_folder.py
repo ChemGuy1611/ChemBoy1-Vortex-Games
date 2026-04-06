@@ -88,7 +88,7 @@ def build_symbol_table(src):
             if re.match(r'^\w+$', arg) and arg in table:
                 parts.append(table[arg])
                 continue
-            # Unresolvable — abort this join
+            # Unresolvable -abort this join
             parts = None
             break
         if parts:
@@ -111,8 +111,8 @@ def build_symbol_table(src):
 def resolve_exec(table):
     """
     Return (exec_filename, binaries_path) where:
-      exec_filename — the .exe filename only (no directory parts)
-      binaries_path — subdirectory relative to game root, or '' for root
+      exec_filename -the .exe filename only (no directory parts)
+      binaries_path -subdirectory relative to game root, or '' for root
     """
     def valid(val):
         return val and val != "XXX" and not val.startswith("${")
@@ -129,7 +129,7 @@ def resolve_exec(table):
     if exec_name and not exec_name.lower().endswith(".exe"):
         exec_name += ".exe"
 
-    # BINARIES_PATH — also try STEAM_EXEC_FOLDER as fallback
+    # BINARIES_PATH -also try STEAM_EXEC_FOLDER as fallback
     bin_path = table.get("BINARIES_PATH", "")
     if not valid(bin_path):
         bin_path = table.get("STEAM_EXEC_FOLDER", "")
@@ -163,7 +163,7 @@ def setup(game_id, dry_run=False, force=False):
     index_path = os.path.join(folder, "index.js")
 
     if not os.path.isfile(index_path):
-        print(f"  [{game_id}] ERROR — no index.js found in game-{game_id}/")
+        print(f"  [{game_id}] ERROR -no index.js found in game-{game_id}/")
         return False
 
     with open(index_path, encoding="utf-8") as f:
@@ -173,23 +173,23 @@ def setup(game_id, dry_run=False, force=False):
 
     game_name = table.get("GAME_NAME")
     if not game_name or game_name == "XXX":
-        print(f"  [{game_id}] ERROR — could not resolve GAME_NAME from index.js")
+        print(f"  [{game_id}] ERROR -could not resolve GAME_NAME from index.js")
         return False
 
     exec_name, bin_path = resolve_exec(table)
     if not exec_name or exec_name == ".exe":
-        print(f"  [{game_id}] ERROR — could not resolve executable name from index.js")
+        print(f"  [{game_id}] ERROR -could not resolve executable name from index.js")
         return False
 
     req_file = resolve_req_file(table)
 
-    # Build the target paths — strip characters invalid in Windows folder names
+    # Build the target paths -strip characters invalid in Windows folder names
     safe_game_name = re.sub(r'[<>:"/\\|?*]', '', game_name).strip()
     game_folder = os.path.join(TEST_ROOT, safe_game_name)
     exec_dir = os.path.join(game_folder, bin_path) if bin_path else game_folder
     exec_file = os.path.join(exec_dir, exec_name)
 
-    # REQ_FILE path — relative to game_folder
+    # REQ_FILE path -relative to game_folder
     req_path = os.path.join(game_folder, req_file) if req_file else None
     # If REQ_FILE has no extension it is a folder (e.g. EPIC_CODE_NAME)
     req_is_dir = req_path and not os.path.splitext(req_file)[1]

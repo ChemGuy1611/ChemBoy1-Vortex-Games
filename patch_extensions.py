@@ -711,9 +711,10 @@ def run_png_resize(folders, dry_run):
             prefix = "[DRY RUN] " if dry_run else ""
             print(f"  {prefix}[{folder_name}/{png}] {size[0]}x{size[1]} -> 64x64")
             if not dry_run:
-                img = Image.open(png_path).convert("RGBA")
-                img = img.resize(TARGET, Image.LANCZOS)
-                img.save(png_path)
+                with Image.open(png_path) as img:
+                    img = img.convert("RGBA")
+                    img = img.resize(TARGET, Image.LANCZOS)
+                    img.save(png_path)
             total_resized += 1
 
     print(f"\nPNG resize: {total_resized} resized, {total_already} already 64x64.\n")
@@ -745,19 +746,18 @@ def run_title_image_resize(game_ids, dry_run):
         try:
             with Image.open(img_path) as img:
                 size = img.size
+                if size == TARGET:
+                    total_already += 1
+                    continue
+                prefix = "[DRY RUN] " if dry_run else ""
+                print(f"  {prefix}[title-images/{filename}] {size[0]}x{size[1]} -> 1920x1080")
+                if not dry_run:
+                    img = img.convert("RGB")
+                    img = img.resize(TARGET, Image.LANCZOS)
+                    img.save(img_path, "JPEG", quality=95)
         except Exception as e:
             print(f"  [title-images/{filename}] SKIP -- could not read image: {e}")
             continue
-        if size == TARGET:
-            total_already += 1
-            continue
-        prefix = "[DRY RUN] " if dry_run else ""
-        print(f"  {prefix}[title-images/{filename}] {size[0]}x{size[1]} -> 1920x1080")
-        if not dry_run:
-            with Image.open(img_path) as img:
-                img = img.convert("RGB")
-                img = img.resize(TARGET, Image.LANCZOS)
-                img.save(img_path, "JPEG", quality=95)
         total_resized += 1
 
     print(f"\nTitle image resize: {total_resized} resized, {total_already} already 1920x1080, {total_missing} missing.\n")
@@ -785,19 +785,18 @@ def run_cover_art_resize(game_ids, dry_run):
         try:
             with Image.open(img_path) as img:
                 size = img.size
+                if size == TARGET:
+                    total_already += 1
+                    continue
+                prefix = "[DRY RUN] " if dry_run else ""
+                print(f"  {prefix}[game-{game_id}/{filename}] {size[0]}x{size[1]} -> 640x360")
+                if not dry_run:
+                    img = img.convert("RGB")
+                    img = img.resize(TARGET, Image.LANCZOS)
+                    img.save(img_path, "JPEG", quality=95)
         except Exception as e:
             print(f"  [game-{game_id}/{filename}] SKIP -- could not read image: {e}")
             continue
-        if size == TARGET:
-            total_already += 1
-            continue
-        prefix = "[DRY RUN] " if dry_run else ""
-        print(f"  {prefix}[game-{game_id}/{filename}] {size[0]}x{size[1]} -> 640x360")
-        if not dry_run:
-            with Image.open(img_path) as img:
-                img = img.convert("RGB")
-                img = img.resize(TARGET, Image.LANCZOS)
-                img.save(img_path, "JPEG", quality=95)
         total_resized += 1
 
     print(f"\nCover art resize: {total_resized} resized, {total_already} already 640x360, {total_missing} missing.\n")

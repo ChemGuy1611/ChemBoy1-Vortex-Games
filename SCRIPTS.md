@@ -263,7 +263,8 @@ Only store ID fields are set to `null` when not found (`EPICAPP_ID`, `GOGAPP_ID`
 After writing `index.js`, the script automatically runs:
 
 1. `node generate_explained.js {GAME_ID}` — generates `EXTENSION_EXPLAINED.md`
-2. `python categorize_games.py {GAME_ID}` — adds the game to the correct engine category file in `resources/`
+2. `python categorize_games.py {GAME_ID}` — adds the game to the correct engine category file in `resources/lists/`
+3. `python setup_test_folder.py {GAME_ID}` — creates a minimal test game folder
 
 ---
 
@@ -301,7 +302,7 @@ Writes `EXTENSION_EXPLAINED.md` into each processed extension folder. Skips fold
 
 ## categorize_games.py
 
-Scans all `game-*` extension folders and categorizes them by engine or framework based on the `Structure:` header comment and key code markers in each `index.js`. Writes one `.txt` file per category into `resources/`. Each line in the file is a `GAME_ID`.
+Scans all `game-*` extension folders and categorizes them by engine or framework based on the `Structure:` header comment and key code markers in each `index.js`. Writes one `.txt` file per category into `resources/lists/`. Each line in the file is a `GAME_ID`.
 
 Also called automatically by `new_extension.py` to add a newly created extension to the correct category file.
 
@@ -332,20 +333,20 @@ python categorize_games.py hogwartslegacy
 
 | File | Category |
 | --- | --- |
-| `resources/games-ue4-5.txt` | Unreal Engine 4/5 |
-| `resources/games-ue2-3.txt` | Unreal Engine 2/3 |
-| `resources/games-unity-bepinex.txt` | Unity + BepInEx (modtype-bepinex) |
-| `resources/games-unity-melonloader-bepinex.txt` | Unity + MelonLoader/BepInEx Hybrid |
-| `resources/games-unity-umm.txt` | Unity + UMM |
-| `resources/games-farcrygame.txt` | Far Cry / Dunia Engine |
-| `resources/games-rpgmaker.txt` | RPG Maker |
-| `resources/games-snowdrop.txt` | Snowdrop Engine |
-| `resources/games-godot.txt` | Godot Engine |
-| `resources/games-cobra-acse.txt` | Cobra Engine / ACSE |
-| `resources/games-reengine.txt` | RE Engine (REFramework / Fluffy) |
-| `resources/games-reloaded2.txt` | Reloaded-II |
-| `resources/games-anvil.txt` | Ubisoft Anvil Engine (AnvilToolkit) |
-| `resources/games-basic.txt` | Basic / Proprietary (catch-all) |
+| `resources/lists/games-ue4-5.txt` | Unreal Engine 4/5 |
+| `resources/lists/games-ue2-3.txt` | Unreal Engine 2/3 |
+| `resources/lists/games-unity-bepinex.txt` | Unity + BepInEx (modtype-bepinex) |
+| `resources/lists/games-unity-melonloader-bepinex.txt` | Unity + MelonLoader/BepInEx Hybrid |
+| `resources/lists/games-unity-umm.txt` | Unity + UMM |
+| `resources/lists/games-farcrygame.txt` | Far Cry / Dunia Engine |
+| `resources/lists/games-rpgmaker.txt` | RPG Maker |
+| `resources/lists/games-snowdrop.txt` | Snowdrop Engine |
+| `resources/lists/games-godot.txt` | Godot Engine |
+| `resources/lists/games-cobra-acse.txt` | Cobra Engine / ACSE |
+| `resources/lists/games-reengine.txt` | RE Engine (REFramework / Fluffy) |
+| `resources/lists/games-reloaded2.txt` | Reloaded-II |
+| `resources/lists/games-anvil.txt` | Ubisoft Anvil Engine (AnvilToolkit) |
+| `resources/lists/games-basic.txt` | Basic / Proprietary (catch-all) |
 
 ### categorize_games.py — Detection
 

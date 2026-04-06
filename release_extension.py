@@ -36,7 +36,7 @@ def get_version(folder):
 def update_version_txt(folder, game_id, version, dry_run=False):
     """Rename the versioned .txt file to match the current version from info.json."""
     if not version:
-        print(f"  [{game_id}] WARNING — could not read version from info.json, skipping .txt rename")
+        print(f"  [{game_id}] WARNING -could not read version from info.json, skipping .txt rename")
         return
 
     version_re = re.compile(r'^\d+\.\d+\.\d+\.txt$')
@@ -44,7 +44,7 @@ def update_version_txt(folder, game_id, version, dry_run=False):
     expected = f"{version}.txt"
 
     if not existing:
-        print(f"  [{game_id}] WARNING — no version .txt file found in folder")
+        print(f"  [{game_id}] WARNING -no version .txt file found in folder")
         return
 
     for txt_file in existing:
@@ -76,26 +76,26 @@ def update_index_header(folder, game_id, version, date, dry_run=False):
     """Update the Version and Date lines in the index.js header comment."""
     index_path = os.path.join(folder, "index.js")
     if not os.path.isfile(index_path):
-        print(f"  [{game_id}] WARNING — index.js not found, skipping header update")
+        print(f"  [{game_id}] WARNING -index.js not found, skipping header update")
         return
 
     try:
         with open(index_path, encoding="utf-8") as f:
             original = f.read()
     except OSError as e:
-        print(f"  [{game_id}] WARNING — could not read index.js: {e}")
+        print(f"  [{game_id}] WARNING -could not read index.js: {e}")
         return
 
     updated = original
     if version:
         updated = re.sub(r'(Version:\s*)\d+\.\d+\.\d+', rf'\g<1>{version}', updated, count=1)
     else:
-        print(f"  [{game_id}] WARNING — no version available, skipping Version header update")
+        print(f"  [{game_id}] WARNING -no version available, skipping Version header update")
 
     if date:
         updated = re.sub(r'(Date:\s*)\d{4}-\d{2}-\d{2}', rf'\g<1>{date}', updated, count=1)
     else:
-        print(f"  [{game_id}] WARNING — no changelog date found, skipping Date header update")
+        print(f"  [{game_id}] WARNING -no changelog date found, skipping Date header update")
 
     if updated == original:
         print(f"  [{game_id}] index.js header already up to date")
@@ -116,7 +116,7 @@ def update_index_header(folder, game_id, version, date, dry_run=False):
         if date:
             print(f"  [{game_id}] Updated index.js header: Date -> {date}")
     except OSError as e:
-        print(f"  [{game_id}] ERROR — could not write index.js: {e}")
+        print(f"  [{game_id}] ERROR -could not write index.js: {e}")
 
 
 def get_extension_url(src):
@@ -133,7 +133,7 @@ def get_extension_url(src):
 def release(game_id, open_browser, dry_run=False):
     folder = os.path.join(REPO_ROOT, f"game-{game_id}")
     if not os.path.isdir(folder):
-        print(f"  [{game_id}] ERROR — folder not found: {folder}")
+        print(f"  [{game_id}] ERROR -folder not found: {folder}")
         return False
 
     index_path = os.path.join(folder, "index.js")
@@ -154,7 +154,7 @@ def release(game_id, open_browser, dry_run=False):
         if extension_url:
             print(f"  [{game_id}] [DRY RUN] Would open: {extension_url}")
         else:
-            print(f"  [{game_id}] [DRY RUN] EXTENSION_URL not set — would open: {NEXUS_SITE_URL}")
+            print(f"  [{game_id}] [DRY RUN] EXTENSION_URL not set -would open: {NEXUS_SITE_URL}")
         return True
 
     print(f"  [{game_id}] Generating EXTENSION_EXPLAINED.md...")
@@ -163,7 +163,7 @@ def release(game_id, open_browser, dry_run=False):
         cwd=REPO_ROOT, capture_output=True, text=True
     )
     if result.returncode != 0:
-        print(f"  [{game_id}] WARNING — generate_explained.js failed: {result.stderr.strip()}")
+        print(f"  [{game_id}] WARNING -generate_explained.js failed: {result.stderr.strip()}")
 
     zip_path = os.path.join(folder, f"game-{game_id}.zip")
 
@@ -178,7 +178,7 @@ def release(game_id, open_browser, dry_run=False):
     )
 
     if result.returncode != 0:
-        print(f"  [{game_id}] ERROR — 7-Zip failed:")
+        print(f"  [{game_id}] ERROR -7-Zip failed:")
         print(f"    {result.stderr.strip() or result.stdout.strip()}")
         return False
 
@@ -198,7 +198,7 @@ def main():
     args = sys.argv[1:]
     open_browser = "--no-open" not in args
     dry_run = "--dry-run" in args
-    args = [a for a in args if a not in ("--no-open", "--dry-run", "--force")]
+    args = [a for a in args if a not in ("--no-open", "--dry-run")]
 
     if not args:
         print("Usage: python release_extension.py GAME_ID [GAME_ID ...] [--no-open] [--dry-run]")

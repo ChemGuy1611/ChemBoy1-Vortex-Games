@@ -11,10 +11,6 @@ Usage:
     python new_extension.py TEMPLATE "Game Name" --dry-run
     python new_extension.py TEMPLATE "Game Name" --no-images
 
-Examples:
-    python new_extension.py --template template-unitybepinex "Hollow Knight"
-    python new_extension.py --template template-ue4-5 1954200
-
 Fills in all XXX fields it can resolve automatically from Steam, GOG, Epic,
 and PCGamingWiki. Remaining XXX fields are reported at the end for manual entry.
 
@@ -145,7 +141,7 @@ def get_exec_info(steam_data, steamdb_data):
 
     Method 1: Parse Steam launch options for the full exe path.
     Method 2: Use launch executables from the SteamDB info page scrape."""
-    # Method 1: Steam launch options (most reliable — full path available)
+    # Method 1: Steam launch options (most reliable -full path available)
     launch = (steam_data or {}).get("launch", [])
     for entry in sorted(launch, key=lambda x: 0 if x.get("type") == "default" else 1):
         cat = entry.get("category", "")
@@ -345,7 +341,7 @@ def lookup_nexus_domain(game_name, api_key):
 
 def lookup_gog(game_name):
     """Search GOG catalog for a matching game. Returns GOG ID string or None.
-    Only returns a result when the title genuinely matches — never falls back
+    Only returns a result when the title genuinely matches -never falls back
     to an unrelated first result."""
     url = (
         "https://catalog.gog.com/v1/catalog"
@@ -541,7 +537,7 @@ def download_exec_icon(appid, game_name, out_path):
     1. Steam CDN icon via exact appid match in SearchApps results
     2. SteamGridDB icons endpoint (requires STEAMGRIDDB_API_KEY env var)
     """
-    # 1. Steam CDN — exact appid match only, no name-based fallback
+    # 1. Steam CDN -exact appid match only, no name-based fallback
     icon_url = steam_icon_search(appid, game_name)
     if icon_url:
         try:
@@ -592,15 +588,15 @@ def download_cover_art(appid, game_name, out_path, sgdb_key=None):
     never used.
 
     Priority order:
-    1. SteamGridDB 920x430 grid, no_logo style only — native aspect ratio, no text
-    2. SteamGridDB heroes — title-free wide art, center-cropped from 3:1 to 16:9
-    3. Steam library_hero.jpg — title-free wide art, center-cropped from 3:1 to 16:9
+    1. SteamGridDB 920x430 grid, no_logo style only -native aspect ratio, no text
+    2. SteamGridDB heroes -title-free wide art, center-cropped from 3:1 to 16:9
+    3. Steam library_hero.jpg -title-free wide art, center-cropped from 3:1 to 16:9
     """
 
     img_data = None
     source = None
 
-    # 1. SteamGridDB 920x430 no_logo grids only — skip if style not available
+    # 1. SteamGridDB 920x430 no_logo grids only -skip if style not available
     if sgdb_key:
         try:
             url = f"https://www.steamgriddb.com/api/v2/grids/steam/{appid}?dimensions=920x430&styles=no_logo"
@@ -613,7 +609,7 @@ def download_cover_art(appid, game_name, out_path, sgdb_key=None):
         except Exception as e:
             print(f"    SteamGridDB grid error: {e}")
 
-    # 2. SteamGridDB heroes (title-free, wide art — requires crop)
+    # 2. SteamGridDB heroes (title-free, wide art -requires crop)
     if not img_data and sgdb_key:
         try:
             url = f"https://www.steamgriddb.com/api/v2/heroes/steam/{appid}"
@@ -626,7 +622,7 @@ def download_cover_art(appid, game_name, out_path, sgdb_key=None):
         except Exception as e:
             print(f"    SteamGridDB hero error: {e}")
 
-    # 3. Steam library_hero.jpg (1920x620, title-free — requires crop)
+    # 3. Steam library_hero.jpg (1920x620, title-free -requires crop)
     if not img_data:
         try:
             url = f"https://cdn.fastly.steamstatic.com/steam/apps/{appid}/library_hero.jpg"
@@ -662,12 +658,12 @@ def download_title_image(appid, game_name, out_path, sgdb_key=None):
     """Download and save a 1920x1080 title image (with game logo/title text).
 
     Priority order:
-    1. SteamGridDB hero + logo composite — hero as background, logo centered in
+    1. SteamGridDB hero + logo composite -hero as background, logo centered in
        the lower portion (Steam library convention). Requires STEAMGRIDDB_API_KEY.
        Heroes and logos prefer is_official=True; logos exclude white/black styles.
-    2. SteamGridDB 920x430 grid (no style filter — usually has title text baked in).
+    2. SteamGridDB 920x430 grid (no style filter -usually has title text baked in).
        Prefers is_official=True, sorted by score. Requires STEAMGRIDDB_API_KEY.
-    3. Steam capsule_616x353.jpg — official art, always has title text. No key needed.
+    3. Steam capsule_616x353.jpg -official art, always has title text. No key needed.
     """
 
     result_img = None
@@ -703,7 +699,7 @@ def download_title_image(appid, game_name, out_path, sgdb_key=None):
             resp = json.loads(http_get(url, {"Authorization": f"Bearer {sgdb_key}"}))
             logos = resp.get("data", [])
             if logos:
-                # Prefer colored logos — exclude white and black styles
+                # Prefer colored logos -exclude white and black styles
                 colored = [l for l in _en(logos) if l.get("style", "") not in ("white", "black")]
                 pool = colored if colored else _en(logos)
                 logo_data = http_get_bytes(_pick(pool, "score")["url"])
@@ -837,7 +833,7 @@ def apply_substitutions(src, fields):
 def add_line_comment(src, var_name, comment):
     """Add or replace the trailing // comment on the const/let VAR_NAME = ...; line."""
     pattern = rf'((?:const|let)\s+{re.escape(var_name)}\s*=[^;\n]*;?)[ \t]*(?://[^\n]*)?\n'
-    return re.sub(pattern, rf'\1 // {comment}\n', src)
+    return re.sub(pattern, lambda m: m.group(1) + f' // {comment}\n', src)
 
 
 def sub_binaries_path(src, dir_parts):
@@ -956,7 +952,7 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
         print(f"  Game ID  : {game_id} (from Nexus Mods)")
     else:
         game_id = derive_game_id(game_name)
-        print(f"  Game ID  : {game_id} (derived — verify Nexus domain manually)")
+        print(f"  Game ID  : {game_id} (derived -verify Nexus domain manually)")
 
     # ── Check destination ─────────────────────────────────────────────────────
     dest = os.path.join(REPO_ROOT, f"game-{game_id}")
@@ -1008,7 +1004,7 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
         print(f"\n{'=' * 60}")
         print(f"  [DRY RUN] Would create: game-{game_id}/")
         print(f"  Template : {template_name}")
-        print(f"  Steam ID : {appid}  |  GOG: {gog_id or '—'}  |  Epic: {'yes' if epic_found else '—'}  |  Xbox: {'yes' if xbox_found else '—'}")
+        print(f"  Steam ID : {appid}  |  GOG: {gog_id or 'N/A'}  |  Epic: {'yes' if epic_found else 'N/A'}  |  Xbox: {'yes' if xbox_found else 'N/A'}")
         print(f"  Exec     : {exec_filename or 'XXX'}")
         if engine_version:
             print(f"  UE build : {engine_version}")
@@ -1070,7 +1066,8 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
 
     # ── 8. Apply substitutions to index.js ───────────────────────────────────
     index_path = os.path.join(dest, "index.js")
-    src = open(index_path, encoding="utf-8").read()
+    with open(index_path, encoding="utf-8") as f:
+        src = f.read()
     src = sub_header(src, game_name, today)
     src = apply_substitutions(src, fields)
     src = update_discovery_ids(src, gog_id, demo_appid)
@@ -1115,7 +1112,7 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
         time.sleep(0.3)
         icon_path = os.path.join(dest, "exec.png")
         icon_ok, icon_source = download_exec_icon(appid, game_name, icon_path)
-        print(f"  {'Saved  : ' + icon_source if icon_ok else 'FAILED — add exec.png manually (64x64 PNG)'}")
+        print(f"  {'Saved  : ' + icon_source if icon_ok else 'FAILED -add exec.png manually (64x64 PNG)'}")
         if icon_ok:
             os.startfile(icon_path)
 
@@ -1131,7 +1128,7 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
             print(f"  Saved  : {art_source}")
             os.startfile(art_path)
         else:
-            print(f"  FAILED — add {game_id}.jpg manually (640x360 JPG, no title text)")
+            print(f"  FAILED -add {game_id}.jpg manually (640x360 JPG, no title text)")
 
     # ── Title image ───────────────────────────────────────────────────────────
     title_ok = False
@@ -1154,7 +1151,8 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
     print(f"  Template : {template_name}")
     print()
 
-    src_check = open(index_path, encoding="utf-8").read()
+    with open(index_path, encoding="utf-8") as f:
+        src_check = f.read()
     remaining = [
         m.group(1)
         for m in re.finditer(r'(?:const|let)\s+(\w+)\s*=\s*["\']XXX["\']', src_check)
@@ -1194,7 +1192,7 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
     if result.returncode == 0:
         print(f"  EXTENSION_EXPLAINED.md written.\n")
     else:
-        print(f"  FAILED — run manually: node generate_explained.js {game_id}")
+        print(f"  FAILED -run manually: node generate_explained.js {game_id}")
         if result.stderr:
             print(f"  {result.stderr.strip()}\n")
 
@@ -1207,7 +1205,7 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
     if result.returncode == 0:
         print(f"  {result.stdout.strip()}\n")
     else:
-        print(f"  FAILED — run manually: python categorize_games.py {game_id}")
+        print(f"  FAILED -run manually: python categorize_games.py {game_id}")
         if result.stderr:
             print(f"  {result.stderr.strip()}\n")
 
@@ -1216,7 +1214,7 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
     try:
         stf.setup(game_id)
     except Exception as exc:
-        print(f"  FAILED — run manually: python setup_test_folder.py {game_id}")
+        print(f"  FAILED -run manually: python setup_test_folder.py {game_id}")
         print(f"  {exc}\n")
 
 
@@ -1230,7 +1228,7 @@ def main():
             "Templates:\n  " + "\n  ".join(TEMPLATE_SHORT_NAMES) + "\n\n"
             "Examples:\n"
             '  python new_extension.py unitybepinex "Hollow Knight"\n'
-            "  python new_extension.py ue4-5game 1954200\n"
+            "  python new_extension.py ue4-5 1954200\n"
         ),
     )
     parser.add_argument(

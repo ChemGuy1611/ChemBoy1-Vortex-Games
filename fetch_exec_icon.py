@@ -134,7 +134,7 @@ def fetch_all(target_game_ids=None, dry_run=False, force=False):
     if dry_run:
         return
 
-    print(f"\n{'─' * 50}")
+    print(f"\n{'-' * 50}")
     print(f"Saved : {len(saved)}")
     if failed:
         print(f"Failed: {len(failed)}")
