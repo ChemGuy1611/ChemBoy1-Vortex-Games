@@ -5,11 +5,13 @@ Generic framework for making repo-wide changes to all game-*/index.js files.
 Each patch is a named, independently-enabled function. New patches can be added
 to the PATCHES list without touching the runner logic.
 
-Also resizes all non-64x64 PNG files in game-* and template-* folders to 64x64
+Also resizes all non-64x64 PNG files in game-* and template-* folders to 64x64,
+all non-1920x1080 title images in resources/title-images/ to 1920x1080, and
+all non-640x360 cover art (GAME_ID.jpg) in game-* folders to 640x360
 (requires Pillow: pip install Pillow).
 
 Usage:
-    python patch_extensions.py                              # run all enabled patches on all games + resize PNGs
+    python patch_extensions.py                              # run all enabled patches on all games + resize PNGs + resize title images + resize cover art
     python patch_extensions.py GAME_ID [GAME_ID ...]       # run on one or more games (no template PNG resize)
     python patch_extensions.py --dry-run                   # preview changes without writing
     python patch_extensions.py GAME_ID [GAME_ID ...] --dry-run
@@ -27,6 +29,7 @@ import urllib.request
 import subprocess
 
 REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
+TITLE_IMAGES_DIR = os.path.join(REPO_ROOT, "resources", "title-images")
 MANIFEST_PATH = r"C:\ProgramData\vortex\temp\extensions-manifest.json"
 NEXUS_SITE_BASE = "https://www.nexusmods.com/site/mods"
 PCGW_API = "https://www.pcgamingwiki.com/w/api.php"
@@ -716,6 +719,90 @@ def run_png_resize(folders, dry_run):
     print(f"\nPNG resize: {total_resized} resized, {total_already} already 64x64.\n")
 
 
+def run_title_image_resize(game_ids, dry_run):
+    """Resize all non-1920x1080 title images in resources/title-images/ to 1920x1080 using Pillow."""
+    try:
+        from PIL import Image
+    except ImportError:
+        print("Title image resize skipped -- Pillow not installed (pip install Pillow)\n")
+        return
+
+    TARGET = (1920, 1080)
+    total_resized = 0
+    total_already = 0
+    total_missing = 0
+
+    if not os.path.isdir(TITLE_IMAGES_DIR):
+        print("Title image resize skipped -- resources/title-images/ not found\n")
+        return
+
+    for game_id in game_ids:
+        filename = f"{game_id}_title.jpg"
+        img_path = os.path.join(TITLE_IMAGES_DIR, filename)
+        if not os.path.isfile(img_path):
+            total_missing += 1
+            continue
+        try:
+            with Image.open(img_path) as img:
+                size = img.size
+        except Exception as e:
+            print(f"  [title-images/{filename}] SKIP -- could not read image: {e}")
+            continue
+        if size == TARGET:
+            total_already += 1
+            continue
+        prefix = "[DRY RUN] " if dry_run else ""
+        print(f"  {prefix}[title-images/{filename}] {size[0]}x{size[1]} -> 1920x1080")
+        if not dry_run:
+            with Image.open(img_path) as img:
+                img = img.convert("RGB")
+                img = img.resize(TARGET, Image.LANCZOS)
+                img.save(img_path, "JPEG", quality=95)
+        total_resized += 1
+
+    print(f"\nTitle image resize: {total_resized} resized, {total_already} already 1920x1080, {total_missing} missing.\n")
+
+
+def run_cover_art_resize(game_ids, dry_run):
+    """Resize all non-640x360 cover art (GAME_ID.jpg) in game-* folders to 640x360 using Pillow."""
+    try:
+        from PIL import Image
+    except ImportError:
+        print("Cover art resize skipped -- Pillow not installed (pip install Pillow)\n")
+        return
+
+    TARGET = (640, 360)
+    total_resized = 0
+    total_already = 0
+    total_missing = 0
+
+    for game_id in game_ids:
+        filename = f"{game_id}.jpg"
+        img_path = os.path.join(REPO_ROOT, f"game-{game_id}", filename)
+        if not os.path.isfile(img_path):
+            total_missing += 1
+            continue
+        try:
+            with Image.open(img_path) as img:
+                size = img.size
+        except Exception as e:
+            print(f"  [game-{game_id}/{filename}] SKIP -- could not read image: {e}")
+            continue
+        if size == TARGET:
+            total_already += 1
+            continue
+        prefix = "[DRY RUN] " if dry_run else ""
+        print(f"  {prefix}[game-{game_id}/{filename}] {size[0]}x{size[1]} -> 640x360")
+        if not dry_run:
+            with Image.open(img_path) as img:
+                img = img.convert("RGB")
+                img = img.resize(TARGET, Image.LANCZOS)
+                img.save(img_path, "JPEG", quality=95)
+        total_resized += 1
+
+    print(f"\nCover art resize: {total_resized} resized, {total_already} already 640x360, {total_missing} missing.\n")
+
+
 # ── Runner ────────────────────────────────────────────────────────────────────
 
 def run_patches(game_ids, dry_run, context):
@@ -817,6 +904,12 @@ def main():
         ]
     print(f"Checking PNGs in {len(png_folders)} folder(s){' [DRY RUN]' if dry_run else ''}...\n")
     run_png_resize(png_folders, dry_run)
+
+    print(f"Checking title images for {len(game_ids)} game(s){' [DRY RUN]' if dry_run else ''}...\n")
+    run_title_image_resize(game_ids, dry_run)
+
+    print(f"Checking cover art for {len(game_ids)} game(s){' [DRY RUN]' if dry_run else ''}...\n")
+    run_cover_art_resize(game_ids, dry_run)
 
 
 if __name__ == "__main__":

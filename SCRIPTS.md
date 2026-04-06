@@ -446,7 +446,7 @@ Reads `info.json` and renames the versioned `.txt` file (e.g. `0.2.7.txt` -> `0.
 
 Generic framework for making repo-wide changes to all `game-*/index.js` files. Each patch is a named, independently-enabled function registered in the `PATCHES` list. New patches can be added without touching the runner logic.
 
-Also resizes all non-64x64 PNG files in `game-*` and `template-*` folders to 64x64 after the patch run.
+Also resizes all non-64x64 PNG files in `game-*` and `template-*` folders to 64x64, all non-1920x1080 title images in `resources/title-images/` to 1920x1080, and all non-640x360 cover art (`GAME_ID.jpg`) in `game-*` folders to 640x360, after the patch run.
 
 ### patch_extensions.py — Requirements
 
@@ -484,7 +484,7 @@ Use `--debug` to print raw PCGamingWiki search results and match status for each
 
 Each patch skips a game if the value is already set (unless `--force-pcgw` is used for `pcgamingwiki_url`). Games that fail a non-trivial step are always printed in the output so failures are visible. After writing any changed `index.js`, `generate_explained.js` is run automatically to keep `EXTENSION_EXPLAINED.md` in sync.
 
-After all patches run, PNGs are resized to 64x64 (requires Pillow). When targeting specific games, only those `game-{id}` folders are checked. When running on all, all `game-*` and `template-*` folders are checked.
+After all patches run, PNGs are resized to 64x64, title images in `resources/title-images/` are resized to 1920x1080, and cover art (`GAME_ID.jpg`) in each `game-*` folder is resized to 640x360 (all require Pillow). When targeting specific games, only those game folders are checked. When running on all, all `game-*` and `template-*` folders are checked for PNGs.
 
 ### patch_extensions.py — Adding New Patches
 
