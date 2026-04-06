@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.2.8] - 2026-04-06
+
+- Fixed: Prevent folder rename dialogue from calling when mod info is missing.
+
 ## [0.2.7] - 2026-03-28
 
 - Fixed: Handle case where user clicks "Rename" button in the folder rename dialog without entering anything in the text box.

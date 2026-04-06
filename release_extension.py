@@ -10,6 +10,7 @@ Usage:
     python release_extension.py GAME_ID --dry-run
 """
 
+import json
 import os
 import re
 import sys
@@ -18,6 +19,104 @@ import subprocess
 REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
 SEVENZIP = r"C:\Program Files\7-Zip\7z.exe"
 NEXUS_SITE_URL = "https://www.nexusmods.com/games/site"
+
+
+def get_version(folder):
+    """Return the version string from info.json, or None if not found."""
+    info_path = os.path.join(folder, "info.json")
+    if not os.path.isfile(info_path):
+        return None
+    try:
+        with open(info_path, encoding="utf-8") as f:
+            return json.load(f).get("version")
+    except (json.JSONDecodeError, OSError):
+        return None
+
+
+def update_version_txt(folder, game_id, version, dry_run=False):
+    """Rename the versioned .txt file to match the current version from info.json."""
+    if not version:
+        print(f"  [{game_id}] WARNING — could not read version from info.json, skipping .txt rename")
+        return
+
+    version_re = re.compile(r'^\d+\.\d+\.\d+\.txt$')
+    existing = [f for f in os.listdir(folder) if version_re.match(f)]
+    expected = f"{version}.txt"
+
+    if not existing:
+        print(f"  [{game_id}] WARNING — no version .txt file found in folder")
+        return
+
+    for txt_file in existing:
+        if txt_file == expected:
+            print(f"  [{game_id}] Version .txt already correct: {txt_file}")
+        elif dry_run:
+            print(f"  [{game_id}] [DRY RUN] Would rename: {txt_file} -> {expected}")
+        else:
+            os.rename(os.path.join(folder, txt_file), os.path.join(folder, expected))
+            print(f"  [{game_id}] Renamed: {txt_file} -> {expected}")
+
+
+def get_changelog_date(folder):
+    """Return the date string from the most recent versioned entry in CHANGELOG.md, or None."""
+    changelog_path = os.path.join(folder, "CHANGELOG.md")
+    if not os.path.isfile(changelog_path):
+        return None
+    entry_re = re.compile(r'^## \[\d+\.\d+\.\d+\] - (\d{4}-\d{2}-\d{2})', re.MULTILINE)
+    try:
+        with open(changelog_path, encoding="utf-8") as f:
+            content = f.read()
+        m = entry_re.search(content)
+        return m.group(1) if m else None
+    except OSError:
+        return None
+
+
+def update_index_header(folder, game_id, version, date, dry_run=False):
+    """Update the Version and Date lines in the index.js header comment."""
+    index_path = os.path.join(folder, "index.js")
+    if not os.path.isfile(index_path):
+        print(f"  [{game_id}] WARNING — index.js not found, skipping header update")
+        return
+
+    try:
+        with open(index_path, encoding="utf-8") as f:
+            original = f.read()
+    except OSError as e:
+        print(f"  [{game_id}] WARNING — could not read index.js: {e}")
+        return
+
+    updated = original
+    if version:
+        updated = re.sub(r'(Version:\s*)\d+\.\d+\.\d+', rf'\g<1>{version}', updated, count=1)
+    else:
+        print(f"  [{game_id}] WARNING — no version available, skipping Version header update")
+
+    if date:
+        updated = re.sub(r'(Date:\s*)\d{4}-\d{2}-\d{2}', rf'\g<1>{date}', updated, count=1)
+    else:
+        print(f"  [{game_id}] WARNING — no changelog date found, skipping Date header update")
+
+    if updated == original:
+        print(f"  [{game_id}] index.js header already up to date")
+        return
+
+    if dry_run:
+        if version:
+            print(f"  [{game_id}] [DRY RUN] Would update index.js header: Version -> {version}")
+        if date:
+            print(f"  [{game_id}] [DRY RUN] Would update index.js header: Date -> {date}")
+        return
+
+    try:
+        with open(index_path, "w", encoding="utf-8") as f:
+            f.write(updated)
+        if version:
+            print(f"  [{game_id}] Updated index.js header: Version -> {version}")
+        if date:
+            print(f"  [{game_id}] Updated index.js header: Date -> {date}")
+    except OSError as e:
+        print(f"  [{game_id}] ERROR — could not write index.js: {e}")
 
 
 def get_extension_url(src):
@@ -42,6 +141,11 @@ def release(game_id, open_browser, dry_run=False):
     if os.path.isfile(index_path):
         with open(index_path, encoding="utf-8") as f:
             extension_url = get_extension_url(f.read())
+
+    version = get_version(folder)
+    date = get_changelog_date(folder)
+    update_version_txt(folder, game_id, version, dry_run=dry_run)
+    update_index_header(folder, game_id, version, date, dry_run=dry_run)
 
     if dry_run:
         zip_path = os.path.join(folder, f"game-{game_id}.zip")

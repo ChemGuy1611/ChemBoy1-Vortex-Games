@@ -2,8 +2,8 @@
 Name: Marvel Rivals Vortex Extension
 Structure: UE5
 Author: ChemBoy1
-Version: 0.5.2
-Date: 2026-03-16
+Version: 0.5.3
+Date: 2026-04-04
 ////////////////////////////////////////*/
 
 //Import libraries
@@ -78,6 +78,13 @@ const SIGBYPASS_LUA = "marvelrivalsutocsignaturebypass.asi";
 const SIGBYPASS_PAGE_NO = 2940;
 const SIGBYPASS_FILE_NO = 7106;
 
+const REPAK_ID = `${GAME_ID}-repak`;
+const REPAK_NAME = "Repak Rivals";
+const REPAK_EXEC = 'repak-gui.exe';
+const REPAK_PAGE_NO = 1717;
+const REPAK_FILE_NO = 19706;
+const REPAK_DOMAIN = GAME_ID;
+
 // FILLED IN FROM DATA ABOVE
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1132"; //Nexus link to this extension. Used for links
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Marvel_Rivals";
@@ -142,7 +149,19 @@ const spec = {
 
 //3rd party tools and launchers
 const tools = [
-
+  {
+    id: REPAK_ID,
+    name: REPAK_NAME,
+    logo: `repak.png`,
+    //queryPath: getBinariesFolder,
+    executable: () => REPAK_EXEC,
+    requiredFiles: [REPAK_EXEC],
+    detach: true,
+    relative: true,
+    exclusive: true,
+    //shell: true,
+    //parameters: [],
+  }, //*/
 ];
 
 // BASIC EXTENSION FUNCTIONS //////////////////////////////////////////////////////////////////////////////////

@@ -438,7 +438,7 @@ python release_extension.py assassinscreedorigins assassinscreedvalhalla --no-op
 
 ### release_extension.py — Output
 
-Runs `generate_explained.js` first to regenerate `EXTENSION_EXPLAINED.md`, then creates `game-{GAME_ID}.zip` inside the extension folder, overwriting any existing zip. Reads `EXTENSION_URL` from `index.js` — if set to a valid URL, opens it in the default browser so the file can be uploaded. If `EXTENSION_URL` is `"XXX"` or not present, opens `https://www.nexusmods.com/games/site` instead.
+Reads `info.json` and renames the versioned `.txt` file (e.g. `0.2.7.txt` -> `0.2.8.txt`) to match the current version. Updates the `Version:` and `Date:` lines in the `index.js` header comment — version from `info.json`, date from the most recent `## [X.X.X] - YYYY-MM-DD` entry in `CHANGELOG.md`. Then runs `generate_explained.js` to regenerate `EXTENSION_EXPLAINED.md` and creates `game-{GAME_ID}.zip` inside the extension folder, overwriting any existing zip. Reads `EXTENSION_URL` from `index.js` — if set to a valid URL, opens it in the default browser so the file can be uploaded. If `EXTENSION_URL` is `"XXX"` or not present, opens `https://www.nexusmods.com/games/site` instead.
 
 ---
 
