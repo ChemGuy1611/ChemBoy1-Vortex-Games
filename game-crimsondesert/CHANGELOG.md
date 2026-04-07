@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.2.6] - 2026-04-07
+
+- Added: Auto-download JSON Mod Manager if not installed to the game folder yet (required to install most mods)
+
 ## [0.2.5] - 2026-04-06
 
 - Added: Support for .dds texture mods - installed via JSON Mod Manager

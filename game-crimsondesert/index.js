@@ -2,8 +2,8 @@
 Name: Crimson Desert Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.2.5
-Date: 2026-04-06
+Version: 0.2.6
+Date: 2026-04-07
 Notes:
 - Supports plugin mods and data mods with "00XX" folders
 - Supports Crimson Browser (manifest.json and files folder) and JSON Mod Manager (.json or "0036+" folder) mods
@@ -791,14 +791,11 @@ function installBrowserMod(files, fileName) {
   let rootPath = path.dirname(modFile);
   //*
   let folder = path.basename(fileName).replace('.installing', '');
-  //??? Read manifest.json to get folder name???
   const ROOT_PATH = path.basename(rootPath);
   if (ROOT_PATH !== '.') {
     folder = ''; //no folder needed if already present
     modFile = rootPath; //make the folder the targeted modFile so we can grab any other folders also in its directory
     rootPath = path.dirname(modFile);
-    //const indexFolder = path.basename(modFile);
-    //idx = modFile.indexOf(`${indexFolder}${path.sep}`);  //index on the folder with path separator
   } //*/
   const idx = modFile.indexOf(path.basename(modFile));
 
@@ -819,14 +816,14 @@ function installBrowserMod(files, fileName) {
 
 //Test for patch mod files
 function testPatchMod(files, gameId, archivePath) {
-  const isMod = files.some(file => PATCH_MOD_FILES.includes(path.basename(file).toLowerCase())); //modinfo.json
+  //const isMod = files.some(file => PATCH_MOD_FILES.includes(path.basename(file).toLowerCase())); //modinfo.json
   const isFolder = files.some(file => ( //i.e. "0036" folder
     path.basename(file).startsWith('00')
     && path.basename(file).length === 4
     && parseFloat(path.basename(file).replace('00', '')) > 35
     //&& isDir(archivePath, file)
   )); //*/
-  let supported = (gameId === spec.game.id) && ( isFolder );
+  let supported = (gameId === spec.game.id) && ( isFolder ); //modinfo.json not included in test since many mods don't have one
 
   // Test for a mod installer
   if (supported && files.find(file =>
@@ -853,16 +850,12 @@ function installPatchMod(api, files, fileName) {
     //&& isDir(archivePath, file)
   )); //*/
   let rootPath = path.dirname(modFile);
-  //*
   let folder = path.basename(fileName).replace('.installing', '');
-  //??? Read modinfo.json to get folder name???
   const ROOT_PATH = path.basename(rootPath);
   if (ROOT_PATH !== '.') {
     folder = ''; //no folder needed if already present
     modFile = rootPath; //make the folder the targeted modFile so we can grab any other folders also in its directory
     rootPath = path.dirname(modFile);
-    //const indexFolder = path.basename(modFile);
-    //idx = modFile.indexOf(`${indexFolder}${path.sep}`);  //index on the folder with path separator
   } //*/
   const idx = modFile.indexOf(path.basename(modFile));
 
@@ -904,19 +897,15 @@ function testTextureMod(files, gameId) {
 function installTextureMod(files, fileName) {
   const MOD_TYPE = PATCH_MOD_ID;
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
-  //let modFile = files.find(file => PATCH_MOD_FILES.includes(path.basename(file).toLowerCase())); //modinfo.json
   let modFile = files.find(file => DATA_FOLDERS.includes(path.basename(file)));
   let rootPath = path.dirname(modFile);
   //*
   let folder = path.basename(fileName).replace('.installing', '');
-  //??? Read modinfo.json to get folder name???
   const ROOT_PATH = path.basename(rootPath);
   if (ROOT_PATH !== '.') {
     folder = ''; //no folder needed if already present
     modFile = rootPath; //make the folder the targeted modFile so we can grab any other folders also in its directory
     rootPath = path.dirname(modFile);
-    //const indexFolder = path.basename(modFile);
-    //idx = modFile.indexOf(`${indexFolder}${path.sep}`);  //index on the folder with path separator
   } //*/
   const idx = modFile.indexOf(path.basename(modFile));
 
@@ -1838,6 +1827,7 @@ async function setup(discovery, api, gameSpec) {
   if (setupNotification) {
     setupNotify(api);
   }
+  if (!loadOrder) await downloadJsonManager(api, gameSpec);
   /*await fs.ensureDirWritableAsync(CONFIG_PATH);
   await fs.ensureDirWritableAsync(SAVE_PATH); //*/
   if (hasLoader) {
@@ -2059,6 +2049,8 @@ function deployNotify(api) {
         action: async (dismiss) => {
           if (await isJsonManagerInstalled(api, spec)) {
             runJsonManager(api);
+          } else {
+            api.showErrorNotification(`JSON Mod Manager is not installed.`, undefined, { allowReport: false });
           }
           dismiss();
         },
@@ -2068,6 +2060,8 @@ function deployNotify(api) {
         action: async (dismiss) => {
           if (await isBrowserInstalled(api, spec)) {
             runBrowser(api);
+          } else {
+            api.showErrorNotification(`Crimson Browser is not installed.`, undefined, { allowReport: false });
           }
           dismiss();
         },
@@ -2083,6 +2077,8 @@ function deployNotify(api) {
               label: `Run ${JSON_MANAGER_NAME}`, action: async () => {
                 if (await isJsonManagerInstalled(api, spec)) {
                   runJsonManager(api);
+                } else {
+                  api.showErrorNotification(`JSON Mod Manager is not installed.`, undefined, { allowReport: false });
                 }
                 dismiss();
               }
@@ -2091,6 +2087,8 @@ function deployNotify(api) {
               label: `Run ${BROWSER_NAME}`, action: async () => {
                 if (await isBrowserInstalled(api, spec)) {
                   runBrowser(api);
+                } else {
+                  api.showErrorNotification(`Crimson Browser is not installed.`, undefined, { allowReport: false });
                 }
                 dismiss();
               }
@@ -2099,9 +2097,13 @@ function deployNotify(api) {
               label: `Run BOTH!`, action: async () => {
                 if (await isJsonManagerInstalled(api, spec)) {
                   runJsonManager(api);
+                } else {
+                  api.showErrorNotification(`JSON Mod Manager is not installed.`, undefined, { allowReport: false });
                 }
                 if (await isBrowserInstalled(api, spec)) {
                   runBrowser(api);
+                } else {
+                  api.showErrorNotification(`Crimson Browser is not installed.`, undefined, { allowReport: false });
                 }
                 dismiss();
               }
