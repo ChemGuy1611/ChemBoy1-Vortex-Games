@@ -5,7 +5,7 @@
 | Property | Value |
 | --- | --- |
 | Name | WH40K Boltgun Vortex Extension |
-| Engine / Structure | UE4 (Basic) |
+| Engine / Structure | UE4 |
 | Author | ChemBoy1 |
 
 ## Key Identifiers
