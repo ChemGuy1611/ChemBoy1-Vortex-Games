@@ -32,15 +32,15 @@ const LOCALAPPDATA = util.getVortexPath("localAppData");
 const GAME_ID = "thelongdark";
 const STEAMAPP_ID = "305620"; // https://steamdb.info/app/305620/
 const STEAMAPP_ID_DEMO = null;
-const EPICAPP_ID = "XXX"; // https://store.epicgames.com/en-US/p/the-long-dark
-const GOGAPP_ID = null;
-const XBOXAPP_ID = "XXX"; // https://apps.microsoft.com/detail/9nfkn56zbmr0
+const EPICAPP_ID = "ed93b18355a84230938c705121c63661"; // https://store.epicgames.com/en-US/p/the-long-dark
+const GOGAPP_ID = "2141432999";
+const XBOXAPP_ID = "27620HinterlandStudio.30233944AADE4"; // https://apps.microsoft.com/detail/9nfkn56zbmr0
 const XBOXEXECNAME = "Game";
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID, GOGAPP_ID, XBOXAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
 const GAME_NAME = "The Long Dark";
 const GAME_NAME_SHORT = "The Long Dark";
-const GAME_STRING = "XXX"; //string for exe and data folder (seem to always match)
+const GAME_STRING = "tld"; //string for exe and data folder (seem to always match)
 const GAME_STRING_ALT = GAME_STRING; //CHANGE THIS IF IT DOESN'T MATCH
 const EXEC = `${GAME_STRING}.exe`;
 const EXEC_EGS = EXEC;
@@ -50,6 +50,11 @@ const EXEC_XBOX = 'gamelaunchhelper.exe';
 const EXEC_ALT = `${GAME_STRING_ALT}.exe`;
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/The_Long_Dark";
 const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
+
+//has multiple top level folders for different game mods. Not sure how to handle this yet
+const TOP_LEVEL_FOLDER_MAIN = "TheLongDark";
+const TOP_LEVEL_FOLDER_EP = "Episode5";
+const TOP_LEVEL_FOLDER_WM = "Wintermute";
 
 //feature toggles
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
@@ -1599,6 +1604,8 @@ async function relaunchExt(api) {
 }
 //Function to choose mod loader
 async function chooseModLoader(api, gameSpec) {
+  await downloadMelon(api, gameSpec);
+  /*
   const CUSTOM_LABEL = `${CUSTOMLOADER_NAME} (Recommended)`;
   let BEP_LABEL = `BepInEx`;
   if (recommendedLoader === 'bepinex') {
@@ -1657,7 +1664,7 @@ async function chooseModLoader(api, gameSpec) {
       await deploy(api);
       relaunchExt(api);
     }
-  });
+  }); //*/
 }
 //Deconflict mod loaders
 async function deconflictModLoaders(api, gameSpec) {

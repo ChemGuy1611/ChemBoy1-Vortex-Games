@@ -2062,6 +2062,11 @@ async function setup(discovery, api, gameSpec) {
   if ( (bepinexInstalled && melonInstalled) || (bepinexInstalled && customInstalled) || (melonInstalled && customInstalled)) {
     await deconflictModLoaders(api, spec); //deconflict if multiple mod loaders are installed
   } //*/
+  bepinexInstalled = isBepinexInstalled(api, gameSpec); //check installs again after install/deconflict
+  melonInstalled = isMelonInstalled(api, gameSpec);
+  if (hasCustomLoader) {
+    customInstalled = isCustomInstalled(api, gameSpec);
+  }
   if (bepinexInstalled && allowBepCfgMan) {
     downloadBepCfgManNotify(api, gameSpec); //notification to download BepInExConfigManager
   } //*/
@@ -2329,6 +2334,12 @@ function main(context) {
       }
       if ( (bepinexInstalled && melonInstalled) || (bepinexInstalled && customInstalled) || (melonInstalled && customInstalled)) {
         await deconflictModLoaders(api, spec); //deconflict if multiple mod loaders are installed
+      } //*/
+      /*
+      bepinexInstalled = isBepinexInstalled(api, spec); //check installs again after install/deconflict
+      melonInstalled = isMelonInstalled(api, spec);
+      if (hasCustomLoader) {
+        customInstalled = isCustomInstalled(api, spec);
       } //*/
       /*if (bepinexInstalled && allowBepCfgMan) {
         downloadBepCfgManNotify(api, spec); //download BepInExConfigManager

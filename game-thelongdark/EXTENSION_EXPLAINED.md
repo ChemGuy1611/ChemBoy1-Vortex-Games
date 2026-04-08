@@ -13,15 +13,16 @@
 | Property | Value |
 | --- | --- |
 | Game ID | `thelongdark` |
-| Executable | `XXX.exe` |
+| Executable | `tld.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
-| Executable (GOG) | `XXX.exe` |
-| Executable (Demo) | `XXX.exe` |
+| Executable (GOG) | `tld.exe` |
+| Executable (Demo) | `tld.exe` |
 | Extension Page | XXX |
 
 ## Supported Stores
 
 - **Steam** — `305620`
+- **Epic Games Store** — `ed93b18355a84230938c705121c63661`
 
 ## Feature Flags
 
@@ -104,6 +105,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Purge Hook** (`did-purge`) — runs custom logic when mods are purged.
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
+- **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
