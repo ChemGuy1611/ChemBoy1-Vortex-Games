@@ -1145,6 +1145,22 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
         else:
             print(f"  FAILED -- add {game_id}_title.jpg manually to resources/title-images/ (1920x1080 JPG, with title text)")
 
+    # ── Banner image ─────────────────────────────────────────────────────────
+    banner_ok = False
+    if no_images:
+        print(f"\n[{game_id}_banner.jpg] Skipped (--no-images)")
+    else:
+        print(f"\n[{game_id}_banner.jpg]")
+        banner_dir = os.path.join(REPO_ROOT, "resources", "banner-images")
+        os.makedirs(banner_dir, exist_ok=True)
+        banner_path = os.path.join(banner_dir, f"{game_id}_banner.jpg")
+        from fetch_cover_art import download_banner_image
+        banner_ok, banner_source = download_banner_image(appid, game_id, banner_path, sgdb_key)
+        if banner_ok:
+            print(f"  Saved  : {banner_source}")
+        else:
+            print(f"  FAILED -- add {game_id}_banner.jpg manually to resources/banner-images/")
+
     # ── Summary ───────────────────────────────────────────────────────────────
     print(f"\n{'=' * 60}")
     print(f"  Created  : game-{game_id}/")
@@ -1176,6 +1192,8 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
         missing_files.append(f"{game_id}.jpg (640x360 JPG, no title text)")
     if not title_ok:
         missing_files.append(f"{game_id}_title.jpg (1920x1080 JPG, with title text) -> resources/title-images/")
+    if not banner_ok:
+        missing_files.append(f"{game_id}_banner.jpg (full-size hero JPG) -> resources/banner-images/")
     if missing_files:
         print("\n  Files to add manually:")
         for f in missing_files:

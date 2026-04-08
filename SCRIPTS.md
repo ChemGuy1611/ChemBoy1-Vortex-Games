@@ -38,10 +38,11 @@ python fetch_exec_icon.py --force
 
 ## fetch_cover_art.py
 
-Scans all `game-*` extension folders and downloads missing cover art or title images. Reads `STEAMAPP_ID` directly from each `index.js` to look up art. Imports image-download logic from `new_extension.py`.
+Scans all `game-*` extension folders and downloads missing cover art, title images, or banner images. Reads `STEAMAPP_ID` directly from each `index.js` to look up art. Imports image-download logic from `new_extension.py`.
 
 - Default mode: downloads `{GAME_ID}.jpg` (640x360, no title text) into each extension folder.
 - `--title` mode: downloads `{GAME_ID}_title.jpg` (1920x1080, with title text) to `resources/title-images/`.
+- `--banner` mode: downloads `{GAME_ID}_banner.jpg` (full-size official SteamGridDB hero) to `resources/banner-images/`.
 
 ### fetch_cover_art.py — Requirements
 
@@ -53,7 +54,7 @@ pip install Pillow
 
 | Variable | Required | Description |
 | --- | --- | --- |
-| `STEAMGRIDDB_API_KEY` | Optional | SteamGridDB API key. Used for higher-quality hero art in default mode. Required for `--title` mode (no fallback available). Falls back to Steam `library_hero.jpg` in default mode if not set. |
+| `STEAMGRIDDB_API_KEY` | Optional | SteamGridDB API key. Used for higher-quality hero art in default mode. Required for `--title` and `--banner` modes (no fallback available). Falls back to Steam `library_hero.jpg` in default mode if not set. |
 
 ### fetch_cover_art.py — Usage
 
@@ -64,6 +65,8 @@ python fetch_cover_art.py --dry-run
 python fetch_cover_art.py --force
 python fetch_cover_art.py --title
 python fetch_cover_art.py --title GAME_ID [GAME_ID ...]
+python fetch_cover_art.py --banner
+python fetch_cover_art.py --banner GAME_ID [GAME_ID ...]
 ```
 
 - No arguments — scans all `game-*` folders and downloads missing cover art.
@@ -71,11 +74,13 @@ python fetch_cover_art.py --title GAME_ID [GAME_ID ...]
 - `--dry-run` — lists missing files without downloading anything.
 - `--force` — re-downloads even if the target file already exists.
 - `--title` — fetches title images (1920x1080) to `resources/title-images/` instead of cover art.
+- `--banner` — fetches full-size official hero images to `resources/banner-images/`. Requires `STEAMGRIDDB_API_KEY`.
 
 ### fetch_cover_art.py — Output
 
 - Cover art saved as `{GAME_ID}.jpg` (640x360 JPEG) in each extension folder.
 - Title images saved as `{GAME_ID}_title.jpg` (1920x1080 JPEG) in `resources/title-images/`.
+- Banner images saved as `{GAME_ID}_banner.jpg` (full-size JPEG) in `resources/banner-images/`.
 - Extensions without a `STEAMAPP_ID` in `index.js` are skipped with a note.
 - A summary of saved / failed / skipped counts is printed at the end.
 

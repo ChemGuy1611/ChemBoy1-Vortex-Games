@@ -16,7 +16,6 @@
 | Executable | `SOSGrandBazaar.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 | Executable (GOG) | `SOSGrandBazaar.exe` |
-| Extension Page | XXX |
 
 ## Supported Stores
 
