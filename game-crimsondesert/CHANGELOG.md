@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.2.7] - 2026-04-08
+
+- Fixed: removed manifest.json check from Crimson Browser mod installer - prevent mods installed to game root when meant for JSON Mod Manager
+
 ## [0.2.6] - 2026-04-07
 
 - Added: Auto-download JSON Mod Manager if not installed to the game folder yet (required to install most mods)

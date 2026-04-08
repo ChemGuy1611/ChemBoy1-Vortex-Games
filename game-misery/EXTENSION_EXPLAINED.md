@@ -16,7 +16,6 @@
 | Executable | `MISERY.exe` |
 | Executable (GOG) | `MISERY.exe` |
 | Executable (Demo) | `MISERY.exe` |
-| Extension Page | XXX |
 | PCGamingWiki | XXX |
 
 ## Supported Stores

@@ -2,8 +2,8 @@
 Name: Crimson Desert Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.2.6
-Date: 2026-04-07
+Version: 0.2.7
+Date: 2026-04-08
 Notes:
 - Supports plugin mods and data mods with "00XX" folders
 - Supports Crimson Browser (manifest.json and files folder) and JSON Mod Manager (.json or "0036+" folder) mods
@@ -766,9 +766,10 @@ function installTools(files) {
 
 //Test for Crimson Browser mod files
 function testBrowserMod(files, gameId) {
-  const isJson = files.some(file => path.basename(file).toLowerCase() === BROWSER_MOD_MANIFEST); //manifest.json
+  //const isJson = files.some(file => path.basename(file).toLowerCase() === BROWSER_MOD_MANIFEST); //manifest.json - not included since many mods don't have one
+  const isDataFolder = files.some(file => DATA_FOLDERS.includes(path.basename(file)));
   const isFolder = files.some(file => path.basename(file).toLowerCase() === BROWSER_MOD_FOLDER); //"files" folder
-  let supported = (gameId === spec.game.id) && ( isJson && isFolder );
+  let supported = (gameId === spec.game.id) && ( isFolder && isDataFolder );
 
   // Test for a mod installer
   if (supported && files.find(file =>
@@ -787,7 +788,7 @@ function testBrowserMod(files, gameId) {
 function installBrowserMod(files, fileName) {
   const MOD_TYPE = BROWSER_MOD_ID;
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
-  let modFile = files.find(file => path.basename(file).toLowerCase() === BROWSER_MOD_MANIFEST);
+  let modFile = files.find(file => path.basename(file).toLowerCase() === BROWSER_MOD_FOLDER);
   let rootPath = path.dirname(modFile);
   //*
   let folder = path.basename(fileName).replace('.installing', '');
