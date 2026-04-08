@@ -31,6 +31,8 @@ const EXEC = "XXX";
 const PCGAMINGWIKI_URL = "XXX";
 const EXTENSION_URL = "XXX";
 
+const FROSTYMOD_FOLDER = "XXX"; // Game-specific folder name inside FrostyModManager/Mods/
+
 //feature toggles
 const allowSymlinks = false; // Frosty handles its own deployment; symlinks not typical
 const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
@@ -47,7 +49,6 @@ let DOWNLOAD_FOLDER = '';
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Binaries / Root Folder";
 
-const FROSTYMOD_FOLDER = "XXX"; // Game-specific folder name inside FrostyModManager/Mods/
 const FROSTYMOD_ID = `${GAME_ID}-frostymod`;
 const FROSTYMOD_NAME = "Frosty .fbmod/.archive";
 const FROSTYMOD_EXTS = [".fbmod", ".archive"];
@@ -91,7 +92,6 @@ const spec = {
       "steamAppId": +STEAMAPP_ID,
       "EAAppId": EAAPP_ID,
       "epicAppId": EPICAPP_ID,
-      "xboxAppId": XBOXAPP_ID,
       "gogAppId": null,
       "supportsSymlinks": allowSymlinks,
       "ignoreConflicts": IGNORE_CONFLICTS,
@@ -103,7 +103,6 @@ const spec = {
       "GogAPPId": GOGAPP_ID,
       "EAAPPId": EAAPP_ID,
       "EpicAPPId": EPICAPP_ID,
-      "XboxAPPId": XBOXAPP_ID,
     }
   },
   "modTypes": [
@@ -241,7 +240,7 @@ function pathPattern(api, game, pattern) {
       appData: util.getVortexPath('appData'),
     });
   }
-  catch (err) { //this happens if the executable comes back as "undefined", usually caused by the Xbox app locking down the folder
+  catch (err) { //this happens if the executable comes back as "undefined", usually caused by the another app locking down the folder
     api.showErrorNotification('Failed to locate executable. Please launch the game at least once.', err);
   }
 }
@@ -406,7 +405,7 @@ function testFbmod(files, gameId) {
   });
 }
 
-//Install .fbmod files
+/*Install .fbmod files - SIMPLE VERSION
 function installFbmod(files) {
   const modFile = files.find(file => FROSTYMOD_EXTS.includes(path.extname(file).toLowerCase()));
   const idx = modFile.indexOf(path.basename(modFile));
@@ -424,6 +423,57 @@ function installFbmod(files) {
   });
   instructions.push(setModTypeInstruction);
   return Promise.resolve({ instructions });
+} //*/
+
+//install .fbmod/.archive mod files (variant handler)
+async function installFbmod(api, files) {
+  const fileExt = FROSTYMOD_EXTS;
+  const modFiles = files.filter(file => fileExt.includes(path.extname(file).toLowerCase()));
+  const modType = {
+    type: 'setmodtype',
+    value: UE5_SORTABLE_ID,
+  };
+  const installFiles = (modFiles.length > FROSTYMOD_EXTS.length)
+    ? await chooseFilesToInstall(api, modFiles, fileExt)
+    : modFiles;
+  let instructions = installFiles.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.basename(file)
+    };
+  });
+  instructions.push(modType);
+  return Promise.resolve({ instructions });
+}
+
+//file selection dialog for .fbmod/.archive mods
+async function chooseFilesToInstall(api, files, fileExt) {
+  const t = api.translate;
+  return api.showDialog('question', t('Multiple {{ext}} files', { replace: { ext: fileExt } }), {
+    text: t('The mod you are installing contains {{x}} {{ext}} files.', { replace: { x: files.length, ext: fileExt } }) +
+        `This can be because the author intended for you to chose one of several options. Please select which files to install below:`,
+    checkboxes: files.map((file) => {
+      return {
+          id: file,
+          text: file,
+          value: false
+      };
+    })
+    }, [
+      { label: 'Cancel' },
+      { label: 'Install Selected' },
+      { label: 'Install All_plural' }
+  ]).then((result) => {
+      if (result.action === 'Cancel')
+          return Promise.reject(new util.UserCanceled('User cancelled.'));
+      else {
+          const installAll = (result.action === 'Install All' || result.action === 'Install All_plural');
+          const installPAKS = installAll ? files : Object.keys(result.input).filter(s => result.input[s])
+            .map(file => files.find(f => f === file));
+          return installPAKS;
+      }
+  });
 }
 
 //Fallback installer to root folder
@@ -525,7 +575,7 @@ function fallbackInstallerNotify(api, modName) {
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
-//Notify User to run ATK after deployment
+//Notify User to run Frosty after deployment
 function deployNotify(api) {
   const NOTIF_ID = `${GAME_ID}-deploy-notification`;
   const MOD_NAME = FROSTY_NAME;
@@ -633,7 +683,7 @@ function applyGame(context, gameSpec) {
 
   //register mod installers
   context.registerInstaller(FROSTY_ID, 25, testFrosty, installFrosty);
-  context.registerInstaller(FROSTYMOD_ID, 30, testFbmod, installFbmod);
+  context.registerInstaller(FROSTYMOD_ID, 30, testFbmod, (files) => installFbmod(context.api, files));
   if (fallbackInstaller) {
     context.registerInstaller(`${GAME_ID}-fallback`, 49, testFallback, (files, destinationPath) => installFallback(context.api, files, destinationPath));
   }

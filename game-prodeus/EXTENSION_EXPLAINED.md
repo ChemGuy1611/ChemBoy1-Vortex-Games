@@ -13,22 +13,22 @@
 | Property | Value |
 | --- | --- |
 | Game ID | `prodeus` |
-| Executable | `XXX.exe` |
+| Executable | `Prodeus.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
-| Executable (GOG) | `XXX.exe` |
-| Executable (Demo) | `XXX.exe` |
-| Extension Page | XXX |
+| Executable (GOG) | `Prodeus.exe` |
+| Executable (Demo) | `Prodeus.exe` |
 
 ## Supported Stores
 
 - **Steam** — `964800`
+- **GOG** — `1549165795`
 
 ## Feature Flags
 
 | Flag | Value | Description |
 | --- | --- | --- |
 | `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
-| `hasXbox` | `false` | toggle for Xbox version logic |
+| `hasXbox` | `true` | NOT on Game Pass |
 | `multiExe` | `false` | set to true if there are multiple executables (typically for Xbox/EGS) |
 | `isCustom` | `false` |  |
 | `unknown` | `false` |  |
@@ -84,13 +84,10 @@ These tools appear in Vortex's Tools panel when this game is active:
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- Download Latest BepInEx BE (Browse)
-- Download BepInExConfigManager
 - Download Latest MelonLoader
 - Open Data Folder
 - Open Save Folder
-- Open BepInEx Config
-- Open BepInEx Log
+- Open Config Folder
 - Open MelonLoader Config
 - Open MelonLoader Log
 - Open PCGamingWiki Page
@@ -104,6 +101,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Purge Hook** (`did-purge`) — runs custom logic when mods are purged.
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
+- **GOG Support** — detects GOG version with adjusted executable/data paths.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 

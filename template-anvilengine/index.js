@@ -254,6 +254,19 @@ if (hasAtk) {
     exclusive: true,
   });
 }
+if (hasForger) {
+  tools.push({
+    id: FORGER_ID,
+    name: FORGER_NAME,
+    logo: 'forger.png',
+    executable: () => FORGER_EXEC,
+    requiredFiles: [
+      FORGER_EXEC,
+    ],
+    relative: true,
+    exclusive: true,
+  });
+}
 
 // BASIC EXTENSION FUNCTIONS ///////////////////////////////////////////////////
 

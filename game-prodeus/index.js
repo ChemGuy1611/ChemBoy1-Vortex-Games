@@ -3,7 +3,7 @@ Name: Prodeus Vortex Extension
 Structure: Unity BepinEx/MelonLoader/Custom Loader Hybrid
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2026-03-31
+Date: 2026-04-08
 Notes:
 - 
 //////////////////////////////////////////*/
@@ -16,7 +16,6 @@ const fsExtra = require('fs-extra');
 const { parseStringPromise } = require('xml2js');
 const winapi = require('winapi-bindings');
 //const fsPromises = require('fs/promises'); //.rm() for recursive folder deletion
-//const fsExtra = require('fs-extra');
 //const turbowalk = require('turbowalk');
 
 // -- START EDIT ZONE -- ///////////////////////////////////////////////////////////////////////////////
@@ -32,15 +31,15 @@ const LOCALAPPDATA = util.getVortexPath("localAppData");
 const GAME_ID = "prodeus";
 const STEAMAPP_ID = "964800"; // https://steamdb.info/app/964800/
 const STEAMAPP_ID_DEMO = null;
-const EPICAPP_ID = "XXX";
-const GOGAPP_ID = null;
-const XBOXAPP_ID = "XXX";
+const EPICAPP_ID = null;
+const GOGAPP_ID = "1549165795"; //https://www.gogdb.org/product/1549165795
+const XBOXAPP_ID = "XXX"; //NOT on Game Pass
 const XBOXEXECNAME = "Game";
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, GOGAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
 const GAME_NAME = "Prodeus";
 const GAME_NAME_SHORT = "Prodeus";
-const GAME_STRING = "XXX"; //string for exe and data folder (seem to always match)
+const GAME_STRING = "Prodeus"; //string for exe and data folder (seem to always match)
 const GAME_STRING_ALT = GAME_STRING; //CHANGE THIS IF IT DOESN'T MATCH
 const EXEC = `${GAME_STRING}.exe`;
 const EXEC_EGS = EXEC;
@@ -49,11 +48,11 @@ const EXEC_DEMO = EXEC;
 const EXEC_XBOX = 'gamelaunchhelper.exe';
 const EXEC_ALT = `${GAME_STRING_ALT}.exe`;
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Prodeus";
-const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1794"; //Nexus link to this extension. Used for links
 
 //feature toggles
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
-const hasXbox = false; //toggle for Xbox version logic
+const hasXbox = true; //NOT on Game Pass
 let multiExe = false; //set to true if there are multiple executables (typically for Xbox/EGS)
 if (GAME_STRING_ALT !== GAME_STRING) {
   multiExe = true;
@@ -78,15 +77,15 @@ const hasVersionFile = false; //set to true if there is a Version.info file that
 const VER_IDX = 3; //index of the version number in the Version.info file
 const VER_SPLIT = ' '; //split character for the Version.info file - typically a space
 
-const DEV_REGSTRING = "XXX"; //developer name
-const GAME_REGSTRING = "XXX"; //game name
-const XBOX_SAVE_STRING = "XXX"; //string after "ID_"
-const CONFIG_FOLDERNAME = "XXX";
-const SAVE_FOLDERNAME = "XXX";
+const DEV_REGSTRING = "BoundingBoxSoftware"; //developer name
+const GAME_REGSTRING = "Prodeus"; //game name
+const XBOX_PUB_ID = "XXX"; //string after "ID_"
+const CONFIG_FOLDERNAME = "Settings";
+const SAVE_FOLDERNAME = "SaveGames";
 const hasUserIdFolder = false; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
 
 //Data to determine BepinEx/MelonLoader versions and URLs
-const recommendedLoader = ''; // bepinex/melon/'' - loader shows as "(Recommended)" in selector. '' if no recommendation.
+const recommendedLoader = 'melon'; // bepinex/melon/'' - loader shows as "(Recommended)" in selector. '' if no recommendation.
 const BEPINEX_BUILD = 'il2cpp'; // 'mono' or 'il2cpp' - check for "il2cpp_data" folder
 const ARCH = 'x64'; //'x64' or 'x86' game architecture (64-bit or 32-bit)
 const BEP_VER = '5.4.23.5'; //set BepInEx version for mono URLs
@@ -137,7 +136,7 @@ if (hasUserIdFolder) {
 const CONFIG_PATH = path.join(CONFIG_FOLDER, USERID_FOLDER, CONFIG_FOLDERNAME);
 const CONFIG_FILES = ['settings.json'];
 const SAVE_PATH_DEFAULT = path.join(LOCALLOW, DEV_REGSTRING, GAME_REGSTRING, USERID_FOLDER, SAVE_FOLDERNAME);
-const SAVE_PATH_XBOX = path.join(LOCALAPPDATA, "Packages", `${XBOXAPP_ID}_${XBOX_SAVE_STRING}`, "SystemAppData", "wgs"); //XBOX Version
+const SAVE_PATH_XBOX = path.join(LOCALAPPDATA, "Packages", `${XBOXAPP_ID}_${XBOX_PUB_ID}`, "SystemAppData", "wgs"); //XBOX Version
 let SAVE_PATH = SAVE_PATH_DEFAULT;
 const SAVE_FILES = ['XXX.XXX'];
 const SAVE_EXTS = [".XXX"];
@@ -1599,6 +1598,8 @@ async function relaunchExt(api) {
 }
 //Function to choose mod loader
 async function chooseModLoader(api, gameSpec) {
+  await downloadMelon(api, gameSpec, true);
+  /* choice popup disabled since only MelonLoader is used
   const CUSTOM_LABEL = `${CUSTOMLOADER_NAME} (Recommended)`;
   let BEP_LABEL = `BepInEx`;
   if (recommendedLoader === 'bepinex') {
@@ -1657,7 +1658,7 @@ async function chooseModLoader(api, gameSpec) {
       await deploy(api);
       relaunchExt(api);
     }
-  });
+  }); //*/
 }
 //Deconflict mod loaders
 async function deconflictModLoaders(api, gameSpec) {
@@ -2181,7 +2182,7 @@ function applyGame(context, gameSpec) {
   }
   
   //register actions
-  if (BEPINEX_BUILD === 'il2cpp') {
+  /*if (BEPINEX_BUILD === 'il2cpp') {
     context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download Latest BepInEx BE (Browse)', () => {
       downloadBepinexManual(context.api, spec);
       }, () => {
@@ -2196,7 +2197,7 @@ function applyGame(context, gameSpec) {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
-  });
+  }); //*/
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download Latest MelonLoader', () => {
     downloadMelon(context.api, spec, false);
     }, () => {
@@ -2228,7 +2229,7 @@ function applyGame(context, gameSpec) {
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   });
-  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
     util.opn(CONFIG_PATH).catch(() => null);
   }, () => {
     const state = context.api.getState();
@@ -2242,7 +2243,7 @@ function applyGame(context, gameSpec) {
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   }); //*/
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open BepInEx Config', () => {
+  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open BepInEx Config', () => {
     GAME_PATH = getDiscoveryPath(context.api);
     const openPath = path.join(GAME_PATH, BEP_CONFIG_FILEPATH);
     util.opn(openPath).catch(() => null);
@@ -2259,7 +2260,7 @@ function applyGame(context, gameSpec) {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
-  });
+  }); //*/
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open MelonLoader Config', () => {
     GAME_PATH = getDiscoveryPath(context.api);
     const openPath = path.join(GAME_PATH, MEL_CONFIG_FILEPATH);
