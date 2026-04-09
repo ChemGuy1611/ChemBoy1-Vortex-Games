@@ -1,5 +1,9 @@
 # Changelog
 
+## [1.1.0] - 2026-04-08
+
+- Refactored for more robust operation
+
 ## [1.0.4] - 2026-02-02
 
 - Cleaned up what's printed to the console

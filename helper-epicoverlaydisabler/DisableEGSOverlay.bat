@@ -4,7 +4,7 @@
 net session >nul 2>&1
 if %errorlevel% neq 0 (
     echo Requesting administrator privileges...
-    powershell -Command "Start-Process cmd -ArgumentList '/k', '\"%~f0\"' -Verb RunAs"
+    powershell -Command "Start-Process cmd -ArgumentList '/c', '\"%~f0\"' -Verb RunAs"
     exit /b
 )
 
@@ -18,7 +18,7 @@ set "FILE_PATTERN2=*EOSOVH*"
 
 echo ===================================
 echo Epic Games Store Overlay Disable Script
-echo Author: ChemBoy1 - Version: 1.0.4
+echo Author: ChemBoy1 - Version: 1.1.0
 echo Description: Disables the EGS Overlay by deleting
 echo    "EOSOverlay" and "EOSOVH" files.
 echo ===================================
@@ -54,64 +54,68 @@ echo Using EOS Overlay files path: !BASE_PATH!
 echo.
 
 :: Convert to short path to avoid spaces and parentheses
-for %%i in ("!BASE_PATH!") do set "SHORT_PATH=%%~si"
-if "!SHORT_PATH!"=="" (
-    echo ERROR: Could not convert EOS path to short format.
-    echo Original path: !BASE_PATH!
-    echo.
-    ::echo Exiting in 30 seconds... Press any key to close immediately.
-    timeout /t 30
-    exit
+if not exist "!BASE_PATH!" (
+    echo WARNING: EOS Overlay path does not exist: !BASE_PATH!
+    set "BASE_PATH="
+) else (
+    for %%i in ("!BASE_PATH!") do set "SHORT_PATH=%%~si"
+    if "!SHORT_PATH!"=="" (
+        echo ERROR: Could not convert EOS path to short format.
+        echo Original path: !BASE_PATH!
+        echo.
+        timeout /t 30
+        exit
+    )
+    set "BASE_PATH=!SHORT_PATH!"
 )
-set "BASE_PATH=!SHORT_PATH!"
+
+:: Check if EOS path exists (may have been cleared by short path check above)
+if defined BASE_PATH (
+    set "EOS_EXISTS=1"
+) else (
+    set "EOS_EXISTS=0"
+)
 
 :: Build the Launcher path by going up to Epic Games folder and adding the rest
-for %%i in ("!BASE_PATH!\..\..\..") do set "EPIC_GAMES_PATH=%%~fi"
-set "LAUNCHER_PATH=!EPIC_GAMES_PATH!\Launcher\Portal\Extras\Overlay"
-for %%i in ("!LAUNCHER_PATH!") do set "SHORT_PATH=%%~si"
-if "!SHORT_PATH!"=="" (
-    echo ERROR: Could not convert Launcher path to short format.
-    echo Original path: !LAUNCHER_PATH!
-    echo.
-    ::echo Exiting in 30 seconds... Press any key to close immediately.
-    timeout /t 30
-    exit
+if "!EOS_EXISTS!"=="1" (
+    for %%i in ("!BASE_PATH!\..\..\..") do set "EPIC_GAMES_PATH=%%~fi"
+    set "LAUNCHER_PATH=!EPIC_GAMES_PATH!\Launcher\Portal\Extras\Overlay"
+) else (
+    set "LAUNCHER_PATH=C:\Program Files (x86)\Epic Games\Launcher\Portal\Extras\Overlay"
 )
-set "LAUNCHER_PATH=!SHORT_PATH!"
 
-:: Check if the EOS path exists
-if not exist "!BASE_PATH!" (
-    echo WARNING: EOS Overlay path does not exist.
-    set "EOS_EXISTS=0"
+if not exist "!LAUNCHER_PATH!" (
+    echo WARNING: Launcher Overlay path does not exist: !LAUNCHER_PATH!
+    set "LAUNCHER_EXISTS=0"
     echo.
 ) else (
-    set "EOS_EXISTS=1"
+    for %%i in ("!LAUNCHER_PATH!") do set "SHORT_PATH=%%~si"
+    if "!SHORT_PATH!"=="" (
+        echo ERROR: Could not convert Launcher path to short format.
+        echo Original path: !LAUNCHER_PATH!
+        echo.
+        timeout /t 30
+        exit
+    )
+    set "LAUNCHER_PATH=!SHORT_PATH!"
+    set "LAUNCHER_EXISTS=1"
 )
 
 :: Display Launcher Overlay path
 echo Using Launcher Overlay files path: !LAUNCHER_PATH!
 echo.
 
-:: Check if the Launcher path exists
-if not exist "!LAUNCHER_PATH!" (
-    echo WARNING: Launcher Overlay path does not exist.
-    set "LAUNCHER_EXISTS=0"
-    echo.
-) else (
-    set "LAUNCHER_EXISTS=1"
-)
-
 :: Display files to be deleted (confirmation)
 echo Files matching patterns "%FILE_PATTERN1%" and "%FILE_PATTERN2%":
 echo.
 
-:: Initialize file count variables
 set "FILES_FOUND=0"
 set "LAUNCHER_FILES_FOUND=0"
 
 if "!EOS_EXISTS!"=="1" (
     echo In EOS Overlay path:
-    call :ListFiles
+    call :ListFilesIn "!BASE_PATH!"
+    set "FILES_FOUND=!FOUND!"
     if "!FILES_FOUND!"=="0" (
         echo No files found.
     )
@@ -119,7 +123,8 @@ if "!EOS_EXISTS!"=="1" (
 )
 if "!LAUNCHER_EXISTS!"=="1" (
     echo In Launcher Overlay path:
-    call :ListLauncherFiles
+    call :ListFilesIn "!LAUNCHER_PATH!"
+    set "LAUNCHER_FILES_FOUND=!FOUND!"
     if "!LAUNCHER_FILES_FOUND!"=="0" (
         echo No files found.
     )
@@ -160,15 +165,15 @@ set "DELETE_SUCCESS=1"
 
 if "!EOS_EXISTS!"=="1" (
     echo Deleting files from EOS Overlay path...
-    call :DeleteFiles
-    if !errorlevel! neq 0 set "DELETE_SUCCESS=0"
+    call :DeleteFilesIn "!BASE_PATH!"
+    if "!DELETE_FAILED!"=="1" set "DELETE_SUCCESS=0"
     echo.
 )
 
 if "!LAUNCHER_EXISTS!"=="1" (
     echo Deleting files from Launcher Overlay path...
-    call :DeleteLauncherFiles
-    if !errorlevel! neq 0 set "DELETE_SUCCESS=0"
+    call :DeleteFilesIn "!LAUNCHER_PATH!"
+    if "!DELETE_FAILED!"=="1" set "DELETE_SUCCESS=0"
     echo.
 )
 
@@ -195,36 +200,27 @@ exit
 
 :: METHODS
 
-:ListFiles
-set "FILES_FOUND=0"
-for /f %%f in ('dir /s /b "!BASE_PATH!\*EOSOverlay*" 2^>nul') do (
+:ListFilesIn
+set "FOUND=0"
+for /f "delims=" %%f in ('dir /s /b "%~1\!FILE_PATTERN1!" 2^>nul') do (
     echo %%f
-    set "FILES_FOUND=1"
+    set "FOUND=1"
 )
-for /f %%f in ('dir /s /b "!BASE_PATH!\*EOSOVH*" 2^>nul') do (
+for /f "delims=" %%f in ('dir /s /b "%~1\!FILE_PATTERN2!" 2^>nul') do (
     echo %%f
-    set "FILES_FOUND=1"
-)
-exit /b
-
-:ListLauncherFiles
-set "LAUNCHER_FILES_FOUND=0"
-for /f %%f in ('dir /s /b "!LAUNCHER_PATH!\*EOSOverlay*" 2^>nul') do (
-    echo %%f
-    set "LAUNCHER_FILES_FOUND=1"
-)
-for /f %%f in ('dir /s /b "!LAUNCHER_PATH!\*EOSOVH*" 2^>nul') do (
-    echo %%f
-    set "LAUNCHER_FILES_FOUND=1"
+    set "FOUND=1"
 )
 exit /b
 
-:DeleteFiles
-del /s /q "!BASE_PATH!\*EOSOverlay*" 2>nul
-del /s /q "!BASE_PATH!\*EOSOVH*" 2>nul
-exit /b
-
-:DeleteLauncherFiles
-del /s /q "!LAUNCHER_PATH!\*EOSOverlay*" 2>nul
-del /s /q "!LAUNCHER_PATH!\*EOSOVH*" 2>nul
+:DeleteFilesIn
+set "DELETE_FAILED=0"
+del /s /q "%~1\!FILE_PATTERN1!" 2>nul
+del /s /q "%~1\!FILE_PATTERN2!" 2>nul
+:: Verify files are actually gone
+for /f "delims=" %%f in ('dir /s /b "%~1\!FILE_PATTERN1!" 2^>nul') do (
+    set "DELETE_FAILED=1"
+)
+for /f "delims=" %%f in ('dir /s /b "%~1\!FILE_PATTERN2!" 2^>nul') do (
+    set "DELETE_FAILED=1"
+)
 exit /b
