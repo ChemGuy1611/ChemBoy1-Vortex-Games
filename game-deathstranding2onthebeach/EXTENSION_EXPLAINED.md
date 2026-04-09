@@ -13,11 +13,10 @@
 | Property | Value |
 | --- | --- |
 | Game ID | `deathstranding2onthebeach` |
-| Executable | `./XXX.exe` |
+| Executable | `./DS2.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
-| Executable (GOG) | `./XXX.exe` |
-| Executable (Demo) | `./XXX.exe` |
-| Extension Page | XXX |
+| Executable (GOG) | `./DS2.exe` |
+| Executable (Demo) | `./DS2.exe` |
 
 ## Supported Stores
 
@@ -33,9 +32,9 @@
 | `multiExe` | `false` | set to true if there are multiple executable names |
 | `multiModPath` | `false` | set to true if there are multiple possible mod paths (i.e. different path for Xbox version) |
 | `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
-| `needsModInstaller` | `true` | set to true if standard mods should run through an installer - set false to have mods installed to the mods folder without any processing |
+| `needsModInstaller` | `false` | set to true if standard mods should run through an installer - set false to have mods installed to the mods folder without any processing |
 | `rootInstaller` | `true` | enable root installer. Set false if you need to avoid installer collisions |
-| `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |
+| `fallbackInstaller` | `false` | enable fallback installer. Set false if you need to avoid installer collisions |
 | `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below) |
 | `hasUserIdFolder` | `false` | true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID) |
 | `debug` | `false` | toggle for debug mode |
@@ -58,7 +57,6 @@ Installers run in priority order (lower number = tested first). The first instal
 | --- | --- |
 | `deathstranding2onthebeach-loader` | 25 |
 | `deathstranding2onthebeach-root` | 27 |
-| `deathstranding2onthebeach-binaries` | 29 |
 | `deathstranding2onthebeach-mod` | 35 |
 | `deathstranding2onthebeach-fallback` | 49 |
 
@@ -66,13 +64,13 @@ Installers run in priority order (lower number = tested first). The first instal
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch** (`./XXX.exe`)
-- **Custom Launch** (`gamelaunchhelper.exe`)
+- **Custom Launch**
 
 ## Toolbar Actions
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
+- Open Config/Save Folder
 - Open PCGamingWiki Page
 - View Changelog
 - Submit Bug Report

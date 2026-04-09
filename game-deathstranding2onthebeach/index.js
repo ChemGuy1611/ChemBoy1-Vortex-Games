@@ -3,7 +3,7 @@ Name: DEATH STRANDING 2: ON THE BEACH Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2026-03-31
+Date: 2026-04-08
 Notes:
 - 
 ///////////////////////////////////////////*/
@@ -28,22 +28,22 @@ const DOCUMENTS = util.getVortexPath("documents");
 const GAME_ID = "deathstranding2onthebeach";
 const STEAMAPP_ID = "3280350"; // https://steamdb.info/app/3280350/
 const STEAMAPP_ID_DEMO = null;
-const EPICAPP_ID = "0099fdb24c5442b09486de5feb33aa8d"; // https://store.epicgames.com/en-US/p/death-stranding-2-on-the-beach-7773ec
+const EPICAPP_ID = "0099fdb24c5442b09486de5feb33aa8d"; //https://egdata.app/offers/297bb10765dd493eb78944e264e16b7c/builds  https://store.epicgames.com/en-US/p/death-stranding-2-on-the-beach-7773ec
 const GOGAPP_ID = null;
 const XBOXAPP_ID = null;
-const XBOXEXECNAME = "XXX";
-const XBOX_PUB_ID = "XXX"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
+const XBOXEXECNAME = null;
+const XBOX_PUB_ID = null; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 const GAME_NAME = "DEATH STRANDING 2: ON THE BEACH";
 const GAME_NAME_SHORT = "DEATH STRANDING 2";
 const BINARIES_PATH = path.join('.');
-const EXEC_NAME = "XXX.exe";
+const EXEC_NAME = "DS2.exe";
 const EXEC = path.join(BINARIES_PATH, EXEC_NAME);
 const EXEC_EGS = EXEC; //change other versions if different than Steam/default
 const EXEC_GOG = EXEC;
 const EXEC_DEMO = EXEC;
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/DEATH_STRANDING_2%3A_ON_THE_BEACH";
-const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1796"; //Nexus link to this extension. Used for links
 //for finding install in registry - requires winapi-bindings
 const INSTALL_HIVE = 'HKEY_LOCAL_MACHINE'; //typically HKEY_LOCAL_MACHINE or HKEY_CURRENT_USER
 const INSTALL_KEY = `SOFTWARE\\WOW6432Node\\XXX\\XXX`; //fill in path
@@ -55,26 +55,23 @@ const hasXbox = false; //toggle for Xbox version logic
 const multiExe = false; //set to true if there are multiple executable names
 const multiModPath = false; //set to true if there are multiple possible mod paths (i.e. different path for Xbox version)
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
-const needsModInstaller = true; //set to true if standard mods should run through an installer - set false to have mods installed to the mods folder without any processing
+const needsModInstaller = false; //set to true if standard mods should run through an installer - set false to have mods installed to the mods folder without any processing
 const rootInstaller = true; //enable root installer. Set false if you need to avoid installer collisions
-const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
+const fallbackInstaller = false; //enable fallback installer. Set false if you need to avoid installer collisions
 const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
 const hasUserIdFolder = false; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
 const debug = false; //toggle for debug mode
 let binariesInstaller = false;
-if (BINARIES_PATH !== '.') {
-    binariesInstaller = true; //only enable Binaries installer if not in root
-}
 
 //info for modtypes, installers, tools, and actions
-const DATA_FOLDER = 'XXX';
+const DATA_FOLDER = 'LocalCacheWinGame';
 const ROOT_FOLDERS = [DATA_FOLDER];
 
 const CONFIGMOD_LOCATION = DOCUMENTS;
 const SAVEMOD_LOCATION = DOCUMENTS;
-const APPDATA_FOLDER = path.join('XXX');
-const CONFIG_FOLDERNAME = 'XXX';
-const SAVE_FOLDERNAME = 'XXX';
+const APPDATA_FOLDER = path.join('DEATH STRANDING 2 - ON THE BEACH');
+const CONFIG_FOLDERNAME = '';
+const SAVE_FOLDERNAME = '';
 
 let GAME_PATH = '';
 let GAME_VERSION = '';
@@ -100,9 +97,6 @@ const LOADER_URL = `XXX`; //if not on Nexus
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Folder";
-
-const BINARIES_ID = `${GAME_ID}-binaries`;
-const BINARIES_NAME = "Binaries (Engine Injector)";
 
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_NAME = "Save";
@@ -137,12 +131,12 @@ const TOOL_EXEC = 'XXX.exe';
 const TOOL_EXEC_PATH = path.join(TOOL_EXEC_FOLDER, TOOL_EXEC);
 //*/
 
-const MOD_PATH_DEFAULT = MOD_PATH;
+const MOD_PATH_DEFAULT = '.';
 const REQ_FILE = EXEC;
 const PARAMETERS_STRING = '';
 const PARAMETERS = [PARAMETERS_STRING];
 
-let MODTYPE_FOLDERS = [MOD_PATH, BINARIES_PATH];
+let MODTYPE_FOLDERS = [];
 const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 
@@ -180,12 +174,12 @@ const spec = {
     }
   },
   "modTypes": [
-    {
+    /*{
       "id": MOD_ID,
       "name": MOD_NAME,
       "priority": "high",
       "targetPath": path.join("{gamePath}", MOD_PATH)
-    },
+    }, //*/
     {
       "id": ROOT_ID,
       "name": ROOT_NAME,
@@ -198,15 +192,6 @@ const spec = {
     "names": []
   }
 };
-//think of a way to tell if the mod path is not in the game folder, only add ROOT modType if it is
-if (binariesInstaller) {
-  spec.modTypes.push({
-    "id": BINARIES_ID,
-    "name": BINARIES_NAME,
-    "priority": "high",
-    "targetPath": path.join("{gamePath}", BINARIES_PATH)
-  });
-}
 
 //3rd party tools and launchers
 const tools = [ //accepts: exe, jar, py, vbs, bat
@@ -224,20 +209,6 @@ const tools = [ //accepts: exe, jar, py, vbs, bat
     detach: true,
     //defaultPrimary: true,
     parameters: PARAMETERS,
-  }, //*/
-  {
-    id: `${GAME_ID}-customlaunchxbox`,
-    name: 'Custom Launch',
-    logo: 'exec.png',
-    executable: () => EXEC_XBOX,
-    requiredFiles: [
-      EXEC_XBOX,
-    ],
-    relative: true,
-    exclusive: true,
-    shell: true,
-    //defaultPrimary: true,
-    //parameters: PARAMETERS,
   }, //*/
   /*{
     id: TOOL_ID,
@@ -309,15 +280,15 @@ function pathPattern(api, game, pattern) {
 //* Get mod path dynamically for different game versions
 function getModPath(discoveryPath) {
   if (!multiModPath) {
-    return MOD_PATH_DEFAULT;
+    return () => MOD_PATH_DEFAULT;
   }
   if (statCheckSync(discoveryPath, EXEC_XBOX)) {
     GAME_VERSION = 'xbox';
-    return MOD_PATH_XBOX;
+    return () => MOD_PATH_XBOX;
   };
   //add GOG/EGS/Demo versions here if needed
   GAME_VERSION = 'default';
-  return MOD_PATH_DEFAULT;
+  return () => MOD_PATH_DEFAULT;
 } //*/
 
 //Find game installation directory
@@ -551,41 +522,6 @@ function installRoot(files) {
       type: 'copy',
       source: file,
       destination: path.join(file.substr(idx)),
-    };
-  });
-  instructions.push(setModTypeInstruction);
-  return Promise.resolve({ instructions });
-}
-
-//Fallback installer to Binaries folder
-function testBinaries(files, gameId) {
-  let supported = (gameId === spec.game.id);
-
-  // Test for a mod installer.
-  if (supported && files.find(file =>
-    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
-    supported = false;
-  }
-
-  return Promise.resolve({
-    supported,
-    requiredFiles: [],
-  });
-}
-
-//Fallback installer to Binaries folder
-function installBinaries(files) {
-  const setModTypeInstruction = { type: 'setmodtype', value: BINARIES_ID };
-  
-  const filtered = files.filter(file =>
-    (!file.endsWith(path.sep))
-  );
-  const instructions = filtered.map(file => {
-    return {
-      type: 'copy',
-      source: file,
-      destination: file,
     };
   });
   instructions.push(setModTypeInstruction);
@@ -915,9 +851,6 @@ function applyGame(context, gameSpec) {
   if (rootInstaller) {
     context.registerInstaller(ROOT_ID, 27, testRoot, installRoot);
   }
-  if (binariesInstaller) {
-    context.registerInstaller(BINARIES_ID, 29, testBinaries, installBinaries);
-  }
   //context.registerInstaller(CONFIG_ID, 31, testConfig, installConfig);
   //context.registerInstaller(SAVE_ID, 33, testSave, installSave);
   if (needsModInstaller) {
@@ -928,14 +861,7 @@ function applyGame(context, gameSpec) {
   }
 
   //register actions
-  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
-    util.opn(CONFIG_PATH).catch(() => null);
-    }, () => {
-      const state = context.api.getState();
-      const gameId = selectors.activeGameId(state);
-      return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', () => {
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config/Save Folder', () => {
     util.opn(SAVE_PATH).catch(() => null);
     }, () => {
       const state = context.api.getState();

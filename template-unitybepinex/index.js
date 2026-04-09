@@ -1006,7 +1006,7 @@ function main(context) {
   context.once(() => {
     const api = context.api;
     if (context.api.ext.bepinexAddGame !== undefined) {
-      if (BEPINEX_PAGE_ID !== '0' && allowBepinexNexus === true) { //if Nexus page exists and is allowed, download from Nexus
+      if (BEPINEX_PAGE_ID !== '0' && allowBepinexNexus) { //if Nexus page exists and is allowed, download from Nexus
         context.api.ext.bepinexAddGame({
           gameId: GAME_ID,
           autoDownloadBepInEx: true,
@@ -1017,6 +1017,8 @@ function main(context) {
               modId: BEPINEX_PAGE_ID, // <--- Nexus Mods site page number for the BepinEx package's mod page (string)
               fileId: BEPINEX_FILE_ID, // <--- Get this by hovering over the download button on the site (string)
               archiveName: `BepInEx-${GAME_ID}-Custom.zip`, // <--- What we want to call the archive of the downloaded pack.
+              architecture: BEPINEX_ARCH,
+              version: BEPINEX_VERSION,
               allowAutoInstall: true, // <--- Whether we want this to be installed automatically - should always be true
             }
           },

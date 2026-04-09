@@ -309,15 +309,15 @@ function pathPattern(api, game, pattern) {
 //* Get mod path dynamically for different game versions
 function getModPath(discoveryPath) {
   if (!multiModPath) {
-    return MOD_PATH_DEFAULT;
+    return () => MOD_PATH_DEFAULT;
   }
   if (statCheckSync(discoveryPath, EXEC_XBOX)) {
     GAME_VERSION = 'xbox';
-    return MOD_PATH_XBOX;
+    return () => MOD_PATH_XBOX;
   };
   //add GOG/EGS/Demo versions here if needed
   GAME_VERSION = 'default';
-  return MOD_PATH_DEFAULT;
+  return () => MOD_PATH_DEFAULT;
 } //*/
 
 //Find game installation directory
