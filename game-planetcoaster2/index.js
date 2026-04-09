@@ -2,14 +2,15 @@
 Name: Planet Coaster 2 Vortex Extension
 Structure: Cobra Engine (ACSE)
 Author: ChemBoy1
-Version: 0.2.0
-Date: 2025-10-22
+Version: 0.3.1
+Date: 2026-04-09
 ///////////////////////////////////////*/
 
 //import libraries
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
+const { parseStringPromise } = require('xml2js');
 //const winapi = require('winapi-bindings'); //gives access to the Windows registry
 
 const USER_HOME = util.getVortexPath("home");
@@ -22,13 +23,13 @@ const GAME_ID = "planetcoaster2";
 const STEAMAPP_ID = "2688950";
 const EPICAPP_ID = "d945e57b9dde4510b664a581fead2819";
 const GOGAPP_ID  = null;
-const XBOXAPP_ID = null;
-const XBOXEXECNAME = null;
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const XBOXAPP_ID = "FrontierDevelopmentsPlc.FDNewton";
+const XBOXEXECNAME = "Newton.App";
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID, XBOXAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 const GAME_NAME = "Planet Coaster 2";
 const GAME_NAME_SHORT = "Planet Coaster 2";
-
 const EXEC = "PlanetCoaster2.exe";
+
 const ROOT_FOLDERS = ['Win64', 'Blueprints', 'TerrainSkirts', 'ProvidedCustomTextures', 'Parks', 'Movies'];
 const ACSE_PAGE_NO = 1;
 const ACSE_FILE_NO = 2;
@@ -39,6 +40,8 @@ let GAME_PATH = '';
 let GAME_VERSION = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
+const EXEC_XBOX = "gamelaunchhelper.exe";
+const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 //Info for mod types and installers
 const ROOT_ID = `${GAME_ID}-root`;
@@ -90,7 +93,6 @@ const spec = {
     "id": GAME_ID,
     "name": GAME_NAME,
     "shortName": GAME_NAME_SHORT,
-    "executable": EXEC,
     //"parameters": PARAMETERS,
     "logo": `${GAME_ID}.jpg`,
     "mergeMods": true,
@@ -103,12 +105,12 @@ const spec = {
     "details": {
       "steamAppId": +STEAMAPP_ID,
       "epicAppId": EPICAPP_ID,
-      //"xboxAppId": XBOXAPP_ID,
+      "xboxAppId": XBOXAPP_ID,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
       "EpicAPPId": EPICAPP_ID,
-      //"XboxAPPId": XBOXAPP_ID,
+      "XboxAPPId": XBOXAPP_ID,
     },
   },
   "modTypes": [
@@ -156,7 +158,7 @@ const tools = [
     exclusive: true,
     shell: true,
     //defaultPrimary: true,
-    parameters: PARAMETERS,
+    //parameters: PARAMETERS,
   }, //*/
 ];
 
@@ -241,8 +243,6 @@ async function requiresLauncher(gamePath, store) {
         addInfo: {
           appId: XBOXAPP_ID,
           parameters: [{ appExecName: XBOXEXECNAME }],
-          //parameters: [{ appExecName: XBOXEXECNAME }, PARAMETERS_STRING],
-          //launchType: 'gamestore',
         },
       });
   } //*/
@@ -251,20 +251,13 @@ async function requiresLauncher(gamePath, store) {
         launcher: 'epic',
         addInfo: {
           appId: EPICAPP_ID,
-          //parameters: PARAMETERS,
-          //launchType: 'gamestore',
         },
     });
   } //*/
-  /*
+  //*
   if (store === 'steam') {
     return Promise.resolve({
       launcher: 'steam',
-      addInfo: {
-        appId: STEAM_ID,
-        //parameters: PARAMETERS,
-        //launchType: 'gamestore',
-      } //
     });
   } //*/
   return Promise.resolve(undefined);
@@ -272,37 +265,18 @@ async function requiresLauncher(gamePath, store) {
 
 //Get correct executable for game version
 function getExecutable(discoveryPath) {
-  const isCorrectExec = (exec) => {
-    try {
-      fs.statSync(path.join(discoveryPath, exec));
-      return true;
-    }
-    catch (err) {
-      return false;
-    }
-  };
-  if (isCorrectExec(EXEC_XBOX)) {
+  if (statCheckSync(discoveryPath, EXEC_XBOX)) {
     return EXEC_XBOX;
   };
   return EXEC;
 }
 
 //Get correct game version
-function setGameVersion(gamePath) {
-  const isCorrectExec = (exec) => {
-    try {
-      fs.statSync(path.join(gamePath, exec));
-      return true;
-    }
-    catch (err) {
-      return false;
-    }
-  };
-  if (isCorrectExec(EXEC_XBOX)) {
+async function setGameVersion(gamePath) {
+  if (await statCheckAsync(gamePath, EXEC_XBOX)) {
     GAME_VERSION = 'xbox';
     return GAME_VERSION;
   };
-
   GAME_VERSION = 'default';
   return GAME_VERSION;
 }
@@ -555,15 +529,43 @@ async function downloadACSE(api, gameSpec) {
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
+//* Resolve game version dynamically for different game versions
+async function resolveGameVersion(gamePath) {
+  GAME_VERSION = await setGameVersion(gamePath);
+  let version = '0.0.0';
+  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
+    try {
+      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
+      const parsed = await parseStringPromise(appManifest);
+      version = parsed?.Package?.Identity?.[0]?.$?.Version;
+      return Promise.resolve(version);
+    } catch (err) {
+      log('error', `Could not read appxmanifest.xml file to get Xbox game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+  else { // use exe
+    try {
+      const exeVersion = require('exe-version');
+      //const EXEC = getExecutable(gamePath);
+      version = exeVersion.getProductVersion(path.join(gamePath, EXEC)); //can also use getFileVersion if this doesn't return the correct number (rare)
+      return Promise.resolve(version); 
+    } catch (err) {
+      log('error', `Could not read executable file to get game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+} //*/
+
 //Setup function
 async function setup(discovery, api, gameSpec) {
   // SYNCHRONOUS CODE ////////////////////////////////////
   const state = api.getState();
   GAME_PATH = discovery.path;
-  //GAME_VERSION = setGameVersion(GAME_PATH);
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   // ASYNC CODE //////////////////////////////////////////
+  GAME_VERSION = await setGameVersion(GAME_PATH);
   await downloadACSE(api, gameSpec);
   await fs.ensureDirWritableAsync(SAVE_PATH);
   return fs.ensureDirWritableAsync(path.join(GAME_PATH, MOD_PATH));
@@ -578,8 +580,9 @@ function applyGame(context, gameSpec) {
     queryModPath: makeGetModPath(context.api, gameSpec),
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
-    executable: () => gameSpec.game.executable,
+    executable: getExecutable,
     supportedTools: tools,
+    getGameVersion: resolveGameVersion,
   };
   context.registerGame(game);
 
@@ -600,32 +603,42 @@ function applyGame(context, gameSpec) {
 
   //register actions
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', () => {
-    const openPath = SAVE_PATH;
-    util.opn(openPath).catch(() => null);
+    util.opn(SAVE_PATH).catch(() => null);
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
-    const openPath = CONFIG_PATH;
-    util.opn(openPath).catch(() => null);
+    util.opn(CONFIG_PATH).catch(() => null);
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
+    util.opn(PCGAMINGWIKI_URL).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {
-    const openPath = path.join(__dirname, 'CHANGELOG.md');
-    util.opn(openPath).catch(() => null);
+    util.opn(path.join(__dirname, 'CHANGELOG.md')).catch(() => null);
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
+    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
-    const openPath = DOWNLOAD_FOLDER;
-    util.opn(openPath).catch(() => null);
+    util.opn(DOWNLOAD_FOLDER).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);

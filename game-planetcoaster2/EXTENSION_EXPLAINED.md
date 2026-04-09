@@ -14,11 +14,13 @@
 | --- | --- |
 | Game ID | `planetcoaster2` |
 | Executable | `PlanetCoaster2.exe` |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
 
 ## Supported Stores
 
 - **Steam** — `2688950`
 - **Epic Games Store** — `d945e57b9dde4510b664a581fead2819`
+- **Xbox / Microsoft Store** — `FrontierDevelopmentsPlc.FDNewton`
 
 ## Mod Types
 
@@ -54,7 +56,9 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - Open Save Folder
 - Open Config Folder
+- Open PCGamingWiki Page
 - View Changelog
+- Submit Bug Report
 - Open Downloads Folder
 
 ## Auto-Downloaded Dependencies
@@ -67,6 +71,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
+- **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.

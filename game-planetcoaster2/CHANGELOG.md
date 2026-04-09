@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.3.1] - 2026-04-09
+
+- Added: Xbox (Game Pass) version support.
+
 ## [0.3.0] - 2025-10-22
 
 - Added Root modtype and installer for known folders.

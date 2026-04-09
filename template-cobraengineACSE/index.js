@@ -12,8 +12,8 @@ Notes:
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
+const { parseStringPromise } = require('xml2js');
 //const winapi = require('winapi-bindings'); //gives access to the Windows registry
-//const { parseStringPromise } = require('xml2js');
 
 const USER_HOME = util.getVortexPath("home");
 //const DOCUMENTS = util.getVortexPath("documents");
@@ -303,8 +303,7 @@ async function statCheckAsync(gamePath, file) {
 }
 //Get correct game version
 async function setGameVersion(gamePath) {
-  const CHECK = await statCheckAsync(gamePath, EXEC_XBOX);
-  if (CHECK) {
+  if (await statCheckAsync(gamePath, EXEC_XBOX)) {
     GAME_VERSION = 'xbox';
     return GAME_VERSION;
   } else {
@@ -729,7 +728,7 @@ async function downloadACSE(api, gameSpec) {
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
-/*
+//*
 async function resolveGameVersion(gamePath) {
   GAME_VERSION = await setGameVersion(gamePath);
   let version = '0.0.0';
@@ -747,6 +746,7 @@ async function resolveGameVersion(gamePath) {
   else { // use exe
     try {
       const exeVersion = require('exe-version');
+      //const EXEC = getExecutable(gamePath);
       version = exeVersion.getProductVersion(path.join(gamePath, EXEC));
       return Promise.resolve(version); 
     } catch (err) {
