@@ -37,14 +37,15 @@ Environment variables:
 """
 
 import os
-import re
 import sys
-import json
 import argparse
 
-REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
+from vortex_utils import (
+    REPO_ROOT, read_index_js, extract_game_id, extract_steamapp_id,
+    get_api_key,
+)
 
-# Import shared helpers from new_extension.py
+# Import download helpers from new_extension.py
 sys.path.insert(0, REPO_ROOT)
 import new_extension as ne
 
@@ -52,36 +53,7 @@ import new_extension as ne
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
 def get_sgdb_key():
-    key = os.environ.get("STEAMGRIDDB_API_KEY")
-    if not key:
-        try:
-            from winreg import OpenKey, QueryValueEx, HKEY_CURRENT_USER
-            with OpenKey(HKEY_CURRENT_USER, "Environment") as reg_key:
-                key, _ = QueryValueEx(reg_key, "STEAMGRIDDB_API_KEY")
-        except Exception:
-            pass
-    return key
-
-
-def read_index_js(folder):
-    """Read index.js from a game extension folder. Returns src string or None."""
-    path = os.path.join(folder, "index.js")
-    if not os.path.isfile(path):
-        return None
-    with open(path, encoding="utf-8") as f:
-        return f.read()
-
-
-def extract_game_id(src):
-    """Extract GAME_ID value from index.js source."""
-    m = re.search(r"const\s+GAME_ID\s*=\s*['\"]([^'\"]+)['\"]", src)
-    return m.group(1) if m else None
-
-
-def extract_steamapp_id(src):
-    """Extract STEAMAPP_ID value from index.js source. Returns None if not found or null."""
-    m = re.search(r"const\s+STEAMAPP_ID\s*=\s*['\"]?(\d+)['\"]?\s*;?", src)
-    return m.group(1) if m else None
+    return get_api_key("STEAMGRIDDB_API_KEY")
 
 
 # ── Core logic ────────────────────────────────────────────────────────────────

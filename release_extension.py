@@ -10,14 +10,15 @@ Usage:
     python release_extension.py GAME_ID --dry-run
 """
 
+import argparse
 import json
 import os
 import re
 import sys
 import subprocess
 
-REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
-SEVENZIP = r"C:\Program Files\7-Zip\7z.exe"
+from vortex_utils import REPO_ROOT
+SEVENZIP = os.environ.get("SEVENZIP_PATH", r"C:\Program Files\7-Zip\7z.exe")
 NEXUS_SITE_URL = "https://www.nexusmods.com/games/site"
 
 
@@ -195,27 +196,39 @@ def release(game_id, open_browser, dry_run=False):
 
 
 def main():
-    args = sys.argv[1:]
-    open_browser = "--no-open" not in args
-    dry_run = "--dry-run" in args
-    args = [a for a in args if a not in ("--no-open", "--dry-run")]
+    parser = argparse.ArgumentParser(
+        description="Package Vortex game extensions into .zip archives for release."
+    )
+    parser.add_argument(
+        "game",
+        nargs="+",
+        metavar="GAME_ID",
+        help="One or more game IDs to release.",
+    )
+    parser.add_argument(
+        "--no-open",
+        action="store_true",
+        help="Skip opening the Nexus Mods page in the browser.",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print what would be done without running 7-Zip.",
+    )
+    args = parser.parse_args()
 
-    if not args:
-        print("Usage: python release_extension.py GAME_ID [GAME_ID ...] [--no-open] [--dry-run]")
-        sys.exit(1)
-
-    if not dry_run and not os.path.isfile(SEVENZIP):
+    if not args.dry_run and not os.path.isfile(SEVENZIP):
         print(f"ERROR: 7-Zip not found at {SEVENZIP}")
         sys.exit(1)
 
-    label = " [DRY RUN]" if dry_run else ""
-    print(f"Releasing {len(args)} extension(s){label}...\n")
+    label = " [DRY RUN]" if args.dry_run else ""
+    print(f"Releasing {len(args.game)} extension(s){label}...\n")
     success = 0
-    for game_id in args:
-        if release(game_id, open_browser, dry_run):
+    for game_id in args.game:
+        if release(game_id, not args.no_open, args.dry_run):
             success += 1
 
-    print(f"\nDone. {success}/{len(args)} succeeded.")
+    print(f"\nDone. {success}/{len(args.game)} succeeded.")
 
 
 if __name__ == "__main__":

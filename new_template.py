@@ -60,7 +60,7 @@ import sys
 import shutil
 import argparse
 
-REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
+from vortex_utils import REPO_ROOT, extract_game_id
 
 # String constants always replaced with "XXX"
 ALWAYS_XXX = [
@@ -116,11 +116,6 @@ def nullify_empty_store_id(src, var_name):
         src, count=1
     )
 
-
-def extract_game_id(src):
-    """Extract the GAME_ID constant value before substitutions are applied."""
-    m = re.search(r'(?:const|let)\s+GAME_ID\s*=\s*["\']([^"\']+)["\']', src)
-    return m.group(1) if m else None
 
 
 def replace_game_id_embedded(src, original_game_id):

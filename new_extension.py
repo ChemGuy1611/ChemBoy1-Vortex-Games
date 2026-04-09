@@ -32,7 +32,6 @@ import os
 import re
 import sys
 import json
-import time
 import shutil
 import argparse
 import subprocess
@@ -43,7 +42,11 @@ from io import BytesIO
 from PIL import Image
 import setup_test_folder as stf
 
-REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
+from vortex_utils import (
+    REPO_ROOT, http_get, http_get_bytes,
+    roman_to_arabic, arabic_to_roman, name_lookup_variants,
+    lookup_pcgamingwiki, get_api_key,
+)
 
 TEMPLATES = [
     "template-anvilengine",
@@ -67,24 +70,6 @@ TEMPLATES = [
 
 # Short names accepted on the command line (strip the "template-" prefix)
 TEMPLATE_SHORT_NAMES = [t[len("template-"):] for t in TEMPLATES]
-
-# ── HTTP ──────────────────────────────────────────────────────────────────────
-
-def http_get(url, headers=None):
-    req = urllib.request.Request(
-        url, headers={"User-Agent": "Mozilla/5.0", **(headers or {})}
-    )
-    with urllib.request.urlopen(req, timeout=15) as resp:
-        return resp.read().decode("utf-8")
-
-
-def http_get_bytes(url, headers=None):
-    req = urllib.request.Request(
-        url, headers={"User-Agent": "Mozilla/5.0", **(headers or {})}
-    )
-    with urllib.request.urlopen(req, timeout=15) as resp:
-        return resp.read()
-
 
 # ── Steam ─────────────────────────────────────────────────────────────────────
 
@@ -229,85 +214,6 @@ def steam_icon_search(appid, game_name):
 
 # ── Store lookups ─────────────────────────────────────────────────────────────
 
-_ROMAN = [
-    (r'\bVIII\b', '8'), (r'\bVII\b', '7'), (r'\bVI\b', '6'),
-    (r'\bIX\b', '9'), (r'\bIV\b', '4'), (r'\bXI\b', '11'),
-    (r'\bIII\b', '3'), (r'\bII\b', '2'), (r'\bX\b', '10'),
-    (r'\bV\b', '5'),
-]
-
-_ARABIC_TO_ROMAN = [
-    ('11', 'XI'), ('10', 'X'), ('9', 'IX'), ('8', 'VIII'),
-    ('7', 'VII'), ('6', 'VI'), ('5', 'V'), ('4', 'IV'),
-    ('3', 'III'), ('2', 'II'),
-]
-
-_EDITION_SUFFIXES = [
-    ' Gold Edition', ' GOTY Edition', ' Game of the Year Edition',
-    ' Definitive Edition', ' Complete Edition', ' Deluxe Edition',
-    ' Ultimate Edition', ' Anniversary Edition', ' Remastered Edition',
-    ' Edition REMASTERED', ' REMASTERED', ' Remastered',
-    ' Gold', ' Plus Edition',
-]
-
-def roman_to_arabic(name):
-    """Convert standalone Roman numeral words in a game title to Arabic digits."""
-    for pattern, replacement in _ROMAN:
-        name = re.sub(pattern, replacement, name)
-    return name
-
-
-def arabic_to_roman(name):
-    """Convert standalone Arabic digit words in a game title to Roman numerals."""
-    for arabic, roman in _ARABIC_TO_ROMAN:
-        name = re.sub(rf'\b{arabic}\b', roman, name)
-    return name
-
-
-def name_lookup_variants(game_name):
-    """
-    Return a list of name strings to try for PCGW direct title lookup.
-    Includes the original, title-cased (for all-caps names), roman↔arabic
-    numeral alternates, and edition-suffix-stripped variants of all the above.
-    """
-    candidates = [game_name]
-
-    # Title-case variant: covers all-caps names ("FINAL FANTASY TACTICS") and
-    # names with lowercase prepositions ("Escape from Duckov" → "Escape From Duckov")
-    titled = game_name.title()
-    if titled != game_name:
-        candidates.append(titled)
-
-    # Arabic ↔ Roman numeral alternates
-    extra = []
-    for c in candidates:
-        r2a = roman_to_arabic(c)
-        if r2a != c:
-            extra.append(r2a)
-        a2r = arabic_to_roman(c)
-        if a2r != c:
-            extra.append(a2r)
-    candidates.extend(extra)
-
-    # Edition-suffix-stripped variants
-    stripped = []
-    for c in candidates:
-        for suffix in _EDITION_SUFFIXES:
-            if c.endswith(suffix):
-                stripped.append(c[: -len(suffix)].rstrip())
-                break
-    candidates.extend(stripped)
-
-    # Deduplicate while preserving order
-    seen = set()
-    result = []
-    for c in candidates:
-        if c not in seen:
-            seen.add(c)
-            result.append(c)
-    return result
-
-
 _nexus_games_cache = None
 
 def lookup_nexus_domain(game_name, api_key):
@@ -358,64 +264,6 @@ def lookup_gog(game_name):
         print(f"    GOG lookup error: {e}")
     return None
 
-
-
-def lookup_pcgamingwiki(game_name):
-    """Search PCGamingWiki and return (page_url, page_title) or (None, None).
-    Stage 1: direct title lookup with redirect following for exact matches.
-    Stage 2: title search fallback for disambiguation suffixes like "Keeper (video game)"."""
-    PCGW_API = "https://www.pcgamingwiki.com/w/api.php"
-    norm = lambda s: s.lower().replace('\u2019', "'").replace(':', '').replace(' - ', ' ').replace('  ', ' ').strip()
-    name_variants = name_lookup_variants(game_name)
-
-    try:
-        # Stage 1: direct title lookup (handles exact matches and redirects)
-        for variant in name_variants:
-            url = (
-                f"{PCGW_API}?action=query&titles={urllib.parse.quote(variant)}"
-                "&redirects=1&format=json"
-            )
-            data = json.loads(http_get(url))
-            pages = data.get("query", {}).get("pages", {})
-            for page_id, page in pages.items():
-                if page_id != "-1" and "missing" not in page:
-                    title = page["title"]
-                    slug = urllib.parse.quote(title.replace(" ", "_"))
-                    return f"https://www.pcgamingwiki.com/wiki/{slug}", title
-
-        # Stage 2: title search fallback for disambiguation suffixes
-        url = (
-            f"{PCGW_API}?action=query&list=search&srsearch={urllib.parse.quote(game_name)}"
-            "&srwhat=title&format=json&srlimit=20"
-        )
-        data = json.loads(http_get(url))
-        results = data.get("query", {}).get("search", [])
-        name_variants_norm = {norm(v) for v in name_variants}
-        title = None
-        for result in results:
-            t = norm(result["title"])
-            if t in name_variants_norm or any(t.startswith(v + " (") for v in name_variants_norm):
-                title = result["title"]
-                break
-        if not title:
-            return None, None
-
-        # Fetch wikitext to check for redirect on disambiguation-matched pages
-        wt_url = (
-            f"{PCGW_API}?action=parse&page={urllib.parse.quote(title)}"
-            "&prop=wikitext&format=json"
-        )
-        wt_data = json.loads(http_get(wt_url))
-        wikitext = wt_data.get("parse", {}).get("wikitext", {}).get("*", "")
-        redirect = re.search(r'#REDIRECT\s*\[\[(.+?)\]\]', wikitext)
-        if redirect:
-            title = redirect.group(1)
-        slug = urllib.parse.quote(title.replace(" ", "_"))
-        return f"https://www.pcgamingwiki.com/wiki/{slug}", title
-
-    except Exception as e:
-        print(f"    PCGamingWiki lookup error: {e}")
-    return None, None
 
 
 def fetch_pcgw_availability(page_title):
@@ -901,29 +749,8 @@ def edit_changelog(path, today):
 # ── Orchestration ─────────────────────────────────────────────────────────────
 
 def create_extension(template_name, game_input, force=False, dry_run=False, no_images=False):
-    sgdb_key = os.environ.get("STEAMGRIDDB_API_KEY")
-    if not sgdb_key:
-        try:
-            from winreg import OpenKey, QueryValueEx, HKEY_CURRENT_USER
-            with OpenKey(HKEY_CURRENT_USER, "Environment") as reg_key:
-                sgdb_key, _ = QueryValueEx(reg_key, "STEAMGRIDDB_API_KEY")
-        except Exception:
-            pass
-    nexus_key = os.environ.get("NEXUS_API_KEY")
-    if not nexus_key:
-        try:
-            from winreg import OpenKey, QueryValueEx, HKEY_CURRENT_USER
-            with OpenKey(HKEY_CURRENT_USER, "Environment") as reg_key:
-                nexus_key, _ = QueryValueEx(reg_key, "NEXUS_API_KEY")
-        except Exception:
-            pass
-    if not nexus_key:
-        try:
-            from winreg import OpenKey, QueryValueEx, HKEY_LOCAL_MACHINE
-            with OpenKey(HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\Session Manager\Environment") as reg_key:
-                nexus_key, _ = QueryValueEx(reg_key, "NEXUS_API_KEY")
-        except Exception:
-            pass
+    sgdb_key = get_api_key("STEAMGRIDDB_API_KEY")
+    nexus_key = get_api_key("NEXUS_API_KEY")
     today = date.today().strftime("%Y-%m-%d")
 
     # ── Resolve Steam ID and canonical name ──────────────────────────────────

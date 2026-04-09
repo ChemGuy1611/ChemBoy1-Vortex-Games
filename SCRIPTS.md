@@ -4,6 +4,37 @@ Developer scripts for creating and documenting Vortex game extensions.
 
 ---
 
+## vortex_utils.py
+
+Shared utility module imported by all other scripts. Centralizes common patterns to eliminate duplication across the script suite.
+
+### vortex_utils.py -- Contents
+
+| Export | Description |
+| --- | --- |
+| `REPO_ROOT` | Absolute path to the repository root directory |
+| `PCGW_API` | PCGamingWiki API base URL |
+| `read_index_js(folder)` | Read `index.js` from a game extension folder, returns source string or `None` |
+| `extract_game_id(src)` | Extract `GAME_ID` value from `index.js` source |
+| `extract_steamapp_id(src)` | Extract `STEAMAPP_ID` value from `index.js` source |
+| `extract_game_name(src)` | Extract `GAME_NAME` value from `index.js` source |
+| `roman_to_arabic(name)` | Convert Roman numeral words to Arabic digits in a game title |
+| `arabic_to_roman(name)` | Convert Arabic digit words to Roman numerals in a game title |
+| `name_lookup_variants(name)` | Generate name variants for PCGamingWiki lookups (title-case, numeral alternates, edition suffix stripping) |
+| `lookup_pcgamingwiki(name, debug)` | Search PCGamingWiki for a game, returns `(page_url, page_title)` with session caching |
+| `get_api_key(key_name)` | Load an API key from env var with Windows registry fallback (HKCU, then HKLM) |
+| `http_get(url, headers)` | Fetch a URL and return UTF-8 string |
+| `http_get_bytes(url, headers)` | Fetch a URL and return raw bytes |
+| `log_info(game_id, msg)` | Print `[game_id] msg` |
+| `log_error(game_id, msg)` | Print `[game_id] ERROR - msg` |
+| `log_warn(game_id, msg)` | Print `[game_id] WARNING - msg` |
+
+### vortex_utils.py -- Requirements
+
+No additional packages required (Python stdlib only).
+
+---
+
 ## fetch_exec_icon.py
 
 Scans all `game-*` extension folders and downloads a 64x64 PNG icon for any extension missing its `exec.png` file. Reads `STEAMAPP_ID` and `GAME_NAME` directly from each `index.js`. Imports icon-download logic from `new_extension.py`.

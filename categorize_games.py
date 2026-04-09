@@ -15,8 +15,9 @@ Usage:
 import os
 import sys
 import re
+import argparse
 
-REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
+from vortex_utils import REPO_ROOT
 LISTS_DIR = os.path.join(REPO_ROOT, "resources", "lists")
 
 # Output file name → detection logic (applied in order; first match wins)
@@ -207,19 +208,30 @@ def update_single(game_id, dry_run=False):
 
 
 def main():
-    args = sys.argv[1:]
-    dry_run = "--dry-run" in args
-    args = [a for a in args if a != "--dry-run"]
+    parser = argparse.ArgumentParser(
+        description="Categorize Vortex game extensions by engine/framework."
+    )
+    parser.add_argument(
+        "game",
+        nargs="*",
+        metavar="GAME_ID",
+        help="One or more game IDs to update. Omit to rebuild all.",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print categorizations without writing files.",
+    )
+    args = parser.parse_args()
 
-    # Remaining positional args (if any) are the GAME_IDs to target
-    target_ids = args if args else None
+    target_ids = args.game if args.game else None
     if target_ids:
         for game_id in target_ids:
-            print(f"Updating category for game-{game_id}{'  [DRY RUN]' if dry_run else ''}...")
-            update_single(game_id, dry_run)
+            print(f"Updating category for game-{game_id}{'  [DRY RUN]' if args.dry_run else ''}...")
+            update_single(game_id, args.dry_run)
     else:
-        print(f"Rebuilding all category files{'  [DRY RUN]' if dry_run else ''}...")
-        rebuild_all(dry_run)
+        print(f"Rebuilding all category files{'  [DRY RUN]' if args.dry_run else ''}...")
+        rebuild_all(args.dry_run)
 
 
 if __name__ == "__main__":

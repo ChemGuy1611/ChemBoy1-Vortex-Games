@@ -48,7 +48,7 @@ import argparse
 import subprocess
 import tempfile
 
-REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
+from vortex_utils import REPO_ROOT
 
 # Template constant names that are boolean feature toggles.
 # These are intentionally left at template defaults, not transferred from the game.

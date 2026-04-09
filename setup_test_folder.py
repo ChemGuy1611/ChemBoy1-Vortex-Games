@@ -13,12 +13,13 @@ Usage:
     python setup_test_folder.py GAME_ID --force
 """
 
+import argparse
 import os
 import re
 import sys
 
-REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
-TEST_ROOT = r"D:\Game_Tools_D\!TestGameFolders_D"
+from vortex_utils import REPO_ROOT
+TEST_ROOT = os.environ.get("VORTEX_TEST_ROOT", r"D:\Game_Tools_D\!TestGameFolders_D")
 
 
 # ── Symbol table builder ──────────────────────────────────────────────────────
@@ -205,7 +206,8 @@ def setup(game_id, dry_run=False, force=False):
     # Create the exe
     os.makedirs(exec_dir, exist_ok=True)
     if not os.path.exists(exec_file) or force:
-        open(exec_file, "w").close()
+        with open(exec_file, "w") as f:
+            pass
         print(f"  [{game_id}] Created exe:      {exec_file}")
     else:
         print(f"  [{game_id}] Already exists:   {exec_file}")
@@ -218,34 +220,47 @@ def setup(game_id, dry_run=False, force=False):
         else:
             os.makedirs(os.path.dirname(req_path), exist_ok=True)
             if not os.path.exists(req_path) or force:
-                open(req_path, "w").close()
+                with open(req_path, "w") as f:
+                    pass
                 print(f"  [{game_id}] Created req file: {req_path}")
 
     return True
 
 
 def main():
-    args = sys.argv[1:]
-    dry_run = "--dry-run" in args
-    force = "--force" in args
-    args = [a for a in args if a not in ("--dry-run", "--force")]
+    parser = argparse.ArgumentParser(
+        description="Create minimal fake game installation folders for Vortex testing."
+    )
+    parser.add_argument(
+        "game",
+        nargs="+",
+        metavar="GAME_ID",
+        help="One or more game IDs to set up test folders for.",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Print what would be created without making directories or files.",
+    )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Recreate the .exe stub even if it already exists.",
+    )
+    args = parser.parse_args()
 
-    if not args:
-        print("Usage: python setup_test_folder.py GAME_ID [GAME_ID ...] [--dry-run] [--force]")
-        sys.exit(1)
-
-    if not dry_run and not os.path.isdir(TEST_ROOT):
+    if not args.dry_run and not os.path.isdir(TEST_ROOT):
         print(f"ERROR: Test root directory not found: {TEST_ROOT}")
         sys.exit(1)
 
-    label = " [DRY RUN]" if dry_run else ""
+    label = " [DRY RUN]" if args.dry_run else ""
     print(f"Setting up test folder(s) in {TEST_ROOT}{label}...\n")
     success = 0
-    for game_id in args:
-        if setup(game_id, dry_run, force):
+    for game_id in args.game:
+        if setup(game_id, args.dry_run, args.force):
             success += 1
 
-    print(f"\nDone. {success}/{len(args)} succeeded.")
+    print(f"\nDone. {success}/{len(args.game)} succeeded.")
 
 
 if __name__ == "__main__":

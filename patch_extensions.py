@@ -20,19 +20,22 @@ Usage:
     python patch_extensions.py GAME_ID [GAME_ID ...] --debug  # print raw PCGW search results for diagnosis
 """
 
+import argparse
 import os
 import sys
 import re
 import json
-import time
-import urllib.request
 import subprocess
 
-REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
+from vortex_utils import (
+    REPO_ROOT, PCGW_API,
+    name_lookup_variants, roman_to_arabic, arabic_to_roman,
+    lookup_pcgamingwiki,
+)
+
 TITLE_IMAGES_DIR = os.path.join(REPO_ROOT, "resources", "title-images")
-MANIFEST_PATH = r"C:\ProgramData\vortex\temp\extensions-manifest.json"
+MANIFEST_PATH = os.environ.get("VORTEX_MANIFEST_PATH", r"C:\ProgramData\vortex\temp\extensions-manifest.json")
 NEXUS_SITE_BASE = "https://www.nexusmods.com/site/mods"
-PCGW_API = "https://www.pcgamingwiki.com/w/api.php"
 
 
 # ── Shared utilities ──────────────────────────────────────────────────────────
@@ -126,168 +129,6 @@ def load_manifest():
         return {}
 
 
-_ROMAN = [
-    (r'\bVIII\b', '8'), (r'\bVII\b', '7'), (r'\bVI\b', '6'),
-    (r'\bIX\b', '9'), (r'\bIV\b', '4'), (r'\bXI\b', '11'),
-    (r'\bIII\b', '3'), (r'\bII\b', '2'), (r'\bX\b', '10'),
-    (r'\bV\b', '5'),
-]
-
-_ARABIC_TO_ROMAN = [
-    ('11', 'XI'), ('10', 'X'), ('9', 'IX'), ('8', 'VIII'),
-    ('7', 'VII'), ('6', 'VI'), ('5', 'V'), ('4', 'IV'),
-    ('3', 'III'), ('2', 'II'),
-]
-
-_EDITION_SUFFIXES = [
-    ' Gold Edition', ' GOTY Edition', ' Game of the Year Edition',
-    ' Definitive Edition', ' Complete Edition', ' Deluxe Edition',
-    ' Ultimate Edition', ' Anniversary Edition', ' Remastered Edition',
-    ' Edition REMASTERED', ' REMASTERED', ' Remastered',
-    ' Gold', ' Plus Edition',
-]
-
-def roman_to_arabic(name):
-    """Convert standalone Roman numeral words in a game title to Arabic digits."""
-    for pattern, replacement in _ROMAN:
-        name = re.sub(pattern, replacement, name)
-    return name
-
-
-def arabic_to_roman(name):
-    """Convert standalone Arabic digit words in a game title to Roman numerals."""
-    for arabic, roman in _ARABIC_TO_ROMAN:
-        name = re.sub(rf'\b{arabic}\b', roman, name)
-    return name
-
-
-def name_lookup_variants(game_name):
-    """
-    Return a list of name strings to try for PCGW direct title lookup.
-    Includes the original, title-cased (for all-caps names), roman↔arabic
-    numeral alternates, and edition-suffix-stripped variants of all the above.
-    """
-    candidates = [game_name]
-
-    # Title-case variant: covers all-caps names ("FINAL FANTASY TACTICS") and
-    # names with lowercase prepositions ("Escape from Duckov" → "Escape From Duckov")
-    titled = game_name.title()
-    if titled != game_name:
-        candidates.append(titled)
-
-    # Arabic ↔ Roman numeral alternates
-    extra = []
-    for c in candidates:
-        r2a = roman_to_arabic(c)
-        if r2a != c:
-            extra.append(r2a)
-        a2r = arabic_to_roman(c)
-        if a2r != c:
-            extra.append(a2r)
-    candidates.extend(extra)
-
-    # Edition-suffix-stripped variants
-    stripped = []
-    for c in candidates:
-        for suffix in _EDITION_SUFFIXES:
-            if c.endswith(suffix):
-                stripped.append(c[: -len(suffix)].rstrip())
-                break
-    candidates.extend(stripped)
-
-    # Deduplicate while preserving order
-    seen = set()
-    result = []
-    for c in candidates:
-        if c not in seen:
-            seen.add(c)
-            result.append(c)
-    return result
-
-
-_pcgw_cache = {}
-_debug = False
-
-def lookup_pcgamingwiki(game_name):
-    """
-    Return (page_url, page_title) for the game, or (None, None).
-    Results are cached in _pcgw_cache by game_name.
-    Stage 1: direct title lookup with redirect following for exact matches.
-    Stage 2: title search fallback for disambiguation suffixes like "Keeper (video game)".
-    """
-    if game_name in _pcgw_cache:
-        return _pcgw_cache[game_name]
-
-    norm = lambda s: s.lower().replace('\u2019', "'").replace(':', '').replace(' - ', ' ').replace('  ', ' ').strip()
-    name_variants = name_lookup_variants(game_name)
-
-    try:
-        # Stage 1: direct title lookup (handles exact matches and redirects)
-        for variant in name_variants:
-            time.sleep(0.2)
-            variant_encoded = urllib.request.quote(variant)
-            url = f"{PCGW_API}?action=query&titles={variant_encoded}&redirects=1&format=json"
-            req = urllib.request.Request(url, headers={"User-Agent": "vortex-ext-dev/1.0"})
-            with urllib.request.urlopen(req, timeout=10) as r:
-                data = json.loads(r.read())
-            pages = data.get("query", {}).get("pages", {})
-            for page_id, page in pages.items():
-                if page_id != "-1" and "missing" not in page:
-                    title = page["title"]
-                    if _debug:
-                        print(f"    [debug] direct lookup: {repr(variant)} → {repr(title)}")
-                    page_url = f"https://www.pcgamingwiki.com/wiki/{urllib.request.quote(title.replace(' ', '_'))}"
-                    _pcgw_cache[game_name] = (page_url, title)
-                    return page_url, title
-
-        # Stage 2: title search fallback for disambiguation suffixes
-        time.sleep(0.2)
-        name_encoded = urllib.request.quote(game_name)
-        url = f"{PCGW_API}?action=query&list=search&srsearch={name_encoded}&srwhat=title&format=json&srlimit=20"
-        req = urllib.request.Request(url, headers={"User-Agent": "vortex-ext-dev/1.0"})
-        with urllib.request.urlopen(req, timeout=10) as r:
-            data = json.loads(r.read())
-
-        results = data.get("query", {}).get("search", [])
-        name_variants_norm = {norm(v) for v in name_variants}
-        if _debug:
-            print(f"    [debug] search fallback: {repr(game_name)} variants={name_variants_norm}")
-            for result in results:
-                t = norm(result["title"])
-                match = any(t.startswith(v + " (") for v in name_variants_norm)
-                print(f"    [debug]   result: {repr(result['title'])}  match={match}")
-
-        title = None
-        for result in results:
-            t = norm(result["title"])
-            if t in name_variants_norm or any(t.startswith(v + " (") for v in name_variants_norm):
-                title = result["title"]
-                break
-
-        if not title:
-            _pcgw_cache[game_name] = (None, None)
-            return None, None
-
-        # Fetch wikitext to check for redirect on disambiguation-matched pages
-        time.sleep(0.2)
-        wt_url = f"{PCGW_API}?action=parse&page={urllib.request.quote(title)}&prop=wikitext&format=json"
-        req2 = urllib.request.Request(wt_url, headers={"User-Agent": "vortex-ext-dev/1.0"})
-        with urllib.request.urlopen(req2, timeout=10) as r2:
-            wt_data = json.loads(r2.read())
-
-        wikitext = wt_data.get("parse", {}).get("wikitext", {}).get("*", "")
-        redirect = re.search(r'#REDIRECT\s*\[\[(.+?)]]', wikitext)
-        if redirect:
-            title = redirect.group(1)
-
-        page_url = f"https://www.pcgamingwiki.com/wiki/{urllib.request.quote(title.replace(' ', '_'))}"
-        _pcgw_cache[game_name] = (page_url, title)
-        return page_url, title
-
-    except Exception:
-        _pcgw_cache[game_name] = (None, None)
-        return None, None
-
 
 # ── Patches ───────────────────────────────────────────────────────────────────
 
@@ -326,7 +167,7 @@ def patch_pcgamingwiki_url(game_id, src, context):
     page_url = None
 
     if game_name:
-        page_url, _title = lookup_pcgamingwiki(game_name)
+        page_url, _title = lookup_pcgamingwiki(game_name, debug=context.get("debug", False))
 
     if not page_url:
         if is_missing(src, "PCGAMINGWIKI_URL"):
@@ -861,22 +702,45 @@ def run_patches(game_ids, dry_run, context):
 
 
 def main():
-    args = sys.argv[1:]
-    dry_run = "--dry-run" in args
-    force_pcgw = "--force-pcgw" in args
-    force = "--force" in args
-    global _debug
-    _debug = "--debug" in args
-    args = [a for a in args if a not in ("--dry-run", "--force-pcgw", "--force", "--debug")]
-
-    # Remaining positional args (if any) are the GAME_IDs to target
-    target_ids = args if args else None
+    parser = argparse.ArgumentParser(
+        description="Apply repo-wide patches to all game-*/index.js files."
+    )
+    parser.add_argument(
+        "game",
+        nargs="*",
+        metavar="GAME_ID",
+        help="One or more game IDs to target. Omit to run on all.",
+    )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Preview changes without writing.",
+    )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Re-run all URL patches even if values are already set.",
+    )
+    parser.add_argument(
+        "--force-pcgw",
+        action="store_true",
+        help="Re-evaluate PCGAMINGWIKI_URL values that are already set.",
+    )
+    parser.add_argument(
+        "--debug",
+        action="store_true",
+        help="Print raw PCGamingWiki search results for diagnosis.",
+    )
+    args = parser.parse_args()
+    dry_run = args.dry_run
+    target_ids = args.game if args.game else None
 
     print("Loading context...")
     context = {
         "manifest": load_manifest(),
-        "force_pcgw": force_pcgw or force,
-        "force": force,
+        "force_pcgw": args.force_pcgw or args.force,
+        "force": args.force,
+        "debug": args.debug,
     }
 
     if target_ids:

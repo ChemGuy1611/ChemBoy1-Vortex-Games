@@ -21,44 +21,17 @@ Requirements:
 """
 
 import os
-import re
 import sys
 import argparse
 
-REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
+from vortex_utils import (
+    REPO_ROOT, read_index_js, extract_game_id, extract_steamapp_id,
+    extract_game_name,
+)
 
-# Import shared helpers from new_extension.py
+# Import download helper from new_extension.py
 sys.path.insert(0, REPO_ROOT)
 import new_extension as ne
-
-
-# ── Helpers ───────────────────────────────────────────────────────────────────
-
-def read_index_js(folder):
-    """Read index.js from a game extension folder. Returns src string or None."""
-    path = os.path.join(folder, "index.js")
-    if not os.path.isfile(path):
-        return None
-    with open(path, encoding="utf-8") as f:
-        return f.read()
-
-
-def extract_game_id(src):
-    """Extract GAME_ID value from index.js source."""
-    m = re.search(r"const\s+GAME_ID\s*=\s*['\"]([^'\"]+)['\"]", src)
-    return m.group(1) if m else None
-
-
-def extract_steamapp_id(src):
-    """Extract STEAMAPP_ID value from index.js source. Returns None if not found or null."""
-    m = re.search(r"const\s+STEAMAPP_ID\s*=\s*['\"]?(\d+)['\"]?\s*;?", src)
-    return m.group(1) if m else None
-
-
-def extract_game_name(src):
-    """Extract GAME_NAME value from index.js source for Steam icon search."""
-    m = re.search(r"const\s+GAME_NAME\s*=\s*['\"]([^'\"]+)['\"]", src)
-    return m.group(1) if m else None
 
 
 # ── Core logic ────────────────────────────────────────────────────────────────
