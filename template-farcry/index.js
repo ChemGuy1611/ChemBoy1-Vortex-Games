@@ -17,12 +17,14 @@ const winapi = require('winapi-bindings');
 const DOCUMENTS = util.getVortexPath("documents");
 
 //Specify all the information about the game
-const GAME_ID = "farcryXXX";
+const GAME_ID = "XXX";
 const STEAMAPP_ID = "XXX";
 const UPLAYAPP_ID = "XXX";
+//Epic and Xbox versions are actually installed via the Ubisoft Connect app
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, UPLAYAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+
 const GAME_NAME = "Far Cry XXX";
 const GAME_NAME_SHORT = "FCXXX";
-
 const BIN_PATH = "bin";
 const DATA_PATH = "data_win32";
 const EXEC_NAME = "XXX.exe";
@@ -194,10 +196,7 @@ const spec = {
     }, //*/ // outside of the game folder
   ],
   "discovery": {
-    "ids": [
-      STEAMAPP_ID,
-      UPLAYAPP_ID,
-    ],
+    "ids": DISCOVERY_IDS_ACTIVE,
     "names": []
   }
 };

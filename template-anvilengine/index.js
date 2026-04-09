@@ -15,11 +15,13 @@ const template = require('string-template');
 const winapi = require('winapi-bindings');
 
 //Specify all the information about the game
+const GAME_ID = "XXX";
 const UPLAYAPP_ID = "XXX"; //Ubisoft Connect App ID — from SOFTWARE\WOW6432Node\Ubisoft\Launcher\Installs\
 const STEAMAPP_ID = "XXX"; //https://steamdb.info/app/XXX/
 const GOGAPP_ID = null; //not typically available for Ubisoft games
-const EPICAPP_ID = null; //not typically available for Ubisoft games
-const GAME_ID = "XXX";
+//Epic and Xbox versions are actually installed via the Ubisoft Connect app
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, UPLAYAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+
 const GAME_NAME = "XXX";
 const GAME_NAME_SHORT = "XXX";
 const EXEC = "XXX.exe";
@@ -101,7 +103,6 @@ const spec = {
     "id": GAME_ID,
     "name": GAME_NAME,
     "shortName": GAME_NAME_SHORT,
-    "executable": EXEC,
     "logo": `${GAME_ID}.jpg`,
     "mergeMods": true,
     "requiresCleanup": true,
@@ -116,8 +117,6 @@ const spec = {
     },
     "details": {
       "steamAppId": +STEAMAPP_ID,
-      "gogAppId": GOGAPP_ID,
-      "epicAppId": EPICAPP_ID,
       "uPlayAppId": UPLAYAPP_ID,
       "supportsSymlinks": allowSymlinks,
       "ignoreDeploy": IGNORE_DEPLOY,
@@ -125,8 +124,6 @@ const spec = {
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
-      "GogAPPId": GOGAPP_ID,
-      "EpicAPPId": EPICAPP_ID,
       "UPlayAPPId": UPLAYAPP_ID
     }
   },
@@ -169,10 +166,7 @@ const spec = {
     },
   ],
   "discovery": {
-    "ids": [
-      STEAMAPP_ID,
-      UPLAYAPP_ID
-    ],
+    "ids": DISCOVERY_IDS_ACTIVE,
     "names": []
   }
 };
@@ -364,7 +358,7 @@ function makeFindGame(api, gameSpec) {
 
 //* Get mod path dynamically
 function getModPath(discoveryPath) {
-  return MOD_PATH_DEFAULT;
+  return () => MOD_PATH_DEFAULT;
 } //*/
 
 //Set launcher requirements
@@ -1245,10 +1239,10 @@ async function setup(discovery, api, gameSpec) {
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   // ASYNC CODE //////////////////////////////////////////
-  if (setupNotification) {
-    setupNotify(api);
+  if (setupNotification) setupNotify(api);
+  if (hasAtk) {
+    await downloadAnvil(api, gameSpec);
   }
-  if (hasAtk) await downloadAnvil(api, gameSpec);
   if (hasForger) {
     await downloadForger(api, gameSpec);
   }

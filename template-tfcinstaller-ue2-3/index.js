@@ -29,6 +29,7 @@ const GOGAPP_ID = "XXX";
 const XBOXAPP_ID = "XXX";
 const XBOXEXECNAME = "XXX";
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+
 const GAME_NAME = "XXX";
 const GAME_NAME_SHORT = "XXX";
 const EPIC_CODE_NAME = "XXX";
@@ -43,6 +44,7 @@ const PCGAMINGWIKI_URL = "XXX";
 const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
 
 //feature toggles
+const hasXbox = false; //toggle for Xbox version logic
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
 const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
 
@@ -119,7 +121,6 @@ const spec = {
     "id": GAME_ID,
     "name": GAME_NAME,
     "shortName": GAME_NAME_SHORT,
-    "executable": EXEC,
     //"parameters": PARAMETERS,
     "logo": `${GAME_ID}.jpg`,
     "mergeMods": true,
@@ -244,6 +245,25 @@ const tools = [
 
 // BASIC EXTENSION FUNCTIONS ///////////////////////////////////////////////////
 
+function statCheckSync(gamePath, file) {
+  try {
+    fs.statSync(path.join(gamePath, file));
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}
+async function statCheckAsync(gamePath, file) {
+  try {
+    await fs.statAsync(path.join(gamePath, file));
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}
+
 //Set mod type priorities
 function modTypePriority(priority) {
   return {
@@ -283,31 +303,31 @@ function makeFindGame(api, gameSpec) {
 
 //set launcher requirements
 async function requiresLauncher(gamePath, store) {
-  if (store === 'xbox' && (DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID))) {
-      return Promise.resolve({
-        launcher: 'xbox',
-        addInfo: {
-          appId: XBOXAPP_ID,
-          parameters: [{ appExecName: XBOXEXECNAME }],
-          //parameters: [{ appExecName: XBOXEXECNAME }, PARAMETERS_STRING],
-          //launchType: 'gamestore',
-        },
-      });
-  } //*/
-  if (store === 'epic' && (DISCOVERY_IDS_ACTIVE.includes(EPICAPP_ID))) {
-    return Promise.resolve({
-        launcher: 'epic',
-        addInfo: {
-          appId: EPICAPP_ID,
-          //parameters: PARAMETERS,
-          //launchType: 'gamestore',
-        },
-    });
-  } //*/
-  /*
+  //*
   if (store === 'steam') {
     return Promise.resolve({
       launcher: 'steam',
+    });
+  } //*/
+  if (store === 'xbox' && (DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID))) {
+    return Promise.resolve({
+      launcher: 'xbox',
+      addInfo: {
+        appId: XBOXAPP_ID,
+        parameters: [{ appExecName: XBOXEXECNAME }],
+        //parameters: [{ appExecName: XBOXEXECNAME }, PARAMETERS_STRING],
+        //launchType: 'gamestore',
+      },
+    });
+  } //*/
+  if (store === 'epic' && (DISCOVERY_IDS_ACTIVE.includes(EPICAPP_ID))) {
+    return Promise.resolve({
+      launcher: 'epic',
+      addInfo: {
+        appId: EPICAPP_ID,
+        //parameters: PARAMETERS,
+        //launchType: 'gamestore',
+      },
     });
   } //*/
   return Promise.resolve(undefined);
@@ -315,34 +335,15 @@ async function requiresLauncher(gamePath, store) {
 
 //Get the executable dynamically
 function getExecutable(gamePath) {
-  if (statCheckSync(gamePath, EXEC_XBOX)) {
+  if (hasXbox && statCheckSync(gamePath, EXEC_XBOX)) {
     return EXEC_XBOX;
   }
   return EXEC;
 }
 
-function statCheckSync(gamePath, file) {
-  try {
-    fs.statSync(path.join(gamePath, file));
-    return true;
-  }
-  catch (err) {
-    return false;
-  }
-}
-async function statCheckAsync(gamePath, file) {
-  try {
-    await fs.statAsync(path.join(gamePath, file));
-    return true;
-  }
-  catch (err) {
-    return false;
-  }
-}
-
 //Get correct game version
 async function setGameVersion(gamePath) {
-  if (await statCheckAsync(gamePath, EXEC_XBOX)) {
+  if (hasXbox && await statCheckAsync(gamePath, EXEC_XBOX)) {
     GAME_VERSION = 'xbox';
     return GAME_VERSION;
   }
@@ -978,7 +979,7 @@ function runModManager(api) {
   }
 }
 
-/*
+//*
 async function resolveGameVersion(gamePath) {
   GAME_VERSION = await setGameVersion(gamePath);
   let version = '0.0.0';
@@ -1036,8 +1037,7 @@ function applyGame(context, gameSpec) {
     queryModPath: makeGetModPath(context.api, gameSpec),
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
-    executable: () => gameSpec.game.executable,
-    //executable: getExecutable,
+    executable: getExecutable,
     //getGameVersion: resolveGameVersion,
     supportedTools: tools,
   };

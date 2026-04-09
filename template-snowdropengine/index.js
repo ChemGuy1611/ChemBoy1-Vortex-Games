@@ -19,6 +19,9 @@ const DOCUMENTS = util.getVortexPath("documents");
 const GAME_ID = "XXX";
 const UPLAYAPP_ID = "XXX";
 const STEAMAPP_ID = "XXX";
+//Epic and Xbox versions are actually installed via the Ubisoft Connect app
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, UPLAYAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+
 const EXEC = "XXX.exe";
 const EXEC_PLUS = "XXX_Plus.exe";
 const GAME_NAME = "XXX";
@@ -126,10 +129,7 @@ const spec = {
     },
   ],
   "discovery": {
-    "ids": [
-      STEAMAPP_ID,
-      UPLAYAPP_ID,
-    ],
+    "ids": DISCOVERY_IDS_ACTIVE,
     "names": []
   }
 };
@@ -195,11 +195,14 @@ function makeGetModPath(api, gameSpec) {
     : pathPattern(api, gameSpec.game, gameSpec.game.modPath);
 }
 
-//Setup launcher requirements (Steam, Epic, GOG, GamePass, etc.). More parameters required for Epic and GamePass
-function makeRequiresLauncher(api, gameSpec) {
-  return () => Promise.resolve((gameSpec.game.requiresLauncher !== undefined)
-    ? { launcher: gameSpec.game.requiresLauncher }
-    : undefined);
+//Set launcher requirements
+async function requiresLauncher(gamePath, store) {
+  if (store === 'steam') {
+      return Promise.resolve({
+          launcher: 'steam',
+      });
+  }
+  return Promise.resolve(undefined);
 }
 
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
@@ -558,7 +561,7 @@ function applyGame(context, gameSpec) {
     ...gameSpec.game,
     queryPath: makeFindGame(context.api, gameSpec),
     queryModPath: makeGetModPath(context.api, gameSpec),
-    requiresLauncher: makeRequiresLauncher(context.api, gameSpec),
+    requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     executable: () => gameSpec.game.executable,
     supportedTools: tools,

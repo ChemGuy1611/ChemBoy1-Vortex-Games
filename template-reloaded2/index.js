@@ -23,15 +23,16 @@ const DOCUMENTS = util.getVortexPath("documents");
 const GAME_ID = "XXX";
 const STEAMAPP_ID = "XXX";
 const STEAMAPP_ID_DEMO = "XXX";
-const EPICAPP_ID = null;
+const EPICAPP_ID = "XXX";
 const GOGAPP_ID = "XXX";
 const XBOXAPP_ID = "XXX";
 const XBOXEXECNAME = "XXX";
+const XBOX_PUB_ID = "XXX"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID];
+
 const GAME_NAME = "XXX";
 const GAME_NAME_SHORT = "XXX";
 const EXEC = "XXX.exe";
-const EXEC_XBOX = 'gamelaunchhelper.exe';
 const PCGAMINGWIKI_URL = "XXX";
 const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
 
@@ -43,6 +44,7 @@ const RELOADEDMODLOADER_URL = `XXX`; //if from GitHub or another site
 const RELOADEDMODLOADER_URL_ERR = `XXX`;
 
 //feature toggles
+const hasXbox = false; //toggle for Xbox version logic
 const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
 
 const PUBLISHER_FOLDER = "";
@@ -53,6 +55,7 @@ let GAME_VERSION = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 const APPMANIFEST_FILE = 'appxmanifest.xml';
+const EXEC_XBOX = 'gamelaunchhelper.exe';
 
 //Data for mod types, tools, and installers
 const RELOADED_ID = `${GAME_ID}-reloadedmanager`;
@@ -111,7 +114,6 @@ const spec = {
     "id": GAME_ID,
     "name": GAME_NAME,
     "shortName": GAME_NAME_SHORT,
-    "executable": EXEC,
     "logo": `${GAME_ID}.jpg`,
     "mergeMods": true,
     "requiresCleanup": true,
@@ -174,6 +176,25 @@ const spec = {
 
 // BASIC EXTENSION FUNCTIONS ///////////////////////////////////////////////////
 
+function statCheckSync(gamePath, file) {
+  try {
+    fs.statSync(path.join(gamePath, file));
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}
+async function statCheckAsync(gamePath, file) {
+  try {
+    await fs.statAsync(path.join(gamePath, file));
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}
+
 //Set mod type priorities
 function modTypePriority(priority) {
   return {
@@ -212,6 +233,12 @@ function makeFindGame(api, gameSpec) {
 }
 
 async function requiresLauncher(gamePath, store) {
+  //*
+  if ((store === 'steam')) {
+    return Promise.resolve({
+      launcher: 'steam',
+    });
+  } //*/
   if ((store === 'xbox') && DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID)) {
     return Promise.resolve({
       launcher: 'xbox',
@@ -224,43 +251,32 @@ async function requiresLauncher(gamePath, store) {
   //*
   if ((store === 'epic') && DISCOVERY_IDS_ACTIVE.includes(EPICAPP_ID)) {
     return Promise.resolve({
-        launcher: 'epic',
-        addInfo: {
-            appId: EPICAPP_ID,
-        },
-    });
-  } //*/
-  /*
-  if ((store === 'steam') && DISCOVERY_IDS_ACTIVE.includes(STEAMAPP_ID)) {
-    return Promise.resolve({
-        launcher: 'steam',
+      launcher: 'epic',
+      addInfo: {
+        appId: EPICAPP_ID,
+      },
     });
   } //*/
   return Promise.resolve(undefined);
 }
 
-function statCheckSync(gamePath, file) {
-  try {
-    fs.statSync(path.join(gamePath, file));
-    return true;
+//Get correct executable for game version
+function getExecutable(discoveryPath) {
+  if (!hasXbox) {
+    return EXEC;
   }
-  catch (err) {
-    return false;
-  }
+  if (hasXbox && statCheckSync(discoveryPath, EXEC_XBOX)) {
+    GAME_VERSION = 'xbox';
+    return EXEC_XBOX;
+  };
+  //add GOG/EGS/Demo versions here if needed
+  GAME_VERSION = 'default';
+  return EXEC;
 }
-async function statCheckAsync(gamePath, file) {
-  try {
-    await fs.statAsync(path.join(gamePath, file));
-    return true;
-  }
-  catch (err) {
-    return false;
-  }
-}
+
 //Get correct game version
 async function setGameVersion(gamePath) {
-  const CHECK = await statCheckAsync(gamePath, EXEC_XBOX);
-  if (CHECK) {
+  if (hasXbox && await statCheckAsync(gamePath, EXEC_XBOX)) {
     GAME_VERSION = 'xbox';
     return GAME_VERSION;
   } else {
@@ -898,7 +914,7 @@ function applyGame(context, gameSpec) {
     queryModPath: makeGetModPath(context.api, gameSpec),
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
-    executable: () => gameSpec.game.executable,
+    executable: getExecutable,
     //getGameVersion: resolveGameVersion,
     supportedTools: [
       {

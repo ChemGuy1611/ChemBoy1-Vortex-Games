@@ -30,7 +30,9 @@ const EPICAPP_ID = "XXX";
 const GOGAPP_ID = "XXX";
 const XBOXAPP_ID = "XXX";
 const XBOXEXECNAME = "XXX";
+const XBOX_PUB_ID = "XXX"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+
 const GAME_NAME = "XXX";
 const GAME_NAME_SHORT = "XXX";
 const EXEC = "XXX.exe";
@@ -42,6 +44,7 @@ const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
 const ENGINE_VERSION = '4'; // 4 or 3 - can see when running console.exe for game
 
 //feature toggles
+const hasXbox = false; //toggle for Xbox version logic
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
 const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
 const customLoader = true;
@@ -156,7 +159,6 @@ const spec = {
     "id": GAME_ID,
     "name": GAME_NAME,
     "shortName": GAME_NAME_SHORT,
-    "executable": EXEC,
     "parameters": PARAMETERS,
     "logo": `${GAME_ID}.jpg`,
     "mergeMods": true,
@@ -258,6 +260,25 @@ function truncateString(str, num) {
   return str.length > num ? str.slice(0, num) : str;
 }
 
+function statCheckSync(gamePath, file) {
+  try {
+    fs.statSync(path.join(gamePath, file));
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}
+async function statCheckAsync(gamePath, file) {
+  try {
+    await fs.statAsync(path.join(gamePath, file));
+    return true;
+  }
+  catch (err) {
+    return false;
+  }
+}
+
 //Set mod type priorities
 function modTypePriority(priority) {
   return {
@@ -297,31 +318,31 @@ function makeFindGame(api, gameSpec) {
 
 //Set launcher requirements
 async function requiresLauncher(gamePath, store) {
-  if (store === 'xbox' && (DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID))) {
-      return Promise.resolve({
-        launcher: 'xbox',
-        addInfo: {
-          appId: XBOXAPP_ID,
-          parameters: [{ appExecName: XBOXEXECNAME }],
-          //parameters: [{ appExecName: XBOXEXECNAME }, PARAMETERS_STRING],
-          //launchType: 'gamestore',
-        },
-      });
-  } //*/
-  if (store === 'epic' && (DISCOVERY_IDS_ACTIVE.includes(EPICAPP_ID))) {
-    return Promise.resolve({
-        launcher: 'epic',
-        addInfo: {
-          appId: EPICAPP_ID,
-          //parameters: PARAMETERS,
-          //launchType: 'gamestore',
-        },
-    });
-  } //*/
-  /*
+  //*
   if (store === 'steam') {
     return Promise.resolve({
       launcher: 'steam',
+    });
+  } //*/
+  if (store === 'xbox' && (DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID))) {
+    return Promise.resolve({
+      launcher: 'xbox',
+      addInfo: {
+        appId: XBOXAPP_ID,
+        parameters: [{ appExecName: XBOXEXECNAME }],
+        //parameters: [{ appExecName: XBOXEXECNAME }, PARAMETERS_STRING],
+        //launchType: 'gamestore',
+      },
+    });
+  } //*/
+  if (store === 'epic' && (DISCOVERY_IDS_ACTIVE.includes(EPICAPP_ID))) {
+    return Promise.resolve({
+      launcher: 'epic',
+      addInfo: {
+        appId: EPICAPP_ID,
+        //parameters: PARAMETERS,
+        //launchType: 'gamestore',
+      },
     });
   } //*/
   return Promise.resolve(undefined);
@@ -329,35 +350,15 @@ async function requiresLauncher(gamePath, store) {
 
 //Get correct executable for game version
 function getExecutable(discoveryPath) {
-  if (statCheckSync(discoveryPath, EXEC_XBOX)) {
+  if (hasXbox && statCheckSync(discoveryPath, EXEC_XBOX)) {
     return EXEC_XBOX;
   };
   return EXEC;
 }
 
-function statCheckSync(gamePath, file) {
-  try {
-    fs.statSync(path.join(gamePath, file));
-    return true;
-  }
-  catch (err) {
-    return false;
-  }
-}
-async function statCheckAsync(gamePath, file) {
-  try {
-    await fs.statAsync(path.join(gamePath, file));
-    return true;
-  }
-  catch (err) {
-    return false;
-  }
-}
-
 //Get correct game version
 async function setGameVersion(gamePath) {
-  const CHECK = await statCheckAsync(gamePath, EXEC_XBOX);
-  if (CHECK) {
+  if (hasXbox && await statCheckAsync(gamePath, EXEC_XBOX)) {
     GAME_VERSION = 'xbox';
     return GAME_VERSION;
   } else {
@@ -754,8 +755,7 @@ function applyGame(context, gameSpec) {
   const game = {
     ...gameSpec.game,
     queryPath: makeFindGame(context.api, gameSpec),
-    executable: () => gameSpec.game.executable,
-    //executable: getExecutable,
+    executable: getExecutable,
     queryModPath: makeGetModPath(context.api, gameSpec),
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),

@@ -33,7 +33,11 @@ const GOGAPP_ID = "XXX";
 const XBOXAPP_ID = "XXX";
 const XBOXEXECNAME = "XXX";
 const XBOX_PUB_ID = "XXX"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
+const INSTALL_HIVE = 'HKEY_LOCAL_MACHINE'; //typically HKEY_LOCAL_MACHINE or HKEY_CURRENT_USER
+const INSTALL_KEY = `SOFTWARE\\WOW6432Node\\XXX\\XXX`; //for finding install in registry - requires winapi-bindings
+const INSTALL_VALUE = "XXX"; //often InstallDir or InstallPath
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+
 const GAME_NAME = "XXX";
 const GAME_NAME_SHORT = "XXX";
 const BINARIES_PATH = path.join('.');
@@ -44,10 +48,6 @@ const EXEC_GOG = EXEC;
 const EXEC_DEMO = EXEC;
 const PCGAMINGWIKI_URL = "XXX";
 const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
-//for finding install in registry - requires winapi-bindings
-const INSTALL_HIVE = 'HKEY_LOCAL_MACHINE'; //typically HKEY_LOCAL_MACHINE or HKEY_CURRENT_USER
-const INSTALL_KEY = `SOFTWARE\\WOW6432Node\\XXX\\XXX`; //fill in path
-const INSTALL_VALUE = "XXX"; //often InstallDir or InstallPath
 
 //feature toggles
 const hasLoader = false; //true if game needs a mod loader
@@ -341,6 +341,11 @@ function makeFindGame(api, gameSpec) {
 
 //Set launcher requirements
 async function requiresLauncher(gamePath, store) {
+  if (store === 'steam') {
+    return Promise.resolve({
+      launcher: 'steam',
+    });
+  } //*/
   if (store === 'xbox' && (DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID))) {
     return Promise.resolve({
       launcher: 'xbox',
@@ -360,11 +365,6 @@ async function requiresLauncher(gamePath, store) {
         //parameters: PARAMETERS,
         //launchType: 'gamestore',
       },
-    });
-  } //*/
-  if (store === 'steam') {
-    return Promise.resolve({
-      launcher: 'steam',
     });
   } //*/
   return Promise.resolve(undefined);
@@ -842,9 +842,7 @@ async function setup(discovery, api, gameSpec) {
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   // ASYNC CODE //////////////////////////////////////////
   //GAME_VERSION = await setGameVersion(GAME_PATH);
-  if (setupNotification) {
-    setupNotify(api);
-  }
+  if (setupNotification) setupNotify(api);
   /*await fs.ensureDirWritableAsync(CONFIG_PATH);
   await fs.ensureDirWritableAsync(SAVE_PATH); //*/
   if (hasLoader) {

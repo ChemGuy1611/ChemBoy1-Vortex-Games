@@ -36,6 +36,7 @@ const GOGAPP_ID = "XXX";
 const XBOXAPP_ID = "XXX";
 const XBOXEXECNAME = "Game";
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+
 const GAME_NAME = "XXX";
 const GAME_NAME_SHORT = "XXX";
 const GAME_STRING = "XXX"; //string for exe and data folder (seem to always match)
@@ -342,27 +343,27 @@ function makeFindGame(api, gameSpec) {
 
 //Set launcher requirements
 async function requiresLauncher(gamePath, store) {
+  //*
+  if (store === 'steam') {
+    return Promise.resolve({
+      launcher: 'steam',
+    });
+  } //*/
   if (store === 'xbox' && (DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID))) {
-      return Promise.resolve({
-          launcher: 'xbox',
-          addInfo: {
-              appId: XBOXAPP_ID,
-              parameters: [{ appExecName: XBOXEXECNAME }],
-          },
-      });
+    return Promise.resolve({
+      launcher: 'xbox',
+      addInfo: {
+        appId: XBOXAPP_ID,
+        parameters: [{ appExecName: XBOXEXECNAME }],
+      },
+    });
   } //*/
   if (store === 'epic' && (DISCOVERY_IDS_ACTIVE.includes(EPICAPP_ID))) {
     return Promise.resolve({
-        launcher: 'epic',
-        addInfo: {
-            appId: EPICAPP_ID,
-        },
-    });
-  } //*/
-  /*
-  if (store === 'steam') {
-    return Promise.resolve({
-        launcher: 'steam',
+      launcher: 'epic',
+      addInfo: {
+        appId: EPICAPP_ID,
+      },
     });
   } //*/
   return Promise.resolve(undefined);

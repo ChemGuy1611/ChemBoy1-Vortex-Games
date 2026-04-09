@@ -90,7 +90,6 @@ const spec = {
     "id": GAME_ID,
     "name": GAME_NAME,
     "shortName": GAME_NAME_SHORT,
-    "executable": EXEC,
     "logo": `${GAME_ID}.jpg`,
     "mergeMods": true,
     "modPath": MOD_PATH_DEFAULT,
@@ -249,6 +248,11 @@ function makeGetModPath(api, gameSpec) {
 
 //Set launcher requirements
 async function requiresLauncher(gamePath, store) {
+  if (store === 'steam') {
+    return Promise.resolve({
+      launcher: 'steam',
+    });
+  } //*/
   if (store === 'xbox' && (DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID))) {
     return Promise.resolve({
       launcher: 'xbox',
@@ -268,11 +272,6 @@ async function requiresLauncher(gamePath, store) {
         //parameters: PARAMETERS,
         //launchType: 'gamestore',
       },
-    });
-  } //*/
-  if (store === 'steam') {
-    return Promise.resolve({
-      launcher: 'steam',
     });
   } //*/
   return Promise.resolve(undefined);

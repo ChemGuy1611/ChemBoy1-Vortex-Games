@@ -21,9 +21,13 @@ const winapi = require('winapi-bindings');
 const GAME_ID = "XXX";
 const STEAMAPP_ID = "XXX";
 const STEAMAPP_ID_DEMO = "XXX";
-const EPICAPP_ID = null;
-const GOGAPP_ID = null;
+const EPICAPP_ID = "XXX";
+const GOGAPP_ID = "XXX";
+const XBOXAPP_ID = "XXX";
+const XBOXEXECNAME = "XXX";
+const XBOX_PUB_ID = "XXX"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+
 const EXEC = "XXX.exe";
 const EXEC_DEMO = "XXXdemo.exe";
 const GAME_NAME = "XXX";
@@ -42,6 +46,7 @@ const CONFIG_PATH = '.';
 const CONFIG_FILE = 'config.ini';
 
 //feature toggles
+const hasXbox = false; //toggle for Xbox version logic
 const reZip = true; //NOT WORKING YET - KEEP AS TRUE FOR NOW - set to true to re-zip Fluffy Mods (possibly not necessary for FLUFFY v3.069+)
 //could index on modinfo.ini to avoid extra top level folder. should work?
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
@@ -56,6 +61,8 @@ let GAME_VERSION = '';
 let SAVE_PATH = '';
 let STAGING_FOLDER = ''; //Vortex staging folder path
 let DOWNLOAD_FOLDER = ''; //Vortex download folder path
+const EXEC_XBOX = 'gamelaunchhelper.exe';
+const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 //Information for mod types, tools, and installers
 const ROOT_ID = `${GAME_ID}-root`;
@@ -309,16 +316,16 @@ function makeFindGame(api, gameSpec) {
 async function requiresLauncher(gamePath, store) {
   if (store === 'steam') {
       return Promise.resolve({
-          launcher: 'steam',
+        launcher: 'steam',
       });
   }
-  /*
-  if (store === 'epic') {
+  //*
+  if (store === 'epic' && (DISCOVERY_IDS_ACTIVE.includes(EPICAPP_ID))) {
     return Promise.resolve({
-        launcher: 'epic',
-        addInfo: {
-            appId: EPICAPP_ID,
-        },
+      launcher: 'epic',
+      addInfo: {
+        appId: EPICAPP_ID,
+      },
     });
   } //*/
   return Promise.resolve(undefined);
@@ -326,9 +333,12 @@ async function requiresLauncher(gamePath, store) {
 
 //Get correct executable for game version
 function getExecutable(discoveryPath) {
-  if (!multiExe) { //return immediately if only one exe filename for all versions
+  if (!multiExe && !hasXbox) { //return immediately if only one exe filename for all versions
     return EXEC;
   }
+  if (hasXbox && statCheckSync(discoveryPath, EXEC_XBOX)) {
+    return EXEC_XBOX;
+  };
   if (statCheckSync(discoveryPath, EXEC_DEMO)) {
     FLUFFYMOD_PATH = FLUFFYMOD_PATH_DEMO;
     PRESET_PATH = PRESET_PATH_DEMO;
@@ -340,20 +350,23 @@ function getExecutable(discoveryPath) {
 //Set mod path
 function getModPath(discoveryPath) {
   if (!multiExe) { //return immediately if only one exe filename for all versions
-    return FLUFFYMOD_PATH;
+    return () => FLUFFYMOD_PATH;
   }
   if (statCheckSync(discoveryPath, EXEC_DEMO)) {
     FLUFFYMOD_PATH = FLUFFYMOD_PATH_DEMO;
     PRESET_PATH = PRESET_PATH_DEMO;
-    return FLUFFYMOD_PATH;
+    return () => FLUFFYMOD_PATH;
   };
-  return FLUFFYMOD_PATH;
+  return () => FLUFFYMOD_PATH;
 }
 
 //Get correct game version
 async function setGameVersion(gamePath) {
-  const CHECK = await statCheckAsync(gamePath, EXEC_DEMO);
-  if (CHECK) {
+  if (hasXbox && await statCheckAsync(gamePath, EXEC_XBOX)) {
+    GAME_VERSION = 'xbox';
+    return GAME_VERSION;
+  };
+  if (multiExe && await statCheckAsync(gamePath, EXEC_DEMO)) {
     GAME_VERSION = 'demo';
     FLUFFYMOD_PATH = FLUFFYMOD_PATH_DEMO;
     PRESET_PATH = PRESET_PATH_DEMO;
@@ -990,6 +1003,34 @@ function runFluffy(api) {
   }
 }
 
+//* Resolve game version dynamically for different game versions
+async function resolveGameVersion(gamePath) {
+  GAME_VERSION = await setGameVersion(gamePath);
+  let version = '0.0.0';
+  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
+    try {
+      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
+      const parsed = await parseStringPromise(appManifest);
+      version = parsed?.Package?.Identity?.[0]?.$?.Version;
+      return Promise.resolve(version);
+    } catch (err) {
+      log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+  else { // use exe
+    try {
+      const exeVersion = require('exe-version');
+      const EXEC = getExecutable(gamePath);
+      version = exeVersion.getProductVersion(path.join(gamePath, EXEC)); //can also use getFileVersion if this doesn't return the correct number (rare)
+      return Promise.resolve(version); 
+    } catch (err) {
+      log('error', `Could not read executable file to get game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+} //*/
+
 async function modFoldersEnsureWritable(gamePath, relPaths) {
   for (let index = 0; index < relPaths.length; index++) {
     await fs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
@@ -1020,10 +1061,11 @@ function applyGame(context, gameSpec) {
     ...gameSpec.game,
     queryPath: makeFindGame(context.api, gameSpec),
     executable: getExecutable,
-    queryModPath: getModPath,
+    queryModPath: getModPath(),
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     supportedTools: tools,
+    //getGameVersion: resolveGameVersion,
   };
   context.registerGame(game);
 

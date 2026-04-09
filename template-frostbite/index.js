@@ -17,14 +17,16 @@ const winapi = require('winapi-bindings');
 const DOCUMENTS = util.getVortexPath("documents");
 
 //Specify all the information about the game
+const GAME_ID = "XXX";
 const EAAPP_ID = "XXX";
 const STEAMAPP_ID = "XXX";
-const EPICAPP_ID = null;
-const GOGAPP_ID = null;
+const EPICAPP_ID = "XXX";
+const GOGAPP_ID = null; //not typically available for EA games
+//not typically available on Xbox - available through EA Play instead
 const REGISTRY_KEY = 'XXX'; // e.g. 'SOFTWARE\\WOW6432Node\\BioWare\\Mass Effect Andromeda'
 const REGISTRY_VALUE = 'XXX'; // e.g. 'Install Dir'
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EAAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
-const GAME_ID = "XXX";
+
 const GAME_NAME = "XXX";
 const GAME_NAME_SHORT = "XXX";
 const EXEC = "XXX";
@@ -271,6 +273,11 @@ function makeGetModPath(api, gameSpec) {
 
 //Set launcher requirements
 async function requiresLauncher(gamePath, store) {
+  if (store === 'steam') {
+    return Promise.resolve({
+      launcher: 'steam',
+    });
+  } //*/
   if (store === 'epic' && (DISCOVERY_IDS_ACTIVE.includes(EPICAPP_ID))) {
     return Promise.resolve({
       launcher: 'epic',
@@ -279,11 +286,6 @@ async function requiresLauncher(gamePath, store) {
         //parameters: PARAMETERS,
         //launchType: 'gamestore',
       },
-    });
-  } //*/
-  if (store === 'steam') {
-    return Promise.resolve({
-      launcher: 'steam',
     });
   } //*/
   return Promise.resolve(undefined);
