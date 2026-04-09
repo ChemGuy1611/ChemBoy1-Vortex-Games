@@ -56,6 +56,7 @@ TEMPLATES = [
     "template-reframework-fluffy",
     "template-reloaded2",
     "template-rpgmaker",
+    "template-shinryu",
     "template-snowdropengine",
     "template-tfcinstaller-ue2-3",
     "template-ue4-5",

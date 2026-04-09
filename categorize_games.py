@@ -95,6 +95,11 @@ CATEGORIES = [
         lambda head, src: "AnvilToolkit" in head or "const ATK_ID =" in src or "ReForge" in src,
     ),
     (
+        "games-srmm.txt",
+        "Shin Ryu Mod Manager (SRMM)",
+        lambda head, src: "SRMM" in head or "shinryumodmanager" in src,
+    ),
+    (
         "games-basic.txt",
         "Basic / Proprietary",
         lambda head, src: True,  # catch-all

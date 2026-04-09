@@ -36,6 +36,9 @@ Fixup passes (apply_fixups):
   11. requiresLauncher with full DISCOVERY_IDS_ACTIVE logic
   12. testFallback / installFallback / fallbackInstallerNotify functions +
       gated registerInstaller call at priority 49; ROOT_ID if missing
+  13. Standard registerAction calls (Open PCGamingWiki Page, View Changelog,
+      Submit Bug Report, Open Downloads Folder, commented Config/Save Folder);
+      each checked individually by label
 
 Usage:
     python new_template.py TEMPLATE_NAME GAME_ID [GAME_ID ...]
@@ -315,10 +318,27 @@ def _fixup_parameters(src):
 
 
 def _fixup_modtype_folders(src):
-    """Add MODTYPE_FOLDERS array if missing."""
+    """Add MODTYPE_FOLDERS array if missing.
+    Populates the array by scanning spec.modTypes targetPath entries for
+    *_PATH variable references (skips bare '{gamePath}' root entries)."""
     if re.search(r'(?:const|let)\s+MODTYPE_FOLDERS\s*=', src):
         return src
-    line = 'let MODTYPE_FOLDERS = [MOD_PATH]; // Add all mod type target paths\n'
+    # Collect *_PATH vars from targetPath lines inside spec.modTypes
+    path_vars = []
+    seen = set()
+    for m_tp in re.finditer(
+        r'"targetPath"\s*:\s*path\.join\(\s*[\'"`]\{gamePath\}[\'"`]\s*,\s*(\w+_PATH)\b',
+        src
+    ):
+        var = m_tp.group(1)
+        if var not in seen:
+            path_vars.append(var)
+            seen.add(var)
+    if path_vars:
+        arr = ', '.join(path_vars)
+    else:
+        arr = 'MOD_PATH'
+    line = f'let MODTYPE_FOLDERS = [{arr}]; // Add all mod type target paths\n'
     m = re.search(r'(?:const|let)\s+PARAMETERS\s*=\s*\[[^\]]*\][^\n]*\n', src)
     if m:
         return src[:m.end()] + line + src[m.end():]
@@ -455,25 +475,26 @@ def _fixup_mod_folders_fn(src):
 
 
 def _fixup_setup_writable(src):
-    """Add modFoldersEnsureWritable call before setup()'s closing brace if missing."""
+    """Add modFoldersEnsureWritable call before setup()'s closing brace if missing.
+    Also removes any existing 'return fs.ensureDirWritableAsync(...)' lines inside
+    setup() so the new call is the single return point."""
     # Check for the *call* specifically (GAME_PATH as first arg), not just the definition
     if re.search(r'modFoldersEnsureWritable\s*\(\s*GAME_PATH', src):
         return src
     m_start = re.search(r'\nasync function setup\b[^{]*\{|\nfunction setup\b[^{]*\{', src)
     if not m_start:
         return src
-    brace_depth = 0
-    idx = m_start.end() - 1  # index of the opening '{'
-    while idx < len(src):
-        if src[idx] == '{':
-            brace_depth += 1
-        elif src[idx] == '}':
-            brace_depth -= 1
-            if brace_depth == 0:
-                line = '  return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);\n'
-                return src[:idx] + line + src[idx:]
-        idx += 1
-    return src
+    fn_end = _find_fn_end(src, m_start.end())
+    if fn_end == -1:
+        return src
+    # Extract setup() body, remove any 'return fs.ensureDirWritableAsync(...)' lines
+    setup_body = src[m_start.end():fn_end - 1]
+    setup_body = re.sub(
+        r'[ \t]*return\s+fs\.ensureDirWritableAsync\s*\([^()]*(?:\([^()]*\)[^()]*)*\)\s*;?\s*\n?',
+        '', setup_body)
+    # Rebuild with the new return at the end
+    line = '  return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);\n'
+    return src[:m_start.end()] + setup_body + line + src[fn_end - 1:]
 
 
 _PATHPATTERN_FN = (
@@ -750,6 +771,114 @@ def _fixup_fallback_installer(src):
     return src
 
 
+_REGISTER_ACTIONS = [
+    (
+        'Open Config Folder',
+        True,  # commented out
+        "  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {\n"
+        "    util.opn(CONFIG_PATH).catch(() => null);\n"
+        "    }, () => {\n"
+        "      const state = context.api.getState();\n"
+        "      const gameId = selectors.activeGameId(state);\n"
+        "      return gameId === GAME_ID;\n"
+        "  });\n",
+    ),
+    (
+        'Open Save Folder',
+        True,  # commented out
+        "  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', () => {\n"
+        "    util.opn(SAVE_PATH).catch(() => null);\n"
+        "    }, () => {\n"
+        "      const state = context.api.getState();\n"
+        "      const gameId = selectors.activeGameId(state);\n"
+        "      return gameId === GAME_ID;\n"
+        "  }); //*/\n",
+    ),
+    (
+        'Open PCGamingWiki Page',
+        False,
+        "  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {\n"
+        "    util.opn(PCGAMINGWIKI_URL).catch(() => null);\n"
+        "  }, () => {\n"
+        "    const state = context.api.getState();\n"
+        "    const gameId = selectors.activeGameId(state);\n"
+        "    return gameId === GAME_ID;\n"
+        "  });\n",
+    ),
+    (
+        'View Changelog',
+        False,
+        "  context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {\n"
+        "    const openPath = path.join(__dirname, 'CHANGELOG.md');\n"
+        "    util.opn(openPath).catch(() => null);\n"
+        "    }, () => {\n"
+        "      const state = context.api.getState();\n"
+        "      const gameId = selectors.activeGameId(state);\n"
+        "      return gameId === GAME_ID;\n"
+        "  });\n",
+    ),
+    (
+        'Submit Bug Report',
+        False,
+        "  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {\n"
+        "    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);\n"
+        "  }, () => {\n"
+        "    const state = context.api.getState();\n"
+        "    const gameId = selectors.activeGameId(state);\n"
+        "    return gameId === GAME_ID;\n"
+        "  });\n",
+    ),
+    (
+        'Open Downloads Folder',
+        False,
+        "  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {\n"
+        "    util.opn(DOWNLOAD_FOLDER).catch(() => null);\n"
+        "  }, () => {\n"
+        "    const state = context.api.getState();\n"
+        "    const gameId = selectors.activeGameId(state);\n"
+        "    return gameId === GAME_ID;\n"
+        "  });\n",
+    ),
+]
+
+
+def _fixup_register_actions(src):
+    """
+    Inject standard context.registerAction calls inside applyGame() for any
+    that are missing: Open Config/Save Folder (commented out), Open PCGamingWiki
+    Page, View Changelog, Submit Bug Report, Open Downloads Folder.
+    Each action is checked individually by its label string.
+    """
+    # Find applyGame to locate its closing brace
+    m = re.search(r'\nfunction applyGame\b[^{]*\{|\nasync function applyGame\b[^{]*\{', src)
+    if not m:
+        return src
+
+    fn_end = _find_fn_end(src, m.end())
+    if fn_end == -1:
+        return src
+
+    # Collect missing actions
+    missing = []
+    for label, _commented, code in _REGISTER_ACTIONS:
+        if f"'{label}'" not in src:
+            missing.append(code)
+
+    if not missing:
+        return src
+
+    # Build the block to inject
+    block = '\n'
+    # Add the //register actions comment if not present
+    if '//register actions' not in src:
+        block += '  //register actions\n'
+    block += ''.join(missing)
+
+    # Insert before the closing } of applyGame
+    src = src[:fn_end - 1] + block + src[fn_end - 1:]
+    return src
+
+
 def apply_fixups(src):
     """
     Post-process augmentation: inject standard structure and utility code that is
@@ -783,6 +912,8 @@ def apply_fixups(src):
          _fixup_requires_launcher),
         ('fallback installer (testFallback / installFallback / registration)',
          _fixup_fallback_installer),
+        ('register actions (PCGamingWiki / Changelog / Bug Report / Downloads)',
+         _fixup_register_actions),
     ]
     applied = []
     for name, fn in fixups:

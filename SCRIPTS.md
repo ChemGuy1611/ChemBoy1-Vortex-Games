@@ -157,6 +157,7 @@ After substitutions, the processed `index.js` is augmented with standard structu
 | `pathPattern` try/catch wrapper (replaces body if absent; injects full function if missing) | Before `modTypePriority` or `makeFindGame` |
 | `requiresLauncher` with full `DISCOVERY_IDS_ACTIVE.includes` Xbox/Epic/Steam logic | Replaces existing body, or injected before `getExecutable` |
 | `testFallback`, `installFallback`, `fallbackInstallerNotify` functions + gated `registerInstaller` at priority 49. Injects `ROOT_ID` if missing. | Functions before `applyGame`; registration before `//register actions` or first `context.registerAction` |
+| Standard `context.registerAction` calls: Open PCGamingWiki Page, View Changelog, Submit Bug Report, Open Downloads Folder, plus commented-out Open Config/Save Folder. Each action checked individually by label. | Before closing `}` of `applyGame()` |
 
 ### new_template.py — After Running
 
@@ -228,6 +229,7 @@ python new_extension.py unitymelonloaderbepinex-hybrid "The Long Dark" --force
 | `template-tfcinstaller-ue2-3` | Unreal Engine 2/3 |
 | `template-anvilengine` | Ubisoft Anvil Engine (AC series, Ghost Recon, etc.) |
 | `template-frostbite` | Frostbite Engine (EA games, Frosty Mod Manager) |
+| `template-shinryu` | Shin Ryu Mod Manager (SRMM) |
 
 ### What It Automates
 
@@ -351,6 +353,7 @@ python categorize_games.py hogwartslegacy
 | `resources/lists/games-reengine.txt` | RE Engine (REFramework / Fluffy) |
 | `resources/lists/games-reloaded2.txt` | Reloaded-II |
 | `resources/lists/games-anvil.txt` | Ubisoft Anvil Engine (AnvilToolkit) |
+| `resources/lists/games-srmm.txt` | Shin Ryu Mod Manager (SRMM) |
 | `resources/lists/games-basic.txt` | Basic / Proprietary (catch-all) |
 
 ### categorize_games.py — Detection
