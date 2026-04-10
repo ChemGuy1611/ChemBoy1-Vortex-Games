@@ -4,7 +4,7 @@
 
 - None
 
-## [0.1.2] - 2026-03-30
+## [0.1.2] - 2026-04-10
 
 - Added: Installer and download button for BepInEx Config Manager
 - Bump: BepInEx version to 5.4.23.5

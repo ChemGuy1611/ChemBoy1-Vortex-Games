@@ -4,7 +4,7 @@
 
 - None
 
-## [0.1.2] - 2026-03-30
+## [0.1.2] - 2026-04-10
 
 - Bump: BepInEx Config Manager to 18.4.1 - changed repo
 

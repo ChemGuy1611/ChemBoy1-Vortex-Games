@@ -394,6 +394,131 @@ def _extract_function_body(src, func_start):
     return None, None
 
 
+def _find_fn_end(src, fn_match_end):
+    """Return index just past the closing '}' of the function that opens at fn_match_end-1."""
+    brace_depth = 0
+    idx = fn_match_end - 1  # position of the opening '{'
+    while idx < len(src):
+        if src[idx] == '{':
+            brace_depth += 1
+        elif src[idx] == '}':
+            brace_depth -= 1
+            if brace_depth == 0:
+                return idx + 1
+        idx += 1
+    return -1
+
+
+_REGISTER_ACTIONS = [
+    (
+        'Open Config Folder',
+        True,  # commented out
+        "  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {\n"
+        "    util.opn(CONFIG_PATH).catch(() => null);\n"
+        "    }, () => {\n"
+        "      const state = context.api.getState();\n"
+        "      const gameId = selectors.activeGameId(state);\n"
+        "      return gameId === GAME_ID;\n"
+        "  }); //*/\n",
+    ),
+    (
+        'Open Save Folder',
+        True,  # commented out
+        "  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', () => {\n"
+        "    util.opn(SAVE_PATH).catch(() => null);\n"
+        "    }, () => {\n"
+        "      const state = context.api.getState();\n"
+        "      const gameId = selectors.activeGameId(state);\n"
+        "      return gameId === GAME_ID;\n"
+        "  }); //*/\n",
+    ),
+    (
+        'Open PCGamingWiki Page',
+        False,
+        "  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {\n"
+        "    util.opn(PCGAMINGWIKI_URL).catch(() => null);\n"
+        "  }, () => {\n"
+        "    const state = context.api.getState();\n"
+        "    const gameId = selectors.activeGameId(state);\n"
+        "    return gameId === GAME_ID;\n"
+        "  });\n",
+    ),
+    (
+        'View Changelog',
+        False,
+        "  context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {\n"
+        "    const openPath = path.join(__dirname, 'CHANGELOG.md');\n"
+        "    util.opn(openPath).catch(() => null);\n"
+        "    }, () => {\n"
+        "      const state = context.api.getState();\n"
+        "      const gameId = selectors.activeGameId(state);\n"
+        "      return gameId === GAME_ID;\n"
+        "  });\n",
+    ),
+    (
+        'Submit Bug Report',
+        False,
+        "  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {\n"
+        "    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);\n"
+        "  }, () => {\n"
+        "    const state = context.api.getState();\n"
+        "    const gameId = selectors.activeGameId(state);\n"
+        "    return gameId === GAME_ID;\n"
+        "  });\n",
+    ),
+    (
+        'Open Downloads Folder',
+        False,
+        "  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {\n"
+        "    util.opn(DOWNLOAD_FOLDER).catch(() => null);\n"
+        "  }, () => {\n"
+        "    const state = context.api.getState();\n"
+        "    const gameId = selectors.activeGameId(state);\n"
+        "    return gameId === GAME_ID;\n"
+        "  });\n",
+    ),
+]
+
+
+def patch_register_actions(game_id, src, context):
+    """
+    Inject standard context.registerAction calls inside applyGame() for any
+    that are missing: Open Config/Save Folder (commented out), Open PCGamingWiki
+    Page, View Changelog, Submit Bug Report, Open Downloads Folder.
+    Each action is checked individually by its label string.
+    """
+    # Find applyGame to locate its closing brace
+    m = re.search(r'\nfunction applyGame\b[^{]*\{|\nasync function applyGame\b[^{]*\{', src)
+    if not m:
+        return src, False, "no applyGame function found"
+
+    fn_end = _find_fn_end(src, m.end())
+    if fn_end == -1:
+        return src, False, "could not parse applyGame function body"
+
+    # Collect missing actions
+    missing = []
+    missing_names = []
+    for label, _commented, code in _REGISTER_ACTIONS:
+        if f"'{label}'" not in src:
+            missing.append(code)
+            missing_names.append(label)
+
+    if not missing:
+        return src, False, "already set"
+
+    # Build the block to inject
+    block = '\n'
+    # Add the //register actions comment if not present
+    if '//register actions' not in src:
+        block += '  //register actions\n'
+    block += ''.join(missing)
+
+    # Insert before the closing } of applyGame
+    src = src[:fn_end - 1] + block + src[fn_end - 1:]
+    return src, True, f"inserted {', '.join(missing_names)}"
+
+
 def patch_setup_vars(game_id, src, context):
     """
     Ensure the setup() function sets GAME_PATH, STAGING_FOLDER, DOWNLOAD_FOLDER
@@ -498,6 +623,7 @@ PATCHES = [
     {"name": "folder_vars",         "enabled": True, "fn": patch_folder_vars},
     {"name": "utility_functions",   "enabled": True, "fn": patch_utility_functions},
     {"name": "setup_vars",          "enabled": True, "fn": patch_setup_vars},
+    {"name": "register_actions",    "enabled": True, "fn": patch_register_actions},
     {"name": "context_once_api",    "enabled": True, "fn": patch_context_once_api},
     {"name": "extension_url",       "enabled": True, "fn": patch_extension_url},
     {"name": "pcgamingwiki_url",    "enabled": True, "fn": patch_pcgamingwiki_url},

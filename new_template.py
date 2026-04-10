@@ -776,12 +776,12 @@ _REGISTER_ACTIONS = [
         "      const state = context.api.getState();\n"
         "      const gameId = selectors.activeGameId(state);\n"
         "      return gameId === GAME_ID;\n"
-        "  });\n",
+        "  }); //*/\n",
     ),
     (
         'Open Save Folder',
         True,  # commented out
-        "  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', () => {\n"
+        "  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', () => {\n"
         "    util.opn(SAVE_PATH).catch(() => null);\n"
         "    }, () => {\n"
         "      const state = context.api.getState();\n"
