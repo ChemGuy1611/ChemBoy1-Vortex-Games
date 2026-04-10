@@ -36,34 +36,11 @@ Mod types define where each category of mod gets deployed:
 | Fluffy Mod Manager | `deadrisingdeluxeremaster-fluffymodmanager` | low | `{gamePath}` |
 | REFramework | `deadrisingdeluxeremaster-reframework` | low | `{gamePath}` |
 
-## Mod Installers
-
-Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
-
-| Installer ID | Priority |
-| --- | --- |
-| `deadrisingdeluxeremaster-fluffymodmanager` | 25 |
-| `deadrisingdeluxeremaster-reframework` | 30 |
-| `deadrisingdeluxeremaster-looselua` | 29 |
-| `deadrisingdeluxeremaster-root` | 31 |
-| `deadrisingdeluxeremaster-preset` | 33 |
-| `deadrisingdeluxeremaster-fluffymodzip` | 45 |
-
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
 - **Custom Launch**
-
-## Toolbar Actions
-
-These buttons appear in the Vortex mod-icons toolbar when this game is active:
-
-- Open Config File
-- Open PCGamingWiki Page
-- View Changelog
-- Submit Bug Report
-- Open Downloads Folder
 
 ## Auto-Downloaded Dependencies
 

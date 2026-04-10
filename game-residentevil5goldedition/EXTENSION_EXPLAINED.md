@@ -18,6 +18,15 @@
 
 - **Steam** — `21690`
 
+## Toolbar Actions
+
+These buttons appear in the Vortex mod-icons toolbar when this game is active:
+
+- Open PCGamingWiki Page
+- View Changelog
+- Submit Bug Report
+- Open Downloads Folder
+
 ## Special Features
 
 - No special features beyond the standard extension pattern.

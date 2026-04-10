@@ -44,10 +44,6 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - TOC Reset (After Update)
 - Open Save Folder
-- Open PCGamingWiki Page
-- View Changelog
-- Submit Bug Report
-- Open Downloads Folder
 
 ## Special Features
 

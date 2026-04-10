@@ -854,9 +854,13 @@ def _fixup_register_actions(src):
         return src
 
     # Collect missing actions
+    has_combined_config_save = "'Open Config/Save Folder'" in src
     missing = []
     for label, _commented, code in _REGISTER_ACTIONS:
         if f"'{label}'" not in src:
+            # Skip separate Config/Save if a combined button already exists
+            if has_combined_config_save and label in ('Open Config Folder', 'Open Save Folder'):
+                continue
             missing.append(code)
 
     if not missing:

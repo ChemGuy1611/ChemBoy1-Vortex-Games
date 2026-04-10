@@ -47,6 +47,10 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Download DML (Manual)
 - Open UZDoom Config Folder
 - Open Vortex Downloads Folder
+- Open PCGamingWiki Page
+- View Changelog
+- Submit Bug Report
+- Open Downloads Folder
 
 ## Config & Save Paths
 

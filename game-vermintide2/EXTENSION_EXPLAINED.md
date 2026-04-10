@@ -27,6 +27,15 @@ Mod types define where each category of mod gets deployed:
 | Binaries | `vermintide2-binaries` | high | `{gamePath}/binaries` |
 | Binaries DX12 | `vermintide2-binariesdx12` | high | `{gamePath}/binaries_dx12` |
 
+## Toolbar Actions
+
+These buttons appear in the Vortex mod-icons toolbar when this game is active:
+
+- Open PCGamingWiki Page
+- View Changelog
+- Submit Bug Report
+- Open Downloads Folder
+
 ## Special Features
 
 - No special features beyond the standard extension pattern.

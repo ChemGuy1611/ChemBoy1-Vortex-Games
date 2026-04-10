@@ -592,7 +592,7 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(SOUND_ID, 40, testSound, installSound);
   //context.registerInstaller(`${GAME_ID}-zip-mod`, 45, testZipContent, installZipContent);
 
-  //register buttons to open folders
+  //register actions
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
     util.opn(CONFIG_PATH).catch(() => null);
   }, () => {
@@ -621,6 +621,29 @@ function applyGame(context, gameSpec) {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
+  });
+
+  //register actions
+  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', () => {
+    util.opn(SAVE_PATH).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  }); //*/
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
+    util.opn(PCGAMINGWIKI_URL).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
+    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
   });
 }
 

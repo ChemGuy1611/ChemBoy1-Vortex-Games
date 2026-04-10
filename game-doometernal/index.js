@@ -707,7 +707,7 @@ function applyGame(context, gameSpec) {
   context.registerInstaller('doometernal-meathook', 40, testMeat, installMeat);
   context.registerInstaller('doometernal-zip-mod', 45, testZipContent, installZipContent);
 
-  //register buttons to open folders
+  //register actions
   context.registerAction('mod-icons', 300, 'open-ext', {}, `Download EternalModInjector v${INJ_REV} (${INJ_DL_ID})`, () => {
     downloadEternalModInjector(context.api, spec, false);
   }, () => {
@@ -743,6 +743,29 @@ function applyGame(context, gameSpec) {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
+  });
+
+  //register actions
+  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', () => {
+    util.opn(SAVE_PATH).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  }); //*/
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
+    util.opn(PCGAMINGWIKI_URL).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
+    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
   });
 }
 

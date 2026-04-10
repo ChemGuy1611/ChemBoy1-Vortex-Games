@@ -54,6 +54,15 @@ These tools appear in Vortex's Tools panel when this game is active:
 - **Launch Modded Game** (`gamelaunchhelper.exe`)
 - **Sig Bypass Patch**
 
+## Toolbar Actions
+
+These buttons appear in the Vortex mod-icons toolbar when this game is active:
+
+- Open PCGamingWiki Page
+- View Changelog
+- Submit Bug Report
+- Open Downloads Folder
+
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |

@@ -48,6 +48,13 @@ These tools appear in Vortex's Tools panel when this game is active:
 
 - **Custom Launch**
 
+## Toolbar Actions
+
+These buttons appear in the Vortex mod-icons toolbar when this game is active:
+
+- Open PCGamingWiki Page
+- Submit Bug Report
+
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |

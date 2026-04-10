@@ -1245,7 +1245,7 @@ function applyGame(context, gameSpec) {
   //context.registerInstaller(`${GAME_ID}-save`, 60, testSave, installSave);
   context.registerInstaller(BINARIES_ID, 49, testBinaries, installBinaries);
 
-  //register buttons to open folders
+  //register actions
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download UE4SS', () => {
     downloadUe4ss(context.api, gameSpec).catch(() => null);
   }, () => {
@@ -1319,6 +1319,15 @@ function applyGame(context, gameSpec) {
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   });
+
+  //register actions
+  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', () => {
+    util.opn(SAVE_PATH).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  }); //*/
 }
 
 //Main function

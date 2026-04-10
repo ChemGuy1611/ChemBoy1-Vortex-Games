@@ -36,23 +36,6 @@ Mod types define where each category of mod gets deployed:
 | Root Folder | `ghostreconbreakpoint-root` | high | `{gamePath}` |
 | AnvilToolkit | `ghostreconbreakpoint-atk` | low | `{gamePath}` |
 
-## Mod Installers
-
-Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
-
-| Installer ID | Priority |
-| --- | --- |
-| `ghostreconbreakpoint-atk` | 25 |
-| `ghostreconbreakpoint-sound` | 27 |
-| `ghostreconbreakpoint-buildtable` | 29 |
-| `ghostreconbreakpoint-extracted` | 31 |
-| `ghostreconbreakpoint-forgefolder` | 33 |
-| `ghostreconbreakpoint-datafolder` | 35 |
-| `ghostreconbreakpoint-loosedata` | 37 |
-| `ghostreconbreakpoint-forgefile` | 39 |
-| `ghostreconbreakpoint-root` | 41 |
-| `ghostreconbreakpoint-fallback` | 43 |
-
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
@@ -60,16 +43,6 @@ These tools appear in Vortex's Tools panel when this game is active:
 - **Launch Game Ubisoft Plus**
 - **Launch Vulkan Game**
 - **Custom Launch**
-
-## Toolbar Actions
-
-These buttons appear in the Vortex mod-icons toolbar when this game is active:
-
-- Open Settings INI
-- Open PCGamingWiki Page
-- View Changelog
-- Submit Bug Report
-- Open Downloads Folder
 
 ## Special Features
 

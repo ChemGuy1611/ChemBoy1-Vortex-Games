@@ -46,6 +46,10 @@ Installers run in priority order (lower number = tested first). The first instal
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - Download Reloaded Mod Manager
+- Open PCGamingWiki Page
+- View Changelog
+- Submit Bug Report
+- Open Downloads Folder
 
 ## Auto-Downloaded Dependencies
 

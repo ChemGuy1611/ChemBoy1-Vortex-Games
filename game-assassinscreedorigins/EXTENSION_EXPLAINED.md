@@ -48,6 +48,15 @@ These tools appear in Vortex's Tools panel when this game is active:
 - **AnvilToolkit**
 - **Forger Patch Manager**
 
+## Toolbar Actions
+
+These buttons appear in the Vortex mod-icons toolbar when this game is active:
+
+- Open PCGamingWiki Page
+- View Changelog
+- Submit Bug Report
+- Open Downloads Folder
+
 ## Special Features
 
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).

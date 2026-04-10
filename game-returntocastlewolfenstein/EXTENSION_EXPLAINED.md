@@ -57,6 +57,10 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - Download RealRTCW
 - Download ioRTCW
+- Open PCGamingWiki Page
+- View Changelog
+- Submit Bug Report
+- Open Downloads Folder
 
 ## Special Features
 

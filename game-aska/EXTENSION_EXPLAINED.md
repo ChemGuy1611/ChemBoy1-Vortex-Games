@@ -87,6 +87,8 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Open BepInEx Log
 - View Changelog
 - Open Downloads Folder
+- Open PCGamingWiki Page
+- Submit Bug Report
 
 ## Auto-Downloaded Dependencies
 

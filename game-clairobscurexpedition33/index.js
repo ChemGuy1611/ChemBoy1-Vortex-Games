@@ -1600,7 +1600,7 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(SAVE_ID, 43, (files, gameId) => testSave(context.api, files, gameId), (files) => installSave(context.api, files));
   context.registerInstaller(BINARIES_ID, 45, testBinaries, installBinaries);
 
-  //register buttons to open folders
+  //register actions
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Paks Folder', () => {
     GAME_PATH = getDiscoveryPath(context.api);
     const openPath = path.join(GAME_PATH, UE5_ALT_PATH);

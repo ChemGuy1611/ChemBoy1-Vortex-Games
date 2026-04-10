@@ -497,10 +497,14 @@ def patch_register_actions(game_id, src, context):
         return src, False, "could not parse applyGame function body"
 
     # Collect missing actions
+    has_combined_config_save = "'Open Config/Save Folder'" in src
     missing = []
     missing_names = []
     for label, _commented, code in _REGISTER_ACTIONS:
         if f"'{label}'" not in src:
+            # Skip separate Config/Save if a combined button already exists
+            if has_combined_config_save and label in ('Open Config Folder', 'Open Save Folder'):
+                continue
             missing.append(code)
             missing_names.append(label)
 
@@ -536,13 +540,13 @@ def patch_setup_vars(game_id, src, context):
     body = src[body_start:body_end]
     # Determine which lines are missing from the setup body
     needed = [
-        ("const state",     r'\bconst\s+state\s*=\s*api\.getState\b',
+        ("const state",     r'\bconst\s+state\s*=',
          "  const state = api.getState();"),
-        ("GAME_PATH",       r'\bGAME_PATH\s*=\s*discovery\.path\b',
+        ("GAME_PATH",       r'\bGAME_PATH\s*=',
          "  GAME_PATH = discovery.path;"),
-        ("STAGING_FOLDER",  r'\bSTAGING_FOLDER\s*=\s*selectors\.installPathForGame\b',
+        ("STAGING_FOLDER",  r'\bSTAGING_FOLDER\s*=',
          "  STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);"),
-        ("DOWNLOAD_FOLDER", r'\bDOWNLOAD_FOLDER\s*=\s*selectors\.downloadPathForGame\b',
+        ("DOWNLOAD_FOLDER", r'\bDOWNLOAD_FOLDER\s*=',
          "  DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);"),
     ]
 

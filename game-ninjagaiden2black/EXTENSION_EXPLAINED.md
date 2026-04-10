@@ -71,6 +71,10 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Open Config Folder
 - Open Saves Folder (Steam)
 - Open Saves Folder (Xbox)
+- Open PCGamingWiki Page
+- View Changelog
+- Submit Bug Report
+- Open Downloads Folder
 
 ## Auto-Downloaded Dependencies
 

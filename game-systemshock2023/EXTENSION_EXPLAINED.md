@@ -42,6 +42,15 @@ Installers run in priority order (lower number = tested first). The first instal
 | `systemshock2023-save` | 40 |
 | `systemshock2023-root` | 45 |
 
+## Toolbar Actions
+
+These buttons appear in the Vortex mod-icons toolbar when this game is active:
+
+- Open PCGamingWiki Page
+- View Changelog
+- Submit Bug Report
+- Open Downloads Folder
+
 ## Config & Save Paths
 
 | Type | Path |

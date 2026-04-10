@@ -30,15 +30,6 @@ Mod types define where each category of mod gets deployed:
 | --- | --- | --- | --- |
 | Dropzone Folder | `thehuntercallofthewild-dropzonefolder` | high | `{gamePath}/.` |
 
-## Mod Installers
-
-Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
-
-| Installer ID | Priority |
-| --- | --- |
-| `thehuntercallofthewild-dropzonefolder` | 25 |
-| `thehuntercallofthewild-save` | 49 |
-
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
@@ -49,10 +40,8 @@ These tools appear in Vortex's Tools panel when this game is active:
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- Open Save Data Folder
-- Open Config Folder
-- View Changelog
-- Open Downloads Folder
+- Open PCGamingWiki Page
+- Submit Bug Report
 
 ## Special Features
 

@@ -37,6 +37,12 @@ These tools appear in Vortex's Tools panel when this game is active:
 - **Smithbox**
 - **Flver Editor**
 
+## Toolbar Actions
+
+These buttons appear in the Vortex mod-icons toolbar when this game is active:
+
+- Open PCGamingWiki Page
+
 ## Config & Save Paths
 
 | Type | Path |

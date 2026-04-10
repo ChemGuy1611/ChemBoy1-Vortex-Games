@@ -56,8 +56,8 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Download EternalModInjector v${INJ_REV} (${INJ_DL_ID})
 - Open Config Folder
 - Open Saves Folder
-- View Changelog
-- Open Downloads Folder
+- Open PCGamingWiki Page
+- Submit Bug Report
 
 ## Special Features
 

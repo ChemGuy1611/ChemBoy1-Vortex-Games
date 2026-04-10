@@ -1857,7 +1857,7 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(SAVE_ID, 43, (files, gameId) => testSave(context.api, files, gameId), (files) => installSave(context.api, files));
   context.registerInstaller(BINARIES_ID, 49, testBinaries, installBinaries);
 
-  //register buttons to open folders
+  //register actions
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Paks Folder', () => {
     GAME_PATH = getDiscoveryPath(context.api);
     const openPath = path.join(GAME_PATH, PAK_ALT_PATH);
@@ -1937,6 +1937,15 @@ function applyGame(context, gameSpec) {
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
     const openPath = DOWNLOAD_FOLDER;
     util.opn(openPath).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+
+  //register actions
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
+    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);

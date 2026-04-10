@@ -1657,7 +1657,7 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(`${GAME_ID}-save`, 47, testSave, installSave);
   context.registerInstaller(`${GAME_ID}-sigbypass`, 49, testSigBypass, installSigBypass);
 
-  //register buttons to open folders
+  //register actions
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open JsonFiles.json File', () => {
     const state = context.api.getState();
     const discovery = selectors.discoveryByGame(state, GAME_ID);
@@ -1745,6 +1745,15 @@ function applyGame(context, gameSpec) {
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   });
+
+  //register actions
+  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', () => {
+    util.opn(SAVE_PATH).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  }); //*/
 }
 
 //Main function

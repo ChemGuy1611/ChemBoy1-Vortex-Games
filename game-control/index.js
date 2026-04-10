@@ -839,7 +839,7 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(LOOSELOADER_ID, 35, testLooseLoader, installLooseLoader);
   context.registerInstaller(PLUGINLOADER_ID, 40, testPluginLoader, installPluginLoader);
   
-  //register buttons to open folders and files
+  //register actions and files
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', async () => {
     CONFIG_PATH = await setConfigPath(context.api);
     util.opn(CONFIG_PATH).catch(() => null);
@@ -891,6 +891,29 @@ function applyGame(context, gameSpec) {
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {
     const openPath = DOWNLOAD_FOLDER;
     util.opn(openPath).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+
+  //register actions
+  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', () => {
+    util.opn(SAVE_PATH).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  }); //*/
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
+    util.opn(PCGAMINGWIKI_URL).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
+    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);

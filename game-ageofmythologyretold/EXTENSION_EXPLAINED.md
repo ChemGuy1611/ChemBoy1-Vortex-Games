@@ -43,6 +43,15 @@ Installers run in priority order (lower number = tested first). The first instal
 | `ageofmythologyretold-reshade` | 40 |
 | `ageofmythologyretold-binaries` | 45 |
 
+## Toolbar Actions
+
+These buttons appear in the Vortex mod-icons toolbar when this game is active:
+
+- Open PCGamingWiki Page
+- View Changelog
+- Submit Bug Report
+- Open Downloads Folder
+
 ## Special Features
 
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.

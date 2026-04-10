@@ -74,6 +74,8 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Open Config Folder
 - Open Saves Folder
 - Download UE4SS
+- Open PCGamingWiki Page
+- Submit Bug Report
 
 ## Auto-Downloaded Dependencies
 

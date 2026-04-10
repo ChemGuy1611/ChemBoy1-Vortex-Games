@@ -1035,7 +1035,7 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(`${GAME_ID}-config`, 45, testConfig, installConfig);
   context.registerInstaller(`${GAME_ID}-save`, 49, testSave, installSave);
 
-  //register buttons to open folders
+  //register actions
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Paks Folder', () => {
     GAME_PATH = getDiscoveryPath(context.api);
     util.opn(path.join(GAME_PATH, PAK_PATH)).catch(() => null);
@@ -1126,6 +1126,15 @@ function applyGame(context, gameSpec) {
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   });
+
+  //register actions
+  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', () => {
+    util.opn(SAVE_PATH).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  }); //*/
 }
 
 //Main function

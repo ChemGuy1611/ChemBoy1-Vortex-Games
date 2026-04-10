@@ -57,6 +57,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Open PCGamingWiki Page
 - View Changelog
 - Open Downloads Folder
+- Submit Bug Report
 
 ## Auto-Downloaded Dependencies
 

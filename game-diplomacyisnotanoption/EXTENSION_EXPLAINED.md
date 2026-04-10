@@ -29,6 +29,15 @@ Mod types define where each category of mod gets deployed:
 | Root Game Folder | `diplomacyisnotanoption-root` | high | `{gamePath}` |
 | BepinEx Mod | `diplomacyisnotanoption-bepmods` | high | `{gamePath}/BepinEx/plugins` |
 
+## Toolbar Actions
+
+These buttons appear in the Vortex mod-icons toolbar when this game is active:
+
+- Open PCGamingWiki Page
+- View Changelog
+- Submit Bug Report
+- Open Downloads Folder
+
 ## Special Features
 
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).

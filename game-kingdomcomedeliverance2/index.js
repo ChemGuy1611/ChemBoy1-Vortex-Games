@@ -1190,7 +1190,7 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(`${GAME_ID}-cfg`, 35, testCfg, installCfg);
   context.registerInstaller(BINARIES_ID, 40, testBinaries, installBinaries);
 
-  //register buttons to open folders and logs
+  //register actions and logs
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Log - kcd.log', async () => {
     GAME_PATH = getDiscoveryPath(context.api);
     GAME_VERSION = await setGameVersion(GAME_PATH);
@@ -1266,6 +1266,15 @@ function applyGame(context, gameSpec) {
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   });
+
+  //register actions
+  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', () => {
+    util.opn(SAVE_PATH).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  }); //*/
 }
 
 //main function

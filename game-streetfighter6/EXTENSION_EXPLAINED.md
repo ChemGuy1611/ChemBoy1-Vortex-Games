@@ -34,40 +34,11 @@ Mod types define where each category of mod gets deployed:
 | Fluffy Mod Manager | `streetfighter6-fluffymodmanager` | low | `{gamePath}` |
 | REFramework | `streetfighter6-reframework` | low | `{gamePath}` |
 
-## Mod Installers
-
-Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
-
-| Installer ID | Priority |
-| --- | --- |
-| `streetfighter6-fluffymodmanager` | 25 |
-| `streetfighter6-reframework` | 30 |
-| `streetfighter6-looselua` | 29 |
-| `streetfighter6-root` | 31 |
-| `streetfighter6-preset` | 33 |
-| `streetfighter6-fluffymodzip` | 45 |
-| `streetfighter6-fluffymodmanager` | 25 |
-| `streetfighter6-reframework` | 30 |
-| `streetfighter6-looselua` | 29 |
-| `streetfighter6-root` | 31 |
-| `streetfighter6-preset` | 33 |
-| `streetfighter6-fluffymodzip` | 45 |
-
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
 - **Custom Launch**
-
-## Toolbar Actions
-
-These buttons appear in the Vortex mod-icons toolbar when this game is active:
-
-- Open Config File
-- Open PCGamingWiki Page
-- View Changelog
-- Submit Bug Report
-- Open Downloads Folder
 
 ## Auto-Downloaded Dependencies
 

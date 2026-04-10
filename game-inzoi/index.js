@@ -2180,7 +2180,7 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(SAVE_ID, 42, testSave, (files) => installSave(context.api, files));
   context.registerInstaller(BINARIES_ID, 43, testBinaries, (files) => installBinaries(context.api, files));
 
-  //register buttons to open folders
+  //register actions
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download Mod Enabler (Legacy)', () => {
     downloadModEnabler(context.api, gameSpec);
   }, () => {
@@ -2300,6 +2300,22 @@ function applyGame(context, gameSpec) {
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   });
+
+  //register actions
+  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
+    util.opn(CONFIG_PATH).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  }); //*/
+  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', () => {
+    util.opn(SAVE_PATH).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  }); //*/
 }
 
 //Main function

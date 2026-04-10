@@ -936,7 +936,7 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(DHEWM3_ID, 25, testDhewm3, installDhewm3);
   context.registerInstaller(ROOT_ID, 27, testRoot, (files, fileName) => installRoot(context.api, files, fileName));
   
-  //register buttons to open folders
+  //register actions
   /*
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
     const openPath = CONFIG_PATH;
@@ -970,6 +970,29 @@ function applyGame(context, gameSpec) {
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   });
+
+  //register actions
+  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', () => {
+    util.opn(SAVE_PATH).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  }); //*/
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
+    util.opn(PCGAMINGWIKI_URL).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
+    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
 }
 
 function applyGameBfg(context, gameSpec) {
@@ -998,7 +1021,7 @@ function applyGameBfg(context, gameSpec) {
   //register mod installers
   context.registerInstaller(ROOT_ID_BFG, 25, testRootBfg, installRootBfg);
 
-  //register buttons to open folders
+  //register actions
     /*
     context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
       util.opn(CONFIG_PATH_BFG).catch(() => null);

@@ -48,6 +48,8 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - View Changelog
 - Open Downloads Folder
+- Open PCGamingWiki Page
+- Submit Bug Report
 - View Changelog
 - Open Downloads Folder
 
