@@ -17,7 +17,7 @@ import re
 import sys
 import subprocess
 
-from vortex_utils import REPO_ROOT
+from vortex_utils import REPO_ROOT, run_generate_explained
 SEVENZIP = os.environ.get("SEVENZIP_PATH", r"C:\Program Files\7-Zip\7z.exe")
 NEXUS_SITE_URL = "https://www.nexusmods.com/games/site"
 
@@ -159,12 +159,9 @@ def release(game_id, open_browser, dry_run=False):
         return True
 
     print(f"  [{game_id}] Generating EXTENSION_EXPLAINED.md...")
-    result = subprocess.run(
-        ["node", "generate_explained.js", game_id],
-        cwd=REPO_ROOT, capture_output=True, text=True
-    )
-    if result.returncode != 0:
-        print(f"  [{game_id}] WARNING -generate_explained.js failed: {result.stderr.strip()}")
+    ok, err = run_generate_explained(game_id)
+    if not ok:
+        print(f"  [{game_id}] WARNING -generate_explained.js failed: {err}")
 
     zip_path = os.path.join(folder, f"game-{game_id}.zip")
 

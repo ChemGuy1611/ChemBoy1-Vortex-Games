@@ -25,8 +25,7 @@ import sys
 import argparse
 
 from vortex_utils import (
-    REPO_ROOT, read_index_js, extract_game_id, extract_steamapp_id,
-    extract_game_name,
+    REPO_ROOT, extract_steamapp_id, extract_game_name, iter_game_folders,
 )
 
 # Import download helper from new_extension.py
@@ -42,29 +41,10 @@ def find_targets(target_game_ids=None, force=False):
     Without --force, skips extensions that already have an exec.png.
     If target_game_ids is set, only those extensions are checked.
     """
-    entries = sorted(os.listdir(REPO_ROOT))
-    for entry in entries:
-        folder = os.path.join(REPO_ROOT, entry)
-        if not os.path.isdir(folder):
-            continue
-        if not entry.startswith("game-"):
-            continue
-
-        src = read_index_js(folder)
-        if not src:
-            continue
-
-        game_id = extract_game_id(src)
-        if not game_id:
-            continue
-
-        if target_game_ids and game_id not in target_game_ids:
-            continue
-
+    for folder, game_id, src in iter_game_folders(target_game_ids):
         icon_path = os.path.join(folder, "exec.png")
         if os.path.isfile(icon_path) and not force:
             continue
-
         steamapp_id = extract_steamapp_id(src)
         game_name = extract_game_name(src)
         yield folder, game_id, steamapp_id, game_name

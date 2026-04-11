@@ -101,6 +101,11 @@ CATEGORIES = [
         lambda head, src: "SRMM" in head or "shinryumodmanager" in src,
     ),
     (
+        "games-frostbite.txt",
+        "Frostbite Engine (Frosty Mod Manager)",
+        lambda head, src: "Frostbite" in head or "const FROSTY_ID =" in src,
+    ),
+    (
         "games-basic.txt",
         "Basic / Proprietary",
         lambda head, src: True,  # catch-all

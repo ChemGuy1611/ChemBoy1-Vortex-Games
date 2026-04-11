@@ -25,12 +25,11 @@ import os
 import sys
 import re
 import json
-import subprocess
-
 from vortex_utils import (
     REPO_ROOT, PCGW_API,
     name_lookup_variants, roman_to_arabic, arabic_to_roman,
-    lookup_pcgamingwiki,
+    lookup_pcgamingwiki, extract_game_id, extract_game_name,
+    _find_fn_end, REGISTER_ACTIONS, run_generate_explained,
 )
 
 TITLE_IMAGES_DIR = os.path.join(REPO_ROOT, "resources", "title-images")
@@ -39,27 +38,6 @@ NEXUS_SITE_BASE = "https://www.nexusmods.com/site/mods"
 
 
 # ── Shared utilities ──────────────────────────────────────────────────────────
-
-def get_game_name_from_src(src):
-    """Extract the game name from index.js source, or None.
-    Tries GAME_NAME constant first, then quoted 'name': in spec, then
-    name: following id: GAME_ID in the context.registerGame call."""
-    m = re.search(r'const\s+GAME_NAME\s*=\s*(["\'])(.+?)\1', src)
-    if m:
-        return m.group(2)
-    m = re.search(r'"name":\s*(["\'])(.+?)\1', src)
-    if m:
-        return m.group(2)
-    # Fallback: name: field immediately following id: GAME_ID in registerGame object
-    m = re.search(r'\bid\s*:\s*GAME_ID\b.+?\bname\s*:\s*(["\'])(.+?)\1', src, re.DOTALL)
-    return m.group(2) if m else None
-
-
-def get_game_id_from_src(src):
-    """Extract the GAME_ID constant value from index.js source, or None."""
-    m = re.search(r'const\s+GAME_ID\s*=\s*(["\'])(.+?)\1', src)
-    return m.group(2) if m else None
-
 
 def const_value(src, var_name):
     """
@@ -163,7 +141,7 @@ def patch_pcgamingwiki_url(game_id, src, context):
         if not context.get("force_pcgw"):
             return src, False, "already set"
 
-    game_name = get_game_name_from_src(src)
+    game_name = extract_game_name(src)
     page_url = None
 
     if game_name:
@@ -394,90 +372,6 @@ def _extract_function_body(src, func_start):
     return None, None
 
 
-def _find_fn_end(src, fn_match_end):
-    """Return index just past the closing '}' of the function that opens at fn_match_end-1."""
-    brace_depth = 0
-    idx = fn_match_end - 1  # position of the opening '{'
-    while idx < len(src):
-        if src[idx] == '{':
-            brace_depth += 1
-        elif src[idx] == '}':
-            brace_depth -= 1
-            if brace_depth == 0:
-                return idx + 1
-        idx += 1
-    return -1
-
-
-_REGISTER_ACTIONS = [
-    (
-        'Open Config Folder',
-        True,  # commented out
-        "  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {\n"
-        "    util.opn(CONFIG_PATH).catch(() => null);\n"
-        "    }, () => {\n"
-        "      const state = context.api.getState();\n"
-        "      const gameId = selectors.activeGameId(state);\n"
-        "      return gameId === GAME_ID;\n"
-        "  }); //*/\n",
-    ),
-    (
-        'Open Save Folder',
-        True,  # commented out
-        "  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', () => {\n"
-        "    util.opn(SAVE_PATH).catch(() => null);\n"
-        "    }, () => {\n"
-        "      const state = context.api.getState();\n"
-        "      const gameId = selectors.activeGameId(state);\n"
-        "      return gameId === GAME_ID;\n"
-        "  }); //*/\n",
-    ),
-    (
-        'Open PCGamingWiki Page',
-        False,
-        "  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {\n"
-        "    util.opn(PCGAMINGWIKI_URL).catch(() => null);\n"
-        "  }, () => {\n"
-        "    const state = context.api.getState();\n"
-        "    const gameId = selectors.activeGameId(state);\n"
-        "    return gameId === GAME_ID;\n"
-        "  });\n",
-    ),
-    (
-        'View Changelog',
-        False,
-        "  context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {\n"
-        "    const openPath = path.join(__dirname, 'CHANGELOG.md');\n"
-        "    util.opn(openPath).catch(() => null);\n"
-        "    }, () => {\n"
-        "      const state = context.api.getState();\n"
-        "      const gameId = selectors.activeGameId(state);\n"
-        "      return gameId === GAME_ID;\n"
-        "  });\n",
-    ),
-    (
-        'Submit Bug Report',
-        False,
-        "  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {\n"
-        "    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);\n"
-        "  }, () => {\n"
-        "    const state = context.api.getState();\n"
-        "    const gameId = selectors.activeGameId(state);\n"
-        "    return gameId === GAME_ID;\n"
-        "  });\n",
-    ),
-    (
-        'Open Downloads Folder',
-        False,
-        "  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {\n"
-        "    util.opn(DOWNLOAD_FOLDER).catch(() => null);\n"
-        "  }, () => {\n"
-        "    const state = context.api.getState();\n"
-        "    const gameId = selectors.activeGameId(state);\n"
-        "    return gameId === GAME_ID;\n"
-        "  });\n",
-    ),
-]
 
 
 def patch_register_actions(game_id, src, context):
@@ -817,12 +711,9 @@ def run_patches(game_ids, dry_run, context):
             if not dry_run:
                 with open(index_path, "w", encoding="utf-8") as f:
                     f.write(src)
-                result = subprocess.run(
-                    ["node", "generate_explained.js", game_id],
-                    cwd=REPO_ROOT, capture_output=True, text=True
-                )
-                if result.returncode != 0:
-                    print(f"    ! generate_explained.js failed: {result.stderr.strip()}")
+                ok, err = run_generate_explained(game_id)
+                if not ok:
+                    print(f"    ! generate_explained.js failed: {err}")
         else:
             if fail_msgs:
                 print(f"  [{game_id}] — {'; '.join(fail_msgs)}")

@@ -48,7 +48,7 @@ import argparse
 import subprocess
 import tempfile
 
-from vortex_utils import REPO_ROOT
+from vortex_utils import REPO_ROOT, run_generate_explained
 
 # Template constant names that are boolean feature toggles.
 # These are intentionally left at template defaults, not transferred from the game.
@@ -395,6 +395,13 @@ def create_port(game_id, template_name, dry_run, force):
     print()
     print(f'  Written: game-{game_id}/index.js')
     print(f'  Backup:  game-{game_id}/index.js.bak')
+
+    # Regenerate EXTENSION_EXPLAINED.md
+    ok, err = run_generate_explained(game_id)
+    if ok:
+        print(f'  EXTENSION_EXPLAINED.md regenerated.')
+    else:
+        print(f'  WARNING: generate_explained.js failed -- run manually: node generate_explained.js {game_id}')
 
 
 def main():

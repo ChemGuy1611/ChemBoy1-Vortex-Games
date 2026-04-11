@@ -60,7 +60,7 @@ import sys
 import shutil
 import argparse
 
-from vortex_utils import REPO_ROOT, extract_game_id
+from vortex_utils import REPO_ROOT, extract_game_id, _find_fn_end, REGISTER_ACTIONS
 
 # String constants always replaced with "XXX"
 ALWAYS_XXX = [
@@ -511,21 +511,6 @@ _PATHPATTERN_FN = (
 )
 
 
-def _find_fn_end(src, fn_match_end):
-    """Return index just past the closing '}' of the function that opens at fn_match_end-1."""
-    brace_depth = 0
-    idx = fn_match_end - 1  # position of the opening '{'
-    while idx < len(src):
-        if src[idx] == '{':
-            brace_depth += 1
-        elif src[idx] == '}':
-            brace_depth -= 1
-            if brace_depth == 0:
-                return idx + 1
-        idx += 1
-    return -1
-
-
 def _fixup_path_pattern(src):
     """
     Add try/catch to pathPattern if it exists without one.
@@ -766,75 +751,6 @@ def _fixup_fallback_installer(src):
     return src
 
 
-_REGISTER_ACTIONS = [
-    (
-        'Open Config Folder',
-        True,  # commented out
-        "  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {\n"
-        "    util.opn(CONFIG_PATH).catch(() => null);\n"
-        "    }, () => {\n"
-        "      const state = context.api.getState();\n"
-        "      const gameId = selectors.activeGameId(state);\n"
-        "      return gameId === GAME_ID;\n"
-        "  }); //*/\n",
-    ),
-    (
-        'Open Save Folder',
-        True,  # commented out
-        "  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', () => {\n"
-        "    util.opn(SAVE_PATH).catch(() => null);\n"
-        "    }, () => {\n"
-        "      const state = context.api.getState();\n"
-        "      const gameId = selectors.activeGameId(state);\n"
-        "      return gameId === GAME_ID;\n"
-        "  }); //*/\n",
-    ),
-    (
-        'Open PCGamingWiki Page',
-        False,
-        "  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {\n"
-        "    util.opn(PCGAMINGWIKI_URL).catch(() => null);\n"
-        "  }, () => {\n"
-        "    const state = context.api.getState();\n"
-        "    const gameId = selectors.activeGameId(state);\n"
-        "    return gameId === GAME_ID;\n"
-        "  });\n",
-    ),
-    (
-        'View Changelog',
-        False,
-        "  context.registerAction('mod-icons', 300, 'open-ext', {}, 'View Changelog', () => {\n"
-        "    const openPath = path.join(__dirname, 'CHANGELOG.md');\n"
-        "    util.opn(openPath).catch(() => null);\n"
-        "    }, () => {\n"
-        "      const state = context.api.getState();\n"
-        "      const gameId = selectors.activeGameId(state);\n"
-        "      return gameId === GAME_ID;\n"
-        "  });\n",
-    ),
-    (
-        'Submit Bug Report',
-        False,
-        "  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {\n"
-        "    util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);\n"
-        "  }, () => {\n"
-        "    const state = context.api.getState();\n"
-        "    const gameId = selectors.activeGameId(state);\n"
-        "    return gameId === GAME_ID;\n"
-        "  });\n",
-    ),
-    (
-        'Open Downloads Folder',
-        False,
-        "  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Downloads Folder', () => {\n"
-        "    util.opn(DOWNLOAD_FOLDER).catch(() => null);\n"
-        "  }, () => {\n"
-        "    const state = context.api.getState();\n"
-        "    const gameId = selectors.activeGameId(state);\n"
-        "    return gameId === GAME_ID;\n"
-        "  });\n",
-    ),
-]
 
 
 def _fixup_register_actions(src):

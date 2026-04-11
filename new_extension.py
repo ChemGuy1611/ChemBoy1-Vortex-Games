@@ -32,6 +32,7 @@ import os
 import re
 import sys
 import json
+import time
 import shutil
 import argparse
 import subprocess
@@ -45,7 +46,7 @@ import setup_test_folder as stf
 from vortex_utils import (
     REPO_ROOT, http_get, http_get_bytes,
     roman_to_arabic, arabic_to_roman, name_lookup_variants,
-    lookup_pcgamingwiki, get_api_key,
+    lookup_pcgamingwiki, get_api_key, run_generate_explained,
 )
 
 TEMPLATES = [
@@ -55,7 +56,6 @@ TEMPLATES = [
     "template-farcry",
     "template-frostbite",
     "template-godot",
-    "template-masseffectandromeda",
     "template-reframework-fluffy",
     "template-reloaded2",
     "template-rpgmaker",
@@ -404,14 +404,7 @@ def download_exec_icon(appid, game_name, out_path):
             print(f"    Steam CDN error: {e}")
 
     # 2. SteamGridDB icons
-    sgdb_key = os.environ.get("STEAMGRIDDB_API_KEY")
-    if not sgdb_key:
-        try:
-            from winreg import OpenKey, QueryValueEx, HKEY_CURRENT_USER
-            with OpenKey(HKEY_CURRENT_USER, "Environment") as reg_key:
-                sgdb_key, _ = QueryValueEx(reg_key, "STEAMGRIDDB_API_KEY")
-        except Exception:
-            pass
+    sgdb_key = get_api_key("STEAMGRIDDB_API_KEY")
     if sgdb_key:
         try:
             url = f"https://www.steamgriddb.com/api/v2/icons/steam/{appid}"
@@ -1031,16 +1024,13 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
 
     # ── Generate EXTENSION_EXPLAINED.md ───────────────────────────────────────
     print("[generate_explained.js]")
-    result = subprocess.run(
-        ["node", "generate_explained.js", game_id],
-        cwd=REPO_ROOT, capture_output=True, text=True
-    )
-    if result.returncode == 0:
+    ok, err = run_generate_explained(game_id)
+    if ok:
         print(f"  EXTENSION_EXPLAINED.md written.\n")
     else:
         print(f"  FAILED -run manually: node generate_explained.js {game_id}")
-        if result.stderr:
-            print(f"  {result.stderr.strip()}\n")
+        if err:
+            print(f"  {err}\n")
 
     # ── Update engine category lists ─────────────────────────────────────────
     print("[categorize_games.py]")

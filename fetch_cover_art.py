@@ -36,24 +36,19 @@ Environment variables:
     STEAMGRIDDB_API_KEY  (optional; required for --title and --banner)
 """
 
+import json
 import os
 import sys
 import argparse
 
 from vortex_utils import (
-    REPO_ROOT, read_index_js, extract_game_id, extract_steamapp_id,
-    get_api_key,
+    REPO_ROOT, extract_steamapp_id,
+    get_api_key, http_get, http_get_bytes, iter_game_folders,
 )
 
 # Import download helpers from new_extension.py
 sys.path.insert(0, REPO_ROOT)
 import new_extension as ne
-
-
-# ── Helpers ───────────────────────────────────────────────────────────────────
-
-def get_sgdb_key():
-    return get_api_key("STEAMGRIDDB_API_KEY")
 
 
 # ── Core logic ────────────────────────────────────────────────────────────────
@@ -65,25 +60,7 @@ def find_targets(target_game_ids=None, force=False, mode="cover"):
     If target_game_ids is set, only those extensions are checked.
     mode: "cover" (default), "title", or "banner".
     """
-    entries = sorted(os.listdir(REPO_ROOT))
-    for entry in entries:
-        folder = os.path.join(REPO_ROOT, entry)
-        if not os.path.isdir(folder):
-            continue
-        if not entry.startswith("game-"):
-            continue
-
-        src = read_index_js(folder)
-        if not src:
-            continue
-
-        game_id = extract_game_id(src)
-        if not game_id:
-            continue
-
-        if target_game_ids and game_id not in target_game_ids:
-            continue
-
+    for folder, game_id, src in iter_game_folders(target_game_ids):
         if mode == "title":
             target_path = os.path.join(REPO_ROOT, "resources", "title-images", f"{game_id}_title.jpg")
         elif mode == "banner":
@@ -107,7 +84,7 @@ def download_banner_image(appid, game_id, out_path, sgdb_key):
 
     try:
         url = f"https://www.steamgriddb.com/api/v2/heroes/steam/{appid}"
-        resp = json.loads(ne.http_get(url, {"Authorization": f"Bearer {sgdb_key}"}))
+        resp = json.loads(http_get(url, {"Authorization": f"Bearer {sgdb_key}"}))
         heroes = resp.get("data", [])
         if not heroes:
             return False, None
@@ -115,7 +92,7 @@ def download_banner_image(appid, game_id, out_path, sgdb_key):
         official = [h for h in heroes if h.get("is_official", False)]
         pool = official if official else heroes
         best = sorted(pool, key=lambda x: x.get("width", 0), reverse=True)[0]
-        img_data = ne.http_get_bytes(best["url"])
+        img_data = http_get_bytes(best["url"])
     except Exception as e:
         print(f"    SteamGridDB hero error: {e}")
         return False, None
@@ -129,7 +106,7 @@ def download_banner_image(appid, game_id, out_path, sgdb_key):
 
 
 def fetch_all(target_game_ids=None, dry_run=False, force=False, mode="cover"):
-    sgdb_key = get_sgdb_key()
+    sgdb_key = get_api_key("STEAMGRIDDB_API_KEY")
     if mode in ("title", "banner"):
         if not sgdb_key:
             label = "title" if mode == "title" else "banner"
