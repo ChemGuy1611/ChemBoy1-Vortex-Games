@@ -3,7 +3,7 @@ Name: Cairn Vortex Extension
 Structure: Unity BepinEx/MelonLoader Hybrid
 Author: ChemBoy1
 Version: 0.1.2
-Date: 2026-03-30
+Date: 2026-04-10
 //////////////////////////////////////////*/
 
 //Import libraries
