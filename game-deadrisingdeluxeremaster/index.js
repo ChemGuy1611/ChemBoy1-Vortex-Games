@@ -791,7 +791,6 @@ function runFluffy(api) {
 async function setup(discovery, api, gameSpec) {
   const state = api.getState();
   //setupNotify(api);
-  const state = api.store.getState();
   GAME_PATH = discovery.path;
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);

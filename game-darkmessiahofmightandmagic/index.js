@@ -903,7 +903,6 @@ async function modFoldersEnsureWritable(gamePath, relPaths) {
 //Setup function
 async function setup(discovery, api, gameSpec) {
   const state = api.getState();
-  const state = api.store.getState();
   GAME_PATH = discovery.path;
   STAGING_FOLDER = selectors.installPathForGame(state, gameSpec.game.id);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, gameSpec.game.id);
