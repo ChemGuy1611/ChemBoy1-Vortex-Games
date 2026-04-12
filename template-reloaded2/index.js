@@ -316,9 +316,9 @@ function isModLoaderInstalled(api, spec) {
 }
 
 //Function to auto-download Reloaded-II Mod Loader
-async function downloadModManager(api, gameSpec) {
+async function downloadModManager(api, gameSpec, check = true) {
   let modLoaderInstalled = isModManagerInstalled(api, gameSpec);
-  if (!modLoaderInstalled) {
+  if (!modLoaderInstalled || !check) {
     //notification indicating install process
     const MOD_NAME = 'Reloaded Mod Manager';
     const NOTIF_ID = `${GAME_ID}-${MOD_NAME}-installing`;
@@ -358,49 +358,6 @@ async function downloadModManager(api, gameSpec) {
     } finally {
       api.dismissNotification(NOTIF_ID);
     }
-  }
-}
-
-//Function to auto-download Reloaded-II Mod Loader from GitHub (no check, for button)
-async function downloadModManagerNoCheck(api, gameSpec) {
-  //notification indicating install process
-  const MOD_NAME = 'Reloaded Mod Manager';
-  const NOTIF_ID = `${GAME_ID}-${MOD_NAME}-installing`;
-  api.sendNotification({
-    id: NOTIF_ID,
-    message: `Installing-${MOD_NAME}`,
-    type: 'activity',
-    noDismiss: true,
-    allowSuppress: false,
-  });
-
-  try {
-    //Download the mod
-    const dlInfo = {
-      game: gameSpec.game.id,
-      name: MOD_NAME,
-    };
-    const URL = RELOADED_URL_LATEST;
-    const dlId = await util.toPromise(cb =>
-      api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
-    const modId = await util.toPromise(cb =>
-      api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
-    const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
-    const batched = [
-      actions.setModsEnabled(api, profileId, [modId], true, {
-        allowAutoDeploy: true,
-        installed: true,
-      }),
-      actions.setModType(gameSpec.game.id, modId, RELOADED_ID), // Set the mod type
-    ];
-    util.batchDispatch(api.store, batched); // Will dispatch both actions.
-  //Show the user the download page if the download, install process fails
-  } catch (err) {
-    const errPage = RELOADED_URL_MANUAL;
-    api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
-    util.opn(errPage).catch(() => null);
-  } finally {
-    api.dismissNotification(NOTIF_ID);
   }
 }
 
@@ -751,14 +708,9 @@ function fallbackInstallerNotify(api, modName) {
                 dismiss();
               }
             }, //*/
-            {
-              label: 'Open Staging Folder', action: () => {
-                util.opn(path.join(STAGING_FOLDER, modName)).catch(() => null);
-                dismiss();
-              }
-            }, //*/
             //*
-            { label: `Open Mod Page`, action: () => {
+            { label: `Open Mod Page + Staging Folder`, action: () => {
+              util.opn(path.join(STAGING_FOLDER, modName)).catch(() => null);
               const mods = util.getSafe(api.store.getState(), ['persistent', 'mods', spec.game.id], {});
               const modMatch = Object.values(mods).find(mod => mod.installationPath === modName);
               log('warn', `Found ${modMatch?.id} for ${modName}`);
@@ -770,8 +722,8 @@ function fallbackInstallerNotify(api, modName) {
                 }
               }
               const MOD_PAGE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${PAGE}`;
-              util.opn(MOD_PAGE_URL).catch(err => undefined);
-              //dismiss();
+              util.opn(MOD_PAGE_URL).catch(() => null);
+              dismiss();
             }}, //*/
           ]);
         },
@@ -966,7 +918,7 @@ function applyGame(context, gameSpec) {
 
   //register actions
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download Reloaded Mod Manager', () => {
-    downloadModManagerNoCheck(context.api, gameSpec).catch(() => null);
+    downloadModManager(context.api, gameSpec, false).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);

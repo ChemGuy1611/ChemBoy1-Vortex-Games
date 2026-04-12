@@ -461,7 +461,6 @@ Packages a game extension folder into a `.zip` archive using 7-Zip and opens the
 
 ### release_extension.py — Requirements
 
-
 ### release_extension.py — Environment Variables
 
 | Variable | Required | Description |

@@ -315,17 +315,17 @@ async function downloadModManager(api, check) {
                 allowSuppress: false,
               });
               let files = await fs.readdirAsync(DOWNLOAD_FOLDER);
-              //let files = fs.readdirSync(DOWNLOAD_FOLDER);
               files = files.filter(file => ( path.basename(file).includes(MODMANAGER_STRING) && (path.extname(file).toLowerCase() === '.exe') ))
                 .sort((a,b) => a.toLowerCase().localeCompare(b.toLowerCase()))
                 .reverse();
               const copyFile = files[0];
+              if (copyFile === undefined) {
+                throw new util.UserCanceled(`No ${MOD_NAME} download file found`);
+              }
               await fs.statAsync(path.join(DOWNLOAD_FOLDER, copyFile));
-              //fs.statSync(path.join(DOWNLOAD_FOLDER, copyFile));
               const source = path.join(DOWNLOAD_FOLDER, copyFile);
               const destination = path.join(GAME_PATH, MODMANAGER_EXEC);
               await fs.copyAsync(source, destination, { overwrite: true });
-              //fs.copySync(source, destination, { overwrite: true });
               api.dismissNotification(NOTIF_ID);
               api.dismissNotification(`${NOTIF_ID}-copy`);
               api.sendNotification({ //notification copy success

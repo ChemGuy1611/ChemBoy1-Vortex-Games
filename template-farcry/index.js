@@ -711,14 +711,9 @@ function fallbackInstallerNotify(api, modName) {
                 dismiss();
               }
             }, //*/
-            {
-              label: 'Open Staging Folder', action: () => {
-                util.opn(path.join(STAGING_FOLDER, modName)).catch(() => null);
-                dismiss();
-              }
-            }, //*/
             //*
-            { label: `Open Mod Page`, action: () => {
+            { label: `Open Mod Page + Staging Folder`, action: () => {
+              util.opn(path.join(STAGING_FOLDER, modName)).catch(() => null);
               const mods = util.getSafe(api.store.getState(), ['persistent', 'mods', spec.game.id], {});
               const modMatch = Object.values(mods).find(mod => mod.installationPath === modName);
               log('warn', `Found ${modMatch?.id} for ${modName}`);
@@ -730,8 +725,8 @@ function fallbackInstallerNotify(api, modName) {
                 }
               }
               const MOD_PAGE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${PAGE}`;
-              util.opn(MOD_PAGE_URL).catch(err => undefined);
-              //dismiss();
+              util.opn(MOD_PAGE_URL).catch(() => null);
+              dismiss();
             }}, //*/
           ]);
         },
@@ -757,9 +752,9 @@ function isXmlInstalled(api, spec) {
 }
 
 //* Function to auto-download Mod Installer from site
-async function downloadModInstaller(api, gameSpec) {
+async function downloadModInstaller(api, gameSpec, check = true) {
   let isInstalled = isModInstallerInstalled(api, gameSpec);
-  if (!isInstalled) {
+  if (!isInstalled || !check) {
     const MOD_NAME = MI_NAME;
     const MOD_TYPE = MI_ID;
     const NOTIF_ID = `${MOD_TYPE}-installing`;
@@ -802,9 +797,9 @@ async function downloadModInstaller(api, gameSpec) {
 } //*/
 
 //* Function to auto-download XML file from Nexus Mods
-async function downloadXml(api, gameSpec) {
+async function downloadXml(api, gameSpec, check = true) {
   let isInstalled = isXmlInstalled(api, gameSpec);
-  if (!isInstalled) {
+  if (!isInstalled || !check) {
     const MOD_NAME = XML_NAME;
     const MOD_TYPE = XML_ID;
     const NOTIF_ID = `${MOD_TYPE}-installing`;

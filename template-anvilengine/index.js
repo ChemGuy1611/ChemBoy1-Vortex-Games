@@ -480,9 +480,9 @@ function isForgerInstalled(api, spec) {
 
 //Function to automatically download Forger Patch Manager from Nexus Mods
 //Only called when hasForger = true
-async function downloadForger(api, gameSpec) {
+async function downloadForger(api, gameSpec, check = true) {
   let isInstalled = isForgerInstalled(api, gameSpec);
-  if (!isInstalled) {
+  if (!isInstalled || !check) {
     const MOD_NAME = FORGER_NAME;
     const MOD_TYPE = FORGER_ID;
     const NOTIF_ID = `${MOD_TYPE}-installing`;
@@ -1091,13 +1091,9 @@ function fallbackInstallerNotify(api, modName) {
                 dismiss();
               }
             },
-            {
-              label: 'Open Staging Folder', action: () => {
-                util.opn(path.join(STAGING_FOLDER, modName)).catch(() => null);
-                dismiss();
-              }
-            },
-            { label: `Open Mod Page`, action: () => {
+            //*
+            { label: `Open Mod Page + Staging Folder`, action: () => {
+              util.opn(path.join(STAGING_FOLDER, modName)).catch(() => null);
               const mods = util.getSafe(api.store.getState(), ['persistent', 'mods', spec.game.id], {});
               const modMatch = Object.values(mods).find(mod => mod.installationPath === modName);
               log('warn', `Found ${modMatch?.id} for ${modName}`);
@@ -1105,12 +1101,13 @@ function fallbackInstallerNotify(api, modName) {
               if (modMatch) {
                 const MOD_ID = modMatch.attributes.modId;
                 if (MOD_ID !== undefined) {
-                  PAGE = `${MOD_ID}?tab=description`;
+                  PAGE = `${MOD_ID}?tab=description`; 
                 }
               }
               const MOD_PAGE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${PAGE}`;
               util.opn(MOD_PAGE_URL).catch(() => null);
-            }},
+              dismiss();
+            }}, //*/
           ]);
         },
       },

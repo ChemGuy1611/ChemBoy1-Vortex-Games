@@ -344,9 +344,9 @@ function isModManagerInstalled(api, spec) {
 
 /*
 //Function to auto-download SRMM from Github
-async function downloadModManager(api, gameSpec) {
+async function downloadModManager(api, gameSpec, check = true) {
   let isInstalled = isModManagerInstalled(api, gameSpec);
-  if (!isInstalled) {
+  if (!isInstalled || !check) {
     //notification indicating install process
     const MOD_NAME = MODMANAGER_NAME;
     const NOTIF_ID = `${GAME_ID}-${MOD_NAME}-installing`;
@@ -394,9 +394,9 @@ async function downloadModManager(api, gameSpec) {
 
 //*
 //Function to auto-download SRMM
-async function downloadModManager(api, gameSpec) {
+async function downloadModManager(api, gameSpec, check = true) {
   let isInstalled = isModManagerInstalled(api, gameSpec);
-  if (!isInstalled) {
+  if (!isInstalled || !check) {
     //notification indicating install process
     const MOD_NAME = MODMANAGER_NAME;
     const NOTIF_ID = `${GAME_ID}-${MOD_NAME}-installing`;
@@ -813,14 +813,9 @@ function fallbackInstallerNotify(api, modName) {
                 dismiss();
               }
             }, //*/
-            {
-              label: 'Open Staging Folder', action: () => {
-                util.opn(path.join(STAGING_FOLDER, modName)).catch(() => null);
-                dismiss();
-              }
-            }, //*/
             //*
-            { label: `Open Mod Page`, action: () => {
+            { label: `Open Mod Page + Staging Folder`, action: () => {
+              util.opn(path.join(STAGING_FOLDER, modName)).catch(() => null);
               const mods = util.getSafe(api.store.getState(), ['persistent', 'mods', spec.game.id], {});
               const modMatch = Object.values(mods).find(mod => mod.installationPath === modName);
               log('warn', `Found ${modMatch?.id} for ${modName}`);
@@ -832,8 +827,8 @@ function fallbackInstallerNotify(api, modName) {
                 }
               }
               const MOD_PAGE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${PAGE}`;
-              util.opn(MOD_PAGE_URL).catch(err => undefined);
-              //dismiss();
+              util.opn(MOD_PAGE_URL).catch(() => null);
+              dismiss();
             }}, //*/
           ]);
         },

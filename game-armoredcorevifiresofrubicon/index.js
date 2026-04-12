@@ -1,6 +1,6 @@
 /*///////////////////////////////////////////
 Name: ARMORED CORE VI FIRES OF RUBICON Vortex Extension
-Structure: Basic Game
+Structure: ModEngine Game
 Author: ChemBoy1
 Version: 0.1.0
 Date: 2026-04-03
@@ -189,6 +189,12 @@ const spec = {
     }
   },
   "modTypes": [
+    {
+      "id": ME3_ID,
+      "name": ME3_NAME,
+      "priority": "low",
+      "targetPath": path.join("{gamePath}", ME3_PATH)
+    },
     {
       "id": MOD_ID,
       "name": MOD_NAME,
@@ -443,9 +449,9 @@ async function deploy(api) { //useful to deploy mods after doing some action
 
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
 
-//Test for mod loader files
-function testLoader(files, gameId) {
-  const isMod = files.some(file => path.basename(file) === LOADER_FILE);
+//Test for ME3 files
+function testMe3(files, gameId) {
+  const isMod = files.some(file => path.basename(file) === ME3_FILE);
   let supported = (gameId === spec.game.id) && isMod;
 
   // Test for a mod installer
@@ -461,10 +467,10 @@ function testLoader(files, gameId) {
   });
 }
 
-//Install mod loader files
-function installLoader(files) {
-  const MOD_TYPE = LOADER_ID;
-  const modFile = files.find(file => path.basename(file) === LOADER_FILE);
+//Install ME3 files
+function installMe3(files) {
+  const MOD_TYPE = ME3_ID;
+  const modFile = files.find(file => path.basename(file) === ME3_FILE);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
@@ -669,14 +675,9 @@ function fallbackInstallerNotify(api, modName) {
                 dismiss();
               }
             }, //*/
-            {
-              label: 'Open Staging Folder', action: () => {
-                util.opn(path.join(STAGING_FOLDER, modName)).catch(() => null);
-                dismiss();
-              }
-            }, //*/
             //*
-            { label: `Open Mod Page`, action: () => {
+            { label: `Open Mod Page + Staging Folder`, action: () => {
+              util.opn(path.join(STAGING_FOLDER, modName)).catch(() => null);
               const mods = util.getSafe(api.store.getState(), ['persistent', 'mods', spec.game.id], {});
               const modMatch = Object.values(mods).find(mod => mod.installationPath === modName);
               log('warn', `Found ${modMatch?.id} for ${modName}`);
@@ -688,8 +689,8 @@ function fallbackInstallerNotify(api, modName) {
                 }
               }
               const MOD_PAGE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${PAGE}`;
-              util.opn(MOD_PAGE_URL).catch(err => undefined);
-              //dismiss();
+              util.opn(MOD_PAGE_URL).catch(() => null);
+              dismiss();
             }}, //*/
           ]);
         },
@@ -905,22 +906,8 @@ function applyGame(context, gameSpec) {
     { name: SAVE_NAME }
   ); //*/
 
-  if (hasLoader) {
-    context.registerModType(LOADER_ID, 70, 
-      (gameId) => {
-        var _a;
-        return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-      }, 
-      (game) => pathPattern(context.api, game, path.join('{gamePath}', LOADER_PATH)), 
-      () => Promise.resolve(false), 
-      { name: LOADER_NAME }
-    );
-  }
-  
   //register mod installers
-  if (hasLoader) {
-    context.registerInstaller(LOADER_ID, 25, testLoader, installLoader);
-  }
+  context.registerInstaller(ME3_ID, 25, testMe3, installMe3);
   if (rootInstaller) {
     context.registerInstaller(ROOT_ID, 27, testRoot, installRoot);
   }

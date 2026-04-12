@@ -1350,14 +1350,9 @@ function fallbackInstallerNotify(api, modName) {
                 dismiss();
               }
             }, //*/
-            {
-              label: 'Open Staging Folder', action: () => {
-                util.opn(path.join(STAGING_FOLDER, modName)).catch(() => null);
-                dismiss();
-              }
-            }, //*/
             //*
-            { label: `Open Nexus Mods Page`, action: () => {
+            { label: `Open Mod Page + Staging Folder`, action: () => {
+              util.opn(path.join(STAGING_FOLDER, modName)).catch(() => null);
               const mods = util.getSafe(api.store.getState(), ['persistent', 'mods', spec.game.id], {});
               const modMatch = Object.values(mods).find(mod => mod.installationPath === modName);
               log('warn', `Found ${modMatch?.id} for ${modName}`);
@@ -1369,8 +1364,8 @@ function fallbackInstallerNotify(api, modName) {
                 }
               }
               const MOD_PAGE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${PAGE}`;
-              util.opn(MOD_PAGE_URL).catch(err => undefined);
-              //dismiss();
+              util.opn(MOD_PAGE_URL).catch(() => null);
+              dismiss();
             }}, //*/
           ]);
         },
@@ -1396,7 +1391,7 @@ function isSigBypassInstalled(api, spec) {
 }
 
 //* Download UE4SS from GitHub page (user browse for download)
-async function downloadUe4ss(api, gameSpec) {
+async function downloadUe4ss(api, gameSpec, check = true) {
   let isInstalled = isUe4ssInstalled(api, gameSpec);
   const URL = UE4SS_URL;
   const MOD_NAME = UE4SS_NAME;
@@ -1407,7 +1402,7 @@ async function downloadUe4ss(api, gameSpec) {
     + `click on the appropriate file to download and install the mod.`
   );
 
-  if (!isInstalled) {
+  if (!isInstalled || !check) {
     return new Promise((resolve, reject) => { //Browse and download the mod
       return api.emitAndAwait('browse-for-download', URL, instructions)
       .then((result) => { //result is an array with the URL to the downloaded file as the only element
@@ -1467,9 +1462,9 @@ async function downloadUe4ss(api, gameSpec) {
 } //*/
 
 //* Function to auto-download UE4SS from Nexus Mods
-async function downloadUe4ssNexus(api, gameSpec) {
+async function downloadUe4ssNexus(api, gameSpec, check = true) {
   let isInstalled = isUe4ssInstalled(api, gameSpec);
-  if (!isInstalled) {
+  if (!isInstalled || !check) {
     const MOD_NAME = UE4SS_NAME;
     const MOD_TYPE = UE4SS_ID;
     const NOTIF_ID = `${MOD_TYPE}-installing`;
@@ -1533,9 +1528,9 @@ async function downloadUe4ssNexus(api, gameSpec) {
 } //*/
 
 //* Function to auto-download Sig Bypass from Nexus Mods
-async function downloadSigBypass(api, gameSpec) {
+async function downloadSigBypass(api, gameSpec, check = true) {
   let isInstalled = isSigBypassInstalled(api, gameSpec);
-  if (!isInstalled) {
+  if (!isInstalled || !check) {
     const MOD_NAME = SIGBYPASS_NAME;
     const MOD_TYPE = SIGBYPASS_ID;
     const NOTIF_ID = `${MOD_TYPE}-installing`;

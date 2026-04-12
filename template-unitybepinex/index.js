@@ -731,14 +731,9 @@ function fallbackInstallerNotify(api, modName) {
                 dismiss();
               }
             }, //*/
-            {
-              label: 'Open Staging Folder', action: () => {
-                util.opn(path.join(STAGING_FOLDER, modName)).catch(() => null);
-                dismiss();
-              }
-            }, //*/
             //*
-            { label: `Open Mod Page`, action: () => {
+            { label: `Open Mod Page + Staging Folder`, action: () => {
+              util.opn(path.join(STAGING_FOLDER, modName)).catch(() => null);
               const mods = util.getSafe(api.store.getState(), ['persistent', 'mods', spec.game.id], {});
               const modMatch = Object.values(mods).find(mod => mod.installationPath === modName);
               log('warn', `Found ${modMatch?.id} for ${modName}`);
@@ -750,8 +745,8 @@ function fallbackInstallerNotify(api, modName) {
                 }
               }
               const MOD_PAGE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${PAGE}`;
-              util.opn(MOD_PAGE_URL).catch(err => undefined);
-              //dismiss();
+              util.opn(MOD_PAGE_URL).catch(() => null);
+              dismiss();
             }}, //*/
           ]);
         },
@@ -922,7 +917,7 @@ function applyGame(context, gameSpec) {
   
   //register actions
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download BepInExConfigManager', () => {
-    downloadBepCfgMan(context.api, spec);
+    downloadBepCfgMan(context.api, spec, false);
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
@@ -1059,9 +1054,9 @@ function isBepCfgManInstalled(api, spec) {
   return Object.keys(mods).some(id => mods[id]?.type === BEPCFGMAN_ID);
 }
 
-async function downloadBepCfgMan(api, gameSpec) {
+async function downloadBepCfgMan(api, gameSpec, check = true) {
   let isInstalled = isBepCfgManInstalled(api, gameSpec);
-  if (!isInstalled) {
+  if (!isInstalled || !check) {
     const MOD_NAME = BEPCFGMAN_NAME;
     const MOD_TYPE = BEPCFGMAN_ID;
     const NOTIF_ID = `${MOD_TYPE}-installing`;
@@ -1110,9 +1105,9 @@ function isBepinexInstalled(api, spec) {
   return Object.keys(mods).some(id => mods[id]?.type === BEPINEX_ID);
 }
 
-async function downloadBepinexBleedingEdge(api, gameSpec) {
+async function downloadBepinexBleedingEdge(api, gameSpec, check = true) {
   let isInstalled = isBepinexInstalled(api, gameSpec);
-  if (!isInstalled) {
+  if (!isInstalled || !check) {
     const MOD_NAME = BEPINEX_ZIP;
     const MOD_TYPE = BEPINEX_ID;
     const NOTIF_ID = `${MOD_TYPE}-installing`;
