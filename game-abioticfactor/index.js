@@ -2,8 +2,8 @@
 Name: Abiotic Factor Vortex Extension
 Structure: UE5 (Xbox-Integrated)
 Author: ChemBoy1
-Version: 0.2.0
-Date: 2026-02-06
+Version: 0.2.1
+Date: 2026-04-12
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -481,17 +481,16 @@ async function deploy(api) {
 
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
 
-//Test for save files
+//Test for UE4SS combo (pak and lua/dll) mod files
 function testUe4ssCombo(files, gameId) {
-  const isMod = files.find(file => path.extname(file).toLowerCase() === SCRIPTS_EXT) !== undefined;
-  const isMod2 = files.find(file => path.extname(file).toLowerCase() === LOGICMODS_EXT) !== undefined;
-  const isFolder = files.find(file => path.basename(file).toLowerCase() === ROOT_FOLDER.toLowerCase()) !== undefined;
-  let supported = (gameId === spec.game.id) && isMod && isMod2 && isFolder;
+  const isBinaries = files.some(file => (path.basename(file).toLowerCase() === 'binaries')); //added to catch mods packaged with paks and dll/asi, but no lua scripts.
+  const isContent = files.some(file => (path.basename(file).toLowerCase() === 'content'));
+  let supported = (gameId === spec.game.id) && isContent && isBinaries;
 
   // Test for a mod installer
   if (supported && files.find(file =>
-      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
     supported = false;
   }
 
@@ -501,12 +500,25 @@ function testUe4ssCombo(files, gameId) {
   });
 }
 
-//Install save files
-function installUe4ssCombo(files, fileName) {
-  const modFile = files.find(file => path.basename(file).toLowerCase() === ROOT_FOLDER.toLowerCase());
+//Install UE4SS combo (pak and lua/dll) mod files
+async function installUe4ssCombo(files, workingDir) {
+  const modFile = files.find(file => (path.basename(file).toLowerCase() === 'binaries'));
   const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: UE4SSCOMBO_ID };
+
+  if (GAME_VERSION === 'xbox') {
+    try {
+      /*await fs.statAsync(path.join(workingDir, modFile, 'Binaries', 'Win64'));
+      await fs.renameAsync(path.join(workingDir, modFile, 'Binaries', 'Win64'), path.join(workingDir, modFile, 'Binaries', 'WinGDK')); //*/
+      await fs.statAsync(path.join(workingDir, modFile, 'Win64'));
+      await fs.renameAsync(path.join(workingDir, modFile, 'Win64'), path.join(workingDir, modFile, 'WinGDK')); //*/
+      const paths = await getAllFiles(workingDir);
+      files = [...paths.map(p => p.replace(`${workingDir}${path.sep}`, ''))];
+    } catch (err) {
+      log('warn', `Failed to rename "Win64" folder to "WinGDK" for UE4SS combo mod ${workingDir} (or "Win64" folder is not present): ${err}`);
+    }
+  }
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
@@ -517,7 +529,7 @@ function installUe4ssCombo(files, fileName) {
     return {
       type: 'copy',
       source: file,
-      destination: path.join(file.substr(idx)),
+      destination: path.join(EPIC_CODE_NAME, file.substr(idx)),
     };
   });
   instructions.push(setModTypeInstruction);

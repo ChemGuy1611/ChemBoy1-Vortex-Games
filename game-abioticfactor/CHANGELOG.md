@@ -4,6 +4,10 @@
 
 - None
 
+## [0.2.1] - 2026-04-12
+
+- Improved: Combo mod installer now checks only for "Binaries" and "Content" folders to install incomprehensibly packaged mods
+
 ## [0.2.0] - 2026-02-03
 
 - Improved: Made UE4SS DLL, LogicMods, and Root Folder mod installers case-insensitive to folder names
