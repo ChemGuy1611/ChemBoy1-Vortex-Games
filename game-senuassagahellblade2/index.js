@@ -232,7 +232,7 @@ function pathPattern(api, game, pattern) {
     return template(pattern, {
       gamePath: (_a = api.getState().settings.gameMode.discovered[game.id]) === null || _a === void 0 ? void 0 : _a.path,
       documents: util.getVortexPath('documents'),
-      localAppData: process.env['LOCALAPPDATA'],
+      localAppData: util.getVortexPath('localAppData'),
       appData: util.getVortexPath('appData'),
     });
   }
