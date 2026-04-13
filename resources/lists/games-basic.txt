@@ -24,13 +24,11 @@ doom
 doom3
 doometernal
 doomthedarkages
-dragonageinquisition
 dragonagetheveilguard
 dyinglightthebeast
 europauniversalisiv
 europauniversalisv
 farmingsimulator25
-frostpunk2
 ghostoftsushima
 godofwar
 godofwarragnarok
@@ -44,9 +42,7 @@ horizonzerodawnremastered
 hytale
 indianajonesandthegreatcircle
 kingdomcomedeliverance2
-likeadragonpirateyakuzainhawaii
 marvelsspiderman2
-masseffectandromeda
 metroexodus
 mewgenics
 middleearthshadowofwar

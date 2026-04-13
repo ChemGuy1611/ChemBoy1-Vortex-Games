@@ -29,7 +29,7 @@ CATEGORIES = [
     (
         "games-ue4-5.txt",
         "Unreal Engine 4/5",
-        lambda head, src: "const UNREALDATA =" in src,
+        lambda head, src: "UNREALDATA" in src,
     ),
     (
         "games-ue2-3.txt",
