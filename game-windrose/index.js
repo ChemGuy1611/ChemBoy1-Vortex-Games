@@ -2,8 +2,8 @@
 Name: Windrose Vortex Extension
 Structure: Unreal Engine Game
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2026-03-25
+Version: 0.1.1
+Date: 2026-04-13
 Notes:
 - Only demo out now. Update for full release when available, if needed.
 ////////////////////////////////////////////////*/
@@ -36,7 +36,7 @@ const GOGAPP_ID = null; // from gogdb.org
 const XBOXAPP_ID = null; //from appxmanifest.xml
 const XBOXEXECNAME = "AppUEGameShipping"; //from appxmanifest.xml
 const XBOX_PUB_ID = "XXX"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID, STEAMAPP_ID_DEMO, EPICAPP_ID_DEMO]; // UPDATE THIS WITH ALL VALID IDs
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, STEAMAPP_ID_DEMO, EPICAPP_ID_DEMO]; // UPDATE THIS WITH ALL VALID IDs
 
 const GAME_NAME = "Windrose";
 const GAME_NAME_SHORT = GAME_NAME; //Try for 8-10 characters

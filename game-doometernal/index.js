@@ -2,8 +2,8 @@
 Name: DOOM Eternal Vortex Extension
 Structure: 3rd party mod loader
 Author: ChemBoy1
-Version: 0.3.4
-Date: 2026-03-19
+Version: 0.3.5
+Date: 2026-04-13
 ////////////////////////////////////////////////*/
 /*
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣀⣀⣠⣤⣤⣤⡴⣦⡴⣖⠶⣴⠶⡶⣖⡶⣶⢶⣲⡾⠿⢿⡷⣾⢿⣷⣦⢾⣷⣾⣶⣤⣀⣰⣤⣀⡀⠀⠀⢀⣴⣿⡿⡿⣿⣿⣦⣄⠀⠀⣠⣴⣿⡿⢿⡿⣷⣦⡄⠀⠀⢀⣀⣤⣦⣀⣤⣶⣶⣷⣦⣴⡿⢿⡷⣿⠿⡿⣿⣷⢶⣦⢴⡲⣦⢶⡶⢶⡲⣖⡶⣦⣤⣤⣤⣤⣤⣤⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
@@ -52,8 +52,8 @@ const EXEC = path.join('launcher', "idTechLauncher.exe");
 const EXEC_ALT = "DOOMEternalx64vk.exe";
 const EXEC_XBOX = "gamelaunchhelper.exe";
 
-const INJ_REV = "6.66 Rev 3I";
-const INJ_DL_ID = "1624186"; //update this file id when new version released on gamebanana - https://gamebanana.com/tools/7475
+const INJ_REV = "6.66 Rev 3 L";
+const INJ_DL_ID = "1672431"; //update this file id when new version released on gamebanana - https://gamebanana.com/tools/7475
 const INJ_URL = `https://gamebanana.com/tools/7475`;
 const INJ_INSTR_URL = `https://gamebanana.com/posts/10737067`;
 
