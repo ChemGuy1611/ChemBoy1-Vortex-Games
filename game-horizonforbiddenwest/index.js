@@ -211,7 +211,7 @@ async function requiresLauncher(gamePath, store) {
         },
     });
   } //*/
-  /*
+  //*
   if (store === 'steam') {
     return Promise.resolve({
         launcher: 'steam',
@@ -254,12 +254,11 @@ function isRepackerInstalled(api, spec) {
 }
 
 //* Function to auto-download HFW MM from Nexus Mods
-async function downloadModManager(api, check) {
+async function downloadModManager(api, check = true) {
   GAME_PATH = getDiscoveryPath(api);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(api.getState(), GAME_ID);
   let isInstalled = await isModManagerInstalled(api);
-  if (check === false) isInstalled = false;
-  if (!isInstalled) {
+  if (!isInstalled || !check) {
     const MOD_NAME = MODMANAGER_NAME;
     const MOD_TYPE = MODMANAGER_ID;
     const NOTIF_ID = `${MOD_TYPE}-installing`;
@@ -321,7 +320,7 @@ async function downloadModManager(api, check) {
               const copyFile = files[0];
               if (copyFile === undefined) {
                 throw new util.UserCanceled(`No ${MOD_NAME} download file found`);
-              }
+              } //*/
               await fs.statAsync(path.join(DOWNLOAD_FOLDER, copyFile));
               const source = path.join(DOWNLOAD_FOLDER, copyFile);
               const destination = path.join(GAME_PATH, MODMANAGER_EXEC);
@@ -582,12 +581,6 @@ function deployNotify(api) {
                 + `Use the included tool to launch ${MOD_NAME} (button on notification or in "Dashboard" tab).\n`
                 + `Select the mod options you want, then click the "Pack Mods" button.\n`
           }, [
-            /*{
-              label: `Open Game Folder`, action: () => {
-                util.opn(GAME_PATH).catch(() => null);
-                dismiss();
-              }
-            }, //*/
             { 
               label: `Run ${MOD_NAME}`, action: () => {
                 runManager(api);
@@ -636,12 +629,6 @@ function purgeNotify(api) {
                 + `\n`
                 + `Use the included tool to launch ${MOD_NAME} (button on notification or in "Dashboard" tab).\n`
           }, [
-            /*{
-              label: `Open Game Folder`, action: () => {
-                util.opn(GAME_PATH).catch(() => null);
-                dismiss();
-              }
-            }, //*/
             { 
               label: `Run ${MOD_NAME}`, action: () => {
                 runManager(api);
@@ -779,7 +766,7 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(SAVE_ID, 25, testSave, installSave);
 
   //register actions
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download HFW Mod Manager', () => {
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download HFW Mod Manager (Update)', () => {
     downloadModManager(context.api, false);
   }, () => {
     const state = context.api.getState();

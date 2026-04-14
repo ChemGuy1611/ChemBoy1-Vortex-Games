@@ -2,8 +2,8 @@
 Name: Styx BOG Vortex Extension
 Structure: Unreal Engine Game
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2026-02-19
+Version: 0.1.1
+Date: 2026-04-13
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -69,7 +69,7 @@ const UE4SS_MOD_PATH = path.join('ue4ss', 'Mods'); //this should probably never 
 
 //config, save, shipping exe
 const DATA_FOLDER = EPIC_CODE_NAME; //almost always matches.
-const CONFIG_FOLDERNAME = 'Windows'; //UE 4 games are often 'WindowsNoEditor'
+const CONFIG_FOLDERNAME = 'WindowsClient'; //UE 4 games are often 'WindowsNoEditor' - "Windows", "WindowsClient", "WindowsNoEditor"
 const CONFIG_LOC = 'Local AppData'; //string for notification text.
 const SAVE_LOC = CONFIG_LOC; //string for notification text. Config and Save mods are almonst always in the same place
 const CONFIGMOD_LOCATION = LOCALAPPDATA; //almost always matches. Some are in game folder or Documents.

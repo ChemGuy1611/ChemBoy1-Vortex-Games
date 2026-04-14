@@ -13,10 +13,10 @@
 | Property | Value |
 | --- | --- |
 | Game ID | `deathstranding2onthebeach` |
-| Executable | `./DS2.exe` |
+| Executable | `DS2.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
-| Executable (GOG) | `./DS2.exe` |
-| Executable (Demo) | `./DS2.exe` |
+| Executable (GOG) | `DS2.exe` |
+| Executable (Demo) | `DS2.exe` |
 
 ## Supported Stores
 
@@ -33,12 +33,13 @@
 | `multiModPath` | `false` | set to true if there are multiple possible mod paths (i.e. different path for Xbox version) |
 | `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
 | `needsModInstaller` | `false` | set to true if standard mods should run through an installer - set false to have mods installed to the mods folder without any processing |
-| `rootInstaller` | `true` | enable root installer. Set false if you need to avoid installer collisions |
+| `rootInstaller` | `false` | enable root installer. Set false if you need to avoid installer collisions |
 | `fallbackInstaller` | `false` | enable fallback installer. Set false if you need to avoid installer collisions |
 | `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below) |
 | `hasUserIdFolder` | `false` | true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID) |
 | `debug` | `false` | toggle for debug mode |
 | `binariesInstaller` | `false` | enables the Binaries folder installer (for engine injectors) |
+| `modManagerInstalled` | `false` |  |
 
 ## Mod Types
 
@@ -46,7 +47,8 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
-| Mod | `deathstranding2onthebeach-mod` | high | `{gamePath}/mods` |
+| DS2 Manager Mod | `deathstranding2onthebeach-managermod` | high | `{gamePath}/mods` |
+| DS2 Mod Manager | `deathstranding2onthebeach-modmanager` | low | `{gamePath}` |
 | Root Folder | `deathstranding2onthebeach-root` | high | `{gamePath}` |
 
 ## Mod Installers
@@ -56,8 +58,8 @@ Installers run in priority order (lower number = tested first). The first instal
 | Installer ID | Priority |
 | --- | --- |
 | `deathstranding2onthebeach-loader` | 25 |
+| `deathstranding2onthebeach-managermod` | 35 |
 | `deathstranding2onthebeach-root` | 27 |
-| `deathstranding2onthebeach-mod` | 35 |
 | `deathstranding2onthebeach-fallback` | 49 |
 
 ## Registered Tools
@@ -70,6 +72,8 @@ These tools appear in Vortex's Tools panel when this game is active:
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
+- Download DS2 Mod Manager (Update)
+- Open DS2 Mod Manager Page
 - Open Config/Save Folder
 - Open PCGamingWiki Page
 - View Changelog
@@ -84,6 +88,8 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 ## Special Features
 
+- **Deploy Hook** (`did-deploy`) — runs custom logic (e.g., notifications, metadata patching) every time mods are deployed.
+- **Purge Hook** (`did-purge`) — runs custom logic when mods are purged.
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
@@ -100,6 +106,7 @@ User drops archive into Vortex
                  └── Vortex stages files
                       └── User deploys
                            └── Vortex links/copies to game folder
+                                └── did-deploy fires → post-deploy logic runs
 ```
 
 ## Entry Point

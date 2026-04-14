@@ -2,8 +2,8 @@
 Name: Dead As Disco Vortex Extension
 Structure: Unreal Engine Game
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2026-01-13
+Version: 0.1.1
+Date: 2026-04-13
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -265,7 +265,8 @@ const spec = {
       "enb": false,
     },
     "details": {
-      "steamAppId": +STEAMAPP_ID,
+      "steamAppId": +STEAMAPP_ID_DEMO,
+      //"steamAppId": +STEAMAPP_ID,
       "gogAppId": GOGAPP_ID,
       "epicAppId": EPICAPP_ID,
       "xboxAppId": XBOXAPP_ID,
@@ -274,7 +275,8 @@ const spec = {
       "ignoreDeploy": IGNORE_DEPLOY,
     },
     "environment": {
-      "SteamAPPId": STEAMAPP_ID,
+      "SteamAPPId": STEAMAPP_ID_DEMO,
+      //"SteamAPPId": STEAMAPP_ID,
       "GogAPPId": GOGAPP_ID,
       "EpicAPPId": EPICAPP_ID,
       "XboxAPPId": XBOXAPP_ID,

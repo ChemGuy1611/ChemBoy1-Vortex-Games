@@ -186,7 +186,7 @@ const tools = [
     //defaultPrimary: true,
     //parameters: [],
   }, //*/
-  {
+  /*{
     id: `${GAME_ID}-customlaunchdemo`,
     name: `Custom Launch`,
     logo: `exec_demo.png`,

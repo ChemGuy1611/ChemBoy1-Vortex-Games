@@ -2,8 +2,8 @@
 Name: DEATH STRANDING 2: ON THE BEACH Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2026-04-08
+Version: 0.2.0
+Date: 2026-04-13
 Notes:
 - 
 ///////////////////////////////////////////*/
@@ -34,11 +34,12 @@ const XBOXAPP_ID = null;
 const XBOXEXECNAME = null;
 const XBOX_PUB_ID = null; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+
 const GAME_NAME = "DEATH STRANDING 2: ON THE BEACH";
 const GAME_NAME_SHORT = "DEATH STRANDING 2";
-const BINARIES_PATH = path.join('.');
+const BINARIES_PATH = '.';
 const EXEC_NAME = "DS2.exe";
-const EXEC = path.join(BINARIES_PATH, EXEC_NAME);
+const EXEC = EXEC_NAME;
 const EXEC_EGS = EXEC; //change other versions if different than Steam/default
 const EXEC_GOG = EXEC;
 const EXEC_DEMO = EXEC;
@@ -56,7 +57,7 @@ const multiExe = false; //set to true if there are multiple executable names
 const multiModPath = false; //set to true if there are multiple possible mod paths (i.e. different path for Xbox version)
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
 const needsModInstaller = false; //set to true if standard mods should run through an installer - set false to have mods installed to the mods folder without any processing
-const rootInstaller = true; //enable root installer. Set false if you need to avoid installer collisions
+const rootInstaller = false; //enable root installer. Set false if you need to avoid installer collisions
 const fallbackInstaller = false; //enable fallback installer. Set false if you need to avoid installer collisions
 const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
 const hasUserIdFolder = false; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
@@ -65,11 +66,11 @@ let binariesInstaller = false;
 
 //info for modtypes, installers, tools, and actions
 const DATA_FOLDER = 'LocalCacheWinGame';
-const ROOT_FOLDERS = [DATA_FOLDER];
+const ROOT_FOLDERS = [];
 
 const CONFIGMOD_LOCATION = DOCUMENTS;
 const SAVEMOD_LOCATION = DOCUMENTS;
-const APPDATA_FOLDER = path.join('DEATH STRANDING 2 - ON THE BEACH');
+const APPDATA_FOLDER = 'DEATH STRANDING 2 - ON THE BEACH';
 const CONFIG_FOLDERNAME = '';
 const SAVE_FOLDERNAME = '';
 
@@ -77,6 +78,7 @@ let GAME_PATH = '';
 let GAME_VERSION = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
+let modManagerInstalled = false;
 const APPMANIFEST_FILE = 'appxmanifest.xml';
 const EXEC_XBOX = 'gamelaunchhelper.exe';
 
@@ -94,6 +96,20 @@ const LOADER_PAGE_NO = 0;
 const LOADER_FILE_NO = 0;
 const LOADER_DOMAIN = GAME_ID;
 const LOADER_URL = `XXX`; //if not on Nexus
+
+const MODMANAGER_ID = `${GAME_ID}-modmanager`;
+const MODMANAGER_NAME = "DS2 Mod Manager";
+const MODMANAGER_STRING = 'HFW Mod Manager';
+const MODMANAGER_EXEC = 'HFW_MM.exe';
+const MODMANAGER_PAGE_NO = 137;
+const MODMANAGER_FILE_NO = 762;
+const MODMANAGER_DOMAIN = 'horizonforbiddenwest';
+
+const MANAGERMOD_ID = `${GAME_ID}-managermod`;
+const MANAGERMOD_NAME = "DS2 Manager Mod";
+const MANAGERMOD_PATH = path.join('mods');
+const MANAGERMOD_EXTS = ['.core', '.stream'];
+const MANAGERMOD_FILES = ['modinfo.json'];
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Folder";
@@ -136,7 +152,7 @@ const REQ_FILE = EXEC;
 const PARAMETERS_STRING = '';
 const PARAMETERS = [PARAMETERS_STRING];
 
-let MODTYPE_FOLDERS = [];
+let MODTYPE_FOLDERS = [MANAGERMOD_PATH];
 const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 
@@ -174,12 +190,18 @@ const spec = {
     }
   },
   "modTypes": [
-    /*{
-      "id": MOD_ID,
-      "name": MOD_NAME,
+    {
+      "id": MANAGERMOD_ID,
+      "name": MANAGERMOD_NAME,
       "priority": "high",
-      "targetPath": path.join("{gamePath}", MOD_PATH)
-    }, //*/
+      "targetPath": path.join('{gamePath}', MANAGERMOD_PATH)
+    },
+    {
+      "id": MODMANAGER_ID,
+      "name": MODMANAGER_NAME,
+      "priority": "low",
+      "targetPath": '{gamePath}'
+    },
     {
       "id": ROOT_ID,
       "name": ROOT_NAME,
@@ -208,7 +230,19 @@ const tools = [ //accepts: exe, jar, py, vbs, bat
     shell: true,
     detach: true,
     //defaultPrimary: true,
-    parameters: PARAMETERS,
+    //parameters: PARAMETERS,
+  }, //*/
+  {
+    id: MODMANAGER_ID,
+    name: MODMANAGER_NAME,
+    logo: `modmanager.png`,
+    executable: () => MODMANAGER_EXEC,
+    requiredFiles: [MODMANAGER_EXEC],
+    detach: true,
+    relative: true,
+    exclusive: false,
+    //defaultPrimary: true,
+    //parameters: [],
   }, //*/
   /*{
     id: TOOL_ID,
@@ -446,41 +480,40 @@ function installLoader(files) {
   return Promise.resolve({ instructions });
 }
 
-//Test for mod files
-function testMod(files, gameId) {
-  const isMod = files.some(file => MOD_EXTS.includes(path.extname(file).toLowerCase()));
-  let supported = (gameId === spec.game.id) && isMod;
+//test for HFW MM files/exts
+function testManagerMod(files, gameId) {
+  const isInfo = files.some(file => MANAGERMOD_FILES.includes(path.basename(file).toLowerCase()));
+  const isExt = files.some(file => MANAGERMOD_EXTS.includes(path.extname(file).toLowerCase()));
+  let supported = (gameId === spec.game.id) && ( isInfo || isExt );
 
   // Test for a mod installer
   if (supported && files.find(file =>
-      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
-    supported = false;
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+  supported = false;
   }
 
   return Promise.resolve({
     supported,
-    requiredFiles: [],
+    requiredFiles: []
   });
 }
 
-//Install mod files
-function installMod(files) {
-  const MOD_TYPE = MOD_ID;
-  const modFile = files.find(file => MOD_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
-  const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+//Install Mod Manager mod (unzipped in folder)
+function installManagerMod(files, fileName) {
+  const MOD_NAME = path.basename(fileName);
+  let MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*/gi, '');
+  const setModTypeInstruction = { type: 'setmodtype', value: MANAGERMOD_ID };
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
-  );
+    (!file.endsWith(path.sep)));
+
   const instructions = filtered.map(file => {
     return {
       type: 'copy',
       source: file,
-      destination: path.join(file.substr(idx)),
+      destination: path.join(MOD_FOLDER, file),
     };
   });
   instructions.push(setModTypeInstruction);
@@ -700,6 +733,124 @@ async function downloadLoader(api, gameSpec) {
   }
 } //*/
 
+//Check if HFW ModManager is installed
+async function isModManagerInstalled(api) {
+  try {
+    GAME_PATH = getDiscoveryPath(api);
+    await fs.statAsync(path.join(GAME_PATH, MODMANAGER_EXEC));
+    return true;
+  } catch (err) {
+    return false;
+  }
+}
+
+//* Function to auto-download HFW MM from Nexus Mods
+async function downloadModManager(api, check = true) {
+  GAME_PATH = getDiscoveryPath(api);
+  const DOWNLOAD_FOLDER = selectors.downloadPathForGame(api.getState(), 'horizonforbiddenwest');
+  let isInstalled = await isModManagerInstalled(api);
+  if (!isInstalled || !check) {
+    const MOD_NAME = MODMANAGER_NAME;
+    const MOD_TYPE = MODMANAGER_ID;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
+    const PAGE_ID = MODMANAGER_PAGE_NO;
+    const FILE_ID = MODMANAGER_FILE_NO;  //If using a specific file id because "input" below gives an error
+    const GAME_DOMAIN = MODMANAGER_DOMAIN;
+    api.sendNotification({ //notification indicating install process
+      id: NOTIF_ID,
+      message: `Installing ${MOD_NAME}`,
+      type: 'activity',
+      noDismiss: true,
+      allowSuppress: false,
+    });
+    if (api.ext?.ensureLoggedIn !== undefined) { //make sure user is logged into Nexus Mods account in Vortex
+      await api.ext.ensureLoggedIn();
+    }
+    try {
+      let FILE = null;
+      let URL = null;
+      try { //get the mod files information from Nexus
+        const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
+        const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
+        const file = modFiles
+          .filter(file => file.category_id === 1)
+          .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
+          .reverse()[0];
+        if (file === undefined) {
+          throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
+        }
+        FILE = file.file_id;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      } catch (err) { // use defined file ID if input is undefined above
+        FILE = FILE_ID;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      }
+      const dlInfo = { //Download the mod
+        game: GAME_DOMAIN,
+        name: MOD_NAME,
+      };
+      //*Only start-download with Promise
+      return new Promise((resolve, reject) => {
+        api.events.emit('start-download', [URL], {}, undefined,
+          async (error, dlid) => { //callback function to check for errors and pass id to and call 'start-install-download' event
+            if (error !== null && (error.name !== 'AlreadyDownloaded')) {
+              return reject(error);
+            }
+            try { //find the file in Download and copy it to the game folder
+              api.sendNotification({ //notification indicating copy process
+                id: `${NOTIF_ID}-copy`,
+                message: `Copying ${MOD_NAME} executable to game folder`,
+                type: 'activity',
+                noDismiss: true,
+                allowSuppress: false,
+              });
+              let files = await fs.readdirAsync(DOWNLOAD_FOLDER);
+              files = files.filter(file => ( path.basename(file).includes(MODMANAGER_STRING) && (path.extname(file).toLowerCase() === '.exe') ))
+                .sort((a,b) => a.toLowerCase().localeCompare(b.toLowerCase()))
+                .reverse();
+              const copyFile = files[0];
+              if (copyFile === undefined) {
+                throw new util.UserCanceled(`No ${MOD_NAME} download file found`);
+              } //*/
+              await fs.statAsync(path.join(DOWNLOAD_FOLDER, copyFile));
+              const source = path.join(DOWNLOAD_FOLDER, copyFile);
+              const destination = path.join(GAME_PATH, MODMANAGER_EXEC);
+              await fs.copyAsync(source, destination, { overwrite: true });
+              api.dismissNotification(NOTIF_ID);
+              api.dismissNotification(`${NOTIF_ID}-copy`);
+              api.sendNotification({ //notification copy success
+                id: `${NOTIF_ID}-success`,
+                message: `Successfully copied ${MOD_NAME} executable to game folder`,
+                type: 'success',
+                noDismiss: false,
+                allowSuppress: true,
+              });
+            } catch (err) {
+              const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
+              api.showErrorNotification(`Failed to download and copy ${MOD_NAME} executable`, err, { allowReport: false });
+              util.opn(errPage).catch(() => null);
+              return reject(err);
+            }
+            finally {
+              api.dismissNotification(NOTIF_ID);
+              api.dismissNotification(`${NOTIF_ID}-copy`);
+              return resolve();
+            }
+          },
+          'never',
+          { allowInstall: false },
+        );
+      });
+    } catch (err) { //Show the user the download page if the download and copy process fails
+      const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
+      api.showErrorNotification(`Failed to download and copy ${MOD_NAME} executable`, err, { allowReport: false });
+      util.opn(errPage).catch(() => null);
+      api.dismissNotification(NOTIF_ID);
+      api.dismissNotification(`${NOTIF_ID}-copy`);
+    }
+  }
+} //*/
+
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
 function setupNotify(api) {
@@ -733,6 +884,130 @@ function setupNotify(api) {
       },
     ],
   });
+}
+
+//Notify User to run Mod Manager after deployment
+function deployNotify(api) {
+  const NOTIF_ID = `${GAME_ID}-deploy-notification`;
+  const MOD_NAME = 'HFW MM';
+  const MESSAGE = `Run ${MOD_NAME} after Deploy`;
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'warning',
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: `Run ${MOD_NAME}`,
+        action: (dismiss) => {
+          runManager(api);
+          dismiss();
+        },
+      },
+      {
+        title: 'More',
+        action: (dismiss) => {
+          api.showDialog('question', MESSAGE, {
+            text: `You must use ${MOD_NAME} to install .core/.stream mods after installing with Vortex.\n`
+                + `\n`
+                + `Use the included tool to launch ${MOD_NAME} (button on notification or in "Dashboard" tab).\n`
+                + `Select the mod options you want, then click the "Pack Mods" button.\n`
+          }, [
+            { 
+              label: `Run ${MOD_NAME}`, action: () => {
+                runManager(api);
+                dismiss();
+              }
+            }, //*/
+            { label: 'Continue', action: () => dismiss() },
+            {
+              label: 'Never Show Again', action: () => {
+                api.suppressNotification(NOTIF_ID);
+                dismiss();
+              }
+            },
+          ]);
+        },
+      },
+    ],
+  });
+}
+
+//Notify User to run Mod Manager to restore vanilla files on purge
+function purgeNotify(api) {
+  const NOTIF_ID = `${GAME_ID}-purge-notification`;
+  const MOD_NAME = 'HFW MM';
+  const MESSAGE = `Run ${MOD_NAME} To Restore Files`;
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'warning',
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: `Run ${MOD_NAME}`,
+        action: (dismiss) => {
+          runManager(api);
+          dismiss();
+        },
+      },
+      {
+        title: 'More',
+        action: (dismiss) => {
+          api.showDialog('question', MESSAGE, {
+            text: `\n`
+                + `Vortex just detected that you have purged mods.\n`
+                + `If you wish to restore the game to a vanilla state, you must run ${MOD_NAME} and click the "Restore Files" button.\n`
+                + `\n`
+                + `Use the included tool to launch ${MOD_NAME} (button on notification or in "Dashboard" tab).\n`
+          }, [
+            { 
+              label: `Run ${MOD_NAME}`, action: () => {
+                runManager(api);
+                dismiss();
+              }
+            }, //*/
+            { label: 'Continue', action: () => dismiss() },
+            {
+              label: 'Never Show Again', action: () => {
+                api.suppressNotification(NOTIF_ID);
+                dismiss();
+              }
+            },
+          ]);
+        },
+      },
+    ],
+  });
+}
+
+function runManager(api) {
+  let TOOL_ID =  MODMANAGER_ID;
+  let TOOL_NAME = MODMANAGER_NAME;
+  const state = api.store.getState();
+  const tool = util.getSafe(state, ['settings', 'gameMode', 'discovered', GAME_ID, 'tools', TOOL_ID], undefined);
+
+  try {
+    const TOOL_PATH = tool.path;
+    if (TOOL_PATH !== undefined) {
+      return api.runExecutable(TOOL_PATH, [], 
+        { 
+          //cwd: path.dirname(TOOL_PATH),
+          detach: true, 
+          //env: { 'PATH': process.env.PATH },
+          //shell: true, 
+          suggestDeploy: false 
+        })
+        .catch(err => api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err,
+          { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 })
+        );
+    }
+    else {
+      return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, `Path to ${TOOL_NAME} executable could not be found. Ensure ${TOOL_NAME} is installed through Vortex.`);
+    }
+  } catch (err) {
+    return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 });
+  }
 }
 
 //* Resolve game version dynamically for different game versions
@@ -783,6 +1058,7 @@ async function setup(discovery, api, gameSpec) {
   }
   /*await fs.ensureDirWritableAsync(CONFIG_PATH);
   await fs.ensureDirWritableAsync(SAVE_PATH); //*/
+  await downloadModManager(api, true);
   if (hasLoader) {
     await downloadLoader(api, gameSpec);
   }
@@ -848,19 +1124,31 @@ function applyGame(context, gameSpec) {
   if (hasLoader) {
     context.registerInstaller(LOADER_ID, 25, testLoader, installLoader);
   }
-  if (rootInstaller) {
-    context.registerInstaller(ROOT_ID, 27, testRoot, installRoot);
-  }
   //context.registerInstaller(CONFIG_ID, 31, testConfig, installConfig);
   //context.registerInstaller(SAVE_ID, 33, testSave, installSave);
-  if (needsModInstaller) {
-    context.registerInstaller(MOD_ID, 35, testMod, installMod);
+  context.registerInstaller(MANAGERMOD_ID, 35, testManagerMod, installManagerMod);
+  if (rootInstaller) {
+    context.registerInstaller(ROOT_ID, 27, testRoot, installRoot);
   }
   if (fallbackInstaller) {
     context.registerInstaller(`${GAME_ID}-fallback`, 49, testFallback, (files, destinationPath) => installFallback(context.api, files, destinationPath));
   }
 
   //register actions
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download DS2 Mod Manager (Update)', () => {
+    downloadModManager(context.api, false);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open DS2 Mod Manager Page', () => {
+    util.opn(`https://www.nexusmods.com/'horizonforbiddenwest'/mods/${MODMANAGER_PAGE_NO}`).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config/Save Folder', () => {
     util.opn(SAVE_PATH).catch(() => null);
     }, () => {
@@ -904,6 +1192,26 @@ function main(context) {
   applyGame(context, spec);
   context.once(() => { // put code here that should be run (once) when Vortex starts up
     const api = context.api;
+    context.api.onAsync('did-deploy', async (profileId, deployment) => {
+      const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
+      if (profileId !== LAST_ACTIVE_PROFILE) return;
+      modManagerInstalled = await isModManagerInstalled(context.api);
+      if (!modManagerInstalled) {
+        await downloadModManager(context.api, true);
+      }
+      deployNotify(context.api);
+      return Promise.resolve();
+    });
+    context.api.onAsync('did-purge', async (profileId) => { 
+      const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
+      if (profileId !== LAST_ACTIVE_PROFILE) return;
+      modManagerInstalled = await isModManagerInstalled(context.api);
+      if (!modManagerInstalled) {
+        await downloadModManager(context.api, true);
+      }
+      purgeNotify(context.api);
+      return Promise.resolve();
+    });
   });
   return true;
 }

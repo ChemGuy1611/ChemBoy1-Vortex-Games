@@ -80,7 +80,7 @@ const UE4SS_MOD_PATH = path.join('ue4ss', 'Mods'); //this should probably never 
 
 //config and save
 const DATA_FOLDER = EPIC_CODE_NAME; //almost always matches.
-const CONFIG_FOLDERNAME = 'Windows'; //UE 4 games are often 'WindowsNoEditor'
+const CONFIG_FOLDERNAME = 'Windows'; //UE 4 games are often 'WindowsNoEditor' - "Windows", "WindowsClient", "WindowsNoEditor"
 const CONFIG_LOC = 'Local AppData'; //string for notification text.
 const SAVE_LOC = CONFIG_LOC; //string for notification text. Config and Save mods are almost always in the same place
 const CONFIGMOD_LOCATION = LOCALAPPDATA; //almost always matches. Some are in game folder or Documents.

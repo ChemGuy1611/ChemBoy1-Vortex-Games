@@ -36,7 +36,7 @@ const GOGAPP_ID = null; // from gogdb.org
 const XBOXAPP_ID = null; //from appxmanifest.xml
 const XBOXEXECNAME = "AppUEGameShipping"; //from appxmanifest.xml
 const XBOX_PUB_ID = "XXX"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, STEAMAPP_ID_DEMO, EPICAPP_ID_DEMO]; // UPDATE THIS WITH ALL VALID IDs
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID, STEAMAPP_ID_DEMO, EPICAPP_ID_DEMO]; // UPDATE THIS WITH ALL VALID IDs
 
 const GAME_NAME = "Windrose";
 const GAME_NAME_SHORT = GAME_NAME; //Try for 8-10 characters
@@ -288,18 +288,22 @@ const spec = {
       "enb": false,
     },
     "details": {
-      "steamAppId": +STEAMAPP_ID_DEMO,
+      //"steamAppId": +STEAMAPP_ID_DEMO,
+      "steamAppId": +STEAMAPP_ID,
       "gogAppId": GOGAPP_ID,
-      "epicAppId": EPICAPP_ID_DEMO,
+      //"epicAppId": EPICAPP_ID_DEMO,
+      "epicAppId": EPICAPP_ID,
       "xboxAppId": XBOXAPP_ID,
       "supportsSymlinks": SYM_LINKS,
       "ignoreConflicts": IGNORE_CONFLICTS,
       "ignoreDeploy": IGNORE_DEPLOY,
     },
     "environment": {
-      "SteamAPPId": STEAMAPP_ID_DEMO,
+      //"SteamAPPId": STEAMAPP_ID_DEMO,
+      "SteamAPPId": STEAMAPP_ID,
       "GogAPPId": GOGAPP_ID,
-      "EpicAPPId": EPICAPP_ID_DEMO,
+      //"EpicAPPId": EPICAPP_ID_DEMO,
+      "EpicAPPId": EPICAPP_ID,
       "XboxAPPId": XBOXAPP_ID,
     },
   },
@@ -415,11 +419,11 @@ async function requiresLauncher(gamePath, store) {
     });
   } //*/
   //*
-  if (store === 'epic' && DISCOVERY_IDS_ACTIVE.includes(EPICAPP_ID_DEMO)) {
+  if (store === 'epic' && DISCOVERY_IDS_ACTIVE.includes(EPICAPP_ID)) {
     return Promise.resolve({
         launcher: 'epic',
         addInfo: {
-            appId: EPICAPP_ID_DEMO,
+            appId: EPICAPP_ID,
         },
     });
   } //*/
