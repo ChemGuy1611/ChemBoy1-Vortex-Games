@@ -35,6 +35,7 @@ const EPICAPP_ID = "XXX";
 const GOGAPP_ID = "XXX";
 const XBOXAPP_ID = "XXX";
 const XBOXEXECNAME = "Game";
+const XBOX_PUB_ID = "XXX"; //string after "ID_"
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
 const GAME_NAME = "XXX";
@@ -75,7 +76,6 @@ const VER_SPLIT = ' '; //split character for the Version.info file - typically a
 
 const DEV_REGSTRING = "XXX"; //developer name
 const GAME_REGSTRING = "XXX"; //game name
-const XBOX_PUB_ID = "XXX"; //string after "ID_"
 const CONFIG_FOLDERNAME = "XXX";
 const SAVE_FOLDERNAME = "XXX";
 const hasUserIdFolder = false; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
@@ -171,6 +171,9 @@ const ASSETS_NAME = "Assets/Resources File";
 let ASSETS_PATH = DATA_FOLDER;
 const ASSETS_EXTS = ['.assets', '.resource', '.ress'];
 
+// -- START EDIT ZONE -- ///////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 const MOD_PATH_DEFAULT = ".";
 let REQ_FILE = EXEC;
 if (multiExe) {
@@ -181,6 +184,9 @@ const PARAMETERS = [PARAMETERS_STRING];
 const IGNORE_CONFLICTS = [path.join('**', 'manifest.json'), path.join('**', 'icon.png'), path.join('**', 'changelog*'), path.join('**', 'readme*')];
 const IGNORE_DEPLOY = [path.join('**', 'manifest.json'), path.join('**', 'icon.png'), path.join('**', 'changelog*'), path.join('**', 'readme*')];
 let MODTYPE_FOLDERS = [BEPMOD_PATH];
+
+// -- END EDIT ZONE -- /////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //Filled in from info above
 const spec = {

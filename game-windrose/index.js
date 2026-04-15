@@ -2,8 +2,8 @@
 Name: Windrose Vortex Extension
 Structure: Unreal Engine Game
 Author: ChemBoy1
-Version: 0.1.1
-Date: 2026-04-13
+Version: 0.1.2
+Date: 2026-04-15
 Notes:
 - Only demo out now. Update for full release when available, if needed.
 ////////////////////////////////////////////////*/
@@ -30,13 +30,13 @@ const LOCALAPPDATA = util.getVortexPath('localAppData');
 const GAME_ID = "windrose"; //same as Nexus domain
 const STEAMAPP_ID = "3041230"; //from steamdb.info
 const STEAMAPP_ID_DEMO = "4291770"; //VERIFY if the EPIC_CODE_NAME and EXEC_DEMO match Steam full game
-const EPICAPP_ID = "XXX"; //NOT released yet - https://egdata.app/offers/2cef0862649140d1b000e0fcdd76f4c8/builds
+const EPICAPP_ID = "d08157fbe22d45fcba452680857ac58d"; //https://egdata.app/offers/2cef0862649140d1b000e0fcdd76f4c8/builds
 const EPICAPP_ID_DEMO = "a8fc3e1cd0504d549ed1bbfa11b5e5ff"; //https://egdata.app/offers/4b0484bbe3334ef099180022019612ea/builds
 const GOGAPP_ID = null; // from gogdb.org
 const XBOXAPP_ID = null; //from appxmanifest.xml
 const XBOXEXECNAME = "AppUEGameShipping"; //from appxmanifest.xml
 const XBOX_PUB_ID = "XXX"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, STEAMAPP_ID_DEMO, EPICAPP_ID_DEMO]; // UPDATE THIS WITH ALL VALID IDs
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID, STEAMAPP_ID_DEMO, EPICAPP_ID_DEMO]; // UPDATE THIS WITH ALL VALID IDs
 
 const GAME_NAME = "Windrose";
 const GAME_NAME_SHORT = GAME_NAME; //Try for 8-10 characters

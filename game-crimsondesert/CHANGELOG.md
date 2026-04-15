@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.2.8] - 2026-04-15
+
+- Added: .addon64 files will install to the bin64 folder properly
+
 ## [0.2.7] - 2026-04-08
 
 - Fixed: removed manifest.json check from Crimson Browser mod installer - prevent mods installed to game root when meant for JSON Mod Manager

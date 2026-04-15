@@ -66,7 +66,7 @@ const LOCALAPPDATA = util.getVortexPath("localAppData");
 
 const BINARIES_ID = `${GAME_ID}-binaries`;
 const BINARIES_NAME = "Binaries / Root Folder";
-const BINARIES_EXTS = ['.dll'];
+const BINARIES_EXTS = ['.dll', '.asi', '.addon64'];
 
 const SOUND_ID = `${GAME_ID}-sound`;
 const SOUND_NAME = "Sound";

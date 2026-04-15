@@ -28,6 +28,7 @@ const EPICAPP_ID = "XXX";
 const GOGAPP_ID = "XXX";
 const XBOXAPP_ID = "XXX";
 const XBOXEXECNAME = "XXX";
+const XBOX_PUB_ID = "XXX"; //string after "ID_"
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
 const GAME_NAME = "XXX";
@@ -101,7 +102,7 @@ const COOKEDSUB_EXTS = ['.upk'];
 const BINARIES_ID = `${GAME_ID}-binaries`;
 const BINARIES_NAME = "Binaries (Engine Injector)";
 const BINARIES_FILES = [EXEC_NAME];
-const BINARIES_EXTS = ['.dll'];
+const BINARIES_EXTS = ['.dll', '.asi', '.addon64'];
 
 const CONFIG_PATH = path.join(DOCUMENTS, DATA_FOLDER, 'Config');
 const SAVE_PATH = path.join(DOCUMENTS, DATA_FOLDER, 'SaveData');

@@ -19,7 +19,7 @@ const APPDATA = util.getVortexPath("appData");
 //Specify all information about the game
 const GAME_ID = "aplaguetalerequiem";
 const STEAMAPP_ID = "1182900";
-const EPICAPP_ID = ""; // not on egdata.app yet - https://egdata.app/offers/28678d007f3d4440b7a7365b04c5fc2e/builds
+const EPICAPP_ID = "da49ca987d764445bfeac7bc64cb8ff0"; //https://egdata.app/offers/28678d007f3d4440b7a7365b04c5fc2e/builds
 const GOGAPP_ID = "1552771812";
 const XBOXAPP_ID = "FocusHomeInteractiveSA.APlagueTaleRequiem-Windows";
 const XBOXEXECNAME = "Game";
@@ -33,7 +33,7 @@ const ROOT_FOLDERS_LOWER = ROOT_FOLDERS.map(folder => folder.toLowerCase());
 const gameFinderQuery = {
   steam: [{ id: STEAMAPP_ID, prefer: 0 }],
   gog: [{ id: GOGAPP_ID }],
-  //epic: [{ id: EPICAPP_ID }],
+  epic: [{ id: EPICAPP_ID }],
   xbox: [{ id: XBOXAPP_ID }],
 };
 

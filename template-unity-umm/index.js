@@ -33,6 +33,7 @@ const EPICAPP_ID = "XXX";
 const GOGAPP_ID = "XXX";
 const XBOXAPP_ID = "XXX";
 const XBOXEXECNAME = "Game";
+const XBOX_PUB_ID = 'XXX'; //string after "ID_"
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
 const GAME_NAME = "XXX";
@@ -64,7 +65,6 @@ let VERSION_FILE_PATH = path.join(DATA_FOLDER, VERSION_FILE);
 
 const DEV_REGSTRING = "XXX";
 const GAME_REGSTRING = "XXX";
-const XBOX_PUB_ID = 'XXX';
 
 const UNITY_ARCH = 'x64'; // 'x64' or 'x86'
 const UNITY_BUILD = 'mono'; // 'il2cpp' or 'mono' - IL2CPP will use bleeding edge builds
@@ -120,6 +120,9 @@ const ASSETS_NAME = "Assets/Resources File";
 let ASSETS_PATH = DATA_FOLDER;
 const ASSETS_EXTS = ['.assets', '.resource', '.ress'];
 
+// -- START EDIT ZONE -- ///////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
+
 const MOD_PATH_DEFAULT = ".";
 let REQ_FILE = EXEC;
 if (multiExe && (UNITY_BUILD === 'il2cpp')) {
@@ -133,6 +136,9 @@ const PARAMETERS = [PARAMETERS_STRING];
 const IGNORE_CONFLICTS = [path.join('**', 'manifest.json'), path.join('**', 'icon.png'), path.join('**', 'changelog*'), path.join('**', 'readme*')];
 const IGNORE_DEPLOY = [path.join('**', 'manifest.json'), path.join('**', 'icon.png'), path.join('**', 'changelog*'), path.join('**', 'readme*')];
 let MODTYPE_FOLDERS = [];
+
+// -- END EDIT ZONE -- /////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //Filled in from info above
 const spec = {

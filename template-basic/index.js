@@ -103,6 +103,7 @@ const ROOT_NAME = "Root Folder";
 
 const BINARIES_ID = `${GAME_ID}-binaries`;
 const BINARIES_NAME = "Binaries (Engine Injector)";
+const BINARIES_EXTS = ['.dll', '.asi', '.addon64'];
 
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_NAME = "Save";

@@ -1,9 +1,9 @@
 /*//////////////////////////////////////////
-Name: XXX Vortex Extension
+Name: MiSide Vortex Extension
 Structure: Unity BepinEx/MelonLoader/Custom Loader Hybrid
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2026-XX-XX
+Date: 2026-04-15
 Notes:
 - 
 //////////////////////////////////////////*/
@@ -28,36 +28,33 @@ const LOCALLOW = path.join(USER_HOME, 'AppData', 'LocalLow');
 const LOCALAPPDATA = util.getVortexPath("localAppData");
 
 //Specify all the information about the game
-const GAME_ID = "XXX";
-const STEAMAPP_ID = "XXX";
-const STEAMAPP_ID_DEMO = "XXX";
-const EPICAPP_ID = "XXX";
-const GOGAPP_ID = "XXX";
-const XBOXAPP_ID = "XXX";
+const GAME_ID = "miside";
+const STEAMAPP_ID = "2527500"; // https://steamdb.info/app/2527500/
+const STEAMAPP_ID_DEMO = "2527520"; // https://steamdb.info/app/2527520/
+const EPICAPP_ID = null;
+const GOGAPP_ID = null;
+const XBOXAPP_ID = null;
 const XBOXEXECNAME = "Game";
 const XBOX_PUB_ID = "XXX"; //string after "ID_"
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, STEAMAPP_ID_DEMO]; // UPDATE THIS WITH ALL VALID IDs
 
-const GAME_NAME = "XXX";
-const GAME_NAME_SHORT = "XXX";
-const GAME_STRING = "XXX"; //string for exe and data folder (seem to always match)
-const GAME_STRING_ALT = GAME_STRING; //CHANGE THIS IF IT DOESN'T MATCH
+const GAME_NAME = "MiSide";
+const GAME_NAME_SHORT = "MiSide";
+const GAME_STRING = "MiSideFull"; //string for exe and data folder (seem to always match)
+const GAME_STRING_ALT = "MiSide"; //CHANGE THIS IF IT DOESN'T MATCH
 const EXEC = `${GAME_STRING}.exe`;
 const EXEC_EGS = EXEC;
 const EXEC_GOG = EXEC;
 const EXEC_DEMO = EXEC;
 const EXEC_XBOX = 'gamelaunchhelper.exe';
 const EXEC_ALT = `${GAME_STRING_ALT}.exe`;
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/MiSide";
 const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
 
 //feature toggles
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
 const hasXbox = false; //toggle for Xbox version logic
-let multiExe = false; //set to true if there are multiple executables (typically for Xbox/EGS)
-if (GAME_STRING_ALT !== GAME_STRING) {
-  multiExe = true;
-} //*/
+const multiExe = true; //set to true if there are multiple executables (typically for Xbox/EGS)
 const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
 const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
 const preventPluginInstall = true; //set to true if you want to prevent plugins not for the current mod loader from installing. Disable if using cross-compatibility plugins.
@@ -86,7 +83,7 @@ const hasUserIdFolder = false; //true if there is a folder in the Save path that
 
 //Data to determine BepinEx/MelonLoader versions and URLs
 const loaderChoice = true; //true if loader choice is enabled
-const recommendedLoader = 'mel'; // bep/mel - If loaderChoice false, this determines downloaded loader. Otherwise shows as "(Recommended)" in selector.
+const recommendedLoader = 'bep'; // bep/mel - If loaderChoice false, this determines downloaded loader. Otherwise shows as "(Recommended)" in selector.
 const BEPINEX_BUILD = 'il2cpp'; // 'mono' or 'il2cpp' - check for "il2cpp_data" folder
 const ARCH = 'x64'; //'x64' or 'x86' game architecture (64-bit or 32-bit)
 const BEP_VER = '5.4.23.5'; //set BepInEx version for mono URLs

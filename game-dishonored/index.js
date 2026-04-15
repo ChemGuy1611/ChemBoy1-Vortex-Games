@@ -102,7 +102,7 @@ const COOKEDSUB_EXTS = ['.upk', '.pck'];
 const BINARIES_ID = `${GAME_ID}-binaries`;
 const BINARIES_NAME = "Binaries (Engine Injector)";
 const BINARIES_FILES = [EXEC_NAME];
-const BINARIES_EXTS = ['.dll'];
+const BINARIES_EXTS = ['.dll', '.asi', '.addon64'];
 
 const CONFIG_PATH = path.join(DOCUMENTS, 'My Games', DATA_FOLDER, 'Config');
 const SAVE_PATH = path.join(DOCUMENTS, 'My Games', DATA_FOLDER, 'SaveData');

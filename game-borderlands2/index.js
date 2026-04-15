@@ -113,7 +113,7 @@ const COOKEDSUB_EXTS = ['.tfc', '.upk', '.pck'];
 const BINARIES_ID = `${GAME_ID}-binaries`;
 const BINARIES_NAME = "Binaries (Engine Injector)";
 const BINARIES_FILES = [EXEC_NAME];
-const BINARIES_EXTS = ['.dll'];
+const BINARIES_EXTS = ['.dll', '.asi', '.addon64'];
 
 const MOVIES_ID = `${GAME_ID}-movies`;
 const MOVIES_NAME = "Movies";

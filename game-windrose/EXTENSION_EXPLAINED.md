@@ -24,6 +24,7 @@
 ## Supported Stores
 
 - **Steam** — `3041230`
+- **Epic Games Store** — `d08157fbe22d45fcba452680857ac58d`
 
 ## Feature Flags
 
@@ -56,6 +57,7 @@ Mod types define where each category of mod gets deployed:
 - **Purge Hook** (`did-purge`) — runs custom logic when mods are purged.
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
+- **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
 ## How Mod Installation Works

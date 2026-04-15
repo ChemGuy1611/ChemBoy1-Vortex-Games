@@ -39,7 +39,7 @@ const SK_NAME = "Special K Plugin";
 
 const BINARIES_ID = `${GAME_ID}-binaries`;
 const BINARIES_NAME = "Binaries / Root Folder";
-const BINARIES_EXTS = ['.dll', '.exe', '.tiger'];
+const BINARIES_EXTS = ['.dll', '.exe', '.tiger', '.asi', '.addon64'];
 
 const MANAGERUNIFIED_ID = `${GAME_ID}-trmodmanager`;
 const MANAGERUNIFIED_NAME = "TR Reboot Mod Manager";

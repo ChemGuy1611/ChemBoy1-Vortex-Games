@@ -5,12 +5,12 @@
 | Property | Value |
 | --- | --- |
 | Name | Crimson Desert Vortex Extension |
-| Engine / Structure | Basic Game |
+| Engine / Structure | Basic Game w/ 3rd Party Manager Integration |
 | Author | ChemBoy1 |
 
 ### Notes
 
-- Supports plugin mods and data mods with "00XX" folders
+- Supports plugin mods and data mods with "00XX" folders (XX <= 35)
 - Supports Crimson Browser (manifest.json and files folder) and JSON Mod Manager (.json or "0036+" folder) mods
 - FUTURE: May be able to update to use Vortex LO ("0036"+ folders and patch metadata on deploy)
 - Would not handle .json patches without data files. Still need JSON Manager for that.
