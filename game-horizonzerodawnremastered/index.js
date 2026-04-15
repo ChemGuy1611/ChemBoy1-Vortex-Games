@@ -14,7 +14,7 @@ const template = require('string-template');
 //Specify all the information about the game
 const GAME_ID = "horizonzerodawnremastered";
 const STEAMAPP_ID = "2561580";
-const EPICAPP_ID = ""; // NOT on egdata.app yet - https://egdata.app/offers/ea784aaca7084a2792d961faa0f5d5df/builds
+const EPICAPP_ID = "Grunion"; //from egdata.app
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
 const EXEC = "HorizonZeroDawnRemastered.exe";
@@ -90,7 +90,7 @@ const spec = {
     ],
     "details": {
       "steamAppId": +STEAMAPP_ID,
-      //"epicAppId": EPICAPP_ID,
+      "epicAppId": EPICAPP_ID,
       "compatibleDownloads": ['horizonzerodawn'],
       "supportsSymlinks": true,
       "ignoreConflicts": IGNORE_CONFLICTS,
@@ -98,7 +98,7 @@ const spec = {
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
-      //"EpicAPPId": EPICAPP_ID,
+      "EpicAPPId": EPICAPP_ID,
     },
   },
   "modTypes": [

@@ -19,7 +19,7 @@ const LOCALAPPDATA = util.getVortexPath('localAppData');
 
 //Specify all the information about the game
 const STEAMAPP_ID = "403640";
-const EPICAPP_ID = ""; // not on egdata.app yet
+const EPICAPP_ID = "f5df10ade404453abaaed9c6c204e3d5"; //from egdata.app
 const GOGAPP_ID = "1431426311";
 const XBOXAPP_ID = "BethesdaSoftworks.Dishonored2-PC";
 const XBOXEXECNAME = "App";
@@ -41,7 +41,7 @@ const APPMANIFEST_FILE = 'appxmanifest.xml';
 const gameFinderQuery = {
   steam: [{ id: STEAMAPP_ID, prefer: 0 }],
   gog: [{ id: GOGAPP_ID }],
-  //epic: [{ id: EPICAPP_ID }],
+  epic: [{ id: EPICAPP_ID }],
   xbox: [{ id: XBOXAPP_ID }],
 };
 const requiredFiles = [ROOT_FOLDER];
@@ -271,7 +271,7 @@ async function requiresLauncher(gamePath, store) {
           },
       });
   }
-  /*
+  //*
   if (store === 'epic') {
     return Promise.resolve({
         launcher: 'epic',

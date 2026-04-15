@@ -17,7 +17,7 @@ const DOCUMENTS = util.getVortexPath("documents");
 //Specify all the information about the game
 const EAAPP_ID = "";
 const STEAMAPP_ID = "1238000";
-const EPICAPP_ID = ""; //NOT on egdata.app yet
+const EPICAPP_ID = "dvorak"; //from egdata.app
 const GAME_ID = "masseffectandromeda";
 const GAME_NAME = "Mass Effect: Andromeda";
 const GAME_NAME_SHORT = "ME Andromeda";
@@ -100,7 +100,7 @@ const spec = {
   "discovery": {
     "ids": [
       STEAMAPP_ID,
-      //EPICAPP_ID,
+      EPICAPP_ID,
       //EAAPP_ID
     ],
     "names": []
@@ -240,7 +240,7 @@ function makeGetModPath(api, gameSpec) {
 }
 
 async function requiresLauncher(gamePath, store) {
-  /*if (store === 'epic') {
+  if (store === 'epic') {
     return Promise.resolve({
         launcher: 'epic',
         addInfo: {
@@ -248,7 +248,7 @@ async function requiresLauncher(gamePath, store) {
         },
     });
   } //*/
-  /*if (store === 'steam') {
+  if (store === 'steam') {
     return Promise.resolve({
         launcher: 'steam'
     });

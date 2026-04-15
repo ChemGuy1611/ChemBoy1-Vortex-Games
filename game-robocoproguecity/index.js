@@ -15,7 +15,7 @@ const { parseStringPromise } = require('xml2js');
 //for Rogue City
 const GAME_ID = "robocoproguecity";
 const STEAMAPP_ID = "1681430";
-const EPICAPP_ID = ""; // not on egdata.app yet
+const EPICAPP_ID = "d6ab0d70d3c842b7a13beec125a02ecc"; //from egdata.app
 const GOGAPP_ID = "1950574400";
 const XBOXAPP_ID = "BigbenInteractiveSA.RoboCopRogueCity";
 const XBOXEXECNAME = "AppRobocopShipping";
@@ -44,7 +44,7 @@ const UNREALDATA = {
 //for Unfinished Business
 const GAME_ID_UNFINISHED = "robocoproguecityunfinishedbusiness";
 const STEAMAPP_ID_UNFINISHED = "3527760";
-const EPICAPP_ID_UNFINISHED = "";
+const EPICAPP_ID_UNFINISHED = null;
 const GOGAPP_ID_UNFINISHED = "1318449508";
 const XBOXAPP_ID_UNFINISHED = "";
 const XBOXEXECNAME_UNFINISHED = "";
@@ -240,7 +240,7 @@ const spec = {
   "discovery": {
     "ids": [
       STEAMAPP_ID,
-      //EPICAPP_ID,
+      EPICAPP_ID,
       GOGAPP_ID,
       XBOXAPP_ID
     ],
@@ -446,7 +446,7 @@ async function requiresLauncher(gamePath, store) {
       },
     });
   } //*/
-  /*if (store === 'epic') {
+  if (store === 'epic') {
     return Promise.resolve({
         launcher: 'epic',
         addInfo: {

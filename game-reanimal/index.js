@@ -27,12 +27,12 @@ const LOCALAPPDATA = util.getVortexPath('localAppData');
 const GAME_ID = "reanimal"; //same as Nexus domain
 const STEAMAPP_ID = "2129530"; //from steamdb.info
 const STEAMAPP_ID_DEMO = "4019420"; //VERIFY if the EPIC_CODE_NAME and EXEC_DEMO match Steam full game
-const EPICAPP_ID = ""; //NOT on egdata.app yet
+const EPICAPP_ID = "1da937db348547dfa8c6b6e540d3aff2"; //from egdata.app
 const GOGAPP_ID = "1209105161"; // from gogdb.org
 const XBOXAPP_ID = ""; //NOT on Game Pass, so cannot get data
 const XBOXEXECNAME = "AppUEGameShipping"; //from appxmanifest.xml
 const XBOX_PUB_ID = ""; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, GOGAPP_ID, STEAMAPP_ID_DEMO]; // UPDATE THIS WITH ALL VALID IDs
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, GOGAPP_ID, STEAMAPP_ID_DEMO, EPICAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
 const GAME_NAME = "REANIMAL";
 const GAME_NAME_SHORT = "REANIMAL"; //Try for 8-10 characters

@@ -15,7 +15,7 @@ const { parseStringPromise } = require('xml2js');
 //Specify all information about the game
 const GAME_ID = "frostpunk2";
 const STEAMAPP_ID = "1601580";
-const EPICAPP_ID = ""; // not on egdata.app yet
+const EPICAPP_ID = "b9fcd8cd104a4b31a99692128a8e4bb4"; //from egdata.app
 const GOGAPP_ID = "1728870436";
 const XBOXAPP_ID = "4063811bitstudios.Frostpunk2ConsoleEdition";
 const XBOXEXECNAME = "AppFrostpunk2Shipping";
@@ -29,7 +29,7 @@ const IO_STORE = false; //true if the Paks folder contains .ucas and .utoc files
 const gameFinderQuery = {
   steam: [{ id: STEAMAPP_ID, prefer: 0 }],
   gog: [{ id: GOGAPP_ID }],
-  //epic: [{ id: EPICAPP_ID }],
+  epic: [{ id: EPICAPP_ID }],
   xbox: [{ id: XBOXAPP_ID }],
 };
 
@@ -300,7 +300,6 @@ async function requiresLauncher(gamePath, store) {
           },
       });
   }
-  /*
   if (store === 'epic') {
     return Promise.resolve({
         launcher: 'epic',
@@ -309,12 +308,7 @@ async function requiresLauncher(gamePath, store) {
         },
     });
   }
-  */
-  /*
-  if (store === 'gog') {
-    return Promise.resolve(undefined);
-  }
-  */
+  //*/
   return Promise.resolve(undefined);
 }
 

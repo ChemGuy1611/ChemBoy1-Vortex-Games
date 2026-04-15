@@ -28,12 +28,12 @@ const LOCALAPPDATA = util.getVortexPath('localAppData');
 const GAME_ID = "humanitz"; //same as Nexus domain
 const STEAMAPP_ID = "1766060"; //from steamdb.info
 const STEAMAPP_ID_DEMO = "1773210"; //VERIFY if the EPIC_CODE_NAME and EXEC_DEMO match Steam full game
-const EPICAPP_ID = ""; // NOT on egdata.app yet
-const GOGAPP_ID = "1249249337"; // NOT AVAILABLE in store. Not used!
+const EPICAPP_ID = "7553f3b09de045ca9a2e2c30b2321616"; //from egdata.app
+const GOGAPP_ID = null; // NOT AVAILABLE in store. Not used!
 const XBOXAPP_ID = null; //from appxmanifest.xml
 const XBOXEXECNAME = "AppUEGameShipping"; //from appxmanifest.xml
 const XBOX_PUB_ID = ""; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, STEAMAPP_ID_DEMO]; // UPDATE THIS WITH ALL VALID IDs
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, STEAMAPP_ID_DEMO, EPICAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
 const GAME_NAME = "HumanitZ";
 const GAME_NAME_SHORT = GAME_NAME; //Try for 8-10 characters

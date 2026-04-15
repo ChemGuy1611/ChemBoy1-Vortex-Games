@@ -47,6 +47,7 @@ from vortex_utils import (
     REPO_ROOT, http_get, http_get_bytes,
     roman_to_arabic, arabic_to_roman, name_lookup_variants,
     lookup_pcgamingwiki, get_api_key, run_generate_explained,
+    fetch_epic_app_id, add_to_discovery_ids,
 )
 
 TEMPLATES = [
@@ -700,22 +701,6 @@ def sub_toggle(src, toggle_name, value):
     return re.sub(pattern, rf'\g<1>{val_str}\2', src)
 
 
-def update_discovery_ids(src, gog_id, demo_appid):
-    """Update DISCOVERY_IDS_ACTIVE to include all found store IDs.
-    Always includes STEAMAPP_ID. Adds STEAMAPP_ID_DEMO if a demo was found,
-    GOGAPP_ID if GOG was found."""
-    ids = ["STEAMAPP_ID"]
-    if demo_appid:
-        ids.append("STEAMAPP_ID_DEMO")
-    if gog_id:
-        ids.append("GOGAPP_ID")
-    array_str = ", ".join(ids)
-    return re.sub(
-        r'(const\s+DISCOVERY_IDS_ACTIVE\s*=\s*\[)[^\]]*(\])',
-        rf'\g<1>{array_str}\2',
-        src
-    )
-
 
 # ── File editors ─────────────────────────────────────────────────────────────
 
@@ -815,7 +800,16 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
     xbox_found = availability['xbox']
     epic_found = bool(availability.get('epic_url'))
     engine_version = availability['engine_version']
-    print(f"  Epic     : {'found (set ID manually)' if epic_found else 'not found'}")
+    resolved_epic_id = None
+    if epic_found:
+        time.sleep(0.3)
+        resolved_epic_id = fetch_epic_app_id(game_name)
+    if not epic_found:
+        print(f"  Epic     : not found")
+    elif resolved_epic_id:
+        print(f"  Epic     : {resolved_epic_id}")
+    else:
+        print(f"  Epic     : found (set ID manually)")
     print(f"  Xbox     : {'found (set ID manually)' if xbox_found else 'not found'}")
     if engine_version:
         print(f"  UE build : {engine_version}")
@@ -825,7 +819,7 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
         print(f"\n{'=' * 60}")
         print(f"  [DRY RUN] Would create: game-{game_id}/")
         print(f"  Template : {template_name}")
-        print(f"  Steam ID : {appid}  |  GOG: {gog_id or 'N/A'}  |  Epic: {'yes' if epic_found else 'N/A'}  |  Xbox: {'yes' if xbox_found else 'N/A'}")
+        print(f"  Steam ID : {appid}  |  GOG: {gog_id or 'N/A'}  |  Epic: {resolved_epic_id or ('yes' if epic_found else 'N/A')}  |  Xbox: {'yes' if xbox_found else 'N/A'}")
         print(f"  Exec     : {exec_filename or 'XXX'}")
         if engine_version:
             print(f"  UE build : {engine_version}")
@@ -853,7 +847,7 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
         "GAME_ID":          game_id,
         "STEAMAPP_ID":      appid,
         "STEAMAPP_ID_DEMO": demo_appid,                        # from Steam demos array
-        "EPICAPP_ID":       None if not epic_found else "XXX", # null if not on Epic
+        "EPICAPP_ID":       None if not epic_found else (resolved_epic_id or "XXX"), # null if not on Epic; resolved from egdata.app if possible
         "GOGAPP_ID":        gog_id,
         "XBOXAPP_ID":       None if not xbox_found else "XXX", # null if not on Xbox PC store
         "GAME_NAME":        game_name,
@@ -891,7 +885,7 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
         src = f.read()
     src = sub_header(src, game_name, today)
     src = apply_substitutions(src, fields)
-    src = update_discovery_ids(src, gog_id, demo_appid)
+    src = add_to_discovery_ids(src)
     src = sub_binaries_path(src, dir_parts)
     # Add store lookup links as comments on the const declaration lines
     src = add_line_comment(src, "STEAMAPP_ID", f"https://steamdb.info/app/{appid}/")
@@ -950,6 +944,9 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
             os.startfile(art_path)
         else:
             print(f"  FAILED -add {game_id}.jpg manually (640x360 JPG, no title text)")
+
+    # ── index.js ──────────────────────────────────────────────────────────────
+    os.startfile(os.path.join(dest, "index.js"))
 
     # ── Title image ───────────────────────────────────────────────────────────
     title_ok = False

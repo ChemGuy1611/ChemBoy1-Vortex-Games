@@ -18,6 +18,7 @@
 ## Supported Stores
 
 - **Steam** — `1238000`
+- **Epic Games Store** — `dvorak`
 
 ## Mod Types
 
@@ -55,6 +56,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Deploy Hook** (`did-deploy`) — runs custom logic (e.g., notifications, metadata patching) every time mods are deployed.
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
+- **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 
 ## How Mod Installation Works

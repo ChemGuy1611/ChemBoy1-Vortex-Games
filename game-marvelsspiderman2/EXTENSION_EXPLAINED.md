@@ -18,6 +18,7 @@
 ## Supported Stores
 
 - **Steam** — `2651280`
+- **Epic Games Store** — `575efd0b5dd54429b035ffc8fe2d36d0`
 
 ## Mod Types
 
@@ -50,6 +51,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Deploy Hook** (`did-deploy`) — runs custom logic (e.g., notifications, metadata patching) every time mods are deployed.
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
+- **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 - **Required Extensions** — depends on: `Vortex Steam File Downloader`.
 

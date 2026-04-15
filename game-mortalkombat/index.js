@@ -17,7 +17,7 @@ const LOCALAPPDATA = util.getVortexPath("localAppData");
 //Specify all information about the game
 const GAME_ID = "mortalkombat";
 const STEAMAPP_ID = "1971870";
-const EPICAPP_ID = ""; //not on egdata.app yet
+const EPICAPP_ID = "863510a2790144cabba5252fba4fd808"; //from egdata.app
 const GOGAPP_ID = null;
 const XBOXAPP_ID = "WarnerBros.Interactive.K1Codename";
 const XBOXEXECNAME = "AppMortalKombat1Shipping";
@@ -133,14 +133,14 @@ const spec = {
     "details": {
       "steamAppId": +STEAMAPP_ID,
       //"gogAppId": GOGAPP_ID,
-      //"epicAppId": EPICAPP_ID,
+      "epicAppId": EPICAPP_ID,
       //"xboxAppId": XBOXAPP_ID,
       "supportsSymlinks": SYM_LINKS,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
       //"GogAPPId": GOGAPP_ID,
-      //"EpicAPPId": EPICAPP_ID,
+      "EpicAPPId": EPICAPP_ID,
       //"XboxAPPId": XBOXAPP_ID,
     },
   },
@@ -218,7 +218,7 @@ const spec = {
   "discovery": {
     "ids": [
       STEAMAPP_ID,
-      //EPICAPP_ID,
+      EPICAPP_ID,
       //GOGAPP_ID,
       XBOXAPP_ID
     ],
@@ -357,7 +357,6 @@ async function requiresLauncher(gamePath, store) {
       },
     });
   } //*/
-  /*
   if (store === 'epic') {
     return Promise.resolve({
         launcher: 'epic',
@@ -366,7 +365,6 @@ async function requiresLauncher(gamePath, store) {
         },
     });
   } //*/
-  /*
   if (store === 'steam') {
     return Promise.resolve({
         launcher: 'steam',

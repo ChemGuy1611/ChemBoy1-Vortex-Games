@@ -18,7 +18,7 @@ const LOCALAPPDATA = util.getVortexPath('localAppData');
 const GAME_ID = "manorlords";
 const STEAMAPP_ID = "1363080";
 const GOGAPP_ID = "1361243432";
-const EPICAPP_ID = ""; // not on egdata.app yet
+const EPICAPP_ID = "8a5e1dedaa0e4f4e8b2ac2c00e849111"; //from egdata.app
 const XBOXAPP_ID = "HoodedHorse.ManorLords";
 const XBOXEXECNAME = "AppManorLordsShipping";
 const EPIC_CODE_NAME = "ManorLords";
@@ -38,7 +38,7 @@ const EXEC_FOLDER_XBOX = "WinGDK";
 const gameFinderQuery = {
   steam: [{ id: STEAMAPP_ID, prefer: 0 }],
   gog: [{ id: GOGAPP_ID }],
-  //epic: [{ id: EPICAPP_ID }],
+  epic: [{ id: EPICAPP_ID }],
   xbox: [{ id: XBOXAPP_ID }],
 };
 
@@ -287,6 +287,11 @@ async function requiresLauncher(gamePath, store) {
         },
     });
   }
+  if (store === 'steam') {
+    return Promise.resolve({
+        launcher: 'steam',
+    });
+  } //*/
   return Promise.resolve(undefined);
 }
 

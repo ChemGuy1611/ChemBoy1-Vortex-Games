@@ -21,6 +21,7 @@
 ## Supported Stores
 
 - **Steam** — `2069250`
+- **Epic Games Store** — `dcb7850a425241acbc64067133cace86`
 - **Xbox / Microsoft Store** — `2637SquanchGamesInc.HighOnLife2`
 
 ## Feature Flags
@@ -65,6 +66,7 @@ Mod types define where each category of mod gets deployed:
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
+- **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
 ## How Mod Installation Works

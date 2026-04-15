@@ -27,7 +27,7 @@ const LOCALAPPDATA = util.getVortexPath('localAppData');
 //Specify all information about the game
 const GAME_ID = "crisoltheaterofidols"; //same as Nexus domain
 const STEAMAPP_ID = "1790930"; //from steamdb.info
-const STEAMAPP_ID_DEMO = "3989380"; //DEMO NO LONGER AVAILABLE
+const STEAMAPP_ID_DEMO = null; //"3989380" DEMO NO LONGER AVAILABLE
 const EPICAPP_ID = null; //from egdata.app
 const GOGAPP_ID = null; // from gogdb.org
 const XBOXAPP_ID = null; //from appxmanifest.xml

@@ -14,7 +14,7 @@ const template = require('string-template');
 //Specify all information about the game
 const GAME_ID = "systemshock2023";
 const STEAMAPP_ID = "482400";
-const EPICAPP_ID = ""; //not on egdata.app yet
+const EPICAPP_ID = "1d703aedb468494681ed9e5b657dca00"; //egdata.app
 const GOGAPP_ID = "1439637285";
 const XBOXAPP_ID = null;
 const XBOXEXECNAME = null;
@@ -131,7 +131,7 @@ const spec = {
   "discovery": {
     "ids": [
       STEAMAPP_ID,
-      //EPICAPP_ID,
+      EPICAPP_ID,
       GOGAPP_ID,
       //XBOXAPP_ID
     ],
@@ -244,15 +244,12 @@ async function queryPath() {
 //Set launcher requirements
 async function requiresLauncher() {
   let game = await queryGame();
-
   if (game.gameStoreId === "steam") {
     return undefined;
   }
-
   if (game.gameStoreId === "gog") {
     return undefined;
   }
-  /*
   if (game.gameStoreId === "epic") {
     return {
       launcher: "epic",
@@ -261,6 +258,7 @@ async function requiresLauncher() {
       },
     };
   }
+  /*
   if (game.gameStoreId === "xbox") {
     return {
       launcher: "xbox",

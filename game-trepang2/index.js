@@ -16,7 +16,7 @@ const { parseStringPromise } = require('xml2js');
 const GAME_ID = "trepang2";
 const STEAMAPP_ID = "1164940";
 const GOGAPP_ID = "1599916752";
-const EPICAPP_ID = ""; // not on egdata.app yet
+const EPICAPP_ID = "8d92750c06a2475b8361ae1e759bdef2"; //from egdata.app
 const XBOXAPP_ID = "";  // not on Game Pass anymore
 const XBOXEXECNAME = "";
 const EPIC_CODE_NAME = "CPPFPS";
@@ -135,7 +135,7 @@ const spec = {
   "discovery": {
     "ids": [
       STEAMAPP_ID,
-      //EPICAPP_ID,
+      EPICAPP_ID,
       GOGAPP_ID,
       //XBOXAPP_ID
     ],
@@ -250,15 +250,12 @@ async function queryPath() {
 //Set launcher requirements
 async function requiresLauncher() {
   let game = await queryGame();
-
   if (game.gameStoreId === "steam") {
     return undefined;
   }
-
   if (game.gameStoreId === "gog") {
     return undefined;
   }
-
   if (game.gameStoreId === "epic") {
     return {
       launcher: "epic",
@@ -267,7 +264,6 @@ async function requiresLauncher() {
       },
     };
   }
-
   if (game.gameStoreId === "xbox") {
     return {
       launcher: "xbox",
@@ -278,7 +274,6 @@ async function requiresLauncher() {
       },
     };
   }
-
   return undefined;
 }
 

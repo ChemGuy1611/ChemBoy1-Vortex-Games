@@ -15,7 +15,7 @@ const template = require('string-template');
 
 //Specify all the information about the game
 const STEAMAPP_ID = "1272320";
-const EPICAPP_ID = ""; //not on egdata.app yet
+const EPICAPP_ID = "65b84f30926947bb87400b6e39269156"; //from egdata.app
 const GOGAPP_ID = "1946916562";
 const XBOXAPP_ID = null;
 const XBOXEXECNAME = null;
@@ -81,7 +81,7 @@ const spec = {
   "discovery": {
     "ids": [
       STEAMAPP_ID,
-      //EPICAPP_ID,
+      EPICAPP_ID,
       GOGAPP_ID,
       //XBOXAPP_ID
     ],
@@ -199,11 +199,7 @@ async function requiresLauncher() {
     return undefined;
   }
 
-  if (game.gameStoreId === "gog") {
-    return undefined;
-  }
-
-  /*
+  //*
   if (game.gameStoreId === "epic") {
     return {
       launcher: "epic",
@@ -212,7 +208,7 @@ async function requiresLauncher() {
       },
     };
   }
-  */
+  //*/
 
   if (game.gameStoreId === "xbox") {
     return {

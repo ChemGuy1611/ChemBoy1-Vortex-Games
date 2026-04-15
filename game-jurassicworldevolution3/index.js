@@ -20,11 +20,11 @@ const USER_HOME = util.getVortexPath("home");
 //Specify all the information about the game
 const GAME_ID = "jurassicworldevolution3";
 const STEAMAPP_ID = "2958130";
-const EPICAPP_ID = ""; // not on egdata.app yet
+const EPICAPP_ID = "642f83b4166d4dc7887d798b04337ea8"; //from egdata.app
 const GOGAPP_ID  = null;
 const XBOXAPP_ID = null;
 const XBOXEXECNAME = null;
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 const GAME_NAME = "Jurassic World Evolution 3";
 const GAME_NAME_SHORT = "JWE3";
 

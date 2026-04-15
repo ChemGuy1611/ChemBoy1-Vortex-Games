@@ -30,6 +30,7 @@ from vortex_utils import (
     name_lookup_variants, roman_to_arabic, arabic_to_roman,
     lookup_pcgamingwiki, extract_game_id, extract_game_name,
     _find_fn_end, REGISTER_ACTIONS, run_generate_explained,
+    fetch_epic_app_id, add_to_discovery_ids,
 )
 
 TITLE_IMAGES_DIR = os.path.join(REPO_ROOT, "resources", "title-images")
@@ -128,6 +129,55 @@ def patch_extension_url(game_id, src, context):
     url = f"{NEXUS_SITE_BASE}/{mod_id}"
     new_src = set_or_insert(src, "EXTENSION_URL", url, comment="Nexus link to this extension. Used for links")
     return new_src, True, f"set to {url}"
+
+
+def patch_epic_app_id(game_id, src, context):
+    """
+    Fill in EPICAPP_ID where the value is "" by querying egdata.app with the
+    game name. Skips null (not on Epic), "XXX" (intentional placeholder), and
+    already-set real IDs. Use --force to overwrite already-set real IDs.
+    """
+    current = const_value(src, "EPICAPP_ID")
+    if current is None:
+        return src, False, "no EPICAPP_ID in source"
+    if current == "null":
+        return src, False, "null (not on Epic)"
+    if re.match(r'^["\']XXX["\']$', current):
+        return src, False, "XXX (intentional placeholder)"
+
+    is_empty = bool(re.match(r'^["\']["\']$', current))
+    if not is_empty and not context.get("force"):
+        return src, False, "already set"
+
+    game_name = extract_game_name(src)
+    if not game_name:
+        return src, False, "could not extract game name"
+
+    app_id = fetch_epic_app_id(game_name)
+    if not app_id:
+        return src, False, f"not found on egdata.app for '{game_name}'"
+
+    # Replace the EPICAPP_ID line (value + any trailing comment)
+    new_src = re.sub(
+        r'((?:const|let)\s+EPICAPP_ID\s*=\s*)["\'][^"\']*["\'][^\n]*',
+        rf'\g<1>"{app_id}"; //from egdata.app',
+        src,
+    )
+    if new_src == src:
+        return src, False, "regex substitution had no effect"
+    return new_src, True, f"set to {app_id}"
+
+
+def patch_discovery_ids(game_id, src, context):
+    """
+    Add EPICAPP_ID to DISCOVERY_IDS_ACTIVE if it has a real resolved value
+    and is not already in the array. Delegates all guard and mutation logic
+    to add_to_discovery_ids() from vortex_utils.
+    """
+    new_src = add_to_discovery_ids(src)
+    if new_src == src:
+        return src, False, "already set or EPICAPP_ID not resolved"
+    return new_src, True, "added EPICAPP_ID"
 
 
 def patch_pcgamingwiki_url(game_id, src, context):
@@ -394,7 +444,7 @@ def patch_register_actions(game_id, src, context):
     has_combined_config_save = "'Open Config/Save Folder'" in src
     missing = []
     missing_names = []
-    for label, _commented, code in _REGISTER_ACTIONS:
+    for label, _commented, code in REGISTER_ACTIONS:
         if f"'{label}'" not in src:
             # Skip separate Config/Save if a combined button already exists
             if has_combined_config_save and label in ('Open Config Folder', 'Open Save Folder'):
@@ -525,6 +575,8 @@ PATCHES = [
     {"name": "context_once_api",    "enabled": True, "fn": patch_context_once_api},
     {"name": "extension_url",       "enabled": True, "fn": patch_extension_url},
     {"name": "pcgamingwiki_url",    "enabled": True, "fn": patch_pcgamingwiki_url},
+    {"name": "epic_app_id",         "enabled": True, "fn": patch_epic_app_id},
+    {"name": "discovery_ids",       "enabled": True, "fn": patch_discovery_ids},
 ]
 
 

@@ -13,7 +13,7 @@ const template = require('string-template');
 
 //Specify all the information about the game
 const STEAMAPP_ID = "2515020";
-const EPICAPP_ID = ""; //not on egdata.app yet
+const EPICAPP_ID = "af0318aa20f443ac901a172c389d8303"; //from egdata.app
 const GOGAPP_ID = null;
 const XBOXAPP_ID = null;
 const XBOXEXECNAME = null;
@@ -79,7 +79,7 @@ const spec = {
   "discovery": {
     "ids": [
       STEAMAPP_ID,
-      //EPICAPP_ID,
+      EPICAPP_ID,
       //GOGAPP_ID,
       //XBOXAPP_ID
     ],
@@ -187,16 +187,9 @@ async function queryPath() {
 //Set launcher requirements
 async function requiresLauncher() {
   let game = await queryGame();
-
   if (game.gameStoreId === "steam") {
     return undefined;
   }
-
-  if (game.gameStoreId === "gog") {
-    return undefined;
-  }
-
-  /*
   if (game.gameStoreId === "epic") {
     return {
       launcher: "epic",
@@ -205,8 +198,7 @@ async function requiresLauncher() {
       },
     };
   }
-  */
-
+  //*/
   if (game.gameStoreId === "xbox") {
     return {
       launcher: "xbox",
@@ -217,7 +209,6 @@ async function requiresLauncher() {
       },
     };
   }
-
   return undefined;
 }
 

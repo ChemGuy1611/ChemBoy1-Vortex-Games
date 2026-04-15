@@ -19,6 +19,7 @@
 ## Supported Stores
 
 - **Steam** — `1971870`
+- **Epic Games Store** — `863510a2790144cabba5252fba4fd808`
 - **Xbox / Microsoft Store** — `WarnerBros.Interactive.K1Codename`
 
 ## Feature Flags
@@ -82,6 +83,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
+- **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
 ## How Mod Installation Works

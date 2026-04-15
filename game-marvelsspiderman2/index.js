@@ -15,7 +15,7 @@ const DOCUMENTS = util.getVortexPath("documents");
 
 //Specify all information about the game
 const STEAMAPP_ID = "2651280";
-const EPICAPP_ID = ""; // not on egdata.app yet - https://egdata.app/offers/5143c451be9b4e1ab9f3a0296d0bf5e7/builds
+const EPICAPP_ID = "575efd0b5dd54429b035ffc8fe2d36d0"; //from egdata.app
 const GAME_ID = "marvelsspiderman2";
 const EXEC = "Spider-Man2.exe";
 const GAME_NAME = "Marvel's Spider-Man 2";
@@ -106,7 +106,7 @@ const spec = {
   "discovery": {
     "ids": [
       STEAMAPP_ID,
-      //EPICAPP_ID,
+      EPICAPP_ID,
     ],
     "names": []
   }
@@ -206,13 +206,11 @@ function makeGetModPath(api, gameSpec) {
 
 //Set launcher requirements
 async function requiresLauncher(gamePath, store) {
-
   if (store === 'steam') {
       return Promise.resolve({
           launcher: 'steam',
       });
   }
-  /*
   if (store === 'epic') {
     return Promise.resolve({
         launcher: 'epic',
@@ -220,8 +218,7 @@ async function requiresLauncher(gamePath, store) {
             appId: EPICAPP_ID,
         },
     });
-  }
-  //*/
+  } //*/
   return Promise.resolve(undefined);
 }
 

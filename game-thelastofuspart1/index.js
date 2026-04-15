@@ -15,7 +15,7 @@ const fsPromises = require('fs/promises');
 
 //Specify all information about the game
 const STEAMAPP_ID = "1888930";
-const EPICAPP_ID = ""; // not on egdata.app yet
+const EPICAPP_ID = "7e988ba04889404197fdf06c994326ed"; //from egdata.app
 const GAME_ID = "thelastofuspart1";
 const GAME_NAME = "The Last of Us Part I";
 const GAME_NAME_SHORT = "TLOU Part I";
@@ -190,7 +190,7 @@ const spec = {
   "discovery": {
     "ids": [
       STEAMAPP_ID,
-      //EPICAPP_ID,
+      EPICAPP_ID,
     ],
     "names": []
   }
@@ -297,7 +297,11 @@ function makeFindGame(api, gameSpec) {
 }
 
 async function requiresLauncher(gamePath, store) {
-  /*
+  if (store === 'steam') {
+    return Promise.resolve({
+        launcher: 'steam',
+    });
+  } //*/
   if (store === 'epic') {
     return Promise.resolve({
         launcher: 'epic',

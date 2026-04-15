@@ -14,7 +14,7 @@ const fsPromises = require('fs/promises'); //.readdir() for recursive folder rea
 
 //Specify all the information about the game
 const STEAMAPP_ID = "1593500";
-const EPICAPP_ID = ""; // not on egdata.app yet
+const EPICAPP_ID = "456afef39a4c4cbbb6b17e92201443d7"; //from egdata.app
 const GAME_ID = "godofwar";
 const EXEC = "GoW.exe";
 const GAME_NAME = "God of War (2018)";
@@ -178,7 +178,7 @@ const spec = {
   "discovery": {
     "ids": [
       STEAMAPP_ID,
-      //EPICAPP_ID
+      EPICAPP_ID
     ],
     "names": []
   }
@@ -291,7 +291,11 @@ function makeFindGame(api, gameSpec) {
 }
 
 async function requiresLauncher(gamePath, store) {
-  /*
+  if (store === 'steam') {
+    return Promise.resolve({
+        launcher: 'steam',
+    });
+  } //*/
   if (store === 'epic') {
     return Promise.resolve({
         launcher: 'epic',

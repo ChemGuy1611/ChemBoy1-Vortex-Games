@@ -21,11 +21,11 @@ const LOCALAPPDATA = util.getVortexPath("localAppData");
 const GAME_ID = "footballmanager26";
 const STEAMAPP_ID = "3551340";
 const STEAMAPP_ID_DEMO = "3551360";
-const EPICAPP_ID = ""; //not on egdata.app yet
+const EPICAPP_ID = "e54a251079034694b55ab6289707bfa0"; //from egdata.app
 const GOGAPP_ID = null;
 const XBOXAPP_ID = "SportsInteractive.FootballManager26";
 const XBOXEXECNAME = "App";
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, STEAMAPP_ID_DEMO, XBOXAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, STEAMAPP_ID_DEMO, XBOXAPP_ID, EPICAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 const GAME_NAME = "Football Manager 26";
 const GAME_NAME_SHORT = "FM26";
 const GAME_STRING = "fm"; //string for exe and data folder (seem to always match)
@@ -437,7 +437,6 @@ async function requiresLauncher(gamePath, store) {
         },
     });
   } //*/
-  /*
   if (store === 'steam') {
     return Promise.resolve({
         launcher: 'steam',

@@ -14,7 +14,7 @@ const { parseStringPromise } = require('xml2js');
 
 //Specify all the information about the game
 const STEAMAPP_ID = "2300320";
-const EPICAPP_ID = ""; // not on egdata.app yet
+const EPICAPP_ID = "53a95f209c1141b1be19b1a6d8c3ef5c"; //from egdata.app
 const XBOXAPP_ID = "GIANTSSoftware.FarmingSimulator25PC";
 const XBOXEXECNAME = "x64.FarmingSimulator2025Game";
 const GAME_ID = "farmingsimulator25";
@@ -99,7 +99,7 @@ const spec = {
   "discovery": {
     "ids": [
       STEAMAPP_ID,
-      //EPICAPP_ID,
+      EPICAPP_ID,
       XBOXAPP_ID,
     ],
     "names": []
@@ -216,7 +216,7 @@ function getExecutable(discoveryPath) {
 }
 
 async function requiresLauncher(gamePath, store) {
-  /*if (store === 'epic') {
+  if (store === 'epic') {
     return Promise.resolve({
         launcher: 'epic',
         addInfo: {
@@ -233,7 +233,7 @@ async function requiresLauncher(gamePath, store) {
       },
     });
   } //*/
-  /*if (store === 'steam') {
+  if (store === 'steam') {
     return Promise.resolve({
         launcher: 'steam',
     });

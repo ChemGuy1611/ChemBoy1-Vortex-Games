@@ -18,6 +18,7 @@
 ## Supported Stores
 
 - **Steam** — `1888930`
+- **Epic Games Store** — `7e988ba04889404197fdf06c994326ed`
 
 ## Mod Types
 
@@ -72,6 +73,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Purge Hook** (`did-purge`) — runs custom logic when mods are purged.
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
+- **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 
 ## How Mod Installation Works
 

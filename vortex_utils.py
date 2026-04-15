@@ -3,13 +3,16 @@ vortex_utils.py
 
 Shared utility functions for Vortex extension developer scripts.
 Centralizes common patterns: index.js parsing, name processing,
-API key loading, HTTP helpers, PCGamingWiki lookups, and logging.
+API key loading, HTTP helpers, PCGamingWiki lookups, egdata.app lookups,
+and logging.
 
 Usage:
     from vortex_utils import (
         REPO_ROOT, read_index_js, extract_game_id, extract_steamapp_id,
         extract_game_name, name_lookup_variants, lookup_pcgamingwiki,
-        get_api_key, http_get, http_get_bytes, log_info, log_error, log_warn,
+        get_api_key, http_get, http_get_bytes, http_post_json,
+        fetch_epic_app_id, add_to_discovery_ids, EGDATA_API,
+        log_info, log_error, log_warn,
     )
 """
 
@@ -24,6 +27,7 @@ import urllib.parse
 REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
 
 PCGW_API = "https://www.pcgamingwiki.com/w/api.php"
+EGDATA_API = "https://api.egdata.app"
 
 
 # == Logging helpers ===========================================================
@@ -61,6 +65,22 @@ def http_get_bytes(url, headers=None):
     )
     with urllib.request.urlopen(req, timeout=15) as resp:
         return resp.read()
+
+
+def http_post_json(url, data, headers=None):
+    """POST a JSON-serializable dict to a URL and return the parsed JSON response."""
+    payload = json.dumps(data).encode("utf-8")
+    req = urllib.request.Request(
+        url,
+        data=payload,
+        headers={
+            "User-Agent": "Mozilla/5.0",
+            "Content-Type": "application/json",
+            **(headers or {}),
+        },
+    )
+    with urllib.request.urlopen(req, timeout=15) as resp:
+        return json.loads(resp.read().decode("utf-8"))
 
 
 # == API key loading ===========================================================
@@ -301,7 +321,90 @@ def lookup_pcgamingwiki(game_name, debug=False):
         return None, None
 
 
+# == egdata.app helpers ========================================================
+
+def fetch_epic_app_id(game_name):
+    """Fetch the EPICAPP_ID for a game from egdata.app using a two-step chain.
+
+    Step 1: POST /search with {"title": game_name, "offerType": "BASE_GAME", "limit": 1}
+            -> elements[0].id (offer ID)
+    Step 2: GET /offers/{offer_id}/items
+            -> find item with entitlementType == "EXECUTABLE"
+            -> return releaseInfo[0].appId
+
+    Returns the appId string, or None if not found or on any error.
+    """
+    try:
+        result = http_post_json(
+            f"{EGDATA_API}/search",
+            {"title": game_name, "offerType": "BASE_GAME", "limit": 1},
+        )
+        elements = result.get("elements", [])
+        if not elements:
+            return None
+        offer_id = elements[0].get("id")
+        if not offer_id:
+            return None
+    except Exception:
+        return None
+
+    try:
+        time.sleep(0.3)
+        items = json.loads(http_get(f"{EGDATA_API}/offers/{offer_id}/items"))
+        for item in items:
+            if item.get("entitlementType") == "EXECUTABLE":
+                for release in item.get("releaseInfo", []):
+                    app_id = release.get("appId")
+                    if app_id:
+                        return app_id
+    except Exception:
+        return None
+
+    return None
+
+
 # == JS source helpers =========================================================
+
+def add_to_discovery_ids(src):
+    """Add store ID variables to DISCOVERY_IDS_ACTIVE as needed.
+
+    Reads each store ID constant directly from src. A variable is added only
+    if its current value is a real resolved ID (not null, '', or 'XXX') and
+    it is not already present in the array.
+
+    Handled variables (in order): STEAMAPP_ID_DEMO, GOGAPP_ID, EPICAPP_ID.
+
+    Returns the updated source string.
+    """
+    def _append(s, var_name):
+        m = re.search(r'const\s+DISCOVERY_IDS_ACTIVE\s*=\s*\[([^\]]*)\]', s)
+        if not m or var_name in m.group(1):
+            return s
+        return re.sub(
+            r'(const\s+DISCOVERY_IDS_ACTIVE\s*=\s*\[[^\]]*?)(\s*\])',
+            rf'\1, {var_name}\2',
+            s,
+            count=1,
+        )
+
+    def _has_real_value(s, var_name):
+        m = re.search(
+            rf'(?:const|let)\s+{re.escape(var_name)}\s*=\s*(.+?)(?:\s*;|\s*//|$)',
+            s, re.MULTILINE,
+        )
+        if not m:
+            return False
+        v = m.group(1).strip()
+        return not (v == "null"
+                    or re.match(r'^["\']["\']$', v)
+                    or re.match(r'^["\']XXX["\']$', v))
+
+    for var in ("STEAMAPP_ID_DEMO", "GOGAPP_ID", "EPICAPP_ID"):
+        if _has_real_value(src, var):
+            src = _append(src, var)
+
+    return src
+
 
 def _find_fn_end(src, fn_match_end):
     """Return index just past the closing '}' of the JS function whose opening

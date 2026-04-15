@@ -17,7 +17,7 @@ const fsPromises = require('fs/promises');
 //Specify all the information about the game
 const EAAPP_ID = "";
 const STEAMAPP_ID = "1845910";
-const EPICAPP_ID = ""; // not on egdata.app yet - https://egdata.app/offers/9fd0888a580f402dac23f6e52255636f/builds
+const EPICAPP_ID = "chamaelejp"; //from egdata.app
 const REGISTRY_NAME = "Dragon Age The Veilguard";
 const GAME_ID = "dragonagetheveilguard";
 const EXEC = "Dragon Age The Veilguard.exe";
@@ -185,7 +185,7 @@ const spec = {
   "discovery": {
     "ids": [
       STEAMAPP_ID,
-      //EPICAPP_ID,
+      EPICAPP_ID,
       //EAAPP_ID
     ],
     "names": []
@@ -314,7 +314,7 @@ async function requiresLauncher(gamePath, store) {
         },
     });
   } //*/
-  /*if (store === 'epic') {
+  if (store === 'epic') {
     return Promise.resolve({
         launcher: 'epic',
         addInfo: {

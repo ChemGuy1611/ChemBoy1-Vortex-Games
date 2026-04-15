@@ -27,13 +27,13 @@ const LOCALAPPDATA = util.getVortexPath('localAppData');
 //Specify all information about the game
 const GAME_ID = "norse"; //same as Nexus domain
 const STEAMAPP_ID = "3054690"; //from steamdb.info
-const STEAMAPP_ID_DEMO = "3920000"; //NOT AVAILABLE - NOT USED
-const EPICAPP_ID = ""; //NOT on egdata.app yet
+const STEAMAPP_ID_DEMO = null; //NOT AVAILABLE - NOT USED
+const EPICAPP_ID = "ee6e221431994d89b072a92189d66efc"; //from egdata.app
 const GOGAPP_ID = "1225623266"; // from gogdb.org
 const XBOXAPP_ID = null; //from appxmanifest.xml
 const XBOXEXECNAME = "AppUEGameShipping"; //from appxmanifest.xml
 const XBOX_PUB_ID = ""; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, GOGAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, GOGAPP_ID, EPICAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
 const GAME_NAME = "NORSE: Oath of Blood";
 const GAME_NAME_SHORT = "NORSE OoB"; //Try for 8-10 characters

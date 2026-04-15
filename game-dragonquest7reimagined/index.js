@@ -26,7 +26,7 @@ const LOCALAPPDATA = util.getVortexPath('localAppData');
 //Specify all information about the game
 const GAME_ID = "dragonquest7reimagined"; //same as Nexus domain
 const STEAMAPP_ID = "2499860"; //from steamdb.info
-const STEAMAPP_ID_DEMO = "2499870"; //cannot support demo since EPIC_CODE_NAME is different
+const STEAMAPP_ID_DEMO = null; //"2499870" cannot support demo since EPIC_CODE_NAME is different
 const EPICAPP_ID = null; //from egdata.app
 const GOGAPP_ID = null; // from gogdb.org
 const XBOXAPP_ID = null; //from appxmanifest.xml

@@ -14,6 +14,7 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | --- | --- |
 | `REPO_ROOT` | Absolute path to the repository root directory |
 | `PCGW_API` | PCGamingWiki API base URL |
+| `EGDATA_API` | egdata.app API base URL |
 | `read_index_js(folder)` | Read `index.js` from a game extension folder, returns source string or `None` |
 | `extract_game_id(src)` | Extract `GAME_ID` value from `index.js` source |
 | `extract_steamapp_id(src)` | Extract `STEAMAPP_ID` value from `index.js` source |
@@ -25,6 +26,9 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `get_api_key(key_name)` | Load an API key from env var with Windows registry fallback (HKCU, then HKLM) |
 | `http_get(url, headers)` | Fetch a URL and return UTF-8 string |
 | `http_get_bytes(url, headers)` | Fetch a URL and return raw bytes |
+| `http_post_json(url, data, headers)` | POST a JSON-serializable dict to a URL and return parsed JSON response |
+| `fetch_epic_app_id(game_name)` | Resolve `EPICAPP_ID` for a game via egdata.app (POST search -> GET offer items -> EXECUTABLE item's `releaseInfo.appId`) |
+| `add_to_discovery_ids(src)` | Add `STEAMAPP_ID_DEMO`, `GOGAPP_ID`, and `EPICAPP_ID` to `DISCOVERY_IDS_ACTIVE` if each has a real resolved value in src (not null, `''`, or `'XXX'`) and is not already present. |
 | `log_info(game_id, msg)` | Print `[game_id] msg` |
 | `log_error(game_id, msg)` | Print `[game_id] ERROR - msg` |
 | `log_warn(game_id, msg)` | Print `[game_id] WARNING - msg` |
@@ -538,6 +542,8 @@ Use `--debug` to print raw PCGamingWiki search results and match status for each
 | `context_once_api` | Inserts `const api = context.api;` as the first line inside every `context.once(() => { ... })` block that doesn't already have it. |
 | `extension_url` | Sets `EXTENSION_URL` from the Vortex extensions manifest (`modId` → Nexus URL). Inserts the constant if missing. |
 | `pcgamingwiki_url` | Sets `PCGAMINGWIKI_URL` by looking up the game on PCGamingWiki. Inserts as `"XXX"` if not found or API unreachable. |
+| `epic_app_id` | Fills in `EPICAPP_ID = ""` by searching egdata.app for the game title and reading the EXECUTABLE item's `releaseInfo.appId`. Skips `null`, `"XXX"`, and already-set IDs. |
+| `discovery_ids` | Adds `EPICAPP_ID` to `DISCOVERY_IDS_ACTIVE` if the ID is resolved to a real value and not already present. Uses `add_to_discovery_ids()` from `vortex_utils`. |
 
 Each patch skips a game if the value is already set (unless `--force-pcgw` is used for `pcgamingwiki_url`). Games that fail a non-trivial step are always printed in the output so failures are visible. After writing any changed `index.js`, `generate_explained.js` is run automatically to keep `EXTENSION_EXPLAINED.md` in sync.
 
