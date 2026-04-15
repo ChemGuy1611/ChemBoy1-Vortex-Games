@@ -25,7 +25,7 @@ const LOCALAPPDATA = util.getVortexPath("localAppData");
 //Specify all the information about the game
 const GAME_ID = "starsandisland";
 const STEAMAPP_ID = "2966320";
-const STEAMAPP_ID_DEMO = "3864220"; //NOT AVAILABLE - NOT USED
+const STEAMAPP_ID_DEMO = null; //"3864220" NOT AVAILABLE - NOT USED
 const EPICAPP_ID = null;
 const GOGAPP_ID = null;
 const XBOXAPP_ID = "Seasun.StarsandIsland";

@@ -22,7 +22,7 @@ const DOCUMENTS = util.getVortexPath("documents");
 //Specify all the information about the game
 const GAME_ID = "bloodthief";
 const STEAMAPP_ID = "2533600";
-const STEAMAPP_ID_DEMO = "2941730";
+const STEAMAPP_ID_DEMO = null; //"2941730" Not including demo because it doesn't work with the mod loader.
 const EPICAPP_ID = null;
 const GOGAPP_ID = null;
 const XBOXAPP_ID = null;
