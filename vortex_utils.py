@@ -372,7 +372,7 @@ def add_to_discovery_ids(src):
     if its current value is a real resolved ID (not null, '', or 'XXX') and
     it is not already present in the array.
 
-    Handled variables (in order): STEAMAPP_ID_DEMO, GOGAPP_ID, EPICAPP_ID.
+    Handled variables (in order): STEAMAPP_ID_DEMO, GOGAPP_ID, EPICAPP_ID, XBOXAPP_ID, UPLAYAPP_ID, EAAPP_ID.
 
     Returns the updated source string.
     """
@@ -399,7 +399,7 @@ def add_to_discovery_ids(src):
                     or re.match(r'^["\']["\']$', v)
                     or re.match(r'^["\']XXX["\']$', v))
 
-    for var in ("STEAMAPP_ID_DEMO", "GOGAPP_ID", "EPICAPP_ID"):
+    for var in ("STEAMAPP_ID_DEMO", "GOGAPP_ID", "EPICAPP_ID", "XBOXAPP_ID", "UPLAYAPP_ID", "EAAPP_ID"):
         if _has_real_value(src, var):
             src = _append(src, var)
 

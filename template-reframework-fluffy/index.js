@@ -37,7 +37,7 @@ const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
 
 const FLUFFY_FOLDER = "XXX";
 const FLUFFY_FOLDER_DEMO = "XXX_Demo";
-const ROOT_FILES = ['nvngx_dlss.dll', "dstoragecore.dll", "dstorage.dll", "amd_fidelityfx_dx12.dll", "amd_ags_x64.dll"];
+const ROOT_FILES = ['nvngx_dlss.dll', "dstoragecore.dll", "dstorage.dll", "amd_fidelityfx_dx12.dll", "amd_ags_x64.dll", "libxess.dll"];
 const ROOT_EXTS = [".exe"];
 const REF_PAGE_NO = 0;
 const REF_FILE_NO = 0;
@@ -769,7 +769,7 @@ function installLooseLua(files) {
 
 //Installer test for root folders/files
 function testRoot(files, gameId) {
-  const isFile = files.some(file => ROOT_FILES.includes(path.basename(file)));
+  const isFile = files.some(file => ROOT_FILES.includes(path.basename(file).toLowerCase()));
   const isExt = files.some(file => ROOT_EXTS.includes(path.extname(file).toLowerCase()));
   const isFluffy = files.some(file => path.basename(file).toLowerCase() === FLUFFYMOD_FILE);
   let supported = (gameId === spec.game.id) && ( isFile || isExt ) && !isFluffy;
@@ -789,7 +789,7 @@ function testRoot(files, gameId) {
 
 //Installer install root folders/files
 function installRoot(files) {
-  let modFile = files.find(file => ROOT_FILES.includes(path.basename(file)));
+  let modFile = files.find(file => ROOT_FILES.includes(path.basename(file).toLowerCase()));
   if (modFile === undefined) {
     modFile = files.find(file => ROOT_EXTS.includes(path.extname(file).toLowerCase()));
   }

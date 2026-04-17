@@ -1,10 +1,10 @@
-# Like a Dragon: Pirate Yakuza in Hawaii — Vortex Extension Explained
+# Yakuza Kiwami 3 & Dark Ties — Vortex Extension Explained
 
 ## Overview
 
 | Property | Value |
 | --- | --- |
-| Name | Like a Dragon: Pirate Yakuza in Hawaii Vortex Extension |
+| Name | Yakuza Kiwami 3 & Dark Ties Vortex Extension |
 | Engine / Structure | SRMM Game |
 | Author | ChemBoy1 |
 
@@ -12,13 +12,13 @@
 
 | Property | Value |
 | --- | --- |
-| Game ID | `likeadragonpirateyakuzainhawaii` |
+| Game ID | `yakuzakiwami3` |
 | Executable | `runtime/media/startup.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 
 ## Supported Stores
 
-- **Steam** — `3061810`
+- **Steam** — `3937550`
 
 ## Feature Flags
 
@@ -39,10 +39,10 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
-| Binaries / Root Folder | `likeadragonpirateyakuzainhawaii-root` | high | `{gamePath}/runtime/media` |
-| SRMM Mod | `likeadragonpirateyakuzainhawaii-mod` | high | `{gamePath}/runtime/media/mods` |
-| .par Data File | `likeadragonpirateyakuzainhawaii-data` | high | `{gamePath}/runtime/media/data` |
-| Shin Ryu MM | `likeadragonpirateyakuzainhawaii-modmanager` | low | `{gamePath}/runtime/media` |
+| Binaries / Root Folder | `yakuzakiwami3-root` | high | `{gamePath}/runtime/media` |
+| SRMM Mod | `yakuzakiwami3-mod` | high | `{gamePath}/runtime/media/mods` |
+| .par Data File | `yakuzakiwami3-data` | high | `{gamePath}/runtime/media/data` |
+| Shin Ryu MM | `yakuzakiwami3-modmanager` | low | `{gamePath}/runtime/media` |
 
 ## Mod Installers
 
@@ -50,10 +50,10 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
-| `likeadragonpirateyakuzainhawaii-modmanager` | 25 |
-| `likeadragonpirateyakuzainhawaii-mod` | 27 |
-| `likeadragonpirateyakuzainhawaii-data` | 29 |
-| `likeadragonpirateyakuzainhawaii-root` | 27 |
+| `yakuzakiwami3-modmanager` | 25 |
+| `yakuzakiwami3-mod` | 27 |
+| `yakuzakiwami3-data` | 29 |
+| `yakuzakiwami3-root` | 27 |
 
 ## Registered Tools
 

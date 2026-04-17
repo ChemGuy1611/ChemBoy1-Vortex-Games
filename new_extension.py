@@ -36,6 +36,9 @@ import time
 import shutil
 import argparse
 import subprocess
+import webbrowser
+import gzip
+import urllib.error
 import urllib.request
 import urllib.parse
 from datetime import date
@@ -247,24 +250,162 @@ def lookup_nexus_domain(game_name, api_key):
     return None
 
 
-def lookup_gog(game_name):
-    """Search GOG catalog for a matching game. Returns GOG ID string or None.
-    Only returns a result when the title genuinely matches -never falls back
-    to an unrelated first result."""
-    url = (
-        "https://catalog.gog.com/v1/catalog"
-        f"?search={urllib.parse.quote(game_name)}&productType=in:game,pack&limit=5"
-    )
+def _gog_product_type(pid):
+    """Fetch product.json for a gogdb product and return its type string or None."""
     try:
-        data = json.loads(http_get(url))
-        products = data.get("products", [])
-        for p in products:
-            if game_name.lower() in p.get("title", "").lower():
-                return str(p["id"])
+        data = json.loads(http_get(f"https://www.gogdb.org/data/products/{pid}/product.json"))
+        return data.get("type")
+    except Exception:
+        return None
+
+
+def lookup_gog(game_name):
+    """Search gogdb.org for a matching game. Returns GOG ID string or None.
+    Uses gogdb.org/products?search= (HTML scrape) — the GOG catalog API search
+    parameter is broken and returns unrelated results regardless of query.
+    Prefers type:game over type:pack/dlc; within each tier prefers exact title match."""
+    url = f"https://www.gogdb.org/products?search={urllib.parse.quote(game_name)}"
+    try:
+        html = http_get(url)
+        hits = re.findall(r'href="/product/(\d+)"[^>]*>\s*([^<]+)', html)
+        candidates = [(pid, t.strip()) for pid, t in hits if not t.strip().isdigit()]
+        name_lower = game_name.lower()
+
+        exact   = [pid for pid, t in candidates if t.lower() == name_lower]
+        partial = [pid for pid, t in candidates if name_lower in t.lower() and t.lower() != name_lower]
+
+        for pool in (exact, partial):
+            for pid in pool:
+                if _gog_product_type(pid) == "game":
+                    return pid
+        # Fallback: no type:game found — return first title match of any type
+        return exact[0] if exact else (partial[0] if partial else None)
     except Exception as e:
         print(f"    GOG lookup error: {e}")
     return None
 
+
+
+def _gog_exe_from_builds(pid):
+    """Try to extract the game executable from gogdb.org builds for a single product ID.
+    Returns (filename, dir_parts) or (None, []).
+    Raises urllib.error.HTTPError if the builds directory doesn't exist (404)."""
+    builds_url = f"https://www.gogdb.org/data/products/{pid}/builds/"
+    html = http_get(builds_url)
+    entries = re.findall(r'href="(\d+\.json)"[^>]*>.*?(\d{4}-\d{2}-\d{2} \d{2}:\d{2})', html)
+    if not entries:
+        return None, []
+    entries.sort(key=lambda x: x[1], reverse=True)
+
+    build_data = None
+    for fname, _ in entries:
+        try:
+            data = json.loads(http_get(f"https://www.gogdb.org/data/products/{pid}/builds/{fname}"))
+            if data.get("platform", data.get("os", "")).lower() == "windows":
+                build_data = data
+                break
+        except Exception:
+            continue
+
+    if not build_data:
+        return None, []
+
+    depots = build_data.get("depots", [])
+    if not depots:
+        return None, []
+
+    # Search depots for the game executable. Strategy:
+    # 1. Try en-US single-language depot first (most common structure).
+    # 2. Fall back to all medium-sized depots (1 KB–1 GB) in size-ascending order
+    #    — huge content packs never contain executables, tiny ones are text/config.
+    # Collect all candidates across depots, filter known non-game executables,
+    # then return the largest remaining (game binary is usually the biggest .exe).
+    _NON_GAME = re.compile(
+        r'(setup|installer|launcher|crashreporter|crash_reporter|register|unins|7za|vcredist)',
+        re.IGNORECASE,
+    )
+
+    def exe_size(item):
+        chunks = item.get("chunks", [])
+        return chunks[0].get("size", 0) if chunks else 0
+
+    def depots_to_search():
+        en_us = [d for d in depots if d.get("languages") == ["en-US"]]
+        if en_us:
+            yield from sorted(en_us, key=lambda d: d.get("size", 0), reverse=True)
+        medium = sorted(
+            [d for d in depots if 1_000 < d.get("size", 0) < 1_000_000_000
+             and d.get("languages") != ["en-US"]],
+            key=lambda d: d.get("size", 0),
+        )
+        yield from medium
+
+    all_exes = []
+    for depot in depots_to_search():
+        h = depot.get("manifest")
+        if not h:
+            continue
+        try:
+            manifest_url = f"https://www.gogdb.org/data/manifests_v2/{h[0:2]}/{h[2:4]}/{h}.json.gz"
+            with gzip.open(BytesIO(http_get_bytes(manifest_url))) as f:
+                manifest = json.load(f)
+            items = manifest.get("depot", {}).get("items", [])
+            for item in items:
+                if "executable" in item.get("flags", []) and item.get("path", "").lower().endswith(".exe"):
+                    name = item["path"].replace("\\", "/").split("/")[-1]
+                    if not _NON_GAME.search(name):
+                        all_exes.append(item)
+        except Exception:
+            continue
+
+    if not all_exes:
+        return None, []
+
+    main_exe = max(all_exes, key=exe_size)
+    path = main_exe["path"].replace("\\", "/")
+    parts = path.split("/")
+    return parts[-1], parts[:-1] if len(parts) > 1 else []
+
+
+def lookup_gog_executable(gog_id):
+    """Look up the game executable from gogdb.org depot manifests.
+    Returns (filename, dir_parts) or (None, []).
+
+    If the given ID yields no executable (no builds dir, empty builds, or no
+    windows build), fetches product.json and follows includes_games to find
+    type:game products with builds.
+    """
+    try:
+        result = _gog_exe_from_builds(gog_id)
+        if result[0]:
+            return result
+    except urllib.error.HTTPError as e:
+        if e.code != 404:
+            print(f"    GOG executable lookup error: {e}")
+            return None, []
+    except Exception as e:
+        print(f"    GOG executable lookup error: {e}")
+        return None, []
+
+    # No executable found — follow includes_games to find type:game products with builds
+    try:
+        product = json.loads(http_get(f"https://www.gogdb.org/data/products/{gog_id}/product.json"))
+        for related_id in product.get("includes_games", []):
+            related_id = str(related_id)
+            if _gog_product_type(related_id) != "game":
+                continue
+            try:
+                result = _gog_exe_from_builds(related_id)
+                if result[0]:
+                    return result
+            except urllib.error.HTTPError:
+                continue
+            except Exception:
+                continue
+    except Exception as e:
+        print(f"    GOG executable lookup error: {e}")
+
+    return None, []
 
 
 def fetch_pcgw_availability(page_title):
@@ -781,10 +922,15 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
     time.sleep(0.3)
     steamdb_data = scrape_steamdb_info(appid)
     exec_filename, dir_parts = get_exec_info(steam_data, steamdb_data)
+    gog_exec_used = False
+    if exec_filename is None and gog_id:
+        exec_filename, dir_parts = lookup_gog_executable(gog_id)
+        gog_exec_used = exec_filename is not None
     game_string = exec_filename.replace(".exe", "").replace(".EXE", "") if exec_filename else None
     demo_appid = get_demo_appid(steam_data)
     epic_code_name = get_epic_code_name(steam_data, steamdb_data)
-    print(f"  Exec     : {exec_filename or 'not found (left as XXX)'}")
+    exec_source = " (from GOG manifest)" if gog_exec_used else ""
+    print(f"  Exec     : {exec_filename or 'not found (left as XXX)'}{exec_source}")
     if dir_parts:
         print(f"  Bin path : {'/'.join(dir_parts)}")
     print(f"  Demo ID  : {demo_appid or 'none found'}")
@@ -948,6 +1094,13 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
     # ── index.js ──────────────────────────────────────────────────────────────
     os.startfile(os.path.join(dest, "index.js"))
 
+    # ── Browser tabs ──────────────────────────────────────────────────────────
+    if pcgw_url:
+        webbrowser.open(pcgw_url)
+    webbrowser.open(f"https://steamdb.info/app/{appid}/info/")
+    if demo_appid:
+        webbrowser.open(f"https://store.steampowered.com/app/{demo_appid}/")
+
     # ── Title image ───────────────────────────────────────────────────────────
     title_ok = False
     if no_images:
@@ -960,6 +1113,7 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
         title_ok, title_source = download_title_image(appid, game_name, title_path, sgdb_key)
         if title_ok:
             print(f"  Saved  : {title_source}")
+            os.startfile(title_path)
         else:
             print(f"  FAILED -- add {game_id}_title.jpg manually to resources/title-images/ (1920x1080 JPG, with title text)")
 
@@ -976,6 +1130,7 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
         banner_ok, banner_source = download_banner_image(appid, game_id, banner_path, sgdb_key)
         if banner_ok:
             print(f"  Saved  : {banner_source}")
+            os.startfile(banner_path)
         else:
             print(f"  FAILED -- add {game_id}_banner.jpg manually to resources/banner-images/")
 

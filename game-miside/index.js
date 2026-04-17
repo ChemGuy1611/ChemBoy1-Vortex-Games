@@ -66,7 +66,7 @@ const customLoaderInstaller = false; //set true if the custom loader uses an ins
 
 const DATA_FOLDER_DEFAULT = `${GAME_STRING}_Data`;
 let DATA_FOLDER = DATA_FOLDER_DEFAULT;
-const ALT_VERSION = 'xbox';
+const ALT_VERSION = 'demo';
 const DATA_FOLDER_ALT = `${GAME_STRING_ALT}_Data`; //don't always match
 const ROOT_FOLDERS = [DATA_FOLDER, DATA_FOLDER_ALT];
 const VERSION_FILE = path.join('Version.info'); // LIKELY to change - usually .txt or .info file, i.e. Version.info. app.info typically does NOT contain version number
@@ -75,14 +75,14 @@ const hasVersionFile = false; //set to true if there is a Version.info file that
 const VER_IDX = 3; //index of the version number in the Version.info file
 const VER_SPLIT = ' '; //split character for the Version.info file - typically a space
 
-const DEV_REGSTRING = "XXX"; //developer name
-const GAME_REGSTRING = "XXX"; //game name
-const CONFIG_FOLDERNAME = "XXX";
-const SAVE_FOLDERNAME = "XXX";
+const DEV_REGSTRING = "AIHASTO"; //developer name
+const GAME_REGSTRING = "MiSideFull"; //game name
+const CONFIG_FOLDERNAME = "";
+const SAVE_FOLDERNAME = "Save";
 const hasUserIdFolder = false; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
 
 //Data to determine BepinEx/MelonLoader versions and URLs
-const loaderChoice = true; //true if loader choice is enabled
+const loaderChoice = false; //true if loader choice is enabled
 const recommendedLoader = 'bep'; // bep/mel - If loaderChoice false, this determines downloaded loader. Otherwise shows as "(Recommended)" in selector.
 const BEPINEX_BUILD = 'il2cpp'; // 'mono' or 'il2cpp' - check for "il2cpp_data" folder
 const ARCH = 'x64'; //'x64' or 'x86' game architecture (64-bit or 32-bit)

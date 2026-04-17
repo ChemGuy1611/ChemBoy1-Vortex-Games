@@ -13,6 +13,12 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 
+//const USER_HOME = util.getVortexPath("home");
+//const LOCALLOW = path.join(USER_HOME, 'AppData', 'LocalLow');
+//const DOCUMENTS = util.getVortexPath("documents");
+const ROAMINGAPPDATA = util.getVortexPath("appData");
+const LOCALAPPDATA = util.getVortexPath("localAppData");
+
 //Specify all information about the game
 const GAME_ID = "XXX";
 const STEAMAPP_ID = "XXX";
@@ -32,17 +38,19 @@ const GAME_NAME_SHORT = "XXX";
 const PCGAMINGWIKI_URL = "XXX";
 const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
 
-const PARFILE_NAMES = ["ui.spr.common", "ui.spr.de"];
+//config and save paths
+const DEV_STRING = "Sega"; //developer name
+const GAME_STRING = "XXX"; //game name
+const CONFIG_FOLDERNAME = "Steam";
+const SAVE_FOLDERNAME = CONFIG_FOLDERNAME;
+const hasUserIdFolder = true; //true if there is a user ID folder in the Save path that must be read (i.e. Steam ID)
 
 //feature toggles
 const hasXbox = false; //toggle for Xbox version logic
-const multiExe = false; //set to true if there are multiple executable names
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
-const needsModInstaller = false; //set to true if standard mods should run through an installer - set false to have mods installed to the mods folder without any processing
+const needsModInstaller = true; //set to true if standard mods should run through an installer - set false to have mods installed to the mods folder without any processing
 const rootInstaller = true; //enable root installer. Set false if you need to avoid installer collisions
-const fallbackInstaller = false; //enable fallback installer. Set false if you need to avoid installer collisions
 const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
-const hasUserIdFolder = false; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
 const debug = false; //toggle for debug mode
 
 let GAME_PATH = '';
@@ -55,26 +63,50 @@ const EXEC_XBOX = 'gamelaunchhelper.exe';
 //Information for mod types, tools, and installers
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Binaries / Root Folder";
-const ROOT_PATH = path.join(TOPLEVEL_FOLDER);
+const ROOT_PATH = TOPLEVEL_FOLDER;
+const ROOT_FILES = ['nvngx_dlss.dll', "dstoragecore.dll", "dstorage.dll", "amd_fidelityfx_dx12.dll", "amd_ags_x64.dll", "libxess.dll"];
+const ROOT_EXTS = [".exe"];
 
 const MODMANAGER_ID = `${GAME_ID}-modmanager`;
 const LAUNCH_ID = `${MODMANAGER_ID}launch`;
 const MODMANAGER_NAME = "Shin Ryu MM";
 const MODMANAGER_EXEC = "shinryumodmanager.exe";
-const MODMANAGER_PATH = path.join(TOPLEVEL_FOLDER);
+const MODMANAGER_PATH = TOPLEVEL_FOLDER;
 const MODMANAGER_PAGE_NO = 743;
-const MODMANAGER_FILE_NO = 4744;
+const MODMANAGER_FILE_NO = 7043;
 const MODMANAGER_DOMAIN = 'site';
 
 const MODMANAGERMOD_ID = `${GAME_ID}-mod`;
 const MODMANAGERMOD_NAME = "SRMM Mod";
 const MODMANAGERMOD_PATH = path.join(TOPLEVEL_FOLDER, `mods`);
-const MODMANAGERMOD_FILE = "modinfo.ini";
+const MODMANAGERMOD_FILES = ["mod-meta.yaml", "modinfo.ini"];
 
 const DATAMOD_ID = `${GAME_ID}-data`;
 const DATAMOD_NAME = ".par Data File";
 const DATAMOD_PATH = path.join(TOPLEVEL_FOLDER, `data`);
 const DATAMOD_EXTS = [".par"];
+
+//Config and save paths
+const CONFIG_PATH = path.join(ROAMINGAPPDATA, DEV_STRING, GAME_STRING, CONFIG_FOLDERNAME);
+const CONFIG_FILES = ['graphics.ini', "input.ini"];
+const SAVE_FOLDER = CONFIG_PATH;
+let USERID_FOLDER = "";
+if (hasUserIdFolder) {
+  try {
+    const SAVE_ARRAY = fs.readdirSync(SAVE_FOLDER);
+    USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_FOLDER, entry));
+  } catch(err) {
+    USERID_FOLDER = "";
+  }
+  if (USERID_FOLDER === undefined) {
+    USERID_FOLDER = "";
+  } //*/
+}
+const SAVE_PATH_DEFAULT = path.join(SAVE_FOLDER, USERID_FOLDER);
+let SAVE_PATH = SAVE_PATH_DEFAULT;
+const SAVE_PATH_XBOX = path.join(LOCALAPPDATA, "Packages", `${XBOXAPP_ID}_${XBOX_PUB_ID}`, "SystemAppData", "wgs"); //XBOX Version
+const SAVE_FILES = ['XXX.XXX'];
+const SAVE_EXTS = [".XXX"];
 
 const MOD_PATH_DEFAULT = MODMANAGERMOD_PATH;
 const PARAMETERS_STRING = '';
@@ -180,6 +212,19 @@ const tools = [
     relative: true,
     exclusive: true,
   },
+  {
+    id: `${GAME_ID}-nomodlaunch`,
+    name: 'Launch (No Mods)',
+    logo: 'exec.png',
+    executable: () => EXEC,
+    requiredFiles: [
+      EXEC,
+    ],
+    //parameters: [],
+    detach: true,
+    relative: true,
+    exclusive: true,
+  },
 ];
 
 // BASIC FUNCTIONS //////////////////////////////////////////////////////////////////////
@@ -281,6 +326,7 @@ async function requiresLauncher(gamePath, store) {
 function getExecutable(discoveryPath) {
   if (hasXbox && statCheckSync(discoveryPath, EXEC_XBOX)) {
     GAME_VERSION = 'xbox';
+    SAVE_PATH = SAVE_PATH_XBOX;
     return EXEC_XBOX;
   };
   //add GOG/EGS/Demo versions here if needed
@@ -292,6 +338,7 @@ function getExecutable(discoveryPath) {
 async function setGameVersion(gamePath) {
   if (hasXbox && await statCheckAsync(gamePath, EXEC_XBOX)) {
     GAME_VERSION = 'xbox';
+    SAVE_PATH = SAVE_PATH_XBOX;
     return GAME_VERSION;
   } else {
     GAME_VERSION = 'default';
@@ -506,7 +553,7 @@ function installModManager(files) {
 
 //Installer test for mod files
 function testModManagerMod(files, gameId) {
-  const isMod = files.some(file => (path.basename(file).toLowerCase() === MODMANAGERMOD_FILE));
+  const isMod = files.some(file => MODMANAGERMOD_FILES.includes(path.basename(file).toLowerCase()));
   let supported = (gameId === spec.game.id) && isMod;
 
   // Test for a mod installer
@@ -524,9 +571,8 @@ function testModManagerMod(files, gameId) {
 
 //Installer install mod files
 function installModManagerMod(files, fileName) {
-  let modFile = files.find(file => (path.basename(file).toLowerCase() === MODMANAGERMOD_FILE));
+  let modFile = files.find(file => MODMANAGERMOD_FILES.includes(path.basename(file).toLowerCase()));
   const setModTypeInstruction = { type: 'setmodtype', value: MODMANAGERMOD_ID };
-  let idx = modFile.indexOf(path.basename(modFile));
   let rootPath = path.dirname(modFile);
   let folder = path.basename(fileName, '.installing');
   const ROOT_PATH = path.basename(rootPath);
@@ -534,10 +580,8 @@ function installModManagerMod(files, fileName) {
     folder = '';
     modFile = rootPath; //make the folder the targeted modFile so we can grab any other folders also in its directory
     rootPath = path.dirname(modFile);
-    /*const indexFolder = path.basename(modFile);
-    //idx = modFile.indexOf(`${indexFolder}${path.sep}`); //*/ //index on the folder with path separator
   }
-  idx = modFile.indexOf(path.basename(modFile));
+  const idx = modFile.indexOf(path.basename(modFile));
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
@@ -586,6 +630,50 @@ function installData(files) {
       (!file.endsWith(path.sep)))
   );
 
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Installer test for root folders/files
+function testRoot(files, gameId) {
+  const isFile = files.some(file => ROOT_FILES.includes(path.basename(file).toLowerCase()));
+  const isExt = files.some(file => ROOT_EXTS.includes(path.extname(file).toLowerCase()));
+  let supported = (gameId === spec.game.id) && ( isFile || isExt );
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Installer install root folders/files
+function installRoot(files) {
+  let modFile = files.find(file => ROOT_FILES.includes(path.basename(file)));
+  if (modFile === undefined) {
+    modFile = files.find(file => ROOT_EXTS.includes(path.extname(file).toLowerCase()));
+  }
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
+  const idx = modFile.indexOf(path.basename(modFile));
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
   const instructions = filtered.map(file => {
     return {
       type: 'copy',
@@ -868,13 +956,24 @@ function applyGame(context, gameSpec) {
   }
   context.registerInstaller(DATAMOD_ID, 29, testData, installData);
   if (rootInstaller) {
-    context.registerInstaller(ROOT_ID, 40, testRoot, installRoot);
-  }
-  if (fallbackInstaller) {
-    context.registerInstaller(`${GAME_ID}-fallback`, 49, testFallback, (files, destinationPath) => installFallback(context.api, files, destinationPath));
+    context.registerInstaller(ROOT_ID, 27, testRoot, installRoot);
   }
 
   //register actions
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', () => {
+    util.opn(SAVE_PATH).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  }); //*/
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
+    util.opn(CONFIG_PATH).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  }); //*/
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
     util.opn(PCGAMINGWIKI_URL).catch(() => null);
   }, () => {

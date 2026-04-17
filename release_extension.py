@@ -17,7 +17,7 @@ import re
 import sys
 import subprocess
 
-from vortex_utils import REPO_ROOT, run_generate_explained
+from vortex_utils import REPO_ROOT, run_generate_explained, add_to_discovery_ids
 SEVENZIP = os.environ.get("SEVENZIP_PATH", r"C:\Program Files\7-Zip\7z.exe")
 NEXUS_SITE_URL = "https://www.nexusmods.com/games/site"
 
@@ -120,6 +120,32 @@ def update_index_header(folder, game_id, version, date, dry_run=False):
         print(f"  [{game_id}] ERROR -could not write index.js: {e}")
 
 
+def update_discovery_ids(folder, game_id, dry_run=False):
+    """Add any resolved store IDs to DISCOVERY_IDS_ACTIVE if not already present."""
+    index_path = os.path.join(folder, "index.js")
+    if not os.path.isfile(index_path):
+        return
+    try:
+        with open(index_path, encoding="utf-8") as f:
+            original = f.read()
+    except OSError as e:
+        print(f"  [{game_id}] WARNING -could not read index.js: {e}")
+        return
+    updated = add_to_discovery_ids(original)
+    if updated == original:
+        print(f"  [{game_id}] DISCOVERY_IDS_ACTIVE already up to date")
+        return
+    if dry_run:
+        print(f"  [{game_id}] [DRY RUN] Would update DISCOVERY_IDS_ACTIVE")
+        return
+    try:
+        with open(index_path, "w", encoding="utf-8") as f:
+            f.write(updated)
+        print(f"  [{game_id}] Updated DISCOVERY_IDS_ACTIVE")
+    except OSError as e:
+        print(f"  [{game_id}] ERROR -could not write index.js: {e}")
+
+
 def get_extension_url(src):
     """Return the EXTENSION_URL value from index.js source, or None if unset/XXX."""
     m = re.search(r'const\s+EXTENSION_URL\s*=\s*["\'](.+?)["\']', src)
@@ -147,6 +173,7 @@ def release(game_id, open_browser, dry_run=False):
     date = get_changelog_date(folder)
     update_version_txt(folder, game_id, version, dry_run=dry_run)
     update_index_header(folder, game_id, version, date, dry_run=dry_run)
+    update_discovery_ids(folder, game_id, dry_run=dry_run)
 
     if dry_run:
         zip_path = os.path.join(folder, f"game-{game_id}.zip")

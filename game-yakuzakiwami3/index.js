@@ -1,9 +1,9 @@
 /*////////////////////////////////////////////////////////////
-Name: Like a Dragon: Pirate Yakuza in Hawaii Vortex Extension
+Name: Yakuza Kiwami 3 & Dark Ties Vortex Extension
 Structure: SRMM Game
 Author: ChemBoy1
-Version: 0.2.0
-Date: 2026-XX-XX
+Version: 0.1.0
+Date: 2026-04-16
 Notes:
 - 
 ////////////////////////////////////////////////////////////*/
@@ -20,27 +20,27 @@ const ROAMINGAPPDATA = util.getVortexPath("appData");
 const LOCALAPPDATA = util.getVortexPath("localAppData");
 
 //Specify all information about the game
-const GAME_ID = "likeadragonpirateyakuzainhawaii";
-const STEAMAPP_ID = "3061810";
-const STEAMAPP_ID_DEMO = "3352550";
-const EPICAPP_ID = "XXX";
-const GOGAPP_ID = "XXX";
-const XBOXAPP_ID = "XXX"; //"SEGAofAmericaInc.s1b05f489rw" - NOT ACTIVE YET- Crashes on launch with SRMM injector installed
+const GAME_ID = "yakuzakiwami3";
+const STEAMAPP_ID = "3937550"; // https://steamdb.info/app/3937550/
+const STEAMAPP_ID_DEMO = "3948220"; // https://steamdb.info/app/3948220/
+const EPICAPP_ID = null;
+const GOGAPP_ID = null;
+const XBOXAPP_ID = null;
 const XBOXEXECNAME = "runtime.media.startup";
 const XBOX_PUB_ID = "XXX"; //get from Save folder
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, STEAMAPP_ID_DEMO]; // UPDATE THIS WITH ALL VALID IDs
 
 const TOPLEVEL_FOLDER = path.join('runtime', 'media');
 const EXEC = path.join(TOPLEVEL_FOLDER, 'startup.exe');
-const EXEC2 = path.join(TOPLEVEL_FOLDER, 'likeadragonpirates.exe');
-const GAME_NAME = "Like a Dragon: Pirate Yakuza in Hawaii";
-const GAME_NAME_SHORT = "LaD: Pirate Yakuza iH";
-const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Like_a_Dragon%3A_Pirate_Yakuza_in_Hawaii";
-const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1191"; //Nexus link to this extension. Used for links
+const EXEC2 = path.join(TOPLEVEL_FOLDER, 'yakuzakiwami3.exe');
+const GAME_NAME = "Yakuza Kiwami 3 & Dark Ties";
+const GAME_NAME_SHORT = "Yakuza Kiwami 3 & DT";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Yakuza_Kiwami_3_%26_Dark_Ties";
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1815"; //Nexus link to this extension. Used for links
 
 //config and save paths
 const DEV_STRING = "Sega"; //developer name
-const GAME_STRING = "LikeADragonPirates"; //game name
+const GAME_STRING = "YakuzaKiwami3"; //game name
 const CONFIG_FOLDERNAME = "Steam";
 const SAVE_FOLDERNAME = CONFIG_FOLDERNAME;
 const hasUserIdFolder = true; //true if there is a user ID folder in the Save path that must be read (i.e. Steam ID)
