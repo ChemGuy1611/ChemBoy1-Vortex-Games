@@ -18,19 +18,17 @@ Options:
 
 Requirements:
     pip install Pillow
+Environment variables:
+    STEAMGRIDDB_API_KEY  (optional, used as fallback icon source if Steam CDN fails)
 """
 
 import os
-import sys
 import argparse
 
 from vortex_utils import (
     REPO_ROOT, extract_steamapp_id, extract_game_name, iter_game_folders,
+    download_exec_icon,
 )
-
-# Import download helper from new_extension.py
-sys.path.insert(0, REPO_ROOT)
-import new_extension as ne
 
 
 # ── Core logic ────────────────────────────────────────────────────────────────
@@ -66,22 +64,22 @@ def fetch_all(target_game_ids=None, dry_run=False, force=False):
             if steamapp_id:
                 print(f"  MISSING  {label}  (Steam {steamapp_id})")
             else:
-                print(f"  MISSING  {label}  (no STEAMAPP_ID — cannot auto-fetch)")
+                print(f"  MISSING  {label}  (no STEAMAPP_ID --cannot auto-fetch)")
             continue
 
         print(f"\n{label}")
         if not steamapp_id:
-            print(f"  SKIP — no STEAMAPP_ID in index.js")
+            print(f"  SKIP --no STEAMAPP_ID in index.js")
             skipped.append(game_id)
             continue
 
         out_path = os.path.join(folder, "exec.png")
-        ok, source = ne.download_exec_icon(steamapp_id, game_name or game_id, out_path)
+        ok, source = download_exec_icon(steamapp_id, game_name or game_id, out_path)
         if ok:
             print(f"  Saved: {source}")
             saved.append(game_id)
         else:
-            print(f"  FAILED — add exec.png manually (64x64 PNG)")
+            print(f"  FAILED --add exec.png manually (64x64 PNG)")
             failed.append(game_id)
 
     if dry_run:

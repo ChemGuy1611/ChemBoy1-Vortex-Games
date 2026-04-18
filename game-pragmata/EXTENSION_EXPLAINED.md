@@ -14,6 +14,7 @@
 | --- | --- |
 | Game ID | `pragmata` |
 | Executable | `PRAGMATA.exe` |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
 | Executable (Demo) | `PRAGMATA_SKETCHBOOK.exe` |
 
 ## Supported Stores
@@ -24,6 +25,8 @@
 
 | Flag | Value | Description |
 | --- | --- | --- |
+| `useRefNightly` | `true` | toggle for using the REFramework nightly instead of Nexus release |
+| `hasXbox` | `false` | toggle for Xbox version logic |
 | `reZip` | `true` | NOT WORKING YET - KEEP AS TRUE FOR NOW - set to true to re-zip Fluffy Mods (possibly not necessary for FLUFFY v3.069+) |
 | `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
 | `multiExe` | `true` | set to true if there are multiple executables (and multiple FLUFFY_FOLDERs) (typically for Demo) |
@@ -39,6 +42,20 @@ Mod types define where each category of mod gets deployed:
 | Fluffy Mod Manager | `pragmata-fluffymanager` | low | `{gamePath}` |
 | REFramework | `pragmata-reframework` | low | `{gamePath}` |
 
+## Mod Installers
+
+Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
+
+| Installer ID | Priority |
+| --- | --- |
+| `pragmata-fluffymanager` | 25 |
+| `pragmata-reframework` | 27 |
+| `pragmata-looselua` | 29 |
+| `pragmata-root` | 31 |
+| `pragmata-preset` | 33 |
+| `pragmata-fluffymod` | 49 |
+| `pragmata-fluffymodzip` | 49 |
+
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
@@ -50,6 +67,9 @@ These tools appear in Vortex's Tools panel when this game is active:
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
+- Download Latest REFramework Nightly
+- Open Config File
+- Open Save Folder (Steam)
 - Open PCGamingWiki Page
 - View Changelog
 - Submit Bug Report

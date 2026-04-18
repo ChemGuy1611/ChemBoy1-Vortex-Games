@@ -29,7 +29,8 @@ const XBOX_PUB_ID = "XXX"; //get from Save folder. '8wekyb3d8bbwe' if published 
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
 const EXEC = "XXX.exe";
-const EXEC_DEMO = "XXXdemo.exe";
+const EXEC_DEMO = "XXX.exe";
+const REF_STRING = "XXX";
 const GAME_NAME = "XXX";
 const GAME_NAME_SHORT = "XXX";
 const PCGAMINGWIKI_URL = "XXX";
@@ -46,11 +47,15 @@ const CONFIG_PATH = '.';
 const CONFIG_FILE = 'config.ini';
 
 //feature toggles
+const useRefNightly = false; //toggle for using the REFramework nightly instead of Nexus release
 const hasXbox = false; //toggle for Xbox version logic
 const reZip = true; //NOT WORKING YET - KEEP AS TRUE FOR NOW - set to true to re-zip Fluffy Mods (possibly not necessary for FLUFFY v3.069+)
 //could index on modinfo.ini to avoid extra top level folder. should work?
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
-const multiExe = false; //set to true if there are multiple executables (and multiple FLUFFY_FOLDERs) (typically for Demo)
+let multiExe = false; //set to true if there are multiple executables (and multiple FLUFFY_FOLDERs) (typically for Demo)
+if (EXEC !== EXEC_DEMO) {
+  multiExe = true;
+}
 
 // -- END EDIT ZONE -- /////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -71,6 +76,8 @@ const ROOT_NAME = "Binaries / Root Folder";
 const REF_ID = `${GAME_ID}-reframework`;
 const REF_NAME = "REFramework";
 const REF_FILE = "dinput8.dll";
+const REF_URL = `https://github.com/praydog/REFramework-nightly/releases/latest/download/${REF_STRING}.zip`;
+const REF_URL_ERR = "https://github.com/praydog/REFramework-nightly/releases";
 
 const FLUFFY_ID = `${GAME_ID}-fluffymanager`;
 const FLUFFY_NAME = "Fluffy Mod Manager";
@@ -409,9 +416,9 @@ function isREFInstalled(api, spec) {
 }
 
 //Function to auto-download Fluffy Mod Manager
-async function downloadFluffy(api, gameSpec) {
+async function downloadFluffy(api, gameSpec, check = true) {
   let isInstalled = isFluffyInstalled(api, gameSpec);
-  if (!isInstalled) {
+  if (!isInstalled || !check) {
     const MOD_NAME = FLUFFY_NAME;
     const MOD_TYPE = FLUFFY_ID;
     const NOTIF_ID = `${MOD_TYPE}-installing`;
@@ -478,11 +485,10 @@ async function downloadFluffy(api, gameSpec) {
   }
 } //*/
 
-/*
 //Function to auto-download REFramework from Github
-async function downloadREFramework(api, gameSpec) {
+async function downloadREFrameworkGitHub(api, gameSpec, check = true) {
   let isInstalled = isREFInstalled(api, gameSpec);
-  if (!isInstalled) {
+  if (!isInstalled || !check) {
     //notification indicating install process
     const MOD_NAME = REF_NAME;
     const MOD_TYPE = REF_ID;
@@ -500,8 +506,7 @@ async function downloadREFramework(api, gameSpec) {
         game: gameSpec.game.id,
         name: MOD_NAME,
       };
-      const URL = `https://github.com/praydog/REFramework-nightly/releases/download/nightly-01069-3d533b69ca87ed5f5cd020ba2353b04c0b9bfdb8/MHWILDS.zip`;
-      //const URL = `https://github.com/praydog/REFramework/releases/latest/download/RE4.zip`;
+      const URL = REF_URL;
       const dlId = await util.toPromise(cb =>
         api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
       const modId = await util.toPromise(cb =>
@@ -518,9 +523,8 @@ async function downloadREFramework(api, gameSpec) {
     //Show the user the download page if the download, install process fails
     } catch (err) {
       //const errPage = `https://github.com/praydog/REFramework/releases`;
-      const errPage = `https://github.com/praydog/REFramework-nightly/releases`;
       api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
-      util.opn(errPage).catch(() => null);
+      util.opn(REF_URL_ERR).catch(() => null);
     } finally {
       api.dismissNotification(NOTIF_ID);
     }
@@ -1050,7 +1054,11 @@ async function setup(discovery, api, gameSpec) {
   MODTYPE_FOLDERS.push(FLUFFYMOD_PATH);
   MODTYPE_FOLDERS.push(PRESET_PATH);
   await downloadFluffy(api, gameSpec);
-  await downloadREFramework(api, gameSpec);
+  if (useRefNightly) {
+    await downloadREFrameworkGitHub(api, gameSpec);
+  } else {
+    await downloadREFramework(api, gameSpec);
+  }
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 
@@ -1115,6 +1123,13 @@ function applyGame(context, gameSpec) {
     context.registerInstaller(`${FLUFFYMOD_ID}zip`, 49, testZipContent, installZipContent); //no longer need to rezip as of Fluffy MM v3.069
   }
   //register actions
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download Latest REFramework Nightly', () => {
+    downloadREFrameworkGitHub(context.api, spec, false);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config File', () => {
     GAME_PATH = getDiscoveryPath(context.api);
     util.opn(path.join(GAME_PATH, CONFIG_FILEPATH)).catch(() => null);

@@ -5,17 +5,27 @@ Creates a minimal fake game installation folder for testing a Vortex extension.
 Reads GAME_NAME, EXEC/EXEC_NAME, and BINARIES_PATH from the extension's index.js,
 then creates an empty executable file at the correct path so Vortex can detect the game.
 
-Test folders are created under: D:\\Game_Tools_D\\!TestGameFolders_D\\{GAME_NAME}\\
+Test folders are created under the VORTEX_TEST_ROOT directory.
+
+Environment variables:
+    VORTEX_TEST_ROOT  (optional, default: D:\\Game_Tools_D\\!TestGameFolders_D)
 
 Usage:
     python setup_test_folder.py GAME_ID [GAME_ID ...]
     python setup_test_folder.py GAME_ID --dry-run
     python setup_test_folder.py GAME_ID --force
+    python setup_test_folder.py GAME_ID [GAME_ID ...] --clean
+    python setup_test_folder.py GAME_ID [GAME_ID ...] --clean --dry-run
+
+Examples:
+    python setup_test_folder.py hollowknight
+    python setup_test_folder.py helldivers2 reddeadredemption2
 """
 
 import argparse
 import os
 import re
+import shutil
 import sys
 
 from vortex_utils import REPO_ROOT
@@ -192,8 +202,8 @@ def setup(game_id, dry_run=False, force=False):
 
     # REQ_FILE path -relative to game_folder
     req_path = os.path.join(game_folder, req_file) if req_file else None
-    # If REQ_FILE has no extension it is a folder (e.g. EPIC_CODE_NAME)
-    req_is_dir = req_path and not os.path.splitext(req_file)[1]
+    # If the basename of REQ_FILE has no extension, treat it as a folder
+    req_is_dir = req_path and not os.path.splitext(os.path.basename(req_file))[1]
 
     if dry_run:
         print(f"  [{game_id}] [DRY RUN] Would create:")
@@ -206,8 +216,7 @@ def setup(game_id, dry_run=False, force=False):
     # Create the exe
     os.makedirs(exec_dir, exist_ok=True)
     if not os.path.exists(exec_file) or force:
-        with open(exec_file, "w") as f:
-            pass
+        open(exec_file, "wb").close()
         print(f"  [{game_id}] Created exe:      {exec_file}")
     else:
         print(f"  [{game_id}] Already exists:   {exec_file}")
@@ -220,10 +229,43 @@ def setup(game_id, dry_run=False, force=False):
         else:
             os.makedirs(os.path.dirname(req_path), exist_ok=True)
             if not os.path.exists(req_path) or force:
-                with open(req_path, "w") as f:
-                    pass
+                open(req_path, "wb").close()
                 print(f"  [{game_id}] Created req file: {req_path}")
 
+    return True
+
+
+def clean(game_id, dry_run=False):
+    """Delete the test folder for a game. Resolves GAME_NAME from index.js."""
+    folder = os.path.join(REPO_ROOT, f"game-{game_id}")
+    index_path = os.path.join(folder, "index.js")
+
+    if not os.path.isfile(index_path):
+        print(f"  [{game_id}] ERROR -no index.js found in game-{game_id}/")
+        return False
+
+    with open(index_path, encoding="utf-8") as f:
+        src = f.read()
+
+    table = build_symbol_table(src)
+    game_name = table.get("GAME_NAME")
+    if not game_name or game_name == "XXX":
+        print(f"  [{game_id}] ERROR -could not resolve GAME_NAME from index.js")
+        return False
+
+    safe_game_name = re.sub(r'[<>:"/\\|?*]', '', game_name).strip()
+    game_folder = os.path.join(TEST_ROOT, safe_game_name)
+
+    if not os.path.isdir(game_folder):
+        print(f"  [{game_id}] Nothing to clean: {game_folder}")
+        return True
+
+    if dry_run:
+        print(f"  [{game_id}] [DRY RUN] Would delete: {game_folder}")
+        return True
+
+    shutil.rmtree(game_folder)
+    print(f"  [{game_id}] Deleted: {game_folder}")
     return True
 
 
@@ -247,6 +289,11 @@ def main():
         action="store_true",
         help="Recreate the .exe stub even if it already exists.",
     )
+    parser.add_argument(
+        "--clean",
+        action="store_true",
+        help="Delete the test folder(s) for the given game ID(s) instead of creating them.",
+    )
     args = parser.parse_args()
 
     if not args.dry_run and not os.path.isdir(TEST_ROOT):
@@ -254,11 +301,18 @@ def main():
         sys.exit(1)
 
     label = " [DRY RUN]" if args.dry_run else ""
-    print(f"Setting up test folder(s) in {TEST_ROOT}{label}...\n")
-    success = 0
-    for game_id in args.game:
-        if setup(game_id, args.dry_run, args.force):
-            success += 1
+    if args.clean:
+        print(f"Cleaning test folder(s) in {TEST_ROOT}{label}...\n")
+        success = 0
+        for game_id in args.game:
+            if clean(game_id, args.dry_run):
+                success += 1
+    else:
+        print(f"Setting up test folder(s) in {TEST_ROOT}{label}...\n")
+        success = 0
+        for game_id in args.game:
+            if setup(game_id, args.dry_run, args.force):
+                success += 1
 
     print(f"\nDone. {success}/{len(args.game)} succeeded.")
 

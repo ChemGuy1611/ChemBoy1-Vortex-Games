@@ -4,10 +4,22 @@ release_extension.py
 Zips up a game extension folder using 7-Zip and opens the Nexus Mods
 extension page in the browser.
 
+Steps performed per game:
+    1. Rename version .txt file to match info.json version
+    2. Update Version and Date in index.js header comment
+    3. Add resolved store IDs to DISCOVERY_IDS_ACTIVE if missing
+    4. node --check on index.js (warns on syntax error)
+    5. Run generate_explained.js to regenerate EXTENSION_EXPLAINED.md
+    6. Create game-{GAME_ID}.zip with 7-Zip
+    7. Open EXTENSION_URL in browser (or nexusmods.com/games/site if not set)
+
 Usage:
     python release_extension.py GAME_ID [GAME_ID ...]
     python release_extension.py GAME_ID --no-open
     python release_extension.py GAME_ID --dry-run
+
+Environment variables:
+    SEVENZIP_PATH  (optional, default: C:\\Program Files\\7-Zip\\7z.exe)
 """
 
 import argparse
@@ -17,7 +29,7 @@ import re
 import sys
 import subprocess
 
-from vortex_utils import REPO_ROOT, run_generate_explained, add_to_discovery_ids
+from vortex_utils import REPO_ROOT, run_generate_explained, add_to_discovery_ids, node_check
 SEVENZIP = os.environ.get("SEVENZIP_PATH", r"C:\Program Files\7-Zip\7z.exe")
 NEXUS_SITE_URL = "https://www.nexusmods.com/games/site"
 
@@ -48,29 +60,36 @@ def update_version_txt(folder, game_id, version, dry_run=False):
         print(f"  [{game_id}] WARNING -no version .txt file found in folder")
         return
 
+    renamed = False
     for txt_file in existing:
         if txt_file == expected:
             print(f"  [{game_id}] Version .txt already correct: {txt_file}")
         elif dry_run:
             print(f"  [{game_id}] [DRY RUN] Would rename: {txt_file} -> {expected}")
+        elif renamed:
+            print(f"  [{game_id}] WARNING -extra version .txt found and skipped: {txt_file}")
         else:
             os.rename(os.path.join(folder, txt_file), os.path.join(folder, expected))
             print(f"  [{game_id}] Renamed: {txt_file} -> {expected}")
+            renamed = True
 
 
-def get_changelog_date(folder):
-    """Return the date string from the most recent versioned entry in CHANGELOG.md, or None."""
+def get_changelog_version_and_date(folder):
+    """Return (version, date) from the most recent versioned entry in CHANGELOG.md.
+    Either value may be None if the file is missing or the entry is absent."""
     changelog_path = os.path.join(folder, "CHANGELOG.md")
     if not os.path.isfile(changelog_path):
-        return None
-    entry_re = re.compile(r'^## \[\d+\.\d+\.\d+\] - (\d{4}-\d{2}-\d{2})', re.MULTILINE)
+        return None, None
+    entry_re = re.compile(r'^## \[(\d+\.\d+\.\d+)\] - (\d{4}-\d{2}-\d{2})', re.MULTILINE)
     try:
         with open(changelog_path, encoding="utf-8") as f:
             content = f.read()
         m = entry_re.search(content)
-        return m.group(1) if m else None
+        if m:
+            return m.group(1), m.group(2)
+        return None, None
     except OSError:
-        return None
+        return None, None
 
 
 def update_index_header(folder, game_id, version, date, dry_run=False):
@@ -170,13 +189,16 @@ def release(game_id, open_browser, dry_run=False):
             extension_url = get_extension_url(f.read())
 
     version = get_version(folder)
-    date = get_changelog_date(folder)
+    changelog_version, date = get_changelog_version_and_date(folder)
+    if version and changelog_version and version != changelog_version:
+        print(f"  [{game_id}] WARNING - info.json version ({version}) does not match latest CHANGELOG entry ({changelog_version})")
     update_version_txt(folder, game_id, version, dry_run=dry_run)
     update_index_header(folder, game_id, version, date, dry_run=dry_run)
     update_discovery_ids(folder, game_id, dry_run=dry_run)
 
     if dry_run:
         zip_path = os.path.join(folder, f"game-{game_id}.zip")
+        print(f"  [{game_id}] [DRY RUN] Would run node --check on index.js")
         print(f"  [{game_id}] [DRY RUN] Would generate EXTENSION_EXPLAINED.md")
         print(f"  [{game_id}] [DRY RUN] Would create: {zip_path}")
         if extension_url:
@@ -184,6 +206,14 @@ def release(game_id, open_browser, dry_run=False):
         else:
             print(f"  [{game_id}] [DRY RUN] EXTENSION_URL not set -would open: {NEXUS_SITE_URL}")
         return True
+
+    print(f"  [{game_id}] Checking index.js syntax...")
+    ok, err = node_check(index_path)
+    if ok:
+        print(f"  [{game_id}] index.js syntax OK")
+    else:
+        print(f"  [{game_id}] WARNING - node --check found a syntax error in index.js:")
+        print(f"    {err}")
 
     print(f"  [{game_id}] Generating EXTENSION_EXPLAINED.md...")
     ok, err = run_generate_explained(game_id)
@@ -212,8 +242,8 @@ def release(game_id, open_browser, dry_run=False):
 
     url_to_open = extension_url or NEXUS_SITE_URL
     label = "" if extension_url else " (EXTENSION_URL not set)"
-    print(f"  [{game_id}] Opening: {url_to_open}{label}")
     if open_browser:
+        print(f"  [{game_id}] Opening: {url_to_open}{label}")
         subprocess.run(["cmd", "/c", "start", "", url_to_open], check=False)
 
     return True

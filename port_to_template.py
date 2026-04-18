@@ -35,6 +35,9 @@ Examples:
     python port_to_template.py dragonsdogma2 reframework-fluffy
     python port_to_template.py dragonsdogma2 reframework-fluffy --dry-run
 
+After writing index.js, automatically runs generate_explained.js to regenerate
+EXTENSION_EXPLAINED.md.
+
 Requirements:
     No additional packages required (Python stdlib only).
     node must be on PATH for JS syntax validation.
@@ -97,14 +100,16 @@ def extract_discovery_ids(src):
     Parse the variable names referenced in discovery.ids from the spec object.
     Returns a list of variable name strings, e.g. ["STEAMAPP_ID", "EAAPP_ID"].
     Falls back to ["STEAMAPP_ID"] if the block cannot be found.
+    Strips JS comments before extracting so commented-out IDs are excluded.
     """
     m = re.search(r'"discovery"\s*:\s*\{[^}]*?"ids"\s*:\s*\[([^\]]*)\]', src, re.DOTALL)
     if not m:
         return ['STEAMAPP_ID']
     ids_block = m.group(1)
-    # Extract all identifiers (variable names), skip string literals
+    # Strip /* ... */ block comments and // line comments before extracting names
+    ids_block = re.sub(r'/\*.*?\*/', '', ids_block, flags=re.DOTALL)
+    ids_block = re.sub(r'//[^\n]*', '', ids_block)
     names = re.findall(r'\b([A-Z_][A-Z0-9_]+)\b', ids_block)
-    # Also catch commented-out entries: //EPICAPP_ID -> preserve commented status
     return names if names else ['STEAMAPP_ID']
 
 
@@ -293,11 +298,13 @@ def validate_js(src):
                                          mode='w', encoding='utf-8') as f:
             f.write(src)
             tmp = f.name
-        result = subprocess.run(
-            ['node', '--check', tmp],
-            capture_output=True, text=True
-        )
-        os.unlink(tmp)
+        try:
+            result = subprocess.run(
+                ['node', '--check', tmp],
+                capture_output=True, text=True
+            )
+        finally:
+            os.unlink(tmp)
         if result.returncode == 0:
             return True, None
         return False, result.stderr.strip()

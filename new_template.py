@@ -50,6 +50,9 @@ Examples:
     python new_template.py anvilengine ghostreconbreakpoint assassinscreedorigins
     python new_template.py myengine mygame --dry-run
 
+After writing index.js, automatically runs node --check and prints a WARNING on
+syntax errors (the file is left on disk regardless).
+
 Requirements:
     No additional packages required (Python stdlib only).
 """
@@ -60,7 +63,7 @@ import sys
 import shutil
 import argparse
 
-from vortex_utils import REPO_ROOT, extract_game_id, _find_fn_end, REGISTER_ACTIONS
+from vortex_utils import REPO_ROOT, extract_game_id, _find_fn_end, REGISTER_ACTIONS, node_check
 
 # String constants always replaced with "XXX"
 ALWAYS_XXX = [
@@ -241,7 +244,7 @@ def _fixup_toggles(src):
         return src
     lines = ['//feature toggles'] + [f'const {n} = {d}; //{c}' for n, d, c in missing]
     block = '\n' + '\n'.join(lines) + '\n'
-    m = re.search(r'const EXTENSION_URL\s*=\s*"XXX"[^\n]*\n', src)
+    m = re.search(r'const EXTENSION_URL\s*=\s*[^\n]*\n', src)
     if m:
         return src[:m.end()] + block + src[m.end():]
     m = re.search(r'\nconst spec\s*=', src)
@@ -772,7 +775,7 @@ def _fixup_register_actions(src):
     # Collect missing actions
     has_combined_config_save = "'Open Config/Save Folder'" in src
     missing = []
-    for label, _commented, code in _REGISTER_ACTIONS:
+    for label, _commented, code in REGISTER_ACTIONS:
         if f"'{label}'" not in src:
             # Skip separate Config/Save if a combined button already exists
             if has_combined_config_save and label in ('Open Config Folder', 'Open Save Folder'):
@@ -940,8 +943,13 @@ def create_template(template_name, game_ids, dry_run, force):
     print(f"{prefix}Creating template-{template_name}/ from game-{primary_game}")
     if not dry_run:
         os.makedirs(dest_dir, exist_ok=True)
-        with open(os.path.join(dest_dir, "index.js"), "w", encoding="utf-8") as f:
+        index_js_path = os.path.join(dest_dir, "index.js")
+        with open(index_js_path, "w", encoding="utf-8") as f:
             f.write(processed)
+        ok, err = node_check(index_js_path)
+        if not ok:
+            print(f"  WARNING - node --check reported a syntax error in index.js:")
+            print(f"    {err}")
         with open(os.path.join(dest_dir, "info.json"), "w", encoding="utf-8") as f:
             f.write(make_info_json())
         with open(os.path.join(dest_dir, "CHANGELOG.md"), "w", encoding="utf-8") as f:

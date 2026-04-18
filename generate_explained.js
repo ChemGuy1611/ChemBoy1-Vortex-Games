@@ -2,9 +2,12 @@
  * generate_explained.js
  * Scans every game-* and template-* folder in this repo, reads index.js,
  * and writes an EXTENSION_EXPLAINED.md describing how the extension works.
+ * Always overwrites any existing EXTENSION_EXPLAINED.md.
  *
  * Run with:  node generate_explained.js
  *            node generate_explained.js thelongdark [GAME_ID ...]
+ *
+ * Any argument starting with '--' is ignored (reserved for future flags).
  */
 
 const fs   = require('fs');

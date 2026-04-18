@@ -36,19 +36,14 @@ Environment variables:
     STEAMGRIDDB_API_KEY  (optional; required for --title and --banner)
 """
 
-import json
 import os
-import sys
 import argparse
 
 from vortex_utils import (
     REPO_ROOT, extract_steamapp_id,
-    get_api_key, http_get, http_get_bytes, iter_game_folders,
+    get_api_key, iter_game_folders,
+    download_cover_art, download_title_image, download_banner_image,
 )
-
-# Import download helpers from new_extension.py
-sys.path.insert(0, REPO_ROOT)
-import new_extension as ne
 
 
 # ── Core logic ────────────────────────────────────────────────────────────────
@@ -73,36 +68,6 @@ def find_targets(target_game_ids=None, force=False, mode="cover"):
 
         steamapp_id = extract_steamapp_id(src)
         yield folder, game_id, steamapp_id
-
-
-def download_banner_image(appid, game_id, out_path, sgdb_key):
-    """Download the official SteamGridDB hero at full size. No crop or resize.
-
-    Prefers is_official=True heroes, sorted by resolution. Returns (ok, source)."""
-    from io import BytesIO
-    from PIL import Image
-
-    try:
-        url = f"https://www.steamgriddb.com/api/v2/heroes/steam/{appid}"
-        resp = json.loads(http_get(url, {"Authorization": f"Bearer {sgdb_key}"}))
-        heroes = resp.get("data", [])
-        if not heroes:
-            return False, None
-        # Prefer official, then sort by width
-        official = [h for h in heroes if h.get("is_official", False)]
-        pool = official if official else heroes
-        best = sorted(pool, key=lambda x: x.get("width", 0), reverse=True)[0]
-        img_data = http_get_bytes(best["url"])
-    except Exception as e:
-        print(f"    SteamGridDB hero error: {e}")
-        return False, None
-
-    img = Image.open(BytesIO(img_data)).convert("RGB")
-    img.save(out_path, "JPEG", quality=95)
-    hero_id = best.get("id", "unknown")
-    w, h = img.size
-    source = f"SteamGridDB hero ({w}x{h}) - https://www.steamgriddb.com/hero/{hero_id}"
-    return True, source
 
 
 def fetch_all(target_game_ids=None, dry_run=False, force=False, mode="cover"):
@@ -158,7 +123,7 @@ def fetch_all(target_game_ids=None, dry_run=False, force=False, mode="cover"):
         if mode == "title":
             os.makedirs(out_dir, exist_ok=True)
             out_path = os.path.join(out_dir, f"{game_id}_title.jpg")
-            ok, source = ne.download_title_image(steamapp_id, game_id, out_path, sgdb_key)
+            ok, source = download_title_image(steamapp_id, game_id, out_path, sgdb_key)
             if ok:
                 print(f"  Saved: {source}")
                 saved.append(game_id)
@@ -177,7 +142,7 @@ def fetch_all(target_game_ids=None, dry_run=False, force=False, mode="cover"):
                 failed.append(game_id)
         else:
             out_path = os.path.join(folder, f"{game_id}.jpg")
-            ok, source = ne.download_cover_art(steamapp_id, game_id, out_path, sgdb_key)
+            ok, source = download_cover_art(steamapp_id, game_id, out_path, sgdb_key)
             if ok:
                 print(f"  Saved: {source}")
                 saved.append(game_id)

@@ -13,8 +13,6 @@ Usage:
 """
 
 import os
-import sys
-import re
 import argparse
 
 from vortex_utils import REPO_ROOT
@@ -129,7 +127,7 @@ def categorize(game_id):
     for filename, _label, detector in CATEGORIES:
         if detector(head, src):
             return filename
-    return "games-basic.txt"
+    return "games-basic.txt"  # unreachable — catch-all lambda above always matches
 
 
 def read_list(filepath):

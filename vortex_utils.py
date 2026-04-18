@@ -21,6 +21,7 @@ import os
 import re
 import subprocess
 import time
+import urllib.error
 import urllib.request
 import urllib.parse
 
@@ -49,38 +50,74 @@ def log_warn(game_id, msg):
 
 # == HTTP helpers ==============================================================
 
+_RETRY_DELAYS = (2, 4)  # seconds between attempts (2 retries after initial try)
+
+
+def _is_retryable(exc):
+    """Return True for transient HTTP errors worth retrying (429, 5xx, network)."""
+    if isinstance(exc, urllib.error.HTTPError):
+        return exc.code == 429 or exc.code >= 500
+    if isinstance(exc, urllib.error.URLError):
+        return True
+    return False
+
+
+def _execute_with_retry(fn):
+    """Call fn(), retrying on transient failures with exponential back-off."""
+    last_exc = None
+    for attempt, delay in enumerate([(0,)] + list(_RETRY_DELAYS)):
+        if attempt:
+            time.sleep(delay)
+        try:
+            return fn()
+        except Exception as exc:
+            if not _is_retryable(exc):
+                raise
+            last_exc = exc
+    raise last_exc
+
+
 def http_get(url, headers=None):
-    """Fetch a URL and return the response body as a UTF-8 string."""
-    req = urllib.request.Request(
-        url, headers={"User-Agent": "Mozilla/5.0", **(headers or {})}
-    )
-    with urllib.request.urlopen(req, timeout=15) as resp:
-        return resp.read().decode("utf-8")
+    """Fetch a URL and return the response body as a UTF-8 string.
+    Retries up to 2 times on 429 / 5xx / network errors (2 s, 4 s delays)."""
+    def _do():
+        req = urllib.request.Request(
+            url, headers={"User-Agent": "Mozilla/5.0", **(headers or {})}
+        )
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            return resp.read().decode("utf-8")
+    return _execute_with_retry(_do)
 
 
 def http_get_bytes(url, headers=None):
-    """Fetch a URL and return the response body as raw bytes."""
-    req = urllib.request.Request(
-        url, headers={"User-Agent": "Mozilla/5.0", **(headers or {})}
-    )
-    with urllib.request.urlopen(req, timeout=15) as resp:
-        return resp.read()
+    """Fetch a URL and return the response body as raw bytes.
+    Retries up to 2 times on 429 / 5xx / network errors (2 s, 4 s delays)."""
+    def _do():
+        req = urllib.request.Request(
+            url, headers={"User-Agent": "Mozilla/5.0", **(headers or {})}
+        )
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            return resp.read()
+    return _execute_with_retry(_do)
 
 
 def http_post_json(url, data, headers=None):
-    """POST a JSON-serializable dict to a URL and return the parsed JSON response."""
-    payload = json.dumps(data).encode("utf-8")
-    req = urllib.request.Request(
-        url,
-        data=payload,
-        headers={
-            "User-Agent": "Mozilla/5.0",
-            "Content-Type": "application/json",
-            **(headers or {}),
-        },
-    )
-    with urllib.request.urlopen(req, timeout=15) as resp:
-        return json.loads(resp.read().decode("utf-8"))
+    """POST a JSON-serializable dict to a URL and return the parsed JSON response.
+    Retries up to 2 times on 429 / 5xx / network errors (2 s, 4 s delays)."""
+    def _do():
+        payload = json.dumps(data).encode("utf-8")
+        req = urllib.request.Request(
+            url,
+            data=payload,
+            headers={
+                "User-Agent": "Mozilla/5.0",
+                "Content-Type": "application/json",
+                **(headers or {}),
+            },
+        )
+        with urllib.request.urlopen(req, timeout=15) as resp:
+            return json.loads(resp.read().decode("utf-8"))
+    return _execute_with_retry(_do)
 
 
 # == API key loading ===========================================================
@@ -495,6 +532,303 @@ REGISTER_ACTIONS = [
 ]
 
 
+# == Image download helpers ====================================================
+
+def _steam_icon_search(appid, game_name):
+    """Return the Steam CDN icon URL for exec.png fetching, or None."""
+    try:
+        data = json.loads(http_get(
+            f"https://store.steampowered.com/api/appdetails?appids={appid}"
+        ))
+        if data.get(str(appid), {}).get("success"):
+            game_name = data[str(appid)]["data"]["name"]
+    except Exception:
+        pass
+
+    clean = game_name.encode("ascii", "ignore").decode()
+    clean = re.sub(r"[:\-]", " ", clean)
+    clean = re.sub(
+        r"\b(Deluxe|Gold|Complete|Definitive|Enhanced|Remastered|Ultimate|"
+        r"Standard|Premium|Legendary|Anniversary|Director.s Cut|"
+        r"Game of the Year|GOTY|Edition|Collection|Bundle)\b.*",
+        "", clean, flags=re.IGNORECASE,
+    ).strip()
+
+    try:
+        url = "https://steamcommunity.com/actions/SearchApps/{}".format(
+            urllib.parse.quote(clean)
+        )
+        results = json.loads(http_get(url))
+        for r in results:
+            if str(r.get("appid")) == str(appid):
+                return r.get("icon")
+    except Exception:
+        pass
+    return None
+
+
+def download_exec_icon(appid, game_name, out_path):
+    """Download and save a 64x64 exec.png.
+
+    Tries in order:
+    1. Steam CDN icon via exact appid match in SearchApps results
+    2. SteamGridDB icons endpoint (requires STEAMGRIDDB_API_KEY env var)
+    """
+    from io import BytesIO
+    from PIL import Image
+
+    icon_url = _steam_icon_search(appid, game_name)
+    if icon_url:
+        try:
+            try:
+                data = http_get_bytes(icon_url.replace(".jpg", "_full.jpg"))
+                source = "Steam CDN 184x184"
+            except Exception:
+                data = http_get_bytes(icon_url)
+                source = "Steam CDN 32x32"
+            img = Image.open(BytesIO(data)).convert("RGB")
+            img = img.resize((64, 64), Image.LANCZOS)
+            img.save(out_path, "PNG")
+            return True, source
+        except Exception as e:
+            print(f"    Steam CDN error: {e}")
+
+    sgdb_key = get_api_key("STEAMGRIDDB_API_KEY")
+    if sgdb_key:
+        try:
+            url = f"https://www.steamgriddb.com/api/v2/icons/steam/{appid}"
+            resp = json.loads(http_get(url, {"Authorization": f"Bearer {sgdb_key}"}))
+            icons = resp.get("data", [])
+            if icons:
+                img_data = http_get_bytes(icons[0]["url"])
+                img = Image.open(BytesIO(img_data)).convert("RGB")
+                img = img.resize((64, 64), Image.LANCZOS)
+                img.save(out_path, "PNG")
+                return True, "SteamGridDB icon"
+        except Exception as e:
+            print(f"    SteamGridDB icon error: {e}")
+
+    return False, None
+
+
+def download_cover_art(appid, game_name, out_path, sgdb_key=None):
+    """Download and save a 640x360 cover art JPG with no title text.
+
+    All sources used are strictly title-free. Sources with baked-in title text
+    (Steam capsule, Steam header, SteamGridDB alternate/white_logo grids) are
+    never used.
+
+    Priority order:
+    1. SteamGridDB 920x430 grid, no_logo style only -native aspect ratio, no text
+    2. SteamGridDB heroes -title-free wide art, center-cropped from 3:1 to 16:9
+    3. Steam library_hero.jpg -title-free wide art, center-cropped from 3:1 to 16:9
+    """
+    from io import BytesIO
+    from PIL import Image
+
+    img_data = None
+    source = None
+
+    if sgdb_key:
+        try:
+            url = f"https://www.steamgriddb.com/api/v2/grids/steam/{appid}?dimensions=920x430&styles=no_logo"
+            resp = json.loads(http_get(url, {"Authorization": f"Bearer {sgdb_key}"}))
+            grids = resp.get("data", [])
+            if grids:
+                best = sorted(grids, key=lambda x: x.get("width", 0), reverse=True)[0]
+                img_data = http_get_bytes(best["url"])
+                source = "SteamGridDB grid 920x430 no_logo"
+        except Exception as e:
+            print(f"    SteamGridDB grid error: {e}")
+
+    if not img_data and sgdb_key:
+        try:
+            url = f"https://www.steamgriddb.com/api/v2/heroes/steam/{appid}"
+            resp = json.loads(http_get(url, {"Authorization": f"Bearer {sgdb_key}"}))
+            heroes = resp.get("data", [])
+            if heroes:
+                best = sorted(heroes, key=lambda x: x.get("width", 0), reverse=True)[0]
+                img_data = http_get_bytes(best["url"])
+                source = f"SteamGridDB hero ({best.get('width')}x{best.get('height')}) [cropped]"
+        except Exception as e:
+            print(f"    SteamGridDB hero error: {e}")
+
+    if not img_data:
+        try:
+            url = f"https://cdn.fastly.steamstatic.com/steam/apps/{appid}/library_hero.jpg"
+            img_data = http_get_bytes(url)
+            source = "Steam library_hero.jpg [cropped]"
+        except Exception as e:
+            print(f"    Steam library_hero error: {e}")
+
+    if not img_data:
+        return False, None
+
+    img = Image.open(BytesIO(img_data)).convert("RGB")
+    w, h = img.size
+
+    target_ratio = 640 / 360
+    current_ratio = w / h
+    if current_ratio > target_ratio:
+        new_w = int(h * target_ratio)
+        left = (w - new_w) // 2
+        img = img.crop((left, 0, left + new_w, h))
+    elif current_ratio < target_ratio:
+        new_h = int(w / target_ratio)
+        top = (h - new_h) // 2
+        img = img.crop((0, top, w, top + new_h))
+
+    img = img.resize((640, 360), Image.LANCZOS)
+    img.save(out_path, "JPEG", quality=92)
+    return True, source
+
+
+def download_title_image(appid, game_name, out_path, sgdb_key=None):
+    """Download and save a 1920x1080 title image (with game logo/title text).
+
+    Priority order:
+    1. SteamGridDB hero + logo composite -hero as background, logo centered in
+       the lower portion (Steam library convention). Requires STEAMGRIDDB_API_KEY.
+       Heroes and logos prefer is_official=True; logos exclude white/black styles.
+    2. SteamGridDB 920x430 grid (no style filter -usually has title text baked in).
+       Prefers is_official=True, sorted by score. Requires STEAMGRIDDB_API_KEY.
+    3. Steam capsule_616x353.jpg -official art, always has title text. No key needed.
+    """
+    from io import BytesIO
+    from PIL import Image
+
+    result_img = None
+    source = None
+
+    def _en(items):
+        en = [i for i in items if i.get("language", "en") in ("en", "all")]
+        return en if en else items
+
+    def _pick(items, sort_key="score"):
+        official = [i for i in items if i.get("is_official", False)]
+        pool = official if official else items
+        return sorted(pool, key=lambda x: x.get(sort_key, 0), reverse=True)[0]
+
+    if sgdb_key:
+        hero_data = None
+        logo_data = None
+
+        try:
+            url = f"https://www.steamgriddb.com/api/v2/heroes/steam/{appid}"
+            resp = json.loads(http_get(url, {"Authorization": f"Bearer {sgdb_key}"}))
+            heroes = resp.get("data", [])
+            if heroes:
+                hero_data = http_get_bytes(_pick(_en(heroes), "width")["url"])
+        except Exception as e:
+            print(f"    SteamGridDB hero error: {e}")
+
+        try:
+            url = f"https://www.steamgriddb.com/api/v2/logos/steam/{appid}"
+            resp = json.loads(http_get(url, {"Authorization": f"Bearer {sgdb_key}"}))
+            logos = resp.get("data", [])
+            if logos:
+                colored = [l for l in _en(logos) if l.get("style", "") not in ("white", "black")]
+                pool = colored if colored else _en(logos)
+                logo_data = http_get_bytes(_pick(pool, "score")["url"])
+        except Exception as e:
+            print(f"    SteamGridDB logo error: {e}")
+
+        if hero_data and logo_data:
+            try:
+                hero = Image.open(BytesIO(hero_data)).convert("RGB")
+                w, h = hero.size
+                tr = 1920 / 1080
+                cr = w / h
+                if cr > tr:
+                    nw = int(h * tr)
+                    hero = hero.crop(((w - nw) // 2, 0, (w - nw) // 2 + nw, h))
+                elif cr < tr:
+                    nh = int(w / tr)
+                    hero = hero.crop((0, (h - nh) // 2, w, (h - nh) // 2 + nh))
+                hero = hero.resize((1920, 1080), Image.LANCZOS)
+
+                logo = Image.open(BytesIO(logo_data)).convert("RGBA")
+                logo.thumbnail((int(1920 * 0.65), int(1080 * 0.40)), Image.LANCZOS)
+                lw, lh = logo.size
+
+                x = (1920 - lw) // 2
+                y = int(1080 * 0.88) - lh
+
+                hero.paste(logo, (x, y), mask=logo.split()[3])
+                result_img = hero
+                source = "SteamGridDB hero + logo composite"
+            except Exception as e:
+                print(f"    Composite error: {e}")
+
+    if result_img is None and sgdb_key:
+        try:
+            url = f"https://www.steamgriddb.com/api/v2/grids/steam/{appid}?dimensions=920x430"
+            resp = json.loads(http_get(url, {"Authorization": f"Bearer {sgdb_key}"}))
+            grids = resp.get("data", [])
+            if grids:
+                raw = http_get_bytes(_pick(_en(grids), "score")["url"])
+                result_img = Image.open(BytesIO(raw)).convert("RGB")
+                source = "SteamGridDB grid 920x430 [upscaled]"
+        except Exception as e:
+            print(f"    SteamGridDB grid error: {e}")
+
+    if result_img is None:
+        try:
+            url = f"https://cdn.fastly.steamstatic.com/steam/apps/{appid}/capsule_616x353.jpg"
+            raw = http_get_bytes(url)
+            result_img = Image.open(BytesIO(raw)).convert("RGB")
+            source = "Steam capsule_616x353.jpg [upscaled]"
+        except Exception as e:
+            print(f"    Steam capsule error: {e}")
+
+    if result_img is None:
+        return False, None
+
+    if source != "SteamGridDB hero + logo composite":
+        w, h = result_img.size
+        tr = 1920 / 1080
+        cr = w / h
+        if cr > tr:
+            nw = int(h * tr)
+            result_img = result_img.crop(((w - nw) // 2, 0, (w - nw) // 2 + nw, h))
+        elif cr < tr:
+            nh = int(w / tr)
+            result_img = result_img.crop((0, (h - nh) // 2, w, (h - nh) // 2 + nh))
+        result_img = result_img.resize((1920, 1080), Image.LANCZOS)
+
+    result_img.save(out_path, "JPEG", quality=92)
+    return True, source
+
+
+def download_banner_image(appid, game_id, out_path, sgdb_key):
+    """Download the official SteamGridDB hero at full size. No crop or resize.
+
+    Prefers is_official=True heroes, sorted by resolution. Returns (ok, source)."""
+    from io import BytesIO
+    from PIL import Image
+
+    try:
+        url = f"https://www.steamgriddb.com/api/v2/heroes/steam/{appid}"
+        resp = json.loads(http_get(url, {"Authorization": f"Bearer {sgdb_key}"}))
+        heroes = resp.get("data", [])
+        if not heroes:
+            return False, None
+        official = [h for h in heroes if h.get("is_official", False)]
+        pool = official if official else heroes
+        best = sorted(pool, key=lambda x: x.get("width", 0), reverse=True)[0]
+        img_data = http_get_bytes(best["url"])
+    except Exception as e:
+        print(f"    SteamGridDB hero error: {e}")
+        return False, None
+
+    img = Image.open(BytesIO(img_data)).convert("RGB")
+    img.save(out_path, "JPEG", quality=95)
+    hero_id = best.get("id", "unknown")
+    w, h = img.size
+    source = f"SteamGridDB hero ({w}x{h}) - https://www.steamgriddb.com/hero/{hero_id}"
+    return True, source
+
+
 # == Node / repo helpers =======================================================
 
 def run_generate_explained(game_id):
@@ -502,6 +836,15 @@ def run_generate_explained(game_id):
     result = subprocess.run(
         ["node", "generate_explained.js", game_id],
         cwd=REPO_ROOT, capture_output=True, text=True
+    )
+    return result.returncode == 0, result.stderr.strip()
+
+
+def node_check(path):
+    """Run `node --check` on a JS file. Returns (ok: bool, stderr: str)."""
+    result = subprocess.run(
+        ["node", "--check", path],
+        capture_output=True, text=True
     )
     return result.returncode == 0, result.stderr.strip()
 

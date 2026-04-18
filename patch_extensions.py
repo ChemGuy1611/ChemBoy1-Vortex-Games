@@ -22,13 +22,11 @@ Usage:
 
 import argparse
 import os
-import sys
 import re
 import json
 from vortex_utils import (
-    REPO_ROOT, PCGW_API,
-    name_lookup_variants, roman_to_arabic, arabic_to_roman,
-    lookup_pcgamingwiki, extract_game_id, extract_game_name,
+    REPO_ROOT,
+    lookup_pcgamingwiki, extract_game_name,
     _find_fn_end, REGISTER_ACTIONS, run_generate_explained,
     fetch_epic_app_id, add_to_discovery_ids,
 )
@@ -54,7 +52,7 @@ def const_value(src, var_name):
 
 def is_unset(value_str):
     """Return True if a const value is 'XXX' (needs filling)."""
-    return value_str is not None and re.match(r'^["\']XXX["\']$', value_str)
+    return value_str is not None and bool(re.match(r'^["\']XXX["\']$', value_str))
 
 
 def is_missing(src, var_name):
@@ -170,14 +168,15 @@ def patch_epic_app_id(game_id, src, context):
 
 def patch_discovery_ids(game_id, src, context):
     """
-    Add EPICAPP_ID to DISCOVERY_IDS_ACTIVE if it has a real resolved value
-    and is not already in the array. Delegates all guard and mutation logic
-    to add_to_discovery_ids() from vortex_utils.
+    Add any resolved store IDs (STEAMAPP_ID_DEMO, GOGAPP_ID, EPICAPP_ID,
+    XBOXAPP_ID, UPLAYAPP_ID, EAAPP_ID) to DISCOVERY_IDS_ACTIVE if they have
+    real values and are not already in the array. Delegates all logic to
+    add_to_discovery_ids() from vortex_utils.
     """
     new_src = add_to_discovery_ids(src)
     if new_src == src:
-        return src, False, "already set or EPICAPP_ID not resolved"
-    return new_src, True, "added EPICAPP_ID"
+        return src, False, "already up to date"
+    return new_src, True, "updated DISCOVERY_IDS_ACTIVE"
 
 
 def patch_pcgamingwiki_url(game_id, src, context):
@@ -279,7 +278,7 @@ def patch_game_name(game_id, src, context):
     if not is_missing(src, "GAME_NAME"):
         return src, False, "already set"
 
-    name = get_game_name_from_src(src)
+    name = extract_game_name(src)
     if not name:
         return src, False, "could not extract game name from source"
 

@@ -1,0 +1,17 @@
+# Python scripts
+vortex_utils.py
+new_extension.py
+new_template.py
+port_to_template.py
+patch_extensions.py
+fetch_cover_art.py
+fetch_exec_icon.py
+release_extension.py
+setup_test_folder.py
+categorize_games.py
+
+# Node scripts
+generate_explained.js
+
+# Documentation
+SCRIPTS.md

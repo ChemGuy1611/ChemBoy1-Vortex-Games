@@ -2,6 +2,8 @@
 
 Developer scripts for creating and documenting Vortex game extensions.
 
+Script index: [scripts.txt](scripts.txt) — one filename per line; keep in sync when adding or removing scripts.
+
 ---
 
 ## vortex_utils.py
@@ -24,18 +26,23 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `name_lookup_variants(name)` | Generate name variants for PCGamingWiki lookups (title-case, numeral alternates, edition suffix stripping) |
 | `lookup_pcgamingwiki(name, debug)` | Search PCGamingWiki for a game, returns `(page_url, page_title)` with session caching |
 | `get_api_key(key_name)` | Load an API key from env var with Windows registry fallback (HKCU, then HKLM) |
-| `http_get(url, headers)` | Fetch a URL and return UTF-8 string |
-| `http_get_bytes(url, headers)` | Fetch a URL and return raw bytes |
-| `http_post_json(url, data, headers)` | POST a JSON-serializable dict to a URL and return parsed JSON response |
+| `http_get(url, headers)` | Fetch a URL and return UTF-8 string. Retries up to 2 times on 429/5xx/network errors (2 s, 4 s delays). |
+| `http_get_bytes(url, headers)` | Fetch a URL and return raw bytes. Same retry behaviour as `http_get`. |
+| `http_post_json(url, data, headers)` | POST a JSON-serializable dict to a URL and return parsed JSON response. Same retry behaviour as `http_get`. |
 | `fetch_epic_app_id(game_name)` | Resolve `EPICAPP_ID` for a game via egdata.app (POST search -> GET offer items -> EXECUTABLE item's `releaseInfo.appId`) |
-| `add_to_discovery_ids(src)` | Add `STEAMAPP_ID_DEMO`, `GOGAPP_ID`, and `EPICAPP_ID` to `DISCOVERY_IDS_ACTIVE` if each has a real resolved value in src (not null, `''`, or `'XXX'`) and is not already present. |
+| `add_to_discovery_ids(src)` | Add `STEAMAPP_ID_DEMO`, `GOGAPP_ID`, `EPICAPP_ID`, `XBOXAPP_ID`, `UPLAYAPP_ID`, and `EAAPP_ID` to `DISCOVERY_IDS_ACTIVE` if each has a real resolved value in src (not null, `''`, or `'XXX'`) and is not already present. |
 | `log_info(game_id, msg)` | Print `[game_id] msg` |
 | `log_error(game_id, msg)` | Print `[game_id] ERROR - msg` |
 | `log_warn(game_id, msg)` | Print `[game_id] WARNING - msg` |
 | `_find_fn_end(src, fn_match_end)` | Return index past the closing `}` of the JS function whose `{` is at `fn_match_end - 1` |
 | `run_generate_explained(game_id)` | Run `generate_explained.js` for a game; returns `(ok: bool, stderr: str)` |
+| `node_check(path)` | Run `node --check` on a JS file path; returns `(ok: bool, stderr: str)` |
 | `iter_game_folders(target_game_ids)` | Yield `(folder, game_id, src)` for every `game-*` folder; filtered by `target_game_ids` if given |
 | `REGISTER_ACTIONS` | List of `(label, commented_out, code)` tuples for standard `context.registerAction` calls |
+| `download_exec_icon(appid, game_name, out_path)` | Download and save a 64x64 `exec.png`. Steam CDN first, SteamGridDB icon fallback. |
+| `download_cover_art(appid, game_name, out_path, sgdb_key)` | Download and save a 640x360 cover art JPEG with no title text. SteamGridDB grid/hero or Steam `library_hero.jpg`. |
+| `download_title_image(appid, game_name, out_path, sgdb_key)` | Download and save a 1920x1080 title image (with logo text). SteamGridDB hero+logo composite, grid, or Steam capsule. |
+| `download_banner_image(appid, game_id, out_path, sgdb_key)` | Download official SteamGridDB hero at full size. No crop or resize. |
 
 ### vortex_utils.py -- Requirements
 
@@ -45,7 +52,7 @@ No additional packages required (Python stdlib only).
 
 ## fetch_exec_icon.py
 
-Scans all `game-*` extension folders and downloads a 64x64 PNG icon for any extension missing its `exec.png` file. Reads `STEAMAPP_ID` and `GAME_NAME` directly from each `index.js`. Imports icon-download logic from `new_extension.py`.
+Scans all `game-*` extension folders and downloads a 64x64 PNG icon for any extension missing its `exec.png` file. Reads `STEAMAPP_ID` and `GAME_NAME` directly from each `index.js`. Uses `download_exec_icon` from `vortex_utils`.
 
 ### fetch_exec_icon.py — Requirements
 
@@ -77,7 +84,7 @@ python fetch_exec_icon.py --force
 
 ## fetch_cover_art.py
 
-Scans all `game-*` extension folders and downloads missing cover art, title images, or banner images. Reads `STEAMAPP_ID` directly from each `index.js` to look up art. Imports image-download logic from `new_extension.py`.
+Scans all `game-*` extension folders and downloads missing cover art, title images, or banner images. Reads `STEAMAPP_ID` directly from each `index.js` to look up art. Uses `download_cover_art`, `download_title_image`, and `download_banner_image` from `vortex_utils`.
 
 - Default mode: downloads `{GAME_ID}.jpg` (640x360, no title text) into each extension folder.
 - `--title` mode: downloads `{GAME_ID}_title.jpg` (1920x1080, with title text) to `resources/title-images/`.
@@ -197,6 +204,8 @@ After substitutions, the processed `index.js` is augmented with standard structu
 | `requiresLauncher` with full `DISCOVERY_IDS_ACTIVE.includes` Xbox/Epic/Steam logic | Replaces existing body, or injected before `getExecutable` |
 | `testFallback`, `installFallback`, `fallbackInstallerNotify` functions + gated `registerInstaller` at priority 49. Injects `ROOT_ID` if missing. | Functions before `applyGame`; registration before `//register actions` or first `context.registerAction` |
 | Standard `context.registerAction` calls: Open PCGamingWiki Page, View Changelog, Submit Bug Report, Open Downloads Folder, plus commented-out Open Config/Save Folder. Each action checked individually by label. | Before closing `}` of `applyGame()` |
+
+After writing `index.js`, the script automatically runs `node --check` on it and prints a WARNING if a syntax error is detected. The file is left on disk regardless so it can be inspected and fixed.
 
 ### new_template.py — After Running
 
@@ -343,7 +352,7 @@ node generate_explained.js thelongdark hogwartslegacy
 
 ### generate_explained.js — Output
 
-Writes `EXTENSION_EXPLAINED.md` into each processed extension folder. Skips folders where the file already exists (unless the source `index.js` has been modified more recently). Reports a count of created, skipped, and errored files on completion.
+Always writes `EXTENSION_EXPLAINED.md` into each processed extension folder (overwrites any existing file). Reports a count of created, skipped, and errored files on completion.
 
 ---
 
@@ -463,8 +472,6 @@ A `.bak` file is written alongside `index.js` before overwriting. Use `--force` 
 
 Packages a game extension folder into a `.zip` archive using 7-Zip and opens the extension's Nexus Mods page in the default browser.
 
-### release_extension.py — Requirements
-
 ### release_extension.py — Environment Variables
 
 | Variable | Required | Description |
@@ -492,7 +499,7 @@ python release_extension.py assassinscreedorigins assassinscreedvalhalla --no-op
 
 ### release_extension.py — Output
 
-Reads `info.json` and renames the versioned `.txt` file (e.g. `0.2.7.txt` -> `0.2.8.txt`) to match the current version. Updates the `Version:` and `Date:` lines in the `index.js` header comment — version from `info.json`, date from the most recent `## [X.X.X] - YYYY-MM-DD` entry in `CHANGELOG.md`. Then runs `generate_explained.js` to regenerate `EXTENSION_EXPLAINED.md` and creates `game-{GAME_ID}.zip` inside the extension folder, overwriting any existing zip. Reads `EXTENSION_URL` from `index.js` — if set to a valid URL, opens it in the default browser so the file can be uploaded. If `EXTENSION_URL` is `"XXX"` or not present, opens `https://www.nexusmods.com/games/site` instead.
+Reads `info.json` and renames the versioned `.txt` file (e.g. `0.2.7.txt` -> `0.2.8.txt`) to match the current version. Warns if `info.json` version does not match the latest `## [X.X.X]` entry in `CHANGELOG.md` (sanity check only — does not abort). Updates the `Version:` and `Date:` lines in the `index.js` header comment — version from `info.json`, date from the most recent `## [X.X.X] - YYYY-MM-DD` entry in `CHANGELOG.md`. Adds any resolved store IDs to `DISCOVERY_IDS_ACTIVE` if not already present. Runs `node --check` on `index.js` and warns on syntax errors. Then runs `generate_explained.js` to regenerate `EXTENSION_EXPLAINED.md` and creates `game-{GAME_ID}.zip` inside the extension folder, overwriting any existing zip. Reads `EXTENSION_URL` from `index.js` — if set to a valid URL, opens it in the default browser so the file can be uploaded. If `EXTENSION_URL` is `"XXX"` or not present, opens `https://www.nexusmods.com/games/site` instead.
 
 ---
 
@@ -543,7 +550,7 @@ Use `--debug` to print raw PCGamingWiki search results and match status for each
 | `extension_url` | Sets `EXTENSION_URL` from the Vortex extensions manifest (`modId` → Nexus URL). Inserts the constant if missing. |
 | `pcgamingwiki_url` | Sets `PCGAMINGWIKI_URL` by looking up the game on PCGamingWiki. Inserts as `"XXX"` if not found or API unreachable. |
 | `epic_app_id` | Fills in `EPICAPP_ID = ""` by searching egdata.app for the game title and reading the EXECUTABLE item's `releaseInfo.appId`. Skips `null`, `"XXX"`, and already-set IDs. |
-| `discovery_ids` | Adds `EPICAPP_ID` to `DISCOVERY_IDS_ACTIVE` if the ID is resolved to a real value and not already present. Uses `add_to_discovery_ids()` from `vortex_utils`. |
+| `discovery_ids` | Adds all resolved store IDs (`STEAMAPP_ID_DEMO`, `GOGAPP_ID`, `EPICAPP_ID`, `XBOXAPP_ID`, `UPLAYAPP_ID`, `EAAPP_ID`) to `DISCOVERY_IDS_ACTIVE` if not already present. Uses `add_to_discovery_ids()` from `vortex_utils`. |
 
 Each patch skips a game if the value is already set (unless `--force-pcgw` is used for `pcgamingwiki_url`). Games that fail a non-trivial step are always printed in the output so failures are visible. After writing any changed `index.js`, `generate_explained.js` is run automatically to keep `EXTENSION_EXPLAINED.md` in sync.
 
@@ -581,10 +588,13 @@ No additional packages required (Python stdlib only).
 python setup_test_folder.py GAME_ID [GAME_ID ...]
 python setup_test_folder.py GAME_ID --dry-run
 python setup_test_folder.py GAME_ID --force
+python setup_test_folder.py GAME_ID [GAME_ID ...] --clean
+python setup_test_folder.py GAME_ID [GAME_ID ...] --clean --dry-run
 ```
 
-Use `--dry-run` to print what would be created without making any directories or files.
+Use `--dry-run` to print what would be created or deleted without making any changes.
 Use `--force` to recreate the `.exe` stub even if it already exists.
+Use `--clean` to delete the test folder(s) for the given game ID(s) instead of creating them.
 
 ### setup_test_folder.py — Examples
 
