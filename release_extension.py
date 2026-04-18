@@ -23,27 +23,19 @@ Environment variables:
 """
 
 import argparse
-import json
 import os
 import re
 import sys
 import subprocess
 
-from vortex_utils import REPO_ROOT, run_generate_explained, add_to_discovery_ids, node_check
+from vortex_utils import (
+    REPO_ROOT, run_generate_explained, add_to_discovery_ids, node_check,
+    extract_extension_url, read_info_json, parse_changelog_latest,
+    update_index_header as _apply_header,
+)
 SEVENZIP = os.environ.get("SEVENZIP_PATH", r"C:\Program Files\7-Zip\7z.exe")
 NEXUS_SITE_URL = "https://www.nexusmods.com/games/site"
 
-
-def get_version(folder):
-    """Return the version string from info.json, or None if not found."""
-    info_path = os.path.join(folder, "info.json")
-    if not os.path.isfile(info_path):
-        return None
-    try:
-        with open(info_path, encoding="utf-8") as f:
-            return json.load(f).get("version")
-    except (json.JSONDecodeError, OSError):
-        return None
 
 
 def update_version_txt(folder, game_id, version, dry_run=False):
@@ -74,23 +66,6 @@ def update_version_txt(folder, game_id, version, dry_run=False):
             renamed = True
 
 
-def get_changelog_version_and_date(folder):
-    """Return (version, date) from the most recent versioned entry in CHANGELOG.md.
-    Either value may be None if the file is missing or the entry is absent."""
-    changelog_path = os.path.join(folder, "CHANGELOG.md")
-    if not os.path.isfile(changelog_path):
-        return None, None
-    entry_re = re.compile(r'^## \[(\d+\.\d+\.\d+)\] - (\d{4}-\d{2}-\d{2})', re.MULTILINE)
-    try:
-        with open(changelog_path, encoding="utf-8") as f:
-            content = f.read()
-        m = entry_re.search(content)
-        if m:
-            return m.group(1), m.group(2)
-        return None, None
-    except OSError:
-        return None, None
-
 
 def update_index_header(folder, game_id, version, date, dry_run=False):
     """Update the Version and Date lines in the index.js header comment."""
@@ -106,16 +81,12 @@ def update_index_header(folder, game_id, version, date, dry_run=False):
         print(f"  [{game_id}] WARNING -could not read index.js: {e}")
         return
 
-    updated = original
-    if version:
-        updated = re.sub(r'(Version:\s*)\d+\.\d+\.\d+', rf'\g<1>{version}', updated, count=1)
-    else:
+    if not version:
         print(f"  [{game_id}] WARNING -no version available, skipping Version header update")
-
-    if date:
-        updated = re.sub(r'(Date:\s*)\d{4}-\d{2}-\d{2}', rf'\g<1>{date}', updated, count=1)
-    else:
+    if not date:
         print(f"  [{game_id}] WARNING -no changelog date found, skipping Date header update")
+
+    updated = _apply_header(original, version=version, date=date)
 
     if updated == original:
         print(f"  [{game_id}] index.js header already up to date")
@@ -165,16 +136,6 @@ def update_discovery_ids(folder, game_id, dry_run=False):
         print(f"  [{game_id}] ERROR -could not write index.js: {e}")
 
 
-def get_extension_url(src):
-    """Return the EXTENSION_URL value from index.js source, or None if unset/XXX."""
-    m = re.search(r'const\s+EXTENSION_URL\s*=\s*["\'](.+?)["\']', src)
-    if not m:
-        return None
-    val = m.group(1)
-    if val == "XXX" or not val.startswith("http"):
-        return None
-    return val
-
 
 def release(game_id, open_browser, dry_run=False):
     folder = os.path.join(REPO_ROOT, f"game-{game_id}")
@@ -186,10 +147,10 @@ def release(game_id, open_browser, dry_run=False):
     extension_url = None
     if os.path.isfile(index_path):
         with open(index_path, encoding="utf-8") as f:
-            extension_url = get_extension_url(f.read())
+            extension_url = extract_extension_url(f.read())
 
-    version = get_version(folder)
-    changelog_version, date = get_changelog_version_and_date(folder)
+    version = read_info_json(folder).get("version")
+    changelog_version, date = parse_changelog_latest(folder)
     if version and changelog_version and version != changelog_version:
         print(f"  [{game_id}] WARNING - info.json version ({version}) does not match latest CHANGELOG entry ({changelog_version})")
     update_version_txt(folder, game_id, version, dry_run=dry_run)

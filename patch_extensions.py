@@ -18,72 +18,30 @@ Usage:
     python patch_extensions.py --force-pcgw                # re-evaluate all PCGAMINGWIKI_URL values, overwriting wrong ones
     python patch_extensions.py --force                     # re-run all URL patches even if values are already set
     python patch_extensions.py GAME_ID [GAME_ID ...] --debug  # print raw PCGW search results for diagnosis
+    python patch_extensions.py --list-patches                 # list all patches with enabled status and description
+
+Environment variables:
+    VORTEX_MANIFEST_PATH  (optional) Path to Vortex extensions-manifest.json.
+                          Default: C:\\ProgramData\\vortex\\temp\\extensions-manifest.json
 """
 
 import argparse
 import os
 import re
+import sys
 import json
 from vortex_utils import (
     REPO_ROOT,
     lookup_pcgamingwiki, extract_game_name,
     _find_fn_end, REGISTER_ACTIONS, run_generate_explained,
     fetch_epic_app_id, add_to_discovery_ids,
+    const_value, is_unset, is_missing, set_or_insert,
+    inject_register_actions, find_fn_body,
 )
 
 TITLE_IMAGES_DIR = os.path.join(REPO_ROOT, "resources", "title-images")
 MANIFEST_PATH = os.environ.get("VORTEX_MANIFEST_PATH", r"C:\ProgramData\vortex\temp\extensions-manifest.json")
 NEXUS_SITE_BASE = "https://www.nexusmods.com/site/mods"
-
-
-# ── Shared utilities ──────────────────────────────────────────────────────────
-
-def const_value(src, var_name):
-    """
-    Return the current RHS value of a const/let declaration, or None if not present.
-    Returns the raw matched string (e.g. '"XXX"', 'null', '"https://..."').
-    """
-    m = re.search(
-        rf'(?:const|let)\s+{re.escape(var_name)}\s*=\s*(.+?)(?:\s*;|\s*//|$)',
-        src
-    )
-    return m.group(1).strip() if m else None
-
-
-def is_unset(value_str):
-    """Return True if a const value is 'XXX' (needs filling)."""
-    return value_str is not None and bool(re.match(r'^["\']XXX["\']$', value_str))
-
-
-def is_missing(src, var_name):
-    """Return True if the const/let declaration does not exist at all."""
-    return not re.search(rf'(?:const|let)\s+{re.escape(var_name)}\s*=', src)
-
-
-def set_or_insert(src, var_name, value, comment=None):
-    """
-    If var_name exists and is "XXX", replace it with value.
-    If var_name is missing entirely, insert it before `const spec = {`.
-    value should be a Python string (will be quoted in the output).
-    comment is an optional trailing // comment string.
-    """
-    escaped = value.replace("\\", "\\\\")
-    comment_str = f" //{comment}" if comment else ""
-    new_line = f'const {var_name} = "{escaped}";{comment_str}'
-
-    # Replace existing "XXX" value
-    pattern = rf'((?:const|let)\s+{re.escape(var_name)}\s*=\s*)["\']XXX["\']([^;\n]*;?)'
-    if re.search(pattern, src):
-        return re.sub(pattern, rf'\1"{escaped}"\2', src)
-
-    # Insert before `const spec = {`
-    insert_marker = re.search(r'^const\s+spec\s*=\s*\{', src, re.MULTILINE)
-    if insert_marker:
-        pos = insert_marker.start()
-        return src[:pos] + new_line + "\n" + src[pos:]
-
-    # Fallback: append at end (shouldn't happen for valid extensions)
-    return src + "\n" + new_line + "\n"
 
 
 # ── Data loaders (called once, passed as context) ─────────────────────────────
@@ -401,69 +359,18 @@ def patch_utility_functions(game_id, src, context):
     return new_src, True, f"inserted {', '.join(name for name, _ in missing)}"
 
 
-def _extract_function_body(src, func_start):
-    """
-    Given the index of a function declaration's opening `{` in src,
-    return (body_start, body_end) where src[body_start:body_end] is the
-    content between the braces (exclusive), or (None, None) on failure.
-    """
-    brace_pos = src.find('{', func_start)
-    if brace_pos == -1:
-        return None, None
-    depth = 0
-    for i in range(brace_pos, len(src)):
-        if src[i] == '{':
-            depth += 1
-        elif src[i] == '}':
-            depth -= 1
-            if depth == 0:
-                return brace_pos + 1, i
-    return None, None
-
-
-
-
 def patch_register_actions(game_id, src, context):
     """
     Inject standard context.registerAction calls inside applyGame() for any
     that are missing: Open Config/Save Folder (commented out), Open PCGamingWiki
     Page, View Changelog, Submit Bug Report, Open Downloads Folder.
-    Each action is checked individually by its label string.
     """
-    # Find applyGame to locate its closing brace
-    m = re.search(r'\nfunction applyGame\b[^{]*\{|\nasync function applyGame\b[^{]*\{', src)
-    if not m:
+    if not re.search(r'\nfunction applyGame\b|\nasync function applyGame\b', src):
         return src, False, "no applyGame function found"
-
-    fn_end = _find_fn_end(src, m.end())
-    if fn_end == -1:
-        return src, False, "could not parse applyGame function body"
-
-    # Collect missing actions
-    has_combined_config_save = "'Open Config/Save Folder'" in src
-    missing = []
-    missing_names = []
-    for label, _commented, code in REGISTER_ACTIONS:
-        if f"'{label}'" not in src:
-            # Skip separate Config/Save if a combined button already exists
-            if has_combined_config_save and label in ('Open Config Folder', 'Open Save Folder'):
-                continue
-            missing.append(code)
-            missing_names.append(label)
-
-    if not missing:
+    new_src, missing_labels = inject_register_actions(src)
+    if not missing_labels:
         return src, False, "already set"
-
-    # Build the block to inject
-    block = '\n'
-    # Add the //register actions comment if not present
-    if '//register actions' not in src:
-        block += '  //register actions\n'
-    block += ''.join(missing)
-
-    # Insert before the closing } of applyGame
-    src = src[:fn_end - 1] + block + src[fn_end - 1:]
-    return src, True, f"inserted {', '.join(missing_names)}"
+    return new_src, True, f"inserted {', '.join(missing_labels)}"
 
 
 def patch_setup_vars(game_id, src, context):
@@ -476,7 +383,7 @@ def patch_setup_vars(game_id, src, context):
     if not m_setup:
         return src, False, "no setup function found"
 
-    body_start, body_end = _extract_function_body(src, m_setup.start())
+    body_start, body_end = find_fn_body(src, m_setup.start())
     if body_start is None:
         return src, False, "could not parse setup function body"
 
@@ -540,7 +447,7 @@ def patch_context_once_api(game_id, src, context):
             offset = m.end()
             continue
         brace_pos = m.start() + arrow.end() - 1  # position of {
-        body_start, body_end = _extract_function_body(new_src, brace_pos)
+        body_start, body_end = find_fn_body(new_src, brace_pos)
         if body_start is None:
             offset = m.end()
             continue
@@ -718,6 +625,18 @@ def run_cover_art_resize(game_ids, dry_run):
     print(f"\nCover art resize: {total_resized} resized, {total_already} already 640x360, {total_missing} missing.\n")
 
 
+# ── Patch listing ─────────────────────────────────────────────────────────────
+
+def list_patches():
+    """Print all patches with their enabled status and first docstring line."""
+    col = max(len(p["name"]) for p in PATCHES)
+    for p in PATCHES:
+        fn = p["fn"]
+        doc = (fn.__doc__ or "").strip().splitlines()[0] if fn.__doc__ else "(no description)"
+        status = "enabled " if p["enabled"] else "disabled"
+        print(f"  [{status}] {p['name']:<{col}}  {doc}")
+
+
 # ── Runner ────────────────────────────────────────────────────────────────────
 
 def run_patches(game_ids, dry_run, context):
@@ -803,7 +722,17 @@ def main():
         action="store_true",
         help="Print raw PCGamingWiki search results for diagnosis.",
     )
+    parser.add_argument(
+        "--list-patches",
+        action="store_true",
+        help="List all patches with their enabled status and description, then exit.",
+    )
     args = parser.parse_args()
+
+    if args.list_patches:
+        list_patches()
+        sys.exit(0)
+
     dry_run = args.dry_run
     target_ids = args.game if args.game else None
 

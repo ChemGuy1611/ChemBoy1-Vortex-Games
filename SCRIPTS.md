@@ -35,10 +35,28 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `log_error(game_id, msg)` | Print `[game_id] ERROR - msg` |
 | `log_warn(game_id, msg)` | Print `[game_id] WARNING - msg` |
 | `_find_fn_end(src, fn_match_end)` | Return index past the closing `}` of the JS function whose `{` is at `fn_match_end - 1` |
+| `find_fn_body(src, func_start)` | Public wrapper for brace-counting; returns `(body_start, body_end)` indices or `(None, None)` |
 | `run_generate_explained(game_id)` | Run `generate_explained.js` for a game; returns `(ok: bool, stderr: str)` |
 | `node_check(path)` | Run `node --check` on a JS file path; returns `(ok: bool, stderr: str)` |
+| `node_check_source(src)` | Run `node --check` on an in-memory JS string (writes a temp file internally); returns `(ok, error_msg)` — `ok` is `None` if node is not on PATH |
+| `get_discovery_ids(src)` | Parse variable names from the spec's `discovery.ids` array; returns list of names (e.g. `["STEAMAPP_ID", "EAAPP_ID"]`); falls back to `["STEAMAPP_ID"]` |
 | `iter_game_folders(target_game_ids)` | Yield `(folder, game_id, src)` for every `game-*` folder; filtered by `target_game_ids` if given |
 | `REGISTER_ACTIONS` | List of `(label, commented_out, code)` tuples for standard `context.registerAction` calls |
+| `inject_register_actions(src)` | Inject any missing `context.registerAction` entries into `applyGame()`; returns `(new_src, missing_labels)` |
+| `update_index_header(src, *, name, version, date)` | Replace `Name`, `Version`, and/or `Date` fields in the `index.js` header comment; returns updated source string |
+| `const_value(src, var_name)` | Extract the RHS of a `const`/`let` declaration from JS source; returns string or `None` |
+| `is_unset(value_str)` | Return `True` if a const RHS string is `"XXX"` or `'XXX'` (placeholder not yet filled) |
+| `is_missing(src, var_name)` | Return `True` if a `const`/`let` declaration for `var_name` is absent from src |
+| `set_or_insert(src, var_name, value, comment)` | Replace an `XXX` placeholder for `var_name`, or insert the const before the `spec` block |
+| `extract_extension_url(src)` | Extract the `EXTENSION_URL` value from JS source; returns `None` if unset or not an HTTP URL |
+| `sanitize_game_name(name)` | Strip `®`, `™`, `©` symbols and collapse extra whitespace from a game name string |
+| `list_game_ids()` | Return a sorted list of all `GAME_ID` values found across `game-*` extension folders |
+| `iter_repo_scripts()` | Yield absolute paths of every script listed in `scripts.txt` (skips blank lines and `#` comments) |
+| `read_info_json(folder)` | Read and parse `info.json` from an extension folder; returns a dict (empty if missing/unreadable) |
+| `make_info_json(game_id, game_name, nexus_domain)` | Return a serialised `info.json` string for a new extension |
+| `make_changelog(version, date)` | Return a `CHANGELOG.md` template string with one initial version entry |
+| `parse_changelog_latest(folder)` | Parse `CHANGELOG.md` in a folder; returns `(version, date)` of the most recent entry (either may be `None`) |
+| `dry_prefix(dry_run)` | Return `"[DRY RUN] "` if `dry_run` is `True`, else `""` |
 | `download_exec_icon(appid, game_name, out_path)` | Download and save a 64x64 `exec.png`. Steam CDN first, SteamGridDB icon fallback. |
 | `download_cover_art(appid, game_name, out_path, sgdb_key)` | Download and save a 640x360 cover art JPEG with no title text. SteamGridDB grid/hero or Steam `library_hero.jpg`. |
 | `download_title_image(appid, game_name, out_path, sgdb_key)` | Download and save a 1920x1080 title image (with logo text). SteamGridDB hero+logo composite, grid, or Steam capsule. |
@@ -529,6 +547,7 @@ python patch_extensions.py GAME_ID [GAME_ID ...] --dry-run
 python patch_extensions.py --force
 python patch_extensions.py --force-pcgw
 python patch_extensions.py GAME_ID [GAME_ID ...] --debug
+python patch_extensions.py --list-patches
 ```
 
 Run without arguments to apply all enabled patches to every `game-*` folder.
@@ -536,6 +555,7 @@ Pass `GAME_ID [GAME_ID ...]` to target specific games. Use `--dry-run` to previe
 Use `--force` to re-run all URL patches even if values are already set (implies `--force-pcgw`).
 Use `--force-pcgw` to re-evaluate `PCGAMINGWIKI_URL` values that are already set (e.g. to correct wrong URLs from a previous run).
 Use `--debug` to print raw PCGamingWiki search results and match status for each game (useful for diagnosing lookup failures).
+Use `--list-patches` to print all registered patches with their enabled status and description, then exit without running anything.
 
 ### patch_extensions.py — Built-in Patches
 
@@ -606,3 +626,34 @@ python setup_test_folder.py helldivers2 reddeadredemption2
 ### setup_test_folder.py — Output
 
 Creates `D:\Game_Tools_D\!TestGameFolders_D\{GAME_NAME}\{BINARIES_PATH}\{EXEC_NAME}` as an empty file with all parent directories. If the file already exists it reports so and skips creation. Uses a symbol table built from `index.js` to resolve template literals, `path.join()` expressions, and variable references. Falls back to `STEAM_EXEC` / `EXEC_STEAM` for games that use store-specific exec constants instead of a single `EXEC`.
+
+---
+
+## audit_scripts.py
+
+Compares each developer script's implementation against its own header docstring. Reports flags and environment variables that appear in the code but are absent from the docs, or appear in the docs but are absent from the code. Read-only; never modifies any file.
+
+Uses `iter_repo_scripts()` from `vortex_utils` to iterate the canonical script list in `scripts.txt`. Skips `vortex_utils.py` (library), `generate_explained.js` (Node), and `SCRIPTS.md`.
+
+### audit_scripts.py — Requirements
+
+No additional packages required (Python stdlib only).
+
+### audit_scripts.py — Usage
+
+```sh
+python audit_scripts.py
+python audit_scripts.py SCRIPT [SCRIPT ...]
+```
+
+Run without arguments to audit all scripts. Pass one or more filenames to audit a subset.
+
+### audit_scripts.py — Output
+
+Per-script report listing:
+- **Flags in code, missing from header** — `add_argument('--flag')` calls not documented in the Usage: section
+- **Flags in header, not in argparse** — `--flag` patterns in Usage: that have no matching `add_argument` call
+- **Env vars in code, missing from header** — `os.environ.get('VAR')` / `get_api_key('VAR')` calls not documented in the Environment variables: section
+- **Env vars in header, not in code** — vars listed in the Environment variables: section that are not read directly (note: vars consumed inside `vortex_utils` helpers are allowed here)
+
+Exits with a summary line: `All clear.` or `Drift found. Update the header docstrings to match the code.`

@@ -62,6 +62,7 @@ const setupNotification = false; //enable to show the user a notification with s
 const allowBepinexNexus = false; //set false until bugs are fixed
 const downloadCfgMan = true; //should BepInExConfigManager be downloaded?
 const bleedingEdge = true; //set to true to download bleeding edge builds of BepInEx (IL2CPP only)
+const debug = false; //toggle for debug mode
 
 const DATA_FOLDER_DEFAULT = `${GAME_STRING}_Data`;
 let DATA_FOLDER = DATA_FOLDER_DEFAULT;

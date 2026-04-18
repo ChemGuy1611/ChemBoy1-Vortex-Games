@@ -66,6 +66,7 @@ const enableSaveInstaller = false; //set to true if you want to enable the save 
 const hasCustomMods = false; //set to true if there are modTypes with folder paths dependent on which mod loader is installed
 const hasCustomLoader = false; //set to true if there is a custom mod loader
 const customLoaderInstaller = false; //set true if the custom loader uses an installer
+const debug = false; //toggle for debug mode
 
 const DATA_FOLDER_DEFAULT = `${GAME_STRING}_Data`;
 let DATA_FOLDER = DATA_FOLDER_DEFAULT;

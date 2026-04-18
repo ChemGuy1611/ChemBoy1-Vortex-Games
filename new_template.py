@@ -63,7 +63,11 @@ import sys
 import shutil
 import argparse
 
-from vortex_utils import REPO_ROOT, extract_game_id, _find_fn_end, REGISTER_ACTIONS, node_check
+from vortex_utils import (
+    REPO_ROOT, extract_game_id, _find_fn_end, REGISTER_ACTIONS, node_check,
+    inject_register_actions, update_index_header,
+    make_info_json, make_changelog,
+)
 
 # String constants always replaced with "XXX"
 ALWAYS_XXX = [
@@ -146,10 +150,7 @@ def replace_game_id_embedded(src, original_game_id):
 
 def sanitize_header(src):
     """Reset Name, Version, and Date fields in the header comment block."""
-    src = re.sub(r'(Name:\s+).+?(\s+Vortex Extension)', r'\1XXX\2', src)
-    src = re.sub(r'(Version:\s+)\S+', r'\g<1>0.1.0', src)
-    src = re.sub(r'(Date:\s+)\S+', r'\g<1>2026-XX-XX', src)
-    return src
+    return update_index_header(src, name='XXX', version='0.1.0', date='2026-XX-XX')
 
 
 def apply_substitutions(src):
@@ -757,44 +758,9 @@ def _fixup_fallback_installer(src):
 
 
 def _fixup_register_actions(src):
-    """
-    Inject standard context.registerAction calls inside applyGame() for any
-    that are missing: Open Config/Save Folder (commented out), Open PCGamingWiki
-    Page, View Changelog, Submit Bug Report, Open Downloads Folder.
-    Each action is checked individually by its label string.
-    """
-    # Find applyGame to locate its closing brace
-    m = re.search(r'\nfunction applyGame\b[^{]*\{|\nasync function applyGame\b[^{]*\{', src)
-    if not m:
-        return src
-
-    fn_end = _find_fn_end(src, m.end())
-    if fn_end == -1:
-        return src
-
-    # Collect missing actions
-    has_combined_config_save = "'Open Config/Save Folder'" in src
-    missing = []
-    for label, _commented, code in REGISTER_ACTIONS:
-        if f"'{label}'" not in src:
-            # Skip separate Config/Save if a combined button already exists
-            if has_combined_config_save and label in ('Open Config Folder', 'Open Save Folder'):
-                continue
-            missing.append(code)
-
-    if not missing:
-        return src
-
-    # Build the block to inject
-    block = '\n'
-    # Add the //register actions comment if not present
-    if '//register actions' not in src:
-        block += '  //register actions\n'
-    block += ''.join(missing)
-
-    # Insert before the closing } of applyGame
-    src = src[:fn_end - 1] + block + src[fn_end - 1:]
-    return src
+    """Inject missing standard context.registerAction calls into applyGame()."""
+    new_src, _ = inject_register_actions(src)
+    return new_src
 
 
 def apply_fixups(src):
@@ -843,31 +809,6 @@ def apply_fixups(src):
 
 
 # ─── file generators ─────────────────────────────────────────────────────────
-
-def make_info_json():
-    return (
-        '{\n'
-        '  "name": "Game: XXX",\n'
-        '  "author": "ChemBoy1",\n'
-        '  "version": "0.1.0",\n'
-        '  "description": "Vortex support for XXX"\n'
-        '}\n'
-    )
-
-
-def make_changelog():
-    return (
-        "# Changelog\n"
-        "\n"
-        "## Planned Improvements (Not Yet Released)\n"
-        "\n"
-        "- None Planned\n"
-        "\n"
-        "## [0.1.0] - 2026-XX-XX\n"
-        "\n"
-        "- Initial Release\n"
-    )
-
 
 def update_templates_list(template_name, dry_run):
     """

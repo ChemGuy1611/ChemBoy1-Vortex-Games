@@ -41,6 +41,7 @@ const hasForger = false; //true if game supports Forger Patch Manager (.forger2 
 const setupNotification = false; //enable to show the user a notification with special instructions on first setup
 const allowSymlinks = false; //symlinks can cause issues when repacking with ATK — set to false when hasAtk = true
 const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
+const debug = false; //toggle for debug mode
 
 //Info for mod types and installers
 const ROOT_FOLDERS = ["videos"]; //XXX — update to match game (e.g. ["videos", "resources"])

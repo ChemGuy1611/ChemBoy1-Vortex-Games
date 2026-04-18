@@ -56,6 +56,7 @@ let multiExe = true; //set to true if there are multiple executables (and multip
 if (EXEC !== EXEC_DEMO) {
   multiExe = true;
 }
+const debug = false; //toggle for debug mode
 
 // -- END EDIT ZONE -- /////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -101,10 +102,12 @@ const PRESET_PATH_DEMO = path.join("Games", FLUFFY_FOLDER_DEMO, "Presets");
 const PRESET_EXTS = [".prt"];
 
 const LOOSELUA_ID = `${GAME_ID}-looselua`;
-const LOOSELUA_NAME = "Loose Lua (REFramework)";
+const LOOSELUA_NAME = "Loose Lua/Plugin (REFramework)";
 const LOOSELUA_PATH = ".";
 const LUA_EXT = '.lua';
+const PLUGIN_EXT = '.dll';
 const REF_FOLDERS = ['reframework', 'autorun'];
+const PLUGIN_FOLDERS = ['reframework', 'plugins'];
 
 const CONFIG_ID = `${GAME_ID}-config`;
 const CONFIG_NAME = "Config File";
@@ -238,7 +241,7 @@ const tools = [
     requiredFiles: [FLUFFY_EXEC],
     detach: true,
     relative: true,
-    exclusive: true,
+    exclusive: false,
   },
   {
     id: `${GAME_ID}-customlaunch`,

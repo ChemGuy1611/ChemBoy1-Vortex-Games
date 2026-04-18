@@ -55,6 +55,7 @@ from vortex_utils import (
     lookup_pcgamingwiki, get_api_key, run_generate_explained,
     fetch_epic_app_id, add_to_discovery_ids,
     download_exec_icon, download_cover_art, download_title_image, download_banner_image,
+    update_index_header, sanitize_game_name,
 )
 
 TEMPLATES = [
@@ -522,15 +523,7 @@ def sub(src, var_name, value):
 
 
 def sub_header(src, game_name, today):
-    """Update the header comment block fields."""
-    src = re.sub(
-        r"(Name:\s*).*?(\s*Vortex Extension)",
-        rf"\g<1>{game_name}\2",
-        src
-    )
-    src = re.sub(r"(Version:\s*)[\d.]+", r"\g<1>0.1.0", src)
-    src = re.sub(r"(Date:\s*)\S+", rf"\g<1>{today}", src)
-    return src
+    return update_index_header(src, name=game_name, version="0.1.0", date=today)
 
 
 def apply_substitutions(src, fields):
@@ -614,7 +607,7 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
             game_name = steam_data.get("name", game_name)
 
     # Strip trademark/copyright symbols that Steam sometimes includes in game names
-    game_name = re.sub(r'[®™©]', '', game_name).strip()
+    game_name = sanitize_game_name(game_name)
 
     print(f"  Name     : {game_name}")
     print(f"  Steam ID : {appid}")

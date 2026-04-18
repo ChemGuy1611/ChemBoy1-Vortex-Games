@@ -9,6 +9,7 @@ fetch_exec_icon.py
 release_extension.py
 setup_test_folder.py
 categorize_games.py
+audit_scripts.py
 
 # Node scripts
 generate_explained.js

@@ -1,0 +1,23 @@
+{
+  "name": "cb1",
+  "version": "1.0.0",
+  "description": "Vortex Extensions",
+  "main": "eslint.config.js",
+  "type": "commonjs",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/ChemGuy1611/ChemBoy1-Vortex-Games.git"
+  },
+  "author": "ChemBoy1",
+  "license": "GPL-3.0",
+  "bugs": {
+    "url": "https://github.com/ChemGuy1611/ChemBoy1-Vortex-Games/issues"
+  },
+  "homepage": "https://github.com/ChemGuy1611/ChemBoy1-Vortex-Games#readme",
+  "devDependencies": {
+    "eslint": "^10.2.1"
+  }
+}

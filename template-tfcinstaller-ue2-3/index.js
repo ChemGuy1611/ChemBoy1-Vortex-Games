@@ -48,6 +48,7 @@ const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
 const hasXbox = false; //toggle for Xbox version logic
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
 const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
+const debug = false; //toggle for debug mode
 
 const SPECIAL_TFCMOD_FOLDERS = ['XXX'];
 

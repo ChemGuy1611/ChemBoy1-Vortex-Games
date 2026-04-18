@@ -49,6 +49,7 @@ const allowSymlinks = true; //true if game can use symlinks without issues. Typi
 const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
 const customLoader = true;
 const keepZips = false;
+const debug = false; //toggle for debug mode
 
 const LOADER_CUSTOM_URL = 'XXX'
 const LOADER_CUSTOM_URL_MANUAL = 'XXX';

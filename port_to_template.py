@@ -48,10 +48,8 @@ import re
 import sys
 import shutil
 import argparse
-import subprocess
-import tempfile
 
-from vortex_utils import REPO_ROOT, run_generate_explained
+from vortex_utils import REPO_ROOT, run_generate_explained, node_check_source, get_discovery_ids
 
 # Template constant names that are boolean feature toggles.
 # These are intentionally left at template defaults, not transferred from the game.
@@ -95,22 +93,6 @@ def extract_id_suffix(rhs):
     return m.group(1) if m else None
 
 
-def extract_discovery_ids(src):
-    """
-    Parse the variable names referenced in discovery.ids from the spec object.
-    Returns a list of variable name strings, e.g. ["STEAMAPP_ID", "EAAPP_ID"].
-    Falls back to ["STEAMAPP_ID"] if the block cannot be found.
-    Strips JS comments before extracting so commented-out IDs are excluded.
-    """
-    m = re.search(r'"discovery"\s*:\s*\{[^}]*?"ids"\s*:\s*\[([^\]]*)\]', src, re.DOTALL)
-    if not m:
-        return ['STEAMAPP_ID']
-    ids_block = m.group(1)
-    # Strip /* ... */ block comments and // line comments before extracting names
-    ids_block = re.sub(r'/\*.*?\*/', '', ids_block, flags=re.DOTALL)
-    ids_block = re.sub(r'//[^\n]*', '', ids_block)
-    names = re.findall(r'\b([A-Z_][A-Z0-9_]+)\b', ids_block)
-    return names if names else ['STEAMAPP_ID']
 
 
 def extract_array_rhs(src, var_name):
@@ -234,7 +216,7 @@ def apply_port(template_src, game_consts, game_src):
             continue
 
     # --- Pass 2: DISCOVERY_IDS_ACTIVE ---
-    disc_ids = extract_discovery_ids(game_src)
+    disc_ids = get_discovery_ids(game_src)
     if disc_ids:
         ids_str = ', '.join(disc_ids)
         new_ids_rhs = f'[{ids_str}]'
@@ -291,25 +273,6 @@ def apply_port(template_src, game_consts, game_src):
     return new_src, substituted, skipped, review
 
 
-def validate_js(src):
-    """Run node --check on the source. Returns (ok, error_msg)."""
-    try:
-        with tempfile.NamedTemporaryFile(suffix='.js', delete=False,
-                                         mode='w', encoding='utf-8') as f:
-            f.write(src)
-            tmp = f.name
-        try:
-            result = subprocess.run(
-                ['node', '--check', tmp],
-                capture_output=True, text=True
-            )
-        finally:
-            os.unlink(tmp)
-        if result.returncode == 0:
-            return True, None
-        return False, result.stderr.strip()
-    except FileNotFoundError:
-        return None, 'node not found on PATH -- skipping JS validation'
 
 
 def create_port(game_id, template_name, dry_run, force):
@@ -347,7 +310,7 @@ def create_port(game_id, template_name, dry_run, force):
     new_src, substituted, skipped, review = apply_port(tmpl_src, game_consts, game_src)
 
     # JS validation
-    ok, err = validate_js(new_src)
+    ok, err = node_check_source(new_src)
 
     # Print report
     print(f'{prefix}Porting game-{game_id} -> template-{template_name}')

@@ -54,6 +54,7 @@ const hasXbox = false; //toggle for Xbox version logic
 const multiExe = false; //set to true if there are multiple executables (and conseq. DATA_FOLDERs) (typically for Xbox/EGS)
 const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
 const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
+const debug = false; //toggle for debug mode
 
 const DATA_FOLDER_DEFAULT = `${GAME_STRING}_Data`;
 let DATA_FOLDER = DATA_FOLDER_DEFAULT;

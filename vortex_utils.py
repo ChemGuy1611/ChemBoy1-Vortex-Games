@@ -9,9 +9,15 @@ and logging.
 Usage:
     from vortex_utils import (
         REPO_ROOT, read_index_js, extract_game_id, extract_steamapp_id,
-        extract_game_name, name_lookup_variants, lookup_pcgamingwiki,
+        extract_game_name, extract_extension_url, sanitize_game_name,
+        name_lookup_variants, lookup_pcgamingwiki,
         get_api_key, http_get, http_get_bytes, http_post_json,
         fetch_epic_app_id, add_to_discovery_ids, EGDATA_API,
+        const_value, is_unset, is_missing, set_or_insert,
+        update_index_header, inject_register_actions, find_fn_body,
+        read_info_json, make_info_json, make_changelog, parse_changelog_latest,
+        list_game_ids, iter_repo_scripts, dry_prefix,
+        node_check, node_check_source, get_discovery_ids,
         log_info, log_error, log_warn,
     )
 """
@@ -20,6 +26,7 @@ import json
 import os
 import re
 import subprocess
+import tempfile
 import time
 import urllib.error
 import urllib.request
@@ -183,6 +190,21 @@ def extract_game_name(src):
         return m.group(2)
     m = re.search(r'\bid\s*:\s*GAME_ID\b.+?\bname\s*:\s*(["\'])(.+?)\1', src, re.DOTALL)
     return m.group(2) if m else None
+
+
+def extract_extension_url(src):
+    """Return the EXTENSION_URL value from index.js source, or None if unset/XXX."""
+    m = re.search(r'const\s+EXTENSION_URL\s*=\s*["\'](.+?)["\']', src)
+    if not m:
+        return None
+    val = m.group(1)
+    return val if val.startswith("http") else None
+
+
+def sanitize_game_name(name):
+    """Strip trademark/copyright symbols and normalize whitespace from a game name."""
+    name = re.sub(r'[®™©]', '', name)
+    return ' '.join(name.split())
 
 
 # == Name processing ===========================================================
@@ -402,6 +424,58 @@ def fetch_epic_app_id(game_name):
 
 # == JS source helpers =========================================================
 
+def const_value(src, var_name):
+    """Return the raw RHS of a const/let declaration, or None if absent.
+    E.g. returns '"XXX"', 'null', '"https://..."'."""
+    m = re.search(
+        rf'(?:const|let)\s+{re.escape(var_name)}\s*=\s*(.+?)(?:\s*;|\s*//|$)',
+        src, re.MULTILINE,
+    )
+    return m.group(1).strip() if m else None
+
+
+def is_unset(value_str):
+    """Return True if a const RHS value is "XXX" or 'XXX' (needs filling in)."""
+    return value_str is not None and bool(re.match(r'^["\']XXX["\']$', value_str))
+
+
+def is_missing(src, var_name):
+    """Return True if no const/let declaration for var_name exists in src."""
+    return not re.search(rf'(?:const|let)\s+{re.escape(var_name)}\s*=', src)
+
+
+def set_or_insert(src, var_name, value, comment=None):
+    """Replace the 'XXX' value for var_name, or insert the declaration before
+    `const spec = {` if var_name is missing. value is a Python string (will be
+    JSON-quoted in the output). comment is an optional trailing // comment."""
+    escaped = value.replace("\\", "\\\\")
+    comment_str = f" //{comment}" if comment else ""
+    new_line = f'const {var_name} = "{escaped}";{comment_str}'
+    pattern = rf'((?:const|let)\s+{re.escape(var_name)}\s*=\s*)["\']XXX["\']([^;\n]*;?)'
+    if re.search(pattern, src):
+        return re.sub(pattern, rf'\1"{escaped}"\2', src)
+    insert_marker = re.search(r'^const\s+spec\s*=\s*\{', src, re.MULTILINE)
+    if insert_marker:
+        pos = insert_marker.start()
+        return src[:pos] + new_line + "\n" + src[pos:]
+    return src + "\n" + new_line + "\n"
+
+
+def get_discovery_ids(src):
+    """Parse the variable names referenced in the spec's discovery.ids array.
+    Returns a list of variable name strings (e.g. ["STEAMAPP_ID", "EAAPP_ID"]).
+    Falls back to ["STEAMAPP_ID"] if the block cannot be parsed.
+    Strips JS comments so commented-out IDs are excluded."""
+    m = re.search(r'"discovery"\s*:\s*\{[^}]*?"ids"\s*:\s*\[([^\]]*)\]', src, re.DOTALL)
+    if not m:
+        return ['STEAMAPP_ID']
+    ids_block = m.group(1)
+    ids_block = re.sub(r'/\*.*?\*/', '', ids_block, flags=re.DOTALL)
+    ids_block = re.sub(r'//[^\n]*', '', ids_block)
+    names = re.findall(r'\b([A-Z_][A-Z0-9_]+)\b', ids_block)
+    return names if names else ['STEAMAPP_ID']
+
+
 def add_to_discovery_ids(src):
     """Add store ID variables to DISCOVERY_IDS_ACTIVE as needed.
 
@@ -530,6 +604,64 @@ REGISTER_ACTIONS = [
         "  });\n",
     ),
 ]
+
+
+def find_fn_body(src, func_start):
+    """Return (body_start, body_end) where src[body_start:body_end] is the function
+    body content between braces (exclusive). func_start is the index of the function
+    declaration keyword. Returns (None, None) on failure."""
+    brace_pos = src.find('{', func_start)
+    if brace_pos == -1:
+        return None, None
+    depth = 0
+    for i in range(brace_pos, len(src)):
+        if src[i] == '{':
+            depth += 1
+        elif src[i] == '}':
+            depth -= 1
+            if depth == 0:
+                return brace_pos + 1, i
+    return None, None
+
+
+def update_index_header(src, *, name=None, version=None, date=None):
+    """Update Name, Version, and/or Date fields in the index.js header comment block.
+    Pass None to leave a field unchanged. Returns updated source string."""
+    if name is not None:
+        src = re.sub(r'(Name:\s*).+?(\s+Vortex Extension)', rf'\g<1>{name}\2', src)
+    if version is not None:
+        src = re.sub(r'(Version:\s*)\S+', rf'\g<1>{version}', src)
+    if date is not None:
+        src = re.sub(r'(Date:\s*)\S+', rf'\g<1>{date}', src)
+    return src
+
+
+def inject_register_actions(src):
+    """Inject missing standard context.registerAction calls into applyGame().
+    Returns (new_src, missing_labels) where missing_labels is a list of the
+    injected action label strings (empty list if nothing was injected)."""
+    m = re.search(r'\nfunction applyGame\b[^{]*\{|\nasync function applyGame\b[^{]*\{', src)
+    if not m:
+        return src, []
+    fn_end = _find_fn_end(src, m.end())
+    if fn_end == -1:
+        return src, []
+    has_combined = "'Open Config/Save Folder'" in src
+    missing_code = []
+    missing_labels = []
+    for label, _commented, code in REGISTER_ACTIONS:
+        if f"'{label}'" not in src:
+            if has_combined and label in ('Open Config Folder', 'Open Save Folder'):
+                continue
+            missing_code.append(code)
+            missing_labels.append(label)
+    if not missing_labels:
+        return src, []
+    block = '\n'
+    if '//register actions' not in src:
+        block += '  //register actions\n'
+    block += ''.join(missing_code)
+    return src[:fn_end - 1] + block + src[fn_end - 1:], missing_labels
 
 
 # == Image download helpers ====================================================
@@ -849,6 +981,26 @@ def node_check(path):
     return result.returncode == 0, result.stderr.strip()
 
 
+def node_check_source(src):
+    """Run `node --check` on an in-memory JS string. Returns (ok, error_msg).
+    Returns (None, msg) if node is not on PATH."""
+    try:
+        with tempfile.NamedTemporaryFile(suffix='.js', delete=False,
+                                         mode='w', encoding='utf-8') as f:
+            f.write(src)
+            tmp = f.name
+        try:
+            result = subprocess.run(
+                ['node', '--check', tmp],
+                capture_output=True, text=True
+            )
+        finally:
+            os.unlink(tmp)
+        return result.returncode == 0, result.stderr.strip() or None
+    except FileNotFoundError:
+        return None, 'node not found on PATH -- skipping JS validation'
+
+
 def iter_game_folders(target_game_ids=None):
     """Yield (folder, game_id, src) for every game-* extension folder.
     If target_game_ids is a non-empty collection, only those game IDs are yielded."""
@@ -867,3 +1019,87 @@ def iter_game_folders(target_game_ids=None):
         if target_game_ids and game_id not in target_game_ids:
             continue
         yield folder, game_id, src
+
+
+def list_game_ids():
+    """Return a sorted list of game IDs for all game-* folders in the repo."""
+    return sorted(
+        entry[len('game-'):]
+        for entry in os.listdir(REPO_ROOT)
+        if entry.startswith('game-') and os.path.isdir(os.path.join(REPO_ROOT, entry))
+    )
+
+
+def iter_repo_scripts():
+    """Yield absolute paths of all scripts listed in scripts.txt.
+    Blank lines and # comment lines are skipped."""
+    scripts_txt = os.path.join(REPO_ROOT, "scripts.txt")
+    with open(scripts_txt, encoding="utf-8") as f:
+        for line in f:
+            line = line.strip()
+            if not line or line.startswith('#'):
+                continue
+            yield os.path.join(REPO_ROOT, line)
+
+
+# == Extension metadata helpers ================================================
+
+def read_info_json(folder):
+    """Return the parsed info.json dict for a game folder, or None if missing/invalid."""
+    path = os.path.join(folder, "info.json")
+    if not os.path.isfile(path):
+        return None
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+    except (json.JSONDecodeError, OSError):
+        return None
+
+
+def make_info_json():
+    """Return a fresh info.json template string for a new extension."""
+    return (
+        '{\n'
+        '  "name": "Game: XXX",\n'
+        '  "author": "ChemBoy1",\n'
+        '  "version": "0.1.0",\n'
+        '  "description": "Vortex support for XXX"\n'
+        '}\n'
+    )
+
+
+def make_changelog():
+    """Return a fresh CHANGELOG.md template string for a new extension."""
+    return (
+        "# Changelog\n"
+        "\n"
+        "## Planned Improvements (Not Yet Released)\n"
+        "\n"
+        "- None Planned\n"
+        "\n"
+        "## [0.1.0] - 2026-XX-XX\n"
+        "\n"
+        "- Initial Release\n"
+    )
+
+
+def parse_changelog_latest(folder):
+    """Return (version, date) from the most recent ## [X.Y.Z] - YYYY-MM-DD entry
+    in CHANGELOG.md, or (None, None) if the file is missing or has no dated entry."""
+    path = os.path.join(folder, "CHANGELOG.md")
+    if not os.path.isfile(path):
+        return None, None
+    try:
+        with open(path, encoding="utf-8") as f:
+            content = f.read()
+        m = re.search(r'^## \[(\d+\.\d+\.\d+)\] - (\d{4}-\d{2}-\d{2})', content, re.MULTILINE)
+        return (m.group(1), m.group(2)) if m else (None, None)
+    except OSError:
+        return None, None
+
+
+# == CLI helpers ===============================================================
+
+def dry_prefix(dry_run):
+    """Return '[DRY RUN] ' when dry_run is True, else ''."""
+    return '[DRY RUN] ' if dry_run else ''

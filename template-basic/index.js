@@ -60,11 +60,11 @@ const rootInstaller = true; //enable root installer. Set false if you need to av
 const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
 const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
 const hasUserIdFolder = false; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
-const debug = false; //toggle for debug mode
 let binariesInstaller = false;
 if (BINARIES_PATH !== '.') {
     binariesInstaller = true; //only enable Binaries installer if not in root
 }
+const debug = false; //toggle for debug mode
 
 //info for modtypes, installers, tools, and actions
 const DATA_FOLDER = 'XXX';

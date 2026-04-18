@@ -59,6 +59,7 @@ const autoDownloadUe4ss = false; //toggle for auto downloading UE4SS
 const SIGBYPASS_REQUIRED = false; //set true if there are .sig files in the Paks folder
 const IO_STORE = true; //true if the Paks folder contains .ucas and .utoc files
 const hasUserIdFolder = false; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
+const debug = false; //toggle for debug mode
 
 //UE specific
 const ENGINE_VERSION = '5.X.X.0'; //Unreal Engine version - info only atm. usually '4.27.2.0' or '5.X.X.0'

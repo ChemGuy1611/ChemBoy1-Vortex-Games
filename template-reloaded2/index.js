@@ -46,6 +46,7 @@ const RELOADEDMODLOADER_URL_ERR = `XXX`;
 //feature toggles
 const hasXbox = false; //toggle for Xbox version logic
 const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
+const debug = false; //toggle for debug mode
 
 const PUBLISHER_FOLDER = "";
 const DATA_FOLDER = "";
