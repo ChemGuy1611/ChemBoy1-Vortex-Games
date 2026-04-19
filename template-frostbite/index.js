@@ -433,7 +433,7 @@ async function installFbmod(api, files) {
   const modFiles = files.filter(file => fileExt.includes(path.extname(file).toLowerCase()));
   const modType = {
     type: 'setmodtype',
-    value: UE5_SORTABLE_ID,
+    value: FROSTYMOD_ID,
   };
   const installFiles = (modFiles.length > FROSTYMOD_EXTS.length)
     ? await chooseFilesToInstall(api, modFiles, fileExt)

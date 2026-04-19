@@ -78,6 +78,7 @@ const MOD_FOLDERS = ['data', 'audio', 'levels', 'shaders', 'swfs', 'textures'];
 
 const LO_FILE = 'modlist.txt';
 const LO_FILE_PATH = path.join(MOD_PATH, LO_FILE);
+const LO_ATTRIBUTE = 'modName';
 // for mod update to keep them in the load order and not uncheck them
 let mod_update_all_profile = false;
 let updatemodid = undefined;

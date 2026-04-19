@@ -1702,7 +1702,7 @@ function UNREALEXTENSION(context) {
     let modFiles = [];
     if (fileExt)
       modFiles = files.filter(file => fileExt.includes(path.extname(file).toLowerCase()));
-    const supported = (supportedGame && (gameId === spec.game.id) && modFiles.length > 0);
+    let supported = (supportedGame && (gameId === spec.game.id) && modFiles.length > 0);
 
     // Test for a mod installer
     if (supported && files.find(file =>
@@ -1830,15 +1830,6 @@ function partitionCheckNotify(api, CHECK_CONFIG, CHECK_DOCS) {
   });
 }
 
-// Clean invalid characters from a string
-function cleanInvalidChars(string) {
-  // 1. Remove control characters (ASCII 0-31) & null character
-  let cleaned = string.replace(/[^\x00-\x7F]/gi, ''); // Keep only printable ASCII + UTF-8
-  // 2. Remove non-UTF8 sequences (if needed for strict JSON)
-  cleaned = cleaned.replace(/[\u0000-\u001F]/gi, ''); // Null chars, control chars
-  return cleaned;
-}
-
 //Enable MODKit mods on deployment
 async function setModkitModsEnabled(api) {
   let paths = [];
@@ -1856,7 +1847,6 @@ async function setModkitModsEnabled(api) {
     content = content.slice(content.indexOf('{'), content.indexOf('}')) + '\n}';
     let json;
     try {
-      //content = cleanInvalidChars(content);
       json = JSON.parse(content);
       if (json.bEnable === false || json.bEnable === undefined) {
         json.bEnable = true;

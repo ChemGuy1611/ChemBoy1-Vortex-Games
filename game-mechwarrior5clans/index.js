@@ -205,8 +205,8 @@ const tools = [
     id: "LaunchModdedGame",
     name: "Launch Modded Game",
     logo: `exec.png`,
-    executable: () => EXEC,
-    requiredFiles: [EXEC],
+    executable: () => DEFAULT_EXEC,
+    requiredFiles: [DEFAULT_EXEC],
     detach: true,
     relative: true,
     exclusive: true,
@@ -942,7 +942,7 @@ function UNREALEXTENSION(context) {
     let modFiles = [];
     if (fileExt)
       modFiles = files.filter(file => fileExt.includes(path.extname(file).toLowerCase()));
-    const supported = (supportedGame && (gameId === spec.game.id) && modFiles.length > 0);
+    let supported = (supportedGame && (gameId === spec.game.id) && modFiles.length > 0);
 
     // Test for a mod installer
     if (supported && files.find(file =>

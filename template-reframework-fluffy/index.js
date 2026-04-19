@@ -13,6 +13,7 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 const winapi = require('winapi-bindings');
+const { parseStringPromise } = require('xml2js');
 
 // -- START EDIT ZONE -- ///////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -912,6 +913,7 @@ async function installZipContent(files, destinationPath) {
 
 //Notify User of Setup instructions
 function setupNotify(api) {
+  const NOTIF_ID = `${GAME_ID}-setup-notification`;
   const MOD_NAME = `Fluffy Mod Manager`;
   const MESSAGE = `${MOD_NAME} Instructions`;
   api.sendNotification({

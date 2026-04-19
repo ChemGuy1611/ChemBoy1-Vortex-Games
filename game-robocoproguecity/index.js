@@ -1979,7 +1979,7 @@ function UNREALEXTENSION_UNFINISHED(context) {
     let modFiles = [];
     if (fileExt)
       modFiles = files.filter(file => fileExt.includes(path.extname(file).toLowerCase()));
-    const supported = (supportedGame && (gameId === GAME_ID_UNFINISHED) && modFiles.length > 0);
+    let supported = (supportedGame && (gameId === GAME_ID_UNFINISHED) && modFiles.length > 0);
 
     // Test for a mod installer
     if (supported && files.find(file =>

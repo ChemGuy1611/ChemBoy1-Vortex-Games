@@ -12,6 +12,7 @@ Notes:
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
+const { parseStringPromise } = require('xml2js');
 
 //const USER_HOME = util.getVortexPath("home");
 //const LOCALLOW = path.join(USER_HOME, 'AppData', 'LocalLow');
@@ -689,6 +690,7 @@ function installRoot(files) {
 
 //Notify User of Setup instructions
 function setupNotify(api) {
+  const NOTIF_ID = `${GAME_ID}-setup-notification`;
   const MOD_NAME = `ModManager Mod Manager`;
   api.sendNotification({
     id: `${GAME_ID}-setup-notification`,

@@ -40,6 +40,7 @@ const ROOTSUB_FOLDERS = ['Config', COOKED_FOLDER, 'DLC', 'Localization', 'Movies
 const COOKEDSUB_FOLDERS = ['Maps', 'Packages'];
 const BITS = '32'; //32 or 64
 const EXEC_NAME = 'XXX.exe';
+const EXEC_NAME_64 = 'XXX.exe';
 const DATA_FOLDER = path.join('My Games', 'XXX', EPIC_CODE_NAME);
 const PCGAMINGWIKI_URL = "XXX";
 const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
@@ -55,6 +56,7 @@ const SPECIAL_TFCMOD_FOLDERS = ['XXX'];
 const EXEC_XBOX = 'gamelaunchhelper.exe';
 const BINARIES_PATH = path.join("Binaries", `Win${BITS}`);
 const EXEC = path.join(BINARIES_PATH, EXEC_NAME);
+const EXEC_64 = path.join(BINARIES_PATH, EXEC_NAME_64);
 
 let GAME_PATH = ''; //patched in the setup function to the discovered game path
 let GAME_VERSION = '';

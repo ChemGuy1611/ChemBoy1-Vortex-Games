@@ -514,7 +514,7 @@ function installMicroPatches(files) {
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
  
-  folder = path.basename(modFile, PLUGIN_EXTS[0]);
+  let folder = path.basename(modFile, PLUGIN_EXTS[0]);
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
@@ -670,7 +670,7 @@ function testMod(files, gameId) {
 }
 
 //Install mod files
-function installMod(files, workingDir) {
+async function installMod(api, files, workingDir) {
   const MOD_TYPE = MOD_ID;
   let modFile = files.find(file => MOD_FILES.includes(path.basename(file).toLowerCase()));
   let idx = modFile.indexOf(path.basename(modFile));
@@ -688,7 +688,7 @@ function installMod(files, workingDir) {
   let folder = MOD_NAME;
   let nameFolder = undefined;
   try {
-    const contents = fs.readFileSync(path.join(workingDir, manifest));
+    const contents = await fs.readFileAsync(path.join(workingDir, manifest));
     const json = JSON.parse(contents);
     folder = json.UniqueName;
     //* index on the folder with the uniqueName if it is in the archive
@@ -1288,7 +1288,7 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(MODFINDER_ID, 27, testModFinder, installModFinder);
   context.registerInstaller(SAVEEDITOR_ID, 28, testSaveEditor, installSaveEditor);
   context.registerInstaller(PORTMAN_ID, 29, testPortraitManager, installPortraitManager);
-  context.registerInstaller(MOD_ID, 31, testMod, installMod);
+  context.registerInstaller(MOD_ID, 31, testMod, (files, workingDir) => installMod(context.api, files, workingDir));
   context.registerInstaller(PLUGIN_ID, 33, testPlugin, installPlugin);
   context.registerInstaller(PORTRAIT_ID, 35, testPortrait, installPortrait);
   context.registerInstaller(SAVE_ID, 47, testSave, installSave);

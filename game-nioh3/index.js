@@ -1920,7 +1920,7 @@ const requestDeployment = (api, spec) => {
   });
 };
 
-async function copyRdbFiles(folder, files, target) {
+async function copyRdbFiles(api, folder, files, target) {
   for (let index = 0; index < files.length; index++) {
     const source = path.join(folder, files[index]);
     const dest = path.join(folder, target[index]);
@@ -1945,7 +1945,7 @@ async function resetRdb(api) { //on purge
     'root.rdb.original',
     'root.rdx.original',
   ];
-  return copyRdbFiles(folder, originalFiles, rootFiles);
+  return copyRdbFiles(api, folder, originalFiles, rootFiles);
 }
 
 function runMerge(api) { //on deploy
