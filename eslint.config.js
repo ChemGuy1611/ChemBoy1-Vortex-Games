@@ -8,6 +8,7 @@ module.exports = defineConfig([
     extends: ["js/recommended"],
     rules: {
       "no-unused-vars": "off",
+      "no-useless-assignment": "off",
     },
     languageOptions: {
       "sourceType": "commonjs",

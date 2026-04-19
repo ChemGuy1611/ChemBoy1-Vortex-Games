@@ -1,9 +1,9 @@
 /*//////////////////////////////////////////
-Name: XXX Vortex Extension
+Name: MOUSE: P.I. For Hire Vortex Extension
 Structure: Unity BepinEx/MelonLoader/Custom Loader Hybrid
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2026-XX-XX
+Date: 2026-04-18
 Notes:
 - 
 //////////////////////////////////////////*/
@@ -28,19 +28,19 @@ const LOCALLOW = path.join(USER_HOME, 'AppData', 'LocalLow');
 const LOCALAPPDATA = util.getVortexPath("localAppData");
 
 //Specify all the information about the game
-const GAME_ID = "XXX";
-const STEAMAPP_ID = "XXX";
-const STEAMAPP_ID_DEMO = "XXX";
-const EPICAPP_ID = "XXX";
-const GOGAPP_ID = "XXX";
-const XBOXAPP_ID = "XXX";
+const GAME_ID = "mousepiforhire";
+const STEAMAPP_ID = "2416450"; // https://steamdb.info/app/2416450/
+const STEAMAPP_ID_DEMO = null;
+const EPICAPP_ID = null;
+const GOGAPP_ID = null;
+const XBOXAPP_ID = "XXX"; // NOT on Game Pass - https://apps.microsoft.com/detail/9p7522hwd0nh
 const XBOXEXECNAME = "Game";
 const XBOX_PUB_ID = "XXX"; //string after "ID_"
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
-const GAME_NAME = "XXX";
-const GAME_NAME_SHORT = "XXX";
-const GAME_STRING = "XXX"; //string for exe and data folder (seem to always match)
+const GAME_NAME = "MOUSE: P.I. For Hire";
+const GAME_NAME_SHORT = "MOUSE";
+const GAME_STRING = "MOUSE"; //string for exe and data folder (seem to always match)
 const GAME_STRING_ALT = GAME_STRING; //CHANGE THIS IF IT DOESN'T MATCH
 const EXEC = `${GAME_STRING}.exe`;
 const EXEC_EGS = EXEC;
@@ -48,12 +48,12 @@ const EXEC_GOG = EXEC;
 const EXEC_DEMO = EXEC;
 const EXEC_XBOX = 'gamelaunchhelper.exe';
 const EXEC_ALT = `${GAME_STRING_ALT}.exe`;
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Mouse%3A_P.I._For_Hire";
 const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
 
 //feature toggles
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
-const hasXbox = false; //toggle for Xbox version logic
+const hasXbox = true; //toggle for Xbox version logic
 let multiExe = false; //set to true if there are multiple executables (typically for Xbox/EGS)
 if (GAME_STRING_ALT !== GAME_STRING) {
   multiExe = true;
@@ -79,16 +79,16 @@ const hasVersionFile = false; //set to true if there is a Version.info file that
 const VER_IDX = 3; //index of the version number in the Version.info file
 const VER_SPLIT = ' '; //split character for the Version.info file - typically a space
 
-const DEV_REGSTRING = "XXX"; //developer name
-const GAME_REGSTRING = "XXX"; //game name
-const CONFIG_FOLDERNAME = "XXX";
-const SAVE_FOLDERNAME = "XXX";
+const DEV_REGSTRING = "Fumi Games"; //developer name
+const GAME_REGSTRING = "MOUSE"; //game name
+const CONFIG_FOLDERNAME = "Save";
+const SAVE_FOLDERNAME = "Save";
 const hasUserIdFolder = false; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
 
 //Data to determine BepinEx/MelonLoader versions and URLs
-const loaderChoice = true; //true if loader choice is enabled
-const recommendedLoader = 'mel'; // bep/mel - If loaderChoice false, this determines downloaded loader. Otherwise shows as "(Recommended)" in selector.
-const BEPINEX_BUILD = 'il2cpp'; // 'mono' or 'il2cpp' - check for "il2cpp_data" folder
+const loaderChoice = false; //true if loader choice is enabled
+const recommendedLoader = 'bep'; // bep/mel - If loaderChoice false, this determines downloaded loader. Otherwise shows as "(Recommended)" in selector.
+const BEPINEX_BUILD = 'mono'; // 'mono' or 'il2cpp' - check for "il2cpp_data" folder
 const ARCH = 'x64'; //'x64' or 'x86' game architecture (64-bit or 32-bit)
 const BEP_VER = '5.4.23.5'; //set BepInEx version for mono URLs
 const BEP_BE_VER = '755'; //set BepInEx build for BE IL2CPP URLs

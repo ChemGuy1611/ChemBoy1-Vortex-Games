@@ -1666,7 +1666,7 @@ async function chooseModLoader(api, gameSpec) {
 }
 //Deconflict mod loaders
 async function deconflictModLoaders(api, gameSpec) {
-  CUSTOM_LABEL = `${CUSTOMLOADER_NAME} (Recommended)`;
+  const CUSTOM_LABEL = `${CUSTOMLOADER_NAME} (Recommended)`;
   const BEP_LABEL = `BepInEx`;
   const MEL_LABEL = `MelonLoader`;
   bepinexInstalled = isBepinexInstalled(api, gameSpec);

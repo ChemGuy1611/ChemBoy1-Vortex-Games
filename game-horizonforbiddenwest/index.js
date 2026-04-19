@@ -282,7 +282,7 @@ async function downloadModManager(api, check = true) {
         const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
         const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
         const file = modFiles
-          .filter(file => file.category_id === 2) //! Author has file in Update Files instead of Main Files
+          .filter(file => file.category_id === 1) //Author fixed - files in Main Files
           .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
           .reverse()[0];
         if (file === undefined) {
