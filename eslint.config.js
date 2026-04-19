@@ -10,6 +10,7 @@ module.exports = defineConfig([
     rules: {
       "no-unused-vars": "off",
       "no-useless-assignment": "off",
+      "no-unsafe-finally": "off",
     },
     languageOptions: {
       "sourceType": "commonjs",
