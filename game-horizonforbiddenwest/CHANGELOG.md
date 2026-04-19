@@ -4,6 +4,10 @@
 
 - None
 
+## [0.2.5] - 2026-04-18
+
+- Fixed: HFW MM wil download the latest version
+
 ## [0.2.4] - 2026-01-27
 
 - Added: Button to open save folder

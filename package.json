@@ -18,6 +18,8 @@
   },
   "homepage": "https://github.com/ChemGuy1611/ChemBoy1-Vortex-Games#readme",
   "devDependencies": {
-    "eslint": "^10.2.1"
+    "@eslint/js": "^10.0.1",
+    "eslint": "^10.2.1",
+    "prettier-eslint": "^16.4.2"
   }
 }

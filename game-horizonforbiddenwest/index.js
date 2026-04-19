@@ -1,8 +1,8 @@
 /*////////////////////////////////////////////////
 Name: Horizon Forbidden West Vortex Extension
 Author: ChemBoy1
-Version: 0.2.4
-Date: 2026-01-27
+Version: 0.2.5
+Date: 2026-04-18
 ////////////////////////////////////////////////*/
 
 //import libraries
@@ -52,7 +52,7 @@ const MODMANAGER_NAME = "HFW Mod Manager";
 const MODMANAGER_STRING = 'HFW Mod Manager';
 const MODMANAGER_EXEC = 'HFW_MM.exe';
 const MODMANAGER_PAGE_NO = 137;
-const MODMANAGER_FILE_NO = 683;
+const MODMANAGER_FILE_NO = 763;
 const MODMANAGER_DOMAIN = GAME_ID;
 
 const REPACKER_ID = `${GAME_ID}-repacker`;
@@ -282,7 +282,7 @@ async function downloadModManager(api, check = true) {
         const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
         const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
         const file = modFiles
-          .filter(file => file.category_id === 1)
+          .filter(file => file.category_id === 2) //! Author has file in Update Files instead of Main Files
           .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
           .reverse()[0];
         if (file === undefined) {

@@ -30,10 +30,21 @@ Mod types define where each category of mod gets deployed:
 | REPACKER_NAME | `REPACKER_ID` | low | `{gamePath}` |
 | Save Game (Documents) | `horizonforbiddenwest-save` | low | `SAVE_PATH` |
 
+## Mod Installers
+
+Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
+
+| Installer ID | Priority |
+| --- | --- |
+| `REPACKER_ID` | 25 |
+| `MANAGERMOD_ID` | 27 |
+| `horizonforbiddenwest-save` | 25 |
+
 ## Toolbar Actions
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
+- Download HFW Mod Manager (Update)
 - Open HFW Mod Manager Page
 - Open Saves Folder
 - Open PCGamingWiki Page
