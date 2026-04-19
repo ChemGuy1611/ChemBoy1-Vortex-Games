@@ -4,6 +4,10 @@
 
 - Change CDLC Song Downloader to open a free-roam browser window so that domain switching to file hosting sites for the .psarc files does not cause exit errors and allows downloading multiple files in one session.
 
+## [0.3.1] - 2026-04-19
+
+- Fixed: Corrected CDLC Enabler URL string.
+
 ## [0.3.0] - 2026-04-01
 
 - Fixed: ASIO4ALL install function causing a crash due to hardcoded version in exe filename.

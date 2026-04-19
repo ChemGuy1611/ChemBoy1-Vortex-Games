@@ -2,8 +2,8 @@
 Name: Rocksmith 2014 Edition REMASTERED Vortex Extension
 Structure: Basic Game with Tools & Launchers
 Author: ChemBoy1
-Version: 0.3.0
-Date: 2026-04-01
+Version: 0.3.1
+Date: 2026-04-19
 /////////////////////////////////////////////////////////*/
 
 //Import libraries
@@ -45,7 +45,7 @@ const CDLC_INSTALLER = "RS2014-CDLC-Installer.exe";
 const CDLC_IS_ARCHIVE = false;
 const CDLC_IS_INSTALLER = true;
 const CDLC_IS_ELEVATED = false;
-const CDLC_DLFILE_STRING = "rs2014-cdlc";
+const CDLC_DLFILE_STRING = "cdlc-enabler";
 const CDLC_URL = "https://ignition4.customsforge.com/tools/cdlcenabler";
 
 const CFSM_ID = `${GAME_ID}-cfsm`;
