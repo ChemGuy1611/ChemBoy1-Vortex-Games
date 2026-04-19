@@ -52,7 +52,7 @@ import setup_test_folder as stf
 from vortex_utils import (
     REPO_ROOT, http_get, http_get_bytes,
     roman_to_arabic, arabic_to_roman, name_lookup_variants,
-    lookup_pcgamingwiki, get_api_key, run_generate_explained,
+    lookup_pcgamingwiki, get_api_key, run_generate_explained, eslint_check,
     fetch_epic_app_id, add_to_discovery_ids,
     download_exec_icon, download_cover_art, download_title_image, download_banner_image,
     update_index_header, sanitize_game_name,
@@ -903,6 +903,16 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
         print(f"  FAILED -run manually: node generate_explained.js {game_id}")
         if err:
             print(f"  {err}\n")
+
+    print("[eslint]")
+    ok, out = eslint_check(os.path.join(dest, "index.js"))
+    if ok:
+        print("  index.js passes eslint.\n")
+    else:
+        print("  WARNING - eslint reported issues:")
+        for line in out.splitlines():
+            print(f"    {line}")
+        print()
 
     # ── Update engine category lists ─────────────────────────────────────────
     print("[categorize_games.py]")

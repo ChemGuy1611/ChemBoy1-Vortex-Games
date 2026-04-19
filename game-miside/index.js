@@ -1221,23 +1221,6 @@ function installCustom(files) {
   return Promise.resolve({ instructions });
 }
 
-//Fallback installer to root folder
-function testFallback(files, gameId) {
-  let supported = (gameId === spec.game.id);
-
-  // Test for a mod installer.
-  if (supported && files.find(file =>
-    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
-    supported = false;
-  }
-
-  return Promise.resolve({
-    supported,
-    requiredFiles: [],
-  });
-}
-
 //Installer Test for plugin files
 function testPlugin(files, gameId) {
   const isMod = files.some(file => PLUGIN_EXTS.includes(path.extname(file).toLowerCase()));
@@ -2258,9 +2241,6 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(ASSETS_ID, 37, testAssets, installAssets);
   if (hasCustomMods) {
     context.registerInstaller(CUSTOM_ID, 39, testCustom, installCustom);
-  }
-  if (enableSaveInstaller) {
-    context.registerInstaller(SAVE_ID, 47, testSave, installSave); //best to only enable if saves are stored in the game's folder
   }
   if (fallbackInstaller) {
     context.registerInstaller(`${GAME_ID}-fallback`, 49, testFallback, (files, destinationPath) => installFallback(context.api, files, destinationPath));

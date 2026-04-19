@@ -39,6 +39,7 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `run_generate_explained(game_id)` | Run `generate_explained.js` for a game; returns `(ok: bool, stderr: str)` |
 | `node_check(path)` | Run `node --check` on a JS file path; returns `(ok: bool, stderr: str)` |
 | `node_check_source(src)` | Run `node --check` on an in-memory JS string (writes a temp file internally); returns `(ok, error_msg)` — `ok` is `None` if node is not on PATH |
+| `eslint_check(path)` | Run `npx eslint` on a JS file (config auto-discovered from `REPO_ROOT`); returns `(ok: bool, output: str)` |
 | `get_discovery_ids(src)` | Parse variable names from the spec's `discovery.ids` array; returns list of names (e.g. `["STEAMAPP_ID", "EAAPP_ID"]`); falls back to `["STEAMAPP_ID"]` |
 | `iter_game_folders(target_game_ids)` | Yield `(folder, game_id, src)` for every `game-*` folder; filtered by `target_game_ids` if given |
 | `REGISTER_ACTIONS` | List of `(label, commented_out, code)` tuples for standard `context.registerAction` calls |

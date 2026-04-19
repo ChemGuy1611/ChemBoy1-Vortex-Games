@@ -9,9 +9,10 @@ Steps performed per game:
     2. Update Version and Date in index.js header comment
     3. Add resolved store IDs to DISCOVERY_IDS_ACTIVE if missing
     4. node --check on index.js (warns on syntax error)
-    5. Run generate_explained.js to regenerate EXTENSION_EXPLAINED.md
-    6. Create game-{GAME_ID}.zip with 7-Zip
-    7. Open EXTENSION_URL in browser (or nexusmods.com/games/site if not set)
+    5. eslint on index.js (warns on lint errors)
+    6. Run generate_explained.js to regenerate EXTENSION_EXPLAINED.md
+    7. Create game-{GAME_ID}.zip with 7-Zip
+    8. Open EXTENSION_URL in browser (or nexusmods.com/games/site if not set)
 
 Usage:
     python release_extension.py GAME_ID [GAME_ID ...]
@@ -29,7 +30,7 @@ import sys
 import subprocess
 
 from vortex_utils import (
-    REPO_ROOT, run_generate_explained, add_to_discovery_ids, node_check,
+    REPO_ROOT, run_generate_explained, add_to_discovery_ids, node_check, eslint_check,
     extract_extension_url, read_info_json, parse_changelog_latest,
     update_index_header as _apply_header,
 )
@@ -160,6 +161,7 @@ def release(game_id, open_browser, dry_run=False):
     if dry_run:
         zip_path = os.path.join(folder, f"game-{game_id}.zip")
         print(f"  [{game_id}] [DRY RUN] Would run node --check on index.js")
+        print(f"  [{game_id}] [DRY RUN] Would run eslint on index.js")
         print(f"  [{game_id}] [DRY RUN] Would generate EXTENSION_EXPLAINED.md")
         print(f"  [{game_id}] [DRY RUN] Would create: {zip_path}")
         if extension_url:
@@ -175,6 +177,15 @@ def release(game_id, open_browser, dry_run=False):
     else:
         print(f"  [{game_id}] WARNING - node --check found a syntax error in index.js:")
         print(f"    {err}")
+
+    print(f"  [{game_id}] Linting index.js...")
+    ok, out = eslint_check(index_path)
+    if ok:
+        print(f"  [{game_id}] eslint OK")
+    else:
+        print(f"  [{game_id}] WARNING - eslint reported issues:")
+        for line in out.splitlines():
+            print(f"    {line}")
 
     print(f"  [{game_id}] Generating EXTENSION_EXPLAINED.md...")
     ok, err = run_generate_explained(game_id)

@@ -17,7 +17,7 @@ Usage:
         update_index_header, inject_register_actions, find_fn_body,
         read_info_json, make_info_json, make_changelog, parse_changelog_latest,
         list_game_ids, iter_repo_scripts, dry_prefix,
-        node_check, node_check_source, get_discovery_ids,
+        node_check, node_check_source, eslint_check, get_discovery_ids,
         log_info, log_error, log_warn,
     )
 """
@@ -979,6 +979,17 @@ def node_check(path):
         capture_output=True, text=True
     )
     return result.returncode == 0, result.stderr.strip()
+
+
+def eslint_check(path):
+    """Run `npx eslint` on a JS file. Returns (ok: bool, output: str).
+    Runs from REPO_ROOT so eslint.config.js is picked up automatically."""
+    result = subprocess.run(
+        ["npx", "--no-install", "eslint", path],
+        capture_output=True, text=True, cwd=REPO_ROOT, shell=True,
+    )
+    output = (result.stdout + result.stderr).strip()
+    return result.returncode == 0, output
 
 
 def node_check_source(src):
