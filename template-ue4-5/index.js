@@ -72,6 +72,7 @@ const SAVE_COMPAT_VERSIONS = ['steam', 'epic', 'gog']; //game versions with inst
 let PAKMOD_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Paks', '~mods'); //usually works. Some games don't work from "~mods".
 const PAKMOD_LOADORDER = true; //set to false if you don't want loadOrder. If must be in "Paks" root, disable loadOrder.
 const FBLO = true; //set to false to use legacy load order page
+const LO_IMAGE_WIDTH = 96; //Width of the load order thumbnail image
 const SPECIAL_LO_INSTRUCTIONS = ''; //Show special load order instructions
 const PAKMOD_EXTRA_EXTS = []; //extra extensions to include with paks (usually for custom modding frameworks, i.e .toml, .json)
 const UE4SS_PAGE_NO = 0; //set these if there is a customized UE4SS Nexus page
@@ -103,6 +104,7 @@ const SAVE_EDITOR_EXEC = "XXX.exe";
 // -- END EDIT ZONE -- /////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+const LO_IMAGE_HEIGHT = LO_IMAGE_WIDTH * 0.5625;
 //const ENGINE_VERSION_NO = +ENGINE_VERSION;
 let configSaveMatch = (CONFIGMOD_LOCATION === SAVEMOD_LOCATION); //true if the config and save mods are in the same folder
 const XBOX_SAVE_STRING = XBOX_PUB_ID;
@@ -2386,11 +2388,8 @@ function main(context) {
         deserializeLoadOrder: async () => await deserializeLoadOrder(context),
         serializeLoadOrder: async (loadOrder) => await serializeLoadOrder(context, loadOrder),
         toggleableEntries: false,
-        usageInstructions: `Drag and drop the mods on the left to change the order in which they load. RoN loads mods in alphanumerical order, so Vortex prefixes `
-                + 'the folder names with "AAA, AAB, AAC, ..." to ensure they load in the order you set here. '
-                + 'The number in the left column represents the overwrite order. The changes from mods with higher numbers will take priority over other mods which make similar edits.'
-                + '\n'
-                + 'YOU MUST DEPLOY MODS AFTER CHANGING THE ORDER TO APPLY CHANGES.'
+        usageInstructions: LoadOrderInstructions,
+        customItemRenderer: LoadOrderItemRenderer,
       }); //*/
     } else { //legacy Load Order
       let previousLO;
@@ -2466,6 +2465,7 @@ async function didPurge(api, profileId) { //run on mod purge
   return Promise.resolve();
 }
 
+//React load order instructions renderer
 function LoadOrderInstructions() {
   return React.createElement('div', null,
     React.createElement('p', null,
@@ -2489,6 +2489,67 @@ function LoadOrderInstructions() {
     )
   );
 }
+
+//* React line item renderer for load order
+function LoadOrderItemRenderer(props) {
+  const { className, item } = props;
+  if (item?.loEntry === undefined) return null;
+
+  const { ListGroupItem } = require('react-bootstrap');
+  const { Icon, LoadOrderIndexInput, MainContext } = require('vortex-api');
+  const { useSelector, useDispatch } = require('react-redux');
+
+  const context = React.useContext(MainContext);
+  const dispatch = useDispatch();
+
+  const profile = useSelector((state) => selectors.activeProfile(state));
+  const loadOrder = useSelector((state) =>
+    util.getSafe(state, ['persistent', 'loadOrder', profile?.id], []),
+  );
+
+  const { loEntry } = item;
+  const mods = useSelector((state) => util.getSafe(state, ['persistent', 'mods', GAME_ID], {}));
+  const pictureUrl = mods[loEntry.modId]?.attributes?.pictureUrl;
+  const currentIdx = loadOrder.findIndex((e) => e.id === loEntry.id) + 1;
+
+  const isLocked = (entry) => [true, 'true', 'always'].includes(entry?.locked);
+  const lockedCount = loadOrder.filter(isLocked).length;
+
+  const onApplyIndex = React.useCallback((idx) => {
+    if (currentIdx === idx) return;
+    const newLO = loadOrder.filter((e) => e.id !== loEntry.id);
+    newLO.splice(idx - 1, 0, loEntry);
+    dispatch(actions.setFBLoadOrder(profile.id, newLO));
+  }, [dispatch, profile, loadOrder, loEntry, currentIdx]);
+
+  const classes = ['load-order-entry'];
+  if (className) classes.push(...className.split(' '));
+
+  return React.createElement(
+    ListGroupItem,
+    { key: loEntry.id, className: classes.join(' ') },
+    React.createElement(Icon, { className: 'drag-handle-icon', name: 'drag-handle' }),
+    React.createElement(LoadOrderIndexInput, {
+      className: 'load-order-index',
+      api: context.api,
+      item: loEntry,
+      currentPosition: currentIdx,
+      lockedEntriesCount: lockedCount,
+      loadOrder: loadOrder,
+      isLocked: isLocked,
+      onApplyIndex: onApplyIndex,
+    }),
+    React.createElement('div', { className: 'load-order-thumb-slot', style: { width: LO_IMAGE_WIDTH, height: LO_IMAGE_HEIGHT, marginRight: 4, flexShrink: 0 } },
+      pictureUrl ? React.createElement('img', {
+        className: 'load-order-thumb',
+        src: pictureUrl,
+        draggable: false,
+        style: { width: LO_IMAGE_WIDTH, height: LO_IMAGE_HEIGHT, objectFit: 'cover', borderRadius: 2, pointerEvents: 'none' },
+      }) : null,
+    ),
+    React.createElement('p', { className: 'load-order-name' }, loEntry.name),
+  );
+} //*/
 
 //export to Vortex
 module.exports = {

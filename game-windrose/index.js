@@ -2,7 +2,7 @@
 Name: Windrose Vortex Extension
 Structure: Unreal Engine Game
 Author: ChemBoy1
-Version: 0.1.2
+Version: 0.2.0
 Date: 2026-04-21
 Notes:
 - Only demo out now. Update for full release when available, if needed.
@@ -74,6 +74,7 @@ const SAVE_COMPAT_VERSIONS = ['steam', 'epic', 'gog']; //game versions with inst
 let PAKMOD_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Paks', '~mods'); //usually works. Some games don't work from "~mods".
 const PAKMOD_LOADORDER = true; //set to false if you don't want loadOrder. If must be in "Paks" root, disable loadOrder.
 const FBLO = true; //set to false to use legacy load order page
+const LO_IMAGE_WIDTH = 96; //Width of the load order thumbnail image
 const SPECIAL_LO_INSTRUCTIONS = 'The Load Order is for Client (SP) Paks only!'; //Show special load order instructions
 const PAKMOD_EXTRA_EXTS = []; //extra extensions to include with paks (usually for custom modding frameworks, i.e .toml, .json)
 const UE4SS_PAGE_NO = 43; //set these if there is a customized UE4SS Nexus page
@@ -106,6 +107,7 @@ const SAVE_EDITOR_EXEC = "XXX.exe";
 // -- END EDIT ZONE -- /////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
+const LO_IMAGE_HEIGHT = LO_IMAGE_WIDTH * 0.5625;
 //const ENGINE_VERSION_NO = +ENGINE_VERSION;
 let configSaveMatch = (CONFIGMOD_LOCATION === SAVEMOD_LOCATION); //true if the config and save mods are in the same folder
 const XBOX_SAVE_STRING = XBOX_PUB_ID;
@@ -1819,11 +1821,14 @@ function testPak(files, gameId) {
 async function installPak(api, files) {
   const fileExt = UNREALDATA.fileExt;
   const modFiles = files.filter(file => fileExt.includes(path.extname(file).toLowerCase()));
+  let modType = UE5_SORTABLE_ID;
   const selection = await chooseInstallDestination(api, modFiles);
-  const modType = {
-    type: 'setmodtype',
-    value: selection,
-  };
+  if (selection === UE5_SORTABLE_ID || selection === SERVERPAKS_ID) {
+    modType = selection;
+  }
+  if (selection === 'both') {
+    modType = ROOT_ID;
+  }
   const installFiles = (modFiles.length > PAK_FILE_MIN)
     ? await chooseFilesToInstall(api, modFiles, fileExt)
     : modFiles;
@@ -1832,6 +1837,10 @@ async function installPak(api, files) {
     key: 'unrealModFiles',
     value: installFiles.map(f => path.basename(f))
   };
+  const modTypeInstruction = {
+    type: 'setmodtype',
+    value: modType,
+  };
   let instructions = installFiles.map(file => {
     return {
       type: 'copy',
@@ -1839,7 +1848,25 @@ async function installPak(api, files) {
       destination: path.basename(file)
     };
   });
-  instructions.push(modType);
+  let serverInstructions = [];
+  if (selection === 'both') {
+    instructions = installFiles.map(file => {
+      return {
+        type: 'copy',
+        source: file,
+        destination: path.join(PAK_PATH, path.basename(file))
+      };
+    });
+    serverInstructions = installFiles.map(file => {
+      return {
+        type: 'copy',
+        source: file,
+        destination: path.join(SERVERPAKS_PATH, path.basename(file))
+      };
+    });
+  }
+  instructions.push(serverInstructions);
+  instructions.push(modTypeInstruction);
   instructions.push(unrealModFiles);
   return Promise.resolve({ instructions });
 }
@@ -1851,20 +1878,30 @@ const SERVER_LABEL = 'Server (MP)';
 async function chooseInstallDestination(api, files) {
   const t = api.translate;
   return api.showDialog('question', t('Choose Destination for Pak Mod Files'), {
-    text: t('Choose the destination for the pak files.' 
+    text: t('Choose the destination for the pak files.\n' 
           +`\n`
           +`${CLIENT_LABEL}: Single-Player (Client) Pak Mods\n`
+          +`    Destination: ${PAK_PATH}\n`
+          +`\n`
           +`${SERVER_LABEL}: Multiplayer (Server) Pak Mods\n`
+          +`    Destination: ${SERVERPAKS_PATH}\n`
+          +`\n`
           ),
     }, [
+      { label: 'Cancel' }, //don't use this since we feed directly to modType
       { label: CLIENT_LABEL },
       { label: SERVER_LABEL },
-      //{ label: 'Cancel' }, //don't use this since we feed directly to modType
+      //{ label: 'BOTH SP & MP' },
   ]).then((result) => {
+    if (result.action === 'Cancel') {
+      return Promise.reject(new util.UserCanceled());
+    }
     if (result.action === CLIENT_LABEL) {
-        return UE5_SORTABLE_ID;
+      return UE5_SORTABLE_ID;
+    } else if (result.action === SERVER_LABEL) {
+      return SERVERPAKS_ID;
     } else {
-        return SERVERPAKS_ID;
+      return 'both';
     }
   });
 }
@@ -2451,6 +2488,7 @@ function main(context) {
         serializeLoadOrder: async (loadOrder) => await serializeLoadOrder(context, loadOrder),
         toggleableEntries: false,
         usageInstructions: LoadOrderInstructions,
+        customItemRenderer: LoadOrderItemRenderer,
       }); //*/
     } else { //legacy Load Order
       let previousLO;
@@ -2526,6 +2564,7 @@ async function didPurge(api, profileId) { //run on mod purge
   return Promise.resolve();
 }
 
+//React load order instructions renderer
 function LoadOrderInstructions() {
   return React.createElement('div', null,
     React.createElement('p', null,
@@ -2549,6 +2588,67 @@ function LoadOrderInstructions() {
     )
   );
 }
+
+//* React line item renderer for load order
+function LoadOrderItemRenderer(props) {
+  const { className, item } = props;
+  if (item?.loEntry === undefined) return null;
+
+  const { ListGroupItem } = require('react-bootstrap');
+  const { Icon, LoadOrderIndexInput, MainContext } = require('vortex-api');
+  const { useSelector, useDispatch } = require('react-redux');
+
+  const context = React.useContext(MainContext);
+  const dispatch = useDispatch();
+
+  const profile = useSelector((state) => selectors.activeProfile(state));
+  const loadOrder = useSelector((state) =>
+    util.getSafe(state, ['persistent', 'loadOrder', profile?.id], []),
+  );
+
+  const { loEntry } = item;
+  const mods = useSelector((state) => util.getSafe(state, ['persistent', 'mods', GAME_ID], {}));
+  const pictureUrl = mods[loEntry.modId]?.attributes?.pictureUrl;
+  const currentIdx = loadOrder.findIndex((e) => e.id === loEntry.id) + 1;
+
+  const isLocked = (entry) => [true, 'true', 'always'].includes(entry?.locked);
+  const lockedCount = loadOrder.filter(isLocked).length;
+
+  const onApplyIndex = React.useCallback((idx) => {
+    if (currentIdx === idx) return;
+    const newLO = loadOrder.filter((e) => e.id !== loEntry.id);
+    newLO.splice(idx - 1, 0, loEntry);
+    dispatch(actions.setFBLoadOrder(profile.id, newLO));
+  }, [dispatch, profile, loadOrder, loEntry, currentIdx]);
+
+  const classes = ['load-order-entry'];
+  if (className) classes.push(...className.split(' '));
+
+  return React.createElement(
+    ListGroupItem,
+    { key: loEntry.id, className: classes.join(' ') },
+    React.createElement(Icon, { className: 'drag-handle-icon', name: 'drag-handle' }),
+    React.createElement(LoadOrderIndexInput, {
+      className: 'load-order-index',
+      api: context.api,
+      item: loEntry,
+      currentPosition: currentIdx,
+      lockedEntriesCount: lockedCount,
+      loadOrder: loadOrder,
+      isLocked: isLocked,
+      onApplyIndex: onApplyIndex,
+    }),
+    React.createElement('div', { className: 'load-order-thumb-slot', style: { width: LO_IMAGE_WIDTH, height: LO_IMAGE_HEIGHT, marginRight: 4, flexShrink: 0 } },
+      pictureUrl ? React.createElement('img', {
+        className: 'load-order-thumb',
+        src: pictureUrl,
+        draggable: false,
+        style: { width: LO_IMAGE_WIDTH, height: LO_IMAGE_HEIGHT, objectFit: 'cover', borderRadius: 2, pointerEvents: 'none' },
+      }) : null,
+    ),
+    React.createElement('p', { className: 'load-order-name' }, loEntry.name),
+  );
+} //*/
 
 //export to Vortex
 module.exports = {

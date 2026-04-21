@@ -31,7 +31,6 @@
 | Flag | Value | Description |
 | --- | --- | --- |
 | `hasXbox` | `false` | toggle for Xbox version logic. |
-| `hasServer` | `true` | toggle for server mod logic. |
 | `multiExe` | `false` | toggle for multiple executables (Epic/GOG/Demo don't match Steam) |
 
 ## Mod Types
