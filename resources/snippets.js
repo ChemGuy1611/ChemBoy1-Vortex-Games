@@ -12,6 +12,9 @@ const fsExtra = require('fs-extra');
 const exeVersion = require('exe-version');
 const semver = require('semver');
 
+//React
+const React = require('react');
+
 //File parsers
 const XML = require('xml2js'); //XML.parseString(), XML.parseStringPromise() (async), and XML.Builder() (write)
 const builder = new XML.Builder();
@@ -188,27 +191,29 @@ if (USERID_FOLDER === undefined) {
 let SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
 
 //Write section to an ini file //////////////////////////////////////////////////////
-try { //Fallout4.ini
-const parser = new IniParser(new WinapiFormat());
-fs.statSync(INI_PATH_DEFAULT); //make sure the file exists
-const contents = await parser.read(INI_PATH_DEFAULT);
-let TEST = false;
-let TEST_LINE = '';
-try {
-    TEST_LINE = contents.data['Archive']['SCellResourceIndexFileList'];
-} catch {
-    TEST_LINE = '';
-}
-TEST = TEST_LINE === INI_ARCHIVE_OBJECT.SCellResourceIndexFileList;
-if (!TEST) {
-    contents.data['Archive'] = INI_ARCHIVE_OBJECT; // Set the Archive section to the new value
-    await parser.write(INI_PATH_DEFAULT, contents) //write the INI file
-    .then(() => log('warn', `${EXTENSION_NAME} wrote FOLON INI settings to "${INI_FILE_DEFAULT}"`))
-    .then(() => iniSuccessNotifyDefault(api))
-    .catch(err => api.showErrorNotification(`Error when writing FOLON INI settings to ${INI_FILE_DEFAULT}`, err, { allowReport: true }));
-}
-} catch (err) {
-api.showErrorNotification(`${EXTENSION_NAME} failed to write FOLON INI settings to ${INI_FILE_DEFAULT}`, err, { allowReport: true });
+function WriteIni(api) {
+  try { //Fallout4.ini
+    const parser = new IniParser(new WinapiFormat());
+    fs.statSync(INI_PATH_DEFAULT); //make sure the file exists
+    const contents = await parser.read(INI_PATH_DEFAULT);
+    let TEST = false;
+    let TEST_LINE = '';
+    try {
+        TEST_LINE = contents.data['Archive']['SCellResourceIndexFileList'];
+    } catch {
+        TEST_LINE = '';
+    }
+    TEST = TEST_LINE === INI_ARCHIVE_OBJECT.SCellResourceIndexFileList;
+    if (!TEST) {
+        contents.data['Archive'] = INI_ARCHIVE_OBJECT; // Set the Archive section to the new value
+        await parser.write(INI_PATH_DEFAULT, contents) //write the INI file
+        .then(() => log('warn', `${EXTENSION_NAME} wrote FOLON INI settings to "${INI_FILE_DEFAULT}"`))
+        .then(() => iniSuccessNotifyDefault(api))
+        .catch(err => api.showErrorNotification(`Error when writing FOLON INI settings to ${INI_FILE_DEFAULT}`, err, { allowReport: true }));
+    }
+  } catch (err) {
+  api.showErrorNotification(`${EXTENSION_NAME} failed to write FOLON INI settings to ${INI_FILE_DEFAULT}`, err, { allowReport: true });
+  }
 }
 
 //create a directory link in the staging folder //////////////////////////////////////////////////////

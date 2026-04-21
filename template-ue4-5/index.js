@@ -13,6 +13,7 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 const { parseStringPromise } = require('xml2js');
+const React = require('react');
 //const fsPromises = require('fs/promises'); //.rm() for recursive folder deletion
 
 // -- START EDIT ZONE -- ///////////////////////////////////////////////////////////////////////////////
@@ -54,6 +55,7 @@ if ( (EXEC !== EXEC_EPIC) || (EXEC !== EXEC_GOG) || (EXEC !== EXEC_DEMO) ) {
 } //*/
 const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
 const hasModKit = false; //toggle for UE ModKit mod support
+const hasServer = false; //toggle for server pak mod logic
 const preferHardlinks = true; //set true to perform partition checks when IO-STORE=false for Config/Save modtypes so that hardlinks available to more users
 const autoDownloadUe4ss = false; //toggle for auto downloading UE4SS
 const SIGBYPASS_REQUIRED = false; //set true if there are .sig files in the Paks folder
@@ -70,6 +72,7 @@ const SAVE_COMPAT_VERSIONS = ['steam', 'epic', 'gog']; //game versions with inst
 let PAKMOD_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Paks', '~mods'); //usually works. Some games don't work from "~mods".
 const PAKMOD_LOADORDER = true; //set to false if you don't want loadOrder. If must be in "Paks" root, disable loadOrder.
 const FBLO = true; //set to false to use legacy load order page
+const SPECIAL_LO_INSTRUCTIONS = ''; //Show special load order instructions
 const PAKMOD_EXTRA_EXTS = []; //extra extensions to include with paks (usually for custom modding frameworks, i.e .toml, .json)
 const UE4SS_PAGE_NO = 0; //set these if there is a customized UE4SS Nexus page
 const UE4SS_FILE_NO = 0;
@@ -2461,6 +2464,30 @@ async function didPurge(api, profileId) { //run on mod purge
   }
   
   return Promise.resolve();
+}
+
+function LoadOrderInstructions() {
+  return React.createElement('div', null,
+    React.createElement('p', null,
+      'Drag and drop the mods on the left to change the order in which they load. ',
+    ),
+    React.createElement('br', null),
+    React.createElement('p', null,
+      `${GAME_NAME_SHORT} loads mods in alphanumerical order, so Vortex prefixes the folder `,
+      'names with "AAA, AAB, AAC, ..." to ensure they load in the order you set here. ',
+      'The number in the left column represents the overwrite order. Changes from ',
+      'mods with higher numbers take priority over mods that make similar edits.'
+    ),
+    React.createElement('br', null),
+    React.createElement('p', { style: { fontWeight: 'bold' } },
+      'YOU MUST DEPLOY MODS AFTER CHANGING THE ORDER TO APPLY CHANGES! ',
+      '- This is required to rename the folders for the correct order.'
+    ),
+    React.createElement('br', null),
+    React.createElement('p', { style: { color: 'yellow', fontWeight: 'bold' } },
+      SPECIAL_LO_INSTRUCTIONS
+    )
+  );
 }
 
 //export to Vortex

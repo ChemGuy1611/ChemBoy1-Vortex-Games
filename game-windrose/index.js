@@ -13,6 +13,7 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 const { parseStringPromise } = require('xml2js');
+const React = require('react');
 //const fsPromises = require('fs/promises'); //.rm() for recursive folder deletion
 
 // -- START EDIT ZONE -- ///////////////////////////////////////////////////////////////////////////////
@@ -51,13 +52,13 @@ const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1752"; //Nexus link t
 
 //feature toggles
 const hasXbox = false; //toggle for Xbox version logic.
-const hasServer = true; //toggle for server mod logic.
 let multiExe = false; //toggle for multiple executables (Epic/GOG/Demo don't match Steam)
 if ( (EXEC !== EXEC_EPIC) || (EXEC !== EXEC_GOG) || (EXEC !== EXEC_DEMO) ) {
   multiExe = true;
 } //*/
 const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
 const hasModKit = false; //toggle for UE ModKit mod support
+const hasServer = true; //toggle for server pak mod logic
 const preferHardlinks = true; //set true to perform partition checks when IO-STORE=false for Config/Save modtypes so that hardlinks available to more users
 const autoDownloadUe4ss = false; //toggle for auto downloading UE4SS
 const SIGBYPASS_REQUIRED = false; //set true if there are .sig files in the Paks folder
@@ -73,6 +74,7 @@ const SAVE_COMPAT_VERSIONS = ['steam', 'epic', 'gog']; //game versions with inst
 let PAKMOD_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Paks', '~mods'); //usually works. Some games don't work from "~mods".
 const PAKMOD_LOADORDER = true; //set to false if you don't want loadOrder. If must be in "Paks" root, disable loadOrder.
 const FBLO = true; //set to false to use legacy load order page
+const SPECIAL_LO_INSTRUCTIONS = 'The Load Order is for Client (SP) Paks only!'; //Show special load order instructions
 const PAKMOD_EXTRA_EXTS = []; //extra extensions to include with paks (usually for custom modding frameworks, i.e .toml, .json)
 const UE4SS_PAGE_NO = 43; //set these if there is a customized UE4SS Nexus page
 const UE4SS_FILE_NO = 248;
@@ -250,7 +252,8 @@ const MODKITMOD_PATH = path.join(EPIC_CODE_NAME, 'Mods');
 //server mods
 const SERVERPAKS_ID = `${GAME_ID}-serverpaks`;
 const SERVERPAKS_NAME = "Server Pak Mod";
-const SERVERPAKS_PATH = path.join(EPIC_CODE_NAME, 'Builds', 'WindowsServer', EPIC_CODE_NAME, 'Content', 'Paks', '~mods');
+const SERVERPAKS_PATH_BASE = path.join(EPIC_CODE_NAME, 'Builds', 'WindowsServer', EPIC_CODE_NAME, 'Content', 'Paks');
+const SERVERPAKS_PATH = path.join(SERVERPAKS_PATH_BASE, '~mods');
 
 const MODKIT_ID = `${GAME_ID}-modkit`;
 const MODKIT_NAME = "ModKit";
@@ -1848,8 +1851,11 @@ const SERVER_LABEL = 'Server (MP)';
 async function chooseInstallDestination(api, files) {
   const t = api.translate;
   return api.showDialog('question', t('Choose Destination for Pak Mod Files'), {
-    text: t('Choose the destination for the pak files.' +
-        `If you don't run a server, you can always choose ${CLIENT_LABEL}`),
+    text: t('Choose the destination for the pak files.' 
+          +`\n`
+          +`${CLIENT_LABEL}: Single-Player (Client) Pak Mods\n`
+          +`${SERVER_LABEL}: Multiplayer (Server) Pak Mods\n`
+          ),
     }, [
       { label: CLIENT_LABEL },
       { label: SERVER_LABEL },
@@ -2320,9 +2326,17 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(BINARIES_ID, 49, testBinaries, (files, fileName) => installBinaries(context.api, files, fileName));
 
   //register actions
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Paks Folder', () => {
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Client Paks Folder', () => {
     GAME_PATH = getDiscoveryPath(context.api);
     util.opn(path.join(GAME_PATH, PAK_ALT_PATH)).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Server Paks Folder', () => {
+    GAME_PATH = getDiscoveryPath(context.api);
+    util.opn(path.join(GAME_PATH, SERVERPAKS_PATH_BASE)).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
@@ -2436,11 +2450,7 @@ function main(context) {
         deserializeLoadOrder: async () => await deserializeLoadOrder(context),
         serializeLoadOrder: async (loadOrder) => await serializeLoadOrder(context, loadOrder),
         toggleableEntries: false,
-        usageInstructions: `Drag and drop the mods on the left to change the order in which they load. RoN loads mods in alphanumerical order, so Vortex prefixes `
-                + 'the folder names with "AAA, AAB, AAC, ..." to ensure they load in the order you set here. '
-                + 'The number in the left column represents the overwrite order. The changes from mods with higher numbers will take priority over other mods which make similar edits.'
-                + '\n'
-                + 'YOU MUST DEPLOY MODS AFTER CHANGING THE ORDER TO APPLY CHANGES.'
+        usageInstructions: LoadOrderInstructions,
       }); //*/
     } else { //legacy Load Order
       let previousLO;
@@ -2514,6 +2524,30 @@ async function didPurge(api, profileId) { //run on mod purge
   }
   
   return Promise.resolve();
+}
+
+function LoadOrderInstructions() {
+  return React.createElement('div', null,
+    React.createElement('p', null,
+      'Drag and drop the mods on the left to change the order in which they load. ',
+    ),
+    React.createElement('br', null),
+    React.createElement('p', null,
+      `${GAME_NAME_SHORT} loads mods in alphanumerical order, so Vortex prefixes the folder `,
+      'names with "AAA, AAB, AAC, ..." to ensure they load in the order you set here. ',
+      'The number in the left column represents the overwrite order. Changes from ',
+      'mods with higher numbers take priority over mods that make similar edits.'
+    ),
+    React.createElement('br', null),
+    React.createElement('p', { style: { fontWeight: 'bold' } },
+      'YOU MUST DEPLOY MODS AFTER CHANGING THE ORDER TO APPLY CHANGES! ',
+      '- This is required to rename the folders for the correct order.'
+    ),
+    React.createElement('br', null),
+    React.createElement('p', { style: { color: 'yellow', fontWeight: 'bold' } },
+      SPECIAL_LO_INSTRUCTIONS
+    )
+  );
 }
 
 //export to Vortex
