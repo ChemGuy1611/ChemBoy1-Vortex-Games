@@ -3,7 +3,7 @@ Name: Windrose Vortex Extension
 Structure: Unreal Engine Game
 Author: ChemBoy1
 Version: 0.1.2
-Date: 2026-04-15
+Date: 2026-04-21
 Notes:
 - Only demo out now. Update for full release when available, if needed.
 ////////////////////////////////////////////////*/
@@ -51,6 +51,7 @@ const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1752"; //Nexus link t
 
 //feature toggles
 const hasXbox = false; //toggle for Xbox version logic.
+const hasServer = true; //toggle for server mod logic.
 let multiExe = false; //toggle for multiple executables (Epic/GOG/Demo don't match Steam)
 if ( (EXEC !== EXEC_EPIC) || (EXEC !== EXEC_GOG) || (EXEC !== EXEC_DEMO) ) {
   multiExe = true;
@@ -73,8 +74,8 @@ let PAKMOD_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Paks', '~mods'); //usual
 const PAKMOD_LOADORDER = true; //set to false if you don't want loadOrder. If must be in "Paks" root, disable loadOrder.
 const FBLO = true; //set to false to use legacy load order page
 const PAKMOD_EXTRA_EXTS = []; //extra extensions to include with paks (usually for custom modding frameworks, i.e .toml, .json)
-const UE4SS_PAGE_NO = 0; //set these if there is a customized UE4SS Nexus page
-const UE4SS_FILE_NO = 0;
+const UE4SS_PAGE_NO = 43; //set these if there is a customized UE4SS Nexus page
+const UE4SS_FILE_NO = 248;
 const UE4SS_DOMAIN = GAME_ID; //either GAME_ID or 'site'
 const UE4SS_MOD_PATH = path.join('ue4ss', 'Mods'); //this should probably never change (unless UE4SS team changes it again lol)
 
@@ -246,6 +247,11 @@ const MODKITMOD_FILE = 'mod.json';
 const MODKITMOD_EXT = '.uplugin';
 const MODKITMOD_PATH = path.join(EPIC_CODE_NAME, 'Mods');
 
+//server mods
+const SERVERPAKS_ID = `${GAME_ID}-serverpaks`;
+const SERVERPAKS_NAME = "Server Pak Mod";
+const SERVERPAKS_PATH = path.join(EPIC_CODE_NAME, 'Builds', 'WindowsServer', EPIC_CODE_NAME, 'Content', 'Paks', '~mods');
+
 const MODKIT_ID = `${GAME_ID}-modkit`;
 const MODKIT_NAME = "ModKit";
 const MODKITAPP_ID = "XXX";
@@ -263,7 +269,7 @@ const PARAMETERS = [PARAMETERS_STRING];
 
 const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
-let MODTYPE_FOLDERS = [path.join(LOGICMODS_PATH, LOGICMODS_FOLDER), PAK_PATH, PAK_ALT_PATH];
+let MODTYPE_FOLDERS = [path.join(LOGICMODS_PATH, LOGICMODS_FOLDER), PAK_PATH, PAK_ALT_PATH, SERVERPAKS_PATH];
 
 // -- END EDIT ZONE -- /////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -308,6 +314,12 @@ const spec = {
     },
   },
   "modTypes": [
+    {
+      "id": SERVERPAKS_ID,
+      "name": SERVERPAKS_NAME,
+      "priority": "high",
+      "targetPath": path.join('{gamePath}', SERVERPAKS_PATH)
+    },
     {
       "id": UE4SSCOMBO_ID,
       "name": UE4SSCOMBO_NAME,
@@ -1497,7 +1509,7 @@ async function downloadUe4ssNexus(api, gameSpec) {
         const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
         const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
         const file = modFiles
-          .filter(file => file.category_id === 1)
+          .filter(file => file.category_id === 1 && !file.file_name.includes('ZDEV')) //filter out dev builds
           .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
           .reverse()[0];
         if (file === undefined) {
@@ -1804,9 +1816,10 @@ function testPak(files, gameId) {
 async function installPak(api, files) {
   const fileExt = UNREALDATA.fileExt;
   const modFiles = files.filter(file => fileExt.includes(path.extname(file).toLowerCase()));
+  const selection = await chooseInstallDestination(api, modFiles);
   const modType = {
     type: 'setmodtype',
-    value: UE5_SORTABLE_ID,
+    value: selection,
   };
   const installFiles = (modFiles.length > PAK_FILE_MIN)
     ? await chooseFilesToInstall(api, modFiles, fileExt)
@@ -1826,6 +1839,28 @@ async function installPak(api, files) {
   instructions.push(modType);
   instructions.push(unrealModFiles);
   return Promise.resolve({ instructions });
+}
+
+const CLIENT_LABEL = 'Client (SP)';
+const SERVER_LABEL = 'Server (MP)';
+
+//file selection dialog for pak mods
+async function chooseInstallDestination(api, files) {
+  const t = api.translate;
+  return api.showDialog('question', t('Choose Destination for Pak Mod Files'), {
+    text: t('Choose the destination for the pak files.' +
+        `If you don't run a server, you can always choose ${CLIENT_LABEL}`),
+    }, [
+      { label: CLIENT_LABEL },
+      { label: SERVER_LABEL },
+      //{ label: 'Cancel' }, //don't use this since we feed directly to modType
+  ]).then((result) => {
+    if (result.action === CLIENT_LABEL) {
+        return UE5_SORTABLE_ID;
+    } else {
+        return SERVERPAKS_ID;
+    }
+  });
 }
 
 //file selection dialog for pak mods
@@ -2335,9 +2370,9 @@ function applyGame(context, gameSpec) {
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download UE4SS', () => {
     if (UE4SS_PAGE_NO !== 0) { //download from Nexus if the page exists
-      downloadUe4ssNexus(context.api, gameSpec).catch(() => null);
+      downloadUe4ssNexus(context.api, gameSpec);
     } else {
-      downloadUe4ss(context.api, gameSpec).catch(() => null);
+      downloadUe4ss(context.api, gameSpec, false);
     }
   }, () => {
     const state = context.api.getState();

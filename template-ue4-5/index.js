@@ -2317,9 +2317,9 @@ function applyGame(context, gameSpec) {
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download UE4SS', () => {
     if (UE4SS_PAGE_NO !== 0) { //download from Nexus if the page exists
-      downloadUe4ssNexus(context.api, gameSpec).catch(() => null);
+      downloadUe4ssNexus(context.api, gameSpec);
     } else {
-      downloadUe4ss(context.api, gameSpec).catch(() => null);
+      downloadUe4ss(context.api, gameSpec, false);
     }
   }, () => {
     const state = context.api.getState();

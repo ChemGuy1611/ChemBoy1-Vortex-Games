@@ -31,6 +31,7 @@
 | Flag | Value | Description |
 | --- | --- | --- |
 | `hasXbox` | `false` | toggle for Xbox version logic. |
+| `hasServer` | `true` | toggle for server mod logic. |
 | `multiExe` | `false` | toggle for multiple executables (Epic/GOG/Demo don't match Steam) |
 
 ## Mod Types
@@ -39,6 +40,7 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
+| Server Pak Mod | `windrose-serverpaks` | high | `{gamePath}/R5/Builds/WindowsServer/R5/Content/Paks/~mods` |
 | UE4SS Script-LogicMod Combo | `windrose-ue4sscombo` | high | `{gamePath}` |
 | UE4SS LogicMods (Blueprint) | `windrose-logicmods` | high | `{gamePath}/R5/Content/Paks` |
 | PAK_ALT_NAME | `PAK_ALT_ID` | high | `{gamePath}/PAK_ALT_PATH` |

@@ -13,14 +13,14 @@
 | Property | Value |
 | --- | --- |
 | Game ID | `atomicheart` |
-| Executable | `XXX.exe` |
-| Executable (GOG) | `XXX.exe` |
-| Executable (Demo) | `XXX.exe` |
-| Extension Page | XXX |
+| Executable | `AtomicHeart.exe` |
+| Executable (GOG) | `AtomicHeart.exe` |
+| Executable (Demo) | `AtomicHeart.exe` |
 
 ## Supported Stores
 
 - **Steam** — `668580`
+- **Xbox / Microsoft Store** — `FocusHomeInteractiveSA.579645D26CFD`
 
 ## Feature Flags
 
@@ -36,7 +36,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `atomicheart-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `atomicheart-logicmods` | high | `{gamePath}/XXX/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `atomicheart-logicmods` | high | `{gamePath}/AtomicHeart/Content/Paks` |
 | PAK_ALT_NAME | `PAK_ALT_ID` | high | `{gamePath}/PAK_ALT_PATH` |
 | ROOT_NAME | `ROOT_ID` | high | `{gamePath}` |
 | ROOTSUB_NAME | `ROOTSUB_ID` | high | `{gamePath}/ROOTSUB_PATH` |
@@ -53,6 +53,7 @@ Mod types define where each category of mod gets deployed:
 - **Purge Hook** (`did-purge`) — runs custom logic when mods are purged.
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
+- **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
 ## How Mod Installation Works

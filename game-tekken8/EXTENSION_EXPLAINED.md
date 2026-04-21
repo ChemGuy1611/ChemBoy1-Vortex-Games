@@ -13,10 +13,10 @@
 | Property | Value |
 | --- | --- |
 | Game ID | `tekken8` |
-| Executable | `XXX.exe` |
-| Executable (GOG) | `XXX.exe` |
-| Executable (Demo) | `XXX.exe` |
-| Extension Page | XXX |
+| Executable | `TEKKEN 8.exe` |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
+| Executable (GOG) | `TEKKEN 8.exe` |
+| Executable (Demo) | `TEKKEN 8 Demo.exe` |
 
 ## Supported Stores
 
@@ -27,7 +27,20 @@
 | Flag | Value | Description |
 | --- | --- | --- |
 | `hasXbox` | `false` | toggle for Xbox version logic. |
-| `multiExe` | `false` | toggle for multiple executables (Epic/GOG/Demo don't match Steam) |
+| `multiExe` | `true` | toggle for multiple executables (Epic/GOG/Demo don't match Steam) |
+| `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below) |
+| `hasModKit` | `false` | toggle for UE ModKit mod support |
+| `preferHardlinks` | `true` | set true to perform partition checks when IO-STORE=false for Config/Save modtypes so that hardlinks available to more users |
+| `autoDownloadUe4ss` | `false` | toggle for auto downloading UE4SS |
+| `SIGBYPASS_REQUIRED` | `false` | set true if there are .sig files in the Paks folder |
+| `IO_STORE` | `true` | true if the Paks folder contains .ucas and .utoc files |
+| `hasUserIdFolder` | `false` | true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID) |
+| `debug` | `false` | toggle for debug mode |
+| `PAKMOD_LOADORDER` | `true` | set to false if you don't want loadOrder. If must be in "Paks" root, disable loadOrder. |
+| `FBLO` | `true` | set to false to use legacy load order page |
+| `SYM_LINKS` | `true` | true if symlink deployment is enabled for this game |
+| `CHECK_CONFIG` | `false` | boolean to check if game, staging folder, and config and save folders are on the same drive |
+| `CHECK_SAVE` | `false` | secondary same as above (if save and config are in different locations) |
 
 ## Mod Types
 
@@ -35,11 +48,11 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
-| UE4SS Script-LogicMod Combo | `tekken8-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `tekken8-logicmods` | high | `{gamePath}/XXX/Content/Paks` |
-| PAK_ALT_NAME | `PAK_ALT_ID` | high | `{gamePath}/PAK_ALT_PATH` |
-| ROOT_NAME | `ROOT_ID` | high | `{gamePath}` |
-| ROOTSUB_NAME | `ROOTSUB_ID` | high | `{gamePath}/ROOTSUB_PATH` |
+| UE4SSCOMBO_NAME | `UE4SSCOMBO_ID` | high | `{gamePath}` |
+| LOGICMODS_NAME | `LOGICMODS_ID` | high | `{gamePath}/LOGICMODS_PATH` |
+| Paks (no "~mods") | `tekken8-pakalt` | high | `{gamePath}/Polaris/Content/Paks` |
+| Root Game Folder | `tekken8-root` | high | `{gamePath}` |
+| Root Sub-Folders | `tekken8-rootsubfolders` | high | `{gamePath}/Polaris` |
 
 ## Auto-Downloaded Dependencies
 
@@ -49,6 +62,7 @@ Mod types define where each category of mod gets deployed:
 
 ## Special Features
 
+- **Load Order** — mods are assigned numbered folder names or sorted based on their position in the load order.
 - **Deploy Hook** (`did-deploy`) — runs custom logic (e.g., notifications, metadata patching) every time mods are deployed.
 - **Purge Hook** (`did-purge`) — runs custom logic when mods are purged.
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).

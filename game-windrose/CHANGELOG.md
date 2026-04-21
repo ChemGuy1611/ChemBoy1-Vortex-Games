@@ -4,6 +4,11 @@
 
 - None
 
+## [0.2.0] - 2026-04-21
+
+- Added: Pak installer will now ask if you want to install to the Client (SP) or Server (MP) Paks folder.
+- Changed: UE4SS download button now points to working build on Nexus.
+
 ## [0.1.2] - 2026-04-15
 
 - Fixed: Epic EA version discovery

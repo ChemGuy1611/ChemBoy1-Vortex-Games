@@ -44,7 +44,7 @@ const EXEC_GOG = EXEC;
 const EXEC_DEMO = "TEKKEN 8 Demo.exe";
 const PARAMETERS_STRING = ''; //launch arguments to pass when launching the game
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Tekken_8";
-const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1833"; //Nexus link to this extension. Used for links
 
 //feature toggles
 const hasXbox = false; //toggle for Xbox version logic.
@@ -2280,22 +2280,6 @@ function applyGame(context, gameSpec) {
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open UE4SS Mods Folder', () => {
-    GAME_PATH = getDiscoveryPath(context.api);
-    util.opn( path.join(GAME_PATH, SCRIPTS_PATH)).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open LogicMods Folder', () => {
-    GAME_PATH = getDiscoveryPath(context.api);
-    util.opn(path.join(GAME_PATH, LOGICMODS_PATH)).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', async () => {
     //CONFIG_PATH = await setConfigPath(GAME_VERSION);
     util.opn(CONFIG_PATH).catch(() => null);
@@ -2307,33 +2291,6 @@ function applyGame(context, gameSpec) {
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Saves Folder', async () => {
     //SAVE_PATH = await setSavePath();
     util.opn(SAVE_PATH).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download UE4SS', () => {
-    if (UE4SS_PAGE_NO !== 0) { //download from Nexus if the page exists
-      downloadUe4ssNexus(context.api, gameSpec).catch(() => null);
-    } else {
-      downloadUe4ss(context.api, gameSpec).catch(() => null);
-    }
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open UE4SS Settings INI', () => {
-    GAME_PATH = getDiscoveryPath(context.api);
-    util.opn(path.join(GAME_PATH, BINARIES_PATH, UE4SS_SETTINGS_FILEPATH)).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open UE4SS mods.json', () => {
-    GAME_PATH = getDiscoveryPath(context.api);
-    util.opn(path.join(GAME_PATH, BINARIES_PATH, UE4SS_MODSJSON_FILEPATH)).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);

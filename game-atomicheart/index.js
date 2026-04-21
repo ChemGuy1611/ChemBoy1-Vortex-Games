@@ -44,7 +44,7 @@ const EXEC_GOG = EXEC;
 const EXEC_DEMO = EXEC;
 const PARAMETERS_STRING = ''; //launch arguments to pass when launching the game
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Atomic_Heart";
-const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1832"; //Nexus link to this extension. Used for links
 
 //feature toggles
 const hasXbox = true; //toggle for Xbox version logic.
@@ -71,14 +71,14 @@ let PAKMOD_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Paks', '~mods'); //usual
 const PAKMOD_LOADORDER = true; //set to false if you don't want loadOrder. If must be in "Paks" root, disable loadOrder.
 const FBLO = true; //set to false to use legacy load order page
 const PAKMOD_EXTRA_EXTS = []; //extra extensions to include with paks (usually for custom modding frameworks, i.e .toml, .json)
-const UE4SS_PAGE_NO = 186; //set these if there is a customized UE4SS Nexus page
+const UE4SS_PAGE_NO = 186; //customized for this game
 const UE4SS_FILE_NO = 557;
 const UE4SS_DOMAIN = GAME_ID; //either GAME_ID or 'site'
 const UE4SS_MOD_PATH = path.join('ue4ss', 'Mods'); //this should probably never change (unless UE4SS team changes it again lol)
 
 //config and save
 const DATA_FOLDER = EPIC_CODE_NAME; //almost always matches.
-const CONFIG_FOLDERNAME = ''; //UE 4 games are often 'WindowsNoEditor' - "Windows", "WindowsClient", "WindowsNoEditor"
+const CONFIG_FOLDERNAME = ''; //No folder for this game (unusual)
 const CONFIG_LOC = 'Local AppData'; //string for notification text.
 const SAVE_LOC = CONFIG_LOC; //string for notification text. Config and Save mods are almost always in the same place
 const CONFIGMOD_LOCATION = LOCALAPPDATA; //almost always matches. Some are in game folder or Documents.
