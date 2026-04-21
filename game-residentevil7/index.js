@@ -10,6 +10,7 @@ Date: 2026-03-21
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
+const { parseStringPromise } = require('xml2js');
 
 //Specify all information about the game
 const STEAMAPP_ID = "418370";
@@ -797,8 +798,9 @@ async function installZipContent(files, destinationPath) {
 //Notify User of Setup instructions
 function setupNotify(api) {
   const MOD_NAME = `Fluffy Mod Manager`;
+  const NOTIF_ID = `${GAME_ID}-setup-notification`;
   api.sendNotification({
-    id: `${GAME_ID}-setup-notification`,
+    id: NOTIF_ID,
     type: 'warning',
     message: 'Mod Installation and Setup Instructions',
     allowSuppress: true,

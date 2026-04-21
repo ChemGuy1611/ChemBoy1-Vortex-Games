@@ -13,7 +13,7 @@ const template = require('string-template');
 //const { parseStringPromise } = require('xml2js');
 const fsPromises = require('fs/promises');
 //const fsExtra = require('fs-extra');
-//const winapi = require('winapi-bindings');
+const winapi = require('winapi-bindings');
 //const turbowalk = require('turbowalk');
 
 const USER_HOME = util.getVortexPath("home");
@@ -300,19 +300,6 @@ function makeGetModPath(api, gameSpec) {
     ? gameSpec.game.modPath || '.'
     : pathPattern(api, gameSpec.game, gameSpec.game.modPath);
 }
-
-//* Get mod path dynamically for different game versions
-function getModPath(gamePath) {
-  GAME_VERSION = setGameVersion(gamePath);
-  if (GAME_VERSION === 'xbox') {
-    GAME_VERSION = 'xbox';
-    return MOD_PATH_XBOX;
-  }
-  else {
-    GAME_VERSION = 'default';
-    return MOD_PATH;
-  }
-} //*/
 
 //Find game installation directory
 function makeFindGame(api, gameSpec) {
@@ -828,8 +815,8 @@ async function setup(discovery, api, gameSpec) {
     try {
       steamPath = await winapi.RegGetValue(
         'HKEY_LOCAL_MACHINE',
-        `SOFTWARE\\WOW6432Node\\Ubisoft\\Launcher\\Installs\\${UPLAYAPP_ID}`,
-          'InstallDir');
+        `SOFTWARE\\Valve\\Steam`,
+          'InstallPath');
       if (!steamPath) {
         throw new Error('empty registry key');
       }

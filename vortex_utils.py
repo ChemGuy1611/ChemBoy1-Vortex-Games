@@ -8,11 +8,16 @@ and logging.
 
 Usage:
     from vortex_utils import (
-        REPO_ROOT, read_index_js, extract_game_id, extract_steamapp_id,
-        extract_game_name, extract_extension_url, sanitize_game_name,
+        REPO_ROOT, PCGW_API, EGDATA_API,
+        TITLE_IMAGES_DIR, BANNER_IMAGES_DIR, LISTS_DIR,
+        GAME_PREFIX, TEMPLATE_PREFIX,
+        read_index_js, write_index_js,
+        extract_game_id, extract_steamapp_id,
+        extract_game_name, extract_extension_url,
+        sanitize_game_name, normalize_game_name,
         name_lookup_variants, lookup_pcgamingwiki,
         get_api_key, http_get, http_get_bytes, http_post_json,
-        fetch_epic_app_id, add_to_discovery_ids, EGDATA_API,
+        fetch_epic_app_id, add_to_discovery_ids,
         const_value, is_unset, is_missing, set_or_insert,
         update_index_header, inject_register_actions, find_fn_body,
         read_info_json, make_info_json, make_changelog, parse_changelog_latest,
@@ -34,8 +39,15 @@ import urllib.parse
 
 REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
 
-PCGW_API = "https://www.pcgamingwiki.com/w/api.php"
-EGDATA_API = "https://api.egdata.app"
+PCGW_API    = "https://www.pcgamingwiki.com/w/api.php"
+EGDATA_API  = "https://api.egdata.app"
+
+TITLE_IMAGES_DIR  = os.path.join(REPO_ROOT, "resources", "title-images")
+BANNER_IMAGES_DIR = os.path.join(REPO_ROOT, "resources", "banner-images")
+LISTS_DIR         = os.path.join(REPO_ROOT, "resources", "lists")
+
+GAME_PREFIX     = "game-"
+TEMPLATE_PREFIX = "template-"
 
 
 # == Logging helpers ===========================================================
@@ -166,6 +178,13 @@ def read_index_js(folder):
         return f.read()
 
 
+def write_index_js(folder, src):
+    """Write src to index.js in a game extension folder."""
+    path = os.path.join(folder, "index.js")
+    with open(path, "w", encoding="utf-8") as f:
+        f.write(src)
+
+
 def extract_game_id(src):
     """Extract GAME_ID value from index.js source."""
     m = re.search(r"(?:const|let)\s+GAME_ID\s*=\s*['\"]([^'\"]+)['\"]", src)
@@ -205,6 +224,17 @@ def sanitize_game_name(name):
     """Strip trademark/copyright symbols and normalize whitespace from a game name."""
     name = re.sub(r'[®™©]', '', name)
     return ' '.join(name.split())
+
+
+def normalize_game_name(s):
+    """Lowercase + normalize punctuation for fuzzy title comparison.
+    Strips right-quotes, colons, ' - ' separators, and extra whitespace."""
+    return (s.lower()
+             .replace('\u2019', "'")
+             .replace(':', '')
+             .replace(' - ', ' ')
+             .replace('  ', ' ')
+             .strip())
 
 
 # == Name processing ===========================================================
@@ -305,7 +335,6 @@ def lookup_pcgamingwiki(game_name, debug=False):
     if game_name in _pcgw_cache:
         return _pcgw_cache[game_name]
 
-    norm = lambda s: s.lower().replace('\u2019', "'").replace(':', '').replace(' - ', ' ').replace('  ', ' ').strip()
     name_variants = name_lookup_variants(game_name)
 
     try:
@@ -336,18 +365,18 @@ def lookup_pcgamingwiki(game_name, debug=False):
         )
         data = json.loads(http_get(url))
         results = data.get("query", {}).get("search", [])
-        name_variants_norm = {norm(v) for v in name_variants}
+        name_variants_norm = {normalize_game_name(v) for v in name_variants}
 
         if debug:
             print(f"    [debug] search fallback: {repr(game_name)} variants={name_variants_norm}")
             for result in results:
-                t = norm(result["title"])
+                t = normalize_game_name(result["title"])
                 match = any(t.startswith(v + " (") for v in name_variants_norm)
                 print(f"    [debug]   result: {repr(result['title'])}  match={match}")
 
         title = None
         for result in results:
-            t = norm(result["title"])
+            t = normalize_game_name(result["title"])
             if t in name_variants_norm or any(t.startswith(v + " (") for v in name_variants_norm):
                 title = result["title"]
                 break
@@ -630,7 +659,7 @@ def update_index_header(src, *, name=None, version=None, date=None):
     if name is not None:
         src = re.sub(r'(Name:\s*).+?(\s+Vortex Extension)', rf'\g<1>{name}\2', src)
     if version is not None:
-        src = re.sub(r'(Version:\s*)\S+', rf'\g<1>{version}', src)
+        src = re.sub(r'^([/*\s]*Version:\s*)\S+', rf'\g<1>{version}', src, flags=re.MULTILINE)
     if date is not None:
         src = re.sub(r'(Date:\s*)\S+', rf'\g<1>{date}', src)
     return src

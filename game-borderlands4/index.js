@@ -26,6 +26,7 @@ const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID];
 const GAME_NAME = "Borderlands 4";
 const GAME_NAME_SHORT = "Borderlands 4";
 const EXEC = "Borderlands4.exe";
+const EXEC_DEFAULT = EXEC;
 const EXEC_EPIC = EXEC;
 //Unreal Engine specific
 const EPIC_CODE_NAME = "OakGame";
@@ -45,6 +46,9 @@ const SAVEMOD_LOCATION = CONFIGMOD_LOCATION;
 const SHIPEXE_STRING_DEFAULT = '';
 const SHIPEXE_STRING_EGS = '';
 const SHIPPING_EXE_FILENAME = `Borderlands4.exe`;
+
+const EXEC_FOLDER_DEFAULT = "Win64";
+const EXEC_FOLDER_XBOX = "WinGDK";
 
 //Settings related to the IO Store UE feature
 let PAKMOD_EXTS = ['.pak'];
@@ -1371,6 +1375,7 @@ function UNREALEXTENSION(context) {
     if (fileExt) {
       modFiles = files.filter(file => fileExt.includes(path.extname(file).toLowerCase()));
     }
+    let supported = (supportedGame && (gameId === spec.game.id) && modFiles.length > 0 );
 
     // Test for a mod installer
     if (supported && files.find(file =>
@@ -1379,7 +1384,6 @@ function UNREALEXTENSION(context) {
       supported = false;
     }
 
-    const supported = (supportedGame && (gameId === spec.game.id) && modFiles.length > 0 );
     return Promise.resolve({
       supported,
       requiredFiles: []

@@ -626,16 +626,6 @@ async function requiresLauncher(gamePath, store) {
   return Promise.resolve(undefined);
 }
 
-/*open Config entries in Registry
-function openConfigRegistry(api) {
-  GAME_PATH = getDiscoveryPath(api);
-  try {
-    api.runExecutable(path.join(GAME_PATH, 'regjump.exe'), [`${CONFIG_REGPATH_FULL}`], { shell: true, detached: true } )
-  } catch (err) {
-    log('error', `Could not open ${GAME_NAME} config in registry: ${err}`);
-  }
-} //*/
-
 //Get correct save folder for game version
 async function getSavePath(api) {
   GAME_PATH = getDiscoveryPath(api);
@@ -2217,13 +2207,6 @@ function applyGame(context, gameSpec) {
   });
   /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
     util.opn(CONFIG_PATH).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  }); //*/
-  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config (Registry)', () => {
-    openConfigRegistry;
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);

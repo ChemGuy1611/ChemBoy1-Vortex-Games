@@ -19,6 +19,8 @@ Usage:
     python patch_extensions.py --force                     # re-run all URL patches even if values are already set
     python patch_extensions.py GAME_ID [GAME_ID ...] --debug  # print raw PCGW search results for diagnosis
     python patch_extensions.py --list-patches                 # list all patches with enabled status and description
+    python patch_extensions.py --only PATCH_NAME              # run only the named patch (bypasses enabled flag)
+    python patch_extensions.py GAME_ID [GAME_ID ...] --only PATCH_NAME
 
 Environment variables:
     VORTEX_MANIFEST_PATH  (optional) Path to Vortex extensions-manifest.json.
@@ -31,15 +33,14 @@ import re
 import sys
 import json
 from vortex_utils import (
-    REPO_ROOT,
+    REPO_ROOT, TITLE_IMAGES_DIR,
     lookup_pcgamingwiki, extract_game_name,
     _find_fn_end, REGISTER_ACTIONS, run_generate_explained,
     fetch_epic_app_id, add_to_discovery_ids,
     const_value, is_unset, is_missing, set_or_insert,
     inject_register_actions, find_fn_body,
+    list_game_ids, write_index_js,
 )
-
-TITLE_IMAGES_DIR = os.path.join(REPO_ROOT, "resources", "title-images")
 MANIFEST_PATH = os.environ.get("VORTEX_MANIFEST_PATH", r"C:\ProgramData\vortex\temp\extensions-manifest.json")
 NEXUS_SITE_BASE = "https://www.nexusmods.com/site/mods"
 
@@ -113,10 +114,10 @@ def patch_epic_app_id(game_id, src, context):
     if not app_id:
         return src, False, f"not found on egdata.app for '{game_name}'"
 
-    # Replace the EPICAPP_ID line (value + any trailing comment)
+    # Replace only the EPICAPP_ID value; preserve any existing trailing comment
     new_src = re.sub(
-        r'((?:const|let)\s+EPICAPP_ID\s*=\s*)["\'][^"\']*["\'][^\n]*',
-        rf'\g<1>"{app_id}"; //from egdata.app',
+        r'((?:const|let)\s+EPICAPP_ID\s*=\s*)["\'][^"\']*["\']',
+        rf'\g<1>"{app_id}"',
         src,
     )
     if new_src == src:
@@ -639,8 +640,11 @@ def list_patches():
 
 # ── Runner ────────────────────────────────────────────────────────────────────
 
-def run_patches(game_ids, dry_run, context):
-    active_patches = [p for p in PATCHES if p["enabled"]]
+def run_patches(game_ids, dry_run, context, only=None):
+    if only:
+        active_patches = [p for p in PATCHES if p["name"] == only]
+    else:
+        active_patches = [p for p in PATCHES if p["enabled"]]
     total_changed = 0
     total_skipped = 0
     total_errors = 0
@@ -679,8 +683,7 @@ def run_patches(game_ids, dry_run, context):
             for msg in changed_msgs:
                 print(f"    • {msg}")
             if not dry_run:
-                with open(index_path, "w", encoding="utf-8") as f:
-                    f.write(src)
+                write_index_js(os.path.join(REPO_ROOT, f"game-{game_id}"), src)
                 ok, err = run_generate_explained(game_id)
                 if not ok:
                     print(f"    ! generate_explained.js failed: {err}")
@@ -727,11 +730,22 @@ def main():
         action="store_true",
         help="List all patches with their enabled status and description, then exit.",
     )
+    parser.add_argument(
+        "--only",
+        metavar="PATCH_NAME",
+        help="Run only this named patch (bypasses the enabled flag). Use --list-patches to see names.",
+    )
     args = parser.parse_args()
 
     if args.list_patches:
         list_patches()
         sys.exit(0)
+
+    if args.only:
+        patch_names = {p["name"] for p in PATCHES}
+        if args.only not in patch_names:
+            print(f"ERROR: unknown patch '{args.only}'. Use --list-patches to see available patches.")
+            sys.exit(1)
 
     dry_run = args.dry_run
     target_ids = args.game if args.game else None
@@ -747,14 +761,13 @@ def main():
     if target_ids:
         game_ids = target_ids
     else:
-        game_ids = sorted(
-            d[len("game-"):]
-            for d in os.listdir(REPO_ROOT)
-            if d.startswith("game-") and os.path.isdir(os.path.join(REPO_ROOT, d))
-        )
+        game_ids = list_game_ids()
 
-    print(f"Running {len([p for p in PATCHES if p['enabled']])} patch(es) on {len(game_ids)} game(s){' [DRY RUN]' if dry_run else ''}...\n")
-    run_patches(game_ids, dry_run, context)
+    if args.only:
+        print(f"Running patch '{args.only}' on {len(game_ids)} game(s){' [DRY RUN]' if dry_run else ''}...\n")
+    else:
+        print(f"Running {len([p for p in PATCHES if p['enabled']])} patch(es) on {len(game_ids)} game(s){' [DRY RUN]' if dry_run else ''}...\n")
+    run_patches(game_ids, dry_run, context, only=args.only)
 
     # PNG resize — all game-* and template-* folders when running on all,
     # or just the targeted game folders when specific IDs are given

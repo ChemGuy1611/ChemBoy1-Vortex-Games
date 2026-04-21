@@ -142,6 +142,7 @@ const PORT_CONFIG_PATH = path.join(CONFIG_PATH, PORT_CONFIG_FILE);
 
 //Filled in from info above
 const PCGAMINGWIKI_URL = "XXX";
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1319";
 const spec = {
   "game": {
     "id": GAME_ID,
@@ -934,7 +935,7 @@ function applyGame(context, gameSpec) {
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   }); //*/
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download UZDoom (Manual)', () => {
+  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download UZDoom (Manual)', () => {
     downloadUzdoomManual(context.api, gameSpec).catch(() => null);
   }, () => {
     const state = context.api.getState();

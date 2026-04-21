@@ -25,6 +25,7 @@ const GOGAPP_ID = null;
 const GAME_NAME = "Daemon X Machina: Titanic Scion";
 const GAME_NAME_SHORT = "Daemon X Machina: TS";
 const EXEC = "Game.exe";
+const EXEC_DEFAULT = EXEC;
 const EXEC_EPIC = EXEC;
 //Unreal Engine specific
 const EPIC_CODE_NAME = "Game";
@@ -44,6 +45,8 @@ const SAVEMOD_LOCATION = LOCALAPPDATA;
 const SHIPEXE_STRING_DEFAULT = '';
 const SHIPEXE_STRING_EGS = '';
 const SHIPPING_EXE_FILENAME = `${EPIC_CODE_NAME}-${EXEC_FOLDER_NAME}${SHIPEXE_STRING_DEFAULT}-Shipping.exe`;
+const EXEC_FOLDER_DEFAULT = "Win64";
+const EXEC_FOLDER_XBOX = "WinGDK";
 
 //Settings related to the IO Store UE feature
 let PAKMOD_EXTS = ['.pak'];

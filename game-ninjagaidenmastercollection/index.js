@@ -104,10 +104,6 @@ const DATABINSUB_FOLDERS23 = ["sound", "movie"];
 
 const CONFIG_FOLDER2 = path.join(DOCUMENTS, 'KoeiTecmo', 'NINJAGAIDENSIGMA2');
 let USERID_FOLDER2 = "";
-function isDir(folder, file) {
-  const stats = fs.statSync(path.join(folder, file));
-  return stats.isDirectory();
-}
 try {
   const CONFIG_ARRAY = fs.readdirSync(CONFIG_FOLDER2);
   USERID_FOLDER2 = CONFIG_ARRAY.find((entry) => isDir(CONFIG_FOLDER2, entry));
@@ -142,10 +138,6 @@ const ML_STEAM_EXEC3 = EXEC3;
 
 const CONFIG_FOLDER3 = path.join(DOCUMENTS, 'KoeiTecmo', 'NINJAGAIDEN3RE');
 let USERID_FOLDER3 = "";
-function isDir(folder, file) {
-  const stats = fs.statSync(path.join(folder, file));
-  return stats.isDirectory();
-}
 try {
   const CONFIG_ARRAY = fs.readdirSync(CONFIG_FOLDER3);
   USERID_FOLDER3 = CONFIG_ARRAY.find((entry) => isDir(CONFIG_FOLDER3, entry));
@@ -1193,7 +1185,7 @@ async function resolveGameVersion(gamePath, gameSpec) {
       version = exeVersion.getProductVersion(path.join(gamePath, gameSpec.game.executable));
       return Promise.resolve(version); 
     } catch (err) {
-      log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
+      log('error', `Could not read ${gameSpec.game.executable} file to get Steam game version: ${err}`);
       return Promise.resolve(version);
     }
   }

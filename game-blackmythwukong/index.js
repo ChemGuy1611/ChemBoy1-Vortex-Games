@@ -31,6 +31,7 @@ const IO_STORE = false; //true if the Paks folder contains .ucas and .utoc files
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Black_Myth:_Wukong";
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/957"; //Nexus link to this extension. Used for links
 
+
 /*
   Unreal Engine Game Data
   - modsPath: this is where the mod files need to be installed, relative to the game install folder.
@@ -75,6 +76,7 @@ const CONFIG_NAME = "Config (Local AppData)";
 const CONFIG_PATH = path.join(LOCALAPPDATA, EPIC_CODE_NAME, 'Saved', 'Config', 'Windows');
 const CONFIG_FILES = ["engine.ini", "scalability.ini", "input.ini"];
 const CONFIG_EXT = ".ini";
+const CONFIG_LOC = 'Local AppData';
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_FOLDER = EPIC_CODE_NAME;
@@ -82,6 +84,7 @@ const ROOT_FOLDER = EPIC_CODE_NAME;
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_PATH = path.join(EPIC_CODE_NAME, "Saved", "SaveGames");
 const SAVE_EXT = ".sav";
+const SAVE_LOC = 'Local AppData';
 
 const SCRIPTS_ID = `${GAME_ID}-scripts`;
 const SCRIPTS_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_NAME, 'ue4ss', 'Mods');
@@ -993,7 +996,7 @@ function UNREALEXTENSION(context) {
     let modFiles = [];
     if (fileExt)
       modFiles = files.filter(file => fileExt.includes(path.extname(file).toLowerCase()));
-    const supported = (supportedGame && (gameId === spec.game.id) && modFiles.length > 0);
+    let supported = (supportedGame && (gameId === spec.game.id) && modFiles.length > 0);
 
     // Test for a mod installer
     if (supported && files.find(file =>

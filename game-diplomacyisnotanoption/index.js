@@ -224,51 +224,6 @@ async function requiresLauncher() {
   return undefined;
 }
 
-//Test for .dll BepinEx mod files
-function testBepMod(files, gameId) {
-  // Make sure we're able to support this mod.
-  const isMod = files.find(file => path.extname(file).toLowerCase() === modFileExt) !== undefined;
-  let supported = (gameId === spec.game.id) && isMod;
-
-  // Test for a mod installer.
-  if (supported && files.find(file =>
-      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
-    supported = false;
-  }
-
-  return Promise.resolve({
-      supported,
-      requiredFiles: [],
-  });
-}
-
-//Install .dll BepinEx mod files
-function installBepMod(files) {
-  // The .dds file is expected to always be positioned in the mods directory we're going to disregard anything placed outside the root.
-  const modFile = files.find(file => path.extname(file).toLowerCase() === modFileExt);
-  const idx = modFile.indexOf(path.basename(modFile));
-  const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: MOD_ID };
-  // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    (
-      (file.indexOf(rootPath) !== -1) &&
-      (!file.endsWith(path.sep))
-    )
-  );
-
-  const instructions = filtered.map(file => {
-    return {
-      type: 'copy',
-      source: file,
-      destination: path.join(file.substr(idx)),
-    };
-  });
-  instructions.push(setModTypeInstruction);
-  return Promise.resolve({ instructions });
-}
-
 //Setup function
 async function setup(discovery, api, gameSpec) {
   const state = api.getState();
@@ -309,7 +264,6 @@ function applyGame(context, gameSpec) {
   });
 
   //register mod installers
-  //context.registerInstaller(BEPMOD_ID, 25, testBepMod, installBepMod);
 
   //register actions
   /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {

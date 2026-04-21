@@ -5,14 +5,15 @@ Zips up a game extension folder using 7-Zip and opens the Nexus Mods
 extension page in the browser.
 
 Steps performed per game:
-    1. Rename version .txt file to match info.json version
-    2. Update Version and Date in index.js header comment
-    3. Add resolved store IDs to DISCOVERY_IDS_ACTIVE if missing
-    4. node --check on index.js (warns on syntax error)
-    5. eslint on index.js (warns on lint errors)
-    6. Run generate_explained.js to regenerate EXTENSION_EXPLAINED.md
-    7. Create game-{GAME_ID}.zip with 7-Zip
-    8. Open EXTENSION_URL in browser (or nexusmods.com/games/site if not set)
+    1. Validate info.json version has a matching ## [X.Y.Z] entry in CHANGELOG.md
+    2. Rename version .txt file to match info.json version
+    3. Update Version and Date in index.js header comment
+    4. Add resolved store IDs to DISCOVERY_IDS_ACTIVE if missing
+    5. node --check on index.js (warns on syntax error)
+    6. eslint on index.js (warns on lint errors)
+    7. Run generate_explained.js to regenerate EXTENSION_EXPLAINED.md
+    8. Create game-{GAME_ID}.zip with 7-Zip
+    9. Open EXTENSION_URL in browser (or nexusmods.com/games/site if not set)
 
 Usage:
     python release_extension.py GAME_ID [GAME_ID ...]
@@ -28,6 +29,7 @@ import os
 import re
 import sys
 import subprocess
+import webbrowser
 
 from vortex_utils import (
     REPO_ROOT, run_generate_explained, add_to_discovery_ids, node_check, eslint_check,
@@ -150,7 +152,22 @@ def release(game_id, open_browser, dry_run=False):
         with open(index_path, encoding="utf-8") as f:
             extension_url = extract_extension_url(f.read())
 
-    version = read_info_json(folder).get("version")
+    info = read_info_json(folder)
+    if info is None:
+        print(f"  [{game_id}] ERROR - info.json missing or invalid")
+        return False
+    version = info.get("version")
+
+    changelog_path = os.path.join(folder, "CHANGELOG.md")
+    if not os.path.isfile(changelog_path):
+        print(f"  [{game_id}] ERROR - CHANGELOG.md missing")
+        return False
+    with open(changelog_path, encoding="utf-8") as f:
+        changelog_src = f.read()
+    if version and not re.search(rf'## \[{re.escape(version)}\]', changelog_src):
+        print(f"  [{game_id}] ERROR - version {version} has no entry in CHANGELOG.md (add ## [{version}] section)")
+        return False
+
     changelog_version, date = parse_changelog_latest(folder)
     if version and changelog_version and version != changelog_version:
         print(f"  [{game_id}] WARNING - info.json version ({version}) does not match latest CHANGELOG entry ({changelog_version})")
@@ -216,7 +233,7 @@ def release(game_id, open_browser, dry_run=False):
     label = "" if extension_url else " (EXTENSION_URL not set)"
     if open_browser:
         print(f"  [{game_id}] Opening: {url_to_open}{label}")
-        subprocess.run(["cmd", "/c", "start", "", url_to_open], check=False)
+        webbrowser.open(url_to_open)
 
     return True
 

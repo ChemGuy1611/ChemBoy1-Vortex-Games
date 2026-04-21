@@ -969,7 +969,7 @@ function mergeOperation(api, filePath, mergeDir) {
 //Notify User of Setup instructions
 function dotNetNotify(api) {
   const NOTIF_ID = `${GAME_ID}-dotnet`;
-  const MESSAGE = `.NET ${DN_REL} Desktop Runtime Required`;
+  const MESSAGE = `.NET ${DOTNET_VER} Desktop Runtime Required`;
   api.sendNotification({
     id: NOTIF_ID,
     type: 'warning',
@@ -980,13 +980,13 @@ function dotNetNotify(api) {
         title: 'More',
         action: (dismiss) => {
           api.showDialog('question', MESSAGE, {
-            text: `.NET ${DN_REL} Desktop Runtime is required to run the ${MERGER_NAME}.\n`
+            text: `.NET ${DOTNET_VER} Desktop Runtime is required to run the ${MERGER_NAME}.\n`
                 + `You can download and install the runtime from the Microsoft website using the button below.\n`
-                + `If you don\'t install the correct version of .NET, the Merger window will open and close immediately when launched, without doing anything.\n`
+                + `If you don't install the correct version of .NET, the Merger window will open and close immediately when launched, without doing anything.\n`
                 + `Mods must be merged by the utility in order to be loaded by the game.\n`
           }, [
             {
-              label: `Go To .NET ${DN_REL} Download Page`, action: () => {
+              label: `Go To .NET ${DOTNET_VER} Download Page`, action: () => {
                 util.opn(DOTNET_URL).catch(() => null);
                 dismiss();
               }

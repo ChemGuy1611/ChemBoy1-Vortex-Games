@@ -27,6 +27,7 @@ const GAME_NAME = "Mortal Kombat 1";
 const GAME_NAME_SHORT = "MK1";
 const EXEC = "MK12.exe";
 const IO_STORE = true; //true if the Paks folder contains .ucas and .utoc files
+const hasXbox = true;
 
 const EXEC_XBOX = 'gamelaunchhelper.exe';
 const EXEC_FOLDER_XBOX = 'WinGDK';
@@ -407,18 +408,6 @@ async function setGameVersionAsync(gamePath) {
     GAME_VERSION = 'steam';
     return GAME_VERSION;
   }
-  if (await statCheckAsync(gamePath, EXEC_EPIC)) {
-    GAME_VERSION = 'epic';
-    return GAME_VERSION;
-  }
-  if (await statCheckAsync(gamePath, EXEC_GOG)) {
-    GAME_VERSION = 'gog';
-    return GAME_VERSION;
-  }
-  if (await statCheckAsync(gamePath, EXEC_DEMO)) {
-    GAME_VERSION = 'demo';
-    return GAME_VERSION;
-  } //*/
 }
 
 const getDiscoveryPath = (api) => { //get the game's discovered path

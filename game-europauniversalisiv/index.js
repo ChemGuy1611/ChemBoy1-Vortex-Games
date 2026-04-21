@@ -104,6 +104,7 @@ const PARAMETERS = [PARAMETERS_STRING];
 const MODTYPE_FOLDERS = [BINARIES_PATH];
 
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Europa_Universalis_IV";
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1526"; //Nexus link to this extension. Used for links
 const spec = {
   "game": {
     "id": GAME_ID,

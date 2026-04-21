@@ -65,7 +65,7 @@ import argparse
 
 from vortex_utils import (
     REPO_ROOT, extract_game_id, _find_fn_end, REGISTER_ACTIONS, node_check,
-    inject_register_actions, update_index_header,
+    inject_register_actions, update_index_header, write_index_js,
     make_info_json, make_changelog,
 )
 
@@ -142,15 +142,11 @@ def replace_game_id_embedded(src, original_game_id):
         replaced += 1
         return m.group(1) + '`' + new_value + '`'
 
-    # Match const/let VAR = "...originalGameId..." but NOT the GAME_ID declaration itself
-    pattern = rf'((?:const|let)\s+(?!GAME_ID\b)\w+\s*=\s*)["\']([^"\']*{re.escape(original_game_id)}[^"\']*)["\']'
+    # Match const/let VAR = "...originalGameId..." but NOT the GAME_ID declaration itself.
+    # Word boundaries around original_game_id prevent partial matches (e.g. "ark" in "darker").
+    pattern = rf'((?:const|let)\s+(?!GAME_ID\b)\w+\s*=\s*)["\']([^"\']*\b{re.escape(original_game_id)}\b[^"\']*)["\']'
     new_src = re.sub(pattern, to_template_literal, src)
     return new_src, replaced
-
-
-def sanitize_header(src):
-    """Reset Name, Version, and Date fields in the header comment block."""
-    return update_index_header(src, name='XXX', version='0.1.0', date='2026-XX-XX')
 
 
 def apply_substitutions(src):
@@ -194,7 +190,7 @@ def apply_substitutions(src):
     src, embedded_count = replace_game_id_embedded(src, original_game_id)
     replaced += embedded_count
 
-    src = sanitize_header(src)
+    src = update_index_header(src, name='XXX', version='0.1.0', date='2026-XX-XX')
     return src, replaced
 
 
@@ -885,8 +881,7 @@ def create_template(template_name, game_ids, dry_run, force):
     if not dry_run:
         os.makedirs(dest_dir, exist_ok=True)
         index_js_path = os.path.join(dest_dir, "index.js")
-        with open(index_js_path, "w", encoding="utf-8") as f:
-            f.write(processed)
+        write_index_js(dest_dir, processed)
         ok, err = node_check(index_js_path)
         if not ok:
             print(f"  WARNING - node --check reported a syntax error in index.js:")

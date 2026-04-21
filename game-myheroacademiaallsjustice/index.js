@@ -35,8 +35,8 @@ const XBOXEXECNAME = "AppUEGameShipping"; //from appxmanifest.xml
 const XBOX_PUB_ID = ""; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
-const GAME_NAME = "MY HERO ACADEMIA: All\'s Justice";
-const GAME_NAME_SHORT = "MHA All\'s Justice"; //Try for 8-10 characters
+const GAME_NAME = "MY HERO ACADEMIA: All's Justice";
+const GAME_NAME_SHORT = "MHA All's Justice"; //Try for 8-10 characters
 const EPIC_CODE_NAME = "HeroGame"; //Folder in root
 const EXEC = path.join(EPIC_CODE_NAME, 'Binaries', 'Win64', 'AJGAME.exe'); //This is true ~80% of the time
 const EXEC_EPIC = EXEC; //change these 3 if different

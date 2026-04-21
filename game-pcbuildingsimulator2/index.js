@@ -314,23 +314,6 @@ async function requiresLauncher(gamePath, store) {
   return Promise.resolve(undefined);
 }
 
-//Find the game installation folder
-function openConfigRegistry(api) {
-  GAME_PATH = getDiscoveryPath(api);
-  try {
-    api.runExecutable(path.join(GAME_PATH, 'regjump.exe'), [`${CONFIG_REGPATH_FULL}`], { shell: true, detached: true } )
-    /*winapi.WithRegOpen(
-      CONFIG_HIVE,
-      CONFIG_REGPATH,
-      hkey => {
-        util.opn(hkey);
-      }
-    ); //*/
-  } catch (err) {
-    log('error', `Could not open ${GAME_NAME} config in registry: ${err}`);
-  }
-} //*/
-
 const getDiscoveryPath = (api) => { //get the game's discovered path
   const state = api.getState();
   const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});
@@ -655,13 +638,6 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(SAVE_ID, 49, testSave, installSave);
   
   //register actions
-  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config (Registry)', () => {
-    openConfigRegistry;
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  }); //*/
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download BepInExConfigManager', () => {
     downloadBepCfgMan(context.api, spec);
     }, () => {

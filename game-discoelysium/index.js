@@ -315,23 +315,6 @@ async function requiresLauncher(gamePath, store) {
   return Promise.resolve(undefined);
 }
 
-//Find the game installation folder
-function openConfigRegistry(api) {
-  GAME_PATH = getDiscoveryPath(api);
-  try {
-    api.runExecutable(path.join(GAME_PATH, 'regjump.exe'), [`${CONFIG_REGPATH_FULL}`], { shell: true, detached: true } )
-    /*winapi.WithRegOpen(
-      CONFIG_HIVE,
-      CONFIG_REGPATH,
-      hkey => {
-        util.opn(hkey);
-      }
-    ); //*/
-  } catch (err) {
-    log('error', `Could not open ${GAME_NAME} config in registry: ${err}`);
-  }
-} //*/
-
 //Get correct executable for game version
 function getExecutable(discoveryPath) {
   if (statCheckSync(discoveryPath, EXEC_XBOX)) {

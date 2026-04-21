@@ -51,7 +51,7 @@ const RESHADE_FOLDER = "reshade-shaders";
 const BINARIES_EXT = [".dll", ".ini"];
 
 let GAME_VERSION = '';
-CONFIG_FOLDER = path.join(util.getVortexPath('home'), "Games", "Age of Mythology Retold");
+const CONFIG_FOLDER = path.join(util.getVortexPath('home'), "Games", "Age of Mythology Retold");
 let USERID_FOLDER = "";
 function isDir(folder, file) {
   const stats = fs.statSync(path.join(folder, file));
@@ -59,7 +59,7 @@ function isDir(folder, file) {
 }
 try {
   const CONFIG_ARRAY = fs.readdirSync(CONFIG_FOLDER);
-  USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(CONFIG_FOLDER, entry));
+  USERID_FOLDER = CONFIG_ARRAY.find((entry) => isDir(CONFIG_FOLDER, entry));
 } catch(err) {
   USERID_FOLDER = "";
 }
@@ -67,10 +67,10 @@ if (USERID_FOLDER === undefined) {
   USERID_FOLDER = "";
 } //*/
 const CONFIG_ID = `${GAME_ID}-config`;
-CONFIG_PATH = path.join(CONFIG_FOLDER, USERID_FOLDER, "users")
+const CONFIG_PATH = path.join(CONFIG_FOLDER, USERID_FOLDER, "users")
 const CONFIG_EXT = ".xml";
 const SAVE_ID = `${GAME_ID}-save`;
-SAVE_PATH = path.join(CONFIG_FOLDER, USERID_FOLDER, "savegames")
+const SAVE_PATH = path.join(CONFIG_FOLDER, USERID_FOLDER, "savegames")
 const SAVE_EXT = ".mythsav";
 const MOD_PATH = path.join(CONFIG_FOLDER, USERID_FOLDER, "mods", "local");
 
@@ -510,7 +510,7 @@ async function resolveGameVersion(gamePath) {
       version = exeVersion.getProductVersion(path.join(gamePath, EXEC_STEAM));
       return Promise.resolve(version); 
     } catch (err) {
-      log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
+      log('error', `Could not read ${EXEC_STEAM} file to get Steam game version: ${err}`);
       return Promise.resolve(version);
     }
   }

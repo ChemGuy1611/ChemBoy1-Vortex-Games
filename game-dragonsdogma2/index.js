@@ -712,8 +712,9 @@ async function installZipContent(files, destinationPath) {
 //Notify User of Setup instructions
 function setupNotify(api) {
   const MOD_NAME = `Fluffy Mod Manager`;
+  const NOTIF_ID = `${GAME_ID}-setup-notification`;
   api.sendNotification({
-    id: `${GAME_ID}-setup-notification`,
+    id: NOTIF_ID,
     type: 'warning',
     message: 'Mod Installation and Setup Instructions',
     allowSuppress: true,

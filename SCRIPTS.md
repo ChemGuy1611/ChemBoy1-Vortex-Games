@@ -17,7 +17,13 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `REPO_ROOT` | Absolute path to the repository root directory |
 | `PCGW_API` | PCGamingWiki API base URL |
 | `EGDATA_API` | egdata.app API base URL |
+| `TITLE_IMAGES_DIR` | Absolute path to `resources/title-images/` |
+| `BANNER_IMAGES_DIR` | Absolute path to `resources/banner-images/` |
+| `LISTS_DIR` | Absolute path to `resources/lists/` |
+| `GAME_PREFIX` | `"game-"` string constant |
+| `TEMPLATE_PREFIX` | `"template-"` string constant |
 | `read_index_js(folder)` | Read `index.js` from a game extension folder, returns source string or `None` |
+| `write_index_js(folder, src)` | Write `src` to `index.js` in a game extension folder |
 | `extract_game_id(src)` | Extract `GAME_ID` value from `index.js` source |
 | `extract_steamapp_id(src)` | Extract `STEAMAPP_ID` value from `index.js` source |
 | `extract_game_name(src)` | Extract `GAME_NAME` value from `index.js` source |
@@ -51,6 +57,7 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `set_or_insert(src, var_name, value, comment)` | Replace an `XXX` placeholder for `var_name`, or insert the const before the `spec` block |
 | `extract_extension_url(src)` | Extract the `EXTENSION_URL` value from JS source; returns `None` if unset or not an HTTP URL |
 | `sanitize_game_name(name)` | Strip `®`, `™`, `©` symbols and collapse extra whitespace from a game name string |
+| `normalize_game_name(s)` | Lowercase + strip right-quotes, colons, ` - ` separators, and extra whitespace. For fuzzy title comparison. |
 | `list_game_ids()` | Return a sorted list of all `GAME_ID` values found across `game-*` extension folders |
 | `iter_repo_scripts()` | Yield absolute paths of every script listed in `scripts.txt` (skips blank lines and `#` comments) |
 | `read_info_json(folder)` | Read and parse `info.json` from an extension folder; returns the dict, or `None` if missing/invalid |
@@ -125,7 +132,7 @@ pip install Pillow
 
 | Variable | Required | Description |
 | --- | --- | --- |
-| `STEAMGRIDDB_API_KEY` | Optional | SteamGridDB API key. Used for higher-quality hero art in default mode. Required for `--title` and `--banner` modes (no fallback available). Falls back to Steam `library_hero.jpg` in default mode if not set. |
+| `STEAMGRIDDB_API_KEY` | Optional | SteamGridDB API key. Used for higher-quality hero art in default mode. Required for `--banner` mode (no fallback available). Falls back to Steam `library_hero.jpg` in default mode if not set. In `--title` mode, used for hero+logo composite and grid art; falls back to Steam `capsule_616x353.jpg` if not set. |
 
 ### fetch_cover_art.py — Usage
 
@@ -267,6 +274,7 @@ python new_extension.py TEMPLATE STEAM_APP_ID
 python new_extension.py TEMPLATE "Game Name" --force
 python new_extension.py TEMPLATE "Game Name" --dry-run
 python new_extension.py TEMPLATE "Game Name" --no-images
+python new_extension.py GAME_ID --refresh-images
 ```
 
 `TEMPLATE` is the short template name — omit the `template-` prefix (e.g. `basic`, `ue4-5`).
@@ -274,6 +282,7 @@ The game input can be a quoted game name (searched on Steam) or a numeric Steam 
 Use `--force` to overwrite an existing folder.
 Use `--dry-run` to run all lookups and print what would be created without writing any files.
 Use `--no-images` to skip downloading `exec.png`, cover art, and title image (useful when re-running on an existing extension).
+Use `--refresh-images GAME_ID` to re-download all 4 images for an existing extension without redoing any lookups or rewriting `index.js`. Reads `STEAMAPP_ID` and `GAME_NAME` directly from the existing `game-{GAME_ID}/index.js`. Always overwrites existing image files.
 
 ### new_extension.py — Examples
 
@@ -314,7 +323,7 @@ python new_extension.py unitymelonloaderbepinex-hybrid "The Long Dark" --force
 | `STEAMAPP_ID` | Steam search or direct App ID input |
 | `STEAMAPP_ID_DEMO` | Steam `demos` array in appdetails |
 | `GOGAPP_ID` | GOG catalog API (genuine title match only) |
-| `EPICAPP_ID` | Set to `"XXX"` if found; `null` if not. Store URL added as line comment. |
+| `EPICAPP_ID` | Resolved via egdata.app (POST search → EXECUTABLE item's `releaseInfo.appId`). Set to the resolved ID if found; `"XXX"` if found on Epic but ID unresolvable; `null` if no Epic listing. Store URL added as line comment. |
 | `XBOXAPP_ID` | Set to `"XXX"` if found; `null` if not. Store URL added as line comment. |
 | `EXEC` / `EXEC_NAME` | Steam launch options (executable filename) |
 | `BINARIES_PATH` | Steam launch options (directory parts of exe path) |
@@ -337,7 +346,7 @@ Line-end URL comments are added to `STEAMAPP_ID` (SteamDB), `STEAMAPP_ID_DEMO` (
 
 - `XBOXEXECNAME`, `XBOX_PUB_ID` — cannot be looked up automatically
 - `EXTENSION_URL` — can only be set after creating the Nexus Mods page
-- Any game-specific paths (`DATA_FOLDER`, `CONFIG_FOLDERNAME`, `SAVE_FOLDERNAME`, etc.)
+- Game-specific paths (`DATA_FOLDER`, etc.) — `CONFIG_FOLDERNAME` and `SAVE_FOLDERNAME` are auto-populated from PCGamingWiki for Unity templates (see "What It Automates" table above)
 
 ### new_extension.py — Null vs XXX
 
@@ -350,6 +359,7 @@ After writing `index.js`, the script automatically runs:
 1. `node generate_explained.js {GAME_ID}` — generates `EXTENSION_EXPLAINED.md`
 2. `python categorize_games.py {GAME_ID}` — adds the game to the correct engine category file in `resources/lists/`
 3. `python setup_test_folder.py {GAME_ID}` — creates a minimal test game folder
+4. `npx eslint game-{GAME_ID}/index.js` — lints the generated extension (warns on issues)
 
 It also opens the PCGamingWiki page, SteamDB info page, and Steam demo page (if a demo exists) in the default browser, and opens each saved image and `index.js` with `os.startfile`.
 
@@ -384,6 +394,61 @@ node generate_explained.js thelongdark hogwartslegacy
 ### generate_explained.js — Output
 
 Always writes `EXTENSION_EXPLAINED.md` into each processed extension folder (overwrites any existing file). Reports a count of created, skipped, and errored files on completion.
+
+---
+
+## lint_extensions.js
+
+Runs ESLint on every `game-*/index.js` file in the repo and prints per-file pass/fail status with a summary. Uses the `eslint.config.js` at the repo root for configuration.
+
+### lint_extensions.js — Requirements
+
+Node.js (no additional packages required). ESLint must be installed (`npm install` at repo root).
+
+### lint_extensions.js — Usage
+
+```sh
+node lint_extensions.js
+node lint_extensions.js GAME_ID [GAME_ID ...]
+node lint_extensions.js --fix
+node lint_extensions.js GAME_ID [GAME_ID ...] --fix
+node lint_extensions.js --templates
+node lint_extensions.js --quiet
+node lint_extensions.js --json
+```
+
+- No arguments — lints all `game-*/index.js` files.
+- `GAME_ID [GAME_ID ...]` — only lints the listed game IDs.
+- `--fix` — runs ESLint with `--fix` to auto-repair fixable issues.
+- `--templates` — also includes `template-*/index.js` files.
+- `--quiet` — suppresses `[OK]` lines; only shows failures.
+- `--json` — writes machine-readable JSON to stdout instead of human-readable text. `lint_results.txt` is still written. Useful for CI pipelines that parse the output.
+
+### lint_extensions.js — Examples
+
+```sh
+node lint_extensions.js
+node lint_extensions.js mewgenics
+node lint_extensions.js cairn crimsondesert --fix
+node lint_extensions.js --templates --quiet
+```
+
+### lint_extensions.js — Output
+
+Per-file status: `[OK]` for passing files, `[FAIL]` with ESLint output for failures. Summary line at the end with pass/fail counts and a list of failed game IDs. Exits with code `0` if all pass, `1` if any fail. Always writes the full output to `lint_results.txt` in the repo root (overwrites on each run).
+
+With `--json`, stdout receives a JSON object instead:
+
+```json
+{
+  "timestamp": "...",
+  "passed": 5,
+  "failed": 1,
+  "total": 6,
+  "results": [{ "id": "game-id", "path": "game-id/index.js", "ok": true, "output": "" }, ...],
+  "failedIds": ["game-id"]
+}
+```
 
 ---
 
@@ -530,7 +595,7 @@ python release_extension.py assassinscreedorigins assassinscreedvalhalla --no-op
 
 ### release_extension.py — Output
 
-Reads `info.json` and renames the versioned `.txt` file (e.g. `0.2.7.txt` -> `0.2.8.txt`) to match the current version. Warns if `info.json` version does not match the latest `## [X.X.X]` entry in `CHANGELOG.md` (sanity check only — does not abort). Updates the `Version:` and `Date:` lines in the `index.js` header comment — version from `info.json`, date from the most recent `## [X.X.X] - YYYY-MM-DD` entry in `CHANGELOG.md`. Adds any resolved store IDs to `DISCOVERY_IDS_ACTIVE` if not already present. Runs `node --check` on `index.js` and warns on syntax errors. Then runs `generate_explained.js` to regenerate `EXTENSION_EXPLAINED.md` and creates `game-{GAME_ID}.zip` inside the extension folder, overwriting any existing zip. Reads `EXTENSION_URL` from `index.js` — if set to a valid URL, opens it in the default browser so the file can be uploaded. If `EXTENSION_URL` is `"XXX"` or not present, opens `https://www.nexusmods.com/games/site` instead.
+**Aborts** if `CHANGELOG.md` is missing or if `info.json` version has no matching `## [X.Y.Z]` section in `CHANGELOG.md`. Warns (but does not abort) if `info.json` version does not match the _latest_ `## [X.X.X]` entry in `CHANGELOG.md`. Renames the versioned `.txt` file (e.g. `0.2.7.txt` -> `0.2.8.txt`) to match the current version. Updates the `Version:` and `Date:` lines in the `index.js` header comment — version from `info.json`, date from the most recent `## [X.X.X] - YYYY-MM-DD` entry in `CHANGELOG.md`. Adds any resolved store IDs to `DISCOVERY_IDS_ACTIVE` if not already present. Runs `node --check` on `index.js` and warns on syntax errors. Then runs `generate_explained.js` to regenerate `EXTENSION_EXPLAINED.md` and creates `game-{GAME_ID}.zip` inside the extension folder, overwriting any existing zip. Reads `EXTENSION_URL` from `index.js` — if set to a valid URL, opens it in the default browser so the file can be uploaded. If `EXTENSION_URL` is `"XXX"` or not present, opens `https://www.nexusmods.com/games/site` instead.
 
 ---
 
@@ -561,6 +626,8 @@ python patch_extensions.py --force
 python patch_extensions.py --force-pcgw
 python patch_extensions.py GAME_ID [GAME_ID ...] --debug
 python patch_extensions.py --list-patches
+python patch_extensions.py --only PATCH_NAME
+python patch_extensions.py GAME_ID [GAME_ID ...] --only PATCH_NAME
 ```
 
 Run without arguments to apply all enabled patches to every `game-*` folder.
@@ -569,6 +636,7 @@ Use `--force` to re-run all URL patches even if values are already set (implies 
 Use `--force-pcgw` to re-evaluate `PCGAMINGWIKI_URL` values that are already set (e.g. to correct wrong URLs from a previous run).
 Use `--debug` to print raw PCGamingWiki search results and match status for each game (useful for diagnosing lookup failures).
 Use `--list-patches` to print all registered patches with their enabled status and description, then exit without running anything.
+Use `--only PATCH_NAME` to run exactly one named patch, bypassing the `enabled` flag. Combine with `GAME_ID` to target a specific game.
 
 ### patch_extensions.py — Built-in Patches
 
@@ -644,9 +712,13 @@ Creates `D:\Game_Tools_D\!TestGameFolders_D\{GAME_NAME}\{BINARIES_PATH}\{EXEC_NA
 
 ## audit_scripts.py
 
-Compares each developer script's implementation against its own header docstring. Reports flags and environment variables that appear in the code but are absent from the docs, or appear in the docs but are absent from the code. Read-only; never modifies any file.
+Runs three audits and reports drift found in any:
 
-Uses `iter_repo_scripts()` from `vortex_utils` to iterate the canonical script list in `scripts.txt`. Skips `vortex_utils.py` (library), `generate_explained.js` (Node), and `SCRIPTS.md`.
+1. **Header docstring audit** — compares each script's argparse flags and env-var reads against the flags and env vars documented in its own header docstring (`Usage:` and `Environment variables:` sections).
+2. **SCRIPTS.md audit** — compares the same code-extracted flags and env vars against the corresponding script section in SCRIPTS.md (`### name — Usage` and `### name — Environment Variables` subsections).
+3. **scripts.txt cross-check** — warns when a `*.py` in the repo root is not listed in `scripts.txt`, or when `scripts.txt` references a missing file.
+
+Read-only; never modifies any file. Uses `iter_repo_scripts()` from `vortex_utils` to iterate the canonical script list in `scripts.txt`. Skips `vortex_utils.py` (library), `generate_explained.js` (Node), and `SCRIPTS.md`.
 
 ### audit_scripts.py — Requirements
 
@@ -663,11 +735,11 @@ Run without arguments to audit all scripts. Pass one or more filenames to audit 
 
 ### audit_scripts.py — Output
 
-Per-script report listing:
+Two sections, each with a per-script report listing:
 
-- **Flags in code, missing from header** — `add_argument('--flag')` calls not documented in the Usage: section
-- **Flags in header, not in argparse** — `--flag` patterns in Usage: that have no matching `add_argument` call
-- **Env vars in code, missing from header** — `os.environ.get('VAR')` / `get_api_key('VAR')` calls not documented in the Environment variables: section
-- **Env vars in header, not in code** — vars listed in the Environment variables: section that are not read directly (note: vars consumed inside `vortex_utils` helpers are allowed here)
+- **Flags in code, missing from header/SCRIPTS.md** — `add_argument('--flag')` calls not documented
+- **Flags in header/SCRIPTS.md, not in argparse** — `--flag` patterns in docs that have no matching `add_argument` call
+- **Env vars in code, missing from header/SCRIPTS.md** — `os.environ.get('VAR')` / `os.getenv('VAR')` / `get_api_key('VAR')` calls not documented
+- **Env vars in header/SCRIPTS.md, not in code** — vars listed in docs that are not read directly (vars consumed inside `vortex_utils` helpers are allowed here)
 
-Exits with a summary line: `All clear.` or `Drift found. Update the header docstrings to match the code.`
+Exits with a summary line: `All clear.` or `Drift found. Update headers, SCRIPTS.md, or scripts.txt to match the code.`

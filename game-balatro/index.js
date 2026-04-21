@@ -812,10 +812,10 @@ async function resolveGameVersion(gamePath) {
   else { // use exe
     try {
       const exeVersion = require('exe-version');
-      version = exeVersion.getProductVersion(path.join(gamePath, EXEC));
+      version = exeVersion.getProductVersion(path.join(gamePath, EXEC_STEAM));
       return Promise.resolve(version); 
     } catch (err) {
-      log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
+      log('error', `Could not read ${EXEC_STEAM} file to get Steam game version: ${err}`);
       return Promise.resolve(version);
     }
   }

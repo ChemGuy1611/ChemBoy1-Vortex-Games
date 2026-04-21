@@ -10,6 +10,7 @@ Date: 2026-03-03
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
+const { parseStringPromise } = require('xml2js');
 
 const DOCUMENTS = util.getVortexPath("documents");
 
@@ -419,7 +420,7 @@ function installMod(files, fileName) {
       if (MOD_FOLDER === '.') { // If mod did not have a top level folder, make one from the mod name
         const modNameLower = MOD_NAME.toLowerCase();
         const modNameLower2 = modNameLower.replace(/ /gi, '_');
-        MOD_FOLDER = modNameLower2.replace(/[\-]*[\d]*[\.]*(installing)*(zip)*(rar)*(7z)*( )*/gi, '');
+        MOD_FOLDER = modNameLower2.replace(/[-]*[\d]*[.]*(installing)*(zip)*(rar)*(7z)*( )*/gi, '');
       }
       try { //write the mod.manifest file
         const MODMANIFEST_CONTENT = (`<?xml version="1.0" encoding="utf-8"?>\n`
@@ -450,7 +451,7 @@ function installMod(files, fileName) {
     if (MOD_FOLDER === '.') {
       const modNameLower = MOD_NAME.toLowerCase();
       const modNameLowerReplaced = modNameLower.replace(/ /gi, '_');
-      MOD_FOLDER = modNameLowerReplaced.replace(/[\-]*[\d]*[\.]*(installing)*(zip)*(rar)*(7z)*( )*/gi, '');
+      MOD_FOLDER = modNameLowerReplaced.replace(/[-]*[\d]*[.]*(installing)*(zip)*(rar)*(7z)*( )*/gi, '');
     }
     try { //Generate basic mod.manifest with modid=MOD_FOLDER
       const MODMANIFEST_CONTENT = (`<?xml version="1.0" encoding="utf-8"?>\n`
@@ -480,7 +481,7 @@ function installMod(files, fileName) {
     if (MOD_FOLDER === '.') {
       const modNameLower = MOD_NAME.toLowerCase();
       const modNameLowerReplaced = modNameLower.replace(/ /gi, '_');
-      MOD_FOLDER = modNameLowerReplaced.replace(/[\-]*[\d]*[\.]*(installing)*(zip)*(rar)*(7z)*( )*/gi, '');
+      MOD_FOLDER = modNameLowerReplaced.replace(/[-]*[\d]*[.]*(installing)*(zip)*(rar)*(7z)*( )*/gi, '');
     }
     try { //Generate basic mod.manifest with modid=MOD_FOLDER
       const MODMANIFEST_CONTENT = (`<?xml version="1.0" encoding="utf-8"?>\n`

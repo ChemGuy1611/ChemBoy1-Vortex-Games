@@ -306,23 +306,6 @@ async function requiresLauncher(gamePath, store) {
   return Promise.resolve(undefined);
 }
 
-//Find the game installation folder
-function openConfigRegistry(api) {
-  GAME_PATH = getDiscoveryPath(api);
-  try {
-    api.runExecutable(path.join(GAME_PATH, 'regjump.exe'), [`${CONFIG_REGPATH_FULL}`], { shell: true, detached: true } )
-    /*winapi.WithRegOpen(
-      CONFIG_HIVE,
-      CONFIG_REGPATH,
-      hkey => {
-        util.opn(hkey);
-      }
-    ); //*/
-  } catch (err) {
-    log('error', `Could not open ${GAME_NAME} config in registry: ${err}`);
-  }
-} //*/
-
 //Get correct executable for game version
 function getExecutable(discoveryPath) {
   if (!multiExe) { //return immediately if only one exe filename for all versions
@@ -803,13 +786,6 @@ function applyGame(context, gameSpec) {
   }
   
   //register actions
-  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config (Registry)', () => {
-    openConfigRegistry;
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  }); //*/
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Data Folder', () => {
     GAME_PATH = getDiscoveryPath(context.api);
     const openPath = path.join(GAME_PATH, DATA_FOLDER);

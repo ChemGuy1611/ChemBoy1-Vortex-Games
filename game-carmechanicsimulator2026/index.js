@@ -39,7 +39,7 @@ const XBOXEXECNAME = "Game";
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, STEAMAPP_ID_DEMO]; // UPDATE THIS WITH ALL VALID IDs
 
 const GAME_NAME = "Car Mechanic Simulator 2026";
-const GAME_NAME_SHORT = "Car Mechanic Simulator 2026";
+const GAME_NAME_SHORT = "Car Mechanic Sim 26";
 const GAME_STRING = "Car Mechanic Simulator 2026"; //string for exe and data folder (seem to always match)
 const GAME_STRING_ALT = 'Car Mechanic Simulator 2026 Demo'; //CHANGE THIS IF IT DOESN'T MATCH
 const EXEC = `${GAME_STRING}.exe`;
@@ -618,16 +618,6 @@ async function requiresLauncher(gamePath, store) {
   } //*/
   return Promise.resolve(undefined);
 }
-
-/*open Config entries in Registry
-function openConfigRegistry(api) {
-  GAME_PATH = getDiscoveryPath(api);
-  try {
-    api.runExecutable(path.join(GAME_PATH, 'regjump.exe'), [`${CONFIG_REGPATH_FULL}`], { shell: true, detached: true } )
-  } catch (err) {
-    log('error', `Could not open ${GAME_NAME} config in registry: ${err}`);
-  }
-} //*/
 
 //Get correct save folder for game version
 async function getSavePath(api) {
@@ -2209,13 +2199,6 @@ function applyGame(context, gameSpec) {
   }); //*/
   /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
     util.opn(CONFIG_PATH).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  }); //*/
-  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config (Registry)', () => {
-    openConfigRegistry;
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);

@@ -149,6 +149,7 @@ const SAVE_EXTS = [".XXX"];
 //info for modtypes, installers, and tools
 const BEPINEX_ID = `${GAME_ID}-bepinex`;
 const BEPINEX_NAME = "BepInEx Injector";
+const BEPINEX_DLL_FILE = "winhttp.dll";
 let BEPINEX_FILE = 'BepInEx.Core.dll';
 let BEP_INDICATOR_FILE = path.join('BepInEx', 'core', BEPINEX_FILE);
 if (BEPINEX_BUILD === 'mono') {
@@ -180,6 +181,7 @@ const MELON_URL = `https://github.com/LavaGang/MelonLoader/releases/latest/downl
 const MELON_URL_NIGHTLY = `https://nightly.link/LavaGang/MelonLoader/workflows/build/alpha-development/MelonLoader.Windows.x64.CI.Release.zip`;
 const MELON_URL_ERR = `https://github.com/LavaGang/MelonLoader/releases`;
 const MELON_FILE = 'MelonLoader.dll';
+const MELON_DLL_FILE = "version.dll";
 const MELON_FOLDER = 'MelonLoader';
 const MEL_STRING = 'MelonLoader';
 const MEL_PLUGIN_STRING = 'MelonPlugin';
@@ -637,16 +639,6 @@ async function requiresLauncher(gamePath, store) {
   return Promise.resolve(undefined);
 }
 
-/*open Config entries in Registry
-function openConfigRegistry(api) {
-  GAME_PATH = getDiscoveryPath(api);
-  try {
-    api.runExecutable(path.join(GAME_PATH, 'regjump.exe'), [`${CONFIG_REGPATH_FULL}`], { shell: true, detached: true } )
-  } catch (err) {
-    log('error', `Could not open ${GAME_NAME} config in registry: ${err}`);
-  }
-} //*/
-
 //Get correct save folder for game version
 async function getSavePath(api) {
   GAME_PATH = getDiscoveryPath(api);
@@ -784,9 +776,10 @@ async function deploy(api) { //useful to deploy mods after doing some action
 
 //Test for BepinEx files
 function testBepinex(files, gameId) {
-  const isMod = files.some(file => (path.basename(file) === BEPINEX_FILE));
+  //const isMod = files.some(file => (path.basename(file) === BEPINEX_FILE));
   const isFolder = files.some(file => (path.basename(file) === BEPINEX_FOLDER));
-  let supported = (gameId === spec.game.id) && isMod && isFolder;
+  const isDll = files.some(file => (path.basename(file) === BEPINEX_DLL_FILE));
+  let supported = (gameId === spec.game.id) && isFolder && isDll;
 
   // Test for a mod installer.
   if (supported && files.find(file =>
@@ -804,8 +797,8 @@ function testBepinex(files, gameId) {
 //Install BepInEx files
 function installBepinex(files) {
   const MOD_TYPE = BEPINEX_ID;
-  const modFile = files.find(file => (path.basename(file) === BEPINEX_FOLDER));
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const modFile = files.find(file => (path.basename(file) === BEPINEX_DLL_FILE));
+  const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
 
@@ -827,9 +820,10 @@ function installBepinex(files) {
 
 //Test for MelonLoader files
 function testMelon(files, gameId) {
-  const isMod = files.some(file => (path.basename(file) === MELON_FILE));
+  //const isMod = files.some(file => (path.basename(file) === MELON_FILE));
   const isFolder = files.some(file => (path.basename(file) === MELON_FOLDER));
-  let supported = (gameId === spec.game.id) && isMod && isFolder;
+  const isDll = files.some(file => (path.basename(file) === MELON_DLL_FILE));
+  let supported = (gameId === spec.game.id) && isFolder && isDll;
 
   // Test for a mod installer.
   if (supported && files.find(file =>
@@ -848,7 +842,7 @@ function testMelon(files, gameId) {
 function installMelon(files) {
   const MOD_TYPE = MELON_ID;
   const modFile = files.find(file => (path.basename(file) === MELON_FOLDER));
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
 
@@ -2354,13 +2348,6 @@ function applyGame(context, gameSpec) {
   }); //*/
   /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
     util.opn(CONFIG_PATH).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  }); //*/
-  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config (Registry)', () => {
-    openConfigRegistry;
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);

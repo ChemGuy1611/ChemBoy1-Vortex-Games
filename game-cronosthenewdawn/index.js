@@ -25,6 +25,7 @@ const GOGAPP_ID = "1546068368";
 const GAME_NAME = "Cronos: The New Dawn";
 const GAME_NAME_SHORT = "Cronos TND";
 const EXEC = "Cronos.exe";
+const EXEC_DEFAULT = EXEC;
 const EXEC_EPIC = "Cronos.exe";
 //Unreal Engine specific
 const EPIC_CODE_NAME = "Cronos";
@@ -41,6 +42,8 @@ const SAVEMOD_LOCATION = LOCALAPPDATA;
 const SHIPEXE_STRING_DEFAULT = '';
 const SHIPEXE_STRING_EGS = '';
 const SHIPPING_EXE_FILENAME = `${EPIC_CODE_NAME}-${EXEC_FOLDER_NAME}${SHIPEXE_STRING_DEFAULT}-Shipping.exe`;
+const EXEC_FOLDER_DEFAULT = "Win64";
+const EXEC_FOLDER_XBOX = "WinGDK";
 
 //Settings related to the IO Store UE feature
 let PAKMOD_EXTS = ['.pak'];

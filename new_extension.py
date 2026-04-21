@@ -10,6 +10,7 @@ Usage:
     python new_extension.py TEMPLATE "Game Name" --force
     python new_extension.py TEMPLATE "Game Name" --dry-run
     python new_extension.py TEMPLATE "Game Name" --no-images
+    python new_extension.py GAME_ID --refresh-images
 
 Fills in all XXX fields it can resolve automatically from Steam, GOG, Epic,
 and PCGamingWiki. Remaining XXX fields are reported at the end for manual entry.
@@ -50,12 +51,14 @@ from io import BytesIO
 import setup_test_folder as stf
 
 from vortex_utils import (
-    REPO_ROOT, http_get, http_get_bytes,
+    REPO_ROOT, PCGW_API, TITLE_IMAGES_DIR, BANNER_IMAGES_DIR,
+    http_get, http_get_bytes,
     roman_to_arabic, arabic_to_roman, name_lookup_variants,
     lookup_pcgamingwiki, get_api_key, run_generate_explained, eslint_check,
     fetch_epic_app_id, add_to_discovery_ids,
     download_exec_icon, download_cover_art, download_title_image, download_banner_image,
-    update_index_header, sanitize_game_name,
+    update_index_header, sanitize_game_name, normalize_game_name, write_index_js,
+    read_index_js, extract_steamapp_id, extract_game_name,
 )
 
 TEMPLATES = [
@@ -145,7 +148,7 @@ def get_exec_info(steam_data, steamdb_data):
         exe = entry.get("executable", "").replace("\\", "/")
         if exe:
             parts = exe.split("/")
-            return parts[-1], parts[:-1] if len(parts) > 1 else []
+            return parts[-1], (parts[:-1] if len(parts) > 1 else [])
 
     # Method 2: SteamDB launch executables
     exes = (steamdb_data or {}).get("launch_exes", [])
@@ -207,13 +210,12 @@ def lookup_nexus_domain(game_name, api_key):
             )
             with urllib.request.urlopen(req, timeout=15) as resp:
                 _nexus_games_cache = json.loads(resp.read())
-        norm = lambda s: s.lower().replace('\u2019', "'").replace(':', '').replace('  ', ' ').strip()
-        name_variants = {norm(game_name)}
+        name_variants = {normalize_game_name(game_name)}
         converted = roman_to_arabic(game_name)
         if converted != game_name:
-            name_variants.add(norm(converted))
+            name_variants.add(normalize_game_name(converted))
         for game in _nexus_games_cache:
-            t = norm(game.get("name", ""))
+            t = normalize_game_name(game.get("name", ""))
             if t in name_variants or any(t.startswith(v + " (") for v in name_variants):
                 return game["domain_name"]
     except Exception as e:
@@ -388,8 +390,7 @@ def fetch_pcgw_availability(page_title):
         return result
     try:
         url = (
-            "https://www.pcgamingwiki.com/w/api.php"
-            f"?action=parse&page={urllib.parse.quote(page_title)}"
+            f"{PCGW_API}?action=parse&page={urllib.parse.quote(page_title)}"
             "&prop=wikitext&format=json"
         )
         data = json.loads(http_get(url))
@@ -400,8 +401,7 @@ def fetch_pcgw_availability(page_title):
             if m_redirect:
                 redirect_title = m_redirect.group(1).strip()
                 url = (
-                    "https://www.pcgamingwiki.com/w/api.php"
-                    f"?action=parse&page={urllib.parse.quote(redirect_title)}"
+                    f"{PCGW_API}?action=parse&page={urllib.parse.quote(redirect_title)}"
                     "&prop=wikitext&format=json"
                 )
                 data = json.loads(http_get(url))
@@ -772,8 +772,7 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
             rf"\g<1>'{engine_version}'",
             src
         )
-    with open(index_path, "w", encoding="utf-8") as f:
-        f.write(src)
+    write_index_js(dest, src)
     print("  index.js written")
 
     # ── 9. info.json ──────────────────────────────────────────────────────────
@@ -828,9 +827,8 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
         print(f"\n[{game_id}_title.jpg] Skipped (--no-images)")
     else:
         print(f"\n[{game_id}_title.jpg]")
-        title_dir = os.path.join(REPO_ROOT, "resources", "title-images")
-        os.makedirs(title_dir, exist_ok=True)
-        title_path = os.path.join(title_dir, f"{game_id}_title.jpg")
+        os.makedirs(TITLE_IMAGES_DIR, exist_ok=True)
+        title_path = os.path.join(TITLE_IMAGES_DIR, f"{game_id}_title.jpg")
         title_ok, title_source = download_title_image(appid, game_name, title_path, sgdb_key)
         if title_ok:
             print(f"  Saved  : {title_source}")
@@ -844,9 +842,8 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
         print(f"\n[{game_id}_banner.jpg] Skipped (--no-images)")
     else:
         print(f"\n[{game_id}_banner.jpg]")
-        banner_dir = os.path.join(REPO_ROOT, "resources", "banner-images")
-        os.makedirs(banner_dir, exist_ok=True)
-        banner_path = os.path.join(banner_dir, f"{game_id}_banner.jpg")
+        os.makedirs(BANNER_IMAGES_DIR, exist_ok=True)
+        banner_path = os.path.join(BANNER_IMAGES_DIR, f"{game_id}_banner.jpg")
         banner_ok, banner_source = download_banner_image(appid, game_id, banner_path, sgdb_key)
         if banner_ok:
             print(f"  Saved  : {banner_source}")
@@ -864,7 +861,7 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
         src_check = f.read()
     remaining = [
         m.group(1)
-        for m in re.finditer(r'(?:const|let)\s+(\w+)\s*=\s*["\']XXX["\']', src_check)
+        for m in re.finditer(r'(?:const|let)\s+(\w+)\s*=\s*["\']XXX[^"\']*["\']', src_check)
     ]
 
     if remaining:
@@ -936,6 +933,65 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
         print(f"  {exc}\n")
 
 
+# ── Refresh images ───────────────────────────────────────────────────────────
+
+def refresh_images(game_id):
+    """Re-download all images for an existing game extension."""
+    folder = os.path.join(REPO_ROOT, f"game-{game_id}")
+    if not os.path.isdir(folder):
+        print(f"ERROR: folder not found: game-{game_id}/")
+        sys.exit(1)
+
+    js = read_index_js(folder)
+    if js is None:
+        print(f"ERROR: index.js not found in game-{game_id}/")
+        sys.exit(1)
+
+    appid = extract_steamapp_id(js)
+    name  = extract_game_name(js) or game_id
+    if not appid or appid == "XXX":
+        print(f"ERROR: STEAMAPP_ID not set in game-{game_id}/index.js")
+        sys.exit(1)
+
+    sgdb_key = get_api_key("STEAMGRIDDB_API_KEY")
+    print(f"Refreshing images for game-{game_id} (Steam ID: {appid})...\n")
+
+    print("[exec.png]")
+    icon_path = os.path.join(folder, "exec.png")
+    ok, source = download_exec_icon(appid, name, icon_path)
+    print(f"  {'Saved  : ' + source if ok else 'FAILED'}")
+    if ok:
+        os.startfile(icon_path)
+
+    print(f"\n[{game_id}.jpg]")
+    time.sleep(0.3)
+    art_path = os.path.join(folder, f"{game_id}.jpg")
+    ok, source = download_cover_art(appid, name, art_path, sgdb_key)
+    print(f"  {'Saved  : ' + source if ok else 'FAILED'}")
+    if ok:
+        os.startfile(art_path)
+
+    print(f"\n[{game_id}_title.jpg]")
+    time.sleep(0.3)
+    os.makedirs(TITLE_IMAGES_DIR, exist_ok=True)
+    title_path = os.path.join(TITLE_IMAGES_DIR, f"{game_id}_title.jpg")
+    ok, source = download_title_image(appid, name, title_path, sgdb_key)
+    print(f"  {'Saved  : ' + source if ok else 'FAILED'}")
+    if ok:
+        os.startfile(title_path)
+
+    print(f"\n[{game_id}_banner.jpg]")
+    time.sleep(0.3)
+    os.makedirs(BANNER_IMAGES_DIR, exist_ok=True)
+    banner_path = os.path.join(BANNER_IMAGES_DIR, f"{game_id}_banner.jpg")
+    ok, source = download_banner_image(appid, game_id, banner_path, sgdb_key)
+    print(f"  {'Saved  : ' + source if ok else 'FAILED'}")
+    if ok:
+        os.startfile(banner_path)
+
+    print()
+
+
 # ── CLI ───────────────────────────────────────────────────────────────────────
 
 def main():
@@ -951,13 +1007,14 @@ def main():
     )
     parser.add_argument(
         "template",
-        choices=TEMPLATE_SHORT_NAMES,
+        nargs="?",
         metavar="TEMPLATE",
-        help=f"Template short name. One of: {', '.join(TEMPLATE_SHORT_NAMES)}",
+        help=f"Template short name (required unless --refresh-images). One of: {', '.join(TEMPLATE_SHORT_NAMES)}",
     )
     parser.add_argument(
         "game",
-        help="Game name (quoted) or Steam App ID",
+        nargs="?",
+        help="Game name (quoted) or Steam App ID (required unless --refresh-images)",
     )
     parser.add_argument(
         "--force", action="store_true",
@@ -971,9 +1028,24 @@ def main():
         "--no-images", action="store_true",
         help="Skip downloading exec.png and cover art (useful when re-running on an existing extension)",
     )
+    parser.add_argument(
+        "--refresh-images", action="store_true",
+        help="Re-download all images for an existing extension. Pass GAME_ID as the only positional argument.",
+    )
     args = parser.parse_args()
-    full_template = f"template-{args.template}"
-    create_extension(full_template, args.game, args.force, args.dry_run, args.no_images)
+
+    if args.refresh_images:
+        game_id = args.template  # only one positional provided; lands in template slot
+        if not game_id:
+            parser.error("GAME_ID is required with --refresh-images")
+        refresh_images(game_id)
+    else:
+        if not args.template or not args.game:
+            parser.error("TEMPLATE and GAME are required")
+        if args.template not in TEMPLATE_SHORT_NAMES:
+            parser.error(f"Invalid template '{args.template}'. Choose from: {', '.join(TEMPLATE_SHORT_NAMES)}")
+        full_template = f"template-{args.template}"
+        create_extension(full_template, args.game, args.force, args.dry_run, args.no_images)
 
 
 if __name__ == "__main__":

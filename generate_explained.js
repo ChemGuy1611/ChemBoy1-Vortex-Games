@@ -210,7 +210,8 @@ function resolveValue(expr, table) {
   if (e.startsWith('`') && e.endsWith('`')) {
     const inner = e.slice(1, -1);
     return inner.replace(/\$\{([^}]+)\}/g, (_, varName) => {
-      return table.get(varName.trim()) || varName;
+      const k = varName.trim();
+      return table.has(k) ? table.get(k) : varName;
     });
   }
 
@@ -223,7 +224,7 @@ function resolveValue(expr, table) {
 
   // Variable reference (including property access like OBJ.prop)
   if (/^[A-Za-z_$][\w.]*$/.test(e)) {
-    return table.get(e) || e;
+    return table.has(e) ? table.get(e) : e;
   }
 
   // Fallback
@@ -990,7 +991,7 @@ function buildMarkdown(dirName, src) {
 
 // ── main ──────────────────────────────────────────────────────────────────────
 
-const gameArgs = process.argv.slice(2).filter(a => !a.startsWith('-'));
+const gameArgs = process.argv.slice(2).filter(a => !a.startsWith('--'));
 
 const entries = fs.readdirSync(ROOT, { withFileTypes: true });
 const extDirs = entries

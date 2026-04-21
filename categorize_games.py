@@ -15,8 +15,7 @@ Usage:
 import os
 import argparse
 
-from vortex_utils import REPO_ROOT
-LISTS_DIR = os.path.join(REPO_ROOT, "resources", "lists")
+from vortex_utils import REPO_ROOT, LISTS_DIR, list_game_ids
 
 # Output file name → detection logic (applied in order; first match wins)
 # Each entry: (filename, label, detector_fn)
@@ -112,8 +111,9 @@ CATEGORIES = [
 
 
 def get_head(src):
-    """Return the first 20 lines of src joined as a single string."""
-    return "\n".join(src.splitlines()[:20])
+    """Return the first 20 lines of src joined, with whitespace normalized."""
+    raw = "\n".join(src.splitlines()[:20])
+    return re.sub(r'\s+', ' ', raw)
 
 
 def categorize(game_id):
@@ -127,7 +127,6 @@ def categorize(game_id):
     for filename, _label, detector in CATEGORIES:
         if detector(head, src):
             return filename
-    return "games-basic.txt"  # unreachable — catch-all lambda above always matches
 
 
 def read_list(filepath):
@@ -149,18 +148,12 @@ def rebuild_all(dry_run=False):
     """Scan all game-* folders and rebuild every category file from scratch."""
     buckets = {filename: [] for filename, _, _ in CATEGORIES}
 
-    game_dirs = sorted(
-        d for d in os.listdir(REPO_ROOT)
-        if d.startswith("game-") and os.path.isdir(os.path.join(REPO_ROOT, d))
-    )
-
-    for d in game_dirs:
-        game_id = d[len("game-"):]
+    for game_id in list_game_ids():
         target = categorize(game_id)
         if target:
             buckets[target].append(game_id)
         else:
-            print(f"  Warning: no index.js found for {d}, skipping.")
+            print(f"  Warning: no index.js found for game-{game_id}, skipping.")
 
     if not dry_run:
         os.makedirs(LISTS_DIR, exist_ok=True)

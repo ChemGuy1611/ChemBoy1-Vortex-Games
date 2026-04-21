@@ -43,6 +43,8 @@ const EXEC_DEMO = EXEC;
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Halo_Wars:_Definitive_Edition";
 const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
 
+const ROOT_FOLDERS = [];
+
 //feature toggles
 const hasLoader = false; //true if game needs a mod loader
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)

@@ -894,7 +894,7 @@ function deployNotify(api) {
         title: 'More',
         action: (dismiss) => {
           api.showDialog('question', MESSAGE, {
-            text: `If your game is installed in a protected folder, such as "C:\Program Files (x86)" (default for Steam), you must run ${MOD_NAME} as Administrator.\n`
+            text: `If your game is installed in a protected folder, such as "C:\\Program Files (x86)" (default for Steam), you must run ${MOD_NAME} as Administrator.\n`
                 + '\n'
                 + `Use the button below to launch ${MOD_NAME} as Administrator.\n`
                 + '\n'

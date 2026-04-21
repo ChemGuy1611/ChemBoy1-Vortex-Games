@@ -1188,11 +1188,8 @@ async function resorepDllCopy(api, gameSpec) {
         //return fs.copyAsync(filePath, mergeTarget)
         .catch({ code: 'ENOENT' }, err => {
           // not entirely sure whether "ENOENT" refers to the source file or the directory we're trying to copy into, the error object contains only one of those paths
-          context.api.showErrorNotification('Failed to copy d3d11.dll from system folder', err);
-          log('error', 'Failed to copy d3d11.dll from system folder', {
-            source: filePath,
-            destination: mergeTarget,
-          });
+          api.showErrorNotification('Failed to copy d3d11.dll from system folder', err);
+          log('error', 'Failed to copy d3d11.dll from system folder');
           return Promise.reject(err);
         });
       } catch (err) {

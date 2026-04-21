@@ -15,6 +15,8 @@ const template = require('string-template');
 const GAME_ID = "horizonzerodawnremastered";
 const STEAMAPP_ID = "2561580";
 const EPICAPP_ID = "Grunion"; //from egdata.app
+const XBOXAPP_ID = null;
+const XBOXEXECNAME = null;
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
 const EXEC = "HorizonZeroDawnRemastered.exe";

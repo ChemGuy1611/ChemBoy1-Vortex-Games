@@ -551,7 +551,7 @@ async function downloadShadPS4(api, gameSpec) {
   let modLoaderInstalled = await isShadPS4Installed(api, gameSpec);
   if (!modLoaderInstalled) {
     //notification indicating install process
-    NOTIF_ID = 'bloodborne-shadps4-installing';
+    const NOTIF_ID = 'bloodborne-shadps4-installing';
     api.sendNotification({
       id: NOTIF_ID,
       message: 'Installing shadPS4',
@@ -596,9 +596,10 @@ async function isShadLauncherInstalled(api, spec) {
   const mods = state.persistent.mods[spec.game.id] || {};
   let check = Object.keys(mods).some(id => mods[id]?.type === SHADLAUNCHER_ID);
   if (!check) {
+    GAME_PATH = getDiscoveryPath(api);
     try {
       GAME_PATH = getDiscoveryPath(api);
-      await fs.statAsync(path.join(discovery.path, SHADLAUNCHER_EXEC));
+      await fs.statAsync(path.join(GAME_PATH, SHADLAUNCHER_EXEC));
       check = true;
     } catch (err) {
       //do nothing

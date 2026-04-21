@@ -24,6 +24,9 @@ const MOD_PATH = path.join("GameSDK", "Precache");
 let execFolder = '';
 let BINARIES_TARGET = '';
 let GAME_VERSION = '';
+let GAME_PATH = '';
+let STAGING_FOLDER = '';
+let DOWNLOAD_FOLDER = '';
 const APPMANIFEST_FILE = 'appxmanifest.xml';
 const FIND_FILE = "GameSDK";
 const requiredFiles = [FIND_FILE];
@@ -494,33 +497,33 @@ async function resolveGameVersion(gamePath) {
       return Promise.resolve(version);
     }
   }
-  if (GAME_VERSION = 'steam') { // use exe
+  if (GAME_VERSION === 'steam') { // use exe
     try {
       const exeVersion = require('exe-version');
       version = exeVersion.getProductVersion(path.join(gamePath, EXEC_STEAM));
       return Promise.resolve(version); 
     } catch (err) {
-      log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
+      log('error', `Could not read ${EXEC_STEAM} file to get Steam game version: ${err}`);
       return Promise.resolve(version);
     }
   }
-  if (GAME_VERSION = 'gog') { // use exe
+  if (GAME_VERSION === 'gog') { // use exe
     try {
       const exeVersion = require('exe-version');
       version = exeVersion.getProductVersion(path.join(gamePath, EXEC_GOG));
       return Promise.resolve(version); 
     } catch (err) {
-      log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
+      log('error', `Could not read ${EXEC_GOG} file to get Steam game version: ${err}`);
       return Promise.resolve(version);
     }
   }
-  if (GAME_VERSION = 'epic') { // use exe
+  if (GAME_VERSION === 'epic') { // use exe
     try {
       const exeVersion = require('exe-version');
       version = exeVersion.getProductVersion(path.join(gamePath, EXEC_EPIC));
       return Promise.resolve(version); 
     } catch (err) {
-      log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
+      log('error', `Could not read ${EXEC_EPIC} file to get Steam game version: ${err}`);
       return Promise.resolve(version);
     }
   }

@@ -12,6 +12,7 @@ const path = require('path');
 const template = require('string-template');
 const fsPromises = require('fs/promises');
 const YAML = require('js-yaml'); //YAML.load (parse) and YAML.dump (stringify)
+const { parseStringPromise } = require('xml2js');
 
 //Specify all the information about the game
 const STEAMAPP_ID = "2183900";

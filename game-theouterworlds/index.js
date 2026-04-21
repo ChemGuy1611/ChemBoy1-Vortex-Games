@@ -452,9 +452,9 @@ async function resolveGameVersion(gamePath, exePath) {
       return Promise.resolve(version);
     }
   }
-  if (GAME_VERSION = 'classic') { //use exe (note that this only returns the UE engine version right now)
+  if (GAME_VERSION === 'classic') { //use exe (note that this only returns the UE engine version right now)
+    const READ_FILE = path.join(gamePath, EXEC_CLASSIC);
     try {
-      const READ_FILE = path.join(gamePath, EXEC_CLASSIC);
       const exeVersion = require('exe-version');
       version = await exeVersion.getProductVersion(READ_FILE);
       //log('warn', `Resolved game version for ${GAME_ID} to: ${version}`);
@@ -464,9 +464,9 @@ async function resolveGameVersion(gamePath, exePath) {
       return Promise.resolve(version);
     }
   }
-  if (GAME_VERSION = 'spacers') { //use shipping exe (note that this only returns the UE engine version right now)
+  if (GAME_VERSION === 'spacers') { //use shipping exe (note that this only returns the UE engine version right now)
+    const READ_FILE = path.join(gamePath, EXEC_NEW);
     try {
-      const READ_FILE = path.join(gamePath, EXEC_NEW);
       const exeVersion = require('exe-version');
       version = await exeVersion.getProductVersion(READ_FILE);
       //log('warn', `Resolved game version for ${GAME_ID} to: ${version}`);

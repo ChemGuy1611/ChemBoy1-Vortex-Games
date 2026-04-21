@@ -1346,7 +1346,7 @@ function UNREALEXTENSION(context) {
       modFiles = files.filter(file => fileExt.includes(path.extname(file).toLowerCase()));
       isPak = files.some(file => (path.extname(file).toLowerCase() === '.pak')); //added to avoid hijacking any mod that had a .json file without a .pak file
     }
-    const supported = (supportedGame && (gameId === spec.game.id) && modFiles.length > 0 && isPak);
+    let supported = (supportedGame && (gameId === spec.game.id) && modFiles.length > 0 && isPak);
 
     // Test for a mod installer
     if (supported && files.find(file =>

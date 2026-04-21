@@ -234,8 +234,8 @@ async function downloadFluffy(api, gameSpec) {
 
   if (!modLoaderInstalled) {
     //notification indicating install process
-    MOD_NAME = 'Fluffy Mod Manager';
-    NOTIF_ID = `${GAME_ID}-${MOD_NAME}-installing`;
+    const MOD_NAME = 'Fluffy Mod Manager';
+    const NOTIF_ID = `${GAME_ID}-${MOD_NAME}-installing`;
     api.sendNotification({
       id: NOTIF_ID,
       message: `Installing ${MOD_NAME}`,

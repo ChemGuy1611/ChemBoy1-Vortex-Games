@@ -906,7 +906,7 @@ async function resolveGameVersion(gamePath) {
       return Promise.resolve(version);
     }
   }
-  if (GAME_VERSION = 'classic') { // use exe
+  if (GAME_VERSION === 'classic') { // use exe
     try {
       const exeVersion = require('exe-version');
       version = exeVersion.getProductVersion(path.join(gamePath, EXEC));
@@ -916,7 +916,7 @@ async function resolveGameVersion(gamePath) {
       return Promise.resolve(version);
     }
   }
-  if (GAME_VERSION = 'definitive') { // use exe
+  if (GAME_VERSION === 'definitive') { // use exe
     try {
       const exeVersion = require('exe-version');
       version = exeVersion.getProductVersion(path.join(gamePath, EXEC_64));

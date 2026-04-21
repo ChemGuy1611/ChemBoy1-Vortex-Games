@@ -1101,15 +1101,16 @@ function installRoot(files) {
 
 //Startup notification
 function setupNotify(api) {
+  const NOTIF_ID = `${GAME_ID}-setup-notification`;
   api.sendNotification({
-    id: `${GAME_ID}-setup-notification`,
+    id: NOTIF_ID,
     type: 'warning',
     message: 'Forger Setup Required',
     allowSuppress: true,
     actions: [
       {
         title: 'More',
-        action: () => {
+        action: (dismiss) => {
           api.showDialog('question', 'Action required', {
             text: 'Some of the most popular mods for AC Shadows require a software called Forger Patch Manager.\n'
                 + 'This software has been automatically downloaded and installed for you by the extension. \n'

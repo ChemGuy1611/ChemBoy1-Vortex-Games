@@ -33,15 +33,16 @@ Options:
 Requirements:
     pip install Pillow
 Environment variables:
-    STEAMGRIDDB_API_KEY  (optional; required for --title and --banner)
+    STEAMGRIDDB_API_KEY  (optional; required for --banner, improves --title and default mode)
+                         --title falls back to Steam capsule_616x353.jpg without this key.
 """
 
 import os
 import argparse
 
 from vortex_utils import (
-    REPO_ROOT, extract_steamapp_id,
-    get_api_key, iter_game_folders,
+    REPO_ROOT, TITLE_IMAGES_DIR, BANNER_IMAGES_DIR,
+    extract_steamapp_id, get_api_key, iter_game_folders,
     download_cover_art, download_title_image, download_banner_image,
 )
 
@@ -57,9 +58,9 @@ def find_targets(target_game_ids=None, force=False, mode="cover"):
     """
     for folder, game_id, src in iter_game_folders(target_game_ids):
         if mode == "title":
-            target_path = os.path.join(REPO_ROOT, "resources", "title-images", f"{game_id}_title.jpg")
+            target_path = os.path.join(TITLE_IMAGES_DIR, f"{game_id}_title.jpg")
         elif mode == "banner":
-            target_path = os.path.join(REPO_ROOT, "resources", "banner-images", f"{game_id}_banner.jpg")
+            target_path = os.path.join(BANNER_IMAGES_DIR, f"{game_id}_banner.jpg")
         else:
             target_path = os.path.join(folder, f"{game_id}.jpg")
 
@@ -74,10 +75,12 @@ def fetch_all(target_game_ids=None, dry_run=False, force=False, mode="cover"):
     sgdb_key = get_api_key("STEAMGRIDDB_API_KEY")
     if mode in ("title", "banner"):
         if not sgdb_key:
-            label = "title" if mode == "title" else "banner"
-            print(f"No SteamGridDB API key -- {label} images require STEAMGRIDDB_API_KEY.")
-            if not dry_run:
-                return
+            if mode == "banner":
+                print("No SteamGridDB API key -- banner images require STEAMGRIDDB_API_KEY.")
+                if not dry_run:
+                    return
+            else:
+                print("No SteamGridDB API key -- title images will fall back to Steam capsule art.")
     else:
         if not dry_run and sgdb_key:
             print("SteamGridDB API key found -- will try heroes first.")
@@ -96,9 +99,9 @@ def fetch_all(target_game_ids=None, dry_run=False, force=False, mode="cover"):
 
     out_dir = None
     if mode == "title":
-        out_dir = os.path.join(REPO_ROOT, "resources", "title-images")
+        out_dir = TITLE_IMAGES_DIR
     elif mode == "banner":
-        out_dir = os.path.join(REPO_ROOT, "resources", "banner-images")
+        out_dir = BANNER_IMAGES_DIR
 
     for folder, game_id, steamapp_id in targets:
         if mode == "title":

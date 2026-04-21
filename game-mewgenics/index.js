@@ -555,6 +555,12 @@ function installMod(files, fileName) {
     //idx = modFile.indexOf(`${indexFolder}${path.sep}`);  //index on the folder with path separator
   } //*/
   const idx = modFile.indexOf(path.basename(modFile));
+  //attribute for use in load order
+  const MOD_ATTRIBUTE = {
+    type: 'attribute',
+    key: LO_ATTRIBUTE,
+    value: fileName.replace('.installing', ''),
+  };
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
@@ -569,6 +575,7 @@ function installMod(files, fileName) {
     };
   });
   instructions.push(setModTypeInstruction);
+  instructions.push(MOD_ATTRIBUTE);
   return Promise.resolve({ instructions });
 }
 

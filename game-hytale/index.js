@@ -36,6 +36,7 @@ const GAME_NAME = "Hytale";
 const GAME_NAME_SHORT = "Hytale";
 const EXEC = 'HytaleClient.exe';
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Hytale";
+const EXTENSION_URL = "XXX";
 
 //feature toggles
 const hasLoader = false; //true if game needs a mod loader

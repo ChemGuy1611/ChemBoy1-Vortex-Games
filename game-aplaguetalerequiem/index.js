@@ -91,7 +91,7 @@ if (USERID_FOLDER === undefined) {
 const SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
 const SAVE_EXTS = [".sav"]; //*/
 
-MOD_PATH_DEFAULT = ".";
+const MOD_PATH_DEFAULT = ".";
 const REQ_FILE = COMMON_FILE;
 const PARAMETERS = [];
 let MODTYPE_FOLDERS = ['.'];

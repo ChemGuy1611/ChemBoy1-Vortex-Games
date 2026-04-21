@@ -48,6 +48,7 @@ const STEAM_EXEC_FOLDER = "Win64";
 const XBOX_EXEC_FOLDER = "WinGDK";
 const STEAM_EXEC= `LOP.exe`;
 const XBOX_EXEC = `gamelaunchhelper.exe`;
+const EXEC_XBOX = XBOX_EXEC;
 
 //Unreal Engine Game Data
 const UNREALDATA = {

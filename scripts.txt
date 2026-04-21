@@ -13,6 +13,7 @@ audit_scripts.py
 
 # Node scripts
 generate_explained.js
+lint_extensions.js
 
 # Documentation
 SCRIPTS.md
