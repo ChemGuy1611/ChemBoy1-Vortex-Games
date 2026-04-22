@@ -28,7 +28,7 @@
 | Flag | Value | Description |
 | --- | --- | --- |
 | `LOAD_ORDER_ENABLED` | `true` | enables load order sorting |
-| `debug` | `false` | enables verbose debug logging |
+| `debug` | `true` | enables verbose debug logging |
 | `mod_update_all_profile` | `false` |  |
 | `updating_mod` | `false` | used to see if it's a mod update or not |
 | `dllInRoot` | `false` |  |

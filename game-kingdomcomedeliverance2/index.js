@@ -2,8 +2,8 @@
 Name: Kingdom Come Deliverance II Vortex Extension
 Structure: Mod Folder and FBLO
 Author: ChemBoy1
-Version: 0.5.1
-Date: 2026-03-03
+Version: 0.6.0
+Date: 2026-04-22
 //////////////////////////////////////////////////*/
 
 //Import libraries
@@ -83,6 +83,7 @@ const LO_FILE = "mod_order.txt";
 const LO_MOD_FILE = MOD_FILE1;
 const LO_PATH = path.join(MOD_PATH, LO_FILE);
 const LO_PATH_XBOX = path.join(MOD_PATH_XBOX, LO_FILE);
+const LO_ATTRIBUTE = "modFolderDerived";
 const IGNORED_EXTS = ['.txt', '.json', '.manifest'];
 
 const LOG_FILE = "kcd.log";
@@ -514,7 +515,7 @@ function installMod(files, fileName) {
   };
   const MOD_ATTRIBUTE2 = { //this attribute is used to identify the mod name in serializeLoadOrder
     type: 'attribute',
-    key: 'modFolderDerived',
+    key: LO_ATTRIBUTE,
     value: MOD_FOLDER,
   };
   const MOD_ATTRIBUTE3 = {
@@ -859,7 +860,7 @@ async function deserializeLoadOrder(context) {
       .catch(() => false)
   };
 
-  // Get readable mod name using modFolderDerived attribute from mod installer
+  // Get readable mod name using attribute from mod installer
   async function getModName(folder) {
     const VORTEX = await isVortexManaged(folder);
     const WORKSHOP = steamWorkshopIds.includes(folder);
@@ -870,7 +871,7 @@ async function deserializeLoadOrder(context) {
       return ('Manual Mod');
     }
     try {//Mod installed by Vortex, find mod where atrribute (from installer) matches folder in the load order
-      const modMatch = Object.values(mods).find(mod => (util.getSafe(mods[mod.id]?.attributes, ['modFolderDerived'], '') === folder));
+      const modMatch = Object.values(mods).find(mod => (util.getSafe(mods[mod.id]?.attributes, [LO_ATTRIBUTE], '') === folder));
       if (modMatch) {
         return modMatch.attributes.customFileName ?? modMatch.attributes.logicalFileName ?? modMatch.attributes.name;
       }
@@ -880,23 +881,18 @@ async function deserializeLoadOrder(context) {
     }
   }
 
-  //* // Get mod image from metadata
-  async function getModImage(folder) {
-    const VORTEX = await isVortexManaged(folder);
-    if (!VORTEX) {
-      return path.join(__dirname, spec.game.logo);
-    }
-    try {//find mod where the folder name assigned in the installer attribute matches the folder name of the mod in the load order
-      const modMatch = Object.values(mods).find(mod => (util.getSafe(mods[mod.id]?.attributes, ['modFolderDerived'], '') === folder));
-      if (modMatch) {
-        return modMatch.attributes.pictureUrl ?? path.join(__dirname, spec.game.logo);
-      }
-      return path.join(__dirname, spec.game.logo);
-    } catch (err) {
-      return path.join(__dirname, spec.game.logo);
-    }
-  }
-  //*/
+ // Get Vortex mod id using attribute from mod installer
+   async function getModId(folder) {
+     try {//find mod where atrribute (from installer) matches file in the load order
+       const modMatch = Object.values(mods).find(mod => (util.getSafe(mods[mod.id]?.attributes, [LO_ATTRIBUTE], '') === folder)); //find mod by folder name attribute
+       if (modMatch) {
+         return modMatch.id;
+       }
+       return undefined;
+     } catch (err) {
+       return undefined;
+     }
+   }
 
   //Set load order (async version)
   let loadOrder = await loadOrderFile.split("\n")
@@ -910,7 +906,7 @@ async function deserializeLoadOrder(context) {
         {
           id: folder,
           name: `${await getModName(folder)} (${folder})`,
-          modId: await isVortexManaged(folder) ? folder : undefined,
+          modId: await isVortexManaged(folder) ? await getModId(folder) : undefined,
           enabled: !line.startsWith("#"),
           //imgUrl: await getModImage(folder);
         }
@@ -925,7 +921,7 @@ async function deserializeLoadOrder(context) {
       loadOrder.push({
         id: folder,
         name: `${await getModName(folder)} (${folder})`,
-        modId: await isVortexManaged(folder) ? folder : undefined,
+        modId: await isVortexManaged(folder) ? await getModId(folder) : undefined,
         enabled: true,
         //imgUrl: await getModImage(folder)
       });
@@ -1271,15 +1267,6 @@ function applyGame(context, gameSpec) {
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   });
-
-  //register actions
-  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', () => {
-    util.opn(SAVE_PATH).catch(() => null);
-    }, () => {
-      const state = context.api.getState();
-      const gameId = selectors.activeGameId(state);
-      return gameId === GAME_ID;
-  }); //*/
 }
 
 //main function

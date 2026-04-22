@@ -2,8 +2,8 @@
 Name: The Last of Us Part II Remastered Vortex Extension
 Author: ChemBoy1
 Structure: Generic Game w/ File Extraction, Mod Loader, and Load Order
-Version: 0.7.1
-Date: 2026-02-11
+Version: 0.8.0
+Date: 2026-04-22
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -64,6 +64,7 @@ const MODLOADER_FILE_NO = 122;
 
 const LO_FILE = "modloader.ini";
 const LO_LINE_START = "MountOrder=";
+const LO_ATTRIBUTE = 'psarcFiles';
 const CHUNKS_FILE = "chunks.txt";
 const CHUNKS_PATH = path.join(MAIN_PATH, CHUNKS_FILE);
 const CHUNKS_START_LINE = 38;
@@ -727,7 +728,7 @@ function installPsarc(files) {
   const PSARC_FILES = files.filter(file => (path.extname(file).toLowerCase() === PSARC_EXT));
   const MOD_ATTRIBUTE = {
     type: 'attribute',
-    key: 'psarcFiles',
+    key: LO_ATTRIBUTE,
     value: PSARC_FILES,
   };
 
@@ -994,7 +995,7 @@ async function deserializeLoadOrder(context) {
   // Get readable mod name using attribute from mod installer
   async function getModName(file) {
     try {//find mod where atrribute (from installer) matches file in the load order
-      const modMatch = Object.values(mods).find(mod => (util.getSafe(mods[mod.id]?.attributes, ['psarcFiles'], '').includes(file))); //find mod that includes the psarc file
+      const modMatch = Object.values(mods).find(mod => (util.getSafe(mods[mod.id]?.attributes, [LO_ATTRIBUTE], '').includes(file))); //find mod that includes the psarc file
       if (modMatch) {
         return modMatch.attributes.customFileName ?? modMatch.attributes.logicalFileName ?? modMatch.attributes.name;
       }
@@ -1007,7 +1008,7 @@ async function deserializeLoadOrder(context) {
   // Get readable mod id using attribute from mod installer
   async function getModId(file) {
     try {//find mod where atrribute (from installer) matches file in the load order
-      const modMatch = Object.values(mods).find(mod => (util.getSafe(mods[mod.id]?.attributes, ['psarcFiles'], '').includes(file))); //find mod that includes the psarc file
+      const modMatch = Object.values(mods).find(mod => (util.getSafe(mods[mod.id]?.attributes, [LO_ATTRIBUTE], '').includes(file))); //find mod that includes the psarc file
       if (modMatch) {
         return modMatch.id;
       }

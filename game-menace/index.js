@@ -2,8 +2,8 @@
 Name: MENACE Vortex Extension
 Structure: Unity BepinEx/MelonLoader Hybrid
 Author: ChemBoy1
-Version: 0.4.2
-Date: 2026-03-22
+Version: 0.5.0
+Date: 2026-04-22
 //////////////////////////////////////////*/
 
 //Import libraries
@@ -1873,7 +1873,7 @@ async function deserializeLoadOrder(context) {
   // Get Vortex mod id using attribute from mod installer
   async function getModId(folder) {
     try {//find mod where atrribute (from installer) matches file in the load order
-      const modMatch = Object.values(mods).find(mod => (util.getSafe(mods[mod.id]?.attributes, [LO_ATTRIBUTE], '').includes(folder))); //find mod by folder name attribute
+      const modMatch = Object.values(mods).find(mod => (util.getSafe(mods[mod.id]?.attributes, [LO_ATTRIBUTE], '') === folder)); //find mod by folder name attribute
       if (modMatch) {
         return modMatch.id;
       }
@@ -1896,7 +1896,7 @@ async function deserializeLoadOrder(context) {
           id: folder,
           //name: `${await getModName(folder)} (${folder})`,
           name: await getModName(folder),
-          modId: await isVortexManaged(folder) ? folder : undefined,
+          modId: await isVortexManaged(folder) ? await getModId(folder) : undefined,
           enabled: true,
         }
       );
@@ -1910,7 +1910,7 @@ async function deserializeLoadOrder(context) {
         id: folder,
         //name: `${await getModName(folder)} (${folder})`,
         name: await getModName(folder),
-        modId: await isVortexManaged(folder) ? folder : undefined,
+        modId: await isVortexManaged(folder) ? await getModId(folder) : undefined,
         enabled: true,
       });
     }
@@ -1940,9 +1940,9 @@ async function writeToFiles(loadOrderPaths) {
     json.loadOrder = setNumber(index);
     const loadOrderOutput = JSON.stringify(json, null, 2);
     await fs.writeFileAsync(
-    loadOrderPaths[index],
-    loadOrderOutput,
-    { encoding: "utf8" },
+      loadOrderPaths[index],
+      loadOrderOutput,
+      { encoding: "utf8" },
   );
   }
 }

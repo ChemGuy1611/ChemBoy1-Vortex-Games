@@ -2,8 +2,8 @@
 Name: WH40K Space Marine 2 Vortex Extension
 Structure: Mods Folder w/ LO
 Author: ChemBoy1
-Version: 0.5.2
-Date: 2025-02-08
+Version: 0.6.0
+Date: 2026-04-22
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -88,6 +88,7 @@ const PAK_EXTS = [PAK_EXT];
 const LO_FILE = 'pak_config.yaml';
 const LO_FILE_PATH = path.join(PAK_PATH, LO_FILE);
 const LO_FILE_SPLITSTR =  '- pak: ';
+const LO_ATTRIBUTE = 'pakModFiles';
 // for mod update to keep them in the load order and not uncheck them
 let mod_update_all_profile = false;
 let updatemodid = undefined;
@@ -899,7 +900,7 @@ function installPak(api, files) {
       : modFiles;
     const pakModFiles = {
       type: 'attribute',
-      key: 'pakModFiles',
+      key: LO_ATTRIBUTE,
       value: modFiles.map(f => path.basename(f))
     };
     let instructions = installFiles.map(file => {
@@ -1032,7 +1033,7 @@ async function deserializeLoadOrder(context) {
   // Get readable mod name using attribute from mod installer
   async function getModName(file) {
     try {//find mod where atrribute (from installer) matches file in the load order
-      const modMatch = Object.values(mods).find(mod => (util.getSafe(mods[mod.id]?.attributes, ['pakModFiles'], '').includes(file))); //find mod that includes the .arch06 file
+      const modMatch = Object.values(mods).find(mod => (util.getSafe(mods[mod.id]?.attributes, [LO_ATTRIBUTE], '').includes(file))); //find mod that includes the .arch06 file
       if (modMatch) {
         return modMatch.attributes.customFileName ?? modMatch.attributes.logicalFileName ?? modMatch.attributes.name;
       }
@@ -1045,7 +1046,7 @@ async function deserializeLoadOrder(context) {
   // Get Vortex mod id using attribute from mod installer
   async function getModId(file) {
     try {//find mod where atrribute (from installer) matches file in the load order
-      const modMatch = Object.values(mods).find(mod => (util.getSafe(mods[mod.id]?.attributes, ['pakModFiles'], '').includes(file))); //find mod that includes the .arch06 file
+      const modMatch = Object.values(mods).find(mod => (util.getSafe(mods[mod.id]?.attributes, [LO_ATTRIBUTE], '').includes(file))); //find mod that includes the .arch06 file
       if (modMatch) {
         return modMatch.id;
       }

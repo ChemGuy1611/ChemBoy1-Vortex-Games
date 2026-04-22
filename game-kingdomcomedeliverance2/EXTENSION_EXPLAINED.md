@@ -38,7 +38,7 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
-| Mod | `MOD_ID` | high | `{gamePath}/Mods` |
+| Mod | `?` | high | `{gamePath}/Mods` |
 | Root Game Folder | `kingdomcomedeliverance2-root` | high | `{gamePath}` |
 
 ## Special Features

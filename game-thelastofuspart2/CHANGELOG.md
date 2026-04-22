@@ -4,6 +4,10 @@
 
 - Added check for if sp-common.psarc and bin.psarc files exist in the game folder (indicator of update and need to extract).
 
+## [0.8.0] - 2026-04-22
+
+- Improved: Load Order rendering using React - show mod image thumbnails
+
 ## [0.7.1] - 2026-02-12
 
 - Fixed: Crash on undefined "err" variable if file extraction process fails

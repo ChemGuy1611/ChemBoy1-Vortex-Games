@@ -2,8 +2,8 @@
 Name: Middle-earth: Shadow of War Vortex Extension
 Structure: Mod Loaders + Mods folder w/ LO support
 Author: ChemBoy1
-Version: 2.3.0
-Date: 2026-03-24
+Version: 2.4.0
+Date: 2026-04-22
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -112,6 +112,7 @@ const LO_FILE = "default.archcfg";
 const LO_FILE_PATH = path.join(BINARIES_PATH, LO_FILE);
 const LO_MOD_EXTS = MOD_EXTS;
 const LO_READ_PATH = MOD_PATH;
+const LO_ATTRIBUTE = 'arch06Files';
 const LO_FILE_SPLITSTRING = "..\\Mods\\";
 let LO_FILE_STARTUP = `..\\Game
 
@@ -645,7 +646,7 @@ async function installMod(api, files) {
   const ARCH06_FILES = installFiles.map(file => path.basename(file));
   const MOD_ATTRIBUTE = {
     type: 'attribute',
-    key: 'arch06Files',
+    key: LO_ATTRIBUTE,
     value: ARCH06_FILES,
   };
   let instructions = installFiles.map(file => {
@@ -701,7 +702,7 @@ function installMod(api, files) {
     .map(file => path.basename(file));
   const MOD_ATTRIBUTE = {
     type: 'attribute',
-    key: 'arch06Files',
+    key: LO_ATTRIBUTE,
     value: ARCH06_FILES,
   };
 
@@ -1207,7 +1208,7 @@ async function deserializeLoadOrder(context) {
   // Get readable mod name using attribute from mod installer
   async function getModName(file) {
     try {//find mod where atrribute (from installer) matches file in the load order
-      const modMatch = Object.values(mods).find(mod => (util.getSafe(mods[mod.id]?.attributes, ['arch06Files'], '').includes(file))); //find mod that includes the .arch06 file
+      const modMatch = Object.values(mods).find(mod => (util.getSafe(mods[mod.id]?.attributes, [LO_ATTRIBUTE], '').includes(file))); //find mod that includes the .arch06 file
       if (modMatch) {
         return modMatch.attributes.customFileName ?? modMatch.attributes.logicalFileName ?? modMatch.attributes.name;
       }
@@ -1220,7 +1221,7 @@ async function deserializeLoadOrder(context) {
   // Get Vortex mod id using attribute from mod installer
   async function getModId(file) {
     try {//find mod where atrribute (from installer) matches file in the load order
-      const modMatch = Object.values(mods).find(mod => (util.getSafe(mods[mod.id]?.attributes, ['arch06Files'], '').includes(file))); //find mod that includes the .arch06 file
+      const modMatch = Object.values(mods).find(mod => (util.getSafe(mods[mod.id]?.attributes, [LO_ATTRIBUTE], '').includes(file))); //find mod that includes the .arch06 file
       if (modMatch) {
         return modMatch.id;
       }

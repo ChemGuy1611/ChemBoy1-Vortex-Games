@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [2.4.0] - 2026-04-22
+
+- Improved: Load Order rendering using React - show mod image thumbnails
+
 ## [2.2.2] - 2026-03-24
 
 - Improved: .arch06 mod installer can now handle mods with multiple .arch06 files and variants

@@ -2,8 +2,8 @@
 Name: Mewgenics Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.1.2
-Date: 2026-03-25
+Version: 0.2.0
+Date: 2026-04-22
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -560,10 +560,15 @@ function installMod(files, fileName) {
   } //*/
   const idx = modFile.indexOf(path.basename(modFile));
   //attribute for use in load order
+  let loValue = folder;
+  if (loValue === '') {
+    loValue = ROOT_PATH;
+  }
+  if (debug) log('warn', `loValue: ${loValue}`);
   const MOD_ATTRIBUTE = {
     type: 'attribute',
     key: LO_ATTRIBUTE,
-    value: fileName.replace('.installing', ''),
+    value: loValue,
   };
 
   // Remove directories and anything that isn't in the rootPath.
@@ -904,7 +909,7 @@ async function deserializeLoadOrder(context) {
   // Get Vortex mod id using attribute from mod installer
   async function getModId(folder) {
     try {//find mod where atrribute (from installer) matches file in the load order
-      const modMatch = Object.values(mods).find(mod => (util.getSafe(mods[mod.id]?.attributes, [LO_ATTRIBUTE], '').includes(folder))); //find mod by folder name attribute
+      const modMatch = Object.values(mods).find(mod => (util.getSafe(mods[mod.id]?.attributes, [LO_ATTRIBUTE], '') === folder)); //find mod by folder name attribute
       if (modMatch) {
         return modMatch.id;
       }
@@ -926,7 +931,7 @@ async function deserializeLoadOrder(context) {
         {
           id: folder,
           name: `${await getModName(folder)} (${folder})`,
-          modId: await isVortexManaged(folder) ? folder : undefined,
+          modId: await isVortexManaged(folder) ? await getModId(folder) : undefined,
           enabled: !entry.startsWith('#'),
         }
       );
@@ -939,7 +944,7 @@ async function deserializeLoadOrder(context) {
       loadOrder.push({
         id: folder,
         name: `${await getModName(folder)} (${folder})`,
-        modId: await isVortexManaged(folder) ? folder : undefined,
+        modId: await isVortexManaged(folder) ? await getModId(folder) : undefined,
         enabled: true,
       });
     }

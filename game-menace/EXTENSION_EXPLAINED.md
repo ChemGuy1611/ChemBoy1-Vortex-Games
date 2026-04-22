@@ -92,7 +92,6 @@ Installers run in priority order (lower number = tested first). The first instal
 | `menace-customleaders` | 36 |
 | `menace-assets` | 37 |
 | `menace-custommod` | 45 |
-| `SAVE_ID` | 47 |
 | `menace-fallback` | 49 |
 
 ## Registered Tools

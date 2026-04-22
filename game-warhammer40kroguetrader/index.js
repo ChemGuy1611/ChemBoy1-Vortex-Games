@@ -2,8 +2,8 @@
 Name: Warhammer 40,000: Rogue Trader Vortex Extension
 Structure: Game with Integrated Mod Loader (UnityModManager)
 Author: ChemBoy1
-Version: 0.2.1
-Date: 2026-02-13
+Version: 0.3.0
+Date: 2026-04-22
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -40,7 +40,7 @@ const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Warhammer_40,000:_Ro
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1627"; //Nexus link to this extension. Used for links
 
 const LOAD_ORDER_ENABLED = true;
-const debug = false;
+const debug = true;
 
 const DATA_FOLDER = path.join(USER_HOME, 'AppData', 'LocalLow', 'Owlcat Games', 'Warhammer 40000 Rogue Trader');
 const ROOT_FOLDERS = ['']; //not using root installer
@@ -706,12 +706,16 @@ async function installMod(api, files, workingDir) {
   } catch (err) {
     api.showErrorNotification(`Could not read mod ${MOD_MANIFEST} file to get ${MOD_NAME} name. Mod files are likely corrupted.`, err, { allowReport: false });
   } //*/
-  
+  let loValue = folder;
+  if (loValue === '') {
+    loValue = path.basename(nameFolder);
+  }
+  if (debug) log('warn', `loValue: ${loValue}`);
   //attribute for use in load order
   const MOD_ATTRIBUTE = {
     type: 'attribute',
     key: LO_ATTRIBUTE,
-    value: folder,
+    value: loValue,
   };
 
   /* normal filtering - cannot do this if the rootPath is "." as it will remove the "Bundles" files without extensions
@@ -1082,7 +1086,7 @@ async function deserializeLoadOrder(context) {
   // Get Vortex mod id using attribute from mod installer
   async function getModId(folder) {
     try {//find mod where atrribute (from installer) matches file in the load order
-      const modMatch = Object.values(mods).find(mod => (util.getSafe(mods[mod.id]?.attributes, [LO_ATTRIBUTE], '').includes(folder))); //find mod by folder name attribute
+      const modMatch = Object.values(mods).find(mod => (util.getSafe(mods[mod.id]?.attributes, [LO_ATTRIBUTE], '') === folder)); //find mod by folder name attribute
       if (modMatch) {
         return modMatch.id;
       }
@@ -1104,7 +1108,7 @@ async function deserializeLoadOrder(context) {
         {
           id: folder,
           name: `${await getModName(folder)} (${folder})`,
-          modId: await isVortexManaged(folder) ? folder : undefined,
+          modId: await isVortexManaged(folder) ? await getModId(folder) : undefined,
           enabled: !disabled.includes(folder),
         }
       );
@@ -1117,7 +1121,7 @@ async function deserializeLoadOrder(context) {
       loadOrder.push({
         id: folder,
         name: `${await getModName(folder)} (${folder})`,
-        modId: await isVortexManaged(folder) ? folder : undefined,
+        modId: await isVortexManaged(folder) ? await getModId(folder) : undefined,
         enabled: true,
       });
     }

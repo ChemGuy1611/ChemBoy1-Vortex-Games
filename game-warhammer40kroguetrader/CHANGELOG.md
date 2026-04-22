@@ -4,6 +4,11 @@
 
 - None Planned
 
+## [0.3.0] - 2026-04-22
+
+- Improved: Load Order rendering using React - show mod image thumbnails
+- Fixed: Properly assign mod attribute at install for Load Order
+
 ## [0.2.1] - 2026-02-16
 
 - Fixed: A typo and a few small technical issues

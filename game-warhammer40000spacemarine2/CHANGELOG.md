@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.6.0] - 2026-04-22
+
+- Improved: Load Order rendering using React - show mod image thumbnails
+
 ## [0.5.2] - 2026-02-08
 
 - Improved: Load Order deserialization and serialization now uses js-yaml for proper formatting

@@ -637,7 +637,7 @@ function main(context) {
     serializeLoadOrder: async (loadOrder) => await serializeLoadOrder(context, loadOrder),
     toggleableEntries: true,
     usageInstructions: LoadOrderInstructions,
-    customItemRenderer: LoadOrderItemRenderer,
+    //customItemRenderer: LoadOrderItemRenderer,
   });
 
   //register mod types

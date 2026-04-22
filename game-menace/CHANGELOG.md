@@ -4,6 +4,10 @@
 
 - None planned at this time
 
+## [0.5.0] - 2026-04-22
+
+- Improved: Load Order rendering using React - show mod image thumbnails
+
 ## [0.4.2] - 2026-03-22
 
 - Added: Installer for Custom Leaders mods

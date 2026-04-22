@@ -4,6 +4,11 @@
 
 - Changed launcher settings so that Steam version launches through Steam (so that Steam launch arguments are used).
 
+## [0.6.0] - 2026-04-22
+
+- Improved: Load Order rendering using React - show mod image thumbnails
+- Fixed: Game version detection for Xbox version
+
 ## [0.5.1] - 2026-03-04
 
 - Fixed: Corrected mod path for Xbox version (Documents)
