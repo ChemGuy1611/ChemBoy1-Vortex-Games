@@ -140,14 +140,18 @@ def resolve_exec(table):
     if exec_name and not exec_name.lower().endswith(".exe"):
         exec_name += ".exe"
 
-    # BINARIES_PATH -also try STEAM_EXEC_FOLDER as fallback
-    bin_path = table.get("BINARIES_PATH", "")
-    if not valid(bin_path):
-        bin_path = table.get("STEAM_EXEC_FOLDER", "")
-    if bin_path in (".", "", None) or not valid(bin_path):
+    # UE4/5 games: exe lives at game root, not in BINARIES_PATH
+    if "EPIC_CODE_NAME" in table:
         bin_path = ""
-    # Normalise forward slashes
-    bin_path = bin_path.replace("/", os.sep)
+    else:
+        # BINARIES_PATH -also try STEAM_EXEC_FOLDER as fallback
+        bin_path = table.get("BINARIES_PATH", "")
+        if not valid(bin_path):
+            bin_path = table.get("STEAM_EXEC_FOLDER", "")
+        if bin_path in (".", "", None) or not valid(bin_path):
+            bin_path = ""
+        # Normalise forward slashes
+        bin_path = bin_path.replace("/", os.sep)
 
     return exec_name, bin_path
 

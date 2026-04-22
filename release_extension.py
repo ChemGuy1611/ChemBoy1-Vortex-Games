@@ -6,14 +6,15 @@ extension page in the browser.
 
 Steps performed per game:
     1. Validate info.json version has a matching ## [X.Y.Z] entry in CHANGELOG.md
-    2. Rename version .txt file to match info.json version
-    3. Update Version and Date in index.js header comment
-    4. Add resolved store IDs to DISCOVERY_IDS_ACTIVE if missing
-    5. node --check on index.js (warns on syntax error)
-    6. eslint on index.js (warns on lint errors)
-    7. Run generate_explained.js to regenerate EXTENSION_EXPLAINED.md
-    8. Create game-{GAME_ID}.zip with 7-Zip
-    9. Open EXTENSION_URL in browser (or nexusmods.com/games/site if not set)
+    2. Check that const debug = false in index.js (errors if true)
+    3. Rename version .txt file to match info.json version
+    4. Update Version and Date in index.js header comment
+    5. Add resolved store IDs to DISCOVERY_IDS_ACTIVE if missing
+    6. node --check on index.js (warns on syntax error)
+    7. eslint on index.js (warns on lint errors)
+    8. Run generate_explained.js to regenerate EXTENSION_EXPLAINED.md
+    9. Create game-{GAME_ID}.zip with 7-Zip
+   10. Open EXTENSION_URL in browser (or nexusmods.com/games/site if not set)
 
 Usage:
     python release_extension.py GAME_ID [GAME_ID ...]
@@ -150,7 +151,11 @@ def release(game_id, open_browser, dry_run=False):
     extension_url = None
     if os.path.isfile(index_path):
         with open(index_path, encoding="utf-8") as f:
-            extension_url = extract_extension_url(f.read())
+            index_src = f.read()
+        extension_url = extract_extension_url(index_src)
+        if re.search(r'\bconst\s+debug\s*=\s*true\b', index_src):
+            print(f"  [{game_id}] ERROR - debug is set to true in index.js")
+            return False
 
     info = read_info_json(folder)
     if info is None:
