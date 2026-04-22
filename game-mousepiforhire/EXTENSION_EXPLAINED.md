@@ -8,16 +8,20 @@
 | Engine / Structure | Unity BepinEx/MelonLoader/Custom Loader Hybrid |
 | Author | ChemBoy1 |
 
+### Notes
+
+- Need custom BepInEx patch due to stripped methods
+- Cannot install BepInExConfigManager - causes BepInEx crash
+
 ## Key Identifiers
 
 | Property | Value |
 | --- | --- |
 | Game ID | `mousepiforhire` |
-| Executable | `XXX.exe` |
+| Executable | `MOUSE.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
-| Executable (GOG) | `XXX.exe` |
-| Executable (Demo) | `XXX.exe` |
-| Extension Page | XXX |
+| Executable (GOG) | `MOUSE.exe` |
+| Executable (Demo) | `MOUSE.exe` |
 
 ## Supported Stores
 
@@ -54,6 +58,7 @@ Mod types define where each category of mod gets deployed:
 | MELONPREFMAN_NAME | `MELONPREFMAN_ID` | high | `{gamePath}/MELONPREFMAN_PATH` |
 | ROOT_NAME | `ROOT_ID` | high | `{gamePath}` |
 | BEPINEX_NAME | `BEPINEX_ID` | low | `{gamePath}` |
+| BEP_LOADER_PATCH_NAME | `BEP_LOADER_PATCH_ID` | low | `{gamePath}/BEP_LOADER_PATCH_PATH` |
 | MELON_NAME | `MELON_ID` | low | `{gamePath}` |
 
 ## Registered Tools
@@ -70,8 +75,6 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Open Save Folder
 - Open BepInEx Config
 - Open BepInEx Log
-- Open MelonLoader Config
-- Open MelonLoader Log
 - Open PCGamingWiki Page
 - View Changelog
 - Submit Bug Report

@@ -5,7 +5,8 @@ Author: ChemBoy1
 Version: 0.1.0
 Date: 2026-04-18
 Notes:
-- 
+- Need custom BepInEx patch due to stripped methods
+- Cannot install BepInExConfigManager - causes BepInEx crash
 //////////////////////////////////////////*/
 
 //Import libraries
@@ -49,7 +50,7 @@ const EXEC_DEMO = EXEC;
 const EXEC_XBOX = 'gamelaunchhelper.exe';
 const EXEC_ALT = `${GAME_STRING_ALT}.exe`;
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Mouse%3A_P.I._For_Hire";
-const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1835"; //Nexus link to this extension. Used for links
 
 //feature toggles
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
@@ -86,20 +87,21 @@ const SAVE_FOLDERNAME = "Save";
 const hasUserIdFolder = false; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
 
 //Data to determine BepinEx/MelonLoader versions and URLs
+const ENGINE_VERSION = '6'; //Unreal Engine version - info only atm.
 const loaderChoice = false; //true if loader choice is enabled
 const recommendedLoader = 'bep'; // bep/mel - If loaderChoice false, this determines downloaded loader. Otherwise shows as "(Recommended)" in selector.
 const bepinexLoaderPatch = true; //should BepInEx Loader Patch be downloaded?
 const BEPINEX_BUILD = 'mono'; // 'mono' or 'il2cpp' - check for "il2cpp_data" folder
 const ARCH = 'x64'; //'x64' or 'x86' game architecture (64-bit or 32-bit)
-const BEP_VER = '5.4.23.4'; //set BepInEx version for mono URLs
+const BEP_VER = '5.4.23.4'; //* Used .4 to match the patch version
 const BEP_BE_VER = '755'; //set BepInEx build for BE IL2CPP URLs
 const BEP_BE_COMMIT = '3fab71a'; //git commit number for BE IL2CPP builds
 const BEPCFGMAN_VER = '18.4.1'; //set BepInExConfigManager version for direct URLs
-const allowBepCfgMan = true; //should BepInExConfigManager be downloaded (via notification)?
+const allowBepCfgMan = false; //! Causes BepInEx to crash if installed!
 const allowMelPrefMan = false; //should MelonPreferencesManager be downloaded (via notification)?
 const allowBepinexNexus = true; //allow Nexus Mods download of BepInEx/MelonLoader
 const allowMelonNexus = true; 
-const BEPINEX_PAGE_NO = 0; //7
+const BEPINEX_PAGE_NO = 0; //7 - not using this one, using patch instead (for now)
 const BEPINEX_FILE_NO = 0; //13
 const BEPINEX_DOMAIN = GAME_ID;
 const MELON_PAGE_NO = 0;
@@ -2358,7 +2360,7 @@ function applyGame(context, gameSpec) {
   }
   
   //register actions
-  if (BEPINEX_BUILD === 'il2cpp') {
+  /*if (BEPINEX_BUILD === 'il2cpp') {
     context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download Latest BepInEx BE (Browse)', () => {
       downloadBepinexManual(context.api, spec, false);
       }, () => {
@@ -2388,8 +2390,8 @@ function applyGame(context, gameSpec) {
         const state = context.api.getState();
         const gameId = selectors.activeGameId(state);
         return gameId === GAME_ID;
-    }); //*/
-  }
+    });
+  } //*/
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Data Folder', () => {
     GAME_PATH = getDiscoveryPath(context.api);
     const openPath = path.join(GAME_PATH, DATA_FOLDER);
@@ -2432,7 +2434,7 @@ function applyGame(context, gameSpec) {
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open MelonLoader Config', () => {
+  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open MelonLoader Config', () => {
     GAME_PATH = getDiscoveryPath(context.api);
     const openPath = path.join(GAME_PATH, MEL_CONFIG_FILEPATH);
     util.opn(openPath).catch(() => null);
@@ -2449,7 +2451,7 @@ function applyGame(context, gameSpec) {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
-  });
+  }); //*/
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
     util.opn(PCGAMINGWIKI_URL).catch(() => null);
   }, () => {

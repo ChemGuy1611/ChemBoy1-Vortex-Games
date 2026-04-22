@@ -86,6 +86,7 @@ const SAVE_FOLDERNAME = "XXX";
 const hasUserIdFolder = false; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
 
 //Data to determine BepinEx/MelonLoader versions and URLs
+const ENGINE_VERSION = '6'; //Unreal Engine version - info only atm.
 const loaderChoice = true; //true if loader choice is enabled
 const recommendedLoader = 'mel'; // bep/mel - If loaderChoice false, this determines downloaded loader. Otherwise shows as "(Recommended)" in selector.
 const BEPINEX_BUILD = 'il2cpp'; // 'mono' or 'il2cpp' - check for "il2cpp_data" folder
