@@ -2,7 +2,11 @@
 
 ## Future Improvements (Not Yet Released)
 
-- tool to launch inZOIMODKit (having difficulty with discovering the install location)
+- None Planned
+
+## [0.6.1] - 2026-04-22
+
+- Fixed: Several minor technical fixes
 
 ## [0.6.0] - 2026-02-03
 

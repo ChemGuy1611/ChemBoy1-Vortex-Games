@@ -83,7 +83,6 @@ Installers run in priority order (lower number = tested first). The first instal
 | `burglingnomes-plugin` | 33 |
 | `ASSETS_ID` | 37 |
 | `CUSTOM_ID` | 39 |
-| `SAVE_ID` | 47 |
 | `burglingnomes-fallback` | 49 |
 
 ## Registered Tools

@@ -41,6 +41,17 @@ Mod types define where each category of mod gets deployed:
 | BepInEx Mod | `pcbuildingsimulator-bepmods` | high | `{gamePath}/BepinEx/plugins` |
 | Save | `pcbuildingsimulator-save` | high | `{gamePath}/Saves` |
 
+## Mod Installers
+
+Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
+
+| Installer ID | Priority |
+| --- | --- |
+| `pcbuildingsimulator-root` | 8 |
+| `pcbuildingsimulator-bepcfgman` | 9 |
+| `pcbuildingsimulator-assemblydll` | 48 |
+| `pcbuildingsimulator-save` | 49 |
+
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:

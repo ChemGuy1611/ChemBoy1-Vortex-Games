@@ -82,7 +82,6 @@ Installers run in priority order (lower number = tested first). The first instal
 | `cairn-plugin` | 33 |
 | `cairn-assets` | 37 |
 | `cairn-custommod` | 39 |
-| `SAVE_ID` | 47 |
 | `cairn-fallback` | 49 |
 
 ## Registered Tools
