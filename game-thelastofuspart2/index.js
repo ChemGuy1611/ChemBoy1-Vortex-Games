@@ -12,6 +12,7 @@ const path = require('path');
 const template = require('string-template');
 //const { download, findModByFile, findDownloadIdByFile, resolveVersionByPattern, testRequirementVersion } = require('./downloader');
 const fsPromises = require('fs/promises');
+const React = require('react');
 
 //Specify all information about the game
 const STEAMAPP_ID = "2531310";
@@ -190,6 +191,9 @@ const REQUIREMENTS = [
     resolveVersion: (api) => resolveVersionByPattern(api, REQUIREMENTS[0]),
   },
 ]; //*/
+
+const LO_IMAGE_WIDTH = 96; //Width of the load order thumbnail image
+const LO_IMAGE_HEIGHT = LO_IMAGE_WIDTH * 0.5625;
 
 // FILLED IN FROM DATA ABOVE
 const spec = {
@@ -1567,9 +1571,8 @@ function main(context) {
       deserializeLoadOrder: async () => await deserializeLoadOrder(context),
       serializeLoadOrder: async (loadOrder) => await serializeLoadOrder(context, loadOrder),  
       toggleableEntries: true,
-      usageInstructions:`Drag and drop the mods on the left to change the order in which they load.   \n`
-                        +`${GAME_NAME} loads mods in the order you set from top to bottom.   \n`
-                        +`\n`,
+      usageInstructions: LoadOrderInstructions,
+      customItemRenderer: LoadOrderItemRenderer,
     });
   }
   context.once(() => { // put code here that should be run (once) when Vortex starts up
@@ -1626,6 +1629,90 @@ async function didPurge(api, profileId) { //run on mod purge
   clearChunksTxt(api);
   return Promise.resolve();
 }
+
+//React load order instructions renderer
+function LoadOrderInstructions() {
+  return React.createElement('div', null,
+    React.createElement('p', null,
+      `Drag and drop the mods on the left to change the order in which they load.   `,
+    ),
+    React.createElement('br', null),
+    React.createElement('p', null,
+      `${GAME_NAME} loads mods in the order you set from top to bottom.   `,
+    ),
+  );
+}
+
+//* React line item renderer for load order
+function LoadOrderItemRenderer(props) {
+  const { className, item } = props;
+  if (item?.loEntry === undefined) return null;
+
+  const { ListGroupItem, Checkbox } = require('react-bootstrap');
+  const { Icon, LoadOrderIndexInput, MainContext } = require('vortex-api');
+  const { useSelector, useDispatch } = require('react-redux');
+
+  const context = React.useContext(MainContext);
+  const dispatch = useDispatch();
+
+  const profile = useSelector((state) => selectors.activeProfile(state));
+  const loadOrder = useSelector((state) =>
+    util.getSafe(state, ['persistent', 'loadOrder', profile?.id], []),
+  );
+
+  const { loEntry, displayCheckboxes } = item;
+  const mods = useSelector((state) => util.getSafe(state, ['persistent', 'mods', GAME_ID], {}));
+  const pictureUrl = mods[loEntry.modId]?.attributes?.pictureUrl;
+  const currentIdx = loadOrder.findIndex((e) => e.id === loEntry.id) + 1;
+
+  const isLocked = (entry) => [true, 'true', 'always'].includes(entry?.locked);
+  const lockedCount = loadOrder.filter(isLocked).length;
+
+  const onApplyIndex = React.useCallback((idx) => {
+    if (currentIdx === idx) return;
+    const newLO = loadOrder.filter((e) => e.id !== loEntry.id);
+    newLO.splice(idx - 1, 0, loEntry);
+    dispatch(actions.setFBLoadOrder(profile.id, newLO));
+  }, [dispatch, profile, loadOrder, loEntry, currentIdx]);
+
+  const onToggle = React.useCallback((evt) => {
+    dispatch(actions.setFBLoadOrderEntry(profile.id, { ...loEntry, enabled: evt.target.checked }));
+  }, [dispatch, profile, loEntry]);
+
+  const classes = ['load-order-entry'];
+  if (className) classes.push(...className.split(' '));
+
+  return React.createElement(
+    ListGroupItem,
+    { key: loEntry.id, className: classes.join(' ') },
+    React.createElement(Icon, { className: 'drag-handle-icon', name: 'drag-handle' }),
+    React.createElement(LoadOrderIndexInput, {
+      className: 'load-order-index',
+      api: context.api,
+      item: loEntry,
+      currentPosition: currentIdx,
+      lockedEntriesCount: lockedCount,
+      loadOrder: loadOrder,
+      isLocked: isLocked,
+      onApplyIndex: onApplyIndex,
+    }),
+    React.createElement('div', { className: 'load-order-thumb-slot', style: { width: LO_IMAGE_WIDTH, height: LO_IMAGE_HEIGHT, marginRight: 4, flexShrink: 0 } },
+      pictureUrl ? React.createElement('img', {
+        className: 'load-order-thumb',
+        src: pictureUrl,
+        draggable: false,
+        style: { width: LO_IMAGE_WIDTH, height: LO_IMAGE_HEIGHT, objectFit: 'cover', borderRadius: 2, pointerEvents: 'none' },
+      }) : null,
+    ),
+    React.createElement('p', { className: 'load-order-name' }, loEntry.name),
+    displayCheckboxes ? React.createElement(Checkbox, {
+      className: 'entry-checkbox',
+      checked: loEntry.enabled,
+      disabled: isLocked(loEntry),
+      onChange: onToggle,
+    }) : null,
+  );
+} //*/
 
 //export to Vortex
 module.exports = {

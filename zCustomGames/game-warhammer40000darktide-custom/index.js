@@ -1,10 +1,12 @@
 const path = require("path");
 const { fs, actions, util, selectors, log } = require("vortex-api");
 const template = require("string-template");
+const { parseStringPromise } = require('xml2js');
+const React = require('react');
 
 const GAME_ID = "warhammer40kdarktide";
 const STEAMAPP_ID = "1361210";
-const MS_APPID = "FatsharkAB.Warhammer40000DarktideNew";
+const XBOXAPP_ID = "FatsharkAB.Warhammer40000DarktideNew";
 const XBOXEXECNAME = "launcher.launcher";
 const MOD_FILE_EXT = ".mod";
 const BAT_FILE_EXT = ".bat";
@@ -12,6 +14,7 @@ let GAME_PATH = '';
 let GAME_VERSION = '';
 let mod_update_all_profile = false; // for mod update to keep them in the load order and not uncheck them
 let updatemodid = undefined;
+let mod_install_name = undefined;
 let updating_mod = false; // used to see if it's a mod update or not
 const APPMANIFEST_FILE = 'appxmanifest.xml';
 
@@ -24,6 +27,8 @@ const CONFIG_FILE = path.join(CONFIG_PATH, "user_settings.config");
 const LO_FILE = "mod_load_order.txt";
 const MOD_FOLDER = "mods";
 const DMF_FOLDER = "dmf";
+const LO_IMAGE_WIDTH = 96; //Width of the load order thumbnail image
+const LO_IMAGE_HEIGHT = LO_IMAGE_WIDTH * 0.5625;
 const DML_FILE = "toggle_darktide_mods.bat";
 const BINARIES_ID = 'darktide-binaries';
 const BINARIES_NAME = 'Binaries';
@@ -135,7 +140,7 @@ function isFile(file) {
 
 //Find game installation directory
 function makeFindGame() {
-  return () => util.GameStoreHelper.findByAppId([STEAMAPP_ID, MS_APPID])
+  return () => util.GameStoreHelper.findByAppId([STEAMAPP_ID, XBOXAPP_ID])
     .then((game) => game.gamePath);
 }
 
@@ -631,6 +636,8 @@ function main(context) {
     deserializeLoadOrder: async () => await deserializeLoadOrder(context),
     serializeLoadOrder: async (loadOrder) => await serializeLoadOrder(context, loadOrder),
     toggleableEntries: true,
+    usageInstructions: LoadOrderInstructions,
+    customItemRenderer: LoadOrderItemRenderer,
   });
 
   //register mod types
@@ -807,6 +814,94 @@ async function toolbar(api) {
     });
   }
 }
+
+//React load order instructions renderer
+function LoadOrderInstructions() {
+  return React.createElement('div', null,
+    React.createElement('p', null,
+      'Drag and drop the mods on the left to change the order in which they load.',
+    ),
+    React.createElement('br', null),
+    React.createElement('p', null,
+      'Warhammer 40,000: Darktide loads mods in alphanumerical order, so Vortex prefixes the folder names with "AAA, AAB, AAC, ..." to ensure they load in the order you set here. The number in the left column represents the overwrite order. Changes from mods with higher numbers take priority over mods that make similar edits.',
+    ),
+    React.createElement('br', null),
+    React.createElement('p', null,
+      'YOU MUST DEPLOY MODS AFTER CHANGING THE ORDER TO APPLY CHANGES! - This is required to rename the folders for the correct order.',
+    ),
+  );
+}
+
+//* React line item renderer for load order
+function LoadOrderItemRenderer(props) {
+  const { className, item } = props;
+  if (item?.loEntry === undefined) return null;
+
+  const { ListGroupItem, Checkbox } = require('react-bootstrap');
+  const { Icon, LoadOrderIndexInput, MainContext } = require('vortex-api');
+  const { useSelector, useDispatch } = require('react-redux');
+
+  const context = React.useContext(MainContext);
+  const dispatch = useDispatch();
+
+  const profile = useSelector((state) => selectors.activeProfile(state));
+  const loadOrder = useSelector((state) =>
+    util.getSafe(state, ['persistent', 'loadOrder', profile?.id], []),
+  );
+
+  const { loEntry, displayCheckboxes } = item;
+  const mods = useSelector((state) => util.getSafe(state, ['persistent', 'mods', GAME_ID], {}));
+  const pictureUrl = mods[loEntry.modId]?.attributes?.pictureUrl;
+  const currentIdx = loadOrder.findIndex((e) => e.id === loEntry.id) + 1;
+
+  const isLocked = (entry) => [true, 'true', 'always'].includes(entry?.locked);
+  const lockedCount = loadOrder.filter(isLocked).length;
+
+  const onApplyIndex = React.useCallback((idx) => {
+    if (currentIdx === idx) return;
+    const newLO = loadOrder.filter((e) => e.id !== loEntry.id);
+    newLO.splice(idx - 1, 0, loEntry);
+    dispatch(actions.setFBLoadOrder(profile.id, newLO));
+  }, [dispatch, profile, loadOrder, loEntry, currentIdx]);
+
+  const onToggle = React.useCallback((evt) => {
+    dispatch(actions.setFBLoadOrderEntry(profile.id, { ...loEntry, enabled: evt.target.checked }));
+  }, [dispatch, profile, loEntry]);
+
+  const classes = ['load-order-entry'];
+  if (className) classes.push(...className.split(' '));
+
+  return React.createElement(
+    ListGroupItem,
+    { key: loEntry.id, className: classes.join(' ') },
+    React.createElement(Icon, { className: 'drag-handle-icon', name: 'drag-handle' }),
+    React.createElement(LoadOrderIndexInput, {
+      className: 'load-order-index',
+      api: context.api,
+      item: loEntry,
+      currentPosition: currentIdx,
+      lockedEntriesCount: lockedCount,
+      loadOrder: loadOrder,
+      isLocked: isLocked,
+      onApplyIndex: onApplyIndex,
+    }),
+    React.createElement('div', { className: 'load-order-thumb-slot', style: { width: LO_IMAGE_WIDTH, height: LO_IMAGE_HEIGHT, marginRight: 4, flexShrink: 0 } },
+      pictureUrl ? React.createElement('img', {
+        className: 'load-order-thumb',
+        src: pictureUrl,
+        draggable: false,
+        style: { width: LO_IMAGE_WIDTH, height: LO_IMAGE_HEIGHT, objectFit: 'cover', borderRadius: 2, pointerEvents: 'none' },
+      }) : null,
+    ),
+    React.createElement('p', { className: 'load-order-name' }, loEntry.name),
+    displayCheckboxes ? React.createElement(Checkbox, {
+      className: 'entry-checkbox',
+      checked: loEntry.enabled,
+      disabled: isLocked(loEntry),
+      onChange: onToggle,
+    }) : null,
+  );
+} //*/
 
 module.exports = {
   default: main,

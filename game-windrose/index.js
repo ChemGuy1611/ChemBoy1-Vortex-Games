@@ -2594,7 +2594,7 @@ function LoadOrderItemRenderer(props) {
   const { className, item } = props;
   if (item?.loEntry === undefined) return null;
 
-  const { ListGroupItem } = require('react-bootstrap');
+  const { ListGroupItem, Checkbox } = require('react-bootstrap');
   const { Icon, LoadOrderIndexInput, MainContext } = require('vortex-api');
   const { useSelector, useDispatch } = require('react-redux');
 
@@ -2606,7 +2606,7 @@ function LoadOrderItemRenderer(props) {
     util.getSafe(state, ['persistent', 'loadOrder', profile?.id], []),
   );
 
-  const { loEntry } = item;
+  const { loEntry, displayCheckboxes } = item;
   const mods = useSelector((state) => util.getSafe(state, ['persistent', 'mods', GAME_ID], {}));
   const pictureUrl = mods[loEntry.modId]?.attributes?.pictureUrl;
   const currentIdx = loadOrder.findIndex((e) => e.id === loEntry.id) + 1;
@@ -2620,6 +2620,10 @@ function LoadOrderItemRenderer(props) {
     newLO.splice(idx - 1, 0, loEntry);
     dispatch(actions.setFBLoadOrder(profile.id, newLO));
   }, [dispatch, profile, loadOrder, loEntry, currentIdx]);
+
+  const onToggle = React.useCallback((evt) => {
+    dispatch(actions.setFBLoadOrderEntry(profile.id, { ...loEntry, enabled: evt.target.checked }));
+  }, [dispatch, profile, loEntry]);
 
   const classes = ['load-order-entry'];
   if (className) classes.push(...className.split(' '));
@@ -2647,6 +2651,12 @@ function LoadOrderItemRenderer(props) {
       }) : null,
     ),
     React.createElement('p', { className: 'load-order-name' }, loEntry.name),
+    displayCheckboxes ? React.createElement(Checkbox, {
+      className: 'entry-checkbox',
+      checked: loEntry.enabled,
+      disabled: isLocked(loEntry),
+      onChange: onToggle,
+    }) : null,
   );
 } //*/
 

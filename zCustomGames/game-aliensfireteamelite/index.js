@@ -74,7 +74,7 @@ function main(context) {
     },
     details: {
       steamAppId: STEAMAPP_ID,
-	    stopPatterns: ['(^|/).*\.pak$'],
+	    stopPatterns: ['(^|/).*.pak$'],
     },
   });
 	return true;
