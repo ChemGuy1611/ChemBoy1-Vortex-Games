@@ -27,6 +27,7 @@ const CONFIG_FILE = path.join(CONFIG_PATH, "user_settings.config");
 const LO_FILE = "mod_load_order.txt";
 const MOD_FOLDER = "mods";
 const DMF_FOLDER = "dmf";
+const LO_ATTRIBUTE = "modName";
 const LO_IMAGE_WIDTH = 96; //Width of the load order thumbnail image
 const LO_IMAGE_HEIGHT = LO_IMAGE_WIDTH * 0.5625;
 const DML_FILE = "toggle_darktide_mods.bat";
@@ -266,13 +267,11 @@ function installMod(files) {
     (file) => file.indexOf(rootPath) !== -1 && 
     !file.endsWith(path.sep)
   );
-
   const MOD_ATTRIBUTE = {
     type: 'attribute',
-    key: 'modName',
+    key: LO_ATTRIBUTE,
     value: modName,
   };
-
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -441,7 +440,7 @@ async function deserializeLoadOrder(context) {
       return ('Manual Mod');
     }
     try {//Mod installed by Vortex, find mod where atrribute (from installer) matches folder in the load order
-      const modMatch = Object.values(mods).find(mod => (util.getSafe(mods[mod.id]?.attributes, ['modName'], '') === folder));
+      const modMatch = Object.values(mods).find(mod => (util.getSafe(mods[mod.id]?.attributes, [LO_ATTRIBUTE], '') === folder));
       if (modMatch) {
         let name = modMatch.attributes.customFileName ?? modMatch.attributes.logicalFileName ?? modMatch.attributes.name;
         name = name.replace(/(.zip|.rar|.7z)/gi, '');
@@ -453,6 +452,19 @@ async function deserializeLoadOrder(context) {
       return folder;
     } catch (err) {
       return folder;
+    }
+  }
+
+  // Get Vortex mod id using attribute from mod installer
+  async function getModId(folder) {
+    try {//find mod where atrribute (from installer) matches file in the load order
+      const modMatch = Object.values(mods).find(mod => (util.getSafe(mods[mod.id]?.attributes, [LO_ATTRIBUTE], '') === folder)); //find mod by folder name attribute
+      if (modMatch) {
+        return modMatch.id;
+      }
+      return undefined;
+    } catch (err) {
+      return undefined;
     }
   }
 
@@ -471,14 +483,12 @@ async function deserializeLoadOrder(context) {
       if (!modFolders.includes(folder)) { //remove lines that don't have corresponding mods in the file system
         return Promise.resolve(accum);
       }
-      accum.push(
-        {
-          id: folder,
-          name: `${await getModName(folder)} (${folder})`,
-          modId: await isVortexManaged(folder) ? folder : undefined,
-          enabled: !line.startsWith("--"),
-        }
-      );
+      accum.push({
+        id: folder,
+        name: `${await getModName(folder)} (${folder})`,
+        modId: await isVortexManaged(folder) ? await getModId(folder) : undefined,
+        enabled: !line.startsWith("--"),
+      });
       return Promise.resolve(accum);
       }, Promise.resolve([])
     )
@@ -489,7 +499,7 @@ async function deserializeLoadOrder(context) {
       loadOrder.push({
         id: folder,
         name: `${await getModName(folder)} (${folder})`,
-        modId: await isVortexManaged(folder) ? folder : undefined,
+        modId: await isVortexManaged(folder) ? await getModId(folder) : undefined,
         enabled: true,
       });
     }
@@ -637,7 +647,7 @@ function main(context) {
     serializeLoadOrder: async (loadOrder) => await serializeLoadOrder(context, loadOrder),
     toggleableEntries: true,
     usageInstructions: LoadOrderInstructions,
-    //customItemRenderer: LoadOrderItemRenderer,
+    customItemRenderer: LoadOrderItemRenderer,
   });
 
   //register mod types
