@@ -2,8 +2,8 @@
 Name: Borderlands 4 Vortex Extension
 Structure: UE5 (static exe)
 Author: ChemBoy1
-Version: 0.2.1
-Date: 2025-09-26
+Version: 0.3.0
+Date: 2026-04-22
 //////////////////////////////////////////////////*/
 
 //Import libraries
@@ -177,8 +177,24 @@ const SIGBYPASS_PAGE_NO = 1416;
 const SIGBYPASS_FILE_NO = 5719;
 const SIGBYPASS_DOMAIN = 'site';
 
+//Python SDK
+const SDK_ID = `${GAME_ID}-pysdk`;
+const SDK_NAME = "Python SDK";
+const SDK_FOLDER = "sdk_mods";
+const SDK_DLL = "unrealsdk.dll";
+const SDK_PATH = '.';
+const SDK_URL = `https://github.com/bl-sdk/oak2-mod-manager/releases/latest/download/oak2-sdk.zip`;
+const SDK_URL_ERR = `https://github.com/bl-sdk/oak2-mod-manager/releases`;
+
+const SDKMOD_ID = `${GAME_ID}-pysdkmod`;
+const SDKMOD_NAME = "SDK Mod";
+const SDKMOD_EXT = '.py';
+const SDKMOD_EXT2 = '.sdkmod';
+const SDKMOD_EXTS = [SDKMOD_EXT, SDKMOD_EXT2];
+const SDKMOD_PATH = SDK_FOLDER;
+
 const MOD_PATH_DEFAULT = PAK_PATH;
-const MODTYPE_FOLDERS = [LOGICMODS_PATH, SCRIPTS_PATH, PAK_PATH];
+const MODTYPE_FOLDERS = [LOGICMODS_PATH, SCRIPTS_PATH, PAK_PATH, SDKMOD_PATH];
 
 //Filled in from data above
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1428"; //Nexus link to this extension. Used for links
@@ -237,6 +253,18 @@ const spec = {
       "name": DLL_NAME,
       "priority": "high",
       "targetPath": path.join('{gamePath}', DLL_PATH)
+    },
+    {
+      "id": SDK_ID,
+      "name": SDK_NAME,
+      "priority": "high",
+      "targetPath": path.join('{gamePath}', SDK_PATH)
+    },
+    {
+      "id": SDKMOD_ID,
+      "name": SDKMOD_NAME,
+      "priority": "high",
+      "targetPath": path.join('{gamePath}', SDKMOD_PATH)
     },
     {
       "id": PAK_ID,
@@ -479,6 +507,106 @@ function installUe4ssCombo(files, fileName) {
       destination: path.join(file.substr(idx)),
     };
   });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Installer test for Fluffy Mod Manager files
+function testSdk(files, gameId) {
+  const isFile = files.some(file => (path.basename(file).toLowerCase() === SDK_DLL));
+  const isFolder = files.some(file => (path.basename(file).toLowerCase() === SDK_FOLDER));
+  let supported = (gameId === spec.game.id) && isFile && isFolder;
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Installer install Fluffy Mod Manger files
+function installSdk(files) {
+  const MOD_TYPE = SDK_ID;
+  const modFile = files.find(file => (path.basename(file).toLowerCase() === SDK_FOLDER));
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Test Fallback installer for SDK Mods
+function testSdkMod(files, gameId) {
+  const isMod = files.some(file => SDKMOD_EXTS.includes(path.extname(file).toLowerCase()));
+  let supported = (gameId === spec.game.id) && (isMod);
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Fallback installer for SDK Mods
+function installSdkMod(files, fileName) {
+  const MOD_TYPE = SDKMOD_ID;
+  const modFile = files.find(file => SDKMOD_EXTS.includes(path.extname(file).toLowerCase()));
+  let MOD_FOLDER = '.';
+  const idx = modFile.indexOf(path.basename(modFile));
+  const ROOT_PATH = path.basename(path.dirname(modFile));
+  const MOD_NAME = path.basename(fileName);
+  if (ROOT_PATH === '.') {
+    MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
+  }
+  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+  
+  // Remove empty directories
+  const filtered = files.filter(file =>
+    (!file.endsWith(path.sep))
+  );
+
+  let instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(MOD_FOLDER, file),
+    };
+  });
+  if ((path.extname(modFile).toLowerCase() === SDKMOD_EXT2)) { //index to .sdkmod file if it exists
+    instructions = filtered.map(file => {
+      return {
+        type: 'copy',
+        source: file,
+        destination: path.join(file.substr(idx)),
+      };
+    });
+  }
+
   instructions.push(setModTypeInstruction);
   return Promise.resolve({ instructions });
 }
@@ -1037,6 +1165,58 @@ function isSigBypassInstalled(api, spec) {
   return Object.keys(mods).some(id => mods[id]?.type === SIGBYPASS_ID);
 }
 
+//Check if SDK is installed
+function isSdkInstalled(api, spec) {
+  const state = api.getState();
+  const mods = state.persistent.mods[spec.game.id] || {};
+  return Object.keys(mods).some(id => mods[id]?.type === SDK_ID);
+}
+
+//* Function to SDK from GitHub
+async function downloadSdk(api, gameSpec, check = true) {
+  let isInstalled = isSdkInstalled(api, gameSpec);
+  if (!isInstalled || !check) {
+    const MOD_NAME = SDK_NAME;
+    const MOD_TYPE = SDK_ID;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
+    const GAME_DOMAIN = GAME_ID;
+    const URL = SDK_URL;
+    const ERR_URL = SDK_URL_ERR;
+    api.sendNotification({ //notification indicating install process
+      id: NOTIF_ID,
+      message: `Installing ${MOD_NAME}`,
+      type: 'activity',
+      noDismiss: true,
+      allowSuppress: false,
+    });
+    try {
+      const dlInfo = { //Download the mod
+        game: GAME_DOMAIN,
+        name: MOD_NAME,
+      };
+      const dlId = await util.toPromise(cb =>
+        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+      const modId = await util.toPromise(cb =>
+        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
+      const batched = [
+        actions.setModsEnabled(api, profileId, [modId], true, {
+          allowAutoDeploy: true,
+          installed: true,
+        }),
+        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
+      ];
+      util.batchDispatch(api.store, batched); // Will dispatch both actions
+    } catch (err) { //Show the user the download page if the download, install process fails
+      const errPage = ERR_URL;
+      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
+      util.opn(errPage).catch(() => null);
+    } finally {
+      api.dismissNotification(NOTIF_ID);
+    }
+  }
+} //*/
+
 //* Download UE4SS from GitHub page (user browse for download)
 async function downloadUe4ss(api, gameSpec) {
   let isInstalled = isUe4ssInstalled(api, gameSpec);
@@ -1552,6 +1732,7 @@ async function setup(discovery, api, gameSpec) {
   if (SIGBYPASS_REQUIRED === true) {
     await downloadSigBypass(api, gameSpec);
   }
+  //await downloadSdk(api, gameSpec);
   //await fs.ensureDirWritableAsync(path.join(GAME_PATH, MENU_PATH));
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
@@ -1625,7 +1806,9 @@ function applyGame(context, gameSpec) {
 
   //register mod installers
   context.registerInstaller(UE4SSCOMBO_ID, 25, testUe4ssCombo, installUe4ssCombo);
-  context.registerInstaller(LOGICMODS_ID, 27, testLogic, installLogic);
+  context.registerInstaller(SDK_ID, 26, testSdk, installSdk);
+  context.registerInstaller(SDKMOD_ID, 27, testSdkMod, installSdkMod);
+  context.registerInstaller(LOGICMODS_ID, 28, testLogic, installLogic);
   //29 is pak installer above
   context.registerInstaller(UE4SS_ID, 31, testUe4ss, installUe4ss);
   if (SIGBYPASS_REQUIRED === true) {
@@ -1640,6 +1823,13 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(BINARIES_ID, 49, testBinaries, installBinaries);
 
   //register actions
+  context.registerAction('mod-icons', 300, 'open-ext', {}, `Download ${SDK_NAME} Latest`, () => {
+    downloadSdk(context.api, spec, false);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Paks Folder', () => {
     GAME_PATH = getDiscoveryPath(context.api);
     const openPath = path.join(GAME_PATH, PAK_ALT_PATH);

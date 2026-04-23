@@ -4,6 +4,11 @@
 
 - tool to launch bl4-crypt (by Cr4nkSt4r, naked exe file)
 
+## [0.3.0] - 2026-04-22
+
+- Added: Support for PythonSDK and SDK mods.
+- Added: Button to download latest PythonSDK.
+
 ## [0.2.1] - 2025-09-26
 
 - Fixed Documents folder discovery to work correctly with OneDrive paths.

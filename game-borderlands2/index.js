@@ -592,7 +592,7 @@ async function downloadBlcmm(api, gameSpec) {
   }
 } //*/
 
-//* Function to auto-download Hotfix Merger from Nexus Mods
+//* Function to SDK from GitHub
 async function downloadSdk(api, gameSpec) {
   let isInstalled = isSdkInstalled(api, gameSpec);
   if (!isInstalled) {

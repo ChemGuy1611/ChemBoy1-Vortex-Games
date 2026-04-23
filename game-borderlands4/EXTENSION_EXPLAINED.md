@@ -41,6 +41,8 @@ Mod types define where each category of mod gets deployed:
 | UE4SS_NAME | `UE4SS_ID` | high | `{gamePath}/OakGame/Binaries/Win64` |
 | SCRIPTS_NAME | `SCRIPTS_ID` | high | `{gamePath}/SCRIPTS_PATH` |
 | DLL_NAME | `DLL_ID` | high | `{gamePath}/DLL_PATH` |
+| SDK_NAME | `SDK_ID` | high | `{gamePath}/SDK_PATH` |
+| SDKMOD_NAME | `SDKMOD_ID` | high | `{gamePath}/SDKMOD_PATH` |
 | Paks (no ~mods) | `borderlands4-pak` | low | `{gamePath}/OakGame/Content/Paks` |
 | Root Game Folder | `borderlands4-root` | high | `{gamePath}` |
 | Content Folder | `borderlands4-contentfolder` | high | `{gamePath}/OakGame` |
@@ -54,7 +56,9 @@ Installers run in priority order (lower number = tested first). The first instal
 | --- | --- |
 | `ue5-pak-installer` | 29 |
 | `UE4SSCOMBO_ID` | 25 |
-| `LOGICMODS_ID` | 27 |
+| `SDK_ID` | 26 |
+| `SDKMOD_ID` | 27 |
+| `LOGICMODS_ID` | 28 |
 | `UE4SS_ID` | 31 |
 | `SIGBYPASS_ID` | 32 |
 | `SCRIPTS_ID` | 33 |
@@ -75,6 +79,7 @@ These tools appear in Vortex's Tools panel when this game is active:
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
+- Download ${SDK_NAME} Latest
 - Open Paks Folder
 - Open Binaries Folder
 - Open UE4SS Mods Folder
