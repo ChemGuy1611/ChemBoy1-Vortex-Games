@@ -698,6 +698,15 @@ function main(context) {
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, `Open ${LO_FILE}`, () => {
+    GAME_PATH = getDiscoveryPath(context.api);
+    const openPath = path.join(GAME_PATH, MOD_FOLDER, LO_FILE);
+    util.opn(openPath).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open user_settings.config', () => {
     util.opn(CONFIG_FILE).catch(() => null);
   }, () => {
