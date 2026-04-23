@@ -86,15 +86,28 @@ TEMPLATE_SHORT_NAMES = [t[len("template-"):] for t in TEMPLATES]
 # ── Steam ─────────────────────────────────────────────────────────────────────
 
 def steam_search(game_name):
-    """Search Steam Community for a game. Returns (appid_str, name) or (None, None)."""
+    """Search Steam Community for a game. Returns (appid_str, name) or (None, None).
+    Prefers exact title match, then all-words-match, then falls back to the top
+    result — Steam ranks by popularity, so franchise year variants (e.g. CMS 2021
+    vs 2026) would otherwise shadow the intended release."""
     clean = re.sub(r"[^\w\s]", " ", game_name).strip()
     url = "https://steamcommunity.com/actions/SearchApps/{}".format(
         urllib.parse.quote(clean)
     )
     try:
         results = json.loads(http_get(url))
-        if results:
-            return str(results[0]["appid"]), results[0]["name"]
+        if not results:
+            return None, None
+        query_norm = normalize_game_name(game_name)
+        for r in results:
+            if normalize_game_name(r["name"]) == query_norm:
+                return str(r["appid"]), r["name"]
+        query_words = query_norm.split()
+        for r in results:
+            r_norm = normalize_game_name(r["name"])
+            if all(w in r_norm for w in query_words):
+                return str(r["appid"]), r["name"]
+        return str(results[0]["appid"]), results[0]["name"]
     except Exception as e:
         print(f"    Steam search error: {e}")
     return None, None

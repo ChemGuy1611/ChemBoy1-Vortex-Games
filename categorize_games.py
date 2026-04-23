@@ -13,6 +13,7 @@ Usage:
 """
 
 import os
+import re
 import argparse
 
 from vortex_utils import REPO_ROOT, LISTS_DIR, list_game_ids
