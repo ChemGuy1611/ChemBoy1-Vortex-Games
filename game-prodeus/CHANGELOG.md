@@ -4,6 +4,10 @@
 
 - None
 
+## [0.1.1] - 2026-04-23
+
+- Multiple fixes and enhancements
+
 ## [0.1.0] - 2026-04-08
 
 - Initial release

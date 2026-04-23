@@ -2,8 +2,8 @@
 Name: Prodeus Vortex Extension
 Structure: Unity BepinEx/MelonLoader/Custom Loader Hybrid
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2026-04-08
+Version: 0.1.1
+Date: 2026-04-23
 Notes:
 - 
 //////////////////////////////////////////*/

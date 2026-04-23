@@ -168,6 +168,12 @@ const GUN_EDITOR_NAME = "Gear n Gun Editor";
 const GUN_EDITOR_EXEC = "main.py";
 const GUN_EDITOR_EXEC_PATH = path.join(BINARIES_PATH, 'BL4-Gear-N-Gun-Editor', GUN_EDITOR_EXEC);
 
+//Item and Save Editor
+const ITEM_EDITOR_ID = `${GAME_ID}-itemeditor`;
+const ITEM_EDITOR_NAME = "Item and Save Editor";
+const ITEM_EDITOR_EXEC = "Legit-Builder-Portable.exe";
+const ITEM_EDITOR_EXEC_PATH = path.join(BINARIES_PATH, ITEM_EDITOR_EXEC);
+
 //Signature Bypass
 const SIGBYPASS_ID = `${GAME_ID}-sigbypass`;
 const SIGBYPASS_NAME = "Sig Bypass";
@@ -191,6 +197,7 @@ const SDKMOD_NAME = "SDK Mod";
 const SDKMOD_EXT = '.py';
 const SDKMOD_EXT2 = '.sdkmod';
 const SDKMOD_EXTS = [SDKMOD_EXT, SDKMOD_EXT2];
+const SDKMOD_FILE = '__init__.py';
 const SDKMOD_PATH = SDK_FOLDER;
 
 const MOD_PATH_DEFAULT = PAK_PATH;
@@ -339,6 +346,19 @@ let tools = [
     shell: true,
     //parameters: [],
   }, //*/
+  {
+    id: ITEM_EDITOR_ID,
+    name: ITEM_EDITOR_NAME,
+    logo: `itemeditor.png`,
+    //queryPath: () => BINARIES_PATH,
+    executable: () => ITEM_EDITOR_EXEC_PATH,
+    requiredFiles: [ITEM_EDITOR_EXEC_PATH],
+    detach: true,
+    relative: true,
+    exclusive: true,
+    shell: true,
+    //parameters: [],
+  },
 ];
 
 // BASIC EXTENSION FUNCTIONS ///////////////////////////////////////////////////

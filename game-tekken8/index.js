@@ -2,8 +2,8 @@
 Name: TEKKEN 8 Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2026-04-19
+Version: 0.1.1
+Date: 2026-04-23
 Notes:
 - 
 ////////////////////////////////////////////////*/

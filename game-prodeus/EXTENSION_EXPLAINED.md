@@ -49,6 +49,7 @@ Mod types define where each category of mod gets deployed:
 | MELON_MODS_NAME | `MELON_MODS_ID` | high | `{gamePath}/MELON_MODS_PATH` |
 | MELON_PLUGINS_NAME | `MELON_PLUGINS_ID` | high | `{gamePath}/MELON_PLUGINS_PATH` |
 | MELON_CONFIG_NAME | `MELON_CONFIG_ID` | high | `{gamePath}/MELON_CONFIG_PATH` |
+| MELON_USERLIB_NAME | `MELON_USERLIB_ID` | high | `{gamePath}/MELON_USERLIB_PATH` |
 | BEPCFGMAN_NAME | `BEPCFGMAN_ID` | high | `{gamePath}/BEPCFGMAN_PATH` |
 | MELONPREFMAN_NAME | `MELONPREFMAN_ID` | high | `{gamePath}/MELONPREFMAN_PATH` |
 | ROOT_NAME | `ROOT_ID` | high | `{gamePath}` |
@@ -71,7 +72,6 @@ Installers run in priority order (lower number = tested first). The first instal
 | `prodeus-plugin` | 33 |
 | `ASSETS_ID` | 37 |
 | `CUSTOM_ID` | 39 |
-| `SAVE_ID` | 47 |
 | `prodeus-fallback` | 49 |
 
 ## Registered Tools
@@ -85,9 +85,7 @@ These tools appear in Vortex's Tools panel when this game is active:
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - Download Latest MelonLoader
-- Open Data Folder
-- Open Save Folder
-- Open Config Folder
+- Download MelonPreferencesManager
 - Open MelonLoader Config
 - Open MelonLoader Log
 - Open PCGamingWiki Page

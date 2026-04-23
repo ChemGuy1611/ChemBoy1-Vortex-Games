@@ -2,8 +2,8 @@
 Name: PRAGMATA Vortex Extension
 Structure: Fluffy + REFramework (RE Engine)
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2026-XX-XX
+Version: 0.1.1
+Date: 2026-04-23
 Notes:
 - 
 ///////////////////////////////////////////*/
@@ -41,14 +41,14 @@ const FLUFFY_FOLDER = "PRAGMATA";
 const FLUFFY_FOLDER_DEMO = "PRAGMATA_Demo";
 const ROOT_FILES = ['nvngx_dlss.dll', "dstoragecore.dll", "dstorage.dll", "amd_fidelityfx_dx12.dll", "amd_ags_x64.dll", "libxess.dll"];
 const ROOT_EXTS = [".exe"];
-const REF_PAGE_NO = 0;
-const REF_FILE_NO = 0;
+const REF_PAGE_NO = 40;
+const REF_FILE_NO = 68;
 const REF_DOMAIN = GAME_ID;
 const CONFIG_PATH = '.';
 const CONFIG_FILE = 'config.ini';
 
 //feature toggles
-const useRefNightly = true; //toggle for using the REFramework nightly instead of Nexus release
+const useRefNightly = false; //toggle for using the REFramework nightly instead of Nexus release
 const hasXbox = false; //toggle for Xbox version logic
 const reZip = true; //NOT WORKING YET - KEEP AS TRUE FOR NOW - set to true to re-zip Fluffy Mods (possibly not necessary for FLUFFY v3.069+)
 //could index on modinfo.ini to avoid extra top level folder. should work?
