@@ -4,6 +4,10 @@
 
 - tool to launch bl4-crypt (by Cr4nkSt4r, naked exe file)
 
+## [0.3.1] - 2026-04-23
+
+- Added: Launch tool for Item and Save Editor.
+
 ## [0.3.0] - 2026-04-22
 
 - Added: Support for PythonSDK and SDK mods.
