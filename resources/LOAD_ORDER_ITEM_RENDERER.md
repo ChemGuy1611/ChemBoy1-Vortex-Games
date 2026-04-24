@@ -66,6 +66,63 @@ ListGroupItem .load-order-entry [.selected ...]
  `-- Checkbox           .entry-checkbox        only if displayCheckboxes = true
 ```
 
+### What is ListGroupItem?
+
+`ListGroupItem` from react-bootstrap renders as an HTML `<li>` element. It is
+designed to be a child of `ListGroup`, which renders as a `<ul>`. In the FBLO
+page, `DraggableList` wraps every row inside a `<ListGroup>`, so the real DOM
+structure is:
+
+```html
+<ul>          <!-- ListGroup (DraggableList.tsx:71) -->
+  <div>         <!-- react-dnd drag-preview wrapper (DraggableListItem.tsx:164) -->
+    <div>         <!-- react-dnd drag-source / drop-target ref (DraggableListItem.tsx:165) -->
+      <li class="list-group-item load-order-entry ...">  <!-- ListGroupItem -->
+        ...row children...
+      </li>
+    </div>
+  </div>
+</ul>
+```
+
+The two `<div>` wrappers are injected by `DraggableListItem.tsx`. They are
+invisible visually -- react-dnd attaches refs to them to intercept mouse events
+for dragging. Your renderer never sees them; it only provides the `<li>` via
+`ListGroupItem`.
+
+**Why `ListGroupItem` instead of a plain `<div>`?**
+
+Vortex's load order page is styled around react-bootstrap's list-group system.
+`ListGroupItem` carries the `list-group-item` CSS class, which applies the
+card-like row appearance, hover highlight, and border handling automatically.
+A plain `<div>` would look inconsistent with the rest of the Vortex UI and
+require re-implementing those styles manually.
+
+**Props passed to it:**
+
+| Prop | Value | Notes |
+| --- | --- | --- |
+| `key` | `loEntry.id` | React reconciliation key; must be unique within the list |
+| `className` | `classes.join(' ')` | Merged string; see below |
+
+**How `className` gets built:**
+
+`DraggableListItem.tsx` computes its own classes (`[]` normally, `["selected"]`
+when the user clicks the row, `["dragging"]` while it is being dragged) and
+passes them to your renderer as the `className` prop. The renderer prepends its
+own base class before joining:
+
+```js
+const classes = ['load-order-entry'];
+if (className) classes.push(...className.split(' '));
+// result: "load-order-entry", "load-order-entry selected", "load-order-entry dragging", etc.
+```
+
+If you replace rather than merge -- e.g. `className: 'load-order-entry'` --
+the selection highlight and drag-opacity styles injected by FBLO will stop
+working, because those styles are applied via the `selected` / `dragging`
+class that `DraggableListItem` injects.
+
 The thumbnail slot `div` is always exactly 96x54 px whether or not a thumbnail
 exists. This keeps the name column aligned across all rows even when some mods
 have no image.
