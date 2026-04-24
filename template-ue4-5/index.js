@@ -2080,7 +2080,7 @@ function applyGame(context, gameSpec) {
         //defaultPrimary: true,
         //parameters: [],
       }, //*/
-      {
+      /*{
         id: `${GAME_ID}-customlaunchxbox`,
         name: `Custom Launch`,
         logo: `exec.png`,

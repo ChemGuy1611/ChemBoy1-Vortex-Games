@@ -2077,6 +2077,19 @@ function applyGame(context, gameSpec) {
         //parameters: [],
       }, //*/
       {
+        id: `${GAME_ID}-customlaunchdemo`,
+        name: `Custom Launch (Demo)`,
+        logo: `exec.png`,
+        executable: () => EXEC_DEMO,
+        requiredFiles: [EXEC_DEMO],
+        detach: true,
+        relative: true,
+        exclusive: true,
+        shell: true,
+        //defaultPrimary: true,
+        //parameters: [],
+      }, //*/
+      /*{
         id: `${GAME_ID}-customlaunchxbox`,
         name: `Custom Launch`,
         logo: `exec.png`,
@@ -2254,7 +2267,7 @@ function applyGame(context, gameSpec) {
     context.registerInstaller(MODKITMOD_ID, 25, testModKitMod, installModKitMod);
   }
   context.registerInstaller(UE4SSCOMBO_ID, 26, testUe4ssCombo, installUe4ssCombo);
-  context.registerInstaller(LOGICMODS_ID, 27, testLogic, installLogic);
+  //context.registerInstaller(LOGICMODS_ID, 27, testLogic, installLogic);
   context.registerInstaller(UE5_SORTABLE_ID, 29, testPak, (files) => installPak(context.api, files)); //Pak installer
   context.registerInstaller(UE4SS_ID, 31, testUe4ss, installUe4ss);
   if (SIGBYPASS_REQUIRED === true) {
