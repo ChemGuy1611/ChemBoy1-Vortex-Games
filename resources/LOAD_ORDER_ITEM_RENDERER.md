@@ -10,7 +10,7 @@ Vortex's **File-Based Load Order** (FBLO) system manages a sorted list of mods a
 renders each row in the Load Order page using a **React component** you provide.
 That component is called `customItemRenderer`.
 
-```
+```text
 Vortex renders the FBLO page
   -> for each entry in loadOrder
        -> calls customItemRenderer({ className, item })
@@ -56,7 +56,7 @@ Key points:
 
 Each load-order row is a `ListGroupItem` (from react-bootstrap) containing:
 
-```
+```text
 ListGroupItem .load-order-entry [.selected ...]
  |-- Icon               .drag-handle-icon     drag handle on the left
  |-- LoadOrderIndexInput .load-order-index     numeric position input
@@ -187,7 +187,7 @@ happens at **deploy time**: `loadOrderPrefix` / `makePrefix`
 ([index.js:1741-1750](index.js#L1741)) compute a letter prefix from each entry's
 position in the list:
 
-```
+```text
 position 1  -> prefix "AAA"
 position 2  -> prefix "AAB"
 position 3  -> prefix "AAC"
@@ -485,7 +485,7 @@ and fires `onApplyIndex` on Enter.
 
 **The thumbnail slot:**
 
-```
+```text
 div .load-order-thumb-slot  (always width=96, height=54)
   img .load-order-thumb     (rendered only if pictureUrl is present)
   [nothing]                 (if pictureUrl is absent -- slot still occupies space)

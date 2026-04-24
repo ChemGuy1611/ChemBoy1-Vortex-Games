@@ -4,6 +4,10 @@
 
 - None
 
+## [0.3.0] - 2026-04-24
+
+- Added: Dedicated Server support - registered as a separate game
+
 ## [0.2.0] - 2026-04-21
 
 - Added: Pak installer will now ask if you want to install to the Client (SP) or Server (MP) Paks folder.

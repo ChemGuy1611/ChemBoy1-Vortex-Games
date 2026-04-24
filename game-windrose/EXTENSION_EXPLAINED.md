@@ -10,7 +10,8 @@
 
 ### Notes
 
-- Only demo out now. Update for full release when available, if needed.
+- User selects where to install pak mods (SP or MP)
+- Dedicated Server registered as a separate game
 
 ## Key Identifiers
 
@@ -45,6 +46,10 @@ Mod types define where each category of mod gets deployed:
 | PAK_ALT_NAME | `PAK_ALT_ID` | high | `{gamePath}/PAK_ALT_PATH` |
 | ROOT_NAME | `ROOT_ID` | high | `{gamePath}` |
 | ROOTSUB_NAME | `ROOTSUB_ID` | high | `{gamePath}/ROOTSUB_PATH` |
+| BINARIES_NAME | `BINARIES_ID` | high | `{gamePath}/BINARIES_PATH` |
+| UE4SS | `windrose-ue4ss` | low | `{gamePath}/BINARIES_PATH` |
+| windrose-scripts | `windrose-scripts` | low | `{gamePath}/SCRIPTS_PATH` |
+| UE4SS DLL Mod | `windrose-ue4ssdll` | low | `{gamePath}/DLL_PATH` |
 
 ## Auto-Downloaded Dependencies
 

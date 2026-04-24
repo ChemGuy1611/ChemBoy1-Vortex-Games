@@ -266,6 +266,9 @@ const PARAMETERS = [PARAMETERS_STRING];
 const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 let MODTYPE_FOLDERS = [path.join(LOGICMODS_PATH, LOGICMODS_FOLDER), PAK_PATH, PAK_ALT_PATH];
+if (hasModKit) {
+  MODTYPE_FOLDERS.push(MODKITMOD_PATH);
+}
 
 // -- END EDIT ZONE -- /////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -342,6 +345,15 @@ const spec = {
     "names": []
   }
 };
+
+if (hasModKit) {
+  spec.modTypes.push({
+    "id": MODKITMOD_ID,
+    "name": MODKITMOD_NAME,
+    "priority": "high",
+    "targetPath": path.join('{gamePath}', MODKITMOD_PATH)
+  });
+}
 
 // BASIC EXTENSION FUNCTIONS ///////////////////////////////////////////////////
 
@@ -2203,19 +2215,6 @@ function applyGame(context, gameSpec) {
     );
   }
 
-  //register ModKit modtype
-  if (hasModKit === true) {
-    context.registerModType(MODKITMOD_ID, 60, 
-      (gameId) => {
-        var _a;
-        return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-      }, 
-      (game) => pathPattern(context.api, game, path.join('{gamePath}', MODKITMOD_PATH)),
-      () => Promise.resolve(false), 
-      { name: MODKITMOD_NAME }
-    );
-  }
-
   //* register modtypes with partition checks
   context.registerModType(CONFIG_ID, 62, 
     (gameId) => {
@@ -2290,7 +2289,7 @@ function applyGame(context, gameSpec) {
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open UE4SS Mods Folder', () => {
     GAME_PATH = getDiscoveryPath(context.api);
-    util.opn( path.join(GAME_PATH, SCRIPTS_PATH)).catch(() => null);
+    util.opn(path.join(GAME_PATH, SCRIPTS_PATH)).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
@@ -2402,7 +2401,6 @@ function main(context) {
         callback: (loadOrder) => {
           if (previousLO === undefined) previousLO = loadOrder;
           if (loadOrder === previousLO) return;
-          //context.api.store.dispatch(actions.setDeploymentNecessary(spec.game.id, true));
           requestDeployment(context.api, spec);
           previousLO = loadOrder;
         },
