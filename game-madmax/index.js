@@ -1,9 +1,9 @@
 /*///////////////////////////////////////////
-Name: XXX Vortex Extension
+Name: Mad Max Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2026-XX-XX
+Date: 2026-04-24
 Notes:
 - 
 ///////////////////////////////////////////*/
@@ -25,29 +25,29 @@ const DOCUMENTS = util.getVortexPath("documents");
 //const LOCALAPPDATA = util.getVortexPath("localAppData");
 
 //Specify all the information about the game
-const GAME_ID = "XXX";
-const STEAMAPP_ID = "XXX";
-const STEAMAPP_ID_DEMO = "XXX";
-const EPICAPP_ID = "XXX";
-const GOGAPP_ID = "XXX";
-const XBOXAPP_ID = "XXX";
+const GAME_ID = "madmax";
+const STEAMAPP_ID = "234140"; // https://steamdb.info/app/234140/
+const STEAMAPP_ID_DEMO = null;
+const EPICAPP_ID = null;
+const GOGAPP_ID = "1296467424"; // https://www.gogdb.org/product/1296467424
+const XBOXAPP_ID = null;
 const XBOXEXECNAME = "XXX";
 const XBOX_PUB_ID = "XXX"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
 const INSTALL_HIVE = 'HKEY_LOCAL_MACHINE'; //typically HKEY_LOCAL_MACHINE or HKEY_CURRENT_USER
 const INSTALL_KEY = `SOFTWARE\\WOW6432Node\\XXX\\XXX`; //for finding install in registry - requires winapi-bindings
 const INSTALL_VALUE = "XXX"; //often InstallDir or InstallPath
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, GOGAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
-const GAME_NAME = "XXX";
-const GAME_NAME_SHORT = "XXX";
-const BINARIES_PATH = path.join('.');
-const EXEC_NAME = "XXX.exe";
-const EXEC = path.join(BINARIES_PATH, EXEC_NAME);
+const GAME_NAME = "Mad Max";
+const GAME_NAME_SHORT = "Mad Max";
+const BINARIES_PATH ='.';
+const EXEC_NAME = "MadMax.exe";
+const EXEC = EXEC_NAME;
 const EXEC_EGS = EXEC; //change other versions if different than Steam/default
 const EXEC_GOG = EXEC;
 const EXEC_DEMO = EXEC;
-const PCGAMINGWIKI_URL = "XXX";
-const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Mad_Max";
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1844"; //Nexus link to this extension. Used for links
 
 //feature toggles
 const hasLoader = false; //true if game needs a mod loader
@@ -55,28 +55,25 @@ const hasXbox = false; //toggle for Xbox version logic
 const multiExe = false; //set to true if there are multiple executable names
 const multiModPath = false; //set to true if there are multiple possible mod paths (i.e. different path for Xbox version)
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
-const needsModInstaller = true; //set to true if standard mods should run through an installer - set false to have mods installed to the mods folder without any processing
+const needsModInstaller = false; //set to true if standard mods should run through an installer - set false to have mods installed to the mods folder without any processing
 const rootInstaller = true; //enable root installer. Set false if you need to avoid installer collisions
-const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
+const fallbackInstaller = false; //enable fallback installer. Set false if you need to avoid installer collisions
 const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
 const hasUserIdFolder = false; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
-let binariesInstaller = false;
-if (BINARIES_PATH !== '.') {
-    binariesInstaller = true; //only enable Binaries installer if not in root
-}
+const binariesInstaller = false;
 const debug = false; //toggle for debug mode
 
 //info for modtypes, installers, tools, and actions
-const DATA_FOLDER = 'XXX';
-const ROOT_FOLDERS = [DATA_FOLDER];
-const ROOTSUB_FOLDERS = [];
+const DATA_FOLDER = 'dropzone';
+const ROOT_FOLDERS = [DATA_FOLDER, 'archives_win64', 'dlc_win64'];
+const ROOTSUB_FOLDERS = ['locations', 'global', 'videos'];
 const ROOTSUB_PATH = DATA_FOLDER;
 
 const CONFIGMOD_LOCATION = DOCUMENTS;
 const SAVEMOD_LOCATION = DOCUMENTS;
-const APPDATA_FOLDER = path.join('XXX');
-const CONFIG_FOLDERNAME = 'XXX';
-const SAVE_FOLDERNAME = 'XXX';
+const APPDATA_FOLDER = path.join('WB Games', 'Mad Max');
+const CONFIG_FOLDERNAME = 'Saves';
+const SAVE_FOLDERNAME = 'Backup Saves';
 
 let GAME_PATH = '';
 let GAME_VERSION = '';
@@ -92,7 +89,7 @@ const XBOX_FILE = APPMANIFEST_FILE;
 
 const MOD_ID = `${GAME_ID}-mod`;
 const MOD_NAME = "Mod";
-const MOD_PATH = "mods";
+const MOD_PATH = ".";
 const MOD_PATH_XBOX = MOD_PATH;
 const MOD_EXTS = ['.XXX'];
 
@@ -128,14 +125,14 @@ if (hasUserIdFolder) {
   }
 }
 const SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
-const SAVE_EXTS = [".XXX"];
-const SAVE_FILES = ["XXX"];
+const SAVE_EXTS = [".sav"];
 
 const CONFIG_ID = `${GAME_ID}-config`;
 const CONFIG_NAME = "Config";
 const CONFIG_PATH = path.join(CONFIGMOD_LOCATION, APPDATA_FOLDER, CONFIG_FOLDERNAME);
-const CONFIG_EXTS = [".XXX"];
-const CONFIG_FILES = ["XXX"];
+const CONFIG_FILES = ["settings.sav"];
+
+const CONFIG_FILE_GAME = 'settings.ini';
 
 /* tool info (i.e. save editor)
 const TOOL_ID = `${GAME_ID}-tool`;
@@ -145,12 +142,12 @@ const TOOL_EXEC = 'XXX.exe';
 const TOOL_EXEC_PATH = path.join(TOOL_EXEC_FOLDER, TOOL_EXEC);
 //*/
 
-const MOD_PATH_DEFAULT = MOD_PATH;
+const MOD_PATH_DEFAULT = '.';
 const REQ_FILE = EXEC;
 const PARAMETERS_STRING = '';
 const PARAMETERS = [PARAMETERS_STRING];
 
-let MODTYPE_FOLDERS = [MOD_PATH, BINARIES_PATH];
+let MODTYPE_FOLDERS = [];
 const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 
@@ -188,12 +185,12 @@ const spec = {
     }
   },
   "modTypes": [
-    {
+    /*{
       "id": MOD_ID,
       "name": MOD_NAME,
       "priority": "high",
       "targetPath": path.join("{gamePath}", MOD_PATH)
-    },
+    }, //*/
     {
       "id": ROOT_ID,
       "name": ROOT_NAME,
@@ -206,7 +203,15 @@ const spec = {
     "names": []
   }
 };
-//? think of a way to tell if the mod path is not in the game folder, only add ROOT modType if it is
+//think of a way to tell if the mod path is not in the game folder, only add ROOT modType if it is
+if (hasLoader) {
+  spec.modTypes.push({
+    "id": LOADER_ID,
+    "name": LOADER_NAME,
+    "priority": "low",
+    "targetPath": path.join("{gamePath}", LOADER_PATH)
+  });
+}
 
 //3rd party tools and launchers
 const tools = [ //accepts: exe, jar, py, vbs, bat
@@ -224,20 +229,6 @@ const tools = [ //accepts: exe, jar, py, vbs, bat
     detach: true,
     //defaultPrimary: true,
     parameters: PARAMETERS,
-  }, //*/
-  /*{
-    id: `${GAME_ID}-customlaunchxbox`,
-    name: 'Custom Launch',
-    logo: 'exec.png',
-    executable: () => EXEC_XBOX,
-    requiredFiles: [
-      EXEC_XBOX,
-    ],
-    relative: true,
-    exclusive: true,
-    shell: true,
-    //defaultPrimary: true,
-    //parameters: PARAMETERS,
   }, //*/
   /*{
     id: TOOL_ID,
@@ -567,41 +558,6 @@ function installRoot(files) {
   return Promise.resolve({ instructions });
 }
 
-//Fallback installer to Binaries folder
-function testBinaries(files, gameId) {
-  let supported = (gameId === spec.game.id);
-
-  // Test for a mod installer.
-  if (supported && files.find(file =>
-    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
-    supported = false;
-  }
-
-  return Promise.resolve({
-    supported,
-    requiredFiles: [],
-  });
-}
-
-//Fallback installer to Binaries folder
-function installBinaries(files) {
-  const setModTypeInstruction = { type: 'setmodtype', value: BINARIES_ID };
-  
-  const filtered = files.filter(file =>
-    (!file.endsWith(path.sep))
-  );
-  const instructions = filtered.map(file => {
-    return {
-      type: 'copy',
-      source: file,
-      destination: file,
-    };
-  });
-  instructions.push(setModTypeInstruction);
-  return Promise.resolve({ instructions });
-}
-
 //Fallback installer to root folder
 function testFallback(files, gameId) {
   let supported = (gameId === spec.game.id);
@@ -899,38 +855,12 @@ function applyGame(context, gameSpec) {
     { name: SAVE_NAME }
   ); //*/
 
-  if (hasLoader) {
-    context.registerModType(LOADER_ID, 70, 
-      (gameId) => {
-        var _a;
-        return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-      }, 
-      (game) => pathPattern(context.api, game, path.join('{gamePath}', LOADER_PATH)), 
-      () => Promise.resolve(false), 
-      { name: LOADER_NAME }
-    );
-  }
-  if (binariesInstaller) {
-    context.registerModType(BINARIES_ID, 72, 
-      (gameId) => {
-        var _a;
-        return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-      }, 
-      (game) => pathPattern(context.api, game, path.join('{gamePath}', BINARIES_PATH)), 
-      () => Promise.resolve(false), 
-      { name: BINARIES_NAME }
-    );
-  }
-  
   //register mod installers
   if (hasLoader) {
     context.registerInstaller(LOADER_ID, 25, testLoader, installLoader);
   }
   if (rootInstaller) {
     context.registerInstaller(ROOT_ID, 27, testRoot, installRoot);
-  }
-  if (binariesInstaller) {
-    context.registerInstaller(BINARIES_ID, 29, testBinaries, installBinaries);
   }
   //context.registerInstaller(CONFIG_ID, 31, testConfig, installConfig);
   //context.registerInstaller(SAVE_ID, 33, testSave, installSave);
@@ -942,8 +872,16 @@ function applyGame(context, gameSpec) {
   }
 
   //register actions
-  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
     util.opn(CONFIG_PATH).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, `Open ${CONFIG_FILE_GAME}`, () => {
+    GAME_PATH = getDiscoveryPath(context.api);
+    util.opn(path.join(GAME_PATH, CONFIG_FILE_GAME)).catch(() => null);
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);

@@ -2,8 +2,8 @@
 Name: Crimson Desert Vortex Extension
 Structure: Basic Game w/ 3rd Party Manager Integration
 Author: ChemBoy1
-Version: 0.2.8
-Date: 2026-04-14
+Version: 0.3.0
+Date: 2026-04-24
 Notes:
 - Supports plugin mods and data mods with "00XX" folders (XX <= 35)
 - Supports Crimson Browser (manifest.json and files folder) and JSON Mod Manager (.json or "0036+" folder) mods
@@ -69,6 +69,7 @@ const binariesInstaller = true; //only enable Binaries installer if not in root
 //info for modtypes, installers, tools, and actions
 const ROOT_FOLDERS = [BINARIES_PATH];
 const BINARIES_EXTS = [".dll", ".asi", ".addon64"];
+const SPECIAL_MOD_FOLDERS = ['CharacterCreatorFemale', 'CharacterCreatorMale', 'CharacterCreatorAsi'];
 
 const CONFIGMOD_LOCATION = LOCALAPPDATA;
 const SAVEMOD_LOCATION = LOCALAPPDATA;
@@ -139,12 +140,11 @@ const DATA_FOLDERS = ['meta',
 
 // tool info (i.e. save editor)
 const BROWSER_ID = `${GAME_ID}-browser`;
-const BROWSER_NAME = "Crimson Browser";
-const BROWSER_PY = 'crimson_browser.py';
-const BROWSER_BAT = 'run_mod_manager.bat';
-const BROWSER_ARGS = ['--mod-manager'];
+const BROWSER_NAME = "Crimson Sharp";
+const BROWSER_EXEC = 'CrimsonSharp.exe';
+const BROWSER_ARGS = [];
 const BROWSER_PAGE_NO = 84;
-const BROWSER_FILE_NO = 355;
+const BROWSER_FILE_NO = 4005;
 const BROWSER_DOMAIN = GAME_ID;
 
 const BROWSER_CONFIG_FILE = 'config.txt';
@@ -193,16 +193,17 @@ const UNPACKER_DOMAIN = GAME_ID;
 
 const SAVE_EDITOR_ID = `${GAME_ID}-saveeditor`;
 const SAVE_EDITOR_NAME = "Save Editor";
-const SAVE_EDITOR_EXEC = 'CrimsonSaveEditor.exe';
+const SAVE_EDITOR_EXEC = 'CrimsonSaveEditorStandalone.exe';
 const SAVE_EDITOR_PAGE_NO = 20;
-const SAVE_EDITOR_FILE_NO = 314;
+const SAVE_EDITOR_FILE_NO = 3932;
 const SAVE_EDITOR_DOMAIN = GAME_ID;
+const SAVE_EDITOR_FILE_STRING = 'Save Editor';
 
 const TOOLS_ID = `${GAME_ID}-tools`;
 const TOOLS_NAME = "Tools";
 const KNOWN_TOOLS_FILES = [
   JSON_MANAGER_EXEC,
-  BROWSER_PY,
+  BROWSER_EXEC,
   SAVE_EDITOR_EXEC,
   UNPACKER_EXEC,
   CD_MANAGER_EXEC,
@@ -212,7 +213,7 @@ const KNOWN_TOOLS_FILES = [
 
 //Crimson Browser mods
 const BROWSER_MOD_ID = `${GAME_ID}-browsermod`;
-const BROWSER_MOD_NAME = "Crimson Browser Mod";
+const BROWSER_MOD_NAME = "Crimson Sharp Mod";
 const BROWSER_MOD_PATH = 'mods';
 const BROWSER_MOD_MANIFEST = 'manifest.json';
 const BROWSER_MOD_FOLDER = 'files';
@@ -386,10 +387,9 @@ const tools = [ //accepts: exe, jar, py, vbs, bat
     id: BROWSER_ID,
     name: BROWSER_NAME,
     logo: 'browser.png',
-    executable: () => BROWSER_PY,
+    executable: () => BROWSER_EXEC,
     requiredFiles: [
-      BROWSER_PY,
-      //BROWSER_BAT,
+      BROWSER_EXEC,
     ],
     relative: true,
     exclusive: false,
@@ -760,6 +760,63 @@ function installTools(files) {
       destination: path.join(file.substr(idx)),
     };
   });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Installer test for Special Patch Mod files
+function testSpecialPatchMod(files, gameId) {
+  const isPlugin = files.some(file => BINARIES_EXTS.includes(path.extname(file).toLowerCase()));
+  const isFolder = files.some(file => ( //i.e. "0036" folder
+    path.basename(file).startsWith('00')
+    && path.basename(file).length === 4
+    && parseFloat(path.basename(file).replace('00', '')) > 35
+    //&& isDir(archivePath, file)
+  )); //*/
+  const isExe = files.some(file => path.extname(file).toLowerCase() === '.exe');
+  let supported = (gameId === spec.game.id) && ( isPlugin && isFolder && !isExe );
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Installer install Special Patch Mod files
+function installSpecialPatchMod(files) {
+  const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const pluginFiles = files.filter(file =>
+    (
+      BINARIES_EXTS.includes(path.extname(file).toLowerCase())
+    )
+  );
+  const modFiles = files.filter(file =>
+    (
+      !pluginFiles.includes(file)
+    )
+  );
+  const instructions = pluginFiles.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(BINARIES_PATH, path.basename(file)),
+    };
+  }).concat(modFiles.map(file => {
+      return {
+        type: 'copy',
+        source: file,
+        destination: path.join(PATCH_MOD_PATH, file),
+      };
+    }));
   instructions.push(setModTypeInstruction);
   return Promise.resolve({ instructions });
 }
@@ -1256,7 +1313,7 @@ async function isBrowserInstalled(api, spec) {
   if (test === false) {
     try {
       GAME_PATH = getDiscoveryPath(api);
-      await fs.statAsync(path.join(GAME_PATH, BROWSER_PY));
+      await fs.statAsync(path.join(GAME_PATH, BROWSER_EXEC));
       test = true;
     } catch (err) {
       test = false;
@@ -1265,6 +1322,7 @@ async function isBrowserInstalled(api, spec) {
   return test;
 }
 
+/*
 async function isPythonInstalled(api) {
   const version = PYTHON_MIN_VER;
   let keys = undefined;
@@ -1297,14 +1355,14 @@ async function isPythonInstalled(api) {
         if (found) {
           latest = keys.filter(key => (semver.gt(key, semver.coerce(version))));
           latest = latest.sort((a,b) => parseFloat(a) - parseFloat(b))
-            .reverse(); //*/
+            .reverse(); //
           latest = latest[0];
           log('warn', `Python version found: ${latest}`);
           return true;
         } else {
           return false;
         }
-      } catch (err) { //*/
+      } catch (err) { //
         log('warn', `Python version check failed: ${err}`);
         return false;
       }
@@ -1317,7 +1375,7 @@ async function isPythonInstalled(api) {
     if (found) {
       latest = keys.filter(key => (semver.gt(key, semver.coerce(version))));
       latest = latest.sort((a,b) => parseFloat(a) - parseFloat(b))
-        .reverse(); //*/
+        .reverse(); //
       latest = latest[0];
       log('warn', `Python version found: ${latest}`);
       return true;
@@ -1341,24 +1399,25 @@ async function isPythonInstalled(api) {
         if (found) {
           latest = keys.filter(key => (semver.gt(key, semver.coerce(version))));
           latest = latest.sort((a,b) => parseFloat(a) - parseFloat(b))
-            .reverse(); //*/
+            .reverse(); //
           latest = latest[0];
           log('warn', `Python version found: ${latest}`);
           return true;
         } else {
           return false;
         }
-      } catch (err) { //*/
+      } catch (err) { //
         log('warn', `Python version check failed: ${err}`);
         return false;
       }
     }
-  } catch (err) { //*/
+  } catch (err) { //
     log('warn', `Python version check failed: ${err}`);
     return false;
   }
-}
+} //*/
 
+/*
 function pythonNotify(api) {
   const NOTIF_ID = `${GAME_ID}-pythonnotify`;
   const MESSAGE = `Python ${PYTHON_MIN_VER}+ is required to install Crimson Browser dependencies. Please install Python and try again.`;
@@ -1396,9 +1455,9 @@ function pythonNotify(api) {
       },
     ],
   });
-}
+} //*/
 
-//Run setup  for Crimson Browser
+/*Run setup  for Crimson Browser
 async function setupBrowser(api) {
   GAME_PATH = getDiscoveryPath(api);
   let success1 = false;
@@ -1409,10 +1468,6 @@ async function setupBrowser(api) {
       pythonNotify(api);
       throw new util.UserCanceled();
     }
-    /*const REQ_PATH = path.join(GAME_PATH, BROWSER_REQ_FILE); //disabled since no dependency install is required anymore
-    await fs.statAsync(REQ_PATH);
-    await api.runExecutable('pip', [`install -r "${REQ_PATH}"`], { shell: true, detached: true }) //*/
-    //log('warn', `Installed ${BROWSER_NAME} python dependencies`);
     success1 = true;
   } catch (err) {
     api.showErrorNotification(`Required Python ${PYTHON_MIN_VER}+ installation for ${BROWSER_NAME} not found. Please install Python.`, err, { allowReport: false });
@@ -1443,7 +1498,7 @@ async function setupBrowser(api) {
       allowSuppress: true,
     })
   }
-}
+} //*/
 
 //Check if JSON Mod Manager is installed
 async function isJsonManagerInstalled(api, spec) {
@@ -1705,6 +1760,7 @@ async function downloadSaveEditor(api, gameSpec, check = true) {
         const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
         const file = modFiles
           .filter(file => file.category_id === 1)
+          .filter(file => file.file_name.includes(SAVE_EDITOR_FILE_STRING))
           .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
           .reverse()[0];
         if (file === undefined) {
@@ -1910,16 +1966,17 @@ function applyGame(context, gameSpec) {
     context.registerInstaller(ROOT_ID, 27, testRoot, installRoot);
   }
   context.registerInstaller(TOOLS_ID, 29, testTools, installTools);
-  context.registerInstaller(BROWSER_MOD_ID, 31, testBrowserMod, installBrowserMod);
   if (!loadOrder) {
+    context.registerInstaller(`${GAME_ID}-specialpatchmod`, 31, testSpecialPatchMod, installSpecialPatchMod);
+    context.registerInstaller(BROWSER_MOD_ID, 32, testBrowserMod, installBrowserMod);
     context.registerInstaller(PATCH_MOD_ID, 33, testPatchMod, (files, fileName) => installPatchMod(context.api, files, fileName));
     context.registerInstaller(`${GAME_ID}-texture`, 34, testTextureMod, installTextureMod);
+    context.registerInstaller(`${GAME_ID}-json`, 35, testJsonMod, (files) => installJsonMod(context.api, files)); //.json patches, no data files
   } else {
     context.registerInstaller(`${GAME_ID}-vortexmod`, 33, testVortex, (files, fileName) => installVortex(context.api, files, fileName));
   }
-  context.registerInstaller(`${GAME_ID}-json`, 35, testJsonMod, (files) => installJsonMod(context.api, files)); //.json patches, no data files
   if (needsModInstaller) {
-    context.registerInstaller(MOD_ID, 35, testMod, installMod);
+    context.registerInstaller(MOD_ID, 35, testMod, installMod); //0000-0035 Folders to root
   }
   if (binariesInstaller) {
     context.registerInstaller(BINARIES_ID, 37, testBinaries, installBinaries);
@@ -1932,30 +1989,23 @@ function applyGame(context, gameSpec) {
 
   //register actions
   context.registerAction('mod-icons', 300, 'open-ext', {}, `Download ${BROWSER_NAME} + Setup`, async () => {
-    await downloadBrowser(context.api, spec);
+    await downloadBrowser(context.api, spec, false);
     await deploy(context.api);
-    await setupBrowser(context.api); //*/
+    //await setupBrowser(context.api); //*/
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, `Run ${BROWSER_NAME} Setup`, async () => {
-    await setupBrowser(context.api);
-    }, () => {
-      const state = context.api.getState();
-      const gameId = selectors.activeGameId(state);
-      return gameId === GAME_ID;
-  }); //*/
   context.registerAction('mod-icons', 300, 'open-ext', {}, `Download ${JSON_MANAGER_NAME}`, async () => {
-    await downloadJsonManager(context.api, spec);
+    await downloadJsonManager(context.api, spec, false);
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, `Download ${SAVE_EDITOR_NAME}`, async () => {
-    await downloadSaveEditor(context.api, spec);
+    await downloadSaveEditor(context.api, spec, false);
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
@@ -2018,26 +2068,27 @@ function applyGame(context, gameSpec) {
 function main(context) {
   applyGame(context, spec);
   if (loadOrder) { //Load Order
-    //use load order to set folder names for mods, starting from 0036+
+    //? use load order to set folder names for mods, starting from 0036+
   }
   context.once(() => { // put code here that should be run (once) when Vortex starts up
     const api = context.api;
     api.onAsync('did-deploy', async (profileId, deployment) => { 
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;
-      //patch metadata - NO METHOD YET
+      //! patch metadata - NO METHOD YET
       return deployNotify(api);
     });
     /*api.onAsync('did-purge', async (profileId) => { 
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;
-      //restore metadata - NO METHOD YET
+      //*Purge folders 0036+ on purge?
+      //! restore metadata - NO METHOD YET
     }); //*/
   });
   return true;
 }
 
-//Notify User to run TFC Installer after deployment
+//Notify User to run JSON / CB after deployment
 function deployNotify(api) {
   const NOTIF_ID = `${GAME_ID}-deploy`;
   const MOD_NAME = JSON_MANAGER_NAME;

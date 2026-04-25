@@ -173,9 +173,8 @@ const PAK_EXT = '.pak';
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Game Folder";
 const ROOT_FOLDER = EPIC_CODE_NAME;
-
-const ROOTSUB_ID = `${GAME_ID}-rootsubfolders`;
-const ROOTSUB_NAME = "Root Sub-Folders";
+//const ROOTSUB_ID = `${GAME_ID}-rootsubfolders`;
+//const ROOTSUB_NAME = "Root Sub-Folders";
 const ROOTSUB_PATH = EPIC_CODE_NAME;
 
 const CONFIG_ID = `${GAME_ID}-config`;
@@ -332,12 +331,6 @@ const spec = {
       "name": ROOT_NAME,
       "priority": "high",
       "targetPath": "{gamePath}"
-    },
-    {
-      "id": ROOTSUB_ID,
-      "name": ROOTSUB_NAME,
-      "priority": "high",
-      "targetPath": path.join('{gamePath}', ROOTSUB_PATH)
     },
   ],
   "discovery": {
@@ -1083,15 +1076,16 @@ function testRoot(files, gameId) {
 function installRoot(files) {
   const ROOT_FOLDERS_LOWER = ROOT_FOLDERS.map(str => str.toLowerCase());
   const ROOTSUB_FOLDERS_LOWER = ROOTSUB_FOLDERS.map(str => str.toLowerCase());
+  let folder = '';
   let modFile = files.find(file => ROOT_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
-  let setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
   if (modFile === undefined) {
     modFile = files.find(file => ROOTSUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
-    setModTypeInstruction = { type: 'setmodtype', value: ROOTSUB_ID };
+    folder = ROOTSUB_PATH;
   }
   const ROOT_IDX = `${path.basename(modFile)}${path.sep}`
   const idx = modFile.indexOf(ROOT_IDX);
   const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
@@ -1101,7 +1095,7 @@ function installRoot(files) {
     return {
       type: 'copy',
       source: file,
-      destination: path.join(file.substr(idx)),
+      destination: path.join(folder, file.substr(idx)),
     };
   });
   instructions.push(setModTypeInstruction);

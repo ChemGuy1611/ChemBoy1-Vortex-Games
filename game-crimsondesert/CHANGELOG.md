@@ -4,6 +4,12 @@
 
 - None Planned
 
+## [0.3.0] - 2026-04-24
+
+- Fixed: Updated support for Crimson Sharp (formerly Crimson Browser)
+- Fixed: Updated for Save Editor standalone executable
+- Added: Installer handling for mods like Character Creator mod (has additional layer of folder nesting and includes plugin)
+
 ## [0.2.8] - 2026-04-15
 
 - Added: .addon64 files will install to the bin64 folder properly
