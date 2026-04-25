@@ -1138,6 +1138,46 @@ def parse_changelog_latest(folder):
         return None, None
 
 
+def detect_engine(src):
+    """Return a short engine/framework label for a game extension based on its index.js source.
+
+    Same detection logic as categorize_games.py; both share this function.
+    Returns one of the ENGINE_LABELS strings (e.g. 'Unreal Engine 4/5', 'RE Engine', etc.).
+    """
+    head = re.sub(r'\s+', ' ', '\n'.join(src.splitlines()[:20]))
+    if 'UNREALDATA' in src:
+        return 'Unreal Engine 4/5'
+    if 'const TFC_ID =' in src or 'Structure: UE2/3' in head or 'TFC Installer' in head:
+        return 'Unreal Engine 2/3'
+    if "requireExtension('modtype-bepinex')" in src and 'MelonLoader' not in head and 'Hybrid' not in head:
+        return 'Unity + BepInEx'
+    if 'MelonLoader' in head or 'Hybrid' in head:
+        return 'Unity + MelonLoader/BepInEx'
+    if "requireExtension('modtype-umm')" in src or 'UMM' in head:
+        return 'Unity + UMM'
+    if 'Far Cry' in head or 'Dunia' in head:
+        return 'Far Cry / Dunia'
+    if 'RPGMaker' in head or 'RPG Maker' in head:
+        return 'RPG Maker'
+    if 'Snowdrop' in head:
+        return 'Snowdrop Engine'
+    if 'Godot' in head:
+        return 'Godot Engine'
+    if 'const ACSE_ID =' in src or 'Cobra' in head or 'ACSE' in head:
+        return 'Cobra / ACSE'
+    if 'REFramework' in head or 'RE Engine' in head or 'Fluffy' in head:
+        return 'RE Engine'
+    if 'const RELOADED_ID =' in src or 'Reloaded' in head:
+        return 'Reloaded-II'
+    if 'AnvilToolkit' in head or 'const ATK_ID =' in src or 'ReForge' in src:
+        return 'Anvil Engine'
+    if 'SRMM' in head or 'shinryumodmanager' in src:
+        return 'Shin Ryu (SRMM)'
+    if 'Frostbite' in head or 'const FROSTY_ID =' in src:
+        return 'Frostbite'
+    return 'Basic / Other'
+
+
 # == CLI helpers ===============================================================
 
 def dry_prefix(dry_run):

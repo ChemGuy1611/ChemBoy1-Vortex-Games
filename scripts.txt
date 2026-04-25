@@ -10,6 +10,7 @@ release_extension.py
 setup_test_folder.py
 categorize_games.py
 audit_scripts.py
+vortex_gui.py
 
 # Node scripts
 generate_explained.js

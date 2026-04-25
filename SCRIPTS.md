@@ -743,3 +743,81 @@ Two sections, each with a per-script report listing:
 - **Env vars in header/SCRIPTS.md, not in code** — vars listed in docs that are not read directly (vars consumed inside `vortex_utils` helpers are allowed here)
 
 Exits with a summary line: `All clear.` or `Drift found. Update headers, SCRIPTS.md, or scripts.txt to match the code.`
+
+---
+
+## vortex_gui.py
+
+GUI dashboard for running developer scripts against game extensions. Lists all `game-*` extensions in a sortable, filterable table with a toolbar of script actions.
+
+### vortex_gui.py — Requirements
+
+```sh
+pip install pyside6
+```
+
+### vortex_gui.py — Usage
+
+```sh
+python vortex_gui.py
+```
+
+No arguments. Launches the window, which loads all extensions automatically.
+
+### vortex_gui.py — Layout
+
+```text
+[ Filter: ____________ ]  [Refresh]  [New Game...]
+[ Release ] [ Lint ] [ Generate Explained ] [ Port to Template... ]
+[ Fetch Icon ] [ Fetch Cover ] [ Fetch Title ] [ Fetch Banner ]
+[ Setup Test Folder ] [ Patch ] | [ Open Folder ] [ Open in Editor ]
+---------------------------------------------------------------
+| Game ID | Name | Version | Date | Engine |
+| sortable QTableView, multi-select with Ctrl/Shift |
+---------------------------------------------------------------
+| Log pane (live subprocess output)    [Clear Log] [Stop Running] |
+```
+
+- **Sort**: click any column header.
+- **Filter**: case-insensitive substring match on Game ID and Name.
+- **Multi-select**: Ctrl/Shift-click rows; toolbar buttons pass all selected GAME_IDs in one call.
+- **Right-click**: context menu with the same script actions.
+- **Double-click**: opens `index.js` in the default editor.
+- **Status bar**: shows `N games shown | M selected`.
+
+### vortex_gui.py — Toolbar Actions
+
+| Button | Script invoked |
+| --- | --- |
+| Release | `python release_extension.py <ids>` |
+| Lint | `node lint_extensions.js <ids>` |
+| Generate Explained | `node generate_explained.js <ids>` |
+| Port to Template... | Dialog to pick template, then `python port_to_template.py <id> <template>` per game |
+| Fetch Icon | `python fetch_exec_icon.py <ids>` |
+| Fetch Cover | `python fetch_cover_art.py <ids>` |
+| Fetch Title | `python fetch_cover_art.py --title <ids>` |
+| Fetch Banner | `python fetch_cover_art.py --banner <ids>` |
+| Setup Test Folder | `python setup_test_folder.py <ids>` |
+| Patch | `python patch_extensions.py <ids>` |
+| Open Folder | `os.startfile(folder)` — no subprocess |
+| Open in Editor | `os.startfile(index.js)` — no subprocess |
+
+Toolbar buttons are disabled when no rows are selected and while a script is running. Only one script runs at a time; click **Stop Running** to kill the active process.
+
+### vortex_gui.py — New Game Dialog
+
+Triggered by the **New Game...** button. Fields:
+
+| Field | Description |
+| --- | --- |
+| Template | Combo box populated from all `template-*` folders (prefix stripped) |
+| Game | Free-text game name or numeric Steam App ID |
+| --force | Overwrite an existing extension folder |
+| --no-images | Skip art downloads |
+| --dry-run | Preview only — no files written |
+
+Runs `python new_extension.py <template> "<game>" [flags]`. On success (without `--dry-run`), the table refreshes automatically to show the new game.
+
+### vortex_gui.py — Output
+
+Script output (stdout + stderr merged) streams live into the log pane at the bottom of the window. The log pane scrolls automatically and holds up to 5000 lines.

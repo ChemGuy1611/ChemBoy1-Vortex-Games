@@ -13,108 +13,32 @@ Usage:
 """
 
 import os
-import re
 import argparse
 
-from vortex_utils import REPO_ROOT, LISTS_DIR, list_game_ids
+from vortex_utils import REPO_ROOT, LISTS_DIR, list_game_ids, detect_engine
 
-# Output file name → detection logic (applied in order; first match wins)
-# Each entry: (filename, label, detector_fn)
-# detector_fn(head: str, src: str) -> bool
-#   head = first 20 lines joined, src = full file content
-
+# (filename, display label) in detection priority order.
+# The label strings match detect_engine() return values exactly.
 CATEGORIES = [
-    (
-        "games-ue4-5.txt",
-        "Unreal Engine 4/5",
-        lambda head, src: "UNREALDATA" in src,
-    ),
-    (
-        "games-ue2-3.txt",
-        "Unreal Engine 2/3",
-        lambda head, src: "const TFC_ID =" in src or "Structure: UE2/3" in head or "TFC Installer" in head,
-    ),
-    (
-        "games-unity-bepinex.txt",
-        "Unity + BepInEx (modtype-bepinex)",
-        lambda head, src: (
-            "requireExtension('modtype-bepinex')" in src
-            and "MelonLoader" not in head
-            and "Hybrid" not in head
-        ),
-    ),
-    (
-        "games-unity-melonloader-bepinex.txt",
-        "Unity + MelonLoader/BepInEx Hybrid",
-        lambda head, src: "MelonLoader" in head or "Hybrid" in head,
-    ),
-    (
-        "games-unity-umm.txt",
-        "Unity + UMM",
-        lambda head, src: "requireExtension('modtype-umm')" in src or "UMM" in head,
-    ),
-    (
-        "games-farcrygame.txt",
-        "Far Cry / Dunia Engine",
-        lambda head, src: "Far Cry" in head or "Dunia" in head,
-    ),
-    (
-        "games-rpgmaker.txt",
-        "RPG Maker",
-        lambda head, src: "RPGMaker" in head or "RPG Maker" in head,
-    ),
-    (
-        "games-snowdrop.txt",
-        "Snowdrop Engine",
-        lambda head, src: "Snowdrop" in head,
-    ),
-    (
-        "games-godot.txt",
-        "Godot Engine",
-        lambda head, src: "Godot" in head,
-    ),
-    (
-        "games-cobra-acse.txt",
-        "Cobra Engine / ACSE",
-        lambda head, src: "const ACSE_ID =" in src or "Cobra" in head or "ACSE" in head,
-    ),
-    (
-        "games-reengine.txt",
-        "RE Engine (REFramework / Fluffy)",
-        lambda head, src: "REFramework" in head or "RE Engine" in head or "Fluffy" in head,
-    ),
-    (
-        "games-reloaded2.txt",
-        "Reloaded-II",
-        lambda head, src: "const RELOADED_ID =" in src or "Reloaded" in head,
-    ),
-    (
-        "games-anvil.txt",
-        "Ubisoft Anvil Engine (AnvilToolkit)",
-        lambda head, src: "AnvilToolkit" in head or "const ATK_ID =" in src or "ReForge" in src,
-    ),
-    (
-        "games-srmm.txt",
-        "Shin Ryu Mod Manager (SRMM)",
-        lambda head, src: "SRMM" in head or "shinryumodmanager" in src,
-    ),
-    (
-        "games-frostbite.txt",
-        "Frostbite Engine (Frosty Mod Manager)",
-        lambda head, src: "Frostbite" in head or "const FROSTY_ID =" in src,
-    ),
-    (
-        "games-basic.txt",
-        "Basic / Proprietary",
-        lambda head, src: True,  # catch-all
-    ),
+    ("games-ue4-5.txt",                      "Unreal Engine 4/5"),
+    ("games-ue2-3.txt",                      "Unreal Engine 2/3"),
+    ("games-unity-bepinex.txt",              "Unity + BepInEx"),
+    ("games-unity-melonloader-bepinex.txt",  "Unity + MelonLoader/BepInEx"),
+    ("games-unity-umm.txt",                  "Unity + UMM"),
+    ("games-farcrygame.txt",                 "Far Cry / Dunia"),
+    ("games-rpgmaker.txt",                   "RPG Maker"),
+    ("games-snowdrop.txt",                   "Snowdrop Engine"),
+    ("games-godot.txt",                      "Godot Engine"),
+    ("games-cobra-acse.txt",                 "Cobra / ACSE"),
+    ("games-reengine.txt",                   "RE Engine"),
+    ("games-reloaded2.txt",                  "Reloaded-II"),
+    ("games-anvil.txt",                      "Anvil Engine"),
+    ("games-srmm.txt",                       "Shin Ryu (SRMM)"),
+    ("games-frostbite.txt",                  "Frostbite"),
+    ("games-basic.txt",                      "Basic / Other"),
 ]
 
-
-def get_head(src):
-    """Return the first 20 lines of src joined, with whitespace normalized."""
-    raw = "\n".join(src.splitlines()[:20])
-    return re.sub(r'\s+', ' ', raw)
+_FILE_FOR_LABEL = {label: fname for fname, label in CATEGORIES}
 
 
 def categorize(game_id):
@@ -124,10 +48,7 @@ def categorize(game_id):
         return None
     with open(index_path, encoding="utf-8") as f:
         src = f.read()
-    head = get_head(src)
-    for filename, _label, detector in CATEGORIES:
-        if detector(head, src):
-            return filename
+    return _FILE_FOR_LABEL[detect_engine(src)]
 
 
 def read_list(filepath):
@@ -147,7 +68,7 @@ def write_list(filepath, game_ids):
 
 def rebuild_all(dry_run=False):
     """Scan all game-* folders and rebuild every category file from scratch."""
-    buckets = {filename: [] for filename, _, _ in CATEGORIES}
+    buckets = {filename: [] for filename, _ in CATEGORIES}
 
     for game_id in list_game_ids():
         target = categorize(game_id)
@@ -159,7 +80,7 @@ def rebuild_all(dry_run=False):
     if not dry_run:
         os.makedirs(LISTS_DIR, exist_ok=True)
 
-    for filename, label, _ in CATEGORIES:
+    for filename, label in CATEGORIES:
         if dry_run:
             print(f"  {filename}: {len(buckets[filename])} games")
         else:
@@ -181,7 +102,7 @@ def update_single(game_id, dry_run=False):
     if not dry_run:
         os.makedirs(LISTS_DIR, exist_ok=True)
 
-    for filename, label, _ in CATEGORIES:
+    for filename, label in CATEGORIES:
         filepath = os.path.join(LISTS_DIR, filename)
         ids = read_list(filepath)
         if filename == target:
