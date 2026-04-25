@@ -13,15 +13,19 @@ Usage:
 """
 
 import glob
+import json
 import os
 import shutil
 import sys
 
 from PySide6.QtCore import (
-    QAbstractTableModel, QModelIndex, QObject, QPointF, QProcess,
-    QSortFilterProxyModel, Qt, Signal,
+    QAbstractTableModel, QItemSelectionModel, QModelIndex, QObject, QPointF,
+    QProcess, QSettings, QSize, QSortFilterProxyModel, Qt, Signal,
 )
-from PySide6.QtGui import QAction, QColor, QFont, QPainter, QPen, QTextCursor
+from PySide6.QtGui import (
+    QAction, QColor, QFont, QIcon, QKeySequence, QPainter, QPainterPath,
+    QPen, QPixmap, QShortcut, QTextCursor,
+)
 from PySide6.QtWidgets import (
     QApplication, QCheckBox, QComboBox, QDialog, QDialogButtonBox,
     QFormLayout, QHBoxLayout, QHeaderView, QLabel, QLineEdit,
@@ -34,24 +38,115 @@ import vortex_utils as vu
 REPO_ROOT = vu.REPO_ROOT
 PYTHON = sys.executable
 NODE = shutil.which("node") or "node"
+FLAGS_PATH = os.path.join(REPO_ROOT, "vortex_gui_flags.json")
+
+
+# == Flag storage ==============================================================
+
+def _load_flags() -> dict:
+    if os.path.isfile(FLAGS_PATH):
+        try:
+            with open(FLAGS_PATH, encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return {}
+
+
+def _save_flags(data: dict):
+    tmp = FLAGS_PATH + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2)
+    os.replace(tmp, FLAGS_PATH)
+
+
+def _save_flag(game_id: str, flagged: bool, note: str):
+    flags = _load_flags()
+    if not flagged and not note:
+        flags.pop(game_id, None)
+    else:
+        flags[game_id] = {"flagged": flagged, "note": note}
+    _save_flags(flags)
+
+
+# == Image helpers =============================================================
+
+def _load_icon(path: str, max_w: int, max_h: int) -> "QIcon | None":
+    """Load an image file, scale to fit within max_w x max_h, return QIcon or None."""
+    px = QPixmap(path)
+    if px.isNull():
+        return None
+    px = px.scaled(max_w, max_h, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+    return QIcon(px)
+
+
+_FLAG_ICON: "QIcon | None" = None
+_UNFLAG_ICON: "QIcon | None" = None
+
+
+def _make_flag_icons():
+    """Build the flagged/unflagged QIcons. Must be called after QApplication is created."""
+    global _FLAG_ICON, _UNFLAG_ICON
+
+    def _draw(flagged: bool) -> QIcon:
+        px = QPixmap(16, 16)
+        px.fill(Qt.transparent)
+        p = QPainter(px)
+        p.setRenderHint(QPainter.Antialiasing)
+        if not flagged:
+            p.setOpacity(0.3)
+        p.setPen(QPen(QColor("#1a1a1a"), 1.5))
+        p.drawLine(3, 2, 3, 14)
+        tri = QPainterPath()
+        tri.moveTo(3.0, 2.0)
+        tri.lineTo(13.0, 5.0)
+        tri.lineTo(3.0, 8.0)
+        tri.closeSubpath()
+        p.setPen(Qt.NoPen)
+        p.fillPath(tri, QColor("#e74c3c") if flagged else QColor("#888888"))
+        p.end()
+        return QIcon(px)
+
+    _FLAG_ICON = _draw(True)
+    _UNFLAG_ICON = _draw(False)
 
 
 # == Data model ================================================================
 
-COL_GAME_ID, COL_NAME, COL_VERSION, COL_DATE, COL_ENGINE, COL_FOLDER = range(6)
-HEADERS = ("Game ID", "Name", "Version", "Date", "Engine", "Folder")
+COL_FLAG, COL_ICON, COL_GAME_ID, COL_NAME, COL_VERSION, COL_DATE, COL_ENGINE, \
+    COL_COVER, COL_TITLE, COL_BANNER, COL_FOLDER = range(11)
+HEADERS = ("Flag", "Icon", "Game ID", "Name", "Version", "Date", "Engine", "Cover", "Title", "Banner", "Folder")
+_THUMBNAIL_COLS = frozenset({COL_ICON, COL_COVER, COL_TITLE, COL_BANNER})
 
 
 class GameRow:
-    __slots__ = ("game_id", "name", "version", "date", "engine", "folder")
+    __slots__ = (
+        "game_id", "name", "version", "date", "engine", "folder",
+        "icon", "icon_path", "cover", "cover_path",
+        "title", "title_path", "banner", "banner_path",
+        "flagged", "note",
+    )
 
-    def __init__(self, game_id, name, version, date, engine, folder):
+    def __init__(self, game_id, name, version, date, engine, folder,
+                 icon, icon_path, cover, cover_path,
+                 title, title_path, banner, banner_path,
+                 flagged, note):
         self.game_id = game_id
         self.name = name or ""
         self.version = version or ""
         self.date = date or ""
         self.engine = engine or ""
         self.folder = folder
+        self.icon = icon
+        self.icon_path = icon_path
+        self.cover = cover
+        self.cover_path = cover_path
+        self.title = title
+        self.title_path = title_path
+        self.banner = banner
+        self.banner_path = banner_path
+        self.flagged = flagged
+        self.note = note
 
 
 class GameModel(QAbstractTableModel):
@@ -61,6 +156,7 @@ class GameModel(QAbstractTableModel):
 
     def load(self):
         self.beginResetModel()
+        flags = _load_flags()
         rows = []
         for folder, game_id, src in vu.iter_game_folders():
             info = vu.read_info_json(folder) or {}
@@ -68,7 +164,28 @@ class GameModel(QAbstractTableModel):
             _v, date = vu.parse_changelog_latest(folder)
             name = vu.extract_game_name(src) or game_id
             engine = vu.detect_engine(src)
-            rows.append(GameRow(game_id, name, version, date, engine, folder))
+
+            icon_path = os.path.join(folder, "exec.png")
+            icon = _load_icon(icon_path, 22, 20) if os.path.isfile(icon_path) else None
+
+            cover_path = os.path.join(folder, f"{game_id}.jpg")
+            cover = _load_icon(cover_path, 40, 20) if os.path.isfile(cover_path) else None
+
+            title_path = os.path.join(vu.TITLE_IMAGES_DIR, f"{game_id}_title.jpg")
+            title = _load_icon(title_path, 40, 20) if os.path.isfile(title_path) else None
+
+            banner_path = os.path.join(vu.BANNER_IMAGES_DIR, f"{game_id}_banner.jpg")
+            banner = _load_icon(banner_path, 40, 20) if os.path.isfile(banner_path) else None
+
+            fd = flags.get(game_id, {})
+            rows.append(GameRow(
+                game_id, name, version, date, engine, folder,
+                icon, icon_path if os.path.isfile(icon_path) else None,
+                cover, cover_path if os.path.isfile(cover_path) else None,
+                title, title_path if os.path.isfile(title_path) else None,
+                banner, banner_path if os.path.isfile(banner_path) else None,
+                fd.get("flagged", False), fd.get("note", ""),
+            ))
         self._rows = rows
         self.endResetModel()
 
@@ -82,11 +199,36 @@ class GameModel(QAbstractTableModel):
         if not index.isValid():
             return None
         row = self._rows[index.row()]
+        col = index.column()
+
+        if role == Qt.DecorationRole:
+            if col == COL_FLAG:   return _FLAG_ICON if row.flagged else _UNFLAG_ICON
+            if col == COL_ICON:   return row.icon
+            if col == COL_COVER:  return row.cover
+            if col == COL_TITLE:  return row.title
+            if col == COL_BANNER: return row.banner
+            return None
+
+        if role == Qt.ToolTipRole:
+            if col == COL_FLAG:
+                return row.note if row.note else "Click to flag / add note"
+            return None
+
         if role == Qt.DisplayRole:
-            return (row.game_id, row.name, row.version, row.date,
-                    row.engine, row.folder)[index.column()]
+            if col == COL_FLAG or col in _THUMBNAIL_COLS:
+                return ""
+            return {
+                COL_GAME_ID: row.game_id,
+                COL_NAME:    row.name,
+                COL_VERSION: row.version,
+                COL_DATE:    row.date,
+                COL_ENGINE:  row.engine,
+                COL_FOLDER:  row.folder,
+            }.get(col)
+
         if role == Qt.UserRole:
             return row
+
         return None
 
     def headerData(self, section, orientation, role=Qt.DisplayRole):
@@ -104,13 +246,24 @@ class GameFilterModel(QSortFilterProxyModel):
 
     def set_text(self, text: str):
         self._text = text.strip().lower()
-        self.invalidateFilter()
+        self.invalidateRowsFilter()
 
     def filterAcceptsRow(self, source_row, source_parent):
         if not self._text:
             return True
         row = self.sourceModel()._rows[source_row]
-        return self._text in row.game_id.lower() or self._text in row.name.lower()
+        return (self._text in row.game_id.lower()
+                or self._text in row.name.lower()
+                or self._text in row.engine.lower()
+                or self._text in row.note.lower())
+
+    def lessThan(self, left, right):
+        if left.column() == COL_FLAG:
+            l_row = self.sourceModel()._rows[left.row()]
+            r_row = self.sourceModel()._rows[right.row()]
+            if l_row.flagged != r_row.flagged:
+                return l_row.flagged  # flagged rows sort first in ascending order
+        return super().lessThan(left, right)
 
 
 # == Script runner =============================================================
@@ -152,6 +305,7 @@ class ScriptRunner(QObject):
         p.setWorkingDirectory(REPO_ROOT)
         p.setProcessChannelMode(QProcess.MergedChannels)
         p.readyReadStandardOutput.connect(lambda: self._on_output(p))
+        p.errorOccurred.connect(self._on_process_error)
         p.finished.connect(self._on_finished)
         self._process = p
         p.start(cmd[0], cmd[1:])
@@ -159,6 +313,14 @@ class ScriptRunner(QObject):
     def _on_output(self, p: QProcess):
         data = p.readAllStandardOutput()
         self.log_signal.emit(bytes(data).decode("utf-8", errors="replace"))
+
+    def _on_process_error(self, err):
+        if err == QProcess.ProcessError.FailedToStart:
+            self.log_signal.emit(
+                "\n[ERROR: Failed to start -- executable not found or no permission]\n"
+            )
+            self._queue.clear()
+            self.finished_signal.emit(-1)
 
     def _on_finished(self, code, _status):
         if code != 0:
@@ -177,6 +339,37 @@ def _get_templates() -> list[str]:
         for d in glob.glob(os.path.join(REPO_ROOT, "template-*"))
         if os.path.isdir(d)
     )
+
+
+class FlagDialog(QDialog):
+    def __init__(self, game_id: str, flagged: bool, note: str, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle(f"Flag: {game_id}")
+        self.setMinimumWidth(350)
+        layout = QVBoxLayout(self)
+
+        self._flagged_cb = QCheckBox("Flagged")
+        self._flagged_cb.setChecked(flagged)
+        layout.addWidget(self._flagged_cb)
+
+        layout.addWidget(QLabel("Note:"))
+        self._note_edit = QPlainTextEdit()
+        self._note_edit.setPlainText(note)
+        self._note_edit.setMinimumHeight(80)
+        layout.addWidget(self._note_edit)
+
+        buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
+        buttons.accepted.connect(self.accept)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+
+    @property
+    def flagged(self) -> bool:
+        return self._flagged_cb.isChecked()
+
+    @property
+    def note(self) -> str:
+        return self._note_edit.toPlainText().strip()
 
 
 class NewGameDialog(QDialog):
@@ -337,9 +530,11 @@ class MainWindow(QMainWindow):
 
         self._action_btns: dict[str, QAction] = {}
         self._refresh_after_run = False
+        self._splitter: QSplitter | None = None
 
         self._build_ui()
         self._refresh_data()
+        self._restore_settings()
 
     # -- UI construction -------------------------------------------------------
 
@@ -354,18 +549,22 @@ class MainWindow(QMainWindow):
         top_bar = QHBoxLayout()
         top_bar.addWidget(QLabel("Filter:"))
         self._filter_edit = QLineEdit()
-        self._filter_edit.setPlaceholderText("Game ID or name...")
+        self._filter_edit.setPlaceholderText("Game ID, name, engine, or note...")
         self._filter_edit.setClearButtonEnabled(True)
         self._filter_edit.textChanged.connect(self._proxy.set_text)
         self._filter_edit.textChanged.connect(self._update_status_bar)
         top_bar.addWidget(self._filter_edit, stretch=1)
         self._refresh_btn = QPushButton("Refresh")
         self._refresh_btn.clicked.connect(self._refresh_data)
+        self._refresh_btn.setShortcut("F5")
         top_bar.addWidget(self._refresh_btn)
         self._new_game_btn = QPushButton("New Game...")
         self._new_game_btn.clicked.connect(self._on_new_game)
+        self._new_game_btn.setShortcut(QKeySequence.StandardKey.New)
         top_bar.addWidget(self._new_game_btn)
         root_layout.addLayout(top_bar)
+
+        QShortcut(QKeySequence("Ctrl+F"), self).activated.connect(self._filter_edit.setFocus)
 
         # script toolbar
         toolbar = QToolBar()
@@ -396,6 +595,7 @@ class MainWindow(QMainWindow):
 
         # splitter: table on top, log pane on bottom
         splitter = QSplitter(Qt.Vertical)
+        self._splitter = splitter
         root_layout.addWidget(splitter)
 
         # --- game table ---
@@ -406,21 +606,37 @@ class MainWindow(QMainWindow):
         self._table.setSelectionMode(QTableView.ExtendedSelection)
         self._table.setAlternatingRowColors(True)
         self._table.setColumnHidden(COL_FOLDER, True)
+        self._table.setIconSize(QSize(40, 20))
+        self._table.verticalHeader().setDefaultSectionSize(22)
+
         hdr = self._table.horizontalHeader()
-        hdr.setSectionResizeMode(COL_NAME, QHeaderView.Stretch)
+        hdr.setSectionResizeMode(COL_FLAG,    QHeaderView.Fixed)
+        hdr.setSectionResizeMode(COL_ICON,    QHeaderView.Fixed)
         hdr.setSectionResizeMode(COL_GAME_ID, QHeaderView.Interactive)
+        hdr.setSectionResizeMode(COL_NAME,    QHeaderView.Interactive)
+        hdr.setStretchLastSection(False)
         hdr.setSectionResizeMode(COL_VERSION, QHeaderView.Interactive)
-        hdr.setSectionResizeMode(COL_DATE, QHeaderView.Interactive)
-        hdr.setSectionResizeMode(COL_ENGINE, QHeaderView.Interactive)
+        hdr.setSectionResizeMode(COL_DATE,    QHeaderView.Interactive)
+        hdr.setSectionResizeMode(COL_ENGINE,  QHeaderView.Interactive)
+        hdr.setSectionResizeMode(COL_COVER,   QHeaderView.Fixed)
+        hdr.setSectionResizeMode(COL_TITLE,   QHeaderView.Fixed)
+        hdr.setSectionResizeMode(COL_BANNER,  QHeaderView.Fixed)
+        self._table.setColumnWidth(COL_FLAG,    22)
+        self._table.setColumnWidth(COL_ICON,    26)
+        self._table.setColumnWidth(COL_NAME,    300)
         self._table.setColumnWidth(COL_GAME_ID, 200)
         self._table.setColumnWidth(COL_VERSION, 70)
-        self._table.setColumnWidth(COL_DATE, 92)
-        self._table.setColumnWidth(COL_ENGINE, 195)
+        self._table.setColumnWidth(COL_DATE,    92)
+        self._table.setColumnWidth(COL_ENGINE,  195)
+        self._table.setColumnWidth(COL_COVER,   42)
+        self._table.setColumnWidth(COL_TITLE,   42)
+        self._table.setColumnWidth(COL_BANNER,  42)
         self._table.sortByColumn(COL_GAME_ID, Qt.AscendingOrder)
         self._table.selectionModel().selectionChanged.connect(self._on_selection_changed)
         self._table.setContextMenuPolicy(Qt.CustomContextMenu)
         self._table.customContextMenuRequested.connect(self._on_context_menu)
-        self._table.doubleClicked.connect(self._on_open_editor)
+        self._table.clicked.connect(self._on_table_cell_clicked)
+        self._table.doubleClicked.connect(self._on_table_double_clicked)
         splitter.addWidget(self._table)
 
         # --- log pane ---
@@ -455,12 +671,49 @@ class MainWindow(QMainWindow):
         self._status_label = QLabel()
         self.statusBar().addWidget(self._status_label)
 
+    def _restore_settings(self):
+        settings = QSettings("ChemBoy1", "VortexExtensionManager")
+        geo = settings.value("geometry")
+        if geo:
+            self.restoreGeometry(geo)
+        sp = settings.value("splitter")
+        if sp:
+            self._splitter.restoreState(sp)
+        th = settings.value("tableHeader")
+        if th:
+            self._table.horizontalHeader().restoreState(th)
+
+    def closeEvent(self, event):
+        settings = QSettings("ChemBoy1", "VortexExtensionManager")
+        settings.setValue("geometry", self.saveGeometry())
+        settings.setValue("splitter", self._splitter.saveState())
+        settings.setValue("tableHeader", self._table.horizontalHeader().saveState())
+        self._runner.stop()
+        super().closeEvent(event)
+
     def _refresh_data(self):
+        prev_ids = set(self._selected_ids())
         QApplication.setOverrideCursor(Qt.WaitCursor)
         try:
             self._model.load()
         finally:
             QApplication.restoreOverrideCursor()
+        if prev_ids:
+            sel = self._table.selectionModel()
+            sel.clearSelection()
+            first = None
+            for r in range(self._proxy.rowCount()):
+                gid = self._proxy.data(self._proxy.index(r, COL_GAME_ID))
+                if gid in prev_ids:
+                    sel.select(
+                        self._proxy.index(r, 0),
+                        QItemSelectionModel.SelectionFlag.Select
+                        | QItemSelectionModel.SelectionFlag.Rows,
+                    )
+                    if first is None:
+                        first = self._proxy.index(r, 0)
+            if first:
+                self._table.scrollTo(first)
         self._update_status_bar()
 
     # -- Selection helpers -----------------------------------------------------
@@ -485,6 +738,40 @@ class MainWindow(QMainWindow):
             QMessageBox.information(self, "No Selection", "Select one or more games first.")
             return False
         return True
+
+    # -- Table interaction -----------------------------------------------------
+
+    def _on_table_cell_clicked(self, proxy_index):
+        col = proxy_index.column()
+        src_idx = self._proxy.mapToSource(proxy_index)
+        row = self._model._rows[src_idx.row()]
+
+        if col == COL_FLAG:
+            dlg = FlagDialog(row.game_id, row.flagged, row.note, self)
+            if dlg.exec() == QDialog.Accepted:
+                row.flagged = dlg.flagged
+                row.note = dlg.note
+                flag_cell = self._model.index(src_idx.row(), COL_FLAG)
+                self._model.dataChanged.emit(
+                    flag_cell, flag_cell, [Qt.DecorationRole, Qt.ToolTipRole]
+                )
+                _save_flag(row.game_id, row.flagged, row.note)
+            return
+
+        if col in _THUMBNAIL_COLS:
+            path = {
+                COL_ICON:   row.icon_path,
+                COL_COVER:  row.cover_path,
+                COL_TITLE:  row.title_path,
+                COL_BANNER: row.banner_path,
+            }.get(col)
+            if path and os.path.isfile(path):
+                os.startfile(path)
+
+    def _on_table_double_clicked(self, proxy_index):
+        if proxy_index.column() in (*_THUMBNAIL_COLS, COL_FLAG):
+            return
+        self._on_open_editor()
 
     # -- Script launchers -------------------------------------------------------
 
@@ -668,10 +955,10 @@ class MainWindow(QMainWindow):
     # -- State updates ---------------------------------------------------------
 
     def _on_selection_changed(self, *_):
-        ids = self._selected_ids()
-        enabled = bool(ids)
-        for action in self._action_btns.values():
-            action.setEnabled(enabled)
+        if not self._runner.is_running:
+            ids = self._selected_ids()
+            for action in self._action_btns.values():
+                action.setEnabled(bool(ids))
         self._update_status_bar()
 
     def _on_run_started(self, desc: str):
@@ -697,9 +984,14 @@ class MainWindow(QMainWindow):
             self._update_status_bar()
 
     def _update_status_bar(self):
-        total = self._proxy.rowCount()
+        total_proxy = self._proxy.rowCount()
+        total_model = self._model.rowCount()
         selected = len(self._table.selectionModel().selectedRows())
-        self._status_label.setText(f"{total} games shown  |  {selected} selected")
+        if total_proxy < total_model:
+            count_str = f"{total_proxy} of {total_model} games shown"
+        else:
+            count_str = f"{total_proxy} games shown"
+        self._status_label.setText(f"{count_str}  |  {selected} selected")
         if not self._runner.is_running:
             self.statusBar().clearMessage()
 
@@ -773,6 +1065,7 @@ class _CheckboxStyle(QProxyStyle):
 def main():
     app = QApplication(sys.argv)
     app.setStyle(_CheckboxStyle("Fusion"))
+    _make_flag_icons()
     win = MainWindow()
     win.show()
     sys.exit(app.exec())

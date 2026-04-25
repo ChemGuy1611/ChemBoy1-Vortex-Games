@@ -1173,7 +1173,7 @@ def detect_engine(src):
         return 'Anvil Engine'
     if 'SRMM' in head or 'shinryumodmanager' in src:
         return 'Shin Ryu (SRMM)'
-    if 'Frostbite' in head or 'const FROSTY_ID =' in src:
+    if 'Frostbite' in head or 'const FROSTY_EXEC =' in src:
         return 'Frostbite'
     return 'Basic / Other'
 

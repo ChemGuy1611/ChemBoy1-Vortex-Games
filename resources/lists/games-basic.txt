@@ -5,7 +5,6 @@ anno117paxromana
 aplaguetalerequiem
 armoredcorevifiresofrubicon
 balatro
-battlefield1
 bloodborne
 borderlands3
 civilisationvi
@@ -24,7 +23,6 @@ doom
 doom3
 doometernal
 doomthedarkages
-dragonagetheveilguard
 dyinglightthebeast
 europauniversalisiv
 europauniversalisv

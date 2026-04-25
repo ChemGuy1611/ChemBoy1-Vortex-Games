@@ -1,4 +1,5 @@
-__pycache__
+**/__pycache__/*
 **/node_modules/*
 **/CC-Session-Logs/*
 .claude
+vortex_gui_flags.json
