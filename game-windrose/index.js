@@ -1904,7 +1904,6 @@ async function installPak(api, files) {
       destination: path.basename(file)
     };
   });
-  let serverInstructions = [];
   if (selection === 'both') {
     instructions = installFiles.map(file => {
       return {
@@ -1912,16 +1911,17 @@ async function installPak(api, files) {
         source: file,
         destination: path.join(PAK_PATH, path.basename(file))
       };
-    });
-    serverInstructions = installFiles.map(file => {
+    }).concat(installFiles.map(file => {
       return {
         type: 'copy',
         source: file,
         destination: path.join(SERVERPAKS_PATH, path.basename(file))
       };
-    });
+    }));
+    instructions.push(modTypeInstruction);
+    instructions.push(unrealModFiles);
+    return Promise.resolve({ instructions });
   }
-  instructions.push(serverInstructions);
   instructions.push(modTypeInstruction);
   instructions.push(unrealModFiles);
   return Promise.resolve({ instructions });
@@ -1947,7 +1947,7 @@ async function chooseInstallDestination(api, files) {
       { label: 'Cancel' }, //don't use this since we feed directly to modType
       { label: CLIENT_LABEL },
       { label: SERVER_LABEL },
-      //{ label: 'BOTH SP & MP' },
+      { label: 'BOTH SP & MP' },
   ]).then((result) => {
     if (result.action === 'Cancel') {
       return Promise.reject(new util.UserCanceled());

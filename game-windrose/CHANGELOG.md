@@ -7,6 +7,7 @@
 ## [0.3.0] - 2026-04-24
 
 - Added: Dedicated Server support - registered as a separate game
+- Added: Option to install to both SP and MP Paks folders
 
 ## [0.2.0] - 2026-04-21
 
