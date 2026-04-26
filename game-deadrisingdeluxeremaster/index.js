@@ -21,8 +21,8 @@ const GAME_NAME = "Dead Rising Deluxe Remaster";
 const GAME_NAME_SHORT = "Dead Rising DR";
 const EXEC = "DRDR.exe";
 const EXEC_DEMO = EXEC;
-const PCGAMINGWIKI_URL = "https://www.nexusmods.com/site/mods/1046";
-const EXTENSION_URL = "https://www.pcgamingwiki.com/wiki/Dead_Rising_Deluxe_Remaster"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Dead_Rising_Deluxe_Remaster";
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1046"; //Nexus link to this extension. Used for links
 
 const FLUFFY_FOLDER = "DeadRisingRemaster";
 const FLUFFY_FOLDER_DEMO = FLUFFY_FOLDER;

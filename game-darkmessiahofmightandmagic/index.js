@@ -14,7 +14,7 @@ const template = require('string-template');
 //Specify all the information about the game
 const GAME_ID = "darkmessiahofmightandmagic";
 const STEAMAPP_ID = "2100";
-const GAME_NAME = "Dark Messiah \tof Might & Magic";
+const GAME_NAME = "Dark Messiah of Might & Magic";
 const GAME_NAME_SHORT = "Dark Messiah MM";
 
 const EXEC = "mm.exe";

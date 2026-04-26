@@ -22,8 +22,8 @@ const GAME_NAME = "Resident Evil 7";
 const GAME_NAME_SHORT = "RE7";
 const EXEC = "re7.exe";
 const EXEC_DEMO = "re7trial.exe";
-const PCGAMINGWIKI_URL = "https://www.nexusmods.com/site/mods/914";
-const EXTENSION_URL = "https://www.pcgamingwiki.com/wiki/Resident_Evil_7:_Biohazard"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Resident_Evil_7:_Biohazard";
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/914"; //Nexus link to this extension. Used for links
 
 const FLUFFY_FOLDER = "RE7";
 const FLUFFY_FOLDER_DEMO = "RE7_Demo";

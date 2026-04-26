@@ -21,8 +21,8 @@ const GAME_NAME = "Street Fighter 6";
 const GAME_NAME_SHORT = "SF6";
 const EXEC = "StreetFighter6.exe";
 const EXEC_DEMO = EXEC;
-const PCGAMINGWIKI_URL = "https://www.nexusmods.com/site/mods/956";
-const EXTENSION_URL = "https://www.pcgamingwiki.com/wiki/Street_Fighter_6"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Street_Fighter_6";
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/956"; //Nexus link to this extension. Used for links
 
 const FLUFFY_FOLDER = "SF6";
 const FLUFFY_FOLDER_DEMO = "SF6_Demo";

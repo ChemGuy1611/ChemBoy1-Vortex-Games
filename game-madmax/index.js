@@ -66,7 +66,7 @@ const debug = false; //toggle for debug mode
 //info for modtypes, installers, tools, and actions
 const DATA_FOLDER = 'dropzone';
 const ROOT_FOLDERS = [DATA_FOLDER, 'archives_win64', 'dlc_win64'];
-const ROOTSUB_FOLDERS = ['locations', 'global', 'videos'];
+const ROOTSUB_FOLDERS = ['locations', 'global', 'effects', 'scripts', 'videos'];
 const ROOTSUB_PATH = DATA_FOLDER;
 
 const CONFIGMOD_LOCATION = DOCUMENTS;

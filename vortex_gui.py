@@ -18,14 +18,17 @@ import os
 import shutil
 import sys
 
+import subprocess
+
 from PySide6.QtCore import (
-    QAbstractTableModel, QItemSelectionModel, QModelIndex, QObject, QPointF,
-    QProcess, QSettings, QSize, QSortFilterProxyModel, Qt, Signal,
+    QAbstractProxyModel, QAbstractTableModel, QItemSelectionModel, QModelIndex,
+    QObject, QPointF, QProcess, QSettings, QSize, QSortFilterProxyModel, Qt, QUrl, Signal,
 )
 from PySide6.QtGui import (
-    QAction, QColor, QFont, QIcon, QKeySequence, QPainter, QPainterPath,
+    QAction, QColor, QDesktopServices, QFont, QIcon, QKeySequence, QPainter, QPainterPath,
     QPen, QPixmap, QShortcut, QTextCursor,
 )
+from PySide6.QtSvg import QSvgRenderer
 from PySide6.QtWidgets import (
     QApplication, QCheckBox, QComboBox, QDialog, QDialogButtonBox,
     QFormLayout, QHBoxLayout, QHeaderView, QLabel, QLineEdit,
@@ -80,15 +83,50 @@ def _load_icon(path: str, max_w: int, max_h: int) -> "QIcon | None":
     return QIcon(px)
 
 
+def _load_svg_icon(path: str, size: int) -> "QIcon | None":
+    """Render an SVG at size x size pixels, return QIcon or None."""
+    renderer = QSvgRenderer(path)
+    if not renderer.isValid():
+        return None
+    px = QPixmap(size, size)
+    px.fill(Qt.transparent)
+    p = QPainter(px)
+    renderer.render(p)
+    p.end()
+    return QIcon(px)
+
+
+def _resolve_vortex_exe() -> "str | None":
+    candidates = [
+        r"C:\Program Files\Black Tree Gaming Ltd\Vortex\Vortex.exe",
+        shutil.which("Vortex.exe") or "",
+    ]
+    for path in candidates:
+        if path and os.path.isfile(path):
+            return path
+    return None
+
+
+VORTEX_EXE: "str | None" = _resolve_vortex_exe()
+
 _FLAG_ICON: "QIcon | None" = None
 _UNFLAG_ICON: "QIcon | None" = None
+_NEXUS_ICON: "QIcon | None" = None
+_GEAR_ICON: "QIcon | None" = None
+_GEAR_ICON_DIM: "QIcon | None" = None
+_FOLDER_ICON: "QIcon | None" = None
+_VORTEX_ICON: "QIcon | None" = None
+_VORTEX_ICON_DIM: "QIcon | None" = None
 
 
-def _make_flag_icons():
-    """Build the flagged/unflagged QIcons. Must be called after QApplication is created."""
-    global _FLAG_ICON, _UNFLAG_ICON
+def _make_icons():
+    """Build all QIcons. Must be called after QApplication is created."""
+    import math
+    global _FLAG_ICON, _UNFLAG_ICON, _NEXUS_ICON, _GEAR_ICON, _GEAR_ICON_DIM, \
+           _FOLDER_ICON, _VORTEX_ICON, _VORTEX_ICON_DIM
 
-    def _draw(flagged: bool) -> QIcon:
+    # -- flag icons ----------------------------------------------------------
+    def _draw_flag(flagged: bool) -> QIcon:
         px = QPixmap(16, 16)
         px.fill(Qt.transparent)
         p = QPainter(px)
@@ -107,16 +145,75 @@ def _make_flag_icons():
         p.end()
         return QIcon(px)
 
-    _FLAG_ICON = _draw(True)
-    _UNFLAG_ICON = _draw(False)
+    _FLAG_ICON = _draw_flag(True)
+    _UNFLAG_ICON = _draw_flag(False)
+
+    # -- nexus icon (SVG) ----------------------------------------------------
+    _NEXUS_ICON = _load_svg_icon(os.path.join(REPO_ROOT, "nexus.svg"), 18)
+
+    # -- gear icons (drawn) --------------------------------------------------
+    def _draw_gear(dim: bool) -> QIcon:
+        fill_color = QColor("#cccccc") if dim else QColor("#555555")
+        px = QPixmap(18, 18)
+        px.fill(Qt.transparent)
+        p = QPainter(px)
+        p.setRenderHint(QPainter.Antialiasing)
+        cx, cy = 9.0, 9.0
+        r_out, r_in, r_hole = 8.0, 5.5, 2.8
+        n, tooth_frac = 8, 0.35
+        half = math.pi * tooth_frac / n
+        pts = []
+        for i in range(n):
+            ca = math.tau * i / n
+            pts += [
+                QPointF(cx + r_in  * math.cos(ca - half), cy + r_in  * math.sin(ca - half)),
+                QPointF(cx + r_out * math.cos(ca - half), cy + r_out * math.sin(ca - half)),
+                QPointF(cx + r_out * math.cos(ca + half), cy + r_out * math.sin(ca + half)),
+                QPointF(cx + r_in  * math.cos(ca + half), cy + r_in  * math.sin(ca + half)),
+            ]
+        gear_path = QPainterPath()
+        gear_path.moveTo(pts[0])
+        for pt in pts[1:]:
+            gear_path.lineTo(pt)
+        gear_path.closeSubpath()
+        hole_path = QPainterPath()
+        hole_path.addEllipse(QPointF(cx, cy), r_hole, r_hole)
+        p.setPen(Qt.NoPen)
+        p.fillPath(gear_path.subtracted(hole_path), fill_color)
+        p.end()
+        return QIcon(px)
+
+    _GEAR_ICON = _draw_gear(False)
+    _GEAR_ICON_DIM = _draw_gear(True)
+
+    # -- folder icon (Qt standard) -------------------------------------------
+    from PySide6.QtWidgets import QApplication, QStyle
+    _FOLDER_ICON = QApplication.style().standardIcon(QStyle.SP_DirIcon)
+
+    # -- vortex icon (PNG + dim variant) -------------------------------------
+    vortex_full = _load_icon(os.path.join(REPO_ROOT, "vortex.png"), 18, 18)
+    _VORTEX_ICON = vortex_full
+    if vortex_full is not None:
+        src_px = vortex_full.pixmap(18, 18)
+        dim_px = QPixmap(src_px.size())
+        dim_px.fill(Qt.transparent)
+        p = QPainter(dim_px)
+        p.setOpacity(0.35)
+        p.drawPixmap(0, 0, src_px)
+        p.end()
+        _VORTEX_ICON_DIM = QIcon(dim_px)
+    else:
+        _VORTEX_ICON_DIM = None
 
 
 # == Data model ================================================================
 
 COL_FLAG, COL_ICON, COL_GAME_ID, COL_NAME, COL_VERSION, COL_DATE, COL_ENGINE, \
-    COL_COVER, COL_TITLE, COL_BANNER, COL_FOLDER = range(11)
-HEADERS = ("Flag", "Icon", "Game ID", "Name", "Version", "Date", "Engine", "Cover", "Title", "Banner", "Folder")
+    COL_COVER, COL_TITLE, COL_BANNER, COL_NEXUS, COL_EXT_URL, COL_FOLDER, COL_VORTEX = range(14)
+HEADERS = ("Flag", "Icon", "Game ID", "Name", "Ver", "Date", "Engine", "Cover", "Title", "Banner", "Nex", "Ext", "Open", "Vort")
 _THUMBNAIL_COLS = frozenset({COL_ICON, COL_COVER, COL_TITLE, COL_BANNER})
+_LINK_COLS = frozenset({COL_NEXUS, COL_EXT_URL, COL_FOLDER, COL_VORTEX})
+_IS_GROUP_HEADER_ROLE = Qt.UserRole + 10
 
 
 class GameRow:
@@ -124,12 +221,14 @@ class GameRow:
         "game_id", "name", "version", "date", "engine", "folder",
         "icon", "icon_path", "cover", "cover_path",
         "title", "title_path", "banner", "banner_path",
+        "extension_url",
         "flagged", "note",
     )
 
     def __init__(self, game_id, name, version, date, engine, folder,
                  icon, icon_path, cover, cover_path,
                  title, title_path, banner, banner_path,
+                 extension_url,
                  flagged, note):
         self.game_id = game_id
         self.name = name or ""
@@ -145,6 +244,7 @@ class GameRow:
         self.title_path = title_path
         self.banner = banner
         self.banner_path = banner_path
+        self.extension_url = extension_url
         self.flagged = flagged
         self.note = note
 
@@ -177,6 +277,8 @@ class GameModel(QAbstractTableModel):
             banner_path = os.path.join(vu.BANNER_IMAGES_DIR, f"{game_id}_banner.jpg")
             banner = _load_icon(banner_path, 40, 20) if os.path.isfile(banner_path) else None
 
+            extension_url = vu.extract_extension_url(src)
+
             fd = flags.get(game_id, {})
             rows.append(GameRow(
                 game_id, name, version, date, engine, folder,
@@ -184,6 +286,7 @@ class GameModel(QAbstractTableModel):
                 cover, cover_path if os.path.isfile(cover_path) else None,
                 title, title_path if os.path.isfile(title_path) else None,
                 banner, banner_path if os.path.isfile(banner_path) else None,
+                extension_url,
                 fd.get("flagged", False), fd.get("note", ""),
             ))
         self._rows = rows
@@ -202,20 +305,32 @@ class GameModel(QAbstractTableModel):
         col = index.column()
 
         if role == Qt.DecorationRole:
-            if col == COL_FLAG:   return _FLAG_ICON if row.flagged else _UNFLAG_ICON
-            if col == COL_ICON:   return row.icon
-            if col == COL_COVER:  return row.cover
-            if col == COL_TITLE:  return row.title
-            if col == COL_BANNER: return row.banner
+            if col == COL_FLAG:    return _FLAG_ICON if row.flagged else _UNFLAG_ICON
+            if col == COL_ICON:    return row.icon
+            if col == COL_COVER:   return row.cover
+            if col == COL_TITLE:   return row.title
+            if col == COL_BANNER:  return row.banner
+            if col == COL_NEXUS:   return _NEXUS_ICON
+            if col == COL_EXT_URL: return _GEAR_ICON if row.extension_url else _GEAR_ICON_DIM
+            if col == COL_FOLDER:  return _FOLDER_ICON
+            if col == COL_VORTEX:  return _VORTEX_ICON if VORTEX_EXE else _VORTEX_ICON_DIM
             return None
 
         if role == Qt.ToolTipRole:
             if col == COL_FLAG:
                 return row.note if row.note else "Click to flag / add note"
+            if col == COL_NEXUS:
+                return f"https://www.nexusmods.com/{row.game_id}"
+            if col == COL_EXT_URL:
+                return row.extension_url or "EXTENSION_URL not set"
+            if col == COL_FOLDER:
+                return row.folder
+            if col == COL_VORTEX:
+                return f"Open in Vortex: {row.game_id}" if VORTEX_EXE else "Vortex.exe not found"
             return None
 
         if role == Qt.DisplayRole:
-            if col == COL_FLAG or col in _THUMBNAIL_COLS:
+            if col == COL_FLAG or col in _THUMBNAIL_COLS or col in _LINK_COLS:
                 return ""
             return {
                 COL_GAME_ID: row.game_id,
@@ -223,7 +338,6 @@ class GameModel(QAbstractTableModel):
                 COL_VERSION: row.version,
                 COL_DATE:    row.date,
                 COL_ENGINE:  row.engine,
-                COL_FOLDER:  row.folder,
             }.get(col)
 
         if role == Qt.UserRole:
@@ -243,10 +357,17 @@ class GameFilterModel(QSortFilterProxyModel):
         self.setFilterCaseSensitivity(Qt.CaseInsensitive)
         self.setSortCaseSensitivity(Qt.CaseInsensitive)
         self._text = ""
+        self._grouping = False
 
     def set_text(self, text: str):
         self._text = text.strip().lower()
-        self.invalidateRowsFilter()
+        self.invalidate()
+
+    def set_grouping(self, enabled: bool):
+        if enabled == self._grouping:
+            return
+        self._grouping = enabled
+        self.invalidate()
 
     def filterAcceptsRow(self, source_row, source_parent):
         if not self._text:
@@ -258,12 +379,160 @@ class GameFilterModel(QSortFilterProxyModel):
                 or self._text in row.note.lower())
 
     def lessThan(self, left, right):
+        l_row = self.sourceModel()._rows[left.row()]
+        r_row = self.sourceModel()._rows[right.row()]
+        if self._grouping and l_row.engine != r_row.engine:
+            return l_row.engine < r_row.engine
         if left.column() == COL_FLAG:
-            l_row = self.sourceModel()._rows[left.row()]
-            r_row = self.sourceModel()._rows[right.row()]
             if l_row.flagged != r_row.flagged:
                 return l_row.flagged  # flagged rows sort first in ascending order
         return super().lessThan(left, right)
+
+
+# == Group proxy ===============================================================
+
+class GroupProxy(QAbstractProxyModel):
+    """Wraps GameFilterModel; inserts read-only engine group header rows when enabled."""
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self._grouping = False
+        self._map: list[tuple[bool, int, str]] = []
+
+    def setSourceModel(self, model):
+        old = self.sourceModel()
+        if old is not None:
+            old.modelReset.disconnect(self._rebuild)
+            old.layoutChanged.disconnect(self._rebuild)
+            old.dataChanged.disconnect(self._on_data_changed)
+        super().setSourceModel(model)
+        if model is not None:
+            model.modelReset.connect(self._rebuild)
+            model.layoutChanged.connect(self._rebuild)
+            model.dataChanged.connect(self._on_data_changed)
+            self._rebuild()
+
+    def set_grouping(self, enabled: bool):
+        if enabled == self._grouping:
+            return
+        self._grouping = enabled
+        src = self.sourceModel()
+        if src is not None:
+            src.set_grouping(enabled)
+        # _rebuild fires automatically via layoutChanged from src.invalidate()
+
+    def _rebuild(self):
+        self.beginResetModel()
+        src = self.sourceModel()
+        if src is None:
+            self._map = []
+            self.endResetModel()
+            return
+        n = src.rowCount()
+        if not self._grouping:
+            self._map = [(False, i, "") for i in range(n)]
+        else:
+            result = []
+            cur_engine = None
+            for i in range(n):
+                engine = src.data(src.index(i, COL_ENGINE)) or ""
+                if engine != cur_engine:
+                    cur_engine = engine
+                    result.append((True, -1, engine))
+                result.append((False, i, engine))
+            self._map = result
+        self.endResetModel()
+
+    def _on_data_changed(self, top_left, bottom_right, roles):
+        proxy_tl = self.mapFromSource(top_left)
+        proxy_br = self.mapFromSource(bottom_right)
+        if proxy_tl.isValid() and proxy_br.isValid():
+            self.dataChanged.emit(proxy_tl, proxy_br, roles)
+
+    def rowCount(self, parent=QModelIndex()):
+        return 0 if parent.isValid() else len(self._map)
+
+    def columnCount(self, parent=QModelIndex()):
+        src = self.sourceModel()
+        return (src.columnCount() if src else 0) if not parent.isValid() else 0
+
+    def index(self, row, col, parent=QModelIndex()):
+        if parent.isValid():
+            return QModelIndex()
+        if row < 0 or row >= len(self._map):
+            return QModelIndex()
+        return self.createIndex(row, col)
+
+    def parent(self, index=QModelIndex()):
+        return QModelIndex()
+
+    def mapToSource(self, proxy_index):
+        if not proxy_index.isValid():
+            return QModelIndex()
+        r = proxy_index.row()
+        if r < 0 or r >= len(self._map):
+            return QModelIndex()
+        is_header, src_row, _ = self._map[r]
+        if is_header:
+            return QModelIndex()
+        src = self.sourceModel()
+        return src.index(src_row, proxy_index.column())
+
+    def mapFromSource(self, source_index):
+        if not source_index.isValid():
+            return QModelIndex()
+        src_row = source_index.row()
+        for proxy_row, (is_header, sr, _) in enumerate(self._map):
+            if not is_header and sr == src_row:
+                return self.createIndex(proxy_row, source_index.column())
+        return QModelIndex()
+
+    def data(self, index, role=Qt.DisplayRole):
+        if not index.isValid():
+            return None
+        r = index.row()
+        if r < 0 or r >= len(self._map):
+            return None
+        is_header, _, engine = self._map[r]
+        if role == _IS_GROUP_HEADER_ROLE:
+            return is_header
+        if is_header:
+            if role == Qt.DisplayRole:
+                return engine if index.column() == 0 else ""
+            if role == Qt.BackgroundRole:
+                return QColor("#c8d4e8")
+            if role == Qt.ForegroundRole:
+                return QColor("#1a1a2e")
+            if role == Qt.FontRole:
+                f = QFont()
+                f.setBold(True)
+                return f
+            return None
+        return super().data(index, role)
+
+    def flags(self, index):
+        if not index.isValid():
+            return Qt.NoItemFlags
+        r = index.row()
+        if r < 0 or r >= len(self._map):
+            return Qt.NoItemFlags
+        if self._map[r][0]:
+            return Qt.ItemIsEnabled
+        return super().flags(index)
+
+    def headerData(self, section, orientation, role=Qt.DisplayRole):
+        src = self.sourceModel()
+        return src.headerData(section, orientation, role) if src else None
+
+    def sort(self, column: int, order=Qt.AscendingOrder):
+        src = self.sourceModel()
+        if src is not None:
+            src.sort(column, order)
+
+    def is_header_row(self, proxy_row: int) -> bool:
+        if 0 <= proxy_row < len(self._map):
+            return self._map[proxy_row][0]
+        return False
 
 
 # == Script runner =============================================================
@@ -520,8 +789,11 @@ class MainWindow(QMainWindow):
         self.resize(1300, 850)
 
         self._model = GameModel()
-        self._proxy = GameFilterModel()
-        self._proxy.setSourceModel(self._model)
+        self._filter_model = GameFilterModel()
+        self._filter_model.setSourceModel(self._model)
+        self._proxy = GroupProxy()
+        self._proxy.setSourceModel(self._filter_model)
+        self._prev_header_rows: set[int] = set()
 
         self._runner = ScriptRunner()
         self._runner.log_signal.connect(self._append_log)
@@ -551,7 +823,7 @@ class MainWindow(QMainWindow):
         self._filter_edit = QLineEdit()
         self._filter_edit.setPlaceholderText("Game ID, name, engine, or note...")
         self._filter_edit.setClearButtonEnabled(True)
-        self._filter_edit.textChanged.connect(self._proxy.set_text)
+        self._filter_edit.textChanged.connect(self._filter_model.set_text)
         self._filter_edit.textChanged.connect(self._update_status_bar)
         top_bar.addWidget(self._filter_edit, stretch=1)
         self._refresh_btn = QPushButton("Refresh")
@@ -562,6 +834,10 @@ class MainWindow(QMainWindow):
         self._new_game_btn.clicked.connect(self._on_new_game)
         self._new_game_btn.setShortcut(QKeySequence.StandardKey.New)
         top_bar.addWidget(self._new_game_btn)
+        self._group_btn = QPushButton("Group by Engine")
+        self._group_btn.setCheckable(True)
+        self._group_btn.toggled.connect(self._on_group_toggled)
+        top_bar.addWidget(self._group_btn)
         root_layout.addLayout(top_bar)
 
         QShortcut(QKeySequence("Ctrl+F"), self).activated.connect(self._filter_edit.setFocus)
@@ -587,10 +863,17 @@ class MainWindow(QMainWindow):
         add_action("Fetch Cover", self._on_fetch_cover)
         add_action("Fetch Title", self._on_fetch_title)
         add_action("Fetch Banner", self._on_fetch_banner)
+        add_action("View Icon", self._on_view_icon, sep=True)
+        add_action("View Cover", self._on_view_cover)
+        add_action("View Title", self._on_view_title)
+        add_action("View Banner", self._on_view_banner)
         add_action("Setup Test Folder", self._on_setup_test, sep=True)
         add_action("Patch", self._on_patch)
         add_action("Open Folder", self._on_open_folder, sep=True)
         add_action("Open in Editor", self._on_open_editor)
+        add_action("Open Nexus", self._on_open_nexus, sep=True)
+        add_action("Open Ext", self._on_open_ext)
+        add_action("Open in Vortex", self._on_open_in_vortex)
         root_layout.addWidget(toolbar)
 
         # splitter: table on top, log pane on bottom
@@ -605,7 +888,6 @@ class MainWindow(QMainWindow):
         self._table.setSelectionBehavior(QTableView.SelectRows)
         self._table.setSelectionMode(QTableView.ExtendedSelection)
         self._table.setAlternatingRowColors(True)
-        self._table.setColumnHidden(COL_FOLDER, True)
         self._table.setIconSize(QSize(40, 20))
         self._table.verticalHeader().setDefaultSectionSize(22)
 
@@ -621,6 +903,10 @@ class MainWindow(QMainWindow):
         hdr.setSectionResizeMode(COL_COVER,   QHeaderView.Fixed)
         hdr.setSectionResizeMode(COL_TITLE,   QHeaderView.Fixed)
         hdr.setSectionResizeMode(COL_BANNER,  QHeaderView.Fixed)
+        hdr.setSectionResizeMode(COL_NEXUS,   QHeaderView.Fixed)
+        hdr.setSectionResizeMode(COL_EXT_URL, QHeaderView.Fixed)
+        hdr.setSectionResizeMode(COL_FOLDER,  QHeaderView.Fixed)
+        hdr.setSectionResizeMode(COL_VORTEX,  QHeaderView.Fixed)
         self._table.setColumnWidth(COL_FLAG,    22)
         self._table.setColumnWidth(COL_ICON,    26)
         self._table.setColumnWidth(COL_NAME,    300)
@@ -631,6 +917,10 @@ class MainWindow(QMainWindow):
         self._table.setColumnWidth(COL_COVER,   42)
         self._table.setColumnWidth(COL_TITLE,   42)
         self._table.setColumnWidth(COL_BANNER,  42)
+        self._table.setColumnWidth(COL_NEXUS,   26)
+        self._table.setColumnWidth(COL_EXT_URL, 26)
+        self._table.setColumnWidth(COL_FOLDER,  26)
+        self._table.setColumnWidth(COL_VORTEX,  26)
         self._table.sortByColumn(COL_GAME_ID, Qt.AscendingOrder)
         self._table.selectionModel().selectionChanged.connect(self._on_selection_changed)
         self._table.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -638,6 +928,7 @@ class MainWindow(QMainWindow):
         self._table.clicked.connect(self._on_table_cell_clicked)
         self._table.doubleClicked.connect(self._on_table_double_clicked)
         splitter.addWidget(self._table)
+        self._proxy.modelReset.connect(self._apply_spans)
 
         # --- log pane ---
         self._log_pane = QPlainTextEdit()
@@ -680,7 +971,8 @@ class MainWindow(QMainWindow):
         if sp:
             self._splitter.restoreState(sp)
         th = settings.value("tableHeader")
-        if th:
+        saved_cols = settings.value("tableHeaderColCount", 0, type=int)
+        if th and saved_cols == len(HEADERS):
             self._table.horizontalHeader().restoreState(th)
 
     def closeEvent(self, event):
@@ -688,8 +980,22 @@ class MainWindow(QMainWindow):
         settings.setValue("geometry", self.saveGeometry())
         settings.setValue("splitter", self._splitter.saveState())
         settings.setValue("tableHeader", self._table.horizontalHeader().saveState())
+        settings.setValue("tableHeaderColCount", len(HEADERS))
         self._runner.stop()
         super().closeEvent(event)
+
+    def _apply_spans(self):
+        nc = self._proxy.columnCount()
+        for r in self._prev_header_rows:
+            self._table.setSpan(r, 0, 1, 1)
+        self._prev_header_rows = set()
+        for r in range(self._proxy.rowCount()):
+            if self._proxy.is_header_row(r):
+                self._table.setSpan(r, 0, 1, nc)
+                self._prev_header_rows.add(r)
+
+    def _on_group_toggled(self, checked: bool):
+        self._proxy.set_grouping(checked)
 
     def _refresh_data(self):
         prev_ids = set(self._selected_ids())
@@ -723,7 +1029,10 @@ class MainWindow(QMainWindow):
         seen: set[str] = set()
         result: list[GameRow] = []
         for idx in sel:
-            src_idx = self._proxy.mapToSource(idx)
+            if self._proxy.is_header_row(idx.row()):
+                continue
+            filter_idx = self._proxy.mapToSource(idx)
+            src_idx = self._filter_model.mapToSource(filter_idx)
             row = self._model._rows[src_idx.row()]
             if row.game_id not in seen:
                 seen.add(row.game_id)
@@ -742,8 +1051,11 @@ class MainWindow(QMainWindow):
     # -- Table interaction -----------------------------------------------------
 
     def _on_table_cell_clicked(self, proxy_index):
+        if self._proxy.is_header_row(proxy_index.row()):
+            return
         col = proxy_index.column()
-        src_idx = self._proxy.mapToSource(proxy_index)
+        filter_idx = self._proxy.mapToSource(proxy_index)
+        src_idx = self._filter_model.mapToSource(filter_idx)
         row = self._model._rows[src_idx.row()]
 
         if col == COL_FLAG:
@@ -758,6 +1070,27 @@ class MainWindow(QMainWindow):
                 _save_flag(row.game_id, row.flagged, row.note)
             return
 
+        if col == COL_NEXUS:
+            QDesktopServices.openUrl(QUrl(f"https://www.nexusmods.com/{row.game_id}"))
+            return
+
+        if col == COL_EXT_URL:
+            if row.extension_url:
+                QDesktopServices.openUrl(QUrl(row.extension_url))
+            return
+
+        if col == COL_FOLDER:
+            os.startfile(row.folder)
+            return
+
+        if col == COL_VORTEX:
+            if VORTEX_EXE:
+                subprocess.Popen([VORTEX_EXE, "--game", row.game_id],
+                                  cwd=os.path.dirname(VORTEX_EXE))
+            else:
+                print(f"[vortex_gui] Vortex.exe not found; cannot open {row.game_id}")
+            return
+
         if col in _THUMBNAIL_COLS:
             path = {
                 COL_ICON:   row.icon_path,
@@ -769,7 +1102,9 @@ class MainWindow(QMainWindow):
                 os.startfile(path)
 
     def _on_table_double_clicked(self, proxy_index):
-        if proxy_index.column() in (*_THUMBNAIL_COLS, COL_FLAG):
+        if self._proxy.is_header_row(proxy_index.row()):
+            return
+        if proxy_index.column() in (*_THUMBNAIL_COLS, COL_FLAG, *_LINK_COLS):
             return
         self._on_open_editor()
 
@@ -937,6 +1272,61 @@ class MainWindow(QMainWindow):
             if os.path.isfile(index_path):
                 os.startfile(index_path)
 
+    def _on_view_icon(self):
+        if not self._require_selection():
+            return
+        for row in self._selected_rows():
+            if row.icon_path and os.path.isfile(row.icon_path):
+                os.startfile(row.icon_path)
+
+    def _on_view_cover(self):
+        if not self._require_selection():
+            return
+        for row in self._selected_rows():
+            if row.cover_path and os.path.isfile(row.cover_path):
+                os.startfile(row.cover_path)
+
+    def _on_view_title(self):
+        if not self._require_selection():
+            return
+        for row in self._selected_rows():
+            if row.title_path and os.path.isfile(row.title_path):
+                os.startfile(row.title_path)
+
+    def _on_view_banner(self):
+        if not self._require_selection():
+            return
+        for row in self._selected_rows():
+            if row.banner_path and os.path.isfile(row.banner_path):
+                os.startfile(row.banner_path)
+
+    def _on_open_nexus(self):
+        if not self._require_selection():
+            return
+        for row in self._selected_rows():
+            QDesktopServices.openUrl(QUrl(f"https://www.nexusmods.com/{row.game_id}"))
+
+    def _on_open_ext(self):
+        if not self._require_selection():
+            return
+        for row in self._selected_rows():
+            if row.extension_url:
+                QDesktopServices.openUrl(QUrl(row.extension_url))
+
+    def _on_open_in_vortex(self):
+        rows = self._selected_rows()
+        if not rows:
+            QMessageBox.information(self, "No Selection", "Select one or more games first.")
+            return
+        if len(rows) > 1:
+            QMessageBox.information(self, "Single Game Only", "Open in Vortex works on one game at a time.")
+            return
+        if not VORTEX_EXE:
+            QMessageBox.warning(self, "Vortex Not Found", "Vortex.exe could not be located.")
+            return
+        subprocess.Popen([VORTEX_EXE, "--game", rows[0].game_id],
+                         cwd=os.path.dirname(VORTEX_EXE))
+
     def _on_new_game(self):
         dlg = NewGameDialog(self)
         if dlg.exec() != QDialog.Accepted:
@@ -984,7 +1374,7 @@ class MainWindow(QMainWindow):
             self._update_status_bar()
 
     def _update_status_bar(self):
-        total_proxy = self._proxy.rowCount()
+        total_proxy = self._filter_model.rowCount()
         total_model = self._model.rowCount()
         selected = len(self._table.selectionModel().selectedRows())
         if total_proxy < total_model:
@@ -1065,7 +1455,7 @@ class _CheckboxStyle(QProxyStyle):
 def main():
     app = QApplication(sys.argv)
     app.setStyle(_CheckboxStyle("Fusion"))
-    _make_flag_icons()
+    _make_icons()
     win = MainWindow()
     win.show()
     sys.exit(app.exec())
