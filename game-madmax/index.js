@@ -73,7 +73,7 @@ const CONFIGMOD_LOCATION = DOCUMENTS;
 const SAVEMOD_LOCATION = DOCUMENTS;
 const APPDATA_FOLDER = path.join('WB Games', 'Mad Max');
 const CONFIG_FOLDERNAME = 'Saves';
-const SAVE_FOLDERNAME = 'Backup Saves';
+const SAVE_FOLDERNAME = 'Backup';
 
 let GAME_PATH = '';
 let GAME_VERSION = '';

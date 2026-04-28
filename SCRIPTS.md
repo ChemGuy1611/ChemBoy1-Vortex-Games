@@ -164,6 +164,46 @@ python fetch_cover_art.py --banner GAME_ID [GAME_ID ...]
 
 ---
 
+## fetch_nexus_stats.py
+
+Fetches endorsement count and unique download count from the Nexus Mods v1 API for every `game-*` extension with a valid `EXTENSION_URL` (i.e., a `nexusmods.com` URL). Results are cached to `vortex_gui_nexus_stats.json` at the repo root (gitignored). The GUI dashboard reads this file and displays the stats in the `End` and `DL` columns.
+
+Extensions with placeholder `EXTENSION_URL = "XXX"` are silently skipped.
+
+### fetch_nexus_stats.py — Requirements
+
+No additional packages required (Python stdlib only).
+
+### fetch_nexus_stats.py — Environment Variables
+
+| Variable | Required | Description |
+| --- | --- | --- |
+| `NEXUS_API_KEY` | Required | Nexus Mods API key. Not needed for `--dry-run`. |
+
+### fetch_nexus_stats.py — Usage
+
+```sh
+python fetch_nexus_stats.py
+python fetch_nexus_stats.py GAME_ID [GAME_ID ...]
+python fetch_nexus_stats.py --dry-run
+python fetch_nexus_stats.py --force
+```
+
+- No arguments — fetches stats for all extensions missing from the cache.
+- `GAME_ID [GAME_ID ...]` — only processes the listed game IDs.
+- `--dry-run` — lists extensions that would be fetched without making any API calls. Works without `NEXUS_API_KEY`.
+- `--force` — re-fetches stats even if already cached.
+
+### fetch_nexus_stats.py — Output
+
+- Results written to `vortex_gui_nexus_stats.json` (single atomic write at the end of the run).
+- Each entry includes `endorsements`, `unique_downloads`, `total_downloads`, `mod_name`, `mod_version`, `fetched_at` (epoch seconds), and `error` (null on success, "404" if not found).
+- Prints `endorsements` and `unique_downloads` per game while running, with the daily API rate limit remaining.
+- Rate limit is checked after each call; stops early if fewer than 6 requests remain.
+- Summary line at the end: `Updated: N | Failed: N | Daily remaining: N`.
+
+---
+
 ## new_template.py
 
 Creates a new Vortex extension template from one or more existing game extensions. The primary game's `index.js` is copied and all game-specific constants are replaced with `"XXX"` placeholders. Tool icon PNGs (excluding `exec.png`) are copied. Adds the new template to the `TEMPLATES` list in `new_extension.py` automatically.
@@ -769,14 +809,17 @@ No arguments. Launches the window, which loads all extensions automatically.
 ```text
 [ Filter: ____________ ]  [Refresh]  [New Game...]
 [ Release ] [ Lint ] [ Generate Explained ] [ Port to Template... ]
-[ Fetch Icon ] [ Fetch Cover ] [ Fetch Title ] [ Fetch Banner ]
+[ Fetch Icon ] [ Fetch Cover ] [ Fetch Title ] [ Fetch Banner ] [ Fetch Nexus Stats ]
 [ Setup Test Folder ] [ Patch ] | [ Open Folder ] [ Open in Editor ]
----------------------------------------------------------------
-| Game ID | Name | Version | Date | Engine |
-| sortable QTableView, multi-select with Ctrl/Shift |
----------------------------------------------------------------
+-------------------------------------------------------------------------------
+| Game ID | Name | Ver | Date | Engine | End | DL | Cover | Title | Banner |...
+| sortable QTableView, multi-select with Ctrl/Shift                           |
+-------------------------------------------------------------------------------
 | Log pane (live subprocess output)    [Clear Log] [Stop Running] |
 ```
+
+- `End` — Nexus endorsement count (blank until `Fetch Nexus Stats` is run; sorts numerically).
+- `DL` — Nexus unique download count (same). Tooltip shows the last fetch timestamp.
 
 - **Sort**: click any column header.
 - **Filter**: case-insensitive substring match on Game ID and Name.
@@ -797,6 +840,7 @@ No arguments. Launches the window, which loads all extensions automatically.
 | Fetch Cover | `python fetch_cover_art.py <ids>` |
 | Fetch Title | `python fetch_cover_art.py --title <ids>` |
 | Fetch Banner | `python fetch_cover_art.py --banner <ids>` |
+| Fetch Nexus Stats | `python fetch_nexus_stats.py <ids>` |
 | Setup Test Folder | `python setup_test_folder.py <ids>` |
 | Patch | `python patch_extensions.py <ids>` |
 | Open Folder | `os.startfile(folder)` — no subprocess |

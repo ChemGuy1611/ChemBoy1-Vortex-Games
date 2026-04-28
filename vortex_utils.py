@@ -212,12 +212,12 @@ def extract_game_name(src):
 
 
 def extract_extension_url(src):
-    """Return the EXTENSION_URL value from index.js source, or None if unset/XXX."""
-    m = re.search(r'const\s+EXTENSION_URL\s*=\s*["\'](.+?)["\']', src)
+    """Return the EXTENSION_URL value from index.js source, or None if unset/XXX/non-Nexus."""
+    m = re.search(r'const\s+EXTENSION_URL\s*=\s*["\'\`](.+?)["\'\`]', src)
     if not m:
         return None
     val = m.group(1)
-    return val if val.startswith("http") else None
+    return val if "nexusmods.com" in val else None
 
 
 def sanitize_game_name(name):

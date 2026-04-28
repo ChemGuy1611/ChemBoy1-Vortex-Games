@@ -6,6 +6,7 @@ port_to_template.py
 patch_extensions.py
 fetch_cover_art.py
 fetch_exec_icon.py
+fetch_nexus_stats.py
 release_extension.py
 setup_test_folder.py
 categorize_games.py

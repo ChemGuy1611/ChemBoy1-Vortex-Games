@@ -1,9 +1,9 @@
 /*/////////////////////////////////////////////
-Name: XXX Vortex Extension
+Name: STAR WARS Battlefront II Vortex Extension
 Structure: Frostbite Engine - Frosty Mod Manager
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2026-XX-XX
+Date: 2026-04-26
 Notes:
 -
 /////////////////////////////////////////////*/
@@ -17,29 +17,29 @@ const winapi = require('winapi-bindings');
 const DOCUMENTS = util.getVortexPath("documents");
 
 //Specify all the information about the game
-const GAME_ID = "XXX";
+const GAME_ID = "starwarsbattlefront22017";
 const EAAPP_ID = "XXX";
-const STEAMAPP_ID = "XXX";
+const STEAMAPP_ID = "1237950"; // https://steamdb.info/app/1237950/
 const GOGAPP_ID = null; //not typically available for EA games
-//not typically available on Xbox/Epic - available through EA Play instead
+//not typically available on Xbox - available through EA Play instead
 const REGISTRY_HIVE = 'HKEY_LOCAL_MACHINE';
-const REGISTRY_KEY = 'SOFTWARE\\WOW432Node\\EA Games\\XXX'; // e.g. 'SOFTWARE\\WOW6432Node\\BioWare\\Mass Effect Andromeda'
+const REGISTRY_KEY = 'SOFTWARE\\WOW432Node\\EA Games\\STAR WARS Battlefront II'; // e.g. 'SOFTWARE\\WOW6432Node\\BioWare\\Mass Effect Andromeda'
 const REGISTRY_VALUE = 'Install Dir'; // e.g. 'Install Dir'
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EAAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
 const gameFinderQuery = {
   steam: [{ id: STEAMAPP_ID, prefer: 0 }],
   registry: [{ id: `${REGISTRY_HIVE}:${REGISTRY_KEY}:${REGISTRY_VALUE}`}],
 };
 
-const GAME_NAME = "XXX";
-const GAME_NAME_SHORT = "XXX";
-const EXEC = "XXX";
-const PCGAMINGWIKI_URL = "XXX";
-const EXTENSION_URL = "XXX";
+const GAME_NAME = "STAR WARS Battlefront II (2017)";
+const GAME_NAME_SHORT = "SW Battlefront II";
+const EXEC = "starwarsbattlefrontii.exe";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Star_Wars_Battlefront_II_(2017)";
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1852";
 
-const CONFIG_FOLDER = path.join("XXX", "XXX"); // Developer folder, game subfolder (e.g. "BioWare", "Mass Effect Andromeda")
-const FROSTYMOD_FOLDER = "XXX"; // Game-specific folder name inside FrostyModManager/Mods/
+const CONFIG_FOLDER = path.join("STAR WARS Battlefront II", "settings"); // Developer folder, game subfolder (e.g. "BioWare", "Mass Effect Andromeda")
+const FROSTYMOD_FOLDER = "StarWarsBattlefrontII"; // Game-specific folder name inside FrostyModManager/Mods/
 
 //feature toggles
 const allowSymlinks = false; // Frosty handles its own deployment; symlinks not typical

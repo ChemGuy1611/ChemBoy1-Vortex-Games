@@ -1019,6 +1019,7 @@ async function deserializeLoadOrder(context) {
   //* yaml with "disabled" parameter
   let MOD_ENTRIES = YAML.load(loadOrderFile);
   let LO_MOD_ARRAY = MOD_ENTRIES;
+  if (LO_MOD_ARRAY === undefined) LO_MOD_ARRAY = [];
   
   //Get all .pak files from mods folder
   let modFiles = [];

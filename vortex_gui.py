@@ -19,6 +19,7 @@ import shutil
 import sys
 
 import subprocess
+from datetime import datetime
 
 from PySide6.QtCore import (
     QAbstractProxyModel, QAbstractTableModel, QItemSelectionModel, QModelIndex,
@@ -42,6 +43,7 @@ REPO_ROOT = vu.REPO_ROOT
 PYTHON = sys.executable
 NODE = shutil.which("node") or "node"
 FLAGS_PATH = os.path.join(REPO_ROOT, "vortex_gui_flags.json")
+STATS_PATH = os.path.join(REPO_ROOT, "vortex_gui_nexus_stats.json")
 
 
 # == Flag storage ==============================================================
@@ -61,6 +63,18 @@ def _save_flags(data: dict):
     with open(tmp, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=2)
     os.replace(tmp, FLAGS_PATH)
+
+
+# == Stats storage =============================================================
+
+def _load_stats() -> dict:
+    if os.path.isfile(STATS_PATH):
+        try:
+            with open(STATS_PATH, encoding="utf-8") as f:
+                return json.load(f)
+        except Exception:
+            pass
+    return {}
 
 
 def _save_flag(game_id: str, flagged: bool, note: str):
@@ -183,8 +197,8 @@ def _make_icons():
         p.end()
         return QIcon(px)
 
-    _GEAR_ICON = _draw_gear(False)
-    _GEAR_ICON_DIM = _draw_gear(True)
+    _GEAR_ICON = _draw_gear(True)
+    _GEAR_ICON_DIM = _draw_gear(False)
 
     # -- folder icon (Qt standard) -------------------------------------------
     from PySide6.QtWidgets import QApplication, QStyle
@@ -209,8 +223,9 @@ def _make_icons():
 # == Data model ================================================================
 
 COL_FLAG, COL_ICON, COL_GAME_ID, COL_NAME, COL_VERSION, COL_DATE, COL_ENGINE, \
-    COL_COVER, COL_TITLE, COL_BANNER, COL_NEXUS, COL_EXT_URL, COL_FOLDER, COL_VORTEX = range(14)
-HEADERS = ("Flag", "Icon", "Game ID", "Name", "Ver", "Date", "Engine", "Cover", "Title", "Banner", "Nex", "Ext", "Open", "Vort")
+    COL_END, COL_DL, \
+    COL_COVER, COL_TITLE, COL_BANNER, COL_NEXUS, COL_EXT_URL, COL_FOLDER, COL_VORTEX = range(16)
+HEADERS = ("Flag", "Icon", "Game ID", "Name", "Ver", "Date", "Engine", "End", "DL", "Cover", "Title", "Banner", "Nex", "Ext", "Opn", "Vort")
 _THUMBNAIL_COLS = frozenset({COL_ICON, COL_COVER, COL_TITLE, COL_BANNER})
 _LINK_COLS = frozenset({COL_NEXUS, COL_EXT_URL, COL_FOLDER, COL_VORTEX})
 _IS_GROUP_HEADER_ROLE = Qt.UserRole + 10
@@ -222,6 +237,7 @@ class GameRow:
         "icon", "icon_path", "cover", "cover_path",
         "title", "title_path", "banner", "banner_path",
         "extension_url",
+        "endorsements", "unique_downloads", "stats_fetched_at",
         "flagged", "note",
     )
 
@@ -229,6 +245,7 @@ class GameRow:
                  icon, icon_path, cover, cover_path,
                  title, title_path, banner, banner_path,
                  extension_url,
+                 endorsements, unique_downloads, stats_fetched_at,
                  flagged, note):
         self.game_id = game_id
         self.name = name or ""
@@ -245,6 +262,9 @@ class GameRow:
         self.banner = banner
         self.banner_path = banner_path
         self.extension_url = extension_url
+        self.endorsements = endorsements
+        self.unique_downloads = unique_downloads
+        self.stats_fetched_at = stats_fetched_at
         self.flagged = flagged
         self.note = note
 
@@ -257,6 +277,7 @@ class GameModel(QAbstractTableModel):
     def load(self):
         self.beginResetModel()
         flags = _load_flags()
+        stats = _load_stats()
         rows = []
         for folder, game_id, src in vu.iter_game_folders():
             info = vu.read_info_json(folder) or {}
@@ -279,6 +300,11 @@ class GameModel(QAbstractTableModel):
 
             extension_url = vu.extract_extension_url(src)
 
+            s = stats.get(game_id) or {}
+            endorsements = s.get("endorsements") if not s.get("error") else None
+            unique_downloads = s.get("unique_downloads") if not s.get("error") else None
+            stats_fetched_at = s.get("fetched_at")
+
             fd = flags.get(game_id, {})
             rows.append(GameRow(
                 game_id, name, version, date, engine, folder,
@@ -287,6 +313,7 @@ class GameModel(QAbstractTableModel):
                 title, title_path if os.path.isfile(title_path) else None,
                 banner, banner_path if os.path.isfile(banner_path) else None,
                 extension_url,
+                endorsements, unique_downloads, stats_fetched_at,
                 fd.get("flagged", False), fd.get("note", ""),
             ))
         self._rows = rows
@@ -327,11 +354,20 @@ class GameModel(QAbstractTableModel):
                 return row.folder
             if col == COL_VORTEX:
                 return f"Open in Vortex: {row.game_id}" if VORTEX_EXE else "Vortex.exe not found"
+            if col in (COL_END, COL_DL):
+                if row.stats_fetched_at:
+                    ts = datetime.fromtimestamp(row.stats_fetched_at).strftime("%Y-%m-%d %H:%M")
+                    return f"Last fetched: {ts}"
+                return "Stats not yet fetched -- run Fetch Nexus Stats"
             return None
 
         if role == Qt.DisplayRole:
             if col == COL_FLAG or col in _THUMBNAIL_COLS or col in _LINK_COLS:
                 return ""
+            if col == COL_END:
+                return "" if row.endorsements is None else f"{row.endorsements:,}"
+            if col == COL_DL:
+                return "" if row.unique_downloads is None else f"{row.unique_downloads:,}"
             return {
                 COL_GAME_ID: row.game_id,
                 COL_NAME:    row.name,
@@ -340,8 +376,20 @@ class GameModel(QAbstractTableModel):
                 COL_ENGINE:  row.engine,
             }.get(col)
 
+        if role == Qt.TextAlignmentRole:
+            if col in (COL_END, COL_DL):
+                return int(Qt.AlignRight | Qt.AlignVCenter)
+            return None
+
         if role == Qt.UserRole:
             return row
+
+        if role == Qt.UserRole + 1:
+            if col == COL_END:
+                return row.endorsements if row.endorsements is not None else -1
+            if col == COL_DL:
+                return row.unique_downloads if row.unique_downloads is not None else -1
+            return None
 
         return None
 
@@ -383,6 +431,13 @@ class GameFilterModel(QSortFilterProxyModel):
         r_row = self.sourceModel()._rows[right.row()]
         if self._grouping and l_row.engine != r_row.engine:
             return l_row.engine < r_row.engine
+        if left.column() in (COL_END, COL_DL):
+            src = self.sourceModel()
+            lv = src.data(left,  Qt.UserRole + 1)
+            rv = src.data(right, Qt.UserRole + 1)
+            lv = lv if lv is not None else -1
+            rv = rv if rv is not None else -1
+            return lv < rv
         if left.column() == COL_FLAG:
             if l_row.flagged != r_row.flagged:
                 return l_row.flagged  # flagged rows sort first in ascending order
@@ -863,6 +918,7 @@ class MainWindow(QMainWindow):
         add_action("Fetch Cover", self._on_fetch_cover)
         add_action("Fetch Title", self._on_fetch_title)
         add_action("Fetch Banner", self._on_fetch_banner)
+        add_action("Fetch Nexus Stats", self._on_fetch_nexus_stats)
         add_action("View Icon", self._on_view_icon, sep=True)
         add_action("View Cover", self._on_view_cover)
         add_action("View Title", self._on_view_title)
@@ -900,6 +956,8 @@ class MainWindow(QMainWindow):
         hdr.setSectionResizeMode(COL_VERSION, QHeaderView.Interactive)
         hdr.setSectionResizeMode(COL_DATE,    QHeaderView.Interactive)
         hdr.setSectionResizeMode(COL_ENGINE,  QHeaderView.Interactive)
+        hdr.setSectionResizeMode(COL_END,     QHeaderView.Interactive)
+        hdr.setSectionResizeMode(COL_DL,      QHeaderView.Interactive)
         hdr.setSectionResizeMode(COL_COVER,   QHeaderView.Fixed)
         hdr.setSectionResizeMode(COL_TITLE,   QHeaderView.Fixed)
         hdr.setSectionResizeMode(COL_BANNER,  QHeaderView.Fixed)
@@ -914,6 +972,8 @@ class MainWindow(QMainWindow):
         self._table.setColumnWidth(COL_VERSION, 70)
         self._table.setColumnWidth(COL_DATE,    92)
         self._table.setColumnWidth(COL_ENGINE,  195)
+        self._table.setColumnWidth(COL_END,     62)
+        self._table.setColumnWidth(COL_DL,      80)
         self._table.setColumnWidth(COL_COVER,   42)
         self._table.setColumnWidth(COL_TITLE,   42)
         self._table.setColumnWidth(COL_BANNER,  42)
@@ -1224,6 +1284,21 @@ class MainWindow(QMainWindow):
         self._run([[PYTHON, os.path.join(REPO_ROOT, "fetch_cover_art.py"), "--banner"] + dlg.extra_args() + ids],
                   "fetch_cover_art.py --banner")
 
+    def _on_fetch_nexus_stats(self):
+        dlg = self._script_dlg(
+            "Fetch Nexus Stats",
+            flags=[
+                ("--dry-run", "Preview only, no API calls", False),
+                ("--force", "Re-fetch even if already cached", False),
+            ],
+        )
+        if dlg is None:
+            return
+        ids = self._selected_ids()
+        self._refresh_after_run = "--dry-run" not in dlg.extra_args()
+        self._run([[PYTHON, os.path.join(REPO_ROOT, "fetch_nexus_stats.py")] + dlg.extra_args() + ids],
+                  "fetch_nexus_stats.py")
+
     def _on_setup_test(self):
         dlg = self._script_dlg(
             "Setup Test Folder",
@@ -1401,6 +1476,7 @@ class MainWindow(QMainWindow):
             ("Fetch Cover", self._on_fetch_cover),
             ("Fetch Title", self._on_fetch_title),
             ("Fetch Banner", self._on_fetch_banner),
+            ("Fetch Nexus Stats", self._on_fetch_nexus_stats),
             None,
             ("Setup Test Folder", self._on_setup_test),
             ("Patch", self._on_patch),
