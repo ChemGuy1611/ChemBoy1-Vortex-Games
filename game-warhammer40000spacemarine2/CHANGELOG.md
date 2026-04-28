@@ -4,6 +4,11 @@
 
 - None Planned
 
+## [0.7.0] - 2026-04-28
+
+- Improved: Upgraded pak installer dialogue to show full paths
+- Improved: Added defensive code in load order deserialization
+
 ## [0.6.0] - 2026-04-22
 
 - Improved: Load Order rendering using React - show mod image thumbnails

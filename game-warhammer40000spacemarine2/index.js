@@ -2,8 +2,8 @@
 Name: WH40K Space Marine 2 Vortex Extension
 Structure: Mods Folder w/ LO
 Author: ChemBoy1
-Version: 0.6.0
-Date: 2026-04-22
+Version: 0.7.0
+Date: 2026-04-28
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -859,7 +859,7 @@ function installLocalSub(files) {
   return Promise.resolve({ instructions });
 }
 
-//Test for save files
+//Test for pak files
 function testPak(files, gameId) {
   const isMod = files.some(file => PAK_EXTS.includes(path.extname(file).toLowerCase()))
   let supported = (gameId === spec.game.id) && isMod;
@@ -877,72 +877,60 @@ function testPak(files, gameId) {
   });
 }
 
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-  function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-  return new (P || (P = Promise))(function (resolve, reject) {
-      function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-      function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-      function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-      step((generator = generator.apply(thisArg, _arguments || [])).next());
-  });
-};
-
-function installPak(api, files) {
-  return __awaiter(this, void 0, void 0, function* () {
-    const fileExt = PAK_EXTS[0];
-    const modFiles = files.filter(file => PAK_EXTS.includes(path.extname(file).toLowerCase()));
-    const modType = {
-      type: 'setmodtype',
-      value: PAK_ID,
+//install pak files
+async function installPak(api, files) {
+  const fileExt = PAK_EXTS[0];
+  const modFiles = files.filter(file => PAK_EXTS.includes(path.extname(file).toLowerCase()));
+  const modType = {
+    type: 'setmodtype',
+    value: PAK_ID,
+  };
+  const installFiles = (modFiles.length > PAK_EXTS.length)
+    ? await chooseFilesToInstall(api, modFiles, fileExt)
+    : modFiles;
+  const pakModFiles = {
+    type: 'attribute',
+    key: LO_ATTRIBUTE,
+    value: modFiles.map(f => path.basename(f))
+  };
+  let instructions = installFiles.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.basename(file)
     };
-    const installFiles = (modFiles.length > 1)
-      ? yield chooseFilesToInstall(api, modFiles, fileExt)
-      : modFiles;
-    const pakModFiles = {
-      type: 'attribute',
-      key: LO_ATTRIBUTE,
-      value: modFiles.map(f => path.basename(f))
-    };
-    let instructions = installFiles.map(file => {
-      return {
-        type: 'copy',
-        source: file,
-        destination: path.basename(file)
-      };
-    });
-    instructions.push(modType);
-    instructions.push(pakModFiles);
-    return Promise.resolve({ instructions });
   });
+  instructions.push(modType);
+  instructions.push(pakModFiles);
+  return Promise.resolve({ instructions });
 }
 
-function chooseFilesToInstall(api, files, fileExt) {
-  return __awaiter(this, void 0, void 0, function* () {
-    const t = api.translate;
-    return api.showDialog('question', t('Multiple {{PAK}} files', { replace: { PAK: fileExt } }), {
-        text: t('The mod you are installing contains {{x}} {{ext}} files.', { replace: { x: files.length, ext: fileExt } }) +
-            `This can be because the author intended for you to chose from several options. Please select which files to install below:`,
-        checkboxes: files.map((pak) => {
-            return {
-                id: path.basename(pak),
-                text: pak,
-                value: false
-            };
-        })
+//pak selection dialogue
+async function chooseFilesToInstall(api, files, fileExt) {
+  const t = api.translate;
+  return api.showDialog('question', t('Multiple {{PAK}} files', { replace: { PAK: fileExt } }), {
+      text: t('The mod you are installing contains {{x}} {{ext}} files.', { replace: { x: files.length, ext: fileExt } }) +
+          `This can be because the author intended for you to chose from several options. Please select which files to install below:`,
+      checkboxes: files.map((pak) => {
+      return {
+          id: pak,
+          text: pak,
+          value: false
+      };
+    })
     }, [
-        { label: 'Cancel' },
-        { label: 'Install Selected' },
-        { label: 'Install All_plural' }
+      { label: 'Cancel' },
+      { label: 'Install Selected' },
+      { label: 'Install All_plural' }
     ]).then((result) => {
         if (result.action === 'Cancel')
             return Promise.reject(new util.UserCanceled('User cancelled.'));
         else {
             const installAll = (result.action === 'Install All' || result.action === 'Install All_plural');
             const installPAKS = installAll ? files : Object.keys(result.input).filter(s => result.input[s])
-                .map(file => files.find(f => path.basename(f) === file));
+              .map(file => files.find(f => f === file));
             return installPAKS;
         }
-    });
   });
 }
 
@@ -1006,15 +994,11 @@ async function deserializeLoadOrder(context) {
   const mods = util.getSafe(context.api.store.getState(), ['persistent', 'mods', spec.game.id], {});
   let modFolderPath = path.join(gameDir, PAK_PATH);
   let loadOrderPath = path.join(gameDir, LO_FILE_PATH);
+  await fs.ensureFileAsync(loadOrderPath);
   let loadOrderFile = await fs.readFileAsync(
     loadOrderPath, 
     { encoding: "utf8", }
   );
-
-  /* simple single line, no "disabled" parameter
-  let loadOrderSplit = loadOrderFile.split('\n');
-  let MOD_ENTRIES = loadOrderSplit
-  .map(entry => entry.replace(LO_FILE_SPLITSTR, '')); //*/
 
   //* yaml with "disabled" parameter
   let MOD_ENTRIES = YAML.load(loadOrderFile);
@@ -1034,7 +1018,7 @@ async function deserializeLoadOrder(context) {
   // Get readable mod name using attribute from mod installer
   async function getModName(file) {
     try {//find mod where atrribute (from installer) matches file in the load order
-      const modMatch = Object.values(mods).find(mod => (util.getSafe(mods[mod.id]?.attributes, [LO_ATTRIBUTE], '').includes(file))); //find mod that includes the .arch06 file
+      const modMatch = Object.values(mods).find(mod => (util.getSafe(mods[mod.id]?.attributes, [LO_ATTRIBUTE], '').includes(file))); //find mod that includes the .pak file
       if (modMatch) {
         return modMatch.attributes.customFileName ?? modMatch.attributes.logicalFileName ?? modMatch.attributes.name;
       }
@@ -1047,7 +1031,7 @@ async function deserializeLoadOrder(context) {
   // Get Vortex mod id using attribute from mod installer
   async function getModId(file) {
     try {//find mod where atrribute (from installer) matches file in the load order
-      const modMatch = Object.values(mods).find(mod => (util.getSafe(mods[mod.id]?.attributes, [LO_ATTRIBUTE], '').includes(file))); //find mod that includes the .arch06 file
+      const modMatch = Object.values(mods).find(mod => (util.getSafe(mods[mod.id]?.attributes, [LO_ATTRIBUTE], '').includes(file))); //find mod that includes the .pak file
       if (modMatch) {
         return modMatch.id;
       }
@@ -1061,19 +1045,17 @@ async function deserializeLoadOrder(context) {
   let loadOrder = await LO_MOD_ARRAY
     .reduce(async (accumP, entry) => {
       const accum = await accumP;
-      //const file = entry;
       const file = entry.pak;
       if (!modFiles.includes(file)) {
         return Promise.resolve(accum);
       }
       accum.push(
-      {
-        id: file,
-        name: `${file.replace(PAK_EXT, '')} (${await getModName(file)})`,
-        modId: await getModId(file),
-        //enabled: true,
-        enabled: !entry.disabled,
-      }
+        {
+          id: file,
+          name: `${file.replace(PAK_EXT, '')} (${await getModName(file)})`,
+          modId: await getModId(file),
+          enabled: !entry.disabled,
+        }
       );
       return Promise.resolve(accum);
     }, Promise.resolve([]));
@@ -1110,14 +1092,6 @@ async function serializeLoadOrder(context, loadOrder) {
   }
   const loadOrderPath = path.join(gameDir, LO_FILE_PATH);
 
-  /* simple single line, no "disabled" parameter
-  let loadOrderMapped = loadOrder
-    .map((mod) => (mod.enabled ? modToTemplate(mod.id) : ``));
-  let loadOrderJoined = loadOrderMapped
-    .filter((entry) => (entry !== ``))
-    .join("\n"); 
-  //let loadOrderOutput = loadOrderJoined + "\n"; //*/
-  
   //* yaml with "disabled" parameter
   let loadOrderMapped = loadOrder
     .map((mod) => ({

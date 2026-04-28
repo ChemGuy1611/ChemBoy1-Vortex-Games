@@ -5,6 +5,7 @@ Scans all game-* extension folders and categorizes them by engine/framework
 based on the Structure: header comment and key code markers in index.js.
 
 Writes one .txt file per category to resources/lists/. Each line is a GAME_ID.
+Also writes games-loadorder.txt for non-UE4/5 games that call context.registerLoadOrder.
 
 Usage:
     python categorize_games.py              # rebuild all category files from scratch
@@ -40,6 +41,8 @@ CATEGORIES = [
 
 _FILE_FOR_LABEL = {label: fname for fname, label in CATEGORIES}
 
+LOADORDER_FILE = "games-loadorder.txt"
+
 
 def categorize(game_id):
     """Return the output filename for the given game_id, or None if no index.js found."""
@@ -49,6 +52,16 @@ def categorize(game_id):
     with open(index_path, encoding="utf-8") as f:
         src = f.read()
     return _FILE_FOR_LABEL[detect_engine(src)]
+
+
+def is_load_order_game(game_id):
+    """Return True if the game calls registerLoadOrder and is not a UE4/5 extension."""
+    index_path = os.path.join(REPO_ROOT, f"game-{game_id}", "index.js")
+    if not os.path.isfile(index_path):
+        return False
+    with open(index_path, encoding="utf-8") as f:
+        src = f.read()
+    return "context.registerLoadOrder" in src and detect_engine(src) != "Unreal Engine 4/5"
 
 
 def read_list(filepath):
@@ -69,6 +82,7 @@ def write_list(filepath, game_ids):
 def rebuild_all(dry_run=False):
     """Scan all game-* folders and rebuild every category file from scratch."""
     buckets = {filename: [] for filename, _ in CATEGORIES}
+    lo_games = []
 
     for game_id in list_game_ids():
         target = categorize(game_id)
@@ -76,6 +90,8 @@ def rebuild_all(dry_run=False):
             buckets[target].append(game_id)
         else:
             print(f"  Warning: no index.js found for game-{game_id}, skipping.")
+        if is_load_order_game(game_id):
+            lo_games.append(game_id)
 
     if not dry_run:
         os.makedirs(LISTS_DIR, exist_ok=True)
@@ -88,8 +104,14 @@ def rebuild_all(dry_run=False):
             write_list(filepath, buckets[filename])
             print(f"  {filename}: {len(buckets[filename])} games")
 
-    label = " [DRY RUN]" if dry_run else ""
-    print(f"\nDone{label}. {sum(len(v) for v in buckets.values())} games categorized across {len(CATEGORIES)} categories.")
+    if dry_run:
+        print(f"  {LOADORDER_FILE}: {len(lo_games)} games")
+    else:
+        write_list(os.path.join(LISTS_DIR, LOADORDER_FILE), lo_games)
+        print(f"  {LOADORDER_FILE}: {len(lo_games)} games")
+
+    tag = " [DRY RUN]" if dry_run else ""
+    print(f"\nDone{tag}. {sum(len(v) for v in buckets.values())} games categorized across {len(CATEGORIES)} categories. {len(lo_games)} with load order.")
 
 
 def update_single(game_id, dry_run=False):
@@ -123,6 +145,27 @@ def update_single(game_id, dry_run=False):
                     ids.remove(game_id)
                     write_list(filepath, ids)
                     print(f"  Removed {game_id} from {filename}")
+
+    lo_path = os.path.join(LISTS_DIR, LOADORDER_FILE)
+    lo_ids = read_list(lo_path)
+    if is_load_order_game(game_id):
+        if game_id not in lo_ids:
+            if dry_run:
+                print(f"  [DRY RUN] Would add {game_id} -> {LOADORDER_FILE}")
+            else:
+                lo_ids.append(game_id)
+                write_list(lo_path, lo_ids)
+                print(f"  Added {game_id} -> {LOADORDER_FILE}")
+        else:
+            print(f"  {game_id} already in {LOADORDER_FILE}")
+    else:
+        if game_id in lo_ids:
+            if dry_run:
+                print(f"  [DRY RUN] Would remove {game_id} from {LOADORDER_FILE}")
+            else:
+                lo_ids.remove(game_id)
+                write_list(lo_path, lo_ids)
+                print(f"  Removed {game_id} from {LOADORDER_FILE}")
 
 
 def main():
