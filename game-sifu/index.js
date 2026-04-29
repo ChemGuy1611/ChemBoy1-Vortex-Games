@@ -105,7 +105,7 @@ const UE4SS_FILE = "dwmapi.dll";
 //Set file number for pak installer file selection (needs to be 3 if IO Store is used to accomodate .ucas and .utoc files)
 let PAK_FILE_MIN = 2; //pak and sig files
 
-const EXTENSION_URL = "https://www.nexusmods.com/site/mods/350"; //Nexus link to this extension. Used for links
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1063"; //https://www.nexusmods.com/site/mods/350 Nexus link to this extension. Used for links
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Sifu";
 let STAGING_FOLDER = ''; //Vortex staging folder path
 let DOWNLOAD_FOLDER = ''; //Vortex download folder path

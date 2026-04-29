@@ -10,6 +10,7 @@ Usage:
     python new_extension.py TEMPLATE "Game Name" --force
     python new_extension.py TEMPLATE "Game Name" --dry-run
     python new_extension.py TEMPLATE "Game Name" --no-images
+    python new_extension.py TEMPLATE "Game Name" --no-browser --no-startfile
     python new_extension.py GAME_ID --refresh-images
 
 Fills in all XXX fields it can resolve automatically from Steam, GOG, Epic,
@@ -25,6 +26,7 @@ After writing index.js, automatically runs:
     1. node generate_explained.js {GAME_ID}
     2. python categorize_games.py {GAME_ID}
     3. python setup_test_folder.py {GAME_ID}
+    4. npx eslint game-{GAME_ID}/index.js  (warns on issues, does not abort)
 
 Requirements:
     pip install Pillow
@@ -59,6 +61,7 @@ from vortex_utils import (
     download_exec_icon, download_cover_art, download_title_image, download_banner_image,
     update_index_header, sanitize_game_name, normalize_game_name, write_index_js,
     read_index_js, extract_steamapp_id, extract_game_name,
+    nexus_list_games,
 )
 
 TEMPLATES = [
@@ -205,29 +208,20 @@ def get_epic_code_name(steam_data, steamdb_data):
 
 # ── Store lookups ─────────────────────────────────────────────────────────────
 
-_nexus_games_cache = None
-
 def lookup_nexus_domain(game_name, api_key):
     """Look up the Nexus Mods domain name for a game using the v1 games list.
-    Fetches all games once and caches the result for the session.
+    Fetches all games once and caches the result for the session (via vortex_utils).
     Uses exact matching with Roman numeral fallback (e.g. 'II' -> '2').
     Returns the domain_name string, or None if not found."""
-    global _nexus_games_cache
-    if not api_key:
-        return None
     try:
-        if _nexus_games_cache is None:
-            req = urllib.request.Request(
-                "https://api.nexusmods.com/v1/games.json?include_unapproved=false",
-                headers={"apikey": api_key, "User-Agent": "Mozilla/5.0", "Accept": "application/json"}
-            )
-            with urllib.request.urlopen(req, timeout=15) as resp:
-                _nexus_games_cache = json.loads(resp.read())
+        games = nexus_list_games(api_key)
+        if not games:
+            return None
         name_variants = {normalize_game_name(game_name)}
         converted = roman_to_arabic(game_name)
         if converted != game_name:
             name_variants.add(normalize_game_name(converted))
-        for game in _nexus_games_cache:
+        for game in games:
             t = normalize_game_name(game.get("name", ""))
             if t in name_variants or any(t.startswith(v + " (") for v in name_variants):
                 return game["domain_name"]
@@ -462,11 +456,30 @@ def parse_unity_data_paths(wikitext):
     result = {'dev_folder': None, 'game_folder': None, 'save_folder': None, 'config_folder': None}
 
     def extract_windows_path(data_type):
-        m = re.search(
-            rf'\{{{{Game data/{data_type}\s*\|[^|]*Windows[^|]*\|([^}}]+)\}}}}',
-            wikitext, re.IGNORECASE | re.DOTALL
-        )
-        return m.group(1).strip() if m else None
+        # Brace-depth scanner: handles {{p|...}} nested tokens inside the path arg.
+        # Finds the last top-level pipe argument before the closing }}.
+        pat = re.search(rf'\{{{{Game data/{data_type}\s*\|', wikitext, re.IGNORECASE)
+        if not pat:
+            return None
+        pos = pat.end()
+        depth = 1
+        last_pipe_pos = None
+        while pos < len(wikitext) and depth > 0:
+            two = wikitext[pos:pos + 2]
+            if two == '{{':
+                depth += 1
+                pos += 2
+            elif two == '}}':
+                depth -= 1
+                if depth == 0:
+                    return wikitext[last_pipe_pos:pos].strip() if last_pipe_pos is not None else None
+                pos += 2
+            elif wikitext[pos] == '|' and depth == 1:
+                last_pipe_pos = pos + 1
+                pos += 1
+            else:
+                pos += 1
+        return None
 
     def parse_locallow(path_str):
         """Return (dev, game, subfolder) from a LocalLow path string, or (None, None, None)."""
@@ -599,7 +612,8 @@ def edit_changelog(path, today):
 
 # ── Orchestration ─────────────────────────────────────────────────────────────
 
-def create_extension(template_name, game_input, force=False, dry_run=False, no_images=False):
+def create_extension(template_name, game_input, force=False, dry_run=False, no_images=False,
+                     no_browser=False, no_startfile=False):
     sgdb_key = get_api_key("STEAMGRIDDB_API_KEY")
     nexus_key = get_api_key("NEXUS_API_KEY")
     today = date.today().strftime("%Y-%m-%d")
@@ -807,7 +821,7 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
         icon_path = os.path.join(dest, "exec.png")
         icon_ok, icon_source = download_exec_icon(appid, game_name, icon_path)
         print(f"  {'Saved  : ' + icon_source if icon_ok else 'FAILED -add exec.png manually (64x64 PNG)'}")
-        if icon_ok:
+        if icon_ok and not no_startfile:
             os.startfile(icon_path)
 
     # ── Cover art ─────────────────────────────────────────────────────────────
@@ -820,19 +834,22 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
         art_ok, art_source = download_cover_art(appid, game_name, art_path, sgdb_key)
         if art_ok:
             print(f"  Saved  : {art_source}")
-            os.startfile(art_path)
+            if not no_startfile:
+                os.startfile(art_path)
         else:
             print(f"  FAILED -add {game_id}.jpg manually (640x360 JPG, no title text)")
 
     # ── index.js ──────────────────────────────────────────────────────────────
-    os.startfile(os.path.join(dest, "index.js"))
+    if not no_startfile:
+        os.startfile(os.path.join(dest, "index.js"))
 
     # ── Browser tabs ──────────────────────────────────────────────────────────
-    if pcgw_url:
-        webbrowser.open(pcgw_url)
-    webbrowser.open(f"https://steamdb.info/app/{appid}/info/")
-    if demo_appid:
-        webbrowser.open(f"https://store.steampowered.com/app/{demo_appid}/")
+    if not no_browser:
+        if pcgw_url:
+            webbrowser.open(pcgw_url)
+        webbrowser.open(f"https://steamdb.info/app/{appid}/info/")
+        if demo_appid:
+            webbrowser.open(f"https://store.steampowered.com/app/{demo_appid}/")
 
     # ── Title image ───────────────────────────────────────────────────────────
     title_ok = False
@@ -845,7 +862,8 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
         title_ok, title_source = download_title_image(appid, game_name, title_path, sgdb_key)
         if title_ok:
             print(f"  Saved  : {title_source}")
-            os.startfile(title_path)
+            if not no_startfile:
+                os.startfile(title_path)
         else:
             print(f"  FAILED -- add {game_id}_title.jpg manually to resources/title-images/ (1920x1080 JPG, with title text)")
 
@@ -860,7 +878,8 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
         banner_ok, banner_source = download_banner_image(appid, game_id, banner_path, sgdb_key)
         if banner_ok:
             print(f"  Saved  : {banner_source}")
-            os.startfile(banner_path)
+            if not no_startfile:
+                os.startfile(banner_path)
         else:
             print(f"  FAILED -- add {game_id}_banner.jpg manually to resources/banner-images/")
 
@@ -948,7 +967,7 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
 
 # ── Refresh images ───────────────────────────────────────────────────────────
 
-def refresh_images(game_id):
+def refresh_images(game_id, no_browser=False, no_startfile=False):
     """Re-download all images for an existing game extension."""
     folder = os.path.join(REPO_ROOT, f"game-{game_id}")
     if not os.path.isdir(folder):
@@ -973,7 +992,7 @@ def refresh_images(game_id):
     icon_path = os.path.join(folder, "exec.png")
     ok, source = download_exec_icon(appid, name, icon_path)
     print(f"  {'Saved  : ' + source if ok else 'FAILED'}")
-    if ok:
+    if ok and not no_startfile:
         os.startfile(icon_path)
 
     print(f"\n[{game_id}.jpg]")
@@ -981,7 +1000,7 @@ def refresh_images(game_id):
     art_path = os.path.join(folder, f"{game_id}.jpg")
     ok, source = download_cover_art(appid, name, art_path, sgdb_key)
     print(f"  {'Saved  : ' + source if ok else 'FAILED'}")
-    if ok:
+    if ok and not no_startfile:
         os.startfile(art_path)
 
     print(f"\n[{game_id}_title.jpg]")
@@ -990,7 +1009,7 @@ def refresh_images(game_id):
     title_path = os.path.join(TITLE_IMAGES_DIR, f"{game_id}_title.jpg")
     ok, source = download_title_image(appid, name, title_path, sgdb_key)
     print(f"  {'Saved  : ' + source if ok else 'FAILED'}")
-    if ok:
+    if ok and not no_startfile:
         os.startfile(title_path)
 
     print(f"\n[{game_id}_banner.jpg]")
@@ -999,7 +1018,7 @@ def refresh_images(game_id):
     banner_path = os.path.join(BANNER_IMAGES_DIR, f"{game_id}_banner.jpg")
     ok, source = download_banner_image(appid, game_id, banner_path, sgdb_key)
     print(f"  {'Saved  : ' + source if ok else 'FAILED'}")
-    if ok:
+    if ok and not no_startfile:
         os.startfile(banner_path)
 
     print()
@@ -1045,20 +1064,29 @@ def main():
         "--refresh-images", action="store_true",
         help="Re-download all images for an existing extension. Pass GAME_ID as the only positional argument.",
     )
+    parser.add_argument(
+        "--no-browser", action="store_true",
+        help="Skip opening browser tabs (PCGamingWiki, SteamDB, Steam demo page).",
+    )
+    parser.add_argument(
+        "--no-startfile", action="store_true",
+        help="Skip opening downloaded images and index.js in the default editor.",
+    )
     args = parser.parse_args()
 
     if args.refresh_images:
         game_id = args.template  # only one positional provided; lands in template slot
         if not game_id:
             parser.error("GAME_ID is required with --refresh-images")
-        refresh_images(game_id)
+        refresh_images(game_id, no_browser=args.no_browser, no_startfile=args.no_startfile)
     else:
         if not args.template or not args.game:
             parser.error("TEMPLATE and GAME are required")
         if args.template not in TEMPLATE_SHORT_NAMES:
             parser.error(f"Invalid template '{args.template}'. Choose from: {', '.join(TEMPLATE_SHORT_NAMES)}")
         full_template = f"template-{args.template}"
-        create_extension(full_template, args.game, args.force, args.dry_run, args.no_images)
+        create_extension(full_template, args.game, args.force, args.dry_run, args.no_images,
+                         no_browser=args.no_browser, no_startfile=args.no_startfile)
 
 
 if __name__ == "__main__":

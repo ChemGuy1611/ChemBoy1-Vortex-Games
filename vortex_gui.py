@@ -42,39 +42,22 @@ import vortex_utils as vu
 REPO_ROOT = vu.REPO_ROOT
 PYTHON = sys.executable
 NODE = shutil.which("node") or "node"
-FLAGS_PATH = os.path.join(REPO_ROOT, "vortex_gui_flags.json")
-STATS_PATH = os.path.join(REPO_ROOT, "vortex_gui_nexus_stats.json")
+FLAGS_PATH = vu.GUI_FLAGS_PATH
+STATS_PATH = vu.GUI_STATS_PATH
 
 
-# == Flag storage ==============================================================
+# == Flag / stats storage ======================================================
 
 def _load_flags() -> dict:
-    if os.path.isfile(FLAGS_PATH):
-        try:
-            with open(FLAGS_PATH, encoding="utf-8") as f:
-                return json.load(f)
-        except Exception:
-            pass
-    return {}
+    return vu.read_json(FLAGS_PATH)
 
 
 def _save_flags(data: dict):
-    tmp = FLAGS_PATH + ".tmp"
-    with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2)
-    os.replace(tmp, FLAGS_PATH)
+    vu.write_json_atomic(FLAGS_PATH, data)
 
-
-# == Stats storage =============================================================
 
 def _load_stats() -> dict:
-    if os.path.isfile(STATS_PATH):
-        try:
-            with open(STATS_PATH, encoding="utf-8") as f:
-                return json.load(f)
-        except Exception:
-            pass
-    return {}
+    return vu.read_json(STATS_PATH)
 
 
 def _save_flag(game_id: str, flagged: bool, note: str):
@@ -110,18 +93,7 @@ def _load_svg_icon(path: str, size: int) -> "QIcon | None":
     return QIcon(px)
 
 
-def _resolve_vortex_exe() -> "str | None":
-    candidates = [
-        r"C:\Program Files\Black Tree Gaming Ltd\Vortex\Vortex.exe",
-        shutil.which("Vortex.exe") or "",
-    ]
-    for path in candidates:
-        if path and os.path.isfile(path):
-            return path
-    return None
-
-
-VORTEX_EXE: "str | None" = _resolve_vortex_exe()
+VORTEX_EXE: "str | None" = vu.find_vortex_exe()
 
 _FLAG_ICON: "QIcon | None" = None
 _UNFLAG_ICON: "QIcon | None" = None
@@ -223,9 +195,9 @@ def _make_icons():
 # == Data model ================================================================
 
 COL_FLAG, COL_ICON, COL_GAME_ID, COL_NAME, COL_VERSION, COL_DATE, COL_ENGINE, \
-    COL_END, COL_DL, \
-    COL_COVER, COL_TITLE, COL_BANNER, COL_NEXUS, COL_EXT_URL, COL_FOLDER, COL_VORTEX = range(16)
-HEADERS = ("Flag", "Icon", "Game ID", "Name", "Ver", "Date", "Engine", "End", "DL", "Cover", "Title", "Banner", "Nex", "Ext", "Opn", "Vort")
+    COL_END, COL_DL, COL_NEXUS_PUB, \
+    COL_COVER, COL_TITLE, COL_BANNER, COL_NEXUS, COL_EXT_URL, COL_FOLDER, COL_VORTEX = range(17)
+HEADERS = ("Flag", "Icon", "Game ID", "Name", "Ver", "Updated", "Engine", "End", "DL", "Pub", "Cover", "Title", "Banner", "Nex", "Ext", "Opn", "Vort")
 _THUMBNAIL_COLS = frozenset({COL_ICON, COL_COVER, COL_TITLE, COL_BANNER})
 _LINK_COLS = frozenset({COL_NEXUS, COL_EXT_URL, COL_FOLDER, COL_VORTEX})
 _IS_GROUP_HEADER_ROLE = Qt.UserRole + 10
@@ -237,7 +209,7 @@ class GameRow:
         "icon", "icon_path", "cover", "cover_path",
         "title", "title_path", "banner", "banner_path",
         "extension_url",
-        "endorsements", "unique_downloads", "stats_fetched_at",
+        "endorsements", "unique_downloads", "nexus_published", "stats_fetched_at",
         "flagged", "note",
     )
 
@@ -245,7 +217,7 @@ class GameRow:
                  icon, icon_path, cover, cover_path,
                  title, title_path, banner, banner_path,
                  extension_url,
-                 endorsements, unique_downloads, stats_fetched_at,
+                 endorsements, unique_downloads, nexus_published, stats_fetched_at,
                  flagged, note):
         self.game_id = game_id
         self.name = name or ""
@@ -264,6 +236,7 @@ class GameRow:
         self.extension_url = extension_url
         self.endorsements = endorsements
         self.unique_downloads = unique_downloads
+        self.nexus_published = nexus_published
         self.stats_fetched_at = stats_fetched_at
         self.flagged = flagged
         self.note = note
@@ -304,6 +277,8 @@ class GameModel(QAbstractTableModel):
             endorsements = s.get("endorsements") if not s.get("error") else None
             unique_downloads = s.get("unique_downloads") if not s.get("error") else None
             stats_fetched_at = s.get("fetched_at")
+            _ts = s.get("created_timestamp")
+            nexus_published = datetime.fromtimestamp(_ts).strftime("%Y-%m-%d") if _ts else None
 
             fd = flags.get(game_id, {})
             rows.append(GameRow(
@@ -313,7 +288,7 @@ class GameModel(QAbstractTableModel):
                 title, title_path if os.path.isfile(title_path) else None,
                 banner, banner_path if os.path.isfile(banner_path) else None,
                 extension_url,
-                endorsements, unique_downloads, stats_fetched_at,
+                endorsements, unique_downloads, nexus_published, stats_fetched_at,
                 fd.get("flagged", False), fd.get("note", ""),
             ))
         self._rows = rows
@@ -354,7 +329,7 @@ class GameModel(QAbstractTableModel):
                 return row.folder
             if col == COL_VORTEX:
                 return f"Open in Vortex: {row.game_id}" if VORTEX_EXE else "Vortex.exe not found"
-            if col in (COL_END, COL_DL):
+            if col in (COL_END, COL_DL, COL_NEXUS_PUB):
                 if row.stats_fetched_at:
                     ts = datetime.fromtimestamp(row.stats_fetched_at).strftime("%Y-%m-%d %H:%M")
                     return f"Last fetched: {ts}"
@@ -368,6 +343,8 @@ class GameModel(QAbstractTableModel):
                 return "" if row.endorsements is None else f"{row.endorsements:,}"
             if col == COL_DL:
                 return "" if row.unique_downloads is None else f"{row.unique_downloads:,}"
+            if col == COL_NEXUS_PUB:
+                return row.nexus_published or ""
             return {
                 COL_GAME_ID: row.game_id,
                 COL_NAME:    row.name,
@@ -957,7 +934,8 @@ class MainWindow(QMainWindow):
         hdr.setSectionResizeMode(COL_DATE,    QHeaderView.Interactive)
         hdr.setSectionResizeMode(COL_ENGINE,  QHeaderView.Interactive)
         hdr.setSectionResizeMode(COL_END,     QHeaderView.Interactive)
-        hdr.setSectionResizeMode(COL_DL,      QHeaderView.Interactive)
+        hdr.setSectionResizeMode(COL_DL,        QHeaderView.Interactive)
+        hdr.setSectionResizeMode(COL_NEXUS_PUB, QHeaderView.Interactive)
         hdr.setSectionResizeMode(COL_COVER,   QHeaderView.Fixed)
         hdr.setSectionResizeMode(COL_TITLE,   QHeaderView.Fixed)
         hdr.setSectionResizeMode(COL_BANNER,  QHeaderView.Fixed)
@@ -973,7 +951,8 @@ class MainWindow(QMainWindow):
         self._table.setColumnWidth(COL_DATE,    92)
         self._table.setColumnWidth(COL_ENGINE,  195)
         self._table.setColumnWidth(COL_END,     62)
-        self._table.setColumnWidth(COL_DL,      80)
+        self._table.setColumnWidth(COL_DL,        80)
+        self._table.setColumnWidth(COL_NEXUS_PUB, 92)
         self._table.setColumnWidth(COL_COVER,   42)
         self._table.setColumnWidth(COL_TITLE,   42)
         self._table.setColumnWidth(COL_BANNER,  42)
@@ -1034,6 +1013,11 @@ class MainWindow(QMainWindow):
         saved_cols = settings.value("tableHeaderColCount", 0, type=int)
         if th and saved_cols == len(HEADERS):
             self._table.horizontalHeader().restoreState(th)
+        filter_text = settings.value("filterText", "")
+        if filter_text:
+            self._filter_edit.setText(filter_text)
+        if settings.value("groupByEngine", False, type=bool):
+            self._group_btn.setChecked(True)
 
     def closeEvent(self, event):
         settings = QSettings("ChemBoy1", "VortexExtensionManager")
@@ -1041,6 +1025,8 @@ class MainWindow(QMainWindow):
         settings.setValue("splitter", self._splitter.saveState())
         settings.setValue("tableHeader", self._table.horizontalHeader().saveState())
         settings.setValue("tableHeaderColCount", len(HEADERS))
+        settings.setValue("filterText", self._filter_edit.text())
+        settings.setValue("groupByEngine", self._group_btn.isChecked())
         self._runner.stop()
         super().closeEvent(event)
 

@@ -103,7 +103,7 @@ const IGNORE_CONFLICTS = [path.join('**', 'CHANGELOG.md'), path.join('**', 'read
 const IGNORE_DEPLOY = [path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
 let MODTYPE_FOLDERS = [MOD_PATH, BINARIES_PATH];
 
-const EXTENSION_URL = "https://www.nexusmods.com/site/mods/68"; //Nexus link to this extension. Used for links
+const EXTENSION_URL = "XXX"; //https://www.nexusmods.com/site/mods/68 Nexus link to this extension. Used for links
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Red_Dead_Redemption_2";
 const spec = {
   "game": {

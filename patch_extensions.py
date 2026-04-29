@@ -35,11 +35,11 @@ import json
 from vortex_utils import (
     REPO_ROOT, TITLE_IMAGES_DIR,
     lookup_pcgamingwiki, extract_game_name,
-    _find_fn_end, REGISTER_ACTIONS, run_generate_explained,
+    REGISTER_ACTIONS, run_generate_explained,
     fetch_epic_app_id, add_to_discovery_ids,
     const_value, is_unset, is_missing, set_or_insert,
     inject_register_actions, find_fn_body,
-    list_game_ids, write_index_js,
+    list_game_ids, write_index_js, resize_images_to,
 )
 MANIFEST_PATH = os.environ.get("VORTEX_MANIFEST_PATH", r"C:\ProgramData\vortex\temp\extensions-manifest.json")
 NEXUS_SITE_BASE = "https://www.nexusmods.com/site/mods"
@@ -545,85 +545,34 @@ def run_png_resize(folders, dry_run):
 
 
 def run_title_image_resize(game_ids, dry_run):
-    """Resize all non-1920x1080 title images in resources/title-images/ to 1920x1080 using Pillow."""
-    try:
-        from PIL import Image
-    except ImportError:
-        print("Title image resize skipped -- Pillow not installed (pip install Pillow)\n")
-        return
-
-    TARGET = (1920, 1080)
-    total_resized = 0
-    total_already = 0
-    total_missing = 0
-
+    """Resize all non-1920x1080 title images in resources/title-images/ to 1920x1080."""
     if not os.path.isdir(TITLE_IMAGES_DIR):
         print("Title image resize skipped -- resources/title-images/ not found\n")
         return
-
-    for game_id in game_ids:
-        filename = f"{game_id}_title.jpg"
-        img_path = os.path.join(TITLE_IMAGES_DIR, filename)
-        if not os.path.isfile(img_path):
-            total_missing += 1
-            continue
-        try:
-            with Image.open(img_path) as img:
-                size = img.size
-                if size == TARGET:
-                    total_already += 1
-                    continue
-                prefix = "[DRY RUN] " if dry_run else ""
-                print(f"  {prefix}[title-images/{filename}] {size[0]}x{size[1]} -> 1920x1080")
-                if not dry_run:
-                    img = img.convert("RGB")
-                    img = img.resize(TARGET, Image.LANCZOS)
-                    img.save(img_path, "JPEG", quality=95)
-        except Exception as e:
-            print(f"  [title-images/{filename}] SKIP -- could not read image: {e}")
-            continue
-        total_resized += 1
-
-    print(f"\nTitle image resize: {total_resized} resized, {total_already} already 1920x1080, {total_missing} missing.\n")
+    pairs = [
+        (os.path.join(TITLE_IMAGES_DIR, f"{gid}_title.jpg"), f"title-images/{gid}_title.jpg")
+        for gid in game_ids
+    ]
+    try:
+        r, a, m = resize_images_to(pairs, (1920, 1080), dry_run=dry_run)
+    except ImportError:
+        print("Title image resize skipped -- Pillow not installed (pip install Pillow)\n")
+        return
+    print(f"\nTitle image resize: {r} resized, {a} already 1920x1080, {m} missing.\n")
 
 
 def run_cover_art_resize(game_ids, dry_run):
-    """Resize all non-640x360 cover art (GAME_ID.jpg) in game-* folders to 640x360 using Pillow."""
+    """Resize all non-640x360 cover art (GAME_ID.jpg) in game-* folders to 640x360."""
+    pairs = [
+        (os.path.join(REPO_ROOT, f"game-{gid}", f"{gid}.jpg"), f"game-{gid}/{gid}.jpg")
+        for gid in game_ids
+    ]
     try:
-        from PIL import Image
+        r, a, m = resize_images_to(pairs, (640, 360), dry_run=dry_run)
     except ImportError:
         print("Cover art resize skipped -- Pillow not installed (pip install Pillow)\n")
         return
-
-    TARGET = (640, 360)
-    total_resized = 0
-    total_already = 0
-    total_missing = 0
-
-    for game_id in game_ids:
-        filename = f"{game_id}.jpg"
-        img_path = os.path.join(REPO_ROOT, f"game-{game_id}", filename)
-        if not os.path.isfile(img_path):
-            total_missing += 1
-            continue
-        try:
-            with Image.open(img_path) as img:
-                size = img.size
-                if size == TARGET:
-                    total_already += 1
-                    continue
-                prefix = "[DRY RUN] " if dry_run else ""
-                print(f"  {prefix}[game-{game_id}/{filename}] {size[0]}x{size[1]} -> 640x360")
-                if not dry_run:
-                    img = img.convert("RGB")
-                    img = img.resize(TARGET, Image.LANCZOS)
-                    img.save(img_path, "JPEG", quality=95)
-        except Exception as e:
-            print(f"  [game-{game_id}/{filename}] SKIP -- could not read image: {e}")
-            continue
-        total_resized += 1
-
-    print(f"\nCover art resize: {total_resized} resized, {total_already} already 640x360, {total_missing} missing.\n")
+    print(f"\nCover art resize: {r} resized, {a} already 640x360, {m} missing.\n")
 
 
 # ── Patch listing ─────────────────────────────────────────────────────────────
@@ -652,7 +601,7 @@ def run_patches(game_ids, dry_run, context, only=None):
     for game_id in game_ids:
         index_path = os.path.join(REPO_ROOT, f"game-{game_id}", "index.js")
         if not os.path.isfile(index_path):
-            print(f"  [{game_id}] SKIP — no index.js found")
+            print(f"  [{game_id}] SKIP - no index.js found")
             total_skipped += 1
             continue
 
@@ -673,7 +622,7 @@ def run_patches(game_ids, dry_run, context, only=None):
                 elif msg != "already set":
                     fail_msgs.append(f"{patch['name']}: {msg}")
             except Exception as ex:
-                fail_msgs.append(f"{patch['name']}: ERROR — {ex}")
+                fail_msgs.append(f"{patch['name']}: ERROR - {ex}")
                 total_errors += 1
 
         if game_changed:
@@ -681,7 +630,7 @@ def run_patches(game_ids, dry_run, context, only=None):
             prefix = "[DRY RUN] " if dry_run else ""
             print(f"  {prefix}[{game_id}] CHANGED")
             for msg in changed_msgs:
-                print(f"    • {msg}")
+                print(f"    - {msg}")
             if not dry_run:
                 write_index_js(os.path.join(REPO_ROOT, f"game-{game_id}"), src)
                 ok, err = run_generate_explained(game_id)
@@ -689,7 +638,7 @@ def run_patches(game_ids, dry_run, context, only=None):
                     print(f"    ! generate_explained.js failed: {err}")
         else:
             if fail_msgs:
-                print(f"  [{game_id}] — {'; '.join(fail_msgs)}")
+                print(f"  [{game_id}] - {'; '.join(fail_msgs)}")
             total_skipped += 1
 
     print(f"\nDone. {total_changed} changed, {total_skipped} skipped, {total_errors} errors.")

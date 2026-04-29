@@ -96,17 +96,40 @@ def extract_id_suffix(rhs):
 
 
 def extract_array_rhs(src, var_name):
-    """
-    Extract the full RHS (including brackets) of an array declaration like:
-      const IGNORE_CONFLICTS = [...];
-    Returns the raw array string (e.g. "[path.join(...), ...]") or None.
-    """
-    pattern = re.compile(
-        rf'(?:const|let)\s+{re.escape(var_name)}\s*=\s*(\[[^\]]*\])',
-        re.DOTALL
-    )
-    m = pattern.search(src)
-    return m.group(1) if m else None
+    """Extract the full RHS array of a const/let declaration.
+    Uses bracket-depth counting to handle nested arrays/calls correctly.
+    Returns the raw array string (e.g. "[path.join(...), ...]") or None."""
+    m = re.search(rf'(?:const|let)\s+{re.escape(var_name)}\s*=\s*(\[)', src)
+    if not m:
+        return None
+    start = m.start(1)
+    depth = 0
+    for i in range(start, len(src)):
+        if src[i] == '[':
+            depth += 1
+        elif src[i] == ']':
+            depth -= 1
+            if depth == 0:
+                return src[start:i + 1]
+    return None
+
+
+def _sub_array_rhs(src, var_name, new_rhs):
+    """Replace the RHS array of a const/let declaration using bracket-depth counting.
+    Returns (new_src, replaced_count)."""
+    m = re.search(rf'((?:const|let)\s+{re.escape(var_name)}\s*=\s*)(\[)', src)
+    if not m:
+        return src, 0
+    start = m.start(2)
+    depth = 0
+    for i in range(start, len(src)):
+        if src[i] == '[':
+            depth += 1
+        elif src[i] == ']':
+            depth -= 1
+            if depth == 0:
+                return src[:start] + new_rhs + src[i + 1:], 1
+    return src, 0
 
 
 def is_xxx_value(rhs):
@@ -220,14 +243,8 @@ def apply_port(template_src, game_consts, game_src):
     if disc_ids:
         ids_str = ', '.join(disc_ids)
         new_ids_rhs = f'[{ids_str}]'
-        # Replace the array in DISCOVERY_IDS_ACTIVE line (preserve trailing comment)
-        pattern = re.compile(
-            r'((?:const|let)\s+DISCOVERY_IDS_ACTIVE\s*=\s*)\[[^\]]*\]'
-        )
-        replaced, count = pattern.subn(
-            lambda m: m.group(1) + new_ids_rhs,
-            new_src, count=1
-        )
+        # Replace the array in DISCOVERY_IDS_ACTIVE using depth-aware scanner.
+        replaced, count = _sub_array_rhs(new_src, 'DISCOVERY_IDS_ACTIVE', new_ids_rhs)
         if count:
             old_ids = extract_array_rhs(template_src, 'DISCOVERY_IDS_ACTIVE') or '[STEAMAPP_ID]'
             if new_ids_rhs != old_ids:
@@ -239,14 +256,7 @@ def apply_port(template_src, game_consts, game_src):
         game_array = extract_array_rhs(game_src, name)
         tmpl_array = extract_array_rhs(template_src, name)
         if game_array and tmpl_array and game_array.strip() != tmpl_array.strip():
-            pattern = re.compile(
-                rf'((?:const|let)\s+{re.escape(name)}\s*=\s*)(\[[^\]]*\])',
-                re.DOTALL
-            )
-            replaced, count = pattern.subn(
-                lambda m, ga=game_array: m.group(1) + ga,
-                new_src, count=1
-            )
+            replaced, count = _sub_array_rhs(new_src, name, game_array)
             if count:
                 new_src = replaced
                 substituted.append((name, tmpl_array.strip(), game_array.strip()))

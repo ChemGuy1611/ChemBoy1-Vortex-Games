@@ -57,6 +57,7 @@ Requirements:
     No additional packages required (Python stdlib only).
 """
 
+import difflib
 import os
 import re
 import sys
@@ -469,6 +470,38 @@ def _fixup_mod_folders_fn(src):
     return src
 
 
+def _remove_ensure_writable_returns(body):
+    """Remove 'return fs.ensureDirWritableAsync(...)' statements from a JS function body.
+    Uses paren-depth counting to handle arbitrarily nested argument expressions."""
+    result = []
+    i = 0
+    while i < len(body):
+        m = re.search(r'[ \t]*return\s+fs\.ensureDirWritableAsync\s*\(', body[i:])
+        if not m:
+            result.append(body[i:])
+            break
+        # Keep everything before this match
+        result.append(body[i:i + m.start()])
+        # Scan forward from the opening '(' to find the matching ')'
+        scan = i + m.end()
+        depth = 1
+        while scan < len(body) and depth > 0:
+            if body[scan] == '(':
+                depth += 1
+            elif body[scan] == ')':
+                depth -= 1
+            scan += 1
+        # Skip optional ';' and newline
+        while scan < len(body) and body[scan] in ' \t':
+            scan += 1
+        if scan < len(body) and body[scan] == ';':
+            scan += 1
+        if scan < len(body) and body[scan] == '\n':
+            scan += 1
+        i = scan
+    return ''.join(result)
+
+
 def _fixup_setup_writable(src):
     """Add modFoldersEnsureWritable call before setup()'s closing brace if missing.
     Also removes any existing 'return fs.ensureDirWritableAsync(...)' lines inside
@@ -482,11 +515,10 @@ def _fixup_setup_writable(src):
     fn_end = _find_fn_end(src, m_start.end())
     if fn_end == -1:
         return src
-    # Extract setup() body, remove any 'return fs.ensureDirWritableAsync(...)' lines
+    # Extract setup() body, remove any 'return fs.ensureDirWritableAsync(...)' lines.
+    # Use a depth scanner instead of regex to handle arbitrarily nested parens.
     setup_body = src[m_start.end():fn_end - 1]
-    setup_body = re.sub(
-        r'[ \t]*return\s+fs\.ensureDirWritableAsync\s*\([^()]*(?:\([^()]*\)[^()]*)*\)\s*;?\s*\n?',
-        '', setup_body)
+    setup_body = _remove_ensure_writable_returns(setup_body)
     # Rebuild with the new return at the end
     line = '  return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);\n'
     return src[:m_start.end()] + setup_body + line + src[fn_end - 1:]
@@ -838,7 +870,7 @@ def update_templates_list(template_name, dry_run):
     return True, f"inserted {full_name}"
 
 
-def create_template(template_name, game_ids, dry_run, force):
+def create_template(template_name, game_ids, dry_run, force, diff=False):
     primary_game = game_ids[0]
     extra_games = game_ids[1:]
 
@@ -855,7 +887,7 @@ def create_template(template_name, game_ids, dry_run, force):
         sys.exit(1)
 
     # Check destination
-    if os.path.isdir(dest_dir) and not force:
+    if os.path.isdir(dest_dir) and not force and not diff:
         print(f"ERROR: template-{template_name}/ already exists. Use --force to overwrite.")
         sys.exit(1)
 
@@ -869,6 +901,30 @@ def create_template(template_name, game_ids, dry_run, force):
     processed, replaced_count = apply_substitutions(index_content)
     processed, fixup_list = apply_fixups(processed)
     remaining, template_literal_candidates = find_remaining_values(processed, original_game_id)
+
+    # --diff: show unified diff vs existing template (or full output if new)
+    if diff:
+        existing_index = os.path.join(dest_dir, "index.js")
+        if os.path.isfile(existing_index):
+            with open(existing_index, encoding="utf-8") as f:
+                existing = f.read()
+            diff_lines = list(difflib.unified_diff(
+                existing.splitlines(keepends=True),
+                processed.splitlines(keepends=True),
+                fromfile=f"template-{template_name}/index.js (current)",
+                tofile=f"template-{template_name}/index.js (would write)",
+            ))
+            if diff_lines:
+                print(f"Diff for template-{template_name}/index.js "
+                      f"({replaced_count} substitution(s), {len(fixup_list)} fixup(s)):\n")
+                print("".join(diff_lines))
+            else:
+                print(f"template-{template_name}/index.js: no changes.")
+        else:
+            print(f"template-{template_name}/ does not exist yet -- full output "
+                  f"({replaced_count} substitution(s), {len(fixup_list)} fixup(s)):\n")
+            print(processed)
+        return
 
     # Collect tool icon PNGs (exclude exec.png)
     pngs = sorted(
@@ -963,9 +1019,14 @@ def main():
         "--force", action="store_true",
         help="Overwrite template folder if it already exists."
     )
+    parser.add_argument(
+        "--diff", action="store_true",
+        help="Print unified diff of what would be written vs the current template index.js. "
+             "Does not write any files. Shows full output if the template does not exist yet.",
+    )
     args = parser.parse_args()
 
-    create_template(args.template_name, args.game_ids, args.dry_run, args.force)
+    create_template(args.template_name, args.game_ids, args.dry_run, args.force, diff=args.diff)
 
 
 if __name__ == "__main__":

@@ -31,11 +31,12 @@ import re
 import sys
 import subprocess
 import webbrowser
+import zipfile
 
 from vortex_utils import (
     REPO_ROOT, run_generate_explained, add_to_discovery_ids, node_check, eslint_check,
     extract_extension_url, read_info_json, parse_changelog_latest,
-    update_index_header as _apply_header,
+    update_index_header as _apply_header, mutate_index_js,
 )
 SEVENZIP = os.environ.get("SEVENZIP_PATH", r"C:\Program Files\7-Zip\7z.exe")
 NEXUS_SITE_URL = "https://www.nexusmods.com/games/site"
@@ -116,28 +117,13 @@ def update_index_header(folder, game_id, version, date, dry_run=False):
 
 def update_discovery_ids(folder, game_id, dry_run=False):
     """Add any resolved store IDs to DISCOVERY_IDS_ACTIVE if not already present."""
-    index_path = os.path.join(folder, "index.js")
-    if not os.path.isfile(index_path):
-        return
-    try:
-        with open(index_path, encoding="utf-8") as f:
-            original = f.read()
-    except OSError as e:
-        print(f"  [{game_id}] WARNING -could not read index.js: {e}")
-        return
-    updated = add_to_discovery_ids(original)
-    if updated == original:
-        print(f"  [{game_id}] DISCOVERY_IDS_ACTIVE already up to date")
-        return
-    if dry_run:
-        print(f"  [{game_id}] [DRY RUN] Would update DISCOVERY_IDS_ACTIVE")
-        return
-    try:
-        with open(index_path, "w", encoding="utf-8") as f:
-            f.write(updated)
-        print(f"  [{game_id}] Updated DISCOVERY_IDS_ACTIVE")
-    except OSError as e:
-        print(f"  [{game_id}] ERROR -could not write index.js: {e}")
+    mutate_index_js(
+        folder, game_id, add_to_discovery_ids,
+        dry_run=dry_run,
+        changed_msg="Updated DISCOVERY_IDS_ACTIVE",
+        unchanged_msg="DISCOVERY_IDS_ACTIVE already up to date",
+        dry_run_msg="Would update DISCOVERY_IDS_ACTIVE",
+    )
 
 
 
@@ -153,7 +139,7 @@ def release(game_id, open_browser, dry_run=False):
         with open(index_path, encoding="utf-8") as f:
             index_src = f.read()
         extension_url = extract_extension_url(index_src)
-        if re.search(r'\bconst\s+debug\s*=\s*true\b', index_src):
+        if re.search(r'^\s*const\s+debug\s*=\s*true\b', index_src, re.MULTILINE):
             print(f"  [{game_id}] ERROR - debug is set to true in index.js")
             return False
 
@@ -233,6 +219,14 @@ def release(game_id, open_browser, dry_run=False):
 
     size_kb = os.path.getsize(zip_path) / 1024
     print(f"  [{game_id}] Created: {zip_path} ({size_kb:.1f} KB)")
+
+    try:
+        with zipfile.ZipFile(zip_path) as zf:
+            names = zf.namelist()
+        if "info.json" not in names:
+            print(f"  [{game_id}] WARNING - info.json not found at zip root (got: {names[:5]}...)")
+    except Exception as e:
+        print(f"  [{game_id}] WARNING - could not verify zip contents: {e}")
 
     url_to_open = extension_url or NEXUS_SITE_URL
     label = "" if extension_url else " (EXTENSION_URL not set)"

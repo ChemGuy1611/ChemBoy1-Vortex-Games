@@ -33,17 +33,19 @@ Options:
 Requirements:
     pip install Pillow
 Environment variables:
-    STEAMGRIDDB_API_KEY  (optional; required for --banner, improves --title and default mode)
-                         --title falls back to Steam capsule_616x353.jpg without this key.
+    STEAMGRIDDB_API_KEY  (optional, consumed by vortex_utils download helpers;
+                         required for --banner; improves --title and default mode.
+                         --title falls back to Steam capsule_616x353.jpg without this key.)
 """
 
 import os
 import argparse
 
 from vortex_utils import (
-    REPO_ROOT, TITLE_IMAGES_DIR, BANNER_IMAGES_DIR,
+    TITLE_IMAGES_DIR, BANNER_IMAGES_DIR,
     extract_steamapp_id, get_api_key, iter_game_folders,
     download_cover_art, download_title_image, download_banner_image,
+    print_run_summary, const_value,
 )
 
 
@@ -66,6 +68,8 @@ def find_targets(target_game_ids=None, force=False, mode="cover"):
 
         if os.path.isfile(target_path) and not force:
             continue
+        if const_value(src, "STEAMAPP_ID") == "null":
+            continue  # Xbox/Epic-only game -- no Steam art available
 
         steamapp_id = extract_steamapp_id(src)
         yield folder, game_id, steamapp_id
@@ -156,16 +160,7 @@ def fetch_all(target_game_ids=None, dry_run=False, force=False, mode="cover"):
     if dry_run:
         return
 
-    print(f"\n{'-' * 50}")
-    print(f"Saved : {len(saved)}")
-    if failed:
-        print(f"Failed: {len(failed)}")
-        for g in failed:
-            print(f"  - {g}")
-    if skipped:
-        print(f"Skipped (no Steam ID): {len(skipped)}")
-        for g in skipped:
-            print(f"  - {g}")
+    print_run_summary(saved, failed, skipped)
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────

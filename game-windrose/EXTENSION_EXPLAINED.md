@@ -40,9 +40,9 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
-| Server Pak Mod | `windrose-serverpaks` | high | `{gamePath}/R5/Builds/WindowsServer/R5/Content/Paks/~mods` |
+| Server Pak Mod | `windrose-serverpaks` | high | `{gamePath}/R5/Builds/WindowsServer/R5/Content` |
 | UE4SS Script-LogicMod Combo | `windrose-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `windrose-logicmods` | high | `{gamePath}/R5/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `windrose-logicmods` | high | `{gamePath}/R5/Content` |
 | PAK_ALT_NAME | `PAK_ALT_ID` | high | `{gamePath}/PAK_ALT_PATH` |
 | ROOT_NAME | `ROOT_ID` | high | `{gamePath}` |
 | ROOTSUB_NAME | `ROOTSUB_ID` | high | `{gamePath}/ROOTSUB_PATH` |

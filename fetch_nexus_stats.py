@@ -12,11 +12,13 @@ Usage:
     python fetch_nexus_stats.py GAME_ID [GAME_ID ...]
     python fetch_nexus_stats.py --dry-run
     python fetch_nexus_stats.py --force
+    python fetch_nexus_stats.py --prune [--dry-run]
 
 Options:
     GAME_ID          One or more game IDs to process. Omit to process all.
-    --dry-run        List extensions to fetch without making any API calls.
+    --dry-run        List extensions to fetch (or entries to prune) without making changes.
     --force          Re-fetch stats even if already cached.
+    --prune          Remove cache entries for game IDs no longer in the repo, then exit.
 
 Environment variables:
     NEXUS_API_KEY    Required. Nexus Mods API key (env var or HKCU registry).
@@ -24,56 +26,32 @@ Environment variables:
 """
 
 import argparse
-import json
-import os
 import re
 import sys
 import time
 import urllib.error
-import urllib.request
 
 import vortex_utils as vu
 
-STATS_PATH = os.path.join(vu.REPO_ROOT, "vortex_gui_nexus_stats.json")
+STATS_PATH = vu.GUI_STATS_PATH
 MOD_RE     = re.compile(r"nexusmods\.com/([^/]+)/mods/(\d+)")
-API_TMPL   = "https://api.nexusmods.com/v1/games/{domain}/mods/{id}.json"
 
 
 # == Persistence ===============================================================
 
 def _load_stats() -> dict:
-    if os.path.isfile(STATS_PATH):
-        try:
-            with open(STATS_PATH, encoding="utf-8") as f:
-                return json.load(f)
-        except Exception:
-            pass
-    return {}
+    return vu.read_json(STATS_PATH)
 
 
 def _save_stats(data: dict):
-    tmp = STATS_PATH + ".tmp"
-    with open(tmp, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=2, sort_keys=True)
-    os.replace(tmp, STATS_PATH)
+    vu.write_json_atomic(STATS_PATH, data, sort_keys=True)
 
 
 # == API =======================================================================
 
 def _fetch_mod(domain: str, mod_id: str, api_key: str):
     """Fetch mod details from Nexus v1. Returns (data_dict, rate_remaining_str_or_None)."""
-    req = urllib.request.Request(
-        API_TMPL.format(domain=domain, id=mod_id),
-        headers={
-            "apikey": api_key,
-            "User-Agent": "Mozilla/5.0",
-            "Accept": "application/json",
-        },
-    )
-    with urllib.request.urlopen(req, timeout=15) as resp:
-        data = json.loads(resp.read())
-        remaining = resp.headers.get("X-RL-Daily-Remaining")
-    return data, remaining
+    return vu.nexus_get_mod(domain, mod_id, api_key)
 
 
 # == Core logic ================================================================
@@ -130,6 +108,7 @@ def fetch_all(target_ids=None, dry_run=False, force=False):
                 "total_downloads": data.get("mod_downloads", 0),
                 "mod_name": data.get("name"),
                 "mod_version": data.get("version"),
+                "created_timestamp": data.get("created_timestamp"),
                 "fetched_at": int(time.time()),
                 "error": None,
             }
@@ -177,6 +156,28 @@ def fetch_all(target_ids=None, dry_run=False, force=False):
         print(f"Daily remaining: {last_remaining}")
 
 
+# == Prune =====================================================================
+
+def prune(dry_run=False):
+    """Remove cache entries for game IDs no longer present in the repo."""
+    cache = _load_stats()
+    current = set(vu.list_game_ids())
+    stale = sorted(gid for gid in cache if gid not in current)
+    if not stale:
+        print("Nothing to prune -- all cached IDs still exist in the repo.")
+        return
+    for gid in stale:
+        if dry_run:
+            print(f"  [DRY RUN] Would remove: {gid}")
+        else:
+            del cache[gid]
+            print(f"  Removed: {gid}")
+    if not dry_run:
+        _save_stats(cache)
+    tag = " [DRY RUN]" if dry_run else ""
+    print(f"\nDone{tag}. {len(stale)} stale {'entry' if len(stale) == 1 else 'entries'} pruned.")
+
+
 # == Entry point ===============================================================
 
 def main():
@@ -199,7 +200,15 @@ def main():
         action="store_true",
         help="Re-fetch stats even if already cached.",
     )
+    parser.add_argument(
+        "--prune",
+        action="store_true",
+        help="Remove cache entries for game IDs no longer in the repo, then exit.",
+    )
     args = parser.parse_args()
+    if args.prune:
+        prune(dry_run=args.dry_run)
+        return
     fetch_all(
         target_ids=set(args.game) or None,
         dry_run=args.dry_run,

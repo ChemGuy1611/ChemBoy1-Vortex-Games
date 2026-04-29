@@ -64,7 +64,21 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `make_info_json()` | Return an `info.json` template string (name `Game: XXX`, version `0.1.0`) for a new extension |
 | `make_changelog()` | Return a `CHANGELOG.md` template string with `0.1.0 - 2026-XX-XX` initial entry |
 | `parse_changelog_latest(folder)` | Parse `CHANGELOG.md` in a folder; returns `(version, date)` of the most recent entry (either may be `None`) |
+| `mutate_index_js(folder, game_id, mutator_fn, *, dry_run, changed_msg, unchanged_msg, dry_run_msg)` | Read `index.js`, apply `mutator_fn(src) -> new_src`, write back if changed. Handles all error printing. Returns `True` if changed. |
+| `read_json(path, default)` | Read and parse a JSON file; returns `default` (empty dict) on missing/corrupt file |
+| `write_json_atomic(path, data, *, indent, sort_keys)` | Write JSON atomically via tmp file + `os.replace` |
 | `dry_prefix(dry_run)` | Return `"[DRY RUN] "` if `dry_run` is `True`, else `""` |
+| `print_run_summary(saved, failed, skipped, *, skip_label)` | Print a standardized saved / failed / skipped run summary block (separator line + counts + per-item lists) |
+| `resize_images_to(paths_and_labels, target_wh, *, fmt, quality, dry_run)` | Resize images in a `(path, label)` list to `target_wh`. Returns `(resized, already_correct, missing)`. Raises `ImportError` if Pillow absent. |
+| `find_vortex_exe()` | Return path to `Vortex.exe` (default install dir then PATH), or `None` |
+| `safe_windows_dirname(name)` | Strip characters invalid in Windows directory names (`<>:"/\|?*`) and strip whitespace |
+| `read_id_list(filepath)` | Read a text file; return list of stripped non-empty lines (game IDs or similar) |
+| `write_id_list(filepath, game_ids)` | Write a sorted list of IDs to a file, one per line |
+| `is_load_order_game(src)` | Return `True` if `src` calls `registerLoadOrder` and is not a UE4/5 extension |
+| `nexus_list_games(api_key)` | Fetch all approved Nexus Mods games; caches result for the process lifetime. Returns `[]` on error. |
+| `nexus_get_mod(domain, mod_id, api_key)` | Fetch Nexus v1 mod details with retry. Returns `(data_dict, rate_remaining_or_None)`. Raises on 404 / non-retryable errors. |
+| `GUI_FLAGS_PATH` | Absolute path to `vortex_gui_flags.json` at repo root |
+| `GUI_STATS_PATH` | Absolute path to `vortex_gui_nexus_stats.json` at repo root |
 | `download_exec_icon(appid, game_name, out_path)` | Download and save a 64x64 `exec.png`. Steam CDN first, SteamGridDB icon fallback. |
 | `download_cover_art(appid, game_name, out_path, sgdb_key)` | Download and save a 640x360 cover art JPEG with no title text. SteamGridDB grid/hero or Steam `library_hero.jpg`. |
 | `download_title_image(appid, game_name, out_path, sgdb_key)` | Download and save a 1920x1080 title image (with logo text). SteamGridDB hero+logo composite, grid, or Steam capsule. |
@@ -84,7 +98,7 @@ Scans all `game-*` extension folders and downloads a 64x64 PNG icon for any exte
 
 | Variable | Required | Description |
 | --- | --- | --- |
-| `STEAMGRIDDB_API_KEY` | Optional | SteamGridDB API key. Used as fallback icon source when Steam CDN has no icon for the app. |
+| `STEAMGRIDDB_API_KEY` | Optional | SteamGridDB API key. Consumed by `vortex_utils.download_exec_icon`; used as fallback icon source when Steam CDN has no icon for the app. |
 
 ### fetch_exec_icon.py — Requirements
 
@@ -132,7 +146,7 @@ pip install Pillow
 
 | Variable | Required | Description |
 | --- | --- | --- |
-| `STEAMGRIDDB_API_KEY` | Optional | SteamGridDB API key. Used for higher-quality hero art in default mode. Required for `--banner` mode (no fallback available). Falls back to Steam `library_hero.jpg` in default mode if not set. In `--title` mode, used for hero+logo composite and grid art; falls back to Steam `capsule_616x353.jpg` if not set. |
+| `STEAMGRIDDB_API_KEY` | Optional | SteamGridDB API key. Consumed by `vortex_utils` download helpers. Used for higher-quality hero art in default mode. Required for `--banner` mode (no fallback available). Falls back to Steam `library_hero.jpg` in default mode if not set. In `--title` mode, used for hero+logo composite and grid art; falls back to Steam `capsule_616x353.jpg` if not set. |
 
 ### fetch_cover_art.py — Usage
 
@@ -187,12 +201,14 @@ python fetch_nexus_stats.py
 python fetch_nexus_stats.py GAME_ID [GAME_ID ...]
 python fetch_nexus_stats.py --dry-run
 python fetch_nexus_stats.py --force
+python fetch_nexus_stats.py --prune [--dry-run]
 ```
 
 - No arguments — fetches stats for all extensions missing from the cache.
 - `GAME_ID [GAME_ID ...]` — only processes the listed game IDs.
-- `--dry-run` — lists extensions that would be fetched without making any API calls. Works without `NEXUS_API_KEY`.
+- `--dry-run` — lists extensions that would be fetched (or entries to prune) without making changes. Works without `NEXUS_API_KEY`.
 - `--force` — re-fetches stats even if already cached.
+- `--prune` — removes cache entries for game IDs no longer present in the repo, then exits. Combine with `--dry-run` to preview.
 
 ### fetch_nexus_stats.py — Output
 
@@ -314,6 +330,7 @@ python new_extension.py TEMPLATE STEAM_APP_ID
 python new_extension.py TEMPLATE "Game Name" --force
 python new_extension.py TEMPLATE "Game Name" --dry-run
 python new_extension.py TEMPLATE "Game Name" --no-images
+python new_extension.py TEMPLATE "Game Name" --no-browser --no-startfile
 python new_extension.py GAME_ID --refresh-images
 ```
 
@@ -322,6 +339,8 @@ The game input can be a quoted game name (searched on Steam) or a numeric Steam 
 Use `--force` to overwrite an existing folder.
 Use `--dry-run` to run all lookups and print what would be created without writing any files.
 Use `--no-images` to skip downloading `exec.png`, cover art, and title image (useful when re-running on an existing extension).
+Use `--no-browser` to suppress all `webbrowser.open` calls (PCGamingWiki, SteamDB, Steam demo page). Useful in headless / CI environments.
+Use `--no-startfile` to suppress opening downloaded images and `index.js` in the default editor.
 Use `--refresh-images GAME_ID` to re-download all 4 images for an existing extension without redoing any lookups or rewriting `index.js`. Reads `STEAMAPP_ID` and `GAME_NAME` directly from the existing `game-{GAME_ID}/index.js`. Always overwrites existing image files.
 
 ### new_extension.py — Examples
@@ -711,7 +730,7 @@ Each patch function receives `(game_id, src, context)` and returns `(new_src, ch
 
 ## setup_test_folder.py
 
-Creates a minimal fake game installation for testing a Vortex extension. Reads `GAME_NAME`, `EXEC`/`EXEC_NAME`, and `BINARIES_PATH` from `index.js` and creates an empty `.exe` file at the correct path so Vortex can detect the game.
+Creates a minimal fake game installation for testing a Vortex extension. Reads `GAME_NAME`, `EXEC`/`EXEC_NAME`, `BINARIES_PATH`, `EPIC_CODE_NAME`, `STEAM_EXEC`, `EXEC_STEAM`, `STEAM_EXEC_FOLDER`, and `REQ_FILE` from `index.js` and creates an empty executable file at the correct path so Vortex can detect the game.
 
 ### setup_test_folder.py — Requirements
 
@@ -769,9 +788,13 @@ No additional packages required (Python stdlib only).
 ```sh
 python audit_scripts.py
 python audit_scripts.py SCRIPT [SCRIPT ...]
+python audit_scripts.py --json
 ```
 
 Run without arguments to audit all scripts. Pass one or more filenames to audit a subset.
+Use `--json` to emit a structured JSON report (for CI pipelines). Exits with code 1 when drift is found in either mode.
+
+The SCRIPTS.md audit also checks for orphan sections — `## script.py` headings in SCRIPTS.md whose file no longer exists on disk.
 
 ### audit_scripts.py — Output
 
@@ -782,7 +805,7 @@ Two sections, each with a per-script report listing:
 - **Env vars in code, missing from header/SCRIPTS.md** — `os.environ.get('VAR')` / `os.getenv('VAR')` / `get_api_key('VAR')` calls not documented
 - **Env vars in header/SCRIPTS.md, not in code** — vars listed in docs that are not read directly (vars consumed inside `vortex_utils` helpers are allowed here)
 
-Exits with a summary line: `All clear.` or `Drift found. Update headers, SCRIPTS.md, or scripts.txt to match the code.`
+Exits 0 with `All clear.` or exits 1 with `Drift found. Update headers, SCRIPTS.md, or scripts.txt to match the code.` — non-zero exit allows CI to fail on drift.
 
 ---
 

@@ -2,8 +2,8 @@
 Name: Windrose Vortex Extension
 Structure: Unreal Engine Game
 Author: ChemBoy1
-Version: 0.3.0
-Date: 2026-04-24
+Version: 0.4.0
+Date: 2026-04-29
 Notes:
 - User selects where to install pak mods (SP or MP)
 - Dedicated Server registered as a separate game
@@ -57,7 +57,7 @@ let multiExe = false; //toggle for multiple executables (Epic/GOG/Demo don't mat
 if ( (EXEC !== EXEC_EPIC) || (EXEC !== EXEC_GOG) || (EXEC !== EXEC_DEMO) ) {
   multiExe = true;
 } //*/
-const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
+const setupNotification = true; //enable to show the user a notification with special instructions (specify below)
 const hasModKit = false; //toggle for UE ModKit mod support
 const hasServer = true; //toggle for server pak mod logic
 const preferHardlinks = true; //set true to perform partition checks when IO-STORE=false for Config/Save modtypes so that hardlinks available to more users
@@ -72,7 +72,7 @@ const ROOT_FOLDERS = [EPIC_CODE_NAME, 'Engine']; //addressable folders in root
 const ROOTSUB_FOLDERS = ['Content', 'Binaries', 'Mods']; //subfolders of EPIC_CODE_NAME. Don't use "Plugins" here since it can conflict with plugin loader/asi mods
 const SAVE_EXT = ".sav";
 const SAVE_COMPAT_VERSIONS = ['steam', 'epic', 'gog']; //game versions with installable save mods (never Xbox)
-let PAKMOD_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Paks', '~mods'); //usually works. Some games don't work from "~mods".
+let PAKMOD_PATH = path.join(EPIC_CODE_NAME, 'Content'); //usually works. Some games don't work from "~mods".
 const PAKMOD_LOADORDER = true; //set to false if you don't want loadOrder. If must be in "Paks" root, disable loadOrder.
 const FBLO = true; //set to false to use legacy load order page
 const LO_IMAGE_WIDTH = 96; //Width of the load order thumbnail image
@@ -220,7 +220,7 @@ const LOGICMODS_ID = `${GAME_ID}-logicmods`;
 const LOGICMODS_NAME = "UE4SS LogicMods (Blueprint)";
 const UE4SSCOMBO_ID = `${GAME_ID}-ue4sscombo`;
 const UE4SSCOMBO_NAME = "UE4SS Script-LogicMod Combo";
-const LOGICMODS_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Paks');
+const LOGICMODS_PATH = path.join(EPIC_CODE_NAME, 'Content');
 const LOGICMODS_FOLDER = "LogicMods";
 const LOGICMODS_EXT = ".pak";
 
@@ -255,8 +255,8 @@ const MODKITMOD_PATH = path.join(EPIC_CODE_NAME, 'Mods');
 //server (MP) mods
 const SERVERPAKS_ID = `${GAME_ID}-serverpaks`;
 const SERVERPAKS_NAME = "Server Pak Mod";
-const SERVERPAKS_PATH_BASE = path.join(EPIC_CODE_NAME, 'Builds', 'WindowsServer', EPIC_CODE_NAME, 'Content', 'Paks');
-const SERVERPAKS_PATH = path.join(SERVERPAKS_PATH_BASE, '~mods');
+const SERVERPAKS_PATH_ALT = path.join(EPIC_CODE_NAME, 'Builds', 'WindowsServer', EPIC_CODE_NAME, 'Content', 'Paks');
+const SERVERPAKS_PATH = path.join(EPIC_CODE_NAME, 'Builds', 'WindowsServer', EPIC_CODE_NAME, 'Content');
 
 const MODKIT_ID = `${GAME_ID}-modkit`;
 const MODKIT_NAME = "ModKit";
@@ -275,7 +275,7 @@ const PARAMETERS = [PARAMETERS_STRING];
 
 const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
-let MODTYPE_FOLDERS = [path.join(LOGICMODS_PATH, LOGICMODS_FOLDER), PAK_PATH, PAK_ALT_PATH, SERVERPAKS_PATH];
+let MODTYPE_FOLDERS = [path.join(LOGICMODS_PATH, 'Paks', LOGICMODS_FOLDER), PAK_PATH, PAK_ALT_PATH, SERVERPAKS_PATH];
 
 // -- END EDIT ZONE -- /////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -338,12 +338,12 @@ const spec = {
       "priority": "high",
       "targetPath": path.join('{gamePath}', LOGICMODS_PATH)
     },
-    {
+    /*{
       "id": PAK_ALT_ID,
       "name": PAK_ALT_NAME,
       "priority": "high",
       "targetPath": path.join('{gamePath}', PAK_ALT_PATH)
-    },
+    }, //*/
     {
       "id": ROOT_ID,
       "name": ROOT_NAME,
@@ -455,12 +455,12 @@ const specServer = {
       "priority": "high",
       "targetPath": path.join('{gamePath}', LOGICMODS_PATH)
     },
-    {
+    /*{
       "id": PAK_ALT_ID,
       "name": PAK_ALT_NAME,
       "priority": "high",
       "targetPath": path.join('{gamePath}', PAK_ALT_PATH)
-    },
+    }, //*/
     {
       "id": ROOT_ID,
       "name": ROOT_NAME,
@@ -1019,7 +1019,7 @@ function installLogic(files) {
     return {
       type: 'copy',
       source: file,
-      destination: path.join(file.substr(idx)),
+      destination: path.join('Paks', file.substr(idx)),
     };
   });
   instructions.push(setModTypeInstruction);
@@ -1904,6 +1904,15 @@ async function installPak(api, files) {
       destination: path.basename(file)
     };
   });
+  if (selection === SERVERPAKS_ID) {
+    instructions = installFiles.map(file => {
+      return {
+        type: 'copy',
+        source: file,
+        destination: path.join('Paks', '~mods', path.basename(file))
+      };
+    });
+  }
   if (selection === 'both') {
     instructions = installFiles.map(file => {
       return {
@@ -2223,7 +2232,7 @@ function partitionCheckNotify(api, CHECK_CONFIG, CHECK_SAVE) {
 
 function setupNotify(api) {
   const NOTIF_ID = `${GAME_ID}-setup-notify`;
-  const MESSAGE = 'Special Setup Instructions';
+  const MESSAGE = 'Reinstall Pak Mods (Installed Before v0.4.0)';
   api.sendNotification({
     id: NOTIF_ID,
     type: 'warning',
@@ -2235,10 +2244,13 @@ function setupNotify(api) {
         action: (dismiss) => {
           api.showDialog('question', MESSAGE, {
             text: `\n`
-                + `TEXT HERE.\n`
+                + `If you installed any pak mods prior to extension v0.4.0 (otherwise, ignore this message):\n`
                 + `\n`
-                + `TEXT HERE.\n`
+                + `Due to some unusual behavior by this game, the paths for pak mods had to be changed to avoid having Vortex deployment JSON in the Paks folder.\n`
                 + `\n`
+                + `Please Purge Mods, delete anything left over in "~mods" folder, and then re-install your pak mods to get everything in the right place.\n`
+                + `\n`
+                + `Apologies for any inconvenience this change may have caused.\n`
           }, [
             { label: 'Acknowledge', action: () => dismiss() },
             {
@@ -2496,7 +2508,8 @@ function applyGame(context, gameSpec) {
     { name: UE5_SORTABLE_NAME,
       mergeMods: (mod) => {
         if (UNREALDATA.loadOrder === true) {
-          return loadOrderPrefix(context.api, mod) + mod.id
+          const folder = loadOrderPrefix(context.api, mod) + mod.id;
+          return path.join('Paks', '~mods', folder);
         } else { //If load order is disabled, don't use sorting folders
           return '';
         }
@@ -2567,7 +2580,7 @@ function applyGame(context, gameSpec) {
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Server Paks Folder', () => {
     GAME_PATH = getDiscoveryPath(context.api, GAME_ID);
-    util.opn(path.join(GAME_PATH, SERVERPAKS_PATH_BASE)).catch(() => null);
+    util.opn(path.join(GAME_PATH, SERVERPAKS_PATH_ALT)).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
@@ -2718,7 +2731,8 @@ function applyGameServer(context, gameSpec) {
     { name: UE5_SORTABLE_NAME,
       mergeMods: (mod) => {
         if (UNREALDATA.loadOrder === true) {
-          return loadOrderPrefixServer(context.api, mod) + mod.id
+          const folder = loadOrderPrefixServer(context.api, mod) + mod.id;
+          return path.join('Paks', '~mods', folder);
         } else { //If load order is disabled, don't use sorting folders
           return '';
         }
@@ -2733,7 +2747,7 @@ function applyGameServer(context, gameSpec) {
   //register actions
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Paks Folder', () => {
     GAME_PATH = getDiscoveryPath(context.api, GAME_ID_SERVER);
-    util.opn(path.join(GAME_PATH, PAKMOD_PATH)).catch(() => null);
+    util.opn(path.join(GAME_PATH, PAK_ALT_PATH)).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);

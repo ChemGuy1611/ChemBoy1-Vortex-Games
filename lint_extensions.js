@@ -79,7 +79,7 @@ if (gameArgs.length > 0) {
 // ── header ────────────────────────────────────────────────────────────────────
 
 const label     = doFix ? 'Fixing' : 'Linting';
-const timestamp = new Date().toLocaleString();
+const timestamp = new Date().toISOString();
 
 emit(`ESLint Results -- ${timestamp}`);
 emit('='.repeat(60));
@@ -88,29 +88,38 @@ emit(`${label} ${targetDirs.length} extension(s)...`);
 emit();
 if (doJson) process.stderr.write(`${label} ${targetDirs.length} extension(s)...\n`);
 
-// ── run eslint per file ───────────────────────────────────────────────────────
+// ── collect files ─────────────────────────────────────────────────────────────
 
-const isWin    = process.platform === 'win32';
-const npxCmd   = isWin ? 'npx.cmd' : 'npx';
+const isWin  = process.platform === 'win32';
+const npxCmd = isWin ? 'npx.cmd' : 'npx';
 
-let passed = 0;
-let failed = 0;
-const failedIds  = [];
-const jsonResults = [];
+const targetFiles = [];
 
 for (const dirName of targetDirs) {
   const indexPath = path.join(ROOT, dirName, 'index.js');
   const relPath   = path.join(dirName, 'index.js');
-
   if (!fs.existsSync(indexPath)) {
     if (!quiet) emit(`  SKIP  ${relPath} (no index.js)`);
-    continue;
+  } else {
+    targetFiles.push({ dirName, indexPath, relPath });
   }
+}
 
-  const quotedPath = isWin ? `"${indexPath}"` : indexPath;
-  const eslintArgs = ['eslint'];
+// ── run eslint (single spawn) ─────────────────────────────────────────────────
+
+let passed        = 0;
+let failed        = 0;
+let totalErrors   = 0;
+let totalWarnings = 0;
+const failedIds   = [];
+const jsonResults = [];
+
+if (targetFiles.length > 0) {
+  const eslintArgs = ['eslint', '--format', 'json'];
   if (doFix) eslintArgs.push('--fix');
-  eslintArgs.push(quotedPath);
+  for (const { indexPath } of targetFiles) {
+    eslintArgs.push(isWin ? `"${indexPath}"` : indexPath);
+  }
 
   const result = spawnSync(npxCmd, eslintArgs, {
     cwd: ROOT,
@@ -118,25 +127,50 @@ for (const dirName of targetDirs) {
     shell: true,
   });
 
-  const output = (result.stdout || '') + (result.stderr || '');
-  const ok     = result.status === 0;
-
-  const gameId = dirName.replace(/^(game|template)-/, '');
-  if (doJson) process.stderr.write(`  ${ok ? '[OK]  ' : '[FAIL]'} ${relPath}\n`);
-  if (ok) {
-    if (!quiet) emit(`  [OK]   ${relPath}`);
-    passed++;
-  } else {
-    emit(`  [FAIL] ${relPath}`);
-    if (output.trim()) {
-      for (const line of output.trim().split('\n')) {
-        emit(`         ${line}`);
-      }
-    }
-    failed++;
-    failedIds.push(gameId);
+  let eslintData = [];
+  try {
+    eslintData = JSON.parse(result.stdout || '[]');
+  } catch (_) {
+    emit(`ESLint error: ${(result.stderr || result.stdout || '').trim()}`);
+    process.exit(2);
   }
-  jsonResults.push({ id: gameId, path: relPath, ok, output: ok ? '' : output.trim() });
+
+  const byPath = new Map();
+  for (const entry of eslintData) {
+    byPath.set(path.normalize(entry.filePath), entry);
+  }
+
+  for (const { dirName, indexPath, relPath } of targetFiles) {
+    const entry     = byPath.get(path.normalize(indexPath));
+    const errCount  = entry ? entry.errorCount   : 0;
+    const warnCount = entry ? entry.warningCount : 0;
+    const ok        = errCount === 0;
+    const gameId    = dirName.replace(/^(game|template)-/, '');
+
+    totalErrors   += errCount;
+    totalWarnings += warnCount;
+
+    if (doJson) process.stderr.write(`  ${ok ? '[OK]  ' : '[FAIL]'} ${relPath}\n`);
+    if (ok) {
+      if (!quiet) {
+        const suffix = warnCount > 0 ? ` (${warnCount} warning${warnCount !== 1 ? 's' : ''})` : '';
+        emit(`  [OK]   ${relPath}${suffix}`);
+      }
+      passed++;
+    } else {
+      emit(`  [FAIL] ${relPath}`);
+      if (entry && entry.messages.length > 0) {
+        for (const msg of entry.messages) {
+          const sev = msg.severity === 1 ? 'warning' : 'error';
+          emit(`         ${relPath}:${msg.line}:${msg.column}: ${sev} - ${msg.message} (${msg.ruleId || 'no-rule'})`);
+        }
+      }
+      failed++;
+      failedIds.push(gameId);
+    }
+    jsonResults.push({ id: gameId, path: relPath, ok, errorCount: errCount, warningCount: warnCount,
+      messages: entry ? entry.messages : [] });
+  }
 }
 
 // ── summary ───────────────────────────────────────────────────────────────────

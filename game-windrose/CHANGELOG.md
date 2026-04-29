@@ -4,6 +4,10 @@
 
 - None
 
+## [0.4.0] - 2026-04-29
+
+- Fixed: Changed pak mod pathing to avoid deployment JSON files in Pak folders (game tries to load them) - Please purge mods, make sure the ~mods folders are empty, and then re-install your pak mods.
+
 ## [0.3.0] - 2026-04-24
 
 - Added: Dedicated Server support - registered as a separate game

@@ -2,7 +2,8 @@
 setup_test_folder.py
 
 Creates a minimal fake game installation folder for testing a Vortex extension.
-Reads GAME_NAME, EXEC/EXEC_NAME, and BINARIES_PATH from the extension's index.js,
+Reads GAME_NAME, EXEC/EXEC_NAME, BINARIES_PATH, EPIC_CODE_NAME, STEAM_EXEC,
+EXEC_STEAM, STEAM_EXEC_FOLDER, and REQ_FILE from the extension's index.js,
 then creates an empty executable file at the correct path so Vortex can detect the game.
 
 Test folders are created under the VORTEX_TEST_ROOT directory.
@@ -28,7 +29,7 @@ import re
 import shutil
 import sys
 
-from vortex_utils import REPO_ROOT
+from vortex_utils import REPO_ROOT, safe_windows_dirname
 TEST_ROOT = os.environ.get("VORTEX_TEST_ROOT", r"D:\Game_Tools_D\!TestGameFolders_D")
 
 
@@ -136,8 +137,9 @@ def resolve_exec(table):
             exec_name = os.path.basename(val.replace("/", os.sep))
             break
 
-    # Strip .exe if not present and re-add to normalise
-    if exec_name and not exec_name.lower().endswith(".exe"):
+    # Append .exe only when the name has no file extension at all.
+    # Avoids mangling non-Windows execs like game.x86_64 or game.sh.
+    if exec_name and not os.path.splitext(exec_name)[1]:
         exec_name += ".exe"
 
     # UE4/5 games: exe lives at game root, not in BINARIES_PATH
@@ -199,7 +201,7 @@ def setup(game_id, dry_run=False, force=False):
     req_file = resolve_req_file(table)
 
     # Build the target paths -strip characters invalid in Windows folder names
-    safe_game_name = re.sub(r'[<>:"/\\|?*]', '', game_name).strip()
+    safe_game_name = safe_windows_dirname(game_name)
     game_folder = os.path.join(TEST_ROOT, safe_game_name)
     exec_dir = os.path.join(game_folder, bin_path) if bin_path else game_folder
     exec_file = os.path.join(exec_dir, exec_name)
@@ -257,7 +259,7 @@ def clean(game_id, dry_run=False):
         print(f"  [{game_id}] ERROR -could not resolve GAME_NAME from index.js")
         return False
 
-    safe_game_name = re.sub(r'[<>:"/\\|?*]', '', game_name).strip()
+    safe_game_name = safe_windows_dirname(game_name)
     game_folder = os.path.join(TEST_ROOT, safe_game_name)
 
     if not os.path.isdir(game_folder):

@@ -10,6 +10,7 @@ Usage:
     from vortex_utils import (
         REPO_ROOT, PCGW_API, EGDATA_API,
         TITLE_IMAGES_DIR, BANNER_IMAGES_DIR, LISTS_DIR,
+        GUI_FLAGS_PATH, GUI_STATS_PATH,
         GAME_PREFIX, TEMPLATE_PREFIX,
         read_index_js, write_index_js,
         extract_game_id, extract_steamapp_id,
@@ -24,12 +25,16 @@ Usage:
         list_game_ids, iter_repo_scripts, dry_prefix,
         node_check, node_check_source, eslint_check, get_discovery_ids,
         log_info, log_error, log_warn,
+        find_vortex_exe, safe_windows_dirname,
+        read_id_list, write_id_list, is_load_order_game,
+        nexus_list_games, nexus_get_mod,
     )
 """
 
 import json
 import os
 import re
+import shutil
 import subprocess
 import tempfile
 import time
@@ -45,6 +50,9 @@ EGDATA_API  = "https://api.egdata.app"
 TITLE_IMAGES_DIR  = os.path.join(REPO_ROOT, "resources", "title-images")
 BANNER_IMAGES_DIR = os.path.join(REPO_ROOT, "resources", "banner-images")
 LISTS_DIR         = os.path.join(REPO_ROOT, "resources", "lists")
+
+GUI_FLAGS_PATH = os.path.join(REPO_ROOT, "vortex_gui_flags.json")
+GUI_STATS_PATH = os.path.join(REPO_ROOT, "vortex_gui_nexus_stats.json")
 
 GAME_PREFIX     = "game-"
 TEMPLATE_PREFIX = "template-"
@@ -201,9 +209,9 @@ def extract_game_name(src):
     """Extract the game name from index.js source.
     Tries GAME_NAME constant first, then quoted 'name': in spec,
     then name: following id: GAME_ID in the context.registerGame call."""
-    m = re.search(r"const\s+GAME_NAME\s*=\s*['\"]([^'\"]+)['\"]", src)
+    m = re.search(r"const\s+GAME_NAME\s*=\s*(['\"])(.*?)\1", src)
     if m:
-        return m.group(1)
+        return m.group(2)
     m = re.search(r'"name":\s*(["\'])(.+?)\1', src)
     if m:
         return m.group(2)
@@ -990,6 +998,47 @@ def download_banner_image(appid, game_id, out_path, sgdb_key):
     return True, source
 
 
+# == Image resize helpers ======================================================
+
+def resize_images_to(paths_and_labels, target_wh, *, fmt='JPEG', quality=95, dry_run=False):
+    """Resize images that don't match the target dimensions.
+
+    paths_and_labels: iterable of (img_path, label) tuples.
+    target_wh: (width, height) tuple.
+    fmt: 'JPEG' or 'PNG'.
+    quality: JPEG quality (ignored for PNG).
+    dry_run: if True, print what would be done without writing files.
+
+    Returns (resized, already_correct, missing) counts.
+    Raises ImportError if Pillow is not installed (caller should catch)."""
+    from PIL import Image
+    target = tuple(target_wh)
+    tw, th = target
+    resized = already = missing = 0
+    for img_path, label in paths_and_labels:
+        if not os.path.isfile(img_path):
+            missing += 1
+            continue
+        try:
+            with Image.open(img_path) as img:
+                size = img.size
+                if size == target:
+                    already += 1
+                    continue
+                prefix = '[DRY RUN] ' if dry_run else ''
+                print(f"  {prefix}[{label}] {size[0]}x{size[1]} -> {tw}x{th}")
+                if not dry_run:
+                    mode = 'RGB' if fmt == 'JPEG' else 'RGBA'
+                    resized_img = img.convert(mode).resize(target, Image.LANCZOS)
+                    kw = {'quality': quality} if fmt == 'JPEG' else {}
+                    resized_img.save(img_path, fmt, **kw)
+        except Exception as e:
+            print(f"  [{label}] SKIP - could not process: {e}")
+            continue
+        resized += 1
+    return resized, already, missing
+
+
 # == Node / repo helpers =======================================================
 
 def run_generate_explained(game_id):
@@ -1183,3 +1232,181 @@ def detect_engine(src):
 def dry_prefix(dry_run):
     """Return '[DRY RUN] ' when dry_run is True, else ''."""
     return '[DRY RUN] ' if dry_run else ''
+
+
+def mutate_index_js(folder, game_id, mutator_fn, *,
+                    dry_run=False,
+                    changed_msg="Updated index.js",
+                    unchanged_msg="index.js already up to date",
+                    dry_run_msg="Would update index.js"):
+    """Read index.js, apply mutator_fn(src) -> new_src, write back if changed.
+
+    Returns True if changed (or would be in dry_run). Handles all error
+    printing so callers do not need try/except boilerplate.
+    Pass unchanged_msg=None to suppress the no-change print."""
+    index_path = os.path.join(folder, "index.js")
+    if not os.path.isfile(index_path):
+        print(f"  [{game_id}] WARNING - index.js not found")
+        return False
+    try:
+        with open(index_path, encoding="utf-8") as f:
+            src = f.read()
+    except OSError as e:
+        print(f"  [{game_id}] WARNING - could not read index.js: {e}")
+        return False
+    new_src = mutator_fn(src)
+    if new_src == src:
+        if unchanged_msg:
+            print(f"  [{game_id}] {unchanged_msg}")
+        return False
+    if dry_run:
+        print(f"  [{game_id}] [DRY RUN] {dry_run_msg}")
+        return True
+    try:
+        with open(index_path, "w", encoding="utf-8") as f:
+            f.write(new_src)
+        print(f"  [{game_id}] {changed_msg}")
+        return True
+    except OSError as e:
+        print(f"  [{game_id}] ERROR - could not write index.js: {e}")
+        return False
+
+
+def read_json(path, default=None):
+    """Read and parse a JSON file. Returns default (empty dict by default) on missing/corrupt file."""
+    if default is None:
+        default = {}
+    if not os.path.isfile(path):
+        return default
+    try:
+        with open(path, encoding="utf-8") as f:
+            return json.load(f)
+    except Exception:
+        return default
+
+
+def write_json_atomic(path, data, *, indent=2, sort_keys=False):
+    """Write data as JSON to path atomically (tmp file + os.replace)."""
+    tmp = path + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=indent, sort_keys=sort_keys)
+    os.replace(tmp, path)
+
+
+def print_run_summary(saved, failed, skipped, *, skip_label="no Steam ID"):
+    """Print a standardized saved/failed/skipped run summary block."""
+    print(f"\n{'-' * 50}")
+    print(f"Saved : {len(saved)}")
+    if failed:
+        print(f"Failed: {len(failed)}")
+        for g in failed:
+            print(f"  - {g}")
+    if skipped:
+        print(f"Skipped ({skip_label}): {len(skipped)}")
+        for g in skipped:
+            print(f"  - {g}")
+
+
+# == Nexus Mods API helpers ====================================================
+
+_NEXUS_HEADERS = {
+    "User-Agent": "Mozilla/5.0",
+    "Accept": "application/json",
+}
+
+_nexus_games_cache = None
+
+
+def nexus_list_games(api_key):
+    """Fetch all Nexus Mods games (approved only). Caches result for the process lifetime.
+    Returns a list of game dicts with at least 'name' and 'domain_name'. Returns [] on error."""
+    global _nexus_games_cache
+    if not api_key:
+        return []
+    if _nexus_games_cache is None:
+        try:
+            req = urllib.request.Request(
+                "https://api.nexusmods.com/v1/games.json?include_unapproved=false",
+                headers={"apikey": api_key, **_NEXUS_HEADERS},
+            )
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                _nexus_games_cache = json.loads(resp.read())
+        except Exception as e:
+            print(f"  Nexus games fetch error: {e}")
+            return []
+    return _nexus_games_cache
+
+
+def nexus_get_mod(domain, mod_id, api_key):
+    """Fetch mod details from the Nexus v1 API.
+
+    Returns (data_dict, rate_remaining_str_or_None). Retries up to 2 times on
+    429 / 5xx / network errors (2 s, 4 s delays). Raises immediately on 404 or
+    non-retryable 4xx errors."""
+    req = urllib.request.Request(
+        f"https://api.nexusmods.com/v1/games/{domain}/mods/{mod_id}.json",
+        headers={"apikey": api_key, **_NEXUS_HEADERS},
+    )
+    last_exc = None
+    for delay in (0, 2, 4):
+        if delay:
+            time.sleep(delay)
+        try:
+            with urllib.request.urlopen(req, timeout=15) as resp:
+                data = json.loads(resp.read())
+                remaining = resp.headers.get("X-RL-Daily-Remaining")
+            return data, remaining
+        except urllib.error.HTTPError as e:
+            if e.code == 404 or (e.code != 429 and e.code < 500):
+                raise
+            if e.code == 429:
+                try:
+                    ra = int(e.headers.get("Retry-After") or "0")
+                    if ra > delay:
+                        time.sleep(ra - delay)
+                except (ValueError, TypeError):
+                    pass
+            last_exc = e
+        except urllib.error.URLError as e:
+            last_exc = e
+    raise last_exc
+
+
+# == Platform / filesystem helpers =============================================
+
+def find_vortex_exe():
+    """Return the path to Vortex.exe if found, else None.
+    Checks the default install location first, then PATH."""
+    candidates = [
+        r"C:\Program Files\Black Tree Gaming Ltd\Vortex\Vortex.exe",
+        shutil.which("Vortex.exe") or "",
+    ]
+    for path in candidates:
+        if path and os.path.isfile(path):
+            return path
+    return None
+
+
+def safe_windows_dirname(name):
+    """Strip characters invalid in Windows directory names and strip whitespace."""
+    return re.sub(r'[<>:"/\\|?*]', '', name).strip()
+
+
+def read_id_list(filepath):
+    """Read a text file and return a list of IDs (stripped, non-empty lines)."""
+    if not os.path.isfile(filepath):
+        return []
+    with open(filepath, encoding="utf-8") as f:
+        return [line.strip() for line in f if line.strip()]
+
+
+def write_id_list(filepath, game_ids):
+    """Write a sorted list of IDs to a file, one per line."""
+    with open(filepath, "w", encoding="utf-8") as f:
+        for gid in sorted(game_ids):
+            f.write(gid + "\n")
+
+
+def is_load_order_game(src):
+    """Return True if the extension registers a load order and is not a UE4/5 game."""
+    return "context.registerLoadOrder" in src and detect_engine(src) != "Unreal Engine 4/5"

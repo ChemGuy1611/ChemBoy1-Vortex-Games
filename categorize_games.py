@@ -16,7 +16,11 @@ Usage:
 import os
 import argparse
 
-from vortex_utils import REPO_ROOT, LISTS_DIR, list_game_ids, detect_engine
+from vortex_utils import (
+    REPO_ROOT, LISTS_DIR, list_game_ids, detect_engine,
+    read_id_list, write_id_list,
+    is_load_order_game as _is_load_order_game_src,
+)
 
 # (filename, display label) in detection priority order.
 # The label strings match detect_engine() return values exactly.
@@ -61,22 +65,7 @@ def is_load_order_game(game_id):
         return False
     with open(index_path, encoding="utf-8") as f:
         src = f.read()
-    return "context.registerLoadOrder" in src and detect_engine(src) != "Unreal Engine 4/5"
-
-
-def read_list(filepath):
-    """Read a category file and return a list of game IDs (stripped, non-empty lines)."""
-    if not os.path.isfile(filepath):
-        return []
-    with open(filepath, encoding="utf-8") as f:
-        return [line.strip() for line in f if line.strip()]
-
-
-def write_list(filepath, game_ids):
-    """Write a sorted list of game IDs to a category file."""
-    with open(filepath, "w", encoding="utf-8") as f:
-        for gid in sorted(game_ids):
-            f.write(gid + "\n")
+    return _is_load_order_game_src(src)
 
 
 def rebuild_all(dry_run=False):
@@ -101,13 +90,13 @@ def rebuild_all(dry_run=False):
             print(f"  {filename}: {len(buckets[filename])} games")
         else:
             filepath = os.path.join(LISTS_DIR, filename)
-            write_list(filepath, buckets[filename])
+            write_id_list(filepath, buckets[filename])
             print(f"  {filename}: {len(buckets[filename])} games")
 
     if dry_run:
         print(f"  {LOADORDER_FILE}: {len(lo_games)} games")
     else:
-        write_list(os.path.join(LISTS_DIR, LOADORDER_FILE), lo_games)
+        write_id_list(os.path.join(LISTS_DIR, LOADORDER_FILE), lo_games)
         print(f"  {LOADORDER_FILE}: {len(lo_games)} games")
 
     tag = " [DRY RUN]" if dry_run else ""
@@ -126,14 +115,14 @@ def update_single(game_id, dry_run=False):
 
     for filename, label in CATEGORIES:
         filepath = os.path.join(LISTS_DIR, filename)
-        ids = read_list(filepath)
+        ids = read_id_list(filepath)
         if filename == target:
             if game_id not in ids:
                 if dry_run:
                     print(f"  [DRY RUN] Would add {game_id} -> {filename} ({label})")
                 else:
                     ids.append(game_id)
-                    write_list(filepath, ids)
+                    write_id_list(filepath, ids)
                     print(f"  Added {game_id} -> {filename} ({label})")
             else:
                 print(f"  {game_id} already in {filename} ({label})")
@@ -143,18 +132,18 @@ def update_single(game_id, dry_run=False):
                     print(f"  [DRY RUN] Would remove {game_id} from {filename}")
                 else:
                     ids.remove(game_id)
-                    write_list(filepath, ids)
+                    write_id_list(filepath, ids)
                     print(f"  Removed {game_id} from {filename}")
 
     lo_path = os.path.join(LISTS_DIR, LOADORDER_FILE)
-    lo_ids = read_list(lo_path)
+    lo_ids = read_id_list(lo_path)
     if is_load_order_game(game_id):
         if game_id not in lo_ids:
             if dry_run:
                 print(f"  [DRY RUN] Would add {game_id} -> {LOADORDER_FILE}")
             else:
                 lo_ids.append(game_id)
-                write_list(lo_path, lo_ids)
+                write_id_list(lo_path, lo_ids)
                 print(f"  Added {game_id} -> {LOADORDER_FILE}")
         else:
             print(f"  {game_id} already in {LOADORDER_FILE}")
@@ -164,7 +153,7 @@ def update_single(game_id, dry_run=False):
                 print(f"  [DRY RUN] Would remove {game_id} from {LOADORDER_FILE}")
             else:
                 lo_ids.remove(game_id)
-                write_list(lo_path, lo_ids)
+                write_id_list(lo_path, lo_ids)
                 print(f"  Removed {game_id} from {LOADORDER_FILE}")
 
 
