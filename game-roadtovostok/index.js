@@ -475,7 +475,9 @@ async function installRezip(files, destinationPath) {
 
   //Repack .vmz files since Vortex forcibly extracts them as archives for some reason...
   const szip = new util.SevenZip();
-  const archiveName = path.basename(destinationPath, '.installing') + MOD_EXT;
+  const modName = path.basename(destinationPath, '.installing');
+  const split = modName.split('-');
+  const archiveName = split[0] + '.zip';
   const archivePath = path.join(destinationPath, archiveName);
   const rootRelPaths = await fs.readdirAsync(destinationPath);
   await szip.add(archivePath, rootRelPaths.map(relPath => path.join(destinationPath, relPath)), { raw: ['-r'] });

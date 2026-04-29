@@ -48,6 +48,7 @@ Installers run in priority order (lower number = tested first). The first instal
 | --- | --- |
 | `roadtovostok-godotmodloader` | 25 |
 | `roadtovostok-mod` | 27 |
+| `roadtovostok-mod-rezip` | 27 |
 | `roadtovostok-fallback` | 49 |
 
 ## Registered Tools
