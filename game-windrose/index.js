@@ -7,6 +7,7 @@ Date: 2026-04-29
 Notes:
 - User selects where to install pak mods (SP or MP)
 - Dedicated Server registered as a separate game
+- Had to move pak modType paths up to EPIC_CODE_NAME as the game will try to load ANY JSON (deployment.json) files within the Content folder (never seen this before)
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -72,7 +73,7 @@ const ROOT_FOLDERS = [EPIC_CODE_NAME, 'Engine']; //addressable folders in root
 const ROOTSUB_FOLDERS = ['Content', 'Binaries', 'Mods']; //subfolders of EPIC_CODE_NAME. Don't use "Plugins" here since it can conflict with plugin loader/asi mods
 const SAVE_EXT = ".sav";
 const SAVE_COMPAT_VERSIONS = ['steam', 'epic', 'gog']; //game versions with installable save mods (never Xbox)
-let PAKMOD_PATH = path.join(EPIC_CODE_NAME, 'Content'); //usually works. Some games don't work from "~mods".
+let PAKMOD_PATH = path.join(EPIC_CODE_NAME); //usually works. Some games don't work from "~mods".
 const PAKMOD_LOADORDER = true; //set to false if you don't want loadOrder. If must be in "Paks" root, disable loadOrder.
 const FBLO = true; //set to false to use legacy load order page
 const LO_IMAGE_WIDTH = 96; //Width of the load order thumbnail image
@@ -220,7 +221,7 @@ const LOGICMODS_ID = `${GAME_ID}-logicmods`;
 const LOGICMODS_NAME = "UE4SS LogicMods (Blueprint)";
 const UE4SSCOMBO_ID = `${GAME_ID}-ue4sscombo`;
 const UE4SSCOMBO_NAME = "UE4SS Script-LogicMod Combo";
-const LOGICMODS_PATH = path.join(EPIC_CODE_NAME, 'Content');
+const LOGICMODS_PATH = path.join(EPIC_CODE_NAME);
 const LOGICMODS_FOLDER = "LogicMods";
 const LOGICMODS_EXT = ".pak";
 
@@ -256,7 +257,7 @@ const MODKITMOD_PATH = path.join(EPIC_CODE_NAME, 'Mods');
 const SERVERPAKS_ID = `${GAME_ID}-serverpaks`;
 const SERVERPAKS_NAME = "Server Pak Mod";
 const SERVERPAKS_PATH_ALT = path.join(EPIC_CODE_NAME, 'Builds', 'WindowsServer', EPIC_CODE_NAME, 'Content', 'Paks');
-const SERVERPAKS_PATH = path.join(EPIC_CODE_NAME, 'Builds', 'WindowsServer', EPIC_CODE_NAME, 'Content');
+const SERVERPAKS_PATH = path.join(EPIC_CODE_NAME, 'Builds', 'WindowsServer', EPIC_CODE_NAME);
 
 const MODKIT_ID = `${GAME_ID}-modkit`;
 const MODKIT_NAME = "ModKit";
@@ -275,7 +276,7 @@ const PARAMETERS = [PARAMETERS_STRING];
 
 const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
-let MODTYPE_FOLDERS = [path.join(LOGICMODS_PATH, 'Paks', LOGICMODS_FOLDER), PAK_PATH, PAK_ALT_PATH, SERVERPAKS_PATH];
+let MODTYPE_FOLDERS = [path.join(LOGICMODS_PATH, 'Content', 'Paks', LOGICMODS_FOLDER), PAK_PATH, PAK_ALT_PATH, SERVERPAKS_PATH];
 
 // -- END EDIT ZONE -- /////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -1019,7 +1020,7 @@ function installLogic(files) {
     return {
       type: 'copy',
       source: file,
-      destination: path.join('Paks', file.substr(idx)),
+      destination: path.join('Content', 'Paks', file.substr(idx)),
     };
   });
   instructions.push(setModTypeInstruction);
@@ -1860,12 +1861,12 @@ function testPak(files, gameId) {
   const isPak = files.some(file => (path.extname(file).toLowerCase() === PAK_EXT));
   let supported = supportedGame && isPak;
   
-  // Test for a mod installer
+  /*! INTENTIONALLY REMOVED - due to pak pathing changes in 0.4.0
   if (supported && files.find(file =>
     (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
     (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
     supported = false;
-  }
+  } //*/
   
   return Promise.resolve({
     supported,
@@ -1909,7 +1910,7 @@ async function installPak(api, files) {
       return {
         type: 'copy',
         source: file,
-        destination: path.join('Paks', '~mods', path.basename(file))
+        destination: path.join('Content', 'Paks', '~mods', path.basename(file))
       };
     });
   }
@@ -2509,7 +2510,7 @@ function applyGame(context, gameSpec) {
       mergeMods: (mod) => {
         if (UNREALDATA.loadOrder === true) {
           const folder = loadOrderPrefix(context.api, mod) + mod.id;
-          return path.join('Paks', '~mods', folder);
+          return path.join('Content', 'Paks', '~mods', folder);
         } else { //If load order is disabled, don't use sorting folders
           return '';
         }
@@ -2732,7 +2733,7 @@ function applyGameServer(context, gameSpec) {
       mergeMods: (mod) => {
         if (UNREALDATA.loadOrder === true) {
           const folder = loadOrderPrefixServer(context.api, mod) + mod.id;
-          return path.join('Paks', '~mods', folder);
+          return path.join('Content', 'Paks', '~mods', folder);
         } else { //If load order is disabled, don't use sorting folders
           return '';
         }
