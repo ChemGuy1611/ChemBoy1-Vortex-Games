@@ -1919,13 +1919,13 @@ async function installPak(api, files) {
       return {
         type: 'copy',
         source: file,
-        destination: path.join(PAK_PATH, path.basename(file))
+        destination: path.join(PAK_PATH, 'Content', 'Paks', '~mods', path.basename(file))
       };
     }).concat(installFiles.map(file => {
       return {
         type: 'copy',
         source: file,
-        destination: path.join(SERVERPAKS_PATH, path.basename(file))
+        destination: path.join(SERVERPAKS_PATH, 'Content', 'Paks', '~mods', path.basename(file))
       };
     }));
     instructions.push(modTypeInstruction);

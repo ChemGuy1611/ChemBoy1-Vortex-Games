@@ -12,6 +12,7 @@
 
 - User selects where to install pak mods (SP or MP)
 - Dedicated Server registered as a separate game
+- Had to move pak modType paths up to EPIC_CODE_NAME as the game will try to load ANY JSON (deployment.json) files within the Content folder (never seen this before)
 
 ## Key Identifiers
 
