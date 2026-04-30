@@ -37,7 +37,7 @@ const EXEC_GOG = EXEC;
 const EXEC_EGS = EXEC;
 const EXEC_XBOX = 'gamelaunchhelper.exe';
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Warhammer_40,000:_Dark_Heresy";
-const EXTENSION_URL = "https://www.nexusmods.com/site/mods/XXX"; //Nexus link to this extension. Used for links
+const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
 
 const LOAD_ORDER_ENABLED = true;
 const debug = false;

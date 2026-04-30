@@ -234,9 +234,18 @@ No additional packages required (Python stdlib only).
 python new_template.py TEMPLATE_NAME GAME_ID [GAME_ID ...]
 python new_template.py TEMPLATE_NAME GAME_ID [GAME_ID ...] --dry-run
 python new_template.py TEMPLATE_NAME GAME_ID [GAME_ID ...] --force
+python new_template.py TEMPLATE_NAME GAME_ID [GAME_ID ...] --diff
 ```
 
 The first `GAME_ID` is the primary source — its `index.js` is copied and stripped. Additional `GAME_ID`s are listed in the output as reference sources but not processed.
+
+### new_template.py — Options
+
+| Flag | Effect |
+| --- | --- |
+| `--dry-run` | Print actions without writing files or updating `new_extension.py`. |
+| `--force` | Overwrite existing template folder. |
+| `--diff` | Show unified diff vs. existing template (or full output if new). No files written. |
 
 ### new_template.py — Examples
 
@@ -494,17 +503,19 @@ node lint_extensions.js --templates --quiet
 
 ### lint_extensions.js — Output
 
-Per-file status: `[OK]` for passing files, `[FAIL]` with ESLint output for failures. Summary line at the end with pass/fail counts and a list of failed game IDs. Exits with code `0` if all pass, `1` if any fail. Always writes the full output to `lint_results.txt` in the repo root (overwrites on each run).
+Per-file status: `[OK]` for passing files (with `(N warnings)` suffix when warnings are present), `[FAIL]` with per-message details for failures. Summary line: `N passed, N failed, N errors, N warnings`. Exits with code `0` if all pass, `1` if any fail. Always writes the full output to `lint_results.txt` in the repo root (overwrites on each run). Timestamp is ISO 8601 for stable cross-machine ordering.
 
 With `--json`, stdout receives a JSON object instead:
 
 ```json
 {
-  "timestamp": "...",
+  "timestamp": "2026-04-29T12:00:00.000Z",
   "passed": 5,
   "failed": 1,
   "total": 6,
-  "results": [{ "id": "game-id", "path": "game-id/index.js", "ok": true, "output": "" }, ...],
+  "totalErrors": 2,
+  "totalWarnings": 7,
+  "results": [{ "id": "game-id", "path": "game-id/index.js", "ok": true, "errorCount": 0, "warningCount": 0, "messages": [] }, ...],
   "failedIds": ["game-id"]
 }
 ```

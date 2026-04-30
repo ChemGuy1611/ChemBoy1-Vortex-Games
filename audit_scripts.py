@@ -51,8 +51,8 @@ import sys
 
 from vortex_utils import iter_repo_scripts, REPO_ROOT
 
-# Scripts that are libraries or non-Python — skip them
-SKIP = {"vortex_utils.py", "generate_explained.js", "SCRIPTS.md"}
+# Scripts that are libraries, config files, or otherwise not dev scripts
+SKIP = {"vortex_utils.py", "generate_explained.js", "SCRIPTS.md", "eslint.config.js"}
 
 # Env vars consumed inside vortex_utils helpers (indirect use).
 # Scripts that document these but don't call os.environ.get() directly are correct.
@@ -326,7 +326,7 @@ def audit_scripts_txt():
         if (f.endswith('.py') or f.endswith('.js'))
         and os.path.isfile(os.path.join(REPO_ROOT, f))
     }
-    unlisted_files = sorted(on_disk - listed)
+    unlisted_files = sorted((on_disk - listed) - SKIP)
     any_issue = bool(missing_files or unlisted_files)
     return any_issue, missing_files, unlisted_files
 

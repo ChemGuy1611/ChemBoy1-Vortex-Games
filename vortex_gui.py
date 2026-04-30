@@ -95,6 +95,243 @@ def _load_svg_icon(path: str, size: int) -> "QIcon | None":
 
 VORTEX_EXE: "str | None" = vu.find_vortex_exe()
 
+# == Dark theme palette ========================================================
+
+_DK_BG       = "#1e1e2e"
+_DK_BG_ALT   = "#252535"
+_DK_BG_RAISE = "#2a2a3d"
+_DK_BORDER   = "#3a3a4f"
+_DK_TEXT     = "#e4e4ec"
+_DK_TEXT_DIM = "#9090a0"
+_DK_ACCENT   = "#5a8eff"
+_DK_ACCENT_H = "#7aa3ff"
+
+
+def _apply_dark_theme(app):
+    from PySide6.QtGui import QPalette
+    pal = QPalette()
+    bg       = QColor(_DK_BG)
+    bg_alt   = QColor(_DK_BG_ALT)
+    bg_raise = QColor(_DK_BG_RAISE)
+    text     = QColor(_DK_TEXT)
+    text_dim = QColor(_DK_TEXT_DIM)
+    accent   = QColor(_DK_ACCENT)
+    border   = QColor(_DK_BORDER)
+    disabled_text = QColor("#606070")
+
+    pal.setColor(QPalette.Window,          bg)
+    pal.setColor(QPalette.WindowText,      text)
+    pal.setColor(QPalette.Base,            bg_alt)
+    pal.setColor(QPalette.AlternateBase,   bg_raise)
+    pal.setColor(QPalette.Text,            text)
+    pal.setColor(QPalette.BrightText,      text)
+    pal.setColor(QPalette.Button,          bg_raise)
+    pal.setColor(QPalette.ButtonText,      text)
+    pal.setColor(QPalette.Highlight,       accent)
+    pal.setColor(QPalette.HighlightedText, QColor("#ffffff"))
+    pal.setColor(QPalette.Link,            accent)
+    pal.setColor(QPalette.LinkVisited,     QColor(_DK_ACCENT_H))
+    pal.setColor(QPalette.ToolTipBase,     bg_raise)
+    pal.setColor(QPalette.ToolTipText,     text)
+    pal.setColor(QPalette.PlaceholderText, text_dim)
+    pal.setColor(QPalette.Disabled, QPalette.Text,       disabled_text)
+    pal.setColor(QPalette.Disabled, QPalette.ButtonText, disabled_text)
+    pal.setColor(QPalette.Disabled, QPalette.WindowText, disabled_text)
+    app.setPalette(pal)
+
+    ss = f"""
+QMainWindow, QDialog, QWidget {{
+    background-color: {_DK_BG};
+    color: {_DK_TEXT};
+}}
+QToolBar {{
+    background-color: {_DK_BG_RAISE};
+    border-bottom: 1px solid {_DK_BORDER};
+    spacing: 2px;
+    padding: 2px 4px;
+}}
+QToolBar::separator {{
+    background: {_DK_BORDER};
+    width: 1px;
+    margin: 3px 4px;
+}}
+QToolButton {{
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 4px;
+    padding: 2px 6px;
+    color: {_DK_TEXT};
+}}
+QToolButton:hover {{
+    background: {_DK_BG_ALT};
+    border-color: {_DK_BORDER};
+}}
+QToolButton:pressed {{
+    background: {_DK_BORDER};
+}}
+QToolButton:disabled {{
+    color: #606070;
+}}
+QPushButton {{
+    background-color: {_DK_BG_RAISE};
+    border: 1px solid {_DK_BORDER};
+    border-radius: 4px;
+    padding: 3px 10px;
+    color: {_DK_TEXT};
+}}
+QPushButton:hover {{
+    background-color: {_DK_BG_ALT};
+    border-color: {_DK_ACCENT};
+}}
+QPushButton:pressed {{
+    background-color: {_DK_BORDER};
+}}
+QPushButton:checked {{
+    background-color: {_DK_ACCENT};
+    border-color: {_DK_ACCENT};
+    color: #ffffff;
+}}
+QPushButton:disabled {{
+    color: #606070;
+    border-color: {_DK_BORDER};
+}}
+QLineEdit {{
+    background-color: {_DK_BG_ALT};
+    border: 1px solid {_DK_BORDER};
+    border-radius: 4px;
+    padding: 2px 6px;
+    color: {_DK_TEXT};
+    selection-background-color: {_DK_ACCENT};
+}}
+QLineEdit:focus {{
+    border-color: {_DK_ACCENT};
+}}
+QTableView {{
+    gridline-color: {_DK_BORDER};
+    background-color: {_DK_BG_ALT};
+    alternate-background-color: {_DK_BG_RAISE};
+    border: 1px solid {_DK_BORDER};
+    selection-background-color: {_DK_ACCENT};
+    selection-color: #ffffff;
+}}
+QTableView::item:selected {{
+    background-color: {_DK_ACCENT};
+    color: #ffffff;
+}}
+QHeaderView::section {{
+    background-color: {_DK_BG_RAISE};
+    color: {_DK_TEXT};
+    border: none;
+    border-right: 1px solid {_DK_BORDER};
+    border-bottom: 1px solid {_DK_BORDER};
+    padding: 3px 4px;
+}}
+QHeaderView::section:checked {{
+    background-color: {_DK_BG_ALT};
+}}
+QPlainTextEdit {{
+    background-color: {_DK_BG_ALT};
+    color: {_DK_TEXT};
+    border: 1px solid {_DK_BORDER};
+    border-radius: 4px;
+    selection-background-color: {_DK_ACCENT};
+}}
+QPlainTextEdit#logPane {{
+    background-color: #000000;
+    color: #f0f0f0;
+    border: 1px solid {_DK_BORDER};
+    border-radius: 0px;
+    font-family: Consolas, "Courier New", monospace;
+}}
+QScrollBar:vertical {{
+    background: {_DK_BG_ALT};
+    width: 10px;
+    border: none;
+}}
+QScrollBar::handle:vertical {{
+    background: {_DK_BORDER};
+    border-radius: 5px;
+    min-height: 20px;
+}}
+QScrollBar::handle:vertical:hover {{
+    background: {_DK_TEXT_DIM};
+}}
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {{
+    height: 0px;
+}}
+QScrollBar:horizontal {{
+    background: {_DK_BG_ALT};
+    height: 10px;
+    border: none;
+}}
+QScrollBar::handle:horizontal {{
+    background: {_DK_BORDER};
+    border-radius: 5px;
+    min-width: 20px;
+}}
+QScrollBar::handle:horizontal:hover {{
+    background: {_DK_TEXT_DIM};
+}}
+QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {{
+    width: 0px;
+}}
+QStatusBar {{
+    background-color: {_DK_BG_RAISE};
+    color: {_DK_TEXT_DIM};
+    border-top: 1px solid {_DK_BORDER};
+}}
+QMenu {{
+    background-color: {_DK_BG_RAISE};
+    color: {_DK_TEXT};
+    border: 1px solid {_DK_BORDER};
+}}
+QMenu::item:selected {{
+    background-color: {_DK_ACCENT};
+    color: #ffffff;
+}}
+QMenu::separator {{
+    height: 1px;
+    background: {_DK_BORDER};
+    margin: 2px 4px;
+}}
+QComboBox {{
+    background-color: {_DK_BG_ALT};
+    border: 1px solid {_DK_BORDER};
+    border-radius: 4px;
+    padding: 2px 6px;
+    color: {_DK_TEXT};
+    selection-background-color: {_DK_ACCENT};
+}}
+QComboBox QAbstractItemView {{
+    background-color: {_DK_BG_RAISE};
+    color: {_DK_TEXT};
+    border: 1px solid {_DK_BORDER};
+    selection-background-color: {_DK_ACCENT};
+    selection-color: #ffffff;
+}}
+QCheckBox {{
+    color: {_DK_TEXT};
+    spacing: 6px;
+}}
+QLabel {{
+    color: {_DK_TEXT};
+}}
+QDialogButtonBox QPushButton {{
+    min-width: 72px;
+}}
+QToolTip {{
+    background-color: {_DK_BG_RAISE};
+    color: {_DK_TEXT};
+    border: 1px solid {_DK_BORDER};
+    padding: 3px 6px;
+}}
+QSplitter::handle {{
+    background: {_DK_BORDER};
+}}
+"""
+    app.setStyleSheet(ss)
+
+
 _FLAG_ICON: "QIcon | None" = None
 _UNFLAG_ICON: "QIcon | None" = None
 _NEXUS_ICON: "QIcon | None" = None
@@ -119,7 +356,7 @@ def _make_icons():
         p.setRenderHint(QPainter.Antialiasing)
         if not flagged:
             p.setOpacity(0.3)
-        p.setPen(QPen(QColor("#1a1a1a"), 1.5))
+        p.setPen(QPen(QColor(_DK_TEXT_DIM), 1.5))
         p.drawLine(3, 2, 3, 14)
         tri = QPainterPath()
         tri.moveTo(3.0, 2.0)
@@ -127,7 +364,7 @@ def _make_icons():
         tri.lineTo(3.0, 8.0)
         tri.closeSubpath()
         p.setPen(Qt.NoPen)
-        p.fillPath(tri, QColor("#e74c3c") if flagged else QColor("#888888"))
+        p.fillPath(tri, QColor("#e74c3c") if flagged else QColor("#5a5a6a"))
         p.end()
         return QIcon(px)
 
@@ -139,7 +376,7 @@ def _make_icons():
 
     # -- gear icons (drawn) --------------------------------------------------
     def _draw_gear(dim: bool) -> QIcon:
-        fill_color = QColor("#cccccc") if dim else QColor("#555555")
+        fill_color = QColor("#c0c0d0") if dim else QColor("#5a5a6a")
         px = QPixmap(18, 18)
         px.fill(Qt.transparent)
         p = QPainter(px)
@@ -532,9 +769,9 @@ class GroupProxy(QAbstractProxyModel):
             if role == Qt.DisplayRole:
                 return engine if index.column() == 0 else ""
             if role == Qt.BackgroundRole:
-                return QColor("#c8d4e8")
+                return QColor(_DK_BG_RAISE)
             if role == Qt.ForegroundRole:
-                return QColor("#1a1a2e")
+                return QColor(_DK_ACCENT)
             if role == Qt.FontRole:
                 f = QFont()
                 f.setBold(True)
@@ -971,8 +1208,9 @@ class MainWindow(QMainWindow):
 
         # --- log pane ---
         self._log_pane = QPlainTextEdit()
+        self._log_pane.setObjectName("logPane")
         self._log_pane.setReadOnly(True)
-        self._log_pane.setFont(QFont("Consolas", 9))
+        self._log_pane.setFont(QFont("Consolas", 10))
         self._log_pane.setMaximumBlockCount(5000)
 
         self._stop_btn = QPushButton("Stop Running")
@@ -1483,8 +1721,9 @@ class MainWindow(QMainWindow):
 
 class _CheckboxStyle(QProxyStyle):
     _GREEN = QColor("#27ae60")
-    _BORDER = QColor("#1a1a1a")
+    _BORDER = QColor(_DK_TEXT_DIM)
     _WHITE = QColor("#ffffff")
+    _UNCHECKED_BG = QColor(_DK_BG_ALT)
 
     def drawPrimitive(self, element, option, painter, widget=None):
         if element != QStyle.PE_IndicatorCheckBox:
@@ -1494,7 +1733,7 @@ class _CheckboxStyle(QProxyStyle):
         r = option.rect.adjusted(1, 1, -1, -1)
         painter.save()
         painter.setRenderHint(QPainter.Antialiasing)
-        painter.fillRect(r, self._GREEN if checked else self._WHITE)
+        painter.fillRect(r, self._GREEN if checked else self._UNCHECKED_BG)
         border_pen = QPen(self._BORDER, 1.5)
         painter.setPen(border_pen)
         painter.drawRect(r)
@@ -1517,6 +1756,7 @@ class _CheckboxStyle(QProxyStyle):
 def main():
     app = QApplication(sys.argv)
     app.setStyle(_CheckboxStyle("Fusion"))
+    _apply_dark_theme(app)
     _make_icons()
     win = MainWindow()
     win.show()

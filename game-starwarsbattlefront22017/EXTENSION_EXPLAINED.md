@@ -23,6 +23,7 @@
 
 | Flag | Value | Description |
 | --- | --- | --- |
+| `hasArchives` | `false` | toggle for .archive file support |
 | `allowSymlinks` | `false` | Frosty handles its own deployment; symlinks not typical |
 | `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |
 | `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below) |
@@ -37,6 +38,7 @@ Mod types define where each category of mod gets deployed:
 | --- | --- | --- | --- |
 | Binaries / Root Folder | `starwarsbattlefront22017-root` | high | `{gamePath}` |
 | Frosty .fbmod/.archive | `starwarsbattlefront22017-frostymod` | high | `{gamePath}/FrostyModManager/Mods/StarWarsBattlefrontII` |
+| Plugin (FMM) | `starwarsbattlefront22017-plugin` | high | `{gamePath}/FrostyModManager/Plugins` |
 | Frosty Mod Manager | `starwarsbattlefront22017-frostymodmanager` | low | `{gamePath}` |
 
 ## Mod Installers
@@ -47,6 +49,7 @@ Installers run in priority order (lower number = tested first). The first instal
 | --- | --- |
 | `starwarsbattlefront22017-frostymodmanager` | 25 |
 | `starwarsbattlefront22017-frostymod` | 30 |
+| `starwarsbattlefront22017-plugin` | 35 |
 | `starwarsbattlefront22017-fallback` | 49 |
 
 ## Registered Tools
@@ -59,7 +62,8 @@ These tools appear in Vortex's Tools panel when this game is active:
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- Open Config Folder
+- Download ${PATCH_NAME}
+- Delete ModData Folder
 - Open Frosty Mods Folder
 - Open PCGamingWiki Page
 - View Changelog

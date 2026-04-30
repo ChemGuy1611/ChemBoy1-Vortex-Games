@@ -175,8 +175,11 @@ if (targetFiles.length > 0) {
 
 // ── summary ───────────────────────────────────────────────────────────────────
 
+const errNote  = totalErrors   > 0 ? `, ${totalErrors} error${totalErrors   !== 1 ? 's' : ''}` : '';
+const warnNote = totalWarnings > 0 ? `, ${totalWarnings} warning${totalWarnings !== 1 ? 's' : ''}` : '';
+
 emit();
-emit(`${label} complete: ${passed + failed} files -- ${passed} passed, ${failed} failed`);
+emit(`${label} complete: ${passed + failed} files -- ${passed} passed, ${failed} failed${errNote}${warnNote}`);
 if (failedIds.length > 0) {
   emit();
   emit(`Failed IDs:`);
@@ -191,6 +194,8 @@ if (doJson) {
     passed,
     failed,
     total: passed + failed,
+    totalErrors,
+    totalWarnings,
     results: jsonResults,
     failedIds,
   };

@@ -44,6 +44,14 @@ Usage:
     python new_template.py TEMPLATE_NAME GAME_ID [GAME_ID ...]
     python new_template.py TEMPLATE_NAME GAME_ID [GAME_ID ...] --dry-run
     python new_template.py TEMPLATE_NAME GAME_ID [GAME_ID ...] --force
+    python new_template.py TEMPLATE_NAME GAME_ID [GAME_ID ...] --diff
+
+Options:
+    --dry-run    Print actions without writing files or updating new_extension.py.
+    --force      Overwrite existing template folder.
+    --diff       Show a unified diff of what would be written vs. what exists on
+                 disk (or the full processed output if the template is new).
+                 Does not write any files.
 
 Examples:
     python new_template.py anvilengine ghostreconbreakpoint
