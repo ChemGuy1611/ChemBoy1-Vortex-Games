@@ -4,6 +4,6 @@
 
 - None Planned
 
-## [0.1.0] - 2026-04-26
+## [1.0.0] - 2026-04-30
 
-- Initial Release
+- Initial Release of new ChemBoy1 extension

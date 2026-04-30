@@ -593,6 +593,46 @@ async function chooseFilesToInstall(api, files, fileExt) {
   });
 }
 
+//Test for FMM plugin files
+function testPlugin(files, gameId) {
+  const isMod = files.some(file => PLUGIN_EXTS.includes(path.extname(file).toLowerCase()));
+  let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install Frosty Manager files
+function installPlugin(files) {
+  const modFile = files.find(file => PLUGIN_EXTS.includes(path.extname(file).toLowerCase()));
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: PLUGIN_ID };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
 //Fallback installer to root folder
 function testFallback(files, gameId) {
   let supported = (gameId === spec.game.id);
@@ -754,6 +794,62 @@ function runFrosty(api) {
   }
 }
 
+function setupNotify(api, gameSpec) {
+  const NOTIF_ID = `${GAME_ID}-setup-notify`;
+  const MESSAGE = 'IMPORTANT: DatapathFix for Steam/Epic Versions';
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'warning',
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: 'Download DatapathFix', 
+        action: (dismiss) => {
+          downloadPatch(api, gameSpec, true);
+          dismiss();
+        }
+      },
+      {
+        title: 'More',
+        action: (dismiss) => {
+          const replace = {
+            game: gameSpec.game.shortName,
+            bl: '[br][/br][br][/br]',
+          };
+          const t = api.translate;
+          api.showDialog('info', MESSAGE, {
+            bbcode: t(`If you have the license for SWBF2 from Steam or Epic, you need to use the ${PATCH_NAME}.{{bl}}`
+              + `You can download the plugin using the button below or within the folder icon on the Mods page toolbar.{{bl}}`
+              + `Once downloaded, start Frosty and go to Options > DatapathFix Options > set "Enabled" checkbox.{{bl}}`
+              + `Without this step, your mods will NOT load in the game on Steam and Epic versions.{{bl}}`
+              + `[img]https://live.staticflickr.com/65535/55239407657_9cb28562aa_n.jpg[/img]`
+              + '{{bl}}'
+              + `[img]https://live.staticflickr.com/65535/55240681830_e246926ca6.jpg[/img]`
+              + '{{bl}}',
+              { replace }
+            ),
+          }, [
+          { label: 'Continue', action: () => dismiss() },
+          {
+            label: 'Download DatapathFix', action: () => {
+              downloadPatch(api, gameSpec, true);
+              dismiss();
+            }
+          },
+          {
+            label: 'Never Show Again', action: () => {
+              api.suppressNotification(NOTIF_ID);
+              dismiss();
+            }
+          },
+        ]);
+        },
+      },
+    ],
+  });
+}
+
 //Setup function
 async function modFoldersEnsureWritable(gamePath, relPaths) {
   for (let index = 0; index < relPaths.length; index++) {
@@ -766,6 +862,7 @@ async function setup(discovery, api, gameSpec) {
   GAME_PATH = discovery.path;
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
+  if (setupNotification) setupNotify(api, gameSpec);
   await downloadFrosty(discovery, api, gameSpec);
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }

@@ -371,7 +371,7 @@ const spec = {
     },
     {
       "id": SCRIPTS_ID,
-      "name": SCRIPTS_ID,
+      "name": SCRIPTS_NAME,
       "priority": "low",
       "targetPath": path.join('{gamePath}', SCRIPTS_PATH)
     },
@@ -488,7 +488,7 @@ const specServer = {
     },
     {
       "id": SCRIPTS_ID,
-      "name": SCRIPTS_ID,
+      "name": SCRIPTS_NAME,
       "priority": "low",
       "targetPath": path.join('{gamePath}', SCRIPTS_PATH)
     },

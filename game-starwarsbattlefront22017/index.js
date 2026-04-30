@@ -2,8 +2,8 @@
 Name: STAR WARS Battlefront II Vortex Extension
 Structure: Frostbite Engine - Frosty Mod Manager
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2026-04-26
+Version: 1.0.0
+Date: 2026-04-30
 Notes:
 -
 /////////////////////////////////////////////*/
@@ -37,7 +37,7 @@ const GAME_NAME = "STAR WARS Battlefront II (2017)";
 const GAME_NAME_SHORT = "SW Battlefront II";
 const EXEC = "starwarsbattlefrontii.exe";
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Star_Wars_Battlefront_II_(2017)";
-const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1852";
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/112";
 
 const CONFIG_FOLDER = path.join("STAR WARS Battlefront II", "settings"); // Developer folder, game subfolder (e.g. "BioWare", "Mass Effect Andromeda")
 const FROSTYMOD_FOLDER = "StarWarsBattlefrontII"; // Game-specific folder name inside FrostyModManager/Mods/
@@ -46,7 +46,7 @@ const FROSTYMOD_FOLDER = "StarWarsBattlefrontII"; // Game-specific folder name i
 const hasArchives = false; //toggle for .archive file support
 const allowSymlinks = false; // Frosty handles its own deployment; symlinks not typical
 const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
-const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
+const setupNotification = true; //enable to show the user a notification with special instructions (specify below)
 const hasUserIdFolder = false; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
 const debug = false; //toggle for debug mode
 
@@ -794,6 +794,62 @@ function runFrosty(api) {
   }
 }
 
+function setupNotify(api, gameSpec) {
+  const NOTIF_ID = `${GAME_ID}-setup-notify`;
+  const MESSAGE = 'IMPORTANT: DatapathFix for Steam/Epic Versions';
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'warning',
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: 'Download DatapathFix', 
+        action: (dismiss) => {
+          downloadPatch(api, gameSpec, true);
+          dismiss();
+        }
+      },
+      {
+        title: 'More',
+        action: (dismiss) => {
+          const replace = {
+            game: gameSpec.game.shortName,
+            bl: '[br][/br][br][/br]',
+          };
+          const t = api.translate;
+          api.showDialog('info', MESSAGE, {
+            bbcode: t(`If you have the license for SWBF2 from Steam or Epic, you need to use the ${PATCH_NAME}.{{bl}}`
+              + `You can download the plugin using the button below or within the folder icon on the Mods page toolbar.{{bl}}`
+              + `Once downloaded, start Frosty and go to Options > DatapathFix Options > set "Enabled" checkbox.{{bl}}`
+              + `Without this step, your mods will NOT load in the game on Steam and Epic versions.{{bl}}`
+              + `[img]https://live.staticflickr.com/65535/55239407657_9cb28562aa_n.jpg[/img]`
+              + '{{bl}}'
+              + `[img]https://live.staticflickr.com/65535/55240681830_e246926ca6.jpg[/img]`
+              + '{{bl}}',
+              { replace }
+            ),
+          }, [
+          { label: 'Continue', action: () => dismiss() },
+          {
+            label: 'Download DatapathFix', action: () => {
+              downloadPatch(api, gameSpec, true);
+              dismiss();
+            }
+          },
+          {
+            label: 'Never Show Again', action: () => {
+              api.suppressNotification(NOTIF_ID);
+              dismiss();
+            }
+          },
+        ]);
+        },
+      },
+    ],
+  });
+}
+
 //Setup function
 async function modFoldersEnsureWritable(gamePath, relPaths) {
   for (let index = 0; index < relPaths.length; index++) {
@@ -806,6 +862,7 @@ async function setup(discovery, api, gameSpec) {
   GAME_PATH = discovery.path;
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
+  if (setupNotification) setupNotify(api, gameSpec);
   await downloadFrosty(discovery, api, gameSpec);
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }

@@ -26,7 +26,7 @@
 | `hasArchives` | `false` | toggle for .archive file support |
 | `allowSymlinks` | `false` | Frosty handles its own deployment; symlinks not typical |
 | `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |
-| `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below) |
+| `setupNotification` | `true` | enable to show the user a notification with special instructions (specify below) |
 | `hasUserIdFolder` | `false` | true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID) |
 | `debug` | `false` | toggle for debug mode |
 
