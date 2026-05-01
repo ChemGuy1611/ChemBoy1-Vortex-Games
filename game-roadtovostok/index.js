@@ -2,8 +2,8 @@
 Name: Road to Vostok Vortex Extension
 Structure: Godot Engine Game
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2026-04-27
+Version: 0.1.1
+Date: 2026-04-30
 Notes:
 - 
 ///////////////////////////////////////////*/
@@ -107,13 +107,16 @@ const LOADER_PAGE_NO = 20;
 const LOADER_FILE_NO = 52;
 const LOADER_DOMAIN = GAME_ID;
 const OVERRIDE_FILE = 'override.cfg';
+const LOADER_URL = `https://github.com/ametrocavich/vostok-mod-loader/releases`;
+
+const WORKSHOP_URL = `https://modworkshop.net/g/roadtovostok`;
 
 const MCM_ID = `${GAME_ID}-mcm`;
-const MCM_NAME = "Mod Configuration Manager";
+const MCM_NAME = "ModConfigurationMenu";
 const MCM_PATH = MOD_PATH;
 const MCM_FILE = 'ModConfigurationMenu';
-const MCM_URL = `https://storage.modworkshop.net/mods/files/53713_214458_MAl3Z1e1N0DMkgOWXl54QwOqQ5icM0VTdU44fvJk.vmz?filename=00ModConfigurationMenu.vmz`;
-const MCM_URL_ERR = `https://modworkshop.net/mod/53713`;
+const MCM_URL = `https://github.com/DoinkOink/Mod-Configuration-Menu-Road-To-Vostok/releases/latest/download/00ModConfigurationMenu.vmz`;
+const MCM_URL_ERR = `https://github.com/DoinkOink/Mod-Configuration-Menu-Road-To-Vostok/releases`;
 
 const MOD_PATH_DEFAULT = MOD_PATH;
 const REQ_FILE = EXEC;
@@ -167,6 +170,12 @@ const spec = {
       "name": MOD_NAME,
       "priority": "high",
       "targetPath": path.join("{gamePath}", MOD_PATH)
+    },
+    {
+      "id": MCM_ID,
+      "name": MCM_NAME,
+      "priority": "low",
+      "targetPath": path.join("{gamePath}", MCM_PATH)
     },
     {
       "id": LOADER_ID,
@@ -589,8 +598,14 @@ function isModLoaderInstalled(api, spec) {
   return Object.keys(mods).some(id => mods[id]?.type === LOADER_ID);
 }
 
-//*
-//Function to auto-download SRMM
+//Check if MCM is installed
+function isMcmInstalled(api, spec) {
+  const state = api.getState();
+  const mods = state.persistent.mods[spec.game.id] || {};
+  return Object.keys(mods).some(id => mods[id]?.type === MCM_ID);
+}
+
+//* Function to auto-download Mod Loader from Nexus
 async function downloadModLoaderNexus(api, gameSpec, check = true) {
   let isInstalled = isModLoaderInstalled(api, gameSpec);
   if (!isInstalled || !check) {
@@ -658,6 +673,50 @@ async function downloadModLoaderNexus(api, gameSpec, check = true) {
   }
 } //*/
 
+//* Function to auto-download MCM from GitHub
+async function downloadMcm(api, gameSpec, check = true) {
+  let isInstalled = isMcmInstalled(api, gameSpec);
+  if (!isInstalled || !check) {
+    const MOD_NAME = MCM_NAME;
+    const MOD_TYPE = MCM_ID;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
+    const GAME_DOMAIN = GAME_ID;
+    const URL = MCM_URL;
+    const URL_ERR = MCM_URL_ERR;
+    api.sendNotification({ //notification indicating install process
+      id: NOTIF_ID,
+      message: `Installing ${MOD_NAME}`,
+      type: 'activity',
+      noDismiss: true,
+      allowSuppress: false,
+    });
+    try {
+      const dlInfo = { //Download the mod
+        game: GAME_DOMAIN,
+        name: MOD_NAME,
+      };
+      const dlId = await util.toPromise(cb =>
+        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+      const modId = await util.toPromise(cb =>
+        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
+      const batched = [
+        actions.setModsEnabled(api, profileId, [modId], true, {
+          allowAutoDeploy: true,
+          installed: true,
+        }),
+        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
+      ];
+      util.batchDispatch(api.store, batched); // Will dispatch both actions
+    } catch (err) { //Show the user the download page if the download, install process fails
+      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
+      util.opn(URL_ERR).catch(() => null);
+    } finally {
+      api.dismissNotification(NOTIF_ID);
+    }
+  }
+} //*/
+
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
 /*
@@ -705,6 +764,7 @@ async function setup(discovery, api, gameSpec) {
   await fs.ensureDirWritableAsync(SAVE_PATH); //*/
   //GAME_VERSION = await setGameVersion(GAME_PATH);
   await downloadModLoaderNexus(api, gameSpec);
+  await downloadMcm(api, gameSpec, true);
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 
@@ -763,6 +823,20 @@ function applyGame(context, gameSpec) {
   }
 
   //register actions
+  context.registerAction('mod-icons', 300, 'open-ext', {}, `Download Latest ${MCM_NAME}`, () => {
+    downloadMcm(context.api, spec, false);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, `Open Modworkshop Page`, () => {
+    util.opn(WORKSHOP_URL).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
     util.opn(CONFIG_PATH).catch(() => null);
     }, () => {

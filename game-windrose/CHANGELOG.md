@@ -4,6 +4,10 @@
 
 - None
 
+## [0.4.1] - 2026-04-30
+
+- Fixed: Corrected save extension to ".sst"
+
 ## [0.4.0] - 2026-04-29
 
 - Fixed: Changed pak mod pathing to avoid deployment JSON files in Pak folders (game tries to load them) - Please purge mods, make sure the ~mods folders are empty, and then re-install your pak mods.

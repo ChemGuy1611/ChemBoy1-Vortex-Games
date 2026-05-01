@@ -38,6 +38,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | Godot Mod | `roadtovostok-mod` | high | `{gamePath}/mods` |
+| ModConfigurationMenu | `roadtovostok-mcm` | low | `{gamePath}/mods` |
 | Metro Mod Loader | `roadtovostok-godotmodloader` | low | `{gamePath}` |
 
 ## Mod Installers
@@ -61,6 +62,8 @@ These tools appear in Vortex's Tools panel when this game is active:
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
+- Download Latest ${MCM_NAME}
+- Open Modworkshop Page
 - Open Config Folder
 - Open override.cfg
 - Open PCGamingWiki Page

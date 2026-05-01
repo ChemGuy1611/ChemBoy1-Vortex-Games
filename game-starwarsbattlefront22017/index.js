@@ -313,11 +313,20 @@ const getDiscoveryPath = (api) => {
 
 // AUTO-DOWNLOAD FUNCTIONS /////////////////////////////////////////////////////////////////////
 
-//Check if mod injector is installed
-function isFrostyInstalled(api, spec) {
+//Check if Frosty is installed
+async function isFrostyInstalled(api, spec) {
   const state = api.getState();
   const mods = state.persistent.mods[spec.game.id] || {};
-  return Object.keys(mods).some(id => mods[id]?.type === FROSTY_ID);
+  let test = Object.keys(mods).some(id => mods[id]?.type === FROSTY_ID);
+  if (!test) {
+    try {
+      await fs.statAsync(path.join(GAME_PATH, FROSTYMOD_FOLDER, FROSTY_EXEC));
+      test = true;
+    } catch (err) {
+      test = false;
+    }
+  }
+  return test;
 }
 
 //Check if Patch is installed
@@ -337,8 +346,8 @@ async function isPatchInstalled(api, spec) {
 }
 
 //Function to auto-download Frosty Mod Manager
-async function downloadFrosty(discovery, api, gameSpec, check = true) {
-  let modLoaderInstalled = isFrostyInstalled(api, gameSpec);
+async function downloadFrosty(api, gameSpec, check = true) {
+  let modLoaderInstalled = await isFrostyInstalled(api, gameSpec);
   if (!modLoaderInstalled || !check) {
     const NOTIF_ID = `${GAME_ID}-frosty-installing`
     api.sendNotification({ //notification indicating install process
@@ -819,14 +828,18 @@ function setupNotify(api, gameSpec) {
           };
           const t = api.translate;
           api.showDialog('info', MESSAGE, {
-            bbcode: t(`If you have the license for SWBF2 from Steam or Epic, you need to use the ${PATCH_NAME}.{{bl}}`
+            bbcode: t('[br][/br]'
+              + `If you have the license for {{game}} from Steam or Epic, you need to use the ${PATCH_NAME}.{{bl}}`
               + `You can download the plugin using the button below or within the folder icon on the Mods page toolbar.{{bl}}`
               + `Once downloaded, start Frosty and go to Options > DatapathFix Options > set "Enabled" checkbox.{{bl}}`
               + `Without this step, your mods will NOT load in the game on Steam and Epic versions.{{bl}}`
+              + `You can determine if you need the plugin by checking for a "accessed through Steam/Epic" message on the game's EA App page.{{bl}}`
+              + `[img]https://live.staticflickr.com/65535/55239690302_da1f8ec95b_z.jpg[/img]`
+              + '[br][/br]'
               + `[img]https://live.staticflickr.com/65535/55239407657_9cb28562aa_n.jpg[/img]`
-              + '{{bl}}'
+              + '[br][/br]'
               + `[img]https://live.staticflickr.com/65535/55240681830_e246926ca6.jpg[/img]`
-              + '{{bl}}',
+              + '[br][/br]',
               { replace }
             ),
           }, [
@@ -863,7 +876,7 @@ async function setup(discovery, api, gameSpec) {
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   if (setupNotification) setupNotify(api, gameSpec);
-  await downloadFrosty(discovery, api, gameSpec);
+  await downloadFrosty(api, gameSpec, true);
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 
