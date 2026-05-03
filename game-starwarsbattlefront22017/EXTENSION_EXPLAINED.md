@@ -64,6 +64,8 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - Download ${PATCH_NAME}
 - Delete ModData Folder
+- Set ${PATCH_NAME} Enabled
+- Open Config Folder
 - Open Frosty Mods Folder
 - Open PCGamingWiki Page
 - View Changelog

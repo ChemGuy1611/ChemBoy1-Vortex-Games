@@ -16,6 +16,7 @@ const winapi = require('winapi-bindings');
 const fsPromises = require('fs/promises');
 
 const DOCUMENTS = util.getVortexPath("documents");
+const LOCALAPPDATA = util.getVortexPath("localAppData");
 
 //Specify all the information about the game
 const GAME_ID = "XXX";
@@ -72,6 +73,8 @@ const FROSTY_FOLDER = "FrostyModManager";
 const FROSTY_EXEC = 'frostymodmanager.exe';
 const FROSTY_URL = "https://github.com/CadeEvs/FrostyToolsuite/releases/download/v1.0.6.3/FrostyModManager.zip";
 const FROSTY_URL_ERR = `https://github.com/CadeEvs/FrostyToolsuite/releases`;
+const FROSTY_CONFIG_FILE = 'manager_config.json';
+const FROSTY_CONFIG_PATH = path.join(LOCALAPPDATA, "Frosty", FROSTY_CONFIG_FILE);
 
 const PATCH_ID = `${GAME_ID}-patch`;
 const PATCH_NAME = "DatapathFix Plugin";
@@ -79,6 +82,7 @@ const PATCH_PATH = path.join(FROSTY_FOLDER, "Plugins");
 const PATCH_FILE = 'DatapathFixPlugin.dll';
 const PATCH_URL = `https://github.com/Dyvinia/DatapathFixPlugin/releases/download/v1.7.1/DatapathFixPlugin.dll`;
 const PATCH_URL_ERR = `https://github.com/Dyvinia/DatapathFixPlugin/releases`;
+const PATCH_KEY = 'GlobalOptions.DatapathFixEnabled';
 
 const PLUGIN_ID = `${GAME_ID}-plugin`;
 const PLUGIN_NAME = "Plugin (FMM)";
@@ -934,6 +938,28 @@ function applyGame(context, gameSpec) {
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   }); //*/
+  context.registerAction('mod-icons', 300, 'open-ext', {}, `Open Frosty ${FROSTY_CONFIG_FILE}`, () => {
+    const openPath = FROSTY_CONFIG_PATH;
+    util.opn(openPath).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  }); //*/
+  context.registerAction('mod-icons', 300, 'open-ext', {}, `Set ${PATCH_NAME} Enabled`, () => {
+    togglePatch(context.api, true);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  }); //*/
+  context.registerAction('mod-icons', 300, 'open-ext', {}, `Set ${PATCH_NAME} Disabled`, () => {
+    togglePatch(context.api, false);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  }); //*/
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
     const openPath = CONFIG_PATH;
     util.opn(openPath).catch(() => null);
@@ -1054,6 +1080,31 @@ async function removePatch(api) {
     });
   } catch (err) {
     api.showErrorNotification(`Failed to remove ${PATCH_NAME}`, err, { allowReport: false });
+  }
+}
+
+async function togglePatch(api, toggle) {
+  const filePath = FROSTY_CONFIG_PATH;
+  let MESSAGE = `Successfully Enabled ${PATCH_NAME}`;
+  let MESSAGE_ERR = `Failed to enable ${PATCH_NAME}`;
+  if (!toggle) {
+    MESSAGE = `Successfully Disabled ${PATCH_NAME}`;
+    MESSAGE_ERR = `Failed to disable ${PATCH_NAME}`;
+  }
+  try {
+    const data = await fs.readFileAsync(filePath, 'utf8');
+    const json = JSON.parse(data);
+    json.GlobalOptions.DatapathFixEnabled = toggle;
+    await fs.writeFileAsync(filePath, JSON.stringify(json, null, 2));
+    api.sendNotification({
+      id: `${GAME_ID}-togglepatch`,
+      type: 'success',
+      message: MESSAGE,
+      allowSuppress: true,
+      actions: [],
+    });
+  } catch (err) {
+    api.showErrorNotification(MESSAGE_ERR, err, { allowReport: false });
   }
 }
 
