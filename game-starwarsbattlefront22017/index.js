@@ -609,7 +609,8 @@ async function chooseFilesToInstall(api, files, fileExt) {
 //Test for FMM plugin files
 function testPlugin(files, gameId) {
   const isMod = files.some(file => PLUGIN_EXTS.includes(path.extname(file).toLowerCase()));
-  let supported = (gameId === spec.game.id) && isMod;
+  const isExe = files.some(file => path.extname(file).toLowerCase() === '.exe');
+  let supported = (gameId === spec.game.id) && isMod && !isExe;
 
   // Test for a mod installer.
   if (supported && files.find(file =>

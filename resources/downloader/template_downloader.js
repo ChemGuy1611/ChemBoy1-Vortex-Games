@@ -1,4 +1,7 @@
+const { actions, fs, util, selectors, log } = require('vortex-api');
+const path = require('path');
 const GAME_ID = 'placeholder';
+const api = require('vortex-api'); //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
 
 // REQUIREMENTS ///////////////////////////////////////////////////
 const { download, findModByFile, findDownloadIdByFile, resolveVersionByPattern, testRequirementVersion } = require('./downloader');
@@ -81,15 +84,15 @@ async function checkForRequirements(api) {
 }
 
 // *** In setup() function ////////////////////
-
-const requirementsInstalled = await checkForRequirements(api);
-if (!requirementsInstalled) {
-    await download(api, REQUIREMENTS);
-} //*/
+async function setup(api) {
+  const requirementsInstalled = await checkForRequirements(api);
+  if (!requirementsInstalled) {
+      await download(api, REQUIREMENTS);
+  } //*/
+}
 
 // *** In context.once() function ////////////////////
-
-context.api.onAsync('check-mods-version', (gameId, mods, forced) => {
-    if (gameId !== GAME_ID) return;
-    return onCheckModVersion(context.api, gameId, mods, forced);
-}); //*/
+  api.onAsync('check-mods-version', (gameId, mods, forced) => {
+      if (gameId !== GAME_ID) return;
+      return onCheckModVersion(api, gameId, mods, forced);
+  }); //*/
