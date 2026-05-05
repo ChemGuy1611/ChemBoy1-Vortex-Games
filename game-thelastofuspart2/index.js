@@ -2,8 +2,8 @@
 Name: The Last of Us Part II Remastered Vortex Extension
 Author: ChemBoy1
 Structure: Generic Game w/ File Extraction, Mod Loader, and Load Order
-Version: 0.8.0
-Date: 2026-04-22
+Version: 0.9.0
+Date: 2026-05-05
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -718,36 +718,55 @@ function testPsarc(files, gameId) {
 }
 
 //Installer Install psarc files
-function installPsarc(files) {
-  const modFile = files.find(file => (path.extname(file).toLowerCase() === PSARC_EXT));
-  const idx = modFile.indexOf(path.basename(modFile));
-  const rootPath = path.dirname(modFile);
+async function installPsarc(api, files) {
   const setModTypeInstruction = { type: 'setmodtype', value: PSARC_ID };
-
-  //set a mod attribute to find the mod name in deserializeLoadOrder
   const PSARC_FILES = files.filter(file => (path.extname(file).toLowerCase() === PSARC_EXT));
+  const installFiles = (PSARC_FILES.length > 1)
+    ? await chooseFilesToInstall(api, PSARC_FILES)
+    : PSARC_FILES;
+  //set a mod attribute to find the mod name in deserializeLoadOrder
   const MOD_ATTRIBUTE = {
     type: 'attribute',
     key: LO_ATTRIBUTE,
-    value: PSARC_FILES,
+    value: installFiles.map(f => path.basename(f)),
   };
 
-  // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
-  );
-  const instructions = filtered.map(file => {
-    return {
-      type: 'copy',
-      source: file,
-      destination: path.join(file.substr(idx)),
-    };
-  });
+  const instructions = installFiles.map(file => ({
+    type: 'copy',
+    source: file,
+    destination: path.basename(file),
+  }));
   instructions.push(setModTypeInstruction);
   instructions.push(MOD_ATTRIBUTE);
   return Promise.resolve({ instructions });
 }
 
+async function chooseFilesToInstall(api, files) {
+  const t = api.translate;
+  return api.showDialog('question', t('Multiple .psarc Files Found'), {
+    text: t('The mod you are installing contains {{x}} .psarc files. ', { replace: { x: files.length } })
+        + `This may mean the author intended for you to choose one of several options. `
+        + `Please select which files to install below:`,
+    checkboxes: files.map((file) => ({
+      id: file,
+      text: file,
+      value: false,
+    })),
+  }, [
+    { label: 'Cancel' },
+    { label: 'Install Selected' },
+    { label: 'Install All_plural' },
+  ]).then((result) => {
+    if (result.action === 'Cancel')
+      return Promise.reject(new util.UserCanceled('User cancelled.'));
+    else {
+      const installAll = (result.action === 'Install All' || result.action === 'Install All_plural');
+      const installFiles = installAll ? files : Object.keys(result.input).filter(s => result.input[s])
+        .map(file => files.find(f => f === file));
+      return installFiles;
+    }
+  });
+}
 
 //Installer test for pak files in root folder
 function testPak(files, gameId) {
@@ -1449,7 +1468,7 @@ function applyGame(context, gameSpec) {
 
   //register mod installers
   context.registerInstaller(MODLOADER_ID, 25, testModLoader, installModLoader);
-  context.registerInstaller(PSARC_ID, 27, testPsarc, installPsarc);
+  context.registerInstaller(PSARC_ID, 27, testPsarc, (files) => installPsarc(context.api, files));
   context.registerInstaller(`${BUILD_ID}pakbin`, 29, testBuildPakBin, installBuildPakBin);
   context.registerInstaller(BIN_ID, 31, testBin, installBin);
   context.registerInstaller(PAK_ID, 33, testPak, installPak);

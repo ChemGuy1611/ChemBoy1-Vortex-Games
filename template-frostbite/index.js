@@ -599,9 +599,9 @@ async function chooseFilesToInstall(api, files, fileExt) {
           return Promise.reject(new util.UserCanceled('User cancelled.'));
       else {
           const installAll = (result.action === 'Install All' || result.action === 'Install All_plural');
-          const installPAKS = installAll ? files : Object.keys(result.input).filter(s => result.input[s])
+          const installFiles = installAll ? files : Object.keys(result.input).filter(s => result.input[s])
             .map(file => files.find(f => f === file));
-          return installPAKS;
+          return installFiles;
       }
   });
 }

@@ -2,8 +2,8 @@
 Name: Dead As Disco Vortex Extension
 Structure: Unreal Engine Game
 Author: ChemBoy1
-Version: 0.1.1
-Date: 2026-04-13
+Version: 0.2.0
+Date: 2026-05-05
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -39,6 +39,7 @@ const EXEC_GOG = EXEC;
 const EXEC_DEMO = EXEC;
 const PARAMETERS_STRING = ''; //launch arguments to pass when launching the game
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Dead_as_Disco";
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1626"; //Nexus link to this extension. Used for links
 
 //feature toggles
 const hasXbox = false; //toggle for Xbox version logic.
@@ -245,7 +246,6 @@ let MODTYPE_FOLDERS = [path.join(LOGICMODS_PATH, 'LogicMods'), PAK_PATH, PAK_ALT
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
 //Filled in from data above
-const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1626"; //Nexus link to this extension. Used for links
 const spec = {
   "game": {
     "id": GAME_ID,
@@ -265,8 +265,8 @@ const spec = {
       "enb": false,
     },
     "details": {
-      "steamAppId": +STEAMAPP_ID_DEMO,
-      //"steamAppId": +STEAMAPP_ID,
+      //"steamAppId": +STEAMAPP_ID_DEMO,
+      "steamAppId": +STEAMAPP_ID,
       "gogAppId": GOGAPP_ID,
       "epicAppId": EPICAPP_ID,
       "xboxAppId": XBOXAPP_ID,
@@ -275,8 +275,8 @@ const spec = {
       "ignoreDeploy": IGNORE_DEPLOY,
     },
     "environment": {
-      "SteamAPPId": STEAMAPP_ID_DEMO,
-      //"SteamAPPId": STEAMAPP_ID,
+      //"SteamAPPId": STEAMAPP_ID_DEMO,
+      "SteamAPPId": STEAMAPP_ID,
       "GogAPPId": GOGAPP_ID,
       "EpicAPPId": EPICAPP_ID,
       "XboxAPPId": XBOXAPP_ID,

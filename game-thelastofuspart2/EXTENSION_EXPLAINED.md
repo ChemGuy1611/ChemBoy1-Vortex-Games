@@ -1,4 +1,4 @@
-# The Last of Us Part II\t Remastered — Vortex Extension Explained
+# The Last of Us Part II Remastered — Vortex Extension Explained
 
 ## Overview
 

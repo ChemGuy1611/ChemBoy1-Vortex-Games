@@ -4,6 +4,10 @@
 
 - Added check for if sp-common.psarc and bin.psarc files exist in the game folder (indicator of update and need to extract).
 
+## [0.9.0] - 2026-05-05
+
+- Added: Selection dialogue when a mod archive contains multiple .psarc files
+
 ## [0.8.0] - 2026-04-22
 
 - Improved: Load Order rendering using React - show mod image thumbnails
