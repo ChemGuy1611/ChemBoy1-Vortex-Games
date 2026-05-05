@@ -7,14 +7,15 @@ extension page in the browser.
 Steps performed per game:
     1. Validate info.json version has a matching ## [X.Y.Z] entry in CHANGELOG.md
     2. Check that const debug = false in index.js (errors if true)
-    3. Rename version .txt file to match info.json version
-    4. Update Version and Date in index.js header comment
-    5. Add resolved store IDs to DISCOVERY_IDS_ACTIVE if missing
-    6. node --check on index.js (warns on syntax error)
-    7. eslint on index.js (warns on lint errors)
-    8. Run generate_explained.js to regenerate EXTENSION_EXPLAINED.md
-    9. Create game-{GAME_ID}.zip with 7-Zip
-   10. Open EXTENSION_URL in browser (or nexusmods.com/games/site if not set)
+    3. Check that all context.registerInstaller calls have unique priority numbers (errors if not)
+    4. Rename version .txt file to match info.json version
+    5. Update Version and Date in index.js header comment
+    6. Add resolved store IDs to DISCOVERY_IDS_ACTIVE if missing
+    7. node --check on index.js (warns on syntax error)
+    8. eslint on index.js (warns on lint errors)
+    9. Run generate_explained.js to regenerate EXTENSION_EXPLAINED.md
+   10. Create game-{GAME_ID}.zip with 7-Zip
+   11. Open EXTENSION_URL in browser (or nexusmods.com/games/site if not set)
 
 Usage:
     python release_extension.py GAME_ID [GAME_ID ...]
@@ -41,6 +42,23 @@ from vortex_utils import (
 SEVENZIP = os.environ.get("SEVENZIP_PATH", r"C:\Program Files\7-Zip\7z.exe")
 NEXUS_SITE_URL = "https://www.nexusmods.com/games/site"
 
+
+
+def check_installer_priorities(index_src, game_id):
+    """Error if any two context.registerInstaller calls share the same priority number."""
+    priorities = re.findall(
+        r'context\.registerInstaller\s*\(\s*["\'][^"\']*["\']\s*,\s*(\d+)\s*,',
+        index_src,
+    )
+    seen, dupes = set(), []
+    for p in priorities:
+        if p in seen and p not in dupes:
+            dupes.append(p)
+        seen.add(p)
+    if dupes:
+        print(f"  [{game_id}] ERROR - duplicate registerInstaller priority: {', '.join(dupes)}")
+        return False
+    return True
 
 
 def update_version_txt(folder, game_id, version, dry_run=False):
@@ -141,6 +159,8 @@ def release(game_id, open_browser, dry_run=False):
         extension_url = extract_extension_url(index_src)
         if re.search(r'^\s*const\s+debug\s*=\s*true\b', index_src, re.MULTILINE):
             print(f"  [{game_id}] ERROR - debug is set to true in index.js")
+            return False
+        if not check_installer_priorities(index_src, game_id):
             return False
 
     info = read_info_json(folder)

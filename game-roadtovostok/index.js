@@ -67,6 +67,7 @@ const MOD_PATH = MOD_FOLDER;
 const MOD_EXT = '.vmz';
 const MOD_EXTS = [MOD_EXT];
 const MOD_FILES = ["mod.txt"];
+const REPACK_EXT = '.zip';
 
 const CONFIG_ID = `${GAME_ID}-config`;
 const CONFIG_NAME = "Config";
@@ -390,6 +391,44 @@ function installLoader(files) {
   return Promise.resolve({ instructions });
 }
 
+//Test for Godot Mod Loader files
+function testMcm(files, gameId) {
+  const isMod = files.some(file => (path.basename(file) === MCM_FILE));
+  let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install Godot Mod Loader files
+async function installMcm(files, destinationPath) {
+  const setModTypeInstruction = { type: 'setmodtype', value: MCM_ID };
+  //Repack .vmz files since Vortex forcibly extracts them as archives for some reason...
+  const szip = new util.SevenZip();
+  const modName = path.basename(destinationPath, '.installing');
+  const split = modName.split('-');
+  const archiveName = split[0] + REPACK_EXT;
+  const archivePath = path.join(destinationPath, archiveName);
+  const rootRelPaths = await fs.readdirAsync(destinationPath);
+  await szip.add(archivePath, rootRelPaths.map(relPath => path.join(destinationPath, relPath)), { raw: ['-r'] });
+  const instructions = [{
+    type: 'copy',
+    source: archiveName,
+    destination: path.basename(archivePath),
+  }];
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
 //Test for mod files
 function testMod(files, gameId) {
   const isMod = files.some(file => MOD_EXTS.includes(path.extname(file).toLowerCase()));
@@ -486,7 +525,7 @@ async function installRezip(files, destinationPath) {
   const szip = new util.SevenZip();
   const modName = path.basename(destinationPath, '.installing');
   const split = modName.split('-');
-  const archiveName = split[0] + '.zip';
+  const archiveName = split[0] + REPACK_EXT;
   const archivePath = path.join(destinationPath, archiveName);
   const rootRelPaths = await fs.readdirAsync(destinationPath);
   await szip.add(archivePath, rootRelPaths.map(relPath => path.join(destinationPath, relPath)), { raw: ['-r'] });
@@ -834,8 +873,9 @@ function applyGame(context, gameSpec) {
 
   //register mod installers
   context.registerInstaller(LOADER_ID, 25, testLoader, installLoader);
-  context.registerInstaller(MOD_ID, 27, testMod, (files) => installMod(context.api, files)); //unzip
-  context.registerInstaller(`${MOD_ID}-rezip`, 27, testRezip, installRezip); //re-zip
+  context.registerInstaller(MCM_ID, 26, testMcm, installMcm);
+  context.registerInstaller(MOD_ID, 31, testMod, (files) => installMod(context.api, files)); //unzip
+  context.registerInstaller(`${MOD_ID}-rezip`, 33, testRezip, installRezip); //re-zip
   //context.registerInstaller(CONFIG_ID, 43, testConfig, installConfig);
   //context.registerInstaller(SAVE_ID, 45, testSave, installSave);
   if (fallbackInstaller) {
