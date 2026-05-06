@@ -2,8 +2,8 @@
 Name: Dishonored Vortex Extension
 Structure: UE2/3 TFC
 Author: ChemBoy1
-Version: 0.6.1
-Date: 2025-11-16
+Version: 0.6.2
+Date: 2026-05-06
 //*///////////////////////////////////////////////
 
 //Import libraries
@@ -51,8 +51,6 @@ const gameFinderQuery = {
 };
 
 //Information for setting the executable and variable paths based on the game store version
-let BINARIES_FOLDER = null;
-let BINARIES_TARGET = null;
 const requiredFiles = [COMMON_FOLDER];
 const EXEC_NAME = 'Dishonored.exe';
 const BINARIES_FOLDER_32 = path.join('Binaries', 'Win32');
@@ -60,6 +58,8 @@ const EXEC = path.join(BINARIES_FOLDER_32, EXEC_NAME);
 const BINARIES_FOLDER_64 = path.join('Binaries', 'Win64');
 const EXEC_64 = path.join(BINARIES_FOLDER_64, EXEC_NAME);
 const EXEC_XBOX = 'gamelaunchhelper.exe';
+let BINARIES_FOLDER = BINARIES_FOLDER_32;
+let BINARIES_TARGET = path.join('{gamePath}', BINARIES_FOLDER);
 
 //Information for mod types and installers
 const TFC_ID = `${GAME_ID}-tfcinstaller`;

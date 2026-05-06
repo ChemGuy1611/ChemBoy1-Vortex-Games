@@ -2,8 +2,8 @@
 Name: BioShock 2 Remastered Vortex Extension
 Structure: UE2/3 TFC
 Author: ChemBoy1
-Version: 0.6.1
-Date: 2025-11-12
+Version: 0.6.2
+Date: 2026-05-06
 ////////////////////////////////////////////*/
 
 //Import libraries
@@ -45,8 +45,6 @@ const gameFinderQuery = {
 };
 
 //Information for setting the executable and variable paths based on the game store version
-let BINARIES_TARGET = null;
-let BINARIES_FOLDER = null;
 let requiredFiles = [];
 const BINARIES_FOLDER_STEAM = path.join('Build', 'Final');
 const BINARIES_FOLDER_EPIC = path.join('Build', 'FinalEpic');
@@ -54,6 +52,8 @@ const BINARIES_FOLDER_CLASSIC = path.join('SP', 'Builds', 'Binaries');
 const EXEC_STEAM = path.join(BINARIES_FOLDER_STEAM, EXEC_NAME);
 const EXEC_EPIC = path.join(BINARIES_FOLDER_EPIC, EXEC_NAME);
 const EXEC_CLASSIC = path.join(BINARIES_FOLDER_CLASSIC, EXEC_NAME_CLASSIC);
+let BINARIES_FOLDER = BINARIES_FOLDER_STEAM;
+let BINARIES_TARGET = path.join('{gamePath}', BINARIES_FOLDER);
 
 //Information for mod types and installers
 const TFC_ID = `${GAME_ID}-tfcinstaller`;

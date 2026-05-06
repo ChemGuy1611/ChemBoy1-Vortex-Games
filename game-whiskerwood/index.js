@@ -84,7 +84,6 @@ let CHECK_DOCS = false; //secondary same as above (if save and config are in dif
 let STAGING_FOLDER = ''; //Vortex staging folder path
 let DOWNLOAD_FOLDER = ''; //Vortex download folder path
 let GAME_VERSION = '';
-let BINARIES_FOLDER = null;
 let USERID_FOLDER = "";
 const APPMANIFEST_FILE = 'appxmanifest.xml';
 
@@ -102,6 +101,7 @@ const BINARIES_ID = `${GAME_ID}-binaries`;
 const BINARIES_NAME = "Binaries (Engine Injector)";
 let BINARIES_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_DEFAULT);
 let SHIPPING_EXE = path.join(BINARIES_PATH, `${SHIPEXE_PROJECTNAME}-${EXEC_FOLDER_DEFAULT}${SHIPEXE_STRING_DEFAULT}-Shipping.exe`);
+let BINARIES_FOLDER = BINARIES_PATH;
 
 const PAK_ALT_ID = `${GAME_ID}-pakalt`;
 const PAK_ALT_NAME = 'Paks (no "~mods")';

@@ -1,5 +1,9 @@
 # Changelog
 
+## [0.6.2] - 2026-05-06
+
+- Fixed: Type error on race condition due to null path assignment
+
 ## [0.6.1] - 2025-11-16
 
 - Further improvements to TFC mod installer.
