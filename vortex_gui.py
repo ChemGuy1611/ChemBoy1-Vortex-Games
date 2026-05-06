@@ -1139,6 +1139,7 @@ class MainWindow(QMainWindow):
         add_action("View Banner", self._on_view_banner)
         add_action("Setup Test Folder", self._on_setup_test, sep=True)
         add_action("Patch", self._on_patch)
+        add_action("Deploy to Vortex", self._on_deploy_to_vortex)
         add_action("Open Folder", self._on_open_folder, sep=True)
         add_action("Open in Editor", self._on_open_editor)
         add_action("Open Nexus", self._on_open_nexus, sep=True)
@@ -1557,6 +1558,20 @@ class MainWindow(QMainWindow):
         self._run([[PYTHON, os.path.join(REPO_ROOT, "patch_extensions.py")] + dlg.extra_args() + ids],
                   "patch_extensions.py")
 
+    def _on_deploy_to_vortex(self):
+        dlg = self._script_dlg(
+            "Deploy to Vortex",
+            flags=[
+                ("--dry-run", "Preview only, no copies", False),
+                ("--force", "Overwrite existing plugin folder without prompting", False),
+            ],
+        )
+        if dlg is None:
+            return
+        ids = self._selected_ids()
+        self._run([[PYTHON, os.path.join(REPO_ROOT, "deploy_to_vortex.py")] + dlg.extra_args() + ids],
+                  "deploy_to_vortex.py")
+
     def _on_open_folder(self):
         if not self._require_selection():
             return
@@ -1704,6 +1719,7 @@ class MainWindow(QMainWindow):
             None,
             ("Setup Test Folder", self._on_setup_test),
             ("Patch", self._on_patch),
+            ("Deploy to Vortex", self._on_deploy_to_vortex),
             None,
             ("Open Folder", self._on_open_folder),
             ("Open in Editor", self._on_open_editor),

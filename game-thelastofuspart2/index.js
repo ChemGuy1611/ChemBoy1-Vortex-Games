@@ -1132,6 +1132,11 @@ async function clearModOrder(api) {
   }
 
   let loadOrderPath = path.join(gameDir, LO_FILE);
+  try {
+    await fs.statAsync(loadOrderPath);
+  } catch (err) {
+    return Promise.reject(err);
+  }
   let loadOrderFile = await fs.readFileAsync(
     loadOrderPath, 
     { encoding: "utf8", }

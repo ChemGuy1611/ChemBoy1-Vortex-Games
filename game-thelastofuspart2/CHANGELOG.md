@@ -7,6 +7,7 @@
 ## [0.9.0] - 2026-05-05
 
 - Added: Selection dialogue when a mod archive contains multiple .psarc files
+- Fixed: Crash that could occur on purge if load order file does not exist
 
 ## [0.8.0] - 2026-04-22
 

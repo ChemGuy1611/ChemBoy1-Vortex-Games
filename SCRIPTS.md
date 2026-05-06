@@ -780,6 +780,40 @@ Creates `D:\Game_Tools_D\!TestGameFolders_D\{GAME_NAME}\{BINARIES_PATH}\{EXEC_NA
 
 ---
 
+## deploy_to_vortex.py
+
+Copies one or more CB1 game extension folders from the repo into the Vortex plugins directory (`C:\ProgramData\vortex\plugins`). If a matching plugin folder already exists (exact `game-{id}` or a versioned `Vortex Extension Update - {GAME_NAME} Vortex Extension v*` folder), only `index.js` is copied. If no match is found, the full folder is deployed. Use `--force` to always do a full replace.
+
+### deploy_to_vortex.py — Requirements
+
+No additional packages required (Python stdlib only).
+
+### deploy_to_vortex.py -- Usage
+
+```sh
+python deploy_to_vortex.py GAME_ID [GAME_ID ...]
+python deploy_to_vortex.py GAME_ID --dry-run
+python deploy_to_vortex.py GAME_ID --force
+```
+
+- `GAME_ID [GAME_ID ...]` — one or more game IDs to deploy (e.g. `thelastofuspart2`).
+- `--dry-run` — lists what would be copied without writing anything.
+- `--force` — always do a full folder replace instead of index.js-only update.
+
+### deploy_to_vortex.py — Examples
+
+```sh
+python deploy_to_vortex.py thelastofuspart2
+python deploy_to_vortex.py thelastofuspart2 residentevil4 --force
+python deploy_to_vortex.py thelastofuspart2 --dry-run
+```
+
+### deploy_to_vortex.py — Output
+
+Per-game status: `[game_id] updated index.js in <folder>` (existing match) or `[game_id] deployed to <path> (N files)` (full deploy) on success, or `[game_id] ERROR - ...` on failure. Exits with code `1` if any game fails.
+
+---
+
 ## audit_scripts.py
 
 Runs three audits and reports drift found in any:

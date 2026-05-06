@@ -9,6 +9,7 @@ fetch_exec_icon.py
 fetch_nexus_stats.py
 release_extension.py
 setup_test_folder.py
+deploy_to_vortex.py
 categorize_games.py
 audit_scripts.py
 vortex_gui.py

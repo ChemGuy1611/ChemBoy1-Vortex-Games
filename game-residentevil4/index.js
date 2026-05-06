@@ -1,9 +1,9 @@
 /*///////////////////////////////////////////
-Name: XXX Vortex Extension
+Name: Resident Evil 4 (2005) Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2026-XX-XX
+Date: 2026-05-05
 Notes:
 - 
 ///////////////////////////////////////////*/
@@ -25,12 +25,12 @@ const DOCUMENTS = util.getVortexPath("documents");
 //const LOCALAPPDATA = util.getVortexPath("localAppData");
 
 //Specify all the information about the game
-const GAME_ID = "XXX";
-const STEAMAPP_ID = "XXX";
-const STEAMAPP_ID_DEMO = "XXX";
-const EPICAPP_ID = "XXX";
-const GOGAPP_ID = "XXX";
-const XBOXAPP_ID = "XXX";
+const GAME_ID = "residentevil4";
+const STEAMAPP_ID = "254700"; // https://steamdb.info/app/254700/
+const STEAMAPP_ID_DEMO = null;
+const EPICAPP_ID = null;
+const GOGAPP_ID = null;
+const XBOXAPP_ID = null;
 const XBOXEXECNAME = "XXX";
 const XBOX_PUB_ID = "XXX"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
 const INSTALL_HIVE = 'HKEY_LOCAL_MACHINE'; //typically HKEY_LOCAL_MACHINE or HKEY_CURRENT_USER
@@ -38,16 +38,16 @@ const INSTALL_KEY = `SOFTWARE\\WOW6432Node\\XXX\\XXX`; //for finding install in 
 const INSTALL_VALUE = "XXX"; //often InstallDir or InstallPath
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
-const GAME_NAME = "XXX";
-const GAME_NAME_SHORT = "XXX";
-const BINARIES_PATH = path.join('.');
-const EXEC_NAME = "XXX.exe";
+const GAME_NAME = "Resident Evil 4 (2005)";
+const GAME_NAME_SHORT = "RE4";
+const BINARIES_PATH = 'Bin32';
+const EXEC_NAME = "bio4.exe";
 const EXEC = path.join(BINARIES_PATH, EXEC_NAME);
 const EXEC_EGS = EXEC; //change other versions if different than Steam/default
 const EXEC_GOG = EXEC;
 const EXEC_DEMO = EXEC;
-const PCGAMINGWIKI_URL = "XXX";
-const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Resident_Evil_4_Ultimate_HD_Edition";
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1869"; //Nexus link to this extension. Used for links
 
 //feature toggles
 const hasLoader = false; //true if game needs a mod loader
@@ -55,32 +55,28 @@ const hasXbox = false; //toggle for Xbox version logic
 const multiExe = false; //set to true if there are multiple executable names
 const multiModPath = false; //set to true if there are multiple possible mod paths (i.e. different path for Xbox version)
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
-const needsModInstaller = true; //set to true if standard mods should run through an installer - set false to have mods installed to the mods folder without any processing
+const needsModInstaller = false; //set to true if standard mods should run through an installer - set false to have mods installed to the mods folder without any processing
 const rootInstaller = true; //enable root installer. Set false if you need to avoid installer collisions
-const saveInstaller = false; //enable save installer. Set false if path is outside of game folder
+const saveInstaller = true; //enable save installer. Set false if path is outside of game folder
 const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
 const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
 const hasUserIdFolder = false; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
-let binariesInstaller = false;
-if (BINARIES_PATH !== '.') {
-    binariesInstaller = true; //only enable Binaries installer if not in root
-}
+const binariesInstaller = true;
 const debug = false; //toggle for debug mode
 
 //info for modtypes, installers, tools, and actions
-const DATA_FOLDER = 'XXX';
-let ROOT_FOLDERS = [DATA_FOLDER];
-if (BINARIES_PATH !== '.') {
-  ROOT_FOLDERS.push(BINARIES_PATH.split(path.sep)[0]);
-}
-const ROOTSUB_FOLDERS = [];
+const DATA_FOLDER = 'BIO4';
+const ROOT_FOLDERS = [DATA_FOLDER, BINARIES_PATH];
+const ROOTSUB_FOLDERS = ['Bgm', 'Em', 'Etc', 'Evd', 'Font', 'gradients', 
+  'ImagePack', 'ImagePackHD', 'iww', 'Key', 'movie', 'op', 'option', 'Ranking', 
+  'rel', 'snd', 'SS', 'St0', 'St1', 'St2', 'St3', 'St4', 'St5', 'St6', 'St7',
+  'sv', 'text', 'Title', 'uvdata',
+];
 const ROOTSUB_PATH = DATA_FOLDER;
 
 const CONFIGMOD_LOCATION = DOCUMENTS;
-const SAVEMOD_LOCATION = DOCUMENTS;
-const APPDATA_FOLDER = path.join('XXX');
-const CONFIG_FOLDERNAME = 'XXX';
-const SAVE_FOLDERNAME = 'XXX';
+const APPDATA_FOLDER = path.join('My Games', 'Capcom', 'RE4');
+const CONFIG_FOLDERNAME = '';
 
 let GAME_PATH = '';
 let GAME_VERSION = '';
@@ -118,21 +114,8 @@ const BINARIES_EXTS = ['.dll', '.asi', '.addon64', '.exe'];
 
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_NAME = "Save";
-const SAVE_FOLDER = path.join(SAVEMOD_LOCATION, APPDATA_FOLDER, SAVE_FOLDERNAME);
-let USERID_FOLDER = "";
-if (hasUserIdFolder) {
-  try {
-    const SAVE_ARRAY = fs.readdirSync(SAVE_FOLDER);
-    USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_FOLDER, entry));
-  } catch(err) {
-    USERID_FOLDER = "";
-  }
-  if (USERID_FOLDER === undefined) {
-    USERID_FOLDER = "";
-  }
-}
-const SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
-const SAVE_EXTS = [".XXX"];
+const SAVE_PATH = path.join(BINARIES_PATH, 'profile', 'player', 'saves');
+const SAVE_EXTS = [".sav"];
 const SAVE_FILES = ["XXX"];
 
 const CONFIG_ID = `${GAME_ID}-config`;
@@ -140,6 +123,8 @@ const CONFIG_NAME = "Config";
 const CONFIG_PATH = path.join(CONFIGMOD_LOCATION, APPDATA_FOLDER, CONFIG_FOLDERNAME);
 const CONFIG_EXTS = [".XXX"];
 const CONFIG_FILES = ["XXX"];
+const INPUT_INI_FILE = 'input.ini';
+const INPUT_INI_PATH = path.join(DATA_FOLDER, INPUT_INI_FILE);
 
 /* tool info (i.e. save editor)
 const TOOL_ID = `${GAME_ID}-tool`;
@@ -149,21 +134,12 @@ const TOOL_EXEC = 'XXX.exe';
 const TOOL_EXEC_PATH = path.join(TOOL_EXEC_FOLDER, TOOL_EXEC);
 //*/
 
-let MOD_PATH_DEFAULT = MOD_PATH;
-if (!needsModInstaller) {
-  MOD_PATH_DEFAULT = '.';
-}
+const MOD_PATH_DEFAULT = '.';
 const REQ_FILE = EXEC;
 const PARAMETERS_STRING = '';
 const PARAMETERS = [PARAMETERS_STRING];
 
-let MODTYPE_FOLDERS = [BINARIES_PATH];
-if (needsModInstaller) {
-  MODTYPE_FOLDERS.push(MOD_PATH);
-}
-if (saveInstaller) {
-  MODTYPE_FOLDERS.push(SAVE_PATH);
-}
+let MODTYPE_FOLDERS = [BINARIES_PATH, ROOTSUB_PATH, SAVE_PATH];
 const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 
@@ -953,15 +929,6 @@ function applyGame(context, gameSpec) {
     () => Promise.resolve(false), 
     { name: CONFIG_NAME }
   ); //*/
-  /*context.registerModType(SAVE_ID, 62, 
-    (gameId) => {
-      var _a;
-      return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, 
-    (game) => pathPattern(context.api, game, SAVE_PATH), 
-    () => Promise.resolve(false), 
-    { name: SAVE_NAME }
-  ); //*/
 
   if (hasLoader) {
     context.registerModType(LOADER_ID, 70, 
@@ -990,11 +957,11 @@ function applyGame(context, gameSpec) {
   if (hasLoader) {
     context.registerInstaller(LOADER_ID, 25, testLoader, installLoader);
   }
-  if (rootInstaller) {
-    context.registerInstaller(ROOT_ID, 27, testRoot, installRoot);
-  }
   if (binariesInstaller) {
-    context.registerInstaller(BINARIES_ID, 29, testBinaries, installBinaries);
+    context.registerInstaller(BINARIES_ID, 27, testBinaries, installBinaries); //*moved up priority due to re4_tweaks containing root subfolders
+  }
+  if (rootInstaller) {
+    context.registerInstaller(ROOT_ID, 29, testRoot, installRoot);
   }
   //context.registerInstaller(CONFIG_ID, 31, testConfig, installConfig);
   if (saveInstaller) {
@@ -1008,15 +975,24 @@ function applyGame(context, gameSpec) {
   }
 
   //register actions
-  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
     util.opn(CONFIG_PATH).catch(() => null);
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open input.ini', () => {
+    GAME_PATH = getDiscoveryPath(context.api);
+    util.opn(path.join(GAME_PATH, INPUT_INI_PATH)).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  }); //*/
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', () => {
-    util.opn(SAVE_PATH).catch(() => null);
+    GAME_PATH = getDiscoveryPath(context.api);
+    util.opn(path.join(GAME_PATH, SAVE_PATH)).catch(() => null);
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
