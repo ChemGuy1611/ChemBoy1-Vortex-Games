@@ -433,10 +433,9 @@ def _make_icons():
 
 COL_FLAG, COL_ICON, COL_GAME_ID, COL_NAME, COL_VERSION, COL_DATE, COL_ENGINE, \
     COL_END, COL_DL, COL_NEXUS_PUB, \
-    COL_COVER, COL_TITLE, COL_BANNER, COL_NEXUS, COL_EXT_URL, COL_FOLDER, COL_VORTEX = range(17)
-HEADERS = ("Flag", "Icon", "Game ID", "Name", "Ver", "Updated", "Engine", "End", "DL", "Pub", "Cover", "Title", "Banner", "Nex", "Ext", "Opn", "Vort")
+    COL_COVER, COL_TITLE, COL_BANNER = range(13)
+HEADERS = ("Flag", "Icon", "Game ID", "Name", "Ver", "Updated", "Engine", "End", "DL", "Pub", "Cover", "Title", "Banner")
 _THUMBNAIL_COLS = frozenset({COL_ICON, COL_COVER, COL_TITLE, COL_BANNER})
-_LINK_COLS = frozenset({COL_NEXUS, COL_EXT_URL, COL_FOLDER, COL_VORTEX})
 _IS_GROUP_HEADER_ROLE = Qt.UserRole + 10
 
 
@@ -544,28 +543,16 @@ class GameModel(QAbstractTableModel):
         col = index.column()
 
         if role == Qt.DecorationRole:
-            if col == COL_FLAG:    return _FLAG_ICON if row.flagged else _UNFLAG_ICON
-            if col == COL_ICON:    return row.icon
-            if col == COL_COVER:   return row.cover
-            if col == COL_TITLE:   return row.title
-            if col == COL_BANNER:  return row.banner
-            if col == COL_NEXUS:   return _NEXUS_ICON
-            if col == COL_EXT_URL: return _GEAR_ICON if row.extension_url else _GEAR_ICON_DIM
-            if col == COL_FOLDER:  return _FOLDER_ICON
-            if col == COL_VORTEX:  return _VORTEX_ICON if VORTEX_EXE else _VORTEX_ICON_DIM
+            if col == COL_FLAG:   return _FLAG_ICON if row.flagged else _UNFLAG_ICON
+            if col == COL_ICON:   return row.icon
+            if col == COL_COVER:  return row.cover
+            if col == COL_TITLE:  return row.title
+            if col == COL_BANNER: return row.banner
             return None
 
         if role == Qt.ToolTipRole:
             if col == COL_FLAG:
                 return row.note if row.note else "Click to flag / add note"
-            if col == COL_NEXUS:
-                return f"https://www.nexusmods.com/{row.game_id}"
-            if col == COL_EXT_URL:
-                return row.extension_url or "EXTENSION_URL not set"
-            if col == COL_FOLDER:
-                return row.folder
-            if col == COL_VORTEX:
-                return f"Open in Vortex: {row.game_id}" if VORTEX_EXE else "Vortex.exe not found"
             if col in (COL_END, COL_DL, COL_NEXUS_PUB):
                 if row.stats_fetched_at:
                     ts = datetime.fromtimestamp(row.stats_fetched_at).strftime("%Y-%m-%d %H:%M")
@@ -574,7 +561,7 @@ class GameModel(QAbstractTableModel):
             return None
 
         if role == Qt.DisplayRole:
-            if col == COL_FLAG or col in _THUMBNAIL_COLS or col in _LINK_COLS:
+            if col == COL_FLAG or col in _THUMBNAIL_COLS:
                 return ""
             if col == COL_END:
                 return "" if row.endorsements is None else f"{row.endorsements:,}"
@@ -1140,10 +1127,13 @@ class MainWindow(QMainWindow):
         add_action("Setup Test Folder", self._on_setup_test, sep=True)
         add_action("Patch", self._on_patch)
         add_action("Deploy to Vortex", self._on_deploy_to_vortex)
+        _analyze_act = QAction("Analyze Log", self)
+        _analyze_act.triggered.connect(self._on_analyze_log)
+        toolbar.addAction(_analyze_act)
         add_action("Open Folder", self._on_open_folder, sep=True)
         add_action("Open in Editor", self._on_open_editor)
-        add_action("Open Nexus", self._on_open_nexus, sep=True)
-        add_action("Open Ext", self._on_open_ext)
+        add_action("Open Mods Page", self._on_open_nexus, sep=True)
+        add_action("Open Extension Page", self._on_open_ext)
         add_action("Open in Vortex", self._on_open_in_vortex)
         root_layout.addWidget(toolbar)
 
@@ -1177,10 +1167,6 @@ class MainWindow(QMainWindow):
         hdr.setSectionResizeMode(COL_COVER,   QHeaderView.Fixed)
         hdr.setSectionResizeMode(COL_TITLE,   QHeaderView.Fixed)
         hdr.setSectionResizeMode(COL_BANNER,  QHeaderView.Fixed)
-        hdr.setSectionResizeMode(COL_NEXUS,   QHeaderView.Fixed)
-        hdr.setSectionResizeMode(COL_EXT_URL, QHeaderView.Fixed)
-        hdr.setSectionResizeMode(COL_FOLDER,  QHeaderView.Fixed)
-        hdr.setSectionResizeMode(COL_VORTEX,  QHeaderView.Fixed)
         self._table.setColumnWidth(COL_FLAG,    22)
         self._table.setColumnWidth(COL_ICON,    26)
         self._table.setColumnWidth(COL_NAME,    300)
@@ -1194,10 +1180,6 @@ class MainWindow(QMainWindow):
         self._table.setColumnWidth(COL_COVER,   42)
         self._table.setColumnWidth(COL_TITLE,   42)
         self._table.setColumnWidth(COL_BANNER,  42)
-        self._table.setColumnWidth(COL_NEXUS,   26)
-        self._table.setColumnWidth(COL_EXT_URL, 26)
-        self._table.setColumnWidth(COL_FOLDER,  26)
-        self._table.setColumnWidth(COL_VORTEX,  26)
         self._table.sortByColumn(COL_GAME_ID, Qt.AscendingOrder)
         self._table.selectionModel().selectionChanged.connect(self._on_selection_changed)
         self._table.setContextMenuPolicy(Qt.CustomContextMenu)
@@ -1355,27 +1337,6 @@ class MainWindow(QMainWindow):
                 _save_flag(row.game_id, row.flagged, row.note)
             return
 
-        if col == COL_NEXUS:
-            QDesktopServices.openUrl(QUrl(f"https://www.nexusmods.com/{row.game_id}"))
-            return
-
-        if col == COL_EXT_URL:
-            if row.extension_url:
-                QDesktopServices.openUrl(QUrl(row.extension_url))
-            return
-
-        if col == COL_FOLDER:
-            os.startfile(row.folder)
-            return
-
-        if col == COL_VORTEX:
-            if VORTEX_EXE:
-                subprocess.Popen([VORTEX_EXE, "--game", row.game_id],
-                                  cwd=os.path.dirname(VORTEX_EXE))
-            else:
-                print(f"[vortex_gui] Vortex.exe not found; cannot open {row.game_id}")
-            return
-
         if col in _THUMBNAIL_COLS:
             path = {
                 COL_ICON:   row.icon_path,
@@ -1389,7 +1350,7 @@ class MainWindow(QMainWindow):
     def _on_table_double_clicked(self, proxy_index):
         if self._proxy.is_header_row(proxy_index.row()):
             return
-        if proxy_index.column() in (*_THUMBNAIL_COLS, COL_FLAG, *_LINK_COLS):
+        if proxy_index.column() in (*_THUMBNAIL_COLS, COL_FLAG):
             return
         self._on_open_editor()
 
@@ -1572,6 +1533,12 @@ class MainWindow(QMainWindow):
         self._run([[PYTHON, os.path.join(REPO_ROOT, "deploy_to_vortex.py")] + dlg.extra_args() + ids],
                   "deploy_to_vortex.py")
 
+    def _on_analyze_log(self):
+        self._run(
+            [[PYTHON, os.path.join(REPO_ROOT, "analyze_vortex_log.py"), "--force"]],
+            "analyze_vortex_log.py",
+        )
+
     def _on_open_folder(self):
         if not self._require_selection():
             return
@@ -1723,6 +1690,10 @@ class MainWindow(QMainWindow):
             None,
             ("Open Folder", self._on_open_folder),
             ("Open in Editor", self._on_open_editor),
+            None,
+            ("Open Mods Page", self._on_open_nexus),
+            ("Open Extension Page", self._on_open_ext),
+            ("Open in Vortex", self._on_open_in_vortex),
         ]
         for entry in entries:
             if entry is None:

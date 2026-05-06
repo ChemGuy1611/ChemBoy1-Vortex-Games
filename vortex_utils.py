@@ -428,7 +428,7 @@ def fetch_epic_app_id(game_name):
             -> find item with entitlementType == "EXECUTABLE"
             -> return releaseInfo[0].appId
 
-    Returns the appId string, or None if not found or on any error.
+    Returns (app_id, offer_id) tuple, or (None, None) if not found or on any error.
     """
     try:
         result = http_post_json(
@@ -437,12 +437,12 @@ def fetch_epic_app_id(game_name):
         )
         elements = result.get("elements", [])
         if not elements:
-            return None
+            return None, None
         offer_id = elements[0].get("id")
         if not offer_id:
-            return None
+            return None, None
     except Exception:
-        return None
+        return None, None
 
     try:
         time.sleep(0.3)
@@ -452,11 +452,11 @@ def fetch_epic_app_id(game_name):
                 for release in item.get("releaseInfo", []):
                     app_id = release.get("appId")
                     if app_id:
-                        return app_id
+                        return app_id, offer_id
     except Exception:
-        return None
+        return None, None
 
-    return None
+    return None, None
 
 
 # == JS source helpers =========================================================

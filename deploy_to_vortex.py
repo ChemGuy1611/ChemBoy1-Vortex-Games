@@ -23,6 +23,17 @@ PLUGINS_DIR = r"C:\ProgramData\vortex\plugins"
 
 _GAME_NAME_RE = re.compile(r'const GAME_NAME\s*=\s*["\']([^"\']+)["\']')
 
+_ROMAN_MAP = [
+    ('XII', '12'), ('XI', '11'), ('X', '10'),
+    ('IX', '9'), ('VIII', '8'), ('VII', '7'), ('VI', '6'),
+    ('V', '5'), ('IV', '4'), ('III', '3'), ('II', '2'), ('I', '1'),
+]
+
+def _normalize_numerals(s: str) -> str:
+    for roman, arabic in _ROMAN_MAP:
+        s = re.sub(r'\b' + roman + r'\b', arabic, s)
+    return s
+
 
 def _read_game_name(src: str) -> str | None:
     index_js = os.path.join(src, "index.js")
@@ -49,9 +60,9 @@ def find_existing_plugin(game_id: str, game_name: str | None) -> str | None:
         if name == prefix or name.startswith(prefix + "-"):
             return os.path.join(PLUGINS_DIR, name)
     if game_name:
-        needle = f"Vortex Extension Update - {game_name} Vortex Extension v"
+        needle = _normalize_numerals(f"Vortex Extension Update - {game_name} Vortex Extension")
         for name in entries:
-            if name.startswith(needle):
+            if _normalize_numerals(name).startswith(needle):
                 return os.path.join(PLUGINS_DIR, name)
     return None
 

@@ -1,9 +1,9 @@
 /*/////////////////////////////////////////
-Name: XXX Vortex Extension
+Name: Batman: Arkham City Vortex Extension
 Structure: UE 2-3 Game + TFC Installer
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2026-XX-XX
+Date: 2026-05-06
 Notes:
 - 
 /////////////////////////////////////////*/
@@ -22,33 +22,32 @@ const DOCUMENTS = util.getVortexPath("documents");
 //const LOCALAPPDATA = util.getVortexPath('localAppData');
 
 //Specify all the information about the game
-const GAME_ID = "XXX";
-const STEAMAPP_ID = "XXX";
-const EPICAPP_ID = "XXX";
-const GOGAPP_ID = "XXX";
-const XBOXAPP_ID = "XXX";
+const GAME_ID = "batmanarkhamcity";
+const STEAMAPP_ID = "200260"; // https://steamdb.info/app/200260/
+const STEAMAPP_ID_LEGACY = "57400"; // https://steamdb.info/app/57400/
+const EPICAPP_ID = "Egret"; // https://store.epicgames.com/en-US/p/batman-arkham-city
+const GOGAPP_ID = "1260066469"; // https://www.gogdb.org/product/1260066469
+const XBOXAPP_ID = null;
 const XBOXEXECNAME = "XXX";
 const XBOX_PUB_ID = "XXX"; //string after "ID_"
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, GOGAPP_ID, EPICAPP_ID, STEAMAPP_ID_LEGACY]; // UPDATE THIS WITH ALL VALID IDs
 
-const GAME_NAME = "XXX";
-const GAME_NAME_SHORT = "XXX";
-const EPIC_CODE_NAME = "XXX";
-const COOKED_FOLDER = 'CookedPC';
-const ROOT_FOLDERS = [EPIC_CODE_NAME, 'Engine', 'Binaries'];
-const ROOTSUB_FOLDERS = ['Config', COOKED_FOLDER, 'DLC', 'Localization', 'Movies'];
-const COOKEDSUB_FOLDERS = ['Maps', 'Packages'];
+const GAME_NAME = "Batman: Arkham City";
+const GAME_NAME_SHORT = "Batman AC";
+const EPIC_CODE_NAME = "BmGame";
+const COOKED_FOLDER = 'CookedPCConsole';
+const ROOT_FOLDERS = [EPIC_CODE_NAME, 'engine', 'Binaries'];
+const ROOTSUB_FOLDERS = ['Config', COOKED_FOLDER, 'Localization', 'Movies'];
+const COOKEDSUB_FOLDERS = ['SFX'];
 const BITS = '32'; //32 or 64
-const EXEC_NAME = 'XXX.exe';
-const EXEC_NAME_64 = 'XXX.exe';
-const EXEC_NAME_SHIPPING = 'XXX.exe';
-const DATA_FOLDER = path.join('My Games', 'XXX', EPIC_CODE_NAME);
-const PCGAMINGWIKI_URL = "XXX";
-const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
+const EXEC_NAME = 'BmLauncher.exe';
+const EXEC_NAME_SHIPPING = 'BatmanAC.exe';
+const DATA_FOLDER = path.join('WB Games', 'Batman Arkham City GOTY', EPIC_CODE_NAME);
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Batman%3A_Arkham_City";
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1870"; //Nexus link to this extension. Used for links
 
 //feature toggles
 const hasXbox = false; //toggle for Xbox version logic
-const has64Bit = false; //toggle for 64-bit version logic
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
 const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
 const debug = false; //toggle for debug mode
@@ -58,7 +57,6 @@ const SPECIAL_TFCMOD_FOLDERS = ['XXX'];
 const EXEC_XBOX = 'gamelaunchhelper.exe';
 const BINARIES_PATH = path.join("Binaries", `Win${BITS}`);
 const EXEC = path.join(BINARIES_PATH, EXEC_NAME);
-const EXEC_64 = path.join(BINARIES_PATH, EXEC_NAME_64);
 const EXEC_SHIPPING = path.join(BINARIES_PATH, EXEC_NAME_SHIPPING);
 
 let GAME_PATH = ''; //patched in the setup function to the discovered game path
@@ -345,9 +343,6 @@ function getExecutable(gamePath) {
   if (hasXbox && statCheckSync(gamePath, EXEC_XBOX)) {
     return EXEC_XBOX;
   }
-  if (has64Bit && statCheckSync(gamePath, EXEC_64)) {
-    return EXEC_64;
-  }
   return EXEC;
 }
 
@@ -357,14 +352,6 @@ async function setGameVersion(gamePath) {
     GAME_VERSION = 'xbox';
     return GAME_VERSION;
   }
-  if (await statCheckAsync(gamePath, EXEC)) {
-      GAME_VERSION = 'default';
-      return GAME_VERSION;
-  }
-  if (has64Bit && await statCheckAsync(gamePath, EXEC_64)) {
-      GAME_VERSION = 'definitive';
-      return GAME_VERSION;
-  } //*/
 }
 
 const getDiscoveryPath = (api) => { //get the game's discovered path
@@ -986,38 +973,14 @@ function runModManager(api) {
 
 //*
 async function resolveGameVersion(gamePath) {
-  GAME_VERSION = await setGameVersion(gamePath);
   let version = '0.0.0';
-  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
-    try {
-      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
-      const parsed = await parseStringPromise(appManifest);
-      version = parsed?.Package?.Identity?.[0]?.$?.Version;
-      return Promise.resolve(version);
-    } catch (err) {
-      log('error', `Could not read ${APPMANIFEST_FILE} file to get game version: ${err}`);
-      return Promise.resolve(version);
-    }
-  }
-  /*if (has64Bit && await statCheckAsync(gamePath, EXEC_64)) {
-    try {
-      const exeVersion = require('exe-version');
-      version = exeVersion.getProductVersion(path.join(gamePath, EXEC_SHIPPING));
-      return Promise.resolve(version); 
-    } catch (err) {
-      log('error', `Could not read ${EXEC_NAME_SHIPPING} file to get Steam game version: ${err}`);
-      return Promise.resolve(version);
-    }
-  } //*/
-  else { // use exe
-    try {
-      const exeVersion = require('exe-version');
-      version = exeVersion.getProductVersion(path.join(gamePath, EXEC_SHIPPING));
-      return Promise.resolve(version); 
-    } catch (err) {
-      log('error', `Could not read ${EXEC_NAME_SHIPPING} file to get game version: ${err}`);
-      return Promise.resolve(version);
-    }
+  try {
+    const exeVersion = require('exe-version');
+    version = exeVersion.getProductVersion(path.join(gamePath, EXEC_SHIPPING));
+    return Promise.resolve(version); 
+  } catch (err) {
+    log('error', `Could not read ${EXEC_NAME_SHIPPING} file to get game version: ${err}`);
+    return Promise.resolve(version);
   }
 } //*/
 

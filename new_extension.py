@@ -211,16 +211,15 @@ def get_epic_code_name(steam_data, steamdb_data):
 def lookup_nexus_domain(game_name, api_key):
     """Look up the Nexus Mods domain name for a game using the v1 games list.
     Fetches all games once and caches the result for the session (via vortex_utils).
-    Uses exact matching with Roman numeral fallback (e.g. 'II' -> '2').
+    Builds name variants via name_lookup_variants (roman/arabic numerals, edition suffixes
+    like 'Game of the Year Edition', 'Definitive Edition', etc.) so GOTY/edition titles
+    match the base game domain on Nexus.
     Returns the domain_name string, or None if not found."""
     try:
         games = nexus_list_games(api_key)
         if not games:
             return None
-        name_variants = {normalize_game_name(game_name)}
-        converted = roman_to_arabic(game_name)
-        if converted != game_name:
-            name_variants.add(normalize_game_name(converted))
+        name_variants = {normalize_game_name(v) for v in name_lookup_variants(game_name)}
         for game in games:
             t = normalize_game_name(game.get("name", ""))
             if t in name_variants or any(t.startswith(v + " (") for v in name_variants):
@@ -693,9 +692,10 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
     epic_found = bool(availability.get('epic_url'))
     engine_version = availability['engine_version']
     resolved_epic_id = None
+    epic_offer_id = None
     if epic_found:
         time.sleep(0.3)
-        resolved_epic_id = fetch_epic_app_id(game_name)
+        resolved_epic_id, epic_offer_id = fetch_epic_app_id(game_name)
     if not epic_found:
         print(f"  Epic     : not found")
     elif resolved_epic_id:
@@ -850,6 +850,10 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
         webbrowser.open(f"https://steamdb.info/app/{appid}/info/")
         if demo_appid:
             webbrowser.open(f"https://store.steampowered.com/app/{demo_appid}/")
+        if gog_id:
+            webbrowser.open(f"https://www.gogdb.org/product/{gog_id}")
+        if epic_found and epic_offer_id:
+            webbrowser.open(f"https://egdata.app/offers/{epic_offer_id}")
 
     # ── Title image ───────────────────────────────────────────────────────────
     title_ok = False

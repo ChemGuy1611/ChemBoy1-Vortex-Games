@@ -110,7 +110,7 @@ def patch_epic_app_id(game_id, src, context):
     if not game_name:
         return src, False, "could not extract game name"
 
-    app_id = fetch_epic_app_id(game_name)
+    app_id, _ = fetch_epic_app_id(game_name)
     if not app_id:
         return src, False, f"not found on egdata.app for '{game_name}'"
 

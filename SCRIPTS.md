@@ -814,6 +814,51 @@ Per-game status: `[game_id] updated index.js in <folder>` (existing match) or `[
 
 ---
 
+## analyze_vortex_log.py
+
+Parses `C:\ProgramData\vortex\vortex.log` and splits entries into four per-severity output files. Multi-line entries (stack traces, JSON blobs) are kept together. Output files land next to `vortex.log` by default. Opens the output folder on success.
+
+### analyze_vortex_log.py — Requirements
+
+No additional packages required (Python stdlib only).
+
+### analyze_vortex_log.py — Usage
+
+```sh
+python analyze_vortex_log.py
+python analyze_vortex_log.py LOG_PATH
+python analyze_vortex_log.py [LOG_PATH] --out-dir DIR
+python analyze_vortex_log.py --levels WARN,ERROR
+python analyze_vortex_log.py --summary-only
+python analyze_vortex_log.py --dry-run
+python analyze_vortex_log.py --force
+```
+
+### analyze_vortex_log.py — Options
+
+| Option | Description |
+| --- | --- |
+| `LOG_PATH` | Path to the log file. Default: `C:\ProgramData\vortex\vortex.log` (falls back to `%APPDATA%\Vortex\vortex.log`). |
+| `--out-dir DIR` | Output directory. Default: same folder as `LOG_PATH`. |
+| `--levels LEVELS` | Comma-separated levels: `DEBUG`, `INFO`, `WARN`, `ERROR`. Default: all four. |
+| `--summary-only` | Print entry counts and exit without writing files. |
+| `--dry-run` | Preview output paths and counts without writing. |
+| `--force` | Overwrite existing output files. |
+| `--no-open` | Do not open the output folder after writing. |
+
+### analyze_vortex_log.py — Output
+
+Per-severity files written to `--out-dir` (default: log parent folder):
+
+- `vortex.debug.log`
+- `vortex.info.log`
+- `vortex.warn.log`
+- `vortex.error.log`
+
+Console summary prints total entry count and per-level breakdown. Opened folder shows all four files after a successful run.
+
+---
+
 ## audit_scripts.py
 
 Runs three audits and reports drift found in any:
@@ -911,10 +956,12 @@ No arguments. Launches the window, which loads all extensions automatically.
 | Fetch Nexus Stats | `python fetch_nexus_stats.py <ids>` |
 | Setup Test Folder | `python setup_test_folder.py <ids>` |
 | Patch | `python patch_extensions.py <ids>` |
+| Deploy to Vortex | Dialog, then `python deploy_to_vortex.py [--dry-run] [--force] <ids>` |
+| Analyze Log | `python analyze_vortex_log.py --force` (no selection required; opens output folder) |
 | Open Folder | `os.startfile(folder)` — no subprocess |
 | Open in Editor | `os.startfile(index.js)` — no subprocess |
 
-Toolbar buttons are disabled when no rows are selected and while a script is running. Only one script runs at a time; click **Stop Running** to kill the active process.
+Most toolbar buttons are disabled when no rows are selected and while a script is running. **Analyze Log** is always enabled (requires no selection). Only one script runs at a time; click **Stop Running** to kill the active process.
 
 ### vortex_gui.py — New Game Dialog
 
