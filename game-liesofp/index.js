@@ -2,8 +2,8 @@
 Name: Lies of P Vortex Extension
 Structure: UE4 (XBOX Integrated)
 Author: ChemBoy1
-Version: 0.4.0
-Date: 2025-06-17
+Version: 0.5.0
+Date: 2026-05-07
 *//////////////////////////////////////////////////
 
 //Import libraries

@@ -14,6 +14,7 @@
 | --- | --- |
 | Game ID | `liesofp` |
 | Executable | `N/A` |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
 
 ## Supported Stores
 

@@ -29,26 +29,26 @@ const LOCALAPPDATA = util.getVortexPath('localAppData');
 const GAME_ID = "conanexilesenhanced"; //same as Nexus domain
 const STEAMAPP_ID = "440900"; // https://steamdb.info/app/440900/
 const STEAMAPP_ID_DEMO = null; //VERIFY if the EPIC_CODE_NAME and EXEC_DEMO match Steam full game
-const EPICAPP_ID = null; //from egdata.app
+const EPICAPP_ID = "8efabb9c553b4a43a7ec95d452307429"; //from egdata.app
 const GOGAPP_ID = null; // from gogdb.org
 const XBOXAPP_ID = null; //from appxmanifest.xml
 const XBOXEXECNAME = "AppUEGameShipping"; //from appxmanifest.xml
 const XBOX_PUB_ID = "XXX"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
 const GAME_NAME = "Conan Exiles Enhanced";
-const GAME_NAME_SHORT = "Conan Exiles Enhanced"; //Try for 8-10 characters
-const EPIC_CODE_NAME = "XXX"; //Folder in root
+const GAME_NAME_SHORT = "Conan Exiles"; //Try for 8-10 characters
+const EPIC_CODE_NAME = "ConanSandbox"; //Folder in root
 const EXEC = `${EPIC_CODE_NAME}.exe`; //This is true ~80% of the time. Change if different
 const EXEC_EPIC = EXEC; //change these 3 if different
 const EXEC_GOG = EXEC;
 const EXEC_DEMO = EXEC;
 const PARAMETERS_STRING = ''; //launch arguments to pass when launching the game
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Conan_Exiles";
 const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
 
 //feature toggles
-const hasXbox = false; //toggle for Xbox version logic.
+const hasXbox = true; //toggle for Xbox version logic.
 let multiExe = false; //toggle for multiple executables (Epic/GOG/Demo don't match Steam)
 if ( (EXEC !== EXEC_EPIC) || (EXEC !== EXEC_GOG) || (EXEC !== EXEC_DEMO) ) {
   multiExe = true;

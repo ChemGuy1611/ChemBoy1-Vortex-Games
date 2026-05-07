@@ -4,6 +4,10 @@
 
 - None
 
+## [0.2.0] - 2026-05-07
+
+- Fixed: Multiple technical issues
+
 ## [0.1.2] - 2025-07-28
 
 - Corrected Epic Games ID.

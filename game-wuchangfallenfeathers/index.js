@@ -2,8 +2,8 @@
 Name: WUCHANG: Fallen Feathers Vortex Extension
 Structure: UE5 (Xbox-Integrated)
 Author: ChemBoy1
-Version: 0.1.2
-Date: 2025-07-28
+Version: 0.2.0
+Date: 2026-05-07
 ////////////////////////////////////////////////*/
 
 //Import libraries
