@@ -106,7 +106,7 @@ const COOKEDSUB_EXTS = ['.upk'];
 const BINARIES_ID = `${GAME_ID}-binaries`;
 const BINARIES_NAME = "Binaries (Engine Injector)";
 const BINARIES_FILES = [EXEC_NAME];
-const BINARIES_EXTS = ['.dll', '.asi', '.addon64', '.exe'];
+const BINARIES_EXTS = ['.exe', '.dll', '.asi', '.addon64'];
 
 const CONFIG_PATH = path.join(DOCUMENTS, DATA_FOLDER, 'Config');
 const SAVE_PATH = path.join(DOCUMENTS, DATA_FOLDER, 'SaveData');
@@ -270,6 +270,31 @@ async function statCheckAsync(gamePath, file) {
 }
 
 //Set mod type priorities
+function isDir(folder, file) {
+  const stats = fs.statSync(path.join(folder, file));
+  return stats.isDirectory();
+}
+
+async function getAllFiles(dirPath) {
+  let results = [];
+  try {
+    const entries = await fs.readdirAsync(dirPath);
+    for (const entry of entries) {
+      const fullPath = path.join(dirPath, entry);
+      const stats = await fs.statAsync(fullPath);
+      if (stats.isDirectory()) { // Recursively get files from subdirectories
+        const subDirFiles = await getAllFiles(fullPath);
+        results = results.concat(subDirFiles);
+      } else { // Add file to results
+        results.push(fullPath);
+      }
+    }
+  } catch (err) {
+    log('warn', `Error reading directory ${dirPath}: ${err.message}`);
+  }
+  return results;
+}
+
 function modTypePriority(priority) {
   return {
     high: 25,

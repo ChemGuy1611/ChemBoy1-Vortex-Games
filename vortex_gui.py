@@ -1,9 +1,16 @@
 """
 vortex_gui.py
 
-GUI dashboard for ChemBoy1-Vortex-Games developer scripts.
-Lists all game-* extensions in a sortable/filterable table and provides
-toolbar buttons to run developer scripts against selected games.
+GUI dashboard for ChemBoy1-Vortex-Games developer scripts. Lists all game-*
+extensions in a sortable/filterable table with Nexus stats columns (End, DL),
+image columns (Cover, Title, Banner), flag/note system, and group-by-engine view.
+
+Toolbar buttons run developer scripts against selected games. An always-visible
+log pane streams live subprocess output. Settings (geometry, column widths, filter
+text, grouping) persist across sessions via QSettings.
+
+Dark theme applied via Fusion palette + stylesheet. Engine grouping inserts
+read-only header rows via GroupProxy.
 
 Requirements:
     pip install pyside6
@@ -12,8 +19,6 @@ Usage:
     python vortex_gui.py
 """
 
-import glob
-import json
 import os
 import shutil
 import sys
@@ -432,16 +437,16 @@ def _make_icons():
 # == Data model ================================================================
 
 COL_FLAG, COL_ICON, COL_GAME_ID, COL_NAME, COL_VERSION, COL_DATE, COL_ENGINE, \
-    COL_END, COL_DL, COL_NEXUS_PUB, \
-    COL_COVER, COL_TITLE, COL_BANNER = range(13)
-HEADERS = ("Flag", "Icon", "Game ID", "Name", "Ver", "Updated", "Engine", "End", "DL", "Pub", "Cover", "Title", "Banner")
+    COL_STORES, COL_END, COL_DL, COL_NEXUS_PUB, \
+    COL_COVER, COL_TITLE, COL_BANNER = range(14)
+HEADERS = ("Flag", "Icon", "Game ID", "Name", "Ver", "Updated", "Engine", "Stores", "End", "DL", "Pub", "Cover", "Title", "Banner")
 _THUMBNAIL_COLS = frozenset({COL_ICON, COL_COVER, COL_TITLE, COL_BANNER})
 _IS_GROUP_HEADER_ROLE = Qt.UserRole + 10
 
 
 class GameRow:
     __slots__ = (
-        "game_id", "name", "version", "date", "engine", "folder",
+        "game_id", "name", "version", "date", "engine", "stores", "folder",
         "icon", "icon_path", "cover", "cover_path",
         "title", "title_path", "banner", "banner_path",
         "extension_url",
@@ -449,7 +454,7 @@ class GameRow:
         "flagged", "note",
     )
 
-    def __init__(self, game_id, name, version, date, engine, folder,
+    def __init__(self, game_id, name, version, date, engine, stores, folder,
                  icon, icon_path, cover, cover_path,
                  title, title_path, banner, banner_path,
                  extension_url,
@@ -460,6 +465,7 @@ class GameRow:
         self.version = version or ""
         self.date = date or ""
         self.engine = engine or ""
+        self.stores = stores or ""
         self.folder = folder
         self.icon = icon
         self.icon_path = icon_path
@@ -494,6 +500,7 @@ class GameModel(QAbstractTableModel):
             _v, date = vu.parse_changelog_latest(folder)
             name = vu.extract_game_name(src) or game_id
             engine = vu.detect_engine(src)
+            stores = vu.detect_stores(src)
 
             icon_path = os.path.join(folder, "exec.png")
             icon = _load_icon(icon_path, 22, 20) if os.path.isfile(icon_path) else None
@@ -518,7 +525,7 @@ class GameModel(QAbstractTableModel):
 
             fd = flags.get(game_id, {})
             rows.append(GameRow(
-                game_id, name, version, date, engine, folder,
+                game_id, name, version, date, engine, stores, folder,
                 icon, icon_path if os.path.isfile(icon_path) else None,
                 cover, cover_path if os.path.isfile(cover_path) else None,
                 title, title_path if os.path.isfile(title_path) else None,
@@ -575,6 +582,7 @@ class GameModel(QAbstractTableModel):
                 COL_VERSION: row.version,
                 COL_DATE:    row.date,
                 COL_ENGINE:  row.engine,
+                COL_STORES:  row.stores,
             }.get(col)
 
         if role == Qt.TextAlignmentRole:
@@ -654,6 +662,7 @@ class GroupProxy(QAbstractProxyModel):
         super().__init__(parent)
         self._grouping = False
         self._map: list[tuple[bool, int, str]] = []
+        self._src_to_proxy: dict[int, int] = {}
 
     def setSourceModel(self, model):
         old = self.sourceModel()
@@ -682,21 +691,26 @@ class GroupProxy(QAbstractProxyModel):
         src = self.sourceModel()
         if src is None:
             self._map = []
+            self._src_to_proxy = {}
             self.endResetModel()
             return
         n = src.rowCount()
         if not self._grouping:
             self._map = [(False, i, "") for i in range(n)]
+            self._src_to_proxy = {i: i for i in range(n)}
         else:
             result = []
+            cache: dict[int, int] = {}
             cur_engine = None
             for i in range(n):
                 engine = src.data(src.index(i, COL_ENGINE)) or ""
                 if engine != cur_engine:
                     cur_engine = engine
                     result.append((True, -1, engine))
+                cache[i] = len(result)
                 result.append((False, i, engine))
             self._map = result
+            self._src_to_proxy = cache
         self.endResetModel()
 
     def _on_data_changed(self, top_left, bottom_right, roles):
@@ -737,11 +751,10 @@ class GroupProxy(QAbstractProxyModel):
     def mapFromSource(self, source_index):
         if not source_index.isValid():
             return QModelIndex()
-        src_row = source_index.row()
-        for proxy_row, (is_header, sr, _) in enumerate(self._map):
-            if not is_header and sr == src_row:
-                return self.createIndex(proxy_row, source_index.column())
-        return QModelIndex()
+        proxy_row = self._src_to_proxy.get(source_index.row(), -1)
+        if proxy_row < 0:
+            return QModelIndex()
+        return self.createIndex(proxy_row, source_index.column())
 
     def data(self, index, role=Qt.DisplayRole):
         if not index.isValid():
@@ -858,13 +871,6 @@ class ScriptRunner(QObject):
 
 # == Dialogs ===================================================================
 
-def _get_templates() -> list[str]:
-    return sorted(
-        os.path.basename(d)[len("template-"):]
-        for d in glob.glob(os.path.join(REPO_ROOT, "template-*"))
-        if os.path.isdir(d)
-    )
-
 
 class FlagDialog(QDialog):
     def __init__(self, game_id: str, flagged: bool, note: str, parent=None):
@@ -905,7 +911,7 @@ class NewGameDialog(QDialog):
         layout = QFormLayout(self)
 
         self.template_combo = QComboBox()
-        self.template_combo.addItems(_get_templates())
+        self.template_combo.addItems(vu.list_template_names())
         layout.addRow("Template:", self.template_combo)
 
         self.name_edit = QLineEdit()
@@ -953,7 +959,7 @@ class PortTemplateDialog(QDialog):
         layout.addRow(QLabel(f"Games: {ids_text}"))
 
         self.template_combo = QComboBox()
-        self.template_combo.addItems(_get_templates())
+        self.template_combo.addItems(vu.list_template_names())
         layout.addRow("Template:", self.template_combo)
 
         self.dry_run_cb = QCheckBox("--dry-run (preview only, no writes)")
@@ -1112,29 +1118,29 @@ class MainWindow(QMainWindow):
             self._action_btns[label] = act
 
         add_action("Release", self._on_release)
-        add_action("Lint", self._on_lint)
-        add_action("Generate Explained", self._on_generate_explained)
-        add_action("Port to Template...", self._on_port_to_template)
+        add_action("Deploy to Vortex", self._on_deploy_to_vortex)
+        add_action("Open Folder", self._on_open_folder, sep=True)
+        add_action("Open in Editor", self._on_open_editor)
+        add_action("Open Game Page", self._on_open_nexus, sep=True)
+        add_action("Open Extension Page", self._on_open_ext)
+        add_action("Open in Vortex", self._on_open_in_vortex)
+        add_action("Port to Template...", self._on_port_to_template, sep=True)
+        add_action("Setup Test Folder", self._on_setup_test)
+        add_action("Patch", self._on_patch)
+        add_action("Categorize", self._on_categorize)
+        toolbar.addSeparator()
+        _analyze_act = QAction("Analyze Log", self)
+        _analyze_act.triggered.connect(self._on_analyze_log)
+        toolbar.addAction(_analyze_act)
+        _audit_act = QAction("Audit Scripts", self)
+        _audit_act.triggered.connect(self._on_audit_scripts)
+        toolbar.addAction(_audit_act)
         add_action("Fetch Icon", self._on_fetch_icon, sep=True)
         add_action("Fetch Cover", self._on_fetch_cover)
         add_action("Fetch Title", self._on_fetch_title)
         add_action("Fetch Banner", self._on_fetch_banner)
         add_action("Fetch Nexus Stats", self._on_fetch_nexus_stats)
-        add_action("View Icon", self._on_view_icon, sep=True)
-        add_action("View Cover", self._on_view_cover)
-        add_action("View Title", self._on_view_title)
-        add_action("View Banner", self._on_view_banner)
-        add_action("Setup Test Folder", self._on_setup_test, sep=True)
-        add_action("Patch", self._on_patch)
-        add_action("Deploy to Vortex", self._on_deploy_to_vortex)
-        _analyze_act = QAction("Analyze Log", self)
-        _analyze_act.triggered.connect(self._on_analyze_log)
-        toolbar.addAction(_analyze_act)
-        add_action("Open Folder", self._on_open_folder, sep=True)
-        add_action("Open in Editor", self._on_open_editor)
-        add_action("Open Mods Page", self._on_open_nexus, sep=True)
-        add_action("Open Extension Page", self._on_open_ext)
-        add_action("Open in Vortex", self._on_open_in_vortex)
+        add_action("View Images", self._on_view_images, sep=True)
         root_layout.addWidget(toolbar)
 
         # splitter: table on top, log pane on bottom
@@ -1161,6 +1167,7 @@ class MainWindow(QMainWindow):
         hdr.setSectionResizeMode(COL_VERSION, QHeaderView.Interactive)
         hdr.setSectionResizeMode(COL_DATE,    QHeaderView.Interactive)
         hdr.setSectionResizeMode(COL_ENGINE,  QHeaderView.Interactive)
+        hdr.setSectionResizeMode(COL_STORES,  QHeaderView.Interactive)
         hdr.setSectionResizeMode(COL_END,     QHeaderView.Interactive)
         hdr.setSectionResizeMode(COL_DL,        QHeaderView.Interactive)
         hdr.setSectionResizeMode(COL_NEXUS_PUB, QHeaderView.Interactive)
@@ -1174,6 +1181,7 @@ class MainWindow(QMainWindow):
         self._table.setColumnWidth(COL_VERSION, 70)
         self._table.setColumnWidth(COL_DATE,    92)
         self._table.setColumnWidth(COL_ENGINE,  195)
+        self._table.setColumnWidth(COL_STORES,  60)
         self._table.setColumnWidth(COL_END,     62)
         self._table.setColumnWidth(COL_DL,        80)
         self._table.setColumnWidth(COL_NEXUS_PUB, 92)
@@ -1345,7 +1353,7 @@ class MainWindow(QMainWindow):
                 COL_BANNER: row.banner_path,
             }.get(col)
             if path and os.path.isfile(path):
-                os.startfile(path)
+                vu.open_in_default_app(path)
 
     def _on_table_double_clicked(self, proxy_index):
         if self._proxy.is_header_row(proxy_index.row()):
@@ -1382,29 +1390,6 @@ class MainWindow(QMainWindow):
         self._run([[PYTHON, os.path.join(REPO_ROOT, "release_extension.py")] + ids + dlg.extra_args()],
                   "release_extension.py")
 
-    def _on_lint(self):
-        dlg = self._script_dlg(
-            "Lint Extensions",
-            flags=[
-                ("--fix", "Auto-fix fixable issues", False),
-                ("--templates", "Also lint template-*/index.js", False),
-                ("--quiet", "Only show failures (suppress [OK] lines)", False),
-            ],
-        )
-        if dlg is None:
-            return
-        ids = self._selected_ids()
-        self._run([[NODE, os.path.join(REPO_ROOT, "lint_extensions.js")] + ids + dlg.extra_args()],
-                  "lint_extensions.js")
-
-    def _on_generate_explained(self):
-        dlg = self._script_dlg("Generate Explained")
-        if dlg is None:
-            return
-        ids = self._selected_ids()
-        self._run([[NODE, os.path.join(REPO_ROOT, "generate_explained.js")] + ids],
-                  "generate_explained.js")
-
     def _on_port_to_template(self):
         if not self._require_selection():
             return
@@ -1425,6 +1410,7 @@ class MainWindow(QMainWindow):
         if dlg is None:
             return
         ids = self._selected_ids()
+        self._refresh_after_run = "--dry-run" not in dlg.extra_args()
         self._run([[PYTHON, os.path.join(REPO_ROOT, "fetch_exec_icon.py")] + dlg.extra_args() + ids],
                   "fetch_exec_icon.py")
 
@@ -1439,6 +1425,7 @@ class MainWindow(QMainWindow):
         if dlg is None:
             return
         ids = self._selected_ids()
+        self._refresh_after_run = "--dry-run" not in dlg.extra_args()
         self._run([[PYTHON, os.path.join(REPO_ROOT, "fetch_cover_art.py")] + dlg.extra_args() + ids],
                   "fetch_cover_art.py")
 
@@ -1453,6 +1440,7 @@ class MainWindow(QMainWindow):
         if dlg is None:
             return
         ids = self._selected_ids()
+        self._refresh_after_run = "--dry-run" not in dlg.extra_args()
         self._run([[PYTHON, os.path.join(REPO_ROOT, "fetch_cover_art.py"), "--title"] + dlg.extra_args() + ids],
                   "fetch_cover_art.py --title")
 
@@ -1467,6 +1455,7 @@ class MainWindow(QMainWindow):
         if dlg is None:
             return
         ids = self._selected_ids()
+        self._refresh_after_run = "--dry-run" not in dlg.extra_args()
         self._run([[PYTHON, os.path.join(REPO_ROOT, "fetch_cover_art.py"), "--banner"] + dlg.extra_args() + ids],
                   "fetch_cover_art.py --banner")
 
@@ -1539,11 +1528,25 @@ class MainWindow(QMainWindow):
             "analyze_vortex_log.py",
         )
 
+    def _on_categorize(self):
+        dlg = self._script_dlg(
+            "Categorize",
+            flags=[("--dry-run", "Print categorizations without writing files", False)],
+        )
+        if dlg is None:
+            return
+        ids = self._selected_ids()
+        self._run([[PYTHON, os.path.join(REPO_ROOT, "categorize_games.py")] + dlg.extra_args() + ids],
+                  "categorize_games.py")
+
+    def _on_audit_scripts(self):
+        self._run([[PYTHON, os.path.join(REPO_ROOT, "audit_scripts.py")]], "audit_scripts.py")
+
     def _on_open_folder(self):
         if not self._require_selection():
             return
         for row in self._selected_rows():
-            os.startfile(row.folder)
+            vu.open_in_default_app(row.folder)
 
     def _on_open_editor(self):
         if not self._require_selection():
@@ -1551,35 +1554,15 @@ class MainWindow(QMainWindow):
         for row in self._selected_rows():
             index_path = os.path.join(row.folder, "index.js")
             if os.path.isfile(index_path):
-                os.startfile(index_path)
+                vu.open_in_default_app(index_path)
 
-    def _on_view_icon(self):
+    def _on_view_images(self):
         if not self._require_selection():
             return
         for row in self._selected_rows():
-            if row.icon_path and os.path.isfile(row.icon_path):
-                os.startfile(row.icon_path)
-
-    def _on_view_cover(self):
-        if not self._require_selection():
-            return
-        for row in self._selected_rows():
-            if row.cover_path and os.path.isfile(row.cover_path):
-                os.startfile(row.cover_path)
-
-    def _on_view_title(self):
-        if not self._require_selection():
-            return
-        for row in self._selected_rows():
-            if row.title_path and os.path.isfile(row.title_path):
-                os.startfile(row.title_path)
-
-    def _on_view_banner(self):
-        if not self._require_selection():
-            return
-        for row in self._selected_rows():
-            if row.banner_path and os.path.isfile(row.banner_path):
-                os.startfile(row.banner_path)
+            for path in (row.icon_path, row.cover_path, row.title_path, row.banner_path):
+                if path and os.path.isfile(path):
+                    vu.open_in_default_app(path)
 
     def _on_open_nexus(self):
         if not self._require_selection():
@@ -1674,26 +1657,24 @@ class MainWindow(QMainWindow):
         menu = QMenu(self)
         entries = [
             ("Release", self._on_release),
-            ("Lint", self._on_lint),
-            ("Generate Explained", self._on_generate_explained),
+            ("Deploy to Vortex", self._on_deploy_to_vortex),
+            None,
+            ("Open Folder", self._on_open_folder),
+            ("Open in Editor", self._on_open_editor),
+            None,
+            ("Open Game Page", self._on_open_nexus),
+            ("Open Extension Page", self._on_open_ext),
+            ("Open in Vortex", self._on_open_in_vortex),
+            None,
             ("Port to Template...", self._on_port_to_template),
+            ("Setup Test Folder", self._on_setup_test),
+            ("Patch", self._on_patch),
             None,
             ("Fetch Icon", self._on_fetch_icon),
             ("Fetch Cover", self._on_fetch_cover),
             ("Fetch Title", self._on_fetch_title),
             ("Fetch Banner", self._on_fetch_banner),
             ("Fetch Nexus Stats", self._on_fetch_nexus_stats),
-            None,
-            ("Setup Test Folder", self._on_setup_test),
-            ("Patch", self._on_patch),
-            ("Deploy to Vortex", self._on_deploy_to_vortex),
-            None,
-            ("Open Folder", self._on_open_folder),
-            ("Open in Editor", self._on_open_editor),
-            None,
-            ("Open Mods Page", self._on_open_nexus),
-            ("Open Extension Page", self._on_open_ext),
-            ("Open in Vortex", self._on_open_in_vortex),
         ]
         for entry in entries:
             if entry is None:

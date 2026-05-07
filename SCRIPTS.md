@@ -40,7 +40,7 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `log_info(game_id, msg)` | Print `[game_id] msg` |
 | `log_error(game_id, msg)` | Print `[game_id] ERROR - msg` |
 | `log_warn(game_id, msg)` | Print `[game_id] WARNING - msg` |
-| `_find_fn_end(src, fn_match_end)` | Return index past the closing `}` of the JS function whose `{` is at `fn_match_end - 1` |
+| `find_fn_end(src, fn_match_end)` | Return index past the closing `}` of the JS function whose `{` is at `fn_match_end - 1` |
 | `find_fn_body(src, func_start)` | Public wrapper for brace-counting; returns `(body_start, body_end)` indices or `(None, None)` |
 | `run_generate_explained(game_id)` | Run `generate_explained.js` for a game; returns `(ok: bool, stderr: str)` |
 | `node_check(path)` | Run `node --check` on a JS file path; returns `(ok: bool, stderr: str)` |
@@ -48,7 +48,7 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `eslint_check(path)` | Run `npx eslint` on a JS file (config auto-discovered from `REPO_ROOT`); returns `(ok: bool, output: str)` |
 | `get_discovery_ids(src)` | Parse variable names from the spec's `discovery.ids` array; returns list of names (e.g. `["STEAMAPP_ID", "EAAPP_ID"]`); falls back to `["STEAMAPP_ID"]` |
 | `iter_game_folders(target_game_ids)` | Yield `(folder, game_id, src)` for every `game-*` folder; filtered by `target_game_ids` if given |
-| `REGISTER_ACTIONS` | List of `(label, commented_out, code)` tuples for standard `context.registerAction` calls |
+| `REGISTER_ACTIONS` | List of `(label, commented_out, code[, detect_key])` tuples for standard `context.registerAction` calls; `detect_key` overrides the presence check (used by Config/Save entries to match any `'Open Config ...'`/`'Open Save ...'` variant) |
 | `inject_register_actions(src)` | Inject any missing `context.registerAction` entries into `applyGame()`; returns `(new_src, missing_labels)` |
 | `update_index_header(src, *, name, version, date)` | Replace `Name`, `Version`, and/or `Date` fields in the `index.js` header comment; returns updated source string |
 | `const_value(src, var_name)` | Extract the RHS of a `const`/`let` declaration from JS source; returns string or `None` |
@@ -77,6 +77,16 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `is_load_order_game(src)` | Return `True` if `src` calls `registerLoadOrder` and is not a UE4/5 extension |
 | `nexus_list_games(api_key)` | Fetch all approved Nexus Mods games; caches result for the process lifetime. Returns `[]` on error. |
 | `nexus_get_mod(domain, mod_id, api_key)` | Fetch Nexus v1 mod details with retry. Returns `(data_dict, rate_remaining_or_None)`. Raises on 404 / non-retryable errors. |
+| `write_text_atomic(path, entries, encoding)` | Write list-of-strings (or a single string) to `path` atomically via `.tmp` + `os.replace`. |
+| `open_in_default_app(path)` | Open `path` in the system default application (`os.startfile` on Windows). |
+| `run_script(script_name, *args, capture=True)` | Run a Python script from `REPO_ROOT` via `sys.executable`. Returns `CompletedProcess`. |
+| `load_vortex_manifest(path=None)` | Read `extensions-manifest.json`; return `{game_id: mod_id}` dict. Defaults to `C:\ProgramData\vortex\temp\extensions-manifest.json`. |
+| `resize_pngs_in_dirs(folders, dry_run=False)` | Resize all non-64x64 PNGs in the given folders to 64x64 using Pillow. |
+| `build_js_symbol_table(src)` | Resolve `const`/`let` strings, template literals, `path.join()`, and variable refs in index.js source. Returns `{name: value}` dict. |
+| `list_template_names()` | Return sorted list of template name suffixes (e.g. `['basic', 'ue4-5', ...]`). |
+| `iter_extension_folders(*, include_templates=False)` | Like `iter_game_folders()` but optionally yields `template-*` folders too. |
+| `detect_stores(src)` | Return space-separated store badges from `DISCOVERY_IDS_ACTIVE` in index.js: `S` Steam, `G` GOG, `E` Epic, `X` Xbox, `U` Ubisoft, `EA` EA. |
+| `validate_index_js(src)` | Return list of issue strings: leftover `XXX`, missing `applyGame()`, missing `context.registerGame()`, missing `main()`. |
 | `GUI_FLAGS_PATH` | Absolute path to `vortex_gui_flags.json` at repo root |
 | `GUI_STATS_PATH` | Absolute path to `vortex_gui_nexus_stats.json` at repo root |
 | `download_exec_icon(appid, game_name, out_path)` | Download and save a 64x64 `exec.png`. Steam CDN first, SteamGridDB icon fallback. |
@@ -571,6 +581,7 @@ python categorize_games.py hogwartslegacy
 | `resources/lists/games-srmm.txt` | Shin Ryu Mod Manager (SRMM) |
 | `resources/lists/games-frostbite.txt` | Frostbite Engine (Frosty Mod Manager) |
 | `resources/lists/games-basic.txt` | Basic / Proprietary (catch-all) |
+| `resources/lists/games-loadorder.txt` | Non-UE4/5 games that call `context.registerLoadOrder` |
 
 ### categorize_games.py — Detection
 
@@ -665,7 +676,7 @@ python release_extension.py assassinscreedorigins assassinscreedvalhalla --no-op
 
 ### release_extension.py — Output
 
-**Aborts** if `CHANGELOG.md` is missing, if `info.json` version has no matching `## [X.Y.Z]` section in `CHANGELOG.md`, or if `const debug = true` is found in `index.js`. Warns (but does not abort) if `info.json` version does not match the _latest_ `## [X.X.X]` entry in `CHANGELOG.md`. Renames the versioned `.txt` file (e.g. `0.2.7.txt` -> `0.2.8.txt`) to match the current version. Updates the `Version:` and `Date:` lines in the `index.js` header comment — version from `info.json`, date from the most recent `## [X.X.X] - YYYY-MM-DD` entry in `CHANGELOG.md`. Adds any resolved store IDs to `DISCOVERY_IDS_ACTIVE` if not already present. Runs `node --check` on `index.js` and warns on syntax errors. Then runs `generate_explained.js` to regenerate `EXTENSION_EXPLAINED.md` and creates `game-{GAME_ID}.zip` inside the extension folder, overwriting any existing zip. Reads `EXTENSION_URL` from `index.js` — if set to a valid URL, opens it in the default browser so the file can be uploaded. If `EXTENSION_URL` is `"XXX"` or not present, opens `https://www.nexusmods.com/games/site` instead.
+**Aborts** if `CHANGELOG.md` is missing, if `info.json` version has no matching `## [X.Y.Z]` section in `CHANGELOG.md`, if `info.json` `name` does not match `Game: <Name>` pattern, or if `const debug = true` is found in `index.js`. Warns (but does not abort) if `info.json` version does not match the _latest_ `## [X.X.X]` entry in `CHANGELOG.md`. Runs `validate_index_js` checks (leftover `XXX`, missing `applyGame`, etc.) and warns on each issue found. Renames the versioned `.txt` file (e.g. `0.2.7.txt` -> `0.2.8.txt`) to match the current version. Updates the `Version:` and `Date:` lines in the `index.js` header comment — version from `info.json`, date from the most recent `## [X.X.X] - YYYY-MM-DD` entry in `CHANGELOG.md`. Adds any resolved store IDs to `DISCOVERY_IDS_ACTIVE` if not already present. Runs `node --check` on `index.js` and warns on syntax errors. Then runs `generate_explained.js` to regenerate `EXTENSION_EXPLAINED.md` and creates `game-{GAME_ID}.zip` inside the extension folder, overwriting any existing zip. Reads `EXTENSION_URL` from `index.js` — if set to a valid URL, opens it in the default browser so the file can be uploaded. If `EXTENSION_URL` is `"XXX"` or not present, opens `https://www.nexusmods.com/games/site` instead.
 
 ---
 
@@ -816,7 +827,7 @@ Per-game status: `[game_id] updated index.js in <folder>` (existing match) or `[
 
 ## analyze_vortex_log.py
 
-Parses `C:\ProgramData\vortex\vortex.log` and splits entries into four per-severity output files. Multi-line entries (stack traces, JSON blobs) are kept together. Output files land next to `vortex.log` by default. Opens the output folder on success.
+Parses `C:\ProgramData\vortex\vortex.log` and consolidates entries into a single file (`vortex.analyzed.log`) with sections per severity level. Within each section, entries are grouped by hour in chronological order. Multi-line entries (stack traces, JSON blobs) are kept together. Output file lands next to `vortex.log` by default. Opens the output file on success.
 
 ### analyze_vortex_log.py — Requirements
 
@@ -832,7 +843,14 @@ python analyze_vortex_log.py --levels WARN,ERROR
 python analyze_vortex_log.py --summary-only
 python analyze_vortex_log.py --dry-run
 python analyze_vortex_log.py --force
+python analyze_vortex_log.py --no-open
 ```
+
+### analyze_vortex_log.py — Environment Variables
+
+| Variable | Required | Description |
+| --- | --- | --- |
+| `APPDATA` | Optional | Standard Windows variable used to locate the fallback log path (`%APPDATA%\Vortex\vortex.log`) when the primary log is absent. Not a user-configurable input. |
 
 ### analyze_vortex_log.py — Options
 
@@ -842,32 +860,36 @@ python analyze_vortex_log.py --force
 | `--out-dir DIR` | Output directory. Default: same folder as `LOG_PATH`. |
 | `--levels LEVELS` | Comma-separated levels: `DEBUG`, `INFO`, `WARN`, `ERROR`. Default: all four. |
 | `--summary-only` | Print entry counts and exit without writing files. |
-| `--dry-run` | Preview output paths and counts without writing. |
-| `--force` | Overwrite existing output files. |
+| `--dry-run` | Preview output path and per-hour counts without writing. |
+| `--force` | Overwrite existing output file. |
 | `--no-open` | Do not open the output folder after writing. |
 
 ### analyze_vortex_log.py — Output
 
-Per-severity files written to `--out-dir` (default: log parent folder):
+Single file written to `--out-dir` (default: log parent folder):
 
-- `vortex.debug.log`
-- `vortex.info.log`
-- `vortex.warn.log`
-- `vortex.error.log`
+- `vortex.analyzed.log`
 
-Console summary prints total entry count and per-level breakdown. Opened folder shows all four files after a successful run.
+File structure:
+
+1. **Header / TOC** — source path, total entry count, per-level counts, and hour bucket totals aggregated across all selected levels.
+2. **Per-severity sections** (DEBUG, INFO, WARN, ERROR) — each headed by a `===` banner; skipped when empty. Within each section entries are sub-grouped by `YYYY-MM-DD HH:00` in chronological order, each sub-group preceded by a `--- hour (N entries) ---` marker.
+
+Console summary prints total entry count and per-level breakdown.
 
 ---
 
 ## audit_scripts.py
 
-Runs three audits and reports drift found in any:
+Runs five audits and reports drift found in any:
 
 1. **Header docstring audit** — compares each script's argparse flags and env-var reads against the flags and env vars documented in its own header docstring (`Usage:` and `Environment variables:` sections).
 2. **SCRIPTS.md audit** — compares the same code-extracted flags and env vars against the corresponding script section in SCRIPTS.md (`### name — Usage` and `### name — Environment Variables` subsections).
-3. **scripts.txt cross-check** — warns when a `*.py` in the repo root is not listed in `scripts.txt`, or when `scripts.txt` references a missing file.
+3. **scripts.txt cross-check** — warns when a `*.py` or `*.js` in the repo root is not listed in `scripts.txt`, or when `scripts.txt` references a missing file.
+4. **vortex_utils.py exports audit** — detects public functions defined in `vortex_utils.py` that are missing from its module docstring import list.
+5. **Raw log-print audit** — detects `print(f"  [{...}]")` calls in scripts outside `vortex_utils.py` that should use `log_info`/`log_warn`/`log_error` (informational; does not affect exit code).
 
-Read-only; never modifies any file. Uses `iter_repo_scripts()` from `vortex_utils` to iterate the canonical script list in `scripts.txt`. Skips `vortex_utils.py` (library), `generate_explained.js` (Node), and `SCRIPTS.md`.
+Read-only; never modifies any file. Uses `iter_repo_scripts()` from `vortex_utils` to iterate the canonical script list in `scripts.txt`. Skips `vortex_utils.py` (library), `generate_explained.js` (Node), `eslint.config.js` (config), and `SCRIPTS.md`.
 
 ### audit_scripts.py — Requirements
 
@@ -923,7 +945,8 @@ No arguments. Launches the window, which loads all extensions automatically.
 [ Filter: ____________ ]  [Refresh]  [New Game...]
 [ Release ] [ Lint ] [ Generate Explained ] [ Port to Template... ]
 [ Fetch Icon ] [ Fetch Cover ] [ Fetch Title ] [ Fetch Banner ] [ Fetch Nexus Stats ]
-[ Setup Test Folder ] [ Patch ] | [ Open Folder ] [ Open in Editor ]
+[ Setup Test Folder ] [ Patch ] [ Deploy to Vortex ] [ Categorize ] | [ Analyze Log ] [ Audit Scripts ]
+[ Open Folder ] [ Open in Editor ]
 -------------------------------------------------------------------------------
 | Game ID | Name | Ver | Date | Engine | End | DL | Cover | Title | Banner |...
 | sortable QTableView, multi-select with Ctrl/Shift                           |
@@ -957,11 +980,14 @@ No arguments. Launches the window, which loads all extensions automatically.
 | Setup Test Folder | `python setup_test_folder.py <ids>` |
 | Patch | `python patch_extensions.py <ids>` |
 | Deploy to Vortex | Dialog, then `python deploy_to_vortex.py [--dry-run] [--force] <ids>` |
+| Categorize | Dialog, then `python categorize_games.py [--dry-run] <ids>` |
 | Analyze Log | `python analyze_vortex_log.py --force` (no selection required; opens output folder) |
+| Audit Scripts | `python audit_scripts.py` (no selection required) |
 | Open Folder | `os.startfile(folder)` — no subprocess |
 | Open in Editor | `os.startfile(index.js)` — no subprocess |
+| Open Game on Nexus | Opens `nexusmods.com/{game_id}` (the game's Nexus domain page) — no subprocess |
 
-Most toolbar buttons are disabled when no rows are selected and while a script is running. **Analyze Log** is always enabled (requires no selection). Only one script runs at a time; click **Stop Running** to kill the active process.
+Most toolbar buttons are disabled when no rows are selected and while a script is running. **Analyze Log** and **Audit Scripts** are always enabled (require no selection). Only one script runs at a time; click **Stop Running** to kill the active process.
 
 ### vortex_gui.py — New Game Dialog
 

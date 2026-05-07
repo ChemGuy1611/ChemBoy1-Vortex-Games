@@ -7,7 +7,7 @@
  * Run with:  node generate_explained.js
  *            node generate_explained.js thelongdark [GAME_ID ...]
  *
- * Any argument starting with '--' is ignored (reserved for future flags).
+ * Arguments starting with '--' are silently ignored.
  */
 
 const fs   = require('fs');
@@ -173,22 +173,40 @@ function splitPathJoinArgs(argsStr) {
 }
 
 /**
- * Split a string on commas at depth 0 (not inside parentheses or brackets).
+ * Split a string on commas at depth 0 (not inside parentheses, brackets, or string literals).
  */
 function splitAtTopLevelCommas(str) {
   const parts = [];
   let depth = 0;
+  let inStr = '';  // '', "'", '"', or '`'
   let current = '';
   for (let i = 0; i < str.length; i++) {
     const ch = str[i];
-    if (ch === '(' || ch === '[') depth++;
-    else if (ch === ')' || ch === ']') depth--;
-    else if (ch === ',' && depth === 0) {
-      parts.push(current);
-      current = '';
+    if (inStr) {
+      current += ch;
+      if (ch === '\\') {
+        i++;
+        if (i < str.length) current += str[i];
+      } else if (ch === inStr) {
+        inStr = '';
+      }
       continue;
     }
-    current += ch;
+    if (ch === "'" || ch === '"' || ch === '`') {
+      inStr = ch;
+      current += ch;
+    } else if (ch === '(' || ch === '[') {
+      depth++;
+      current += ch;
+    } else if (ch === ')' || ch === ']') {
+      depth--;
+      current += ch;
+    } else if (ch === ',' && depth === 0) {
+      parts.push(current);
+      current = '';
+    } else {
+      current += ch;
+    }
   }
   if (current.trim()) parts.push(current);
   return parts;

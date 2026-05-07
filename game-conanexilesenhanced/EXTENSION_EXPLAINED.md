@@ -1,36 +1,34 @@
-# Kingdom Come: Deliverance II — Vortex Extension Explained
+# Conan Exiles Enhanced — Vortex Extension Explained
 
 ## Overview
 
 | Property | Value |
 | --- | --- |
-| Name | Kingdom Come Deliverance II Vortex Extension |
-| Engine / Structure | Mod Folder and FBLO |
+| Name | Conan Exiles Enhanced Vortex Extension |
+| Engine / Structure | Unreal Engine 4-5 Game |
 | Author | ChemBoy1 |
 
 ## Key Identifiers
 
 | Property | Value |
 | --- | --- |
-| Game ID | `kingdomcomedeliverance2` |
-| Executable | `N/A` |
-| Executable (Xbox) | `gamelaunchhelper.exe` |
-| Executable (GOG) | `Bin/Win64MasterMasterGogPGO/KingdomCome.exe` |
+| Game ID | `conanexilesenhanced` |
+| Executable | `XXX.exe` |
+| Executable (GOG) | `XXX.exe` |
+| Executable (Demo) | `XXX.exe` |
+| Extension Page | XXX |
+| PCGamingWiki | XXX |
 
 ## Supported Stores
 
-- **Steam** — `1771300`
-- **Epic Games Store** — `278984b84235407d922da634b9d7d247`
-- **GOG** — `1248083010`
-- **Xbox / Microsoft Store** — `DeepSilver.77536C3FE941`
+- **Steam** — `440900`
 
 ## Feature Flags
 
 | Flag | Value | Description |
 | --- | --- | --- |
-| `LOAD_ORDER_ENABLED` | `true` | enables load order sorting |
-| `mod_update_all_profile` | `false` |  |
-| `updating_mod` | `false` | used to see if it's a mod update or not |
+| `hasXbox` | `false` | toggle for Xbox version logic. |
+| `multiExe` | `false` | toggle for multiple executables (Epic/GOG/Demo don't match Steam) |
 
 ## Mod Types
 
@@ -38,16 +36,23 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
-| Mod | `?` | high | `{gamePath}/Mods` |
-| Root Game Folder | `kingdomcomedeliverance2-root` | high | `{gamePath}` |
+| UE4SS Script-LogicMod Combo | `conanexilesenhanced-ue4sscombo` | high | `{gamePath}` |
+| UE4SS LogicMods (Blueprint) | `conanexilesenhanced-logicmods` | high | `{gamePath}/XXX/Content/Paks` |
+| PAK_ALT_NAME | `PAK_ALT_ID` | high | `{gamePath}/PAK_ALT_PATH` |
+| ROOT_NAME | `ROOT_ID` | high | `{gamePath}` |
+
+## Auto-Downloaded Dependencies
+
+| Dependency | Version | Details |
+| --- | --- | --- |
+| UE4SS | — | — |
 
 ## Special Features
 
 - **Deploy Hook** (`did-deploy`) — runs custom logic (e.g., notifications, metadata patching) every time mods are deployed.
+- **Purge Hook** (`did-purge`) — runs custom logic when mods are purged.
+- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
-- **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
-- **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
-- **GOG Support** — detects GOG version with adjusted executable/data paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
 ## How Mod Installation Works

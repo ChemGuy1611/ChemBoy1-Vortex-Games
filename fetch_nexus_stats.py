@@ -47,13 +47,6 @@ def _save_stats(data: dict):
     vu.write_json_atomic(STATS_PATH, data, sort_keys=True)
 
 
-# == API =======================================================================
-
-def _fetch_mod(domain: str, mod_id: str, api_key: str):
-    """Fetch mod details from Nexus v1. Returns (data_dict, rate_remaining_str_or_None)."""
-    return vu.nexus_get_mod(domain, mod_id, api_key)
-
-
 # == Core logic ================================================================
 
 def fetch_all(target_ids=None, dry_run=False, force=False):
@@ -98,7 +91,7 @@ def fetch_all(target_ids=None, dry_run=False, force=False):
         if i > 0:
             time.sleep(0.2)
         try:
-            data, remaining = _fetch_mod(domain, mod_id, api_key)
+            data, remaining = vu.nexus_get_mod(domain, mod_id, api_key)
             last_remaining = remaining
             entry = {
                 "mod_id": int(mod_id),

@@ -16,18 +16,30 @@ Usage:
         extract_game_id, extract_steamapp_id,
         extract_game_name, extract_extension_url,
         sanitize_game_name, normalize_game_name,
+        roman_to_arabic, arabic_to_roman,
         name_lookup_variants, lookup_pcgamingwiki,
         get_api_key, http_get, http_get_bytes, http_post_json,
         fetch_epic_app_id, add_to_discovery_ids,
         const_value, is_unset, is_missing, set_or_insert,
-        update_index_header, inject_register_actions, find_fn_body,
+        update_index_header, inject_register_actions,
+        find_fn_end, find_fn_body, REGISTER_ACTIONS,
         read_info_json, make_info_json, make_changelog, parse_changelog_latest,
-        list_game_ids, iter_repo_scripts, dry_prefix,
-        node_check, node_check_source, eslint_check, get_discovery_ids,
+        mutate_index_js, read_json, write_json_atomic,
+        list_game_ids, iter_game_folders, iter_repo_scripts,
+        dry_prefix, print_run_summary, resize_images_to,
+        node_check, node_check_source, eslint_check,
+        run_generate_explained, get_discovery_ids, detect_engine, detect_stores,
+        validate_index_js,
         log_info, log_error, log_warn,
         find_vortex_exe, safe_windows_dirname,
         read_id_list, write_id_list, is_load_order_game,
         nexus_list_games, nexus_get_mod,
+        download_exec_icon, download_cover_art,
+        download_title_image, download_banner_image,
+        write_text_atomic, open_in_default_app,
+        run_script, load_vortex_manifest,
+        resize_pngs_in_dirs, build_js_symbol_table,
+        list_template_names, iter_extension_folders,
     )
 """
 
@@ -36,6 +48,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import tempfile
 import time
 import urllib.error
@@ -92,7 +105,7 @@ def _is_retryable(exc):
 def _execute_with_retry(fn):
     """Call fn(), retrying on transient failures with exponential back-off."""
     last_exc = None
-    for attempt, delay in enumerate([(0,)] + list(_RETRY_DELAYS)):
+    for attempt, delay in enumerate([0] + list(_RETRY_DELAYS)):
         if attempt:
             time.sleep(delay)
         try:
@@ -248,14 +261,14 @@ def normalize_game_name(s):
 # == Name processing ===========================================================
 
 _ROMAN = [
-    (r'\bVIII\b', '8'), (r'\bVII\b', '7'), (r'\bVI\b', '6'),
+    (r'\bXII\b', '12'), (r'\bVIII\b', '8'), (r'\bVII\b', '7'), (r'\bVI\b', '6'),
     (r'\bIX\b', '9'), (r'\bIV\b', '4'), (r'\bXI\b', '11'),
     (r'\bIII\b', '3'), (r'\bII\b', '2'), (r'\bX\b', '10'),
     (r'\bV\b', '5'),
 ]
 
 _ARABIC_TO_ROMAN = [
-    ('11', 'XI'), ('10', 'X'), ('9', 'IX'), ('8', 'VIII'),
+    ('12', 'XII'), ('11', 'XI'), ('10', 'X'), ('9', 'IX'), ('8', 'VIII'),
     ('7', 'VII'), ('6', 'VI'), ('5', 'V'), ('4', 'IV'),
     ('3', 'III'), ('2', 'II'),
 ]
@@ -554,7 +567,7 @@ def add_to_discovery_ids(src):
     return src
 
 
-def _find_fn_end(src, fn_match_end):
+def find_fn_end(src, fn_match_end):
     """Return index just past the closing '}' of the JS function whose opening
     '{' is at fn_match_end - 1. Returns -1 if the brace is never closed."""
     brace_depth = 0
@@ -571,7 +584,8 @@ def _find_fn_end(src, fn_match_end):
 
 
 # Standard context.registerAction entries injected by new_template.py and patch_extensions.py.
-# Each tuple: (label, commented_out: bool, code: str)
+# Each tuple: (label, commented_out: bool, code: str[, detect_key: str])
+# detect_key overrides the default exact-label check used to decide whether the action already exists.
 REGISTER_ACTIONS = [
     (
         'Open Config Folder',
@@ -583,6 +597,7 @@ REGISTER_ACTIONS = [
         "      const gameId = selectors.activeGameId(state);\n"
         "      return gameId === GAME_ID;\n"
         "  }); //*/\n",
+        'Open Config',  # match any 'Open Config ...' variant
     ),
     (
         'Open Save Folder',
@@ -594,6 +609,7 @@ REGISTER_ACTIONS = [
         "      const gameId = selectors.activeGameId(state);\n"
         "      return gameId === GAME_ID;\n"
         "  }); //*/\n",
+        'Open Save',  # match any 'Open Save ...' variant
     ),
     (
         'Open PCGamingWiki Page',
@@ -680,14 +696,15 @@ def inject_register_actions(src):
     m = re.search(r'\nfunction applyGame\b[^{]*\{|\nasync function applyGame\b[^{]*\{', src)
     if not m:
         return src, []
-    fn_end = _find_fn_end(src, m.end())
+    fn_end = find_fn_end(src, m.end())
     if fn_end == -1:
         return src, []
-    has_combined = "'Open Config/Save Folder'" in src
+    has_combined = 'Open Config/Save' in src
     missing_code = []
     missing_labels = []
-    for label, _commented, code in REGISTER_ACTIONS:
-        if f"'{label}'" not in src:
+    for label, _commented, code, *rest in REGISTER_ACTIONS:
+        detect_key = rest[0] if rest else f"'{label}'"
+        if detect_key not in src:
             if has_combined and label in ('Open Config Folder', 'Open Save Folder'):
                 continue
             missing_code.append(code)
@@ -699,6 +716,86 @@ def inject_register_actions(src):
         block += '  //register actions\n'
     block += ''.join(missing_code)
     return src[:fn_end - 1] + block + src[fn_end - 1:], missing_labels
+
+
+# == JS symbol table ===========================================================
+
+def build_js_symbol_table(src):
+    """Build a simple {name: value} dict of resolved string constants from index.js source.
+
+    Handles:
+      - String literals:   const FOO = "bar"  or  const FOO = 'bar'
+      - Template literals: const FOO = `${OTHER}suffix`
+      - path.join():       const FOO = path.join("a", "b")  -> "a/b"
+      - Variable refs:     const FOO = OTHER_VAR
+    Multi-pass to resolve chained references.
+    """
+    table = {}
+
+    # Pass 1: collect all literal string constants (trailing semicolon optional)
+    for m in re.finditer(
+        r'^(?:const|let)\s+(\w+)\s*=\s*["`\'](.*?)["`\']\s*;?',
+        src, re.MULTILINE
+    ):
+        table[m.group(1)] = m.group(2)
+
+    # Pass 2: resolve template literals `${VAR}suffix` or `prefix${VAR}`
+    for m in re.finditer(
+        r'^(?:const|let)\s+(\w+)\s*=\s*`(.*?)`\s*;?',
+        src, re.MULTILINE
+    ):
+        name = m.group(1)
+        template = m.group(2)
+        resolved = re.sub(
+            r'\$\{(\w+)\}',
+            lambda r: table.get(r.group(1), r.group(0)),
+            template
+        )
+        if '${' not in resolved:
+            table[name] = resolved
+
+    # Pass 3: collect path.join(...) constants, resolving variable refs from table
+    for m in re.finditer(
+        r'^(?:const|let)\s+(\w+)\s*=\s*path\.join\((.+?)\)\s*;?',
+        src, re.MULTILINE
+    ):
+        name = m.group(1)
+        args_str = m.group(2)
+        parts = []
+        for arg in re.split(r',', args_str):
+            arg = arg.strip()
+            qm = re.match(r'^["\']([^"\']*)["\']$', arg)
+            if qm:
+                parts.append(qm.group(1))
+                continue
+            tm = re.match(r'^`(.*)`$', arg)
+            if tm:
+                resolved = re.sub(
+                    r'\$\{(\w+)\}',
+                    lambda r: table.get(r.group(1), r.group(0)),
+                    tm.group(1)
+                )
+                if '${' not in resolved:
+                    parts.append(resolved)
+                continue
+            if re.match(r'^\w+$', arg) and arg in table:
+                parts.append(table[arg])
+                continue
+            parts = None
+            break
+        if parts:
+            table[name] = "/".join(parts)
+
+    # Pass 4: resolve variable-to-variable refs
+    for m in re.finditer(
+        r'^(?:const|let)\s+(\w+)\s*=\s*(\w+)\s*;?',
+        src, re.MULTILINE
+    ):
+        name, ref = m.group(1), m.group(2)
+        if name not in table and ref in table:
+            table[name] = table[ref]
+
+    return table
 
 
 # == Image download helpers ====================================================
@@ -1039,6 +1136,27 @@ def resize_images_to(paths_and_labels, target_wh, *, fmt='JPEG', quality=95, dry
     return resized, already, missing
 
 
+def resize_pngs_in_dirs(folders, dry_run=False):
+    """Resize all non-64x64 PNGs in the given folders to 64x64 using Pillow.
+    Skips folders that do not exist. Prints a summary line."""
+    try:
+        from PIL import Image  # noqa: F401 — import check only; resize_images_to imports again
+    except ImportError:
+        print("PNG resize skipped -- Pillow not installed (pip install Pillow)\n")
+        return
+    pairs = []
+    for folder in folders:
+        if not os.path.isdir(folder):
+            continue
+        folder_name = os.path.basename(folder)
+        for png in sorted(f for f in os.listdir(folder) if f.lower().endswith('.png')):
+            pairs.append((os.path.join(folder, png), f"{folder_name}/{png}"))
+    if not pairs:
+        return
+    r, a, _ = resize_images_to(pairs, (64, 64), fmt='PNG', dry_run=dry_run)
+    print(f"\nPNG resize: {r} resized, {a} already 64x64.\n")
+
+
 # == Node / repo helpers =======================================================
 
 def run_generate_explained(game_id):
@@ -1090,6 +1208,19 @@ def node_check_source(src):
         return None, 'node not found on PATH -- skipping JS validation'
 
 
+def run_script(script_name, *args, capture=True):
+    """Run a Python script from REPO_ROOT using sys.executable.
+
+    Returns a CompletedProcess with .returncode, .stdout, .stderr when
+    capture=True (default). Returns a CompletedProcess with only .returncode
+    when capture=False (output goes to the terminal)."""
+    cmd = [sys.executable, script_name] + [str(a) for a in args]
+    return subprocess.run(
+        cmd, cwd=REPO_ROOT,
+        capture_output=capture, text=capture,
+    )
+
+
 def iter_game_folders(target_game_ids=None):
     """Yield (folder, game_id, src) for every game-* extension folder.
     If target_game_ids is a non-empty collection, only those game IDs are yielded."""
@@ -1119,6 +1250,37 @@ def list_game_ids():
     )
 
 
+def list_template_names():
+    """Return a sorted list of template name suffixes (e.g. ['basic', 'ue4-5', ...])."""
+    return sorted(
+        entry[len(TEMPLATE_PREFIX):]
+        for entry in os.listdir(REPO_ROOT)
+        if entry.startswith(TEMPLATE_PREFIX) and os.path.isdir(os.path.join(REPO_ROOT, entry))
+    )
+
+
+def iter_extension_folders(*, include_templates=False):
+    """Yield (folder, game_id, src) for game-* and optionally template-* folders.
+
+    Like iter_game_folders() but can also include templates. Template game_id
+    falls back to the folder entry name when GAME_ID is absent from source."""
+    for entry in sorted(os.listdir(REPO_ROOT)):
+        folder = os.path.join(REPO_ROOT, entry)
+        if not os.path.isdir(folder):
+            continue
+        if entry.startswith(GAME_PREFIX):
+            pass
+        elif include_templates and entry.startswith(TEMPLATE_PREFIX):
+            pass
+        else:
+            continue
+        src = read_index_js(folder)
+        if not src:
+            continue
+        game_id = extract_game_id(src) or entry
+        yield folder, game_id, src
+
+
 def iter_repo_scripts():
     """Yield absolute paths of all scripts listed in scripts.txt.
     Blank lines and # comment lines are skipped."""
@@ -1143,6 +1305,31 @@ def read_info_json(folder):
             return json.load(f)
     except (json.JSONDecodeError, OSError):
         return None
+
+
+_DEFAULT_MANIFEST_PATH = r"C:\ProgramData\vortex\temp\extensions-manifest.json"
+
+
+def load_vortex_manifest(path=None):
+    """Read Vortex extensions-manifest.json. Returns {game_id: mod_id} dict.
+
+    path defaults to C:\\ProgramData\\vortex\\temp\\extensions-manifest.json.
+    Returns {} and prints a warning on any read/parse error."""
+    manifest_path = path or _DEFAULT_MANIFEST_PATH
+    try:
+        with open(manifest_path, encoding="utf-8") as f:
+            data = json.load(f)
+        result = {}
+        for e in data.get("extensions", []):
+            gid = e.get("gameId")
+            mid = e.get("modId")
+            if gid and mid:
+                result[gid] = mid
+        print(f"  Manifest loaded: {len(result)} games with modId.")
+        return result
+    except Exception as ex:
+        print(f"  Warning: could not load manifest ({ex}). EXTENSION_URL patch will be skipped.")
+        return {}
 
 
 def make_info_json():
@@ -1227,6 +1414,53 @@ def detect_engine(src):
     return 'Basic / Other'
 
 
+def validate_index_js(src: str) -> list[str]:
+    """Return a list of issue strings found in an index.js source.
+
+    Checks: leftover XXX placeholders outside comments, missing applyGame(),
+    missing context.registerGame(), and missing main() function.
+    """
+    issues = []
+    stripped = re.sub(r'/\*.*?\*/', '', src, flags=re.DOTALL)
+    stripped = re.sub(r'//[^\n]*', '', stripped)
+    if re.search(r'\bXXX\b', stripped):
+        issues.append("leftover XXX placeholder(s)")
+    if 'applyGame' not in src:
+        issues.append("missing applyGame()")
+    if 'context.registerGame' not in src:
+        issues.append("missing context.registerGame()")
+    if not re.search(r'\bfunction\s+main\s*\(|\bconst\s+main\s*=', src):
+        issues.append("missing main()")
+    return issues
+
+
+def detect_stores(src: str) -> str:
+    """Return space-separated store badges present in DISCOVERY_IDS_ACTIVE.
+
+    Parses the array literal and maps known constant names to abbreviated badges:
+    STEAMAPP_ID -> S, GOGAPP_ID -> G, EPICAPP_ID -> E, XBOXAPP_ID -> X,
+    UBI*_ID -> U, EA_APP_ID/ORIGIN_ID -> EA.
+    """
+    m = re.search(r'DISCOVERY_IDS_ACTIVE\s*=\s*\[([^\]]*)\]', src, re.DOTALL)
+    if not m:
+        return ""
+    active = m.group(1)
+    badges = []
+    if re.search(r'\bSTEAMAPP_ID\b', active):
+        badges.append("S")
+    if re.search(r'\bGOGAPP_ID\b', active):
+        badges.append("G")
+    if re.search(r'\bEPICAPP_ID\b', active):
+        badges.append("E")
+    if re.search(r'\bXBOXAPP_ID\b', active):
+        badges.append("X")
+    if re.search(r'\bUBI(?:APP)?_ID\b', active):
+        badges.append("U")
+    if re.search(r'\bEA_APP_ID\b|\bORIGIN_ID\b', active):
+        badges.append("EA")
+    return " ".join(badges)
+
+
 # == CLI helpers ===============================================================
 
 def dry_prefix(dry_run):
@@ -1290,6 +1524,20 @@ def write_json_atomic(path, data, *, indent=2, sort_keys=False):
     tmp = path + ".tmp"
     with open(tmp, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=indent, sort_keys=sort_keys)
+    os.replace(tmp, path)
+
+
+def write_text_atomic(path, entries, encoding="utf-8"):
+    """Write entries to path atomically via a .tmp file + os.replace.
+
+    entries may be a list of strings (each written in order) or a single string.
+    path may be a str or pathlib.Path."""
+    tmp = str(path) + ".tmp"
+    if isinstance(entries, str):
+        entries = [entries]
+    with open(tmp, "w", encoding=encoding) as f:
+        for entry in entries:
+            f.write(entry)
     os.replace(tmp, path)
 
 
@@ -1385,6 +1633,11 @@ def find_vortex_exe():
         if path and os.path.isfile(path):
             return path
     return None
+
+
+def open_in_default_app(path):
+    """Open path in the system default application (Windows: os.startfile)."""
+    os.startfile(path)
 
 
 def safe_windows_dirname(name):

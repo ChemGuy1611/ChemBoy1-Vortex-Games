@@ -73,9 +73,9 @@ import shutil
 import argparse
 
 from vortex_utils import (
-    REPO_ROOT, extract_game_id, _find_fn_end, REGISTER_ACTIONS, node_check,
+    REPO_ROOT, extract_game_id, find_fn_end, REGISTER_ACTIONS, node_check,
     inject_register_actions, update_index_header, write_index_js,
-    make_info_json, make_changelog,
+    make_info_json, make_changelog, is_missing, const_value,
 )
 
 # String constants always replaced with "XXX"
@@ -175,13 +175,8 @@ def apply_substitutions(src):
             replaced += 1
 
     for var in STORE_IDS:
-        # Match null, non-empty string, or empty string ("" / '')
-        m = re.search(
-            rf'(?:const|let)\s+{re.escape(var)}\s*=\s*(["\'].*?["\']|null)',
-            src
-        )
-        if m:
-            value = m.group(1)
+        value = const_value(src, var)
+        if value is not None:
             if value == 'null':
                 pass  # already null, leave it
             elif value in ('""', "''"):  # empty string -> null (store not applicable)
@@ -244,8 +239,7 @@ def _fixup_toggles(src):
         ('hasUserIdFolder',   'false', 'true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)'),
         ('debug',             'false', 'toggle for debug mode'),
     ]
-    missing = [(n, d, c) for n, d, c in TOGGLES
-               if not re.search(rf'(?:const|let)\s+{n}\s*=', src)]
+    missing = [(n, d, c) for n, d, c in TOGGLES if is_missing(src, n)]
     if not missing:
         return src
     lines = ['//feature toggles'] + [f'const {n} = {d}; //{c}' for n, d, c in missing]
@@ -262,11 +256,11 @@ def _fixup_toggles(src):
 def _fixup_store_consts(src):
     """Add GOGAPP_ID=null, XBOXAPP_ID=null, XBOXEXECNAME='XXX' constants if missing."""
     to_add = []
-    if not re.search(r'(?:const|let)\s+GOGAPP_ID\s*=', src):
+    if is_missing(src, 'GOGAPP_ID'):
         to_add.append('const GOGAPP_ID = null;')
-    if not re.search(r'(?:const|let)\s+XBOXAPP_ID\s*=', src):
+    if is_missing(src, 'XBOXAPP_ID'):
         to_add.append('const XBOXAPP_ID = null;')
-    if not re.search(r'(?:const|let)\s+XBOXEXECNAME\s*=', src):
+    if is_missing(src, 'XBOXEXECNAME'):
         to_add.append('const XBOXEXECNAME = "XXX";')
     if not to_add:
         return src
@@ -283,7 +277,7 @@ def _fixup_store_consts(src):
 
 def _fixup_discovery_ids_active(src):
     """Add DISCOVERY_IDS_ACTIVE constant if missing."""
-    if re.search(r'(?:const|let)\s+DISCOVERY_IDS_ACTIVE\s*=', src):
+    if not is_missing(src, 'DISCOVERY_IDS_ACTIVE'):
         return src
     line = 'const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs\n'
     for pat in [
@@ -520,7 +514,7 @@ def _fixup_setup_writable(src):
     m_start = re.search(r'\nasync function setup\b[^{]*\{|\nfunction setup\b[^{]*\{', src)
     if not m_start:
         return src
-    fn_end = _find_fn_end(src, m_start.end())
+    fn_end = find_fn_end(src, m_start.end())
     if fn_end == -1:
         return src
     # Extract setup() body, remove any 'return fs.ensureDirWritableAsync(...)' lines.
@@ -566,7 +560,7 @@ def _fixup_path_pattern(src):
     m_fn = re.search(r'\nfunction pathPattern\b[^{]*\{', src)
     if not m_fn:
         return src
-    fn_end = _find_fn_end(src, m_fn.end())
+    fn_end = find_fn_end(src, m_fn.end())
     if fn_end == -1:
         return src
     fn_body = src[m_fn.start():fn_end]
@@ -633,7 +627,7 @@ def _fixup_requires_launcher(src):
     )
     if not m_start:
         return src
-    fn_end = _find_fn_end(src, m_start.end())
+    fn_end = find_fn_end(src, m_start.end())
     if fn_end == -1:
         return src
     new_fn = '\n' + _REQUIRES_LAUNCHER_FN.rstrip('\n')
@@ -784,7 +778,7 @@ def _fixup_fallback_installer(src):
     # Fallback: before the closing } of applyGame
     m = re.search(r'\nfunction applyGame\b[^{]*\{|\nasync function applyGame\b[^{]*\{', src)
     if m:
-        fn_end = _find_fn_end(src, m.end())
+        fn_end = find_fn_end(src, m.end())
         if fn_end != -1:
             src = src[:fn_end - 1] + _FALLBACK_REGISTRATION + src[fn_end - 1:]
 

@@ -3,7 +3,7 @@
 fetch_exec_icon.py
 ------------------
 Finds all game-* extension folders missing their exec.png icon and downloads
-it from the Steam CDN (64x64 PNG).
+it from the Steam CDN (64x64 PNG) with SteamGridDB icon as fallback.
 
 Usage:
     python fetch_exec_icon.py

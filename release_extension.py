@@ -6,16 +6,18 @@ extension page in the browser.
 
 Steps performed per game:
     1. Validate info.json version has a matching ## [X.Y.Z] entry in CHANGELOG.md
-    2. Check that const debug = false in index.js (errors if true)
-    3. Check that all context.registerInstaller calls have unique priority numbers (errors if not)
-    4. Rename version .txt file to match info.json version
-    5. Update Version and Date in index.js header comment
-    6. Add resolved store IDs to DISCOVERY_IDS_ACTIVE if missing
-    7. node --check on index.js (warns on syntax error)
-    8. eslint on index.js (warns on lint errors)
-    9. Run generate_explained.js to regenerate EXTENSION_EXPLAINED.md
-   10. Create game-{GAME_ID}.zip with 7-Zip
-   11. Open EXTENSION_URL in browser (or nexusmods.com/games/site if not set)
+    2. Check info.json 'name' matches 'Game: <Name>' pattern (errors if not)
+    3. Check that const debug = false in index.js (errors if true)
+    4. Check that all context.registerInstaller calls have unique priority numbers (errors if not)
+    5. Run validate_index_js: leftover XXX, missing applyGame/registerGame/main (warns)
+    6. Rename version .txt file to match info.json version
+    7. Update Version and Date in index.js header comment
+    8. Add resolved store IDs to DISCOVERY_IDS_ACTIVE if missing
+    9. node --check on index.js (warns on syntax error)
+   10. eslint on index.js (warns on lint errors)
+   11. Run generate_explained.js to regenerate EXTENSION_EXPLAINED.md
+   12. Create game-{GAME_ID}.zip with 7-Zip
+   13. Open EXTENSION_URL in browser (or nexusmods.com/games/site if not set)
 
 Usage:
     python release_extension.py GAME_ID [GAME_ID ...]
@@ -37,7 +39,7 @@ import zipfile
 from vortex_utils import (
     REPO_ROOT, run_generate_explained, add_to_discovery_ids, node_check, eslint_check,
     extract_extension_url, read_info_json, parse_changelog_latest,
-    update_index_header as _apply_header, mutate_index_js,
+    update_index_header as _apply_header, mutate_index_js, validate_index_js,
 )
 SEVENZIP = os.environ.get("SEVENZIP_PATH", r"C:\Program Files\7-Zip\7z.exe")
 NEXUS_SITE_URL = "https://www.nexusmods.com/games/site"
@@ -92,45 +94,20 @@ def update_version_txt(folder, game_id, version, dry_run=False):
 
 def update_index_header(folder, game_id, version, date, dry_run=False):
     """Update the Version and Date lines in the index.js header comment."""
-    index_path = os.path.join(folder, "index.js")
-    if not os.path.isfile(index_path):
-        print(f"  [{game_id}] WARNING -index.js not found, skipping header update")
-        return
-
-    try:
-        with open(index_path, encoding="utf-8") as f:
-            original = f.read()
-    except OSError as e:
-        print(f"  [{game_id}] WARNING -could not read index.js: {e}")
-        return
-
     if not version:
-        print(f"  [{game_id}] WARNING -no version available, skipping Version header update")
+        print(f"  [{game_id}] WARNING - no version available, skipping Version header update")
     if not date:
-        print(f"  [{game_id}] WARNING -no changelog date found, skipping Date header update")
-
-    updated = _apply_header(original, version=version, date=date)
-
-    if updated == original:
-        print(f"  [{game_id}] index.js header already up to date")
-        return
-
-    if dry_run:
-        if version:
-            print(f"  [{game_id}] [DRY RUN] Would update index.js header: Version -> {version}")
-        if date:
-            print(f"  [{game_id}] [DRY RUN] Would update index.js header: Date -> {date}")
-        return
-
-    try:
-        with open(index_path, "w", encoding="utf-8") as f:
-            f.write(updated)
-        if version:
-            print(f"  [{game_id}] Updated index.js header: Version -> {version}")
-        if date:
-            print(f"  [{game_id}] Updated index.js header: Date -> {date}")
-    except OSError as e:
-        print(f"  [{game_id}] ERROR -could not write index.js: {e}")
+        print(f"  [{game_id}] WARNING - no changelog date found, skipping Date header update")
+    parts = [p for p in (f"Version -> {version}" if version else None, f"Date -> {date}" if date else None) if p]
+    label = ", ".join(parts) if parts else "header"
+    mutate_index_js(
+        folder, game_id,
+        lambda src: _apply_header(src, version=version, date=date),
+        dry_run=dry_run,
+        changed_msg=f"Updated index.js {label}",
+        unchanged_msg="index.js header already up to date",
+        dry_run_msg=f"Would update index.js {label}",
+    )
 
 
 def update_discovery_ids(folder, game_id, dry_run=False):
@@ -162,12 +139,19 @@ def release(game_id, open_browser, dry_run=False):
             return False
         if not check_installer_priorities(index_src, game_id):
             return False
+        for issue in validate_index_js(index_src):
+            print(f"  [{game_id}] WARNING - {issue}")
 
     info = read_info_json(folder)
     if info is None:
         print(f"  [{game_id}] ERROR - info.json missing or invalid")
         return False
     version = info.get("version")
+
+    name_field = info.get("name", "")
+    if not re.match(r'^Game:\s+\S', name_field):
+        print(f"  [{game_id}] ERROR - info.json 'name' does not match 'Game: <Name>' pattern: {name_field!r}")
+        return False
 
     changelog_path = os.path.join(folder, "CHANGELOG.md")
     if not os.path.isfile(changelog_path):

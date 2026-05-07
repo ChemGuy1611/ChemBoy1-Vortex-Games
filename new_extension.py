@@ -24,9 +24,9 @@ Copies all template assets as-is (tfc.png, fluffy.png, reloaded.png, etc.).
 
 After writing index.js, automatically runs:
     1. node generate_explained.js {GAME_ID}
-    2. python categorize_games.py {GAME_ID}
-    3. python setup_test_folder.py {GAME_ID}
-    4. npx eslint game-{GAME_ID}/index.js  (warns on issues, does not abort)
+    2. npx eslint game-{GAME_ID}/index.js  (warns on issues, does not abort)
+    3. python categorize_games.py {GAME_ID}
+    4. python setup_test_folder.py {GAME_ID}
 
 Requirements:
     pip install Pillow
@@ -42,7 +42,6 @@ import json
 import time
 import shutil
 import argparse
-import subprocess
 import webbrowser
 import gzip
 import urllib.error
@@ -61,7 +60,7 @@ from vortex_utils import (
     download_exec_icon, download_cover_art, download_title_image, download_banner_image,
     update_index_header, sanitize_game_name, normalize_game_name, write_index_js,
     read_index_js, extract_steamapp_id, extract_game_name,
-    nexus_list_games,
+    nexus_list_games, run_script, open_in_default_app,
 )
 
 TEMPLATES = [
@@ -822,7 +821,7 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
         icon_ok, icon_source = download_exec_icon(appid, game_name, icon_path)
         print(f"  {'Saved  : ' + icon_source if icon_ok else 'FAILED -add exec.png manually (64x64 PNG)'}")
         if icon_ok and not no_startfile:
-            os.startfile(icon_path)
+            open_in_default_app(icon_path)
 
     # ── Cover art ─────────────────────────────────────────────────────────────
     if no_images:
@@ -835,13 +834,13 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
         if art_ok:
             print(f"  Saved  : {art_source}")
             if not no_startfile:
-                os.startfile(art_path)
+                open_in_default_app(art_path)
         else:
             print(f"  FAILED -add {game_id}.jpg manually (640x360 JPG, no title text)")
 
     # ── index.js ──────────────────────────────────────────────────────────────
     if not no_startfile:
-        os.startfile(os.path.join(dest, "index.js"))
+        open_in_default_app(os.path.join(dest, "index.js"))
 
     # ── Browser tabs ──────────────────────────────────────────────────────────
     if not no_browser:
@@ -867,7 +866,7 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
         if title_ok:
             print(f"  Saved  : {title_source}")
             if not no_startfile:
-                os.startfile(title_path)
+                open_in_default_app(title_path)
         else:
             print(f"  FAILED -- add {game_id}_title.jpg manually to resources/title-images/ (1920x1080 JPG, with title text)")
 
@@ -883,7 +882,7 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
         if banner_ok:
             print(f"  Saved  : {banner_source}")
             if not no_startfile:
-                os.startfile(banner_path)
+                open_in_default_app(banner_path)
         else:
             print(f"  FAILED -- add {game_id}_banner.jpg manually to resources/banner-images/")
 
@@ -949,10 +948,7 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
 
     # ── Update engine category lists ─────────────────────────────────────────
     print("[categorize_games.py]")
-    result = subprocess.run(
-        ["python", "categorize_games.py", game_id],
-        cwd=REPO_ROOT, capture_output=True, text=True
-    )
+    result = run_script("categorize_games.py", game_id)
     if result.returncode == 0:
         print(f"  {result.stdout.strip()}\n")
     else:
@@ -997,7 +993,7 @@ def refresh_images(game_id, no_browser=False, no_startfile=False):
     ok, source = download_exec_icon(appid, name, icon_path)
     print(f"  {'Saved  : ' + source if ok else 'FAILED'}")
     if ok and not no_startfile:
-        os.startfile(icon_path)
+        open_in_default_app(icon_path)
 
     print(f"\n[{game_id}.jpg]")
     time.sleep(0.3)
@@ -1005,7 +1001,7 @@ def refresh_images(game_id, no_browser=False, no_startfile=False):
     ok, source = download_cover_art(appid, name, art_path, sgdb_key)
     print(f"  {'Saved  : ' + source if ok else 'FAILED'}")
     if ok and not no_startfile:
-        os.startfile(art_path)
+        open_in_default_app(art_path)
 
     print(f"\n[{game_id}_title.jpg]")
     time.sleep(0.3)
@@ -1014,7 +1010,7 @@ def refresh_images(game_id, no_browser=False, no_startfile=False):
     ok, source = download_title_image(appid, name, title_path, sgdb_key)
     print(f"  {'Saved  : ' + source if ok else 'FAILED'}")
     if ok and not no_startfile:
-        os.startfile(title_path)
+        open_in_default_app(title_path)
 
     print(f"\n[{game_id}_banner.jpg]")
     time.sleep(0.3)
@@ -1023,7 +1019,7 @@ def refresh_images(game_id, no_browser=False, no_startfile=False):
     ok, source = download_banner_image(appid, game_id, banner_path, sgdb_key)
     print(f"  {'Saved  : ' + source if ok else 'FAILED'}")
     if ok and not no_startfile:
-        os.startfile(banner_path)
+        open_in_default_app(banner_path)
 
     print()
 

@@ -1,7 +1,7 @@
 """
 audit_scripts.py
 
-Runs three audits and reports drift found in any:
+Runs five audits and reports drift found in any:
 
   1. Header docstring audit -- compares each script's argparse flags and
      env-var reads against the flags and env vars documented in its own
@@ -13,6 +13,12 @@ Runs three audits and reports drift found in any:
 
   3. scripts.txt cross-check -- warns when a *.py or *.js in the repo root is
      not listed in scripts.txt, or when scripts.txt references a missing file.
+
+  4. vortex_utils.py exports audit -- detects public functions defined in
+     vortex_utils.py that are missing from its module docstring export list.
+
+  5. Raw log-print audit -- detects raw print(f"  [{...}]") calls in scripts
+     outside vortex_utils.py that should use log_info/log_warn/log_error.
 
 Read-only; never modifies any file.
 
@@ -27,8 +33,8 @@ Examples:
     python audit_scripts.py --json | jq .drift_found
 
 Details:
-    Skips vortex_utils.py (library), generate_explained.js (Node), and
-    SCRIPTS.md. These are listed in the SKIP set.
+    Skips vortex_utils.py (library), generate_explained.js (Node),
+    eslint.config.js (config), and SCRIPTS.md. These are listed in the SKIP set.
 
     Env vars consumed inside vortex_utils helpers (STEAMGRIDDB_API_KEY,
     NEXUS_API_KEY, STEAM_API_KEY) are listed in INDIRECT_ENVVARS and
@@ -331,6 +337,59 @@ def audit_scripts_txt():
     return any_issue, missing_files, unlisted_files
 
 
+# ── vortex_utils.py exports audit (D5) ───────────────────────────────────────
+
+def audit_vortex_utils_exports():
+    """Detect public functions in vortex_utils.py missing from its module docstring.
+    Returns (any_drift, missing_names)."""
+    utils_path = os.path.join(REPO_ROOT, "vortex_utils.py")
+    if not os.path.isfile(utils_path):
+        return False, []
+    with open(utils_path, encoding="utf-8") as f:
+        src = f.read()
+    try:
+        tree = ast.parse(src)
+    except SyntaxError:
+        return False, []
+
+    defined = {
+        node.name for node in tree.body
+        if isinstance(node, ast.FunctionDef) and not node.name.startswith("_")
+    }
+
+    docstring = _extract_module_docstring(src)
+    m = re.search(r'from vortex_utils import\s*\(([\s\S]+?)\)', docstring)
+    if not m:
+        return bool(defined), sorted(defined)
+    exported = set(re.findall(r'\b([a-z_]\w+)\b', m.group(1)))
+
+    missing = sorted(defined - exported)
+    return bool(missing), missing
+
+
+# ── Raw log-print audit (D6) ──────────────────────────────────────────────────
+
+def audit_raw_log_prints(paths):
+    """Detect raw print(f'  [{...}]') calls outside vortex_utils.py.
+    Returns (any_issue, {script_name: [line_numbers]})."""
+    hits: dict[str, list[int]] = {}
+    for path in paths:
+        name = os.path.basename(path)
+        if name == "vortex_utils.py" or not name.endswith(".py"):
+            continue
+        if not os.path.isfile(path):
+            continue
+        with open(path, encoding="utf-8") as f:
+            src = f.read()
+        lines_hit = [
+            i for i, line in enumerate(src.splitlines(), 1)
+            if re.search(r'''^\s*print\s*\(\s*f["']\s{2}\[''', line)
+        ]
+        if lines_hit:
+            hits[name] = lines_hit
+    return bool(hits), hits
+
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main():
@@ -379,7 +438,16 @@ def main():
     # -- scripts.txt cross-check --
     txt_issue, missing_files, unlisted_files = audit_scripts_txt()
 
-    any_drift = header_drift or md_drift or txt_issue
+    # -- vortex_utils.py exports audit --
+    exports_drift, missing_exports = audit_vortex_utils_exports()
+
+    # -- raw log-print audit --
+    # Collect all .py paths including vortex_utils itself for the filter inside
+    all_py_paths = [p for p in iter_repo_scripts() if p.endswith('.py')]
+    prints_issue, raw_print_hits = audit_raw_log_prints(all_py_paths)
+
+    # prints_issue is informational only -- raw-print calls are migration candidates, not blocking
+    any_drift = header_drift or md_drift or txt_issue or exports_drift
 
     if args.json:
         output = {
@@ -400,6 +468,12 @@ def main():
             "scripts_txt_audit": {
                 "missing_files": missing_files,
                 "unlisted_files": unlisted_files,
+            },
+            "vortex_utils_exports_audit": {
+                "missing_from_docstring": missing_exports,
+            },
+            "raw_log_prints_audit": {
+                name: lines for name, lines in raw_print_hits.items()
             },
             "drift_found": any_drift,
         }
@@ -439,6 +513,23 @@ def main():
             print(f"  {name}: exists in repo root but not listed in scripts.txt")
         if not missing_files and not unlisted_files:
             print("  scripts.txt: OK")
+
+    print()
+    print("Auditing vortex_utils.py exports against module docstring...\n")
+    if missing_exports:
+        for name in missing_exports:
+            print(f"  {name}: defined in vortex_utils.py but missing from module docstring")
+    else:
+        print("  vortex_utils.py: OK")
+
+    print()
+    print("Checking for raw print(f'  [{...}]') log calls outside vortex_utils.py...\n")
+    if raw_print_hits:
+        for name, line_nums in sorted(raw_print_hits.items()):
+            nums = ", ".join(str(n) for n in line_nums)
+            print(f"  {name}: raw log-print on line(s) {nums} -- use log_info/log_warn/log_error")
+    else:
+        print("  No raw log-print calls found.")
 
     print()
     if any_drift:

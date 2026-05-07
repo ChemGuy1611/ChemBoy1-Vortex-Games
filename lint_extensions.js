@@ -105,7 +105,9 @@ for (const dirName of targetDirs) {
   }
 }
 
-// ── run eslint (single spawn) ─────────────────────────────────────────────────
+// ── run eslint (chunked on Windows to stay under 8191-char cmd limit) ─────────
+
+const WIN_CMD_LIMIT = 7900;
 
 let passed        = 0;
 let failed        = 0;
@@ -115,29 +117,50 @@ const failedIds   = [];
 const jsonResults = [];
 
 if (targetFiles.length > 0) {
-  const eslintArgs = ['eslint', '--format', 'json'];
-  if (doFix) eslintArgs.push('--fix');
-  for (const { indexPath } of targetFiles) {
-    eslintArgs.push(isWin ? `"${indexPath}"` : indexPath);
-  }
+  const baseArgs = ['eslint', '--format', 'json'];
+  if (doFix) baseArgs.push('--fix');
 
-  const result = spawnSync(npxCmd, eslintArgs, {
-    cwd: ROOT,
-    encoding: 'utf8',
-    shell: true,
-  });
-
-  let eslintData = [];
-  try {
-    eslintData = JSON.parse(result.stdout || '[]');
-  } catch (_) {
-    emit(`ESLint error: ${(result.stderr || result.stdout || '').trim()}`);
-    process.exit(2);
+  // Split into batches so no single invocation exceeds the Windows limit
+  const batches = [[]];
+  if (isWin) {
+    let batchLen = 0;
+    for (const f of targetFiles) {
+      const argLen = `"${f.indexPath}"`.length + 1;
+      if (batches[batches.length - 1].length > 0 && batchLen + argLen > WIN_CMD_LIMIT) {
+        batches.push([]);
+        batchLen = 0;
+      }
+      batches[batches.length - 1].push(f);
+      batchLen += argLen;
+    }
+  } else {
+    batches[0] = targetFiles;
   }
 
   const byPath = new Map();
-  for (const entry of eslintData) {
-    byPath.set(path.normalize(entry.filePath), entry);
+  for (const batch of batches) {
+    if (batch.length === 0) continue;
+    const eslintArgs = [...baseArgs];
+    for (const { indexPath } of batch) {
+      eslintArgs.push(isWin ? `"${indexPath}"` : indexPath);
+    }
+    const result = spawnSync(npxCmd, eslintArgs, {
+      cwd: ROOT,
+      encoding: 'utf8',
+      shell: true,
+    });
+    let eslintData = [];
+    try {
+      eslintData = JSON.parse(result.stdout || '[]');
+    } catch (_) {
+      const errMsg = `ESLint error: ${(result.stderr || result.stdout || '').trim()}`;
+      emit(errMsg);
+      fs.writeFileSync(OUT_FILE, lines.join('\n') + '\n', 'utf8');
+      process.exit(2);
+    }
+    for (const entry of eslintData) {
+      byPath.set(path.normalize(entry.filePath), entry);
+    }
   }
 
   for (const { dirName, indexPath, relPath } of targetFiles) {

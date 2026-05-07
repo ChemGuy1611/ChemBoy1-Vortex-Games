@@ -31,7 +31,6 @@ import argparse
 import os
 import re
 import sys
-import json
 from vortex_utils import (
     REPO_ROOT, TITLE_IMAGES_DIR,
     lookup_pcgamingwiki, extract_game_name,
@@ -39,31 +38,11 @@ from vortex_utils import (
     fetch_epic_app_id, add_to_discovery_ids,
     const_value, is_unset, is_missing, set_or_insert,
     inject_register_actions, find_fn_body,
-    list_game_ids, write_index_js, resize_images_to,
+    list_game_ids, write_index_js, resize_images_to, log_info,
+    load_vortex_manifest, resize_pngs_in_dirs,
 )
 MANIFEST_PATH = os.environ.get("VORTEX_MANIFEST_PATH", r"C:\ProgramData\vortex\temp\extensions-manifest.json")
 NEXUS_SITE_BASE = "https://www.nexusmods.com/site/mods"
-
-
-# ── Data loaders (called once, passed as context) ─────────────────────────────
-
-def load_manifest():
-    """Return dict of {game_id: mod_id} from the Vortex extensions manifest."""
-    try:
-        with open(MANIFEST_PATH, encoding="utf-8") as f:
-            data = json.load(f)
-        result = {}
-        for e in data.get("extensions", []):
-            gid = e.get("gameId")
-            mid = e.get("modId")
-            if gid and mid:
-                result[gid] = mid
-        print(f"  Manifest loaded: {len(result)} games with modId.")
-        return result
-    except Exception as ex:
-        print(f"  Warning: could not load manifest ({ex}). EXTENSION_URL patch will be skipped.")
-        return {}
-
 
 
 # ── Patches ───────────────────────────────────────────────────────────────────
@@ -487,63 +466,6 @@ PATCHES = [
 ]
 
 
-# ── PNG resize ───────────────────────────────────────────────────────────────
-
-def _get_png_size(path):
-    """Return (width, height) from a PNG IHDR chunk, or None on failure."""
-    import struct
-    try:
-        with open(path, 'rb') as f:
-            if f.read(8) != b'\x89PNG\r\n\x1a\n':
-                return None
-            f.read(4)  # chunk length
-            if f.read(4) != b'IHDR':
-                return None
-            w = struct.unpack('>I', f.read(4))[0]
-            h = struct.unpack('>I', f.read(4))[0]
-            return (w, h)
-    except Exception:
-        return None
-
-
-def run_png_resize(folders, dry_run):
-    """Resize all non-64x64 PNGs in the given folders to 64x64 using Pillow."""
-    try:
-        from PIL import Image
-    except ImportError:
-        print("PNG resize skipped -- Pillow not installed (pip install Pillow)\n")
-        return
-
-    TARGET = (64, 64)
-    total_resized = 0
-    total_already = 0
-
-    for folder in folders:
-        if not os.path.isdir(folder):
-            continue
-        folder_name = os.path.basename(folder)
-        pngs = sorted(f for f in os.listdir(folder) if f.lower().endswith('.png'))
-        for png in pngs:
-            png_path = os.path.join(folder, png)
-            size = _get_png_size(png_path)
-            if size is None:
-                print(f"  [{folder_name}/{png}] SKIP -- could not read PNG")
-                continue
-            if size == TARGET:
-                total_already += 1
-                continue
-            prefix = "[DRY RUN] " if dry_run else ""
-            print(f"  {prefix}[{folder_name}/{png}] {size[0]}x{size[1]} -> 64x64")
-            if not dry_run:
-                with Image.open(png_path) as img:
-                    img = img.convert("RGBA")
-                    img = img.resize(TARGET, Image.LANCZOS)
-                    img.save(png_path)
-            total_resized += 1
-
-    print(f"\nPNG resize: {total_resized} resized, {total_already} already 64x64.\n")
-
-
 def run_title_image_resize(game_ids, dry_run):
     """Resize all non-1920x1080 title images in resources/title-images/ to 1920x1080."""
     if not os.path.isdir(TITLE_IMAGES_DIR):
@@ -601,7 +523,7 @@ def run_patches(game_ids, dry_run, context, only=None):
     for game_id in game_ids:
         index_path = os.path.join(REPO_ROOT, f"game-{game_id}", "index.js")
         if not os.path.isfile(index_path):
-            print(f"  [{game_id}] SKIP - no index.js found")
+            log_info(game_id, "SKIP - no index.js found")
             total_skipped += 1
             continue
 
@@ -701,7 +623,7 @@ def main():
 
     print("Loading context...")
     context = {
-        "manifest": load_manifest(),
+        "manifest": load_vortex_manifest(MANIFEST_PATH),
         "force_pcgw": args.force_pcgw or args.force,
         "force": args.force,
         "debug": args.debug,
@@ -729,7 +651,7 @@ def main():
             and os.path.isdir(os.path.join(REPO_ROOT, d))
         ]
     print(f"Checking PNGs in {len(png_folders)} folder(s){' [DRY RUN]' if dry_run else ''}...\n")
-    run_png_resize(png_folders, dry_run)
+    resize_pngs_in_dirs(png_folders, dry_run=dry_run)
 
     print(f"Checking title images for {len(game_ids)} game(s){' [DRY RUN]' if dry_run else ''}...\n")
     run_title_image_resize(game_ids, dry_run)

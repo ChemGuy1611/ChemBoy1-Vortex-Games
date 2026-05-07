@@ -49,7 +49,7 @@ import sys
 import shutil
 import argparse
 
-from vortex_utils import REPO_ROOT, run_generate_explained, node_check_source, get_discovery_ids
+from vortex_utils import REPO_ROOT, run_generate_explained, node_check_source, get_discovery_ids, log_warn
 
 # Template constant names that are boolean feature toggles.
 # These are intentionally left at template defaults, not transferred from the game.
@@ -350,7 +350,7 @@ def create_port(game_id, template_name, dry_run, force):
 
     print()
     if ok is False:
-        print(f'  WARNING: JS syntax error in ported output:')
+        log_warn(game_id, 'JS syntax error in ported output:')
         print(f'    {err}')
         print('  The file has NOT been written. Fix the issue and re-run.')
         return
@@ -381,7 +381,7 @@ def create_port(game_id, template_name, dry_run, force):
     if ok:
         print(f'  EXTENSION_EXPLAINED.md regenerated.')
     else:
-        print(f'  WARNING: generate_explained.js failed -- run manually: node generate_explained.js {game_id}')
+        log_warn(game_id, f'generate_explained.js failed -- run manually: node generate_explained.js {game_id}')
 
 
 def main():
