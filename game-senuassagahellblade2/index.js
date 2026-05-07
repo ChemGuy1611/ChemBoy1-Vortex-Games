@@ -3,7 +3,7 @@ Name: Hellblade 2 Vortex Extension
 Structure: UE5 (XBOX Integrated)
 Author: ChemBoy1
 Version: 0.5.0
-Date: 2026-02-01
+Date: 2026-05-07
 //////////////////////////////////////////////////*/
 
 //Import libraries

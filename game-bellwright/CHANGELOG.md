@@ -4,7 +4,7 @@
 
 - Added tool to launch ModKit (Epic Games).
 
-## [0.4.0] - 2026-02-01
+## [0.4.0] - 2026-05-07
 
 - Fixed: Issue with Load Order sorting not working if certain other UE game extensions were installed. You will need to reinstall all pak mods to be able to sort them properly. A notification will be sent reminding you to do this.
 - Added: Notification indicating deployment is required after changing the load order.
