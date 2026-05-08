@@ -4,7 +4,7 @@ analyze_vortex_log.py
 ---------------------
 Parses the Vortex runtime log and consolidates entries into a single file
 (vortex.analyzed.log) with sections per severity level. Within each section
-entries are grouped by hour in chronological order. Multi-line entries
+entries are grouped by hour, newest-first within each bucket. Multi-line entries
 (stack traces, JSON blobs) are kept together. The output file lands next to
 the source log by default, and the folder is opened on success.
 
@@ -190,7 +190,7 @@ def _build_output(
         parts.append(f"  {label}  ({len(entries):,} entries)\n")
         parts.append(_SEP + "\n")
 
-        # group by hour, sort chronologically
+        # group by hour, newest-first within each bucket
         hour_groups: dict[str, list[str]] = {}
         for hour, text in entries:
             if hour not in hour_groups:
@@ -200,7 +200,7 @@ def _build_output(
         for hour in sorted(hour_groups, reverse=True):
             group = hour_groups[hour]
             parts.append(f"\n--- {hour} ({len(group):,} entries) ---\n")
-            parts.extend(group)
+            parts.extend(reversed(group))
 
         parts.append("\n")
 
