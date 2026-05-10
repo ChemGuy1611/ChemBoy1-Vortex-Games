@@ -1,4 +1,4 @@
-# S.T.A.L.K.E.R. 2 \tHeart of Chornobyl — Vortex Extension Explained
+# S.T.A.L.K.E.R. 2 Heart of Chornobyl — Vortex Extension Explained
 
 ## Overview
 

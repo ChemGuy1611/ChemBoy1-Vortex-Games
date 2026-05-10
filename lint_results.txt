@@ -1,8 +1,8 @@
-ESLint Results -- 2026-04-29T20:53:52.214Z
+ESLint Results -- 2026-05-09T13:40:52.945Z
 ============================================================
 
 Linting 1 extension(s)...
 
-  [OK]   game-control\index.js
+  [OK]   template-basic\index.js
 
 Linting complete: 1 files -- 1 passed, 0 failed

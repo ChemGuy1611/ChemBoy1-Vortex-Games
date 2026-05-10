@@ -7,7 +7,11 @@
  * Run with:  node generate_explained.js
  *            node generate_explained.js thelongdark [GAME_ID ...]
  *
- * Arguments starting with '--' are silently ignored.
+ * Flags:
+ *   --json   Write machine-readable JSON to stdout; progress goes to stderr.
+ *
+ * JSON output schema:
+ *   { timestamp, created, skipped, errors, results: [{ id, ok, error? }] }
  */
 
 const fs   = require('fs');
@@ -195,10 +199,10 @@ function splitAtTopLevelCommas(str) {
     if (ch === "'" || ch === '"' || ch === '`') {
       inStr = ch;
       current += ch;
-    } else if (ch === '(' || ch === '[') {
+    } else if (ch === '(' || ch === '[' || ch === '{') {
       depth++;
       current += ch;
-    } else if (ch === ')' || ch === ']') {
+    } else if (ch === ')' || ch === ']' || ch === '}') {
       depth--;
       current += ch;
     } else if (ch === ',' && depth === 0) {
@@ -522,7 +526,7 @@ function extractTools(src, table) {
 function extractActions(src) {
   const results = [];
   const stripped = src.replace(/\/\*[\s\S]*?\*\//g, '');
-  const re = /context\.registerAction\([^,]+,\s*\d+,\s*[^,]+,\s*\{\}\s*,\s*[`'"]([^`'"]+)[`'"]/g;
+  const re = /context\.registerAction\([^,]+,\s*\d+,\s*[^,]+,\s*\{[^}]*\}\s*,\s*[`'"]([^`'"]+)[`'"]/g;
   let m;
   while ((m = re.exec(stripped)) !== null) {
     const lineStart = stripped.lastIndexOf('\n', m.index);
@@ -1009,7 +1013,16 @@ function buildMarkdown(dirName, src) {
 
 // ── main ──────────────────────────────────────────────────────────────────────
 
-const gameArgs = process.argv.slice(2).filter(a => !a.startsWith('--'));
+const rawArgs     = process.argv.slice(2);
+const cliFlags    = new Set(rawArgs.filter(a => a.startsWith('--')));
+const gameArgs    = rawArgs.filter(a => !a.startsWith('--'));
+const doJson      = cliFlags.has('--json');
+const jsonResults = [];
+
+function emit(line = '') {
+  if (doJson) process.stderr.write((line || '') + '\n');
+  else console.log(line);
+}
 
 const entries = fs.readdirSync(ROOT, { withFileTypes: true });
 const extDirs = entries
@@ -1023,9 +1036,9 @@ if (gameArgs.length > 0) {
     console.error(`Error: no matching directories found for: ${gameArgs.join(', ')}`);
     process.exit(1);
   }
-  console.log(`Processing ${extDirs.length} extension(s): ${extDirs.join(', ')}\n`);
+  emit(`Processing ${extDirs.length} extension(s): ${extDirs.join(', ')}\n`);
 } else {
-  console.log(`Found ${extDirs.length} extension directories.\n`);
+  emit(`Found ${extDirs.length} extension directories.\n`);
 }
 
 let created = 0;
@@ -1038,7 +1051,8 @@ for (const dirName of extDirs) {
   const outPath    = path.join(dirPath, 'EXTENSION_EXPLAINED.md');
 
   if (!fs.existsSync(indexPath)) {
-    console.log(`  SKIP  ${dirName} (no index.js)`);
+    emit(`  SKIP  ${dirName} (no index.js)`);
+    jsonResults.push({ id: dirName, ok: false, error: 'no index.js' });
     skipped++;
     continue;
   }
@@ -1047,12 +1061,24 @@ for (const dirName of extDirs) {
     const src = fs.readFileSync(indexPath, 'utf8');
     const md  = buildMarkdown(dirName, src);
     fs.writeFileSync(outPath, md, 'utf8');
-    console.log(`  OK    ${dirName}`);
+    emit(`  OK    ${dirName}`);
+    jsonResults.push({ id: dirName, ok: true });
     created++;
   } catch (err) {
-    console.error(`  ERR   ${dirName}: ${err.message}`);
+    emit(`  ERR   ${dirName}: ${err.message}`);
+    jsonResults.push({ id: dirName, ok: false, error: err.message });
     errors++;
   }
 }
 
-console.log(`\nDone. Created: ${created}  Skipped: ${skipped}  Errors: ${errors}`);
+emit(`\nDone. Created: ${created}  Skipped: ${skipped}  Errors: ${errors}`);
+if (doJson) {
+  process.stdout.write(JSON.stringify({
+    timestamp: new Date().toISOString(),
+    created,
+    skipped,
+    errors,
+    results: jsonResults,
+  }, null, 2) + '\n');
+}
+if (errors > 0) process.exit(1);

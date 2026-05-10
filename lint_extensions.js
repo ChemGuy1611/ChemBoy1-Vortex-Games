@@ -17,6 +17,10 @@
  *   --templates            Also include template-[*]/index.js files.
  *   --quiet                Suppress output for passing files.
  *   --json                 Write machine-readable JSON to stdout instead of human-readable text.
+ *
+ * JSON output schema:
+ *   { timestamp, passed, failed, total, totalErrors, totalWarnings,
+ *     failedIds, results: [{ id, path, ok, errorCount, warningCount, messages }] }
  */
 
 const fs            = require('fs');
@@ -51,17 +55,20 @@ let targetDirs;
 if (gameArgs.length > 0) {
   targetDirs = [];
   for (const id of gameArgs) {
-    const dir = path.join(ROOT, `game-${id}`);
-    if (!fs.existsSync(dir)) {
-      console.error(`Error: folder not found: game-${id}`);
+    const gameDir     = path.join(ROOT, `game-${id}`);
+    const templateDir = path.join(ROOT, `template-${id}`);
+    const prefix      = fs.existsSync(gameDir) ? 'game' : fs.existsSync(templateDir) ? 'template' : null;
+    if (!prefix) {
+      console.error(`Error: folder not found: game-${id} or template-${id}`);
       process.exit(1);
     }
-    const indexPath = path.join(dir, 'index.js');
+    const dirName   = `${prefix}-${id}`;
+    const indexPath = path.join(ROOT, dirName, 'index.js');
     if (!fs.existsSync(indexPath)) {
-      console.error(`Error: no index.js in game-${id}`);
+      console.error(`Error: no index.js in ${dirName}`);
       process.exit(1);
     }
-    targetDirs.push(`game-${id}`);
+    targetDirs.push(dirName);
   }
 } else {
   const entries = fs.readdirSync(ROOT, { withFileTypes: true });
@@ -105,9 +112,15 @@ for (const dirName of targetDirs) {
   }
 }
 
-// ── run eslint (chunked on Windows to stay under 8191-char cmd limit) ─────────
+if (targetFiles.length === 0) {
+  emit('Warning: no index.js files found to lint.');
+  fs.writeFileSync(OUT_FILE, lines.join('\n') + '\n', 'utf8');
+  process.exit(1);
+}
 
-const WIN_CMD_LIMIT = 7900;
+// ── run eslint (chunked to stay under Windows CreateProcess 32767-char limit) ──
+
+const WIN_CMD_LIMIT = 32000;
 
 let passed        = 0;
 let failed        = 0;
@@ -125,7 +138,7 @@ if (targetFiles.length > 0) {
   if (isWin) {
     let batchLen = 0;
     for (const f of targetFiles) {
-      const argLen = `"${f.indexPath}"`.length + 1;
+      const argLen = f.indexPath.length + 1;
       if (batches[batches.length - 1].length > 0 && batchLen + argLen > WIN_CMD_LIMIT) {
         batches.push([]);
         batchLen = 0;
@@ -142,12 +155,11 @@ if (targetFiles.length > 0) {
     if (batch.length === 0) continue;
     const eslintArgs = [...baseArgs];
     for (const { indexPath } of batch) {
-      eslintArgs.push(isWin ? `"${indexPath}"` : indexPath);
+      eslintArgs.push(indexPath);
     }
     const result = spawnSync(npxCmd, eslintArgs, {
       cwd: ROOT,
       encoding: 'utf8',
-      shell: true,
     });
     let eslintData = [];
     try {

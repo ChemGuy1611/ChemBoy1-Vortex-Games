@@ -47,6 +47,8 @@ def find_targets(target_game_ids=None, force=False):
         if const_value(src, "STEAMAPP_ID") == "null":
             continue  # Xbox/Epic-only game -- no Steam icon available
         steamapp_id = extract_steamapp_id(src)
+        if not steamapp_id:
+            continue  # XXX placeholder or other non-resolvable ID
         game_name = extract_game_name(src)
         yield folder, game_id, steamapp_id, game_name
 
@@ -64,17 +66,10 @@ def fetch_all(target_game_ids=None, dry_run=False, force=False):
     for folder, game_id, steamapp_id, game_name in targets:
         label = f"[{game_id}]"
         if dry_run:
-            if steamapp_id:
-                print(f"  MISSING  {label}  (Steam {steamapp_id})")
-            else:
-                print(f"  MISSING  {label}  (no STEAMAPP_ID --cannot auto-fetch)")
+            print(f"  MISSING  {label}  (Steam {steamapp_id})")
             continue
 
         print(f"\n{label}")
-        if not steamapp_id:
-            print(f"  SKIP --no STEAMAPP_ID in index.js")
-            skipped.append(game_id)
-            continue
 
         out_path = os.path.join(folder, "exec.png")
         ok, source = download_exec_icon(steamapp_id, game_name or game_id, out_path)

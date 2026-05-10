@@ -13,10 +13,10 @@
 | Property | Value |
 | --- | --- |
 | Game ID | `carmechanicsimulator2026` |
-| Executable | `XXX.exe` |
+| Executable | `Car Mechanic Simulator 2026.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
-| Executable (GOG) | `XXX.exe` |
-| Executable (Demo) | `XXX.exe` |
+| Executable (GOG) | `Car Mechanic Simulator 2026.exe` |
+| Executable (Demo) | `Car Mechanic Simulator 2026 Demo.exe` |
 | Extension Page | XXX |
 
 ## Supported Stores
@@ -29,7 +29,25 @@
 | --- | --- | --- |
 | `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
 | `hasXbox` | `false` | toggle for Xbox version logic |
-| `multiExe` | `false` | set to true if there are multiple executables (typically for Xbox/EGS) |
+| `multiExe` | `true` | set to true if there are multiple executables (typically for Xbox/EGS) |
+| `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below) |
+| `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |
+| `preventPluginInstall` | `true` | set to true if you want to prevent plugins not for the current mod loader from installing. Disable if using cross-compatibility plugins. |
+| `loaderSwitchRestart` | `false` | set to true if you need to restart the extension after switching mod loaders |
+| `enableSaveInstaller` | `false` | set to true if you want to enable the save installer (only recommended if saves are stored in the game's folder) |
+| `hasCustomMods` | `false` | set to true if there are modTypes with folder paths dependent on which mod loader is installed |
+| `hasCustomLoader` | `false` | set to true if there is a custom mod loader |
+| `customLoaderInstaller` | `false` | set true if the custom loader uses an installer |
+| `debug` | `false` | toggle for debug mode |
+| `hasVersionFile` | `false` | set to true if there is a Version.info file that contains the game version number |
+| `hasUserIdFolder` | `false` | true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID) |
+| `loaderChoice` | `false` | true if loader choice is enabled |
+| `allowBepCfgMan` | `true` | should BepInExConfigManager be downloaded (via notification)? |
+| `allowMelPrefMan` | `false` | should MelonPreferencesManager be downloaded (via notification)? |
+| `allowBepinexNexus` | `true` | allow Nexus Mods download of BepInEx/MelonLoader |
+| `allowMelonNexus` | `true` | allows MelonLoader to be downloaded from Nexus Mods |
+| `useMelonNightly` | `false` | use Nightly build of MelonLoader? |
+| `customInstalled` | `false` |  |
 | `isCustom` | `false` |  |
 | `unknown` | `false` |  |
 | `fileTest` | `false` |  |
@@ -41,20 +59,20 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
-| BEPINEX_MOD_NAME | `BEPINEX_MOD_ID` | high | `{gamePath}/BEPINEX_MOD_PATH` |
-| MELON_MOD_NAME | `MELON_MOD_ID` | high | `{gamePath}/MELON_MOD_PATH` |
-| BEPINEX_PLUGINS_NAME | `BEPINEX_PLUGINS_ID` | high | `{gamePath}/BEPINEX_PLUGINS_PATH` |
-| BEPINEX_PATCHERS_NAME | `BEPINEX_PATCHERS_ID` | high | `{gamePath}/BEPINEX_PATCHERS_PATH` |
-| BEPINEX_CONFIG_NAME | `BEPINEX_CONFIG_ID` | high | `{gamePath}/BEPINEX_CONFIG_PATH` |
-| MELON_MODS_NAME | `MELON_MODS_ID` | high | `{gamePath}/MELON_MODS_PATH` |
-| MELON_PLUGINS_NAME | `MELON_PLUGINS_ID` | high | `{gamePath}/MELON_PLUGINS_PATH` |
-| MELON_CONFIG_NAME | `MELON_CONFIG_ID` | high | `{gamePath}/MELON_CONFIG_PATH` |
-| MELON_USERLIB_NAME | `MELON_USERLIB_ID` | high | `{gamePath}/MELON_USERLIB_PATH` |
-| BEPCFGMAN_NAME | `BEPCFGMAN_ID` | high | `{gamePath}/BEPCFGMAN_PATH` |
-| MELONPREFMAN_NAME | `MELONPREFMAN_ID` | high | `{gamePath}/MELONPREFMAN_PATH` |
-| ROOT_NAME | `ROOT_ID` | high | `{gamePath}` |
-| BEPINEX_NAME | `BEPINEX_ID` | low | `{gamePath}` |
-| MELON_NAME | `MELON_ID` | low | `{gamePath}` |
+| BepInEx Mod | `carmechanicsimulator2026-bepinexmod` | high | `{gamePath}/BepInEx` |
+| MelonLoader Mod | `carmechanicsimulator2026-melonmod` | high | `{gamePath}/.` |
+| BepInEx Plugins | `carmechanicsimulator2026-bepinex-plugins` | high | `{gamePath}/BepInEx/plugins` |
+| BepInEx Patchers | `carmechanicsimulator2026-bepinex-patchers` | high | `{gamePath}/BepInEx/patchers` |
+| BepInEx Config | `carmechanicsimulator2026-bepinex-config` | high | `{gamePath}/BepInEx/config` |
+| MelonLoader Mods | `carmechanicsimulator2026-melonloader-mods` | high | `{gamePath}/Mods` |
+| MelonLoader Plugins | `carmechanicsimulator2026-melonloader-plugins` | high | `{gamePath}/Plugins` |
+| MelonLoader Config | `carmechanicsimulator2026-melonloader-config` | high | `{gamePath}/UserData` |
+| MelonLoader UserLibs | `carmechanicsimulator2026-melonloader-userlibs` | high | `{gamePath}/UserLibs` |
+| BepInExConfigManager | `carmechanicsimulator2026-bepcfgman` | high | `{gamePath}/BepInEx` |
+| MelonPreferencesManager | `carmechanicsimulator2026-melonprefman` | high | `{gamePath}/Mods` |
+| Root Game Folder | `carmechanicsimulator2026-root` | high | `{gamePath}` |
+| BepInEx Injector | `carmechanicsimulator2026-bepinex` | low | `{gamePath}` |
+| MelonLoader | `carmechanicsimulator2026-melonloader` | low | `{gamePath}` |
 
 ## Registered Tools
 
@@ -76,6 +94,12 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - View Changelog
 - Submit Bug Report
 - Open Downloads Folder
+
+## Auto-Downloaded Dependencies
+
+| Dependency | Version | Details |
+| --- | --- | --- |
+| BepInEx | 5.4.23.5 | il2cpp |
 
 ## Special Features
 

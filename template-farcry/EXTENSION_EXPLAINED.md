@@ -12,7 +12,7 @@
 
 | Property | Value |
 | --- | --- |
-| Game ID | `farcryXXX` |
+| Game ID | `XXX` |
 | Executable | `bin/XXX.exe` |
 | Extension Page | XXX |
 | PCGamingWiki | XXX |
@@ -23,6 +23,7 @@
 | --- | --- | --- |
 | `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
 | `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |
+| `debug` | `false` | toggle for debug mode |
 
 ## Mod Types
 
@@ -30,13 +31,13 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
-| Root Folder | `farcryXXX-root` | high | `{gamePath}` |
-| Binaries (Engine Injector) | `farcryXXX-binaries` | high | `{gamePath}/bin` |
-| Game Data | `farcryXXX-data` | high | `{gamePath}/data_win32` |
-| FC Mod Installer | `farcryXXX-modinstaller` | high | `{gamePath}/FCModInstaller` |
-| FCMI Mod (.a2/.a3/.a4/.a5/.bin) | `farcryXXX-mimod` | high | `{gamePath}/FCModInstaller/ModifiedFilesFCXXX` |
-| Repacked FCMI Mod | `farcryXXX-mimoda3` | high | `{gamePath}/FCModInstaller/ModifiedFilesFCXXX` |
-| XML Settings Mod | `farcryXXX-xml` | high | `XML_PATH` |
+| Root Folder | `XXX-root` | high | `{gamePath}` |
+| Binaries (Engine Injector) | `XXX-binaries` | high | `{gamePath}/bin` |
+| Game Data | `XXX-data` | high | `{gamePath}/data_win32` |
+| FC Mod Installer | `XXX-modinstaller` | high | `{gamePath}/FCModInstaller` |
+| FCMI Mod (.a2/.a3/.a4/.a5/.bin) | `XXX-mimod` | high | `{gamePath}/FCModInstaller/ModifiedFilesFCXXX` |
+| Repacked FCMI Mod | `XXX-mimoda3` | high | `{gamePath}/FCModInstaller/ModifiedFilesFCXXX` |
+| XML Settings Mod | `XXX-xml` | high | `XML_PATH` |
 
 ## Mod Installers
 
@@ -44,14 +45,14 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
-| `farcryXXX-modinstaller` | 25 |
-| `farcryXXX-root` | 27 |
-| `farcryXXX-data` | 29 |
-| `farcryXXX-binaries` | 31 |
-| `farcryXXX-mimoda3` | 33 |
-| `farcryXXX-mimod` | 35 |
-| `farcryXXX-xml` | 37 |
-| `farcryXXX-fallback` | 49 |
+| `XXX-modinstaller` | 25 |
+| `XXX-root` | 27 |
+| `XXX-data` | 29 |
+| `XXX-binaries` | 31 |
+| `XXX-mimoda3` | 33 |
+| `XXX-mimod` | 35 |
+| `XXX-xml` | 37 |
+| `XXX-fallback` | 49 |
 
 ## Registered Tools
 

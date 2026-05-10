@@ -1,4 +1,4 @@
-# MY HERO ACADEMIA: All\'s Justice — Vortex Extension Explained
+# MY HERO ACADEMIA: All's Justice — Vortex Extension Explained
 
 ## Overview
 

@@ -83,7 +83,6 @@ Installers run in priority order (lower number = tested first). The first instal
 | `starsandisland-plugin` | 33 |
 | `ASSETS_ID` | 37 |
 | `CUSTOM_ID` | 39 |
-| `SAVE_ID` | 47 |
 | `starsandisland-fallback` | 49 |
 
 ## Registered Tools

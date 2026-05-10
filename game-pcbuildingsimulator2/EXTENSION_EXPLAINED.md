@@ -51,12 +51,6 @@ These tools appear in Vortex's Tools panel when this game is active:
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- Download BepInExConfigManager
-- Open BepInEx.cfg
-- Open Data Folder
-- Open Save Folder
-- View Changelog
-- Open Downloads Folder
 - Open PCGamingWiki Page
 - Submit Bug Report
 

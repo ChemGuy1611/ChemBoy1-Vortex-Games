@@ -9,31 +9,20 @@ Arguments:
     GAME_ID     One or more game IDs (e.g. thelastofuspart2)
     --dry-run   Preview what would change without copying
     --force     Always do a full folder replace instead of index.js-only update
+
+Environment variables:
+    VORTEX_PLUGINS_DIR  Path to the Vortex plugins directory.
+                        Default: C:\\ProgramData\\vortex\\plugins
 """
 
 import argparse
 import os
-import re
 import shutil
 import sys
 
 import vortex_utils as vu
 
-PLUGINS_DIR = r"C:\ProgramData\vortex\plugins"
-
-_GAME_NAME_RE = re.compile(r'const GAME_NAME\s*=\s*["\']([^"\']+)["\']')
-
-def _read_game_name(src: str) -> str | None:
-    index_js = os.path.join(src, "index.js")
-    try:
-        with open(index_js, encoding="utf-8") as f:
-            for line in f:
-                m = _GAME_NAME_RE.search(line)
-                if m:
-                    return m.group(1)
-    except OSError:
-        pass
-    return None
+PLUGINS_DIR = os.environ.get("VORTEX_PLUGINS_DIR", r"C:\ProgramData\vortex\plugins")
 
 
 def find_existing_plugin(game_id: str, game_name: str | None) -> str | None:
@@ -61,7 +50,8 @@ def deploy_game(game_id: str, dry_run: bool, force: bool) -> bool:
         vu.log_error(game_id, f"source folder not found: {src}")
         return False
 
-    game_name = _read_game_name(src)
+    js_src = vu.read_index_js(src)
+    game_name = vu.extract_game_name(js_src) if js_src else None
     existing = None if force else find_existing_plugin(game_id, game_name)
     dest = existing or os.path.join(PLUGINS_DIR, f"game-{game_id}")
     pfx = vu.dry_prefix(dry_run)
@@ -84,7 +74,7 @@ def deploy_game(game_id: str, dry_run: bool, force: bool) -> bool:
         print(f"[{game_id}] updated index.js in {os.path.basename(existing)}")
     else:
         if os.path.isdir(dest):
-            shutil.rmtree(dest)
+            vu.safe_rmtree(dest, "close Vortex first")
         shutil.copytree(src, dest)
         files = os.listdir(dest)
         print(f"[{game_id}] deployed to {dest} ({len(files)} files)")
@@ -104,7 +94,13 @@ def main():
         print(f"[ERROR] Vortex plugins folder not found: {PLUGINS_DIR}")
         sys.exit(1)
 
-    results = [deploy_game(gid, dry_run=args.dry_run, force=args.force) for gid in args.game_ids]
+    results = []
+    for gid in args.game_ids:
+        try:
+            results.append(deploy_game(gid, dry_run=args.dry_run, force=args.force))
+        except Exception as e:
+            vu.log_error(gid, f"unexpected error: {e}")
+            results.append(False)
     if not all(results):
         sys.exit(1)
 

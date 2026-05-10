@@ -26,7 +26,6 @@
 | --- | --- | --- |
 | `hasUserIdFolder` | `true` | true if there is a user ID folder in the Save path that must be read (i.e. Steam ID) |
 | `hasXbox` | `false` | toggle for Xbox version logic |
-| `multiExe` | `false` | set to true if there are multiple executable names |
 | `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
 | `needsModInstaller` | `true` | set to true if standard mods should run through an installer - set false to have mods installed to the mods folder without any processing |
 | `rootInstaller` | `true` | enable root installer. Set false if you need to avoid installer collisions |

@@ -5,7 +5,7 @@
 | Property | Value |
 | --- | --- |
 | Name | XXX Vortex Extension |
-| Engine / Structure | Unreal Engine Game |
+| Engine / Structure | Unreal Engine 4-5 Game |
 | Author | ChemBoy1 |
 
 ## Key Identifiers
@@ -36,7 +36,6 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `XXX-logicmods` | high | `{gamePath}/XXX/Content/Paks` |
 | PAK_ALT_NAME | `PAK_ALT_ID` | high | `{gamePath}/PAK_ALT_PATH` |
 | ROOT_NAME | `ROOT_ID` | high | `{gamePath}` |
-| ROOTSUB_NAME | `ROOTSUB_ID` | high | `{gamePath}/ROOTSUB_PATH` |
 
 ## Auto-Downloaded Dependencies
 

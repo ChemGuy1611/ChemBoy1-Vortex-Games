@@ -41,8 +41,7 @@ Mod types define where each category of mod gets deployed:
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch** (`XXX.exe`)
-- **Custom Launch** (`XXX.exe`)
+- **Custom Launch**
 
 ## Toolbar Actions
 

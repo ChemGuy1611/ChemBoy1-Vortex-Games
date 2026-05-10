@@ -134,7 +134,7 @@ def _parse_docstring_flags(docstring):
             in_usage = True
             continue
         if in_usage:
-            m = re.match(r'^([A-Za-z][A-Za-z ]*?)\s*:', stripped)
+            m = re.match(r'^([A-Za-z][A-Za-z ]*?)\s*:\s*$', stripped)
             if m and m.group(1).lower() in _SECTION_HEADERS:
                 in_usage = False
                 continue
@@ -154,7 +154,7 @@ def _parse_docstring_envvars(docstring):
         if in_env:
             if not stripped:
                 continue
-            m = re.match(r'^([A-Za-z][A-Za-z ]*?)\s*:', stripped)
+            m = re.match(r'^([A-Za-z][A-Za-z ]*?)\s*:\s*$', stripped)
             if m and m.group(1).lower() in _SECTION_HEADERS:
                 in_env = False
                 continue

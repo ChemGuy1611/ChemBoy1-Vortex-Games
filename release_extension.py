@@ -40,6 +40,7 @@ from vortex_utils import (
     REPO_ROOT, run_generate_explained, add_to_discovery_ids, node_check, eslint_check,
     extract_extension_url, read_info_json, parse_changelog_latest,
     update_index_header as _apply_header, mutate_index_js, validate_index_js,
+    print_run_summary, assert_is_game_id,
 )
 SEVENZIP = os.environ.get("SEVENZIP_PATH", r"C:\Program Files\7-Zip\7z.exe")
 NEXUS_SITE_URL = "https://www.nexusmods.com/games/site"
@@ -122,7 +123,7 @@ def update_discovery_ids(folder, game_id, dry_run=False):
 
 
 
-def release(game_id, open_browser, dry_run=False):
+def release(game_id, open_browser, dry_run=False, skip_eslint=False, skip_explained=False):
     folder = os.path.join(REPO_ROOT, f"game-{game_id}")
     if not os.path.isdir(folder):
         print(f"  [{game_id}] ERROR -folder not found: {folder}")
@@ -134,7 +135,7 @@ def release(game_id, open_browser, dry_run=False):
         with open(index_path, encoding="utf-8") as f:
             index_src = f.read()
         extension_url = extract_extension_url(index_src)
-        if re.search(r'^\s*const\s+debug\s*=\s*true\b', index_src, re.MULTILINE):
+        if re.search(r'^\s*(?:const|let)\s+debug\s*=\s*true\b', index_src, re.MULTILINE):
             print(f"  [{game_id}] ERROR - debug is set to true in index.js")
             return False
         if not check_installer_priorities(index_src, game_id):
@@ -159,7 +160,7 @@ def release(game_id, open_browser, dry_run=False):
         return False
     with open(changelog_path, encoding="utf-8") as f:
         changelog_src = f.read()
-    if version and not re.search(rf'## \[{re.escape(version)}\]', changelog_src):
+    if version and not re.search(rf'## (?:\[{re.escape(version)}\]|{re.escape(version)})(?!\w)', changelog_src):
         print(f"  [{game_id}] ERROR - version {version} has no entry in CHANGELOG.md (add ## [{version}] section)")
         return False
 
@@ -173,8 +174,10 @@ def release(game_id, open_browser, dry_run=False):
     if dry_run:
         zip_path = os.path.join(folder, f"game-{game_id}.zip")
         print(f"  [{game_id}] [DRY RUN] Would run node --check on index.js")
-        print(f"  [{game_id}] [DRY RUN] Would run eslint on index.js")
-        print(f"  [{game_id}] [DRY RUN] Would generate EXTENSION_EXPLAINED.md")
+        if not skip_eslint:
+            print(f"  [{game_id}] [DRY RUN] Would run eslint on index.js")
+        if not skip_explained:
+            print(f"  [{game_id}] [DRY RUN] Would generate EXTENSION_EXPLAINED.md")
         print(f"  [{game_id}] [DRY RUN] Would create: {zip_path}")
         if extension_url:
             print(f"  [{game_id}] [DRY RUN] Would open: {extension_url}")
@@ -190,19 +193,21 @@ def release(game_id, open_browser, dry_run=False):
         print(f"  [{game_id}] WARNING - node --check found a syntax error in index.js:")
         print(f"    {err}")
 
-    print(f"  [{game_id}] Linting index.js...")
-    ok, out = eslint_check(index_path)
-    if ok:
-        print(f"  [{game_id}] eslint OK")
-    else:
-        print(f"  [{game_id}] WARNING - eslint reported issues:")
-        for line in out.splitlines():
-            print(f"    {line}")
+    if not skip_eslint:
+        print(f"  [{game_id}] Linting index.js...")
+        ok, out = eslint_check(index_path)
+        if ok:
+            print(f"  [{game_id}] eslint OK")
+        else:
+            print(f"  [{game_id}] WARNING - eslint reported issues:")
+            for line in out.splitlines():
+                print(f"    {line}")
 
-    print(f"  [{game_id}] Generating EXTENSION_EXPLAINED.md...")
-    ok, err = run_generate_explained(game_id)
-    if not ok:
-        print(f"  [{game_id}] WARNING -generate_explained.js failed: {err}")
+    if not skip_explained:
+        print(f"  [{game_id}] Generating EXTENSION_EXPLAINED.md...")
+        ok, err = run_generate_explained(game_id)
+        if not ok:
+            print(f"  [{game_id}] WARNING -generate_explained.js failed: {err}")
 
     zip_path = os.path.join(folder, f"game-{game_id}.zip")
 
@@ -213,7 +218,8 @@ def release(game_id, open_browser, dry_run=False):
     print(f"  [{game_id}] Zipping...")
     result = subprocess.run(
         [SEVENZIP, "a", "-tzip", zip_path, os.path.join(folder, "*")],
-        capture_output=True, text=True
+        capture_output=True, text=True,
+        encoding="utf-8", errors="replace",
     )
 
     if result.returncode != 0:
@@ -229,6 +235,8 @@ def release(game_id, open_browser, dry_run=False):
             names = zf.namelist()
         if "info.json" not in names:
             print(f"  [{game_id}] WARNING - info.json not found at zip root (got: {names[:5]}...)")
+        if "index.js" not in names:
+            print(f"  [{game_id}] WARNING - index.js not found at zip root (got: {names[:5]}...)")
     except Exception as e:
         print(f"  [{game_id}] WARNING - could not verify zip contents: {e}")
 
@@ -261,6 +269,16 @@ def main():
         action="store_true",
         help="Print what would be done without running 7-Zip.",
     )
+    parser.add_argument(
+        "--skip-eslint",
+        action="store_true",
+        help="Skip the eslint step.",
+    )
+    parser.add_argument(
+        "--skip-explained",
+        action="store_true",
+        help="Skip regenerating EXTENSION_EXPLAINED.md.",
+    )
     args = parser.parse_args()
 
     if not args.dry_run and not os.path.isfile(SEVENZIP):
@@ -269,12 +287,22 @@ def main():
 
     label = " [DRY RUN]" if args.dry_run else ""
     print(f"Releasing {len(args.game)} extension(s){label}...\n")
-    success = 0
+    saved = []
+    failed = []
     for game_id in args.game:
-        if release(game_id, not args.no_open, args.dry_run):
-            success += 1
+        try:
+            assert_is_game_id(game_id)
+        except ValueError as e:
+            print(f"  ERROR - {e}")
+            failed.append(game_id)
+            continue
+        if release(game_id, not args.no_open, args.dry_run,
+                   skip_eslint=args.skip_eslint, skip_explained=args.skip_explained):
+            saved.append(game_id)
+        else:
+            failed.append(game_id)
 
-    print(f"\nDone. {success}/{len(args.game)} succeeded.")
+    print_run_summary(saved, failed, skipped=[])
 
 
 if __name__ == "__main__":

@@ -27,6 +27,7 @@
 | Flag | Value | Description |
 | --- | --- | --- |
 | `IO_STORE` | `true` | true if the Paks folder contains .ucas and .utoc files |
+| `hasXbox` | `true` | enables Xbox Game Pass version detection and launcher logic |
 | `SYM_LINKS` | `true` | true if symlink deployment is enabled for this game |
 
 ## Mod Types

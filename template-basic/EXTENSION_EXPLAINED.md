@@ -31,11 +31,12 @@
 | `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
 | `needsModInstaller` | `true` | set to true if standard mods should run through an installer - set false to have mods installed to the mods folder without any processing |
 | `rootInstaller` | `true` | enable root installer. Set false if you need to avoid installer collisions |
+| `saveInstaller` | `false` | enable save installer. Set false if path is outside of game folder |
 | `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |
 | `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below) |
 | `hasUserIdFolder` | `false` | true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID) |
-| `debug` | `false` | toggle for debug mode |
 | `binariesInstaller` | `false` | enables the Binaries folder installer (for engine injectors) |
+| `debug` | `false` | toggle for debug mode |
 
 ## Mod Types
 
@@ -43,7 +44,6 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
-| Mod | `XXX-mod` | high | `{gamePath}/mods` |
 | Root Folder | `XXX-root` | high | `{gamePath}` |
 
 ## Mod Installers
@@ -55,6 +55,7 @@ Installers run in priority order (lower number = tested first). The first instal
 | `XXX-loader` | 25 |
 | `XXX-root` | 27 |
 | `XXX-binaries` | 29 |
+| `XXX-save` | 33 |
 | `XXX-mod` | 35 |
 | `XXX-fallback` | 49 |
 

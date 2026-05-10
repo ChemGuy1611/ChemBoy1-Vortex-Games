@@ -34,12 +34,13 @@ import sys
 from vortex_utils import (
     REPO_ROOT, TITLE_IMAGES_DIR,
     lookup_pcgamingwiki, extract_game_name,
-    REGISTER_ACTIONS, run_generate_explained,
+    REGISTER_ACTIONS, run_generate_explained, run_generate_explained_batch,
     fetch_epic_app_id, add_to_discovery_ids,
     const_value, is_unset, is_missing, set_or_insert,
     inject_register_actions, find_fn_body,
     list_game_ids, write_index_js, resize_images_to, log_info,
     load_vortex_manifest, resize_pngs_in_dirs,
+    is_placeholder_value,
 )
 MANIFEST_PATH = os.environ.get("VORTEX_MANIFEST_PATH", r"C:\ProgramData\vortex\temp\extensions-manifest.json")
 NEXUS_SITE_BASE = "https://www.nexusmods.com/site/mods"
@@ -78,7 +79,7 @@ def patch_epic_app_id(game_id, src, context):
         return src, False, "no EPICAPP_ID in source"
     if current == "null":
         return src, False, "null (not on Epic)"
-    if re.match(r'^["\']XXX["\']$', current):
+    if is_placeholder_value(current):
         return src, False, "XXX (intentional placeholder)"
 
     is_empty = bool(re.match(r'^["\']["\']$', current))
@@ -93,9 +94,9 @@ def patch_epic_app_id(game_id, src, context):
     if not app_id:
         return src, False, f"not found on egdata.app for '{game_name}'"
 
-    # Replace only the EPICAPP_ID value; preserve any existing trailing comment
+    # Replace EPICAPP_ID value; consume any stale trailing comment so it isn't re-decorated
     new_src = re.sub(
-        r'((?:const|let)\s+EPICAPP_ID\s*=\s*)["\'][^"\']*["\']',
+        r'((?:const|let)\s+EPICAPP_ID\s*=\s*)["\'][^"\']*["\'](\s*//[^\n]*)?',
         rf'\g<1>"{app_id}"',
         src,
     )
@@ -238,7 +239,7 @@ def patch_game_name(game_id, src, context):
 _UTILITY_FUNCTIONS = [
     (
         "isDir",
-        r'\bfunction\s+isDir\b',
+        r'^function\s+isDir\b',
         "function isDir(folder, file) {\n"
         "  const stats = fs.statSync(path.join(folder, file));\n"
         "  return stats.isDirectory();\n"
@@ -246,7 +247,7 @@ _UTILITY_FUNCTIONS = [
     ),
     (
         "statCheckSync",
-        r'\bfunction\s+statCheckSync\b',
+        r'^function\s+statCheckSync\b',
         "function statCheckSync(gamePath, file) {\n"
         "  try {\n"
         "    fs.statSync(path.join(gamePath, file));\n"
@@ -259,7 +260,7 @@ _UTILITY_FUNCTIONS = [
     ),
     (
         "statCheckAsync",
-        r'\bfunction\s+statCheckAsync\b',
+        r'^async\s+function\s+statCheckAsync\b',
         "async function statCheckAsync(gamePath, file) {\n"
         "  try {\n"
         "    await fs.statAsync(path.join(gamePath, file));\n"
@@ -272,7 +273,7 @@ _UTILITY_FUNCTIONS = [
     ),
     (
         "getAllFiles",
-        r'\bfunction\s+getAllFiles\b',
+        r'^async\s+function\s+getAllFiles\b',
         "async function getAllFiles(dirPath) {\n"
         "  let results = [];\n"
         "  try {\n"
@@ -295,7 +296,7 @@ _UTILITY_FUNCTIONS = [
     ),
     (
         "getDiscoveryPath",
-        r'\bgetDiscoveryPath\b',
+        r'^const\s+getDiscoveryPath\b',
         "const getDiscoveryPath = (api) => { //get the game's discovered path\n"
         "  const state = api.getState();\n"
         "  const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});\n"
@@ -304,14 +305,14 @@ _UTILITY_FUNCTIONS = [
     ),
     (
         "purge",
-        r'\basync\s+function\s+purge\b',
+        r'^async\s+function\s+purge\b',
         "async function purge(api) {\n"
         "  return new Promise((resolve, reject) => api.events.emit('purge-mods', true, (err) => err ? reject(err) : resolve()));\n"
         "}\n"
     ),
     (
         "deploy",
-        r'\basync\s+function\s+deploy\b',
+        r'^async\s+function\s+deploy\b',
         "async function deploy(api) {\n"
         "  return new Promise((resolve, reject) => api.events.emit('deploy-mods', (err) => err ? reject(err) : resolve()));\n"
         "}\n"
@@ -326,7 +327,7 @@ def patch_utility_functions(game_id, src, context):
     for any extension missing them. Only missing functions are inserted.
     """
     missing = [(name, code) for name, pattern, code in _UTILITY_FUNCTIONS
-               if not re.search(pattern, src)]
+               if not re.search(pattern, src, re.MULTILINE)]
     if not missing:
         return src, False, "already set"
 
@@ -359,7 +360,7 @@ def patch_setup_vars(game_id, src, context):
     (and GAME_VERSION if setGameVersion is defined) at the top of its body.
     Lines already present in the setup body are not duplicated.
     """
-    m_setup = re.search(r'^async\s+function\s+setup\b', src, re.MULTILINE)
+    m_setup = re.search(r'^(?:async\s+)?function\s+setup\b', src, re.MULTILINE)
     if not m_setup:
         return src, False, "no setup function found"
 
@@ -511,6 +512,12 @@ def list_patches():
 
 # ── Runner ────────────────────────────────────────────────────────────────────
 
+_SILENT_MSGS = frozenset({
+    "already set", "null (not on Epic)", "no EPICAPP_ID in source",
+    "XXX (intentional placeholder)", "no modId in manifest", "already up to date",
+})
+
+
 def run_patches(game_ids, dry_run, context, only=None):
     if only:
         active_patches = [p for p in PATCHES if p["name"] == only]
@@ -519,6 +526,7 @@ def run_patches(game_ids, dry_run, context, only=None):
     total_changed = 0
     total_skipped = 0
     total_errors = 0
+    changed_ids = []
 
     for game_id in game_ids:
         index_path = os.path.join(REPO_ROOT, f"game-{game_id}", "index.js")
@@ -533,7 +541,7 @@ def run_patches(game_ids, dry_run, context, only=None):
         original_src = src
         game_changed = False
         changed_msgs = []
-        fail_msgs = []  # non-trivial skips worth showing (excludes "already set")
+        fail_msgs = []  # non-trivial skips worth showing
 
         for patch in active_patches:
             try:
@@ -541,7 +549,7 @@ def run_patches(game_ids, dry_run, context, only=None):
                 if changed:
                     changed_msgs.append(f"{patch['name']}: {msg}")
                     game_changed = True
-                elif msg != "already set":
+                elif msg not in _SILENT_MSGS:
                     fail_msgs.append(f"{patch['name']}: {msg}")
             except Exception as ex:
                 fail_msgs.append(f"{patch['name']}: ERROR - {ex}")
@@ -555,15 +563,18 @@ def run_patches(game_ids, dry_run, context, only=None):
                 print(f"    - {msg}")
             if not dry_run:
                 write_index_js(os.path.join(REPO_ROOT, f"game-{game_id}"), src)
-                ok, err = run_generate_explained(game_id)
-                if not ok:
-                    print(f"    ! generate_explained.js failed: {err}")
+                changed_ids.append(game_id)
         else:
             if fail_msgs:
                 print(f"  [{game_id}] - {'; '.join(fail_msgs)}")
             total_skipped += 1
 
     print(f"\nDone. {total_changed} changed, {total_skipped} skipped, {total_errors} errors.")
+
+    if changed_ids and not dry_run:
+        ok, err = run_generate_explained_batch(changed_ids)
+        if not ok:
+            print(f"  ! generate_explained.js batch failed: {err}")
 
 
 def main():

@@ -25,10 +25,9 @@ Examples:
 
 import argparse
 import os
-import shutil
 import sys
 
-from vortex_utils import REPO_ROOT, safe_windows_dirname, log_error, log_info, build_js_symbol_table
+from vortex_utils import REPO_ROOT, safe_windows_dirname, log_error, log_info, build_js_symbol_table, safe_rmtree, touch_empty
 TEST_ROOT = os.environ.get("VORTEX_TEST_ROOT", r"D:\Game_Tools_D\!TestGameFolders_D")
 
 
@@ -136,7 +135,7 @@ def setup(game_id, dry_run=False, force=False):
     # Create the exe
     os.makedirs(exec_dir, exist_ok=True)
     if not os.path.exists(exec_file) or force:
-        open(exec_file, "wb").close()
+        touch_empty(exec_file, force=True)
         log_info(game_id, f"Created exe:      {exec_file}")
     else:
         log_info(game_id, f"Already exists:   {exec_file}")
@@ -149,7 +148,7 @@ def setup(game_id, dry_run=False, force=False):
         else:
             os.makedirs(os.path.dirname(req_path), exist_ok=True)
             if not os.path.exists(req_path) or force:
-                open(req_path, "wb").close()
+                touch_empty(req_path, force=True)
                 log_info(game_id, f"Created req file: {req_path}")
 
     return True
@@ -184,7 +183,7 @@ def clean(game_id, dry_run=False):
         log_info(game_id, f"[DRY RUN] Would delete: {game_folder}")
         return True
 
-    shutil.rmtree(game_folder)
+    safe_rmtree(game_folder, "close the game or Vortex first")
     log_info(game_id, f"Deleted: {game_folder}")
     return True
 
@@ -216,7 +215,7 @@ def main():
     )
     args = parser.parse_args()
 
-    if not args.dry_run and not os.path.isdir(TEST_ROOT):
+    if not os.path.isdir(TEST_ROOT) and (not args.dry_run or args.clean):
         print(f"ERROR: Test root directory not found: {TEST_ROOT}")
         sys.exit(1)
 

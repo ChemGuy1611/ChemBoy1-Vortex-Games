@@ -15,6 +15,7 @@
 | Game ID | `hytale` |
 | Executable | `HytaleClient.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
+| Extension Page | XXX |
 
 ## Feature Flags
 

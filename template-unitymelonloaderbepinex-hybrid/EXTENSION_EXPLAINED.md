@@ -46,30 +46,12 @@ Mod types define where each category of mod gets deployed:
 | MELON_MODS_NAME | `MELON_MODS_ID` | high | `{gamePath}/MELON_MODS_PATH` |
 | MELON_PLUGINS_NAME | `MELON_PLUGINS_ID` | high | `{gamePath}/MELON_PLUGINS_PATH` |
 | MELON_CONFIG_NAME | `MELON_CONFIG_ID` | high | `{gamePath}/MELON_CONFIG_PATH` |
+| MELON_USERLIB_NAME | `MELON_USERLIB_ID` | high | `{gamePath}/MELON_USERLIB_PATH` |
 | BEPCFGMAN_NAME | `BEPCFGMAN_ID` | high | `{gamePath}/BEPCFGMAN_PATH` |
 | MELONPREFMAN_NAME | `MELONPREFMAN_ID` | high | `{gamePath}/MELONPREFMAN_PATH` |
 | ROOT_NAME | `ROOT_ID` | high | `{gamePath}` |
 | BEPINEX_NAME | `BEPINEX_ID` | low | `{gamePath}` |
 | MELON_NAME | `MELON_ID` | low | `{gamePath}` |
-
-## Mod Installers
-
-Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
-
-| Installer ID | Priority |
-| --- | --- |
-| `XXX-customloader` | 25 |
-| `BEPINEX_ID` | 26 |
-| `MELON_ID` | 27 |
-| `ROOT_ID` | 28 |
-| `BEPCFGMAN_ID` | 29 |
-| `MELONPREFMAN_ID` | 30 |
-| `ASSEMBLY_ID` | 31 |
-| `XXX-plugin` | 33 |
-| `ASSETS_ID` | 37 |
-| `CUSTOM_ID` | 39 |
-| `SAVE_ID` | 47 |
-| `XXX-fallback` | 49 |
 
 ## Registered Tools
 
@@ -81,9 +63,6 @@ These tools appear in Vortex's Tools panel when this game is active:
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- Download Latest BepInEx BE (Browse)
-- Download BepInExConfigManager
-- Download Latest MelonLoader
 - Open Data Folder
 - Open Save Folder
 - Open BepInEx Config

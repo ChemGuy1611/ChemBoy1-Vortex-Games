@@ -5,7 +5,7 @@
 | Property | Value |
 | --- | --- |
 | Name | ARMORED CORE VI FIRES OF RUBICON Vortex Extension |
-| Engine / Structure | Basic Game |
+| Engine / Structure | ModEngine Game |
 | Author | ChemBoy1 |
 
 ## Key Identifiers
@@ -46,6 +46,7 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
+| Mod Engine 3 | `armoredcorevifiresofrubicon-me3` | low | `{gamePath}/.` |
 | Mod | `armoredcorevifiresofrubicon-mod` | high | `{gamePath}/mods` |
 | Root Folder | `armoredcorevifiresofrubicon-root` | high | `{gamePath}` |
 
@@ -55,7 +56,7 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
-| `armoredcorevifiresofrubicon-loader` | 25 |
+| `armoredcorevifiresofrubicon-me3` | 25 |
 | `armoredcorevifiresofrubicon-root` | 27 |
 | `armoredcorevifiresofrubicon-binaries` | 29 |
 | `armoredcorevifiresofrubicon-mod` | 35 |

@@ -38,6 +38,16 @@ Mod types define where each category of mod gets deployed:
 | --- | --- | --- | --- |
 | Root Game Folder | `railroader-root` | high | `{gamePath}` |
 
+## Mod Installers
+
+Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
+
+| Installer ID | Priority |
+| --- | --- |
+| `railroader-root` | 8 |
+| `railroader-assemblydll` | 25 |
+| `ASSETS_ID` | 27 |
+
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:

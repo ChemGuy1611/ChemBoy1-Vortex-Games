@@ -30,6 +30,9 @@ Usage:
     python port_to_template.py GAME_ID TEMPLATE_NAME
     python port_to_template.py GAME_ID TEMPLATE_NAME --dry-run
     python port_to_template.py GAME_ID TEMPLATE_NAME --force
+    python port_to_template.py GAME_ID TEMPLATE_NAME --no-explained
+
+    --no-explained  Skip regenerating EXTENSION_EXPLAINED.md after writing index.js.
 
 Examples:
     python port_to_template.py dragonsdogma2 reframework-fluffy
@@ -86,11 +89,12 @@ def extract_constants(src):
 
 def extract_id_suffix(rhs):
     """
-    If rhs is a template literal of the form `${GAME_ID}-SUFFIX`, return SUFFIX.
+    If rhs is a template literal `${GAME_ID}[-_]SUFFIX` or bare `${GAME_ID}`,
+    return the separator+suffix (e.g. '-binaries', '_loader') or '' for bare form.
     Otherwise return None.
     """
-    m = re.match(r'^`\$\{GAME_ID\}-([^`]+)`$', rhs.strip())
-    return m.group(1) if m else None
+    m = re.match(r'^`\$\{GAME_ID\}([-_][^`]+)?`$', rhs.strip())
+    return (m.group(1) or '') if m else None
 
 
 
@@ -171,13 +175,13 @@ def apply_port(template_src, game_consts, game_src):
 
     def replace_single(var_name, old_rhs, new_rhs):
         nonlocal new_src
-        # Replace the exact declaration line in the template src
+        # Replace the exact declaration line; skip comment lines via negative lookahead
         pattern = re.compile(
-            rf'((?:const|let)\s+{re.escape(var_name)}\s*=\s*)({re.escape(old_rhs)})(\s*;?\s*$)',
+            rf'^(?![ \t]*//)(?P<prefix>(?:const|let)\s+{re.escape(var_name)}\s*=\s*)(?P<old>{re.escape(old_rhs)})(?P<trail>\s*;?\s*)$',
             re.MULTILINE
         )
         replaced, count = pattern.subn(
-            lambda m: m.group(1) + new_rhs + m.group(3),
+            lambda m: m.group('prefix') + new_rhs + m.group('trail'),
             new_src,
             count=1
         )
@@ -203,8 +207,8 @@ def apply_port(template_src, game_consts, game_src):
             if game_rhs is not None:
                 game_suffix = extract_id_suffix(game_rhs)
                 if game_suffix is not None and game_suffix != tmpl_suffix:
-                    # Different suffix — rewrite to preserve game's suffix
-                    new_rhs = f'`${{GAME_ID}}-{game_suffix}`'
+                    # Different suffix — rewrite to preserve game's suffix (includes separator)
+                    new_rhs = f'`${{GAME_ID}}{game_suffix}`'
                     if replace_single(name, tmpl_rhs, new_rhs):
                         substituted.append((name, tmpl_rhs, new_rhs))
                 # else: suffix matches or game also uses template literal — leave as-is
@@ -285,7 +289,7 @@ def apply_port(template_src, game_consts, game_src):
 
 
 
-def create_port(game_id, template_name, dry_run, force):
+def create_port(game_id, template_name, dry_run, force, no_explained=False):
     game_dir = os.path.join(REPO_ROOT, f'game-{game_id}')
     tmpl_dir = os.path.join(REPO_ROOT, f'template-{template_name}')
     game_index = os.path.join(game_dir, 'index.js')
@@ -377,11 +381,12 @@ def create_port(game_id, template_name, dry_run, force):
     print(f'  Backup:  game-{game_id}/index.js.bak')
 
     # Regenerate EXTENSION_EXPLAINED.md
-    ok, err = run_generate_explained(game_id)
-    if ok:
-        print(f'  EXTENSION_EXPLAINED.md regenerated.')
-    else:
-        log_warn(game_id, f'generate_explained.js failed -- run manually: node generate_explained.js {game_id}')
+    if not no_explained:
+        ok, err = run_generate_explained(game_id)
+        if ok:
+            print(f'  EXTENSION_EXPLAINED.md regenerated.')
+        else:
+            log_warn(game_id, f'generate_explained.js failed -- run manually: node generate_explained.js {game_id}')
 
 
 def main():
@@ -407,8 +412,13 @@ def main():
         '--force', action='store_true',
         help='Overwrite existing .bak file.'
     )
+    parser.add_argument(
+        '--no-explained', action='store_true',
+        help='Skip regenerating EXTENSION_EXPLAINED.md after writing index.js.'
+    )
     args = parser.parse_args()
-    create_port(args.game_id, args.template_name, args.dry_run, args.force)
+    create_port(args.game_id, args.template_name, args.dry_run, args.force,
+                no_explained=args.no_explained)
 
 
 if __name__ == '__main__':

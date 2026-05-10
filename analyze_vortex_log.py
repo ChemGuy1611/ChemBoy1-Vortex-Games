@@ -48,7 +48,7 @@ _DEFAULT_LOG_FALLBACK = os.path.join(
     os.environ.get("APPDATA", ""), "Vortex", "vortex.log"
 )
 
-_ENTRY_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\S+Z \[(DEBG|INFO|WARN|ERROR)\] ")
+_ENTRY_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\S+(?:Z|[+-]\d{4}) \[(DEBG|INFO|WARN|ERROR)\] ")
 _HOUR_RE  = re.compile(r"^(\d{4}-\d{2}-\d{2})T(\d{2}):")
 
 _USER_TO_TOKEN = {
@@ -289,7 +289,7 @@ def main() -> None:
     print(f"[OK] Wrote {out}")
 
     if not args.no_open:
-        open_in_default_app(out)
+        open_in_default_app(out.parent)
 
 
 if __name__ == "__main__":

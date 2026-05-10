@@ -87,57 +87,60 @@ def fetch_all(target_ids=None, dry_run=False, force=False):
     failed = []
     last_remaining = None
 
-    for i, (game_id, domain, mod_id) in enumerate(work):
-        if i > 0:
-            time.sleep(0.2)
-        try:
-            data, remaining = vu.nexus_get_mod(domain, mod_id, api_key)
-            last_remaining = remaining
-            entry = {
-                "mod_id": int(mod_id),
-                "domain": domain,
-                "endorsements": data.get("endorsement_count", 0),
-                "unique_downloads": data.get("mod_unique_downloads", 0),
-                "total_downloads": data.get("mod_downloads", 0),
-                "mod_name": data.get("name"),
-                "mod_version": data.get("version"),
-                "created_timestamp": data.get("created_timestamp"),
-                "fetched_at": int(time.time()),
-                "error": None,
-            }
-            cache[game_id] = entry
-            vu.log_info(
-                game_id,
-                f"endorsements={entry['endorsements']:,}  unique_dl={entry['unique_downloads']:,}"
-                + (f"  (rate left: {remaining})" if remaining is not None else ""),
-            )
-            updated += 1
-
-            if remaining is not None:
-                try:
-                    if int(remaining) <= 5:
-                        vu.log_warn("fetch_nexus_stats", "Daily rate limit nearly exhausted -- stopping early")
-                        break
-                except ValueError:
-                    pass
-
-        except urllib.error.HTTPError as e:
-            if e.code == 404:
-                cache[game_id] = {
+    try:
+        for i, (game_id, domain, mod_id) in enumerate(work):
+            if i > 0:
+                time.sleep(0.2)
+            try:
+                data, remaining = vu.nexus_get_mod(domain, mod_id, api_key)
+                last_remaining = remaining
+                entry = {
                     "mod_id": int(mod_id),
                     "domain": domain,
-                    "error": "404",
+                    "endorsements": data.get("endorsement_count", 0),
+                    "unique_downloads": data.get("mod_unique_downloads", 0),
+                    "total_downloads": data.get("mod_downloads", 0),
+                    "mod_name": data.get("name"),
+                    "mod_version": data.get("version"),
+                    "created_timestamp": data.get("created_timestamp"),
                     "fetched_at": int(time.time()),
+                    "error": None,
                 }
-                vu.log_warn(game_id, f"404 from Nexus (mod {mod_id} not found or private)")
-            else:
-                vu.log_error(game_id, f"HTTP {e.code}: {e.reason}")
-                failed.append(game_id)
-        except Exception as e:
-            vu.log_error(game_id, f"fetch error: {e}")
-            failed.append(game_id)
+                cache[game_id] = entry
+                vu.log_info(
+                    game_id,
+                    f"endorsements={entry['endorsements']:,}  unique_dl={entry['unique_downloads']:,}"
+                    + (f"  (rate left: {remaining})" if remaining is not None else ""),
+                )
+                updated += 1
 
-    _save_stats(cache)
+                if remaining is not None:
+                    try:
+                        if int(remaining) <= 5:
+                            vu.log_warn("fetch_nexus_stats", "Daily rate limit nearly exhausted -- stopping early")
+                            break
+                    except ValueError:
+                        pass
+
+            except urllib.error.HTTPError as e:
+                if e.code == 404:
+                    cache[game_id] = {
+                        "mod_id": int(mod_id),
+                        "domain": domain,
+                        "error": "404",
+                        "fetched_at": int(time.time()),
+                    }
+                    vu.log_warn(game_id, f"404 from Nexus (mod {mod_id} not found or private)")
+                else:
+                    vu.log_error(game_id, f"HTTP {e.code}: {e.reason}")
+                    failed.append(game_id)
+            except Exception as e:
+                vu.log_error(game_id, f"fetch error: {e}")
+                failed.append(game_id)
+    except KeyboardInterrupt:
+        print(f"\nInterrupted. Progress saved ({updated} updated).")
+    finally:
+        _save_stats(cache)
 
     print(f"\n{'-' * 50}")
     print(f"Updated: {updated}")

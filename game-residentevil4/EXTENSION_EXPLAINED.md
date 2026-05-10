@@ -56,10 +56,6 @@ Installers run in priority order (lower number = tested first). The first instal
 | --- | --- |
 | `residentevil4-loader` | 25 |
 | `residentevil4-binaries` | 27 |
-| `residentevil4-root` | 29 |
-| `residentevil4-save` | 33 |
-| `residentevil4-mod` | 35 |
-| `residentevil4-fallback` | 49 |
 
 ## Registered Tools
 
@@ -72,8 +68,7 @@ These tools appear in Vortex's Tools panel when this game is active:
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- Open Config Folder
-- Open input.ini
+- Open Save Folder
 - Open PCGamingWiki Page
 - View Changelog
 - Submit Bug Report

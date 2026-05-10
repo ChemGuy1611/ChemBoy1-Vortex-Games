@@ -21,19 +21,25 @@ Usage:
         get_api_key, http_get, http_get_bytes, http_post_json,
         fetch_epic_app_id, add_to_discovery_ids,
         const_value, is_unset, is_missing, set_or_insert,
+        XXX_PATTERN, is_placeholder_value, is_real_value,
+        const_decl_match, const_array_value, extract_array_rhs,
+        find_js_function,
         update_index_header, inject_register_actions,
         find_fn_end, find_fn_body, REGISTER_ACTIONS,
         read_info_json, make_info_json, make_changelog, parse_changelog_latest,
-        mutate_index_js, read_json, write_json_atomic,
+        mutate_index_js, mutate_text_file, read_json, write_json_atomic,
         list_game_ids, iter_game_folders, iter_repo_scripts,
-        dry_prefix, print_run_summary, resize_images_to,
+        dry_prefix, log_dry, print_run_summary, resize_images_to,
+        build_arg_parser, assert_is_game_id, report_node_check,
         node_check, node_check_source, eslint_check,
-        run_generate_explained, get_discovery_ids, detect_engine, detect_stores,
+        run_generate_explained, run_generate_explained_batch,
+        get_discovery_ids, detect_engine, detect_stores,
         validate_index_js,
         log_info, log_error, log_warn,
         find_vortex_exe, safe_windows_dirname,
+        safe_rmtree, touch_empty, find_vortex_plugin_folder,
         read_id_list, write_id_list, is_load_order_game,
-        nexus_list_games, nexus_get_mod,
+        parse_nexus_mod_url, nexus_list_games, nexus_get_mod,
         download_exec_icon, download_cover_art,
         download_title_image, download_banner_image,
         write_text_atomic, open_in_default_app,
@@ -43,6 +49,7 @@ Usage:
     )
 """
 
+import argparse
 import json
 import os
 import re
@@ -88,8 +95,14 @@ def log_warn(game_id, msg):
     print(f"  [{game_id}] WARNING - {msg}")
 
 
+def log_dry(msg):
+    """Print a dry-run message without a game_id prefix."""
+    print(f"[DRY RUN] {msg}")
+
+
 # == HTTP helpers ==============================================================
 
+_HTTP_TIMEOUT = 15  # seconds for all urllib urlopen calls
 _RETRY_DELAYS = (2, 4)  # seconds between attempts (2 retries after initial try)
 
 
@@ -102,8 +115,11 @@ def _is_retryable(exc):
     return False
 
 
-def _execute_with_retry(fn):
-    """Call fn(), retrying on transient failures with exponential back-off."""
+def _execute_with_retry(fn, *, respect_retry_after=False):
+    """Call fn(), retrying on transient failures with exponential back-off.
+
+    If respect_retry_after=True and fn raises HTTPError 429 with a Retry-After
+    header, that delay is honored on top of the base back-off delay."""
     last_exc = None
     for attempt, delay in enumerate([0] + list(_RETRY_DELAYS)):
         if attempt:
@@ -113,6 +129,15 @@ def _execute_with_retry(fn):
         except Exception as exc:
             if not _is_retryable(exc):
                 raise
+            if (respect_retry_after
+                    and isinstance(exc, urllib.error.HTTPError)
+                    and exc.code == 429):
+                try:
+                    ra = int(exc.headers.get("Retry-After") or "0")
+                    if ra > delay:
+                        time.sleep(ra - delay)
+                except (ValueError, TypeError):
+                    pass
             last_exc = exc
     raise last_exc
 
@@ -124,7 +149,7 @@ def http_get(url, headers=None):
         req = urllib.request.Request(
             url, headers={"User-Agent": "Mozilla/5.0", **(headers or {})}
         )
-        with urllib.request.urlopen(req, timeout=15) as resp:
+        with urllib.request.urlopen(req, timeout=_HTTP_TIMEOUT) as resp:
             return resp.read().decode("utf-8")
     return _execute_with_retry(_do)
 
@@ -136,7 +161,7 @@ def http_get_bytes(url, headers=None):
         req = urllib.request.Request(
             url, headers={"User-Agent": "Mozilla/5.0", **(headers or {})}
         )
-        with urllib.request.urlopen(req, timeout=15) as resp:
+        with urllib.request.urlopen(req, timeout=_HTTP_TIMEOUT) as resp:
             return resp.read()
     return _execute_with_retry(_do)
 
@@ -155,7 +180,7 @@ def http_post_json(url, data, headers=None):
                 **(headers or {}),
             },
         )
-        with urllib.request.urlopen(req, timeout=15) as resp:
+        with urllib.request.urlopen(req, timeout=_HTTP_TIMEOUT) as resp:
             return json.loads(resp.read().decode("utf-8"))
     return _execute_with_retry(_do)
 
@@ -214,7 +239,7 @@ def extract_game_id(src):
 
 def extract_steamapp_id(src):
     """Extract STEAMAPP_ID value from index.js source. Returns None if not found or null."""
-    m = re.search(r"const\s+STEAMAPP_ID\s*=\s*['\"]?(\d+)['\"]?\s*;?", src)
+    m = re.search(r"(?:const|let)\s+STEAMAPP_ID\s*=\s*['\"]?(\d+)['\"]?\s*;?", src)
     return m.group(1) if m else None
 
 
@@ -353,7 +378,7 @@ def lookup_pcgamingwiki(game_name, debug=False):
 
     Set debug=True to print raw search results and match status.
     """
-    if game_name in _pcgw_cache:
+    if game_name in _pcgw_cache and not debug:
         return _pcgw_cache[game_name]
 
     name_variants = name_lookup_variants(game_name)
@@ -498,7 +523,7 @@ def set_or_insert(src, var_name, value, comment=None):
     """Replace the 'XXX' value for var_name, or insert the declaration before
     `const spec = {` if var_name is missing. value is a Python string (will be
     JSON-quoted in the output). comment is an optional trailing // comment."""
-    escaped = value.replace("\\", "\\\\")
+    escaped = value.replace("\\", "\\\\").replace('"', '\\"')
     comment_str = f" //{comment}" if comment else ""
     new_line = f'const {var_name} = "{escaped}";{comment_str}'
     pattern = rf'((?:const|let)\s+{re.escape(var_name)}\s*=\s*)["\']XXX["\']([^;\n]*;?)'
@@ -516,7 +541,7 @@ def get_discovery_ids(src):
     Returns a list of variable name strings (e.g. ["STEAMAPP_ID", "EAAPP_ID"]).
     Falls back to ["STEAMAPP_ID"] if the block cannot be parsed.
     Strips JS comments so commented-out IDs are excluded."""
-    m = re.search(r'"discovery"\s*:\s*\{[^}]*?"ids"\s*:\s*\[([^\]]*)\]', src, re.DOTALL)
+    m = re.search(r'"discovery"\s*:\s*\{.*?"ids"\s*:\s*\[([^\]]*)\]', src, re.DOTALL)
     if not m:
         return ['STEAMAPP_ID']
     ids_block = m.group(1)
@@ -677,15 +702,112 @@ def find_fn_body(src, func_start):
     return None, None
 
 
+# == Extended JS source helpers ================================================
+
+# Canonical placeholder pattern: "XXX", 'XXX', "XXX.exe", "XXX_Demo", etc.
+XXX_PATTERN = re.compile(r"""^["']XXX(?:[._][A-Za-z0-9]+)*["']$""")
+
+
+def is_placeholder_value(rhs):
+    """Return True if rhs is a placeholder value ("XXX", "XXX.exe", "XXX_Demo", etc.)."""
+    if rhs is None:
+        return False
+    return bool(XXX_PATTERN.match(rhs.strip()))
+
+
+def is_real_value(v):
+    """Return True if v is a filled-in, non-empty, non-placeholder value.
+
+    Returns False for: None, empty string, quoted empty string, 'XXX*' placeholders,
+    'null', 'N/A', and JS template refs like '${...}'."""
+    if v is None:
+        return False
+    s = str(v).strip()
+    if not s or s in ("null", "N/A"):
+        return False
+    if re.match(r'^["\']["\']$', s):
+        return False
+    if is_placeholder_value(s):
+        return False
+    if s.startswith('${'):
+        return False
+    return True
+
+
+def const_decl_match(src, name):
+    """Return the re.Match for the const/let declaration line of name, or None.
+
+    Useful for line-position edits — m.start()/m.end() give the declaration bounds."""
+    return re.search(
+        rf'^[ \t]*(?:const|let)\s+{re.escape(name)}\s*=\s*.+?(?:\s*;|\s*//|$)',
+        src, re.MULTILINE,
+    )
+
+
+def _scan_to_close(src, open_pos, open_ch, close_ch):
+    """Return content between open_ch and close_ch starting at open_pos using depth tracking.
+    Returns None if unbalanced."""
+    depth = 0
+    start = None
+    for i in range(open_pos, len(src)):
+        if src[i] == open_ch:
+            depth += 1
+            if start is None:
+                start = i + 1
+        elif src[i] == close_ch:
+            depth -= 1
+            if depth == 0:
+                return src[start:i]
+    return None
+
+
+def const_array_value(src, name):
+    """Return the raw array content (between [ and ]) for `const NAME = [...]`.
+    Uses bracket-depth scanning to handle nested arrays. Returns None if not found."""
+    m = re.search(rf'(?:const|let)\s+{re.escape(name)}\s*=\s*\[', src)
+    if not m:
+        return None
+    return _scan_to_close(src, m.end() - 1, '[', ']')
+
+
+def extract_array_rhs(src, name):
+    """Return raw content between [ and ] for `const NAME = [...]` via bracket-depth scanning.
+    Alias for const_array_value. Returns None if not found."""
+    return const_array_value(src, name)
+
+
+def find_js_function(src, name):
+    """Return (fn_start, body_start, body_end) for the named JS function.
+
+    fn_start: start of the function keyword (or const/let for arrow functions).
+    body_start: index just after the opening '{'.
+    body_end: index of the closing '}'.
+    Returns (None, None, None) if not found."""
+    m = re.search(rf'(?:async\s+)?function\s+{re.escape(name)}\s*\(', src)
+    if not m:
+        m = re.search(
+            rf'(?:const|let)\s+{re.escape(name)}\s*=\s*(?:async\s+)?(?:\([^)]*\)|\w+)\s*=>\s*\{{',
+            src,
+        )
+        if not m:
+            return None, None, None
+    fn_start = m.start()
+    body_start, body_end = find_fn_body(src, m.start())
+    return fn_start, body_start, body_end
+
+
 def update_index_header(src, *, name=None, version=None, date=None):
     """Update Name, Version, and/or Date fields in the index.js header comment block.
     Pass None to leave a field unchanged. Returns updated source string."""
     if name is not None:
-        src = re.sub(r'(Name:\s*).+?(\s+Vortex Extension)', rf'\g<1>{name}\2', src)
+        src = re.sub(
+            r'^([/*\s]*Name:\s*).+?(\s+Vortex Extension)',
+            rf'\g<1>{name}\g<2>', src, flags=re.MULTILINE,
+        )
     if version is not None:
         src = re.sub(r'^([/*\s]*Version:\s*)\S+', rf'\g<1>{version}', src, flags=re.MULTILINE)
     if date is not None:
-        src = re.sub(r'(Date:\s*)\S+', rf'\g<1>{date}', src)
+        src = re.sub(r'^([/*\s]*Date:\s*)\S+', rf'\g<1>{date}', src, flags=re.MULTILINE)
     return src
 
 
@@ -1163,7 +1285,21 @@ def run_generate_explained(game_id):
     """Run generate_explained.js for game_id. Returns (ok: bool, stderr: str)."""
     result = subprocess.run(
         ["node", "generate_explained.js", game_id],
-        cwd=REPO_ROOT, capture_output=True, text=True
+        cwd=REPO_ROOT, capture_output=True, text=True,
+        encoding="utf-8", errors="replace",
+    )
+    return result.returncode == 0, result.stderr.strip()
+
+
+def run_generate_explained_batch(game_ids):
+    """Run generate_explained.js for multiple game IDs in a single node invocation.
+    Returns (ok: bool, stderr: str). No-op (ok=True) for empty input."""
+    if not game_ids:
+        return True, ""
+    result = subprocess.run(
+        ["node", "generate_explained.js"] + list(game_ids),
+        cwd=REPO_ROOT, capture_output=True, text=True,
+        encoding="utf-8", errors="replace",
     )
     return result.returncode == 0, result.stderr.strip()
 
@@ -1468,6 +1604,42 @@ def dry_prefix(dry_run):
     return '[DRY RUN] ' if dry_run else ''
 
 
+def build_arg_parser(desc, *, with_force=True, with_dry_run=True, ids_required=True):
+    """Return an ArgumentParser with standard GAME_ID positional arg and common flags.
+
+    with_dry_run: add --dry-run flag (default True)
+    with_force: add --force flag (default True)
+    ids_required: nargs='+' when True, nargs='*' when False"""
+    p = argparse.ArgumentParser(description=desc)
+    p.add_argument(
+        "game_ids", metavar="GAME_ID",
+        nargs="+" if ids_required else "*",
+        help="Game ID(s) to process",
+    )
+    if with_dry_run:
+        p.add_argument("--dry-run", action="store_true",
+                       help="Show what would be done without making changes")
+    if with_force:
+        p.add_argument("--force", action="store_true",
+                       help="Overwrite existing files without prompting")
+    return p
+
+
+def assert_is_game_id(game_id):
+    """Raise ValueError with a clear message if game_id is a template name."""
+    if game_id.startswith(TEMPLATE_PREFIX):
+        raise ValueError(
+            f"Expected a game ID but got template name '{game_id}'. "
+            f"Pass the game ID without the '{TEMPLATE_PREFIX}' prefix."
+        )
+
+
+def report_node_check(game_id, ok, err):
+    """Print node --check result in standard format. No-op when ok and no error."""
+    if not ok:
+        log_warn(game_id, f"node --check failed: {err}")
+
+
 def mutate_index_js(folder, game_id, mutator_fn, *,
                     dry_run=False,
                     changed_msg="Updated index.js",
@@ -1503,6 +1675,44 @@ def mutate_index_js(folder, game_id, mutator_fn, *,
         return True
     except OSError as e:
         print(f"  [{game_id}] ERROR - could not write index.js: {e}")
+        return False
+
+
+def mutate_text_file(path, fn, *, dry_run=False, atomic=True,
+                     changed_msg="Updated", unchanged_msg="Already up to date",
+                     dry_run_msg="Would update"):
+    """Read a text file, apply fn(src) -> new_src, write back if changed.
+
+    Sibling to mutate_index_js for non-index.js files. Returns True if changed.
+    Uses write_text_atomic when atomic=True (default)."""
+    label = os.path.basename(path)
+    if not os.path.isfile(path):
+        print(f"  WARNING - {label} not found")
+        return False
+    try:
+        with open(path, encoding="utf-8") as f:
+            src = f.read()
+    except OSError as e:
+        print(f"  WARNING - could not read {label}: {e}")
+        return False
+    new_src = fn(src)
+    if new_src == src:
+        if unchanged_msg:
+            print(f"  {unchanged_msg}: {label}")
+        return False
+    if dry_run:
+        print(f"  [DRY RUN] {dry_run_msg}: {label}")
+        return True
+    try:
+        if atomic:
+            write_text_atomic(path, new_src)
+        else:
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(new_src)
+        print(f"  {changed_msg}: {label}")
+        return True
+    except OSError as e:
+        print(f"  ERROR - could not write {label}: {e}")
         return False
 
 
@@ -1557,6 +1767,17 @@ def print_run_summary(saved, failed, skipped, *, skip_label="no Steam ID"):
 
 # == Nexus Mods API helpers ====================================================
 
+def parse_nexus_mod_url(url):
+    """Parse a Nexus Mods URL into (domain, mod_id) or None.
+
+    Handles: https://www.nexusmods.com/<domain>/mods/<mod_id>[?...][#...]
+    Returns (domain: str, mod_id: int) or None."""
+    m = re.search(r'nexusmods\.com/([^/]+)/mods/(\d+)', url)
+    if not m:
+        return None
+    return m.group(1), int(m.group(2))
+
+
 _NEXUS_HEADERS = {
     "User-Agent": "Mozilla/5.0",
     "Accept": "application/json",
@@ -1577,7 +1798,7 @@ def nexus_list_games(api_key):
                 "https://api.nexusmods.com/v1/games.json?include_unapproved=false",
                 headers={"apikey": api_key, **_NEXUS_HEADERS},
             )
-            with urllib.request.urlopen(req, timeout=15) as resp:
+            with urllib.request.urlopen(req, timeout=_HTTP_TIMEOUT) as resp:
                 _nexus_games_cache = json.loads(resp.read())
         except Exception as e:
             print(f"  Nexus games fetch error: {e}")
@@ -1589,35 +1810,21 @@ def nexus_get_mod(domain, mod_id, api_key):
     """Fetch mod details from the Nexus v1 API.
 
     Returns (data_dict, rate_remaining_str_or_None). Retries up to 2 times on
-    429 / 5xx / network errors (2 s, 4 s delays). Raises immediately on 404 or
-    non-retryable 4xx errors."""
+    429 / 5xx / network errors (2 s, 4 s delays), honoring Retry-After on 429.
+    Raises immediately on 404 or non-retryable 4xx errors."""
     req = urllib.request.Request(
         f"https://api.nexusmods.com/v1/games/{domain}/mods/{mod_id}.json",
         headers={"apikey": api_key, **_NEXUS_HEADERS},
     )
-    last_exc = None
-    for delay in (0, 2, 4):
-        if delay:
-            time.sleep(delay)
-        try:
-            with urllib.request.urlopen(req, timeout=15) as resp:
-                data = json.loads(resp.read())
-                remaining = resp.headers.get("X-RL-Daily-Remaining")
-            return data, remaining
-        except urllib.error.HTTPError as e:
-            if e.code == 404 or (e.code != 429 and e.code < 500):
-                raise
-            if e.code == 429:
-                try:
-                    ra = int(e.headers.get("Retry-After") or "0")
-                    if ra > delay:
-                        time.sleep(ra - delay)
-                except (ValueError, TypeError):
-                    pass
-            last_exc = e
-        except urllib.error.URLError as e:
-            last_exc = e
-    raise last_exc
+    result = {}
+
+    def _do():
+        with urllib.request.urlopen(req, timeout=_HTTP_TIMEOUT) as resp:
+            result["data"] = json.loads(resp.read())
+            result["remaining"] = resp.headers.get("X-RL-Daily-Remaining")
+
+    _execute_with_retry(_do, respect_retry_after=True)
+    return result["data"], result.get("remaining")
 
 
 # == Platform / filesystem helpers =============================================
@@ -1635,14 +1842,74 @@ def find_vortex_exe():
     return None
 
 
+def safe_rmtree(path, hint=None):
+    """Remove a directory tree, retrying once on PermissionError after 1 second.
+
+    hint: shown in the warning when PermissionError is caught (e.g. "close Vortex first")."""
+    try:
+        shutil.rmtree(path)
+    except PermissionError as e:
+        msg = hint or "ensure no process is locking the folder"
+        print(f"  WARNING - {e}. {msg}. Retrying in 1s...")
+        time.sleep(1)
+        shutil.rmtree(path)
+
+
+def touch_empty(path, force=False):
+    """Create an empty file at path atomically. No-op if file exists and force=False."""
+    if not force and os.path.isfile(path):
+        return
+    tmp = str(path) + ".tmp"
+    with open(tmp, "wb"):
+        pass
+    os.replace(tmp, path)
+
+
+def find_vortex_plugin_folder(game_id, game_name=None):
+    """Return the deployed plugin folder path for game_id in Vortex's plugins dir, or None.
+
+    Checks VORTEX_PLUGINS_DIR env var (default: C:\\ProgramData\\vortex\\plugins).
+    Matches by game_id prefix first; falls back to display name if game_name is given."""
+    plugins_dir = os.environ.get("VORTEX_PLUGINS_DIR", r"C:\ProgramData\vortex\plugins")
+    if not os.path.isdir(plugins_dir):
+        return None
+    gid_lower = game_id.lower()
+    for entry in os.listdir(plugins_dir):
+        el = entry.lower()
+        if el == gid_lower or el.startswith(gid_lower + "-"):
+            full = os.path.join(plugins_dir, entry)
+            if os.path.isdir(full):
+                return full
+    if game_name:
+        name_clean = re.sub(r'[^a-z0-9]', '', game_name.lower())
+        for entry in os.listdir(plugins_dir):
+            if name_clean in re.sub(r'[^a-z0-9]', '', entry.lower()):
+                full = os.path.join(plugins_dir, entry)
+                if os.path.isdir(full):
+                    return full
+    return None
+
+
 def open_in_default_app(path):
     """Open path in the system default application (Windows: os.startfile)."""
-    os.startfile(path)
+    startfile = getattr(os, 'startfile', None)
+    if startfile:
+        startfile(path)
+
+
+_WINDOWS_RESERVED_NAMES = {
+    'CON', 'PRN', 'AUX', 'NUL',
+    'COM1', 'COM2', 'COM3', 'COM4', 'COM5', 'COM6', 'COM7', 'COM8', 'COM9',
+    'LPT1', 'LPT2', 'LPT3', 'LPT4', 'LPT5', 'LPT6', 'LPT7', 'LPT8', 'LPT9',
+}
 
 
 def safe_windows_dirname(name):
-    """Strip characters invalid in Windows directory names and strip whitespace."""
-    return re.sub(r'[<>:"/\\|?*]', '', name).strip()
+    """Strip invalid Windows dir name chars, trailing dots/spaces, and reject reserved names."""
+    name = re.sub(r'[<>:"/\\|?*]', '', name).rstrip('. ').strip()
+    if name.upper() in _WINDOWS_RESERVED_NAMES:
+        name = '_' + name
+    return name
 
 
 def read_id_list(filepath):

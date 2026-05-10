@@ -8,6 +8,11 @@
 | Engine / Structure | Unreal Engine 4-5 Game |
 | Author | ChemBoy1 |
 
+### Notes
+
+- Game is Early Access
+- Very likely to have a modkit release by 1.0
+
 ## Key Identifiers
 
 | Property | Value |
@@ -16,7 +21,6 @@
 | Executable | `XXX.exe` |
 | Executable (GOG) | `XXX.exe` |
 | Executable (Demo) | `XXX.exe` |
-| Extension Page | XXX |
 
 ## Supported Stores
 

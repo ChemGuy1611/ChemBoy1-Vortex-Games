@@ -28,6 +28,7 @@
 | `multiExe` | `false` | set to true if there are multiple executables (and conseq. DATA_FOLDERs) (typically for Xbox/EGS) |
 | `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |
 | `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below) |
+| `debug` | `false` | toggle for debug mode |
 
 ## Mod Types
 
@@ -48,8 +49,6 @@ These tools appear in Vortex's Tools panel when this game is active:
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- Open Data Folder
-- Open Save Folder
 - Open PCGamingWiki Page
 - View Changelog
 - Submit Bug Report

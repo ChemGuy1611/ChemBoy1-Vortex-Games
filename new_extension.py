@@ -13,6 +13,11 @@ Usage:
     python new_extension.py TEMPLATE "Game Name" --no-browser --no-startfile
     python new_extension.py GAME_ID --refresh-images
 
+    --no-browser        Skip opening browser tabs (PCGamingWiki, SteamDB, Steam demo page).
+    --no-startfile      Skip opening downloaded images and index.js in the default editor.
+    --refresh-images    Re-download all 4 images for an existing extension. Pass GAME_ID as
+                        the only positional arg. Does not redo lookups or rewrite index.js.
+
 Fills in all XXX fields it can resolve automatically from Steam, GOG, Epic,
 and PCGamingWiki. Remaining XXX fields are reported at the end for manual entry.
 
@@ -49,8 +54,6 @@ import urllib.request
 import urllib.parse
 from datetime import date
 from io import BytesIO
-import setup_test_folder as stf
-
 from vortex_utils import (
     REPO_ROOT, PCGW_API, TITLE_IMAGES_DIR, BANNER_IMAGES_DIR,
     http_get, http_get_bytes,
@@ -61,6 +64,7 @@ from vortex_utils import (
     update_index_header, sanitize_game_name, normalize_game_name, write_index_js,
     read_index_js, extract_steamapp_id, extract_game_name,
     nexus_list_games, run_script, open_in_default_app,
+    write_text_atomic, is_placeholder_value,
 )
 
 TEMPLATES = [
@@ -517,8 +521,9 @@ def parse_unity_data_paths(wikitext):
 # ── Derivation helpers ────────────────────────────────────────────────────────
 
 def derive_game_id(name):
-    """'Hollow Knight' → 'hollowknight'"""
-    return re.sub(r"[^a-z0-9]", "", name.lower())
+    """'FIFA 24' -> 'fifa-24'"""
+    clean = re.sub(r"[^a-z0-9 ]", "", name.lower()).strip()
+    return re.sub(r" +", "-", clean)
 
 
 def derive_short_name(name):
@@ -539,7 +544,7 @@ def sub(src, var_name, value):
     Only targets lines where the RHS is exactly "XXX" or 'XXX'.
     Lines already set to null or a real value are untouched.
     """
-    pattern = rf'((?:const|let)\s+{re.escape(var_name)}\s*=\s*)["\']XXX(?:\.exe)?["\']'
+    pattern = rf'((?:const|let)\s+{re.escape(var_name)}\s*=\s*)["\']XXX[^"\']*["\']'
     if value is None:
         return re.sub(pattern, r"\1null", src)
     escaped = value.replace("\\", "\\\\")
@@ -594,8 +599,7 @@ def edit_info_json(path, game_name):
         content = f.read()
     content = content.replace('"Game: XXX"', f'"Game: {game_name}"')
     content = content.replace('"Vortex support for XXX"', f'"Vortex support for {game_name}"')
-    with open(path, "w", encoding="utf-8") as f:
-        f.write(content)
+    write_text_atomic(path, content)
 
 
 def edit_changelog(path, today):
@@ -714,6 +718,43 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
         print(f"  Exec     : {exec_filename or 'XXX'}")
         if engine_version:
             print(f"  UE build : {engine_version}")
+        tmpl_index = os.path.join(REPO_ROOT, template_name, "index.js")
+        if os.path.isfile(tmpl_index):
+            with open(tmpl_index, encoding="utf-8") as f:
+                tmpl_src = f.read()
+            short_name = derive_short_name(game_name)
+            game_string = exec_filename.replace(".exe", "").replace(".EXE", "") if exec_filename else None
+            preview_fields = {
+                "GAME_ID":          game_id,
+                "STEAMAPP_ID":      appid,
+                "STEAMAPP_ID_DEMO": demo_appid,
+                "EPICAPP_ID":       None if not epic_found else (resolved_epic_id or "XXX"),
+                "GOGAPP_ID":        gog_id,
+                "XBOXAPP_ID":       None if not xbox_found else "XXX",
+                "GAME_NAME":        game_name,
+                "GAME_NAME_SHORT":  short_name,
+                **({"PCGAMINGWIKI_URL": pcgw_url} if pcgw_url else {}),
+                **({"EPIC_CODE_NAME": epic_code_name} if epic_code_name else {}),
+                **({"GAME_STRING": game_string, "GAME_STRING_ALT": game_string,
+                    "GAME_FOLDER": game_string, "FLUFFY_FOLDER": game_string} if game_string else {}),
+            }
+            if exec_filename:
+                preview_fields["EXEC"] = exec_filename
+                preview_fields["EXEC_NAME"] = exec_filename
+                preview_fields["EXEC_DEMO"] = None
+            tmpl_src = sub_header(tmpl_src, game_name, today)
+            tmpl_src = apply_substitutions(tmpl_src, preview_fields)
+            remaining_dry = [
+                m.group(1)
+                for m in re.finditer(r'(?:const|let)\s+(\w+)\s*=\s*("[^"]*"|\'[^\']*\')', tmpl_src)
+                if is_placeholder_value(m.group(2))
+            ]
+            if remaining_dry:
+                print(f"\n  XXX placeholders that would need manual entry:")
+                for v in remaining_dry:
+                    print(f"    - {v}")
+            else:
+                print(f"\n  All XXX placeholders resolved.")
         print(f"{'=' * 60}\n")
         return
 
@@ -896,7 +937,8 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
         src_check = f.read()
     remaining = [
         m.group(1)
-        for m in re.finditer(r'(?:const|let)\s+(\w+)\s*=\s*["\']XXX[^"\']*["\']', src_check)
+        for m in re.finditer(r'(?:const|let)\s+(\w+)\s*=\s*("[^"]*"|\'[^\']*\')', src_check)
+        if is_placeholder_value(m.group(2))
     ]
 
     if remaining:
@@ -958,11 +1000,13 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
 
     # ── Create test game folder ───────────────────────────────────────────────
     print("[setup_test_folder.py]")
-    try:
-        stf.setup(game_id)
-    except Exception as exc:
+    result = run_script("setup_test_folder.py", game_id)
+    if result.returncode == 0:
+        print(f"  {result.stdout.strip()}\n")
+    else:
         print(f"  FAILED -run manually: python setup_test_folder.py {game_id}")
-        print(f"  {exc}\n")
+        if result.stderr:
+            print(f"  {result.stderr.strip()}\n")
 
 
 # ── Refresh images ───────────────────────────────────────────────────────────

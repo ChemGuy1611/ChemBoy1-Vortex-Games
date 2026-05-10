@@ -29,6 +29,9 @@
 | `CHECK_DATA` | `false` | true if game, staging, and save folders are all on the same drive (partition check) |
 | `IO_STORE` | `true` | true if the Paks folder contains .ucas and .utoc files |
 | `SYM_LINKS` | `true` | true if symlink deployment is enabled for this game |
+| `success1` | `false` |  |
+| `success2` | `false` |  |
+| `test` | `false` |  |
 
 ## Mod Types
 
@@ -63,6 +66,7 @@ Installers run in priority order (lower number = tested first). The first instal
 These tools appear in Vortex's Tools panel when this game is active:
 
 - **Custom Launch**
+- **Skip-EAC Launch**
 
 ## Toolbar Actions
 

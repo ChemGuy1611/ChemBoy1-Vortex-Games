@@ -40,12 +40,17 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `log_info(game_id, msg)` | Print `[game_id] msg` |
 | `log_error(game_id, msg)` | Print `[game_id] ERROR - msg` |
 | `log_warn(game_id, msg)` | Print `[game_id] WARNING - msg` |
+| `log_dry(msg)` | Print a dry-run message (`[DRY RUN] msg`) without a game_id prefix. |
 | `find_fn_end(src, fn_match_end)` | Return index past the closing `}` of the JS function whose `{` is at `fn_match_end - 1` |
 | `find_fn_body(src, func_start)` | Public wrapper for brace-counting; returns `(body_start, body_end)` indices or `(None, None)` |
 | `run_generate_explained(game_id)` | Run `generate_explained.js` for a game; returns `(ok: bool, stderr: str)` |
+| `run_generate_explained_batch(game_ids)` | Run `generate_explained.js` for multiple game IDs in a single `node` invocation. Returns `(ok: bool, stderr: str)`. |
 | `node_check(path)` | Run `node --check` on a JS file path; returns `(ok: bool, stderr: str)` |
 | `node_check_source(src)` | Run `node --check` on an in-memory JS string (writes a temp file internally); returns `(ok, error_msg)` — `ok` is `None` if node is not on PATH |
 | `eslint_check(path)` | Run `npx eslint` on a JS file (config auto-discovered from `REPO_ROOT`); returns `(ok: bool, output: str)` |
+| `build_arg_parser(desc, *, with_force, with_dry_run, ids_required)` | Return an `ArgumentParser` with standard `GAME_ID` positional arg and `--dry-run`/`--force` flags. |
+| `assert_is_game_id(game_id)` | Raise `ValueError` if `game_id` starts with `template-`. Use to reject template names passed to game-only commands. |
+| `report_node_check(game_id, ok, err)` | Print `node --check` result in standard format. No-op when `ok` and no error. |
 | `get_discovery_ids(src)` | Parse variable names from the spec's `discovery.ids` array; returns list of names (e.g. `["STEAMAPP_ID", "EAAPP_ID"]`); falls back to `["STEAMAPP_ID"]` |
 | `iter_game_folders(target_game_ids)` | Yield `(folder, game_id, src)` for every `game-*` folder; filtered by `target_game_ids` if given |
 | `REGISTER_ACTIONS` | List of `(label, commented_out, code[, detect_key])` tuples for standard `context.registerAction` calls; `detect_key` overrides the presence check (used by Config/Save entries to match any `'Open Config ...'`/`'Open Save ...'` variant) |
@@ -55,6 +60,13 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `is_unset(value_str)` | Return `True` if a const RHS string is `"XXX"` or `'XXX'` (placeholder not yet filled) |
 | `is_missing(src, var_name)` | Return `True` if a `const`/`let` declaration for `var_name` is absent from src |
 | `set_or_insert(src, var_name, value, comment)` | Replace an `XXX` placeholder for `var_name`, or insert the const before the `spec` block |
+| `XXX_PATTERN` | Compiled regex matching any quoted `XXX` placeholder value (e.g. `"XXX"`, `"XXX.exe"`, `"XXX_Demo"`). |
+| `is_placeholder_value(rhs)` | Return `True` if `rhs` is a placeholder value: `"XXX"`, `"XXX.exe"`, `"XXX_Demo"`, etc. Uses `XXX_PATTERN`. |
+| `is_real_value(v)` | Return `True` if `v` is a filled-in, non-empty, non-placeholder value. Returns `False` for `None`, empty string, `null`, `N/A`, `XXX*`, and `${...}` template refs. |
+| `const_decl_match(src, name)` | Return the `re.Match` for the `const`/`let` declaration line of `name`. Useful for line-position edits. |
+| `const_array_value(src, name)` | Return the raw array content (between `[` and `]`) for `const NAME = [...]` via bracket-depth scanning. Returns `None` if not found. |
+| `extract_array_rhs(src, name)` | Alias for `const_array_value`. Returns bracket-depth-scanned array content for `const NAME = [...]`. |
+| `find_js_function(src, name)` | Return `(fn_start, body_start, body_end)` for the named JS function. Returns `(None, None, None)` if not found. |
 | `extract_extension_url(src)` | Extract the `EXTENSION_URL` value from JS source; returns `None` if unset or not an HTTP URL |
 | `sanitize_game_name(name)` | Strip `®`, `™`, `©` symbols and collapse extra whitespace from a game name string |
 | `normalize_game_name(s)` | Lowercase + strip right-quotes, colons, ` - ` separators, and extra whitespace. For fuzzy title comparison. |
@@ -65,6 +77,7 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `make_changelog()` | Return a `CHANGELOG.md` template string with `0.1.0 - 2026-XX-XX` initial entry |
 | `parse_changelog_latest(folder)` | Parse `CHANGELOG.md` in a folder; returns `(version, date)` of the most recent entry (either may be `None`) |
 | `mutate_index_js(folder, game_id, mutator_fn, *, dry_run, changed_msg, unchanged_msg, dry_run_msg)` | Read `index.js`, apply `mutator_fn(src) -> new_src`, write back if changed. Handles all error printing. Returns `True` if changed. |
+| `mutate_text_file(path, fn, *, dry_run, atomic)` | Like `mutate_index_js` but for non-`index.js` files. Reads, applies `fn(src)->new_src`, writes atomically if changed. Returns `True` if changed. |
 | `read_json(path, default)` | Read and parse a JSON file; returns `default` (empty dict) on missing/corrupt file |
 | `write_json_atomic(path, data, *, indent, sort_keys)` | Write JSON atomically via tmp file + `os.replace` |
 | `dry_prefix(dry_run)` | Return `"[DRY RUN] "` if `dry_run` is `True`, else `""` |
@@ -72,9 +85,13 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `resize_images_to(paths_and_labels, target_wh, *, fmt, quality, dry_run)` | Resize images in a `(path, label)` list to `target_wh`. Returns `(resized, already_correct, missing)`. Raises `ImportError` if Pillow absent. |
 | `find_vortex_exe()` | Return path to `Vortex.exe` (default install dir then PATH), or `None` |
 | `safe_windows_dirname(name)` | Strip characters invalid in Windows directory names (`<>:"/\|?*`) and strip whitespace |
+| `safe_rmtree(path, hint)` | Remove a directory tree, retrying once on `PermissionError` after 1 second. `hint` shown in the warning (e.g. `"close Vortex first"`). |
+| `touch_empty(path, force)` | Create an empty file at `path` atomically. No-op if file exists and `force=False`. |
+| `find_vortex_plugin_folder(game_id, game_name)` | Return the deployed plugin folder path for `game_id` in Vortex's plugins dir. Reads `VORTEX_PLUGINS_DIR` env (default `C:\ProgramData\vortex\plugins`). Returns `None` if not found. |
 | `read_id_list(filepath)` | Read a text file; return list of stripped non-empty lines (game IDs or similar) |
 | `write_id_list(filepath, game_ids)` | Write a sorted list of IDs to a file, one per line |
 | `is_load_order_game(src)` | Return `True` if `src` calls `registerLoadOrder` and is not a UE4/5 extension |
+| `parse_nexus_mod_url(url)` | Parse a Nexus Mods URL into `(domain, mod_id)` or `None`. |
 | `nexus_list_games(api_key)` | Fetch all approved Nexus Mods games; caches result for the process lifetime. Returns `[]` on error. |
 | `nexus_get_mod(domain, mod_id, api_key)` | Fetch Nexus v1 mod details with retry. Returns `(data_dict, rate_remaining_or_None)`. Raises on 404 / non-retryable errors. |
 | `write_text_atomic(path, entries, encoding)` | Write list-of-strings (or a single string) to `path` atomically via `.tmp` + `os.replace`. |
@@ -85,6 +102,7 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `build_js_symbol_table(src)` | Resolve `const`/`let` strings, template literals, `path.join()`, and variable refs in index.js source. Returns `{name: value}` dict. |
 | `list_template_names()` | Return sorted list of template name suffixes (e.g. `['basic', 'ue4-5', ...]`). |
 | `iter_extension_folders(*, include_templates=False)` | Like `iter_game_folders()` but optionally yields `template-*` folders too. |
+| `detect_engine(src)` | Return a short engine/framework label (e.g. `'Unreal Engine 4/5'`, `'RE Engine'`) based on index.js source. Same detection logic as `categorize_games.py`. |
 | `detect_stores(src)` | Return space-separated store badges from `DISCOVERY_IDS_ACTIVE` in index.js: `S` Steam, `G` GOG, `E` Epic, `X` Xbox, `U` Ubisoft, `EA` EA. |
 | `validate_index_js(src)` | Return list of issue strings: leftover `XXX`, missing `applyGame()`, missing `context.registerGame()`, missing `main()`. |
 | `GUI_FLAGS_PATH` | Absolute path to `vortex_gui_flags.json` at repo root |
@@ -257,6 +275,8 @@ The first `GAME_ID` is the primary source — its `index.js` is copied and strip
 | `--force` | Overwrite existing template folder. |
 | `--diff` | Show unified diff vs. existing template (or full output if new). No files written. |
 
+`--diff` and `--force` are mutually exclusive; passing both is an error.
+
 ### new_template.py — Examples
 
 ```sh
@@ -361,6 +381,7 @@ Use `--no-images` to skip downloading `exec.png`, cover art, and title image (us
 Use `--no-browser` to suppress all `webbrowser.open` calls (PCGamingWiki, SteamDB, Steam demo page). Useful in headless / CI environments.
 Use `--no-startfile` to suppress opening downloaded images and `index.js` in the default editor.
 Use `--refresh-images GAME_ID` to re-download all 4 images for an existing extension without redoing any lookups or rewriting `index.js`. Reads `STEAMAPP_ID` and `GAME_NAME` directly from the existing `game-{GAME_ID}/index.js`. Always overwrites existing image files.
+Use `--dry-run` to run all lookups and print what would be created without writing any files. After all lookups, prints the list of XXX placeholders that would still need manual entry.
 
 ### new_extension.py — Examples
 
@@ -456,10 +477,13 @@ Node.js (no additional packages required).
 ```sh
 node generate_explained.js
 node generate_explained.js GAME_ID [GAME_ID ...]
+node generate_explained.js --json
+node generate_explained.js GAME_ID [GAME_ID ...] --json
 ```
 
 Run without arguments to process all `game-*` and `template-*` folders.
 Pass one or more bare `GAME_ID` values to target specific extensions (e.g. `thelongdark`).
+`--json` writes machine-readable JSON to stdout; progress and summary go to stderr instead.
 
 ### generate_explained.js — Examples
 
@@ -471,7 +495,19 @@ node generate_explained.js thelongdark hogwartslegacy
 
 ### generate_explained.js — Output
 
-Always writes `EXTENSION_EXPLAINED.md` into each processed extension folder (overwrites any existing file). Reports a count of created, skipped, and errored files on completion.
+Always writes `EXTENSION_EXPLAINED.md` into each processed extension folder (overwrites any existing file). Reports a count of created, skipped, and errored files on completion. Exits with code `1` if any extension threw an error during generation; `0` otherwise.
+
+With `--json`, stdout receives a JSON object:
+
+```json
+{
+  "timestamp": "2026-05-09T12:00:00.000Z",
+  "created": 5,
+  "skipped": 1,
+  "errors": 0,
+  "results": [{ "id": "game-thelongdark", "ok": true }, ...]
+}
+```
 
 ---
 
@@ -496,9 +532,9 @@ node lint_extensions.js --json
 ```
 
 - No arguments — lints all `game-*/index.js` files.
-- `GAME_ID [GAME_ID ...]` — only lints the listed game IDs.
+- `GAME_ID [GAME_ID ...]` — only lints the listed game IDs. Resolves `game-<ID>` first; falls back to `template-<ID>` if not found (so `basic` lints `template-basic`).
 - `--fix` — runs ESLint with `--fix` to auto-repair fixable issues.
-- `--templates` — also includes `template-*/index.js` files.
+- `--templates` — also includes `template-*/index.js` files in a full scan (no GAME_ID args).
 - `--quiet` — suppresses `[OK]` lines; only shows failures.
 - `--json` — writes machine-readable JSON to stdout instead of human-readable text. `lint_results.txt` is still written. Useful for CI pipelines that parse the output.
 
@@ -513,7 +549,7 @@ node lint_extensions.js --templates --quiet
 
 ### lint_extensions.js — Output
 
-Per-file status: `[OK]` for passing files (with `(N warnings)` suffix when warnings are present), `[FAIL]` with per-message details for failures. Summary line: `N passed, N failed, N errors, N warnings`. Exits with code `0` if all pass, `1` if any fail. Always writes the full output to `lint_results.txt` in the repo root (overwrites on each run). Timestamp is ISO 8601 for stable cross-machine ordering.
+Per-file status: `[OK]` for passing files (with `(N warnings)` suffix when warnings are present), `[FAIL]` with per-message details for failures. Summary line: `N passed, N failed, N errors, N warnings`. Exit codes: `0` all pass, `1` any fail or no files found, `2` ESLint crashed. Always writes the full output to `lint_results.txt` in the repo root (overwrites on each run). Timestamp is ISO 8601 for stable cross-machine ordering.
 
 With `--json`, stdout receives a JSON object instead:
 
@@ -605,9 +641,11 @@ No additional packages required (Python stdlib only). `node` must be on `PATH` f
 python port_to_template.py GAME_ID TEMPLATE_NAME
 python port_to_template.py GAME_ID TEMPLATE_NAME --dry-run
 python port_to_template.py GAME_ID TEMPLATE_NAME --force
+python port_to_template.py GAME_ID TEMPLATE_NAME --no-explained
 ```
 
 `GAME_ID` is the folder name without the `game-` prefix. `TEMPLATE_NAME` is the folder name without the `template-` prefix.
+Use `--no-explained` to skip regenerating `EXTENSION_EXPLAINED.md` after writing `index.js` (saves time when running `node generate_explained.js` separately).
 
 ### port_to_template.py — Examples
 
@@ -661,11 +699,14 @@ Packages a game extension folder into a `.zip` archive using 7-Zip and opens the
 python release_extension.py GAME_ID [GAME_ID ...]
 python release_extension.py GAME_ID --no-open
 python release_extension.py GAME_ID --dry-run
+python release_extension.py GAME_ID --skip-eslint --skip-explained
 ```
 
 Pass one or more `GAME_ID` values to release multiple extensions in one run.
 Use `--no-open` to skip opening the browser (useful for testing or bulk releases).
 Use `--dry-run` to print what would be generated and zipped without running 7-Zip.
+Use `--skip-eslint` to skip the ESLint step. Use `--skip-explained` to skip regenerating `EXTENSION_EXPLAINED.md`.
+Passing a template name (e.g. `template-basic`) instead of a game ID errors immediately before any release steps run.
 
 ### release_extension.py — Examples
 
@@ -799,6 +840,12 @@ Copies one or more CB1 game extension folders from the repo into the Vortex plug
 
 No additional packages required (Python stdlib only).
 
+### deploy_to_vortex.py -- Environment Variables
+
+| Variable | Required | Description |
+| --- | --- | --- |
+| `VORTEX_PLUGINS_DIR` | Optional | Path to the Vortex plugins directory. Default: `C:\ProgramData\vortex\plugins`. |
+
 ### deploy_to_vortex.py -- Usage
 
 ```sh
@@ -827,7 +874,7 @@ Per-game status: `[game_id] updated index.js in <folder>` (existing match) or `[
 
 ## analyze_vortex_log.py
 
-Parses `C:\ProgramData\vortex\vortex.log` and consolidates entries into a single file (`vortex.analyzed.log`) with sections per severity level. Within each section, entries are grouped by hour in chronological order. Multi-line entries (stack traces, JSON blobs) are kept together. Output file lands next to `vortex.log` by default. Opens the output file on success.
+Parses `C:\ProgramData\vortex\vortex.log` and consolidates entries into a single file (`vortex.analyzed.log`) with sections per severity level. Within each section, entries are grouped by hour in chronological order. Multi-line entries (stack traces, JSON blobs) are kept together. Output file lands next to `vortex.log` by default. Opens the output folder on success.
 
 ### analyze_vortex_log.py — Requirements
 

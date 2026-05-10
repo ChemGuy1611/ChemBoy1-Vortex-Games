@@ -28,7 +28,7 @@ from datetime import datetime
 
 from PySide6.QtCore import (
     QAbstractProxyModel, QAbstractTableModel, QItemSelectionModel, QModelIndex,
-    QObject, QPointF, QProcess, QSettings, QSize, QSortFilterProxyModel, Qt, QUrl, Signal,
+    QObject, QPointF, QProcess, QProcessEnvironment, QSettings, QSize, QSortFilterProxyModel, Qt, QUrl, Signal,
 )
 from PySide6.QtGui import (
     QAction, QColor, QDesktopServices, QFont, QIcon, QKeySequence, QPainter, QPainterPath,
@@ -443,6 +443,19 @@ HEADERS = ("Flag", "Icon", "Game ID", "Name", "Ver", "Updated", "Engine", "Store
 _THUMBNAIL_COLS = frozenset({COL_ICON, COL_COVER, COL_TITLE, COL_BANNER})
 _IS_GROUP_HEADER_ROLE = Qt.UserRole + 10
 
+_icon_cache: dict[tuple[str, float], "QIcon | None"] = {}
+
+
+def _load_icon_cached(path: str, max_w: int, max_h: int) -> "QIcon | None":
+    try:
+        mtime = os.path.getmtime(path)
+    except OSError:
+        return None
+    key = (path, mtime)
+    if key not in _icon_cache:
+        _icon_cache[key] = _load_icon(path, max_w, max_h)
+    return _icon_cache[key]
+
 
 class GameRow:
     __slots__ = (
@@ -503,16 +516,16 @@ class GameModel(QAbstractTableModel):
             stores = vu.detect_stores(src)
 
             icon_path = os.path.join(folder, "exec.png")
-            icon = _load_icon(icon_path, 22, 20) if os.path.isfile(icon_path) else None
+            icon = _load_icon_cached(icon_path, 22, 20) if os.path.isfile(icon_path) else None
 
             cover_path = os.path.join(folder, f"{game_id}.jpg")
-            cover = _load_icon(cover_path, 40, 20) if os.path.isfile(cover_path) else None
+            cover = _load_icon_cached(cover_path, 40, 20) if os.path.isfile(cover_path) else None
 
             title_path = os.path.join(vu.TITLE_IMAGES_DIR, f"{game_id}_title.jpg")
-            title = _load_icon(title_path, 40, 20) if os.path.isfile(title_path) else None
+            title = _load_icon_cached(title_path, 40, 20) if os.path.isfile(title_path) else None
 
             banner_path = os.path.join(vu.BANNER_IMAGES_DIR, f"{game_id}_banner.jpg")
-            banner = _load_icon(banner_path, 40, 20) if os.path.isfile(banner_path) else None
+            banner = _load_icon_cached(banner_path, 40, 20) if os.path.isfile(banner_path) else None
 
             extension_url = vu.extract_extension_url(src)
 
@@ -598,6 +611,10 @@ class GameModel(QAbstractTableModel):
                 return row.endorsements if row.endorsements is not None else -1
             if col == COL_DL:
                 return row.unique_downloads if row.unique_downloads is not None else -1
+            if col == COL_ICON:   return 1 if row.icon   is not None else 0
+            if col == COL_COVER:  return 1 if row.cover  is not None else 0
+            if col == COL_TITLE:  return 1 if row.title  is not None else 0
+            if col == COL_BANNER: return 1 if row.banner is not None else 0
             return None
 
         return None
@@ -640,7 +657,7 @@ class GameFilterModel(QSortFilterProxyModel):
         r_row = self.sourceModel()._rows[right.row()]
         if self._grouping and l_row.engine != r_row.engine:
             return l_row.engine < r_row.engine
-        if left.column() in (COL_END, COL_DL):
+        if left.column() in (COL_END, COL_DL, COL_ICON, COL_COVER, COL_TITLE, COL_BANNER):
             src = self.sourceModel()
             lv = src.data(left,  Qt.UserRole + 1)
             rv = src.data(right, Qt.UserRole + 1)
@@ -842,6 +859,10 @@ class ScriptRunner(QObject):
         p = QProcess()
         p.setWorkingDirectory(REPO_ROOT)
         p.setProcessChannelMode(QProcess.MergedChannels)
+        env = QProcessEnvironment.systemEnvironment()
+        env.insert("PYTHONIOENCODING", "utf-8")
+        env.insert("PYTHONUTF8", "1")
+        p.setProcessEnvironment(env)
         p.readyReadStandardOutput.connect(lambda: self._on_output(p))
         p.errorOccurred.connect(self._on_process_error)
         p.finished.connect(self._on_finished)
@@ -853,12 +874,16 @@ class ScriptRunner(QObject):
         self.log_signal.emit(bytes(data).decode("utf-8", errors="replace"))
 
     def _on_process_error(self, err):
-        if err == QProcess.ProcessError.FailedToStart:
-            self.log_signal.emit(
-                "\n[ERROR: Failed to start -- executable not found or no permission]\n"
-            )
-            self._queue.clear()
-            self.finished_signal.emit(-1)
+        msgs = {
+            QProcess.ProcessError.FailedToStart: "Failed to start -- executable not found or no permission",
+            QProcess.ProcessError.Crashed:       "Process crashed",
+            QProcess.ProcessError.Timedout:      "Process timed out",
+            QProcess.ProcessError.ReadError:     "Read error",
+            QProcess.ProcessError.WriteError:    "Write error",
+        }
+        self.log_signal.emit(f"\n[ERROR: {msgs.get(err, f'Process error {err}')}]\n")
+        self._queue.clear()
+        self.finished_signal.emit(-1)
 
     def _on_finished(self, code, _status):
         if code != 0:
@@ -1103,6 +1128,10 @@ class MainWindow(QMainWindow):
         root_layout.addLayout(top_bar)
 
         QShortcut(QKeySequence("Ctrl+F"), self).activated.connect(self._filter_edit.setFocus)
+        QShortcut(QKeySequence("F2"),     self).activated.connect(self._on_flag_shortcut)
+        QShortcut(QKeySequence("Delete"), self).activated.connect(self._on_flag_shortcut)
+        QShortcut(QKeySequence("Ctrl+E"), self).activated.connect(self._on_open_editor)
+        QShortcut(QKeySequence("Escape"), self).activated.connect(self._filter_edit.clear)
 
         # script toolbar
         toolbar = QToolBar()
@@ -1119,11 +1148,11 @@ class MainWindow(QMainWindow):
 
         add_action("Release", self._on_release)
         add_action("Deploy to Vortex", self._on_deploy_to_vortex)
+        add_action("Launch in Vortex", self._on_open_in_vortex)
         add_action("Open Folder", self._on_open_folder, sep=True)
         add_action("Open in Editor", self._on_open_editor)
         add_action("Open Game Page", self._on_open_nexus, sep=True)
         add_action("Open Extension Page", self._on_open_ext)
-        add_action("Open in Vortex", self._on_open_in_vortex)
         add_action("Port to Template...", self._on_port_to_template, sep=True)
         add_action("Setup Test Folder", self._on_setup_test)
         add_action("Patch", self._on_patch)
@@ -1257,6 +1286,9 @@ class MainWindow(QMainWindow):
         settings.setValue("filterText", self._filter_edit.text())
         settings.setValue("groupByEngine", self._group_btn.isChecked())
         self._runner.stop()
+        proc = self._runner._process
+        if proc is not None:
+            proc.waitForFinished(3000)
         super().closeEvent(event)
 
     def _apply_spans(self):
@@ -1361,6 +1393,13 @@ class MainWindow(QMainWindow):
         if proxy_index.column() in (*_THUMBNAIL_COLS, COL_FLAG):
             return
         self._on_open_editor()
+
+    def _on_flag_shortcut(self):
+        for idx in self._table.selectionModel().selectedRows():
+            if self._proxy.is_header_row(idx.row()):
+                continue
+            self._on_table_cell_clicked(self._proxy.index(idx.row(), COL_FLAG))
+            break
 
     # -- Script launchers -------------------------------------------------------
 
@@ -1583,13 +1622,14 @@ class MainWindow(QMainWindow):
             QMessageBox.information(self, "No Selection", "Select one or more games first.")
             return
         if len(rows) > 1:
-            QMessageBox.information(self, "Single Game Only", "Open in Vortex works on one game at a time.")
+            QMessageBox.information(self, "Single Game Only", "Launch in Vortex works on one game at a time.")
             return
         if not VORTEX_EXE:
             QMessageBox.warning(self, "Vortex Not Found", "Vortex.exe could not be located.")
             return
         subprocess.Popen([VORTEX_EXE, "--game", rows[0].game_id],
-                         cwd=os.path.dirname(VORTEX_EXE))
+                         cwd=os.path.dirname(VORTEX_EXE),
+                         creationflags=subprocess.CREATE_NO_WINDOW)
 
     def _on_new_game(self):
         dlg = NewGameDialog(self)
@@ -1658,23 +1698,26 @@ class MainWindow(QMainWindow):
         entries = [
             ("Release", self._on_release),
             ("Deploy to Vortex", self._on_deploy_to_vortex),
+            ("Launch in Vortex", self._on_open_in_vortex),
             None,
             ("Open Folder", self._on_open_folder),
             ("Open in Editor", self._on_open_editor),
             None,
             ("Open Game Page", self._on_open_nexus),
             ("Open Extension Page", self._on_open_ext),
-            ("Open in Vortex", self._on_open_in_vortex),
             None,
             ("Port to Template...", self._on_port_to_template),
             ("Setup Test Folder", self._on_setup_test),
             ("Patch", self._on_patch),
+            ("Categorize", self._on_categorize),
+            ("Analyze Log", self._on_analyze_log),
             None,
             ("Fetch Icon", self._on_fetch_icon),
             ("Fetch Cover", self._on_fetch_cover),
             ("Fetch Title", self._on_fetch_title),
             ("Fetch Banner", self._on_fetch_banner),
             ("Fetch Nexus Stats", self._on_fetch_nexus_stats),
+            ("View Images", self._on_view_images),
         ]
         for entry in entries:
             if entry is None:

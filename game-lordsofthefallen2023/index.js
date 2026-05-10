@@ -2,8 +2,8 @@
 Name: Lords of the Fallen (2023) Vortex Extension
 Structure: UE5 (Xbox-Integrated)
 Author: ChemBoy1
-Version: 0.2.0
-Date: 2026-05-07
+Version: 0.3.0
+Date: 2026-05-10
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -11,6 +11,7 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 const { parseStringPromise } = require('xml2js');
+const { default: IniParser, WinapiFormat } = require('vortex-parse-ini');
 
 //Specify all information about the game
 const GAME_ID = "lordsofthefallen2023";
@@ -19,9 +20,13 @@ const EPICAPP_ID = "ce98de7d9e9c47ea8d9ba8e46a5063b4";
 const GOGAPP_ID = null;
 const XBOXAPP_ID = "CIGamesS.A.LordsoftheFallen-PC";
 const XBOXEXECNAME = "AppLordsoftheFallenShipping";
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1276"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Lords_of_the_Fallen_%282023%29";
+
 const GAME_NAME = "Lords of the Fallen (2023)";
 const GAME_NAME_SHORT = "Lords of the Fallen";
 const DEFAULT_EXEC = "LOTF2.exe";
+const EXEC = DEFAULT_EXEC;
 let GAME_PATH = '';
 let CHECK_DATA = false;
 let STAGING_FOLDER = '';
@@ -146,11 +151,114 @@ const UE4SS_FILE_NO = 0;
 
 const MOD_PATH_DEFAULT = UE5_PATH;
 
-const INSTR_URL = `https://www.pcgamingwiki.com/wiki/Lords_of_the_Fallen_(2023)#Disable_Easy_Anticheat`;
+//for EAC bypass
+const EAC_BAT_ID = `${GAME_ID}-eacbat`;
+const EAC_BAT = 'EAC.bat';
+const EAC_BAT_CONTENTS = `@echo off
+set SteamAppId=1501750
+set SteamGameId=1501750
+start LOTF2-Win64-Shipping.exe
+`;
+const EAC_CONFIG_FILE = 'Engine.ini';
+const EAC_CONFIG_FILEPATH = path.join(CONFIG_PATH_DEFAULT, EAC_CONFIG_FILE);
+const EAC_CONFIG_KEY = `EpicOnlineServices`;
+const EAC_CONFIG_VALUE = 'EnableAntiCheat';
+const EAC_CONFIG_SET = 'False';
+const EAC_INSTR_URL = `https://www.pcgamingwiki.com/wiki/Lords_of_the_Fallen_(2023)#Disable_Easy_Anticheat`;
+
+//Bypass EAC - Create .bat file and Write to Engine.ini file
+async function bypassEac(api) {
+  GAME_PATH = getDiscoveryPath(api);
+  let success1 = false;
+  let success2 = false;
+  //Create EAC.bat
+  try { 
+    await fs.statAsync(path.join(GAME_PATH, EAC_BAT));
+    success1 = true;
+  } catch { //file DNE - Write
+    try {
+      await fs.writeFileAsync(
+        path.join(GAME_PATH, EAC_BAT),
+        EAC_BAT_CONTENTS,
+        { encoding: "utf8" },
+      );
+      success1 = true;
+    } catch (err) {
+      api.showErrorNotification(`Failed to create ${EAC_CONFIG_FILE} to bypass EAC. Must do it manually.`, err, { allowReport: false });
+    }
+  }
+  //Write to Engine.ini
+  let stat = [];
+  try { 
+    const parser = new IniParser(new WinapiFormat());
+    try {
+      await fs.ensureDirWritableAsync(path.dirname(EAC_CONFIG_FILEPATH));
+      await fs.statAsync(EAC_CONFIG_FILEPATH);
+    } catch (err) { //file DNE - Write
+      try {
+        await fs.writeFileAsync(
+          EAC_CONFIG_FILEPATH,
+          `[${EAC_CONFIG_KEY}]\n${EAC_CONFIG_VALUE}=${EAC_CONFIG_SET}\n`,
+          { encoding: "utf8" },
+        );
+        success2 = true;
+      } catch (err) {
+        api.showErrorNotification(`Failed to create ${EAC_CONFIG_FILE} to bypass EAC. Must do it manually.`, err, { allowReport: false });
+      }
+    }
+    stat = await fs.statAsync(EAC_CONFIG_FILEPATH);
+    if (stat.size === 0) { //if Engine.ini exists, but is empty, write it
+      await fs.writeFileAsync(
+        EAC_CONFIG_FILEPATH,
+        `[${EAC_CONFIG_KEY}]\n${EAC_CONFIG_VALUE}=${EAC_CONFIG_SET}\n`,
+        { encoding: "utf8" },
+      );
+      success2 = true;
+    }
+    let content = await parser.read(EAC_CONFIG_FILEPATH);
+    let test = false;
+    let TEST_LINE = '';
+    try {
+      TEST_LINE = content.data[EAC_CONFIG_KEY][EAC_CONFIG_VALUE];
+    } catch {
+      TEST_LINE = '';
+    }
+    test = TEST_LINE === EAC_CONFIG_SET;
+    if (!test) {
+      try {
+        content.data[EAC_CONFIG_KEY][EAC_CONFIG_VALUE] = EAC_CONFIG_SET; // Set the new value
+      } catch { //if the value didn't exist, above is undefined and throws error. Add new value to object
+        content.data = {
+          ...content.data,
+          [EAC_CONFIG_KEY]: {
+            [EAC_CONFIG_VALUE]: EAC_CONFIG_SET
+          }
+        };
+      }
+      await parser.write(EAC_CONFIG_FILEPATH, content) //write the INI file
+      success2 = true;
+    }
+    if (test) success2 = true;
+  } catch (err) {
+    api.showErrorNotification(`Failed to write ${EAC_CONFIG_FILE} to bypass EAC. Must do it manually.`, err, { allowReport: false });
+  }
+  if (success1 && success2) successNotify(api);
+  return (success1 && success2);
+}
+
+function successNotify(api) {
+  const NOTIF_ID = `${GAME_ID}-eacbypasssuccess`;
+  const MESSAGE = `Successfully Bypassed EAC - EAC.bat created and Engine.ini updated`;
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'success',
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [],
+  });
+}
 
 //Filled in from data above
-const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1276"; //Nexus link to this extension. Used for links
-const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Lords_of_the_Fallen_%282023%29";
 const spec = {
   "game": {
     "id": GAME_ID,
@@ -209,8 +317,8 @@ const spec = {
 
 //3rd party tools and launchers
 const tools = [
-  /*{
-    id: "CustomLaunch",
+  {
+    id: `${GAME_ID}-customlaunch`,
     name: `Custom Launch`,
     logo: `exec.png`,
     executable: () => EXEC,
@@ -219,8 +327,20 @@ const tools = [
     relative: true,
     exclusive: true,
     shell: true,
-    //defaultPrimary: true,
-    parameters: []
+    //parameters: []
+  }, //*/
+  {
+    id: EAC_BAT_ID,
+    name: `Skip-EAC Launch`,
+    logo: `noeac.png`,
+    executable: () => EAC_BAT,
+    requiredFiles: [EAC_BAT],
+    detach: true,
+    relative: true,
+    exclusive: true,
+    shell: true,
+    defaultPrimary: true,
+    //parameters: []
   }, //*/
 ];
 
@@ -1274,7 +1394,7 @@ function antiCheatNotify(api) {
           }, [
             //*
             { label: `View Instructions (PCGamingWiki)`, action: () => {
-              util.opn(INSTR_URL).catch(err => undefined);
+              util.opn(EAC_INSTR_URL).catch(err => undefined);
               dismiss();
             }}, //*/
             { label: 'Acknowledge', action: () => dismiss() },
@@ -1377,9 +1497,6 @@ async function setup(discovery, api, gameSpec) {
   GAME_PATH = discovery.path;
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
-  if (GAME_VERSION === 'default') {
-    antiCheatNotify(api);
-  }
   //*
   CHECK_DATA = checkPartitions(LOCALAPPDATA, GAME_PATH);
   if (!CHECK_DATA) {
@@ -1391,6 +1508,12 @@ async function setup(discovery, api, gameSpec) {
     //await fs.ensureDirWritableAsync(SAVE_PATH);
   } //*/
   //await downloadUe4ss(api, gameSpec);
+  if (GAME_VERSION !== 'xbox') {
+    const success = await bypassEac(api);
+    if (!success) {
+      antiCheatNotify(api)
+    }
+  }
   await fs.ensureDirWritableAsync(path.join(GAME_PATH, SCRIPTS_PATH));
   await fs.ensureDirWritableAsync(path.join(GAME_PATH, LOGICMODS_PATH));
   return fs.ensureDirWritableAsync(path.join(GAME_PATH, UE5_PATH));
@@ -1408,7 +1531,7 @@ function applyGame(context, gameSpec) {
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     requiresLauncher: requiresLauncher,
     getGameVersion: resolveGameVersion,
-    //supportedTools: getTools(context.api),
+    supportedTools: tools,
   };
   context.registerGame(game);
 
@@ -1529,9 +1652,7 @@ function applyGame(context, gameSpec) {
     return gameId === GAME_ID;
   });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
-    const state = context.api.getState();
-    const openPath = path.join(CONFIG_PATH);
-    util.opn(openPath).catch(() => null);
+    util.opn(CONFIG_PATH).catch(() => null);
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
@@ -1539,9 +1660,7 @@ function applyGame(context, gameSpec) {
     }
   );
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Saves Folder', () => {
-    const state = context.api.getState();
-    const openPath = path.join(SAVE_PATH);
-    util.opn(openPath).catch(() => null);
+    util.opn(SAVE_PATH).catch(() => null);
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);

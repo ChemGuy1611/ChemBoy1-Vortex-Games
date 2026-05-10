@@ -14,7 +14,8 @@
 | --- | --- |
 | Game ID | `XXX` |
 | Executable | `XXX.exe` |
-| Executable (Demo) | `XXXdemo.exe` |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
+| Executable (Demo) | `XXX.exe` |
 | Extension Page | XXX |
 | PCGamingWiki | XXX |
 
@@ -22,9 +23,12 @@
 
 | Flag | Value | Description |
 | --- | --- | --- |
+| `useRefNightly` | `false` | toggle for using the REFramework nightly instead of Nexus release |
+| `hasXbox` | `false` | toggle for Xbox version logic |
 | `reZip` | `true` | NOT WORKING YET - KEEP AS TRUE FOR NOW - set to true to re-zip Fluffy Mods (possibly not necessary for FLUFFY v3.069+) |
 | `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
 | `multiExe` | `false` | set to true if there are multiple executables (and multiple FLUFFY_FOLDERs) (typically for Demo) |
+| `debug` | `false` | toggle for debug mode |
 
 ## Mod Types
 
@@ -33,9 +37,23 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | Binaries / Root Folder | `XXX-root` | high | `{gamePath}` |
-| Loose Lua (REFramework) | `XXX-looselua` | high | `{gamePath}/.` |
+| Loose Lua/Plugin (REFramework) | `XXX-looselua` | high | `{gamePath}/.` |
 | Fluffy Mod Manager | `XXX-fluffymanager` | low | `{gamePath}` |
 | REFramework | `XXX-reframework` | low | `{gamePath}` |
+
+## Mod Installers
+
+Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
+
+| Installer ID | Priority |
+| --- | --- |
+| `XXX-fluffymanager` | 25 |
+| `XXX-reframework` | 27 |
+| `XXX-looselua` | 29 |
+| `XXX-root` | 31 |
+| `XXX-preset` | 33 |
+| `XXX-fluffymod` | 49 |
+| `XXX-fluffymodzip` | 49 |
 
 ## Registered Tools
 
@@ -48,6 +66,9 @@ These tools appear in Vortex's Tools panel when this game is active:
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
+- Download Latest REFramework Nightly
+- Open Config File
+- Open Save Folder (Steam)
 - Open PCGamingWiki Page
 - View Changelog
 - Submit Bug Report

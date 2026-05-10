@@ -1,4 +1,4 @@
-# Dark Messiah \tof Might & Magic — Vortex Extension Explained
+# Dark Messiah of Might & Magic — Vortex Extension Explained
 
 ## Overview
 

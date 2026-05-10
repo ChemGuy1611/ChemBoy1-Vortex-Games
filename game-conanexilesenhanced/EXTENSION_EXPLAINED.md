@@ -13,21 +13,21 @@
 | Property | Value |
 | --- | --- |
 | Game ID | `conanexilesenhanced` |
-| Executable | `XXX.exe` |
-| Executable (GOG) | `XXX.exe` |
-| Executable (Demo) | `XXX.exe` |
+| Executable | `ConanSandbox.exe` |
+| Executable (GOG) | `ConanSandbox.exe` |
+| Executable (Demo) | `ConanSandbox.exe` |
 | Extension Page | XXX |
-| PCGamingWiki | XXX |
 
 ## Supported Stores
 
 - **Steam** — `440900`
+- **Epic Games Store** — `8efabb9c553b4a43a7ec95d452307429`
 
 ## Feature Flags
 
 | Flag | Value | Description |
 | --- | --- | --- |
-| `hasXbox` | `false` | toggle for Xbox version logic. |
+| `hasXbox` | `true` | toggle for Xbox version logic. |
 | `multiExe` | `false` | toggle for multiple executables (Epic/GOG/Demo don't match Steam) |
 
 ## Mod Types
@@ -37,7 +37,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `conanexilesenhanced-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `conanexilesenhanced-logicmods` | high | `{gamePath}/XXX/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `conanexilesenhanced-logicmods` | high | `{gamePath}/ConanSandbox/Content/Paks` |
 | PAK_ALT_NAME | `PAK_ALT_ID` | high | `{gamePath}/PAK_ALT_PATH` |
 | ROOT_NAME | `ROOT_ID` | high | `{gamePath}` |
 
@@ -53,6 +53,7 @@ Mod types define where each category of mod gets deployed:
 - **Purge Hook** (`did-purge`) — runs custom logic when mods are purged.
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
+- **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
 ## How Mod Installation Works

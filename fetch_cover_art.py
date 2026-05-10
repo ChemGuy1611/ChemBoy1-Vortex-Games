@@ -51,6 +51,15 @@ from vortex_utils import (
 
 # ── Core logic ────────────────────────────────────────────────────────────────
 
+def _handle_result(ok, source, game_id, fail_msg, saved, failed):
+    if ok:
+        print(f"  Saved: {source}")
+        saved.append(game_id)
+    else:
+        print(f"  FAILED -- {fail_msg}")
+        failed.append(game_id)
+
+
 def find_targets(target_game_ids=None, force=False, mode="cover"):
     """
     Yields (folder_path, game_id, steamapp_id) for extensions to process.
@@ -81,8 +90,7 @@ def fetch_all(target_game_ids=None, dry_run=False, force=False, mode="cover"):
         if not sgdb_key:
             if mode == "banner":
                 print("No SteamGridDB API key -- banner images require STEAMGRIDDB_API_KEY.")
-                if not dry_run:
-                    return
+                return
             else:
                 print("No SteamGridDB API key -- title images will fall back to Steam capsule art.")
     else:
@@ -131,31 +139,22 @@ def fetch_all(target_game_ids=None, dry_run=False, force=False, mode="cover"):
             os.makedirs(out_dir, exist_ok=True)
             out_path = os.path.join(out_dir, f"{game_id}_title.jpg")
             ok, source = download_title_image(steamapp_id, game_id, out_path, sgdb_key)
-            if ok:
-                print(f"  Saved: {source}")
-                saved.append(game_id)
-            else:
-                print(f"  FAILED -- add {game_id}_title.jpg manually to resources/title-images/ (1920x1080 JPG, with title text)")
-                failed.append(game_id)
+            _handle_result(ok, source, game_id,
+                           f"add {game_id}_title.jpg manually to resources/title-images/ (1920x1080 JPG, with title text)",
+                           saved, failed)
         elif mode == "banner":
             os.makedirs(out_dir, exist_ok=True)
             out_path = os.path.join(out_dir, f"{game_id}_banner.jpg")
             ok, source = download_banner_image(steamapp_id, game_id, out_path, sgdb_key)
-            if ok:
-                print(f"  Saved: {source}")
-                saved.append(game_id)
-            else:
-                print(f"  FAILED -- add {game_id}_banner.jpg manually to resources/banner-images/")
-                failed.append(game_id)
+            _handle_result(ok, source, game_id,
+                           f"add {game_id}_banner.jpg manually to resources/banner-images/",
+                           saved, failed)
         else:
             out_path = os.path.join(folder, f"{game_id}.jpg")
             ok, source = download_cover_art(steamapp_id, game_id, out_path, sgdb_key)
-            if ok:
-                print(f"  Saved: {source}")
-                saved.append(game_id)
-            else:
-                print(f"  FAILED -- add {game_id}.jpg manually (640x360 JPG, no title text)")
-                failed.append(game_id)
+            _handle_result(ok, source, game_id,
+                           f"add {game_id}.jpg manually (640x360 JPG, no title text)",
+                           saved, failed)
 
     if dry_run:
         return

@@ -23,6 +23,8 @@
 
 - **Steam** — `305620`
 - **Epic Games Store** — `ed93b18355a84230938c705121c63661`
+- **GOG** — `1447763046`
+- **Xbox / Microsoft Store** — `27620HinterlandStudio.30233944AADE4`
 
 ## Feature Flags
 
@@ -72,7 +74,6 @@ Installers run in priority order (lower number = tested first). The first instal
 | `thelongdark-plugin` | 33 |
 | `ASSETS_ID` | 37 |
 | `CUSTOM_ID` | 39 |
-| `SAVE_ID` | 47 |
 | `thelongdark-fallback` | 49 |
 
 ## Registered Tools
@@ -105,7 +106,9 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Purge Hook** (`did-purge`) — runs custom logic when mods are purged.
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
+- **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
+- **GOG Support** — detects GOG version with adjusted executable/data paths.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 

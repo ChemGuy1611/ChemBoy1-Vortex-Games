@@ -49,7 +49,7 @@ Mod types define where each category of mod gets deployed:
 | ROOTSUB_NAME | `ROOTSUB_ID` | high | `{gamePath}/ROOTSUB_PATH` |
 | BINARIES_NAME | `BINARIES_ID` | high | `{gamePath}/BINARIES_PATH` |
 | UE4SS | `windrose-ue4ss` | low | `{gamePath}/BINARIES_PATH` |
-| windrose-scripts | `windrose-scripts` | low | `{gamePath}/SCRIPTS_PATH` |
+| UE4SS Script Mod | `windrose-scripts` | low | `{gamePath}/SCRIPTS_PATH` |
 | UE4SS DLL Mod | `windrose-ue4ssdll` | low | `{gamePath}/DLL_PATH` |
 
 ## Auto-Downloaded Dependencies

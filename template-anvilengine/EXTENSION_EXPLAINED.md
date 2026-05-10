@@ -5,7 +5,7 @@
 | Property | Value |
 | --- | --- |
 | Name | XXX Vortex Extension |
-| Engine / Structure | Reloaded-II Game (Mod Installer) |
+| Engine / Structure | Anvil Engine - AnvilToolkit/ForgerPatchManager |
 | Author | ChemBoy1 |
 
 ## Key Identifiers
@@ -14,7 +14,6 @@
 | --- | --- |
 | Game ID | `XXX` |
 | Executable | `XXX.exe` |
-| Executable (Xbox) | `gamelaunchhelper.exe` |
 | Extension Page | XXX |
 | PCGamingWiki | XXX |
 
@@ -22,7 +21,10 @@
 
 | Flag | Value | Description |
 | --- | --- | --- |
-| `hasXbox` | `false` | toggle for Xbox version logic |
+| `hasAtk` | `true` | true if game supports AnvilToolkit — set to false for games that don't use ATK |
+| `hasForger` | `false` | true if game supports Forger Patch Manager (.forger2 files) — typically older AC games |
+| `setupNotification` | `false` | enable to show the user a notification with special instructions on first setup |
+| `allowSymlinks` | `false` | symlinks can cause issues when repacking with ATK — set to false when hasAtk = true |
 | `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |
 | `debug` | `false` | toggle for debug mode |
 
@@ -32,10 +34,12 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
-| Reloaded Mod | `XXX-reloadedmod` | high | `{gamePath}/Reloaded/Mods` |
-| Mod Loader | `XXX-reloadedmodloader` | low | `{gamePath}/Reloaded/Mods/XXX_Mod_Loader` |
-| Reloaded-II Mod Manager | `XXX-reloadedmanager` | low | `{gamePath}` |
-| Save File | `XXX-save` | high | `{gamePath}/SAVE_PATH` |
+| Extracted Folder | `XXX-extracted` | high | `{gamePath}` |
+| .forge Folder | `XXX-forgefolder` | high | `{gamePath}` |
+| .data Folder | `XXX-datafolder` | high | `{gamePath}` |
+| Loose Data Files | `XXX-loosedata` | high | `{gamePath}` |
+| Forge Replacement | `XXX-forgefile` | high | `{gamePath}` |
+| Binaries / Root Folder | `XXX-root` | high | `{gamePath}` |
 
 ## Mod Installers
 
@@ -43,38 +47,46 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
-| `XXX-reloadedmanager` | 25 |
-| `XXX-reloadedmodloader` | 27 |
-| `XXX-reloadedmod` | 29 |
+| `XXX-atk` | 25 |
+| `XXX-extracted` | 27 |
+| `XXX-forgefolder` | 29 |
+| `XXX-datafolder` | 31 |
+| `XXX-loosedata` | 33 |
+| `XXX-forgefile` | 35 |
+| `XXX-root` | 37 |
+| `XXX-forger` | 41 |
+| `XXX-forgerpatch` | 43 |
 | `XXX-fallback` | 49 |
+
+## Registered Tools
+
+These tools appear in Vortex's Tools panel when this game is active:
+
+- **Launch Game Ubisoft Plus**
+- **Launch Vulkan**
+- **Custom Launch**
 
 ## Toolbar Actions
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- Download Reloaded Mod Manager
 - Open PCGamingWiki Page
 - View Changelog
-- Open Downloads Folder
 - Submit Bug Report
+- Open Downloads Folder
 
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
 | --- | --- | --- |
-| Reloaded-II | — | — |
-
-## Config & Save Paths
-
-| Type | Path |
-| --- | --- |
-| Save | `gamedata/savedata` |
+| Forger Patch Manager | — | — |
 
 ## Special Features
 
 - **Deploy Hook** (`did-deploy`) — runs custom logic (e.g., notifications, metadata patching) every time mods are deployed.
-- **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
+- **Symlinks Disabled** — hardlink or copy deployment is used instead of symlinks.
+- **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
 ## How Mod Installation Works

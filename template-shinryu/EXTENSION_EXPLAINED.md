@@ -5,7 +5,7 @@
 | Property | Value |
 | --- | --- |
 | Name | XXX Vortex Extension |
-| Engine / Structure | Reloaded-II Game (Mod Installer) |
+| Engine / Structure | SRMM Game |
 | Author | ChemBoy1 |
 
 ## Key Identifiers
@@ -13,7 +13,7 @@
 | Property | Value |
 | --- | --- |
 | Game ID | `XXX` |
-| Executable | `XXX.exe` |
+| Executable | `runtime/media/startup.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 | Extension Page | XXX |
 | PCGamingWiki | XXX |
@@ -22,8 +22,12 @@
 
 | Flag | Value | Description |
 | --- | --- | --- |
+| `hasUserIdFolder` | `true` | true if there is a user ID folder in the Save path that must be read (i.e. Steam ID) |
 | `hasXbox` | `false` | toggle for Xbox version logic |
-| `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |
+| `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
+| `needsModInstaller` | `true` | set to true if standard mods should run through an installer - set false to have mods installed to the mods folder without any processing |
+| `rootInstaller` | `true` | enable root installer. Set false if you need to avoid installer collisions |
+| `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below) |
 | `debug` | `false` | toggle for debug mode |
 
 ## Mod Types
@@ -32,10 +36,10 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
-| Reloaded Mod | `XXX-reloadedmod` | high | `{gamePath}/Reloaded/Mods` |
-| Mod Loader | `XXX-reloadedmodloader` | low | `{gamePath}/Reloaded/Mods/XXX_Mod_Loader` |
-| Reloaded-II Mod Manager | `XXX-reloadedmanager` | low | `{gamePath}` |
-| Save File | `XXX-save` | high | `{gamePath}/SAVE_PATH` |
+| Binaries / Root Folder | `XXX-root` | high | `{gamePath}/runtime/media` |
+| SRMM Mod | `XXX-mod` | high | `{gamePath}/runtime/media/mods` |
+| .par Data File | `XXX-data` | high | `{gamePath}/runtime/media/data` |
+| Shin Ryu MM | `XXX-modmanager` | low | `{gamePath}/runtime/media` |
 
 ## Mod Installers
 
@@ -43,32 +47,27 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
-| `XXX-reloadedmanager` | 25 |
-| `XXX-reloadedmodloader` | 27 |
-| `XXX-reloadedmod` | 29 |
-| `XXX-fallback` | 49 |
+| `XXX-modmanager` | 25 |
+| `XXX-mod` | 27 |
+| `XXX-data` | 29 |
+| `XXX-root` | 27 |
+
+## Registered Tools
+
+These tools appear in Vortex's Tools panel when this game is active:
+
+- **Launch Modded Game**
+- **Launch (No Mods)**
 
 ## Toolbar Actions
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- Download Reloaded Mod Manager
+- Open Save Folder
 - Open PCGamingWiki Page
 - View Changelog
-- Open Downloads Folder
 - Submit Bug Report
-
-## Auto-Downloaded Dependencies
-
-| Dependency | Version | Details |
-| --- | --- | --- |
-| Reloaded-II | — | — |
-
-## Config & Save Paths
-
-| Type | Path |
-| --- | --- |
-| Save | `gamedata/savedata` |
+- Open Downloads Folder
 
 ## Special Features
 

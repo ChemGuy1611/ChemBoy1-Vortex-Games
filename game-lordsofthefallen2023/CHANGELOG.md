@@ -2,7 +2,11 @@
 
 ## Future Improvements (Not Yet Released)
 
-- Automate EAC bypass for Steam and Epic versions
+- None Planned
+
+## [0.3.0] - 2026-05-10
+
+- Improved: EAC bypass is set up automatically by Vortex for Steam version
 
 ## [0.2.0] - 2026-05-07
 

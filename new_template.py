@@ -76,6 +76,7 @@ from vortex_utils import (
     REPO_ROOT, extract_game_id, find_fn_end, REGISTER_ACTIONS, node_check,
     inject_register_actions, update_index_header, write_index_js,
     make_info_json, make_changelog, is_missing, const_value,
+    write_text_atomic, extract_array_rhs,
 )
 
 # String constants always replaced with "XXX"
@@ -295,10 +296,17 @@ def _fixup_discovery_ids_active(src):
 
 
 def _fixup_parameters(src):
-    """Add PARAMETERS_STRING and PARAMETERS constants if missing."""
-    if re.search(r'(?:const|let)\s+PARAMETERS_STRING\s*=', src):
+    """Add PARAMETERS_STRING and PARAMETERS constants if missing (checked independently)."""
+    has_string = bool(re.search(r'(?:const|let)\s+PARAMETERS_STRING\s*=', src))
+    has_params = bool(re.search(r'(?:const|let)\s+PARAMETERS\s*=', src))
+    if has_string and has_params:
         return src
-    block = "const PARAMETERS_STRING = '';\nconst PARAMETERS = [PARAMETERS_STRING];\n"
+    lines = []
+    if not has_string:
+        lines.append("const PARAMETERS_STRING = '';")
+    if not has_params:
+        lines.append("const PARAMETERS = [PARAMETERS_STRING];")
+    block = '\n'.join(lines) + '\n'
     for pat in [
         r'(?:const|let)\s+REQ_FILE\s*=[^\n]+\n',
         r'(?:const|let)\s+MOD_PATH_DEFAULT\s*=[^\n]+\n',
@@ -446,9 +454,20 @@ def _fixup_spec(src):
             ind = m.group(2)
             src = src[:m.end()] + f'\n{ind}"XboxAPPId": XBOXAPP_ID,' + src[m.end():]
 
-    # 11. DISCOVERY_IDS_ACTIVE in discovery.ids (replace hard-coded array literal)
+    # 11. DISCOVERY_IDS_ACTIVE in discovery.ids (bracket-depth scanner handles nested arrays)
     if not re.search(r'"ids"\s*:\s*DISCOVERY_IDS_ACTIVE', src):
-        src = re.sub(r'("ids"\s*:\s*)\[[^\]]*\]', r'\1DISCOVERY_IDS_ACTIVE', src, count=1)
+        m = re.search(r'("ids"\s*:\s*)(\[)', src)
+        if m:
+            start = m.start(2)
+            depth = 0
+            for i in range(start, len(src)):
+                if src[i] == '[':
+                    depth += 1
+                elif src[i] == ']':
+                    depth -= 1
+                    if depth == 0:
+                        src = src[:m.start(1)] + m.group(1) + 'DISCOVERY_IDS_ACTIVE' + src[i + 1:]
+                        break
 
     return src
 
@@ -466,7 +485,7 @@ def _fixup_mod_folders_fn(src):
     """Add modFoldersEnsureWritable function before setup() if missing."""
     if re.search(r'function\s+modFoldersEnsureWritable\b', src):
         return src
-    m = re.search(r'\nasync function setup\b|\nfunction setup\b', src)
+    m = re.search(r'\nasync function setup\b|\nfunction setup\b|\nconst setup\s*=', src)
     if m:
         return src[:m.start()] + '\n' + _MOD_FOLDERS_FN + src[m.start():]
     return src
@@ -511,7 +530,7 @@ def _fixup_setup_writable(src):
     # Check for the *call* specifically (GAME_PATH as first arg), not just the definition
     if re.search(r'modFoldersEnsureWritable\s*\(\s*GAME_PATH', src):
         return src
-    m_start = re.search(r'\nasync function setup\b[^{]*\{|\nfunction setup\b[^{]*\{', src)
+    m_start = re.search(r'\nasync function setup\b[^{]*\{|\nfunction setup\b[^{]*\{|\nconst setup\s*=[^{]*\{', src)
     if not m_start:
         return src
     fn_end = find_fn_end(src, m_start.end())
@@ -747,7 +766,7 @@ def _fixup_fallback_installer(src):
     gated registerInstaller call (priority 49) if missing. Also injects ROOT_ID if absent,
     since installFallback sets the mod type to ROOT_ID.
     """
-    if re.search(r'function\s+testFallback\b', src):
+    if re.search(r'^function\s+testFallback\b', src, re.MULTILINE):
         return src  # already present
 
     # Ensure ROOT_ID is defined (installFallback references it)
@@ -866,8 +885,7 @@ def update_templates_list(template_name, dry_run):
     new_src = src[:m.start(2)] + new_entries + src[m.end(2):]
 
     if not dry_run:
-        with open(path, "w", encoding="utf-8") as f:
-            f.write(new_src)
+        write_text_atomic(path, new_src)
 
     return True, f"inserted {full_name}"
 
@@ -1027,6 +1045,9 @@ def main():
              "Does not write any files. Shows full output if the template does not exist yet.",
     )
     args = parser.parse_args()
+
+    if args.diff and args.force:
+        parser.error("--diff and --force are mutually exclusive")
 
     create_template(args.template_name, args.game_ids, args.dry_run, args.force, diff=args.diff)
 

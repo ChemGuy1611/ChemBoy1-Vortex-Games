@@ -108,7 +108,7 @@ def update_single(game_id, dry_run=False):
     target = categorize(game_id)
     if target is None:
         print(f"  Warning: no index.js found for game-{game_id}, skipping.")
-        return
+        return False
 
     if not dry_run:
         os.makedirs(LISTS_DIR, exist_ok=True)
@@ -155,6 +155,7 @@ def update_single(game_id, dry_run=False):
                 lo_ids.remove(game_id)
                 write_id_list(lo_path, lo_ids)
                 print(f"  Removed {game_id} from {LOADORDER_FILE}")
+    return True
 
 
 def main():
@@ -176,9 +177,16 @@ def main():
 
     target_ids = args.game if args.game else None
     if target_ids:
+        success = 0
+        failed = 0
         for game_id in target_ids:
             print(f"Updating category for game-{game_id}{'  [DRY RUN]' if args.dry_run else ''}...")
-            update_single(game_id, args.dry_run)
+            if update_single(game_id, args.dry_run):
+                success += 1
+            else:
+                failed += 1
+        tag = " [DRY RUN]" if args.dry_run else ""
+        print(f"\nDone{tag}. {success}/{len(target_ids)} succeeded.")
     else:
         print(f"Rebuilding all category files{'  [DRY RUN]' if args.dry_run else ''}...")
         rebuild_all(args.dry_run)
