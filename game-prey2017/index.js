@@ -1,8 +1,8 @@
 /*
 Name: Prey Vortex Extension (Alt version)
 Author: ChemBoy1
-Version: 0.5.0
-Date: 03/09/2025
+Version: 0.6.0
+Date: 2026-05-10
 */
 
 //Import libraries
@@ -20,6 +20,8 @@ const XBOXEXECNAME = "App";
 const GAME_ID = "prey2017";
 const GAME_NAME = "Prey (2017)";
 const MOD_PATH = path.join("GameSDK", "Precache");
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/711"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Prey_%282017%29";
 
 let execFolder = '';
 let BINARIES_TARGET = '';
@@ -650,7 +652,3 @@ function main(context) {
 module.exports = {
   default: main,
 };
-
-const EXTENSION_URL = "https://www.nexusmods.com/site/mods/711"; //Nexus link to this extension. Used for links
-
-const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Prey_%282017%29";
