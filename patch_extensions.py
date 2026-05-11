@@ -38,7 +38,7 @@ from vortex_utils import (
     fetch_epic_app_id, add_to_discovery_ids,
     const_value, is_unset, is_missing, set_or_insert,
     inject_register_actions, find_fn_body,
-    list_game_ids, write_index_js, resize_images_to, log_info,
+    list_game_ids, write_index_js, resize_images_to, log_info, log_warn,
     load_vortex_manifest, resize_pngs_in_dirs,
     is_placeholder_value,
 )
@@ -566,7 +566,7 @@ def run_patches(game_ids, dry_run, context, only=None):
                 changed_ids.append(game_id)
         else:
             if fail_msgs:
-                print(f"  [{game_id}] - {'; '.join(fail_msgs)}")
+                log_warn(game_id, '; '.join(fail_msgs))
             total_skipped += 1
 
     print(f"\nDone. {total_changed} changed, {total_skipped} skipped, {total_errors} errors.")

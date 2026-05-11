@@ -75,7 +75,7 @@ def fetch_all(target_ids=None, dry_run=False, force=False):
     if dry_run:
         print(f"Extensions to fetch ({len(work)} total):")
         for game_id, domain, mod_id in work:
-            print(f"  [{game_id}]  nexusmods.com/{domain}/mods/{mod_id}")
+            vu.log_info(game_id, f"nexusmods.com/{domain}/mods/{mod_id}")
         return
 
     api_key = vu.get_api_key("NEXUS_API_KEY")

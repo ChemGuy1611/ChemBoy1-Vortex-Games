@@ -33,6 +33,7 @@ Installers run in priority order (lower number = tested first). The first instal
 | `prey2017-chairloader` | 30 |
 | `prey2017-chairmodzip` | 35 |
 | `prey2017-root` | 40 |
+| `prey2017-binaries` | 45 |
 
 ## Registered Tools
 

@@ -14,6 +14,8 @@ const template = require('string-template');
 //Specify all the information about the game
 const STEAMAPP_ID = "1145350";
 const EPICAPP_ID = "07c634c7291a49b5b2455e14b9a83950";
+const XBOXAPP_ID = "SupergiantGamesLLC.HadesII";
+const XBOXEXECNAME = "Game";
 const GAME_ID = "hades2";
 const GAME_NAME = "Hades II"
 const EXEC = path.join("Ship", "Hades2.exe");
@@ -113,6 +115,7 @@ const spec = {
     "ids": [
       STEAMAPP_ID,
       EPICAPP_ID,
+      XBOXAPP_ID,
     ],
     "names": []
   }
@@ -238,7 +241,12 @@ function makeFindGame(api, gameSpec) {
 
 //set launcher requirements
 async function requiresLauncher(gamePath, store) {
-  /*if (store === 'xbox') {
+  if (store === 'steam') {
+    return Promise.resolve({
+      launcher: 'steam',
+    });
+  } //*/
+  if (store === 'xbox') {
       return Promise.resolve({
         launcher: 'xbox',
         addInfo: {
@@ -257,17 +265,6 @@ async function requiresLauncher(gamePath, store) {
           //parameters: PARAMETERS,
           //launchType: 'gamestore',
         },
-    });
-  } //*/
-  /*
-  if (store === 'steam') {
-    return Promise.resolve({
-      launcher: 'steam',
-      addInfo: {
-        appId: STEAM_ID,
-        //parameters: PARAMETERS,
-        //launchType: 'gamestore',
-      } //
     });
   } //*/
   return Promise.resolve(undefined);

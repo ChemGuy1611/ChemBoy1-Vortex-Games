@@ -225,20 +225,6 @@ const tools = [ //accepts: exe, jar, py, vbs, bat
     parameters: PARAMETERS,
   }, //*/
   /*{
-    id: `${GAME_ID}-customlaunchxbox`,
-    name: 'Custom Launch',
-    logo: 'exec.png',
-    executable: () => EXEC_XBOX,
-    requiredFiles: [
-      EXEC_XBOX,
-    ],
-    relative: true,
-    exclusive: true,
-    shell: true,
-    //defaultPrimary: true,
-    //parameters: PARAMETERS,
-  }, //*/
-  /*{
     id: TOOL_ID,
     name: TOOL_NAME,
     logo: 'tool.png',

@@ -721,6 +721,36 @@ python release_extension.py assassinscreedorigins assassinscreedvalhalla --no-op
 
 ---
 
+## bump_version.py
+
+Bumps the version of one or more game extensions. Updates `info.json`, the `index.js` header comment (`Version:` and `Date:` fields), and prepends a new empty changelog section to `CHANGELOG.md`.
+
+### bump_version.py — Requirements
+
+No additional packages required (Python stdlib only).
+
+### bump_version.py — Usage
+
+```sh
+python bump_version.py --major GAME_ID [GAME_ID ...]
+python bump_version.py --minor GAME_ID [GAME_ID ...]
+python bump_version.py --version 1.2.3 GAME_ID [GAME_ID ...]
+python bump_version.py --major GAME_ID --dry-run
+```
+
+- `--major` — bumps the minor segment and resets patch to 0 (e.g. `0.3.0 -> 0.4.0`).
+- `--minor` — bumps the patch segment (e.g. `0.3.0 -> 0.3.1`).
+- `--version VER` — sets an explicit version; must be valid semver (`X.Y.Z`). Errors immediately if format is invalid.
+- `--dry-run` — prints what would change without writing files.
+
+One of `--major`, `--minor`, or `--version` is required. Pass multiple `GAME_ID` values to bump several extensions in one run.
+
+### bump_version.py — Output
+
+For each game: prints `[game_id] OLD -> NEW`. Writes `info.json`, updates `index.js` header, and inserts `## [NEW] - YYYY-MM-DD` before the first versioned entry in `CHANGELOG.md`. The new CHANGELOG section body is left as a single blank list item for manual editing. Summary line at the end: `Saved: N | Failed: N`.
+
+---
+
 ## patch_extensions.py
 
 Generic framework for making repo-wide changes to all `game-*/index.js` files. Each patch is a named, independently-enabled function registered in the `PATCHES` list. New patches can be added without touching the runner logic.

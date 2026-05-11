@@ -1,7 +1,7 @@
 /*
 Name: Prey Vortex Extension (Alt version)
 Author: ChemBoy1
-Version: 0.6.0
+Version: 0.6.1
 Date: 2026-05-10
 */
 
@@ -55,11 +55,12 @@ const gameFinderQuery = {
 
 const ROOT_ID = "prey2017-root";
 const ROOT_PATH = "{gamePath}";
-const ROOT_FOLDERS = ["GameSDK", "Whiplash", "Binaries", "Engine", "Localization", ""];
+const ROOT_FOLDERS = ["GameSDK", "Whiplash", "Binaries", "Engine", "Localization"];
 const ROOT_NAME = "Root Game Folder";
 
 const BINARIES_ID = "prey2017-binaries";
 const BINARIES_NAME = "Binaries (Engine Injector)";
+const BINARIES_EXTS = ['.exe', '.dll', '.asi', '.addon64'];
 
 const PRIC_ID = `${GAME_ID}-pric`;
 const PRIC_NAME = "Prey Interface Customizer";
@@ -124,26 +125,28 @@ function pathPattern(api, game, pattern) {
 }
 
 async function requiresLauncher(gamePath, store) {
-
   if (store === 'xbox') {
-      return Promise.resolve({
-          launcher: 'xbox',
-          addInfo: {
-              appId: XBOXAPP_ID,
-              parameters: [{ appExecName: XBOXEXECNAME }],
-          },
-      });
-  }
-
-  if (store === 'epic') {
     return Promise.resolve({
-        launcher: 'epic',
+        launcher: 'xbox',
         addInfo: {
-            appId: EPICAPP_ID,
+          appId: XBOXAPP_ID,
+          parameters: [{ appExecName: XBOXEXECNAME }],
         },
     });
   }
-  
+  if (store === 'epic') {
+    return Promise.resolve({
+      launcher: 'epic',
+      addInfo: {
+        appId: EPICAPP_ID,
+      },
+    });
+  }
+  if (store === 'steam') {
+    return Promise.resolve({
+      launcher: 'steam',
+    });
+  }
   return Promise.resolve(undefined);
 }
 
@@ -290,7 +293,7 @@ function installChair(files) {
 }
 
 //test for zips
-async function testChairModZip(files, gameId) {
+function testChairModZip(files, gameId) {
   const isMod = files.some(file => path.basename(file).toLowerCase() === CHAIRMOD_FILE);
   return Promise.resolve({
     supported: (gameId === GAME_ID) && isMod,
@@ -331,7 +334,7 @@ async function installChairModZip(files, destinationPath) {
   }
 }
 
-//Installer test for Fluffy Mod Manager files
+//Installer test for Chairloader mod files
 function testChairMod(files, gameId) {
   const isMod = files.some(file => path.basename(file).toLowerCase() === CHAIRMOD_FILE);
   let supported = (gameId === GAME_ID) && isMod;
@@ -389,7 +392,6 @@ function testChairModLegacy(files, gameId) {
 
 //mod installer instructions
 function installChairModLegacy(files) {
-  // The .psarc file is expected to always be positioned in the mods directory we're going to disregard anything placed outside the root.
   const modFile = files.find(file => path.extname(file).toLowerCase() === CHAIRMODLEGACY_EXT);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
@@ -413,7 +415,6 @@ function installChairModLegacy(files) {
 
 //Installer test for Fluffy Mod Manager files
 function testRoot(files, gameId) {
-  //const isMod = files.some(file => path.basename(file).toLowerCase() === ROOT_FILE);
   const isMod = files.some(file => ROOT_FOLDERS.includes(path.basename(file)));
   let supported = (gameId === GAME_ID) && isMod;
 
@@ -425,7 +426,6 @@ function testRoot(files, gameId) {
 
 //Installer install Fluffy Mod Manger files
 function installRoot(files) {
-  //const modFile = files.find(file => path.basename(file).toLowerCase() === ROOT_FILE);
   const modFile = files.find(file => ROOT_FOLDERS.includes(path.basename(file)));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
@@ -433,7 +433,6 @@ function installRoot(files) {
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
-    //((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
     ((file.indexOf(rootPath) !== -1))
   );
 
@@ -442,6 +441,42 @@ function installRoot(files) {
       type: 'copy',
       source: file,
       destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Fallback installer to Binaries folder
+function testBinaries(files, gameId) {
+  const isMod = files.some(file => BINARIES_EXTS.includes(path.extname(file).toLowerCase()));
+  let supported = (gameId === GAME_ID) && isMod;
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Fallback installer to Binaries folder
+function installBinaries(files) {
+  const setModTypeInstruction = { type: 'setmodtype', value: BINARIES_ID };
+  
+  const filtered = files.filter(file =>
+    (!file.endsWith(path.sep))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: file,
     };
   });
   instructions.push(setModTypeInstruction);
@@ -637,6 +672,7 @@ function main(context) {
   context.registerInstaller(`${GAME_ID}-chairmodzip`, 35, testChairModZip, installChairModZip);
   //context.registerInstaller(`${GAME_ID}-chairmod`, 35, testChairMod, installChairMod);
   context.registerInstaller(`${GAME_ID}-root`, 40, testRoot, installRoot);
+  context.registerInstaller(BINARIES_ID, 45, testBinaries, installBinaries);
   //context.registerInstaller(`${GAME_ID}-chairmodlegacy`, 45, testChairModLegacy, installChairModLegacy);
 
   context.once(() => {

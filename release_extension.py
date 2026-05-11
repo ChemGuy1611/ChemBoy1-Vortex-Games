@@ -23,6 +23,8 @@ Usage:
     python release_extension.py GAME_ID [GAME_ID ...]
     python release_extension.py GAME_ID --no-open
     python release_extension.py GAME_ID --dry-run
+    python release_extension.py GAME_ID --skip-eslint
+    python release_extension.py GAME_ID --skip-explained
 
 Environment variables:
     SEVENZIP_PATH  (optional, default: C:\\Program Files\\7-Zip\\7z.exe)
@@ -40,7 +42,7 @@ from vortex_utils import (
     REPO_ROOT, run_generate_explained, add_to_discovery_ids, node_check, eslint_check,
     extract_extension_url, read_info_json, parse_changelog_latest,
     update_index_header as _apply_header, mutate_index_js, validate_index_js,
-    print_run_summary, assert_is_game_id,
+    print_run_summary, assert_is_game_id, log_info, log_warn, log_error,
 )
 SEVENZIP = os.environ.get("SEVENZIP_PATH", r"C:\Program Files\7-Zip\7z.exe")
 NEXUS_SITE_URL = "https://www.nexusmods.com/games/site"
@@ -59,7 +61,7 @@ def check_installer_priorities(index_src, game_id):
             dupes.append(p)
         seen.add(p)
     if dupes:
-        print(f"  [{game_id}] ERROR - duplicate registerInstaller priority: {', '.join(dupes)}")
+        log_error(game_id, f"duplicate registerInstaller priority: {', '.join(dupes)}")
         return False
     return True
 
@@ -67,7 +69,7 @@ def check_installer_priorities(index_src, game_id):
 def update_version_txt(folder, game_id, version, dry_run=False):
     """Rename the versioned .txt file to match the current version from info.json."""
     if not version:
-        print(f"  [{game_id}] WARNING -could not read version from info.json, skipping .txt rename")
+        log_warn(game_id, "could not read version from info.json, skipping .txt rename")
         return
 
     version_re = re.compile(r'^\d+\.\d+\.\d+\.txt$')
@@ -75,20 +77,20 @@ def update_version_txt(folder, game_id, version, dry_run=False):
     expected = f"{version}.txt"
 
     if not existing:
-        print(f"  [{game_id}] WARNING -no version .txt file found in folder")
+        log_warn(game_id, "no version .txt file found in folder")
         return
 
     renamed = False
     for txt_file in existing:
         if txt_file == expected:
-            print(f"  [{game_id}] Version .txt already correct: {txt_file}")
+            log_info(game_id, f"Version .txt already correct: {txt_file}")
         elif dry_run:
-            print(f"  [{game_id}] [DRY RUN] Would rename: {txt_file} -> {expected}")
+            log_info(game_id, f"[DRY RUN] Would rename: {txt_file} -> {expected}")
         elif renamed:
-            print(f"  [{game_id}] WARNING -extra version .txt found and skipped: {txt_file}")
+            log_warn(game_id, f"extra version .txt found and skipped: {txt_file}")
         else:
             os.rename(os.path.join(folder, txt_file), os.path.join(folder, expected))
-            print(f"  [{game_id}] Renamed: {txt_file} -> {expected}")
+            log_info(game_id, f"Renamed: {txt_file} -> {expected}")
             renamed = True
 
 
@@ -96,9 +98,9 @@ def update_version_txt(folder, game_id, version, dry_run=False):
 def update_index_header(folder, game_id, version, date, dry_run=False):
     """Update the Version and Date lines in the index.js header comment."""
     if not version:
-        print(f"  [{game_id}] WARNING - no version available, skipping Version header update")
+        log_warn(game_id, "no version available, skipping Version header update")
     if not date:
-        print(f"  [{game_id}] WARNING - no changelog date found, skipping Date header update")
+        log_warn(game_id, "no changelog date found, skipping Date header update")
     parts = [p for p in (f"Version -> {version}" if version else None, f"Date -> {date}" if date else None) if p]
     label = ", ".join(parts) if parts else "header"
     mutate_index_js(
@@ -126,7 +128,7 @@ def update_discovery_ids(folder, game_id, dry_run=False):
 def release(game_id, open_browser, dry_run=False, skip_eslint=False, skip_explained=False):
     folder = os.path.join(REPO_ROOT, f"game-{game_id}")
     if not os.path.isdir(folder):
-        print(f"  [{game_id}] ERROR -folder not found: {folder}")
+        log_error(game_id, f"folder not found: {folder}")
         return False
 
     index_path = os.path.join(folder, "index.js")
@@ -136,78 +138,78 @@ def release(game_id, open_browser, dry_run=False, skip_eslint=False, skip_explai
             index_src = f.read()
         extension_url = extract_extension_url(index_src)
         if re.search(r'^\s*(?:const|let)\s+debug\s*=\s*true\b', index_src, re.MULTILINE):
-            print(f"  [{game_id}] ERROR - debug is set to true in index.js")
+            log_error(game_id, "debug is set to true in index.js")
             return False
         if not check_installer_priorities(index_src, game_id):
             return False
         for issue in validate_index_js(index_src):
-            print(f"  [{game_id}] WARNING - {issue}")
+            log_warn(game_id, issue)
 
     info = read_info_json(folder)
     if info is None:
-        print(f"  [{game_id}] ERROR - info.json missing or invalid")
+        log_error(game_id, "info.json missing or invalid")
         return False
     version = info.get("version")
 
     name_field = info.get("name", "")
     if not re.match(r'^Game:\s+\S', name_field):
-        print(f"  [{game_id}] ERROR - info.json 'name' does not match 'Game: <Name>' pattern: {name_field!r}")
+        log_error(game_id, f"info.json 'name' does not match 'Game: <Name>' pattern: {name_field!r}")
         return False
 
     changelog_path = os.path.join(folder, "CHANGELOG.md")
     if not os.path.isfile(changelog_path):
-        print(f"  [{game_id}] ERROR - CHANGELOG.md missing")
+        log_error(game_id, "CHANGELOG.md missing")
         return False
     with open(changelog_path, encoding="utf-8") as f:
         changelog_src = f.read()
     if version and not re.search(rf'## (?:\[{re.escape(version)}\]|{re.escape(version)})(?!\w)', changelog_src):
-        print(f"  [{game_id}] ERROR - version {version} has no entry in CHANGELOG.md (add ## [{version}] section)")
+        log_error(game_id, f"version {version} has no entry in CHANGELOG.md (add ## [{version}] section)")
         return False
 
     changelog_version, date = parse_changelog_latest(folder)
     if version and changelog_version and version != changelog_version:
-        print(f"  [{game_id}] WARNING - info.json version ({version}) does not match latest CHANGELOG entry ({changelog_version})")
+        log_warn(game_id, f"info.json version ({version}) does not match latest CHANGELOG entry ({changelog_version})")
     update_version_txt(folder, game_id, version, dry_run=dry_run)
     update_index_header(folder, game_id, version, date, dry_run=dry_run)
     update_discovery_ids(folder, game_id, dry_run=dry_run)
 
     if dry_run:
         zip_path = os.path.join(folder, f"game-{game_id}.zip")
-        print(f"  [{game_id}] [DRY RUN] Would run node --check on index.js")
+        log_info(game_id, "[DRY RUN] Would run node --check on index.js")
         if not skip_eslint:
-            print(f"  [{game_id}] [DRY RUN] Would run eslint on index.js")
+            log_info(game_id, "[DRY RUN] Would run eslint on index.js")
         if not skip_explained:
-            print(f"  [{game_id}] [DRY RUN] Would generate EXTENSION_EXPLAINED.md")
-        print(f"  [{game_id}] [DRY RUN] Would create: {zip_path}")
+            log_info(game_id, "[DRY RUN] Would generate EXTENSION_EXPLAINED.md")
+        log_info(game_id, f"[DRY RUN] Would create: {zip_path}")
         if extension_url:
-            print(f"  [{game_id}] [DRY RUN] Would open: {extension_url}")
+            log_info(game_id, f"[DRY RUN] Would open: {extension_url}")
         else:
-            print(f"  [{game_id}] [DRY RUN] EXTENSION_URL not set -would open: {NEXUS_SITE_URL}")
+            log_info(game_id, f"[DRY RUN] EXTENSION_URL not set - would open: {NEXUS_SITE_URL}")
         return True
 
-    print(f"  [{game_id}] Checking index.js syntax...")
+    log_info(game_id, "Checking index.js syntax...")
     ok, err = node_check(index_path)
     if ok:
-        print(f"  [{game_id}] index.js syntax OK")
+        log_info(game_id, "index.js syntax OK")
     else:
-        print(f"  [{game_id}] WARNING - node --check found a syntax error in index.js:")
+        log_warn(game_id, "node --check found a syntax error in index.js:")
         print(f"    {err}")
 
     if not skip_eslint:
-        print(f"  [{game_id}] Linting index.js...")
+        log_info(game_id, "Linting index.js...")
         ok, out = eslint_check(index_path)
         if ok:
-            print(f"  [{game_id}] eslint OK")
+            log_info(game_id, "eslint OK")
         else:
-            print(f"  [{game_id}] WARNING - eslint reported issues:")
+            log_warn(game_id, "eslint reported issues:")
             for line in out.splitlines():
                 print(f"    {line}")
 
     if not skip_explained:
-        print(f"  [{game_id}] Generating EXTENSION_EXPLAINED.md...")
+        log_info(game_id, "Generating EXTENSION_EXPLAINED.md...")
         ok, err = run_generate_explained(game_id)
         if not ok:
-            print(f"  [{game_id}] WARNING -generate_explained.js failed: {err}")
+            log_warn(game_id, f"generate_explained.js failed: {err}")
 
     zip_path = os.path.join(folder, f"game-{game_id}.zip")
 
@@ -215,7 +217,7 @@ def release(game_id, open_browser, dry_run=False, skip_eslint=False, skip_explai
     if os.path.isfile(zip_path):
         os.remove(zip_path)
 
-    print(f"  [{game_id}] Zipping...")
+    log_info(game_id, "Zipping...")
     result = subprocess.run(
         [SEVENZIP, "a", "-tzip", zip_path, os.path.join(folder, "*")],
         capture_output=True, text=True,
@@ -223,27 +225,27 @@ def release(game_id, open_browser, dry_run=False, skip_eslint=False, skip_explai
     )
 
     if result.returncode != 0:
-        print(f"  [{game_id}] ERROR -7-Zip failed:")
+        log_error(game_id, "7-Zip failed:")
         print(f"    {result.stderr.strip() or result.stdout.strip()}")
         return False
 
     size_kb = os.path.getsize(zip_path) / 1024
-    print(f"  [{game_id}] Created: {zip_path} ({size_kb:.1f} KB)")
+    log_info(game_id, f"Created: {zip_path} ({size_kb:.1f} KB)")
 
     try:
         with zipfile.ZipFile(zip_path) as zf:
             names = zf.namelist()
         if "info.json" not in names:
-            print(f"  [{game_id}] WARNING - info.json not found at zip root (got: {names[:5]}...)")
+            log_warn(game_id, f"info.json not found at zip root (got: {names[:5]}...)")
         if "index.js" not in names:
-            print(f"  [{game_id}] WARNING - index.js not found at zip root (got: {names[:5]}...)")
+            log_warn(game_id, f"index.js not found at zip root (got: {names[:5]}...)")
     except Exception as e:
-        print(f"  [{game_id}] WARNING - could not verify zip contents: {e}")
+        log_warn(game_id, f"could not verify zip contents: {e}")
 
     url_to_open = extension_url or NEXUS_SITE_URL
     label = "" if extension_url else " (EXTENSION_URL not set)"
     if open_browser:
-        print(f"  [{game_id}] Opening: {url_to_open}{label}")
+        log_info(game_id, f"Opening: {url_to_open}{label}")
         webbrowser.open(url_to_open)
 
     return True

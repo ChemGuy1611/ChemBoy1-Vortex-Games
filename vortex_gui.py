@@ -20,6 +20,7 @@ Usage:
 """
 
 import os
+import re
 import shutil
 import sys
 
@@ -39,7 +40,7 @@ from PySide6.QtWidgets import (
     QApplication, QCheckBox, QComboBox, QDialog, QDialogButtonBox,
     QFormLayout, QHBoxLayout, QHeaderView, QLabel, QLineEdit,
     QMainWindow, QMenu, QMessageBox, QPlainTextEdit, QProxyStyle, QPushButton,
-    QSplitter, QStyle, QTableView, QToolBar, QVBoxLayout, QWidget,
+    QRadioButton, QSplitter, QStyle, QTableView, QToolBar, QVBoxLayout, QWidget,
 )
 
 import vortex_utils as vu
@@ -1067,6 +1068,67 @@ class ScriptArgsDialog(QDialog):
         return args
 
 
+class BumpTypeDialog(QDialog):
+    """Radio-button popup for selecting major, minor, or manual version bump."""
+
+    _SEMVER = re.compile(r'^\d+\.\d+\.\d+$')
+
+    def __init__(self, game_ids: list[str], parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Bump Version")
+        self.setMinimumWidth(320)
+        layout = QVBoxLayout(self)
+        layout.setSpacing(8)
+
+        if len(game_ids) <= 5:
+            ids_text = ", ".join(game_ids)
+        else:
+            ids_text = f"{', '.join(game_ids[:5])}, ... ({len(game_ids)} games)"
+        layout.addWidget(QLabel(f"Selected: {ids_text}"))
+
+        self._major = QRadioButton("Major  (0.3.0 -> 0.4.0)")
+        self._minor = QRadioButton("Minor  (0.3.0 -> 0.3.1)")
+        self._manual = QRadioButton("Manual")
+        self._major.setChecked(True)
+        layout.addWidget(self._major)
+        layout.addWidget(self._minor)
+
+        manual_row = QHBoxLayout()
+        manual_row.setContentsMargins(0, 0, 0, 0)
+        manual_row.addWidget(self._manual)
+        self._version_edit = QLineEdit()
+        self._version_edit.setPlaceholderText("X.Y.Z")
+        self._version_edit.setEnabled(False)
+        manual_row.addWidget(self._version_edit)
+        layout.addLayout(manual_row)
+
+        self._manual.toggled.connect(self._version_edit.setEnabled)
+
+        bb = QDialogButtonBox(QDialogButtonBox.Cancel)
+        bb.addButton("Continue", QDialogButtonBox.AcceptRole)
+        bb.accepted.connect(self._on_accept)
+        bb.rejected.connect(self.reject)
+        layout.addWidget(bb)
+
+    def _on_accept(self):
+        if self._manual.isChecked():
+            ver = self._version_edit.text().strip()
+            if not self._SEMVER.match(ver):
+                QMessageBox.warning(
+                    self, "Invalid Version",
+                    f"'{ver}' is not valid semver.\nUse X.Y.Z format (e.g. 1.2.3).",
+                )
+                return
+        self.accept()
+
+    def bump_args(self) -> list[str]:
+        if self._major.isChecked():
+            return ["--major"]
+        if self._minor.isChecked():
+            return ["--minor"]
+        return ["--version", self._version_edit.text().strip()]
+
+
 # == Main window ===============================================================
 
 class MainWindow(QMainWindow):
@@ -1146,6 +1208,7 @@ class MainWindow(QMainWindow):
             toolbar.addAction(act)
             self._action_btns[label] = act
 
+        add_action("Bump Version", self._on_bump_version)
         add_action("Release", self._on_release)
         add_action("Deploy to Vortex", self._on_deploy_to_vortex)
         add_action("Launch in Vortex", self._on_open_in_vortex)
@@ -1414,6 +1477,19 @@ class MainWindow(QMainWindow):
             return None
         dlg = ScriptArgsDialog(title, self._selected_ids(), flags=flags, inputs=inputs, parent=self)
         return dlg if dlg.exec() == QDialog.Accepted else None
+
+    def _on_bump_version(self):
+        if not self._require_selection():
+            return
+        ids = self._selected_ids()
+        dlg = BumpTypeDialog(ids, self)
+        if dlg.exec() != QDialog.Accepted:
+            return
+        self._refresh_after_run = True
+        self._run(
+            [[PYTHON, os.path.join(REPO_ROOT, "bump_version.py")] + dlg.bump_args() + ids],
+            "bump_version.py",
+        )
 
     def _on_release(self):
         dlg = self._script_dlg(
@@ -1696,6 +1772,7 @@ class MainWindow(QMainWindow):
             return
         menu = QMenu(self)
         entries = [
+            ("Bump Version", self._on_bump_version),
             ("Release", self._on_release),
             ("Deploy to Vortex", self._on_deploy_to_vortex),
             ("Launch in Vortex", self._on_open_in_vortex),
