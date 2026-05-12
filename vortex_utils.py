@@ -1443,13 +1443,13 @@ def read_info_json(folder):
         return None
 
 
-_DEFAULT_MANIFEST_PATH = r"C:\ProgramData\vortex\temp\extensions-manifest.json"
+_DEFAULT_MANIFEST_PATH = r"C:\Game_Tools\0 GitHub Repos\Vortex-Backend\out\extensions-manifest.json"
 
 
 def load_vortex_manifest(path=None):
     """Read Vortex extensions-manifest.json. Returns {game_id: mod_id} dict.
 
-    path defaults to C:\\ProgramData\\vortex\\temp\\extensions-manifest.json.
+    path defaults to C:\\Game_Tools\\0 GitHub Repos\\Vortex-Backend\\out\\extensions-manifest.json.
     Returns {} and prints a warning on any read/parse error."""
     manifest_path = path or _DEFAULT_MANIFEST_PATH
     try:

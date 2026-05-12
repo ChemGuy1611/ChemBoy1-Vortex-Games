@@ -24,7 +24,7 @@ Usage:
 
 Environment variables:
     VORTEX_MANIFEST_PATH  (optional) Path to Vortex extensions-manifest.json.
-                          Default: C:\\ProgramData\\vortex\\temp\\extensions-manifest.json
+                          Default: C:\\Game_Tools\\0 GitHub Repos\\Vortex-Backend\\out\\extensions-manifest.json
 """
 
 import argparse
@@ -42,7 +42,7 @@ from vortex_utils import (
     load_vortex_manifest, resize_pngs_in_dirs,
     is_placeholder_value,
 )
-MANIFEST_PATH = os.environ.get("VORTEX_MANIFEST_PATH", r"C:\ProgramData\vortex\temp\extensions-manifest.json")
+MANIFEST_PATH = os.environ.get("VORTEX_MANIFEST_PATH", r"C:\Game_Tools\0 GitHub Repos\Vortex-Backend\out\extensions-manifest.json")
 NEXUS_SITE_BASE = "https://www.nexusmods.com/site/mods"
 
 

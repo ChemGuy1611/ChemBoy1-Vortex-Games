@@ -6,6 +6,20 @@ Script index: [scripts.txt](scripts.txt) — one filename per line; keep in sync
 
 ---
 
+## resources/BOOTSTRAP.md
+
+Setup guide for the script environment on a new PC. Update this file whenever any of the following change:
+
+- Python package dependencies (`PySide6`, `Pillow`, `requests`, etc.)
+- Node.js / npm dev dependencies (`package.json`)
+- Windows environment variables (names, default values, or which scripts consume them)
+- The location of `extensions-manifest.json` or other external file paths
+- Minimum Python or Node version requirements
+
+File: [resources/BOOTSTRAP.md](resources/BOOTSTRAP.md)
+
+---
+
 ## vortex_utils.py
 
 Shared utility module imported by all other scripts. Centralizes common patterns to eliminate duplication across the script suite.
@@ -97,7 +111,7 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `write_text_atomic(path, entries, encoding)` | Write list-of-strings (or a single string) to `path` atomically via `.tmp` + `os.replace`. |
 | `open_in_default_app(path)` | Open `path` in the system default application (`os.startfile` on Windows). |
 | `run_script(script_name, *args, capture=True)` | Run a Python script from `REPO_ROOT` via `sys.executable`. Returns `CompletedProcess`. |
-| `load_vortex_manifest(path=None)` | Read `extensions-manifest.json`; return `{game_id: mod_id}` dict. Defaults to `C:\ProgramData\vortex\temp\extensions-manifest.json`. |
+| `load_vortex_manifest(path=None)` | Read `extensions-manifest.json`; return `{game_id: mod_id}` dict. Defaults to `C:\Game_Tools\0 GitHub Repos\Vortex-Backend\out\extensions-manifest.json`. |
 | `resize_pngs_in_dirs(folders, dry_run=False)` | Resize all non-64x64 PNGs in the given folders to 64x64 using Pillow. |
 | `build_js_symbol_table(src)` | Resolve `const`/`let` strings, template literals, `path.join()`, and variable refs in index.js source. Returns `{name: value}` dict. |
 | `list_template_names()` | Return sorted list of template name suffixes (e.g. `['basic', 'ue4-5', ...]`). |
@@ -765,7 +779,7 @@ Also resizes all non-64x64 PNG files in `game-*` and `template-*` folders to 64x
 
 | Variable | Required | Description |
 | --- | --- | --- |
-| `VORTEX_MANIFEST_PATH` | Optional | Path to the Vortex extensions manifest JSON. Defaults to `C:\ProgramData\vortex\temp\extensions-manifest.json`. Used by the `extension_url` patch. |
+| `VORTEX_MANIFEST_PATH` | Optional | Path to the Vortex extensions manifest JSON. Defaults to `C:\Game_Tools\0 GitHub Repos\Vortex-Backend\out\extensions-manifest.json`. Used by the `extension_url` patch. |
 
 ### patch_extensions.py — Usage
 
