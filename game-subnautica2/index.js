@@ -32,14 +32,14 @@ const STEAMAPP_ID = "1962700"; // https://steamdb.info/app/1962700/
 const STEAMAPP_ID_DEMO = null; //VERIFY if the EPIC_CODE_NAME and EXEC_DEMO match Steam full game
 const EPICAPP_ID = "22bfc34d90b64054809542014fc9eb32"; // https://store.epicgames.com/en-US/p/subnautica-2-d27f94
 const GOGAPP_ID = null; // from gogdb.org
-const XBOXAPP_ID = "XXX"; // https://apps.microsoft.com/detail/9pjpcb188svg
-const XBOXEXECNAME = "AppUEGameShipping"; //from appxmanifest.xml
+const XBOXAPP_ID = "UnknownWorldsEntertainmen.Subnautica2"; // https://apps.microsoft.com/detail/9pjpcb188svg
+const XBOXEXECNAME = "AppSubnautica2Shipping"; //from appxmanifest.xml
 const XBOX_PUB_ID = "XXX"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, XBOXAPP_ID, EPICAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
 const GAME_NAME = "Subnautica 2";
 const GAME_NAME_SHORT = "Subnautica 2"; //Try for 8-10 characters
-const EPIC_CODE_NAME = "XXX"; //Folder in root
+const EPIC_CODE_NAME = "Subnautica2"; //Folder in root
 const EXEC = `${EPIC_CODE_NAME}.exe`; //This is true ~80% of the time. Change if different
 const EXEC_EPIC = EXEC; //change these 3 if different
 const EXEC_GOG = EXEC;
@@ -55,7 +55,7 @@ if ( (EXEC !== EXEC_EPIC) || (EXEC !== EXEC_GOG) || (EXEC !== EXEC_DEMO) ) {
   multiExe = true;
 } //*/
 const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
-const hasModKit = false; //Very likely to have a modkit release by 1.0
+const hasModKit = false; //!Very likely to have a modkit release by 1.0
 const hasServer = false; //toggle for server pak mod logic
 const preferHardlinks = true; //set true to perform partition checks when IO-STORE=false for Config/Save modtypes so that hardlinks available to more users
 const autoDownloadUe4ss = false; //toggle for auto downloading UE4SS
@@ -65,9 +65,10 @@ const hasUserIdFolder = false; //true if there is a folder in the Save path that
 const debug = false; //toggle for debug mode
 
 //UE specific
-const ENGINE_VERSION = '5.X.X.0'; //Unreal Engine version - info only atm. usually '4.27.2.0' or '5.X.X.0'
+const ENGINE_VERSION = '5.6.X.0'; //Unreal Engine version - info only atm. usually '4.27.2.0' or '5.X.X.0'
 const ROOT_FOLDERS = [EPIC_CODE_NAME, 'Engine']; //addressable folders in root
 const ROOTSUB_FOLDERS = ['Content', 'Binaries', 'Mods']; //subfolders of EPIC_CODE_NAME. Don't use "Plugins" here since it can conflict with plugin loader/asi mods
+const CONTENTSUB_FOLDERS = ['Paks', 'FMOD', 'Macros', 'Movies', 'PerfTours', 'Smoketest', 'Splash', 'VideoTours']; //subfolders of Content folder
 const SAVE_EXT = ".sav";
 const SAVE_COMPAT_VERSIONS = ['steam', 'epic', 'gog']; //game versions with installable save mods (never Xbox)
 let PAKMOD_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Paks', '~mods'); //usually works. Some games don't work from "~mods".
@@ -1056,9 +1057,11 @@ function installDll(files, fileName) {
 function testRoot(files, gameId) {
   const ROOT_FOLDERS_LOWER = ROOT_FOLDERS.map(str => str.toLowerCase());
   const ROOTSUB_FOLDERS_LOWER = ROOTSUB_FOLDERS.map(str => str.toLowerCase());
+  const CONTENTSUB_FOLDERS_LOWER = CONTENTSUB_FOLDERS.map(str => str.toLowerCase());
   const isMod = files.some(file => ROOT_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
   const isSub = files.some(file => ROOTSUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
-  let supported = (gameId === spec.game.id) && ( isMod || isSub );
+  const isContentSub = files.some(file => CONTENTSUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
+  let supported = (gameId === spec.game.id) && ( isMod || isSub || isContentSub );
 
   // Test for a mod installer.
   if (supported && files.find(file =>
@@ -1077,11 +1080,16 @@ function testRoot(files, gameId) {
 function installRoot(files) {
   const ROOT_FOLDERS_LOWER = ROOT_FOLDERS.map(str => str.toLowerCase());
   const ROOTSUB_FOLDERS_LOWER = ROOTSUB_FOLDERS.map(str => str.toLowerCase());
+  const CONTENTSUB_FOLDERS_LOWER = CONTENTSUB_FOLDERS.map(str => str.toLowerCase());
   let folder = '';
   let modFile = files.find(file => ROOT_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
   if (modFile === undefined) {
     modFile = files.find(file => ROOTSUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
     folder = ROOTSUB_PATH;
+  }
+  if (modFile === undefined) {
+    modFile = files.find(file => CONTENTSUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
+    folder = path.join(EPIC_CODE_NAME, 'Content');
   }
   const ROOT_IDX = `${path.basename(modFile)}${path.sep}`
   const idx = modFile.indexOf(ROOT_IDX);
@@ -2333,9 +2341,9 @@ function applyGame(context, gameSpec) {
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open UE4SS mods.json', () => {
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open UE4SS mods.txt', () => {
     GAME_PATH = getDiscoveryPath(context.api);
-    util.opn(path.join(GAME_PATH, BINARIES_PATH, UE4SS_MODSJSON_FILEPATH)).catch(() => null);
+    util.opn(path.join(GAME_PATH, BINARIES_PATH, UE4SS_MODSTXT_FILEPATH)).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);

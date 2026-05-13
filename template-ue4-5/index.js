@@ -67,6 +67,7 @@ const debug = false; //toggle for debug mode
 const ENGINE_VERSION = '5.X.X.0'; //Unreal Engine version - info only atm. usually '4.27.2.0' or '5.X.X.0'
 const ROOT_FOLDERS = [EPIC_CODE_NAME, 'Engine']; //addressable folders in root
 const ROOTSUB_FOLDERS = ['Content', 'Binaries', 'Mods']; //subfolders of EPIC_CODE_NAME. Don't use "Plugins" here since it can conflict with plugin loader/asi mods
+const CONTENTSUB_FOLDERS = ['Paks', 'Movies']; //subfolders of Content folder
 const SAVE_EXT = ".sav";
 const SAVE_COMPAT_VERSIONS = ['steam', 'epic', 'gog']; //game versions with installable save mods (never Xbox)
 let PAKMOD_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Paks', '~mods'); //usually works. Some games don't work from "~mods".
@@ -1055,9 +1056,11 @@ function installDll(files, fileName) {
 function testRoot(files, gameId) {
   const ROOT_FOLDERS_LOWER = ROOT_FOLDERS.map(str => str.toLowerCase());
   const ROOTSUB_FOLDERS_LOWER = ROOTSUB_FOLDERS.map(str => str.toLowerCase());
+  const CONTENTSUB_FOLDERS_LOWER = CONTENTSUB_FOLDERS.map(str => str.toLowerCase());
   const isMod = files.some(file => ROOT_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
   const isSub = files.some(file => ROOTSUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
-  let supported = (gameId === spec.game.id) && ( isMod || isSub );
+  const isContentSub = files.some(file => CONTENTSUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
+  let supported = (gameId === spec.game.id) && ( isMod || isSub || isContentSub );
 
   // Test for a mod installer.
   if (supported && files.find(file =>
@@ -1076,11 +1079,16 @@ function testRoot(files, gameId) {
 function installRoot(files) {
   const ROOT_FOLDERS_LOWER = ROOT_FOLDERS.map(str => str.toLowerCase());
   const ROOTSUB_FOLDERS_LOWER = ROOTSUB_FOLDERS.map(str => str.toLowerCase());
+  const CONTENTSUB_FOLDERS_LOWER = CONTENTSUB_FOLDERS.map(str => str.toLowerCase());
   let folder = '';
   let modFile = files.find(file => ROOT_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
   if (modFile === undefined) {
     modFile = files.find(file => ROOTSUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
     folder = ROOTSUB_PATH;
+  }
+  if (modFile === undefined) {
+    modFile = files.find(file => CONTENTSUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
+    folder = path.join(EPIC_CODE_NAME, 'Content');
   }
   const ROOT_IDX = `${path.basename(modFile)}${path.sep}`
   const idx = modFile.indexOf(ROOT_IDX);

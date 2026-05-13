@@ -18,14 +18,15 @@
 | Property | Value |
 | --- | --- |
 | Game ID | `subnautica2` |
-| Executable | `XXX.exe` |
-| Executable (GOG) | `XXX.exe` |
-| Executable (Demo) | `XXX.exe` |
+| Executable | `Subnautica2.exe` |
+| Executable (GOG) | `Subnautica2.exe` |
+| Executable (Demo) | `Subnautica2.exe` |
 
 ## Supported Stores
 
 - **Steam** — `1962700`
 - **Epic Games Store** — `22bfc34d90b64054809542014fc9eb32`
+- **Xbox / Microsoft Store** — `UnknownWorldsEntertainmen.Subnautica2`
 
 ## Feature Flags
 
@@ -41,7 +42,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `subnautica2-ue4sscombo` | high | `{gamePath}` |
-| UE4SS LogicMods (Blueprint) | `subnautica2-logicmods` | high | `{gamePath}/XXX/Content/Paks` |
+| UE4SS LogicMods (Blueprint) | `subnautica2-logicmods` | high | `{gamePath}/Subnautica2/Content/Paks` |
 | PAK_ALT_NAME | `PAK_ALT_ID` | high | `{gamePath}/PAK_ALT_PATH` |
 | ROOT_NAME | `ROOT_ID` | high | `{gamePath}` |
 
@@ -57,6 +58,7 @@ Mod types define where each category of mod gets deployed:
 - **Purge Hook** (`did-purge`) — runs custom logic when mods are purged.
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
+- **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
