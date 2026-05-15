@@ -34,6 +34,14 @@ const args      = process.argv.slice(2);
 const flags     = new Set(args.filter(a => a.startsWith('--')));
 const gameArgs  = args.filter(a => !a.startsWith('--'));
 
+const KNOWN_FLAGS = new Set(['--fix', '--templates', '--quiet', '--json']);
+for (const f of flags) {
+  if (!KNOWN_FLAGS.has(f)) {
+    console.error(`Error: unknown flag '${f}'. Known flags: ${[...KNOWN_FLAGS].join(', ')}`);
+    process.exit(1);
+  }
+}
+
 const doFix       = flags.has('--fix');
 const doTemplates = flags.has('--templates');
 const quiet       = flags.has('--quiet');

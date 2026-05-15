@@ -544,11 +544,11 @@ def sub(src, var_name, value):
     Only targets lines where the RHS is exactly "XXX" or 'XXX'.
     Lines already set to null or a real value are untouched.
     """
-    pattern = rf'((?:const|let)\s+{re.escape(var_name)}\s*=\s*)["\']XXX[^"\']*["\']'
+    pattern = rf'^([ \t]*(?:const|let)\s+{re.escape(var_name)}\s*=\s*)["\']XXX[^"\']*["\']'
     if value is None:
-        return re.sub(pattern, r"\1null", src)
+        return re.sub(pattern, r"\1null", src, count=1, flags=re.MULTILINE)
     escaped = value.replace("\\", "\\\\")
-    return re.sub(pattern, rf'\1"{escaped}"', src)
+    return re.sub(pattern, rf'\1"{escaped}"', src, count=1, flags=re.MULTILINE)
 
 
 def sub_header(src, game_name, today):
@@ -564,8 +564,8 @@ def apply_substitutions(src, fields):
 
 def add_line_comment(src, var_name, comment):
     """Add or replace the trailing // comment on the const/let VAR_NAME = ...; line."""
-    pattern = rf'((?:const|let)\s+{re.escape(var_name)}\s*=[^;\n]*;?)[ \t]*(?://[^\n]*)?\n'
-    return re.sub(pattern, lambda m: m.group(1) + f' // {comment}\n', src)
+    pattern = rf'^([ \t]*(?:const|let)\s+{re.escape(var_name)}\s*=[^;\n]*;?)[ \t]*(?://[^\n]*)?\n'
+    return re.sub(pattern, lambda m: m.group(1) + f' // {comment}\n', src, count=1, flags=re.MULTILINE)
 
 
 def sub_binaries_path(src, dir_parts):
@@ -575,9 +575,9 @@ def sub_binaries_path(src, dir_parts):
         return src
     args = ", ".join(f'"{p}"' for p in dir_parts)
     return re.sub(
-        r"(const\s+BINARIES_PATH\s*=\s*)path\.join\s*\(\s*['\"]\.['\"]\s*\)",
+        r"^([ \t]*const\s+BINARIES_PATH\s*=\s*)path\.join\s*\(\s*['\"]\.['\"]\s*\)",
         rf'\1path.join({args})',
-        src
+        src, count=1, flags=re.MULTILINE,
     )
 
 
@@ -608,8 +608,7 @@ def edit_changelog(path, today):
         content = f.read()
     # Replace date placeholders like 2026-XX-XX or XXXX-XX-XX
     content = re.sub(r'\d{4}-XX-XX', today, content)
-    with open(path, "w", encoding="utf-8") as f:
-        f.write(content)
+    write_text_atomic(path, content)
 
 
 # ── Orchestration ─────────────────────────────────────────────────────────────
@@ -653,7 +652,7 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
     dest = os.path.join(REPO_ROOT, f"game-{game_id}")
     if os.path.exists(dest) and not dry_run:
         if force:
-            shutil.rmtree(dest)
+            vu.safe_rmtree(dest, "close Vortex first")
         else:
             print(f"\n  ERROR: Folder already exists: {dest}")
             print("  Use --force to overwrite.")
@@ -674,7 +673,7 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
     if exec_filename is None and gog_id:
         exec_filename, dir_parts = lookup_gog_executable(gog_id)
         gog_exec_used = exec_filename is not None
-    game_string = exec_filename.replace(".exe", "").replace(".EXE", "") if exec_filename else None
+    game_string = re.sub(r'\.exe$', '', exec_filename, flags=re.IGNORECASE) if exec_filename else None
     demo_appid = get_demo_appid(steam_data)
     epic_code_name = get_epic_code_name(steam_data, steamdb_data)
     exec_source = " (from GOG manifest)" if gog_exec_used else ""
@@ -723,7 +722,7 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
             with open(tmpl_index, encoding="utf-8") as f:
                 tmpl_src = f.read()
             short_name = derive_short_name(game_name)
-            game_string = exec_filename.replace(".exe", "").replace(".EXE", "") if exec_filename else None
+            game_string = re.sub(r'\.exe$', '', exec_filename, flags=re.IGNORECASE) if exec_filename else None
             preview_fields = {
                 "GAME_ID":          game_id,
                 "STEAMAPP_ID":      appid,
@@ -835,7 +834,7 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
         src = add_line_comment(src, "EPICAPP_ID", pcgw_epic_url)
     if engine_version:
         src = re.sub(
-            r"(const\s+ENGINE_VERSION\s*=\s*)['\"]5\.X\.X(?:\.0)?['\"]",
+            r"(const\s+ENGINE_VERSION\s*=\s*)['\"](?:4|5)\.X\.X(?:\.0)?['\"]",
             rf"\g<1>'{engine_version}'",
             src
         )

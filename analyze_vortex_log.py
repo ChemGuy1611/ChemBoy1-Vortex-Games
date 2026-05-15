@@ -48,7 +48,7 @@ _DEFAULT_LOG_FALLBACK = os.path.join(
     os.environ.get("APPDATA", ""), "Vortex", "vortex.log"
 )
 
-_ENTRY_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\S+(?:Z|[+-]\d{4}) \[(DEBG|INFO|WARN|ERROR)\] ")
+_ENTRY_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\S+(?:Z|[+-]\d{2}:?\d{2}) \[(DEBG|INFO|WARN|ERROR)\] ")
 _HOUR_RE  = re.compile(r"^(\d{4}-\d{2}-\d{2})T(\d{2}):")
 
 _USER_TO_TOKEN = {

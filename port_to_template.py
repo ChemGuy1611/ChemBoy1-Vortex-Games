@@ -52,10 +52,11 @@ import sys
 import shutil
 import argparse
 
-from vortex_utils import REPO_ROOT, run_generate_explained, node_check_source, get_discovery_ids, log_warn
+from vortex_utils import REPO_ROOT, run_generate_explained, node_check_source, get_discovery_ids, log_warn, write_text_atomic, extract_array_rhs
 
 # Template constant names that are boolean feature toggles.
 # These are intentionally left at template defaults, not transferred from the game.
+# 'debug' is included so game-side debug=true never leaks into the ported template.
 BOOLEAN_TOGGLES = {
     'reZip', 'allowSymlinks', 'multiExe', 'multiModPath',
     'hasLoader', 'hasXbox', 'needsModInstaller', 'rootInstaller',
@@ -98,24 +99,6 @@ def extract_id_suffix(rhs):
 
 
 
-
-def extract_array_rhs(src, var_name):
-    """Extract the full RHS array of a const/let declaration.
-    Uses bracket-depth counting to handle nested arrays/calls correctly.
-    Returns the raw array string (e.g. "[path.join(...), ...]") or None."""
-    m = re.search(rf'(?:const|let)\s+{re.escape(var_name)}\s*=\s*(\[)', src)
-    if not m:
-        return None
-    start = m.start(1)
-    depth = 0
-    for i in range(start, len(src)):
-        if src[i] == '[':
-            depth += 1
-        elif src[i] == ']':
-            depth -= 1
-            if depth == 0:
-                return src[start:i + 1]
-    return None
 
 
 def _sub_array_rhs(src, var_name, new_rhs):
@@ -372,10 +355,9 @@ def create_port(game_id, template_name, dry_run, force, no_explained=False):
     if ok is False:
         return  # already returned above, but be safe
 
-    # Write backup then overwrite
+    # Write backup then overwrite (atomic: tmp + os.replace)
     shutil.copy2(game_index, bak_path)
-    with open(game_index, 'w', encoding='utf-8') as f:
-        f.write(new_src)
+    write_text_atomic(game_index, new_src)
     print()
     print(f'  Written: game-{game_id}/index.js')
     print(f'  Backup:  game-{game_id}/index.js.bak')

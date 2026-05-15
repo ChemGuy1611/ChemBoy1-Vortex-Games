@@ -225,10 +225,12 @@ def read_index_js(folder):
 
 
 def write_index_js(folder, src):
-    """Write src to index.js in a game extension folder."""
-    path = os.path.join(folder, "index.js")
-    with open(path, "w", encoding="utf-8") as f:
+    """Write src to index.js in a game extension folder (atomic via tmp + os.replace)."""
+    dst = os.path.join(folder, "index.js")
+    tmp = dst + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
         f.write(src)
+    os.replace(tmp, dst)
 
 
 def extract_game_id(src):
@@ -564,7 +566,7 @@ def add_to_discovery_ids(src):
     """
     def _append(s, var_name):
         m = re.search(r'const\s+DISCOVERY_IDS_ACTIVE\s*=\s*\[([^\]]*)\]', s)
-        if not m or var_name in m.group(1):
+        if not m or re.search(rf'\b{re.escape(var_name)}\b', m.group(1)):
             return s
         return re.sub(
             r'(const\s+DISCOVERY_IDS_ACTIVE\s*=\s*\[[^\]]*?)(\s*\])',
@@ -1308,7 +1310,8 @@ def node_check(path):
     """Run `node --check` on a JS file. Returns (ok: bool, stderr: str)."""
     result = subprocess.run(
         ["node", "--check", path],
-        capture_output=True, text=True
+        capture_output=True, text=True,
+        encoding="utf-8", errors="replace",
     )
     return result.returncode == 0, result.stderr.strip()
 
@@ -1319,6 +1322,7 @@ def eslint_check(path):
     result = subprocess.run(
         ["npx", "--no-install", "eslint", path],
         capture_output=True, text=True, cwd=REPO_ROOT, shell=True,
+        encoding="utf-8", errors="replace",
     )
     output = (result.stdout + result.stderr).strip()
     return result.returncode == 0, output
@@ -1335,7 +1339,8 @@ def node_check_source(src):
         try:
             result = subprocess.run(
                 ['node', '--check', tmp],
-                capture_output=True, text=True
+                capture_output=True, text=True,
+                encoding="utf-8", errors="replace",
             )
         finally:
             os.unlink(tmp)
@@ -1354,6 +1359,8 @@ def run_script(script_name, *args, capture=True):
     return subprocess.run(
         cmd, cwd=REPO_ROOT,
         capture_output=capture, text=capture,
+        encoding="utf-8" if capture else None,
+        errors="replace" if capture else None,
     )
 
 
@@ -1559,6 +1566,7 @@ def validate_index_js(src: str) -> list[str]:
     issues = []
     stripped = re.sub(r'/\*.*?\*/', '', src, flags=re.DOTALL)
     stripped = re.sub(r'//[^\n]*', '', stripped)
+    stripped = re.sub(r'"[^"\n]*"|\'[^\'\n]*\'|`[^`]*`', '', stripped)
     if re.search(r'\bXXX\b', stripped):
         issues.append("leftover XXX placeholder(s)")
     if 'applyGame' not in src:
@@ -1604,15 +1612,16 @@ def dry_prefix(dry_run):
     return '[DRY RUN] ' if dry_run else ''
 
 
-def build_arg_parser(desc, *, with_force=True, with_dry_run=True, ids_required=True):
+def build_arg_parser(desc, *, with_force=True, with_dry_run=True, ids_required=True, dest="game_ids"):
     """Return an ArgumentParser with standard GAME_ID positional arg and common flags.
 
     with_dry_run: add --dry-run flag (default True)
     with_force: add --force flag (default True)
-    ids_required: nargs='+' when True, nargs='*' when False"""
+    ids_required: nargs='+' when True, nargs='*' when False
+    dest: parsed-namespace attribute name (default 'game_ids'; pass 'game' for args.game)"""
     p = argparse.ArgumentParser(description=desc)
     p.add_argument(
-        "game_ids", metavar="GAME_ID",
+        dest, metavar="GAME_ID",
         nargs="+" if ids_required else "*",
         help="Game ID(s) to process",
     )

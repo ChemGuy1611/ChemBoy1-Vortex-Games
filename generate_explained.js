@@ -8,7 +8,8 @@
  *            node generate_explained.js thelongdark [GAME_ID ...]
  *
  * Flags:
- *   --json   Write machine-readable JSON to stdout; progress goes to stderr.
+ *   --json       Write machine-readable JSON to stdout; progress goes to stderr.
+ *   --templates  Also process template-* folders (when no GAME_ID args given).
  *
  * JSON output schema:
  *   { timestamp, created, skipped, errors, results: [{ id, ok, error? }] }
@@ -1017,6 +1018,7 @@ const rawArgs     = process.argv.slice(2);
 const cliFlags    = new Set(rawArgs.filter(a => a.startsWith('--')));
 const gameArgs    = rawArgs.filter(a => !a.startsWith('--'));
 const doJson      = cliFlags.has('--json');
+const doTemplates = cliFlags.has('--templates');
 const jsonResults = [];
 
 function emit(line = '') {
@@ -1026,10 +1028,15 @@ function emit(line = '') {
 
 const entries = fs.readdirSync(ROOT, { withFileTypes: true });
 const extDirs = entries
-  .filter(e => e.isDirectory() && (e.name.startsWith('game-') || e.name.startsWith('template-')))
+  .filter(e => {
+    if (!e.isDirectory()) return false;
+    if (e.name.startsWith('game-')) return true;
+    if (e.name.startsWith('template-')) return gameArgs.length > 0 || doTemplates;
+    return false;
+  })
   .map(e => e.name)
   .sort()
-  .filter(name => gameArgs.length === 0 || gameArgs.includes(name.replace(/^game-/, '')));
+  .filter(name => gameArgs.length === 0 || gameArgs.includes(name.replace(/^(?:game|template)-/, '')));
 
 if (gameArgs.length > 0) {
   if (extDirs.length === 0) {

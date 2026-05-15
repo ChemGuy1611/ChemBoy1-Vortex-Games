@@ -40,7 +40,7 @@ def _bump(version: str, bump_type: str) -> str:
     return f"{major}.{minor}.{patch}"
 
 
-_SEMVER = re.compile(r'^\d+\.\d+\.\d+$')
+_SEMVER = re.compile(r'^\d+\.\d+\.\d+(?:-[\w.]+)?$')
 
 
 def _process(folder: str, game_id: str, bump_type: str | None, dry_run: bool,
@@ -122,11 +122,18 @@ def main():
     bump_type = "major" if args.major else ("minor" if args.minor else None)
     manual_ver = args.version or None
     saved, failed = [], []
-    for folder, game_id, _ in vu.iter_game_folders(args.game_ids):
-        ok = _process(folder, game_id, bump_type, args.dry_run, manual_ver)
-        (saved if ok else failed).append(game_id)
-
-    vu.print_run_summary(saved, failed, [])
+    try:
+        for folder, game_id, _ in vu.iter_game_folders(args.game_ids):
+            try:
+                ok = _process(folder, game_id, bump_type, args.dry_run, manual_ver)
+                (saved if ok else failed).append(game_id)
+            except Exception as e:
+                vu.log_error(game_id, f"unexpected error: {e}")
+                failed.append(game_id)
+    except KeyboardInterrupt:
+        print("\n\n  Interrupted.")
+    finally:
+        vu.print_run_summary(saved, failed, [])
 
 
 if __name__ == "__main__":

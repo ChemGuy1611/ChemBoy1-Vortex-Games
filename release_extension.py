@@ -213,7 +213,9 @@ def release(game_id, open_browser, dry_run=False, skip_eslint=False, skip_explai
 
     zip_path = os.path.join(folder, f"game-{game_id}.zip")
 
-    # Remove existing zip so 7-Zip creates a fresh one
+    # The zip is a convenience artifact for manual distribution.
+    # If 7-Zip fails or is absent, having no zip is acceptable — the extension
+    # (index.js, info.json, CHANGELOG.md, images) is still fully valid without it.
     if os.path.isfile(zip_path):
         os.remove(zip_path)
 
@@ -291,20 +293,23 @@ def main():
     print(f"Releasing {len(args.game)} extension(s){label}...\n")
     saved = []
     failed = []
-    for game_id in args.game:
-        try:
-            assert_is_game_id(game_id)
-        except ValueError as e:
-            print(f"  ERROR - {e}")
-            failed.append(game_id)
-            continue
-        if release(game_id, not args.no_open, args.dry_run,
-                   skip_eslint=args.skip_eslint, skip_explained=args.skip_explained):
-            saved.append(game_id)
-        else:
-            failed.append(game_id)
-
-    print_run_summary(saved, failed, skipped=[])
+    try:
+        for game_id in args.game:
+            try:
+                assert_is_game_id(game_id)
+            except ValueError as e:
+                print(f"  ERROR - {e}")
+                failed.append(game_id)
+                continue
+            if release(game_id, not args.no_open, args.dry_run,
+                       skip_eslint=args.skip_eslint, skip_explained=args.skip_explained):
+                saved.append(game_id)
+            else:
+                failed.append(game_id)
+    except KeyboardInterrupt:
+        print("\n\n  Interrupted.")
+    finally:
+        print_run_summary(saved, failed, skipped=[])
 
 
 if __name__ == "__main__":

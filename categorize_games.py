@@ -20,6 +20,7 @@ from vortex_utils import (
     REPO_ROOT, LISTS_DIR, list_game_ids, detect_engine,
     read_id_list, write_id_list,
     is_load_order_game as _is_load_order_game_src,
+    log_error, log_dry,
 )
 
 # (filename, display label) in detection priority order.
@@ -119,7 +120,7 @@ def update_single(game_id, dry_run=False):
         if filename == target:
             if game_id not in ids:
                 if dry_run:
-                    print(f"  [DRY RUN] Would add {game_id} -> {filename} ({label})")
+                    log_dry(f"Would add {game_id} -> {filename} ({label})")
                 else:
                     ids.append(game_id)
                     write_id_list(filepath, ids)
@@ -129,7 +130,7 @@ def update_single(game_id, dry_run=False):
         else:
             if game_id in ids:
                 if dry_run:
-                    print(f"  [DRY RUN] Would remove {game_id} from {filename}")
+                    log_dry(f"Would remove {game_id} from {filename}")
                 else:
                     ids.remove(game_id)
                     write_id_list(filepath, ids)
@@ -140,7 +141,7 @@ def update_single(game_id, dry_run=False):
     if is_load_order_game(game_id):
         if game_id not in lo_ids:
             if dry_run:
-                print(f"  [DRY RUN] Would add {game_id} -> {LOADORDER_FILE}")
+                log_dry(f"Would add {game_id} -> {LOADORDER_FILE}")
             else:
                 lo_ids.append(game_id)
                 write_id_list(lo_path, lo_ids)
@@ -150,7 +151,7 @@ def update_single(game_id, dry_run=False):
     else:
         if game_id in lo_ids:
             if dry_run:
-                print(f"  [DRY RUN] Would remove {game_id} from {LOADORDER_FILE}")
+                log_dry(f"Would remove {game_id} from {LOADORDER_FILE}")
             else:
                 lo_ids.remove(game_id)
                 write_id_list(lo_path, lo_ids)
@@ -179,14 +180,22 @@ def main():
     if target_ids:
         success = 0
         failed = 0
-        for game_id in target_ids:
-            print(f"Updating category for game-{game_id}{'  [DRY RUN]' if args.dry_run else ''}...")
-            if update_single(game_id, args.dry_run):
-                success += 1
-            else:
-                failed += 1
-        tag = " [DRY RUN]" if args.dry_run else ""
-        print(f"\nDone{tag}. {success}/{len(target_ids)} succeeded.")
+        try:
+            for game_id in target_ids:
+                print(f"Updating category for game-{game_id}{'  [DRY RUN]' if args.dry_run else ''}...")
+                try:
+                    if update_single(game_id, args.dry_run):
+                        success += 1
+                    else:
+                        failed += 1
+                except Exception as e:
+                    log_error(game_id, str(e))
+                    failed += 1
+        except KeyboardInterrupt:
+            print("\n\n  Interrupted.")
+        finally:
+            tag = " [DRY RUN]" if args.dry_run else ""
+            print(f"\nDone{tag}. {success}/{len(target_ids)} succeeded.")
     else:
         print(f"Rebuilding all category files{'  [DRY RUN]' if args.dry_run else ''}...")
         rebuild_all(args.dry_run)

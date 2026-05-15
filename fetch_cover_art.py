@@ -135,26 +135,30 @@ def fetch_all(target_game_ids=None, dry_run=False, force=False, mode="cover"):
             skipped.append(game_id)
             continue
 
-        if mode == "title":
-            os.makedirs(out_dir, exist_ok=True)
-            out_path = os.path.join(out_dir, f"{game_id}_title.jpg")
-            ok, source = download_title_image(steamapp_id, game_id, out_path, sgdb_key)
-            _handle_result(ok, source, game_id,
-                           f"add {game_id}_title.jpg manually to resources/title-images/ (1920x1080 JPG, with title text)",
-                           saved, failed)
-        elif mode == "banner":
-            os.makedirs(out_dir, exist_ok=True)
-            out_path = os.path.join(out_dir, f"{game_id}_banner.jpg")
-            ok, source = download_banner_image(steamapp_id, game_id, out_path, sgdb_key)
-            _handle_result(ok, source, game_id,
-                           f"add {game_id}_banner.jpg manually to resources/banner-images/",
-                           saved, failed)
-        else:
-            out_path = os.path.join(folder, f"{game_id}.jpg")
-            ok, source = download_cover_art(steamapp_id, game_id, out_path, sgdb_key)
-            _handle_result(ok, source, game_id,
-                           f"add {game_id}.jpg manually (640x360 JPG, no title text)",
-                           saved, failed)
+        try:
+            if mode == "title":
+                os.makedirs(out_dir, exist_ok=True)
+                out_path = os.path.join(out_dir, f"{game_id}_title.jpg")
+                ok, source = download_title_image(steamapp_id, game_id, out_path, sgdb_key)
+                _handle_result(ok, source, game_id,
+                               f"add {game_id}_title.jpg manually to resources/title-images/ (1920x1080 JPG, with title text)",
+                               saved, failed)
+            elif mode == "banner":
+                os.makedirs(out_dir, exist_ok=True)
+                out_path = os.path.join(out_dir, f"{game_id}_banner.jpg")
+                ok, source = download_banner_image(steamapp_id, game_id, out_path, sgdb_key)
+                _handle_result(ok, source, game_id,
+                               f"add {game_id}_banner.jpg manually to resources/banner-images/",
+                               saved, failed)
+            else:
+                out_path = os.path.join(folder, f"{game_id}.jpg")
+                ok, source = download_cover_art(steamapp_id, game_id, out_path, sgdb_key)
+                _handle_result(ok, source, game_id,
+                               f"add {game_id}.jpg manually (640x360 JPG, no title text)",
+                               saved, failed)
+        except Exception as e:
+            print(f"  ERROR - {e}")
+            failed.append(game_id)
 
     if dry_run:
         return

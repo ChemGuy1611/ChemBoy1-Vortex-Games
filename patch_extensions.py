@@ -56,12 +56,12 @@ def patch_extension_url(game_id, src, context):
     manifest = context["manifest"]
     mod_id = manifest.get(game_id)
     if not mod_id:
-        return src, False, "no modId in manifest"
+        return src, False, SKIP_NO_MOD_ID
 
     current = const_value(src, "EXTENSION_URL")
     if current and not is_unset(current) and current != "null":
         if not context.get("force"):
-            return src, False, "already set"
+            return src, False, SKIP_ALREADY_SET
 
     url = f"{NEXUS_SITE_BASE}/{mod_id}"
     new_src = set_or_insert(src, "EXTENSION_URL", url, comment="Nexus link to this extension. Used for links")
@@ -76,15 +76,15 @@ def patch_epic_app_id(game_id, src, context):
     """
     current = const_value(src, "EPICAPP_ID")
     if current is None:
-        return src, False, "no EPICAPP_ID in source"
+        return src, False, SKIP_NO_EPICAPP_ID
     if current == "null":
-        return src, False, "null (not on Epic)"
+        return src, False, SKIP_NULL_NOT_ON_EPIC
     if is_placeholder_value(current):
-        return src, False, "XXX (intentional placeholder)"
+        return src, False, SKIP_XXX_INTENTIONAL
 
     is_empty = bool(re.match(r'^["\']["\']$', current))
     if not is_empty and not context.get("force"):
-        return src, False, "already set"
+        return src, False, SKIP_ALREADY_SET
 
     game_name = extract_game_name(src)
     if not game_name:
@@ -96,9 +96,9 @@ def patch_epic_app_id(game_id, src, context):
 
     # Replace EPICAPP_ID value; consume any stale trailing comment so it isn't re-decorated
     new_src = re.sub(
-        r'((?:const|let)\s+EPICAPP_ID\s*=\s*)["\'][^"\']*["\'](\s*//[^\n]*)?',
+        r'^([ \t]*(?:const|let)\s+EPICAPP_ID\s*=\s*)["\'][^"\']*["\'](\s*//[^\n]*)?',
         rf'\g<1>"{app_id}"',
-        src,
+        src, count=1, flags=re.MULTILINE,
     )
     if new_src == src:
         return src, False, "regex substitution had no effect"
@@ -114,7 +114,7 @@ def patch_discovery_ids(game_id, src, context):
     """
     new_src = add_to_discovery_ids(src)
     if new_src == src:
-        return src, False, "already up to date"
+        return src, False, SKIP_ALREADY_UP_TO_DATE
     return new_src, True, "updated DISCOVERY_IDS_ACTIVE"
 
 
@@ -127,7 +127,7 @@ def patch_pcgamingwiki_url(game_id, src, context):
     current = const_value(src, "PCGAMINGWIKI_URL")
     if current and not is_unset(current) and current != "null":
         if not context.get("force_pcgw"):
-            return src, False, "already set"
+            return src, False, SKIP_ALREADY_SET
 
     game_name = extract_game_name(src)
     page_url = None
@@ -161,7 +161,7 @@ def patch_folder_vars(game_id, src, context):
     missing_staging  = is_missing(src, "STAGING_FOLDER")
     missing_download = is_missing(src, "DOWNLOAD_FOLDER")
     if not any([missing_game, missing_version, missing_staging, missing_download]):
-        return src, False, "already set"
+        return src, False, SKIP_ALREADY_SET
 
     # Lines to insert after GAME_PATH (in template order)
     after_game_path_lines = []
@@ -215,7 +215,7 @@ def patch_game_name(game_id, src, context):
     spec.game.name (quoted 'name':), or the name: field in context.registerGame.
     """
     if not is_missing(src, "GAME_NAME"):
-        return src, False, "already set"
+        return src, False, SKIP_ALREADY_SET
 
     name = extract_game_name(src)
     if not name:
@@ -329,7 +329,7 @@ def patch_utility_functions(game_id, src, context):
     missing = [(name, code) for name, pattern, code in _UTILITY_FUNCTIONS
                if not re.search(pattern, src, re.MULTILINE)]
     if not missing:
-        return src, False, "already set"
+        return src, False, SKIP_ALREADY_SET
 
     m = re.search(r'^function\s+modTypePriority\b', src, re.MULTILINE)
     if not m:
@@ -350,7 +350,7 @@ def patch_register_actions(game_id, src, context):
         return src, False, "no applyGame function found"
     new_src, missing_labels = inject_register_actions(src)
     if not missing_labels:
-        return src, False, "already set"
+        return src, False, SKIP_ALREADY_SET
     return new_src, True, f"inserted {', '.join(missing_labels)}"
 
 
@@ -389,7 +389,7 @@ def patch_setup_vars(game_id, src, context):
             missing_names.append(name)
 
     if not missing_lines:
-        return src, False, "already set"
+        return src, False, SKIP_ALREADY_SET
 
     # If const state already exists, insert missing lines right after it.
     # Otherwise insert everything at the top of the body.
@@ -446,7 +446,7 @@ def patch_context_once_api(game_id, src, context):
         offset = ins_pos + len(insert_line) + 1
 
     if inserted == 0:
-        return src, False, "already set"
+        return src, False, SKIP_ALREADY_SET
     return new_src, True, f"inserted const api in {inserted} context.once block(s)"
 
 
@@ -507,14 +507,23 @@ def list_patches():
         fn = p["fn"]
         doc = (fn.__doc__ or "").strip().splitlines()[0] if fn.__doc__ else "(no description)"
         status = "enabled " if p["enabled"] else "disabled"
-        print(f"  [{status}] {p['name']:<{col}}  {doc}")
+        print(f"  [{status}] {p['name']:<{col}}  {doc}")  # noqa: raw-log-print
 
 
 # ── Runner ────────────────────────────────────────────────────────────────────
 
+# Named sentinel strings returned by patches to suppress per-game output.
+# Patches must return one of these constants (not a free string) to stay silent.
+SKIP_ALREADY_SET        = "already set"
+SKIP_NULL_NOT_ON_EPIC   = "null (not on Epic)"
+SKIP_NO_EPICAPP_ID      = "no EPICAPP_ID in source"
+SKIP_XXX_INTENTIONAL    = "XXX (intentional placeholder)"
+SKIP_NO_MOD_ID          = "no modId in manifest"
+SKIP_ALREADY_UP_TO_DATE = "already up to date"
+
 _SILENT_MSGS = frozenset({
-    "already set", "null (not on Epic)", "no EPICAPP_ID in source",
-    "XXX (intentional placeholder)", "no modId in manifest", "already up to date",
+    SKIP_ALREADY_SET, SKIP_NULL_NOT_ON_EPIC, SKIP_NO_EPICAPP_ID,
+    SKIP_XXX_INTENTIONAL, SKIP_NO_MOD_ID, SKIP_ALREADY_UP_TO_DATE,
 })
 
 
@@ -528,48 +537,51 @@ def run_patches(game_ids, dry_run, context, only=None):
     total_errors = 0
     changed_ids = []
 
-    for game_id in game_ids:
-        index_path = os.path.join(REPO_ROOT, f"game-{game_id}", "index.js")
-        if not os.path.isfile(index_path):
-            log_info(game_id, "SKIP - no index.js found")
-            total_skipped += 1
-            continue
+    try:
+        for game_id in game_ids:
+            index_path = os.path.join(REPO_ROOT, f"game-{game_id}", "index.js")
+            if not os.path.isfile(index_path):
+                log_info(game_id, "SKIP - no index.js found")
+                total_skipped += 1
+                continue
 
-        with open(index_path, encoding="utf-8") as f:
-            src = f.read()
+            with open(index_path, encoding="utf-8", errors="replace") as f:
+                src = f.read()
 
-        original_src = src
-        game_changed = False
-        changed_msgs = []
-        fail_msgs = []  # non-trivial skips worth showing
+            original_src = src
+            game_changed = False
+            changed_msgs = []
+            fail_msgs = []  # non-trivial skips worth showing
 
-        for patch in active_patches:
-            try:
-                src, changed, msg = patch["fn"](game_id, src, context)
-                if changed:
-                    changed_msgs.append(f"{patch['name']}: {msg}")
-                    game_changed = True
-                elif msg not in _SILENT_MSGS:
-                    fail_msgs.append(f"{patch['name']}: {msg}")
-            except Exception as ex:
-                fail_msgs.append(f"{patch['name']}: ERROR - {ex}")
-                total_errors += 1
+            for patch in active_patches:
+                try:
+                    src, changed, msg = patch["fn"](game_id, src, context)
+                    if changed:
+                        changed_msgs.append(f"{patch['name']}: {msg}")
+                        game_changed = True
+                    elif msg not in _SILENT_MSGS:
+                        fail_msgs.append(f"{patch['name']}: {msg}")
+                except Exception as ex:
+                    fail_msgs.append(f"{patch['name']}: ERROR - {ex}")
+                    total_errors += 1
 
-        if game_changed:
-            total_changed += 1
-            prefix = "[DRY RUN] " if dry_run else ""
-            print(f"  {prefix}[{game_id}] CHANGED")
-            for msg in changed_msgs:
-                print(f"    - {msg}")
-            if not dry_run:
-                write_index_js(os.path.join(REPO_ROOT, f"game-{game_id}"), src)
-                changed_ids.append(game_id)
-        else:
-            if fail_msgs:
-                log_warn(game_id, '; '.join(fail_msgs))
-            total_skipped += 1
+            if game_changed:
+                total_changed += 1
+                log_info(game_id, f"{'[DRY RUN] ' if dry_run else ''}CHANGED")
+                for msg in changed_msgs:
+                    print(f"    - {msg}")
+                if not dry_run:
+                    write_index_js(os.path.join(REPO_ROOT, f"game-{game_id}"), src)
+                    changed_ids.append(game_id)
+            else:
+                if fail_msgs:
+                    log_warn(game_id, '; '.join(fail_msgs))
+                total_skipped += 1
 
-    print(f"\nDone. {total_changed} changed, {total_skipped} skipped, {total_errors} errors.")
+    except KeyboardInterrupt:
+        print("\n\n  Interrupted.")
+    finally:
+        print(f"\nDone. {total_changed} changed, {total_skipped} skipped, {total_errors} errors.")
 
     if changed_ids and not dry_run:
         ok, err = run_generate_explained_batch(changed_ids)

@@ -76,7 +76,7 @@ from vortex_utils import (
     REPO_ROOT, extract_game_id, find_fn_end, REGISTER_ACTIONS, node_check,
     inject_register_actions, update_index_header, write_index_js,
     make_info_json, make_changelog, is_missing, const_value,
-    write_text_atomic, extract_array_rhs,
+    write_text_atomic, extract_array_rhs, report_node_check,
 )
 
 # String constants always replaced with "XXX"
@@ -119,18 +119,18 @@ SAFE_VALUE_PATTERNS = [
 def replace_const(src, var_name):
     """Replace a string constant's quoted value with "XXX". Null values are untouched."""
     return re.sub(
-        rf'((?:const|let)\s+{re.escape(var_name)}\s*=\s*)["\'].+?["\']',
+        rf'^([ \t]*(?:const|let)\s+{re.escape(var_name)}\s*=\s*)["\'].+?["\']',
         r'\1"XXX"',
-        src, count=1
+        src, count=1, flags=re.MULTILINE,
     )
 
 
 def nullify_empty_store_id(src, var_name):
     """Replace an empty-string store ID (= "" or = '') with null."""
     return re.sub(
-        rf'((?:const|let)\s+{re.escape(var_name)}\s*=\s*)["\']["\']',
+        rf'^([ \t]*(?:const|let)\s+{re.escape(var_name)}\s*=\s*)["\']["\']',
         r'\1null',
-        src, count=1
+        src, count=1, flags=re.MULTILINE,
     )
 
 
@@ -885,6 +885,10 @@ def update_templates_list(template_name, dry_run):
     new_src = src[:m.start(2)] + new_entries + src[m.end(2):]
 
     if not dry_run:
+        try:
+            compile(new_src, str(path), 'exec')
+        except SyntaxError as e:
+            return False, f"compile check failed after insertion: {e}"
         write_text_atomic(path, new_src)
 
     return True, f"inserted {full_name}"
@@ -959,9 +963,7 @@ def create_template(template_name, game_ids, dry_run, force, diff=False):
         index_js_path = os.path.join(dest_dir, "index.js")
         write_index_js(dest_dir, processed)
         ok, err = node_check(index_js_path)
-        if not ok:
-            print(f"  WARNING - node --check reported a syntax error in index.js:")
-            print(f"    {err}")
+        report_node_check(primary_game, ok, err)
         with open(os.path.join(dest_dir, "info.json"), "w", encoding="utf-8") as f:
             f.write(make_info_json())
         with open(os.path.join(dest_dir, "CHANGELOG.md"), "w", encoding="utf-8") as f:

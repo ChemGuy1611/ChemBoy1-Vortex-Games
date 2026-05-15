@@ -72,12 +72,17 @@ def fetch_all(target_game_ids=None, dry_run=False, force=False):
         print(f"\n{label}")
 
         out_path = os.path.join(folder, "exec.png")
-        ok, source = download_exec_icon(steamapp_id, game_name or game_id, out_path)
+        try:
+            ok, source = download_exec_icon(steamapp_id, game_name or game_id, out_path)
+        except Exception as e:
+            print(f"  ERROR - {e}")
+            failed.append(game_id)
+            continue
         if ok:
             print(f"  Saved: {source}")
             saved.append(game_id)
         else:
-            print(f"  FAILED --add exec.png manually (64x64 PNG)")
+            print(f"  FAILED -- add exec.png manually (64x64 PNG)")
             failed.append(game_id)
 
     if dry_run:

@@ -26,7 +26,6 @@ Environment variables:
 """
 
 import argparse
-import re
 import sys
 import time
 import urllib.error
@@ -34,7 +33,6 @@ import urllib.error
 import vortex_utils as vu
 
 STATS_PATH = vu.GUI_STATS_PATH
-MOD_RE     = re.compile(r"nexusmods\.com/([^/]+)/mods/(\d+)")
 
 
 # == Persistence ===============================================================
@@ -58,11 +56,11 @@ def fetch_all(target_ids=None, dry_run=False, force=False):
         url = vu.extract_extension_url(src)
         if not url:
             continue
-        m = MOD_RE.search(url)
-        if not m:
+        result = vu.parse_nexus_mod_url(url)
+        if not result:
             vu.log_warn(game_id, f"EXTENSION_URL has no parseable mod ID: {url}")
             continue
-        domain, mod_id = m.group(1), m.group(2)
+        domain, mod_id = result
         cached = cache.get(game_id, {})
         if not force and cached and cached.get("error") in (None, ""):
             continue
@@ -80,7 +78,7 @@ def fetch_all(target_ids=None, dry_run=False, force=False):
 
     api_key = vu.get_api_key("NEXUS_API_KEY")
     if not api_key:
-        vu.log_error("fetch_nexus_stats", "NEXUS_API_KEY not set -- add it as a Windows user env var or in HKCU\\Environment")
+        print("ERROR: NEXUS_API_KEY not set -- add it as a Windows user env var or in HKCU\\Environment")
         sys.exit(1)
 
     updated = 0
@@ -95,7 +93,7 @@ def fetch_all(target_ids=None, dry_run=False, force=False):
                 data, remaining = vu.nexus_get_mod(domain, mod_id, api_key)
                 last_remaining = remaining
                 entry = {
-                    "mod_id": int(mod_id),
+                    "mod_id": mod_id,
                     "domain": domain,
                     "endorsements": data.get("endorsement_count", 0),
                     "unique_downloads": data.get("mod_unique_downloads", 0),
@@ -117,7 +115,7 @@ def fetch_all(target_ids=None, dry_run=False, force=False):
                 if remaining is not None:
                     try:
                         if int(remaining) <= 5:
-                            vu.log_warn("fetch_nexus_stats", "Daily rate limit nearly exhausted -- stopping early")
+                            print("WARNING: Daily rate limit nearly exhausted -- stopping early")
                             break
                     except ValueError:
                         pass
@@ -125,7 +123,7 @@ def fetch_all(target_ids=None, dry_run=False, force=False):
             except urllib.error.HTTPError as e:
                 if e.code == 404:
                     cache[game_id] = {
-                        "mod_id": int(mod_id),
+                        "mod_id": mod_id,
                         "domain": domain,
                         "error": "404",
                         "fetched_at": int(time.time()),
@@ -164,7 +162,7 @@ def prune(dry_run=False):
         return
     for gid in stale:
         if dry_run:
-            print(f"  [DRY RUN] Would remove: {gid}")
+            vu.log_dry(f"Would remove: {gid}")
         else:
             del cache[gid]
             print(f"  Removed: {gid}")

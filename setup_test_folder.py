@@ -27,7 +27,7 @@ import argparse
 import os
 import sys
 
-from vortex_utils import REPO_ROOT, safe_windows_dirname, log_error, log_info, build_js_symbol_table, safe_rmtree, touch_empty
+from vortex_utils import REPO_ROOT, safe_windows_dirname, log_error, log_info, build_js_symbol_table, safe_rmtree, touch_empty, print_run_summary
 TEST_ROOT = os.environ.get("VORTEX_TEST_ROOT", r"D:\Game_Tools_D\!TestGameFolders_D")
 
 
@@ -220,20 +220,31 @@ def main():
         sys.exit(1)
 
     label = " [DRY RUN]" if args.dry_run else ""
-    if args.clean:
-        print(f"Cleaning test folder(s) in {TEST_ROOT}{label}...\n")
-        success = 0
-        for game_id in args.game:
-            if clean(game_id, args.dry_run):
-                success += 1
-    else:
-        print(f"Setting up test folder(s) in {TEST_ROOT}{label}...\n")
-        success = 0
-        for game_id in args.game:
-            if setup(game_id, args.dry_run, args.force):
-                success += 1
-
-    print(f"\nDone. {success}/{len(args.game)} succeeded.")
+    saved = []
+    failed = []
+    try:
+        if args.clean:
+            print(f"Cleaning test folder(s) in {TEST_ROOT}{label}...\n")
+            for game_id in args.game:
+                try:
+                    if clean(game_id, args.dry_run):
+                        saved.append(game_id)
+                except Exception as e:
+                    log_error(game_id, str(e))
+                    failed.append(game_id)
+        else:
+            print(f"Setting up test folder(s) in {TEST_ROOT}{label}...\n")
+            for game_id in args.game:
+                try:
+                    if setup(game_id, args.dry_run, args.force):
+                        saved.append(game_id)
+                except Exception as e:
+                    log_error(game_id, str(e))
+                    failed.append(game_id)
+    except KeyboardInterrupt:
+        print("\n\n  Interrupted.")
+    finally:
+        print_run_summary(saved, failed, [])
 
 
 if __name__ == "__main__":

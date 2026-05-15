@@ -612,6 +612,13 @@ class GameModel(QAbstractTableModel):
                 return row.endorsements if row.endorsements is not None else -1
             if col == COL_DL:
                 return row.unique_downloads if row.unique_downloads is not None else -1
+            if col == COL_NEXUS_PUB:
+                if row.nexus_published:
+                    try:
+                        return datetime.strptime(row.nexus_published, "%Y-%m-%d").timestamp()
+                    except ValueError:
+                        return -1
+                return -1
             if col == COL_ICON:   return 1 if row.icon   is not None else 0
             if col == COL_COVER:  return 1 if row.cover  is not None else 0
             if col == COL_TITLE:  return 1 if row.title  is not None else 0
@@ -658,7 +665,7 @@ class GameFilterModel(QSortFilterProxyModel):
         r_row = self.sourceModel()._rows[right.row()]
         if self._grouping and l_row.engine != r_row.engine:
             return l_row.engine < r_row.engine
-        if left.column() in (COL_END, COL_DL, COL_ICON, COL_COVER, COL_TITLE, COL_BANNER):
+        if left.column() in (COL_END, COL_DL, COL_NEXUS_PUB, COL_ICON, COL_COVER, COL_TITLE, COL_BANNER):
             src = self.sourceModel()
             lv = src.data(left,  Qt.UserRole + 1)
             rv = src.data(right, Qt.UserRole + 1)
@@ -1220,13 +1227,8 @@ class MainWindow(QMainWindow):
         add_action("Setup Test Folder", self._on_setup_test)
         add_action("Patch", self._on_patch)
         add_action("Categorize", self._on_categorize)
-        toolbar.addSeparator()
-        _analyze_act = QAction("Analyze Log", self)
-        _analyze_act.triggered.connect(self._on_analyze_log)
-        toolbar.addAction(_analyze_act)
-        _audit_act = QAction("Audit Scripts", self)
-        _audit_act.triggered.connect(self._on_audit_scripts)
-        toolbar.addAction(_audit_act)
+        add_action("Analyze Log", self._on_analyze_log, sep=True)
+        add_action("Audit Scripts", self._on_audit_scripts)
         add_action("Fetch Icon", self._on_fetch_icon, sep=True)
         add_action("Fetch Cover", self._on_fetch_cover)
         add_action("Fetch Title", self._on_fetch_title)
@@ -1788,6 +1790,7 @@ class MainWindow(QMainWindow):
             ("Patch", self._on_patch),
             ("Categorize", self._on_categorize),
             ("Analyze Log", self._on_analyze_log),
+            ("Audit Scripts", self._on_audit_scripts),
             None,
             ("Fetch Icon", self._on_fetch_icon),
             ("Fetch Cover", self._on_fetch_cover),

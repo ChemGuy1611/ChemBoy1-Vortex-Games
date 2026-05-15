@@ -54,14 +54,12 @@ def deploy_game(game_id: str, dry_run: bool, force: bool) -> bool:
     game_name = vu.extract_game_name(js_src) if js_src else None
     existing = None if force else find_existing_plugin(game_id, game_name)
     dest = existing or os.path.join(PLUGINS_DIR, f"game-{game_id}")
-    pfx = vu.dry_prefix(dry_run)
-
     if dry_run:
         if existing:
-            print(f"{pfx}[{game_id}] copy index.js -> {existing}")
+            vu.log_info(game_id, f"copy index.js -> {existing}")
         else:
             action = "overwrite" if os.path.isdir(dest) else "create"
-            print(f"{pfx}[{game_id}] {action} -> {dest}")
+            vu.log_info(game_id, f"{action} -> {dest}")
             for name in sorted(os.listdir(src)):
                 status = "(overwrite)" if os.path.exists(os.path.join(dest, name)) else "(new)"
                 print(f"  {name} {status}")
@@ -71,13 +69,13 @@ def deploy_game(game_id: str, dry_run: bool, force: bool) -> bool:
         src_js = os.path.join(src, "index.js")
         dest_js = os.path.join(existing, "index.js")
         shutil.copy2(src_js, dest_js)
-        print(f"[{game_id}] updated index.js in {os.path.basename(existing)}")
+        vu.log_info(game_id, f"updated index.js in {os.path.basename(existing)}")
     else:
         if os.path.isdir(dest):
             vu.safe_rmtree(dest, "close Vortex first")
         shutil.copytree(src, dest)
         files = os.listdir(dest)
-        print(f"[{game_id}] deployed to {dest} ({len(files)} files)")
+        vu.log_info(game_id, f"deployed to {dest} ({len(files)} files)")
     return True
 
 
@@ -95,12 +93,16 @@ def main():
         sys.exit(1)
 
     results = []
-    for gid in args.game_ids:
-        try:
-            results.append(deploy_game(gid, dry_run=args.dry_run, force=args.force))
-        except Exception as e:
-            vu.log_error(gid, f"unexpected error: {e}")
-            results.append(False)
+    try:
+        for gid in args.game_ids:
+            try:
+                results.append(deploy_game(gid, dry_run=args.dry_run, force=args.force))
+            except Exception as e:
+                vu.log_error(gid, f"unexpected error: {e}")
+                results.append(False)
+    except KeyboardInterrupt:
+        print("\n\n  Interrupted.")
+        results.append(False)
     if not all(results):
         sys.exit(1)
 

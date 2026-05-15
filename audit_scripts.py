@@ -84,9 +84,13 @@ def _extract_module_docstring(src):
     return ''
 
 
+_BUILD_ARG_PARSER_FLAGS = {
+    "with_dry_run":  "--dry-run",
+    "with_force":    "--force",
+}
 def _extract_argparse_flags(src):
     """Return set of --flag-name strings found in add_argument() calls.
-    Uses ast to avoid false misses when help= strings contain parentheses."""
+    Also synthesises flags implied by vu.build_arg_parser(with_dry_run=True, ...)."""
     flags = set()
     try:
         tree = ast.parse(src)
@@ -96,6 +100,20 @@ def _extract_argparse_flags(src):
         if not isinstance(node, ast.Call):
             continue
         fn = node.func
+        # Detect calls to build_arg_parser (bare or vu.build_arg_parser)
+        is_build_arg = (
+            (isinstance(fn, ast.Name) and fn.id == 'build_arg_parser')
+            or (isinstance(fn, ast.Attribute) and fn.attr == 'build_arg_parser')
+        )
+        if is_build_arg:
+            for kw in node.keywords:
+                implied = _BUILD_ARG_PARSER_FLAGS.get(kw.arg)
+                if implied:
+                    val = kw.value
+                    if not (isinstance(val, ast.Constant) and val.value is False):
+                        flags.add(implied)
+                    # if with_dry_run=False explicitly, don't add --dry-run
+            continue
         if not (isinstance(fn, ast.Attribute) and fn.attr == 'add_argument'):
             continue
         for arg in node.args:
@@ -371,6 +389,7 @@ def audit_vortex_utils_exports():
 
 def audit_raw_log_prints(paths):
     """Detect raw print(f'  [{...}]') calls outside vortex_utils.py.
+    Lines with  # noqa: raw-log-print  are suppressed.
     Returns (any_issue, {script_name: [line_numbers]})."""
     hits: dict[str, list[int]] = {}
     for path in paths:
@@ -383,7 +402,8 @@ def audit_raw_log_prints(paths):
             src = f.read()
         lines_hit = [
             i for i, line in enumerate(src.splitlines(), 1)
-            if re.search(r'''^\s*print\s*\(\s*f["']\s{2}\[''', line)
+            if re.search(r'''^\s*print\s*\(\s*f["']\s{2}\[\{''', line)
+            and "# noqa: raw-log-print" not in line
         ]
         if lines_hit:
             hits[name] = lines_hit
