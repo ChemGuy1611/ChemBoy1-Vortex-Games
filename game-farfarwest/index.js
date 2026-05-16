@@ -1,9 +1,9 @@
 /*////////////////////////////////////////////////
-Name: XXX Vortex Extension
+Name: Far Far West Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2026-XX-XX
+Date: 2026-05-15
 Notes:
 - 
 ////////////////////////////////////////////////*/
@@ -27,26 +27,26 @@ const LOCALLOW = path.join(USER_HOME, 'AppData', 'LocalLow'); //*/
 const LOCALAPPDATA = util.getVortexPath('localAppData');
 
 //Specify all information about the game
-const GAME_ID = "XXX"; //same as Nexus domain
-const STEAMAPP_ID = "XXX"; //from steamdb.info
-const STEAMAPP_ID_DEMO = "XXX"; //VERIFY if the EPIC_CODE_NAME and EXEC_DEMO match Steam full game
-const EPICAPP_ID = "XXX"; //from egdata.app
-const GOGAPP_ID = "XXX"; // from gogdb.org
-const XBOXAPP_ID = "XXX"; //from appxmanifest.xml
+const GAME_ID = "farfarwest"; //same as Nexus domain
+const STEAMAPP_ID = "3124540"; // https://steamdb.info/app/3124540/
+const STEAMAPP_ID_DEMO = null; //VERIFY if the EPIC_CODE_NAME and EXEC_DEMO match Steam full game
+const EPICAPP_ID = null; //from egdata.app
+const GOGAPP_ID = null; // from gogdb.org
+const XBOXAPP_ID = null; //from appxmanifest.xml
 const XBOXEXECNAME = "AppUEGameShipping"; //from appxmanifest.xml
 const XBOX_PUB_ID = "XXX"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
-const GAME_NAME = "XXX";
-const GAME_NAME_SHORT = "XXX"; //Try for 8-10 characters
-const EPIC_CODE_NAME = "XXX"; //Folder in root
+const GAME_NAME = "Far Far West";
+const GAME_NAME_SHORT = "Far Far West"; //Try for 8-10 characters
+const EPIC_CODE_NAME = "FarFarWest"; //Folder in root
 const EXEC = `${EPIC_CODE_NAME}.exe`; //This is true ~80% of the time. Change if different
 const EXEC_EPIC = EXEC; //change these 3 if different
 const EXEC_GOG = EXEC;
 const EXEC_DEMO = EXEC;
 const PARAMETERS_STRING = ''; //launch arguments to pass when launching the game
-const PCGAMINGWIKI_URL = "XXX";
-const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Far_Far_West";
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1900"; //Nexus link to this extension. Used for links
 
 //feature toggles
 const hasXbox = false; //toggle for Xbox version logic.
@@ -58,14 +58,14 @@ const setupNotification = false; //enable to show the user a notification with s
 const hasModKit = false; //toggle for UE ModKit mod support
 const hasServer = false; //toggle for server pak mod logic
 const preferHardlinks = true; //set true to perform partition checks when IO-STORE=false for Config/Save modtypes so that hardlinks available to more users
-const autoDownloadUe4ss = false; //toggle for auto downloading UE4SS
+const autoDownloadUe4ss = true; //toggle for auto downloading UE4SS
 const SIGBYPASS_REQUIRED = false; //set true if there are .sig files in the Paks folder
 const IO_STORE = true; //true if the Paks folder contains .ucas and .utoc files
 const hasUserIdFolder = false; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
 const debug = false; //toggle for debug mode
 
 //UE specific
-const ENGINE_VERSION = '5.X.X.0'; //Unreal Engine version - info only atm. usually '4.27.2.0' or '5.X.X.0'
+const ENGINE_VERSION = '5.7.3.0'; //Unreal Engine version - info only atm. usually '4.27.2.0' or '5.X.X.0'
 const MAJOR_VERSION = ENGINE_VERSION.split('.')[0]; //major UE version
 const MINOR_VERSION = ENGINE_VERSION.split('.')[1]; //minor UE version
 const ROOT_FOLDERS = [EPIC_CODE_NAME, 'Engine']; //addressable folders in root
@@ -81,8 +81,8 @@ const LO_IMAGE_WIDTH = 96; //Width of the load order thumbnail image
 const SPECIAL_LO_INSTRUCTIONS = ''; //Show special load order instructions
 const PAKMOD_EXTRA_EXTS = []; //extra extensions to include with paks (usually for custom modding frameworks, i.e .toml, .json)
 const ue4ssLoadOrder = true; //enable load order and mods.txt writing for UE4SS mods
-const UE4SS_PAGE_NO = 0; //set these if there is a customized UE4SS Nexus page
-const UE4SS_FILE_NO = 0;
+const UE4SS_PAGE_NO = 27; //set these if there is a customized UE4SS Nexus page
+const UE4SS_FILE_NO = 57;
 const UE4SS_DOMAIN = GAME_ID; //either GAME_ID or 'site'
 const UE4SS_FOLDER = 'ue4ss'; //this should probably never change
 const UE4SS_MOD_PATH = path.join(UE4SS_FOLDER, 'Mods'); //this should probably never change (unless UE4SS team changes it again lol)

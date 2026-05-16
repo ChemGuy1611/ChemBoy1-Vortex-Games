@@ -262,12 +262,12 @@ function iniSuccessNotifyCustom(api) {
 
 //Mod Type test for FOLON files
 async function isFolonModType(api, instructions, files) {
-  const setModTypeInstruction = { type: 'setmodtype', value: FOLON_ID };
+  //const setModTypeInstruction = { type: 'setmodtype', value: FOLON_ID };
   const isMod = files.some(file => (path.basename(file) === FOLON_FILE));
   if (isMod) {
-    instructions.push(setModTypeInstruction);
+    return true;
   }
-  return Promise.resolve(isMod);
+  return false;
 }
 
 // Function to check if staging folder and game path are on same drive partition to enable modtypes + installers

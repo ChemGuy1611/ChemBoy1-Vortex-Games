@@ -2172,11 +2172,10 @@ function setupNotify(api) {
 }
 
 async function resolveGameVersion(gamePath, exePath) {
-  GAME_VERSION = await setGameVersionAsync(gamePath);
-  //SHIPPING_EXE = getShippingExe(gamePath);
-  const READ_FILE = path.join(gamePath, SHIPPING_EXE);
+  //GAME_VERSION = await setGameVersionAsync(gamePath);
+  const READ_FILE = path.join(gamePath, VERSION_FILE);
   let version = '0.0.0';
-  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
+  /*if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
     try { //try to parse appxmanifest.xml
       const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
       const parsed = await parseStringPromise(appManifest);
@@ -2186,18 +2185,22 @@ async function resolveGameVersion(gamePath, exePath) {
       log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
       return Promise.resolve(version);
     }
-  }
-  else { //use shipping exe (note that this only returns the UE engine version right now)
+  } //*/
+  //else { //use version.json
     try {
-      const exeVersion = require('exe-version');
-      version = await exeVersion.getProductVersion(READ_FILE);
-      //log('warn', `Resolved game version for ${GAME_ID} to: ${version}`);
+      await fs.statAsync(READ_FILE);
+      const contents = await fs.readFileAsync(READ_FILE, 'utf8');
+      const json = JSON.parse(contents);
+      const rawVersion = json[VERSION_KEY].toString().trim(); //'112084' -> `0.11.2084`
+      log('warn', `Raw version for ${GAME_ID} to: ${rawVersion}`);
+      version = `0.${rawVersion.slice(0, 1)}.${rawVersion.slice(2)}`;
+      log('warn', `Resolved version for ${GAME_ID} to: ${version}`);
       return Promise.resolve(version); 
     } catch (err) {
       log('error', `Could not read ${READ_FILE} file to get game version: ${err}`);
       return Promise.resolve(version);
     }
-  }
+  //}
 }
 
 async function modFoldersEnsureWritable(gamePath, relPaths) {
@@ -2645,7 +2648,7 @@ function main(context) {
         const state = context.api.store.getState();
         const gameId = selectors.activeGameId(state);
         const loEnabled = util.getSafe(state, ['settings', GAME_ID, 'ue4ssLoEnabled'], true);
-        return gameId === GAME_ID && isUe4ssInstalled(context.api, spec) && loEnabled;
+        return gameId === GAME_ID && loEnabled;
       },
       props: () => ({ api: context.api }),
     });

@@ -9,6 +9,7 @@ For the exhaustive API reference see memory files `reference_vortex_api_core.md`
 ## 1. UI Extension Points
 
 ### `context.registerControlWrapper(group, priority, wrapper)` — line 3545
+
 **Why useful:** Injects a HOC around an existing Vortex control group without forking it. Add badges, tooltips, or overlay icons to existing table rows or toolbar buttons.
 
 **Use case:** Wrap the mods-table row renderer to add a "Needs Patch" badge on specific mods without replacing the entire row component.
@@ -16,6 +17,7 @@ For the exhaustive API reference see memory files `reference_vortex_api_core.md`
 ---
 
 ### `context.registerOverlay(id, element, props?)` — line 3539
+
 **Why useful:** Renders a component that floats above the main Vortex window in a managed layer. Visibility is controlled by the extension.
 
 **Use case:** Show a post-install README panel ("Quick Start Guide") after a required mod is installed, triggered by an `api.events` listener. See `src/extensions/instructions_overlay/index.ts` for the first-party implementation.
@@ -23,6 +25,7 @@ For the exhaustive API reference see memory files `reference_vortex_api_core.md`
 ---
 
 ### `context.registerToDo(id, type, props, icon, text, action, condition, value, priority)` — line 3557
+
 **Why useful:** Shows a one-time onboarding item on the Vortex dashboard that auto-dismisses when its condition is met.
 
 **Use case:** "Set your game executable path" or "Install the required runtime before deploying" — visible only until the user completes the action, without needing a persistent notification.
@@ -30,6 +33,7 @@ For the exhaustive API reference see memory files `reference_vortex_api_core.md`
 ---
 
 ### `context.registerDashlet(title, width, height, position, component, isVisible, props, opts)` — line 3570
+
 **Why useful:** Add a tile to the Vortex dashboard (grid layout; width 1-3, height 1-6).
 
 **Use case:** A "Mod Stats" dashlet showing total enabled mods, last deploy time, and a "Deploy Now" button for the active game — visible only when your game is active via `isVisible`.
@@ -37,6 +41,7 @@ For the exhaustive API reference see memory files `reference_vortex_api_core.md`
 ---
 
 ### `context.registerBanner(group, component, opts)` — line 3564
+
 **Why useful:** A cycling banner shown at the top of a Vortex page group.
 
 **Use case:** "This game has a new compatible patch — update your mods" shown in the Mods page banner group after fetching upstream version info.
@@ -44,6 +49,7 @@ For the exhaustive API reference see memory files `reference_vortex_api_core.md`
 ---
 
 ### `context.registerFooter(id, element, props?)` — line 3548
+
 **Why useful:** Persistent status element in the bottom status bar.
 
 **Use case:** "Load order valid" / "3 conflicts detected" live status derived from `api.onStateChange`.
@@ -51,6 +57,7 @@ For the exhaustive API reference see memory files `reference_vortex_api_core.md`
 ---
 
 ### `context.registerDialog(id, element, props?)` — line 3536
+
 **Why useful:** Self-controlled modal with full React component (unlike `api.showDialog` which is declarative). Manages its own show/hide state via `actions.setDialogVisible`.
 
 **Use case:** Multi-step installation wizard (choose variant -> confirm files -> set options) where `showDialog` is too rigid.
@@ -58,6 +65,7 @@ For the exhaustive API reference see memory files `reference_vortex_api_core.md`
 ---
 
 ### `context.registerSettings(title, element, props?, visible?, priority?)` — line 3509
+
 **Why useful:** Adds a tab to Vortex's Settings dialog. Pair with `context.registerReducer(['settings', 'myExtId'], spec)` to persist the values.
 
 **Use case:** "Skyrim Tools Settings" page letting users toggle auto-LOOT, set output paths, choose merge strategy.
@@ -65,6 +73,7 @@ For the exhaustive API reference see memory files `reference_vortex_api_core.md`
 ---
 
 ### `api.highlightControl(selector, durationMS, text?, altStyle?)` — line 3117
+
 **Why useful:** Briefly pulse-highlights a DOM element by CSS selector to onboard users to a button or control you just added.
 
 **Use case:** After registering a new toolbar action, call `api.highlightControl('[data-id="my-action"]', 3000, 'New!')` on first launch to draw attention to it.
@@ -72,6 +81,7 @@ For the exhaustive API reference see memory files `reference_vortex_api_core.md`
 ---
 
 ### `api.awaitUI()` — line 3121
+
 **Why useful:** Returns a Promise that resolves once the Vortex UI is fully mounted. Gate event emissions or notifications that must appear on screen.
 
 **Use case:** Inside `context.once()`, `await api.awaitUI()` before sending a startup notification — avoids notifications appearing before the UI is ready and being lost.
@@ -81,6 +91,7 @@ For the exhaustive API reference see memory files `reference_vortex_api_core.md`
 ## 2. State & Reducers
 
 ### `context.registerReducer(path, spec)` — line 3624
+
 **Why useful:** Adds a typed Redux state slice to Vortex's store. Data at `window.*` or `settings.*` or `persistent.*` paths is persisted between sessions; `session.*` is not.
 
 **Use case:** Store per-game extension config at `persistent.myExtension[gameId]` — auto-persisted, accessible via `selectors` patterns, triggers React re-renders automatically.
@@ -97,6 +108,7 @@ context.registerReducer(['persistent', 'myExt'], {
 ---
 
 ### `context.registerSettingsHive(type, hive)` — line 3632
+
 **Why useful:** Declares that a top-level state hive should be scoped to `'global' | 'game' | 'profile'` for persistence. Game-scoped hives automatically switch content when the active game changes.
 
 **Use case:** Store load-order overrides scoped per-game so switching games auto-loads the right overrides without manual cleanup.
@@ -104,6 +116,7 @@ context.registerReducer(['persistent', 'myExt'], {
 ---
 
 ### `context.registerPersistor(hive, persistor, debounce?)` — line 3640
+
 **Why useful:** Back a state hive with a custom file format (e.g., YAML, INI, or a game-native config). Vortex treats it like any other state slice — React re-renders, onStateChange, etc.
 
 **Use case:** Read/write a game's native `mods.txt` as a Vortex state slice so in-app edits are reflected on disk in real time.
@@ -111,6 +124,7 @@ context.registerReducer(['persistent', 'myExt'], {
 ---
 
 ### `context.registerActionCheck(actionType, check)` — line 3657
+
 **Why useful:** Pre-dispatch guard on any Redux action type. Throw or return an error string to block bad dispatches before they corrupt state.
 
 **Use case:** Guard `setLoadOrder` to reject load orders where a required master is missing — better error UX than catching the downstream deploy failure.
@@ -118,6 +132,7 @@ context.registerReducer(['persistent', 'myExt'], {
 ---
 
 ### `util.makeReactive(obj)` — line 7017
+
 **Why useful:** Wraps a plain JS object so property assignments trigger React re-renders in components that reference it — without Redux. Useful for ephemeral UI state that doesn't need to persist.
 
 **Use case:** A "scan in progress" flag that a dashlet component reads from — no action/reducer needed, just assign `state.scanning = true`.
@@ -125,6 +140,7 @@ context.registerReducer(['persistent', 'myExt'], {
 ---
 
 ### `util.setDefaultArray(state, path, fallback)` — line 7901
+
 **Why useful:** Like `setdefault` but initializes the path with `fallback` (an array) if missing. Safe for use inside reducers.
 
 **Use case:** Ensure `state.loadOrder` exists before pushing a new entry in a reducer — `util.setDefaultArray(state, ['loadOrder'], [])`.
@@ -134,6 +150,7 @@ context.registerReducer(['persistent', 'myExt'], {
 ## 3. Mod Metadata & Lookup
 
 ### `api.lookupModReference(ref, opts?)` — line 3206
+
 **Why useful:** Resolves an `IModReference` (by md5, repo id, or expression) to candidate download entries. Use in complex installers that need to verify or find dependencies.
 
 **Use case:** Before auto-installing a required DLC, call `lookupModReference` to confirm the file is already downloaded — skip the Nexus fetch if it is.
@@ -141,6 +158,7 @@ context.registerReducer(['persistent', 'myExt'], {
 ---
 
 ### `api.lookupModMeta(details, ignoreCache?)` — line 3215
+
 **Why useful:** Hash+size lookup against the mod metadata database. Enriches mod attributes (name, version, author) from just the file.
 
 **Use case:** When a user drops an archive into the download folder manually, trigger a lookup to auto-populate mod metadata instead of showing "Unknown Mod".
@@ -148,6 +166,7 @@ context.registerReducer(['persistent', 'myExt'], {
 ---
 
 ### `api.genMd5Hash(data, progressCb?)` — line 3197
+
 **Why useful:** Streamed MD5 hash with a progress callback — preferable to a custom implementation for large archives.
 
 **Use case:** Pre-hash a staged file before uploading a mod to a custom server, or verify a download's integrity against a known hash.
@@ -155,6 +174,7 @@ context.registerReducer(['persistent', 'myExt'], {
 ---
 
 ### `context.registerAttributeExtractor(priority, extractor)` — line 3755
+
 **Why useful:** Inject extra attributes into any mod at install time by parsing its files. Default meta-db extractor runs at priority 100 — use 90 or lower to run first.
 
 **Use case:** Parse a mod's `manifest.json` at install time and surface `engineVersion`, `requiredDLC`, or `patchTarget` as searchable/sortable mod table columns.
@@ -162,6 +182,7 @@ context.registerReducer(['persistent', 'myExt'], {
 ---
 
 ### `context.registerGameInfoProvider(id, priority, expireMS, keys, query)` — line 3741
+
 **Why useful:** Cache per-game info (fetched from any source) and expose it in Vortex's game info panel. Auto-refreshed after `expireMS` milliseconds.
 
 **Use case:** Show the current Steam Workshop item count or the latest game patch version in the game info panel, fetched from an API and cached for 1 hour.
@@ -169,6 +190,7 @@ context.registerReducer(['persistent', 'myExt'], {
 ---
 
 ### `util.coerceToSemver(version)` vs `util.semverCoerce(version, opts?)` — lines 831 / 7812
+
 **Why useful:** Game versions are rarely strict semver. `coerceToSemver` returns a string; `semverCoerce` returns a `SemVer` object (access `.major`, `.minor`, `.patch`).
 
 **Use case:** Compare a game's reported version against a minimum required version — `semver.gte(util.semverCoerce(gameVersion), '1.6.0')`.
@@ -176,6 +198,7 @@ context.registerReducer(['persistent', 'myExt'], {
 ---
 
 ### `util.isFuzzyVersion(input)` — line 6026
+
 **Why useful:** Returns `true` if a version string is not strict semver (e.g. `"1.2"`, `"latest"`, `"beta"`). Gate strict semver operations on this check to avoid crashes.
 
 **Use case:** Before calling `semver.satisfies`, check `util.isFuzzyVersion(modVersion)` and fall back to a simple string comparison if true.
@@ -185,6 +208,7 @@ context.registerReducer(['persistent', 'myExt'], {
 ## 4. Install / Launch Hooks
 
 ### `context.registerStartHook(priority, id, hook)` — line 3833
+
 **Why useful:** Intercept any tool launch. The hook receives `IRunParameters` and can mutate args, environment, or cancel the launch by throwing `UserCanceled` / `ProcessCanceled`.
 
 **Use case:** Before launching the game, verify all required prerequisite mods are deployed; if not, show a dialog and cancel the launch (`throw new util.ProcessCanceled('Deploy first')`).
@@ -194,6 +218,7 @@ Priority guide: first-party check-deployment hook runs at 100. Use 50-90 for ext
 ---
 
 ### `context.registerInterpreter(extension, apply)` — line 3827
+
 **Why useful:** Map a file extension (e.g. `.py`, `.jar`, `.bat`) to an actual interpreter when Vortex tries to launch it. Throw `util.MissingInterpreter(msg, url)` for a nice error UI.
 
 **Use case:** Register `.jar` files to launch via `java -jar` so modders can ship Java-based tools that Vortex can auto-launch.
@@ -201,6 +226,7 @@ Priority guide: first-party check-deployment hook runs at 100. Use 50-90 for ext
 ---
 
 ### `context.registerMerge(test, merge, modType)` — line 3821
+
 **Why useful:** Merge files across mods of a given type during deployment. Use for text-format configs that need combining rather than overwriting.
 
 **Use case:** Merge all mods' `plugins.txt` entries into one combined file during deployment for games that use a plugin load-order text file.
@@ -208,6 +234,7 @@ Priority guide: first-party check-deployment hook runs at 100. Use 50-90 for ext
 ---
 
 ### `context.registerArchiveType(extension, handler)` — line 3808
+
 **Why useful:** Teach Vortex to open and list contents of a non-7z archive format — then installers and preview panels can read it.
 
 **Use case:** Register `.pak` archives for a game engine so the installer can inspect their contents and apply the correct mod type.
@@ -215,6 +242,7 @@ Priority guide: first-party check-deployment hook runs at 100. Use 50-90 for ext
 ---
 
 ### `context.registerDownloadProtocol(scheme, handler)` — IExtensionContext.ts:1173
+
 **Why useful:** Register a custom URI scheme that resolves to direct download URLs. When a URL starting with your scheme arrives, Vortex calls your handler to resolve it to `{ urls: string[], updatedUrl?, meta }`.
 
 **Why not in api.d.ts yet:** Added to Vortex source but not yet published in the vortex-api bundle. Fully functional.
@@ -226,6 +254,7 @@ Priority guide: first-party check-deployment hook runs at 100. Use 50-90 for ext
 ## 5. File Operations Beyond fs Basics
 
 ### `util.walk(target, cb, opts?)` — line 9105
+
 **Why useful:** Async recursive directory walk with `{ ignoreErrors?: boolean }`. Cleaner than manual `readdirAsync` recursion when you need per-entry `Stats`.
 
 ```js
