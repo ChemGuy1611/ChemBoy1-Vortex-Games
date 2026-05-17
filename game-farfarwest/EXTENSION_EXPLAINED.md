@@ -16,7 +16,6 @@
 | Executable | `FarFarWest.exe` |
 | Executable (GOG) | `FarFarWest.exe` |
 | Executable (Demo) | `FarFarWest.exe` |
-| Extension Page | XXX |
 
 ## Supported Stores
 

@@ -272,6 +272,7 @@ const LO_ATTRIBUTE_UE4SS = 'ue4ssModFolder';
 const UE4SS_NATIVE_MODS = ['BPML_GenericFunctions', 'BPModLoaderMod', 'CheatManagerEnablerMod', 
   'ConsoleCommandsMod', 'ConsoleEnablerMod', 'Keybinds', 'LineTraceMod', 'shared', 'SplitScreenMod'
 ];
+const ENABLEDTXT_FILE = 'enabled.txt';
 
 //Signature Bypass (only used if game requires)
 const SIGBYPASS_ID = `${GAME_ID}-sigbypass`;
@@ -713,6 +714,47 @@ async function getAllFiles(dirPath) {
   return results;
 }
 
+async function reconcileEnabledTxt(api, write) {
+  const state = api.getState();
+  const stagingPath = selectors.installPathForGame(state, GAME_ID);
+  if (!stagingPath) return;
+
+  const targets = new Set();
+  await util.walk(stagingPath, (iterPath, stats) => {
+    if (!stats.isDirectory()) return Promise.resolve();
+    const base = path.basename(iterPath).toLowerCase();
+    if (base === 'scripts' || base === 'dlls') {
+      targets.add(path.dirname(iterPath));
+    }
+    return Promise.resolve();
+  }, { ignoreErrors: true });
+
+  let touched = 0;
+  for (const parent of targets) {
+    const marker = path.join(parent, 'enabled.txt');
+    try {
+      if (write) {
+        try { await fs.statAsync(marker); }
+        catch { await fs.writeFileAsync(marker, ''); touched++; }
+      } else {
+        try { await fs.removeAsync(marker); touched++; }
+        catch (err) { if (err.code !== 'ENOENT') throw err; }
+      }
+    } catch (err) {
+      log('warn', `enabled.txt ${write ? 'write' : 'delete'} failed at ${marker}: ${err.message}`);
+    }
+  }
+
+  api.sendNotification({
+    id: `${GAME_ID}-ue4ss-lo-reconcile`,
+    type: 'success',
+    message: write
+      ? `UE4SS Load Order disabled: wrote enabled.txt for ${touched} mod folder(s).`
+      : `UE4SS Load Order enabled: cleared enabled.txt for ${touched} mod folder(s).`,
+    displayMS: 5000,
+  });
+}
+
 const getDiscoveryPath = (api) => { //get the game's discovered path
   const state = api.getState();
   const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});
@@ -994,17 +1036,21 @@ function testScripts(files, gameId) {
 
 //Install UE4SS Script files
 async function installScripts(api, files, fileName) {
-  const modFile = files.find(file => (path.basename(file).toLowerCase() === SCRIPTS_FOLDER.toLowerCase()));
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
-  const rootPath = path.dirname(modFile);
+  let modFile = files.find(file => (path.basename(file).toLowerCase() === SCRIPTS_FOLDER.toLowerCase()));
+  let rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: SCRIPTS_ID };
   const MOD_NAME = path.basename(fileName);
-  let MOD_FOLDER = path.basename(rootPath);
-  if (MOD_FOLDER === '.') {
-    MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
+  let MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
+  let fallbackName = true;
+  const ROOT_PATH = path.basename(rootPath);
+  if (ROOT_PATH !== '.') {
+    fallbackName = false;
+    MOD_FOLDER = ''; //no top level folder needed if it's already included in the archive
+    modFile = rootPath; //make the folder the targeted modFile so we can grab any other folders also in its directory
+    rootPath = path.dirname(modFile);
   }
+  const idx = modFile.indexOf(path.basename(modFile));
   if (!ue4ssLoadOrder || !util.getSafe(api.store.getState(), ['settings', GAME_ID, 'ue4ssLoEnabled'], true)) {
-    const ENABLEDTXT_FILE = 'enabled.txt'
     const ENABLEDTXT_PATH = path.join(fileName, rootPath, ENABLEDTXT_FILE);
     try {
       await fs.statAsync(ENABLEDTXT_PATH);
@@ -1016,13 +1062,13 @@ async function installScripts(api, files, fileName) {
           { encoding: "utf8" },
         );
         files.push(path.join(rootPath, ENABLEDTXT_FILE));
-        log('info', `Successfully created enabled.txt for UE4SS Script Mod: ${MOD_NAME}`);
+        log('info', `Successfully created ${ENABLEDTXT_FILE} for UE4SS Script Mod: ${MOD_NAME}`);
       } catch (err) {
-        log('error', `Could not create enabled.txt for UE4SS Script Mod: ${MOD_NAME}`);
+        log('error', `Could not create ${ENABLEDTXT_FILE} for UE4SS Script Mod: ${MOD_NAME}`);
       }
     }
   } else {
-    files = files.filter(f => path.basename(f).toLowerCase() !== 'enabled.txt');
+    files = files.filter(f => path.basename(f).toLowerCase() !== ENABLEDTXT_FILE);
   }
 
   //Filter files and set instructions
@@ -1032,7 +1078,7 @@ async function installScripts(api, files, fileName) {
   const MOD_ATTRIBUTE = {
     type: 'attribute',
     key: LO_ATTRIBUTE_UE4SS,
-    value: MOD_FOLDER,
+    value: fallbackName ? MOD_FOLDER : path.basename(modFile),
   };
   const instructions = filtered.map(file => {
     return {
@@ -1067,18 +1113,21 @@ function testDll(files, gameId) {
 
 //Install UE4SS DLL files
 async function installDll(api, files, fileName) {
-  const modFile = files.find(file => (path.basename(file).toLowerCase() === DLL_FOLDER.toLowerCase()));
-  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
-  const rootPath = path.dirname(modFile);
+  let modFile = files.find(file => (path.basename(file).toLowerCase() === DLL_FOLDER.toLowerCase()));
+  let rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: DLL_ID };
   const MOD_NAME = path.basename(fileName);
-  let MOD_FOLDER = path.basename(rootPath);
-  if (MOD_FOLDER === '.') {
-    MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
+  let MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
+  let fallbackName = true;
+  const ROOT_PATH = path.basename(rootPath);
+  if (ROOT_PATH !== '.') {
+    fallbackName = false;
+    MOD_FOLDER = ''; //no top level folder needed if it's already included in the archive
+    modFile = rootPath; //make the folder the targeted modFile so we can grab any other folders also in its directory
+    rootPath = path.dirname(modFile);
   }
-
+  const idx = modFile.indexOf(path.basename(modFile));
   if (!ue4ssLoadOrder || !util.getSafe(api.store.getState(), ['settings', GAME_ID, 'ue4ssLoEnabled'], true)) {
-    const ENABLEDTXT_FILE = 'enabled.txt'
     const ENABLEDTXT_PATH = path.join(fileName, rootPath, ENABLEDTXT_FILE);
     try {
       await fs.statAsync(ENABLEDTXT_PATH);
@@ -1090,13 +1139,13 @@ async function installDll(api, files, fileName) {
           { encoding: "utf8" },
         );
         files.push(path.join(rootPath, ENABLEDTXT_FILE));
-        log('info', `Successfully created enabled.txt for UE4SS DLL Mod: ${MOD_NAME}`);
+        log('info', `Successfully created ${ENABLEDTXT_FILE} for UE4SS DLL Mod: ${MOD_NAME}`);
       } catch (err) {
-        log('error', `Could not create enabled.txt for UE4SS DLL Mod: ${MOD_NAME}`);
+        log('error', `Could not create ${ENABLEDTXT_FILE} for UE4SS DLL Mod: ${MOD_NAME}`);
       }
     }
   } else {
-    files = files.filter(f => path.basename(f).toLowerCase() !== 'enabled.txt');
+    files = files.filter(f => path.basename(f).toLowerCase() !== ENABLEDTXT_FILE);
   }
 
   //Filter files and set instructions
@@ -1106,7 +1155,7 @@ async function installDll(api, files, fileName) {
   const MOD_ATTRIBUTE = {
     type: 'attribute',
     key: LO_ATTRIBUTE_UE4SS,
-    value: MOD_FOLDER,
+    value: fallbackName ? MOD_FOLDER : path.basename(modFile),
   };
   const instructions = filtered.map(file => {
     return {
@@ -2815,14 +2864,17 @@ function LoadOrderItemRenderer(props) {
 } //*/
 
 function GameSettings() {
-  const { Toggle, More } = require('vortex-api');
+  const { Toggle, More, MainContext } = require('vortex-api');
   const { useSelector, useDispatch } = require('react-redux');
   const dispatch = useDispatch();
+  const { api } = React.useContext(MainContext);
   const ue4ssLoEnabled = useSelector(state =>
     util.getSafe(state, ['settings', GAME_ID, 'ue4ssLoEnabled'], true));
   const onToggle = React.useCallback((checked) => {
     dispatch(setUe4ssLoEnabled(checked));
-  }, [dispatch]);
+    reconcileEnabledTxt(api, !checked)
+      .catch(err => log('warn', `UE4SS LO reconcile failed: ${err.message}`));
+  }, [api, dispatch]);
   return React.createElement('form', null,
     React.createElement('div', { className: 'settings-group' },
       React.createElement(Toggle, { checked: ue4ssLoEnabled, onToggle },
