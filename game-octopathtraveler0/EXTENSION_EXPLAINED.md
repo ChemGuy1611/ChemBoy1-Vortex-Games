@@ -17,6 +17,8 @@
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 | Executable (GOG) | `Octopath_Traveler0.exe` |
 | Executable (Demo) | `Octopath_Traveler0.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1566](https://www.nexusmods.com/site/mods/1566) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Octopath_Traveler_0](https://www.pcgamingwiki.com/wiki/Octopath_Traveler_0) |
 
 ## Supported Stores
 
@@ -41,11 +43,51 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
-| UE4SSCOMBO_NAME | `UE4SSCOMBO_ID` | high | `{gamePath}` |
-| LOGICMODS_NAME | `LOGICMODS_ID` | high | `{gamePath}/LOGICMODS_PATH` |
+| UE4SS Script-LogicMod Combo | `octopathtraveler0-ue4sscombo` | high | `{gamePath}` |
+| UE4SS LogicMods (Blueprint) | `octopathtraveler0-logicmods` | high | `{gamePath}/Octopath_Traveler0/Content/Paks` |
 | Paks (no "~mods") | `octopathtraveler0-pakalt` | high | `{gamePath}/Octopath_Traveler0/Content/Paks` |
 | Root Game Folder | `octopathtraveler0-root` | high | `{gamePath}` |
 | Root Sub-Folders | `octopathtraveler0-rootsubfolders` | high | `{gamePath}/Octopath_Traveler0` |
+| UE Sortable Pak Mod | `octopathtraveler0-uesortablepak` | 25 | `?` |
+| UE4SS Script Mod | `octopathtraveler0-scripts` | 50 | `?` |
+| UE4SS DLL Mod | `octopathtraveler0-ue4ssdll` | 52 | `?` |
+| Binaries (Engine Injector) | `octopathtraveler0-binaries` | 54 | `?` |
+| UE4SS | `octopathtraveler0-ue4ss` | 56 | `?` |
+| Config (Local AppData) | `octopathtraveler0-config` | 60 | `?` |
+| Saves (Local AppData) | `octopathtraveler0-save` | 62 | `?` |
+
+## Mod Installers
+
+Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
+
+| Installer ID | Priority |
+| --- | --- |
+| `ue5-pak-installer` | 29 |
+| `octopathtraveler0-ue4sscombo` | 25 |
+| `octopathtraveler0-logicmods` | 27 |
+| `octopathtraveler0-ue4ss` | 31 |
+| `octopathtraveler0-scripts` | 35 |
+| `octopathtraveler0-ue4ssdll` | 37 |
+| `octopathtraveler0-root` | 39 |
+| `octopathtraveler0-config` | 41 |
+| `octopathtraveler0-save` | 43 |
+| `octopathtraveler0-binaries` | 49 |
+
+## Toolbar Actions
+
+These buttons appear in the Vortex mod-icons toolbar when this game is active:
+
+- Open Paks Folder
+- Open Binaries Folder
+- Open UE4SS Mods Folder
+- Open LogicMods Folder
+- Open Config Folder
+- Open Saves Folder
+- Download UE4SS
+- Open PCGamingWiki Page
+- View Changelog
+- Open Downloads Folder
+- Submit Bug Report
 
 ## Auto-Downloaded Dependencies
 
@@ -62,19 +104,3 @@ Mod types define where each category of mod gets deployed:
 - **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

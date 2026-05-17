@@ -15,6 +15,8 @@
 | Game ID | `dishonored2` |
 | Executable | `Dishonored2.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/925](https://www.nexusmods.com/site/mods/925) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Dishonored_2](https://www.pcgamingwiki.com/wiki/Dishonored_2) |
 
 ## Supported Stores
 
@@ -35,11 +37,13 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
-| VOIDMOD_NAME | `VOIDMOD_ID` | high | `{gamePath}/VOIDMOD_PATH` |
-| VOID_NAME | `VOID_ID` | low | `{gamePath}/VOID_PATH` |
+| Void Mod | `dishonored2-voidmod` | high | `{gamePath}/Void Installer/Mods` |
+| Void Installer | `dishonored2-voidinstaller` | low | `{gamePath}/.` |
 | Root Game Folder | `dishonored2-root` | high | `{gamePath}` |
-| VIDEO_NAME | `VIDEO_ID` | high | `{gamePath}/VIDEO_PATH` |
-| VOIDEXPLORER_NAME | `VOIDEXPLORER_ID` | low | `{gamePath}/VOIDEXPLORER_PATH` |
+| Video Mod | `dishonored2-video` | high | `{gamePath}/base/video` |
+| Void Explorer | `dishonored2-voidexplorer` | low | `{gamePath}/.` |
+| Save Game | `dishonored2-save` | 62 | `?` |
+| Config | `dishonored2-config` | 63 | `?` |
 
 ## Mod Installers
 
@@ -47,7 +51,13 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
-| `CONFIG_ID` | 37 |
+| `dishonored2-voidinstaller` | 25 |
+| `dishonored2-voidexplorer` | 27 |
+| `dishonored2-voidmod` | 29 |
+| `dishonored2-root` | 31 |
+| `dishonored2-video` | 33 |
+| `dishonored2-save` | 35 |
+| `dishonored2-config` | 37 |
 
 ## Registered Tools
 
@@ -77,19 +87,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

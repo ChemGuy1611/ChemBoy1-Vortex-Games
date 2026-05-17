@@ -14,6 +14,8 @@
 | --- | --- |
 | Game ID | `wolfenstein2009` |
 | Executable | `SP/Wolf2.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/985](https://www.nexusmods.com/site/mods/985) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Wolfenstein](https://www.pcgamingwiki.com/wiki/Wolfenstein) |
 
 ## Supported Stores
 
@@ -47,8 +49,8 @@ Installers run in priority order (lower number = tested first). The first instal
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Launch SP Game**
-- **Launch MP Game**
+- **Launch SP Game** (`SP/Wolf2.exe`)
+- **Launch MP Game** (`MP/Wolf2MP.exe`)
 
 ## Toolbar Actions
 
@@ -64,18 +66,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

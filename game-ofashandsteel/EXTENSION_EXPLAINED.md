@@ -17,6 +17,8 @@
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 | Executable (GOG) | `ofAshAndSteelGame.exe` |
 | Executable (Demo) | `ofAshAndSteelGame.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1606](https://www.nexusmods.com/site/mods/1606) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Of_Ash_and_Steel](https://www.pcgamingwiki.com/wiki/Of_Ash_and_Steel) |
 
 ## Supported Stores
 
@@ -43,11 +45,51 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
-| UE4SSCOMBO_NAME | `UE4SSCOMBO_ID` | high | `{gamePath}` |
-| LOGICMODS_NAME | `LOGICMODS_ID` | high | `{gamePath}/LOGICMODS_PATH` |
+| UE4SS Script-LogicMod Combo | `ofashandsteel-ue4sscombo` | high | `{gamePath}` |
+| UE4SS LogicMods (Blueprint) | `ofashandsteel-logicmods` | high | `{gamePath}/ofAshAndSteelGame/Content/Paks` |
 | Paks (with "~mods") | `ofashandsteel-pakalt` | high | `{gamePath}/ofAshAndSteelGame/Content/Paks/~mods` |
 | Root Game Folder | `ofashandsteel-root` | high | `{gamePath}` |
 | Root Sub-Folders | `ofashandsteel-rootsubfolders` | high | `{gamePath}/ofAshAndSteelGame` |
+| UE Sortable Pak Mod | `ofashandsteel-uesortablepak` | 25 | `?` |
+| UE4SS Script Mod | `ofashandsteel-scripts` | 50 | `?` |
+| UE4SS DLL Mod | `ofashandsteel-ue4ssdll` | 52 | `?` |
+| Binaries (Engine Injector) | `ofashandsteel-binaries` | 54 | `?` |
+| UE4SS | `ofashandsteel-ue4ss` | 56 | `?` |
+| Config (Local AppData) | `ofashandsteel-config` | 62 | `?` |
+| Saves (Local AppData) | `ofashandsteel-save` | 64 | `?` |
+
+## Mod Installers
+
+Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
+
+| Installer ID | Priority |
+| --- | --- |
+| `ue5-pak-installer` | 29 |
+| `ofashandsteel-ue4sscombo` | 26 |
+| `ofashandsteel-logicmods` | 27 |
+| `ofashandsteel-ue4ss` | 31 |
+| `ofashandsteel-scripts` | 35 |
+| `ofashandsteel-ue4ssdll` | 37 |
+| `ofashandsteel-root` | 39 |
+| `ofashandsteel-config` | 41 |
+| `ofashandsteel-save` | 43 |
+| `ofashandsteel-binaries` | 49 |
+
+## Toolbar Actions
+
+These buttons appear in the Vortex mod-icons toolbar when this game is active:
+
+- Open Paks Folder
+- Open Binaries Folder
+- Open UE4SS Mods Folder
+- Open LogicMods Folder
+- Open Config Folder
+- Open Saves Folder
+- Download UE4SS
+- Open PCGamingWiki Page
+- View Changelog
+- Open Downloads Folder
+- Submit Bug Report
 
 ## Auto-Downloaded Dependencies
 
@@ -64,19 +106,3 @@ Mod types define where each category of mod gets deployed:
 - **GOG Support** — detects GOG version with adjusted executable/data paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

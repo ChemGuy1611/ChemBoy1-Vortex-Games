@@ -15,6 +15,8 @@
 | Game ID | `mywintercar` |
 | Executable | `mywintercar.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1600](https://www.nexusmods.com/site/mods/1600) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/My_Winter_Car](https://www.pcgamingwiki.com/wiki/My_Winter_Car) |
 
 ## Supported Stores
 
@@ -32,10 +34,6 @@
 | `allowBepinexNexus` | `false` | set false until bugs are fixed |
 | `allowMelonNexus` | `false` | set false until bugs are fixed |
 | `mscInstalled` | `false` |  |
-| `isMsc` | `false` |  |
-| `unknown` | `false` |  |
-| `fileTest` | `false` |  |
-| `fileTest` | `false` |  |
 
 ## Mod Types
 
@@ -78,7 +76,6 @@ Installers run in priority order (lower number = tested first). The first instal
 | `mywintercar-assemblydll` | 31 |
 | `mywintercar-plugin` | 33 |
 | `mywintercar-assets` | 37 |
-| `mywintercar-custommod` | 39 |
 | `mywintercar-texturepack` | 48 |
 | `mywintercar-fallback` | 49 |
 
@@ -86,8 +83,8 @@ Installers run in priority order (lower number = tested first). The first instal
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch**
-- **${MSCLOADER_NAME} Installer**
+- **Custom Launch** (`mywintercar.exe`)
+- **${MSCLOADER_NAME} Installer** (`path.join(MSCLOADER_FOLDER`)
 
 ## Toolbar Actions
 
@@ -112,6 +109,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 | Dependency | Version | Details |
 | --- | --- | --- |
 | BepInEx | 5.4.23.5 | mono |
+| BepInEx Configuration Manager | 18.4.1 | — |
 
 ## Config & Save Paths
 
@@ -127,19 +125,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

@@ -15,6 +15,8 @@
 | Game ID | `blueprince` |
 | Executable | `BLUE PRINCE.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1519](https://www.nexusmods.com/site/mods/1519) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Blue_Prince](https://www.pcgamingwiki.com/wiki/Blue_Prince) |
 
 ## Supported Stores
 
@@ -52,16 +54,38 @@ Mod types define where each category of mod gets deployed:
 | BepInEx Injector | `blueprince-bepinex` | low | `{gamePath}` |
 | MelonLoader | `blueprince-melonloader` | low | `{gamePath}` |
 
+## Mod Installers
+
+Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
+
+| Installer ID | Priority |
+| --- | --- |
+| `blueprince-bepinex` | 25 |
+| `blueprince-melonloader` | 26 |
+| `blueprince-root` | 27 |
+| `blueprince-bepcfgman` | 29 |
+| `blueprince-melonprefman` | 30 |
+| `blueprince-assemblydll` | 31 |
+| `blueprince-plugin` | 33 |
+| `blueprince-assets` | 37 |
+
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch**
+- **Custom Launch** (`BLUE PRINCE.exe`)
 
 ## Toolbar Actions
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
+- Open Data Folder
+- Open Save Folder
+- Open BepInEx Config
+- Open BepInEx Log
+- Download BepInExConfigManager
+- Open MelonLoader Config
+- Open MelonLoader Log
 - View Changelog
 - Open Downloads Folder
 - Open PCGamingWiki Page
@@ -72,6 +96,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 | Dependency | Version | Details |
 | --- | --- | --- |
 | BepInEx | 5.4.23.5 | il2cpp |
+| BepInEx Configuration Manager | 18.4.1 | — |
 
 ## Config & Save Paths
 
@@ -87,19 +112,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

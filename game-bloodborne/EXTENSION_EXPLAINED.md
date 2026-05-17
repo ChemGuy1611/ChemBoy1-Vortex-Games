@@ -14,7 +14,8 @@
 | --- | --- |
 | Game ID | `bloodborne` |
 | Executable | `N/A` |
-| PCGamingWiki | XXX |
+| Extension Page | [https://www.nexusmods.com/bloodborne/mods/64](https://www.nexusmods.com/bloodborne/mods/64) |
+| PCGamingWiki | [XXX](XXX) |
 
 ## Mod Types
 
@@ -28,19 +29,36 @@ Mod types define where each category of mod gets deployed:
 | shadPS4 | `bloodborne-shadps4` | low | `{gamePath}` |
 | shadPS4QtLauncher | `bloodborne-shadps4qtlauncher` | low | `{gamePath}` |
 
+## Mod Installers
+
+Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
+
+| Installer ID | Priority |
+| --- | --- |
+| `bloodborne-shadps4` | 25 |
+| `bloodborne-shadlauncher` | 27 |
+| `bloodborne-smithbox` | 29 |
+| `bloodborne-flver` | 31 |
+| `bloodborne-dvdroot_ps4` | 33 |
+| `bloodborne-save` | 35 |
+
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **shadPS4 (No-GUI)**
-- **shadPS4QtLauncher**
-- **Smithbox**
-- **Flver Editor**
+- **shadPS4 (No-GUI)** (`shadps4.exe`)
+- **shadPS4QtLauncher** (`shadps4qtlauncher.exe`)
+- **Smithbox** (`smithbox.exe`)
+- **Flver Editor** (`flver_editor.exe`)
 
 ## Toolbar Actions
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
+- Download ${SHADLAUNCHER_NAME}
+- View Changelog
+- Submit Bug Report
+- Open Downloads Folder
 - Open PCGamingWiki Page
 
 ## Config & Save Paths
@@ -53,18 +71,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

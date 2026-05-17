@@ -16,6 +16,8 @@
 | Executable | `Cairn.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 | Executable (GOG) | `Cairn.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1674](https://www.nexusmods.com/site/mods/1674) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Cairn](https://www.pcgamingwiki.com/wiki/Cairn) |
 
 ## Supported Stores
 
@@ -41,10 +43,6 @@
 | `allowBepinexNexus` | `false` | set false until bugs are fixed |
 | `allowMelonNexus` | `false` | set false until bugs are fixed |
 | `customInstalled` | `false` |  |
-| `isCustom` | `false` |  |
-| `unknown` | `false` |  |
-| `fileTest` | `false` |  |
-| `fileTest` | `false` |  |
 
 ## Mod Types
 
@@ -65,6 +63,8 @@ Mod types define where each category of mod gets deployed:
 | Root Game Folder | `cairn-root` | high | `{gamePath}` |
 | BepInEx Injector | `cairn-bepinex` | low | `{gamePath}` |
 | MelonLoader | `cairn-melonloader` | low | `{gamePath}` |
+| Assembly DLL Mod | `cairn-assemblydll` | 60 | `?` |
+| Assets/Resources File | `cairn-assets` | 62 | `?` |
 
 ## Mod Installers
 
@@ -72,7 +72,6 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
-| `cairn-customloader` | 25 |
 | `cairn-bepinex` | 26 |
 | `cairn-melonloader` | 27 |
 | `cairn-root` | 28 |
@@ -81,14 +80,13 @@ Installers run in priority order (lower number = tested first). The first instal
 | `cairn-assemblydll` | 31 |
 | `cairn-plugin` | 33 |
 | `cairn-assets` | 37 |
-| `cairn-custommod` | 39 |
 | `cairn-fallback` | 49 |
 
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch**
+- **Custom Launch** (`Cairn.exe`)
 
 ## Toolbar Actions
 
@@ -111,6 +109,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 | Dependency | Version | Details |
 | --- | --- | --- |
 | BepInEx | 5.4.23.5 | il2cpp |
+| BepInEx Configuration Manager | 18.4.1 | — |
 
 ## Special Features
 
@@ -123,19 +122,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

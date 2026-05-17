@@ -15,6 +15,8 @@
 | Game ID | `returntocastlewolfenstein` |
 | Executable | `WolfSP.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/937](https://www.nexusmods.com/site/mods/937) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Return_to_Castle_Wolfenstein](https://www.pcgamingwiki.com/wiki/Return_to_Castle_Wolfenstein) |
 
 ## Supported Stores
 
@@ -48,8 +50,8 @@ Installers run in priority order (lower number = tested first). The first instal
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Launch RealRTCW**
-- **Launch ioRTCW**
+- **Launch RealRTCW** (`realrtcw.x64.exe`)
+- **Launch ioRTCW** (`iowolfsp.x64.exe`)
 
 ## Toolbar Actions
 
@@ -68,18 +70,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

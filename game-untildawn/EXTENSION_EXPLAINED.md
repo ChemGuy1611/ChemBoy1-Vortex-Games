@@ -14,6 +14,8 @@
 | --- | --- |
 | Game ID | `untildawn` |
 | Executable | `Windows/Bates.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1049](https://www.nexusmods.com/site/mods/1049) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Until_Dawn](https://www.pcgamingwiki.com/wiki/Until_Dawn) |
 
 ## Supported Stores
 
@@ -25,6 +27,7 @@
 | Flag | Value | Description |
 | --- | --- | --- |
 | `IO_STORE` | `true` | true if the Paks folder contains .ucas and .utoc files |
+| `SYM_LINKS` | `true` | true if symlink deployment is enabled for this game |
 
 ## Mod Types
 
@@ -32,16 +35,18 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
-| UE4SS Scripts | `SCRIPTS_ID` | high | `{gamePath}/SCRIPTS_PATH` |
+| UE4SS Scripts | `untildawn-scripts` | high | `{gamePath}/Windows/Bates/Binaries/Win64/ue4ss/Mods` |
 | UE4SS LogicMods (Blueprint) | `untildawn-logicmods` | high | `{gamePath}/Windows/Bates/Content/Paks/LogicMods` |
 | UE4SS Script-LogicMod Combo | `untildawn-ue4sscombo` | high | `{gamePath}/Windows` |
-| Config (My Games) | `untildawn-config` | high | `CONFIG_PATH` |
-| Saves (My Games) | `untildawn-save` | high | `SAVE_PATH/USERID_FOLDER` |
+| Config (My Games) | `untildawn-config` | high | `DOCS_PATH/My Games/Bates/Saved/Config/Windows` |
+| Saves (My Games) | `untildawn-save` | high | `DOCS_PATH/My Games/Bates/Saved/SaveGames/USERID_FOLDER/USERID_FOLDER` |
 | Root Game Folder | `untildawn-root` | high | `{gamePath}/Windows` |
 | UE5 Paks | `untildawn-ue5` | high | `{gamePath}/Windows/Bates/Content/Paks/~mods` |
 | UE5 Paks (no "~mods") | `untildawn-pakalt` | high | `{gamePath}/Windows/Bates/Content/Paks` |
 | Binaries (Engine Injector) | `untildawn-binaries` | high | `{gamePath}/Windows/Bates/Binaries/Win64` |
-| UE4SS | `UE4SS_ID` | low | `{gamePath}/Windows/Bates/Binaries/Win64` |
+| UE4SS | `untildawn-ue4ss` | low | `{gamePath}/Windows/Bates/Binaries/Win64` |
+| UE5 Sortable Mod | `untildawn-ue5-sortable-modtype` | 25 | `?` |
+| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `?` |
 
 ## Mod Installers
 
@@ -60,7 +65,7 @@ Installers run in priority order (lower number = tested first). The first instal
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Launch Modded Game**
+- **Launch Modded Game** (`Windows/Bates.exe`)
 
 ## Toolbar Actions
 
@@ -83,18 +88,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

@@ -17,6 +17,8 @@
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 | Executable (GOG) | `HeroGame/Binaries/Win64/AJGAME.exe` |
 | Executable (Demo) | `HeroGame/Binaries/Win64/AJGAME.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1687](https://www.nexusmods.com/site/mods/1687) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/My_Hero_Academia:_All%27s_Justice](https://www.pcgamingwiki.com/wiki/My_Hero_Academia:_All%27s_Justice) |
 
 ## Supported Stores
 
@@ -44,11 +46,55 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
-| UE4SSCOMBO_NAME | `UE4SSCOMBO_ID` | high | `{gamePath}` |
-| LOGICMODS_NAME | `LOGICMODS_ID` | high | `{gamePath}/LOGICMODS_PATH` |
+| UE4SS Script-LogicMod Combo | `myheroacademiaallsjustice-ue4sscombo` | high | `{gamePath}` |
+| UE4SS LogicMods (Blueprint) | `myheroacademiaallsjustice-logicmods` | high | `{gamePath}/HeroGame/Content/Paks` |
 | Paks (no "~mods") | `myheroacademiaallsjustice-pakalt` | high | `{gamePath}/HeroGame/Content/Paks` |
 | Root Game Folder | `myheroacademiaallsjustice-root` | high | `{gamePath}` |
 | Root Sub-Folders | `myheroacademiaallsjustice-rootsubfolders` | high | `{gamePath}/HeroGame` |
+| UE Sortable Pak Mod | `myheroacademiaallsjustice-uesortablepak` | 25 | `?` |
+| UE4SS Script Mod | `myheroacademiaallsjustice-scripts` | 50 | `?` |
+| UE4SS DLL Mod | `myheroacademiaallsjustice-ue4ssdll` | 52 | `?` |
+| Binaries (Engine Injector) | `myheroacademiaallsjustice-binaries` | 54 | `?` |
+| UE4SS | `myheroacademiaallsjustice-ue4ss` | 56 | `?` |
+| Sig Bypass | `myheroacademiaallsjustice-sigbypass` | 58 | `?` |
+| Config (Local AppData) | `myheroacademiaallsjustice-config` | 62 | `?` |
+| Saves (Local AppData) | `myheroacademiaallsjustice-save` | 64 | `?` |
+
+## Mod Installers
+
+Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
+
+| Installer ID | Priority |
+| --- | --- |
+| `ue5-pak-installer` | 29 |
+| `myheroacademiaallsjustice-ue4sscombo` | 26 |
+| `myheroacademiaallsjustice-logicmods` | 27 |
+| `myheroacademiaallsjustice-ue4ss` | 31 |
+| `myheroacademiaallsjustice-sigbypass` | 33 |
+| `myheroacademiaallsjustice-scripts` | 35 |
+| `myheroacademiaallsjustice-ue4ssdll` | 37 |
+| `myheroacademiaallsjustice-root` | 39 |
+| `myheroacademiaallsjustice-config` | 41 |
+| `myheroacademiaallsjustice-save` | 43 |
+| `myheroacademiaallsjustice-binaries` | 49 |
+
+## Toolbar Actions
+
+These buttons appear in the Vortex mod-icons toolbar when this game is active:
+
+- Open Paks Folder
+- Open Binaries Folder
+- Open UE4SS Mods Folder
+- Open LogicMods Folder
+- Open Config Folder
+- Open Saves Folder
+- Download UE4SS
+- Open UE4SS Settings INI
+- Open UE4SS mods.json
+- Open PCGamingWiki Page
+- View Changelog
+- Submit Bug Report
+- Open Downloads Folder
 
 ## Auto-Downloaded Dependencies
 
@@ -66,19 +112,3 @@ Mod types define where each category of mod gets deployed:
 - **Signature Bypass** — .sig file bypass is required for pak mods.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

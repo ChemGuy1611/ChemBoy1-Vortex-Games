@@ -15,6 +15,8 @@
 | Game ID | `dishonored` |
 | Executable | `Binaries/Win32/Dishonored.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/924](https://www.nexusmods.com/site/mods/924) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Dishonored](https://www.pcgamingwiki.com/wiki/Dishonored) |
 
 ## Supported Stores
 
@@ -36,6 +38,7 @@ Mod types define where each category of mod gets deployed:
 | Movies Mod | `dishonored-movies` | high | `{gamePath}/DishonoredGame/Movies` |
 | TFC Installer | `dishonored-tfcinstaller` | low | `{gamePath}/.` |
 | UPK Explorer | `dishonored-tfcexplorer` | low | `{gamePath}/.` |
+| Binaries (Engine Injector) | `dishonored-binaries` | 40 | `?` |
 
 ## Mod Installers
 
@@ -79,19 +82,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

@@ -17,6 +17,7 @@
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 | Executable (GOG) | `Gnomium.exe` |
 | Executable (Demo) | `Gnomium.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1702](https://www.nexusmods.com/site/mods/1702) |
 
 ## Supported Stores
 
@@ -42,10 +43,6 @@
 | `allowBepinexNexus` | `true` | allow Nexus Mods download of BepInEx/MelonLoader |
 | `allowMelonNexus` | `true` | allows MelonLoader to be downloaded from Nexus Mods |
 | `customInstalled` | `false` |  |
-| `isCustom` | `false` |  |
-| `unknown` | `false` |  |
-| `fileTest` | `false` |  |
-| `fileTest` | `false` |  |
 
 ## Mod Types
 
@@ -53,19 +50,21 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
-| BEPINEX_MOD_NAME | `BEPINEX_MOD_ID` | high | `{gamePath}/BEPINEX_MOD_PATH` |
-| MELON_MOD_NAME | `MELON_MOD_ID` | high | `{gamePath}/MELON_MOD_PATH` |
-| BEPINEX_PLUGINS_NAME | `BEPINEX_PLUGINS_ID` | high | `{gamePath}/BEPINEX_PLUGINS_PATH` |
-| BEPINEX_PATCHERS_NAME | `BEPINEX_PATCHERS_ID` | high | `{gamePath}/BEPINEX_PATCHERS_PATH` |
-| BEPINEX_CONFIG_NAME | `BEPINEX_CONFIG_ID` | high | `{gamePath}/BEPINEX_CONFIG_PATH` |
-| MELON_MODS_NAME | `MELON_MODS_ID` | high | `{gamePath}/MELON_MODS_PATH` |
-| MELON_PLUGINS_NAME | `MELON_PLUGINS_ID` | high | `{gamePath}/MELON_PLUGINS_PATH` |
-| MELON_CONFIG_NAME | `MELON_CONFIG_ID` | high | `{gamePath}/MELON_CONFIG_PATH` |
-| BEPCFGMAN_NAME | `BEPCFGMAN_ID` | high | `{gamePath}/BEPCFGMAN_PATH` |
-| MELONPREFMAN_NAME | `MELONPREFMAN_ID` | high | `{gamePath}/MELONPREFMAN_PATH` |
-| ROOT_NAME | `ROOT_ID` | high | `{gamePath}` |
-| BEPINEX_NAME | `BEPINEX_ID` | low | `{gamePath}` |
-| MELON_NAME | `MELON_ID` | low | `{gamePath}` |
+| BepInEx Mod | `burglingnomes-bepinexmod` | high | `{gamePath}/BepInEx` |
+| MelonLoader Mod | `burglingnomes-melonmod` | high | `{gamePath}/.` |
+| BepInEx Plugins | `burglingnomes-bepinex-plugins` | high | `{gamePath}/BepInEx/plugins` |
+| BepInEx Patchers | `burglingnomes-bepinex-patchers` | high | `{gamePath}/BepInEx/patchers` |
+| BepInEx Config | `burglingnomes-bepinex-config` | high | `{gamePath}/BepInEx/config` |
+| MelonLoader Mods | `burglingnomes-melonloader-mods` | high | `{gamePath}/Mods` |
+| MelonLoader Plugins | `burglingnomes-melonloader-plugins` | high | `{gamePath}/Plugins` |
+| MelonLoader Config | `burglingnomes-melonloader-config` | high | `{gamePath}/UserData` |
+| BepInExConfigManager | `burglingnomes-bepcfgman` | high | `{gamePath}/BepInEx` |
+| MelonPreferencesManager | `burglingnomes-melonprefman` | high | `{gamePath}/Mods` |
+| Root Game Folder | `burglingnomes-root` | high | `{gamePath}` |
+| BepInEx Injector | `burglingnomes-bepinex` | low | `{gamePath}` |
+| MelonLoader | `burglingnomes-melonloader` | low | `{gamePath}` |
+| Assembly DLL Mod | `burglingnomes-assemblydll` | 60 | `?` |
+| Assets/Resources File | `burglingnomes-assets` | 62 | `?` |
 
 ## Mod Installers
 
@@ -73,16 +72,14 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
-| `burglingnomes-customloader` | 25 |
-| `BEPINEX_ID` | 26 |
-| `MELON_ID` | 27 |
-| `ROOT_ID` | 28 |
-| `BEPCFGMAN_ID` | 29 |
-| `MELONPREFMAN_ID` | 30 |
-| `ASSEMBLY_ID` | 31 |
+| `burglingnomes-bepinex` | 26 |
+| `burglingnomes-melonloader` | 27 |
+| `burglingnomes-root` | 28 |
+| `burglingnomes-bepcfgman` | 29 |
+| `burglingnomes-melonprefman` | 30 |
+| `burglingnomes-assemblydll` | 31 |
 | `burglingnomes-plugin` | 33 |
-| `ASSETS_ID` | 37 |
-| `CUSTOM_ID` | 39 |
+| `burglingnomes-assets` | 37 |
 | `burglingnomes-fallback` | 49 |
 
 ## Registered Tools
@@ -91,7 +88,7 @@ These tools appear in Vortex's Tools panel when this game is active:
 
 - **Custom Launch** (`Gnomium.exe`)
 - **Custom Launch** (`gamelaunchhelper.exe`)
-- **${CUSTOMLOADER_NAME} Installer**
+- **${CUSTOMLOADER_NAME} Installer** (`path.join(CUSTOMLOADER_FOLDER`)
 
 ## Toolbar Actions
 
@@ -114,6 +111,13 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 | Dependency | Version | Details |
 | --- | --- | --- |
 | BepInEx | 5.4.23.5 | mono |
+| BepInEx Configuration Manager | 18.4.1 | — |
+
+## Config & Save Paths
+
+| Type | Path |
+| --- | --- |
+| Config (Registry) | `HKEY_CURRENT_USER\\Software\\\\` |
 
 ## Special Features
 
@@ -123,19 +127,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

@@ -13,6 +13,8 @@
 | --- | --- |
 | Game ID | `horizonzerodawnremastered` |
 | Executable | `HorizonZeroDawnRemastered.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1077](https://www.nexusmods.com/site/mods/1077) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Horizon_Zero_Dawn_Remastered](https://www.pcgamingwiki.com/wiki/Horizon_Zero_Dawn_Remastered) |
 
 ## Supported Stores
 
@@ -33,13 +35,22 @@ Mod types define where each category of mod gets deployed:
 | --- | --- | --- | --- |
 | DS2 Manager Mod | `horizonzerodawnremastered-managermod` | high | `{gamePath}/mods` |
 | DS2 Mod Manager | `horizonzerodawnremastered-modmanager` | low | `{gamePath}` |
-| Save Game (Documents) | `horizonzerodawnremastered-save` | high | `SAVE_PATH` |
+| Save Game (Documents) | `horizonzerodawnremastered-save` | high | `userDocsPathString/Horizon Zero Dawn Remastered/USERID_FOLDER` |
+
+## Mod Installers
+
+Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
+
+| Installer ID | Priority |
+| --- | --- |
+| `horizonzerodawnremastered-managermod` | 35 |
+| `horizonzerodawnremastered-save` | 45 |
 
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch**
+- **Custom Launch** (`HorizonZeroDawnRemastered.exe`)
 
 ## Toolbar Actions
 
@@ -60,19 +71,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

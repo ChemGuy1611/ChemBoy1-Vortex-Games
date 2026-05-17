@@ -14,7 +14,8 @@
 | --- | --- |
 | Game ID | `mirthwood` |
 | Executable | `Mirthwood.exe` |
-| PCGamingWiki | XXX |
+| Extension Page | [https://www.nexusmods.com/site/mods/1272](https://www.nexusmods.com/site/mods/1272) |
+| PCGamingWiki | [XXX](XXX) |
 
 ## Supported Stores
 
@@ -44,18 +45,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Required Extensions** — depends on: `modtype-bepinex`.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

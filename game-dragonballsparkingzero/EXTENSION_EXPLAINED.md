@@ -14,6 +14,8 @@
 | --- | --- |
 | Game ID | `dragonballsparkingzero` |
 | Executable | `SparkingZERO.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1055](https://www.nexusmods.com/site/mods/1055) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Dragon_Ball:_Sparking!_Zero](https://www.pcgamingwiki.com/wiki/Dragon_Ball:_Sparking!_Zero) |
 
 ## Supported Stores
 
@@ -47,6 +49,10 @@ Mod types define where each category of mod gets deployed:
 | Signature Bypass | `dragonballsparkingzero-sigbypass` | low | `{gamePath}/SparkingZERO/Binaries/Win64` |
 | SZModLoader | `dragonballsparkingzero-modloader` | low | `{gamePath}/SparkingZERO/Mods` |
 | LFSE | `dragonballsparkingzero-lfse` | low | `{gamePath}/SparkingZERO/Mods` |
+| UE5 Sortable Mod | `dragonballsparkingzero-ue5-sortable-modtype` | 25 | `?` |
+| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `?` |
+| Saves (Game Directory) | `dragonballsparkingzero-save` | 55 | `?` |
+| Config (LocalAppData) | `dragonballsparkingzero-config` | 60 | `?` |
 
 ## Mod Installers
 
@@ -73,7 +79,7 @@ Installers run in priority order (lower number = tested first). The first instal
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch**
+- **Custom Launch** (`SparkingZERO.exe`)
 
 ## Toolbar Actions
 
@@ -109,19 +115,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

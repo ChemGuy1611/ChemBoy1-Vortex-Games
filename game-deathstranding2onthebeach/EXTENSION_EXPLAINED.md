@@ -17,6 +17,8 @@
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 | Executable (GOG) | `DS2.exe` |
 | Executable (Demo) | `DS2.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1796](https://www.nexusmods.com/site/mods/1796) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/DEATH_STRANDING_2%3A_ON_THE_BEACH](https://www.pcgamingwiki.com/wiki/DEATH_STRANDING_2%3A_ON_THE_BEACH) |
 
 ## Supported Stores
 
@@ -57,16 +59,13 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
-| `deathstranding2onthebeach-loader` | 25 |
 | `deathstranding2onthebeach-managermod` | 35 |
-| `deathstranding2onthebeach-root` | 27 |
-| `deathstranding2onthebeach-fallback` | 49 |
 
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch**
+- **Custom Launch** (`DS2.exe`)
 
 ## Toolbar Actions
 
@@ -96,19 +95,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

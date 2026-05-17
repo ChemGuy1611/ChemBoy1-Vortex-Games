@@ -15,6 +15,8 @@
 | Game ID | `warhammer40000spacemarine` |
 | Executable | `SpaceMarine.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/894](https://www.nexusmods.com/site/mods/894) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Warhammer_40%2C000%3A_Space_Marine](https://www.pcgamingwiki.com/wiki/Warhammer_40%2C000%3A_Space_Marine) |
 
 ## Supported Stores
 
@@ -33,7 +35,7 @@ Mod types define where each category of mod gets deployed:
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Launch Modded Game**
+- **Launch Modded Game** (`SpaceMarine.exe`)
 
 ## Toolbar Actions
 
@@ -48,18 +50,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

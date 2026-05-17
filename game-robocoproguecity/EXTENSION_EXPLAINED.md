@@ -15,6 +15,8 @@
 | Game ID | `robocoproguecity` |
 | Executable | `RoboCop.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/892](https://www.nexusmods.com/site/mods/892) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/RoboCop%3A_Rogue_City](https://www.pcgamingwiki.com/wiki/RoboCop%3A_Rogue_City) |
 
 ## Supported Stores
 
@@ -43,15 +45,67 @@ Mod types define where each category of mod gets deployed:
 | Root Game Folder | `robocoproguecity-root` | high | `{gamePath}` |
 | Content Folder | `robocoproguecity-contentfolder` | high | `{gamePath}/Game` |
 | UE5 Paks (no "~mods") | `robocoproguecity-pakalt` | high | `{gamePath}/Game/Content/Paks` |
+| UE5 Sortable Mod | `robocoproguecity-ue5-sortable-modtype` | 25 | `?` |
+| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `?` |
+| UE5 Sortable Mod | `robocoproguecityunfinishedbusiness-ue5-sortable-modtype` | 25 | `?` |
+| UE4SS Script Mod | `robocoproguecity-scripts` | 50 | `?` |
+| UE4SS DLL Mod | `robocoproguecity-ue4ssdll` | 52 | `?` |
+| Binaries (Engine Injector) | `robocoproguecity-binaries` | 54 | `?` |
+| UE4SS | `robocoproguecity-ue4ss` | 56 | `?` |
+| Config | `robocoproguecity-config` | 58 | `?` |
+| Saves | `robocoproguecity-save` | 60 | `?` |
+| Config | `robocoproguecityunfinishedbusiness-config` | 60 | `?` |
+| Saves | `robocoproguecityunfinishedbusiness-save` | 62 | `?` |
+
+## Mod Installers
+
+Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
+
+| Installer ID | Priority |
+| --- | --- |
+| `robocoproguecity-ue5-sortable-modtype` | 29 |
+| `robocoproguecityunfinishedbusiness-ue5-sortable-modtype` | 29 |
+| `robocoproguecity-ue4sscombo` | 25 |
+| `robocoproguecity-logicmods` | 27 |
+| `robocoproguecity-ue4ss` | 31 |
+| `robocoproguecity-scripts` | 33 |
+| `robocoproguecity-ue4ssdll` | 35 |
+| `robocoproguecity-root` | 37 |
+| `robocoproguecity-contentfolder` | 39 |
+| `robocoproguecity-config` | 41 |
+| `robocoproguecity-save` | 43 |
+| `robocoproguecity-binaries` | 45 |
+| `robocoproguecityunfinishedbusiness-ue4sscombo` | 25 |
+| `robocoproguecityunfinishedbusiness-logicmods` | 27 |
+| `robocoproguecityunfinishedbusiness-ue4ss` | 31 |
+| `robocoproguecityunfinishedbusiness-scripts` | 33 |
+| `robocoproguecityunfinishedbusiness-ue4ssdll` | 35 |
+| `robocoproguecityunfinishedbusiness-root` | 37 |
+| `robocoproguecityunfinishedbusiness-contentfolder` | 39 |
+| `robocoproguecityunfinishedbusiness-config` | 41 |
+| `robocoproguecityunfinishedbusiness-save` | 43 |
+| `robocoproguecityunfinishedbusiness-binaries` | 45 |
 
 ## Toolbar Actions
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
+- Open Paks Folder
+- Open Binaries Folder
+- Open UE4SS Mods Folder
+- Open Config Folder
+- Open Saves Folder
+- Download UE4SS
 - View Changelog
 - Open Downloads Folder
 - Open PCGamingWiki Page
 - Submit Bug Report
+- Open Paks Folder
+- Open Binaries Folder
+- Open UE4SS Mods Folder
+- Open Config Folder
+- Open Saves Folder
+- Download UE4SS
 - View Changelog
 - Open Downloads Folder
 
@@ -69,18 +123,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

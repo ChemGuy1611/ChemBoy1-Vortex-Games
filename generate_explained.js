@@ -31,7 +31,7 @@ function buildSymbolTable(src) {
   const raw = [];
 
   // Strip block comments to avoid picking up commented-out declarations
-  const stripped = src.replace(/\/\*[\s\S]*?\*\//g, '');
+  const stripped = src.replace(/(?<!\/)\/\*[\s\S]*?\*\//g, '');
 
   // Harvest all const/let declarations
   const lines = stripped.split('\n');
@@ -40,7 +40,7 @@ function buildSymbolTable(src) {
     // Skip line comments
     if (trimmed.startsWith('//')) continue;
     // Remove inline comments for parsing but keep them for later
-    const noComment = trimmed.replace(/\/\/.*$/, '').trim();
+    const noComment = trimmed.replace(/(?<!:)\/\/.*$/, '').trim();
 
     // Match: const/let NAME = VALUE;
     const m = noComment.match(/^(?:const|let)\s+([A-Za-z_$]\w*)\s*=\s*(.+?)\s*;?\s*$/);
@@ -218,6 +218,31 @@ function splitAtTopLevelCommas(str) {
 }
 
 /**
+ * Scan backwards from callIndex to find the enclosing if-block guard.
+ * Returns the flag name if the enclosing block is `if (FLAG)` or
+ * `if (FLAG === true)`; returns null for anything more complex.
+ */
+function getGuardFlag(stripped, callIndex) {
+  let depth = 0;
+  let i = callIndex - 1;
+  while (i >= 0) {
+    const ch = stripped[i];
+    if (ch === '}') depth++;
+    else if (ch === '{') {
+      if (depth === 0) {
+        const lineStart = stripped.lastIndexOf('\n', i);
+        const lineText = stripped.substring(lineStart + 1, i + 1).trim();
+        const m = lineText.match(/^if\s*\(\s*([A-Za-z_$]\w*)\s*(?:===\s*true\s*)?\)\s*\{?$/);
+        return m ? m[1] : null;
+      }
+      depth--;
+    }
+    i--;
+  }
+  return null;
+}
+
+/**
  * Resolve a value expression using the symbol table.
  * Handles string literals, template literals, variable refs, and path.join.
  */
@@ -252,6 +277,41 @@ function resolveValue(expr, table) {
 
   // Fallback
   return e;
+}
+
+/**
+ * Like resolveValue but falls back to a direct regex search in src when the
+ * symbol table doesn't have the variable (handles template literals too).
+ */
+function resolveWithFallback(expr, table, src) {
+  if (!expr) return null;
+  const e = expr.trim();
+  // Handle path.join with fallback-aware arg resolution
+  const pjMatch = e.match(/^path\.join\((.+)\)$/);
+  if (pjMatch) {
+    const args = splitPathJoinArgs(pjMatch[1]);
+    return args.map(a => resolveWithFallback(a, table, src) || a).join('/');
+  }
+  const resolved = resolveValue(expr, table);
+  if (resolved !== e || !/^[A-Za-z_$]\w*$/.test(e)) return resolved;
+  // Bare identifier not resolved by table — search source directly
+  const dqM = src.match(new RegExp(`(?:const|let)\\s+${e}\\s*=\\s*"([^"]*)"`));
+  if (dqM) return dqM[1];
+  const sqM = src.match(new RegExp(`(?:const|let)\\s+${e}\\s*=\\s*'([^']*)'`));
+  if (sqM) return sqM[1];
+  const tlM = src.match(new RegExp(`(?:const|let)\\s+${e}\\s*=\\s*\`([^\`]+)\``));
+  if (tlM) {
+    return tlM[1].replace(/\$\{([^}]+)\}/g, (_, v) => {
+      const k = v.trim();
+      if (table.has(k)) return table.get(k);
+      const dm = src.match(new RegExp(`(?:const|let)\\s+${k}\\s*=\\s*"([^"]*)"`));
+      return dm ? dm[1] : k;
+    });
+  }
+  // If it's itself a path.join declaration, recurse into it
+  const pjDecl = src.match(new RegExp(`(?:const|let)\\s+${e}\\s*=\\s*(path\\.join\\([^)]+\\))`));
+  if (pjDecl) return resolveWithFallback(pjDecl[1], table, src);
+  return resolved;
 }
 
 // ── extractors ──────────────────────────────────────────────────────────────
@@ -295,6 +355,7 @@ const FLAG_DESCRIPTIONS = {
   PAKMOD_LOADORDER:      'enables load order sorting for pak mods',
   FBLO:                  'enables the full-featured load order page (false uses the legacy page)',
   LOAD_ORDER_ENABLED:    'enables load order sorting',
+  ue4ssLoadOrder:        'enables UE4SS script/DLL mod load order management and mods.txt serialization on deploy',
   // Store / platform
   hasXbox:               'enables Xbox Game Pass version detection and launcher logic',
   multiExe:              'the game has multiple executables for different store versions',
@@ -365,8 +426,10 @@ function getFlagDescription(name, comment) {
 function discoverFlags(src) {
   const flags = [];
   // Strip block comments
-  const stripped = src.replace(/\/\*[\s\S]*?\*\//g, '');
-  const lines = stripped.split('\n');
+  const stripped = src.replace(/(?<!\/)\/\*[\s\S]*?\*\//g, '');
+  const specIdx = stripped.search(/^(?:const|let)\s+spec\s*=/m);
+  const headerSrc = specIdx !== -1 ? stripped.slice(0, specIdx) : stripped;
+  const lines = headerSrc.split('\n');
   for (const line of lines) {
     const trimmed = line.trim();
     if (trimmed.startsWith('//')) continue;
@@ -414,11 +477,90 @@ function extractModTypes(src, table) {
     const targetPathRaw = extractFieldRaw(entry, 'targetPath');
 
     results.push({
-      id: resolveValue(idRaw, table),
-      name: resolveValue(nameRaw, table),
+      id: resolveWithFallback(idRaw, table, src),
+      name: resolveWithFallback(nameRaw, table, src),
       priority: resolveValue(priorityRaw, table),
-      targetPath: resolveValue(targetPathRaw, table)
+      targetPath: resolveWithFallback(targetPathRaw, table, src)
     });
+  }
+
+  // Also capture spec.modTypes.push({...}) entries (conditional/guarded additions)
+  const stripped = src.replace(/(?<!\/)\/\*[\s\S]*?\*\//g, '');
+  const pushRe = /spec\.modTypes\.push\(\s*\{/g;
+  let pm;
+  while ((pm = pushRe.exec(stripped)) !== null) {
+    const lineStart = stripped.lastIndexOf('\n', pm.index);
+    const linePrefix = stripped.substring(lineStart + 1, pm.index).trim();
+    if (linePrefix.startsWith('//')) continue;
+    const guardFlagPush = getGuardFlag(stripped, pm.index);
+    if (guardFlagPush && table.get(guardFlagPush) === 'false') continue;
+    let depth = 1;
+    let i = pm.index + pm[0].length;
+    let entry = '';
+    while (i < stripped.length && depth > 0) {
+      const ch = stripped[i];
+      if (ch === '{') depth++;
+      else if (ch === '}') { if (--depth === 0) break; }
+      entry += ch;
+      i++;
+    }
+    const idRaw = extractField(entry, 'id');
+    const nameRaw = extractField(entry, 'name');
+    const priorityRaw = extractField(entry, 'priority');
+    const targetPathRaw = extractFieldRaw(entry, 'targetPath');
+    results.push({
+      id: resolveWithFallback(idRaw, table, src),
+      name: resolveWithFallback(nameRaw, table, src),
+      priority: resolveValue(priorityRaw, table),
+      targetPath: resolveWithFallback(targetPathRaw, table, src)
+    });
+  }
+
+  return results;
+}
+
+/**
+ * Extract explicit context.registerModType() calls (e.g. from applyGame).
+ * Skips entries already captured via spec.modTypes.
+ */
+function extractRegisterModTypes(src, table) {
+  const results = [];
+  const stripped = src.replace(/(?<!\/)\/\*[\s\S]*?\*\//g, '');
+  const re = /context\.registerModType\(/g;
+  let m;
+  while ((m = re.exec(stripped)) !== null) {
+    const lineStart = stripped.lastIndexOf('\n', m.index);
+    const linePrefix = stripped.substring(lineStart + 1, m.index).trim();
+    if (linePrefix.startsWith('//')) continue;
+    const guardFlagMT = getGuardFlag(stripped, m.index);
+    if (guardFlagMT && table.get(guardFlagMT) === 'false') continue;
+    // Extract full args by depth tracking
+    let depth = 1;
+    let i = m.index + m[0].length;
+    let argsStr = '';
+    while (i < stripped.length && depth > 0) {
+      const ch = stripped[i];
+      if (ch === '(') depth++;
+      else if (ch === ')') { if (--depth === 0) break; }
+      argsStr += ch;
+      i++;
+    }
+    const args = splitAtTopLevelCommas(argsStr);
+    if (args.length < 2) continue;
+    const idRaw = args[0].trim();
+    // Skip forEach iteration variables like type.id
+    if (idRaw.includes('.')) continue;
+    const priorityRaw = args[1].trim();
+    const priority = /^\d+$/.test(priorityRaw) ? priorityRaw : null;
+    const id = resolveWithFallback(idRaw, table, src);
+    // Name from last arg if it's an options object { name: ... }
+    let name = null;
+    const lastArg = args[args.length - 1].trim();
+    if (lastArg.startsWith('{')) {
+      const nameM = lastArg.match(/(?:"name"|name)\s*:\s*([^,}\n]+)/);
+      if (nameM) name = resolveWithFallback(nameM[1].trim(), table, src);
+    }
+    results.push({ id, name: name || id, priority, targetPath: null });
   }
   return results;
 }
@@ -469,7 +611,7 @@ function extractFieldRaw(objStr, fieldName) {
 function extractInstallers(src, table) {
   const results = [];
   // Strip block comments but preserve line structure
-  const stripped = src.replace(/\/\*[\s\S]*?\*\//g, '');
+  const stripped = src.replace(/(?<!\/)\/\*[\s\S]*?\*\//g, '');
   const re = /context\.registerInstaller\(\s*([^,]+),\s*(\d+)/g;
   let m;
   while ((m = re.exec(stripped)) !== null) {
@@ -477,6 +619,8 @@ function extractInstallers(src, table) {
     const lineStart = stripped.lastIndexOf('\n', m.index);
     const linePrefix = stripped.substring(lineStart + 1, m.index).trim();
     if (linePrefix.startsWith('//')) continue;
+    const guardFlagInst = getGuardFlag(stripped, m.index);
+    if (guardFlagInst && table.get(guardFlagInst) === 'false') continue;
 
     const rawId = m[1].trim();
     const priority = m[2];
@@ -526,7 +670,7 @@ function extractTools(src, table) {
  */
 function extractActions(src) {
   const results = [];
-  const stripped = src.replace(/\/\*[\s\S]*?\*\//g, '');
+  const stripped = src.replace(/(?<!\/)\/\*[\s\S]*?\*\//g, '');
   const re = /context\.registerAction\([^,]+,\s*\d+,\s*[^,]+,\s*\{[^}]*\}\s*,\s*[`'"]([^`'"]+)[`'"]/g;
   let m;
   while ((m = re.exec(stripped)) !== null) {
@@ -756,6 +900,12 @@ function detectSpecialFeatures(src, flags, stores) {
     features.push('**Load Order** — mods are assigned numbered folder names or sorted based on their position in the load order.');
   }
 
+  // UE4SS Load Order
+  const hasUe4ssLO = flags.some(f => f.name === 'ue4ssLoadOrder' && f.value === 'true');
+  if (hasUe4ssLO) {
+    features.push('**UE4SS Load Order** — manages UE4SS script/DLL mod load order via a dedicated page; serializes order to `mods.txt` on deploy.');
+  }
+
   // Deploy Hook
   if (src.includes("'did-deploy'") || src.includes('"did-deploy"')) {
     features.push('**Deploy Hook** (`did-deploy`) — runs custom logic (e.g., notifications, metadata patching) every time mods are deployed.');
@@ -846,7 +996,10 @@ function buildMarkdown(dirName, src) {
   const table = buildSymbolTable(src);
   const header = parseHeader(src);
   const flags = discoverFlags(src);
-  const modTypes = extractModTypes(src, table);
+  const specModTypes = extractModTypes(src, table);
+  const registeredModTypes = extractRegisterModTypes(src, table);
+  const seenModTypeIds = new Set(specModTypes.map(mt => mt.id));
+  const modTypes = [...specModTypes, ...registeredModTypes.filter(mt => !seenModTypeIds.has(mt.id))];
   const installers = extractInstallers(src, table);
   const tools = extractTools(src, table);
   const actions = extractActions(src);
@@ -889,8 +1042,8 @@ function buildMarkdown(dirName, src) {
   if (execXbox && execXbox !== 'null') md += `| Executable (Xbox) | \`${execXbox}\` |\n`;
   if (execGog && execGog !== 'null') md += `| Executable (GOG) | \`${execGog}\` |\n`;
   if (execDemo && execDemo !== 'null') md += `| Executable (Demo) | \`${execDemo}\` |\n`;
-  if (nexusUrl && nexusUrl !== 'null') md += `| Extension Page | ${nexusUrl} |\n`;
-  if (pcgwUrl && pcgwUrl !== 'null') md += `| PCGamingWiki | ${pcgwUrl} |\n`;
+  if (nexusUrl && nexusUrl !== 'null') md += `| Extension Page | [${nexusUrl}](${nexusUrl}) |\n`;
+  if (pcgwUrl && pcgwUrl !== 'null') md += `| PCGamingWiki | [${pcgwUrl}](${pcgwUrl}) |\n`;
   md += `\n`;
 
   // Supported Stores
@@ -938,13 +1091,8 @@ function buildMarkdown(dirName, src) {
   if (tools.length > 0) {
     md += `## Registered Tools\n\n`;
     md += `These tools appear in Vortex's Tools panel when this game is active:\n\n`;
-    // Disambiguate duplicate names
-    const nameCount = {};
     for (const t of tools) {
-      nameCount[t.name] = (nameCount[t.name] || 0) + 1;
-    }
-    for (const t of tools) {
-      if (nameCount[t.name] > 1 && t.executable) {
+      if (t.executable) {
         md += `- **${t.name}** (\`${t.executable}\`)\n`;
       } else {
         md += `- **${t.name}**\n`;
@@ -987,27 +1135,6 @@ function buildMarkdown(dirName, src) {
   md += `## Special Features\n\n`;
   for (const f of specialFeatures) md += `- ${f}\n`;
   md += `\n`;
-
-  // How Mod Installation Works
-  md += `## How Mod Installation Works\n\n`;
-  md += `\`\`\`\n`;
-  md += `User drops archive into Vortex\n`;
-  md += `  └── Each installer's test() runs in priority order\n`;
-  md += `       └── First supported=true wins\n`;
-  md += `            └── install() returns copy instructions + setmodtype\n`;
-  md += `                 └── Vortex stages files\n`;
-  md += `                      └── User deploys\n`;
-  md += `                           └── Vortex links/copies to game folder\n`;
-  const hasDeployHook = src.includes("'did-deploy'") || src.includes('"did-deploy"');
-  if (hasDeployHook) {
-    md += `                                └── did-deploy fires → post-deploy logic runs\n`;
-  }
-  md += `\`\`\`\n\n`;
-
-  // Entry Point
-  md += `## Entry Point\n\n`;
-  md += `The extension is registered via \`module.exports = { default: main }\`. `;
-  md += `The \`main(context)\` function calls \`applyGame(context, spec)\` which registers the game, mod types, installers, and actions with Vortex.\n`;
 
   return md;
 }

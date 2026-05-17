@@ -14,6 +14,8 @@
 | --- | --- |
 | Game ID | `daemonxmachinatitanicscion` |
 | Executable | `Game.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1429](https://www.nexusmods.com/site/mods/1429) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Daemon_X_Machina%3A_Titanic_Scion](https://www.pcgamingwiki.com/wiki/Daemon_X_Machina%3A_Titanic_Scion) |
 
 ## Supported Stores
 
@@ -35,15 +37,18 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
-| UE4SSCOMBO_NAME | `UE4SSCOMBO_ID` | high | `{gamePath}` |
-| LOGICMODS_NAME | `LOGICMODS_ID` | high | `{gamePath}/LOGICMODS_PATH` |
-| UE4SS_NAME | `UE4SS_ID` | high | `{gamePath}/Game/Binaries/Win64` |
-| SCRIPTS_NAME | `SCRIPTS_ID` | high | `{gamePath}/SCRIPTS_PATH` |
-| DLL_NAME | `DLL_ID` | high | `{gamePath}/DLL_PATH` |
+| UE4SS Script-LogicMod Combo | `daemonxmachinatitanicscion-ue4sscombo` | high | `{gamePath}` |
+| UE4SS LogicMods (Blueprint) | `daemonxmachinatitanicscion-logicmods` | high | `{gamePath}/Game/Content/Paks/LogicMods` |
+| UE4SS | `daemonxmachinatitanicscion-ue4ss` | high | `{gamePath}/Game/Binaries/Win64` |
+| UE4SS Script Mod | `daemonxmachinatitanicscion-scripts` | high | `{gamePath}/Game/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `daemonxmachinatitanicscion-ue4ssdll` | high | `{gamePath}/Game/Binaries/Win64/ue4ss/Mods` |
 | Paks (no ~mods) | `daemonxmachinatitanicscion-pak` | low | `{gamePath}/Game/Content/Paks` |
 | Root Game Folder | `daemonxmachinatitanicscion-root` | high | `{gamePath}` |
 | Content Folder | `daemonxmachinatitanicscion-contentfolder` | high | `{gamePath}/Game` |
 | Binaries (Engine Injector) | `daemonxmachinatitanicscion-binaries` | high | `{gamePath}/Game/Binaries/Win64` |
+| UE Sortable Pak Mod | `daemonxmachinatitanicscion-uesortablepak` | 25 | `?` |
+| Config | `daemonxmachinatitanicscion-config` | 45 | `?` |
+| Saves | `daemonxmachinatitanicscion-save` | 47 | `?` |
 
 ## Mod Installers
 
@@ -51,12 +56,12 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
-| `UE4SSCOMBO_ID` | 25 |
-| `LOGICMODS_ID` | 27 |
-| `UE4SS_ID` | 31 |
-| `SIGBYPASS_ID` | 32 |
-| `SCRIPTS_ID` | 33 |
-| `DLL_ID` | 35 |
+| `ue5-pak-installer` | 29 |
+| `daemonxmachinatitanicscion-ue4sscombo` | 25 |
+| `daemonxmachinatitanicscion-logicmods` | 27 |
+| `daemonxmachinatitanicscion-ue4ss` | 31 |
+| `daemonxmachinatitanicscion-scripts` | 33 |
+| `daemonxmachinatitanicscion-ue4ssdll` | 35 |
 | `daemonxmachinatitanicscion-root` | 37 |
 | `daemonxmachinatitanicscion-contentfolder` | 38 |
 | `daemonxmachinatitanicscion-config` | 39 |
@@ -67,7 +72,7 @@ Installers run in priority order (lower number = tested first). The first instal
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch**
+- **Custom Launch** (`Game.exe`)
 
 ## Toolbar Actions
 
@@ -97,18 +102,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

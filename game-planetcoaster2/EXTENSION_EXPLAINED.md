@@ -15,6 +15,8 @@
 | Game ID | `planetcoaster2` |
 | Executable | `PlanetCoaster2.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1103](https://www.nexusmods.com/site/mods/1103) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Planet_Coaster_2](https://www.pcgamingwiki.com/wiki/Planet_Coaster_2) |
 
 ## Supported Stores
 
@@ -31,7 +33,7 @@ Mod types define where each category of mod gets deployed:
 | ACSE | `planetcoaster2-acse` | high | `{gamePath}/Win64/ovldata` |
 | Root Game Folder | `planetcoaster2-root` | high | `{gamePath}` |
 | ovldata Subfolder | `planetcoaster2-ovldata` | high | `{gamePath}/Win64` |
-| Saves | `planetcoaster2-save` | high | `SAVE_PATH` |
+| Saves | `planetcoaster2-save` | high | `USER_HOME/Saved Games/Frontier Developments/Planet Coaster 2/USERID_FOLDER/Saves` |
 
 ## Mod Installers
 
@@ -48,7 +50,7 @@ Installers run in priority order (lower number = tested first). The first instal
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch**
+- **Custom Launch** (`PlanetCoaster2.exe`)
 
 ## Toolbar Actions
 
@@ -76,18 +78,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

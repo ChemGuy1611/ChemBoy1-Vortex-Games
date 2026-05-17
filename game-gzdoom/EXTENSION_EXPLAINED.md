@@ -14,7 +14,8 @@
 | --- | --- |
 | Game ID | `gzdoom` |
 | Executable | `N/A` |
-| PCGamingWiki | XXX |
+| Extension Page | [https://www.nexusmods.com/site/mods/1319](https://www.nexusmods.com/site/mods/1319) |
+| PCGamingWiki | [XXX](XXX) |
 
 ## Mod Types
 
@@ -45,7 +46,9 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - Open DML ReadMe
 - Download DML (Manual)
+- Open UZDoom Save Folder
 - Open UZDoom Config Folder
+- Open uzdoom.ini
 - Open Vortex Downloads Folder
 - View Changelog
 - Submit Bug Report
@@ -64,19 +67,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

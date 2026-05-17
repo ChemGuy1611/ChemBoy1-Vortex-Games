@@ -14,6 +14,8 @@
 | --- | --- |
 | Game ID | `godofwarragnarok` |
 | Executable | `GoWR.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/959](https://www.nexusmods.com/site/mods/959) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/God_of_War_Ragnar%C3%B6k](https://www.pcgamingwiki.com/wiki/God_of_War_Ragnar%C3%B6k) |
 
 ## Supported Stores
 
@@ -30,9 +32,42 @@ Mod types define where each category of mod gets deployed:
 | patch Folder | `godofwarragnarok-patchfolder` | high | `{gamePath}/exec` |
 | exec subfolder | `godofwarragnarok-execsub` | high | `{gamePath}/exec` |
 | Texpack/Lodpack | `godofwarragnarok-pack` | high | `{gamePath}/exec/patch/pc_le` |
-| LUAMOD_NAME | `LUAMOD_ID` | high | `{gamePath}/LUAMOD_PATH` |
-| Save (Documents) | `godofwarragnarok-save` | high | `SAVE_PATH` |
-| LOADER_NAME | `LOADER_ID` | low | `{gamePath}` |
+| Lua Mod | `godofwarragnarok-luamod` | high | `{gamePath}/mod` |
+| Save (Documents) | `godofwarragnarok-save` | high | `userHomePathSanitize/Saved Games/God of War Ragnar\u00F6k/USERID_FOLDER` |
+| GoWR-Script-Loader | `godofwarragnarok-scriptloader` | low | `{gamePath}` |
+
+## Mod Installers
+
+Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
+
+| Installer ID | Priority |
+| --- | --- |
+| `godofwarragnarok-scriptloader` | 25 |
+| `godofwarragnarok-data` | 27 |
+| `godofwarragnarok-patchfolder` | 29 |
+| `godofwarragnarok-execsub` | 31 |
+| `godofwarragnarok-pack` | 33 |
+| `godofwarragnarok-luamod` | 35 |
+| `godofwarragnarok-save` | 37 |
+
+## Toolbar Actions
+
+These buttons appear in the Vortex mod-icons toolbar when this game is active:
+
+- Download ${LOADER_NAME}
+- Open Settings INI
+- Open boot-options.json
+- Open GoWR-Script-Loader Config
+- Open PCGamingWiki Page
+- View Changelog
+- Submit Bug Report
+- Open Downloads Folder
+
+## Auto-Downloaded Dependencies
+
+| Dependency | Version | Details |
+| --- | --- | --- |
+| GoWR-Script-Loader | — | — |
 
 ## Special Features
 
@@ -42,19 +77,3 @@ Mod types define where each category of mod gets deployed:
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

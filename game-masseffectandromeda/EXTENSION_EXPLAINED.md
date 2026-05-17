@@ -14,6 +14,8 @@
 | --- | --- |
 | Game ID | `masseffectandromeda` |
 | Executable | `MassEffectAndromeda.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/877](https://www.nexusmods.com/site/mods/877) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Mass_Effect:_Andromeda](https://www.pcgamingwiki.com/wiki/Mass_Effect:_Andromeda) |
 
 ## Supported Stores
 
@@ -43,13 +45,18 @@ Installers run in priority order (lower number = tested first). The first instal
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Launch Modded Game**
+- **Launch Modded Game** (`frostymodmanager.exe`)
 
 ## Toolbar Actions
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - Open Config Folder
+- Open Frosty Mods Folder
+- Open PCGamingWiki Page
+- View Changelog
+- Submit Bug Report
+- Open Downloads Folder
 
 ## Special Features
 
@@ -59,19 +66,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

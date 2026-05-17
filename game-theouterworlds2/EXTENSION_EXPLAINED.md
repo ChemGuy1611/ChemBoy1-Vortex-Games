@@ -15,6 +15,8 @@
 | Game ID | `theouterworlds2` |
 | Executable | `TheOuterWorlds2.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1498](https://www.nexusmods.com/site/mods/1498) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/The_Outer_Worlds_2](https://www.pcgamingwiki.com/wiki/The_Outer_Worlds_2) |
 
 ## Supported Stores
 
@@ -42,6 +44,46 @@ Mod types define where each category of mod gets deployed:
 | Root Game Folder | `theouterworlds2-root` | high | `{gamePath}` |
 | Content Folder | `theouterworlds2-contentfolder` | high | `{gamePath}/Arkansas` |
 | UE5 Paks (no "~mods") | `theouterworlds2-pakalt` | high | `{gamePath}/Arkansas/Content/Paks` |
+| UE5 Sortable Mod | `theouterworlds2-ue5-sortable-modtype` | 25 | `?` |
+| UE4SS Script Mod | `theouterworlds2-scripts` | 50 | `?` |
+| UE4SS DLL Mod | `theouterworlds2-ue4ssdll` | 52 | `?` |
+| Binaries (Engine Injector) | `theouterworlds2-binaries` | 54 | `?` |
+| UE4SS | `theouterworlds2-ue4ss` | 56 | `?` |
+| Config (LocalAppData) | `theouterworlds2-config` | 60 | `?` |
+| Saves (LocalAppData) | `theouterworlds2-save` | 62 | `?` |
+
+## Mod Installers
+
+Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
+
+| Installer ID | Priority |
+| --- | --- |
+| `ue5-pak-installer` | 29 |
+| `theouterworlds2-ue4sscombo` | 25 |
+| `theouterworlds2-logicmods` | 27 |
+| `theouterworlds2-ue4ss` | 31 |
+| `theouterworlds2-scripts` | 33 |
+| `theouterworlds2-ue4ssdll` | 35 |
+| `theouterworlds2-root` | 37 |
+| `theouterworlds2-contentfolder` | 39 |
+| `theouterworlds2-config` | 41 |
+| `theouterworlds2-save` | 43 |
+| `theouterworlds2-binaries` | 49 |
+
+## Toolbar Actions
+
+These buttons appear in the Vortex mod-icons toolbar when this game is active:
+
+- Open Paks Folder
+- Open Binaries Folder
+- Open UE4SS Mods Folder
+- Open Config Folder
+- Open Saves Folder
+- Download UE4SS
+- View Changelog
+- Open Downloads Folder
+- Open PCGamingWiki Page
+- Submit Bug Report
 
 ## Auto-Downloaded Dependencies
 
@@ -58,19 +100,3 @@ Mod types define where each category of mod gets deployed:
 - **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

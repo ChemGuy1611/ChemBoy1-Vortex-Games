@@ -13,6 +13,8 @@
 | --- | --- |
 | Game ID | `residentevil5goldedition` |
 | Executable | `Launcher.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/915](https://www.nexusmods.com/site/mods/915) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Resident_Evil_5](https://www.pcgamingwiki.com/wiki/Resident_Evil_5) |
 
 ## Supported Stores
 
@@ -31,18 +33,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - No special features beyond the standard extension pattern.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

@@ -15,6 +15,8 @@
 | Game ID | `batmanarkhamcity` |
 | Executable | `Binaries/Win32/BmLauncher.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1870](https://www.nexusmods.com/site/mods/1870) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Batman%3A_Arkham_City](https://www.pcgamingwiki.com/wiki/Batman%3A_Arkham_City) |
 
 ## Supported Stores
 
@@ -65,7 +67,7 @@ Installers run in priority order (lower number = tested first). The first instal
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch**
+- **Custom Launch** (`Binaries/Win32/BatmanAC.exe`)
 
 ## Toolbar Actions
 
@@ -87,19 +89,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

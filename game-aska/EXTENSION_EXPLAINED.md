@@ -15,6 +15,8 @@
 | Game ID | `aska` |
 | Executable | `Aska.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1549](https://www.nexusmods.com/site/mods/1549) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/ASKA](https://www.pcgamingwiki.com/wiki/ASKA) |
 
 ## Supported Stores
 
@@ -66,14 +68,13 @@ Installers run in priority order (lower number = tested first). The first instal
 | `aska-assemblydll` | 31 |
 | `aska-plugin` | 33 |
 | `aska-assets` | 37 |
-| `aska-custommod` | 39 |
 | `aska-fallback` | 49 |
 
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch**
+- **Custom Launch** (`Aska.exe`)
 
 ## Toolbar Actions
 
@@ -95,6 +96,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 | Dependency | Version | Details |
 | --- | --- | --- |
 | BepInEx | 5.4.23.5 | il2cpp |
+| BepInEx Configuration Manager | 18.4.1 | — |
 
 ## Config & Save Paths
 
@@ -109,19 +111,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

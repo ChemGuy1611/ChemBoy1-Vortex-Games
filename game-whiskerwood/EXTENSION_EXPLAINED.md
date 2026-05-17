@@ -17,6 +17,8 @@
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 | Executable (GOG) | `Whiskerwood.exe` |
 | Executable (Demo) | `Whiskerwood.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1534](https://www.nexusmods.com/site/mods/1534) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Whiskerwood](https://www.pcgamingwiki.com/wiki/Whiskerwood) |
 
 ## Supported Stores
 
@@ -43,11 +45,51 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
-| UE4SSCOMBO_NAME | `UE4SSCOMBO_ID` | high | `{gamePath}` |
-| LOGICMODS_NAME | `LOGICMODS_ID` | high | `{gamePath}/LOGICMODS_PATH` |
+| UE4SS Script-LogicMod Combo | `whiskerwood-ue4sscombo` | high | `{gamePath}` |
+| UE4SS LogicMods (Blueprint) | `whiskerwood-logicmods` | high | `{gamePath}/Whiskerwood/Content/Paks/LogicMods` |
 | Paks (no "~mods") | `whiskerwood-pakalt` | high | `{gamePath}/Whiskerwood/Content/Paks` |
 | Root Game Folder | `whiskerwood-root` | high | `{gamePath}` |
 | Root Sub-Folders | `whiskerwood-rootsubfolders` | high | `{gamePath}/Whiskerwood` |
+| UE Sortable Pak Mod | `whiskerwood-uesortablepak` | 25 | `?` |
+| UE4SS Script Mod | `whiskerwood-scripts` | 50 | `?` |
+| UE4SS DLL Mod | `whiskerwood-ue4ssdll` | 52 | `?` |
+| Binaries (Engine Injector) | `whiskerwood-binaries` | 54 | `?` |
+| UE4SS | `whiskerwood-ue4ss` | 56 | `?` |
+| Config (Local AppData) | `whiskerwood-config` | 60 | `?` |
+| Saves (Local AppData) | `whiskerwood-save` | 62 | `?` |
+
+## Mod Installers
+
+Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
+
+| Installer ID | Priority |
+| --- | --- |
+| `ue5-pak-installer` | 29 |
+| `whiskerwood-ue4sscombo` | 25 |
+| `whiskerwood-logicmods` | 27 |
+| `whiskerwood-ue4ss` | 31 |
+| `whiskerwood-scripts` | 33 |
+| `whiskerwood-ue4ssdll` | 35 |
+| `whiskerwood-root` | 37 |
+| `whiskerwood-config` | 39 |
+| `whiskerwood-save` | 41 |
+| `whiskerwood-binaries` | 49 |
+
+## Toolbar Actions
+
+These buttons appear in the Vortex mod-icons toolbar when this game is active:
+
+- Open Paks Folder
+- Open Binaries Folder
+- Open UE4SS Mods Folder
+- Open LogicMods Folder
+- Open Config Folder
+- Open Saves Folder
+- Download UE4SS
+- View Changelog
+- Open Downloads Folder
+- Open PCGamingWiki Page
+- Submit Bug Report
 
 ## Auto-Downloaded Dependencies
 
@@ -66,19 +108,3 @@ Mod types define where each category of mod gets deployed:
 - **GOG Support** — detects GOG version with adjusted executable/data paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

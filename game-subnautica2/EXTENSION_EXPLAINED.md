@@ -10,6 +10,7 @@
 
 ### Notes
 
+- version.json file in root
 - Game is Early Access
 - Very likely to have a modkit release by 1.0
 
@@ -19,8 +20,11 @@
 | --- | --- |
 | Game ID | `subnautica2` |
 | Executable | `Subnautica2.exe` |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
 | Executable (GOG) | `Subnautica2.exe` |
 | Executable (Demo) | `Subnautica2.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1874](https://www.nexusmods.com/site/mods/1874) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Subnautica_2](https://www.pcgamingwiki.com/wiki/Subnautica_2) |
 
 ## Supported Stores
 
@@ -34,6 +38,21 @@
 | --- | --- | --- |
 | `hasXbox` | `true` | toggle for Xbox version logic. |
 | `multiExe` | `false` | toggle for multiple executables (Epic/GOG/Demo don't match Steam) |
+| `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below) |
+| `hasModKit` | `false` | !Very likely to have a modkit release by 1.0 |
+| `hasServer` | `false` | toggle for server pak mod logic |
+| `preferHardlinks` | `true` | set true to perform partition checks when IO-STORE=false for Config/Save modtypes so that hardlinks available to more users |
+| `autoDownloadUe4ss` | `false` | toggle for auto downloading UE4SS |
+| `SIGBYPASS_REQUIRED` | `false` | set true if there are .sig files in the Paks folder |
+| `IO_STORE` | `true` | true if the Paks folder contains .ucas and .utoc files |
+| `hasUserIdFolder` | `false` | true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID) |
+| `debug` | `false` | toggle for debug mode |
+| `PAKMOD_LOADORDER` | `true` | set to false if you don't want loadOrder. If must be in "Paks" root, disable loadOrder. |
+| `FBLO` | `true` | set to false to use legacy load order page |
+| `ue4ssLoadOrder` | `true` | enable load order and mods.txt writing for UE4SS mods |
+| `SYM_LINKS` | `true` | true if symlink deployment is enabled for this game |
+| `CHECK_CONFIG` | `false` | boolean to check if game, staging folder, and config and save folders are on the same drive |
+| `CHECK_SAVE` | `false` | secondary same as above (if save and config are in different locations) |
 
 ## Mod Types
 
@@ -43,8 +62,50 @@ Mod types define where each category of mod gets deployed:
 | --- | --- | --- | --- |
 | UE4SS Script-LogicMod Combo | `subnautica2-ue4sscombo` | high | `{gamePath}` |
 | UE4SS LogicMods (Blueprint) | `subnautica2-logicmods` | high | `{gamePath}/Subnautica2/Content/Paks` |
-| PAK_ALT_NAME | `PAK_ALT_ID` | high | `{gamePath}/PAK_ALT_PATH` |
-| ROOT_NAME | `ROOT_ID` | high | `{gamePath}` |
+| Paks (no "~mods") | `subnautica2-pakalt` | high | `{gamePath}/Subnautica2/Content/Paks` |
+| Root Game Folder | `subnautica2-root` | high | `{gamePath}` |
+| UE Sortable Pak Mod | `subnautica2-uesortablepak` | 25 | `?` |
+| UE4SS Script Mod | `subnautica2-scripts` | 50 | `?` |
+| UE4SS DLL Mod | `subnautica2-ue4ssdll` | 52 | `?` |
+| Binaries (Engine Injector) | `subnautica2-binaries` | 54 | `?` |
+| UE4SS | `subnautica2-ue4ss` | 56 | `?` |
+| Config (Local AppData) | `subnautica2-config` | 62 | `?` |
+| Saves (Local AppData) | `subnautica2-save` | 64 | `?` |
+
+## Mod Installers
+
+Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
+
+| Installer ID | Priority |
+| --- | --- |
+| `subnautica2-ue4sscombo` | 26 |
+| `subnautica2-logicmods` | 27 |
+| `subnautica2-uesortablepak` | 29 |
+| `subnautica2-ue4ss` | 31 |
+| `subnautica2-scripts` | 35 |
+| `subnautica2-ue4ssdll` | 37 |
+| `subnautica2-root` | 39 |
+| `subnautica2-config` | 41 |
+| `subnautica2-save` | 43 |
+| `subnautica2-binaries` | 49 |
+
+## Toolbar Actions
+
+These buttons appear in the Vortex mod-icons toolbar when this game is active:
+
+- Open Paks Folder
+- Open Binaries Folder
+- Open UE4SS Mods Folder
+- Open LogicMods Folder
+- Open Config Folder
+- Open Saves Folder
+- Download UE4SS
+- Open UE4SS Settings INI
+- Open UE4SS mods.txt
+- Open PCGamingWiki Page
+- View Changelog
+- Submit Bug Report
+- Open Downloads Folder
 
 ## Auto-Downloaded Dependencies
 
@@ -54,6 +115,8 @@ Mod types define where each category of mod gets deployed:
 
 ## Special Features
 
+- **Load Order** — mods are assigned numbered folder names or sorted based on their position in the load order.
+- **UE4SS Load Order** — manages UE4SS script/DLL mod load order via a dedicated page; serializes order to `mods.txt` on deploy.
 - **Deploy Hook** (`did-deploy`) — runs custom logic (e.g., notifications, metadata patching) every time mods are deployed.
 - **Purge Hook** (`did-purge`) — runs custom logic when mods are purged.
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
@@ -62,19 +125,3 @@ Mod types define where each category of mod gets deployed:
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

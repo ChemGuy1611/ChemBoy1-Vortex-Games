@@ -14,6 +14,8 @@
 | --- | --- |
 | Game ID | `rocksmith2014editionremastered` |
 | Executable | `Rocksmith2014.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1240](https://www.nexusmods.com/site/mods/1240) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Rocksmith_2014](https://www.pcgamingwiki.com/wiki/Rocksmith_2014) |
 
 ## Supported Stores
 
@@ -60,16 +62,31 @@ Mod types define where each category of mod gets deployed:
 | Editor On Fire | `rocksmith2014editionremastered-eof` | high | `{gamePath}/EditorOnFire` |
 | Root Game Folder | `rocksmith2014editionremastered-root` | high | `{gamePath}` |
 
+## Mod Installers
+
+Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
+
+| Installer ID | Priority |
+| --- | --- |
+| `rocksmith2014editionremastered-root` | 25 |
+| `rocksmith2014editionremastered-cdlcmod` | 27 |
+| `rocksmith2014editionremastered-eof` | 29 |
+
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch**
+- **Custom Launch** (`Rocksmith2014.exe`)
 
 ## Toolbar Actions
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
+- Open Game Settings INI
+- Open RSMods Settings INI
+- Open NoCableLauncher Settings XML
+- ------------------
+- Download CDLC Songs
 - Download RSMods
 - Download CDLC Enabler
 - Download CustomsForge Song Manager
@@ -91,19 +108,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

@@ -14,6 +14,8 @@
 | --- | --- |
 | Game ID | `dragonageinquisition` |
 | Executable | `DragonAgeInquisition.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/876](https://www.nexusmods.com/site/mods/876) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Dragon_Age:_Inquisition](https://www.pcgamingwiki.com/wiki/Dragon_Age:_Inquisition) |
 
 ## Supported Stores
 
@@ -29,7 +31,7 @@ Mod types define where each category of mod gets deployed:
 | Binaries / Root Game Folder | `dragonageinquisition-binaries` | high | `{gamePath}` |
 | Frosty Mod .fbmod | `dragonageinquisition-frostymod` | high | `{gamePath}/FrostyModManager/Mods/dragonageinquisition` |
 | DAIMod .daimod | `dragonageinquisition-daimod` | high | `{gamePath}/DAIMod` |
-| Config / Save File | `dragonageinquisition-configsave` | high | `CONFIG_PATH` |
+| Config / Save File | `dragonageinquisition-configsave` | high | `DOCUMENTS/BioWare/Dragon Age Inquisition/Save` |
 | Frosty Plugin | `dragonageinquisition-frostyplugin` | high | `{gamePath}/FrostyModManager/Plugins` |
 | Update Folder | `dragonageinquisition-update` | high | `{gamePath}/Update` |
 | DAI Mod Manager | `dragonageinquisition-daimanager` | low | `{gamePath}` |
@@ -52,9 +54,9 @@ Installers run in priority order (lower number = tested first). The first instal
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Launch Modded Game**
-- **Frosty Mod Manager**
-- **DAI Mod Manager**
+- **Launch Modded Game** (`frostymodmanager.exe`)
+- **Frosty Mod Manager** (`frostymodmanager.exe`)
+- **DAI Mod Manager** (`daimodmanager.exe`)
 
 ## Toolbar Actions
 
@@ -73,18 +75,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

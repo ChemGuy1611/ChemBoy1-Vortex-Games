@@ -15,6 +15,8 @@
 | Game ID | `frostpunk2` |
 | Executable | `Frostpunk2.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/960](https://www.nexusmods.com/site/mods/960) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Frostpunk_2](https://www.pcgamingwiki.com/wiki/Frostpunk_2) |
 
 ## Supported Stores
 
@@ -40,6 +42,14 @@ Mod types define where each category of mod gets deployed:
 | Root Game Folder | `frostpunk2-root` | high | `{gamePath}` |
 | UE5 Paks | `frostpunk2-ue5` | high | `{gamePath}/Frostpunk2/Content/Paks/~mods` |
 | UE5 Paks (no "~mods") | `frostpunk2-pakalt` | high | `{gamePath}/Frostpunk2/Content/Paks` |
+| UE5 Sortable Mod | `frostpunk2-ue5-sortable-modtype` | 25 | `?` |
+| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `?` |
+| UE4SS Scripts | `frostpunk2-scripts` | 40 | `?` |
+| Config (LocalAppData) | `frostpunk2-config` | 55 | `?` |
+| Saves (LocalAppData) | `frostpunk2-save` | 60 | `?` |
+| Binaries (Engine Injector) | `frostpunk2-binaries` | 65 | `?` |
+| UE4SS | `frostpunk2-ue4ss` | 70 | `?` |
+| Signature Bypass | `frostpunk2-sigbypass` | 75 | `?` |
 
 ## Mod Installers
 
@@ -61,7 +71,7 @@ Installers run in priority order (lower number = tested first). The first instal
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Launch Modded Game**
+- **Launch Modded Game** (`EXEC`)
 
 ## Toolbar Actions
 
@@ -94,18 +104,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

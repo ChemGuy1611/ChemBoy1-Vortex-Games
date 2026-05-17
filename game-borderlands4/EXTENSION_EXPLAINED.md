@@ -14,6 +14,8 @@
 | --- | --- |
 | Game ID | `borderlands4` |
 | Executable | `Borderlands4.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1428](https://www.nexusmods.com/site/mods/1428) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Borderlands_4](https://www.pcgamingwiki.com/wiki/Borderlands_4) |
 
 ## Supported Stores
 
@@ -36,17 +38,20 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
-| UE4SSCOMBO_NAME | `UE4SSCOMBO_ID` | high | `{gamePath}` |
-| LOGICMODS_NAME | `LOGICMODS_ID` | high | `{gamePath}/LOGICMODS_PATH` |
-| UE4SS_NAME | `UE4SS_ID` | high | `{gamePath}/OakGame/Binaries/Win64` |
-| SCRIPTS_NAME | `SCRIPTS_ID` | high | `{gamePath}/SCRIPTS_PATH` |
-| DLL_NAME | `DLL_ID` | high | `{gamePath}/DLL_PATH` |
-| SDK_NAME | `SDK_ID` | high | `{gamePath}/SDK_PATH` |
-| SDKMOD_NAME | `SDKMOD_ID` | high | `{gamePath}/SDKMOD_PATH` |
+| UE4SS Script-LogicMod Combo | `borderlands4-ue4sscombo` | high | `{gamePath}` |
+| UE4SS LogicMods (Blueprint) | `borderlands4-logicmods` | high | `{gamePath}/OakGame/Content/Paks/LogicMods` |
+| UE4SS | `borderlands4-ue4ss` | high | `{gamePath}/OakGame/Binaries/Win64` |
+| UE4SS Script Mod | `borderlands4-scripts` | high | `{gamePath}/OakGame/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `borderlands4-ue4ssdll` | high | `{gamePath}/OakGame/Binaries/Win64/ue4ss/Mods` |
+| Python SDK | `borderlands4-pysdk` | high | `{gamePath}/.` |
+| SDK Mod | `borderlands4-pysdkmod` | high | `{gamePath}/sdk_mods` |
 | Paks (no ~mods) | `borderlands4-pak` | low | `{gamePath}/OakGame/Content/Paks` |
 | Root Game Folder | `borderlands4-root` | high | `{gamePath}` |
 | Content Folder | `borderlands4-contentfolder` | high | `{gamePath}/OakGame` |
 | Binaries (Engine Injector) | `borderlands4-binaries` | high | `{gamePath}/OakGame/Binaries/Win64` |
+| UE Sortable Pak Mod | `borderlands4-uesortablepak` | 25 | `?` |
+| Config | `borderlands4-config` | 45 | `?` |
+| Saves | `borderlands4-save` | 47 | `?` |
 
 ## Mod Installers
 
@@ -55,14 +60,13 @@ Installers run in priority order (lower number = tested first). The first instal
 | Installer ID | Priority |
 | --- | --- |
 | `ue5-pak-installer` | 29 |
-| `UE4SSCOMBO_ID` | 25 |
-| `SDK_ID` | 26 |
-| `SDKMOD_ID` | 27 |
-| `LOGICMODS_ID` | 28 |
-| `UE4SS_ID` | 31 |
-| `SIGBYPASS_ID` | 32 |
-| `SCRIPTS_ID` | 33 |
-| `DLL_ID` | 35 |
+| `borderlands4-ue4sscombo` | 25 |
+| `borderlands4-pysdk` | 26 |
+| `borderlands4-pysdkmod` | 27 |
+| `borderlands4-logicmods` | 28 |
+| `borderlands4-ue4ss` | 31 |
+| `borderlands4-scripts` | 33 |
+| `borderlands4-ue4ssdll` | 35 |
 | `borderlands4-root` | 37 |
 | `borderlands4-contentfolder` | 38 |
 | `borderlands4-config` | 39 |
@@ -73,7 +77,7 @@ Installers run in priority order (lower number = tested first). The first instal
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch**
+- **Custom Launch** (`Borderlands4.exe`)
 
 ## Toolbar Actions
 
@@ -105,18 +109,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

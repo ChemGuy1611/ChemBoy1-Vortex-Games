@@ -15,6 +15,8 @@
 | Game ID | `europauniversalisiv` |
 | Executable | `./eu4.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1526](https://www.nexusmods.com/site/mods/1526) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Europa_Universalis_IV](https://www.pcgamingwiki.com/wiki/Europa_Universalis_IV) |
 
 ## Supported Stores
 
@@ -28,7 +30,7 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
-| Mod (Documents) | `europauniversalisiv-mod` | high | `MOD_PATH` |
+| Mod (Documents) | `europauniversalisiv-mod` | high | `game/mod` |
 | Root Folder | `europauniversalisiv-root` | high | `{gamePath}` |
 | Binaries (Engine Injector) | `europauniversalisiv-binaries` | high | `{gamePath}/.` |
 
@@ -44,7 +46,7 @@ Installers run in priority order (lower number = tested first). The first instal
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch**
+- **Custom Launch** (`./eu4.exe`)
 
 ## Toolbar Actions
 
@@ -62,18 +64,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

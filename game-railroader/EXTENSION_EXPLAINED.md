@@ -16,7 +16,8 @@
 | Executable | `Railroader.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 | Executable (GOG) | `Railroader.exe` |
-| Extension Page | XXX |
+| Extension Page | [XXX](XXX) |
+| PCGamingWiki | [https://railroader.fandom.com/wiki/Railroader_Wiki](https://railroader.fandom.com/wiki/Railroader_Wiki) |
 
 ## Supported Stores
 
@@ -37,6 +38,8 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | Root Game Folder | `railroader-root` | high | `{gamePath}` |
+| Assembly DLL Mod | `railroader-assemblydll` | 60 | `?` |
+| Assets/Resources File | `railroader-assets` | 62 | `?` |
 
 ## Mod Installers
 
@@ -46,7 +49,7 @@ Installers run in priority order (lower number = tested first). The first instal
 | --- | --- |
 | `railroader-root` | 8 |
 | `railroader-assemblydll` | 25 |
-| `ASSETS_ID` | 27 |
+| `railroader-assets` | 27 |
 
 ## Registered Tools
 
@@ -73,6 +76,12 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 | --- | --- | --- |
 | Unity Mod Manager (UMM) | — | — |
 
+## Config & Save Paths
+
+| Type | Path |
+| --- | --- |
+| Config (Registry) | `HKEY_CURRENT_USER\\Software\\Giraffe Lab LLC\\Railroader` |
+
 ## Special Features
 
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
@@ -80,18 +89,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 - **Required Extensions** — depends on: `modtype-umm`.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

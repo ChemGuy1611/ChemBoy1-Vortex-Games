@@ -17,6 +17,8 @@
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 | Executable (GOG) | `Everholm/Binaries/Win64/REANIMAL.exe` |
 | Executable (Demo) | `Everholm/Binaries/Win64/REANIMAL.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1649](https://www.nexusmods.com/site/mods/1649) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Reanimal](https://www.pcgamingwiki.com/wiki/Reanimal) |
 
 ## Supported Stores
 
@@ -46,11 +48,51 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
-| UE4SSCOMBO_NAME | `UE4SSCOMBO_ID` | high | `{gamePath}` |
-| LOGICMODS_NAME | `LOGICMODS_ID` | high | `{gamePath}/LOGICMODS_PATH` |
+| UE4SS Script-LogicMod Combo | `reanimal-ue4sscombo` | high | `{gamePath}` |
+| UE4SS LogicMods (Blueprint) | `reanimal-logicmods` | high | `{gamePath}/Everholm/Content/Paks` |
 | Paks (no "~mods") | `reanimal-pakalt` | high | `{gamePath}/Everholm/Content/Paks` |
 | Root Game Folder | `reanimal-root` | high | `{gamePath}` |
 | Root Sub-Folders | `reanimal-rootsubfolders` | high | `{gamePath}/Everholm` |
+| UE Sortable Pak Mod | `reanimal-uesortablepak` | 25 | `?` |
+| UE4SS Script Mod | `reanimal-scripts` | 50 | `?` |
+| UE4SS DLL Mod | `reanimal-ue4ssdll` | 52 | `?` |
+| Binaries (Engine Injector) | `reanimal-binaries` | 54 | `?` |
+| UE4SS | `reanimal-ue4ss` | 56 | `?` |
+| Config (Local AppData) | `reanimal-config` | 62 | `?` |
+| Saves (Local AppData) | `reanimal-save` | 64 | `?` |
+
+## Mod Installers
+
+Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
+
+| Installer ID | Priority |
+| --- | --- |
+| `ue5-pak-installer` | 29 |
+| `reanimal-ue4sscombo` | 26 |
+| `reanimal-logicmods` | 27 |
+| `reanimal-ue4ss` | 31 |
+| `reanimal-scripts` | 35 |
+| `reanimal-ue4ssdll` | 37 |
+| `reanimal-root` | 39 |
+| `reanimal-config` | 41 |
+| `reanimal-save` | 43 |
+| `reanimal-binaries` | 49 |
+
+## Toolbar Actions
+
+These buttons appear in the Vortex mod-icons toolbar when this game is active:
+
+- Open Paks Folder
+- Open Binaries Folder
+- Open UE4SS Mods Folder
+- Open LogicMods Folder
+- Open Config Folder
+- Open Saves Folder
+- Download UE4SS
+- Open PCGamingWiki Page
+- View Changelog
+- Open Downloads Folder
+- Submit Bug Report
 
 ## Auto-Downloaded Dependencies
 
@@ -69,19 +111,3 @@ Mod types define where each category of mod gets deployed:
 - **GOG Support** — detects GOG version with adjusted executable/data paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

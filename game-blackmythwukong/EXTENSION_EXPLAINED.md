@@ -14,6 +14,8 @@
 | --- | --- |
 | Game ID | `blackmythwukong` |
 | Executable | `b1.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/957](https://www.nexusmods.com/site/mods/957) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Black_Myth:_Wukong](https://www.pcgamingwiki.com/wiki/Black_Myth:_Wukong) |
 
 ## Supported Stores
 
@@ -43,6 +45,10 @@ Mod types define where each category of mod gets deployed:
 | Binaries (Engine Injector) | `blackmythwukong-binaries` | high | `{gamePath}/b1/Binaries/Win64` |
 | UE4SS | `blackmythwukong-ue4ss` | low | `{gamePath}/b1/Binaries/Win64` |
 | Signature Bypass | `blackmythwukong-sigbypass` | low | `{gamePath}/b1/Binaries/Win64` |
+| UE5 Sortable Mod | `blackmythwukong-ue5-sortable-modtype` | 25 | `?` |
+| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `?` |
+| Config (Local AppData) | `blackmythwukong-config` | 62 | `?` |
+| Saves (Game Directory) | `blackmythwukong-save` | 60 | `?` |
 
 ## Mod Installers
 
@@ -50,6 +56,7 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
+| `ue5-pak-installer` | 35 |
 | `blackmythwukong-ue4ss-logicscriptcombo` | 25 |
 | `blackmythwukong-ue4ss-logicmod` | 30 |
 | `blackmythwukong-ue4ss` | 40 |
@@ -64,7 +71,7 @@ Installers run in priority order (lower number = tested first). The first instal
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Launch Modded Game**
+- **Launch Modded Game** (`b1.exe`)
 
 ## Toolbar Actions
 
@@ -100,19 +107,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

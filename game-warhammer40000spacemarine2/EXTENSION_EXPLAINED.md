@@ -15,6 +15,8 @@
 | Game ID | `warhammer40000spacemarine2` |
 | Executable | `Warhammer 40000 Space Marine 2.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/961](https://www.nexusmods.com/site/mods/961) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Warhammer_40,000:_Space_Marine_II](https://www.pcgamingwiki.com/wiki/Warhammer_40,000:_Space_Marine_II) |
 
 ## Supported Stores
 
@@ -27,6 +29,8 @@
 | Flag | Value | Description |
 | --- | --- | --- |
 | `loadOrderEnabled` | `true` | enables load order sorting for mods |
+| `mod_update_all_profile` | `false` |  |
+| `updating_mod` | `false` | used to see if it's a mod update or not |
 
 ## Mod Types
 
@@ -34,13 +38,13 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
-| BINARIES_NAME | `BINARIES_ID` | high | `{gamePath}/BINARIES_PATH` |
-| Config (LocalAppData) | `warhammer40000spacemarine2-config` | high | `CONFIG_PATH` |
-| PAK_NAME | `PAK_ID` | high | `{gamePath}/PAK_PATH` |
-| LOCAL_NAME | `LOCAL_ID` | high | `{gamePath}/LOCAL_PATH` |
-| LOCALSUB_NAME | `LOCALSUB_ID` | high | `{gamePath}/LOCALSUB_PATH` |
-| ROOT_NAME | `ROOT_ID` | high | `{gamePath}` |
-| INTEGRATION_STUDIO_NAME | `INTEGRATION_STUDIO_ID` | low | `{gamePath}/INTEGRATION_STUDIO_PATH` |
+| Binaries (Engine Injector) | `warhammer40000spacemarine2-binaries` | high | `{gamePath}/client_pc/root/bin/pc` |
+| Config (LocalAppData) | `warhammer40000spacemarine2-config` | high | `LOCALAPPDATA/Saber/Space Marine 2` |
+| Paks | `warhammer40000spacemarine2-pak` | high | `{gamePath}/client_pc/root/mods` |
+| Local (Loose) | `warhammer40000spacemarine2-local` | high | `{gamePath}/client_pc/root` |
+| Local (Loose Subfolder) | `warhammer40000spacemarine2-localsub` | high | `{gamePath}/client_pc/root/local` |
+| Root Game Folder | `warhammer40000spacemarine2-root` | high | `{gamePath}` |
+| Integration Studio | `warhammer40000spacemarine2-integrationstudio` | low | `{gamePath}/client_pc/root` |
 
 ## Mod Installers
 
@@ -48,19 +52,31 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
-| `INTEGRATION_STUDIO_ID` | 25 |
-| `PAK_ID` | 27 |
-| `ROOT_ID` | 29 |
-| `LOCAL_ID` | 31 |
-| `LOCALSUB_ID` | 33 |
-| `BINARIES_ID` | 49 |
+| `warhammer40000spacemarine2-integrationstudio` | 25 |
+| `warhammer40000spacemarine2-pak` | 27 |
+| `warhammer40000spacemarine2-root` | 29 |
+| `warhammer40000spacemarine2-local` | 31 |
+| `warhammer40000spacemarine2-localsub` | 33 |
+| `warhammer40000spacemarine2-binaries` | 49 |
 
 ## Toolbar Actions
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - === RESTORE SAVES ===
+- Open Saves (Profile) Folder
+- Open ${LO_FILE} (Load Order)
+- Download Integration Studio
 - Download Index V2
+- Open Binaries Folder
+- Open Loose Mods Folder
+- Open Pak Mods Folder
+- Open Local AppData Folder
+- Open Crash Reports Folder
+- Open PCGamingWiki Page
+- View Changelog
+- Submit Bug Report
+- Open Downloads Folder
 
 ## Special Features
 
@@ -72,19 +88,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

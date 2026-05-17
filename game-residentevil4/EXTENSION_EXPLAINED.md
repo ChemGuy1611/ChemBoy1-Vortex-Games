@@ -17,6 +17,8 @@
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 | Executable (GOG) | `Bin32/bio4.exe` |
 | Executable (Demo) | `Bin32/bio4.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1869](https://www.nexusmods.com/site/mods/1869) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Resident_Evil_4_Ultimate_HD_Edition](https://www.pcgamingwiki.com/wiki/Resident_Evil_4_Ultimate_HD_Edition) |
 
 ## Supported Stores
 
@@ -47,6 +49,8 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | Root Folder | `residentevil4-root` | high | `{gamePath}` |
+| Save | `residentevil4-save` | high | `{gamePath}/Bin32/profile/player/saves` |
+| Binaries (Engine Injector) | `residentevil4-binaries` | 72 | `?` |
 
 ## Mod Installers
 
@@ -54,20 +58,23 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
-| `residentevil4-loader` | 25 |
 | `residentevil4-binaries` | 27 |
+| `residentevil4-root` | 29 |
+| `residentevil4-save` | 33 |
+| `residentevil4-fallback` | 49 |
 
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
 - **Custom Launch** (`Bin32/bio4.exe`)
-- **Custom Launch** (`gamelaunchhelper.exe`)
 
 ## Toolbar Actions
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
+- Open Config Folder
+- Open input.ini
 - Open Save Folder
 - Open PCGamingWiki Page
 - View Changelog
@@ -93,18 +100,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

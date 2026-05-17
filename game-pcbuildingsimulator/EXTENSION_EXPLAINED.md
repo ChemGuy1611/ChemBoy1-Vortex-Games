@@ -15,6 +15,8 @@
 | Game ID | `pcbuildingsimulator` |
 | Executable | `PCBS.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1493](https://www.nexusmods.com/site/mods/1493) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/PC_Building_Simulator](https://www.pcgamingwiki.com/wiki/PC_Building_Simulator) |
 
 ## Supported Stores
 
@@ -56,7 +58,7 @@ Installers run in priority order (lower number = tested first). The first instal
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch**
+- **Custom Launch** (`PCBS.exe`)
 
 ## Toolbar Actions
 
@@ -75,6 +77,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 | Dependency | Version | Details |
 | --- | --- | --- |
 | BepInEx | 5.4.23.5 | unitymono, x64 |
+| BepInEx Configuration Manager | 18.4.1 | — |
 
 ## Config & Save Paths
 
@@ -90,18 +93,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Required Extensions** — depends on: `modtype-bepinex`.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

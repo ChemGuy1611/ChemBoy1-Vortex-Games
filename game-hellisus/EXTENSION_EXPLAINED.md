@@ -14,6 +14,8 @@
 | --- | --- |
 | Game ID | `hellisus` |
 | Executable | `HellIsUs.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1417](https://www.nexusmods.com/site/mods/1417) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Hell_is_Us](https://www.pcgamingwiki.com/wiki/Hell_is_Us) |
 
 ## Supported Stores
 
@@ -35,15 +37,19 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
-| UE4SSCOMBO_NAME | `UE4SSCOMBO_ID` | high | `{gamePath}` |
-| LOGICMODS_NAME | `LOGICMODS_ID` | high | `{gamePath}/LOGICMODS_PATH` |
-| UE4SS_NAME | `UE4SS_ID` | high | `{gamePath}/HellIsUs/Binaries/Win64` |
-| SCRIPTS_NAME | `SCRIPTS_ID` | high | `{gamePath}/SCRIPTS_PATH` |
-| DLL_NAME | `DLL_ID` | high | `{gamePath}/DLL_PATH` |
+| UE4SS Script-LogicMod Combo | `hellisus-ue4sscombo` | high | `{gamePath}` |
+| UE4SS LogicMods (Blueprint) | `hellisus-logicmods` | high | `{gamePath}/HellIsUs/Content/Paks/LogicMods` |
+| UE4SS | `hellisus-ue4ss` | high | `{gamePath}/HellIsUs/Binaries/Win64` |
+| UE4SS Script Mod | `hellisus-scripts` | high | `{gamePath}/HellIsUs/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `hellisus-ue4ssdll` | high | `{gamePath}/HellIsUs/Binaries/Win64/ue4ss/Mods` |
 | Paks (no ~mods) | `hellisus-pak` | low | `{gamePath}/HellIsUs/Content/Paks` |
 | Root Game Folder | `hellisus-root` | high | `{gamePath}` |
 | Content Folder | `hellisus-contentfolder` | high | `{gamePath}/HellIsUs` |
 | Binaries (Engine Injector) | `hellisus-binaries` | high | `{gamePath}/HellIsUs/Binaries/Win64` |
+| UE Sortable Pak Mod | `hellisus-uesortablepak` | 25 | `?` |
+| Sig Bypass | `hellisus-sigbypass` | 60 | `?` |
+| Config | `hellisus-config` | 45 | `?` |
+| Saves | `hellisus-save` | 47 | `?` |
 
 ## Mod Installers
 
@@ -51,12 +57,13 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
-| `UE4SSCOMBO_ID` | 25 |
-| `LOGICMODS_ID` | 27 |
-| `UE4SS_ID` | 31 |
-| `SIGBYPASS_ID` | 32 |
-| `SCRIPTS_ID` | 33 |
-| `DLL_ID` | 35 |
+| `ue5-pak-installer` | 29 |
+| `hellisus-ue4sscombo` | 25 |
+| `hellisus-logicmods` | 27 |
+| `hellisus-ue4ss` | 31 |
+| `hellisus-sigbypass` | 32 |
+| `hellisus-scripts` | 33 |
+| `hellisus-ue4ssdll` | 35 |
 | `hellisus-root` | 37 |
 | `hellisus-contentfolder` | 38 |
 | `hellisus-config` | 39 |
@@ -67,7 +74,7 @@ Installers run in priority order (lower number = tested first). The first instal
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch**
+- **Custom Launch** (`HellIsUs.exe`)
 
 ## Toolbar Actions
 
@@ -98,18 +105,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

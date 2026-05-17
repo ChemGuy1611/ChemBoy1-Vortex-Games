@@ -249,6 +249,7 @@ const UE4SS_MODSJSON_FILEPATH = path.join(UE4SS_MOD_PATH, UE4SS_MODSJSON_FILE); 
 const UE4SS_MODSTXT_FILEPATH = path.join(UE4SS_MOD_PATH, UE4SS_MODSTXT_FILE);
 const UE4SS_LO_FILE = 'ue4ss_loadOrder.json';
 const LO_ATTRIBUTE_UE4SS = 'ue4ssModFolder';
+const UE4SS_CONFIG_FILES = ['config.lua', 'settings.json']; //files that trigger the Configure button on UE4SS LO items
 const UE4SS_NATIVE_MODS = ['BPML_GenericFunctions', 'BPModLoaderMod', 'CheatManagerEnablerMod', 
   'ConsoleCommandsMod', 'ConsoleEnablerMod', 'Keybinds', 'LineTraceMod', 'shared', 'SplitScreenMod'
 ];
@@ -2763,6 +2764,10 @@ function LoadOrderInstructions() {
       '- This is required to rename the folders for the correct order.'
     ),
     React.createElement('br', null),
+    React.createElement('p', { style: { fontStyle: 'italic', color: 'yellow', fontWeight: 'bold' } },
+      'Note: This page manages Pak mods only. UE4SS mod load order is managed on the UE4SS Load Order page.'
+    ),
+    React.createElement('br', null),
     React.createElement('p', { style: { color: 'yellow', fontWeight: 'bold' } },
       SPECIAL_LO_INSTRUCTIONS
     )
@@ -2878,6 +2883,26 @@ function Ue4ssItemRenderer({ className, item }) {
     util.getSafe(state, ['persistent', 'ue4ssLoadOrder', GAME_ID, 'loadOrder'], []));
   const mods = useSelector(state => util.getSafe(state, ['persistent', 'mods', GAME_ID], {}));
   const pictureUrl = mods[item.modId]?.attributes?.pictureUrl;
+  const gamePath = useSelector(state => util.getSafe(state, ['settings', 'gameMode', 'discovered', GAME_ID, 'path'], ''));
+
+  const [configFilePath, setConfigFilePath] = React.useState('');
+  React.useEffect(() => {
+    if (!gamePath || !item.id) { setConfigFilePath(''); return; }
+    const modFolder = path.join(gamePath, BINARIES_PATH, UE4SS_MOD_PATH, item.id);
+    let found = '';
+    util.walk(modFolder, (iterPath, stats) => {
+      if (found === '' && !stats.isDirectory() && UE4SS_CONFIG_FILES.includes(path.basename(iterPath))) {
+        found = iterPath;
+      }
+      return Promise.resolve();
+    })
+      .then(() => setConfigFilePath(found))
+      .catch(() => setConfigFilePath(''));
+  }, [gamePath, item.id]);
+
+  const onConfigure = React.useCallback(() => {
+    util.opn(configFilePath).catch(() => null);
+  }, [configFilePath]);
 
   const onToggle = React.useCallback((evt) => {
     const newLO = loadOrder.map(e => e.id === item.id ? { ...e, enabled: evt.target.checked } : e);
@@ -2908,6 +2933,10 @@ function Ue4ssItemRenderer({ className, item }) {
       }) : null,
     ),
     React.createElement('p', { className: 'load-order-name', style: { flex: '1 1 0', margin: 0 } }, item.name),
+    configFilePath ? React.createElement('button', {
+      className: 'btn btn-default btn-sm',
+      onClick: onConfigure,
+    }, 'Configure') : null,
     React.createElement(Checkbox, {
       className: 'entry-checkbox',
       style: { margin: 0 },
@@ -2936,8 +2965,12 @@ function Ue4ssLoadOrderInfoPanel() {
       'Drag-to-reorder changes also write to mods.txt immediately. Restart the game for changes to take effect.'
     ),
     React.createElement('br', null),
-    React.createElement('p', { style: { fontStyle: 'italic' } },
-      'Note: This page manages UE4SS mods only. PAK mod load order is managed on the Load Order page.'
+    React.createElement('p', null,
+      `Mods with a ${UE4SS_CONFIG_FILES.join('/')} file will have a "Configure" button to open the file externally.`
+    ),
+    React.createElement('br', null),
+    React.createElement('p', { style: { fontStyle: 'italic', color: 'yellow', fontWeight: 'bold' } },
+      'Note: This page manages UE4SS mods only. Pak mod load order is managed on the Load Order page.'
     ),
   );
 }

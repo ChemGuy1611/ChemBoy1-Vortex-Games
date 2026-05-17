@@ -15,6 +15,8 @@
 | Game ID | `finalfantasytacticstheivalicechronicles` |
 | Executable | `FFT_enhanced.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1515](https://www.nexusmods.com/site/mods/1515) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Final_Fantasy_Tactics_-_The_Ivalice_Chronicles](https://www.pcgamingwiki.com/wiki/Final_Fantasy_Tactics_-_The_Ivalice_Chronicles) |
 
 ## Supported Stores
 
@@ -29,7 +31,7 @@ Mod types define where each category of mod gets deployed:
 | Reloaded Mod | `finalfantasytacticstheivalicechronicles-reloadedmod` | high | `{gamePath}/Reloaded/Mods` |
 | Mod Loader | `finalfantasytacticstheivalicechronicles-reloadedmodloader` | low | `{gamePath}/Reloaded/Mods/FFTIVC_Mod_Loader` |
 | Reloaded-II Mod Manager | `finalfantasytacticstheivalicechronicles-reloadedmanager` | low | `{gamePath}` |
-| Save File | `finalfantasytacticstheivalicechronicles-save` | high | `{gamePath}/SAVE_PATH` |
+| Save File | `finalfantasytacticstheivalicechronicles-save` | high | `{gamePath}/DOCUMENTS/My Games/FINAL FANTASY TACTICS - The Ivalice Chronicles/Steam/USERID_FOLDER` |
 
 ## Mod Installers
 
@@ -46,6 +48,7 @@ Installers run in priority order (lower number = tested first). The first instal
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - Download Reloaded Mod Manager
+- Open Save Folder
 - View Changelog
 - Open Downloads Folder
 - Open PCGamingWiki Page
@@ -64,19 +67,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

@@ -16,6 +16,8 @@
 | Executable | `disco.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 | Executable (GOG) | `disco.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1643](https://www.nexusmods.com/site/mods/1643) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Disco_Elysium](https://www.pcgamingwiki.com/wiki/Disco_Elysium) |
 
 ## Supported Stores
 
@@ -43,6 +45,8 @@ Mod types define where each category of mod gets deployed:
 | Root Game Folder | `discoelysium-root` | high | `{gamePath}` |
 | BepInEx Configuration Manager | `discoelysium-bepcfgman` | high | `{gamePath}/Bepinex` |
 | BepInEx Mod | `discoelysium-bepmods` | high | `{gamePath}/BepinEx/plugins` |
+| Assembly DLL Mod | `discoelysium-assemblydll` | 60 | `?` |
+| Assets/Resources File | `discoelysium-assets` | 62 | `?` |
 
 ## Mod Installers
 
@@ -70,12 +74,18 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Download BepInExConfigManager
 - Open Data Folder
 - Open Config Folder
+- Open Save Folder
+- Open PCGamingWiki Page
+- View Changelog
+- Open Downloads Folder
+- Submit Bug Report
 
 ## Auto-Downloaded Dependencies
 
 | Dependency | Version | Details |
 | --- | --- | --- |
 | BepInEx | 6.0.0 | unityil2cpp, x64 |
+| BepInEx Configuration Manager | 18.4.1 | — |
 
 ## Special Features
 
@@ -87,18 +97,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 - **Required Extensions** — depends on: `modtype-bepinex`.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

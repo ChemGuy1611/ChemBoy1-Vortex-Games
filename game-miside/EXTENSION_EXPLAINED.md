@@ -17,7 +17,8 @@
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 | Executable (GOG) | `MiSideFull.exe` |
 | Executable (Demo) | `MiSideFull.exe` |
-| Extension Page | XXX |
+| Extension Page | [XXX](XXX) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/MiSide](https://www.pcgamingwiki.com/wiki/MiSide) |
 
 ## Supported Stores
 
@@ -47,10 +48,6 @@
 | `allowMelonNexus` | `true` | allows MelonLoader to be downloaded from Nexus Mods |
 | `useMelonNightly` | `false` | use Nightly build of MelonLoader? |
 | `customInstalled` | `false` |  |
-| `isCustom` | `false` |  |
-| `unknown` | `false` |  |
-| `fileTest` | `false` |  |
-| `fileTest` | `false` |  |
 
 ## Mod Types
 
@@ -72,17 +69,39 @@ Mod types define where each category of mod gets deployed:
 | Root Game Folder | `miside-root` | high | `{gamePath}` |
 | BepInEx Injector | `miside-bepinex` | low | `{gamePath}` |
 | MelonLoader | `miside-melonloader` | low | `{gamePath}` |
+| Assembly DLL Mod | `miside-assemblydll` | 60 | `?` |
+| Assets/Resources File | `miside-assets` | 62 | `?` |
+
+## Mod Installers
+
+Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
+
+| Installer ID | Priority |
+| --- | --- |
+| `miside-bepinex` | 26 |
+| `miside-melonloader` | 27 |
+| `miside-root` | 28 |
+| `miside-bepcfgman` | 29 |
+| `miside-melonprefman` | 30 |
+| `miside-assemblydll` | 31 |
+| `miside-plugin` | 33 |
+| `miside-assets` | 37 |
+| `miside-fallback` | 49 |
 
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch**
+- **Custom Launch** (`MiSideFull.exe`)
 
 ## Toolbar Actions
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
+- Download Latest BepInEx BE (Browse)
+- Download BepInExConfigManager
+- Download Latest MelonLoader
+- Download MelonPreferencesManager
 - Open Data Folder
 - Open Save Folder
 - Open BepInEx Config
@@ -100,6 +119,12 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 | --- | --- | --- |
 | BepInEx | 5.4.23.5 | il2cpp |
 
+## Config & Save Paths
+
+| Type | Path |
+| --- | --- |
+| Config (Registry) | `HKEY_CURRENT_USER\\Software\\AIHASTO\\MiSideFull` |
+
 ## Special Features
 
 - **Deploy Hook** (`did-deploy`) — runs custom logic (e.g., notifications, metadata patching) every time mods are deployed.
@@ -109,19 +134,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

@@ -14,6 +14,8 @@
 | --- | --- |
 | Game ID | `witchfire` |
 | Executable | `Witchfire.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/662](https://www.nexusmods.com/site/mods/662) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Witchfire](https://www.pcgamingwiki.com/wiki/Witchfire) |
 
 ## Supported Stores
 
@@ -37,11 +39,44 @@ Mod types define where each category of mod gets deployed:
 | UE4SS LogicMods (Blueprint) | `witchfire-logicmods` | high | `{gamePath}/Witchfire/Content/Paks` |
 | UE4SS | `witchfire-ue4ss` | low | `{gamePath}/Witchfire/Binaries/Win64` |
 
+## Mod Installers
+
+Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
+
+| Installer ID | Priority |
+| --- | --- |
+| `witchfire-ue4sscombo` | 21 |
+| `witchfire-logicmods` | 23 |
+| `witchfire-ue4ss` | 27 |
+| `witchfire-scripts` | 29 |
+| `witchfire-ue4ssdll` | 31 |
+| `witchfire-config` | 33 |
+| `witchfire-root` | 35 |
+| `witchfire-save` | 37 |
+
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch**
+- **Custom Launch** (`Witchfire.exe`)
+
+## Toolbar Actions
+
+These buttons appear in the Vortex mod-icons toolbar when this game is active:
+
+- Open Paks Folder
+- Open Binaries Folder
+- Open UE4SS Mods Folder
+- Open LogicMods Folder
+- Open Config Folder
+- Open Saves Folder
+- Download UE4SS
+- Open UE4SS Settings INI
+- Open UE4SS mods.json
+- Open PCGamingWiki Page
+- View Changelog
+- Submit Bug Report
+- Open Downloads Folder
 
 ## Auto-Downloaded Dependencies
 
@@ -64,18 +99,3 @@ These tools appear in Vortex's Tools panel when this game is active:
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 - **Required Extensions** — depends on: `Unreal Engine Mod Installer`.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

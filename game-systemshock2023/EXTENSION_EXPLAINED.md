@@ -14,6 +14,8 @@
 | --- | --- |
 | Game ID | `systemshock2023` |
 | Executable | `SystemShock.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/923](https://www.nexusmods.com/site/mods/923) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/System_Shock_%282023%29](https://www.pcgamingwiki.com/wiki/System_Shock_%282023%29) |
 
 ## Supported Stores
 
@@ -65,18 +67,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Required Extensions** — depends on: `Unreal Engine Mod Installer`.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

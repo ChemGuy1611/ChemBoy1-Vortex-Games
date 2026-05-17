@@ -16,6 +16,8 @@
 | Executable | `Menace.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 | Executable (GOG) | `Menace.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1686](https://www.nexusmods.com/site/mods/1686) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Menace](https://www.pcgamingwiki.com/wiki/Menace) |
 
 ## Supported Stores
 
@@ -45,8 +47,6 @@
 | `customInstalled` | `false` |  |
 | `mod_update_all_profile` | `false` |  |
 | `updating_mod` | `false` | used to see if it's a mod update or not |
-| `isCustom` | `false` |  |
-| `unknown` | `false` |  |
 
 ## Mod Types
 
@@ -71,6 +71,8 @@ Mod types define where each category of mod gets deployed:
 | Root Game Folder | `menace-root` | high | `{gamePath}` |
 | BepInEx Injector | `menace-bepinex` | low | `{gamePath}` |
 | MelonLoader | `menace-melonloader` | low | `{gamePath}` |
+| Assembly DLL Mod | `menace-assemblydll` | 60 | `?` |
+| Assets/Resources File | `menace-assets` | 62 | `?` |
 
 ## Mod Installers
 
@@ -78,7 +80,6 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
-| `menace-customloader` | 25 |
 | `menace-melonloader` | 26 |
 | `menace-bepinex` | 27 |
 | `menace-modkit` | 28 |
@@ -91,7 +92,6 @@ Installers run in priority order (lower number = tested first). The first instal
 | `menace-plugin` | 35 |
 | `menace-customleaders` | 36 |
 | `menace-assets` | 37 |
-| `menace-custommod` | 45 |
 | `menace-fallback` | 49 |
 
 ## Registered Tools
@@ -100,13 +100,15 @@ These tools appear in Vortex's Tools panel when this game is active:
 
 - **Custom Launch** (`Menace.exe`)
 - **Custom Launch** (`gamelaunchhelper.exe`)
-- **${CUSTOMLOADER_NAME} Installer**
+- **${CUSTOMLOADER_NAME} Installer** (`path.join(CUSTOMLOADER_FOLDER`)
 
 ## Toolbar Actions
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - Download ${MODKIT_NAME}
+- Open Data Folder
+- Open Save Folder
 - Open MelonLoader Config
 - Open MelonLoader Log
 - Open PCGamingWiki Page
@@ -119,6 +121,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 | Dependency | Version | Details |
 | --- | --- | --- |
 | BepInEx | 5.4.23.5 | il2cpp |
+| BepInEx Configuration Manager | 18.4.1 | — |
 
 ## Special Features
 
@@ -132,19 +135,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

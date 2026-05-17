@@ -16,6 +16,8 @@
 | Executable | `APlagueTaleRequiem_x64.exe` |
 | Executable (Xbox) | `APT2_WinStore.x64.Submission.exe` |
 | Executable (GOG) | `APlagueTaleRequiem_x64.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/837](https://www.nexusmods.com/site/mods/837) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/A_Plague_Tale%3A_Requiem](https://www.pcgamingwiki.com/wiki/A_Plague_Tale%3A_Requiem) |
 
 ## Supported Stores
 
@@ -31,7 +33,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | Root Folder | `aplaguetalerequiem-root` | high | `{gamePath}` |
-| CONFIG_NAME | `CONFIG_ID` | high | `CONFIG_PATH` |
+| Config | `aplaguetalerequiem-config` | high | `CONFIG_PATH` |
 
 ## Mod Installers
 
@@ -66,18 +68,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **GOG Support** — detects GOG version with adjusted executable/data paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

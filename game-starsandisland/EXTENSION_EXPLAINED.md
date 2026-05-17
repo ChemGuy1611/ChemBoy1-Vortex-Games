@@ -16,6 +16,8 @@
 | Executable | `StarsandIsland.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 | Executable (GOG) | `StarsandIsland.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1701](https://www.nexusmods.com/site/mods/1701) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Starsand_Island](https://www.pcgamingwiki.com/wiki/Starsand_Island) |
 
 ## Supported Stores
 
@@ -42,10 +44,6 @@
 | `allowBepinexNexus` | `true` | set false until bugs are fixed |
 | `allowMelonNexus` | `true` | set false until bugs are fixed |
 | `customInstalled` | `false` |  |
-| `isCustom` | `false` |  |
-| `unknown` | `false` |  |
-| `fileTest` | `false` |  |
-| `fileTest` | `false` |  |
 
 ## Mod Types
 
@@ -53,19 +51,21 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
-| BEPINEX_MOD_NAME | `BEPINEX_MOD_ID` | high | `{gamePath}/BEPINEX_MOD_PATH` |
-| MELON_MOD_NAME | `MELON_MOD_ID` | high | `{gamePath}/MELON_MOD_PATH` |
-| BEPINEX_PLUGINS_NAME | `BEPINEX_PLUGINS_ID` | high | `{gamePath}/BEPINEX_PLUGINS_PATH` |
-| BEPINEX_PATCHERS_NAME | `BEPINEX_PATCHERS_ID` | high | `{gamePath}/BEPINEX_PATCHERS_PATH` |
-| BEPINEX_CONFIG_NAME | `BEPINEX_CONFIG_ID` | high | `{gamePath}/BEPINEX_CONFIG_PATH` |
-| MELON_MODS_NAME | `MELON_MODS_ID` | high | `{gamePath}/MELON_MODS_PATH` |
-| MELON_PLUGINS_NAME | `MELON_PLUGINS_ID` | high | `{gamePath}/MELON_PLUGINS_PATH` |
-| MELON_CONFIG_NAME | `MELON_CONFIG_ID` | high | `{gamePath}/MELON_CONFIG_PATH` |
-| BEPCFGMAN_NAME | `BEPCFGMAN_ID` | high | `{gamePath}/BEPCFGMAN_PATH` |
-| MELONPREFMAN_NAME | `MELONPREFMAN_ID` | high | `{gamePath}/MELONPREFMAN_PATH` |
-| ROOT_NAME | `ROOT_ID` | high | `{gamePath}` |
-| BEPINEX_NAME | `BEPINEX_ID` | low | `{gamePath}` |
-| MELON_NAME | `MELON_ID` | low | `{gamePath}` |
+| BepInEx Mod | `starsandisland-bepinexmod` | high | `{gamePath}/BepInEx` |
+| MelonLoader Mod | `starsandisland-melonmod` | high | `{gamePath}/.` |
+| BepInEx Plugins | `starsandisland-bepinex-plugins` | high | `{gamePath}/BepInEx/plugins` |
+| BepInEx Patchers | `starsandisland-bepinex-patchers` | high | `{gamePath}/BepInEx/patchers` |
+| BepInEx Config | `starsandisland-bepinex-config` | high | `{gamePath}/BepInEx/config` |
+| MelonLoader Mods | `starsandisland-melonloader-mods` | high | `{gamePath}/Mods` |
+| MelonLoader Plugins | `starsandisland-melonloader-plugins` | high | `{gamePath}/Plugins` |
+| MelonLoader Config | `starsandisland-melonloader-config` | high | `{gamePath}/UserData` |
+| BepInExConfigManager | `starsandisland-bepcfgman` | high | `{gamePath}/BepInEx` |
+| MelonPreferencesManager | `starsandisland-melonprefman` | high | `{gamePath}/Mods` |
+| Root Game Folder | `starsandisland-root` | high | `{gamePath}` |
+| BepInEx Injector | `starsandisland-bepinex-new` | low | `{gamePath}` |
+| MelonLoader | `starsandisland-melonloader` | low | `{gamePath}` |
+| Assembly DLL Mod | `starsandisland-assemblydll` | 60 | `?` |
+| Assets/Resources File | `starsandisland-assets` | 62 | `?` |
 
 ## Mod Installers
 
@@ -73,16 +73,14 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
-| `starsandisland-customloader` | 25 |
-| `BEPINEX_ID` | 26 |
-| `MELON_ID` | 27 |
-| `ROOT_ID` | 28 |
-| `BEPCFGMAN_ID` | 29 |
-| `MELONPREFMAN_ID` | 30 |
-| `ASSEMBLY_ID` | 31 |
+| `starsandisland-bepinex-new` | 26 |
+| `starsandisland-melonloader` | 27 |
+| `starsandisland-root` | 28 |
+| `starsandisland-bepcfgman` | 29 |
+| `starsandisland-melonprefman` | 30 |
+| `starsandisland-assemblydll` | 31 |
 | `starsandisland-plugin` | 33 |
-| `ASSETS_ID` | 37 |
-| `CUSTOM_ID` | 39 |
+| `starsandisland-assets` | 37 |
 | `starsandisland-fallback` | 49 |
 
 ## Registered Tools
@@ -91,7 +89,7 @@ These tools appear in Vortex's Tools panel when this game is active:
 
 - **Custom Launch** (`StarsandIsland.exe`)
 - **Custom Launch** (`gamelaunchhelper.exe`)
-- **${CUSTOMLOADER_NAME} Installer**
+- **${CUSTOMLOADER_NAME} Installer** (`path.join(CUSTOMLOADER_FOLDER`)
 
 ## Toolbar Actions
 
@@ -124,19 +122,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

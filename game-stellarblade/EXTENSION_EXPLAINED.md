@@ -14,6 +14,8 @@
 | --- | --- |
 | Game ID | `stellarblade` |
 | Executable | `SB.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1324](https://www.nexusmods.com/site/mods/1324) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Stellar_Blade](https://www.pcgamingwiki.com/wiki/Stellar_Blade) |
 
 ## Supported Stores
 
@@ -28,7 +30,6 @@
 | `CHECK_DOCS` | `false` |  |
 | `IO_STORE` | `true` | true if the Paks folder contains .ucas and .utoc files |
 | `SYM_LINKS` | `true` | true if symlink deployment is enabled for this game |
-| `isPak` | `false` |  |
 
 ## Mod Types
 
@@ -36,18 +37,21 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
-| UE4SSCOMBO_NAME | `UE4SSCOMBO_ID` | high | `{gamePath}` |
-| LOGICMODS_NAME | `LOGICMODS_ID` | high | `{gamePath}/LOGICMODS_PATH` |
-| UE4SS_NAME | `UE4SS_ID` | high | `{gamePath}/SB/Binaries/Win64` |
-| SCRIPTS_NAME | `SCRIPTS_ID` | high | `{gamePath}/SCRIPTS_PATH` |
-| DLL_NAME | `DLL_ID` | high | `{gamePath}/DLL_PATH` |
+| UE4SS Script-LogicMod Combo | `stellarblade-ue4sscombo` | high | `{gamePath}` |
+| UE4SS LogicMods (Blueprint) | `stellarblade-logicmods` | high | `{gamePath}/SB/Content/Paks/LogicMods` |
+| UE4SS | `stellarblade-ue4ss` | high | `{gamePath}/SB/Binaries/Win64` |
+| UE4SS Script Mod | `stellarblade-scripts` | high | `{gamePath}/SB/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `stellarblade-ue4ssdll` | high | `{gamePath}/SB/Binaries/Win64/ue4ss/Mods` |
 | Paks (no ~mods) | `stellarblade-pak` | low | `{gamePath}/SB/Content/Paks` |
 | Root Game Folder | `stellarblade-root` | high | `{gamePath}` |
 | Binaries (Engine Injector) | `stellarblade-binaries` | high | `{gamePath}/SB/Binaries/Win64` |
-| MOVIE_NAME | `MOVIE_ID` | high | `{gamePath}/MOVIE_PATH` |
-| MENU_NAME | `MENU_ID` | high | `{gamePath}/MENU_PATH` |
-| SPLASH_NAME | `SPLASH_ID` | high | `{gamePath}/SPLASH_PATH` |
-| CNSJSON_NAME | `CNSJSON_ID` | high | `{gamePath}/CNSJSON_PATH` |
+| Movie Mod (.bk2) | `stellarblade-movie` | high | `{gamePath}/SB/Content/Movies` |
+| Menu Mod (.bk2/.webm) | `stellarblade-menu` | high | `{gamePath}/SB/Content/Movies/Menu` |
+| Splash Screen | `stellarblade-splash` | high | `{gamePath}/SB/Content/Splash` |
+| CNS JSON Mod | `stellarblade-cnsjson` | high | `{gamePath}/SB/Content/Paks/~mods/CustomNanosuitSystem` |
+| UE Sortable Pak Mod | `stellarblade-uesortablepak` | 25 | `?` |
+| Config | `stellarblade-config` | 45 | `?` |
+| Saves | `stellarblade-save` | 47 | `?` |
 
 ## Mod Installers
 
@@ -56,25 +60,25 @@ Installers run in priority order (lower number = tested first). The first instal
 | Installer ID | Priority |
 | --- | --- |
 | `ue5-pak-installer` | 35 |
-| `UE4SSCOMBO_ID` | 25 |
-| `LOGICMODS_ID` | 27 |
-| `UE4SS_ID` | 29 |
-| `SCRIPTS_ID` | 31 |
-| `DLL_ID` | 33 |
+| `stellarblade-ue4sscombo` | 25 |
+| `stellarblade-logicmods` | 27 |
+| `stellarblade-ue4ss` | 29 |
+| `stellarblade-scripts` | 31 |
+| `stellarblade-ue4ssdll` | 33 |
 | `stellarblade-root` | 37 |
 | `stellarblade-config` | 39 |
 | `stellarblade-save` | 41 |
-| `MENU_ID` | 43 |
-| `MOVIE_ID` | 45 |
-| `SPLASH_ID` | 47 |
-| `CNSJSON_ID` | 48 |
+| `stellarblade-menu` | 43 |
+| `stellarblade-movie` | 45 |
+| `stellarblade-splash` | 47 |
+| `stellarblade-cnsjson` | 48 |
 | `stellarblade-binaries` | 49 |
 
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch**
+- **Custom Launch** (`SB.exe`)
 
 ## Toolbar Actions
 
@@ -105,18 +109,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

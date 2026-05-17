@@ -15,6 +15,8 @@
 | Game ID | `trepang2` |
 | Executable | `CPPFPS.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/981](https://www.nexusmods.com/site/mods/981) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Trepang2](https://www.pcgamingwiki.com/wiki/Trepang2) |
 
 ## Supported Stores
 
@@ -69,18 +71,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 - **Required Extensions** — depends on: `Unreal Engine Mod Installer`.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

@@ -16,6 +16,8 @@
 | Executable | `Stalker2.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 | Executable (GOG) | `Stalker2.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/958](https://www.nexusmods.com/site/mods/958) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/S.T.A.L.K.E.R._2:_Heart_of_Chornobyl](https://www.pcgamingwiki.com/wiki/S.T.A.L.K.E.R._2:_Heart_of_Chornobyl) |
 
 ## Supported Stores
 
@@ -45,6 +47,14 @@ Mod types define where each category of mod gets deployed:
 | UE5 Paks (no ~mods) | `stalker2heartofchornobyl-pakalt` | high | `{gamePath}/Stalker2/Content/Paks` |
 | Herbata Mod (GameLite) | `stalker2heartofchornobyl-herbatamod` | high | `{gamePath}/Stalker2/Content` |
 | Simple Mod Merger | `stalker2heartofchornobyl-merger` | low | `{gamePath}/Stalker2SimpleModMerger` |
+| UE5 Sortable Mod | `stalker2heartofchornobyl-ue5-sortable-modtype` | 25 | `?` |
+| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `?` |
+| UE4SS Scripts | `stalker2heartofchornobyl-scripts` | 40 | `?` |
+| UE4SS DLL Mod | `stalker2heartofchornobyl-ue4ssdll` | 42 | `?` |
+| Config (LocalAppData) | `stalker2heartofchornobyl-config` | 44 | `?` |
+| Saves (LocalAppData) | `stalker2heartofchornobyl-save` | 46 | `?` |
+| Binaries (Engine Injector) | `stalker2heartofchornobyl-binaries` | 48 | `?` |
+| UE4SS | `stalker2heartofchornobyl-ue4ss` | 50 | `?` |
 
 ## Mod Installers
 
@@ -70,8 +80,8 @@ These tools appear in Vortex's Tools panel when this game is active:
 
 - **Custom Launch** (`Stalker2.exe`)
 - **Custom Launch** (`gamelaunchhelper.exe`)
-- **Simple Mod Merger**
-- **Herbata**
+- **Simple Mod Merger** (`simple_mod_merger.exe`)
+- **Herbata** (`herbatasdlc-as-modloader.exe`)
 
 ## Toolbar Actions
 
@@ -111,19 +121,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **GOG Support** — detects GOG version with adjusted executable/data paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

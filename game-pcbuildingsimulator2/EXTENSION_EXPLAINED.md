@@ -15,6 +15,8 @@
 | Game ID | `pcbuildingsimulator2` |
 | Executable | `PCBS2.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1494](https://www.nexusmods.com/site/mods/1494) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/PC_Building_Simulator_2](https://www.pcgamingwiki.com/wiki/PC_Building_Simulator_2) |
 
 ## Supported Stores
 
@@ -41,16 +43,35 @@ Mod types define where each category of mod gets deployed:
 | PC Build | `pcbuildingsimulator2-pcbuild` | high | `{gamePath}/PCs` |
 | Assets/Resources File | `pcbuildingsimulator2-assets` | high | `{gamePath}/PCBS2_Data` |
 
+## Mod Installers
+
+Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
+
+| Installer ID | Priority |
+| --- | --- |
+| `pcbuildingsimulator2-root` | 8 |
+| `pcbuildingsimulator2-bepcfgman` | 9 |
+| `pcbuildingsimulator2-pcbuild` | 25 |
+| `pcbuildingsimulator2-assemblydll` | 27 |
+| `pcbuildingsimulator2-assets` | 29 |
+| `pcbuildingsimulator2-save` | 49 |
+
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch**
+- **Custom Launch** (`PCBS2.exe`)
 
 ## Toolbar Actions
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
+- Download BepInExConfigManager
+- Open BepInEx.cfg
+- Open Data Folder
+- Open Save Folder
+- View Changelog
+- Open Downloads Folder
 - Open PCGamingWiki Page
 - Submit Bug Report
 
@@ -59,6 +80,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 | Dependency | Version | Details |
 | --- | --- | --- |
 | BepInEx | 6.0.0 | il2cpp, x64 |
+| BepInEx Configuration Manager | 18.4.1 | — |
 
 ## Config & Save Paths
 
@@ -74,18 +96,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Required Extensions** — depends on: `modtype-bepinex`.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

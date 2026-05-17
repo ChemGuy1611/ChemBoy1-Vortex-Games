@@ -15,6 +15,8 @@
 | Game ID | `avowed` |
 | Executable | `Avowed.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/965](https://www.nexusmods.com/site/mods/965) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Avowed](https://www.pcgamingwiki.com/wiki/Avowed) |
 
 ## Supported Stores
 
@@ -39,6 +41,12 @@ Mod types define where each category of mod gets deployed:
 | Root Game Folder | `avowed-root` | high | `{gamePath}` |
 | UE5 Paks | `avowed-ue5` | high | `{gamePath}/Alabama/Content/Paks/~mods` |
 | UE5 Paks (no "~mods") | `avowed-pakalt` | high | `{gamePath}/Alabama/Content/Paks` |
+| UE5 Sortable Mod | `avowed-ue5-sortable-modtype` | 25 | `?` |
+| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `?` |
+| UE4SS Scripts | `avowed-scripts` | 40 | `?` |
+| UE4SS DLL Mod | `avowed-ue4ssdll` | 42 | `?` |
+| Binaries (Engine Injector) | `avowed-binaries` | 65 | `?` |
+| UE4SS | `avowed-ue4ss` | 70 | `?` |
 
 ## Mod Installers
 
@@ -46,6 +54,7 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
+| `ue5-pak-installer` | 35 |
 | `avowed-ue4ss-logicscriptcombo` | 25 |
 | `avowed-ue4ss-logicmod` | 30 |
 | `avowed-ue4ss` | 40 |
@@ -89,19 +98,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

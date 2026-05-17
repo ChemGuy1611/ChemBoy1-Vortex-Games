@@ -15,6 +15,8 @@
 | Game ID | `indianajonesandthegreatcircle` |
 | Executable | `TheGreatCircle.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1123](https://www.nexusmods.com/site/mods/1123) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Indiana_Jones_and_the_Great_Circle](https://www.pcgamingwiki.com/wiki/Indiana_Jones_and_the_Great_Circle) |
 
 ## Supported Stores
 
@@ -31,8 +33,8 @@ Mod types define where each category of mod gets deployed:
 | Sounds | `indianajonesandthegreatcircle-sounds` | high | `{gamePath}/base/sound/soundbanks/pc` |
 | Binaries (Engine Injector) | `indianajonesandthegreatcircle-binaries` | high | `{gamePath}` |
 | Mod Injector | `indianajonesandthegreatcircle-modinjector` | low | `{gamePath}` |
-| Config (Saved Games) | `indianajonesandthegreatcircle-config` | high | `CONFIG_PATH` |
-| Save (Steam) | `indianajonesandthegreatcircle-saves` | high | `SAVE_PATH` |
+| Config (Saved Games) | `indianajonesandthegreatcircle-config` | high | `USER_DOCS/Saved Games/MachineGames/TheGreatCircle/base` |
+| Save (Steam) | `indianajonesandthegreatcircle-saves` | high | `ROAMINGAPPDATA/GSE Saves/2677660/remote/GAME-SLOT0` |
 
 ## Mod Installers
 
@@ -48,8 +50,8 @@ Installers run in priority order (lower number = tested first). The first instal
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch**
-- **Indiana Jones Mod Injector**
+- **Custom Launch** (`TheGreatCircle.exe`)
+- **Indiana Jones Mod Injector** (`indianajonesmodmanager.exe`)
 
 ## Toolbar Actions
 
@@ -57,6 +59,8 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - Open Config Folder
 - Open Saves Folder
+- View Changelog
+- Open Downloads Folder
 - Open PCGamingWiki Page
 - Submit Bug Report
 
@@ -67,18 +71,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

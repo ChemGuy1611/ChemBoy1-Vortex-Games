@@ -15,6 +15,8 @@
 | Game ID | `stateofdecay2` |
 | Executable | `StateOfDecay2.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/946](https://www.nexusmods.com/site/mods/946) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/State_of_Decay_2](https://www.pcgamingwiki.com/wiki/State_of_Decay_2) |
 
 ## Supported Stores
 
@@ -33,6 +35,7 @@ Mod types define where each category of mod gets deployed:
 | Cooked Mods | `stateofdecay2-cooked` | high | `{localAppData}/StateOfDecay2/Saved` |
 | Root Game Folder | `stateofdecay2-root` | high | `{gamePath}` |
 | SoD2 Mod Manager | `stateofdecay2-modmanager` | low | `{gamePath}` |
+| Binaries (Engine Injector) | `stateofdecay2-binaries` | 45 | `?` |
 
 ## Mod Installers
 
@@ -50,7 +53,7 @@ Installers run in priority order (lower number = tested first). The first instal
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **SoD2 Mod Manager**
+- **SoD2 Mod Manager** (`modintegrator.exe`)
 - **Custom Launch** (`StateOfDecay2.exe`)
 - **Custom Launch** (`gamelaunchhelper.exe`)
 
@@ -81,18 +84,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 - **Required Extensions** — depends on: `Unreal Engine Mod Installer`.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

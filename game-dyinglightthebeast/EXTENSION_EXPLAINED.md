@@ -15,6 +15,8 @@
 | Game ID | `dyinglightthebeast` |
 | Executable | `ph_ft/work/bin/x64/DyingLightGame_TheBeast_x64_rwdi.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1456](https://www.nexusmods.com/site/mods/1456) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Dying_Light%3A_The_Beast](https://www.pcgamingwiki.com/wiki/Dying_Light%3A_The_Beast) |
 
 ## Supported Stores
 
@@ -28,7 +30,6 @@
 | `DOTNET_INSTALLED` | `false` |  |
 | `superMergerInstalled` | `false` |  |
 | `mergerInstalled` | `false` |  |
-| `hasVariants` | `false` |  |
 
 ## Mod Types
 
@@ -58,7 +59,7 @@ Installers run in priority order (lower number = tested first). The first instal
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch**
+- **Custom Launch** (`ph_ft/work/bin/x64/DyingLightGame_TheBeast_x64_rwdi.exe`)
 
 ## Toolbar Actions
 
@@ -79,19 +80,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

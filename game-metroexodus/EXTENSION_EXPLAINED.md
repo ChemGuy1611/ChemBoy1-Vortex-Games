@@ -14,6 +14,8 @@
 | --- | --- |
 | Game ID | `metroexodus` |
 | Executable | `MetroExodus.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/907](https://www.nexusmods.com/site/mods/907) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Metro_Exodus](https://www.pcgamingwiki.com/wiki/Metro_Exodus) |
 
 ## Supported Stores
 
@@ -25,7 +27,7 @@
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Metro Exodus SDK**
+- **Metro Exodus SDK** (`path.join("SDK"`)
 
 ## Toolbar Actions
 
@@ -40,18 +42,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

@@ -14,6 +14,8 @@
 | --- | --- |
 | Game ID | `finalfantasy7rebirth` |
 | Executable | `ff7rebirth.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1150](https://www.nexusmods.com/site/mods/1150) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Final_Fantasy_VII_Rebirth](https://www.pcgamingwiki.com/wiki/Final_Fantasy_VII_Rebirth) |
 
 ## Supported Stores
 
@@ -34,16 +36,20 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
-| MODLOADERMOD_NAME | `MODLOADERMOD_ID` | high | `{gamePath}/MODLOADERMOD_PATH` |
-| UE4SSCOMBO_NAME | `UE4SSCOMBO_ID` | high | `{gamePath}` |
-| LOGICMODS_NAME | `LOGICMODS_ID` | high | `{gamePath}/LOGICMODS_PATH` |
-| UE4SS_NAME | `UE4SS_ID` | high | `{gamePath}/End/Binaries/Win64` |
-| SCRIPTS_NAME | `SCRIPTS_ID` | high | `{gamePath}/SCRIPTS_PATH` |
-| DLL_NAME | `DLL_ID` | high | `{gamePath}/DLL_PATH` |
+| FF7RML Mod | `finalfantasy7rebirth-modloadermod` | high | `{gamePath}/End/Mods` |
+| UE4SS Script-LogicMod Combo | `finalfantasy7rebirth-ue4sscombo` | high | `{gamePath}` |
+| UE4SS LogicMods (Blueprint) | `finalfantasy7rebirth-logicmods` | high | `{gamePath}/End/Content/Paks/LogicMods` |
+| UE4SS | `finalfantasy7rebirth-ue4ss` | high | `{gamePath}/End/Binaries/Win64` |
+| UE4SS Script Mod | `finalfantasy7rebirth-scripts` | high | `{gamePath}/End/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `finalfantasy7rebirth-ue4ssdll` | high | `{gamePath}/End/Binaries/Win64/ue4ss/Mods` |
 | Paks (no ~mods) | `finalfantasy7rebirth-pak` | low | `{gamePath}/End/Content/Paks` |
 | Root Folder | `finalfantasy7rebirth-root` | high | `{gamePath}` |
 | Binaries (Engine Injector) | `finalfantasy7rebirth-binaries` | high | `{gamePath}/End/Binaries/Win64` |
-| MODLOADER_NAME | `MODLOADER_ID` | low | `{gamePath}/MODLOADER_PATH` |
+| FF7R Mod Loader | `finalfantasy7rebirth-modloader` | low | `{gamePath}/End/Mods` |
+| UE5 Sortable Mod | `finalfantasy7rebirth-ue5-sortable-modtype` | 25 | `?` |
+| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `?` |
+| Config (Documents) | `finalfantasy7rebirth-config` | 45 | `?` |
+| Saves (Documents) | `finalfantasy7rebirth-save` | 47 | `?` |
 
 ## Mod Installers
 
@@ -52,13 +58,13 @@ Installers run in priority order (lower number = tested first). The first instal
 | Installer ID | Priority |
 | --- | --- |
 | `ue5-pak-installer` | 29 |
-| `UE4SSCOMBO_ID` | 25 |
-| `LOGICMODS_ID` | 26 |
-| `MODLOADER_ID` | 27 |
-| `MODLOADERMOD_ID` | 28 |
-| `UE4SS_ID` | 31 |
-| `SCRIPTS_ID` | 33 |
-| `DLL_ID` | 35 |
+| `finalfantasy7rebirth-ue4sscombo` | 25 |
+| `finalfantasy7rebirth-logicmods` | 26 |
+| `finalfantasy7rebirth-modloader` | 27 |
+| `finalfantasy7rebirth-modloadermod` | 28 |
+| `finalfantasy7rebirth-ue4ss` | 31 |
+| `finalfantasy7rebirth-scripts` | 33 |
+| `finalfantasy7rebirth-ue4ssdll` | 35 |
 | `finalfantasy7rebirth-root` | 37 |
 | `finalfantasy7rebirth-config` | 39 |
 | `finalfantasy7rebirth-save` | 41 |
@@ -68,7 +74,7 @@ Installers run in priority order (lower number = tested first). The first instal
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch**
+- **Custom Launch** (`ff7rebirth.exe`)
 
 ## Toolbar Actions
 
@@ -99,19 +105,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

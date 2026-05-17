@@ -14,6 +14,8 @@
 | --- | --- |
 | Game ID | `runescapedragonwilds` |
 | Executable | `RSDragonwilds.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1273](https://www.nexusmods.com/site/mods/1273) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/RuneScape%3A_Dragonwilds](https://www.pcgamingwiki.com/wiki/RuneScape%3A_Dragonwilds) |
 
 ## Supported Stores
 
@@ -33,14 +35,19 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
-| UE4SSCOMBO_NAME | `UE4SSCOMBO_ID` | high | `{gamePath}` |
-| LOGICMODS_NAME | `LOGICMODS_ID` | high | `{gamePath}/LOGICMODS_PATH` |
-| UE4SS_NAME | `UE4SS_ID` | high | `{gamePath}/RSDragonwilds/Binaries/Win64` |
-| SCRIPTS_NAME | `SCRIPTS_ID` | high | `{gamePath}/SCRIPTS_PATH` |
-| DLL_NAME | `DLL_ID` | high | `{gamePath}/DLL_PATH` |
+| UE4SS Script-LogicMod Combo | `runescapedragonwilds-ue4sscombo` | high | `{gamePath}` |
+| UE4SS LogicMods (Blueprint) | `runescapedragonwilds-logicmods` | high | `{gamePath}/RSDragonwilds/Content/Paks/LogicMods` |
+| UE4SS | `runescapedragonwilds-ue4ss` | high | `{gamePath}/RSDragonwilds/Binaries/Win64` |
+| UE4SS Script Mod | `runescapedragonwilds-scripts` | high | `{gamePath}/RSDragonwilds/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `runescapedragonwilds-ue4ssdll` | high | `{gamePath}/RSDragonwilds/Binaries/Win64/ue4ss/Mods` |
 | Paks (no ~mods) | `runescapedragonwilds-pak` | low | `{gamePath}/RSDragonwilds/Content/Paks` |
 | Root Game Folder | `runescapedragonwilds-root` | high | `{gamePath}` |
 | Binaries (Engine Injector) | `runescapedragonwilds-binaries` | high | `{gamePath}/RSDragonwilds/Binaries/Win64` |
+| UE5 Sortable Mod | `runescapedragonwilds-ue5-sortable-modtype` | 25 | `?` |
+| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `?` |
+| Config (Documents) | `runescapedragonwilds-config` | 45 | `?` |
+| Saves (Documents) | `runescapedragonwilds-save` | 47 | `?` |
+| Save Characters | `runescapedragonwilds-savecharacters` | 49 | `?` |
 
 ## Mod Installers
 
@@ -49,22 +56,22 @@ Installers run in priority order (lower number = tested first). The first instal
 | Installer ID | Priority |
 | --- | --- |
 | `ue5-pak-installer` | 29 |
-| `UE4SSCOMBO_ID` | 25 |
-| `LOGICMODS_ID` | 27 |
-| `UE4SS_ID` | 31 |
-| `SCRIPTS_ID` | 33 |
-| `DLL_ID` | 35 |
+| `runescapedragonwilds-ue4sscombo` | 25 |
+| `runescapedragonwilds-logicmods` | 27 |
+| `runescapedragonwilds-ue4ss` | 31 |
+| `runescapedragonwilds-scripts` | 33 |
+| `runescapedragonwilds-ue4ssdll` | 35 |
 | `runescapedragonwilds-root` | 37 |
 | `runescapedragonwilds-config` | 39 |
 | `runescapedragonwilds-save` | 41 |
-| `CHARACTER_ID` | 43 |
+| `runescapedragonwilds-savecharacters` | 43 |
 | `runescapedragonwilds-binaries` | 45 |
 
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch**
+- **Custom Launch** (`RSDragonwilds.exe`)
 
 ## Toolbar Actions
 
@@ -93,18 +100,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

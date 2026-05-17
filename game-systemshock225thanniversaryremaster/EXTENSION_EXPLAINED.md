@@ -15,6 +15,8 @@
 | Game ID | `systemshock225thanniversaryremaster` |
 | Executable | `N/A` |
 | Executable (GOG) | `hathor_Shipping_Playfab_Galaxy_x64.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1359](https://www.nexusmods.com/site/mods/1359) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/System_Shock_2%3A_25th_Anniversary_Remaster](https://www.pcgamingwiki.com/wiki/System_Shock_2%3A_25th_Anniversary_Remaster) |
 
 ## Supported Stores
 
@@ -64,18 +66,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **GOG Support** — detects GOG version with adjusted executable/data paths.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

@@ -14,6 +14,8 @@
 | --- | --- |
 | Game ID | `civilisationvi` |
 | Executable | `Base/Binaries/Win64Steam/CivilizationVI.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1183](https://www.nexusmods.com/site/mods/1183) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Sid_Meier%27s_Civilization_VI](https://www.pcgamingwiki.com/wiki/Sid_Meier%27s_Civilization_VI) |
 
 ## Supported Stores
 
@@ -27,6 +29,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | Root Game Folder | `civilisationvi-root` | high | `{gamePath}` |
+| Mod | `civilisationvi-mod` | 25 | `?` |
 
 ## Mod Installers
 
@@ -52,18 +55,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

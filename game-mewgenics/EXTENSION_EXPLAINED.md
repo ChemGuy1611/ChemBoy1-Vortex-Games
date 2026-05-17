@@ -17,6 +17,8 @@
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 | Executable (GOG) | `Mewgenics.exe` |
 | Executable (Demo) | `Mewgenics.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1691](https://www.nexusmods.com/site/mods/1691) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Mewgenics](https://www.pcgamingwiki.com/wiki/Mewgenics) |
 
 ## Supported Stores
 
@@ -48,6 +50,7 @@ Mod types define where each category of mod gets deployed:
 | Root Folder | `mewgenics-root` | high | `{gamePath}` |
 | Mewjector | `mewgenics-mewjector` | low | `{gamePath}/.` |
 | MewgenicsSaveEditor | `mewgenics-saveeeditor` | low | `{gamePath}` |
+| Mewtator | `mewgenics-mewtator` | 70 | `?` |
 
 ## Mod Installers
 
@@ -59,7 +62,6 @@ Installers run in priority order (lower number = tested first). The first instal
 | `mewgenics-saveeeditor` | 26 |
 | `mewgenics-mewjector` | 27 |
 | `mewgenics-mod` | 28 |
-| `mewgenics-root` | 31 |
 | `mewgenics-mewjectormod` | 33 |
 | `mewgenics-fallback` | 49 |
 
@@ -88,19 +90,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

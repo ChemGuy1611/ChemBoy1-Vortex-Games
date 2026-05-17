@@ -14,6 +14,8 @@
 | --- | --- |
 | Game ID | `assassinscreedii` |
 | Executable | `AssassinsCreedIIGame.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/977](https://www.nexusmods.com/site/mods/977) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Assassin%27s_Creed_II](https://www.pcgamingwiki.com/wiki/Assassin%27s_Creed_II) |
 
 ## Supported Stores
 
@@ -40,7 +42,7 @@ Installers run in priority order (lower number = tested first). The first instal
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **AnvilToolkit**
+- **AnvilToolkit** (`anviltoolkit.exe`)
 
 ## Toolbar Actions
 
@@ -56,18 +58,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

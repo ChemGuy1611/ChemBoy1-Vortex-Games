@@ -14,6 +14,8 @@
 | --- | --- |
 | Game ID | `silenthillf` |
 | Executable | `SHf.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1458](https://www.nexusmods.com/site/mods/1458) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Silent_Hill_f](https://www.pcgamingwiki.com/wiki/Silent_Hill_f) |
 
 ## Supported Stores
 
@@ -36,15 +38,18 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
-| UE4SSCOMBO_NAME | `UE4SSCOMBO_ID` | high | `{gamePath}` |
-| LOGICMODS_NAME | `LOGICMODS_ID` | high | `{gamePath}/LOGICMODS_PATH` |
-| UE4SS_NAME | `UE4SS_ID` | high | `{gamePath}/SHf/Binaries/Win64` |
-| SCRIPTS_NAME | `SCRIPTS_ID` | high | `{gamePath}/SCRIPTS_PATH` |
-| DLL_NAME | `DLL_ID` | high | `{gamePath}/DLL_PATH` |
+| UE4SS Script-LogicMod Combo | `silenthillf-ue4sscombo` | high | `{gamePath}` |
+| UE4SS LogicMods (Blueprint) | `silenthillf-logicmods` | high | `{gamePath}/SHf/Content/Paks/LogicMods` |
+| UE4SS | `silenthillf-ue4ss` | high | `{gamePath}/SHf/Binaries/Win64` |
+| UE4SS Script Mod | `silenthillf-scripts` | high | `{gamePath}/SHf/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `silenthillf-ue4ssdll` | high | `{gamePath}/SHf/Binaries/Win64/ue4ss/Mods` |
 | Paks (no ~mods) | `silenthillf-pak` | low | `{gamePath}/SHf/Content/Paks` |
 | Root Game Folder | `silenthillf-root` | high | `{gamePath}` |
 | Content Folder | `silenthillf-contentfolder` | high | `{gamePath}/SHf` |
 | Binaries (Engine Injector) | `silenthillf-binaries` | high | `{gamePath}/SHf/Binaries/Win64` |
+| UE Sortable Pak Mod | `silenthillf-uesortablepak` | 25 | `?` |
+| Config | `silenthillf-config` | 45 | `?` |
+| Saves | `silenthillf-save` | 47 | `?` |
 
 ## Mod Installers
 
@@ -52,12 +57,12 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
-| `UE4SSCOMBO_ID` | 25 |
-| `LOGICMODS_ID` | 27 |
-| `UE4SS_ID` | 31 |
-| `SIGBYPASS_ID` | 32 |
-| `SCRIPTS_ID` | 33 |
-| `DLL_ID` | 35 |
+| `ue5-pak-installer` | 29 |
+| `silenthillf-ue4sscombo` | 25 |
+| `silenthillf-logicmods` | 27 |
+| `silenthillf-ue4ss` | 31 |
+| `silenthillf-scripts` | 33 |
+| `silenthillf-ue4ssdll` | 35 |
 | `silenthillf-root` | 37 |
 | `silenthillf-contentfolder` | 38 |
 | `silenthillf-config` | 39 |
@@ -68,7 +73,7 @@ Installers run in priority order (lower number = tested first). The first instal
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch**
+- **Custom Launch** (`SHf.exe`)
 
 ## Toolbar Actions
 
@@ -99,18 +104,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

@@ -15,6 +15,8 @@
 | Game ID | `senuassagahellblade2` |
 | Executable | `N/A` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/888](https://www.nexusmods.com/site/mods/888) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Senua%27s_Saga%3A_Hellblade_II](https://www.pcgamingwiki.com/wiki/Senua%27s_Saga%3A_Hellblade_II) |
 
 ## Supported Stores
 
@@ -31,6 +33,10 @@ Mod types define where each category of mod gets deployed:
 | UE5 Paks | `senuassagahellblade2-ue5` | high | `{gamePath}/Hellblade2/Content/Paks/~mods` |
 | Paks (Alt, no "~mods") | `senuassagahellblade2-pakalt` | high | `{gamePath}/Hellblade2/Content/Paks` |
 | Root Game Folder | `senuassagahellblade2-root` | high | `{gamePath}` |
+| UE5 Sortable Mod | `senuassagahellblade2-ue5-sortable-modtype` | 25 | `?` |
+| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `?` |
+| Binaries (Engine Injector) | `senuassagahellblade2-binaries` | 40 | `?` |
+| Config (LocalAppData) | `senuassagahellblade2-config` | 45 | `?` |
 
 ## Mod Installers
 
@@ -65,18 +71,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

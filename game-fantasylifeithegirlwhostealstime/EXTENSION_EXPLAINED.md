@@ -1,4 +1,4 @@
-# FANTASY LIFE i: The Girl Who Steals Time Vortex Extension — Vortex Extension Explained
+# FANTASY LIFE i: The Girl Who Steals Time — Vortex Extension Explained
 
 ## Overview
 
@@ -12,14 +12,24 @@
 
 | Property | Value |
 | --- | --- |
-| Game ID | `game-fantasylifeithegirlwhostealstime` |
-| Executable | `N/A` |
+| Game ID | `fantasylifeithegirlwhostealstime` |
+| Executable | `NFL1.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
+| Executable (GOG) | `NFL1.exe` |
+| Executable (Demo) | `NFL1.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1785](https://www.nexusmods.com/site/mods/1785) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Fantasy_Life_i%3A_The_Girl_Who_Steals_Time](https://www.pcgamingwiki.com/wiki/Fantasy_Life_i%3A_The_Girl_Who_Steals_Time) |
+
+## Supported Stores
+
+- **Steam** — `2993780`
 
 ## Feature Flags
 
 | Flag | Value | Description |
 | --- | --- | --- |
+| `hasXbox` | `false` | toggle for Xbox version logic. |
+| `multiExe` | `false` | toggle for multiple executables (Epic/GOG/Demo don't match Steam) |
 | `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below) |
 | `hasModKit` | `false` | toggle for UE ModKit mod support |
 | `preferHardlinks` | `true` | set true to perform partition checks when IO-STORE=false for Config/Save modtypes so that hardlinks available to more users |
@@ -39,11 +49,13 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
-| UE4SSCOMBO_NAME | `UE4SSCOMBO_ID` | high | `{gamePath}` |
-| LOGICMODS_NAME | `LOGICMODS_ID` | high | `{gamePath}/LOGICMODS_PATH` |
-| Paks (no "~mods") | `PAK_ALT_ID` | high | `{gamePath}/PAK_ALT_PATH` |
-| Root Game Folder | `ROOT_ID` | high | `{gamePath}` |
-| Root Sub-Folders | `ROOTSUB_ID` | high | `{gamePath}/ROOTSUB_PATH` |
+| UE4SS Script-LogicMod Combo | `fantasylifeithegirlwhostealstime-ue4sscombo` | high | `{gamePath}` |
+| UE4SS LogicMods (Blueprint) | `fantasylifeithegirlwhostealstime-logicmods` | high | `{gamePath}/Game/Content/Paks` |
+| Paks (no "~mods") | `fantasylifeithegirlwhostealstime-pakalt` | high | `{gamePath}/Game/Content/Paks` |
+| Root Game Folder | `fantasylifeithegirlwhostealstime-root` | high | `{gamePath}` |
+| Root Sub-Folders | `fantasylifeithegirlwhostealstime-rootsubfolders` | high | `{gamePath}/Game` |
+| UE Sortable Pak Mod | `fantasylifeithegirlwhostealstime-uesortablepak` | 25 | `?` |
+| Binaries (Engine Injector) | `fantasylifeithegirlwhostealstime-binaries` | 54 | `?` |
 
 ## Mod Installers
 
@@ -51,11 +63,9 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
-| `MODKITMOD_ID` | 25 |
-| `UE5_SORTABLE_ID` | 29 |
-| `SIGBYPASS_ID` | 33 |
-| `ROOT_ID` | 39 |
-| `BINARIES_ID` | 49 |
+| `fantasylifeithegirlwhostealstime-uesortablepak` | 29 |
+| `fantasylifeithegirlwhostealstime-root` | 39 |
+| `fantasylifeithegirlwhostealstime-binaries` | 49 |
 
 ## Toolbar Actions
 
@@ -85,19 +95,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

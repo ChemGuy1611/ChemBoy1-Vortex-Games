@@ -14,6 +14,8 @@
 | --- | --- |
 | Game ID | `cronosthenewdawn` |
 | Executable | `Cronos.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1421](https://www.nexusmods.com/site/mods/1421) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Cronos%3A_The_New_Dawn](https://www.pcgamingwiki.com/wiki/Cronos%3A_The_New_Dawn) |
 
 ## Supported Stores
 
@@ -36,15 +38,19 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
-| UE4SSCOMBO_NAME | `UE4SSCOMBO_ID` | high | `{gamePath}` |
-| LOGICMODS_NAME | `LOGICMODS_ID` | high | `{gamePath}/LOGICMODS_PATH` |
-| UE4SS_NAME | `UE4SS_ID` | high | `{gamePath}/Cronos/Binaries/Win64` |
-| SCRIPTS_NAME | `SCRIPTS_ID` | high | `{gamePath}/SCRIPTS_PATH` |
-| DLL_NAME | `DLL_ID` | high | `{gamePath}/DLL_PATH` |
+| UE4SS Script-LogicMod Combo | `cronosthenewdawn-ue4sscombo` | high | `{gamePath}` |
+| UE4SS LogicMods (Blueprint) | `cronosthenewdawn-logicmods` | high | `{gamePath}/Cronos/Content/Paks/LogicMods` |
+| UE4SS | `cronosthenewdawn-ue4ss` | high | `{gamePath}/Cronos/Binaries/Win64` |
+| UE4SS Script Mod | `cronosthenewdawn-scripts` | high | `{gamePath}/Cronos/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `cronosthenewdawn-ue4ssdll` | high | `{gamePath}/Cronos/Binaries/Win64/ue4ss/Mods` |
 | Paks (no ~mods) | `cronosthenewdawn-pak` | low | `{gamePath}/Cronos/Content/Paks` |
 | Root Game Folder | `cronosthenewdawn-root` | high | `{gamePath}` |
 | Content Folder | `cronosthenewdawn-contentfolder` | high | `{gamePath}/Cronos` |
 | Binaries (Engine Injector) | `cronosthenewdawn-binaries` | high | `{gamePath}/Cronos/Binaries/Win64` |
+| UE Sortable Pak Mod | `cronosthenewdawn-uesortablepak` | 25 | `?` |
+| Sig Bypass | `cronosthenewdawn-sigbypass` | 60 | `?` |
+| Config | `cronosthenewdawn-config` | 45 | `?` |
+| Saves | `cronosthenewdawn-save` | 47 | `?` |
 
 ## Mod Installers
 
@@ -52,12 +58,13 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
-| `UE4SSCOMBO_ID` | 25 |
-| `LOGICMODS_ID` | 27 |
-| `UE4SS_ID` | 31 |
-| `SIGBYPASS_ID` | 32 |
-| `SCRIPTS_ID` | 33 |
-| `DLL_ID` | 35 |
+| `ue5-pak-installer` | 29 |
+| `cronosthenewdawn-ue4sscombo` | 25 |
+| `cronosthenewdawn-logicmods` | 27 |
+| `cronosthenewdawn-ue4ss` | 31 |
+| `cronosthenewdawn-sigbypass` | 32 |
+| `cronosthenewdawn-scripts` | 33 |
+| `cronosthenewdawn-ue4ssdll` | 35 |
 | `cronosthenewdawn-root` | 37 |
 | `cronosthenewdawn-contentfolder` | 38 |
 | `cronosthenewdawn-config` | 39 |
@@ -68,7 +75,7 @@ Installers run in priority order (lower number = tested first). The first instal
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch**
+- **Custom Launch** (`Cronos.exe`)
 
 ## Toolbar Actions
 
@@ -99,18 +106,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

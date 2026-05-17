@@ -14,6 +14,8 @@
 | --- | --- |
 | Game ID | `deusexinvisiblewar` |
 | Executable | `System/dx2.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1463](https://www.nexusmods.com/site/mods/1463) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Deus_Ex%3A_Invisible_War](https://www.pcgamingwiki.com/wiki/Deus_Ex%3A_Invisible_War) |
 
 ## Supported Stores
 
@@ -44,7 +46,7 @@ Installers run in priority order (lower number = tested first). The first instal
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch**
+- **Custom Launch** (`System/dx2.exe`)
 
 ## Toolbar Actions
 
@@ -66,18 +68,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

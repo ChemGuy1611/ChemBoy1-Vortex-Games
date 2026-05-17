@@ -17,6 +17,8 @@
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 | Executable (GOG) | `CrisolTheaterOfIdols.exe` |
 | Executable (Demo) | `CrisolTheaterOfIdolsDemo.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1690](https://www.nexusmods.com/site/mods/1690) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Crisol:_Theater_of_Idols](https://www.pcgamingwiki.com/wiki/Crisol:_Theater_of_Idols) |
 
 ## Supported Stores
 
@@ -44,11 +46,53 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
-| UE4SSCOMBO_NAME | `UE4SSCOMBO_ID` | high | `{gamePath}` |
-| LOGICMODS_NAME | `LOGICMODS_ID` | high | `{gamePath}/LOGICMODS_PATH` |
+| UE4SS Script-LogicMod Combo | `crisoltheaterofidols-ue4sscombo` | high | `{gamePath}` |
+| UE4SS LogicMods (Blueprint) | `crisoltheaterofidols-logicmods` | high | `{gamePath}/CRToiPrototype/Content/Paks` |
 | Paks (no "~mods") | `crisoltheaterofidols-pakalt` | high | `{gamePath}/CRToiPrototype/Content/Paks` |
 | Root Game Folder | `crisoltheaterofidols-root` | high | `{gamePath}` |
 | Root Sub-Folders | `crisoltheaterofidols-rootsubfolders` | high | `{gamePath}/CRToiPrototype` |
+| UE Sortable Pak Mod | `crisoltheaterofidols-uesortablepak` | 25 | `?` |
+| UE4SS Script Mod | `crisoltheaterofidols-scripts` | 50 | `?` |
+| UE4SS DLL Mod | `crisoltheaterofidols-ue4ssdll` | 52 | `?` |
+| Binaries (Engine Injector) | `crisoltheaterofidols-binaries` | 54 | `?` |
+| UE4SS | `crisoltheaterofidols-ue4ss` | 56 | `?` |
+| Config (Local AppData) | `crisoltheaterofidols-config` | 62 | `?` |
+| Saves (Local AppData) | `crisoltheaterofidols-save` | 64 | `?` |
+
+## Mod Installers
+
+Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
+
+| Installer ID | Priority |
+| --- | --- |
+| `ue5-pak-installer` | 29 |
+| `crisoltheaterofidols-ue4sscombo` | 26 |
+| `crisoltheaterofidols-logicmods` | 27 |
+| `crisoltheaterofidols-ue4ss` | 31 |
+| `crisoltheaterofidols-scripts` | 35 |
+| `crisoltheaterofidols-ue4ssdll` | 37 |
+| `crisoltheaterofidols-root` | 39 |
+| `crisoltheaterofidols-config` | 41 |
+| `crisoltheaterofidols-save` | 43 |
+| `crisoltheaterofidols-binaries` | 49 |
+
+## Toolbar Actions
+
+These buttons appear in the Vortex mod-icons toolbar when this game is active:
+
+- Open Paks Folder
+- Open Binaries Folder
+- Open UE4SS Mods Folder
+- Open LogicMods Folder
+- Open Config Folder
+- Open Saves Folder
+- Download UE4SS
+- Open UE4SS Settings INI
+- Open UE4SS mods.json
+- Open PCGamingWiki Page
+- View Changelog
+- Submit Bug Report
+- Open Downloads Folder
 
 ## Auto-Downloaded Dependencies
 
@@ -65,19 +109,3 @@ Mod types define where each category of mod gets deployed:
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

@@ -14,6 +14,8 @@
 | --- | --- |
 | Game ID | `inzoi` |
 | Executable | `inZOI.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1241](https://www.nexusmods.com/site/mods/1241) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/InZOI](https://www.pcgamingwiki.com/wiki/InZOI) |
 
 ## Supported Stores
 
@@ -34,15 +36,27 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
-| UE5KITMOD_NAME | `UE5KITMOD_ID` | high | `UE5KITMOD_PATH` |
-| Save | `inzoi-save` | high | `SAVE_PATH` |
-| CREATIONS_NAME | `CREATIONS_ID` | high | `CREATIONS_PATH` |
-| AIGENERATED_NAME | `AIGENERATED_ID` | high | `AIGENERATED_PATH` |
-| CANVAS_NAME | `CANVAS_ID` | high | `CANVAS_PATH` |
-| MY3DPRINTER_NAME | `MY3DPRINTER_ID` | high | `MY3DPRINTER_PATH` |
-| MYAPPEARANCES_NAME | `MYAPPEARANCES_ID` | high | `MYAPPEARANCES_PATH` |
-| ANIMATIONS_NAME | `ANIMATIONS_ID` | high | `ANIMATIONS_PATH` |
-| TEXTURES_NAME | `TEXTURES_ID` | high | `TEXTURES_PATH` |
+| UE5 MODKit Pak Mod | `inzoi-ue5modkitpak` | high | `DOCUMENTS/inZOI/Mods` |
+| Save | `inzoi-save` | high | `DOCUMENTS/inZOI/SaveGames/USERID_FOLDER` |
+| Creations (Documents) | `inzoi-creations` | high | `DOCUMENTS/inZOI` |
+| AIGenerated (Documents) | `inzoi-aigenerated` | high | `DOCUMENTS/inZOI` |
+| Canvas (Documents) | `inzoi-canvas` | high | `DOCUMENTS/inZOI` |
+| My3DPrinter (Documents) | `inzoi-my3dprinter` | high | `DOCUMENTS/inZOI/AIGenerated/My3DPrinter` |
+| MyAppearances (Documents) | `inzoi-myappearances` | high | `DOCUMENTS/inZOI/Creations/MyAppearances` |
+| Animations (Documents) | `inzoi-animations` | high | `DOCUMENTS/inZOI/AIGenerated/MyAIMotions` |
+| Textures (Documents) | `inzoi-textures` | high | `DOCUMENTS/inZOI/Creations/MyTextures` |
+| UE5 Sortable Mod | `inzoi-ue5-sortable-modtype` | 25 | `?` |
+| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `?` |
+| inzoi-config | `inzoi-config` | 50 | `?` |
+| UE4SS Script-LogicMod Combo | `inzoi-ue4sscombo` | 51 | `?` |
+| UE4SS LogicMods (Blueprint) | `inzoi-logicmods` | 52 | `?` |
+| UE4SS | `inzoi-ue4ss` | 53 | `?` |
+| UE4SS Script Mod | `inzoi-scripts` | 54 | `?` |
+| UE4SS DLL Mod | `inzoi-ue4ssdll` | 54 | `?` |
+| Paks (no ~mods) | `inzoi-pak` | 55 | `?` |
+| Mod Enabler | `inzoi-modenabler` | 56 | `?` |
+| Root Game Folder | `inzoi-root` | 57 | `?` |
+| Binaries (Engine Injector) | `inzoi-binaries` | 58 | `?` |
 
 ## Mod Installers
 
@@ -51,6 +65,44 @@ Installers run in priority order (lower number = tested first). The first instal
 | Installer ID | Priority |
 | --- | --- |
 | `ue5-pak-installer` | 28 |
+| `inzoi-ue4sscombo` | 25 |
+| `inzoi-logicmods` | 26 |
+| `inzoi-ue5modkitpak` | 27 |
+| `inzoi-ue4ss` | 29 |
+| `inzoi-modenabler` | 30 |
+| `inzoi-scripts` | 31 |
+| `inzoi-ue4ssdll` | 32 |
+| `inzoi-creations` | 33 |
+| `inzoi-aigenerated` | 24 |
+| `inzoi-canvas` | 35 |
+| `inzoi-my3dprinter` | 36 |
+| `inzoi-myappearances` | 37 |
+| `inzoi-animations` | 38 |
+| `inzoi-textures` | 39 |
+| `inzoi-root` | 40 |
+| `inzoi-config` | 41 |
+| `inzoi-save` | 42 |
+| `inzoi-binaries` | 43 |
+
+## Toolbar Actions
+
+These buttons appear in the Vortex mod-icons toolbar when this game is active:
+
+- Download Mod Enabler (Legacy)
+- Open MODKit Mods Folder (Documents)
+- Open MODKit Folder (Epic)
+- Open Legacy Pak Mods Folder
+- Open Binaries Folder
+- Open UE4SS Mods Folder
+- Open LogicMods Folder
+- Open Config Folder (Local AppData)
+- Open Saves Folder (Documents)
+- Open inZOI Documents Folder
+- Download UE4SS
+- Open PCGamingWiki Page
+- View Changelog
+- Submit Bug Report
+- Open Downloads Folder
 
 ## Auto-Downloaded Dependencies
 
@@ -65,19 +117,3 @@ Installers run in priority order (lower number = tested first). The first instal
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

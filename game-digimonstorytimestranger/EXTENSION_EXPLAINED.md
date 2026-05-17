@@ -15,6 +15,8 @@
 | Game ID | `digimonstorytimestranger` |
 | Executable | `Digimon Story Time Stranger.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1480](https://www.nexusmods.com/site/mods/1480) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Digimon_Story%3A_Time_Stranger](https://www.pcgamingwiki.com/wiki/Digimon_Story%3A_Time_Stranger) |
 
 ## Supported Stores
 
@@ -29,7 +31,7 @@ Mod types define where each category of mod gets deployed:
 | Reloaded Mod | `digimonstorytimestranger-reloadedmod` | high | `{gamePath}/Reloaded/Mods` |
 | Mod Loader | `digimonstorytimestranger-reloadedmodloader` | low | `{gamePath}/Reloaded/Mods/` |
 | Reloaded-II Mod Manager | `digimonstorytimestranger-reloadedmanager` | low | `{gamePath}` |
-| Save File | `digimonstorytimestranger-save` | high | `{gamePath}/SAVE_PATH` |
+| Save File | `digimonstorytimestranger-save` | high | `{gamePath}/gamedata/savedata/` |
 
 ## Mod Installers
 
@@ -46,6 +48,7 @@ Installers run in priority order (lower number = tested first). The first instal
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - Download Reloaded Mod Manager
+- Open Save Folder
 - View Changelog
 - Open Downloads Folder
 - Open PCGamingWiki Page
@@ -61,7 +64,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 | Type | Path |
 | --- | --- |
-| Save | `gamedata/savedata` |
+| Save | `gamedata/savedata/` |
 
 ## Special Features
 
@@ -70,19 +73,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

@@ -14,6 +14,8 @@
 | --- | --- |
 | Game ID | `unchartedlegacyofthievescollection` |
 | Executable | `u4-l.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1048](https://www.nexusmods.com/site/mods/1048) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Uncharted%3A_Legacy_of_Thieves_Collection](https://www.pcgamingwiki.com/wiki/Uncharted%3A_Legacy_of_Thieves_Collection) |
 
 ## Supported Stores
 
@@ -43,9 +45,9 @@ Installers run in priority order (lower number = tested first). The first instal
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Launch Uncharted 4**
-- **Launch Uncharted TLL**
-- **Fluffy Mod Manager**
+- **Launch Uncharted 4** (`u4-l.exe`)
+- **Launch Uncharted TLL** (`tll-l.exe`)
+- **Fluffy Mod Manager** (`modmanager.exe`)
 
 ## Toolbar Actions
 
@@ -67,18 +69,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

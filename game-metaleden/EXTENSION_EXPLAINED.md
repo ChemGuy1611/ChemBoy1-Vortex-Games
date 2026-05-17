@@ -14,6 +14,8 @@
 | --- | --- |
 | Game ID | `metaleden` |
 | Executable | `MetalEden.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1425](https://www.nexusmods.com/site/mods/1425) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Metal_Eden](https://www.pcgamingwiki.com/wiki/Metal_Eden) |
 
 ## Supported Stores
 
@@ -36,15 +38,19 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
-| UE4SSCOMBO_NAME | `UE4SSCOMBO_ID` | high | `{gamePath}` |
-| LOGICMODS_NAME | `LOGICMODS_ID` | high | `{gamePath}/LOGICMODS_PATH` |
-| UE4SS_NAME | `UE4SS_ID` | high | `{gamePath}/MetalEden/Binaries/Win64` |
-| SCRIPTS_NAME | `SCRIPTS_ID` | high | `{gamePath}/SCRIPTS_PATH` |
-| DLL_NAME | `DLL_ID` | high | `{gamePath}/DLL_PATH` |
+| UE4SS Script-LogicMod Combo | `metaleden-ue4sscombo` | high | `{gamePath}` |
+| UE4SS LogicMods (Blueprint) | `metaleden-logicmods` | high | `{gamePath}/MetalEden/Content/Paks/LogicMods` |
+| UE4SS | `metaleden-ue4ss` | high | `{gamePath}/MetalEden/Binaries/Win64` |
+| UE4SS Script Mod | `metaleden-scripts` | high | `{gamePath}/MetalEden/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `metaleden-ue4ssdll` | high | `{gamePath}/MetalEden/Binaries/Win64/ue4ss/Mods` |
 | Paks (no ~mods) | `metaleden-pak` | low | `{gamePath}/MetalEden/Content/Paks` |
 | Root Game Folder | `metaleden-root` | high | `{gamePath}` |
 | Content Folder | `metaleden-contentfolder` | high | `{gamePath}/MetalEden` |
 | Binaries (Engine Injector) | `metaleden-binaries` | high | `{gamePath}/MetalEden/Binaries/Win64` |
+| UE Sortable Pak Mod | `metaleden-uesortablepak` | 25 | `?` |
+| Sig Bypass | `metaleden-sigbypass` | 60 | `?` |
+| Config | `metaleden-config` | 45 | `?` |
+| Saves | `metaleden-save` | 47 | `?` |
 
 ## Mod Installers
 
@@ -52,12 +58,13 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
-| `UE4SSCOMBO_ID` | 25 |
-| `LOGICMODS_ID` | 27 |
-| `UE4SS_ID` | 31 |
-| `SIGBYPASS_ID` | 32 |
-| `SCRIPTS_ID` | 33 |
-| `DLL_ID` | 35 |
+| `ue5-pak-installer` | 29 |
+| `metaleden-ue4sscombo` | 25 |
+| `metaleden-logicmods` | 27 |
+| `metaleden-ue4ss` | 31 |
+| `metaleden-sigbypass` | 32 |
+| `metaleden-scripts` | 33 |
+| `metaleden-ue4ssdll` | 35 |
 | `metaleden-root` | 37 |
 | `metaleden-contentfolder` | 38 |
 | `metaleden-config` | 39 |
@@ -68,7 +75,7 @@ Installers run in priority order (lower number = tested first). The first instal
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch**
+- **Custom Launch** (`MetalEden.exe`)
 
 ## Toolbar Actions
 
@@ -99,18 +106,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Signature Bypass** — .sig file bypass is required for pak mods.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

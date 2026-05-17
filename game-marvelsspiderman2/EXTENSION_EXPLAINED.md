@@ -14,6 +14,8 @@
 | --- | --- |
 | Game ID | `marvelsspiderman2` |
 | Executable | `Spider-Man2.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1166](https://www.nexusmods.com/site/mods/1166) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Marvel's_Spider-Man_2](https://www.pcgamingwiki.com/wiki/Marvel's_Spider-Man_2) |
 
 ## Supported Stores
 
@@ -44,7 +46,12 @@ Installers run in priority order (lower number = tested first). The first instal
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - TOC Reset (After Update)
+- .NET 7 Download Page
 - Open Save Folder
+- Open PCGamingWiki Page
+- View Changelog
+- Submit Bug Report
+- Open Downloads Folder
 
 ## Special Features
 
@@ -55,19 +62,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 - **Required Extensions** — depends on: `Vortex Steam File Downloader`.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

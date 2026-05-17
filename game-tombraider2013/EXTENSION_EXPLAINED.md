@@ -15,6 +15,8 @@
 | Game ID | `tombraider2013` |
 | Executable | `TombRaider.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/893](https://www.nexusmods.com/site/mods/893) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Tomb_Raider_%282013%29](https://www.pcgamingwiki.com/wiki/Tomb_Raider_%282013%29) |
 
 ## Supported Stores
 
@@ -29,11 +31,11 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
-| BINARIES_NAME | `BINARIES_ID` | high | `{gamePath}` |
-| MANAGERMOD_NAME | `MANAGERMOD_ID` | high | `{gamePath}/MANAGERMOD_PATH` |
-| TEXMODPACK_NAME | `TEXMODPACK_ID` | high | `{gamePath}/TEXMODPACK_PATH` |
-| MANAGER_NAME | `MANAGER_ID` | low | `{gamePath}` |
-| TEXMOD_NAME | `TEXMOD_ID` | low | `{gamePath}` |
+| Binaries / Root Folder | `tombraider2013-binaries` | high | `{gamePath}` |
+| Manager Mod | `tombraider2013-managermod` | high | `{gamePath}/Mods` |
+| TexMod Pack | `tombraider2013-texmodpack` | high | `{gamePath}/TexMod` |
+| TR Reboot Mod Manager | `tombraider2013-trmodmanager` | low | `{gamePath}` |
+| TexMod | `tombraider2013-texmod` | low | `{gamePath}` |
 
 ## Mod Installers
 
@@ -41,10 +43,10 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
-| `MANAGER_ID` | 25 |
-| `TEXMOD_ID` | 27 |
-| `TEXMODPACK_ID` | 29 |
-| `MANAGERMOD_ID` | 31 |
+| `tombraider2013-trmodmanager` | 25 |
+| `tombraider2013-texmod` | 27 |
+| `tombraider2013-texmodpack` | 29 |
+| `tombraider2013-managermod` | 31 |
 
 ## Toolbar Actions
 
@@ -65,19 +67,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

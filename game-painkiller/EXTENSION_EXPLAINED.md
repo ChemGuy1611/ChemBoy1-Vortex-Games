@@ -16,6 +16,8 @@
 | Executable | `Painkiller.exe` |
 | Executable (GOG) | `Painkiller.exe` |
 | Executable (Demo) | `Painkiller.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1505](https://www.nexusmods.com/site/mods/1505) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Painkiller](https://www.pcgamingwiki.com/wiki/Painkiller) |
 
 ## Supported Stores
 
@@ -37,15 +39,18 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
-| UE4SSCOMBO_NAME | `UE4SSCOMBO_ID` | high | `{gamePath}` |
-| LOGICMODS_NAME | `LOGICMODS_ID` | high | `{gamePath}/LOGICMODS_PATH` |
-| UE4SS_NAME | `UE4SS_ID` | high | `{gamePath}/Painkiller/Binaries/Win64` |
-| SCRIPTS_NAME | `SCRIPTS_ID` | high | `{gamePath}/SCRIPTS_PATH` |
-| DLL_NAME | `DLL_ID` | high | `{gamePath}/DLL_PATH` |
+| UE4SS Script-LogicMod Combo | `painkiller-ue4sscombo` | high | `{gamePath}` |
+| UE4SS LogicMods (Blueprint) | `painkiller-logicmods` | high | `{gamePath}/Painkiller/Content/Paks/LogicMods` |
+| UE4SS | `painkiller-ue4ss` | high | `{gamePath}/Painkiller/Binaries/Win64` |
+| UE4SS Script Mod | `painkiller-scripts` | high | `{gamePath}/Painkiller/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `painkiller-ue4ssdll` | high | `{gamePath}/Painkiller/Binaries/Win64/ue4ss/Mods` |
 | Paks (no ~mods) | `painkiller-pakalt` | low | `{gamePath}/Painkiller/Content/Paks` |
 | Root Game Folder | `painkiller-root` | high | `{gamePath}` |
 | Content Folder | `painkiller-contentfolder` | high | `{gamePath}/Painkiller` |
 | Binaries (Engine Injector) | `painkiller-binaries` | high | `{gamePath}/Painkiller/Binaries/Win64` |
+| UE Sortable Pak Mod | `painkiller-uesortablepak` | 25 | `?` |
+| Config | `painkiller-config` | 45 | `?` |
+| Saves | `painkiller-save` | 47 | `?` |
 
 ## Mod Installers
 
@@ -53,12 +58,12 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
-| `UE4SSCOMBO_ID` | 25 |
-| `LOGICMODS_ID` | 27 |
-| `UE4SS_ID` | 31 |
-| `SIGBYPASS_ID` | 32 |
-| `SCRIPTS_ID` | 33 |
-| `DLL_ID` | 35 |
+| `ue5-pak-installer` | 29 |
+| `painkiller-ue4sscombo` | 25 |
+| `painkiller-logicmods` | 27 |
+| `painkiller-ue4ss` | 31 |
+| `painkiller-scripts` | 33 |
+| `painkiller-ue4ssdll` | 35 |
 | `painkiller-root` | 37 |
 | `painkiller-contentfolder` | 38 |
 | `painkiller-config` | 39 |
@@ -69,8 +74,8 @@ Installers run in priority order (lower number = tested first). The first instal
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch**
-- **Demo Launch**
+- **Custom Launch** (`Painkiller.exe`)
+- **Demo Launch** (`Painkiller.exe`)
 
 ## Toolbar Actions
 
@@ -100,18 +105,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

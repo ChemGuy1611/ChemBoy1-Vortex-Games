@@ -14,6 +14,8 @@
 | --- | --- |
 | Game ID | `rvthereyet` |
 | Executable | `Ride.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1509](https://www.nexusmods.com/site/mods/1509) |
+| PCGamingWiki | [XXX](XXX) |
 
 ## Supported Stores
 
@@ -35,15 +37,18 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
-| UE4SSCOMBO_NAME | `UE4SSCOMBO_ID` | high | `{gamePath}` |
-| LOGICMODS_NAME | `LOGICMODS_ID` | high | `{gamePath}/LOGICMODS_PATH` |
-| UE4SS_NAME | `UE4SS_ID` | high | `{gamePath}/Ride/Binaries/Win64` |
-| SCRIPTS_NAME | `SCRIPTS_ID` | high | `{gamePath}/SCRIPTS_PATH` |
-| DLL_NAME | `DLL_ID` | high | `{gamePath}/DLL_PATH` |
+| UE4SS Script-LogicMod Combo | `rvthereyet-ue4sscombo` | high | `{gamePath}` |
+| UE4SS LogicMods (Blueprint) | `rvthereyet-logicmods` | high | `{gamePath}/Ride/Content/Paks/LogicMods` |
+| UE4SS | `rvthereyet-ue4ss` | high | `{gamePath}/Ride/Binaries/Win64` |
+| UE4SS Script Mod | `rvthereyet-scripts` | high | `{gamePath}/Ride/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `rvthereyet-ue4ssdll` | high | `{gamePath}/Ride/Binaries/Win64/ue4ss/Mods` |
 | Paks (no ~mods) | `rvthereyet-pakalt` | low | `{gamePath}/Ride/Content/Paks` |
 | Root Game Folder | `rvthereyet-root` | high | `{gamePath}` |
 | Content Folder | `rvthereyet-contentfolder` | high | `{gamePath}/Ride` |
 | Binaries (Engine Injector) | `rvthereyet-binaries` | high | `{gamePath}/Ride/Binaries/Win64` |
+| UE Sortable Pak Mod | `rvthereyet-uesortablepak` | 25 | `?` |
+| Config | `rvthereyet-config` | 45 | `?` |
+| Saves | `rvthereyet-save` | 47 | `?` |
 
 ## Mod Installers
 
@@ -51,12 +56,12 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
-| `UE4SSCOMBO_ID` | 25 |
-| `LOGICMODS_ID` | 27 |
-| `UE4SS_ID` | 31 |
-| `SIGBYPASS_ID` | 32 |
-| `SCRIPTS_ID` | 33 |
-| `DLL_ID` | 35 |
+| `ue5-pak-installer` | 29 |
+| `rvthereyet-ue4sscombo` | 25 |
+| `rvthereyet-logicmods` | 27 |
+| `rvthereyet-ue4ss` | 31 |
+| `rvthereyet-scripts` | 33 |
+| `rvthereyet-ue4ssdll` | 35 |
 | `rvthereyet-root` | 37 |
 | `rvthereyet-contentfolder` | 38 |
 | `rvthereyet-config` | 39 |
@@ -67,8 +72,8 @@ Installers run in priority order (lower number = tested first). The first instal
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch**
-- **Demo Launch**
+- **Custom Launch** (`Ride.exe`)
+- **Demo Launch** (`EXEC_DEMO`)
 
 ## Toolbar Actions
 
@@ -100,19 +105,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

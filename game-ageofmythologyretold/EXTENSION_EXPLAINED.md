@@ -15,6 +15,8 @@
 | Game ID | `ageofmythologyretold` |
 | Executable | `N/A` |
 | Executable (Xbox) | `AoMRT.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1028](https://www.nexusmods.com/site/mods/1028) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Age_of_Mythology%3A_Retold](https://www.pcgamingwiki.com/wiki/Age_of_Mythology%3A_Retold) |
 
 ## Supported Stores
 
@@ -29,8 +31,8 @@ Mod types define where each category of mod gets deployed:
 | --- | --- | --- | --- |
 | Game Data Folder | `ageofmythologyretold-data` | high | `{gamePath}/game` |
 | Binaries / Root Game Folder | `ageofmythologyretold-binaries` | high | `{gamePath}` |
-| Config (UserGames) | `CONFIG_ID` | high | `CONFIG_PATH` |
-| Save (UserGames) | `SAVE_ID` | high | `SAVE_PATH` |
+| Config (UserGames) | `ageofmythologyretold-config` | high | `util.getVortexPath('home'/USERID_FOLDER/users` |
+| Save (UserGames) | `ageofmythologyretold-save` | high | `util.getVortexPath('home'/USERID_FOLDER/savegames` |
 
 ## Mod Installers
 
@@ -58,18 +60,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

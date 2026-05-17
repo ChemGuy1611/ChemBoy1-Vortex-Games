@@ -14,6 +14,8 @@
 | --- | --- |
 | Game ID | `thelastofuspart2` |
 | Executable | `launcher.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1250](https://www.nexusmods.com/site/mods/1250) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/The_Last_of_Us_Part_II_Remastered](https://www.pcgamingwiki.com/wiki/The_Last_of_Us_Part_II_Remastered) |
 
 ## Supported Stores
 
@@ -38,9 +40,9 @@ Mod types define where each category of mod gets deployed:
 | Build Folder | `thelastofuspart2-buildfolder` | high | `{gamePath}/.` |
 | bin Folder | `thelastofuspart2-binfolder` | high | `{gamePath}/build/pc/main` |
 | Pak (actor97) | `thelastofuspart2-pak` | high | `{gamePath}/build/pc/main` |
-| Save | `thelastofuspart2-save` | high | `SAVE_PATH` |
-| CONFIG_NAME | `CONFIG_ID` | high | `CONFIG_PATH` |
-| PSARCTOOL_NAME | `PSARCTOOL_ID` | low | `{gamePath}/build/pc/main` |
+| Save | `thelastofuspart2-save` | high | `DOCUMENTS/The Last of Us Part II/USERID_FOLDER/savedata` |
+| Config | `thelastofuspart2-config` | high | `USER_HOME/SOFTWARE/Naughty Dog/The Last of Us Part II` |
+| ndarc Tool | `thelastofuspart2-psarctoolndarc` | low | `{gamePath}/build/pc/main` |
 | ND Mod Loader | `thelastofuspart2-modloader` | low | `{gamePath}/.` |
 
 ## Mod Installers
@@ -56,14 +58,14 @@ Installers run in priority order (lower number = tested first). The first instal
 | `thelastofuspart2-pak` | 33 |
 | `thelastofuspart2-buildfolder` | 35 |
 | `thelastofuspart2-save` | 37 |
-| `CONFIG_ID` | 39 |
-| `PSARCTOOL_ID` | 41 |
+| `thelastofuspart2-config` | 39 |
+| `thelastofuspart2-psarctoolndarc` | 41 |
 
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch**
+- **Custom Launch** (`launcher.exe`)
 
 ## Toolbar Actions
 
@@ -90,19 +92,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

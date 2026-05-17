@@ -15,6 +15,8 @@
 | Game ID | `sifu` |
 | Executable | `Sifu.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1063](https://www.nexusmods.com/site/mods/1063) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Sifu](https://www.pcgamingwiki.com/wiki/Sifu) |
 
 ## Supported Stores
 
@@ -32,6 +34,13 @@ Mod types define where each category of mod gets deployed:
 | UE4SS Script-LogicMod Combo | `sifu-ue4sscombo` | high | `{gamePath}` |
 | Root Game Folder | `sifu-root` | high | `{gamePath}` |
 | Paks | `sifu-pak` | high | `{gamePath}/Sifu/Content/Paks/~mods` |
+| UE Sortable Pak Mod | `sifu-ue5-sortable-modtype` | 25 | `?` |
+| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `?` |
+| UE4SS Scripts | `sifu-scripts` | 40 | `?` |
+| Config (LocalAppData) | `sifu-config` | 45 | `?` |
+| Saves (LocalAppData) | `sifu-save` | 50 | `?` |
+| Binaries (Engine Injector) | `sifu-binaries` | 55 | `?` |
+| UE4SS | `sifu-ue4ss` | 60 | `?` |
 
 ## Mod Installers
 
@@ -53,7 +62,7 @@ Installers run in priority order (lower number = tested first). The first instal
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Launch Modded Game**
+- **Launch Modded Game** (`EXEC`)
 
 ## Toolbar Actions
 
@@ -78,18 +87,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

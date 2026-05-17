@@ -15,6 +15,8 @@
 | Game ID | `lostsoulaside` |
 | Executable | `LostSoulAside.exe` |
 | Executable (Demo) | `LostSoulAsideDemo.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1415](https://www.nexusmods.com/site/mods/1415) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Lost_Soul_Aside](https://www.pcgamingwiki.com/wiki/Lost_Soul_Aside) |
 
 ## Supported Stores
 
@@ -37,15 +39,19 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
-| UE4SSCOMBO_NAME | `UE4SSCOMBO_ID` | high | `{gamePath}` |
-| LOGICMODS_NAME | `LOGICMODS_ID` | high | `{gamePath}/LOGICMODS_PATH` |
-| UE4SS_NAME | `UE4SS_ID` | high | `{gamePath}/Projectlsa/Binaries/Win64` |
-| SCRIPTS_NAME | `SCRIPTS_ID` | high | `{gamePath}/SCRIPTS_PATH` |
-| DLL_NAME | `DLL_ID` | high | `{gamePath}/DLL_PATH` |
+| UE4SS Script-LogicMod Combo | `lostsoulaside-ue4sscombo` | high | `{gamePath}` |
+| UE4SS LogicMods (Blueprint) | `lostsoulaside-logicmods` | high | `{gamePath}/Projectlsa/Content/Paks/LogicMods` |
+| UE4SS | `lostsoulaside-ue4ss` | high | `{gamePath}/Projectlsa/Binaries/Win64` |
+| UE4SS Script Mod | `lostsoulaside-scripts` | high | `{gamePath}/Projectlsa/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `lostsoulaside-ue4ssdll` | high | `{gamePath}/Projectlsa/Binaries/Win64/ue4ss/Mods` |
 | Paks (no ~mods) | `lostsoulaside-pak` | low | `{gamePath}/Projectlsa/Content/Paks` |
 | Root Game Folder | `lostsoulaside-root` | high | `{gamePath}` |
 | Content Folder | `lostsoulaside-contentfolder` | high | `{gamePath}` |
 | Binaries (Engine Injector) | `lostsoulaside-binaries` | high | `{gamePath}/Projectlsa/Binaries/Win64` |
+| UE Sortable Pak Mod | `lostsoulaside-uesortablepak` | 25 | `?` |
+| Sig Bypass | `lostsoulaside-sigbypass` | 60 | `?` |
+| Config | `lostsoulaside-config` | 45 | `?` |
+| Saves | `lostsoulaside-save` | 47 | `?` |
 
 ## Mod Installers
 
@@ -53,12 +59,13 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
-| `UE4SSCOMBO_ID` | 25 |
-| `LOGICMODS_ID` | 27 |
-| `UE4SS_ID` | 31 |
-| `SIGBYPASS_ID` | 32 |
-| `SCRIPTS_ID` | 33 |
-| `DLL_ID` | 35 |
+| `ue5-pak-installer` | 29 |
+| `lostsoulaside-ue4sscombo` | 25 |
+| `lostsoulaside-logicmods` | 27 |
+| `lostsoulaside-ue4ss` | 31 |
+| `lostsoulaside-sigbypass` | 32 |
+| `lostsoulaside-scripts` | 33 |
+| `lostsoulaside-ue4ssdll` | 35 |
 | `lostsoulaside-root` | 37 |
 | `lostsoulaside-contentfolder` | 38 |
 | `lostsoulaside-config` | 39 |
@@ -69,8 +76,8 @@ Installers run in priority order (lower number = tested first). The first instal
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Demo Launch**
-- **Custom Launch**
+- **Demo Launch** (`LostSoulAsideDemo.exe`)
+- **Custom Launch** (`LostSoulAside.exe`)
 
 ## Toolbar Actions
 
@@ -101,18 +108,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

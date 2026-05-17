@@ -17,6 +17,8 @@
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 | Executable (GOG) | `HighOnLife2.exe` |
 | Executable (Demo) | `HighOnLife2.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1648](https://www.nexusmods.com/site/mods/1648) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/High_on_Life_2](https://www.pcgamingwiki.com/wiki/High_on_Life_2) |
 
 ## Supported Stores
 
@@ -46,11 +48,51 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
-| UE4SSCOMBO_NAME | `UE4SSCOMBO_ID` | high | `{gamePath}` |
-| LOGICMODS_NAME | `LOGICMODS_ID` | high | `{gamePath}/LOGICMODS_PATH` |
+| UE4SS Script-LogicMod Combo | `highonlife2-ue4sscombo` | high | `{gamePath}` |
+| UE4SS LogicMods (Blueprint) | `highonlife2-logicmods` | high | `{gamePath}/HighOnLife2/Content/Paks` |
 | Paks (no "~mods") | `highonlife2-pakalt` | high | `{gamePath}/HighOnLife2/Content/Paks` |
 | Root Game Folder | `highonlife2-root` | high | `{gamePath}` |
 | Root Sub-Folders | `highonlife2-rootsubfolders` | high | `{gamePath}/HighOnLife2` |
+| UE Sortable Pak Mod | `highonlife2-uesortablepak` | 25 | `?` |
+| UE4SS Script Mod | `highonlife2-scripts` | 50 | `?` |
+| UE4SS DLL Mod | `highonlife2-ue4ssdll` | 52 | `?` |
+| Binaries (Engine Injector) | `highonlife2-binaries` | 54 | `?` |
+| UE4SS | `highonlife2-ue4ss` | 56 | `?` |
+| Config (Local AppData) | `highonlife2-config` | 62 | `?` |
+| Saves (Local AppData) | `highonlife2-save` | 64 | `?` |
+
+## Mod Installers
+
+Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
+
+| Installer ID | Priority |
+| --- | --- |
+| `ue5-pak-installer` | 29 |
+| `highonlife2-ue4sscombo` | 26 |
+| `highonlife2-logicmods` | 27 |
+| `highonlife2-ue4ss` | 31 |
+| `highonlife2-scripts` | 35 |
+| `highonlife2-ue4ssdll` | 37 |
+| `highonlife2-root` | 39 |
+| `highonlife2-config` | 41 |
+| `highonlife2-save` | 43 |
+| `highonlife2-binaries` | 49 |
+
+## Toolbar Actions
+
+These buttons appear in the Vortex mod-icons toolbar when this game is active:
+
+- Open Paks Folder
+- Open Binaries Folder
+- Open UE4SS Mods Folder
+- Open LogicMods Folder
+- Open Config Folder
+- Open Saves Folder
+- Download UE4SS
+- Open PCGamingWiki Page
+- View Changelog
+- Open Downloads Folder
+- Submit Bug Report
 
 ## Auto-Downloaded Dependencies
 
@@ -69,19 +111,3 @@ Mod types define where each category of mod gets deployed:
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

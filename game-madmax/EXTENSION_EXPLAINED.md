@@ -17,6 +17,8 @@
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 | Executable (GOG) | `MadMax.exe` |
 | Executable (Demo) | `MadMax.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1844](https://www.nexusmods.com/site/mods/1844) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Mad_Max](https://www.pcgamingwiki.com/wiki/Mad_Max) |
 
 ## Supported Stores
 
@@ -55,16 +57,13 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
-| `madmax-loader` | 25 |
 | `madmax-root` | 27 |
-| `madmax-mod` | 35 |
-| `madmax-fallback` | 49 |
 
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch**
+- **Custom Launch** (`MadMax.exe`)
 
 ## Toolbar Actions
 
@@ -92,18 +91,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

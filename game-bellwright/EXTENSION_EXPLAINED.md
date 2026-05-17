@@ -14,7 +14,8 @@
 | --- | --- |
 | Game ID | `bellwright` |
 | Executable | `BellwrightGame.exe` |
-| PCGamingWiki | XXX |
+| Extension Page | [https://www.nexusmods.com/site/mods/1065](https://www.nexusmods.com/site/mods/1065) |
+| PCGamingWiki | [XXX](XXX) |
 
 ## Supported Stores
 
@@ -45,6 +46,8 @@ Mod types define where each category of mod gets deployed:
 | Binaries (Engine Injector) | `bellwright-binaries` | high | `{gamePath}/Bellwright/Binaries/Win64` |
 | UE4SS | `bellwright-ue4ss` | low | `{gamePath}/Bellwright/Binaries/Win64` |
 | Signature Bypass | `bellwright-sigbypass` | low | `{gamePath}/Bellwright/Binaries/Win64` |
+| UE Sortable Mod | `bellwright-ue5-sortable-modtype` | 25 | `?` |
+| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `?` |
 
 ## Mod Installers
 
@@ -52,6 +55,7 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
+| `ue5-pak-installer` | 29 |
 | `bellwright-ue4sscombo` | 25 |
 | `bellwright-logicmods` | 27 |
 | `bellwright-ue5modkitpak` | 29 |
@@ -65,7 +69,7 @@ Installers run in priority order (lower number = tested first). The first instal
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch**
+- **Custom Launch** (`BellwrightGame.exe`)
 
 ## Toolbar Actions
 
@@ -100,18 +104,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

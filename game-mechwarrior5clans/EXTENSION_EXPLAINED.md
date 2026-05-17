@@ -15,6 +15,8 @@
 | Game ID | `mechwarrior5clans` |
 | Executable | `MechWarrior.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1074](https://www.nexusmods.com/site/mods/1074) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/MechWarrior_5%3A_Clans](https://www.pcgamingwiki.com/wiki/MechWarrior_5%3A_Clans) |
 
 ## Supported Stores
 
@@ -41,6 +43,11 @@ Mod types define where each category of mod gets deployed:
 | Root Game Folder | `mechwarrior5clans-root` | high | `{gamePath}` |
 | UE5 Paks | `mechwarrior5clans-ue5` | high | `{gamePath}/MW5Clans/Content/Paks/~mods` |
 | UE5 Paks (no "~mods") | `mechwarrior5clans-pakalt` | high | `{gamePath}/MW5Clans/Content/Paks` |
+| UE5 Sortable Mod | `mechwarrior5clans-ue5-sortable-modtype` | 25 | `?` |
+| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `?` |
+| UE4SS Scripts | `mechwarrior5clans-scripts` | 40 | `?` |
+| Binaries (Engine Injector) | `mechwarrior5clans-binaries` | 65 | `?` |
+| UE4SS | `mechwarrior5clans-ue4ss` | 70 | `?` |
 
 ## Mod Installers
 
@@ -60,7 +67,7 @@ Installers run in priority order (lower number = tested first). The first instal
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Launch Modded Game**
+- **Launch Modded Game** (`MechWarrior.exe`)
 
 ## Toolbar Actions
 
@@ -85,18 +92,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

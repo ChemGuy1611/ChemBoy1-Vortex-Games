@@ -1,4 +1,4 @@
-# Pathologic 2 Vortex Extension — Vortex Extension Explained
+# Pathologic 2 — Vortex Extension Explained
 
 ## Overview
 
@@ -12,8 +12,26 @@
 
 | Property | Value |
 | --- | --- |
-| Game ID | `game-pathologic2` |
-| Executable | `N/A` |
+| Game ID | `pathologic2` |
+| Executable | `Pathologic.exe` |
+| Executable (Xbox) | `gamelaunchhelper.exe` |
+| Executable (GOG) | `Pathologic.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1631](https://www.nexusmods.com/site/mods/1631) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Pathologic_2](https://www.pcgamingwiki.com/wiki/Pathologic_2) |
+
+## Supported Stores
+
+- **Steam** — `505230`
+- **GOG** — `1076642617`
+
+## Feature Flags
+
+| Flag | Value | Description |
+| --- | --- | --- |
+| `hasLoader` | `true` | true if game needs a mod loader |
+| `rootInstaller` | `true` | enable root installer. Usually disabled to avoid installer collisions |
+| `fallbackInstaller` | `true` | enable fallback installer. Usually disabled to avoid installer collisions |
+| `debug` | `false` | toggle for debug mode |
 
 ## Mod Types
 
@@ -21,9 +39,10 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
-| MOD_NAME | `MOD_ID` | high | `{gamePath}/MOD_PATH` |
-| ROOT_NAME | `ROOT_ID` | high | `{gamePath}` |
-| BINARIES_NAME | `BINARIES_ID` | high | `{gamePath}/BINARIES_PATH` |
+| Mod | `pathologic2-mod` | high | `{gamePath}/Mods` |
+| Root Folder | `pathologic2-root` | high | `{gamePath}` |
+| Binaries (Engine Injector) | `pathologic2-binaries` | high | `{gamePath}/.` |
+| P2ModLoader | `pathologic2-loader` | 70 | `?` |
 
 ## Mod Installers
 
@@ -31,17 +50,17 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
-| `LOADER_ID` | 25 |
-| `MOD_ID` | 27 |
-| `ROOT_ID` | 29 |
-| `GAME_ID-fallback` | 49 |
+| `pathologic2-loader` | 25 |
+| `pathologic2-mod` | 27 |
+| `pathologic2-root` | 29 |
+| `pathologic2-fallback` | 49 |
 
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch** (`EXEC`)
-- **Custom Launch** (`EXEC_XBOX`)
+- **Custom Launch** (`Pathologic.exe`)
+- **Custom Launch** (`gamelaunchhelper.exe`)
 
 ## Toolbar Actions
 
@@ -54,25 +73,17 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Open Downloads Folder
 - Submit Bug Report
 
+## Auto-Downloaded Dependencies
+
+| Dependency | Version | Details |
+| --- | --- | --- |
+| P2ModLoader | — | — |
+
 ## Special Features
 
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
+- **GOG Support** — detects GOG version with adjusted executable/data paths.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

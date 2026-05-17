@@ -13,11 +13,21 @@
 | --- | --- |
 | Game ID | `horizonforbiddenwest` |
 | Executable | `HorizonForbiddenWest.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/844](https://www.nexusmods.com/site/mods/844) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Horizon_Forbidden_West](https://www.pcgamingwiki.com/wiki/Horizon_Forbidden_West) |
 
 ## Supported Stores
 
 - **Steam** — `2420110`
 - **Epic Games Store** — `2efe99166b8847e9bcd80c571b05e1b6`
+
+## Feature Flags
+
+| Flag | Value | Description |
+| --- | --- | --- |
+| `modManagerInstalled` | `false` |  |
+| `repackerInstalled` | `false` |  |
+| `loaderChoice` | `false` | toggle for choice of mod packer |
 
 ## Mod Types
 
@@ -25,10 +35,10 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
-| MANAGERMOD_NAME | `MANAGERMOD_ID` | high | `{gamePath}/MANAGERMOD_PATH` |
-| MODMANAGER_NAME | `MODMANAGER_ID` | low | `{gamePath}` |
-| REPACKER_NAME | `REPACKER_ID` | low | `{gamePath}` |
-| Save Game (Documents) | `horizonforbiddenwest-save` | low | `SAVE_PATH` |
+| HFW Manager Mod | `horizonforbiddenwest-managermod` | high | `{gamePath}/mods` |
+| HFW Mod Manager | `horizonforbiddenwest-modmanager` | low | `{gamePath}` |
+| Repacker | `horizonforbiddenwest-repacker` | low | `{gamePath}` |
+| Save Game (Documents) | `horizonforbiddenwest-save` | low | `userDocsPathString/Horizon Forbidden West Complete Edition/USERID_FOLDER` |
 
 ## Mod Installers
 
@@ -36,8 +46,7 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
-| `REPACKER_ID` | 25 |
-| `MANAGERMOD_ID` | 27 |
+| `horizonforbiddenwest-managermod` | 27 |
 | `horizonforbiddenwest-save` | 25 |
 
 ## Toolbar Actions
@@ -60,19 +69,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

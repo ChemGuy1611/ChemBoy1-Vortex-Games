@@ -15,6 +15,8 @@
 | Game ID | `nioh2` |
 | Executable | `nioh2.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1628](https://www.nexusmods.com/site/mods/1628) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Nioh_2:_The_Complete_Edition](https://www.pcgamingwiki.com/wiki/Nioh_2:_The_Complete_Edition) |
 
 ## Supported Stores
 
@@ -30,8 +32,8 @@ Mod types define where each category of mod gets deployed:
 | Mod | `nioh2-mod` | high | `{gamePath}/Mods` |
 | Root Folder | `nioh2-root` | high | `{gamePath}` |
 | Mod Loader | `nioh2-loader` | low | `{gamePath}/.` |
-| Config | `nioh2-config` | low | `{gamePath}/CONFIG_PATH` |
-| Save | `nioh2-save` | low | `{gamePath}/SAVE_PATH` |
+| Config | `nioh2-config` | low | `{gamePath}/CONFIGMOD_LOCATION/KoeiTecmo/NIOH2/CONFIG_FOLDERNAME` |
+| Save | `nioh2-save` | low | `{gamePath}/SAVEMOD_LOCATION/KoeiTecmo/NIOH2/Savedata/USERID_FOLDER` |
 
 ## Mod Installers
 
@@ -47,7 +49,7 @@ Installers run in priority order (lower number = tested first). The first instal
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch**
+- **Custom Launch** (`nioh2.exe`)
 
 ## Toolbar Actions
 
@@ -74,18 +76,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

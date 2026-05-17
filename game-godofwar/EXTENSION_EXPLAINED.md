@@ -14,6 +14,8 @@
 | --- | --- |
 | Game ID | `godofwar` |
 | Executable | `GoW.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/340](https://www.nexusmods.com/site/mods/340) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/God_of_War](https://www.pcgamingwiki.com/wiki/God_of_War) |
 
 ## Supported Stores
 
@@ -31,15 +33,48 @@ Mod types define where each category of mod gets deployed:
 | exec subfolder | `godofwar-execsub` | high | `{gamePath}/exec` |
 | Texpack/Lodpack | `godofwar-pack` | high | `{gamePath}/exec/patch/pc_le` |
 | Texpack/Lodpack | `godofwar-pack` | high | `{gamePath}/exec/patch/pc_le` |
-| LUAMOD_NAME | `LUAMOD_ID` | high | `{gamePath}/LUAMOD_PATH` |
-| Save (User Home) | `godofwar-save` | high | `SAVE_PATH` |
-| LOADER_NAME | `LOADER_ID` | low | `{gamePath}` |
+| Lua Mod | `godofwar-luamod` | high | `{gamePath}/mods` |
+| Save (User Home) | `godofwar-save` | high | `USER_HOME/Saved Games/God of War/USERID_FOLDER` |
+| Script Loader | `godofwar-scriptloader` | low | `{gamePath}` |
+
+## Mod Installers
+
+Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
+
+| Installer ID | Priority |
+| --- | --- |
+| `godofwar-scriptloader` | 25 |
+| `godofwar-data` | 27 |
+| `godofwar-patchfolder` | 29 |
+| `godofwar-execsub` | 31 |
+| `godofwar-pack` | 33 |
+| `godofwar-luamod` | 35 |
+| `godofwar-save` | 37 |
 
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch**
+- **Custom Launch** (`GoW.exe`)
+
+## Toolbar Actions
+
+These buttons appear in the Vortex mod-icons toolbar when this game is active:
+
+- Download ${LOADER_NAME}
+- Open Settings INI
+- Open boot-options.json
+- Open Script Loader Config
+- Open PCGamingWiki Page
+- View Changelog
+- Submit Bug Report
+- Open Downloads Folder
+
+## Auto-Downloaded Dependencies
+
+| Dependency | Version | Details |
+| --- | --- | --- |
+| Script Loader | — | — |
 
 ## Special Features
 
@@ -49,19 +84,3 @@ These tools appear in Vortex's Tools panel when this game is active:
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

@@ -14,6 +14,8 @@
 | --- | --- |
 | Game ID | `nobodywantstodie` |
 | Executable | `detnoir.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/975](https://www.nexusmods.com/site/mods/975) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Nobody_Wants_to_Die](https://www.pcgamingwiki.com/wiki/Nobody_Wants_to_Die) |
 
 ## Supported Stores
 
@@ -39,6 +41,8 @@ Mod types define where each category of mod gets deployed:
 | UE5 Paks | `nobodywantstodie-ue5` | high | `{gamePath}/detnoir/Content/Paks/~mods` |
 | Paks (Alt, no "~mods") | `nobodywantstodie-pakalt` | high | `{gamePath}/detnoir/Content/Paks` |
 | Root Game Folder | `nobodywantstodie-root` | high | `{gamePath}` |
+| UE5 Sortable Mod | `nobodywantstodie-ue5-sortable-modtype` | 25 | `?` |
+| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `?` |
 
 ## Mod Installers
 
@@ -69,18 +73,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

@@ -14,6 +14,8 @@
 | --- | --- |
 | Game ID | `farcry6` |
 | Executable | `bin/FarCry6.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1477](https://www.nexusmods.com/site/mods/1477) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Far_Cry_6](https://www.pcgamingwiki.com/wiki/Far_Cry_6) |
 
 ## Supported Stores
 
@@ -29,9 +31,9 @@ Mod types define where each category of mod gets deployed:
 | Binaries (Engine Injector) | `farcry6-binaries` | high | `{gamePath}/bin` |
 | Game Data | `farcry6-data` | high | `{gamePath}/data_final/pc` |
 | FC Mod Installer | `farcry6-modinstaller` | high | `{gamePath}/FCModInstaller` |
-| MIMOD_NAME | `MIMOD_ID` | high | `{gamePath}/MIMOD_PATH` |
-| MIMODA3_NAME | `MIMODA3_ID` | high | `{gamePath}/MIMOD_PATH` |
-| XML Settings Mod | `farcry6-xml` | high | `XML_PATH` |
+| FCMI Mod (.a2/.a3/.a4/.a5/.bin) | `farcry6-mimod` | high | `{gamePath}/FCModInstaller/ModifiedFilesFC6` |
+| Repacked FCMI Mod | `farcry6-mimoda3` | high | `{gamePath}/FCModInstaller/ModifiedFilesFC6` |
+| XML Settings Mod | `farcry6-xml` | high | `DOCUMENTS/My Games/Far Cry 6/USERID_FOLDER` |
 
 ## Mod Installers
 
@@ -43,15 +45,15 @@ Installers run in priority order (lower number = tested first). The first instal
 | `farcry6-root` | 27 |
 | `farcry6-data` | 29 |
 | `farcry6-binaries` | 31 |
-| `MIMODA3_ID` | 33 |
-| `MIMOD_ID` | 35 |
+| `farcry6-mimoda3` | 33 |
+| `farcry6-mimod` | 35 |
 | `farcry6-xml` | 37 |
 
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch**
+- **Custom Launch** (`bin/FarCry6.exe`)
 
 ## Toolbar Actions
 
@@ -79,19 +81,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

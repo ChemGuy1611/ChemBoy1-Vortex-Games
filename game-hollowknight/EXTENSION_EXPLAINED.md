@@ -16,6 +16,8 @@
 | Executable | `hollow_knight.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 | Executable (GOG) | `Hollow Knight.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/376](https://www.nexusmods.com/site/mods/376) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Hollow_Knight](https://www.pcgamingwiki.com/wiki/Hollow_Knight) |
 
 ## Supported Stores
 
@@ -40,6 +42,8 @@ Mod types define where each category of mod gets deployed:
 | Root Game Folder | `hollowknight-root` | high | `{gamePath}` |
 | BepInEx Configuration Manager | `hollowknight-bepcfgman` | high | `{gamePath}/Bepinex` |
 | BepInEx Mod | `hollowknight-bepmods` | high | `{gamePath}/BepinEx/plugins` |
+| Assembly DLL Mod | `hollowknight-assemblydll` | 60 | `?` |
+| Assets/Resources File | `hollowknight-assets` | 62 | `?` |
 
 ## Mod Installers
 
@@ -78,6 +82,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 | Dependency | Version | Details |
 | --- | --- | --- |
 | BepInEx | 5.4.23.5 | unitymono, x64 |
+| BepInEx Configuration Manager | 18.4.1 | — |
 
 ## Config & Save Paths
 
@@ -93,18 +98,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 - **Required Extensions** — depends on: `modtype-bepinex`.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

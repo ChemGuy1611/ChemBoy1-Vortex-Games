@@ -14,6 +14,8 @@
 | --- | --- |
 | Game ID | `monsterhunterwilds` |
 | Executable | `MonsterHunterWilds.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1149](https://www.nexusmods.com/site/mods/1149) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Monster_Hunter_Wilds](https://www.pcgamingwiki.com/wiki/Monster_Hunter_Wilds) |
 
 ## Supported Stores
 
@@ -50,7 +52,7 @@ Installers run in priority order (lower number = tested first). The first instal
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch**
+- **Custom Launch** (`MonsterHunterWilds.exe`)
 
 ## Toolbar Actions
 
@@ -81,19 +83,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

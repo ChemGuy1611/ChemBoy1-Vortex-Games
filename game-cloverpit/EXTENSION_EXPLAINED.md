@@ -15,6 +15,8 @@
 | Game ID | `cloverpit` |
 | Executable | `CloverPit.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1496](https://www.nexusmods.com/site/mods/1496) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/CloverPit](https://www.pcgamingwiki.com/wiki/CloverPit) |
 
 ## Supported Stores
 
@@ -42,16 +44,34 @@ Mod types define where each category of mod gets deployed:
 | BepInEx Injector | `cloverpit-bepinex` | low | `{gamePath}` |
 | MelonLoader | `cloverpit-melonloader` | low | `{gamePath}` |
 
+## Mod Installers
+
+Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
+
+| Installer ID | Priority |
+| --- | --- |
+| `cloverpit-bepinex` | 25 |
+| `cloverpit-melonloader` | 26 |
+| `cloverpit-root` | 27 |
+| `cloverpit-bepcfgman` | 29 |
+| `cloverpit-assemblydll` | 31 |
+| `cloverpit-plugin` | 33 |
+| `cloverpit-assets` | 37 |
+
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch**
+- **Custom Launch** (`CloverPit.exe`)
 
 ## Toolbar Actions
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
+- Open Saves Folder
+- Open Data Folder
+- View Changelog
+- Open Downloads Folder
 - Open PCGamingWiki Page
 - Submit Bug Report
 
@@ -60,6 +80,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 | Dependency | Version | Details |
 | --- | --- | --- |
 | BepInEx | 5.4.23.5 | mono |
+| BepInEx Configuration Manager | 18.4.1 | — |
 
 ## Config & Save Paths
 
@@ -74,19 +95,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

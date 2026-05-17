@@ -17,6 +17,8 @@
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 | Executable (GOG) | `TEKKEN 8.exe` |
 | Executable (Demo) | `TEKKEN 8 Demo.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1833](https://www.nexusmods.com/site/mods/1833) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Tekken_8](https://www.pcgamingwiki.com/wiki/Tekken_8) |
 
 ## Supported Stores
 
@@ -48,11 +50,47 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
-| UE4SSCOMBO_NAME | `UE4SSCOMBO_ID` | high | `{gamePath}` |
-| LOGICMODS_NAME | `LOGICMODS_ID` | high | `{gamePath}/LOGICMODS_PATH` |
+| UE4SS Script-LogicMod Combo | `tekken8-ue4sscombo` | high | `{gamePath}` |
+| UE4SS LogicMods (Blueprint) | `tekken8-logicmods` | high | `{gamePath}/Polaris/Content/Paks` |
 | Paks (no "~mods") | `tekken8-pakalt` | high | `{gamePath}/Polaris/Content/Paks` |
 | Root Game Folder | `tekken8-root` | high | `{gamePath}` |
 | Root Sub-Folders | `tekken8-rootsubfolders` | high | `{gamePath}/Polaris` |
+| UE Sortable Pak Mod | `tekken8-uesortablepak` | 25 | `?` |
+| UE4SS Script Mod | `tekken8-scripts` | 50 | `?` |
+| UE4SS DLL Mod | `tekken8-ue4ssdll` | 52 | `?` |
+| Binaries (Engine Injector) | `tekken8-binaries` | 54 | `?` |
+| UE4SS | `tekken8-ue4ss` | 56 | `?` |
+| Config (Local AppData) | `tekken8-config` | 62 | `?` |
+| Saves (Local AppData) | `tekken8-save` | 64 | `?` |
+
+## Mod Installers
+
+Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
+
+| Installer ID | Priority |
+| --- | --- |
+| `tekken8-ue4sscombo` | 26 |
+| `tekken8-uesortablepak` | 29 |
+| `tekken8-ue4ss` | 31 |
+| `tekken8-scripts` | 35 |
+| `tekken8-ue4ssdll` | 37 |
+| `tekken8-root` | 39 |
+| `tekken8-config` | 41 |
+| `tekken8-save` | 43 |
+| `tekken8-binaries` | 49 |
+
+## Toolbar Actions
+
+These buttons appear in the Vortex mod-icons toolbar when this game is active:
+
+- Open Paks Folder
+- Open Binaries Folder
+- Open Config Folder
+- Open Saves Folder
+- Open PCGamingWiki Page
+- View Changelog
+- Submit Bug Report
+- Open Downloads Folder
 
 ## Auto-Downloaded Dependencies
 
@@ -69,19 +107,3 @@ Mod types define where each category of mod gets deployed:
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

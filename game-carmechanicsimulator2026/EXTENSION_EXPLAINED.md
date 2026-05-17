@@ -17,7 +17,8 @@
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 | Executable (GOG) | `Car Mechanic Simulator 2026.exe` |
 | Executable (Demo) | `Car Mechanic Simulator 2026 Demo.exe` |
-| Extension Page | XXX |
+| Extension Page | [XXX](XXX) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Car_Mechanic_Simulator_2026](https://www.pcgamingwiki.com/wiki/Car_Mechanic_Simulator_2026) |
 
 ## Supported Stores
 
@@ -48,10 +49,6 @@
 | `allowMelonNexus` | `true` | allows MelonLoader to be downloaded from Nexus Mods |
 | `useMelonNightly` | `false` | use Nightly build of MelonLoader? |
 | `customInstalled` | `false` |  |
-| `isCustom` | `false` |  |
-| `unknown` | `false` |  |
-| `fileTest` | `false` |  |
-| `fileTest` | `false` |  |
 
 ## Mod Types
 
@@ -73,17 +70,39 @@ Mod types define where each category of mod gets deployed:
 | Root Game Folder | `carmechanicsimulator2026-root` | high | `{gamePath}` |
 | BepInEx Injector | `carmechanicsimulator2026-bepinex` | low | `{gamePath}` |
 | MelonLoader | `carmechanicsimulator2026-melonloader` | low | `{gamePath}` |
+| Assembly DLL Mod | `carmechanicsimulator2026-assemblydll` | 60 | `?` |
+| Assets/Resources File | `carmechanicsimulator2026-assets` | 62 | `?` |
+
+## Mod Installers
+
+Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
+
+| Installer ID | Priority |
+| --- | --- |
+| `carmechanicsimulator2026-bepinex` | 26 |
+| `carmechanicsimulator2026-melonloader` | 27 |
+| `carmechanicsimulator2026-root` | 28 |
+| `carmechanicsimulator2026-bepcfgman` | 29 |
+| `carmechanicsimulator2026-melonprefman` | 30 |
+| `carmechanicsimulator2026-assemblydll` | 31 |
+| `carmechanicsimulator2026-plugin` | 33 |
+| `carmechanicsimulator2026-assets` | 37 |
+| `carmechanicsimulator2026-fallback` | 49 |
 
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch**
+- **Custom Launch** (`Car Mechanic Simulator 2026.exe`)
 
 ## Toolbar Actions
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
+- Download Latest BepInEx BE (Browse)
+- Download BepInExConfigManager
+- Download Latest MelonLoader
+- Download MelonPreferencesManager
 - Open Data Folder
 - Open Save Folder
 - Open BepInEx Config
@@ -101,6 +120,12 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 | --- | --- | --- |
 | BepInEx | 5.4.23.5 | il2cpp |
 
+## Config & Save Paths
+
+| Type | Path |
+| --- | --- |
+| Config (Registry) | `HKEY_CURRENT_USER\\Software\\Red Dot Games\\Car Mechanic Simulator 2026` |
+
 ## Special Features
 
 - **Deploy Hook** (`did-deploy`) — runs custom logic (e.g., notifications, metadata patching) every time mods are deployed.
@@ -110,19 +135,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

@@ -15,6 +15,8 @@
 | Game ID | `mortalkombat` |
 | Executable | `MK12.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1066](https://www.nexusmods.com/site/mods/1066) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Mortal_Kombat_1](https://www.pcgamingwiki.com/wiki/Mortal_Kombat_1) |
 
 ## Supported Stores
 
@@ -47,6 +49,22 @@ Mod types define where each category of mod gets deployed:
 | UE4SS | `mortalkombat-ue4ss` | low | `{gamePath}/MK12/Binaries/Win64` |
 | UE4SS Scripts | `mortalkombat-scripts` | high | `{gamePath}/MK12/Binaries/Win64/ue4ss/Mods` |
 | Signature Bypass | `mortalkombat-sigbypass` | low | `{gamePath}/MK12/Binaries/Win64` |
+| UE Sortable Mod | `mortalkombat-ue5-sortable-modtype` | 25 | `?` |
+| Legacy UE - REINSTALL TO SORT | `ue5-sortable-modtype` | 65 | `?` |
+
+## Mod Installers
+
+Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
+
+| Installer ID | Priority |
+| --- | --- |
+| `ue5-pak-installer` | 35 |
+| `mortalkombat-ue4ss-logicscriptcombo` | 25 |
+| `mortalkombat-ue4ss-logicmod` | 30 |
+| `mortalkombat-ue4ss` | 40 |
+| `mortalkombat-sigbypass` | 45 |
+| `mortalkombat-ue4ss-scripts` | 50 |
+| `mortalkombat-root` | 55 |
 
 ## Registered Tools
 
@@ -54,7 +72,7 @@ These tools appear in Vortex's Tools panel when this game is active:
 
 - **Launch Modded Game** (`MK12.exe`)
 - **Launch Modded Game** (`gamelaunchhelper.exe`)
-- **Sig Bypass Patch**
+- **Sig Bypass Patch** (`patch_proj.exe`)
 
 ## Toolbar Actions
 
@@ -87,19 +105,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

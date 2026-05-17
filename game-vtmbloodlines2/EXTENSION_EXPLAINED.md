@@ -14,6 +14,8 @@
 | --- | --- |
 | Game ID | `vtmbloodlines2` |
 | Executable | `Bloodlines2.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1500](https://www.nexusmods.com/site/mods/1500) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Vampire%3A_The_Masquerade_-_Bloodlines_2](https://www.pcgamingwiki.com/wiki/Vampire%3A_The_Masquerade_-_Bloodlines_2) |
 
 ## Supported Stores
 
@@ -46,6 +48,9 @@ Mod types define where each category of mod gets deployed:
 | Root Game Folder | `vtmbloodlines2-root` | high | `{gamePath}` |
 | Content Folder | `vtmbloodlines2-contentfolder` | high | `{gamePath}/Bloodlines2` |
 | Binaries (Engine Injector) | `vtmbloodlines2-binaries` | high | `{gamePath}/Bloodlines2/Binaries/Win64` |
+| UE Sortable Pak Mod | `vtmbloodlines2-uesortablepak` | 25 | `?` |
+| Config | `vtmbloodlines2-config` | 45 | `?` |
+| Saves | `vtmbloodlines2-save` | 47 | `?` |
 
 ## Mod Installers
 
@@ -53,10 +58,10 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
+| `ue5-pak-installer` | 29 |
 | `vtmbloodlines2-ue4sscombo` | 25 |
 | `vtmbloodlines2-logicmods` | 27 |
 | `vtmbloodlines2-ue4ss` | 31 |
-| `vtmbloodlines2-sigbypass` | 32 |
 | `vtmbloodlines2-scripts` | 33 |
 | `vtmbloodlines2-ue4ssdll` | 35 |
 | `vtmbloodlines2-root` | 37 |
@@ -69,8 +74,8 @@ Installers run in priority order (lower number = tested first). The first instal
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch**
-- **Demo Launch**
+- **Custom Launch** (`Bloodlines2.exe`)
+- **Demo Launch** (`EXEC_DEMO`)
 
 ## Toolbar Actions
 
@@ -101,18 +106,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

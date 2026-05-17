@@ -15,6 +15,8 @@
 | Game ID | `monsterhunterstories3twistedreflection` |
 | Executable | `MONSTER_HUNTER_STORIES_3_TWISTED_REFLECTION.exe` |
 | Executable (Demo) | `MONSTER_HUNTER_STORIES_3_TWISTED_REFLECTION_TRIAL.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1740](https://www.nexusmods.com/site/mods/1740) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Monster_Hunter_Stories_3:_Twisted_Reflection](https://www.pcgamingwiki.com/wiki/Monster_Hunter_Stories_3:_Twisted_Reflection) |
 
 ## Supported Stores
 
@@ -38,6 +40,8 @@ Mod types define where each category of mod gets deployed:
 | Loose Lua (REFramework) | `monsterhunterstories3twistedreflection-looselua` | high | `{gamePath}/.` |
 | Fluffy Mod Manager | `monsterhunterstories3twistedreflection-fluffymanager` | low | `{gamePath}` |
 | REFramework | `monsterhunterstories3twistedreflection-reframework` | low | `{gamePath}` |
+| Fluffy Mod | `monsterhunterstories3twistedreflection-fluffymod` | 25 | `?` |
+| Fluffy Preset | `monsterhunterstories3twistedreflection-preset` | 40 | `?` |
 
 ## Mod Installers
 
@@ -57,8 +61,8 @@ Installers run in priority order (lower number = tested first). The first instal
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch**
-- **Custom Launch (Demo)**
+- **Custom Launch** (`MONSTER_HUNTER_STORIES_3_TWISTED_REFLECTION.exe`)
+- **Custom Launch (Demo)** (`MONSTER_HUNTER_STORIES_3_TWISTED_REFLECTION_TRIAL.exe`)
 
 ## Toolbar Actions
 
@@ -66,6 +70,10 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - Open Config File
 - Open Save Folder (Steam)
+- Open PCGamingWiki Page
+- View Changelog
+- Submit Bug Report
+- Open Downloads Folder
 
 ## Auto-Downloaded Dependencies
 
@@ -79,6 +87,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 | Type | Path |
 | --- | --- |
 | Config | `.` |
+| Save | `/userdata` |
 
 ## Special Features
 
@@ -88,19 +97,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

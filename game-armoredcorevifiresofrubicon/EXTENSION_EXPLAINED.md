@@ -17,7 +17,8 @@
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 | Executable (GOG) | `./XXX.exe` |
 | Executable (Demo) | `./XXX.exe` |
-| Extension Page | XXX |
+| Extension Page | [XXX](XXX) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Armored_Core_VI%3A_Fires_of_Rubicon](https://www.pcgamingwiki.com/wiki/Armored_Core_VI%3A_Fires_of_Rubicon) |
 
 ## Supported Stores
 
@@ -58,7 +59,6 @@ Installers run in priority order (lower number = tested first). The first instal
 | --- | --- |
 | `armoredcorevifiresofrubicon-me3` | 25 |
 | `armoredcorevifiresofrubicon-root` | 27 |
-| `armoredcorevifiresofrubicon-binaries` | 29 |
 | `armoredcorevifiresofrubicon-mod` | 35 |
 | `armoredcorevifiresofrubicon-fallback` | 49 |
 
@@ -91,18 +91,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

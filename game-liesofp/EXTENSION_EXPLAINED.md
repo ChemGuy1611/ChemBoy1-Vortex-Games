@@ -15,6 +15,8 @@
 | Game ID | `liesofp` |
 | Executable | `N/A` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/852](https://www.nexusmods.com/site/mods/852) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Lies_of_P](https://www.pcgamingwiki.com/wiki/Lies_of_P) |
 
 ## Supported Stores
 
@@ -29,6 +31,9 @@ Mod types define where each category of mod gets deployed:
 | --- | --- | --- | --- |
 | Paks | `liesofp-pak` | low | `{gamePath}/LiesofP/Content/Paks/~mods` |
 | Root Game Folder | `liesofp-root` | high | `{gamePath}` |
+| Binaries (Engine Injector) | `liesofp-binaries` | 40 | `?` |
+| Config (LocalAppData) | `liesofp-config` | 45 | `?` |
+| Save | `liesofp-save` | 50 | `?` |
 
 ## Mod Installers
 
@@ -73,18 +78,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 - **Required Extensions** — depends on: `Unreal Engine Mod Installer`.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

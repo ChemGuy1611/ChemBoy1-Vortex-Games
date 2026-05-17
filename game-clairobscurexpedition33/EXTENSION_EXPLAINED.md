@@ -16,6 +16,8 @@
 | Executable | `Expedition33_Steam.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 | Executable (GOG) | `SandFallGOG.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1279](https://www.nexusmods.com/site/mods/1279) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Clair_Obscur:_Expedition_33](https://www.pcgamingwiki.com/wiki/Clair_Obscur:_Expedition_33) |
 
 ## Supported Stores
 
@@ -43,11 +45,42 @@ Mod types define where each category of mod gets deployed:
 | Root Game Folder | `clairobscurexpedition33-root` | high | `{gamePath}` |
 | Content Folder | `clairobscurexpedition33-contentfolder` | high | `{gamePath}/Sandfall` |
 | UE5 Paks (no "~mods") | `clairobscurexpedition33-pakalt` | high | `{gamePath}/Sandfall/Content/Paks` |
+| UE5 Sortable Mod | `clairobscurexpedition33-ue5-sortable-modtype` | 25 | `?` |
+| UE4SS Script Mod | `clairobscurexpedition33-scripts` | 50 | `?` |
+| UE4SS DLL Mod | `clairobscurexpedition33-ue4ssdll` | 52 | `?` |
+| Binaries (Engine Injector) | `clairobscurexpedition33-binaries` | 54 | `?` |
+| UE4SS | `clairobscurexpedition33-ue4ss` | 56 | `?` |
+| Config (LocalAppData) | `clairobscurexpedition33-config` | 58 | `?` |
+| Saves (LocalAppData) | `clairobscurexpedition33-save` | 60 | `?` |
+
+## Mod Installers
+
+Installers run in priority order (lower number = tested first). The first installer whose test returns `supported: true` handles the archive.
+
+| Installer ID | Priority |
+| --- | --- |
+| `ue5-pak-installer` | 29 |
+| `clairobscurexpedition33-ue4sscombo` | 25 |
+| `clairobscurexpedition33-logicmods` | 27 |
+| `clairobscurexpedition33-ue4ss` | 31 |
+| `clairobscurexpedition33-scripts` | 33 |
+| `clairobscurexpedition33-ue4ssdll` | 35 |
+| `clairobscurexpedition33-root` | 37 |
+| `clairobscurexpedition33-contentfolder` | 39 |
+| `clairobscurexpedition33-config` | 41 |
+| `clairobscurexpedition33-save` | 43 |
+| `clairobscurexpedition33-binaries` | 45 |
 
 ## Toolbar Actions
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
+- Open Paks Folder
+- Open Binaries Folder
+- Open UE4SS Mods Folder
+- Open Config Folder
+- Open Saves Folder
+- Download UE4SS
 - Open UE4SS Settings INI
 - Open UE4SS mods.json
 - Open PCGamingWiki Page
@@ -72,19 +105,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **GOG Support** — detects GOG version with adjusted executable/data paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

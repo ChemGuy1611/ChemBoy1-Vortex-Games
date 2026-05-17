@@ -14,6 +14,8 @@
 | --- | --- |
 | Game ID | `titanquest2` |
 | Executable | `TQ2.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1430](https://www.nexusmods.com/site/mods/1430) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Titan_Quest_II](https://www.pcgamingwiki.com/wiki/Titan_Quest_II) |
 
 ## Supported Stores
 
@@ -36,15 +38,18 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
-| UE4SSCOMBO_NAME | `UE4SSCOMBO_ID` | high | `{gamePath}` |
-| LOGICMODS_NAME | `LOGICMODS_ID` | high | `{gamePath}/LOGICMODS_PATH` |
-| UE4SS_NAME | `UE4SS_ID` | high | `{gamePath}/TQ2/Binaries/Win64` |
-| SCRIPTS_NAME | `SCRIPTS_ID` | high | `{gamePath}/SCRIPTS_PATH` |
-| DLL_NAME | `DLL_ID` | high | `{gamePath}/DLL_PATH` |
+| UE4SS Script-LogicMod Combo | `titanquest2-ue4sscombo` | high | `{gamePath}` |
+| UE4SS LogicMods (Blueprint) | `titanquest2-logicmods` | high | `{gamePath}/TQ2/Content/Paks/LogicMods` |
+| UE4SS | `titanquest2-ue4ss` | high | `{gamePath}/TQ2/Binaries/Win64` |
+| UE4SS Script Mod | `titanquest2-scripts` | high | `{gamePath}/TQ2/Binaries/Win64/ue4ss/Mods` |
+| UE4SS DLL Mod | `titanquest2-ue4ssdll` | high | `{gamePath}/TQ2/Binaries/Win64/ue4ss/Mods` |
 | Paks (no ~mods) | `titanquest2-pak` | low | `{gamePath}/TQ2/Content/Paks` |
 | Root Game Folder | `titanquest2-root` | high | `{gamePath}` |
 | Content Folder | `titanquest2-contentfolder` | high | `{gamePath}/TQ2` |
 | Binaries (Engine Injector) | `titanquest2-binaries` | high | `{gamePath}/TQ2/Binaries/Win64` |
+| UE Sortable Pak Mod | `titanquest2-uesortablepak` | 25 | `?` |
+| Config | `titanquest2-config` | 45 | `?` |
+| Saves | `titanquest2-save` | 47 | `?` |
 
 ## Mod Installers
 
@@ -52,12 +57,12 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
-| `UE4SSCOMBO_ID` | 25 |
-| `LOGICMODS_ID` | 27 |
-| `UE4SS_ID` | 31 |
-| `SIGBYPASS_ID` | 32 |
-| `SCRIPTS_ID` | 33 |
-| `DLL_ID` | 35 |
+| `ue5-pak-installer` | 29 |
+| `titanquest2-ue4sscombo` | 25 |
+| `titanquest2-logicmods` | 27 |
+| `titanquest2-ue4ss` | 31 |
+| `titanquest2-scripts` | 33 |
+| `titanquest2-ue4ssdll` | 35 |
 | `titanquest2-root` | 37 |
 | `titanquest2-contentfolder` | 38 |
 | `titanquest2-config` | 39 |
@@ -68,7 +73,7 @@ Installers run in priority order (lower number = tested first). The first instal
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch**
+- **Custom Launch** (`TQ2.exe`)
 
 ## Toolbar Actions
 
@@ -99,18 +104,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

@@ -24,6 +24,8 @@
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 | Executable (GOG) | `bin64/CrimsonDesert.exe` |
 | Executable (Demo) | `bin64/CrimsonDesert.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1746](https://www.nexusmods.com/site/mods/1746) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Crimson_Desert](https://www.pcgamingwiki.com/wiki/Crimson_Desert) |
 
 ## Supported Stores
 
@@ -56,6 +58,7 @@ Mod types define where each category of mod gets deployed:
 | Patch Mod | `crimsondesert-patchmod` | high | `{gamePath}/mods` |
 | Root Folder | `crimsondesert-root` | high | `{gamePath}` |
 | Tools | `crimsondesert-tools` | low | `{gamePath}` |
+| Binaries (Engine Injector) | `crimsondesert-binaries` | high | `{gamePath}/bin64` |
 
 ## Mod Installers
 
@@ -63,7 +66,6 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
-| `crimsondesert-loader` | 25 |
 | `crimsondesert-root` | 27 |
 | `crimsondesert-tools` | 29 |
 | `crimsondesert-specialpatchmod` | 31 |
@@ -80,13 +82,17 @@ Installers run in priority order (lower number = tested first). The first instal
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch**
+- **Custom Launch** (`bin64/CrimsonDesert.exe`)
 
 ## Toolbar Actions
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - Download ${BROWSER_NAME} + Setup
+- Download ${JSON_MANAGER_NAME}
+- Download ${SAVE_EDITOR_NAME}
+- Open Config File
+- Open Save Folder
 - Open PCGamingWiki Page
 - View Changelog
 - Submit Bug Report
@@ -108,19 +114,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

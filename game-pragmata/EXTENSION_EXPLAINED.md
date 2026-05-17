@@ -16,6 +16,8 @@
 | Executable | `PRAGMATA.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 | Executable (Demo) | `PRAGMATA_SKETCHBOOK.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1652](https://www.nexusmods.com/site/mods/1652) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Pragmata](https://www.pcgamingwiki.com/wiki/Pragmata) |
 
 ## Supported Stores
 
@@ -42,6 +44,8 @@ Mod types define where each category of mod gets deployed:
 | Loose Lua/Plugin (REFramework) | `pragmata-looselua` | high | `{gamePath}/.` |
 | Fluffy Mod Manager | `pragmata-fluffymanager` | low | `{gamePath}` |
 | REFramework | `pragmata-reframework` | low | `{gamePath}` |
+| Fluffy Mod | `pragmata-fluffymod` | 25 | `?` |
+| Fluffy Preset | `pragmata-preset` | 40 | `?` |
 
 ## Mod Installers
 
@@ -61,8 +65,8 @@ Installers run in priority order (lower number = tested first). The first instal
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch**
-- **Custom Launch (Demo)**
+- **Custom Launch** (`PRAGMATA.exe`)
+- **Custom Launch (Demo)** (`PRAGMATA_SKETCHBOOK.exe`)
 
 ## Toolbar Actions
 
@@ -88,6 +92,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 | Type | Path |
 | --- | --- |
 | Config | `.` |
+| Save | `/userdata` |
 
 ## Special Features
 
@@ -97,19 +102,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

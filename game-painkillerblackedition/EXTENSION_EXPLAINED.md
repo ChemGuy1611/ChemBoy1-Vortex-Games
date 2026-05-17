@@ -14,6 +14,8 @@
 | --- | --- |
 | Game ID | `painkillerblackedition` |
 | Executable | `Bin/Painkiller.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1506](https://www.nexusmods.com/site/mods/1506) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Painkiller](https://www.pcgamingwiki.com/wiki/Painkiller) |
 
 ## Supported Stores
 
@@ -48,7 +50,7 @@ Installers run in priority order (lower number = tested first). The first instal
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch**
+- **Custom Launch** (`Bin/Painkiller.exe`)
 
 ## Toolbar Actions
 
@@ -57,6 +59,8 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Open moddb.com page
 - Open config.ini
 - Open Save Folder
+- View Changelog
+- Open Downloads Folder
 - Open PCGamingWiki Page
 - Submit Bug Report
 
@@ -71,18 +75,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.
