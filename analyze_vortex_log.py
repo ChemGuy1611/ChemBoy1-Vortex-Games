@@ -6,7 +6,7 @@ Parses the Vortex runtime log and consolidates entries into a single file
 (vortex.analyzed.log) with sections per severity level. Within each section
 entries are grouped by hour, newest-first within each bucket. Multi-line entries
 (stack traces, JSON blobs) are kept together. The output file lands next to
-the source log by default, and the folder is opened on success.
+the source log by default, and the output file is opened on success.
 
 Usage:
     python analyze_vortex_log.py
@@ -31,7 +31,7 @@ Options:
     --summary-only   Print entry counts and exit without writing files.
     --dry-run        Preview output path and counts without writing.
     --force          Overwrite existing output file.
-    --no-open        Do not open the output folder after writing.
+    --no-open        Do not open the output file after writing.
 """
 
 import argparse
@@ -289,7 +289,7 @@ def main() -> None:
     print(f"[OK] Wrote {out}")
 
     if not args.no_open:
-        open_in_default_app(out.parent)
+        open_in_default_app(out)
 
 
 if __name__ == "__main__":

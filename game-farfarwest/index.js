@@ -771,7 +771,7 @@ function testModKitMod(files, gameId) {
 }
 
 //Installer install modkit mod files
-function installModKitMod(files, fileName) {
+async function installModKitMod(files, fileName) {
   const modFile = files.find(file => (path.basename(file).toLowerCase() === MODKITMOD_FILE));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
@@ -783,7 +783,9 @@ function installModKitMod(files, fileName) {
     MOD_FOLDER = MOD_NAME;
   }
   try { //read mod.json file to get folder name (game will crash if this doesn't match)
-    const JSON_OBJECT = JSON.parse(fs.readFileSync(path.join(fileName, rootPath, MODKITMOD_FILE)));
+    let contents = await fs.readFileAsync(path.join(fileName, rootPath, MODKITMOD_FILE), 'utf8');
+    contents = util.deBOM(contents);
+    const JSON_OBJECT = JSON.parse(contents);
     const JSON_MOD_NAME = JSON_OBJECT["modPluginName"];
     MOD_FOLDER = JSON_MOD_NAME;
   } catch (err) { //mod.json could not be read.

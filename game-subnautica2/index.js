@@ -791,7 +791,7 @@ function testModKitMod(files, gameId) {
 }
 
 //Installer install modkit mod files
-function installModKitMod(files, fileName) {
+async function installModKitMod(files, fileName) {
   const modFile = files.find(file => (path.basename(file).toLowerCase() === MODKITMOD_FILE));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
@@ -803,7 +803,9 @@ function installModKitMod(files, fileName) {
     MOD_FOLDER = MOD_NAME;
   }
   try { //read mod.json file to get folder name (game will crash if this doesn't match)
-    const JSON_OBJECT = JSON.parse(fs.readFileSync(path.join(fileName, rootPath, MODKITMOD_FILE)));
+    let contents = await fs.readFileAsync(path.join(fileName, rootPath, MODKITMOD_FILE), 'utf8');
+    contents = util.deBOM(contents);
+    const JSON_OBJECT = JSON.parse(contents);
     const JSON_MOD_NAME = JSON_OBJECT["modPluginName"];
     MOD_FOLDER = JSON_MOD_NAME;
   } catch (err) { //mod.json could not be read.
@@ -2239,12 +2241,23 @@ async function resolveGameVersion(gamePath, exePath) {
   //else { //use version.json
     try {
       await fs.statAsync(READ_FILE);
-      const contents = await fs.readFileAsync(READ_FILE, 'utf8');
+      const rawBuf = await fs.readFileAsync(READ_FILE);
+      let contents;
+      if (rawBuf[0] === 0xFF && rawBuf[1] === 0xFE) {
+        contents = rawBuf.toString('utf16le');
+        if (contents.charCodeAt(0) === 0xFEFF) contents = contents.slice(1);
+      } else if (rawBuf[0] === 0xFE && rawBuf[1] === 0xFF) {
+        rawBuf.swap16();
+        contents = rawBuf.toString('utf16le');
+        if (contents.charCodeAt(0) === 0xFEFF) contents = contents.slice(1);
+      } else {
+        contents = util.deBOM(rawBuf.toString('utf8'));
+      }
       const json = JSON.parse(contents);
-      const rawVersion = json[VERSION_KEY].toString().trim(); //'112084' -> `0.11.2084`
-      log('warn', `Raw version for ${GAME_ID} to: ${rawVersion}`);
-      version = `0.${rawVersion.slice(0, 1)}.${rawVersion.slice(2)}`;
-      log('warn', `Resolved version for ${GAME_ID} to: ${version}`);
+      const rawVersion = json[VERSION_KEY].toString(); //'112084' -> `0.11.2084`
+      log('warn', `Raw version for ${GAME_ID}: ${rawVersion}`);
+      version = `0.${rawVersion.slice(0, 2)}.${rawVersion.slice(2)}`;
+      log('warn', `Resolved version for ${GAME_ID}: ${version}`);
       return Promise.resolve(version); 
     } catch (err) {
       log('error', `Could not read ${READ_FILE} file to get game version: ${err}`);
