@@ -39,7 +39,7 @@
 | `loadOrder` | `false` | true if game needs a load order |
 | `hasLoader` | `false` | true if game needs a mod loader |
 | `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
-| `needsModInstaller` | `true` | set to true if standard mods should run through an installer - set false to have mods installed to the mods folder without any processing |
+| `needsModInstaller` | `false` | whether to install 0000-0035 folder mods to root - DISABLED since mod manager can handle |
 | `rootInstaller` | `true` | enable root installer. Set false if you need to avoid installer collisions |
 | `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |
 | `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below) |
@@ -74,7 +74,6 @@ Installers run in priority order (lower number = tested first). The first instal
 | `crimsondesert-texture` | 34 |
 | `crimsondesert-json` | 35 |
 | `crimsondesert-vortexmod` | 33 |
-| `crimsondesert-mod` | 35 |
 | `crimsondesert-binaries` | 37 |
 | `crimsondesert-fallback` | 49 |
 
@@ -89,7 +88,7 @@ These tools appear in Vortex's Tools panel when this game is active:
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - Download ${BROWSER_NAME} + Setup
-- Download ${JSON_MANAGER_NAME}
+- Download ${DMM_NAME}
 - Download ${SAVE_EDITOR_NAME}
 - Open Config File
 - Open Save Folder

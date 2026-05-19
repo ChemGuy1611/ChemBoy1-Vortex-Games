@@ -4,6 +4,12 @@
 
 - None Planned
 
+## [0.4.0] - 2026-05-19
+
+- Migrated: Now uses Definitive Mod Manager as primary mod installer (JSON Mod Manager is deprecated)
+- Fixed: Mods with a folder 0000-0035 will now install to the mods folder like other mods (to be installed with DMM)
+- Fixed: Issue with Crimson Sharp made mod installer missing files if they did not have a "0000-0035" folder.
+
 ## [0.3.0] - 2026-04-24
 
 - Fixed: Updated support for Crimson Sharp (formerly Crimson Browser)

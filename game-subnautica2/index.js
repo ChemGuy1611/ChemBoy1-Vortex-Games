@@ -3044,7 +3044,7 @@ function Ue4ssLoadOrderPage({ api }) {
   if (!loadOrder.length) {
     return React.createElement(MainPage, null,
       React.createElement(MainPage.Body, null,
-        React.createElement(Spinner)));
+        React.createElement('p', { style: { padding: '12px', fontWeight: 'bold', color: 'yellow' } }, 'No UE4SS mods are installed.')));
   }
 
   return React.createElement(MainPage, null,
