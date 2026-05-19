@@ -316,18 +316,20 @@ internally; do NOT import it from npm.
 
 ```js
 const SET_UE4SS_LOAD_ORDER = `SET_${GAME_ID.toUpperCase()}_UE4SS_LOAD_ORDER`;
-function setUe4ssLoadOrder(lo) { return { type: SET_UE4SS_LOAD_ORDER, payload: lo }; }
+function setUe4ssLoadOrder(profileId, lo) { return { type: SET_UE4SS_LOAD_ORDER, payload: { profileId, loadOrder: lo } }; }
 setUe4ssLoadOrder.toString = () => SET_UE4SS_LOAD_ORDER;
 ```
 
 ### Reducer registration (inside `main(context)`)
 
+State is keyed by `profileId` so switching profiles picks up the correct order without re-reading the file.
+
 ```js
-context.registerReducer(['persistent', 'ue4ssLoadOrder', GAME_ID], {
+context.registerReducer(['persistent', 'ue4ssLoadOrder'], {
   reducers: {
-    [setUe4ssLoadOrder.toString()]: (state, payload) => ({ ...state, loadOrder: payload }),
+    [setUe4ssLoadOrder.toString()]: (state, payload) => util.setSafe(state, [payload.profileId, 'loadOrder'], payload.loadOrder),
   },
-  defaults: { loadOrder: [] },
+  defaults: {},
 });
 ```
 
@@ -360,7 +362,7 @@ until a profile switch.
 ```js
 if (ue4ssLoadOrder && isUe4ssInstalled(api, spec)) {
   const UE4SS_LOAD_ORDER = await deserializeUe4ss(api);
-  api.store.dispatch(setUe4ssLoadOrder(UE4SS_LOAD_ORDER));
+  api.store.dispatch(setUe4ssLoadOrder(profileId, UE4SS_LOAD_ORDER));
   // do NOT call serializeUe4ss here
 }
 ```
@@ -397,13 +399,13 @@ function Ue4ssLoadOrderPage({ api }) {
 
   const profileId = useSelector(state => selectors.activeProfile(state)?.id);
   const loadOrder = useSelector(state =>
-    util.getSafe(state, ['persistent', 'ue4ssLoadOrder', GAME_ID, 'loadOrder'], []));
+    util.getSafe(state, ['persistent', 'ue4ssLoadOrder', profileId, 'loadOrder'], []));
   const dispatch = useDispatch();
   const [filterText, setFilterText] = React.useState('');
 
   React.useEffect(() => {
     if (!profileId) return;
-    deserializeUe4ss(api).then(lo => dispatch(setUe4ssLoadOrder(lo)));
+    deserializeUe4ss(api).then(lo => dispatch(setUe4ssLoadOrder(profileId, lo)));
   }, [profileId]);
 
   const onApply = React.useCallback((reordered) => {
@@ -417,9 +419,9 @@ function Ue4ssLoadOrderPage({ api }) {
     } else {
       newLO = reordered;
     }
-    dispatch(setUe4ssLoadOrder(newLO));
+    dispatch(setUe4ssLoadOrder(profileId, newLO));
     serializeUe4ss(api, newLO); // writes mods.txt + sidecar directly — no deploy needed
-  }, [dispatch, loadOrder, filterText]);
+  }, [dispatch, loadOrder, filterText, profileId]);
 
   const filteredOrder = filterText
     ? loadOrder.filter(e => e.name.toLowerCase().includes(filterText.toLowerCase()))
@@ -480,16 +482,17 @@ function Ue4ssItemRenderer({ className, item }) {
 
   const vortexContext = React.useContext(MainContext);
   const dispatch = useDispatch();
+  const profileId = useSelector(state => selectors.activeProfile(state)?.id);
   const loadOrder = useSelector(state =>
-    util.getSafe(state, ['persistent', 'ue4ssLoadOrder', GAME_ID, 'loadOrder'], []));
+    util.getSafe(state, ['persistent', 'ue4ssLoadOrder', profileId, 'loadOrder'], []));
   const mods = useSelector(state => util.getSafe(state, ['persistent', 'mods', GAME_ID], {}));
   const pictureUrl = mods[item.modId]?.attributes?.pictureUrl;
 
   const onToggle = React.useCallback((evt) => {
     const newLO = loadOrder.map(e => e.id === item.id ? { ...e, enabled: evt.target.checked } : e);
-    dispatch(setUe4ssLoadOrder(newLO));
+    dispatch(setUe4ssLoadOrder(profileId, newLO));
     serializeUe4ss(vortexContext.api, newLO); // immediate write, no deploy
-  }, [dispatch, vortexContext, loadOrder, item]);
+  }, [dispatch, vortexContext, loadOrder, item, profileId]);
 
   const classes = ['load-order-entry'];
   if (className) classes.push(...className.split(' ').filter(Boolean));

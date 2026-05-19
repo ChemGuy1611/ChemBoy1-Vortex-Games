@@ -88,7 +88,7 @@ const UE4SS_FOLDER = 'ue4ss'; //this should probably never change
 const UE4SS_MOD_PATH = path.join(UE4SS_FOLDER, 'Mods'); //this should probably never change (unless UE4SS team changes it again lol)
 
 const SET_UE4SS_LOAD_ORDER = `SET_${GAME_ID.toUpperCase()}_UE4SS_LOAD_ORDER`;
-function setUe4ssLoadOrder(loadOrder) { return { type: SET_UE4SS_LOAD_ORDER, payload: loadOrder }; }
+function setUe4ssLoadOrder(profileId, loadOrder) { return { type: SET_UE4SS_LOAD_ORDER, payload: { profileId, loadOrder } }; }
 setUe4ssLoadOrder.toString = () => SET_UE4SS_LOAD_ORDER;
 
 const SET_UE4SS_LO_ENABLED = `SET_${GAME_ID.toUpperCase()}_UE4SS_LO_ENABLED`;
@@ -695,47 +695,6 @@ async function getAllFiles(dirPath) {
   return results;
 }
 
-async function reconcileEnabledTxt(api, write) {
-  const state = api.getState();
-  const stagingPath = selectors.installPathForGame(state, GAME_ID);
-  if (!stagingPath) return;
-
-  const targets = new Set();
-  await util.walk(stagingPath, (iterPath, stats) => {
-    if (!stats.isDirectory()) return Promise.resolve();
-    const base = path.basename(iterPath).toLowerCase();
-    if (base === 'scripts' || base === 'dlls') {
-      targets.add(path.dirname(iterPath));
-    }
-    return Promise.resolve();
-  }, { ignoreErrors: true });
-
-  let touched = 0;
-  for (const parent of targets) {
-    const marker = path.join(parent, ENABLEDTXT_FILE);
-    try {
-      if (write) {
-        try { await fs.statAsync(marker); }
-        catch { await fs.writeFileAsync(marker, ''); touched++; }
-      } else {
-        try { await fs.removeAsync(marker); touched++; }
-        catch (err) { if (err.code !== 'ENOENT') throw err; }
-      }
-    } catch (err) {
-      log('warn', `${ENABLEDTXT_FILE} ${write ? 'write' : 'delete'} failed at ${marker}: ${err.message}`);
-    }
-  }
-
-  api.sendNotification({
-    id: `${GAME_ID}-ue4ss-lo-reconcile`,
-    type: 'success',
-    message: write
-      ? `UE4SS Load Order disabled: wrote ${ENABLEDTXT_FILE} for ${touched} mod folder(s).`
-      : `UE4SS Load Order enabled: cleared ${ENABLEDTXT_FILE} for ${touched} mod folder(s).`,
-    displayMS: 5000,
-  });
-}
-
 const getDiscoveryPath = (api) => { //get the game's discovered path
   const state = api.getState();
   const discovery = util.getSafe(state, [`settings`, `gameMode`, `discovered`, GAME_ID], {});
@@ -1019,9 +978,10 @@ function testScripts(files, gameId) {
 
 //Install UE4SS Script files
 async function installScripts(api, files, fileName) {
-  let modFile = files.find(file => (path.basename(file).toLowerCase() === SCRIPTS_FOLDER.toLowerCase()));
-  let rootPath = path.dirname(modFile);
+  const scriptsFolder = files.find(file => (path.basename(file).toLowerCase() === SCRIPTS_FOLDER.toLowerCase()));
   const setModTypeInstruction = { type: 'setmodtype', value: SCRIPTS_ID };
+  let modFile = scriptsFolder;
+  let rootPath = path.dirname(modFile);
   const MOD_NAME = path.basename(fileName);
   let MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
   let fallbackName = true;
@@ -1033,18 +993,15 @@ async function installScripts(api, files, fileName) {
     rootPath = path.dirname(modFile);
   }
   const idx = modFile.indexOf(path.basename(modFile));
+  //handle enabled.txt file
   if (!ue4ssLoadOrder || !util.getSafe(api.store.getState(), ['settings', GAME_ID, 'ue4ssLoEnabled'], true)) {
-    const ENABLEDTXT_PATH = path.join(fileName, rootPath, ENABLEDTXT_FILE);
+    const ENABLEDTXT_PATH = path.join(fileName, path.dirname(scriptsFolder), ENABLEDTXT_FILE);
     try {
       await fs.statAsync(ENABLEDTXT_PATH);
     } catch (err) {
       try {
-        await fs.writeFileAsync(
-          ENABLEDTXT_PATH,
-          ``,
-          { encoding: "utf8" },
-        );
-        files.push(path.join(rootPath, ENABLEDTXT_FILE));
+        await fs.writeFileAsync(ENABLEDTXT_PATH, '', { encoding: "utf8" });
+        files.push(path.join(path.dirname(scriptsFolder), ENABLEDTXT_FILE));
         log('info', `Successfully created ${ENABLEDTXT_FILE} for UE4SS Script Mod: ${MOD_NAME}`);
       } catch (err) {
         log('error', `Could not create ${ENABLEDTXT_FILE} for UE4SS Script Mod: ${MOD_NAME}`);
@@ -1053,7 +1010,6 @@ async function installScripts(api, files, fileName) {
   } else {
     files = files.filter(f => path.basename(f).toLowerCase() !== ENABLEDTXT_FILE);
   }
-
   //Filter files and set instructions
   const filtered = files.filter(file =>
     ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
@@ -1096,9 +1052,10 @@ function testDll(files, gameId) {
 
 //Install UE4SS DLL files
 async function installDll(api, files, fileName) {
-  let modFile = files.find(file => (path.basename(file).toLowerCase() === DLL_FOLDER.toLowerCase()));
-  let rootPath = path.dirname(modFile);
+  const dllFolder = files.find(file => (path.basename(file).toLowerCase() === DLL_FOLDER.toLowerCase()));
   const setModTypeInstruction = { type: 'setmodtype', value: DLL_ID };
+  let modFile = dllFolder;
+  let rootPath = path.dirname(modFile);
   const MOD_NAME = path.basename(fileName);
   let MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
   let fallbackName = true;
@@ -1110,18 +1067,15 @@ async function installDll(api, files, fileName) {
     rootPath = path.dirname(modFile);
   }
   const idx = modFile.indexOf(path.basename(modFile));
+  //handle enabled.txt file
   if (!ue4ssLoadOrder || !util.getSafe(api.store.getState(), ['settings', GAME_ID, 'ue4ssLoEnabled'], true)) {
-    const ENABLEDTXT_PATH = path.join(fileName, rootPath, ENABLEDTXT_FILE);
+    const ENABLEDTXT_PATH = path.join(fileName, path.dirname(dllFolder), ENABLEDTXT_FILE);
     try {
       await fs.statAsync(ENABLEDTXT_PATH);
     } catch (err) {
       try {
-        await fs.writeFileAsync(
-          ENABLEDTXT_PATH,
-          ``,
-          { encoding: "utf8" },
-        );
-        files.push(path.join(rootPath, ENABLEDTXT_FILE));
+        await fs.writeFileAsync(ENABLEDTXT_PATH, '', { encoding: "utf8" });
+        files.push(path.join(path.dirname(dllFolder), ENABLEDTXT_FILE));
         log('info', `Successfully created ${ENABLEDTXT_FILE} for UE4SS DLL Mod: ${MOD_NAME}`);
       } catch (err) {
         log('error', `Could not create ${ENABLEDTXT_FILE} for UE4SS DLL Mod: ${MOD_NAME}`);
@@ -1130,7 +1084,6 @@ async function installDll(api, files, fileName) {
   } else {
     files = files.filter(f => path.basename(f).toLowerCase() !== ENABLEDTXT_FILE);
   }
-
   //Filter files and set instructions
   const filtered = files.filter(file =>
     ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
@@ -2661,11 +2614,11 @@ function main(context) {
   context.registerSettings('Mods', GameSettings, () => ({}),
     () => selectors.activeGameId(context.api.getState()) === GAME_ID, 150);
   if (ue4ssLoadOrder) {
-    context.registerReducer(['persistent', 'ue4ssLoadOrder', GAME_ID], {
+    context.registerReducer(['persistent', 'ue4ssLoadOrder'], {
       reducers: {
-        [setUe4ssLoadOrder.toString()]: (state, payload) => ({ ...state, loadOrder: payload }),
+        [setUe4ssLoadOrder.toString()]: (state, payload) => util.setSafe(state, [payload.profileId, 'loadOrder'], payload.loadOrder),
       },
-      defaults: { loadOrder: [] },
+      defaults: {},
     });
     context.registerMainPage('unreal', 'UE4SS Load Order', Ue4ssLoadOrderPage, {
       id: `${GAME_ID}-ue4ss-loadorder`,
@@ -2722,10 +2675,10 @@ async function didDeploy(api, profileId) { //run on mod deploy
       let UE4SS_LOAD_ORDER;
       try {
         UE4SS_LOAD_ORDER = await deserializeUe4ss(api);
-        api.store.dispatch(setUe4ssLoadOrder(UE4SS_LOAD_ORDER));
+        api.store.dispatch(setUe4ssLoadOrder(profileId, UE4SS_LOAD_ORDER));
       } catch (err) {
         log('error', `[${GAME_ID}] didDeploy: deserializeUe4ss failed, falling back to store state`, err);
-        UE4SS_LOAD_ORDER = util.getSafe(state, ['persistent', 'ue4ssLoadOrder', GAME_ID, 'loadOrder'], []);
+        UE4SS_LOAD_ORDER = util.getSafe(state, ['persistent', 'ue4ssLoadOrder', profileId, 'loadOrder'], []);
       }
       if (UE4SS_LOAD_ORDER.length > 0) {
         await serializeUe4ss(api, UE4SS_LOAD_ORDER);
@@ -2872,6 +2825,49 @@ function GameSettings() {
   );
 }
 
+async function reconcileEnabledTxt(api, write) {
+  const state = api.getState();
+  const stagingPath = selectors.installPathForGame(state, GAME_ID);
+  if (!stagingPath) return;
+
+  const targets = new Set();
+  await util.walk(stagingPath, (iterPath, stats) => {
+    if (!stats.isDirectory()) return Promise.resolve();
+    const base = path.basename(iterPath).toLowerCase();
+    if (base === 'scripts' || base === 'dlls') {
+      if (!UE4SS_NATIVE_MODS.includes(path.basename(path.dirname(iterPath)))) {
+        targets.add(path.dirname(iterPath));
+      }
+    }
+    return Promise.resolve();
+  }, { ignoreErrors: true });
+
+  let touched = 0;
+  for (const parent of targets) {
+    const marker = path.join(parent, ENABLEDTXT_FILE);
+    try {
+      if (write) {
+        try { await fs.statAsync(marker); }
+        catch { await fs.writeFileAsync(marker, ''); touched++; }
+      } else {
+        try { await fs.removeAsync(marker); touched++; }
+        catch (err) { if (err.code !== 'ENOENT') throw err; }
+      }
+    } catch (err) {
+      log('warn', `${ENABLEDTXT_FILE} ${write ? 'write' : 'delete'} failed at ${marker}: ${err.message}`);
+    }
+  }
+
+  api.sendNotification({
+    id: `${GAME_ID}-ue4ss-lo-reconcile`,
+    type: 'success',
+    message: write
+      ? `UE4SS Load Order disabled: wrote ${ENABLEDTXT_FILE} for ${touched} mod folder(s).`
+      : `UE4SS Load Order enabled: cleared ${ENABLEDTXT_FILE} for ${touched} mod folder(s).`,
+    displayMS: 5000,
+  });
+}
+
 //* React components for UE4SS load order page
 function Ue4ssItemRenderer({ className, item }) {
   const { Checkbox } = require('react-bootstrap');
@@ -2881,8 +2877,9 @@ function Ue4ssItemRenderer({ className, item }) {
   const vortexContext = React.useContext(MainContext);
   const dispatch = useDispatch();
 
+  const profileId = useSelector(state => selectors.activeProfile(state)?.id);
   const loadOrder = useSelector(state =>
-    util.getSafe(state, ['persistent', 'ue4ssLoadOrder', GAME_ID, 'loadOrder'], []));
+    util.getSafe(state, ['persistent', 'ue4ssLoadOrder', profileId, 'loadOrder'], []));
   const mods = useSelector(state => util.getSafe(state, ['persistent', 'mods', GAME_ID], {}));
   const pictureUrl = mods[item.modId]?.attributes?.pictureUrl;
   const gamePath = useSelector(state => util.getSafe(state, ['settings', 'gameMode', 'discovered', GAME_ID, 'path'], ''));
@@ -2908,9 +2905,9 @@ function Ue4ssItemRenderer({ className, item }) {
 
   const onToggle = React.useCallback((evt) => {
     const newLO = loadOrder.map(e => e.id === item.id ? { ...e, enabled: evt.target.checked } : e);
-    dispatch(setUe4ssLoadOrder(newLO));
+    dispatch(setUe4ssLoadOrder(profileId, newLO));
     serializeUe4ss(vortexContext.api, newLO);
-  }, [dispatch, vortexContext, loadOrder, item]);
+  }, [dispatch, vortexContext, loadOrder, item, profileId]);
 
   const classes = ['load-order-entry'];
   if (className) classes.push(...className.split(' ').filter(Boolean));
@@ -2983,13 +2980,13 @@ function Ue4ssLoadOrderPage({ api }) {
 
   const profileId = useSelector(state => selectors.activeProfile(state)?.id);
   const loadOrder = useSelector(state =>
-    util.getSafe(state, ['persistent', 'ue4ssLoadOrder', GAME_ID, 'loadOrder'], []));
+    util.getSafe(state, ['persistent', 'ue4ssLoadOrder', profileId, 'loadOrder'], []));
   const dispatch = useDispatch();
   const [filterText, setFilterText] = React.useState('');
 
   React.useEffect(() => {
     if (!profileId) return;
-    deserializeUe4ss(api).then(lo => dispatch(setUe4ssLoadOrder(lo)));
+    deserializeUe4ss(api).then(lo => dispatch(setUe4ssLoadOrder(profileId, lo)));
   }, [profileId]);
 
   const onApply = React.useCallback((reordered) => {
@@ -3002,9 +2999,9 @@ function Ue4ssLoadOrderPage({ api }) {
     } else {
       newLO = reordered;
     }
-    dispatch(setUe4ssLoadOrder(newLO));
+    dispatch(setUe4ssLoadOrder(profileId, newLO));
     serializeUe4ss(api, newLO);
-  }, [dispatch, loadOrder, filterText]);
+  }, [dispatch, loadOrder, filterText, profileId]);
 
   const filteredOrder = filterText
     ? loadOrder.filter(e => e.name.toLowerCase().includes(filterText.toLowerCase()))
