@@ -1,6 +1,6 @@
 # LoadOrderItemRenderer - Explainer & Learning Guide
 
-**Source:** `template-ue4-5/index.js:2494-2562`
+**Source:** `template-ue4-5/index.js:2733-2831`
 
 ---
 
@@ -60,12 +60,13 @@ Each load-order row is a `ListGroupItem` (from react-bootstrap) containing:
 ListGroupItem .load-order-entry [.selected ...]
  |-- div                                       drag handle (hidden when locked)
  |     `-- Icon         .drag-handle-icon
- |-- LoadOrderIndexInput .load-order-index     numeric position input
+ |-- div                 style={width:24,flexShrink:0,overflow:'hidden'}
+ |     `-- LoadOrderIndexInput .load-order-index  numeric position input
  |-- div                                       lock toggle button (amber when locked)
  |     `-- Icon                                'locked' | 'unlocked'
  |-- div                .load-order-thumb-slot (always 96 x 54 px)
  |     `-- img          .load-order-thumb      Nexus thumbnail | nothing
- |-- p                  .load-order-name       loEntry.name
+ |-- p                  .load-order-name       loEntry.name  (whiteSpace:normal, wordBreak:break-word)
  `-- Checkbox           .entry-checkbox        only if displayCheckboxes = true
 ```
 
@@ -236,7 +237,7 @@ games but activates automatically in any extension that registers with
 
 ## 5. Code walkthrough, line by line
 
-The full function is at [index.js:2494-2562](index.js#L2494). Broken into chunks:
+The full function is at [index.js:2733-2831](index.js#L2733). Broken into chunks:
 
 ---
 
@@ -437,16 +438,18 @@ return React.createElement(
 
   React.createElement(Icon, { className: 'drag-handle-icon', name: 'drag-handle' }),
 
-  React.createElement(LoadOrderIndexInput, {         // numeric position editor
-    className: 'load-order-index',
-    api: context.api,
-    item: loEntry,
-    currentPosition: currentIdx,
-    lockedEntriesCount: lockedCount,
-    loadOrder: loadOrder,
-    isLocked: isLocked,
-    onApplyIndex: onApplyIndex,
-  }),
+  React.createElement('div', { style: { width: 24, flexShrink: 0, overflow: 'hidden' } },
+    React.createElement(LoadOrderIndexInput, {       // numeric position editor
+      className: 'load-order-index',
+      api: context.api,
+      item: loEntry,
+      currentPosition: currentIdx,
+      lockedEntriesCount: lockedCount,
+      loadOrder: loadOrder,
+      isLocked: isLocked,
+      onApplyIndex: onApplyIndex,
+    }),
+  ),
 
   React.createElement('div',                         // fixed-size thumbnail slot
     { className: 'load-order-thumb-slot',
@@ -460,7 +463,7 @@ return React.createElement(
     }) : null,
   ),
 
-  React.createElement('p', { className: 'load-order-name' }, loEntry.name),
+  React.createElement('p', { className: 'load-order-name', style: { whiteSpace: 'normal', wordBreak: 'break-word' } }, loEntry.name),
 
   displayCheckboxes ? React.createElement(Checkbox, { // conditional enable toggle
     className: 'entry-checkbox',
@@ -640,18 +643,55 @@ extensions: imports -> toggles -> constants -> spec -> helpers -> installers ->
 | `<img>` always needs `draggable: false` and `pointerEvents: 'none'` | Native browser image drag hijacks react-dnd; rows won't move without this |
 | One `setFBLoadOrder` call for the whole reorder | Never dispatch entry-by-entry in a loop; a single action is atomic |
 | `onLock` must call `serializeLoadOrder` explicitly | Vortex FBLO auto-serialize from `setFBLoadOrderEntry` may not write `locked` to the JSON — always use `setFBLoadOrder` + explicit `serializeLoadOrder(context, newLO)` |
+| Name `<p>` needs `whiteSpace:'normal'` and `wordBreak:'break-word'` | Vortex's default CSS applies `white-space:nowrap` to `.load-order-name`; without the override, long mod names are clipped rather than wrapping |
 | `serializeLoadOrder` accepts React `MainContext` as `context` | It only uses `context.api`, so the React `MainContext` from `useContext(MainContext)` works directly |
 | `require` calls go inside the function body | Top-level require of Vortex-bundled modules fails before the renderer is ready |
 | Merge `className`, don't replace it | Vortex injects `"selected"` and other state classes; overwriting them breaks the selection highlight |
 | Use `registerLoadOrder`, not `registerLoadOrderPage` | The older call is deprecated |
 | Place the component after `main()` | Convention; hoisting handles the forward reference safely |
 | `toggleableEntries: false` for rename-based FBLO | The `enabled` bit has no on-disk representation; checkbox would be a lie |
+| `FlexLayout.Flex` ignores `flex: '0 0 Npx'` height in column mode | The component likely hardcodes `flex: 1`; use a plain `div { flexShrink: 0 }` for fixed-height children in a column `FlexLayout` |
+| react-bootstrap `Checkbox` breaks flex row centering | The `div > label > input` wrapper stack prevents `alignItems: 'center'` from working; use a plain `input[type=checkbox]` with `alignSelf: 'center'` instead |
+| `ul` needs `listStyleType: 'disc'` | Vortex's global CSS resets `list-style: none` on all `ul` elements; the property must be set inline to restore bullet points |
+
+---
+
+## 12. Ue4ssLoadOrderPage layout
+
+`Ue4ssLoadOrderPage` renders a `FlexLayout type='column'` with the mod list on top and an info panel at the bottom:
+
+```js
+React.createElement(FlexLayout, { type: 'column', ..., style: { height: '100%' } },
+  // list — must have minHeight:0 to shrink in a column flex container
+  React.createElement(FlexLayout.Flex, { style: { overflowY: 'auto', minHeight: 0 } },
+    React.createElement(DraggableList, { ... })
+  ),
+  // info panel — plain div, not FlexLayout.Flex (FlexLayout.Flex ignores height constraints)
+  React.createElement('div', { style: { flexShrink: 0 } },
+    React.createElement(Ue4ssLoadOrderInfoPanel)
+  ),
+)
+```
+
+`Ue4ssLoadOrderInfoPanel` uses a `ul` with `listStyleType: 'disc'` and a `borderTop` separator. No fixed height — auto-sizes to content. Current bullets (4):
+
+1. Drag-and-drop reorder — changes write to mods.txt immediately.
+2. Checkboxes to enable/disable each mod — all changes write to mods.txt immediately.
+3. Mods with a `config.lua`/`settings.json` file have a Configure button to open it externally.
+4. *(italic, yellow, bold)* Note: this page manages UE4SS mods only; pak mod load order is on the Load Order page.
+
+### Ue4ssItemRenderer row details
+
+| Element | Key style / note |
+| --- | --- |
+| Configure button | `style: { margin: '0 4px' }` for spacing |
+| Enable checkbox | Plain `input[type=checkbox]` with `alignSelf: 'center', cursor: 'pointer'` — react-bootstrap `Checkbox` wrapper breaks flex centering |
 
 ---
 
 ## 11. Related reading
 
-- **Template source:** `template-ue4-5/index.js:2494-2562`
+- **Template source:** `template-ue4-5/index.js:2733-2831`
 - **Registration site:** `template-ue4-5/index.js:2384-2393`
 - **Prefix / rename logic:** `template-ue4-5/index.js:1741-1763` (`makePrefix`, `loadOrderPrefix`)
 - **Serialize / deserialize:** `template-ue4-5/index.js:1636-1717`

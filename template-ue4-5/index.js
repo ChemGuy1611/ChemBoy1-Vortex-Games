@@ -2793,7 +2793,7 @@ function LoadOrderItemRenderer(props) {
     React.createElement('div', { style: { visibility: isEntryLocked ? 'hidden' : 'visible' } },
       React.createElement(Icon, { className: 'drag-handle-icon', name: 'drag-handle' }),
     ),
-    React.createElement('div', { style: { width: 30, flexShrink: 0, overflow: 'hidden' } },
+    React.createElement('div', { style: { width: 24, flexShrink: 0, overflow: 'hidden' } },
       React.createElement(LoadOrderIndexInput, {
         className: 'load-order-index',
         api: context.api,
@@ -2820,7 +2820,7 @@ function LoadOrderItemRenderer(props) {
         style: { width: LO_IMAGE_WIDTH, height: LO_IMAGE_HEIGHT, objectFit: 'cover', borderRadius: 2, pointerEvents: 'none' },
       }) : null,
     ),
-    React.createElement('p', { className: 'load-order-name' }, loEntry.name),
+    React.createElement('p', { className: 'load-order-name', style: { whiteSpace: 'normal', wordBreak: 'break-word' } }, loEntry.name),
     displayCheckboxes ? React.createElement(Checkbox, {
       className: 'entry-checkbox',
       checked: loEntry.enabled,
@@ -3004,7 +3004,7 @@ function Ue4ssItemRenderer({ className, item }) {
     React.createElement('div', { style: { visibility: isEntryLocked ? 'hidden' : 'visible' } },
       React.createElement(Icon, { className: 'drag-handle-icon', name: 'drag-handle' }),
     ),
-    React.createElement('div', { style: { width: 30, flexShrink: 0, overflow: 'hidden' } },
+    React.createElement('div', { style: { width: 24, flexShrink: 0, overflow: 'hidden' } },
       React.createElement(LoadOrderIndexInput, {
         className: 'load-order-index',
         api: vortexContext.api,
@@ -3031,14 +3031,15 @@ function Ue4ssItemRenderer({ className, item }) {
         style: { width: LO_IMAGE_WIDTH, height: LO_IMAGE_HEIGHT, objectFit: 'cover', borderRadius: 2, pointerEvents: 'none' },
       }) : null,
     ),
-    React.createElement('p', { className: 'load-order-name', style: { flex: '1 1 0', margin: 0 } }, item.name),
+    React.createElement('p', { className: 'load-order-name', style: { flex: '1 1 0', margin: 0, whiteSpace: 'normal', wordBreak: 'break-word' } }, item.name),
     configFilePath ? React.createElement('button', {
       className: 'btn btn-default btn-sm',
+      style: { margin: '0 4px' },
       onClick: onConfigure,
     }, 'Configure') : null,
-    React.createElement(Checkbox, {
-      className: 'entry-checkbox',
-      style: { margin: 0 },
+    React.createElement('input', {
+      type: 'checkbox',
+      style: { alignSelf: 'center', cursor: 'pointer' },
       checked: item.enabled ?? true,
       onChange: onToggle,
     }),
@@ -3048,28 +3049,22 @@ function Ue4ssItemRenderer({ className, item }) {
 function Ue4ssLoadOrderInfoPanel() {
   return React.createElement('div', {
     id: 'loadorderinfo',
-    style: { padding: '12px', height: '100%', overflowY: 'auto', borderLeft: '1px solid rgba(255,255,255,0.1)' },
+    style: { padding: '12px', borderTop: '1px solid rgba(255,255,255,0.1)' },
   },
     React.createElement('h2', { style: { marginTop: 0 } }, 'UE4SS Mod Load Order'),
-    React.createElement('p', null,
-      'Drag and drop mods on the left to change the order in which UE4SS loads mods.'
-    ),
-    React.createElement('br', null),
-    React.createElement('p', null,
-      'Use the checkbox next to each mod to enable or disable it. ',
-      React.createElement('strong', null, 'Changes write to mods.txt immediately - no deploy required.')
-    ),
-    React.createElement('br', null),
-    React.createElement('p', null,
-      'Drag-to-reorder changes also write to mods.txt immediately. Restart the game for changes to take effect.'
-    ),
-    React.createElement('br', null),
-    React.createElement('p', null,
-      `Mods with a ${UE4SS_CONFIG_FILES.join('/')} file will have a "Configure" button to open the file externally.`
-    ),
-    React.createElement('br', null),
-    React.createElement('p', { style: { fontStyle: 'italic', color: 'yellow', fontWeight: 'bold' } },
-      'Note: This page manages UE4SS mods only. Pak mod load order is managed on the Load Order page.'
+    React.createElement('ul', { style: { margin: 0, paddingLeft: 20, listStyleType: 'disc' } },
+      React.createElement('li', null,
+        'Drag and drop mods to change the order in which UE4SS loads them. Changes write to mods.txt immediately.'
+      ),
+      React.createElement('li', null,
+        'Use the checkboxes to enable or disable each mod. All changes write to mods.txt immediately.'
+      ),
+      React.createElement('li', null,
+        `Mods with a ${UE4SS_CONFIG_FILES.join('/')} file will have a "Configure" button to open the file externally.`
+      ),
+      React.createElement('li', { style: { fontStyle: 'italic', color: 'yellow', fontWeight: 'bold' } },
+        'Note: This page manages UE4SS mods only. Pak mod load order is managed on the Load Order page.'
+      ),
     ),
   );
 }
@@ -3146,8 +3141,8 @@ function Ue4ssLoadOrderPage({ api }) {
     ),
     React.createElement(MainPage.Body, null,
       React.createElement(DNDContainer, { style: { height: '95%' } },
-        React.createElement(FlexLayout, { type: 'row', className: 'file-based-load-order-container', style: { height: '100%' } },
-          React.createElement(FlexLayout.Flex, { className: 'file-based-load-order-list', style: { overflowY: 'auto' } },
+        React.createElement(FlexLayout, { type: 'column', className: 'file-based-load-order-container', style: { height: '100%' } },
+          React.createElement(FlexLayout.Flex, { className: 'file-based-load-order-list', style: { overflowY: 'auto', minHeight: 0 } },
             React.createElement(Ue4ssSelectionContext.Provider, { value: { selectedIds, setSelectedIds, allIds } },
               React.createElement(DraggableList, {
                 itemTypeId: `${GAME_ID}-ue4ss-lo-entry`,
@@ -3160,7 +3155,7 @@ function Ue4ssLoadOrderPage({ api }) {
               })
             )
           ),
-          React.createElement(FlexLayout.Flex, { style: { flex: '0 0 300px', overflowY: 'auto' } },
+          React.createElement('div', { style: { flexShrink: 0 } },
             React.createElement(Ue4ssLoadOrderInfoPanel)
           )
         )
