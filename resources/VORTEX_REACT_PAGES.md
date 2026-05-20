@@ -222,6 +222,21 @@ if (!items.length) {
 }
 ```
 
+### Disabled-setting guard
+
+Read the setting via `useSelector` alongside other selectors at the top of the component (before any early returns — Rules of Hooks). Then guard after the empty-list check:
+
+```js
+const loEnabled = useSelector(state => util.getSafe(state, ['settings', GAME_ID, 'ue4ssLoEnabled'], true));
+
+// after empty-list check:
+if (!loEnabled) {
+  return React.createElement(MainPage, null,
+    React.createElement(MainPage.Body, null,
+      React.createElement('p', { style: { padding: '12px', fontWeight: 'bold', color: 'yellow' } }, 'UE4SS load order is disabled in Settings.')));
+}
+```
+
 ---
 
 ## 6. Layout Primitives

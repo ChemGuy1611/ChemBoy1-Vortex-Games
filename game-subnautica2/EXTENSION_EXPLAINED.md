@@ -42,7 +42,7 @@
 | `hasModKit` | `false` | !Very likely to have a modkit release by 1.0 |
 | `hasServer` | `false` | toggle for server pak mod logic |
 | `preferHardlinks` | `true` | set true to perform partition checks when IO-STORE=false for Config/Save modtypes so that hardlinks available to more users |
-| `autoDownloadUe4ss` | `false` | toggle for auto downloading UE4SS |
+| `autoDownloadUe4ss` | `true` | toggle for auto downloading UE4SS |
 | `SIGBYPASS_REQUIRED` | `false` | set true if there are .sig files in the Paks folder |
 | `IO_STORE` | `true` | true if the Paks folder contains .ucas and .utoc files |
 | `hasUserIdFolder` | `false` | true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID) |

@@ -290,8 +290,7 @@ did-deploy fires
 
 ## 8. Custom React page for UE4SS mods — implementation
 
-**Reference implementation: `game-subnautica2/index.js` v0.2.0 (2026-05-15).**
-`template-ue4-5/index.js` propagation queued (toggle `false` at line 82).
+**Reference implementation: `game-subnautica2/index.js`, `template-ue4-5/index.js`.**
 
 The page is **additive** — registered alongside the existing FBLO page, never replacing it.
 FBLO manages PAK mod load order (prefix renaming). The custom page manages only UE4SS
@@ -400,6 +399,7 @@ function Ue4ssLoadOrderPage({ api }) {
   const profileId = useSelector(state => selectors.activeProfile(state)?.id);
   const loadOrder = useSelector(state =>
     util.getSafe(state, ['persistent', 'ue4ssLoadOrder', profileId, 'loadOrder'], []));
+  const loEnabled = useSelector(state => util.getSafe(state, ['settings', GAME_ID, 'ue4ssLoEnabled'], true));
   const dispatch = useDispatch();
   const [filterText, setFilterText] = React.useState('');
 
@@ -430,6 +430,11 @@ function Ue4ssLoadOrderPage({ api }) {
   if (!loadOrder.length) {
     return React.createElement(MainPage, null,
       React.createElement(MainPage.Body, null, React.createElement('p', { style: { padding: '12px', fontWeight: 'bold', color: 'yellow' } }, 'No UE4SS mods are installed.')));
+  }
+
+  if (!loEnabled) {
+    return React.createElement(MainPage, null,
+      React.createElement(MainPage.Body, null, React.createElement('p', { style: { padding: '12px', fontWeight: 'bold', color: 'yellow' } }, 'UE4SS load order is disabled in Settings.')));
   }
 
   return React.createElement(MainPage, null,
@@ -475,9 +480,12 @@ block display needs page-scoped CSS that won't fire. Use `MainContext` to get `a
 the renderer (same pattern as `LoadOrderItemRenderer`).
 
 ```js
+// Module level — before Ue4ssItemRenderer
+const Ue4ssSelectionContext = React.createContext({ selectedIds: new Set(), setSelectedIds: () => {}, allIds: [] });
+
 function Ue4ssItemRenderer({ className, item }) {
   const { Checkbox } = require('react-bootstrap');
-  const { Icon, MainContext } = require('vortex-api');
+  const { Icon, LoadOrderIndexInput, MainContext } = require('vortex-api');
   const { useSelector, useDispatch } = require('react-redux');
 
   const vortexContext = React.useContext(MainContext);
@@ -488,22 +496,75 @@ function Ue4ssItemRenderer({ className, item }) {
   const mods = useSelector(state => util.getSafe(state, ['persistent', 'mods', GAME_ID], {}));
   const pictureUrl = mods[item.modId]?.attributes?.pictureUrl;
 
+  const isLocked = (entry) => [true, 'true', 'always'].includes(entry?.locked);
+  const lockedCount = loadOrder.filter(isLocked).length;
+  const isEntryLocked = isLocked(item);
+
+  const onApplyIndex = React.useCallback((idx) => {
+    if (currentIdx === idx) return;
+    const newLO = loadOrder.filter((e) => e.id !== item.id);
+    newLO.splice(idx - 1, 0, item);
+    dispatch(setUe4ssLoadOrder(profileId, newLO));
+    serializeUe4ss(vortexContext.api, newLO);
+  }, [dispatch, vortexContext, profileId, loadOrder, item, currentIdx]);
+
+  const onLock = React.useCallback(() => {
+    const newLO = loadOrder.map(e => e.id === item.id ? { ...e, locked: !isEntryLocked } : e);
+    dispatch(setUe4ssLoadOrder(profileId, newLO));
+    serializeUe4ss(vortexContext.api, newLO);
+  }, [dispatch, vortexContext, profileId, loadOrder, item, isEntryLocked]);
+
   const onToggle = React.useCallback((evt) => {
     const newLO = loadOrder.map(e => e.id === item.id ? { ...e, enabled: evt.target.checked } : e);
     dispatch(setUe4ssLoadOrder(profileId, newLO));
-    serializeUe4ss(vortexContext.api, newLO); // immediate write, no deploy
+    serializeUe4ss(vortexContext.api, newLO);
   }, [dispatch, vortexContext, loadOrder, item, profileId]);
+
+  const { selectedIds, setSelectedIds, allIds } = React.useContext(Ue4ssSelectionContext);
+  const isSelected = selectedIds.has(item.id);
+  const onSelect = React.useCallback((evt) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (evt.ctrlKey || evt.metaKey) {
+        next.has(item.id) ? next.delete(item.id) : next.add(item.id);
+      } else if (evt.shiftKey) {
+        const lastId = [...prev].at(-1);
+        const start = allIds.indexOf(lastId ?? item.id);
+        const end = allIds.indexOf(item.id);
+        const [lo, hi] = [Math.min(start, end), Math.max(start, end)];
+        for (let i = lo; i <= hi; i++) next.add(allIds[i]);
+      } else { next.clear(); next.add(item.id); }
+      return next;
+    });
+  }, [item.id, setSelectedIds, allIds]);
 
   const classes = ['load-order-entry'];
   if (className) classes.push(...className.split(' ').filter(Boolean));
 
   return React.createElement('div', {
-    key: item.id, className: classes.join(' '),
+    key: item.id, className: classes.join(' '), onClick: onSelect,
     style: { display: 'flex', flexDirection: 'row', alignItems: 'center',
              gap: 8, padding: '4px 12px', margin: 0,
-             border: '1px solid rgba(255,255,255,0.15)', borderRadius: 4, minHeight: 52 },
+             border: '1px solid rgba(255,255,255,0.15)', borderRadius: 4, minHeight: 52,
+             outline: isSelected ? '2px solid #337ab7' : 'none', outlineOffset: '-1px' },
   },
-    React.createElement(Icon, { className: 'drag-handle-icon', name: 'drag-handle' }),
+    React.createElement('div', { style: { visibility: isEntryLocked ? 'hidden' : 'visible' } },
+      React.createElement(Icon, { className: 'drag-handle-icon', name: 'drag-handle' }),
+    ),
+    React.createElement('div', { style: { width: 30, flexShrink: 0, overflow: 'hidden' } },
+      React.createElement(LoadOrderIndexInput, {
+        className: 'load-order-index', api: vortexContext.api, item: item,
+        currentPosition: currentIdx, lockedEntriesCount: lockedCount,
+        loadOrder: loadOrder, isLocked: isLocked, onApplyIndex: onApplyIndex,
+      }),
+    ),
+    React.createElement('div', {
+      style: { cursor: 'pointer', display: 'flex', alignItems: 'center' },
+      title: isEntryLocked ? 'Unlock position' : 'Lock position', onClick: onLock,
+    },
+      React.createElement(Icon, { name: isEntryLocked ? 'locked' : 'unlocked',
+        style: { color: isEntryLocked ? '#e2c04c' : 'inherit' } }),
+    ),
     React.createElement('div', { className: 'load-order-thumb-slot',
       style: { width: LO_IMAGE_WIDTH, height: LO_IMAGE_HEIGHT, flexShrink: 0 } },
       pictureUrl ? React.createElement('img', {
@@ -512,8 +573,7 @@ function Ue4ssItemRenderer({ className, item }) {
                  objectFit: 'cover', borderRadius: 2, pointerEvents: 'none' },
       }) : null,
     ),
-    React.createElement('p', { className: 'load-order-name',
-      style: { flex: '1 1 0', margin: 0 } }, item.name),
+    React.createElement('p', { className: 'load-order-name', style: { flex: '1 1 0', margin: 0 } }, item.name),
     React.createElement(Checkbox, {
       className: 'entry-checkbox', style: { margin: 0 },
       checked: item.enabled ?? true, onChange: onToggle,
@@ -522,13 +582,18 @@ function Ue4ssItemRenderer({ className, item }) {
 }
 ```
 
+**`deserializeUe4ss` must explicitly include `locked: entry?.locked`** when building entry objects — entries are constructed manually, so the field is dropped if omitted.
+
+**Multi-select** uses `Ue4ssSelectionContext` defined at module level. `Ue4ssLoadOrderPage` holds `selectedIds` state, clears it on profile change, computes `allIds = filteredOrder.map(e => e.id)`, and wraps `DraggableList` in `Ue4ssSelectionContext.Provider`. Click = single select; Ctrl/Meta = toggle; Shift = range over `allIds`.
+
 ### Hook integration summary
 
 | Event | Response |
 | --- | --- |
-| Page mounts / profile switches | `useEffect([profileId])` -> `deserializeUe4ss` -> dispatch |
+| Page mounts / profile switches | `useEffect([profileId])` -> `deserializeUe4ss` -> dispatch + clear selection |
 | User drags row | `DraggableList.apply` -> merge filter subset -> `serializeUe4ss` -> dispatch |
 | User toggles checkbox | `onToggle` -> map new enabled state -> `serializeUe4ss` -> dispatch |
+| User clicks row | `onSelect` -> update `selectedIds` (plain/Ctrl/Shift) |
 | `did-deploy` | `didDeploy` -> `deserializeUe4ss` -> dispatch only (no serialize) |
 
 ---

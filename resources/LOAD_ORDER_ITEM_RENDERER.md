@@ -58,8 +58,11 @@ Each load-order row is a `ListGroupItem` (from react-bootstrap) containing:
 
 ```text
 ListGroupItem .load-order-entry [.selected ...]
- |-- Icon               .drag-handle-icon     drag handle on the left
+ |-- div                                       drag handle (hidden when locked)
+ |     `-- Icon         .drag-handle-icon
  |-- LoadOrderIndexInput .load-order-index     numeric position input
+ |-- div                                       lock toggle button (amber when locked)
+ |     `-- Icon                                'locked' | 'unlocked'
  |-- div                .load-order-thumb-slot (always 96 x 54 px)
  |     `-- img          .load-order-thumb      Nexus thumbnail | nothing
  |-- p                  .load-order-name       loEntry.name
@@ -574,8 +577,8 @@ return (
 | Validation error display | Yes | No |
 | External mod banner | Yes | No |
 | View-mod icon | Yes | No |
-| Lock icon | Yes | No |
-| Nexus thumbnail | No | Yes (new addition) |
+| Lock icon | Yes | Yes — amber `#e2c04c` when locked; drag handle hides |
+| Nexus thumbnail | No | Yes |
 | Checkbox | Yes (`toggleableEntries: true`) | Yes (conditional, usually dormant) |
 | `displayCheckboxes` check | Not used | Yes -- guards the Checkbox branch |
 | Reorder mechanism | `onApplyIndex` -> `setFBLoadOrder` | Same |
@@ -636,6 +639,8 @@ extensions: imports -> toggles -> constants -> spec -> helpers -> installers ->
 | Never pass `ref={item.setRef}` | Always `undefined` in current FBLO; emits React warnings |
 | `<img>` always needs `draggable: false` and `pointerEvents: 'none'` | Native browser image drag hijacks react-dnd; rows won't move without this |
 | One `setFBLoadOrder` call for the whole reorder | Never dispatch entry-by-entry in a loop; a single action is atomic |
+| `onLock` must call `serializeLoadOrder` explicitly | Vortex FBLO auto-serialize from `setFBLoadOrderEntry` may not write `locked` to the JSON — always use `setFBLoadOrder` + explicit `serializeLoadOrder(context, newLO)` |
+| `serializeLoadOrder` accepts React `MainContext` as `context` | It only uses `context.api`, so the React `MainContext` from `useContext(MainContext)` works directly |
 | `require` calls go inside the function body | Top-level require of Vortex-bundled modules fails before the renderer is ready |
 | Merge `className`, don't replace it | Vortex injects `"selected"` and other state classes; overwriting them breaks the selection highlight |
 | Use `registerLoadOrder`, not `registerLoadOrderPage` | The older call is deprecated |

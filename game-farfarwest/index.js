@@ -1867,6 +1867,7 @@ async function deserializeUe4ss(api) {
           name: `${await getModName(folder)} (${folder})`,
           modId: await isVortexManaged(folder) ? await getModId(folder) : undefined,
           enabled: entry.enabled,
+          locked: entry?.locked,
         }
       );
       return Promise.resolve(accum);
@@ -2629,8 +2630,8 @@ function main(context) {
       visible: () => {
         const state = context.api.store.getState();
         const gameId = selectors.activeGameId(state);
-        const loEnabled = util.getSafe(state, ['settings', GAME_ID, 'ue4ssLoEnabled'], true);
-        return gameId === GAME_ID && loEnabled;
+        //const loEnabled = util.getSafe(state, ['settings', GAME_ID, 'ue4ssLoEnabled'], true);
+        return gameId === GAME_ID && ue4ssLoadOrder; //not using loEnabled so that the page is still visible
       },
       props: () => ({ api: context.api }),
     });
@@ -2765,23 +2766,52 @@ function LoadOrderItemRenderer(props) {
     dispatch(actions.setFBLoadOrderEntry(profile.id, { ...loEntry, enabled: evt.target.checked }));
   }, [dispatch, profile, loEntry]);
 
+  const isEntryLocked = isLocked(loEntry);
+
+  const onLock = React.useCallback(() => {
+    const newLO = loadOrder.map(e => e.id === loEntry.id ? { ...e, locked: !isEntryLocked } : e);
+    dispatch(actions.setFBLoadOrder(profile.id, newLO));
+    serializeLoadOrder(context, newLO);
+  }, [dispatch, context, profile, loadOrder, loEntry, isEntryLocked]);
+
+  React.useEffect(() => {
+    const styleId = 'lo-index-focus-style';
+    if (!globalThis.document.getElementById(styleId)) {
+      const style = globalThis.document.createElement('style');
+      style.id = styleId;
+      style.textContent = '.load-order-index input:focus { background: white !important; color: black !important; }';
+      globalThis.document.head.appendChild(style);
+    }
+  }, []);
+
   const classes = ['load-order-entry'];
   if (className) classes.push(...className.split(' '));
 
   return React.createElement(
     ListGroupItem,
     { key: loEntry.id, className: classes.join(' ') },
-    React.createElement(Icon, { className: 'drag-handle-icon', name: 'drag-handle' }),
-    React.createElement(LoadOrderIndexInput, {
-      className: 'load-order-index',
-      api: context.api,
-      item: loEntry,
-      currentPosition: currentIdx,
-      lockedEntriesCount: lockedCount,
-      loadOrder: loadOrder,
-      isLocked: isLocked,
-      onApplyIndex: onApplyIndex,
-    }),
+    React.createElement('div', { style: { visibility: isEntryLocked ? 'hidden' : 'visible' } },
+      React.createElement(Icon, { className: 'drag-handle-icon', name: 'drag-handle' }),
+    ),
+    React.createElement('div', { style: { width: 30, flexShrink: 0, overflow: 'hidden' } },
+      React.createElement(LoadOrderIndexInput, {
+        className: 'load-order-index',
+        api: context.api,
+        item: loEntry,
+        currentPosition: currentIdx,
+        lockedEntriesCount: lockedCount,
+        loadOrder: loadOrder,
+        isLocked: isLocked,
+        onApplyIndex: onApplyIndex,
+      }),
+    ),
+    React.createElement('div', {
+      style: { cursor: 'pointer', display: 'flex', alignItems: 'center' },
+      title: isEntryLocked ? 'Unlock position' : 'Lock position',
+      onClick: onLock,
+    },
+      React.createElement(Icon, { name: isEntryLocked ? 'locked' : 'unlocked', style: { color: isEntryLocked ? '#e2c04c' : 'inherit' } }),
+    ),
     React.createElement('div', { className: 'load-order-thumb-slot', style: { width: LO_IMAGE_WIDTH, height: LO_IMAGE_HEIGHT, marginRight: 4, flexShrink: 0 } },
       pictureUrl ? React.createElement('img', {
         className: 'load-order-thumb',
@@ -2869,9 +2899,11 @@ async function reconcileEnabledTxt(api, write) {
 }
 
 //* React components for UE4SS load order page
+const Ue4ssSelectionContext = React.createContext({ selectedIds: new Set(), setSelectedIds: () => {}, allIds: [] });
+
 function Ue4ssItemRenderer({ className, item }) {
   const { Checkbox } = require('react-bootstrap');
-  const { Icon, MainContext } = require('vortex-api');
+  const { Icon, LoadOrderIndexInput, MainContext } = require('vortex-api');
   const { useSelector, useDispatch } = require('react-redux');
 
   const vortexContext = React.useContext(MainContext);
@@ -2883,6 +2915,26 @@ function Ue4ssItemRenderer({ className, item }) {
   const mods = useSelector(state => util.getSafe(state, ['persistent', 'mods', GAME_ID], {}));
   const pictureUrl = mods[item.modId]?.attributes?.pictureUrl;
   const gamePath = useSelector(state => util.getSafe(state, ['settings', 'gameMode', 'discovered', GAME_ID, 'path'], ''));
+
+  const currentIdx = loadOrder.findIndex((e) => e.id === item.id) + 1;
+  const isLocked = (entry) => [true, 'true', 'always'].includes(entry?.locked);
+  const lockedCount = loadOrder.filter(isLocked).length;
+
+  const onApplyIndex = React.useCallback((idx) => {
+    if (currentIdx === idx) return;
+    const newLO = loadOrder.filter((e) => e.id !== item.id);
+    newLO.splice(idx - 1, 0, item);
+    dispatch(setUe4ssLoadOrder(profileId, newLO));
+    serializeUe4ss(vortexContext.api, newLO);
+  }, [dispatch, vortexContext, profileId, loadOrder, item, currentIdx]);
+
+  const isEntryLocked = isLocked(item);
+
+  const onLock = React.useCallback(() => {
+    const newLO = loadOrder.map(e => e.id === item.id ? { ...e, locked: !isEntryLocked } : e);
+    dispatch(setUe4ssLoadOrder(profileId, newLO));
+    serializeUe4ss(vortexContext.api, newLO);
+  }, [dispatch, vortexContext, profileId, loadOrder, item, isEntryLocked]);
 
   const [configFilePath, setConfigFilePath] = React.useState('');
   React.useEffect(() => {
@@ -2909,20 +2961,68 @@ function Ue4ssItemRenderer({ className, item }) {
     serializeUe4ss(vortexContext.api, newLO);
   }, [dispatch, vortexContext, loadOrder, item, profileId]);
 
+  const { selectedIds, setSelectedIds, allIds } = React.useContext(Ue4ssSelectionContext);
+  const isSelected = selectedIds.has(item.id);
+
+  const onSelect = React.useCallback((evt) => {
+    const ctrlKey = evt.ctrlKey || evt.metaKey;
+    const shiftKey = evt.shiftKey;
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (ctrlKey) {
+        next.has(item.id) ? next.delete(item.id) : next.add(item.id);
+      } else if (shiftKey) {
+        const lastId = [...prev].at(-1);
+        const start = allIds.indexOf(lastId ?? item.id);
+        const end = allIds.indexOf(item.id);
+        const [lo, hi] = [Math.min(start, end), Math.max(start, end)];
+        for (let i = lo; i <= hi; i++) next.add(allIds[i]);
+      } else {
+        next.clear();
+        next.add(item.id);
+      }
+      return next;
+    });
+  }, [item.id, setSelectedIds, allIds]);
+
   const classes = ['load-order-entry'];
   if (className) classes.push(...className.split(' ').filter(Boolean));
 
   return React.createElement('div', {
     key: item.id,
     className: classes.join(' '),
+    onClick: onSelect,
     style: {
       display: 'flex', flexDirection: 'row', alignItems: 'center',
       gap: 8, padding: '4px 12px', margin: 0,
       border: '1px solid rgba(255,255,255,0.15)', borderRadius: 4,
       minHeight: 52,
+      outline: isSelected ? '2px solid #337ab7' : 'none',
+      outlineOffset: '-1px',
     },
   },
-    React.createElement(Icon, { className: 'drag-handle-icon', name: 'drag-handle' }),
+    React.createElement('div', { style: { visibility: isEntryLocked ? 'hidden' : 'visible' } },
+      React.createElement(Icon, { className: 'drag-handle-icon', name: 'drag-handle' }),
+    ),
+    React.createElement('div', { style: { width: 30, flexShrink: 0, overflow: 'hidden' } },
+      React.createElement(LoadOrderIndexInput, {
+        className: 'load-order-index',
+        api: vortexContext.api,
+        item: item,
+        currentPosition: currentIdx,
+        lockedEntriesCount: lockedCount,
+        loadOrder: loadOrder,
+        isLocked: isLocked,
+        onApplyIndex: onApplyIndex,
+      }),
+    ),
+    React.createElement('div', {
+      style: { cursor: 'pointer', display: 'flex', alignItems: 'center' },
+      title: isEntryLocked ? 'Unlock position' : 'Lock position',
+      onClick: onLock,
+    },
+      React.createElement(Icon, { name: isEntryLocked ? 'locked' : 'unlocked', style: { color: isEntryLocked ? '#e2c04c' : 'inherit' } }),
+    ),
     React.createElement('div', { className: 'load-order-thumb-slot', style: { width: LO_IMAGE_WIDTH, height: LO_IMAGE_HEIGHT, flexShrink: 0 } },
       pictureUrl ? React.createElement('img', {
         className: 'load-order-thumb',
@@ -2981,13 +3081,26 @@ function Ue4ssLoadOrderPage({ api }) {
   const profileId = useSelector(state => selectors.activeProfile(state)?.id);
   const loadOrder = useSelector(state =>
     util.getSafe(state, ['persistent', 'ue4ssLoadOrder', profileId, 'loadOrder'], []));
+  const loEnabled = useSelector(state => util.getSafe(state, ['settings', GAME_ID, 'ue4ssLoEnabled'], true));
   const dispatch = useDispatch();
   const [filterText, setFilterText] = React.useState('');
+  const [selectedIds, setSelectedIds] = React.useState(new Set());
 
   React.useEffect(() => {
     if (!profileId) return;
     deserializeUe4ss(api).then(lo => dispatch(setUe4ssLoadOrder(profileId, lo)));
+    setSelectedIds(new Set());
   }, [profileId]);
+
+  React.useEffect(() => {
+    const styleId = 'lo-index-focus-style';
+    if (!globalThis.document.getElementById(styleId)) {
+      const style = globalThis.document.createElement('style');
+      style.id = styleId;
+      style.textContent = '.load-order-index input:focus { background: white !important; color: black !important; }';
+      globalThis.document.head.appendChild(style);
+    }
+  }, []);
 
   const onApply = React.useCallback((reordered) => {
     let newLO;
@@ -3006,6 +3119,14 @@ function Ue4ssLoadOrderPage({ api }) {
   const filteredOrder = filterText
     ? loadOrder.filter(e => e.name.toLowerCase().includes(filterText.toLowerCase()))
     : loadOrder;
+
+  const allIds = filteredOrder.map(e => e.id);
+
+  if (!loEnabled) {
+    return React.createElement(MainPage, null,
+      React.createElement(MainPage.Body, null,
+        React.createElement('p', { style: { padding: '12px', fontWeight: 'bold', color: 'yellow' } }, 'UE4SS load order is disabled in Settings.')));
+  }
 
   if (!loadOrder.length) {
     return React.createElement(MainPage, null,
@@ -3027,14 +3148,17 @@ function Ue4ssLoadOrderPage({ api }) {
       React.createElement(DNDContainer, { style: { height: '95%' } },
         React.createElement(FlexLayout, { type: 'row', className: 'file-based-load-order-container', style: { height: '100%' } },
           React.createElement(FlexLayout.Flex, { className: 'file-based-load-order-list', style: { overflowY: 'auto' } },
-            React.createElement(DraggableList, {
-              itemTypeId: `${GAME_ID}-ue4ss-lo-entry`,
-              id: `${GAME_ID}-ue4ss-loadorder-list`,
-              items: filteredOrder,
-              itemRenderer: Ue4ssItemRenderer,
-              apply: onApply,
-              idFunc: entry => entry.id,
-            })
+            React.createElement(Ue4ssSelectionContext.Provider, { value: { selectedIds, setSelectedIds, allIds } },
+              React.createElement(DraggableList, {
+                itemTypeId: `${GAME_ID}-ue4ss-lo-entry`,
+                id: `${GAME_ID}-ue4ss-loadorder-list`,
+                items: filteredOrder,
+                itemRenderer: Ue4ssItemRenderer,
+                apply: onApply,
+                idFunc: entry => entry.id,
+                isLocked: item => [true, 'true', 'always'].includes(item?.locked),
+              })
+            )
           ),
           React.createElement(FlexLayout.Flex, { style: { flex: '0 0 300px', overflowY: 'auto' } },
             React.createElement(Ue4ssLoadOrderInfoPanel)
