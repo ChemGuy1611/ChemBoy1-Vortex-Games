@@ -40,7 +40,7 @@ from vortex_utils import (
     inject_register_actions, find_fn_body,
     list_game_ids, write_index_js, resize_images_to, log_info, log_warn,
     load_vortex_manifest, resize_pngs_in_dirs,
-    is_placeholder_value,
+    is_placeholder_value, replace_const_rhs, print_count_summary,
 )
 MANIFEST_PATH = os.environ.get("VORTEX_MANIFEST_PATH", r"C:\Game_Tools\0 GitHub Repos\Vortex-Backend\out\extensions-manifest.json")
 NEXUS_SITE_BASE = "https://www.nexusmods.com/site/mods"
@@ -94,12 +94,7 @@ def patch_epic_app_id(game_id, src, context):
     if not app_id:
         return src, False, f"not found on egdata.app for '{game_name}'"
 
-    # Replace EPICAPP_ID value; consume any stale trailing comment so it isn't re-decorated
-    new_src = re.sub(
-        r'^([ \t]*(?:const|let)\s+EPICAPP_ID\s*=\s*)["\'][^"\']*["\'](\s*//[^\n]*)?',
-        rf'\g<1>"{app_id}"',
-        src, count=1, flags=re.MULTILINE,
-    )
+    new_src = replace_const_rhs(src, "EPICAPP_ID", f'"{app_id}"')
     if new_src == src:
         return src, False, "regex substitution had no effect"
     return new_src, True, f"set to {app_id}"
@@ -581,7 +576,7 @@ def run_patches(game_ids, dry_run, context, only=None):
     except KeyboardInterrupt:
         print("\n\n  Interrupted.")
     finally:
-        print(f"\nDone. {total_changed} changed, {total_skipped} skipped, {total_errors} errors.")
+        print_count_summary({"changed": total_changed, "skipped": total_skipped, "errors": total_errors})
 
     if changed_ids and not dry_run:
         ok, err = run_generate_explained_batch(changed_ids)

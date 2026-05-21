@@ -52,7 +52,7 @@ NEXUS_SITE_URL = "https://www.nexusmods.com/games/site"
 def check_installer_priorities(index_src, game_id):
     """Error if any two context.registerInstaller calls share the same priority number."""
     priorities = re.findall(
-        r'context\.registerInstaller\s*\(\s*["\'][^"\']*["\']\s*,\s*(\d+)\s*,',
+        r"""context\.registerInstaller\s*\(\s*["'`][^"'`]*["'`]\s*,\s*(\d+)\s*,""",
         index_src,
     )
     seen, dupes = set(), []
@@ -301,10 +301,14 @@ def main():
                 print(f"  ERROR - {e}")
                 failed.append(game_id)
                 continue
-            if release(game_id, not args.no_open, args.dry_run,
-                       skip_eslint=args.skip_eslint, skip_explained=args.skip_explained):
-                saved.append(game_id)
-            else:
+            try:
+                if release(game_id, not args.no_open, args.dry_run,
+                           skip_eslint=args.skip_eslint, skip_explained=args.skip_explained):
+                    saved.append(game_id)
+                else:
+                    failed.append(game_id)
+            except Exception as e:
+                log_error(game_id, f"unexpected error: {e}")
                 failed.append(game_id)
     except KeyboardInterrupt:
         print("\n\n  Interrupted.")

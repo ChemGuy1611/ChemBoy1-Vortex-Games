@@ -2217,7 +2217,7 @@ function deployNotify(api) {
         title: 'Run DMM',
         action: async (dismiss) => {
           if (await isDmmInstalled(api, spec)) {
-            runManager(api, DMM_ID, DMM_NAME);
+            runManager(api, DMM_ID, DMM_NAME, DMM_ARGS);
           } else {
             api.showErrorNotification(`DMM is not installed.`, undefined, { allowReport: false });
           }
@@ -2228,7 +2228,7 @@ function deployNotify(api) {
         title: 'Run Browser',
         action: async (dismiss) => {
           if (await isBrowserInstalled(api, spec)) {
-            runBrowser(api);
+            runManager(api, BROWSER_ID, BROWSER_NAME, BROWSER_ARGS);
           } else {
             api.showErrorNotification(`Crimson Browser is not installed.`, undefined, { allowReport: false });
           }
@@ -2245,7 +2245,7 @@ function deployNotify(api) {
             {
               label: `Run ${MOD_NAME}`, action: async () => {
                 if (await isDmmInstalled(api, spec)) {
-                  runManager(api, DMM_ID, DMM_NAME);
+                  runManager(api, DMM_ID, DMM_NAME, DMM_ARGS);
                 } else {
                   api.showErrorNotification(`DMM is not installed.`, undefined, { allowReport: false });
                 }
@@ -2255,14 +2255,14 @@ function deployNotify(api) {
             {
               label: `Run ${BROWSER_NAME}`, action: async () => {
                 if (await isBrowserInstalled(api, spec)) {
-                  runBrowser(api);
+                  runManager(api, BROWSER_ID, BROWSER_NAME, BROWSER_ARGS);
                 } else {
                   api.showErrorNotification(`Crimson Browser is not installed.`, undefined, { allowReport: false });
                 }
                 dismiss();
               }
             },
-            {
+            /*{
               label: `Run BOTH!`, action: async () => {
                 if (await isDmmInstalled(api, spec)) {
                   runManager(api, DMM_ID, DMM_NAME);
@@ -2270,13 +2270,13 @@ function deployNotify(api) {
                   api.showErrorNotification(`DMM is not installed.`, undefined, { allowReport: false });
                 }
                 if (await isBrowserInstalled(api, spec)) {
-                  runBrowser(api);
+                  runManager(api, BROWSER_ID, BROWSER_NAME, BROWSER_ARGS);
                 } else {
                   api.showErrorNotification(`Crimson Browser is not installed.`, undefined, { allowReport: false });
                 }
                 dismiss();
               }
-            },
+            }, //*/
             { label: 'Continue', action: () => dismiss() },
             {
               label: 'Never Show Again', action: () => {
@@ -2291,29 +2291,7 @@ function deployNotify(api) {
   });
 }
 
-function runBrowser(api) {
-  const TOOL_ID = BROWSER_ID;
-  const TOOL_NAME = BROWSER_NAME;
-  const state = api.store.getState();
-  const tool = util.getSafe(state, ['settings', 'gameMode', 'discovered', GAME_ID, 'tools', TOOL_ID], undefined);
-
-  try {
-    const TOOL_PATH = tool.path;
-    if (TOOL_PATH !== undefined) {
-      return api.runExecutable(TOOL_PATH, BROWSER_ARGS, { suggestDeploy: false })
-        .catch(err => api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err,
-          { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 })
-        );
-    }
-    else {
-      return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, `Path to ${TOOL_NAME} executable could not be found. Ensure ${TOOL_NAME} is installed through Vortex.`);
-    }
-  } catch (err) {
-    return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 });
-  }
-}
-
-function runManager(api, id, name) {
+function runManager(api, id, name, args = []) {
   const TOOL_ID = id;
   const TOOL_NAME = name;
   const state = api.store.getState();
@@ -2322,7 +2300,7 @@ function runManager(api, id, name) {
   try {
     const TOOL_PATH = tool.path;
     if (TOOL_PATH !== undefined) {
-      return api.runExecutable(TOOL_PATH, JSON_ARGS, { suggestDeploy: false })
+      return api.runExecutable(TOOL_PATH, args, { suggestDeploy: false })
         .catch(err => api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err,
           { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 })
         );

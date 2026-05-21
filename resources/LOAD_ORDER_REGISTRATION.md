@@ -44,7 +44,7 @@ types.ts:81                 interface ILoadOrderGameInfo { ... }
 | --- | --- | --- |
 | `toggleableEntries` | `true` | Show enable/disable checkbox per row |
 | `clearStateOnPurge` | `true` | Wipe Redux state when mods are purged |
-| `usageInstructions` | Vortex default | String or `React.ComponentType` shown in the info panel |
+| `usageInstructions` | Vortex default | String or `React.ComponentType` shown in the info panel — always rendered on the **right side** of the list in a `FlexLayout type="row"`; position is hardcoded and not configurable via this API |
 | `customItemRenderer` | Vortex default | `React.ComponentType` for each row in the list |
 | `noCollectionGeneration` | `false` | Opt out of automatic Vortex Collections integration |
 | `condition` | `undefined` | `() => boolean` — hide the LO page when returns `false` |
@@ -159,6 +159,8 @@ context.registerMainPage('sort-none', 'Load order', FileBasedLoadOrderPage, {
   </MainPage.Body>
 </MainPage>
 ```
+
+> **`usageInstructions` position is hardcoded right.** `FileBasedLoadOrderPage.tsx:304-309` uses `FlexLayout type="row"` with the list left and `InfoPanel` right. There is no API option to move it to the bottom. To get bottom-positioned instructions you must replace `registerLoadOrder` with a fully custom `registerMainPage` (column `FlexLayout`, list as `FlexLayout.Flex` + info panel as `div { flexShrink: 0 }`) — the same approach as `Ue4ssLoadOrderPage`. That means re-implementing filter, DnD, validate, and serialize wiring yourself; not worth it for instruction placement alone.
 
 ### What `customItemRenderer` receives
 

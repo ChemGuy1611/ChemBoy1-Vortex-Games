@@ -237,7 +237,7 @@ def main() -> None:
     )
     parser.add_argument(
         "--no-open", action="store_true",
-        help="Do not open the output folder after writing",
+        help="Do not open the output file after writing",
     )
     args = parser.parse_args()
 

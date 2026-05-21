@@ -17,7 +17,7 @@ import os
 import argparse
 
 from vortex_utils import (
-    REPO_ROOT, LISTS_DIR, list_game_ids, detect_engine,
+    REPO_ROOT, LISTS_DIR, list_game_ids, detect_engine, read_index_js,
     read_id_list, write_id_list,
     is_load_order_game as _is_load_order_game_src,
     log_error, log_dry,
@@ -51,21 +51,17 @@ LOADORDER_FILE = "games-loadorder.txt"
 
 def categorize(game_id):
     """Return the output filename for the given game_id, or None if no index.js found."""
-    index_path = os.path.join(REPO_ROOT, f"game-{game_id}", "index.js")
-    if not os.path.isfile(index_path):
+    src = read_index_js(os.path.join(REPO_ROOT, f"game-{game_id}"))
+    if src is None:
         return None
-    with open(index_path, encoding="utf-8") as f:
-        src = f.read()
     return _FILE_FOR_LABEL[detect_engine(src)]
 
 
 def is_load_order_game(game_id):
     """Return True if the game calls registerLoadOrder and is not a UE4/5 extension."""
-    index_path = os.path.join(REPO_ROOT, f"game-{game_id}", "index.js")
-    if not os.path.isfile(index_path):
+    src = read_index_js(os.path.join(REPO_ROOT, f"game-{game_id}"))
+    if src is None:
         return False
-    with open(index_path, encoding="utf-8") as f:
-        src = f.read()
     return _is_load_order_game_src(src)
 
 

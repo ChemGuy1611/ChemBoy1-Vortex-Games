@@ -50,11 +50,15 @@ function buildSymbolTable(src) {
   }
 
   // Harvest object literal properties (e.g., UNREALDATA = { modsPath: ... })
-  const objRe = /(?:const|let)\s+([A-Za-z_$]\w*)\s*=\s*\{([\s\S]*?)\}/g;
+  // Use depth-counted scan so nested braces don't truncate the body early.
+  const objDeclRe = /(?:const|let)\s+([A-Za-z_$]\w*)\s*=\s*\{/g;
   let objM;
-  while ((objM = objRe.exec(stripped)) !== null) {
+  while ((objM = objDeclRe.exec(stripped)) !== null) {
     const objName = objM[1];
-    const objBody = objM[2];
+    const braceOpenPos = objM.index + objM[0].length - 1;
+    const braceClosePos = scanToMatchingClose(stripped, braceOpenPos, '{', '}');
+    if (braceClosePos === -1) continue;
+    const objBody = stripped.slice(braceOpenPos + 1, braceClosePos);
     // Split on commas that are at depth 0 (not inside parentheses)
     const props = splitAtTopLevelCommas(objBody);
     for (const prop of props) {
@@ -218,6 +222,24 @@ function splitAtTopLevelCommas(str) {
 }
 
 /**
+ * Return the index of the matching close character (openCh/closeCh pair) for
+ * the open character at openPos. Handles nesting by depth counting.
+ * Returns -1 if the open position is not openCh or the close is never found.
+ */
+function scanToMatchingClose(str, openPos, openCh, closeCh) {
+  if (str[openPos] !== openCh) return -1;
+  let depth = 0;
+  for (let i = openPos; i < str.length; i++) {
+    if (str[i] === openCh) depth++;
+    else if (str[i] === closeCh) {
+      depth--;
+      if (depth === 0) return i;
+    }
+  }
+  return -1;
+}
+
+/**
  * Scan backwards from callIndex to find the enclosing if-block guard.
  * Returns the flag name if the enclosing block is `if (FLAG)` or
  * `if (FLAG === true)`; returns null for anything more complex.
@@ -312,6 +334,10 @@ function resolveWithFallback(expr, table, src) {
   const pjDecl = src.match(new RegExp(`(?:const|let)\\s+${e}\\s*=\\s*(path\\.join\\([^)]+\\))`));
   if (pjDecl) return resolveWithFallback(pjDecl[1], table, src);
   return resolved;
+}
+
+function isRealValue(v) {
+  return v != null && v !== 'null' && v !== 'XXX' && v !== 'N/A';
 }
 
 // ── extractors ──────────────────────────────────────────────────────────────
@@ -597,10 +623,17 @@ function extractField(objStr, fieldName) {
  * Extract raw field value (including path.join expressions).
  */
 function extractFieldRaw(objStr, fieldName) {
-  // Try path.join first
-  const pjRe = new RegExp(`"${fieldName}"\\s*:\\s*(path\\.join\\([^)]+\\))`);
-  const pjM = objStr.match(pjRe);
-  if (pjM) return pjM[1].trim();
+  // Try path.join first; use depth-tracked paren scan so nested path.join
+  // calls (e.g. path.join(a, path.join(b,c))) don't truncate the expression.
+  const pjStartRe = new RegExp(`"${fieldName}"\\s*:\\s*(path\\.join\\()`);
+  const pjM = pjStartRe.exec(objStr);
+  if (pjM) {
+    const parenOpenPos = pjM.index + pjM[0].length - 1;
+    const parenClosePos = scanToMatchingClose(objStr, parenOpenPos, '(', ')');
+    if (parenClosePos !== -1) {
+      return 'path.join(' + objStr.slice(parenOpenPos + 1, parenClosePos) + ')';
+    }
+  }
   // Fall back to regular extraction
   return extractField(objStr, fieldName);
 }
@@ -635,10 +668,14 @@ function extractInstallers(src, table) {
  */
 function extractTools(src, table) {
   const results = [];
-  // Match the tools array block - handle both const and let
-  const toolsBlock = src.match(/(?:const|let)\s+tools\s*=\s*\[([\s\S]*?)\];\s*\n/);
-  if (!toolsBlock) return results;
-  const block = toolsBlock[1];
+  // Locate the tools array using a depth-tracked bracket scan so entries that
+  // contain nested arrays (e.g. parameters: [...]) don't terminate the match early.
+  const toolsDeclM = src.match(/(?:const|let)\s+tools\s*=\s*\[/);
+  if (!toolsDeclM) return results;
+  const arrayOpenPos = toolsDeclM.index + toolsDeclM[0].length - 1;
+  const arrayClosePos = scanToMatchingClose(src, arrayOpenPos, '[', ']');
+  if (arrayClosePos === -1) return results;
+  const block = src.slice(arrayOpenPos + 1, arrayClosePos);
 
   // Split into individual tool objects
   const entries = [];
@@ -671,13 +708,23 @@ function extractTools(src, table) {
 function extractActions(src) {
   const results = [];
   const stripped = src.replace(/(?<!\/)\/\*[\s\S]*?\*\//g, '');
-  const re = /context\.registerAction\([^,]+,\s*\d+,\s*[^,]+,\s*\{[^}]*\}\s*,\s*[`'"]([^`'"]+)[`'"]/g;
+  // Find each context.registerAction( call; use depth-tracked arg parsing so
+  // an options object containing nested {} does not truncate the match.
+  const startRe = /context\.registerAction\s*\(/g;
   let m;
-  while ((m = re.exec(stripped)) !== null) {
+  while ((m = startRe.exec(stripped)) !== null) {
     const lineStart = stripped.lastIndexOf('\n', m.index);
     const linePrefix = stripped.substring(lineStart + 1, m.index).trim();
     if (linePrefix.startsWith('//')) continue;
-    results.push(m[1]);
+    const parenOpenPos = m.index + m[0].length - 1;
+    const parenClosePos = scanToMatchingClose(stripped, parenOpenPos, '(', ')');
+    if (parenClosePos === -1) continue;
+    const argsStr = stripped.slice(parenOpenPos + 1, parenClosePos);
+    const args = splitAtTopLevelCommas(argsStr);
+    if (args.length < 5) continue;
+    const labelArg = args[4].trim();
+    const labelM = labelArg.match(/^[`'"]([^`'"]+)[`'"]$/);
+    if (labelM) results.push(labelM[1]);
   }
   return results;
 }
@@ -692,18 +739,10 @@ function detectStores(table) {
   const gogId = table.get('GOGAPP_ID');
   const xboxId = table.get('XBOXAPP_ID');
 
-  if (steamId && steamId !== 'null' && steamId !== 'XXX' && steamId !== 'N/A') {
-    stores.push({ store: 'Steam', appId: steamId });
-  }
-  if (epicId && epicId !== 'null' && epicId !== 'XXX' && epicId !== 'N/A') {
-    stores.push({ store: 'Epic Games Store', appId: epicId });
-  }
-  if (gogId && gogId !== 'null' && gogId !== 'XXX' && gogId !== 'N/A') {
-    stores.push({ store: 'GOG', appId: gogId });
-  }
-  if (xboxId && xboxId !== 'null' && xboxId !== 'XXX' && xboxId !== 'N/A') {
-    stores.push({ store: 'Xbox / Microsoft Store', appId: xboxId });
-  }
+  if (isRealValue(steamId)) stores.push({ store: 'Steam', appId: steamId });
+  if (isRealValue(epicId))  stores.push({ store: 'Epic Games Store', appId: epicId });
+  if (isRealValue(gogId))   stores.push({ store: 'GOG', appId: gogId });
+  if (isRealValue(xboxId))  stores.push({ store: 'Xbox / Microsoft Store', appId: xboxId });
   return stores;
 }
 
@@ -717,7 +756,7 @@ function extractDependencies(src, table) {
   const bepVersion = table.get('BEPINEX_VERSION') || table.get('BEP_VER');
   const bepBuild = table.get('BEPINEX_BUILD');
   const bepArch = table.get('BEPINEX_ARCH');
-  if (bepVersion && bepVersion !== 'null') {
+  if (isRealValue(bepVersion)) {
     deps.push({
       name: 'BepInEx',
       version: bepVersion,
@@ -727,7 +766,7 @@ function extractDependencies(src, table) {
 
   // BepInEx Configuration Manager
   const cfgManUrl = table.get('BEPCFGMAN_URL');
-  if (cfgManUrl && cfgManUrl !== 'null') {
+  if (isRealValue(cfgManUrl)) {
     const cfgManVersion = cfgManUrl.match(/v([\d.]+)/);
     deps.push({
       name: 'BepInEx Configuration Manager',
@@ -738,7 +777,7 @@ function extractDependencies(src, table) {
 
   // MelonLoader
   const melonVersion = table.get('MELON_VERSION') || table.get('MEL_VER');
-  if (melonVersion && melonVersion !== 'null') {
+  if (isRealValue(melonVersion)) {
     deps.push({
       name: 'MelonLoader',
       version: melonVersion,
@@ -748,7 +787,7 @@ function extractDependencies(src, table) {
 
   // Fluffy Mod Manager
   const fluffyExec = table.get('FLUFFY_EXEC');
-  if (fluffyExec && fluffyExec !== 'null') {
+  if (isRealValue(fluffyExec)) {
     deps.push({
       name: 'Fluffy Mod Manager',
       version: null,
@@ -758,7 +797,7 @@ function extractDependencies(src, table) {
 
   // REFramework
   const refId = table.get('REF_ID');
-  if (refId && refId !== 'null' && src.includes('REFramework')) {
+  if (isRealValue(refId) && src.includes('REFramework')) {
     deps.push({
       name: 'REFramework',
       version: null,
@@ -767,8 +806,8 @@ function extractDependencies(src, table) {
   }
 
   // ACSE
-  if (src.includes('downloadACSE') || (table.get('ACSE_NAME') && table.get('ACSE_NAME') !== 'null')) {
-    const acseName = table.get('ACSE_NAME');
+  const acseName = table.get('ACSE_NAME');
+  if (src.includes('downloadACSE') || isRealValue(acseName)) {
     deps.push({
       name: acseName || 'ACSE',
       version: null,
@@ -796,7 +835,7 @@ function extractDependencies(src, table) {
 
   // GDWeave / Godot Mod Loader
   const loaderName = table.get('LOADER_NAME');
-  if (loaderName && loaderName !== 'null') {
+  if (isRealValue(loaderName)) {
     deps.push({
       name: loaderName,
       version: null,
@@ -806,7 +845,7 @@ function extractDependencies(src, table) {
 
   // Mod Installer tools (Far Cry etc.)
   const miName = table.get('MI_NAME');
-  if (miName && miName !== 'null') {
+  if (isRealValue(miName)) {
     deps.push({
       name: miName,
       version: null,
@@ -816,7 +855,7 @@ function extractDependencies(src, table) {
 
   // AnvilToolkit / Forger
   const forgerName = table.get('FORGER_NAME');
-  if (forgerName && forgerName !== 'null') {
+  if (isRealValue(forgerName)) {
     deps.push({
       name: forgerName,
       version: null,
@@ -835,7 +874,7 @@ function extractDependencies(src, table) {
 
   // Save Manager
   const smName = table.get('SM_NAME');
-  if (smName && smName !== 'null') {
+  if (isRealValue(smName)) {
     deps.push({
       name: smName,
       version: null,
@@ -854,21 +893,21 @@ function extractConfigSavePaths(table) {
 
   // Config paths
   const configPath = table.get('CONFIG_PATH') || table.get('CONFIG_FOLDER') || table.get('CONFIG_PATH_DEFAULT');
-  if (configPath && configPath !== 'null') {
+  if (isRealValue(configPath)) {
     paths.configPath = cleanEnvPath(configPath);
   }
   const configReg = table.get('CONFIG_REGPATH_FULL');
-  if (configReg && configReg !== 'null') {
+  if (isRealValue(configReg)) {
     paths.configRegistry = configReg;
   }
 
   // Save paths
   const savePath = table.get('SAVE_PATH') || table.get('SAVE_PATH_DEFAULT') || table.get('SAVE_FOLDER');
-  if (savePath && savePath !== 'null') {
+  if (isRealValue(savePath)) {
     paths.savePath = cleanEnvPath(savePath);
   }
   const savePathXbox = table.get('SAVE_PATH_XBOX');
-  if (savePathXbox && savePathXbox !== 'null') {
+  if (isRealValue(savePathXbox)) {
     paths.savePathXbox = cleanEnvPath(savePathXbox);
   }
 
@@ -1039,11 +1078,11 @@ function buildMarkdown(dirName, src) {
   const execXbox = table.get('EXEC_XBOX');
   const execGog = table.get('EXEC_GOG');
   const execDemo = table.get('EXEC_DEMO');
-  if (execXbox && execXbox !== 'null') md += `| Executable (Xbox) | \`${execXbox}\` |\n`;
-  if (execGog && execGog !== 'null') md += `| Executable (GOG) | \`${execGog}\` |\n`;
-  if (execDemo && execDemo !== 'null') md += `| Executable (Demo) | \`${execDemo}\` |\n`;
-  if (nexusUrl && nexusUrl !== 'null') md += `| Extension Page | [${nexusUrl}](${nexusUrl}) |\n`;
-  if (pcgwUrl && pcgwUrl !== 'null') md += `| PCGamingWiki | [${pcgwUrl}](${pcgwUrl}) |\n`;
+  if (isRealValue(execXbox))  md += `| Executable (Xbox) | \`${execXbox}\` |\n`;
+  if (isRealValue(execGog))   md += `| Executable (GOG) | \`${execGog}\` |\n`;
+  if (isRealValue(execDemo))  md += `| Executable (Demo) | \`${execDemo}\` |\n`;
+  if (isRealValue(nexusUrl))  md += `| Extension Page | [${nexusUrl}](${nexusUrl}) |\n`;
+  if (isRealValue(pcgwUrl))   md += `| PCGamingWiki | [${pcgwUrl}](${pcgwUrl}) |\n`;
   md += `\n`;
 
   // Supported Stores
@@ -1194,7 +1233,9 @@ for (const dirName of extDirs) {
   try {
     const src = fs.readFileSync(indexPath, 'utf8');
     const md  = buildMarkdown(dirName, src);
-    fs.writeFileSync(outPath, md, 'utf8');
+    const tmpPath = outPath + '.tmp';
+    fs.writeFileSync(tmpPath, md, 'utf8');
+    fs.renameSync(tmpPath, outPath);
     emit(`  OK    ${dirName}`);
     jsonResults.push({ id: dirName, ok: true });
     created++;

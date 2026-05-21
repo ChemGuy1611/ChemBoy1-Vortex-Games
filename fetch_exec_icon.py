@@ -28,7 +28,7 @@ import argparse
 
 from vortex_utils import (
     extract_steamapp_id, extract_game_name, iter_game_folders,
-    download_exec_icon, print_run_summary, const_value,
+    download_exec_icon, print_run_summary, const_value, normalize_target_ids,
 )
 
 
@@ -114,7 +114,7 @@ def main():
         help="Re-download exec.png even if it already exists.",
     )
     args = parser.parse_args()
-    fetch_all(target_game_ids=set(args.game) or None, dry_run=args.dry_run, force=args.force)
+    fetch_all(target_game_ids=normalize_target_ids(args.game), dry_run=args.dry_run, force=args.force)
 
 
 if __name__ == "__main__":

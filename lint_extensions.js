@@ -30,6 +30,12 @@ const { spawnSync } = require('child_process');
 const ROOT       = __dirname;
 const OUT_FILE   = path.join(ROOT, 'lint_results.txt');
 
+function writeResultsAtomic(content) {
+  const tmp = OUT_FILE + '.tmp';
+  fs.writeFileSync(tmp, content, 'utf8');
+  fs.renameSync(tmp, OUT_FILE);
+}
+
 const args      = process.argv.slice(2);
 const flags     = new Set(args.filter(a => a.startsWith('--')));
 const gameArgs  = args.filter(a => !a.startsWith('--'));
@@ -122,7 +128,7 @@ for (const dirName of targetDirs) {
 
 if (targetFiles.length === 0) {
   emit('Warning: no index.js files found to lint.');
-  fs.writeFileSync(OUT_FILE, lines.join('\n') + '\n', 'utf8');
+  writeResultsAtomic(lines.join('\n') + '\n');
   process.exit(1);
 }
 
@@ -168,14 +174,21 @@ if (targetFiles.length > 0) {
     const result = spawnSync(npxCmd, eslintArgs, {
       cwd: ROOT,
       encoding: 'utf8',
+      shell: isWin,
     });
+    if (result.error) {
+      const errMsg = `ESLint spawn failed: ${result.error.message}`;
+      emit(errMsg);
+      writeResultsAtomic(lines.join('\n') + '\n');
+      process.exit(2);
+    }
     let eslintData = [];
     try {
       eslintData = JSON.parse(result.stdout || '[]');
     } catch (_) {
       const errMsg = `ESLint error: ${(result.stderr || result.stdout || '').trim()}`;
       emit(errMsg);
-      fs.writeFileSync(OUT_FILE, lines.join('\n') + '\n', 'utf8');
+      writeResultsAtomic(lines.join('\n') + '\n');
       process.exit(2);
     }
     for (const entry of eslintData) {
@@ -245,7 +258,7 @@ if (doJson) {
   process.stdout.write(JSON.stringify(jsonOut, null, 2) + '\n');
 }
 
-fs.writeFileSync(OUT_FILE, lines.join('\n') + '\n', 'utf8');
+writeResultsAtomic(lines.join('\n') + '\n');
 if (doJson) {
   process.stderr.write(`\n${passed} passed, ${failed} failed. JSON follows on stdout.\n`);
 } else {

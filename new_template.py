@@ -76,7 +76,7 @@ from vortex_utils import (
     REPO_ROOT, extract_game_id, find_fn_end, REGISTER_ACTIONS, node_check,
     inject_register_actions, update_index_header, write_index_js,
     make_info_json, make_changelog, is_missing, const_value,
-    write_text_atomic, extract_array_rhs, report_node_check,
+    write_text_atomic, extract_array_rhs, report_node_check, replace_const_rhs,
 )
 
 # String constants always replaced with "XXX"
@@ -118,20 +118,15 @@ SAFE_VALUE_PATTERNS = [
 
 def replace_const(src, var_name):
     """Replace a string constant's quoted value with "XXX". Null values are untouched."""
-    return re.sub(
-        rf'^([ \t]*(?:const|let)\s+{re.escape(var_name)}\s*=\s*)["\'].+?["\']',
-        r'\1"XXX"',
-        src, count=1, flags=re.MULTILINE,
-    )
+    return replace_const_rhs(src, var_name, '"XXX"')
 
 
 def nullify_empty_store_id(src, var_name):
     """Replace an empty-string store ID (= "" or = '') with null."""
-    return re.sub(
-        rf'^([ \t]*(?:const|let)\s+{re.escape(var_name)}\s*=\s*)["\']["\']',
-        r'\1null',
-        src, count=1, flags=re.MULTILINE,
-    )
+    pattern = rf'^[ \t]*(?:const|let)\s+{re.escape(var_name)}\s*=\s*["\']["\']'
+    if not re.search(pattern, src, re.MULTILINE):
+        return src
+    return replace_const_rhs(src, var_name, 'null')
 
 
 
@@ -154,8 +149,9 @@ def replace_game_id_embedded(src, original_game_id):
 
     # Match const/let VAR = "...originalGameId..." but NOT the GAME_ID declaration itself.
     # Word boundaries around original_game_id prevent partial matches (e.g. "ark" in "darker").
-    pattern = rf'((?:const|let)\s+(?!GAME_ID\b)\w+\s*=\s*)["\']([^"\']*\b{re.escape(original_game_id)}\b[^"\']*)["\']'
-    new_src = re.sub(pattern, to_template_literal, src)
+    # Anchored to start of line to avoid matching inside JS comment lines.
+    pattern = rf'^([ \t]*(?:const|let)\s+(?!GAME_ID\b)\w+\s*=\s*)["\']([^"\']*\b{re.escape(original_game_id)}\b[^"\']*)["\']'
+    new_src = re.sub(pattern, to_template_literal, src, flags=re.MULTILINE)
     return new_src, replaced
 
 
@@ -297,8 +293,8 @@ def _fixup_discovery_ids_active(src):
 
 def _fixup_parameters(src):
     """Add PARAMETERS_STRING and PARAMETERS constants if missing (checked independently)."""
-    has_string = bool(re.search(r'(?:const|let)\s+PARAMETERS_STRING\s*=', src))
-    has_params = bool(re.search(r'(?:const|let)\s+PARAMETERS\s*=', src))
+    has_string = bool(re.search(r'^[ \t]*(?:const|let)\s+PARAMETERS_STRING\s*=', src, re.MULTILINE))
+    has_params = bool(re.search(r'^[ \t]*(?:const|let)\s+PARAMETERS\s*=', src, re.MULTILINE))
     if has_string and has_params:
         return src
     lines = []
@@ -308,13 +304,13 @@ def _fixup_parameters(src):
         lines.append("const PARAMETERS = [PARAMETERS_STRING];")
     block = '\n'.join(lines) + '\n'
     for pat in [
-        r'(?:const|let)\s+REQ_FILE\s*=[^\n]+\n',
-        r'(?:const|let)\s+MOD_PATH_DEFAULT\s*=[^\n]+\n',
+        r'^[ \t]*(?:const|let)\s+REQ_FILE\s*=[^\n]+\n',
+        r'^[ \t]*(?:const|let)\s+MOD_PATH_DEFAULT\s*=[^\n]+\n',
     ]:
-        m = re.search(pat, src)
+        m = re.search(pat, src, re.MULTILINE)
         if m:
             return src[:m.end()] + block + src[m.end():]
-    m = re.search(r'(?:const|let)\s+MODTYPE_FOLDERS\s*=', src)
+    m = re.search(r'^[ \t]*(?:const|let)\s+MODTYPE_FOLDERS\s*=', src, re.MULTILINE)
     if m:
         return src[:m.start()] + block + src[m.start():]
     m = re.search(r'\nconst spec\s*=', src)
@@ -327,7 +323,7 @@ def _fixup_modtype_folders(src):
     """Add MODTYPE_FOLDERS array if missing.
     Populates the array by scanning spec.modTypes targetPath entries for
     *_PATH variable references (skips bare '{gamePath}' root entries)."""
-    if re.search(r'(?:const|let)\s+MODTYPE_FOLDERS\s*=', src):
+    if re.search(r'^[ \t]*(?:const|let)\s+MODTYPE_FOLDERS\s*=', src, re.MULTILINE):
         return src
     # Collect *_PATH vars from targetPath lines inside spec.modTypes
     path_vars = []
@@ -345,7 +341,7 @@ def _fixup_modtype_folders(src):
     else:
         arr = 'MOD_PATH'
     line = f'let MODTYPE_FOLDERS = [{arr}]; // Add all mod type target paths\n'
-    m = re.search(r'(?:const|let)\s+PARAMETERS\s*=\s*\[[^\]]*\][^\n]*\n', src)
+    m = re.search(r'^[ \t]*(?:const|let)\s+PARAMETERS\s*=\s*\[[^\]]*\][^\n]*\n', src, re.MULTILINE)
     if m:
         return src[:m.end()] + line + src[m.end():]
     m = re.search(r'\nconst spec\s*=', src)
@@ -356,8 +352,8 @@ def _fixup_modtype_folders(src):
 
 def _fixup_ignore_arrays(src):
     """Add IGNORE_CONFLICTS and IGNORE_DEPLOY arrays if missing."""
-    has_conflicts = bool(re.search(r'(?:const|let)\s+IGNORE_CONFLICTS\s*=', src))
-    has_deploy = bool(re.search(r'(?:const|let)\s+IGNORE_DEPLOY\s*=', src))
+    has_conflicts = bool(re.search(r'^[ \t]*(?:const|let)\s+IGNORE_CONFLICTS\s*=', src, re.MULTILINE))
+    has_deploy = bool(re.search(r'^[ \t]*(?:const|let)\s+IGNORE_DEPLOY\s*=', src, re.MULTILINE))
     if has_conflicts and has_deploy:
         return src
     lines = []
@@ -366,7 +362,7 @@ def _fixup_ignore_arrays(src):
     if not has_deploy:
         lines.append("const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];")
     block = '\n'.join(lines) + '\n'
-    m = re.search(r'(?:const|let)\s+MODTYPE_FOLDERS\s*=[^\n]+\n', src)
+    m = re.search(r'^[ \t]*(?:const|let)\s+MODTYPE_FOLDERS\s*=[^\n]+\n', src, re.MULTILINE)
     if m:
         return src[:m.end()] + block + src[m.end():]
     m = re.search(r'\nconst spec\s*=', src)
@@ -483,7 +479,7 @@ _MOD_FOLDERS_FN = (
 
 def _fixup_mod_folders_fn(src):
     """Add modFoldersEnsureWritable function before setup() if missing."""
-    if re.search(r'function\s+modFoldersEnsureWritable\b', src):
+    if re.search(r'^[ \t]*(?:async\s+)?function\s+modFoldersEnsureWritable\b', src, re.MULTILINE):
         return src
     m = re.search(r'\nasync function setup\b|\nfunction setup\b|\nconst setup\s*=', src)
     if m:
@@ -569,7 +565,7 @@ def _fixup_path_pattern(src):
     Add try/catch to pathPattern if it exists without one.
     If pathPattern is absent entirely, inject it before modTypePriority or makeFindGame.
     """
-    if not re.search(r'function\s+pathPattern\b', src):
+    if not re.search(r'^[ \t]*(?:async\s+)?function\s+pathPattern\b', src, re.MULTILINE):
         for pat in [r'\nfunction modTypePriority\b', r'\nfunction makeFindGame\b']:
             m = re.search(pat, src)
             if m:
@@ -629,9 +625,9 @@ def _fixup_requires_launcher(src):
     Replace requiresLauncher with the standard DISCOVERY_IDS_ACTIVE form, or inject it
     if absent. Skips if DISCOVERY_IDS_ACTIVE.includes is already present.
     """
-    if re.search(r'DISCOVERY_IDS_ACTIVE\.includes', src):
+    if re.search(r'^[ \t]*(?!//).*DISCOVERY_IDS_ACTIVE\.includes', src, re.MULTILINE):
         return src  # already in standard form
-    if not re.search(r'function\s+requiresLauncher\b', src):
+    if not re.search(r'^[ \t]*(?:async\s+)?function\s+requiresLauncher\b', src, re.MULTILINE):
         # Inject before getExecutable or applyGame
         for pat in [r'\nfunction getExecutable\b', r'\nasync function getExecutable\b',
                     r'\nfunction applyGame\b']:
@@ -964,10 +960,8 @@ def create_template(template_name, game_ids, dry_run, force, diff=False):
         write_index_js(dest_dir, processed)
         ok, err = node_check(index_js_path)
         report_node_check(primary_game, ok, err)
-        with open(os.path.join(dest_dir, "info.json"), "w", encoding="utf-8") as f:
-            f.write(make_info_json())
-        with open(os.path.join(dest_dir, "CHANGELOG.md"), "w", encoding="utf-8") as f:
-            f.write(make_changelog())
+        write_text_atomic(os.path.join(dest_dir, "info.json"), make_info_json())
+        write_text_atomic(os.path.join(dest_dir, "CHANGELOG.md"), make_changelog())
         for png in pngs:
             shutil.copy2(os.path.join(src_dir, png), os.path.join(dest_dir, png))
 

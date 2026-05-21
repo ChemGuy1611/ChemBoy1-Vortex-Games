@@ -269,7 +269,7 @@ const UE4SS_MODSJSON_FILEPATH = path.join(UE4SS_MOD_PATH, UE4SS_MODSJSON_FILE); 
 const UE4SS_MODSTXT_FILEPATH = path.join(UE4SS_MOD_PATH, UE4SS_MODSTXT_FILE);
 const UE4SS_LO_FILE = 'ue4ss_loadOrder.json';
 const LO_ATTRIBUTE_UE4SS = 'ue4ssModFolder';
-const UE4SS_CONFIG_FILES = ['config.lua', 'settings.json']; //files that trigger the Configure button on UE4SS LO items
+const UE4SS_CONFIG_FILES = ['config.txt', 'settings.json', 'config.lua']; //files that trigger the Configure button on UE4SS LO items
 const UE4SS_NATIVE_MODS = ['BPML_GenericFunctions', 'BPModLoaderMod', 'CheatManagerEnablerMod', 
   'ConsoleCommandsMod', 'ConsoleEnablerMod', 'Keybinds', 'LineTraceMod', 'shared', 'SplitScreenMod'
 ];
@@ -1813,15 +1813,11 @@ async function deserializeUe4ss(api) {
   const profile = selectors.activeProfile(state);
   const filename = profile.id + '_' + UE4SS_LO_FILE;
   let loadOrderPath = path.join(modFolderPath, filename);
-  await fs.ensureFileAsync(loadOrderPath);
-  let loadOrderFile = await fs.readFileAsync(
-    loadOrderPath, 
-    { encoding: "utf8", }
-  );
   let LO_MOD_ARRAY = [];
-  if (loadOrderFile.length > 0) {
-    LO_MOD_ARRAY = JSON.parse(loadOrderFile);
-  }
+  try {
+    const raw = await fs.readFileAsync(loadOrderPath, { encoding: 'utf8' });
+    if (raw.length > 0) LO_MOD_ARRAY = JSON.parse(util.deBOM(raw));
+  } catch { /* file doesn't exist yet; start with empty array */ }
   if (debug) {
     log('warn', `UE4SS LO_MOD_ARRAY: ${LO_MOD_ARRAY.map(mod => mod.id).join(', ')}`);
   }
@@ -1911,6 +1907,7 @@ async function deserializeUe4ss(api) {
 //Write load order to files
 async function serializeUe4ss(api, loadOrder) {
   const state = api.getState();
+  if (selectors.activeGameId(state) !== GAME_ID) return;
   GAME_PATH = getDiscoveryPath(api);
   const profile = selectors.activeProfile(state);
   const filename = profile.id + '_' + UE4SS_LO_FILE;
@@ -2589,12 +2586,6 @@ function applyGame(context, gameSpec) {
 
 //Main function
 function main(context) {
-  context.registerReducer(['settings', GAME_ID], {
-    reducers: {
-      [setUe4ssLoEnabled.toString()]: (state, payload) => util.setSafe(state, ['ue4ssLoEnabled'], payload),
-    },
-    defaults: { ue4ssLoEnabled: true },
-  });
   applyGame(context, spec);
   if (UNREALDATA.loadOrder === true) { //UNREAL - mod load order
     if (FBLO) {
@@ -2631,9 +2622,16 @@ function main(context) {
       }); //*/
     }
   }
-  context.registerSettings('Mods', GameSettings, () => ({}),
-    () => selectors.activeGameId(context.api.getState()) === GAME_ID, 150);
   if (ue4ssLoadOrder) {
+    context.registerReducer(['settings', GAME_ID], {
+      reducers: {
+        [setUe4ssLoEnabled.toString()]: (state, payload) => util.setSafe(state, ['ue4ssLoEnabled'], payload),
+      },
+      defaults: { ue4ssLoEnabled: true },
+    });
+    context.registerSettings('Mods', GameSettings, () => ({}),
+      () => selectors.activeGameId(context.api.getState()) === GAME_ID, 150
+    );
     context.registerReducer(['persistent', 'ue4ssLoadOrder'], {
       reducers: {
         [setUe4ssLoadOrder.toString()]: (state, payload) => util.setSafe(state, [payload.profileId, 'loadOrder'], payload.loadOrder),
@@ -3102,6 +3100,7 @@ function Ue4ssLoadOrderPage({ api }) {
 
   React.useEffect(() => {
     if (!profileId) return;
+    if (selectors.activeGameId(api.getState()) !== GAME_ID) return;
     deserializeUe4ss(api).then(lo => dispatch(setUe4ssLoadOrder(profileId, lo)));
     setSelectedIds(new Set());
   }, [profileId]);

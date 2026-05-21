@@ -18,18 +18,19 @@ Usage:
         sanitize_game_name, normalize_game_name,
         roman_to_arabic, arabic_to_roman,
         name_lookup_variants, lookup_pcgamingwiki,
-        get_api_key, http_get, http_get_bytes, http_post_json,
+        get_api_key, http_get, http_get_bytes, http_get_json, http_post_json,
         fetch_epic_app_id, add_to_discovery_ids,
-        const_value, is_unset, is_missing, set_or_insert,
-        XXX_PATTERN, is_placeholder_value, is_real_value,
+        const_value, is_unset, is_missing, set_or_insert, replace_const_rhs,
+        XXX_PATTERN, is_placeholder_value, is_real_value, find_placeholder_vars,
         const_decl_match, const_array_value, extract_array_rhs,
         find_js_function,
         update_index_header, inject_register_actions,
         find_fn_end, find_fn_body, REGISTER_ACTIONS,
         read_info_json, make_info_json, make_changelog, parse_changelog_latest,
+        bump_semver, prepend_changelog_entry,
         mutate_index_js, mutate_text_file, read_json, write_json_atomic,
         list_game_ids, iter_game_folders, iter_repo_scripts,
-        dry_prefix, log_dry, print_run_summary, resize_images_to,
+        dry_prefix, log_dry, print_run_summary, print_count_summary, resize_images_to,
         build_arg_parser, assert_is_game_id, report_node_check,
         node_check, node_check_source, eslint_check,
         run_generate_explained, run_generate_explained_batch,
@@ -38,7 +39,7 @@ Usage:
         log_info, log_error, log_warn,
         find_vortex_exe, safe_windows_dirname,
         safe_rmtree, touch_empty, find_vortex_plugin_folder,
-        read_id_list, write_id_list, is_load_order_game,
+        normalize_target_ids, read_id_list, write_id_list, is_load_order_game,
         parse_nexus_mod_url, nexus_list_games, nexus_get_mod,
         download_exec_icon, download_cover_art,
         download_title_image, download_banner_image,
@@ -183,6 +184,12 @@ def http_post_json(url, data, headers=None):
         with urllib.request.urlopen(req, timeout=_HTTP_TIMEOUT) as resp:
             return json.loads(resp.read().decode("utf-8"))
     return _execute_with_retry(_do)
+
+
+def http_get_json(url, headers=None):
+    """Fetch a URL and return the parsed JSON response body.
+    Retries up to 2 times on 429 / 5xx / network errors (2 s, 4 s delays)."""
+    return json.loads(http_get(url, headers))
 
 
 # == API key loading ===========================================================
@@ -576,16 +583,8 @@ def add_to_discovery_ids(src):
         )
 
     def _has_real_value(s, var_name):
-        m = re.search(
-            rf'(?:const|let)\s+{re.escape(var_name)}\s*=\s*(.+?)(?:\s*;|\s*//|$)',
-            s, re.MULTILINE,
-        )
-        if not m:
-            return False
-        v = m.group(1).strip()
-        return not (v == "null"
-                    or re.match(r'^["\']["\']$', v)
-                    or re.match(r'^["\']XXX["\']$', v))
+        v = const_value(s, var_name)
+        return is_real_value(v)
 
     for var in ("STEAMAPP_ID_DEMO", "GOGAPP_ID", "EPICAPP_ID", "XBOXAPP_ID", "UPLAYAPP_ID", "EAAPP_ID"):
         if _has_real_value(src, var):
@@ -734,6 +733,22 @@ def is_real_value(v):
     if s.startswith('${'):
         return False
     return True
+
+
+def find_placeholder_vars(src):
+    """Return a list of const/let variable names whose RHS is a placeholder value.
+
+    A placeholder is any value matched by is_placeholder_value (XXX*, N/A, etc.)
+    or is_unset. Useful for reporting leftover unset fields after extension creation."""
+    found = []
+    for m in re.finditer(
+        r'^[ \t]*(?:const|let)\s+(\w+)\s*=\s*(["\'][^"\']*["\'])',
+        src, re.MULTILINE,
+    ):
+        rhs = m.group(2)
+        if is_placeholder_value(rhs) or is_unset(rhs):
+            found.append(m.group(1))
+    return found
 
 
 def const_decl_match(src, name):
@@ -1634,6 +1649,14 @@ def build_arg_parser(desc, *, with_force=True, with_dry_run=True, ids_required=T
     return p
 
 
+def normalize_target_ids(arg):
+    """Convert a list of game IDs from argparse to a set, or None for 'all games'.
+
+    arg: the parsed positional list (may be [] or None when nargs='*').
+    Returns set(arg) when non-empty, else None."""
+    return set(arg) or None
+
+
 def assert_is_game_id(game_id):
     """Raise ValueError with a clear message if game_id is a template name."""
     if game_id.startswith(TEMPLATE_PREFIX):
@@ -1774,6 +1797,57 @@ def print_run_summary(saved, failed, skipped, *, skip_label="no Steam ID"):
             print(f"  - {g}")
 
 
+def print_count_summary(counters):
+    """Print a one-line 'Done. N label, ...' summary from an ordered {label: count} dict."""
+    parts = ", ".join(f"{v} {k}" for k, v in counters.items())
+    print(f"\nDone. {parts}.")
+
+
+def replace_const_rhs(src, name, new_rhs, *, count=1):
+    """Replace the quoted RHS of a const/let declaration with new_rhs.
+
+    new_rhs is the literal replacement string, e.g. '"value"' or 'null'.
+    Anchored with ^[ \\t]* and MULTILINE so only the first top-level
+    declaration is targeted when count=1 (default)."""
+    pattern = rf'^([ \t]*(?:const|let)\s+{re.escape(name)}\s*=\s*)["\'][^"\']*["\']'
+    return re.sub(pattern, rf'\g<1>{new_rhs}', src, count=count, flags=re.MULTILINE)
+
+
+def bump_semver(version, kind):
+    """Bump a semver string. kind='major' increments minor and resets patch; else increments patch.
+
+    Raises ValueError for malformed version strings."""
+    parts = version.split(".")
+    if len(parts) != 3:
+        raise ValueError(f"Unexpected version format: {version!r}")
+    major, minor, patch = int(parts[0]), int(parts[1]), int(parts[2])
+    if kind == "major":
+        minor += 1
+        patch = 0
+    else:
+        patch += 1
+    return f"{major}.{minor}.{patch}"
+
+
+def prepend_changelog_entry(folder, version, date):
+    """Prepend a new ## [version] - date section to CHANGELOG.md in folder.
+
+    No-op if CHANGELOG.md does not exist. Inserts before the first existing
+    ## [ heading, or appends after trailing content if none found."""
+    changelog_path = os.path.join(folder, "CHANGELOG.md")
+    if not os.path.exists(changelog_path):
+        return
+    with open(changelog_path, "r", encoding="utf-8") as f:
+        content = f.read()
+    new_section = f"## [{version}] - {date}\n\n- \n\n"
+    m = re.search(r"^## \[", content, re.MULTILINE)
+    if m:
+        content = content[: m.start()] + new_section + content[m.start():]
+    else:
+        content = content.rstrip("\n") + "\n\n" + new_section
+    write_text_atomic(changelog_path, content)
+
+
 # == Nexus Mods API helpers ====================================================
 
 def parse_nexus_mod_url(url):
@@ -1854,14 +1928,27 @@ def find_vortex_exe():
 def safe_rmtree(path, hint=None):
     """Remove a directory tree, retrying once on PermissionError after 1 second.
 
-    hint: shown in the warning when PermissionError is caught (e.g. "close Vortex first")."""
+    On retry, read-only bits are cleared via an onerror handler before the
+    per-file delete is re-attempted.
+    hint: shown in the warning when PermissionError is caught."""
+    def _onerror(func, fpath, _exc_info):
+        try:
+            os.chmod(fpath, 0o777)
+            func(fpath)
+        except Exception:
+            pass
+
     try:
         shutil.rmtree(path)
     except PermissionError as e:
         msg = hint or "ensure no process is locking the folder"
         print(f"  WARNING - {e}. {msg}. Retrying in 1s...")
         time.sleep(1)
-        shutil.rmtree(path)
+        try:
+            shutil.rmtree(path, onerror=_onerror)
+        except PermissionError as e2:
+            print(f"  ERROR - {e2}. {msg}. Could not remove folder.")
+            raise
 
 
 def touch_empty(path, force=False):
@@ -1930,10 +2017,8 @@ def read_id_list(filepath):
 
 
 def write_id_list(filepath, game_ids):
-    """Write a sorted list of IDs to a file, one per line."""
-    with open(filepath, "w", encoding="utf-8") as f:
-        for gid in sorted(game_ids):
-            f.write(gid + "\n")
+    """Write a sorted list of IDs to a file atomically, one per line."""
+    write_text_atomic(filepath, "".join(gid + "\n" for gid in sorted(game_ids)))
 
 
 def is_load_order_game(src):

@@ -52,7 +52,7 @@ import sys
 import shutil
 import argparse
 
-from vortex_utils import REPO_ROOT, run_generate_explained, node_check_source, get_discovery_ids, log_warn, write_text_atomic, extract_array_rhs
+from vortex_utils import REPO_ROOT, run_generate_explained, node_check_source, get_discovery_ids, log_warn, write_text_atomic, extract_array_rhs, is_placeholder_value, update_index_header
 
 # Template constant names that are boolean feature toggles.
 # These are intentionally left at template defaults, not transferred from the game.
@@ -120,10 +120,9 @@ def _sub_array_rhs(src, var_name, new_rhs):
 
 
 def is_xxx_value(rhs):
-    """Return True if the rhs string is a variant of the XXX placeholder."""
-    # Matches "XXX", "XXX.exe", "XXXdemo.exe", "XXX_Demo", 'XXX', etc.
-    stripped = rhs.strip('"\'` ')
-    return stripped.upper().startswith('XXX') or stripped == ''
+    """Return True if the rhs string is a variant of the XXX placeholder.
+    Delegates to the central is_placeholder_value; kept as a local alias for clarity."""
+    return is_placeholder_value(rhs)
 
 
 def is_zero_value(rhs):
@@ -250,8 +249,7 @@ def apply_port(template_src, game_consts, game_src):
 
     # --- Pass 4: header comment Name field ---
     game_name = game_consts.get('GAME_NAME', 'XXX').strip('"\'')
-    new_src = re.sub(r'(Name:\s+)XXX(\s+Vortex Extension)',
-                     rf'\g<1>{game_name}\2', new_src)
+    new_src = update_index_header(new_src, name=game_name)
 
     # --- Build review list: game consts not covered by any template constant ---
     template_names = set(template_consts.keys()) | ARRAY_CONSTS | {'DISCOVERY_IDS_ACTIVE'}

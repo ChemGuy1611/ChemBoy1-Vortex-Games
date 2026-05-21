@@ -28,16 +28,7 @@ import vortex_utils as vu
 
 
 def _bump(version: str, bump_type: str) -> str:
-    parts = version.split(".")
-    if len(parts) != 3:
-        raise ValueError(f"Unexpected version format: {version!r}")
-    major, minor, patch = int(parts[0]), int(parts[1]), int(parts[2])
-    if bump_type == "major":
-        minor += 1
-        patch = 0
-    else:
-        patch += 1
-    return f"{major}.{minor}.{patch}"
+    return vu.bump_semver(version, bump_type)
 
 
 _SEMVER = re.compile(r'^\d+\.\d+\.\d+(?:-[\w.]+)?$')
@@ -61,6 +52,11 @@ def _process(folder: str, game_id: str, bump_type: str | None, dry_run: bool,
             return False
 
     today = datetime.date.today().strftime("%Y-%m-%d")
+
+    if new_ver == old_ver:
+        vu.log_info(game_id, f"version unchanged ({new_ver}), nothing to do")
+        return True
+
     vu.log_info(game_id, f"{old_ver} -> {new_ver}")
 
     if dry_run:
@@ -80,18 +76,7 @@ def _process(folder: str, game_id: str, bump_type: str | None, dry_run: bool,
         if new_src != src:
             vu.write_index_js(folder, new_src)
 
-    # CHANGELOG.md
-    changelog_path = os.path.join(folder, "CHANGELOG.md")
-    if os.path.exists(changelog_path):
-        with open(changelog_path, "r", encoding="utf-8") as f:
-            content = f.read()
-        new_section = f"## [{new_ver}] - {today}\n\n- \n\n"
-        m = re.search(r"^## \[", content, re.MULTILINE)
-        if m:
-            content = content[: m.start()] + new_section + content[m.start() :]
-        else:
-            content = content.rstrip("\n") + "\n\n" + new_section
-        vu.write_text_atomic(changelog_path, content)
+    vu.prepend_changelog_entry(folder, new_ver, today)
 
     return True
 

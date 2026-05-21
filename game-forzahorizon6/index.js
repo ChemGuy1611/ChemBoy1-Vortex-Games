@@ -1,9 +1,9 @@
 /*///////////////////////////////////////////
-Name: XXX Vortex Extension
+Name: Forza Horizon 6 Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2026-XX-XX
+Date: 2026-05-20
 Notes:
 - 
 ///////////////////////////////////////////*/
@@ -20,38 +20,38 @@ const { parseStringPromise } = require('xml2js');
 
 /*const USER_HOME = util.getVortexPath("home");
 const LOCALLOW = path.join(USER_HOME, 'AppData', 'LocalLow'); //*/
-const DOCUMENTS = util.getVortexPath("documents");
+//const DOCUMENTS = util.getVortexPath("documents");
 //const ROAMINGAPPDATA = util.getVortexPath("appData");
 const LOCALAPPDATA = util.getVortexPath("localAppData");
 
 //Specify all the information about the game
-const GAME_ID = "XXX";
-const STEAMAPP_ID = "XXX";
-const STEAMAPP_ID_DEMO = "XXX";
-const EPICAPP_ID = "XXX";
-const GOGAPP_ID = "XXX";
-const XBOXAPP_ID = "XXX";
-const XBOXEXECNAME = "XXX";
-const XBOX_PUB_ID = "XXX"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
+const GAME_ID = "forzahorizon6";
+const STEAMAPP_ID = "2483190"; // https://steamdb.info/app/2483190/
+const STEAMAPP_ID_DEMO = null;
+const EPICAPP_ID = null;
+const GOGAPP_ID = null;
+const XBOXAPP_ID = "Microsoft.ForteBaseGame"; // https://apps.microsoft.com/detail/9nr1r1xwlcnb
+const XBOXEXECNAME = "Forzahorizon6";
+const XBOX_PUB_ID = "8wekyb3d8bbwe"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
 const INSTALL_HIVE = 'HKEY_LOCAL_MACHINE'; //typically HKEY_LOCAL_MACHINE or HKEY_CURRENT_USER
 const INSTALL_KEY = `SOFTWARE\\WOW6432Node\\XXX\\XXX`; //for finding install in registry - requires winapi-bindings
 const INSTALL_VALUE = "XXX"; //often InstallDir or InstallPath
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, XBOXAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
-const GAME_NAME = "XXX";
-const GAME_NAME_SHORT = "XXX";
+const GAME_NAME = "Forza Horizon 6";
+const GAME_NAME_SHORT = "Forza Horizon 6";
 const BINARIES_PATH = path.join('.');
-const EXEC_NAME = "XXX.exe";
-const EXEC = path.join(BINARIES_PATH, EXEC_NAME);
+const EXEC_NAME = "forzahorizon6.exe";
+const EXEC = EXEC_NAME;
 const EXEC_EGS = EXEC; //change other versions if different than Steam/default
 const EXEC_GOG = EXEC;
 const EXEC_DEMO = EXEC;
-const PCGAMINGWIKI_URL = "XXX";
-const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Forza_Horizon_6";
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1913"; //Nexus link to this extension. Used for links
 
 //feature toggles
 const hasLoader = false; //true if game needs a mod loader
-const hasXbox = false; //toggle for Xbox version logic
+const hasXbox = true; //toggle for Xbox version logic
 const multiExe = false; //set to true if there are multiple executable names
 const multiModPath = false; //set to true if there are multiple possible mod paths (i.e. different path for Xbox version)
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
@@ -60,23 +60,26 @@ const rootInstaller = true; //enable root installer. Set false if you need to av
 const saveInstaller = false; //enable save installer. Set false if path is outside of game folder
 const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
 const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
-const hasUserIdFolder = false; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
+const hasUserIdFolder = true; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
 let binariesInstaller = false;
-if (BINARIES_PATH !== '.') binariesInstaller = true; //only enable Binaries installer if not in root
 const debug = false; //toggle for debug mode
 
 //info for modtypes, installers, tools, and actions
-const DATA_FOLDER = 'XXX';
+const DATA_FOLDER = 'media';
 let ROOT_FOLDERS = [DATA_FOLDER];
-if (BINARIES_PATH !== '.') ROOT_FOLDERS.push(BINARIES_PATH.split(path.sep)[0]);
-const ROOTSUB_FOLDERS = [];
+const ROOTSUB_FOLDERS = ['_library', 'audio', 'brakes', 'cars',
+  'charactercustomisation', 'cinematic_assets', 'crowds', 'deformableterrain',
+  'dynamicpost', 'graphicscache', 'hdrskies', 'lensflare', 'livery',
+  'nerddata', 'openworld', 'particles', 'physics', 'stripped', 'timeofday',
+  'tracks', 'ui', 'water', 'weather', 
+];
 const ROOTSUB_PATH = DATA_FOLDER;
 
-const CONFIGMOD_LOCATION = DOCUMENTS;
-const SAVEMOD_LOCATION = DOCUMENTS;
-const APPDATA_FOLDER = path.join('XXX');
-const CONFIG_FOLDERNAME = 'XXX';
-const SAVE_FOLDERNAME = 'XXX';
+const CONFIGMOD_LOCATION = LOCALAPPDATA;
+const SAVEMOD_LOCATION = LOCALAPPDATA;
+const APPDATA_FOLDER = path.join('ForzaHorizon6', 'LocalStorage_Shared');
+const CONFIG_FOLDERNAME = '';
+const SAVE_FOLDERNAME = '';
 
 let GAME_PATH = '';
 let GAME_VERSION = '';
@@ -119,7 +122,7 @@ let USERID_FOLDER = "";
 if (hasUserIdFolder) {
   try {
     const SAVE_ARRAY = fs.readdirSync(SAVE_FOLDER);
-    USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_FOLDER, entry));
+    USERID_FOLDER = SAVE_ARRAY.find((entry) => (isDir(SAVE_FOLDER, entry) && entry.includes('User_')));
   } catch(err) {
     USERID_FOLDER = "";
   }
@@ -128,11 +131,11 @@ if (hasUserIdFolder) {
   }
 }
 let SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
-const SAVE_FOLDER_XBOX = path.join(LOCALAPPDATA, "Packages", `${XBOXAPP_ID}_${XBOX_PUB_ID}`, "SystemAppData", "wgs");
+const SAVE_FOLDER_XBOX = path.join(LOCALAPPDATA, "Packages", `${XBOXAPP_ID}_${XBOX_PUB_ID}`, "LocalCache", "Local", 'LocalStorage_Shared'); //XBOX Version
 if (hasUserIdFolder) {
   try {
     const SAVE_ARRAY = fs.readdirSync(SAVE_FOLDER_XBOX);
-    USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_FOLDER, entry));
+    USERID_FOLDER = SAVE_ARRAY.find((entry) => (isDir(SAVE_FOLDER, entry) && entry.includes('User_')));
   } catch(err) {
     USERID_FOLDER = "";
   }
@@ -147,7 +150,7 @@ const SAVE_FILES = ["XXX"];
 const CONFIG_ID = `${GAME_ID}-config`;
 const CONFIG_NAME = "Config";
 let CONFIG_PATH = path.join(CONFIGMOD_LOCATION, APPDATA_FOLDER, CONFIG_FOLDERNAME);
-const CONFIG_PATH_XBOX = CONFIG_PATH; //XBOX Version
+const CONFIG_PATH_XBOX = path.join(LOCALAPPDATA, "Packages", `${XBOXAPP_ID}_${XBOX_PUB_ID}`, "LocalCache", "Local", 'LocalStorage_Shared'); //XBOX Version
 const CONFIG_EXTS = [".XXX"];
 const CONFIG_FILES = ["XXX"];
 
@@ -160,14 +163,20 @@ const TOOL_EXEC_PATH = path.join(TOOL_EXEC_FOLDER, TOOL_EXEC);
 //*/
 
 let MOD_PATH_DEFAULT = MOD_PATH;
-if (!needsModInstaller) MOD_PATH_DEFAULT = '.';
+if (!needsModInstaller) {
+  MOD_PATH_DEFAULT = '.';
+}
 const REQ_FILE = EXEC;
 const PARAMETERS_STRING = '';
 const PARAMETERS = [PARAMETERS_STRING];
 
-let MODTYPE_FOLDERS = [BINARIES_PATH];
-if (needsModInstaller) MODTYPE_FOLDERS.push(MOD_PATH);
-if (saveInstaller) MODTYPE_FOLDERS.push(SAVE_PATH);
+let MODTYPE_FOLDERS = [DATA_FOLDER];
+if (needsModInstaller) {
+  MODTYPE_FOLDERS.push(MOD_PATH);
+}
+if (saveInstaller) {
+  MODTYPE_FOLDERS.push(SAVE_PATH);
+}
 const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 
@@ -570,6 +579,7 @@ function testRoot(files, gameId) {
 
 //Installer install Root folder files
 function installRoot(files) {
+  files = files.filter(file => !file.toLowerCase().includes('backup') && !file.toLowerCase().includes('original')); //!risky, but fixes some poorly packaged mods
   const ROOT_FOLDERS_LOWER = ROOT_FOLDERS.map(str => str.toLowerCase());
   const ROOTSUB_FOLDERS_LOWER = ROOTSUB_FOLDERS.map(str => str.toLowerCase());
   let folder = '';
@@ -578,7 +588,7 @@ function installRoot(files) {
     modFile = files.find(file => ROOTSUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
     folder = ROOTSUB_PATH;
   }
-  const ROOT_IDX = `${path.basename(modFile)}${path.sep}`
+  const ROOT_IDX = path.basename(modFile); //!don't use path.sep since some sub-items are files
   const idx = modFile.indexOf(ROOT_IDX);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
@@ -919,9 +929,7 @@ async function setup(discovery, api, gameSpec) {
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   // ASYNC CODE //////////////////////////////////////////
-  if (hasXbox || multiExe) {
-    GAME_VERSION = await setGameVersion(GAME_PATH);
-  }
+  GAME_VERSION = await setGameVersion(GAME_PATH);
   if (setupNotification) setupNotify(api);
   //await fs.ensureDirWritableAsync(CONFIG_PATH);
   if (hasLoader) {

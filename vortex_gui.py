@@ -29,7 +29,7 @@ from datetime import datetime
 
 from PySide6.QtCore import (
     QAbstractProxyModel, QAbstractTableModel, QItemSelectionModel, QModelIndex,
-    QObject, QPointF, QProcess, QProcessEnvironment, QSettings, QSize, QSortFilterProxyModel, Qt, QUrl, Signal,
+    QObject, QPointF, QProcess, QProcessEnvironment, QSettings, QSize, QSortFilterProxyModel, Qt, QThread, QUrl, Signal,
 )
 from PySide6.QtGui import (
     QAction, QColor, QDesktopServices, QFont, QIcon, QKeySequence, QPainter, QPainterPath,
@@ -503,8 +503,7 @@ class GameModel(QAbstractTableModel):
         super().__init__()
         self._rows: list[GameRow] = []
 
-    def load(self):
-        self.beginResetModel()
+    def _load_rows(self) -> list:
         flags = _load_flags()
         stats = _load_stats()
         rows = []
@@ -548,6 +547,15 @@ class GameModel(QAbstractTableModel):
                 endorsements, unique_downloads, nexus_published, stats_fetched_at,
                 fd.get("flagged", False), fd.get("note", ""),
             ))
+        return rows
+
+    def load(self):
+        self.beginResetModel()
+        self._rows = self._load_rows()
+        self.endResetModel()
+
+    def apply_rows(self, rows: list):
+        self.beginResetModel()
         self._rows = rows
         self.endResetModel()
 
@@ -617,8 +625,8 @@ class GameModel(QAbstractTableModel):
                     try:
                         return datetime.strptime(row.nexus_published, "%Y-%m-%d").timestamp()
                     except ValueError:
-                        return -1
-                return -1
+                        return float('inf')
+                return float('inf')
             if col == COL_ICON:   return 1 if row.icon   is not None else 0
             if col == COL_COVER:  return 1 if row.cover  is not None else 0
             if col == COL_TITLE:  return 1 if row.title  is not None else 0
@@ -631,6 +639,17 @@ class GameModel(QAbstractTableModel):
         if orientation == Qt.Horizontal and role == Qt.DisplayRole:
             return HEADERS[section]
         return None
+
+
+class _RefreshWorker(QThread):
+    done = Signal(list)
+
+    def __init__(self, model, parent=None):
+        super().__init__(parent)
+        self._model = model
+
+    def run(self):
+        self.done.emit(self._model._load_rows())
 
 
 class GameFilterModel(QSortFilterProxyModel):
@@ -854,6 +873,10 @@ class ScriptRunner(QObject):
         if self._process and self._process.state() != QProcess.NotRunning:
             self._process.kill()
 
+    def wait_for_finished(self, ms: int = 3000):
+        if self._process is not None:
+            self._process.waitForFinished(ms)
+
     @property
     def is_running(self) -> bool:
         return bool(self._process and self._process.state() != QProcess.NotRunning)
@@ -1008,14 +1031,17 @@ class PortTemplateDialog(QDialog):
     def build_cmds(self, game_ids: list[str]) -> list[list[str]]:
         template = self.template_combo.currentText()
         script = os.path.join(REPO_ROOT, "port_to_template.py")
+        dry = self.dry_run_cb.isChecked()
         cmds = []
         for gid in game_ids:
-            cmd = [PYTHON, script, gid, template]
-            if self.dry_run_cb.isChecked():
+            cmd = [PYTHON, script, gid, template, "--no-explained"]
+            if dry:
                 cmd.append("--dry-run")
             if self.force_cb.isChecked():
                 cmd.append("--force")
             cmds.append(cmd)
+        if not dry:
+            cmds.append([NODE, os.path.join(REPO_ROOT, "generate_explained.js")] + game_ids)
         return cmds
 
 
@@ -1136,6 +1162,37 @@ class BumpTypeDialog(QDialog):
         return ["--version", self._version_edit.text().strip()]
 
 
+# == Help dialog ===============================================================
+
+class HelpDialog(QDialog):
+    _SHORTCUTS = [
+        ("Ctrl+F",          "Focus filter"),
+        ("Ctrl+R / F5",     "Refresh table"),
+        ("Ctrl+N",          "New game"),
+        ("Ctrl+L",          "Focus log pane"),
+        ("Ctrl+E",          "Open in editor"),
+        ("F1",              "Show this help"),
+        ("F2 / Delete",     "Flag selected game"),
+        ("Escape",          "Clear filter"),
+    ]
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        self.setWindowTitle("Keyboard Shortcuts")
+        self.setMinimumWidth(380)
+        layout = QVBoxLayout(self)
+        text = "\n".join(f"{k:<22}  {v}" for k, v in self._SHORTCUTS)
+        view = QPlainTextEdit()
+        view.setReadOnly(True)
+        view.setFont(QFont("Consolas", 10))
+        view.setPlainText(text)
+        view.setMinimumHeight(180)
+        layout.addWidget(view)
+        buttons = QDialogButtonBox(QDialogButtonBox.Close)
+        buttons.rejected.connect(self.reject)
+        layout.addWidget(buttons)
+
+
 # == Main window ===============================================================
 
 class MainWindow(QMainWindow):
@@ -1158,6 +1215,7 @@ class MainWindow(QMainWindow):
 
         self._action_btns: dict[str, QAction] = {}
         self._refresh_after_run = False
+        self._refresh_worker: _RefreshWorker | None = None
         self._splitter: QSplitter | None = None
 
         self._build_ui()
@@ -1201,6 +1259,9 @@ class MainWindow(QMainWindow):
         QShortcut(QKeySequence("Delete"), self).activated.connect(self._on_flag_shortcut)
         QShortcut(QKeySequence("Ctrl+E"), self).activated.connect(self._on_open_editor)
         QShortcut(QKeySequence("Escape"), self).activated.connect(self._filter_edit.clear)
+        QShortcut(QKeySequence("Ctrl+R"), self).activated.connect(self._refresh_data)
+        QShortcut(QKeySequence("Ctrl+L"), self).activated.connect(lambda: self._log_pane.setFocus())
+        QShortcut(QKeySequence("F1"),     self).activated.connect(self._on_help)
 
         # script toolbar
         toolbar = QToolBar()
@@ -1351,9 +1412,10 @@ class MainWindow(QMainWindow):
         settings.setValue("filterText", self._filter_edit.text())
         settings.setValue("groupByEngine", self._group_btn.isChecked())
         self._runner.stop()
-        proc = self._runner._process
-        if proc is not None:
-            proc.waitForFinished(3000)
+        self._runner.wait_for_finished(3000)
+        if self._refresh_worker is not None:
+            self._refresh_worker.quit()
+            self._refresh_worker.wait()
         super().closeEvent(event)
 
     def _apply_spans(self):
@@ -1370,12 +1432,22 @@ class MainWindow(QMainWindow):
         self._proxy.set_grouping(checked)
 
     def _refresh_data(self):
+        if self._refresh_worker is not None:
+            return
         prev_ids = set(self._selected_ids())
+        self._refresh_btn.setEnabled(False)
         QApplication.setOverrideCursor(Qt.WaitCursor)
-        try:
-            self._model.load()
-        finally:
-            QApplication.restoreOverrideCursor()
+        self._refresh_worker = _RefreshWorker(self._model, self)
+        self._refresh_worker.done.connect(lambda rows: self._on_refresh_done(rows, prev_ids))
+        self._refresh_worker.start()
+
+    def _on_refresh_done(self, rows: list, prev_ids: set):
+        self._model.apply_rows(rows)
+        self._refresh_worker.deleteLater()
+        self._refresh_worker = None
+        QApplication.restoreOverrideCursor()
+        if not self._runner.is_running:
+            self._refresh_btn.setEnabled(True)
         if prev_ids:
             sel = self._table.selectionModel()
             sel.clearSelection()
@@ -1665,6 +1737,9 @@ class MainWindow(QMainWindow):
         for row in self._selected_rows():
             vu.open_in_default_app(row.folder)
 
+    def _on_help(self):
+        HelpDialog(self).exec()
+
     def _on_open_editor(self):
         if not self._require_selection():
             return
@@ -1705,9 +1780,12 @@ class MainWindow(QMainWindow):
         if not VORTEX_EXE:
             QMessageBox.warning(self, "Vortex Not Found", "Vortex.exe could not be located.")
             return
-        subprocess.Popen([VORTEX_EXE, "--game", rows[0].game_id],
-                         cwd=os.path.dirname(VORTEX_EXE),
-                         creationflags=subprocess.CREATE_NO_WINDOW)
+        try:
+            subprocess.Popen([VORTEX_EXE, "--game", rows[0].game_id],
+                             cwd=os.path.dirname(VORTEX_EXE),
+                             creationflags=subprocess.CREATE_NO_WINDOW)
+        except OSError as exc:
+            QMessageBox.warning(self, "Launch Failed", f"Could not launch Vortex:\n{exc}")
 
     def _on_new_game(self):
         dlg = NewGameDialog(self)

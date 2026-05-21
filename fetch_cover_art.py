@@ -40,12 +40,13 @@ Environment variables:
 
 import os
 import argparse
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from vortex_utils import (
     TITLE_IMAGES_DIR, BANNER_IMAGES_DIR,
     extract_steamapp_id, get_api_key, iter_game_folders,
     download_cover_art, download_title_image, download_banner_image,
-    print_run_summary, const_value,
+    print_run_summary, const_value, normalize_target_ids,
 )
 
 
@@ -127,41 +128,59 @@ def fetch_all(target_game_ids=None, dry_run=False, force=False, mode="cover"):
                 print(f"  MISSING  {label}  (Steam {steamapp_id})")
             else:
                 print(f"  MISSING  {label}  (no STEAMAPP_ID -- cannot auto-fetch)")
-            continue
 
-        print(f"\n{label}")
+    if dry_run:
+        return
+
+    def _download_one(item):
+        folder, game_id, steamapp_id = item
         if not steamapp_id:
-            print(f"  SKIP -- no STEAMAPP_ID in index.js")
-            skipped.append(game_id)
-            continue
-
+            return game_id, "skip", None, None
         try:
             if mode == "title":
                 os.makedirs(out_dir, exist_ok=True)
                 out_path = os.path.join(out_dir, f"{game_id}_title.jpg")
                 ok, source = download_title_image(steamapp_id, game_id, out_path, sgdb_key)
-                _handle_result(ok, source, game_id,
-                               f"add {game_id}_title.jpg manually to resources/title-images/ (1920x1080 JPG, with title text)",
-                               saved, failed)
+                fail_msg = f"add {game_id}_title.jpg manually to resources/title-images/ (1920x1080 JPG, with title text)"
             elif mode == "banner":
                 os.makedirs(out_dir, exist_ok=True)
                 out_path = os.path.join(out_dir, f"{game_id}_banner.jpg")
                 ok, source = download_banner_image(steamapp_id, game_id, out_path, sgdb_key)
-                _handle_result(ok, source, game_id,
-                               f"add {game_id}_banner.jpg manually to resources/banner-images/",
-                               saved, failed)
+                fail_msg = f"add {game_id}_banner.jpg manually to resources/banner-images/"
             else:
                 out_path = os.path.join(folder, f"{game_id}.jpg")
                 ok, source = download_cover_art(steamapp_id, game_id, out_path, sgdb_key)
-                _handle_result(ok, source, game_id,
-                               f"add {game_id}.jpg manually (640x360 JPG, no title text)",
-                               saved, failed)
+                fail_msg = f"add {game_id}.jpg manually (640x360 JPG, no title text)"
+            return game_id, "ok" if ok else "fail", source, fail_msg
         except Exception as e:
-            print(f"  ERROR - {e}")
-            failed.append(game_id)
+            return game_id, "error", None, str(e)
 
-    if dry_run:
-        return
+    results = {}
+    with ThreadPoolExecutor(max_workers=8) as pool:
+        for f in as_completed({pool.submit(_download_one, item): item for item in targets}):
+            r = f.result()
+            results[r[0]] = r
+
+    for _, game_id, steamapp_id in targets:
+        if mode == "title":
+            label = f"[{game_id}_title.jpg]"
+        elif mode == "banner":
+            label = f"[{game_id}_banner.jpg]"
+        else:
+            label = f"[{game_id}]"
+        _, status, source, detail = results[game_id]
+        if status == "skip":
+            print(f"\n{label}\n  SKIP -- no STEAMAPP_ID in index.js")
+            skipped.append(game_id)
+        elif status == "ok":
+            print(f"\n{label}\n  Saved: {source}")
+            saved.append(game_id)
+        elif status == "fail":
+            print(f"\n{label}\n  FAILED -- {detail}")
+            failed.append(game_id)
+        elif status == "error":
+            print(f"\n{label}\n  ERROR - {detail}")
+            failed.append(game_id)
 
     print_run_summary(saved, failed, skipped)
 
@@ -202,7 +221,7 @@ def main():
     args = parser.parse_args()
     mode = "title" if args.title else "banner" if args.banner else "cover"
     fetch_all(
-        target_game_ids=set(args.game) or None,
+        target_game_ids=normalize_target_ids(args.game),
         dry_run=args.dry_run,
         force=args.force,
         mode=mode,

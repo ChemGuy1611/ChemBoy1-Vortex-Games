@@ -56,15 +56,16 @@ from datetime import date
 from io import BytesIO
 from vortex_utils import (
     REPO_ROOT, PCGW_API, TITLE_IMAGES_DIR, BANNER_IMAGES_DIR,
-    http_get, http_get_bytes,
+    http_get, http_get_bytes, http_get_json,
     roman_to_arabic, arabic_to_roman, name_lookup_variants,
-    lookup_pcgamingwiki, get_api_key, run_generate_explained, eslint_check,
+    lookup_pcgamingwiki, get_api_key, run_generate_explained_batch, eslint_check,
     fetch_epic_app_id, add_to_discovery_ids,
     download_exec_icon, download_cover_art, download_title_image, download_banner_image,
     update_index_header, sanitize_game_name, normalize_game_name, write_index_js,
     read_index_js, extract_steamapp_id, extract_game_name,
     nexus_list_games, run_script, open_in_default_app,
-    write_text_atomic, is_placeholder_value,
+    write_text_atomic, is_placeholder_value, find_placeholder_vars, replace_const_rhs,
+    safe_rmtree,
 )
 
 TEMPLATES = [
@@ -101,7 +102,7 @@ def steam_search(game_name):
         urllib.parse.quote(clean)
     )
     try:
-        results = json.loads(http_get(url))
+        results = http_get_json(url)
         if not results:
             return None, None
         query_norm = normalize_game_name(game_name)
@@ -123,7 +124,7 @@ def steam_appdetails(appid):
     """Fetch Steam Store app details. Returns data dict or None."""
     url = f"https://store.steampowered.com/api/appdetails?appids={appid}"
     try:
-        data = json.loads(http_get(url))
+        data = http_get_json(url)
         entry = data.get(str(appid), {})
         if entry.get("success"):
             return entry["data"]
@@ -235,7 +236,7 @@ def lookup_nexus_domain(game_name, api_key):
 def _gog_product_type(pid):
     """Fetch product.json for a gogdb product and return its type string or None."""
     try:
-        data = json.loads(http_get(f"https://www.gogdb.org/data/products/{pid}/product.json"))
+        data = http_get_json(f"https://www.gogdb.org/data/products/{pid}/product.json")
         return data.get("type")
     except Exception:
         return None
@@ -282,7 +283,7 @@ def _gog_exe_from_builds(pid):
     build_data = None
     for fname, _ in entries:
         try:
-            data = json.loads(http_get(f"https://www.gogdb.org/data/products/{pid}/builds/{fname}"))
+            data = http_get_json(f"https://www.gogdb.org/data/products/{pid}/builds/{fname}")
             if data.get("platform", data.get("os", "")).lower() == "windows":
                 build_data = data
                 break
@@ -371,7 +372,7 @@ def lookup_gog_executable(gog_id):
 
     # No executable found — follow includes_games to find type:game products with builds
     try:
-        product = json.loads(http_get(f"https://www.gogdb.org/data/products/{gog_id}/product.json"))
+        product = http_get_json(f"https://www.gogdb.org/data/products/{gog_id}/product.json")
         for related_id in product.get("includes_games", []):
             related_id = str(related_id)
             if _gog_product_type(related_id) != "game":
@@ -402,7 +403,7 @@ def fetch_pcgw_availability(page_title):
             f"{PCGW_API}?action=parse&page={urllib.parse.quote(page_title)}"
             "&prop=wikitext&format=json"
         )
-        data = json.loads(http_get(url))
+        data = http_get_json(url)
         wikitext = data.get("parse", {}).get("wikitext", {}).get("*", "")
         # Follow redirect if the title resolved to a redirect page
         if wikitext.strip().startswith("#REDIRECT"):
@@ -413,7 +414,7 @@ def fetch_pcgw_availability(page_title):
                     f"{PCGW_API}?action=parse&page={urllib.parse.quote(redirect_title)}"
                     "&prop=wikitext&format=json"
                 )
-                data = json.loads(http_get(url))
+                data = http_get_json(url)
                 wikitext = data.get("parse", {}).get("wikitext", {}).get("*", "")
         if re.search(r'microsoft\s*store|xbox\s*(game\s*pass|store|app)', wikitext, re.IGNORECASE):
             result['xbox'] = True
@@ -536,19 +537,17 @@ def derive_short_name(name):
 # ── index.js substitution ─────────────────────────────────────────────────────
 
 def sub(src, var_name, value):
-    """
-    Replace lines of the form:
-        const VAR_NAME = "XXX"   →   const VAR_NAME = "value"
-        const VAR_NAME = "XXX"   →   const VAR_NAME = null    (when value is None)
-        const VAR_NAME = 'XXX'   →   same (single-quoted variant)
-    Only targets lines where the RHS is exactly "XXX" or 'XXX'.
-    Lines already set to null or a real value are untouched.
-    """
-    pattern = rf'^([ \t]*(?:const|let)\s+{re.escape(var_name)}\s*=\s*)["\']XXX[^"\']*["\']'
-    if value is None:
-        return re.sub(pattern, r"\1null", src, count=1, flags=re.MULTILINE)
-    escaped = value.replace("\\", "\\\\")
-    return re.sub(pattern, rf'\1"{escaped}"', src, count=1, flags=re.MULTILINE)
+    """Replace const/let VAR_NAME = "XXX" placeholder.
+
+    Only acts when the RHS is exactly "XXX" or 'XXX'. Lines already set to a
+    real value are untouched. value=None writes null."""
+    if not re.search(
+        rf'^[ \t]*(?:const|let)\s+{re.escape(var_name)}\s*=\s*["\']XXX[^"\']*["\']',
+        src, re.MULTILINE
+    ):
+        return src
+    new_rhs = "null" if value is None else f'"{value.replace(chr(92), chr(92)*2)}"'
+    return replace_const_rhs(src, var_name, new_rhs)
 
 
 def sub_header(src, game_name, today):
@@ -586,8 +585,8 @@ def sub_toggle(src, toggle_name, value):
     Only acts if the toggle currently holds the opposite value."""
     val_str = "true" if value else "false"
     opposite = "false" if value else "true"
-    pattern = rf'(const\s+{re.escape(toggle_name)}\s*=\s*){re.escape(opposite)}(\s*;?)'
-    return re.sub(pattern, rf'\g<1>{val_str}\2', src)
+    pattern = rf'^([ \t]*(?:const|let)\s+{re.escape(toggle_name)}\s*=\s*){re.escape(opposite)}(\s*;?)'
+    return re.sub(pattern, rf'\g<1>{val_str}\2', src, count=1, flags=re.MULTILINE)
 
 
 
@@ -652,7 +651,7 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
     dest = os.path.join(REPO_ROOT, f"game-{game_id}")
     if os.path.exists(dest) and not dry_run:
         if force:
-            vu.safe_rmtree(dest, "close Vortex first")
+            safe_rmtree(dest, "close Vortex first")
         else:
             print(f"\n  ERROR: Folder already exists: {dest}")
             print("  Use --force to overwrite.")
@@ -743,11 +742,7 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
                 preview_fields["EXEC_DEMO"] = None
             tmpl_src = sub_header(tmpl_src, game_name, today)
             tmpl_src = apply_substitutions(tmpl_src, preview_fields)
-            remaining_dry = [
-                m.group(1)
-                for m in re.finditer(r'(?:const|let)\s+(\w+)\s*=\s*("[^"]*"|\'[^\']*\')', tmpl_src)
-                if is_placeholder_value(m.group(2))
-            ]
+            remaining_dry = find_placeholder_vars(tmpl_src)
             if remaining_dry:
                 print(f"\n  XXX placeholders that would need manual entry:")
                 for v in remaining_dry:
@@ -834,9 +829,9 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
         src = add_line_comment(src, "EPICAPP_ID", pcgw_epic_url)
     if engine_version:
         src = re.sub(
-            r"(const\s+ENGINE_VERSION\s*=\s*)['\"](?:4|5)\.X\.X(?:\.0)?['\"]",
+            r"^([ \t]*(?:const|let)\s+ENGINE_VERSION\s*=\s*)['\"](?:4|5)\.X\.X(?:\.0)?['\"]",
             rf"\g<1>'{engine_version}'",
-            src
+            src, count=1, flags=re.MULTILINE,
         )
     write_index_js(dest, src)
     print("  index.js written")
@@ -932,13 +927,9 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
     print(f"  Template : {template_name}")
     print()
 
-    with open(index_path, encoding="utf-8") as f:
+    with open(index_path, encoding="utf-8", errors="replace") as f:
         src_check = f.read()
-    remaining = [
-        m.group(1)
-        for m in re.finditer(r'(?:const|let)\s+(\w+)\s*=\s*("[^"]*"|\'[^\']*\')', src_check)
-        if is_placeholder_value(m.group(2))
-    ]
+    remaining = find_placeholder_vars(src_check)
 
     if remaining:
         print("  Fields still needing manual attention (XXX remaining):")
@@ -969,7 +960,7 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
 
     # ── Generate EXTENSION_EXPLAINED.md ───────────────────────────────────────
     print("[generate_explained.js]")
-    ok, err = run_generate_explained(game_id)
+    ok, err = run_generate_explained_batch([game_id])
     if ok:
         print(f"  EXTENSION_EXPLAINED.md written.\n")
     else:

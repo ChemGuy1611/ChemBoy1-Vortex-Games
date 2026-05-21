@@ -17,7 +17,6 @@
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 | Executable (GOG) | `tld.exe` |
 | Executable (Demo) | `tld.exe` |
-| Extension Page | [XXX](XXX) |
 | PCGamingWiki | [https://www.pcgamingwiki.com/wiki/The_Long_Dark](https://www.pcgamingwiki.com/wiki/The_Long_Dark) |
 
 ## Supported Stores

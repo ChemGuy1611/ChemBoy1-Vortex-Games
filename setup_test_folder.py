@@ -27,7 +27,7 @@ import argparse
 import os
 import sys
 
-from vortex_utils import REPO_ROOT, safe_windows_dirname, log_error, log_info, build_js_symbol_table, safe_rmtree, touch_empty, print_run_summary
+from vortex_utils import REPO_ROOT, safe_windows_dirname, log_error, log_info, build_js_symbol_table, read_index_js, safe_rmtree, touch_empty, print_run_summary, is_real_value
 TEST_ROOT = os.environ.get("VORTEX_TEST_ROOT", r"D:\Game_Tools_D\!TestGameFolders_D")
 
 
@@ -39,14 +39,11 @@ def resolve_exec(table):
       exec_filename -the .exe filename only (no directory parts)
       binaries_path -subdirectory relative to game root, or '' for root
     """
-    def valid(val):
-        return val and val != "XXX" and not val.startswith("${")
-
     # Prefer EXEC_NAME, then STEAM_EXEC/EXEC_STEAM, then extract filename from EXEC
     exec_name = None
     for key in ("EXEC_NAME", "STEAM_EXEC", "EXEC_STEAM", "EXEC"):
         val = table.get(key)
-        if valid(val):
+        if is_real_value(val):
             exec_name = os.path.basename(val.replace("/", os.sep))
             break
 
@@ -61,9 +58,9 @@ def resolve_exec(table):
     else:
         # BINARIES_PATH -also try STEAM_EXEC_FOLDER as fallback
         bin_path = table.get("BINARIES_PATH", "")
-        if not valid(bin_path):
+        if not is_real_value(bin_path):
             bin_path = table.get("STEAM_EXEC_FOLDER", "")
-        if bin_path in (".", "", None) or not valid(bin_path):
+        if bin_path in (".", "", None) or not is_real_value(bin_path):
             bin_path = ""
         # Normalise forward slashes
         bin_path = bin_path.replace("/", os.sep)
@@ -77,11 +74,8 @@ def resolve_req_file(table):
     REQ_FILE is either a folder name (e.g. EPIC_CODE_NAME) or a file path
     (e.g. EXEC). Normalise separators but do not strip anything.
     """
-    def valid(val):
-        return val and val != "XXX" and not val.startswith("${")
-
     val = table.get("REQ_FILE")
-    if not valid(val):
+    if not is_real_value(val):
         return None
     return val.replace("/", os.sep)
 
@@ -90,14 +84,11 @@ def resolve_req_file(table):
 
 def setup(game_id, dry_run=False, force=False):
     folder = os.path.join(REPO_ROOT, f"game-{game_id}")
-    index_path = os.path.join(folder, "index.js")
 
-    if not os.path.isfile(index_path):
+    src = read_index_js(folder)
+    if src is None:
         log_error(game_id, f"no index.js found in game-{game_id}/")
         return False
-
-    with open(index_path, encoding="utf-8") as f:
-        src = f.read()
 
     table = build_js_symbol_table(src)
 
@@ -157,14 +148,11 @@ def setup(game_id, dry_run=False, force=False):
 def clean(game_id, dry_run=False):
     """Delete the test folder for a game. Resolves GAME_NAME from index.js."""
     folder = os.path.join(REPO_ROOT, f"game-{game_id}")
-    index_path = os.path.join(folder, "index.js")
 
-    if not os.path.isfile(index_path):
+    src = read_index_js(folder)
+    if src is None:
         log_error(game_id, f"no index.js found in game-{game_id}/")
         return False
-
-    with open(index_path, encoding="utf-8") as f:
-        src = f.read()
 
     table = build_js_symbol_table(src)
     game_name = table.get("GAME_NAME")

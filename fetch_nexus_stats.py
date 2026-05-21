@@ -204,7 +204,7 @@ def main():
         prune(dry_run=args.dry_run)
         return
     fetch_all(
-        target_ids=set(args.game) or None,
+        target_ids=vu.normalize_target_ids(args.game),
         dry_run=args.dry_run,
         force=args.force,
     )
