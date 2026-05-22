@@ -2728,6 +2728,25 @@ function LoadOrderInstructions() {
   );
 }
 
+//* PAK LO selection + context menu state (module-level pub-sub, shared across all item renderer instances)
+let _pakSelectedIds = new Set();
+let _pakContextMenu = null;
+const _pakListeners = new Set();
+function _notifyPak() { _pakListeners.forEach(l => l()); }
+function usePakLOState() {
+  const [, forceUpdate] = React.useReducer(x => x + 1, 0);
+  React.useEffect(() => {
+    _pakListeners.add(forceUpdate);
+    return () => _pakListeners.delete(forceUpdate);
+  }, []);
+  return {
+    selectedIds: _pakSelectedIds,
+    setSelectedIds: (fn) => { _pakSelectedIds = fn(_pakSelectedIds); _notifyPak(); },
+    contextMenu: _pakContextMenu,
+    setContextMenu: (val) => { _pakContextMenu = val; _notifyPak(); },
+  };
+}
+
 //* React line item renderer for load order
 function LoadOrderItemRenderer(props) {
   const { className, item } = props;
@@ -2766,6 +2785,37 @@ function LoadOrderItemRenderer(props) {
 
   const isEntryLocked = isLocked(loEntry);
 
+  const { selectedIds, setSelectedIds, contextMenu, setContextMenu } = usePakLOState();
+  const isSelected = selectedIds.has(loEntry.id);
+  const allIds = loadOrder.map(e => e.id);
+
+  const onSelect = React.useCallback((evt) => {
+    const ctrlKey = evt.ctrlKey || evt.metaKey;
+    const shiftKey = evt.shiftKey;
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (ctrlKey) {
+        next.has(loEntry.id) ? next.delete(loEntry.id) : next.add(loEntry.id);
+      } else if (shiftKey) {
+        const lastId = [...prev].at(-1);
+        const start = allIds.indexOf(lastId ?? loEntry.id);
+        const end = allIds.indexOf(loEntry.id);
+        const [lo, hi] = [Math.min(start, end), Math.max(start, end)];
+        for (let i = lo; i <= hi; i++) next.add(allIds[i]);
+      } else {
+        next.clear();
+        next.add(loEntry.id);
+      }
+      return next;
+    });
+  }, [loEntry.id, setSelectedIds, allIds]);
+
+  const onContextMenu = React.useCallback((evt) => {
+    evt.preventDefault();
+    evt.stopPropagation();
+    setContextMenu({ x: evt.clientX, y: evt.clientY, itemId: loEntry.id });
+  }, [loEntry.id, setContextMenu]);
+
   const onLock = React.useCallback(() => {
     const newLO = loadOrder.map(e => e.id === loEntry.id ? { ...e, locked: !isEntryLocked } : e);
     dispatch(actions.setFBLoadOrder(profile.id, newLO));
@@ -2787,7 +2837,7 @@ function LoadOrderItemRenderer(props) {
 
   return React.createElement(
     ListGroupItem,
-    { key: loEntry.id, className: classes.join(' ') },
+    { key: loEntry.id, className: classes.join(' '), onClick: onSelect, onContextMenu: onContextMenu, style: { outline: isSelected ? '2px solid #337ab7' : 'none', outlineOffset: '-1px' } },
     React.createElement('div', { style: { visibility: isEntryLocked ? 'hidden' : 'visible' } },
       React.createElement(Icon, { className: 'drag-handle-icon', name: 'drag-handle' }),
     ),
@@ -2825,8 +2875,91 @@ function LoadOrderItemRenderer(props) {
       disabled: isLocked(loEntry),
       onChange: onToggle,
     }) : null,
+    contextMenu?.itemId === loEntry.id ? React.createElement(PakContextMenu, {
+      x: contextMenu.x, y: contextMenu.y,
+      item: loEntry, loadOrder, profile, dispatch, context, selectedIds,
+      onClose: () => setContextMenu(null),
+    }) : null,
   );
 } //*/
+
+function PakContextMenu({ x, y, item, loadOrder, profile, dispatch, context, selectedIds, onClose }) {
+  React.useEffect(() => {
+    const onKey = (evt) => { if (evt.key === 'Escape') onClose(); };
+    globalThis.document.addEventListener('keydown', onKey);
+    return () => globalThis.document.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  React.useEffect(() => {
+    const dismiss = onClose;
+    globalThis.document.addEventListener('click', dismiss);
+    globalThis.document.addEventListener('contextmenu', dismiss);
+    return () => {
+      globalThis.document.removeEventListener('click', dismiss);
+      globalThis.document.removeEventListener('contextmenu', dismiss);
+    };
+  }, []);
+
+  React.useEffect(() => {
+    const styleId = 'ue4ss-ctx-menu-style';
+    if (!globalThis.document.getElementById(styleId)) {
+      const style = globalThis.document.createElement('style');
+      style.id = styleId;
+      style.textContent = '.ue4ss-ctx-item:hover { background: rgba(255,255,255,0.1); }';
+      globalThis.document.head.appendChild(style);
+    }
+  }, []);
+
+  const isLocked = (e) => [true, 'true', 'always'].includes(e?.locked);
+  const isMulti = selectedIds.size >= 2 && selectedIds.has(item.id);
+  const targets = isMulti ? loadOrder.filter(e => selectedIds.has(e.id)) : [item];
+
+  const applyToTargets = (transform, serialize = false) => {
+    const newLO = transform(loadOrder, targets);
+    dispatch(actions.setFBLoadOrder(profile.id, newLO));
+    if (serialize) serializeLoadOrder(context, newLO);
+    onClose();
+  };
+
+  const isEntryLocked = isLocked(item);
+
+  const menuStyle = {
+    position: 'fixed', left: x, top: y, zIndex: 9999,
+    background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.2)',
+    borderRadius: 4, padding: '4px 0', minWidth: 180,
+    boxShadow: '0 4px 12px rgba(0,0,0,0.6)',
+  };
+  const itemStyle = { padding: '6px 16px', cursor: 'pointer', whiteSpace: 'nowrap' };
+  const sepStyle = { borderTop: '1px solid rgba(255,255,255,0.1)', margin: '4px 0' };
+
+  const menuItem = (label, onClick) => React.createElement('div', {
+    className: 'ue4ss-ctx-item',
+    style: itemStyle,
+    onClick: (evt) => { evt.stopPropagation(); onClick(); },
+  }, label);
+
+  if (isMulti) {
+    const n = targets.length;
+    return React.createElement('div', { style: menuStyle },
+      menuItem(`Lock Selected (${n})`, () => applyToTargets((lo) => lo.map(e => targets.find(t => t.id === e.id) ? { ...e, locked: true } : e), true)),
+      menuItem(`Unlock Selected (${n})`, () => applyToTargets((lo) => lo.map(e => targets.find(t => t.id === e.id) ? { ...e, locked: false } : e), true)),
+    );
+  }
+
+  return React.createElement('div', { style: menuStyle },
+    menuItem(isEntryLocked ? 'Unlock Position' : 'Lock Position', () => applyToTargets((lo) => lo.map(e => e.id === item.id ? { ...e, locked: !isEntryLocked } : e), true)),
+    React.createElement('div', { style: sepStyle }),
+    menuItem('Move to Top', () => applyToTargets((lo) => {
+      const locked = lo.filter(isLocked);
+      const rest = lo.filter(e => !isLocked(e) && e.id !== item.id);
+      return [...locked, item, ...rest];
+    })),
+    menuItem('Move to Bottom', () => applyToTargets((lo) => {
+      const rest = lo.filter(e => e.id !== item.id);
+      return [...rest, item];
+    })),
+  );
+}
 
 function GameSettings() {
   const { Toggle, More, MainContext } = require('vortex-api');
@@ -2897,7 +3030,7 @@ async function reconcileEnabledTxt(api, write) {
 }
 
 //* React components for UE4SS load order page
-const Ue4ssSelectionContext = React.createContext({ selectedIds: new Set(), setSelectedIds: () => {}, allIds: [] });
+const Ue4ssSelectionContext = React.createContext({ selectedIds: new Set(), setSelectedIds: () => {}, allIds: [], contextMenu: null, setContextMenu: () => {} });
 
 function Ue4ssItemRenderer({ className, item }) {
   const { Checkbox } = require('react-bootstrap');
@@ -2938,9 +3071,10 @@ function Ue4ssItemRenderer({ className, item }) {
   React.useEffect(() => {
     if (!gamePath || !item.id) { setConfigFilePath(''); return; }
     const modFolder = path.join(gamePath, BINARIES_PATH, UE4SS_MOD_PATH, item.id);
+    const localConfigFiles = [...UE4SS_CONFIG_FILES, `${item.id}.txt`, `${item.id}.ini`, `${item.id}.json`];
     let found = '';
     util.walk(modFolder, (iterPath, stats) => {
-      if (found === '' && !stats.isDirectory() && UE4SS_CONFIG_FILES.includes(path.basename(iterPath))) {
+      if (found === '' && !stats.isDirectory() && localConfigFiles.includes(path.basename(iterPath))) {
         found = iterPath;
       }
       return Promise.resolve();
@@ -2959,8 +3093,14 @@ function Ue4ssItemRenderer({ className, item }) {
     serializeUe4ss(vortexContext.api, newLO);
   }, [dispatch, vortexContext, loadOrder, item, profileId]);
 
-  const { selectedIds, setSelectedIds, allIds } = React.useContext(Ue4ssSelectionContext);
+  const { selectedIds, setSelectedIds, allIds, contextMenu, setContextMenu } = React.useContext(Ue4ssSelectionContext);
   const isSelected = selectedIds.has(item.id);
+
+  const onContextMenu = React.useCallback((evt) => {
+    evt.preventDefault();
+    evt.stopPropagation();
+    setContextMenu({ x: evt.clientX, y: evt.clientY, itemId: item.id });
+  }, [item.id, setContextMenu]);
 
   const onSelect = React.useCallback((evt) => {
     const ctrlKey = evt.ctrlKey || evt.metaKey;
@@ -2990,6 +3130,7 @@ function Ue4ssItemRenderer({ className, item }) {
     key: item.id,
     className: classes.join(' '),
     onClick: onSelect,
+    onContextMenu: onContextMenu,
     style: {
       display: 'flex', flexDirection: 'row', alignItems: 'center',
       gap: 8, padding: '4px 12px', margin: 0,
@@ -3041,6 +3182,90 @@ function Ue4ssItemRenderer({ className, item }) {
       checked: item.enabled ?? true,
       onChange: onToggle,
     }),
+    contextMenu?.itemId === item.id ? React.createElement(Ue4ssContextMenu, {
+      x: contextMenu.x, y: contextMenu.y,
+      item, loadOrder, profileId, dispatch,
+      api: vortexContext.api, gamePath, configFilePath, selectedIds,
+      onClose: () => setContextMenu(null),
+    }) : null,
+  );
+}
+
+function Ue4ssContextMenu({ x, y, item, loadOrder, profileId, dispatch, api, gamePath, configFilePath, selectedIds, onClose }) {
+  React.useEffect(() => {
+    const onKey = (evt) => { if (evt.key === 'Escape') onClose(); };
+    globalThis.document.addEventListener('keydown', onKey);
+    return () => globalThis.document.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  React.useEffect(() => {
+    const styleId = 'ue4ss-ctx-menu-style';
+    if (!globalThis.document.getElementById(styleId)) {
+      const style = globalThis.document.createElement('style');
+      style.id = styleId;
+      style.textContent = '.ue4ss-ctx-item:hover { background: rgba(255,255,255,0.1); }';
+      globalThis.document.head.appendChild(style);
+    }
+  }, []);
+
+  const isLocked = (e) => [true, 'true', 'always'].includes(e?.locked);
+  const isMulti = selectedIds.size >= 2 && selectedIds.has(item.id);
+  const targets = isMulti ? loadOrder.filter(e => selectedIds.has(e.id)) : [item];
+
+  const applyToTargets = (transform) => {
+    const newLO = transform(loadOrder, targets);
+    dispatch(setUe4ssLoadOrder(profileId, newLO));
+    serializeUe4ss(api, newLO);
+    onClose();
+  };
+
+  const isEntryLocked = isLocked(item);
+  const isEntryEnabled = item.enabled ?? true;
+
+  const menuStyle = {
+    position: 'fixed', left: x, top: y, zIndex: 9999,
+    background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.2)',
+    borderRadius: 4, padding: '4px 0', minWidth: 180,
+    boxShadow: '0 4px 12px rgba(0,0,0,0.6)',
+  };
+  const itemStyle = { padding: '6px 16px', cursor: 'pointer', whiteSpace: 'nowrap' };
+  const sepStyle = { borderTop: '1px solid rgba(255,255,255,0.1)', margin: '4px 0' };
+
+  const menuItem = (label, onClick) => React.createElement('div', {
+    className: 'ue4ss-ctx-item',
+    style: itemStyle,
+    onClick: (evt) => { evt.stopPropagation(); onClick(); },
+  }, label);
+
+  if (isMulti) {
+    const n = targets.length;
+    return React.createElement('div', { style: menuStyle },
+      menuItem(`Enable Selected (${n})`, () => applyToTargets((lo) => lo.map(e => targets.find(t => t.id === e.id) ? { ...e, enabled: true } : e))),
+      menuItem(`Disable Selected (${n})`, () => applyToTargets((lo) => lo.map(e => targets.find(t => t.id === e.id) ? { ...e, enabled: false } : e))),
+      React.createElement('div', { style: sepStyle }),
+      menuItem(`Lock Selected (${n})`, () => applyToTargets((lo) => lo.map(e => targets.find(t => t.id === e.id) ? { ...e, locked: true } : e))),
+      menuItem(`Unlock Selected (${n})`, () => applyToTargets((lo) => lo.map(e => targets.find(t => t.id === e.id) ? { ...e, locked: false } : e))),
+      React.createElement('div', { style: sepStyle }),
+      menuItem('Open Mod Folder', () => { util.opn(path.join(gamePath, BINARIES_PATH, UE4SS_MOD_PATH, item.id)).catch(() => null); onClose(); }),
+    );
+  }
+
+  return React.createElement('div', { style: menuStyle },
+    menuItem(isEntryEnabled ? 'Disable' : 'Enable', () => applyToTargets((lo) => lo.map(e => e.id === item.id ? { ...e, enabled: !isEntryEnabled } : e))),
+    menuItem(isEntryLocked ? 'Unlock Position' : 'Lock Position', () => applyToTargets((lo) => lo.map(e => e.id === item.id ? { ...e, locked: !isEntryLocked } : e))),
+    configFilePath ? menuItem('Configure', () => { util.opn(configFilePath).catch(() => null); onClose(); }) : null,
+    React.createElement('div', { style: sepStyle }),
+    menuItem('Open Mod Folder', () => { util.opn(path.join(gamePath, BINARIES_PATH, UE4SS_MOD_PATH, item.id)).catch(() => null); onClose(); }),
+    React.createElement('div', { style: sepStyle }),
+    menuItem('Move to Top', () => applyToTargets((lo) => {
+      const locked = lo.filter(isLocked);
+      const rest = lo.filter(e => !isLocked(e) && e.id !== item.id);
+      return [...locked, item, ...rest];
+    })),
+    menuItem('Move to Bottom', () => applyToTargets((lo) => {
+      const rest = lo.filter(e => e.id !== item.id);
+      return [...rest, item];
+    })),
   );
 }
 
@@ -3078,6 +3303,18 @@ function Ue4ssLoadOrderPage({ api }) {
   const dispatch = useDispatch();
   const [filterText, setFilterText] = React.useState('');
   const [selectedIds, setSelectedIds] = React.useState(new Set());
+  const [contextMenu, setContextMenu] = React.useState(null);
+
+  React.useEffect(() => {
+    if (!contextMenu) return;
+    const dismiss = () => setContextMenu(null);
+    globalThis.document.addEventListener('click', dismiss);
+    globalThis.document.addEventListener('contextmenu', dismiss);
+    return () => {
+      globalThis.document.removeEventListener('click', dismiss);
+      globalThis.document.removeEventListener('contextmenu', dismiss);
+    };
+  }, [contextMenu]);
 
   React.useEffect(() => {
     if (!profileId) return;
@@ -3142,7 +3379,7 @@ function Ue4ssLoadOrderPage({ api }) {
       React.createElement(DNDContainer, { style: { height: '95%' } },
         React.createElement(FlexLayout, { type: 'column', className: 'file-based-load-order-container', style: { height: '100%' } },
           React.createElement(FlexLayout.Flex, { className: 'file-based-load-order-list', style: { overflowY: 'auto', minHeight: 0 } },
-            React.createElement(Ue4ssSelectionContext.Provider, { value: { selectedIds, setSelectedIds, allIds } },
+            React.createElement(Ue4ssSelectionContext.Provider, { value: { selectedIds, setSelectedIds, allIds, contextMenu, setContextMenu } },
               React.createElement(DraggableList, {
                 itemTypeId: `${GAME_ID}-ue4ss-lo-entry`,
                 id: `${GAME_ID}-ue4ss-loadorder-list`,
