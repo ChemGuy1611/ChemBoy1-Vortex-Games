@@ -1,6 +1,6 @@
 # LoadOrderItemRenderer - Explainer & Learning Guide
 
-**Source:** `template-ue4-5/index.js:2733-2831`
+**Source:** `template-ue4-5/index.js:2751-2884` (LoadOrderItemRenderer), `2732-2748` (usePakLOState), `2886-2962` (PakContextMenu)
 
 ---
 
@@ -26,7 +26,7 @@ toggle entries.
 
 ## 2. The registration contract
 
-Inside `main()`, FBLO is registered like this ([index.js:2384-2393](index.js#L2384)):
+Inside `main()`, FBLO is registered like this ([index.js:2573-2581](index.js#L2573)):
 
 ```js
 context.registerLoadOrder({
@@ -67,7 +67,8 @@ ListGroupItem .load-order-entry [.selected ...]
  |-- div                .load-order-thumb-slot (always 96 x 54 px)
  |     `-- img          .load-order-thumb      Nexus thumbnail | nothing
  |-- p                  .load-order-name       loEntry.name  (whiteSpace:normal, wordBreak:break-word)
- `-- Checkbox           .entry-checkbox        only if displayCheckboxes = true
+ |-- Checkbox           .entry-checkbox        only if displayCheckboxes = true
+ `-- PakContextMenu                            only if contextMenu.itemId === loEntry.id
 ```
 
 ### What is ListGroupItem?
@@ -108,6 +109,9 @@ require re-implementing those styles manually.
 | --- | --- | --- |
 | `key` | `loEntry.id` | React reconciliation key; must be unique within the list |
 | `className` | `classes.join(' ')` | Merged string; see below |
+| `onClick` | `onSelect` | Updates shared selection state via `usePakLOState` |
+| `onContextMenu` | `onContextMenu` | Opens `PakContextMenu` at cursor position |
+| `style` | `{ outline: isSelected ? '2px solid #337ab7' : 'none', outlineOffset: '-1px' }` | Selection highlight |
 
 **How `className` gets built:**
 
@@ -165,7 +169,7 @@ An object (`IItemRendererProps`) with:
 | `name` | `string` | Display name |
 | `enabled` | `boolean` | Whether the mod is "on" in the load order |
 | `locked` | `boolean \| 'always'` | Optional; if truthy, the row cannot be reordered |
-| `modId` | `string` | Nexus mod ID -- used to look up the thumbnail |
+| `modId` | `string` | Vortex internal mod id -- used to look up the thumbnail |
 | `data` | `any` | Extension-specific extra data |
 
 ### The null guard
@@ -185,10 +189,10 @@ Understanding this requires understanding **how UE4-5 FBLO actually works on dis
 
 ### Rename-based load ordering
 
-The template's `serializeLoadOrder` ([index.js:1705-1717](index.js#L1705)) just writes
+The template's `serializeLoadOrder` ([index.js:1772-1784](index.js#L1772)) just writes
 a JSON snapshot of the load order to a local file. The actual ordering on disk
 happens at **deploy time**: `loadOrderPrefix` / `makePrefix`
-([index.js:1741-1750](index.js#L1741)) compute a letter prefix from each entry's
+([index.js:1943-1970](index.js#L1943)) compute a letter prefix from each entry's
 position in the list:
 
 ```text
@@ -215,7 +219,7 @@ and do nothing.
 
 Therefore:
 
-- `toggleableEntries: false` is set at registration ([index.js:2390](index.js#L2390))
+- `toggleableEntries: false` is set at registration
 - Vortex passes `displayCheckboxes: false` into the renderer
 - The `displayCheckboxes ? Checkbox : null` branch never fires for UE4-5 games
 
@@ -237,11 +241,11 @@ games but activates automatically in any extension that registers with
 
 ## 5. Code walkthrough, line by line
 
-The full function is at [index.js:2733-2831](index.js#L2733). Broken into chunks:
+The full function is at [index.js:2751-2884](index.js#L2751). Broken into chunks:
 
 ---
 
-### Chunk A -- Imports inside the function body (lines 2498-2500)
+### Chunk A -- Imports inside the function body
 
 ```js
 const { ListGroupItem, Checkbox } = require('react-bootstrap');
@@ -259,7 +263,7 @@ to the component function body ensures they only resolve at render time.
 
 ---
 
-### Chunk B -- Getting api from context (lines 2502-2503)
+### Chunk B -- Getting api from context
 
 ```js
 const context = React.useContext(MainContext);
@@ -276,7 +280,7 @@ actions.
 
 ---
 
-### Chunk C -- Reading state with useSelector (lines 2505-2508)
+### Chunk C -- Reading state with useSelector
 
 ```js
 const profile = useSelector((state) => selectors.activeProfile(state));
@@ -292,12 +296,6 @@ Whenever that slice changes, the component re-renders automatically. Two separat
 calls are needed here because `loadOrder` depends on `profile.id` -- each call is
 an independent subscription.
 
-**What is `util.getSafe`?**
-
-A Vortex utility that does a safe deep-read of a nested object. If any intermediate
-key is missing, it returns the fallback instead of throwing. Here the fallback is
-`[]` -- if there is no load order yet, the component gets an empty array.
-
 **What is `persistent.loadOrder`?**
 
 The Vortex Redux state tree. `persistent` is the branch that survives app restarts.
@@ -306,7 +304,7 @@ active profile ID is needed first.
 
 ---
 
-### Chunk D -- Destructuring item, reading the thumbnail (lines 2510-2513)
+### Chunk D -- Destructuring item, reading the thumbnail
 
 ```js
 const { loEntry, displayCheckboxes } = item;
@@ -318,14 +316,9 @@ const currentIdx = loadOrder.findIndex((e) => e.id === loEntry.id) + 1;
 **Where does `pictureUrl` come from?**
 
 When Vortex downloads a mod from Nexus Mods it stores metadata -- including the Nexus
-CDN thumbnail URL -- as `mod.attributes.pictureUrl`. This is an HTTPS URL the browser
-can load directly. Not every mod has one (local installs, for example), so optional
-chaining (`?.`) means `pictureUrl` is `undefined` when absent.
-
-**Why `GAME_ID` here?**
-
-Mods for this game live under `persistent.mods[GAME_ID]`. `GAME_ID` is a module-level
-constant in every extension -- the renderer closes over it automatically.
+CDN thumbnail URL -- as `mod.attributes.pictureUrl`. Not every mod has one (local
+installs, for example), so optional chaining (`?.`) means `pictureUrl` is `undefined`
+when absent.
 
 **Why `currentIdx + 1`?**
 
@@ -334,7 +327,7 @@ Adding 1 converts between the two systems.
 
 ---
 
-### Chunk E -- Locked entries (lines 2515-2516)
+### Chunk E -- Locked entries
 
 ```js
 const isLocked = (entry) => [true, 'true', 'always'].includes(entry?.locked);
@@ -355,7 +348,7 @@ can clamp the user's input to the valid reorderable range:
 
 ---
 
-### Chunk F -- The reorder callback (lines 2518-2523)
+### Chunk F -- The reorder callback (onApplyIndex)
 
 ```js
 const onApplyIndex = React.useCallback((idx) => {
@@ -366,35 +359,17 @@ const onApplyIndex = React.useCallback((idx) => {
 }, [dispatch, profile, loadOrder, loEntry, currentIdx]);
 ```
 
-**What triggers this?**
-
-The user types a number into `LoadOrderIndexInput` and presses Enter. The input
-component calls `onApplyIndex(idx)` where `idx` is the desired 1-based position.
-
 **How does the splice work?**
 
-1. Remove the entry from its current position:
-   `loadOrder.filter((e) => e.id !== loEntry.id)`.
-2. Insert it at the new position:
-   `newLO.splice(idx - 1, 0, loEntry)`.
-   (`idx - 1` converts back to 0-based for `splice`.)
-3. Dispatch the entire rewritten array in one Redux action:
-   `actions.setFBLoadOrder(profile.id, newLO)`.
+1. Remove the entry from its current position: `loadOrder.filter(...)`.
+2. Insert at the new position: `newLO.splice(idx - 1, 0, loEntry)` (`idx - 1` = 0-based for `splice`).
+3. Dispatch the entire rewritten array in one Redux action.
 
-**Why `useCallback`?**
-
-Without it, a new function reference is created on every render, which re-renders
-children unnecessarily. `useCallback` memoizes the function and only recreates it
-when a dependency changes.
-
-**Why the early return when `currentIdx === idx`?**
-
-Dispatching a no-op action would trigger unnecessary serialize cycles.
-Short-circuiting avoids that.
+The early return when `currentIdx === idx` avoids unnecessary serialize cycles.
 
 ---
 
-### Chunk G -- The toggle callback (lines 2525-2527)
+### Chunk G -- The toggle callback (onToggle)
 
 ```js
 const onToggle = React.useCallback((evt) => {
@@ -402,19 +377,75 @@ const onToggle = React.useCallback((evt) => {
 }, [dispatch, profile, loEntry]);
 ```
 
-**What does this do?**
-
-When the per-row Checkbox is toggled (in extensions where `displayCheckboxes` is
-`true`), this dispatches `setFBLoadOrderEntry` -- a Redux action that patches a
-single entry in the load order, flipping its `enabled` flag.
-
-**For UE4-5 / windrose:** this callback is defined but never wired to anything
-because the Checkbox never renders. It adds negligible overhead and keeps the
-renderer generic for other extension types.
+Dispatches `setFBLoadOrderEntry` when the per-row Checkbox fires. Dormant for UE4-5
+(`displayCheckboxes` is always `false`) but kept so the renderer stays generic.
 
 ---
 
-### Chunk H -- CSS class assembly (lines 2529-2530)
+### Chunk H -- Lock callback (onLock)
+
+```js
+const onLock = React.useCallback(() => {
+  const newLO = loadOrder.map(e => e.id === loEntry.id ? { ...e, locked: !isEntryLocked } : e);
+  dispatch(actions.setFBLoadOrder(profile.id, newLO));
+  serializeLoadOrder(context, newLO);
+}, [dispatch, context, profile, loadOrder, loEntry, isEntryLocked]);
+```
+
+**Critical:** always call `serializeLoadOrder` explicitly here. Vortex FBLO's
+auto-serialize fires on `onStateChange(persistent.loadOrder)`, but internal timing
+means the `locked` field may not reach the JSON file. Building the full new array
+and dispatching `setFBLoadOrder` + calling serialize explicitly is the only safe path.
+
+`serializeLoadOrder` accepts the React `MainContext` as `context` -- it only uses
+`context.api`.
+
+---
+
+### Chunk I -- Selection and context menu (usePakLOState)
+
+```js
+const { selectedIds, setSelectedIds, contextMenu, setContextMenu } = usePakLOState();
+const isSelected = selectedIds.has(loEntry.id);
+const allIds = loadOrder.map(e => e.id);
+
+const onSelect = React.useCallback((evt) => {
+  const ctrlKey = evt.ctrlKey || evt.metaKey;
+  const shiftKey = evt.shiftKey;
+  setSelectedIds(prev => {
+    const next = new Set(prev);
+    if (ctrlKey) {
+      next.has(loEntry.id) ? next.delete(loEntry.id) : next.add(loEntry.id);
+    } else if (shiftKey) {
+      const lastId = [...prev].at(-1);
+      const start = allIds.indexOf(lastId ?? loEntry.id);
+      const end = allIds.indexOf(loEntry.id);
+      const [lo, hi] = [Math.min(start, end), Math.max(start, end)];
+      for (let i = lo; i <= hi; i++) next.add(allIds[i]);
+    } else {
+      next.clear();
+      next.add(loEntry.id);
+    }
+    return next;
+  });
+}, [loEntry.id, setSelectedIds, allIds]);
+
+const onContextMenu = React.useCallback((evt) => {
+  evt.preventDefault();
+  evt.stopPropagation();
+  setContextMenu({ x: evt.clientX, y: evt.clientY, itemId: loEntry.id });
+}, [loEntry.id, setContextMenu]);
+```
+
+See section 5b for the pub-sub mechanism behind `usePakLOState`.
+
+**Modifier keys must be captured before entering the setState updater.** React 16
+event pooling nullifies `evt.ctrlKey`/`evt.shiftKey` before the updater runs. Always
+extract them into local variables (`ctrlKey`, `shiftKey`) before calling `setSelectedIds`.
+
+---
+
+### Chunk J -- CSS class assembly
 
 ```js
 const classes = ['load-order-entry'];
@@ -422,83 +453,75 @@ if (className) classes.push(...className.split(' '));
 ```
 
 Always start with your own base class, then append what Vortex sends. Vortex may
-send `"selected"` or other state classes. Replacing rather than merging would kill
-the selection highlight.
+send `"selected"` or other state classes. Replacing rather than merging kills the
+selection highlight.
 
 ---
 
-### Chunk I -- The rendered tree (lines 2532-2561)
+### Chunk K -- The rendered tree
 
-Since extension files cannot use JSX, everything uses `React.createElement(type, props, ...children)`:
+The `ListGroupItem` receives `onClick: onSelect`, `onContextMenu: onContextMenu`,
+and `style: { outline: isSelected ? '2px solid #337ab7' : 'none', outlineOffset: '-1px' }`.
+
+`PakContextMenu` is rendered as the last child, conditionally:
 
 ```js
-return React.createElement(
-  ListGroupItem,                                     // root container
-  { key: loEntry.id, className: classes.join(' ') },
-
-  React.createElement(Icon, { className: 'drag-handle-icon', name: 'drag-handle' }),
-
-  React.createElement('div', { style: { width: 24, flexShrink: 0, overflow: 'hidden' } },
-    React.createElement(LoadOrderIndexInput, {       // numeric position editor
-      className: 'load-order-index',
-      api: context.api,
-      item: loEntry,
-      currentPosition: currentIdx,
-      lockedEntriesCount: lockedCount,
-      loadOrder: loadOrder,
-      isLocked: isLocked,
-      onApplyIndex: onApplyIndex,
-    }),
-  ),
-
-  React.createElement('div',                         // fixed-size thumbnail slot
-    { className: 'load-order-thumb-slot',
-      style: { width: LO_IMAGE_WIDTH, height: LO_IMAGE_HEIGHT, marginRight: 4, flexShrink: 0 } },
-    pictureUrl ? React.createElement('img', {
-      className: 'load-order-thumb',
-      src: pictureUrl,
-      draggable: false,
-      style: { width: LO_IMAGE_WIDTH, height: LO_IMAGE_HEIGHT,
-               objectFit: 'cover', borderRadius: 2, pointerEvents: 'none' },
-    }) : null,
-  ),
-
-  React.createElement('p', { className: 'load-order-name', style: { whiteSpace: 'normal', wordBreak: 'break-word' } }, loEntry.name),
-
-  displayCheckboxes ? React.createElement(Checkbox, { // conditional enable toggle
-    className: 'entry-checkbox',
-    checked: loEntry.enabled,
-    disabled: isLocked(loEntry),
-    onChange: onToggle,
-  }) : null,
-);
+contextMenu?.itemId === loEntry.id ? React.createElement(PakContextMenu, {
+  x: contextMenu.x, y: contextMenu.y,
+  item: loEntry, loadOrder, profile, dispatch, context, selectedIds,
+  onClose: () => setContextMenu(null),
+}) : null,
 ```
 
-**`LoadOrderIndexInput` props cheatsheet:**
+---
 
-| Prop | What to pass |
-| --- | --- |
-| `api` | `context.api` |
-| `item` | `loEntry` (the `ILoadOrderEntry_2` object) |
-| `currentPosition` | 1-based position of this entry |
-| `lockedEntriesCount` | count of entries where `isLocked` is truthy |
-| `loadOrder` | the full load order array |
-| `isLocked` | a function `(entry) => boolean` |
-| `onApplyIndex` | called with the new 1-based position when user confirms |
+## 5b. Module-level PAK selection pub-sub (`usePakLOState`)
 
-The input clamps the user's typed number to `[lockedCount + 1, loadOrder.length]`
-and fires `onApplyIndex` on Enter.
+**Why not React context?**
 
-**The thumbnail slot:**
+`customItemRenderer` instances are rendered deep inside FBLO's `DraggableList`.
+There is no API hook to wrap the list in a context provider from outside FBLO.
+The only way for all row instances to share mutable selection state is a
+**module-level variable** combined with a simple pub-sub notification system.
 
-```text
-div .load-order-thumb-slot  (always width=96, height=54)
-  img .load-order-thumb     (rendered only if pictureUrl is present)
-  [nothing]                 (if pictureUrl is absent -- slot still occupies space)
+**The pattern ([index.js:2732-2748](index.js#L2732)):**
+
+```js
+let _pakSelectedIds = new Set();
+let _pakContextMenu = null;
+const _pakListeners = new Set();
+function _notifyPak() { _pakListeners.forEach(l => l()); }
+
+function usePakLOState() {
+  const [, forceUpdate] = React.useReducer(x => x + 1, 0);
+  React.useEffect(() => {
+    _pakListeners.add(forceUpdate);
+    return () => _pakListeners.delete(forceUpdate);
+  }, []);
+  return {
+    selectedIds: _pakSelectedIds,
+    setSelectedIds: (fn) => { _pakSelectedIds = fn(_pakSelectedIds); _notifyPak(); },
+    contextMenu: _pakContextMenu,
+    setContextMenu: (val) => { _pakContextMenu = val; _notifyPak(); },
+  };
+}
 ```
 
-`LO_IMAGE_WIDTH = 96` and `LO_IMAGE_HEIGHT = LO_IMAGE_WIDTH * 0.5625` (16:9).
-The slot div always takes that space so the name column stays aligned.
+**How it works:**
+
+1. Each `LoadOrderItemRenderer` instance calls `usePakLOState()` on render.
+2. The hook registers a `forceUpdate` reducer as a listener in `_pakListeners`.
+3. When `setSelectedIds` or `setContextMenu` is called (from any instance), it
+   mutates the module-level variable and then calls `_notifyPak()`.
+4. `_notifyPak` calls every registered `forceUpdate`, which increments a counter
+   and causes all instances to re-render, picking up the new shared state.
+5. On unmount, the `useEffect` cleanup removes the listener.
+
+**Contrast with `Ue4ssSelectionContext`:**
+
+The UE4SS page owns its `DraggableList` and can wrap it in a React context
+(`Ue4ssSelectionContext.Provider`). The PAK LO page is FBLO-managed; the pub-sub
+approach is the workaround for that constraint.
 
 ---
 
@@ -544,23 +567,14 @@ setting a ref to `undefined` at worst.
 ## 8. The Witcher 3 ancestor -- side by side
 
 The Witcher 3 `ItemRenderer.tsx` in the Vortex repo is the original the template
-renderer is modelled on. Here is the root element it returns (lines 154-178):
+renderer is modelled on. Here is the root element it returns:
 
 ```tsx
 // Vortex/extensions/games/game-witcher3/src/views/ItemRenderer.tsx
 return (
   <ListGroupItem key={key} className={classes.join(' ')} ref={props.item.setRef}>
     <Icon className='drag-handle-icon' name='drag-handle' />
-    <LoadOrderIndexInput
-      className='load-order-index'
-      api={context.api}
-      item={item.loEntry}
-      currentPosition={currentPosition(props)}
-      lockedEntriesCount={lockedEntriesCount(props)}
-      loadOrder={loadOrder}
-      isLocked={isLocked}
-      onApplyIndex={onApplyIndex}
-    />
+    <LoadOrderIndexInput ... />
     {renderValidationError(props)}
     <p className='load-order-name'>{key}</p>
     {renderExternalBanner(item.loEntry)}
@@ -580,15 +594,13 @@ return (
 | Validation error display | Yes | No |
 | External mod banner | Yes | No |
 | View-mod icon | Yes | No |
-| Lock icon | Yes | Yes — amber `#e2c04c` when locked; drag handle hides |
+| Lock icon | Yes | Yes -- amber `#e2c04c` when locked; drag handle hides |
 | Nexus thumbnail | No | Yes |
 | Checkbox | Yes (`toggleableEntries: true`) | Yes (conditional, usually dormant) |
 | `displayCheckboxes` check | Not used | Yes -- guards the Checkbox branch |
+| Multi-select | No | Yes -- `usePakLOState` pub-sub |
+| Context menu | No | Yes -- `PakContextMenu` on right-click |
 | Reorder mechanism | `onApplyIndex` -> `setFBLoadOrder` | Same |
-
-The template strips all the Witcher 3-specific features (validation, external banners,
-lock icon, view-mod button), adds the thumbnail slot, and converts from JSX to
-`React.createElement` so no build step is needed.
 
 ---
 
@@ -604,9 +616,10 @@ const React = require('react');       // top-level require is fine for React its
 const { selectors, util, actions } = require('vortex-api');
 const LO_IMAGE_WIDTH = 96;
 const LO_IMAGE_HEIGHT = LO_IMAGE_WIDTH * 0.5625;
+// Also required if using context menu / selection:
+// _pakSelectedIds, _pakContextMenu, _pakListeners, _notifyPak, usePakLOState
+// serializeLoadOrder (must be defined in the same file)
 ```
-
-If any are missing, the renderer will fail at runtime with a ReferenceError.
 
 ### Wiring checklist
 
@@ -615,23 +628,15 @@ If any are missing, the renderer will fail at runtime with a ReferenceError.
 - [ ] Set `toggleableEntries: true` if your FBLO writes real enabled/disabled state
   to disk -- the per-row checkbox will appear automatically.
 - [ ] Confirm your `serializeLoadOrder` and `deserializeLoadOrder` functions are correct.
-  The renderer reads from the store but cannot fix a broken serialize/deserialize.
-- [ ] Make sure the mod type your extension registers for sortable mods matches what
-  `deserializeLoadOrder` filters on, or entries may vanish from the list.
-
-### Adjusting image size
-
-Change `LO_IMAGE_WIDTH`. `LO_IMAGE_HEIGHT` derives from it automatically
-(`LO_IMAGE_WIDTH * 0.5625` = 16:9). Both constants are referenced inline in the
-`style` props -- changing the constants is a one-line edit.
+- [ ] Copy the `usePakLOState` pub-sub block and `PakContextMenu` if you want context menus.
 
 ### Function placement
 
 Define `LoadOrderItemRenderer` **after `main()`** in the file. JavaScript hoisting
 makes it accessible inside `main()` as `customItemRenderer: LoadOrderItemRenderer`
-even though it appears later. This follows the standard code structure for UE4-5
-extensions: imports -> toggles -> constants -> spec -> helpers -> installers ->
-`applyGame()` -> `main()` -> React components -> `module.exports`.
+even though it appears later. Standard code structure: imports -> toggles -> constants
+-> spec -> helpers -> installers -> `applyGame()` -> `main()` -> React components ->
+`module.exports`.
 
 ---
 
@@ -642,68 +647,165 @@ extensions: imports -> toggles -> constants -> spec -> helpers -> installers ->
 | Never pass `ref={item.setRef}` | Always `undefined` in current FBLO; emits React warnings |
 | `<img>` always needs `draggable: false` and `pointerEvents: 'none'` | Native browser image drag hijacks react-dnd; rows won't move without this |
 | One `setFBLoadOrder` call for the whole reorder | Never dispatch entry-by-entry in a loop; a single action is atomic |
-| `onLock` must call `serializeLoadOrder` explicitly | Vortex FBLO auto-serialize from `setFBLoadOrderEntry` may not write `locked` to the JSON — always use `setFBLoadOrder` + explicit `serializeLoadOrder(context, newLO)` |
-| Name `<p>` needs `whiteSpace:'normal'` and `wordBreak:'break-word'` | Vortex's default CSS applies `white-space:nowrap` to `.load-order-name`; without the override, long mod names are clipped rather than wrapping |
+| `onLock` must call `serializeLoadOrder` explicitly | Vortex FBLO auto-serialize may not write `locked` to the JSON -- always use `setFBLoadOrder` + explicit `serializeLoadOrder(context, newLO)` |
+| Name `<p>` needs `whiteSpace:'normal'` and `wordBreak:'break-word'` | Vortex's default CSS applies `white-space:nowrap` to `.load-order-name`; without the override, long mod names are clipped |
 | `serializeLoadOrder` accepts React `MainContext` as `context` | It only uses `context.api`, so the React `MainContext` from `useContext(MainContext)` works directly |
 | `require` calls go inside the function body | Top-level require of Vortex-bundled modules fails before the renderer is ready |
 | Merge `className`, don't replace it | Vortex injects `"selected"` and other state classes; overwriting them breaks the selection highlight |
 | Use `registerLoadOrder`, not `registerLoadOrderPage` | The older call is deprecated |
-| Place the component after `main()` | Convention; hoisting handles the forward reference safely |
 | `toggleableEntries: false` for rename-based FBLO | The `enabled` bit has no on-disk representation; checkbox would be a lie |
-| `FlexLayout.Flex` ignores `flex: '0 0 Npx'` height in column mode | The component likely hardcodes `flex: 1`; use a plain `div { flexShrink: 0 }` for fixed-height children in a column `FlexLayout` |
-| react-bootstrap `Checkbox` breaks flex row centering | The `div > label > input` wrapper stack prevents `alignItems: 'center'` from working; use a plain `input[type=checkbox]` with `alignSelf: 'center'` instead |
-| `ul` needs `listStyleType: 'disc'` | Vortex's global CSS resets `list-style: none` on all `ul` elements; the property must be set inline to restore bullet points |
+| Capture modifier keys before calling `setSelectedIds` | React 16 event pooling nullifies `evt.ctrlKey`/`evt.shiftKey` before the updater runs |
+| PAK selection uses pub-sub, not React context | No API hook exists to wrap FBLO's `DraggableList` in a context provider from outside |
+| `FlexLayout.Flex` ignores `flex: '0 0 Npx'` height in column mode | Use a plain `div { flexShrink: 0 }` for fixed-height children in a column `FlexLayout` |
+| react-bootstrap `Checkbox` breaks flex row centering | The `div > label > input` wrapper stack prevents `alignItems: 'center'`; use plain `input[type=checkbox]` with `alignSelf: 'center'` |
+| `ul` needs `listStyleType: 'disc'` | Vortex's global CSS resets `list-style: none` on all `ul` elements |
+
+---
+
+## 11. PakContextMenu
+
+**Source:** [index.js:2886-2962](index.js#L2886)
+
+`PakContextMenu` is a fixed-position overlay rendered as the last child of
+`LoadOrderItemRenderer` when `contextMenu.itemId === loEntry.id`.
+
+### Lifecycle
+
+- Rendered by: `LoadOrderItemRenderer` when `contextMenu?.itemId === loEntry.id`
+- Dismissed by: click anywhere (`document.addEventListener('click', dismiss)`),
+  right-click anywhere (`contextmenu` event), or Escape key
+- Inline `<style>` injection: on first render, injects `.ue4ss-ctx-item:hover { background: rgba(255,255,255,0.1); }` via `globalThis.document.head` if not already present
+
+### Menu variants
+
+**Single-item menu** (one entry selected, or right-clicking an unselected entry):
+
+| Item | Action |
+| --- | --- |
+| Lock / Unlock Position | Toggle `locked` on this entry; serializes LO |
+| *(separator)* | |
+| Move to Top | Re-inserts after all locked entries |
+| Move to Bottom | Re-inserts at end of array |
+
+**Multi-item menu** (`selectedIds.size >= 2 && selectedIds.has(item.id)`):
+
+| Item | Action |
+| --- | --- |
+| Lock Selected (n) | Set `locked: true` on all selected entries; serializes |
+| Unlock Selected (n) | Set `locked: false` on all selected entries; serializes |
+
+### applyToTargets helper
+
+```js
+const applyToTargets = (transform, serialize = false) => {
+  const newLO = transform(loadOrder, targets);
+  dispatch(actions.setFBLoadOrder(profile.id, newLO));
+  if (serialize) serializeLoadOrder(context, newLO);
+  onClose();
+};
+```
+
+Lock/unlock operations pass `serialize = true`; move operations do not (deploy handles
+the prefix rename).
+
+### Positioning
+
+```js
+const menuStyle = {
+  position: 'fixed', left: x, top: y, zIndex: 9999,
+  background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.2)',
+  borderRadius: 4, padding: '4px 0', minWidth: 180,
+  boxShadow: '0 4px 12px rgba(0,0,0,0.6)',
+};
+```
+
+`x` and `y` come from `evt.clientX` / `evt.clientY` at right-click time, stored in
+`_pakContextMenu` via `setContextMenu({ x, y, itemId })`.
 
 ---
 
 ## 12. Ue4ssLoadOrderPage layout
 
-`Ue4ssLoadOrderPage` renders a `FlexLayout type='column'` with the mod list on top and an info panel at the bottom:
+`Ue4ssLoadOrderPage` renders a `FlexLayout type='column'` with the mod list on top
+and an info panel at the bottom. It uses its own `DraggableList` + `Ue4ssItemRenderer`
+with a React context (`Ue4ssSelectionContext`) for shared selection and context menu state:
 
 ```js
-React.createElement(FlexLayout, { type: 'column', ..., style: { height: '100%' } },
-  // list — must have minHeight:0 to shrink in a column flex container
+const Ue4ssSelectionContext = React.createContext({
+  selectedIds: new Set(), setSelectedIds: () => {},
+  allIds: [],
+  contextMenu: null, setContextMenu: () => {},
+});
+```
+
+Page layout:
+
+```js
+React.createElement(FlexLayout, { type: 'column', style: { height: '100%' } },
+  // list -- must have minHeight:0 to shrink in a column flex container
   React.createElement(FlexLayout.Flex, { style: { overflowY: 'auto', minHeight: 0 } },
-    React.createElement(DraggableList, { ... })
+    React.createElement(Ue4ssSelectionContext.Provider, { value: { selectedIds, setSelectedIds, allIds, contextMenu, setContextMenu } },
+      React.createElement(DraggableList, {
+        ...
+        isLocked: item => [true, 'true', 'always'].includes(item?.locked),
+      })
+    )
   ),
-  // info panel — plain div, not FlexLayout.Flex (FlexLayout.Flex ignores height constraints)
+  // info panel -- plain div, not FlexLayout.Flex
   React.createElement('div', { style: { flexShrink: 0 } },
     React.createElement(Ue4ssLoadOrderInfoPanel)
   ),
 )
 ```
 
-`Ue4ssLoadOrderInfoPanel` uses a `ul` with `listStyleType: 'disc'` and a `borderTop` separator. No fixed height — auto-sizes to content. Current bullets (4):
+`Ue4ssLoadOrderInfoPanel` uses a `ul` with `listStyleType: 'disc'` and a `borderTop`
+separator. Current bullets (4):
 
-1. Drag-and-drop reorder — changes write to mods.txt immediately.
-2. Checkboxes to enable/disable each mod — all changes write to mods.txt immediately.
-3. Mods with a `config.lua`/`settings.json` file have a Configure button to open it externally.
-4. *(italic, yellow, bold)* Note: this page manages UE4SS mods only; pak mod load order is on the Load Order page.
+1. Drag-and-drop reorder -- changes write to `mods.txt` immediately.
+2. Checkboxes to enable/disable each mod -- all changes write to `mods.txt` immediately.
+3. Mods with a `config.lua`/`settings.json`/etc. file have a **Configure** button to open it externally.
+4. *(italic, yellow, bold)* Note: this page manages UE4SS mods only; pak mod LO is on the Load Order page.
 
 ### Ue4ssItemRenderer row details
 
-| Element | Key style / note |
+The renderer uses a plain `div` (not `ListGroupItem` -- no page-scoped CSS). Key elements:
+
+| Element | Key note |
 | --- | --- |
-| Configure button | `style: { margin: '0 4px' }` for spacing |
-| Enable checkbox | Plain `input[type=checkbox]` with `alignSelf: 'center', cursor: 'pointer'` — react-bootstrap `Checkbox` wrapper breaks flex centering |
+| Root `div` | `display:flex, flexDirection:row, alignItems:center, gap:8, padding:'4px 12px', border, borderRadius, minHeight:52`, outline for selection |
+| Configure button | Only rendered when `configFilePath` is non-empty (detected by `useEffect` + `util.walk`); `style: { margin: '0 4px' }` |
+| Enable checkbox | Plain `input[type=checkbox]` with `alignSelf: 'center', cursor: 'pointer'` -- react-bootstrap `Checkbox` wrapper breaks flex centering |
+| Context menu | `Ue4ssContextMenu` rendered last when `contextMenu?.itemId === item.id` |
+
+### Ue4ssContextMenu
+
+`Ue4ssContextMenu` is richer than `PakContextMenu`. Single-item menu includes:
+Enable/Disable, Lock/Unlock, Configure (if `configFilePath` non-empty), separator,
+Open Mod Folder, separator, Move to Top, Move to Bottom.
+
+Multi-item menu: Enable/Disable selected, Lock/Unlock selected, separator, Open Mod Folder.
 
 ---
 
-## 11. Related reading
+## 13. Related reading
 
-- **Template source:** `template-ue4-5/index.js:2733-2831`
-- **Registration site:** `template-ue4-5/index.js:2384-2393`
-- **Prefix / rename logic:** `template-ue4-5/index.js:1741-1763` (`makePrefix`, `loadOrderPrefix`)
-- **Serialize / deserialize:** `template-ue4-5/index.js:1636-1717`
+- **Template source:** `template-ue4-5/index.js`
+  - `usePakLOState`: lines 2732-2748
+  - `LoadOrderItemRenderer`: lines 2751-2884
+  - `PakContextMenu`: lines 2886-2962
+  - `Ue4ssSelectionContext` + `Ue4ssItemRenderer`: lines 3033-3192
+  - `Ue4ssContextMenu`: lines 3194-3270
+  - `Ue4ssLoadOrderPage`: lines 3295-3401
+  - Registration site: lines 2573-2581
+  - `makePrefix` / `loadOrderPrefix`: lines 1943-1970
+  - `serializeLoadOrder` / `deserializeLoadOrder`: lines 1703-1784
 - **Witcher 3 ItemRenderer (inspiration, TSX):**
   `Vortex/extensions/games/game-witcher3/src/views/ItemRenderer.tsx`
 - **Vortex core ItemRenderer (default, TSX):**
   `Vortex/src/renderer/src/extensions/file_based_loadorder/views/ItemRenderer.tsx`
 - **`LoadOrderIndexInput` source:**
   `Vortex/src/renderer/src/extensions/file_based_loadorder/views/loadOrderIndex.tsx`
-- **FBLO type definitions (IItemRendererProps, ILoadOrderEntry_2, customItemRenderer):**
+- **FBLO type definitions:**
   `Vortex/src/renderer/src/extensions/file_based_loadorder/types/types.ts`
-- **Public API surface (ILoadOrderEntry_2, ILoadOrderGameInfo):**
-  `Vortex/etc/vortex.api.md:2668, 5802-5803`
 - **`context.registerLoadOrder` declaration:**
-  `Vortex/src/renderer/src/types/IExtensionContext.ts:1524`
+  `Vortex/src/renderer/src/types/IExtensionContext.ts`

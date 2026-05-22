@@ -16,7 +16,7 @@ Calling it does three things:
 
 1. Registers a per-game load order handler (serialize / deserialize / validate functions).
 2. Makes the shared **Load Order** sidebar page visible for that game, powered by those handlers.
-3. Wires up automatic lifecycle events — page mount, profile switch, deploy/purge, game exit — to call your handlers at the right times.
+3. Wires up automatic lifecycle events -- page mount, profile switch, deploy/purge, game exit -- to call your handlers at the right times.
 
 The older `context.registerLoadOrderPage` (used with PAK-prefix renaming: `AAA_`, `AAB_`, ...) is **deprecated**. Use `registerLoadOrder` for all new development.
 
@@ -44,20 +44,20 @@ types.ts:81                 interface ILoadOrderGameInfo { ... }
 | --- | --- | --- |
 | `toggleableEntries` | `true` | Show enable/disable checkbox per row |
 | `clearStateOnPurge` | `true` | Wipe Redux state when mods are purged |
-| `usageInstructions` | Vortex default | String or `React.ComponentType` shown in the info panel — always rendered on the **right side** of the list in a `FlexLayout type="row"`; position is hardcoded and not configurable via this API |
+| `usageInstructions` | Vortex default | String or `React.ComponentType` shown in the info panel -- always rendered on the **right side** of the list in a `FlexLayout type="row"`; position is hardcoded and not configurable via this API |
 | `customItemRenderer` | Vortex default | `React.ComponentType` for each row in the list |
 | `noCollectionGeneration` | `false` | Opt out of automatic Vortex Collections integration |
-| `condition` | `undefined` | `() => boolean` — hide the LO page when returns `false` |
+| `condition` | `undefined` | `() => boolean` -- hide the LO page when returns `false` |
 
 ### `ILoadOrderEntry` shape (types.ts:35-60)
 
 ```js
 {
-  id: string,       // unique key — usually mod folder name or filename
+  id: string,       // unique key -- usually mod folder name or filename
   enabled: boolean, // controls per-entry on/off checkbox
   name: string,     // display name shown in the list
-  locked?: LockedState,  // 'locked'|'always-locked'|undefined — prevents drag
-  modId?: string,   // Vortex internal mod id — REQUIRED for Collections to work
+  locked?: LockedState,  // 'locked'|'always-locked'|undefined -- prevents drag
+  modId?: string,   // Vortex internal mod id -- REQUIRED for Collections to work
   data?: any,       // arbitrary extra data passed through serialize/deserialize
 }
 ```
@@ -79,7 +79,7 @@ types.ts:81                 interface ILoadOrderGameInfo { ... }
 
 ### template-ue4-5 (ChemBoy1 FBLO pattern)
 
-`template-ue4-5\index.js:2555-2563`:
+`template-ue4-5\index.js:2573-2581`:
 
 ```js
 context.registerLoadOrder({
@@ -160,7 +160,7 @@ context.registerMainPage('sort-none', 'Load order', FileBasedLoadOrderPage, {
 </MainPage>
 ```
 
-> **`usageInstructions` position is hardcoded right.** `FileBasedLoadOrderPage.tsx:304-309` uses `FlexLayout type="row"` with the list left and `InfoPanel` right. There is no API option to move it to the bottom. To get bottom-positioned instructions you must replace `registerLoadOrder` with a fully custom `registerMainPage` (column `FlexLayout`, list as `FlexLayout.Flex` + info panel as `div { flexShrink: 0 }`) — the same approach as `Ue4ssLoadOrderPage`. That means re-implementing filter, DnD, validate, and serialize wiring yourself; not worth it for instruction placement alone.
+> **`usageInstructions` position is hardcoded right.** `FileBasedLoadOrderPage.tsx:304-309` uses `FlexLayout type="row"` with the list left and `InfoPanel` right. There is no API option to move it to the bottom. To get bottom-positioned instructions you must replace `registerLoadOrder` with a fully custom `registerMainPage` (column `FlexLayout`, list as `FlexLayout.Flex` + info panel as `div { flexShrink: 0 }`) -- the same approach as `Ue4ssLoadOrderPage`. That means re-implementing filter, DnD, validate, and serialize wiring yourself; not worth it for instruction placement alone.
 
 ### What `customItemRenderer` receives
 
@@ -174,9 +174,7 @@ IItemRendererProps = {
 }
 ```
 
-The renderer also has full access to the Vortex Redux store via `connect()` or
-`useSelector()` — that is how `LoadOrderItemRenderer` in the template reads mod
-attributes (thumbnail, etc.) without them being passed explicitly.
+The renderer also has full access to the Vortex Redux store via `useSelector()`.
 
 ---
 
@@ -188,12 +186,13 @@ attributes (thumbnail, etc.) without them being passed explicitly.
 state.persistent.loadOrder[profileId] = ILoadOrderEntry[]
 ```
 
-Key point: keyed by **profile id**, not game id. This means each profile has its own
+Key point: keyed by **profile id**, not game id. Each profile has its own
 independent load order for the same game.
 
 Reducers are registered at:
-- `["persistent", "loadOrder"]` — the LO array (`file_based_loadorder\index.ts:290`)
-- `["session", "fblo"]` — validation results, force-update flag (`index.ts:291`)
+
+- `["persistent", "loadOrder"]` -- the LO array (`file_based_loadorder\index.ts:290`)
+- `["session", "fblo"]` -- validation results, force-update flag (`index.ts:291`)
 
 ### Actions (`file_based_loadorder\actions\loadOrder.ts`)
 
@@ -224,20 +223,21 @@ const { actions } = require('vortex-api');
 | `will-purge` event | `api.onAsync('will-purge', ...)` | `deserializeLoadOrder` |
 | `did-purge` event | `api.onAsync('did-purge', ...)` | `deserializeLoadOrder` |
 
-Serialize is **never** called directly by events — it is only called after a user-driven
+Serialize is **never** called directly by events -- it is only called after a user-driven
 LO state change (`onStateChange persistent.loadOrder`). Deploy/purge events only call
 deserialize, not serialize.
 
 ---
 
-## 7. `ue4ss_loadOrder.json` — how it fits in the UE4-5 template
+## 7. `ue4ss_loadOrder.json` -- how it fits in the UE4-5 template
 
-### Key constants (`template-ue4-5\index.js:237-245`)
+### Key constants (`template-ue4-5\index.js:237-252`)
 
 ```js
 const UE4SS_MODSTXT_FILE  = 'mods.txt';
 const UE4SS_LO_FILE       = 'ue4ss_loadOrder.json';
 const LO_ATTRIBUTE_UE4SS  = 'ue4ssModFolder'; // installer sets this on each mod
+const UE4SS_CONFIG_FILES  = ['config.txt', 'settings.json', 'config.lua']; // triggers Configure button
 const UE4SS_NATIVE_MODS   = [
   'BPML_GenericFunctions', 'BPModLoaderMod', 'CheatManagerEnablerMod',
   'ConsoleCommandsMod', 'ConsoleEnablerMod', 'Keybinds',
@@ -257,7 +257,7 @@ Same directory as `mods.txt`.
 ```json
 [
   { "id": "MyScriptMod",  "name": "My Mod (MyScriptMod)",  "modId": "abc123", "enabled": true },
-  { "id": "AnotherMod",   "name": "Manual Mod (AnotherMod)", "modId": null,   "enabled": false }
+  { "id": "AnotherMod",   "name": "Manual Mod (AnotherMod)", "modId": null,   "enabled": false, "locked": true }
 ]
 ```
 
@@ -267,34 +267,22 @@ Same directory as `mods.txt`.
 the UE4SS sidecar are **two separate systems**:
 
 - FBLO uses `<profile>_loadOrder.json` for **PAK-style** mods (sortable via prefix renaming).
-- `ue4ss_loadOrder.json` is used **only** by the `didDeploy` hook, gated by
-  `if (ue4ssLoadOrder && isUe4ssInstalled(...))`.
-- Setting `ue4ssLoadOrder = false` (line 82) disables UE4SS sidecar entirely —
+- `ue4ss_loadOrder.json` is used by the `Ue4ssLoadOrderPage` custom React page and
+  written to disk by `serializeUe4ss`, which also rewrites `mods.txt` directly.
+- Setting `ue4ssLoadOrder = false` disables the UE4SS sidecar entirely --
   the FBLO page still works for PAK mods.
 
-The sidecar is **deploy-driven, not FBLO-driven**. Flow on deploy:
-
-```
-did-deploy fires
-  -> deserializeUe4ss()
-       reads <profile>_ue4ss_loadOrder.json
-       scans Mods/ folder for actual mod folders
-       resolves mod names via LO_ATTRIBUTE_UE4SS attribute
-       returns sorted ILoadOrderEntry[]
-  -> serializeUe4ss()
-       writes back <profile>_ue4ss_loadOrder.json
-       rewrites mods.txt between BPModLoaderMod and Keybinds anchors
-```
-
 `mods.txt` line format: `ModFolderName : 1` (enabled) or `ModFolderName : 0` (disabled).
+`serializeUe4ss` writes user-managed mods between the `BPModLoaderMod` and `Keybinds`
+anchor lines.
 
 ---
 
-## 8. Custom React page for UE4SS mods — implementation
+## 8. Custom React page for UE4SS mods -- implementation
 
-**Reference implementation: `game-subnautica2/index.js`, `template-ue4-5/index.js`.**
+**Reference implementation: `template-ue4-5/index.js`, `game-subnautica2/index.js`.**
 
-The page is **additive** — registered alongside the existing FBLO page, never replacing it.
+The page is **additive** -- registered alongside the existing FBLO page, never replacing it.
 FBLO manages PAK mod load order (prefix renaming). The custom page manages only UE4SS
 script mods via the `<profile>_ue4ss_loadOrder.json` sidecar + `mods.txt`.
 
@@ -304,8 +292,8 @@ script mods via the `<profile>_ue4ss_loadOrder.json` sidecar + `mods.txt`.
 // top-level import in index.js
 const { actions, fs, util, selectors, log,
         MainPage, FlexLayout, DNDContainer, DraggableList, Spinner } = require('vortex-api');
-// inline-required inside component functions (mirrors existing LoadOrderItemRenderer style):
-// Icon, MainContext  <- from 'vortex-api'
+// inline-required inside component functions:
+// Icon, LoadOrderIndexInput, MainContext, Toggle, More  <- from 'vortex-api'
 // Checkbox, FormControl  <- from 'react-bootstrap'
 // useSelector, useDispatch  <- from 'react-redux'
 ```
@@ -313,69 +301,213 @@ const { actions, fs, util, selectors, log,
 **Critical:** always wrap drag-and-drop lists in `DNDContainer`. Vortex bundles `react-dnd`
 internally; do NOT import it from npm.
 
-### Action creator (no safeCreateAction — not exported from vortex-api)
+### Action creators (no safeCreateAction -- not exported from vortex-api)
 
 ```js
+// UE4SS load order state (per-profile, persistent)
 const SET_UE4SS_LOAD_ORDER = `SET_${GAME_ID.toUpperCase()}_UE4SS_LOAD_ORDER`;
 function setUe4ssLoadOrder(profileId, lo) { return { type: SET_UE4SS_LOAD_ORDER, payload: { profileId, loadOrder: lo } }; }
 setUe4ssLoadOrder.toString = () => SET_UE4SS_LOAD_ORDER;
+
+// UE4SS LO enabled toggle (settings)
+const SET_UE4SS_LO_ENABLED = `SET_${GAME_ID.toUpperCase()}_UE4SS_LO_ENABLED`;
+function setUe4ssLoEnabled(value) { return { type: SET_UE4SS_LO_ENABLED, payload: value }; }
+setUe4ssLoEnabled.toString = () => SET_UE4SS_LO_ENABLED;
 ```
 
-### Reducer registration (inside `main(context)`)
+### Registration gating in main()
 
-State is keyed by `profileId` so switching profiles picks up the correct order without re-reading the file.
-
-```js
-context.registerReducer(['persistent', 'ue4ssLoadOrder'], {
-  reducers: {
-    [setUe4ssLoadOrder.toString()]: (state, payload) => util.setSafe(state, [payload.profileId, 'loadOrder'], payload.loadOrder),
-  },
-  defaults: {},
-});
-```
-
-### Page registration (inside `main(context)`, after FBLO block)
+All four UE4SS registrations live inside a single `if (ue4ssLoadOrder)` block in `main()`:
 
 ```js
-if (ue4ssLoadOrder) {
-  context.registerReducer([...]);  // see above
-  context.registerMainPage('sort-none', 'UE4SS Load Order', Ue4ssLoadOrderPage, {
-    id: `${GAME_ID}-ue4ss-loadorder`,
-    group: 'per-game',
-    hotkey: 'U',
-    visible: () => {
-      const gameId = selectors.activeGameId(context.api.store.getState());
-      return gameId === GAME_ID && isUe4ssInstalled(context.api, spec);
-    },
-    props: () => ({ api: context.api }),
-  });
+function main(context) {
+  applyGame(context, spec);
+  if (UNREALDATA.loadOrder === true) {
+    if (FBLO) { context.registerLoadOrder({...}); }   // PAK FBLO only
+  }
+  if (ue4ssLoadOrder) {
+    // 1. Settings reducer (ue4ssLoEnabled toggle)
+    context.registerReducer(['settings', GAME_ID], {
+      reducers: {
+        [setUe4ssLoEnabled.toString()]: (state, payload) => util.setSafe(state, ['ue4ssLoEnabled'], payload),
+      },
+      defaults: { ue4ssLoEnabled: true },
+    });
+    // 2. Settings page entry (Toggle + More)
+    context.registerSettings('Mods', GameSettings, () => ({}),
+      () => selectors.activeGameId(context.api.getState()) === GAME_ID, 150
+    );
+    // 3. Persistent LO reducer
+    context.registerReducer(['persistent', 'ue4ssLoadOrder'], {
+      reducers: {
+        [setUe4ssLoadOrder.toString()]: (state, payload) => util.setSafe(state, [payload.profileId, 'loadOrder'], payload.loadOrder),
+      },
+      defaults: {},
+    });
+    // 4. Main page
+    context.registerMainPage('unreal', 'UE4SS Load Order', Ue4ssLoadOrderPage, {
+      id: `${GAME_ID}-ue4ss-loadorder`,
+      priority: 31,
+      group: 'per-game',
+      hotkey: 'U',
+      mdi: 'M12 0c-6.5745 0-11.899 5.371-11.899 12s...', // UE4SS SVG icon path
+      visible: () => {
+        const state = context.api.store.getState();
+        const gameId = selectors.activeGameId(state);
+        return gameId === GAME_ID && ue4ssLoadOrder; // ue4ssLoadOrder is the toggle constant
+      },
+      props: () => ({ api: context.api }),
+    });
+  }
 }
 ```
 
-### didDeploy — refresh-only, page is sole writer
+**`visible` must NOT check `isUe4ssInstalled()`** -- when gated that way, the page
+requires a full Vortex restart to appear after UE4SS auto-downloads in the same session
+(mod-state check doesn't re-evaluate). The `ue4ssLoadOrder` constant is always `true`
+when this block runs, so `visible` simplifies to `gameId === GAME_ID`.
 
-`serializeUe4ss` writes directly to the game directory (not staging), so `didDeploy`
-must NOT re-serialize — that would overwrite the user's order. Instead it refreshes the
-reducer so newly deployed mods appear in the list. **The refresh IS necessary** — the
-page's `useEffect` only fires on `profileId` change, so without it new mods don't appear
-until a profile switch.
+Reducer path `['persistent', 'ue4ssLoadOrder']` -- state shape
+`{ [profileId]: { loadOrder: [] } }` -- persisted per-profile, not per-game.
+
+### GameSettings component
+
+`GameSettings` renders a `Toggle` + `More` help text in the Vortex Settings > Mods tab.
+Toggling off calls `reconcileEnabledTxt(api, true)` to write `enabled.txt` files;
+toggling on calls `reconcileEnabledTxt(api, false)` to delete them.
 
 ```js
-if (ue4ssLoadOrder && isUe4ssInstalled(api, spec)) {
-  const UE4SS_LOAD_ORDER = await deserializeUe4ss(api);
-  api.store.dispatch(setUe4ssLoadOrder(profileId, UE4SS_LOAD_ORDER));
-  // do NOT call serializeUe4ss here
+function GameSettings() {
+  const { Toggle, More, MainContext } = require('vortex-api');
+  const { useSelector, useDispatch } = require('react-redux');
+  const dispatch = useDispatch();
+  const { api } = React.useContext(MainContext);
+  const ue4ssLoEnabled = useSelector(state =>
+    util.getSafe(state, ['settings', GAME_ID, 'ue4ssLoEnabled'], true));
+  const onToggle = React.useCallback((checked) => {
+    dispatch(setUe4ssLoEnabled(checked));
+    reconcileEnabledTxt(api, !checked)
+      .catch(err => log('warn', `UE4SS LO reconcile failed: ${err.message}`));
+  }, [api, dispatch]);
+  return React.createElement('form', null,
+    React.createElement('div', { className: 'settings-group' },
+      React.createElement(Toggle, { checked: ue4ssLoEnabled, onToggle },
+        'UE4SS Load Order',
+        React.createElement(More, { id: `${GAME_ID}-ue4ss-lo-more`, name: 'UE4SS Load Order' },
+          'Enable the UE4SS mod load order page and mods.txt management. '
+          + `Disabling will have the extension write ${ENABLEDTXT_FILE} files with no Load Order control.`,
+        ),
+      ),
+    ),
+  );
 }
 ```
 
-### CSS scoping pitfall (critical)
+### reconcileEnabledTxt
 
-FBLO styles live in `Vortex/src/stylesheets/vortex/page-mod-load-order.scss` and are
-scoped to `#page-file-based-loadorder`. A custom page has a different DOM ID so these
-rules **do not apply**: `.load-order-entry`, `.load-order-name`, the page-scoped
-`.layout-flex { overflow:auto }` override, `.file-based-load-order-list .list-group`, etc.
+When the UE4SS LO toggle changes, `reconcileEnabledTxt(api, write)` walks the staging
+folder and writes or deletes `enabled.txt` files in every UE4SS mod folder:
 
-**Global** styles that DO apply (from `layout.scss`):
+- Walks `stagingPath` with `util.walk`
+- Identifies mod folders: any parent of a `scripts` or `dlls` sub-folder (excluding native mods)
+- `write = true`: writes empty `enabled.txt` if not present (LO disabled -- mods need marker file)
+- `write = false`: deletes `enabled.txt` if present (LO enabled -- marker no longer needed)
+- Sends a success notification with count of touched folders
+
+### Installer API pattern
+
+`installScripts` and `installDll` are `async` and receive `api` as their **first**
+parameter, injected via a closure at `registerInstaller`:
+
+```js
+context.registerInstaller(SCRIPTS_ID, 35, testScripts, (files, fileName) => installScripts(context.api, files, fileName));
+```
+
+When LO is enabled (`ue4ssLoadOrder && ue4ssLoEnabled`): filter any bundled `enabled.txt`
+out of `files` before building instructions. When disabled: `await fs.writeFileAsync(...)`
+to create `enabled.txt` (async -- no `writeFileSync`).
+
+### Cross-game guard pattern
+
+Both `serializeUe4ss` and `deserializeUe4ss` must guard against being called while a
+different game is active. Vortex keeps all pages mounted; the `useEffect([profileId])`
+fires on game switch and would call into the wrong game's UE4SS folder without guards.
+
+```js
+async function deserializeUe4ss(api) {
+  // read-only; do NOT use ensureFileAsync -- that creates empty files on wrong-game calls
+  let LO_MOD_ARRAY = [];
+  try {
+    const raw = await fs.readFileAsync(loadOrderPath, { encoding: 'utf8' });
+    if (raw.length > 0) LO_MOD_ARRAY = JSON.parse(util.deBOM(raw));
+  } catch { /* file doesn't exist yet; start empty */ }
+```
+
+```js
+async function serializeUe4ss(api, loadOrder) {
+  const state = api.getState();
+  if (selectors.activeGameId(state) !== GAME_ID) return; // guard: wrong game active
+  // ...
+}
+```
+
+```js
+// Ue4ssLoadOrderPage useEffect:
+React.useEffect(() => {
+  if (!profileId) return;
+  if (selectors.activeGameId(api.getState()) !== GAME_ID) return; // guard: page mounted after game switch
+  deserializeUe4ss(api).then(lo => dispatch(setUe4ssLoadOrder(profileId, lo)));
+  setSelectedIds(new Set());
+}, [profileId]);
+```
+
+The `ensureFileAsync` -> try/catch change in `deserializeUe4ss` is load-bearing:
+`ensureFileAsync` creates an empty file on first call, which is what causes the
+"empty LO written for the other game's profile" symptom.
+
+### didDeploy: deserialize -> dispatch -> serialize (with fallback)
+
+`didDeploy` runs all three steps so `mods.txt` stays current after every deploy.
+`deserializeUe4ss` is wrapped in try/catch -- `isDir` uses `fs.statSync` inside
+`Array.filter()`, which can throw during deploy if a junction/hardlink is in a
+transitional state. Without the catch, a throw propagates silently and
+`serializeUe4ss` is never reached:
+
+```js
+async function didDeploy(api, profileId) {
+  const state = api.getState();
+  const profile = selectors.profileById(state, profileId);
+  if (profile?.gameId !== GAME_ID) return Promise.resolve();
+  if (ue4ssLoadOrder && isUe4ssInstalled(api, spec)) {
+    const loEnabled = util.getSafe(state, ['settings', GAME_ID, 'ue4ssLoEnabled'], true);
+    if (loEnabled) {
+      let UE4SS_LOAD_ORDER;
+      try {
+        UE4SS_LOAD_ORDER = await deserializeUe4ss(api);
+        api.store.dispatch(setUe4ssLoadOrder(profileId, UE4SS_LOAD_ORDER));
+      } catch (err) {
+        log('error', `[${GAME_ID}] didDeploy: deserializeUe4ss failed, falling back to store state`, err);
+        UE4SS_LOAD_ORDER = util.getSafe(state, ['persistent', 'ue4ssLoadOrder', profileId, 'loadOrder'], []);
+      }
+      if (UE4SS_LOAD_ORDER.length > 0) {
+        await serializeUe4ss(api, UE4SS_LOAD_ORDER);
+      }
+    }
+  }
+  api.dismissNotification(`${GAME_ID}-loadorderdeploy-notif`);
+  return Promise.resolve();
+}
+```
+
+The `length > 0` guard prevents writing an empty load order if both paths fail. The
+dispatch on success is required: the page's `useEffect` only fires on `profileId`
+change, so without it newly deployed mods won't appear in the UI until a profile switch.
+
+### CSS scoping pitfall
+
+FBLO styles are scoped to `#page-file-based-loadorder`. On a custom page (different DOM
+ID), `.load-order-entry`, `.load-order-name`, and page-scoped `.layout-flex` overrides
+**do not apply**. Global styles that DO apply:
 
 | Class | Global style |
 | --- | --- |
@@ -387,11 +519,12 @@ Fix: apply all critical styles inline on `div` elements.
 
 ### FlexLayout layout rules
 
-- `FlexLayout.Flex` has global `overflow: hidden` — override with `style={{ overflowY: 'auto' }}` on the scrollable list side.
-- Fixed-width info panel: use `FlexLayout.Flex` with `style={{ flex: '0 0 300px' }}`. Do NOT use `FlexLayout.Fixed` — it only gets `position: relative`, no flex sizing, and gets squeezed.
-- `FlexLayout(row)` inside a percentage-height parent (e.g. `DNDContainer style={{ height: '95%' }}`) needs `style={{ height: '100%' }}` or it collapses to content height.
+- `FlexLayout.Flex` has global `overflow: hidden` -- override with `style={{ overflowY: 'auto' }}` on the scrollable list side.
+- Fixed-width info panel: use `FlexLayout.Flex` with `style={{ flex: '0 0 300px' }}`. Do NOT use `FlexLayout.Fixed` -- only gets `position: relative`, no flex sizing.
+- `FlexLayout(row)` inside a percentage-height parent needs `style={{ height: '100%' }}` or it collapses.
+- For a **column** layout (Ue4ssLoadOrderPage pattern): `FlexLayout.Flex` list needs `minHeight: 0` to shrink; info panel should be a plain `div { flexShrink: 0 }` -- `FlexLayout.Flex` ignores `flex: '0 0 Npx'` height constraints in column mode.
 
-### Component skeleton (actual working pattern)
+### Ue4ssLoadOrderPage component skeleton
 
 ```js
 function Ue4ssLoadOrderPage({ api }) {
@@ -404,10 +537,27 @@ function Ue4ssLoadOrderPage({ api }) {
   const loEnabled = useSelector(state => util.getSafe(state, ['settings', GAME_ID, 'ue4ssLoEnabled'], true));
   const dispatch = useDispatch();
   const [filterText, setFilterText] = React.useState('');
+  const [selectedIds, setSelectedIds] = React.useState(new Set());
+  const [contextMenu, setContextMenu] = React.useState(null);
 
+  // Dismiss context menu on any click/right-click outside
+  React.useEffect(() => {
+    if (!contextMenu) return;
+    const dismiss = () => setContextMenu(null);
+    globalThis.document.addEventListener('click', dismiss);
+    globalThis.document.addEventListener('contextmenu', dismiss);
+    return () => {
+      globalThis.document.removeEventListener('click', dismiss);
+      globalThis.document.removeEventListener('contextmenu', dismiss);
+    };
+  }, [contextMenu]);
+
+  // Load on profile change; guard against wrong game
   React.useEffect(() => {
     if (!profileId) return;
+    if (selectors.activeGameId(api.getState()) !== GAME_ID) return;
     deserializeUe4ss(api).then(lo => dispatch(setUe4ssLoadOrder(profileId, lo)));
+    setSelectedIds(new Set());
   }, [profileId]);
 
   const onApply = React.useCallback((reordered) => {
@@ -422,21 +572,27 @@ function Ue4ssLoadOrderPage({ api }) {
       newLO = reordered;
     }
     dispatch(setUe4ssLoadOrder(profileId, newLO));
-    serializeUe4ss(api, newLO); // writes mods.txt + sidecar directly — no deploy needed
+    serializeUe4ss(api, newLO); // writes mods.txt + sidecar directly -- no deploy needed
   }, [dispatch, loadOrder, filterText, profileId]);
 
   const filteredOrder = filterText
     ? loadOrder.filter(e => e.name.toLowerCase().includes(filterText.toLowerCase()))
     : loadOrder;
 
-  if (!loadOrder.length) {
-    return React.createElement(MainPage, null,
-      React.createElement(MainPage.Body, null, React.createElement('p', { style: { padding: '12px', fontWeight: 'bold', color: 'yellow' } }, 'No UE4SS mods are installed.')));
-  }
+  const allIds = filteredOrder.map(e => e.id);
 
+  // Empty-state checks: loEnabled first, then no mods
   if (!loEnabled) {
     return React.createElement(MainPage, null,
-      React.createElement(MainPage.Body, null, React.createElement('p', { style: { padding: '12px', fontWeight: 'bold', color: 'yellow' } }, 'UE4SS load order is disabled in Settings.')));
+      React.createElement(MainPage.Body, null,
+        React.createElement('p', { style: { padding: '12px', fontWeight: 'bold', color: 'yellow' } },
+          'UE4SS load order is disabled in Settings.')));
+  }
+  if (!loadOrder.length) {
+    return React.createElement(MainPage, null,
+      React.createElement(MainPage.Body, null,
+        React.createElement('p', { style: { padding: '12px', fontWeight: 'bold', color: 'yellow' } },
+          'No UE4SS mods are installed.')));
   }
 
   return React.createElement(MainPage, null,
@@ -449,18 +605,24 @@ function Ue4ssLoadOrderPage({ api }) {
     ),
     React.createElement(MainPage.Body, null,
       React.createElement(DNDContainer, { style: { height: '95%' } },
-        React.createElement(FlexLayout, { type: 'row',
+        React.createElement(FlexLayout, { type: 'column',
           className: 'file-based-load-order-container', style: { height: '100%' } },
           React.createElement(FlexLayout.Flex,
-            { className: 'file-based-load-order-list', style: { overflowY: 'auto' } },
-            React.createElement(DraggableList, {
-              itemTypeId: `${GAME_ID}-ue4ss-lo-entry`,
-              id: `${GAME_ID}-ue4ss-loadorder-list`,
-              items: filteredOrder, itemRenderer: Ue4ssItemRenderer,
-              apply: onApply, idFunc: entry => entry.id,
-            })
+            { className: 'file-based-load-order-list', style: { overflowY: 'auto', minHeight: 0 } },
+            React.createElement(Ue4ssSelectionContext.Provider,
+              { value: { selectedIds, setSelectedIds, allIds, contextMenu, setContextMenu } },
+              React.createElement(DraggableList, {
+                itemTypeId: `${GAME_ID}-ue4ss-lo-entry`,
+                id: `${GAME_ID}-ue4ss-loadorder-list`,
+                items: filteredOrder,
+                itemRenderer: Ue4ssItemRenderer,
+                apply: onApply,
+                idFunc: entry => entry.id,
+                isLocked: item => [true, 'true', 'always'].includes(item?.locked),
+              })
+            )
           ),
-          React.createElement(FlexLayout.Flex, { style: { flex: '0 0 300px', overflowY: 'auto' } },
+          React.createElement('div', { style: { flexShrink: 0 } },
             React.createElement(Ue4ssLoadOrderInfoPanel)
           )
         )
@@ -470,34 +632,50 @@ function Ue4ssLoadOrderPage({ api }) {
 }
 ```
 
+### Ue4ssSelectionContext
+
+Defined at module level (outside components):
+
+```js
+const Ue4ssSelectionContext = React.createContext({
+  selectedIds: new Set(),
+  setSelectedIds: () => {},
+  allIds: [],
+  contextMenu: null,
+  setContextMenu: () => {},
+});
+```
+
+`Ue4ssLoadOrderPage` holds `selectedIds` and `contextMenu` as state. `allIds` is
+derived from `filteredOrder.map(e => e.id)` per render. All five fields are provided
+via `Ue4ssSelectionContext.Provider` wrapping `DraggableList`.
+
 ### Per-row renderer (DraggableList contract)
 
 `DraggableList` passes `{ className, item }` where `item` is the **raw entry** from the
-`items` array — NOT FBLO's wrapped `{ loEntry, displayCheckboxes, invalidEntries }`. The
-control wraps all rows in a `<ListGroup>` internally
-(`controls/DraggableList.tsx:70`, `controls/DraggableListItem.tsx:146`).
+`items` array -- NOT FBLO's wrapped `{ loEntry, displayCheckboxes, invalidEntries }`.
+The control wraps all rows in a `<ListGroup>` internally.
 
-Return a plain `div` with inline flex styles. Do NOT use `ListGroupItem` — Bootstrap's
-block display needs page-scoped CSS that won't fire. Use `MainContext` to get `api` inside
-the renderer (same pattern as `LoadOrderItemRenderer`).
+Return a plain `div` with inline flex styles. Do NOT use `ListGroupItem` -- Bootstrap's
+block display needs page-scoped CSS that won't fire on a custom page.
 
 ```js
-// Module level — before Ue4ssItemRenderer
-const Ue4ssSelectionContext = React.createContext({ selectedIds: new Set(), setSelectedIds: () => {}, allIds: [] });
-
 function Ue4ssItemRenderer({ className, item }) {
-  const { Checkbox } = require('react-bootstrap');
   const { Icon, LoadOrderIndexInput, MainContext } = require('vortex-api');
   const { useSelector, useDispatch } = require('react-redux');
 
   const vortexContext = React.useContext(MainContext);
   const dispatch = useDispatch();
+
   const profileId = useSelector(state => selectors.activeProfile(state)?.id);
   const loadOrder = useSelector(state =>
     util.getSafe(state, ['persistent', 'ue4ssLoadOrder', profileId, 'loadOrder'], []));
   const mods = useSelector(state => util.getSafe(state, ['persistent', 'mods', GAME_ID], {}));
   const pictureUrl = mods[item.modId]?.attributes?.pictureUrl;
+  const gamePath = useSelector(state =>
+    util.getSafe(state, ['settings', 'gameMode', 'discovered', GAME_ID, 'path'], ''));
 
+  const currentIdx = loadOrder.findIndex((e) => e.id === item.id) + 1;
   const isLocked = (entry) => [true, 'true', 'always'].includes(entry?.locked);
   const lockedCount = loadOrder.filter(isLocked).length;
   const isEntryLocked = isLocked(item);
@@ -522,14 +700,41 @@ function Ue4ssItemRenderer({ className, item }) {
     serializeUe4ss(vortexContext.api, newLO);
   }, [dispatch, vortexContext, loadOrder, item, profileId]);
 
-  const { selectedIds, setSelectedIds, allIds } = React.useContext(Ue4ssSelectionContext);
+  // Detect config file for "Configure" button
+  const [configFilePath, setConfigFilePath] = React.useState('');
+  React.useEffect(() => {
+    if (!gamePath || !item.id) { setConfigFilePath(''); return; }
+    const modFolder = path.join(gamePath, BINARIES_PATH, UE4SS_MOD_PATH, item.id);
+    const localConfigFiles = [...UE4SS_CONFIG_FILES, `${item.id}.txt`, `${item.id}.ini`, `${item.id}.json`];
+    let found = '';
+    util.walk(modFolder, (iterPath, stats) => {
+      if (found === '' && !stats.isDirectory() && localConfigFiles.includes(path.basename(iterPath))) {
+        found = iterPath;
+      }
+      return Promise.resolve();
+    })
+      .then(() => setConfigFilePath(found))
+      .catch(() => setConfigFilePath(''));
+  }, [gamePath, item.id]);
+
+  const { selectedIds, setSelectedIds, allIds, contextMenu, setContextMenu } =
+    React.useContext(Ue4ssSelectionContext);
   const isSelected = selectedIds.has(item.id);
+
+  const onContextMenu = React.useCallback((evt) => {
+    evt.preventDefault();
+    evt.stopPropagation();
+    setContextMenu({ x: evt.clientX, y: evt.clientY, itemId: item.id });
+  }, [item.id, setContextMenu]);
+
   const onSelect = React.useCallback((evt) => {
+    const ctrlKey = evt.ctrlKey || evt.metaKey; // capture before entering updater
+    const shiftKey = evt.shiftKey;
     setSelectedIds(prev => {
       const next = new Set(prev);
-      if (evt.ctrlKey || evt.metaKey) {
+      if (ctrlKey) {
         next.has(item.id) ? next.delete(item.id) : next.add(item.id);
-      } else if (evt.shiftKey) {
+      } else if (shiftKey) {
         const lastId = [...prev].at(-1);
         const start = allIds.indexOf(lastId ?? item.id);
         const end = allIds.indexOf(item.id);
@@ -544,16 +749,21 @@ function Ue4ssItemRenderer({ className, item }) {
   if (className) classes.push(...className.split(' ').filter(Boolean));
 
   return React.createElement('div', {
-    key: item.id, className: classes.join(' '), onClick: onSelect,
-    style: { display: 'flex', flexDirection: 'row', alignItems: 'center',
-             gap: 8, padding: '4px 12px', margin: 0,
-             border: '1px solid rgba(255,255,255,0.15)', borderRadius: 4, minHeight: 52,
-             outline: isSelected ? '2px solid #337ab7' : 'none', outlineOffset: '-1px' },
+    key: item.id,
+    className: classes.join(' '),
+    onClick: onSelect,
+    onContextMenu: onContextMenu,
+    style: {
+      display: 'flex', flexDirection: 'row', alignItems: 'center',
+      gap: 8, padding: '4px 12px', margin: 0,
+      border: '1px solid rgba(255,255,255,0.15)', borderRadius: 4, minHeight: 52,
+      outline: isSelected ? '2px solid #337ab7' : 'none', outlineOffset: '-1px',
+    },
   },
     React.createElement('div', { style: { visibility: isEntryLocked ? 'hidden' : 'visible' } },
       React.createElement(Icon, { className: 'drag-handle-icon', name: 'drag-handle' }),
     ),
-    React.createElement('div', { style: { width: 30, flexShrink: 0, overflow: 'hidden' } },
+    React.createElement('div', { style: { width: 24, flexShrink: 0, overflow: 'hidden' } },
       React.createElement(LoadOrderIndexInput, {
         className: 'load-order-index', api: vortexContext.api, item: item,
         currentPosition: currentIdx, lockedEntriesCount: lockedCount,
@@ -575,34 +785,81 @@ function Ue4ssItemRenderer({ className, item }) {
                  objectFit: 'cover', borderRadius: 2, pointerEvents: 'none' },
       }) : null,
     ),
-    React.createElement('p', { className: 'load-order-name', style: { flex: '1 1 0', margin: 0 } }, item.name),
-    React.createElement(Checkbox, {
-      className: 'entry-checkbox', style: { margin: 0 },
-      checked: item.enabled ?? true, onChange: onToggle,
+    React.createElement('p', { className: 'load-order-name',
+      style: { flex: '1 1 0', margin: 0, whiteSpace: 'normal', wordBreak: 'break-word' } }, item.name),
+    configFilePath ? React.createElement('button', {
+      className: 'btn btn-default btn-sm', style: { margin: '0 4px' },
+      onClick: () => util.opn(configFilePath).catch(() => null),
+    }, 'Configure') : null,
+    React.createElement('input', {
+      type: 'checkbox',
+      style: { alignSelf: 'center', cursor: 'pointer' },
+      checked: item.enabled ?? true,
+      onChange: onToggle,
     }),
+    contextMenu?.itemId === item.id ? React.createElement(Ue4ssContextMenu, {
+      x: contextMenu.x, y: contextMenu.y,
+      item, loadOrder, profileId, dispatch,
+      api: vortexContext.api, gamePath, configFilePath, selectedIds,
+      onClose: () => setContextMenu(null),
+    }) : null,
   );
 }
 ```
 
-**`deserializeUe4ss` must explicitly include `locked: entry?.locked`** when building entry objects — entries are constructed manually, so the field is dropped if omitted.
+**`deserializeUe4ss` must explicitly include `locked: entry?.locked`** -- entries are
+built manually (not spread from file), so `locked` is silently dropped if omitted.
 
-**Multi-select** uses `Ue4ssSelectionContext` defined at module level. `Ue4ssLoadOrderPage` holds `selectedIds` state, clears it on profile change, computes `allIds = filteredOrder.map(e => e.id)`, and wraps `DraggableList` in `Ue4ssSelectionContext.Provider`. Click = single select; Ctrl/Meta = toggle; Shift = range over `allIds`.
+### Ue4ssContextMenu
+
+Richer than `PakContextMenu`. Dismissed by click/contextmenu/Escape (same pattern).
+Injects `.ue4ss-ctx-item:hover` style once via `globalThis.document.head`.
+
+**Single-item menu:**
+
+| Item | Condition | Action |
+| --- | --- | --- |
+| Enable / Disable | always | Toggle `enabled` on this entry; serialize |
+| Lock / Unlock Position | always | Toggle `locked`; serialize |
+| Configure | `configFilePath` non-empty | `util.opn(configFilePath)` |
+| *(separator)* | always | |
+| Open Mod Folder | always | `util.opn(gamePath/binaries/ue4ss/Mods/item.id)` |
+| *(separator)* | always | |
+| Move to Top | always | Re-insert after locked entries; serialize |
+| Move to Bottom | always | Re-insert at end; serialize |
+
+**Multi-item menu** (`selectedIds.size >= 2 && selectedIds.has(item.id)`):
+
+| Item | Action |
+| --- | --- |
+| Enable Selected (n) | Set `enabled: true` on all selected; serialize |
+| Disable Selected (n) | Set `enabled: false` on all selected; serialize |
+| Lock Selected (n) | Set `locked: true` on all selected; serialize |
+| Unlock Selected (n) | Set `locked: false` on all selected; serialize |
+| Open Mod Folder | Opens `item.id` folder (not all selected) |
+
+All menu actions call `dispatch(setUe4ssLoadOrder(profileId, newLO))` and
+`serializeUe4ss(api, newLO)` -- changes write to `mods.txt` immediately.
 
 ### Hook integration summary
 
 | Event | Response |
 | --- | --- |
-| Page mounts / profile switches | `useEffect([profileId])` -> `deserializeUe4ss` -> dispatch + clear selection |
-| User drags row | `DraggableList.apply` -> merge filter subset -> `serializeUe4ss` -> dispatch |
-| User toggles checkbox | `onToggle` -> map new enabled state -> `serializeUe4ss` -> dispatch |
-| User clicks row | `onSelect` -> update `selectedIds` (plain/Ctrl/Shift) |
-| `did-deploy` | `didDeploy` -> `deserializeUe4ss` -> dispatch only (no serialize) |
+| Page mounts / profile switches | `useEffect([profileId])` -> guard GAME_ID -> `deserializeUe4ss` -> dispatch + clear selection |
+| User drags row | `DraggableList.apply` -> merge filter subset -> dispatch -> `serializeUe4ss` |
+| User types position | `onApplyIndex` -> splice -> dispatch -> `serializeUe4ss` |
+| User toggles checkbox | `onToggle` -> map new enabled state -> dispatch -> `serializeUe4ss` |
+| User locks entry | `onLock` -> map new locked state -> dispatch -> `serializeUe4ss` |
+| User right-clicks | `onContextMenu` -> `setContextMenu({ x, y, itemId })` |
+| User clicks row | `onSelect` -> `setSelectedIds` (plain/Ctrl/Shift) |
+| Context menu dismissed | click/contextmenu/Escape listeners -> `setContextMenu(null)` |
+| `did-deploy` | `didDeploy` -> `deserializeUe4ss` (with fallback) -> dispatch + `serializeUe4ss` |
 
 ---
 
 ## 9. Related files
 
-- `resources/LOAD_ORDER_ITEM_RENDERER.md` — deep dive on the per-row renderer component
-- `resources/RE-UE4SS_MODS_CONFIG.md` — mods.json vs mods.txt vs sidecar relationship
-- `template-ue4-5\index.js` — canonical implementation of everything described here
-- `Vortex\src\renderer\src\extensions\file_based_loadorder\` — full FBLO source
+- `resources/LOAD_ORDER_ITEM_RENDERER.md` -- deep dive on the per-row renderer component
+- `resources/RE-UE4SS_MODS_CONFIG.md` -- mods.json vs mods.txt vs sidecar relationship
+- `template-ue4-5\index.js` -- canonical implementation of everything described here
+- `Vortex\src\renderer\src\extensions\file_based_loadorder\` -- full FBLO source

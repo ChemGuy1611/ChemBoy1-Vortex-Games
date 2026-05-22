@@ -274,6 +274,7 @@ const UE4SS_NATIVE_MODS = ['BPML_GenericFunctions', 'BPModLoaderMod', 'CheatMana
   'ConsoleCommandsMod', 'ConsoleEnablerMod', 'Keybinds', 'LineTraceMod', 'shared', 'SplitScreenMod'
 ];
 const ENABLEDTXT_FILE = 'enabled.txt';
+const UE4SS_ICON = 'M12 0c-6.5745 0-11.899 5.371-11.899 12s5.324 12 11.899 12c6.57 0 11.899-5.371 11.899-12s-5.328-12-11.903-12zM12 0.527c3.035 0 5.894 1.196 8.043 3.359 2.144 2.156 3.34 5.075 3.332 8.114 0 3.062-1.184 5.945-3.332 8.114-2.121 2.153-5.02 3.363-8.043 3.359-3.023 0.004-5.922-1.207-8.043-3.359-2.144-2.156-3.344-5.075-3.336-8.114 0-3.062 1.187-5.945 3.332-8.114 2.121-2.156 5.024-3.368 8.047-3.359zM11.402 4.75c-1.937 0.52-3.731 1.516-6.121 4.258s-1.937 5.008-1.937 5.008c0 0 0.66-1.559 2.246-3.2 0.754-0.777 1.313-1.039 1.7-1.039 0.344-0.02 0.633 0.258 0.633 0.602v5.567c0 0.551-0.356 0.672-0.683 0.664-0.278-0.004-0.536-0.101-0.536-0.101 1.629 2.367 5.528 2.699 5.528 2.699l1.711-1.829 0.039 0.035 1.567 1.336c2.867-1.703 4.25-4.859 4.25-4.859-1.281 1.352-2.094 1.668-2.579 1.668-0.43-0.004-0.598-0.254-0.598-0.254-0.023-0.117-0.062-1.813-0.078-3.508-0.016-1.754 0-3.512 0.086-3.516 0.496-0.93 2.075-2.805 2.075-2.805-2.949 0.582-4.555 2.516-4.555 2.516-0.476-0.375-1.445-0.313-1.445-0.313 0.453 0.25 0.906 0.977 0.906 1.578v5.922c0 0-0.989 0.871-1.75 0.871-0.453 0-0.731-0.246-0.883-0.449-0.059-0.078-0.11-0.164-0.149-0.258v-7.313c-0.106 0.078-0.235 0.121-0.363 0.125-0.164 0-0.332-0.082-0.446-0.32-0.086-0.18-0.141-0.449-0.141-0.844 0-1.348 1.523-2.243 1.523-2.243z';
 
 //Signature Bypass (only used if game requires)
 const SIGBYPASS_ID = `${GAME_ID}-sigbypass`;
@@ -2643,7 +2644,7 @@ function main(context) {
       priority: 31,
       group: 'per-game',
       hotkey: 'U',
-      mdi: 'M12 0c-6.5745 0-11.899 5.371-11.899 12s5.324 12 11.899 12c6.57 0 11.899-5.371 11.899-12s-5.328-12-11.903-12zM12 0.527c3.035 0 5.894 1.196 8.043 3.359 2.144 2.156 3.34 5.075 3.332 8.114 0 3.062-1.184 5.945-3.332 8.114-2.121 2.153-5.02 3.363-8.043 3.359-3.023 0.004-5.922-1.207-8.043-3.359-2.144-2.156-3.344-5.075-3.336-8.114 0-3.062 1.187-5.945 3.332-8.114 2.121-2.156 5.024-3.368 8.047-3.359zM11.402 4.75c-1.937 0.52-3.731 1.516-6.121 4.258s-1.937 5.008-1.937 5.008c0 0 0.66-1.559 2.246-3.2 0.754-0.777 1.313-1.039 1.7-1.039 0.344-0.02 0.633 0.258 0.633 0.602v5.567c0 0.551-0.356 0.672-0.683 0.664-0.278-0.004-0.536-0.101-0.536-0.101 1.629 2.367 5.528 2.699 5.528 2.699l1.711-1.829 0.039 0.035 1.567 1.336c2.867-1.703 4.25-4.859 4.25-4.859-1.281 1.352-2.094 1.668-2.579 1.668-0.43-0.004-0.598-0.254-0.598-0.254-0.023-0.117-0.062-1.813-0.078-3.508-0.016-1.754 0-3.512 0.086-3.516 0.496-0.93 2.075-2.805 2.075-2.805-2.949 0.582-4.555 2.516-4.555 2.516-0.476-0.375-1.445-0.313-1.445-0.313 0.453 0.25 0.906 0.977 0.906 1.578v5.922c0 0-0.989 0.871-1.75 0.871-0.453 0-0.731-0.246-0.883-0.449-0.059-0.078-0.11-0.164-0.149-0.258v-7.313c-0.106 0.078-0.235 0.121-0.363 0.125-0.164 0-0.332-0.082-0.446-0.32-0.086-0.18-0.141-0.449-0.141-0.844 0-1.348 1.523-2.243 1.523-2.243z',
+      mdi: UE4SS_ICON,
       visible: () => {
         const state = context.api.store.getState();
         const gameId = selectors.activeGameId(state);
@@ -2732,6 +2733,12 @@ function LoadOrderInstructions() {
       'mods with higher numbers take priority over mods that make similar edits.'
     ),
     React.createElement('br', null),
+    React.createElement('p', { style: { fontWeight: 'bold', color: '#7ec8e3' } },
+      'The Enable/Disable button on each row enables or disables the underlying Vortex mod. ',
+      'Disabling a mod here will remove it from this view and disable it on the Mods tab. ',
+      'Re-enabling it on the Mods tab will restore it to the load order.'
+    ),
+    React.createElement('br', null),
     React.createElement('p', { style: { fontWeight: 'bold' } },
       'YOU MUST DEPLOY MODS AFTER CHANGING THE ORDER TO APPLY CHANGES! ',
       '- This is required to rename the folders for the correct order.'
@@ -2787,6 +2794,8 @@ function LoadOrderItemRenderer(props) {
   const mods = useSelector((state) => util.getSafe(state, ['persistent', 'mods', GAME_ID], {}));
   const pictureUrl = mods[loEntry.modId]?.attributes?.pictureUrl;
   const currentIdx = loadOrder.findIndex((e) => e.id === loEntry.id) + 1;
+  const isModEnabled = useSelector(state =>
+    util.getSafe(state, ['persistent', 'profiles', profile?.id, 'modState', loEntry.modId, 'enabled'], false));
 
   const isLocked = (entry) => [true, 'true', 'always'].includes(entry?.locked);
   const lockedCount = loadOrder.filter(isLocked).length;
@@ -2801,6 +2810,12 @@ function LoadOrderItemRenderer(props) {
   const onToggle = React.useCallback((evt) => {
     dispatch(actions.setFBLoadOrderEntry(profile.id, { ...loEntry, enabled: evt.target.checked }));
   }, [dispatch, profile, loEntry]);
+
+  const onModToggle = React.useCallback(() => {
+    if (!loEntry.modId) return;
+    dispatch(actions.setModEnabled(profile.id, loEntry.modId, !isModEnabled));
+    requestDeployment(context.api, spec);
+  }, [dispatch, profile, loEntry.modId, isModEnabled, context]);
 
   const isEntryLocked = isLocked(loEntry);
 
@@ -2888,6 +2903,14 @@ function LoadOrderItemRenderer(props) {
       }) : null,
     ),
     React.createElement('p', { className: 'load-order-name', style: { whiteSpace: 'normal', wordBreak: 'break-word' } }, loEntry.name),
+    loEntry.modId ? React.createElement('button', {
+      className: 'btn btn-default btn-sm',
+      style: { margin: '0 4px', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4 },
+      onClick: evt => { evt.stopPropagation(); onModToggle(); },
+    },
+      React.createElement(Icon, { name: isModEnabled ? 'toggle-disabled' : 'toggle-enabled' }),
+      isModEnabled ? 'Disable' : 'Enable',
+    ) : null,
     displayCheckboxes ? React.createElement(Checkbox, {
       className: 'entry-checkbox',
       checked: loEntry.enabled,
@@ -2896,13 +2919,13 @@ function LoadOrderItemRenderer(props) {
     }) : null,
     contextMenu?.itemId === loEntry.id ? React.createElement(PakContextMenu, {
       x: contextMenu.x, y: contextMenu.y,
-      item: loEntry, loadOrder, profile, dispatch, context, selectedIds,
+      item: loEntry, loadOrder, profile, dispatch, context, selectedIds, isModEnabled,
       onClose: () => setContextMenu(null),
     }) : null,
   );
 } //*/
 
-function PakContextMenu({ x, y, item, loadOrder, profile, dispatch, context, selectedIds, onClose }) {
+function PakContextMenu({ x, y, item, loadOrder, profile, dispatch, context, selectedIds, isModEnabled, onClose }) {
   React.useEffect(() => {
     const onKey = (evt) => { if (evt.key === 'Escape') onClose(); };
     globalThis.document.addEventListener('keydown', onKey);
@@ -2942,6 +2965,16 @@ function PakContextMenu({ x, y, item, loadOrder, profile, dispatch, context, sel
 
   const isEntryLocked = isLocked(item);
 
+  const setModsEnabled = (entries, enable) => {
+    const batch = entries.filter(e => e.modId)
+      .map(e => actions.setModEnabled(profile.id, e.modId, enable));
+    if (batch.length) {
+      util.batchDispatch(dispatch, batch);
+      requestDeployment(context.api, spec);
+    }
+    onClose();
+  };
+
   const menuStyle = {
     position: 'fixed', left: x, top: y, zIndex: 9999,
     background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.2)',
@@ -2960,12 +2993,17 @@ function PakContextMenu({ x, y, item, loadOrder, profile, dispatch, context, sel
   if (isMulti) {
     const n = targets.length;
     return React.createElement('div', { style: menuStyle },
+      menuItem(`Enable Selected (${n})`, () => setModsEnabled(targets, true)),
+      menuItem(`Disable Selected (${n})`, () => setModsEnabled(targets, false)),
+      React.createElement('div', { style: sepStyle }),
       menuItem(`Lock Selected (${n})`, () => applyToTargets((lo) => lo.map(e => targets.find(t => t.id === e.id) ? { ...e, locked: true } : e), true)),
       menuItem(`Unlock Selected (${n})`, () => applyToTargets((lo) => lo.map(e => targets.find(t => t.id === e.id) ? { ...e, locked: false } : e), true)),
     );
   }
 
   return React.createElement('div', { style: menuStyle },
+    item.modId ? menuItem(isModEnabled ? 'Disable Mod' : 'Enable Mod', () => setModsEnabled([item], !isModEnabled)) : null,
+    item.modId ? React.createElement('div', { style: sepStyle }) : null,
     menuItem(isEntryLocked ? 'Unlock Position' : 'Lock Position', () => applyToTargets((lo) => lo.map(e => e.id === item.id ? { ...e, locked: !isEntryLocked } : e), true)),
     React.createElement('div', { style: sepStyle }),
     menuItem('Move to Top', () => applyToTargets((lo) => {
@@ -3293,7 +3331,18 @@ function Ue4ssLoadOrderInfoPanel() {
     id: 'loadorderinfo',
     style: { padding: '12px', borderTop: '1px solid rgba(255,255,255,0.1)' },
   },
-    React.createElement('h2', { style: { marginTop: 0 } }, 'UE4SS Mod Load Order'),
+    React.createElement('h2', { style: { marginTop: 0, display: 'flex', alignItems: 'center', gap: 10 } },
+      React.createElement('svg', {
+        viewBox: '0 0 24 24',
+        style: { width: 28, height: 28, fill: 'currentColor', flexShrink: 0 },
+      },
+        React.createElement('path', { d: UE4SS_ICON }),
+      ),
+      React.createElement('span', null,
+        React.createElement('span', { style: { fontWeight: 'bold' } }, 'UE4SS'),
+        React.createElement('span', { style: { fontWeight: 300, color: 'rgba(255,255,255,0.65)' } }, ' Mod Load Order'),
+      ),
+    ),
     React.createElement('ul', { style: { margin: 0, paddingLeft: 20, listStyleType: 'disc' } },
       React.createElement('li', null,
         'Drag and drop mods to change the order in which UE4SS loads them. Changes write to mods.txt immediately.'
