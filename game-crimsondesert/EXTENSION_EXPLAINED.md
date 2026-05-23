@@ -53,7 +53,7 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
-| Data Mod | `crimsondesert-mod` | high | `{gamePath}/.` |
+| Plugin Loader | `crimsondesert-mod` | high | `{gamePath}/.` |
 | Crimson Sharp Mod | `crimsondesert-browsermod` | high | `{gamePath}/mods` |
 | Patch Mod | `crimsondesert-patchmod` | high | `{gamePath}/mods` |
 | Root Folder | `crimsondesert-root` | high | `{gamePath}` |
@@ -89,6 +89,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - Download ${BROWSER_NAME} + Setup
 - Download ${DMM_NAME}
+- Download ${UAL_NAME}
 - Download ${SAVE_EDITOR_NAME}
 - Open Config File
 - Open Save Folder

@@ -4,6 +4,11 @@
 
 - None Planned
 
+## [0.4.1] - 2026-05-22
+
+- Fixed: Remove "__folder_managed_by_vortex" marker files from "mods" folder on deploy - avoid unnecessary conflicts in DMM.
+- Added: Notification to download Ultimate ASI Loader if no plugin loader installed (checks for version.dll and winmm.dll).
+
 ## [0.4.0] - 2026-05-19
 
 - Migrated: Now uses Definitive Mod Manager as primary mod installer (JSON Mod Manager is deprecated)

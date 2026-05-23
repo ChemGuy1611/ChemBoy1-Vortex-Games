@@ -2,8 +2,8 @@
 Name: Crimson Desert Vortex Extension
 Structure: Basic Game w/ 3rd Party Manager Integration
 Author: ChemBoy1
-Version: 0.4.0
-Date: 2026-05-19
+Version: 0.4.1
+Date: 2026-05-22
 Notes:
 - Supports plugin mods and data mods with "00XX" folders (XX <= 35)
 - Supports Crimson Browser (manifest.json and files folder) and JSON Mod Manager (.json or "0036+" folder) mods
@@ -70,6 +70,10 @@ const binariesInstaller = true; //only enable Binaries installer if not in root
 const ROOT_FOLDERS = [BINARIES_PATH];
 const BINARIES_EXTS = [".dll", ".asi", ".addon64"];
 const SPECIAL_MOD_FOLDERS = ['CharacterCreatorFemale', 'CharacterCreatorMale', 'CharacterCreatorAsi'];
+const UAL_URL = "https://github.com/ThirteenAG/Ultimate-ASI-Loader/releases/download/x64-latest/winmm-x64.zip";
+const UAL_URL_ERR = "https://github.com/ThirteenAG/Ultimate-ASI-Loader/releases";
+const UAL_FILES = ["winmm.dll", "version.dll"];
+const UAL_NAME = "Ultimate ASI Loader";
 
 const CONFIGMOD_LOCATION = LOCALAPPDATA;
 const SAVEMOD_LOCATION = LOCALAPPDATA;
@@ -239,6 +243,7 @@ const PATCH_MOD_PATH = PATCH_MOD_FOLDER;
 const PATCH_MOD_FILES = ['modinfo.json'];
 const PATCH_MOD_EXTS = ['.json', '.cdmod'];
 const EXCEPTION_EXTS = ['.dds'];
+const MARKER_FILE = "__folder_managed_by_vortex";
 
 //Mod type to use with future Vortex built-in LO and patch on deploy
 const VORTEX_MOD_ID = `${GAME_ID}-vortexmod`;
@@ -1974,6 +1979,119 @@ async function modFoldersEnsureWritable(gamePath, relPaths) {
   }
 }
 
+async function checkForUal(api, gameSpec) {
+  const state = api.getState();
+  GAME_PATH = getDiscoveryPath(api);
+  let results = [];
+  for (let index = 0; index < UAL_FILES.length; index++) {
+    const file = UAL_FILES[index];
+    try {
+      await fs.statAsync(path.join(GAME_PATH, BINARIES_PATH, file));
+      results.push(true);
+    } catch (err) {
+      results.push(false);
+    }
+  }
+  //check if any result entry is true
+  if (!results.some(r => r === true)) {
+    downloadUalNotify(api);
+    return true;
+  }
+  return false;
+}
+
+function downloadUalNotify(api) {
+  const NOTIF_ID = `${GAME_ID}-download-ual-notify`;
+  const MOD_NAME = "Plugin Loader";
+  const MESSAGE = `Download ${MOD_NAME}`;
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'warning',
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: `Download ${MOD_NAME}`,
+        action: async (dismiss) => {
+          await downloadUal(api, spec, false);
+          dismiss();
+        },
+      },
+      {
+        title: 'More',
+        action: (dismiss) => {
+          api.showDialog('question', MESSAGE, {
+            text: `\n`
+                + `TEXT HERE.\n`
+                + `\n`
+                + `TEXT HERE.\n`
+                + `\n`
+          }, [
+            { label: 'Not Now', action: () => dismiss() },
+            {
+              label: `Download ${MOD_NAME}`, action: async () => {
+                await downloadUal(api, spec, false);
+                dismiss();
+              }
+            },
+            {
+              label: 'Never Show Again', action: () => {
+                api.suppressNotification(NOTIF_ID);
+                dismiss();
+              }
+            },
+          ]);
+        },
+      },
+    ],
+  });
+}
+
+// Download MelonLoader latest from GitHub
+async function downloadUal(api, gameSpec, check = true) {
+  let isInstalled = await checkForUal(api, gameSpec);
+  if (!isInstalled || !check) {
+    const MOD_NAME = UAL_NAME;
+    const MOD_TYPE = BINARIES_ID;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
+    const GAME_DOMAIN = gameSpec.game.id;
+    const URL = UAL_URL;
+    const URL_ERR = UAL_URL_ERR;
+    api.sendNotification({ //notification indicating install process
+      id: NOTIF_ID,
+      message: `Installing ${MOD_NAME}`,
+      type: 'activity',
+      noDismiss: true,
+      allowSuppress: false,
+    });
+    try {
+      const dlInfo = { //Download the mod
+        //game: GAME_DOMAIN,
+        name: MOD_NAME,
+      }; //*/
+      //const dlInfo = {};
+      const dlId = await util.toPromise(cb =>
+        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+      const modId = await util.toPromise(cb =>
+        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
+      const batched = [
+        actions.setModsEnabled(api, profileId, [modId], true, {
+          allowAutoDeploy: true,
+          installed: true,
+        }),
+        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
+      ];
+      util.batchDispatch(api.store, batched); // Will dispatch both actions
+    } catch (err) { //Show the user the download page if the download, install process fails
+      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err, { allowReport: false });
+      util.opn(URL_ERR).catch(() => null);
+    } finally {
+      api.dismissNotification(NOTIF_ID);
+    }
+  }
+}
+
 //Setup function
 async function setup(discovery, api, gameSpec) {
   // SYNCHRONOUS CODE ////////////////////////////////////
@@ -1991,6 +2109,8 @@ async function setup(discovery, api, gameSpec) {
   await fs.ensureDirWritableAsync(SAVE_PATH); //*/
   if (hasLoader) {
     await downloadLoader(api, gameSpec);
+  } else {
+    const test = await checkForUal(api, gameSpec);
   }
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
@@ -2111,6 +2231,13 @@ function applyGame(context, gameSpec) {
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, `Download ${UAL_NAME}`, async () => {
+    await downloadUal(context.api, spec, false);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  }); //*/
   /*context.registerAction('mod-icons', 300, 'open-ext', {}, `Download ${JSON_MANAGER_NAME}`, async () => {
     await downloadJsonManager(context.api, spec, false);
     }, () => {
@@ -2190,6 +2317,7 @@ function main(context) {
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;
       //! patch metadata - NO METHOD YET
+      deleteMarkerFiles(api);
       return deployNotify(api);
     });
     /*api.onAsync('did-purge', async (profileId) => { 
@@ -2200,6 +2328,24 @@ function main(context) {
     }); //*/
   });
   return true;
+}
+
+//delete __folder_managed_by_vortex marker files
+async function deleteMarkerFiles(api) {
+  const state = api.getState();
+  GAME_PATH = getDiscoveryPath(api);
+  const folder = path.join(GAME_PATH, PATCH_MOD_PATH);
+  //walk the folder and delete any marker files found
+  const markerPaths = [];
+  await util.walk(folder, (iterPath, stats) => {
+    if (!stats.isDirectory() && path.basename(iterPath) === MARKER_FILE) {
+      markerPaths.push(iterPath);
+    }
+    return Promise.resolve();
+  }, { ignoreErrors: true });
+  for (const markerPath of markerPaths) {
+    try { await fs.removeAsync(markerPath); } catch (err) { /* ignore */ }
+  }
 }
 
 //Notify User to run JSON / CB after deployment
