@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.7.1] - 2026-05-23
+
+- Added: Function to clear folders from "local" on purge (avoid MODS DETECTED from stray folders after purge)
+
 ## [0.7.0] - 2026-04-28
 
 - Improved: Upgraded pak installer dialogue to show full paths

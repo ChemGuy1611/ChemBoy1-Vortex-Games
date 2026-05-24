@@ -66,7 +66,11 @@ const LOGICMODS_EXT = ".pak";
 const DOCS_PATH = util.getVortexPath('documents');
 const CONFIG_ID = `${GAME_ID}-config`;
 const CONFIG_PATH = path.join(DOCS_PATH, 'My Games', EPIC_CODE_NAME, "Saved", "Config", "Windows");
-const CONFIG_FILES = ["engine.ini", "scalability.ini", "input.ini"];
+const CONFIG_FILES = [
+  "engine.ini", "game.ini", "gameusersettings.ini", "input.ini", "scalability.ini",
+  "hardware.ini", "deviceprofiles.ini", "compat.ini", "runtimeoptions.ini",
+  "gameplaytags.ini", "enhancedinput.ini", "consolevariables.ini",
+];
 const CONFIG_EXT = ".ini";
 
 const SAVE_ID = `${GAME_ID}-save`;

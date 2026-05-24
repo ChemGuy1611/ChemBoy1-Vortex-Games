@@ -1,11 +1,37 @@
-# context.registerLoadOrder — Reference & Custom-Page Design Guide
+# Load Order Registration — Legacy vs. FBLO Reference
 
 **Source files cited throughout:**
-- `Vortex\src\renderer\src\types\IExtensionContext.ts` (signature, IMainPageOptions)
-- `Vortex\src\renderer\src\extensions\file_based_loadorder\types\types.ts` (all interfaces)
-- `Vortex\src\renderer\src\extensions\file_based_loadorder\index.ts` (registration, lifecycle)
-- `Vortex\src\renderer\src\extensions\file_based_loadorder\views\FileBasedLoadOrderPage.tsx` (UI)
-- `template-ue4-5\index.js` (canonical ChemBoy1 usage)
+
+- `Vortex\src\renderer\src\types\IExtensionContext.ts` (both API signatures)
+- `Vortex\src\renderer\src\extensions\mod_load_order\types\types.ts` (legacy types)
+- `Vortex\src\renderer\src\extensions\mod_load_order\index.ts` (legacy registration)
+- `Vortex\src\renderer\src\extensions\file_based_loadorder\types\types.ts` (FBLO types)
+- `Vortex\src\renderer\src\extensions\file_based_loadorder\index.ts` (FBLO registration)
+- `Vortex\src\renderer\src\extensions\file_based_loadorder\views\FileBasedLoadOrderPage.tsx` (FBLO UI)
+- `template-ue4-5\index.js` (canonical ChemBoy1 FBLO usage)
+
+---
+
+## 0. At a glance — legacy vs. FBLO
+
+| Aspect | Legacy `registerLoadOrderPage` | Modern `registerLoadOrder` (FBLO) |
+| --- | --- | --- |
+| Source extension | `mod_load_order` | `file_based_loadorder` |
+| Status | Deprecated | Current — use for all new work |
+| State shape | Dict `{ [profileId]: { [modId]: { pos, enabled, prefix } } }` | Array `{ [profileId]: IFBLoadOrderEntry[] }` |
+| State path | `persistent.loadOrder[profileId][modId]` | `persistent.loadOrder[profileId]` (same root, different child) |
+| Order encoding | `pos: number` field on each entry | Array index |
+| Entry discovery | `filter(mods)` — Vortex queries installed mods and passes them in | `deserializeLoadOrder()` — extension owns what appears |
+| Entry shape | `ILoadOrderDisplayItem` (`id`, `name`, `imgUrl`) | `IFBLoadOrderEntry` (`id`, `name`, `enabled`, `locked`, `modId`) |
+| File I/O | Extension handles in `callback` or `did-deploy` hook | Extension provides `serializeLoadOrder` + `deserializeLoadOrder` |
+| Lifecycle | `callback(loadOrder, updateType)` fires on every change | `serialize` / `deserialize` called at defined lifecycle points |
+| Info panel | `createInfoPanel(props: { refresh })` — returns string or component | `usageInstructions` — string or component (no props) |
+| Item renderer prop | `{ className, item: ILoadOrderDisplayItem, onRef }` | `{ className, item: { loEntry, displayCheckboxes, invalidEntries } }` |
+| Validation | None | `validate(prev, current) => IValidationResult` |
+| Enable/disable row | `displayCheckboxes` (default renderer) | `toggleableEntries` (default renderer) |
+| Deployment trigger | Extension calls `setDeploymentNecessary` in `callback` | Extension calls `setDeploymentNecessary` in `serializeLoadOrder` or item renderer |
+| Sort direction | `preSort(items, direction, updateType)` called before render | Not provided — extension orders in `deserializeLoadOrder` |
+| Collections support | Via `noCollectionGeneration` | Via `noCollectionGeneration` |
 
 ---
 
@@ -22,9 +48,255 @@ The older `context.registerLoadOrderPage` (used with PAK-prefix renaming: `AAA_`
 
 ---
 
+## 1a. Legacy `registerLoadOrderPage` — full reference
+
+Kept here as a migration reference for Phase C / Phase D work. Do not use in new extensions.
+
+### Source
+
+`Vortex\src\renderer\src\extensions\mod_load_order\types\types.ts:130` — `IGameLoadOrderEntry`
+
+### Registration signature
+
+```js
+context.registerLoadOrderPage({
+  gameId: string,               // required — Nexus/Vortex game domain ID
+  gameArtURL: string,           // required — path to game logo image
+  createInfoPanel: (props) => string | React.ComponentType,  // required — info panel content
+  preSort?: (items, direction, updateType) => Promise<ILoadOrderDisplayItem[]>,
+  filter?: (mods: IMod[]) => IMod[],
+  callback?: (loadOrder: ILoadOrder, updateType?: UpdateType) => void,
+  displayCheckboxes?: boolean,  // default: true
+  noCollectionGeneration?: boolean,
+  itemRenderer?: React.ComponentType<{ className, item: ILoadOrderDisplayItem, onRef }>,
+});
+```
+
+### `ILoadOrderDisplayItem` — what each entry looks like
+
+```ts
+{
+  id: string;      // arbitrary unique id (usually modId or folder name)
+  name: string;    // display name
+  imgUrl: string;  // thumbnail URL — required by default renderer
+  prefix?: string; // AAA/AAB sort prefix (set by preSort or loadOrderPrefix helper)
+  data?: string;   // arbitrary extra data
+  locked?: boolean;
+  external?: boolean;
+  official?: boolean;
+  message?: string;   // optional message displayed beneath the mod image in the default renderer
+  contextMenuActions?: IActionDefinitionEx[];   // per-item context menu entries (default renderer ignores this)
+  condition?: (
+    lhs: ILoadOrderDisplayItem,
+    rhs: ILoadOrderDisplayItem,
+    predictedResult: ILoadOrderDisplayItem[],
+  ) => IDnDConditionResult;   // DnD restriction functor — return { success: false, errMessage } to block a drop
+}
+```
+
+### `ILoadOrderEntry` — what Vortex stores in Redux
+
+The item *displayed* (`ILoadOrderDisplayItem`) is different from what Vortex *persists* (`ILoadOrderEntry`):
+
+```ts
+{
+  pos: number;      // sort position / priority index
+  enabled: boolean;
+  prefix?: string;
+  data?: T;
+  locked?: boolean;
+  external?: boolean;
+}
+```
+
+### Redux state shape (legacy)
+
+```text
+state.persistent.loadOrder[profileId][modId] = ILoadOrderEntry
+```
+
+So the full dict is: `{ [profileId]: { [modId]: { pos, enabled, prefix, ... } } }`
+
+Updated by Vortex via `setLoadOrderEntry(profileId, modId, loEntry)` internally.
+
+### How the lifecycle works (legacy)
+
+1. User opens Load Order page.
+2. Vortex reads `state.persistent.loadOrder[profileId]` to get current positions.
+3. Vortex calls `filter(mods)` to get the set of mods to display.
+4. Vortex calls `preSort(items, direction, updateType)` — extension maps mods to `ILoadOrderDisplayItem[]`, optionally sorts them.
+5. Page renders the sorted list.
+6. User drags a row — Vortex updates its internal state and calls `callback(loadOrder, 'drag-n-drop')`.
+7. Extension's `callback` calls `setDeploymentNecessary` and optionally writes files.
+
+Extension has **no** serialize/deserialize callbacks. File I/O must happen in `callback` or in a `did-deploy` / `will-purge` event handler registered separately.
+
+### Common legacy pattern (ChemBoy1 games)
+
+```js
+// In main():
+let previousLO;
+context.registerLoadOrderPage({
+  gameId: spec.game.id,
+  gameArtURL: path.join(__dirname, spec.game.logo),
+  preSort: (items, direction) => preSort(context.api, items, direction),
+  filter: mods => mods.filter(mod => mod.type === UE5_SORTABLE_ID),
+  displayCheckboxes: false,
+  callback: (loadOrder) => {
+    if (previousLO === undefined) previousLO = loadOrder;
+    if (loadOrder === previousLO) return;
+    context.api.store.dispatch(actions.setDeploymentNecessary(spec.game.id, true));
+    previousLO = loadOrder;
+  },
+  createInfoPanel: () =>
+    context.api.translate(`Drag and drop the mods on the left to change the order...`),
+});
+```
+
+```js
+// Typical preSort helper (maps Vortex mods to display items):
+async function preSort(api, items, direction) {
+  const mods = util.getSafe(api.store.getState(), ['persistent', 'mods', GAME_ID], {});
+  const loadOrder = items.map(mod => {
+    const modInfo = mods[mod.id];
+    const name = modInfo?.attributes?.customFileName
+      ?? modInfo?.attributes?.logicalFileName
+      ?? modInfo?.attributes?.name
+      ?? mod.name;
+    return {
+      id: mod.id,
+      name,
+      imgUrl: modInfo?.attributes?.pictureUrl ?? path.join(__dirname, spec.game.logo),
+    };
+  });
+  return direction === 'descending' ? loadOrder.reverse() : loadOrder;
+}
+```
+
+The `loadOrderPrefix` / `makePrefix` helpers (also in the extension file) are called at deploy time to rename staging folders: `AAA_modname`, `AAB_modname`, etc.
+
+### What is NOT in the legacy system
+
+- No `serializeLoadOrder` callback — extension must wire `did-deploy` / `will-purge` manually.
+- No `deserializeLoadOrder` callback — order is driven by `persistent.loadOrder[profileId][modId].pos`.
+- No built-in validation.
+- No `usageInstructions` React component — `createInfoPanel` returns a string or component but does not receive live update props.
+- No `customItemRenderer` (it's called `itemRenderer` with a different prop shape including `onRef`).
+
+---
+
+## 1b. Migrating from legacy to FBLO — considerations
+
+This section is critical for Phase C and Phase D games that currently use `registerLoadOrderPage`.
+
+### State path compatibility
+
+Both systems write to `persistent.loadOrder[profileId]` — but in different shapes:
+
+- **Legacy**: `persistent.loadOrder[profileId]` is a `{ [modId]: { pos, enabled, prefix } }` dict
+- **FBLO**: `persistent.loadOrder[profileId]` is an `IFBLoadOrderEntry[]` array
+
+When FBLO first dispatches `setFBLoadOrder(profileId, array)`, it **replaces** whatever was at that path (the old dict). This is safe — the old dict becomes irrelevant once `deserializeLoadOrder` has run.
+
+### Natural migration via folder prefixes
+
+For UE PAK games, the load order is encoded in deployed folder names (`AAA_`, `AAB_`, `AAC_`...). The `deserializeLoadOrder` implementation in `template-ue4-5` reads those prefixes from the staging folder, so it **reconstructs the correct order from the filesystem** even without explicit state migration. This is the primary migration mechanism — no `registerMigration` is strictly necessary for users who have deployed at least once.
+
+```text
+Before migration (legacy, deployed):
+  staging/
+    AAA_ModA/     <- pos 0
+    AAB_ModB/     <- pos 1
+    AAC_ModC/     <- pos 2
+
+After migration (FBLO, first deserialize):
+  deserializeLoadOrder() reads prefix from each folder
+  returns [{ id:'ModA', pos:0 }, { id:'ModB', pos:1 }, { id:'ModC', pos:2 }]
+  -> order is recovered automatically
+```
+
+**Edge case**: users who have never deployed (or have purged) have no prefixes on disk. Their LO will start fresh in an arbitrary order on first FBLO run. This is acceptable for most games — add a note in the CHANGELOG if this is a concern.
+
+### When to add `registerMigration`
+
+Add it when:
+
+- The CHANGELOG version bump is MINOR (which it always is for this migration) — tell users to deploy.
+- The old extension had custom state the FBLO system doesn't handle (unusual).
+- You need to explicitly clean up stale state from the old system.
+
+Minimum useful migration — user notification + mark deployment necessary:
+
+```js
+const semver = require('semver');
+
+async function migrateLegacyToFBLO(api, oldVersion) {
+  if (semver.gte(oldVersion, TARGET_VERSION)) return;
+  // State reads are safe before awaitUI; dispatches that update session state are too.
+  const state = api.store.getState();
+  const gamePath = util.getSafe(state, ['settings', 'gameMode', 'discovered', GAME_ID, 'path'], undefined);
+  if (!gamePath) return; // game not discovered, nothing to migrate
+  api.store.dispatch(actions.setDeploymentNecessary(GAME_ID, true));
+  await api.awaitUI(); // required before showDialog / sendNotification
+  api.sendNotification({
+    id: `${GAME_ID}-lo-migration`,
+    type: 'info',
+    title: 'Load Order upgraded',
+    message: 'Deploy your mods once to confirm load order is preserved in the new format.',
+    actions: [{ title: 'Deploy', action: (dismiss) => { deploy(api); dismiss(); } }],
+  });
+}
+
+// In main():
+context.registerMigration(old => migrateLegacyToFBLO(context.api, old));
+```
+
+Replace `TARGET_VERSION` with the MINOR version being introduced (e.g. `'0.4.0'`).
+
+### `deserializeLoadOrder` merge pattern
+
+A robust FBLO `deserializeLoadOrder` for PAK games must **merge** three sources:
+
+1. **On-disk order** — read from the FBLO sidecar JSON (if it exists) or from deployed folder prefix names
+2. **Currently installed mods** — from `state.persistent.mods[GAME_ID]` filtered to the right mod type
+3. **New mods** — any installed mod not present in the on-disk order; append at the end
+
+This merge ensures that:
+
+- Existing order is preserved across deploys
+- Newly installed mods appear in the list (appended, not silently dropped)
+- Uninstalled mods are removed from the returned array (no ghost entries)
+
+The template's `deserializeLoadOrder` does this by:
+
+1. Reading the staging folder to find all installed mods of type `UE5_SORTABLE_ID`
+2. Sorting them by current folder prefix if present
+3. Returning `IFBLoadOrderEntry[]` sorted by prefix, with new mods appended
+
+When migrating from legacy (no sidecar JSON exists yet), step 2 is what recovers the old order.
+
+### Item renderer prop shape change
+
+The legacy `itemRenderer` received `{ className, item: ILoadOrderDisplayItem, onRef }` where `item.id` is the modId and `item.imgUrl` must be set by `preSort`. The FBLO `customItemRenderer` receives `{ className, item: { loEntry: IFBLoadOrderEntry, displayCheckboxes, invalidEntries } }` — `loEntry.modId` is the Vortex internal mod ID, and `loEntry.id` is the unique display key. If you have a custom `itemRenderer` in a legacy game, it must be rewritten for the FBLO prop shape.
+
+### Summary of what changes per game
+
+| Legacy code | FBLO replacement |
+| --- | --- |
+| `registerLoadOrderPage({ ... })` | `registerLoadOrder({ ... })` |
+| `preSort(items, direction)` | Logic moves into `deserializeLoadOrder` (initial ordering from prefixes/JSON) |
+| `filter(mods)` | Filtering moves into `deserializeLoadOrder` (return only mods of the right type) |
+| `callback(loadOrder)` + `setDeploymentNecessary` | `serializeLoadOrder` writes files; `requestDeployment` / `setDeploymentNecessary` called from item renderer or serializer |
+| `createInfoPanel(props)` | `usageInstructions` (no props — remove any usage of `props.refresh`) |
+| `itemRenderer` (optional) | `customItemRenderer` (different prop shape) |
+| `displayCheckboxes: false` | `toggleableEntries: false` |
+| No migration | `registerMigration` gated to the new MINOR version |
+
+---
+
 ## 2. The `ILoadOrderGameInfo` contract
 
-```
+```text
 IExtensionContext.ts:1463   registerLoadOrder(gameInfo: ILoadOrderGameInfo): void
 types.ts:81                 interface ILoadOrderGameInfo { ... }
 ```
@@ -131,7 +403,7 @@ context.registerMainPage('sort-none', 'Load order', FileBasedLoadOrderPage, {
 
 ### Component tree (FileBasedLoadOrderPage.tsx:289-314)
 
-```
+```jsx
 <MainPage>
   <MainPage.Header>
     <IconBar group="fb-load-order-icons" />   // toolbar buttons
@@ -167,11 +439,16 @@ context.registerMainPage('sort-none', 'Load order', FileBasedLoadOrderPage, {
 Each row's renderer gets props `{ className?: string, item: IItemRendererProps }` where:
 
 ```ts
+// IItemRendererProps — the `item` field passed to customItemRenderer
 IItemRendererProps = {
   loEntry: ILoadOrderEntry,
   displayCheckboxes: boolean,        // = toggleableEntries
   invalidEntries?: IInvalidResult[], // from last validation run
+  setRef?: (ref: any) => void,       // forward to root element for react-dnd compat
 }
+
+// The full props shape received by customItemRenderer:
+{ className?: string, item: IItemRendererProps, forwardedRef?: (ref: any) => void }
 ```
 
 The renderer also has full access to the Vortex Redux store via `useSelector()`.
@@ -182,7 +459,7 @@ The renderer also has full access to the Vortex Redux store via `useSelector()`.
 
 ### State path
 
-```
+```text
 state.persistent.loadOrder[profileId] = ILoadOrderEntry[]
 ```
 

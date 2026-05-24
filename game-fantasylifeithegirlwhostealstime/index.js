@@ -180,7 +180,11 @@ const ROOTSUB_PATH = EPIC_CODE_NAME;
 const CONFIG_ID = `${GAME_ID}-config`;
 const CONFIG_NAME = `Config (${CONFIG_LOC})`;
 let CONFIG_PATH = CONFIG_PATH_DEFAULT;
-const CONFIG_FILES = ["engine.ini", "scalability.ini", "input.ini", "game.ini", "gameusersettings.ini"];
+const CONFIG_FILES = [
+  "engine.ini", "game.ini", "gameusersettings.ini", "input.ini", "scalability.ini",
+  "hardware.ini", "deviceprofiles.ini", "compat.ini", "runtimeoptions.ini",
+  "gameplaytags.ini", "enhancedinput.ini", "consolevariables.ini",
+];
 const CONFIG_EXT = ".ini";
 
 const SAVE_ID = `${GAME_ID}-save`;

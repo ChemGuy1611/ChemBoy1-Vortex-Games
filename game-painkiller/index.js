@@ -81,7 +81,11 @@ const UE5_SORTABLE_NAME = 'UE Sortable Pak Mod';
 const CONFIG_ID = `${GAME_ID}-config`;
 const CONFIG_NAME = "Config";
 const CONFIG_PATH = path.join(CONFIGMOD_LOCATION, DATA_FOLDER, "Saved", "Config", CONFIG_FOLDERNAME);
-const CONFIG_FILES = ["engine.ini", "scalability.ini", "input.ini", "game.ini", "gameusersettings.ini"];
+const CONFIG_FILES = [
+  "engine.ini", "game.ini", "gameusersettings.ini", "input.ini", "scalability.ini",
+  "hardware.ini", "deviceprofiles.ini", "compat.ini", "runtimeoptions.ini",
+  "gameplaytags.ini", "enhancedinput.ini", "consolevariables.ini",
+];
 const CONFIG_EXT = ".ini";
 
 const PAK_ID = `${GAME_ID}-pakalt`;

@@ -3,3 +3,4 @@
 **/CC-Session-Logs/*
 .claude
 lint_results.txt
+*.pyc

@@ -37,9 +37,10 @@ def find_existing_plugin(game_id: str, game_name: str | None) -> str | None:
         if name == prefix or name.startswith(prefix + "-"):
             return os.path.join(PLUGINS_DIR, name)
     if game_name:
-        needle = vu.roman_to_arabic(f"Vortex Extension Update - {game_name} Vortex Extension")
+        needle = vu.normalize_game_name(vu.roman_to_arabic(
+            f"Vortex Extension Update - {game_name} Vortex Extension"))
         for name in entries:
-            if vu.roman_to_arabic(name).startswith(needle):
+            if vu.normalize_game_name(vu.roman_to_arabic(name)).startswith(needle):
                 return os.path.join(PLUGINS_DIR, name)
     return None
 

@@ -67,7 +67,11 @@ const UNREALDATA = {
 //This information will be filled in from the data above
 const CONFIG_ID = `${GAME_ID}-config`;
 const CONFIG_NAME = "Config (LocalAppData)";
-const CONFIG_FILES = ["engine.ini", "input.ini"];
+const CONFIG_FILES = [
+  "engine.ini", "game.ini", "gameusersettings.ini", "input.ini", "scalability.ini",
+  "hardware.ini", "deviceprofiles.ini", "compat.ini", "runtimeoptions.ini",
+  "gameplaytags.ini", "enhancedinput.ini", "consolevariables.ini",
+];
 const CONFIG_EXT = ".ini";
 
 const PAK_ID = `${GAME_ID}-pak`;

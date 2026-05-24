@@ -283,8 +283,9 @@ def sanitize_game_name(name):
 
 def normalize_game_name(s):
     """Lowercase + normalize punctuation for fuzzy title comparison.
-    Strips right-quotes, colons, ' - ' separators, and extra whitespace."""
-    return (s.lower()
+    Strips right-quotes, colons, ' - ' separators, extra whitespace, and normalizes 40,000 -> 40K."""
+    return (s.replace('40,000', '40K')
+             .lower()
              .replace('\u2019', "'")
              .replace(':', '')
              .replace(' - ', ' ')

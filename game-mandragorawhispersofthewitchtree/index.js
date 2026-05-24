@@ -61,7 +61,11 @@ const DATA_FOLDER = `MandragoraWotWT`;
 const CONFIG_ID = `${GAME_ID}-config`;
 const CONFIG_NAME = "Config (Documents)";
 const CONFIG_PATH = path.join(LOCALAPPDATA, DATA_FOLDER, "Saved", "Config", "WindowsNoEditor");
-const CONFIG_FILES = ["engine.ini", "scalability.ini", "input.ini", "game.ini"];
+const CONFIG_FILES = [
+  "engine.ini", "game.ini", "gameusersettings.ini", "input.ini", "scalability.ini",
+  "hardware.ini", "deviceprofiles.ini", "compat.ini", "runtimeoptions.ini",
+  "gameplaytags.ini", "enhancedinput.ini", "consolevariables.ini",
+];
 const CONFIG_EXT = ".ini";
 
 const PAK_ID = `${GAME_ID}-pak`;

@@ -79,7 +79,11 @@ const LOCALDATA_FOLDER = 'SilentHill2';
 const CONFIG_ID = `${GAME_ID}-config`;
 let CONFIG_PATH = path.join(LOCALAPPDATA, LOCALDATA_FOLDER, "Saved", "Config", "Windows");
 const CONFIG_PATH_XBOX = path.join(LOCALAPPDATA, LOCALDATA_FOLDER, "Saved", "Config", "WinGDK"); //XBOX Version
-const CONFIG_FILES = ["engine.ini", "scalability.ini", "input.ini"];
+const CONFIG_FILES = [
+  "engine.ini", "game.ini", "gameusersettings.ini", "input.ini", "scalability.ini",
+  "hardware.ini", "deviceprofiles.ini", "compat.ini", "runtimeoptions.ini",
+  "gameplaytags.ini", "enhancedinput.ini", "consolevariables.ini",
+];
 const CONFIG_EXT = ".ini";
 
 const SAVE_ID = `${GAME_ID}-save`;

@@ -62,7 +62,12 @@ const LOCALAPPDATA = util.getVortexPath('localAppData');
 
 const CONFIG_ID = `${GAME_ID}-config`;
 const CONFIG_NAME = "Config (LocalAppData)";
-const CONFIG_FILES = ['engine.ini', 'input.ini', 'game.ini', 'gameusersettings.ini', 'scalability.ini', 'scalabilitygroups.ini', 'defaultengine.ini', 'defaultinput.ini'];
+const CONFIG_FILES = [
+  "engine.ini", "game.ini", "gameusersettings.ini", "input.ini", "scalability.ini",
+  "hardware.ini", "deviceprofiles.ini", "compat.ini", "runtimeoptions.ini",
+  "gameplaytags.ini", "enhancedinput.ini", "consolevariables.ini",
+  "scalabilitygroups.ini", "defaultengine.ini", "defaultinput.ini",
+];
 const CONFIG_EXT = ".ini";
 
 const CONFIG_PATH_DEFAULT = path.join(EPIC_CODE_NAME, "Saved", "Config", "WindowsNoEditor");

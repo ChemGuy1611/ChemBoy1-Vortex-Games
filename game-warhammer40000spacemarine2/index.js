@@ -2,8 +2,8 @@
 Name: WH40K Space Marine 2 Vortex Extension
 Structure: Mods Folder w/ LO
 Author: ChemBoy1
-Version: 0.7.0
-Date: 2026-04-28
+Version: 0.7.1
+Date: 2026-05-23
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -1363,6 +1363,34 @@ async function restoreSaves(api) {
   }
 }
 
+async function clearLocal(api) {
+  try {
+    GAME_PATH = getDiscoveryPath(api);
+    const readFolder = path.join(GAME_PATH, LOCAL_PATH, LOCAL_FILE);
+    const files = await fs.readdirAsync(readFolder);
+    const localFolders = files.filter(file => (
+      isDir(readFolder, file)
+    ));
+    log('warn', `Found ${localFolders.length} folders to remove on purge in "${readFolder}"`);
+    for (let folder of localFolders) {
+      const source = path.join(readFolder, folder);
+      await fs.removeAsync(source);
+    }
+    if (localFolders.length > 0) {
+      api.sendNotification({
+        id: `${GAME_ID}-clearlocal-success`,
+        type: 'success',
+        message: `On Purge: Folders Successfully Deleted from "${readFolder}"`,
+        allowSuppress: true,
+        actions: [],
+      });
+    }
+  } catch(err) {
+    //log('error', 'Could not clear Local Paks from Mods folder: ' + err);
+    api.showErrorNotification(`Failed to clear folders from "${LOCAL_FILE}" folder`, err);
+  }
+}
+
 //Setup function
 async function setup(discovery, api, gameSpec) {
   const state = api.getState();
@@ -1616,9 +1644,11 @@ function main(context) {
     context.api.onAsync('did-purge', async (profileId) => {
       const lastActiveProfile = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
       if (profileId !== lastActiveProfile) return;
-      backupSaves(context.api); //always backup saves after purging so modded progress is preserved
-      notifySaves(context.api);
-      clearCsPaks(context.api);
+      await backupSaves(context.api); //always backup saves after purging so modded progress is preserved
+      await notifySaves(context.api);
+      await clearCsPaks(context.api);
+      await clearLocal(context.api);
+      //return Promise.resolve();
     });
     context.api.events.on("mod-update", (gameId, modId, fileId) => {
       if (GAME_ID == gameId) {
