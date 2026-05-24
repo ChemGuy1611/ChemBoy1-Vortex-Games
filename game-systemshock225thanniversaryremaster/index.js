@@ -208,7 +208,7 @@ function statCheckSync(gamePath, file) {
     fs.statSync(path.join(gamePath, file));
     return true;
   }
-  catch (err) {
+  catch {
     return false;
   }
 }
@@ -218,7 +218,7 @@ async function statCheckAsync(gamePath, file) {
     await fs.statAsync(path.join(gamePath, file));
     return true;
   }
-  catch (err) {
+  catch {
     return false;
   }
 }
@@ -619,7 +619,7 @@ function isSS2ToolInstalled(api, gameSpec) {
   try {
     fs.statSync(path.join(GAME_PATH, BMM_EXEC));
     return true;
-  } catch (err) {
+  } catch {
     return false;
   }
 }
@@ -911,7 +911,7 @@ function getExecutable(discoveryPath) {
       fs.statSync(path.join(discoveryPath, exec));
       return true;
     }
-    catch (err) {
+    catch {
       return false;
     }
   };
@@ -938,7 +938,7 @@ function getVersion(api, gameSpec) {
       fs.statSync(path.join(GAME_PATH, exec));
       return true;
     }
-    catch (err) {
+    catch {
       return false;
     }
   };

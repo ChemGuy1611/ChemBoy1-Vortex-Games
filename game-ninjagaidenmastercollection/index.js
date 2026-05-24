@@ -70,7 +70,7 @@ function isDir(folder, file) {
 try {
   const CONFIG_ARRAY = fs.readdirSync(CONFIG_FOLDER1);
   USERID_FOLDER1 = CONFIG_ARRAY.find((entry) => isDir(CONFIG_FOLDER1, entry));
-} catch(err) {
+} catch {
   USERID_FOLDER1 = "";
 }
 if (USERID_FOLDER1 === undefined) {
@@ -107,7 +107,7 @@ let USERID_FOLDER2 = "";
 try {
   const CONFIG_ARRAY = fs.readdirSync(CONFIG_FOLDER2);
   USERID_FOLDER2 = CONFIG_ARRAY.find((entry) => isDir(CONFIG_FOLDER2, entry));
-} catch(err) {
+} catch {
   USERID_FOLDER2 = "";
 }
 if (USERID_FOLDER2 === undefined) {
@@ -141,7 +141,7 @@ let USERID_FOLDER3 = "";
 try {
   const CONFIG_ARRAY = fs.readdirSync(CONFIG_FOLDER3);
   USERID_FOLDER3 = CONFIG_ARRAY.find((entry) => isDir(CONFIG_FOLDER3, entry));
-} catch(err) {
+} catch {
   USERID_FOLDER3 = "";
 }
 if (USERID_FOLDER3 === undefined) {
@@ -384,7 +384,7 @@ function statCheckSync(gamePath, file) {
     fs.statSync(path.join(gamePath, file));
     return true;
   }
-  catch (err) {
+  catch {
     return false;
   }
 }
@@ -394,7 +394,7 @@ async function statCheckAsync(gamePath, file) {
     await fs.statAsync(path.join(gamePath, file));
     return true;
   }
-  catch (err) {
+  catch {
     return false;
   }
 }
@@ -1140,7 +1140,7 @@ function getStore(discovery) {
     fs.statSync(path.join(discovery.path, XBOX_EXEC));
     return GAME_STORE = 'xbox';
   }
-  catch (err) {
+  catch {
     return GAME_STORE = 'steam';
   }
 }
@@ -1152,7 +1152,7 @@ async function setGameVersion(gamePath) {
       fs.statSync(path.join(gamePath, exec));
       return true;
     }
-    catch (err) {
+    catch {
       return false;
     }
   };

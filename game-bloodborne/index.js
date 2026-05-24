@@ -215,7 +215,7 @@ function statCheckSync(gamePath, file) {
     fs.statSync(path.join(gamePath, file));
     return true;
   }
-  catch (err) {
+  catch {
     return false;
   }
 }
@@ -225,7 +225,7 @@ async function statCheckAsync(gamePath, file) {
     await fs.statAsync(path.join(gamePath, file));
     return true;
   }
-  catch (err) {
+  catch {
     return false;
   }
 }
@@ -540,7 +540,7 @@ async function isShadPS4Installed(api, spec) {
       GAME_PATH = getDiscoveryPath(api);
       await fs.statAsync(path.join(GAME_PATH, SHADPS4_EXEC));
       check = true;
-    } catch (err) {
+    } catch {
       //do nothing
     }
   }
@@ -601,7 +601,7 @@ async function isShadLauncherInstalled(api, spec) {
       GAME_PATH = getDiscoveryPath(api);
       await fs.statAsync(path.join(GAME_PATH, SHADLAUNCHER_EXEC));
       check = true;
-    } catch (err) {
+    } catch {
       //do nothing
     }
   }

@@ -130,7 +130,7 @@ function isDir(folder, file) {
 try {
   const SAVE_ARRAY = fs.readdirSync(SAVE_FOLDER);
   USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_FOLDER, entry));
-} catch(err) {
+} catch {
   USERID_FOLDER = "";
 }
 if (USERID_FOLDER === undefined) {
@@ -315,7 +315,7 @@ function statCheckSync(gamePath, file) {
     fs.statSync(path.join(gamePath, file));
     return true;
   }
-  catch (err) {
+  catch {
     return false;
   }
 }
@@ -325,7 +325,7 @@ async function statCheckAsync(gamePath, file) {
     await fs.statAsync(path.join(gamePath, file));
     return true;
   }
-  catch (err) {
+  catch {
     return false;
   }
 }
@@ -472,7 +472,7 @@ async function downloadModLoader(api, gameSpec) {
         }
         FILE = file.file_id;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      } catch (err) { // use defined file ID if input is undefined above
+      } catch { // use defined file ID if input is undefined above
         FILE = FILE_ID;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
       }
@@ -539,7 +539,7 @@ async function downloadPsarcTool(api, gameSpec) {
         }
         FILE = file.file_id;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      } catch (err) { // use defined file ID if input is undefined above
+      } catch { // use defined file ID if input is undefined above
         FILE = FILE_ID;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
       }
@@ -1019,7 +1019,7 @@ async function deserializeLoadOrder(context) {
         return modMatch.attributes.customFileName ?? modMatch.attributes.logicalFileName ?? modMatch.attributes.name;
       }
       return file;
-    } catch (err) {
+    } catch {
       return file;
     }
   }
@@ -1032,7 +1032,7 @@ async function deserializeLoadOrder(context) {
         return modMatch.id;
       }
       return undefined;
-    } catch (err) {
+    } catch {
       return undefined;
     }
   }
@@ -1178,7 +1178,7 @@ async function setupNotify(api) {
     await fs.statAsync(path.join(GAME_PATH, PSARCTOOL_PATH, 'pak68'));
     log('warn', `Extracted folder found. Suppressing setup notification.`);
   }
-  catch (err) { //*/
+  catch { //*/
     const NOTIF_ID = `${GAME_ID}-setup`;
     const MESSAGE = `Extract Vanilla .psarc Files with ${PSARCTOOL_NAME}`;
     api.sendNotification({
@@ -1267,7 +1267,7 @@ async function psarcExtract(GAME_PATH, api) {
     await fs.statAsync(path.join(WORK_PATH, BIN_FOLDER));
     await fs.statAsync(path.join(WORK_PATH, 'pak68'));
     return true;
-  } catch (err) { //if the folders aren't there, the user probably closed the terminal windows early
+  } catch { //if the folders aren't there, the user probably closed the terminal windows early
     return false;
   }
 }
@@ -1375,7 +1375,7 @@ async function psarcCleanup(api) {
     try { //make sure vanilla file is not in place - this usually means the game was updated
       await fs.statAsync(path.join(WORK_PATH, SPCOMPSARC_FILE));
       await fs.unlinkAsync(path.join(WORK_PATH, BAK_SPCOMPSARC_FILE));
-    } catch (err) { //vanilla file not present, safe to rename
+    } catch { //vanilla file not present, safe to rename
       await fs.renameAsync(path.join(WORK_PATH, BAK_SPCOMPSARC_FILE), path.join(WORK_PATH, SPCOMPSARC_FILE));
       log('warn', `Renamed .psarc file ${BAK_SPCOMPSARC_FILE} to ${SPCOMPSARC_FILE}`);
     }
@@ -1388,7 +1388,7 @@ async function psarcCleanup(api) {
     try { //make sure vanilla file is not in place - this usually means the game was updated
       await fs.statAsync(path.join(WORK_PATH, BINPSARC_FILE));
       await fs.unlinkAsync(path.join(WORK_PATH, BAK_BINPSARC_FILE));
-    } catch (err) {
+    } catch {
       await fs.renameAsync(path.join(WORK_PATH, BAK_BINPSARC_FILE), path.join(WORK_PATH, BINPSARC_FILE));
       log('warn', `Renamed .psarc file ${BAK_BINPSARC_FILE} to ${BINPSARC_FILE}`);
     }
@@ -1432,7 +1432,7 @@ async function setup(discovery, api, gameSpec) {
     const LO_FILE_PATH = path.join(GAME_PATH, LO_FILE);
     try {
       await fs.statAsync(LO_FILE_PATH);
-    } catch (err) {
+    } catch {
       const modFolder = path.join(GAME_PATH, PSARC_PATH);
       const LO_FILE_LINES = [`[ModLoader]`, 'MountOrder=', 'ShowConsole=false', `ModFolder=${modFolder}`];
       const LO_FILE_CONTENT = LO_FILE_LINES.join('\n')
@@ -1647,7 +1647,7 @@ async function didPurge(api, profileId) { //run on mod purge
     await fs.statAsync(path.join(GAME_PATH, PSARCTOOL_PATH, 'pak68'));
     await fs.statAsync(path.join(GAME_PATH, PSARCTOOL_PATH, BIN_FOLDER));
     await psarcCleanup(api);
-  } catch (err) {
+  } catch {
     log('warn', `Skipping purge cleanup because cleanup folders not found.`);
   }
   clearModOrder(api);

@@ -208,7 +208,7 @@ function statCheckSync(gamePath, file) {
     fs.statSync(path.join(gamePath, file));
     return true;
   }
-  catch (err) {
+  catch {
     return false;
   }
 }
@@ -218,7 +218,7 @@ async function statCheckAsync(gamePath, file) {
     await fs.statAsync(path.join(gamePath, file));
     return true;
   }
-  catch (err) {
+  catch {
     return false;
   }
 }

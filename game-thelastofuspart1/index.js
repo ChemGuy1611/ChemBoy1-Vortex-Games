@@ -64,7 +64,7 @@ function isDir(folder, file) {
 try {
   const SAVE_ARRAY = fs.readdirSync(SAVE_FOLDER);
   USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_FOLDER, entry));
-} catch(err) {
+} catch {
   USERID_FOLDER = "";
 }
 if (USERID_FOLDER === undefined) {
@@ -230,7 +230,7 @@ function statCheckSync(gamePath, file) {
     fs.statSync(path.join(gamePath, file));
     return true;
   }
-  catch (err) {
+  catch {
     return false;
   }
 }
@@ -240,7 +240,7 @@ async function statCheckAsync(gamePath, file) {
     await fs.statAsync(path.join(gamePath, file));
     return true;
   }
-  catch (err) {
+  catch {
     return false;
   }
 }
@@ -644,7 +644,7 @@ async function setupNotify(api) {
     await fs.statAsync(path.join(GAME_PATH, PSARCTOOL_PATH, 'pak68'));
     log('warn', `Extracted folder found. Suppressing setup notification.`);
   }
-  catch (err) { //*/
+  catch { //*/
     const NOTIF_ID = `${GAME_ID}-setup`;
     const MESSAGE = `Extract Vanilla .psarc Files with ${PSARCTOOL_NAME}`;
     api.sendNotification({
@@ -763,7 +763,7 @@ async function psarcExtract(GAME_PATH, api) {
     await fs.statAsync(path.join(WORK_PATH, BIN_FOLDER));
     await fs.statAsync(path.join(WORK_PATH, 'pak68'));
     return true;
-  } catch (err) { //if the folders aren't there, the user probably closed the terminal windows early
+  } catch { //if the folders aren't there, the user probably closed the terminal windows early
     return false;
   }
 }
@@ -871,7 +871,7 @@ async function psarcCleanup(api) {
     try { //make sure vanilla file is not in place - this usually means the game was updated
       await fs.statAsync(path.join(WORK_PATH, SPCOMPSARC_FILE));
       await fs.unlinkAsync(path.join(WORK_PATH, BAK_SPCOMPSARC_FILE));
-    } catch (err) { //vanilla file not present, safe to rename
+    } catch { //vanilla file not present, safe to rename
       await fs.renameAsync(path.join(WORK_PATH, BAK_SPCOMPSARC_FILE), path.join(WORK_PATH, SPCOMPSARC_FILE));
       log('warn', `Renamed .psarc file ${BAK_SPCOMPSARC_FILE} to ${SPCOMPSARC_FILE}`);
     }
@@ -884,7 +884,7 @@ async function psarcCleanup(api) {
     try { //make sure vanilla file is not in place - this usually means the game was updated
       await fs.statAsync(path.join(WORK_PATH, BINPSARC_FILE));
       await fs.unlinkAsync(path.join(WORK_PATH, BAK_BINPSARC_FILE));
-    } catch (err) {
+    } catch {
       await fs.renameAsync(path.join(WORK_PATH, BAK_BINPSARC_FILE), path.join(WORK_PATH, BINPSARC_FILE));
       log('warn', `Renamed .psarc file ${BAK_BINPSARC_FILE} to ${BINPSARC_FILE}`);
     }
@@ -1081,7 +1081,7 @@ async function didPurge(api, profileId) { //run on mod purge
     await fs.statAsync(path.join(GAME_PATH, PSARCTOOL_PATH, 'pak68'));
     await fs.statAsync(path.join(GAME_PATH, PSARCTOOL_PATH, BIN_FOLDER));
     await psarcCleanup(api);
-  } catch (err) {
+  } catch {
     log('warn', `Skipping purge cleanup because cleanup folders not found.`);
   }
   return Promise.resolve();

@@ -67,7 +67,7 @@ function isDir(folder, file) {
 try {
   const SAVE_ARRAY = fs.readdirSync(SAVE_FOLDER);
   USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_FOLDER, entry));
-} catch(err) {
+} catch {
   USERID_FOLDER = "";
 }
 if (USERID_FOLDER === undefined) {
@@ -210,7 +210,7 @@ function statCheckSync(gamePath, file) {
     fs.statSync(path.join(gamePath, file));
     return true;
   }
-  catch (err) {
+  catch {
     return false;
   }
 }
@@ -220,7 +220,7 @@ async function statCheckAsync(gamePath, file) {
     await fs.statAsync(path.join(gamePath, file));
     return true;
   }
-  catch (err) {
+  catch {
     return false;
   }
 }
@@ -630,7 +630,7 @@ async function downloadLoader(api, gameSpec) {
         }
         FILE = file.file_id;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      } catch (err) { // use defined file ID if input is undefined above
+      } catch { // use defined file ID if input is undefined above
         FILE = FILE_ID;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
       }
@@ -692,10 +692,10 @@ async function updateBootOptions(api) { // Write texpack and lodpack file names 
         const WAD_TEX_FILE_NAMES = WAD_TEX_FILES.map(file => file.replace(path.extname(file), '').replace("\\", "/"));
         const WAD_TEX_FILE_NAMES_CONV = WAD_TEX_FILE_NAMES.map(file => `../../wad/${file}`); //*/
         BOOT_OPTIONS_JSON[BOOT_TEX_KEY] = TEX_FILE_NAMES_CONV.concat(WAD_TEX_FILE_NAMES_CONV);
-      } catch (err) {
+      } catch {
         log('warn', `Could not find ${PACK_EXT}  files in "${PACK_PATH_WAD}" folder.`);
       }
-    } catch (err) {
+    } catch {
       log('warn', `Could not read "${PACK_PATH_WAD}" folder for ${PACK_EXT} files. Folder proably does not exist.`);
     }
     //.lodpack files
@@ -716,10 +716,10 @@ async function updateBootOptions(api) { // Write texpack and lodpack file names 
         const WAD_LOD_FILE_NAMES = WAD_LOD_FILES.map(file => file.replace(path.extname(file), '').replace("\\", "/"));
         const WAD_LOD_FILE_NAMES_CONV = WAD_LOD_FILE_NAMES.map(file => `../../wad/${file}`); //*/
         BOOT_OPTIONS_JSON[BOOT_LOD_KEY] = LOD_FILE_NAMES_CONV.concat(WAD_LOD_FILE_NAMES_CONV);
-      } catch (err) {
+      } catch {
         log('warn', `Could not find ${LOD_EXT} files in "${PACK_PATH_WAD}" folder.`);
       }
-    } catch (err) {
+    } catch {
       log('warn', `Could not read "${PACK_PATH_WAD}" folder for ${LOD_EXT} files. Folder proably does not exist.`);
     }
     await fs.writeFileAsync(

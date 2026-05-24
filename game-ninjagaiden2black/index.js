@@ -229,7 +229,7 @@ function statCheckSync(gamePath, file) {
     fs.statSync(path.join(gamePath, file));
     return true;
   }
-  catch (err) {
+  catch {
     return false;
   }
 }
@@ -239,7 +239,7 @@ async function statCheckAsync(gamePath, file) {
     await fs.statAsync(path.join(gamePath, file));
     return true;
   }
-  catch (err) {
+  catch {
     return false;
   }
 }
@@ -335,7 +335,7 @@ function getExecutable(discoveryPath) {
       fs.statSync(path.join(discoveryPath, exec));
       return true;
     }
-    catch (err) {
+    catch {
       return false;
     }
   };
@@ -350,7 +350,7 @@ function getExecutable(discoveryPath) {
     try {
       const SAVE_ARRAY = fs.readdirSync(SAVE_PATH_XBOX);
       USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_PATH_XBOX, entry));
-    } catch(err) {
+    } catch {
       USERID_FOLDER = "";
     }
     if (USERID_FOLDER === undefined) {
@@ -371,7 +371,7 @@ function getExecutable(discoveryPath) {
     try {
       const SAVE_ARRAY = fs.readdirSync(SAVE_PATH_DEFAULT);
       USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_PATH_DEFAULT, entry));
-    } catch(err) {
+    } catch {
       USERID_FOLDER = "";
     }
     if (USERID_FOLDER === undefined) {
@@ -392,7 +392,7 @@ async function setGameVersionPath(gamePath) {
       fs.statSync(path.join(gamePath, exec));
       return true;
     }
-    catch (err) {
+    catch {
       return false;
     }
   };

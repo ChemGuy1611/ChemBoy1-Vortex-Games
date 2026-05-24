@@ -33,7 +33,7 @@ function readRegistryKey(hive, key, name) {
       throw new Error('empty registry key');
     }
     return Promise.resolve(instPath.value);
-  } catch (err) {
+  } catch {
     return Promise.resolve(undefined);
   }
 }

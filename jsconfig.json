@@ -9,7 +9,9 @@
         "experimentalDecorators": false,
         "strictNullChecks": true,
         "strictFunctionTypes": true,
-        "strict": true
+        "strict": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true
     },
     "exclude": [
         "node_modules",

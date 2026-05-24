@@ -140,7 +140,7 @@ function statCheckSync(gamePath, file) {
     fs.statSync(path.join(gamePath, file));
     return true;
   }
-  catch (err) {
+  catch {
     return false;
   }
 }
@@ -150,7 +150,7 @@ async function statCheckAsync(gamePath, file) {
     await fs.statAsync(path.join(gamePath, file));
     return true;
   }
-  catch (err) {
+  catch {
     return false;
   }
 }
@@ -244,7 +244,7 @@ function getExecutable(discoveryPath) {
       fs.statSync(path.join(discoveryPath, exec));
       return true;
     }
-    catch (err) {
+    catch {
       return false;
     }
   };
@@ -275,7 +275,7 @@ async function setGameVersionPath(gamePath) {
       fs.statSync(path.join(gamePath, exec));
       return true;
     }
-    catch (err) {
+    catch {
       return false;
     }
   };
@@ -585,7 +585,7 @@ function installScripts(files, fileName) {
       );
       files.push(path.join(rootPath, ENABLEDTXT_FILE));
       log('info', `Successfully created enabled.txt for UE4SS Script Mod: ${MOD_NAME}`);
-    } catch (err) {
+    } catch {
       log('error', `Could not create enabled.txt for UE4SS Script Mod: ${MOD_NAME}`);
     }
   }
@@ -649,7 +649,7 @@ function installDll(files, fileName) {
       );
       files.push(path.join(rootPath, ENABLEDTXT_FILE));
       log('info', `Successfully created enabled.txt for UE4SS DLL Mod: ${MOD_NAME}`);
-    } catch (err) {
+    } catch {
       log('error', `Could not create enabled.txt for UE4SS DLL Mod: ${MOD_NAME}`);
     }
   }

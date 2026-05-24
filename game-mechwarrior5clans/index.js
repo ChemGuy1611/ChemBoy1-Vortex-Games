@@ -232,7 +232,7 @@ function statCheckSync(gamePath, file) {
     fs.statSync(path.join(gamePath, file));
     return true;
   }
-  catch (err) {
+  catch {
     return false;
   }
 }
@@ -242,7 +242,7 @@ async function statCheckAsync(gamePath, file) {
     await fs.statAsync(path.join(gamePath, file));
     return true;
   }
-  catch (err) {
+  catch {
     return false;
   }
 }
@@ -336,7 +336,7 @@ function getExecutable(discoveryPath) {
       fs.statSync(path.join(discoveryPath, exec));
       return true;
     }
-    catch (err) {
+    catch {
       return false;
     }
   };
@@ -351,7 +351,7 @@ function getExecutable(discoveryPath) {
     try {
       const SAVE_ARRAY = fs.readdirSync(SAVE_PATH_XBOX);
       USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_PATH_XBOX, entry));
-    } catch(err) {
+    } catch {
       USERID_FOLDER = "";
     }
     if (USERID_FOLDER === undefined) {
@@ -372,7 +372,7 @@ function getExecutable(discoveryPath) {
     try {
       const SAVE_ARRAY = fs.readdirSync(SAVE_PATH_DEFAULT);
       USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_PATH_DEFAULT, entry));
-    } catch(err) {
+    } catch {
       USERID_FOLDER = "";
     }
     if (USERID_FOLDER === undefined) {
@@ -393,7 +393,7 @@ async function setGameVersionPath(gamePath) {
       fs.statSync(path.join(gamePath, exec));
       return true;
     }
-    catch (err) {
+    catch {
       return false;
     }
   };
@@ -442,7 +442,7 @@ function installEditorMod(files, fileName) {
     const JSON_OBJECT = JSON.parse(fs.readFileSync(path.join(fileName, rootPath, EDITORMOD_FILE)));
     const JSON_MOD_NAME = JSON_OBJECT["modPluginName"];
     MOD_FOLDER = JSON_MOD_NAME;
-  } catch (err) { //mod.json could not be read.
+  } catch { //mod.json could not be read.
     log('error', `Could not read mod.json file for mod ${MOD_NAME}.`);
   }
 

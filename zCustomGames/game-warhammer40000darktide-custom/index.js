@@ -99,7 +99,7 @@ function statCheckSync(gamePath, file) {
     fs.statSync(path.join(gamePath, file));
     return true;
   }
-  catch (err) {
+  catch {
     return false;
   }
 }
@@ -108,7 +108,7 @@ async function statCheckAsync(gamePath, file) {
     await fs.statAsync(path.join(gamePath, file));
     return true;
   }
-  catch (err) {
+  catch {
     return false;
   }
 }
@@ -423,11 +423,11 @@ async function deserializeLoadOrder(context) {
     try {
       fs.statAsync(path.join(modFolderPath, modId, `__folder_managed_by_vortex`));
       return true;
-    } catch (e) {
+    } catch {
       try {
         fs.statAsync(path.join(modFolderPath, modId, `${modId}.mod.vortex_backup`));
         return true;
-      } catch (d) {
+      } catch {
         return false;
       }
     }
@@ -450,7 +450,7 @@ async function deserializeLoadOrder(context) {
         return name;
       }
       return folder;
-    } catch (err) {
+    } catch {
       return folder;
     }
   }
@@ -463,7 +463,7 @@ async function deserializeLoadOrder(context) {
         return modMatch.id;
       }
       return undefined;
-    } catch (err) {
+    } catch {
       return undefined;
     }
   }
@@ -761,7 +761,7 @@ function main(context) {
       if (is_darktide_profile_active(api) && GAME_PATH != null) {
         try {
           api.runExecutable(path.join(GAME_PATH, "tools", "dtkit-patch.exe"), ["--patch"], { shell: true, detached: true } )
-        } catch (e) {}
+        } catch {}
       } //*/
     });
     /* DISABLED since a mod automates this - Unpatch exe on purge
@@ -770,7 +770,7 @@ function main(context) {
       if (is_darktide_profile_active(api) && GAME_PATH != null) {
         try {
           api.runExecutable(path.join(GAME_PATH, "tools", "dtkit-patch.exe"), ["--unpatch"], { shell: true, detached: true } )
-        } catch (e) {}
+        } catch {}
       } 
     }); //*/
     //detect mod update (to maintain LO position)

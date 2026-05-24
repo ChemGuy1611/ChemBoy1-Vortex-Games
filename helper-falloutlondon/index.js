@@ -220,7 +220,7 @@ function changeFolonModTypeNotify(api) {
         ],
       });
     }
-  } catch(err) {
+  } catch {
     //do nothing
   }
 }

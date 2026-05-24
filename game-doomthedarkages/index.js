@@ -297,7 +297,7 @@ function statCheckSync(gamePath, file) {
     fs.statSync(path.join(gamePath, file));
     return true;
   }
-  catch (err) {
+  catch {
     return false;
   }
 }
@@ -307,7 +307,7 @@ async function statCheckAsync(gamePath, file) {
     await fs.statAsync(path.join(gamePath, file));
     return true;
   }
-  catch (err) {
+  catch {
     return false;
   }
 }
@@ -391,7 +391,7 @@ async function setGameVersion(discoveryPath) {
       fs.statSync(path.join(discoveryPath, exec));
       return true;
     }
-    catch (err) {
+    catch {
       return false;
     }
   };
@@ -412,7 +412,7 @@ async function setSavePath(discoveryPath) {
       fs.statSync(path.join(discoveryPath, exec));
       return true;
     }
-    catch (err) {
+    catch {
       return false;
     }
   };
@@ -431,7 +431,7 @@ async function setSavePath(discoveryPath) {
     try {
       const SAVE_ARRAY = fs.readdirSync(STEAMDATA_PATH);
       USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(STEAMDATA_PATH, entry));
-    } catch(err) {
+    } catch {
       USERID_FOLDER = "";
     }
     if (USERID_FOLDER === undefined) {
@@ -576,7 +576,7 @@ async function downloadPatcher(api, gameSpec) {
         }
         FILE = file.file_id;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      } catch (err) { // use defined file ID if input is undefined above
+      } catch { // use defined file ID if input is undefined above
         FILE = FILE_ID;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
       }
@@ -1085,7 +1085,7 @@ async function setup(discovery, api, gameSpec) {
   const AUTOEXEC_CFG_PATH = path.join(GAME_PATH, CONFIG_PATH, AUTOEXEC_CFG_FILE);
   try {
     fs.statSync(AUTOEXEC_CFG_PATH);
-  } catch (err) {
+  } catch {
     await fs.writeFileAsync(
       AUTOEXEC_CFG_PATH,
       ``,

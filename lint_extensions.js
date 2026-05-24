@@ -185,7 +185,7 @@ if (targetFiles.length > 0) {
     let eslintData = [];
     try {
       eslintData = JSON.parse(result.stdout || '[]');
-    } catch (_) {
+    } catch {
       const errMsg = `ESLint error: ${(result.stderr || result.stdout || '').trim()}`;
       emit(errMsg);
       writeResultsAtomic(lines.join('\n') + '\n');

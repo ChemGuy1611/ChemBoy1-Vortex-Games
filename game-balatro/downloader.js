@@ -186,7 +186,7 @@ async function getLatestGithubReleaseAsset(api, requirement) {
     const chooseAsset = (release) => {
         var _a;
         const assets = release.assets;
-        if (!!requirement.fileArchivePattern) {
+        if (requirement.fileArchivePattern) {
             const asset = assets.find(asset => requirement.fileArchivePattern.exec(asset.name));
             if (asset) {
                 return {
@@ -408,17 +408,15 @@ async function resolveVersionByPattern(api, requirement) {
 }
 exports.resolveVersionByPattern = resolveVersionByPattern;
 async function walkPath(dirPath, walkOptions) {
-    walkOptions = !!walkOptions
+    walkOptions = walkOptions
         ? { ...walkOptions, skipHidden: true, skipInaccessible: true, skipLinks: true }
         : { skipLinks: true, skipHidden: true, skipInaccessible: true };
     const walkResults = [];
-    return new Promise(async (resolve, reject) => {
-        await (0, turbowalk_1.default)(dirPath, (entries) => {
-            walkResults.push(...entries);
-            return Promise.resolve();
-        }, walkOptions).catch(err => err.code === 'ENOENT' ? Promise.resolve() : Promise.reject(err));
-        return resolve(walkResults);
-    });
+    await (0, turbowalk_1.default)(dirPath, (entries) => {
+        walkResults.push(...entries);
+        return Promise.resolve();
+    }, walkOptions).catch(err => err.code === 'ENOENT' ? Promise.resolve() : Promise.reject(err));
+    return walkResults;
 }
 exports.walkPath = walkPath;
 
@@ -876,7 +874,7 @@ const toFlatObject = (sourceObj, destObj, filter, propFilter) => {
   const merged = {};
 
   destObj = destObj || {};
-  // eslint-disable-next-line no-eq-null,eqeqeq
+   
   if (sourceObj == null) return destObj;
 
   do {
@@ -942,9 +940,9 @@ const toArray = (thing) => {
  *
  * @returns {Array}
  */
-// eslint-disable-next-line func-names
+ 
 const isTypedArray = (TypedArray => {
-  // eslint-disable-next-line func-names
+   
   return thing => {
     return TypedArray && thing instanceof TypedArray;
   };
@@ -1266,7 +1264,7 @@ const descriptors = {};
   'ERR_CANCELED',
   'ERR_NOT_SUPPORT',
   'ERR_INVALID_URL'
-// eslint-disable-next-line func-names
+ 
 ].forEach(code => {
   descriptors[code] = {value: code};
 });
@@ -1274,7 +1272,7 @@ const descriptors = {};
 Object.defineProperties(AxiosError, descriptors);
 Object.defineProperty(prototype$1, 'isAxiosError', {value: true});
 
-// eslint-disable-next-line func-names
+ 
 AxiosError.from = (error, code, config, request, response, customProps) => {
   const axiosError = Object.create(prototype$1);
 
@@ -1295,7 +1293,7 @@ AxiosError.from = (error, code, config, request, response, customProps) => {
   return axiosError;
 };
 
-// eslint-disable-next-line strict
+ 
 var httpAdapter = null;
 
 /**
@@ -1332,7 +1330,7 @@ function removeBrackets(key) {
 function renderKey(path, key, dots) {
   if (!path) return key;
   return path.concat(key).map(function each(token, i) {
-    // eslint-disable-next-line no-param-reassign
+     
     token = removeBrackets(token);
     return !dots && i ? '[' + token + ']' : token;
   }).join(dots ? '.' : '');
@@ -1381,21 +1379,21 @@ function toFormData(obj, formData, options) {
     throw new TypeError('target must be an object');
   }
 
-  // eslint-disable-next-line no-param-reassign
+   
   formData = formData || new (FormData)();
 
-  // eslint-disable-next-line no-param-reassign
+   
   options = utils$1.toFlatObject(options, {
     metaTokens: true,
     dots: false,
     indexes: false
   }, false, function defined(option, source) {
-    // eslint-disable-next-line no-eq-null,eqeqeq
+     
     return !utils$1.isUndefined(source[option]);
   });
 
   const metaTokens = options.metaTokens;
-  // eslint-disable-next-line no-use-before-define
+   
   const visitor = options.visitor || defaultVisitor;
   const dots = options.dots;
   const indexes = options.indexes;
@@ -1439,20 +1437,20 @@ function toFormData(obj, formData, options) {
 
     if (value && !path && typeof value === 'object') {
       if (utils$1.endsWith(key, '{}')) {
-        // eslint-disable-next-line no-param-reassign
+         
         key = metaTokens ? key : key.slice(0, -2);
-        // eslint-disable-next-line no-param-reassign
+         
         value = JSON.stringify(value);
       } else if (
         (utils$1.isArray(value) && isFlatArray(value)) ||
         ((utils$1.isFileList(value) || utils$1.endsWith(key, '[]')) && (arr = utils$1.toArray(value))
         )) {
-        // eslint-disable-next-line no-param-reassign
+         
         key = removeBrackets(key);
 
         arr.forEach(function each(el, index) {
           !(utils$1.isUndefined(el) || el === null) && formData.append(
-            // eslint-disable-next-line no-nested-ternary
+             
             indexes === true ? renderKey([key], index, dots) : (indexes === null ? key : key + '[]'),
             convertValue(el)
           );
@@ -1590,7 +1588,6 @@ function encode(val) {
  * @returns {string} The formatted url
  */
 function buildURL(url, params, options) {
-  /*eslint no-param-reassign:0*/
   if (!params) {
     return url;
   }
@@ -1747,7 +1744,7 @@ const hasStandardBrowserEnv = (
 const hasStandardBrowserWebWorkerEnv = (() => {
   return (
     typeof WorkerGlobalScope !== 'undefined' &&
-    // eslint-disable-next-line no-undef
+     
     self instanceof WorkerGlobalScope &&
     typeof self.importScripts === 'function'
   );
@@ -2398,7 +2395,7 @@ function isCancel(value) {
  * @returns {CanceledError} The created error.
  */
 function CanceledError(message, config, request) {
-  // eslint-disable-next-line no-eq-null,eqeqeq
+   
   AxiosError.call(this, message == null ? 'canceled' : message, AxiosError.ERR_CANCELED, config, request);
   this.name = 'CanceledError';
 }
@@ -2851,7 +2848,7 @@ var xhrAdapter = isXHRAdapterSupported && function (config) {
 
     if (config.cancelToken || config.signal) {
       // Handle cancellation
-      // eslint-disable-next-line func-names
+       
       onCanceled = cancel => {
         if (!request) {
           return;
@@ -2890,7 +2887,7 @@ utils$1.forEach(knownAdapters, (fn, value) => {
     try {
       Object.defineProperty(fn, 'name', {value});
     } catch (e) {
-      // eslint-disable-next-line no-empty
+      // pass
     }
     Object.defineProperty(fn, 'adapterName', {value});
   }
@@ -3038,7 +3035,7 @@ const headersToObject = (thing) => thing instanceof AxiosHeaders$1 ? thing.toJSO
  * @returns {Object} New object resulting from merging config2 to config1
  */
 function mergeConfig(config1, config2) {
-  // eslint-disable-next-line no-param-reassign
+   
   config2 = config2 || {};
   const config = {};
 
@@ -3053,7 +3050,7 @@ function mergeConfig(config1, config2) {
     return source;
   }
 
-  // eslint-disable-next-line consistent-return
+   
   function mergeDeepProperties(a, b, caseless) {
     if (!utils$1.isUndefined(b)) {
       return getMergedValue(a, b, caseless);
@@ -3062,14 +3059,14 @@ function mergeConfig(config1, config2) {
     }
   }
 
-  // eslint-disable-next-line consistent-return
+   
   function valueFromConfig2(a, b) {
     if (!utils$1.isUndefined(b)) {
       return getMergedValue(undefined, b);
     }
   }
 
-  // eslint-disable-next-line consistent-return
+   
   function defaultToConfig2(a, b) {
     if (!utils$1.isUndefined(b)) {
       return getMergedValue(undefined, b);
@@ -3078,7 +3075,7 @@ function mergeConfig(config1, config2) {
     }
   }
 
-  // eslint-disable-next-line consistent-return
+   
   function mergeDirectKeys(a, b, prop) {
     if (prop in config2) {
       return getMergedValue(a, b);
@@ -3132,7 +3129,7 @@ const VERSION = "1.6.7";
 
 const validators$1 = {};
 
-// eslint-disable-next-line func-names
+ 
 ['object', 'boolean', 'number', 'function', 'string', 'symbol'].forEach((type, i) => {
   validators$1[type] = function validator(thing) {
     return typeof thing === type || 'a' + (i < 1 ? 'n ' : ' ') + type;
@@ -3155,7 +3152,7 @@ validators$1.transitional = function transitional(validator, version, message) {
     return '[Axios v' + VERSION + '] Transitional option \'' + opt + '\'' + desc + (message ? '. ' + message : '');
   }
 
-  // eslint-disable-next-line func-names
+   
   return (value, opt, opts) => {
     if (validator === false) {
       throw new AxiosError(
@@ -3166,7 +3163,7 @@ validators$1.transitional = function transitional(validator, version, message) {
 
     if (version && !deprecatedWarnings[opt]) {
       deprecatedWarnings[opt] = true;
-      // eslint-disable-next-line no-console
+       
       console.warn(
         formatMessage(
           opt,
@@ -3268,7 +3265,6 @@ class Axios {
   }
 
   _request(configOrUrl, config) {
-    /*eslint no-param-reassign:0*/
     // Allow for axios('example/url'[, config]) a la fetch API
     if (typeof configOrUrl === 'string') {
       config = config || {};
@@ -3410,7 +3406,6 @@ utils$1.forEach(['delete', 'get', 'head', 'options'], function forEachMethodNoDa
 });
 
 utils$1.forEach(['post', 'put', 'patch'], function forEachMethodWithData(method) {
-  /*eslint func-names:0*/
 
   function generateHTTPMethod(isForm) {
     return function httpMethod(url, data, config) {
@@ -3453,7 +3448,7 @@ class CancelToken {
 
     const token = this;
 
-    // eslint-disable-next-line func-names
+     
     this.promise.then(cancel => {
       if (!token._listeners) return;
 
@@ -3465,10 +3460,10 @@ class CancelToken {
       token._listeners = null;
     });
 
-    // eslint-disable-next-line func-names
+     
     this.promise.then = onfulfilled => {
       let _resolve;
-      // eslint-disable-next-line func-names
+       
       const promise = new Promise(resolve => {
         token.subscribe(resolve);
         _resolve = resolve;

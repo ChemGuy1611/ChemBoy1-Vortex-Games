@@ -583,7 +583,7 @@ function statCheckSync(gamePath, file) {
     fs.statSync(path.join(gamePath, file));
     return true;
   }
-  catch (err) {
+  catch {
     return false;
   }
 }
@@ -592,7 +592,7 @@ async function statCheckAsync(gamePath, file) {
     await fs.statAsync(path.join(gamePath, file));
     return true;
   }
-  catch (err) {
+  catch {
     return false;
   }
 }
@@ -1865,7 +1865,7 @@ async function deserializeLoadOrder(context) {
         return modMatch.attributes.customFileName ?? modMatch.attributes.logicalFileName ?? modMatch.attributes.name;
       }
       return folder;
-    } catch (err) {
+    } catch {
       return folder;
     }
   }
@@ -1878,7 +1878,7 @@ async function deserializeLoadOrder(context) {
         return modMatch.id;
       }
       return undefined;
-    } catch (err) {
+    } catch {
       return undefined;
     }
   }
@@ -2378,7 +2378,7 @@ async function ensureModpackLoader(api, check) {
       try {
         await fs.statAsync(dllPath);
         test = true;
-      } catch (err) {
+      } catch {
         test = false;
       }
     }
@@ -2386,7 +2386,7 @@ async function ensureModpackLoader(api, check) {
       try {
         await fs.statAsync(libPath);
         testLib = true;
-      } catch (err) {
+      } catch {
         testLib = false;
       }
     }
@@ -2950,7 +2950,7 @@ function isCustomInstalled(api, spec) {
   try {
     fs.statSync(path.join(GAME_PATH, CUSTOMLOADER_MARKER_PATH));
     fileTest = true;
-  } catch (err) {
+  } catch {
     fileTest = false;
   }
   return (idTest || fileTest);
@@ -2963,7 +2963,7 @@ function checkCustomInstalled(api, spec) {
   try {
     fs.statSync(path.join(GAME_PATH, CUSTOMLOADER_MARKER_PATH));
     fileTest = true;
-  } catch (err) {
+  } catch {
     customInstallerNotify(api);
     fileTest = false;
   }
@@ -3177,7 +3177,7 @@ async function downloadMelon(api, gameSpec) {
         }
         FILE = file.file_id;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      } catch (err) { // use defined file ID if input is undefined above
+      } catch { // use defined file ID if input is undefined above
         FILE = FILE_ID;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
       }
@@ -3243,7 +3243,7 @@ async function downloadModpackLoader(api, gameSpec) {
         }
         FILE = file.file_id;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      } catch (err) { // use defined file ID if input is undefined above
+      } catch { // use defined file ID if input is undefined above
         FILE = FILE_ID;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
       }
@@ -3354,7 +3354,7 @@ async function downloadCustom(api, gameSpec) {
         }
         FILE = file.file_id;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      } catch (err) { // use defined file ID if input is undefined above
+      } catch { // use defined file ID if input is undefined above
         FILE = FILE_ID;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
       }

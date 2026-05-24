@@ -112,7 +112,7 @@ function isDir(folder, file) {
 try {
   const CONFIG_ARRAY = fs.readdirSync(CONFIG_FOLDER);
   USERID_FOLDER = CONFIG_ARRAY.find((entry) => isDir(CONFIG_FOLDER, entry));
-} catch(err) {
+} catch {
   USERID_FOLDER = "";
 }
 if (USERID_FOLDER === undefined) {
@@ -501,7 +501,7 @@ function statCheckSync(gamePath, file) {
     fs.statSync(path.join(gamePath, file));
     return true;
   }
-  catch (err) {
+  catch {
     return false;
   }
 }
@@ -510,7 +510,7 @@ async function statCheckAsync(gamePath, file) {
     await fs.statAsync(path.join(gamePath, file));
     return true;
   }
-  catch (err) {
+  catch {
     return false;
   }
 }
@@ -2204,7 +2204,7 @@ function isCustomInstalled(api, spec) {
   try {
     fs.statSync(path.join(GAME_PATH, CUSTOMLOADER_MARKER_PATH));
     fileTest = true;
-  } catch (err) {
+  } catch {
     fileTest = false;
   }
   return (idTest || fileTest);
@@ -2217,7 +2217,7 @@ function checkCustomInstalled(api, spec) {
   try {
     fs.statSync(path.join(GAME_PATH, CUSTOMLOADER_MARKER_PATH));
     fileTest = true;
-  } catch (err) {
+  } catch {
     customInstallerNotify(api);
     fileTest = false;
   }
@@ -2386,7 +2386,7 @@ async function downloadBepinexNexus(api, gameSpec) {
         }
         FILE = file.file_id;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      } catch (err) { // use defined file ID if input is undefined above
+      } catch { // use defined file ID if input is undefined above
         FILE = FILE_ID;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
       }
@@ -2497,7 +2497,7 @@ async function downloadMelonNexus(api, gameSpec) {
         }
         FILE = file.file_id;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      } catch (err) { // use defined file ID if input is undefined above
+      } catch { // use defined file ID if input is undefined above
         FILE = FILE_ID;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
       }
@@ -2563,7 +2563,7 @@ async function downloadCustom(api, gameSpec) {
         }
         FILE = file.file_id;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      } catch (err) { // use defined file ID if input is undefined above
+      } catch { // use defined file ID if input is undefined above
         FILE = FILE_ID;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
       }
@@ -2639,7 +2639,7 @@ async function downloadBepCfgMan(api, gameSpec) {
         }
         FILE = file.file_id;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      } catch (err) { // use defined file ID if input is undefined above
+      } catch { // use defined file ID if input is undefined above
         FILE = FILE_ID;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
       }

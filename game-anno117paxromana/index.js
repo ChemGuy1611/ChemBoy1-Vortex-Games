@@ -77,7 +77,7 @@ function isDir(folder, file) {
 try {
   const SAVE_ARRAY = fs.readdirSync(SAVE_FOLDER);
   USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_FOLDER, entry));
-} catch(err) {
+} catch {
   USERID_FOLDER = "";
 }
 if (USERID_FOLDER === undefined) {
@@ -251,7 +251,7 @@ function makeFindGame(api, gameSpec) {
       throw new Error('empty registry key');
     }
     return () => Promise.resolve(instPath.value);
-  } catch (err) { //*/
+  } catch { //*/
     return () => util.GameStoreHelper.findByAppId(gameSpec.discovery.ids)
       .then((game) => game.gamePath);
   //}
@@ -299,7 +299,7 @@ function statCheckSync(gamePath, file) {
     fs.statSync(path.join(gamePath, file));
     return true;
   }
-  catch (err) {
+  catch {
     return false;
   }
 }
@@ -308,7 +308,7 @@ async function statCheckAsync(gamePath, file) {
     await fs.statAsync(path.join(gamePath, file));
     return true;
   }
-  catch (err) {
+  catch {
     return false;
   }
 }

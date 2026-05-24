@@ -275,7 +275,7 @@ if (hasUserIdFolder) {
   try {
     const SAVE_ARRAY = fs.readdirSync(SAVE_FOLDER);
     USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_FOLDER, entry));
-  } catch(err) {
+  } catch {
     USERID_FOLDER = "";
   }
   if (USERID_FOLDER === undefined) {
@@ -517,7 +517,7 @@ function statCheckSync(gamePath, file) {
     fs.statSync(path.join(gamePath, file));
     return true;
   }
-  catch (err) {
+  catch {
     return false;
   }
 }
@@ -526,7 +526,7 @@ async function statCheckAsync(gamePath, file) {
     await fs.statAsync(path.join(gamePath, file));
     return true;
   }
-  catch (err) {
+  catch {
     return false;
   }
 }
@@ -575,7 +575,7 @@ function makeFindGame(api, gameSpec) {
       throw new Error('empty registry key');
     }
     return () => Promise.resolve(instPath.value);
-  } catch (err) { //*/
+  } catch { //*/
     return () => util.GameStoreHelper.findByAppId(gameSpec.discovery.ids)
       .then((game) => game.gamePath);
   //}
@@ -1344,7 +1344,7 @@ async function isBrowserInstalled(api, spec) {
       GAME_PATH = getDiscoveryPath(api);
       await fs.statAsync(path.join(GAME_PATH, BROWSER_EXEC));
       test = true;
-    } catch (err) {
+    } catch {
       test = false;
     }
   }
@@ -1539,7 +1539,7 @@ async function isJsonManagerInstalled(api, spec) {
       GAME_PATH = getDiscoveryPath(api);
       await fs.statAsync(path.join(GAME_PATH, JSON_MANAGER_EXEC));
       test = true;
-    } catch (err) {
+    } catch {
       test = false;
     }
   }
@@ -1556,7 +1556,7 @@ async function isDmmInstalled(api, spec) {
       GAME_PATH = getDiscoveryPath(api);
       await fs.statAsync(path.join(GAME_PATH, DMM_EXEC));
       test = true;
-    } catch (err) {
+    } catch {
       test = false;
     }
   }
@@ -1573,7 +1573,7 @@ async function isSaveEditorInstalled(api, spec) {
       GAME_PATH = getDiscoveryPath(api);
       await fs.statAsync(path.join(GAME_PATH, SAVE_EDITOR_EXEC));
       test = true;
-    } catch (err) {
+    } catch {
       test = false;
     }
   }
@@ -1615,7 +1615,7 @@ async function downloadLoader(api, gameSpec, check = true) {
         }
         FILE = file.file_id;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      } catch (err) { // use defined file ID if input is undefined above
+      } catch { // use defined file ID if input is undefined above
         FILE = FILE_ID;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
       }
@@ -1681,7 +1681,7 @@ async function downloadBrowser(api, gameSpec, check = true) {
         }
         FILE = file.file_id;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      } catch (err) { // use defined file ID if input is undefined above
+      } catch { // use defined file ID if input is undefined above
         FILE = FILE_ID;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
       }
@@ -1747,7 +1747,7 @@ async function downloadJsonManager(api, gameSpec, check = true) {
         }
         FILE = file.file_id;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      } catch (err) { // use defined file ID if input is undefined above
+      } catch { // use defined file ID if input is undefined above
         FILE = FILE_ID;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
       }
@@ -1813,7 +1813,7 @@ async function downloadDmm(api, gameSpec, check = true) {
         }
         FILE = file.file_id;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      } catch (err) { // use defined file ID if input is undefined above
+      } catch { // use defined file ID if input is undefined above
         FILE = FILE_ID;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
       }
@@ -1880,7 +1880,7 @@ async function downloadSaveEditor(api, gameSpec, check = true) {
         }
         FILE = file.file_id;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      } catch (err) { // use defined file ID if input is undefined above
+      } catch { // use defined file ID if input is undefined above
         FILE = FILE_ID;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
       }
@@ -1988,7 +1988,7 @@ async function checkForUal(api, gameSpec) {
     try {
       await fs.statAsync(path.join(GAME_PATH, BINARIES_PATH, file));
       results.push(true);
-    } catch (err) {
+    } catch {
       results.push(false);
     }
   }
@@ -2344,7 +2344,7 @@ async function deleteMarkerFiles(api) {
     return Promise.resolve();
   }, { ignoreErrors: true });
   for (const markerPath of markerPaths) {
-    try { await fs.removeAsync(markerPath); } catch (err) { /* ignore */ }
+    try { await fs.removeAsync(markerPath); } catch { /* ignore */ }
   }
 }
 

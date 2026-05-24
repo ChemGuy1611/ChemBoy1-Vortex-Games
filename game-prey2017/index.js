@@ -158,7 +158,7 @@ function getExecutable(discoveryPath) {
       fs.statSync(path.join(discoveryPath, exec));
       return true;
     }
-    catch (err) {
+    catch {
       return false;
     }
   };
@@ -197,7 +197,7 @@ async function setGameVersion(gamePath) {
       fs.statSync(path.join(gamePath, exec));
       return true;
     }
-    catch (err) {
+    catch {
       return false;
     }
   };

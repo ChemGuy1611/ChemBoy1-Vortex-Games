@@ -168,7 +168,7 @@ function statCheckSync(gamePath, file) {
     fs.statSync(path.join(gamePath, file));
     return true;
   }
-  catch (err) {
+  catch {
     return false;
   }
 }
@@ -177,7 +177,7 @@ async function statCheckAsync(gamePath, file) {
     await fs.statAsync(path.join(gamePath, file));
     return true;
   }
-  catch (err) {
+  catch {
     return false;
   }
 }
@@ -338,7 +338,7 @@ async function downloadFluffy(api, gameSpec) {
         }
         FILE = file.file_id;
         URL = `nxm://${GAME_DOMAIN}/mods/${modPageId}/files/${FILE}`;
-      } catch (err) {
+      } catch {
         FILE = FILE_ID;
         URL = `nxm://${GAME_DOMAIN}/mods/${modPageId}/files/${FILE}`;
       }
@@ -409,7 +409,7 @@ async function downloadREFramework(api, gameSpec) {
         }
         FILE = file.file_id;
         URL = `nxm://${GAME_DOMAIN}/mods/${modPageId}/files/${FILE}`;
-      } catch (err) {
+      } catch {
         FILE = FILE_ID;
         URL = `nxm://${GAME_DOMAIN}/mods/${modPageId}/files/${FILE}`;
       }

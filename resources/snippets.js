@@ -153,7 +153,7 @@ function readRegistryKey(hive, key, name) {
       throw new Error('empty registry key');
     }
     return Promise.resolve(instPath.value);
-  } catch (err) {
+  } catch {
     return Promise.resolve(undefined);
   }
 }
@@ -182,7 +182,7 @@ function isDir(folder, file) {
 try {
   const SAVE_ARRAY = fs.readdirSync(SAVE_FOLDER);
   USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_FOLDER, entry));
-} catch(err) {
+} catch {
   USERID_FOLDER = "";
 }
 if (USERID_FOLDER === undefined) {
@@ -191,7 +191,7 @@ if (USERID_FOLDER === undefined) {
 let SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
 
 //Write section to an ini file //////////////////////////////////////////////////////
-function WriteIni(api) {
+async function WriteIni(api) {
   try { //Fallout4.ini
     const parser = new IniParser(new WinapiFormat());
     fs.statSync(INI_PATH_DEFAULT); //make sure the file exists
@@ -356,7 +356,6 @@ function installContent(files) {
 }
 
 // Re-zip installer //////////////////////////////////////////////////////
-const Bluebird = require('bluebird'); //DEPRECATED
 //Install zips
 async function installZipContent(files, destinationPath) {
   const zipFiles = files.filter(file => ['.zip', '.7z', '.rar'].includes(path.extname(file)));
@@ -726,7 +725,7 @@ function isModLoaderInstalled(api, spec) {
       GAME_PATH = getDiscoveryPath(api);
       fs.statSync(path.join(GAME_PATH, BINARIES_PATH, MODLOADER_MARKER));
       test = true;
-    } catch (err) {
+    } catch {
       test = false;
     }
   } //*/
@@ -787,7 +786,7 @@ async function downloadUe4ssNexus(api, gameSpec) {
         }
         FILE = file.file_id;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      } catch (err) { // use defined file ID if input is undefined above
+      } catch { // use defined file ID if input is undefined above
         FILE = FILE_ID;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
       }
@@ -972,7 +971,7 @@ async function downloadModManager(api, check) {
         }
         FILE = file.file_id;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      } catch (err) { // use defined file ID if input is undefined above
+      } catch { // use defined file ID if input is undefined above
         FILE = FILE_ID;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
       }
@@ -1337,7 +1336,7 @@ function isRsModsInstalled(discovery, api, spec) {
   try {
     fs.statSync(path.join(discovery.path, RSMODS_FILE));
     return true;
-  } catch (err) {
+  } catch {
     return false;
   }
 } //*/
@@ -1363,7 +1362,7 @@ async function downloadRsMods(discovery, api, gameSpec) {
 function isAsio4allInstalled() {
   try {
     return registryInstallCheck(ASIO4ALL_REGISTRY_KEY, ASIO4ALL_NAME);
-  } catch (err) {
+  } catch {
     return false;
   } //*/
 }
@@ -1640,7 +1639,7 @@ async function deserializeLoadOrder(context) {
         return modMatch.attributes.customFileName ?? modMatch.attributes.logicalFileName ?? modMatch.attributes.name;
       }
       return file;
-    } catch (err) {
+    } catch {
       return file;
     }
   }
@@ -1652,7 +1651,7 @@ async function deserializeLoadOrder(context) {
         return modMatch.id;
       }
       return undefined;
-    } catch (err) {
+    } catch {
       return undefined;
     }
   }
@@ -1719,7 +1718,7 @@ async function validate(context, prev, current) {
     try {
       await fs.statAsync(path.join(dataPath, entry.id));
     }
-    catch (err) {
+    catch {
       invalid.push({ id: entry.id, reason: 'File not found in Data folder' });
     }
   }
@@ -1786,7 +1785,7 @@ async function deserializeLoadOrder(context) {
         return modMatch.attributes.customFileName ?? modMatch.attributes.logicalFileName ?? modMatch.attributes.name;
       }
       return file;
-    } catch (err) {
+    } catch {
       return file;
     }
   }
@@ -1798,7 +1797,7 @@ async function deserializeLoadOrder(context) {
         return modMatch.id;
       }
       return undefined;
-    } catch (err) {
+    } catch {
       return undefined;
     }
   }
@@ -1932,7 +1931,7 @@ function getExecutable(discoveryPath) {
       fs.statSync(path.join(discoveryPath, exec));
       return true;
     }
-    catch (err) {
+    catch {
       return false;
     }
   };
@@ -2303,7 +2302,7 @@ async function psarcExtract(GAME_PATH, api) {
     fs.statSync(path.join(GAME_PATH, PSARCTOOL_PATH, BIN_FOLDER));
     fs.statSync(path.join(GAME_PATH, PSARCTOOL_PATH, 'pak68'));
     return true;
-  } catch (err) { //if the folders aren't there, the user probably clossed the terminal windows
+  } catch { //if the folders aren't there, the user probably clossed the terminal windows
     return false;
   }
 }
@@ -2370,7 +2369,7 @@ async function psarcCleanup(api) {
     try { //make sure vanilla file is not in place - this usually means the game was updated
       fs.statSync(path.join(GAME_PATH, PSARCTOOL_PATH, SPCOMPSARC_FILE));
       fs.unlinkAsync(path.join(GAME_PATH, PSARCTOOL_PATH, BAK_SPCOMPSARC_FILE));
-    } catch (err) { //vanilla file not present, safe to rename
+    } catch { //vanilla file not present, safe to rename
       await fs.renameAsync(path.join(GAME_PATH, PSARCTOOL_PATH, BAK_SPCOMPSARC_FILE), path.join(GAME_PATH, PSARCTOOL_PATH, SPCOMPSARC_FILE));
       //log('warn', `Renamed .psarc file ${BAK_SPCOMPSARC_FILE} to ${SPCOMPSARC_FILE}`);
     }
@@ -2382,7 +2381,7 @@ async function psarcCleanup(api) {
     try { //make sure vanilla file is not in place - this usually means the game was updated
       fs.statSync(path.join(GAME_PATH, PSARCTOOL_PATH, BINPSARC_FILE));
       fs.unlinkAsync(path.join(GAME_PATH, PSARCTOOL_PATH, BAK_BINPSARC_FILE));
-    } catch (err) {
+    } catch {
       await fs.renameAsync(path.join(GAME_PATH, PSARCTOOL_PATH, BAK_BINPSARC_FILE), path.join(GAME_PATH, PSARCTOOL_PATH, BINPSARC_FILE));
       //log('warn', `Renamed .psarc file ${BAK_BINPSARC_FILE} to ${BINPSARC_FILE}`);
     }
@@ -2406,7 +2405,7 @@ async function setGameVersion(discoveryPath) {
       fs.statSync(path.join(discoveryPath, exec));
       return true;
     }
-    catch (err) {
+    catch {
       return false;
     }
   };
@@ -2453,7 +2452,7 @@ function getShippingExe(gamePath) {
       fs.statSync(path.join(gamePath, exec));
       return true;
     }
-    catch (err) {
+    catch {
       return false;
     }
   };
@@ -2680,7 +2679,7 @@ async function updateJsonFiles(api) {
     try { //read JsonFiles.json file to get current list
       fs.statSync(path.join(GAME_PATH, JSON_PATH, JSONFILES_FILE));
       JSONFILES_JSON = JSON.parse(fs.readFileSync(path.join(GAME_PATH, JSON_PATH, JSONFILES_FILE)));
-    } catch (err) {
+    } catch {
       await fs.writeFileAsync(
         path.join(GAME_PATH, JSON_PATH, JSONFILES_FILE),
         `${JSON.stringify(DEFAULT_JSON, null, 2)}`,
@@ -2713,7 +2712,7 @@ async function resetJsonFiles(api) {
     try { //read JsonFiles.json file to get current list
       fs.statSync(path.join(GAME_PATH, JSON_PATH, JSONFILES_FILE));
       JSONFILES_JSON = JSON.parse(fs.readFileSync(path.join(GAME_PATH, JSON_PATH, JSONFILES_FILE)));
-    } catch (err) {
+    } catch {
       await fs.writeFileAsync(
         path.join(GAME_PATH, JSON_PATH, JSONFILES_FILE),
         `${JSON.stringify(DEFAULT_JSON, null, 2)}`,

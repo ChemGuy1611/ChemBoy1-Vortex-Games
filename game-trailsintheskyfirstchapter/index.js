@@ -306,7 +306,7 @@ function statCheckSync(gamePath, file) {
     fs.statSync(path.join(gamePath, file));
     return true;
   }
-  catch (err) {
+  catch {
     return false;
   }
 }
@@ -315,7 +315,7 @@ async function statCheckAsync(gamePath, file) {
     await fs.statAsync(path.join(gamePath, file));
     return true;
   }
-  catch (err) {
+  catch {
     return false;
   }
 }
@@ -456,7 +456,7 @@ async function filesRestore(workingPath, files) {
       try { //make sure no vanilla file - this usually means the game was updated
         await fs.statAsync(newName);
         await fs.unlinkAsync(file); //delete backup since original present
-      } catch (err) { //no vanilla file, safe to rename
+      } catch { //no vanilla file, safe to rename
         await fs.statAsync(file);
         await fs.renameAsync(file, newName);
         //log('warn', `Renamed file "${path.basename(file)}" to "${path.basename(newName)}"`);
@@ -494,7 +494,7 @@ async function pacExtract(GAME_PATH, api) {
   try { //stat an extracted folder
     await fs.statAsync(EXTRACTED_FOLDER);
     return true;
-  } catch (err) { //if the folder isn't there, the user probably interrupted somehow
+  } catch { //if the folder isn't there, the user probably interrupted somehow
     return false;
   }
 }
@@ -658,7 +658,7 @@ async function setupNotify(api) {
     await fs.statAsync(path.join(GAME_PATH, DATA_FOLDER));
     log('warn', `"${DATA_FOLDER}" folder found. Skipping setup notification.`);
   }
-  catch (err) { //*/
+  catch { //*/
     const NOTIF_ID = `${GAME_ID}-setuprequired`;
     const MESSAGE = `Game Data Extraction Required`;
     api.sendNotification({
@@ -871,7 +871,7 @@ async function didPurge(api, profileId) { //run on mod purge
   try {
     await fs.statAsync(path.join(GAME_PATH, DATA_FOLDER));
     await pacCleanupPurge(api);
-  } catch (err) {
+  } catch {
     log('warn', `Skipping "${DATA_FOLDER}" folder cleanup. Folder not found.`);
   }
   return Promise.resolve();

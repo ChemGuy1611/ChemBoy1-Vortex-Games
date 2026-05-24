@@ -184,7 +184,7 @@ function makeFindGame(api, gameSpec) {
       throw new Error('empty registry key');
     }
     return () => Promise.resolve(instPath.value);
-  } catch (err) {
+  } catch {
     return () => util.GameStoreHelper.findByAppId(gameSpec.discovery.ids)
       .then((game) => game.gamePath);
   }
@@ -499,7 +499,7 @@ async function downloadModLoader(api, gameSpec, check = true) {
         }
         FILE = file.file_id;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      } catch (err) { // use defined file ID if input is undefined above
+      } catch { // use defined file ID if input is undefined above
         FILE = FILE_ID;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
       } //

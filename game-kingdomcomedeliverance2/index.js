@@ -164,7 +164,7 @@ function statCheckSync(gamePath, file) {
     fs.statSync(path.join(gamePath, file));
     return true;
   }
-  catch (err) {
+  catch {
     return false;
   }
 }
@@ -173,7 +173,7 @@ async function statCheckAsync(gamePath, file) {
     await fs.statAsync(path.join(gamePath, file));
     return true;
   }
-  catch (err) {
+  catch {
     return false;
   }
 }
@@ -411,7 +411,7 @@ function installMod(files, fileName) {
         modName = XML.getElementsByTagName("modid")[0].childNodes[0].nodeValue;
         //log('info', `Mod Name: ${modName}`);
         MOD_FOLDER = modName;
-      } catch (err) { //could not get modid. Try for name, then lowercease and replace whitespace with "_"
+      } catch { //could not get modid. Try for name, then lowercease and replace whitespace with "_"
         modName = XML.getElementsByTagName("name")[0].childNodes[0].nodeValue;
         //log('info', `Mod Name: ${modName}`);
         const modNameLower = modName.toLowerCase();
@@ -443,7 +443,7 @@ function installMod(files, fileName) {
           { encoding: "utf8" },
         );
         //files.push(path.join(rootPath, 'mod.manifest'));
-      } catch (err) {
+      } catch {
         log('error', `Could not create a clean mod.manifest for mod ${MOD_NAME}`);
       }
     }
@@ -474,7 +474,7 @@ function installMod(files, fileName) {
         { encoding: "utf8" },
       );
       files.push(path.join(rootPath, 'mod.manifest'));
-    } catch (err) {
+    } catch {
       log('error', `Could not create mod.manifest for mod ${MOD_NAME}`);
     }
   }
@@ -504,7 +504,7 @@ function installMod(files, fileName) {
         { encoding: "utf8" },
       );
       files.push(path.join(rootPath, 'mod.manifest'));
-    } catch (err) {
+    } catch {
       log('error', `Could not create mod.manifest for mod ${MOD_NAME}`);
     }
   }
@@ -724,7 +724,7 @@ async function deserializeLoadOrder(context) {
       const STEAM_INSTALL_PATH = SPLIT_PATH.slice(0, SPLIT_PATH_LENGTH - 2).join(path.sep);
       //const STEAM_INSTALL_PATH = gameDir.replace(/\/common\/KindgomComeDeliverance2/, '');
       STEAMWORKSHOP_PATH = path.join(STEAM_INSTALL_PATH, STEAMWORKSHOP_FOLDER);
-    } catch (err) {
+    } catch {
       log('error', `Could not modify Steam game path to set Steam Workshop mods folder: ${gameDir}`);
     }
   }
@@ -797,7 +797,7 @@ async function deserializeLoadOrder(context) {
         const XML = parser.parseFromString(modManifest, 'text/xml');
         try { //try to get the modid from mod.manifest
           MOD_ID = XML.getElementsByTagName("modid")[0].childNodes[0].nodeValue;
-        } catch (err) { //could not get modid. Try for name, then lowercase and replace whitespace with "_"
+        } catch { //could not get modid. Try for name, then lowercase and replace whitespace with "_"
           const MOD_NAME = XML.getElementsByTagName("name")[0].childNodes[0].nodeValue;
           const MOD_NAME_LOWER = MOD_NAME.toLowerCase();
           MOD_ID = MOD_NAME_LOWER.replace(/ /gi, '_');
@@ -876,7 +876,7 @@ async function deserializeLoadOrder(context) {
         return modMatch.attributes.customFileName ?? modMatch.attributes.logicalFileName ?? modMatch.attributes.name;
       }
       return folder;
-    } catch (err) {
+    } catch {
       return folder;
     }
   }
@@ -889,7 +889,7 @@ async function deserializeLoadOrder(context) {
          return modMatch.id;
        }
        return undefined;
-     } catch (err) {
+     } catch {
        return undefined;
      }
    }

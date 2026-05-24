@@ -229,7 +229,7 @@ if (hasUserIdFolder) {
   try {
     const SAVE_ARRAY = fs.readdirSync(SAVE_FOLDER);
     USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_FOLDER, entry));
-  } catch(err) {
+  } catch {
     USERID_FOLDER = "";
   }
   if (USERID_FOLDER === undefined) {
@@ -409,7 +409,7 @@ function statCheckSync(gamePath, file) {
     fs.statSync(path.join(gamePath, file));
     return true;
   }
-  catch (err) {
+  catch {
     return false;
   }
 }
@@ -418,7 +418,7 @@ async function statCheckAsync(gamePath, file) {
     await fs.statAsync(path.join(gamePath, file));
     return true;
   }
-  catch (err) {
+  catch {
     return false;
   }
 }
@@ -492,7 +492,7 @@ function getUserIdFolder(savePath) {
   try {
     const SAVE_ARRAY = fs.readdirSync(savePath);
     USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(savePath, entry));
-  } catch(err) {
+  } catch {
     USERID_FOLDER = "";
   }
   if (USERID_FOLDER === undefined) {
@@ -670,7 +670,7 @@ async function setConfigPath(version) {
   try {
     const ARRAY = await fs.readdirAsync(DATA_PATH);
     STORE_FOLDER = ARRAY.find(entry => isDir(DATA_PATH, entry));
-  } catch(err) {
+  } catch {
     STORE_FOLDER = '';
   }
   if (STORE_FOLDER === undefined) {
@@ -689,7 +689,7 @@ async function setSavePath() {
   try {
     const ARRAY = await fs.readdirAsync(DATA_PATH);
     STORE_FOLDER = ARRAY.find(entry => isDir(DATA_PATH, entry));
-  } catch(err) {
+  } catch {
     STORE_FOLDER = '';
   }
   if (STORE_FOLDER === undefined) {
@@ -772,7 +772,7 @@ async function installModKitMod(files, fileName) {
     const JSON_OBJECT = JSON.parse(contents);
     const JSON_MOD_NAME = JSON_OBJECT["modPluginName"];
     MOD_FOLDER = JSON_MOD_NAME;
-  } catch (err) { //mod.json could not be read.
+  } catch { //mod.json could not be read.
     log('error', `Could not read mod.json file for mod ${MOD_NAME}.`);
   }
 
@@ -1028,7 +1028,7 @@ async function installScripts(api, files, fileName) {
         await fs.writeFileAsync(ENABLEDTXT_PATH, '', { encoding: "utf8" });
         files.push(path.join(path.dirname(scriptsFolder), ENABLEDTXT_FILE));
         log('info', `Successfully created ${ENABLEDTXT_FILE} for UE4SS Script Mod: ${MOD_NAME}`);
-      } catch (err) {
+      } catch {
         log('error', `Could not create ${ENABLEDTXT_FILE} for UE4SS Script Mod: ${MOD_NAME}`);
       }
     }
@@ -1102,7 +1102,7 @@ async function installDll(api, files, fileName) {
         await fs.writeFileAsync(ENABLEDTXT_PATH, '', { encoding: "utf8" });
         files.push(path.join(path.dirname(dllFolder), ENABLEDTXT_FILE));
         log('info', `Successfully created ${ENABLEDTXT_FILE} for UE4SS DLL Mod: ${MOD_NAME}`);
-      } catch (err) {
+      } catch {
         log('error', `Could not create ${ENABLEDTXT_FILE} for UE4SS DLL Mod: ${MOD_NAME}`);
       }
     }
@@ -1590,7 +1590,7 @@ async function downloadUe4ssNexus(api, gameSpec, check = true) {
         }
         FILE = file.file_id;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      } catch (err) { // use defined file ID if input is undefined above
+      } catch { // use defined file ID if input is undefined above
         FILE = FILE_ID;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
       }
@@ -1656,7 +1656,7 @@ async function downloadSigBypass(api, gameSpec, check = true) {
         }
         FILE = file.file_id;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      } catch (err) { // use defined file ID if input is undefined above
+      } catch { // use defined file ID if input is undefined above
         FILE = FILE_ID;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
       } //*/
@@ -1856,7 +1856,7 @@ async function deserializeUe4ss(api) {
         return modMatch.attributes.customFileName ?? modMatch.attributes.logicalFileName ?? modMatch.attributes.name;
       }
       return folder;
-    } catch (err) {
+    } catch {
       return folder;
     }
   }
@@ -1869,7 +1869,7 @@ async function deserializeUe4ss(api) {
         return modMatch.id;
       }
       return undefined;
-    } catch (err) {
+    } catch {
       return undefined;
     }
   }
@@ -2266,7 +2266,7 @@ async function getModKitPath() {
   let game = undefined;
   try {
     game = await util.GameStoreHelper.findByAppId(MODKITAPP_ID, 'epic');
-  } catch (err) {
+  } catch {
     //log('warn', `ModKit path not found`);
     return undefined;
   }

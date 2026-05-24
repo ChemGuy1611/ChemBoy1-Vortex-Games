@@ -320,7 +320,7 @@ function statCheckSync(gamePath, file) {
     fs.statSync(path.join(gamePath, file));
     return true;
   }
-  catch (err) {
+  catch {
     return false;
   }
 }
@@ -330,7 +330,7 @@ async function statCheckAsync(gamePath, file) {
     await fs.statAsync(path.join(gamePath, file));
     return true;
   }
-  catch (err) {
+  catch {
     return false;
   }
 }
@@ -747,7 +747,7 @@ function isRsModsInstalled(discovery, api, spec) {
   try {
     fs.statSync(path.join(discovery.path, RSMODS_FILE));
     return true;
-  } catch (err) {
+  } catch {
     return false;
   }
 }
@@ -756,7 +756,7 @@ function isCdlcInstalled(discovery, api, spec) {
   try {
     fs.statSync(path.join(discovery.path, CDLC_FILE));
     return true;
-  } catch (err) {
+  } catch {
     return false;
   }
 }
@@ -765,7 +765,7 @@ function isCfsmInstalled(discovery, api, spec) {
   try {
     fs.statSync(path.join(discovery.path, CFSM_PATH, CFSM_EXEC));
     return true;
-  } catch (err) {
+  } catch {
     return false;
   }
 }
@@ -775,7 +775,7 @@ function isNoCableInstalled(discovery, api, spec) {
   try {
     fs.statSync(path.join(discovery.path, NOCABLE_EXEC));
     return true;
-  } catch (err) {
+  } catch {
     return false;
   }
 }
@@ -784,7 +784,7 @@ function isRsAsioInstalled(discovery, api, spec) {
   try {
     fs.statSync(path.join(discovery.path, RSASIO_FILE));
     return true;
-  } catch (err) {
+  } catch {
     return false;
   }
 }
@@ -794,7 +794,7 @@ function isEofInstalled(discovery, api, spec) {
   try {
     fs.statSync(path.join(discovery.path, EOF_PATH, EOF_EXEC));
     return true;
-  } catch (err) {
+  } catch {
     return false;
   }
 }
@@ -803,7 +803,7 @@ function isDlcBuilderInstalled(discovery, api, spec) {
   try {
     fs.statSync(path.join(discovery.path, DLCBUILDER_PATH, DLCBUILDER_EXEC));
     return true;
-  } catch (err) {
+  } catch {
     return false;
   }
 }
@@ -812,7 +812,7 @@ function isDlcBuilderInstalled(discovery, api, spec) {
 function isAsio4allInstalled() {
   try {
     return registryInstallCheck(ASIO4ALL_REGISTRY_KEY, ASIO4ALL_NAME);
-  } catch (err) {
+  } catch {
     return false;
   } //*/
 }
@@ -1023,7 +1023,7 @@ async function downloadNoCable(discovery, api, gameSpec) {
         }
         FILE = file.file_id;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      } catch (err) {
+      } catch {
         FILE = FILE_ID;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
       }

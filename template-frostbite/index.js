@@ -209,7 +209,7 @@ function statCheckSync(gamePath, file) {
     fs.statSync(path.join(gamePath, file));
     return true;
   }
-  catch (err) {
+  catch {
     return false;
   }
 }
@@ -219,7 +219,7 @@ async function statCheckAsync(gamePath, file) {
     await fs.statAsync(path.join(gamePath, file));
     return true;
   }
-  catch (err) {
+  catch {
     return false;
   }
 }
@@ -286,7 +286,7 @@ function makeFindGame(api, gameSpec) {
       throw new Error('empty registry key');
     }
     return () => Promise.resolve(instPath.value);
-  } catch (err) {
+  } catch {
     return () => util.GameStoreHelper.findByAppId(gameSpec.discovery.ids)
       .then((game) => game.gamePath);
   }
@@ -326,7 +326,7 @@ async function isFrostyInstalled(api, spec) {
     try {
       await fs.statAsync(path.join(GAME_PATH, FROSTYMOD_FOLDER, FROSTY_EXEC));
       test = true;
-    } catch (err) {
+    } catch {
       test = false;
     }
   }
@@ -342,7 +342,7 @@ async function isPatchInstalled(api, spec) {
     try {
       await fs.statAsync(path.join(GAME_PATH, PATCH_PATH, PATCH_FILE));
       test = true;
-    } catch (err) {
+    } catch {
       test = false;
     }
   }

@@ -132,7 +132,7 @@ if (hasUserIdFolder) {
   try {
     const CONFIG_ARRAY = fs.readdirSync(CONFIG_FOLDER);
     USERID_FOLDER = CONFIG_ARRAY.find((entry) => isDir(CONFIG_FOLDER, entry));
-  } catch(err) {
+  } catch {
     USERID_FOLDER = "";
   }
   if (USERID_FOLDER === undefined) {
@@ -578,7 +578,7 @@ function statCheckSync(gamePath, file) {
     fs.statSync(path.join(gamePath, file));
     return true;
   }
-  catch (err) {
+  catch {
     return false;
   }
 }
@@ -587,7 +587,7 @@ async function statCheckAsync(gamePath, file) {
     await fs.statAsync(path.join(gamePath, file));
     return true;
   }
-  catch (err) {
+  catch {
     return false;
   }
 }
@@ -2571,7 +2571,7 @@ function isCustomInstalled(api, spec) {
   try {
     fs.statSync(path.join(GAME_PATH, CUSTOMLOADER_MARKER_PATH));
     fileTest = true;
-  } catch (err) {
+  } catch {
     fileTest = false;
   }
   return (idTest || fileTest);
@@ -2584,7 +2584,7 @@ function checkCustomInstalled(api, spec) {
   try {
     fs.statSync(path.join(GAME_PATH, CUSTOMLOADER_MARKER_PATH));
     fileTest = true;
-  } catch (err) {
+  } catch {
     customInstallerNotify(api);
     fileTest = false;
   }
@@ -2676,7 +2676,7 @@ function isMelonPrefManInstalled(api, spec) {
       GAME_PATH = getDiscoveryPath(api);
       fs.statSync(path.join(GAME_PATH, MELON_MODS_PATH, MELONPREFMAN_FILE));
       test = true;
-    } catch (err) {
+    } catch {
       test = false;
     }
   }
@@ -2763,7 +2763,7 @@ async function downloadBepinexNexus(api, gameSpec, check = true) {
         }
         FILE = file.file_id;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      } catch (err) { // use defined file ID if input is undefined above
+      } catch { // use defined file ID if input is undefined above
         FILE = FILE_ID;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
       }
@@ -2836,7 +2836,7 @@ async function downloadBepLoaderPatch(api, gameSpec, check = true) {
         }
         FILE = file.file_id;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      } catch (err) { // use defined file ID if input is undefined above
+      } catch { // use defined file ID if input is undefined above
         FILE = FILE_ID;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
       }
@@ -3021,7 +3021,7 @@ async function downloadMelonNexus(api, gameSpec, check = true) {
         }
         FILE = file.file_id;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      } catch (err) { // use defined file ID if input is undefined above
+      } catch { // use defined file ID if input is undefined above
         FILE = FILE_ID;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
       }
@@ -3087,7 +3087,7 @@ async function downloadCustom(api, gameSpec, check = true) {
         }
         FILE = file.file_id;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      } catch (err) { // use defined file ID if input is undefined above
+      } catch { // use defined file ID if input is undefined above
         FILE = FILE_ID;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
       }

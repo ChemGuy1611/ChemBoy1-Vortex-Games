@@ -278,7 +278,7 @@ function statCheckSync(gamePath, file) {
     fs.statSync(path.join(gamePath, file));
     return true;
   }
-  catch (err) {
+  catch {
     return false;
   }
 }
@@ -288,7 +288,7 @@ async function statCheckAsync(gamePath, file) {
     await fs.statAsync(path.join(gamePath, file));
     return true;
   }
-  catch (err) {
+  catch {
     return false;
   }
 }
@@ -501,7 +501,7 @@ function installPak(files, fileName) {
     const JSON_OBJECT = JSON.parse(fs.readFileSync(path.join(fileName, rootPath, UE5KITMOD_FILE)));
     const JSON_MOD_NAME = JSON_OBJECT["folderName"];
     MOD_FOLDER = JSON_MOD_NAME;
-  } catch (err) { //modinfo.json could not be read.
+  } catch { //modinfo.json could not be read.
     log('error', `Could not read modinfo.json file for mod ${MOD_NAME}.`);
   }
 
@@ -650,7 +650,7 @@ function installScripts(files, fileName) {
       );
       files.push(path.join(rootPath, ENABLEDTXT_FILE));
       log('info', `Successfully created enabled.txt for UE4SS Script Mod: ${MOD_NAME}`);
-    } catch (err) {
+    } catch {
       log('error', `Could not create enabled.txt for UE4SS Script Mod: ${MOD_NAME}`);
     }
   }
@@ -714,7 +714,7 @@ function installDll(files, fileName) {
       );
       files.push(path.join(rootPath, ENABLEDTXT_FILE));
       log('info', `Successfully created enabled.txt for UE4SS DLL Mod: ${MOD_NAME}`);
-    } catch (err) {
+    } catch {
       log('error', `Could not create enabled.txt for UE4SS DLL Mod: ${MOD_NAME}`);
     }
   }
@@ -986,7 +986,7 @@ async function downloadSigBypass(api, gameSpec) {
         }
         FILE = file.file_id;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      } catch (err) { // use defined file ID if input is undefined above
+      } catch { // use defined file ID if input is undefined above
         FILE = FILE_ID;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
       }
@@ -1341,7 +1341,7 @@ async function getModKitPath() {
   let game = undefined;
   try {
     game = await util.GameStoreHelper.findByAppId(MODKITAPP_ID, 'epic');
-  } catch (err) {
+  } catch {
     //log('warn', `ModKit path not found`);
     return undefined;
   }

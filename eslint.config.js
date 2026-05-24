@@ -4,11 +4,14 @@ const globals = require("globals");
 
 module.exports = defineConfig([
   {
+    ignores: ["resources/snippets.js"],
+  },
+  {
     files: ["**/*.js"],
     plugins: { js },
     extends: ["js/recommended"],
     rules: {
-      "no-unused-vars": "off",
+      "no-unused-vars": ["warn", { "vars": "all", "args": "after-used", "ignoreRestSiblings": true }],
       "no-useless-assignment": "off",
       "no-unsafe-finally": "off",
       "require-yield": "off",

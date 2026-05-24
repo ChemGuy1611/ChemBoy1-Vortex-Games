@@ -296,7 +296,7 @@ function statCheckSync(gamePath, file) {
     fs.statSync(path.join(gamePath, file));
     return true;
   }
-  catch (err) {
+  catch {
     return false;
   }
 }
@@ -306,7 +306,7 @@ async function statCheckAsync(gamePath, file) {
     await fs.statAsync(path.join(gamePath, file));
     return true;
   }
-  catch (err) {
+  catch {
     return false;
   }
 }
@@ -616,7 +616,7 @@ function installDll(files, fileName) {
       );
       files.push(path.join(rootPath, ENABLEDTXT_FILE));
       log('info', `Successfully created enabled.txt for UE4SS DLL Mod: ${MOD_NAME}`);
-    } catch (err) {
+    } catch {
       log('error', `Could not create enabled.txt for UE4SS DLL Mod: ${MOD_NAME}`);
     }
   }
@@ -1094,7 +1094,7 @@ async function downloadSigBypass(api, gameSpec) {
         }
         FILE = file.file_id;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      } catch (err) { // use defined file ID if input is undefined above
+      } catch { // use defined file ID if input is undefined above
         FILE = FILE_ID;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
       }
@@ -1161,7 +1161,7 @@ async function downloadModLoader(api, gameSpec) {
         }
         FILE = file.file_id;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      } catch (err) { // use defined file ID if input is undefined above
+      } catch { // use defined file ID if input is undefined above
         FILE = FILE_ID;
         URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
       }
@@ -1375,7 +1375,7 @@ async function updateJsonFiles(api) { // Write json file list to JsonFiles.json 
       await fs.statAsync(JSONFILES_FILEPATH);
       const contents = await fs.readFileAsync(JSONFILES_FILEPATH);
       JSONFILES_JSON = JSON.parse(contents);
-    } catch (err) { //write the file with default content if it doesn't exist
+    } catch { //write the file with default content if it doesn't exist
       await fs.writeFileAsync(
         JSONFILES_FILEPATH,
         JSON.stringify(DEFAULT_JSON, null, 2),
@@ -1410,7 +1410,7 @@ async function resetJsonFiles(api) { // Reset JsonFiles.json file (on purge)
       await fs.statAsync(JSONFILES_FILEPATH);
       const contents = await fs.readFileAsync(JSONFILES_FILEPATH);
       JSONFILES_JSON = JSON.parse(contents);
-    } catch (err) { //write the file with default content if it doesn't exist
+    } catch { //write the file with default content if it doesn't exist
       await fs.writeFileAsync(
         JSONFILES_FILEPATH,
         JSON.stringify(DEFAULT_JSON, null, 2),
@@ -1563,7 +1563,7 @@ async function setup(discovery, api, gameSpec) {
   try {
     const SAVE_ARRAY = fs.readdirSync(SAVE_FOLDER);
     USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_FOLDER, entry));
-  } catch(err) {
+  } catch {
     USERID_FOLDER = "";
   }
   if (USERID_FOLDER === undefined) {
@@ -1574,7 +1574,7 @@ async function setup(discovery, api, gameSpec) {
     fs.statSync(path.join(GAME_PATH, JSON_PATH, JSONFILES_FILE));
     JSONFILES_JSON = JSON.parse(fs.readFileSync(path.join(GAME_PATH, JSON_PATH, JSONFILES_FILE)));
     DEFAULT_ARRAY = JSONFILES_JSON[JSONFILES_KEY];
-  } catch (err) {
+  } catch {
     await fs.writeFileAsync(
       path.join(GAME_PATH, JSON_PATH, JSONFILES_FILE),
       `${JSON.stringify(DEFAULT_JSON, null, 2)}`,

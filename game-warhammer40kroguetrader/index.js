@@ -348,7 +348,7 @@ function statCheckSync(gamePath, file) {
     fs.statSync(path.join(gamePath, file));
     return true;
   }
-  catch (err) {
+  catch {
     return false;
   }
 }
@@ -357,7 +357,7 @@ async function statCheckAsync(gamePath, file) {
     await fs.statAsync(path.join(gamePath, file));
     return true;
   }
-  catch (err) {
+  catch {
     return false;
   }
 }
@@ -1078,7 +1078,7 @@ async function deserializeLoadOrder(context) {
         return modMatch.attributes.customFileName ?? modMatch.attributes.logicalFileName ?? modMatch.attributes.name;
       }
       return folder;
-    } catch (err) {
+    } catch {
       return folder;
     }
   }
@@ -1091,7 +1091,7 @@ async function deserializeLoadOrder(context) {
         return modMatch.id;
       }
       return undefined;
-    } catch (err) {
+    } catch {
       return undefined;
     }
   }
@@ -1239,7 +1239,7 @@ async function setup(discovery, api, gameSpec) {
           { encoding: "utf8" },
         );
       }
-    } catch (err) {
+    } catch {
       await fs.writeFileAsync(
         LO_FILE_PATH,
         JSON.stringify(LO_FILE_EMPTY, null, 2),
