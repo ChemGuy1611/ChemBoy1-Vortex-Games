@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.4.2] - 2026-05-24
+
+- Fixed: Launcher for DMM to account for .exe file name with version number. Launch tool must be defined manually if desired.
+
 ## [0.4.1] - 2026-05-22
 
 - Fixed: Remove "__folder_managed_by_vortex" marker files from "mods" folder on deploy - avoid unnecessary conflicts in DMM.

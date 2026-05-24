@@ -22,8 +22,6 @@
 | Game ID | `crimsondesert` |
 | Executable | `bin64/CrimsonDesert.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
-| Executable (GOG) | `bin64/CrimsonDesert.exe` |
-| Executable (Demo) | `bin64/CrimsonDesert.exe` |
 | Extension Page | [https://www.nexusmods.com/site/mods/1746](https://www.nexusmods.com/site/mods/1746) |
 | PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Crimson_Desert](https://www.pcgamingwiki.com/wiki/Crimson_Desert) |
 
@@ -58,6 +56,7 @@ Mod types define where each category of mod gets deployed:
 | Patch Mod | `crimsondesert-patchmod` | high | `{gamePath}/mods` |
 | Root Folder | `crimsondesert-root` | high | `{gamePath}` |
 | Tools | `crimsondesert-tools` | low | `{gamePath}` |
+| Definitive Mod Manager | `crimsondesert-dmm` | low | `{gamePath}` |
 | Binaries (Engine Injector) | `crimsondesert-binaries` | high | `{gamePath}/bin64` |
 
 ## Mod Installers
@@ -67,6 +66,7 @@ Installers run in priority order (lower number = tested first). The first instal
 | Installer ID | Priority |
 | --- | --- |
 | `crimsondesert-root` | 27 |
+| `crimsondesert-dmm` | 28 |
 | `crimsondesert-tools` | 29 |
 | `crimsondesert-specialpatchmod` | 31 |
 | `crimsondesert-browsermod` | 32 |

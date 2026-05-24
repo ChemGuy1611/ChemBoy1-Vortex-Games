@@ -16,6 +16,7 @@ The `fomod-installer` package exposes two modes:
 Vortex uses the **Native** mode exclusively. C# script support (rare; used by some older Bethesda mods) is not currently enabled in production.
 
 **Source locations:**
+
 - `fomod-installer/src/ModInstaller.Native.TypeScript/src/` — TypeScript wrapper for native binding
 - `Vortex/src/renderer/src/extensions/installer_fomod_native/` — Vortex extension
 - `Vortex/src/renderer/src/extensions/installer_fomod_shared/` — shared utilities (gameSupport, helpers)
@@ -55,7 +56,7 @@ This applies to **all** installer test functions including the fallback (`testFa
 
 ## Install Flow
 
-```
+```text
 archive selected
   → Vortex runs testSupported() for each registered installer (priority order)
   → FOMOD installer wins at priority 10 (XmlScript) or 100 (Basic)
@@ -172,6 +173,7 @@ The `stopPatterns` for Bethesda games include: `\.esp$`, `\.esm$`, `\.esl$`, `\.
 ## Error Handling
 
 If ModuleConfig.xml fails XML validation the installer:
+
 1. Shows an error notification
 2. Offers an **"Ignore"** action that retries installation with validation disabled
 
@@ -212,6 +214,7 @@ interface IInstallStep {
 ```
 
 Callbacks passed to dialog management:
+
 - `SelectCallback` — called when user selects/deselects a plugin
 - `ContinueCallback` — called when user clicks Next/Finish
 - `CancelCallback` — called when user cancels; throws `UserCanceled`

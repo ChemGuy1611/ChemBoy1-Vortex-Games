@@ -2,8 +2,8 @@
 Name: Crimson Desert Vortex Extension
 Structure: Basic Game w/ 3rd Party Manager Integration
 Author: ChemBoy1
-Version: 0.4.1
-Date: 2026-05-22
+Version: 0.4.2
+Date: 2026-05-24
 Notes:
 - Supports plugin mods and data mods with "00XX" folders (XX <= 35)
 - Supports Crimson Browser (manifest.json and files folder) and JSON Mod Manager (.json or "0036+" folder) mods
@@ -16,8 +16,8 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 const { parseStringPromise } = require('xml2js');
-const winapi = require('winapi-bindings');
-const semver = require('semver');
+//const winapi = require('winapi-bindings');
+//const semver = require('semver');
 //const fsPromises = require('fs/promises'); //.rm() for recursive folder deletion
 //const fsExtra = require('fs-extra');
 //const turbowalk = require('turbowalk');
@@ -31,27 +31,27 @@ const LOCALAPPDATA = util.getVortexPath("localAppData");
 //Specify all the information about the game
 const GAME_ID = "crimsondesert";
 const STEAMAPP_ID = "3321460"; //https://steamdb.info/app/3321460/depots/
-const STEAMAPP_ID_DEMO = null;
+//const STEAMAPP_ID_DEMO = null;
 const EPICAPP_ID = "0230d0150e9f45d49dce401e1103c9fc"; // https://egdata.app/offers/93fa632bf25b4361abb3a79c86e3f822/builds
 const GOGAPP_ID = null;
 const XBOXAPP_ID = "XXX"; //not on Game Pass. Cannot get info
 const XBOXEXECNAME = "XXX";
-const XBOX_PUB_ID = ""; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
+//const XBOX_PUB_ID = ""; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 const GAME_NAME = "Crimson Desert";
 const GAME_NAME_SHORT = "Crimson Desert";
 const BINARIES_PATH = 'bin64';
 const EXEC_NAME = "CrimsonDesert.exe";
 const EXEC = path.join(BINARIES_PATH, EXEC_NAME);
-const EXEC_EGS = EXEC; //change other versions if different than Steam/default
-const EXEC_GOG = EXEC;
-const EXEC_DEMO = EXEC;
+//const EXEC_EGS = EXEC; //change other versions if different than Steam/default
+//const EXEC_GOG = EXEC;
+//const EXEC_DEMO = EXEC;
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Crimson_Desert";
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1746"; //Nexus link to this extension. Used for links
 //for finding install in registry - requires winapi-bindings
-const INSTALL_HIVE = 'HKEY_LOCAL_MACHINE'; //typically HKEY_LOCAL_MACHINE or HKEY_CURRENT_USER
-const INSTALL_KEY = `SOFTWARE\\WOW6432Node\\XXX\\XXX`; //fill in path
-const INSTALL_VALUE = "XXX"; //often InstallDir or InstallPath
+//const INSTALL_HIVE = 'HKEY_LOCAL_MACHINE'; //typically HKEY_LOCAL_MACHINE or HKEY_CURRENT_USER
+//const INSTALL_KEY = `SOFTWARE\\WOW6432Node\\XXX\\XXX`; //fill in path
+//const INSTALL_VALUE = "XXX"; //often InstallDir or InstallPath
 const RESHADE_URL = "https://reshade.me/#download";
 
 //feature toggles
@@ -103,9 +103,9 @@ log('warn', `FOLDER_NAME: ${FOLDER_NAME}`);
 const MOD_STARTING_INDEX = +VANILLA_ENDING_FOLDERNAME + 1; //Naming folders subsequent will load the mod data after vanilla, so you don't have to repack the ENTIRE game file.
 //*/
 const DATA_FOLDERS = ['meta',
-  '0000', 
-  '0001', 
-  '0002', 
+  '0000',
+  '0001',
+  '0002',
   '0003',
   '0004',
   '0005',
@@ -207,7 +207,8 @@ const SAVE_EDITOR_FILE_STRING = 'Save Editor';
 
 const DMM_ID = `${GAME_ID}-dmm`;
 const DMM_NAME = "Definitive Mod Manager";
-const DMM_EXEC = 'DMM.exe';
+const DMM_EXEC_STRING = 'DMM';
+let DMM_EXEC = 'DMM.exe';
 const DMM_ARGS = [];
 const DMM_PAGE_NO = 633;
 const DMM_FILE_NO = 9166;
@@ -216,7 +217,7 @@ const DMM_DOMAIN = GAME_ID;
 const TOOLS_ID = `${GAME_ID}-tools`;
 const TOOLS_NAME = "Tools";
 const KNOWN_TOOLS_FILES = [
-  DMM_EXEC,
+  //DMM_EXEC,
   JSON_MANAGER_EXEC,
   BROWSER_EXEC,
   SAVE_EDITOR_EXEC,
@@ -366,6 +367,12 @@ const spec = {
       "priority": "low",
       "targetPath": "{gamePath}"
     },
+    {
+      "id": DMM_ID,
+      "name": DMM_NAME,
+      "priority": "low",
+      "targetPath": "{gamePath}"
+    },
   ],
   "discovery": {
     "ids": DISCOVERY_IDS_ACTIVE,
@@ -383,7 +390,7 @@ if (binariesInstaller) {
 }
 
 //3rd party tools and launchers
-const tools = [ //accepts: exe, jar, py, vbs, bat
+let tools = [ //accepts: exe, jar, py, vbs, bat
   {
     id: `${GAME_ID}-customlaunch`,
     name: 'Custom Launch',
@@ -424,19 +431,6 @@ const tools = [ //accepts: exe, jar, py, vbs, bat
     exclusive: false,
     //shell: true,
     //parameters: [],
-  }, //*/
-  {
-    id: DMM_ID,
-    name: DMM_NAME,
-    logo: 'dmm.png',
-    executable: () => DMM_EXEC,
-    requiredFiles: [
-      DMM_EXEC,
-    ],
-    relative: true,
-    exclusive: false,
-    //shell: true,
-    //parameters: DMM_ARGS,
   }, //*/
   {
     id: JSON_MANAGER_ID,
@@ -614,6 +608,33 @@ async function requiresLauncher(gamePath, store) {
 
 //Get correct executable for game version
 function getExecutable(discoveryPath) {
+  /*try {
+    let files = fs.readdirSync(discoveryPath);
+    files = files.filter(file => (
+      path.basename(file).startsWith(DMM_EXEC_STRING)
+      && path.extname(file).toLowerCase() === '.exe'
+    ));
+    if (files !== undefined && files.length > 0) {
+      DMM_EXEC = files.sort((a,b) => a.toLowerCase().localeCompare(b.toLowerCase()))
+        .reverse()[0];
+      log('warn', `Found ${DMM_EXEC} for ${GAME_NAME}`);
+      tools.push({
+        id: DMM_ID,
+        name: DMM_NAME,
+        logo: 'dmm.png',
+        executable: () => DMM_EXEC,
+        requiredFiles: [
+          DMM_EXEC,
+        ],
+        relative: true,
+        exclusive: false,
+      });
+    } else {
+      //pass
+    }
+  } catch(err) {
+    log('warn', `DMM not found at ${discoveryPath}: ${err.message}`);
+  } //*/
   if (statCheckSync(discoveryPath, EXEC_XBOX)) {
     GAME_VERSION = 'xbox';
     return EXEC_XBOX;
@@ -736,6 +757,53 @@ function installRoot(files) {
   const idx = modFile.indexOf(ROOT_IDX);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Test for DMM exe file
+function testDmm(files, gameId) {
+  const isDmm = files.some(file => (
+    path.basename(file).startsWith(DMM_EXEC_STRING)
+    && path.extname(file).toLowerCase() === '.exe'
+  ));
+  let supported = (gameId === spec.game.id) && isDmm;
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install DMM exe file
+function installDmm(files) {
+  const MOD_TYPE = DMM_ID;
+  const modFile = files.find(file => (
+    path.basename(file).startsWith(DMM_EXEC_STRING)
+    && path.extname(file).toLowerCase() === '.exe'
+  ));
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
@@ -1209,7 +1277,7 @@ function installBinaries(files) {
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
-  
+
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
     ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
@@ -1246,7 +1314,7 @@ function testFallback(files, gameId) {
 function installFallback(api, files, destinationPath) {
   fallbackInstallerNotify(api, destinationPath);
   const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
-  
+
   const filtered = files.filter(file =>
     (!file.endsWith(path.sep))
   );
@@ -1286,7 +1354,7 @@ function fallbackInstallerNotify(api, modName) {
                 + `If you think that Vortex should be capable to install this mod to a specific folder, please contact the extension developer for support at the link below.\n`
                 + `\n`
                 + `Mod Name: ${modName}.\n`
-                + `\n`             
+                + `\n`
           }, [
             { label: 'Continue', action: () => dismiss() },
             {
@@ -1305,7 +1373,7 @@ function fallbackInstallerNotify(api, modName) {
               if (modMatch) {
                 const MOD_ID = modMatch.attributes.modId;
                 if (MOD_ID !== undefined) {
-                  PAGE = `${MOD_ID}?tab=description`; 
+                  PAGE = `${MOD_ID}?tab=description`;
                 }
               }
               const MOD_PAGE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${PAGE}`;
@@ -1554,9 +1622,34 @@ async function isDmmInstalled(api, spec) {
   if (test === false) {
     try {
       GAME_PATH = getDiscoveryPath(api);
-      await fs.statAsync(path.join(GAME_PATH, DMM_EXEC));
-      test = true;
-    } catch {
+      let files = await fs.readdirAsync(GAME_PATH);
+      files = files.filter(file => (
+        path.basename(file).startsWith(DMM_EXEC_STRING)
+        && path.extname(file).toLowerCase() === '.exe'
+      ));
+      if (files !== undefined && files.length > 0) {
+        DMM_EXEC = files.sort((a,b) => a.toLowerCase().localeCompare(b.toLowerCase()))
+          .reverse()[0];
+        log('warn', `Found ${DMM_EXEC} for ${GAME_NAME}`);
+        tools.push({
+          id: DMM_ID,
+          name: DMM_NAME,
+          logo: 'dmm.png',
+          executable: () => DMM_EXEC,
+          requiredFiles: [
+            DMM_EXEC,
+          ],
+          relative: true,
+          exclusive: false,
+          //shell: true,
+          //parameters: DMM_ARGS,
+        });
+        test = true;
+      } else {
+        test = false;
+      }
+    } catch(err) {
+      log('warn', `DMM not found at ${GAME_PATH}: ${err.message}`);
       test = false;
     }
   }
@@ -1783,7 +1876,7 @@ async function downloadDmm(api, gameSpec, check = true) {
   let isInstalled = await isDmmInstalled(api, gameSpec);
   if (!isInstalled || !check) {
     const MOD_NAME = DMM_ID;
-    const MOD_TYPE = TOOLS_ID;
+    const MOD_TYPE = DMM_ID;
     const NOTIF_ID = `${MOD_TYPE}-installing`;
     const PAGE_ID = DMM_PAGE_NO;
     const FILE_ID = DMM_FILE_NO;  //If using a specific file id because "input" below gives an error
@@ -1965,7 +2058,7 @@ async function resolveGameVersion(gamePath) {
     try {
       const exeVersion = require('exe-version');
       version = exeVersion.getProductVersion(path.join(gamePath, EXEC));
-      return Promise.resolve(version); 
+      return Promise.resolve(version);
     } catch (err) {
       log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
       return Promise.resolve(version);
@@ -1980,7 +2073,6 @@ async function modFoldersEnsureWritable(gamePath, relPaths) {
 }
 
 async function checkForUal(api, gameSpec) {
-  const state = api.getState();
   GAME_PATH = getDiscoveryPath(api);
   let results = [];
   for (let index = 0; index < UAL_FILES.length; index++) {
@@ -2139,52 +2231,52 @@ function applyGame(context, gameSpec) {
   });
 
   /*register mod types explicitly
-  context.registerModType(CONFIG_ID, 60, 
+  context.registerModType(CONFIG_ID, 60,
     (gameId) => {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, 
-    (game) => pathPattern(context.api, game, CONFIG_PATH), 
-    () => Promise.resolve(false), 
+    },
+    (game) => pathPattern(context.api, game, CONFIG_PATH),
+    () => Promise.resolve(false),
     { name: CONFIG_NAME }
   ); //
-  context.registerModType(SAVE_ID, 62, 
+  context.registerModType(SAVE_ID, 62,
     (gameId) => {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, 
-    (game) => pathPattern(context.api, game, SAVE_PATH), 
-    () => Promise.resolve(false), 
+    },
+    (game) => pathPattern(context.api, game, SAVE_PATH),
+    () => Promise.resolve(false),
     { name: SAVE_NAME }
   ); //*/
 
   if (hasLoader) {
-    context.registerModType(LOADER_ID, 70, 
+    context.registerModType(LOADER_ID, 70,
       (gameId) => {
         var _a;
         return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-      }, 
-      (game) => pathPattern(context.api, game, path.join('{gamePath}', LOADER_PATH)), 
-      () => Promise.resolve(false), 
+      },
+      (game) => pathPattern(context.api, game, path.join('{gamePath}', LOADER_PATH)),
+      () => Promise.resolve(false),
       { name: LOADER_NAME }
     );
   }
 
   //Vortex mod type - merger from LO and patch on deploy
   if (loadOrder) {
-    context.registerModType(VORTEX_MOD_ID, 25, 
+    context.registerModType(VORTEX_MOD_ID, 25,
       (gameId) => {
         var _a;
         return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-      }, 
-      (game) => pathPattern(context.api, game, path.join('{gamePath}', VORTEX_MOD_PATH)), 
-      () => Promise.resolve(false), 
+      },
+      (game) => pathPattern(context.api, game, path.join('{gamePath}', VORTEX_MOD_PATH)),
+      () => Promise.resolve(false),
       { name: VORTEX_MOD_NAME
         //mergeMods: (mod) => loadOrderPrefix(context.api, mod)
        }
     );
   }
-  
+
   //register mod installers
   if (hasLoader) {
     context.registerInstaller(LOADER_ID, 25, testLoader, installLoader);
@@ -2192,6 +2284,7 @@ function applyGame(context, gameSpec) {
   if (rootInstaller) {
     context.registerInstaller(ROOT_ID, 27, testRoot, installRoot);
   }
+  context.registerInstaller(DMM_ID, 28, testDmm, installDmm);
   context.registerInstaller(TOOLS_ID, 29, testTools, installTools);
   if (!loadOrder) {
     context.registerInstaller(`${GAME_ID}-specialpatchmod`, 31, testSpecialPatchMod, installSpecialPatchMod);
@@ -2313,14 +2406,14 @@ function main(context) {
   }
   context.once(() => { // put code here that should be run (once) when Vortex starts up
     const api = context.api;
-    api.onAsync('did-deploy', async (profileId, deployment) => { 
+    api.onAsync('did-deploy', async (profileId, deployment) => {
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;
       //! patch metadata - NO METHOD YET
       deleteMarkerFiles(api);
       return deployNotify(api);
     });
-    /*api.onAsync('did-purge', async (profileId) => { 
+    /*api.onAsync('did-purge', async (profileId) => {
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;
       //*Purge folders 0036+ on purge?
@@ -2332,7 +2425,6 @@ function main(context) {
 
 //delete __folder_managed_by_vortex marker files
 async function deleteMarkerFiles(api) {
-  const state = api.getState();
   GAME_PATH = getDiscoveryPath(api);
   const folder = path.join(GAME_PATH, PATCH_MOD_PATH);
   //walk the folder and delete any marker files found
@@ -2363,7 +2455,8 @@ function deployNotify(api) {
         title: 'Run DMM',
         action: async (dismiss) => {
           if (await isDmmInstalled(api, spec)) {
-            runManager(api, DMM_ID, DMM_NAME, DMM_ARGS);
+            //runManager(api, DMM_ID, DMM_NAME, DMM_ARGS);
+            runDmm(api, DMM_EXEC);
           } else {
             api.showErrorNotification(`DMM is not installed.`, undefined, { allowReport: false });
           }
@@ -2391,7 +2484,8 @@ function deployNotify(api) {
             {
               label: `Run ${MOD_NAME}`, action: async () => {
                 if (await isDmmInstalled(api, spec)) {
-                  runManager(api, DMM_ID, DMM_NAME, DMM_ARGS);
+                  //runManager(api, DMM_ID, DMM_NAME, DMM_ARGS);
+                  runDmm(api, DMM_EXEC);
                 } else {
                   api.showErrorNotification(`DMM is not installed.`, undefined, { allowReport: false });
                 }
@@ -2411,7 +2505,8 @@ function deployNotify(api) {
             /*{
               label: `Run BOTH!`, action: async () => {
                 if (await isDmmInstalled(api, spec)) {
-                  runManager(api, DMM_ID, DMM_NAME);
+                  //runManager(api, DMM_ID, DMM_NAME, DMM_ARGS);
+                  runDmm(api, DMM_EXEC);
                 } else {
                   api.showErrorNotification(`DMM is not installed.`, undefined, { allowReport: false });
                 }
@@ -2435,6 +2530,57 @@ function deployNotify(api) {
       },
     ],
   });
+}
+
+async function runDmm(api, file, args = []) {
+  GAME_PATH = getDiscoveryPath(api);
+  const TOOL_NAME = DMM_NAME;
+  try {
+    GAME_PATH = getDiscoveryPath(api);
+    let files = await fs.readdirAsync(GAME_PATH);
+    files = files.filter(file => (
+      path.basename(file).startsWith(DMM_EXEC_STRING)
+      && path.extname(file).toLowerCase() === '.exe'
+    ));
+    if (files !== undefined && files.length > 0) {
+      DMM_EXEC = files.sort((a,b) => a.toLowerCase().localeCompare(b.toLowerCase()))
+        .reverse()[0];
+      file = DMM_EXEC;
+      log('warn', `Found ${DMM_EXEC} for ${GAME_NAME}`);
+      tools.push({
+        id: DMM_ID,
+        name: DMM_NAME,
+        logo: 'dmm.png',
+        executable: () => DMM_EXEC,
+        requiredFiles: [
+          DMM_EXEC,
+        ],
+        relative: true,
+        exclusive: false,
+        //shell: true,
+        //parameters: DMM_ARGS,
+      });
+      //pass
+    } else {
+      //pass
+    }
+  } catch(err) {
+    log('warn', `DMM exe not found at ${GAME_PATH}: ${err.message}`);
+  }
+  try {
+    const TOOL_PATH = path.join(GAME_PATH, file);
+    if (TOOL_PATH !== undefined) {
+      return api.runExecutable(TOOL_PATH, args, { suggestDeploy: false })
+        .catch(err => api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err,
+          { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 })
+        );
+    }
+    else {
+      return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, `Path to ${TOOL_NAME} executable could not be found. Ensure ${TOOL_NAME} is installed through Vortex.`);
+    }
+  } catch (err) {
+    return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 });
+  }
 }
 
 function runManager(api, id, name, args = []) {
