@@ -1,0 +1,24 @@
+{
+  "eslint.rules.customizations": [
+    { "rule": "no-unused-vars", "severity": "info" },
+    { "rule": "no-useless-assignment", "severity": "info" },
+    { "rule": "no-unsafe-finally", "severity": "info" },
+    { "rule": "require-yield", "severity": "info" }
+  ],
+  "eslint.useFlatConfig": true,
+  "editor.codeActionsOnSave": {
+    "source.fixAll.eslint": "explicit"
+  },
+  "search.exclude": {
+    "**/*.zip": true,
+    "**/node_modules": true,
+    "**/*.jpg": true,
+    "**/*.png": true,
+    "**/*.ico": true,
+    "**/*.svg": true
+  },
+  "[javascript]": {
+    "editor.defaultFormatter": "esbenp.prettier-vscode",
+    "editor.formatOnSave": false
+  }
+}

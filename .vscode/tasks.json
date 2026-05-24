@@ -1,0 +1,38 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "ESLint: Lint All",
+      "type": "shell",
+      "command": "npx eslint .",
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": ["$eslint-stylish"]
+    },
+    {
+      "label": "ESLint: Fix All",
+      "type": "shell",
+      "command": "npx eslint . --fix",
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": ["$eslint-stylish"]
+    },
+    {
+      "label": "ESLint: Lint Current File",
+      "type": "shell",
+      "command": "npx eslint ${file}",
+      "group": "test",
+      "presentation": {
+        "reveal": "always",
+        "panel": "shared"
+      },
+      "problemMatcher": ["$eslint-stylish"]
+    }
+  ]
+}
