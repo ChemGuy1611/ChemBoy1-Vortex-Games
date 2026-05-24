@@ -13,8 +13,8 @@ module.exports = defineConfig([
     rules: {
       "no-unused-vars": ["warn", { "vars": "all", "args": "after-used", "ignoreRestSiblings": true }],
       "no-useless-assignment": "off",
-      "no-unsafe-finally": "off",
-      "require-yield": "off",
+      "no-unsafe-finally": "warn",
+      "require-yield": "warn",
     },
     languageOptions: {
       "sourceType": "commonjs",
