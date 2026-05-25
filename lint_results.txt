@@ -1,8 +1,0 @@
-ESLint Results -- 2026-05-20T20:51:53.758Z
-============================================================
-
-Linting 1 extension(s)...
-
-  [OK]   game-thelongdark\index.js
-
-Linting complete: 1 files -- 1 passed, 0 failed
