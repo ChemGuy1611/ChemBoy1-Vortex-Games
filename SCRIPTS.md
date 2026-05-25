@@ -794,6 +794,8 @@ python patch_extensions.py GAME_ID [GAME_ID ...] --debug
 python patch_extensions.py --list-patches
 python patch_extensions.py --only PATCH_NAME
 python patch_extensions.py GAME_ID [GAME_ID ...] --only PATCH_NAME
+python patch_extensions.py --audit
+python patch_extensions.py GAME_ID [GAME_ID ...] --audit
 ```
 
 Run without arguments to apply all enabled patches to every `game-*` folder.
@@ -803,6 +805,7 @@ Use `--force-pcgw` to re-evaluate `PCGAMINGWIKI_URL` values that are already set
 Use `--debug` to print raw PCGamingWiki search results and match status for each game (useful for diagnosing lookup failures).
 Use `--list-patches` to print all registered patches with their enabled status and description, then exit without running anything.
 Use `--only PATCH_NAME` to run exactly one named patch, bypassing the `enabled` flag. Combine with `GAME_ID` to target a specific game.
+Use `--audit` to run both read-only audits (installer priorities + FOMOD checks) across all `game-*` and `template-*` folders, then exit without patching. Combine with `GAME_ID` args to scope the audit. Output goes to stdout — pipe to a file for triage (e.g. `python patch_extensions.py --audit > resources/audit_2026-05-24.txt`).
 
 ### patch_extensions.py — Built-in Patches
 
@@ -814,12 +817,25 @@ Use `--only PATCH_NAME` to run exactly one named patch, bypassing the `enabled` 
 | `setup_vars` | Ensures `setup()` sets `GAME_PATH`, `STAGING_FOLDER`, and `DOWNLOAD_FOLDER` at the top of the function body. Only missing assignments are inserted. |
 | `register_actions` | Injects standard `context.registerAction` calls inside `applyGame()` for any that are missing: Open Config/Save Folder (commented out), Open PCGamingWiki Page, View Changelog, Submit Bug Report, Open Downloads Folder. Each action is checked individually by its label string. |
 | `context_once_api` | Inserts `const api = context.api;` as the first line inside every `context.once(() => { ... })` block that doesn't already have it. |
+| `filtered_empty_dirs` | Ensures every `const filtered = files.filter(...)` block in an installer includes `!file.endsWith(path.sep)` to skip directory entries emitted by Vortex. Canonical: `template-basic:495-497`. |
+| `ignore_conflicts_deploy_constants` | Inserts `IGNORE_CONFLICTS` and `IGNORE_DEPLOY` constants (canonical values: `[path.join('**', 'changelog*'), path.join('**', 'readme*')]`) immediately before `const spec = {` for any extension missing them. Never overwrites existing constants with custom values. |
+| `spec_ignore_fields` | Adds `"ignoreConflicts": IGNORE_CONFLICTS` and `"ignoreDeploy": IGNORE_DEPLOY` to the `spec.game.details` object for any extension that declares the constants but hasn't wired them into spec. Canonical: `template-basic:197-198`. Skips a field if its constant is not yet declared. |
+| `findgame_launcher_async` | Ensures `makeFindGame` is sync and `requiresLauncher` is async. Removes `async` from the two-arg form of `makeFindGame`; adds `async` to any `requiresLauncher` that lacks it. Canonical: `template-basic:351,370`. |
 | `extension_url` | Sets `EXTENSION_URL` from the Vortex extensions manifest (`modId` → Nexus URL). Inserts the constant if missing. |
 | `pcgamingwiki_url` | Sets `PCGAMINGWIKI_URL` by looking up the game on PCGamingWiki. Inserts as `"XXX"` if not found or API unreachable. |
 | `epic_app_id` | Fills in `EPICAPP_ID = ""` by searching egdata.app for the game title and reading the EXECUTABLE item's `releaseInfo.appId`. Skips `null`, `"XXX"`, and already-set IDs. |
 | `discovery_ids` | Adds all resolved store IDs (`STEAMAPP_ID_DEMO`, `GOGAPP_ID`, `EPICAPP_ID`, `XBOXAPP_ID`, `UPLAYAPP_ID`, `EAAPP_ID`) to `DISCOVERY_IDS_ACTIVE` if not already present. Uses `add_to_discovery_ids()` from `vortex_utils`. |
 
 Each patch skips a game if the value is already set (unless `--force-pcgw` is used for `pcgamingwiki_url`). Games that fail a non-trivial step are always printed in the output so failures are visible. After writing any changed `index.js`, `generate_explained.js` is run automatically to keep `EXTENSION_EXPLAINED.md` in sync.
+
+### patch_extensions.py — Built-in Audits (`--audit`)
+
+Read-only flag-only reports. Scan `game-*/index.js` and `template-*/index.js`; print findings to stdout; do not modify any files.
+
+| Audit | Description |
+| --- | --- |
+| installer priorities | Reports every `context.registerInstaller(ID, PRIORITY, ...)` call where `PRIORITY` is an integer literal outside 25–49. Comment-only occurrences are ignored. `registerModType` priorities are out of scope. Output format: `<folder>/index.js: :<line>  priority=<N>  id=<INSTALLER_ID>` grouped by file. |
+| FOMOD check | Reports every `function test<Name>(files, gameId)` (or `async` variant) whose body does not contain a `moduleconfig.xml` reference. Output format: `<folder>/index.js: :<line>  function <name>  -- no FOMOD check` grouped by file. |
 
 After all patches run, PNGs are resized to 64x64, title images in `resources/title-images/` are resized to 1920x1080, and cover art (`GAME_ID.jpg`) in each `game-*` folder is resized to 640x360 (all require Pillow). When targeting specific games, only those game folders are checked. When running on all, all `game-*` and `template-*` folders are checked for PNGs.
 

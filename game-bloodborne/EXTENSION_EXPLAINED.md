@@ -15,7 +15,6 @@
 | Game ID | `bloodborne` |
 | Executable | `N/A` |
 | Extension Page | [https://www.nexusmods.com/bloodborne/mods/64](https://www.nexusmods.com/bloodborne/mods/64) |
-| PCGamingWiki | [XXX](XXX) |
 
 ## Mod Types
 

@@ -11,13 +11,14 @@
 Read by `UE4SSProgram::start_mods()` at game launch. Controls which mods start and in what order.
 
 **Format:**
-```
+```text
 ModName : 1
 ModName : 0
 ```
 `1` = enabled, `0` = disabled. Order in the file = load order.
 
 **Three-tier startup priority:**
+
 1. Listed in `mods.txt` with `: 1` — explicit load order preserved
 2. Has `enabled.txt` in the mod's own folder — starts but no guaranteed order
 3. Neither — mod is installed but not started

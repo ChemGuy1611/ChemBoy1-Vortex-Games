@@ -165,6 +165,8 @@ const PARAMETERS = [PARAMETERS_STRING0, PARAMETERS_STRING1, PARAMETERS_STRING2, 
 
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1432"; //Nexus link to this extension. Used for links
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/The_Hunter%3A_Call_of_the_Wild";
+const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
+const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 const spec = {
   "game": {
     "id": GAME_ID,
@@ -185,6 +187,8 @@ const spec = {
       "gogAppId": GOGAPP_ID,
       "epicAppId": EPICAPP_ID,
       "xboxAppId": XBOXAPP_ID,
+      "ignoreConflicts": IGNORE_CONFLICTS,
+      "ignoreDeploy": IGNORE_DEPLOY,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,

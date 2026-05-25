@@ -290,7 +290,7 @@ function installFallback(api, files, destinationPath) {
 
 Archives often wrap files in a subfolder (e.g. `MyMod-v1.2/Data/plugin.esp`). The `idx` technique strips that prefix so files install to the correct relative path.
 
-```
+```text
 archive path:  "MyMod-v1.2\Data\plugin.esp"
 path.basename: "plugin.esp"
 idx:           modFile.indexOf("plugin.esp")  →  11
@@ -299,7 +299,7 @@ file.substr(11) → "plugin.esp"
 
 For folder-based installers the anchor is the folder name + separator:
 
-```
+```text
 archive path:  "MyMod-v1.2\Data\"
 ROOT_IDX:      "Data\"
 idx:           modFile.indexOf("Data\")  →  11

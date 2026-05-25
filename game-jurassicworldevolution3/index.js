@@ -95,6 +95,8 @@ const PARAMETERS = [];
 
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1503"; //Nexus link to this extension. Used for links
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Jurassic_World_Evolution_3";
+const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
+const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 const spec = {
   "game": {
     "id": GAME_ID,
@@ -114,6 +116,8 @@ const spec = {
       "steamAppId": +STEAMAPP_ID,
       "epicAppId": EPICAPP_ID,
       //"xboxAppId": XBOXAPP_ID,
+      "ignoreConflicts": IGNORE_CONFLICTS,
+      "ignoreDeploy": IGNORE_DEPLOY,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
@@ -328,7 +332,6 @@ function installACSE(files) {
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
     ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
-    //((file.indexOf(rootPath) !== -1))
   );
 
   const instructions = filtered.map(file => {

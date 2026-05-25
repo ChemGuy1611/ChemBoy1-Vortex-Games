@@ -167,6 +167,8 @@ const MOD_PATH_DEFAULT = UE5_PATH;
 //Filled in from data above
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1385"; //Nexus link to this extension. Used for links
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Wuchang%3A_Fallen_Feathers";
+const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
+const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 const spec = {
   "game": {
     "id": GAME_ID,
@@ -181,6 +183,8 @@ const spec = {
       "epicAppId": EPICAPP_ID,
       "xboxAppId": XBOXAPP_ID,
       "supportsSymlinks": SYM_LINKS,
+      "ignoreConflicts": IGNORE_CONFLICTS,
+      "ignoreDeploy": IGNORE_DEPLOY,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
@@ -543,8 +547,7 @@ function installUe4ss(files) {
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
-    //((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
-    ((file.indexOf(rootPath) !== -1))
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
   );
 
   const instructions = filtered.map(file => {
@@ -757,7 +760,6 @@ function installRoot(files) {
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
     ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
-    //((file.indexOf(rootPath) !== -1))
   );
   const instructions = filtered.map(file => {
     return {
@@ -798,7 +800,6 @@ function installContent(files) {
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
     ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
-    //((file.indexOf(rootPath) !== -1))
   );
   const instructions = filtered.map(file => {
     return {

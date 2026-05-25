@@ -15,7 +15,6 @@
 | Game ID | `mirthwood` |
 | Executable | `Mirthwood.exe` |
 | Extension Page | [https://www.nexusmods.com/site/mods/1272](https://www.nexusmods.com/site/mods/1272) |
-| PCGamingWiki | [XXX](XXX) |
 
 ## Supported Stores
 

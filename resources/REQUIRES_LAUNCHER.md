@@ -1,6 +1,7 @@
 # requiresLauncher Reference
 
 Sources:
+
 - `Vortex/src/renderer/src/types/IGame.ts` lines 74-101
 - `Vortex/src/renderer/src/util/StarterInfo.ts` lines 146-252
 

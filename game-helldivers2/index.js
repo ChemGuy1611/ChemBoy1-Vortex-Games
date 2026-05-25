@@ -67,6 +67,8 @@ const IGNORED_FILES = [path.join('**', PATCH_FILE1), path.join('**', PATCH_FILE2
 //Filled in from info above
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/845"; //Nexus link to this extension. Used for links
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Helldivers_2";
+const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
+const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 const spec = {
   "game": {
     "id": GAME_ID,
@@ -83,6 +85,7 @@ const spec = {
     "details": {
       "steamAppId": +STEAMAPP_ID,
       "ignoreConflicts": IGNORED_FILES,
+      "ignoreDeploy": IGNORE_DEPLOY,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
@@ -562,7 +565,6 @@ function installStream(files, gameSpec) {
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
   (
-    //(file.indexOf(rootPath) !== -1) && 
     (!file.endsWith(path.sep))
   )
   );

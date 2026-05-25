@@ -180,6 +180,8 @@ const MOD_PATH_DEFAULT_UNFINISHED = UE5_PATH;
 //Filled in from data above
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/892"; //Nexus link to this extension. Used for links
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/RoboCop%3A_Rogue_City";
+const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
+const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 const spec = {
   "game": {
     "id": GAME_ID,
@@ -201,6 +203,8 @@ const spec = {
       "xboxAppId": XBOXAPP_ID,
       "compatibleDownloads": [GAME_ID_UNFINISHED],
       "supportsSymlinks": SYM_LINKS,
+      "ignoreConflicts": IGNORE_CONFLICTS,
+      "ignoreDeploy": IGNORE_DEPLOY,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
@@ -688,8 +692,7 @@ function installUe4ss(files) {
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
-    //((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
-    ((file.indexOf(rootPath) !== -1))
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
   );
 
   const instructions = filtered.map(file => {
@@ -859,7 +862,6 @@ function installRoot(files) {
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
     ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
-    //((file.indexOf(rootPath) !== -1))
   );
   const instructions = filtered.map(file => {
     return {
@@ -900,7 +902,6 @@ function installContent(files) {
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
     ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
-    //((file.indexOf(rootPath) !== -1))
   );
   const instructions = filtered.map(file => {
     return {
@@ -1231,8 +1232,7 @@ function installUe4ssUnfinished(files) {
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
-    //((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
-    ((file.indexOf(rootPath) !== -1))
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
   );
 
   const instructions = filtered.map(file => {
@@ -1402,7 +1402,6 @@ function installRootUnfinished(files) {
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
     ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
-    //((file.indexOf(rootPath) !== -1))
   );
   const instructions = filtered.map(file => {
     return {
@@ -1443,7 +1442,6 @@ function installContentUnfinished(files) {
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
     ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
-    //((file.indexOf(rootPath) !== -1))
   );
   const instructions = filtered.map(file => {
     return {

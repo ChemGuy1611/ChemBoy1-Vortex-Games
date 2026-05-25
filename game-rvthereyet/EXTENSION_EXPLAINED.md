@@ -15,7 +15,6 @@
 | Game ID | `rvthereyet` |
 | Executable | `Ride.exe` |
 | Extension Page | [https://www.nexusmods.com/site/mods/1509](https://www.nexusmods.com/site/mods/1509) |
-| PCGamingWiki | [XXX](XXX) |
 
 ## Supported Stores
 

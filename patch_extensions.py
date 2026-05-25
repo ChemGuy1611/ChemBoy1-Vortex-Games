@@ -21,6 +21,8 @@ Usage:
     python patch_extensions.py --list-patches                 # list all patches with enabled status and description
     python patch_extensions.py --only PATCH_NAME              # run only the named patch (bypasses enabled flag)
     python patch_extensions.py GAME_ID [GAME_ID ...] --only PATCH_NAME
+    python patch_extensions.py --audit                        # run both read-only audits (installer priorities + FOMOD checks) then exit
+    python patch_extensions.py GAME_ID [GAME_ID ...] --audit  # scope audits to specific games only
 
 Environment variables:
     VORTEX_MANIFEST_PATH  (optional) Path to Vortex extensions-manifest.json.
@@ -402,6 +404,201 @@ def patch_setup_vars(game_id, src, context):
     return new_src, True, f"inserted {', '.join(missing_names)} in setup()"
 
 
+def patch_filtered_empty_dirs(game_id, src, context):
+    """
+    Ensure every `const filtered = files.filter(...)` block in an installer
+    includes `!file.endsWith(path.sep)` to skip directory entries emitted by Vortex.
+    Canonical form: template-basic:495-497.
+    """
+    if not re.search(r'\bconst\s+filtered\s*=\s*files\.filter\(', src):
+        return src, False, SKIP_ALREADY_SET
+
+    # Shape A: commented canonical line above simplified active line — replace both with canonical
+    shape_a = re.compile(
+        r'([ \t]*)//\(\(file\.indexOf\(rootPath\) !== -1\) && \(!file\.endsWith\(path\.sep\)\)\)\n'
+        r'\1\(\(file\.indexOf\(rootPath\) !== -1\)\)'
+    )
+    new_src = shape_a.sub(
+        r'\1((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))',
+        src
+    )
+
+    # Shape B: bare simplified line not already followed by && guard
+    shape_b = re.compile(
+        r'\(\(file\.indexOf\(rootPath\) !== -1\)\)(?!\s*&&\s*\(!file\.endsWith)'
+    )
+    new_src = shape_b.sub(
+        '((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))',
+        new_src
+    )
+
+    if new_src == src:
+        return src, False, SKIP_ALREADY_SET
+    return new_src, True, "added !file.endsWith(path.sep) guard to filtered block(s)"
+
+
+def patch_ignore_conflicts_deploy_constants(game_id, src, context):
+    """
+    Insert IGNORE_CONFLICTS and IGNORE_DEPLOY constants before `const spec = {`
+    for any extension missing them. Canonical values match template-basic:171-172.
+    Never overwrites existing constants that have custom values.
+    """
+    missing_conflicts = is_missing(src, "IGNORE_CONFLICTS")
+    missing_deploy = is_missing(src, "IGNORE_DEPLOY")
+
+    if not missing_conflicts and not missing_deploy:
+        return src, False, SKIP_ALREADY_SET
+
+    lines = []
+    if missing_conflicts:
+        lines.append("const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];")
+    if missing_deploy:
+        lines.append("const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];")
+
+    insert_block = "\n".join(lines) + "\n"
+    m = re.search(r'^const\s+spec\s*=\s*\{', src, re.MULTILINE)
+    if not m:
+        return src, False, "could not find const spec = { anchor"
+
+    new_src = src[:m.start()] + insert_block + src[m.start():]
+    missing_names = (["IGNORE_CONFLICTS"] if missing_conflicts else []) + (["IGNORE_DEPLOY"] if missing_deploy else [])
+    return new_src, True, f"inserted {', '.join(missing_names)}"
+
+
+def patch_spec_ignore_fields(game_id, src, context):
+    """
+    Add "ignoreConflicts": IGNORE_CONFLICTS and "ignoreDeploy": IGNORE_DEPLOY to the
+    spec.game.details object for any extension that declares the constants but lacks
+    the spec wiring. Canonical: template-basic:197-198.
+    Only inserts a field if its corresponding constant is declared in the file.
+    """
+    # Find details block
+    m = re.search(r'"details"\s*:\s*\{', src)
+    if not m:
+        return src, False, "no details block in spec"
+
+    # Brace-count to find closing }
+    open_brace = src.index('{', m.start())
+    depth = 0
+    close_brace = None
+    for i in range(open_brace, len(src)):
+        if src[i] == '{':
+            depth += 1
+        elif src[i] == '}':
+            depth -= 1
+            if depth == 0:
+                close_brace = i
+                break
+    if close_brace is None:
+        return src, False, "could not find end of details block"
+
+    body = src[open_brace + 1:close_brace]
+
+    missing_conflicts = '"ignoreConflicts"' not in body
+    missing_deploy = '"ignoreDeploy"' not in body
+
+    # Detect correct field indentation from other fields in the details block
+    other_field_m = re.search(r'\n([ \t]+)"(?!ignoreConflicts|ignoreDeploy)', body)
+    correct_indent = other_field_m.group(1) if other_field_m else "      "
+
+    # Derive close-brace indent from the "details" key indentation (same level as closing })
+    details_key_m = re.search(r'^([ \t]*)"details"', src, re.MULTILINE)
+    expected_close_indent = details_key_m.group(1) if details_key_m else "    "
+
+    def _find_close_brace(s):
+        """Re-find the details close-brace in string s."""
+        dm = re.search(r'"details"\s*:\s*\{', s)
+        if not dm:
+            return None
+        ob = s.index('{', dm.start())
+        depth, cb = 0, None
+        for i in range(ob, len(s)):
+            if s[i] == '{': depth += 1
+            elif s[i] == '}':
+                depth -= 1
+                if depth == 0: cb = i; break
+        return cb
+
+    if not missing_conflicts:
+        new_src = src
+        changed = False
+
+        # Repair 1: trailing comma before "ignoreConflicts"
+        repair_comma = re.compile(r'([^,\n{])([ \t]*\n[ \t]*"ignoreConflicts")')
+        fixed = repair_comma.sub(r'\1,\2', new_src)
+        if fixed != new_src:
+            new_src = fixed
+            changed = True
+
+        # Repair 2: wrong indentation of ignoreConflicts/ignoreDeploy lines
+        indent_fix = re.compile(r'(?m)^[ \t]+("(?:ignoreConflicts|ignoreDeploy)")')
+        fixed = indent_fix.sub(lambda m: correct_indent + m.group(1), new_src)
+        if fixed != new_src:
+            new_src = fixed
+            changed = True
+
+        # Repair 3: wrong indentation of the details closing }
+        cb = _find_close_brace(new_src)
+        if cb is not None:
+            line_start = new_src.rfind('\n', 0, cb) + 1
+            current_close_ws = new_src[line_start:cb]
+            if re.match(r'^[ \t]*$', current_close_ws) and current_close_ws != expected_close_indent:
+                new_src = new_src[:line_start] + expected_close_indent + new_src[cb:]
+                changed = True
+
+        if changed:
+            return new_src, True, "repaired comma/indent for ignoreConflicts/ignoreDeploy in spec.details"
+        return src, False, SKIP_ALREADY_SET
+
+    lines = []
+    if missing_conflicts and not is_missing(src, "IGNORE_CONFLICTS"):
+        lines.append(f'{correct_indent}"ignoreConflicts": IGNORE_CONFLICTS,')
+    if missing_deploy and not is_missing(src, "IGNORE_DEPLOY"):
+        lines.append(f'{correct_indent}"ignoreDeploy": IGNORE_DEPLOY,')
+
+    if not lines:
+        return src, False, "constants not yet declared; run ignore_conflicts_deploy_constants first"
+
+    # Strip trailing whitespace before close_brace; derive } indent from "details" key level.
+    pre_close = src[:close_brace].rstrip()
+    if not pre_close.endswith(','):
+        pre_close = pre_close + ','
+
+    insert_lines = '\n'.join(lines)
+    new_src = pre_close + '\n' + insert_lines + '\n' + expected_close_indent + src[close_brace:]
+
+    added = [n.strip('"') for n in re.findall(r'"(\w+)"', insert_lines)]
+    return new_src, True, f"added {', '.join(added)} to spec.details"
+
+
+def patch_findgame_launcher_async(game_id, src, context):
+    """
+    Ensure makeFindGame is sync and requiresLauncher is async. Canonical: template-basic:351,370.
+    Removes 'async' from 'async function makeFindGame(api, gameSpec)' (two-arg form only,
+    to avoid touching the zero-arg darktide-custom variant).
+    Adds 'async' to 'function requiresLauncher' when missing.
+    """
+    new_src = src
+    changed_msgs = []
+
+    # Strip async from two-arg makeFindGame (currently 0 hits, defensive)
+    pat1 = re.compile(r'\basync\s+(function\s+makeFindGame\s*\(\s*api\s*,\s*gameSpec\s*\))')
+    new_src = pat1.sub(r'\1', new_src)
+    if new_src != src:
+        changed_msgs.append("removed async from makeFindGame")
+
+    # Add async to requiresLauncher (currently 1 hit: vampirebloodlines-custom:75)
+    pat2 = re.compile(r'^function\s+requiresLauncher\b', re.MULTILINE)
+    fixed = pat2.sub('async function requiresLauncher', new_src)
+    if fixed != new_src:
+        new_src = fixed
+        changed_msgs.append("added async to requiresLauncher")
+
+    if not changed_msgs:
+        return src, False, SKIP_ALREADY_SET
+    return new_src, True, "; ".join(changed_msgs)
+
+
 def patch_context_once_api(game_id, src, context):
     """
     Insert `const api = context.api;` as the first statement inside every
@@ -449,17 +646,115 @@ def patch_context_once_api(game_id, src, context):
 # Add new patches here. Set enabled=False to skip without removing.
 
 PATCHES = [
-    {"name": "game_name",           "enabled": True, "fn": patch_game_name},
-    {"name": "folder_vars",         "enabled": True, "fn": patch_folder_vars},
-    {"name": "utility_functions",   "enabled": True, "fn": patch_utility_functions},
-    {"name": "setup_vars",          "enabled": True, "fn": patch_setup_vars},
-    {"name": "register_actions",    "enabled": True, "fn": patch_register_actions},
-    {"name": "context_once_api",    "enabled": True, "fn": patch_context_once_api},
-    {"name": "extension_url",       "enabled": True, "fn": patch_extension_url},
-    {"name": "pcgamingwiki_url",    "enabled": True, "fn": patch_pcgamingwiki_url},
-    {"name": "epic_app_id",         "enabled": True, "fn": patch_epic_app_id},
-    {"name": "discovery_ids",       "enabled": True, "fn": patch_discovery_ids},
+    {"name": "game_name",                        "enabled": True, "fn": patch_game_name},
+    {"name": "folder_vars",                      "enabled": True, "fn": patch_folder_vars},
+    {"name": "utility_functions",                "enabled": True, "fn": patch_utility_functions},
+    {"name": "setup_vars",                       "enabled": True, "fn": patch_setup_vars},
+    {"name": "register_actions",                 "enabled": True, "fn": patch_register_actions},
+    {"name": "context_once_api",                 "enabled": True, "fn": patch_context_once_api},
+    {"name": "filtered_empty_dirs",              "enabled": True, "fn": patch_filtered_empty_dirs},
+    {"name": "ignore_conflicts_deploy_constants","enabled": True, "fn": patch_ignore_conflicts_deploy_constants},
+    {"name": "spec_ignore_fields",              "enabled": True, "fn": patch_spec_ignore_fields},
+    {"name": "findgame_launcher_async",          "enabled": True, "fn": patch_findgame_launcher_async},
+    {"name": "extension_url",                    "enabled": True, "fn": patch_extension_url},
+    {"name": "pcgamingwiki_url",                 "enabled": True, "fn": patch_pcgamingwiki_url},
+    {"name": "epic_app_id",                      "enabled": True, "fn": patch_epic_app_id},
+    {"name": "discovery_ids",                    "enabled": True, "fn": patch_discovery_ids},
 ]
+
+
+# ── Audits (read-only, flag-only reports) ─────────────────────────────────────
+
+def audit_installer_priorities(folder_paths):
+    """
+    Scan context.registerInstaller calls across the given index.js files and report
+    any with a priority literal outside the 25-49 range. Read-only; no files modified.
+    Returns total outlier count.
+    """
+    pat = re.compile(
+        r'^\s*context\.registerInstaller\(\s*([^,]+?)\s*,\s*(\d+)\s*,',
+        re.MULTILINE
+    )
+    total = 0
+    for folder, index_path in folder_paths:
+        with open(index_path, encoding="utf-8", errors="replace") as f:
+            src = f.read()
+        lines = src.splitlines()
+        file_hits = []
+        for lineno, line in enumerate(lines, 1):
+            if line.lstrip().startswith('//'):
+                continue
+            m = re.match(r'\s*context\.registerInstaller\(\s*([^,]+?)\s*,\s*(\d+)\s*,', line)
+            if m:
+                installer_id = m.group(1).strip()
+                priority = int(m.group(2))
+                if priority < 25 or priority > 49:
+                    file_hits.append((lineno, priority, installer_id))
+        if file_hits:
+            print(f"\n{folder}/index.js:")  # noqa: raw-log-print
+            for lineno, priority, installer_id in file_hits:
+                print(f"  :{lineno}  priority={priority}  id={installer_id}")  # noqa: raw-log-print
+                total += 1
+    return total
+
+
+def audit_fomod_check(folder_paths):
+    """
+    Scan testSupported functions (function test<Name>(files, gameId)) across the given
+    index.js files and report any whose body lacks a moduleconfig.xml FOMOD guard.
+    Read-only; no files modified. Returns total flagged count.
+    """
+    fn_pat = re.compile(
+        r'^(?:async\s+)?function\s+(test\w+)\s*\(\s*files\s*,\s*gameId\s*\)',
+        re.MULTILINE
+    )
+    total = 0
+    for folder, index_path in folder_paths:
+        with open(index_path, encoding="utf-8", errors="replace") as f:
+            src = f.read()
+        file_hits = []
+        for m in fn_pat.finditer(src):
+            fn_name = m.group(1)
+            lineno = src[:m.start()].count('\n') + 1
+            body_start, body_end = find_fn_body(src, m.start())
+            if body_start is None:
+                continue
+            body = src[m.start():body_end]
+            if 'moduleconfig.xml' not in body.lower():
+                file_hits.append((lineno, fn_name))
+        if file_hits:
+            print(f"\n{folder}/index.js:")  # noqa: raw-log-print
+            for lineno, fn_name in file_hits:
+                print(f"  :{lineno}  function {fn_name}  -- no FOMOD check")  # noqa: raw-log-print
+                total += 1
+    return total
+
+
+def run_audits(target_ids=None):
+    """Run both read-only audits across all game-* and template-* index.js files."""
+    folder_paths = []
+    for d in sorted(os.listdir(REPO_ROOT)):
+        full = os.path.join(REPO_ROOT, d)
+        if not os.path.isdir(full):
+            continue
+        if not (d.startswith("game-") or d.startswith("template-")):
+            continue
+        if target_ids:
+            suffix = d[len("game-"):] if d.startswith("game-") else d[len("template-"):]
+            if suffix not in target_ids:
+                continue
+        index_path = os.path.join(full, "index.js")
+        if os.path.isfile(index_path):
+            folder_paths.append((d, index_path))
+
+    scope = f"{len(folder_paths)} extension(s)"
+    print(f"\n=== Audit: installer priorities (expected range 25-49) — {scope} ===")  # noqa: raw-log-print
+    pri_total = audit_installer_priorities(folder_paths)
+    print(f"\nTotal out-of-range calls: {pri_total}")  # noqa: raw-log-print
+
+    print(f"\n=== Audit: testSupported FOMOD check — {scope} ===")  # noqa: raw-log-print
+    fomod_total = audit_fomod_check(folder_paths)
+    print(f"\nTotal missing FOMOD guard: {fomod_total}")  # noqa: raw-log-print
 
 
 def run_title_image_resize(game_ids, dry_run):
@@ -624,10 +919,20 @@ def main():
         metavar="PATCH_NAME",
         help="Run only this named patch (bypasses the enabled flag). Use --list-patches to see names.",
     )
+    parser.add_argument(
+        "--audit",
+        action="store_true",
+        help="Run both read-only audits (installer priorities + FOMOD checks) across all game-* and template-* folders, then exit without patching.",
+    )
     args = parser.parse_args()
 
     if args.list_patches:
         list_patches()
+        sys.exit(0)
+
+    if args.audit:
+        target_ids = args.game if args.game else None
+        run_audits(target_ids)
         sys.exit(0)
 
     if args.only:

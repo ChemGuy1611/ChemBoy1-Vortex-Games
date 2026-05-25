@@ -52,6 +52,8 @@ const CONFIG_NAME = "Config Folder";
 const CONFIG_PATH = path.join(DOCUMENTS, "BioWare", "Mass Effect Andromeda", "Save");
 
 // Filled in from data above
+const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
+const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 const spec = {
   "game": {
     "id": GAME_ID,
@@ -70,6 +72,8 @@ const spec = {
       "steamAppId": +STEAMAPP_ID,
       //"EAAppId": EAAPP_ID,
       "epicAppId": EPICAPP_ID,
+      "ignoreConflicts": IGNORE_CONFLICTS,
+      "ignoreDeploy": IGNORE_DEPLOY,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,

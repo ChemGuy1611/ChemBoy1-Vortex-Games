@@ -101,6 +101,8 @@ const LO_IMAGE_WIDTH = 96; //Width of the load order thumbnail image
 const LO_IMAGE_HEIGHT = LO_IMAGE_WIDTH * 0.5625;
 
 //Filled in from data above
+const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
+const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 const spec = {
   "game": {
     "id": GAME_ID,
@@ -119,6 +121,8 @@ const spec = {
       "gogAppId": GOGAPP_ID,
       "epicAppId": EPICAPP_ID,
       "xboxAppId": XBOXAPP_ID,
+      "ignoreConflicts": IGNORE_CONFLICTS,
+      "ignoreDeploy": IGNORE_DEPLOY,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
@@ -569,7 +573,6 @@ function installRoot(files) {
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
     ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
-    //((file.indexOf(rootPath) !== -1))
   );
 
   const instructions = filtered.map(file => {

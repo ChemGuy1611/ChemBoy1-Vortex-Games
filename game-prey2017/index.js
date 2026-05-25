@@ -433,7 +433,7 @@ function installRoot(files) {
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1))
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
   );
 
   const instructions = filtered.map(file => {

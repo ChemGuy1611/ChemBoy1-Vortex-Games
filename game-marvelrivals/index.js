@@ -92,6 +92,8 @@ const REPAK_DOMAIN = GAME_ID;
 // FILLED IN FROM DATA ABOVE
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1132"; //Nexus link to this extension. Used for links
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Marvel_Rivals";
+const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
+const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 const spec = {
   "game": {
     "id": GAME_ID,
@@ -110,6 +112,8 @@ const spec = {
       "steamAppId": +STEAMAPP_ID,
       "epicAppId": EPICAPP_ID,
       "supportsSymlinks": SYM_LINKS,
+      "ignoreConflicts": IGNORE_CONFLICTS,
+      "ignoreDeploy": IGNORE_DEPLOY,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,

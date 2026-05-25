@@ -88,6 +88,8 @@ const MOD_PATH_DEFAULT = '.';
 
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1515"; //Nexus link to this extension. Used for links
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Final_Fantasy_Tactics_-_The_Ivalice_Chronicles";
+const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
+const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 const spec = {
   "game": {
     "id": GAME_ID,
@@ -108,6 +110,8 @@ const spec = {
       "epicAppId": EPICAPP_ID,
       "xboxAppId": XBOXAPP_ID,
       "supportsSymlinks": false,
+      "ignoreConflicts": IGNORE_CONFLICTS,
+      "ignoreDeploy": IGNORE_DEPLOY,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,

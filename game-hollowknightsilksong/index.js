@@ -112,6 +112,7 @@ const MODTYPE_FOLDERS = [BEPMOD_PATH, ASSEMBLY_PATH, SKIN_PATH];
 const IGNORE_CONFLICTS = [path.join('**', 'manifest.json'), path.join('**', 'icon.png'), path.join('**', 'CHANGELOG.md'), path.join('**', 'readme.txt'), path.join('**', 'README.txt'), path.join('**', 'ReadMe.txt'), path.join('**', 'Readme.txt')];
 
 //Filled in from info above
+const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 const spec = {
   "game": {
     "id": GAME_ID,
@@ -132,6 +133,7 @@ const spec = {
       "epicAppId": EPICAPP_ID,
       "xboxAppId": XBOXAPP_ID,
       "ignoreConflicts": IGNORE_CONFLICTS,
+      "ignoreDeploy": IGNORE_DEPLOY,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,

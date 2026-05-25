@@ -94,6 +94,8 @@ const PARAMETERS = [GAME_FILE];
 
 //Filled in from info above
 const PCGAMINGWIKI_URL = "XXX";
+const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
+const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 const spec = {
   "game": {
     "id": GAME_ID,
@@ -109,7 +111,9 @@ const spec = {
     "requiredFiles": [
       GAME_FILE,
     ],
-    "details": {},
+    "details": {      "ignoreConflicts": IGNORE_CONFLICTS,
+      "ignoreDeploy": IGNORE_DEPLOY,
+    },
     "environment": {}
   },
   "modTypes": [

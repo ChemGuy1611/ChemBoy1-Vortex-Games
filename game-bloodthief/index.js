@@ -142,6 +142,8 @@ const MODTYPE_FOLDERS = [MOD_PATH, 'mods'];
 
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1528"; //Nexus link to this extension. Used for links
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Bloodthief";
+const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
+const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 const spec = {
   "game": {
     "id": GAME_ID,
@@ -163,6 +165,8 @@ const spec = {
       "epicAppId": EPICAPP_ID,
       "xboxAppId": XBOXAPP_ID,
       //"supportsSymlinks": false,
+      "ignoreConflicts": IGNORE_CONFLICTS,
+      "ignoreDeploy": IGNORE_DEPLOY,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
@@ -408,8 +412,6 @@ function installLoader(files) {
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
   (
-    //(file.indexOf(rootPath) !== -1) &&
-    //!file.includes('.venv') &&
     !file.endsWith(path.sep)
   ));
 

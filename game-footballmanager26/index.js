@@ -189,6 +189,7 @@ const IGNORE_CONFLICTS = [path.join('**', 'manifest.json'), path.join('**', 'ico
 //Filled in from info above
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1523"; //Nexus link to this extension. Used for links
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Football_Manager_26";
+const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 const spec = {
   "game": {
     "id": GAME_ID,
@@ -211,6 +212,7 @@ const spec = {
       "xboxAppId": XBOXAPP_ID,
       //"supportsSymlinks": false,
       "ignoreConflicts": IGNORE_CONFLICTS,
+      "ignoreDeploy": IGNORE_DEPLOY,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,

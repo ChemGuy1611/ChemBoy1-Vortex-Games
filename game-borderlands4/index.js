@@ -210,6 +210,8 @@ const MODTYPE_FOLDERS = [LOGICMODS_PATH, SCRIPTS_PATH, PAK_PATH, SDKMOD_PATH];
 //Filled in from data above
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1428"; //Nexus link to this extension. Used for links
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Borderlands_4";
+const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
+const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 const spec = {
   "game": {
     "id": GAME_ID,
@@ -228,6 +230,8 @@ const spec = {
       "epicAppId": EPICAPP_ID,
       "steamAppId": +STEAMAPP_ID,
       "supportsSymlinks": SYM_LINKS,
+      "ignoreConflicts": IGNORE_CONFLICTS,
+      "ignoreDeploy": IGNORE_DEPLOY,
     },
     "environment": {
       "EpicAppId": EPICAPP_ID,
@@ -918,8 +922,7 @@ function installRoot(files) {
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
-    //((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
-    ((file.indexOf(rootPath) !== -1))
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
   );
   const instructions = filtered.map(file => {
     return {
@@ -960,7 +963,6 @@ function installContent(files) {
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
     ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
-    //((file.indexOf(rootPath) !== -1))
   );
   const instructions = filtered.map(file => {
     return {

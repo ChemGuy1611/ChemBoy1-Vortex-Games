@@ -68,7 +68,7 @@ function main(context) {
 
 ### IReducerSpec shape
 
-```
+```text
 {
   reducers: { [actionTypeString]: (state, payload) => newState },
   defaults:  { ... }   // initial state; same keys as what reducers touch
@@ -78,10 +78,15 @@ function main(context) {
 
 - Reducers must be **pure** — return a new object, never mutate.
 - Use `util.setSafe(state, [keyPath], value)` for nested updates; use spread
+
   (`{ ...state, key: value }`) for shallow updates.
+
 - State must be **serializable** — strings, numbers, booleans, arrays, plain
+
   objects only. No functions or class instances.
+
 - `api.sendNotification` and `api.showDialog` are **not available** inside
+
   reducer functions.
 
 ### Path for game-specific settings
@@ -142,8 +147,11 @@ context.registerSettings(
 ```
 
 - The `visible` callback hides the section when the wrong game is active —
+
   always set this for game-specific settings.
+
 - The `props` callback is **not** the place to read state; do that inside the
+
   component with `useSelector`.
 
 ---
@@ -189,6 +197,7 @@ function MySettingsComponent({ onDoSomething }) {
 - `useStore().dispatch` vs `useDispatch()` — both work; prefer `useDispatch`.
 - Use `Panel` / `Panel.Body` from `react-bootstrap` to group related controls.
 - The component receives the props returned by the props callback as-is — no
+
   Redux `connect` wiring needed when using hooks.
 
 ---

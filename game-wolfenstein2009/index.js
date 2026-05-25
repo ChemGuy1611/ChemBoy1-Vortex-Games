@@ -39,6 +39,8 @@ let STAGING_FOLDER = ''; //Vortex staging folder path
 let DOWNLOAD_FOLDER = ''; //Vortex download folder path
 let GAME_PATH = ''; //Game installation path
 let GAME_VERSION = ''; //Game version
+const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
+const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 const spec = {
   "game": {
     "id": GAME_ID,
@@ -55,6 +57,8 @@ const spec = {
     ],
     "details": {
       "steamAppId": +STEAMAPP_ID,
+      "ignoreConflicts": IGNORE_CONFLICTS,
+      "ignoreDeploy": IGNORE_DEPLOY,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
@@ -291,7 +295,7 @@ function installBase(api, files) {
             const setModTypeInstruction = { type: 'setmodtype', value: SP_ID };
             // Remove directories and anything that isn't in the rootPath.
             const filtered = files.filter(file =>
-              ((file.indexOf(rootPath) !== -1))
+              ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
             );
             const instructions = filtered.map(file => {
               return {
@@ -309,7 +313,7 @@ function installBase(api, files) {
             const setModTypeInstruction = { type: 'setmodtype', value: MP_ID };
             // Remove directories and anything that isn't in the rootPath.
             const filtered = files.filter(file =>
-              ((file.indexOf(rootPath) !== -1))
+              ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
             );
             const instructions = filtered.map(file => {
               return {
@@ -369,7 +373,7 @@ function installMaps(api, files) {
             const setModTypeInstruction = { type: 'setmodtype', value: SPBASE_ID };
             // Remove directories and anything that isn't in the rootPath.
             const filtered = files.filter(file =>
-              ((file.indexOf(rootPath) !== -1))
+              ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
             );
             const instructions = filtered.map(file => {
               return {
@@ -387,7 +391,7 @@ function installMaps(api, files) {
             const setModTypeInstruction = { type: 'setmodtype', value: MPBASE_ID };
             // Remove directories and anything that isn't in the rootPath.
             const filtered = files.filter(file =>
-              ((file.indexOf(rootPath) !== -1))
+              ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
             );
             const instructions = filtered.map(file => {
               return {
@@ -447,7 +451,7 @@ function installStream(api, files) {
             const setModTypeInstruction = { type: 'setmodtype', value: SPBASE_ID };
             // Remove directories and anything that isn't in the rootPath.
             const filtered = files.filter(file =>
-              ((file.indexOf(rootPath) !== -1))
+              ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
             );
             const instructions = filtered.map(file => {
               return {
@@ -465,7 +469,7 @@ function installStream(api, files) {
             const setModTypeInstruction = { type: 'setmodtype', value: MPBASE_ID };
             // Remove directories and anything that isn't in the rootPath.
             const filtered = files.filter(file =>
-              ((file.indexOf(rootPath) !== -1))
+              ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
             );
             const instructions = filtered.map(file => {
               return {
@@ -525,7 +529,7 @@ function installVideos(api, files) {
             const setModTypeInstruction = { type: 'setmodtype', value: SPBASE_ID };
             // Remove directories and anything that isn't in the rootPath.
             const filtered = files.filter(file =>
-              ((file.indexOf(rootPath) !== -1))
+              ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
             );
             const instructions = filtered.map(file => {
               return {
@@ -543,7 +547,7 @@ function installVideos(api, files) {
             const setModTypeInstruction = { type: 'setmodtype', value: MPBASE_ID };
             // Remove directories and anything that isn't in the rootPath.
             const filtered = files.filter(file =>
-              ((file.indexOf(rootPath) !== -1))
+              ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
             );
             const instructions = filtered.map(file => {
               return {
@@ -603,7 +607,7 @@ function installPk4(api, files) {
             const setModTypeInstruction = { type: 'setmodtype', value: SPBASE_ID };
             // Remove directories and anything that isn't in the rootPath.
             const filtered = files.filter(file =>
-              ((file.indexOf(rootPath) !== -1))
+              ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
             );
             const instructions = filtered.map(file => {
               return {
@@ -621,7 +625,7 @@ function installPk4(api, files) {
             const setModTypeInstruction = { type: 'setmodtype', value: MPBASE_ID };
             // Remove directories and anything that isn't in the rootPath.
             const filtered = files.filter(file =>
-              ((file.indexOf(rootPath) !== -1))
+              ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
             );
             const instructions = filtered.map(file => {
               return {
@@ -681,7 +685,7 @@ function installExe(api, files) {
             const setModTypeInstruction = { type: 'setmodtype', value: SP_ID };
             // Remove directories and anything that isn't in the rootPath.
             const filtered = files.filter(file =>
-              ((file.indexOf(rootPath) !== -1))
+              ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
             );
             const instructions = filtered.map(file => {
               return {
@@ -699,7 +703,7 @@ function installExe(api, files) {
             const setModTypeInstruction = { type: 'setmodtype', value: MP_ID };
             // Remove directories and anything that isn't in the rootPath.
             const filtered = files.filter(file =>
-              ((file.indexOf(rootPath) !== -1))
+              ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
             );
             const instructions = filtered.map(file => {
               return {

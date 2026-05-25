@@ -43,11 +43,16 @@ context.registerLoadOrder({
 Key points:
 
 - `context.registerLoadOrder` is the **current API** for file-based load orders.
+
   The older `context.registerLoadOrderPage` is deprecated -- do not use it for new
   extensions.
+
 - `customItemRenderer` is passed **by reference**, not invoked. Vortex calls it
+
   internally once per row, per render cycle.
+
 - `toggleableEntries: false` controls whether per-row enable/disable checkboxes
+
   appear. See section 4b for why UE4-5 games set this to `false`.
 
 ---
@@ -512,9 +517,13 @@ function usePakLOState() {
 1. Each `LoadOrderItemRenderer` instance calls `usePakLOState()` on render.
 2. The hook registers a `forceUpdate` reducer as a listener in `_pakListeners`.
 3. When `setSelectedIds` or `setContextMenu` is called (from any instance), it
+
    mutates the module-level variable and then calls `_notifyPak()`.
+
 4. `_notifyPak` calls every registered `forceUpdate`, which increments a counter
+
    and causes all instances to re-render, picking up the new shared state.
+
 5. On unmount, the `useEffect` cleanup removes the listener.
 
 **Contrast with `Ue4ssSelectionContext`:**
@@ -539,6 +548,7 @@ event fires instead of the react-dnd event, and the row appears to do nothing.
 
 - `draggable: false` disables native image drag.
 - `pointerEvents: 'none'` makes the image transparent to all mouse events. The drag
+
   gesture lands on the parent `ListGroupItem` instead, which react-dnd's FBLO
   wrapper intercepts correctly.
 
@@ -626,7 +636,9 @@ const LO_IMAGE_HEIGHT = LO_IMAGE_WIDTH * 0.5625;
 - [ ] Pass `customItemRenderer: LoadOrderItemRenderer` in `context.registerLoadOrder()`.
 - [ ] Set `toggleableEntries: false` if your FBLO is rename-based (UE4-5/windrose-style).
 - [ ] Set `toggleableEntries: true` if your FBLO writes real enabled/disabled state
+
   to disk -- the per-row checkbox will appear automatically.
+
 - [ ] Confirm your `serializeLoadOrder` and `deserializeLoadOrder` functions are correct.
 - [ ] Copy the `usePakLOState` pub-sub block and `PakContextMenu` if you want context menus.
 
@@ -673,7 +685,9 @@ even though it appears later. Standard code structure: imports -> toggles -> con
 
 - Rendered by: `LoadOrderItemRenderer` when `contextMenu?.itemId === loEntry.id`
 - Dismissed by: click anywhere (`document.addEventListener('click', dismiss)`),
+
   right-click anywhere (`contextmenu` event), or Escape key
+
 - Inline `<style>` injection: on first render, injects `.ue4ss-ctx-item:hover { background: rgba(255,255,255,0.1); }` via `globalThis.document.head` if not already present
 
 ### Menu variants
@@ -800,12 +814,21 @@ Multi-item menu: Enable/Disable selected, Lock/Unlock selected, separator, Open 
   - `makePrefix` / `loadOrderPrefix`: lines 1943-1970
   - `serializeLoadOrder` / `deserializeLoadOrder`: lines 1703-1784
 - **Witcher 3 ItemRenderer (inspiration, TSX):**
+
   `Vortex/extensions/games/game-witcher3/src/views/ItemRenderer.tsx`
+
 - **Vortex core ItemRenderer (default, TSX):**
+
   `Vortex/src/renderer/src/extensions/file_based_loadorder/views/ItemRenderer.tsx`
+
 - **`LoadOrderIndexInput` source:**
+
   `Vortex/src/renderer/src/extensions/file_based_loadorder/views/loadOrderIndex.tsx`
+
 - **FBLO type definitions:**
+
   `Vortex/src/renderer/src/extensions/file_based_loadorder/types/types.ts`
+
 - **`context.registerLoadOrder` declaration:**
+
   `Vortex/src/renderer/src/types/IExtensionContext.ts`

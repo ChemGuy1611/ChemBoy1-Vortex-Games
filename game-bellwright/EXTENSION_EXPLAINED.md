@@ -15,7 +15,6 @@
 | Game ID | `bellwright` |
 | Executable | `BellwrightGame.exe` |
 | Extension Page | [https://www.nexusmods.com/site/mods/1065](https://www.nexusmods.com/site/mods/1065) |
-| PCGamingWiki | [XXX](XXX) |
 
 ## Supported Stores
 

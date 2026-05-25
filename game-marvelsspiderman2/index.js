@@ -61,6 +61,8 @@ if (USERID_FOLDER === undefined) {
 } //*/
 const SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
 
+const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
+const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 const spec = {
   "game": {
     "id": GAME_ID,
@@ -77,6 +79,8 @@ const spec = {
     "details": {
       "steamAppId": +STEAMAPP_ID,
       "epicAppId": EPICAPP_ID,
+      "ignoreConflicts": IGNORE_CONFLICTS,
+      "ignoreDeploy": IGNORE_DEPLOY,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,

@@ -23,6 +23,7 @@
 - **Steam** — `236850`
 - **Epic Games Store** — `da0103e959e54d139d0c109ded3b3672`
 - **GOG** — `2057001589`
+- **Xbox / Microsoft Store** — ``
 
 ## Mod Types
 
@@ -60,6 +61,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Special Features
 
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
+- **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.

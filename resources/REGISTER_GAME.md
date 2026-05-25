@@ -170,6 +170,7 @@ function makeFindGame(api, gameSpec) {
 ## setup()
 
 Runs every time the user activates this game in Vortex. Typical uses:
+
 - Create mod subdirectories with `fs.ensureDirWritableAsync()`
 - Copy default config files if missing
 - Write `mods.txt` for UE4SS mods

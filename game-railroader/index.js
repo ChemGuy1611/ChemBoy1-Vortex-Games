@@ -124,6 +124,7 @@ const IGNORE_CONFLICTS = [path.join('**', 'manifest.json'), path.join('**', 'ico
 let MODTYPE_FOLDERS = [];
 
 //Filled in from info above
+const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 const spec = {
   "game": {
     "id": GAME_ID,
@@ -145,6 +146,7 @@ const spec = {
       "xboxAppId": XBOXAPP_ID,
       "supportsSymlinks": allowSymlinks,
       "ignoreConflicts": IGNORE_CONFLICTS,
+      "ignoreDeploy": IGNORE_DEPLOY,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,

@@ -91,6 +91,8 @@ const XBOX_MOD_PATH_DEFAULT = path.join(LOCALAPPDATA, XBOX_COOKED_PATH);
 const REQ_FILE = EPIC_CODE_NAME;
 
 // Filled in from info above
+const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
+const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 const spec = {
   "game": {
     "id": GAME_ID,
@@ -113,7 +115,9 @@ const spec = {
       "steamAppId": +STEAMAPP_ID,
       //"gogAppId": GOGAPP_ID,
       "xboxAppId": XBOXAPP_ID,
-      "customOpenModsPath": UNREALDATA.absModsPath || UNREALDATA.modsPath
+      "customOpenModsPath": UNREALDATA.absModsPath || UNREALDATA.modsPath,
+      "ignoreConflicts": IGNORE_CONFLICTS,
+      "ignoreDeploy": IGNORE_DEPLOY,
     },
     "compatible": {
       "unrealEngine": true
@@ -569,8 +573,7 @@ function installCooked(files) {
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
-    //((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
-    ((file.indexOf(rootPath) !== -1))
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
   );
   const instructions = filtered.map(file => {
     return {
@@ -611,8 +614,7 @@ function installRoot(files) {
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
-    //((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
-    ((file.indexOf(rootPath) !== -1))
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
   );
   const instructions = filtered.map(file => {
     return {

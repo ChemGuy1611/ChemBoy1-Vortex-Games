@@ -1,6 +1,7 @@
 # Nexus Mods File Object Properties
 
 Properties returned by the mod files endpoints:
+
 - `GET /v1/games/{domain}/mods/{mod_id}/files.json`
 - `GET /v1/games/{domain}/mods/{mod_id}/files/{file_id}.json`
 

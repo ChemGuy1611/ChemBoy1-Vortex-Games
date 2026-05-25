@@ -92,6 +92,8 @@ const SAVE_FOLDER_XBOX = path.join(LOCALAPPDATA, "Packages", `${XBOXAPP_ID}_r4z3
 
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/852"; //Nexus link to this extension. Used for links
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Lies_of_P";
+const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
+const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 const spec = {
   "game": {
     "id": GAME_ID,
@@ -105,7 +107,9 @@ const spec = {
       //"gogAppId": GOGAPP_ID,
       //"epicAppId": EPICAPP_ID,
       "xboxAppId": XBOXAPP_ID,
-      "customOpenModsPath": UNREALDATA.absModsPath || UNREALDATA.modsPath
+      "customOpenModsPath": UNREALDATA.absModsPath || UNREALDATA.modsPath,
+      "ignoreConflicts": IGNORE_CONFLICTS,
+      "ignoreDeploy": IGNORE_DEPLOY,
     },
     "compatible": {
       "unrealEngine": true
@@ -420,8 +424,7 @@ function installRoot(files) {
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
-    //((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
-    ((file.indexOf(rootPath) !== -1))
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
   );
 
   const instructions = filtered.map(file => {

@@ -48,6 +48,8 @@ const MANAGER_URL_LEGACY_ERR = "https://www.factionfiles.com/ff.php?action=file&
 //Filled in from data above
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1145"; //Nexus link to this extension. Used for links
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Red_Faction_Guerrilla_Re-Mars-tered";
+const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
+const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 const spec = {
   "game": {
     "id": GAME_ID,
@@ -66,6 +68,8 @@ const spec = {
       "steamAppId": +STEAMAPP_ID,
       "gogAppId": GOGAPP_ID,
       "compatibleDownloads": ['redfactionguerilla'],
+      "ignoreConflicts": IGNORE_CONFLICTS,
+      "ignoreDeploy": IGNORE_DEPLOY,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,

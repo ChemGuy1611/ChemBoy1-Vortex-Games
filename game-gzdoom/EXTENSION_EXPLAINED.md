@@ -15,7 +15,6 @@
 | Game ID | `gzdoom` |
 | Executable | `N/A` |
 | Extension Page | [https://www.nexusmods.com/site/mods/1319](https://www.nexusmods.com/site/mods/1319) |
-| PCGamingWiki | [XXX](XXX) |
 
 ## Mod Types
 

@@ -44,7 +44,7 @@ const debug = true;
 
 const DATA_FOLDER = path.join(USER_HOME, 'AppData', 'LocalLow', 'Owlcat Games', 'Warhammer 40000 Rogue Trader');
 const ROOT_FOLDERS = ['']; //not using root installer
-const VERSION_FILE = 'Version.info'; 
+const VERSION_FILE = 'Version.info';
 let GAME_DATA_FOLDER = `WH40KRT_Data`;
 const GAME_DATA_FOLDER_XBOX = 'Warhammer 40000 Rogue Trader_Data';
 let VERSION_FILE_PATH = path.join(GAME_DATA_FOLDER, 'StreamingAssets', VERSION_FILE);
@@ -240,18 +240,6 @@ const spec = {
       "priority": "low",
       "targetPath": MICROPATCHES_PATH
     },
-    /*{
-      "id": ROOT_ID,
-      "name": ROOT_NAME,
-      "priority": "high",
-      "targetPath": `{gamePath}`
-    }, 
-    {
-      "id": BINARIES_ID,
-      "name": BINARIES_NAME,
-      "priority": "high",
-      "targetPath": path.join("{gamePath}", BINARIES_PATH)
-    }, //*/
   ],
   "discovery": {
     "ids": DISCOVERY_IDS_ACTIVE,
@@ -301,7 +289,6 @@ const tools = [ //accepts: exe, jar, py, vbs, bat
     relative: false,
     exclusive: true,
     //shell: true,
-    //defaultPrimary: true,
     //parameters: PARAMETERS,
   }, //*/
   {
@@ -517,7 +504,7 @@ function installMicroPatches(files) {
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
- 
+
   let folder = path.basename(modFile, PLUGIN_EXTS[0]);
 
   // Remove directories and anything that isn't in the rootPath.
@@ -558,7 +545,7 @@ function installModFinder(files) {
   const modFile = files.find(file => (path.basename(file).toLowerCase() === MODFINDER_EXEC.toLowerCase()));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
- 
+
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
     ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
@@ -596,7 +583,7 @@ function installSaveEditor(files) {
   const modFile = files.find(file => (path.basename(file).toLowerCase() === SAVEEDITOR_EXEC.toLowerCase()));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
- 
+
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
     ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
@@ -634,7 +621,7 @@ function installPortraitManager(files) {
   const modFile = files.find(file => (path.basename(file).toLowerCase() === PORTMAN_EXEC.toLowerCase()));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
- 
+
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
     ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
@@ -681,10 +668,10 @@ async function installMod(api, files, workingDir) {
   let rootPath = path.dirname(modFile); //this is often "." because mods are frequently not in top-level folders
   const ROOT_PATH = path.basename(rootPath);
   let filtered = files.filter(file =>
-    (!file.endsWith(path.sep))
+    (!file.endsWith(path.sep)) //! CANNOT do rootPath filtering since there are files without extensions - cannot do this if the rootPath is "." as it will remove the "Bundles" files without extensions
   ); //*/
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
- 
+
   //read manifest to get uniqueName and set folder name
   //const manifest = files.find(file => (path.basename(file).toLowerCase() === MOD_MANIFEST.toLowerCase()));
   const manifest = modFile;
@@ -699,7 +686,6 @@ async function installMod(api, files, workingDir) {
     nameFolder = files.find(file => (path.basename(file) === folder));
     if (nameFolder !== undefined) {
       modFile = nameFolder;
-      //idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
       idx = modFile.indexOf(path.basename(modFile));
       folder = '';
     } //*/
@@ -718,30 +704,13 @@ async function installMod(api, files, workingDir) {
     value: loValue,
   };
 
-  /* normal filtering - cannot do this if the rootPath is "." as it will remove the "Bundles" files without extensions
-  filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
-  ); //*/
   let instructions = filtered.map(file => {
     return {
       type: 'copy',
       source: file,
-      //destination: file,
-      //destination: file.substr(idx),
       destination: path.join(folder, file.substr(idx)),
     };
   });
-  /* if the mod is not in a top-level folder, we need to add the folder name to the destination
-  if (ROOT_PATH !== '.') {
-    instructions = filtered.map(file => {
-      return {
-        type: 'copy',
-        source: file,
-        //destination: file,
-        destination: path.join(folder, file.substr(idx)),
-      };
-    });
-  } //*/
   instructions.push(setModTypeInstruction);
   instructions.push(MOD_ATTRIBUTE);
   return Promise.resolve({ instructions });
@@ -770,9 +739,9 @@ function installPlugin(files) {
   const MOD_TYPE = PLUGIN_ID;
   const modFile = files.find(file => PLUGIN_EXTS.includes(path.extname(file).toLowerCase()));
   const idx = modFile.indexOf(path.basename(modFile));
-  const rootPath = path.dirname(modFile);
+  //const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
- 
+
   let folder = path.basename(modFile, PLUGIN_EXTS[0]);
   if (PLUGIN_IGNORE_NAMES.includes(folder)) {
     const file = files.find(file => ( PLUGIN_EXTS.includes(path.extname(file).toLowerCase()) && !PLUGIN_IGNORE_NAMES.includes(path.basename(file, PLUGIN_EXTS[0])) ));
@@ -785,8 +754,7 @@ function installPlugin(files) {
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file => (
-    //(file.indexOf(rootPath) !== -1) && 
-    (!file.endsWith(path.sep))
+    (!file.endsWith(path.sep)) //! CANNOT do rootPath filtering since there are files without extensions
   )
   );
   const instructions = filtered.map(file => {
@@ -874,7 +842,7 @@ function installSave(files) {
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
- 
+
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
     ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
@@ -910,7 +878,7 @@ function testFallback(files, gameId) {
 //Fallback installer to Binaries folder
 function installFallback(api, files, destinationPath) {
   fallbackInstallerNotify(api, destinationPath);
-  
+
   const filtered = files.filter(file =>
     (!file.endsWith(path.sep))
   );
@@ -963,7 +931,7 @@ function fallbackInstallerNotify(api, modName) {
               if (modMatch) {
                 const MOD_ID = modMatch.attributes.modId;
                 if (MOD_ID !== undefined) {
-                  PAGE = `${MOD_ID}?tab=description`; 
+                  PAGE = `${MOD_ID}?tab=description`;
                 }
               }
               const MOD_PAGE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${PAGE}`;
@@ -1038,7 +1006,7 @@ async function deserializeLoadOrder(context) {
   let modFolderPath = MOD_PATH;
   let loadOrderPath = LO_FILE_PATH;
   let loadOrderFile = await fs.readFileAsync(
-    loadOrderPath, 
+    loadOrderPath,
     { encoding: "utf8", }
   );
   let json = JSON.parse(loadOrderFile);
@@ -1048,7 +1016,7 @@ async function deserializeLoadOrder(context) {
   if (debug) {
     log('warn', `LO_MOD_ARRAY: ${LO_MOD_ARRAY.join(', ')}`);
   }
-  
+
   //Get all mod files from mods folder
   let modFolders = [];
   try {
@@ -1065,7 +1033,7 @@ async function deserializeLoadOrder(context) {
       .then(() => true)
       .catch(() => false)
   };
-  
+
   // Get readable mod name using attribute from mod installer
   async function getModName(folder) {
     const VORTEX = await isVortexManaged(folder);
@@ -1114,7 +1082,7 @@ async function deserializeLoadOrder(context) {
       );
       return Promise.resolve(accum);
     }, Promise.resolve([]));
-  
+
   //push new mods to loadOrder
   for (let folder of modFolders) {
     if (!loadOrder.find((mod) => (mod.id === folder))) {
@@ -1201,13 +1169,13 @@ async function resolveGameVersion(gamePath) {
   try {
     const data = await fs.readFileAsync(versionFilepath, { encoding: 'utf8' });
     const segments = data.split(' ');
-    return (segments[3]) 
+    return (segments[3])
       ? Promise.resolve(segments[3])
       : Promise.reject(new util.DataInvalid('Failed to resolve version'));
   } catch (err) {
     return Promise.reject(err);
   }
-} 
+}
 
 async function modFoldersEnsureWritable(paths) {
   for (let index = 0; index < paths.length; index++) {

@@ -1,0 +1,339 @@
+
+=== Audit: installer priorities (expected range 25-49) � 266 extension(s) ===
+
+game-assassinscreedivblackflag/index.js:
+  :1253  priority=50  id=LOOSE_ID
+  :1255  priority=57  id=RESOREP_ID
+  :1256  priority=60  id=FORGE_ID
+  :1257  priority=65  id=ROOT_ID
+  :1258  priority=70  id=RESOREP_TEXTURES_ID
+
+game-assassinscreedshadows/index.js:
+  :1293  priority=50  id=FORGEFOLDER_ID
+  :1294  priority=55  id=DATAFOLDER_ID
+  :1295  priority=60  id=LOOSE_ID
+  :1297  priority=65  id=FORGE_ID
+  :1298  priority=69  id=ROOT_ID
+
+game-assassinscreedunity/index.js:
+  :1284  priority=50  id=LOOSE_ID
+  :1285  priority=55  id=FIXES_ID
+  :1286  priority=57  id=RESOREP_ID
+  :1287  priority=60  id=FORGE_ID
+  :1288  priority=65  id=ROOT_ID
+  :1289  priority=70  id=RESOREP_TEXTURES_ID
+
+game-blackmythwukong/index.js:
+  :1256  priority=50  id=`${GAME_ID}-ue4ss-scripts`
+  :1257  priority=53  id=DLL_ID
+  :1258  priority=55  id=`${GAME_ID}-root`
+  :1259  priority=60  id=`${GAME_ID}-config`
+  :1260  priority=65  id=`${GAME_ID}-save`
+
+game-dragonageinquisition/index.js:
+  :752  priority=50  id='dragonageinquisition-config'
+  :753  priority=55  id='dragonageinquisition-save'
+
+game-frostpunk2/index.js:
+  :1161  priority=50  id=`${GAME_ID}-ue4ss-scripts`
+  :1162  priority=55  id=`${GAME_ID}-root`
+  :1163  priority=60  id=`${GAME_ID}-config`
+  :1164  priority=65  id=`${GAME_ID}-save`
+
+game-mortalkombat/index.js:
+  :1296  priority=50  id=`${GAME_ID}-ue4ss-scripts`
+  :1297  priority=55  id=`${GAME_ID}-root`
+
+game-ninjagaiden2black/index.js:
+  :1314  priority=50  id=BINARIES_ID
+
+game-sifu/index.js:
+  :1119  priority=50  id=`${GAME_ID}-root`
+  :1120  priority=55  id=`${GAME_ID}-config`
+  :1121  priority=60  id=`${GAME_ID}-save`
+  :1122  priority=65  id=BINARIES_ID
+
+game-trepang2/index.js:
+  :526  priority=55  id=`${GAME_ID}-save`
+
+game-untildawn/index.js:
+  :1005  priority=50  id=`${GAME_ID}-root`
+
+game-wolfenstein2009/index.js:
+  :763  priority=50  id=`${GAME_ID}-exe`
+
+=== Audit: testSupported FOMOD check � 266 extension(s) ===
+
+game-ageofmythologyretold/index.js:
+  :314  function testData  -- no FOMOD check
+  :428  function testReshade  -- no FOMOD check
+  :461  function testBinaries  -- no FOMOD check
+
+game-alanwake2/index.js:
+  :306  function testModLoader  -- no FOMOD check
+
+game-assassinscreed/index.js:
+  :281  function testATK  -- no FOMOD check
+
+game-assassinscreedbrotherhood/index.js:
+  :279  function testATK  -- no FOMOD check
+
+game-assassinscreedii/index.js:
+  :277  function testATK  -- no FOMOD check
+
+game-assassinscreediii/index.js:
+  :279  function testATK  -- no FOMOD check
+
+game-assassinscreediiiremastered/index.js:
+  :282  function testATK  -- no FOMOD check
+
+game-assassinscreedivblackflag/index.js:
+  :606  function testATK  -- no FOMOD check
+  :978  function testRoot  -- no FOMOD check
+
+game-assassinscreedmirage/index.js:
+  :472  function testATK  -- no FOMOD check
+
+game-assassinscreedodyssey/index.js:
+  :503  function testATK  -- no FOMOD check
+
+game-assassinscreedorigins/index.js:
+  :516  function testATK  -- no FOMOD check
+
+game-assassinscreedrevelations/index.js:
+  :279  function testATK  -- no FOMOD check
+
+game-assassinscreedrogue/index.js:
+  :279  function testATK  -- no FOMOD check
+
+game-assassinscreedshadows/index.js:
+  :608  function testATK  -- no FOMOD check
+  :642  function testForger  -- no FOMOD check
+  :1066  function testRoot  -- no FOMOD check
+
+game-assassinscreedsyndicate/index.js:
+  :279  function testATK  -- no FOMOD check
+
+game-assassinscreedunity/index.js:
+  :636  function testATK  -- no FOMOD check
+  :1008  function testRoot  -- no FOMOD check
+
+game-avowed/index.js:
+  :500  function testUe4ss  -- no FOMOD check
+  :704  function testRoot  -- no FOMOD check
+
+game-bioshock/index.js:
+  :474  function testTfc  -- no FOMOD check
+  :508  function testUpkExplorer  -- no FOMOD check
+
+game-bioshock2/index.js:
+  :474  function testTfc  -- no FOMOD check
+  :508  function testUpkExplorer  -- no FOMOD check
+
+game-blackmythwukong/index.js:
+  :440  function testUe4ss  -- no FOMOD check
+  :475  function testSigBypass  -- no FOMOD check
+  :664  function testRoot  -- no FOMOD check
+
+game-bloodborne/index.js:
+  :309  function testShadPs4  -- no FOMOD check
+  :342  function testShadLauncher  -- no FOMOD check
+  :375  function testSmithbox  -- no FOMOD check
+  :408  function testFlver  -- no FOMOD check
+  :441  function testDvdRootPs4  -- no FOMOD check
+  :474  function testSave  -- no FOMOD check
+
+game-darkmessiahofmightandmagic/index.js:
+  :463  function testLauncher  -- no FOMOD check
+  :496  function testUnlimited  -- no FOMOD check
+
+game-deadrisingdeluxeremaster/index.js:
+  :442  function testFluffy  -- no FOMOD check
+  :477  function testREF  -- no FOMOD check
+
+game-deusexhumanrevolution/index.js:
+  :532  function testPatcher  -- no FOMOD check
+
+game-digimonstorytimestranger/index.js:
+  :388  function testModManger  -- no FOMOD check
+
+game-dishonored2/index.js:
+  :441  function testVoid  -- no FOMOD check
+  :475  function testVoidExplorer  -- no FOMOD check
+
+game-dishonoreddeathoftheoutsider/index.js:
+  :440  function testVoid  -- no FOMOD check
+  :474  function testVoidExplorer  -- no FOMOD check
+
+game-doom/index.js:
+  :412  function testModLoader  -- no FOMOD check
+  :445  function testLauncher  -- no FOMOD check
+  :479  function testLegacy  -- no FOMOD check
+  :512  function testRollback  -- no FOMOD check
+  :545  function testZipContent  -- no FOMOD check
+
+game-doometernal/index.js:
+  :357  function testRollback  -- no FOMOD check
+  :390  function testInjector  -- no FOMOD check
+  :423  function testKTDE  -- no FOMOD check
+  :457  function testMeat  -- no FOMOD check
+  :491  function testZipContent  -- no FOMOD check
+
+game-dragonballsparkingzero/index.js:
+  :777  function testSigBypass  -- no FOMOD check
+
+game-dragonsdogma2/index.js:
+  :427  function testFluffy  -- no FOMOD check
+  :462  function testREF  -- no FOMOD check
+  :671  function testZipContent  -- no FOMOD check
+
+game-finalfantasy16/index.js:
+  :274  function testModManger  -- no FOMOD check
+
+game-finalfantasytacticstheivalicechronicles/index.js:
+  :466  function testModManger  -- no FOMOD check
+
+game-frostpunk2/index.js:
+  :490  function testUe4ss  -- no FOMOD check
+  :525  function testSigBypass  -- no FOMOD check
+  :650  function testRoot  -- no FOMOD check
+
+game-indianajonesandthegreatcircle/index.js:
+  :361  function testZipContent  -- no FOMOD check
+
+game-jurassicworldevolution3/index.js:
+  :315  function testACSE  -- no FOMOD check
+  :435  function testOvlData  -- no FOMOD check
+  :469  function testLocalised  -- no FOMOD check
+
+game-liesofp/index.js:
+  :407  function testRoot  -- no FOMOD check
+
+game-manorlords/index.js:
+  :538  function testUe4ss  -- no FOMOD check
+  :725  function testRoot  -- no FOMOD check
+
+game-marvelsspiderman2/index.js:
+  :330  function testOverstrike  -- no FOMOD check
+
+game-mechwarrior5clans/index.js:
+  :554  function testUe4ss  -- no FOMOD check
+  :678  function testRoot  -- no FOMOD check
+
+game-metaphorrefantazio/index.js:
+  :460  function testModManger  -- no FOMOD check
+
+game-mortalkombat/index.js:
+  :522  function testUe4ss  -- no FOMOD check
+  :557  function testSigBypass  -- no FOMOD check
+  :684  function testRoot  -- no FOMOD check
+
+game-ninjagaiden2black/index.js:
+  :499  function testUe4ss  -- no FOMOD check
+  :580  function testRoot  -- no FOMOD check
+  :698  function testModLoader  -- no FOMOD check
+  :732  function testMlMod  -- no FOMOD check
+
+game-ninjagaidenmastercollection/index.js:
+  :785  function testModLoaderXbox  -- no FOMOD check
+  :819  function testModLoaderSteam1  -- no FOMOD check
+  :853  function testModLoaderSteam2  -- no FOMOD check
+  :887  function testModLoaderSteam3  -- no FOMOD check
+  :1003  function testDatabinSub1  -- no FOMOD check
+  :1037  function testDatabinSub23  -- no FOMOD check
+
+game-nobodywantstodie/index.js:
+  :350  function testRoot  -- no FOMOD check
+
+game-planetcoaster2/index.js:
+  :304  function testACSE  -- no FOMOD check
+  :425  function testOvlData  -- no FOMOD check
+
+game-prey2017/index.js:
+  :226  function testPric  -- no FOMOD check
+  :261  function testChair  -- no FOMOD check
+  :296  function testChairModZip  -- no FOMOD check
+  :338  function testChairMod  -- no FOMOD check
+  :417  function testRoot  -- no FOMOD check
+
+game-residentevil42023/index.js:
+  :545  function testFluffy  -- no FOMOD check
+  :579  function testREF  -- no FOMOD check
+  :744  function testUpscaler  -- no FOMOD check
+  :820  function testZipContent  -- no FOMOD check
+
+game-residentevil7/index.js:
+  :549  function testFluffy  -- no FOMOD check
+  :584  function testREF  -- no FOMOD check
+
+game-returntocastlewolfenstein/index.js:
+  :457  function testIortcw  -- no FOMOD check
+  :492  function testRealrtcw  -- no FOMOD check
+  :529  function testMainFolder  -- no FOMOD check
+
+game-riseofthetombraider/index.js:
+  :359  function testModManger  -- no FOMOD check
+  :393  function testModMangerUnified  -- no FOMOD check
+
+game-senuassagahellblade2/index.js:
+  :371  function testRoot  -- no FOMOD check
+
+game-shadowofthetombraider/index.js:
+  :427  function testModManger  -- no FOMOD check
+  :461  function testModMangerUnified  -- no FOMOD check
+
+game-sifu/index.js:
+  :462  function testUe4ss  -- no FOMOD check
+  :586  function testRoot  -- no FOMOD check
+
+game-silenthill2/index.js:
+  :491  function testUe4ss  -- no FOMOD check
+  :679  function testRoot  -- no FOMOD check
+
+game-starwarsoutlaws/index.js:
+  :290  function testModLoader  -- no FOMOD check
+  :368  function testDataSub  -- no FOMOD check
+
+game-streetfighter6/index.js:
+  :448  function testFluffy  -- no FOMOD check
+  :483  function testREF  -- no FOMOD check
+
+game-systemshock2023/index.js:
+  :368  function testRoot  -- no FOMOD check
+
+game-theouterworlds/index.js:
+  :383  function testRoot  -- no FOMOD check
+
+game-trepang2/index.js:
+  :351  function testRoot  -- no FOMOD check
+
+game-unchartedlegacyofthievescollection/index.js:
+  :297  function testFluffy  -- no FOMOD check
+  :376  function testZipContent  -- no FOMOD check
+
+game-untildawn/index.js:
+  :464  function testUe4ss  -- no FOMOD check
+  :587  function testRoot  -- no FOMOD check
+
+game-warhammer40000boltgun/index.js:
+  :297  function testRoot  -- no FOMOD check
+
+game-witchfire/index.js:
+  :645  function testRoot  -- no FOMOD check
+
+template-anvilengine/index.js:
+  :854  function testForger  -- no FOMOD check
+
+template-cobraengineACSE/index.js:
+  :334  function testACSE  -- no FOMOD check
+  :452  function testOvlData  -- no FOMOD check
+  :486  function testLocalised  -- no FOMOD check
+
+template-reloaded2/index.js:
+  :479  function testModManger  -- no FOMOD check
+
+template-snowdropengine/index.js:
+  :254  function testModLoader  -- no FOMOD check
+  :333  function testDataSub  -- no FOMOD check
+
+Total missing FOMOD guard: 136

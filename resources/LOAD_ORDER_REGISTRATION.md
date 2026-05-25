@@ -524,7 +524,7 @@ const UE4SS_NATIVE_MODS   = [
 
 ### File path
 
-```
+```text
 <GamePath>/<EPIC_CODE_NAME>/Binaries/<Win64|WinGDK>/ue4ss/Mods/<profileId>_ue4ss_loadOrder.json
 ```
 Same directory as `mods.txt`.
@@ -545,8 +545,11 @@ the UE4SS sidecar are **two separate systems**:
 
 - FBLO uses `<profile>_loadOrder.json` for **PAK-style** mods (sortable via prefix renaming).
 - `ue4ss_loadOrder.json` is used by the `Ue4ssLoadOrderPage` custom React page and
+
   written to disk by `serializeUe4ss`, which also rewrites `mods.txt` directly.
+
 - Setting `ue4ssLoadOrder = false` disables the UE4SS sidecar entirely --
+
   the FBLO page still works for PAK mods.
 
 `mods.txt` line format: `ModFolderName : 1` (enabled) or `ModFolderName : 0` (disabled).

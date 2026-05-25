@@ -37,10 +37,12 @@ Game support config: `gamebryo-plugin-management\src\util\gameSupport.ts`
 | `.ghost` | Ghosted/disabled plugin | Appended to base filename (e.g. `Mod.esp.ghost`) |
 
 Starfield adds two extra types:
+
 - **Medium plugin** — `FLAG_MASTER` bit set on a `.esm` with special light limit
 - **Blueprint plugin** — `0x00000800` flag; Starfield manages these itself, they are excluded from `plugins.txt` entirely
 
 Plugin extension list is built by `pluginExtensions(gameMode)`:
+
 - Games with ESL support: `['.esm', '.esp', '.esl']`
 - Games without: `['.esm', '.esp']`
 
@@ -53,14 +55,14 @@ Plugin extension list is built by `pluginExtensions(gameMode)`:
 Two separate files:
 
 **`loadorder.txt`** (UTF-8) — all plugins in load order, one per line, no prefix:
-```
+```text
 Oblivion.esm
 DLCBattlehornCastle.esp
 MyMod.esp
 ```
 
 **`plugins.txt`** (latin1) — only enabled plugins, one per line:
-```
+```text
 Oblivion.esm
 MyMod.esp
 ```
@@ -70,7 +72,7 @@ When Vortex controls load order it sets file modification timestamps sequentiall
 ### 3b. "fallout4" format (Skyrim SE, Fallout 4, Starfield, Enderal SE)
 
 Single file: **`plugins.txt`** (latin1) — all plugins, enabled ones prefixed with `*`:
-```
+```text
 *Skyrim.esm
 *Update.esm
 *DLC.esm
@@ -85,6 +87,7 @@ Lines without `*` are known but disabled. `loadorder.txt` may also exist for com
 ## 4. Native Plugins
 
 Each game has a hardcoded list of native (game-bundled) plugins in `gameSupport.ts`. These are:
+
 - Always placed at the beginning of the load order in a fixed sequence
 - Not written to `plugins.txt` or `loadorder.txt`
 - Never visible in Vortex's plugin list for user reordering
@@ -109,7 +112,7 @@ Vortex reads only the `TES4` record header (first ~50-200 bytes) — not the ful
 | `SNAM` | Description string |
 
 Flags extracted from TES4 record header:
-```
+```text
 FLAG_MASTER    = 0x00000001  -> isMaster
 FLAG_LIGHT     = 0x00000200  -> isLight (ESL)  [0x00000100 on Starfield]
 FLAG_BLUEPRINT = 0x00000800  -> isBlueprint (Starfield only)
@@ -125,6 +128,7 @@ Ghosted plugins are disabled without removing them from the load order or the fi
 - Ghosted: `SomeMod.esp.ghost`
 
 Ghosted plugins are:
+
 - Excluded from LOOT sort operations
 - Not counted in the 255-plugin (or ESL slot) limits
 - Still tracked in Vortex's internal state with `enabled: "ghost"`
@@ -134,7 +138,7 @@ Ghosted plugins are:
 ## 7. Redux State
 
 ### Load order state path
-```
+```text
 state.persistent.loadOrder[profileId][pluginId] = ILoadOrder
 ```
 
@@ -147,7 +151,7 @@ state.persistent.loadOrder[profileId][pluginId] = ILoadOrder
 ```
 
 ### Plugin info state path
-```
+```text
 state.session.plugins.pluginList[pluginId] = IPlugin
 ```
 
@@ -171,18 +175,21 @@ Reducers: `gamebryo-plugin-management\src\reducers\loadOrder.ts`, `plugins.ts`
 Source: `gamebryo-plugin-management\src\util\PluginPersistor.ts`
 
 Implements `types.IPersistor`. Responsibilities:
+
 - Watch `plugins.txt` and `loadorder.txt` for external changes (file watcher)
 - Deserialize files into Redux state on game activation
 - Serialize Redux state back to files on any state change
 - Debounce writes (200ms) to avoid rapid thrashing
 
 **Deserialization flow:**
+
 1. Read `loadorder.txt` (original) or `plugins.txt` (fallout4) for order
 2. Read `plugins.txt` for enabled state
 3. Merge with native plugin list (prepend, mark `isNative: true`)
 4. Emit Redux update
 
 **Serialization flow:**
+
 1. Collect all plugins sorted by `loadOrder`
 2. Skip Blueprint plugins (Starfield only)
 3. Write `loadorder.txt` (all plugins, UTF-8)
@@ -241,6 +248,7 @@ Triggered by `autosort-plugins` event or manual "Sort Now" button:
 ### 9d. Plugin Metadata from LOOT
 
 Metadata retrieved per-plugin via:
+
 - `loot.getPluginMetadataAsync(pluginName)` — groups, custom rules
 - `loot.getPluginAsync(pluginName)` — tags, archive loading, cleanliness
 

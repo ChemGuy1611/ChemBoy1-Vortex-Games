@@ -16,7 +16,6 @@
 | Executable | `Railroader.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 | Executable (GOG) | `Railroader.exe` |
-| Extension Page | [XXX](XXX) |
 | PCGamingWiki | [https://railroader.fandom.com/wiki/Railroader_Wiki](https://railroader.fandom.com/wiki/Railroader_Wiki) |
 
 ## Supported Stores

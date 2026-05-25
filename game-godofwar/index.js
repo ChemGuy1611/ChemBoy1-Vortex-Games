@@ -102,6 +102,8 @@ const LOADER_FILE_NO = 475;
 const LOADER_DOMAIN = GAME_ID;
 
 // FILLED IN FROM DATA ABOVE
+const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
+const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 const spec = {
   "game": {
     "id": GAME_ID,
@@ -119,6 +121,8 @@ const spec = {
     "details": {
       "steamAppId": +STEAMAPP_ID,
       "epicAppId": EPICAPP_ID,
+      "ignoreConflicts": IGNORE_CONFLICTS,
+      "ignoreDeploy": IGNORE_DEPLOY,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
@@ -578,9 +582,7 @@ function installSave(files) {
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
-    (file
-      //(file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep))
-    )
+    !file.endsWith(path.sep)
   );
   const instructions = filtered.map(file => {
     return {

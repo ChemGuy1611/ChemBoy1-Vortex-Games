@@ -143,6 +143,8 @@ const PORT_CONFIG_PATH = path.join(CONFIG_PATH, PORT_CONFIG_FILE);
 //Filled in from info above
 const PCGAMINGWIKI_URL = "XXX";
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1319";
+const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
+const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 const spec = {
   "game": {
     "id": GAME_ID,
@@ -158,6 +160,8 @@ const spec = {
     "details": {
       "compatibleDownloads": [GAME_ID1, GAME_ID2, GAME_ID3],
       "nexusPageId": GAME_ID1,
+      "ignoreConflicts": IGNORE_CONFLICTS,
+      "ignoreDeploy": IGNORE_DEPLOY,
     },
     "environment": {}
   },

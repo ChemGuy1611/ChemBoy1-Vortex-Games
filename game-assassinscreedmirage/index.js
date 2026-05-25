@@ -31,6 +31,8 @@ let STAGING_FOLDER = ''; //Vortex staging folder path
 let DOWNLOAD_FOLDER = ''; //Vortex download folder path
 let GAME_PATH = ''; //Game installation path
 let GAME_VERSION = ''; //Game version
+const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
+const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 const spec = {
   "game": {
     "id": GAME_ID,
@@ -48,6 +50,8 @@ const spec = {
       "steamAppId": +STEAMAPP_ID,
       //"epicAppId": EPICAPP_ID,
       "uPlayAppId": UPLAYAPP_ID,
+      "ignoreConflicts": IGNORE_CONFLICTS,
+      "ignoreDeploy": IGNORE_DEPLOY,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
@@ -412,13 +416,13 @@ function setupNotify(api) {
         },
       },
     ],
-  });    
+  });
 }
 
 //Test for .forger2 files
 function forgerTestSupportedContent(files, gameId) {
   // Make sure we're able to support this mod.
-  let supported = (gameId === spec.game.id) && 
+  let supported = (gameId === spec.game.id) &&
       (files.find(file => path.extname(file).toLowerCase() === forgerModFileExt) !== undefined);
 
   // Test for a mod installer.
@@ -448,12 +452,7 @@ function forgerInstallContent(files) {
     ((file.indexOf(rootPath) !== -1) &&
       (!file.endsWith(path.sep))));
   //*/
-  /*
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1)));
-  */
   const instructions = filtered.map(file => {
-  //const instructions = files.map(file => {
     return {
         type: 'copy',
         source: file,

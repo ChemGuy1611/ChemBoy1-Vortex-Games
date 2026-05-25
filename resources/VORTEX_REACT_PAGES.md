@@ -125,10 +125,12 @@ function GameSettings() {
 ```
 
 **`Toggle` props:**
+
 - `checked` — boolean state value
 - `onToggle(checked: boolean)` — receives the new value (not a DOM event)
 
 **`More` props:**
+
 - `id` — must be unique across all registered `More` components
 - `name` — display name in the tooltip header
 
@@ -191,7 +193,7 @@ const items = useSelector(state =>
 
 All main pages should use the `MainPage` wrapper. Three sub-components:
 
-```
+```text
 MainPage          — root wrapper
   MainPage.Header — optional toolbar / filter row at top
   MainPage.Body   — scrollable content area
@@ -378,6 +380,7 @@ function MyItemRenderer({ className, item }) {
 ```
 
 **Rules:**
+
 - Always include `Icon` with `name: 'drag-handle'` and `className: 'drag-handle-icon'`.
 - Spread `className` from props onto the root element so DnD works.
 - Use `filter(Boolean)` when splitting className to avoid empty class strings.
@@ -464,7 +467,7 @@ const onApply = React.useCallback((reordered) => {
 
 Define React components **after `main()`** and before `module.exports`. They can be referenced inside `main()` because JS hoisting makes function declarations available throughout the file scope.
 
-```
+```text
 Imports
 Toggles / constants
 spec

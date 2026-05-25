@@ -17,7 +17,7 @@
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 | Executable (GOG) | `RetroRewind.exe` |
 | Executable (Demo) | `RetroRewind.exe` |
-| Extension Page | [XXX](XXX) |
+| Extension Page | [https://www.nexusmods.com/site/mods/1780](https://www.nexusmods.com/site/mods/1780) |
 | PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Retro_Rewind](https://www.pcgamingwiki.com/wiki/Retro_Rewind) |
 
 ## Supported Stores

@@ -42,7 +42,7 @@ const DATA_FILE = "helix";
 const DATASUB_ID = `${GAME_ID}-datasub`;
 const DATASUB_NAME = "Game Data Subfolder";
 const DATASUB_PATH = path.join("helix");
-const DATASUB_FOLDERS = ["baked", "graph objects", "game system data"]; // <-- Update to incorporate all subfolders 
+const DATASUB_FOLDERS = ["baked", "graph objects", "game system data"]; // <-- Update to incorporate all subfolders
 
 const MODLOADER_ID = `${GAME_ID}-modloader`;
 const MODLOADER_NAME = "Snowdrop ModLoader";
@@ -54,6 +54,8 @@ const MOD_PATH = ".";
 
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/970"; //Nexus link to this extension. Used for links
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Star_Wars_Outlaws";
+const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
+const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 const spec = {
   "game": {
     "id": GAME_ID,
@@ -71,6 +73,8 @@ const spec = {
     "details": {
       "uPlayAppId": UPLAYAPP_ID,
       "steamAppId": +STEAMAPP_ID,
+      "ignoreConflicts": IGNORE_CONFLICTS,
+      "ignoreDeploy": IGNORE_DEPLOY,
     },
     "environment": {
       "UPlayAPPId": UPLAYAPP_ID,
@@ -282,7 +286,7 @@ function installConfig(files) {
   return Promise.resolve({ instructions });
 }
 
-//Installer test for Signature Bypass files
+//Installer test for Mod Loader files
 function testModLoader(files, gameId) {
   const isMod = files.some(file => path.basename(file).toLowerCase() === MODLOADER_FILE);
   let supported = (gameId === spec.game.id) && isMod;
@@ -293,7 +297,7 @@ function testModLoader(files, gameId) {
   });
 }
 
-//Installer install UE4SS files
+//Installer install Mod Loader files
 function installModLoader(files) {
   const modFile = files.find(file => path.basename(file).toLowerCase() === MODLOADER_FILE);
   const idx = modFile.indexOf(path.basename(modFile));
@@ -302,8 +306,7 @@ function installModLoader(files) {
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
-    //((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
-    ((file.indexOf(rootPath) !== -1))
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
   );
 
   const instructions = filtered.map(file => {
