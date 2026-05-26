@@ -1571,12 +1571,16 @@ class MainWindow(QMainWindow):
             flags=[
                 ("--no-open", "Skip browser (don't open Nexus upload page)", False),
                 ("--dry-run", "Preview only, no writes", False),
+                ("--upload", "Upload zip to Nexus Mods after zipping", False),
             ],
         )
         if dlg is None:
             return
         ids = self._selected_ids()
-        self._run([[PYTHON, os.path.join(REPO_ROOT, "release_extension.py")] + ids + dlg.extra_args()],
+        extra = dlg.extra_args()
+        if "--upload" not in extra:
+            extra.append("--no-upload")
+        self._run([[PYTHON, os.path.join(REPO_ROOT, "release_extension.py")] + ids + extra],
                   "release_extension.py")
 
     def _on_port_to_template(self):
