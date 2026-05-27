@@ -976,9 +976,15 @@ class NewGameDialog(QDialog):
 
         self.force_cb = QCheckBox("--force (overwrite existing folder)")
         self.no_images_cb = QCheckBox("--no-images (skip art downloads)")
-        self.dry_run_cb = QCheckBox("--dry-run (preview only, no writes)")
+        self.refresh_images_cb = QCheckBox("--refresh-images (re-download all images for existing extension)")
+        self.no_browser_cb = QCheckBox("--no-browser (skip opening browser tabs)")
+        self.no_startfile_cb = QCheckBox("--no-startfile (skip opening images/index.js in editor)")
+        self.dry_run_cb = QCheckBox("--dry-run (dry run, no writes)")
         layout.addRow("", self.force_cb)
         layout.addRow("", self.no_images_cb)
+        layout.addRow("", self.refresh_images_cb)
+        layout.addRow("", self.no_browser_cb)
+        layout.addRow("", self.no_startfile_cb)
         layout.addRow("", self.dry_run_cb)
 
         buttons = QDialogButtonBox(QDialogButtonBox.Ok | QDialogButtonBox.Cancel)
@@ -999,6 +1005,12 @@ class NewGameDialog(QDialog):
             cmd.append("--force")
         if self.no_images_cb.isChecked():
             cmd.append("--no-images")
+        if self.refresh_images_cb.isChecked():
+            cmd.append("--refresh-images")
+        if self.no_browser_cb.isChecked():
+            cmd.append("--no-browser")
+        if self.no_startfile_cb.isChecked():
+            cmd.append("--no-startfile")
         if self.dry_run_cb.isChecked():
             cmd.append("--dry-run")
         return cmd
@@ -1018,7 +1030,7 @@ class PortTemplateDialog(QDialog):
         self.template_combo.addItems(vu.list_template_names())
         layout.addRow("Template:", self.template_combo)
 
-        self.dry_run_cb = QCheckBox("--dry-run (preview only, no writes)")
+        self.dry_run_cb = QCheckBox("--dry-run (dry run, no writes)")
         self.force_cb = QCheckBox("--force (overwrite .bak backup)")
         layout.addRow("", self.dry_run_cb)
         layout.addRow("", self.force_cb)
@@ -1569,9 +1581,12 @@ class MainWindow(QMainWindow):
         dlg = self._script_dlg(
             "Release Extension",
             flags=[
-                ("--no-open", "Skip browser (don't open Nexus upload page)", False),
-                ("--dry-run", "Preview only, no writes", False),
-                ("--upload", "Upload zip to Nexus Mods after zipping", False),
+                ("--upload", "Upload (Nexus API v3)", True),
+                ("--edit-changelog", "Open Changelog editor", True),
+                ("--no-open", "Skip opening Nexus Page", False),
+                ("--dry-run", "Dry run (no writes)", False),
+                ("--skip-node-check", "Skip Node syntax", False),
+                ("--skip-eslint", "Skip ESLint", False),
             ],
         )
         if dlg is None:
@@ -1658,6 +1673,7 @@ class MainWindow(QMainWindow):
             flags=[
                 ("--dry-run", "Preview only, no API calls", False),
                 ("--force", "Re-fetch even if already cached", False),
+                ("--prune", "Remove cache entries for game IDs no longer in repo, then exit", False),
             ],
         )
         if dlg is None:
@@ -1671,7 +1687,7 @@ class MainWindow(QMainWindow):
         dlg = self._script_dlg(
             "Setup Test Folder",
             flags=[
-                ("--dry-run", "Preview only, no writes", False),
+                ("--dry-run", "Dry run (no writes)", False),
                 ("--force", "Recreate .exe stub even if it already exists", False),
                 ("--clean", "Delete test folder(s) instead of creating", False),
             ],
@@ -1686,10 +1702,12 @@ class MainWindow(QMainWindow):
         dlg = self._script_dlg(
             "Patch Extensions",
             flags=[
-                ("--dry-run", "Preview only, no writes", False),
+                ("--dry-run", "Dry run (no writes)", False),
                 ("--force", "Re-run all URL patches (implies --force-pcgw)", False),
                 ("--force-pcgw", "Re-evaluate PCGAMINGWIKI_URL even if already set", False),
                 ("--debug", "Print raw PCGamingWiki search results", False),
+                ("--list-patches", "List all patches with enabled status, then exit", False),
+                ("--audit", "Run installer priority + FOMOD audits across all folders, then exit", False),
             ],
             inputs=[
                 ("--only", "Only patch", "patch name (e.g. pcgamingwiki_url)"),

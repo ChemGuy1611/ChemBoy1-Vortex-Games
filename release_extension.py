@@ -14,22 +14,24 @@ Steps performed per game:
     6. Rename version .txt file to match info.json version
     7. Update Version and Date in index.js header comment
     8. Add resolved store IDs to DISCOVERY_IDS_ACTIVE if missing
-    9. node --check on index.js (warns on syntax error)
-   10. eslint on index.js (warns on lint errors)
+    9. node --check on index.js (warns on syntax error; use --skip-node-check to skip)
+   10. eslint on index.js (warns on lint errors; use --skip-eslint to skip)
    11. Run generate_explained.js to regenerate EXTENSION_EXPLAINED.md
    12. Create game-{GAME_ID}.zip with 7-Zip
    13. Optionally upload zip to Nexus Mods as a new file version (changelog entry
-       attached as description); pass --upload to enable (default: skip)
-   14. Open EXTENSION_URL in browser (or nexusmods.com/games/site if not set)
+       attached as description); default: skip (use --upload to enable)
+   14. Open EXTENSION_URL?tab=files in browser (or nexusmods.com/games/site if not set)
+   15. Optionally open EXTENSION_URL/edit/documents (changelog editor) in browser
 
 Usage:
     python release_extension.py GAME_ID [GAME_ID ...]
     python release_extension.py GAME_ID --no-open
     python release_extension.py GAME_ID --dry-run
+    python release_extension.py GAME_ID --skip-node-check
     python release_extension.py GAME_ID --skip-eslint
-    python release_extension.py GAME_ID --skip-explained
     python release_extension.py GAME_ID --upload
     python release_extension.py GAME_ID --no-upload
+    python release_extension.py GAME_ID --edit-changelog
 
 Environment variables:
     SEVENZIP_PATH   (optional, default: C:\\Program Files\\7-Zip\\7z.exe)
@@ -49,7 +51,7 @@ import webbrowser
 import zipfile
 
 from vortex_utils import (
-    REPO_ROOT, run_generate_explained, add_to_discovery_ids, node_check, eslint_check,
+    REPO_ROOT, run_generate_explained_batch, add_to_discovery_ids, node_check, eslint_check,
     extract_extension_url, read_info_json, parse_changelog_latest,
     update_index_header as _apply_header, mutate_index_js, validate_index_js,
     print_run_summary, assert_is_game_id, log_info, log_warn, log_error,
@@ -58,7 +60,6 @@ from vortex_utils import (
 SEVENZIP = os.environ.get("SEVENZIP_PATH", r"C:\Program Files\7-Zip\7z.exe")
 NEXUS_SITE_URL = "https://www.nexusmods.com/games/site"
 NEXUS_V3 = "https://api.nexusmods.com/v3"
-
 
 
 # == Nexus v3 upload helpers ===================================================
@@ -78,7 +79,7 @@ def _v3_get(path, api_key):
             body = e.read().decode("utf-8", errors="replace")
         except Exception:
             pass
-        raise RuntimeError(f"HTTP {e.code} {e.reason} — {body[:200]}") from None
+        raise RuntimeError(f"HTTP {e.code} {e.reason} - {body[:200]}") from None
 
 
 def _v3_post_json(path, body, api_key):
@@ -103,7 +104,7 @@ def _v3_post_json(path, body, api_key):
             body_txt = e.read().decode("utf-8", errors="replace")
         except Exception:
             pass
-        raise RuntimeError(f"HTTP {e.code} {e.reason} — {body_txt[:400]}") from None
+        raise RuntimeError(f"HTTP {e.code} {e.reason} - {body_txt[:400]}") from None
 
 
 def _extract_changelog_entry(changelog_src, version):
@@ -181,6 +182,8 @@ def _upload_parts(zip_path, presigned_urls, part_size, game_id):
     with open(zip_path, "rb") as f:
         for i, url in enumerate(presigned_urls):
             chunk = f.read(part_size)
+            if len(chunk) == 0 and i < total - 1:
+                raise RuntimeError(f"unexpected EOF reading zip before part {i + 1}/{total}")
             req = urllib.request.Request(url, data=chunk, method="PUT")
             req.add_header("Content-Type", "application/octet-stream")
             req.add_header("Content-Length", str(len(chunk)))
@@ -204,22 +207,30 @@ def _complete_multipart(complete_url, etags):
         method="POST",
     )
     req.add_header("Content-Type", "application/xml")
-    with urllib.request.urlopen(req, timeout=60):
-        pass
+    try:
+        with urllib.request.urlopen(req, timeout=60):
+            pass
+    except urllib.error.HTTPError as e:
+        body = ""
+        try:
+            body = e.read().decode("utf-8", errors="replace")
+        except Exception:
+            pass
+        raise RuntimeError(f"S3 CompleteMultipartUpload failed: HTTP {e.code} {e.reason} - {body[:400]}") from None
 
 
 def _poll_upload_state(upload_id, api_key, game_id):
     """Poll until the upload reaches 'available' state. Raises on timeout."""
     log_info(game_id, "Waiting for upload to be processed...")
-    for attempt in range(60):
-        delay = min(2.0 * (1.5 ** attempt), 30.0)
+    for attempt in range(30):
+        delay = min(1.0 * (1.4 ** attempt), 20.0)
         time.sleep(delay)
         data = _v3_get(f"/uploads/{upload_id}", api_key)
         state = data.get("state", "")
         if state == "available":
             return
         log_info(game_id, f"  Upload state: {state}")
-    raise RuntimeError(f"upload {upload_id} did not become available after 60 attempts")
+    raise RuntimeError(f"upload {upload_id} did not become available after 30 attempts")
 
 
 def _nexus_upload_zip(zip_path, mod_id, domain, version, description, api_key, game_id, group_id_override=None):
@@ -253,18 +264,19 @@ def _nexus_upload_zip(zip_path, mod_id, domain, version, description, api_key, g
     _poll_upload_state(upload_id, api_key, game_id)
 
     log_info(game_id, f"Publishing version {version} to file group '{display_name}'...")
-    _v3_post_json(f"/mod-file-update-groups/{group_id}/versions", {
+    result = _v3_post_json(f"/mod-file-update-groups/{group_id}/versions", {
         "upload_id": upload_id,
         "name": display_name,
         "description": description,
-        "changelog_html": description,
         "version": version,
         "file_category": "main",
         "archive_existing_file": True,
         "primary_mod_manager_download": True,
-        "allow_mod_manager_download": True,
+        "allow_mod_manager_download": False,  # inverted legacy field: False = MMD enabled, True = MMD disabled
         "show_requirements_pop_up": True,
     }, api_key)
+    file_uid = result.get("id", "unknown")
+    log_info(game_id, f"File UID: {file_uid} (NOTE: enable 'Mod Manager Download' manually on the Files tab - Nexus v3 API ignores allow_mod_manager_download)")
 
     log_info(game_id, f"Nexus upload complete: {display_name} v{version}")
 
@@ -316,7 +328,6 @@ def update_version_txt(folder, game_id, version, dry_run=False):
             renamed = True
 
 
-
 def update_index_header(folder, game_id, version, date, dry_run=False):
     """Update the Version and Date lines in the index.js header comment."""
     if not version:
@@ -346,8 +357,12 @@ def update_discovery_ids(folder, game_id, dry_run=False):
     )
 
 
+def release(game_id, open_browser, dry_run=False, skip_eslint=False,
+            skip_node_check=False, upload=False, edit_changelog=False, out=None):
+    if out is None:
+        out = {}
+    out.update({"zipped": False, "uploaded": False, "upload_failed": False, "browser_opened": False})
 
-def release(game_id, open_browser, dry_run=False, skip_eslint=False, skip_explained=False, upload=None):
     folder = os.path.join(REPO_ROOT, f"game-{game_id}")
     if not os.path.isdir(folder):
         log_error(game_id, f"folder not found: {folder}")
@@ -399,69 +414,69 @@ def release(game_id, open_browser, dry_run=False, skip_eslint=False, skip_explai
     if version and changelog_version and version != changelog_version:
         log_warn(game_id, f"info.json version ({version}) does not match latest CHANGELOG entry ({changelog_version})")
     changelog_entry = _extract_changelog_entry(changelog_src, version or "")
+    if changelog_entry:
+        log_info(game_id, f"Changelog entry for v{version}:")
+        for line in changelog_entry.splitlines():
+            print(f"    {line}")
+
     update_version_txt(folder, game_id, version, dry_run=dry_run)
     update_index_header(folder, game_id, version, date, dry_run=dry_run)
     update_discovery_ids(folder, game_id, dry_run=dry_run)
 
     if dry_run:
         zip_path = os.path.join(folder, f"game-{game_id}.zip")
-        log_info(game_id, "[DRY RUN] Would run node --check on index.js")
+        if not skip_node_check:
+            log_info(game_id, "[DRY RUN] Would run node --check on index.js")
         if not skip_eslint:
             log_info(game_id, "[DRY RUN] Would run eslint on index.js")
-        if not skip_explained:
-            log_info(game_id, "[DRY RUN] Would generate EXTENSION_EXPLAINED.md")
+        log_info(game_id, "[DRY RUN] Would generate EXTENSION_EXPLAINED.md")
         log_info(game_id, f"[DRY RUN] Would create: {zip_path}")
-        if upload:
-            api_key = get_api_key("NEXUS_API_KEY")
-            if not api_key:
-                log_error(game_id, "[DRY RUN] NEXUS_API_KEY not set; upload would be skipped")
+        api_key = get_api_key("NEXUS_API_KEY")
+        if not api_key:
+            log_warn(game_id, "[DRY RUN] NEXUS_API_KEY not set; file group lookup skipped")
+        else:
+            parsed = parse_nexus_mod_url(extension_url) if extension_url else None
+            if not parsed:
+                log_warn(game_id, "[DRY RUN] EXTENSION_URL missing or not a valid Nexus mod URL; file group lookup skipped")
             else:
-                parsed = parse_nexus_mod_url(extension_url) if extension_url else None
-                if not parsed:
-                    log_error(game_id, "[DRY RUN] EXTENSION_URL missing or not a valid Nexus mod URL; upload would be skipped")
-                else:
-                    _domain, mod_id = parsed
-                    try:
-                        group = _pick_file_group(mod_id, _domain, api_key, game_id, group_id_override=file_group_id)
+                _domain, mod_id = parsed
+                try:
+                    group = _pick_file_group(mod_id, _domain, api_key, game_id, group_id_override=file_group_id)
+                    if upload:
                         log_info(game_id, f"[DRY RUN] Would upload {os.path.basename(zip_path)} to file group"
                                  f" '{group['name']}' (id: {group['id']})")
-                        if changelog_entry:
-                            log_info(game_id, "[DRY RUN] Changelog entry to attach:")
-                            for line in changelog_entry.splitlines():
-                                print(f"    {line}")
-                        else:
-                            log_warn(game_id, "[DRY RUN] No changelog entry found for this version")
-                    except Exception as e:
-                        log_error(game_id, f"[DRY RUN] File group lookup failed: {e}")
+                    else:
+                        log_info(game_id, f"[DRY RUN] File group: '{group['name']}' (id: {group['id']})")
+                except Exception as e:
+                    log_error(game_id, f"[DRY RUN] File group lookup failed: {e}")
         if extension_url:
-            log_info(game_id, f"[DRY RUN] Would open: {extension_url}")
+            log_info(game_id, f"[DRY RUN] Would open (files tab): {extension_url}?tab=files")
+            if edit_changelog:
+                _ep = parse_nexus_mod_url(extension_url)
+                if _ep:
+                    log_info(game_id, f"[DRY RUN] Would open (changelog edit): https://www.nexusmods.com/games/{_ep[0]}/mods/{_ep[1]}/edit/documents")
         else:
             log_info(game_id, f"[DRY RUN] EXTENSION_URL not set - would open: {NEXUS_SITE_URL}")
         return True
 
-    log_info(game_id, "Checking index.js syntax...")
-    ok, err = node_check(index_path)
-    if ok:
-        log_info(game_id, "index.js syntax OK")
-    else:
-        log_warn(game_id, "node --check found a syntax error in index.js:")
-        print(f"    {err}")
+    if not skip_node_check:
+        log_info(game_id, "Checking index.js syntax...")
+        ok, err = node_check(index_path)
+        if ok:
+            log_info(game_id, "index.js syntax OK")
+        else:
+            log_warn(game_id, "node --check found a syntax error in index.js:")
+            print(f"    {err}")
 
     if not skip_eslint:
         log_info(game_id, "Linting index.js...")
-        ok, out = eslint_check(index_path)
-        if ok:
+        lint_ok, lint_out = eslint_check(index_path)
+        if lint_ok:
             log_info(game_id, "eslint OK")
         else:
             log_warn(game_id, "eslint reported issues:")
-            for line in out.splitlines():
+            for line in lint_out.splitlines():
                 print(f"    {line}")
-
-    if not skip_explained:
-        log_info(game_id, "Generating EXTENSION_EXPLAINED.md...")
-        ok, err = run_generate_explained(game_id)
-        if not ok:
-            log_warn(game_id, f"generate_explained.js failed: {err}")
 
     zip_path = os.path.join(folder, f"game-{game_id}.zip")
 
@@ -485,44 +500,75 @@ def release(game_id, open_browser, dry_run=False, skip_eslint=False, skip_explai
 
     size_kb = os.path.getsize(zip_path) / 1024
     log_info(game_id, f"Created: {zip_path} ({size_kb:.1f} KB)")
+    out["zipped"] = True
 
     try:
         with zipfile.ZipFile(zip_path) as zf:
             names = zf.namelist()
         if "info.json" not in names:
-            log_warn(game_id, f"info.json not found at zip root (got: {names[:5]}...)")
+            shown = ", ".join(names[:10]) + (f" ... ({len(names)} total)" if len(names) > 10 else "")
+            log_warn(game_id, f"info.json not found at zip root (files: {shown})")
         if "index.js" not in names:
-            log_warn(game_id, f"index.js not found at zip root (got: {names[:5]}...)")
+            shown = ", ".join(names[:10]) + (f" ... ({len(names)} total)" if len(names) > 10 else "")
+            log_warn(game_id, f"index.js not found at zip root (files: {shown})")
     except Exception as e:
         log_warn(game_id, f"could not verify zip contents: {e}")
 
-    do_upload = upload
-    if do_upload is None:
-        ans = input(f"\n  Upload {os.path.basename(zip_path)} to Nexus Mods? [y/N] ").strip().lower()
-        do_upload = ans in ("y", "yes")
-    if do_upload:
+    if upload and not dry_run:
         api_key = get_api_key("NEXUS_API_KEY")
         if not api_key:
             log_error(game_id, "NEXUS_API_KEY not set; skipping upload")
+            out["upload_failed"] = True
         else:
             parsed = parse_nexus_mod_url(extension_url) if extension_url else None
             if not parsed:
                 log_error(game_id, "EXTENSION_URL missing or not a valid Nexus mod URL; skipping upload")
+                out["upload_failed"] = True
             else:
                 _domain, mod_id = parsed
                 try:
                     _nexus_upload_zip(zip_path, mod_id, _domain, version or "", changelog_entry, api_key, game_id,
                                       group_id_override=file_group_id)
+                    out["uploaded"] = True
                 except Exception as e:
                     log_error(game_id, f"upload failed: {e}")
+                    out["upload_failed"] = True
 
-    url_to_open = extension_url or NEXUS_SITE_URL
-    label = "" if extension_url else " (EXTENSION_URL not set)"
+    url_to_open = (f"{extension_url}?tab=files" if extension_url else None) or NEXUS_SITE_URL
+    url_label = "" if extension_url else " (EXTENSION_URL not set)"
     if open_browser:
-        log_info(game_id, f"Opening: {url_to_open}{label}")
+        log_info(game_id, f"Opening: {url_to_open}{url_label}")
         webbrowser.open(url_to_open)
+        out["browser_opened"] = True
+        if edit_changelog and extension_url:
+            _ep = parse_nexus_mod_url(extension_url)
+            if _ep:
+                edit_url = f"https://www.nexusmods.com/games/{_ep[0]}/mods/{_ep[1]}/edit/documents"
+                log_info(game_id, f"Opening changelog editor: {edit_url}")
+                webbrowser.open(edit_url)
 
     return True
+
+
+def _print_per_game_summary(details):
+    """Print per-game zipped/uploaded/browser action summary."""
+    if not details:
+        return
+    print("\nPer-game actions:")
+    for game_id, r in details.items():
+        if not r.get("ok"):
+            print(f"  {game_id}: failed")
+            continue
+        parts = ["zipped"]
+        if r.get("uploaded"):
+            parts.append("uploaded")
+        elif r.get("upload_failed"):
+            parts.append("upload failed")
+        else:
+            parts.append("upload skipped")
+        if r.get("browser_opened"):
+            parts.append("opened browser")
+        print(f"  {game_id}: {', '.join(parts)}")
 
 
 def main():
@@ -543,17 +589,17 @@ def main():
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Print what would be done without running 7-Zip.",
+        help="Print what would be done without running checks, 7-Zip, or upload.",
+    )
+    parser.add_argument(
+        "--skip-node-check",
+        action="store_true",
+        help="Skip the node --check syntax step.",
     )
     parser.add_argument(
         "--skip-eslint",
         action="store_true",
         help="Skip the eslint step.",
-    )
-    parser.add_argument(
-        "--skip-explained",
-        action="store_true",
-        help="Skip regenerating EXTENSION_EXPLAINED.md.",
     )
     upload_group = parser.add_mutually_exclusive_group()
     upload_group.add_argument(
@@ -566,6 +612,11 @@ def main():
         action="store_true",
         help="Skip the Nexus Mods upload step entirely (no prompt).",
     )
+    parser.add_argument(
+        "--edit-changelog",
+        action="store_true",
+        help="Also open the Nexus Mods changelog editor (Documents tab) in the browser.",
+    )
     args = parser.parse_args()
 
     upload = True if args.upload else False
@@ -574,10 +625,23 @@ def main():
         print(f"ERROR: 7-Zip not found at {SEVENZIP}")
         sys.exit(1)
 
-    label = " [DRY RUN]" if args.dry_run else ""
-    print(f"Releasing {len(args.game)} extension(s){label}...\n")
+    dry_label = " [DRY RUN]" if args.dry_run else ""
+    print(f"Releasing {len(args.game)} extension(s){dry_label}...\n")
+
+    # Batch generate_explained for all valid game folders in a single Node invocation.
+    if not args.dry_run:
+        batch_ids = [gid for gid in args.game if os.path.isdir(os.path.join(REPO_ROOT, f"game-{gid}"))]
+        if batch_ids:
+            n = len(batch_ids)
+            label = f"{n} games" if n > 1 else "1 game"
+            print(f"  Generating EXTENSION_EXPLAINED.md ({label})...")
+            ok, err = run_generate_explained_batch(batch_ids)
+            if not ok:
+                print(f"  WARNING - generate_explained.js batch failed: {err}")
+
     saved = []
     failed = []
+    details = {}
     try:
         for game_id in args.game:
             try:
@@ -585,21 +649,34 @@ def main():
             except ValueError as e:
                 print(f"  ERROR - {e}")
                 failed.append(game_id)
+                details[game_id] = {}
                 continue
+            r_out = {}
             try:
-                if release(game_id, not args.no_open, args.dry_run,
-                           skip_eslint=args.skip_eslint, skip_explained=args.skip_explained,
-                           upload=upload):
+                ok = release(
+                    game_id, not args.no_open, args.dry_run,
+                    skip_eslint=args.skip_eslint,
+                    skip_node_check=args.skip_node_check,
+                    upload=upload,
+                    edit_changelog=args.edit_changelog,
+                    out=r_out,
+                )
+                r_out["ok"] = ok
+                if ok:
                     saved.append(game_id)
                 else:
                     failed.append(game_id)
             except Exception as e:
                 log_error(game_id, f"unexpected error: {e}")
+                r_out["ok"] = False
                 failed.append(game_id)
+            details[game_id] = r_out
     except KeyboardInterrupt:
         print("\n\n  Interrupted.")
     finally:
         print_run_summary(saved, failed, skipped=[])
+        if not args.dry_run:
+            _print_per_game_summary(details)
 
 
 if __name__ == "__main__":

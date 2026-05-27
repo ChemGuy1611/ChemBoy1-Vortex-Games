@@ -699,7 +699,7 @@ A `.bak` file is written alongside `index.js` before overwriting. Use `--force` 
 
 ## release_extension.py
 
-Packages a game extension folder into a `.zip` archive using 7-Zip, optionally uploads it to the Nexus Mods mod page as a new file version, and opens the extension's Nexus Mods page in the default browser.
+Packages a game extension folder into a `.zip` archive using 7-Zip, optionally uploads it to the Nexus Mods mod page as a new file version, and opens the extension's Nexus Mods Files tab in the default browser.
 
 ### release_extension.py — Environment Variables
 
@@ -714,16 +714,18 @@ Packages a game extension folder into a `.zip` archive using 7-Zip, optionally u
 python release_extension.py GAME_ID [GAME_ID ...]
 python release_extension.py GAME_ID --no-open
 python release_extension.py GAME_ID --dry-run
-python release_extension.py GAME_ID --skip-eslint --skip-explained
+python release_extension.py GAME_ID --skip-node-check --skip-eslint --skip-explained
 python release_extension.py GAME_ID --upload
 python release_extension.py GAME_ID --no-upload
+python release_extension.py GAME_ID --edit-changelog
 ```
 
 Pass one or more `GAME_ID` values to release multiple extensions in one run.
 Use `--no-open` to skip opening the browser (useful for testing or bulk releases).
-Use `--dry-run` to print what would be generated and zipped without running 7-Zip.
-Use `--skip-eslint` to skip the ESLint step. Use `--skip-explained` to skip regenerating `EXTENSION_EXPLAINED.md`.
-Use `--upload` to automatically upload the zip to Nexus Mods as a new file version after zipping (no prompt). Use `--no-upload` to always skip the upload step. If neither flag is given, the script prompts `[y/N]` interactively after each zip is created. The changelog entry for the current version is attached as the file description on Nexus. `--upload` and `--no-upload` are mutually exclusive.
+Use `--dry-run` to print what would be done without running checks, 7-Zip, or upload.
+Use `--skip-node-check` to skip the `node --check` syntax step. Use `--skip-eslint` to skip the ESLint step. Use `--skip-explained` to skip regenerating `EXTENSION_EXPLAINED.md`.
+Use `--upload` to upload the zip to Nexus Mods as a new file version after zipping. Default is skip (no prompt). Use `--no-upload` to explicitly skip. The changelog entry for the current version is attached as the file description on Nexus. `--upload` and `--no-upload` are mutually exclusive.
+Use `--edit-changelog` to also open the Nexus Mods changelog editor (Documents tab) in the browser alongside the Files tab.
 Passing a template name (e.g. `template-basic`) instead of a game ID errors immediately before any release steps run.
 
 ### release_extension.py — Examples
@@ -736,7 +738,7 @@ python release_extension.py assassinscreedorigins assassinscreedvalhalla --no-op
 
 ### release_extension.py — Output
 
-**Aborts** if `CHANGELOG.md` is missing, if `info.json` version has no matching `## [X.Y.Z]` section in `CHANGELOG.md`, if `info.json` `name` does not match `Game: <Name>` pattern, or if `const debug = true` is found in `index.js`. Warns (but does not abort) if `info.json` version does not match the _latest_ `## [X.X.X]` entry in `CHANGELOG.md`. Runs `validate_index_js` checks (leftover `XXX`, missing `applyGame`, etc.) and warns on each issue found. Renames the versioned `.txt` file (e.g. `0.2.7.txt` -> `0.2.8.txt`) to match the current version. Updates the `Version:` and `Date:` lines in the `index.js` header comment — version from `info.json`, date from the most recent `## [X.X.X] - YYYY-MM-DD` entry in `CHANGELOG.md`. Adds any resolved store IDs to `DISCOVERY_IDS_ACTIVE` if not already present. Runs `node --check` on `index.js` and warns on syntax errors. Then runs `generate_explained.js` to regenerate `EXTENSION_EXPLAINED.md` and creates `game-{GAME_ID}.zip` inside the extension folder, overwriting any existing zip. If uploading, looks up the active file update group from `GET /v3/mods/{id}/file-update-groups`, runs a multipart upload via the Nexus v3 API, and publishes a new file version with the `## [X.Y.Z]` changelog entry as the description. Upload failure logs an error but does not fail the overall release. Reads `EXTENSION_URL` from `index.js` — if set to a valid URL, opens it in the default browser. If `EXTENSION_URL` is `"XXX"` or not present, opens `https://www.nexusmods.com/games/site` instead.
+**Aborts** if `CHANGELOG.md` is missing, if `info.json` version has no matching `## [X.Y.Z]` section in `CHANGELOG.md`, if `info.json` `name` does not match `Game: <Name>` pattern, or if `const debug = true` is found in `index.js`. Warns (but does not abort) if `info.json` version does not match the _latest_ `## [X.X.X]` entry in `CHANGELOG.md`. Runs `validate_index_js` checks (leftover `XXX`, missing `applyGame`, etc.) and warns on each issue found. Renames the versioned `.txt` file (e.g. `0.2.7.txt` -> `0.2.8.txt`) to match the current version. Updates the `Version:` and `Date:` lines in the `index.js` header comment — version from `info.json`, date from the most recent `## [X.X.X] - YYYY-MM-DD` entry in `CHANGELOG.md`. Adds any resolved store IDs to `DISCOVERY_IDS_ACTIVE` if not already present. Runs `node --check` on `index.js` (skip with `--skip-node-check`) and warns on syntax errors. Runs ESLint (skip with `--skip-eslint`). Runs `generate_explained.js` to regenerate `EXTENSION_EXPLAINED.md` (skip with `--skip-explained`; batched across all games in a single Node invocation when releasing multiple). Creates `game-{GAME_ID}.zip` inside the extension folder, overwriting any existing zip. If `--upload` is passed, looks up the active file update group from `GET /v3/mods/{id}/file-update-groups`, runs a multipart upload via the Nexus v3 API, and publishes a new file version with the `## [X.Y.Z]` changelog entry as the description. Upload failure logs an error but does not fail the overall release. Always prints the extracted changelog entry for the current version to the console before zipping. Reads `EXTENSION_URL` from `index.js` — if set to a valid URL, opens `EXTENSION_URL?tab=files` in the default browser; otherwise opens `https://www.nexusmods.com/games/site`. If `--edit-changelog` is passed, also opens the Nexus Mods Documents editor (`EXTENSION_URL/edit/documents`) in the browser.
 
 ---
 
@@ -1080,7 +1082,7 @@ No arguments. Launches the window, which loads all extensions automatically.
 
 | Button | Script invoked |
 | --- | --- |
-| Release | Dialog (`--no-open`, `--dry-run`, `--upload`), then `python release_extension.py <ids> [flags] (--upload\|--no-upload)` |
+| Release | Dialog (`--no-open`, `--dry-run`, `--upload`, `--edit-changelog`), then `python release_extension.py <ids> [flags] (--upload\|--no-upload)` |
 | Lint | `node lint_extensions.js <ids>` |
 | Generate Explained | `node generate_explained.js <ids>` |
 | Port to Template... | Dialog to pick template, then `python port_to_template.py <id> <template>` per game |
