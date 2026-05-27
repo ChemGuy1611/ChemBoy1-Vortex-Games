@@ -1210,6 +1210,7 @@ function installConfig(api, files) {
   if (IS_CONFIG === false) {
     //api.showErrorNotification(`Could not install mod as Config`, `You tried installing a Config mod, but the game, staging folder, and ${CONFIG_LOC} folder are not all on the same drive. Please move the game and/or staging folder to the same drive as the ${CONFIG_LOC} folder (typically C Drive) to install these types of mods with Vortex.`, { allowReport: false });
     configInstallerNotify(api);
+    throw new util.UserCanceled();
   }
   return Promise.resolve({ instructions });
 }
@@ -1312,6 +1313,7 @@ function installSave(api, files) {
   if (IS_SAVE === false) {
     //api.showErrorNotification(`Could not install mod as Save`, `You tried installing a Save mod, but the game, staging folder, and ${SAVE_LOC} folder are not all on the same drive. Please move the game and/or staging folder to the same drive as the ${SAVE_LOC} folder (typically C Drive) to install these types of mods with Vortex.`, { allowReport: false });
     saveInstallerNotify(api);
+    throw new util.UserCanceled();
   }
   return Promise.resolve({ instructions });
 }

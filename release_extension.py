@@ -18,8 +18,8 @@ Steps performed per game:
    10. eslint on index.js (warns on lint errors; use --skip-eslint to skip)
    11. Run generate_explained.js to regenerate EXTENSION_EXPLAINED.md
    12. Create game-{GAME_ID}.zip with 7-Zip
-   13. Optionally upload zip to Nexus Mods as a new file version (changelog entry
-       attached as description); default: skip (use --upload to enable)
+   13. Optionally upload zip to Nexus Mods as a new file version (changelog entry as
+       description; file group resolved via v1 uid -> v3 groups); default: skip (use --upload to enable)
    14. Open EXTENSION_URL?tab=files in browser (or nexusmods.com/games/site if not set)
    15. Optionally open EXTENSION_URL/edit/documents (changelog editor) in browser
 
@@ -55,7 +55,7 @@ from vortex_utils import (
     extract_extension_url, read_info_json, parse_changelog_latest,
     update_index_header as _apply_header, mutate_index_js, validate_index_js,
     print_run_summary, assert_is_game_id, log_info, log_warn, log_error,
-    get_api_key, parse_nexus_mod_url, const_value,
+    get_api_key, parse_nexus_mod_url,
 )
 SEVENZIP = os.environ.get("SEVENZIP_PATH", r"C:\Program Files\7-Zip\7z.exe")
 NEXUS_SITE_URL = "https://www.nexusmods.com/games/site"
@@ -121,20 +121,13 @@ def _extract_changelog_entry(changelog_src, version):
     return text.strip()
 
 
-def _pick_file_group(mod_id, domain, api_key, game_id, group_id_override=None):
+def _pick_file_group(mod_id, domain, api_key, game_id):
     """Return the file update group dict to use for this upload.
 
-    Resolution order:
-      1. group_id_override (from FILE_GROUP_ID constant in index.js)
-      2. Lookup: v1 mod UID via GET /v1/games/{domain}/mods/{mod_id}.json,
-         then GET /v3/mods/{uid}/file-update-groups
+    Lookup: v1 mod UID via GET /v1/games/{domain}/mods/{mod_id}.json,
+    then GET /v3/mods/{uid}/file-update-groups.
     """
-    if group_id_override is not None:
-        group_id = str(group_id_override)
-        log_info(game_id, f"Using FILE_GROUP_ID: {group_id}")
-        return {"id": group_id, "name": group_id}
-
-    log_info(game_id, "FILE_GROUP_ID not set; resolving mod UID from Nexus v1...")
+    log_info(game_id, "Resolving mod UID from Nexus v1...")
     try:
         req = urllib.request.Request(
             f"https://api.nexusmods.com/v1/games/{domain}/mods/{mod_id}.json",
@@ -233,9 +226,9 @@ def _poll_upload_state(upload_id, api_key, game_id):
     raise RuntimeError(f"upload {upload_id} did not become available after 30 attempts")
 
 
-def _nexus_upload_zip(zip_path, mod_id, domain, version, description, api_key, game_id, group_id_override=None):
+def _nexus_upload_zip(zip_path, mod_id, domain, version, description, api_key, game_id):
     """Run the full Nexus v3 multipart upload flow and create a new file version."""
-    group = _pick_file_group(mod_id, domain, api_key, game_id, group_id_override=group_id_override)
+    group = _pick_file_group(mod_id, domain, api_key, game_id)
     group_id = group["id"]
     display_name = group["name"]
 
@@ -370,17 +363,10 @@ def release(game_id, open_browser, dry_run=False, skip_eslint=False,
 
     index_path = os.path.join(folder, "index.js")
     extension_url = None
-    file_group_id = None
     if os.path.isfile(index_path):
         with open(index_path, encoding="utf-8") as f:
             index_src = f.read()
         extension_url = extract_extension_url(index_src)
-        _fgid = const_value(index_src, "FILE_GROUP_ID")
-        if _fgid and _fgid not in ("XXX", "'XXX'", '"XXX"', "null"):
-            try:
-                file_group_id = int(_fgid)
-            except (ValueError, TypeError):
-                pass
         if re.search(r'^\s*(?:const|let)\s+debug\s*=\s*true\b', index_src, re.MULTILINE):
             log_error(game_id, "debug is set to true in index.js")
             return False
@@ -441,7 +427,7 @@ def release(game_id, open_browser, dry_run=False, skip_eslint=False,
             else:
                 _domain, mod_id = parsed
                 try:
-                    group = _pick_file_group(mod_id, _domain, api_key, game_id, group_id_override=file_group_id)
+                    group = _pick_file_group(mod_id, _domain, api_key, game_id)
                     if upload:
                         log_info(game_id, f"[DRY RUN] Would upload {os.path.basename(zip_path)} to file group"
                                  f" '{group['name']}' (id: {group['id']})")
@@ -527,8 +513,7 @@ def release(game_id, open_browser, dry_run=False, skip_eslint=False,
             else:
                 _domain, mod_id = parsed
                 try:
-                    _nexus_upload_zip(zip_path, mod_id, _domain, version or "", changelog_entry, api_key, game_id,
-                                      group_id_override=file_group_id)
+                    _nexus_upload_zip(zip_path, mod_id, _domain, version or "", changelog_entry, api_key, game_id)
                     out["uploaded"] = True
                 except Exception as e:
                     log_error(game_id, f"upload failed: {e}")
