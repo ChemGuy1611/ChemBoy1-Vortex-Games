@@ -39,14 +39,10 @@ Environment variables:
 """
 
 import argparse
-import json
 import os
 import re
 import sys
 import subprocess
-import time
-import urllib.error
-import urllib.request
 import webbrowser
 import zipfile
 
@@ -57,221 +53,9 @@ from vortex_utils import (
     print_run_summary, assert_is_game_id, log_info, log_warn, log_error,
     get_api_key, parse_nexus_mod_url,
 )
+from nexus_upload import pick_file_group, upload_zip, extract_changelog_entry
 SEVENZIP = os.environ.get("SEVENZIP_PATH", r"C:\Program Files\7-Zip\7z.exe")
 NEXUS_SITE_URL = "https://www.nexusmods.com/games/site"
-NEXUS_V3 = "https://api.nexusmods.com/v3"
-
-
-# == Nexus v3 upload helpers ===================================================
-
-def _v3_get(path, api_key):
-    """GET a Nexus v3 endpoint. Returns the parsed 'data' field."""
-    req = urllib.request.Request(
-        f"{NEXUS_V3}{path}",
-        headers={"apikey": api_key, "Accept": "application/json"},
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=30) as resp:
-            return json.loads(resp.read())["data"]
-    except urllib.error.HTTPError as e:
-        body = ""
-        try:
-            body = e.read().decode("utf-8", errors="replace")
-        except Exception:
-            pass
-        raise RuntimeError(f"HTTP {e.code} {e.reason} - {body[:200]}") from None
-
-
-def _v3_post_json(path, body, api_key):
-    """POST JSON to a Nexus v3 endpoint. Returns the parsed 'data' field if present."""
-    payload = json.dumps(body).encode("utf-8")
-    req = urllib.request.Request(
-        f"{NEXUS_V3}{path}",
-        data=payload,
-        headers={
-            "apikey": api_key,
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-        },
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=60) as resp:
-            result = json.loads(resp.read())
-            return result.get("data", result)
-    except urllib.error.HTTPError as e:
-        body_txt = ""
-        try:
-            body_txt = e.read().decode("utf-8", errors="replace")
-        except Exception:
-            pass
-        raise RuntimeError(f"HTTP {e.code} {e.reason} - {body_txt[:400]}") from None
-
-
-def _extract_changelog_entry(changelog_src, version):
-    """Extract changelog entry for version: date-only header + body, no blank line between."""
-    pattern = rf'(## (?:\[?{re.escape(version)}\]?).*?)(?=\n## |\Z)'
-    m = re.search(pattern, changelog_src, re.DOTALL)
-    if not m:
-        return ""
-    text = m.group(1).strip()
-    # replace "## [X.Y.Z] - DATE" header with bare date only
-    text = re.sub(r'^## (?:\[?[^\]]*\]?\s*-\s*)(\d{4}-\d{2}-\d{2})', r'\1', text)
-    # collapse any remaining blank line between date and first bullet
-    text = re.sub(r'^(\d{4}-\d{2}-\d{2})\n\n', r'\1\n', text)
-    return text.strip()
-
-
-def _pick_file_group(mod_id, domain, api_key, game_id):
-    """Return the file update group dict to use for this upload.
-
-    Lookup: v1 mod UID via GET /v1/games/{domain}/mods/{mod_id}.json,
-    then GET /v3/mods/{uid}/file-update-groups.
-    """
-    log_info(game_id, "Resolving mod UID from Nexus v1...")
-    try:
-        req = urllib.request.Request(
-            f"https://api.nexusmods.com/v1/games/{domain}/mods/{mod_id}.json",
-            headers={"apikey": api_key, "Accept": "application/json"},
-        )
-        with urllib.request.urlopen(req, timeout=15) as resp:
-            v1_data = json.loads(resp.read())
-        uid = v1_data.get("uid")
-        if not uid:
-            raise RuntimeError("v1 mod data has no 'uid' field")
-        log_info(game_id, f"Resolved uid: {uid}; fetching file update groups...")
-    except urllib.error.HTTPError as e:
-        raise RuntimeError(f"v1 mod lookup failed: HTTP {e.code} {e.reason}") from None
-
-    try:
-        data = _v3_get(f"/mods/{uid}/file-update-groups", api_key)
-    except RuntimeError as e:
-        if "HTTP 404" in str(e):
-            raise RuntimeError(
-                f"mod uid {uid} has no v3 file update groups. "
-                "Add FILE_GROUP_ID to index.js or create a file group via the Nexus Mods Files tab."
-            ) from None
-        raise
-    groups = [g for g in data.get("groups", []) if g.get("is_active")]
-    if not groups:
-        raise RuntimeError("no active file update groups found for this mod")
-    if len(groups) == 1:
-        log_info(game_id, f"File group: {groups[0]['name']} (id: {groups[0]['id']})")
-        return groups[0]
-    print(f"\n  Multiple active file groups for mod {mod_id}:")
-    for i, g in enumerate(groups):
-        last = g.get("latest_file_upload_date") or "never"
-        print(f"  [{i + 1}] {g['name']}  (id: {g['id']}, last upload: {last})")
-    while True:
-        ans = input(f"  Choose group [1-{len(groups)}]: ").strip()
-        if ans.isdigit() and 1 <= int(ans) <= len(groups):
-            return groups[int(ans) - 1]
-        print(f"  Enter a number between 1 and {len(groups)}.")
-
-
-def _upload_parts(zip_path, presigned_urls, part_size, game_id):
-    """Upload zip_path in parts to the presigned S3 URLs. Returns list of ETags."""
-    etags = []
-    total = len(presigned_urls)
-    with open(zip_path, "rb") as f:
-        for i, url in enumerate(presigned_urls):
-            chunk = f.read(part_size)
-            if len(chunk) == 0 and i < total - 1:
-                raise RuntimeError(f"unexpected EOF reading zip before part {i + 1}/{total}")
-            req = urllib.request.Request(url, data=chunk, method="PUT")
-            req.add_header("Content-Type", "application/octet-stream")
-            req.add_header("Content-Length", str(len(chunk)))
-            with urllib.request.urlopen(req, timeout=120) as resp:
-                etag = resp.getheader("ETag", "").strip('"')
-                etags.append(etag)
-            log_info(game_id, f"  Part {i + 1}/{total} uploaded")
-    return etags
-
-
-def _complete_multipart(complete_url, etags):
-    """POST the S3 CompleteMultipartUpload XML to finalize assembly."""
-    parts_xml = "".join(
-        f"<Part><PartNumber>{i + 1}</PartNumber><ETag>{etag}</ETag></Part>"
-        for i, etag in enumerate(etags)
-    )
-    xml_body = f"<CompleteMultipartUpload>{parts_xml}</CompleteMultipartUpload>"
-    req = urllib.request.Request(
-        complete_url,
-        data=xml_body.encode("utf-8"),
-        method="POST",
-    )
-    req.add_header("Content-Type", "application/xml")
-    try:
-        with urllib.request.urlopen(req, timeout=60):
-            pass
-    except urllib.error.HTTPError as e:
-        body = ""
-        try:
-            body = e.read().decode("utf-8", errors="replace")
-        except Exception:
-            pass
-        raise RuntimeError(f"S3 CompleteMultipartUpload failed: HTTP {e.code} {e.reason} - {body[:400]}") from None
-
-
-def _poll_upload_state(upload_id, api_key, game_id):
-    """Poll until the upload reaches 'available' state. Raises on timeout."""
-    log_info(game_id, "Waiting for upload to be processed...")
-    for attempt in range(30):
-        delay = min(1.0 * (1.4 ** attempt), 20.0)
-        time.sleep(delay)
-        data = _v3_get(f"/uploads/{upload_id}", api_key)
-        state = data.get("state", "")
-        if state == "available":
-            return
-        log_info(game_id, f"  Upload state: {state}")
-    raise RuntimeError(f"upload {upload_id} did not become available after 30 attempts")
-
-
-def _nexus_upload_zip(zip_path, mod_id, domain, version, description, api_key, game_id):
-    """Run the full Nexus v3 multipart upload flow and create a new file version."""
-    group = _pick_file_group(mod_id, domain, api_key, game_id)
-    group_id = group["id"]
-    display_name = group["name"]
-
-    file_size = os.path.getsize(zip_path)
-    filename = os.path.basename(zip_path)
-
-    log_info(game_id, f"Creating upload session for {filename} ({file_size / 1024:.1f} KB)...")
-    upload = _v3_post_json("/uploads/multipart", {
-        "filename": filename,
-        "size_bytes": str(file_size),
-    }, api_key)
-    upload_id = upload["id"]
-    presigned_urls = upload["part_presigned_urls"]
-    part_size = upload["part_size_bytes"]
-    complete_url = upload["complete_presigned_url"]
-
-    log_info(game_id, f"Uploading {len(presigned_urls)} part(s)...")
-    etags = _upload_parts(zip_path, presigned_urls, part_size, game_id)
-
-    log_info(game_id, "Completing multipart upload...")
-    _complete_multipart(complete_url, etags)
-
-    log_info(game_id, "Finalising upload...")
-    _v3_post_json(f"/uploads/{upload_id}/finalise", {}, api_key)
-
-    _poll_upload_state(upload_id, api_key, game_id)
-
-    log_info(game_id, f"Publishing version {version} to file group '{display_name}'...")
-    result = _v3_post_json(f"/mod-file-update-groups/{group_id}/versions", {
-        "upload_id": upload_id,
-        "name": display_name,
-        "description": description,
-        "version": version,
-        "file_category": "main",
-        "archive_existing_file": True,
-        "primary_mod_manager_download": True,
-        "allow_mod_manager_download": False,  # inverted legacy field: False = MMD enabled, True = MMD disabled
-        "show_requirements_pop_up": True,
-    }, api_key)
-    file_uid = result.get("id", "unknown")
-    log_info(game_id, f"File UID: {file_uid} (NOTE: enable 'Mod Manager Download' manually on the Files tab - Nexus v3 API ignores allow_mod_manager_download)")
-
-    log_info(game_id, f"Nexus upload complete: {display_name} v{version}")
 
 
 # == Extension helpers =========================================================
@@ -399,7 +183,7 @@ def release(game_id, open_browser, dry_run=False, skip_eslint=False,
     changelog_version, date = parse_changelog_latest(folder)
     if version and changelog_version and version != changelog_version:
         log_warn(game_id, f"info.json version ({version}) does not match latest CHANGELOG entry ({changelog_version})")
-    changelog_entry = _extract_changelog_entry(changelog_src, version or "")
+    changelog_entry = extract_changelog_entry(changelog_src, version or "")
     if changelog_entry:
         log_info(game_id, f"Changelog entry for v{version}:")
         for line in changelog_entry.splitlines():
@@ -427,7 +211,7 @@ def release(game_id, open_browser, dry_run=False, skip_eslint=False,
             else:
                 _domain, mod_id = parsed
                 try:
-                    group = _pick_file_group(mod_id, _domain, api_key, game_id)
+                    group = pick_file_group(mod_id, _domain, api_key, game_id)
                     if upload:
                         log_info(game_id, f"[DRY RUN] Would upload {os.path.basename(zip_path)} to file group"
                                  f" '{group['name']}' (id: {group['id']})")
@@ -513,7 +297,7 @@ def release(game_id, open_browser, dry_run=False, skip_eslint=False,
             else:
                 _domain, mod_id = parsed
                 try:
-                    _nexus_upload_zip(zip_path, mod_id, _domain, version or "", changelog_entry, api_key, game_id)
+                    upload_zip(zip_path, mod_id, _domain, version or "", changelog_entry, api_key, game_id)
                     out["uploaded"] = True
                 except Exception as e:
                     log_error(game_id, f"upload failed: {e}")

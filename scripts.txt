@@ -1,5 +1,6 @@
 # Python scripts
 vortex_utils.py
+nexus_upload.py
 new_extension.py
 new_template.py
 port_to_template.py

@@ -1674,13 +1674,15 @@ class MainWindow(QMainWindow):
                 ("--dry-run", "Preview only, no API calls", False),
                 ("--force", "Re-fetch even if already cached", False),
                 ("--prune", "Remove cache entries for game IDs no longer in repo, then exit", False),
+                ("--report-groups", "Print extensions with multiple file groups from cache, then exit", False),
             ],
         )
         if dlg is None:
             return
         ids = self._selected_ids()
-        self._refresh_after_run = "--dry-run" not in dlg.extra_args()
-        self._run([[PYTHON, os.path.join(REPO_ROOT, "fetch_nexus_stats.py")] + dlg.extra_args() + ids],
+        extra = dlg.extra_args()
+        self._refresh_after_run = "--dry-run" not in extra and "--report-groups" not in extra
+        self._run([[PYTHON, os.path.join(REPO_ROOT, "fetch_nexus_stats.py")] + extra + ids],
                   "fetch_nexus_stats.py")
 
     def _on_setup_test(self):

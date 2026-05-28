@@ -132,6 +132,30 @@ No additional packages required (Python stdlib only).
 
 ---
 
+## nexus_upload.py
+
+Reusable Nexus Mods v3 upload module. Extracted from `release_extension.py`; provides the full multipart upload flow and changelog extraction with no game/extension-specific assumptions. Imported by `release_extension.py` and external scripts in other repos.
+
+### nexus_upload.py -- Contents
+
+| Export | Description |
+| --- | --- |
+| `NEXUS_V3` | Base URL for the Nexus Mods v3 API |
+| `v3_get(path, api_key)` | GET a Nexus v3 endpoint; returns parsed `data` field |
+| `v3_post_json(path, body, api_key)` | POST JSON to a Nexus v3 endpoint; returns parsed `data` field |
+| `extract_changelog_entry(changelog_src, version)` | Extract the changelog entry body for `version` (date-only header + bullet list) |
+| `pick_file_group(mod_id, domain, api_key, mod_key, name_hint=None)` | Resolve mod UID via v1 API, fetch v3 file update groups, auto-select by exact-normalized name match (then substring fallback) when `name_hint` provided; raises `RuntimeError` on no match or ambiguous match; falls back to interactive prompt only when `name_hint` is absent. Words in `_NAME_STRIP_WORDS` (default: `['addon']`) are stripped from group names before comparison. |
+| `upload_parts(zip_path, presigned_urls, part_size, mod_key)` | Upload zip in parts to presigned S3 URLs; returns list of ETags |
+| `complete_multipart(complete_url, etags)` | POST CompleteMultipartUpload XML to finalize S3 assembly |
+| `poll_upload_state(upload_id, api_key, mod_key)` | Poll v3 upload until state is `available`; raises on timeout |
+| `upload_zip(zip_path, mod_id, domain, version, description, api_key, mod_key, name_hint=None)` | Full Nexus v3 multipart upload flow: session create → part upload → complete → finalise → poll → publish version |
+
+### nexus_upload.py -- Requirements
+
+No additional packages required (Python stdlib only). Requires `vortex_utils.py` on `sys.path`.
+
+---
+
 ## fetch_exec_icon.py
 
 Scans all `game-*` extension folders and downloads a 64x64 PNG icon for any extension missing its `exec.png` file. Reads `STEAMAPP_ID` and `GAME_NAME` directly from each `index.js`. Uses `download_exec_icon` from `vortex_utils`.
@@ -222,7 +246,7 @@ python fetch_cover_art.py --banner GAME_ID [GAME_ID ...]
 
 ## fetch_nexus_stats.py
 
-Fetches endorsement count and unique download count from the Nexus Mods v1 API for every `game-*` extension with a valid `EXTENSION_URL` (i.e., a `nexusmods.com` URL). Results are cached to `vortex_gui_nexus_stats.json` at the repo root (gitignored). The GUI dashboard reads this file and displays the stats in the `End` and `DL` columns.
+Fetches endorsement count, unique download count, and active file-update-group IDs from the Nexus Mods v1/v3 APIs for every `game-*` extension with a valid `EXTENSION_URL` (i.e., a `nexusmods.com` URL). Results are cached to `vortex_gui_nexus_stats.json` at the repo root (gitignored). The GUI dashboard reads this file and displays the stats in the `End` and `DL` columns.
 
 Extensions with placeholder `EXTENSION_URL = "XXX"` are silently skipped.
 
@@ -244,21 +268,24 @@ python fetch_nexus_stats.py GAME_ID [GAME_ID ...]
 python fetch_nexus_stats.py --dry-run
 python fetch_nexus_stats.py --force
 python fetch_nexus_stats.py --prune [--dry-run]
+python fetch_nexus_stats.py --report-groups
 ```
 
-- No arguments — fetches stats for all extensions missing from the cache.
+- No arguments — fetches stats for all extensions missing from the cache (including those missing `file_groups`).
 - `GAME_ID [GAME_ID ...]` — only processes the listed game IDs.
 - `--dry-run` — lists extensions that would be fetched (or entries to prune) without making changes. Works without `NEXUS_API_KEY`.
 - `--force` — re-fetches stats even if already cached.
 - `--prune` — removes cache entries for game IDs no longer present in the repo, then exits. Combine with `--dry-run` to preview.
+- `--report-groups` — prints all extensions with more than one active file-update group from the cache, then exits. No API calls; works without `NEXUS_API_KEY`.
 
 ### fetch_nexus_stats.py — Output
 
 - Results written to `vortex_gui_nexus_stats.json` (single atomic write at the end of the run).
-- Each entry includes `endorsements`, `unique_downloads`, `total_downloads`, `mod_name`, `mod_version`, `fetched_at` (epoch seconds), and `error` (null on success, "404" if not found).
-- Prints `endorsements` and `unique_downloads` per game while running, with the daily API rate limit remaining.
+- Each entry includes `endorsements`, `unique_downloads`, `total_downloads`, `mod_name`, `mod_version`, `fetched_at` (epoch seconds), `uid` (Nexus internal UID), `file_groups` (list of `{id, name}` for active file-update groups), and `error` (null on success, "404" if not found).
+- Prints `endorsements`, `unique_downloads`, and `groups=N` (when groups > 0) per game while running, with the daily API rate limit remaining.
 - Rate limit is checked after each call; stops early if fewer than 6 requests remain.
 - Summary line at the end: `Updated: N | Failed: N | Daily remaining: N`.
+- Multi-group report printed after every fetch run: lists all extensions with more than one active file-update group.
 
 ---
 
