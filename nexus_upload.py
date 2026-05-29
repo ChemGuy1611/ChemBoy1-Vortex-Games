@@ -18,9 +18,16 @@ Usage:
 import json
 import os
 import re
+import ssl
 import time
 import urllib.error
 import urllib.request
+
+try:
+    import certifi
+    _SSL_CTX = ssl.create_default_context(cafile=certifi.where())
+except ImportError:
+    _SSL_CTX = ssl.create_default_context()
 
 from vortex_utils import log_info, log_warn, log_error
 
@@ -36,7 +43,7 @@ def v3_get(path, api_key):
         headers={"apikey": api_key, "Accept": "application/json"},
     )
     try:
-        with urllib.request.urlopen(req, timeout=30) as resp:
+        with urllib.request.urlopen(req, timeout=30, context=_SSL_CTX) as resp:
             return json.loads(resp.read())["data"]
     except urllib.error.HTTPError as e:
         body = ""
@@ -60,7 +67,7 @@ def v3_post_json(path, body, api_key):
         },
     )
     try:
-        with urllib.request.urlopen(req, timeout=60) as resp:
+        with urllib.request.urlopen(req, timeout=60, context=_SSL_CTX) as resp:
             result = json.loads(resp.read())
             return result.get("data", result)
     except urllib.error.HTTPError as e:
@@ -115,7 +122,7 @@ def pick_file_group(mod_id, domain, api_key, mod_key, name_hint=None):
             f"https://api.nexusmods.com/v1/games/{domain}/mods/{mod_id}.json",
             headers={"apikey": api_key, "Accept": "application/json"},
         )
-        with urllib.request.urlopen(req, timeout=15) as resp:
+        with urllib.request.urlopen(req, timeout=15, context=_SSL_CTX) as resp:
             v1_data = json.loads(resp.read())
         uid = v1_data.get("uid")
         if not uid:
@@ -189,7 +196,7 @@ def upload_parts(zip_path, presigned_urls, part_size, mod_key):
             req = urllib.request.Request(url, data=chunk, method="PUT")
             req.add_header("Content-Type", "application/octet-stream")
             req.add_header("Content-Length", str(len(chunk)))
-            with urllib.request.urlopen(req, timeout=120) as resp:
+            with urllib.request.urlopen(req, timeout=120, context=_SSL_CTX) as resp:
                 etag = resp.getheader("ETag", "").strip('"')
                 etags.append(etag)
             log_info(mod_key, f"  Part {i + 1}/{total} uploaded")
@@ -210,7 +217,7 @@ def complete_multipart(complete_url, etags):
     )
     req.add_header("Content-Type", "application/xml")
     try:
-        with urllib.request.urlopen(req, timeout=60):
+        with urllib.request.urlopen(req, timeout=60, context=_SSL_CTX):
             pass
     except urllib.error.HTTPError as e:
         body = ""

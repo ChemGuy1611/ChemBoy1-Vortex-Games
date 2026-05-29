@@ -2,8 +2,8 @@
 Name: The Outer Worlds Vortex Extension
 Structure: UE4
 Author: ChemBoy1
-Version: 0.5.1
-Date: 2026-02-07
+Version: 0.5.2
+Date: 2026-05-28
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -24,7 +24,7 @@ const GOGAPP_ID_NEW = "1986509485";
 const XBOXAPP_ID = "PrivateDivision.TheOuterWorldsWindows10";
 const XBOXAPP_ID_NEW = "PrivateDivision.64850D0BF098F";
 const XBOXEXECNAME = "App";
-const XBOXEXECNAME_NEW = "App";
+const XBOXEXECNAME_NEW = "AppTheOuterWorldsShipping";
 
 const EPIC_CODE_NAME = "Indiana";
 const EXEC_FOLDER = "Win64";
@@ -461,7 +461,7 @@ async function resolveGameVersion(gamePath, exePath) {
       const exeVersion = require('exe-version');
       version = await exeVersion.getProductVersion(READ_FILE);
       //log('warn', `Resolved game version for ${GAME_ID} to: ${version}`);
-      return Promise.resolve(version); 
+      return Promise.resolve(version);
     } catch (err) {
       log('error', `Could not read ${READ_FILE} file to get Steam game version: ${err}`);
       return Promise.resolve(version);
@@ -473,7 +473,7 @@ async function resolveGameVersion(gamePath, exePath) {
       const exeVersion = require('exe-version');
       version = await exeVersion.getProductVersion(READ_FILE);
       //log('warn', `Resolved game version for ${GAME_ID} to: ${version}`);
-      return Promise.resolve(version); 
+      return Promise.resolve(version);
     } catch (err) {
       log('error', `Could not read ${READ_FILE} file to get Steam game version: ${err}`);
       return Promise.resolve(version);
@@ -520,22 +520,22 @@ function applyGame(context, gameSpec) {
   });
 
   //register mod types explicitly
-  context.registerModType(BINARIES_ID, 40, 
+  context.registerModType(BINARIES_ID, 40,
     (gameId) => {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, 
-    (game) => pathPattern(context.api, game, BINARIES_TARGET), 
-    () => Promise.resolve(false), 
+    },
+    (game) => pathPattern(context.api, game, BINARIES_TARGET),
+    () => Promise.resolve(false),
     { name: BINARIES_NAME }
   );
-  context.registerModType(CONFIG_ID, 45, 
+  context.registerModType(CONFIG_ID, 45,
     (gameId) => {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, 
-    (game) => pathPattern(context.api, game, CONFIG_PATH), 
-    () => Promise.resolve(false), 
+    },
+    (game) => pathPattern(context.api, game, CONFIG_PATH),
+    () => Promise.resolve(false),
     { name: CONFIG_NAME }
   );
 
@@ -617,7 +617,7 @@ function applyGame(context, gameSpec) {
 //Main function
 function main(context) {
   applyGame(context, spec);
-  
+
   if (UNREALDATA.loadOrder === true) {
     let previousLO;
     context.registerLoadOrderPage({
@@ -639,7 +639,7 @@ function main(context) {
       + 'The number in the left column represents the overwrite order. The changes from mods with higher numbers will take priority over other mods which make similar edits.'),
     });
   }
-  
+
   context.once(() => { // put code here that should be run (once) when Vortex starts up
     const api = context.api;
     context.api.onAsync('did-deploy', (profileId) => didDeploy(context.api, profileId)); //*/

@@ -4,3 +4,4 @@
 .claude
 lint_results.txt
 *.pyc
+vortex_gui_nexus_stats.json

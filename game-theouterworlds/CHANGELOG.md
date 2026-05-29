@@ -4,6 +4,10 @@
 
 - UE4SS support - Haven't seen any mods for it yet
 
+## [0.5.2] - 2026-05-28
+
+- Fixed: Launching of Spacer's Choice Xbox version
+
 ## [0.5.1] - 2026-02-07
 
 - Improved: Made Root folder installer case-insensitive
