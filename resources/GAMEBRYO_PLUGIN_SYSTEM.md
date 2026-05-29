@@ -55,6 +55,7 @@ Plugin extension list is built by `pluginExtensions(gameMode)`:
 Two separate files:
 
 **`loadorder.txt`** (UTF-8) — all plugins in load order, one per line, no prefix:
+
 ```text
 Oblivion.esm
 DLCBattlehornCastle.esp
@@ -62,6 +63,7 @@ MyMod.esp
 ```
 
 **`plugins.txt`** (latin1) — only enabled plugins, one per line:
+
 ```text
 Oblivion.esm
 MyMod.esp
@@ -72,6 +74,7 @@ When Vortex controls load order it sets file modification timestamps sequentiall
 ### 3b. "fallout4" format (Skyrim SE, Fallout 4, Starfield, Enderal SE)
 
 Single file: **`plugins.txt`** (latin1) — all plugins, enabled ones prefixed with `*`:
+
 ```text
 *Skyrim.esm
 *Update.esm
@@ -112,6 +115,7 @@ Vortex reads only the `TES4` record header (first ~50-200 bytes) — not the ful
 | `SNAM` | Description string |
 
 Flags extracted from TES4 record header:
+
 ```text
 FLAG_MASTER    = 0x00000001  -> isMaster
 FLAG_LIGHT     = 0x00000200  -> isLight (ESL)  [0x00000100 on Starfield]
@@ -138,11 +142,13 @@ Ghosted plugins are:
 ## 7. Redux State
 
 ### Load order state path
+
 ```text
 state.persistent.loadOrder[profileId][pluginId] = ILoadOrder
 ```
 
 ### ILoadOrder shape
+
 ```ts
 {
   enabled: boolean | "ghost",  // true = active, false = disabled, "ghost" = ghosted
@@ -151,11 +157,13 @@ state.persistent.loadOrder[profileId][pluginId] = ILoadOrder
 ```
 
 ### Plugin info state path
+
 ```text
 state.session.plugins.pluginList[pluginId] = IPlugin
 ```
 
 ### IPlugin shape
+
 ```ts
 {
   modId?: string,        // originating Vortex mod id
@@ -216,6 +224,7 @@ Triggered by `gamemode-activated` event:
 4. Calls `loot.loadListsAsync(masterlistPath, userlistPath, preludePath)`
 
 **LOOT list file paths:**
+
 | File | Path |
 | --- | --- |
 | masterlist | `{vortexUserData}/{gameId}/masterlist/masterlist.yaml` |
@@ -253,6 +262,7 @@ Metadata retrieved per-plugin via:
 - `loot.getPluginAsync(pluginName)` — tags, archive loading, cleanliness
 
 `IPluginLoot` shape:
+
 ```ts
 {
   messages: Message[],                  // LOOT messages (warnings, info)

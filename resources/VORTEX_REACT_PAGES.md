@@ -75,7 +75,7 @@ context.registerMainPage('unreal', 'UE4SS Load Order', Ue4ssLoadOrderPage, {
 
 ## 3. `registerSettings` — Add a Settings Tab Panel
 
-### Signature
+### Signature - registerSettings
 
 ```js
 context.registerSettings(title, Component, propsCallback, visibleCallback, priority);
@@ -182,6 +182,7 @@ context.registerReducer(['persistent', 'myList', GAME_ID], {
 ```
 
 Reading state:
+
 ```js
 const items = useSelector(state =>
   util.getSafe(state, ['persistent', 'myList', GAME_ID, 'items'], []));
@@ -285,6 +286,7 @@ React.createElement(DraggableList, {
 ```
 
 `IDraggableListProps`:
+
 ```ts
 {
   disabled?: boolean;

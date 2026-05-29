@@ -268,6 +268,7 @@ await util.walk(stagingPath, async (root, entries) => {
 ---
 
 ### `fs.forcePerm(t, op, filePath?, maxTries?)` — line 1258 (fs namespace)
+
 **Why useful:** Retries a file operation while temporarily granting write permissions (read-only files, protected directories). Falls back to elevation if needed.
 
 **Use case:** Before unlinking or renaming a file in a game's protected directory, wrap the operation in `fs.forcePerm(t, () => fs.unlinkAsync(path), path)` instead of failing silently.
@@ -275,6 +276,7 @@ await util.walk(stagingPath, async (root, entries) => {
 ---
 
 ### `util.withTmpDir` / `fs.withTmpFile` — util line 9256, fs namespace
+
 **Why useful:** Scoped temporary directory/file that is auto-deleted when the callback resolves or rejects. No manual cleanup.
 
 ```js
@@ -287,6 +289,7 @@ await util.withTmpDir(async (tmpPath) => {
 ---
 
 ### `util.copyFileAtomic(src, dest)` / `util.writeFileAtomic(path, data)` — lines 9012 / 9108
+
 **Why useful:** Write-via-temp-then-rename pattern — crash-safe for config files. If the process dies mid-write, the original file is unaffected.
 
 **Use case:** Any extension config or state file written to disk should use `writeFileAtomic` rather than `fs.writeFileAsync` directly.
@@ -294,6 +297,7 @@ await util.withTmpDir(async (tmpPath) => {
 ---
 
 ### `util.calculateFolderSize(dirPath)` — line 9008
+
 **Why useful:** Async total size of a directory tree in bytes. No wheel to reinvent.
 
 **Use case:** Show staging folder disk usage in a dashlet or before a large deployment operation.
@@ -301,6 +305,7 @@ await util.withTmpDir(async (tmpPath) => {
 ---
 
 ### `util.ConcurrencyLimiter` — line 9014
+
 **Why useful:** Caps how many async operations run in parallel. Prevents I/O floods when processing hundreds of mod files.
 
 ```js
@@ -313,6 +318,7 @@ await Promise.all(modFiles.map(f => limiter.do(() => processFile(f))));
 ## 6. Inter-Extension API
 
 ### `context.registerAPI(name, func, opts)` — line 3855
+
 **Why useful:** Exposes a function on `api.ext.<name>` for other extensions to call. The standard way to build an extension that others can integrate with.
 
 **Use case:** A "game server integration" extension exposes `api.ext.getCurrentServerStatus()` so a dashlet in another extension can display it.
@@ -320,6 +326,7 @@ await Promise.all(modFiles.map(f => limiter.do(() => processFile(f))));
 ---
 
 ### `context.requireExtension(extId, version?, optional?)` — line 3862
+
 **Why useful:** Declare a hard or soft dependency on another Vortex extension. Vortex will show an error if a required extension is missing or out of range.
 
 **Use case:** If your extension requires the Nexus Integration extension, call `context.requireExtension('nexus_integration')` so Vortex reports a clean error instead of a runtime crash.
@@ -327,6 +334,7 @@ await Promise.all(modFiles.map(f => limiter.do(() => processFile(f))));
 ---
 
 ### `context.optional.*` — line 3882
+
 **Why useful:** A Proxy around `context` that silently no-ops any `registerXyz` call for APIs that don't exist. Use for truly optional integrations where missing the extension is fine.
 
 **Use case:** `context.optional.registerLoadOrder(gameInfo)` — gracefully degrades if the Collections extension isn't installed without try/catch boilerplate.
@@ -334,6 +342,7 @@ await Promise.all(modFiles.map(f => limiter.do(() => processFile(f))));
 ---
 
 ### `api.getLoadedExtensions()` — line 3125
+
 **Why useful:** Returns the list of all currently loaded extensions at runtime. Use to detect optional peer extensions and enable conditional behavior.
 
 **Use case:** At startup, check if `api.getLoadedExtensions().some(e => e.name === 'collections')` to decide whether to register collection-related features.
@@ -362,6 +371,7 @@ All are sync (NodeJS.EventEmitter). Subscribe in `context.once()`.
 ---
 
 ### `api.onAsync(event, listener)` — line 3103
+
 **Why useful:** Async variant of `api.events.on`. Vortex awaits all registered `onAsync` listeners before proceeding. Use for pre-flight checks that need to resolve before the triggering action continues.
 
 **Use case:** Register an `onAsync('will-deploy', ...)` listener that validates the load order and throws `UserCanceled` to abort deployment if validation fails — Vortex will show your error and not proceed.
@@ -369,6 +379,7 @@ All are sync (NodeJS.EventEmitter). Subscribe in `context.once()`.
 ---
 
 ### `api.emitAndAwait(event, ...args)` — line 3099
+
 **Why useful:** Emit to all `onAsync` listeners and collect their return values as an array. Use when an extension needs to aggregate input from multiple loaded extensions.
 
 **Use case:** Emit `'get-load-order-constraints'` and collect constraint objects from all loaded game-specific extensions to build a unified sort order.
@@ -376,6 +387,7 @@ All are sync (NodeJS.EventEmitter). Subscribe in `context.once()`.
 ---
 
 ### `api.withPrePost(event, cb)` — line 3108
+
 **Why useful:** Wraps a function so it automatically emits `will-<event>` before and `did-<event>` after — a cheap way to make your extension's operations hookable by others.
 
 **Use case:** Wrap your `installPrerequisite()` function so other extensions can `onAsync('will-install-prereq', ...)` to do pre-work or cancel it.
@@ -383,6 +395,7 @@ All are sync (NodeJS.EventEmitter). Subscribe in `context.once()`.
 ---
 
 ### `api.onStateChange(path, callback)` — line 3088
+
 **Why useful:** Subscribe to a specific Redux state path with `(prev, cur) => void`. Much cheaper than `store.subscribe` + manual diffing.
 
 **Use case:** Watch `['persistent', 'mods', gameId]` to trigger a re-check of load-order validity whenever any mod is installed or removed — without polling.
@@ -392,6 +405,7 @@ All are sync (NodeJS.EventEmitter). Subscribe in `context.once()`.
 ## 8. Profile, Tools & Load Order
 
 ### `context.registerProfileFile(gameId, filePath)` — line 3878
+
 **Why useful:** Mark a file as "profile-specific" — Vortex backs it up when switching profiles and restores the right version per profile.
 
 **Use case:** Register a game's `plugins.txt` as a profile file so each profile maintains its own independent load order with zero extra code.
@@ -399,6 +413,7 @@ All are sync (NodeJS.EventEmitter). Subscribe in `context.once()`.
 ---
 
 ### `context.registerProfileFeature(featureId, type, icon, label, desc, supported)` — line 3879
+
 **Why useful:** Add a toggleable per-profile feature (stored at `state.persistent.profiles[id].features[featureId]`). Appears as a checkbox in the profile management UI.
 
 **Use case:** "Auto-sort load order on deploy" toggle stored per-profile — users who prefer manual ordering on one profile still get auto-sort on another.
@@ -406,6 +421,7 @@ All are sync (NodeJS.EventEmitter). Subscribe in `context.once()`.
 ---
 
 ### `context.registerToolVariables(cb)` — line 3880
+
 **Why useful:** Inject `${MY_VARIABLE}` token substitutions into tool command line arguments. Keys must be `UPPERCASE_UNDERSCORE`.
 
 **Use case:** Expose `${GAME_MOD_STAGING_PATH}` and `${ACTIVE_PROFILE_ID}` as tool variables so power users can use them in custom tool launch args without hardcoding paths.
@@ -413,6 +429,7 @@ All are sync (NodeJS.EventEmitter). Subscribe in `context.once()`.
 ---
 
 ### `context.registerHistoryStack(id, opts)` — line 3881
+
 **Why useful:** Add a named undo/redo lane to Vortex's history system. Provide `describe`, `describeRevert`, `canRevert`, and `revert` callbacks.
 
 **Use case:** Track load-order changes with undo support — each reorder pushes an entry; users can undo to the last known-good order from the History panel.
@@ -420,6 +437,7 @@ All are sync (NodeJS.EventEmitter). Subscribe in `context.once()`.
 ---
 
 ### `context.registerGameVersionProvider(id, priority, supported, getVersion, opts?)` — line 3875
+
 **Why useful:** Override how Vortex detects the installed game version. Use when the default exe-header approach gives wrong results.
 
 **Use case:** Read a game's `build_id.txt` or Steam `appmanifest.acf` to report the real version — many games report `1.0.0` in their PE header regardless of actual version.
@@ -429,6 +447,7 @@ All are sync (NodeJS.EventEmitter). Subscribe in `context.once()`.
 ## 9. Useful `util.*` Helpers
 
 ### `util.deBOM(str)` — line 9019
+
 Strip a UTF-8 or UTF-16 BOM before parsing JSON/text files written by game tools. Many game-generated files include a BOM that breaks `JSON.parse`.
 
 ```js
@@ -438,16 +457,19 @@ const data = JSON.parse(util.deBOM(await fs.readFileAsync(cfgPath, 'utf8')));
 ---
 
 ### `util.sanitizeFilename(input)` / `util.isFilenameValid(input)` / `util.isPathValid(input, allowRelative?)` — lines 9088 / 9049 / 9051
+
 Cross-platform filename/path safety. `isFilenameValid` checks the name component; `isPathValid` checks the full path; `sanitizeFilename` strips illegal characters. Use before any user-provided path reaches the filesystem.
 
 ---
 
 ### `util.isChildPath(child, parent, normalize?)` — line 9048
+
 Reliable Windows-aware child-path check (case-insensitive by default). Never use string `.startsWith()` for path containment on Windows — drive letter casing and trailing-slash differences will break it.
 
 ---
 
 ### `util.makeQueue()` — line 9060
+
 Returns a serial async queue. Enqueue functions that return Promises; they run one at a time, in order. Useful for IPC-with-game-server style operations that must not overlap.
 
 ```js
@@ -459,16 +481,19 @@ queue(() => writeConfigFile(data2)); // waits for the first to finish
 ---
 
 ### `util.objDiff(lhs, rhs, skip?)` — line 7276
+
 Shallow diff of two objects; returns `{ key: { lhs, rhs } }` for changed keys. Use for state-change debugging or change-log generation.
 
 ---
 
 ### `util.Debouncer` — line 9018
+
 Class with `schedule(delay, cb)`, `runNow()`, `wait()`, `clear()`. Debounce expensive reactions to rapid state changes (e.g., user typing in a search box, rapid mod enable/disable toggles).
 
 ---
 
 ### Custom error classes — lines 9002/9076/9017/9092/9066/9069/9070/9071/9016
+
 Throw these instead of generic `Error` to get the right Vortex error UI:
 
 | Class | When to throw |

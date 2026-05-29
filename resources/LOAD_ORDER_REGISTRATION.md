@@ -481,6 +481,7 @@ Reducers are registered at:
 | `setValidationResult(profileId, result)` | Write validation errors to session state |
 
 Import from `vortex-api`:
+
 ```js
 const { actions } = require('vortex-api');
 // setFBLoadOrder is re-exported as actions.setFBLoadOrder
@@ -527,6 +528,7 @@ const UE4SS_NATIVE_MODS   = [
 ```text
 <GamePath>/<EPIC_CODE_NAME>/Binaries/<Win64|WinGDK>/ue4ss/Mods/<profileId>_ue4ss_loadOrder.json
 ```
+
 Same directory as `mods.txt`.
 
 ### JSON shape

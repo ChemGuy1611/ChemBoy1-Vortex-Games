@@ -11,10 +11,12 @@
 Read by `UE4SSProgram::start_mods()` at game launch. Controls which mods start and in what order.
 
 **Format:**
+
 ```text
 ModName : 1
 ModName : 0
 ```
+
 `1` = enabled, `0` = disabled. Order in the file = load order.
 
 **Three-tier startup priority:**
@@ -30,6 +32,7 @@ ModName : 0
 Located at `assets/Mods/mods.json` in the RE-UE4SS repo. Structurally mirrors `mods.txt` but in JSON.
 
 **Format:**
+
 ```json
 [
     { "mod_name": "ConsoleEnablerMod", "mod_enabled": true },

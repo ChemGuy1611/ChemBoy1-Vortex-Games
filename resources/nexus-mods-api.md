@@ -43,7 +43,7 @@ V3 uses a global `uid` (large int, e.g. `9856949946066`), **not** the per-domain
 
 Get the v3 uid:
 
-```
+```text
 GET /v1/games/{domain}/mods/{mod_id}.json  ->  response["uid"]
 ```
 
@@ -126,7 +126,7 @@ chunk size for each PUT except the final part (which may be smaller).
 
 Read `part_size_bytes` bytes from the zip file per part. PUT each chunk to its presigned URL:
 
-```
+```text
 PUT {part_presigned_url}
 Content-Type: application/octet-stream
 Content-Length: {chunk_length}
@@ -140,7 +140,7 @@ Capture the `ETag` response header and strip surrounding quotes. Store all ETags
 
 ### Step 5 — Complete Multipart (S3)
 
-```
+```text
 POST {complete_presigned_url}
 Content-Type: application/xml
 
@@ -156,7 +156,7 @@ No auth header. Successful response has no meaningful body — check for HTTP 20
 
 ### Step 6 — Finalise Upload
 
-```
+```text
 POST /v3/uploads/{upload_id}/finalise
 Content-Type: application/json
 
@@ -169,7 +169,7 @@ Empty JSON body required. Signals Nexus to pick up the assembled S3 object.
 
 ### Step 7 — Poll Upload State
 
-```
+```text
 GET /v3/uploads/{upload_id}
 ```
 
@@ -180,7 +180,7 @@ Poll `data.state` until `"available"`. Implementation backoff: `min(1.0 * 1.4^n,
 
 ### Step 8 — Create File Version
 
-```
+```text
 POST /v3/mod-file-update-groups/{group_id}/versions
 Content-Type: application/json
 ```

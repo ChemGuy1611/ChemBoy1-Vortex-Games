@@ -96,7 +96,7 @@ type NotificationDismiss = () => void;
 | `icon` | `string` | No | Button icon |
 | `action` | `(dismiss: () => void) => void` | Yes | Callback; call `dismiss()` to close the notification |
 
-### Example
+### Example: sendNotification
 
 ```js
 const nid = api.sendNotification({
@@ -282,7 +282,7 @@ interface IConditionResult {
 }
 ```
 
-### Example
+### Example: showDialog
 
 ```js
 const result = await api.showDialog('question', 'Confirm Install', {
