@@ -24,11 +24,11 @@ Environment variables:
 """
 
 import os
-import argparse
 
 from vortex_utils import (
     extract_steamapp_id, extract_game_name, iter_game_folders,
-    download_exec_icon, print_run_summary, const_value, normalize_target_ids,
+    download_exec_icon, print_run_summary, has_real_steamapp_id, normalize_target_ids,
+    build_arg_parser,
 )
 
 
@@ -44,11 +44,9 @@ def find_targets(target_game_ids=None, force=False):
         icon_path = os.path.join(folder, "exec.png")
         if os.path.isfile(icon_path) and not force:
             continue
-        if const_value(src, "STEAMAPP_ID") == "null":
-            continue  # Xbox/Epic-only game -- no Steam icon available
+        if not has_real_steamapp_id(src):
+            continue  # Xbox/Epic-only game or no resolvable Steam ID
         steamapp_id = extract_steamapp_id(src)
-        if not steamapp_id:
-            continue  # XXX placeholder or other non-resolvable ID
         game_name = extract_game_name(src)
         yield folder, game_id, steamapp_id, game_name
 
@@ -94,24 +92,9 @@ def fetch_all(target_game_ids=None, dry_run=False, force=False):
 # ── Entry point ───────────────────────────────────────────────────────────────
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Download missing exec.png icons for Vortex game extensions."
-    )
-    parser.add_argument(
-        "game",
-        nargs="*",
-        metavar="GAME_ID",
-        help="One or more game IDs to process. Omit to process all.",
-    )
-    parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="List missing exec.png files without downloading.",
-    )
-    parser.add_argument(
-        "--force",
-        action="store_true",
-        help="Re-download exec.png even if it already exists.",
+    parser = build_arg_parser(
+        "Download missing exec.png icons for Vortex game extensions.",
+        ids_required=False, dest="game",
     )
     args = parser.parse_args()
     fetch_all(target_game_ids=normalize_target_ids(args.game), dry_run=args.dry_run, force=args.force)

@@ -106,13 +106,16 @@ def _extract_argparse_flags(src):
             or (isinstance(fn, ast.Attribute) and fn.attr == 'build_arg_parser')
         )
         if is_build_arg:
+            # Both flags default to True — include unless explicitly =False
+            _defaults_on = {"with_dry_run": "--dry-run", "with_force": "--force"}
+            _disabled = set()
             for kw in node.keywords:
-                implied = _BUILD_ARG_PARSER_FLAGS.get(kw.arg)
-                if implied:
-                    val = kw.value
-                    if not (isinstance(val, ast.Constant) and val.value is False):
-                        flags.add(implied)
-                    # if with_dry_run=False explicitly, don't add --dry-run
+                if kw.arg in _defaults_on:
+                    if isinstance(kw.value, ast.Constant) and kw.value.value is False:
+                        _disabled.add(kw.arg)
+            for kwarg, flag in _defaults_on.items():
+                if kwarg not in _disabled:
+                    flags.add(flag)
             continue
         if not (isinstance(fn, ast.Attribute) and fn.attr == 'add_argument'):
             continue
@@ -220,7 +223,10 @@ def _parse_scripts_md():
             continue
 
         if current_sub == 'usage':
-            result[current_script]['flags'].update(re.findall(r'--[\w-]+', line))
+            # Strip `node --flag` and `npx --flag` spans so prose like
+            # "skip the `node --check` step" doesn't produce phantom flags.
+            cleaned = re.sub(r'`(?:node|npx)\s[^`]*`', '', line)
+            result[current_script]['flags'].update(re.findall(r'--[\w-]+', cleaned))
         elif current_sub == 'envvars':
             # Match backtick-quoted VAR_NAME in first table column
             m = re.match(r'\|\s*`([A-Z][A-Z0-9_]+)`', line)

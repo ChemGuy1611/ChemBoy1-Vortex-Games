@@ -52,7 +52,7 @@ import sys
 import shutil
 import argparse
 
-from vortex_utils import REPO_ROOT, run_generate_explained, node_check_source, get_discovery_ids, log_warn, write_text_atomic, extract_array_rhs, is_placeholder_value, update_index_header
+from vortex_utils import REPO_ROOT, run_generate_explained, node_check_source, get_discovery_ids, log_warn, write_text_atomic, const_array_value, is_placeholder_value, update_index_header
 
 # Template constant names that are boolean feature toggles.
 # These are intentionally left at template defaults, not transferred from the game.
@@ -232,15 +232,15 @@ def apply_port(template_src, game_consts, game_src):
         # Replace the array in DISCOVERY_IDS_ACTIVE using depth-aware scanner.
         replaced, count = _sub_array_rhs(new_src, 'DISCOVERY_IDS_ACTIVE', new_ids_rhs)
         if count:
-            old_ids = extract_array_rhs(template_src, 'DISCOVERY_IDS_ACTIVE') or '[STEAMAPP_ID]'
+            old_ids = const_array_value(template_src, 'DISCOVERY_IDS_ACTIVE') or '[STEAMAPP_ID]'
             if new_ids_rhs != old_ids:
                 substituted.append(('DISCOVERY_IDS_ACTIVE', old_ids, new_ids_rhs))
             new_src = replaced
 
     # --- Pass 3: IGNORE_CONFLICTS / IGNORE_DEPLOY ---
     for name in ('IGNORE_CONFLICTS', 'IGNORE_DEPLOY'):
-        game_array = extract_array_rhs(game_src, name)
-        tmpl_array = extract_array_rhs(template_src, name)
+        game_array = const_array_value(game_src, name)
+        tmpl_array = const_array_value(template_src, name)
         if game_array and tmpl_array and game_array.strip() != tmpl_array.strip():
             replaced, count = _sub_array_rhs(new_src, name, game_array)
             if count:

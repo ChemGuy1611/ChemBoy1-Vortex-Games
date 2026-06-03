@@ -13,7 +13,7 @@ Usage:
         GUI_FLAGS_PATH, GUI_STATS_PATH,
         GAME_PREFIX, TEMPLATE_PREFIX,
         read_index_js, write_index_js,
-        extract_game_id, extract_steamapp_id,
+        extract_game_id, extract_steamapp_id, has_real_steamapp_id,
         extract_game_name, extract_extension_url,
         sanitize_game_name, normalize_game_name,
         roman_to_arabic, arabic_to_roman,
@@ -22,7 +22,7 @@ Usage:
         fetch_epic_app_id, add_to_discovery_ids,
         const_value, is_unset, is_missing, set_or_insert, replace_const_rhs,
         XXX_PATTERN, is_placeholder_value, is_real_value, find_placeholder_vars,
-        const_decl_match, const_array_value, extract_array_rhs,
+        const_decl_match, const_array_value,
         find_js_function,
         update_index_header, inject_register_actions,
         find_fn_end, find_fn_body, REGISTER_ACTIONS,
@@ -250,6 +250,13 @@ def extract_steamapp_id(src):
     """Extract STEAMAPP_ID value from index.js source. Returns None if not found or null."""
     m = re.search(r"(?:const|let)\s+STEAMAPP_ID\s*=\s*['\"]?(\d+)['\"]?\s*;?", src)
     return m.group(1) if m else None
+
+
+def has_real_steamapp_id(src):
+    """Return True if STEAMAPP_ID is a real numeric value (not null or a placeholder)."""
+    if const_value(src, "STEAMAPP_ID") == "null":
+        return False
+    return bool(extract_steamapp_id(src))
 
 
 def extract_game_name(src):
@@ -513,7 +520,7 @@ def const_value(src, var_name):
     """Return the raw RHS of a const/let declaration, or None if absent.
     E.g. returns '"XXX"', 'null', '"https://..."'."""
     m = re.search(
-        rf'(?:const|let)\s+{re.escape(var_name)}\s*=\s*(.+?)(?:\s*;|\s*//|$)',
+        rf'(?:const|let)\s+{re.escape(var_name)}\s*=\s*(.+?)(?:\s*;|\s+//|$)',
         src, re.MULTILINE,
     )
     return m.group(1).strip() if m else None
@@ -788,11 +795,6 @@ def const_array_value(src, name):
     return _scan_to_close(src, m.end() - 1, '[', ']')
 
 
-def extract_array_rhs(src, name):
-    """Return raw content between [ and ] for `const NAME = [...]` via bracket-depth scanning.
-    Alias for const_array_value. Returns None if not found."""
-    return const_array_value(src, name)
-
 
 def find_js_function(src, name):
     """Return (fn_start, body_start, body_end) for the named JS function.
@@ -874,10 +876,10 @@ def build_js_symbol_table(src):
 
     # Pass 1: collect all literal string constants (trailing semicolon optional)
     for m in re.finditer(
-        r'^(?:const|let)\s+(\w+)\s*=\s*["`\'](.*?)["`\']\s*;?',
+        r'^(?:const|let)\s+(\w+)\s*=\s*(["`\'])(.*?)\2\s*;?',
         src, re.MULTILINE
     ):
-        table[m.group(1)] = m.group(2)
+        table[m.group(1)] = m.group(3)
 
     # Pass 2: resolve template literals `${VAR}suffix` or `prefix${VAR}`
     for m in re.finditer(
@@ -1929,15 +1931,19 @@ def find_vortex_exe():
 def safe_rmtree(path, hint=None):
     """Remove a directory tree, retrying once on PermissionError after 1 second.
 
-    On retry, read-only bits are cleared via an onerror handler before the
+    On retry, read-only bits are cleared via an error handler before the
     per-file delete is re-attempted.
     hint: shown in the warning when PermissionError is caught."""
-    def _onerror(func, fpath, _exc_info):
+    def _on_err(func, fpath, _exc):
         try:
             os.chmod(fpath, 0o777)
             func(fpath)
         except Exception:
             pass
+
+    # onexc= replaces deprecated onerror= in Python 3.12+
+    retry_kwargs = ({'onexc': _on_err} if sys.version_info >= (3, 12)
+                    else {'onerror': _on_err})
 
     try:
         shutil.rmtree(path)
@@ -1946,7 +1952,7 @@ def safe_rmtree(path, hint=None):
         print(f"  WARNING - {e}. {msg}. Retrying in 1s...")
         time.sleep(1)
         try:
-            shutil.rmtree(path, onerror=_onerror)
+            shutil.rmtree(path, **retry_kwargs)
         except PermissionError as e2:
             print(f"  ERROR - {e2}. {msg}. Could not remove folder.")
             raise

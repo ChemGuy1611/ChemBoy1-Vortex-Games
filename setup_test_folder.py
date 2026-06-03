@@ -93,7 +93,7 @@ def setup(game_id, dry_run=False, force=False):
     table = build_js_symbol_table(src)
 
     game_name = table.get("GAME_NAME")
-    if not game_name or game_name == "XXX":
+    if not is_real_value(game_name):
         log_error(game_id, "could not resolve GAME_NAME from index.js")
         return False
 
@@ -156,11 +156,14 @@ def clean(game_id, dry_run=False):
 
     table = build_js_symbol_table(src)
     game_name = table.get("GAME_NAME")
-    if not game_name or game_name == "XXX":
+    if not is_real_value(game_name):
         log_error(game_id, "could not resolve GAME_NAME from index.js")
         return False
 
     safe_game_name = safe_windows_dirname(game_name)
+    if not safe_game_name:
+        log_error(game_id, f"GAME_NAME '{game_name}' cannot be sanitized to a valid folder name")
+        return False
     game_folder = os.path.join(TEST_ROOT, safe_game_name)
 
     if not os.path.isdir(game_folder):

@@ -15,7 +15,6 @@ Environment variables:
                         Default: C:\\ProgramData\\vortex\\plugins
 """
 
-import argparse
 import os
 import shutil
 import sys
@@ -69,24 +68,24 @@ def deploy_game(game_id: str, dry_run: bool, force: bool) -> bool:
     if existing:
         src_js = os.path.join(src, "index.js")
         dest_js = os.path.join(existing, "index.js")
-        shutil.copy2(src_js, dest_js)
+        dest_tmp = dest_js + ".tmp"
+        shutil.copy2(src_js, dest_tmp)
+        os.replace(dest_tmp, dest_js)
         vu.log_info(game_id, f"updated index.js in {os.path.basename(existing)}")
     else:
         if os.path.isdir(dest):
             vu.safe_rmtree(dest, "close Vortex first")
-        shutil.copytree(src, dest)
+        shutil.copytree(src, dest,
+                        ignore=shutil.ignore_patterns("*.bak", "*.tmp"))
         files = os.listdir(dest)
         vu.log_info(game_id, f"deployed to {dest} ({len(files)} files)")
     return True
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Deploy CB1 extension folder(s) to the Vortex plugins directory."
+    parser = vu.build_arg_parser(
+        "Deploy CB1 extension folder(s) to the Vortex plugins directory.",
     )
-    parser.add_argument("game_ids", nargs="+", metavar="GAME_ID")
-    parser.add_argument("--dry-run", action="store_true", help="preview without copying")
-    parser.add_argument("--force", action="store_true", help="full folder replace instead of index.js-only update")
     args = parser.parse_args()
 
     if not os.path.isdir(PLUGINS_DIR):

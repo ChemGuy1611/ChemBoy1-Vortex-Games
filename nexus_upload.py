@@ -171,15 +171,15 @@ def pick_file_group(mod_id, domain, api_key, mod_key, name_hint=None):
             + ", ".join(g["name"] for g in matched)
         )
 
-    print(f"\n  Multiple active file groups for mod {mod_id}:")
+    print(f"\n  Multiple active file groups for mod {mod_id}:")  # noqa: raw-log-print
     for i, g in enumerate(groups):
         last = g.get("latest_file_upload_date") or "never"
-        print(f"  [{i + 1}] {g['name']}  (id: {g['id']}, last upload: {last})")
+        print(f"  [{i + 1}] {g['name']}  (id: {g['id']}, last upload: {last})")  # noqa: raw-log-print
     while True:
         ans = input(f"  Choose group [1-{len(groups)}]: ").strip()
         if ans.isdigit() and 1 <= int(ans) <= len(groups):
             return groups[int(ans) - 1]
-        print(f"  Enter a number between 1 and {len(groups)}.")
+        print(f"  Enter a number between 1 and {len(groups)}.")  # noqa: raw-log-print
 
 
 # == Multipart upload ==========================================================

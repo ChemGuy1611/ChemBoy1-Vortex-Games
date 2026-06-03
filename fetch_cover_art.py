@@ -39,14 +39,14 @@ Environment variables:
 """
 
 import os
-import argparse
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from vortex_utils import (
     TITLE_IMAGES_DIR, BANNER_IMAGES_DIR,
     extract_steamapp_id, get_api_key, iter_game_folders,
     download_cover_art, download_title_image, download_banner_image,
-    print_run_summary, const_value, normalize_target_ids,
+    print_run_summary, has_real_steamapp_id, normalize_target_ids,
+    build_arg_parser,
 )
 
 
@@ -78,8 +78,8 @@ def find_targets(target_game_ids=None, force=False, mode="cover"):
 
         if os.path.isfile(target_path) and not force:
             continue
-        if const_value(src, "STEAMAPP_ID") == "null":
-            continue  # Xbox/Epic-only game -- no Steam art available
+        if not has_real_steamapp_id(src):
+            continue  # Xbox/Epic-only game or no resolvable Steam ID
 
         steamapp_id = extract_steamapp_id(src)
         yield folder, game_id, steamapp_id
@@ -188,24 +188,9 @@ def fetch_all(target_game_ids=None, dry_run=False, force=False, mode="cover"):
 # ── Entry point ───────────────────────────────────────────────────────────────
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Download missing cover art or title images for Vortex game extensions."
-    )
-    parser.add_argument(
-        "game",
-        nargs="*",
-        metavar="GAME_ID",
-        help="One or more game IDs to process. Omit to process all.",
-    )
-    parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="List missing cover art without downloading.",
-    )
-    parser.add_argument(
-        "--force",
-        action="store_true",
-        help="Re-download even if the target file already exists.",
+    parser = build_arg_parser(
+        "Download missing cover art or title images for Vortex game extensions.",
+        ids_required=False, dest="game",
     )
     mode_group = parser.add_mutually_exclusive_group()
     mode_group.add_argument(

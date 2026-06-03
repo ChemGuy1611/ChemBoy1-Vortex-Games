@@ -76,7 +76,7 @@ from vortex_utils import (
     REPO_ROOT, extract_game_id, find_fn_end, REGISTER_ACTIONS, node_check,
     inject_register_actions, update_index_header, write_index_js,
     make_info_json, make_changelog, is_missing, const_value,
-    write_text_atomic, extract_array_rhs, report_node_check, replace_const_rhs,
+    write_text_atomic, report_node_check, replace_const_rhs,
 )
 
 # String constants always replaced with "XXX"
@@ -205,7 +205,7 @@ def find_remaining_values(src, original_game_id=None):
     """
     review = []
     template_literal = []
-    for m in re.finditer(r'(?:const|let)\s+(\w+)\s*=\s*["\']([^"\']+)["\']', src):
+    for m in re.finditer(r'^[ \t]*(?!//)(?:const|let)\s+(\w+)\s*=\s*["\']([^"\']+)["\']', src, re.MULTILINE):
         var_name = m.group(1)
         value = m.group(2)
         if len(value) < REVIEW_VALUE_MIN_LEN:

@@ -1,13 +1,11 @@
 /*////////////////////////////////////////////////
-Name: Subnautica 2 Vortex Extension
+Name: Fatekeeper Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 0.2.0
-Date: 2026-05-15
-Notes:\
-- version.json file in root
-- Game is Early Access
-- Very likely to have a modkit release by 1.0
+Version: 0.1.0
+Date: 2026-06-02
+Notes:
+-
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -25,43 +23,43 @@ const React = require('react');
 /*const USER_HOME = util.getVortexPath("home");
 const LOCALLOW = path.join(USER_HOME, 'AppData', 'LocalLow'); //*/
 //const DOCUMENTS = util.getVortexPath('documents');
-//const ROAMINGAPPDATA = util.getVortexPath('appData');
+const ROAMINGAPPDATA = util.getVortexPath('appData');
 const LOCALAPPDATA = util.getVortexPath('localAppData');
 
 //Specify all information about the game
-const GAME_ID = "subnautica2"; //same as Nexus domain
-const STEAMAPP_ID = "1962700"; // https://steamdb.info/app/1962700/
+const GAME_ID = "fatekeeper"; //same as Nexus domain
+const STEAMAPP_ID = "2186990"; // https://steamdb.info/app/2186990/
 const STEAMAPP_ID_DEMO = null; //VERIFY if the EPIC_CODE_NAME and EXEC_DEMO match Steam full game
-const EPICAPP_ID = "22bfc34d90b64054809542014fc9eb32"; // https://store.epicgames.com/en-US/p/subnautica-2-d27f94
+const EPICAPP_ID = null; //from egdata.app
 const GOGAPP_ID = null; // from gogdb.org
-const XBOXAPP_ID = "UnknownWorldsEntertainmen.Subnautica2"; // https://apps.microsoft.com/detail/9pjpcb188svg
-const XBOXEXECNAME = "AppSubnautica2Shipping"; //from appxmanifest.xml
-const XBOX_PUB_ID = "bh1f6rvenfkm2"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, XBOXAPP_ID, EPICAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const XBOXAPP_ID = null; //from appxmanifest.xml
+const XBOXEXECNAME = "AppUEGameShipping"; //from appxmanifest.xml
+const XBOX_PUB_ID = "XXX"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
-const GAME_NAME = "Subnautica 2";
-const GAME_NAME_SHORT = "Subnautica 2"; //Try for 8-10 characters
-const EPIC_CODE_NAME = "Subnautica2"; //Folder in root
+const GAME_NAME = "Fatekeeper";
+const GAME_NAME_SHORT = "Fatekeeper"; //Try for 8-10 characters
+const EPIC_CODE_NAME = "SLASHER"; //Folder in root
 const EXEC = `${EPIC_CODE_NAME}.exe`; //This is true ~80% of the time. Change if different
 const EXEC_EPIC = EXEC; //change these 3 if different
 const EXEC_GOG = EXEC;
 const EXEC_DEMO = EXEC;
 const PARAMETERS_STRING = ''; //launch arguments to pass when launching the game
-const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Subnautica_2";
-const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1874"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Fatekeeper";
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1960"; //Nexus link to this extension. Used for links
 
 //feature toggles
-const hasXbox = true; //toggle for Xbox version logic.
+const hasXbox = false; //toggle for Xbox version logic.
 let multiExe = false; //toggle for multiple executables (Epic/GOG/Demo don't match Steam)
 if ( (EXEC !== EXEC_EPIC) || (EXEC !== EXEC_GOG) || (EXEC !== EXEC_DEMO) ) {
   multiExe = true;
 } //*/
 const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
-const hasModKit = false; //!Very likely to have a modkit release by 1.0
+const hasModKit = false; //toggle for UE ModKit mod support
 const hasServer = false; //toggle for server pak mod logic
 const preferHardlinks = true; //set true to perform partition checks when IO-STORE=false for Config/Save modtypes so that hardlinks available to more users
-const autoDownloadUe4ss = true; //toggle for auto downloading UE4SS
-const SIGBYPASS_REQUIRED = false; //set true if there are .sig files in the Paks folder
+const autoDownloadUe4ss = false; //toggle for auto downloading UE4SS
+const SIGBYPASS_REQUIRED = true; //set true if there are .sig files in the Paks folder
 const IO_STORE = true; //true if the Paks folder contains .ucas and .utoc files
 const hasUserIdFolder = false; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
 const debug = false; //toggle for debug mode
@@ -72,7 +70,7 @@ const MAJOR_VERSION = ENGINE_VERSION.split('.')[0]; //major UE version
 const MINOR_VERSION = ENGINE_VERSION.split('.')[1]; //minor UE version
 const ROOT_FOLDERS = [EPIC_CODE_NAME, 'Engine']; //addressable folders in root
 const ROOTSUB_FOLDERS = ['Content', 'Binaries', 'Mods']; //subfolders of EPIC_CODE_NAME. Don't use "Plugins" here since it can conflict with plugin loader/asi mods
-const CONTENTSUB_FOLDERS = ['Paks', 'FMOD', 'Macros', 'Movies', 'PerfTours', 'Smoketest', 'Splash', 'VideoTours']; //subfolders of Content folder
+const CONTENTSUB_FOLDERS = ['Paks', 'Movies']; //subfolders of Content folder
 const UE4SS_SUBFOLDERS = ['MapGenBP', 'MemberVarLayoutTemplates', 'UE4SS_Signatures', 'VTableLayoutTemplates']; //subfolders of UE4SS folder
 const SAVE_EXT = ".sav";
 const SAVE_COMPAT_VERSIONS = ['steam', 'epic', 'gog']; //game versions with installable save mods (never Xbox)
@@ -83,8 +81,8 @@ const LO_IMAGE_WIDTH = 96; //Width of the load order thumbnail image
 const SPECIAL_LO_INSTRUCTIONS = ''; //Show special load order instructions
 const PAKMOD_EXTRA_EXTS = []; //extra extensions to include with paks (usually for custom modding frameworks, i.e .toml, .json)
 const ue4ssLoadOrder = true; //enable load order and mods.txt writing for UE4SS mods
-const UE4SS_PAGE_NO = 36; //set these if there is a customized UE4SS Nexus page
-const UE4SS_FILE_NO = 25;
+const UE4SS_PAGE_NO = 0; //set these if there is a customized UE4SS Nexus page
+const UE4SS_FILE_NO = 0;
 const UE4SS_DOMAIN = GAME_ID; //either GAME_ID or 'site'
 const UE4SS_FOLDER = 'ue4ss'; //this should probably never change
 const UE4SS_MOD_PATH = path.join(UE4SS_FOLDER, 'Mods'); //this should probably never change (unless UE4SS team changes it again lol)
@@ -101,9 +99,9 @@ setUe4ssLoEnabled.toString = () => SET_UE4SS_LO_ENABLED;
 const DATA_FOLDER = EPIC_CODE_NAME; //almost always matches.
 const CONFIG_FOLDERNAME = 'Windows'; //UE 4 games are often 'WindowsNoEditor' - "Windows", "WindowsClient", "WindowsNoEditor"
 const CONFIG_LOC = 'Local AppData'; //string for notification text.
-const SAVE_LOC = CONFIG_LOC; //string for notification text. Config and Save mods are almost always in the same place
+const SAVE_LOC = 'Roaming AppData'; //string for notification text. Config and Save mods are almost always in the same place
 const CONFIGMOD_LOCATION = LOCALAPPDATA; //almost always matches. Some are in game folder or Documents.
-const SAVEMOD_LOCATION = CONFIGMOD_LOCATION;
+const SAVEMOD_LOCATION = ROAMINGAPPDATA; //!different
 
 //shipping exe
 const SHIPEXE_STRING_DEFAULT = '';
@@ -121,31 +119,13 @@ const SAVE_EDITOR_EXEC = "XXX.exe";
 // -- END EDIT ZONE -- /////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-const VERSION_FILE = 'version.json';
-const VERSION_KEY = "changelist"; //needs to be "0.{first2digits}.{last4digits}"
-/* version.json contents
-{
-    "branch":  "//Project/SN2-Release-Hotfix",
-    "is_shelve":  false,
-    "changelist":  112084, -> version is 0.11.2084 - matches appxmanifest.xml
-    "build_number":  311,
-    "compatible":  0,
-    "build_server_label":  "311_SHIPPING_RELEASEHOTFIX_CL-112084_B-18",
-    "shelve":  0,
-    "timestamp":  "2026-05-02T04:43:27",
-    "is_personal_build":  false,
-    "base_branch":  "//Project/SN2-Release-Hotfix",
-    "is_main_branch":  true
-}
-//*/
-
 const LO_IMAGE_HEIGHT = LO_IMAGE_WIDTH * 0.5625;
 //const ENGINE_VERSION_NO = +ENGINE_VERSION;
 let configSaveMatch = (CONFIGMOD_LOCATION === SAVEMOD_LOCATION); //true if the config and save mods are in the same folder
 const XBOX_SAVE_STRING = XBOX_PUB_ID;
 const CONFIG_PATH_DEFAULT = path.join(CONFIGMOD_LOCATION, DATA_FOLDER, "Saved", "Config", CONFIG_FOLDERNAME);
 const CONFIG_PATH_XBOX = path.join(CONFIGMOD_LOCATION, DATA_FOLDER, "Saved", "Config", "WinGDK"); //XBOX Version
-const SAVE_PATH_DEFAULT = path.join(SAVEMOD_LOCATION, DATA_FOLDER, "Saved", "SaveGames");
+const SAVE_PATH_DEFAULT = path.join(SAVEMOD_LOCATION, "Paraglacial", "Fatekeeper", "SaveGames"); //!different
 const SAVE_PATH_XBOX = path.join(LOCALAPPDATA, "Packages", `${XBOXAPP_ID}_${XBOX_SAVE_STRING}`, "SystemAppData", "wgs"); //XBOX Version
 
 //Settings related to the IO Store UE feature
@@ -2098,8 +2078,7 @@ function checkPartitions(folder, discoveryPath) {
     const c = stats3.dev;
     const TEST = ((a === b) && (b === c));
     return TEST;
-  } catch (err) {
-    //log('error', `Error checking folder partitions: ${err}`);
+  } catch {
     return false;
   }
 }
@@ -2182,30 +2161,31 @@ function setupNotify(api) {
 }
 
 async function resolveGameVersion(gamePath, exePath) {
-  //GAME_VERSION = await setGameVersionAsync(gamePath);
-  const READ_FILE = path.join(gamePath, VERSION_FILE);
+  GAME_VERSION = await setGameVersionAsync(gamePath);
+  //SHIPPING_EXE = getShippingExe(gamePath);
+  const READ_FILE = path.join(gamePath, SHIPPING_EXE);
   let version = '0.0.0';
-  try {
-    await fs.statAsync(READ_FILE);
-    const rawBuf = await fs.readFileAsync(READ_FILE);
-    let contents;
-    if (rawBuf[0] === 0xFF && rawBuf[1] === 0xFE) {
-      contents = rawBuf.toString('utf16le');
-      if (contents.charCodeAt(0) === 0xFEFF) contents = contents.slice(1);
-    } else if (rawBuf[0] === 0xFE && rawBuf[1] === 0xFF) {
-      rawBuf.swap16();
-      contents = rawBuf.toString('utf16le');
-      if (contents.charCodeAt(0) === 0xFEFF) contents = contents.slice(1);
-    } else {
-      contents = util.deBOM(rawBuf.toString('utf8'));
+  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
+    try { //try to parse appxmanifest.xml
+      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
+      const parsed = await parseStringPromise(appManifest);
+      version = parsed?.Package?.Identity?.[0]?.$?.Version;
+      return Promise.resolve(version);
+    } catch (err) {
+      log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
+      return Promise.resolve(version);
     }
-    const json = JSON.parse(contents);
-    const rawVersion = json[VERSION_KEY].toString(); //'112084' -> `0.11.2084`
-    version = `0.${rawVersion.slice(0, 2)}.${rawVersion.slice(2)}`;
-    return Promise.resolve(version);
-  } catch (err) {
-    log('error', `Could not read ${READ_FILE} file to get game version: ${err}`);
-    return Promise.resolve(version);
+  }
+  else { //use shipping exe (note that this only returns the UE engine version right now)
+    try {
+      const exeVersion = require('exe-version');
+      version = await exeVersion.getProductVersion(READ_FILE);
+      //log('warn', `Resolved game version for ${GAME_ID} to: ${version}`);
+      return Promise.resolve(version);
+    } catch (err) {
+      log('error', `Could not read ${READ_FILE} file to get game version: ${err}`);
+      return Promise.resolve(version);
+    }
   }
 }
 

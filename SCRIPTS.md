@@ -40,6 +40,7 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `write_index_js(folder, src)` | Write `src` to `index.js` in a game extension folder |
 | `extract_game_id(src)` | Extract `GAME_ID` value from `index.js` source |
 | `extract_steamapp_id(src)` | Extract `STEAMAPP_ID` value from `index.js` source |
+| `has_real_steamapp_id(src)` | Return `True` if `STEAMAPP_ID` is a real numeric value (not null or placeholder) |
 | `extract_game_name(src)` | Extract `GAME_NAME` value from `index.js` source |
 | `roman_to_arabic(name)` | Convert Roman numeral words to Arabic digits in a game title |
 | `arabic_to_roman(name)` | Convert Arabic digit words to Roman numerals in a game title |
@@ -79,7 +80,6 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `is_real_value(v)` | Return `True` if `v` is a filled-in, non-empty, non-placeholder value. Returns `False` for `None`, empty string, `null`, `N/A`, `XXX*`, and `${...}` template refs. |
 | `const_decl_match(src, name)` | Return the `re.Match` for the `const`/`let` declaration line of `name`. Useful for line-position edits. |
 | `const_array_value(src, name)` | Return the raw array content (between `[` and `]`) for `const NAME = [...]` via bracket-depth scanning. Returns `None` if not found. |
-| `extract_array_rhs(src, name)` | Alias for `const_array_value`. Returns bracket-depth-scanned array content for `const NAME = [...]`. |
 | `find_js_function(src, name)` | Return `(fn_start, body_start, body_end)` for the named JS function. Returns `(None, None, None)` if not found. |
 | `extract_extension_url(src)` | Extract the `EXTENSION_URL` value from JS source; returns `None` if unset or not an HTTP URL |
 | `sanitize_game_name(name)` | Strip `®`, `™`, `©` symbols and collapse extra whitespace from a game name string |
@@ -252,13 +252,13 @@ Extensions with placeholder `EXTENSION_URL = "XXX"` are silently skipped.
 
 ### fetch_nexus_stats.py — Requirements
 
-No additional packages required (Python stdlib only).
+No additional packages required (Python stdlib only). Requires `nexus_upload.py` on `sys.path` (included in this repo).
 
 ### fetch_nexus_stats.py — Environment Variables
 
 | Variable | Required | Description |
 | --- | --- | --- |
-| `NEXUS_API_KEY` | Required | Nexus Mods API key. Not needed for `--dry-run`. |
+| `NEXUS_API_KEY` | Required | Nexus Mods API key. Not needed for `--dry-run` or `--report-groups`. |
 
 ### fetch_nexus_stats.py — Usage
 
@@ -497,9 +497,9 @@ Only store ID fields are set to `null` when not found (`EPICAPP_ID`, `GOGAPP_ID`
 After writing `index.js`, the script automatically runs:
 
 1. `node generate_explained.js {GAME_ID}` — generates `EXTENSION_EXPLAINED.md`
-2. `python categorize_games.py {GAME_ID}` — adds the game to the correct engine category file in `resources/lists/`
-3. `python setup_test_folder.py {GAME_ID}` — creates a minimal test game folder
-4. `npx eslint game-{GAME_ID}/index.js` — lints the generated extension (warns on issues)
+2. `npx eslint game-{GAME_ID}/index.js` — lints the generated extension (warns on issues)
+3. `python categorize_games.py {GAME_ID}` — adds the game to the correct engine category file in `resources/lists/`
+4. `python setup_test_folder.py {GAME_ID}` — creates a minimal test game folder
 
 It also opens the PCGamingWiki page, SteamDB info page, and Steam demo page (if a demo exists) in the default browser, and opens each saved image and `index.js` with `os.startfile`.
 
@@ -520,11 +520,14 @@ node generate_explained.js
 node generate_explained.js GAME_ID [GAME_ID ...]
 node generate_explained.js --json
 node generate_explained.js GAME_ID [GAME_ID ...] --json
+node generate_explained.js --templates
+node generate_explained.js --templates --json
 ```
 
-Run without arguments to process all `game-*` and `template-*` folders.
+Run without arguments to process all `game-*` folders.
 Pass one or more bare `GAME_ID` values to target specific extensions (e.g. `thelongdark`).
 `--json` writes machine-readable JSON to stdout; progress and summary go to stderr instead.
+`--templates` also processes `template-*` folders (only effective when no `GAME_ID` args are given).
 
 ### generate_explained.js — Examples
 
@@ -602,8 +605,8 @@ With `--json`, stdout receives a JSON object instead:
   "total": 6,
   "totalErrors": 2,
   "totalWarnings": 7,
-  "results": [{ "id": "game-id", "path": "game-id/index.js", "ok": true, "errorCount": 0, "warningCount": 0, "messages": [] }, ...],
-  "failedIds": ["game-id"]
+  "results": [{ "id": "thelongdark", "path": "game-thelongdark/index.js", "ok": true, "errorCount": 0, "warningCount": 0, "messages": [] }, ...],
+  "failedIds": ["thelongdark"]
 }
 ```
 
@@ -741,7 +744,7 @@ Packages a game extension folder into a `.zip` archive using 7-Zip, optionally u
 python release_extension.py GAME_ID [GAME_ID ...]
 python release_extension.py GAME_ID --no-open
 python release_extension.py GAME_ID --dry-run
-python release_extension.py GAME_ID --skip-node-check --skip-eslint --skip-explained
+python release_extension.py GAME_ID --skip-node-check --skip-eslint
 python release_extension.py GAME_ID --upload
 python release_extension.py GAME_ID --no-upload
 python release_extension.py GAME_ID --edit-changelog
@@ -750,7 +753,7 @@ python release_extension.py GAME_ID --edit-changelog
 Pass one or more `GAME_ID` values to release multiple extensions in one run.
 Use `--no-open` to skip opening the browser (useful for testing or bulk releases).
 Use `--dry-run` to print what would be done without running checks, 7-Zip, or upload.
-Use `--skip-node-check` to skip the `node --check` syntax step. Use `--skip-eslint` to skip the ESLint step. Use `--skip-explained` to skip regenerating `EXTENSION_EXPLAINED.md`.
+Use `--skip-node-check` to skip the `node --check` syntax step. Use `--skip-eslint` to skip the ESLint step.
 Use `--upload` to upload the zip to Nexus Mods as a new file version after zipping. Default is skip (no prompt). Use `--no-upload` to explicitly skip. The changelog entry for the current version is attached as the file description on Nexus. `--upload` and `--no-upload` are mutually exclusive.
 Use `--edit-changelog` to also open the Nexus Mods changelog editor (Documents tab) in the browser alongside the Files tab.
 Passing a template name (e.g. `template-basic`) instead of a game ID errors immediately before any release steps run.
@@ -765,7 +768,7 @@ python release_extension.py assassinscreedorigins assassinscreedvalhalla --no-op
 
 ### release_extension.py — Output
 
-**Aborts** if `CHANGELOG.md` is missing, if `info.json` version has no matching `## [X.Y.Z]` section in `CHANGELOG.md`, if `info.json` `name` does not match `Game: <Name>` pattern, or if `const debug = true` is found in `index.js`. Warns (but does not abort) if `info.json` version does not match the _latest_ `## [X.X.X]` entry in `CHANGELOG.md`. Runs `validate_index_js` checks (leftover `XXX`, missing `applyGame`, etc.) and warns on each issue found. Renames the versioned `.txt` file (e.g. `0.2.7.txt` -> `0.2.8.txt`) to match the current version. Updates the `Version:` and `Date:` lines in the `index.js` header comment — version from `info.json`, date from the most recent `## [X.X.X] - YYYY-MM-DD` entry in `CHANGELOG.md`. Adds any resolved store IDs to `DISCOVERY_IDS_ACTIVE` if not already present. Runs `node --check` on `index.js` (skip with `--skip-node-check`) and warns on syntax errors. Runs ESLint (skip with `--skip-eslint`). Runs `generate_explained.js` to regenerate `EXTENSION_EXPLAINED.md` (skip with `--skip-explained`; batched across all games in a single Node invocation when releasing multiple). Creates `game-{GAME_ID}.zip` inside the extension folder, overwriting any existing zip. If `--upload` is passed, looks up the active file update group from `GET /v3/mods/{id}/file-update-groups`, runs a multipart upload via the Nexus v3 API, and publishes a new file version with the `## [X.Y.Z]` changelog entry as the description. Upload failure logs an error but does not fail the overall release. Always prints the extracted changelog entry for the current version to the console before zipping. Reads `EXTENSION_URL` from `index.js` — if set to a valid URL, opens `EXTENSION_URL?tab=files` in the default browser; otherwise opens `https://www.nexusmods.com/games/site`. If `--edit-changelog` is passed, also opens the Nexus Mods Documents editor (`EXTENSION_URL/edit/documents`) in the browser.
+**Aborts** if `CHANGELOG.md` is missing, if `info.json` version has no matching `## [X.Y.Z]` section in `CHANGELOG.md`, if `info.json` `name` does not match `Game: <Name>` pattern, or if `const debug = true` is found in `index.js`. Warns (but does not abort) if `info.json` version does not match the _latest_ `## [X.X.X]` entry in `CHANGELOG.md`. Runs `validate_index_js` checks (leftover `XXX`, missing `applyGame`, etc.) and warns on each issue found. Renames the versioned `.txt` file (e.g. `0.2.7.txt` -> `0.2.8.txt`) to match the current version. Updates the `Version:` and `Date:` lines in the `index.js` header comment — version from `info.json`, date from the most recent `## [X.X.X] - YYYY-MM-DD` entry in `CHANGELOG.md`. Adds any resolved store IDs to `DISCOVERY_IDS_ACTIVE` if not already present. Runs `node --check` on `index.js` (skip with `--skip-node-check`) and warns on syntax errors. Runs ESLint (skip with `--skip-eslint`). Runs `generate_explained.js` to regenerate `EXTENSION_EXPLAINED.md` (batched across all games in a single Node invocation when releasing multiple). Creates `game-{GAME_ID}.zip` inside the extension folder, overwriting any existing zip. If `--upload` is passed, looks up the active file update group from `GET /v3/mods/{id}/file-update-groups`, runs a multipart upload via the Nexus v3 API, and publishes a new file version with the `## [X.Y.Z]` changelog entry as the description. Upload failure logs an error but does not fail the overall release. Always prints the extracted changelog entry for the current version to the console before zipping. Reads `EXTENSION_URL` from `index.js` — if set to a valid URL, opens `EXTENSION_URL?tab=files` in the default browser; otherwise opens `https://www.nexusmods.com/games/site`. If `--edit-changelog` is passed, also opens the Nexus Mods Documents editor (`EXTENSION_URL/edit/documents`) in the browser.
 
 ---
 
@@ -968,7 +971,7 @@ Per-game status: `[game_id] updated index.js in <folder>` (existing match) or `[
 
 ## analyze_vortex_log.py
 
-Parses `C:\ProgramData\vortex\vortex.log` and consolidates entries into a single file (`vortex.analyzed.log`) with sections per severity level. Within each section, entries are grouped by hour in chronological order. Multi-line entries (stack traces, JSON blobs) are kept together. Output file lands next to `vortex.log` by default. Opens the output file on success.
+Parses `C:\ProgramData\vortex\vortex.log` and consolidates entries into a single file (`vortex.analyzed.log`) with sections per severity level. Within each section, entries are grouped by hour with the newest entries first within each bucket. Multi-line entries (stack traces, JSON blobs) are kept together. Output file lands next to `vortex.log` by default. Opens the output file on success.
 
 ### analyze_vortex_log.py — Requirements
 
@@ -1014,7 +1017,7 @@ Single file written to `--out-dir` (default: log parent folder):
 File structure:
 
 1. **Header / TOC** — source path, total entry count, per-level counts, and hour bucket totals aggregated across all selected levels.
-2. **Per-severity sections** (DEBUG, INFO, WARN, ERROR) — each headed by a `===` banner; skipped when empty. Within each section entries are sub-grouped by `YYYY-MM-DD HH:00` in chronological order, each sub-group preceded by a `--- hour (N entries) ---` marker.
+2. **Per-severity sections** (DEBUG, INFO, WARN, ERROR) — each headed by a `===` banner; skipped when empty. Within each section entries are sub-grouped by `YYYY-MM-DD HH:00` with newest entries first within each bucket, each sub-group preceded by a `--- hour (N entries) ---` marker.
 
 Console summary prints total entry count and per-level breakdown.
 
@@ -1084,22 +1087,22 @@ No arguments. Launches the window, which loads all extensions automatically.
 
 ```text
 [ Filter: ____________ ]  [Refresh]  [New Game...]
-[ Release ] [ Lint ] [ Generate Explained ] [ Port to Template... ]
-[ Fetch Icon ] [ Fetch Cover ] [ Fetch Title ] [ Fetch Banner ] [ Fetch Nexus Stats ]
-[ Setup Test Folder ] [ Patch ] [ Deploy to Vortex ] [ Categorize ] | [ Analyze Log ] [ Audit Scripts ]
-[ Open Folder ] [ Open in Editor ]
--------------------------------------------------------------------------------
-| Game ID | Name | Ver | Date | Engine | End | DL | Cover | Title | Banner |...
-| sortable QTableView, multi-select with Ctrl/Shift                           |
--------------------------------------------------------------------------------
+[ Bump Version ] [ Release ] [ Deploy to Vortex ] [ Launch in Vortex ] | [ Open Folder ] [ Open in Editor ]
+[ Open Game Page ] [ Open Extension Page ] | [ Port to Template... ] [ Setup Test Folder ] [ Patch ] [ Categorize ]
+[ Analyze Log ] [ Audit Scripts ] | [ Fetch Icon ] [ Fetch Cover ] [ Fetch Title ] [ Fetch Banner ] [ Fetch Nexus Stats ] [ View Images ]
+-------------------------------------------------------------------------------------------------------------
+| Flag | Icon | Game ID | Name | Ver | Updated | Engine | Stores | End | DL | Pub | Cover | Title | Banner |
+| sortable QTableView, multi-select with Ctrl/Shift                                                         |
+-------------------------------------------------------------------------------------------------------------
 | Log pane (live subprocess output)    [Clear Log] [Stop Running] |
 ```
 
 - `End` — Nexus endorsement count (blank until `Fetch Nexus Stats` is run; sorts numerically).
 - `DL` — Nexus unique download count (same). Tooltip shows the last fetch timestamp.
+- `Pub` — Nexus published file count.
 
 - **Sort**: click any column header.
-- **Filter**: case-insensitive substring match on Game ID and Name.
+- **Filter**: case-insensitive substring match on Game ID, Name, Engine, and Note.
 - **Multi-select**: Ctrl/Shift-click rows; toolbar buttons pass all selected GAME_IDs in one call.
 - **Right-click**: context menu with the same script actions.
 - **Double-click**: opens `index.js` in the default editor.
@@ -1109,24 +1112,26 @@ No arguments. Launches the window, which loads all extensions automatically.
 
 | Button | Script invoked |
 | --- | --- |
+| Bump Version | Dialog (`--major`, `--minor`, `--dry-run`), then `python bump_version.py <id> [flags]` |
 | Release | Dialog (`--no-open`, `--dry-run`, `--upload`, `--edit-changelog`), then `python release_extension.py <ids> [flags] (--upload\|--no-upload)` |
-| Lint | `node lint_extensions.js <ids>` |
-| Generate Explained | `node generate_explained.js <ids>` |
+| Deploy to Vortex | Dialog, then `python deploy_to_vortex.py [--dry-run] [--force] <ids>` |
+| Launch in Vortex | `subprocess.Popen(VortexExe, ...)` — opens Vortex with `--profile` for the selected game |
+| Open Folder | `os.startfile(folder)` — no subprocess |
+| Open in Editor | `os.startfile(index.js)` — no subprocess |
+| Open Game Page | Opens `nexusmods.com/{game_id}` (the game's Nexus domain page) — no subprocess |
+| Open Extension Page | Opens `EXTENSION_URL` from `index.js` in the browser — no subprocess |
 | Port to Template... | Dialog to pick template, then `python port_to_template.py <id> <template>` per game |
+| Setup Test Folder | `python setup_test_folder.py <ids>` |
+| Patch | `python patch_extensions.py <ids>` |
+| Categorize | Dialog, then `python categorize_games.py [--dry-run] <ids>` |
+| Analyze Log | `python analyze_vortex_log.py --force` (no selection required; opens output file) |
+| Audit Scripts | `python audit_scripts.py` (no selection required) |
 | Fetch Icon | `python fetch_exec_icon.py <ids>` |
 | Fetch Cover | `python fetch_cover_art.py <ids>` |
 | Fetch Title | `python fetch_cover_art.py --title <ids>` |
 | Fetch Banner | `python fetch_cover_art.py --banner <ids>` |
 | Fetch Nexus Stats | `python fetch_nexus_stats.py <ids>` |
-| Setup Test Folder | `python setup_test_folder.py <ids>` |
-| Patch | `python patch_extensions.py <ids>` |
-| Deploy to Vortex | Dialog, then `python deploy_to_vortex.py [--dry-run] [--force] <ids>` |
-| Categorize | Dialog, then `python categorize_games.py [--dry-run] <ids>` |
-| Analyze Log | `python analyze_vortex_log.py --force` (no selection required; opens output file) |
-| Audit Scripts | `python audit_scripts.py` (no selection required) |
-| Open Folder | `os.startfile(folder)` — no subprocess |
-| Open in Editor | `os.startfile(index.js)` — no subprocess |
-| Open Game on Nexus | Opens `nexusmods.com/{game_id}` (the game's Nexus domain page) — no subprocess |
+| View Images | Opens the cover, title, and banner images in the default viewer — no subprocess |
 
 Most toolbar buttons are disabled when no rows are selected and while a script is running. **Analyze Log** and **Audit Scripts** are always enabled (require no selection). Only one script runs at a time; click **Stop Running** to kill the active process.
 

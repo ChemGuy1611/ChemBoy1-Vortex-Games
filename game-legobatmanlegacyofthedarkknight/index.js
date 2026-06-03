@@ -10,7 +10,7 @@ Notes:
 
 //Import libraries
 const { actions, fs, util, selectors, log,
-        MainPage, FlexLayout, DNDContainer, DraggableList, Spinner } = require('vortex-api');
+        MainPage, FlexLayout, DNDContainer, DraggableList } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 const { parseStringPromise } = require('xml2js');

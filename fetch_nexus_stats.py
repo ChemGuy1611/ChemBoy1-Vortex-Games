@@ -28,7 +28,6 @@ Environment variables:
                      Not needed for --dry-run or --report-groups.
 """
 
-import argparse
 import sys
 import time
 import urllib.error
@@ -215,24 +214,9 @@ def prune(dry_run=False):
 # == Entry point ===============================================================
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="Fetch Nexus Mods endorsement and unique download stats for Vortex extensions."
-    )
-    parser.add_argument(
-        "game",
-        nargs="*",
-        metavar="GAME_ID",
-        help="One or more game IDs to process. Omit to process all.",
-    )
-    parser.add_argument(
-        "--dry-run",
-        action="store_true",
-        help="List extensions to fetch without making any API calls.",
-    )
-    parser.add_argument(
-        "--force",
-        action="store_true",
-        help="Re-fetch stats even if already cached.",
+    parser = vu.build_arg_parser(
+        "Fetch Nexus Mods endorsement and unique download stats for Vortex extensions.",
+        ids_required=False, dest="game",
     )
     parser.add_argument(
         "--prune",
