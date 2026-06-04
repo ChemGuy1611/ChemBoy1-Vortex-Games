@@ -10,7 +10,7 @@ All requests require header `apikey: {key}`. Env var `NEXUS_API_KEY` (registry f
 `reference_env_vars.md`). Steps 4 and 5 of the upload flow hit S3 presigned URLs directly —
 **no `apikey` header** on those requests.
 
-**Rate limit:** 2500 requests/day (free tier). Check `X-RL-Daily-Remaining` response header.
+**Rate limits (premium):** 20000 requests/day, 1500/hour. Check `X-RL-Daily-Remaining` and `X-RL-Hourly-Remaining` response headers.
 
 ---
 
@@ -81,7 +81,9 @@ Full working flow confirmed 2026-05-26. Used by `release_extension.py --upload`.
         "name": "My Extension",
         "is_active": true,
         "last_file_uploaded_at": "2026-05-20T10:00:00.000Z",
-        "versions_count": 12
+        "versions_count": 12,
+        "archived_count": 3,
+        "removed_count": 0
       }
     ]
   }
@@ -106,14 +108,16 @@ prompt the user to choose.
 
 `size_bytes` must be a string, not a number.
 
-**Response `data`:**
+**Response `data` (HTTP 201):**
 
 ```json
 {
   "id": "abc123-upload-id",
   "part_presigned_urls": ["https://s3.amazonaws.com/...?partNumber=1&...", "..."],
-  "part_size_bytes": 10485760,
-  "complete_presigned_url": "https://s3.amazonaws.com/...?uploadId=..."
+  "part_size_bytes": 52428800,
+  "complete_presigned_url": "https://s3.amazonaws.com/...?uploadId=...",
+  "state": "created",
+  "user": { "id": "3263034" }
 }
 ```
 
@@ -174,7 +178,8 @@ GET /v3/uploads/{upload_id}
 ```
 
 Poll `data.state` until `"available"`. Implementation backoff: `min(1.0 * 1.4^n, 20.0)` seconds,
-30 attempts max. Intermediate states observed: `"pending"`, `"processing"`.
+30 attempts max. Known states: `"created"` (initial), `"pending"`, `"processing"`, `"available"`, `"failed"`.
+Response also includes `"id"` (upload UUID) and `"user": {"id": "<user_id>"}` fields.
 
 ---
 
@@ -196,19 +201,22 @@ Content-Type: application/json
   "file_category": "main",
   "archive_existing_file": true,
   "primary_mod_manager_download": true,
-  "allow_mod_manager_download": false,
+  "allow_mod_manager_download": true,
   "show_requirements_pop_up": true
 }
 ```
+
+**Required fields** (422 if absent): `upload_id`, `name`, `version`, `file_category`
+
+**Optional fields** (schema passes if absent, but `null` causes 422 for boolean fields): `description`, `archive_existing_file`, `primary_mod_manager_download`, `allow_mod_manager_download`, `show_requirements_pop_up`
 
 **Field notes:**
 
 - `name` — use the file group name verbatim; do not append version.
 - `description` — changelog entry: bare date (`YYYY-MM-DD`) on first line, then bullet lines.
   No markdown heading, no version prefix.
-- `allow_mod_manager_download` — **inverted legacy field**: send `false` to enable MMD,
-  `true` to disable it. The polarity was never corrected when the API meaning changed.
-- `show_requirements_pop_up` — must be `true` or `false`; `null` causes 422 error.
+- `file_category` — enum `NewModFileCategory`; invalid values cause 422. Known valid: `"main"`.
+- `allow_mod_manager_download`, `show_requirements_pop_up`, `primary_mod_manager_download` — all must be `true` or `false`; `null` causes 422 on any of them. Schema validates before upload state check.
 
 **Response `data`:**
 
@@ -227,15 +235,9 @@ Content-Type: application/json
 
 The following fields are silently ignored by the API — accepted without error but have no effect:
 
-- `allow_mod_manager_download` — see polarity note above; still silently ignored as of 2026-05-26.
 - `primary_mod_manager_download`
-- `show_requirements_pop_up`
 
-**Result:** every uploaded file has Mod Manager Download disabled regardless of what is sent.
-No PATCH or PUT endpoint exists to fix this post-creation. Enable MMD manually on the Nexus
-Files tab after upload.
-
-These fields are still sent in the request body in case Nexus fixes the API.
+**Note:** `allow_mod_manager_download` and `show_requirements_pop_up` were previously ignored but now work (confirmed 2026-06-03).
 
 ---
 

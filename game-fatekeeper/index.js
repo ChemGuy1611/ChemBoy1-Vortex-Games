@@ -72,7 +72,9 @@ const ROOT_FOLDERS = [EPIC_CODE_NAME, 'Engine']; //addressable folders in root
 const ROOTSUB_FOLDERS = ['Content', 'Binaries', 'Mods']; //subfolders of EPIC_CODE_NAME. Don't use "Plugins" here since it can conflict with plugin loader/asi mods
 const CONTENTSUB_FOLDERS = ['Paks', 'Movies']; //subfolders of Content folder
 const UE4SS_SUBFOLDERS = ['MapGenBP', 'MemberVarLayoutTemplates', 'UE4SS_Signatures', 'VTableLayoutTemplates']; //subfolders of UE4SS folder
-const SAVE_EXT = ".sav";
+const SAVE_EXT = "";
+const SAVE_STRING = "Campaign_";
+const SAVE_SUBFOLDER = "Profile0";
 const SAVE_COMPAT_VERSIONS = ['steam', 'epic', 'gog']; //game versions with installable save mods (never Xbox)
 let PAKMOD_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Paks', '~mods'); //usually works. Some games don't work from "~mods".
 const PAKMOD_LOADORDER = true; //set to false if you don't want loadOrder. If must be in "Paks" root, disable loadOrder.
@@ -125,8 +127,10 @@ let configSaveMatch = (CONFIGMOD_LOCATION === SAVEMOD_LOCATION); //true if the c
 const XBOX_SAVE_STRING = XBOX_PUB_ID;
 const CONFIG_PATH_DEFAULT = path.join(CONFIGMOD_LOCATION, DATA_FOLDER, "Saved", "Config", CONFIG_FOLDERNAME);
 const CONFIG_PATH_XBOX = path.join(CONFIGMOD_LOCATION, DATA_FOLDER, "Saved", "Config", "WinGDK"); //XBOX Version
-const SAVE_PATH_DEFAULT = path.join(SAVEMOD_LOCATION, "Paraglacial", "Fatekeeper", "SaveGames"); //!different
+const SAVE_PATH_DEFAULT = path.join(SAVEMOD_LOCATION, "Paraglacial", "Fatekeeper", "SaveGames", SAVE_SUBFOLDER); //!different
 const SAVE_PATH_XBOX = path.join(LOCALAPPDATA, "Packages", `${XBOXAPP_ID}_${XBOX_SAVE_STRING}`, "SystemAppData", "wgs"); //XBOX Version
+const GAME_SETTINGS_FILE = "GameSettings.json";
+const GAME_SETTINGS_PATH = path.join(LOCALAPPDATA, EPIC_CODE_NAME, "Saved", "GameSettings", GAME_SETTINGS_FILE);
 
 //Settings related to the IO Store UE feature
 if (!PAKMOD_LOADORDER) PAKMOD_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Paks'); //if loadOrder is disabled, Paks must be in root
@@ -1251,6 +1255,7 @@ function configInstallerNotify(api) {
   });
 }
 
+//error notification for Xbox version save install attempt
 function saveErrorNotify(api) {
   const NOTIF_ID = `${GAME_ID}-saveinsterrxbox`;
   const MESSAGE = `Save files are not supported by the Xbox version of ${GAME_NAME}`;
@@ -1265,7 +1270,7 @@ function saveErrorNotify(api) {
 
 //Test for save files
 function testSave(files, gameId) {
-  const isMod = files.some(file => (path.extname(file).toLowerCase() === SAVE_EXT));
+  const isMod = files.some(file => path.basename(file).startsWith(SAVE_STRING));
   let supported = (gameId === spec.game.id) && isMod;
 
   // Test for a mod installer
@@ -1282,23 +1287,23 @@ function testSave(files, gameId) {
 }
 
 //Install save files
-function installSave(api, files) {
-  const modFile = files.find(file => (path.extname(file).toLowerCase() === SAVE_EXT));
+async function installSave(api, files) {
+  const modFile = files.find(file => path.basename(file).startsWith(SAVE_STRING));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: SAVE_ID };
 
   GAME_PATH = getDiscoveryPath(api);
-  GAME_VERSION = setGameVersionSync(GAME_PATH);
+  GAME_VERSION = await setGameVersionAsync(GAME_PATH);
   const TEST = SAVE_COMPAT_VERSIONS.includes(GAME_VERSION);
   if (!TEST) {
-    throw new Error(`Save files are not supported by the Xbox version of ${GAME_NAME}`);
-    //saveErrorNotify(api);
+    saveErrorNotify(api);
+    throw new util.UserCanceled();
   }
 
-  //Filter files and set instructions
+  //!CANNOT use rootPath filter since files have no extension
   const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+    ((!file.endsWith(path.sep)))
   );
   const instructions = filtered.map(file => {
     return {
@@ -1308,17 +1313,15 @@ function installSave(api, files) {
     };
   });
   instructions.push(setModTypeInstruction);
-  GAME_PATH = getDiscoveryPath(api);
   const IS_SAVE = checkPartitions(SAVEMOD_LOCATION, GAME_PATH);
   if (IS_SAVE === false) {
-    //api.showErrorNotification(`Could not install mod as Save`, `You tried installing a Save mod, but the game, staging folder, and ${SAVE_LOC} folder are not all on the same drive. Please move the game and/or staging folder to the same drive as the ${SAVE_LOC} folder (typically C Drive) to install these types of mods with Vortex.`, { allowReport: false });
     saveInstallerNotify(api);
     throw new util.UserCanceled();
   }
   return Promise.resolve({ instructions });
 }
 
-//Notification for config installer
+//Error notification for save installer when not on same partition
 function saveInstallerNotify(api) {
   const NOTIF_ID = `${GAME_ID}-saveinstaller`;
   const MESSAGE = 'Could not install mod as Save';
@@ -2429,18 +2432,12 @@ function applyGame(context, gameSpec) {
       GAME_VERSION = setGameVersionSync(GAME_PATH);
       if (GAME_PATH !== undefined) {
         if (configSaveMatch) {
-          CHECK_CONFIG = checkPartitions(SAVEMOD_LOCATION, GAME_PATH);
-        }
-        if (!configSaveMatch) {
+          CHECK_SAVE = CHECK_CONFIG;
+        } else {
           CHECK_SAVE = checkPartitions(SAVEMOD_LOCATION, GAME_PATH);
         }
       }
-      if (configSaveMatch) {
-        return ((gameId === GAME_ID) && (CHECK_CONFIG === true) && SAVE_COMPAT_VERSIONS.includes(GAME_VERSION));
-      }
-      if (!configSaveMatch) {
-        return ((gameId === GAME_ID) && (CHECK_SAVE === true) && SAVE_COMPAT_VERSIONS.includes(GAME_VERSION));
-      }
+      return ((gameId === GAME_ID) && (CHECK_SAVE === true) && SAVE_COMPAT_VERSIONS.includes(GAME_VERSION));
     },
     (game) => pathPattern(context.api, game, SAVE_PATH),
     () => Promise.resolve(false),
@@ -2501,6 +2498,13 @@ function applyGame(context, gameSpec) {
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', async () => {
     //CONFIG_PATH = await setConfigPath(GAME_VERSION);
     util.opn(CONFIG_PATH).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, `Open ${GAME_SETTINGS_FILE}`, () => {
+    util.opn(GAME_SETTINGS_PATH).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);

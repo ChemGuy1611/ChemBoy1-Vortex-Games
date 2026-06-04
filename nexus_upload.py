@@ -283,10 +283,10 @@ def upload_zip(zip_path, mod_id, domain, version, description, api_key, mod_key,
         "file_category": "main",
         "archive_existing_file": True,
         "primary_mod_manager_download": True,
-        "allow_mod_manager_download": False,  # inverted legacy field: False = MMD enabled, True = MMD disabled
+        "allow_mod_manager_download": True,
         "show_requirements_pop_up": True,
     }, api_key)
     file_uid = result.get("id", "unknown")
-    log_info(mod_key, f"File UID: {file_uid} (NOTE: enable 'Mod Manager Download' manually on the Files tab - Nexus v3 API ignores allow_mod_manager_download)")
+    log_info(mod_key, f"File UID: {file_uid}")
 
     log_info(mod_key, f"Nexus upload complete: {display_name} v{version}")

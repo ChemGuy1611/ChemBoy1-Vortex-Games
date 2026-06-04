@@ -156,6 +156,34 @@ No additional packages required (Python stdlib only). Requires `vortex_utils.py`
 
 ---
 
+## check_nexus_api.py
+
+Verifies Nexus Mods v1 and v3 API response shapes against documentation. Tests read-only endpoints only — does not create or modify any data. Checks v1 mod field types, rate limit headers, v3 file-update-groups shape (including undocumented `archived_count`/`removed_count` fields), and expected error codes for broken endpoints. Defaults to `site/1960` (Fatekeeper) as the test target; pass `--domain` and `--mod-id` to test another mod.
+
+### check_nexus_api.py — Environment Variables
+
+| Variable | Required | Description |
+| --- | --- | --- |
+| `NEXUS_API_KEY` | Required | Nexus Mods API key. Read from HKCU registry via `winreg`. |
+
+### check_nexus_api.py — Usage
+
+```sh
+python check_nexus_api.py
+python check_nexus_api.py --domain site --mod-id 1960
+python check_nexus_api.py --test-upload
+```
+
+- No arguments — runs read-only checks only.
+- `--domain` / `--mod-id` — override the default test target (site/1960 Fatekeeper).
+- `--test-upload` — also POSTs a 1-byte upload session to verify step 3 + step 7 shapes. Creates a dangling session that expires automatically; does not upload data or publish files.
+
+### check_nexus_api.py — Output
+
+Per-check `[PASS]` / `[FAIL]` / `[WARN]` lines for: v1 mod shape (13 required fields), rate limit headers (daily + hourly limit and remaining), v3 file-update-groups shape (5 required fields + known extras), 4 broken-endpoint status codes, and (with `--test-upload`) upload session shape (step 3) + upload state shape (step 7). Summary: `Passed: N/total`. Exits `0` if all pass, `1` if any fail.
+
+---
+
 ## fetch_exec_icon.py
 
 Scans all `game-*` extension folders and downloads a 64x64 PNG icon for any extension missing its `exec.png` file. Reads `STEAMAPP_ID` and `GAME_NAME` directly from each `index.js`. Uses `download_exec_icon` from `vortex_utils`.

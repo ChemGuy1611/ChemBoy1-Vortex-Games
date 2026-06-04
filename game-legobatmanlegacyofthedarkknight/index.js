@@ -1251,6 +1251,7 @@ function configInstallerNotify(api) {
   });
 }
 
+//error notification for Xbox version save install attempt
 function saveErrorNotify(api) {
   const NOTIF_ID = `${GAME_ID}-saveinsterrxbox`;
   const MESSAGE = `Save files are not supported by the Xbox version of ${GAME_NAME}`;
@@ -1282,18 +1283,18 @@ function testSave(files, gameId) {
 }
 
 //Install save files
-function installSave(api, files) {
+async function installSave(api, files) {
   const modFile = files.find(file => (path.extname(file).toLowerCase() === SAVE_EXT));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: SAVE_ID };
 
   GAME_PATH = getDiscoveryPath(api);
-  GAME_VERSION = setGameVersionSync(GAME_PATH);
+  GAME_VERSION = await setGameVersionAsync(GAME_PATH);
   const TEST = SAVE_COMPAT_VERSIONS.includes(GAME_VERSION);
   if (!TEST) {
-    throw new Error(`Save files are not supported by the Xbox version of ${GAME_NAME}`);
-    //saveErrorNotify(api);
+    saveErrorNotify(api);
+    throw new util.UserCanceled();
   }
 
   //Filter files and set instructions
@@ -1308,17 +1309,15 @@ function installSave(api, files) {
     };
   });
   instructions.push(setModTypeInstruction);
-  GAME_PATH = getDiscoveryPath(api);
   const IS_SAVE = checkPartitions(SAVEMOD_LOCATION, GAME_PATH);
   if (IS_SAVE === false) {
-    //api.showErrorNotification(`Could not install mod as Save`, `You tried installing a Save mod, but the game, staging folder, and ${SAVE_LOC} folder are not all on the same drive. Please move the game and/or staging folder to the same drive as the ${SAVE_LOC} folder (typically C Drive) to install these types of mods with Vortex.`, { allowReport: false });
     saveInstallerNotify(api);
     throw new util.UserCanceled();
   }
   return Promise.resolve({ instructions });
 }
 
-//Notification for config installer
+//Error notification for save installer when not on same partition
 function saveInstallerNotify(api) {
   const NOTIF_ID = `${GAME_ID}-saveinstaller`;
   const MESSAGE = 'Could not install mod as Save';
@@ -2429,18 +2428,12 @@ function applyGame(context, gameSpec) {
       GAME_VERSION = setGameVersionSync(GAME_PATH);
       if (GAME_PATH !== undefined) {
         if (configSaveMatch) {
-          CHECK_CONFIG = checkPartitions(SAVEMOD_LOCATION, GAME_PATH);
-        }
-        if (!configSaveMatch) {
+          CHECK_SAVE = CHECK_CONFIG;
+        } else {
           CHECK_SAVE = checkPartitions(SAVEMOD_LOCATION, GAME_PATH);
         }
       }
-      if (configSaveMatch) {
-        return ((gameId === GAME_ID) && (CHECK_CONFIG === true) && SAVE_COMPAT_VERSIONS.includes(GAME_VERSION));
-      }
-      if (!configSaveMatch) {
-        return ((gameId === GAME_ID) && (CHECK_SAVE === true) && SAVE_COMPAT_VERSIONS.includes(GAME_VERSION));
-      }
+      return ((gameId === GAME_ID) && (CHECK_SAVE === true) && SAVE_COMPAT_VERSIONS.includes(GAME_VERSION));
     },
     (game) => pathPattern(context.api, game, SAVE_PATH),
     () => Promise.resolve(false),

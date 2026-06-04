@@ -92,6 +92,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Open UE4SS Mods Folder
 - Open LogicMods Folder
 - Open Config Folder
+- Open ${GAME_SETTINGS_FILE}
 - Open Saves Folder
 - Download UE4SS
 - Open UE4SS Settings INI
