@@ -2,8 +2,8 @@
 Name: Far Far West Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2026-05-15
+Version: 0.1.1
+Date: 2026-06-04
 Notes:
 -
 ////////////////////////////////////////////////*/
@@ -2972,17 +2972,29 @@ function PakContextMenu({ x, y, item, loadOrder, profile, dispatch, context, sel
   if (isMulti) {
     const n = targets.length;
     return React.createElement('div', { style: menuStyle },
-      menuItem(`Enable Selected (${n})`, () => setModsEnabled(targets, true)),
+      //menuItem(`Enable Selected (${n})`, () => setModsEnabled(targets, true)),
       menuItem(`Disable Selected (${n})`, () => setModsEnabled(targets, false)),
       React.createElement('div', { style: sepStyle }),
       menuItem(`Lock Selected (${n})`, () => applyToTargets((lo) => lo.map(e => targets.find(t => t.id === e.id) ? { ...e, locked: true } : e), true)),
       menuItem(`Unlock Selected (${n})`, () => applyToTargets((lo) => lo.map(e => targets.find(t => t.id === e.id) ? { ...e, locked: false } : e), true)),
+      React.createElement('div', { style: sepStyle }),
+      menuItem(`Move to Top (${n})`, () => applyToTargets((lo) => {
+        const locked = lo.filter(isLocked);
+        const selected = lo.filter(e => targets.find(t => t.id === e.id) && !isLocked(e));
+        const rest = lo.filter(e => !isLocked(e) && !targets.find(t => t.id === e.id));
+        return [...locked, ...selected, ...rest];
+      })),
+      menuItem(`Move to Bottom (${n})`, () => applyToTargets((lo) => {
+        const selected = lo.filter(e => targets.find(t => t.id === e.id));
+        const rest = lo.filter(e => !targets.find(t => t.id === e.id));
+        return [...rest, ...selected];
+      })),
     );
   }
 
   return React.createElement('div', { style: menuStyle },
-    item.modId ? menuItem(isModEnabled ? 'Disable Mod' : 'Enable Mod', () => setModsEnabled([item], !isModEnabled)) : null,
-    item.modId ? React.createElement('div', { style: sepStyle }) : null,
+    item.modId && isModEnabled ? menuItem('Disable Mod', () => setModsEnabled([item], false)) : null,
+    item.modId && isModEnabled ? React.createElement('div', { style: sepStyle }) : null,
     menuItem(isEntryLocked ? 'Unlock Position' : 'Lock Position', () => applyToTargets((lo) => lo.map(e => e.id === item.id ? { ...e, locked: !isEntryLocked } : e), true)),
     React.createElement('div', { style: sepStyle }),
     menuItem('Move to Top', () => applyToTargets((lo) => {
@@ -3210,6 +3222,7 @@ function Ue4ssItemRenderer({ className, item }) {
     configFilePath ? React.createElement('button', {
       className: 'btn btn-default btn-sm',
       style: { margin: '0 4px' },
+      title: path.basename(configFilePath),
       onClick: onConfigure,
     }, 'Configure') : null,
     React.createElement('input', {
@@ -3282,7 +3295,19 @@ function Ue4ssContextMenu({ x, y, item, loadOrder, profileId, dispatch, api, gam
       menuItem(`Lock Selected (${n})`, () => applyToTargets((lo) => lo.map(e => targets.find(t => t.id === e.id) ? { ...e, locked: true } : e))),
       menuItem(`Unlock Selected (${n})`, () => applyToTargets((lo) => lo.map(e => targets.find(t => t.id === e.id) ? { ...e, locked: false } : e))),
       React.createElement('div', { style: sepStyle }),
-      menuItem('Open Mod Folder', () => { util.opn(path.join(gamePath, BINARIES_PATH, UE4SS_MOD_PATH, item.id)).catch(() => null); onClose(); }),
+      menuItem(`Open Mod Folders (${n})`, () => { targets.forEach(t => util.opn(path.join(gamePath, BINARIES_PATH, UE4SS_MOD_PATH, t.id)).catch(() => null)); onClose(); }),
+      React.createElement('div', { style: sepStyle }),
+      menuItem(`Move to Top (${n})`, () => applyToTargets((lo) => {
+        const locked = lo.filter(isLocked);
+        const selected = lo.filter(e => targets.find(t => t.id === e.id) && !isLocked(e));
+        const rest = lo.filter(e => !isLocked(e) && !targets.find(t => t.id === e.id));
+        return [...locked, ...selected, ...rest];
+      })),
+      menuItem(`Move to Bottom (${n})`, () => applyToTargets((lo) => {
+        const selected = lo.filter(e => targets.find(t => t.id === e.id));
+        const rest = lo.filter(e => !targets.find(t => t.id === e.id));
+        return [...rest, ...selected];
+      })),
     );
   }
 

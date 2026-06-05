@@ -696,6 +696,8 @@ even though it appears later. Standard code structure: imports -> toggles -> con
 
 | Item | Action |
 | --- | --- |
+| Disable Mod | Only shown when `item.modId` set AND mod is currently enabled; calls `setModsEnabled` on the underlying Vortex mod |
+| *(separator)* | Only shown when Disable Mod is visible |
 | Lock / Unlock Position | Toggle `locked` on this entry; serializes LO |
 | *(separator)* | |
 | Move to Top | Re-inserts after all locked entries |
@@ -705,8 +707,13 @@ even though it appears later. Standard code structure: imports -> toggles -> con
 
 | Item | Action |
 | --- | --- |
+| Disable Selected (n) | Call `setModsEnabled(targets, false)`; Enable Selected is commented out (no effect on deployed pak mods) |
+| *(separator)* | |
 | Lock Selected (n) | Set `locked: true` on all selected entries; serializes |
 | Unlock Selected (n) | Set `locked: false` on all selected entries; serializes |
+| *(separator)* | |
+| Move to Top (n) | Selected entries (relative order) placed after locked entries; non-selected unlocked entries follow |
+| Move to Bottom (n) | Non-selected entries first, then selected entries (relative order) |
 
 ### applyToTargets helper
 
@@ -787,7 +794,7 @@ The renderer uses a plain `div` (not `ListGroupItem` -- no page-scoped CSS). Key
 | Element | Key note |
 | --- | --- |
 | Root `div` | `display:flex, flexDirection:row, alignItems:center, gap:8, padding:'4px 12px', border, borderRadius, minHeight:52`, outline for selection |
-| Configure button | Only rendered when `configFilePath` is non-empty (detected by `useEffect` + `util.walk`); `style: { margin: '0 4px' }` |
+| Configure button | Only rendered when `configFilePath` is non-empty (detected by `useEffect` + `util.walk`); `style: { margin: '0 4px' }`; `title: path.basename(configFilePath)` shows filename on hover |
 | Enable checkbox | Plain `input[type=checkbox]` with `alignSelf: 'center', cursor: 'pointer'` -- react-bootstrap `Checkbox` wrapper breaks flex centering |
 | Context menu | `Ue4ssContextMenu` rendered last when `contextMenu?.itemId === item.id` |
 
@@ -797,7 +804,7 @@ The renderer uses a plain `div` (not `ListGroupItem` -- no page-scoped CSS). Key
 Enable/Disable, Lock/Unlock, Configure (if `configFilePath` non-empty), separator,
 Open Mod Folder, separator, Move to Top, Move to Bottom.
 
-Multi-item menu: Enable/Disable selected, Lock/Unlock selected, separator, Open Mod Folder.
+Multi-item menu: Enable/Disable selected, Lock/Unlock selected, separator, Open Mod Folders (n) (opens each selected mod's folder), separator, Move to Top (n), Move to Bottom (n).
 
 ---
 
