@@ -32,6 +32,7 @@ Mod types define where each category of mod gets deployed:
 | --- | --- | --- | --- |
 | ACSE | `planetcoaster2-acse` | high | `{gamePath}/Win64/ovldata` |
 | Root Game Folder | `planetcoaster2-root` | high | `{gamePath}` |
+| ACSE Mod | `planetcoaster2-acsemod` | high | `{gamePath}/Win64/ovldata` |
 | ovldata Subfolder | `planetcoaster2-ovldata` | high | `{gamePath}/Win64` |
 | Saves | `planetcoaster2-save` | high | `USER_HOME/Saved Games/Frontier Developments/Planet Coaster 2/USERID_FOLDER/Saves` |
 
@@ -43,6 +44,7 @@ Installers run in priority order (lower number = tested first). The first instal
 | --- | --- |
 | `planetcoaster2-acse` | 25 |
 | `planetcoaster2-root` | 27 |
+| `planetcoaster2-acsemod` | 28 |
 | `planetcoaster2-ovldata` | 29 |
 | `planetcoaster2-save` | 49 |
 

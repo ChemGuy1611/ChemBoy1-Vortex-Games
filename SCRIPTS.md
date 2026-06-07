@@ -1115,7 +1115,7 @@ No arguments. Launches the window, which loads all extensions automatically.
 
 ```text
 [ Filter: ____________ ]  [Refresh]  [New Game...]
-[ Bump Version ] [ Release ] [ Deploy to Vortex ] [ Launch in Vortex ] | [ Open Folder ] [ Open in Editor ]
+[ Bump Version ] [ Release ] [ Deploy to Vortex ] [ Launch in Vortex ] | [ Open Folder ] [ Open in Editor ] [ Open Changelog ]
 [ Open Game Page ] [ Open Extension Page ] | [ Port to Template... ] [ Setup Test Folder ] [ Patch ] [ Categorize ]
 [ Analyze Log ] [ Audit Scripts ] | [ Fetch Icon ] [ Fetch Cover ] [ Fetch Title ] [ Fetch Banner ] [ Fetch Nexus Stats ] [ View Images ]
 -------------------------------------------------------------------------------------------------------------
@@ -1146,6 +1146,7 @@ No arguments. Launches the window, which loads all extensions automatically.
 | Launch in Vortex | `subprocess.Popen(VortexExe, ...)` — opens Vortex with `--profile` for the selected game |
 | Open Folder | `os.startfile(folder)` — no subprocess |
 | Open in Editor | `os.startfile(index.js)` — no subprocess |
+| Open Changelog | `os.startfile(CHANGELOG.md)` — no subprocess |
 | Open Game Page | Opens `nexusmods.com/{game_id}` (the game's Nexus domain page) — no subprocess |
 | Open Extension Page | Opens `EXTENSION_URL` from `index.js` in the browser — no subprocess |
 | Port to Template... | Dialog to pick template, then `python port_to_template.py <id> <template>` per game |

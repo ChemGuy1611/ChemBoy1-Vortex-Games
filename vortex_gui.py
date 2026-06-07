@@ -1294,6 +1294,7 @@ class MainWindow(QMainWindow):
         add_action("Launch in Vortex", self._on_open_in_vortex)
         add_action("Open Folder", self._on_open_folder, sep=True)
         add_action("Open in Editor", self._on_open_editor)
+        add_action("Open Changelog", self._on_open_changelog)
         add_action("Open Game Page", self._on_open_nexus, sep=True)
         add_action("Open Extension Page", self._on_open_ext)
         add_action("Port to Template...", self._on_port_to_template, sep=True)
@@ -1772,6 +1773,14 @@ class MainWindow(QMainWindow):
             if os.path.isfile(index_path):
                 vu.open_in_default_app(index_path)
 
+    def _on_open_changelog(self):
+        if not self._require_selection():
+            return
+        for row in self._selected_rows():
+            changelog_path = os.path.join(row.folder, "CHANGELOG.md")
+            if os.path.isfile(changelog_path):
+                vu.open_in_default_app(changelog_path)
+
     def _on_view_images(self):
         if not self._require_selection():
             return
@@ -1883,6 +1892,7 @@ class MainWindow(QMainWindow):
             None,
             ("Open Folder", self._on_open_folder),
             ("Open in Editor", self._on_open_editor),
+            ("Open Changelog", self._on_open_changelog),
             None,
             ("Open Game Page", self._on_open_nexus),
             ("Open Extension Page", self._on_open_ext),

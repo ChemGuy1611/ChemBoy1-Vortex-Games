@@ -5,7 +5,7 @@ Author: ChemBoy1
 Version: 0.1.0
 Date: 2026-XX-XX
 Notes:
-- 
+-
 ///////////////////////////////////////*/
 
 //import libraries
@@ -75,6 +75,11 @@ const LOCALISED_ID = `${GAME_ID}-localised`;
 const LOCALISED_NAME = "ACSE Localization";
 const LOCALISED_PATH = path.join(ACSE_PATH, ACSE_FILE);
 const LOCALISED_FILE = "localised";
+
+const ACSE_MOD_ID = `${GAME_ID}-acsemod`;
+const ACSE_MOD_NAME = "ACSE Mod";
+const ACSE_MOD_PATH = MOD_PATH;
+const ACSE_MOD_FILE = "Main.ovl";
 
 const MOVIES_ID = `${GAME_ID}-movies`;
 const MOVIES_NAME = "Movies (.webm)";
@@ -159,19 +164,25 @@ const spec = {
       "priority": "high",
       "targetPath": '{gamePath}'
     },
-    { 
+    {
+      "id": ACSE_MOD_ID,
+      "name": ACSE_MOD_NAME,
+      "priority": "high",
+      "targetPath": path.join('{gamePath}', ACSE_MOD_PATH)
+    },
+    {
       "id": OVLDATA_ID,
       "name": OVLDATA_NAME,
       "priority": "high",
       "targetPath": path.join('{gamePath}', OVLDATA_PATH)
     },
-    { 
+    {
       "id": LOCALISED_ID,
       "name": LOCALISED_NAME,
       "priority": "high",
       "targetPath": path.join('{gamePath}', LOCALISED_PATH)
     },
-    { 
+    {
       "id": MOVIES_ID,
       "name": MOVIES_NAME,
       "priority": "high",
@@ -368,7 +379,7 @@ function installACSE(files) {
 function testSave(files, gameId) {
   const isMod = files.some(file => SAVE_EXTS.includes(path.extname(file).toLowerCase()));
   let supported = (gameId === spec.game.id) && isMod;
-  
+
   // Test for a mod installer.
   if (supported && files.find(file =>
       (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
@@ -391,7 +402,7 @@ function installSave(files) {
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file => (
-    (file.indexOf(rootPath) !== -1) && 
+    (file.indexOf(rootPath) !== -1) &&
     (!file.endsWith(path.sep))
   ));
 
@@ -482,6 +493,49 @@ function installOvlData(files) {
   return Promise.resolve({ instructions });
 }
 
+//Installer test for ACSE mod files
+function testAcseMod(files, gameId) {
+  const isMod = files.some(file => (path.basename(file).toLowerCase() === ACSE_MOD_FILE.toLowerCase()));
+  let supported = (gameId === spec.game.id) && isMod;
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Installer install ACSE Mod files
+function installAcseMod(files, fileName) {
+  let modFile = files.find(file => (path.basename(file).toLowerCase() === ACSE_MOD_FILE.toLowerCase()));
+  let rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: ACSE_MOD_ID };
+  const MOD_NAME = path.basename(fileName);
+  let MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
+
+  const ROOT_PATH = path.basename(rootPath);
+  if (ROOT_PATH !== '.') {
+    MOD_FOLDER = '.'; //no top level folder needed if it's already included in the archive
+    modFile = rootPath; //make the folder the targeted modFile so we can grab any other folders also in its directory
+    rootPath = path.dirname(modFile);
+  }
+  const idx = modFile.indexOf(path.basename(modFile));
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(MOD_FOLDER, file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
 //Installer test for localised folder
 function testLocalised(files, gameId) {
   const isMod = files.some(file => (path.basename(file).toLowerCase() === LOCALISED_FILE));
@@ -520,7 +574,7 @@ function installLocalised(files) {
 function testMovies(files, gameId) {
   const isMod = files.some(file => MOVIES_EXTS.includes(path.extname(file).toLowerCase()));
   let supported = (gameId === spec.game.id) && isMod;
-  
+
   // Test for a mod installer.
   if (supported && files.find(file =>
       (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
@@ -543,7 +597,7 @@ function installMovies(files) {
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file => (
-    (file.indexOf(rootPath) !== -1) && 
+    (file.indexOf(rootPath) !== -1) &&
     (!file.endsWith(path.sep))
   ));
 
@@ -578,7 +632,7 @@ function testFallback(files, gameId) {
 //Fallback installer to root folder
 function installFallback(api, files, destinationPath) {
   fallbackInstallerNotify(api, destinationPath);
-  
+
   const filtered = files.filter(file =>
     (!file.endsWith(path.sep))
   );
@@ -615,7 +669,7 @@ function fallbackInstallerNotify(api, modName) {
                 + `If you think that Vortex should be capable to install this mod to a specific folder, please contact the extension developer for support at the link below.\n`
                 + `\n`
                 + `Mod Name: ${modName}.\n`
-                + `\n`             
+                + `\n`
           }, [
             { label: 'Continue', action: () => dismiss() },
             {
@@ -634,7 +688,7 @@ function fallbackInstallerNotify(api, modName) {
               if (modMatch) {
                 const MOD_ID = modMatch.attributes.modId;
                 if (MOD_ID !== undefined) {
-                  PAGE = `${MOD_ID}?tab=description`; 
+                  PAGE = `${MOD_ID}?tab=description`;
                 }
               }
               const MOD_PAGE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${PAGE}`;
@@ -746,7 +800,7 @@ async function resolveGameVersion(gamePath) {
       const exeVersion = require('exe-version');
       //const EXEC = getExecutable(gamePath);
       version = exeVersion.getProductVersion(path.join(gamePath, EXEC));
-      return Promise.resolve(version); 
+      return Promise.resolve(version);
     } catch (err) {
       log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
       return Promise.resolve(version);
@@ -801,6 +855,7 @@ function applyGame(context, gameSpec) {
   //register mod installers
   context.registerInstaller(ACSE_ID, 25, testACSE, installACSE);
   context.registerInstaller(ROOT_ID, 27, testRoot, installRoot);
+  context.registerInstaller(ACSE_MOD_ID, 28, testAcseMod, installAcseMod);
   context.registerInstaller(LOCALISED_ID, 29, testLocalised, installLocalised);
   context.registerInstaller(MOVIES_ID, 31, testMovies, installMovies);
   context.registerInstaller(OVLDATA_ID, 33, testOvlData, installOvlData);

@@ -2,8 +2,8 @@
 Name: Planet Coaster 2 Vortex Extension
 Structure: Cobra Engine (ACSE)
 Author: ChemBoy1
-Version: 0.3.1
-Date: 2026-04-09
+Version: 0.4.0
+Date: 2026-06-06
 ///////////////////////////////////////*/
 
 //import libraries
@@ -59,6 +59,11 @@ const OVLDATA_ID = `${GAME_ID}-ovldata`;
 const OVLDATA_NAME = "ovldata Subfolder";
 const OVLDATA_PATH = path.join("Win64");
 const OVLDATA_FILE = "ovldata";
+
+const ACSE_MOD_ID = `${GAME_ID}-acsemod`;
+const ACSE_MOD_NAME = "ACSE Mod";
+const ACSE_MOD_PATH = MOD_PATH;
+const ACSE_MOD_FILE = "Main.ovl";
 
 const SAVE_ID = `${GAME_ID}-save`
 const SAVE_NAME = "Saves";
@@ -130,7 +135,13 @@ const spec = {
       "priority": "high",
       "targetPath": '{gamePath}'
     },
-    { 
+    {
+      "id": ACSE_MOD_ID,
+      "name": ACSE_MOD_NAME,
+      "priority": "high",
+      "targetPath": path.join('{gamePath}', ACSE_MOD_PATH)
+    },
+    {
       "id": OVLDATA_ID,
       "name": OVLDATA_NAME,
       "priority": "high",
@@ -339,7 +350,7 @@ function installACSE(files) {
 function testSave(files, gameId) {
   const isMod = files.some(file => SAVE_EXTS.includes(path.extname(file).toLowerCase()));
   let supported = (gameId === spec.game.id) && isMod;
-  
+
   // Test for a mod installer.
   if (supported && files.find(file =>
       (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
@@ -362,7 +373,7 @@ function installSave(files) {
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file => (
-    (file.indexOf(rootPath) !== -1) && 
+    (file.indexOf(rootPath) !== -1) &&
     (!file.endsWith(path.sep))
   ));
 
@@ -448,6 +459,49 @@ function installOvlData(files) {
       type: 'copy',
       source: file,
       destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+//Installer test for ACSE mod files
+function testAcseMod(files, gameId) {
+  const isMod = files.some(file => (path.basename(file).toLowerCase() === ACSE_MOD_FILE.toLowerCase()));
+  let supported = (gameId === spec.game.id) && isMod;
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Installer install ACSE Mod files
+function installAcseMod(files, fileName) {
+  let modFile = files.find(file => (path.basename(file).toLowerCase() === ACSE_MOD_FILE.toLowerCase()));
+  let rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: ACSE_MOD_ID };
+  const MOD_NAME = path.basename(fileName);
+  let MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
+
+  const ROOT_PATH = path.basename(rootPath);
+  if (ROOT_PATH !== '.') {
+    MOD_FOLDER = '.'; //no top level folder needed if it's already included in the archive
+    modFile = rootPath; //make the folder the targeted modFile so we can grab any other folders also in its directory
+    rootPath = path.dirname(modFile);
+  }
+  const idx = modFile.indexOf(path.basename(modFile));
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(MOD_FOLDER, file.substr(idx)),
     };
   });
   instructions.push(setModTypeInstruction);
@@ -552,7 +606,7 @@ async function resolveGameVersion(gamePath) {
       const exeVersion = require('exe-version');
       //const EXEC = getExecutable(gamePath);
       version = exeVersion.getProductVersion(path.join(gamePath, EXEC)); //can also use getFileVersion if this doesn't return the correct number (rare)
-      return Promise.resolve(version); 
+      return Promise.resolve(version);
     } catch (err) {
       log('error', `Could not read executable file to get game version: ${err}`);
       return Promise.resolve(version);
@@ -601,6 +655,7 @@ function applyGame(context, gameSpec) {
   //register mod installers
   context.registerInstaller(ACSE_ID, 25, testACSE, installACSE);
   context.registerInstaller(ROOT_ID, 27, testRoot, installRoot);
+  context.registerInstaller(ACSE_MOD_ID, 28, testAcseMod, installAcseMod);
   context.registerInstaller(OVLDATA_ID, 29, testOvlData, installOvlData);
   context.registerInstaller(SAVE_ID, 49, testSave, installSave);
 

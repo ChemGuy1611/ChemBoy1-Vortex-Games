@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.4.0] - 2026-06-06
+
+- Fixed: ACSE Mods always installed with a top level folder
+
 ## [0.3.1] - 2026-04-09
 
 - Added: Xbox (Game Pass) version support.
