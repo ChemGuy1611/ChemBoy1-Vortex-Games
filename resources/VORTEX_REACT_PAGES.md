@@ -89,7 +89,7 @@ context.registerSettings(title, Component, propsCallback, visibleCallback, prior
 | `visibleCallback` | `() => bool` | Gate by active game ID |
 | `priority` | `number` | Order within the tab; `150` is a safe default |
 
-### Example
+### Settings registration example
 
 ```js
 context.registerSettings('Mods', GameSettings, () => ({}),
@@ -535,3 +535,439 @@ See [game-subnautica2/index.js](../game-subnautica2/index.js) lines 2639–2985 
 - `Ue4ssItemRenderer` at line 2840 — DnD item with thumbnail, checkbox
 - `Ue4ssLoadOrderInfoPanel` at line 2891 — static info panel
 - `Ue4ssLoadOrderPage` at line 2916 — full page with filter, DnD list, info panel
+
+---
+
+## 15. Page Groups
+
+The `group` option controls where a page appears in the sidebar.
+
+| Group | When visible | Real examples |
+| --- | --- | --- |
+| `'per-game'` | Only when a game is active | Load Order, Browse Nexus, Health Check |
+| `'global'` | Always (no game required) | Downloads, Extensions, Games |
+| `'dashboard'` | Used only for the Dashboard tab itself | Dashboard |
+| `'hidden'` | Accessible programmatically but no sidebar entry | About dialog |
+| `'support'` | Defined in interface but unused in practice | — |
+
+Use `'per-game'` for all game-specific extension pages. Use `'global'` for tools or viewers that make sense without any game active.
+
+---
+
+## 16. Badge and Activity Indicators
+
+`badge` shows a numeric count on the sidebar icon. `activity` shows a spinner. Both take a `ReduxProp` — a subscription to a Redux state path with a transform function.
+
+### Constructing a `ReduxProp`
+
+```js
+const { ReduxProp } = require('vortex-api');
+
+// badge: count of active items from state
+const myBadgeCount = new ReduxProp(
+  context.api,
+  [['persistent', 'myData', 'items']],   // array of state paths to subscribe to
+  (items) => {
+    const count = Object.keys(items ?? {})
+      .filter(id => items[id].active).length;
+    return count > 0 ? count : undefined;  // undefined = no badge shown
+  }
+);
+
+context.registerMainPage('download', 'My Page', MyPage, {
+  group: 'global',
+  priority: 30,
+  badge: myBadgeCount,    // numeric badge on sidebar icon
+  // activity: myActivity // spinner instead of badge
+});
+```
+
+- Return `undefined` from the transform to hide the badge.
+- `activity` is for long-running background work (e.g. installing mods). `badge` is for count-based indicators.
+- Real example: `Vortex/src/renderer/src/extensions/download_management/index.ts` — `downloadCount` badges active downloads.
+
+---
+
+## 17. MDI Icons
+
+Use `mdi` to provide a custom SVG icon from `@mdi/js` instead of a named string icon.
+
+```js
+const { mdiUnrealEngine } = require('@mdi/js'); // if available
+// or paste the SVG path data string directly:
+const UE4SS_ICON = 'M12 2A10 10 0 0 0 2 12A10 10 0 0 0 12 22...';
+
+context.registerMainPage('', 'My Page', MyPage, {
+  group: 'per-game',
+  mdi: UE4SS_ICON,   // overrides the icon string arg
+  // ...
+});
+```
+
+- When `mdi` is set, the first `icon` argument is ignored.
+- `@mdi/js` is bundled with Vortex — you can `require('@mdi/js')` and destructure named exports.
+- Store the path string as a constant at the top of the file for reuse.
+
+Real example: `mdi: mdiViewDashboard` (Dashboard), `mdi: mdiMagnify` (Browse Nexus), `mdi: UE4SS_ICON` (UE4SS Load Order pages in CB1 extensions).
+
+---
+
+## 18. Simple Info / Status Page (No DnD)
+
+Not all pages need drag-and-drop. A static or read-only page is just a `MainPage` with content in the body.
+
+```js
+function MyInfoPage({ api }) {
+  const { useSelector } = require('react-redux');
+  const [data, setData] = React.useState(null);
+
+  React.useEffect(() => {
+    loadData(api).then(setData);
+  }, []);
+
+  if (!data) {
+    return React.createElement(MainPage, null,
+      React.createElement(MainPage.Body, null,
+        React.createElement(Spinner)));
+  }
+
+  return React.createElement(MainPage, null,
+    React.createElement(MainPage.Body, null,
+      React.createElement('div', { style: { padding: 16 } },
+        React.createElement('h2', null, 'Status'),
+        React.createElement('p', null, `Loaded ${data.items.length} items.`),
+        data.items.map(item =>
+          React.createElement('div', { key: item.id, style: { marginBottom: 8 } },
+            React.createElement('strong', null, item.name),
+            React.createElement('span', { style: { marginLeft: 8, color: '#aaa' } }, item.status),
+          )
+        ),
+      )
+    )
+  );
+}
+```
+
+Register the same way as any page:
+
+```js
+context.registerMainPage('gamepad', 'My Status', MyInfoPage, {
+  id: `${GAME_ID}-status`,
+  group: 'per-game',
+  priority: 40,
+  hotkey: 'S',
+  visible: () => selectors.activeGameId(context.api.store.getState()) === GAME_ID,
+  props: () => ({ api: context.api }),
+});
+```
+
+---
+
+## 19. Page Header with Toolbar Buttons
+
+Two approaches for toolbar buttons in `MainPage.Header`:
+
+### Approach A: `staticElements` with `IconBar`
+
+Use this for hardcoded buttons (not user-extensible).
+
+```js
+const { IconBar } = require('vortex-api');
+
+const toolbarButtons = [
+  {
+    component: ToolbarIcon,  // or any React component
+    props: () => ({
+      id: 'btn-refresh',
+      icon: 'refresh',
+      text: 'Refresh',
+      onClick: () => loadData(api),
+    }),
+  },
+];
+
+// In the page component:
+React.createElement(MainPage, null,
+  React.createElement(MainPage.Header, null,
+    React.createElement(IconBar, {
+      group: `${GAME_ID}-toolbar-icons`,  // matches registerAction group
+      staticElements: toolbarButtons,
+    })
+  ),
+  React.createElement(MainPage.Body, null, /* ... */),
+)
+```
+
+### Approach B: `registerAction` (user-extensible toolbar)
+
+`registerAction` adds buttons to a named toolbar group. Any extension can add to the same group. The page renders the group via `IconBar`.
+
+```js
+// In main():
+context.registerAction(
+  `${GAME_ID}-toolbar-icons`,   // group name — matches IconBar group prop
+  100,                          // priority (lower = left)
+  'refresh',                    // icon name
+  {},                           // options
+  'Refresh Data',               // tooltip / label
+  (instanceIds) => {
+    loadData(context.api);
+  },
+  (instanceIds) => true,        // condition: return true/false or an error string
+);
+```
+
+Full `registerAction` signature: see [REGISTER_ACTION.md](REGISTER_ACTION.md).
+
+---
+
+## 20. Tab-Based Page Layout
+
+Vortex exports `TabProvider`, `TabBar`, and `TabPanel` from `vortex-api` for multi-tab pages (as used in the Health Check page).
+
+```js
+function MyTabbedPage({ api }) {
+  const { TabProvider, TabBar, TabPanel } = require('vortex-api');
+  const [activeTab, setActiveTab] = React.useState('tab-a');
+
+  return React.createElement(MainPage, null,
+    React.createElement(MainPage.Header, null,
+      React.createElement(TabBar, {
+        activeTab,
+        tabs: [
+          { id: 'tab-a', title: 'Overview' },
+          { id: 'tab-b', title: 'Details', count: 3 },  // count shows a badge
+        ],
+        onSelect: setActiveTab,
+      }),
+    ),
+    React.createElement(MainPage.Body, null,
+      React.createElement(TabProvider, { activeTab },
+        React.createElement(TabPanel, { tabId: 'tab-a' },
+          React.createElement('div', { style: { padding: 16 } },
+            React.createElement('p', null, 'Overview content.'),
+          ),
+        ),
+        React.createElement(TabPanel, { tabId: 'tab-b' },
+          React.createElement('div', { style: { padding: 16 } },
+            React.createElement('p', null, 'Details content.'),
+          ),
+        ),
+      ),
+    ),
+  );
+}
+```
+
+- `count` on a tab entry shows a numeric badge next to the tab label.
+- `TabProvider` + `TabPanel` handle show/hide based on `activeTab`.
+- Tabs can also go inside `MainPage.Body` rather than the header, depending on layout needs.
+
+---
+
+## 21. `registerDashlet` — Dashboard Widgets
+
+Add a widget to the Dashboard page. Dashlets are small cards in the masonry grid.
+
+### Interface
+
+```js
+context.registerDashlet(
+  title,      // string — card heading
+  width,      // 1 | 2 | 3 — grid column units
+  height,     // 1 | 2 | 3 | 4 | 5 — grid row units
+  position,   // number — initial position in the grid
+  Component,  // React.ComponentType — the card content
+  isFixed,    // boolean — if true, user cannot move/close it
+  propsCallback,  // () => ({}) — extra props for Component
+  isVisible,  // (state) => boolean — hide when condition is false
+);
+```
+
+### Dashlet registration example
+
+```js
+context.registerDashlet(
+  'My Game Status',
+  2,             // 2 columns wide
+  2,             // 2 rows tall
+  10,            // position 10 in the grid
+  MyDashletComponent,
+  false,         // user can close/move it
+  () => ({}),
+  (state) => selectors.activeGameId(state) === GAME_ID,
+);
+```
+
+### Dashlet component
+
+```js
+function MyDashletComponent() {
+  const { useSelector } = require('react-redux');
+  const count = useSelector(state =>
+    util.getSafe(state, ['persistent', 'myData', GAME_ID, 'items'], []).length);
+
+  return React.createElement('div', { style: { padding: 12 } },
+    React.createElement('p', null, `${count} items installed.`),
+  );
+}
+```
+
+- Dashlets must be self-contained — no props from outside except what `propsCallback` provides.
+- Vortex handles positioning and the Edit Mode toggle for user rearrangement.
+- `isFixed: true` means the dashlet cannot be moved or closed by the user.
+
+---
+
+## 22. `registerFooter` — Footer Components
+
+Add a persistent component to the Vortex footer bar (bottom of the window).
+
+```js
+context.registerFooter('my-footer-item', MyFooterComponent);
+```
+
+```js
+function MyFooterComponent() {
+  const { useSelector } = require('react-redux');
+  const status = useSelector(state =>
+    util.getSafe(state, ['session', GAME_ID, 'status'], ''));
+
+  return React.createElement('div', { style: { padding: '0 8px', display: 'flex', alignItems: 'center' } },
+    React.createElement('span', null, status),
+  );
+}
+```
+
+- Footer is always visible regardless of active page.
+- Use for lightweight status indicators (e.g. transfer speed, background task status).
+- Real example: `registerFooter('speed-o-meter', SpeedOMeter)` in `download_management`.
+
+---
+
+## 23. `isClassicOnly` / `isModernOnly` Options
+
+Gate a page to a specific UI generation of Vortex.
+
+```js
+context.registerMainPage('profiles', 'Profiles', ProfilesPage, {
+  group: 'global',
+  hotkey: 'P',
+  isClassicOnly: true,   // only shown in Vortex "classic" UI
+  // isModernOnly: true  // only shown in Vortex "modern" UI
+  visible: () => ...,
+});
+```
+
+- In practice, only the Profiles page uses `isClassicOnly: true`.
+- Most extensions can ignore these options.
+
+---
+
+## 24. Putting It All Together — Non-DnD Game Page Example
+
+A game-specific page that shows save files (no DnD, has toolbar, reloads on profile change):
+
+```js
+// --- In main() ---
+context.registerMainPage('savegame', 'Saves', SavesPage, {
+  id: `${GAME_ID}-saves`,
+  group: 'per-game',
+  priority: 40,
+  hotkey: 'V',
+  visible: () => selectors.activeGameId(context.api.store.getState()) === GAME_ID,
+  props: () => ({ api: context.api }),
+});
+
+// --- Component (after main()) ---
+function SavesPage({ api }) {
+  const { IconBar } = require('vortex-api');
+  const { useSelector } = require('react-redux');
+
+  const profileId = useSelector(state => selectors.activeProfile(state)?.id);
+  const [saves, setSaves] = React.useState([]);
+  const [loading, setLoading] = React.useState(true);
+
+  const reload = React.useCallback(async () => {
+    setLoading(true);
+    try {
+      const result = await loadSavesFromDisk(api);
+      setSaves(result);
+    } finally {
+      setLoading(false);
+    }
+  }, [api]);
+
+  React.useEffect(() => {
+    if (!profileId) return;
+    reload();
+  }, [profileId, reload]);
+
+  const toolbarButtons = [
+    {
+      component: ToolbarIcon,
+      props: () => ({ id: 'btn-refresh', icon: 'refresh', text: 'Refresh', onClick: reload }),
+    },
+  ];
+
+  if (loading) {
+    return React.createElement(MainPage, null,
+      React.createElement(MainPage.Body, null, React.createElement(Spinner)));
+  }
+
+  return React.createElement(MainPage, null,
+    React.createElement(MainPage.Header, null,
+      React.createElement(IconBar, {
+        group: `${GAME_ID}-saves-toolbar`,
+        staticElements: toolbarButtons,
+      }),
+    ),
+    React.createElement(MainPage.Body, null,
+      React.createElement('div', { style: { padding: 16 } },
+        saves.length === 0
+          ? React.createElement('p', null, 'No saves found.')
+          : saves.map(save =>
+              React.createElement('div', {
+                key: save.id,
+                style: { padding: '8px 0', borderBottom: '1px solid rgba(255,255,255,0.1)' },
+              },
+                React.createElement('strong', null, save.name),
+                React.createElement('span', { style: { marginLeft: 12, color: '#aaa' } },
+                  new Date(save.date).toLocaleDateString()),
+              )
+            ),
+      ),
+    ),
+  );
+}
+
+// ToolbarIcon helper (paste once per file, or import from a shared module)
+function ToolbarIcon({ id, icon, text, onClick }) {
+  const { Icon } = require('vortex-api');
+  return React.createElement('div', {
+    id,
+    className: 'toolbar-icon',
+    onClick,
+    title: text,
+    style: { display: 'flex', alignItems: 'center', gap: 4, cursor: 'pointer', padding: '0 8px' },
+  },
+    React.createElement(Icon, { name: icon }),
+    React.createElement('span', null, text),
+  );
+}
+```
+
+---
+
+## 25. Full Examples in Other Repos
+
+| Page type | File | Notes |
+| --- | --- | --- |
+| DnD load order (LO + sidebar info panel) | `game-subnautica2/index.js` | Full UE4SS LO page |
+| DnD load order (FBLO + context menu) | `game-legobatmanlegacyofthedarkknight/index.js` | Pak LO + context menu |
+| Settings panel | `template-ue4-5/index.js` | `Toggle`+`More` pattern |
+| Dashboard | `Vortex/src/renderer/src/extensions/dashboard/index.ts` | Dashlet registry + Packery grid |
+| Search + pagination page | `Vortex/src/renderer/src/extensions/browse_nexus/index.ts` | `useSelector` + async search |
+| Health/status + tabs | `Vortex/src/renderer/src/extensions/health_check/index.ts` | `TabProvider`/`TabBar`/`TabPanel` |
+| Badge on sidebar icon | `Vortex/src/renderer/src/extensions/download_management/index.ts` | `ReduxProp` + `badge` |
+| Saves table page | `vortex-games/game-mount-and-blade2/src/index.ts` | `useContext(MainContext)` + toolbar |
