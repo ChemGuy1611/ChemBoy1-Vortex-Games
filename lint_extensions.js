@@ -10,6 +10,7 @@
  *   node lint_extensions.js GAME_ID [GAME_ID ...] --fix
  *   node lint_extensions.js --templates
  *   node lint_extensions.js --quiet
+ *   node lint_extensions.js --changed
  *
  * Flags:
  *   GAME_ID [GAME_ID ...]  Only lint the listed game IDs.
@@ -17,6 +18,7 @@
  *   --templates            Also include template-[*]/index.js files.
  *   --quiet                Suppress output for passing files.
  *   --json                 Write machine-readable JSON to stdout instead of human-readable text.
+ *   --changed              Only lint extensions with index.js changes per git status.
  *
  * JSON output schema:
  *   { timestamp, passed, failed, total, totalErrors, totalWarnings,
@@ -40,7 +42,7 @@ const args      = process.argv.slice(2);
 const flags     = new Set(args.filter(a => a.startsWith('--')));
 const gameArgs  = args.filter(a => !a.startsWith('--'));
 
-const KNOWN_FLAGS = new Set(['--fix', '--templates', '--quiet', '--json']);
+const KNOWN_FLAGS = new Set(['--fix', '--templates', '--quiet', '--json', '--changed']);
 for (const f of flags) {
   if (!KNOWN_FLAGS.has(f)) {
     console.error(`Error: unknown flag '${f}'. Known flags: ${[...KNOWN_FLAGS].join(', ')}`);
@@ -52,6 +54,7 @@ const doFix       = flags.has('--fix');
 const doTemplates = flags.has('--templates');
 const quiet       = flags.has('--quiet');
 const doJson      = flags.has('--json');
+const doChanged   = flags.has('--changed');
 
 // ── output helper ─────────────────────────────────────────────────────────────
 
@@ -95,6 +98,35 @@ if (gameArgs.length > 0) {
     })
     .map(e => e.name)
     .sort();
+}
+
+// ── filter to git-changed index.js files ─────────────────────────────────────
+
+if (doChanged) {
+  const gitResult = spawnSync('git', ['status', '--porcelain', '-z'], {
+    cwd: ROOT,
+    encoding: 'utf8',
+  });
+  if (gitResult.error) {
+    console.error(`Warning: git status failed (${gitResult.error.message}); --changed ignored.`);
+  } else {
+    const changedDirs = new Set();
+    const entries = gitResult.stdout.split('\0').filter(Boolean);
+    for (const entry of entries) {
+      // porcelain: "XY PATH" or "XY ORIG -> PATH" (rename)
+      const filePath = entry.slice(3).split(' -> ').pop().trim();
+      const norm = filePath.replace(/\\/g, '/');
+      const m = norm.match(/^((?:game|template)-[^/]+)\/index\.js$/);
+      if (m) changedDirs.add(m[1]);
+    }
+    const before = targetDirs.length;
+    targetDirs = targetDirs.filter(d => changedDirs.has(d));
+    if (targetDirs.length === 0 && before > 0) {
+      emit('No changed index.js files found (--changed).');
+      writeResultsAtomic(lines.join('\n') + '\n');
+      process.exit(0);
+    }
+  }
 }
 
 // ── header ────────────────────────────────────────────────────────────────────

@@ -15,11 +15,13 @@ Usage:
     python fetch_nexus_stats.py --force
     python fetch_nexus_stats.py --prune [--dry-run]
     python fetch_nexus_stats.py --report-groups
+    python fetch_nexus_stats.py --max-age 7
 
 Options:
     GAME_ID          One or more game IDs to process. Omit to process all.
     --dry-run        List extensions to fetch (or entries to prune) without making changes.
     --force          Re-fetch stats even if already cached.
+    --max-age DAYS   Re-fetch entries older than DAYS days (overrides per-entry --force logic).
     --prune          Remove cache entries for game IDs no longer in the repo, then exit.
     --report-groups  Print extensions with multiple active file groups from cache, then exit.
 
@@ -35,23 +37,12 @@ import urllib.error
 import vortex_utils as vu
 from nexus_upload import v3_get
 
-STATS_PATH = vu.GUI_STATS_PATH
-
-
-# == Persistence ===============================================================
-
-def _load_stats() -> dict:
-    return vu.read_json(STATS_PATH)
-
-
-def _save_stats(data: dict):
-    vu.write_json_atomic(STATS_PATH, data, sort_keys=True)
-
-
 # == Core logic ================================================================
 
-def fetch_all(target_ids=None, dry_run=False, force=False):
-    cache = _load_stats()
+def fetch_all(target_ids=None, dry_run=False, force=False, max_age=None):
+    import time as _time
+    cache = vu.read_gui_stats()
+    now = _time.time()
 
     # Build work list
     work = []
@@ -66,7 +57,10 @@ def fetch_all(target_ids=None, dry_run=False, force=False):
         domain, mod_id = result
         cached = cache.get(game_id, {})
         if not force and cached and cached.get("error") in (None, "") and "file_groups" in cached:
-            continue
+            if max_age is None:
+                continue
+            if now - cached.get("fetched_at", 0) <= max_age * 86400:
+                continue
         work.append((game_id, domain, mod_id))
 
     if not work:
@@ -159,7 +153,7 @@ def fetch_all(target_ids=None, dry_run=False, force=False):
     except KeyboardInterrupt:
         print(f"\nInterrupted. Progress saved ({updated} updated).")
     finally:
-        _save_stats(cache)
+        vu.write_gui_stats(cache)
 
     print(f"\n{'-' * 50}")
     print(f"Updated: {updated}")
@@ -178,7 +172,7 @@ def fetch_all(target_ids=None, dry_run=False, force=False):
 def report_groups(cache=None):
     """Print extensions that have more than one active Nexus file-update group."""
     if cache is None:
-        cache = _load_stats()
+        cache = vu.read_gui_stats()
     multi = [(gid, d) for gid, d in sorted(cache.items()) if len(d.get("file_groups", [])) > 1]
     if multi:
         print(f"\nExtensions with multiple file groups ({len(multi)}):")
@@ -193,7 +187,7 @@ def report_groups(cache=None):
 
 def prune(dry_run=False):
     """Remove cache entries for game IDs no longer present in the repo."""
-    cache = _load_stats()
+    cache = vu.read_gui_stats()
     current = set(vu.list_game_ids())
     stale = sorted(gid for gid in cache if gid not in current)
     if not stale:
@@ -206,7 +200,7 @@ def prune(dry_run=False):
             del cache[gid]
             print(f"  Removed: {gid}")
     if not dry_run:
-        _save_stats(cache)
+        vu.write_gui_stats(cache)
     tag = " [DRY RUN]" if dry_run else ""
     print(f"\nDone{tag}. {len(stale)} stale {'entry' if len(stale) == 1 else 'entries'} pruned.")
 
@@ -229,6 +223,10 @@ def main():
         dest="report_groups",
         help="Print extensions with multiple active file groups from cache, then exit.",
     )
+    parser.add_argument(
+        "--max-age", type=int, default=None, metavar="DAYS", dest="max_age",
+        help="Re-fetch cache entries older than DAYS days.",
+    )
     args = parser.parse_args()
     if args.report_groups:
         report_groups()
@@ -240,6 +238,7 @@ def main():
         target_ids=vu.normalize_target_ids(args.game),
         dry_run=args.dry_run,
         force=args.force,
+        max_age=args.max_age,
     )
 
 

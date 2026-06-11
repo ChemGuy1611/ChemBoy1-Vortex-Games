@@ -10,11 +10,15 @@ Usage:
     python fetch_exec_icon.py GAME_ID [GAME_ID ...]
     python fetch_exec_icon.py --dry-run
     python fetch_exec_icon.py --force
+    python fetch_exec_icon.py --retry-failed
+    python fetch_exec_icon.py --concurrency 4
 
 Options:
     GAME_ID          One or more game IDs to process. Omit to process all.
     --dry-run        List missing exec.png files without downloading anything.
     --force          Re-download exec.png even if it already exists.
+    --concurrency N  Max parallel download workers (default: 8).
+    --retry-failed   Automatically retry failed downloads once after the main pass.
 
 Requirements:
     pip install Pillow
@@ -24,67 +28,87 @@ Environment variables:
 """
 
 import os
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from vortex_utils import (
-    extract_steamapp_id, extract_game_name, iter_game_folders,
-    download_exec_icon, print_run_summary, has_real_steamapp_id, normalize_target_ids,
+    iter_steam_image_targets,
+    download_exec_icon, print_run_summary, normalize_target_ids,
     build_arg_parser,
 )
 
 
 # ── Core logic ────────────────────────────────────────────────────────────────
 
-def find_targets(target_game_ids=None, force=False):
-    """
-    Yields (folder_path, game_id, steamapp_id, game_name) for extensions to process.
-    Without --force, skips extensions that already have an exec.png.
-    If target_game_ids is set, only those extensions are checked.
-    """
-    for folder, game_id, src in iter_game_folders(target_game_ids):
-        icon_path = os.path.join(folder, "exec.png")
-        if os.path.isfile(icon_path) and not force:
-            continue
-        if not has_real_steamapp_id(src):
-            continue  # Xbox/Epic-only game or no resolvable Steam ID
-        steamapp_id = extract_steamapp_id(src)
-        game_name = extract_game_name(src)
-        yield folder, game_id, steamapp_id, game_name
-
-
-def fetch_all(target_game_ids=None, dry_run=False, force=False):
+def fetch_all(target_game_ids=None, dry_run=False, force=False,
+              concurrency=8, retry_failed=False):
     saved = []
     failed = []
     skipped = []
 
-    targets = list(find_targets(target_game_ids, force))
+    targets = list(iter_steam_image_targets(
+        target_game_ids, force,
+        target_path_fn=lambda folder, game_id: os.path.join(folder, "exec.png"),
+    ))
     if not targets:
         print("No missing exec.png files found.")
         return
 
-    for folder, game_id, steamapp_id, game_name in targets:
-        label = f"[{game_id}]"
-        if dry_run:
-            print(f"  MISSING  {label}  (Steam {steamapp_id})")
-            continue
+    if dry_run:
+        for folder, game_id, steamapp_id, game_name in targets:
+            print(f"  MISSING  [{game_id}]  (Steam {steamapp_id})")
+        return
 
-        print(f"\n{label}")
-
+    def _download_one(item):
+        folder, game_id, steamapp_id, game_name = item
         out_path = os.path.join(folder, "exec.png")
         try:
             ok, source = download_exec_icon(steamapp_id, game_name or game_id, out_path)
+            return game_id, "ok" if ok else "fail", source
         except Exception as e:
-            print(f"  ERROR - {e}")
-            failed.append(game_id)
+            return game_id, "error", str(e)
+
+    def _run_pass(items):
+        batch = {}
+        try:
+            with ThreadPoolExecutor(max_workers=concurrency) as pool:
+                for f in as_completed({pool.submit(_download_one, item): item for item in items}):
+                    r = f.result()
+                    batch[r[0]] = r
+        except KeyboardInterrupt:
+            print("\n\n  Interrupted.")
+        return batch
+
+    results = _run_pass(targets)
+
+    for _, game_id, steamapp_id, game_name in targets:
+        if game_id not in results:
             continue
-        if ok:
-            print(f"  Saved: {source}")
+        _, status, detail = results[game_id]
+        label = f"[{game_id}]"
+        if status == "ok":
+            print(f"\n{label}\n  Saved: {detail}")
             saved.append(game_id)
-        else:
-            print(f"  FAILED -- add exec.png manually (64x64 PNG)")
+        elif status == "fail":
+            print(f"\n{label}\n  FAILED -- add exec.png manually (64x64 PNG)")
+            failed.append(game_id)
+        elif status == "error":
+            print(f"\n{label}\n  ERROR - {detail}")
             failed.append(game_id)
 
-    if dry_run:
-        return
+    if retry_failed and failed:
+        print(f"\n  Retrying {len(failed)} failed download(s)...")
+        retry_ids = set(failed)
+        retry_targets = [t for t in targets if t[1] in retry_ids]
+        failed.clear()
+        retry_results = _run_pass(retry_targets)
+        for _, game_id, _steamapp_id, _game_name in retry_targets:
+            if game_id not in retry_results:
+                continue
+            _, status, detail = retry_results[game_id]
+            if status == "ok":
+                saved.append(game_id)
+            elif status in ("fail", "error"):
+                failed.append(game_id)
 
     print_run_summary(saved, failed, skipped)
 
@@ -96,8 +120,22 @@ def main():
         "Download missing exec.png icons for Vortex game extensions.",
         ids_required=False, dest="game",
     )
+    parser.add_argument(
+        "--concurrency", type=int, default=8, metavar="N",
+        help="Max parallel download workers (default: 8).",
+    )
+    parser.add_argument(
+        "--retry-failed", action="store_true",
+        help="Automatically retry failed downloads once after the main pass.",
+    )
     args = parser.parse_args()
-    fetch_all(target_game_ids=normalize_target_ids(args.game), dry_run=args.dry_run, force=args.force)
+    fetch_all(
+        target_game_ids=normalize_target_ids(args.game),
+        dry_run=args.dry_run,
+        force=args.force,
+        concurrency=args.concurrency,
+        retry_failed=args.retry_failed,
+    )
 
 
 if __name__ == "__main__":

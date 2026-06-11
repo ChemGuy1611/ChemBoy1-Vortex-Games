@@ -7,3 +7,4 @@ lint_results.txt
 vortex_gui_nexus_stats.json
 eslint_output.json
 temp_eslint.json
+**/graphify-out/*

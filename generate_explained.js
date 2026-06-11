@@ -10,9 +10,12 @@
  * Flags:
  *   --json       Write machine-readable JSON to stdout; progress goes to stderr.
  *   --templates  Also process template-* folders (when no GAME_ID args given).
+ *   --check      Drift mode: exit non-zero if any EXTENSION_EXPLAINED.md would change.
+ *                Does not write files. Use in CI to detect stale docs.
  *
  * JSON output schema:
- *   { timestamp, created, skipped, errors, results: [{ id, ok, error? }] }
+ *   { timestamp, created, skipped, errors, drifted, unresolvedTotal,
+ *     results: [{ id, ok, error?, unresolved }] }
  */
 
 const fs   = require('fs');
@@ -1185,6 +1188,7 @@ const cliFlags    = new Set(rawArgs.filter(a => a.startsWith('--')));
 const gameArgs    = rawArgs.filter(a => !a.startsWith('--'));
 const doJson      = cliFlags.has('--json');
 const doTemplates = cliFlags.has('--templates');
+const doCheck     = cliFlags.has('--check');
 const jsonResults = [];
 
 function emit(line = '') {
@@ -1214,9 +1218,11 @@ if (gameArgs.length > 0) {
   emit(`Found ${extDirs.length} extension directories.\n`);
 }
 
-let created = 0;
-let skipped = 0;
-let errors  = 0;
+let created         = 0;
+let skipped         = 0;
+let errors          = 0;
+let drifted         = 0;
+let unresolvedTotal = 0;
 
 for (const dirName of extDirs) {
   const dirPath    = path.join(ROOT, dirName);
@@ -1225,35 +1231,55 @@ for (const dirName of extDirs) {
 
   if (!fs.existsSync(indexPath)) {
     emit(`  SKIP  ${dirName} (no index.js)`);
-    jsonResults.push({ id: dirName, ok: false, error: 'no index.js' });
+    jsonResults.push({ id: dirName, ok: false, error: 'no index.js', unresolved: 0 });
     skipped++;
     continue;
   }
 
   try {
-    const src = fs.readFileSync(indexPath, 'utf8');
-    const md  = buildMarkdown(dirName, src);
-    const tmpPath = outPath + '.tmp';
-    fs.writeFileSync(tmpPath, md, 'utf8');
-    fs.renameSync(tmpPath, outPath);
-    emit(`  OK    ${dirName}`);
-    jsonResults.push({ id: dirName, ok: true });
-    created++;
+    const src        = fs.readFileSync(indexPath, 'utf8');
+    const md         = buildMarkdown(dirName, src);
+    const unresolved = (md.match(/\$\{[^}]+\}/g) || []).length;
+    unresolvedTotal += unresolved;
+
+    if (doCheck) {
+      const existing = fs.existsSync(outPath) ? fs.readFileSync(outPath, 'utf8') : null;
+      if (existing === md) {
+        emit(`  OK    ${dirName}${unresolved > 0 ? ` (${unresolved} unresolved)` : ''}`);
+        jsonResults.push({ id: dirName, ok: true, unresolved });
+        created++;
+      } else {
+        emit(`  DRIFT ${dirName}${unresolved > 0 ? ` (${unresolved} unresolved)` : ''}`);
+        jsonResults.push({ id: dirName, ok: false, error: 'drift', unresolved });
+        drifted++;
+      }
+    } else {
+      const tmpPath = outPath + '.tmp';
+      fs.writeFileSync(tmpPath, md, 'utf8');
+      fs.renameSync(tmpPath, outPath);
+      emit(`  OK    ${dirName}${unresolved > 0 ? ` (${unresolved} unresolved)` : ''}`);
+      jsonResults.push({ id: dirName, ok: true, unresolved });
+      created++;
+    }
   } catch (err) {
     emit(`  ERR   ${dirName}: ${err.message}`);
-    jsonResults.push({ id: dirName, ok: false, error: err.message });
+    jsonResults.push({ id: dirName, ok: false, error: err.message, unresolved: 0 });
     errors++;
   }
 }
 
-emit(`\nDone. Created: ${created}  Skipped: ${skipped}  Errors: ${errors}`);
+const checkNote = doCheck ? `  Drifted: ${drifted}` : `  Created: ${created}`;
+const unresolvedNote = unresolvedTotal > 0 ? `  Unresolved vars: ${unresolvedTotal}` : '';
+emit(`\nDone.${checkNote}  Skipped: ${skipped}  Errors: ${errors}${unresolvedNote}`);
 if (doJson) {
   process.stdout.write(JSON.stringify({
     timestamp: new Date().toISOString(),
     created,
     skipped,
     errors,
+    drifted,
+    unresolvedTotal,
     results: jsonResults,
   }, null, 2) + '\n');
 }
-if (errors > 0) process.exit(1);
+if (errors > 0 || (doCheck && drifted > 0)) process.exit(1);

@@ -26,22 +26,22 @@ from vortex_utils import (
 # (filename, display label) in detection priority order.
 # The label strings match detect_engine() return values exactly.
 CATEGORIES = [
-    ("games-ue4-5.txt",                      "Unreal Engine 4/5"),
-    ("games-ue2-3.txt",                      "Unreal Engine 2/3"),
-    ("games-unity-bepinex.txt",              "Unity + BepInEx"),
-    ("games-unity-melonloader-bepinex.txt",  "Unity + MelonLoader/BepInEx"),
-    ("games-unity-umm.txt",                  "Unity + UMM"),
-    ("games-farcrygame.txt",                 "Far Cry / Dunia"),
+    ("games-ue4-5.txt",                      "UE4-5"),
+    ("games-ue2-3.txt",                      "UE2-3"),
+    ("games-unity-bepinex.txt",              "Unity+Bep"),
+    ("games-unity-melonloader-bepinex.txt",  "Unity+Mel/Bep"),
+    ("games-unity-umm.txt",                  "Unity+UMM"),
+    ("games-farcrygame.txt",                 "Dunia"),
     ("games-rpgmaker.txt",                   "RPG Maker"),
-    ("games-snowdrop.txt",                   "Snowdrop Engine"),
-    ("games-godot.txt",                      "Godot Engine"),
-    ("games-cobra-acse.txt",                 "Cobra / ACSE"),
-    ("games-reengine.txt",                   "RE Engine"),
+    ("games-snowdrop.txt",                   "Snowdrop"),
+    ("games-godot.txt",                      "Godot"),
+    ("games-cobra-acse.txt",                 "Cobra/ACSE"),
+    ("games-reengine.txt",                   "RE/Fluffy"),
     ("games-reloaded2.txt",                  "Reloaded-II"),
-    ("games-anvil.txt",                      "Anvil Engine"),
-    ("games-srmm.txt",                       "Shin Ryu (SRMM)"),
+    ("games-anvil.txt",                      "Anvil"),
+    ("games-srmm.txt",                       "SRMM"),
     ("games-frostbite.txt",                  "Frostbite"),
-    ("games-basic.txt",                      "Basic / Other"),
+    ("games-basic.txt",                      "Basic"),
 ]
 
 _FILE_FOR_LABEL = {label: fname for fname, label in CATEGORIES}
@@ -110,49 +110,54 @@ def update_single(game_id, dry_run=False):
     if not dry_run:
         os.makedirs(LISTS_DIR, exist_ok=True)
 
+    # Phase 1: compute all needed changes before touching the filesystem so a
+    # mid-loop failure cannot leave the game in two categories simultaneously.
+    pending = {}  # filepath -> (new_ids_list, log_message)
+
     for filename, label in CATEGORIES:
         filepath = os.path.join(LISTS_DIR, filename)
         ids = read_id_list(filepath)
         if filename == target:
             if game_id not in ids:
-                if dry_run:
-                    log_dry(f"Would add {game_id} -> {filename} ({label})")
-                else:
-                    ids.append(game_id)
-                    write_id_list(filepath, ids)
-                    print(f"  Added {game_id} -> {filename} ({label})")
+                ids.append(game_id)
+                pending[filepath] = (ids, f"Added {game_id} -> {filename} ({label})")
             else:
                 print(f"  {game_id} already in {filename} ({label})")
         else:
             if game_id in ids:
-                if dry_run:
-                    log_dry(f"Would remove {game_id} from {filename}")
-                else:
-                    ids.remove(game_id)
-                    write_id_list(filepath, ids)
-                    print(f"  Removed {game_id} from {filename}")
+                ids.remove(game_id)
+                pending[filepath] = (ids, f"Removed {game_id} from {filename}")
 
     lo_path = os.path.join(LISTS_DIR, LOADORDER_FILE)
     lo_ids = read_id_list(lo_path)
     if is_load_order_game(game_id):
         if game_id not in lo_ids:
-            if dry_run:
-                log_dry(f"Would add {game_id} -> {LOADORDER_FILE}")
-            else:
-                lo_ids.append(game_id)
-                write_id_list(lo_path, lo_ids)
-                print(f"  Added {game_id} -> {LOADORDER_FILE}")
+            lo_ids.append(game_id)
+            pending[lo_path] = (lo_ids, f"Added {game_id} -> {LOADORDER_FILE}")
         else:
             print(f"  {game_id} already in {LOADORDER_FILE}")
     else:
         if game_id in lo_ids:
-            if dry_run:
-                log_dry(f"Would remove {game_id} from {LOADORDER_FILE}")
-            else:
-                lo_ids.remove(game_id)
-                write_id_list(lo_path, lo_ids)
-                print(f"  Removed {game_id} from {LOADORDER_FILE}")
-    return True
+            lo_ids.remove(game_id)
+            pending[lo_path] = (lo_ids, f"Removed {game_id} from {LOADORDER_FILE}")
+
+    if dry_run:
+        for _, (_, msg) in pending.items():
+            log_dry(f"Would: {msg}")
+        return True
+
+    # Phase 2: write all changes atomically per-file; report failures individually
+    # so a single bad write does not silently leave the game in two categories.
+    ok = True
+    for filepath, (ids, msg) in pending.items():
+        try:
+            write_id_list(filepath, ids)
+            print(f"  {msg}")
+        except Exception as e:
+            log_error(game_id, f"FAILED writing {os.path.basename(filepath)}: {e}")
+            ok = False
+
+    return ok
 
 
 def main():

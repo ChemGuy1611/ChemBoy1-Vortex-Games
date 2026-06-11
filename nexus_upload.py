@@ -23,60 +23,26 @@ import time
 import urllib.error
 import urllib.request
 
-try:
-    import certifi
-    _SSL_CTX = ssl.create_default_context(cafile=certifi.where())
-except ImportError:
-    _SSL_CTX = ssl.create_default_context()
-
-from vortex_utils import log_info, log_warn, log_error
+from vortex_utils import log_info, log_warn, log_error, nexus_v3_get, nexus_v3_post_json
 
 NEXUS_V3 = "https://api.nexusmods.com/v3"
+
+# S3 presigned-URL requests go directly to AWS — use a plain SSL context, not the
+# Nexus-specific certifi one that vu builds for its own helpers.
+_SSL_CTX = ssl.create_default_context()
 
 
 # == Low-level HTTP helpers ====================================================
 
 def v3_get(path, api_key):
     """GET a Nexus v3 endpoint. Returns the parsed 'data' field."""
-    req = urllib.request.Request(
-        f"{NEXUS_V3}{path}",
-        headers={"apikey": api_key, "Accept": "application/json"},
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=30, context=_SSL_CTX) as resp:
-            return json.loads(resp.read())["data"]
-    except urllib.error.HTTPError as e:
-        body = ""
-        try:
-            body = e.read().decode("utf-8", errors="replace")
-        except Exception:
-            pass
-        raise RuntimeError(f"HTTP {e.code} {e.reason} - {body[:200]}") from None
+    return nexus_v3_get(path, api_key)["data"]
 
 
 def v3_post_json(path, body, api_key):
     """POST JSON to a Nexus v3 endpoint. Returns the parsed 'data' field if present."""
-    payload = json.dumps(body).encode("utf-8")
-    req = urllib.request.Request(
-        f"{NEXUS_V3}{path}",
-        data=payload,
-        headers={
-            "apikey": api_key,
-            "Content-Type": "application/json",
-            "Accept": "application/json",
-        },
-    )
-    try:
-        with urllib.request.urlopen(req, timeout=60, context=_SSL_CTX) as resp:
-            result = json.loads(resp.read())
-            return result.get("data", result)
-    except urllib.error.HTTPError as e:
-        body_txt = ""
-        try:
-            body_txt = e.read().decode("utf-8", errors="replace")
-        except Exception:
-            pass
-        raise RuntimeError(f"HTTP {e.code} {e.reason} - {body_txt[:400]}") from None
+    result = nexus_v3_post_json(path, body, api_key)
+    return result.get("data", result)
 
 
 # == Changelog extraction ======================================================
@@ -200,6 +166,14 @@ def upload_parts(zip_path, presigned_urls, part_size, mod_key):
                 etag = resp.getheader("ETag", "").strip('"')
                 etags.append(etag)
             log_info(mod_key, f"  Part {i + 1}/{total} uploaded")
+        # guard: if the API returned too few presigned URLs the tail of the zip is silently
+        # dropped and a truncated archive would be published
+        tail = f.read(1)
+        if tail:
+            raise RuntimeError(
+                f"upload_parts: zip has unread data after {total} parts -- "
+                "the API returned too few presigned URLs; aborting to avoid truncated archive"
+            )
     return etags
 
 
@@ -244,7 +218,7 @@ def poll_upload_state(upload_id, api_key, mod_key):
 
 # == Top-level upload flow =====================================================
 
-def upload_zip(zip_path, mod_id, domain, version, description, api_key, mod_key, name_hint=None):
+def upload_zip(zip_path, mod_id, domain, version, description, api_key, mod_key, name_hint=None, file_category="main"):
     """Run the full Nexus v3 multipart upload flow and create a new file version."""
     group = pick_file_group(mod_id, domain, api_key, mod_key, name_hint=name_hint)
     group_id = group["id"]
@@ -280,7 +254,7 @@ def upload_zip(zip_path, mod_id, domain, version, description, api_key, mod_key,
         "name": display_name,
         "description": description,
         "version": version,
-        "file_category": "main",
+        "file_category": file_category,
         "archive_existing_file": True,
         "primary_mod_manager_download": True,
         "allow_mod_manager_download": True,

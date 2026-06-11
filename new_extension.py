@@ -12,11 +12,15 @@ Usage:
     python new_extension.py TEMPLATE "Game Name" --no-images
     python new_extension.py TEMPLATE "Game Name" --no-browser --no-startfile
     python new_extension.py GAME_ID --refresh-images
+    python new_extension.py TEMPLATE "Game Name" --skip-explained
+    python new_extension.py TEMPLATE "Game Name" --skip-eslint
 
     --no-browser        Skip opening browser tabs (PCGamingWiki, SteamDB, Steam demo page).
     --no-startfile      Skip opening downloaded images and index.js in the default editor.
     --refresh-images    Re-download all 4 images for an existing extension. Pass GAME_ID as
                         the only positional arg. Does not redo lookups or rewrite index.js.
+    --skip-explained    Skip running generate_explained.js after writing index.js.
+    --skip-eslint       Skip running eslint after writing index.js.
 
 Fills in all XXX fields it can resolve automatically from Steam, GOG, Epic,
 and PCGamingWiki. Remaining XXX fields are reported at the end for manual entry.
@@ -613,7 +617,8 @@ def edit_changelog(path, today):
 # ── Orchestration ─────────────────────────────────────────────────────────────
 
 def create_extension(template_name, game_input, force=False, dry_run=False, no_images=False,
-                     no_browser=False, no_startfile=False):
+                     no_browser=False, no_startfile=False,
+                     skip_explained=False, skip_eslint=False):
     sgdb_key = get_api_key("STEAMGRIDDB_API_KEY")
     nexus_key = get_api_key("NEXUS_API_KEY")
     today = date.today().strftime("%Y-%m-%d")
@@ -959,24 +964,30 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
     print(f"{'=' * 60}\n")
 
     # ── Generate EXTENSION_EXPLAINED.md ───────────────────────────────────────
-    print("[generate_explained.js]")
-    ok, err = run_generate_explained_batch([game_id])
-    if ok:
-        print(f"  EXTENSION_EXPLAINED.md written.\n")
+    if skip_explained:
+        print("[generate_explained.js] skipped (--skip-explained)\n")
     else:
-        print(f"  FAILED -run manually: node generate_explained.js {game_id}")
-        if err:
-            print(f"  {err}\n")
+        print("[generate_explained.js]")
+        ok, err = run_generate_explained_batch([game_id])
+        if ok:
+            print(f"  EXTENSION_EXPLAINED.md written.\n")
+        else:
+            print(f"  FAILED -run manually: node generate_explained.js {game_id}")
+            if err:
+                print(f"  {err}\n")
 
-    print("[eslint]")
-    ok, out = eslint_check(os.path.join(dest, "index.js"))
-    if ok:
-        print("  index.js passes eslint.\n")
+    if skip_eslint:
+        print("[eslint] skipped (--skip-eslint)\n")
     else:
-        print("  WARNING - eslint reported issues:")
-        for line in out.splitlines():
-            print(f"    {line}")
-        print()
+        print("[eslint]")
+        ok, out = eslint_check(os.path.join(dest, "index.js"))
+        if ok:
+            print("  index.js passes eslint.\n")
+        else:
+            print("  WARNING - eslint reported issues:")
+            for line in out.splitlines():
+                print(f"    {line}")
+            print()
 
     # ── Update engine category lists ─────────────────────────────────────────
     print("[categorize_games.py]")
@@ -1106,6 +1117,14 @@ def main():
         "--no-startfile", action="store_true",
         help="Skip opening downloaded images and index.js in the default editor.",
     )
+    parser.add_argument(
+        "--skip-explained", action="store_true",
+        help="Skip running generate_explained.js after writing index.js.",
+    )
+    parser.add_argument(
+        "--skip-eslint", action="store_true",
+        help="Skip running eslint after writing index.js.",
+    )
     args = parser.parse_args()
 
     if args.refresh_images:
@@ -1120,7 +1139,8 @@ def main():
             parser.error(f"Invalid template '{args.template}'. Choose from: {', '.join(TEMPLATE_SHORT_NAMES)}")
         full_template = f"template-{args.template}"
         create_extension(full_template, args.game, args.force, args.dry_run, args.no_images,
-                         no_browser=args.no_browser, no_startfile=args.no_startfile)
+                         no_browser=args.no_browser, no_startfile=args.no_startfile,
+                         skip_explained=args.skip_explained, skip_eslint=args.skip_eslint)
 
 
 if __name__ == "__main__":

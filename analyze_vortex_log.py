@@ -16,6 +16,8 @@ Usage:
     python analyze_vortex_log.py --dry-run
     python analyze_vortex_log.py --force
     python analyze_vortex_log.py --no-open
+    python analyze_vortex_log.py --grep PATTERN
+    python analyze_vortex_log.py --since HOURS
 
 Environment variables:
     APPDATA          Standard Windows variable used to locate the fallback log path
@@ -32,6 +34,8 @@ Options:
     --dry-run        Preview output path and counts without writing.
     --force          Overwrite existing output file.
     --no-open        Do not open the output file after writing.
+    --grep PATTERN   Only include entries matching PATTERN (regex, applied per-entry).
+    --since HOURS    Only include entries from the last N hours.
 """
 
 import argparse
@@ -48,8 +52,10 @@ _DEFAULT_LOG_FALLBACK = os.path.join(
     os.environ.get("APPDATA", ""), "Vortex", "vortex.log"
 )
 
-_ENTRY_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\S+(?:Z|[+-]\d{2}:?\d{2}) \[(DEBG|INFO|WARN|ERROR)\] ")
-_HOUR_RE  = re.compile(r"^(\d{4}-\d{2}-\d{2})T(\d{2}):")
+_ENTRY_RE     = re.compile(r"^\d{4}-\d{2}-\d{2}T\S+(?:Z|[+-]\d{2}:?\d{2}) \[(DEBG|INFO|WARN|ERROR)\] ")
+_ANY_LEVEL_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\S+(?:Z|[+-]\d{2}:?\d{2}) \[([A-Z]+)\] ")
+_HOUR_RE      = re.compile(r"^(\d{4}-\d{2}-\d{2})T(\d{2}):")
+_TS_RE        = re.compile(r"^(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2}):(\d{2})")
 
 _USER_TO_TOKEN = {
     "DEBUG": "DEBG",
@@ -57,8 +63,8 @@ _USER_TO_TOKEN = {
     "WARN":  "WARN",
     "ERROR": "ERROR",
 }
-_DISPLAY_ORDER = ["ERROR", "WARN", "INFO", "DEBG"]
-_DISPLAY_LABEL = {"DEBG": "DEBUG", "INFO": "INFO", "WARN": "WARN", "ERROR": "ERROR"}
+_DISPLAY_ORDER = ["ERROR", "WARN", "INFO", "DEBG", "OTHER"]
+_DISPLAY_LABEL = {"DEBG": "DEBUG", "INFO": "INFO", "WARN": "WARN", "ERROR": "ERROR", "OTHER": "OTHER"}
 
 _SEP = "=" * 80
 
@@ -111,35 +117,78 @@ def _extract_hour(entry: str) -> str:
     return "unknown"
 
 
+def _entry_ts_seconds(entry: str) -> float | None:
+    """Return epoch seconds for the timestamp in the first line of an entry, or None."""
+    import datetime as _dt
+    m = _TS_RE.match(entry)
+    if not m:
+        return None
+    try:
+        dt = _dt.datetime(int(m.group(1)), int(m.group(2)), int(m.group(3)), int(m.group(4)),
+                          tzinfo=_dt.timezone.utc)
+        return dt.timestamp()
+    except (ValueError, OverflowError):
+        return None
+
+
 def _parse_log(
-    log_path: pathlib.Path, selected_tokens: list[str]
+    log_path: pathlib.Path, selected_tokens: list[str],
+    since_seconds: float | None = None,
+    grep_pattern: "re.Pattern | None" = None,
 ) -> tuple[collections.Counter, dict[str, list[tuple[str, str]]]]:
     counts: collections.Counter = collections.Counter()
-    # buckets: token -> list of (hour_key, entry_text)
-    buckets: dict[str, list[tuple[str, str]]] = {tok: [] for tok in selected_tokens}
+    # buckets: token -> list of (hour_key, entry_text); includes "OTHER" for unknown levels
+    all_tokens = list(selected_tokens) + (["OTHER"] if "OTHER" not in selected_tokens else [])
+    buckets: dict[str, list[tuple[str, str]]] = {tok: [] for tok in all_tokens}
     current_lines: list[str] = []
     current_level: str | None = None
+    current_is_other = False
+
+    def _flush():
+        nonlocal current_level, current_lines, current_is_other
+        if current_level is None:
+            return
+        text = "".join(current_lines)
+        if since_seconds is not None:
+            ts = _entry_ts_seconds(text)
+            if ts is not None and ts < since_seconds:
+                current_lines = []
+                current_level = None
+                current_is_other = False
+                return
+        if grep_pattern is not None and not grep_pattern.search(text):
+            current_lines = []
+            current_level = None
+            current_is_other = False
+            return
+        counts[current_level] += 1
+        bucket_key = current_level if current_level in buckets else "OTHER"
+        if bucket_key in buckets:
+            buckets[bucket_key].append((_extract_hour(text), text))
+        current_lines = []
+        current_level = None
+        current_is_other = False
 
     with open(log_path, encoding="utf-8", errors="replace") as f:
         for line in f:
             m = _ENTRY_RE.match(line)
             if m:
-                if current_level is not None:
-                    counts[current_level] += 1
-                    if current_level in buckets:
-                        text = "".join(current_lines)
-                        buckets[current_level].append((_extract_hour(text), text))
+                _flush()
                 current_lines = [line]
                 current_level = m.group(1)
-            elif current_level is not None:
-                current_lines.append(line)
+                current_is_other = False
+            else:
+                # Catch-all: line that starts with a timestamp + unknown level token
+                ma = _ANY_LEVEL_RE.match(line)
+                if ma and ma.group(1) not in _USER_TO_TOKEN.values():
+                    _flush()
+                    current_lines = [line]
+                    current_level = "OTHER"
+                    current_is_other = True
+                elif current_level is not None:
+                    current_lines.append(line)
 
-    if current_level is not None:
-        counts[current_level] += 1
-        if current_level in buckets:
-            text = "".join(current_lines)
-            buckets[current_level].append((_extract_hour(text), text))
-
+    _flush()
     return counts, buckets
 
 
@@ -239,11 +288,32 @@ def main() -> None:
         "--no-open", action="store_true",
         help="Do not open the output file after writing",
     )
+    parser.add_argument(
+        "--grep", metavar="PATTERN", default=None,
+        help="Only include entries matching PATTERN (regex, applied per-entry).",
+    )
+    parser.add_argument(
+        "--since", metavar="HOURS", type=float, default=None,
+        help="Only include entries from the last N hours.",
+    )
     args = parser.parse_args()
 
     log_path = _resolve_log_path(args.log_path)
     out_dir  = pathlib.Path(args.out_dir) if args.out_dir else log_path.parent
     selected = _parse_levels(args.levels)
+
+    grep_pattern = None
+    if args.grep:
+        try:
+            grep_pattern = re.compile(args.grep)
+        except re.error as e:
+            print(f"[ERROR] Invalid --grep pattern: {e}", file=sys.stderr)
+            sys.exit(1)
+
+    since_seconds = None
+    if args.since is not None:
+        import time as _time
+        since_seconds = _time.time() - args.since * 3600
 
     write_mode = not args.dry_run and not args.summary_only
 
@@ -254,7 +324,8 @@ def main() -> None:
             sys.exit(1)
 
     print(f"Parsing {log_path} ...")
-    counts, buckets = _parse_log(log_path, selected)
+    counts, buckets = _parse_log(log_path, selected,
+                                 since_seconds=since_seconds, grep_pattern=grep_pattern)
     total = sum(counts.values())
 
     count_w = max(len(f"{counts.get(t, 0):,}") for t in _DISPLAY_ORDER)

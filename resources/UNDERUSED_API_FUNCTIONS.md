@@ -64,14 +64,6 @@ For the exhaustive API reference see memory files `reference_vortex_api_core.md`
 
 ---
 
-### `context.registerSettings(title, element, props?, visible?, priority?)` — line 3509
-
-**Why useful:** Adds a tab to Vortex's Settings dialog. Pair with `context.registerReducer(['settings', 'myExtId'], spec)` to persist the values.
-
-**Use case:** "Skyrim Tools Settings" page letting users toggle auto-LOOT, set output paths, choose merge strategy.
-
----
-
 ### `api.highlightControl(selector, durationMS, text?, altStyle?)` — line 3117
 
 **Why useful:** Briefly pulse-highlights a DOM element by CSS selector to onboard users to a button or control you just added.
@@ -88,24 +80,39 @@ For the exhaustive API reference see memory files `reference_vortex_api_core.md`
 
 ---
 
-## 2. State & Reducers
+### `api.setStylesheet(key, filePath)` — line 3350
 
-### `context.registerReducer(path, spec)` — line 3624
+**Why useful:** Injects a SASS stylesheet into Vortex's styling pipeline. Three built-in keys: `'variables'` (colors/sizes/margins), `'details'` (controls), `'style'` (component-specific). A custom key inserts before `'style'`. Call `api.clearStylesheet()` to force the cache to rebuild.
 
-**Why useful:** Adds a typed Redux state slice to Vortex's store. Data at `window.*` or `settings.*` or `persistent.*` paths is persisted between sessions; `session.*` is not.
-
-**Use case:** Store per-game extension config at `persistent.myExtension[gameId]` — auto-persisted, accessible via `selectors` patterns, triggers React re-renders automatically.
+**Use case:** Ship a `.scss` file alongside your extension to re-skin controls in your registered pages without forking any Vortex component.
 
 ```js
-context.registerReducer(['persistent', 'myExt'], {
-  defaultState: { enabled: true, outputDir: '' },
-  reducers: {
-    ['SET_MY_EXT_OPTION']: (state, payload) => util.setSafe(state, ['enabled'], payload),
-  },
+context.once(() => {
+  api.setStylesheet('my-ext-style', path.join(__dirname, 'style.scss'));
 });
 ```
 
 ---
+
+### `api.closeDialog(id, actionKey?, input?)` — line 3153
+
+**Why useful:** Programmatically close a dialog that was opened with `api.showDialog`. Optionally simulate clicking an action button by passing its `action` key.
+
+**Use case:** Show a progress dialog (no actions, just a spinner), then close it when async work completes — without requiring the user to dismiss it manually.
+
+---
+
+### `context.registerPreview(priority, handler)` — line 3883
+
+**Why useful:** Registers a handler that can show a preview or diff of files. Vortex calls handlers in priority order, skipping any that reject with `ProcessCanceled`. Priority guide: 0–100 = diff + pick, 100–200 = diff only, 300+ = view-only.
+
+**Signature:** `handler(files: IPreviewFile[], allowPick: boolean) => Promise<IPreviewFile>`
+
+**Use case:** Show a custom diff view for game-specific binary config files that Vortex's default text differ can't handle.
+
+---
+
+## 2. State & Reducers
 
 ### `context.registerSettingsHive(type, hive)` — line 3632
 
@@ -173,6 +180,22 @@ context.registerReducer(['persistent', 'myExt'], {
 
 ---
 
+### `api.saveModMeta(modInfo)` — line 3316
+
+**Why useful:** Persists a manually computed or scraped `IModInfo` record to Vortex's local meta database. The meta DB is the backing store for `lookupModMeta` — saving here means subsequent lookups will find your data without hitting the network.
+
+**Use case:** After a custom installer parses a mod's bundled `manifest.json`, call `saveModMeta` to store the name/version/author so the mod table populates correctly even without a Nexus lookup.
+
+---
+
+### `api.addMetaServer(id, server?)` — line 3292
+
+**Why useful:** Registers an additional metadata lookup server. Vortex queries all registered servers and merges results. Pass `undefined` as the server argument to remove a previously added server with the same `id`.
+
+**Use case:** Point Vortex at an internal or community-run metadata server for games that aren't on Nexus — add a server, and `lookupModMeta` calls will hit it automatically.
+
+---
+
 ### `context.registerAttributeExtractor(priority, extractor)` — line 3755
 
 **Why useful:** Inject extra attributes into any mod at install time by parsing its files. Default meta-db extractor runs at priority 100 — use 90 or lower to run first.
@@ -225,47 +248,15 @@ Priority guide: first-party check-deployment hook runs at 100. Use 50-90 for ext
 
 ---
 
-### `context.registerMerge(test, merge, modType)` — line 3821
-
-**Why useful:** Merge files across mods of a given type during deployment. Use for text-format configs that need combining rather than overwriting.
-
-**Use case:** Merge all mods' `plugins.txt` entries into one combined file during deployment for games that use a plugin load-order text file.
-
----
-
-### `context.registerArchiveType(extension, handler)` — line 3808
-
-**Why useful:** Teach Vortex to open and list contents of a non-7z archive format — then installers and preview panels can read it.
-
-**Use case:** Register `.pak` archives for a game engine so the installer can inspect their contents and apply the correct mod type.
-
----
-
-### `context.registerDownloadProtocol(scheme, handler)` — IExtensionContext.ts:1173
+### `context.registerDownloadProtocol(scheme, handler)` — line 3621
 
 **Why useful:** Register a custom URI scheme that resolves to direct download URLs. When a URL starting with your scheme arrives, Vortex calls your handler to resolve it to `{ urls: string[], updatedUrl?, meta }`.
-
-**Why not in api.d.ts yet:** Added to Vortex source but not yet published in the vortex-api bundle. Fully functional.
 
 **Use case:** Handle `mygame://mod/12345` deep links by resolving them to CDN download URLs — enabling Nexus-like one-click install for a custom mod portal.
 
 ---
 
 ## 5. File Operations Beyond fs Basics
-
-### `util.walk(target, cb, opts?)` — line 9105
-
-**Why useful:** Async recursive directory walk with `{ ignoreErrors?: boolean }`. Cleaner than manual `readdirAsync` recursion when you need per-entry `Stats`.
-
-```js
-await util.walk(stagingPath, async (root, entries) => {
-  for (const entry of entries) {
-    if (entry.name.endsWith('.cfg')) { /* process */ }
-  }
-});
-```
-
----
 
 ### `fs.forcePerm(t, op, filePath?, maxTries?)` — line 1258 (fs namespace)
 
@@ -315,6 +306,20 @@ await Promise.all(modFiles.map(f => limiter.do(() => processFile(f))));
 
 ---
 
+### `api.openArchive(archivePath, options?, extension?)` — line 3320
+
+**Why useful:** Opens an archive through Vortex's archive subsystem (7z + any registered `registerArchiveType` handlers) and returns an `Archive` object. The `extension` parameter overrides file extension detection — useful for archives without conventional extensions.
+
+```js
+const archive = await api.openArchive(downloadPath);
+const entries = await archive.list();
+const data = await archive.extractFile('data/config.json');
+```
+
+**Use case:** Inspect mod archive contents during installation without extracting everything — preview what files a mod contains before committing to a mod type.
+
+---
+
 ## 6. Inter-Extension API
 
 ### `context.registerAPI(name, func, opts)` — line 3855
@@ -322,14 +327,6 @@ await Promise.all(modFiles.map(f => limiter.do(() => processFile(f))));
 **Why useful:** Exposes a function on `api.ext.<name>` for other extensions to call. The standard way to build an extension that others can integrate with.
 
 **Use case:** A "game server integration" extension exposes `api.ext.getCurrentServerStatus()` so a dashlet in another extension can display it.
-
----
-
-### `context.requireExtension(extId, version?, optional?)` — line 3862
-
-**Why useful:** Declare a hard or soft dependency on another Vortex extension. Vortex will show an error if a required extension is missing or out of range.
-
-**Use case:** If your extension requires the Nexus Integration extension, call `context.requireExtension('nexus_integration')` so Vortex reports a clean error instead of a runtime crash.
 
 ---
 
@@ -370,19 +367,33 @@ All are sync (NodeJS.EventEmitter). Subscribe in `context.once()`.
 
 ---
 
-### `api.onAsync(event, listener)` — line 3103
+### `context.requireVersion(versionRange)` — line 3922
 
-**Why useful:** Async variant of `api.events.on`. Vortex awaits all registered `onAsync` listeners before proceeding. Use for pre-flight checks that need to resolve before the triggering action continues.
+**Why useful:** Declares a semver version range that the running Vortex must satisfy. Vortex will show a clear error if the constraint isn't met rather than crashing at runtime. Multiple calls are ANDed together.
 
-**Use case:** Register an `onAsync('will-deploy', ...)` listener that validates the load order and throws `UserCanceled` to abort deployment if validation fails — Vortex will show your error and not proceed.
+**Use case:** If your extension uses an API introduced in Vortex 1.9.0, call `context.requireVersion('^1.9.0')` so users on older versions see a clean "please update Vortex" message.
 
 ---
 
-### `api.emitAndAwait(event, ...args)` — line 3099
+### `context.registerGameSpecificCollectionsData(data)` — line 3911
 
-**Why useful:** Emit to all `onAsync` listeners and collect their return values as an array. Use when an extension needs to aggregate input from multiple loaded extensions.
+**Why useful:** Hooks your game extension into Vortex's Collections system. Lets you export and import game-specific data (load order, INI settings, profile files, etc.) as part of a Collection.
 
-**Use case:** Emit `'get-load-order-constraints'` and collect constraint objects from all loaded game-specific extensions to build a unified sort order.
+**Shape:**
+
+```js
+context.registerGameSpecificCollectionsData({
+  gameId: GAME_ID,
+  // Called when exporting — return any serializable data to include in the collection
+  generator: async (state, gameId, stagingPath, modIds, mods) => ({ loadOrder: ... }),
+  // Called when importing — apply the previously exported data
+  parser: async (api, gameId, collection) => { /* restore loadOrder, etc. */ },
+  // Optional React component shown in the Collections UI for this game's data
+  interface: (props) => <MyCollectionUI {...props} />,
+});
+```
+
+**Use case:** Allow users to share load orders and game settings via Nexus Collections without manual file copying.
 
 ---
 
@@ -446,16 +457,6 @@ All are sync (NodeJS.EventEmitter). Subscribe in `context.once()`.
 
 ## 9. Useful `util.*` Helpers
 
-### `util.deBOM(str)` — line 9019
-
-Strip a UTF-8 or UTF-16 BOM before parsing JSON/text files written by game tools. Many game-generated files include a BOM that breaks `JSON.parse`.
-
-```js
-const data = JSON.parse(util.deBOM(await fs.readFileAsync(cfgPath, 'utf8')));
-```
-
----
-
 ### `util.sanitizeFilename(input)` / `util.isFilenameValid(input)` / `util.isPathValid(input, allowRelative?)` — lines 9088 / 9049 / 9051
 
 Cross-platform filename/path safety. `isFilenameValid` checks the name component; `isPathValid` checks the full path; `sanitizeFilename` strips illegal characters. Use before any user-provided path reaches the filesystem.
@@ -507,3 +508,121 @@ Throw these instead of generic `Error` to get the right Vortex error UI:
 | `util.ArgumentInvalid(argument)` | Bad argument to an API call |
 | `util.CycleError` | Circular dependency detected |
 | `util.NotSupportedError()` | Feature not supported in this context |
+
+---
+
+## 10. Table Attributes
+
+### `context.registerTableAttribute(tableId, attribute)` — line 3653
+
+**Why useful:** Adds a new column or detail-pane field to any existing Vortex table without touching the table component itself. The mods table id is `'mods'`; download table is `'downloads'`.
+
+**Key `ITableAttribute` fields:**
+
+| Field | Purpose |
+| --- | --- |
+| `id` | Unique attribute id |
+| `name` | Column header text |
+| `placement` | `'table'` (column), `'detail'` (side panel), or `'both'` |
+| `calc(mod, t)` | Returns the display value from a mod object |
+| `customRenderer(mod, detailCell, t)` | Optional React component renderer |
+| `isSortable` | Allow column sort |
+| `isToggleable` | Allow user to hide column |
+| `isGroupable` | Allow grouping rows by this attribute |
+| `isDefaultVisible` | Whether column is visible by default (default `true`) |
+| `filter` | `ITableFilter` instance for column filter UI |
+| `position` | Default column order (lower = further left; default 100) |
+
+```js
+context.registerTableAttribute('mods', {
+  id: 'my-game-version',
+  name: 'Game Version',
+  description: 'Minimum game version required by this mod',
+  placement: 'both',
+  calc: (mod) => mod.attributes?.['minGameVersion'] ?? '',
+  isSortable: true,
+  isToggleable: true,
+  isDefaultVisible: false,
+});
+```
+
+---
+
+## 11. Diagnostics & Health Checks
+
+### `context.registerTest(id, event, check)` — line 3661
+
+**Why useful:** Attaches an automated integrity check to a Vortex event. The check function receives `api` and must return `Promise<ITestResult>` — an object with `severity` and `description`.
+
+**Note:** Prefer `registerHealthCheck` for new code. `registerTest` is the legacy system and maps to `HealthCheckTrigger` internally via `ILegacyTestAdapter`.
+
+---
+
+### `context.registerHealthCheck(healthCheck)` — line 3671
+
+**Why useful:** The modern check system. Pass an `IHealthCheck` for whole-game checks or an `IModHealthCheck` for per-mod checks (Vortex iterates installed mods and calls `checkMod` per mod).
+
+**`IHealthCheck` shape:**
+
+```js
+{
+  id: 'my-game-check',
+  name: 'My Game Integrity Check',
+  description: 'Verifies the game directory is intact',
+  category: types.HealthCheckCategory.Game,        // 'system'|'game'|'mods'|'requirements'|'tools'|'performance'|'legacy'
+  severity: types.HealthCheckSeverity.Warning,     // 'info'|'warning'|'error'|'critical'
+  triggers: [types.HealthCheckTrigger.GameChanged, types.HealthCheckTrigger.Startup],
+  cacheDuration: 60_000,   // ms; omit to re-run every time
+  check: async (api) => ({
+    checkId: 'my-game-check',
+    status: 'passed',            // 'passed'|'failed'|'warning'|'error'
+    severity: types.HealthCheckSeverity.Warning,
+    message: 'Game directory OK',
+    executionTime: 0,
+    timestamp: new Date(),
+  }),
+  fix: async (api) => { /* optional auto-fix */ },
+}
+```
+
+**`IModHealthCheck`** is the same shape with `checkMod(api, mod)` replacing `check`.
+
+**`HealthCheckTrigger` values:** `Manual`, `Startup`, `GameChanged`, `ProfileChanged`, `ModsChanged`, `ResultsChanged`, `SettingsChanged`, `PluginsChanged`, `LootUpdated`, `Scheduled`.
+
+---
+
+## 12. OS File Dialogs
+
+### `api.selectFile(options)` / `api.saveFile(options)` / `api.selectDir(options)` / `api.selectExecutable(options)` — lines 3172–3190
+
+**Why useful:** Native OS file/directory picker dialogs. These return a `Promise<string>` resolving to the selected path (or `undefined` if the user cancels).
+
+**`IOpenOptions` / `ISaveOptions` fields:**
+
+| Field | Purpose |
+| --- | --- |
+| `title` | Dialog window title |
+| `defaultPath` | Initial directory or file path |
+| `filters` | `IFileFilter[]` — each `{ name, extensions: string[] }` |
+
+```js
+const filePath = await api.selectFile({
+  title: 'Select mod config',
+  defaultPath: util.getVortexPath('userData'),
+  filters: [{ name: 'JSON', extensions: ['json'] }],
+});
+if (filePath !== undefined) {
+  // user selected a file
+}
+
+const savePath = await api.saveFile({
+  title: 'Save merged config',
+  filters: [{ name: 'INI', extensions: ['ini'] }],
+});
+
+const dir = await api.selectDir({ title: 'Select game folder' });
+
+const exe = await api.selectExecutable({ title: 'Select launcher' });
+```
+
+**Use case:** Any settings page that needs a user-picked path should use these rather than a free-text input — avoids typos and normalizes path format.

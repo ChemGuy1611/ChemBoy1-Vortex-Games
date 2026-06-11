@@ -590,25 +590,49 @@ context.registerMainPage('download', 'My Page', MyPage, {
 
 ## 17. MDI Icons
 
-Use `mdi` to provide a custom SVG icon from `@mdi/js` instead of a named string icon.
+Use `mdi` to provide a custom SVG icon from `@mdi/js` instead of a named string icon. MDI = Material Design Icons.
+
+**Finding icons:** [pictogrammers.com/library/mdi/](https://pictogrammers.com/library/mdi/)
+
+Workflow to get path data from Pictogrammers:
+
+1. Search for icon by name or keyword
+2. Click the icon
+3. Click **SVG** tab in the detail panel
+4. Copy the `d="..."` value (the long path string)
+5. Paste as a string constant in your extension
+
+**Option A — named import from `@mdi/js`** (bundled with Vortex; preferred when the icon exists):
 
 ```js
-const { mdiUnrealEngine } = require('@mdi/js'); // if available
-// or paste the SVG path data string directly:
+const { mdiGamepad, mdiFolder, mdiCog } = require('@mdi/js');
+
+context.registerMainPage('', 'My Page', MyPage, {
+  group: 'per-game',
+  mdi: mdiGamepad,
+});
+```
+
+Named exports follow `mdi` + PascalCase icon name: `mdi-gamepad` → `mdiGamepad`, `mdi-file-tree` → `mdiFileTree`.
+
+**Option B — raw SVG path string** (for custom/unavailable icons):
+
+```js
 const UE4SS_ICON = 'M12 2A10 10 0 0 0 2 12A10 10 0 0 0 12 22...';
 
 context.registerMainPage('', 'My Page', MyPage, {
   group: 'per-game',
-  mdi: UE4SS_ICON,   // overrides the icon string arg
-  // ...
+  mdi: UE4SS_ICON,
 });
 ```
 
-- When `mdi` is set, the first `icon` argument is ignored.
-- `@mdi/js` is bundled with Vortex — you can `require('@mdi/js')` and destructure named exports.
-- Store the path string as a constant at the top of the file for reuse.
+### Rules
 
-Real example: `mdi: mdiViewDashboard` (Dashboard), `mdi: mdiMagnify` (Browse Nexus), `mdi: UE4SS_ICON` (UE4SS Load Order pages in CB1 extensions).
+- When `mdi` is set, the first `icon` string argument to `registerMainPage` is ignored.
+- Store as a `const` at file top; reuse across multiple page registrations.
+- `mdi` is **only** for `registerMainPage` — `registerAction` icon strings are from Vortex's own icon font (e.g. `'open-ext'`, `'gamepad'`), not MDI.
+
+Real examples: `mdi: mdiViewDashboard` (Dashboard page), `mdi: mdiMagnify` (Browse Nexus page), `mdi: UE4SS_ICON` (UE4SS Load Order pages in CB1 extensions).
 
 ---
 

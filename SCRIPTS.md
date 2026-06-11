@@ -111,7 +111,7 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `write_text_atomic(path, entries, encoding)` | Write list-of-strings (or a single string) to `path` atomically via `.tmp` + `os.replace`. |
 | `open_in_default_app(path)` | Open `path` in the system default application (`os.startfile` on Windows). |
 | `run_script(script_name, *args, capture=True)` | Run a Python script from `REPO_ROOT` via `sys.executable`. Returns `CompletedProcess`. |
-| `load_vortex_manifest(path=None)` | Read `extensions-manifest.json`; return `{game_id: mod_id}` dict. Defaults to `C:\Game_Tools\0 GitHub Repos\Vortex-Backend\out\extensions-manifest.json`. |
+| `load_vortex_manifest(path=None)` | Read `extensions-manifest.json`; return `{game_id: mod_id}` dict. Defaults to `%APPDATA%\Vortex\temp\extensions-manifest.json`. |
 | `resize_pngs_in_dirs(folders, dry_run=False)` | Resize all non-64x64 PNGs in the given folders to 64x64 using Pillow. |
 | `build_js_symbol_table(src)` | Resolve `const`/`let` strings, template literals, `path.join()`, and variable refs in index.js source. Returns `{name: value}` dict. |
 | `list_template_names()` | Return sorted list of template name suffixes (e.g. `['basic', 'ue4-5', ...]`). |
@@ -207,12 +207,16 @@ python fetch_exec_icon.py
 python fetch_exec_icon.py GAME_ID [GAME_ID ...]
 python fetch_exec_icon.py --dry-run
 python fetch_exec_icon.py --force
+python fetch_exec_icon.py --concurrency 4
+python fetch_exec_icon.py --retry-failed
 ```
 
 - No arguments — scans all `game-*` folders and downloads missing icons.
 - `GAME_ID [GAME_ID ...]` — only processes the listed game IDs.
 - `--dry-run` — lists missing files without downloading anything.
 - `--force` — re-downloads `exec.png` even if it already exists.
+- `--concurrency N` — max parallel download workers (default: 8).
+- `--retry-failed` — automatically retries failed downloads once after the main pass.
 
 ### fetch_exec_icon.py — Output
 
@@ -253,6 +257,8 @@ python fetch_cover_art.py --title
 python fetch_cover_art.py --title GAME_ID [GAME_ID ...]
 python fetch_cover_art.py --banner
 python fetch_cover_art.py --banner GAME_ID [GAME_ID ...]
+python fetch_cover_art.py --concurrency 4
+python fetch_cover_art.py --retry-failed
 ```
 
 - No arguments — scans all `game-*` folders and downloads missing cover art.
@@ -261,6 +267,8 @@ python fetch_cover_art.py --banner GAME_ID [GAME_ID ...]
 - `--force` — re-downloads even if the target file already exists.
 - `--title` — fetches title images (1920x1080) to `resources/title-images/` instead of cover art.
 - `--banner` — fetches full-size official hero images to `resources/banner-images/`. Requires `STEAMGRIDDB_API_KEY`.
+- `--concurrency N` — max parallel download workers (default: 8).
+- `--retry-failed` — automatically retries failed downloads once after the main pass.
 
 ### fetch_cover_art.py — Output
 
@@ -295,6 +303,7 @@ python fetch_nexus_stats.py
 python fetch_nexus_stats.py GAME_ID [GAME_ID ...]
 python fetch_nexus_stats.py --dry-run
 python fetch_nexus_stats.py --force
+python fetch_nexus_stats.py --max-age 7
 python fetch_nexus_stats.py --prune [--dry-run]
 python fetch_nexus_stats.py --report-groups
 ```
@@ -303,6 +312,7 @@ python fetch_nexus_stats.py --report-groups
 - `GAME_ID [GAME_ID ...]` — only processes the listed game IDs.
 - `--dry-run` — lists extensions that would be fetched (or entries to prune) without making changes. Works without `NEXUS_API_KEY`.
 - `--force` — re-fetches stats even if already cached.
+- `--max-age DAYS` — re-fetches entries older than `DAYS` days, even if cached.
 - `--prune` — removes cache entries for game IDs no longer present in the repo, then exits. Combine with `--dry-run` to preview.
 - `--report-groups` — prints all extensions with more than one active file-update group from the cache, then exits. No API calls; works without `NEXUS_API_KEY`.
 
@@ -440,6 +450,8 @@ python new_extension.py TEMPLATE "Game Name" --dry-run
 python new_extension.py TEMPLATE "Game Name" --no-images
 python new_extension.py TEMPLATE "Game Name" --no-browser --no-startfile
 python new_extension.py GAME_ID --refresh-images
+python new_extension.py TEMPLATE "Game Name" --skip-explained
+python new_extension.py TEMPLATE "Game Name" --skip-eslint
 ```
 
 `TEMPLATE` is the short template name — omit the `template-` prefix (e.g. `basic`, `ue4-5`).
@@ -451,6 +463,8 @@ Use `--no-browser` to suppress all `webbrowser.open` calls (PCGamingWiki, SteamD
 Use `--no-startfile` to suppress opening downloaded images and `index.js` in the default editor.
 Use `--refresh-images GAME_ID` to re-download all 4 images for an existing extension without redoing any lookups or rewriting `index.js`. Reads `STEAMAPP_ID` and `GAME_NAME` directly from the existing `game-{GAME_ID}/index.js`. Always overwrites existing image files.
 Use `--dry-run` to run all lookups and print what would be created without writing any files. After all lookups, prints the list of XXX placeholders that would still need manual entry.
+Use `--skip-explained` to skip running `generate_explained.js` after writing `index.js`.
+Use `--skip-eslint` to skip running ESLint after writing `index.js`.
 
 ### new_extension.py — Examples
 
@@ -550,12 +564,14 @@ node generate_explained.js --json
 node generate_explained.js GAME_ID [GAME_ID ...] --json
 node generate_explained.js --templates
 node generate_explained.js --templates --json
+node generate_explained.js --check
 ```
 
 Run without arguments to process all `game-*` folders.
 Pass one or more bare `GAME_ID` values to target specific extensions (e.g. `thelongdark`).
 `--json` writes machine-readable JSON to stdout; progress and summary go to stderr instead.
 `--templates` also processes `template-*` folders (only effective when no `GAME_ID` args are given).
+`--check` runs in drift-detection mode: compares what would be generated against each existing `EXTENSION_EXPLAINED.md` without writing any files. Exits with code `1` if any file would change or is missing. Useful in CI to detect stale docs.
 
 ### generate_explained.js — Examples
 
@@ -567,7 +583,9 @@ node generate_explained.js thelongdark hogwartslegacy
 
 ### generate_explained.js — Output
 
-Always writes `EXTENSION_EXPLAINED.md` into each processed extension folder (overwrites any existing file). Reports a count of created, skipped, and errored files on completion. Exits with code `1` if any extension threw an error during generation; `0` otherwise.
+Always writes `EXTENSION_EXPLAINED.md` into each processed extension folder (overwrites any existing file). Reports a count of created, skipped, errored, and unresolved variable references on completion. Exits with code `1` if any extension threw an error during generation or if `--check` detects drift; `0` otherwise.
+
+`--check` mode prints `DRIFT` instead of `OK` for files that would change, reports a drifted count, and does not write any files.
 
 With `--json`, stdout receives a JSON object:
 
@@ -577,7 +595,9 @@ With `--json`, stdout receives a JSON object:
   "created": 5,
   "skipped": 1,
   "errors": 0,
-  "results": [{ "id": "game-thelongdark", "ok": true }, ...]
+  "drifted": 0,
+  "unresolvedTotal": 2,
+  "results": [{ "id": "game-thelongdark", "ok": true, "unresolved": 0 }, ...]
 }
 ```
 
@@ -601,6 +621,7 @@ node lint_extensions.js GAME_ID [GAME_ID ...] --fix
 node lint_extensions.js --templates
 node lint_extensions.js --quiet
 node lint_extensions.js --json
+node lint_extensions.js --changed
 ```
 
 - No arguments — lints all `game-*/index.js` files.
@@ -609,6 +630,7 @@ node lint_extensions.js --json
 - `--templates` — also includes `template-*/index.js` files in a full scan (no GAME_ID args).
 - `--quiet` — suppresses `[OK]` lines; only shows failures.
 - `--json` — writes machine-readable JSON to stdout instead of human-readable text. `lint_results.txt` is still written. Useful for CI pipelines that parse the output.
+- `--changed` — only lints extensions whose `index.js` appears as changed in `git status`. Useful for fast pre-commit checks.
 
 ### lint_extensions.js — Examples
 
@@ -844,7 +866,7 @@ Also resizes all non-64x64 PNG files in `game-*` and `template-*` folders to 64x
 
 | Variable | Required | Description |
 | --- | --- | --- |
-| `VORTEX_MANIFEST_PATH` | Optional | Path to the Vortex extensions manifest JSON. Defaults to `C:\Game_Tools\0 GitHub Repos\Vortex-Backend\out\extensions-manifest.json`. Used by the `extension_url` patch. |
+| `VORTEX_MANIFEST_PATH` | Optional | Path to the Vortex extensions manifest JSON. Defaults to `%APPDATA%\Vortex\temp\extensions-manifest.json`. Used by the `extension_url` patch. |
 
 ### patch_extensions.py — Usage
 
@@ -977,9 +999,12 @@ No additional packages required (Python stdlib only).
 python deploy_to_vortex.py GAME_ID [GAME_ID ...]
 python deploy_to_vortex.py GAME_ID --dry-run
 python deploy_to_vortex.py GAME_ID --force
+python deploy_to_vortex.py --all
+python deploy_to_vortex.py --all --dry-run
 ```
 
 - `GAME_ID [GAME_ID ...]` — one or more game IDs to deploy (e.g. `thelastofuspart2`).
+- `--all` — deploy every `game-*` extension in the repo.
 - `--dry-run` — lists what would be copied without writing anything.
 - `--force` — always do a full folder replace instead of index.js-only update.
 
@@ -1016,6 +1041,8 @@ python analyze_vortex_log.py --summary-only
 python analyze_vortex_log.py --dry-run
 python analyze_vortex_log.py --force
 python analyze_vortex_log.py --no-open
+python analyze_vortex_log.py --grep PATTERN
+python analyze_vortex_log.py --since HOURS
 ```
 
 ### analyze_vortex_log.py — Environment Variables
@@ -1035,6 +1062,8 @@ python analyze_vortex_log.py --no-open
 | `--dry-run` | Preview output path and per-hour counts without writing. |
 | `--force` | Overwrite existing output file. |
 | `--no-open` | Do not open the output file after writing. |
+| `--grep PATTERN` | Only include entries matching `PATTERN` (regex, applied to the full multi-line entry text). |
+| `--since HOURS` | Only include entries from the last `N` hours. |
 
 ### analyze_vortex_log.py — Output
 
@@ -1114,14 +1143,14 @@ No arguments. Launches the window, which loads all extensions automatically.
 ### vortex_gui.py — Layout
 
 ```text
-[ Filter: ____________ ]  [Refresh]  [New Game...]
+[ Filter: ____________ ]  [Refresh]  [New Game...]  [Group by Engine]  [Clear Checks]
 [ Bump Version ] [ Release ] [ Deploy to Vortex ] [ Launch in Vortex ] | [ Open Folder ] [ Open in Editor ] [ Open Changelog ]
 [ Open Game Page ] [ Open Extension Page ] | [ Port to Template... ] [ Setup Test Folder ] [ Patch ] [ Categorize ]
 [ Analyze Log ] [ Audit Scripts ] | [ Fetch Icon ] [ Fetch Cover ] [ Fetch Title ] [ Fetch Banner ] [ Fetch Nexus Stats ] [ View Images ]
--------------------------------------------------------------------------------------------------------------
-| Flag | Icon | Game ID | Name | Ver | Updated | Engine | Stores | End | DL | Pub | Cover | Title | Banner |
-| sortable QTableView, multi-select with Ctrl/Shift                                                         |
--------------------------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------------------
+| [x] | Flag | Icon | Game ID | Name | Ver | Updated | Engine | Stores | End | DL | Pub | Cover | Title | Banner |
+| sortable QTableView, multi-select with Ctrl/Shift                                                                |
+-----------------------------------------------------------------------------------------------------------------------
 | Log pane (live subprocess output)    [Clear Log] [Stop Running] |
 ```
 
@@ -1131,10 +1160,11 @@ No arguments. Launches the window, which loads all extensions automatically.
 
 - **Sort**: click any column header.
 - **Filter**: case-insensitive substring match on Game ID, Name, Engine, and Note.
-- **Multi-select**: Ctrl/Shift-click rows; toolbar buttons pass all selected GAME_IDs in one call.
+- **Checkboxes**: click the leftmost `[x]` column to check/uncheck a game. Checked games are always visible regardless of filter text and persist across sessions. When any games are checked, toolbar actions operate on the checked set instead of the row selection. **Clear Checks** button (enabled only when something is checked) unchecks all. Status bar shows `N checked` when non-zero.
+- **Multi-select**: Ctrl/Shift-click rows; used as the action target when no checkboxes are checked.
 - **Right-click**: context menu with the same script actions.
 - **Double-click**: opens `index.js` in the default editor.
-- **Status bar**: shows `N games shown | M selected`.
+- **Status bar**: shows `N games shown | M selected` (plus `K checked` when applicable).
 
 ### vortex_gui.py — Toolbar Actions
 

@@ -866,7 +866,7 @@ def update_templates_list(template_name, dry_run):
 
     full_name = f"template-{template_name}"
 
-    if full_name in src:
+    if f'"{full_name}"' in src:
         return False, "already in TEMPLATES list"
 
     m = re.search(r'(TEMPLATES\s*=\s*\[)(.*?)(\])', src, re.DOTALL)

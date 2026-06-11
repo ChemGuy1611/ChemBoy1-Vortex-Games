@@ -20,6 +20,8 @@ Usage:
     python fetch_cover_art.py --title GAME_ID [GAME_ID ...]
     python fetch_cover_art.py --banner
     python fetch_cover_art.py --banner GAME_ID [GAME_ID ...]
+    python fetch_cover_art.py --retry-failed
+    python fetch_cover_art.py --concurrency 4
 
 Options:
     GAME_ID          One or more game IDs to process. Omit to process all.
@@ -29,6 +31,8 @@ Options:
                      instead of the usual 640x360 cover art.
     --banner         Fetch full-size official hero images to
                      resources/banner-images/. Requires STEAMGRIDDB_API_KEY.
+    --concurrency N  Max parallel download workers (default: 8).
+    --retry-failed   Automatically retry failed downloads once after the main pass.
 
 Requirements:
     pip install Pillow
@@ -43,9 +47,9 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from vortex_utils import (
     TITLE_IMAGES_DIR, BANNER_IMAGES_DIR,
-    extract_steamapp_id, get_api_key, iter_game_folders,
+    get_api_key, iter_steam_image_targets,
     download_cover_art, download_title_image, download_banner_image,
-    print_run_summary, has_real_steamapp_id, normalize_target_ids,
+    print_run_summary, normalize_target_ids,
     build_arg_parser,
 )
 
@@ -61,31 +65,16 @@ def _handle_result(ok, source, game_id, fail_msg, saved, failed):
         failed.append(game_id)
 
 
-def find_targets(target_game_ids=None, force=False, mode="cover"):
-    """
-    Yields (folder_path, game_id, steamapp_id) for extensions to process.
-    Without --force, skips extensions that already have their target image.
-    If target_game_ids is set, only those extensions are checked.
-    mode: "cover" (default), "title", or "banner".
-    """
-    for folder, game_id, src in iter_game_folders(target_game_ids):
-        if mode == "title":
-            target_path = os.path.join(TITLE_IMAGES_DIR, f"{game_id}_title.jpg")
-        elif mode == "banner":
-            target_path = os.path.join(BANNER_IMAGES_DIR, f"{game_id}_banner.jpg")
-        else:
-            target_path = os.path.join(folder, f"{game_id}.jpg")
-
-        if os.path.isfile(target_path) and not force:
-            continue
-        if not has_real_steamapp_id(src):
-            continue  # Xbox/Epic-only game or no resolvable Steam ID
-
-        steamapp_id = extract_steamapp_id(src)
-        yield folder, game_id, steamapp_id
+def _cover_target_path(mode, folder, game_id):
+    if mode == "title":
+        return os.path.join(TITLE_IMAGES_DIR, f"{game_id}_title.jpg")
+    if mode == "banner":
+        return os.path.join(BANNER_IMAGES_DIR, f"{game_id}_banner.jpg")
+    return os.path.join(folder, f"{game_id}.jpg")
 
 
-def fetch_all(target_game_ids=None, dry_run=False, force=False, mode="cover"):
+def fetch_all(target_game_ids=None, dry_run=False, force=False, mode="cover",
+              concurrency=8, retry_failed=False):
     sgdb_key = get_api_key("STEAMGRIDDB_API_KEY")
     if mode in ("title", "banner"):
         if not sgdb_key:
@@ -104,7 +93,10 @@ def fetch_all(target_game_ids=None, dry_run=False, force=False, mode="cover"):
     failed = []
     skipped = []
 
-    targets = list(find_targets(target_game_ids, force, mode))
+    targets = list(iter_steam_image_targets(
+        target_game_ids, force,
+        target_path_fn=lambda folder, game_id: _cover_target_path(mode, folder, game_id),
+    ))
     if not targets:
         labels = {"cover": "cover art files", "title": "title images", "banner": "banner images"}
         print(f"No missing {labels[mode]} found.")
@@ -116,7 +108,7 @@ def fetch_all(target_game_ids=None, dry_run=False, force=False, mode="cover"):
     elif mode == "banner":
         out_dir = BANNER_IMAGES_DIR
 
-    for folder, game_id, steamapp_id in targets:
+    for folder, game_id, steamapp_id, _game_name in targets:
         if mode == "title":
             label = f"[{game_id}_title.jpg]"
         elif mode == "banner":
@@ -132,18 +124,20 @@ def fetch_all(target_game_ids=None, dry_run=False, force=False, mode="cover"):
     if dry_run:
         return
 
+    # Hoist makedirs out of the thread pool to avoid concurrent redundant calls
+    if out_dir:
+        os.makedirs(out_dir, exist_ok=True)
+
     def _download_one(item):
-        folder, game_id, steamapp_id = item
+        folder, game_id, steamapp_id, _game_name = item
         if not steamapp_id:
             return game_id, "skip", None, None
         try:
             if mode == "title":
-                os.makedirs(out_dir, exist_ok=True)
                 out_path = os.path.join(out_dir, f"{game_id}_title.jpg")
                 ok, source = download_title_image(steamapp_id, game_id, out_path, sgdb_key)
                 fail_msg = f"add {game_id}_title.jpg manually to resources/title-images/ (1920x1080 JPG, with title text)"
             elif mode == "banner":
-                os.makedirs(out_dir, exist_ok=True)
                 out_path = os.path.join(out_dir, f"{game_id}_banner.jpg")
                 ok, source = download_banner_image(steamapp_id, game_id, out_path, sgdb_key)
                 fail_msg = f"add {game_id}_banner.jpg manually to resources/banner-images/"
@@ -155,13 +149,23 @@ def fetch_all(target_game_ids=None, dry_run=False, force=False, mode="cover"):
         except Exception as e:
             return game_id, "error", None, str(e)
 
-    results = {}
-    with ThreadPoolExecutor(max_workers=8) as pool:
-        for f in as_completed({pool.submit(_download_one, item): item for item in targets}):
-            r = f.result()
-            results[r[0]] = r
+    def _run_pass(items):
+        batch = {}
+        try:
+            with ThreadPoolExecutor(max_workers=concurrency) as pool:
+                for f in as_completed({pool.submit(_download_one, item): item for item in items}):
+                    r = f.result()
+                    batch[r[0]] = r
+        except KeyboardInterrupt:
+            print("\n\n  Interrupted.")
+        return batch
 
-    for _, game_id, steamapp_id in targets:
+    results = _run_pass(targets)
+
+    # Report results in original order
+    for _, game_id, steamapp_id, _game_name in targets:
+        if game_id not in results:
+            continue
         if mode == "title":
             label = f"[{game_id}_title.jpg]"
         elif mode == "banner":
@@ -181,6 +185,23 @@ def fetch_all(target_game_ids=None, dry_run=False, force=False, mode="cover"):
         elif status == "error":
             print(f"\n{label}\n  ERROR - {detail}")
             failed.append(game_id)
+
+    if retry_failed and failed:
+        print(f"\n  Retrying {len(failed)} failed download(s)...")
+        retry_ids = set(failed)
+        retry_targets = [t for t in targets if t[1] in retry_ids]
+        failed.clear()
+        retry_results = _run_pass(retry_targets)
+        for _, game_id, steamapp_id, _game_name in retry_targets:
+            if game_id not in retry_results:
+                continue
+            _, status, source, detail = retry_results[game_id]
+            if status == "ok":
+                saved.append(game_id)
+            elif status in ("fail", "error"):
+                failed.append(game_id)
+            elif status == "skip":
+                skipped.append(game_id)
 
     print_run_summary(saved, failed, skipped)
 
@@ -203,6 +224,14 @@ def main():
         action="store_true",
         help="Fetch full-size official hero images to resources/banner-images/. Requires STEAMGRIDDB_API_KEY.",
     )
+    parser.add_argument(
+        "--concurrency", type=int, default=8, metavar="N",
+        help="Max parallel download workers (default: 8).",
+    )
+    parser.add_argument(
+        "--retry-failed", action="store_true",
+        help="Automatically retry failed downloads once after the main pass.",
+    )
     args = parser.parse_args()
     mode = "title" if args.title else "banner" if args.banner else "cover"
     fetch_all(
@@ -210,6 +239,8 @@ def main():
         dry_run=args.dry_run,
         force=args.force,
         mode=mode,
+        concurrency=args.concurrency,
+        retry_failed=args.retry_failed,
     )
 
 

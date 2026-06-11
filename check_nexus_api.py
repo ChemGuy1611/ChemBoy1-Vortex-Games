@@ -21,7 +21,8 @@ import ssl
 import sys
 import urllib.error
 import urllib.request
-import winreg
+
+from vortex_utils import get_api_key as vu_get_api_key
 
 try:
     import certifi
@@ -106,12 +107,7 @@ KNOWN_UPLOAD_STATES = {"created", "pending", "processing", "available", "failed"
 # == HTTP helpers ==============================================================
 
 def _get_api_key():
-    try:
-        key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, "Environment")
-        val, _ = winreg.QueryValueEx(key, "NEXUS_API_KEY")
-        return val
-    except OSError:
-        return None
+    return vu_get_api_key("NEXUS_API_KEY")
 
 
 def _get(url, api_key, *, expect_status=200):
@@ -488,7 +484,7 @@ def main():
 
     api_key = _get_api_key()
     if not api_key:
-        print("ERROR: NEXUS_API_KEY not found in HKCU\\Environment")
+        print("ERROR: NEXUS_API_KEY not found in env / registry")
         sys.exit(1)
     print(f"API key loaded ({len(api_key)} chars)")
 

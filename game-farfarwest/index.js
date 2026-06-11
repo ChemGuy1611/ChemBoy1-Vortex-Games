@@ -2,8 +2,8 @@
 Name: Far Far West Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 0.1.1
-Date: 2026-06-04
+Version: 0.2.0
+Date: 2026-06-11
 Notes:
 -
 ////////////////////////////////////////////////*/
@@ -81,19 +81,12 @@ const LO_IMAGE_WIDTH = 96; //Width of the load order thumbnail image
 const SPECIAL_LO_INSTRUCTIONS = ''; //Show special load order instructions
 const PAKMOD_EXTRA_EXTS = []; //extra extensions to include with paks (usually for custom modding frameworks, i.e .toml, .json)
 const ue4ssLoadOrder = true; //enable load order and mods.txt writing for UE4SS mods
+const logicModsLoadOrder = true; //enable load order page and load_order.txt writing for LogicMods/Blueprint pak mods
 const UE4SS_PAGE_NO = 27; //set these if there is a customized UE4SS Nexus page
 const UE4SS_FILE_NO = 57;
 const UE4SS_DOMAIN = GAME_ID; //either GAME_ID or 'site'
 const UE4SS_FOLDER = 'ue4ss'; //this should probably never change
 const UE4SS_MOD_PATH = path.join(UE4SS_FOLDER, 'Mods'); //this should probably never change (unless UE4SS team changes it again lol)
-
-const SET_UE4SS_LOAD_ORDER = `SET_${GAME_ID.toUpperCase()}_UE4SS_LOAD_ORDER`;
-function setUe4ssLoadOrder(profileId, loadOrder) { return { type: SET_UE4SS_LOAD_ORDER, payload: { profileId, loadOrder } }; }
-setUe4ssLoadOrder.toString = () => SET_UE4SS_LOAD_ORDER;
-
-const SET_UE4SS_LO_ENABLED = `SET_${GAME_ID.toUpperCase()}_UE4SS_LO_ENABLED`;
-function setUe4ssLoEnabled(value) { return { type: SET_UE4SS_LO_ENABLED, payload: value }; }
-setUe4ssLoEnabled.toString = () => SET_UE4SS_LO_ENABLED;
 
 //config and save
 const DATA_FOLDER = EPIC_CODE_NAME; //almost always matches.
@@ -259,6 +252,23 @@ const UE4SS_NATIVE_MODS = ['BPML_GenericFunctions', 'BPModLoaderMod', 'CheatMana
 ];
 const ENABLEDTXT_FILE = 'enabled.txt';
 const UE4SS_ICON = 'M12 0c-6.5745 0-11.899 5.371-11.899 12s5.324 12 11.899 12c6.57 0 11.899-5.371 11.899-12s-5.328-12-11.903-12zM12 0.527c3.035 0 5.894 1.196 8.043 3.359 2.144 2.156 3.34 5.075 3.332 8.114 0 3.062-1.184 5.945-3.332 8.114-2.121 2.153-5.02 3.363-8.043 3.359-3.023 0.004-5.922-1.207-8.043-3.359-2.144-2.156-3.344-5.075-3.336-8.114 0-3.062 1.187-5.945 3.332-8.114 2.121-2.156 5.024-3.368 8.047-3.359zM11.402 4.75c-1.937 0.52-3.731 1.516-6.121 4.258s-1.937 5.008-1.937 5.008c0 0 0.66-1.559 2.246-3.2 0.754-0.777 1.313-1.039 1.7-1.039 0.344-0.02 0.633 0.258 0.633 0.602v5.567c0 0.551-0.356 0.672-0.683 0.664-0.278-0.004-0.536-0.101-0.536-0.101 1.629 2.367 5.528 2.699 5.528 2.699l1.711-1.829 0.039 0.035 1.567 1.336c2.867-1.703 4.25-4.859 4.25-4.859-1.281 1.352-2.094 1.668-2.579 1.668-0.43-0.004-0.598-0.254-0.598-0.254-0.023-0.117-0.062-1.813-0.078-3.508-0.016-1.754 0-3.512 0.086-3.516 0.496-0.93 2.075-2.805 2.075-2.805-2.949 0.582-4.555 2.516-4.555 2.516-0.476-0.375-1.445-0.313-1.445-0.313 0.453 0.25 0.906 0.977 0.906 1.578v5.922c0 0-0.989 0.871-1.75 0.871-0.453 0-0.731-0.246-0.883-0.449-0.059-0.078-0.11-0.164-0.149-0.258v-7.313c-0.106 0.078-0.235 0.121-0.363 0.125-0.164 0-0.332-0.082-0.446-0.32-0.086-0.18-0.141-0.449-0.141-0.844 0-1.348 1.523-2.243 1.523-2.243z';
+const BLUEPRINT_ICON = 'M19.5 17C19.36 17 19.24 17 19.11 17.04L17.5 13.8C17.95 13.35 18.25 12.71 18.25 12C18.25 10.62 17.13 9.5 15.75 9.5C15.61 9.5 15.5 9.5 15.35 9.54L13.74 6.3C14.21 5.84 14.5 5.21 14.5 4.5C14.5 3.12 13.38 2 12 2S9.5 3.12 9.5 4.5C9.5 5.2 9.79 5.84 10.26 6.29L8.65 9.54C8.5 9.5 8.39 9.5 8.25 9.5C6.87 9.5 5.75 10.62 5.75 12C5.75 12.71 6.04 13.34 6.5 13.79L4.89 17.04C4.76 17 4.64 17 4.5 17C3.12 17 2 18.12 2 19.5C2 20.88 3.12 22 4.5 22S7 20.88 7 19.5C7 18.8 6.71 18.16 6.24 17.71L7.86 14.46C8 14.5 8.12 14.5 8.25 14.5C8.38 14.5 8.5 14.5 8.63 14.46L10.26 17.71C9.79 18.16 9.5 18.8 9.5 19.5C9.5 20.88 10.62 22 12 22S14.5 20.88 14.5 19.5C14.5 18.12 13.38 17 12 17C11.87 17 11.74 17 11.61 17.04L10 13.8C10.45 13.35 10.75 12.71 10.75 12C10.75 11.3 10.46 10.67 10 10.21L11.61 6.96C11.74 7 11.87 7 12 7C12.13 7 12.26 7 12.39 6.96L14 10.21C13.54 10.66 13.25 11.3 13.25 12C13.25 13.38 14.37 14.5 15.75 14.5C15.88 14.5 16 14.5 16.13 14.46L17.76 17.71C17.29 18.16 17 18.8 17 19.5C17 20.88 18.12 22 19.5 22S22 20.88 22 19.5C22 18.12 20.88 17 19.5 17M4.5 20.5C3.95 20.5 3.5 20.05 3.5 19.5S3.95 18.5 4.5 18.5 5.5 18.95 5.5 19.5 5.05 20.5 4.5 20.5M13 19.5C13 20.05 12.55 20.5 12 20.5S11 20.05 11 19.5 11.45 18.5 12 18.5 13 18.95 13 19.5M7.25 12C7.25 11.45 7.7 11 8.25 11S9.25 11.45 9.25 12 8.8 13 8.25 13 7.25 12.55 7.25 12M11 4.5C11 3.95 11.45 3.5 12 3.5S13 3.95 13 4.5 12.55 5.5 12 5.5 11 5.05 11 4.5M14.75 12C14.75 11.45 15.2 11 15.75 11S16.75 11.45 16.75 12 16.3 13 15.75 13 14.75 12.55 14.75 12M19.5 20.5C18.95 20.5 18.5 20.05 18.5 19.5S18.95 18.5 19.5 18.5 20.5 18.95 20.5 19.5 20.05 20.5 19.5 20.5Z'; // mdiGraphOutline (@mdi/js 7.4.47)
+const BPML_FOLDER = 'BPModLoaderMod'; //UE4SS native mod that reads load_order.txt (also in UE4SS_NATIVE_MODS)
+const BPML_LO_FILE = 'load_order.txt'; //file BPModLoaderMod reads for BP pak load order
+const LOGICMODS_LO_FILE = 'logicMods_loadOrder.json'; //persisted LO state, profile-prefixed, stored in BPModLoaderMod folder
+const LO_ATTRIBUTE_LOGIC = 'logicModFiles'; //mod install attribute: array of pak basenames (no ext) in LogicMods folder
+
+const SET_UE4SS_LOAD_ORDER = `SET_${GAME_ID.toUpperCase()}_UE4SS_LOAD_ORDER`;
+function setUe4ssLoadOrder(profileId, loadOrder) { return { type: SET_UE4SS_LOAD_ORDER, payload: { profileId, loadOrder } }; }
+setUe4ssLoadOrder.toString = () => SET_UE4SS_LOAD_ORDER;
+
+const SET_UE4SS_LO_ENABLED = `SET_${GAME_ID.toUpperCase()}_UE4SS_LO_ENABLED`;
+function setUe4ssLoEnabled(value) { return { type: SET_UE4SS_LO_ENABLED, payload: value }; }
+setUe4ssLoEnabled.toString = () => SET_UE4SS_LO_ENABLED;
+
+const SET_LOGICMODS_LOAD_ORDER = `SET_${GAME_ID.toUpperCase()}_LOGICMODS_LOAD_ORDER`;
+function setLogicModsLoadOrder(profileId, loadOrder) { return { type: SET_LOGICMODS_LOAD_ORDER, payload: { profileId, loadOrder } }; }
+setLogicModsLoadOrder.toString = () => SET_LOGICMODS_LOAD_ORDER;
 
 //Signature Bypass (only used if game requires)
 const SIGBYPASS_ID = `${GAME_ID}-sigbypass`;
@@ -828,6 +838,13 @@ async function installUe4ssCombo(files, workingDir) {
     };
   });
   instructions.push(setModTypeInstruction);
+  const logicPakBasenames = filtered
+    .filter(f => f.toLowerCase().includes(`${LOGICMODS_FOLDER.toLowerCase()}${path.sep}`)
+              && path.extname(f).toLowerCase() === LOGICMODS_EXT)
+    .map(f => path.basename(f, LOGICMODS_EXT));
+  if (logicPakBasenames.length) {
+    instructions.push({ type: 'attribute', key: LO_ATTRIBUTE_LOGIC, value: logicPakBasenames });
+  }
   return Promise.resolve({ instructions });
 }
 
@@ -869,7 +886,13 @@ function installLogic(files) {
       destination: path.join(file.substr(idx)),
     };
   });
+  const pakBasenames = filtered
+    .filter(f => path.extname(f).toLowerCase() === LOGICMODS_EXT)
+    .map(f => path.basename(f, LOGICMODS_EXT));
   instructions.push(setModTypeInstruction);
+  if (pakBasenames.length) {
+    instructions.push({ type: 'attribute', key: LO_ATTRIBUTE_LOGIC, value: pakBasenames });
+  }
   return Promise.resolve({ instructions });
 }
 
@@ -1924,6 +1947,100 @@ async function serializeUe4ss(api, loadOrder) {
   );
 }
 
+async function deserializeLogicMods(api) {
+  const state = api.getState();
+  const mods = util.getSafe(state, ['persistent', 'mods', spec.game.id], {});
+  GAME_PATH = getDiscoveryPath(api);
+  const logicModsFolder = path.join(GAME_PATH, LOGICMODS_PATH, LOGICMODS_FOLDER);
+  const bpmlFolder = path.join(GAME_PATH, BINARIES_PATH, UE4SS_MOD_PATH, BPML_FOLDER);
+  const profile = selectors.activeProfile(state);
+  const filename = profile.id + '_' + LOGICMODS_LO_FILE;
+  const jsonPath = path.join(bpmlFolder, filename);
+
+  let LO_MOD_ARRAY = [];
+  try {
+    const raw = await fs.readFileAsync(jsonPath, { encoding: 'utf8' });
+    if (raw.length > 0) LO_MOD_ARRAY = JSON.parse(util.deBOM(raw));
+  } catch { /* file doesn't exist yet; start with empty array */ }
+
+  let pakFiles = [];
+  try {
+    const all = await getAllFiles(logicModsFolder);
+    const seen = new Set();
+    for (const f of all) {
+      if (path.extname(f).toLowerCase() === LOGICMODS_EXT) {
+        const name = path.basename(f, LOGICMODS_EXT);
+        if (!seen.has(name)) { seen.add(name); pakFiles.push(name); }
+      }
+    }
+  } catch {
+    return Promise.reject(new Error('Failed to read LogicMods folder'));
+  }
+
+  const getModName = (pakName) => {
+    try {
+      const modMatch = Object.values(mods).find(mod => {
+        const attr = util.getSafe(mod, ['attributes', LO_ATTRIBUTE_LOGIC], []);
+        return Array.isArray(attr) ? attr.includes(pakName) : attr === pakName;
+      });
+      if (modMatch) {
+        return modMatch.attributes.customFileName ?? modMatch.attributes.logicalFileName ?? modMatch.attributes.name;
+      }
+      return undefined;
+    } catch { return undefined; }
+  };
+
+  const getModId = (pakName) => {
+    try {
+      const modMatch = Object.values(mods).find(mod => {
+        const attr = util.getSafe(mod, ['attributes', LO_ATTRIBUTE_LOGIC], []);
+        return Array.isArray(attr) ? attr.includes(pakName) : attr === pakName;
+      });
+      return modMatch ? modMatch.id : undefined;
+    } catch { return undefined; }
+  };
+
+  const makeEntry = (pakName) => {
+    const modName = getModName(pakName);
+    return {
+      id: pakName,
+      name: modName ? `${modName} (${pakName}${LOGICMODS_EXT})` : `Manual Mod (${pakName}${LOGICMODS_EXT})`,
+      modId: getModId(pakName),
+    };
+  };
+
+  let loadOrder = LO_MOD_ARRAY
+    .filter(entry => pakFiles.includes(entry.id))
+    .map(entry => makeEntry(entry.id));
+
+  for (const pakName of pakFiles) {
+    if (!loadOrder.find(e => e.id === pakName)) {
+      loadOrder.push(makeEntry(pakName));
+    }
+  }
+
+  return loadOrder;
+}
+
+//Write load order for LogicMods/Blueprint pak mods
+async function serializeLogicMods(api, loadOrder) {
+  const state = api.getState();
+  if (selectors.activeGameId(state) !== GAME_ID) return;
+  GAME_PATH = getDiscoveryPath(api);
+  const profile = selectors.activeProfile(state);
+  const bpmlFolder = path.join(GAME_PATH, BINARIES_PATH, UE4SS_MOD_PATH, BPML_FOLDER);
+  const jsonPath = path.join(bpmlFolder, profile.id + '_' + LOGICMODS_LO_FILE);
+  await fs.writeFileAsync(jsonPath, JSON.stringify(loadOrder, null, 2), { encoding: 'utf8' });
+
+  const loTxtPath = path.join(bpmlFolder, BPML_LO_FILE);
+  await fs.ensureFileAsync(loTxtPath);
+  await fs.writeFileAsync(
+    loTxtPath,
+    loadOrder.map(e => e.id).join('\n'),
+    { encoding: 'utf8' },
+  );
+}
+
 //UNREAL - Pre-sort function - legacy load order page
 async function preSort(api, items, direction) {
   const mods = util.getSafe(api.store.getState(), ['persistent', 'mods', spec.game.id], {});
@@ -2239,6 +2356,9 @@ async function setup(discovery, api, gameSpec) {
     await downloadSigBypass(api, gameSpec);
   }
   MODTYPE_FOLDERS.push(SCRIPTS_PATH);
+  if (logicModsLoadOrder) {
+    MODTYPE_FOLDERS.push(path.join(SCRIPTS_PATH, BPML_FOLDER));
+  }
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 
@@ -2633,6 +2753,27 @@ function main(context) {
       props: () => ({ api: context.api }),
     });
   }
+  if (logicModsLoadOrder) {
+    context.registerReducer(['persistent', 'logicModsLoadOrder'], {
+      reducers: {
+        [setLogicModsLoadOrder.toString()]: (state, payload) => util.setSafe(state, [payload.profileId, 'loadOrder'], payload.loadOrder),
+      },
+      defaults: {},
+    });
+    context.registerMainPage('unreal', 'LogicMods Load Order', LogicModsLoadOrderPage, {
+      id: `${GAME_ID}-logicmods-loadorder`,
+      priority: 32,
+      group: 'per-game',
+      hotkey: 'L',
+      mdi: BLUEPRINT_ICON,
+      visible: () => {
+        const state = context.api.store.getState();
+        const gameId = selectors.activeGameId(state);
+        return gameId === GAME_ID && logicModsLoadOrder;
+      },
+      props: () => ({ api: context.api }),
+    });
+  }
   context.once(() => { // put code here that should be run (once) when Vortex starts up
     const api = context.api;
     api.onAsync('did-deploy', (profileId) => didDeploy(api, profileId)); //*/
@@ -2681,6 +2822,19 @@ async function didDeploy(api, profileId) { //run on mod deploy
       if (UE4SS_LOAD_ORDER.length > 0) {
         await serializeUe4ss(api, UE4SS_LOAD_ORDER);
       }
+    }
+  }
+  if (logicModsLoadOrder && isUe4ssInstalled(api, spec)) {
+    let LO;
+    try {
+      LO = await deserializeLogicMods(api);
+      api.store.dispatch(setLogicModsLoadOrder(profileId, LO));
+    } catch (err) {
+      log('error', `[${GAME_ID}] didDeploy: deserializeLogicMods failed, falling back to store state`, err);
+      LO = util.getSafe(state, ['persistent', 'logicModsLoadOrder', profileId, 'loadOrder'], []);
+    }
+    if (LO.length > 0) {
+      await serializeLogicMods(api, LO);
     }
   }
   api.dismissNotification(`${GAME_ID}-loadorderdeploy-notif`);
@@ -3465,6 +3619,397 @@ function Ue4ssLoadOrderPage({ api }) {
           ),
           React.createElement('div', { style: { flexShrink: 0 } },
             React.createElement(Ue4ssLoadOrderInfoPanel)
+          )
+        )
+      )
+    )
+  );
+} //*/
+
+//* React components for LogicMods load order page
+const LogicModsSelectionContext = React.createContext({ selectedIds: new Set(), setSelectedIds: () => {}, allIds: [], contextMenu: null, setContextMenu: () => {} });
+
+function LogicModsItemRenderer({ className, item }) {
+  const { Icon, LoadOrderIndexInput, MainContext } = require('vortex-api');
+  const { useSelector, useDispatch } = require('react-redux');
+
+  const vortexContext = React.useContext(MainContext);
+  const dispatch = useDispatch();
+
+  const profileId = useSelector(state => selectors.activeProfile(state)?.id);
+  const loadOrder = useSelector(state =>
+    util.getSafe(state, ['persistent', 'logicModsLoadOrder', profileId, 'loadOrder'], []));
+  const mods = useSelector(state => util.getSafe(state, ['persistent', 'mods', GAME_ID], {}));
+  const pictureUrl = mods[item.modId]?.attributes?.pictureUrl;
+
+  const isModEnabled = useSelector(state =>
+    util.getSafe(state, ['persistent', 'profiles', profileId, 'modState', item.modId, 'enabled'], false));
+
+  const currentIdx = loadOrder.findIndex((e) => e.id === item.id) + 1;
+  const isLocked = (entry) => [true, 'true', 'always'].includes(entry?.locked);
+  const lockedCount = loadOrder.filter(isLocked).length;
+
+  const onApplyIndex = React.useCallback((idx) => {
+    if (currentIdx === idx) return;
+    const newLO = loadOrder.filter((e) => e.id !== item.id);
+    newLO.splice(idx - 1, 0, item);
+    dispatch(setLogicModsLoadOrder(profileId, newLO));
+    serializeLogicMods(vortexContext.api, newLO);
+  }, [dispatch, vortexContext, profileId, loadOrder, item, currentIdx]);
+
+  const isEntryLocked = isLocked(item);
+
+  const onLock = React.useCallback(() => {
+    const newLO = loadOrder.map(e => e.id === item.id ? { ...e, locked: !isEntryLocked } : e);
+    dispatch(setLogicModsLoadOrder(profileId, newLO));
+    serializeLogicMods(vortexContext.api, newLO);
+  }, [dispatch, vortexContext, profileId, loadOrder, item, isEntryLocked]);
+
+  const onDisable = React.useCallback(() => {
+    if (!item.modId) return;
+    dispatch(actions.setModEnabled(profileId, item.modId, false));
+    requestDeployment(vortexContext.api, spec);
+  }, [dispatch, vortexContext, profileId, item.modId]);
+
+  const { selectedIds, setSelectedIds, allIds, contextMenu, setContextMenu } = React.useContext(LogicModsSelectionContext);
+  const isSelected = selectedIds.has(item.id);
+
+  const onContextMenu = React.useCallback((evt) => {
+    evt.preventDefault();
+    evt.stopPropagation();
+    setContextMenu({ x: evt.clientX, y: evt.clientY, itemId: item.id });
+  }, [item.id, setContextMenu]);
+
+  const onSelect = React.useCallback((evt) => {
+    const ctrlKey = evt.ctrlKey || evt.metaKey;
+    const shiftKey = evt.shiftKey;
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (ctrlKey) {
+        next.has(item.id) ? next.delete(item.id) : next.add(item.id);
+      } else if (shiftKey) {
+        const lastId = [...prev].at(-1);
+        const start = allIds.indexOf(lastId ?? item.id);
+        const end = allIds.indexOf(item.id);
+        const [lo, hi] = [Math.min(start, end), Math.max(start, end)];
+        for (let i = lo; i <= hi; i++) next.add(allIds[i]);
+      } else {
+        next.clear();
+        next.add(item.id);
+      }
+      return next;
+    });
+  }, [item.id, setSelectedIds, allIds]);
+
+  React.useEffect(() => {
+    const styleId = 'lo-index-focus-style';
+    if (!globalThis.document.getElementById(styleId)) {
+      const style = globalThis.document.createElement('style');
+      style.id = styleId;
+      style.textContent = '.load-order-index input:focus { background: white !important; color: black !important; }';
+      globalThis.document.head.appendChild(style);
+    }
+  }, []);
+
+  const classes = ['load-order-entry'];
+  if (className) classes.push(...className.split(' ').filter(Boolean));
+
+  return React.createElement('div', {
+    key: item.id,
+    className: classes.join(' '),
+    onClick: onSelect,
+    onContextMenu: onContextMenu,
+    style: {
+      display: 'flex', flexDirection: 'row', alignItems: 'center',
+      gap: 8, padding: '4px 12px', margin: 0,
+      border: '1px solid rgba(255,255,255,0.15)', borderRadius: 4,
+      minHeight: 52,
+      outline: isSelected ? '2px solid #337ab7' : 'none',
+      outlineOffset: '-1px',
+    },
+  },
+    React.createElement('div', { style: { visibility: isEntryLocked ? 'hidden' : 'visible' } },
+      React.createElement(Icon, { className: 'drag-handle-icon', name: 'drag-handle' }),
+    ),
+    React.createElement('div', { style: { width: 24, flexShrink: 0, overflow: 'hidden' } },
+      React.createElement(LoadOrderIndexInput, {
+        className: 'load-order-index',
+        api: vortexContext.api,
+        item: item,
+        currentPosition: currentIdx,
+        lockedEntriesCount: lockedCount,
+        loadOrder: loadOrder,
+        isLocked: isLocked,
+        onApplyIndex: onApplyIndex,
+      }),
+    ),
+    React.createElement('div', {
+      style: { cursor: 'pointer', display: 'flex', alignItems: 'center' },
+      title: isEntryLocked ? 'Unlock position' : 'Lock position',
+      onClick: onLock,
+    },
+      React.createElement(Icon, { name: isEntryLocked ? 'locked' : 'unlocked', style: { color: isEntryLocked ? '#e2c04c' : 'inherit' } }),
+    ),
+    React.createElement('div', { className: 'load-order-thumb-slot', style: { width: LO_IMAGE_WIDTH, height: LO_IMAGE_HEIGHT, flexShrink: 0 } },
+      pictureUrl ? React.createElement('img', {
+        className: 'load-order-thumb',
+        src: pictureUrl,
+        draggable: false,
+        style: { width: LO_IMAGE_WIDTH, height: LO_IMAGE_HEIGHT, objectFit: 'cover', borderRadius: 2, pointerEvents: 'none' },
+      }) : null,
+    ),
+    React.createElement('p', { className: 'load-order-name', style: { flex: '1 1 0', margin: 0, whiteSpace: 'normal', wordBreak: 'break-word' } }, item.name),
+    item.modId && isModEnabled ? React.createElement('button', {
+      className: 'btn btn-default btn-sm',
+      style: { margin: '0 4px', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4 },
+      onClick: evt => { evt.stopPropagation(); onDisable(); },
+    },
+      React.createElement(Icon, { name: 'toggle-disabled' }),
+      'Disable',
+    ) : null,
+    contextMenu?.itemId === item.id ? React.createElement(LogicModsContextMenu, {
+      x: contextMenu.x, y: contextMenu.y,
+      item, loadOrder, profileId, dispatch,
+      api: vortexContext.api, selectedIds, isModEnabled,
+      onClose: () => setContextMenu(null),
+    }) : null,
+  );
+}
+
+function LogicModsContextMenu({ x, y, item, loadOrder, profileId, dispatch, api, selectedIds, isModEnabled, onClose }) {
+  React.useEffect(() => {
+    const onKey = (evt) => { if (evt.key === 'Escape') onClose(); };
+    globalThis.document.addEventListener('keydown', onKey);
+    return () => globalThis.document.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  React.useEffect(() => {
+    const dismiss = onClose;
+    globalThis.document.addEventListener('click', dismiss);
+    globalThis.document.addEventListener('contextmenu', dismiss);
+    return () => {
+      globalThis.document.removeEventListener('click', dismiss);
+      globalThis.document.removeEventListener('contextmenu', dismiss);
+    };
+  }, []);
+
+  React.useEffect(() => {
+    const styleId = 'ue4ss-ctx-menu-style';
+    if (!globalThis.document.getElementById(styleId)) {
+      const style = globalThis.document.createElement('style');
+      style.id = styleId;
+      style.textContent = '.ue4ss-ctx-item:hover { background: rgba(255,255,255,0.1); }';
+      globalThis.document.head.appendChild(style);
+    }
+  }, []);
+
+  const isLocked = (e) => [true, 'true', 'always'].includes(e?.locked);
+  const isMulti = selectedIds.size >= 2 && selectedIds.has(item.id);
+  const targets = isMulti ? loadOrder.filter(e => selectedIds.has(e.id)) : [item];
+
+  const applyToTargets = (transform) => {
+    const newLO = transform(loadOrder, targets);
+    dispatch(setLogicModsLoadOrder(profileId, newLO));
+    serializeLogicMods(api, newLO);
+    onClose();
+  };
+
+  const isEntryLocked = isLocked(item);
+
+  const menuStyle = {
+    position: 'fixed', left: x, top: y, zIndex: 9999,
+    background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.2)',
+    borderRadius: 4, padding: '4px 0', minWidth: 180,
+    boxShadow: '0 4px 12px rgba(0,0,0,0.6)',
+  };
+  const itemStyle = { padding: '6px 16px', cursor: 'pointer', whiteSpace: 'nowrap' };
+  const sepStyle = { borderTop: '1px solid rgba(255,255,255,0.1)', margin: '4px 0' };
+
+  const menuItem = (label, onClick) => React.createElement('div', {
+    className: 'ue4ss-ctx-item',
+    style: itemStyle,
+    onClick: (evt) => { evt.stopPropagation(); onClick(); },
+  }, label);
+
+  if (isMulti) {
+    const n = targets.length;
+    return React.createElement('div', { style: menuStyle },
+      menuItem(`Disable Selected (${n})`, () => {
+        const batch = targets.filter(e => e.modId).map(e => actions.setModEnabled(profileId, e.modId, false));
+        if (batch.length) { util.batchDispatch(dispatch, batch); requestDeployment(api, spec); }
+        onClose();
+      }),
+      React.createElement('div', { style: sepStyle }),
+      menuItem(`Lock Selected (${n})`, () => applyToTargets((lo) => lo.map(e => targets.find(t => t.id === e.id) ? { ...e, locked: true } : e))),
+      menuItem(`Unlock Selected (${n})`, () => applyToTargets((lo) => lo.map(e => targets.find(t => t.id === e.id) ? { ...e, locked: false } : e))),
+      React.createElement('div', { style: sepStyle }),
+      menuItem(`Open LogicMods Folder (${n})`, () => { util.opn(path.join(GAME_PATH, LOGICMODS_PATH, LOGICMODS_FOLDER)).catch(() => null); onClose(); }),
+      React.createElement('div', { style: sepStyle }),
+      menuItem(`Move to Top (${n})`, () => applyToTargets((lo) => {
+        const locked = lo.filter(isLocked);
+        const selected = lo.filter(e => targets.find(t => t.id === e.id) && !isLocked(e));
+        const rest = lo.filter(e => !isLocked(e) && !targets.find(t => t.id === e.id));
+        return [...locked, ...selected, ...rest];
+      })),
+      menuItem(`Move to Bottom (${n})`, () => applyToTargets((lo) => {
+        const selected = lo.filter(e => targets.find(t => t.id === e.id));
+        const rest = lo.filter(e => !targets.find(t => t.id === e.id));
+        return [...rest, ...selected];
+      })),
+    );
+  }
+
+  return React.createElement('div', { style: menuStyle },
+    item.modId && isModEnabled ? menuItem('Disable Mod', () => {
+      dispatch(actions.setModEnabled(profileId, item.modId, false));
+      requestDeployment(api, spec);
+      onClose();
+    }) : null,
+    item.modId && isModEnabled ? React.createElement('div', { style: sepStyle }) : null,
+    menuItem(isEntryLocked ? 'Unlock Position' : 'Lock Position', () => applyToTargets((lo) => lo.map(e => e.id === item.id ? { ...e, locked: !isEntryLocked } : e))),
+    React.createElement('div', { style: sepStyle }),
+    menuItem('Open LogicMods Folder', () => { util.opn(path.join(GAME_PATH, LOGICMODS_PATH, LOGICMODS_FOLDER)).catch(() => null); onClose(); }),
+    React.createElement('div', { style: sepStyle }),
+    menuItem('Move to Top', () => applyToTargets((lo) => {
+      const locked = lo.filter(isLocked);
+      const rest = lo.filter(e => !isLocked(e) && e.id !== item.id);
+      return [...locked, item, ...rest];
+    })),
+    menuItem('Move to Bottom', () => applyToTargets((lo) => {
+      const rest = lo.filter(e => e.id !== item.id);
+      return [...rest, item];
+    })),
+  );
+}
+
+function LogicModsLoadOrderInfoPanel() {
+  return React.createElement('div', {
+    id: 'logicmods-loadorderinfo',
+    style: { padding: '12px', borderTop: '1px solid rgba(255,255,255,0.1)' },
+  },
+    React.createElement('h2', { style: { marginTop: 0, display: 'flex', alignItems: 'center', gap: 10 } },
+      React.createElement('svg', {
+        viewBox: '0 0 24 24',
+        style: { width: 28, height: 28, fill: 'currentColor', flexShrink: 0 },
+      },
+        React.createElement('path', { d: BLUEPRINT_ICON }),
+      ),
+      React.createElement('span', null,
+        React.createElement('span', { style: { fontWeight: 'bold' } }, 'LogicMods'),
+        React.createElement('span', { style: { fontWeight: 300, color: 'rgba(255,255,255,0.65)' } }, ' Blueprint Pak Load Order'),
+      ),
+    ),
+    React.createElement('ul', { style: { margin: 0, paddingLeft: 20, listStyleType: 'disc' } },
+      React.createElement('li', null,
+        'Drag and drop mods to change the order in which BPModLoaderMod loads Blueprint paks. Changes write to load_order.txt immediately.'
+      ),
+      React.createElement('li', null,
+        'Use the "Disable" button to disable the underlying Vortex mod. Deploy after disabling to remove the pak from the LogicMods folder.'
+      ),
+      React.createElement('li', null,
+        'Paks not listed in load_order.txt still load, but in random order after the listed ones.'
+      ),
+      React.createElement('li', { style: { fontStyle: 'italic', color: 'yellow', fontWeight: 'bold' } },
+        'Note: This page manages LogicMods/Blueprint paks only. UE4SS script/DLL mod load order is managed on the UE4SS Load Order page.'
+      ),
+    ),
+  );
+}
+
+function LogicModsLoadOrderPage({ api }) {
+  const { useSelector, useDispatch } = require('react-redux');
+  const { FormControl } = require('react-bootstrap');
+
+  const profileId = useSelector(state => selectors.activeProfile(state)?.id);
+  const loadOrder = useSelector(state =>
+    util.getSafe(state, ['persistent', 'logicModsLoadOrder', profileId, 'loadOrder'], []));
+  const dispatch = useDispatch();
+  const [filterText, setFilterText] = React.useState('');
+  const [selectedIds, setSelectedIds] = React.useState(new Set());
+  const [contextMenu, setContextMenu] = React.useState(null);
+
+  React.useEffect(() => {
+    if (!contextMenu) return;
+    const dismiss = () => setContextMenu(null);
+    globalThis.document.addEventListener('click', dismiss);
+    globalThis.document.addEventListener('contextmenu', dismiss);
+    return () => {
+      globalThis.document.removeEventListener('click', dismiss);
+      globalThis.document.removeEventListener('contextmenu', dismiss);
+    };
+  }, [contextMenu]);
+
+  React.useEffect(() => {
+    if (!profileId) return;
+    if (selectors.activeGameId(api.getState()) !== GAME_ID) return;
+    deserializeLogicMods(api).then(lo => dispatch(setLogicModsLoadOrder(profileId, lo)));
+    setSelectedIds(new Set());
+  }, [profileId]);
+
+  React.useEffect(() => {
+    const styleId = 'lo-index-focus-style';
+    if (!globalThis.document.getElementById(styleId)) {
+      const style = globalThis.document.createElement('style');
+      style.id = styleId;
+      style.textContent = '.load-order-index input:focus { background: white !important; color: black !important; }';
+      globalThis.document.head.appendChild(style);
+    }
+  }, []);
+
+  const onApply = React.useCallback((reordered) => {
+    let newLO;
+    if (filterText) {
+      const filteredIds = new Set(reordered.map(e => e.id));
+      const positions = loadOrder.reduce((acc, e, i) => { if (filteredIds.has(e.id)) acc.push(i); return acc; }, []);
+      newLO = [...loadOrder];
+      positions.forEach((pos, i) => { newLO[pos] = reordered[i]; });
+    } else {
+      newLO = reordered;
+    }
+    dispatch(setLogicModsLoadOrder(profileId, newLO));
+    serializeLogicMods(api, newLO);
+  }, [dispatch, loadOrder, filterText, profileId]);
+
+  const filteredOrder = filterText
+    ? loadOrder.filter(e => e.name.toLowerCase().includes(filterText.toLowerCase()))
+    : loadOrder;
+
+  const allIds = filteredOrder.map(e => e.id);
+
+  if (!loadOrder.length) {
+    return React.createElement(MainPage, null,
+      React.createElement(MainPage.Body, null,
+        React.createElement('p', { style: { padding: '12px', fontWeight: 'bold', color: 'yellow' } }, 'No LogicMods/Blueprint pak mods are installed.')));
+  }
+
+  return React.createElement(MainPage, null,
+    React.createElement(MainPage.Header, null,
+      React.createElement(FormControl, {
+        type: 'search',
+        placeholder: 'Filter mods...',
+        className: 'file-based-load-order-filter',
+        value: filterText,
+        onChange: (evt) => setFilterText(evt.target.value),
+      })
+    ),
+    React.createElement(MainPage.Body, null,
+      React.createElement(DNDContainer, { style: { height: '95%' } },
+        React.createElement(FlexLayout, { type: 'column', className: 'file-based-load-order-container', style: { height: '100%' } },
+          React.createElement(FlexLayout.Flex, { className: 'file-based-load-order-list', style: { overflowY: 'auto', minHeight: 0 } },
+            React.createElement(LogicModsSelectionContext.Provider, { value: { selectedIds, setSelectedIds, allIds, contextMenu, setContextMenu } },
+              React.createElement(DraggableList, {
+                itemTypeId: `${GAME_ID}-logicmods-lo-entry`,
+                id: `${GAME_ID}-logicmods-loadorder-list`,
+                items: filteredOrder,
+                itemRenderer: LogicModsItemRenderer,
+                apply: onApply,
+                idFunc: entry => entry.id,
+                isLocked: item => [true, 'true', 'always'].includes(item?.locked),
+              })
+            )
+          ),
+          React.createElement('div', { style: { flexShrink: 0 } },
+            React.createElement(LogicModsLoadOrderInfoPanel)
           )
         )
       )

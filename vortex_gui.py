@@ -19,8 +19,8 @@ Usage:
     python vortex_gui.py
 """
 
+import collections
 import os
-import re
 import shutil
 import sys
 
@@ -49,7 +49,6 @@ REPO_ROOT = vu.REPO_ROOT
 PYTHON = sys.executable
 NODE = shutil.which("node") or "node"
 FLAGS_PATH = vu.GUI_FLAGS_PATH
-STATS_PATH = vu.GUI_STATS_PATH
 
 
 # == Flag / stats storage ======================================================
@@ -63,7 +62,7 @@ def _save_flags(data: dict):
 
 
 def _load_stats() -> dict:
-    return vu.read_json(STATS_PATH)
+    return vu.read_gui_stats()
 
 
 def _save_flag(game_id: str, flagged: bool, note: str):
@@ -437,14 +436,15 @@ def _make_icons():
 
 # == Data model ================================================================
 
-COL_FLAG, COL_ICON, COL_GAME_ID, COL_NAME, COL_VERSION, COL_DATE, COL_ENGINE, \
+COL_CHECK, COL_FLAG, COL_ICON, COL_GAME_ID, COL_NAME, COL_VERSION, COL_DATE, COL_ENGINE, \
     COL_STORES, COL_END, COL_DL, COL_NEXUS_PUB, \
-    COL_COVER, COL_TITLE, COL_BANNER = range(14)
-HEADERS = ("Flag", "Icon", "Game ID", "Name", "Ver", "Updated", "Engine", "Stores", "End", "DL", "Pub", "Cover", "Title", "Banner")
+    COL_COVER, COL_TITLE, COL_BANNER = range(15)
+HEADERS = ("", "Flag", "Icon", "Game ID", "Name", "Ver", "Updated", "Engine", "Stores", "End", "DL", "Pub", "Cover", "Title", "Banner")
 _THUMBNAIL_COLS = frozenset({COL_ICON, COL_COVER, COL_TITLE, COL_BANNER})
 _IS_GROUP_HEADER_ROLE = Qt.UserRole + 10
 
-_icon_cache: dict[tuple[str, float], "QIcon | None"] = {}
+_ICON_CACHE_MAX = 512
+_icon_cache: "collections.OrderedDict[tuple[str, float], QIcon | None]" = collections.OrderedDict()
 
 
 def _load_icon_cached(path: str, max_w: int, max_h: int) -> "QIcon | None":
@@ -453,9 +453,14 @@ def _load_icon_cached(path: str, max_w: int, max_h: int) -> "QIcon | None":
     except OSError:
         return None
     key = (path, mtime)
-    if key not in _icon_cache:
-        _icon_cache[key] = _load_icon(path, max_w, max_h)
-    return _icon_cache[key]
+    if key in _icon_cache:
+        _icon_cache.move_to_end(key)
+        return _icon_cache[key]
+    icon = _load_icon(path, max_w, max_h)
+    _icon_cache[key] = icon
+    if len(_icon_cache) > _ICON_CACHE_MAX:
+        _icon_cache.popitem(last=False)
+    return icon
 
 
 class GameRow:
@@ -502,8 +507,11 @@ class GameModel(QAbstractTableModel):
     def __init__(self):
         super().__init__()
         self._rows: list[GameRow] = []
+        self._checked_ids: set[str] = set()
 
     def _load_rows(self) -> list:
+        """Load all row data from disk. Must NOT create QPixmap/QIcon objects -- safe to call
+        from a background thread. Call _attach_icons(rows) on the UI thread afterward."""
         flags = _load_flags()
         stats = _load_stats()
         rows = []
@@ -516,16 +524,9 @@ class GameModel(QAbstractTableModel):
             stores = vu.detect_stores(src)
 
             icon_path = os.path.join(folder, "exec.png")
-            icon = _load_icon_cached(icon_path, 22, 20) if os.path.isfile(icon_path) else None
-
             cover_path = os.path.join(folder, f"{game_id}.jpg")
-            cover = _load_icon_cached(cover_path, 40, 20) if os.path.isfile(cover_path) else None
-
             title_path = os.path.join(vu.TITLE_IMAGES_DIR, f"{game_id}_title.jpg")
-            title = _load_icon_cached(title_path, 40, 20) if os.path.isfile(title_path) else None
-
             banner_path = os.path.join(vu.BANNER_IMAGES_DIR, f"{game_id}_banner.jpg")
-            banner = _load_icon_cached(banner_path, 40, 20) if os.path.isfile(banner_path) else None
 
             extension_url = vu.extract_extension_url(src)
 
@@ -539,19 +540,35 @@ class GameModel(QAbstractTableModel):
             fd = flags.get(game_id, {})
             rows.append(GameRow(
                 game_id, name, version, date, engine, stores, folder,
-                icon, icon_path if os.path.isfile(icon_path) else None,
-                cover, cover_path if os.path.isfile(cover_path) else None,
-                title, title_path if os.path.isfile(title_path) else None,
-                banner, banner_path if os.path.isfile(banner_path) else None,
+                None, icon_path if os.path.isfile(icon_path) else None,
+                None, cover_path if os.path.isfile(cover_path) else None,
+                None, title_path if os.path.isfile(title_path) else None,
+                None, banner_path if os.path.isfile(banner_path) else None,
                 extension_url,
                 endorsements, unique_downloads, nexus_published, stats_fetched_at,
                 fd.get("flagged", False), fd.get("note", ""),
             ))
         return rows
 
+    @staticmethod
+    def _attach_icons(rows: list) -> None:
+        """Build QIcon objects for all rows. Must be called on the UI thread -- Qt forbids
+        constructing QPixmap outside the main thread."""
+        for row in rows:
+            if row.icon_path:
+                row.icon = _load_icon_cached(row.icon_path, 22, 20)
+            if row.cover_path:
+                row.cover = _load_icon_cached(row.cover_path, 40, 20)
+            if row.title_path:
+                row.title = _load_icon_cached(row.title_path, 40, 20)
+            if row.banner_path:
+                row.banner = _load_icon_cached(row.banner_path, 40, 20)
+
     def load(self):
         self.beginResetModel()
-        self._rows = self._load_rows()
+        rows = self._load_rows()
+        self._attach_icons(rows)   # QPixmap construction -- UI thread only
+        self._rows = rows
         self.endResetModel()
 
     def apply_rows(self, rows: list):
@@ -570,6 +587,11 @@ class GameModel(QAbstractTableModel):
             return None
         row = self._rows[index.row()]
         col = index.column()
+
+        if role == Qt.CheckStateRole:
+            if col == COL_CHECK:
+                return Qt.Checked if row.game_id in self._checked_ids else Qt.Unchecked
+            return None
 
         if role == Qt.DecorationRole:
             if col == COL_FLAG:   return _FLAG_ICON if row.flagged else _UNFLAG_ICON
@@ -590,7 +612,7 @@ class GameModel(QAbstractTableModel):
             return None
 
         if role == Qt.DisplayRole:
-            if col == COL_FLAG or col in _THUMBNAIL_COLS:
+            if col in (COL_CHECK, COL_FLAG) or col in _THUMBNAIL_COLS:
                 return ""
             if col == COL_END:
                 return "" if row.endorsements is None else f"{row.endorsements:,}"
@@ -627,10 +649,13 @@ class GameModel(QAbstractTableModel):
                     except ValueError:
                         return float('inf')
                 return float('inf')
-            if col == COL_ICON:   return 1 if row.icon   is not None else 0
-            if col == COL_COVER:  return 1 if row.cover  is not None else 0
-            if col == COL_TITLE:  return 1 if row.title  is not None else 0
-            if col == COL_BANNER: return 1 if row.banner is not None else 0
+            if col in (COL_ICON, COL_COVER, COL_TITLE, COL_BANNER):
+                p = {COL_ICON: row.icon_path, COL_COVER: row.cover_path,
+                     COL_TITLE: row.title_path, COL_BANNER: row.banner_path}[col]
+                try:
+                    return os.path.getmtime(p) if p else -1.0
+                except OSError:
+                    return -1.0
             return None
 
         return None
@@ -639,6 +664,17 @@ class GameModel(QAbstractTableModel):
         if orientation == Qt.Horizontal and role == Qt.DisplayRole:
             return HEADERS[section]
         return None
+
+    def clear_checked(self):
+        if not self._checked_ids:
+            return
+        self._checked_ids.clear()
+        if self._rows:
+            self.dataChanged.emit(
+                self.index(0, COL_CHECK),
+                self.index(len(self._rows) - 1, COL_CHECK),
+                [Qt.CheckStateRole],
+            )
 
 
 class _RefreshWorker(QThread):
@@ -671,9 +707,11 @@ class GameFilterModel(QSortFilterProxyModel):
         self.invalidate()
 
     def filterAcceptsRow(self, source_row, source_parent):
+        row = self.sourceModel()._rows[source_row]
+        if row.game_id in self.sourceModel()._checked_ids:
+            return True
         if not self._text:
             return True
-        row = self.sourceModel()._rows[source_row]
         return (self._text in row.game_id.lower()
                 or self._text in row.name.lower()
                 or self._text in row.engine.lower()
@@ -714,11 +752,15 @@ class GroupProxy(QAbstractProxyModel):
             old.modelReset.disconnect(self._rebuild)
             old.layoutChanged.disconnect(self._rebuild)
             old.dataChanged.disconnect(self._on_data_changed)
+            old.rowsRemoved.disconnect(self._rebuild)
+            old.rowsInserted.disconnect(self._rebuild)
         super().setSourceModel(model)
         if model is not None:
             model.modelReset.connect(self._rebuild)
             model.layoutChanged.connect(self._rebuild)
             model.dataChanged.connect(self._on_data_changed)
+            model.rowsRemoved.connect(self._rebuild)
+            model.rowsInserted.connect(self._rebuild)
             self._rebuild()
 
     def set_grouping(self, enabled: bool):
@@ -1116,7 +1158,7 @@ class ScriptArgsDialog(QDialog):
 class BumpTypeDialog(QDialog):
     """Radio-button popup for selecting major, minor, or manual version bump."""
 
-    _SEMVER = re.compile(r'^\d+\.\d+\.\d+$')
+    _SEMVER = vu.SEMVER_PATTERN
 
     def __init__(self, game_ids: list[str], parent=None):
         super().__init__(parent)
@@ -1226,6 +1268,7 @@ class MainWindow(QMainWindow):
         self._runner.finished_signal.connect(self._on_run_finished)
 
         self._action_btns: dict[str, QAction] = {}
+        self._global_action_labels: set[str] = set()  # repo-wide; enabled regardless of selection
         self._refresh_after_run = False
         self._refresh_worker: _RefreshWorker | None = None
         self._splitter: QSplitter | None = None
@@ -1264,6 +1307,10 @@ class MainWindow(QMainWindow):
         self._group_btn.setCheckable(True)
         self._group_btn.toggled.connect(self._on_group_toggled)
         top_bar.addWidget(self._group_btn)
+        self._clear_checks_btn = QPushButton("Clear Checks")
+        self._clear_checks_btn.setEnabled(False)
+        self._clear_checks_btn.clicked.connect(self._clear_checks)
+        top_bar.addWidget(self._clear_checks_btn)
         root_layout.addLayout(top_bar)
 
         QShortcut(QKeySequence("Ctrl+F"), self).activated.connect(self._filter_edit.setFocus)
@@ -1279,14 +1326,16 @@ class MainWindow(QMainWindow):
         toolbar = QToolBar()
         toolbar.setMovable(False)
 
-        def add_action(label: str, slot, sep: bool = False):
+        def add_action(label: str, slot, sep: bool = False, global_action: bool = False):
             if sep:
                 toolbar.addSeparator()
             act = QAction(label, self)
             act.triggered.connect(slot)
-            act.setEnabled(False)
+            act.setEnabled(global_action)  # global actions start enabled; others need selection
             toolbar.addAction(act)
             self._action_btns[label] = act
+            if global_action:
+                self._global_action_labels.add(label)
 
         add_action("Bump Version", self._on_bump_version)
         add_action("Release", self._on_release)
@@ -1301,8 +1350,8 @@ class MainWindow(QMainWindow):
         add_action("Setup Test Folder", self._on_setup_test)
         add_action("Patch", self._on_patch)
         add_action("Categorize", self._on_categorize)
-        add_action("Analyze Log", self._on_analyze_log, sep=True)
-        add_action("Audit Scripts", self._on_audit_scripts)
+        add_action("Analyze Log", self._on_analyze_log, sep=True, global_action=True)
+        add_action("Audit Scripts", self._on_audit_scripts, global_action=True)
         add_action("Fetch Icon", self._on_fetch_icon, sep=True)
         add_action("Fetch Cover", self._on_fetch_cover)
         add_action("Fetch Title", self._on_fetch_title)
@@ -1327,6 +1376,7 @@ class MainWindow(QMainWindow):
         self._table.verticalHeader().setDefaultSectionSize(22)
 
         hdr = self._table.horizontalHeader()
+        hdr.setSectionResizeMode(COL_CHECK,   QHeaderView.Fixed)
         hdr.setSectionResizeMode(COL_FLAG,    QHeaderView.Fixed)
         hdr.setSectionResizeMode(COL_ICON,    QHeaderView.Fixed)
         hdr.setSectionResizeMode(COL_GAME_ID, QHeaderView.Interactive)
@@ -1342,6 +1392,7 @@ class MainWindow(QMainWindow):
         hdr.setSectionResizeMode(COL_COVER,   QHeaderView.Fixed)
         hdr.setSectionResizeMode(COL_TITLE,   QHeaderView.Fixed)
         hdr.setSectionResizeMode(COL_BANNER,  QHeaderView.Fixed)
+        self._table.setColumnWidth(COL_CHECK,   20)
         self._table.setColumnWidth(COL_FLAG,    22)
         self._table.setColumnWidth(COL_ICON,    26)
         self._table.setColumnWidth(COL_NAME,    300)
@@ -1364,6 +1415,7 @@ class MainWindow(QMainWindow):
         self._table.doubleClicked.connect(self._on_table_double_clicked)
         splitter.addWidget(self._table)
         self._proxy.modelReset.connect(self._apply_spans)
+        self._model.dataChanged.connect(self._on_model_data_changed)
 
         # --- log pane ---
         self._log_pane = QPlainTextEdit()
@@ -1415,6 +1467,12 @@ class MainWindow(QMainWindow):
             self._filter_edit.setText(filter_text)
         if settings.value("groupByEngine", False, type=bool):
             self._group_btn.setChecked(True)
+        raw_checked = settings.value("checkedIds", [])
+        if isinstance(raw_checked, str):
+            raw_checked = [raw_checked]
+        elif raw_checked is None:
+            raw_checked = []
+        self._model._checked_ids = set(raw_checked)
 
     def closeEvent(self, event):
         settings = QSettings("ChemBoy1", "VortexExtensionManager")
@@ -1424,6 +1482,7 @@ class MainWindow(QMainWindow):
         settings.setValue("tableHeaderColCount", len(HEADERS))
         settings.setValue("filterText", self._filter_edit.text())
         settings.setValue("groupByEngine", self._group_btn.isChecked())
+        settings.setValue("checkedIds", list(self._model._checked_ids))
         self._runner.stop()
         self._runner.wait_for_finished(3000)
         if self._refresh_worker is not None:
@@ -1455,6 +1514,7 @@ class MainWindow(QMainWindow):
         self._refresh_worker.start()
 
     def _on_refresh_done(self, rows: list, prev_ids: set):
+        self._model._attach_icons(rows)   # QPixmap must be built on the UI thread
         self._model.apply_rows(rows)
         self._refresh_worker.deleteLater()
         self._refresh_worker = None
@@ -1482,19 +1542,27 @@ class MainWindow(QMainWindow):
     # -- Selection helpers -----------------------------------------------------
 
     def _selected_rows(self) -> list[GameRow]:
+        if self._model._checked_ids:
+            seen: set[str] = set()
+            result: list[GameRow] = []
+            for row in self._model._rows:
+                if row.game_id in self._model._checked_ids and row.game_id not in seen:
+                    seen.add(row.game_id)
+                    result.append(row)
+            return result
         sel = self._table.selectionModel().selectedRows()
-        seen: set[str] = set()
-        result: list[GameRow] = []
+        seen2: set[str] = set()
+        result2: list[GameRow] = []
         for idx in sel:
             if self._proxy.is_header_row(idx.row()):
                 continue
             filter_idx = self._proxy.mapToSource(idx)
             src_idx = self._filter_model.mapToSource(filter_idx)
             row = self._model._rows[src_idx.row()]
-            if row.game_id not in seen:
-                seen.add(row.game_id)
-                result.append(row)
-        return result
+            if row.game_id not in seen2:
+                seen2.add(row.game_id)
+                result2.append(row)
+        return result2
 
     def _selected_ids(self) -> list[str]:
         return [r.game_id for r in self._selected_rows()]
@@ -1514,6 +1582,16 @@ class MainWindow(QMainWindow):
         filter_idx = self._proxy.mapToSource(proxy_index)
         src_idx = self._filter_model.mapToSource(filter_idx)
         row = self._model._rows[src_idx.row()]
+
+        if col == COL_CHECK:
+            gid = row.game_id
+            if gid in self._model._checked_ids:
+                self._model._checked_ids.discard(gid)
+            else:
+                self._model._checked_ids.add(gid)
+            check_cell = self._model.index(src_idx.row(), COL_CHECK)
+            self._model.dataChanged.emit(check_cell, check_cell, [Qt.CheckStateRole])
+            return
 
         if col == COL_FLAG:
             dlg = FlagDialog(row.game_id, row.flagged, row.note, self)
@@ -1540,7 +1618,7 @@ class MainWindow(QMainWindow):
     def _on_table_double_clicked(self, proxy_index):
         if self._proxy.is_header_row(proxy_index.row()):
             return
-        if proxy_index.column() in (*_THUMBNAIL_COLS, COL_FLAG):
+        if proxy_index.column() in (*_THUMBNAIL_COLS, COL_CHECK, COL_FLAG):
             return
         self._on_open_editor()
 
@@ -1837,11 +1915,25 @@ class MainWindow(QMainWindow):
 
     # -- State updates ---------------------------------------------------------
 
+    def _set_actions_enabled(self, ids=None):
+        """Enable toolbar actions. Global actions (repo-wide) always enabled; others need a selection."""
+        if ids is None:
+            ids = self._selected_ids()
+        for label, action in self._action_btns.items():
+            action.setEnabled(bool(ids) or label in self._global_action_labels)
+        launch_act = self._action_btns.get("Launch in Vortex")
+        if launch_act:
+            n = len(ids) if ids else 0
+            if n == 1:
+                launch_act.setToolTip("Launch selected game in Vortex")
+            elif n == 0:
+                launch_act.setToolTip("Select a game to launch in Vortex")
+            else:
+                launch_act.setToolTip("Select exactly one game to launch in Vortex")
+
     def _on_selection_changed(self, *_):
         if not self._runner.is_running:
-            ids = self._selected_ids()
-            for action in self._action_btns.values():
-                action.setEnabled(bool(ids))
+            self._set_actions_enabled()
         self._update_status_bar()
 
     def _on_run_started(self, desc: str):
@@ -1861,20 +1953,32 @@ class MainWindow(QMainWindow):
         if refresh:
             self._refresh_data()
         else:
-            ids = self._selected_ids()
-            for action in self._action_btns.values():
-                action.setEnabled(bool(ids))
+            self._set_actions_enabled()
             self._update_status_bar()
+
+    def _clear_checks(self):
+        self._model.clear_checked()
+
+    def _on_model_data_changed(self, top_left, _bottom_right, _roles):
+        if top_left.column() == COL_CHECK:
+            self._update_status_bar()
+            if not self._runner.is_running:
+                self._set_actions_enabled()
 
     def _update_status_bar(self):
         total_proxy = self._filter_model.rowCount()
         total_model = self._model.rowCount()
         selected = len(self._table.selectionModel().selectedRows())
+        checked = len(self._model._checked_ids)
         if total_proxy < total_model:
             count_str = f"{total_proxy} of {total_model} games shown"
         else:
             count_str = f"{total_proxy} games shown"
-        self._status_label.setText(f"{count_str}  |  {selected} selected")
+        parts = [count_str, f"{selected} selected"]
+        if checked:
+            parts.append(f"{checked} checked")
+        self._status_label.setText("  |  ".join(parts))
+        self._clear_checks_btn.setEnabled(bool(checked))
         if not self._runner.is_running:
             self.statusBar().clearMessage()
 

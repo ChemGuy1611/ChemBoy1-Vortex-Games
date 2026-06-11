@@ -4,9 +4,11 @@ deploy_to_vortex.py -- Copy CB1 game extension folder(s) to the Vortex plugins d
 
 Usage:
     python deploy_to_vortex.py GAME_ID [GAME_ID ...] [--dry-run] [--force]
+    python deploy_to_vortex.py --all [--dry-run] [--force]
 
 Arguments:
     GAME_ID     One or more game IDs (e.g. thelastofuspart2)
+    --all       Deploy every game-* extension in the repo
     --dry-run   Preview what would change without copying
     --force     Always do a full folder replace instead of index.js-only update
 
@@ -24,26 +26,6 @@ import vortex_utils as vu
 PLUGINS_DIR = os.environ.get("VORTEX_PLUGINS_DIR", r"C:\ProgramData\vortex\plugins")
 
 
-def find_existing_plugin(game_id: str, game_name: str | None) -> str | None:
-    """Return path to an existing plugin folder matching game-{game_id}[-*] or
-    'Vortex Extension Update - {game_name} Vortex Extension v*'."""
-    prefix = f"game-{game_id}"
-    try:
-        entries = sorted(os.listdir(PLUGINS_DIR))
-    except OSError:
-        return None
-    for name in entries:
-        if name == prefix or name.startswith(prefix + "-"):
-            return os.path.join(PLUGINS_DIR, name)
-    if game_name:
-        needle = vu.normalize_game_name(vu.roman_to_arabic(
-            f"Vortex Extension Update - {game_name} Vortex Extension"))
-        for name in entries:
-            if vu.normalize_game_name(vu.roman_to_arabic(name)).startswith(needle):
-                return os.path.join(PLUGINS_DIR, name)
-    return None
-
-
 def deploy_game(game_id: str, dry_run: bool, force: bool) -> bool:
     src = os.path.join(vu.REPO_ROOT, f"game-{game_id}")
     if not os.path.isdir(src):
@@ -52,7 +34,7 @@ def deploy_game(game_id: str, dry_run: bool, force: bool) -> bool:
 
     js_src = vu.read_index_js(src)
     game_name = vu.extract_game_name(js_src) if js_src else None
-    existing = None if force else find_existing_plugin(game_id, game_name)
+    existing = None if force else vu.find_vortex_plugin_folder(game_id, game_name)
     dest = existing or os.path.join(PLUGINS_DIR, f"game-{game_id}")
     if dry_run:
         if existing:
@@ -85,8 +67,23 @@ def deploy_game(game_id: str, dry_run: bool, force: bool) -> bool:
 def main():
     parser = vu.build_arg_parser(
         "Deploy CB1 extension folder(s) to the Vortex plugins directory.",
+        ids_required=False,
+    )
+    parser.add_argument(
+        "--all", action="store_true",
+        help="Deploy every game-* extension in the repo.",
     )
     args = parser.parse_args()
+
+    if args.all:
+        game_ids = vu.list_game_ids()
+        if not game_ids:
+            print("[ERROR] No game-* folders found in repo.")
+            sys.exit(1)
+    elif args.game_ids:
+        game_ids = args.game_ids
+    else:
+        parser.error("Provide at least one GAME_ID or use --all.")
 
     if not os.path.isdir(PLUGINS_DIR):
         print(f"[ERROR] Vortex plugins folder not found: {PLUGINS_DIR}")
@@ -94,7 +91,7 @@ def main():
 
     results = []
     try:
-        for gid in args.game_ids:
+        for gid in game_ids:
             try:
                 results.append(deploy_game(gid, dry_run=args.dry_run, force=args.force))
             except Exception as e:

@@ -42,6 +42,7 @@
 | `PAKMOD_LOADORDER` | `true` | set to false if you don't want loadOrder. If must be in "Paks" root, disable loadOrder. |
 | `FBLO` | `true` | set to false to use legacy load order page |
 | `ue4ssLoadOrder` | `true` | enable load order and mods.txt writing for UE4SS mods |
+| `logicModsLoadOrder` | `true` | enable load order page and load_order.txt writing for LogicMods/Blueprint pak mods |
 | `SYM_LINKS` | `true` | true if symlink deployment is enabled for this game |
 | `CHECK_CONFIG` | `false` | boolean to check if game, staging folder, and config and save folders are on the same drive |
 | `CHECK_SAVE` | `false` | secondary same as above (if save and config are in different locations) |

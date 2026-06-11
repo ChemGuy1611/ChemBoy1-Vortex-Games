@@ -19,6 +19,7 @@ Usage:
         roman_to_arabic, arabic_to_roman,
         name_lookup_variants, lookup_pcgamingwiki,
         get_api_key, http_get, http_get_bytes, http_get_json, http_post_json,
+        nexus_v3_get, nexus_v3_post_json,
         fetch_epic_app_id, add_to_discovery_ids,
         const_value, is_unset, is_missing, set_or_insert, replace_const_rhs,
         XXX_PATTERN, is_placeholder_value, is_real_value, find_placeholder_vars,
@@ -29,7 +30,9 @@ Usage:
         read_info_json, make_info_json, make_changelog, parse_changelog_latest,
         bump_semver, prepend_changelog_entry,
         mutate_index_js, mutate_text_file, read_json, write_json_atomic,
-        list_game_ids, iter_game_folders, iter_repo_scripts,
+        read_gui_stats, write_gui_stats,
+        SEMVER_PATTERN, is_valid_semver,
+        list_game_ids, iter_game_folders, iter_steam_image_targets, iter_repo_scripts,
         dry_prefix, log_dry, print_run_summary, print_count_summary, resize_images_to,
         build_arg_parser, assert_is_game_id, report_node_check,
         node_check, node_check_source, eslint_check,
@@ -55,6 +58,7 @@ import json
 import os
 import re
 import shutil
+import ssl
 import subprocess
 import sys
 import tempfile
@@ -62,6 +66,12 @@ import time
 import urllib.error
 import urllib.request
 import urllib.parse
+
+try:
+    import certifi as _certifi
+    _SSL_CTX_NEXUS = ssl.create_default_context(cafile=_certifi.where())
+except ImportError:
+    _SSL_CTX_NEXUS = ssl.create_default_context()
 
 REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
 
@@ -1402,6 +1412,30 @@ def iter_game_folders(target_game_ids=None):
         yield folder, game_id, src
 
 
+def iter_steam_image_targets(target_game_ids=None, force=False, target_path_fn=None):
+    """Yield (folder, game_id, steamapp_id, game_name) for extensions to process.
+
+    Skips games that already have their target image (unless force=True) and games
+    without a real STEAMAPP_ID (Xbox/Epic-only). Deduplicates identical game_ids.
+
+    target_path_fn: callable(folder, game_id) -> str target path. If None, yields
+    all Steam-resolvable games (caller computes path)."""
+    seen = set()
+    for folder, game_id, src in iter_game_folders(target_game_ids):
+        if game_id in seen:
+            continue
+        seen.add(game_id)
+        if not has_real_steamapp_id(src):
+            continue
+        if target_path_fn is not None:
+            target_path = target_path_fn(folder, game_id)
+            if os.path.isfile(target_path) and not force:
+                continue
+        steamapp_id = extract_steamapp_id(src)
+        game_name = extract_game_name(src)
+        yield folder, game_id, steamapp_id, game_name
+
+
 def list_game_ids():
     """Return a sorted list of game IDs for all game-* folders in the repo."""
     return sorted(
@@ -1468,13 +1502,13 @@ def read_info_json(folder):
         return None
 
 
-_DEFAULT_MANIFEST_PATH = r"C:\Game_Tools\0 GitHub Repos\Vortex-Backend\out\extensions-manifest.json"
+_DEFAULT_MANIFEST_PATH = os.path.join(os.environ.get("APPDATA", ""), "Vortex", "temp", "extensions-manifest.json")
 
 
 def load_vortex_manifest(path=None):
     """Read Vortex extensions-manifest.json. Returns {game_id: mod_id} dict.
 
-    path defaults to C:\\Game_Tools\\0 GitHub Repos\\Vortex-Backend\\out\\extensions-manifest.json.
+    path defaults to %APPDATA%\\Vortex\\temp\\extensions-manifest.json.
     Returns {} and prints a warning on any read/parse error."""
     manifest_path = path or _DEFAULT_MANIFEST_PATH
     try:
@@ -1539,40 +1573,40 @@ def detect_engine(src):
     """Return a short engine/framework label for a game extension based on its index.js source.
 
     Same detection logic as categorize_games.py; both share this function.
-    Returns one of the ENGINE_LABELS strings (e.g. 'Unreal Engine 4/5', 'RE Engine', etc.).
+    Returns one of the ENGINE_LABELS strings (e.g. 'UE4-5', 'RE Engine', etc.).
     """
     head = re.sub(r'\s+', ' ', '\n'.join(src.splitlines()[:20]))
     if 'UNREALDATA' in src:
-        return 'Unreal Engine 4/5'
+        return 'UE4-5'
     if 'const TFC_ID =' in src or 'Structure: UE2/3' in head or 'TFC Installer' in head:
-        return 'Unreal Engine 2/3'
+        return 'UE2-3'
     if "requireExtension('modtype-bepinex')" in src and 'MelonLoader' not in head and 'Hybrid' not in head:
-        return 'Unity + BepInEx'
+        return 'Unity+Bep'
     if 'MelonLoader' in head or 'Hybrid' in head:
-        return 'Unity + MelonLoader/BepInEx'
+        return 'Unity+Mel/Bep'
     if "requireExtension('modtype-umm')" in src or 'UMM' in head:
-        return 'Unity + UMM'
+        return 'Unity+UMM'
     if 'Far Cry' in head or 'Dunia' in head:
-        return 'Far Cry / Dunia'
+        return 'Dunia'
     if 'RPGMaker' in head or 'RPG Maker' in head:
         return 'RPG Maker'
     if 'Snowdrop' in head:
-        return 'Snowdrop Engine'
+        return 'Snowdrop'
     if 'Godot' in head:
-        return 'Godot Engine'
+        return 'Godot'
     if 'const ACSE_ID =' in src or 'Cobra' in head or 'ACSE' in head:
-        return 'Cobra / ACSE'
+        return 'Cobra/ACSE'
     if 'REFramework' in head or 'RE Engine' in head or 'Fluffy' in head:
-        return 'RE Engine'
+        return 'RE/Fluffy'
     if 'const RELOADED_ID =' in src or 'Reloaded' in head:
         return 'Reloaded-II'
     if 'AnvilToolkit' in head or 'const ATK_ID =' in src or 'ReForge' in src:
-        return 'Anvil Engine'
+        return 'Anvil'
     if 'SRMM' in head or 'shinryumodmanager' in src:
-        return 'Shin Ryu (SRMM)'
+        return 'SRMM'
     if 'Frostbite' in head or 'const FROSTY_EXEC =' in src:
         return 'Frostbite'
-    return 'Basic / Other'
+    return 'Basic'
 
 
 def validate_index_js(src: str) -> list[str]:
@@ -1786,6 +1820,22 @@ def write_text_atomic(path, entries, encoding="utf-8"):
     os.replace(tmp, path)
 
 
+def read_gui_stats():
+    """Read the shared GUI nexus-stats JSON ({game_id: stats_dict}). Returns {} on error.
+
+    Both vortex_gui.py and fetch_nexus_stats.py must use this instead of reading
+    GUI_STATS_PATH directly to keep their I/O behaviour in sync."""
+    return read_json(GUI_STATS_PATH, default={})
+
+
+def write_gui_stats(data):
+    """Write stats dict to GUI_STATS_PATH atomically with sort_keys=True.
+
+    Both vortex_gui.py and fetch_nexus_stats.py must use this so the file is always
+    written consistently (sort_keys guarantees a stable diff for version control)."""
+    write_json_atomic(GUI_STATS_PATH, data, sort_keys=True)
+
+
 def print_run_summary(saved, failed, skipped, *, skip_label="no Steam ID"):
     """Print a standardized saved/failed/skipped run summary block."""
     print(f"\n{'-' * 50}")
@@ -1814,6 +1864,16 @@ def replace_const_rhs(src, name, new_rhs, *, count=1):
     declaration is targeted when count=1 (default)."""
     pattern = rf'^([ \t]*(?:const|let)\s+{re.escape(name)}\s*=\s*)["\'][^"\']*["\']'
     return re.sub(pattern, rf'\g<1>{new_rhs}', src, count=count, flags=re.MULTILINE)
+
+
+SEMVER_PATTERN = re.compile(r'^\d+\.\d+\.\d+$')
+"""Compiled regex matching strict X.Y.Z semver (no pre-release suffix).
+Use is_valid_semver() for a boolean check."""
+
+
+def is_valid_semver(s):
+    """Return True if s is a strict X.Y.Z semver string (no pre-release suffix)."""
+    return bool(SEMVER_PATTERN.match(s))
 
 
 def bump_semver(version, kind):
@@ -1913,6 +1973,61 @@ def nexus_get_mod(domain, mod_id, api_key):
     return result["data"], result.get("remaining")
 
 
+_NEXUS_V3 = "https://api.nexusmods.com/v3"
+_NEXUS_V3_HEADERS = {"Accept": "application/json", "User-Agent": "Mozilla/5.0"}
+
+
+def nexus_v3_get(path, api_key):
+    """GET a Nexus Mods v3 endpoint.
+
+    Uses certifi SSL context; retries up to 2 times on 429/5xx (honoring Retry-After).
+    Returns the parsed JSON response body (the full dict, not just 'data' -- v3 shapes vary).
+    Raises RuntimeError on persistent HTTP errors."""
+    url = f"{_NEXUS_V3}{path}"
+    headers = {"apikey": api_key, **_NEXUS_V3_HEADERS}
+
+    def _do():
+        req = urllib.request.Request(url, headers=headers)
+        with urllib.request.urlopen(req, timeout=30, context=_SSL_CTX_NEXUS) as resp:
+            return json.loads(resp.read())
+
+    try:
+        result = {}
+        result["r"] = _execute_with_retry(_do, respect_retry_after=True)
+    except urllib.error.HTTPError as e:
+        body = ""
+        try:
+            body = e.read().decode("utf-8", errors="replace")
+        except Exception:
+            pass
+        raise RuntimeError(f"nexus_v3_get {path}: HTTP {e.code} {e.reason} - {body[:200]}") from None
+    return result["r"]
+
+
+def nexus_v3_post_json(path, body, api_key):
+    """POST JSON to a Nexus Mods v3 endpoint.
+
+    Uses certifi SSL context. Returns the parsed JSON response body.
+    Not retried (POST is not idempotent). Raises RuntimeError on HTTP errors."""
+    url = f"{_NEXUS_V3}{path}"
+    payload = json.dumps(body).encode("utf-8")
+    req = urllib.request.Request(
+        url,
+        data=payload,
+        headers={"apikey": api_key, "Content-Type": "application/json", **_NEXUS_V3_HEADERS},
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=60, context=_SSL_CTX_NEXUS) as resp:
+            return json.loads(resp.read())
+    except urllib.error.HTTPError as e:
+        body_txt = ""
+        try:
+            body_txt = e.read().decode("utf-8", errors="replace")
+        except Exception:
+            pass
+        raise RuntimeError(f"nexus_v3_post_json {path}: HTTP {e.code} {e.reason} - {body_txt[:400]}") from None
+
+
 # == Platform / filesystem helpers =============================================
 
 def find_vortex_exe():
@@ -1972,24 +2087,58 @@ def find_vortex_plugin_folder(game_id, game_name=None):
     """Return the deployed plugin folder path for game_id in Vortex's plugins dir, or None.
 
     Checks VORTEX_PLUGINS_DIR env var (default: C:\\ProgramData\\vortex\\plugins).
-    Matches by game_id prefix first; falls back to display name if game_name is given."""
+    Match priority:
+      1. Exact game_id match or game_id prefix (e.g. "subnautica2", "subnautica2-1.2.0")
+      2. "Vortex Extension Update - <name> v*" folder (deployed via Nexus in-app update)
+      3. Fuzzy display-name match (if game_name is given)"""
     plugins_dir = os.environ.get("VORTEX_PLUGINS_DIR", r"C:\ProgramData\vortex\plugins")
     if not os.path.isdir(plugins_dir):
         return None
+    try:
+        entries = os.listdir(plugins_dir)
+    except OSError:
+        return None
+
     gid_lower = game_id.lower()
-    for entry in os.listdir(plugins_dir):
+
+    # Pass 1: exact game-id prefix match
+    for entry in entries:
         el = entry.lower()
         if el == gid_lower or el.startswith(gid_lower + "-"):
             full = os.path.join(plugins_dir, entry)
             if os.path.isdir(full):
                 return full
+
+    # Pass 2: "Vortex Extension Update - <name> v*" naming (Vortex in-app update folder)
+    # Compare the stripped name portion against both game_id and game_name.
+    _vu_prefix = re.compile(r'^vortex extension update - (.+?) v\d', re.IGNORECASE)
+    def _clean(s):
+        return re.sub(r'[^a-z0-9]', '', s.lower())
+
+    gid_clean = _clean(game_id)
+    name_clean = _clean(game_name) if game_name else None
+
+    for entry in entries:
+        m = _vu_prefix.match(entry)
+        if not m:
+            continue
+        entry_name_clean = _clean(m.group(1))
+        full = os.path.join(plugins_dir, entry)
+        if not os.path.isdir(full):
+            continue
+        if entry_name_clean == gid_clean:
+            return full
+        if name_clean and name_clean in entry_name_clean:
+            return full
+
+    # Pass 3: fuzzy game_name substring match (original fallback)
     if game_name:
-        name_clean = re.sub(r'[^a-z0-9]', '', game_name.lower())
-        for entry in os.listdir(plugins_dir):
-            if name_clean in re.sub(r'[^a-z0-9]', '', entry.lower()):
+        for entry in entries:
+            if name_clean and name_clean in _clean(entry):
                 full = os.path.join(plugins_dir, entry)
                 if os.path.isdir(full):
                     return full
+
     return None
 
 
@@ -2030,4 +2179,4 @@ def write_id_list(filepath, game_ids):
 
 def is_load_order_game(src):
     """Return True if the extension registers a load order and is not a UE4/5 game."""
-    return "context.registerLoadOrder" in src and detect_engine(src) != "Unreal Engine 4/5"
+    return "context.registerLoadOrder" in src and detect_engine(src) != "UE4-5"

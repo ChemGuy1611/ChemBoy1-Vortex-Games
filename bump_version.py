@@ -20,7 +20,6 @@ Options:
 
 import datetime
 import os
-import re
 import sys
 
 sys.path.insert(0, os.path.dirname(__file__))
@@ -29,9 +28,6 @@ import vortex_utils as vu
 
 def _bump(version: str, bump_type: str) -> str:
     return vu.bump_semver(version, bump_type)
-
-
-_SEMVER = re.compile(r'^\d+\.\d+\.\d+(?:-[\w.]+)?$')
 
 
 def _process(folder: str, game_id: str, bump_type: str | None, dry_run: bool,
@@ -100,7 +96,7 @@ def main():
     )
     args = parser.parse_args()
 
-    if args.version and not _SEMVER.match(args.version):
+    if args.version and not vu.is_valid_semver(args.version):
         print(f"ERROR: '{args.version}' is not valid semver (X.Y.Z required)")
         sys.exit(1)
 
