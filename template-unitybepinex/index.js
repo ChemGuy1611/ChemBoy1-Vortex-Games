@@ -5,7 +5,7 @@ Author: ChemBoy1
 Version: 0.1.0
 Date: 2026-XX-XX
 Notes:
-- 
+-
 //////////////////////////////////////////*/
 
 //Import libraries
@@ -110,7 +110,7 @@ const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 //modtypes
 const ROOT_ID = `${GAME_ID}-root`;
-const ROOT_NAME = "Root Game Folder";
+const ROOT_NAME = "Root Folder";
 
 let BEPINEX_STRING = 'mono';
 if (BEPINEX_BUILD === 'il2cpp') {
@@ -682,7 +682,7 @@ function testFallback(files, gameId) {
 //Fallback installer to root folder
 function installFallback(api, files, destinationPath) {
   fallbackInstallerNotify(api, destinationPath);
-  
+
   const filtered = files.filter(file =>
     (!file.endsWith(path.sep))
   );
@@ -719,7 +719,7 @@ function fallbackInstallerNotify(api, modName) {
                 + `If you think that Vortex should be capable to install this mod to a specific folder, please contact the extension developer for support at the link below.\n`
                 + `\n`
                 + `Mod Name: ${modName}.\n`
-                + `\n`             
+                + `\n`
           }, [
             { label: 'Continue', action: () => dismiss() },
             {
@@ -738,7 +738,7 @@ function fallbackInstallerNotify(api, modName) {
               if (modMatch) {
                 const MOD_ID = modMatch.attributes.modId;
                 if (MOD_ID !== undefined) {
-                  PAGE = `${MOD_ID}?tab=description`; 
+                  PAGE = `${MOD_ID}?tab=description`;
                 }
               }
               const MOD_PAGE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${PAGE}`;
@@ -763,7 +763,7 @@ async function resolveGameVersion(gamePath) {
     try {
       const data = await fs.readFileAsync(versionFilePath, { encoding: 'utf8' });
       const segments = data.split(VER_SPLIT); //space is usually the split for Version.info files
-      return (segments[VER_IDX]) 
+      return (segments[VER_IDX])
         ? Promise.resolve(segments[VER_IDX])
         : Promise.reject(new util.DataInvalid('Failed to resolve version'));
     } catch (err) {
@@ -781,13 +781,13 @@ async function resolveGameVersion(gamePath) {
       log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
       return Promise.resolve(version);
     }
-  } 
+  }
   else { // use exe - only returns Unity version
     try {
       const exeVersion = require('exe-version');
       const EXEC = getExecutable(gamePath); //need to read to account for multiple exe
       version = exeVersion.getProductVersion(path.join(gamePath, EXEC)); //getFileVersion may need to be used in some cases
-      return Promise.resolve(version); 
+      return Promise.resolve(version);
     } catch (err) {
       log('error', `Could not read ${EXEC} file to get game version: ${err}`);
       return Promise.resolve(version);
@@ -883,22 +883,22 @@ function applyGame(context, gameSpec) {
   });
 
   //register mod types explicitly (due to potentially dynamic DATA_FOLDER)
-  context.registerModType(ASSEMBLY_ID, 60, 
+  context.registerModType(ASSEMBLY_ID, 60,
     (gameId) => {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, 
-    (game) => pathPattern(context.api, game, path.join('{gamePath}', ASSEMBLY_PATH)), 
-    () => Promise.resolve(false), 
+    },
+    (game) => pathPattern(context.api, game, path.join('{gamePath}', ASSEMBLY_PATH)),
+    () => Promise.resolve(false),
     { name: ASSEMBLY_NAME }
   );
-  context.registerModType(ASSETS_ID, 62, 
+  context.registerModType(ASSETS_ID, 62,
     (gameId) => {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, 
-    (game) => pathPattern(context.api, game, path.join('{gamePath}', ASSETS_PATH)), 
-    () => Promise.resolve(false), 
+    },
+    (game) => pathPattern(context.api, game, path.join('{gamePath}', ASSETS_PATH)),
+    () => Promise.resolve(false),
     { name: ASSETS_NAME }
   );
 
@@ -911,7 +911,7 @@ function applyGame(context, gameSpec) {
   if (fallbackInstaller) {
     context.registerInstaller(`${GAME_ID}-fallback`, 49, testFallback, (files, destinationPath) => installFallback(context.api, files, destinationPath));
   }
-  
+
   //register actions
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download BepInExConfigManager', () => {
     downloadBepCfgMan(context.api, spec, false);
@@ -1009,7 +1009,7 @@ function main(context) {
             }
           },
         });
-      } else { 
+      } else {
         if (BEPINEX_BUILD === 'mono') { //* download from GitHub (mono)
           context.api.ext.bepinexAddGame({
             gameId: GAME_ID,

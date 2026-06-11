@@ -50,7 +50,7 @@ const CONFIG_ID = `${GAME_ID}-config`;
 const CONFIG_NAME = "Config (Documents)";
 const CONFIG_PATH = path.join(DOCUMENTS, "My Games", CONFIG_FOLDER);
 const CONFIG_FILES = ["graphic settings.cfg"];
-const CONFIG_EXT = ".cfg";
+const CONFIG_EXTS = [".cfg"];
 
 const DATA_ID = `${GAME_ID}-data`;
 const DATA_NAME = "Game Data Folder";
@@ -211,7 +211,7 @@ async function requiresLauncher(gamePath, store) {
 
 //Test for config files
 function testConfig(files, gameId) {
-  const isConfig = files.some(file => (path.extname(file).toLowerCase() === CONFIG_EXT));
+  const isConfig = files.some(file => CONFIG_EXTS.includes(path.extname(file).toLowerCase()));
   let supported = (gameId === spec.game.id) && isConfig;
 
   // Test for a mod installer
@@ -229,7 +229,7 @@ function testConfig(files, gameId) {
 
 //Install config files
 function installConfig(files) {
-  const modFile = files.find(file => (path.extname(file).toLowerCase() === CONFIG_EXT));
+  const modFile = files.find(file => CONFIG_EXTS.includes(path.extname(file).toLowerCase()));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: CONFIG_ID };

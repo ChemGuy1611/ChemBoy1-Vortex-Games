@@ -93,7 +93,7 @@ const JSON_EXT = ".json";
 const CONFIG_ID = `${GAME_ID}-config`;
 const CONFIG_NAME = "Config";
 const CONFIG_PATH = path.join(CONFIGMOD_LOCATION, DATA_FOLDER, CONFIG_FOLDERNAME);
-const CONFIG_EXT = ".ini";
+const CONFIG_EXTS = [".ini"];
 const CONFIG_FILES = ["XXX"];
 
 const SAVE_ID = `${GAME_ID}-save`;
@@ -114,7 +114,7 @@ if (USERID_FOLDER === undefined) {
   USERID_FOLDER = "";
 } //*/
 const SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
-const SAVE_EXT = ".sav";
+const SAVE_EXTS = [".sav"];
 const SAVE_FILES = ["XXX"];
 
 const TOOL_ID = `${GAME_ID}-tool`;

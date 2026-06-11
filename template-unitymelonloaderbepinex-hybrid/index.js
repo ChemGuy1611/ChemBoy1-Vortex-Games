@@ -193,7 +193,7 @@ const DOTNET_REG_HIVE = 'HKEY_LOCAL_MACHINE';
 const DOTNET_REG_KEY = `SOFTWARE\\WOW6432Node\\dotnet\\Setup\\InstalledVersions\\x64\\sharedfx\\Microsoft.WindowsDesktop.App`;
 
 const ROOT_ID = `${GAME_ID}-root`;
-const ROOT_NAME = "Root Game Folder";
+const ROOT_NAME = "Root Folder";
 
 const ASSEMBLY_ID = `${GAME_ID}-assemblydll`;
 const ASSEMBLY_NAME = "Assembly DLL Mod";

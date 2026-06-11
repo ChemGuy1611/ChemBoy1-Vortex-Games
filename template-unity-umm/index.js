@@ -93,7 +93,7 @@ const PLUGIN_FOLDER = 'Plugins';
 const PLUGIN_EXTS = ['.dll'];
 
 const ROOT_ID = `${GAME_ID}-root`;
-const ROOT_NAME = "Root Game Folder";
+const ROOT_NAME = "Root Folder";
 
 const ASSEMBLY_ID = `${GAME_ID}-assemblydll`;
 const ASSEMBLY_NAME = "Assembly DLL Mod";

@@ -56,7 +56,7 @@ const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 //Info for mod types and installers
 const ROOT_ID = `${GAME_ID}-root`;
-const ROOT_NAME = "Root Game Folder";
+const ROOT_NAME = "Root Folder";
 
 const ACSE_ID = `${GAME_ID}-acse`;
 const ACSE_NAME = "ACSE (Script Extender)";

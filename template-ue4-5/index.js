@@ -72,7 +72,7 @@ const ROOT_FOLDERS = [EPIC_CODE_NAME, 'Engine']; //addressable folders in root
 const ROOTSUB_FOLDERS = ['Content', 'Binaries', 'Mods']; //subfolders of EPIC_CODE_NAME. Don't use "Plugins" here since it can conflict with plugin loader/asi mods
 const CONTENTSUB_FOLDERS = ['Paks', 'Movies']; //subfolders of Content folder
 const UE4SS_SUBFOLDERS = ['MapGenBP', 'MemberVarLayoutTemplates', 'UE4SS_Signatures', 'VTableLayoutTemplates']; //subfolders of UE4SS folder
-const SAVE_EXT = ".sav";
+const SAVE_EXTS = [".sav"];
 const SAVE_COMPAT_VERSIONS = ['steam', 'epic', 'gog']; //game versions with installable save mods (never Xbox)
 let PAKMOD_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Paks', '~mods'); //usually works. Some games don't work from "~mods".
 const PAKMOD_LOADORDER = true; //set to false if you don't want loadOrder. If must be in "Paks" root, disable loadOrder.
@@ -180,7 +180,7 @@ const PAK_PATH = UNREALDATA.modsPath;
 const PAK_EXT = '.pak';
 
 const ROOT_ID = `${GAME_ID}-root`;
-const ROOT_NAME = "Root Game Folder";
+const ROOT_NAME = "Root Folder";
 const ROOT_FOLDER = EPIC_CODE_NAME;
 //const ROOTSUB_ID = `${GAME_ID}-rootsubfolders`;
 //const ROOTSUB_NAME = "Root Sub-Folders";
@@ -194,7 +194,7 @@ const CONFIG_FILES = [
   "hardware.ini", "deviceprofiles.ini", "compat.ini", "runtimeoptions.ini",
   "gameplaytags.ini", "enhancedinput.ini", "consolevariables.ini",
 ];
-const CONFIG_EXT = ".ini";
+const CONFIG_EXTS = [".ini"];
 
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_NAME = `Saves (${SAVE_LOC})`;
@@ -1214,7 +1214,7 @@ function testConfig(files, gameId) {
 
 //Install config files
 function installConfig(api, files) {
-  const modFile = files.find(file => (path.extname(file).toLowerCase() === CONFIG_EXT));
+  const modFile = files.find(file => CONFIG_FILES.includes(path.basename(file).toLowerCase()));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: CONFIG_ID };
@@ -1292,7 +1292,7 @@ function saveErrorNotify(api) {
 
 //Test for save files
 function testSave(files, gameId) {
-  const isMod = files.some(file => (path.extname(file).toLowerCase() === SAVE_EXT));
+  const isMod = files.some(file => SAVE_EXTS.includes(path.extname(file).toLowerCase()));
   let supported = (gameId === spec.game.id) && isMod;
 
   // Test for a mod installer
@@ -1310,7 +1310,7 @@ function testSave(files, gameId) {
 
 //Install save files
 async function installSave(api, files) {
-  const modFile = files.find(file => (path.extname(file).toLowerCase() === SAVE_EXT));
+  const modFile = files.find(file => SAVE_EXTS.includes(path.extname(file).toLowerCase()));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: SAVE_ID };
