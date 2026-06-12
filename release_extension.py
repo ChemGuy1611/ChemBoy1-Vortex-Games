@@ -176,7 +176,7 @@ def release(game_id, open_browser, dry_run=False, skip_eslint=False,
         return False
     with open(changelog_path, encoding="utf-8") as f:
         changelog_src = f.read()
-    if version and not re.search(rf'## (?:\[{re.escape(version)}\]|{re.escape(version)})(?!\w)', changelog_src):
+    if version and not re.search(rf'## \[{re.escape(version)}\]', changelog_src):
         log_error(game_id, f"version {version} has no entry in CHANGELOG.md (add ## [{version}] section)")
         return False
 

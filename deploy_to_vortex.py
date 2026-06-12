@@ -3,14 +3,19 @@
 deploy_to_vortex.py -- Copy CB1 game extension folder(s) to the Vortex plugins directory.
 
 Usage:
-    python deploy_to_vortex.py GAME_ID [GAME_ID ...] [--dry-run] [--force]
-    python deploy_to_vortex.py --all [--dry-run] [--force]
+    python deploy_to_vortex.py GAME_ID [GAME_ID ...] [--dry-run] [--force] [--restart-vortex]
+    python deploy_to_vortex.py --all [--dry-run] [--force] [--restart-vortex]
 
 Arguments:
     GAME_ID     One or more game IDs (e.g. thelastofuspart2)
     --all       Deploy every game-* extension in the repo
     --dry-run   Preview what would change without copying
     --force     Always do a full folder replace instead of index.js-only update
+    --restart-vortex
+                Close Vortex before copying (graceful taskkill, force-kill
+                after 30s) and launch it again (no CLI args) after all copies.
+                One close + one launch per run, not per game. Launches Vortex
+                even if it was not running. Ignored with --dry-run.
 
 Environment variables:
     VORTEX_PLUGINS_DIR  Path to the Vortex plugins directory.
@@ -19,11 +24,54 @@ Environment variables:
 
 import os
 import shutil
+import subprocess
 import sys
+import time
 
 import vortex_utils as vu
 
 PLUGINS_DIR = os.environ.get("VORTEX_PLUGINS_DIR", r"C:\ProgramData\vortex\plugins")
+VORTEX_IMAGE = "Vortex.exe"
+
+
+def _vortex_running() -> bool:
+    out = subprocess.run(
+        ["tasklist", "/FI", f"IMAGENAME eq {VORTEX_IMAGE}", "/NH"],
+        capture_output=True, encoding="utf-8", errors="replace",
+    )
+    return VORTEX_IMAGE.lower() in (out.stdout or "").lower()
+
+
+def _close_vortex(timeout: int = 30) -> None:
+    if not _vortex_running():
+        print("Vortex is not running -- nothing to close.")
+        return
+    print("Closing Vortex...")
+    subprocess.run(
+        ["taskkill", "/IM", VORTEX_IMAGE],
+        capture_output=True, encoding="utf-8", errors="replace",
+    )
+    deadline = time.time() + timeout
+    while time.time() < deadline:
+        if not _vortex_running():
+            print("Vortex closed.")
+            return
+        time.sleep(1)
+    print(f"Vortex did not exit within {timeout}s -- force-killing.")
+    subprocess.run(
+        ["taskkill", "/F", "/IM", VORTEX_IMAGE],
+        capture_output=True, encoding="utf-8", errors="replace",
+    )
+    time.sleep(1)
+
+
+def _start_vortex() -> None:
+    exe = vu.find_vortex_exe()
+    if not exe:
+        print("[WARN] Vortex.exe not found -- skipping launch.")
+        return
+    print(f"Starting Vortex: {exe}")
+    subprocess.Popen([exe], cwd=os.path.dirname(exe))
 
 
 def deploy_game(game_id: str, dry_run: bool, force: bool) -> bool:
@@ -51,8 +99,12 @@ def deploy_game(game_id: str, dry_run: bool, force: bool) -> bool:
         src_js = os.path.join(src, "index.js")
         dest_js = os.path.join(existing, "index.js")
         dest_tmp = dest_js + ".tmp"
-        shutil.copy2(src_js, dest_tmp)
-        os.replace(dest_tmp, dest_js)
+        try:
+            shutil.copy2(src_js, dest_tmp)
+            os.replace(dest_tmp, dest_js)
+        except PermissionError:
+            vu.log_error(game_id, f"index.js locked in {os.path.basename(existing)} -- close Vortex first (or use --restart-vortex)")
+            return False
         vu.log_info(game_id, f"updated index.js in {os.path.basename(existing)}")
     else:
         if os.path.isdir(dest):
@@ -73,6 +125,10 @@ def main():
         "--all", action="store_true",
         help="Deploy every game-* extension in the repo.",
     )
+    parser.add_argument(
+        "--restart-vortex", action="store_true",
+        help="Close Vortex before copying and relaunch it after all copies. Ignored with --dry-run.",
+    )
     args = parser.parse_args()
 
     if args.all:
@@ -89,6 +145,10 @@ def main():
         print(f"[ERROR] Vortex plugins folder not found: {PLUGINS_DIR}")
         sys.exit(1)
 
+    restart = args.restart_vortex and not args.dry_run
+    if restart:
+        _close_vortex()
+
     results = []
     try:
         for gid in game_ids:
@@ -100,6 +160,10 @@ def main():
     except KeyboardInterrupt:
         print("\n\n  Interrupted.")
         results.append(False)
+
+    if restart:
+        _start_vortex()
+
     if not all(results):
         sys.exit(1)
 

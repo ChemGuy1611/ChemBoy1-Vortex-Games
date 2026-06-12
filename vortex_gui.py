@@ -37,8 +37,8 @@ from PySide6.QtGui import (
 )
 from PySide6.QtSvg import QSvgRenderer
 from PySide6.QtWidgets import (
-    QApplication, QCheckBox, QComboBox, QDialog, QDialogButtonBox,
-    QFormLayout, QHBoxLayout, QHeaderView, QLabel, QLineEdit,
+    QAbstractItemView, QApplication, QCheckBox, QComboBox, QDialog, QDialogButtonBox,
+    QFileDialog, QFormLayout, QHBoxLayout, QHeaderView, QInputDialog, QLabel, QLineEdit,
     QMainWindow, QMenu, QMessageBox, QPlainTextEdit, QProxyStyle, QPushButton,
     QRadioButton, QSplitter, QStyle, QTableView, QToolBar, QVBoxLayout, QWidget,
 )
@@ -894,18 +894,21 @@ class GroupProxy(QAbstractProxyModel):
 
 class ScriptRunner(QObject):
     log_signal = Signal(str)
-    started_signal = Signal(str)   # description, emitted once per run() call
-    finished_signal = Signal(int)  # exit code, emitted once when queue is done
+    started_signal = Signal(str)     # description, emitted once per run() call
+    progress_signal = Signal(int, int)  # (current 1-based, total), emitted per queued command
+    finished_signal = Signal(int)    # exit code, emitted once when queue is done
 
     def __init__(self):
         super().__init__()
         self._process: QProcess | None = None
         self._queue: list[list[str]] = []
         self._desc = ""
+        self._total = 0
 
     def run(self, cmds: list[list[str]], desc: str = ""):
         self._queue = list(cmds)
         self._desc = desc
+        self._total = len(self._queue)
         if self._queue:
             self.started_signal.emit(desc)
         self._run_next()
@@ -928,6 +931,7 @@ class ScriptRunner(QObject):
             self.finished_signal.emit(0)
             return
         cmd = self._queue.pop(0)
+        self.progress_signal.emit(self._total - len(self._queue), self._total)
         self.log_signal.emit(f"\n> {' '.join(cmd)}\n")
         p = QProcess()
         p.setWorkingDirectory(REPO_ROOT)
@@ -1191,6 +1195,9 @@ class BumpTypeDialog(QDialog):
 
         self._manual.toggled.connect(self._version_edit.setEnabled)
 
+        self._dry_run_cb = QCheckBox("--dry-run (dry run, no writes)")
+        layout.addWidget(self._dry_run_cb)
+
         bb = QDialogButtonBox(QDialogButtonBox.Cancel)
         bb.addButton("Continue", QDialogButtonBox.AcceptRole)
         bb.accepted.connect(self._on_accept)
@@ -1210,10 +1217,14 @@ class BumpTypeDialog(QDialog):
 
     def bump_args(self) -> list[str]:
         if self._major.isChecked():
-            return ["--major"]
-        if self._minor.isChecked():
-            return ["--minor"]
-        return ["--version", self._version_edit.text().strip()]
+            args = ["--major"]
+        elif self._minor.isChecked():
+            args = ["--minor"]
+        else:
+            args = ["--version", self._version_edit.text().strip()]
+        if self._dry_run_cb.isChecked():
+            args.append("--dry-run")
+        return args
 
 
 # == Help dialog ===============================================================
@@ -1265,7 +1276,9 @@ class MainWindow(QMainWindow):
         self._runner = ScriptRunner()
         self._runner.log_signal.connect(self._append_log)
         self._runner.started_signal.connect(self._on_run_started)
+        self._runner.progress_signal.connect(self._on_run_progress)
         self._runner.finished_signal.connect(self._on_run_finished)
+        self._run_desc = ""
 
         self._action_btns: dict[str, QAction] = {}
         self._global_action_labels: set[str] = set()  # repo-wide; enabled regardless of selection
@@ -1314,6 +1327,7 @@ class MainWindow(QMainWindow):
         root_layout.addLayout(top_bar)
 
         QShortcut(QKeySequence("Ctrl+F"), self).activated.connect(self._filter_edit.setFocus)
+        QShortcut(QKeySequence("Ctrl+G"), self).activated.connect(self._on_jump_to_game)
         QShortcut(QKeySequence("F2"),     self).activated.connect(self._on_flag_shortcut)
         QShortcut(QKeySequence("Delete"), self).activated.connect(self._on_flag_shortcut)
         QShortcut(QKeySequence("Ctrl+E"), self).activated.connect(self._on_open_editor)
@@ -1429,9 +1443,12 @@ class MainWindow(QMainWindow):
         self._stop_btn.clicked.connect(self._runner.stop)
         clear_btn = QPushButton("Clear Log")
         clear_btn.clicked.connect(self._log_pane.clear)
+        export_btn = QPushButton("Export Log")
+        export_btn.clicked.connect(self._on_export_log)
 
         log_btn_row = QHBoxLayout()
         log_btn_row.addWidget(clear_btn)
+        log_btn_row.addWidget(export_btn)
         log_btn_row.addWidget(self._stop_btn)
         log_btn_row.addStretch()
 
@@ -1650,9 +1667,10 @@ class MainWindow(QMainWindow):
         dlg = BumpTypeDialog(ids, self)
         if dlg.exec() != QDialog.Accepted:
             return
-        self._refresh_after_run = True
+        bump_args = dlg.bump_args()
+        self._refresh_after_run = "--dry-run" not in bump_args
         self._run(
-            [[PYTHON, os.path.join(REPO_ROOT, "bump_version.py")] + dlg.bump_args() + ids],
+            [[PYTHON, os.path.join(REPO_ROOT, "bump_version.py")] + bump_args + ids],
             "bump_version.py",
         )
 
@@ -1806,6 +1824,7 @@ class MainWindow(QMainWindow):
             flags=[
                 ("--dry-run", "Preview only, no copies", False),
                 ("--force", "Overwrite existing plugin folder without prompting", False),
+                ("--restart-vortex", "Close Vortex before copying, relaunch after", True),
             ],
         )
         if dlg is None:
@@ -1913,6 +1932,57 @@ class MainWindow(QMainWindow):
         self._log_pane.insertPlainText(text)
         self._log_pane.ensureCursorVisible()
 
+    def _on_export_log(self):
+        text = self._log_pane.toPlainText()
+        if not text.strip():
+            QMessageBox.information(self, "Export Log", "Log pane is empty -- nothing to export.")
+            return
+        default_name = f"vortex_gui_log_{datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.txt"
+        path, _ = QFileDialog.getSaveFileName(
+            self, "Export Log",
+            os.path.join(os.path.expanduser("~"), default_name),
+            "Text files (*.txt);;All files (*)",
+        )
+        if not path:
+            return
+        try:
+            with open(path, "w", encoding="utf-8") as f:
+                f.write(text)
+        except OSError as exc:
+            QMessageBox.warning(self, "Export Failed", f"Could not write log file:\n{exc}")
+            return
+        self.statusBar().showMessage(f"Log exported to {path}", 5000)
+
+    # -- Jump to game ------------------------------------------------------------
+
+    def _on_jump_to_game(self):
+        text, ok = QInputDialog.getText(self, "Jump to Game", "Game ID (or prefix):")
+        if not ok or not text.strip():
+            return
+        needle = text.strip().lower()
+        rows = self._model._rows
+        row_i = next((i for i, r in enumerate(rows) if r.game_id.lower() == needle), None)
+        if row_i is None:
+            row_i = next((i for i, r in enumerate(rows) if r.game_id.lower().startswith(needle)), None)
+        if row_i is None:
+            QMessageBox.information(self, "Jump to Game", f"No game matching '{text.strip()}'.")
+            return
+        src_idx = self._model.index(row_i, 0)
+        filter_idx = self._filter_model.mapFromSource(src_idx)
+        if not filter_idx.isValid():
+            # Row is hidden by the current filter -- clear it so the row is visible
+            self._filter_edit.clear()
+            filter_idx = self._filter_model.mapFromSource(src_idx)
+            if not filter_idx.isValid():
+                return
+        proxy_idx = self._proxy.mapFromSource(filter_idx)
+        if not proxy_idx.isValid():
+            return
+        self._table.clearSelection()
+        self._table.selectRow(proxy_idx.row())
+        self._table.scrollTo(proxy_idx, QAbstractItemView.ScrollHint.PositionAtCenter)
+        self._table.setFocus()
+
     # -- State updates ---------------------------------------------------------
 
     def _set_actions_enabled(self, ids=None):
@@ -1937,12 +2007,17 @@ class MainWindow(QMainWindow):
         self._update_status_bar()
 
     def _on_run_started(self, desc: str):
+        self._run_desc = desc
         self._stop_btn.setEnabled(True)
         self._refresh_btn.setEnabled(False)
         self._new_game_btn.setEnabled(False)
         for action in self._action_btns.values():
             action.setEnabled(False)
         self.statusBar().showMessage(f"Running: {desc}")
+
+    def _on_run_progress(self, current: int, total: int):
+        if total > 1:
+            self.statusBar().showMessage(f"Running: {self._run_desc} ({current}/{total})")
 
     def _on_run_finished(self, code: int):
         self._stop_btn.setEnabled(False)

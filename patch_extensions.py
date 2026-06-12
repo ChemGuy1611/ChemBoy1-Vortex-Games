@@ -27,6 +27,8 @@ Usage:
 Environment variables:
     VORTEX_MANIFEST_PATH  (optional) Path to Vortex extensions-manifest.json.
                           Default: %APPDATA%\\Vortex\\temp\\extensions-manifest.json
+    APPDATA               (optional) Base for the default manifest path above.
+                          Only read when VORTEX_MANIFEST_PATH is not set.
 """
 
 import argparse

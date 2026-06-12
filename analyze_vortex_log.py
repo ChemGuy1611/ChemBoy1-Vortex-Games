@@ -18,6 +18,7 @@ Usage:
     python analyze_vortex_log.py --no-open
     python analyze_vortex_log.py --grep PATTERN
     python analyze_vortex_log.py --since HOURS
+    python analyze_vortex_log.py --merge-lines
 
 Environment variables:
     APPDATA          Standard Windows variable used to locate the fallback log path
@@ -36,6 +37,8 @@ Options:
     --no-open        Do not open the output file after writing.
     --grep PATTERN   Only include entries matching PATTERN (regex, applied per-entry).
     --since HOURS    Only include entries from the last N hours.
+    --merge-lines    Collapse each multi-line entry (stack traces, JSON blobs)
+                     into a single ` | `-joined line for easier grepping.
 """
 
 import argparse
@@ -135,6 +138,7 @@ def _parse_log(
     log_path: pathlib.Path, selected_tokens: list[str],
     since_seconds: float | None = None,
     grep_pattern: "re.Pattern | None" = None,
+    merge_lines: bool = False,
 ) -> tuple[collections.Counter, dict[str, list[tuple[str, str]]]]:
     counts: collections.Counter = collections.Counter()
     # buckets: token -> list of (hour_key, entry_text); includes "OTHER" for unknown levels
@@ -162,6 +166,10 @@ def _parse_log(
             current_is_other = False
             return
         counts[current_level] += 1
+        if merge_lines and "\n" in text.rstrip("\n"):
+            text = " | ".join(
+                ln.strip() for ln in text.splitlines() if ln.strip()
+            ) + "\n"
         bucket_key = current_level if current_level in buckets else "OTHER"
         if bucket_key in buckets:
             buckets[bucket_key].append((_extract_hour(text), text))
@@ -296,6 +304,10 @@ def main() -> None:
         "--since", metavar="HOURS", type=float, default=None,
         help="Only include entries from the last N hours.",
     )
+    parser.add_argument(
+        "--merge-lines", action="store_true",
+        help="Collapse multi-line entries (stack traces, JSON blobs) into single ' | '-joined lines.",
+    )
     args = parser.parse_args()
 
     log_path = _resolve_log_path(args.log_path)
@@ -325,7 +337,8 @@ def main() -> None:
 
     print(f"Parsing {log_path} ...")
     counts, buckets = _parse_log(log_path, selected,
-                                 since_seconds=since_seconds, grep_pattern=grep_pattern)
+                                 since_seconds=since_seconds, grep_pattern=grep_pattern,
+                                 merge_lines=args.merge_lines)
     total = sum(counts.values())
 
     count_w = max(len(f"{counts.get(t, 0):,}") for t in _DISPLAY_ORDER)

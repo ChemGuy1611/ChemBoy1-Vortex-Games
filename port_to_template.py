@@ -30,8 +30,11 @@ Usage:
     python port_to_template.py GAME_ID TEMPLATE_NAME
     python port_to_template.py GAME_ID TEMPLATE_NAME --dry-run
     python port_to_template.py GAME_ID TEMPLATE_NAME --force
+    python port_to_template.py GAME_ID TEMPLATE_NAME --diff
     python port_to_template.py GAME_ID TEMPLATE_NAME --no-explained
 
+    --diff          Show a unified diff of the game's current index.js vs. the
+                    ported output. Does not write any files.
     --no-explained  Skip regenerating EXTENSION_EXPLAINED.md after writing index.js.
 
 Examples:
@@ -46,6 +49,7 @@ Requirements:
     node must be on PATH for JS syntax validation.
 """
 
+import difflib
 import os
 import re
 import sys
@@ -270,7 +274,7 @@ def apply_port(template_src, game_consts, game_src):
 
 
 
-def create_port(game_id, template_name, dry_run, force, no_explained=False):
+def create_port(game_id, template_name, dry_run, force, no_explained=False, diff=False):
     game_dir = os.path.join(REPO_ROOT, f'game-{game_id}')
     tmpl_dir = os.path.join(REPO_ROOT, f'template-{template_name}')
     game_index = os.path.join(game_dir, 'index.js')
@@ -290,7 +294,7 @@ def create_port(game_id, template_name, dry_run, force, no_explained=False):
     if not os.path.isfile(tmpl_index):
         print(f'ERROR: template-{template_name}/index.js not found.')
         sys.exit(1)
-    if not dry_run and os.path.isfile(bak_path) and not force:
+    if not dry_run and not diff and os.path.isfile(bak_path) and not force:
         print(f'ERROR: {game_id}/index.js.bak already exists. Use --force to overwrite.')
         sys.exit(1)
 
@@ -303,6 +307,20 @@ def create_port(game_id, template_name, dry_run, force, no_explained=False):
 
     game_consts = extract_constants(game_src)
     new_src, substituted, skipped, review = apply_port(tmpl_src, game_consts, game_src)
+
+    # --diff: show unified diff of current game index.js vs ported output
+    if diff:
+        diff_lines = list(difflib.unified_diff(
+            game_src.splitlines(keepends=True),
+            new_src.splitlines(keepends=True),
+            fromfile=f'game-{game_id}/index.js (current)',
+            tofile=f'game-{game_id}/index.js (ported to template-{template_name})',
+        ))
+        if diff_lines:
+            sys.stdout.writelines(diff_lines)
+        else:
+            print(f'No differences -- game-{game_id}/index.js already matches the ported output.')
+        return
 
     # JS validation
     ok, err = node_check_source(new_src)
@@ -393,12 +411,19 @@ def main():
         help='Overwrite existing .bak file.'
     )
     parser.add_argument(
+        '--diff', action='store_true',
+        help="Print unified diff of the game's current index.js vs the ported output. "
+             'Does not write any files.'
+    )
+    parser.add_argument(
         '--no-explained', action='store_true',
         help='Skip regenerating EXTENSION_EXPLAINED.md after writing index.js.'
     )
     args = parser.parse_args()
+    if args.diff and args.force:
+        parser.error('--diff and --force are mutually exclusive')
     create_port(args.game_id, args.template_name, args.dry_run, args.force,
-                no_explained=args.no_explained)
+                no_explained=args.no_explained, diff=args.diff)
 
 
 if __name__ == '__main__':

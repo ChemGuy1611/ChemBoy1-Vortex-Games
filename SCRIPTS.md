@@ -96,6 +96,7 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `write_json_atomic(path, data, *, indent, sort_keys)` | Write JSON atomically via tmp file + `os.replace` |
 | `dry_prefix(dry_run)` | Return `"[DRY RUN] "` if `dry_run` is `True`, else `""` |
 | `print_run_summary(saved, failed, skipped, *, skip_label)` | Print a standardized saved / failed / skipped run summary block (separator line + counts + per-item lists) |
+| `run_concurrent_batch(items, worker_fn, max_workers=8)` | Run `worker_fn` over `items` in a thread pool; returns `{key: result_tuple}` keyed by the first element of each result. Worker must catch its own exceptions. KeyboardInterrupt returns the partial batch. |
 | `resize_images_to(paths_and_labels, target_wh, *, fmt, quality, dry_run)` | Resize images in a `(path, label)` list to `target_wh`. Returns `(resized, already_correct, missing)`. Raises `ImportError` if Pillow absent. |
 | `find_vortex_exe()` | Return path to `Vortex.exe` (default install dir then PATH), or `None` |
 | `safe_windows_dirname(name)` | Strip characters invalid in Windows directory names (`<>:"/\|?*`) and strip whitespace |
@@ -735,10 +736,12 @@ No additional packages required (Python stdlib only). `node` must be on `PATH` f
 python port_to_template.py GAME_ID TEMPLATE_NAME
 python port_to_template.py GAME_ID TEMPLATE_NAME --dry-run
 python port_to_template.py GAME_ID TEMPLATE_NAME --force
+python port_to_template.py GAME_ID TEMPLATE_NAME --diff
 python port_to_template.py GAME_ID TEMPLATE_NAME --no-explained
 ```
 
 `GAME_ID` is the folder name without the `game-` prefix. `TEMPLATE_NAME` is the folder name without the `template-` prefix.
+Use `--diff` to print a unified diff of the game's current `index.js` vs. the ported output without writing any files (mutually exclusive with `--force`).
 Use `--no-explained` to skip regenerating `EXTENSION_EXPLAINED.md` after writing `index.js` (saves time when running `node generate_explained.js` separately).
 
 ### port_to_template.py — Examples
@@ -867,6 +870,7 @@ Also resizes all non-64x64 PNG files in `game-*` and `template-*` folders to 64x
 | Variable | Required | Description |
 | --- | --- | --- |
 | `VORTEX_MANIFEST_PATH` | Optional | Path to the Vortex extensions manifest JSON. Defaults to `%APPDATA%\Vortex\temp\extensions-manifest.json`. Used by the `extension_url` patch. |
+| `APPDATA` | Optional | Base for the default manifest path above. Only read when `VORTEX_MANIFEST_PATH` is not set. |
 
 ### patch_extensions.py — Usage
 
@@ -960,11 +964,13 @@ python setup_test_folder.py GAME_ID --dry-run
 python setup_test_folder.py GAME_ID --force
 python setup_test_folder.py GAME_ID [GAME_ID ...] --clean
 python setup_test_folder.py GAME_ID [GAME_ID ...] --clean --dry-run
+python setup_test_folder.py --list
 ```
 
 Use `--dry-run` to print what would be created or deleted without making any changes.
 Use `--force` to recreate the `.exe` stub even if it already exists.
 Use `--clean` to delete the test folder(s) for the given game ID(s) instead of creating them.
+Use `--list` to print all existing test folders with size and last-modified time, then exit (no `GAME_ID` needed).
 
 ### setup_test_folder.py — Examples
 
@@ -999,6 +1005,7 @@ No additional packages required (Python stdlib only).
 python deploy_to_vortex.py GAME_ID [GAME_ID ...]
 python deploy_to_vortex.py GAME_ID --dry-run
 python deploy_to_vortex.py GAME_ID --force
+python deploy_to_vortex.py GAME_ID --restart-vortex
 python deploy_to_vortex.py --all
 python deploy_to_vortex.py --all --dry-run
 ```
@@ -1007,6 +1014,7 @@ python deploy_to_vortex.py --all --dry-run
 - `--all` — deploy every `game-*` extension in the repo.
 - `--dry-run` — lists what would be copied without writing anything.
 - `--force` — always do a full folder replace instead of index.js-only update.
+- `--restart-vortex` — close Vortex before copying (graceful `taskkill`, force-kill after 30s) and launch it again (no CLI args) after all copies. One close + one launch per run, not per game. Launches Vortex even if it was not running. Ignored with `--dry-run`.
 
 ### deploy_to_vortex.py — Examples
 
@@ -1043,6 +1051,7 @@ python analyze_vortex_log.py --force
 python analyze_vortex_log.py --no-open
 python analyze_vortex_log.py --grep PATTERN
 python analyze_vortex_log.py --since HOURS
+python analyze_vortex_log.py --merge-lines
 ```
 
 ### analyze_vortex_log.py — Environment Variables
@@ -1064,6 +1073,7 @@ python analyze_vortex_log.py --since HOURS
 | `--no-open` | Do not open the output file after writing. |
 | `--grep PATTERN` | Only include entries matching `PATTERN` (regex, applied to the full multi-line entry text). |
 | `--since HOURS` | Only include entries from the last `N` hours. |
+| `--merge-lines` | Collapse each multi-line entry (stack traces, JSON blobs) into a single ` \| `-joined line for easier grepping. |
 
 ### analyze_vortex_log.py — Output
 
@@ -1151,7 +1161,7 @@ No arguments. Launches the window, which loads all extensions automatically.
 | [x] | Flag | Icon | Game ID | Name | Ver | Updated | Engine | Stores | End | DL | Pub | Cover | Title | Banner |
 | sortable QTableView, multi-select with Ctrl/Shift                                                                |
 -----------------------------------------------------------------------------------------------------------------------
-| Log pane (live subprocess output)    [Clear Log] [Stop Running] |
+| Log pane (live subprocess output)    [Clear Log] [Export Log] [Stop Running] |
 ```
 
 - `End` — Nexus endorsement count (blank until `Fetch Nexus Stats` is run; sorts numerically).
@@ -1164,16 +1174,18 @@ No arguments. Launches the window, which loads all extensions automatically.
 - **Multi-select**: Ctrl/Shift-click rows; used as the action target when no checkboxes are checked.
 - **Right-click**: context menu with the same script actions.
 - **Double-click**: opens `index.js` in the default editor.
-- **Status bar**: shows `N games shown | M selected` (plus `K checked` when applicable).
+- **Status bar**: shows `N games shown | M selected` (plus `K checked` when applicable). While a multi-command run is active (e.g. Port to Template over several games), shows `Running: <script> (current/total)`.
+- **Jump to game**: `Ctrl+G` prompts for a game ID (or prefix), clears the filter if the row is hidden, then selects and scrolls to it.
+- **Export Log**: button next to **Clear Log**; saves the log pane to a timestamped `.txt` file via a save dialog.
 
 ### vortex_gui.py — Toolbar Actions
 
 | Button | Script invoked |
 | --- | --- |
-| Bump Version | Dialog (`--major`, `--minor`, `--dry-run`), then `python bump_version.py <id> [flags]` |
+| Bump Version | Dialog (`--major`, `--minor`, Manual `--version X.Y.Z`, `--dry-run`), then `python bump_version.py <id> [flags]` |
 | Release | Dialog (`--no-open`, `--dry-run`, `--upload`, `--edit-changelog`), then `python release_extension.py <ids> [flags] (--upload\|--no-upload)` |
-| Deploy to Vortex | Dialog, then `python deploy_to_vortex.py [--dry-run] [--force] <ids>` |
-| Launch in Vortex | `subprocess.Popen(VortexExe, ...)` — opens Vortex with `--profile` for the selected game |
+| Deploy to Vortex | Dialog (`--dry-run`, `--force`, `--restart-vortex` default-checked), then `python deploy_to_vortex.py [flags] <ids>` |
+| Launch in Vortex | `subprocess.Popen(VortexExe, ...)` — opens Vortex with `--game` for the selected game |
 | Open Folder | `os.startfile(folder)` — no subprocess |
 | Open in Editor | `os.startfile(index.js)` — no subprocess |
 | Open Changelog | `os.startfile(CHANGELOG.md)` — no subprocess |
@@ -1204,6 +1216,9 @@ Triggered by the **New Game...** button. Fields:
 | Game | Free-text game name or numeric Steam App ID |
 | --force | Overwrite an existing extension folder |
 | --no-images | Skip art downloads |
+| --refresh-images | Re-download all images for an existing extension |
+| --no-browser | Skip opening browser tabs |
+| --no-startfile | Skip opening images/index.js in the editor |
 | --dry-run | Preview only — no files written |
 
 Runs `python new_extension.py <template> "<game>" [flags]`. On success (without `--dry-run`), the table refreshes automatically to show the new game.

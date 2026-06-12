@@ -17,6 +17,10 @@ Usage:
     python setup_test_folder.py GAME_ID --force
     python setup_test_folder.py GAME_ID [GAME_ID ...] --clean
     python setup_test_folder.py GAME_ID [GAME_ID ...] --clean --dry-run
+    python setup_test_folder.py --list
+
+    --list  List all existing test folders with size and last-modified time,
+            then exit. No GAME_ID needed.
 
 Examples:
     python setup_test_folder.py hollowknight
@@ -26,6 +30,7 @@ Examples:
 import argparse
 import os
 import sys
+from datetime import datetime
 
 from vortex_utils import REPO_ROOT, safe_windows_dirname, log_error, log_info, build_js_symbol_table, read_index_js, safe_rmtree, touch_empty, print_run_summary, is_real_value
 TEST_ROOT = os.environ.get("VORTEX_TEST_ROOT", r"D:\Game_Tools_D\!TestGameFolders_D")
@@ -179,13 +184,54 @@ def clean(game_id, dry_run=False):
     return True
 
 
+def _folder_size(path):
+    """Return total size in bytes of all files under path."""
+    total = 0
+    for root, _dirs, files in os.walk(path):
+        for name in files:
+            try:
+                total += os.path.getsize(os.path.join(root, name))
+            except OSError:
+                pass
+    return total
+
+
+def _format_size(size):
+    """Format a byte count as B / KB / MB / GB."""
+    for unit in ("B", "KB", "MB"):
+        if size < 1024:
+            return f"{size:.0f} {unit}" if unit == "B" else f"{size:.1f} {unit}"
+        size /= 1024
+    return f"{size:.1f} GB"
+
+
+def list_folders():
+    """Print all test folders under TEST_ROOT with size and last-modified time."""
+    entries = sorted(
+        e for e in os.listdir(TEST_ROOT)
+        if os.path.isdir(os.path.join(TEST_ROOT, e))
+    )
+    if not entries:
+        print(f"No test folders found in {TEST_ROOT}.")
+        return
+    print(f"Test folders in {TEST_ROOT}:\n")
+    total = 0
+    for name in entries:
+        path = os.path.join(TEST_ROOT, name)
+        size = _folder_size(path)
+        total += size
+        mtime = datetime.fromtimestamp(os.path.getmtime(path)).strftime("%Y-%m-%d %H:%M:%S")
+        print(f"  {mtime}  {_format_size(size):>10}  {name}")
+    print(f"\n  {len(entries)} folder(s), {_format_size(total)} total")
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="Create minimal fake game installation folders for Vortex testing."
     )
     parser.add_argument(
         "game",
-        nargs="+",
+        nargs="*",
         metavar="GAME_ID",
         help="One or more game IDs to set up test folders for.",
     )
@@ -204,11 +250,23 @@ def main():
         action="store_true",
         help="Delete the test folder(s) for the given game ID(s) instead of creating them.",
     )
+    parser.add_argument(
+        "--list",
+        action="store_true",
+        help="List all existing test folders with size and last-modified time, then exit.",
+    )
     args = parser.parse_args()
 
-    if not os.path.isdir(TEST_ROOT) and (not args.dry_run or args.clean):
+    if not args.list and not args.game:
+        parser.error("Provide at least one GAME_ID (or use --list).")
+
+    if not os.path.isdir(TEST_ROOT) and (args.list or not args.dry_run or args.clean):
         print(f"ERROR: Test root directory not found: {TEST_ROOT}")
         sys.exit(1)
+
+    if args.list:
+        list_folders()
+        return
 
     label = " [DRY RUN]" if args.dry_run else ""
     saved = []

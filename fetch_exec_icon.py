@@ -28,10 +28,9 @@ Environment variables:
 """
 
 import os
-from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from vortex_utils import (
-    iter_steam_image_targets,
+    iter_steam_image_targets, run_concurrent_batch,
     download_exec_icon, print_run_summary, normalize_target_ids,
     build_arg_parser,
 )
@@ -67,18 +66,7 @@ def fetch_all(target_game_ids=None, dry_run=False, force=False,
         except Exception as e:
             return game_id, "error", str(e)
 
-    def _run_pass(items):
-        batch = {}
-        try:
-            with ThreadPoolExecutor(max_workers=concurrency) as pool:
-                for f in as_completed({pool.submit(_download_one, item): item for item in items}):
-                    r = f.result()
-                    batch[r[0]] = r
-        except KeyboardInterrupt:
-            print("\n\n  Interrupted.")
-        return batch
-
-    results = _run_pass(targets)
+    results = run_concurrent_batch(targets, _download_one, max_workers=concurrency)
 
     for _, game_id, steamapp_id, game_name in targets:
         if game_id not in results:
@@ -100,7 +88,7 @@ def fetch_all(target_game_ids=None, dry_run=False, force=False,
         retry_ids = set(failed)
         retry_targets = [t for t in targets if t[1] in retry_ids]
         failed.clear()
-        retry_results = _run_pass(retry_targets)
+        retry_results = run_concurrent_batch(retry_targets, _download_one, max_workers=concurrency)
         for _, game_id, _steamapp_id, _game_name in retry_targets:
             if game_id not in retry_results:
                 continue

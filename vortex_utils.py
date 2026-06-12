@@ -33,6 +33,7 @@ Usage:
         read_gui_stats, write_gui_stats,
         SEMVER_PATTERN, is_valid_semver,
         list_game_ids, iter_game_folders, iter_steam_image_targets, iter_repo_scripts,
+        run_concurrent_batch,
         dry_prefix, log_dry, print_run_summary, print_count_summary, resize_images_to,
         build_arg_parser, assert_is_game_id, report_node_check,
         node_check, node_check_source, eslint_check,
@@ -66,6 +67,7 @@ import time
 import urllib.error
 import urllib.request
 import urllib.parse
+from concurrent.futures import ThreadPoolExecutor, as_completed
 
 try:
     import certifi as _certifi
@@ -1434,6 +1436,24 @@ def iter_steam_image_targets(target_game_ids=None, force=False, target_path_fn=N
         steamapp_id = extract_steamapp_id(src)
         game_name = extract_game_name(src)
         yield folder, game_id, steamapp_id, game_name
+
+
+def run_concurrent_batch(items, worker_fn, max_workers=8):
+    """Run worker_fn over items in a thread pool; return {key: result_tuple}.
+
+    worker_fn(item) must return a tuple whose first element is the result key,
+    and must catch its own per-item exceptions (an uncaught exception aborts
+    the batch). KeyboardInterrupt prints an "Interrupted." notice and returns
+    the partial batch collected so far."""
+    batch = {}
+    try:
+        with ThreadPoolExecutor(max_workers=max_workers) as pool:
+            for f in as_completed({pool.submit(worker_fn, item): item for item in items}):
+                r = f.result()
+                batch[r[0]] = r
+    except KeyboardInterrupt:
+        print("\n\n  Interrupted.")
+    return batch
 
 
 def list_game_ids():
