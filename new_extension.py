@@ -188,7 +188,8 @@ def get_demo_appid(steam_data):
     Steam appdetails includes a 'demos' array when a demo is available."""
     demos = (steam_data or {}).get("demos", [])
     if demos:
-        return str(demos[0].get("appid", ""))
+        appid = demos[0].get("appid")
+        return str(appid) if appid else None
     return None
 
 

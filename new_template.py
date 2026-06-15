@@ -880,11 +880,12 @@ def update_templates_list(template_name, dry_run):
     new_entries = "\n" + "".join(f'    "{e}",\n' for e in entries)
     new_src = src[:m.start(2)] + new_entries + src[m.end(2):]
 
+    try:
+        compile(new_src, str(path), 'exec')
+    except SyntaxError as e:
+        return False, f"compile check failed after insertion: {e}"
+
     if not dry_run:
-        try:
-            compile(new_src, str(path), 'exec')
-        except SyntaxError as e:
-            return False, f"compile check failed after insertion: {e}"
         write_text_atomic(path, new_src)
 
     return True, f"inserted {full_name}"

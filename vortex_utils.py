@@ -11,7 +11,7 @@ Usage:
         REPO_ROOT, PCGW_API, EGDATA_API,
         TITLE_IMAGES_DIR, BANNER_IMAGES_DIR, LISTS_DIR,
         GUI_FLAGS_PATH, GUI_STATS_PATH,
-        GAME_PREFIX, TEMPLATE_PREFIX,
+        GAME_PREFIX, TEMPLATE_PREFIX, VORTEX_PLUGINS_DIR,
         read_index_js, write_index_js,
         extract_game_id, extract_steamapp_id, has_real_steamapp_id,
         extract_game_name, extract_extension_url,
@@ -33,7 +33,7 @@ Usage:
         read_gui_stats, write_gui_stats,
         SEMVER_PATTERN, is_valid_semver,
         list_game_ids, iter_game_folders, iter_steam_image_targets, iter_repo_scripts,
-        run_concurrent_batch,
+        run_concurrent_batch, report_download_results, retry_failed_downloads,
         dry_prefix, log_dry, print_run_summary, print_count_summary, resize_images_to,
         build_arg_parser, assert_is_game_id, report_node_check,
         node_check, node_check_source, eslint_check,
@@ -90,6 +90,8 @@ GUI_STATS_PATH = os.path.join(REPO_ROOT, "vortex_gui_nexus_stats.json")
 GAME_PREFIX     = "game-"
 TEMPLATE_PREFIX = "template-"
 
+VORTEX_PLUGINS_DIR = os.environ.get("VORTEX_PLUGINS_DIR", r"C:\ProgramData\vortex\plugins")
+
 
 # == Logging helpers ===========================================================
 
@@ -144,7 +146,8 @@ def _execute_with_retry(fn, *, respect_retry_after=False):
                 raise
             if (respect_retry_after
                     and isinstance(exc, urllib.error.HTTPError)
-                    and exc.code == 429):
+                    and exc.code == 429
+                    and attempt < len(_RETRY_DELAYS)):
                 try:
                     ra = int(exc.headers.get("Retry-After") or "0")
                     if ra > delay:
@@ -1031,6 +1034,23 @@ def download_exec_icon(appid, game_name, out_path):
     return False, None
 
 
+def _crop_resize(img, w_out, h_out):
+    """Center-crop img to the target aspect ratio, then resize to (w_out, h_out) with LANCZOS."""
+    from PIL import Image
+    w, h = img.size
+    target_ratio = w_out / h_out
+    current_ratio = w / h
+    if current_ratio > target_ratio:
+        new_w = int(h * target_ratio)
+        left = (w - new_w) // 2
+        img = img.crop((left, 0, left + new_w, h))
+    elif current_ratio < target_ratio:
+        new_h = int(w / target_ratio)
+        top = (h - new_h) // 2
+        img = img.crop((0, top, w, top + new_h))
+    return img.resize((w_out, h_out), Image.LANCZOS)
+
+
 def download_cover_art(appid, game_name, out_path, sgdb_key=None):
     """Download and save a 640x360 cover art JPG with no title text.
 
@@ -1085,20 +1105,7 @@ def download_cover_art(appid, game_name, out_path, sgdb_key=None):
         return False, None
 
     img = Image.open(BytesIO(img_data)).convert("RGB")
-    w, h = img.size
-
-    target_ratio = 640 / 360
-    current_ratio = w / h
-    if current_ratio > target_ratio:
-        new_w = int(h * target_ratio)
-        left = (w - new_w) // 2
-        img = img.crop((left, 0, left + new_w, h))
-    elif current_ratio < target_ratio:
-        new_h = int(w / target_ratio)
-        top = (h - new_h) // 2
-        img = img.crop((0, top, w, top + new_h))
-
-    img = img.resize((640, 360), Image.LANCZOS)
+    img = _crop_resize(img, 640, 360)
     img.save(out_path, "JPEG", quality=92)
     return True, source
 
@@ -1155,17 +1162,7 @@ def download_title_image(appid, game_name, out_path, sgdb_key=None):
 
         if hero_data and logo_data:
             try:
-                hero = Image.open(BytesIO(hero_data)).convert("RGB")
-                w, h = hero.size
-                tr = 1920 / 1080
-                cr = w / h
-                if cr > tr:
-                    nw = int(h * tr)
-                    hero = hero.crop(((w - nw) // 2, 0, (w - nw) // 2 + nw, h))
-                elif cr < tr:
-                    nh = int(w / tr)
-                    hero = hero.crop((0, (h - nh) // 2, w, (h - nh) // 2 + nh))
-                hero = hero.resize((1920, 1080), Image.LANCZOS)
+                hero = _crop_resize(Image.open(BytesIO(hero_data)).convert("RGB"), 1920, 1080)
 
                 logo = Image.open(BytesIO(logo_data)).convert("RGBA")
                 logo.thumbnail((int(1920 * 0.65), int(1080 * 0.40)), Image.LANCZOS)
@@ -1205,16 +1202,7 @@ def download_title_image(appid, game_name, out_path, sgdb_key=None):
         return False, None
 
     if source != "SteamGridDB hero + logo composite":
-        w, h = result_img.size
-        tr = 1920 / 1080
-        cr = w / h
-        if cr > tr:
-            nw = int(h * tr)
-            result_img = result_img.crop(((w - nw) // 2, 0, (w - nw) // 2 + nw, h))
-        elif cr < tr:
-            nh = int(w / tr)
-            result_img = result_img.crop((0, (h - nh) // 2, w, (h - nh) // 2 + nh))
-        result_img = result_img.resize((1920, 1080), Image.LANCZOS)
+        result_img = _crop_resize(result_img, 1920, 1080)
 
     result_img.save(out_path, "JPEG", quality=92)
     return True, source
@@ -1454,6 +1442,62 @@ def run_concurrent_batch(items, worker_fn, max_workers=8):
     except KeyboardInterrupt:
         print("\n\n  Interrupted.")
     return batch
+
+
+def report_download_results(targets, results, label_fn, saved, failed, skipped):
+    """Classify and print results from run_concurrent_batch for download workers.
+
+    Worker results must be (game_id, status, source_or_none, msg_or_none) where:
+      status  : "ok" (saved), "fail" (soft fail, shows msg), "error" (exception, shows msg), "skip"
+      source_or_none : description string for "ok"
+      msg_or_none    : fail/error message, or None
+    label_fn(game_id) : callable returning the display label string.
+    saved / failed / skipped : lists updated in-place."""
+    for item in targets:
+        game_id = item[1]
+        if game_id not in results:
+            continue
+        result = results[game_id]
+        status = result[1]
+        source = result[2] if len(result) > 2 else None
+        msg = result[3] if len(result) > 3 else None
+        label = label_fn(game_id)
+        if status == "skip":
+            print(f"\n{label}\n  SKIP -- no STEAMAPP_ID in index.js")
+            skipped.append(game_id)
+        elif status == "ok":
+            print(f"\n{label}\n  Saved: {source}")
+            saved.append(game_id)
+        elif status == "fail":
+            print(f"\n{label}\n  FAILED -- {msg}")
+            failed.append(game_id)
+        elif status == "error":
+            print(f"\n{label}\n  ERROR - {msg}")
+            failed.append(game_id)
+
+
+def retry_failed_downloads(targets, failed, worker_fn, concurrency, saved, skipped):
+    """Retry failed downloads once using worker_fn; updates saved/failed/skipped in-place.
+
+    Clears the failed list, re-runs failed items through run_concurrent_batch, then
+    re-classifies results (ok → saved, fail/error → failed, skip → skipped)."""
+    print(f"\n  Retrying {len(failed)} failed download(s)...")
+    retry_ids = set(failed)
+    retry_targets = [t for t in targets if t[1] in retry_ids]
+    failed.clear()
+    retry_results = run_concurrent_batch(retry_targets, worker_fn, max_workers=concurrency)
+    for item in retry_targets:
+        game_id = item[1]
+        if game_id not in retry_results:
+            continue
+        result = retry_results[game_id]
+        status = result[1]
+        if status == "ok":
+            saved.append(game_id)
+        elif status in ("fail", "error"):
+            failed.append(game_id)
+        elif status == "skip":
+            skipped.append(game_id)
 
 
 def list_game_ids():
@@ -2111,7 +2155,7 @@ def find_vortex_plugin_folder(game_id, game_name=None):
       1. Exact game_id match or game_id prefix (e.g. "subnautica2", "subnautica2-1.2.0")
       2. "Vortex Extension Update - <name> v*" folder (deployed via Nexus in-app update)
       3. Fuzzy display-name match (if game_name is given)"""
-    plugins_dir = os.environ.get("VORTEX_PLUGINS_DIR", r"C:\ProgramData\vortex\plugins")
+    plugins_dir = VORTEX_PLUGINS_DIR
     if not os.path.isdir(plugins_dir):
         return None
     try:

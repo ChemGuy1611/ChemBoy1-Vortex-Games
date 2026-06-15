@@ -71,6 +71,15 @@ BOOLEAN_TOGGLES = {
 ARRAY_CONSTS = {'IGNORE_CONFLICTS', 'IGNORE_DEPLOY', 'DISCOVERY_IDS_ACTIVE'}
 
 
+def _find_consts_with_trailing_comments(src):
+    """Return the set of top-level const/let names whose declaration line has a trailing // comment."""
+    pattern = re.compile(
+        r'^(?:const|let)\s+([A-Za-z_][A-Za-z0-9_]*)\s*=\s*[^;\n]+?\s*;?\s*//[^\n]*$',
+        re.MULTILINE
+    )
+    return {m.group(1) for m in pattern.finditer(src)}
+
+
 def extract_constants(src):
     """
     Return a dict {name: raw_rhs_string} for every top-level single-line const/let
@@ -81,8 +90,9 @@ def extract_constants(src):
     """
     consts = {}
     # Anchor at start of line (^) with no leading whitespace to skip function-body locals.
+    # Allow an optional trailing // comment (e.g. URL comments added by new_extension.py).
     pattern = re.compile(
-        r'^(?:const|let)\s+([A-Za-z_][A-Za-z0-9_]*)\s*=\s*([^;\n]+?)\s*;?\s*$',
+        r'^(?:const|let)\s+([A-Za-z_][A-Za-z0-9_]*)\s*=\s*([^;\n]+?)\s*;?\s*(?://[^\n]*)?$',
         re.MULTILINE
     )
     for m in pattern.finditer(src):
@@ -161,9 +171,11 @@ def apply_port(template_src, game_consts, game_src):
 
     def replace_single(var_name, old_rhs, new_rhs):
         nonlocal new_src
-        # Replace the exact declaration line; skip comment lines via negative lookahead
+        # Replace the exact declaration line; skip comment lines via negative lookahead.
+        # Allow an optional trailing // comment in the trail group so lines with URL
+        # comments (e.g. added by new_extension.py) are still matched and preserved.
         pattern = re.compile(
-            rf'^(?![ \t]*//)(?P<prefix>(?:const|let)\s+{re.escape(var_name)}\s*=\s*)(?P<old>{re.escape(old_rhs)})(?P<trail>\s*;?\s*)$',
+            rf'^(?![ \t]*//)(?P<prefix>(?:const|let)\s+{re.escape(var_name)}\s*=\s*)(?P<old>{re.escape(old_rhs)})(?P<trail>\s*;?\s*(?://[^\n]*)?)$',
             re.MULTILINE
         )
         replaced, count = pattern.subn(
@@ -306,6 +318,7 @@ def create_port(game_id, template_name, dry_run, force, no_explained=False, diff
         tmpl_src = f.read()
 
     game_consts = extract_constants(game_src)
+    trailing_comment_names = _find_consts_with_trailing_comments(game_src)
     new_src, substituted, skipped, review = apply_port(tmpl_src, game_consts, game_src)
 
     # --diff: show unified diff of current game index.js vs ported output
@@ -350,6 +363,14 @@ def create_port(game_id, template_name, dry_run, force, no_explained=False, diff
             print(f'    {name} = {rhs}')
     else:
         print('  No game constants outside template scope.')
+
+    substituted_names = {s[0] for s in substituted}
+    ported_with_comments = sorted(trailing_comment_names & substituted_names)
+    if ported_with_comments:
+        print()
+        print('  Consts with trailing // comments (ported OK -- verify the result):')
+        for name in ported_with_comments:
+            print(f'    {name}')
 
     print()
     if ok is False:

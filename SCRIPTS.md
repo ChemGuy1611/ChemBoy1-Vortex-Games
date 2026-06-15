@@ -36,6 +36,7 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `LISTS_DIR` | Absolute path to `resources/lists/` |
 | `GAME_PREFIX` | `"game-"` string constant |
 | `TEMPLATE_PREFIX` | `"template-"` string constant |
+| `VORTEX_PLUGINS_DIR` | Resolved Vortex plugins directory path (`VORTEX_PLUGINS_DIR` env var, default `C:\ProgramData\vortex\plugins`) |
 | `read_index_js(folder)` | Read `index.js` from a game extension folder, returns source string or `None` |
 | `write_index_js(folder, src)` | Write `src` to `index.js` in a game extension folder |
 | `extract_game_id(src)` | Extract `GAME_ID` value from `index.js` source |
@@ -97,6 +98,8 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `dry_prefix(dry_run)` | Return `"[DRY RUN] "` if `dry_run` is `True`, else `""` |
 | `print_run_summary(saved, failed, skipped, *, skip_label)` | Print a standardized saved / failed / skipped run summary block (separator line + counts + per-item lists) |
 | `run_concurrent_batch(items, worker_fn, max_workers=8)` | Run `worker_fn` over `items` in a thread pool; returns `{key: result_tuple}` keyed by the first element of each result. Worker must catch its own exceptions. KeyboardInterrupt returns the partial batch. |
+| `report_download_results(targets, results, label_fn, saved, failed, skipped)` | Classify and print results from `run_concurrent_batch` for download workers. Worker results must be `(game_id, status, source_or_none, msg_or_none)`; status one of `"ok"`, `"fail"`, `"error"`, `"skip"`. Updates `saved`/`failed`/`skipped` in-place. |
+| `retry_failed_downloads(targets, failed, worker_fn, concurrency, saved, skipped)` | Retry failed downloads once via `run_concurrent_batch`; clears and rebuilds `failed` in-place; updates `saved`/`skipped`. |
 | `resize_images_to(paths_and_labels, target_wh, *, fmt, quality, dry_run)` | Resize images in a `(path, label)` list to `target_wh`. Returns `(resized, already_correct, missing)`. Raises `ImportError` if Pillow absent. |
 | `find_vortex_exe()` | Return path to `Vortex.exe` (default install dir then PATH), or `None` |
 | `safe_windows_dirname(name)` | Strip characters invalid in Windows directory names (`<>:"/\|?*`) and strip whitespace |
@@ -165,7 +168,7 @@ Verifies Nexus Mods v1 and v3 API response shapes against documentation. Tests r
 
 | Variable | Required | Description |
 | --- | --- | --- |
-| `NEXUS_API_KEY` | Required | Nexus Mods API key. Read from HKCU registry via `winreg`. |
+| `NEXUS_API_KEY` | Required | Nexus Mods API key. Read from env var, with HKCU/HKLM registry fallback. |
 
 ### check_nexus_api.py — Usage
 
@@ -313,7 +316,7 @@ python fetch_nexus_stats.py --report-groups
 - `GAME_ID [GAME_ID ...]` — only processes the listed game IDs.
 - `--dry-run` — lists extensions that would be fetched (or entries to prune) without making changes. Works without `NEXUS_API_KEY`.
 - `--force` — re-fetches stats even if already cached.
-- `--max-age DAYS` — re-fetches entries older than `DAYS` days, even if cached.
+- `--max-age DAYS` — re-fetches entries older than `DAYS` days (ignored when `--force` is set).
 - `--prune` — removes cache entries for game IDs no longer present in the repo, then exits. Combine with `--dry-run` to preview.
 - `--report-groups` — prints all extensions with more than one active file-update group from the cache, then exits. No API calls; works without `NEXUS_API_KEY`.
 
@@ -799,7 +802,6 @@ python release_extension.py GAME_ID --no-open
 python release_extension.py GAME_ID --dry-run
 python release_extension.py GAME_ID --skip-node-check --skip-eslint
 python release_extension.py GAME_ID --upload
-python release_extension.py GAME_ID --no-upload
 python release_extension.py GAME_ID --edit-changelog
 ```
 
@@ -807,7 +809,7 @@ Pass one or more `GAME_ID` values to release multiple extensions in one run.
 Use `--no-open` to skip opening the browser (useful for testing or bulk releases).
 Use `--dry-run` to print what would be done without running checks, 7-Zip, or upload.
 Use `--skip-node-check` to skip the `node --check` syntax step. Use `--skip-eslint` to skip the ESLint step.
-Use `--upload` to upload the zip to Nexus Mods as a new file version after zipping. Default is skip (no prompt). Use `--no-upload` to explicitly skip. The changelog entry for the current version is attached as the file description on Nexus. `--upload` and `--no-upload` are mutually exclusive.
+Use `--upload` to upload the zip to Nexus Mods as a new file version after zipping. Default is skip (no prompt). The changelog entry for the current version is attached as the file description on Nexus.
 Use `--edit-changelog` to also open the Nexus Mods changelog editor (Documents tab) in the browser alongside the Files tab.
 Passing a template name (e.g. `template-basic`) instead of a game ID errors immediately before any release steps run.
 
@@ -816,7 +818,7 @@ Passing a template name (e.g. `template-basic`) instead of a game ID errors imme
 ```sh
 python release_extension.py hollowknight
 python release_extension.py hollowknight --upload
-python release_extension.py assassinscreedorigins assassinscreedvalhalla --no-open --no-upload
+python release_extension.py assassinscreedorigins assassinscreedvalhalla --no-open
 ```
 
 ### release_extension.py — Output
@@ -995,9 +997,7 @@ No additional packages required (Python stdlib only).
 
 ### deploy_to_vortex.py -- Environment Variables
 
-| Variable | Required | Description |
-| --- | --- | --- |
-| `VORTEX_PLUGINS_DIR` | Optional | Path to the Vortex plugins directory. Default: `C:\ProgramData\vortex\plugins`. |
+No environment variables are read directly. The plugins directory path is resolved via `vortex_utils.VORTEX_PLUGINS_DIR` (`VORTEX_PLUGINS_DIR` env var, default `C:\ProgramData\vortex\plugins`).
 
 ### deploy_to_vortex.py -- Usage
 
@@ -1183,7 +1183,7 @@ No arguments. Launches the window, which loads all extensions automatically.
 | Button | Script invoked |
 | --- | --- |
 | Bump Version | Dialog (`--major`, `--minor`, Manual `--version X.Y.Z`, `--dry-run`), then `python bump_version.py <id> [flags]` |
-| Release | Dialog (`--no-open`, `--dry-run`, `--upload`, `--edit-changelog`), then `python release_extension.py <ids> [flags] (--upload\|--no-upload)` |
+| Release | Dialog (`--no-open`, `--dry-run`, `--upload`, `--edit-changelog`), then `python release_extension.py <ids> [flags]` |
 | Deploy to Vortex | Dialog (`--dry-run`, `--force`, `--restart-vortex` default-checked), then `python deploy_to_vortex.py [flags] <ids>` |
 | Launch in Vortex | `subprocess.Popen(VortexExe, ...)` — opens Vortex with `--game` for the selected game |
 | Open Folder | `os.startfile(folder)` — no subprocess |

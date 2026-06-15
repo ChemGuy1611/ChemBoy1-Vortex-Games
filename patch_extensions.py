@@ -843,7 +843,8 @@ def run_patches(game_ids, dry_run, context, only=None):
             original_src = src
             game_changed = False
             changed_msgs = []
-            fail_msgs = []  # non-trivial skips worth showing
+            fail_msgs = []   # non-trivial skip reasons
+            err_msgs = []    # patch exceptions — always shown regardless of game_changed
 
             for patch in active_patches:
                 try:
@@ -854,8 +855,11 @@ def run_patches(game_ids, dry_run, context, only=None):
                     elif msg not in _SILENT_MSGS:
                         fail_msgs.append(f"{patch['name']}: {msg}")
                 except Exception as ex:
-                    fail_msgs.append(f"{patch['name']}: ERROR - {ex}")
+                    err_msgs.append(f"{patch['name']}: ERROR - {ex}")
                     total_errors += 1
+
+            if err_msgs:
+                log_error(game_id, '; '.join(err_msgs))
 
             if game_changed:
                 total_changed += 1

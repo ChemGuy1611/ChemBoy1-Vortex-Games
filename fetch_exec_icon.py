@@ -31,6 +31,7 @@ import os
 
 from vortex_utils import (
     iter_steam_image_targets, run_concurrent_batch,
+    report_download_results, retry_failed_downloads,
     download_exec_icon, print_run_summary, normalize_target_ids,
     build_arg_parser,
 )
@@ -60,43 +61,18 @@ def fetch_all(target_game_ids=None, dry_run=False, force=False,
     def _download_one(item):
         folder, game_id, steamapp_id, game_name = item
         out_path = os.path.join(folder, "exec.png")
+        fail_msg = "add exec.png manually (64x64 PNG)"
         try:
             ok, source = download_exec_icon(steamapp_id, game_name or game_id, out_path)
-            return game_id, "ok" if ok else "fail", source
+            return game_id, "ok" if ok else "fail", source, fail_msg
         except Exception as e:
-            return game_id, "error", str(e)
+            return game_id, "error", None, str(e)
 
     results = run_concurrent_batch(targets, _download_one, max_workers=concurrency)
-
-    for _, game_id, steamapp_id, game_name in targets:
-        if game_id not in results:
-            continue
-        _, status, detail = results[game_id]
-        label = f"[{game_id}]"
-        if status == "ok":
-            print(f"\n{label}\n  Saved: {detail}")
-            saved.append(game_id)
-        elif status == "fail":
-            print(f"\n{label}\n  FAILED -- add exec.png manually (64x64 PNG)")
-            failed.append(game_id)
-        elif status == "error":
-            print(f"\n{label}\n  ERROR - {detail}")
-            failed.append(game_id)
+    report_download_results(targets, results, lambda gid: f"[{gid}]", saved, failed, skipped)
 
     if retry_failed and failed:
-        print(f"\n  Retrying {len(failed)} failed download(s)...")
-        retry_ids = set(failed)
-        retry_targets = [t for t in targets if t[1] in retry_ids]
-        failed.clear()
-        retry_results = run_concurrent_batch(retry_targets, _download_one, max_workers=concurrency)
-        for _, game_id, _steamapp_id, _game_name in retry_targets:
-            if game_id not in retry_results:
-                continue
-            _, status, detail = retry_results[game_id]
-            if status == "ok":
-                saved.append(game_id)
-            elif status in ("fail", "error"):
-                failed.append(game_id)
+        retry_failed_downloads(targets, failed, _download_one, concurrency, saved, skipped)
 
     print_run_summary(saved, failed, skipped)
 

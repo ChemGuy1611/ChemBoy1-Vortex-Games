@@ -18,8 +18,7 @@ Arguments:
                 even if it was not running. Ignored with --dry-run.
 
 Environment variables:
-    VORTEX_PLUGINS_DIR  Path to the Vortex plugins directory.
-                        Default: C:\\ProgramData\\vortex\\plugins
+    (none -- VORTEX_PLUGINS_DIR is read from vortex_utils.VORTEX_PLUGINS_DIR)
 """
 
 import os
@@ -30,7 +29,7 @@ import time
 
 import vortex_utils as vu
 
-PLUGINS_DIR = os.environ.get("VORTEX_PLUGINS_DIR", r"C:\ProgramData\vortex\plugins")
+PLUGINS_DIR = vu.VORTEX_PLUGINS_DIR
 VORTEX_IMAGE = "Vortex.exe"
 
 

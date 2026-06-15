@@ -12,7 +12,7 @@ Usage:
     python check_nexus_api.py --test-upload
 
 Environment variables:
-    NEXUS_API_KEY  Required. Read from HKCU registry.
+    NEXUS_API_KEY  Required. Read from env var, with HKCU/HKLM registry fallback.
 """
 
 import argparse

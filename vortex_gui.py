@@ -1690,8 +1690,6 @@ class MainWindow(QMainWindow):
             return
         ids = self._selected_ids()
         extra = dlg.extra_args()
-        if "--upload" not in extra:
-            extra.append("--no-upload")
         self._run([[PYTHON, os.path.join(REPO_ROOT, "release_extension.py")] + ids + extra],
                   "release_extension.py")
 

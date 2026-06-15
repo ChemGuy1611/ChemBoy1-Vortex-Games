@@ -21,7 +21,7 @@ Options:
     GAME_ID          One or more game IDs to process. Omit to process all.
     --dry-run        List extensions to fetch (or entries to prune) without making changes.
     --force          Re-fetch stats even if already cached.
-    --max-age DAYS   Re-fetch entries older than DAYS days (overrides per-entry --force logic).
+    --max-age DAYS   Re-fetch entries older than DAYS days (ignored when --force is set).
     --prune          Remove cache entries for game IDs no longer in the repo, then exit.
     --report-groups  Print extensions with multiple active file groups from cache, then exit.
 
@@ -127,15 +127,12 @@ def fetch_all(target_ids=None, dry_run=False, force=False, max_age=None):
                 )
                 updated += 1
 
-                if remaining is not None:
-                    try:
-                        if int(remaining) <= 5:
-                            print("WARNING: Daily rate limit nearly exhausted -- stopping early")
-                            break
-                    except ValueError:
-                        pass
-
             except urllib.error.HTTPError as e:
+                # Try to capture remaining quota even from error responses.
+                try:
+                    last_remaining = e.headers.get("X-RL-Daily-Remaining") or last_remaining
+                except Exception:
+                    pass
                 if e.code == 404:
                     cache[game_id] = {
                         "mod_id": mod_id,
@@ -150,6 +147,15 @@ def fetch_all(target_ids=None, dry_run=False, force=False, max_age=None):
             except Exception as e:
                 vu.log_error(game_id, f"fetch error: {e}")
                 failed.append(game_id)
+
+            # Rate-limit guard checked after every request (success or handled error).
+            if last_remaining is not None:
+                try:
+                    if int(last_remaining) <= 5:
+                        print("WARNING: Daily rate limit nearly exhausted -- stopping early")
+                        break
+                except ValueError:
+                    pass
     except KeyboardInterrupt:
         print(f"\nInterrupted. Progress saved ({updated} updated).")
     finally:

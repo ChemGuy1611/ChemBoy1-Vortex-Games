@@ -47,6 +47,7 @@ import os
 from vortex_utils import (
     TITLE_IMAGES_DIR, BANNER_IMAGES_DIR,
     get_api_key, iter_steam_image_targets, run_concurrent_batch,
+    report_download_results, retry_failed_downloads,
     download_cover_art, download_title_image, download_banner_image,
     print_run_summary, normalize_target_ids,
     build_arg_parser,
@@ -54,15 +55,6 @@ from vortex_utils import (
 
 
 # ── Core logic ────────────────────────────────────────────────────────────────
-
-def _handle_result(ok, source, game_id, fail_msg, saved, failed):
-    if ok:
-        print(f"  Saved: {source}")
-        saved.append(game_id)
-    else:
-        print(f"  FAILED -- {fail_msg}")
-        failed.append(game_id)
-
 
 def _cover_target_path(mode, folder, game_id):
     if mode == "title":
@@ -150,46 +142,17 @@ def fetch_all(target_game_ids=None, dry_run=False, force=False, mode="cover",
 
     results = run_concurrent_batch(targets, _download_one, max_workers=concurrency)
 
-    # Report results in original order
-    for _, game_id, steamapp_id, _game_name in targets:
-        if game_id not in results:
-            continue
+    def _label(game_id):
         if mode == "title":
-            label = f"[{game_id}_title.jpg]"
-        elif mode == "banner":
-            label = f"[{game_id}_banner.jpg]"
-        else:
-            label = f"[{game_id}]"
-        _, status, source, detail = results[game_id]
-        if status == "skip":
-            print(f"\n{label}\n  SKIP -- no STEAMAPP_ID in index.js")
-            skipped.append(game_id)
-        elif status == "ok":
-            print(f"\n{label}\n  Saved: {source}")
-            saved.append(game_id)
-        elif status == "fail":
-            print(f"\n{label}\n  FAILED -- {detail}")
-            failed.append(game_id)
-        elif status == "error":
-            print(f"\n{label}\n  ERROR - {detail}")
-            failed.append(game_id)
+            return f"[{game_id}_title.jpg]"
+        if mode == "banner":
+            return f"[{game_id}_banner.jpg]"
+        return f"[{game_id}]"
+
+    report_download_results(targets, results, _label, saved, failed, skipped)
 
     if retry_failed and failed:
-        print(f"\n  Retrying {len(failed)} failed download(s)...")
-        retry_ids = set(failed)
-        retry_targets = [t for t in targets if t[1] in retry_ids]
-        failed.clear()
-        retry_results = run_concurrent_batch(retry_targets, _download_one, max_workers=concurrency)
-        for _, game_id, steamapp_id, _game_name in retry_targets:
-            if game_id not in retry_results:
-                continue
-            _, status, source, detail = retry_results[game_id]
-            if status == "ok":
-                saved.append(game_id)
-            elif status in ("fail", "error"):
-                failed.append(game_id)
-            elif status == "skip":
-                skipped.append(game_id)
+        retry_failed_downloads(targets, failed, _download_one, concurrency, saved, skipped)
 
     print_run_summary(saved, failed, skipped)
 

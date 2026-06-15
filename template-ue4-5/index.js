@@ -82,6 +82,7 @@ const SPECIAL_LO_INSTRUCTIONS = ''; //Show special load order instructions
 const PAKMOD_EXTRA_EXTS = []; //extra extensions to include with paks (usually for custom modding frameworks, i.e .toml, .json)
 const ue4ssLoadOrder = true; //enable load order and mods.txt writing for UE4SS mods
 const logicModsLoadOrder = true; //enable load order page and load_order.txt writing for LogicMods/Blueprint pak mods
+const collectionsLoadOrder = true; //include UE4SS and LogicMods load orders in collections (ANDed with the toggles above)
 const UE4SS_PAGE_NO = 0; //set these if there is a customized UE4SS Nexus page
 const UE4SS_FILE_NO = 0;
 const UE4SS_DOMAIN = GAME_ID; //either GAME_ID or 'site'
@@ -253,8 +254,6 @@ const UE4SS_NATIVE_MODS = ['BPML_GenericFunctions', 'BPModLoaderMod', 'CheatMana
 ];
 const ENABLEDTXT_FILE = 'enabled.txt';
 const UE4SS_ICON = 'M12 0c-6.5745 0-11.899 5.371-11.899 12s5.324 12 11.899 12c6.57 0 11.899-5.371 11.899-12s-5.328-12-11.903-12zM12 0.527c3.035 0 5.894 1.196 8.043 3.359 2.144 2.156 3.34 5.075 3.332 8.114 0 3.062-1.184 5.945-3.332 8.114-2.121 2.153-5.02 3.363-8.043 3.359-3.023 0.004-5.922-1.207-8.043-3.359-2.144-2.156-3.344-5.075-3.336-8.114 0-3.062 1.187-5.945 3.332-8.114 2.121-2.156 5.024-3.368 8.047-3.359zM11.402 4.75c-1.937 0.52-3.731 1.516-6.121 4.258s-1.937 5.008-1.937 5.008c0 0 0.66-1.559 2.246-3.2 0.754-0.777 1.313-1.039 1.7-1.039 0.344-0.02 0.633 0.258 0.633 0.602v5.567c0 0.551-0.356 0.672-0.683 0.664-0.278-0.004-0.536-0.101-0.536-0.101 1.629 2.367 5.528 2.699 5.528 2.699l1.711-1.829 0.039 0.035 1.567 1.336c2.867-1.703 4.25-4.859 4.25-4.859-1.281 1.352-2.094 1.668-2.579 1.668-0.43-0.004-0.598-0.254-0.598-0.254-0.023-0.117-0.062-1.813-0.078-3.508-0.016-1.754 0-3.512 0.086-3.516 0.496-0.93 2.075-2.805 2.075-2.805-2.949 0.582-4.555 2.516-4.555 2.516-0.476-0.375-1.445-0.313-1.445-0.313 0.453 0.25 0.906 0.977 0.906 1.578v5.922c0 0-0.989 0.871-1.75 0.871-0.453 0-0.731-0.246-0.883-0.449-0.059-0.078-0.11-0.164-0.149-0.258v-7.313c-0.106 0.078-0.235 0.121-0.363 0.125-0.164 0-0.332-0.082-0.446-0.32-0.086-0.18-0.141-0.449-0.141-0.844 0-1.348 1.523-2.243 1.523-2.243z';
-// mdiCardAccountDetails (custom trace from blueprint.png): 'M4 2.5C2.6 2.5 1.5 3.6 1.5 5V19C1.5 20.4 2.6 21.5 4 21.5H5.5V2.5H4M7.5 2.5V21.5H20C21.4 21.5 22.5 20.4 22.5 19V5C22.5 3.6 21.4 2.5 20 2.5H7.5M9.5 5.5H13.5V7H9.5V5.5M9.5 8.5H13.5V10H9.5V8.5M9.5 11.5H12.5V13H9.5V11.5M16.5 8C18.2 8 19.5 9.3 19.5 11S18.2 14 16.5 14 13.5 12.7 13.5 11 14.8 8 16.5 8M16.5 9.5C15.7 9.5 15 10.2 15 11S15.7 12.5 16.5 12.5 18 11.8 18 11 17.3 9.5 16.5 9.5M9.5 15.5H19.5V17H9.5V15.5Z'
-// mdiFloorPlan: 'M10,5V10H9V5H5V13H9V12H10V17H9V14H5V19H12V17H13V19H19V17H21V21H3V3H21V15H19V10H13V15H12V9H19V5H10Z'
 const BLUEPRINT_ICON = 'M19.5 17C19.36 17 19.24 17 19.11 17.04L17.5 13.8C17.95 13.35 18.25 12.71 18.25 12C18.25 10.62 17.13 9.5 15.75 9.5C15.61 9.5 15.5 9.5 15.35 9.54L13.74 6.3C14.21 5.84 14.5 5.21 14.5 4.5C14.5 3.12 13.38 2 12 2S9.5 3.12 9.5 4.5C9.5 5.2 9.79 5.84 10.26 6.29L8.65 9.54C8.5 9.5 8.39 9.5 8.25 9.5C6.87 9.5 5.75 10.62 5.75 12C5.75 12.71 6.04 13.34 6.5 13.79L4.89 17.04C4.76 17 4.64 17 4.5 17C3.12 17 2 18.12 2 19.5C2 20.88 3.12 22 4.5 22S7 20.88 7 19.5C7 18.8 6.71 18.16 6.24 17.71L7.86 14.46C8 14.5 8.12 14.5 8.25 14.5C8.38 14.5 8.5 14.5 8.63 14.46L10.26 17.71C9.79 18.16 9.5 18.8 9.5 19.5C9.5 20.88 10.62 22 12 22S14.5 20.88 14.5 19.5C14.5 18.12 13.38 17 12 17C11.87 17 11.74 17 11.61 17.04L10 13.8C10.45 13.35 10.75 12.71 10.75 12C10.75 11.3 10.46 10.67 10 10.21L11.61 6.96C11.74 7 11.87 7 12 7C12.13 7 12.26 7 12.39 6.96L14 10.21C13.54 10.66 13.25 11.3 13.25 12C13.25 13.38 14.37 14.5 15.75 14.5C15.88 14.5 16 14.5 16.13 14.46L17.76 17.71C17.29 18.16 17 18.8 17 19.5C17 20.88 18.12 22 19.5 22S22 20.88 22 19.5C22 18.12 20.88 17 19.5 17M4.5 20.5C3.95 20.5 3.5 20.05 3.5 19.5S3.95 18.5 4.5 18.5 5.5 18.95 5.5 19.5 5.05 20.5 4.5 20.5M13 19.5C13 20.05 12.55 20.5 12 20.5S11 20.05 11 19.5 11.45 18.5 12 18.5 13 18.95 13 19.5M7.25 12C7.25 11.45 7.7 11 8.25 11S9.25 11.45 9.25 12 8.8 13 8.25 13 7.25 12.55 7.25 12M11 4.5C11 3.95 11.45 3.5 12 3.5S13 3.95 13 4.5 12.55 5.5 12 5.5 11 5.05 11 4.5M14.75 12C14.75 11.45 15.2 11 15.75 11S16.75 11.45 16.75 12 16.3 13 15.75 13 14.75 12.55 14.75 12M19.5 20.5C18.95 20.5 18.5 20.05 18.5 19.5S18.95 18.5 19.5 18.5 20.5 18.95 20.5 19.5 20.05 20.5 19.5 20.5Z'; // mdiGraphOutline (@mdi/js 7.4.47)
 const BPML_FOLDER = 'BPModLoaderMod'; //UE4SS native mod that reads load_order.txt (also in UE4SS_NATIVE_MODS)
 const BPML_LO_FILE = 'load_order.txt'; //file BPModLoaderMod reads for BP pak load order
@@ -847,6 +846,16 @@ async function installUe4ssCombo(files, workingDir) {
     .map(f => path.basename(f, LOGICMODS_EXT));
   if (logicPakBasenames.length) {
     instructions.push({ type: 'attribute', key: LO_ATTRIBUTE_LOGIC, value: logicPakBasenames });
+  }
+  const ue4ssModFolders = files
+    .filter(f => (
+      f.toLowerCase().includes(UE4SS_MOD_PATH.toLowerCase())
+      && (path.basename(f).toLowerCase() === SCRIPTS_FOLDER.toLowerCase())
+    ))
+    .map(f => path.basename(path.dirname(f)));
+  if (ue4ssModFolders.length) {
+    instructions.push({ type: 'attribute', key: LO_ATTRIBUTE_UE4SS, value: ue4ssModFolders[0] }); //!only picking one folder to have a string. Can change to array if needed, but need to change in load order modId function too.
+    log('warn', `Installer: UE4SS LO attribute: ${ue4ssModFolders.join(', ')}`);
   }
   return Promise.resolve({ instructions });
 }
@@ -2044,6 +2053,74 @@ async function serializeLogicMods(api, loadOrder) {
   );
 }
 
+//Generate UE4SS + LogicMods load order data for inclusion in a collection
+async function genUe4ssCollectionsData(api, gameId, includedMods) {
+  const state = api.getState();
+  const profileId = selectors.lastActiveProfileForGame(state, gameId);
+  if (profileId === undefined) {
+    return Promise.reject(new Error('Invalid profile - cannot generate UE4SS load order collection data'));
+  }
+  const result = {};
+  if (ue4ssLoadOrder) {
+    const lo = util.getSafe(state, ['persistent', 'ue4ssLoadOrder', profileId, 'loadOrder'], []);
+    result.ue4ssLoadOrder = lo
+      .filter(entry => (entry.modId !== undefined) && includedMods.includes(entry.modId)) //drop manual mods and mods not in the collection
+      .map(entry => ({ id: entry.id, enabled: entry.enabled, locked: entry.locked })); //name and modId are machine-specific - recomputed on deserialize
+  }
+  if (logicModsLoadOrder) {
+    const lo = util.getSafe(state, ['persistent', 'logicModsLoadOrder', profileId, 'loadOrder'], []);
+    result.logicModsLoadOrder = lo
+      .filter(entry => (entry.modId !== undefined) && includedMods.includes(entry.modId))
+      .map(entry => ({ id: entry.id }));
+  }
+  return Promise.resolve(result);
+}
+
+//Apply UE4SS + LogicMods load order data from an installed collection
+async function parseUe4ssCollectionsData(api, gameId, collection) {
+  const state = api.getState();
+  const profileId = selectors.lastActiveProfileForGame(state, gameId);
+  if (profileId === undefined) {
+    return Promise.reject(new Error('Invalid profile - cannot apply UE4SS load order collection data'));
+  }
+  const ue4ssLO = collection?.ue4ssLoadOrder;
+  const logicLO = collection?.logicModsLoadOrder;
+  GAME_PATH = getDiscoveryPath(api);
+  if (ue4ssLoadOrder && Array.isArray(ue4ssLO) && (ue4ssLO.length > 0)) {
+    api.store.dispatch(setUe4ssLoadOrder(profileId, ue4ssLO));
+    if (GAME_PATH !== undefined) { //write per-profile json file so deserializeUe4ss picks up the ordering on next deploy
+      try {
+        const modFolderPath = path.join(GAME_PATH, BINARIES_PATH, UE4SS_MOD_PATH);
+        await fs.ensureDirWritableAsync(modFolderPath);
+        await fs.writeFileAsync(
+          path.join(modFolderPath, profileId + '_' + UE4SS_LO_FILE),
+          JSON.stringify(ue4ssLO, null, 2),
+          { encoding: 'utf8' },
+        );
+      } catch (err) {
+        log('warn', `[${GAME_ID}] Failed to write UE4SS load order file from collection`, err);
+      }
+    }
+  }
+  if (logicModsLoadOrder && Array.isArray(logicLO) && (logicLO.length > 0)) {
+    api.store.dispatch(setLogicModsLoadOrder(profileId, logicLO));
+    if (GAME_PATH !== undefined) {
+      try {
+        const bpmlFolder = path.join(GAME_PATH, BINARIES_PATH, UE4SS_MOD_PATH, BPML_FOLDER);
+        await fs.ensureDirWritableAsync(bpmlFolder);
+        await fs.writeFileAsync(
+          path.join(bpmlFolder, profileId + '_' + LOGICMODS_LO_FILE),
+          JSON.stringify(logicLO, null, 2),
+          { encoding: 'utf8' },
+        );
+      } catch (err) {
+        log('warn', `[${GAME_ID}] Failed to write LogicMods load order file from collection`, err);
+      }
+    }
+  }
+  return Promise.resolve();
+}
+
 //UNREAL - Pre-sort function - legacy load order page
 async function preSort(api, items, direction) {
   const mods = util.getSafe(api.store.getState(), ['persistent', 'mods', spec.game.id], {});
@@ -2755,6 +2832,17 @@ function main(context) {
       },
       props: () => ({ api: context.api }),
     });
+  }
+  if (collectionsLoadOrder && (ue4ssLoadOrder || logicModsLoadOrder)) {
+    context.optional.registerCollectionFeature(
+      `${GAME_ID}_ue4ss_collection_data`,
+      (gameId, includedMods) => genUe4ssCollectionsData(context.api, gameId, includedMods),
+      (gameId, collection) => parseUe4ssCollectionsData(context.api, gameId, collection),
+      () => Promise.resolve(),
+      (t) => t('UE4SS Load Orders'),
+      (state, gameId) => gameId === GAME_ID,
+      CollectionsDataView,
+    );
   }
   if (logicModsLoadOrder) {
     context.registerReducer(['persistent', 'logicModsLoadOrder'], {
@@ -4019,6 +4107,47 @@ function LogicModsLoadOrderPage({ api }) {
     )
   );
 } //*/
+
+//Read-only view of UE4SS + LogicMods load order data exported with a collection (collection workshop tab)
+function CollectionsDataView({ t, collection }) {
+  const { useSelector } = require('react-redux');
+  const { ListGroup, ListGroupItem } = require('react-bootstrap');
+
+  const profileId = useSelector(state => selectors.lastActiveProfileForGame(state, GAME_ID));
+  const ue4ssLO = useSelector(state =>
+    util.getSafe(state, ['persistent', 'ue4ssLoadOrder', profileId, 'loadOrder'], []));
+  const logicLO = useSelector(state =>
+    util.getSafe(state, ['persistent', 'logicModsLoadOrder', profileId, 'loadOrder'], []));
+
+  const isInCollection = (entry) =>
+    (entry.modId !== undefined) && (collection?.rules ?? []).some(rule => rule.reference?.id === entry.modId);
+  const ue4ssFiltered = ue4ssLoadOrder ? ue4ssLO.filter(isInCollection) : [];
+  const logicFiltered = logicModsLoadOrder ? logicLO.filter(isInCollection) : [];
+
+  const renderSection = (title, entries, showEnabled) =>
+    React.createElement('div', { style: { marginBottom: 16 } },
+      React.createElement('h4', null, t(title)),
+      entries.length > 0
+        ? React.createElement(ListGroup, null,
+            entries.map((entry, idx) => React.createElement(ListGroupItem, { key: entry.id },
+              React.createElement('span', { style: { marginRight: 8, color: 'rgba(255,255,255,0.5)' } }, `${idx + 1}.`),
+              React.createElement('span', null, entry.name ?? entry.id),
+              showEnabled && (entry.enabled === false)
+                ? React.createElement('span', { style: { marginLeft: 8, fontStyle: 'italic', color: 'rgba(255,255,255,0.5)' } }, t('(disabled)'))
+                : null,
+            ))
+          )
+        : React.createElement('p', { style: { fontStyle: 'italic' } },
+            t('No mods of this type from this collection are in the load order.')),
+    );
+
+  return React.createElement('div', { style: { overflow: 'auto', padding: '8px' } },
+    React.createElement('p', null,
+      t('This is a snapshot of the UE4SS and LogicMods load order information that will be exported with this collection.')),
+    ue4ssLoadOrder ? renderSection('UE4SS Mods (mods.txt)', ue4ssFiltered, true) : null,
+    logicModsLoadOrder ? renderSection('LogicMods/Blueprint Mods', logicFiltered, false) : null,
+  );
+}
 
 //export to Vortex
 module.exports = {

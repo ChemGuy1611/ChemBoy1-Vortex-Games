@@ -49,12 +49,16 @@ def v3_post_json(path, body, api_key):
 
 def extract_changelog_entry(changelog_src, version):
     """Extract changelog entry for version: date-only header + body, no blank line between."""
-    pattern = rf'(## (?:\[?{re.escape(version)}\]?).*?)(?=\n## |\Z)'
+    # Use a trailing boundary (?![\d.]) to prevent "1.2" matching "1.20" or "1.2.3".
+    pattern = rf'(## (?:\[?{re.escape(version)}\]?(?![\d.])).*?)(?=\n## |\Z)'
     m = re.search(pattern, changelog_src, re.DOTALL)
     if not m:
         return ""
     text = m.group(1).strip()
+    # Strip "## [X.Y.Z] - YYYY-MM-DD" header down to just the date.
     text = re.sub(r'^## (?:\[?[^\]]*\]?\s*-\s*)(\d{4}-\d{2}-\d{2})', r'\1', text)
+    # Strip bare "## [X.Y.Z]" or "## X.Y.Z" header (no date) so it doesn't appear in upload.
+    text = re.sub(r'^## \[?[^\]\n]+\]?\s*\n', '', text)
     text = re.sub(r'^(\d{4}-\d{2}-\d{2})\n\n', r'\1\n', text)
     return text.strip()
 

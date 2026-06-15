@@ -19,7 +19,7 @@ Steps performed per game:
    11. Run generate_explained.js to regenerate EXTENSION_EXPLAINED.md
    12. Create game-{GAME_ID}.zip with 7-Zip
    13. Optionally upload zip to Nexus Mods as a new file version (changelog entry as
-       description; file group resolved via v1 uid -> v3 groups); default: skip (use --upload to enable)
+       description; file group resolved via v1 uid -> v3 groups); default: skip; use --upload to enable
    14. Open EXTENSION_URL?tab=files in browser (or nexusmods.com/games/site if not set)
    15. Optionally open EXTENSION_URL/edit/documents (changelog editor) in browser
 
@@ -30,7 +30,6 @@ Usage:
     python release_extension.py GAME_ID --skip-node-check
     python release_extension.py GAME_ID --skip-eslint
     python release_extension.py GAME_ID --upload
-    python release_extension.py GAME_ID --no-upload
     python release_extension.py GAME_ID --edit-changelog
 
 Environment variables:
@@ -370,16 +369,10 @@ def main():
         action="store_true",
         help="Skip the eslint step.",
     )
-    upload_group = parser.add_mutually_exclusive_group()
-    upload_group.add_argument(
+    parser.add_argument(
         "--upload",
         action="store_true",
         help="Upload the zip to Nexus Mods as a new file version (no prompt).",
-    )
-    upload_group.add_argument(
-        "--no-upload",
-        action="store_true",
-        help="Skip the Nexus Mods upload step entirely (no prompt).",
     )
     parser.add_argument(
         "--edit-changelog",
