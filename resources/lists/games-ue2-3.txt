@@ -1,5 +1,6 @@
 batmanarkhamasylum
 batmanarkhamcity
+batmanarkhamorigins
 bioshock
 bioshock2
 bioshockinfinite

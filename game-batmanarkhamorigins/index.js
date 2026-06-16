@@ -1,9 +1,9 @@
 /*/////////////////////////////////////////
-Name: XXX Vortex Extension
+Name: Batman: Arkham Origins Vortex Extension
 Structure: UE 2-3 Game + TFC Installer
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2026-XX-XX
+Date: 2026-06-15
 Notes:
 -
 /////////////////////////////////////////*/
@@ -22,30 +22,31 @@ const DOCUMENTS = util.getVortexPath("documents");
 //const LOCALAPPDATA = util.getVortexPath('localAppData');
 
 //Specify all the information about the game
-const GAME_ID = "XXX";
-const STEAMAPP_ID = "XXX";
-const EPICAPP_ID = "XXX";
-const GOGAPP_ID = "XXX";
-const XBOXAPP_ID = "XXX";
+const GAME_ID = "batmanarkhamorigins";
+const STEAMAPP_ID = "209000"; // https://steamdb.info/app/209000/
+const EPICAPP_ID = null;
+const GOGAPP_ID = null;
+const XBOXAPP_ID = null;
 const XBOXEXECNAME = "XXX";
 const XBOX_PUB_ID = "XXX"; //string after "ID_"
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
-const GAME_NAME = "XXX";
-const GAME_NAME_SHORT = "XXX";
-const EPIC_CODE_NAME = "XXX";
-const COOKED_FOLDER = 'CookedPC';
+const TOP_LEVEL_FOLDER = "SinglePlayer";
+const GAME_NAME = "Batman: Arkham Origins";
+const GAME_NAME_SHORT = "Batman";
+const EPIC_CODE_NAME = "BMGame";
+const COOKED_FOLDER = 'CookedPCConsole';
 const ROOT_FOLDERS = [EPIC_CODE_NAME, 'Engine', 'Binaries'];
 const ROOTSUB_FOLDERS = ['Config', COOKED_FOLDER, 'DLC', 'Localization', 'Movies'];
-const DLCSUB_FOLDERS = ['XXX'];
+const DLCSUB_FOLDERS = ['237611', '237612', '237613', '237614','237618','237619','237620','237621','250960', '257070', '277830'];
 const COOKEDSUB_FOLDERS = ['Maps', 'Packages'];
 const BITS = '32'; //32 or 64
-const EXEC_NAME = 'XXX.exe';
-const EXEC_NAME_64 = 'XXX.exe';
-const EXEC_NAME_SHIPPING = 'XXX.exe';
-const DATA_FOLDER = path.join('My Games', 'XXX', EPIC_CODE_NAME);
-const PCGAMINGWIKI_URL = "XXX";
-const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
+const EXEC_NAME = 'BatmanOrigins.exe';
+const EXEC_NAME_64 = 'BatmanOrigins.exe';
+const EXEC_NAME_SHIPPING = 'BatmanOrigins.exe';
+const DATA_FOLDER = path.join('WB Games', 'Batman Arkham Origins');
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Batman%3A_Arkham_Origins";
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1989"; //Nexus link to this extension. Used for links
 
 //feature toggles
 const hasXbox = false; //toggle for Xbox version logic
@@ -54,10 +55,10 @@ const allowSymlinks = true; //true if game can use symlinks without issues. Typi
 const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
 const debug = false; //toggle for debug mode
 
-const SPECIAL_TFCMOD_FOLDERS = ['XXX'];
+const SPECIAL_TFCMOD_FOLDERS = [];
 
 const EXEC_XBOX = 'gamelaunchhelper.exe';
-const BINARIES_PATH = path.join("Binaries", `Win${BITS}`);
+const BINARIES_PATH = path.join(TOP_LEVEL_FOLDER, "Binaries", `Win${BITS}`);
 const EXEC = path.join(BINARIES_PATH, EXEC_NAME);
 const EXEC_64 = path.join(BINARIES_PATH, EXEC_NAME_64);
 const EXEC_SHIPPING = path.join(BINARIES_PATH, EXEC_NAME_SHIPPING);
@@ -73,7 +74,7 @@ const TFC_ID = `${GAME_ID}-tfcinstaller`;
 const TFC_NAME = "TFC Installer";
 const TFC_EXEC = "tfcinstaller.exe";
 const TFC_FOLDER = "TFCInstaller";
-const TFC_PATH = '.';
+const TFC_PATH = TOP_LEVEL_FOLDER;
 const TFC_PAGE_NO = 588;
 const TFC_FILE_NO = 8075;
 
@@ -81,26 +82,27 @@ const UPKEXPLORER_ID = `${GAME_ID}-tfcexplorer`;
 const UPKEXPLORER_NAME = "UPK Explorer";
 const UPKEXPLORER_EXEC = "upk explorer.exe";
 const UPKEXPLORER_FOLDER = "UPK Explorer";
-const UPKEXPLORER_PATH = '.';
+const UPKEXPLORER_PATH = TOP_LEVEL_FOLDER;
 
 const TFCMOD_ID = `${GAME_ID}-tfcmod`;
 const TFCMOD_NAME = "TFC Mod";
 const TFCMOD_EXTS = ['.packagepatch', '.descriptor', '.tfcmapping', '.inipatch']; //removed .tfc because that can be in direct file mods
 const TFCMOD_FILES = ['gameprofile.xml', 'gameprofile.idremappings.xml', 'objectdescriptors.xml', 'packageextensions.xml', `texturepack`, 'game'];
-const TFCMOD_PATH = path.join(TFC_FOLDER, 'Mods');
+const TFCMOD_PATH = path.join(TOP_LEVEL_FOLDER, TFC_FOLDER, 'Mods');
 
 const MOVIES_ID = `${GAME_ID}-movies`;
 const MOVIES_NAME = "Movies Mod";
-const MOVIES_PATH = path.join(EPIC_CODE_NAME, 'Movies');
-const MOVIES_EXTS = ['.bik'];
+const MOVIES_PATH = path.join(TOP_LEVEL_FOLDER, EPIC_CODE_NAME, 'Movies');
+const MOVIES_EXTS = ['.usm'];
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Folder";
-const ROOTSUB_PATH = path.join(EPIC_CODE_NAME);
+const ROOT_PATH = path.join(TOP_LEVEL_FOLDER);
+const ROOTSUB_PATH = path.join(TOP_LEVEL_FOLDER, EPIC_CODE_NAME);
 
 const COOKEDSUB_ID = `${GAME_ID}-cookedsub`;
-const COOKEDSUB_NAME = "Cooked Sub Folder";
-const COOKEDSUB_PATH = path.join(ROOTSUB_PATH, COOKED_FOLDER);
+const COOKEDSUB_NAME = `.upk Mod`;
+const COOKEDSUB_PATH = TOP_LEVEL_FOLDER; //!needs to start from root to cover both main and DLC folders
 const COOKEDSUB_EXTS = ['.upk'];
 
 const BINARIES_ID = `${GAME_ID}-binaries`;
@@ -108,11 +110,12 @@ const BINARIES_NAME = "Binaries (Engine Injector)";
 const BINARIES_FILES = [EXEC_NAME];
 const BINARIES_EXTS = ['.exe', '.dll', '.asi', '.addon64'];
 
-const CONFIG_PATH = path.join(DOCUMENTS, DATA_FOLDER, 'Config');
+const CONFIG_PATH = path.join(DOCUMENTS, DATA_FOLDER, EPIC_CODE_NAME, 'Config');
 const SAVE_PATH = path.join(DOCUMENTS, DATA_FOLDER, 'SaveData');
+const GRAPHICS_XML_PATH = path.join(DOCUMENTS, DATA_FOLDER, 'GFXSettings.BatmanArkhamOrigins.xml');
 
 const MOD_PATH_DEFAULT = '.';
-const REQ_FILE = EPIC_CODE_NAME;
+const REQ_FILE = path.join(TOP_LEVEL_FOLDER, EPIC_CODE_NAME);
 const PARAMETERS_STRING = '';
 const PARAMETERS = [PARAMETERS_STRING];
 
@@ -166,7 +169,7 @@ const spec = {
       "id": ROOT_ID,
       "name": ROOT_NAME,
       "priority": "high",
-      "targetPath": '{gamePath}'
+      "targetPath": path.join('{gamePath}', ROOT_PATH)
     },
     {
       "id": COOKEDSUB_ID,
@@ -618,10 +621,12 @@ function testRoot(files, gameId) {
   const ROOT_FOLDERS_LOWER = ROOT_FOLDERS.map(str => str.toLowerCase());
   const ROOTSUB_FOLDERS_LOWER = ROOTSUB_FOLDERS.map(str => str.toLowerCase());
   const DLCSUB_FOLDERS_LOWER = DLCSUB_FOLDERS.map(str => str.toLowerCase());
+  const COOKEDSUB_FOLDERS_LOWER = COOKEDSUB_FOLDERS.map(str => str.toLowerCase());
   const isMod = files.some(file => ROOT_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
   const isSub = files.some(file => ROOTSUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
   const isDlcSub = files.some(file => DLCSUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
-  let supported = (gameId === spec.game.id) && ( isMod || isSub || isDlcSub );
+  const isCookedSub = files.some(file => COOKEDSUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
+  let supported = (gameId === spec.game.id) && ( isMod || isSub || isDlcSub || isCookedSub );
 
   // Test for a mod installer.
   if (supported && files.find(file =>
@@ -642,6 +647,7 @@ function installRoot(files) {
   const ROOT_FOLDERS_LOWER = ROOT_FOLDERS.map(str => str.toLowerCase());
   const ROOTSUB_FOLDERS_LOWER = ROOTSUB_FOLDERS.map(str => str.toLowerCase());
   const DLCSUB_FOLDERS_LOWER = DLCSUB_FOLDERS.map(str => str.toLowerCase());
+  const COOKEDSUB_FOLDERS_LOWER = COOKEDSUB_FOLDERS.map(str => str.toLowerCase());
   let modFile = files.find(file => ROOT_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
   const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
   if (modFile === undefined) {
@@ -651,6 +657,10 @@ function installRoot(files) {
   if (modFile === undefined) {
     modFile = files.find(file => DLCSUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
     folder = path.join(EPIC_CODE_NAME, 'DLC');
+  }
+  if (modFile === undefined) {
+    modFile = files.find(file => COOKEDSUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
+    folder = path.join(EPIC_CODE_NAME, COOKED_FOLDER);
   }
   const ROOT_IDX = `${path.basename(modFile)}${path.sep}`
   const idx = modFile.indexOf(ROOT_IDX);
@@ -672,11 +682,10 @@ function installRoot(files) {
   return Promise.resolve({ instructions });
 }
 
-//Installer test for CookedPC folders/files
+//Installer test .upk files
 function testCookedSub(files, gameId) {
-  const isFolder = files.some(file => COOKEDSUB_FOLDERS.includes(path.basename(file)));
   const isExt = files.some(file => COOKEDSUB_EXTS.includes(path.extname(file).toLowerCase()));
-  let supported = (gameId === spec.game.id) && ( isFolder || isExt );
+  let supported = (gameId === spec.game.id) && isExt;
 
   // Test for a mod installer.
   if (supported && files.find(file =>
@@ -691,31 +700,103 @@ function testCookedSub(files, gameId) {
   });
 }
 
-//Installer install CookedPC folders/files
-function installCookedSub(files) {
-  let modFile = files.find(file => COOKEDSUB_FOLDERS.includes(path.basename(file)));
-  let idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
-  if (modFile === undefined) {
-    modFile = files.find(file => COOKEDSUB_EXTS.includes(path.extname(file).toLowerCase()));
-    idx = modFile.indexOf(path.basename(modFile));
+//Installer install .upk files
+async function installCookedSub(api, files, destinationPath, gameId, progressDel, choices, unattended, archivePath) {
+  const state = api.getState();
+  const downloads = util.getSafe(state, ['persistent', 'downloads', 'files'], {});
+  const archive = Object.values(downloads).find(arc => archivePath.endsWith(arc.localPath));
+  const nexusPageUrl = `https://www.nexusmods.com/${GAME_ID}/mods/${archive?.modInfo?.nexus?.ids?.modId}`;
+  const t = api.translate;
+  const choice = await api.showDialog('question', 'Select Install Directory for .upk Files', {
+      bbcode: t('Select the Install Destination for the .upk mod files you are installing.[br][/br][br][/br]'
+          + `Read the mod's description to determine the correct location.[br][/br][br][/br]`
+          + (archive ? `[url=${nexusPageUrl}]VIEW MOD PAGE[/url][br][/br][br][/br]` : '[br][/br]')),
+      choices: [{ id: 'main', text: `Main - ${path.join(EPIC_CODE_NAME, COOKED_FOLDER)}`, value: true }].concat(Array.from(DLCSUB_FOLDERS).map((dlc) => ({ id: dlc, text: `DLC - ${dlc}`, value: false }))),
+      options: { order: ['bbcode', 'choices'], wrap: true },
+  }, [
+      { label: 'Cancel' },
+      { label: 'Install' },
+  ]);
+  if (choice.action === 'Cancel') {
+      throw new util.UserCanceled();
   }
-  const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: COOKEDSUB_ID };
+  const selected = Object.keys(choice.input).find(iter => choice.input[iter]);
+  let folder = path.join('DLC', selected);
+  if (selected === 'main') {
+    folder = path.join(EPIC_CODE_NAME, COOKED_FOLDER);
+  }
 
-  // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  //handle variants
+  let hasVariants = false;
+  const upkFiles = files.reduce((accum, iter) => {
+    if (COOKEDSUB_EXTS.includes(path.extname(iter).toLowerCase())) {
+      const exists = accum[path.basename(iter)] !== undefined;
+      if (exists) {
+        hasVariants = true;
+      }
+      accum[path.basename(iter)] = exists
+        ? accum[path.basename(iter)].concat(iter)
+        : [iter];
+    }
+    return accum;
+  }, {});
+
+  let filtered = files.filter(file =>
+    !file.endsWith(path.sep)
   );
 
-  const instructions = filtered.map(file => {
-    return {
-      type: 'copy',
-      source: file,
-      destination: path.join(file.substr(idx)),
-    };
-  });
-  instructions.push(setModTypeInstruction);
-  return Promise.resolve({ instructions });
+  const queryVariant = () => {
+    const patch = Object.keys(upkFiles).filter(key => upkFiles[key].length > 1);
+    return Promise.map(patch, upkFile => {
+      return api.showDialog('question', 'Choose Variant', {
+        text: 'This mod has several variants for "{{file}}" - please '
+            + 'choose the variant you wish to install. (You can choose a '
+            + 'different variant by re-installing the mod)',
+        choices: upkFiles[upkFile].map((iter, idx) => ({
+          id: iter,
+          text: iter,
+          value: idx === 0,
+        })),
+        parameters: {
+          file: upkFile,
+        },
+      }, [
+        { label: 'Cancel' },
+        { label: 'Confirm' },
+      ]).then(res => {
+        if (res.action === 'Confirm') {
+          const choice = Object.keys(res.input).find(choice => res.input[choice]);
+          filtered = filtered.filter(file => //only include files in same directory as chosen variant
+            (path.dirname(file) === path.dirname(choice))
+          );
+          return Promise.resolve();
+        } else {
+          throw new util.UserCanceled();
+        }
+      });
+    })
+  };
+
+  const generateInstructions = () => {
+    const fileInstructions = filtered.reduce((accum, iter) => {
+      const idx = iter.indexOf(path.basename(iter));
+      accum.push({
+        type: 'copy',
+        source: iter,
+        destination: path.join(folder, iter.substr(idx)),
+      });
+      return accum;
+    }, []);
+    const instructions = [{
+      type: 'setmodtype',
+      value: COOKEDSUB_ID,
+    }].concat(fileInstructions);
+    return instructions;
+  }
+
+  const prom = hasVariants ? queryVariant : Promise.resolve;
+  return prom()
+    .then(() => Promise.resolve({ instructions: generateInstructions() }));
 }
 
 //test whether to use mod installer
@@ -1103,7 +1184,7 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(UPKEXPLORER_ID, 27, testUpkExplorer, installUpkExplorer);
   context.registerInstaller(TFCMOD_ID, 29, testTfcMod, installTfcMod);
   context.registerInstaller(ROOT_ID, 31, testRoot, installRoot);
-  context.registerInstaller(COOKEDSUB_ID, 33, testCookedSub, installCookedSub);
+  context.registerInstaller(COOKEDSUB_ID, 33, testCookedSub, (files, destinationPath, gameId, progressDel, choices, unattended, archivePath) => installCookedSub(context.api, files, destinationPath, gameId, progressDel, choices, unattended, archivePath));
   context.registerInstaller(MOVIES_ID, 35, testMovies, installMovies);
   context.registerInstaller(BINARIES_ID, 37, testBinaries, installBinaries);
   if (fallbackInstaller) {
@@ -1113,6 +1194,13 @@ function applyGame(context, gameSpec) {
   //register actions
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
     util.opn(CONFIG_PATH).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Graphics Settings XML', () => {
+    util.opn(GRAPHICS_XML_PATH).catch(() => null);
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
