@@ -1,9 +1,9 @@
 /*/////////////////////////////////////////////
-Name: XXX Vortex Extension
+Name: Need for Speed Heat Vortex Extension
 Structure: Frostbite Engine - Frosty Mod Manager
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2026-XX-XX
+Date: 2026-06-15
 Notes:
 -
 /////////////////////////////////////////////*/
@@ -19,13 +19,13 @@ const DOCUMENTS = util.getVortexPath("documents");
 const LOCALAPPDATA = util.getVortexPath("localAppData");
 
 //Specify all the information about the game
-const GAME_ID = "XXX";
+const GAME_ID = "needforspeedheat";
 const EAAPP_ID = "XXX";
-const STEAMAPP_ID = "XXX";
+const STEAMAPP_ID = "1222680"; // https://steamdb.info/app/1222680/
 const GOGAPP_ID = null; //not typically available for EA games
 //not typically available on Xbox/Epic - available through EA Play instead
 const REGISTRY_HIVE = 'HKEY_LOCAL_MACHINE';
-const REGISTRY_KEY = 'SOFTWARE\\WOW6432Node\\EA Games\\XXX'; // e.g. 'SOFTWARE\\WOW6432Node\\BioWare\\Mass Effect Andromeda'
+const REGISTRY_KEY = 'SOFTWARE\\WOW6432Node\\EA Games\\Need for Speed Heat'; // e.g. 'SOFTWARE\\WOW6432Node\\BioWare\\Mass Effect Andromeda'
 const REGISTRY_VALUE = 'Install Dir'; // e.g. 'Install Dir'
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
@@ -34,18 +34,18 @@ const gameFinderQuery = {
   registry: [{ id: `${REGISTRY_HIVE}:${REGISTRY_KEY}:${REGISTRY_VALUE}`}],
 };
 
-const GAME_NAME = "XXX";
-const GAME_NAME_SHORT = "XXX";
-const EXEC = "XXX.exe";
-const PCGAMINGWIKI_URL = "XXX";
-const EXTENSION_URL = "XXX";
+const GAME_NAME = "Need for Speed Heat";
+const GAME_NAME_SHORT = "NFS Heat";
+const EXEC = "NeedForSpeedHeat.exe";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Need_for_Speed_Heat";
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1994";
 
-const CONFIG_FOLDER = path.join("XXX", "settings"); // Developer folder, game subfolder (e.g. "BioWare", "Mass Effect Andromeda")
-const FROSTYMOD_FOLDER = "XXX"; // Game-specific folder name inside FrostyModManager/Mods/
+const CONFIG_FOLDER = path.join("Need For Speed Heat", "settings"); // Developer folder, game subfolder (e.g. "BioWare", "Mass Effect Andromeda")
+const FROSTYMOD_FOLDER = "NeedForSpeedHeat"; // Game-specific folder name inside FrostyModManager/Mods/
 
 //feature toggles
 const hasArchives = false; //toggle for .archive file support
-const needsKey = false; //toggle for encryption key logic
+const needsKey = true; //toggle for encryption key logic
 const allowSymlinks = false; // Frosty handles its own deployment; symlinks not typical
 const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
 const setupNotification = true; //enable to show the user a notification with special instructions (specify below)
@@ -93,9 +93,9 @@ const PLUGIN_EXTS = ['.dll'];
 const KEY_ID = `${GAME_ID}-key`;
 const KEY_NAME = "Key (FMM)";
 const KEY_PATH = path.join(FROSTY_FOLDER);
-const KEY_FILE = 'XXX.key';
-const KEY_PAGE_NO = 0;
-const KEY_FILE_NO = 0;
+const KEY_FILE = 'NFSHEAT.key';
+const KEY_PAGE_NO = 74;
+const KEY_FILE_NO = 281;
 
 const CONFIG_ID = `${GAME_ID}-config`;
 const CONFIG_NAME = "Config Folder";

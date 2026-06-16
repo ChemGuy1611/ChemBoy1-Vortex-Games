@@ -4,6 +4,11 @@
 
 - None Planned
 
+## [1.0.2] - 2026-06-16
+
+- Fixed: Typo in registry discovery key
+- Added: .fbpack file support
+
 ## [1.0.1] - 2026-05-01
 
 - Added: Buttons to open Frosty manager_config.json and Enable/Disable DatapathFix Plugin

@@ -2,4 +2,6 @@ battlefield1
 dragonageinquisition
 dragonagetheveilguard
 masseffectandromeda
+needforspeedheat
+needforspeedunbound
 starwarsbattlefront22017

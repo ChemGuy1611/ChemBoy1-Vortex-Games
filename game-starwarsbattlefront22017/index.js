@@ -2,8 +2,8 @@
 Name: STAR WARS Battlefront II Vortex Extension
 Structure: Frostbite Engine - Frosty Mod Manager
 Author: ChemBoy1
-Version: 1.0.1
-Date: 2026-05-01
+Version: 1.0.2
+Date: 2026-06-16
 Notes:
 -
 /////////////////////////////////////////////*/
@@ -25,7 +25,7 @@ const STEAMAPP_ID = "1237950"; // https://steamdb.info/app/1237950/
 const GOGAPP_ID = null; //not typically available for EA games
 //not typically available on Xbox - available through EA Play instead
 const REGISTRY_HIVE = 'HKEY_LOCAL_MACHINE';
-const REGISTRY_KEY = 'SOFTWARE\\WOW432Node\\EA Games\\STAR WARS Battlefront II'; // e.g. 'SOFTWARE\\WOW6432Node\\BioWare\\Mass Effect Andromeda'
+const REGISTRY_KEY = 'SOFTWARE\\WOW6432Node\\EA Games\\STAR WARS Battlefront II'; // e.g. 'SOFTWARE\\WOW6432Node\\BioWare\\Mass Effect Andromeda'
 const REGISTRY_VALUE = 'Install Dir'; // e.g. 'Install Dir'
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
@@ -61,8 +61,8 @@ const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Binaries / Root Folder";
 
 const FROSTYMOD_ID = `${GAME_ID}-frostymod`;
-const FROSTYMOD_NAME = "Frosty .fbmod/.archive";
-let FROSTYMOD_EXTS = [".fbmod"];
+const FROSTYMOD_NAME = "Frosty Mod";
+let FROSTYMOD_EXTS = [".fbmod", ".fbpack"];
 if (hasArchives) FROSTYMOD_EXTS.push(".archive");
 const FROSTYMOD_PATH = path.join("FrostyModManager", "Mods", FROSTYMOD_FOLDER);
 const MODDATA_FOLDER = 'ModData';
@@ -76,7 +76,7 @@ const FROSTY_URL_ERR = `https://github.com/CadeEvs/FrostyToolsuite/releases`;
 const FROSTY_CONFIG_FILE = 'manager_config.json';
 const FROSTY_CONFIG_PATH = path.join(LOCALAPPDATA, "Frosty", FROSTY_CONFIG_FILE);
 
-const PATCH_ID = `${GAME_ID}-patch`;
+const PATCH_ID = `${GAME_ID}-patch`; //!NOT registered as a modType since the plugin must be copied in as it is not in an archive
 const PATCH_NAME = "DatapathFix Plugin";
 const PATCH_PATH = path.join(FROSTY_FOLDER, "Plugins");
 const PATCH_FILE = 'DatapathFixPlugin.dll';
@@ -521,7 +521,7 @@ function installFrosty(files) {
 function testFbmod(files, gameId) {
   const isMod = files.some(file => FROSTYMOD_EXTS.includes(path.extname(file).toLowerCase()));
   let supported = (gameId === spec.game.id) && isMod;
-  
+
   // Test for a mod installer.
   if (supported && files.find(file =>
       (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
@@ -556,7 +556,7 @@ function installFbmod(files) {
 } //*/
 
 //install .fbmod/.archive mod files (variant handler)
-async function installFbmod(api, files) {
+async function installFbmod(api, files, workingDir) {
   const fileExt = FROSTYMOD_EXTS;
   const modFiles = files.filter(file => fileExt.includes(path.extname(file).toLowerCase()));
   const modType = {
@@ -573,8 +573,51 @@ async function installFbmod(api, files) {
       destination: path.basename(file)
     };
   });
+  if (installFiles.some(file => path.extname(file).toLowerCase() === '.fbpack')) {
+    const file = path.basename(installFiles.find(file => path.extname(file).toLowerCase() === '.fbpack'));
+    packInstructionsNotify(api, workingDir, file);
+  }
   instructions.push(modType);
   return Promise.resolve({ instructions });
+}
+
+function packInstructionsNotify(api, modName, file) {
+  GAME_PATH = getDiscoveryPath(api);
+  log('warn', `.fbpack file: ${file}`);
+  modName = path.basename(modName, '.installing');
+  const id = modName.replace(/[^a-zA-Z0-9\s]*( )*/gi, '').slice(0, 20);
+  const NOTIF_ID = `${GAME_ID}-${id}-fallback`;
+  const MESSAGE = '.fbpack Import Required for ' + modName;
+  const t = api.translate;
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'warning',
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: 'More',
+        action: (dismiss) => {
+          api.showDialog('question', MESSAGE, {
+            bbcode: t(`The mod you just installed included a .fbpack file. This means you need to manually import the pack in Frosty Mod Manager.[br][/br][br][/br]`
+                + `Run Frosty with the button below, then select File -> Pack -> Import.[br][/br][br][/br]`
+                + `Then navigate to the file path shown below and select the file. Screenshot included below for reference.[br][/br][br][/br]`
+                + `Mod Name: ${modName}.[br][/br][br][/br]`
+                + `Path to .fbpack File: ${path.join(GAME_PATH, FROSTYMOD_PATH, file)}[br][/br][br][/br]`
+                + `[img]https://live.staticflickr.com/65535/55339069196_713ca00e3f.jpg[/img][br][/br][br][/br]`
+          )}, [
+            { label: 'Continue', action: () => dismiss() },
+            {
+              label: 'Run Frosty', action: () => {
+                runFrosty(api);
+                dismiss();
+              }
+            },
+          ]);
+        },
+      },
+    ],
+  });
 }
 
 //file selection dialog for .fbmod/.archive mods
@@ -599,9 +642,9 @@ async function chooseFilesToInstall(api, files, fileExt) {
           return Promise.reject(new util.UserCanceled('User cancelled.'));
       else {
           const installAll = (result.action === 'Install All' || result.action === 'Install All_plural');
-          const installPAKS = installAll ? files : Object.keys(result.input).filter(s => result.input[s])
+          const installFiles = installAll ? files : Object.keys(result.input).filter(s => result.input[s])
             .map(file => files.find(f => f === file));
-          return installPAKS;
+          return installFiles;
       }
   });
 }
@@ -668,7 +711,7 @@ function testFallback(files, gameId) {
 function installFallback(api, files, destinationPath) {
   fallbackInstallerNotify(api, destinationPath);
   const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
-  
+
   const filtered = files.filter(file =>
     (!file.endsWith(path.sep))
   );
@@ -706,7 +749,7 @@ function fallbackInstallerNotify(api, modName) {
                 + `If you think that Vortex should be capable to install this mod to a specific folder, please contact the extension developer for support at the link below.\n`
                 + `\n`
                 + `Mod Name: ${modName}.\n`
-                + `\n`             
+                + `\n`
           }, [
             { label: 'Continue', action: () => dismiss() },
             {
@@ -725,7 +768,7 @@ function fallbackInstallerNotify(api, modName) {
               if (modMatch) {
                 const MOD_ID = modMatch.attributes.modId;
                 if (MOD_ID !== undefined) {
-                  PAGE = `${MOD_ID}?tab=description`; 
+                  PAGE = `${MOD_ID}?tab=description`;
                 }
               }
               const MOD_PAGE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${PAGE}`;
@@ -818,7 +861,7 @@ function setupNotify(api, gameSpec) {
     allowSuppress: true,
     actions: [
       {
-        title: 'Download DatapathFix', 
+        title: 'Download DatapathFix',
         action: (dismiss) => {
           downloadPatch(api, gameSpec, true);
           dismiss();
@@ -890,8 +933,8 @@ function applyGame(context, gameSpec) {
   //register game
   const game = {
     ...gameSpec.game,
-    queryPath: makeFindGame(context.api, gameSpec),
-    //queryArgs: gameFinderQuery,
+    //queryPath: makeFindGame(context.api, gameSpec),
+    queryArgs: gameFinderQuery,
     queryModPath: makeGetModPath(context.api, gameSpec),
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
@@ -911,7 +954,7 @@ function applyGame(context, gameSpec) {
 
   //register mod installers
   context.registerInstaller(FROSTY_ID, 25, testFrosty, installFrosty);
-  context.registerInstaller(FROSTYMOD_ID, 30, testFbmod, (files) => installFbmod(context.api, files));
+  context.registerInstaller(FROSTYMOD_ID, 30, testFbmod, (files, workingDir) => installFbmod(context.api, files, workingDir));
   context.registerInstaller(PLUGIN_ID, 35, testPlugin, installPlugin);
   if (fallbackInstaller) {
     context.registerInstaller(`${GAME_ID}-fallback`, 49, testFallback, (files, destinationPath) => installFallback(context.api, files, destinationPath));
@@ -968,13 +1011,6 @@ function applyGame(context, gameSpec) {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
-  }); //*/
-  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', () => {
-    util.opn(SAVE_PATH).catch(() => null);
-    }, () => {
-      const state = context.api.getState();
-      const gameId = selectors.activeGameId(state);
-      return gameId === GAME_ID;
   }); //*/
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Frosty Mods Folder', () => {
     const state = context.api.getState();

@@ -1,9 +1,9 @@
 /*/////////////////////////////////////////////
-Name: XXX Vortex Extension
+Name: Need for Speed Unbound Vortex Extension
 Structure: Frostbite Engine - Frosty Mod Manager
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2026-XX-XX
+Date: 2026-06-15
 Notes:
 -
 /////////////////////////////////////////////*/
@@ -19,13 +19,13 @@ const DOCUMENTS = util.getVortexPath("documents");
 const LOCALAPPDATA = util.getVortexPath("localAppData");
 
 //Specify all the information about the game
-const GAME_ID = "XXX";
+const GAME_ID = "needforspeedunbound";
 const EAAPP_ID = "XXX";
-const STEAMAPP_ID = "XXX";
+const STEAMAPP_ID = "1846380"; // https://steamdb.info/app/1846380/
 const GOGAPP_ID = null; //not typically available for EA games
 //not typically available on Xbox/Epic - available through EA Play instead
 const REGISTRY_HIVE = 'HKEY_LOCAL_MACHINE';
-const REGISTRY_KEY = 'SOFTWARE\\WOW6432Node\\EA Games\\XXX'; // e.g. 'SOFTWARE\\WOW6432Node\\BioWare\\Mass Effect Andromeda'
+const REGISTRY_KEY = 'SOFTWARE\\WOW6432Node\\EA Games\\Need for Speed Unbound'; // e.g. 'SOFTWARE\\WOW6432Node\\BioWare\\Mass Effect Andromeda'
 const REGISTRY_VALUE = 'Install Dir'; // e.g. 'Install Dir'
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
@@ -34,18 +34,18 @@ const gameFinderQuery = {
   registry: [{ id: `${REGISTRY_HIVE}:${REGISTRY_KEY}:${REGISTRY_VALUE}`}],
 };
 
-const GAME_NAME = "XXX";
-const GAME_NAME_SHORT = "XXX";
-const EXEC = "XXX.exe";
-const PCGAMINGWIKI_URL = "XXX";
-const EXTENSION_URL = "XXX";
+const GAME_NAME = "Need for Speed Unbound";
+const GAME_NAME_SHORT = "NFS Unbound";
+const EXEC = "NeedForSpeedUnbound.exe";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Need_for_Speed_Unbound";
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1993";
 
-const CONFIG_FOLDER = path.join("XXX", "settings"); // Developer folder, game subfolder (e.g. "BioWare", "Mass Effect Andromeda")
-const FROSTYMOD_FOLDER = "XXX"; // Game-specific folder name inside FrostyModManager/Mods/
+const CONFIG_FOLDER = path.join("Need For Speed(TM) Unbound", "settings"); // Developer folder, game subfolder (e.g. "BioWare", "Mass Effect Andromeda")
+const FROSTYMOD_FOLDER = "NeedForSpeedUnbound"; // Game-specific folder name inside FrostyModManager/Mods/
 
 //feature toggles
 const hasArchives = false; //toggle for .archive file support
-const needsKey = false; //toggle for encryption key logic
+const needsKey = true; //toggle for encryption key logic
 const allowSymlinks = false; // Frosty handles its own deployment; symlinks not typical
 const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
 const setupNotification = true; //enable to show the user a notification with special instructions (specify below)
@@ -76,6 +76,8 @@ const FROSTY_URL = "https://github.com/CadeEvs/FrostyToolsuite/releases/download
 const FROSTY_URL_ERR = `https://github.com/CadeEvs/FrostyToolsuite/releases`;
 const FROSTY_CONFIG_FILE = 'manager_config.json';
 const FROSTY_CONFIG_PATH = path.join(LOCALAPPDATA, "Frosty", FROSTY_CONFIG_FILE);
+const FROSTY_PAGE_NO = 290;
+const FROSTY_FILE_NO = 2440;
 
 const PATCH_ID = `${GAME_ID}-patch`; //!NOT registered as a modType since the plugin must be copied in as it is not in an archive
 const PATCH_NAME = "DatapathFix Plugin";
@@ -93,9 +95,10 @@ const PLUGIN_EXTS = ['.dll'];
 const KEY_ID = `${GAME_ID}-key`;
 const KEY_NAME = "Key (FMM)";
 const KEY_PATH = path.join(FROSTY_FOLDER);
-const KEY_FILE = 'XXX.key';
-const KEY_PAGE_NO = 0;
-const KEY_FILE_NO = 0;
+const KEY_FILE = 'nfsunbound.key';
+const KEY_PAGE_NO = 97;
+const KEY_FILE_NO = 622;
+const KEY_STRING = '0B0E04030409080C010708010E0B0B02';
 
 const CONFIG_ID = `${GAME_ID}-config`;
 const CONFIG_NAME = "Config Folder";
@@ -381,7 +384,73 @@ async function isKeyInstalled(api, spec) {
   return test;
 }
 
-//Function to auto-download Frosty Mod Manager
+//* Function to auto-download custom FMM from Nexus Mods
+async function downloadFrosty(api, gameSpec, check = true) {
+  let modLoaderInstalled = await isFrostyInstalled(api, gameSpec);
+  if (!modLoaderInstalled || !check) {
+    const MOD_NAME = FROSTY_NAME;
+    const MOD_TYPE = FROSTY_ID;
+    const NOTIF_ID = `${MOD_TYPE}-installing`;
+    const PAGE_ID = FROSTY_PAGE_NO;
+    const FILE_ID = FROSTY_FILE_NO;  //If using a specific file id because "input" below gives an error
+    const GAME_DOMAIN = GAME_ID;
+    api.sendNotification({ //notification indicating install process
+      id: NOTIF_ID,
+      message: `Installing ${MOD_NAME}`,
+      type: 'activity',
+      noDismiss: true,
+      allowSuppress: false,
+    });
+    if (api.ext?.ensureLoggedIn !== undefined) { //make sure user is logged into Nexus Mods account in Vortex
+      await api.ext.ensureLoggedIn();
+    }
+    try {
+      let FILE = null;
+      let URL = null;
+      try { //get the mod files information from Nexus
+        const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
+        const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
+        const file = modFiles
+          .filter(file => file.category_id === 1)
+          .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
+          .reverse()[0];
+        if (file === undefined) {
+          throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
+        }
+        FILE = file.file_id;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      } catch { // use defined file ID if input is undefined above
+        FILE = FILE_ID;
+        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+      }
+      const dlInfo = { //Download the mod
+        game: GAME_DOMAIN,
+        name: MOD_NAME,
+      };
+      const dlId = await util.toPromise(cb =>
+        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+      const modId = await util.toPromise(cb =>
+        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
+      const batched = [
+        actions.setModsEnabled(api, profileId, [modId], true, {
+          allowAutoDeploy: true,
+          installed: true,
+        }),
+        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
+      ];
+      util.batchDispatch(api.store, batched); // Will dispatch both actions
+    } catch (err) { //Show the user the download page if the download, install process fails
+      const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
+      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
+      util.opn(errPage).catch(() => null);
+    } finally {
+      api.dismissNotification(NOTIF_ID);
+    }
+  }
+} //*/
+
+/* Function to auto-download Frosty Mod Manager from GitHub
 async function downloadFrosty(api, gameSpec, check = true) {
   let modLoaderInstalled = await isFrostyInstalled(api, gameSpec);
   if (!modLoaderInstalled || !check) {
@@ -420,7 +489,7 @@ async function downloadFrosty(api, gameSpec, check = true) {
       api.dismissNotification(NOTIF_ID);
     }
   }
-}
+} //*/
 
 // Download Patch from GitHub
 async function downloadPatch(api, gameSpec, check) {

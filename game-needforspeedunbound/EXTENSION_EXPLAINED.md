@@ -1,10 +1,10 @@
-# STAR WARS Battlefront II (2017) — Vortex Extension Explained
+# Need for Speed Unbound — Vortex Extension Explained
 
 ## Overview
 
 | Property | Value |
 | --- | --- |
-| Name | STAR WARS Battlefront II Vortex Extension |
+| Name | Need for Speed Unbound Vortex Extension |
 | Engine / Structure | Frostbite Engine - Frosty Mod Manager |
 | Author | ChemBoy1 |
 
@@ -12,20 +12,21 @@
 
 | Property | Value |
 | --- | --- |
-| Game ID | `starwarsbattlefront22017` |
-| Executable | `starwarsbattlefrontii.exe` |
-| Extension Page | [https://www.nexusmods.com/site/mods/112](https://www.nexusmods.com/site/mods/112) |
-| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Star_Wars_Battlefront_II_(2017)](https://www.pcgamingwiki.com/wiki/Star_Wars_Battlefront_II_(2017)) |
+| Game ID | `needforspeedunbound` |
+| Executable | `NeedForSpeedUnbound.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/1993](https://www.nexusmods.com/site/mods/1993) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Need_for_Speed_Unbound](https://www.pcgamingwiki.com/wiki/Need_for_Speed_Unbound) |
 
 ## Supported Stores
 
-- **Steam** — `1237950`
+- **Steam** — `1846380`
 
 ## Feature Flags
 
 | Flag | Value | Description |
 | --- | --- | --- |
 | `hasArchives` | `false` | toggle for .archive file support |
+| `needsKey` | `true` | toggle for encryption key logic |
 | `allowSymlinks` | `false` | Frosty handles its own deployment; symlinks not typical |
 | `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |
 | `setupNotification` | `true` | enable to show the user a notification with special instructions (specify below) |
@@ -38,10 +39,11 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
-| Binaries / Root Folder | `starwarsbattlefront22017-root` | high | `{gamePath}` |
-| Frosty Mod | `starwarsbattlefront22017-frostymod` | high | `{gamePath}/FrostyModManager/Mods/StarWarsBattlefrontII` |
-| Plugin (FMM) | `starwarsbattlefront22017-plugin` | high | `{gamePath}/FrostyModManager/Plugins` |
-| Frosty Mod Manager | `starwarsbattlefront22017-frostymodmanager` | low | `{gamePath}` |
+| Binaries / Root Folder | `needforspeedunbound-root` | high | `{gamePath}` |
+| Frosty Mod | `needforspeedunbound-frostymod` | high | `{gamePath}/FrostyModManager/Mods/NeedForSpeedUnbound` |
+| Plugin (FMM) | `needforspeedunbound-plugin` | high | `{gamePath}/FrostyModManager/Plugins` |
+| Frosty Mod Manager | `needforspeedunbound-frostymodmanager` | low | `{gamePath}` |
+| Key (FMM) | `needforspeedunbound-key` | low | `{gamePath}/FrostyModManager` |
 
 ## Mod Installers
 
@@ -49,10 +51,11 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
-| `starwarsbattlefront22017-frostymodmanager` | 25 |
-| `starwarsbattlefront22017-frostymod` | 30 |
-| `starwarsbattlefront22017-plugin` | 35 |
-| `starwarsbattlefront22017-fallback` | 49 |
+| `needforspeedunbound-frostymodmanager` | 25 |
+| `needforspeedunbound-frostymod` | 30 |
+| `needforspeedunbound-plugin` | 35 |
+| `needforspeedunbound-key` | 40 |
+| `needforspeedunbound-fallback` | 49 |
 
 ## Registered Tools
 
@@ -81,7 +84,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 | Type | Path |
 | --- | --- |
-| Config | `STAR WARS Battlefront II/settings` |
+| Config | `Need For Speed(TM) Unbound/settings` |
 
 ## Special Features
 
