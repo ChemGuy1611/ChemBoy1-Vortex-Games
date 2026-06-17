@@ -1,9 +1,9 @@
 /*///////////////////////////////////////////
-Name: XXX Vortex Extension
+Name: Watch_Dogs 2 Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
 Version: 0.1.0
-Date: 2026-XX-XX
+Date: 2026-06-17
 Notes:
 -
 ///////////////////////////////////////////*/
@@ -12,98 +12,75 @@ Notes:
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
-const { parseStringPromise } = require('xml2js');
-//const winapi = require('winapi-bindings');
+const winapi = require('winapi-bindings');
 //const fsPromises = require('fs/promises'); //.rm() for recursive folder deletion
 //const fsExtra = require('fs-extra');
 //const turbowalk = require('turbowalk');
 
-/*const USER_HOME = util.getVortexPath("home");
-const LOCALLOW = path.join(USER_HOME, 'AppData', 'LocalLow'); //*/
 const DOCUMENTS = util.getVortexPath("documents");
-//const ROAMINGAPPDATA = util.getVortexPath("appData");
-const LOCALAPPDATA = util.getVortexPath("localAppData");
 
 //Specify all the information about the game
-const GAME_ID = "XXX";
-const STEAMAPP_ID = "XXX";
-const STEAMAPP_ID_DEMO = "XXX";
-const EPICAPP_ID = "XXX";
-const GOGAPP_ID = "XXX";
-const XBOXAPP_ID = "XXX";
-const XBOXEXECNAME = "XXX";
-const XBOX_PUB_ID = "XXX"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
+const GAME_ID = "watchdogs2";
+const STEAMAPP_ID = "447040"; // https://steamdb.info/app/447040/
+const UPLAYAPP_ID = "2668";
+const EPICAPP_ID = "Angelonia"; // https://store.epicgames.com/en-US/p/watch-dogs-2
+const GOGAPP_ID = null;
 const INSTALL_HIVE = 'HKEY_LOCAL_MACHINE'; //typically HKEY_LOCAL_MACHINE or HKEY_CURRENT_USER
-const INSTALL_KEY = `SOFTWARE\\WOW6432Node\\XXX\\XXX`; //for finding install in registry - requires winapi-bindings
-const INSTALL_VALUE = "XXX"; //often InstallDir or InstallPath
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const INSTALL_KEY = `SOFTWARE\\WOW6432Node\\Ubisoft\\Launcher\\Installs\\${UPLAYAPP_ID}`; //for finding install in registry - requires winapi-bindings
+const INSTALL_VALUE = "InstallDir"; //often InstallDir or InstallPath
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
-const GAME_NAME = "XXX";
-const GAME_NAME_SHORT = "XXX";
-const BINARIES_PATH = path.join('.');
-const EXEC_NAME = "XXX.exe";
+const gameFinderQuery = {
+  steam: [{ id: STEAMAPP_ID, prefer: 0 }],
+  epic: [{ id: EPICAPP_ID}],
+  registry: [{ id: `${INSTALL_HIVE}:${INSTALL_KEY}:${INSTALL_VALUE}`}],
+};
+
+const GAME_NAME = "Watch_Dogs 2";
+const GAME_NAME_SHORT = "Watch_Dogs 2";
+const BINARIES_PATH = 'bin';
+const EXEC_NAME = "WatchDogs2.exe";
 const EXEC = path.join(BINARIES_PATH, EXEC_NAME);
-const EXEC_EGS = EXEC; //change other versions if different than Steam/default
-const EXEC_GOG = EXEC;
-const EXEC_DEMO = EXEC;
-const PCGAMINGWIKI_URL = "XXX";
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Watch_Dogs_2";
 const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
 
 //feature toggles
-const hasLoader = false; //true if game needs a mod loader
-const hasXbox = false; //toggle for Xbox version logic
-const multiExe = false; //set to true if there are multiple executable names
-const multiModPath = false; //set to true if there are multiple possible mod paths (i.e. different path for Xbox version)
+const hasLoader = true; //true if game needs a mod loader
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
-const needsModInstaller = false; //set to true if standard mods should run through an installer - set false to have mods installed to the mods folder without any processing
+const needsModInstaller = true; //set to true if standard mods should run through an installer - set false to have mods installed to the mods folder without any processing
 const rootInstaller = true; //enable root installer. Set false if you need to avoid installer collisions
 const saveInstaller = false; //enable save installer. Set false if path is outside of game folder
 const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
 const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
-const hasUserIdFolder = false; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
-let binariesInstaller = false;
-if (BINARIES_PATH !== '.') binariesInstaller = true; //only enable Binaries installer if not in root
+const hasUserIdFolder = true; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
+const binariesInstaller = true;
 const debug = false; //toggle for debug mode
 
 //info for modtypes, installers, tools, and actions
-const DATA_FOLDER = 'XXX';
-let ROOT_FOLDERS = [DATA_FOLDER];
-if (BINARIES_PATH !== '.') ROOT_FOLDERS.push(BINARIES_PATH.split(path.sep)[0]);
-const ROOTSUB_FOLDERS = [];
+const DATA_FOLDER = 'data_win64';
+const ROOT_FOLDERS = [DATA_FOLDER, BINARIES_PATH];
+const ROOTSUB_FOLDERS = ['worlds'];
 const ROOTSUB_PATH = DATA_FOLDER;
 
 const CONFIGMOD_LOCATION = DOCUMENTS;
-const SAVEMOD_LOCATION = DOCUMENTS;
-const APPDATA_FOLDER = path.join('XXX');
-const CONFIG_FOLDERNAME = 'XXX';
-const SAVE_FOLDERNAME = 'XXX';
+const APPDATA_FOLDER = path.join('My Games', 'Watch_Dogs 2');
+const SAVE_FOLDERNAME = 'savegames';
 
 let GAME_PATH = '';
-let GAME_VERSION = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
-const APPMANIFEST_FILE = 'appxmanifest.xml';
-const EXEC_XBOX = 'gamelaunchhelper.exe';
-
-const STEAM_FILE = 'steam_api64.dll';
-const GOG_FILE = 'Galaxy64.dll';
-const EPIC_FILE = 'EOSSDK-Win64-Shipping.dll';
-const XBOX_FILE = APPMANIFEST_FILE;
 
 const LOADER_ID = `${GAME_ID}-loader`;
 const LOADER_NAME = "Mod Loader";
-const LOADER_PATH = BINARIES_PATH;
-const LOADER_FILE = 'XXX.dll';
-const LOADER_PAGE_NO = 0;
-const LOADER_FILE_NO = 0;
-const LOADER_DOMAIN = GAME_ID;
-const LOADER_URL = `XXX`; //if not on Nexus
+const LOADER_PATH = 'Disrupt_Manager';
+const LOADER_FILE = 'DisruptManager.exe';
+const LOADER_URL = `https://github.com/rootCBR/DisruptManager/releases/download/1.1.9311.41691/DisruptManager.1.1.9311.41691.zip`; //if not on Nexus
+const LOADER_URL_ERR = `https://github.com/rootCBR/DisruptManager/releases`;
 
 const MOD_ID = `${GAME_ID}-mod`;
 const MOD_NAME = "Mod";
-const MOD_PATH = ".";
-const MOD_PATH_XBOX = MOD_PATH;
-const MOD_EXTS = ['.XXX'];
+const MOD_PATH = path.join(LOADER_PATH, 'Watch Dogs 2');
+const MOD_EXTS = ['.dat', '.fat'];
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Folder";
@@ -114,42 +91,25 @@ const BINARIES_EXTS = ['.exe', '.dll', '.asi', '.addon64'];
 
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_NAME = "Save";
-const SAVE_FOLDER = path.join(SAVEMOD_LOCATION, APPDATA_FOLDER, SAVE_FOLDERNAME);
 let USERID_FOLDER = "";
-if (hasUserIdFolder) {
-  try {
-    const SAVE_ARRAY = fs.readdirSync(SAVE_FOLDER);
-    USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_FOLDER, entry));
-  } catch {
-    USERID_FOLDER = "";
-  }
-  if (USERID_FOLDER === undefined) {
-    USERID_FOLDER = "";
-  }
-}
-let SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
-const SAVE_FOLDER_XBOX = path.join(LOCALAPPDATA, "Packages", `${XBOXAPP_ID}_${XBOX_PUB_ID}`, "SystemAppData", "wgs");
-if (hasUserIdFolder) {
-  try {
-    const SAVE_ARRAY = fs.readdirSync(SAVE_FOLDER_XBOX);
-    USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_FOLDER, entry));
-  } catch {
-    USERID_FOLDER = "";
-  }
-  if (USERID_FOLDER === undefined) {
-    USERID_FOLDER = "";
-  }
-}
-const SAVE_PATH_XBOX = path.join(SAVE_FOLDER_XBOX, USERID_FOLDER);
-const SAVE_EXTS = [".XXX"];
-const SAVE_FILES = ["XXX"];
+let SAVE_PATH = ''; //Defined in setup fn <Ubisoft-Connect-folder>\savegames\<user-id>\2668\
+const SAVE_EXTS = [".save"];
 
-const CONFIG_ID = `${GAME_ID}-config`;
-const CONFIG_NAME = "Config";
-let CONFIG_PATH = path.join(CONFIGMOD_LOCATION, APPDATA_FOLDER, CONFIG_FOLDERNAME);
-const CONFIG_PATH_XBOX = CONFIG_PATH; //XBOX Version
-const CONFIG_EXTS = [".XXX"];
-const CONFIG_FILES = ["XXX"];
+let CONFIG_FOLDER = path.join(CONFIGMOD_LOCATION, APPDATA_FOLDER);
+if (hasUserIdFolder) {
+  try {
+    const CONFIG_ARRAY = fs.readdirSync(CONFIG_FOLDER);
+    USERID_FOLDER = CONFIG_ARRAY.find((entry) => isDir(CONFIG_FOLDER, entry));
+  } catch {
+    USERID_FOLDER = "";
+  }
+  if (USERID_FOLDER === undefined) {
+    USERID_FOLDER = "";
+  }
+}
+let CONFIG_PATH = path.join(CONFIG_FOLDER, USERID_FOLDER);
+const CONFIG_FILES = ["GamerProfile.xml"];
+const CONFIG_FILE_PATH = path.join(CONFIG_PATH, CONFIG_FILES[0]);
 
 /* tool info (i.e. save editor)
 const TOOL_ID = `${GAME_ID}-tool`;
@@ -192,7 +152,6 @@ const spec = {
       "steamAppId": +STEAMAPP_ID,
       "gogAppId": GOGAPP_ID,
       "epicAppId": EPICAPP_ID,
-      "xboxAppId": XBOXAPP_ID,
       "supportsSymlinks": allowSymlinks,
       "ignoreConflicts": IGNORE_CONFLICTS,
       "ignoreDeploy": IGNORE_DEPLOY,
@@ -201,7 +160,6 @@ const spec = {
       "SteamAPPId": STEAMAPP_ID,
       "GogAPPId": GOGAPP_ID,
       "EpicAPPId": EPICAPP_ID,
-      "XboxAPPId": XBOXAPP_ID,
     }
   },
   "modTypes": [
@@ -251,20 +209,6 @@ const tools = [ //accepts: exe, jar, py, vbs, bat
     detach: true,
     //defaultPrimary: true,
     parameters: PARAMETERS,
-  }, //*/
-  /*{
-    id: `${GAME_ID}-customlaunchxbox`,
-    name: 'Custom Launch',
-    logo: 'exec.png',
-    executable: () => EXEC_XBOX,
-    requiredFiles: [
-      EXEC_XBOX,
-    ],
-    relative: true,
-    exclusive: true,
-    shell: true,
-    //defaultPrimary: true,
-    //parameters: PARAMETERS,
   }, //*/
   /*{
     id: TOOL_ID,
@@ -334,36 +278,8 @@ function pathPattern(api, game, pattern) {
 }
 
 //* Get mod path dynamically for different game versions
-function getModPath(discoveryPath) {
-  if (!multiModPath) {
-    return () => MOD_PATH_DEFAULT;
-  }
-  if (statCheckSync(discoveryPath, EXEC_XBOX)) {
-    GAME_VERSION = 'xbox';
-    return () => MOD_PATH_XBOX;
-  };
-  //add GOG/EGS/Demo versions here if needed
-  GAME_VERSION = 'default';
+function getModPath() {
   return () => MOD_PATH_DEFAULT;
-} //*/
-
-//Find game installation directory
-function makeFindGame(api, gameSpec) {
-  /*using registry - requires winapi-bindings
-  try {
-    const instPath = winapi.RegGetValue(
-      INSTALL_HIVE,
-      INSTALL_KEY,
-      INSTALL_VALUE
-    );
-    if (!instPath) {
-      throw new Error('empty registry key');
-    }
-    return () => Promise.resolve(instPath.value);
-  } catch { //*/
-    return () => util.GameStoreHelper.findByAppId(gameSpec.discovery.ids)
-      .then((game) => game.gamePath);
-  //}
 } //*/
 
 //Set launcher requirements
@@ -371,17 +287,6 @@ async function requiresLauncher(gamePath, store) {
   if (store === 'steam') {
     return Promise.resolve({
       launcher: 'steam',
-    });
-  } //*/
-  if (store === 'xbox' && (DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID))) {
-    return Promise.resolve({
-      launcher: 'xbox',
-      addInfo: {
-        appId: XBOXAPP_ID,
-        parameters: [{ appExecName: XBOXEXECNAME }],
-        //parameters: [{ appExecName: XBOXEXECNAME }, PARAMETERS_STRING],
-        //launchType: 'gamestore',
-      },
     });
   } //*/
   if (store === 'epic' && (DISCOVERY_IDS_ACTIVE.includes(EPICAPP_ID))) {
@@ -398,35 +303,35 @@ async function requiresLauncher(gamePath, store) {
 }
 
 //Get correct executable for game version
-function getExecutable(discoveryPath) {
-  if (!multiExe && !hasXbox) {
-    return EXEC;
-  }
-  if (hasXbox && statCheckSync(discoveryPath, EXEC_XBOX)) {
-    GAME_VERSION = 'xbox';
-    SAVE_PATH = SAVE_PATH_XBOX;
-    CONFIG_PATH = CONFIG_PATH_XBOX;
-    return EXEC_XBOX;
-  };
-  //add GOG/EGS/Demo versions here if needed
-  GAME_VERSION = 'default';
+function getExecutable() {
   return EXEC;
 }
 
-//Get correct game version
-async function setGameVersion(gamePath) {
-  if (!multiExe && !hasXbox) {
-    GAME_VERSION = 'default';
-    return GAME_VERSION;
-  }
-  if (await statCheckAsync(gamePath, EXEC_XBOX)) {
-    GAME_VERSION = 'xbox';
-    SAVE_PATH = SAVE_PATH_XBOX;
-    CONFIG_PATH = CONFIG_PATH_XBOX;
-    return GAME_VERSION;
-  } else {
-    GAME_VERSION = 'default';
-    return GAME_VERSION;
+//Find the save folder (inside Ubisoft Launcher install path)
+function getUbisoftSavePath() {
+  try {
+    const instPath = winapi.RegGetValue(
+      'HKEY_LOCAL_MACHINE',
+      `SOFTWARE\\WOW6432Node\\Ubisoft\\Launcher`,
+        'InstallDir');
+    if (!instPath) {
+      throw new Error('empty registry key');
+    }
+    const REG_PATH = instPath.value;
+    const READ_PATH = path.join(REG_PATH, SAVE_FOLDERNAME);
+    try {
+      const ARRAY = fs.readdirSync(READ_PATH);
+      USERID_FOLDER = ARRAY.find(entry => isDir(READ_PATH, entry));
+    } catch {
+      USERID_FOLDER = "";
+    }
+    if (USERID_FOLDER === undefined) {
+      USERID_FOLDER = "";
+    }
+    SAVE_PATH = path.join(READ_PATH, USERID_FOLDER, UPLAYAPP_ID);
+    return SAVE_PATH;
+  } catch (err) {
+    log('warn', `Could not get Ubisoft Launcher install path from registry to set the Saves directory: ${err}`);
   }
 }
 
@@ -776,16 +681,16 @@ function isLoaderInstalled(api, spec) {
   return Object.keys(mods).some(id => mods[id]?.type === LOADER_ID);
 }
 
-//* Function to auto-download mod loader from Nexus Mods
+//* Function to auto-download Disrupt Manager from GitHub
 async function downloadLoader(api, gameSpec, check = true) {
   let isInstalled = isLoaderInstalled(api, gameSpec);
   if (!isInstalled || !check) {
     const MOD_NAME = LOADER_NAME;
     const MOD_TYPE = LOADER_ID;
     const NOTIF_ID = `${MOD_TYPE}-installing`;
-    const PAGE_ID = LOADER_PAGE_NO;
-    const FILE_ID = LOADER_FILE_NO;  //If using a specific file id because "input" below gives an error
-    const GAME_DOMAIN = LOADER_DOMAIN;
+    const GAME_DOMAIN = GAME_ID;
+    let URL = LOADER_URL;
+    const URL_ERR = LOADER_URL_ERR;
     api.sendNotification({ //notification indicating install process
       id: NOTIF_ID,
       message: `Installing ${MOD_NAME}`,
@@ -793,32 +698,12 @@ async function downloadLoader(api, gameSpec, check = true) {
       noDismiss: true,
       allowSuppress: false,
     });
-    if (api.ext?.ensureLoggedIn !== undefined) { //make sure user is logged into Nexus Mods account in Vortex
-      await api.ext.ensureLoggedIn();
-    }
     try {
-      let FILE = null;
-      let URL = null;
-      try { //get the mod files information from Nexus
-        const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
-        const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
-        const file = modFiles
-          .filter(file => file.category_id === 1)
-          .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
-          .reverse()[0];
-        if (file === undefined) {
-          throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
-        }
-        FILE = file.file_id;
-        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      } catch { // use defined file ID if input is undefined above
-        FILE = FILE_ID;
-        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      }
       const dlInfo = { //Download the mod
         game: GAME_DOMAIN,
         name: MOD_NAME,
       };
+      //const dlInfo = {};
       const dlId = await util.toPromise(cb =>
         api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
       const modId = await util.toPromise(cb =>
@@ -833,9 +718,8 @@ async function downloadLoader(api, gameSpec, check = true) {
       ];
       util.batchDispatch(api.store, batched); // Will dispatch both actions
     } catch (err) { //Show the user the download page if the download, install process fails
-      const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
-      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
-      util.opn(errPage).catch(() => null);
+      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err, { allowReport: false });
+      util.opn(URL_ERR).catch(() => null);
     } finally {
       api.dismissNotification(NOTIF_ID);
     }
@@ -877,34 +761,6 @@ function setupNotify(api) {
   });
 }
 
-//* Resolve game version dynamically for different game versions
-async function resolveGameVersion(gamePath) {
-  GAME_VERSION = await setGameVersion(gamePath);
-  let version = '0.0.0';
-  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
-    try {
-      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
-      const parsed = await parseStringPromise(appManifest);
-      version = parsed?.Package?.Identity?.[0]?.$?.Version;
-      return Promise.resolve(version);
-    } catch (err) {
-      log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
-      return Promise.resolve(version);
-    }
-  }
-  else { // use exe
-    try {
-      const exeVersion = require('exe-version');
-      const EXEC = getExecutable(gamePath);
-      version = exeVersion.getProductVersion(path.join(gamePath, EXEC)); //can also use getFileVersion if this doesn't return the correct number (rare)
-      return Promise.resolve(version);
-    } catch (err) {
-      log('error', `Could not read executable file to get game version: ${err}`);
-      return Promise.resolve(version);
-    }
-  }
-} //*/
-
 async function modFoldersEnsureWritable(gamePath, relPaths) {
   for (let index = 0; index < relPaths.length; index++) {
     await fs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
@@ -916,14 +772,11 @@ async function setup(discovery, api, gameSpec) {
   // SYNCHRONOUS CODE ////////////////////////////////////
   const state = api.getState();
   GAME_PATH = discovery.path;
+  SAVE_PATH = getUbisoftSavePath();
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   // ASYNC CODE //////////////////////////////////////////
-  if (hasXbox || multiExe) {
-    GAME_VERSION = await setGameVersion(GAME_PATH);
-  }
   if (setupNotification) setupNotify(api);
-  //await fs.ensureDirWritableAsync(CONFIG_PATH);
   if (hasLoader) {
     await downloadLoader(api, gameSpec);
   }
@@ -934,12 +787,13 @@ async function setup(discovery, api, gameSpec) {
 function applyGame(context, gameSpec) {
   const game = { //register game
     ...gameSpec.game,
-    queryPath: makeFindGame(context.api, gameSpec),
+    //queryPath: makeFindGame(context.api, gameSpec),
+    queryArgs: gameFinderQuery,
     executable: getExecutable,
     queryModPath: getModPath(),
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
-    getGameVersion: resolveGameVersion,
+    //getGameVersion: resolveGameVersion,
     supportedTools: tools,
   };
   context.registerGame(game);
@@ -952,26 +806,6 @@ function applyGame(context, gameSpec) {
         && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
     }, (game) => pathPattern(context.api, game, type.targetPath), () => Promise.resolve(false), { name: type.name });
   });
-
-  /*register mod types explicitly
-  context.registerModType(CONFIG_ID, 60,
-    (gameId) => {
-      var _a;
-      return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    },
-    (game) => pathPattern(context.api, game, CONFIG_PATH),
-    () => Promise.resolve(false),
-    { name: CONFIG_NAME }
-  ); //*/
-  /*context.registerModType(SAVE_ID, 62,
-    (gameId) => {
-      var _a;
-      return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    },
-    (game) => pathPattern(context.api, game, SAVE_PATH),
-    () => Promise.resolve(false),
-    { name: SAVE_NAME }
-  ); //*/
 
   if (hasLoader) {
     context.registerModType(LOADER_ID, 70,
@@ -1018,8 +852,8 @@ function applyGame(context, gameSpec) {
   }
 
   //register actions
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
-    util.opn(CONFIG_PATH).catch(() => null);
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config File', () => {
+    util.opn(CONFIG_FILE_PATH).catch(() => null);
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);

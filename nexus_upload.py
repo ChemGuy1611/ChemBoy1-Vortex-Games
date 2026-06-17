@@ -76,16 +76,54 @@ def _normalize_name(s):
     return re.sub(r'[\s_\-]+', '', s.lower())
 
 
-def pick_file_group(mod_id, domain, api_key, mod_key, name_hint=None):
+def _v1_primary_file_name(mod_id, domain, api_key):
+    """Return the name of the latest primary, non-archived v1 file for this mod, or None.
+
+    Used to label a direct-to-group upload (FILE_GROUP_ID override) with the same
+    name the existing file group uses on Nexus.
+    """
+    try:
+        req = urllib.request.Request(
+            f"https://api.nexusmods.com/v1/games/{domain}/mods/{mod_id}/files.json",
+            headers={"apikey": api_key, "Accept": "application/json"},
+        )
+        with urllib.request.urlopen(req, timeout=15, context=_SSL_CTX) as resp:
+            data = json.loads(resp.read())
+    except (urllib.error.HTTPError, urllib.error.URLError):
+        return None
+    candidates = [
+        f for f in data.get("files", [])
+        if f.get("is_primary") and f.get("category_name") != "ARCHIVED"
+    ]
+    if not candidates:
+        candidates = data.get("files", [])
+    if not candidates:
+        return None
+    latest = max(candidates, key=lambda f: f.get("uploaded_timestamp", 0))
+    return latest.get("name")
+
+
+def pick_file_group(mod_id, domain, api_key, mod_key, name_hint=None, group_id_override=None):
     """Return the file update group dict to use for this upload.
 
     Lookup: v1 mod UID via GET /v1/games/{domain}/mods/{mod_id}.json,
-    then GET /v3/mods/{uid}/file-update-groups.
+    then GET /v3/mods/{uid}/files (returns the file groups under `mod_files`;
+    the old /v3/mods/{uid}/file-update-groups path is defunct and 404s).
+
+    group_id_override: when set, skip the v1->v3 group list entirely and target
+    this group id directly. The publish name is derived from the latest primary
+    v1 file, then name_hint, then a generic fallback. Use when the v3 list
+    endpoint 404s for a mod whose files were uploaded via the web/v1 flow.
 
     name_hint: optional string used to auto-select from multiple groups by
     fuzzy name match (lowercase, spaces/underscores/hyphens stripped).
     Falls back to interactive picker when hint is ambiguous or absent.
     """
+    if group_id_override is not None:
+        name = _v1_primary_file_name(mod_id, domain, api_key) or name_hint or f"file group {group_id_override}"
+        log_info(mod_key, f"File group (override): {name} (id: {group_id_override})")
+        return {"id": group_id_override, "name": name}
+
     log_info(mod_key, "Resolving mod UID from Nexus v1...")
     try:
         req = urllib.request.Request(
@@ -97,22 +135,25 @@ def pick_file_group(mod_id, domain, api_key, mod_key, name_hint=None):
         uid = v1_data.get("uid")
         if not uid:
             raise RuntimeError("v1 mod data has no 'uid' field")
-        log_info(mod_key, f"Resolved uid: {uid}; fetching file update groups...")
+        log_info(mod_key, f"Resolved uid: {uid}; fetching file groups...")
     except urllib.error.HTTPError as e:
         raise RuntimeError(f"v1 mod lookup failed: HTTP {e.code} {e.reason}") from None
 
+    # File groups live under GET /v3/mods/{uid}/files as `mod_files` (same shape as the
+    # `groups` array the now-defunct /file-update-groups endpoint used to return: each entry
+    # has id, name, is_active, versions_count, ...). The mod_files[].id IS the file group id.
     try:
-        data = v3_get(f"/mods/{uid}/file-update-groups", api_key)
+        data = v3_get(f"/mods/{uid}/files", api_key)
     except RuntimeError as e:
         if "HTTP 404" in str(e):
             raise RuntimeError(
-                f"mod uid {uid} has no v3 file update groups. "
+                f"mod uid {uid} has no v3 file groups. "
                 "Add FILE_GROUP_ID to index.js or create a file group via the Nexus Mods Files tab."
             ) from None
         raise
-    groups = [g for g in data.get("groups", []) if g.get("is_active")]
+    groups = [g for g in data.get("mod_files", []) if g.get("is_active")]
     if not groups:
-        raise RuntimeError("no active file update groups found for this mod")
+        raise RuntimeError("no active file groups found for this mod")
     if len(groups) == 1:
         log_info(mod_key, f"File group: {groups[0]['name']} (id: {groups[0]['id']})")
         return groups[0]
@@ -222,9 +263,9 @@ def poll_upload_state(upload_id, api_key, mod_key):
 
 # == Top-level upload flow =====================================================
 
-def upload_zip(zip_path, mod_id, domain, version, description, api_key, mod_key, name_hint=None, file_category="main"):
+def upload_zip(zip_path, mod_id, domain, version, description, api_key, mod_key, name_hint=None, file_category="main", group_id_override=None):
     """Run the full Nexus v3 multipart upload flow and create a new file version."""
-    group = pick_file_group(mod_id, domain, api_key, mod_key, name_hint=name_hint)
+    group = pick_file_group(mod_id, domain, api_key, mod_key, name_hint=name_hint, group_id_override=group_id_override)
     group_id = group["id"]
     display_name = group["name"]
 

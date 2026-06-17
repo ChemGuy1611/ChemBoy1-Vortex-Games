@@ -302,6 +302,17 @@ def extract_extension_url(src):
     return val if "nexusmods.com" in val else None
 
 
+def extract_file_group_id(src):
+    """Return the FILE_GROUP_ID integer from index.js source, or None if unset/non-numeric.
+
+    Optional escape hatch: when a mod's v3 file-update-groups list endpoint 404s
+    (files uploaded via the web/v1 flow are not registered in the v3 list), this
+    constant lets the uploader POST directly to /v3/mod-file-update-groups/{id}/versions.
+    """
+    m = re.search(r'const\s+FILE_GROUP_ID\s*=\s*(\d+)\b', src)
+    return int(m.group(1)) if m else None
+
+
 def sanitize_game_name(name):
     """Strip trademark/copyright symbols and normalize whitespace from a game name."""
     name = re.sub(r'[®™©]', '', name)
@@ -310,11 +321,12 @@ def sanitize_game_name(name):
 
 def normalize_game_name(s):
     """Lowercase + normalize punctuation for fuzzy title comparison.
-    Strips right-quotes, colons, ' - ' separators, extra whitespace, and normalizes 40,000 -> 40K."""
+    Strips right-quotes, colons, ' - ' separators, underscores, extra whitespace, and normalizes 40,000 -> 40K."""
     return (s.replace('40,000', '40K')
              .lower()
              .replace('\u2019', "'")
              .replace(':', '')
+             .replace('_', ' ')
              .replace(' - ', ' ')
              .replace('  ', ' ')
              .strip())

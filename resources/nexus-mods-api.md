@@ -60,7 +60,7 @@ Full working flow confirmed 2026-05-26. Used by `release_extension.py --upload`.
 | Step | Auth | Method | URL | Notes |
 | --- | --- | --- | --- | --- |
 | 1 | apikey | GET | `/v1/games/{domain}/mods/{mod_id}.json` | Extract `uid` |
-| 2 | apikey | GET | `/v3/mods/{uid}/file-update-groups` | List active groups; pick one |
+| 2 | apikey | GET | `/v3/mods/{uid}/files` | List file groups under `mod_files[]` (id, name, is_active, versions_count...); pick one. `mod_files[].id` IS the group id. (The old `/v3/mods/{uid}/file-update-groups` path now 404s) |
 | 3 | apikey | POST | `/v3/uploads/multipart` | Create upload session |
 | 4 | none | PUT | `{part_presigned_url}` (S3) | Upload binary chunk; capture `ETag` |
 | 5 | none | POST | `{complete_presigned_url}` (S3) | Send XML to assemble parts |
@@ -70,12 +70,12 @@ Full working flow confirmed 2026-05-26. Used by `release_extension.py --upload`.
 
 ---
 
-### Step 2 — File Update Groups Response
+### Step 2 — File Groups Response (`GET /v3/mods/{uid}/files`)
 
 ```json
 {
   "data": {
-    "groups": [
+    "mod_files": [
       {
         "id": "7216945",
         "name": "My Extension",
@@ -90,8 +90,9 @@ Full working flow confirmed 2026-05-26. Used by `release_extension.py --upload`.
 }
 ```
 
-Filter to `is_active === true` only. The `id` is a string int. If multiple active groups exist,
-prompt the user to choose.
+Filter to `is_active === true` only. The `id` is a string int and is the file group id used in
+step 8. If multiple active groups exist, prompt the user to choose. (The retired
+`/v3/mods/{uid}/file-update-groups` path returned the same objects under `groups[]` and now 404s.)
 
 ---
 
@@ -248,7 +249,12 @@ The following fields are silently ignored by the API — accepted without error 
 | `GET /v3/mods/{v1_mod_id}/file-update-groups` | 404 — must use `uid`, not `mod_id` |
 | `GET /v3/games/{domain}/mods/{mod_id}/file-update-groups` | 500 |
 | `GET /v3/mod-file-update-groups/{group_id}` | 500 |
+| `GET /v3/mods/{uid}/file-update-groups` | 404 even with correct `uid` — endpoint now defunct. **Use `GET /v3/mods/{uid}/files` instead** (returns the same group list under `mod_files[]`) |
 | `GET /v3/openapi.yaml` | 500 |
+
+**File group lookup (working):** `GET /v3/mods/{uid}/files` returns `{ data: { mod_files: [{ id, name, is_active, last_file_uploaded_at, versions_count, archived_count, removed_count }] } }`. Each `mod_files[].id` IS the file group id used by `POST /v3/mod-file-update-groups/{group_id}/versions`. This replaces the dead `/file-update-groups` path.
+
+**FILE_GROUP_ID override (fallback):** set `const FILE_GROUP_ID = <id>;` in the extension's index.js (id from the Nexus Files tab) to skip the lookup entirely and POST directly to the group. `release_extension.py` derives the publish `name` from the latest primary, non-ARCHIVED file in `GET /v1/games/{domain}/mods/{mod_id}/files.json`. Only needed if the `/files` lookup itself ever fails.
 
 ---
 

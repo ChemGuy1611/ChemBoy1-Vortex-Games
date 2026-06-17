@@ -83,6 +83,7 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `const_array_value(src, name)` | Return the raw array content (between `[` and `]`) for `const NAME = [...]` via bracket-depth scanning. Returns `None` if not found. |
 | `find_js_function(src, name)` | Return `(fn_start, body_start, body_end)` for the named JS function. Returns `(None, None, None)` if not found. |
 | `extract_extension_url(src)` | Extract the `EXTENSION_URL` value from JS source; returns `None` if unset or not an HTTP URL |
+| `extract_file_group_id(src)` | Extract the optional `FILE_GROUP_ID` integer from JS source; returns `None` if unset. Escape hatch for mods whose v3 file-update-groups list 404s |
 | `sanitize_game_name(name)` | Strip `®`, `™`, `©` symbols and collapse extra whitespace from a game name string |
 | `normalize_game_name(s)` | Lowercase + strip right-quotes, colons, ` - ` separators, and extra whitespace. For fuzzy title comparison. |
 | `list_game_ids()` | Return a sorted list of all `GAME_ID` values found across `game-*` extension folders |
@@ -148,11 +149,11 @@ Reusable Nexus Mods v3 upload module. Extracted from `release_extension.py`; pro
 | `v3_get(path, api_key)` | GET a Nexus v3 endpoint; returns parsed `data` field |
 | `v3_post_json(path, body, api_key)` | POST JSON to a Nexus v3 endpoint; returns parsed `data` field |
 | `extract_changelog_entry(changelog_src, version)` | Extract the changelog entry body for `version` (date-only header + bullet list) |
-| `pick_file_group(mod_id, domain, api_key, mod_key, name_hint=None)` | Resolve mod UID via v1 API, fetch v3 file update groups, auto-select by exact-normalized name match (then substring fallback) when `name_hint` provided; raises `RuntimeError` on no match or ambiguous match; falls back to interactive prompt only when `name_hint` is absent. Words in `_NAME_STRIP_WORDS` (default: `['addon']`) are stripped from group names before comparison. |
+| `pick_file_group(mod_id, domain, api_key, mod_key, name_hint=None, group_id_override=None)` | Resolve mod UID via v1 API, fetch file groups via `GET /v3/mods/{uid}/files` (`mod_files[]`; the old `/file-update-groups` path is defunct), auto-select by exact-normalized name match (then substring fallback) when `name_hint` provided; raises `RuntimeError` on no match or ambiguous match; falls back to interactive prompt only when `name_hint` is absent. Words in `_NAME_STRIP_WORDS` (default: `['addon']`) are stripped from group names before comparison. When `group_id_override` is set (from index.js `FILE_GROUP_ID`), the v1->v3 list is skipped and the group is targeted directly, with the publish name derived from the latest primary v1 file. |
 | `upload_parts(zip_path, presigned_urls, part_size, mod_key)` | Upload zip in parts to presigned S3 URLs; returns list of ETags |
 | `complete_multipart(complete_url, etags)` | POST CompleteMultipartUpload XML to finalize S3 assembly |
 | `poll_upload_state(upload_id, api_key, mod_key)` | Poll v3 upload until state is `available`; raises on timeout |
-| `upload_zip(zip_path, mod_id, domain, version, description, api_key, mod_key, name_hint=None)` | Full Nexus v3 multipart upload flow: session create → part upload → complete → finalise → poll → publish version |
+| `upload_zip(zip_path, mod_id, domain, version, description, api_key, mod_key, name_hint=None, file_category="main", group_id_override=None)` | Full Nexus v3 multipart upload flow: session create → part upload → complete → finalise → poll → publish version |
 
 ### nexus_upload.py -- Requirements
 
