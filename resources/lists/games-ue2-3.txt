@@ -7,3 +7,4 @@ bioshockinfinite
 borderlands
 borderlands2
 dishonored
+xcom

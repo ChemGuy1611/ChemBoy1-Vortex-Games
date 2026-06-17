@@ -7,6 +7,7 @@ new_template.py
 port_to_template.py
 patch_extensions.py
 fetch_cover_art.py
+make_title_image.py
 fetch_exec_icon.py
 fetch_nexus_stats.py
 release_extension.py

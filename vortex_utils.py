@@ -84,6 +84,11 @@ TITLE_IMAGES_DIR  = os.path.join(REPO_ROOT, "resources", "title-images")
 BANNER_IMAGES_DIR = os.path.join(REPO_ROOT, "resources", "banner-images")
 LISTS_DIR         = os.path.join(REPO_ROOT, "resources", "lists")
 
+# Title-image logo composite: logo is scaled to this fraction of the image
+# width (upscaled if the native logo is smaller), capped at the height fraction.
+TITLE_LOGO_WIDTH_FRAC  = 0.50
+TITLE_LOGO_HEIGHT_FRAC = 0.40
+
 GUI_FLAGS_PATH = os.path.join(REPO_ROOT, "vortex_gui_flags.json")
 GUI_STATS_PATH = os.path.join(REPO_ROOT, "vortex_gui_nexus_stats.json")
 
@@ -1110,7 +1115,8 @@ def download_cover_art(appid, game_name, out_path, sgdb_key=None):
     return True, source
 
 
-def download_title_image(appid, game_name, out_path, sgdb_key=None):
+def download_title_image(appid, game_name, out_path, sgdb_key=None,
+                         hero_id=None, logo_id=None):
     """Download and save a 1920x1080 title image (with game logo/title text).
 
     Priority order:
@@ -1120,6 +1126,14 @@ def download_title_image(appid, game_name, out_path, sgdb_key=None):
     2. SteamGridDB 920x430 grid (no style filter -usually has title text baked in).
        Prefers is_official=True, sorted by score. Requires STEAMGRIDDB_API_KEY.
     3. Steam capsule_616x353.jpg -official art, always has title text. No key needed.
+
+    hero_id: if given, use that specific SteamGridDB hero asset
+        (https://www.steamgriddb.com/hero/<id>) as the background instead of the
+        best hero auto-picked for appid. The composite still falls back to the
+        grid/capsule path if no logo is available.
+    logo_id: if given, use that specific SteamGridDB logo asset
+        (https://www.steamgriddb.com/logo/<id>) instead of the best auto-picked
+        logo for appid.
     """
     from io import BytesIO
     from PIL import Image
@@ -1141,22 +1155,36 @@ def download_title_image(appid, game_name, out_path, sgdb_key=None):
         logo_data = None
 
         try:
-            url = f"https://www.steamgriddb.com/api/v2/heroes/steam/{appid}"
-            resp = json.loads(http_get(url, {"Authorization": f"Bearer {sgdb_key}"}))
-            heroes = resp.get("data", [])
-            if heroes:
-                hero_data = http_get_bytes(_pick(_en(heroes), "width")["url"])
+            if hero_id:
+                url = f"https://www.steamgriddb.com/api/v2/heroes/{hero_id}"
+                resp = json.loads(http_get(url, {"Authorization": f"Bearer {sgdb_key}"}))
+                hero = resp.get("data")
+                if hero:
+                    hero_data = http_get_bytes(hero["url"])
+            else:
+                url = f"https://www.steamgriddb.com/api/v2/heroes/steam/{appid}"
+                resp = json.loads(http_get(url, {"Authorization": f"Bearer {sgdb_key}"}))
+                heroes = resp.get("data", [])
+                if heroes:
+                    hero_data = http_get_bytes(_pick(_en(heroes), "width")["url"])
         except Exception as e:
             print(f"    SteamGridDB hero error: {e}")
 
         try:
-            url = f"https://www.steamgriddb.com/api/v2/logos/steam/{appid}"
-            resp = json.loads(http_get(url, {"Authorization": f"Bearer {sgdb_key}"}))
-            logos = resp.get("data", [])
-            if logos:
-                colored = [l for l in _en(logos) if l.get("style", "") not in ("white", "black")]
-                pool = colored if colored else _en(logos)
-                logo_data = http_get_bytes(_pick(pool, "score")["url"])
+            if logo_id:
+                url = f"https://www.steamgriddb.com/api/v2/logos/{logo_id}"
+                resp = json.loads(http_get(url, {"Authorization": f"Bearer {sgdb_key}"}))
+                logo = resp.get("data")
+                if logo:
+                    logo_data = http_get_bytes(logo["url"])
+            else:
+                url = f"https://www.steamgriddb.com/api/v2/logos/steam/{appid}"
+                resp = json.loads(http_get(url, {"Authorization": f"Bearer {sgdb_key}"}))
+                logos = resp.get("data", [])
+                if logos:
+                    colored = [l for l in _en(logos) if l.get("style", "") not in ("white", "black")]
+                    pool = colored if colored else _en(logos)
+                    logo_data = http_get_bytes(_pick(pool, "score")["url"])
         except Exception as e:
             print(f"    SteamGridDB logo error: {e}")
 
@@ -1165,8 +1193,15 @@ def download_title_image(appid, game_name, out_path, sgdb_key=None):
                 hero = _crop_resize(Image.open(BytesIO(hero_data)).convert("RGB"), 1920, 1080)
 
                 logo = Image.open(BytesIO(logo_data)).convert("RGBA")
-                logo.thumbnail((int(1920 * 0.65), int(1080 * 0.40)), Image.LANCZOS)
+                # Scale logo to a target fraction of the image width (upscaling
+                # small native logos too), capped by a max height fraction so
+                # tall/square logos don't dominate. thumbnail() only shrinks, so
+                # small logos stayed tiny -- use an explicit resize instead.
                 lw, lh = logo.size
+                scale = min(1920 * TITLE_LOGO_WIDTH_FRAC / lw,
+                            1080 * TITLE_LOGO_HEIGHT_FRAC / lh)
+                lw, lh = int(lw * scale), int(lh * scale)
+                logo = logo.resize((lw, lh), Image.LANCZOS)
 
                 x = (1920 - lw) // 2
                 y = int(1080 * 0.88) - lh
@@ -2153,8 +2188,12 @@ def find_vortex_plugin_folder(game_id, game_name=None):
     Checks VORTEX_PLUGINS_DIR env var (default: C:\\ProgramData\\vortex\\plugins).
     Match priority:
       1. Exact game_id match or game_id prefix (e.g. "subnautica2", "subnautica2-1.2.0")
-      2. "Vortex Extension Update - <name> v*" folder (deployed via Nexus in-app update)
-      3. Fuzzy display-name match (if game_name is given)"""
+      2. "Vortex Extension Update - <name> v*" folder (deployed via Nexus in-app update);
+         cleaned game_id or game_name as substring
+      3. Fuzzy substring match of cleaned game_id or game_name against any folder
+
+    Cleaning applies roman_to_arabic before lowercasing, so display names with
+    Roman numerals ("Battlefront II") match folders/ids using Arabic ("battlefront2")."""
     plugins_dir = VORTEX_PLUGINS_DIR
     if not os.path.isdir(plugins_dir):
         return None
@@ -2176,8 +2215,13 @@ def find_vortex_plugin_folder(game_id, game_name=None):
     # Pass 2: "Vortex Extension Update - <name> v*" naming (Vortex in-app update folder)
     # Compare the stripped name portion against both game_id and game_name.
     _vu_prefix = re.compile(r'^vortex extension update - (.+?) v\d', re.IGNORECASE)
+    _vu_suffix = re.compile(r'\s+vortex extension.*$', re.IGNORECASE)
     def _clean(s):
-        return re.sub(r'[^a-z0-9]', '', s.lower())
+        # Drop trailing " Vortex Extension[ CB1...]" suffix, then roman_to_arabic
+        # before lowercasing (its patterns are uppercase-cased), so "Battlefront II"
+        # and "Battlefront 2" collapse to the same string.
+        s = _vu_suffix.sub('', s)
+        return re.sub(r'[^a-z0-9]', '', roman_to_arabic(s).lower())
 
     gid_clean = _clean(game_id)
     name_clean = _clean(game_name) if game_name else None
@@ -2190,18 +2234,18 @@ def find_vortex_plugin_folder(game_id, game_name=None):
         full = os.path.join(plugins_dir, entry)
         if not os.path.isdir(full):
             continue
-        if entry_name_clean == gid_clean:
+        if gid_clean and gid_clean in entry_name_clean:
             return full
         if name_clean and name_clean in entry_name_clean:
             return full
 
     # Pass 3: fuzzy game_name substring match (original fallback)
-    if game_name:
-        for entry in entries:
-            if name_clean and name_clean in _clean(entry):
-                full = os.path.join(plugins_dir, entry)
-                if os.path.isdir(full):
-                    return full
+    for entry in entries:
+        ec = _clean(entry)
+        if (gid_clean and gid_clean in ec) or (name_clean and name_clean in ec):
+            full = os.path.join(plugins_dir, entry)
+            if os.path.isdir(full):
+                return full
 
     return None
 

@@ -330,14 +330,6 @@ const data = await archive.extractFile('data/config.json');
 
 ---
 
-### `context.optional.*` — line 3882
-
-**Why useful:** A Proxy around `context` that silently no-ops any `registerXyz` call for APIs that don't exist. Use for truly optional integrations where missing the extension is fine.
-
-**Use case:** `context.optional.registerLoadOrder(gameInfo)` — gracefully degrades if the Collections extension isn't installed without try/catch boilerplate.
-
----
-
 ### `api.getLoadedExtensions()` — line 3125
 
 **Why useful:** Returns the list of all currently loaded extensions at runtime. Use to detect optional peer extensions and enable conditional behavior.
@@ -372,28 +364,6 @@ All are sync (NodeJS.EventEmitter). Subscribe in `context.once()`.
 **Why useful:** Declares a semver version range that the running Vortex must satisfy. Vortex will show a clear error if the constraint isn't met rather than crashing at runtime. Multiple calls are ANDed together.
 
 **Use case:** If your extension uses an API introduced in Vortex 1.9.0, call `context.requireVersion('^1.9.0')` so users on older versions see a clean "please update Vortex" message.
-
----
-
-### `context.registerGameSpecificCollectionsData(data)` — line 3911
-
-**Why useful:** Hooks your game extension into Vortex's Collections system. Lets you export and import game-specific data (load order, INI settings, profile files, etc.) as part of a Collection.
-
-**Shape:**
-
-```js
-context.registerGameSpecificCollectionsData({
-  gameId: GAME_ID,
-  // Called when exporting — return any serializable data to include in the collection
-  generator: async (state, gameId, stagingPath, modIds, mods) => ({ loadOrder: ... }),
-  // Called when importing — apply the previously exported data
-  parser: async (api, gameId, collection) => { /* restore loadOrder, etc. */ },
-  // Optional React component shown in the Collections UI for this game's data
-  interface: (props) => <MyCollectionUI {...props} />,
-});
-```
-
-**Use case:** Allow users to share load orders and game settings via Nexus Collections without manual file copying.
 
 ---
 

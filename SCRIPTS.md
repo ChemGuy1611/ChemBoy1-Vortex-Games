@@ -127,7 +127,7 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `GUI_STATS_PATH` | Absolute path to `vortex_gui_nexus_stats.json` at repo root |
 | `download_exec_icon(appid, game_name, out_path)` | Download and save a 64x64 `exec.png`. Steam CDN first, SteamGridDB icon fallback. |
 | `download_cover_art(appid, game_name, out_path, sgdb_key)` | Download and save a 640x360 cover art JPEG with no title text. SteamGridDB grid/hero or Steam `library_hero.jpg`. |
-| `download_title_image(appid, game_name, out_path, sgdb_key)` | Download and save a 1920x1080 title image (with logo text). SteamGridDB hero+logo composite, grid, or Steam capsule. |
+| `download_title_image(appid, game_name, out_path, sgdb_key, hero_id=None, logo_id=None)` | Download and save a 1920x1080 title image (with logo text). SteamGridDB hero+logo composite, grid, or Steam capsule. `hero_id`/`logo_id` force a specific SteamGridDB asset instead of auto-picking by appid. Composite logo is scaled to `TITLE_LOGO_WIDTH_FRAC` (0.50) of image width, capped at `TITLE_LOGO_HEIGHT_FRAC` (0.40) of height; small native logos are upscaled. |
 | `download_banner_image(appid, game_id, out_path, sgdb_key)` | Download official SteamGridDB hero at full size. No crop or resize. |
 
 ### vortex_utils.py -- Requirements
@@ -281,6 +281,42 @@ python fetch_cover_art.py --retry-failed
 - Banner images saved as `{GAME_ID}_banner.jpg` (full-size JPEG) in `resources/banner-images/`.
 - Extensions without a `STEAMAPP_ID` in `index.js` are skipped with a note.
 - A summary of saved / failed / skipped counts is printed at the end.
+
+---
+
+## make_title_image.py
+
+Builds a single `{GAME_ID}_title.jpg` from a specific SteamGridDB hero asset (the number in a `https://www.steamgriddb.com/hero/<id>` URL), composited with the game's logo (Steam library convention: logo centered in the lower portion). Unlike `fetch_cover_art.py --title`, which auto-picks the best hero for the game's Steam appid, this lets you pin the exact hero. Reads `STEAMAPP_ID` from the game's `index.js` for the logo lookup and calls `download_title_image` from `vortex_utils` with `hero_id`/`logo_id`.
+
+### make_title_image.py — Requirements
+
+```sh
+pip install Pillow
+```
+
+### make_title_image.py — Environment Variables
+
+| Variable | Required | Description |
+| --- | --- | --- |
+| `STEAMGRIDDB_API_KEY` | Required | SteamGridDB API key (env var or HKCU registry fallback via `get_api_key`). No fallback art source for this script. |
+
+### make_title_image.py — Usage
+
+```sh
+python make_title_image.py GAME_ID --hero HERO_ID
+python make_title_image.py GAME_ID --hero HERO_ID --logo LOGO_ID
+python make_title_image.py GAME_ID --hero HERO_ID --dry-run
+```
+
+- `GAME_ID` — the game extension id (folder `game-<id>`; matched by the `GAME_ID` const in `index.js`).
+- `--hero ID` — SteamGridDB hero asset id to use as the background (required).
+- `--logo ID` — SteamGridDB logo asset id to composite (optional; default is the best official colored logo for the game's Steam appid).
+- `--dry-run` — resolves appid/paths and reports without downloading or writing.
+
+### make_title_image.py — Output
+
+- Title image saved as `{GAME_ID}_title.jpg` (1920x1080 JPEG) in `resources/title-images/`.
+- Exit code `0` on success, `1` on failure.
 
 ---
 
