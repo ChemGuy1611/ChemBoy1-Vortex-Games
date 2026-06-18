@@ -5,6 +5,7 @@
 lint_results.txt
 *.pyc
 vortex_gui_nexus_stats.json
+vortex_gui_row_cache.json
 eslint_output.json
 temp_eslint.json
 **/graphify-out/*

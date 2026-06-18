@@ -17,7 +17,8 @@ Usage:
     python analyze_vortex_log.py --force
     python analyze_vortex_log.py --no-open
     python analyze_vortex_log.py --grep PATTERN
-    python analyze_vortex_log.py --since HOURS
+    python analyze_vortex_log.py --since WHEN
+    python analyze_vortex_log.py --until WHEN
     python analyze_vortex_log.py --merge-lines
 
 Environment variables:
@@ -36,7 +37,10 @@ Options:
     --force          Overwrite existing output file.
     --no-open        Do not open the output file after writing.
     --grep PATTERN   Only include entries matching PATTERN (regex, applied per-entry).
-    --since HOURS    Only include entries from the last N hours.
+    --since WHEN     Only include entries at or after WHEN: a number of hours
+                     ago (e.g. 24) or an ISO timestamp (e.g. 2026-06-18T10:00).
+    --until WHEN     Only include entries at or before WHEN: a number of hours
+                     ago (e.g. 2) or an ISO timestamp (e.g. 2026-06-18T18:00).
     --merge-lines    Collapse each multi-line entry (stack traces, JSON blobs)
                      into a single ` | `-joined line for easier grepping.
 """
@@ -127,16 +131,41 @@ def _entry_ts_seconds(entry: str) -> float | None:
     if not m:
         return None
     try:
-        dt = _dt.datetime(int(m.group(1)), int(m.group(2)), int(m.group(3)), int(m.group(4)),
+        year, month, day = (int(x) for x in m.group(1).split("-"))
+        dt = _dt.datetime(year, month, day, int(m.group(2)), int(m.group(3)), int(m.group(4)),
                           tzinfo=_dt.timezone.utc)
         return dt.timestamp()
     except (ValueError, OverflowError):
         return None
 
 
+def _parse_time_arg(value: str, label: str) -> float:
+    """Parse a --since/--until value into epoch seconds (UTC).
+
+    A bare number means that many hours ago; anything else is parsed as an
+    ISO-8601 timestamp (e.g. 2026-06-18T10:00). Naive timestamps are treated
+    as UTC, matching how log timestamps are parsed."""
+    import datetime as _dt
+    import time as _time
+    try:
+        return _time.time() - float(value) * 3600
+    except ValueError:
+        pass
+    try:
+        dt = _dt.datetime.fromisoformat(value)
+    except ValueError:
+        print(f"[ERROR] Invalid --{label} value '{value}'. Use a number of hours "
+              f"(e.g. 24) or an ISO timestamp (e.g. 2026-06-18T10:00).", file=sys.stderr)
+        sys.exit(1)
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=_dt.timezone.utc)
+    return dt.timestamp()
+
+
 def _parse_log(
     log_path: pathlib.Path, selected_tokens: list[str],
     since_seconds: float | None = None,
+    until_seconds: float | None = None,
     grep_pattern: "re.Pattern | None" = None,
     merge_lines: bool = False,
 ) -> tuple[collections.Counter, dict[str, list[tuple[str, str]]]]:
@@ -153,9 +182,12 @@ def _parse_log(
         if current_level is None:
             return
         text = "".join(current_lines)
-        if since_seconds is not None:
+        if since_seconds is not None or until_seconds is not None:
             ts = _entry_ts_seconds(text)
-            if ts is not None and ts < since_seconds:
+            if ts is not None and (
+                (since_seconds is not None and ts < since_seconds)
+                or (until_seconds is not None and ts > until_seconds)
+            ):
                 current_lines = []
                 current_level = None
                 current_is_other = False
@@ -301,8 +333,14 @@ def main() -> None:
         help="Only include entries matching PATTERN (regex, applied per-entry).",
     )
     parser.add_argument(
-        "--since", metavar="HOURS", type=float, default=None,
-        help="Only include entries from the last N hours.",
+        "--since", metavar="WHEN", default=None,
+        help="Only include entries at or after WHEN: a number of hours ago "
+             "(e.g. 24) or an ISO timestamp (e.g. 2026-06-18T10:00).",
+    )
+    parser.add_argument(
+        "--until", metavar="WHEN", default=None,
+        help="Only include entries at or before WHEN: a number of hours ago "
+             "(e.g. 2) or an ISO timestamp (e.g. 2026-06-18T18:00).",
     )
     parser.add_argument(
         "--merge-lines", action="store_true",
@@ -322,10 +360,8 @@ def main() -> None:
             print(f"[ERROR] Invalid --grep pattern: {e}", file=sys.stderr)
             sys.exit(1)
 
-    since_seconds = None
-    if args.since is not None:
-        import time as _time
-        since_seconds = _time.time() - args.since * 3600
+    since_seconds = _parse_time_arg(args.since, "since") if args.since is not None else None
+    until_seconds = _parse_time_arg(args.until, "until") if args.until is not None else None
 
     write_mode = not args.dry_run and not args.summary_only
 
@@ -337,8 +373,8 @@ def main() -> None:
 
     print(f"Parsing {log_path} ...")
     counts, buckets = _parse_log(log_path, selected,
-                                 since_seconds=since_seconds, grep_pattern=grep_pattern,
-                                 merge_lines=args.merge_lines)
+                                 since_seconds=since_seconds, until_seconds=until_seconds,
+                                 grep_pattern=grep_pattern, merge_lines=args.merge_lines)
     total = sum(counts.values())
 
     count_w = max(len(f"{counts.get(t, 0):,}") for t in _DISPLAY_ORDER)

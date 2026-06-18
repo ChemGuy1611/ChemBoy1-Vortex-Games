@@ -1,7 +1,7 @@
 """
 audit_scripts.py
 
-Runs five audits and reports drift found in any:
+Runs six audits and reports drift found in any:
 
   1. Header docstring audit -- compares each script's argparse flags and
      env-var reads against the flags and env vars documented in its own
@@ -20,6 +20,11 @@ Runs five audits and reports drift found in any:
   5. Raw log-print audit -- detects raw print(f"  [{...}]") calls in scripts
      outside vortex_utils.py that should use log_info/log_warn/log_error.
 
+  6. Non-atomic write audit -- detects plain open(<managed file>, "w") writes
+     to index.js / info.json / CHANGELOG outside the atomic helpers
+     (write_index_js / write_*_atomic / os.replace). Blocking. Suppress a line
+     with  # noqa: nonatomic-write  when a non-atomic write is intentional.
+
 Read-only; never modifies any file.
 
 Usage:
@@ -33,8 +38,9 @@ Examples:
     python audit_scripts.py --json | jq .drift_found
 
 Details:
-    Skips vortex_utils.py (library), generate_explained.js (Node),
-    eslint.config.js (config), and SCRIPTS.md. These are listed in the SKIP set.
+    Skips vortex_utils.py (library), gui_tray.py (GUI library),
+    generate_explained.js (Node), eslint.config.js (config), and SCRIPTS.md.
+    These are listed in the SKIP set.
 
     Env vars consumed inside vortex_utils helpers (STEAMGRIDDB_API_KEY,
     NEXUS_API_KEY, STEAM_API_KEY) are listed in INDIRECT_ENVVARS and
@@ -58,7 +64,7 @@ import sys
 from vortex_utils import iter_repo_scripts, REPO_ROOT
 
 # Scripts that are libraries, config files, or otherwise not dev scripts
-SKIP = {"vortex_utils.py", "generate_explained.js", "SCRIPTS.md", "eslint.config.js"}
+SKIP = {"vortex_utils.py", "gui_tray.py", "generate_explained.js", "SCRIPTS.md", "eslint.config.js"}
 
 # Env vars consumed inside vortex_utils helpers (indirect use).
 # Scripts that document these but don't call os.environ.get() directly are correct.
@@ -416,6 +422,53 @@ def audit_raw_log_prints(paths):
     return bool(hits), hits
 
 
+# Write-mode open() call: capture the call from "open(" up to and including the
+# mode string, so both open(var, "w") and open(os.path.join(.., "x"), "w") match.
+_WRITE_OPEN_RE = re.compile(r'''\bopen\s*\((?P<call>.*?,\s*["'][wa]b?["'])''')
+# Managed extension files that must be written atomically. Matches either a
+# filename literal or the conventional *_path variable that names one.
+_MANAGED_TARGET_RE = re.compile(
+    r'''index\.js|info\.json|CHANGELOG'''
+    r'''|index_path|info_path|info_json_path|changelog_path'''
+)
+
+
+def audit_nonatomic_writes(paths):
+    """Detect plain open(<managed file>, "w") writes outside the atomic helpers.
+
+    A managed file is index.js / info.json / CHANGELOG (matched by filename
+    literal or the conventional *_path variable). These must be written via
+    write_index_js / write_*_atomic / os.replace so a crash mid-write cannot
+    corrupt them. vortex_utils.py is skipped (it holds the helper internals and
+    an intentional atomic=False branch). Lines with  # noqa: nonatomic-write
+    are suppressed. Returns (any_issue, {script_name: [line_numbers]})."""
+    hits: dict[str, list[int]] = {}
+    for path in paths:
+        name = os.path.basename(path)
+        if name == "vortex_utils.py" or not name.endswith(".py"):
+            continue
+        if not os.path.isfile(path):
+            continue
+        with open(path, encoding="utf-8") as f:
+            src = f.read()
+        lines_hit = []
+        for i, line in enumerate(src.splitlines(), 1):
+            if "# noqa: nonatomic-write" in line:
+                continue
+            m = _WRITE_OPEN_RE.search(line)
+            if not m:
+                continue
+            call = m.group("call")
+            # Atomic helpers write to a *.tmp path first -- never flag those.
+            if ".tmp" in call:
+                continue
+            if _MANAGED_TARGET_RE.search(call):
+                lines_hit.append(i)
+        if lines_hit:
+            hits[name] = lines_hit
+    return bool(hits), hits
+
+
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 def main():
@@ -472,8 +525,11 @@ def main():
     all_py_paths = [p for p in iter_repo_scripts() if p.endswith('.py')]
     prints_issue, raw_print_hits = audit_raw_log_prints(all_py_paths)
 
+    # -- non-atomic write audit (blocking) --
+    nonatomic_issue, nonatomic_hits = audit_nonatomic_writes(all_py_paths)
+
     # prints_issue is informational only -- raw-print calls are migration candidates, not blocking
-    any_drift = header_drift or md_drift or txt_issue or exports_drift
+    any_drift = header_drift or md_drift or txt_issue or exports_drift or nonatomic_issue
 
     if args.json:
         output = {
@@ -500,6 +556,9 @@ def main():
             },
             "raw_log_prints_audit": {
                 name: lines for name, lines in raw_print_hits.items()
+            },
+            "nonatomic_writes_audit": {
+                name: lines for name, lines in nonatomic_hits.items()
             },
             "drift_found": any_drift,
         }
@@ -556,6 +615,15 @@ def main():
             print(f"  {name}: raw log-print on line(s) {nums} -- use log_info/log_warn/log_error")
     else:
         print("  No raw log-print calls found.")
+
+    print()
+    print("Checking for non-atomic writes to managed files (index.js/info.json/CHANGELOG)...\n")
+    if nonatomic_hits:
+        for name, line_nums in sorted(nonatomic_hits.items()):
+            nums = ", ".join(str(n) for n in line_nums)
+            print(f"  {name}: non-atomic write on line(s) {nums} -- use write_index_js/write_*_atomic/os.replace")
+    else:
+        print("  No non-atomic writes to managed files found.")
 
     print()
     if any_drift:

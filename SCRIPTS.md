@@ -1087,7 +1087,8 @@ python analyze_vortex_log.py --dry-run
 python analyze_vortex_log.py --force
 python analyze_vortex_log.py --no-open
 python analyze_vortex_log.py --grep PATTERN
-python analyze_vortex_log.py --since HOURS
+python analyze_vortex_log.py --since WHEN
+python analyze_vortex_log.py --until WHEN
 python analyze_vortex_log.py --merge-lines
 ```
 
@@ -1109,7 +1110,8 @@ python analyze_vortex_log.py --merge-lines
 | `--force` | Overwrite existing output file. |
 | `--no-open` | Do not open the output file after writing. |
 | `--grep PATTERN` | Only include entries matching `PATTERN` (regex, applied to the full multi-line entry text). |
-| `--since HOURS` | Only include entries from the last `N` hours. |
+| `--since WHEN` | Only include entries at or after `WHEN`: a number of hours ago (e.g. `24`) or an ISO timestamp (e.g. `2026-06-18T10:00`). Naive timestamps are treated as UTC. |
+| `--until WHEN` | Only include entries at or before `WHEN`: a number of hours ago (e.g. `2`) or an ISO timestamp (e.g. `2026-06-18T18:00`). Pairs with `--since` to bound a window. |
 | `--merge-lines` | Collapse each multi-line entry (stack traces, JSON blobs) into a single ` \| `-joined line for easier grepping. |
 
 ### analyze_vortex_log.py — Output
@@ -1129,13 +1131,14 @@ Console summary prints total entry count and per-level breakdown.
 
 ## audit_scripts.py
 
-Runs five audits and reports drift found in any:
+Runs six audits and reports drift found in any:
 
 1. **Header docstring audit** — compares each script's argparse flags and env-var reads against the flags and env vars documented in its own header docstring (`Usage:` and `Environment variables:` sections).
 2. **SCRIPTS.md audit** — compares the same code-extracted flags and env vars against the corresponding script section in SCRIPTS.md (`### name — Usage` and `### name — Environment Variables` subsections).
 3. **scripts.txt cross-check** — warns when a `*.py` or `*.js` in the repo root is not listed in `scripts.txt`, or when `scripts.txt` references a missing file.
 4. **vortex_utils.py exports audit** — detects public functions defined in `vortex_utils.py` that are missing from its module docstring import list.
 5. **Raw log-print audit** — detects `print(f"  [{...}]")` calls in scripts outside `vortex_utils.py` that should use `log_info`/`log_warn`/`log_error` (informational; does not affect exit code).
+6. **Non-atomic write audit** — detects plain `open(<managed file>, "w")` writes to `index.js` / `info.json` / `CHANGELOG` outside the atomic helpers (`write_index_js` / `write_*_atomic` / `os.replace`). Blocking. Suppress an intentional non-atomic write with `# noqa: nonatomic-write`.
 
 Read-only; never modifies any file. Uses `iter_repo_scripts()` from `vortex_utils` to iterate the canonical script list in `scripts.txt`. Skips `vortex_utils.py` (library), `generate_explained.js` (Node), `eslint.config.js` (config), and `SCRIPTS.md`.
 
@@ -1169,9 +1172,19 @@ Exits 0 with `All clear.` or exits 1 with `Drift found. Update headers, SCRIPTS.
 
 ---
 
+## gui_tray.py
+
+PySide6-only helper library (not run directly) that makes a single-window GUI tray-resident and single-instance. Imported by `vortex_gui.py` only — never by CLI scripts, so it can depend on PySide6 while `vortex_utils.py` cannot. A copy lives in the Personal repo for its GUIs; keep the two in sync.
+
+- `another_instance_running(key)` — returns `True` if an instance is already listening on the named local server `key`, and signals it to restore its window (so a second launch focuses the existing window instead of starting a second process).
+- `listen_for_activation(key, on_activate)` — become the named server; calls `on_activate()` on each ping. Returns the `QLocalServer` (caller must keep a reference).
+- `TrayManager(window, *, app_name, settings_org, settings_app, icon=None)` — adds a `QSystemTrayIcon` (Show/Quit menu, click-to-restore) and close-to-tray behavior. Call `on_close(event)` from the window's `closeEvent`: returns `True` to proceed with a real quit, `False` if the window was hidden to the tray. Degrades gracefully (always returns `True`) when no system tray is available. Falls back to a drawn letter-badge icon when `icon` is omitted.
+
 ## vortex_gui.py
 
 GUI dashboard for running developer scripts against game extensions. Lists all `game-*` extensions in a sortable, filterable table with a toolbar of script actions.
+
+Tray-resident + single-instance via `gui_tray.py`: the close (X) button hides the window to the system tray (a one-time notice explains this), the app keeps running, and re-launching focuses the existing window instead of starting a second. Quit for real from the tray icon's right-click menu. Settings are saved on both hide and quit.
 
 ### vortex_gui.py — Requirements
 
@@ -1186,6 +1199,8 @@ python vortex_gui.py
 ```
 
 No arguments. Launches the window, which loads all extensions automatically.
+
+The per-folder `index.js`/`info.json`/`CHANGELOG.md` parse is cached in `vortex_gui_row_cache.json` at the repo root (gitignored, auto-managed). The cache is keyed by folder name plus those three files' modification times, so unchanged extensions skip the read+regex on later launches — the dominant startup cost. Image existence and Nexus stats are always read live. Delete the file to force a full rebuild; it regenerates on the next refresh.
 
 ### vortex_gui.py — Layout
 

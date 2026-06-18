@@ -14,7 +14,7 @@ Usage:
         GAME_PREFIX, TEMPLATE_PREFIX, VORTEX_PLUGINS_DIR,
         read_index_js, write_index_js,
         extract_game_id, extract_steamapp_id, has_real_steamapp_id,
-        extract_game_name, extract_extension_url,
+        extract_game_name, extract_extension_url, extract_file_group_id,
         sanitize_game_name, normalize_game_name,
         roman_to_arabic, arabic_to_roman,
         name_lookup_variants, lookup_pcgamingwiki,
@@ -1849,8 +1849,7 @@ def mutate_index_js(folder, game_id, mutator_fn, *,
         print(f"  [{game_id}] [DRY RUN] {dry_run_msg}")
         return True
     try:
-        with open(index_path, "w", encoding="utf-8") as f:
-            f.write(new_src)
+        write_index_js(folder, new_src)
         print(f"  [{game_id}] {changed_msg}")
         return True
     except OSError as e:

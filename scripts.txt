@@ -1,5 +1,6 @@
 # Python scripts
 vortex_utils.py
+gui_tray.py
 nexus_upload.py
 check_nexus_api.py
 new_extension.py

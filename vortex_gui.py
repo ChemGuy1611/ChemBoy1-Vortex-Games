@@ -44,11 +44,15 @@ from PySide6.QtWidgets import (
 )
 
 import vortex_utils as vu
+import gui_tray
 
 REPO_ROOT = vu.REPO_ROOT
 PYTHON = sys.executable
 NODE = shutil.which("node") or "node"
+SINGLE_INSTANCE_KEY = "ChemBoy1.VortexExtensionManager"
 FLAGS_PATH = vu.GUI_FLAGS_PATH
+ROW_CACHE_PATH = os.path.join(REPO_ROOT, "vortex_gui_row_cache.json")
+_ROW_CACHE_VERSION = 1
 
 
 # == Flag / stats storage ======================================================
@@ -63,6 +67,30 @@ def _save_flags(data: dict):
 
 def _load_stats() -> dict:
     return vu.read_gui_stats()
+
+
+def _safe_mtime(path: str) -> float:
+    """Return the modification time of path, or -1.0 if it does not exist."""
+    try:
+        return os.path.getmtime(path)
+    except OSError:
+        return -1.0
+
+
+def _load_row_cache() -> dict:
+    """Return {folder_entry: cached_fields} from the row cache.
+
+    Returns {} if the cache is absent or its schema version does not match,
+    so a stale-schema cache is transparently rebuilt on the next load."""
+    data = vu.read_json(ROW_CACHE_PATH, default={})
+    if data.get("v") != _ROW_CACHE_VERSION:
+        return {}
+    return data.get("entries", {})
+
+
+def _save_row_cache(entries: dict):
+    """Persist the per-folder parse cache (atomic). Safe to call off the UI thread."""
+    vu.write_json_atomic(ROW_CACHE_PATH, {"v": _ROW_CACHE_VERSION, "entries": entries})
 
 
 def _save_flag(game_id: str, flagged: bool, note: str):
@@ -511,24 +539,59 @@ class GameModel(QAbstractTableModel):
 
     def _load_rows(self) -> list:
         """Load all row data from disk. Must NOT create QPixmap/QIcon objects -- safe to call
-        from a background thread. Call _attach_icons(rows) on the UI thread afterward."""
+        from a background thread. Call _attach_icons(rows) on the UI thread afterward.
+
+        Per-folder index.js/info.json/CHANGELOG parsing is cached in ROW_CACHE_PATH keyed by
+        folder name + those files' mtimes, so unchanged extensions skip the read+regex on
+        later launches (the dominant startup cost). Image existence and Nexus stats are read
+        live -- they change independently of the cached source files."""
         flags = _load_flags()
         stats = _load_stats()
+        cache = _load_row_cache()
+        new_cache: dict = {}
         rows = []
-        for folder, game_id, src in vu.iter_game_folders():
-            info = vu.read_info_json(folder) or {}
-            version = info.get("version", "")
-            _v, date = vu.parse_changelog_latest(folder)
-            name = vu.extract_game_name(src) or game_id
-            engine = vu.detect_engine(src)
-            stores = vu.detect_stores(src)
+        for entry in sorted(os.listdir(REPO_ROOT)):
+            folder = os.path.join(REPO_ROOT, entry)
+            if not entry.startswith(vu.GAME_PREFIX) or not os.path.isdir(folder):
+                continue
+            mtimes = [
+                _safe_mtime(os.path.join(folder, "index.js")),
+                _safe_mtime(os.path.join(folder, "info.json")),
+                _safe_mtime(os.path.join(folder, "CHANGELOG.md")),
+            ]
+            cached = cache.get(entry)
+            if cached and cached.get("mtimes") == mtimes and cached.get("game_id"):
+                game_id       = cached["game_id"]
+                name          = cached["name"]
+                version       = cached["version"]
+                date          = cached["date"]
+                engine        = cached["engine"]
+                stores        = cached["stores"]
+                extension_url = cached["extension_url"]
+            else:
+                src = vu.read_index_js(folder)
+                if not src:
+                    continue
+                game_id = vu.extract_game_id(src)
+                if not game_id:
+                    continue
+                info = vu.read_info_json(folder) or {}
+                version = info.get("version", "")
+                _v, date = vu.parse_changelog_latest(folder)
+                name = vu.extract_game_name(src) or game_id
+                engine = vu.detect_engine(src)
+                stores = vu.detect_stores(src)
+                extension_url = vu.extract_extension_url(src)
+            new_cache[entry] = {
+                "game_id": game_id, "name": name, "version": version, "date": date,
+                "engine": engine, "stores": stores, "extension_url": extension_url,
+                "mtimes": mtimes,
+            }
 
             icon_path = os.path.join(folder, "exec.png")
             cover_path = os.path.join(folder, f"{game_id}.jpg")
             title_path = os.path.join(vu.TITLE_IMAGES_DIR, f"{game_id}_title.jpg")
             banner_path = os.path.join(vu.BANNER_IMAGES_DIR, f"{game_id}_banner.jpg")
-
-            extension_url = vu.extract_extension_url(src)
 
             s = stats.get(game_id) or {}
             endorsements = s.get("endorsements") if not s.get("error") else None
@@ -548,6 +611,7 @@ class GameModel(QAbstractTableModel):
                 endorsements, unique_downloads, nexus_published, stats_fetched_at,
                 fd.get("flagged", False), fd.get("note", ""),
             ))
+        _save_row_cache(new_cache)
         return rows
 
     @staticmethod
@@ -1286,6 +1350,12 @@ class MainWindow(QMainWindow):
         self._refresh_worker: _RefreshWorker | None = None
         self._splitter: QSplitter | None = None
 
+        self._tray = gui_tray.TrayManager(
+            self, app_name="Vortex Extension Manager",
+            settings_org="ChemBoy1", settings_app="VortexExtensionManager",
+            icon=_VORTEX_ICON,
+        )
+
         self._build_ui()
         self._refresh_data()
         self._restore_settings()
@@ -1500,6 +1570,8 @@ class MainWindow(QMainWindow):
         settings.setValue("filterText", self._filter_edit.text())
         settings.setValue("groupByEngine", self._group_btn.isChecked())
         settings.setValue("checkedIds", list(self._model._checked_ids))
+        if not self._tray.on_close(event):
+            return  # hidden to tray; keep running (settings already saved)
         self._runner.stop()
         self._runner.wait_for_finished(3000)
         if self._refresh_worker is not None:
@@ -2135,10 +2207,13 @@ class _CheckboxStyle(QProxyStyle):
 
 def main():
     app = QApplication(sys.argv)
+    if gui_tray.another_instance_running(SINGLE_INSTANCE_KEY):
+        sys.exit(0)  # focus the already-running window instead of starting a 2nd
     app.setStyle(_CheckboxStyle("Fusion"))
     _apply_dark_theme(app)
     _make_icons()
     win = MainWindow()
+    win._server = gui_tray.listen_for_activation(SINGLE_INSTANCE_KEY, win._tray.restore)
     win.show()
     sys.exit(app.exec())
 
