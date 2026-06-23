@@ -3137,7 +3137,14 @@ function LoadOrderItemRenderer(props) {
       React.createElement(Icon, { name: isEntryLocked ? 'locked' : 'unlocked', style: { color: isEntryLocked ? '#e2c04c' : 'inherit' } }),
     ),
     React.createElement('div', { className: 'load-order-thumb-slot', style: { width: LO_IMAGE_WIDTH, height: LO_IMAGE_HEIGHT, marginRight: 4, flexShrink: 0 } },
-      pictureUrl ? React.createElement('img', {
+      !loEntry.modId ? React.createElement('div', {
+        className: 'load-order-unmanaged-banner',
+        title: 'Not managed by Vortex',
+        style: { width: LO_IMAGE_WIDTH, height: LO_IMAGE_HEIGHT, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, textAlign: 'center', borderRadius: 2, border: '1px solid #e2c04c', background: 'rgba(226,192,76,0.12)', color: '#e2c04c', fontSize: 9, lineHeight: 1.1, padding: 2, pointerEvents: 'none' },
+      },
+        React.createElement(Icon, { className: 'external-caution-logo', name: 'feedback-warning', style: { color: '#e2c04c' } }),
+        React.createElement('span', null, 'Not managed by Vortex'),
+      ) : pictureUrl ? React.createElement('img', {
         className: 'load-order-thumb',
         src: pictureUrl,
         draggable: false,
@@ -3482,7 +3489,14 @@ function Ue4ssItemRenderer({ className, item }) {
       React.createElement(Icon, { name: isEntryLocked ? 'locked' : 'unlocked', style: { color: isEntryLocked ? '#e2c04c' : 'inherit' } }),
     ),
     React.createElement('div', { className: 'load-order-thumb-slot', style: { width: LO_IMAGE_WIDTH, height: LO_IMAGE_HEIGHT, flexShrink: 0 } },
-      pictureUrl ? React.createElement('img', {
+      !item.modId ? React.createElement('div', {
+        className: 'load-order-unmanaged-banner',
+        title: 'Not managed by Vortex',
+        style: { width: LO_IMAGE_WIDTH, height: LO_IMAGE_HEIGHT, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, textAlign: 'center', borderRadius: 2, border: '1px solid #e2c04c', background: 'rgba(226,192,76,0.12)', color: '#e2c04c', fontSize: 9, lineHeight: 1.1, padding: 2, pointerEvents: 'none' },
+      },
+        React.createElement(Icon, { className: 'external-caution-logo', name: 'feedback-warning', style: { color: '#e2c04c' } }),
+        React.createElement('span', null, 'Not managed by Vortex'),
+      ) : pictureUrl ? React.createElement('img', {
         className: 'load-order-thumb',
         src: pictureUrl,
         draggable: false,
@@ -3876,7 +3890,14 @@ function LogicModsItemRenderer({ className, item }) {
       React.createElement(Icon, { name: isEntryLocked ? 'locked' : 'unlocked', style: { color: isEntryLocked ? '#e2c04c' : 'inherit' } }),
     ),
     React.createElement('div', { className: 'load-order-thumb-slot', style: { width: LO_IMAGE_WIDTH, height: LO_IMAGE_HEIGHT, flexShrink: 0 } },
-      pictureUrl ? React.createElement('img', {
+      !item.modId ? React.createElement('div', {
+        className: 'load-order-unmanaged-banner',
+        title: 'Not managed by Vortex',
+        style: { width: LO_IMAGE_WIDTH, height: LO_IMAGE_HEIGHT, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, textAlign: 'center', borderRadius: 2, border: '1px solid #e2c04c', background: 'rgba(226,192,76,0.12)', color: '#e2c04c', fontSize: 9, lineHeight: 1.1, padding: 2, pointerEvents: 'none' },
+      },
+        React.createElement(Icon, { className: 'external-caution-logo', name: 'feedback-warning', style: { color: '#e2c04c' } }),
+        React.createElement('span', null, 'Not managed by Vortex'),
+      ) : pictureUrl ? React.createElement('img', {
         className: 'load-order-thumb',
         src: pictureUrl,
         draggable: false,
