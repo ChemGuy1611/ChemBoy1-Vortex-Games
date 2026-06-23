@@ -2,8 +2,8 @@
 Name: Fatekeeper Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 0.3.0
-Date: 2026-06-12
+Version: 0.3.1
+Date: 2026-06-22
 Notes:
 -
 ////////////////////////////////////////////////*/
@@ -3095,7 +3095,7 @@ function LoadOrderItemRenderer(props) {
     if (!globalThis.document.getElementById(styleId)) {
       const style = globalThis.document.createElement('style');
       style.id = styleId;
-      style.textContent = '.load-order-index input:focus { background: white !important; color: black !important; }';
+      style.textContent = '.load-order-index input:focus { background: white !important; color: black !important; } .layout-flex.file-based-load-order-list-outer { overflow: auto; }';
       globalThis.document.head.appendChild(style);
     }
   }, []);
@@ -3209,6 +3209,14 @@ function PakContextMenu({ x, y, item, loadOrder, profile, dispatch, context, sel
     onClose();
   };
 
+  const clampRef = (el) => {
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const vw = globalThis.window.innerWidth;
+    const vh = globalThis.window.innerHeight;
+    if (x + rect.width > vw) el.style.left = `${Math.max(8, vw - rect.width - 8)}px`;
+    if (y + rect.height > vh) el.style.top = `${Math.max(8, vh - rect.height - 8)}px`;
+  };
   const menuStyle = {
     position: 'fixed', left: x, top: y, zIndex: 9999,
     background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.2)',
@@ -3226,7 +3234,7 @@ function PakContextMenu({ x, y, item, loadOrder, profile, dispatch, context, sel
 
   if (isMulti) {
     const n = targets.length;
-    return React.createElement('div', { style: menuStyle },
+    return React.createElement('div', { ref: clampRef, style: menuStyle },
       //menuItem(`Enable Selected (${n})`, () => setModsEnabled(targets, true)),
       menuItem(`Disable Selected (${n})`, () => setModsEnabled(targets, false)),
       React.createElement('div', { style: sepStyle }),
@@ -3247,7 +3255,7 @@ function PakContextMenu({ x, y, item, loadOrder, profile, dispatch, context, sel
     );
   }
 
-  return React.createElement('div', { style: menuStyle },
+  return React.createElement('div', { ref: clampRef, style: menuStyle },
     item.modId && isModEnabled ? menuItem('Disable Mod', () => setModsEnabled([item], false)) : null,
     item.modId && isModEnabled ? React.createElement('div', { style: sepStyle }) : null,
     menuItem(isEntryLocked ? 'Unlock Position' : 'Lock Position', () => applyToTargets((lo) => lo.map(e => e.id === item.id ? { ...e, locked: !isEntryLocked } : e), true)),
@@ -3526,6 +3534,14 @@ function Ue4ssContextMenu({ x, y, item, loadOrder, profileId, dispatch, api, gam
   const isEntryLocked = isLocked(item);
   const isEntryEnabled = item.enabled ?? true;
 
+  const clampRef = (el) => {
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const vw = globalThis.window.innerWidth;
+    const vh = globalThis.window.innerHeight;
+    if (x + rect.width > vw) el.style.left = `${Math.max(8, vw - rect.width - 8)}px`;
+    if (y + rect.height > vh) el.style.top = `${Math.max(8, vh - rect.height - 8)}px`;
+  };
   const menuStyle = {
     position: 'fixed', left: x, top: y, zIndex: 9999,
     background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.2)',
@@ -3543,7 +3559,7 @@ function Ue4ssContextMenu({ x, y, item, loadOrder, profileId, dispatch, api, gam
 
   if (isMulti) {
     const n = targets.length;
-    return React.createElement('div', { style: menuStyle },
+    return React.createElement('div', { ref: clampRef, style: menuStyle },
       menuItem(`Enable Selected (${n})`, () => applyToTargets((lo) => lo.map(e => targets.find(t => t.id === e.id) ? { ...e, enabled: true } : e))),
       menuItem(`Disable Selected (${n})`, () => applyToTargets((lo) => lo.map(e => targets.find(t => t.id === e.id) ? { ...e, enabled: false } : e))),
       React.createElement('div', { style: sepStyle }),
@@ -3566,7 +3582,7 @@ function Ue4ssContextMenu({ x, y, item, loadOrder, profileId, dispatch, api, gam
     );
   }
 
-  return React.createElement('div', { style: menuStyle },
+  return React.createElement('div', { ref: clampRef, style: menuStyle },
     menuItem(isEntryEnabled ? 'Disable' : 'Enable', () => applyToTargets((lo) => lo.map(e => e.id === item.id ? { ...e, enabled: !isEntryEnabled } : e))),
     menuItem(isEntryLocked ? 'Unlock Position' : 'Lock Position', () => applyToTargets((lo) => lo.map(e => e.id === item.id ? { ...e, locked: !isEntryLocked } : e))),
     configFilePath ? menuItem('Configure', () => { util.opn(configFilePath).catch(() => null); onClose(); }) : null,
@@ -3655,7 +3671,7 @@ function Ue4ssLoadOrderPage({ api }) {
     if (!globalThis.document.getElementById(styleId)) {
       const style = globalThis.document.createElement('style');
       style.id = styleId;
-      style.textContent = '.load-order-index input:focus { background: white !important; color: black !important; }';
+      style.textContent = '.load-order-index input:focus { background: white !important; color: black !important; } .layout-flex.file-based-load-order-list-outer { overflow: auto; }';
       globalThis.document.head.appendChild(style);
     }
   }, []);
@@ -3807,7 +3823,7 @@ function LogicModsItemRenderer({ className, item }) {
     if (!globalThis.document.getElementById(styleId)) {
       const style = globalThis.document.createElement('style');
       style.id = styleId;
-      style.textContent = '.load-order-index input:focus { background: white !important; color: black !important; }';
+      style.textContent = '.load-order-index input:focus { background: white !important; color: black !important; } .layout-flex.file-based-load-order-list-outer { overflow: auto; }';
       globalThis.document.head.appendChild(style);
     }
   }, []);
@@ -3917,6 +3933,14 @@ function LogicModsContextMenu({ x, y, item, loadOrder, profileId, dispatch, api,
 
   const isEntryLocked = isLocked(item);
 
+  const clampRef = (el) => {
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const vw = globalThis.window.innerWidth;
+    const vh = globalThis.window.innerHeight;
+    if (x + rect.width > vw) el.style.left = `${Math.max(8, vw - rect.width - 8)}px`;
+    if (y + rect.height > vh) el.style.top = `${Math.max(8, vh - rect.height - 8)}px`;
+  };
   const menuStyle = {
     position: 'fixed', left: x, top: y, zIndex: 9999,
     background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.2)',
@@ -3934,7 +3958,7 @@ function LogicModsContextMenu({ x, y, item, loadOrder, profileId, dispatch, api,
 
   if (isMulti) {
     const n = targets.length;
-    return React.createElement('div', { style: menuStyle },
+    return React.createElement('div', { ref: clampRef, style: menuStyle },
       menuItem(`Disable Selected (${n})`, () => {
         const batch = targets.filter(e => e.modId).map(e => actions.setModEnabled(profileId, e.modId, false));
         if (batch.length) { util.batchDispatch(dispatch, batch); requestDeployment(api, spec); }
@@ -3960,7 +3984,7 @@ function LogicModsContextMenu({ x, y, item, loadOrder, profileId, dispatch, api,
     );
   }
 
-  return React.createElement('div', { style: menuStyle },
+  return React.createElement('div', { ref: clampRef, style: menuStyle },
     item.modId && isModEnabled ? menuItem('Disable Mod', () => {
       dispatch(actions.setModEnabled(profileId, item.modId, false));
       requestDeployment(api, spec);
@@ -4052,7 +4076,7 @@ function LogicModsLoadOrderPage({ api }) {
     if (!globalThis.document.getElementById(styleId)) {
       const style = globalThis.document.createElement('style');
       style.id = styleId;
-      style.textContent = '.load-order-index input:focus { background: white !important; color: black !important; }';
+      style.textContent = '.load-order-index input:focus { background: white !important; color: black !important; } .layout-flex.file-based-load-order-list-outer { overflow: auto; }';
       globalThis.document.head.appendChild(style);
     }
   }, []);

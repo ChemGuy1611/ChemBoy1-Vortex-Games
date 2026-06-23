@@ -851,6 +851,25 @@ function LoadOrderInstructions() {
   );
 }
 
+//Module-level pub-sub for multi-select + context menu (Vortex FBLO page has no custom context provider)
+let _fbloSelectedIds = new Set();
+let _fbloContextMenu = null;
+const _fbloListeners = new Set();
+function _notifyFblo() { _fbloListeners.forEach(l => l()); }
+function useFbloState() {
+  const [, forceUpdate] = React.useReducer(x => x + 1, 0);
+  React.useEffect(() => {
+    _fbloListeners.add(forceUpdate);
+    return () => _fbloListeners.delete(forceUpdate);
+  }, []);
+  return {
+    selectedIds: _fbloSelectedIds,
+    setSelectedIds: (fn) => { _fbloSelectedIds = fn(_fbloSelectedIds); _notifyFblo(); },
+    contextMenu: _fbloContextMenu,
+    setContextMenu: (val) => { _fbloContextMenu = val; _notifyFblo(); },
+  };
+}
+
 //* React line item renderer for load order
 function LoadOrderItemRenderer(props) {
   const { className, item } = props;
@@ -887,12 +906,56 @@ function LoadOrderItemRenderer(props) {
     dispatch(actions.setFBLoadOrderEntry(profile.id, { ...loEntry, enabled: evt.target.checked }));
   }, [dispatch, profile, loEntry]);
 
+  const isEntryLocked = isLocked(loEntry);
+  const { selectedIds, setSelectedIds, contextMenu, setContextMenu } = useFbloState();
+  const isSelected = selectedIds.has(loEntry.id);
+  const allIds = loadOrder.map(e => e.id);
+
+  const onSelect = React.useCallback((evt) => {
+    const ctrlKey = evt.ctrlKey || evt.metaKey;
+    const shiftKey = evt.shiftKey;
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (ctrlKey) {
+        next.has(loEntry.id) ? next.delete(loEntry.id) : next.add(loEntry.id);
+      } else if (shiftKey) {
+        const lastId = [...prev].at(-1);
+        const start = allIds.indexOf(lastId ?? loEntry.id);
+        const end = allIds.indexOf(loEntry.id);
+        const [lo, hi] = [Math.min(start, end), Math.max(start, end)];
+        for (let i = lo; i <= hi; i++) next.add(allIds[i]);
+      } else {
+        next.clear();
+        next.add(loEntry.id);
+      }
+      return next;
+    });
+  }, [loEntry.id, setSelectedIds, allIds]);
+
+  const onContextMenu = React.useCallback((evt) => {
+    evt.preventDefault();
+    evt.stopPropagation();
+    setContextMenu({ x: evt.clientX, y: evt.clientY, itemId: loEntry.id });
+  }, [loEntry.id, setContextMenu]);
+
+  const onLock = React.useCallback(() => {
+    const newLO = loadOrder.map(e => e.id === loEntry.id ? { ...e, locked: !isEntryLocked } : e);
+    dispatch(actions.setFBLoadOrder(profile.id, newLO));
+    serializeLoadOrder(context, newLO);
+  }, [dispatch, context, profile, loadOrder, loEntry, isEntryLocked]);
+
   const classes = ['load-order-entry'];
   if (className) classes.push(...className.split(' '));
 
   return React.createElement(
     ListGroupItem,
-    { key: loEntry.id, className: classes.join(' ') },
+    {
+      key: loEntry.id,
+      className: classes.join(' '),
+      onClick: onSelect,
+      onContextMenu: onContextMenu,
+      style: { outline: isSelected ? '2px solid #337ab7' : 'none', outlineOffset: '-1px' },
+    },
     React.createElement(Icon, { className: 'drag-handle-icon', name: 'drag-handle' }),
     React.createElement(LoadOrderIndexInput, {
       className: 'load-order-index',
@@ -904,6 +967,13 @@ function LoadOrderItemRenderer(props) {
       isLocked: isLocked,
       onApplyIndex: onApplyIndex,
     }),
+    React.createElement('div', {
+      style: { cursor: 'pointer', display: 'flex', alignItems: 'center', marginRight: 4 },
+      title: isEntryLocked ? 'Unlock position' : 'Lock position',
+      onClick: (evt) => { evt.stopPropagation(); onLock(); },
+    },
+      React.createElement(Icon, { name: isEntryLocked ? 'locked' : 'unlocked', style: { color: isEntryLocked ? '#e2c04c' : 'inherit' } }),
+    ),
     React.createElement('div', { className: 'load-order-thumb-slot', style: { width: LO_IMAGE_WIDTH, height: LO_IMAGE_HEIGHT, marginRight: 4, flexShrink: 0 } },
       pictureUrl ? React.createElement('img', {
         className: 'load-order-thumb',
@@ -919,8 +989,106 @@ function LoadOrderItemRenderer(props) {
       disabled: isLocked(loEntry),
       onChange: onToggle,
     }) : null,
+    contextMenu?.itemId === loEntry.id ? React.createElement(FbloContextMenu, {
+      x: contextMenu.x, y: contextMenu.y,
+      item: loEntry, loadOrder, profile, dispatch, context, selectedIds,
+      onClose: () => setContextMenu(null),
+    }) : null,
   );
 } //*/
+
+//Right-click context menu for load order entries (single + multi-select)
+function FbloContextMenu({ x, y, item, loadOrder, profile, dispatch, context, selectedIds, onClose }) {
+  React.useEffect(() => {
+    const onKey = (evt) => { if (evt.key === 'Escape') onClose(); };
+    globalThis.document.addEventListener('keydown', onKey);
+    return () => globalThis.document.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  React.useEffect(() => {
+    const dismiss = onClose;
+    globalThis.document.addEventListener('click', dismiss);
+    globalThis.document.addEventListener('contextmenu', dismiss);
+    return () => {
+      globalThis.document.removeEventListener('click', dismiss);
+      globalThis.document.removeEventListener('contextmenu', dismiss);
+    };
+  }, []);
+
+  React.useEffect(() => {
+    const styleId = 'ue4ss-ctx-menu-style';
+    if (!globalThis.document.getElementById(styleId)) {
+      const style = globalThis.document.createElement('style');
+      style.id = styleId;
+      style.textContent = '.ue4ss-ctx-item:hover { background: rgba(255,255,255,0.1); }';
+      globalThis.document.head.appendChild(style);
+    }
+  }, []);
+
+  const clampRef = (el) => {
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const vw = globalThis.window.innerWidth;
+    const vh = globalThis.window.innerHeight;
+    if (x + rect.width > vw) el.style.left = `${Math.max(8, vw - rect.width - 8)}px`;
+    if (y + rect.height > vh) el.style.top = `${Math.max(8, vh - rect.height - 8)}px`;
+  };
+
+  const isLocked = (e) => [true, 'true', 'always'].includes(e?.locked);
+  const isMulti = selectedIds.size >= 2 && selectedIds.has(item.id);
+  const targets = isMulti ? loadOrder.filter(e => selectedIds.has(e.id)) : [item];
+
+  const applyToTargets = (transform, serialize = false) => {
+    const newLO = transform(loadOrder, targets);
+    dispatch(actions.setFBLoadOrder(profile.id, newLO));
+    if (serialize) serializeLoadOrder(context, newLO);
+    onClose();
+  };
+
+  const isEntryLocked = isLocked(item);
+  const isEntryEnabled = item.enabled ?? true;
+
+  const menuStyle = {
+    position: 'fixed', left: x, top: y, zIndex: 9999,
+    background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.2)',
+    borderRadius: 4, padding: '4px 0', minWidth: 180,
+    boxShadow: '0 4px 12px rgba(0,0,0,0.6)',
+  };
+  const itemStyle = { padding: '6px 16px', cursor: 'pointer', whiteSpace: 'nowrap' };
+  const sepStyle = { borderTop: '1px solid rgba(255,255,255,0.1)', margin: '4px 0' };
+
+  const menuItem = (label, onClick) => React.createElement('div', {
+    className: 'ue4ss-ctx-item',
+    style: itemStyle,
+    onClick: (evt) => { evt.stopPropagation(); onClick(); },
+  }, label);
+
+  if (isMulti) {
+    const n = targets.length;
+    return React.createElement('div', { ref: clampRef, style: menuStyle },
+      menuItem(`Enable Selected (${n})`, () => applyToTargets((lo) => lo.map(e => targets.find(t => t.id === e.id) ? { ...e, enabled: true } : e))),
+      menuItem(`Disable Selected (${n})`, () => applyToTargets((lo) => lo.map(e => targets.find(t => t.id === e.id) ? { ...e, enabled: false } : e))),
+      React.createElement('div', { style: sepStyle }),
+      menuItem(`Lock Selected (${n})`, () => applyToTargets((lo) => lo.map(e => targets.find(t => t.id === e.id) ? { ...e, locked: true } : e), true)),
+      menuItem(`Unlock Selected (${n})`, () => applyToTargets((lo) => lo.map(e => targets.find(t => t.id === e.id) ? { ...e, locked: false } : e), true)),
+    );
+  }
+
+  return React.createElement('div', { ref: clampRef, style: menuStyle },
+    menuItem(isEntryEnabled ? 'Disable' : 'Enable', () => applyToTargets((lo) => lo.map(e => e.id === item.id ? { ...e, enabled: !isEntryEnabled } : e))),
+    menuItem(isEntryLocked ? 'Unlock Position' : 'Lock Position', () => applyToTargets((lo) => lo.map(e => e.id === item.id ? { ...e, locked: !isEntryLocked } : e), true)),
+    React.createElement('div', { style: sepStyle }),
+    menuItem('Move to Top', () => applyToTargets((lo) => {
+      const locked = lo.filter(isLocked);
+      const rest = lo.filter(e => !isLocked(e) && e.id !== item.id);
+      return [...locked, item, ...rest];
+    })),
+    menuItem('Move to Bottom', () => applyToTargets((lo) => {
+      const rest = lo.filter(e => e.id !== item.id);
+      return [...rest, item];
+    })),
+  );
+}
 
 module.exports = {
   default: main,

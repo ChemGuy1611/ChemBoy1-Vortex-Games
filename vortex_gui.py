@@ -1353,7 +1353,6 @@ class MainWindow(QMainWindow):
         self._tray = gui_tray.TrayManager(
             self, app_name="Vortex Extension Manager",
             settings_org="ChemBoy1", settings_app="VortexExtensionManager",
-            icon=_VORTEX_ICON,
         )
 
         self._build_ui()

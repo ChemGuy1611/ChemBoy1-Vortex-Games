@@ -4,6 +4,11 @@
 
 - ModKit?
 
+## [0.3.1] - 2026-06-22
+
+- Fixed: Load Order Context menus no longer cut off when item is at bottom of the application window.
+- Fixed: Scrollbar displayed properly on UE4SS and LogicMods Load Order pages.
+
 ## [0.3.0] - 2026-06-12
 
 - Added LogicMods/Blueprint pak load order page (draggable reorder of Blueprint pak mods; writes per-profile sidecar JSON + `BPModLoaderMod/load_order.txt` on user reorder and after deploy)
