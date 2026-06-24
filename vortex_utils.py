@@ -2299,3 +2299,30 @@ def write_id_list(filepath, game_ids):
 def is_load_order_game(src):
     """Return True if the extension registers a load order and is not a UE4/5 game."""
     return "context.registerLoadOrder" in src and detect_engine(src) != "UE4-5"
+
+
+# Matches a GitHub release-asset download URL, e.g.
+#   github.com/Owner/Repo/releases/download/v1.2.3/asset.zip
+#   github.com/Owner/Repo/releases/latest/download/asset.zip
+_GITHUB_DOWNLOAD_RE = re.compile(r"github\.com/[^\"'\s]+/releases/(?:latest/)?download")
+
+
+def has_downloader_js(folder):
+    """Return True if the extension folder contains a bundled downloader.js module."""
+    return os.path.isfile(os.path.join(folder, "downloader.js"))
+
+
+def downloads_from_github(src):
+    """Return True if index.js pulls a mod/requirement from a GitHub release.
+
+    Detects direct release-asset URLs and the browser_download_url field returned
+    by the GitHub releases API. Independent of whether a downloader.js module exists.
+    """
+    return bool(_GITHUB_DOWNLOAD_RE.search(src)) or "browser_download_url" in src
+
+
+def requires_unreal_mod_installer(src):
+    """Return True if the extension declares a dependency on the
+    'Unreal Engine Mod Installer' extension via context.requireExtension in applyGame."""
+    return ('context.requireExtension("Unreal Engine Mod Installer")' in src
+            or "context.requireExtension('Unreal Engine Mod Installer')" in src)

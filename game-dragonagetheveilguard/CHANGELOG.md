@@ -4,6 +4,10 @@
 
 - Config and save installers (partition check)
 
+## [0.4.0] - 2026-06-24
+
+- Improved: Refactored downloader.js GitHub downloader/updater for Vortex v2.0+ and more reliable operation.
+
 ## [0.3.0] - 2026-02-26
 
 - Added: SDK patch will be automatically installed for EA game version (not needed for Steam)

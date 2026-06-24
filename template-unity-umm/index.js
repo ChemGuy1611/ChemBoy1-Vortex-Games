@@ -5,7 +5,7 @@ Author: ChemBoy1
 Version: 0.1.0
 Date: 2026-XX-XX
 Notes:
-- 
+-
 //////////////////////////////////////////*/
 
 //Import libraries
@@ -13,7 +13,6 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 const winapi = require('winapi-bindings');
-//const turbowalk = require('turbowalk');
 const { parseStringPromise } = require('xml2js');
 
 // -- START EDIT ZONE -- ///////////////////////////////////////////////////////////////////////////////
@@ -563,7 +562,7 @@ function testFallback(files, gameId) {
 //Fallback installer to root folder
 function installFallback(api, files, destinationPath) {
   fallbackInstallerNotify(api, destinationPath);
-  
+
   const filtered = files.filter(file =>
     (!file.endsWith(path.sep))
   );
@@ -600,7 +599,7 @@ function fallbackInstallerNotify(api, modName) {
                 + `If you think that Vortex should be capable to install this mod to a specific folder, please contact the extension developer for support at the link below.\n`
                 + `\n`
                 + `Mod Name: ${modName}.\n`
-                + `\n`             
+                + `\n`
           }, [
             { label: 'Continue', action: () => dismiss() },
             {
@@ -619,7 +618,7 @@ function fallbackInstallerNotify(api, modName) {
               if (modMatch) {
                 const MOD_ID = modMatch.attributes.modId;
                 if (MOD_ID !== undefined) {
-                  PAGE = `${MOD_ID}?tab=description`; 
+                  PAGE = `${MOD_ID}?tab=description`;
                 }
               }
               const MOD_PAGE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${PAGE}`;
@@ -649,12 +648,12 @@ async function resolveGameVersion(gamePath) {
       log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
       return Promise.resolve(version);
     }
-  } 
+  }
   else { // use exe
     try {
       const exeVersion = require('exe-version');
       version = exeVersion.getProductVersion(path.join(gamePath, EXEC));
-      return Promise.resolve(version); 
+      return Promise.resolve(version);
     } catch (err) {
       log('error', `Could not read ${EXEC} file to get game version: ${err}`);
       return Promise.resolve(version);
@@ -665,7 +664,7 @@ async function resolveGameVersion(gamePath) {
     try {
       const data = await fs.readFileAsync(versionFilepath, { encoding: 'utf8' });
       const segments = data.split(' ');
-      return (segments[3]) 
+      return (segments[3])
         ? Promise.resolve(segments[3])
         : Promise.reject(new util.DataInvalid('Failed to resolve version'));
     } catch (err) {
@@ -757,22 +756,22 @@ function applyGame(context, gameSpec) {
   });
 
   //register mod types explicitly (due to potentially dynamic DATA_FOLDER)
-  context.registerModType(ASSEMBLY_ID, 60, 
+  context.registerModType(ASSEMBLY_ID, 60,
     (gameId) => {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, 
-    (game) => pathPattern(context.api, game, path.join('{gamePath}', ASSEMBLY_PATH)), 
-    () => Promise.resolve(false), 
+    },
+    (game) => pathPattern(context.api, game, path.join('{gamePath}', ASSEMBLY_PATH)),
+    () => Promise.resolve(false),
     { name: ASSEMBLY_NAME }
   );
-  context.registerModType(ASSETS_ID, 62, 
+  context.registerModType(ASSETS_ID, 62,
     (gameId) => {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, 
-    (game) => pathPattern(context.api, game, path.join('{gamePath}', ASSETS_PATH)), 
-    () => Promise.resolve(false), 
+    },
+    (game) => pathPattern(context.api, game, path.join('{gamePath}', ASSETS_PATH)),
+    () => Promise.resolve(false),
     { name: ASSETS_NAME }
   );
 
@@ -784,7 +783,7 @@ function applyGame(context, gameSpec) {
   if (fallbackInstaller) {
     context.registerInstaller(`${GAME_ID}-fallback`, 49, testFallback, (files, destinationPath) => installFallback(context.api, files, destinationPath));
   }
-  
+
   //register actions
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Data Folder', () => {
     GAME_PATH = getDiscoveryPath(context.api);

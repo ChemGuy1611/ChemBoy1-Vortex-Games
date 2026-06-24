@@ -153,7 +153,57 @@ Godot 3/4 with Godot Mod Loader.
 
 **Mod types:** `LOADER_ID` → `MOD_ID` → optional `CONFIG_ID`/`SAVE_ID`
 
-**downloader.js required** — handles GitHub release downloading for loader.
+**downloader.js required** — see the shared downloader notes below.
+
+---
+
+### Shared: downloader.js (requirements auto-downloader)
+
+A shared module copied into each extension that auto-downloads/installs a modding
+requirement (loader, framework) from its **GitHub releases**. The canonical copy lives at
+`resources/downloader/downloader.js`; each adopter carries its own copy (propagate changes
+manually — see the adopters list in memory `reference_downloader_adopters`).
+
+Hand-authored CommonJS (formerly a webpack bundle). axios is inlined at the bottom of the
+file because Vortex does not expose it to extensions at runtime; the rest of the module
+requires `path`, `semver`, and `vortex-api` as externals.
+
+Exports consumed by extensions:
+`download`, `findModByFile`, `findDownloadIdByFile`, `resolveVersionByPattern`,
+`testRequirementVersion` (plus `getLatestGithubReleaseAsset`, `doDownload`, `walkPath`,
+`getMods`, `axios`).
+
+Key behaviors:
+
+- **GitHub-only.** Requirements are fetched from GitHub release assets. (Nexus requirements
+  are handled inline in the individual extensions, not here.)
+- **Version normalization.** Mis-tagged release versions are corrected so semver can parse
+  them via `normalizeVersion()` — `-`/`_` between digits become `.` (e.g. `v1-2-3` → `v1.2.3`).
+- **Case-insensitive detection.** `findModByFile` matches the requirement's `assemblyFileName`
+  case-insensitively, so a capitalization change by the maintainer won't trigger a re-download
+  loop.
+- **No auto-update on setup.** `download()` installs a missing requirement, but if it is already
+  installed it does NOT silently pull a newer release. Instead it surfaces the "update available"
+  notification (via `testRequirementVersion`); only the user-driven Download action actually
+  updates (it calls `download(..., true)`).
+- **Pre-release support (opt-in).** `allowPrerelease: true` on a requirement fetches the newest
+  release including GitHub pre-releases (scans `/releases`); otherwise only stable releases are
+  used (`/releases/latest`). `prereleaseTag: '<tag>'` targets one fixed release directly via
+  `/releases/tags/<tag>`.
+- **Rolling pre-release tag (opt-in).** `trackByAssetDate: true` detects updates by the asset's
+  GitHub upload time (`asset.updated_at`) instead of the release tag — for repos that keep one
+  long-lived pre-release tag and only re-upload the files (e.g. UE4SS `experimental`). The asset
+  date is recorded on the installed mod (`githubAssetDate` attribute) and read back by
+  `resolveVersionByAssetDate`; usually paired with `prereleaseTag`.
+- Recursive file search uses Vortex's `util.walk` (no `turbowalk` dependency).
+
+Consumer template: `resources/downloader/template_downloader.js` shows the `REQUIREMENTS`
+array and `setup()` wiring, including the version-resolve options on a requirement:
+`resolveVersionByPattern` (default — version is in the archive file name), `resolveVersionByFile`
+(version is inside a file such as `version.txt` — extracts the newest matching archive to a temp
+dir and reads it; the parse step is per-game customizable), and `resolveVersionByAssetDate` (for
+`trackByAssetDate` rolling pre-release tags). Opt-in fields `allowPrerelease` / `prereleaseTag` /
+`trackByAssetDate` are shown commented in the template REQUIREMENTS example.
 
 ---
 

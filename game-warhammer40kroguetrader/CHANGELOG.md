@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.4.0] - 2026-06-24
+
+- Improved: Refactored downloader.js GitHub downloader/updater for Vortex v2.0+ and more reliable operation.
+
 ## [0.3.0] - 2026-04-22
 
 - Improved: Load Order rendering using React - show mod image thumbnails

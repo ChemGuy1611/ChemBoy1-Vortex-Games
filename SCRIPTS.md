@@ -110,6 +110,9 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `read_id_list(filepath)` | Read a text file; return list of stripped non-empty lines (game IDs or similar) |
 | `write_id_list(filepath, game_ids)` | Write a sorted list of IDs to a file, one per line |
 | `is_load_order_game(src)` | Return `True` if `src` calls `registerLoadOrder` and is not a UE4/5 extension |
+| `has_downloader_js(folder)` | Return `True` if the extension `folder` contains a bundled `downloader.js` module |
+| `downloads_from_github(src)` | Return `True` if `src` pulls a mod/requirement from a GitHub release (release-asset URL or `browser_download_url`) |
+| `requires_unreal_mod_installer(src)` | Return `True` if `src` declares `context.requireExtension("Unreal Engine Mod Installer")` |
 | `parse_nexus_mod_url(url)` | Parse a Nexus Mods URL into `(domain, mod_id)` or `None`. |
 | `nexus_list_games(api_key)` | Fetch all approved Nexus Mods games; caches result for the process lifetime. Returns `[]` on error. |
 | `nexus_get_mod(domain, mod_id, api_key)` | Fetch Nexus v1 mod details with retry. Returns `(data_dict, rate_remaining_or_None)`. Raises on 404 / non-retryable errors. |
@@ -705,7 +708,7 @@ With `--json`, stdout receives a JSON object instead:
 
 ## categorize_games.py
 
-Scans all `game-*` extension folders and categorizes them by engine or framework based on the `Structure:` header comment and key code markers in each `index.js`. Writes one `.txt` file per category into `resources/lists/`. Each line in the file is a `GAME_ID`.
+Scans all `game-*` extension folders and categorizes them by engine or framework based on the `Structure:` header comment and key code markers in each `index.js`. Writes one `.txt` file per engine category into `resources/lists/`, plus several non-exclusive "flag" lists (load order, `downloader.js`, inline GitHub download, Unreal Engine Mod Installer dependency) evaluated for every game independently. Each line in the file is a `GAME_ID`.
 
 Also called automatically by `new_extension.py` to add a newly created extension to the correct category file.
 
@@ -752,11 +755,19 @@ python categorize_games.py hogwartslegacy
 | `resources/lists/games-srmm.txt` | Shin Ryu Mod Manager (SRMM) |
 | `resources/lists/games-frostbite.txt` | Frostbite Engine (Frosty Mod Manager) |
 | `resources/lists/games-basic.txt` | Basic / Proprietary (catch-all) |
+
+The engine categories above are mutually exclusive (one per game). The lists below are non-exclusive "flag" lists, evaluated for every `game-*` extension independently of its engine category and of each other:
+
+| File | Flag |
+| --- | --- |
 | `resources/lists/games-loadorder.txt` | Non-UE4/5 games that call `context.registerLoadOrder` |
+| `resources/lists/games-downloader.txt` | Games with a bundled `downloader.js` module |
+| `resources/lists/games-github.txt` | Games that download from GitHub inline in `index.js` (no `downloader.js`) |
+| `resources/lists/games-uemi.txt` | Games that require the `Unreal Engine Mod Installer` extension via `context.requireExtension` |
 
 ### categorize_games.py — Detection
 
-Each game is matched against categories in order — the first match wins. Detection uses the `Structure:` comment on line 3 of `index.js` as the primary signal, with fallback checks for unique code markers such as `const UNREALDATA =`, `const ATK_ID =`, `context.requireExtension('modtype-bepinex')`, etc.
+Each game is matched against the engine categories in order — the first match wins. Detection uses the `Structure:` comment on line 3 of `index.js` as the primary signal, with fallback checks for unique code markers such as `const UNREALDATA =`, `const ATK_ID =`, `context.requireExtension('modtype-bepinex')`, etc. The flag lists are computed separately via dedicated predicates (`is_load_order_game`, `has_downloader_js`, `downloads_from_github`, `requires_unreal_mod_installer`) in `vortex_utils.py`.
 
 ---
 

@@ -4,13 +4,13 @@ const GAME_ID = 'placeholder';
 const api = require('vortex-api'); //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
 
 // REQUIREMENTS ///////////////////////////////////////////////////
-const { download, findModByFile, findDownloadIdByFile, resolveVersionByPattern, testRequirementVersion } = require('./downloader');
+const { download, findModByFile, findDownloadIdByFile, resolveVersionByPattern, resolveVersionByAssetDate, testRequirementVersion } = require('./downloader');
 const semver = require('semver');
 const XXX_ID = `${GAME_ID}-XXX`;
 const XXX_NAME = "XXX";
 const VER = '0.0.0';
 const XXX_ARC_NAME = `XXX${VER}.zip`;
-const XXX_FILE = 'XXX.exe'; // <-- CASE SENSITIVE! Must match name exactly or downloader will download the file again.
+const XXX_FILE = 'XXX.exe'; // assembly/marker file used to detect an installed requirement (matched case-insensitively)
 const AUTHOR = 'XXX'; // Author of the repo
 const REPO = 'XXX'; // Repository name on GitHub
 const XXX_URL_API = `https://api.github.com/repos/${AUTHOR}/${REPO}`; //api url
@@ -20,36 +20,73 @@ const REQUIREMENTS = [
     modType: XXX_ID,
     assemblyFileName: XXX_FILE,
     userFacingName: XXX_NAME,
-    githubUrl: XXX_URL_API, 
+    githubUrl: XXX_URL_API,
     findMod: (api) => findModByFile(api, XXX_ID, XXX_FILE),
     findDownloadId: (api) => findDownloadIdByFile(api, XXX_ARC_NAME),
     fileArchivePattern: new RegExp(/^XXX(\d+\.\d+\.\d+)/, 'i'), //from ARC_NAME
     resolveVersion: (api) => resolveVersionByPattern(api, REQUIREMENTS[0]), //*/
-    /*versionFile: 'version.txt', //file to check for version number (needed if version is not in the archive name)
-    resolveVersion: (api) => resolveVersionByFile(api, REQUIREMENTS[0]), //*/
+    //versionFile: 'version.txt', //file to check for version number (needed if version is not in the archive name)
+    //resolveVersion: (api) => resolveVersionByFile(api, REQUIREMENTS[0]),
+    //allowPrerelease: true, //include GitHub pre-release versions (default false)
+    //prereleaseTag: 'experimental', //fetch a specific rolling pre-release tag directly (e.g. UE4SS); skips the prerelease scan
+    //trackByAssetDate: true, //detect updates by the asset's GitHub upload time, not the version tag (rolling pre-release whose tag never changes)
+    //resolveVersion: (api) => resolveVersionByAssetDate(api, REQUIREMENTS[0]), //use together with trackByAssetDate
   },
 ]; //*/
 
-//* Function to resolve version by a means other than the archive name
+//* Alternative to resolveVersionByPattern for when the version is NOT in the archive
+// file name. Finds the newest matching downloaded archive, extracts it to a temp dir,
+// then reads requirement.versionFile (e.g. 'version.txt') for the installed version.
 async function resolveVersionByFile(api, requirement) {
-    const exeVersion = require('exe-version');
     const state = api.getState();
-    const files = util.getSafe(state, ['persistent', 'downloads', 'files'], []);
-    const latestVersion = Object.values(files).reduce((prev, file) => {
-        const match = requirement.fileArchivePattern.exec(file.localPath);
-        let version = '0.0.0';
-        if (match !== null && match !== undefined && match[0]) {
-            const checkFile = path.join(file.localPath, requirement.versionFile);
-            version = exeVersion.getProductVersion(checkFile);
-            version = semver.coerce(version);
-            log('warn', `Resolved version ${version} from file ${checkFile}`);
-        }//
-        if ((match === null || match === void 0 ? void 0 : match[0]) && semver.gt(version, prev)) {
-            prev = version;
+    const downloadPath = selectors.downloadPath(state);
+    const files = util.getSafe(state, ['persistent', 'downloads', 'files'], {});
+    // archives matching this requirement (version is not in the name, so match the pattern)
+    const matches = Object.values(files)
+        .filter(file => !!file.localPath && requirement.fileArchivePattern.exec(file.localPath));
+    if (matches.length === 0) {
+        return '0.0.0';
+    }
+    // newest matching archive by file mtime (proxy for "current" download)
+    let newest = null;
+    let newestTime = -1;
+    for (const file of matches) {
+        const archivePath = path.join(downloadPath, file.localPath);
+        try {
+            const stat = await fs.statAsync(archivePath);
+            if (stat.mtime.getTime() > newestTime) {
+                newestTime = stat.mtime.getTime();
+                newest = archivePath;
+            }
+        } catch {
+            // archive missing/unreadable -> skip
         }
-        return prev;
-    }, '0.0.0');
-  return latestVersion;
+    }
+    if (!newest) {
+        return '0.0.0';
+    }
+    // extract into an auto-cleaned temp dir, read the version file, parse the version
+    try {
+        return await util.withTmpDir(async (tmpPath) => {
+            const szip = new util.SevenZip();
+            await szip.extractFull(newest, tmpPath);
+            // NOTE: requirement.versionFile may live in a subfolder of the archive ->
+            // adjust this join per game if so.
+            const versionFilePath = path.join(tmpPath, requirement.versionFile);
+            const raw = await fs.readFileAsync(versionFilePath, { encoding: 'utf8' });
+            // *** PER-GAME CUSTOMIZATION ***
+            // version.txt contents differ per mod - parse the version string out of `raw`.
+            // examples:
+            //   const parsed = raw.trim();                       // file is just "1.2.3"
+            //   const parsed = /(\d+\.\d+\.\d+)/.exec(raw)?.[1];  // version embedded in text
+            //   const parsed = JSON.parse(raw).version;          // json file
+            const parsed = raw.trim();
+            return semver.coerce(parsed)?.version ?? '0.0.0';
+        }, { cleanup: true });
+    } catch (err) {
+        log('warn', `resolveVersionByFile failed: ${err}`);
+        return '0.0.0';
+    }
 } //*/
 
 // AUTO-DOWNLOADER FUNCTIONS ///////////////////////////////////////////////

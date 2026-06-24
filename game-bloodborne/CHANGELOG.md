@@ -4,6 +4,10 @@ Future Changes (NOT IMPLEMENTED YET):
 
 - None
 
+## [0.4.0] - 2026-06-24
+
+- Improved: Refactored downloader.js GitHub downloader/updater for Vortex v2.0+ and more reliable operation.
+
 ## [0.3.0] - 2026-02-16
 
 - Fixed: Updated for shadPS4 v0.12.0 and newer with Qt Launcher as a separate download from the emulator core

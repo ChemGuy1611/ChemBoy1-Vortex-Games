@@ -4,8 +4,14 @@ categorize_games.py
 Scans all game-* extension folders and categorizes them by engine/framework
 based on the Structure: header comment and key code markers in index.js.
 
-Writes one .txt file per category to resources/lists/. Each line is a GAME_ID.
-Also writes games-loadorder.txt for non-UE4/5 games that call context.registerLoadOrder.
+Writes one .txt file per engine category to resources/lists/. Each line is a GAME_ID.
+
+Also writes these non-exclusive "flag" lists, evaluated for every game-* extension
+independently of its engine category and of each other:
+    games-loadorder.txt  - non-UE4/5 games that call context.registerLoadOrder
+    games-downloader.txt - games with a bundled downloader.js module
+    games-github.txt     - games that download from GitHub inline (no downloader.js)
+    games-uemi.txt       - games that require the "Unreal Engine Mod Installer" extension
 
 Usage:
     python categorize_games.py              # rebuild all category files from scratch
@@ -20,6 +26,7 @@ from vortex_utils import (
     REPO_ROOT, LISTS_DIR, list_game_ids, detect_engine, read_index_js,
     read_id_list, write_id_list,
     is_load_order_game as _is_load_order_game_src,
+    has_downloader_js, downloads_from_github, requires_unreal_mod_installer,
     log_error, log_dry,
 )
 
@@ -46,66 +53,71 @@ CATEGORIES = [
 
 _FILE_FOR_LABEL = {label: fname for fname, label in CATEGORIES}
 
-LOADORDER_FILE = "games-loadorder.txt"
+# Flag lists are non-exclusive and evaluated for every game-* extension: a game
+# may appear in zero or more of these in addition to its single engine category.
+# Each entry pairs an output filename with a predicate(src, folder) -> bool.
+FLAG_LISTS = [
+    ("games-loadorder.txt",  lambda src, folder: _is_load_order_game_src(src)),
+    ("games-downloader.txt", lambda src, folder: has_downloader_js(folder)),
+    # GitHub download done inline in index.js, i.e. without the downloader.js module.
+    ("games-github.txt",     lambda src, folder: downloads_from_github(src) and not has_downloader_js(folder)),
+    ("games-uemi.txt",       lambda src, folder: requires_unreal_mod_installer(src)),
+]
 
 
-def categorize(game_id):
-    """Return the output filename for the given game_id, or None if no index.js found."""
-    src = read_index_js(os.path.join(REPO_ROOT, f"game-{game_id}"))
-    if src is None:
-        return None
+def _game_context(game_id):
+    """Return (folder, src) for a game. src is None if no index.js is found."""
+    folder = os.path.join(REPO_ROOT, f"game-{game_id}")
+    return folder, read_index_js(folder)
+
+
+def categorize(src):
+    """Return the engine-category output filename for the given index.js source."""
     return _FILE_FOR_LABEL[detect_engine(src)]
 
 
-def is_load_order_game(game_id):
-    """Return True if the game calls registerLoadOrder and is not a UE4/5 extension."""
-    src = read_index_js(os.path.join(REPO_ROOT, f"game-{game_id}"))
-    if src is None:
-        return False
-    return _is_load_order_game_src(src)
-
-
 def rebuild_all(dry_run=False):
-    """Scan all game-* folders and rebuild every category file from scratch."""
+    """Scan all game-* folders and rebuild every category and flag-list file from scratch."""
     buckets = {filename: [] for filename, _ in CATEGORIES}
-    lo_games = []
+    flag_games = {filename: [] for filename, _ in FLAG_LISTS}
 
     for game_id in list_game_ids():
-        target = categorize(game_id)
-        if target:
-            buckets[target].append(game_id)
-        else:
+        folder, src = _game_context(game_id)
+        if src is None:
             print(f"  Warning: no index.js found for game-{game_id}, skipping.")
-        if is_load_order_game(game_id):
-            lo_games.append(game_id)
+            continue
+        buckets[categorize(src)].append(game_id)
+        for filename, predicate in FLAG_LISTS:
+            if predicate(src, folder):
+                flag_games[filename].append(game_id)
 
     if not dry_run:
         os.makedirs(LISTS_DIR, exist_ok=True)
 
     for filename, label in CATEGORIES:
-        if dry_run:
-            print(f"  {filename}: {len(buckets[filename])} games")
-        else:
-            filepath = os.path.join(LISTS_DIR, filename)
-            write_id_list(filepath, buckets[filename])
-            print(f"  {filename}: {len(buckets[filename])} games")
+        if not dry_run:
+            write_id_list(os.path.join(LISTS_DIR, filename), buckets[filename])
+        print(f"  {filename}: {len(buckets[filename])} games")
 
-    if dry_run:
-        print(f"  {LOADORDER_FILE}: {len(lo_games)} games")
-    else:
-        write_id_list(os.path.join(LISTS_DIR, LOADORDER_FILE), lo_games)
-        print(f"  {LOADORDER_FILE}: {len(lo_games)} games")
+    for filename, _ in FLAG_LISTS:
+        if not dry_run:
+            write_id_list(os.path.join(LISTS_DIR, filename), flag_games[filename])
+        print(f"  {filename}: {len(flag_games[filename])} games")
 
     tag = " [DRY RUN]" if dry_run else ""
-    print(f"\nDone{tag}. {sum(len(v) for v in buckets.values())} games categorized across {len(CATEGORIES)} categories. {len(lo_games)} with load order.")
+    print(f"\nDone{tag}. {sum(len(v) for v in buckets.values())} games categorized across "
+          f"{len(CATEGORIES)} engine categories and {len(FLAG_LISTS)} flag lists.")
 
 
 def update_single(game_id, dry_run=False):
-    """Add game_id to its correct category file and remove it from all others."""
-    target = categorize(game_id)
-    if target is None:
+    """Add game_id to its correct engine category and update every flag list, removing
+    it from any category/flag list it no longer belongs to."""
+    folder, src = _game_context(game_id)
+    if src is None:
         print(f"  Warning: no index.js found for game-{game_id}, skipping.")
         return False
+
+    target = categorize(src)
 
     if not dry_run:
         os.makedirs(LISTS_DIR, exist_ok=True)
@@ -128,18 +140,20 @@ def update_single(game_id, dry_run=False):
                 ids.remove(game_id)
                 pending[filepath] = (ids, f"Removed {game_id} from {filename}")
 
-    lo_path = os.path.join(LISTS_DIR, LOADORDER_FILE)
-    lo_ids = read_id_list(lo_path)
-    if is_load_order_game(game_id):
-        if game_id not in lo_ids:
-            lo_ids.append(game_id)
-            pending[lo_path] = (lo_ids, f"Added {game_id} -> {LOADORDER_FILE}")
+    # Flag lists are non-exclusive: include or remove independently of each other.
+    for filename, predicate in FLAG_LISTS:
+        filepath = os.path.join(LISTS_DIR, filename)
+        ids = read_id_list(filepath)
+        if predicate(src, folder):
+            if game_id not in ids:
+                ids.append(game_id)
+                pending[filepath] = (ids, f"Added {game_id} -> {filename}")
+            else:
+                print(f"  {game_id} already in {filename}")
         else:
-            print(f"  {game_id} already in {LOADORDER_FILE}")
-    else:
-        if game_id in lo_ids:
-            lo_ids.remove(game_id)
-            pending[lo_path] = (lo_ids, f"Removed {game_id} from {LOADORDER_FILE}")
+            if game_id in ids:
+                ids.remove(game_id)
+                pending[filepath] = (ids, f"Removed {game_id} from {filename}")
 
     if dry_run:
         for _, (_, msg) in pending.items():

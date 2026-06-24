@@ -2,8 +2,8 @@
 Name: Bloodborne Vortex Extension
 Structure: Emulation Game
 Author: ChemBoy1
-Version: 0.3.0
-Date: 2026-02-16
+Version: 0.4.0
+Date: 2026-06-24
 ////////////////////////////////////////////////////*/
 
 //Import libraries
@@ -39,8 +39,8 @@ const ROOT_NAME = "Root Folder";
 const SHADPS4_ID = `${GAME_ID}-shadps4`;
 const SHADPS4_NAME = "shadPS4";
 const SHADPS4_EXEC = "shadps4.exe";
-const SHADPS4_VERSION = '0.12.5';
-const SHADPS4_ARC_NAME = `shadps4-win64-sdl-2025-${SHADPS4_VERSION}.zip`;
+const SHADPS4_VERSION = '0.16.0';
+const SHADPS4_ARC_NAME = `shadps4-win64-sdl-${SHADPS4_VERSION}.zip`;
 const SHADPS4_URL = `https://github.com/shadps4-emu/shadPS4/releases/download/v.${SHADPS4_VERSION}/${SHADPS4_ARC_NAME}`;
 const SHADPS4_URL_MAIN = `https://api.github.com/repos/shadps4-emu/shadPS4`;
 const SHADPS4_FILE = 'shadPS4.exe'; // <-- CASE SENSITIVE! Must match name exactly or downloader will download the file again.
@@ -48,7 +48,7 @@ const SHADPS4_FILE = 'shadPS4.exe'; // <-- CASE SENSITIVE! Must match name exact
 const SHADLAUNCHER_ID = `${GAME_ID}-shadps4qtlauncher`;
 const SHADLAUNCHER_NAME = "shadPS4QtLauncher";
 const SHADLAUNCHER_EXEC = "shadps4qtlauncher.exe";
-const SHADLAUNCHER_VERSION = '2025-11-16-d656964';
+const SHADLAUNCHER_VERSION = '2026-06-20-cead95c';
 const SHADLAUNCHER_ARC_NAME = `shadPS4QtLauncher-win64-qt-${SHADLAUNCHER_VERSION}.zip`;
 const SHADLAUNCHER_URL = `https://github.com/shadps4-emu/shadPS4/releases/download/v.${SHADLAUNCHER_VERSION}/${SHADLAUNCHER_ARC_NAME}`;
 const SHADLAUNCHER_URL_MAIN = `https://api.github.com/repos/shadps4-emu/shadps4-qtlauncher`;
@@ -661,7 +661,7 @@ async function downloadShadLauncher(api, gameSpec, check) {
               util.batchDispatch(api.store, batched); // Will dispatch both actions.
               return resolve();
             });
-          }, 
+          },
           'never',
           { allowInstall: false },
         );
@@ -713,7 +713,7 @@ function setupNotify(api) {
         },
       },
     ],
-  });    
+  });
 }
 
 //Setup function

@@ -58,7 +58,7 @@ rage
 reddeadredemption
 reddeadredemption2
 redfactionguerrillaremarstered
-residentevil42005
+residentevil4
 residentevil5goldedition
 returntocastlewolfenstein
 riseofthetombraider
@@ -80,7 +80,6 @@ warhammer40000spacemarine2
 warhammer40kdarkheresy
 warhammer40kroguetrader
 watchdogs
-watchdogs-2
 watchdogs2
 watchdogslegion
 wolfenstein2009

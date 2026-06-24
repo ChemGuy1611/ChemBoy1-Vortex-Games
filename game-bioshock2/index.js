@@ -10,7 +10,6 @@ Date: 2026-05-06
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
-//const turbowalk = require('turbowalk');
 //const winapi = require('winapi-bindings');
 
 const DOCUMENTS = util.getVortexPath('documents');

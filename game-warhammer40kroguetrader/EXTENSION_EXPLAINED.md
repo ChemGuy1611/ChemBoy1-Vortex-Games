@@ -22,6 +22,7 @@
 ## Supported Stores
 
 - **Steam** — `2186680`
+- **Epic Games Store** — ``
 - **GOG** — `1347700224`
 - **Xbox / Microsoft Store** — `OwlcatGames.3387926822CE4`
 
@@ -45,8 +46,6 @@ Mod types define where each category of mod gets deployed:
 | Portraits | `warhammer40kroguetrader-portrait` | high | `USER_HOME/AppData/LocalLow/Owlcat Games/Warhammer 40000 Rogue Trader/Portraits` |
 | Save | `warhammer40kroguetrader-save` | high | `USER_HOME/AppData/LocalLow/Owlcat Games/Warhammer 40000 Rogue Trader/Saved Games` |
 | MicroPatches | `warhammer40kroguetrader-micropatches` | low | `MICROPATCHES_PATH` |
-| Root Folder | `warhammer40kroguetrader-root` | high | `{gamePath}` |
-| Binaries (Engine Injector) | `warhammer40kroguetrader-binaries` | high | `{gamePath}/BINARIES_PATH` |
 
 ## Mod Installers
 
@@ -92,6 +91,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
+- **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **GOG Support** — detects GOG version with adjusted executable/data paths.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.

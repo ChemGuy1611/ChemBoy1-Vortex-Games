@@ -4,6 +4,10 @@ FUTURE CHANGES (NOT IMPLEMENTED YET):
 
 - None Planned
 
+## [0.4.0] - 2026-06-24
+
+- Improved: Refactored downloader.js GitHub downloader/updater for Vortex v2.0+ and more reliable operation.
+
 ## [0.3.0] - 2026-03-11
 
 - Improved: Mod installer performance by removing Bluebird Promises.

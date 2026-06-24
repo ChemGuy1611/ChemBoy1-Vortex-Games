@@ -1055,6 +1055,23 @@ function FbloContextMenu({ x, y, item, loadOrder, profile, dispatch, context, se
   const isEntryLocked = isLocked(item);
   const isEntryEnabled = item.enabled ?? true;
 
+  const gameDir = getDiscoveryPath(context.api);
+  const isModEnabled = (e) => util.getSafe(profile, ['modState', e.modId, 'enabled'], false);
+  const setVortexEnabled = (entries, enabled) => {
+    const modIds = entries.filter(e => e.modId !== undefined).map(e => e.modId);
+    if (modIds.length > 0) {
+      actions.setModsEnabled(context.api, profile.id, modIds, enabled, { allowAutoDeploy: true });
+    }
+    onClose();
+  };
+  const openModFolders = (entries) => {
+    entries
+      .filter(e => e.id !== undefined)
+      .forEach(e => util.opn(path.join(gameDir, MOD_FOLDER, e.id)).catch(() => null));
+    onClose();
+  };
+  const itemVortexEnabled = isModEnabled(item);
+
   const menuStyle = {
     position: 'fixed', left: x, top: y, zIndex: 9999,
     background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.2)',
@@ -1090,6 +1107,9 @@ function FbloContextMenu({ x, y, item, loadOrder, profile, dispatch, context, se
         const rest = lo.filter(e => !targets.find(t => t.id === e.id));
         return [...rest, ...selected];
       })),
+      React.createElement('div', { style: sepStyle }),
+      menuItem(`Disable Vortex Mod (${n})`, () => setVortexEnabled(targets, false)),
+      menuItem(`Open Mod Folders (${n})`, () => openModFolders(targets)),
     );
   }
 
@@ -1106,6 +1126,11 @@ function FbloContextMenu({ x, y, item, loadOrder, profile, dispatch, context, se
       const rest = lo.filter(e => e.id !== item.id);
       return [...rest, item];
     })),
+    React.createElement('div', { style: sepStyle }),
+    item.modId !== undefined
+      ? menuItem(itemVortexEnabled ? 'Disable Vortex Mod' : 'Enable Vortex Mod', () => setVortexEnabled([item], !itemVortexEnabled))
+      : null,
+    menuItem('Open Mod Folder', () => openModFolders([item])),
   );
 }
 

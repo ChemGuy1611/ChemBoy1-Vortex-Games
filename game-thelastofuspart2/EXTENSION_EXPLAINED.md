@@ -73,8 +73,6 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - Extract .psarc Files
 - Cleanup Extracted .psarc Files
-- Open 
-- Open .psarc 
 - Open modloader.ini
 - Open chunks.txt
 - Open Saves Folder

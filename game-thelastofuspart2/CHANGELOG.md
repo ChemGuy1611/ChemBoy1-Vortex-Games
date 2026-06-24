@@ -4,6 +4,10 @@
 
 - Added check for if sp-common.psarc and bin.psarc files exist in the game folder (indicator of update and need to extract).
 
+## [0.10.0] - 2026-06-24
+
+- Improved: Refactored downloader.js GitHub downloader/updater for Vortex v2.0+ and more reliable operation.
+
 ## [0.9.0] - 2026-05-05
 
 - Added: Selection dialogue when a mod archive contains multiple .psarc files

@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [2.2.0] - 2026-06-24
+
+- Improved: Refactored downloader.js GitHub downloader/updater for Vortex v2.0+ and more reliable operation.
+
 ## [2.1.1] - 2026-02-12
 
 - Fixed: Crash on undefined "err" variable if file extraction process fails

@@ -11,7 +11,6 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 const { parseStringPromise } = require('xml2js');
-//const turbowalk = require('turbowalk');
 //const winapi = require('winapi-bindings');
 
 //const USER_HOME = util.getVortexPath("home");
@@ -158,13 +157,13 @@ const spec = {
       "priority": "high",
       "targetPath": `{gamePath}`
     },
-    { 
+    {
       "id": ROOTSUB_ID,
       "name": ROOTSUB_NAME,
       "priority": "high",
       "targetPath": path.join('{gamePath}', ROOTSUB_PATH)
     },
-    { 
+    {
       "id": COOKEDSUB_ID,
       "name": COOKEDSUB_NAME,
       "priority": "high",
@@ -176,7 +175,7 @@ const spec = {
       "priority": "high",
       "targetPath": path.join('{gamePath}', BINARIES_PATH)
     },
-    { 
+    {
       "id": MOVIES_ID,
       "name": MOVIES_NAME,
       "priority": "high",
@@ -361,7 +360,7 @@ function getExecutable(gamePath) {
     }
   };
   if (isCorrectExec(EXEC_XBOX)) {
-    return EXEC_XBOX; 
+    return EXEC_XBOX;
   };
 
   return EXEC;
@@ -832,7 +831,7 @@ function setupNotify(api) {
             text: `The ${MOD_NAME} tool downloaded by this extension requires setup.\n`
                 + `Please launch the tool and set the Game Folder.\n`
                 + `Mods to install with ${MOD_NAME} will be found at this folder: "[RootGameFolder]\\${TFC_FOLDER}\\Mods".\n`
-                + `If you don't see your mod's folder there, check in the root game folder.\n`              
+                + `If you don't see your mod's folder there, check in the root game folder.\n`
                 + `You must use ${MOD_NAME} to install and uninstall those mods after installing with Vortex.\n`
           }, [
             {
@@ -852,7 +851,7 @@ function setupNotify(api) {
         },
       },
     ],
-  });    
+  });
 }
 
 //Notify User to run TFC Installer after deployment
@@ -879,7 +878,7 @@ function deployNotify(api) {
           api.showDialog('question', MESSAGE, {
             text: `For most mods, you must use ${MOD_NAME} to install the mod to the game files after installing with Vortex.\n`
                 + `Mods to install with ${MOD_NAME} will be found at this folder: "[RootGameFolder]\\${TFC_FOLDER}\\Mods".\n`
-                + `If you don't see your mod's folder there, check in the root game folder.\n`   
+                + `If you don't see your mod's folder there, check in the root game folder.\n`
                 + `Use the included tool to launch ${MOD_NAME} (button on notification or in "Dashboard" tab).\n`
           }, [
             {
@@ -930,7 +929,7 @@ async function resolveGameVersion(gamePath) {
   try {
     const exeVersion = require('exe-version');
     version = exeVersion.getProductVersion(path.join(gamePath, SHIPPING_EXE));
-    return Promise.resolve(version); 
+    return Promise.resolve(version);
   } catch (err) {
     log('error', `Could not read ${SHIPPING_EXE} file to get Steam game version: ${err}`);
     return Promise.resolve(version);
@@ -1047,7 +1046,7 @@ function main(context) {
   applyGame(context, spec);
   context.once(() => { // put code here that should be run (once) when Vortex starts up
     const api = context.api;
-    context.api.onAsync('did-deploy', async (profileId, deployment) => { 
+    context.api.onAsync('did-deploy', async (profileId, deployment) => {
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;
 

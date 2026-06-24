@@ -12,7 +12,6 @@ const path = require('path');
 const template = require('string-template');
 const fsPromises = require('fs/promises');
 //const winapi = require('winapi-bindings');
-//const turbowalk = require('turbowalk');
 
 //const USER_HOME = util.getVortexPath("home");
 //const DOCUMENTS = util.getVortexPath("documents");

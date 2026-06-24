@@ -14,7 +14,6 @@ const template = require('string-template');
 //const fsPromises = require('fs/promises'); //.rm() for recursive folder deletion
 //const fsExtra = require('fs-extra');
 const winapi = require('winapi-bindings');
-//const turbowalk = require('turbowalk');
 
 /*const USER_HOME = util.getVortexPath("home");
 const LOCALLOW = path.join(USER_HOME, 'AppData', 'LocalLow'); //*/

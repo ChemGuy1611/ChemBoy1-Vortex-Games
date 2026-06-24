@@ -6,7 +6,6 @@ blackmythwukong
 borderlands4
 clairobscurexpedition33
 codevein2
-conanexilesenhanced
 crisoltheaterofidols
 cronosthenewdawn
 daemonxmachinatitanicscion
@@ -47,7 +46,6 @@ ofashandsteel
 painkiller
 quarantinezonethelastcheck
 reanimal
-retrorewindvideostoresimulator
 robocoproguecity
 romeoisadeadman
 routine

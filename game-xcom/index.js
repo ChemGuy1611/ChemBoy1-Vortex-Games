@@ -13,7 +13,6 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 const { parseStringPromise } = require('xml2js');
-//const turbowalk = require('turbowalk');
 //const winapi = require('winapi-bindings');
 
 //const USER_HOME = util.getVortexPath("home");
