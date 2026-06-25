@@ -167,12 +167,12 @@ async function requiresLauncher(gamePath, store) {
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
 
 function testSupportedContent(files, gameId) {
-  const isDml = files.some(file => ( 
-    (path.extname(file).toLowerCase() === BAT_FILE_EXT) && 
+  const isDml = files.some(file => (
+    (path.extname(file).toLowerCase() === BAT_FILE_EXT) &&
     path.basename(file).toLowerCase().includes("toggle_darktide_mods")
   ));
-  const isLofm = files.some(file => ( 
-    (path.extname(file).toLowerCase() === BAT_FILE_EXT) && 
+  const isLofm = files.some(file => (
+    (path.extname(file).toLowerCase() === BAT_FILE_EXT) &&
     path.basename(file).toLowerCase().includes("_mod_load_order_file_maker")
   ));
   let supported = (gameId === GAME_ID) && (isDml || isLofm);
@@ -223,8 +223,8 @@ function install_mod_load_order_file_maker(files) {
     path.basename(mod_load_order_file_maker),
   );
   const rootPath = path.dirname(mod_load_order_file_maker);
-  const filtered = files.filter(file => 
-    file.indexOf(rootPath) !== -1 && 
+  const filtered = files.filter(file =>
+    file.indexOf(rootPath) !== -1 &&
     !file.endsWith(path.sep)
   );
   const instructions = filtered.map((file) => {
@@ -257,14 +257,14 @@ function testMod(files, gameId) {
 
 //Installer install mod files
 function installMod(files) {
-  const modFile = files.find(file => 
+  const modFile = files.find(file =>
     (path.extname(file).toLowerCase() === MOD_FILE_EXT)
   );
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const modName = path.basename(modFile, MOD_FILE_EXT);
   const filtered = files.filter(
-    (file) => file.indexOf(rootPath) !== -1 && 
+    (file) => file.indexOf(rootPath) !== -1 &&
     !file.endsWith(path.sep)
   );
   const MOD_ATTRIBUTE = {
@@ -360,7 +360,7 @@ function installBinaries(api, files, fileName) {
   if (!updating_mod) {
     fallbackNotify(api, modName);
   } //*/
-  
+
   const filtered = files.filter(file =>
     (!file.endsWith(path.sep))
   );
@@ -396,7 +396,7 @@ async function deserializeLoadOrder(context) {
   const mods = util.getSafe(context.api.store.getState(), ['persistent', 'mods', GAME_ID], {});
   const loadOrderPath = path.join(gameDir, "mods", LO_FILE);
   let loadOrderFile = await fs.readFileAsync(
-    loadOrderPath, 
+    loadOrderPath,
     { encoding: "utf8", }
   );
 
@@ -593,7 +593,7 @@ async function resolveGameVersion(gamePath) {
     try {
       const exeVersion = require('exe-version');
       version = exeVersion.getFileVersion(path.join(gamePath, EXEC));
-      return Promise.resolve(version); 
+      return Promise.resolve(version);
     } catch (err) {
       log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
       return Promise.resolve(version);
@@ -619,6 +619,7 @@ function main(context) {
   context.registerGame({
     id: GAME_ID,
     name: "Warhammer 40,000: Darktide",
+    shortName: "Warhammer 40K Darktide",
     logo: "gameart.png",
     queryPath: makeFindGame(),
     queryModPath: () => ".",
@@ -771,7 +772,7 @@ function main(context) {
         try {
           api.runExecutable(path.join(GAME_PATH, "tools", "dtkit-patch.exe"), ["--unpatch"], { shell: true, detached: true } )
         } catch {}
-      } 
+      }
     }); //*/
     //detect mod update (to maintain LO position)
     context.api.events.on("mod-update", (gameId, modId, fileId) => {
@@ -836,7 +837,25 @@ async function toolbar(api) {
 
 //React load order instructions renderer
 function LoadOrderInstructions() {
+  const { statusFilter, setStatusFilter } = useFbloState();
+  // Collapse the DraggableListItem wrapper of any filtered-out row. The renderer only owns the
+  // inner <li>; the two dnd <div> wrappers retain their spacing when the <li> is display:none,
+  // leaving visible gaps. This :has() rule hides the whole wrapper when its row is marked hidden.
+  React.useEffect(() => {
+    const styleId = 'fblo-status-filter-hide-style';
+    if (!globalThis.document.getElementById(styleId)) {
+      const style = globalThis.document.createElement('style');
+      style.id = styleId;
+      style.textContent = '.file-based-load-order-list .list-group > div:has(.lo-row-hidden) { display: none !important; }';
+      globalThis.document.head.appendChild(style);
+    }
+  }, []);
   return React.createElement('div', null,
+    React.createElement(StatusPills, { active: statusFilter, setActive: setStatusFilter, groups: ['enabled', 'locked', 'unmanaged'] }),
+    React.createElement('p', { style: { fontStyle: 'italic', color: '#7ec8e3' } },
+      'Filter the list above by status. Clear the filter before reordering mods.',
+    ),
+    React.createElement('br', null),
     React.createElement('p', null,
       'Drag and drop the mods on the left to change the order in which they load.',
     ),
@@ -851,9 +870,10 @@ function LoadOrderInstructions() {
   );
 }
 
-//Module-level pub-sub for multi-select + context menu (Vortex FBLO page has no custom context provider)
+//Module-level pub-sub for multi-select + context menu + status filter (Vortex FBLO page has no custom context provider)
 let _fbloSelectedIds = new Set();
 let _fbloContextMenu = null;
+let _fbloStatusFilter = new Set();
 const _fbloListeners = new Set();
 function _notifyFblo() { _fbloListeners.forEach(l => l()); }
 function useFbloState() {
@@ -867,7 +887,53 @@ function useFbloState() {
     setSelectedIds: (fn) => { _fbloSelectedIds = fn(_fbloSelectedIds); _notifyFblo(); },
     contextMenu: _fbloContextMenu,
     setContextMenu: (val) => { _fbloContextMenu = val; _notifyFblo(); },
+    statusFilter: _fbloStatusFilter,
+    setStatusFilter: (next) => { _fbloStatusFilter = next; _notifyFblo(); },
   };
+}
+
+//Status filter shared helpers (load order pages). Groups combine with AND across, OR within.
+const STATUS_GROUP_TOKENS = { enabled: ['enabled', 'disabled'], locked: ['locked', 'unlocked'], unmanaged: ['unmanaged'] };
+const STATUS_TOKEN_LABELS = { enabled: 'Enabled', disabled: 'Disabled', locked: 'Locked', unlocked: 'Unlocked', unmanaged: 'Unmanaged' };
+
+function matchesStatus(entry, active, isEnabledFn, isLockedFn) {
+  if (active.has('enabled') || active.has('disabled')) {
+    const en = isEnabledFn(entry);
+    if (!((active.has('enabled') && en) || (active.has('disabled') && !en))) return false;
+  }
+  if (active.has('locked') || active.has('unlocked')) {
+    const lk = isLockedFn(entry);
+    if (!((active.has('locked') && lk) || (active.has('unlocked') && !lk))) return false;
+  }
+  if (active.has('unmanaged') && entry.modId !== undefined) return false;
+  return true;
+}
+
+//Inline toggle pills for status filtering (used in the InfoPanel surfaces)
+function StatusPills({ active, setActive, groups }) {
+  const { Button } = require('react-bootstrap');
+  const tokens = groups.reduce((acc, g) => acc.concat(STATUS_GROUP_TOKENS[g] || []), []);
+  const toggle = (token) => {
+    const next = new Set(active);
+    next.has(token) ? next.delete(token) : next.add(token);
+    setActive(next);
+  };
+  return React.createElement('div', { style: { display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center', marginBottom: 8 } },
+    React.createElement('span', { style: { fontWeight: 'bold', marginRight: 4 } }, 'Filter:'),
+    ...tokens.map(token => React.createElement(Button, {
+      key: token,
+      bsSize: 'xsmall',
+      bsStyle: active.has(token) ? 'success' : 'default',
+      style: active.has(token) ? { fontWeight: 'bold' } : undefined,
+      onClick: () => toggle(token),
+    }, STATUS_TOKEN_LABELS[token])),
+    active.size > 0 ? React.createElement(Button, {
+      key: '__clear',
+      bsSize: 'xsmall',
+      bsStyle: 'link',
+      onClick: () => setActive(new Set()),
+    }, 'Clear') : null,
+  );
 }
 
 //* React line item renderer for load order
@@ -907,7 +973,7 @@ function LoadOrderItemRenderer(props) {
   }, [dispatch, profile, loEntry]);
 
   const isEntryLocked = isLocked(loEntry);
-  const { selectedIds, setSelectedIds, contextMenu, setContextMenu } = useFbloState();
+  const { selectedIds, setSelectedIds, contextMenu, setContextMenu, statusFilter } = useFbloState();
   const isSelected = selectedIds.has(loEntry.id);
   const allIds = loadOrder.map(e => e.id);
 
@@ -946,6 +1012,13 @@ function LoadOrderItemRenderer(props) {
 
   const classes = ['load-order-entry'];
   if (className) classes.push(...className.split(' '));
+
+  // Status filter: render hidden (but keep the DnD item count stable) when the entry is filtered out.
+  // The 'lo-row-hidden' marker lets the injected CSS collapse the whole DraggableListItem wrapper
+  // (the two dnd <div>s the renderer can't reach), otherwise their spacing leaves visible gaps.
+  if (!matchesStatus(loEntry, statusFilter, (e) => e.enabled !== false, isLocked)) {
+    return React.createElement(ListGroupItem, { key: loEntry.id, className: 'lo-row-hidden', style: { display: 'none' } });
+  }
 
   return React.createElement(
     ListGroupItem,

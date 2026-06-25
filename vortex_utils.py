@@ -2203,8 +2203,10 @@ def find_vortex_plugin_folder(game_id, game_name=None):
          cleaned game_id or game_name as substring
       3. Fuzzy substring match of cleaned game_id or game_name against any folder
 
-    Cleaning applies roman_to_arabic before lowercasing, so display names with
-    Roman numerals ("Battlefront II") match folders/ids using Arabic ("battlefront2")."""
+    Cleaning normalizes "&" to "and" and applies roman_to_arabic before
+    lowercasing, so display names with "&" or Roman numerals ("DOOM I & II",
+    "Battlefront II") match folders using "and"/Arabic ("DOOM I and II",
+    "battlefront2")."""
     plugins_dir = VORTEX_PLUGINS_DIR
     if not os.path.isdir(plugins_dir):
         return None
@@ -2228,10 +2230,11 @@ def find_vortex_plugin_folder(game_id, game_name=None):
     _vu_prefix = re.compile(r'^vortex extension update - (.+?) v\d', re.IGNORECASE)
     _vu_suffix = re.compile(r'\s+vortex extension.*$', re.IGNORECASE)
     def _clean(s):
-        # Drop trailing " Vortex Extension[ CB1...]" suffix, then roman_to_arabic
-        # before lowercasing (its patterns are uppercase-cased), so "Battlefront II"
-        # and "Battlefront 2" collapse to the same string.
-        s = _vu_suffix.sub('', s)
+        # Drop trailing " Vortex Extension[ CB1...]" suffix, normalize ampersand
+        # to "and" (display names use "&", deployed folders use "and"), then
+        # roman_to_arabic before lowercasing (its patterns are uppercase-cased),
+        # so "Battlefront II"/"Battlefront 2" and "I & II"/"I and II" collapse.
+        s = _vu_suffix.sub('', s).replace('&', ' and ')
         return re.sub(r'[^a-z0-9]', '', roman_to_arabic(s).lower())
 
     gid_clean = _clean(game_id)

@@ -217,3 +217,36 @@ supportedTools: [
 - `logo` must match the actual filename in the extension folder (conventionally `${GAME_ID}.jpg`).
 - `queryPath` and `executable` are always functions even though IGameStored stores them as strings.
 - `IDiscoveryResult` is the type for discovered game state — there is no `IDiscoveredGame`.
+
+---
+
+## Extension manifest (info.json)
+
+`info.json` is the extension *package manifest* read by Vortex's extension loader at startup. It is
+separate from the runtime `IGame` object registered by `registerGame()` — the loader uses it to
+list and version the extension before `main()` ever runs. Every game extension ships one at its
+root alongside `index.js`.
+
+```json
+{
+  "name": "Game: Warhammer 40,000: Darktide",
+  "author": "ChemBoy1",
+  "version": "0.1.0",
+  "description": "Vortex support for Warhammer 40,000: Darktide"
+}
+```
+
+| Field | Type | Notes |
+| --- | --- | --- |
+| `name` | `string` | Display name in the Extensions list. Convention: `"Game: <Full Game Name>"`. |
+| `author` | `string` | Extension author — `"ChemBoy1"` for this repo. |
+| `version` | `string` | Semver `MAJOR.MINOR.PATCH`. **Must match the latest `## [x.x.x]` entry in `CHANGELOG.md`.** New extensions start at `0.1.0`. |
+| `description` | `string` | One-line summary. Convention: `"Vortex support for <Full Game Name>"`. |
+
+Notes:
+
+- This `version` is the **extension** version (the one bumped per release), distinct from the
+  game's own version resolved at runtime. The optional `IGame.version` field, when set, mirrors it.
+- Required sibling files in the extension root: `index.js`, `info.json`, `CHANGELOG.md`, and
+  `${GAME_ID}.jpg` (the `logo`). The folder is conventionally named `game-<GAME_ID>`.
+- Bump `info.json` `version` and add a matching `CHANGELOG.md` entry in the same change.
