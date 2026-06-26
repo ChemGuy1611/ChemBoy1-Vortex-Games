@@ -838,6 +838,15 @@ async function toolbar(api) {
 //React load order instructions renderer
 function LoadOrderInstructions() {
   const { statusFilter, setStatusFilter } = useFbloState();
+  const { useSelector } = require('react-redux');
+  const profile = useSelector((state) => selectors.activeProfile(state));
+  const loadOrder = useSelector((state) => util.getSafe(state, ['persistent', 'loadOrder', profile?.id], []));
+  const isLocked = (entry) => [true, 'true', 'always'].includes(entry?.locked);
+  // Count entries matching the active filter (matched / total), shown beside the pills.
+  const total = loadOrder.length;
+  const matched = statusFilter.size > 0
+    ? loadOrder.filter((e) => matchesStatus(e, statusFilter, (x) => x.enabled !== false, isLocked)).length
+    : total;
   // Collapse the DraggableListItem wrapper of any filtered-out row. The renderer only owns the
   // inner <li>; the two dnd <div> wrappers retain their spacing when the <li> is display:none,
   // leaving visible gaps. This :has() rule hides the whole wrapper when its row is marked hidden.
@@ -851,7 +860,7 @@ function LoadOrderInstructions() {
     }
   }, []);
   return React.createElement('div', null,
-    React.createElement(StatusPills, { active: statusFilter, setActive: setStatusFilter, groups: ['enabled', 'locked', 'unmanaged'] }),
+    React.createElement(StatusPills, { active: statusFilter, setActive: setStatusFilter, groups: ['enabled', 'locked', 'unmanaged'], count: statusFilter.size > 0 ? { matched, total } : null }),
     React.createElement('p', { style: { fontStyle: 'italic', color: '#7ec8e3' } },
       'Filter the list above by status. Clear the filter before reordering mods.',
     ),
@@ -910,7 +919,7 @@ function matchesStatus(entry, active, isEnabledFn, isLockedFn) {
 }
 
 //Inline toggle pills for status filtering (used in the InfoPanel surfaces)
-function StatusPills({ active, setActive, groups }) {
+function StatusPills({ active, setActive, groups, count }) {
   const { Button } = require('react-bootstrap');
   const tokens = groups.reduce((acc, g) => acc.concat(STATUS_GROUP_TOKENS[g] || []), []);
   const toggle = (token) => {
@@ -920,6 +929,7 @@ function StatusPills({ active, setActive, groups }) {
   };
   return React.createElement('div', { style: { display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center', marginBottom: 8 } },
     React.createElement('span', { style: { fontWeight: 'bold', marginRight: 4 } }, 'Filter:'),
+    count != null ? React.createElement('span', { style: { color: '#7ec8e3', marginRight: 4 } }, `${count.matched} / ${count.total}`) : null,
     ...tokens.map(token => React.createElement(Button, {
       key: token,
       bsSize: 'xsmall',
