@@ -2203,10 +2203,11 @@ def find_vortex_plugin_folder(game_id, game_name=None):
          cleaned game_id or game_name as substring
       3. Fuzzy substring match of cleaned game_id or game_name against any folder
 
-    Cleaning normalizes "&" to "and" and applies roman_to_arabic before
-    lowercasing, so display names with "&" or Roman numerals ("DOOM I & II",
-    "Battlefront II") match folders using "and"/Arabic ("DOOM I and II",
-    "battlefront2")."""
+    Cleaning normalizes underscores to spaces (newer deployed folders use the
+    underscore-delimited "{Name}_Vortex_Extension_{version}_{hash}" form),
+    normalizes "&" to "and", and applies roman_to_arabic before lowercasing, so
+    display names with "&" or Roman numerals ("DOOM I & II", "Battlefront II")
+    match folders using "and"/Arabic ("DOOM I and II", "battlefront2")."""
     plugins_dir = VORTEX_PLUGINS_DIR
     if not os.path.isdir(plugins_dir):
         return None
@@ -2230,6 +2231,11 @@ def find_vortex_plugin_folder(game_id, game_name=None):
     _vu_prefix = re.compile(r'^vortex extension update - (.+?) v\d', re.IGNORECASE)
     _vu_suffix = re.compile(r'\s+vortex extension.*$', re.IGNORECASE)
     def _clean(s):
+        # Normalize underscores to spaces first: newer deployed folders use
+        # "{Name}_Vortex_Extension_{version}_{hash}" (underscore-delimited),
+        # older ones use spaces. Without this the suffix strip below (\s+...)
+        # and roman_to_arabic's \b boundaries fail on underscore forms.
+        s = s.replace('_', ' ')
         # Drop trailing " Vortex Extension[ CB1...]" suffix, normalize ampersand
         # to "and" (display names use "&", deployed folders use "and"), then
         # roman_to_arabic before lowercasing (its patterns are uppercase-cased),

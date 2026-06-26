@@ -1,8 +1,8 @@
 /*
 Name: Resident Evil 5 Gold Edition Vortex Extension
 Author: ChemBoy1
-Version: 0.1.1
-Date: 08/10/2024
+Version: 0.2.0
+Date: 2026-06-26
 */
 
 //Import libraries
@@ -19,6 +19,14 @@ const XBOXEXECNAME = null;
 const GAME_ID = "residentevil5goldedition";
 const GAME_NAME = "Resident Evil 5 Gold Edition";
 const EXEC = "Launcher.exe";
+const EXEC_DIRECT = "re5dx9.exe";
+
+//info for modtypes, installers, tools, and actions
+const ROOT_ID = `${GAME_ID}-root`;
+const DATA_FOLDER = 'nativePC_MT';
+let ROOT_FOLDERS = [DATA_FOLDER];
+const ROOTSUB_FOLDERS = ['arc', 'data', 'effect', 'soft'];
+const ROOTSUB_PATH = DATA_FOLDER;
 
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/915"; //Nexus link to this extension. Used for links
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Resident_Evil_5";
@@ -26,8 +34,8 @@ let STAGING_FOLDER = ''; //Vortex staging folder path
 let DOWNLOAD_FOLDER = ''; //Vortex download folder path
 let GAME_PATH = ''; //Game installation path
 let GAME_VERSION = ''; //Game version
-const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
-const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
+const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*'), path.join('**', 'modinfo.ini'), path.join('**', 'screenshot.jpg')];
+const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*'), path.join('**', 'modinfo.ini'), path.join('**', 'screenshot.jpg')];
 const spec = {
   "game": {
     "id": GAME_ID,
@@ -39,7 +47,8 @@ const spec = {
     "modPath": ".",
     "modPathIsRelative": true,
     "requiredFiles": [
-      EXEC
+      EXEC,
+      EXEC_DIRECT
     ],
     "details": {
       "steamAppId": +STEAMAPP_ID,
@@ -56,9 +65,7 @@ const spec = {
       //"XboxAPPId": XBOXAPP_ID
     }
   },
-  "modTypes": [
-
-  ],
+  "modTypes": [],
   "discovery": {
     "ids": [
       STEAMAPP_ID,
@@ -72,7 +79,21 @@ const spec = {
 
 //3rd party tools and launchers
 const tools = [
-  
+  {
+    id: `${GAME_ID}-directlaunch`,
+    name: 'Direct Launch',
+    logo: 'exec.png',
+    executable: () => EXEC_DIRECT,
+    requiredFiles: [
+      EXEC_DIRECT,
+    ],
+    relative: true,
+    exclusive: true,
+    shell: true,
+    detach: true,
+    //defaultPrimary: true,
+    //parameters: [],
+  }, //*/
 ];
 
 //Set mod type priorities
@@ -166,7 +187,7 @@ async function queryGame() {
   return game;
 }
 
-//Find game install location 
+//Find game install location
 async function queryPath() {
   let game = await queryGame();
   return game.gamePath;
@@ -207,6 +228,59 @@ async function requiresLauncher() {
   return undefined;
 }
 
+// MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
+
+//Installer test for Root folder files
+function testRoot(files, gameId) {
+  const ROOT_FOLDERS_LOWER = ROOT_FOLDERS.map(str => str.toLowerCase());
+  const ROOTSUB_FOLDERS_LOWER = ROOTSUB_FOLDERS.map(str => str.toLowerCase());
+  const isMod = files.some(file => ROOT_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
+  const isSub = files.some(file => ROOTSUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
+  let supported = (gameId === spec.game.id) && ( isMod || isSub );
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Installer install Root folder files
+function installRoot(files) {
+  const ROOT_FOLDERS_LOWER = ROOT_FOLDERS.map(str => str.toLowerCase());
+  const ROOTSUB_FOLDERS_LOWER = ROOTSUB_FOLDERS.map(str => str.toLowerCase());
+  let folder = '';
+  let modFile = files.find(file => ROOT_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
+  if (modFile === undefined) {
+    modFile = files.find(file => ROOTSUB_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
+    folder = ROOTSUB_PATH;
+  }
+  const ROOT_IDX = `${path.basename(modFile)}${path.sep}`
+  const idx = modFile.indexOf(ROOT_IDX);
+  const rootPath = path.dirname(modFile);
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(folder, file.substr(idx)),
+    };
+  });
+  return Promise.resolve({ instructions });
+}
+
+// MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
+
 //Setup function
 async function setup(discovery, api, gameSpec) {
   const state = api.getState();
@@ -239,9 +313,9 @@ function applyGame(context, gameSpec) {
         && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
     }, (game) => pathPattern(context.api, game, type.targetPath), () => Promise.resolve(false), { name: type.name });
   });
-  
-  //register mod installers
 
+  //register mod installers
+  context.registerInstaller(ROOT_ID, 27, testRoot, installRoot);
 
   //register actions
   /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {

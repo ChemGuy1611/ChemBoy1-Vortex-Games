@@ -151,8 +151,8 @@ const PARAMETERS = [PARAMETERS_STRING];
 let MODTYPE_FOLDERS = [BINARIES_PATH];
 if (needsModInstaller) MODTYPE_FOLDERS.push(MOD_PATH);
 if (saveInstaller) MODTYPE_FOLDERS.push(SAVE_PATH);
-const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
-const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
+const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*'), path.join('**', 'modinfo.ini'), path.join('**', 'screenshot.jpg')];
+const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*'), path.join('**', 'modinfo.ini'), path.join('**', 'screenshot.jpg')];
 
 //filled in from data above
 const spec = {

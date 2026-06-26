@@ -872,10 +872,6 @@ function LoadOrderInstructions() {
     React.createElement('p', null,
       'Warhammer 40,000: Darktide loads mods in alphanumerical order, so Vortex prefixes the folder names with "AAA, AAB, AAC, ..." to ensure they load in the order you set here. The number in the left column represents the overwrite order. Changes from mods with higher numbers take priority over mods that make similar edits.',
     ),
-    React.createElement('br', null),
-    React.createElement('p', null,
-      'YOU MUST DEPLOY MODS AFTER CHANGING THE ORDER TO APPLY CHANGES! - This is required to rename the folders for the correct order.',
-    ),
   );
 }
 
