@@ -332,3 +332,62 @@ Programmatically closes a dialog as if the user clicked a button.
 ```typescript
 closeDialog(id: string, actionKey?: string, input?: any): void;
 ```
+
+---
+
+## Runtime model (how the app drives this)
+
+The sections above are the **authoring** surface (what you call). This section is the **runtime**
+mechanism — how notifications and dialogs actually flow inside the app. Source:
+`Vortex/src/renderer/src/actions/notifications.ts`, `util/GlobalNotifications.ts`,
+`types/INotification.ts`, `types/IDialog.ts`.
+
+### Notifications are state, deduped by id
+
+`sendNotification` ultimately dispatches **`startNotification`** (`ADD_NOTIFICATION`); the
+notification is just an entry in session state rendered by the notification bar. The returned
+**`id` is the dedupe key** — re-sending with the same `id` (or `updateNotification`) **replaces**
+the existing one instead of stacking a duplicate, which is how progress/`activity` notifications
+update in place. `dismissNotification(id)` dispatches `stopNotification` (`STOP_NOTIFICATION`).
+
+- `group` collapses several related notifications into one expandable entry (e.g. the
+  `download-finished` group).
+- `type` (`success` | `info` | `warning` | `error` | `activity`) sets styling; `activity` is the
+  spinner used for in-progress work (e.g. "Preparing game for modding").
+- `displayMS` auto-dismisses; omit it for sticky notifications.
+
+### Global (OS) notifications
+
+`GlobalNotifications` (`util/GlobalNotifications.ts`) watches
+`state.session.notifications.global_notifications` and mirrors the current one to a **native OS
+notification**, closing it (`mCurrentNotification.close()`) when the in-app notification is
+dismissed. This is how important events surface outside the Vortex window.
+
+### Dialogs are modal, queued, and awaited
+
+`showDialog(type, title, content, actions, inId?)` is a **thunk that returns a
+`Promise<IDialogResult>`**:
+
+1. It picks an `id` (`inId` or a generated `shortid`), finds the `default` action's label, and
+   dispatches **`addDialog(id, type, title, content, defaultLabel, actionLabels)`** — pushing the
+   dialog onto the dialog stack in state. The UI shows **one** dialog at a time.
+2. It registers a callback in `DialogCallbacks.instance()[id]`. When the user clicks a button (or
+   code calls `closeDialog(id, actionKey, input)`), that callback runs the matching action's
+   `action(input)` and **resolves the promise** with `{ action: actionKey, input }`.
+3. Link callbacks are registered under `__link-${id}` so `ILink` actions in the content work and
+   can dismiss the dialog.
+
+So `await api.showDialog(...)` blocks the caller until the user responds — the promise resolution
+**is** the user's choice. Action callbacks that throw or reject are logged, not surfaced as crashes.
+Never dispatch `addDialog` / `dismissDialog` directly — go through `showDialog` / `closeDialog` so
+the promise + callback bookkeeping stays consistent.
+
+### Gotchas
+
+- The notification `id` is load-bearing: reuse it to update, vary it to stack.
+- `showDialog` returns a Bluebird promise for backwards-compat; core callers wrap it in
+  `Promise.resolve()` for a native promise.
+- A dialog you open with `showDialog` must be closed with `closeDialog` (not `dismissDialog`),
+  or the awaiting promise never resolves.
+- See also (runtime): `VORTEX_EVENT_BUS.md`, `VORTEX_APP.md`; memory
+  `reference_vortex_notifications`.

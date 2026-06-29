@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.2.1] - 2026-06-28
+
+- Fixed: Installer filter for Save Data files no longer removes the files without extensions.
+
 ## [0.2.0] - 2025-12-11
 
 - Fixed folder path setting for the Save folder based on the game store version.
@@ -26,4 +30,4 @@
 
 ## [0.1.0] - 2025-09-10
 
-- Inital Release
+- Initial Release

@@ -2,8 +2,8 @@
 Name: theHunter: Call of the Wild Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.2.0
-Date: 2025-12-11
+Version: 0.2.1
+Date: 2026-06-28
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -565,7 +565,7 @@ function installSave(files) {
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file => (
     SAVE_FILES.includes(path.basename(file).toLowerCase()) &&
-    (file.indexOf(rootPath) !== -1) &&
+    //(file.indexOf(rootPath) !== -1) &&
     !file.endsWith(path.sep)
   ));
 
@@ -600,7 +600,7 @@ async function resolveGameVersion(gamePath) {
     try {
       const exeVersion = require('exe-version');
       version = exeVersion.getProductVersion(path.join(gamePath, EXEC));
-      return Promise.resolve(version); 
+      return Promise.resolve(version);
     } catch (err) {
       log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
       return Promise.resolve(version);
@@ -646,22 +646,22 @@ function applyGame(context, gameSpec) {
   });
 
   //register mod types explicitly
-  /*context.registerModType(CONFIG_ID, 60, 
+  /*context.registerModType(CONFIG_ID, 60,
     (gameId) => {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, 
-    (game) => pathPattern(context.api, game, CONFIG_PATH), 
-    () => Promise.resolve(false), 
+    },
+    (game) => pathPattern(context.api, game, CONFIG_PATH),
+    () => Promise.resolve(false),
     { name: CONFIG_NAME }
   ); //*/
-  context.registerModType(SAVE_ID, 60, 
+  context.registerModType(SAVE_ID, 60,
     (gameId) => {
       var _a;
       return (gameId === gameSpec.game.id) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, 
+    },
     (game) => getSavePath(context.api),
-    () => Promise.resolve(false), 
+    () => Promise.resolve(false),
     { name: SAVE_NAME }
   ); //*/
 
