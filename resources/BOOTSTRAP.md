@@ -56,7 +56,7 @@ Required by `steam_wishlist_prices.py`.
 
 ## 4. Node.js Dependencies
 
-From `ChemBoy1-Vortex-Games\`:
+From `ChemBoy1-Vortex-Games\`, run command below to install dev dependencies:
 
 ```text
 npm install
