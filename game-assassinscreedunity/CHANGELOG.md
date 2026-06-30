@@ -6,7 +6,8 @@
 
 ## [0.4.3] - 2026-06-30
 
-- Fixed: ResoRep original system dll file copy location corrected to `C:\Windows\System32\d3d11.dll` (needed for 64-bit)
+- Fixed: ResoRep original system dll file copy location corrected to System 32 folder (needed for 64-bit).
+- Added: Button to force copy correct system d3d11.dll file to game folder.
 
 ## [0.4.2]
 

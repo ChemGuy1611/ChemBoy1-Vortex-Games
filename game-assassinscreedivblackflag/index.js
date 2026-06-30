@@ -2,8 +2,8 @@
 Name: AC IV Black Flag Vortex Extension
 Structure: Ubisoft AnvilToolkit
 Author: ChemBoy1
-Version: 0.4.2
-Date: 03/18/2025
+Version: 0.4.3
+Date: 2026-06-30
 */
 
 //Import libraries
@@ -29,7 +29,7 @@ let DOWNLOAD_FOLDER = ''; //Vortex download folder path
 const BITS = "BIT32"; // "BIT32" or "BIT64"
 const RESOREP_PAGE = 1215;
 const RESOREP_FILE_32BIT = 4854;
-const RESOREP_FILE_64BIT = 4855;
+const RESOREP_FILE_64BIT = 8350;
 
 const DLC_FOLDERS = ["dlc_1", "dlc_2", "dlc_3", "dlc_4", "dlc_5", "dlc_6", "dlc_7", "dlc_8", "dlc_9", "dlc_10"];
 const ROOT_FOLDERS = ["videos", "sounddata"];
@@ -100,7 +100,8 @@ const RESOREP_INI_FILE = "dllsettings.ini";
 const RESOREP_DLL_FILE = 'd3d11.dll';
 const RESOREP_ORIDLL_FILE = 'ori_d3d11.dll';
 const RESOREP_SCRIPT_FILE = 'copy_d3d11dll_vortex.bat';
-const SYSTEM_DLL_FILE = path.join('C:', 'Windows', 'SysWOW64', 'd3d11.dll');
+const WINDIR = process.env.SystemRoot || process.env.windir || path.join('C:', 'Windows');
+const SYSTEM_DLL_FILE = path.join(WINDIR, 'SysWOW64', RESOREP_DLL_FILE);
 const RESOREP_INI_TEXT = (
 `version=1.7.0
 modded_textures_folder={gamePath}\\${RESOREP_TEXTURES_PATH}
@@ -413,7 +414,7 @@ async function downloadAnvil(discovery, api, gameSpec) {
         }
         FILE = file.file_id;
       } catch { //Use specific file id because "input" above gives an error
-        FILE = FILE_ID; 
+        FILE = FILE_ID;
       }
       const dlInfo = {
         game: GAME_DOMAIN,
@@ -1128,7 +1129,7 @@ function runAtk(api) {
 async function resorepSettingsWrite(discovery, api, gameSpec) {
   try {
     fs.statSync(path.join(GAME_PATH, RESOREP_INI_FILE));
-  } catch (err) {
+  } catch {
     await fs.writeFileAsync( //write Resorep dllsettings.ini file
       path.join(GAME_PATH, RESOREP_INI_FILE),
       (pathPattern(api, gameSpec.game, RESOREP_INI_TEXT)),
@@ -1149,16 +1150,16 @@ async function resorepScriptCheck(discovery, api, gameSpec) {
     try {
       fs.statSync(path.join(GAME_PATH, RESOREP_ORIDLL_FILE));
       log('info', 'ResoRep original dll already exists. File copy script not run.');
-    } catch (err) {
+    } catch {
       try {
         child_process.spawn(
-        //const proc = child_process.spawn(  
+        //const proc = child_process.spawn(
           path.join(GAME_PATH, RESOREP_SCRIPT_FILE),
           [""],
-          { 
+          {
             //cwd: path.join(GAME_PATH),
-            shell: true, 
-            detached: true, 
+            shell: true,
+            detached: true,
           }
         );
         //proc.on("error", () => {});
@@ -1174,15 +1175,15 @@ async function resorepScriptCheck(discovery, api, gameSpec) {
 }
 
 //Run ResoRep mod script to copy d3d11.dll from system folder
-async function resorepDllCopy(api, gameSpec) {
+async function resorepDllCopy(api, gameSpec, force = false) {
   let isInstalled = isResoRepInstalled(api, gameSpec);
-  if (isInstalled) {
+  if (isInstalled || force) {
     try {
       fs.statSync(path.join(GAME_PATH, RESOREP_ORIDLL_FILE));
       log('info', 'ResoRep original dll already exists. No file copied.');
-    } catch (err) {
+    } catch {
       try {
-        const SOURCE = path.join('C:', 'Windows', 'SysWOW64', 'd3d11.dll');
+        const SOURCE = SYSTEM_DLL_FILE;
         const TARGET = path.join(GAME_PATH, RESOREP_ORIDLL_FILE);
         return util.copyFileAtomic(SOURCE, TARGET)
         //return fs.copyAsync(filePath, mergeTarget)
@@ -1272,6 +1273,13 @@ function applyGame(context, gameSpec) {
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   }); //*/
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Force Copy System d3d11.dll (ResoRep)', () => {
+    resorepDllCopy(context.api, spec, true);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
     util.opn(PCGAMINGWIKI_URL).catch(() => null);
   }, () => {

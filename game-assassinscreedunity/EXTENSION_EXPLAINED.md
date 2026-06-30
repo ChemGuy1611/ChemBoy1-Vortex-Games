@@ -62,6 +62,7 @@ Installers run in priority order (lower number = tested first). The first instal
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
+- Force Copy System d3d11.dll (ResoRep)
 - Open PCGamingWiki Page
 - View Changelog
 - Submit Bug Report

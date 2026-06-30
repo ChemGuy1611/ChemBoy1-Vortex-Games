@@ -24,7 +24,7 @@ let GAME_VERSION = ''; //Game version
 let STAGING_FOLDER = ''; //Vortex staging folder path
 let DOWNLOAD_FOLDER = ''; //Vortex download folder path
 
-const BITS = "BIT64";
+const BITS = "BIT64"; // "BIT32" or "BIT64"
 const RESOREP_PAGE = 1215;
 const RESOREP_FILE_32BIT = 4854;
 const RESOREP_FILE_64BIT = 8350;
@@ -95,7 +95,11 @@ const RESOREP_INI_FILE = "dllsettings.ini";
 const RESOREP_DLL_FILE = 'd3d11.dll';
 const RESOREP_ORIDLL_FILE = 'ori_d3d11.dll';
 const RESOREP_SCRIPT_FILE = 'copy_d3d11dll_vortex.bat';
-const SYSTEM_DLL_FILE = path.join('C:', 'Windows', 'System32', 'd3d11.dll');
+const WINDIR = process.env.SystemRoot || process.env.windir || path.join('C:', 'Windows');
+let SYSTEM_DLL_FILE = path.join(WINDIR, 'System32', RESOREP_DLL_FILE);
+if (BITS === "BIT32") {
+  SYSTEM_DLL_FILE = path.join(WINDIR, 'SysWOW64', RESOREP_DLL_FILE);
+}
 const RESOREP_INI_TEXT = (
 `version=1.7.0
 modded_textures_folder={gamePath}\\${RESOREP_TEXTURES_PATH}
@@ -1158,7 +1162,7 @@ function runAtk(api) {
 async function resorepSettingsWrite(discovery, api, gameSpec) {
   try {
     fs.statSync(path.join(GAME_PATH, RESOREP_INI_FILE));
-  } catch (err) {
+  } catch {
     await fs.writeFileAsync( //write Resorep dllsettings.ini file
       path.join(GAME_PATH, RESOREP_INI_FILE),
       (pathPattern(api, gameSpec.game, RESOREP_INI_TEXT)),
@@ -1179,7 +1183,7 @@ async function resorepScriptCheck(discovery, api, gameSpec) {
     try {
       fs.statSync(path.join(GAME_PATH, RESOREP_ORIDLL_FILE));
       log('info', 'ResoRep original dll already exists. File copy script not run.');
-    } catch (err) {
+    } catch {
       try {
         await api.runExecutable(
         //const proc = child_process.spawn(
@@ -1204,13 +1208,14 @@ async function resorepScriptCheck(discovery, api, gameSpec) {
 }
 
 //Run ResoRep mod script to copy d3d11.dll from system folder
-async function resorepDllCopy(api, gameSpec) {
+async function resorepDllCopy(api, gameSpec, force = false) {
   let isInstalled = isResoRepInstalled(api, gameSpec);
-  if (isInstalled) {
+  if (isInstalled || force) {
     try {
+      if (force) throw new Error();
       fs.statSync(path.join(GAME_PATH, RESOREP_ORIDLL_FILE));
       log('info', 'ResoRep original dll already exists. No file copied.');
-    } catch (err) {
+    } catch {
       try {
         const SOURCE = SYSTEM_DLL_FILE;
         const TARGET = path.join(GAME_PATH, RESOREP_ORIDLL_FILE);
@@ -1303,6 +1308,13 @@ function applyGame(context, gameSpec) {
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   }); //*/
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Force Copy System d3d11.dll (ResoRep)', () => {
+    resorepDllCopy(context.api, spec, true);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
     util.opn(PCGAMINGWIKI_URL).catch(() => null);
   }, () => {
