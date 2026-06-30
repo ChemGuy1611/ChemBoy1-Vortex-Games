@@ -2,8 +2,8 @@
 Name: AC Unity Vortex Extension
 Structure: Ubisoft AnvilToolkit
 Author: ChemBoy1
-Version: 0.4.2
-Date: 03/12/2025
+Version: 0.4.3
+Date: 2026-06-30
 */
 
 //Import libraries
@@ -27,7 +27,7 @@ let DOWNLOAD_FOLDER = ''; //Vortex download folder path
 const BITS = "BIT64";
 const RESOREP_PAGE = 1215;
 const RESOREP_FILE_32BIT = 4854;
-const RESOREP_FILE_64BIT = 4855;
+const RESOREP_FILE_64BIT = 8350;
 
 const DLC_FOLDERS = ["dlc_10", "dlc_11"];
 const ROOT_FOLDERS = ["videos", "sounddata"];
@@ -95,7 +95,7 @@ const RESOREP_INI_FILE = "dllsettings.ini";
 const RESOREP_DLL_FILE = 'd3d11.dll';
 const RESOREP_ORIDLL_FILE = 'ori_d3d11.dll';
 const RESOREP_SCRIPT_FILE = 'copy_d3d11dll_vortex.bat';
-const SYSTEM_DLL_FILE = path.join('C:', 'Windows', 'SysWOW64', 'd3d11.dll');
+const SYSTEM_DLL_FILE = path.join('C:', 'Windows', 'System32', 'd3d11.dll');
 const RESOREP_INI_TEXT = (
 `version=1.7.0
 modded_textures_folder={gamePath}\\${RESOREP_TEXTURES_PATH}
@@ -1182,13 +1182,13 @@ async function resorepScriptCheck(discovery, api, gameSpec) {
     } catch (err) {
       try {
         await api.runExecutable(
-        //const proc = child_process.spawn(  
+        //const proc = child_process.spawn(
           path.join(GAME_PATH, RESOREP_SCRIPT_FILE),
           [],
-          { 
+          {
             //cwd: path.join(GAME_PATH),
-            shell: true, 
-            detached: true, 
+            shell: true,
+            detached: true,
           }
         );
         //proc.on("error", () => {});
@@ -1212,7 +1212,7 @@ async function resorepDllCopy(api, gameSpec) {
       log('info', 'ResoRep original dll already exists. No file copied.');
     } catch (err) {
       try {
-        const SOURCE = path.join('C:', 'Windows', 'SysWOW64', 'd3d11.dll');
+        const SOURCE = SYSTEM_DLL_FILE;
         const TARGET = path.join(GAME_PATH, RESOREP_ORIDLL_FILE);
         return util.copyFileAtomic(SOURCE, TARGET)
         //return fs.copyAsync(filePath, mergeTarget)
