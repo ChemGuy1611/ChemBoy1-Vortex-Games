@@ -14,13 +14,9 @@ let GAME_PATH = '';
 let GAME_VERSION = '';
 let mod_update_all_profile = false; // for mod update to keep them in the load order and not uncheck them
 let updatemodid = undefined;
-let mod_install_name = undefined;
 let updating_mod = false; // used to see if it's a mod update or not
 const APPMANIFEST_FILE = 'appxmanifest.xml';
 
-//1792 is known to work, 2048 crashes on launch.
-const HEAP_SIZE = 1792;
-const HEAP_PARAMETER = `--lua-heap-mb-size ${HEAP_SIZE}`;
 const APPDATA = util.getVortexPath('appData');
 const CONFIG_PATH = path.join(APPDATA, "Fatshark", "Darktide");
 const CONFIG_FILE = path.join(CONFIG_PATH, "user_settings.config");
@@ -40,7 +36,7 @@ const EXEC_LAUNCHER = path.join(LAUNCHER_PATH, 'Launcher.exe');
 const ROOT_ID = 'darktide-root';
 const ROOT_FOLDERS = [MOD_FOLDER, BINARIES_PATH, 'bundle', LAUNCHER_PATH];
 let DOWNLOAD_FOLDER = '';
-let STAGING_FOLDER = '';
+//let STAGING_FOLDER = '';
 
 const tools = [
   {
@@ -89,20 +85,6 @@ const getDiscoveryPath = (api) => {
   return discovery === null || discovery === void 0 ? void 0 : discovery.path;
 };
 
-function isDir(folder, file) {
-  const stats = fs.statSync(path.join(folder, file));
-  return stats.isDirectory();
-}
-
-function statCheckSync(gamePath, file) {
-  try {
-    fs.statSync(path.join(gamePath, file));
-    return true;
-  }
-  catch {
-    return false;
-  }
-}
 async function statCheckAsync(gamePath, file) {
   try {
     await fs.statAsync(path.join(gamePath, file));
@@ -125,20 +107,6 @@ async function setGameVersion(gamePath) {
   }
 }
 
-async function purge(api) {
-  return new Promise((resolve, reject) => api.events.emit('purge-mods', true, (err) => err ? reject(err) : resolve()));
-}
-async function deploy(api) {
-  return new Promise((resolve, reject) => api.events.emit('deploy-mods', (err) => err ? reject(err) : resolve()));
-}
-
-function isDirectory(file) {
-    return file.endsWith(path.sep);
-}
-function isFile(file) {
-    return !file.endsWith(path.sep);
-}
-
 //Find game installation directory
 function makeFindGame() {
   return () => util.GameStoreHelper.findByAppId([STEAMAPP_ID, XBOXAPP_ID])
@@ -155,7 +123,6 @@ async function requiresLauncher(gamePath, store) {
       },
     });
   } //*/
-  /*
   if (store === 'steam') {
     return Promise.resolve({
         launcher: 'steam',
@@ -200,10 +167,10 @@ function installContent(files) {
     return install_mod_load_order_file_maker(files);
   }
 
-  return root_game_install(files);
+  return root_game_install(files); //DML
 }
 
-function root_game_install(files) {
+function root_game_install(files) { //DML
   const filtered = files.filter(file => !file.endsWith(path.sep));
   const instructions = filtered.map((file) => {
     return {
@@ -223,10 +190,10 @@ function install_mod_load_order_file_maker(files) {
     path.basename(mod_load_order_file_maker),
   );
   const rootPath = path.dirname(mod_load_order_file_maker);
-  const filtered = files.filter(file =>
+  const filtered = files.filter(file => (
     file.indexOf(rootPath) !== -1 &&
     !file.endsWith(path.sep)
-  );
+  ));
   const instructions = filtered.map((file) => {
     return {
       type: "copy",
@@ -263,10 +230,10 @@ function installMod(files) {
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const modName = path.basename(modFile, MOD_FILE_EXT);
-  const filtered = files.filter(
-    (file) => file.indexOf(rootPath) !== -1 &&
+  const filtered = files.filter((file) => (
+    file.indexOf(rootPath) !== -1 &&
     !file.endsWith(path.sep)
-  );
+  ));
   const MOD_ATTRIBUTE = {
     type: 'attribute',
     key: LO_ATTRIBUTE,
@@ -418,21 +385,6 @@ async function deserializeLoadOrder(context) {
     })
     .sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase())); // Ignore case when sorting
 
-  /* This is the most reliable way I could find to detect if a mod is managed by Vortex
-  async function isVortexManaged(modId) {
-    try {
-      fs.statAsync(path.join(modFolderPath, modId, `__folder_managed_by_vortex`));
-      return true;
-    } catch {
-      try {
-        fs.statAsync(path.join(modFolderPath, modId, `${modId}.mod.vortex_backup`));
-        return true;
-      } catch {
-        return false;
-      }
-    }
-  } //*/
-
   // Get readable mod name using modFolderDerived attribute from mod installer
   async function getModName(folder) {
     const VORTEX = await getModId(folder) !== undefined;
@@ -467,13 +419,6 @@ async function deserializeLoadOrder(context) {
       return undefined;
     }
   }
-
-  //Determine if mod is managed by Vortex (async version)
-  async function isVortexManaged(modId) {
-    return fs.statAsync(path.join(modFolderPath, modId, `__folder_managed_by_vortex`))
-      .then(() => true)
-      .catch(() => false)
-  };
 
   //create load order array
   let loadOrder = await loadOrderFile.split("\n")
@@ -528,13 +473,7 @@ async function serializeLoadOrder(context, loadOrder) {
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
-const is_darktide_profile_active = (api) => {
-  const state = api.getState();
-  const test = (selectors.activeGameId(state) === GAME_ID)
-  return test;
-};
-
-function checkForDMF(api, mod_framework) {
+async function checkForDMF(api, mod_framework) {
   return fs.statAsync(mod_framework).catch(() => {
     api.sendNotification({
       id: "darktide-mod-framework-missing",
@@ -554,7 +493,7 @@ function checkForDMF(api, mod_framework) {
   });
 }
 
-function checkForDML(api, toggle_mods_path) {
+async function checkForDML(api, toggle_mods_path) {
   return fs.statAsync(toggle_mods_path).catch(() => {
     api.sendNotification({
       id: "toggle_darktide_mods-missing",
@@ -605,9 +544,8 @@ async function resolveGameVersion(gamePath) {
 async function setup(discovery, api) {
   const state = api.getState();
   GAME_PATH = discovery.path;
-  STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
+  //STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
-  toolbar(api);
   await fs.ensureDirWritableAsync(path.join(GAME_PATH,  MOD_FOLDER)); // Ensure the mods directory exists
   await fs.ensureDirWritableAsync(CONFIG_PATH);
   await fs.ensureFileAsync(path.join(GAME_PATH, MOD_FOLDER, LO_FILE)); // Ensure the mod load order file exists
@@ -672,7 +610,7 @@ function main(context) {
     testSupportedContent,
     installContent,
   );
-  context.registerInstaller( //regular mods
+  context.registerInstaller( //regular mods & DMF
     "warhammer40kdarktide-mod",
     27,
     testMod,
@@ -753,7 +691,7 @@ function main(context) {
   context.once(() => {
     const api = context.api; //don't move from the top
     // Patch exe on deploy and reset mod update flags
-    context.api.onAsync("did-deploy", (profileId) => {
+    api.onAsync("did-deploy", () => {
       mod_update_all_profile = false; //reset all-profile flag on deploy
       updating_mod = false; //reset updating flag on deploy
       updatemodid = undefined; //reset updated modId on deploy
@@ -766,7 +704,7 @@ function main(context) {
       } //*/
     });
     /* DISABLED since a mod automates this - Unpatch exe on purge
-    context.api.events.on("will-purge", (profileId) => {
+    api.events.on("will-purge", (profileId) => {
       GAME_PATH = getDiscoveryPath(api);
       if (is_darktide_profile_active(api) && GAME_PATH != null) {
         try {
@@ -775,64 +713,28 @@ function main(context) {
       }
     }); //*/
     //detect mod update (to maintain LO position)
-    context.api.events.on("mod-update", (gameId, modId, fileId) => {
+    api.events.on("mod-update", (gameId, modId) => {
       if (GAME_ID == gameId) {
         updatemodid = modId;
       }
     });
     //detect mod removal (to maintain LO position)
-    context.api.events.on("remove-mod", (gameMode, modId) => {
+    api.events.on("remove-mod", (gameMode, modId) => {
       if (modId.includes("-" + updatemodid + "-")) {
         mod_update_all_profile = true;
       }
     });
     //detect mod installation (to maintain LO position)
-    context.api.events.on("will-install-mod", (gameId, archiveId, modId) => {
-      mod_install_name = modId.split("-")[0];
+    api.events.on("will-install-mod", (gameId, archiveId, modId) => {
       if (GAME_ID == gameId && modId.includes("-" + updatemodid + "-")) {
         updating_mod = true;
       } else {
         updating_mod = false;
       }
     });
-    /* Notification to Enable Toolbar
-    context.api.events.on("profile-did-change", () => {
-      if (is_darktide_profile_active(api)) {
-        toolbar(api);
-      }
-    }); //*/
   });
 
   return true;
-}
-
-async function toolbar(api) {
-  const state = api.getState();
-  if (!util.getSafe(state, ["settings", "interface", "tools", "addToolsToTitleBar"], false)) {
-    api.sendNotification({
-      id: "Darktide-enable-toolbar",
-      type: "warning",
-      message: "Enable toolbar for easy game patching",
-      actions: [
-        {
-          title: "Enable Toolbar",
-          action: () => {
-            api.store.dispatch({
-              type: "SET_ADD_TO_TITLEBAR",
-              payload: { addToTitleBar: true },
-            });
-            api.dismissNotification("Darktide-enable-toolbar");
-            api.sendNotification({
-              id: "enabled toolbar",
-              type: "success",
-              message: "Activated the toolbar. At the top of your screen you now can patch the game",
-              supress: true,
-            });
-          },
-        },
-      ],
-    });
-  }
 }
 
 //React load order instructions renderer
@@ -895,6 +797,28 @@ function useFbloState() {
     statusFilter: _fbloStatusFilter,
     setStatusFilter: (next) => { _fbloStatusFilter = next; _notifyFblo(); },
   };
+}
+
+//Resolve the mod page URL for a Vortex-managed load order entry (undefined when not resolvable).
+//Prefers the mod's homepage attribute; falls back to composing the Nexus URL from the numeric mod id.
+function getModPageURL(api, vortexModId) {
+  if (vortexModId === undefined) return undefined;
+  const attributes = util.getSafe(api.getState(), ['persistent', 'mods', GAME_ID, vortexModId, 'attributes'], {});
+  if (attributes.homepage) return attributes.homepage;
+  if (attributes.source === 'nexus' && attributes.modId !== undefined) {
+    return `https://www.nexusmods.com/${GAME_ID}/mods/${attributes.modId}`;
+  }
+  return undefined;
+}
+
+//Resolve the staging folder of a Vortex-managed load order entry (undefined when not resolvable)
+function getModStagingFolder(api, vortexModId) {
+  if (vortexModId === undefined) return undefined;
+  const state = api.getState();
+  const installationPath = util.getSafe(state, ['persistent', 'mods', GAME_ID, vortexModId, 'installationPath'], undefined);
+  const stagingPath = selectors.installPathForGame(state, GAME_ID);
+  if (!installationPath || !stagingPath) return undefined;
+  return path.join(stagingPath, installationPath);
 }
 
 //Status filter shared helpers (load order pages). Groups combine with AND across, OR within.
@@ -1150,6 +1074,8 @@ function FbloContextMenu({ x, y, item, loadOrder, profile, dispatch, context, se
     onClose();
   };
   const itemVortexEnabled = isModEnabled(item);
+  const modPageUrl = getModPageURL(context.api, item.modId);
+  const stagingFolder = getModStagingFolder(context.api, item.modId);
 
   const menuStyle = {
     position: 'fixed', left: x, top: y, zIndex: 9999,
@@ -1187,8 +1113,16 @@ function FbloContextMenu({ x, y, item, loadOrder, profile, dispatch, context, se
         return [...rest, ...selected];
       })),
       React.createElement('div', { style: sepStyle }),
-      menuItem(`Disable Vortex Mod (${n})`, () => setVortexEnabled(targets, false)),
       menuItem(`Open Mod Folders (${n})`, () => openModFolders(targets)),
+      targets.some(t => t.modId !== undefined) ? menuItem(`Open Staging Folders (${n})`, () => {
+        targets.forEach(t => {
+          const folder = getModStagingFolder(context.api, t.modId);
+          if (folder) util.opn(folder).catch(() => null);
+        });
+        onClose();
+      }) : null,
+      React.createElement('div', { style: sepStyle }),
+      menuItem(`Disable Vortex Mod (${n})`, () => setVortexEnabled(targets, false)),
     );
   }
 
@@ -1206,10 +1140,13 @@ function FbloContextMenu({ x, y, item, loadOrder, profile, dispatch, context, se
       return [...rest, item];
     })),
     React.createElement('div', { style: sepStyle }),
+    menuItem('Open Mod Folder', () => openModFolders([item])),
+    stagingFolder ? menuItem('Open Staging Folder', () => { util.opn(stagingFolder).catch(() => null); onClose(); }) : null,
+    modPageUrl ? menuItem('Open Mod Page', () => { util.opn(modPageUrl).catch(() => null); onClose(); }) : null,
+    item.modId !== undefined ? React.createElement('div', { style: sepStyle }) : null,
     item.modId !== undefined
       ? menuItem(itemVortexEnabled ? 'Disable Vortex Mod' : 'Enable Vortex Mod', () => setVortexEnabled([item], !itemVortexEnabled))
       : null,
-    menuItem('Open Mod Folder', () => openModFolders([item])),
   );
 }
 
