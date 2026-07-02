@@ -1,6 +1,6 @@
 # Changelog
 
-## Future Changes (NOT IMPLEMENTED YET)
+## Planned Improvements (Not Yet Released)
 
 - UE4SS support - Haven't seen any mods for it yet
 

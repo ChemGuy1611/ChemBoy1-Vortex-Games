@@ -1,5 +1,9 @@
 # Changelog
 
+## Planned Improvements (Not Yet Released)
+
+- None
+
 ## [0.1.0]
 
 - Initial release of the Warhammer 40,000: Darktide extension.

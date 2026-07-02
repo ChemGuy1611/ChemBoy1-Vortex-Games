@@ -1,6 +1,6 @@
 # Changelog
 
-## Future Changes (NOT IMPLEMENTED YET)
+## Planned Improvements (Not Yet Released)
 
 - None
 
@@ -8,6 +8,6 @@
 
 - Added: Logic to the UE4SS combo installer to change "Win64" folder name to "WinGDK" if user is on the Xbox version of the game
 
-## [0.1.0] - 2025-XX-XX
+## [0.1.0] - 2025-11-13
 
 - Initial release

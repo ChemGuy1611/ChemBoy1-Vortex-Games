@@ -1,6 +1,6 @@
 # Changelog
 
-## Future Improvements (Not Yet Released)
+## Planned Improvements (Not Yet Released)
 
 - None
 

@@ -1,6 +1,6 @@
 # Changelog
 
-## Future Improvements (Not Yet Released)
+## Planned Improvements (Not Yet Released)
 
 - Added tool to launch ModKit (Epic Games).
 

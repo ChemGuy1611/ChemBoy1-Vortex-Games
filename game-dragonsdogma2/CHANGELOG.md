@@ -1,5 +1,9 @@
 # Changelog
 
+## Planned Improvements (Not Yet Released)
+
+- None
+
 ## [0.6.0] - 2026-03-05
 
 - Improved: Mod installer performance by removing Bluebird.

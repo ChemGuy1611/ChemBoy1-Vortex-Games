@@ -1,5 +1,9 @@
 # Changelog
 
+## Planned Improvements (Not Yet Released)
+
+- None
+
 ## [0.3.0] - 2026-03-21
 
 - Added: Steam Demo version support

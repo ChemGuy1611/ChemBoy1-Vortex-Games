@@ -1,6 +1,6 @@
 # Changelog
 
-## FUTURE CHANGES (NOT YET IMPLEMENTED)
+## Planned Improvements (Not Yet Released)
 
 - Loose Files loader support (once added)
 

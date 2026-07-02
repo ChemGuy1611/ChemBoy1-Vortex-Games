@@ -9,6 +9,6 @@
 - Added: Xbox version support
 - Fixed: ACSE Mods always installed with a top level folder
 
-## [0.1.0] - 2025-XX-XX
+## [0.1.0] - 2025-10-22
 
 - Initial release

@@ -1,6 +1,6 @@
 # Changelog
 
-## FUTURE CHANGES (NOT IMPLEMENTED YET)
+## Planned Improvements (Not Yet Released)
 
 - Config and save modtypes, installers, and open buttons.
 

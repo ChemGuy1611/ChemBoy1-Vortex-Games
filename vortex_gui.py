@@ -6,11 +6,13 @@ extensions in a sortable/filterable table with Nexus stats columns (End, DL),
 image columns (Cover, Title, Banner), flag/note system, and group-by-engine view.
 
 Toolbar buttons run developer scripts against selected games. An always-visible
-log pane streams live subprocess output. Settings (geometry, column widths, filter
-text, grouping) persist across sessions via QSettings.
+log pane streams live subprocess output, coloring error and command-echo lines.
+Settings (geometry, column widths, filter text, grouping, flagged-only, checked
+rows) persist across sessions via QSettings.
 
 Dark theme applied via Fusion palette + stylesheet. Engine grouping inserts
-read-only header rows via GroupProxy.
+read-only header rows via GroupProxy. "Flagged Only" restricts the table to
+flagged rows; Space toggles the checkbox on all selected rows.
 
 Requirements:
     pip install pyside6
@@ -19,6 +21,7 @@ Usage:
     python vortex_gui.py
 """
 
+import codecs
 import collections
 import os
 import shutil
@@ -33,7 +36,7 @@ from PySide6.QtCore import (
 )
 from PySide6.QtGui import (
     QAction, QColor, QDesktopServices, QFont, QIcon, QKeySequence, QPainter, QPainterPath,
-    QPen, QPixmap, QShortcut, QTextCursor,
+    QPen, QPixmap, QShortcut, QTextCharFormat, QTextCursor,
 )
 from PySide6.QtSvg import QSvgRenderer
 from PySide6.QtWidgets import (
@@ -49,7 +52,9 @@ import gui_tray
 REPO_ROOT = vu.REPO_ROOT
 PYTHON = sys.executable
 NODE = shutil.which("node") or "node"
-SINGLE_INSTANCE_KEY = "ChemBoy1.VortexExtensionManager"
+SETTINGS_ORG = "ChemBoy1"
+SETTINGS_APP = "VortexExtensionManager"
+SINGLE_INSTANCE_KEY = f"{SETTINGS_ORG}.{SETTINGS_APP}"
 FLAGS_PATH = vu.GUI_FLAGS_PATH
 ROW_CACHE_PATH = os.path.join(REPO_ROOT, "vortex_gui_row_cache.json")
 _ROW_CACHE_VERSION = 1
@@ -138,6 +143,8 @@ _DK_TEXT     = "#e4e4ec"
 _DK_TEXT_DIM = "#9090a0"
 _DK_ACCENT   = "#5a8eff"
 _DK_ACCENT_H = "#7aa3ff"
+_LOG_ERROR   = "#e74c3c"   # log-pane color for [ERROR ...] / [exited with code N] lines
+_LOG_CMD     = _DK_ACCENT  # log-pane color for "> command" echo lines
 
 
 def _apply_dark_theme(app):
@@ -628,13 +635,6 @@ class GameModel(QAbstractTableModel):
             if row.banner_path:
                 row.banner = _load_icon_cached(row.banner_path, 40, 20)
 
-    def load(self):
-        self.beginResetModel()
-        rows = self._load_rows()
-        self._attach_icons(rows)   # QPixmap construction -- UI thread only
-        self._rows = rows
-        self.endResetModel()
-
     def apply_rows(self, rows: list):
         self.beginResetModel()
         self._rows = rows
@@ -702,6 +702,12 @@ class GameModel(QAbstractTableModel):
             return row
 
         if role == Qt.UserRole + 1:
+            if col == COL_VERSION:
+                # int tuple so 0.10.0 sorts after 0.2.0 (string compare would not)
+                try:
+                    return tuple(int(x) for x in row.version.split("."))
+                except ValueError:
+                    return (-1, -1, -1)
             if col == COL_END:
                 return row.endorsements if row.endorsements is not None else -1
             if col == COL_DL:
@@ -759,9 +765,16 @@ class GameFilterModel(QSortFilterProxyModel):
         self.setSortCaseSensitivity(Qt.CaseInsensitive)
         self._text = ""
         self._grouping = False
+        self._flagged_only = False
 
     def set_text(self, text: str):
         self._text = text.strip().lower()
+        self.invalidate()
+
+    def set_flagged_only(self, enabled: bool):
+        if enabled == self._flagged_only:
+            return
+        self._flagged_only = enabled
         self.invalidate()
 
     def set_grouping(self, enabled: bool):
@@ -773,7 +786,9 @@ class GameFilterModel(QSortFilterProxyModel):
     def filterAcceptsRow(self, source_row, source_parent):
         row = self.sourceModel()._rows[source_row]
         if row.game_id in self.sourceModel()._checked_ids:
-            return True
+            return True  # checked rows stay pinned through every filter
+        if self._flagged_only and not row.flagged:
+            return False
         if not self._text:
             return True
         return (self._text in row.game_id.lower()
@@ -786,7 +801,7 @@ class GameFilterModel(QSortFilterProxyModel):
         r_row = self.sourceModel()._rows[right.row()]
         if self._grouping and l_row.engine != r_row.engine:
             return l_row.engine < r_row.engine
-        if left.column() in (COL_END, COL_DL, COL_NEXUS_PUB, COL_ICON, COL_COVER, COL_TITLE, COL_BANNER):
+        if left.column() in (COL_VERSION, COL_END, COL_DL, COL_NEXUS_PUB, COL_ICON, COL_COVER, COL_TITLE, COL_BANNER):
             src = self.sourceModel()
             lv = src.data(left,  Qt.UserRole + 1)
             rv = src.data(right, Qt.UserRole + 1)
@@ -968,11 +983,14 @@ class ScriptRunner(QObject):
         self._queue: list[list[str]] = []
         self._desc = ""
         self._total = 0
+        self._decoder = None
+        self._finished_emitted = False
 
     def run(self, cmds: list[list[str]], desc: str = ""):
         self._queue = list(cmds)
         self._desc = desc
         self._total = len(self._queue)
+        self._finished_emitted = False
         if self._queue:
             self.started_signal.emit(desc)
         self._run_next()
@@ -990,9 +1008,24 @@ class ScriptRunner(QObject):
     def is_running(self) -> bool:
         return bool(self._process and self._process.state() != QProcess.NotRunning)
 
+    def _emit_finished(self, code: int):
+        """Emit finished_signal exactly once per run() call. kill() makes QProcess fire
+        both errorOccurred(Crashed) and finished(), which would otherwise double-emit."""
+        if self._finished_emitted:
+            return
+        self._finished_emitted = True
+        self.finished_signal.emit(code)
+
+    def _flush_decoder(self):
+        if self._decoder is not None:
+            tail = self._decoder.decode(b"", final=True)
+            self._decoder = None
+            if tail:
+                self.log_signal.emit(tail)
+
     def _run_next(self):
         if not self._queue:
-            self.finished_signal.emit(0)
+            self._emit_finished(0)
             return
         cmd = self._queue.pop(0)
         self.progress_signal.emit(self._total - len(self._queue), self._total)
@@ -1008,11 +1041,17 @@ class ScriptRunner(QObject):
         p.errorOccurred.connect(self._on_process_error)
         p.finished.connect(self._on_finished)
         self._process = p
+        # incremental decoder: a multibyte UTF-8 char split across read chunks must
+        # not decode as U+FFFD replacement characters
+        self._decoder = codecs.getincrementaldecoder("utf-8")(errors="replace")
         p.start(cmd[0], cmd[1:])
 
     def _on_output(self, p: QProcess):
-        data = p.readAllStandardOutput()
-        self.log_signal.emit(bytes(data).decode("utf-8", errors="replace"))
+        data = bytes(p.readAllStandardOutput())
+        text = (self._decoder.decode(data) if self._decoder is not None
+                else data.decode("utf-8", errors="replace"))
+        if text:
+            self.log_signal.emit(text)
 
     def _on_process_error(self, err):
         msgs = {
@@ -1022,15 +1061,17 @@ class ScriptRunner(QObject):
             QProcess.ProcessError.ReadError:     "Read error",
             QProcess.ProcessError.WriteError:    "Write error",
         }
+        self._flush_decoder()
         self.log_signal.emit(f"\n[ERROR: {msgs.get(err, f'Process error {err}')}]\n")
         self._queue.clear()
-        self.finished_signal.emit(-1)
+        self._emit_finished(-1)
 
     def _on_finished(self, code, _status):
+        self._flush_decoder()
         if code != 0:
             self.log_signal.emit(f"\n[exited with code {code}]\n")
             self._queue.clear()
-            self.finished_signal.emit(code)
+            self._emit_finished(code)
         else:
             self._run_next()
 
@@ -1291,26 +1332,35 @@ class BumpTypeDialog(QDialog):
         return args
 
 
+# == Keyboard shortcuts ========================================================
+
+# Single source of truth for shortcuts: MainWindow builds QShortcuts from this
+# list and HelpDialog renders it, so bindings and help text cannot drift apart.
+# (key sequences, description, MainWindow slot name or None if bound elsewhere,
+#  widget attr for a WidgetShortcut context or None for window-wide)
+SHORTCUT_DEFS = [
+    (("Ctrl+F",),      "Focus filter",                  "_focus_filter",          None),
+    (("Ctrl+R", "F5"), "Refresh table",                 "_refresh_data",          None),
+    (("Ctrl+N",),      "New game",                      "_on_new_game",           None),
+    (("Ctrl+G",),      "Jump to game",                  "_on_jump_to_game",       None),
+    (("Ctrl+L",),      "Focus log pane",                "_focus_log",             None),
+    (("Ctrl+E",),      "Open in editor",                "_on_open_editor",        None),
+    (("Space",),       "Toggle check on selected rows", "_toggle_check_selected", "_table"),
+    (("F1",),          "Show this help",                "_on_help",               None),
+    (("F2", "Delete"), "Flag selected game",            "_on_flag_shortcut",      None),
+    (("Escape",),      "Clear filter",                  "_clear_filter",          None),
+]
+
+
 # == Help dialog ===============================================================
 
 class HelpDialog(QDialog):
-    _SHORTCUTS = [
-        ("Ctrl+F",          "Focus filter"),
-        ("Ctrl+R / F5",     "Refresh table"),
-        ("Ctrl+N",          "New game"),
-        ("Ctrl+L",          "Focus log pane"),
-        ("Ctrl+E",          "Open in editor"),
-        ("F1",              "Show this help"),
-        ("F2 / Delete",     "Flag selected game"),
-        ("Escape",          "Clear filter"),
-    ]
-
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWindowTitle("Keyboard Shortcuts")
         self.setMinimumWidth(380)
         layout = QVBoxLayout(self)
-        text = "\n".join(f"{k:<22}  {v}" for k, v in self._SHORTCUTS)
+        text = "\n".join(f"{' / '.join(keys):<22}  {desc}" for keys, desc, _slot, _w in SHORTCUT_DEFS)
         view = QPlainTextEdit()
         view.setReadOnly(True)
         view.setFont(QFont("Consolas", 10))
@@ -1320,6 +1370,36 @@ class HelpDialog(QDialog):
         buttons = QDialogButtonBox(QDialogButtonBox.Close)
         buttons.rejected.connect(self.reject)
         layout.addWidget(buttons)
+
+
+# == Toolbar / context-menu actions ============================================
+
+# Toolbar buttons and the table context menu are both generated from this list,
+# so a single edit here updates both surfaces.
+# (label, MainWindow slot name, separator before entry, enabled without selection)
+ACTION_DEFS = [
+    ("Bump Version",        "_on_bump_version",      False, False),
+    ("Release",             "_on_release",           False, False),
+    ("Deploy to Vortex",    "_on_deploy_to_vortex",  False, False),
+    ("Launch in Vortex",    "_on_open_in_vortex",    False, False),
+    ("Open Folder",         "_on_open_folder",       True,  False),
+    ("Open in Editor",      "_on_open_editor",       False, False),
+    ("Open Changelog",      "_on_open_changelog",    False, False),
+    ("Open Game Page",      "_on_open_nexus",        True,  False),
+    ("Open Extension Page", "_on_open_ext",          False, False),
+    ("Port to Template...", "_on_port_to_template",  True,  False),
+    ("Setup Test Folder",   "_on_setup_test",        False, False),
+    ("Patch",               "_on_patch",             False, False),
+    ("Categorize",          "_on_categorize",        False, False),
+    ("Analyze Log",         "_on_analyze_log",       True,  True),
+    ("Audit Scripts",       "_on_audit_scripts",     False, True),
+    ("Fetch Icon",          "_on_fetch_icon",        True,  False),
+    ("Fetch Cover",         "_on_fetch_cover",       False, False),
+    ("Fetch Title",         "_on_fetch_title",       False, False),
+    ("Fetch Banner",        "_on_fetch_banner",      False, False),
+    ("Fetch Nexus Stats",   "_on_fetch_nexus_stats", False, False),
+    ("View Images",         "_on_view_images",       True,  False),
+]
 
 
 # == Main window ===============================================================
@@ -1352,7 +1432,7 @@ class MainWindow(QMainWindow):
 
         self._tray = gui_tray.TrayManager(
             self, app_name="Vortex Extension Manager",
-            settings_org="ChemBoy1", settings_app="VortexExtensionManager",
+            settings_org=SETTINGS_ORG, settings_app=SETTINGS_APP,
         )
 
         self._build_ui()
@@ -1379,68 +1459,37 @@ class MainWindow(QMainWindow):
         top_bar.addWidget(self._filter_edit, stretch=1)
         self._refresh_btn = QPushButton("Refresh")
         self._refresh_btn.clicked.connect(self._refresh_data)
-        self._refresh_btn.setShortcut("F5")
         top_bar.addWidget(self._refresh_btn)
         self._new_game_btn = QPushButton("New Game...")
         self._new_game_btn.clicked.connect(self._on_new_game)
-        self._new_game_btn.setShortcut(QKeySequence.StandardKey.New)
         top_bar.addWidget(self._new_game_btn)
         self._group_btn = QPushButton("Group by Engine")
         self._group_btn.setCheckable(True)
         self._group_btn.toggled.connect(self._on_group_toggled)
         top_bar.addWidget(self._group_btn)
+        self._flagged_btn = QPushButton("Flagged Only")
+        self._flagged_btn.setCheckable(True)
+        self._flagged_btn.toggled.connect(self._on_flagged_only_toggled)
+        top_bar.addWidget(self._flagged_btn)
         self._clear_checks_btn = QPushButton("Clear Checks")
         self._clear_checks_btn.setEnabled(False)
         self._clear_checks_btn.clicked.connect(self._clear_checks)
         top_bar.addWidget(self._clear_checks_btn)
         root_layout.addLayout(top_bar)
 
-        QShortcut(QKeySequence("Ctrl+F"), self).activated.connect(self._filter_edit.setFocus)
-        QShortcut(QKeySequence("Ctrl+G"), self).activated.connect(self._on_jump_to_game)
-        QShortcut(QKeySequence("F2"),     self).activated.connect(self._on_flag_shortcut)
-        QShortcut(QKeySequence("Delete"), self).activated.connect(self._on_flag_shortcut)
-        QShortcut(QKeySequence("Ctrl+E"), self).activated.connect(self._on_open_editor)
-        QShortcut(QKeySequence("Escape"), self).activated.connect(self._filter_edit.clear)
-        QShortcut(QKeySequence("Ctrl+R"), self).activated.connect(self._refresh_data)
-        QShortcut(QKeySequence("Ctrl+L"), self).activated.connect(lambda: self._log_pane.setFocus())
-        QShortcut(QKeySequence("F1"),     self).activated.connect(self._on_help)
-
-        # script toolbar
+        # script toolbar, built from ACTION_DEFS (shared with the context menu)
         toolbar = QToolBar()
         toolbar.setMovable(False)
-
-        def add_action(label: str, slot, sep: bool = False, global_action: bool = False):
+        for label, slot_name, sep, global_action in ACTION_DEFS:
             if sep:
                 toolbar.addSeparator()
             act = QAction(label, self)
-            act.triggered.connect(slot)
+            act.triggered.connect(getattr(self, slot_name))
             act.setEnabled(global_action)  # global actions start enabled; others need selection
             toolbar.addAction(act)
             self._action_btns[label] = act
             if global_action:
                 self._global_action_labels.add(label)
-
-        add_action("Bump Version", self._on_bump_version)
-        add_action("Release", self._on_release)
-        add_action("Deploy to Vortex", self._on_deploy_to_vortex)
-        add_action("Launch in Vortex", self._on_open_in_vortex)
-        add_action("Open Folder", self._on_open_folder, sep=True)
-        add_action("Open in Editor", self._on_open_editor)
-        add_action("Open Changelog", self._on_open_changelog)
-        add_action("Open Game Page", self._on_open_nexus, sep=True)
-        add_action("Open Extension Page", self._on_open_ext)
-        add_action("Port to Template...", self._on_port_to_template, sep=True)
-        add_action("Setup Test Folder", self._on_setup_test)
-        add_action("Patch", self._on_patch)
-        add_action("Categorize", self._on_categorize)
-        add_action("Analyze Log", self._on_analyze_log, sep=True, global_action=True)
-        add_action("Audit Scripts", self._on_audit_scripts, global_action=True)
-        add_action("Fetch Icon", self._on_fetch_icon, sep=True)
-        add_action("Fetch Cover", self._on_fetch_cover)
-        add_action("Fetch Title", self._on_fetch_title)
-        add_action("Fetch Banner", self._on_fetch_banner)
-        add_action("Fetch Nexus Stats", self._on_fetch_nexus_stats)
-        add_action("View Images", self._on_view_images, sep=True)
         root_layout.addWidget(toolbar)
 
         # splitter: table on top, log pane on bottom
@@ -1536,8 +1585,20 @@ class MainWindow(QMainWindow):
         self._status_label = QLabel()
         self.statusBar().addWidget(self._status_label)
 
+        # keyboard shortcuts, built from SHORTCUT_DEFS after all widgets exist
+        for keys, _desc, slot_name, widget_attr in SHORTCUT_DEFS:
+            if not slot_name:
+                continue
+            slot = getattr(self, slot_name)
+            parent = getattr(self, widget_attr) if widget_attr else self
+            for key in keys:
+                sc = QShortcut(QKeySequence(key), parent)
+                if widget_attr:
+                    sc.setContext(Qt.WidgetShortcut)
+                sc.activated.connect(slot)
+
     def _restore_settings(self):
-        settings = QSettings("ChemBoy1", "VortexExtensionManager")
+        settings = QSettings(SETTINGS_ORG, SETTINGS_APP)
         geo = settings.value("geometry")
         if geo:
             self.restoreGeometry(geo)
@@ -1553,6 +1614,8 @@ class MainWindow(QMainWindow):
             self._filter_edit.setText(filter_text)
         if settings.value("groupByEngine", False, type=bool):
             self._group_btn.setChecked(True)
+        if settings.value("flaggedOnly", False, type=bool):
+            self._flagged_btn.setChecked(True)
         raw_checked = settings.value("checkedIds", [])
         if isinstance(raw_checked, str):
             raw_checked = [raw_checked]
@@ -1561,13 +1624,14 @@ class MainWindow(QMainWindow):
         self._model._checked_ids = set(raw_checked)
 
     def closeEvent(self, event):
-        settings = QSettings("ChemBoy1", "VortexExtensionManager")
+        settings = QSettings(SETTINGS_ORG, SETTINGS_APP)
         settings.setValue("geometry", self.saveGeometry())
         settings.setValue("splitter", self._splitter.saveState())
         settings.setValue("tableHeader", self._table.horizontalHeader().saveState())
         settings.setValue("tableHeaderColCount", len(HEADERS))
         settings.setValue("filterText", self._filter_edit.text())
         settings.setValue("groupByEngine", self._group_btn.isChecked())
+        settings.setValue("flaggedOnly", self._flagged_btn.isChecked())
         settings.setValue("checkedIds", list(self._model._checked_ids))
         if not self._tray.on_close(event):
             return  # hidden to tray; keep running (settings already saved)
@@ -1591,6 +1655,10 @@ class MainWindow(QMainWindow):
     def _on_group_toggled(self, checked: bool):
         self._proxy.set_grouping(checked)
 
+    def _on_flagged_only_toggled(self, checked: bool):
+        self._filter_model.set_flagged_only(checked)
+        self._update_status_bar()
+
     def _refresh_data(self):
         if self._refresh_worker is not None:
             return
@@ -1604,6 +1672,8 @@ class MainWindow(QMainWindow):
     def _on_refresh_done(self, rows: list, prev_ids: set):
         self._model._attach_icons(rows)   # QPixmap must be built on the UI thread
         self._model.apply_rows(rows)
+        # drop checked ids whose extension no longer exists on disk
+        self._model._checked_ids &= {r.game_id for r in rows}
         self._refresh_worker.deleteLater()
         self._refresh_worker = None
         QApplication.restoreOverrideCursor()
@@ -1708,7 +1778,14 @@ class MainWindow(QMainWindow):
             return
         if proxy_index.column() in (*_THUMBNAIL_COLS, COL_CHECK, COL_FLAG):
             return
-        self._on_open_editor()
+        # act on the double-clicked row only -- _on_open_editor would act on the
+        # whole checked set instead whenever checks are active
+        filter_idx = self._proxy.mapToSource(proxy_index)
+        src_idx = self._filter_model.mapToSource(filter_idx)
+        row = self._model._rows[src_idx.row()]
+        index_path = os.path.join(row.folder, "index.js")
+        if os.path.isfile(index_path):
+            vu.open_in_default_app(index_path)
 
     def _on_flag_shortcut(self):
         for idx in self._table.selectionModel().selectedRows():
@@ -1716,6 +1793,26 @@ class MainWindow(QMainWindow):
                 continue
             self._on_table_cell_clicked(self._proxy.index(idx.row(), COL_FLAG))
             break
+
+    def _toggle_check_selected(self):
+        """Space shortcut: flip the checkbox on every view-selected row."""
+        changed: list[int] = []
+        for idx in self._table.selectionModel().selectedRows():
+            if self._proxy.is_header_row(idx.row()):
+                continue
+            filter_idx = self._proxy.mapToSource(idx)
+            src_idx = self._filter_model.mapToSource(filter_idx)
+            row = self._model._rows[src_idx.row()]
+            if row.game_id in self._model._checked_ids:
+                self._model._checked_ids.discard(row.game_id)
+            else:
+                self._model._checked_ids.add(row.game_id)
+            changed.append(src_idx.row())
+        # emit after the loop: dataChanged can re-filter and remap proxy rows,
+        # which would invalidate the selection indexes mid-iteration
+        for r in changed:
+            cell = self._model.index(r, COL_CHECK)
+            self._model.dataChanged.emit(cell, cell, [Qt.CheckStateRole])
 
     # -- Script launchers -------------------------------------------------------
 
@@ -1773,65 +1870,38 @@ class MainWindow(QMainWindow):
             return
         self._run(dlg.build_cmds(ids), "port_to_template.py")
 
-    def _on_fetch_icon(self):
+    def _on_fetch_image(self, title: str, script: str, pre_args: list, desc: str, force_label: str):
+        """Shared handler for the four image-fetch actions -- same dialog flags,
+        refresh-after-run rule, and command shape."""
         dlg = self._script_dlg(
-            "Fetch Icon",
+            title,
             flags=[
                 ("--dry-run", "Preview only, no downloads", False),
-                ("--force", "Re-download even if exec.png already exists", False),
+                ("--force", force_label, False),
             ],
         )
         if dlg is None:
             return
         ids = self._selected_ids()
         self._refresh_after_run = "--dry-run" not in dlg.extra_args()
-        self._run([[PYTHON, os.path.join(REPO_ROOT, "fetch_exec_icon.py")] + dlg.extra_args() + ids],
-                  "fetch_exec_icon.py")
+        self._run([[PYTHON, os.path.join(REPO_ROOT, script)] + list(pre_args) + dlg.extra_args() + ids],
+                  desc)
+
+    def _on_fetch_icon(self):
+        self._on_fetch_image("Fetch Icon", "fetch_exec_icon.py", [], "fetch_exec_icon.py",
+                             "Re-download even if exec.png already exists")
 
     def _on_fetch_cover(self):
-        dlg = self._script_dlg(
-            "Fetch Cover Art",
-            flags=[
-                ("--dry-run", "Preview only, no downloads", False),
-                ("--force", "Re-download even if file already exists", False),
-            ],
-        )
-        if dlg is None:
-            return
-        ids = self._selected_ids()
-        self._refresh_after_run = "--dry-run" not in dlg.extra_args()
-        self._run([[PYTHON, os.path.join(REPO_ROOT, "fetch_cover_art.py")] + dlg.extra_args() + ids],
-                  "fetch_cover_art.py")
+        self._on_fetch_image("Fetch Cover Art", "fetch_cover_art.py", [], "fetch_cover_art.py",
+                             "Re-download even if file already exists")
 
     def _on_fetch_title(self):
-        dlg = self._script_dlg(
-            "Fetch Title Image",
-            flags=[
-                ("--dry-run", "Preview only, no downloads", False),
-                ("--force", "Re-download even if file already exists", False),
-            ],
-        )
-        if dlg is None:
-            return
-        ids = self._selected_ids()
-        self._refresh_after_run = "--dry-run" not in dlg.extra_args()
-        self._run([[PYTHON, os.path.join(REPO_ROOT, "fetch_cover_art.py"), "--title"] + dlg.extra_args() + ids],
-                  "fetch_cover_art.py --title")
+        self._on_fetch_image("Fetch Title Image", "fetch_cover_art.py", ["--title"],
+                             "fetch_cover_art.py --title", "Re-download even if file already exists")
 
     def _on_fetch_banner(self):
-        dlg = self._script_dlg(
-            "Fetch Banner Image",
-            flags=[
-                ("--dry-run", "Preview only, no downloads", False),
-                ("--force", "Re-download even if file already exists", False),
-            ],
-        )
-        if dlg is None:
-            return
-        ids = self._selected_ids()
-        self._refresh_after_run = "--dry-run" not in dlg.extra_args()
-        self._run([[PYTHON, os.path.join(REPO_ROOT, "fetch_cover_art.py"), "--banner"] + dlg.extra_args() + ids],
-                  "fetch_cover_art.py --banner")
+        self._on_fetch_image("Fetch Banner Image", "fetch_cover_art.py", ["--banner"],
+                             "fetch_cover_art.py --banner", "Re-download even if file already exists")
 
     def _on_fetch_nexus_stats(self):
         dlg = self._script_dlg(
@@ -1931,6 +2001,15 @@ class MainWindow(QMainWindow):
     def _on_help(self):
         HelpDialog(self).exec()
 
+    def _focus_filter(self):
+        self._filter_edit.setFocus()
+
+    def _clear_filter(self):
+        self._filter_edit.clear()
+
+    def _focus_log(self):
+        self._log_pane.setFocus()
+
     def _on_open_editor(self):
         if not self._require_selection():
             return
@@ -1997,8 +2076,26 @@ class MainWindow(QMainWindow):
     # -- Log pane --------------------------------------------------------------
 
     def _append_log(self, text: str):
-        self._log_pane.moveCursor(QTextCursor.End)
-        self._log_pane.insertPlainText(text)
+        cursor = self._log_pane.textCursor()
+        cursor.movePosition(QTextCursor.End)
+        default_fmt = QTextCharFormat()
+        error_fmt = QTextCharFormat()
+        error_fmt.setForeground(QColor(_LOG_ERROR))
+        cmd_fmt = QTextCharFormat()
+        cmd_fmt.setForeground(QColor(_LOG_CMD))
+        # our own runner markers arrive as whole chunks, so a per-line scan is
+        # reliable for them; script-output lines split across chunks just stay
+        # uncolored
+        for line in text.splitlines(keepends=True):
+            stripped = line.lstrip()
+            if stripped.startswith("[ERROR") or stripped.startswith("[exited with code"):
+                fmt = error_fmt
+            elif stripped.startswith("> "):
+                fmt = cmd_fmt
+            else:
+                fmt = default_fmt
+            cursor.insertText(line, fmt)
+        self._log_pane.setTextCursor(cursor)
         self._log_pane.ensureCursorVisible()
 
     def _on_export_log(self):
@@ -2132,39 +2229,10 @@ class MainWindow(QMainWindow):
         if not self._selected_rows():
             return
         menu = QMenu(self)
-        entries = [
-            ("Bump Version", self._on_bump_version),
-            ("Release", self._on_release),
-            ("Deploy to Vortex", self._on_deploy_to_vortex),
-            ("Launch in Vortex", self._on_open_in_vortex),
-            None,
-            ("Open Folder", self._on_open_folder),
-            ("Open in Editor", self._on_open_editor),
-            ("Open Changelog", self._on_open_changelog),
-            None,
-            ("Open Game Page", self._on_open_nexus),
-            ("Open Extension Page", self._on_open_ext),
-            None,
-            ("Port to Template...", self._on_port_to_template),
-            ("Setup Test Folder", self._on_setup_test),
-            ("Patch", self._on_patch),
-            ("Categorize", self._on_categorize),
-            ("Analyze Log", self._on_analyze_log),
-            ("Audit Scripts", self._on_audit_scripts),
-            None,
-            ("Fetch Icon", self._on_fetch_icon),
-            ("Fetch Cover", self._on_fetch_cover),
-            ("Fetch Title", self._on_fetch_title),
-            ("Fetch Banner", self._on_fetch_banner),
-            ("Fetch Nexus Stats", self._on_fetch_nexus_stats),
-            ("View Images", self._on_view_images),
-        ]
-        for entry in entries:
-            if entry is None:
+        for label, slot_name, sep, _global in ACTION_DEFS:
+            if sep:
                 menu.addSeparator()
-            else:
-                label, slot = entry
-                menu.addAction(label, slot)
+            menu.addAction(label, getattr(self, slot_name))
         menu.exec(self._table.viewport().mapToGlobal(pos))
 
 

@@ -1,5 +1,9 @@
 # Changelog
 
+## Planned Improvements (Not Yet Released)
+
+- None
+
 ## [0.4.0] - 2026-04-06
 
 - Added: UE4SS support

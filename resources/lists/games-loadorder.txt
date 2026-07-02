@@ -7,4 +7,5 @@ nioh3
 thelastofuspart2
 warhammer40000spacemarine2
 warhammer40kdarkheresy
+warhammer40kdarktide
 warhammer40kroguetrader

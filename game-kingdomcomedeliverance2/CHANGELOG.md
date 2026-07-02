@@ -1,6 +1,6 @@
 # Changelog
 
-## FUTURE CHANGES (NOT YET IMPLEMENTED)
+## Planned Improvements (Not Yet Released)
 
 - Changed launcher settings so that Steam version launches through Steam (so that Steam launch arguments are used).
 

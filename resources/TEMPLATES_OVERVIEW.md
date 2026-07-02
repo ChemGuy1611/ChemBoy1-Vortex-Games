@@ -2,6 +2,10 @@
 
 All 16 templates live in `template-*/`. Use `new_extension.py <short-name> <game>` to scaffold a new extension.
 
+**Changelogs:** each template's own `CHANGELOG.md` is scaffold boilerplate copied verbatim into every new extension by `new_extension.py` — never edit it. Real changes to a template's `index.js`/`info.json`/etc. are logged in `resources/template-changelogs/<template-folder>.md` instead. Update that file in the same session as any template edit.
+
+**index.js header:** never reformat the `/*////.../*` header block (Name/Structure/Author/Version/Date/Notes). `new_extension.py`'s `update_index_header()` parses it with a fixed regex — changing its shape breaks scaffolding for every template.
+
 ---
 
 ## Template Selection Guide

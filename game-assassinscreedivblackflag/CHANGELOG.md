@@ -1,5 +1,9 @@
 # Changelog
 
+## Planned Improvements (Not Yet Released)
+
+- None
+
 ## [0.4.3] - 2026-06-30
 
 - Fixed: Fix pathing to Windows folder to adjust to user environment (not hardcoded to C:\Windows).

@@ -1,5 +1,9 @@
 # Changelog
 
+## Planned Improvements (Not Yet Released)
+
+- None
+
 ## [0.1.1] - 2025-05-14
 - Changed BepinEx page and file IDs to strings to avoid errors with numeric IDs.
 

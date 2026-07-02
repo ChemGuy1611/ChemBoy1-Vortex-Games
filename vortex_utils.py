@@ -39,6 +39,7 @@ Usage:
         node_check, node_check_source, eslint_check,
         run_generate_explained, run_generate_explained_batch,
         get_discovery_ids, detect_engine, detect_stores,
+        has_downloader_js, downloads_from_github, requires_unreal_mod_installer,
         validate_index_js,
         log_info, log_error, log_warn,
         find_vortex_exe, safe_windows_dirname,

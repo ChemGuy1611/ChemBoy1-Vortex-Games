@@ -1,5 +1,9 @@
 # Changelog
 
+## Planned Improvements (Not Yet Released)
+
+- None
+
 ## [0.2.0] - 2026-06-26
 
 - Added: Folder-based installer to correct poorly packaged mods.

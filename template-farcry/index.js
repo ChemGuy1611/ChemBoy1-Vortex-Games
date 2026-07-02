@@ -37,6 +37,7 @@ const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
 //feature toggles
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
 const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
+const setupNotification = true; //enable to show the user a notification with special instructions (specify below) - default true: FC Mod Installer usage instructions are always relevant
 const debug = false; //toggle for debug mode
 
 const DATA_FOLDER = "Far Cry XXX";
@@ -905,7 +906,7 @@ async function modFoldersEnsureWritable(gamePath, relPaths) {
 //Setup function
 async function setup(discovery, api, gameSpec) {
   // SYNCHRONOUS CODE ////////////////////////////////////
-  setupNotify(api);
+  if (setupNotification) setupNotify(api);
   SAVE_PATH = getSavePath();
   const state = api.getState();
   GAME_PATH = discovery.path;

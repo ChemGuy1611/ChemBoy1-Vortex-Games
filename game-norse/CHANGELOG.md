@@ -1,9 +1,9 @@
 # Changelog
 
-## Future Changes (NOT IMPLEMENTED YET)
+## Planned Improvements (Not Yet Released)
 
 - None
 
-## [0.1.0] - 2026-XX-XX
+## [0.1.0] - 2026-02-18
 
 - Initial release

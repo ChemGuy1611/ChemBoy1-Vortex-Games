@@ -57,6 +57,7 @@ let multiExe = false; //set to true if there are multiple executables (and multi
 if (EXEC !== EXEC_DEMO) {
   multiExe = true;
 }
+const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
 const debug = false; //toggle for debug mode
 
 // -- END EDIT ZONE -- /////////////////////////////////////////////////////////////////////////////////
@@ -1073,7 +1074,7 @@ async function setup(discovery, api, gameSpec) {
   GAME_PATH = discovery.path;
   STAGING_FOLDER = selectors.installPathForGame(state, gameSpec.game.id);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, gameSpec.game.id);
-  //setupNotify(api);
+  if (setupNotification) setupNotify(api);
   // ASYNC CODE //////////////////////////////////////////
   GAME_VERSION = await setGameVersion(GAME_PATH);
   MODTYPE_FOLDERS.push(FLUFFYMOD_PATH);

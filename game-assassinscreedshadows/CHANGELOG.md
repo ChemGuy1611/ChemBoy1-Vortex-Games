@@ -1,5 +1,9 @@
 # Changelog
 
+## Planned Improvements (Not Yet Released)
+
+- None
+
 ## [0.1.1]
 - Added mod installer tests for .forge files to put files in the correct dlc folder, if necessary. 
 - Removed some unused mod installers.

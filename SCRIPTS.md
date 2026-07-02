@@ -1216,7 +1216,7 @@ The per-folder `index.js`/`info.json`/`CHANGELOG.md` parse is cached in `vortex_
 ### vortex_gui.py — Layout
 
 ```text
-[ Filter: ____________ ]  [Refresh]  [New Game...]  [Group by Engine]  [Clear Checks]
+[ Filter: ____________ ]  [Refresh]  [New Game...]  [Group by Engine]  [Flagged Only]  [Clear Checks]
 [ Bump Version ] [ Release ] [ Deploy to Vortex ] [ Launch in Vortex ] | [ Open Folder ] [ Open in Editor ] [ Open Changelog ]
 [ Open Game Page ] [ Open Extension Page ] | [ Port to Template... ] [ Setup Test Folder ] [ Patch ] [ Categorize ]
 [ Analyze Log ] [ Audit Scripts ] | [ Fetch Icon ] [ Fetch Cover ] [ Fetch Title ] [ Fetch Banner ] [ Fetch Nexus Stats ] [ View Images ]
@@ -1233,13 +1233,15 @@ The per-folder `index.js`/`info.json`/`CHANGELOG.md` parse is cached in `vortex_
 
 - **Sort**: click any column header.
 - **Filter**: case-insensitive substring match on Game ID, Name, Engine, and Note.
-- **Checkboxes**: click the leftmost `[x]` column to check/uncheck a game. Checked games are always visible regardless of filter text and persist across sessions. When any games are checked, toolbar actions operate on the checked set instead of the row selection. **Clear Checks** button (enabled only when something is checked) unchecks all. Status bar shows `N checked` when non-zero.
+- **Flagged Only**: checkable button that restricts the table to flagged rows (checked games stay pinned visible). The state persists across sessions.
+- **Checkboxes**: click the leftmost `[x]` column to check/uncheck a game, or press **Space** to toggle the checkbox on every selected row (the fast path for bulk-checking). Checked games are always visible regardless of filter text and persist across sessions; checked IDs whose extension folder no longer exists are dropped automatically on refresh. When any games are checked, toolbar actions operate on the checked set instead of the row selection. **Clear Checks** button (enabled only when something is checked) unchecks all. Status bar shows `N checked` when non-zero.
 - **Multi-select**: Ctrl/Shift-click rows; used as the action target when no checkboxes are checked.
 - **Right-click**: context menu with the same script actions.
-- **Double-click**: opens `index.js` in the default editor.
+- **Double-click**: opens the double-clicked row's `index.js` in the default editor (always just that row, even while checkboxes are active).
 - **Status bar**: shows `N games shown | M selected` (plus `K checked` when applicable). While a multi-command run is active (e.g. Port to Template over several games), shows `Running: <script> (current/total)`.
 - **Jump to game**: `Ctrl+G` prompts for a game ID (or prefix), clears the filter if the row is hidden, then selects and scrolls to it.
 - **Export Log**: button next to **Clear Log**; saves the log pane to a timestamped `.txt` file via a save dialog.
+- **Keyboard shortcuts**: press `F1` for the full list. Shortcuts and the help dialog are generated from one registry in the source (`SHORTCUT_DEFS`), and the toolbar and context menu from another (`ACTION_DEFS`), so the surfaces cannot drift apart.
 
 ### vortex_gui.py — Toolbar Actions
 
@@ -1288,4 +1290,4 @@ Runs `python new_extension.py <template> "<game>" [flags]`. On success (without 
 
 ### vortex_gui.py — Output
 
-Script output (stdout + stderr merged) streams live into the log pane at the bottom of the window. The log pane scrolls automatically and holds up to 5000 lines.
+Script output (stdout + stderr merged) streams live into the log pane at the bottom of the window. The log pane scrolls automatically and holds up to 5000 lines. Runner markers are colorized: `[ERROR ...]` and `[exited with code N]` lines render red, and `> command` echo lines render in the accent blue.

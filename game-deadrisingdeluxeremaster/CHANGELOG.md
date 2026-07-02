@@ -1,5 +1,9 @@
 # Changelog
 
+## Planned Improvements (Not Yet Released)
+
+- None
+
 ## [0.3.1] - 2026-03-24
 
 - version bump to fix missing main file

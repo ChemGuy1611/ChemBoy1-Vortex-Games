@@ -435,7 +435,7 @@ async function deserializeLoadOrder(context) {
 
   // Get readable mod name using modFolderDerived attribute from mod installer
   async function getModName(folder) {
-    const VORTEX = await isVortexManaged(folder);
+    const VORTEX = await getModId(folder) !== undefined;
     if (!VORTEX) { //If not Steam Workshop, check if mod was not installed by Vortex
       return ('Manual Mod');
     }
@@ -486,7 +486,7 @@ async function deserializeLoadOrder(context) {
       accum.push({
         id: folder,
         name: `${await getModName(folder)} (${folder})`,
-        modId: await isVortexManaged(folder) ? await getModId(folder) : undefined,
+        modId: await getModId(folder),
         enabled: !line.startsWith("--"),
       });
       return Promise.resolve(accum);
@@ -499,7 +499,7 @@ async function deserializeLoadOrder(context) {
       loadOrder.push({
         id: folder,
         name: `${await getModName(folder)} (${folder})`,
-        modId: await isVortexManaged(folder) ? await getModId(folder) : undefined,
+        modId: await getModId(folder),
         enabled: true,
       });
     }

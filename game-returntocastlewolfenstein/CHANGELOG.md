@@ -1,5 +1,9 @@
 # Changelog
 
+## Planned Improvements (Not Yet Released)
+
+- None
+
 ## [0.4.1]
 - Made game discovery more reliable
 - Corrected a typo in a modtype id

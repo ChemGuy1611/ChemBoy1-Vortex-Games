@@ -1,6 +1,6 @@
 # Changelog
 
-## FUTURE
+## Planned Improvements (Not Yet Released)
 
 - Add: Xbox version support - NOTE: Xbox currently crashes on launch with SRMM injector installed.
 

@@ -1,6 +1,6 @@
 # Changelog
 
-## Planned Improvements
+## Planned Improvements (Not Yet Released)
 
 - (UNCERTAIN) Installer for the preview folder???
 

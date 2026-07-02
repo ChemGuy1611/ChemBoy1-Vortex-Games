@@ -1,6 +1,6 @@
 # Changelog
 
-## Future Changes (NOT IMPLEMENTED YET)
+## Planned Improvements (Not Yet Released)
 
 - Xbox support - waiting on stable (and easy to install) mod injector for Xbox version
 - Automatic update checks for Lovely-Injector - need to solve technical issues with version resolution (no version in filename)

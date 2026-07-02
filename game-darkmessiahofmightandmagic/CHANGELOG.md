@@ -1,5 +1,9 @@
 # Changelog
 
+## Planned Improvements (Not Yet Released)
+
+- None
+
 ## [0.3.0] - 2026-03-25
 
 - Added: Button to download wiltOS Mod Launcher from ModDB - provides a means to update

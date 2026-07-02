@@ -1,6 +1,6 @@
 # Changelog
 
-## FUTURE CHANGES (NOT YET IMPLEMENTED)
+## Planned Improvements (Not Yet Released)
 
 - Added check for if sp-common.psarc and bin.psarc files exist in the game folder (indicator of update and need to extract).
 

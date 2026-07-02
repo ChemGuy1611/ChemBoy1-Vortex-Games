@@ -1,5 +1,9 @@
 # Changelog
 
+## Planned Improvements (Not Yet Released)
+
+- None
+
 ## [0.6.2] - 2026-05-06
 
 - Fixed: Type error on race condition due to null path assignment

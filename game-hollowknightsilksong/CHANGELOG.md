@@ -1,6 +1,6 @@
 # Changelog
 
-## Future Improvements (Not Yet Released)
+## Planned Improvements (Not Yet Released)
 
 - Add???: Support for installing MelonLoader plugins. Need the compatibility loader for MelonLoader mods to work (<https://github.com/BepInEx/BepInEx.MelonLoader.Loader>) - there are very few MelonLoader mods.
 

@@ -1,6 +1,6 @@
 # Changelog
 
-## Future Improvements (Not Yet Released)
+## Planned Improvements (Not Yet Released)
 
 - Add full Xbox version support (not on Game Pass) - discovery (need appxmanifest.xml), binaries folders
 

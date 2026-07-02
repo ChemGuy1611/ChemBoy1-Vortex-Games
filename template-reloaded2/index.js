@@ -46,6 +46,7 @@ const RELOADEDMODLOADER_URL_ERR = `XXX`;
 //feature toggles
 const hasXbox = false; //toggle for Xbox version logic
 const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
+const setupNotification = true; //enable to show the user a notification with special instructions (specify below) - default true: Reloaded-II Mod Manager setup instructions are always relevant
 const debug = false; //toggle for debug mode
 
 const PUBLISHER_FOLDER = "";
@@ -845,7 +846,7 @@ async function modFoldersEnsureWritable(gamePath, relPaths) {
 async function setup(discovery, api, gameSpec) {
   // SYNCHRONOUS CODE ////////////////////////////////////
   GAME_PATH = discovery.path;
-  setupNotify(api);
+  if (setupNotification) setupNotify(api);
   const state = api.getState();
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
