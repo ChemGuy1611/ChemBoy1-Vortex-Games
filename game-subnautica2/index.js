@@ -3453,7 +3453,7 @@ function PakContextMenu({ x, y, item, loadOrder, profile, dispatch, context, sel
     stagingFolder ? menuItem('Open Staging Folder', () => { util.opn(stagingFolder).catch(() => null); onClose(); }) : null,
     modPageUrl ? menuItem('Open Mod Page', () => { util.opn(modPageUrl).catch(() => null); onClose(); }) : null,
     item.modId && isModEnabled ? React.createElement('div', { style: sepStyle }) : null,
-    item.modId && isModEnabled ? menuItem('Disable Mod', () => setModsEnabled([item], false)) : null,
+    item.modId && isModEnabled ? menuItem('Disable Vortex Mod', () => setModsEnabled([item], false)) : null,
   );
 }
 

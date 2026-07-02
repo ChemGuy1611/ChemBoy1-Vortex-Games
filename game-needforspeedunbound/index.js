@@ -2,8 +2,8 @@
 Name: Need for Speed Unbound Vortex Extension
 Structure: Frostbite Engine - Frosty Mod Manager
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2026-06-15
+Version: 0.1.1
+Date: 2026-07-02
 Notes:
 -
 /////////////////////////////////////////////*/
@@ -343,7 +343,7 @@ async function isFrostyInstalled(api, spec) {
   let test = Object.keys(mods).some(id => mods[id]?.type === FROSTY_ID);
   if (!test) {
     try {
-      await fs.statAsync(path.join(GAME_PATH, FROSTYMOD_FOLDER, FROSTY_EXEC));
+      await fs.statAsync(path.join(GAME_PATH, FROSTY_FOLDER, FROSTY_EXEC));
       test = true;
     } catch {
       test = false;

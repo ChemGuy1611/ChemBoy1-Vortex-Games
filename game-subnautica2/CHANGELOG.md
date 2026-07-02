@@ -11,6 +11,7 @@
 - Added: "Disable Vortex Mod" / "Enable Vortex Mod" toggle to the UE4SS Load Order context menu (single item, plus "Disable Vortex Mod (N)" for multi-select). This changes the Vortex mod's enabled state (deployment), separate from the per-entry mods.txt enable checkbox.
 - Changed: LogicMods Load Order context menu "Disable Mod" is now a two-way "Disable Vortex Mod" / "Enable Vortex Mod" toggle, shown for all Vortex-managed entries.
 - Changed: Context menu items follow the same section order on all load order pages: entry toggles/lock, move actions, open folder/page, Vortex mod enable/disable.
+- Changed: Pak Load Order context menu "Disable Mod" renamed to "Disable Vortex Mod" to match the other load order pages.
 - Added: "Open Staging Folder" option to the right-click context menu on all load order pages (opens the mod's Vortex staging folder; shown only for Vortex-managed entries). UE4SS multi-select gets "Open Staging Folders (N)".
 
 ## [0.3.1] - 2026-06-22

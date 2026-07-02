@@ -340,7 +340,7 @@ async function isFrostyInstalled(api, spec) {
   let test = Object.keys(mods).some(id => mods[id]?.type === FROSTY_ID);
   if (!test) {
     try {
-      await fs.statAsync(path.join(GAME_PATH, FROSTYMOD_FOLDER, FROSTY_EXEC));
+      await fs.statAsync(path.join(GAME_PATH, FROSTY_FOLDER, FROSTY_EXEC));
       test = true;
     } catch {
       test = false;

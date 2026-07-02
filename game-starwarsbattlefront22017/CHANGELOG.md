@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [1.0.3] - 2026-07-02
+
+- Fixed: Path typo in Frosty install check fallback
+
 ## [1.0.2] - 2026-06-16
 
 - Fixed: Typo in registry discovery key

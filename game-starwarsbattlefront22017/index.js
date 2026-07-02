@@ -2,8 +2,8 @@
 Name: STAR WARS Battlefront II Vortex Extension
 Structure: Frostbite Engine - Frosty Mod Manager
 Author: ChemBoy1
-Version: 1.0.2
-Date: 2026-06-16
+Version: 1.0.3
+Date: 2026-07-02
 Notes:
 -
 /////////////////////////////////////////////*/
@@ -324,7 +324,7 @@ async function isFrostyInstalled(api, spec) {
   let test = Object.keys(mods).some(id => mods[id]?.type === FROSTY_ID);
   if (!test) {
     try {
-      await fs.statAsync(path.join(GAME_PATH, FROSTYMOD_FOLDER, FROSTY_EXEC));
+      await fs.statAsync(path.join(GAME_PATH, FROSTY_FOLDER, FROSTY_EXEC));
       test = true;
     } catch {
       test = false;
