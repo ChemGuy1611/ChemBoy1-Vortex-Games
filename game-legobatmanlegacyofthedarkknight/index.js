@@ -2,8 +2,8 @@
 Name: LEGO Batman: Legacy of the Dark Knight Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 0.3.1
-Date: 2026-06-22
+Version: 0.4.0
+Date: 2026-07-12
 Notes:
 -
 ////////////////////////////////////////////////*/
@@ -2944,7 +2944,33 @@ async function didPurge(api, profileId) { //run on mod purge
 
 //React load order instructions renderer
 function LoadOrderInstructions() {
+  const { statusFilter, setStatusFilter } = usePakLOState();
+  const { useSelector } = require('react-redux');
+  const profile = useSelector((state) => selectors.activeProfile(state));
+  const loadOrder = useSelector((state) => util.getSafe(state, ['persistent', 'loadOrder', profile?.id], []));
+  const modState = useSelector((state) => util.getSafe(state, ['persistent', 'profiles', profile?.id, 'modState'], {}));
+  const isLocked = (entry) => [true, 'true', 'always'].includes(entry?.locked);
+  const isEnabled = (entry) => util.getSafe(modState, [entry.modId, 'enabled'], false);
+  // Count entries matching the active filter (matched / total), shown beside the pills.
+  const total = loadOrder.length;
+  const matched = statusFilter.size > 0
+    ? loadOrder.filter((e) => matchesStatus(e, statusFilter, isEnabled, isLocked)).length
+    : total;
+  React.useEffect(() => {
+    const styleId = 'fblo-status-filter-hide-style';
+    if (!globalThis.document.getElementById(styleId)) {
+      const style = globalThis.document.createElement('style');
+      style.id = styleId;
+      style.textContent = '.file-based-load-order-list .list-group > div:has(.lo-row-hidden) { display: none !important; }';
+      globalThis.document.head.appendChild(style);
+    }
+  }, []);
   return React.createElement('div', null,
+    React.createElement(StatusPills, { active: statusFilter, setActive: setStatusFilter, groups: ['enabled', 'locked', 'unmanaged'], count: statusFilter.size > 0 ? { matched, total } : null }),
+    React.createElement('p', { style: { fontStyle: 'italic', color: '#7ec8e3' } },
+      'Filter the list above by status. Clear the filter before reordering mods.',
+    ),
+    React.createElement('br', null),
     React.createElement('p', null,
       'Drag and drop the mods on the left to change the order in which they load. ',
     ),
@@ -2977,9 +3003,10 @@ function LoadOrderInstructions() {
   );
 }
 
-//* PAK LO selection + context menu state (module-level pub-sub, shared across all item renderer instances)
+//* PAK LO selection + context menu + status filter state (module-level pub-sub, shared across all item renderer instances)
 let _pakSelectedIds = new Set();
 let _pakContextMenu = null;
+let _pakStatusFilter = new Set();
 const _pakListeners = new Set();
 function _notifyPak() { _pakListeners.forEach(l => l()); }
 function usePakLOState() {
@@ -2993,7 +3020,137 @@ function usePakLOState() {
     setSelectedIds: (fn) => { _pakSelectedIds = fn(_pakSelectedIds); _notifyPak(); },
     contextMenu: _pakContextMenu,
     setContextMenu: (val) => { _pakContextMenu = val; _notifyPak(); },
+    statusFilter: _pakStatusFilter,
+    setStatusFilter: (next) => { _pakStatusFilter = next; _notifyPak(); },
   };
+}
+
+//Resolve the mod page URL for a Vortex-managed load order entry (undefined when not resolvable).
+//Prefers the mod's homepage attribute; falls back to composing the Nexus URL from the numeric mod id.
+function getModPageURL(api, vortexModId) {
+  if (vortexModId === undefined) return undefined;
+  const attributes = util.getSafe(api.getState(), ['persistent', 'mods', GAME_ID, vortexModId, 'attributes'], {});
+  if (attributes.homepage) return attributes.homepage;
+  if (attributes.source === 'nexus' && attributes.modId !== undefined) {
+    return `https://www.nexusmods.com/${GAME_ID}/mods/${attributes.modId}`;
+  }
+  return undefined;
+}
+
+//Resolve the staging folder of a Vortex-managed load order entry (undefined when not resolvable)
+function getModStagingFolder(api, vortexModId) {
+  if (vortexModId === undefined) return undefined;
+  const state = api.getState();
+  const installationPath = util.getSafe(state, ['persistent', 'mods', GAME_ID, vortexModId, 'installationPath'], undefined);
+  const stagingPath = selectors.installPathForGame(state, GAME_ID);
+  if (!installationPath || !stagingPath) return undefined;
+  return path.join(stagingPath, installationPath);
+}
+
+//Status filter shared helpers (load order pages). Groups combine with AND across, OR within.
+const STATUS_GROUP_TOKENS = { enabled: ['enabled', 'disabled'], locked: ['locked', 'unlocked'], unmanaged: ['unmanaged'] };
+const STATUS_TOKEN_LABELS = { enabled: 'Enabled', disabled: 'Disabled', locked: 'Locked', unlocked: 'Unlocked', unmanaged: 'Unmanaged' };
+
+function matchesStatus(entry, active, isEnabledFn, isLockedFn) {
+  if (active.has('enabled') || active.has('disabled')) {
+    const en = isEnabledFn(entry);
+    if (!((active.has('enabled') && en) || (active.has('disabled') && !en))) return false;
+  }
+  if (active.has('locked') || active.has('unlocked')) {
+    const lk = isLockedFn(entry);
+    if (!((active.has('locked') && lk) || (active.has('unlocked') && !lk))) return false;
+  }
+  if (active.has('unmanaged') && entry.modId !== undefined) return false;
+  return true;
+}
+
+//Inline toggle pills for status filtering (used in the InfoPanel surfaces, i.e. the core FBLO page)
+function StatusPills({ active, setActive, groups, count }) {
+  const { Button } = require('react-bootstrap');
+  const tokens = groups.reduce((acc, g) => acc.concat(STATUS_GROUP_TOKENS[g] || []), []);
+  const toggle = (token) => {
+    const next = new Set(active);
+    next.has(token) ? next.delete(token) : next.add(token);
+    setActive(next);
+  };
+  return React.createElement('div', { style: { display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center', marginBottom: 8 } },
+    React.createElement('span', { style: { fontWeight: 'bold', marginRight: 4 } }, 'Filter:'),
+    count != null ? React.createElement('span', { style: { color: '#7ec8e3', marginRight: 4 } }, `${count.matched} / ${count.total}`) : null,
+    ...tokens.map(token => React.createElement(Button, {
+      key: token,
+      bsSize: 'xsmall',
+      bsStyle: active.has(token) ? 'success' : 'default',
+      style: active.has(token) ? { fontWeight: 'bold' } : undefined,
+      onClick: () => toggle(token),
+    }, STATUS_TOKEN_LABELS[token])),
+    active.size > 0 ? React.createElement(Button, {
+      key: '__clear',
+      bsSize: 'xsmall',
+      bsStyle: 'link',
+      onClick: () => setActive(new Set()),
+    }, 'Clear') : null,
+  );
+}
+
+//Dropdown status filter (used on the custom UE4SS/LogicMods pages, beside the text search box).
+//Hand-built (not react-bootstrap Dropdown, which auto-closes on every inner click) - dismiss on
+//outside click / contextmenu / Escape, matching the dismiss pattern already used for context menus.
+function LoadOrderStatusFilter({ active, setActive, groups, count }) {
+  const { Button } = require('react-bootstrap');
+  const { Icon } = require('vortex-api');
+  const [open, setOpen] = React.useState(false);
+  const ref = React.useRef(null);
+  const tokens = groups.reduce((acc, g) => acc.concat(STATUS_GROUP_TOKENS[g] || []), []);
+
+  React.useEffect(() => {
+    if (!open) return;
+    const dismiss = (evt) => { if (ref.current && !ref.current.contains(evt.target)) setOpen(false); };
+    const onKey = (evt) => { if (evt.key === 'Escape') setOpen(false); };
+    globalThis.document.addEventListener('click', dismiss);
+    globalThis.document.addEventListener('contextmenu', dismiss);
+    globalThis.document.addEventListener('keydown', onKey);
+    return () => {
+      globalThis.document.removeEventListener('click', dismiss);
+      globalThis.document.removeEventListener('contextmenu', dismiss);
+      globalThis.document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  const toggle = (token) => {
+    const next = new Set(active);
+    next.has(token) ? next.delete(token) : next.add(token);
+    setActive(next);
+  };
+
+  return React.createElement('div', { ref, style: { position: 'relative', display: 'inline-block', marginLeft: 8 } },
+    React.createElement(Button, {
+      bsStyle: active.size > 0 ? 'success' : 'primary',
+      style: { display: 'flex', alignItems: 'center', gap: 6, fontWeight: 'bold' },
+      onClick: (evt) => { evt.stopPropagation(); setOpen(o => !o); },
+    },
+      React.createElement(Icon, { name: 'filter' }),
+      `Filter${active.size > 0 ? ` (${active.size})` : ''}${count != null ? ` — ${count.matched}/${count.total}` : ''}`,
+    ),
+    open ? React.createElement('div', {
+      style: {
+        position: 'absolute', top: '100%', right: 0, zIndex: 9999, marginTop: 2,
+        background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 4,
+        padding: '6px 0', minWidth: 160, boxShadow: '0 4px 12px rgba(0,0,0,0.6)',
+      },
+    },
+      tokens.map(token => React.createElement('label', {
+        key: token,
+        style: { display: 'flex', alignItems: 'center', gap: 6, padding: '4px 12px', cursor: 'pointer', margin: 0 },
+      },
+        React.createElement('input', { type: 'checkbox', checked: active.has(token), onChange: () => toggle(token) }),
+        STATUS_TOKEN_LABELS[token],
+      )),
+      active.size > 0 ? React.createElement('div', {
+        style: { padding: '4px 12px', cursor: 'pointer', color: '#7ec8e3', borderTop: '1px solid rgba(255,255,255,0.1)', marginTop: 4 },
+        onClick: () => setActive(new Set()),
+      }, 'Clear') : null,
+    ) : null,
+  );
 }
 
 //* React line item renderer for load order
@@ -3042,7 +3199,7 @@ function LoadOrderItemRenderer(props) {
 
   const isEntryLocked = isLocked(loEntry);
 
-  const { selectedIds, setSelectedIds, contextMenu, setContextMenu } = usePakLOState();
+  const { selectedIds, setSelectedIds, contextMenu, setContextMenu, statusFilter } = usePakLOState();
   const isSelected = selectedIds.has(loEntry.id);
   const allIds = loadOrder.map(e => e.id);
 
@@ -3091,6 +3248,13 @@ function LoadOrderItemRenderer(props) {
 
   const classes = ['load-order-entry'];
   if (className) classes.push(...className.split(' '));
+
+  // Status filter: render hidden (but keep the DnD item count stable) when the entry is filtered out.
+  // The 'lo-row-hidden' marker lets the injected CSS collapse the whole DraggableListItem wrapper
+  // (the two dnd <div>s the renderer can't reach), otherwise their spacing leaves visible gaps.
+  if (!matchesStatus(loEntry, statusFilter, () => isModEnabled, isLocked)) {
+    return React.createElement(ListGroupItem, { key: loEntry.id, className: 'lo-row-hidden', style: { display: 'none' } });
+  }
 
   return React.createElement(
     ListGroupItem,
@@ -3231,9 +3395,6 @@ function PakContextMenu({ x, y, item, loadOrder, profile, dispatch, context, sel
   if (isMulti) {
     const n = targets.length;
     return React.createElement('div', { ref: clampRef, style: menuStyle },
-      //menuItem(`Enable Selected (${n})`, () => setModsEnabled(targets, true)),
-      menuItem(`Disable Selected (${n})`, () => setModsEnabled(targets, false)),
-      React.createElement('div', { style: sepStyle }),
       menuItem(`Lock Selected (${n})`, () => applyToTargets((lo) => lo.map(e => targets.find(t => t.id === e.id) ? { ...e, locked: true } : e), true)),
       menuItem(`Unlock Selected (${n})`, () => applyToTargets((lo) => lo.map(e => targets.find(t => t.id === e.id) ? { ...e, locked: false } : e), true)),
       React.createElement('div', { style: sepStyle }),
@@ -3248,12 +3409,16 @@ function PakContextMenu({ x, y, item, loadOrder, profile, dispatch, context, sel
         const rest = lo.filter(e => !targets.find(t => t.id === e.id));
         return [...rest, ...selected];
       })),
+      React.createElement('div', { style: sepStyle }),
+      //menuItem(`Enable Selected (${n})`, () => setModsEnabled(targets, true)),
+      menuItem(`Disable Selected (${n})`, () => setModsEnabled(targets, false)),
     );
   }
 
+  const modPageUrl = getModPageURL(context.api, item.modId);
+  const stagingFolder = getModStagingFolder(context.api, item.modId);
+
   return React.createElement('div', { ref: clampRef, style: menuStyle },
-    item.modId && isModEnabled ? menuItem('Disable Mod', () => setModsEnabled([item], false)) : null,
-    item.modId && isModEnabled ? React.createElement('div', { style: sepStyle }) : null,
     menuItem(isEntryLocked ? 'Unlock Position' : 'Lock Position', () => applyToTargets((lo) => lo.map(e => e.id === item.id ? { ...e, locked: !isEntryLocked } : e), true)),
     React.createElement('div', { style: sepStyle }),
     menuItem('Move to Top', () => applyToTargets((lo) => {
@@ -3265,6 +3430,11 @@ function PakContextMenu({ x, y, item, loadOrder, profile, dispatch, context, sel
       const rest = lo.filter(e => e.id !== item.id);
       return [...rest, item];
     })),
+    (stagingFolder || modPageUrl) ? React.createElement('div', { style: sepStyle }) : null,
+    stagingFolder ? menuItem('Open Staging Folder', () => { util.opn(stagingFolder).catch(() => null); onClose(); }) : null,
+    modPageUrl ? menuItem('Open Mod Page', () => { util.opn(modPageUrl).catch(() => null); onClose(); }) : null,
+    item.modId && isModEnabled ? React.createElement('div', { style: sepStyle }) : null,
+    item.modId && isModEnabled ? menuItem('Disable Vortex Mod', () => setModsEnabled([item], false)) : null,
   );
 }
 
@@ -3537,6 +3707,17 @@ function Ue4ssContextMenu({ x, y, item, loadOrder, profileId, dispatch, api, gam
   const isEntryLocked = isLocked(item);
   const isEntryEnabled = item.enabled ?? true;
 
+  //Vortex mod state (deployment), distinct from the LO-entry enabled flag written to mods.txt
+  const isModEnabled = util.getSafe(api.getState(), ['persistent', 'profiles', profileId, 'modState', item.modId, 'enabled'], false);
+  const setVortexModsEnabled = (entries, enable) => {
+    const batch = entries.filter(e => e.modId).map(e => actions.setModEnabled(profileId, e.modId, enable));
+    if (batch.length) {
+      util.batchDispatch(dispatch, batch);
+      requestDeployment(api, spec);
+    }
+    onClose();
+  };
+
   const clampRef = (el) => {
     if (!el) return;
     const rect = el.getBoundingClientRect();
@@ -3569,8 +3750,6 @@ function Ue4ssContextMenu({ x, y, item, loadOrder, profileId, dispatch, api, gam
       menuItem(`Lock Selected (${n})`, () => applyToTargets((lo) => lo.map(e => targets.find(t => t.id === e.id) ? { ...e, locked: true } : e))),
       menuItem(`Unlock Selected (${n})`, () => applyToTargets((lo) => lo.map(e => targets.find(t => t.id === e.id) ? { ...e, locked: false } : e))),
       React.createElement('div', { style: sepStyle }),
-      menuItem(`Open Mod Folders (${n})`, () => { targets.forEach(t => util.opn(path.join(gamePath, BINARIES_PATH, UE4SS_MOD_PATH, t.id)).catch(() => null)); onClose(); }),
-      React.createElement('div', { style: sepStyle }),
       menuItem(`Move to Top (${n})`, () => applyToTargets((lo) => {
         const locked = lo.filter(isLocked);
         const selected = lo.filter(e => targets.find(t => t.id === e.id) && !isLocked(e));
@@ -3582,15 +3761,27 @@ function Ue4ssContextMenu({ x, y, item, loadOrder, profileId, dispatch, api, gam
         const rest = lo.filter(e => !targets.find(t => t.id === e.id));
         return [...rest, ...selected];
       })),
+      React.createElement('div', { style: sepStyle }),
+      menuItem(`Open Mod Folders (${n})`, () => { targets.forEach(t => util.opn(path.join(gamePath, BINARIES_PATH, UE4SS_MOD_PATH, t.id)).catch(() => null)); onClose(); }),
+      targets.some(t => t.modId !== undefined) ? menuItem(`Open Staging Folders (${n})`, () => {
+        targets.forEach(t => {
+          const folder = getModStagingFolder(api, t.modId);
+          if (folder) util.opn(folder).catch(() => null);
+        });
+        onClose();
+      }) : null,
+      React.createElement('div', { style: sepStyle }),
+      menuItem(`Disable Vortex Mod (${n})`, () => setVortexModsEnabled(targets, false)),
     );
   }
+
+  const modPageUrl = getModPageURL(api, item.modId);
+  const stagingFolder = getModStagingFolder(api, item.modId);
 
   return React.createElement('div', { ref: clampRef, style: menuStyle },
     menuItem(isEntryEnabled ? 'Disable' : 'Enable', () => applyToTargets((lo) => lo.map(e => e.id === item.id ? { ...e, enabled: !isEntryEnabled } : e))),
     menuItem(isEntryLocked ? 'Unlock Position' : 'Lock Position', () => applyToTargets((lo) => lo.map(e => e.id === item.id ? { ...e, locked: !isEntryLocked } : e))),
     configFilePath ? menuItem('Configure', () => { util.opn(configFilePath).catch(() => null); onClose(); }) : null,
-    React.createElement('div', { style: sepStyle }),
-    menuItem('Open Mod Folder', () => { util.opn(path.join(gamePath, BINARIES_PATH, UE4SS_MOD_PATH, item.id)).catch(() => null); onClose(); }),
     React.createElement('div', { style: sepStyle }),
     menuItem('Move to Top', () => applyToTargets((lo) => {
       const locked = lo.filter(isLocked);
@@ -3601,6 +3792,14 @@ function Ue4ssContextMenu({ x, y, item, loadOrder, profileId, dispatch, api, gam
       const rest = lo.filter(e => e.id !== item.id);
       return [...rest, item];
     })),
+    React.createElement('div', { style: sepStyle }),
+    menuItem('Open Mod Folder', () => { util.opn(path.join(gamePath, BINARIES_PATH, UE4SS_MOD_PATH, item.id)).catch(() => null); onClose(); }),
+    stagingFolder ? menuItem('Open Staging Folder', () => { util.opn(stagingFolder).catch(() => null); onClose(); }) : null,
+    modPageUrl ? menuItem('Open Mod Page', () => { util.opn(modPageUrl).catch(() => null); onClose(); }) : null,
+    item.modId !== undefined ? React.createElement('div', { style: sepStyle }) : null,
+    item.modId !== undefined
+      ? menuItem(isModEnabled ? 'Disable Vortex Mod' : 'Enable Vortex Mod', () => setVortexModsEnabled([item], !isModEnabled))
+      : null,
   );
 }
 
@@ -3648,6 +3847,7 @@ function Ue4ssLoadOrderPage({ api }) {
   const loEnabled = useSelector(state => util.getSafe(state, ['settings', GAME_ID, 'ue4ssLoEnabled'], true));
   const dispatch = useDispatch();
   const [filterText, setFilterText] = React.useState('');
+  const [statusFilter, setStatusFilter] = React.useState(new Set());
   const [selectedIds, setSelectedIds] = React.useState(new Set());
   const [contextMenu, setContextMenu] = React.useState(null);
 
@@ -3679,9 +3879,13 @@ function Ue4ssLoadOrderPage({ api }) {
     }
   }, []);
 
+  const isFiltered = !!filterText || statusFilter.size > 0;
+  const isEntryEnabled = (e) => e.enabled !== false;
+  const isEntryLocked = (e) => [true, 'true', 'always'].includes(e?.locked);
+
   const onApply = React.useCallback((reordered) => {
     let newLO;
-    if (filterText) {
+    if (isFiltered) {
       const filteredIds = new Set(reordered.map(e => e.id));
       const positions = loadOrder.reduce((acc, e, i) => { if (filteredIds.has(e.id)) acc.push(i); return acc; }, []);
       newLO = [...loadOrder];
@@ -3691,11 +3895,11 @@ function Ue4ssLoadOrderPage({ api }) {
     }
     dispatch(setUe4ssLoadOrder(profileId, newLO));
     serializeUe4ss(api, newLO);
-  }, [dispatch, loadOrder, filterText, profileId]);
+  }, [dispatch, loadOrder, isFiltered, profileId]);
 
-  const filteredOrder = filterText
-    ? loadOrder.filter(e => e.name.toLowerCase().includes(filterText.toLowerCase()))
-    : loadOrder;
+  const filteredOrder = loadOrder.filter(e =>
+    (!filterText || e.name.toLowerCase().includes(filterText.toLowerCase()))
+    && matchesStatus(e, statusFilter, isEntryEnabled, isEntryLocked));
 
   const allIds = filteredOrder.map(e => e.id);
 
@@ -3713,13 +3917,20 @@ function Ue4ssLoadOrderPage({ api }) {
 
   return React.createElement(MainPage, null,
     React.createElement(MainPage.Header, null,
-      React.createElement(FormControl, {
-        type: 'search',
-        placeholder: 'Filter mods...',
-        className: 'file-based-load-order-filter',
-        value: filterText,
-        onChange: (evt) => setFilterText(evt.target.value),
-      })
+      React.createElement('div', { style: { display: 'flex', alignItems: 'center', width: '100%' } },
+        React.createElement(FormControl, {
+          type: 'search',
+          placeholder: 'Filter mods...',
+          className: 'file-based-load-order-filter',
+          style: { flex: 1 },
+          value: filterText,
+          onChange: (evt) => setFilterText(evt.target.value),
+        }),
+        React.createElement(LoadOrderStatusFilter, {
+          active: statusFilter, setActive: setStatusFilter, groups: ['enabled', 'locked', 'unmanaged'],
+          count: statusFilter.size > 0 ? { matched: filteredOrder.length, total: loadOrder.length } : null,
+        }),
+      )
     ),
     React.createElement(MainPage.Body, null,
       React.createElement(DNDContainer, { style: { height: '95%' } },
@@ -3969,16 +4180,8 @@ function LogicModsContextMenu({ x, y, item, loadOrder, profileId, dispatch, api,
   if (isMulti) {
     const n = targets.length;
     return React.createElement('div', { ref: clampRef, style: menuStyle },
-      menuItem(`Disable Selected (${n})`, () => {
-        const batch = targets.filter(e => e.modId).map(e => actions.setModEnabled(profileId, e.modId, false));
-        if (batch.length) { util.batchDispatch(dispatch, batch); requestDeployment(api, spec); }
-        onClose();
-      }),
-      React.createElement('div', { style: sepStyle }),
       menuItem(`Lock Selected (${n})`, () => applyToTargets((lo) => lo.map(e => targets.find(t => t.id === e.id) ? { ...e, locked: true } : e))),
       menuItem(`Unlock Selected (${n})`, () => applyToTargets((lo) => lo.map(e => targets.find(t => t.id === e.id) ? { ...e, locked: false } : e))),
-      React.createElement('div', { style: sepStyle }),
-      menuItem(`Open LogicMods Folder (${n})`, () => { util.opn(path.join(GAME_PATH, LOGICMODS_PATH, LOGICMODS_FOLDER)).catch(() => null); onClose(); }),
       React.createElement('div', { style: sepStyle }),
       menuItem(`Move to Top (${n})`, () => applyToTargets((lo) => {
         const locked = lo.filter(isLocked);
@@ -3991,19 +4194,22 @@ function LogicModsContextMenu({ x, y, item, loadOrder, profileId, dispatch, api,
         const rest = lo.filter(e => !targets.find(t => t.id === e.id));
         return [...rest, ...selected];
       })),
+      React.createElement('div', { style: sepStyle }),
+      menuItem(`Open LogicMods Folder (${n})`, () => { util.opn(path.join(GAME_PATH, LOGICMODS_PATH, LOGICMODS_FOLDER)).catch(() => null); onClose(); }),
+      React.createElement('div', { style: sepStyle }),
+      menuItem(`Disable Selected (${n})`, () => {
+        const batch = targets.filter(e => e.modId).map(e => actions.setModEnabled(profileId, e.modId, false));
+        if (batch.length) { util.batchDispatch(dispatch, batch); requestDeployment(api, spec); }
+        onClose();
+      }),
     );
   }
 
+  const modPageUrl = getModPageURL(api, item.modId);
+  const stagingFolder = getModStagingFolder(api, item.modId);
+
   return React.createElement('div', { ref: clampRef, style: menuStyle },
-    item.modId && isModEnabled ? menuItem('Disable Mod', () => {
-      dispatch(actions.setModEnabled(profileId, item.modId, false));
-      requestDeployment(api, spec);
-      onClose();
-    }) : null,
-    item.modId && isModEnabled ? React.createElement('div', { style: sepStyle }) : null,
     menuItem(isEntryLocked ? 'Unlock Position' : 'Lock Position', () => applyToTargets((lo) => lo.map(e => e.id === item.id ? { ...e, locked: !isEntryLocked } : e))),
-    React.createElement('div', { style: sepStyle }),
-    menuItem('Open LogicMods Folder', () => { util.opn(path.join(GAME_PATH, LOGICMODS_PATH, LOGICMODS_FOLDER)).catch(() => null); onClose(); }),
     React.createElement('div', { style: sepStyle }),
     menuItem('Move to Top', () => applyToTargets((lo) => {
       const locked = lo.filter(isLocked);
@@ -4014,6 +4220,16 @@ function LogicModsContextMenu({ x, y, item, loadOrder, profileId, dispatch, api,
       const rest = lo.filter(e => e.id !== item.id);
       return [...rest, item];
     })),
+    React.createElement('div', { style: sepStyle }),
+    menuItem('Open LogicMods Folder', () => { util.opn(path.join(GAME_PATH, LOGICMODS_PATH, LOGICMODS_FOLDER)).catch(() => null); onClose(); }),
+    stagingFolder ? menuItem('Open Staging Folder', () => { util.opn(stagingFolder).catch(() => null); onClose(); }) : null,
+    modPageUrl ? menuItem('Open Mod Page', () => { util.opn(modPageUrl).catch(() => null); onClose(); }) : null,
+    item.modId ? React.createElement('div', { style: sepStyle }) : null,
+    item.modId ? menuItem(isModEnabled ? 'Disable Vortex Mod' : 'Enable Vortex Mod', () => {
+      dispatch(actions.setModEnabled(profileId, item.modId, !isModEnabled));
+      requestDeployment(api, spec);
+      onClose();
+    }) : null,
   );
 }
 
@@ -4058,8 +4274,10 @@ function LogicModsLoadOrderPage({ api }) {
   const profileId = useSelector(state => selectors.activeProfile(state)?.id);
   const loadOrder = useSelector(state =>
     util.getSafe(state, ['persistent', 'logicModsLoadOrder', profileId, 'loadOrder'], []));
+  const modState = useSelector(state => util.getSafe(state, ['persistent', 'profiles', profileId, 'modState'], {}));
   const dispatch = useDispatch();
   const [filterText, setFilterText] = React.useState('');
+  const [statusFilter, setStatusFilter] = React.useState(new Set());
   const [selectedIds, setSelectedIds] = React.useState(new Set());
   const [contextMenu, setContextMenu] = React.useState(null);
 
@@ -4091,9 +4309,13 @@ function LogicModsLoadOrderPage({ api }) {
     }
   }, []);
 
+  const isFiltered = !!filterText || statusFilter.size > 0;
+  const isEntryEnabled = (e) => util.getSafe(modState, [e.modId, 'enabled'], false);
+  const isEntryLocked = (e) => [true, 'true', 'always'].includes(e?.locked);
+
   const onApply = React.useCallback((reordered) => {
     let newLO;
-    if (filterText) {
+    if (isFiltered) {
       const filteredIds = new Set(reordered.map(e => e.id));
       const positions = loadOrder.reduce((acc, e, i) => { if (filteredIds.has(e.id)) acc.push(i); return acc; }, []);
       newLO = [...loadOrder];
@@ -4103,11 +4325,11 @@ function LogicModsLoadOrderPage({ api }) {
     }
     dispatch(setLogicModsLoadOrder(profileId, newLO));
     serializeLogicMods(api, newLO);
-  }, [dispatch, loadOrder, filterText, profileId]);
+  }, [dispatch, loadOrder, isFiltered, profileId]);
 
-  const filteredOrder = filterText
-    ? loadOrder.filter(e => e.name.toLowerCase().includes(filterText.toLowerCase()))
-    : loadOrder;
+  const filteredOrder = loadOrder.filter(e =>
+    (!filterText || e.name.toLowerCase().includes(filterText.toLowerCase()))
+    && matchesStatus(e, statusFilter, isEntryEnabled, isEntryLocked));
 
   const allIds = filteredOrder.map(e => e.id);
 
@@ -4119,13 +4341,20 @@ function LogicModsLoadOrderPage({ api }) {
 
   return React.createElement(MainPage, null,
     React.createElement(MainPage.Header, null,
-      React.createElement(FormControl, {
-        type: 'search',
-        placeholder: 'Filter mods...',
-        className: 'file-based-load-order-filter',
-        value: filterText,
-        onChange: (evt) => setFilterText(evt.target.value),
-      })
+      React.createElement('div', { style: { display: 'flex', alignItems: 'center', width: '100%' } },
+        React.createElement(FormControl, {
+          type: 'search',
+          placeholder: 'Filter mods...',
+          className: 'file-based-load-order-filter',
+          style: { flex: 1 },
+          value: filterText,
+          onChange: (evt) => setFilterText(evt.target.value),
+        }),
+        React.createElement(LoadOrderStatusFilter, {
+          active: statusFilter, setActive: setStatusFilter, groups: ['enabled', 'locked', 'unmanaged'],
+          count: statusFilter.size > 0 ? { matched: filteredOrder.length, total: loadOrder.length } : null,
+        }),
+      )
     ),
     React.createElement(MainPage.Body, null,
       React.createElement(DNDContainer, { style: { height: '95%' } },

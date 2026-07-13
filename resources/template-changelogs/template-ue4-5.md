@@ -1,5 +1,13 @@
 # template-ue4-5 Changelog
 
+## [2026-07-12]
+
+- Added: Status filtering on all load order pages (Enabled/Disabled, Locked/Unlocked, Unmanaged), ported from game-subnautica2 0.4.0. Pak Load Order page gets filter pills in the info panel (`StatusPills` + `usePakLOState` statusFilter state + `lo-row-hidden` row hiding with injected `:has()` CSS); UE4SS and LogicMods pages get a `LoadOrderStatusFilter` dropdown beside the search box. Shows a "matched / total" count while a filter is active. Shared `matchesStatus` predicate (AND across groups, OR within a group; text search ANDs on top).
+- Added: `getModPageURL` and `getModStagingFolder` helpers; "Open Mod Page" and "Open Staging Folder" context-menu items on all load order pages (Vortex-managed entries only). UE4SS multi-select gets "Open Staging Folders (N)".
+- Added: `setVortexModsEnabled` helper; "Disable Vortex Mod" / "Enable Vortex Mod" toggle on the UE4SS Load Order context menu (single + "Disable Vortex Mod (N)" multi).
+- Changed: LogicMods context menu "Disable Mod" is now a two-way "Disable Vortex Mod" / "Enable Vortex Mod" toggle; Pak context menu "Disable Mod" renamed to "Disable Vortex Mod".
+- Changed: Context menus on all load order pages aligned to the canonical section order, with the Vortex mod enable/disable section moved to the bottom of each menu.
+
 ## [2026-07-01]
 
 - Changelog tracking started for this template.
