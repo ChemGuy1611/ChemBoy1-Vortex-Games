@@ -2,7 +2,8 @@
 
 How the app discovers, loads, sandboxes, and runs extensions — the plugin runtime itself. The
 **authoring** side (what your `init(context)` looks like, which `context.register*` calls exist,
-the API you receive) is covered by `reference_vortex_api_overview` / `reference_vortex_api_core`.
+the API you receive) is covered by the `vortex-api` type declarations
+(`node_modules/vortex-api/lib/api.d.ts`) and the authoring docs in this folder.
 This doc is how the manager drives them.
 
 Driver: `Vortex/src/renderer/src/ExtensionManager.ts` (+ `ExtensionProvider.ts`).
@@ -87,5 +88,4 @@ replay, downstream extensions can call them in their own `register*`/`once`.
 ## See also
 
 Runtime siblings: `VORTEX_EVENT_BUS.md` (once + handlers), `VORTEX_APP.md` (overview). Authoring:
-`reference_vortex_api_overview`, `reference_vortex_api_core`. Memory:
-`reference_vortex_extension_loading`.
+`REGISTER_GAME.md`, `INSTALLER_SYSTEM.md`, and the `vortex-api` type declarations.

@@ -3,8 +3,7 @@
 How the Vortex app **drives** a game from "known to exist" through "discovered on disk" to
 "actively managed" (`gamemode-activated`). This is the **app-runtime** view — the contract an
 extension implements (`IGame`, `queryPath`, `setup`, `requiresLauncher`, tools) is covered by the
-authoring docs: see `REGISTER_GAME.md`, `REQUIRES_LAUNCHER.md`, `RUN_EXECUTABLE.md` and memory
-`reference_register_game` / `reference_requires_launcher` / `reference_run_executable`.
+authoring docs: see `REGISTER_GAME.md`, `REQUIRES_LAUNCHER.md`, and `RUN_EXECUTABLE.md`.
 
 Almost everything here lives in the `gamemode_management` core extension
 (`Vortex/src/renderer/src/extensions/gamemode_management/`), centered on `GameModeManager.ts`.
@@ -130,4 +129,4 @@ runs; `setGameMode` seeds it from a tool's `defaultPrimary` flag. Launching the 
 
 Runtime siblings: `VORTEX_MOD_INSTALL.md`, `VORTEX_DEPLOYMENT.md`, `VORTEX_PROFILES.md`,
 `VORTEX_EVENT_BUS.md`. Overview: `VORTEX_APP.md`. Authoring contracts: `REGISTER_GAME.md`,
-`REQUIRES_LAUNCHER.md`, `RUN_EXECUTABLE.md`. Memory: `reference_vortex_game_lifecycle`.
+`REQUIRES_LAUNCHER.md`, `RUN_EXECUTABLE.md`.

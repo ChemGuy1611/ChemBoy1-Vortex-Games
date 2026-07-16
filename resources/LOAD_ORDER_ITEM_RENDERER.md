@@ -1,6 +1,6 @@
 # LoadOrderItemRenderer - Explainer & Learning Guide
 
-**Source:** `template-ue4-5/index.js:2751-2884` (LoadOrderItemRenderer), `2732-2748` (usePakLOState), `2886-2962` (PakContextMenu)
+**Source:** `template-ue4-5/index.js` — grep by name: `LoadOrderItemRenderer`, `usePakLOState`, `PakContextMenu`, `matchesStatus`, `StatusPills`, `LoadOrderStatusFilter`. (Line numbers are not cited in this doc — the file grows with each feature wave; function names are stable anchors.)
 
 ---
 
@@ -26,7 +26,7 @@ toggle entries.
 
 ## 2. The registration contract
 
-Inside `main()`, FBLO is registered like this ([index.js:2573-2581](index.js#L2573)):
+Inside `main()`, FBLO is registered like this (grep `registerLoadOrder` in `template-ue4-5/index.js`):
 
 ```js
 context.registerLoadOrder({
@@ -70,11 +70,17 @@ ListGroupItem .load-order-entry [.selected ...]
  |-- div                                       lock toggle button (amber when locked)
  |     `-- Icon                                'locked' | 'unlocked'
  |-- div                .load-order-thumb-slot (always 96 x 54 px)
+ |     `-- div          .load-order-unmanaged-banner  "Not managed by Vortex" (no modId)
  |     `-- img          .load-order-thumb      Nexus thumbnail | nothing
  |-- p                  .load-order-name       loEntry.name  (whiteSpace:normal, wordBreak:break-word)
+ |-- button             Enable/Disable         Vortex-mod toggle (only if loEntry.modId)
  |-- Checkbox           .entry-checkbox        only if displayCheckboxes = true
  `-- PakContextMenu                            only if contextMenu.itemId === loEntry.id
 ```
+
+When a status filter is active and the entry does not match, none of this renders:
+the component instead returns a hidden `ListGroupItem` with className `lo-row-hidden`
+(see section 12b, Status filtering).
 
 ### What is ListGroupItem?
 
@@ -194,10 +200,10 @@ Understanding this requires understanding **how UE4-5 FBLO actually works on dis
 
 ### Rename-based load ordering
 
-The template's `serializeLoadOrder` ([index.js:1772-1784](index.js#L1772)) just writes
+The template's `serializeLoadOrder` (grep `async function serializeLoadOrder`) just writes
 a JSON snapshot of the load order to a local file. The actual ordering on disk
 happens at **deploy time**: `loadOrderPrefix` / `makePrefix`
-([index.js:1943-1970](index.js#L1943)) compute a letter prefix from each entry's
+(grep by name) compute a letter prefix from each entry's
 position in the list:
 
 ```text
@@ -221,6 +227,12 @@ in-game config file that lists which mods are "on" or "off" -- the act of deploy
 **is** the act of enabling. Users already control whether a mod is enabled on the
 main Mods page. Showing a second checkbox in the load order row would be confusing
 and do nothing.
+
+The row does, however, ship a per-row **Enable/Disable button** (shown only when
+`loEntry.modId` is set). That button is not the FBLO entry checkbox: it toggles the
+**underlying Vortex mod's enabled state** (`actions.setModEnabled`) and calls
+`requestDeployment`, so the mod is added to / removed from the deployed folder on
+the next deploy. See Chunk G2 below.
 
 Therefore:
 
@@ -246,7 +258,7 @@ games but activates automatically in any extension that registers with
 
 ## 5. Code walkthrough, line by line
 
-The full function is at [index.js:2751-2884](index.js#L2751). Broken into chunks:
+The full function is in `template-ue4-5/index.js` (grep `function LoadOrderItemRenderer`). Broken into chunks:
 
 ---
 
@@ -387,6 +399,27 @@ Dispatches `setFBLoadOrderEntry` when the per-row Checkbox fires. Dormant for UE
 
 ---
 
+### Chunk G2 -- Vortex-mod toggle (isModEnabled / onModToggle)
+
+```js
+const isModEnabled = useSelector(state =>
+  util.getSafe(state, ['persistent', 'profiles', profile?.id, 'modState', loEntry.modId, 'enabled'], false));
+
+const onModToggle = React.useCallback(() => {
+  if (!loEntry.modId) return;
+  dispatch(actions.setModEnabled(profile.id, loEntry.modId, !isModEnabled));
+  requestDeployment(context.api, spec);
+}, [dispatch, profile, loEntry.modId, isModEnabled, context]);
+```
+
+This backs the per-row **Enable/Disable button**. Unlike `onToggle` (Chunk G), this
+does not touch the FBLO entry at all -- it flips the Vortex mod's profile `modState`
+and requests a deployment, because for rename-based FBLO the only real "off switch"
+is undeploying the mod. `isModEnabled` is also passed into `PakContextMenu` so the
+menu can decide whether to show "Disable Vortex Mod".
+
+---
+
 ### Chunk H -- Lock callback (onLock)
 
 ```js
@@ -410,7 +443,7 @@ and dispatching `setFBLoadOrder` + calling serialize explicitly is the only safe
 ### Chunk I -- Selection and context menu (usePakLOState)
 
 ```js
-const { selectedIds, setSelectedIds, contextMenu, setContextMenu } = usePakLOState();
+const { selectedIds, setSelectedIds, contextMenu, setContextMenu, statusFilter } = usePakLOState();
 const isSelected = selectedIds.has(loEntry.id);
 const allIds = loadOrder.map(e => e.id);
 
@@ -463,24 +496,49 @@ selection highlight.
 
 ---
 
+### Chunk J2 -- Status-filter row hiding
+
+Immediately after class assembly and **after all hooks have run** (a mid-hook early
+return would violate the Rules of Hooks), the renderer checks the shared status filter:
+
+```js
+// Status filter: render hidden (but keep the DnD item count stable) when the entry is filtered out.
+// The 'lo-row-hidden' marker lets the injected CSS collapse the whole DraggableListItem wrapper
+// (the two dnd <div>s the renderer can't reach), otherwise their spacing leaves visible gaps.
+if (!matchesStatus(loEntry, statusFilter, () => isModEnabled, isLocked)) {
+  return React.createElement(ListGroupItem, { key: loEntry.id, className: 'lo-row-hidden', style: { display: 'none' } });
+}
+```
+
+Returning a hidden row instead of `null` keeps FBLO's DnD item count stable. The
+`lo-row-hidden` class exists so the one-time CSS injected by `LoadOrderInstructions`
+(`.file-based-load-order-list .list-group > div:has(.lo-row-hidden) { display: none !important; }`)
+can also collapse the two `DraggableListItem` wrapper `<div>`s the renderer cannot
+reach -- without it their spacing leaves visible gaps in the list. Full mechanism in
+section 12b.
+
+---
+
 ### Chunk K -- The rendered tree
 
 The `ListGroupItem` receives `onClick: onSelect`, `onContextMenu: onContextMenu`,
 and `style: { outline: isSelected ? '2px solid #337ab7' : 'none', outlineOffset: '-1px' }`.
+Children include the unmanaged banner (when no `modId`) or thumbnail, the name, and
+the Enable/Disable Vortex-mod button (when `modId` is set; see Chunk G2).
 
 `PakContextMenu` is rendered as the last child, conditionally:
 
 ```js
 contextMenu?.itemId === loEntry.id ? React.createElement(PakContextMenu, {
   x: contextMenu.x, y: contextMenu.y,
-  item: loEntry, loadOrder, profile, dispatch, context, selectedIds,
+  item: loEntry, loadOrder, profile, dispatch, context, selectedIds, isModEnabled,
   onClose: () => setContextMenu(null),
 }) : null,
 ```
 
 ---
 
-## 5b. Module-level PAK selection pub-sub (`usePakLOState`)
+## 5b. Module-level PAK selection + status-filter pub-sub (`usePakLOState`)
 
 **Why not React context?**
 
@@ -489,11 +547,12 @@ There is no API hook to wrap the list in a context provider from outside FBLO.
 The only way for all row instances to share mutable selection state is a
 **module-level variable** combined with a simple pub-sub notification system.
 
-**The pattern ([index.js:2732-2748](index.js#L2732)):**
+**The pattern (grep `function usePakLOState`):**
 
 ```js
 let _pakSelectedIds = new Set();
 let _pakContextMenu = null;
+let _pakStatusFilter = new Set();
 const _pakListeners = new Set();
 function _notifyPak() { _pakListeners.forEach(l => l()); }
 
@@ -508,6 +567,8 @@ function usePakLOState() {
     setSelectedIds: (fn) => { _pakSelectedIds = fn(_pakSelectedIds); _notifyPak(); },
     contextMenu: _pakContextMenu,
     setContextMenu: (val) => { _pakContextMenu = val; _notifyPak(); },
+    statusFilter: _pakStatusFilter,
+    setStatusFilter: (next) => { _pakStatusFilter = next; _notifyPak(); },
   };
 }
 ```
@@ -516,15 +577,21 @@ function usePakLOState() {
 
 1. Each `LoadOrderItemRenderer` instance calls `usePakLOState()` on render.
 2. The hook registers a `forceUpdate` reducer as a listener in `_pakListeners`.
-3. When `setSelectedIds` or `setContextMenu` is called (from any instance), it
+3. When `setSelectedIds`, `setContextMenu`, or `setStatusFilter` is called (from any
 
-   mutates the module-level variable and then calls `_notifyPak()`.
+   instance), it mutates the module-level variable and then calls `_notifyPak()`.
 
 4. `_notifyPak` calls every registered `forceUpdate`, which increments a counter
 
    and causes all instances to re-render, picking up the new shared state.
 
 5. On unmount, the `useEffect` cleanup removes the listener.
+
+**The status filter rides the same channel.** `LoadOrderInstructions` (the info
+panel) also calls `usePakLOState()`: it renders the `StatusPills` UI and calls
+`setStatusFilter`, and because rows and the panel share the same listener set they
+re-render together -- pills update, rows hide/show, and the matched/total count
+refreshes, all from one `_notifyPak()`.
 
 **Contrast with `Ue4ssSelectionContext`:**
 
@@ -676,10 +743,18 @@ even though it appears later. Standard code structure: imports -> toggles -> con
 
 ## 11. PakContextMenu
 
-**Source:** [index.js:2886-2962](index.js#L2886)
+**Source:** grep `function PakContextMenu` in `template-ue4-5/index.js`
 
 `PakContextMenu` is a fixed-position overlay rendered as the last child of
 `LoadOrderItemRenderer` when `contextMenu.itemId === loEntry.id`.
+
+All LO context menus in the template (PAK, UE4SS, LogicMods) follow one **canonical
+section order**, each section separator-delimited:
+
+1. LO-entry toggles / Lock-Unlock (+ Configure on UE4SS)
+2. Move to Top / Move to Bottom
+3. Open Mod Folder(s) / Open Staging Folder / Open Mod Page
+4. Vortex-mod-state (Disable/Enable Vortex Mod) -- always LAST, in its own section
 
 ### Lifecycle
 
@@ -696,24 +771,27 @@ even though it appears later. Standard code structure: imports -> toggles -> con
 
 | Item | Action |
 | --- | --- |
-| Disable Mod | Only shown when `item.modId` set AND mod is currently enabled; calls `setModsEnabled` on the underlying Vortex mod |
-| *(separator)* | Only shown when Disable Mod is visible |
 | Lock / Unlock Position | Toggle `locked` on this entry; serializes LO |
 | *(separator)* | |
 | Move to Top | Re-inserts after all locked entries |
 | Move to Bottom | Re-inserts at end of array |
+| *(separator)* | Only shown when Open Staging Folder or Open Mod Page is visible |
+| Open Staging Folder | Only when `getModStagingFolder` resolves; `util.opn` on the mod's Vortex staging folder |
+| Open Mod Page | Only when `getModPageURL` resolves; `util.opn` on the mod page URL |
+| *(separator)* | Only shown when Disable Vortex Mod is visible |
+| Disable Vortex Mod | Only shown when `item.modId` set AND mod is currently enabled; calls `setModsEnabled([item], false)` on the underlying Vortex mod (one-way -- re-enable on the Mods tab or via the row button) |
 
 **Multi-item menu** (`selectedIds.size >= 2 && selectedIds.has(item.id)`):
 
 | Item | Action |
 | --- | --- |
-| Disable Selected (n) | Call `setModsEnabled(targets, false)`; Enable Selected is commented out (no effect on deployed pak mods) |
-| *(separator)* | |
 | Lock Selected (n) | Set `locked: true` on all selected entries; serializes |
 | Unlock Selected (n) | Set `locked: false` on all selected entries; serializes |
 | *(separator)* | |
 | Move to Top (n) | Selected entries (relative order) placed after locked entries; non-selected unlocked entries follow |
 | Move to Bottom (n) | Non-selected entries first, then selected entries (relative order) |
+| *(separator)* | |
+| Disable Selected (n) | Call `setModsEnabled(targets, false)`; Enable Selected is commented out (no effect on deployed pak mods) |
 
 ### applyToTargets helper
 
@@ -743,12 +821,52 @@ const menuStyle = {
 `x` and `y` come from `evt.clientX` / `evt.clientY` at right-click time, stored in
 `_pakContextMenu` via `setContextMenu({ x, y, itemId })`.
 
+### Viewport clamping (clampRef)
+
+Every menu root div gets a callback ref that clamps the menu into the viewport, so a
+right-click near the bottom or right edge of the window does not cut the menu off:
+
+```js
+const clampRef = (el) => {
+  if (!el) return;
+  const rect = el.getBoundingClientRect();
+  const vw = globalThis.window.innerWidth;
+  const vh = globalThis.window.innerHeight;
+  if (x + rect.width > vw) el.style.left = `${Math.max(8, vw - rect.width - 8)}px`;
+  if (y + rect.height > vh) el.style.top = `${Math.max(8, vh - rect.height - 8)}px`;
+};
+```
+
+The same `clampRef` pattern appears in all three context menus (PAK, UE4SS, LogicMods).
+
 ---
 
 ## 12. Ue4ssLoadOrderPage layout
 
 `Ue4ssLoadOrderPage` renders a `FlexLayout type='column'` with the mod list on top
-and an info panel at the bottom. It uses its own `DraggableList` + `Ue4ssItemRenderer`
+and an info panel at the bottom. The page header is a flex row holding the text
+search box (`FormControl`, `style: { flex: 1 }`) and the `LoadOrderStatusFilter`
+dropdown (see section 12b). Page-level state includes both filters:
+
+```js
+const [filterText, setFilterText] = React.useState('');
+const [statusFilter, setStatusFilter] = React.useState(new Set());
+
+const isFiltered = !!filterText || statusFilter.size > 0;
+const isEntryEnabled = (e) => e.enabled !== false;
+const isEntryLocked = (e) => [true, 'true', 'always'].includes(e?.locked);
+
+const filteredOrder = loadOrder.filter(e =>
+  (!filterText || e.name.toLowerCase().includes(filterText.toLowerCase()))
+  && matchesStatus(e, statusFilter, isEntryEnabled, isEntryLocked));
+```
+
+`onApply` remaps drag results through the filter whenever **either** filter is
+active -- the guard is `if (isFiltered)`, not `if (filterText)`. (LogicMods'
+`LogicModsLoadOrderPage` is wired identically, except `isEntryEnabled` reads the
+Vortex mod state: `util.getSafe(modState, [e.modId, 'enabled'], false)`.)
+
+It uses its own `DraggableList` + `Ue4ssItemRenderer`
 with a React context (`Ue4ssSelectionContext`) for shared selection and context menu state:
 
 ```js
@@ -800,26 +918,158 @@ The renderer uses a plain `div` (not `ListGroupItem` -- no page-scoped CSS). Key
 
 ### Ue4ssContextMenu
 
-`Ue4ssContextMenu` is richer than `PakContextMenu`. Single-item menu includes:
-Enable/Disable, Lock/Unlock, Configure (if `configFilePath` non-empty), separator,
-Open Mod Folder, separator, Move to Top, Move to Bottom.
+`Ue4ssContextMenu` is richer than `PakContextMenu` and follows the same canonical
+section order (section 11). Single-item menu:
+Enable/Disable (LO-entry `enabled` flag, written to mods.txt), Lock/Unlock Position,
+Configure (if `configFilePath` non-empty), separator, Move to Top, Move to Bottom,
+separator, Open Mod Folder, Open Staging Folder (if resolvable), Open Mod Page (if
+resolvable), separator, **Disable Vortex Mod / Enable Vortex Mod** (two-way toggle,
+shown when `item.modId` is set; calls `setVortexModsEnabled([item], !isModEnabled)`).
 
-Multi-item menu: Enable/Disable selected, Lock/Unlock selected, separator, Open Mod Folders (n) (opens each selected mod's folder), separator, Move to Top (n), Move to Bottom (n).
+Multi-item menu: Enable/Disable Selected (n), separator, Lock/Unlock Selected (n),
+separator, Move to Top (n) / Move to Bottom (n), separator, Open Mod Folders (n),
+Open Staging Folders (n) (shown when any target has a `modId`), separator,
+**Disable Vortex Mod (n)**.
+
+Note the two enable concepts on this page: the plain Enable/Disable items flip the
+**LO-entry** `enabled` flag (serialized to `mods.txt` immediately), while the
+Vortex-mod items flip the **mod's deployment state** via `setVortexModsEnabled`
+(batch `actions.setModEnabled` + `requestDeployment` -- no mods.txt write).
+
+---
+
+## 12b. Status filtering
+
+All load order pages can be filtered by entry **status** in addition to the text
+search: Enabled/Disabled, Locked/Unlocked, Unmanaged. Filters combine with **AND
+across groups, OR within a group**, and the text search ANDs on top.
+
+### Shared predicate and token maps
+
+```js
+const STATUS_GROUP_TOKENS = { enabled: ['enabled', 'disabled'], locked: ['locked', 'unlocked'], unmanaged: ['unmanaged'] };
+const STATUS_TOKEN_LABELS = { enabled: 'Enabled', disabled: 'Disabled', locked: 'Locked', unlocked: 'Unlocked', unmanaged: 'Unmanaged' };
+
+function matchesStatus(entry, active, isEnabledFn, isLockedFn) {
+  if (active.has('enabled') || active.has('disabled')) {
+    const en = isEnabledFn(entry);
+    if (!((active.has('enabled') && en) || (active.has('disabled') && !en))) return false;
+  }
+  if (active.has('locked') || active.has('unlocked')) {
+    const lk = isLockedFn(entry);
+    if (!((active.has('locked') && lk) || (active.has('unlocked') && !lk))) return false;
+  }
+  if (active.has('unmanaged') && entry.modId !== undefined) return false;
+  return true;
+}
+```
+
+`isEnabledFn` differs per surface -- pass whatever the row's enable actually reflects:
+
+| Surface | isEnabledFn |
+| --- | --- |
+| PAK FBLO (rename-based) | Vortex mod state (`isModEnabled`) |
+| UE4SS page (mods.txt) | `(e) => e.enabled !== false` (LO-entry flag) |
+| LogicMods page | Vortex mod state via `modState[e.modId].enabled` |
+
+Unmanaged = `entry.modId === undefined`; Locked = the usual
+`[true, 'true', 'always'].includes(entry?.locked)` -- same everywhere.
+
+### Two UI styles
+
+- **`StatusPills({ active, setActive, groups, count })`** -- inline toggle-button row
+  used on **core FBLO page surfaces**, rendered inside `LoadOrderInstructions` (the
+  registered `usageInstructions` component). Active pill = `bsStyle: 'success'` +
+  bold; a `Clear` link appears when any pill is active. `groups` is
+  `['enabled', 'locked', 'unmanaged']`.
+- **`LoadOrderStatusFilter({ active, setActive, groups, count })`** -- dropdown used
+  on the **custom pages** (UE4SS, LogicMods), beside the search box. It is
+  **hand-built** (button + checkbox panel): react-bootstrap's `Dropdown` auto-closes
+  on every inner click, which makes multi-checkbox filtering unusable. Dismissed on
+  outside click, right-click, or Escape (same dismiss pattern as the context menus).
+  Button style: `bsStyle` primary when idle / success when active, bold, Vortex
+  `filter` icon; the panel anchors `right: 0` so it stays on-screen at the header's
+  right edge.
+
+Both accept `count` -- `{ matched, total }` or `null` -- and render a
+`matched / total` span (accent `#7ec8e3`) while a status filter is active. The pills
+surface computes `matched` from `persistent.loadOrder[profileId]` with
+`matchesStatus`; the custom pages just reuse `filteredOrder.length` / `loadOrder.length`.
+
+### How the core FBLO page filters without Vortex edits
+
+The extension owns only the row (`customItemRenderer`) and the info panel
+(`usageInstructions`) -- not the list. So:
+
+1. `LoadOrderInstructions` renders `StatusPills` and publishes the active filter via
+   the `usePakLOState` pub-sub (section 5b).
+2. Each `LoadOrderItemRenderer` reads `statusFilter` and returns a hidden
+   `lo-row-hidden` row for non-matching entries (Chunk J2). Hidden rather than
+   removed, so FBLO's DnD indices stay stable.
+3. `LoadOrderInstructions` injects one-time CSS (style id
+   `fblo-status-filter-hide-style`) so the `DraggableListItem` wrapper divs collapse
+   too: `.file-based-load-order-list .list-group > div:has(.lo-row-hidden) { display: none !important; }`.
+   (`:has()` is fine -- Vortex 2.x ships Chromium 120+.)
+
+Caveat shown to users in the info panel: clear the status filter before reordering.
+Hidden rows still exist in FBLO's DnD list, so dragging across a filtered list can
+compute odd indices. The custom pages do NOT have this caveat -- they already remap
+drag positions through the filter (`isFiltered` guard in `onApply`).
+
+---
+
+## 12c. Shared LO helpers
+
+Module-level helpers used by the context menus and rows (defined near `usePakLOState`):
+
+```js
+// Mod page URL: homepage attribute first, else compose the Nexus URL.
+function getModPageURL(api, vortexModId) {
+  if (vortexModId === undefined) return undefined;
+  const attributes = util.getSafe(api.getState(), ['persistent', 'mods', GAME_ID, vortexModId, 'attributes'], {});
+  if (attributes.homepage) return attributes.homepage;
+  if (attributes.source === 'nexus' && attributes.modId !== undefined) {
+    return `https://www.nexusmods.com/${GAME_ID}/mods/${attributes.modId}`;
+  }
+  return undefined;
+}
+
+// Vortex staging folder of a managed entry.
+function getModStagingFolder(api, vortexModId) {
+  if (vortexModId === undefined) return undefined;
+  const state = api.getState();
+  const installationPath = util.getSafe(state, ['persistent', 'mods', GAME_ID, vortexModId, 'installationPath'], undefined);
+  const stagingPath = selectors.installPathForGame(state, GAME_ID);
+  if (!installationPath || !stagingPath) return undefined;
+  return path.join(stagingPath, installationPath);
+}
+```
+
+Both return `undefined` when not resolvable, and the menu items that consume them
+(`Open Mod Page`, `Open Staging Folder`) are simply not rendered in that case --
+so unmanaged entries never show them.
+
+The UE4SS/LogicMods menus also define `setVortexModsEnabled(entries, enable)`
+(inside the menu component, since it needs `profileId`/`dispatch`/`onClose`):
+batch-maps `actions.setModEnabled` over entries that have a `modId`, dispatches via
+`util.batchDispatch`, then calls `requestDeployment`. This is the engine behind
+every "Disable/Enable Vortex Mod" menu item.
 
 ---
 
 ## 13. Related reading
 
-- **Template source:** `template-ue4-5/index.js`
-  - `usePakLOState`: lines 2732-2748
-  - `LoadOrderItemRenderer`: lines 2751-2884
-  - `PakContextMenu`: lines 2886-2962
-  - `Ue4ssSelectionContext` + `Ue4ssItemRenderer`: lines 3033-3192
-  - `Ue4ssContextMenu`: lines 3194-3270
-  - `Ue4ssLoadOrderPage`: lines 3295-3401
-  - Registration site: lines 2573-2581
-  - `makePrefix` / `loadOrderPrefix`: lines 1943-1970
-  - `serializeLoadOrder` / `deserializeLoadOrder`: lines 1703-1784
+- **Template source:** `template-ue4-5/index.js` -- grep these names:
+  - `usePakLOState` (pub-sub: selection + context menu + status filter)
+  - `LoadOrderInstructions` (info panel: StatusPills + matched/total + CSS inject)
+  - `LoadOrderItemRenderer` / `PakContextMenu`
+  - `matchesStatus` / `STATUS_GROUP_TOKENS` / `StatusPills` / `LoadOrderStatusFilter`
+  - `getModPageURL` / `getModStagingFolder`
+  - `Ue4ssSelectionContext` / `Ue4ssItemRenderer` / `Ue4ssContextMenu` (+ `setVortexModsEnabled`) / `Ue4ssLoadOrderPage`
+  - `LogicModsItemRenderer` / `LogicModsContextMenu` / `LogicModsLoadOrderPage`
+  - Registration site: `registerLoadOrder` inside `main()`
+  - `makePrefix` / `loadOrderPrefix`
+  - `serializeLoadOrder` / `deserializeLoadOrder`
 - **Witcher 3 ItemRenderer (inspiration, TSX):**
 
   `Vortex/extensions/games/game-witcher3/src/views/ItemRenderer.tsx`

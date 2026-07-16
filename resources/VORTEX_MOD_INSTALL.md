@@ -3,8 +3,8 @@
 How the app turns a downloaded archive into an **installed** mod sitting in the staging folder.
 "Installed" is **not** "deployed" — deployment (staging → game folder) is a separate step covered
 in `VORTEX_DEPLOYMENT.md`. The contract an installer implements (`TestSupported` / `InstallFunc` /
-`IInstruction` / FOMOD `ModuleConfig.xml`) is the authoring view: see `INSTALLER_SYSTEM.md`,
-`FOMOD_INSTALLER.md` and memory `reference_installer_system` / `reference_fomod_installer`.
+`IInstruction` / FOMOD `ModuleConfig.xml`) is the authoring view: see `INSTALLER_SYSTEM.md` and
+`FOMOD_INSTALLER.md`.
 
 Driver: `mod_management/InstallManager.ts` (very large — ~7k lines) in the `mod_management` core
 extension.
@@ -91,8 +91,7 @@ sends that mod's files to the modtype's path.
 
 Collection installs run **phased** (`mInstallPhaseState` in `InstallManager`): Phase 0 = framework
 mods (e.g. SMAPI), Phase 1+ = content. Each phase must finish downloading **and** deploy before
-the next starts. See `VORTEX_APP.md` "Collections & phased install" and memory
-`reference_collections_feature`.
+the next starts. See `VORTEX_APP.md` "Collections & phased install" and `COLLECTIONS_FEATURE.md`.
 
 ## `simulate()` — dry run
 
@@ -122,4 +121,4 @@ installer, and returns the instructions).
 
 Runtime siblings: `VORTEX_GAME_LIFECYCLE.md`, `VORTEX_DEPLOYMENT.md`, `VORTEX_DOWNLOAD_MGMT.md`,
 `VORTEX_EVENT_BUS.md`. Overview: `VORTEX_APP.md`. Authoring: `INSTALLER_SYSTEM.md`,
-`FOMOD_INSTALLER.md`. Memory: `reference_vortex_install_pipeline`.
+`FOMOD_INSTALLER.md`.

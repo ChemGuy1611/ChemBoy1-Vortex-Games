@@ -6,8 +6,8 @@ Covers the v1 and v3 Nexus Mods APIs as used by the release pipeline and extensi
 
 ## Authentication
 
-All requests require header `apikey: {key}`. Env var `NEXUS_API_KEY` (registry fallback — see
-`reference_env_vars.md`). Steps 4 and 5 of the upload flow hit S3 presigned URLs directly —
+All requests require header `apikey: {key}`. Key comes from the `NEXUS_API_KEY` environment
+variable (with an HKCU registry fallback). Steps 4 and 5 of the upload flow hit S3 presigned URLs directly —
 **no `apikey` header** on those requests.
 
 **Rate limits (premium):** 20000 requests/day, 1500/hour. Check `X-RL-Daily-Remaining` and `X-RL-Hourly-Remaining` response headers.

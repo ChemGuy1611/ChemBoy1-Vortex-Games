@@ -387,6 +387,19 @@ function MyItemRenderer({ className, item }) {
 - Spread `className` from props onto the root element so DnD works.
 - Use `filter(Boolean)` when splitting className to avoid empty class strings.
 
+### Sharing state across renderer instances you don't own (module pub-sub)
+
+When the item renderer is rendered by a list **you did not create** (e.g. FBLO's
+`customItemRenderer`), you cannot wrap the list in a React context provider. The
+workaround is a module-level pub-sub hook: module variables hold the shared state
+(selection, context menu, status filter), a listener `Set` holds one `forceUpdate`
+per mounted subscriber, and every setter mutates the variable then notifies all
+listeners. All rows AND the info panel subscribe to the same hook, so one setter
+call re-renders everything consistently. Canonical implementation: `usePakLOState`
+in `template-ue4-5/index.js` (see `resources/LOAD_ORDER_ITEM_RENDERER.md` section
+5b). On pages that own their own `DraggableList`, prefer a normal React context
+(`Ue4ssSelectionContext` pattern).
+
 ---
 
 ## 9. Info Panel Pattern
@@ -411,6 +424,11 @@ function MyInfoPanel() {
   );
 }
 ```
+
+Info panels can also be fully stateful: the FBLO `usageInstructions` component in the
+LO extensions (`LoadOrderInstructions`) subscribes to shared state, renders the
+`StatusPills` filter UI with a matched/total count, and injects CSS -- see
+`resources/LOAD_ORDER_ITEM_RENDERER.md` section 12b.
 
 ---
 
@@ -443,12 +461,17 @@ function MyPage({ api }) {
 }
 ```
 
-When filter is active, reordering must splice filtered positions back into the full list:
+When **any** filter is active, reordering must splice filtered positions back into
+the full list. If the page has more than one filter (e.g. text + status), the guard
+must cover all of them -- guarding on `filterText` alone mis-merges reorders done
+under the other filter:
 
 ```js
+const isFiltered = !!filterText || statusFilter.size > 0;
+
 const onApply = React.useCallback((reordered) => {
   let newItems;
-  if (filterText) {
+  if (isFiltered) {
     const filteredIds = new Set(reordered.map(e => e.id));
     const positions = allItems.reduce((acc, e, i) => {
       if (filteredIds.has(e.id)) acc.push(i);
@@ -460,8 +483,38 @@ const onApply = React.useCallback((reordered) => {
     newItems = reordered;
   }
   dispatch(setMyList(newItems));
-}, [dispatch, allItems, filterText]);
+}, [dispatch, allItems, isFiltered]);
 ```
+
+### Status filter dropdown (beside the search box)
+
+The LO pages pair the search box with a status-filter dropdown in a header flex row.
+The list is then filtered by both: text match AND `matchesStatus` (a shared predicate
+over enabled/locked/unmanaged token sets -- see `resources/LOAD_ORDER_ITEM_RENDERER.md`
+section 12b):
+
+```js
+const [statusFilter, setStatusFilter] = React.useState(new Set());
+
+const filteredItems = allItems.filter(e =>
+  (!filterText || e.name.toLowerCase().includes(filterText.toLowerCase()))
+  && matchesStatus(e, statusFilter, isEntryEnabled, isEntryLocked));
+
+// Header:
+React.createElement('div', { style: { display: 'flex', alignItems: 'center', width: '100%' } },
+  React.createElement(FormControl, { type: 'search', style: { flex: 1 }, /* ... */ }),
+  React.createElement(LoadOrderStatusFilter, {
+    active: statusFilter, setActive: setStatusFilter, groups: ['enabled', 'locked', 'unmanaged'],
+    count: statusFilter.size > 0 ? { matched: filteredItems.length, total: allItems.length } : null,
+  }),
+)
+```
+
+Load-bearing detail: `LoadOrderStatusFilter` is a **hand-built** dropdown (button +
+checkbox panel). react-bootstrap's `Dropdown` auto-closes on every inner click,
+which makes multi-checkbox filtering unusable. It dismisses on outside click,
+right-click, or Escape (the same listener pattern as context menus), anchors its
+panel `right: 0`, and shows a `matched / total` count while active.
 
 ---
 
@@ -527,14 +580,16 @@ visible: () => {
 
 ## 14. Full Example — Custom Load Order Page
 
-See [game-subnautica2/index.js](../game-subnautica2/index.js) lines 2639–2985 for the complete working implementation:
+See [game-subnautica2/index.js](../game-subnautica2/index.js) for the complete
+working implementation (grep by name -- line numbers drift as the file grows):
 
-- `registerReducer` at line 2635 — persistent load order list
-- `registerMainPage` at line 2641 — sidebar registration with visibility gating
-- `GameSettings` at line 2817 — settings panel with `Toggle`+`More`
-- `Ue4ssItemRenderer` at line 2840 — DnD item with thumbnail, checkbox
-- `Ue4ssLoadOrderInfoPanel` at line 2891 — static info panel
-- `Ue4ssLoadOrderPage` at line 2916 — full page with filter, DnD list, info panel
+- `registerReducer` (grep `['persistent', 'ue4ssLoadOrder']`) — persistent load order list
+- `registerMainPage` (grep `'UE4SS Load Order'`) — sidebar registration with visibility gating
+- `GameSettings` — settings panel with `Toggle`+`More`
+- `Ue4ssItemRenderer` — DnD item with thumbnail, checkbox, context menu
+- `Ue4ssLoadOrderInfoPanel` — static info panel
+- `Ue4ssLoadOrderPage` — full page with text + status filter, DnD list, info panel
+- `LogicModsLoadOrderPage` — second custom LO page (same pattern, Enabled = Vortex mod state)
 
 ---
 
@@ -747,11 +802,14 @@ Full `registerAction` signature: see [REGISTER_ACTION.md](REGISTER_ACTION.md).
 
 ## 20. Tab-Based Page Layout
 
-Vortex exports `TabProvider`, `TabBar`, and `TabPanel` from `vortex-api` for multi-tab pages (as used in the Health Check page).
+Vortex's own Health Check page builds its tabs from `TabProvider`, `TabBar`, and `TabPanel` — but these are **internal components** (`src/renderer/src/ui/components/tabs/`), imported by relative path inside the Vortex source. They are **not exported through the `vortex-api` runtime barrel** (`src/renderer/src/api.ts`), so `require('vortex-api')` in an extension does not provide them (verified against Vortex 2.3.0, 2026-07-14).
+
+For an extension-built tabbed page, hand-roll the same pattern: keep an `activeTab` state, render a row of buttons as the tab bar, and show/hide panels by comparing against `activeTab`. The example below sketches the equivalent structure (the internal components referenced are shown for shape only — substitute your own):
 
 ```js
 function MyTabbedPage({ api }) {
-  const { TabProvider, TabBar, TabPanel } = require('vortex-api');
+  // TabProvider/TabBar/TabPanel are NOT available from require('vortex-api');
+  // this shows the structural pattern to replicate with your own components.
   const [activeTab, setActiveTab] = React.useState('tab-a');
 
   return React.createElement(MainPage, null,

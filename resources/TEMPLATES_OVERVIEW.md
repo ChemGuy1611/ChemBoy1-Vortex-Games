@@ -166,7 +166,7 @@ Godot 3/4 with Godot Mod Loader.
 A shared module copied into each extension that auto-downloads/installs a modding
 requirement (loader, framework) from its **GitHub releases**. The canonical copy lives at
 `resources/downloader/downloader.js`; each adopter carries its own copy (propagate changes
-manually — see the adopters list in memory `reference_downloader_adopters`).
+manually to every extension that bundles a `downloader.js`).
 
 Full reference — architecture, exports, the requirement-object fields, the three
 version-resolve strategies, and the `template_downloader.js` wiring — lives in

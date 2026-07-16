@@ -3,7 +3,7 @@
 How the app wires **Nexus Mods** into the runtime: login, `nxm://` links, mod update checks,
 endorsements, categories, feedback. This is the **app-integration** view — the Nexus **HTTP API**
 itself (endpoints, auth headers, response shapes) is documented separately: see `nexus-mods-api.md`
-/ memory `reference_nexus_api` and `nexus-file-properties.md` / `reference_nexus_file_properties`.
+and `nexus-file-properties.md`.
 
 Driver: the `nexus_integration` core extension (`index.tsx`, `util/`, `eventHandlers.ts`,
 `nexusV3Client.ts`, `NXMUrl.ts`).
@@ -90,5 +90,4 @@ Via the extend-API pattern, `nexus_integration` adds methods other extensions ca
 ## See also
 
 Runtime siblings: `VORTEX_DOWNLOAD_MGMT.md` (nxm → transfer), `VORTEX_EVENT_BUS.md`. Overview:
-`VORTEX_APP.md`. Nexus HTTP API: `nexus-mods-api.md` / `reference_nexus_api`,
-`nexus-file-properties.md`. Memory: `reference_vortex_nexus_integration`.
+`VORTEX_APP.md`. Nexus HTTP API: `nexus-mods-api.md`, `nexus-file-properties.md`.

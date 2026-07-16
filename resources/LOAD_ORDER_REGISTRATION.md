@@ -145,7 +145,7 @@ context.registerLoadOrderPage({
   callback: (loadOrder) => {
     if (previousLO === undefined) previousLO = loadOrder;
     if (loadOrder === previousLO) return;
-    context.api.store.dispatch(actions.setDeploymentNecessary(spec.game.id, true));
+    requestDeployment(context.api, spec); // shared helper: setDeploymentNecessary + "Deploy" notification
     previousLO = loadOrder;
   },
   createInfoPanel: () =>
@@ -351,7 +351,7 @@ types.ts:81                 interface ILoadOrderGameInfo { ... }
 
 ### template-ue4-5 (ChemBoy1 FBLO pattern)
 
-`template-ue4-5\index.js:2573-2581`:
+`template-ue4-5\index.js` (grep `registerLoadOrder` inside `main()`):
 
 ```js
 context.registerLoadOrder({
@@ -434,6 +434,19 @@ context.registerMainPage('sort-none', 'Load order', FileBasedLoadOrderPage, {
 
 > **`usageInstructions` position is hardcoded right.** `FileBasedLoadOrderPage.tsx:304-309` uses `FlexLayout type="row"` with the list left and `InfoPanel` right. There is no API option to move it to the bottom. To get bottom-positioned instructions you must replace `registerLoadOrder` with a fully custom `registerMainPage` (column `FlexLayout`, list as `FlexLayout.Flex` + info panel as `div { flexShrink: 0 }`) -- the same approach as `Ue4ssLoadOrderPage`. That means re-implementing filter, DnD, validate, and serialize wiring yourself; not worth it for instruction placement alone.
 
+**`usageInstructions` can be a stateful React component -- and the template exploits that.**
+In the template, `usageInstructions: LoadOrderInstructions` is not a static string: the
+component subscribes to the `usePakLOState` module pub-sub, renders `StatusPills`
+(status filtering: Enabled/Disabled, Locked/Unlocked, Unmanaged) plus a
+`matched / total` count, and injects one-time CSS. The paired `customItemRenderer`
+reads the same shared `statusFilter` and renders non-matching rows as a hidden
+`lo-row-hidden` `ListGroupItem` -- the injected
+`.file-based-load-order-list .list-group > div:has(.lo-row-hidden) { display: none !important; }`
+rule collapses the DraggableListItem wrapper divs so no gaps remain. This is how the
+core FBLO page gets status filtering with **zero Vortex edits**: the extension owns
+both the info panel and the row. Full mechanism: `resources/LOAD_ORDER_ITEM_RENDERER.md`
+sections 5b and 12b.
+
 ### What `customItemRenderer` receives
 
 Each row's renderer gets props `{ className?: string, item: IItemRendererProps }` where:
@@ -509,7 +522,7 @@ deserialize, not serialize.
 
 ## 7. `ue4ss_loadOrder.json` -- how it fits in the UE4-5 template
 
-### Key constants (`template-ue4-5\index.js:237-252`)
+### Key constants (`template-ue4-5\index.js`, grep `UE4SS_NAME` for the block)
 
 ```js
 const UE4SS_MODSTXT_FILE  = 'mods.txt';
@@ -560,13 +573,54 @@ anchor lines.
 
 ---
 
+## 7a. Status filter shared helpers (all LO surfaces)
+
+Every LO page (core FBLO, UE4SS, LogicMods) supports status filtering:
+Enabled/Disabled, Locked/Unlocked, Unmanaged. AND across groups, OR within a group;
+the text search ANDs on top. All the pieces are module-level in the template:
+
+```js
+const STATUS_GROUP_TOKENS = { enabled: ['enabled', 'disabled'], locked: ['locked', 'unlocked'], unmanaged: ['unmanaged'] };
+const STATUS_TOKEN_LABELS = { enabled: 'Enabled', disabled: 'Disabled', locked: 'Locked', unlocked: 'Unlocked', unmanaged: 'Unmanaged' };
+
+function matchesStatus(entry, active, isEnabledFn, isLockedFn) { /* AND across groups, OR within */ }
+function StatusPills({ active, setActive, groups, count }) { /* pill row -- core FBLO InfoPanel */ }
+function LoadOrderStatusFilter({ active, setActive, groups, count }) { /* dropdown -- custom pages */ }
+```
+
+- `isEnabledFn` per surface: core FBLO row = Vortex mod state; UE4SS page =
+  `(e) => e.enabled !== false` (the mods.txt flag); LogicMods page = Vortex mod state.
+- `LoadOrderStatusFilter` is hand-built (button + checkbox panel) because
+  react-bootstrap's `Dropdown` auto-closes on every inner click. Dismissed on outside
+  click / right-click / Escape. Panel anchors `right: 0`.
+- `count` = `{ matched, total }` or `null`; renders a `matched / total` span while a
+  filter is active.
+
+Related menu/row helpers, also module-level: `getModPageURL(api, vortexModId)`
+(homepage attribute, else Nexus URL composed from `attributes.modId`) and
+`getModStagingFolder(api, vortexModId)` (`selectors.installPathForGame` + the mod's
+`installationPath`). Both return `undefined` when unresolvable, which hides the
+consuming context-menu items. Full detail: `resources/LOAD_ORDER_ITEM_RENDERER.md`
+sections 12b/12c.
+
+---
+
 ## 8. Custom React page for UE4SS mods -- implementation
 
-**Reference implementation: `template-ue4-5/index.js`, `game-subnautica2/index.js`.**
+**Reference implementation: `template-ue4-5/index.js`, `game-subnautica2/index.js`
+(also ported: `game-farfarwest`, `game-fatekeeper`, `game-legobatmanlegacyofthedarkknight`).**
 
 The page is **additive** -- registered alongside the existing FBLO page, never replacing it.
 FBLO manages PAK mod load order (prefix renaming). The custom page manages only UE4SS
 script mods via the `<profile>_ue4ss_loadOrder.json` sidecar + `mods.txt`.
+
+A second custom page, `LogicModsLoadOrderPage` (gated by the `logicModsLoadOrder`
+toggle), manages LogicMods/Blueprint pak load order via its own sidecar +
+`BPModLoaderMod/load_order.txt`. It follows the same architecture as the UE4SS page
+described below -- own reducer (`['persistent', 'logicModsLoadOrder']`),
+`registerMainPage` (priority 32, hotkey 'L'), selection context, context menu, and
+status-filter wiring -- with Enabled sourced from the Vortex mod state instead of an
+LO-entry flag.
 
 ### Key Vortex UI primitives
 
@@ -639,6 +693,17 @@ function main(context) {
         return gameId === GAME_ID && ue4ssLoadOrder; // ue4ssLoadOrder is the toggle constant
       },
       props: () => ({ api: context.api }),
+    });
+  }
+  // Also in the template's main(): collections support + the LogicMods page
+  if (collectionsLoadOrder && (ue4ssLoadOrder || logicModsLoadOrder)) {
+    context.optional.registerCollectionFeature(/* UE4SS + LogicMods LO collection data */);
+  }
+  if (logicModsLoadOrder) {
+    context.registerReducer(['persistent', 'logicModsLoadOrder'], { /* setLogicModsLoadOrder */ });
+    context.registerMainPage('unreal', 'LogicMods Load Order', LogicModsLoadOrderPage, {
+      id: `${GAME_ID}-logicmods-loadorder`, priority: 32, group: 'per-game', hotkey: 'L',
+      /* visible: gameId === GAME_ID && logicModsLoadOrder */
     });
   }
 }
@@ -819,6 +884,7 @@ function Ue4ssLoadOrderPage({ api }) {
   const loEnabled = useSelector(state => util.getSafe(state, ['settings', GAME_ID, 'ue4ssLoEnabled'], true));
   const dispatch = useDispatch();
   const [filterText, setFilterText] = React.useState('');
+  const [statusFilter, setStatusFilter] = React.useState(new Set());
   const [selectedIds, setSelectedIds] = React.useState(new Set());
   const [contextMenu, setContextMenu] = React.useState(null);
 
@@ -842,9 +908,14 @@ function Ue4ssLoadOrderPage({ api }) {
     setSelectedIds(new Set());
   }, [profileId]);
 
+  // Either filter active -> drag results must be remapped through the filter
+  const isFiltered = !!filterText || statusFilter.size > 0;
+  const isEntryEnabled = (e) => e.enabled !== false;
+  const isEntryLocked = (e) => [true, 'true', 'always'].includes(e?.locked);
+
   const onApply = React.useCallback((reordered) => {
     let newLO;
-    if (filterText) {
+    if (isFiltered) {
       // merge reordered filtered subset back into full list at the same positions
       const filteredIds = new Set(reordered.map(e => e.id));
       const positions = loadOrder.reduce((acc, e, i) => { if (filteredIds.has(e.id)) acc.push(i); return acc; }, []);
@@ -855,11 +926,11 @@ function Ue4ssLoadOrderPage({ api }) {
     }
     dispatch(setUe4ssLoadOrder(profileId, newLO));
     serializeUe4ss(api, newLO); // writes mods.txt + sidecar directly -- no deploy needed
-  }, [dispatch, loadOrder, filterText, profileId]);
+  }, [dispatch, loadOrder, isFiltered, profileId]);
 
-  const filteredOrder = filterText
-    ? loadOrder.filter(e => e.name.toLowerCase().includes(filterText.toLowerCase()))
-    : loadOrder;
+  const filteredOrder = loadOrder.filter(e =>
+    (!filterText || e.name.toLowerCase().includes(filterText.toLowerCase()))
+    && matchesStatus(e, statusFilter, isEntryEnabled, isEntryLocked));
 
   const allIds = filteredOrder.map(e => e.id);
 
@@ -879,11 +950,19 @@ function Ue4ssLoadOrderPage({ api }) {
 
   return React.createElement(MainPage, null,
     React.createElement(MainPage.Header, null,
-      React.createElement(FormControl, {
-        type: 'search', placeholder: 'Filter mods...',
-        className: 'file-based-load-order-filter',
-        value: filterText, onChange: (evt) => setFilterText(evt.target.value),
-      })
+      // Flex row: search box + status-filter dropdown (see section 7a)
+      React.createElement('div', { style: { display: 'flex', alignItems: 'center', width: '100%' } },
+        React.createElement(FormControl, {
+          type: 'search', placeholder: 'Filter mods...',
+          className: 'file-based-load-order-filter',
+          style: { flex: 1 },
+          value: filterText, onChange: (evt) => setFilterText(evt.target.value),
+        }),
+        React.createElement(LoadOrderStatusFilter, {
+          active: statusFilter, setActive: setStatusFilter, groups: ['enabled', 'locked', 'unmanaged'],
+          count: statusFilter.size > 0 ? { matched: filteredOrder.length, total: loadOrder.length } : null,
+        }),
+      )
     ),
     React.createElement(MainPage.Body, null,
       React.createElement(DNDContainer, { style: { height: '95%' } },
@@ -1097,18 +1176,28 @@ built manually (not spread from file), so `locked` is silently dropped if omitte
 Richer than `PakContextMenu`. Dismissed by click/contextmenu/Escape (same pattern).
 Injects `.ue4ss-ctx-item:hover` style once via `globalThis.document.head`.
 
+All LO context menus follow one canonical section order (each section
+separator-delimited): LO-entry toggles/Lock (+Configure) -> Move to Top/Bottom ->
+Open Folder(s)/Staging/Page -> Vortex-mod-state section LAST. Menu root divs use a
+`clampRef` callback ref that clamps the menu into the viewport (no cut-off at
+window edges).
+
 **Single-item menu:**
 
 | Item | Condition | Action |
 | --- | --- | --- |
-| Enable / Disable | always | Toggle `enabled` on this entry; serialize |
+| Enable / Disable | always | Toggle `enabled` on this entry (mods.txt flag); serialize |
 | Lock / Unlock Position | always | Toggle `locked`; serialize |
 | Configure | `configFilePath` non-empty | `util.opn(configFilePath)` |
 | *(separator)* | always | |
-| Open Mod Folder | always | `util.opn(gamePath/binaries/ue4ss/Mods/item.id)` |
-| *(separator)* | always | |
 | Move to Top | always | Re-insert after locked entries; serialize |
 | Move to Bottom | always | Re-insert at end; serialize |
+| *(separator)* | always | |
+| Open Mod Folder | always | `util.opn(gamePath/binaries/ue4ss/Mods/item.id)` |
+| Open Staging Folder | `getModStagingFolder` resolves | `util.opn` on the mod's Vortex staging folder |
+| Open Mod Page | `getModPageURL` resolves | `util.opn` on the mod page URL |
+| *(separator)* | `item.modId` set | |
+| Disable / Enable Vortex Mod | `item.modId` set | Two-way toggle: `setVortexModsEnabled([item], !isModEnabled)` |
 
 **Multi-item menu** (`selectedIds.size >= 2 && selectedIds.has(item.id)`):
 
@@ -1118,10 +1207,16 @@ Injects `.ue4ss-ctx-item:hover` style once via `globalThis.document.head`.
 | Disable Selected (n) | Set `enabled: false` on all selected; serialize |
 | Lock Selected (n) | Set `locked: true` on all selected; serialize |
 | Unlock Selected (n) | Set `locked: false` on all selected; serialize |
-| Open Mod Folder | Opens `item.id` folder (not all selected) |
+| Move to Top (n) / Move to Bottom (n) | Bulk reorder; serialize |
+| Open Mod Folders (n) | Opens each selected mod's folder |
+| Open Staging Folders (n) | Shown when any target has a `modId`; opens each resolvable staging folder |
+| Disable Vortex Mod (n) | `setVortexModsEnabled(targets, false)` |
 
-All menu actions call `dispatch(setUe4ssLoadOrder(profileId, newLO))` and
-`serializeUe4ss(api, newLO)` -- changes write to `mods.txt` immediately.
+LO-entry actions call `dispatch(setUe4ssLoadOrder(profileId, newLO))` and
+`serializeUe4ss(api, newLO)` -- changes write to `mods.txt` immediately. The
+Vortex-mod items are different: `setVortexModsEnabled` batch-dispatches
+`actions.setModEnabled` (via `util.batchDispatch`) and calls `requestDeployment` --
+they change deployment state, not mods.txt.
 
 ### Hook integration summary
 
@@ -1133,6 +1228,7 @@ All menu actions call `dispatch(setUe4ssLoadOrder(profileId, newLO))` and
 | User toggles checkbox | `onToggle` -> map new enabled state -> dispatch -> `serializeUe4ss` |
 | User locks entry | `onLock` -> map new locked state -> dispatch -> `serializeUe4ss` |
 | User right-clicks | `onContextMenu` -> `setContextMenu({ x, y, itemId })` |
+| User toggles a status filter | `LoadOrderStatusFilter` -> `setStatusFilter` -> `filteredOrder` recomputes (and `isFiltered` arms the `onApply` remap) |
 | User clicks row | `onSelect` -> `setSelectedIds` (plain/Ctrl/Shift) |
 | Context menu dismissed | click/contextmenu/Escape listeners -> `setContextMenu(null)` |
 | `did-deploy` | `didDeploy` -> `deserializeUe4ss` (with fallback) -> dispatch + `serializeUe4ss` |

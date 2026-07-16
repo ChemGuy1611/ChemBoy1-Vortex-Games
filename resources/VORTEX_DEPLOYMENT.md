@@ -3,8 +3,7 @@
 How the app makes **staged** mods actually present in the game folder, and how it removes them
 again (purge). Deployment is the step **after** install (`VORTEX_MOD_INSTALL.md`). The
 `IDeploymentMethod` contract and the deployment-manifest shape are the authoring view: see
-`DEPLOYMENT_MANIFEST.md`, `REGISTER_MERGE.md` and memory `reference_deployment_manifest` /
-`reference_register_merge`.
+`DEPLOYMENT_MANIFEST.md` and `REGISTER_MERGE.md`.
 
 Drivers: `mod_management/modActivation.ts` (`deployMods`), `mod_management/util/deploy.ts`
 (purge), `mod_management/util/deploymentMethods.ts` (activator registry), orchestration in
@@ -113,4 +112,4 @@ set, so once a higher-priority mod has placed a file, lower-priority mods skip i
 
 Runtime siblings: `VORTEX_MOD_INSTALL.md`, `VORTEX_PROFILES.md`, `VORTEX_GAME_LIFECYCLE.md`,
 `VORTEX_EVENT_BUS.md`. Overview: `VORTEX_APP.md`. Authoring: `DEPLOYMENT_MANIFEST.md`,
-`REGISTER_MERGE.md`. Memory: `reference_vortex_deployment`.
+`REGISTER_MERGE.md`.

@@ -2,7 +2,40 @@
 
 Changes extension developers need to make when targeting Vortex 2.0. The API surface is largely unchanged — the migration is primarily build tooling and dependency management.
 
-Source: `vortex-api/docs/MIGRATION.md`
+Source: `Vortex/packages/vortex-api/docs/MIGRATION.md`
+
+---
+
+## Update (July 2026) — `vortex-api` is now an NPM package
+
+The Vortex API type definitions are now published to NPM as **`@nexusmods/vortex-api`**, built from the Vortex monorepo (`packages/vortex-api`) and released alongside every Vortex beta and stable (first stable release: `2.2.0`, 2026-06-30). The standalone `Nexus-Mods/vortex-api` GitHub repository was archived on 2026-07-14 and no longer receives updates (Vortex PR #23679 removed the sync workflows).
+
+Existing extensions that depend on the GitHub repository keep working, but the pinned code is frozen. To receive newer typings, update `package.json` using one of two options:
+
+```diff
+- "vortex-api": "Nexus-Mods/vortex-api"
++ "@nexusmods/vortex-api": "^2.2.0"
+```
+
+with imports updated to the scoped name (preferred, so dependencies match imports):
+
+```ts
+import { types, util, selectors } from '@nexusmods/vortex-api';
+```
+
+Or keep existing imports untouched by aliasing the old name to the new package:
+
+```json
+"vortex-api": "npm:@nexusmods/vortex-api@^2.2.0"
+```
+
+Notes:
+
+- At runtime Vortex resolves **both** module ids — `require('vortex-api')` and `require('@nexusmods/vortex-api')` (see `src/renderer/src/util/extensionRequire.ts`), so shipped extensions do not break either way.
+- If your bundler config externalizes `vortex-api`, add `@nexusmods/vortex-api` to the externals list when switching imports to the scoped name.
+- **Warning:** the unscoped `vortex-api` package on the NPM registry is an unrelated third-party package (last published 2021). Never `npm install vortex-api` — only the scoped `@nexusmods/vortex-api` is official.
+- **Exports-map gotcha:** the NPM package's `exports` field only exposes `"."` (types → `./lib/api.d.ts`). `require('vortex-api/package.json')` — used by the webpack-externals snippet below — throws `ERR_PACKAGE_PATH_NOT_EXPORTED` against the NPM package. Read it via `fs` instead: `JSON.parse(fs.readFileSync('node_modules/vortex-api/package.json', 'utf8'))`.
+- **Peer-dependency pins:** the package declares exact-version peers matching Vortex's runtime (e.g. `fs-extra@9.1.0`). If your repo's own dev tooling needs newer versions, install with `legacy-peer-deps=true` (`.npmrc`) — the peers are only relevant when bundling against Vortex runtime versions.
 
 ---
 

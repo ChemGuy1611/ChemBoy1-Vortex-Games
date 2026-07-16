@@ -2,7 +2,7 @@
 
 How Vortex's loosely-coupled features actually talk to each other at runtime — the **mechanism**,
 not the catalog. For the list of concrete events and their argument signatures, see `EVENTS.md`
-and memory `reference_vortex_events` (the catalog); this doc is the plumbing underneath them.
+(the catalog); this doc is the plumbing underneath them.
 
 Implementation: `Vortex/src/renderer/src/ExtensionManager.ts` (the `api.events` emitter plus
 `emitAndAwait` / `onAsync`).
@@ -95,7 +95,6 @@ management, and health checks all hang off it.
 
 ## See also
 
-Catalog: `EVENTS.md`, memory `reference_vortex_events` (+ `_detail`). Runtime siblings that emit
+Catalog: `EVENTS.md`. Runtime siblings that emit
 these: `VORTEX_MOD_INSTALL.md`, `VORTEX_DEPLOYMENT.md`, `VORTEX_PROFILES.md`,
-`VORTEX_GAME_LIFECYCLE.md`, `VORTEX_DOWNLOAD_MGMT.md`. Overview: `VORTEX_APP.md`. Memory:
-`reference_vortex_event_bus`.
+`VORTEX_GAME_LIFECYCLE.md`, `VORTEX_DOWNLOAD_MGMT.md`. Overview: `VORTEX_APP.md`.

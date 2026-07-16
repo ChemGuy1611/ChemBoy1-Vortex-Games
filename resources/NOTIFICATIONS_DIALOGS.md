@@ -389,5 +389,4 @@ the promise + callback bookkeeping stays consistent.
   `Promise.resolve()` for a native promise.
 - A dialog you open with `showDialog` must be closed with `closeDialog` (not `dismissDialog`),
   or the awaiting promise never resolves.
-- See also (runtime): `VORTEX_EVENT_BUS.md`, `VORTEX_APP.md`; memory
-  `reference_vortex_notifications`.
+- See also (runtime): `VORTEX_EVENT_BUS.md`, `VORTEX_APP.md`.

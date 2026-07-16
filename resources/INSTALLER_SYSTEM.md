@@ -88,7 +88,7 @@ context.registerInstaller(MOD_ID, 35, testMod, (files, fileName) => installMod(c
 
 ## `IInstruction` Interface
 
-Source: `vortex-api/lib/api.d.ts` lines 4691-4702, 5496.
+Source: `node_modules/vortex-api/lib/api.d.ts` (grep `declare interface IInstruction` and `InstructionType`).
 
 ```typescript
 declare interface IInstruction {

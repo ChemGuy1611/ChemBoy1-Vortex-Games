@@ -1,9 +1,9 @@
 # Vortex Repo & App Architecture
 
-How the Vortex application and its monorepo are put together, for orientation when reading or searching the `Vortex` source tree. This is the **app/repo** view — the extension-facing API surface is covered separately (see the `apiReference.d.ts` / `api.d.ts` docs and the `reference_vortex_api_*` memory files). Crosslinks to those are noted where relevant.
+How the Vortex application and its monorepo are put together, for orientation when reading or searching the `Vortex` source tree. This is the **app/repo** view — the extension-facing API surface is covered separately by the `vortex-api` type declarations (`node_modules/vortex-api/lib/api.d.ts`) and the authoring docs in this folder. Crosslinks to those are noted where relevant.
 
 **Repo:** `c:\Game_Tools\0 GitHub Repos\Vortex` (read-only mirror of `Nexus-Mods/Vortex`).
-**Version line (audited 2026-06-26):** 2.2.0-beta.2. Default branch is `master`.
+**Version line (audited 2026-07-14):** v2.3.0 (latest tag; the local checkout's HEAD is on an integration branch that does not contain the tag commit). Default branch is `master`.
 
 ## Top-level layout
 
@@ -93,7 +93,7 @@ Vortex 2.x has a notable persistence/query architecture under `src/main/src/stor
 - **IPC persistence bridge** — `ReduxPersistorIPC.ts`, `persistenceIPC.ts`, `mainPersistence.ts`, `SubPersistor.ts` move state between processes.
 - Renderer side mirrors with `store/persistDiffMiddleware.ts` (diff-based persistence) and `stateDiff.ts`.
 
-For the data *shapes* exposed to extensions (`IState`, profiles, mods), see `reference_vortex_api_types`. For state helper functions (`getSafe`/`setSafe`/`batchDispatch`), see `reference_state_helpers`.
+For the data *shapes* exposed to extensions (`IState`, profiles, mods), see the declarations in `node_modules/vortex-api/lib/api.d.ts`. For state helper functions (`getSafe`/`setSafe`/`batchDispatch`), see `STATE_HELPERS.md`.
 
 ## Extension system — two layers
 
@@ -113,33 +113,31 @@ Vortex has **two** extension directories. Do not confuse them.
    - Tooling: `collections`, `mod-dependency-manager`, `fnis-integration`, `script-extender-installer`, `nmm-import-tool`, `mo-import`, `meta-editor`, `quickbms-support`, `mtframework-arc-support`, and more.
    - **`extensions/games/`** — 86 first-party `game-*` extensions (one folder per game). These are the in-tree equivalents of the third-party extensions in `ChemBoy1-Vortex-Games`.
 
-A reference scaffold for new extensions lives at `samples/sample-extension/` (per AGENTS-DIRECTORIES). Extension authoring against the published API: see `reference_vortex_api_overview` and `reference_register_game`.
+A reference scaffold for new extensions lives at `samples/sample-extension/` (per AGENTS-DIRECTORIES). Extension authoring against the published API: see `REGISTER_GAME.md` and the `vortex-api` type declarations.
 
 ### Collections & phased install
 
-Collections install in **phases**; each phase must complete and deploy before the next starts (Phase 0 = framework mods like SMAPI, Phase 1+ = content). Core logic + invariants live in `InstallManager.ts` (`mInstallPhaseState`, `ensurePhaseState`, `markPhaseDownloadsFinished`, `maybeAdvancePhase`, `pollPhaseSettlement`, `startPendingForPhase`). Rule of thumb when touching it: never bypass phase gating, check both `active === 0` and `pending === 0` before deploying, keep `isDeploying` accurate. Tests: `__tests__/PhasedInstaller.test.ts`. See `reference_collections_feature` for the registration API.
+Collections install in **phases**; each phase must complete and deploy before the next starts (Phase 0 = framework mods like SMAPI, Phase 1+ = content). Core logic + invariants live in `InstallManager.ts` (`mInstallPhaseState`, `ensurePhaseState`, `markPhaseDownloadsFinished`, `maybeAdvancePhase`, `pollPhaseSettlement`, `startPendingForPhase`). Rule of thumb when touching it: never bypass phase gating, check both `active === 0` and `pending === 0` before deploying, keep `isDeploying` accurate. Tests: `__tests__/PhasedInstaller.test.ts`. See `COLLECTIONS_FEATURE.md` for the registration API.
 
 ## How Vortex works (runtime flow)
 
-This is the practical orchestration that happens inside the app at runtime. The *contracts* extensions implement (`IGame`, `TestSupported`/`InstallFunc`, `IDeploymentMethod`, manifest shapes) are covered in the API memory — pointers inline. What follows is how the app drives them. Almost all of this lives in two core extensions: `gamemode_management/` and `mod_management/` (under `src/renderer/src/extensions/`).
+This is the practical orchestration that happens inside the app at runtime. The *contracts* extensions implement (`IGame`, `TestSupported`/`InstallFunc`, `IDeploymentMethod`, manifest shapes) are covered by the authoring docs in this folder — pointers inline. What follows is how the app drives them. Almost all of this lives in two core extensions: `gamemode_management/` and `mod_management/` (under `src/renderer/src/extensions/`).
 
 > **Each runtime subsystem now has its own deep-dive doc** (this section is the summary). Per-topic
 > full docs: `VORTEX_GAME_LIFECYCLE.md` · `VORTEX_MOD_INSTALL.md` · `VORTEX_DEPLOYMENT.md` ·
 > `VORTEX_PROFILES.md` · `VORTEX_LOAD_ORDER.md` · `VORTEX_EVENT_BUS.md` · `VORTEX_DOWNLOAD_MGMT.md`
 > · `VORTEX_NEXUS_INTEGRATION.md` · `VORTEX_EXTENSION_LOADING.md` · `NOTIFICATIONS_DIALOGS.md`
-> (Runtime model section). Memory equivalents: `reference_vortex_*` (game_lifecycle,
-> install_pipeline, deployment, profiles, load_order, event_bus, download_management,
-> nexus_integration, extension_loading, notifications).
+> (Runtime model section).
 
 ### 1. Game lifecycle
 
-- **Known games registry.** Every `context.registerGame(...)` (from a bundled or third-party extension) adds an `IGame` to `GameModeManager`'s `mKnownGames`. Game stores (`gamestore-steam`/`gog`/`xbox`/...) register as `IGameStore` in `mKnownGameStores`. (`gamemode_management/GameModeManager.ts`, registration contract: `reference_register_game`.)
+- **Known games registry.** Every `context.registerGame(...)` (from a bundled or third-party extension) adds an `IGame` to `GameModeManager`'s `mKnownGames`. Game stores (`gamestore-steam`/`gog`/`xbox`/...) register as `IGameStore` in `mKnownGameStores`. (`gamemode_management/GameModeManager.ts`, registration contract: `REGISTER_GAME.md`.)
 - **Discovery** — finding where a game is installed. Three paths in `gamemode_management/util/discovery.ts`:
   - `quickDiscovery` — asks each game's store/`queryPath` + each registered game store; fast, runs on startup. Calls back `onDiscoveredGame` -> writes an `IDiscoveryResult` into state.
   - `searchDiscovery` — full filesystem walk of chosen drives (user-triggered "Scan" when quick discovery misses).
   - `quickDiscoveryTools` / `discoverRelativeTools` — locate tools/script extenders relative to the game.
   - `suggestStagingPath` picks the default mod staging folder for a freshly discovered game.
-- **Activating a game** (managing it) — `GameModeManager.setGameMode(old, new, profileId)` -> `setupGameMode()` runs the game's `setup()` (creates staging dir via `fs.ensureDirWritableAsync`, etc.), then the app emits **`gamemode-activated`** with the game id. This is the signal nearly every feature waits on (deploy validators, load-order pages, plugin management all hook it). `requiresLauncher` resolution happens here too (see `reference_requires_launcher`).
+- **Activating a game** (managing it) — `GameModeManager.setGameMode(old, new, profileId)` -> `setupGameMode()` runs the game's `setup()` (creates staging dir via `fs.ensureDirWritableAsync`, etc.), then the app emits **`gamemode-activated`** with the game id. This is the signal nearly every feature waits on (deploy validators, load-order pages, plugin management all hook it). `requiresLauncher` resolution happens here too (see `REQUIRES_LAUNCHER.md`).
 - **Discovery results vs known games:** `mKnownGames` = what *can* be managed; `state.settings.gameMode.discovered` = what was *found on disk*. A game is manageable only when discovered + valid (`isValidGame`).
 
 ### 2. Mod install pipeline
@@ -148,11 +146,11 @@ Driven by `mod_management/InstallManager.ts` (large file; phased-install invaria
 
 1. **Trigger** — an archive lands (download finished, drag-drop, or collection). The app emits **`start-install`** (archive path) or calls `InstallManager.install(...)` directly. `installDependencies` / `installRecommendations` handle collection/dependency trees.
 2. **Game id** — `util/queryGameId.ts` decides which game the archive belongs to (download metadata, active game, or user prompt).
-3. **Pick an installer** — `InstallManager.installInner` runs registered installers in **priority order** (lower number first). Each installer is a `{ priority, testSupported, install }` triple added via `context.registerInstaller` / `addInstaller`. First `testSupported` returning `{ supported: true }` wins. FOMOD (`installer_fomod_*`) is the high-priority fallback for `ModuleConfig.xml`; the generic `basicInstaller` (`util/basicInstaller.ts`) is the catch-all. (Contract: `reference_installer_system`, `reference_fomod_installer`.)
+3. **Pick an installer** — `InstallManager.installInner` runs registered installers in **priority order** (lower number first). Each installer is a `{ priority, testSupported, install }` triple added via `context.registerInstaller` / `addInstaller`. First `testSupported` returning `{ supported: true }` wins. FOMOD (`installer_fomod_*`) is the high-priority fallback for `ModuleConfig.xml`; the generic `basicInstaller` (`util/basicInstaller.ts`) is the catch-all. (Contract: `INSTALLER_SYSTEM.md`, `FOMOD_INSTALLER.md`.)
 4. **Run install** — the chosen `install()` returns `IInstallResult` = a list of `IInstruction`s (copy, mkdir, generatefile, iniedit, setmodtype, attribute, rule, submodule, enableallplugins, …). `InstallManager`'s instruction-collector class buckets them by type.
 5. **Stage** — the archive is extracted and instructions applied into the **staging folder** (`util/getInstallPath.ts`, `stagingDirectory.ts`) under a per-mod `installationPath` folder. Variant mods append `+variant` to the folder name. The mod is now *installed* (in state) but **not yet on disk in the game** — that's deployment.
 6. **Modtype** — `setmodtype` instructions / modtype extensions (`modtype-*`) route a mod's files to a destination other than the game's data dir (e.g. BepInEx, ENB). Each modtype supplies its own target path.
-7. **Collections** install in phases (Phase 0 framework -> Phase 1+ content); each phase must deploy before the next (`reference_collections_feature`, AGENTS-COLLECTIONS).
+7. **Collections** install in phases (Phase 0 framework -> Phase 1+ content); each phase must deploy before the next (`COLLECTIONS_FEATURE.md`, AGENTS-COLLECTIONS).
 
 `simulate()` is a dry-run that produces instructions without committing — used for previews and conflict detection.
 
@@ -170,13 +168,13 @@ Deployment is what makes staged mods actually present in the game folder. Method
   1. `ensureWritable` + `getNormalizeFunc` on the destination.
   2. `method.prepare(dest, clean, lastActivation, normalize)`.
   3. For each enabled mod: `method.activate(modPath, mod.installationPath, subDir(mod), skipFiles)`. `fileOverrides` add to `skipFiles` so a higher-priority mod's file wins (conflict resolution).
-  4. Activate the **merged** folder (`MERGED_PATH[.typeId]`) holding `registerMerge` outputs (see `reference_register_merge`).
+  4. Activate the **merged** folder (`MERGED_PATH[.typeId]`) holding `registerMerge` outputs (see `REGISTER_MERGE.md`).
   5. `method.finalize(...)` -> writes the **deployment manifest** (list of `IDeployedFile`) and reports progress.
 - **Event flow** around deploy (wired in `mod_management/index.ts`):
   - `will-deploy` (emitAndAwait) -> handlers may adjust state before files move.
   - actual deploy -> `did-deploy` (emitAndAwait) + `mods-did-deploy`.
   - `deploy-single-mod`, `purge-mods`, `purge-mods-in-path`, `await-activation` for targeted ops.
-- **Deployment is triggered** by `mods-enabled` / `mod-enabled` events (debounced), on `gamemode-activated`, and manually. The manifest lets Vortex know what *it* put there so it can purge/redeploy and detect **external changes** (`util/externalChanges.ts`). Manifest shape + caching: `reference_deployment_manifest`.
+- **Deployment is triggered** by `mods-enabled` / `mod-enabled` events (debounced), on `gamemode-activated`, and manually. The manifest lets Vortex know what *it* put there so it can purge/redeploy and detect **external changes** (`util/externalChanges.ts`). Manifest shape + caching: `DEPLOYMENT_MANIFEST.md`.
 - **Purge** (`util/deploy.ts` `purgeMods` / `purgeModsInPath`) removes everything Vortex deployed, restoring the game folder, using the manifest. Always purge-before-redeploy when switching activators or profiles.
 
 ### 4. Profiles
@@ -188,8 +186,8 @@ Deployment is what makes staged mods actually present in the game folder. Method
 
 ### 5. Load order
 
-- **File-based load order (FBLO)** — `file_based_loadorder/` is the modern generic system: extensions register via `registerLoadOrder`, items render with a drag-and-drop list, order persists per profile and is serialized to a game file (e.g. `mods.txt`). `mod_load_order/` is the older renderer-page variant. (Contracts: `reference_register_load_order`, `reference_lo_item_renderer`, `reference_legacy_load_order`.)
-- **Gamebryo plugins** — Bethesda games use a separate plugin (`.esp`/`.esl`) load-order system in the `gamebryo-plugin-management` bundled extension (LOOT sorting, `plugins.txt`). Distinct from FBLO. (`reference_gamebryo_plugin_system`.)
+- **File-based load order (FBLO)** — `file_based_loadorder/` is the modern generic system: extensions register via `registerLoadOrder`, items render with a drag-and-drop list, order persists per profile and is serialized to a game file (e.g. `mods.txt`). `mod_load_order/` is the older renderer-page variant. (Contracts: `LOAD_ORDER_REGISTRATION.md`, `LOAD_ORDER_ITEM_RENDERER.md`.)
+- **Gamebryo plugins** — Bethesda games use a separate plugin (`.esp`/`.esl`) load-order system in the `gamebryo-plugin-management` bundled extension (LOOT sorting, `plugins.txt`). Distinct from FBLO. (`GAMEBRYO_PLUGIN_SYSTEM.md`.)
 - Collections capture and restore load order (`file_based_loadorder/collections/`, `genCollectionLoadOrder`).
 
 ### 6. Event bus — the glue
@@ -205,7 +203,7 @@ gamemode-activated  -> validators, LO pages, plugin mgmt, redeploy check
 profile-will-change -> purge -> profile-did-change -> redeploy
 ```
 
-Full event catalog + signatures: `reference_vortex_events` (+ detail). `registerTest`/health checks fire on `gamemode-activated` to validate the activator, staging folder, and pending transfers. Event-bus **mechanism** (enqueue, will-/did-, deferred `once`): `VORTEX_EVENT_BUS.md`.
+Full event catalog + signatures: `EVENTS.md`. `registerTest`/health checks fire on `gamemode-activated` to validate the activator, staging folder, and pending transfers. Event-bus **mechanism** (enqueue, will-/did-, deferred `once`): `VORTEX_EVENT_BUS.md`.
 
 ### 7. Download management
 
@@ -249,7 +247,7 @@ Notifications are session-state entries deduped by `id` (re-send updates in plac
 
 - **`master` is home** — main development line. Each version stabilises on its own branch (`v2.0`, `v2.1`, …) cut from master; alpha/beta/stable all live on that branch. Tags are semver (`v2.0.0-beta.1`, `v2.0.0`, patch `v2.0.1`). No separate hotfix branches — hotfixes go on the release branch. (`docs/branching-and-release-strategy.md`, `docs/cherry-pick-workflow.md`.)
 - **Cadence:** 2-week beta cycle — beta cut from master on a Monday, promoted to stable 2 weeks later. Three update channels: Stable (default), Beta, No-auto-update. Nightly unpacked artifacts on GitHub Actions (`nightly.yml`), not pushed via update channel. (`RELEASES.md`.)
-- **API for extension devs:** `@nexusmods/vortex-api` published to NPM with every beta + stable. Breaking changes get a ~2-release / 4-week deprecation window where possible; affected authors notified. (`RELEASES.md`, `packages/vortex-api/docs/MIGRATION.md` — see `reference_vortex_2_migration`.)
+- **API for extension devs:** `@nexusmods/vortex-api` published to NPM with every beta + stable (first stable `2.2.0`, 2026-06-30). NPM is now the only distribution channel — the standalone `Nexus-Mods/vortex-api` GitHub repo was archived on 2026-07-14 and its sync workflows removed (PR #23679). Breaking changes get a ~2-release / 4-week deprecation window where possible; affected authors notified. (`RELEASES.md`, `packages/vortex-api/docs/MIGRATION.md` — see `VORTEX_2_MIGRATION.md`.)
 - **Release tooling:** `docs/publishing-releases.md`, `scripts/publish-release-to-nexus/`, `docs/packaging/`, `docker/`, `flatpak/` (Linux).
 
 ## Code style highlights (`CODESTYLE.md`)
@@ -271,6 +269,6 @@ Notifications are session-state entries deduped by `id` (re-send updates in plac
 | `AGENTS-COLLECTIONS.md` | Phased install (note stale `src/extensions/...` path) |
 | `CONTRIBUTE.md` / `CODESTYLE.md` | Setup + code standards |
 
-## See also (extension-API memory)
+## See also (extension-API docs)
 
-`reference_vortex_api_overview` (API entry + lifecycle) · `reference_vortex_api_core` (IExtensionApi / context) · `reference_vortex_api_types` (data shapes) · `reference_vortex_api_helpers` (util/selectors/actions/fs) · `reference_vortex_2_migration` (1.16->2.0) · `reference_register_game` · `reference_installer_system` · `reference_collections_feature` · `reference_vortex_events`.
+`node_modules/vortex-api/lib/api.d.ts` (the full typed API surface) · `VORTEX_2_MIGRATION.md` (1.16->2.0 + NPM package) · `REGISTER_GAME.md` · `INSTALLER_SYSTEM.md` · `COLLECTIONS_FEATURE.md` · `EVENTS.md` · `STATE_HELPERS.md` · `UNDERUSED_API_FUNCTIONS.md`.

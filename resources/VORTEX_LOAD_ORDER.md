@@ -4,7 +4,7 @@ How the app drives mod **load order** at runtime: reading it from disk, persisti
 serializing it back to the game's order file, and validating it. The registration API
 (`registerLoadOrder`), the row renderer, the legacy API, and the separate Gamebryo plugin system
 are the authoring view: see `LOAD_ORDER_REGISTRATION.md`, `LOAD_ORDER_ITEM_RENDERER.md`,
-`reference_legacy_load_order`, `GAMEBRYO_PLUGIN_SYSTEM.md`.
+`GAMEBRYO_PLUGIN_SYSTEM.md`.
 
 There are **two distinct** load-order systems plus a legacy page:
 
@@ -67,7 +67,7 @@ match — surfacing a non-reportable error on `CycleError` (circular mod rules).
 
 `file_based_loadorder/collections/loadOrder.ts` (`generate`, `parser`, `Interface`) captures the
 load order into a collection and restores it on install (`genCollectionLoadOrder`). See
-`reference_collections_feature`.
+`COLLECTIONS_FEATURE.md`.
 
 ## Events / state
 
@@ -90,4 +90,4 @@ load order into a collection and restores it on install (`genCollectionLoadOrder
 
 Runtime siblings: `VORTEX_PROFILES.md`, `VORTEX_DEPLOYMENT.md`, `VORTEX_GAME_LIFECYCLE.md`,
 `VORTEX_EVENT_BUS.md`. Overview: `VORTEX_APP.md`. Authoring: `LOAD_ORDER_REGISTRATION.md`,
-`LOAD_ORDER_ITEM_RENDERER.md`, `GAMEBRYO_PLUGIN_SYSTEM.md`. Memory: `reference_vortex_load_order`.
+`LOAD_ORDER_ITEM_RENDERER.md`, `GAMEBRYO_PLUGIN_SYSTEM.md`.

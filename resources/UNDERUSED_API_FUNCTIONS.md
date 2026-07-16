@@ -2,7 +2,7 @@
 
 Functions available in the Vortex API that are **not used by any of the 16 templates** in this repo, but are genuinely useful for building richer extensions. Organized by use case.
 
-For the exhaustive API reference see memory files `reference_vortex_api_core.md`, `reference_vortex_api_helpers.md`, and `reference_vortex_api_types.md`. Line numbers refer to `vortex-api/lib/api.d.ts` (9295-line build).
+For the exhaustive API reference see the bundled type declarations in `node_modules/vortex-api/lib/api.d.ts`. Line numbers below refer to that file and drift between builds — grep by symbol name instead of trusting them.
 
 ---
 

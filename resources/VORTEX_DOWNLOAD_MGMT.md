@@ -4,7 +4,7 @@ How Vortex fetches mod archives — `nxm://` links, browser hand-offs, the downl
 parallel downloads, pause/resume, and the speed limit.
 
 > **Disambiguation.** This is **Vortex's built-in download manager** (the app subsystem). It is
-> **not** `DOWNLOADER.md` / `reference_downloader`, which is the third-party *requirements
+> **not** `DOWNLOADER.md`, which covers the third-party *requirements
 > auto-downloader* (`downloader.js`) that game extensions in `ChemBoy1-Vortex-Games` embed to pull
 > their dependencies. Different thing entirely.
 
@@ -103,4 +103,4 @@ nxm:// link (or browser/CLI URL)
 
 Runtime siblings: `VORTEX_NEXUS_INTEGRATION.md` (nxm + Nexus URLs), `VORTEX_MOD_INSTALL.md` (what
 happens after `download-finished`), `VORTEX_EVENT_BUS.md`. Overview: `VORTEX_APP.md`. **Not**
-`DOWNLOADER.md`. Memory: `reference_vortex_download_management`.
+`DOWNLOADER.md`.

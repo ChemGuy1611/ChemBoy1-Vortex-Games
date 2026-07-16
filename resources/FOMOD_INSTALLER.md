@@ -226,7 +226,7 @@ Callbacks passed to dialog management:
 The extended `testSupported` signature includes an optional `details` parameter:
 
 ```typescript
-// vortex-api/lib/api.d.ts
+// node_modules/vortex-api/lib/api.d.ts
 interface ITestSupportedDetails {
   hasXmlConfigXML?: boolean;   // true if archive contains fomod/ModuleConfig.xml
   hasCSScripts?: boolean;      // true if archive contains C# script files

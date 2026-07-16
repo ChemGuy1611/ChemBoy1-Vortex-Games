@@ -2,7 +2,7 @@
 
 A shared module copied into each game extension that auto-downloads and installs a modding requirement (a script loader, framework, or runtime) from its **GitHub releases**. It picks the right release/asset, downloads it, imports it into Vortex as a managed mod, and surfaces an "update available" notification when a newer release appears.
 
-The canonical copy lives at `resources/downloader/downloader.js`. Each adopting extension carries its own copy — changes to the canonical file must be propagated manually (see the adopters list in `reference_downloader_adopters`).
+The canonical copy lives at `resources/downloader/downloader.js`. Each adopting extension carries its own copy — changes to the canonical file must be propagated manually to every extension that bundles a `downloader.js`.
 
 ---
 
