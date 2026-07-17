@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.4.1] - 2026-07-16
+
+- Fixed: Atlan Mod Loader updater now properly detects new versions.
+
 ## [0.4.0] - 2026-06-24
 
 - Improved: Refactored downloader.js GitHub downloader/updater for Vortex v2.0+ and more reliable operation.

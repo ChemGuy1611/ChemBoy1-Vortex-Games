@@ -45,6 +45,16 @@ function latestAssetVersion(requirement, latest) {
   if (requirement.trackByAssetDate === true) {
     return latest.updated_at ?? latest.created_at ?? '';
   }
+  // Rolling-tag repos carry the version in the asset filename, not the tag - prefer
+  // the fileArchivePattern capture group when present. Patterns without a capture
+  // group (or non-matching assets) fall through to the tag.
+  const match = requirement.fileArchivePattern?.exec(latest.name);
+  if (match?.[1]) {
+    const fromAsset = semver.coerce(normalizeFrostyVersion(match[1]))?.version;
+    if (fromAsset) {
+      return fromAsset;
+    }
+  }
   return semver.coerce(normalizeFrostyVersion(latest.release.tag_name))?.version ?? '0.0.0';
 }
 
@@ -291,12 +301,11 @@ async function resolveVersionByPattern(api, requirement) {
   const state = api.getState();
   const files = util.getSafe(state, ['persistent', 'downloads', 'files'], []);
   const latestVersion = Object.values(files).reduce((prev, file) => {
-    let match = requirement.fileArchivePattern.exec(file.localPath);
-    if (match?.[1]) {
-      match[1] = normalizeFrostyVersion(match[1]);
-    }
-    if (match?.[1] && semver.gt(match[1], prev)) {
-      prev = match[1];
+    const match = requirement.fileArchivePattern.exec(file.localPath);
+    // coerce so an unparseable capture can't make semver.gt throw
+    const version = match?.[1] ? semver.coerce(normalizeFrostyVersion(match[1]))?.version : undefined;
+    if (version && semver.gt(version, prev)) {
+      prev = version;
     }
     return prev;
   }, '0.0.0');

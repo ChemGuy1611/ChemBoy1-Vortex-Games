@@ -4,6 +4,12 @@
 
 - Config and save modtypes, installers, and open buttons.
 
+## [0.4.0] - 2026-07-16
+
+- Added: EternalModInjector downloads now automatically resolve the latest file from the GameBanana API - no more waiting for the extension to update the download link after an injector release (falls back to the last known link if the API is unreachable)
+- Added: Update check for EternalModInjector when managing the game and when using the "Check for Updates" button on the Mods page - shows a notification with a download button when a newer version is available on GameBanana
+- Added: Installed injector version is now shown in the Mods list entry.
+
 ## [0.3.6] - 2026-07-16
 
 - Bump: EternalModInjector 6.66 Rev 3 N

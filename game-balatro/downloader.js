@@ -20,11 +20,13 @@ const NOTIF_ID_REQUIREMENTS = 'vortex-downloader-requirements-download-notificat
 
 // Normalize mis-tagged GitHub release versions so semver can parse them:
 // replace "-"/"_" with "." between digits, i.e. v1-2-3-pre.4 -> v1.2.3-pre.4.
+// Lookahead keeps the trailing digit unconsumed so every separator is replaced
+// (a consuming match would skip alternate separators, e.g. 6_1_1 -> 6.1_1).
 function normalizeVersion(version) {
   if (version === null || version === undefined) {
     return version;
   }
-  return version.replace(/(\d)[-_](\d)/i, '$1.$2');
+  return version.replace(/(\d)[-_](?=\d)/g, '$1.');
 }
 
 // Comparable/display version for a fetched release asset. For trackByAssetDate requirements
@@ -34,6 +36,16 @@ function normalizeVersion(version) {
 function latestAssetVersion(requirement, latest) {
   if (requirement.trackByAssetDate === true) {
     return latest.updated_at ?? latest.created_at ?? '';
+  }
+  // Rolling-tag repos (e.g. EntityAtlan 'ModLoader') carry the version in the asset
+  // filename, not the tag - prefer the fileArchivePattern capture group when present.
+  // Patterns without a capture group (or non-matching assets) fall through to the tag.
+  const match = requirement.fileArchivePattern?.exec(latest.name);
+  if (match?.[1]) {
+    const fromAsset = semver.coerce(normalizeVersion(match[1]))?.version;
+    if (fromAsset) {
+      return fromAsset;
+    }
   }
   return semver.coerce(normalizeVersion(latest.release.tag_name))?.version ?? '0.0.0';
 }
@@ -281,12 +293,11 @@ async function resolveVersionByPattern(api, requirement) {
   const state = api.getState();
   const files = util.getSafe(state, ['persistent', 'downloads', 'files'], []);
   const latestVersion = Object.values(files).reduce((prev, file) => {
-    let match = requirement.fileArchivePattern.exec(file.localPath);
-    if (match?.[1]) {
-      match[1] = normalizeVersion(match[1]);
-    }
-    if (match?.[1] && semver.gt(match[1], prev)) {
-      prev = match[1];
+    const match = requirement.fileArchivePattern.exec(file.localPath);
+    // coerce so an unparseable capture can't make semver.gt throw
+    const version = match?.[1] ? semver.coerce(normalizeVersion(match[1]))?.version : undefined;
+    if (version && semver.gt(version, prev)) {
+      prev = version;
     }
     return prev;
   }, '0.0.0');

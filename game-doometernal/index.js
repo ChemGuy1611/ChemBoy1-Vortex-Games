@@ -2,7 +2,7 @@
 Name: DOOM Eternal Vortex Extension
 Structure: 3rd party mod loader
 Author: ChemBoy1
-Version: 0.3.6
+Version: 0.4.0
 Date: 2026-07-16
 ////////////////////////////////////////////////*/
 /*
@@ -52,10 +52,14 @@ const EXEC = path.join('launcher', "idTechLauncher.exe");
 const EXEC_ALT = "DOOMEternalx64vk.exe";
 const EXEC_XBOX = "gamelaunchhelper.exe";
 
-const INJ_REV = "6.66 Rev 3 N";
-const INJ_DL_ID = "1706519"; //!update this file id when new version released on gamebanana - https://gamebanana.com/tools/7475
-const INJ_URL = `https://gamebanana.com/tools/7475`;
+const INJ_TOOL_ID = "7475"; //GameBanana tool id for EternalModInjector
+const INJ_REV = "6.66 Rev 3 N"; //fallback version if the GameBanana API is unreachable
+const INJ_DL_ID = "1706519"; //fallback file id if the GameBanana API is unreachable - https://gamebanana.com/tools/7475
+const INJ_URL = `https://gamebanana.com/tools/${INJ_TOOL_ID}`;
 const INJ_INSTR_URL = `https://gamebanana.com/posts/10737067`;
+const INJ_API_FILES_URL = `https://gamebanana.com/apiv11/Tool/${INJ_TOOL_ID}/DownloadPage`;
+const INJ_API_UPDATES_URL = `https://gamebanana.com/apiv11/Tool/${INJ_TOOL_ID}/Updates?_nPage=1&_nPerpage=1`;
+const INJ_FILE_ATTR = "gamebananaFileId"; //mod attribute used to track the installed GameBanana file id
 
 let GAME_PATH = '';
 let STAGING_FOLDER = '';
@@ -303,6 +307,35 @@ async function deploy(api) {
 
 // AUTO-DOWNLOADER FUNCTIONS ///////////////////////////////////////////////////
 
+//Get the latest EternalModInjector file from the GameBanana API (returns null if unreachable)
+async function getLatestInjectorFile() {
+  try {
+    const data = await util.jsonRequest(INJ_API_FILES_URL);
+    const files = (data?._aFiles || []).filter(file => (file?._idRow && file?._sDownloadUrl));
+    if (files.length === 0) {
+      return null;
+    }
+    files.sort((a, b) => (b._tsDateAdded || 0) - (a._tsDateAdded || 0)); //newest file first
+    return files[0];
+  } catch (err) {
+    log('warn', `Could not get latest EternalModInjector file from GameBanana API: ${err}`);
+    return null;
+  }
+}
+
+//Get the latest EternalModInjector version from the GameBanana API (returns null if unreachable)
+async function getLatestInjectorVersion() {
+  try {
+    const data = await util.jsonRequest(INJ_API_UPDATES_URL);
+    const title = data?._aRecords?.[0]?._sName || ''; //title format: "2026-05-20 (Update 6.66 Rev 3 N)"
+    const match = title.match(/\(Update\s+(.+?)\)/);
+    return match ? match[1] : null;
+  } catch (err) {
+    log('warn', `Could not get latest EternalModInjector version from GameBanana API: ${err}`);
+    return null;
+  }
+}
+
 //Check if mod injector is installed
 function isEternalModInjectorInstalled(api, spec) {
   const state = api.getState();
@@ -323,11 +356,13 @@ async function downloadEternalModInjector(api, gameSpec, check = true) {
       allowSuppress: false,
     });
     try { //Download the mod
+      const latestFile = await getLatestInjectorFile(); //resolve current file from GameBanana API
+      const latestVersion = await getLatestInjectorVersion();
       const dlInfo = {
         game: gameSpec.game.id,
         name: 'EternalModInjector',
       };
-      const URL = INJ_DL_URL;
+      const URL = latestFile ? latestFile._sDownloadUrl : INJ_DL_URL; //fall back to hardcoded file id if API is unreachable
       const dlId = await util.toPromise(cb =>
         api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
       const modId = await util.toPromise(cb =>
@@ -339,6 +374,8 @@ async function downloadEternalModInjector(api, gameSpec, check = true) {
           installed: true,
         }),
         actions.setModType(gameSpec.game.id, modId, INJECTOR_ID), // Set the modType
+        actions.setModAttribute(gameSpec.game.id, modId, 'version', latestVersion || INJ_REV),
+        actions.setModAttribute(gameSpec.game.id, modId, INJ_FILE_ATTR, latestFile ? latestFile._idRow : Number(INJ_DL_ID)), // Track the installed file id for update checks
       ];
       util.batchDispatch(api.store, batched); // Will dispatch both actions.
     } catch (err) { //Show the user the download page if the download/install process fails
@@ -348,6 +385,53 @@ async function downloadEternalModInjector(api, gameSpec, check = true) {
     } finally {
       api.dismissNotification(NOTIF_ID);
     }
+  }
+}
+
+//Check the GameBanana API for a newer EternalModInjector file and notify the user
+async function checkForInjectorUpdate(api, gameSpec) {
+  if (!isEternalModInjectorInstalled(api, gameSpec)) {
+    return;
+  }
+  const latestFile = await getLatestInjectorFile();
+  if (!latestFile) {
+    return; //API unreachable - nothing to compare against
+  }
+  const state = api.getState();
+  const mods = state.persistent.mods[gameSpec.game.id] || {};
+  const injectorMods = Object.values(mods).filter(mod => mod?.type === INJECTOR_ID);
+  const latestArchive = String(latestFile._sFile || '').toLowerCase().replace(/\.zip$/, '');
+  const isCurrent = injectorMods.some(mod => // match on tracked file id, or archive name for mods installed before id tracking
+    (String(mod?.attributes?.[INJ_FILE_ATTR]) === String(latestFile._idRow))
+    || ((latestArchive.length > 0) && String(mod?.attributes?.fileName || '').toLowerCase().includes(latestArchive))
+  );
+  if (isCurrent) {
+    return;
+  }
+  const latestVersion = await getLatestInjectorVersion();
+  api.sendNotification({
+    id: 'doometernal-injector-update',
+    type: 'warning',
+    message: `EternalModInjector update available${latestVersion ? ` (${latestVersion})` : ''}`,
+    allowSuppress: true,
+    actions: [
+      {
+        title: 'Download',
+        action: (dismiss) => {
+          downloadEternalModInjector(api, gameSpec, false);
+          dismiss();
+        },
+      },
+    ],
+  });
+}
+
+//Check for injector updates when Vortex checks mod versions (Check for Updates button)
+async function onCheckModVersion(api, gameId, mods, forced) {
+  try {
+    await checkForInjectorUpdate(api, spec);
+  } catch (err) {
+    log('warn', `Failed to check for EternalModInjector update: ${err}`);
   }
 }
 
@@ -672,6 +756,7 @@ async function setup(discovery, api, gameSpec) {
     xboxNotify(api);
   }
   await downloadEternalModInjector(api, gameSpec);
+  await checkForInjectorUpdate(api, gameSpec).catch(() => null); //update check should never block setup
   await fs.ensureDirWritableAsync(path.join(discovery.path, "doomSandBox"));
   return fs.ensureDirWritableAsync(path.join(discovery.path, gameSpec.game.modPath));
 }
@@ -708,7 +793,7 @@ function applyGame(context, gameSpec) {
   context.registerInstaller('doometernal-zip-mod', 45, testZipContent, installZipContent);
 
   //register actions
-  context.registerAction('mod-icons', 300, 'open-ext', {}, `Download EternalModInjector v${INJ_REV} (${INJ_DL_ID})`, () => {
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download Latest EternalModInjector', () => {
     downloadEternalModInjector(context.api, spec, false);
   }, () => {
     const state = context.api.getState();
@@ -774,10 +859,14 @@ function main(context) {
   applyGame(context, spec);
   context.once(() => { // put code here that should be run (once) when Vortex starts up
     const api = context.api;
-    context.api.onAsync('did-deploy', async (profileId, deployment) => {
-      const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
+    api.onAsync('did-deploy', async (profileId, deployment) => {
+      const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;
       return deployNotify(context.api);
+    });
+    api.onAsync('check-mods-version', (gameId, mods, forced) => {
+      if (gameId !== GAME_ID) return;
+      return onCheckModVersion(api, gameId, mods, forced);
     });
   });
   return true;

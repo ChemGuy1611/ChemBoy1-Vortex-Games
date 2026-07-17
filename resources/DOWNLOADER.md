@@ -71,7 +71,9 @@ Set one `resolveVersion` per requirement:
 - **`resolveVersionByFile`** — the version lives inside a file (e.g. `version.txt`). Extracts the newest matching downloaded archive to a temp dir, reads `versionFile`, and parses the version. **Not exported by `downloader.js`** — it ships in `template_downloader.js` because the parse step is per-game customizable.
 - **`resolveVersionByAssetDate`** — paired with `trackByAssetDate`; reads the GitHub asset upload time recorded on the installed mod (`githubAssetDate` attribute) at install time.
 
-Version comparison is centralized: `latestAssetVersion()` and `isUpdateAvailable()` switch between semver comparison and `Date.parse` comparison based on `trackByAssetDate`. Mis-tagged release versions are normalized first via `normalizeVersion()` — a `-`/`_` between digits becomes `.` (e.g. `v1-2-3` -> `v1.2.3`) so semver can parse them.
+Version comparison is centralized: `latestAssetVersion()` and `isUpdateAvailable()` switch between semver comparison and `Date.parse` comparison based on `trackByAssetDate`. Mis-tagged release versions are normalized first via `normalizeVersion()` — every `-`/`_` between digits becomes `.` (e.g. `v1-2-3` -> `v1.2.3`, `6_1_1` -> `6.1.1`) so semver can parse them.
+
+When the latest release is fetched, `latestAssetVersion()` prefers the version embedded in the **asset filename** (the `fileArchivePattern` capture group run against the asset name) over the release tag. This makes update detection work for rolling-tag repositories whose tag carries no version at all (e.g. EntityAtlan publishes `AtlanModLoader_v_6_1_1.zip` under the permanent tag `ModLoader`). Patterns without a capture group, or assets that don't match, fall back to the semver-coerced tag name as before.
 
 ---
 

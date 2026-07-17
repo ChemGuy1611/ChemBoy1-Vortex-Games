@@ -55,7 +55,7 @@ These tools appear in Vortex's Tools panel when this game is active:
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- Download EternalModInjector v${INJ_REV} (${INJ_DL_ID})
+- Download Latest EternalModInjector
 - Open Config Folder
 - Open Saves Folder
 - View Changelog
