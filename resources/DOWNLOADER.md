@@ -8,9 +8,9 @@ The canonical copy lives at `resources/downloader/downloader.js`. Each adopting 
 
 ## Architecture
 
-Hand-authored CommonJS (formerly a webpack bundle). The top of the file is the clean logic; the bottom is the **axios v1.18.1 browser build inlined verbatim** as a local IIFE, because Vortex does not expose axios to extensions at runtime. The only true externals required are `path`, `semver`, and `vortex-api` (the `turbowalk` dependency was dropped — recursive walking now uses Vortex's `util.walk`).
+Hand-authored CommonJS (formerly a webpack bundle). All HTTP goes through the native `fetch` global — Vortex 2 loads extensions in the Electron renderer, so requests use the same Chromium network stack the previously vendored axios browser build did. The only externals required are `path`, `semver`, and `vortex-api` (the `turbowalk` dependency was dropped — recursive walking now uses Vortex's `util.walk`).
 
-`resources/downloader/downloader_old.js` (+ `.map`) is retained only as a diffing reference against the previous bundle.
+`resources/downloader/downloader_old.js` (+ `.map`) is retained only as a diffing reference against the original webpack bundle. `resources/downloader/downloader_axios.js` is the archived last axios-based version, from before the switch to native `fetch`.
 
 ---
 
@@ -37,7 +37,7 @@ const {
 | `testRequirementVersion(api, requirement)` | Compare installed vs. latest release; if newer, raise the "update available" notification. |
 | `getLatestGithubReleaseAsset(api, requirement)` | Fetch the matching release asset from GitHub (also exported). |
 | `doDownload(downloadUrl, destination)` | Low-level arraybuffer download to a path (also exported). |
-| `getMods`, `walkPath`, `axios` | Helpers also exported but rarely consumed directly. |
+| `getMods`, `walkPath` | Helpers also exported but rarely consumed directly. |
 
 ---
 
@@ -82,7 +82,8 @@ When the latest release is fetched, `latestAssetVersion()` prefers the version e
 - **GitHub-only.** Requirements come from GitHub release assets. Nexus requirements are handled inline in the individual extensions, not here. Requirement objects carrying old Nexus fields (`modId`/`fileFilter`/`modUrl`) are ignored.
 - **Case-insensitive detection.** `findModByFile` lower-cases both sides, so a maintainer changing the marker file's capitalization won't trigger a constant re-download loop.
 - **No auto-update on setup.** `download()` installs a missing requirement, but if one is already installed it does **not** silently pull a newer release. Instead it calls `testRequirementVersion`, which raises the "update available" notification. Only the user-driven Download action actually updates — it calls `download(api, [req], true)` (the forced branch).
-- **Rate-limit aware.** `getLatestGithubReleaseAsset` / `doDownload` inspect `x-ratelimit-remaining` and reject with `util.ProcessCanceled` on a 403/404 rate-limit response.
+- **Rate-limit aware.** `getLatestGithubReleaseAsset` / `doDownload` inspect `x-ratelimit-remaining` on a 403/404 response and reject with `util.ProcessCanceled` when the quota is exhausted. The check only fires when the header is actually present, so an error from a host that doesn't send `x-ratelimit-*` headers surfaces as a normal error instead. (Under the old axios build this check was unreachable — axios threw on any 4xx before the status inspection ran; native `fetch` does not throw on HTTP errors, so it now works.) The logged reset time converts GitHub's epoch-seconds `x-ratelimit-reset` correctly.
+- **Non-2xx responses throw.** `fetch` resolves on HTTP errors, so both call sites explicitly throw `Request failed with status code N` on any non-ok, non-rate-limited response — preserving the axios error semantics callers rely on (error notification in `getLatestGithubReleaseAsset`, propagated rejection from `doDownload`).
 
 ---
 
