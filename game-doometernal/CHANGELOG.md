@@ -4,6 +4,10 @@
 
 - Config and save modtypes, installers, and open buttons.
 
+## [0.3.6] - 2026-07-16
+
+- Bump: EternalModInjector 6.66 Rev 3 N
+
 ## [0.3.5] - 2026-04-13
 
 - Bump: EternalModInjector 6.66 Rev 3 L
