@@ -12,9 +12,9 @@ filter, checked rows) persist across sessions via QSettings.
 
 Dark theme applied via Fusion palette + stylesheet. Engine grouping inserts
 read-only header rows via GroupProxy. "Flagged Only" restricts the table to
-flagged rows; the category dropdown restricts it to special-category games
-(bundled downloader module, non-UE load order); Space toggles the checkbox on
-all selected rows.
+flagged rows; the category dropdown is a multi-select checkbox list of engines
+(OR'd together) plus special categories (bundled downloader module, non-UE load
+order -- each AND'd on top); Space toggles the checkbox on all selected rows.
 
 Requirements:
     pip install pyside6
@@ -33,12 +33,12 @@ import subprocess
 from datetime import datetime
 
 from PySide6.QtCore import (
-    QAbstractProxyModel, QAbstractTableModel, QItemSelectionModel, QModelIndex,
+    QAbstractProxyModel, QAbstractTableModel, QEvent, QItemSelectionModel, QModelIndex,
     QObject, QPointF, QProcess, QProcessEnvironment, QSettings, QSize, QSortFilterProxyModel, Qt, QThread, QUrl, Signal,
 )
 from PySide6.QtGui import (
     QAction, QColor, QDesktopServices, QFont, QIcon, QKeySequence, QPainter, QPainterPath,
-    QPen, QPixmap, QShortcut, QTextCharFormat, QTextCursor,
+    QPen, QPixmap, QShortcut, QStandardItem, QTextCharFormat, QTextCursor,
 )
 from PySide6.QtSvg import QSvgRenderer
 from PySide6.QtWidgets import (
@@ -780,7 +780,7 @@ class GameFilterModel(QSortFilterProxyModel):
         self._text = ""
         self._grouping = False
         self._flagged_only = False
-        self._category = ""
+        self._categories: set[str] = set()
 
     def set_text(self, text: str):
         self._text = text.strip().lower()
@@ -792,11 +792,15 @@ class GameFilterModel(QSortFilterProxyModel):
         self._flagged_only = enabled
         self.invalidate()
 
-    def set_category(self, category: str):
-        """Restrict rows to a special category: "" (all), "downloader", "loadorder"."""
-        if category == self._category:
+    def set_categories(self, categories: set):
+        """Restrict rows to the given category values (empty set = all rows).
+
+        Values: "engine:<label>" (multiple engines OR'd together), "downloader",
+        "loadorder" (each AND'd on top of the engine match)."""
+        categories = set(categories)
+        if categories == self._categories:
             return
-        self._category = category
+        self._categories = categories
         self.invalidate()
 
     def set_grouping(self, enabled: bool):
@@ -811,9 +815,12 @@ class GameFilterModel(QSortFilterProxyModel):
             return True  # checked rows stay pinned through every filter
         if self._flagged_only and not row.flagged:
             return False
-        if self._category == "downloader" and not row.has_downloader:
+        engines = {c[7:] for c in self._categories if c.startswith("engine:")}
+        if engines and row.engine not in engines:
             return False
-        if self._category == "loadorder" and not row.has_load_order:
+        if "downloader" in self._categories and not row.has_downloader:
+            return False
+        if "loadorder" in self._categories and not row.has_load_order:
             return False
         if not self._text:
             return True
@@ -993,6 +1000,105 @@ class GroupProxy(QAbstractProxyModel):
         if 0 <= proxy_row < len(self._map):
             return self._map[proxy_row][0]
         return False
+
+
+# == Check combo box ===========================================================
+
+class CheckComboBox(QComboBox):
+    """Combo box whose dropdown items are checkboxes; the popup stays open while
+    toggling so several filters can be picked in one visit.
+
+    The (read-only) line edit shows a summary: the placeholder text when nothing
+    is checked, else the checked labels comma-joined. Item values live in
+    Qt.UserRole -- read them via checked_values() / restore via
+    set_checked_values(). `changed` fires once per user toggle;
+    set_checked_values() is silent so callers can restore state without
+    triggering slots."""
+
+    changed = Signal()
+
+    def __init__(self, placeholder: str = "All"):
+        super().__init__()
+        self._placeholder = placeholder
+        self.setEditable(True)
+        self.setSizeAdjustPolicy(QComboBox.AdjustToContents)
+        self.setInsertPolicy(QComboBox.NoInsert)
+        self.lineEdit().setReadOnly(True)
+        self.lineEdit().installEventFilter(self)   # click on the text opens the popup
+        self.view().viewport().installEventFilter(self)
+        self.model().dataChanged.connect(self._on_data_changed)
+        self._update_text()
+
+    def add_check_item(self, label: str, value: str):
+        item = QStandardItem(label)
+        item.setData(value, Qt.UserRole)
+        item.setFlags(Qt.ItemIsEnabled | Qt.ItemIsUserCheckable)
+        # set the check state BEFORE appendRow so no dataChanged fires during builds
+        item.setData(Qt.Unchecked, Qt.CheckStateRole)
+        self.model().appendRow(item)
+
+    def eventFilter(self, obj, event):
+        if obj is self.view().viewport() and event.type() == QEvent.MouseButtonRelease:
+            # toggle the clicked item and swallow the event so the popup stays open
+            idx = self.view().indexAt(event.position().toPoint())
+            item = self.model().itemFromIndex(idx)
+            if item is not None and item.isCheckable():
+                item.setCheckState(
+                    Qt.Unchecked if item.checkState() == Qt.Checked else Qt.Checked)
+            return True
+        if obj is self.lineEdit() and event.type() == QEvent.MouseButtonPress:
+            self.showPopup()
+            return True
+        return super().eventFilter(obj, event)
+
+    def wheelEvent(self, event):
+        event.ignore()   # scrolling must not change the current index / line edit
+
+    def showPopup(self):
+        # widen the popup to the longest label: column hint + checkbox indicator
+        # + scrollbar, so labels never clip even when the closed combo is narrow
+        view = self.view()
+        width = (view.sizeHintForColumn(0)
+                 + view.verticalScrollBar().sizeHint().width() + 32)
+        view.setMinimumWidth(max(width, self.width()))
+        super().showPopup()
+
+    def checked_values(self) -> list:
+        values = []
+        model = self.model()
+        for i in range(model.rowCount()):
+            item = model.item(i)
+            if item is not None and item.checkState() == Qt.Checked:
+                values.append(item.data(Qt.UserRole))
+        return values
+
+    def set_checked_values(self, values):
+        """Check exactly the items whose value is in `values`; unknown values are
+        dropped silently. Does not emit `changed`."""
+        wanted = set(values or [])
+        prev = self.signalsBlocked()
+        self.blockSignals(True)
+        model = self.model()
+        for i in range(model.rowCount()):
+            item = model.item(i)
+            if item is not None and item.isCheckable():
+                item.setCheckState(
+                    Qt.Checked if item.data(Qt.UserRole) in wanted else Qt.Unchecked)
+        self.blockSignals(prev)
+        self._update_text()
+
+    def _on_data_changed(self, *_args):
+        self._update_text()
+        self.changed.emit()
+
+    def _update_text(self):
+        labels = []
+        model = self.model()
+        for i in range(model.rowCount()):
+            item = model.item(i)
+            if item is not None and item.checkState() == Qt.Checked:
+                labels.append(item.text())
+        self.lineEdit().setText(", ".join(labels) if labels else self._placeholder)
 
 
 # == Script runner =============================================================
@@ -1455,6 +1561,9 @@ class MainWindow(QMainWindow):
         self._refresh_after_run = False
         self._refresh_worker: _RefreshWorker | None = None
         self._splitter: QSplitter | None = None
+        # category filter restored from QSettings before the first refresh has
+        # built the engine entries; applied by _rebuild_category_combo
+        self._pending_category: list | None = None
 
         self._tray = gui_tray.TrayManager(
             self, app_name="Vortex Extension Manager",
@@ -1497,14 +1606,17 @@ class MainWindow(QMainWindow):
         self._flagged_btn.setCheckable(True)
         self._flagged_btn.toggled.connect(self._on_flagged_only_toggled)
         top_bar.addWidget(self._flagged_btn)
-        self._category_combo = QComboBox()
-        self._category_combo.addItem("All Categories", "")
-        self._category_combo.addItem("Downloader", "downloader")
-        self._category_combo.addItem("Load Order", "loadorder")
+        self._category_combo = CheckComboBox("All Categories")
+        # engine entries are injected after each refresh (_rebuild_category_combo)
+        self._category_combo.add_check_item("Downloader", "downloader")
+        self._category_combo.add_check_item("Load Order", "loadorder")
         self._category_combo.setToolTip(
+            "Check any number of filters; the popup stays open while toggling.\n"
+            "Engines: detected from index.js -- checking several shows games of any of them.\n"
             "Downloader: bundles a downloader module (downloader.js / gamebanana / moddb).\n"
-            "Load Order: registers a load order (UE4/5 games excluded -- template standard).")
-        self._category_combo.currentIndexChanged.connect(self._on_category_changed)
+            "Load Order: registers a load order (UE4/5 games excluded -- template standard).\n"
+            "Downloader / Load Order each narrow the engine match further.")
+        self._category_combo.changed.connect(self._on_category_changed)
         top_bar.addWidget(self._category_combo)
         self._clear_checks_btn = QPushButton("Clear Checks")
         self._clear_checks_btn.setEnabled(False)
@@ -1651,11 +1763,12 @@ class MainWindow(QMainWindow):
             self._group_btn.setChecked(True)
         if settings.value("flaggedOnly", False, type=bool):
             self._flagged_btn.setChecked(True)
-        saved_cat = settings.value("categoryFilter", "")
-        if saved_cat:
-            idx = self._category_combo.findData(saved_cat)
-            if idx >= 0:
-                self._category_combo.setCurrentIndex(idx)
+        raw_cat = settings.value("categoryFilter", [])
+        if isinstance(raw_cat, str):   # legacy single-string value from the old QComboBox
+            raw_cat = [raw_cat] if raw_cat else []
+        elif raw_cat is None:
+            raw_cat = []
+        self._pending_category = [c for c in raw_cat if c]
         raw_checked = settings.value("checkedIds", [])
         if isinstance(raw_checked, str):
             raw_checked = [raw_checked]
@@ -1672,7 +1785,7 @@ class MainWindow(QMainWindow):
         settings.setValue("filterText", self._filter_edit.text())
         settings.setValue("groupByEngine", self._group_btn.isChecked())
         settings.setValue("flaggedOnly", self._flagged_btn.isChecked())
-        settings.setValue("categoryFilter", self._category_combo.currentData())
+        settings.setValue("categoryFilter", self._category_combo.checked_values())
         settings.setValue("checkedIds", list(self._model._checked_ids))
         if not self._tray.on_close(event):
             return  # hidden to tray; keep running (settings already saved)
@@ -1699,10 +1812,26 @@ class MainWindow(QMainWindow):
     def _on_flagged_only_toggled(self, checked: bool):
         self._filter_model.set_flagged_only(checked)
 
-    def _on_category_changed(self, _index: int):
-        self._filter_model.set_category(self._category_combo.currentData())
+    def _on_category_changed(self):
+        self._filter_model.set_categories(set(self._category_combo.checked_values()))
         self._update_status_bar()
-        self._update_status_bar()
+
+    def _rebuild_category_combo(self, engines: list[str]):
+        """Rebuild the category dropdown: engine entries from the loaded rows,
+        then a separator, then the special categories. Preserves the current
+        checked set (or the one restored from QSettings on first build)."""
+        combo = self._category_combo
+        want = (self._pending_category if self._pending_category is not None
+                else combo.checked_values())
+        self._pending_category = None
+        combo.clear()
+        for eng in engines:
+            combo.add_check_item(eng, f"engine:{eng}")
+        combo.insertSeparator(combo.count())
+        combo.add_check_item("Downloader", "downloader")
+        combo.add_check_item("Load Order", "loadorder")
+        combo.set_checked_values(want)   # silent; stale engine values drop out
+        self._filter_model.set_categories(set(combo.checked_values()))
 
     def _refresh_data(self):
         if self._refresh_worker is not None:
@@ -1719,6 +1848,7 @@ class MainWindow(QMainWindow):
         self._model.apply_rows(rows)
         # drop checked ids whose extension no longer exists on disk
         self._model._checked_ids &= {r.game_id for r in rows}
+        self._rebuild_category_combo(sorted({r.engine for r in rows}))
         self._refresh_worker.deleteLater()
         self._refresh_worker = None
         QApplication.restoreOverrideCursor()

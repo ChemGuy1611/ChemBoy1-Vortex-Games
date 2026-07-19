@@ -47,8 +47,6 @@ Installers run in priority order (lower number = tested first). The first instal
 | `dragonageinquisition-frostymodmanager` | 30 |
 | `dragonageinquisition-fbmod` | 35 |
 | `dragonageinquisition-daimod` | 45 |
-| `dragonageinquisition-config` | 50 |
-| `dragonageinquisition-save` | 55 |
 
 ## Registered Tools
 
@@ -62,6 +60,13 @@ These tools appear in Vortex's Tools panel when this game is active:
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
+- Download ${PATCH_NAME}
+- Remove ${PATCH_NAME}
+- Delete ModData Folder
+- Open Frosty ${FROSTY_CONFIG_FILE}
+- Set ${PATCH_NAME} Enabled
+- Set ${PATCH_NAME} Disabled
+- Open Frosty Mods Folder
 - Open Config/Save Folder
 - Open PCGamingWiki Page
 - View Changelog
@@ -70,6 +75,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 ## Special Features
 
+- **Deploy Hook** (`did-deploy`) — runs custom logic (e.g., notifications, metadata patching) every time mods are deployed.
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.

@@ -58,7 +58,9 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - Download DAVExtender
 - Download SDK Patch Latest (EA/Epic)
+- Remove ${SDKPATCH_NAME}
 - Delete ModData Folder
+- Open Frosty ${FROSTY_CONFIG_FILE}
 - Open FMM GitHub Page
 - Open Config Folder
 - Open Saves Folder

@@ -6,7 +6,9 @@
 
 ## [0.3.0] - 2026-07-19
 
-- Improved: Now uses downloader module to check to check for Lovely-Injector updates on GitHub.
+- Added: Lovely-Injector is now auto-downloaded and installed from GitHub on setup via the shared downloader module (if not already present).
+- Added: Automatic "update available" notification when a newer Lovely-Injector release is published on GitHub.
+- Improved: Lovely-Injector version is now stamped on the mod entry and read back for update checks, so the installed version is tracked correctly against the latest GitHub release.
 
 ## [0.2.0] - 2026-02-24
 

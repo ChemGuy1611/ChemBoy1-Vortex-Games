@@ -2,8 +2,8 @@
 Name: Dragon Age: The Veilguard Vortex Extension
 Structure: 3rd Party Mod Manager (Frosty)
 Author: ChemBoy1
-Version: 0.4.1
-Date: 2026-07-18
+Version: 0.5.0
+Date: 2026-07-19
 ////////////////////////////////////////////////////*/
 
 //Import libraries
@@ -31,6 +31,7 @@ let GAME_VERSION = '';
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 const DOCUMENTS = util.getVortexPath("documents");
+const LOCALAPPDATA = util.getVortexPath("localAppData");
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Dragon_Age:_The_Veilguard";
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1075"; //Nexus link to this extension. Used for links
 const INSTR_URL = `https://docs.google.com/document/d/1F6X8fjh6RS_IHX7cqx36lyhCEpLPZSYknki-M28w_K0`;
@@ -48,6 +49,8 @@ const FROSTYMANAGER_PATH = path.join("FrostyModManager");
 const FROSTY_EXEC = 'frostymodmanager.exe';
 const FROSTY_TOOL_ID = 'FrostyModManager';
 const MODDATA_FOLDER = 'ModData';
+const FROSTY_CONFIG_FILE = 'manager_config.json';
+const FROSTY_CONFIG_PATH = path.join(LOCALAPPDATA, "Frosty", FROSTY_CONFIG_FILE);
 
 const FROSTYMOD_FOLDER = "Dragon Age The Veilguard";
 const FROSTYMOD_ID = `${GAME_ID}-frostymod`;
@@ -735,7 +738,7 @@ function installSdkPatch(files) {
 function testFbmod(files, gameId) {
   const isMod = files.find(file => FROSTYMOD_EXTS.includes(path.extname(file).toLowerCase())) !== undefined;
   let supported = (gameId === spec.game.id) && isMod;
-  
+
   // Test for a mod installer.
   if (supported && files.find(file =>
       (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
@@ -758,7 +761,7 @@ function installFbmod(files) {
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file => (
-    (file.indexOf(rootPath) !== -1) && 
+    (file.indexOf(rootPath) !== -1) &&
     (!file.endsWith(path.sep))
   ));
   const instructions = filtered.map(file => {
@@ -806,7 +809,7 @@ function setupNotify(api, gameSpec) {
         },
       },
     ],
-  });    
+  });
 }
 
 //Notify User to run ATK after deployment
@@ -918,7 +921,7 @@ function applyGame(context, gameSpec) {
   });
 
   //register mod types explicitlty (partion check)
-  
+
 
   //register mod installers
   context.registerInstaller(FROSTYMANAGER_ID, 25, testFrosty, installFrosty);
@@ -942,8 +945,23 @@ function applyGame(context, gameSpec) {
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   }); //*/
+  context.registerAction('mod-icons', 300, 'open-ext', {}, `Remove ${SDKPATCH_NAME}`, () => {
+    removeSdkPatch(context.api);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  }); //*/
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Delete ModData Folder', () => {
     deleteModData(context.api);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  }); //*/
+  context.registerAction('mod-icons', 300, 'open-ext', {}, `Open Frosty ${FROSTY_CONFIG_FILE}`, () => {
+    const openPath = FROSTY_CONFIG_PATH;
+    util.opn(openPath).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
@@ -1051,19 +1069,49 @@ async function deleteModData(api) {
   }
 }
 
+async function removeSdkPatch(api) {
+  const t = api.translate;
+  let choices = [
+    { label: t("Continue") },
+    { label: t("Cancel") },
+  ];
+  const result = await api.showDialog('question', `Remove ${SDKPATCH_NAME}`, {
+    text: `\n`
+      + `Are you sure you want to remove the ${SDKPATCH_NAME}?\n`
+      + `\n`
+  }, choices)
+  if (result === undefined  || result.action === "Cancel") {
+    return;
+  }
+  GAME_PATH = getDiscoveryPath(api);
+  const patchPath = path.join(GAME_PATH, SDKPATCH_PATH, SDKPATCH_FILE);
+  try {
+    await fs.unlinkAsync(patchPath);
+    api.sendNotification({
+      id: `${GAME_ID}-removesdkpatch`,
+      type: 'success',
+      message: `Successfully Removed ${SDKPATCH_NAME}`,
+      allowSuppress: true,
+      actions: [],
+    });
+  } catch (err) {
+    api.showErrorNotification(`Failed to remove ${SDKPATCH_NAME}`, err, { allowReport: false });
+  }
+}
+
 //main function
 function main(context) {
   applyGame(context, spec);
   context.once(() => { // put code here that should be run (once) when Vortex starts up
     const api = context.api;
-    context.api.onAsync('did-deploy', async (profileId, deployment) => {
-      const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
+    api.onAsync('did-deploy', async (profileId, deployment) => {
+      const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;
-      return deployNotify(context.api);
+      return deployNotify(api);
     });
-    context.api.onAsync('check-mods-version', (gameId, mods, forced) => {
+    api.onAsync('check-mods-version', (gameId, mods, forced) => {
       if (gameId !== GAME_ID) return;
-      return onCheckModVersion(context.api, gameId, mods, forced);
+      return onCheckModVersion(api, gameId, mods, forced);
     }); //*/
   });
   return true;

@@ -4,6 +4,11 @@
 
 - Config and save installers (partition check)
 
+## [0.5.0] - 2026-07-19
+
+- Added: Button to remove the SDK Patch (EA/Epic) dll (with confirmation) - folder icon in Mods toolbar
+- Added: Button to open the Frosty manager_config.json config file
+
 ## [0.4.1] - 2026-07-18
 
 - Changed: Requirement downloader now uses the native fetch API instead of a bundled axios copy (much smaller extension, same behavior on Vortex 2.0+)

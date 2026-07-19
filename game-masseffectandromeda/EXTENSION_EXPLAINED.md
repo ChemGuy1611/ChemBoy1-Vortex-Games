@@ -51,6 +51,12 @@ These tools appear in Vortex's Tools panel when this game is active:
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
+- Download ${PATCH_NAME}
+- Remove ${PATCH_NAME}
+- Delete ModData Folder
+- Open Frosty ${FROSTY_CONFIG_FILE}
+- Set ${PATCH_NAME} Enabled
+- Set ${PATCH_NAME} Disabled
 - Open Config Folder
 - Open Frosty Mods Folder
 - Open PCGamingWiki Page

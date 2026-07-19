@@ -4,6 +4,13 @@
 
 - None Planned
 
+## [0.4.0] - 2026-07-19
+
+- Added: DatapathFix Plugin support for Steam/Epic versions - buttons to download, remove, and enable/disable the plugin (folder icon in Mods toolbar), plus a setup notification with instructions
+- Added: Button to delete the ModData folder (with confirmation) - Frosty rebuilds it on next launch
+- Added: Button to open the Frosty manager_config.json config file
+- Added: Folder write check for the Frosty Plugins folder during setup
+
 ## [0.3.0] - 2026-02-18
 
 - Fixed: Path strings

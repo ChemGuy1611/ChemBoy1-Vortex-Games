@@ -11,7 +11,6 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 const { download, findModByFile, findDownloadIdByFile, resolveVersionByModVersion, testRequirementVersion } = require('./downloader');
-const semver = require('semver');
 const { parseStringPromise } = require('xml2js');
 
 //Specify all the information about the game
@@ -90,23 +89,8 @@ const REQUIREMENTS = [
     findDownloadId: (api) => findDownloadIdByFile(api, LOVELY_ARC_NAME),
     fileArchivePattern: new RegExp(/^lovely-x86_64-pc-windows-msvc/, 'i'), //no capture group - asset filename is versionless, version lives in the release tag
     resolveVersion: (api) => resolveVersionByModVersion(api, REQUIREMENTS[0]), //install stamps the tag-derived version on the mod; update checks read it back
-    //resolveVersion: (api) => resolveVersionByFile(api, REQUIREMENTS[0]),
   },
 ];
-
-//* Function to resolve version by a means other than the archive name - WORK IN PROGRESS - NOT FINISHED
-async function resolveVersionByFile(api, requirement) {
-  const state = api.getState();
-  const files = util.getSafe(state, ['persistent', 'downloads', 'files'], []);
-  const latestVersion = Object.values(files).reduce((prev, file) => {
-    const match = requirement.fileArchivePattern.exec(file.localPath);
-    if ((match === null || match === void 0 ? void 0 : match[1]) && semver.gt(match[1], prev)) {
-        prev = match[1];
-    }
-    return prev;
-  }, '0.0.0');
-  return latestVersion;
-} //*/
 
 const STEAMMODDED_ID = `${GAME_ID}-steammodded`;
 const STEAMMODDED_NAME = "SteamModded";
@@ -117,7 +101,7 @@ const STEAMMODDED_PAGE_NO = 45;
 const STEAMMODDED_FILE_NO = 878;
 
 const REQ_FILE = EXEC_STEAM;
-//const REQ_FILE = `love.dll`;
+//const REQ_FILE = `love.dll`; //!There are not any common files in Xbox version?!?!
 
 const CONFIG_ID = `${GAME_ID}-config`;
 const CONFIG_NAME = "Config";
@@ -161,12 +145,6 @@ const spec = {
     }
   },
   "modTypes": [
-    {
-      "id": MOD_ID,
-      "name": MOD_NAME,
-      "priority": "high",
-      "targetPath": MOD_PATH
-    },
     {
       "id": ROOT_ID,
       "name": ROOT_NAME,
@@ -265,7 +243,7 @@ async function deploy(api) {
 
 function modTypePriority(priority) {
   return {
-    high: 25,
+    high: 30,
     low: 75,
   }[priority];
 }
@@ -359,7 +337,7 @@ async function setGameVersion(discoveryPath) {
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
 
 //Installer test for LOVELY files
-function testLOVELY(files, gameId) {
+function testLovely(files, gameId) {
   const isMod = files.some(file => (path.basename(file).toLowerCase() === LOVELY_FILE));
   let supported = (gameId === spec.game.id) && isMod;
 
@@ -377,7 +355,7 @@ function testLOVELY(files, gameId) {
 }
 
 //Installer install LOVELY files
-function installLOVELY(files) {
+function installLovely(files) {
   const modFile = files.find(file => (path.basename(file).toLowerCase() === LOVELY_FILE));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
@@ -418,7 +396,7 @@ function testSteamModded(files, gameId) {
 
 //Installer install SteamModded files
 function installSteamModded(files) {
-  const modFile = files.find(file => (path.basename(file).toLowerCase() === STEAMMODDED_FILE));
+  //const modFile = files.find(file => (path.basename(file).toLowerCase() === STEAMMODDED_FILE));
   const setModTypeInstruction = { type: 'setmodtype', value: STEAMMODDED_ID };
 
   // Remove directories and anything that isn't in the rootPath.
@@ -456,7 +434,7 @@ function testMalverk(files, gameId) {
 
 //Installer install Malverk files
 function installMalverk(files) {
-  const modFile = files.find(file => (path.basename(file).toLowerCase() === MALVERK_FILE));
+  //const modFile = files.find(file => (path.basename(file).toLowerCase() === MALVERK_FILE));
   const setModTypeInstruction = { type: 'setmodtype', value: MALVERK_ID };
 
   // Remove directories and anything that isn't in the rootPath.
@@ -532,7 +510,7 @@ function installMod(files, fileName) {
 
 // AUTOMATIC DOWNLOAD FUNCTIONS /////////////////////////////////////////////////
 
-async function onCheckModVersion(api, gameId, mods, forced) {
+async function onCheckModVersion(api) {
   try {
     await testRequirementVersion(api, REQUIREMENTS[0]);
   } catch (err) {
@@ -540,7 +518,7 @@ async function onCheckModVersion(api, gameId, mods, forced) {
   }
 }
 
-async function checkForLOVELY(api) {
+async function checkForLovely(api) {
   const mod = await REQUIREMENTS[0].findMod(api);
   return mod !== undefined;
 }
@@ -553,7 +531,7 @@ function isSteamModdedInstalled(api, spec) {
 }
 
 //Check if SteamModded is installed
-function isLOVELYInstalled(api, spec) {
+function islovelyInstalled(api, spec) {
   const state = api.getState();
   const mods = state.persistent.mods[spec.game.id] || {};
   return Object.keys(mods).some(id => mods[id]?.type === LOVELY_ID);
@@ -633,8 +611,8 @@ async function downloadSteamModded(api, gameSpec) {
 } //*/
 
 //* Function to auto-download Lovely Injector from GitHub
-async function downloadLOVELY(api, gameSpec, check) {
-  let isInstalled = isLOVELYInstalled(api, gameSpec);
+async function downloadLovely(api, gameSpec, check) {
+  let isInstalled = islovelyInstalled(api, gameSpec);
   if (!isInstalled || !check) {
     const MOD_NAME = LOVELY_NAME;
     const MOD_TYPE = LOVELY_ID;
@@ -726,77 +704,6 @@ async function downloadMalverk(api, gameSpec, check) {
   }
 } //*/
 
-//* Download Lovely Injector from GitHub page (user browse for download)
-async function downloadLOVELYManual(api, gameSpec) {
-  let isInstalled = isLOVELYInstalled(api, gameSpec);
-  const URL = LOVELY_URL_MANUAL;
-  const MOD_NAME = LOVELY_NAME;
-  const MOD_TYPE = LOVELY_ID;
-  const ARCHIVE_NAME = LOVELY_ARC_NAME;
-  const instructions = api.translate(`Click on Continue below to open the browser. - `
-    + `Navigate to the latest version of ${MOD_NAME} on the GitHub releases page and `
-    + `click on the appropriate file to download and install the mod.`
-  );
-
-  if (!isInstalled) {
-    return new Promise((resolve, reject) => { //Browse to modDB and download the mod
-      return api.emitAndAwait('browse-for-download', URL, instructions)
-      .then((result) => { //result is an array with the URL to the downloaded file as the only element
-        if (!result || !result.length) { //user clicks outside the window without downloading
-          return reject(new util.UserCanceled());
-        }
-        if (!result[0].toLowerCase().includes(ARCHIVE_NAME)) { //if user downloads the wrong file
-          return reject(new util.UserCanceled('Selected wrong download'));
-        } //*/
-        return Promise.resolve(result);
-      })
-      .catch((error) => {
-        return reject(error);
-      })
-      .then((result) => {
-        const dlInfo = {game: gameSpec.game.id, name: MOD_NAME};
-        api.events.emit('start-download', result, {}, undefined,
-          async (error, id) => { //callback function to check for errors and pass id to and call 'start-install-download' event
-            if (error !== null && (error.name !== 'AlreadyDownloaded')) {
-              return reject(error);
-            }
-            api.events.emit('start-install-download', id, { allowAutoEnable: true }, async (error) => { //callback function to complete the installation
-              if (error !== null) {
-                return reject(error);
-              }
-              const profileId = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
-              const batched = [
-                actions.setModsEnabled(api, profileId, result, true, {
-                  allowAutoDeploy: true,
-                  installed: true,
-                }),
-                actions.setModType(GAME_ID, result[0], MOD_TYPE), // Set the mod type
-              ];
-              util.batchDispatch(api.store, batched); // Will dispatch both actions.
-              return resolve();
-            });
-          },
-          'never',
-          { allowInstall: false },
-        );
-      });
-    })
-    .catch(err => {
-      if (err instanceof util.UserCanceled) {
-        api.showErrorNotification(`User cancelled download/install of ${MOD_NAME}. Please re-launch Vortex and try again.`, err, { allowReport: false });
-        //util.opn(URL).catch(() => null);
-        return Promise.resolve();
-      } else if (err instanceof util.ProcessCanceled) {
-        api.showErrorNotification(`Failed to download/install ${MOD_NAME}. Please re-launch Vortex and try again or download manually from modDB at the opened paged and install the zip in Vortex.`, err, { allowReport: false });
-        util.opn(URL).catch(() => null);
-        return Promise.reject(err);
-      } else {
-        return Promise.reject(err);
-      }
-    });
-  }
-} //*/
-
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
 //* Resolve game version (support Xbox)
@@ -835,15 +742,15 @@ async function setup(discovery, api, gameSpec) {
   //GAME_VERSION = await setGameVersion(GAME_PATH);
   await fs.ensureDirWritableAsync(MOD_PATH);
   await fs.ensureDirWritableAsync(GAME_PATH);
-  if (GAME_VERSION !== 'xbox') {
-    const LOVELYInstalled = await checkForLOVELY(api);
-    return LOVELYInstalled ? Promise.resolve() : download(api, REQUIREMENTS);
-  } else {
-    //download Xbox dependencies
-    //
-  }
   await downloadSteamModded(api, gameSpec); //both versions need SteamModded
   //await downloadMalverk(api, gameSpec, true);
+  if (GAME_VERSION !== 'xbox') {
+    const lovelyInstalled = await checkForLovely(api);
+    return lovelyInstalled ? Promise.resolve() : download(api, REQUIREMENTS);
+  } else {
+    //download Xbox dependencies
+    MOD_PATH = MOD_PATH_XBOX;
+  }
 }
 
 //Let Vortex know about the game
@@ -871,8 +778,19 @@ function applyGame(context, gameSpec) {
     }, (game) => pathPattern(context.api, game, type.targetPath), () => Promise.resolve(false), { name: type.name });
   });
 
+  //register mod types explicitly (due to potentially dynamic Mods folder)
+  context.registerModType(MOD_ID, 25,
+    (gameId) => {
+      var _a;
+      return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
+    },
+    (game) => pathPattern(context.api, game, MOD_PATH),
+    () => Promise.resolve(false),
+    { name: MOD_NAME }
+  );
+
   //register mod installers
-  context.registerInstaller(LOVELY_ID, 25, testLOVELY, installLOVELY);
+  context.registerInstaller(LOVELY_ID, 25, testLovely, installLovely);
   context.registerInstaller(STEAMMODDED_ID, 27, testSteamModded, installSteamModded);
   context.registerInstaller(MALVERK_ID, 29, testMalverk, installMalverk);
   context.registerInstaller(MOD_ID, 29, testMod, installMod);
@@ -894,7 +812,7 @@ function applyGame(context, gameSpec) {
     return gameId === GAME_ID;
   }); //*/
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download Lovely-Injector Latest', () => {
-    downloadLOVELY(context.api, gameSpec, false);
+    downloadLovely(context.api, gameSpec, false);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);

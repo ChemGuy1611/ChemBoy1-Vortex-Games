@@ -496,7 +496,7 @@ async function downloadPatch(api, gameSpec, check) {
   GAME_PATH = getDiscoveryPath(api);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(api.getState(), GAME_ID);
   if (GAME_VERSION === 'steam') {
-    api.showErrorNotification(`SDK Patch is not needed for the Steam version of the game`, undefined, { allowReport: false });
+    api.showErrorNotification(`${PATCH_NAME} is not needed for the Steam version of the game`, undefined, { allowReport: false });
     return;
   }
   let isInstalled = await isPatchInstalled(api, gameSpec);
@@ -1266,10 +1266,10 @@ function main(context) {
   applyGame(context, spec);
   context.once(() => { // put code here that should be run (once) when Vortex starts up
     const api = context.api;
-    context.api.onAsync('did-deploy', async (profileId, deployment) => {
-      const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
+    api.onAsync('did-deploy', async (profileId, deployment) => {
+      const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;
-      return deployNotify(context.api);
+      return deployNotify(api);
     });
   });
   return true;
