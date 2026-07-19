@@ -2,15 +2,15 @@
 Name: Balatro Vortex Extension
 Structure: Mod Loader (Mods in AppData Folder)
 Author: ChemBoy1
-Version: 0.2.0
-Date: 2026-02-24
+Version: 0.3.0
+Date: 2026-07-19
 ///////////////////////////////////////*/
 
 //Import libraries
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
-const { download, findModByFile, findDownloadIdByFile, resolveVersionByPattern, testRequirementVersion } = require('./downloader');
+const { download, findModByFile, findDownloadIdByFile, resolveVersionByModVersion, testRequirementVersion } = require('./downloader');
 const semver = require('semver');
 const { parseStringPromise } = require('xml2js');
 
@@ -22,6 +22,10 @@ const STEAMAPP_ID = "2379780";
 const XBOXAPP_ID = "PlayStack.Balatro";
 const XBOXEXECNAME = "Balatro";
 const XBOX_PUB_ID = "3wcqaesafpzfy";
+const DISCOVERY_IDS_ACTIVE = [ // UPDATE THIS WITH ALL VALID IDs
+  STEAMAPP_ID,
+  //XBOXAPP_ID, //!disabled until support is available and implemented
+];
 
 const EXEC_STEAM = `Balatro.exe`;
 const EXEC_XBOX = `gamelaunchhelper.exe`;
@@ -84,8 +88,8 @@ const REQUIREMENTS = [
     githubUrl: LOVELY_URL_MAIN,
     findMod: (api) => findModByFile(api, LOVELY_ID, LOVELY_FILE),
     findDownloadId: (api) => findDownloadIdByFile(api, LOVELY_ARC_NAME),
-    fileArchivePattern: new RegExp(/^lovely-x86_64-pc-windows-msvc/, 'i'),
-    resolveVersion: (api) => resolveVersionByPattern(api, REQUIREMENTS[0]),
+    fileArchivePattern: new RegExp(/^lovely-x86_64-pc-windows-msvc/, 'i'), //no capture group - asset filename is versionless, version lives in the release tag
+    resolveVersion: (api) => resolveVersionByModVersion(api, REQUIREMENTS[0]), //install stamps the tag-derived version on the mod; update checks read it back
     //resolveVersion: (api) => resolveVersionByFile(api, REQUIREMENTS[0]),
   },
 ];
@@ -189,17 +193,14 @@ const spec = {
     }
   ],
   "discovery": {
-    "ids": [
-      STEAMAPP_ID,
-      //XBOXAPP_ID,
-    ],
+    "ids": DISCOVERY_IDS_ACTIVE,
     "names": []
   }
 };
 
 //3rd party tools and launchers
 const tools = [
-  
+
 ];
 
 //Set mod type priorities
@@ -349,7 +350,7 @@ async function setGameVersion(discoveryPath) {
     CONFIG_FILEPATH = CONFIG_FILEPATH_XBOX;
     return GAME_VERSION;
   }
-  else { 
+  else {
     GAME_VERSION = 'steam';
     return GAME_VERSION;
   };
@@ -774,7 +775,7 @@ async function downloadLOVELYManual(api, gameSpec) {
               util.batchDispatch(api.store, batched); // Will dispatch both actions.
               return resolve();
             });
-          }, 
+          },
           'never',
           { allowInstall: false },
         );
@@ -817,7 +818,7 @@ async function resolveGameVersion(gamePath) {
     try {
       const exeVersion = require('exe-version');
       version = exeVersion.getProductVersion(path.join(gamePath, EXEC_STEAM));
-      return Promise.resolve(version); 
+      return Promise.resolve(version);
     } catch (err) {
       log('error', `Could not read ${EXEC_STEAM} file to get Steam game version: ${err}`);
       return Promise.resolve(version);
@@ -835,15 +836,14 @@ async function setup(discovery, api, gameSpec) {
   await fs.ensureDirWritableAsync(MOD_PATH);
   await fs.ensureDirWritableAsync(GAME_PATH);
   if (GAME_VERSION !== 'xbox') {
-    return downloadLOVELY(api, gameSpec, true);
+    const LOVELYInstalled = await checkForLOVELY(api);
+    return LOVELYInstalled ? Promise.resolve() : download(api, REQUIREMENTS);
   } else {
     //download Xbox dependencies
     //
   }
   await downloadSteamModded(api, gameSpec); //both versions need SteamModded
   //await downloadMalverk(api, gameSpec, true);
-  //const LOVELYInstalled = await checkForLOVELY(api);
-  //return LOVELYInstalled ? Promise.resolve() : download(api, REQUIREMENTS);
 }
 
 //Let Vortex know about the game
@@ -956,7 +956,7 @@ function applyGame(context, gameSpec) {
 function main(context) {
   applyGame(context, spec);
   context.once(() => { // put code here that should be run (once) when Vortex starts up
-    /*const api = context.api;
+    const api = context.api;
     api.onAsync('check-mods-version', (gameId, mods, forced) => {
       if (gameId !== GAME_ID) return;
       return onCheckModVersion(api, gameId, mods, forced);

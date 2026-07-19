@@ -2,14 +2,15 @@
 Name: Dark Messiah of Might & Magic Vortex Extension
 Structure: Basic (Launcher)
 Author: ChemBoy1
-Version: 0.3.0
-Date: 2026-03-25
+Version: 0.4.0
+Date: 2026-07-18
 //////////////////////////////////////////////////////*/
 
 //Import libraries
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
+const { downloadModDb, checkForModDbUpdate } = require('./moddb_downloader');
 
 //Specify all the information about the game
 const GAME_ID = "darkmessiahofmightandmagic";
@@ -77,6 +78,18 @@ const LAUNCHER_ID = `${GAME_ID}-launcher`;
 const LAUNCHER_NAME = `wiltOS Mod Launcher`;
 const LAUNCHER_EXEC = EXEC;
 const LAUNCHER_URL = "https://www.moddb.com/games/dark-messiah-of-might-magic/downloads";
+const MODDB_REQUIREMENTS = [ //ModDB requirements for moddb_downloader.js
+  { //wiltOS Mod Launcher
+    moddbPath: 'games/dark-messiah-of-might-magic',
+    modType: LAUNCHER_ID,
+    userFacingName: LAUNCHER_NAME,
+    filePattern: /Dark Messiah Mod Launcher/i,
+    fallbackFileId: '295315', //https://www.moddb.com/downloads/start/295315
+    fallbackVersion: 'R1-08.16',
+    pageUrl: LAUNCHER_URL,
+    skipDownloadManager: true, //download-manager route confirmed blocked (mirror URL 403) - go straight to direct fetch
+  },
+];
 
 const LAUNCHERMOD_ID = `${GAME_ID}-launchermod`;
 const LAUNCHERMOD_NAME = `Launcher Mod`;
@@ -321,15 +334,13 @@ async function deploy(api) { //useful to deploy mods after doing some action
 
 // DOWNLOAD MOD FUNCTIONS //////////////////////////////////////////////////////////////////////////////////////////////
 
-//Check if mod injector is installed
-function isLauncherInstalled(api, spec) {
-  const state = api.getState();
-  const mods = state.persistent.mods[spec.game.id] || {};
-  return Object.keys(mods).some(id => mods[id]?.type === LAUNCHER_ID);
+//Function to auto-download Mod Launcher from modDB (resolved via the shared moddb_downloader module)
+async function downloadLauncher(api, gameSpec, check = true) {
+  return downloadModDb(api, gameSpec, MODDB_REQUIREMENTS, check);
 }
 
-//* Function to have user browse to download Mod Launcher from modDB
-async function downloadLauncher(api, gameSpec, check = true) {
+/* Superseded fallback: browse to modDB and let the user pick the download manually.
+async function downloadLauncherManual(api, gameSpec, check = true) {
   let isInstalled = isLauncherInstalled(api, gameSpec);
   const URL = LAUNCHER_URL;
   const MOD_NAME = "[wOS] Dark Messiah Mod Launcher";
@@ -339,7 +350,6 @@ async function downloadLauncher(api, gameSpec, check = true) {
     + `and click on "Download Now" button to download and install the mod. `
   );
   if (!isInstalled || !check) {
-    //*
     return new Promise((resolve, reject) => { //Browse to modDB and download the mod
       return api.emitAndAwait('browse-for-download', URL, instructions)
       .then((result) => { //result is an array with the URL to the downloaded file as the only element
@@ -361,13 +371,6 @@ async function downloadLauncher(api, gameSpec, check = true) {
             if (error !== null && (error.name !== 'AlreadyDownloaded')) {
               return reject(error);
             }
-            //log('error', `result: ${result}`);
-            //log('error', `error: ${error}`);
-            //log('error', `id: ${id}`);
-            //const FILE_NAME = error.fileName;
-            //const downloads = api.getState().persistent.downloads.files;
-            //id = Object.keys(downloads).find(iter => downloads[iter].localPath === FILE_NAME);
-            //id = Object.keys(downloads).find(iter => downloads[iter].localPath.includes(ARCHIVE_NAME));
             api.events.emit('start-install-download', id, { allowAutoEnable: true }, async (error) => { //callback function to complete the installation
               if (error !== null) {
                 return reject(error);
@@ -384,7 +387,7 @@ async function downloadLauncher(api, gameSpec, check = true) {
               util.batchDispatch(api.store, batched); // Will dispatch both actions.
               return resolve();
             });
-          }, 
+          },
           'never',
           { allowInstall: false },
         );
@@ -393,7 +396,6 @@ async function downloadLauncher(api, gameSpec, check = true) {
     .catch(err => {
       if (err instanceof util.UserCanceled) {
         api.showErrorNotification(`User cancelled download/install of ${MOD_NAME}. Please re-launch Vortex and try again.`, err, { allowReport: false });
-        //util.opn(URL).catch(() => null);
         return Promise.resolve();
       } else if (err instanceof util.ProcessCanceled) {
         api.showErrorNotification(`Failed to download/install ${MOD_NAME}. Please re-launch Vortex and try again or download manually from modDB at the opened paged and install the zip in Vortex.`, err, { allowReport: false });
@@ -403,56 +405,6 @@ async function downloadLauncher(api, gameSpec, check = true) {
         return Promise.reject(err);
       }
     });
-    //*/
-  }
-}
-
-/* Function to auto-download Mod Launcher from modDB
-async function downloadLauncher(api, gameSpec) {
-  let isInstalled = isLauncherInstalled(api, gameSpec);
-
-  if (!isInstalled) {
-    //notification indicating install process
-    const MOD_NAME = "wiltOS Mod Launcher";
-    const NOTIF_ID = `${GAME_ID}-${MOD_NAME}-installing`;
-    const DOWNLOAD_URL = "https://www.moddb.com/downloads/start/277806";
-    const MANUAL_URL = "https://www.moddb.com/games/dark-messiah-of-might-magic/downloads/wos-dark-messiah-mod-launcher-r0-926";
-    api.sendNotification({
-      id: NOTIF_ID,
-      message: `Installing ${MOD_NAME}`,
-      type: 'activity',
-      noDismiss: true,
-      allowSuppress: false,
-    });
-
-    try {
-      //Download the mod
-      const dlInfo = {
-        game: gameSpec.game.id,
-        name: MOD_NAME,
-      };
-      const nxmUrl = DOWNLOAD_URL;
-      const dlId = await util.toPromise(cb =>
-        api.events.emit('start-download', [nxmUrl], dlInfo, undefined, cb, undefined, { allowInstall: false }));
-      const modId = await util.toPromise(cb =>
-        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
-      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
-      const batched = [
-        actions.setModsEnabled(api, profileId, [modId], true, {
-          allowAutoDeploy: true,
-          installed: true, 
-        }),
-        actions.setModType(gameSpec.game.id, modId, LAUNCHER_ID), // Set the mod type
-      ];
-      util.batchDispatch(api.store, batched); // Will dispatch both actions.
-    //Show the user the download page if the download, install process fails
-    } catch (err) {
-      const errPage = MANUAL_URL;
-      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
-      util.opn(errPage).catch(() => null);
-    } finally {
-      api.dismissNotification(NOTIF_ID);
-    }
   }
 }
 //*/
@@ -907,6 +859,7 @@ async function setup(discovery, api, gameSpec) {
   STAGING_FOLDER = selectors.installPathForGame(state, gameSpec.game.id);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, gameSpec.game.id);
   await downloadLauncher(api, gameSpec);
+  await checkForModDbUpdate(api, gameSpec, MODDB_REQUIREMENTS).catch(() => null); //update check should never block setup
   return modFoldersEnsureWritable(discovery.path, MODTYPE_FOLDER);
 }
 
@@ -948,7 +901,7 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(CONFIG_ID, 45, testConfig, installConfig);
 
   //register actions
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download wOS Mod Launcher (Manual)', () => {
+  context.registerAction('mod-icons', 300, 'open-ext', {}, `Download Latest ${LAUNCHER_NAME}`, () => {
       downloadLauncher(context.api, gameSpec, false);
     }, () => {
       const state = context.api.getState();
@@ -1022,6 +975,11 @@ function main(context) {
   applyGame(context, spec);
   context.once(() => {
     const api = context.api;
+    api.onAsync('check-mods-version', (gameId, mods, forced) => {
+      if (gameId !== GAME_ID) return;
+      return checkForModDbUpdate(api, spec, MODDB_REQUIREMENTS)
+        .catch(err => log('warn', `Failed to check for ${LAUNCHER_NAME} update: ${err}`));
+    });
     /* put code here that should be run (once) when Vortex starts up
     context.api.onAsync('did-deploy', async (profileId, deployment) => {
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);

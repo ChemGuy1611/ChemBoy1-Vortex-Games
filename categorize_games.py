@@ -10,6 +10,8 @@ Also writes these non-exclusive "flag" lists, evaluated for every game-* extensi
 independently of its engine category and of each other:
     games-loadorder.txt  - non-UE4/5 games that call context.registerLoadOrder
     games-downloader.txt - games with a bundled downloader.js module
+    games-downloader-gamebanana.txt - games with a bundled gamebanana_downloader.js module
+    games-downloader-moddb.txt      - games with a bundled moddb_downloader.js module
     games-github.txt     - games that download from GitHub inline (no downloader.js)
     games-uemi.txt       - games that require the "Unreal Engine Mod Installer" extension
 
@@ -26,7 +28,8 @@ from vortex_utils import (
     REPO_ROOT, LISTS_DIR, list_game_ids, detect_engine, read_index_js,
     read_id_list, write_id_list,
     is_load_order_game as _is_load_order_game_src,
-    has_downloader_js, downloads_from_github, requires_unreal_mod_installer,
+    has_downloader_js, has_gamebanana_downloader_js, has_moddb_downloader_js,
+    downloads_from_github, requires_unreal_mod_installer,
     log_error, log_dry,
 )
 
@@ -59,6 +62,8 @@ _FILE_FOR_LABEL = {label: fname for fname, label in CATEGORIES}
 FLAG_LISTS = [
     ("games-loadorder.txt",  lambda src, folder: _is_load_order_game_src(src)),
     ("games-downloader.txt", lambda src, folder: has_downloader_js(folder)),
+    ("games-downloader-gamebanana.txt", lambda src, folder: has_gamebanana_downloader_js(folder)),
+    ("games-downloader-moddb.txt",      lambda src, folder: has_moddb_downloader_js(folder)),
     # GitHub download done inline in index.js, i.e. without the downloader.js module.
     ("games-github.txt",     lambda src, folder: downloads_from_github(src) and not has_downloader_js(folder)),
     ("games-uemi.txt",       lambda src, folder: requires_unreal_mod_installer(src)),

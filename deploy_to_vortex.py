@@ -10,7 +10,8 @@ Arguments:
     GAME_ID     One or more game IDs (e.g. thelastofuspart2)
     --all       Deploy every game-* extension in the repo
     --dry-run   Preview what would change without copying
-    --force     Always do a full folder replace instead of index.js-only update
+    --force     Always do a full folder replace instead of updating only
+                index.js and any *downloader.js modules
     --restart-vortex
                 Close Vortex before copying (graceful taskkill, force-kill
                 after 30s) and launch it again (no CLI args) after all copies.
@@ -83,9 +84,12 @@ def deploy_game(game_id: str, dry_run: bool, force: bool) -> bool:
     game_name = vu.extract_game_name(js_src) if js_src else None
     existing = None if force else vu.find_vortex_plugin_folder(game_id, game_name)
     dest = existing or os.path.join(PLUGINS_DIR, f"game-{game_id}")
+    copy_names = ["index.js"] + sorted(
+        n for n in os.listdir(src) if n.endswith("downloader.js")
+    )
     if dry_run:
         if existing:
-            vu.log_info(game_id, f"copy index.js -> {existing}")
+            vu.log_info(game_id, f"copy {', '.join(copy_names)} -> {existing}")
         else:
             action = "overwrite" if os.path.isdir(dest) else "create"
             vu.log_info(game_id, f"{action} -> {dest}")
@@ -95,16 +99,17 @@ def deploy_game(game_id: str, dry_run: bool, force: bool) -> bool:
         return True
 
     if existing:
-        src_js = os.path.join(src, "index.js")
-        dest_js = os.path.join(existing, "index.js")
-        dest_tmp = dest_js + ".tmp"
-        try:
-            shutil.copy2(src_js, dest_tmp)
-            os.replace(dest_tmp, dest_js)
-        except PermissionError:
-            vu.log_error(game_id, f"index.js locked in {os.path.basename(existing)} -- close Vortex first (or use --restart-vortex)")
-            return False
-        vu.log_info(game_id, f"updated index.js in {os.path.basename(existing)}")
+        for name in copy_names:
+            src_file = os.path.join(src, name)
+            dest_file = os.path.join(existing, name)
+            dest_tmp = dest_file + ".tmp"
+            try:
+                shutil.copy2(src_file, dest_tmp)
+                os.replace(dest_tmp, dest_file)
+            except PermissionError:
+                vu.log_error(game_id, f"{name} locked in {os.path.basename(existing)} -- close Vortex first (or use --restart-vortex)")
+                return False
+        vu.log_info(game_id, f"updated {', '.join(copy_names)} in {os.path.basename(existing)}")
     else:
         if os.path.isdir(dest):
             vu.safe_rmtree(dest, "close Vortex first")

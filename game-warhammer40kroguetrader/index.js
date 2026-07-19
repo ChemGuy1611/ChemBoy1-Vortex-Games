@@ -2,8 +2,8 @@
 Name: Warhammer 40,000: Rogue Trader Vortex Extension
 Structure: Game with Integrated Mod Loader (UnityModManager)
 Author: ChemBoy1
-Version: 0.4.0
-Date: 2026-06-24
+Version: 0.4.1
+Date: 2026-07-18
 ///////////////////////////////////////////*/
 
 //Import libraries

@@ -9,7 +9,8 @@
 //
 // Public API: download, getLatestGithubReleaseAsset, doDownload,
 // findModByFile, findDownloadIdByFile, walkPath, resolveVersionByPattern,
-// resolveVersionByAssetDate, getMods, testRequirementVersion, default(init).
+// resolveVersionByAssetDate, resolveVersionByModVersion, getMods,
+// testRequirementVersion, default(init).
 
 const path = require('path');
 const semver = require('semver');
@@ -65,6 +66,12 @@ function isUpdateAvailable(requirement, latest, installed) {
   return semver.gt(latestAssetVersion(requirement, latest), installed ?? '0.0.0');
 }
 
+// requirement.githubUrl is the REST API base (https://api.github.com/repos/{owner}/{repo}),
+// used to build the releases endpoints - convert to the human repo page for the mod's source link.
+function repoPageUrl(requirement) {
+  return requirement.githubUrl?.replace('https://api.github.com/repos/', 'https://github.com/');
+}
+
 // --- downloader -----------------------------------------------------------
 async function download(api, requirements, force) {
   const state = api.getState();
@@ -111,7 +118,16 @@ async function download(api, requirements, force) {
       }
       const dlId = req.findDownloadId(api);
       if (!versionMismatch && !force && dlId) {
-        await installDownload(api, dlId, req.userFacingName);
+        // Archive already downloaded - resolve the version locally (archive filename/version
+        // file) rather than hitting the GitHub API, keeping this shortcut path network-free.
+        // A failed resolve ('' or the '0.0.0' sentinel) is left unstamped rather than recorded,
+        // so the next forced update stamps the real release version instead of a bogus floor
+        // that would suppress nothing and misreport the installed version.
+        let shortcutVersion = req.resolveVersion ? await req.resolveVersion(api) : undefined;
+        if (!shortcutVersion || shortcutVersion === '0.0.0') {
+          shortcutVersion = undefined;
+        }
+        await installDownload(api, dlId, req.userFacingName, undefined, repoPageUrl(req), shortcutVersion);
         continue;
       }
       if (!asset) {
@@ -120,7 +136,7 @@ async function download(api, requirements, force) {
       const tempPath = path.join(util.getVortexPath('temp'), asset.name);
       try {
         await doDownload(asset.browser_download_url, tempPath);
-        await importAndInstall(api, tempPath, req.userFacingName, asset.updated_at);
+        await importAndInstall(api, tempPath, req.userFacingName, asset.updated_at, repoPageUrl(req), latestAssetVersion(req, asset));
       } catch (err) {
         api.showErrorNotification('Failed to download requirements', err, { allowReport: false });
         return;
@@ -137,7 +153,7 @@ async function download(api, requirements, force) {
   }
 }
 
-async function installDownload(api, dlId, name, assetDate) {
+async function installDownload(api, dlId, name, assetDate, pageUrl, version) {
   const state = api.getState();
   const gameId = selectors.activeGameId(state);
   return new Promise((resolve, reject) => {
@@ -154,6 +170,15 @@ async function installDownload(api, dlId, name, assetDate) {
       if (assetDate !== undefined) {
         attributes.githubAssetDate = assetDate;
       }
+      // source: 'website' + url makes Vortex show a clickable "Source" link to the repo
+      // page in the mod details panel (mod_management customRenderer gates on this pair).
+      if (pageUrl !== undefined) {
+        attributes.source = 'website';
+        attributes.url = pageUrl;
+      }
+      if (version !== undefined) {
+        attributes.version = version;
+      }
       const batch = [
         actions.setModAttributes(gameId, modId, attributes),
         actions.setModEnabled(profileId, modId, true),
@@ -164,7 +189,7 @@ async function installDownload(api, dlId, name, assetDate) {
   });
 }
 
-async function importAndInstall(api, filePath, name, assetDate) {
+async function importAndInstall(api, filePath, name, assetDate, pageUrl, version) {
   return new Promise((resolve, reject) => {
     api.events.emit('import-downloads', [filePath], async (dlIds) => {
       const id = dlIds[0];
@@ -175,7 +200,7 @@ async function importAndInstall(api, filePath, name, assetDate) {
       batched.push(actions.setDownloadModInfo(id, 'source', 'other'));
       util.batchDispatch(api.store, batched);
       try {
-        await installDownload(api, id, name, assetDate);
+        await installDownload(api, id, name, assetDate, pageUrl, version);
         return resolve();
       } catch (err) {
         return reject(err);
@@ -315,6 +340,21 @@ async function resolveVersionByAssetDate(api, requirement) {
   return util.getSafe(mod, ['attributes', 'githubAssetDate'], '');
 }
 
+// resolveVersion implementation reading the `version` attribute stamped on the installed
+// mod at install time (see installDownload). For requirements whose asset filename carries
+// no version (the version only exists in the release tag, e.g. lovely-injector's
+// lovely-x86_64-pc-windows-msvc.zip under tags like v0.8.0): the install stamps the
+// tag-derived version and update checks read it back, closing the loop that
+// resolveVersionByPattern cannot close there (a versionless archive name always resolves
+// to the '0.0.0' floor, reporting an update forever). Returns '0.0.0' when the requirement
+// is not installed or has no parsable stamped version, which isUpdateAvailable treats as
+// "update available".
+async function resolveVersionByModVersion(api, requirement) {
+  const mod = await requirement.findMod(api);
+  const stamped = util.getSafe(mod, ['attributes', 'version'], '');
+  return semver.coerce(stamped)?.version ?? '0.0.0';
+}
+
 async function walkPath(dirPath, walkOptions) {
   // util.walk (Vortex-provided) replaces the turbowalk dependency. It calls back
   // per entry with (iterPath, stats); we rebuild the turbowalk-style entry shape
@@ -394,6 +434,7 @@ module.exports = {
   walkPath,
   resolveVersionByPattern,
   resolveVersionByAssetDate,
+  resolveVersionByModVersion,
   getMods,
   testRequirementVersion,
   default: init,

@@ -7,12 +7,14 @@ image columns (Cover, Title, Banner), flag/note system, and group-by-engine view
 
 Toolbar buttons run developer scripts against selected games. An always-visible
 log pane streams live subprocess output, coloring error and command-echo lines.
-Settings (geometry, column widths, filter text, grouping, flagged-only, checked
-rows) persist across sessions via QSettings.
+Settings (geometry, column widths, filter text, grouping, flagged-only, category
+filter, checked rows) persist across sessions via QSettings.
 
 Dark theme applied via Fusion palette + stylesheet. Engine grouping inserts
 read-only header rows via GroupProxy. "Flagged Only" restricts the table to
-flagged rows; Space toggles the checkbox on all selected rows.
+flagged rows; the category dropdown restricts it to special-category games
+(bundled downloader module, non-UE load order); Space toggles the checkbox on
+all selected rows.
 
 Requirements:
     pip install pyside6
@@ -57,7 +59,7 @@ SETTINGS_APP = "VortexExtensionManager"
 SINGLE_INSTANCE_KEY = f"{SETTINGS_ORG}.{SETTINGS_APP}"
 FLAGS_PATH = vu.GUI_FLAGS_PATH
 ROW_CACHE_PATH = os.path.join(REPO_ROOT, "vortex_gui_row_cache.json")
-_ROW_CACHE_VERSION = 1
+_ROW_CACHE_VERSION = 2
 
 
 # == Flag / stats storage ======================================================
@@ -506,6 +508,7 @@ class GameRow:
         "extension_url",
         "endorsements", "unique_downloads", "nexus_published", "stats_fetched_at",
         "flagged", "note",
+        "has_downloader", "has_load_order",
     )
 
     def __init__(self, game_id, name, version, date, engine, stores, folder,
@@ -513,7 +516,7 @@ class GameRow:
                  title, title_path, banner, banner_path,
                  extension_url,
                  endorsements, unique_downloads, nexus_published, stats_fetched_at,
-                 flagged, note):
+                 flagged, note, has_downloader, has_load_order):
         self.game_id = game_id
         self.name = name or ""
         self.version = version or ""
@@ -536,6 +539,8 @@ class GameRow:
         self.stats_fetched_at = stats_fetched_at
         self.flagged = flagged
         self.note = note
+        self.has_downloader = has_downloader
+        self.has_load_order = has_load_order
 
 
 class GameModel(QAbstractTableModel):
@@ -575,6 +580,7 @@ class GameModel(QAbstractTableModel):
                 engine        = cached["engine"]
                 stores        = cached["stores"]
                 extension_url = cached["extension_url"]
+                load_order    = cached["load_order"]
             else:
                 src = vu.read_index_js(folder)
                 if not src:
@@ -589,11 +595,18 @@ class GameModel(QAbstractTableModel):
                 engine = vu.detect_engine(src)
                 stores = vu.detect_stores(src)
                 extension_url = vu.extract_extension_url(src)
+                load_order = vu.is_load_order_game(src)
             new_cache[entry] = {
                 "game_id": game_id, "name": name, "version": version, "date": date,
                 "engine": engine, "stores": stores, "extension_url": extension_url,
+                "load_order": load_order,
                 "mtimes": mtimes,
             }
+            # downloader modules are separate files -- check live, independent of the
+            # index.js parse cache (same rule as image existence)
+            has_downloader = (vu.has_downloader_js(folder)
+                              or vu.has_gamebanana_downloader_js(folder)
+                              or vu.has_moddb_downloader_js(folder))
 
             icon_path = os.path.join(folder, "exec.png")
             cover_path = os.path.join(folder, f"{game_id}.jpg")
@@ -617,6 +630,7 @@ class GameModel(QAbstractTableModel):
                 extension_url,
                 endorsements, unique_downloads, nexus_published, stats_fetched_at,
                 fd.get("flagged", False), fd.get("note", ""),
+                has_downloader, load_order,
             ))
         _save_row_cache(new_cache)
         return rows
@@ -766,6 +780,7 @@ class GameFilterModel(QSortFilterProxyModel):
         self._text = ""
         self._grouping = False
         self._flagged_only = False
+        self._category = ""
 
     def set_text(self, text: str):
         self._text = text.strip().lower()
@@ -775,6 +790,13 @@ class GameFilterModel(QSortFilterProxyModel):
         if enabled == self._flagged_only:
             return
         self._flagged_only = enabled
+        self.invalidate()
+
+    def set_category(self, category: str):
+        """Restrict rows to a special category: "" (all), "downloader", "loadorder"."""
+        if category == self._category:
+            return
+        self._category = category
         self.invalidate()
 
     def set_grouping(self, enabled: bool):
@@ -788,6 +810,10 @@ class GameFilterModel(QSortFilterProxyModel):
         if row.game_id in self.sourceModel()._checked_ids:
             return True  # checked rows stay pinned through every filter
         if self._flagged_only and not row.flagged:
+            return False
+        if self._category == "downloader" and not row.has_downloader:
+            return False
+        if self._category == "loadorder" and not row.has_load_order:
             return False
         if not self._text:
             return True
@@ -1471,6 +1497,15 @@ class MainWindow(QMainWindow):
         self._flagged_btn.setCheckable(True)
         self._flagged_btn.toggled.connect(self._on_flagged_only_toggled)
         top_bar.addWidget(self._flagged_btn)
+        self._category_combo = QComboBox()
+        self._category_combo.addItem("All Categories", "")
+        self._category_combo.addItem("Downloader", "downloader")
+        self._category_combo.addItem("Load Order", "loadorder")
+        self._category_combo.setToolTip(
+            "Downloader: bundles a downloader module (downloader.js / gamebanana / moddb).\n"
+            "Load Order: registers a load order (UE4/5 games excluded -- template standard).")
+        self._category_combo.currentIndexChanged.connect(self._on_category_changed)
+        top_bar.addWidget(self._category_combo)
         self._clear_checks_btn = QPushButton("Clear Checks")
         self._clear_checks_btn.setEnabled(False)
         self._clear_checks_btn.clicked.connect(self._clear_checks)
@@ -1616,6 +1651,11 @@ class MainWindow(QMainWindow):
             self._group_btn.setChecked(True)
         if settings.value("flaggedOnly", False, type=bool):
             self._flagged_btn.setChecked(True)
+        saved_cat = settings.value("categoryFilter", "")
+        if saved_cat:
+            idx = self._category_combo.findData(saved_cat)
+            if idx >= 0:
+                self._category_combo.setCurrentIndex(idx)
         raw_checked = settings.value("checkedIds", [])
         if isinstance(raw_checked, str):
             raw_checked = [raw_checked]
@@ -1632,6 +1672,7 @@ class MainWindow(QMainWindow):
         settings.setValue("filterText", self._filter_edit.text())
         settings.setValue("groupByEngine", self._group_btn.isChecked())
         settings.setValue("flaggedOnly", self._flagged_btn.isChecked())
+        settings.setValue("categoryFilter", self._category_combo.currentData())
         settings.setValue("checkedIds", list(self._model._checked_ids))
         if not self._tray.on_close(event):
             return  # hidden to tray; keep running (settings already saved)
@@ -1657,6 +1698,10 @@ class MainWindow(QMainWindow):
 
     def _on_flagged_only_toggled(self, checked: bool):
         self._filter_model.set_flagged_only(checked)
+
+    def _on_category_changed(self, _index: int):
+        self._filter_model.set_category(self._category_combo.currentData())
+        self._update_status_bar()
         self._update_status_bar()
 
     def _refresh_data(self):

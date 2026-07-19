@@ -4,6 +4,11 @@
 
 - None
 
+## [0.4.0] - 2026-07-18
+
+- Improved: wiltOS Mod Launcher download now auto-resolves and installs the latest file from ModDB's RSS feed (previously required browsing to ModDB and picking the file manually)
+- Added: Update notification when a newer wiltOS Mod Launcher file is published on ModDB (at startup and when using the "Check for Updates" button on the Mods page)
+
 ## [0.3.0] - 2026-03-25
 
 - Added: Button to download wiltOS Mod Launcher from ModDB - provides a means to update

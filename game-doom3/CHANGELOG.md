@@ -4,6 +4,11 @@
 
 - Config and save modtypes, installers, and open buttons.
 
+## [0.5.1] - 2026-07-18
+
+- Changed: Requirement downloader now uses the native fetch API instead of a bundled axios copy (much smaller extension, same behavior on Vortex 2.0+)
+- Added: Auto-downloaded requirements now record their version and a clickable Source link (GitHub repo page) in the mod details panel
+
 ## [0.5.0] - 2026-06-24
 
 - Improved: Refactored downloader.js GitHub downloader/updater for Vortex v2.0+ and more reliable operation.

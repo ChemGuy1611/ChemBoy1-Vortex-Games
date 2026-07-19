@@ -4,7 +4,7 @@ const GAME_ID = 'placeholder';
 const api = require('vortex-api'); //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
 
 // REQUIREMENTS ///////////////////////////////////////////////////
-const { download, findModByFile, findDownloadIdByFile, resolveVersionByPattern, resolveVersionByAssetDate, testRequirementVersion } = require('./downloader');
+const { download, findModByFile, findDownloadIdByFile, resolveVersionByPattern, resolveVersionByAssetDate, resolveVersionByModVersion, testRequirementVersion } = require('./downloader');
 const semver = require('semver');
 const XXX_ID = `${GAME_ID}-XXX`;
 const XXX_NAME = "XXX";
@@ -31,6 +31,7 @@ const REQUIREMENTS = [
     //prereleaseTag: 'experimental', //fetch a specific rolling pre-release tag directly (e.g. UE4SS); skips the prerelease scan
     //trackByAssetDate: true, //detect updates by the asset's GitHub upload time, not the version tag (rolling pre-release whose tag never changes)
     //resolveVersion: (api) => resolveVersionByAssetDate(api, REQUIREMENTS[0]), //use together with trackByAssetDate
+    //resolveVersion: (api) => resolveVersionByModVersion(api, REQUIREMENTS[0]), //reads the version stamped on the installed mod at install time; use when the version is only in the release tag (asset filename is versionless) and fileArchivePattern has no capture group
   },
 ]; //*/
 

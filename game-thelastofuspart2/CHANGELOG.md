@@ -4,6 +4,10 @@
 
 - Added check for if sp-common.psarc and bin.psarc files exist in the game folder (indicator of update and need to extract).
 
+## [0.10.1] - 2026-07-19
+
+- Removed: Deprecated downloader module. All requirements are downloaded from Nexus Mods.
+
 ## [0.10.0] - 2026-06-24
 
 - Improved: Refactored downloader.js GitHub downloader/updater for Vortex v2.0+ and more reliable operation.

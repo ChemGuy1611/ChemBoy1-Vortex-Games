@@ -2322,6 +2322,16 @@ def has_downloader_js(folder):
     return os.path.isfile(os.path.join(folder, "downloader.js"))
 
 
+def has_gamebanana_downloader_js(folder):
+    """Return True if the extension folder contains a bundled gamebanana_downloader.js module."""
+    return os.path.isfile(os.path.join(folder, "gamebanana_downloader.js"))
+
+
+def has_moddb_downloader_js(folder):
+    """Return True if the extension folder contains a bundled moddb_downloader.js module."""
+    return os.path.isfile(os.path.join(folder, "moddb_downloader.js"))
+
+
 def downloads_from_github(src):
     """Return True if index.js pulls a mod/requirement from a GitHub release.
 

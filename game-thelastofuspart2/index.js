@@ -2,15 +2,14 @@
 Name: The Last of Us Part II Remastered Vortex Extension
 Author: ChemBoy1
 Structure: Generic Game w/ File Extraction, Mod Loader, and Load Order
-Version: 0.10.0
-Date: 2026-06-24
+Version: 0.10.1
+Date: 2026-07-19
 ////////////////////////////////////////////////*/
 
 //Import libraries
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
-//const { download, findModByFile, findDownloadIdByFile, resolveVersionByPattern, testRequirementVersion } = require('./downloader');
 const fsPromises = require('fs/promises');
 const React = require('react');
 
@@ -175,23 +174,6 @@ const PSARC_FILES_ARRAY = [
     extractTo: BIN_FOLDER,
   },
 ];
-
-/* Information for UnPSARC downloader and updater
-const PSARCTOOL_ARC_NAME = 'UnPSARC_v2.7.zip';
-const PSARCTOOL_URL = `https://api.github.com/repos/rm-NoobInCoding/UnPSARC`;
-const REQUIREMENTS = [
-  { //PSARCTOOL
-    archiveFileName: PSARCTOOL_ARC_NAME,
-    modType: PSARCTOOL_ID,
-    assemblyFileName: PSARCTOOL_EXEC,
-    userFacingName: PSARCTOOL_NAME,
-    githubUrl: PSARCTOOL_URL,
-    findMod: (api) => findModByFile(api, PSARCTOOL_ID, PSARCTOOL_EXEC),
-    findDownloadId: (api) => findDownloadIdByFile(api, PSARCTOOL_ARC_NAME),
-    fileArchivePattern: new RegExp(/^UnPSARC_v(\d+\.\d+)/, 'i'),
-    resolveVersion: (api) => resolveVersionByPattern(api, REQUIREMENTS[0]),
-  },
-]; //*/
 
 const LO_IMAGE_WIDTH = 96; //Width of the load order thumbnail image
 const LO_IMAGE_HEIGHT = LO_IMAGE_WIDTH * 0.5625;
@@ -992,7 +974,7 @@ async function deserializeLoadOrder(context) {
   const mods = util.getSafe(context.api.store.getState(), ['persistent', 'mods', spec.game.id], {});
   let loadOrderPath = path.join(gameDir, LO_FILE);
   let loadOrderFile = await fs.readFileAsync(
-    loadOrderPath, 
+    loadOrderPath,
     { encoding: "utf8", }
   );
   let loadOrderSplit = loadOrderFile.split("\n");
@@ -1055,7 +1037,7 @@ async function deserializeLoadOrder(context) {
       );
       return Promise.resolve(accum);
     }, Promise.resolve([]));
-  
+
   //push new mod files to loadOrder
   for (let file of modFiles) {
     if (!loadOrder.find((mod) => (mod.id === file))) {
@@ -1085,7 +1067,7 @@ async function serializeLoadOrder(context, loadOrder) {
 
   let loadOrderPath = path.join(gameDir, LO_FILE);
   let loadOrderFile = await fs.readFileAsync(
-    loadOrderPath, 
+    loadOrderPath,
     { encoding: "utf8", }
   );
   let loadOrderSplit = loadOrderFile.split("\n");
@@ -1138,7 +1120,7 @@ async function clearModOrder(api) {
     return Promise.reject(err);
   }
   let loadOrderFile = await fs.readFileAsync(
-    loadOrderPath, 
+    loadOrderPath,
     { encoding: "utf8", }
   );
   let loadOrderSplit = loadOrderFile.split("\n");
@@ -1218,7 +1200,7 @@ async function setupNotify(api) {
           },
         },
       ],
-    });  
+    });
   }
 }
 
@@ -1237,7 +1219,7 @@ async function psarcExtract(GAME_PATH, api) {
   } //*/
   const WORK_PATH = path.join(GAME_PATH, PSARCTOOL_PATH);
   //extract sp-common.psarc
-  try { 
+  try {
     const TARGET_FILE = path.join(WORK_PATH, SPCOMPSARC_FILE);
     const EXTRACT_PATH = WORK_PATH;
     await fs.statAsync(TARGET_FILE);
@@ -1250,7 +1232,7 @@ async function psarcExtract(GAME_PATH, api) {
     return false;
   }
   //extract bin.psarc
-  try { 
+  try {
     const TARGET_FILE = path.join(WORK_PATH, BINPSARC_FILE);
     const EXTRACT_PATH = path.join(WORK_PATH, BIN_FOLDER);
     await fs.statAsync(TARGET_FILE);
@@ -1263,7 +1245,7 @@ async function psarcExtract(GAME_PATH, api) {
     return false;
   }
   //stat extracted folders to make sure they are there
-  try { 
+  try {
     await fs.statAsync(path.join(WORK_PATH, BIN_FOLDER));
     await fs.statAsync(path.join(WORK_PATH, 'pak68'));
     return true;
@@ -1302,7 +1284,7 @@ async function psarcSetup(api) { //run on mod purge
   if (EXTRACTED) {
     log('warn', `Extraction of all .psarc files complete. Renaming files...`);
     //rename sp-common.psarc
-    try { 
+    try {
       await fs.statAsync(path.join(WORK_PATH, SPCOMPSARC_FILE));
       await fs.renameAsync(path.join(WORK_PATH, SPCOMPSARC_FILE), path.join(WORK_PATH, BAK_SPCOMPSARC_FILE));
       log('warn', `Renamed .psarc file ${SPCOMPSARC_FILE} to ${BAK_SPCOMPSARC_FILE}`);
@@ -1310,7 +1292,7 @@ async function psarcSetup(api) { //run on mod purge
       log('error', `Could not rename .psarc file ${SPCOMPSARC_FILE}: ${err}`);
     }
     //rename bin.psarc
-    try { 
+    try {
       await fs.statAsync(path.join(WORK_PATH, BINPSARC_FILE));
       await fs.renameAsync(path.join(WORK_PATH, BINPSARC_FILE), path.join(WORK_PATH, BAK_BINPSARC_FILE));
       log('warn', `Renamed .psarc file ${BINPSARC_FILE} to ${BAK_BINPSARC_FILE}`);
@@ -1326,7 +1308,7 @@ async function psarcSetup(api) { //run on mod purge
   //finish up - failure
   await deploy(api);
   api.dismissNotification(NOTIF_ID);
-  api.showErrorNotification(`Could not complete extraction of .psarc files. Please try again.`, 
+  api.showErrorNotification(`Could not complete extraction of .psarc files. Please try again.`,
     `Could not complete extraction of .psarc files. Please try again. This error likely occured due to closing the ndarc terminal windows before extraction was complete.`,
     { allowReport: false }
   );
@@ -1370,7 +1352,7 @@ async function psarcCleanup(api) {
   const WORK_PATH = path.join(GAME_PATH, PSARCTOOL_PATH);
   await foldersCleanup(WORK_PATH, CLEANUP_FOLDERS);
   //restore name of sp-common.psarc
-  try { 
+  try {
     await fs.statAsync(path.join(WORK_PATH, BAK_SPCOMPSARC_FILE));
     try { //make sure vanilla file is not in place - this usually means the game was updated
       await fs.statAsync(path.join(WORK_PATH, SPCOMPSARC_FILE));
@@ -1383,7 +1365,7 @@ async function psarcCleanup(api) {
     log('error', `Could not restore name of .psarc file ${SPCOMPSARC_FILE}: ${err}`);
   }
   //restore name of bin.psarc
-  try { 
+  try {
     await fs.statAsync(path.join(WORK_PATH, BAK_BINPSARC_FILE));
     try { //make sure vanilla file is not in place - this usually means the game was updated
       await fs.statAsync(path.join(WORK_PATH, BINPSARC_FILE));
@@ -1396,7 +1378,7 @@ async function psarcCleanup(api) {
     log('error', `Could not restore name of .psarc file ${BINPSARC_FILE}: ${err}`);
   }
   //stat vanilla files to make sure they are there
-  try { 
+  try {
     await fs.statAsync(path.join(WORK_PATH, BINPSARC_FILE));
     await fs.statAsync(path.join(WORK_PATH, SPCOMPSARC_FILE));
     api.dismissNotification(NOTIF_ID);
@@ -1405,7 +1387,7 @@ async function psarcCleanup(api) {
     return;
   } catch (err) { //if the files aren't there, cleanup did not succeed
     api.dismissNotification(NOTIF_ID);
-    api.showErrorNotification(`Did Not Complete .psarc Cleanup. Please try again.`, 
+    api.showErrorNotification(`Did Not Complete .psarc Cleanup. Please try again.`,
       `Could not complete cleanup of extracted .psarc files and restoration of vanilla files. Please verify your game files to ensure vanilla .psarc files are present.\n ${err}`,
       { allowReport: false }
     );
@@ -1443,8 +1425,6 @@ async function setup(discovery, api, gameSpec) {
       );
     }
   }
-  /*const isToolInstalled = await checkForTool(api);
-  //return isToolInstalled ? Promise.resolve() : download(api, REQUIREMENTS); //*/
   return downloadPsarcTool(api, gameSpec);
 }
 
@@ -1594,7 +1574,7 @@ function main(context) {
       gameId: GAME_ID,
       validate: async () => Promise.resolve(undefined), // no validation implemented yet
       deserializeLoadOrder: async () => await deserializeLoadOrder(context),
-      serializeLoadOrder: async (loadOrder) => await serializeLoadOrder(context, loadOrder),  
+      serializeLoadOrder: async (loadOrder) => await serializeLoadOrder(context, loadOrder),
       toggleableEntries: true,
       usageInstructions: LoadOrderInstructions,
       customItemRenderer: LoadOrderItemRenderer,
@@ -1602,27 +1582,23 @@ function main(context) {
   }
   context.once(() => { // put code here that should be run (once) when Vortex starts up
     const api = context.api;
-    /*context.api.onAsync('check-mods-version', (gameId, mods, forced) => {
-      if (gameId !== GAME_ID) return;
-      return onCheckModVersion(context.api, gameId, mods, forced);
-    }); //*/
-    context.api.onAsync('did-purge', (profileId) => didPurge(context.api, profileId)); //*/
-    context.api.onAsync("did-deploy", (profileId) => {
+    api.onAsync('did-purge', (profileId) => didPurge(api, profileId)); //*/
+    api.onAsync("did-deploy", (profileId) => {
       mod_update_all_profile = false;
       updating_mod = false;
       updatemodid = undefined;
     });
-    context.api.events.on("mod-update", (gameId, modId, fileId) => {
+    api.events.on("mod-update", (gameId, modId, fileId) => {
       if (GAME_ID == gameId) {
         updatemodid = modId;
       }
     });
-    context.api.events.on("remove-mod", (gameMode, modId) => {
+    api.events.on("remove-mod", (gameMode, modId) => {
       if (modId.includes("-" + updatemodid + "-")) {
         mod_update_all_profile = true;
       }
     });
-    context.api.events.on("will-install-mod", (gameId, archiveId, modId) => {
+    api.events.on("will-install-mod", (gameId, archiveId, modId) => {
       mod_install_name = modId.split("-")[0];
       if (GAME_ID == gameId && modId.includes("-" + updatemodid + "-")) {
         updating_mod = true;

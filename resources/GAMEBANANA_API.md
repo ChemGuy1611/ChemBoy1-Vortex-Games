@@ -150,6 +150,50 @@ Pair this with the item's `Updates` endpoint to extract a display version from t
 
 For GitHub-hosted requirements, see [DOWNLOADER.md](DOWNLOADER.md) — its version-resolution strategies are GitHub-specific, but the same download-then-install flow applies once a GameBanana URL is resolved.
 
+## Shared gamebanana_downloader.js Module
+
+`resources/downloader/gamebanana_downloader.js` packages the pattern above into a reusable requirements auto-downloader — the GameBanana counterpart to the GitHub `downloader.js` (see [DOWNLOADER.md](DOWNLOADER.md)). It downloads and installs GameBanana-hosted requirements (mod injectors, tools, or frameworks), resolves each requirement's latest file via the apiv11 endpoints, and raises an "update available" notification when a newer file appears. Extracted from the DOOM Eternal extension's EternalModInjector downloader.
+
+As with `downloader.js`, the canonical copy lives in `resources/downloader/` and each adopting extension bundles its own copy next to its `index.js` — changes to the canonical file must be propagated manually. Consumer wiring snippets live in `resources/downloader/template_gamebanana_downloader.js`.
+
+### The requirement object
+
+The entry points take an array of requirement objects (conventionally a `GB_REQUIREMENTS` constant in `index.js`), each describing one GameBanana-hosted requirement:
+
+| Field | Required | Meaning |
+| --- | --- | --- |
+| `gbItemType` | yes | apiv11 model name in URL paths: `'Tool'`, `'Mod'`, `'Sound'`, ... |
+| `gbItemId` | yes | GameBanana item id (e.g. `'7475'` from `gamebanana.com/tools/7475`). |
+| `modType` | yes | Vortex mod type id the requirement installs as; also the installed-detection key (any mod with this type counts as installed). |
+| `userFacingName` | yes | Display name in notifications and on the download. |
+| `fileNamePattern` | optional | RegExp tested against `_aFiles[]._sFile`, narrowing multi-file submissions (e.g. Windows/Linux variants) to this requirement's file. Default: the newest file. |
+| `fallbackVersion` | optional | Version attribute to record when the API is unreachable. |
+| `fallbackFileId` | optional | File id used to build a `https://gamebanana.com/dl/{fileId}` fallback link when the API is unreachable. Without it, an unreachable API fails the install with a manual-download error. |
+| `fileIdAttribute` | optional | Mod attribute tracking the installed GameBanana file id for update checks. Default `'gamebananaFileId'`. |
+| `versionPattern` | optional | RegExp whose capture group 1 is the version, run against the latest Updates title. Default `/\(Update\s+(.+?)\)/` (matches titles like `"2026-05-20 (Update 6.66 Rev 3 N)"`). |
+| `pageUrl` | optional | Manual-download page opened on install failure. Default derived from `gbItemType`/`gbItemId` (e.g. `https://gamebanana.com/tools/7475`). |
+
+### Exports
+
+| Export | Role |
+| --- | --- |
+| `downloadGameBanana(api, gameSpec, requirements, check = true)` | Download + install each requirement in the array (sequentially) via Vortex's download manager, then enable it, set its mod type, and record version + file id attributes. With `check = true` (default) it is a no-op for requirements already installed; pass `false` to (re)install/update. Main entry point — call in `setup()`. |
+| `checkForGameBananaUpdate(api, gameSpec, requirements)` | For each requirement in the array, compare the tracked file id (or archive name, for mods installed before id tracking) against the latest apiv11 file; raise a warning notification with a Download action when newer. Call from a `check-mods-version` handler and after the `setup()` download. |
+| `downloadGameBananaRequirement(api, gameSpec, requirement, check = true)` | Single-requirement variant of `downloadGameBanana`. |
+| `checkForGameBananaUpdateRequirement(api, gameSpec, requirement)` | Single-requirement variant of `checkForGameBananaUpdate`. |
+| `isGameBananaRequirementInstalled(api, gameId, requirement)` | Whether any mod with the requirement's mod type exists. |
+| `getLatestGameBananaFile(requirement)` | Newest `_aFiles[]` record by `_tsDateAdded` (null if the API is unreachable). |
+| `getLatestGameBananaVersion(requirement)` | Version parsed from the latest Updates title via `versionPattern` (null if unreachable). |
+
+### Behaviors worth knowing
+
+- **Source attribution.** A successful install sets the mod's `source` attribute to `'website'` and `url` to `pageUrl(requirement)` (the GameBanana item page) — Vortex renders this as a clickable "Source" link in the mod details panel.
+- **API-unreachable fallback.** Both API helpers return `null` on failure. The installer then falls back to `fallbackFileId`/`fallbackVersion`; the update check silently skips (nothing to compare against).
+- **No silent auto-update.** `checkForGameBananaUpdate` only notifies; the user-driven Download action performs the update via `downloadGameBananaRequirement(..., false)`.
+- **Overlap guard.** A requirement whose install is already running is skipped (e.g. double-clicked toolbar action), keyed by mod type.
+- **Install failure opens the page.** A failed download/install shows an error notification and opens `pageUrl` for a manual download.
+- **Per-game pieces stay in `index.js`.** The mod type registration and the `registerInstaller` test/install pair for the requirement are not part of this module.
+
 ## Caveats
 
 - No official rate-limit documentation; keep request volume low and cache results where possible.

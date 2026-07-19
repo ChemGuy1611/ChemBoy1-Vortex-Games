@@ -3,7 +3,10 @@
 ## Planned Improvements (Not Yet Released)
 
 - Xbox support - waiting on stable (and easy to install) mod injector for Xbox version
-- Automatic update checks for Lovely-Injector - need to solve technical issues with version resolution (no version in filename)
+
+## [0.3.0] - 2026-07-19
+
+- Improved: Now uses downloader module to check to check for Lovely-Injector updates on GitHub.
 
 ## [0.2.0] - 2026-02-24
 

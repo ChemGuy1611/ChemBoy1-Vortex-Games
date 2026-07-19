@@ -111,6 +111,8 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `write_id_list(filepath, game_ids)` | Write a sorted list of IDs to a file, one per line |
 | `is_load_order_game(src)` | Return `True` if `src` calls `registerLoadOrder` and is not a UE4/5 extension |
 | `has_downloader_js(folder)` | Return `True` if the extension `folder` contains a bundled `downloader.js` module |
+| `has_gamebanana_downloader_js(folder)` | Return `True` if the extension `folder` contains a bundled `gamebanana_downloader.js` module |
+| `has_moddb_downloader_js(folder)` | Return `True` if the extension `folder` contains a bundled `moddb_downloader.js` module |
 | `downloads_from_github(src)` | Return `True` if `src` pulls a mod/requirement from a GitHub release (release-asset URL or `browser_download_url`) |
 | `requires_unreal_mod_installer(src)` | Return `True` if `src` declares `context.requireExtension("Unreal Engine Mod Installer")` |
 | `parse_nexus_mod_url(url)` | Parse a Nexus Mods URL into `(domain, mod_id)` or `None`. |
@@ -708,7 +710,7 @@ With `--json`, stdout receives a JSON object instead:
 
 ## categorize_games.py
 
-Scans all `game-*` extension folders and categorizes them by engine or framework based on the `Structure:` header comment and key code markers in each `index.js`. Writes one `.txt` file per engine category into `resources/lists/`, plus several non-exclusive "flag" lists (load order, `downloader.js`, inline GitHub download, Unreal Engine Mod Installer dependency) evaluated for every game independently. Each line in the file is a `GAME_ID`.
+Scans all `game-*` extension folders and categorizes them by engine or framework based on the `Structure:` header comment and key code markers in each `index.js`. Writes one `.txt` file per engine category into `resources/lists/`, plus several non-exclusive "flag" lists (load order, `downloader.js`, `gamebanana_downloader.js`, `moddb_downloader.js`, inline GitHub download, Unreal Engine Mod Installer dependency) evaluated for every game independently. Each line in the file is a `GAME_ID`.
 
 Also called automatically by `new_extension.py` to add a newly created extension to the correct category file.
 
@@ -762,12 +764,14 @@ The engine categories above are mutually exclusive (one per game). The lists bel
 | --- | --- |
 | `resources/lists/games-loadorder.txt` | Non-UE4/5 games that call `context.registerLoadOrder` |
 | `resources/lists/games-downloader.txt` | Games with a bundled `downloader.js` module |
+| `resources/lists/games-downloader-gamebanana.txt` | Games with a bundled `gamebanana_downloader.js` module |
+| `resources/lists/games-downloader-moddb.txt` | Games with a bundled `moddb_downloader.js` module |
 | `resources/lists/games-github.txt` | Games that download from GitHub inline in `index.js` (no `downloader.js`) |
 | `resources/lists/games-uemi.txt` | Games that require the `Unreal Engine Mod Installer` extension via `context.requireExtension` |
 
 ### categorize_games.py — Detection
 
-Each game is matched against the engine categories in order — the first match wins. Detection uses the `Structure:` comment on line 3 of `index.js` as the primary signal, with fallback checks for unique code markers such as `const UNREALDATA =`, `const ATK_ID =`, `context.requireExtension('modtype-bepinex')`, etc. The flag lists are computed separately via dedicated predicates (`is_load_order_game`, `has_downloader_js`, `downloads_from_github`, `requires_unreal_mod_installer`) in `vortex_utils.py`.
+Each game is matched against the engine categories in order — the first match wins. Detection uses the `Structure:` comment on line 3 of `index.js` as the primary signal, with fallback checks for unique code markers such as `const UNREALDATA =`, `const ATK_ID =`, `context.requireExtension('modtype-bepinex')`, etc. The flag lists are computed separately via dedicated predicates (`is_load_order_game`, `has_downloader_js`, `has_gamebanana_downloader_js`, `has_moddb_downloader_js`, `downloads_from_github`, `requires_unreal_mod_installer`) in `vortex_utils.py`.
 
 ---
 
@@ -1037,7 +1041,7 @@ Creates `D:\Game_Tools_D\!TestGameFolders_D\{GAME_NAME}\{BINARIES_PATH}\{EXEC_NA
 
 ## deploy_to_vortex.py
 
-Copies one or more CB1 game extension folders from the repo into the Vortex plugins directory (`C:\ProgramData\vortex\plugins`). If a matching plugin folder already exists (exact `game-{id}` or a versioned `Vortex Extension Update - {GAME_NAME} Vortex Extension v*` folder), only `index.js` is copied. If no match is found, the full folder is deployed. Use `--force` to always do a full replace.
+Copies one or more CB1 game extension folders from the repo into the Vortex plugins directory (`C:\ProgramData\vortex\plugins`). If a matching plugin folder already exists (exact `game-{id}` or a versioned `Vortex Extension Update - {GAME_NAME} Vortex Extension v*` folder), only `index.js` plus any downloader modules (files ending in `downloader.js`, e.g. `downloader.js`, `gamebanana_downloader.js`, `moddb_downloader.js`) are copied. If no match is found, the full folder is deployed. Use `--force` to always do a full replace.
 
 ### deploy_to_vortex.py — Requirements
 
@@ -1061,7 +1065,7 @@ python deploy_to_vortex.py --all --dry-run
 - `GAME_ID [GAME_ID ...]` — one or more game IDs to deploy (e.g. `thelastofuspart2`).
 - `--all` — deploy every `game-*` extension in the repo.
 - `--dry-run` — lists what would be copied without writing anything.
-- `--force` — always do a full folder replace instead of index.js-only update.
+- `--force` — always do a full folder replace instead of updating only `index.js` and downloader modules.
 - `--restart-vortex` — close Vortex before copying (graceful `taskkill`, force-kill after 30s) and launch it again (no CLI args) after all copies. One close + one launch per run, not per game. Launches Vortex even if it was not running. Ignored with `--dry-run`.
 
 ### deploy_to_vortex.py — Examples
@@ -1074,7 +1078,7 @@ python deploy_to_vortex.py thelastofuspart2 --dry-run
 
 ### deploy_to_vortex.py — Output
 
-Per-game status: `[game_id] updated index.js in <folder>` (existing match) or `[game_id] deployed to <path> (N files)` (full deploy) on success, or `[game_id] ERROR - ...` on failure. Exits with code `1` if any game fails.
+Per-game status: `[game_id] updated <file list> in <folder>` (existing match; file list is `index.js` plus any `*downloader.js` modules) or `[game_id] deployed to <path> (N files)` (full deploy) on success, or `[game_id] ERROR - ...` on failure. Exits with code `1` if any game fails.
 
 ---
 
@@ -1216,7 +1220,7 @@ The per-folder `index.js`/`info.json`/`CHANGELOG.md` parse is cached in `vortex_
 ### vortex_gui.py — Layout
 
 ```text
-[ Filter: ____________ ]  [Refresh]  [New Game...]  [Group by Engine]  [Flagged Only]  [Clear Checks]
+[ Filter: ____________ ]  [Refresh]  [New Game...]  [Group by Engine]  [Flagged Only]  [All Categories v]  [Clear Checks]
 [ Bump Version ] [ Release ] [ Deploy to Vortex ] [ Launch in Vortex ] | [ Open Folder ] [ Open in Editor ] [ Open Changelog ]
 [ Open Game Page ] [ Open Extension Page ] | [ Port to Template... ] [ Setup Test Folder ] [ Patch ] [ Categorize ]
 [ Analyze Log ] [ Audit Scripts ] | [ Fetch Icon ] [ Fetch Cover ] [ Fetch Title ] [ Fetch Banner ] [ Fetch Nexus Stats ] [ View Images ]
@@ -1234,6 +1238,7 @@ The per-folder `index.js`/`info.json`/`CHANGELOG.md` parse is cached in `vortex_
 - **Sort**: click any column header.
 - **Filter**: case-insensitive substring match on Game ID, Name, Engine, and Note.
 - **Flagged Only**: checkable button that restricts the table to flagged rows (checked games stay pinned visible). The state persists across sessions.
+- **Category dropdown**: restricts the table to a special category of games. `Downloader` — the extension folder bundles a downloader module (`downloader.js`, `gamebanana_downloader.js`, or `moddb_downloader.js`; checked live on every refresh). `Load Order` — the extension calls `context.registerLoadOrder` and is not a UE4/5 game (UE4/5 excluded because load order is template-standard there; detected during the `index.js` parse and cached). Combines with the text filter and Flagged Only (AND); checked games stay pinned visible. The selection persists across sessions.
 - **Checkboxes**: click the leftmost `[x]` column to check/uncheck a game, or press **Space** to toggle the checkbox on every selected row (the fast path for bulk-checking). Checked games are always visible regardless of filter text and persist across sessions; checked IDs whose extension folder no longer exists are dropped automatically on refresh. When any games are checked, toolbar actions operate on the checked set instead of the row selection. **Clear Checks** button (enabled only when something is checked) unchecks all. Status bar shows `N checked` when non-zero.
 - **Multi-select**: Ctrl/Shift-click rows; used as the action target when no checkboxes are checked.
 - **Right-click**: context menu with the same script actions.

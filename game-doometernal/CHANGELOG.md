@@ -4,6 +4,14 @@
 
 - Config and save modtypes, installers, and open buttons.
 
+## [0.4.2] - 2026-07-18
+
+- Fixed: Minor technical changes.
+
+## [0.4.1] - 2026-07-17
+
+- Changed: EternalModInjector auto-download and update-check logic moved to the shared gamebanana_downloader.js module (no functional change)
+
 ## [0.4.0] - 2026-07-16
 
 - Added: EternalModInjector downloads now automatically resolve the latest file from the GameBanana API - no more waiting for the extension to update the download link after an injector release (falls back to the last known link if the API is unreachable)
