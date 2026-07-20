@@ -2,14 +2,15 @@
 Name: Witchfire Vortex Extension
 Structure: UE4
 Author: ChemBoy1
-Version: 0.4.0
-Date: 2026-01-31
+Version: 0.4.1
+Date: 2026-07-20
 //////////////////////////////////////*/
 
 //Import libraries
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
+const { default: IniParser, WinapiFormat } = require('vortex-parse-ini');
 
 const LOCALAPPDATA = util.getVortexPath('localAppData');
 
@@ -27,6 +28,10 @@ const GAME_NAME_SHORT = GAME_NAME;
 const EXEC = "Witchfire.exe";
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Witchfire";
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/662"; //Nexus link to this extension. Used for links
+
+const ENGINE_VERSION = '4.27'; //Unreal Engine version - info only atm. usually '4.27.2.0' or '5.X.X.0'
+const MAJOR_VERSION = ENGINE_VERSION.split('.')[0]; //major UE version
+const MINOR_VERSION = ENGINE_VERSION.split('.')[1]; //minor UE version
 
 let GAME_PATH = '';
 let GAME_VERSION = '';
@@ -319,7 +324,6 @@ async function requiresLauncher(gamePath, store) {
         },
     });
   } //*/
-  /*
   if (store === 'steam') {
     return Promise.resolve({
         launcher: 'steam',
@@ -500,7 +504,7 @@ function installScripts(files, fileName) {
   if (MOD_FOLDER === '.') {
     MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
   }
-  
+
   const ENABLEDTXT_FILE = 'enabled.txt'
   const ENABLEDTXT_PATH = path.join(fileName, rootPath, ENABLEDTXT_FILE);
   try {
@@ -564,7 +568,7 @@ function installDll(files, fileName) {
   if (MOD_FOLDER === '.') {
     MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
   }
-  
+
   const ENABLEDTXT_FILE = 'enabled.txt'
   const ENABLEDTXT_PATH = path.join(fileName, rootPath, ENABLEDTXT_FILE);
   try {
@@ -778,7 +782,7 @@ async function downloadUe4ss(api, gameSpec) {
               util.batchDispatch(api.store, batched); // Will dispatch both actions.
               return resolve();
             });
-          }, 
+          },
           'never',
           { allowInstall: false },
         );
@@ -810,7 +814,7 @@ async function resolveGameVersion(gamePath, exePath) {
     const exeVersion = require('exe-version');
     version = await exeVersion.getProductVersion(READ_FILE);
     //log('warn', `Resolved game version for ${GAME_ID} to: ${version}`);
-    return Promise.resolve(version); 
+    return Promise.resolve(version);
   } catch (err) {
     log('error', `Could not read ${READ_FILE} file to get game version: ${err}`);
     return Promise.resolve(version);
@@ -996,7 +1000,7 @@ function applyGame(context, gameSpec) {
 //Main function
 function main(context) {
   applyGame(context, spec);
-  
+
   if (UNREALDATA.loadOrder === true) {
     let previousLO;
     context.registerLoadOrderPage({
@@ -1008,7 +1012,7 @@ function main(context) {
       callback: (loadOrder) => {
         if (previousLO === undefined) previousLO = loadOrder;
         if (loadOrder === previousLO) return;
-        context.api.store.dispatch(actions.setDeploymentNecessary(spec.game.id, true));
+        requestDeployment(context.api, spec);
         previousLO = loadOrder;
       },
       createInfoPanel: () =>
@@ -1017,15 +1021,60 @@ function main(context) {
       + 'The number in the left column represents the overwrite order. The changes from mods with higher numbers will take priority over other mods which make similar edits.'),
     });
   }
-  
-  context.once(() => {
+
+  context.once(() => { // put code here that should be run (once) when Vortex starts up
     const api = context.api;
-    // put code here that should be run (once) when Vortex starts up
-
+    api.onAsync('did-deploy', (profileId) => didDeploy(api, profileId)); //*/
   });
-
   return true;
-}
+  }
+
+  const requestDeployment = (api, spec) => {
+    api.store.dispatch(actions.setDeploymentNecessary(spec.game.id, true));
+    api.sendNotification({
+      id: `${spec.game.id}-loadorderdeploy-notif`,
+      type: 'warning',
+      message: 'Deployment Required to Apply Load Order Changes',
+      allowSuppress: true,
+      actions: [
+        {
+          title: 'Deploy',
+          action: (dismiss) => {
+            deploy(api);
+            dismiss();
+          }
+        }
+      ],
+    });
+  };
+
+  async function didDeploy(api, profileId) { //run on mod deploy
+    const state = api.getState();
+    const profile = selectors.profileById(state, profileId);
+    const gameId = profile === null || profile === void 0 ? void 0 : profile.gameId;
+    if (gameId !== GAME_ID) {
+      return Promise.resolve();
+    }
+    if (isUe4ssInstalled(api, spec)) {
+      try {
+        GAME_PATH = getDiscoveryPath(api);
+        const INI_PATH = path.join(GAME_PATH, BINARIES_PATH, UE4SS_SETTINGS_FILEPATH);
+        await fs.statAsync(INI_PATH); //check if UE4SS settings file exists
+        const parser = new IniParser(new WinapiFormat());
+        const contents = await parser.read(INI_PATH);
+        const data = contents.data;
+        data.EngineVersionOverride.MajorVersion = ` ${MAJOR_VERSION}`; // Set the UE Engine version
+        data.EngineVersionOverride.MinorVersion = ` ${MINOR_VERSION}`;
+        //data.EngineVersionOverride.DebugBuild = ` 0`;
+        await parser.write(INI_PATH, contents); //write the INI file
+      }
+      catch (err) {
+        log('info', `Failed to read UE4SS Settings INI file and write Engine Version: ${err.message}`);
+      }
+    }
+    api.dismissNotification(`${GAME_ID}-loadorderdeploy-notif`);
+    return Promise.resolve();
+  }
 
 //export to Vortex
 module.exports = {
