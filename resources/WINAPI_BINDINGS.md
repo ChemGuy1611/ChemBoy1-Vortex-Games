@@ -1,6 +1,6 @@
 # winapi-bindings
 
-Native Node bindings exposing Win32 API functions not otherwise available to Node/Electron. Windows-only. Used across extensions mainly for registry lookups (install-path fallback, dependency detection) and INI file access (the latter wrapped by `vortex-parse-ini` — see `resources/INI_PARSING.md`).
+Native Node bindings exposing Win32 API functions not otherwise available to Node/Electron. Windows-only. Used across extensions mainly for registry lookups (install-path fallback, dependency detection) and INI file access (the latter wrapped by `vortex-parse-ini` — see `resources/FILE_PARSING.md`).
 
 ```js
 const winapi = require('winapi-bindings');
@@ -74,7 +74,7 @@ winapi.WithRegOpen('HKEY_LOCAL_MACHINE', 'SOFTWARE\\Python\\PythonCore', (hkey) 
 
 ## INI files
 
-`GetPrivateProfileSection`, `GetPrivateProfileSectionNames`, `GetPrivateProfileString`, `WritePrivateProfileString` back the `vortex-parse-ini` package's `WinapiFormat`. Extensions should go through `vortex-parse-ini` rather than calling these directly — see `resources/INI_PARSING.md` for the read/mutate/write cycle and native-binding gotchas (buffer size limits, null-deletes-key semantics, etc).
+`GetPrivateProfileSection`, `GetPrivateProfileSectionNames`, `GetPrivateProfileString`, `WritePrivateProfileString` back the `vortex-parse-ini` package's `WinapiFormat`. Extensions should go through `vortex-parse-ini` rather than calling these directly — see `resources/FILE_PARSING.md` for the read/mutate/write cycle and native-binding gotchas (buffer size limits, null-deletes-key semantics, etc).
 
 ---
 

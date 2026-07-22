@@ -14,6 +14,7 @@ const { actions, fs, util, selectors, log,
 const path = require('path');
 const template = require('string-template');
 const { parseStringPromise } = require('xml2js');
+const { default: IniParser, WinapiFormat } = require('vortex-parse-ini');
 const React = require('react');
 //const fsPromises = require('fs/promises'); //.rm() for recursive folder deletion
 
@@ -59,13 +60,14 @@ const hasModKit = false; //toggle for UE ModKit mod support
 const hasServer = false; //toggle for server pak mod logic
 const preferHardlinks = true; //set true to perform partition checks when IO-STORE=false for Config/Save modtypes so that hardlinks available to more users
 const autoDownloadUe4ss = false; //toggle for auto downloading UE4SS
+const writeEngineVersion = false; //toggle to write ENGINE_VERSION into UE4SS-settings.ini (EngineVersionOverride) on deploy, when UE4SS is installed
 const SIGBYPASS_REQUIRED = false; //set true if there are .sig files in the Paks folder
 const IO_STORE = true; //true if the Paks folder contains .ucas and .utoc files
 const hasUserIdFolder = false; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
 const debug = false; //toggle for debug mode
 
 //UE specific
-const ENGINE_VERSION = '5.X.X.0'; //Unreal Engine version - info only atm. usually '4.27.2.0' or '5.X.X.0'
+const ENGINE_VERSION = '5.X.X.0'; //Unreal Engine version. usually '4.27.2.0' or '5.X.X.0'. Written to UE4SS-settings.ini if writeEngineVersion is enabled
 const MAJOR_VERSION = ENGINE_VERSION.split('.')[0]; //major UE version
 const MINOR_VERSION = ENGINE_VERSION.split('.')[1]; //minor UE version
 const ROOT_FOLDERS = [EPIC_CODE_NAME, 'Engine']; //addressable folders in root
@@ -2926,6 +2928,23 @@ async function didDeploy(api, profileId) { //run on mod deploy
     }
     if (LO.length > 0) {
       await serializeLogicMods(api, LO);
+    }
+  }
+  if (writeEngineVersion && isUe4ssInstalled(api, spec)) {
+    try {
+      GAME_PATH = getDiscoveryPath(api);
+      const INI_PATH = path.join(GAME_PATH, BINARIES_PATH, UE4SS_SETTINGS_FILEPATH);
+      await fs.statAsync(INI_PATH); //check if UE4SS settings file exists
+      const parser = new IniParser(new WinapiFormat());
+      const contents = await parser.read(INI_PATH);
+      const data = contents.data;
+      data.EngineVersionOverride.MajorVersion = ` ${MAJOR_VERSION}`; // Set the UE Engine version
+      data.EngineVersionOverride.MinorVersion = ` ${MINOR_VERSION}`;
+      //data.EngineVersionOverride.DebugBuild = ` 0`;
+      await parser.write(INI_PATH, contents); //write the INI file
+    }
+    catch (err) {
+      log('info', `[${GAME_ID}] Failed to read UE4SS Settings INI file and write Engine Version: ${err.message}`);
     }
   }
   api.dismissNotification(`${GAME_ID}-loadorderdeploy-notif`);

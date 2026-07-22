@@ -1,5 +1,9 @@
 # template-ue4-5 Changelog
 
+## [2026-07-20]
+
+- Added: `writeEngineVersion` toggle (default off). When enabled, `didDeploy` writes `ENGINE_VERSION` (`MajorVersion`/`MinorVersion`) into the `EngineVersionOverride` section of `UE4SS-settings.ini` whenever UE4SS is installed, using `vortex-parse-ini` (`IniParser`/`WinapiFormat`). Generalized from `game-witchfire` 0.4.1.
+
 ## [2026-07-12]
 
 - Added: Status filtering on all load order pages (Enabled/Disabled, Locked/Unlocked, Unmanaged), ported from game-subnautica2 0.4.0. Pak Load Order page gets filter pills in the info panel (`StatusPills` + `usePakLOState` statusFilter state + `lo-row-hidden` row hiding with injected `:has()` CSS); UE4SS and LogicMods pages get a `LoadOrderStatusFilter` dropdown beside the search box. Shows a "matched / total" count while a filter is active. Shared `matchesStatus` predicate (AND across groups, OR within a group; text search ANDs on top).
