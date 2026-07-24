@@ -27,6 +27,32 @@ Diagrams are Mermaid, which renders natively on GitHub and in most Markdown view
 - State paths are written with dots (`persistent.mods.gameId.modId`) rather than bracket
   subscripts, purely so every Mermaid renderer parses them.
 
+## Authoring notes — read before adding or editing a diagram
+
+- **No cycles or self-loops in a `flowchart`.** An edge back to an already-visited node (a real
+  loop, or a diamond branch pointing at itself) can trigger `Could not find a suitable point for
+  the given distance` on GitHub's rendering pipeline — a known dagre-layout bug. It reproduces even
+  when the same diagram renders fine locally under a current Mermaid build, because GitHub pins its
+  own bundled version, which lags and differs from whatever `npm i mermaid` gives you. Express
+  repetition as label text instead ("continue the walk with the next item in the list") or a dotted
+  note edge to a **new terminal node**, never an edge back into the existing graph.
+- **`mermaid.parse()` only checks grammar — it does not catch this.** The bug above is a layout-time
+  failure, and `parse()` never runs layout. Validating a diagram means actually rendering it:
+  `npm i @mermaid-js/mermaid-cli` (it bundles Puppeteer / real headless Chrome — jsdom cannot stand
+  in here, it's missing browser primitives like `SVGElement.getBBox`/`CSSStyleSheet` that dagre's
+  label sizing needs), write each fenced block to its own `.mmd` file, then `npx mmdc -i block.mmd
+  -o block.svg` per block. A clean render is much stronger evidence than a clean parse.
+- **No standalone bold line as a pseudo-heading (MD036).** A line like `**Key branch points**` on
+  its own reads as a heading to markdownlint even though it isn't one — use a real `###` heading.
+- **Repeated heading text across sections needs disambiguation (MD024).** Headings must be unique
+  per level within the file — `### Key branch points` used after every section collides; suffix
+  each with its section topic (`### Key branch points — mod update`, etc.).
+- This repo has no markdownlint config file, so a bare `markdownlint` CLI run applies its own
+  defaults (e.g. an 80-char `MD013`) that don't match this project's actual style — the existing
+  `resources/*.md` docs already run longer soft-wrapped lines, and a Mermaid node label is
+  necessarily one long line. VS Code's markdownlint extension disables `MD013` out of the box for
+  the same reason; don't chase it here.
+
 ## 1. Mod install pipeline
 
 Turning a downloaded archive into an installed mod in the staging folder. Installed is **not**
@@ -42,9 +68,8 @@ flowchart TD
     GID --> PICK["2. getInstaller(fileList, gameId, archivePath)<br/>walks mInstallers, sorted ASCENDING by priority<br/>lower number = higher priority"]
 
     PICK --> TEST{"testSupported(...) resolves<br/>supported: true?"}
-    TEST -- "false — recurse to next offset" --> PICK
-    TEST -- "undefined — logged as Buggy installer, not selected" --> PICK
     TEST -- "true" --> RUN["3. Chosen install() -> IInstallResult<br/>a list of IInstruction"]
+    TEST -- "false (recurse to next offset)<br/>or undefined (Buggy installer, not selected)" --> SKIP["Continue the same ascending-priority walk<br/>with the next installer in mInstallers"]
 
     PICK -.-> LADDER["Priority ladder:<br/>installer_fomod_native / _ipc / _shared / nested — archives with ModuleConfig.xml<br/>...game extension installers...<br/>basicInstaller — low-priority catch-all, copies everything"]
 
@@ -57,7 +82,7 @@ flowchart TD
     EMPTY -- "populated" --> BUCKET
 
     BUCKET["transformInstructions(...) -> InstructionGroups<br/>one array per type: copy, mkdir, generatefile, iniedit,<br/>setmodtype, attribute, rule, submodule,<br/>enableallplugins, unsupported, error"]
-    BUCKET -. "submodule — install nested archive as its own mod" .-> PICK
+    BUCKET -.-> SUBNOTE["submodule instruction:<br/>install nested archive as its own mod<br/>— re-enters installer selection (step 2) for that archive"]
 
     BUCKET --> STAGE["4. extractArchive, then apply buckets into staging<br/>util/getInstallPath.ts + stagingDirectory.ts give the per-game root<br/>each mod lands in its own installationPath subfolder<br/>variant installs append +variant — util/modName.ts"]
 
@@ -75,16 +100,14 @@ Collection installs additionally run phased:
 
 ```mermaid
 flowchart LR
-    P0["Phase 0 — framework mods<br/>e.g. SMAPI"] --> G0{"phase fully downloaded<br/>AND deployed?"}
-    G0 -- "no" --> G0
+    P0["Phase 0 — framework mods<br/>e.g. SMAPI"] --> G0{"Phase fully downloaded AND deployed?<br/>(next phase blocks until yes)"}
     G0 -- "yes" --> P1["Phase 1 — content"]
-    P1 --> G1{"phase fully downloaded<br/>AND deployed?"}
-    G1 -- "no" --> G1
+    P1 --> G1{"Phase fully downloaded AND deployed?<br/>(next phase blocks until yes)"}
     G1 -- "yes" --> PN["Phase 2+ ..."]
     P0 -.-> ST["Tracked in mInstallPhaseState (InstallManager)"]
 ```
 
-**Key branch points**
+### Key branch points — install pipeline
 
 - Installer selection is *first match wins* on an ascending-priority list, so a low number
   pre-empts everything below it.
@@ -127,7 +150,7 @@ flowchart TD
     RES --> DEP["Deploy to put the new files in the game folder<br/>see diagram 4"]
 ```
 
-**Key branch points**
+### Key branch points — mod update
 
 - The version check runs automatically on `gamemode-activated`, so simply activating a game kicks
   a round of update checks.
@@ -158,10 +181,9 @@ flowchart TD
     S --> UI["FileBasedLoadOrderPage<br/>registerMainPage sort-none, priority 30,<br/>id file-based-loadorder, group per-game, hotkey E<br/>drag-and-drop list via ItemRenderer.tsx"]
     UI -.-> VIS["visible() only when the active game has a<br/>registered FBLO entry and its condition() passes"]
 
-    UI --> RE["User drags items -> setFBLoadOrder"]
-    RE --> S
-
-    S --> WATCH["onStateChange on persistent.loadOrder<br/>computes prev vs new -> applyNewLoadOrder"]
+    UI --> RE["User drags items -> dispatch setFBLoadOrder"]
+    RE -.-> SNOTE["Writes persistent.loadOrder.profileId<br/>(the same state node S, seeded above)"]
+    RE --> WATCH["onStateChange on persistent.loadOrder<br/>computes prev vs new -> applyNewLoadOrder"]
     WATCH -.-> LOOP["applyNewLoadOrder must NEVER dispatch<br/>setFBLoadOrder itself — infinite loop"]
 
     WATCH --> FIND{"findGameEntry(profile.gameId)<br/>registered?"}
@@ -193,7 +215,7 @@ flowchart TD
     PLAIN --> S
 ```
 
-**Key branch points**
+### Key branch points — load order
 
 - Reorders flow *through Redux*: the UI writes state, and a state watcher — not the UI — performs
   serialization and validation.
@@ -231,14 +253,11 @@ flowchart TD
 ```mermaid
 flowchart TD
     D1["ensureWritable(api, destinationPath)<br/>-> getNormalizeFunc(destinationPath)"] --> D2["method.prepare(destinationPath, true, lastActivation, normalize)"]
-    D2 --> D3["For each ENABLED mod — progress 0 to 50 percent"]
-    D3 --> D3A["add the mod's fileOverrides to skipFiles"]
-    D3A --> D3B["method.activate(modPath, mod.installationPath, subDir(mod), skipFiles)"]
-    D3B --> D3
+    D2 --> D3["For each ENABLED mod (progress 0 to 50 percent):<br/>add the mod's fileOverrides to skipFiles, then<br/>method.activate(modPath, mod.installationPath, subDir(mod), skipFiles)"]
     D3 --> D4["Activate the MERGED folder<br/>MERGED_PATH, or MERGED_PATH.typeId<br/>holding registerMerge outputs — empty skip set"]
     D4 --> D5["method.finalize(gameId, destinationPath, installationPath, cb)<br/>progress 50 to 100 percent<br/>returns the new manifest: a list of IDeployedFile"]
     D5 -- "error" --> D6["method.cancel(...) if defined"]
-    D3A -.-> CONF["This IS conflict resolution:<br/>once a higher-priority mod places a file,<br/>lower-priority mods skip it"]
+    D3 -.-> CONF["This IS conflict resolution:<br/>once a higher-priority mod places a file,<br/>lower-priority mods skip it"]
 ```
 
 Choosing the activator:
@@ -269,7 +288,7 @@ flowchart TD
     PR -.-> WARN["ALWAYS purge before switching activators or profiles"]
 ```
 
-**Key branch points**
+### Key branch points — deployment
 
 - Step 3 exists because step 2 can mutate state — skipping the re-read deploys a stale enabled set.
 - The manifest is the source of truth for "what Vortex owns"; hand-editing the game folder shows up
@@ -348,7 +367,7 @@ flowchart TD
     DOWN -.-> TOL["Fires AFTER the profile is active and the UI is usable —<br/>handlers must tolerate the user switching again immediately"]
 ```
 
-**Key branch points**
+### Key branch points — discovery and activation
 
 - `getInstalledVersion` deliberately runs *before* `setup`.
 - The profile can change again mid-activation, so `setGameMode` re-checks before emitting.
@@ -399,7 +418,7 @@ flowchart TD
     AP -.-> DUTY["activeProfileId does DOUBLE DUTY.<br/>There is no switch profile without re-activating the game."]
 ```
 
-**Key branch points**
+### Key branch points — profile switch
 
 - `nextProfileId` is the *request*, `activeProfileId` is the *fact* — two separate state paths.
 - The switch is cancellable: another `nextProfileId` change mid-flight makes the older switch bail.
@@ -441,7 +460,7 @@ flowchart TD
     P5 -.-> DEP["onceMain is DEPRECATED in the renderer — logs a warning. Use once."]
 ```
 
-**Key branch points**
+### Key branch points — extension loading
 
 - The recording Proxy is the whole design: `init` declares, the manager replays.
 - API-extending extensions apply before the general replay, which is why downstream extensions can
