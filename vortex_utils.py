@@ -308,7 +308,7 @@ def extract_file_group_id(src):
 
     Optional escape hatch: when a mod's v3 file-update-groups list endpoint 404s
     (files uploaded via the web/v1 flow are not registered in the v3 list), this
-    constant lets the uploader POST directly to /v3/mod-file-update-groups/{id}/versions.
+    constant lets the uploader POST directly to /v3/mod-files/{id}/versions.
     """
     m = re.search(r'const\s+FILE_GROUP_ID\s*=\s*(\d+)\b', src)
     return int(m.group(1)) if m else None

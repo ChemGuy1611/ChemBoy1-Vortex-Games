@@ -191,3 +191,12 @@ context.registerHealthCheck({
 registry. Prefer `registerHealthCheck` for new code: it adds category/severity,
 declarative triggers, caching, per-mod checks, and one-click fixes that
 `registerTest` lacks.
+
+---
+
+## See also
+
+`VORTEX_GAME_LIFECYCLE.md` (`GameChanged`/`Startup` triggers fire from this runtime flow).
+`VORTEX_APP.md` (overview of where Health Check fits among other extension systems).
+`ERROR_CLASSES.md` (throwing from inside a `check`/`checkMod`/`fix` function still uses these
+classes). `UNDERUSED_API_FUNCTIONS.md` (§11 short pointer back to this doc).

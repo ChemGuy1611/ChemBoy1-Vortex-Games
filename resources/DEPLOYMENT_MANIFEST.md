@@ -94,3 +94,11 @@ const manifest = await util.getManifest(api, 'mymodtype', GAME_ID);
 - `IDeployedFile.source` is the mod's `installationPath` (the staging subdirectory name), not the full path.
 - `target` is the mod type id — empty string means the default mod type.
 - Manifest is written per mod type. If you have multiple mod types, you need separate `getManifest` calls for each.
+
+---
+
+## See also
+
+`VORTEX_DEPLOYMENT.md` (the deploy/purge orchestration that writes the manifest this doc reads).
+`REGISTER_MERGE.md` (`baseFiles`'s `deployedFiles` argument is sourced the same way as
+`getManifest`). `EVENTS.md` (`did-deploy` passes `deployment` directly, avoiding the disk read).

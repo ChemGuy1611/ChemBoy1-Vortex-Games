@@ -1241,3 +1241,7 @@ they change deployment state, not mods.txt.
 - `resources/RE-UE4SS_MODS_CONFIG.md` -- mods.json vs mods.txt vs sidecar relationship
 - `template-ue4-5\index.js` -- canonical implementation of everything described here
 - `Vortex\src\renderer\src\extensions\file_based_loadorder\` -- full FBLO source
+- `resources/VORTEX_LOAD_ORDER.md` -- FBLO runtime orchestration this registration API drives
+- `resources/COLLECTIONS_FEATURE.md` -- collections auto-gen built on `registerLoadOrder` options
+- `resources/GAMEBRYO_PLUGIN_SYSTEM.md` -- plugin-based load order alternative for Bethesda games
+- `resources/TEMPLATES_OVERVIEW.md` -- which templates use FBLO vs the legacy page

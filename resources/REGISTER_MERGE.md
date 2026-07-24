@@ -109,3 +109,11 @@ context.registerMerge(test, merge, '');  // '' = default mod type
 - The `out` path in `baseFiles` must be consistent — it's how Vortex finds the merged file in the working directory.
 - The `merge` function is called once per matching mod file — it must handle being called multiple times on the same output file (i.e., be additive, not overwriting each call).
 - Call inside `main(context)`, not in `context.once()`.
+
+---
+
+## See also
+
+`VORTEX_DEPLOYMENT.md` (where merge runs in the deploy pipeline, relative to file activation).
+`DEPLOYMENT_MANIFEST.md` (`baseFiles`'s `deployedFiles` argument comes from the same manifest
+`util.getManifest` reads).

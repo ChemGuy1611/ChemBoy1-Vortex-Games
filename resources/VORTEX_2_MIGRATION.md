@@ -2,6 +2,10 @@
 
 Changes extension developers need to make when targeting Vortex 2.0. The API surface is largely unchanged — the migration is primarily build tooling and dependency management.
 
+> **Disambiguation.** This is **porting extension code** from Vortex 1.16 to 2.0. It is **not**
+> `REGISTER_MIGRATION.md`, which covers an extension's own runtime state migration on its own
+> version bump via `context.registerMigration`. Different thing entirely.
+
 Source: `Vortex/packages/vortex-api/docs/MIGRATION.md`
 
 ---
@@ -166,3 +170,11 @@ module.exports = {
 - [ ] Update Load Order page priority to `30`, Save Games to `50`
 - [ ] Use sentence case for page names
 - [ ] Update dev plugins path if using dev builds
+
+---
+
+## See also
+
+`VORTEX_APP.md` (overview of the extension-API surface this guide ports code against).
+`REGISTER_MIGRATION.md` (extension's own runtime state migration on its own version bump — not
+this doc; see disambiguation above).

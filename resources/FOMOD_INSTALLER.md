@@ -40,17 +40,9 @@ Custom installers must use the **FOMOD avoidance check** to correctly yield FOMO
 
 ## FOMOD Avoidance
 
-Every custom `testSupported` function must include this check. If `fomod/ModuleConfig.xml` is present, return `supported: false` so the built-in FOMOD handler takes over.
-
-```js
-if (supported && files.find(file =>
-    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
-  supported = false;
-}
-```
-
-This applies to **all** installer test functions including the fallback (`testFallback` / `testRoot` / `testMod` etc.). Without it a fallback at priority 49 would steal FOMOD mods after the FOMOD installer at priority 10 returns `supported: false` for unsupported XML variants.
+Every custom `testSupported` function must return `supported: false` when `fomod/ModuleConfig.xml`
+is present, so the built-in FOMOD handler (this doc) takes over instead of a fallback stealing the
+archive. Canonical check + code block: `INSTALLER_SYSTEM.md` §FOMOD Avoidance.
 
 ---
 
@@ -249,3 +241,12 @@ Custom installers do not typically use `details`; the FOMOD tester uses it inter
 The `installer_fomod_native` extension hooks into `will-install-mod` to reinitialize the logger and file system before each install. This ensures per-install state is clean.
 
 Source: `Vortex/src/renderer/src/extensions/installer_fomod_native/index.ts:89-102`
+
+---
+
+## See also
+
+`INSTALLER_SYSTEM.md` (custom `registerInstaller`/`testSupported`/`install` contracts, priority
+ordering, canonical FOMOD Avoidance check). `VORTEX_MOD_INSTALL.md` (InstallManager orchestration
+that runs installer `testSupported` in priority order). `ARCHIVE_HANDLER.md` (archive extraction
+that produces the `files` list installers test against).

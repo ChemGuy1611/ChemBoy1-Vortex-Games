@@ -148,11 +148,11 @@ async function getLatestGamebananaFile(itemType, itemId) {
 
 Pair this with the item's `Updates` endpoint to extract a display version from the latest update title when needed.
 
-For GitHub-hosted requirements, see [DOWNLOADER.md](DOWNLOADER.md) — its version-resolution strategies are GitHub-specific, but the same download-then-install flow applies once a GameBanana URL is resolved.
+For GitHub-hosted requirements, see `DOWNLOADER.md` — its version-resolution strategies are GitHub-specific, but the same download-then-install flow applies once a GameBanana URL is resolved.
 
 ## Shared gamebanana_downloader.js Module
 
-`resources/downloader/gamebanana_downloader.js` packages the pattern above into a reusable requirements auto-downloader — the GameBanana counterpart to the GitHub `downloader.js` (see [DOWNLOADER.md](DOWNLOADER.md)). It downloads and installs GameBanana-hosted requirements (mod injectors, tools, or frameworks), resolves each requirement's latest file via the apiv11 endpoints, and raises an "update available" notification when a newer file appears. Extracted from the DOOM Eternal extension's EternalModInjector downloader.
+`resources/downloader/gamebanana_downloader.js` packages the pattern above into a reusable requirements auto-downloader — the GameBanana counterpart to the GitHub `downloader.js` (see `DOWNLOADER.md`). It downloads and installs GameBanana-hosted requirements (mod injectors, tools, or frameworks), resolves each requirement's latest file via the apiv11 endpoints, and raises an "update available" notification when a newer file appears. Extracted from the DOOM Eternal extension's EternalModInjector downloader.
 
 As with `downloader.js`, the canonical copy lives in `resources/downloader/` and each adopting extension bundles its own copy next to its `index.js` — changes to the canonical file must be propagated manually. Consumer wiring snippets live in `resources/downloader/template_gamebanana_downloader.js`.
 
@@ -199,3 +199,10 @@ The entry points take an array of requirement objects (conventionally a `GB_REQU
 - No official rate-limit documentation; keep request volume low and cache results where possible.
 - Field sets are not formally versioned — code should tolerate missing fields and fall back gracefully (e.g. to a hardcoded file ID).
 - The `Generic_Game` filter requires GameBanana's own game ID (from `_aGame._idRow` or the game page URL), which is unrelated to Steam/Nexus IDs.
+
+---
+
+## See also
+
+`VORTEX_DOWNLOAD_MGMT.md` (the `start-download`/`import-downloads` events `gamebanana_downloader.js`
+hands off to). `VORTEX_MOD_INSTALL.md` (installing the downloaded requirement as a managed mod).

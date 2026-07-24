@@ -75,118 +75,32 @@ context.registerMainPage('unreal', 'UE4SS Load Order', Ue4ssLoadOrderPage, {
 
 ## 3. `registerSettings` — Add a Settings Tab Panel
 
-### Signature - registerSettings
-
-```js
-context.registerSettings(title, Component, propsCallback, visibleCallback, priority);
-```
-
-| Param | Type | Notes |
-| --- | --- | --- |
-| `title` | `string` | Tab label in Settings dialog |
-| `Component` | `React.ComponentType` | Settings panel component |
-| `propsCallback` | `() => ({})` | Extra props; usually `() => ({})` |
-| `visibleCallback` | `() => bool` | Gate by active game ID |
-| `priority` | `number` | Order within the tab; `150` is a safe default |
-
-### Settings registration example
+Adds a component as a tab panel inside Vortex's Settings dialog:
 
 ```js
 context.registerSettings('Mods', GameSettings, () => ({}),
   () => selectors.activeGameId(context.api.getState()) === GAME_ID, 150);
 ```
 
-### Settings component pattern
-
-```js
-function GameSettings() {
-  const { Toggle, More } = require('vortex-api');
-  const { useSelector, useDispatch } = require('react-redux');
-  const dispatch = useDispatch();
-
-  const myFlag = useSelector(state =>
-    util.getSafe(state, ['settings', GAME_ID, 'myFlag'], true));
-
-  const onToggle = React.useCallback((checked) => {
-    dispatch(setMyFlag(checked));
-  }, [dispatch]);
-
-  return React.createElement('form', null,
-    React.createElement('div', { className: 'settings-group' },
-      React.createElement(Toggle, { checked: myFlag, onToggle },
-        'My Feature',
-        React.createElement(More, { id: `${GAME_ID}-my-feature-more`, name: 'My Feature' },
-          'Tooltip text explaining what this toggle does.',
-        ),
-      ),
-    ),
-  );
-}
-```
-
-**`Toggle` props:**
-
-- `checked` — boolean state value
-- `onToggle(checked: boolean)` — receives the new value (not a DOM event)
-
-**`More` props:**
-
-- `id` — must be unique across all registered `More` components
-- `name` — display name in the tooltip header
+Full `registerSettings` signature/params and the `Toggle`+`More` settings-component pattern
+(`useSelector`/`useDispatch` wiring): see `SETTINGS_REDUCER.md` §5-6.
 
 ---
 
 ## 4. `registerReducer` — Persist State for Pages
 
-Pages that need persistent state (like a load order list) use `registerReducer`. Call it **before** `registerMainPage`.
-
-### State paths
-
-| Path prefix | Persisted? | Notes |
-| --- | --- | --- |
-| `['settings', ...]` | Yes | User settings, survives restart |
-| `['persistent', ...]` | Yes | Persistent game data |
-| `['session', ...]` | No | Cleared on restart |
-
-### Example — settings flag
+Pages that need persistent state (like a load order list) use `registerReducer`. Call it **before**
+`registerMainPage`.
 
 ```js
-// Action creator
-const SET_MY_FLAG = `SET_${GAME_ID.toUpperCase()}_MY_FLAG`;
-function setMyFlag(value) { return { type: SET_MY_FLAG, payload: value }; }
-setMyFlag.toString = () => SET_MY_FLAG;
+context.registerReducer(['persistent', 'myList', GAME_ID], spec); // before registerMainPage
 
-// In main():
-context.registerReducer(['settings', GAME_ID], {
-  reducers: {
-    [setMyFlag.toString()]: (state, payload) => util.setSafe(state, ['myFlag'], payload),
-  },
-  defaults: { myFlag: true },
-});
+// Reading in a component:
+const items = useSelector(state => util.getSafe(state, ['persistent', 'myList', GAME_ID, 'items'], []));
 ```
 
-### Example — persistent list
-
-```js
-const SET_MY_LIST = `SET_${GAME_ID.toUpperCase()}_MY_LIST`;
-function setMyList(list) { return { type: SET_MY_LIST, payload: list }; }
-setMyList.toString = () => SET_MY_LIST;
-
-// In main():
-context.registerReducer(['persistent', 'myList', GAME_ID], {
-  reducers: {
-    [setMyList.toString()]: (state, payload) => ({ ...state, items: payload }),
-  },
-  defaults: { items: [] },
-});
-```
-
-Reading state:
-
-```js
-const items = useSelector(state =>
-  util.getSafe(state, ['persistent', 'myList', GAME_ID, 'items'], []));
-```
+Action-creator patterns, the `settings`/`persistent`/`session`/`window` path-prefix + persistence
+table, and `verifiers`: see `SETTINGS_REDUCER.md`.
 
 ---
 
@@ -796,7 +710,7 @@ context.registerAction(
 );
 ```
 
-Full `registerAction` signature: see [REGISTER_ACTION.md](REGISTER_ACTION.md).
+Full `registerAction` signature: see `REGISTER_ACTION.md`.
 
 ---
 
@@ -1053,3 +967,15 @@ function ToolbarIcon({ id, icon, text, onClick }) {
 | Health/status + tabs | `Vortex/src/renderer/src/extensions/health_check/index.ts` | `TabProvider`/`TabBar`/`TabPanel` |
 | Badge on sidebar icon | `Vortex/src/renderer/src/extensions/download_management/index.ts` | `ReduxProp` + `badge` |
 | Saves table page | `vortex-games/game-mount-and-blade2/src/index.ts` | `useContext(MainContext)` + toolbar |
+
+---
+
+## See also
+
+`TOOLBAR_ACTIONS.md` / `REGISTER_ACTION.md` (`IconBar`/`registerAction` toolbar buttons hosted in
+`MainPage.Header`). `SETTINGS_REDUCER.md` (full `registerSettings`/`registerReducer` mechanics
+behind §3-4 above). `NOTIFICATIONS_DIALOGS.md` (dialogs/notifications launched from page
+components). `LOAD_ORDER_ITEM_RENDERER.md` / `LOAD_ORDER_REGISTRATION.md` (the FBLO item-renderer
+and page-registration patterns §8/§9/§10 reference). `VORTEX_MOD_LIST.md` (the Mods page table,
+built on the same `SuperTable`/registration primitives). `HEALTH_CHECK.md` (tabbed page example).
+`UNDERUSED_API_FUNCTIONS.md` (additional page-adjacent API surface not covered here).

@@ -186,3 +186,11 @@ Or inline in `context.registerGame()` — both work identically.
 - **Fallback is always direct launch** — any uncaught error or `GameStoreNotFound` causes Vortex to silently run the exe directly. If the launcher is required for DRM, a failed `requiresLauncher` will result in a launch that the game itself rejects.
 - **Tools are excluded** — `requiresLauncher` is not called for items in `supportedTools`, only for the game entry itself.
 - **`addInfo` vs `game.details`** — if `addInfo` is omitted, Vortex passes `game.details` to the launcher instead. For Steam this is fine (Steam reads `details.steamAppId`). For Epic and Xbox, always provide `addInfo` explicitly.
+
+---
+
+## See also
+
+`REGISTER_GAME.md` (the `IGame` spec `requiresLauncher` hangs off). `RUN_EXECUTABLE.md`
+(`api.runExecutable`/`IRunOptions` — the actual launch path this hook gates). `VORTEX_GAME_LIFECYCLE.md`
+(where launcher resolution fits in the discovery-to-launch flow).

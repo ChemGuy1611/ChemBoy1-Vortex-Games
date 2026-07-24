@@ -85,3 +85,11 @@ context.registerReducer(['persistent', 'settings', gameId], {
 - `setSafe` creates intermediate keys if missing; `setOrNop` does not — use `setOrNop` when you want to guard against creating unexpected paths.
 - `mutateSafe` is for use outside reducers (e.g., in event handlers operating on plain objects). Never use it inside a reducer spec.
 - `removeValue` uses reference equality; use `removeValueIf` with a predicate for structural equality.
+
+---
+
+## See also
+
+`VORTEX_MOD_LIST.md` (`getSafe` used throughout the Mods page table's calc/filter functions).
+`SETTINGS_REDUCER.md` (`setSafe`/`getSafe` as used inside reducer specs and component readers).
+`REGISTER_MIGRATION.md` (`getSafe`/`setSafe` for reading/patching state inside a migration).

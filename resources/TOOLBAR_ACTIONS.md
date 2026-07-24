@@ -15,31 +15,12 @@ Both are rendered by `IconBar`. `registerAction` populates the action registry; 
 
 ---
 
-## 1. `registerAction` — Full Signature
+## 1. `registerAction` — Signature
 
-```js
-context.registerAction(
-  group,              // string — which toolbar/menu to add to
-  position,           // number — render order (lower = left/first)
-  iconOrComponent,    // string icon name OR React component
-  options,            // IActionOptions — use {} for defaults
-  titleOrProps,       // string title (icon form) | () => ({}) PropsCallback (component form)
-  actionOrCondition,  // () => void action fn (icon form) | condition fn (component form)
-  condition           // (instanceIds: string[]) => bool | string (icon form only)
-);
-```
-
-Always call inside `main(context)`, never inside `context.once()` or `context.onceMain()`.
-
-### IActionOptions
-
-| Field | Type | Default | Effect |
-| --- | --- | --- | --- |
-| `noCollapse` | `boolean` | `false` | Stays visible even when toolbar overflows into "…" menu |
-| `namespace` | `string` | — | i18n namespace override |
-| `hollowIcon` | `boolean` | `false` | Outline-only icon style |
-| `isClassicOnly` | `boolean` | `false` | Only shown in Vortex classic UI |
-| `isModernOnly` | `boolean` | `false` | Only shown in Vortex modern UI |
+`registerAction(group, position, iconOrComponent, options, titleOrProps, actionOrCondition, condition)`,
+always called inside `main(context)`, never `context.once()`/`context.onceMain()`. Full param
+signature and the `IActionOptions` field table (`noCollapse`, `namespace`, `hollowIcon`,
+`isClassicOnly`, `isModernOnly`): see `REGISTER_ACTION.md`.
 
 ---
 
@@ -72,30 +53,9 @@ icon.action?.(ids, icon.data);
 
 ## 3. Condition Return Values
 
-The condition function determines whether the action is shown and enabled.
-
-| Return value | Effect |
-| --- | --- |
-| `true` | Enabled and visible |
-| `false` | Hidden entirely |
-| `string` | Visible but disabled; string is shown as tooltip explaining why |
-
-```js
-// Always enabled
-condition: () => true,
-
-// Hidden when wrong game
-condition: () => selectors.activeGameId(api.getState()) === GAME_ID,
-
-// Disabled with reason
-condition: (instanceIds) => {
-  const state = api.getState();
-  const gameId = selectors.activeGameId(state);
-  if (gameId !== GAME_ID) return 'Only available for this game';
-  if (instanceIds.length === 0) return 'Select at least one mod';
-  return true;
-},
-```
+The condition function determines whether the action is shown and enabled: `true` = enabled,
+`false` = hidden entirely, `string` = visible but disabled (shown as tooltip). Full table +
+examples: see `REGISTER_ACTION.md`.
 
 ---
 
@@ -477,3 +437,12 @@ context.registerAction(
 | Single-row context | `Vortex/src/renderer/src/controls/table/TableRow.tsx:435` | `ActionDropdown` with `group="${tableId}-action-icons"` |
 | Badge on page icon | `Vortex/src/renderer/src/extensions/download_management/index.ts` | `new ReduxProp(...)` passed as `badge:` to `registerMainPage` |
 | noCollapse example | Any CB1 extension with `'mod-icons'` | See `mod-icons` calls in game-* index.js files |
+
+---
+
+## See also
+
+`REGISTER_ACTION.md` (full `registerAction` signature, `IActionOptions`, condition-return-value
+table). `VORTEX_MOD_LIST.md` (the Mods page table `mod-icons`/`mod-context-icons`/
+`mods-multirow-actions` render onto). `VORTEX_REACT_PAGES.md` (custom pages that host their own
+`IconBar` toolbar group). `LOAD_ORDER_REGISTRATION.md` (`fb-load-order-icons` toolbar group).

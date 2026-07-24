@@ -292,3 +292,12 @@ context.registerSettings('Mods', Settings, () => ({
 // Read in setup()
 const udf = util.getSafe(api.getState(), ['settings', GAME_ID, 'udf'], undefined);
 ```
+
+---
+
+## See also
+
+`STATE_HELPERS.md` (`getSafe`/`setSafe`/`batchDispatch` used throughout reducers and readers).
+`VORTEX_PROFILES.md` (per-profile state and `settings`/`persistent` hive swap on profile change).
+`VORTEX_REACT_PAGES.md` (`registerSettings`/`registerReducer` as used inside a page's Settings
+tab). `UNDERUSED_API_FUNCTIONS.md` (additional settings-adjacent API surface).

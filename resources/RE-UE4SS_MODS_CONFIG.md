@@ -101,3 +101,12 @@ async function writeModysTxt(modsJsonPath) {
 | `assets/Mods/mods.json` | Build-time source of truth |
 | `UE4SS/src/UE4SSProgram.cpp` | `start_mods()`, `start_lua_mods()`, `start_cpp_mods()` |
 | `tools/buildscripts/release.py` | `modify_mods_txt()` + `modify_mods_json()` |
+
+---
+
+## See also
+
+`FILE_PARSING.md` (parsing `mods.txt`/`mods.json` — INI vs JSON handling). `FILE_SEARCH.md`
+(locating the UE4SS mods folder on disk). `LOAD_ORDER_REGISTRATION.md` (the UE4SS load-order page
+that reorders entries in `mods.txt`). `COLLECTIONS_FEATURE.md` (exporting/importing UE4SS mod
+order as collection data).

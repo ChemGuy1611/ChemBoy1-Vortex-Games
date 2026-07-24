@@ -179,3 +179,10 @@ const latest = files.find(f => f.file_id === latestId);
 ```js
 files.sort((a, b) => b.uploaded_timestamp - a.uploaded_timestamp);
 ```
+
+---
+
+## See also
+
+`NEXUS_MODS_API.md` (v1/v3 endpoints these file objects come from). `VORTEX_NEXUS_INTEGRATION.md`
+(OAuth/SSO, nxm protocol, and version-check runtime that consumes file properties).

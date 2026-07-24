@@ -110,3 +110,10 @@ python -c "import os; p=os.path.join(os.environ.get('APPDATA',''), 'Vortex', 'te
 # Check env vars
 python -c "import os; [print(k, '=', 'SET' if os.environ.get(k) else 'MISSING') for k in ['NEXUS_API_KEY','STEAM_API_KEY','STEAM_USER_ID','STEAMGRIDDB_API_KEY']]"
 ```
+
+---
+
+## See also
+
+`TEMPLATES_OVERVIEW.md` (what a working environment builds against). `REGISTER_GAME.md` (the
+required extension file set this environment is set up to develop).

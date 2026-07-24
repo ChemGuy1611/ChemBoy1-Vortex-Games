@@ -42,7 +42,7 @@ context.registerAction(
 
 ---
 
-## Known group strings
+## Common group strings
 
 | Group | Where it appears |
 | --- | --- |
@@ -50,15 +50,10 @@ context.registerAction(
 | `'mod-context-icons'` | Mods list single-row right-click menu |
 | `'mods-multirow-actions'` | Mods list multi-row context actions |
 | `'fb-load-order-icons'` | FBLO (file-based) load order page toolbar |
-| `'generic-load-order-icons'` | Generic load order page toolbar |
-| `'global-icons'` | Application header (always visible) |
-| `'application-icons'` | Application header (often `isClassicOnly: true`) |
-| `'downloads-action-icons'` | Downloads page per-row actions |
-| `'downloads-multirow-actions'` | Downloads page multi-row actions |
-| `'categories-icons'` | Categories page toolbar |
-| `'extensions-layout-icons'` | Extensions page toolbar |
-| `'game-managed-buttons'` | Games list row (managed game) |
-| `'game-unmanaged-buttons'` | Games list row (unmanaged game) |
+
+Full group list (incl. `global-icons`, `downloads-*`, `categories-icons`, `game-managed-buttons`,
+etc.) and the dynamic `${tableId}-action-icons` / `${tableId}-multirow-actions` table-group
+patterns: see `TOOLBAR_ACTIONS.md` §6.
 
 ---
 
@@ -119,3 +114,9 @@ context.registerAction(
 - When passing a React component, `titleOrProps` must be a `PropsCallback` (function returning props object), not a string. The action is baked into the component.
 - `condition` returning `false` hides the action entirely. Returning a string disables it and shows the string as a tooltip.
 - Multiple actions can share the same group and position number; tie-breaking is insertion order.
+
+---
+
+## See also
+
+`VORTEX_MOD_LIST.md` (the Mods page table that `mod-icons`/`mod-context-icons`/`mods-multirow-actions` render onto). `TOOLBAR_ACTIONS.md` (how-to guide: `instanceIds` flow, worked examples, full group-string list, `IconBar`/`staticElements`).

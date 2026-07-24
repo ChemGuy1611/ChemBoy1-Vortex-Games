@@ -263,7 +263,7 @@ def poll_upload_state(upload_id, api_key, mod_key):
 
 # == Top-level upload flow =====================================================
 
-def upload_zip(zip_path, mod_id, domain, version, description, api_key, mod_key, name_hint=None, file_category="main", group_id_override=None):
+def upload_zip(zip_path, mod_id, domain, version, description, api_key, mod_key, name_hint=None, file_category="main", group_id_override=None, update_mod_version=True):
     """Run the full Nexus v3 multipart upload flow and create a new file version."""
     group = pick_file_group(mod_id, domain, api_key, mod_key, name_hint=name_hint, group_id_override=group_id_override)
     group_id = group["id"]
@@ -294,7 +294,7 @@ def upload_zip(zip_path, mod_id, domain, version, description, api_key, mod_key,
     poll_upload_state(upload_id, api_key, mod_key)
 
     log_info(mod_key, f"Publishing version {version} to file group '{display_name}'...")
-    result = v3_post_json(f"/mod-file-update-groups/{group_id}/versions", {
+    result = v3_post_json(f"/mod-files/{group_id}/versions", {
         "upload_id": upload_id,
         "name": display_name,
         "description": description,
@@ -304,8 +304,10 @@ def upload_zip(zip_path, mod_id, domain, version, description, api_key, mod_key,
         "primary_mod_manager_download": True,
         "allow_mod_manager_download": True,
         "show_requirements_pop_up": True,
+        "update_mod_version": update_mod_version,
     }, api_key)
-    file_uid = result.get("id", "unknown")
-    log_info(mod_key, f"File UID: {file_uid}")
+    file_uid = result.get("file", {}).get("id", "unknown")
+    version_id = result.get("version", {}).get("id", "unknown")
+    log_info(mod_key, f"File UID: {file_uid} (version id: {version_id})")
 
     log_info(mod_key, f"Nexus upload complete: {display_name} v{version}")

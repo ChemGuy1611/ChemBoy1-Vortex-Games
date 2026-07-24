@@ -376,3 +376,13 @@ Always read existing toggles before adding or removing conditional registration 
 - `idx` is a character index, not a path segment index. `file.substr(idx)` slices the string, not an array.
 - Installer id strings must be unique across all extensions loaded in Vortex. Prefix with `GAME_ID` or a unique constant.
 - Priority 49 is the fallback convention. Do not register a non-fallback installer at 49.
+
+---
+
+## See also
+
+`FOMOD_INSTALLER.md` (the built-in priority-10/100 installer custom installers must yield to).
+`MOD_RULES.md` (`rule` instruction type / `IRule` shape). `ARCHIVE_HANDLER.md` (where the `files`
+list passed to `testSupported`/`install` comes from). `ERROR_CLASSES.md` (throwing from
+`install`/`testSupported`). `TEMPLATES_OVERVIEW.md` (per-template installer sets). `VORTEX_MOD_INSTALL.md`
+(runtime InstallManager orchestration).

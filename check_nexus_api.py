@@ -90,7 +90,10 @@ V3_UPLOAD_STATE_REQUIRED = {
     "user": dict,   # {"id": "<user_id>"}
 }
 
-# Step 8: POST /v3/mod-file-update-groups/{id}/versions response (inside "data")
+# Step 8: POST /v3/mod-files/{id}/versions response, shape of data.file
+# (current endpoint since 2026-07-24 migration; legacy /mod-file-update-groups/{id}/versions
+# returned this same shape flat under "data" instead of nested under "data.file" - deprecated
+# 2026-06-11, removed on/after 2026-09-09)
 V3_FILE_VERSION_REQUIRED = {
     "id": None,         # int or str depending on API
     "game_scoped_id": None,
@@ -224,8 +227,8 @@ def run_read_only_checks(domain, mod_id, api_key):
             fail(f"Missing header: {h}")
 
     # ------------------------------------------------------------------
-    print(f"\n=== v3 File Update Groups: mods/{uid}/file-update-groups ===")
-    status, _, body = _get(f"{NEXUS_V3}/mods/{uid}/file-update-groups", api_key)
+    print(f"\n=== v3 Mod Files: mods/{uid}/files ===")
+    status, _, body = _get(f"{NEXUS_V3}/mods/{uid}/files", api_key)
 
     if status != 200:
         fail(f"Expected 200, got {status}: {body}")
@@ -233,37 +236,41 @@ def run_read_only_checks(domain, mod_id, api_key):
         ok("Status 200")
         if not isinstance(body, dict) or "data" not in body:
             fail("Top-level 'data' wrapper missing")
-        elif "groups" not in body["data"]:
-            fail("'data.groups' missing")
+        elif "mod_files" not in body["data"]:
+            fail("'data.mod_files' missing")
         else:
-            groups = body["data"]["groups"]
-            ok(f"data.groups present ({len(groups)} group(s))")
+            groups = body["data"]["mod_files"]
+            ok(f"data.mod_files present ({len(groups)} group(s))")
             if groups:
                 g = groups[0]
-                passes, fails = check_shape("group[0]", g, V3_GROUP_REQUIRED)
+                passes, fails = check_shape("mod_files[0]", g, V3_GROUP_REQUIRED)
                 for f in fails:
                     fail(f)
                 if passes:
                     ok(f"{passes}/{len(V3_GROUP_REQUIRED)} group fields correct")
-                check_extra_fields(g, V3_GROUP_REQUIRED, V3_GROUP_KNOWN_EXTRA, "group[0]")
+                check_extra_fields(g, V3_GROUP_REQUIRED, V3_GROUP_KNOWN_EXTRA, "mod_files[0]")
                 group_id = g.get("id")
             else:
-                warn("No groups returned - shape check skipped")
+                warn("No mod files returned - shape check skipped")
 
     # ------------------------------------------------------------------
-    print(f"\n=== Broken Endpoints (expect specific error codes) ===")
+    print(f"\n=== Dead/Nonexistent v3 Paths (expect 404 -- confirms still gone, not that they're 'wrong') ===")
 
+    # GET /v3/openapi.yaml itself is NOT broken -- the live spec is at the domain root,
+    # https://api.nexusmods.com/openapi.yaml (no /v3/ prefix). This checks the wrong-prefixed
+    # path stays 404, which is expected and not a bug.
     broken = [
-        ("GET /v3/openapi.yaml", f"{NEXUS_V3}/openapi.yaml", 500),
+        ("GET /v3/openapi.yaml (wrong path -- real spec is at domain root, not under /v3/)",
+         f"{NEXUS_V3}/openapi.yaml", 404),
         (f"GET /v3/mods/{mod_id}/file-update-groups (v1 mod_id, not uid)",
          f"{NEXUS_V3}/mods/{mod_id}/file-update-groups", 404),
-        (f"GET /v3/mods/{uid} (mod namespace broken)",
-         f"{NEXUS_V3}/mods/{uid}", 500),
+        (f"GET /v3/mods/{uid} (mod-level GET by uid was never in the spec)",
+         f"{NEXUS_V3}/mods/{uid}", 404),
     ]
     if group_id:
         broken.append((
-            f"GET /v3/mod-file-update-groups/{group_id}",
-            f"{NEXUS_V3}/mod-file-update-groups/{group_id}", 500,
+            f"GET /v3/mod-file-update-groups/{group_id} (defunct list endpoint)",
+            f"{NEXUS_V3}/mod-file-update-groups/{group_id}", 404,
         ))
 
     for label, url, expected_code in broken:
@@ -295,7 +302,7 @@ def run_upload_shape_checks(api_key, results):
         results["warn"] += 1
 
     # Step 3 — create upload session
-    print(f"\n=== Step 3: POST /v3/uploads/multipart (shape only — no data uploaded) ===")
+    print(f"\n=== Step 3: POST /v3/uploads/multipart (shape only - no data uploaded) ===")
     status, body = _post_json(
         f"{NEXUS_V3}/uploads/multipart",
         api_key,
@@ -374,7 +381,9 @@ def run_upload_shape_checks(api_key, results):
 
 
 def run_step8_shape_checks(api_key, group_id, upload_id, results):
-    """Verify step 8 POST /v3/mod-file-update-groups/{group_id}/versions field validation.
+    """Verify step 8 POST /v3/mod-files/{group_id}/versions field validation.
+    (Current endpoint since the 2026-07-24 migration off the deprecated
+    /mod-file-update-groups/{group_id}/versions path, removed on/after 2026-09-09.)
     Uses schema-validates-before-upload-state-check property:
     - null boolean fields → 422 even with fake upload_id
     - missing required fields → 422
@@ -393,7 +402,7 @@ def run_step8_shape_checks(api_key, group_id, upload_id, results):
         print(f"  {WARN} {msg}")
         results["warn"] += 1
 
-    print(f"\n=== Step 8: POST /v3/mod-file-update-groups/{group_id}/versions (field validation) ===")
+    print(f"\n=== Step 8: POST /v3/mod-files/{group_id}/versions (field validation) ===")
 
     FAKE_UID = "aaaaaaaa-0000-0000-0000-000000000000"
     base = {
@@ -406,8 +415,9 @@ def run_step8_shape_checks(api_key, group_id, upload_id, results):
         "primary_mod_manager_download": True,
         "allow_mod_manager_download": True,
         "show_requirements_pop_up": True,
+        "update_mod_version": False,
     }
-    url = f"{NEXUS_V3}/mod-file-update-groups/{group_id}/versions"
+    url = f"{NEXUS_V3}/mod-files/{group_id}/versions"
 
     def post8(body):
         status, resp = _post_json(url, api_key, body)

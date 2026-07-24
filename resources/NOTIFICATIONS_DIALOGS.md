@@ -389,4 +389,7 @@ the promise + callback bookkeeping stays consistent.
   `Promise.resolve()` for a native promise.
 - A dialog you open with `showDialog` must be closed with `closeDialog` (not `dismissDialog`),
   or the awaiting promise never resolves.
-- See also (runtime): `VORTEX_EVENT_BUS.md`, `VORTEX_APP.md`.
+- See also (runtime): `VORTEX_EVENT_BUS.md`, `VORTEX_APP.md`, `UNDERUSED_API_FUNCTIONS.md` (§1
+  additional UI extension points: `registerDialog`, `registerBanner`, `registerToDo`),
+  `MOD_RULES.md` (dialogs prompting for rule conflicts), `REGISTER_MIGRATION.md` (`api.showDialog`
+  usage after `api.awaitUI()` in a migration).

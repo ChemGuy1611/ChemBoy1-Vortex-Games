@@ -250,3 +250,13 @@ Notes:
 - Required sibling files in the extension root: `index.js`, `info.json`, `CHANGELOG.md`, and
   `${GAME_ID}.jpg` (the `logo`). The folder is conventionally named `game-<GAME_ID>`.
 - Bump `info.json` `version` and add a matching `CHANGELOG.md` entry in the same change.
+
+---
+
+## See also
+
+`VORTEX_GAME_LIFECYCLE.md` (discovery -> gamemode-activated runtime flow this spec feeds).
+`RUN_EXECUTABLE.md` (launching the game/tools defined here). `TEMPLATES_OVERVIEW.md` (per-template
+`spec`/`applyGame()` conventions). `WINAPI_BINDINGS.md` (`winapi.RegGetValue` fallback detection).
+`ERROR_CLASSES.md` (`SetupError` thrown from `IGame.setup()`). `REQUIRES_LAUNCHER.md` (full
+reference for the `requiresLauncher` field above).

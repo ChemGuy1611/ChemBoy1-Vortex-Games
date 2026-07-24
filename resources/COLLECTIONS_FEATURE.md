@@ -131,3 +131,13 @@ Note the UI prop shape differs from A's `editComponent`: `interface` gets only
   `{ id }`. Avoid exporting `name`/`modId` that differ per machine.
 - Before choosing a feature `id` / data key, check existing game extensions —
   the flat `Object.assign` merge means a duplicate key silently clobbers.
+
+---
+
+## See also
+
+`VORTEX_APP.md` (overview of where collections fit among other extension systems).
+`VORTEX_MOD_INSTALL.md` (collection install replays the same InstallManager pipeline).
+`VORTEX_LOAD_ORDER.md` (FBLO auto-generates a collections data source from `persistent.loadOrder`).
+`MOD_RULES.md` (collections export/import mod dependency rules alongside custom feature data).
+`LOAD_ORDER_REGISTRATION.md` (FBLO registration options that back the collections auto-gen).

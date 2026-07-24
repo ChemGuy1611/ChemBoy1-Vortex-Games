@@ -1089,3 +1089,13 @@ every "Disable/Enable Vortex Mod" menu item.
 - **`context.registerLoadOrder` declaration:**
 
   `Vortex/src/renderer/src/types/IExtensionContext.ts`
+
+---
+
+## See also
+
+`LOAD_ORDER_REGISTRATION.md` (the `registerLoadOrder` call this renderer plugs into).
+`VORTEX_LOAD_ORDER.md` (FBLO runtime orchestration — serialize/deserialize/validate).
+`VORTEX_REACT_PAGES.md` (`DraggableList`/item-renderer patterns shared with general extension
+pages). `COLLECTIONS_FEATURE.md` (locked/enabled status this renderer displays feeds collection
+export).

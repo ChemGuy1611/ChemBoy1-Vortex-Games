@@ -103,3 +103,11 @@ Full signatures: `node_modules/winapi-bindings/index.d.ts`.
 - `RegGetValue` throws on any failure (missing hive, missing path, missing value) — never returns `undefined`/`null`. Always wrap in `try`/`catch`.
 - `WithRegOpen`'s callback is synchronous and the key handle dies the instant the callback returns — don't `await` inside it.
 - Prefer `util.GameStoreHelper.findByAppId()` for game discovery; use `RegGetValue`/`WithRegOpen` only as a fallback when a store isn't the source of truth (e.g. standalone installers, dependency detection like .NET/Python versions).
+
+---
+
+## See also
+
+`resources/FILE_PARSING.md` (the INI read/mutate/write cycle these bindings back via
+`vortex-parse-ini`). `REGISTER_GAME.md` (`winapi.RegGetValue` as the discovery fallback after
+`GameStoreHelper.findByAppId()`).

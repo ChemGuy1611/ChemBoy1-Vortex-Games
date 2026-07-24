@@ -208,3 +208,9 @@ try {
 - Always pass the full `IniFile` wrapper to `vortex-parse-ini`'s `write()` — never `contents.data`.
 - Treat `js-yaml`/`@iarna/toml` availability as best-effort (see the availability table above) — don't add a hard runtime dependency on them without a fallback path if the parse `require()` throws. `JSON` has no such caveat.
 - `JSON.stringify(value, null, 2)` is this codebase's convention for human-readable output — keep the 2-space indent when writing a JSON file a modder might open by hand.
+
+---
+
+## See also
+
+`WINAPI_BINDINGS.md` (the native INI functions `vortex-parse-ini`'s `WinapiFormat` backs onto).

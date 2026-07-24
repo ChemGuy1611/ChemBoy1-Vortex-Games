@@ -16,7 +16,7 @@ ModDB (moddb.com) has no official public API. Two site-provided mechanisms cover
 Practical effect for Vortex extensions:
 
 - The RSS feed can be fetched from anywhere (main or renderer process).
-- Resolving a mirror URL from `/downloads/start/{fileId}` must run from the Electron **renderer** process, where `fetch` uses the real Chromium network stack (same reasoning as the GitHub `downloader.js` — see [DOWNLOADER.md](DOWNLOADER.md)).
+- Resolving a mirror URL from `/downloads/start/{fileId}` must run from the Electron **renderer** process, where `fetch` uses the real Chromium network stack (same reasoning as the GitHub `downloader.js` — see `DOWNLOADER.md`).
 - The block extends to the resolved mirror URLs: Vortex's main-process download manager receives `403` when fetching them (verified live against the Dark Messiah launcher mirror). The direct-fetch route in "Two-Step Download" below is therefore the expected working path, not an edge-case fallback.
 
 ## RSS Feed
@@ -58,13 +58,13 @@ The mirror href is what actually serves file bytes (or redirects to ModDB's CDN)
 The download-manager route through ModDB's www host is blocked by the bot-protection layer (verified live — the mirror request returns `403`). Extensions still use a hybrid approach in case the block is relaxed or varies by mirror/CDN node:
 
 1. **Primary:** resolve the mirror URL via a renderer `fetch` against `/downloads/start/{fileId}`, then hand that URL to Vortex's `start-download` event so the download manager owns progress/resume.
-2. **Fallback:** if the download-manager request fails, re-resolve the mirror URL and `fetch` the file directly in the renderer, stream it to a temp file, and hand that off to the `import-downloads` event — the same fetch-then-import pattern the GitHub `downloader.js` uses (see [DOWNLOADER.md](DOWNLOADER.md)).
+2. **Fallback:** if the download-manager request fails, re-resolve the mirror URL and `fetch` the file directly in the renderer, stream it to a temp file, and hand that off to the `import-downloads` event — the same fetch-then-import pattern the GitHub `downloader.js` uses (see `DOWNLOADER.md`).
 
 A requirement can skip step 1 entirely with the `skipDownloadManager` flag once the block is confirmed for its page's mirrors — this avoids a doomed download attempt (and a failed entry on the Downloads page) on every install.
 
 ## Shared moddb_downloader.js Module
 
-`resources/downloader/moddb_downloader.js` packages the pattern above into a reusable requirements auto-downloader — the ModDB counterpart to the GitHub `downloader.js` and the GameBanana `gamebanana_downloader.js` (see [DOWNLOADER.md](DOWNLOADER.md) and [GAMEBANANA_API.md](GAMEBANANA_API.md)). It downloads and installs ModDB-hosted requirements (mods, tools, or launchers), resolves each requirement's latest file via the RSS feed, and raises an "update available" notification when a newer file appears.
+`resources/downloader/moddb_downloader.js` packages the pattern above into a reusable requirements auto-downloader — the ModDB counterpart to the GitHub `downloader.js` and the GameBanana `gamebanana_downloader.js` (see `DOWNLOADER.md` and `GAMEBANANA_API.md`). It downloads and installs ModDB-hosted requirements (mods, tools, or launchers), resolves each requirement's latest file via the RSS feed, and raises an "update available" notification when a newer file appears.
 
 As with the other downloader modules, the canonical copy lives in `resources/downloader/` and each adopting extension bundles its own copy next to its `index.js` — changes to the canonical file must be propagated manually. Consumer wiring snippets live in `resources/downloader/template_moddb_downloader.js`.
 
@@ -113,3 +113,10 @@ The entry points take an array of requirement objects (conventionally a `MODDB_R
 - No official API and no documented rate limit — keep request volume low.
 - The download-start/mirror HTML structure is not versioned by ModDB; treat the mirror-link regex as fragile and keep the direct-fetch fallback route in place.
 - Page paths (`games/<slug>` vs `mods/<slug>`) must match the entity type exactly — the RSS feed for a game page only lists files uploaded to that game page, not to mods under it.
+
+---
+
+## See also
+
+`VORTEX_DOWNLOAD_MGMT.md` (the `start-download`/`import-downloads` events `moddb_downloader.js`
+hands off to). `VORTEX_MOD_INSTALL.md` (installing the downloaded requirement as a managed mod).

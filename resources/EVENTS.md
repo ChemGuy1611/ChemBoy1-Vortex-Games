@@ -201,3 +201,14 @@ Register event handlers inside `context.once()` to ensure all extensions are loa
 | `startup` | - | Application startup complete |
 | `report-feedback` | `(errorMessage: string)` | Report feedback/error |
 | `trigger-test-run` | `(eventType: string, delay?: number)` | Trigger test runner |
+
+---
+
+## See also
+
+`VORTEX_EVENT_BUS.md` (the `emitAndAwait`/`onAsync` mechanism these events ride on).
+`VORTEX_DEPLOYMENT.md` (`will-deploy`/`did-deploy`/`will-purge`/`did-purge`). `VORTEX_MOD_INSTALL.md`
+(`will-install-mod`/mod-enabled/disabled events). `VORTEX_DOWNLOAD_MGMT.md`
+(`start-download`/`import-downloads`). `VORTEX_NEXUS_INTEGRATION.md`
+(`check-mods-version`/endorse events). `COLLECTIONS_FEATURE.md` (collection install/export
+events). `VORTEX_EXTENSION_LOADING.md` (`startup`/extension-load lifecycle).

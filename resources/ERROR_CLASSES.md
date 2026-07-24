@@ -98,3 +98,14 @@ async function setup(discovery) {
 - **Never throw a raw `Error`** in installer or hook code — it shows a crash dialog. Use the semantic classes above.
 - `UserCanceled` and `ProcessCanceled` both suppress error UI. Use `UserCanceled` when the user explicitly clicked cancel; use `ProcessCanceled` for programmatic aborts.
 - `MissingInterpreter` takes an optional `url` param — always provide it so users know where to download the missing tool.
+
+---
+
+## See also
+
+`RUN_EXECUTABLE.md` (`MissingInterpreter`/`ProcessCanceled` thrown from `registerStartHook`/
+`registerInterpreter`). `REGISTER_GAME.md` (`SetupError` thrown from `IGame.setup()`).
+`INSTALLER_SYSTEM.md` (`DataInvalid` and the `error`/`unsupported` instruction types thrown from
+`install`/`testSupported`). `UNDERUSED_API_FUNCTIONS.md` (§9, short pointer back to this doc).
+`HEALTH_CHECK.md` (health-check results use a similar severity vocabulary, though not these
+classes directly).

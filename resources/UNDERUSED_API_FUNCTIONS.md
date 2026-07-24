@@ -463,21 +463,12 @@ Class with `schedule(delay, cb)`, `runNow()`, `wait()`, `clear()`. Debounce expe
 
 ---
 
-### Custom error classes — lines 9002/9076/9017/9092/9066/9069/9070/9071/9016
+### Custom error classes
 
-Throw these instead of generic `Error` to get the right Vortex error UI:
-
-| Class | When to throw |
-| --- | --- |
-| `util.UserCanceled(skipped?)` | User explicitly cancelled — no error report shown |
-| `util.ProcessCanceled(msg)` | Programmatic cancel — no error report |
-| `util.DataInvalid(msg)` | Bad/corrupt data — report shown |
-| `util.SetupError(msg, component?)` | Misconfiguration — report shown with setup guidance |
-| `util.MissingInterpreter(msg, url?)` | Required tool not found — links to download URL |
-| `util.NotFound(what)` | Expected resource missing |
-| `util.ArgumentInvalid(argument)` | Bad argument to an API call |
-| `util.CycleError` | Circular dependency detected |
-| `util.NotSupportedError()` | Feature not supported in this context |
+Throw semantic `util.*` error classes (`UserCanceled`, `ProcessCanceled`, `DataInvalid`,
+`SetupError`, `MissingInterpreter`, `NotFound`, `ArgumentInvalid`, `CycleError`,
+`NotSupportedError`) instead of a generic `Error` to get the right Vortex error UI. Full table +
+cancel semantics: see `ERROR_CLASSES.md`.
 
 ---
 
@@ -520,44 +511,10 @@ context.registerTableAttribute('mods', {
 
 ## 11. Diagnostics & Health Checks
 
-### `context.registerTest(id, event, check)` — line 3661
-
-**Why useful:** Attaches an automated integrity check to a Vortex event. The check function receives `api` and must return `Promise<ITestResult>` — an object with `severity` and `description`.
-
-**Note:** Prefer `registerHealthCheck` for new code. `registerTest` is the legacy system and maps to `HealthCheckTrigger` internally via `ILegacyTestAdapter`.
-
----
-
-### `context.registerHealthCheck(healthCheck)` — line 3671
-
-**Why useful:** The modern check system. Pass an `IHealthCheck` for whole-game checks or an `IModHealthCheck` for per-mod checks (Vortex iterates installed mods and calls `checkMod` per mod).
-
-**`IHealthCheck` shape:**
-
-```js
-{
-  id: 'my-game-check',
-  name: 'My Game Integrity Check',
-  description: 'Verifies the game directory is intact',
-  category: types.HealthCheckCategory.Game,        // 'system'|'game'|'mods'|'requirements'|'tools'|'performance'|'legacy'
-  severity: types.HealthCheckSeverity.Warning,     // 'info'|'warning'|'error'|'critical'
-  triggers: [types.HealthCheckTrigger.GameChanged, types.HealthCheckTrigger.Startup],
-  cacheDuration: 60_000,   // ms; omit to re-run every time
-  check: async (api) => ({
-    checkId: 'my-game-check',
-    status: 'passed',            // 'passed'|'failed'|'warning'|'error'
-    severity: types.HealthCheckSeverity.Warning,
-    message: 'Game directory OK',
-    executionTime: 0,
-    timestamp: new Date(),
-  }),
-  fix: async (api) => { /* optional auto-fix */ },
-}
-```
-
-**`IModHealthCheck`** is the same shape with `checkMod(api, mod)` replacing `check`.
-
-**`HealthCheckTrigger` values:** `Manual`, `Startup`, `GameChanged`, `ProfileChanged`, `ModsChanged`, `ResultsChanged`, `SettingsChanged`, `PluginsChanged`, `LootUpdated`, `Scheduled`.
+`context.registerHealthCheck` (modern) and the legacy `context.registerTest` it supersedes let an
+extension run automated integrity checks against the active game or each installed mod, with
+optional one-click fixes surfaced on the Health Check page. Full `IHealthCheck`/`IModHealthCheck`
+shape, category/severity/trigger enums, and worked examples: see `HEALTH_CHECK.md`.
 
 ---
 
@@ -596,3 +553,15 @@ const exe = await api.selectExecutable({ title: 'Select launcher' });
 ```
 
 **Use case:** Any settings page that needs a user-picked path should use these rather than a free-text input — avoids typos and normalizes path format.
+
+---
+
+## See also
+
+`ERROR_CLASSES.md` (§9 custom error classes, canonical). `HEALTH_CHECK.md` (§11
+registerHealthCheck/registerTest, canonical). `VORTEX_REACT_PAGES.md` (pages that host dashlets,
+banners, and table attributes registered here). `SETTINGS_REDUCER.md` (state hives, persistors,
+and settings hooked up alongside §2's reducer functions). `VORTEX_PROFILES.md`
+(`registerProfileFile`/`registerProfileFeature` in §8). `VORTEX_MOD_LIST.md`
+(`registerTableAttribute` in §10, the mods-table column system). `ARCHIVE_HANDLER.md`
+(`api.openArchive` in §5). `RUN_EXECUTABLE.md` (`registerStartHook`/`registerInterpreter` in §4).

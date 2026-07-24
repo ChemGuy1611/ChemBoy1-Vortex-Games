@@ -307,3 +307,12 @@ Userlist is loaded with the masterlist and affects LOOT sort output. Vortex moni
 | `gamebryo-plugin-management\src\reducers\` | Redux reducers for load order + plugin state |
 
 All paths relative to `Vortex\extensions\`.
+
+---
+
+## See also
+
+`VORTEX_LOAD_ORDER.md` (FBLO — the non-plugin load-order system this doc's plugin-based
+alternative coexists with). `LOAD_ORDER_REGISTRATION.md` (registering a load-order page; plugin
+games use `registerLoadOrderPage` instead). `LOAD_ORDER_ITEM_RENDERER.md` (per-row renderer
+patterns shared conceptually with the plugin list UI).

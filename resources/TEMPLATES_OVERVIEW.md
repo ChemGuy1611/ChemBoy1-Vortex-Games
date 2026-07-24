@@ -239,3 +239,12 @@ Shin Ryu Mod Manager (SRMM). Steam + Xbox.
 **Mod types:** `ROOT_ID` → `MODMANAGERMOD_ID` → `DATAMOD_ID` → `MODMANAGER_ID`
 
 **Tools:** `Launch Modded Game` (SRMM `--run --silent`) + `Shin Ryu MM` (UI). Auto-download SRMM from Nexus. deployNotify with "Run SRMM" button.
+
+---
+
+## See also
+
+`INSTALLER_SYSTEM.md` (per-template installer priority ladders referenced throughout).
+`REGISTER_GAME.md` (the `spec`/`applyGame()` structure every template follows).
+`LOAD_ORDER_REGISTRATION.md` (which templates use FBLO vs the legacy load-order page). Requirements
+auto-downloader: `resources/DOWNLOADER.md` (linked above).

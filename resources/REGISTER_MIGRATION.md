@@ -2,6 +2,11 @@
 
 Registers a function that runs when the extension version changes. Use it to migrate stored state, purge stale files, or prompt the user about breaking changes.
 
+> **Disambiguation.** This is the **`registerMigration` API** — an extension's own state migration
+> that runs when its `info.json` version bumps. It is **not** `VORTEX_2_MIGRATION.md`, which covers
+> porting extension *code* from Vortex 1.16 to 2.0 (build tooling, dependency management, page
+> priorities). Different thing entirely.
+
 ---
 
 ## Signature
@@ -123,3 +128,11 @@ async function migrate100(api, oldVersion) {
 - Never rely on migrations running in a specific order relative to each other if you register multiple.
 - `oldVersion = "0.0.0"` is also set when the extension state was corrupted — handle it defensively.
 - The extension version in `info.json` (`"version"`) is what Vortex compares against the stored value.
+
+---
+
+## See also
+
+`VORTEX_2_MIGRATION.md` (porting extension code across a Vortex version, not extension state —
+see disambiguation above). `SETTINGS_REDUCER.md` (the reducer state shape migrations typically
+patch). `STATE_HELPERS.md` (`getSafe`/`setSafe` for reading/patching state inside a migration).

@@ -97,4 +97,5 @@ management, and health checks all hang off it.
 
 Catalog: `EVENTS.md`. Runtime siblings that emit
 these: `VORTEX_MOD_INSTALL.md`, `VORTEX_DEPLOYMENT.md`, `VORTEX_PROFILES.md`,
-`VORTEX_GAME_LIFECYCLE.md`, `VORTEX_DOWNLOAD_MGMT.md`. Overview: `VORTEX_APP.md`.
+`VORTEX_GAME_LIFECYCLE.md`, `VORTEX_DOWNLOAD_MGMT.md`. Overview: `VORTEX_APP.md`. Authoring:
+`UNDERUSED_API_FUNCTIONS.md` (§7 `api.withPrePost`/`api.onStateChange`/`context.requireVersion`).

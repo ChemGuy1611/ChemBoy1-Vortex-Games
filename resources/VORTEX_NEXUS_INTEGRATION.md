@@ -2,8 +2,8 @@
 
 How the app wires **Nexus Mods** into the runtime: login, `nxm://` links, mod update checks,
 endorsements, categories, feedback. This is the **app-integration** view — the Nexus **HTTP API**
-itself (endpoints, auth headers, response shapes) is documented separately: see `nexus-mods-api.md`
-and `nexus-file-properties.md`.
+itself (endpoints, auth headers, response shapes) is documented separately: see `NEXUS_MODS_API.md`
+and `NEXUS_FILE_PROPERTIES.md`.
 
 Driver: the `nexus_integration` core extension (`index.tsx`, `util/`, `eventHandlers.ts`,
 `nexusV3Client.ts`, `NXMUrl.ts`).
@@ -25,7 +25,10 @@ Driver: the `nexus_integration` core extension (`index.tsx`, `util/`, `eventHand
 
 Two clients back the integration: the **v1 nexus-node** client (`NexusT`) and the **v3** client
 (`nexusV3Client.ts`, backed by `packages/nexus-api-v3`). Different features use different ones
-(v3 for GraphQL-style queries, v1 for legacy endpoints).
+(v3 for GraphQL-style queries, v1 for legacy endpoints). The v1 nexus-node client is the
+`@nexusmods/nexus-api` package — full method/type catalog: `NODE_NEXUS_API_CLIENT.md`. That
+package itself covers v1 REST *and* v2 GraphQL *and* a GraphQL-backed Collections API, which is a
+separate transport from the v3 REST Collections endpoints in `NEXUS_MODS_API.md`.
 
 ## `nxm://` links
 
@@ -90,4 +93,4 @@ Via the extend-API pattern, `nexus_integration` adds methods other extensions ca
 ## See also
 
 Runtime siblings: `VORTEX_DOWNLOAD_MGMT.md` (nxm → transfer), `VORTEX_EVENT_BUS.md`. Overview:
-`VORTEX_APP.md`. Nexus HTTP API: `nexus-mods-api.md`, `nexus-file-properties.md`.
+`VORTEX_APP.md`. Nexus HTTP API: `NEXUS_MODS_API.md`, `NEXUS_FILE_PROPERTIES.md`.

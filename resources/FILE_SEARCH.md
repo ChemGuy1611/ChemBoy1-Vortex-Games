@@ -142,3 +142,10 @@ async function reconcileEnabledTxt(api, write) {
 - `fs.readdirAsync`, `fs.statAsync`, `fs.writeFileAsync`, `fs.removeAsync` — all from `vortex-api`; wrappers around Node's `fs` that return Promises and integrate with Vortex's error reporting.
 - The deprecated hand-rolled `getAllFiles(dirPath)` helper still exists in template-ue4-5/index.js:676 for legacy callers. New code should use `util.walk`.
 - `util.walk` is not exported from `vortex-api`'s top-level TypeScript types in all versions — use it via `util.walk(...)` at runtime; the JS bundle always has it.
+
+---
+
+## See also
+
+`RE-UE4SS_MODS_CONFIG.md` (locating `mods.txt`/`mods.json` on disk). `UNDERUSED_API_FUNCTIONS.md`
+(§5 file operations beyond the basics — `fs.forcePerm`, `util.withTmpDir`, `util.calculateFolderSize`).

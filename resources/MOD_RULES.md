@@ -152,3 +152,13 @@ api.events.emit('install-dependencies', profileId, gameId, [modId]);
 - `repo.modId` is the **Nexus mod ID** (numeric); `IMod.id` is Vortex's internal ID — never confuse them.
 - `ignored: true` means the user chose to skip this rule — respect it and do not re-prompt.
 - `before`/`after` rules affect load order / deployment order, not just UI.
+
+---
+
+## See also
+
+`COLLECTIONS_FEATURE.md` (rules are exported/imported alongside collection data). `EVENTS.md`
+(rule-changed and mod-enabled/disabled events that re-evaluate dependencies). `VORTEX_DEPLOYMENT.md`
+(`before`/`after` rules influencing deploy order). `INSTALLER_SYSTEM.md` (the `rule` instruction
+type that adds an `IRule` at install time). `VORTEX_APP.md` (overview of where mod rules fit among
+other extension systems).

@@ -168,7 +168,7 @@ No additional packages required (Python stdlib only). Requires `vortex_utils.py`
 
 ## check_nexus_api.py
 
-Verifies Nexus Mods v1 and v3 API response shapes against documentation. Tests read-only endpoints only — does not create or modify any data. Checks v1 mod field types, rate limit headers, v3 file-update-groups shape (including undocumented `archived_count`/`removed_count` fields), and expected error codes for broken endpoints. Defaults to `site/1960` (Fatekeeper) as the test target; pass `--domain` and `--mod-id` to test another mod.
+Verifies Nexus Mods v1 and v3 API response shapes against documentation. Tests read-only endpoints only — does not create or modify any data. Checks v1 mod field types, rate limit headers, v3 mod-files shape (`GET /v3/mods/{uid}/files`, including undocumented `archived_count`/`removed_count` fields), and expected error codes for dead endpoints. Defaults to `site/1960` (Fatekeeper) as the test target; pass `--domain` and `--mod-id` to test another mod. Step 8 field-validation checks (`--test-upload`) target `POST /v3/mod-files/{id}/versions`, the current endpoint since the 2026-07-24 migration off the deprecated `/mod-file-update-groups/{id}/versions` path (removed on/after 2026-09-09).
 
 ### check_nexus_api.py — Environment Variables
 
@@ -190,7 +190,7 @@ python check_nexus_api.py --test-upload
 
 ### check_nexus_api.py — Output
 
-Per-check `[PASS]` / `[FAIL]` / `[WARN]` lines for: v1 mod shape (13 required fields), rate limit headers (daily + hourly limit and remaining), v3 file-update-groups shape (5 required fields + known extras), 4 broken-endpoint status codes, and (with `--test-upload`) upload session shape (step 3) + upload state shape (step 7). Summary: `Passed: N/total`. Exits `0` if all pass, `1` if any fail.
+Per-check `[PASS]` / `[FAIL]` / `[WARN]` lines for: v1 mod shape (13 required fields), rate limit headers (daily + hourly limit and remaining), v3 mod-files shape (5 required fields + known extras), 4 dead-endpoint status codes, and (with `--test-upload`) upload session shape (step 3) + upload state shape (step 7) + step 8 field-validation against `POST /v3/mod-files/{id}/versions`. Summary: `Passed: N/total`. Exits `0` if all pass, `1` if any fail.
 
 ---
 

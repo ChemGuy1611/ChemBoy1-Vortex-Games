@@ -4,9 +4,9 @@ A shared module copied into each game extension that auto-downloads and installs
 
 The canonical copy lives at `resources/downloader/downloader.js`. Each adopting extension carries its own copy — changes to the canonical file must be propagated manually to every extension that bundles a `downloader.js`.
 
-For **GameBanana**-hosted requirements, use the companion module `resources/downloader/gamebanana_downloader.js` instead (same local-copy model, with `template_gamebanana_downloader.js` for wiring) — documented in [GAMEBANANA_API.md](GAMEBANANA_API.md).
+For **GameBanana**-hosted requirements, use the companion module `resources/downloader/gamebanana_downloader.js` instead (same local-copy model, with `template_gamebanana_downloader.js` for wiring) — documented in `GAMEBANANA_API.md`.
 
-For **ModDB**-hosted requirements, use the companion module `resources/downloader/moddb_downloader.js` instead (same local-copy model, with `template_moddb_downloader.js` for wiring) — documented in [MODDB_API.md](MODDB_API.md).
+For **ModDB**-hosted requirements, use the companion module `resources/downloader/moddb_downloader.js` instead (same local-copy model, with `template_moddb_downloader.js` for wiring) — documented in `MODDB_API.md`.
 
 ---
 
@@ -147,3 +147,10 @@ api.onAsync('check-mods-version', (gameId, mods, forced) => {
 ```
 
 The template also includes a full `resolveVersionByFile` implementation (extract newest archive to a temp dir, read `versionFile`, parse) with the per-game parse step marked for customization.
+
+---
+
+## See also
+
+`VORTEX_DOWNLOAD_MGMT.md` (the `start-download`/`import-downloads` events this module hands off
+to). `TEMPLATES_OVERVIEW.md` (which templates bundle a `downloader.js` copy).

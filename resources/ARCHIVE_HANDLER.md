@@ -208,3 +208,12 @@ User drops .vmz onto Vortex
 ```
 
 Working example: `game-roadtovostok/index.js`
+
+---
+
+## See also
+
+`INSTALLER_SYSTEM.md` (the `files` list installers test against comes from an archive opened
+through this system). `UNDERUSED_API_FUNCTIONS.md` (§5 `api.openArchive` — inspecting archive
+contents without extracting). `VORTEX_APP.md` (overview of where archive handling fits among
+other extension systems).
