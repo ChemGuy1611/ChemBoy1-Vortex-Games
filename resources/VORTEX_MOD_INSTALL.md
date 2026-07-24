@@ -121,4 +121,4 @@ installer, and returns the instructions).
 
 Runtime siblings: `VORTEX_GAME_LIFECYCLE.md`, `VORTEX_DEPLOYMENT.md`, `VORTEX_DOWNLOAD_MGMT.md`,
 `VORTEX_EVENT_BUS.md`. Overview: `VORTEX_APP.md`. Authoring: `INSTALLER_SYSTEM.md`,
-`FOMOD_INSTALLER.md`.
+`FOMOD_INSTALLER.md`. Diagram of this pipeline: `VORTEX_FLOWCHARTS.md` §1.

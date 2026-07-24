@@ -112,4 +112,4 @@ set, so once a higher-priority mod has placed a file, lower-priority mods skip i
 
 Runtime siblings: `VORTEX_MOD_INSTALL.md`, `VORTEX_PROFILES.md`, `VORTEX_GAME_LIFECYCLE.md`,
 `VORTEX_EVENT_BUS.md`. Overview: `VORTEX_APP.md`. Authoring: `DEPLOYMENT_MANIFEST.md`,
-`REGISTER_MERGE.md`.
+`REGISTER_MERGE.md`. Diagram of deploy/purge: `VORTEX_FLOWCHARTS.md` §4.

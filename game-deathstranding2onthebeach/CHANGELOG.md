@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.2.1] - 2026-07-24
+
+- Fixed: Error on HFW Mod Manger tool download
+
 ## [0.2.0] - 2026-04-13
 
 - Added: HFW Mod Manager integration for installing .core and .stream mods

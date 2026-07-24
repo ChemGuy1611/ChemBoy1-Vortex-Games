@@ -90,4 +90,5 @@ load order into a collection and restores it on install (`genCollectionLoadOrder
 
 Runtime siblings: `VORTEX_PROFILES.md`, `VORTEX_DEPLOYMENT.md`, `VORTEX_GAME_LIFECYCLE.md`,
 `VORTEX_EVENT_BUS.md`. Overview: `VORTEX_APP.md`. Authoring: `LOAD_ORDER_REGISTRATION.md`,
-`LOAD_ORDER_ITEM_RENDERER.md`, `GAMEBRYO_PLUGIN_SYSTEM.md`.
+`LOAD_ORDER_ITEM_RENDERER.md`, `GAMEBRYO_PLUGIN_SYSTEM.md`. Diagram of the FBLO lifecycle:
+`VORTEX_FLOWCHARTS.md` §3.

@@ -129,4 +129,5 @@ runs; `setGameMode` seeds it from a tool's `defaultPrimary` flag. Launching the 
 
 Runtime siblings: `VORTEX_MOD_INSTALL.md`, `VORTEX_DEPLOYMENT.md`, `VORTEX_PROFILES.md`,
 `VORTEX_EVENT_BUS.md`. Overview: `VORTEX_APP.md`. Authoring contracts: `REGISTER_GAME.md`,
-`REQUIRES_LAUNCHER.md`, `RUN_EXECUTABLE.md`.
+`REQUIRES_LAUNCHER.md`, `RUN_EXECUTABLE.md`. Diagrams of discovery + activation:
+`VORTEX_FLOWCHARTS.md` §5.

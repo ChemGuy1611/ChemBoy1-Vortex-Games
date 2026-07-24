@@ -88,4 +88,5 @@ replay, downstream extensions can call them in their own `register*`/`once`.
 ## See also
 
 Runtime siblings: `VORTEX_EVENT_BUS.md` (once + handlers), `VORTEX_APP.md` (overview). Authoring:
-`REGISTER_GAME.md`, `INSTALLER_SYSTEM.md`, and the `vortex-api` type declarations.
+`REGISTER_GAME.md`, `INSTALLER_SYSTEM.md`, and the `vortex-api` type declarations. Diagram of the
+load + init phases: `VORTEX_FLOWCHARTS.md` §7.

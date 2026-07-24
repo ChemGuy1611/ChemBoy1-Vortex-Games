@@ -2,10 +2,10 @@
 Name: DEATH STRANDING 2: ON THE BEACH Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.2.0
-Date: 2026-04-13
+Version: 0.2.1
+Date: 2026-07-24
 Notes:
-- 
+-
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -581,7 +581,7 @@ function testFallback(files, gameId) {
 function installFallback(api, files, destinationPath) {
   fallbackInstallerNotify(api, destinationPath);
   const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
-  
+
   const filtered = files.filter(file =>
     (!file.endsWith(path.sep))
   );
@@ -619,7 +619,7 @@ function fallbackInstallerNotify(api, modName) {
                 + `If you think that Vortex should be capable to install this mod to a specific folder, please contact the extension developer for support at the link below.\n`
                 + `\n`
                 + `Mod Name: ${modName}.\n`
-                + `\n`             
+                + `\n`
           }, [
             { label: 'Continue', action: () => dismiss() },
             {
@@ -643,7 +643,7 @@ function fallbackInstallerNotify(api, modName) {
               if (modMatch) {
                 const MOD_ID = modMatch.attributes.modId;
                 if (MOD_ID !== undefined) {
-                  PAGE = `${MOD_ID}?tab=description`; 
+                  PAGE = `${MOD_ID}?tab=description`;
                 }
               }
               const MOD_PAGE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${PAGE}`;
@@ -746,7 +746,8 @@ async function isModManagerInstalled(api) {
 //* Function to auto-download HFW MM from Nexus Mods
 async function downloadModManager(api, check = true) {
   GAME_PATH = getDiscoveryPath(api);
-  const DOWNLOAD_FOLDER = selectors.downloadPathForGame(api.getState(), 'horizonforbiddenwest');
+  //const DOWNLOAD_FOLDER = selectors.downloadPathForGame(api.getState(), 'horizonforbiddenwest');
+  const DOWNLOAD_FOLDER = selectors.downloadPathForGame(api.getState(), GAME_ID);
   let isInstalled = await isModManagerInstalled(api);
   if (!isInstalled || !check) {
     const MOD_NAME = MODMANAGER_NAME;
@@ -912,7 +913,7 @@ function deployNotify(api) {
                 + `Use the included tool to launch ${MOD_NAME} (button on notification or in "Dashboard" tab).\n`
                 + `Select the mod options you want, then click the "Pack Mods" button.\n`
           }, [
-            { 
+            {
               label: `Run ${MOD_NAME}`, action: () => {
                 runManager(api);
                 dismiss();
@@ -960,7 +961,7 @@ function purgeNotify(api) {
                 + `\n`
                 + `Use the included tool to launch ${MOD_NAME} (button on notification or in "Dashboard" tab).\n`
           }, [
-            { 
+            {
               label: `Run ${MOD_NAME}`, action: () => {
                 runManager(api);
                 dismiss();
@@ -989,13 +990,13 @@ function runManager(api) {
   try {
     const TOOL_PATH = tool.path;
     if (TOOL_PATH !== undefined) {
-      return api.runExecutable(TOOL_PATH, [], 
-        { 
+      return api.runExecutable(TOOL_PATH, [],
+        {
           //cwd: path.dirname(TOOL_PATH),
-          detach: true, 
+          detach: true,
           //env: { 'PATH': process.env.PATH },
-          //shell: true, 
-          suggestDeploy: false 
+          //shell: true,
+          suggestDeploy: false
         })
         .catch(err => api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err,
           { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 })
@@ -1029,7 +1030,7 @@ async function resolveGameVersion(gamePath) {
       const exeVersion = require('exe-version');
       const EXEC = getExecutable(gamePath);
       version = exeVersion.getProductVersion(path.join(gamePath, EXEC)); //can also use getFileVersion if this doesn't return the correct number (rare)
-      return Promise.resolve(version); 
+      return Promise.resolve(version);
     } catch (err) {
       log('error', `Could not read executable file to get game version: ${err}`);
       return Promise.resolve(version);
@@ -1088,37 +1089,37 @@ function applyGame(context, gameSpec) {
   });
 
   /*register mod types explicitly
-  context.registerModType(CONFIG_ID, 60, 
+  context.registerModType(CONFIG_ID, 60,
     (gameId) => {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, 
-    (game) => pathPattern(context.api, game, CONFIG_PATH), 
-    () => Promise.resolve(false), 
+    },
+    (game) => pathPattern(context.api, game, CONFIG_PATH),
+    () => Promise.resolve(false),
     { name: CONFIG_NAME }
   ); //
-  context.registerModType(SAVE_ID, 62, 
+  context.registerModType(SAVE_ID, 62,
     (gameId) => {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, 
-    (game) => pathPattern(context.api, game, SAVE_PATH), 
-    () => Promise.resolve(false), 
+    },
+    (game) => pathPattern(context.api, game, SAVE_PATH),
+    () => Promise.resolve(false),
     { name: SAVE_NAME }
   ); //*/
 
   if (hasLoader) {
-    context.registerModType(LOADER_ID, 70, 
+    context.registerModType(LOADER_ID, 70,
       (gameId) => {
         var _a;
         return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-      }, 
-      (game) => pathPattern(context.api, game, path.join('{gamePath}', LOADER_PATH)), 
-      () => Promise.resolve(false), 
+      },
+      (game) => pathPattern(context.api, game, path.join('{gamePath}', LOADER_PATH)),
+      () => Promise.resolve(false),
       { name: LOADER_NAME }
     );
   }
-  
+
   //register mod installers
   if (hasLoader) {
     context.registerInstaller(LOADER_ID, 25, testLoader, installLoader);
@@ -1201,7 +1202,7 @@ function main(context) {
       deployNotify(context.api);
       return Promise.resolve();
     });
-    context.api.onAsync('did-purge', async (profileId) => { 
+    context.api.onAsync('did-purge', async (profileId) => {
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;
       modManagerInstalled = await isModManagerInstalled(context.api);
