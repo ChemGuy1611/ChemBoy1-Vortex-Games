@@ -2,8 +2,8 @@
 Name: Middle-earth: Shadow of War Vortex Extension
 Structure: Mod Loaders + Mods folder w/ LO support
 Author: ChemBoy1
-Version: 2.4.0
-Date: 2026-04-22
+Version: 2.5.0
+Date: 2026-07-22
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -212,7 +212,7 @@ uhdmipA.Arch06
 
 // for mod update to keep them in the load order and not uncheck them
 let mod_update_all_profile = false;
-let updatemodid = undefined;
+let updateModIds = new Set(); // Nexus mod ids currently tracked as being updated (Set, not scalar, so batch updates don't clobber each other)
 let updating_mod = false; // used to see if it's a mod update or not
 let mod_install_name = ""; // used to display the name of the currently installed mod
 
@@ -1487,27 +1487,36 @@ function main(context) {
         downloadDllLoader(context.api, spec);
         //downloadModLoader(context.api, spec);
       }
-      mod_update_all_profile = false;
-      updating_mod = false;
-      updatemodid = undefined;
+      mod_update_all_profile = false; //reset all-profile flag on deploy
+      updating_mod = false; //reset updating flag on deploy
+      updateModIds.clear(); //reset tracked updated modIds on deploy
     });
+    //detect mod update (to maintain LO position)
     context.api.events.on("mod-update", (gameId, modId, fileId) => {
       if (GAME_ID == gameId) {
-        updatemodid = modId;
+        updateModIds.add(String(modId));
       }
     });
+    //detect mod removal (to maintain LO position) - match on the Nexus mod id
+    //recorded in state (attributes.modId), not the local modId string: the
+    //local id's naming convention varies by when the mod was originally
+    //downloaded (older dash-delimited vs current space-delimited), so string
+    //parsing silently misses old installs.
     context.api.events.on("remove-mod", (gameMode, modId) => {
-      if (modId.includes("-" + updatemodid + "-")) {
+      const removedMod = util.getSafe(api.getState(), ["persistent", "mods", GAME_ID, modId], undefined);
+      const nexusModId = removedMod?.attributes?.modId;
+      if (nexusModId !== undefined && updateModIds.has(String(nexusModId))) {
         mod_update_all_profile = true;
       }
     });
+    //detect mod installation (to maintain LO position). This only gates the
+    //fallback-installer re-notify suppression, so a best-effort filename
+    //match (covering both the old dash and current space delimiter) is fine.
     context.api.events.on("will-install-mod", (gameId, archiveId, modId) => {
       mod_install_name = modId.split("-")[0];
-      if (GAME_ID == gameId && modId.includes("-" + updatemodid + "-")) {
-        updating_mod = true;
-      } else {
-        updating_mod = false;
-      }
+      updating_mod = GAME_ID == gameId && Array.from(updateModIds).some((id) =>
+        modId.includes("-" + id + "-") || modId.includes(" " + id + " ")
+      );
     }); //*/
   });
   return true;

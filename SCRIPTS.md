@@ -1295,4 +1295,4 @@ Runs `python new_extension.py <template> "<game>" [flags]`. On success (without 
 
 ### vortex_gui.py — Output
 
-Script output (stdout + stderr merged) streams live into the log pane at the bottom of the window. The log pane scrolls automatically and holds up to 5000 lines. Runner markers are colorized: `[ERROR ...]` and `[exited with code N]` lines render red, and `> command` echo lines render in the accent blue.
+Script output (stdout + stderr merged) streams live into the log pane at the bottom of the window. The log pane scrolls automatically and holds up to 5000 lines. Runner markers are colorized: `[ERROR ...]` and `[exited with code N]` lines render red, and `[HH:MM:SS] > command` echo lines (timestamped at the moment each queued command starts) render in the accent blue.

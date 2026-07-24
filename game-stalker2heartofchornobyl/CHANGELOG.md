@@ -4,6 +4,22 @@
 
 - None Planned
 
+## [1.0.1] - 2026-07-23
+
+- Fixed: Save mod folder path was incorrect for the Xbox version.
+- Fixed: Save mods can no longer be installed on the Xbox version (not supported).
+- Fixed: Config and Save mod installers now properly cancel instead of installing anyway when the game, staging folder, and mod folder are not on the same drive.
+- Fixed: Steam version now launches through Steam instead of directly.
+- Improved: Fallback installer notification now includes buttons to contact the developer and open the mod page/staging folder.
+
+## [1.0.0] - 2026-07-22
+
+- Migrated to file-based load order (FBLO): lock button, multi-select, right-click context menu, status filter (enabled/disabled, locked/unlocked, unmanaged), Open Mod Page/Staging Folder, Disable/Enable Vortex Mod.
+- Added UE4SS Load Order page (mods.txt management, Configure button, per-profile state) and LogicMods/Blueprint pak Load Order page (load_order.txt management).
+- Added collections support for UE4SS and LogicMods load orders.
+- Added: Updating a mod no longer unchecks it or moves it in the load order (Pak, UE4SS, and LogicMods pages), including on profiles other than the one you're using.
+- Added: Notification when a mod installs through the fallback Binaries folder installer.
+
 ## [0.5.4] - 2026-02-04
 
 - Fixed: Wrong variable name in a couple open buttons

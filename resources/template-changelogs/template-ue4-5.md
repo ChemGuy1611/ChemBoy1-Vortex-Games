@@ -1,5 +1,9 @@
 # template-ue4-5 Changelog
 
+## [2026-07-22]
+
+- Added: Mod-update load order guard, ported from game-subnautica2 0.4.1. Updating a mod no longer unchecks it or moves it in the load order (Pak, UE4SS, LogicMods), including on profiles other than the one you're using. Tracks in-flight updates via the `mod-update`/`remove-mod`/`will-install-mod` events and pauses load order read/write until deployment confirms the update settled.
+
 ## [2026-07-20]
 
 - Added: `writeEngineVersion` toggle (default off). When enabled, `didDeploy` writes `ENGINE_VERSION` (`MajorVersion`/`MinorVersion`) into the `EngineVersionOverride` section of `UE4SS-settings.ini` whenever UE4SS is installed, using `vortex-parse-ini` (`IniParser`/`WinapiFormat`). Generalized from `game-witchfire` 0.4.1.

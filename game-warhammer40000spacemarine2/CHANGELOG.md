@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.8.0] - 2026-07-22
+
+- Fixed: Updating a mod could uncheck it or move it in the load order, especially on profiles other than the one you were using.
+
 ## [0.7.1] - 2026-05-23
 
 - Added: Function to clear folders from "local" on purge (avoid MODS DETECTED from stray folders after purge)

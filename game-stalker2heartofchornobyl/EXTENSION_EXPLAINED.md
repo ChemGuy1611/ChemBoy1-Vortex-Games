@@ -30,9 +30,18 @@
 
 | Flag | Value | Description |
 | --- | --- | --- |
+| `mod_update_all_profile` | `false` | for mod update to keep them in the load order and not uncheck them |
+| `updating_mod` | `false` | used to see if it's a mod update or not |
 | `CHECK_CONFIG` | `false` |  |
 | `IO_STORE` | `true` | true if the Paks folder contains .ucas and .utoc files |
+| `writeEngineVersion` | `false` | toggle to write ENGINE_VERSION into UE4SS-settings.ini (EngineVersionOverride) on deploy, when UE4SS is installed |
 | `SYM_LINKS` | `true` | true if symlink deployment is enabled for this game |
+| `PAKMOD_LOADORDER` | `true` | set to false if you don't want loadOrder |
+| `FBLO` | `true` | set to false to use legacy load order page |
+| `ue4ssLoadOrder` | `true` | enable load order and mods.txt writing for UE4SS mods |
+| `logicModsLoadOrder` | `true` | enable load order page and load_order.txt writing for LogicMods/Blueprint pak mods |
+| `collectionsLoadOrder` | `true` | include UE4SS and LogicMods load orders in collections (ANDed with the toggles above) |
+| `debug` | `false` | enables verbose debug logging |
 
 ## Mod Types
 
@@ -98,7 +107,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Download UE4SS
 - Download Simple Mod Merger
 - Open UE4SS Settings INI
-- Open UE4SS mods.json
+- Open UE4SS mods.txt
 - Open PCGamingWiki Page
 - View Changelog
 - Submit Bug Report
@@ -112,6 +121,8 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 ## Special Features
 
+- **Load Order** — mods are assigned numbered folder names or sorted based on their position in the load order.
+- **UE4SS Load Order** — manages UE4SS script/DLL mod load order via a dedicated page; serializes order to `mods.txt` on deploy.
 - **Deploy Hook** (`did-deploy`) — runs custom logic (e.g., notifications, metadata patching) every time mods are deployed.
 - **Purge Hook** (`did-purge`) — runs custom logic when mods are purged.
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).

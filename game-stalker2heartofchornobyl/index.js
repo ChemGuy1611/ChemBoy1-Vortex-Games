@@ -2,18 +2,21 @@
 Name: S.T.A.L.K.E.R. 2: Heart of Chornobyl Vortex Extension
 Structure: UE5 (Xbox-Integrated)
 Author: ChemBoy1
-Version: 0.5.4
-Date: 2026-02-04
+Version: 1.0.1
+Date: 2026-07-23
 //////////////////////////////////////////////////////////*/
 
 //Import libraries
-const { actions, fs, util, selectors, log } = require('vortex-api');
+const { actions, fs, util, selectors, log,
+        MainPage, FlexLayout, DNDContainer, DraggableList } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 //const Shell = require('node-powershell');
 const child_process = require("child_process");
 const fsPromises = require('fs/promises');
 const { parseStringPromise } = require('xml2js');
+const { default: IniParser, WinapiFormat } = require('vortex-parse-ini');
+const React = require('react');
 
 //Specify all information about the game
 const GAME_ID = "stalker2heartofchornobyl";
@@ -34,7 +37,10 @@ const EXTENSION_URL = "https://www.nexusmods.com/site/mods/958"; //Nexus link to
 
 let GAME_PATH = ''; //patched in the setup function to the discovered game path
 let GAME_VERSION = '';
-let CHECK_CONFIG = false; 
+let mod_update_all_profile = false; // for mod update to keep them in the load order and not uncheck them
+let updateModIds = new Set(); // Nexus mod ids currently tracked as being updated (Set, not scalar, so batch updates don't clobber each other)
+let updating_mod = false; // used to see if it's a mod update or not
+let CHECK_CONFIG = false;
 let STAGING_FOLDER = '';
 let DOWNLOAD_FOLDER = '';
 
@@ -42,11 +48,16 @@ const GOG_FILE = path.join('Plugins', 'OnlineSubsystemGOG', 'GalaxySDK', 'Galaxy
 const STEAM_FILE = path.join('Engine', 'Binaries', 'ThirdParty', 'Steamworks', 'Steamv153', 'Win64', 'steam_api64.dll');
 const EPIC_FILE = path.join('Stalker2', 'Binaries', 'Win64', SHIPPINGEXE_NAME); //not available on egdata.app yet. probably can use an EOSSDK dll file.
 const XBOX_FILE = EXEC_XBOX;
+const SHIPPING_EXE = path.join('Stalker2', 'Binaries', 'Win64', SHIPPINGEXE_NAME);
 
 //Unreal Engine specific
 const EPIC_CODE_NAME = "Stalker2";
 const IO_STORE = true; //true if the Paks folder contains .ucas and .utoc files
 const UE4SS_MOD_PATH = path.join('ue4ss', 'Mods')
+const writeEngineVersion = false; //toggle to write ENGINE_VERSION into UE4SS-settings.ini (EngineVersionOverride) on deploy, when UE4SS is installed
+const ENGINE_VERSION = '5.1.1.0'; //Unreal Engine version. usually '4.27.2.0' or '5.X.X.0'. Written to UE4SS-settings.ini if writeEngineVersion is enabled
+const MAJOR_VERSION = ENGINE_VERSION.split('.')[0]; //major UE version
+const MINOR_VERSION = ENGINE_VERSION.split('.')[1]; //minor UE version
 
 //Settings related to the IO Store UE feature
 let PAKMOD_EXTS = ['.pak'];
@@ -57,6 +68,17 @@ if (IO_STORE) { //Set file number for pak installer file selection (needs to be 
   PAKMOD_EXTS = ['.pak', '.ucas', '.utoc'];
   PAK_FILE_MIN = PAKMOD_EXTS.length;
 }
+
+//Load order feature toggles
+const PAKMOD_LOADORDER = true; //set to false if you don't want loadOrder
+const FBLO = true; //set to false to use legacy load order page
+const LO_IMAGE_WIDTH = 96; //Width of the load order thumbnail image
+const LO_IMAGE_HEIGHT = LO_IMAGE_WIDTH * 0.5625;
+const SPECIAL_LO_INSTRUCTIONS = '';
+const ue4ssLoadOrder = true; //enable load order and mods.txt writing for UE4SS mods
+const logicModsLoadOrder = true; //enable load order page and load_order.txt writing for LogicMods/Blueprint pak mods
+const collectionsLoadOrder = true; //include UE4SS and LogicMods load orders in collections (ANDed with the toggles above)
+const debug = false;
 
 //Discovery IDs
 const gameFinderQuery = {
@@ -123,8 +145,8 @@ const PAK_EXT = '.pak';
 const UE5_PATH = UNREALDATA.modsPath;
 const UE5_ALT_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Paks');
 const UE5_PAK_PRIORITY = 35;
-const UE5_SORTABLE_ID = `${GAME_ID}-ue5-sortable-modtype`;
-const LEGACY_UE5_SORTABLE_ID = 'ue5-sortable-modtype';
+const UE5_SORTABLE_ID = `${GAME_ID}-ue5-sortable-modtype`; //this game's own pre-Plan-C sortable pak modtype id - already game-specific, so kept as-is (no rename/migration needed)
+const LEGACY_UE5_SORTABLE_ID = 'ue5-sortable-modtype'; //very old shared/buggy modtype id from before per-game ids existed - kept for legacyModsNotify reinstall prompt only
 const UE5_SORTABLE_NAME = 'UE5 Sortable Mod';
 
 const LOGICMODS_ID = `${GAME_ID}-logicmods`;
@@ -134,6 +156,23 @@ const UE4SSCOMBO_NAME = "UE4SS Script-LogicMod Combo";
 const LOGICMODS_PATH = path.join(EPIC_CODE_NAME, 'Content', 'Paks', 'LogicMods');
 const LOGICMODS_FOLDER = "LogicMods";
 const LOGICMODS_EXT = ".pak";
+const BLUEPRINT_ICON = 'M19.5 17C19.36 17 19.24 17 19.11 17.04L17.5 13.8C17.95 13.35 18.25 12.71 18.25 12C18.25 10.62 17.13 9.5 15.75 9.5C15.61 9.5 15.5 9.5 15.35 9.54L13.74 6.3C14.21 5.84 14.5 5.21 14.5 4.5C14.5 3.12 13.38 2 12 2S9.5 3.12 9.5 4.5C9.5 5.2 9.79 5.84 10.26 6.29L8.65 9.54C8.5 9.5 8.39 9.5 8.25 9.5C6.87 9.5 5.75 10.62 5.75 12C5.75 12.71 6.04 13.34 6.5 13.79L4.89 17.04C4.76 17 4.64 17 4.5 17C3.12 17 2 18.12 2 19.5C2 20.88 3.12 22 4.5 22S7 20.88 7 19.5C7 18.8 6.71 18.16 6.24 17.71L7.86 14.46C8 14.5 8.12 14.5 8.25 14.5C8.38 14.5 8.5 14.5 8.63 14.46L10.26 17.71C9.79 18.16 9.5 18.8 9.5 19.5C9.5 20.88 10.62 22 12 22S14.5 20.88 14.5 19.5C14.5 18.12 13.38 17 12 17C11.87 17 11.74 17 11.61 17.04L10 13.8C10.45 13.35 10.75 12.71 10.75 12C10.75 11.3 10.46 10.67 10 10.21L11.61 6.96C11.74 7 11.87 7 12 7C12.13 7 12.26 7 12.39 6.96L14 10.21C13.54 10.66 13.25 11.3 13.25 12C13.25 13.38 14.37 14.5 15.75 14.5C15.88 14.5 16 14.5 16.13 14.46L17.76 17.71C17.29 18.16 17 18.8 17 19.5C17 20.88 18.12 22 19.5 22S22 20.88 22 19.5C22 18.12 20.88 17 19.5 17M4.5 20.5C3.95 20.5 3.5 20.05 3.5 19.5S3.95 18.5 4.5 18.5 5.5 18.95 5.5 19.5 5.05 20.5 4.5 20.5M13 19.5C13 20.05 12.55 20.5 12 20.5S11 20.05 11 19.5 11.45 18.5 12 18.5 13 18.95 13 19.5M7.25 12C7.25 11.45 7.7 11 8.25 11S9.25 11.45 9.25 12 8.8 13 8.25 13 7.25 12.55 7.25 12M11 4.5C11 3.95 11.45 3.5 12 3.5S13 3.95 13 4.5 12.55 5.5 12 5.5 11 5.05 11 4.5M14.75 12C14.75 11.45 15.2 11 15.75 11S16.75 11.45 16.75 12 16.3 13 15.75 13 14.75 12.55 14.75 12M19.5 20.5C18.95 20.5 18.5 20.05 18.5 19.5S18.95 18.5 19.5 18.5 20.5 18.95 20.5 19.5 20.05 20.5 19.5 20.5Z'; // mdiGraphOutline (@mdi/js 7.4.47)
+const BPML_FOLDER = 'BPModLoaderMod'; //UE4SS native mod that reads load_order.txt (also in UE4SS_NATIVE_MODS)
+const BPML_LO_FILE = 'load_order.txt'; //file BPModLoaderMod reads for BP pak load order
+const LOGICMODS_LO_FILE = 'logicMods_loadOrder.json'; //persisted LO state, profile-prefixed, stored in BPModLoaderMod folder
+const LO_ATTRIBUTE_LOGIC = 'logicModFiles'; //mod install attribute: array of pak basenames (no ext) in LogicMods folder
+
+const SET_UE4SS_LOAD_ORDER = `SET_${GAME_ID.toUpperCase()}_UE4SS_LOAD_ORDER`;
+function setUe4ssLoadOrder(profileId, loadOrder) { return { type: SET_UE4SS_LOAD_ORDER, payload: { profileId, loadOrder } }; }
+setUe4ssLoadOrder.toString = () => SET_UE4SS_LOAD_ORDER;
+
+const SET_UE4SS_LO_ENABLED = `SET_${GAME_ID.toUpperCase()}_UE4SS_LO_ENABLED`;
+function setUe4ssLoEnabled(value) { return { type: SET_UE4SS_LO_ENABLED, payload: value }; }
+setUe4ssLoEnabled.toString = () => SET_UE4SS_LO_ENABLED;
+
+const SET_LOGICMODS_LOAD_ORDER = `SET_${GAME_ID.toUpperCase()}_LOGICMODS_LOAD_ORDER`;
+function setLogicModsLoadOrder(profileId, loadOrder) { return { type: SET_LOGICMODS_LOAD_ORDER, payload: { profileId, loadOrder } }; }
+setLogicModsLoadOrder.toString = () => SET_LOGICMODS_LOAD_ORDER;
 
 const CONFIG_ID = `${GAME_ID}-config`;
 const CONFIG_NAME = "Config (LocalAppData)";
@@ -143,6 +182,8 @@ const CONFIG_FILES = [
   "gameplaytags.ini", "enhancedinput.ini", "consolevariables.ini",
 ];
 const CONFIG_EXT = ".ini";
+const CONFIG_LOC = 'Local AppData'; //string for notification text.
+const SAVE_LOC = CONFIG_LOC; //string for notification text. Config and Save mods are almost always in the same place
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Game Folder";
@@ -151,6 +192,7 @@ const ROOT_FOLDER = EPIC_CODE_NAME;
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_NAME = "Saves (LocalAppData)";
 const SAVE_EXT = ".sav";
+const SAVE_COMPAT_VERSIONS = ['steam', 'gog', 'epic']; //game versions with installable save mods (never Xbox)
 
 const UE4SS_ID = `${GAME_ID}-ue4ss`;
 const UE4SS_NAME = "UE4SS";
@@ -165,6 +207,14 @@ const UE4SS_MODSJSON_FILE = 'mods.json';
 const UE4SS_MODSTXT_FILE = 'mods.txt';
 const UE4SS_MODSJSON_FILEPATH = path.join(UE4SS_MOD_PATH, UE4SS_MODSJSON_FILE); //relative to Binaries folder
 const UE4SS_MODSTXT_FILEPATH = path.join(UE4SS_MOD_PATH, UE4SS_MODSTXT_FILE);
+const UE4SS_LO_FILE = 'ue4ss_loadOrder.json';
+const LO_ATTRIBUTE_UE4SS = 'ue4ssModFolder';
+const UE4SS_CONFIG_FILES = ['config.txt', 'settings.json', 'config.lua']; //files that trigger the Configure button on UE4SS LO items
+const UE4SS_NATIVE_MODS = ['BPML_GenericFunctions', 'BPModLoaderMod', 'CheatManagerEnablerMod',
+  'ConsoleCommandsMod', 'ConsoleEnablerMod', 'Keybinds', 'LineTraceMod', 'shared', 'SplitScreenMod'
+];
+const ENABLEDTXT_FILE = 'enabled.txt';
+const UE4SS_ICON = 'M12 0c-6.5745 0-11.899 5.371-11.899 12s5.324 12 11.899 12c6.57 0 11.899-5.371 11.899-12s-5.328-12-11.903-12zM12 0.527c3.035 0 5.894 1.196 8.043 3.359 2.144 2.156 3.34 5.075 3.332 8.114 0 3.062-1.184 5.945-3.332 8.114-2.121 2.153-5.02 3.363-8.043 3.359-3.023 0.004-5.922-1.207-8.043-3.359-2.144-2.156-3.344-5.075-3.336-8.114 0-3.062 1.187-5.945 3.332-8.114 2.121-2.156 5.024-3.368 8.047-3.359zM11.402 4.75c-1.937 0.52-3.731 1.516-6.121 4.258s-1.937 5.008-1.937 5.008c0 0 0.66-1.559 2.246-3.2 0.754-0.777 1.313-1.039 1.7-1.039 0.344-0.02 0.633 0.258 0.633 0.602v5.567c0 0.551-0.356 0.672-0.683 0.664-0.278-0.004-0.536-0.101-0.536-0.101 1.629 2.367 5.528 2.699 5.528 2.699l1.711-1.829 0.039 0.035 1.567 1.336c2.867-1.703 4.25-4.859 4.25-4.859-1.281 1.352-2.094 1.668-2.579 1.668-0.43-0.004-0.598-0.254-0.598-0.254-0.023-0.117-0.062-1.813-0.078-3.508-0.016-1.754 0-3.512 0.086-3.516 0.496-0.93 2.075-2.805 2.075-2.805-2.949 0.582-4.555 2.516-4.555 2.516-0.476-0.375-1.445-0.313-1.445-0.313 0.453 0.25 0.906 0.977 0.906 1.578v5.922c0 0-0.989 0.871-1.75 0.871-0.453 0-0.731-0.246-0.883-0.449-0.059-0.078-0.11-0.164-0.149-0.258v-7.313c-0.106 0.078-0.235 0.121-0.363 0.125-0.164 0-0.332-0.082-0.446-0.32-0.086-0.18-0.141-0.449-0.141-0.844 0-1.348 1.523-2.243 1.523-2.243z';
 
 const SCRIPTS_ID = `${GAME_ID}-scripts`;
 const SCRIPTS_NAME = "UE4SS Scripts";
@@ -191,6 +241,7 @@ const HERBATAMOD_PATH_FULL = path.join(EPIC_CODE_NAME, 'Content', 'GameLite', 'D
 const STEAMWORKSHOP_FOLDER = path.join("workshop", "content", STEAMAPP_ID);
 let STEAMWORKSHOP_PATH = undefined;
 
+const LO_FILE_NAME = 'loadOrder.json';
 const MOD_PATH_DEFAULT = UE5_PATH;
 const REQ_FILE = EPIC_CODE_NAME;
 const PARAMETERS_STRING = '';
@@ -215,6 +266,10 @@ const spec = {
     "requiredFiles": [
       REQ_FILE
     ],
+    "compatible": {
+      "dinput": false,
+      "enb": false,
+    },
     "details": {
       "steamAppId": +STEAMAPP_ID,
       "gogAppId": GOGAPP_ID,
@@ -359,6 +414,20 @@ async function statCheckAsync(gamePath, file) {
   }
 }
 
+//Get the per-user save subfolder (Xbox WGS save path is per-Windows-user)
+function getUserIdFolder(savePath) {
+  try {
+    const SAVE_ARRAY = fs.readdirSync(savePath);
+    USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(savePath, entry));
+  } catch {
+    USERID_FOLDER = "";
+  }
+  if (USERID_FOLDER === undefined) {
+    USERID_FOLDER = "";
+  }
+  return path.join(savePath, USERID_FOLDER, 'SaveGames');
+}
+
 //Set mod type priorities
 function modTypePriority(priority) {
   return {
@@ -384,6 +453,11 @@ function pathPattern(api, game, pattern) {
 }
 
 async function requiresLauncher(gamePath, store) {
+  if (store === 'steam') {
+    return Promise.resolve({
+      launcher: 'steam',
+    });
+  }
   if (store === 'xbox') {
     return Promise.resolve({
       launcher: 'xbox',
@@ -414,16 +488,7 @@ function getExecutable(discoveryPath) {
     SCRIPTS_PATH = path.join(EPIC_CODE_NAME, 'Binaries', EXEC_FOLDER_XBOX, UE4SS_MOD_PATH);
     SCRIPTS_TARGET = path.join(`{gamePath}`, SCRIPTS_PATH);
     CONFIG_PATH = CONFIG_PATH_XBOX;
-    try {
-      const SAVE_ARRAY = fs.readdirSync(SAVE_PATH_XBOX);
-      USERID_FOLDER = SAVE_ARRAY.find((entry) => isDir(SAVE_PATH_XBOX, entry));
-    } catch {
-      USERID_FOLDER = "";
-    }
-    if (USERID_FOLDER === undefined) {
-      USERID_FOLDER = "";
-    } //*/
-    SAVE_PATH = path.join(SAVE_PATH_XBOX, USERID_FOLDER, 'SaveGames');
+    SAVE_PATH = getUserIdFolder(SAVE_PATH_XBOX);
     return EXEC_XBOX;
   };
 
@@ -508,7 +573,7 @@ function getSavePath(api, game) {
     return SAVE_PATH;
   };
   if (statCheckSync(GAME_PATH, XBOX_FILE)) {
-    SAVE_PATH = SAVE_PATH_XBOX;
+    SAVE_PATH = getUserIdFolder(SAVE_PATH_XBOX);
     return SAVE_PATH;
   };
   if (statCheckSync(GAME_PATH, EPIC_FILE)) {
@@ -687,6 +752,15 @@ async function installUe4ssCombo(files, workingDir) {
     };
   });
   instructions.push(setModTypeInstruction);
+  const ue4ssModFolders = files
+    .filter(f => (
+      f.toLowerCase().includes(UE4SS_MOD_PATH.toLowerCase())
+      && (path.basename(f).toLowerCase() === SCRIPTS_FOLDER.toLowerCase())
+    ))
+    .map(f => path.basename(path.dirname(f)));
+  if (ue4ssModFolders.length) {
+    instructions.push({ type: 'attribute', key: LO_ATTRIBUTE_UE4SS, value: ue4ssModFolders[0] }); //!only picking one folder to have a string. Can change to array if needed, but need to change in load order modId function too.
+  }
   return Promise.resolve({ instructions });
 }
 
@@ -729,6 +803,12 @@ function installLogic(files) {
     };
   });
   instructions.push(setModTypeInstruction);
+  const pakBasenames = filtered
+    .filter(f => path.extname(f).toLowerCase() === LOGICMODS_EXT)
+    .map(f => path.basename(f, LOGICMODS_EXT));
+  if (pakBasenames.length) {
+    instructions.push({ type: 'attribute', key: LO_ATTRIBUTE_LOGIC, value: pakBasenames });
+  }
   return Promise.resolve({ instructions });
 }
 
@@ -835,7 +915,7 @@ function testScripts(files, gameId) {
 }
 
 //Install UE4SS Script files
-function installScripts(files, fileName) {
+function installScripts(api, files, fileName) {
   const modFile = files.find(file => (path.basename(file).toLowerCase() === SCRIPTS_FOLDER.toLowerCase()));
   const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
@@ -845,23 +925,27 @@ function installScripts(files, fileName) {
   if (MOD_FOLDER === '.') {
     MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
   }
-  
-  const ENABLEDTXT_FILE = 'enabled.txt';
-  const ENABLEDTXT_PATH = path.join(fileName, rootPath, ENABLEDTXT_FILE);
-  try {
-    fs.statSync(ENABLEDTXT_PATH);
-  } catch (err) {
+
+  //handle enabled.txt file - only write it when UE4SS LO is off (the LO page manages enable/disable via mods.txt when on)
+  if (!ue4ssLoadOrder || !util.getSafe(api.store.getState(), ['settings', GAME_ID, 'ue4ssLoEnabled'], true)) {
+    const ENABLEDTXT_PATH = path.join(fileName, rootPath, ENABLEDTXT_FILE);
     try {
-      fs.writeFileSync(
-        ENABLEDTXT_PATH,
-        ``,
-        { encoding: "utf8" },
-      );
-      files.push(path.join(rootPath, ENABLEDTXT_FILE));
-      log('warn', `Successfully created enabled.txt for UE4SS Script Mod: ${MOD_NAME}`);
+      fs.statSync(ENABLEDTXT_PATH);
     } catch (err) {
-      log('error', `Could not create enabled.txt for UE4SS Script Mod: ${MOD_NAME}: ${err}`);
+      try {
+        fs.writeFileSync(
+          ENABLEDTXT_PATH,
+          ``,
+          { encoding: "utf8" },
+        );
+        files.push(path.join(rootPath, ENABLEDTXT_FILE));
+        log('warn', `Successfully created enabled.txt for UE4SS Script Mod: ${MOD_NAME}`);
+      } catch (err) {
+        log('error', `Could not create enabled.txt for UE4SS Script Mod: ${MOD_NAME}: ${err}`);
+      }
     }
+  } else {
+    files = files.filter(f => path.basename(f).toLowerCase() !== ENABLEDTXT_FILE);
   }
 
   //Filter files and set instructions
@@ -876,6 +960,7 @@ function installScripts(files, fileName) {
     };
   });
   instructions.push(setModTypeInstruction);
+  instructions.push({ type: 'attribute', key: LO_ATTRIBUTE_UE4SS, value: MOD_FOLDER });
   return Promise.resolve({ instructions });
 }
 
@@ -899,7 +984,7 @@ function testDll(files, gameId) {
 }
 
 //Install UE4SS DLL files
-function installDll(files, fileName) {
+function installDll(api, files, fileName) {
   const modFile = files.find(file => (path.basename(file).toLowerCase() === DLL_FOLDER.toLowerCase()));
   const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
@@ -909,23 +994,27 @@ function installDll(files, fileName) {
   if (MOD_FOLDER === '.') {
     MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
   }
-  
-  const ENABLEDTXT_FILE = 'enabled.txt'
-  const ENABLEDTXT_PATH = path.join(fileName, rootPath, ENABLEDTXT_FILE);
-  try {
-    fs.statSync(ENABLEDTXT_PATH);
-  } catch (err) {
+
+  //handle enabled.txt file - only write it when UE4SS LO is off (the LO page manages enable/disable via mods.txt when on)
+  if (!ue4ssLoadOrder || !util.getSafe(api.store.getState(), ['settings', GAME_ID, 'ue4ssLoEnabled'], true)) {
+    const ENABLEDTXT_PATH = path.join(fileName, rootPath, ENABLEDTXT_FILE);
     try {
-      fs.writeFileSync(
-        ENABLEDTXT_PATH,
-        ``,
-        { encoding: "utf8" },
-      );
-      files.push(path.join(rootPath, ENABLEDTXT_FILE));
-      log('info', `Successfully created enabled.txt for UE4SS DLL Mod: ${MOD_NAME}`);
-    } catch {
-      log('error', `Could not create enabled.txt for UE4SS DLL Mod: ${MOD_NAME}`);
+      fs.statSync(ENABLEDTXT_PATH);
+    } catch (err) {
+      try {
+        fs.writeFileSync(
+          ENABLEDTXT_PATH,
+          ``,
+          { encoding: "utf8" },
+        );
+        files.push(path.join(rootPath, ENABLEDTXT_FILE));
+        log('info', `Successfully created enabled.txt for UE4SS DLL Mod: ${MOD_NAME}`);
+      } catch {
+        log('error', `Could not create enabled.txt for UE4SS DLL Mod: ${MOD_NAME}`);
+      }
     }
+  } else {
+    files = files.filter(f => path.basename(f).toLowerCase() !== ENABLEDTXT_FILE);
   }
 
   //Filter files and set instructions
@@ -940,6 +1029,7 @@ function installDll(files, fileName) {
     };
   });
   instructions.push(setModTypeInstruction);
+  instructions.push({ type: 'attribute', key: LO_ATTRIBUTE_UE4SS, value: MOD_FOLDER });
   return Promise.resolve({ instructions });
 }
 
@@ -1023,14 +1113,50 @@ function installConfig(api, files) {
     };
   });
   instructions.push(setModTypeInstruction);
-  //*
   const state = api.getState();
   const discovery = selectors.discoveryByGame(state, GAME_ID);
   const IS_CONFIG = checkPartitions(CONFIG_PATH, discovery.path);
   if (IS_CONFIG === false) {
-    api.showErrorNotification(`Could not install mod as Config`, `You tried installing a Config mod, but the game, staging folder, and Config folder are not all on the same drive. Please move the game and/or staging folder to the same drive as the Config folder (typically C Drive) to install these types of mods with Vortex.`, { allowReport: false });
-  } //*/
+    configInstallerNotify(api);
+    throw new util.UserCanceled();
+  }
   return Promise.resolve({ instructions });
+}
+
+//Notification for config installer
+function configInstallerNotify(api) {
+  const NOTIF_ID = `${GAME_ID}-configinstaller`;
+  const MESSAGE = 'Could not install mod as Config';
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'error',
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: 'More',
+        action: (dismiss) => {
+          api.showDialog('question', MESSAGE, {
+            text: `You tried installing a Config file mod, but the game, staging folder, and ${CONFIG_LOC} folder are not all on the same drive.\n`
+                + `Please move the game and/or staging folder to the same drive as the ${CONFIG_LOC} folder (typically C Drive) to install these types of mods with Vortex.\n`
+                + `\n`
+                + `Config Path: ${CONFIG_PATH}\n`
+                + `\n`
+                + `If you want to use this mod installer, you must move the game and staging folder to the same partition as the ${CONFIG_LOC} folder (typically C Drive).\n`
+                + `\n`
+          }, [
+            { label: 'Continue', action: () => dismiss() },
+            {
+              label: 'Open Config Folder', action: () => {
+                util.opn(CONFIG_PATH).catch(() => null);
+                dismiss();
+              }
+            },
+          ]);
+        },
+      },
+    ],
+  });
 }
 
 //Test for save files
@@ -1051,12 +1177,32 @@ function testSave(files, gameId) {
   });
 }
 
+//error notification for Xbox version save install attempt
+function saveErrorNotify(api) {
+  const NOTIF_ID = `${GAME_ID}-saveinsterrxbox`;
+  const MESSAGE = `Save files are not supported by the Xbox version of ${GAME_NAME}`;
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'error',
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [],
+  });
+}
+
 //Install save files
-function installSave(api, files) {
+async function installSave(api, files) {
   const modFile = files.find(file => (path.extname(file).toLowerCase() === SAVE_EXT));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: SAVE_ID };
+
+  GAME_PATH = getDiscoveryPath(api);
+  GAME_VERSION = await setGameVersionPath(GAME_PATH);
+  if (!SAVE_COMPAT_VERSIONS.includes(GAME_VERSION)) {
+    saveErrorNotify(api);
+    throw new util.UserCanceled();
+  }
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
@@ -1072,14 +1218,50 @@ function installSave(api, files) {
     };
   });
   instructions.push(setModTypeInstruction);
-  //*
   const state = api.getState();
   const discovery = selectors.discoveryByGame(state, GAME_ID);
   const IS_SAVE = checkPartitions(SAVE_PATH, discovery.path);
   if (IS_SAVE === false) {
-    api.showErrorNotification(`Could not install mod as Save`, `You tried installing a Save mod, but the game, staging folder, and Save folder are not all on the same drive. Please move the game and/or staging folder to the same drive as the Save folder (typically C Drive) to install these types of mods with Vortex.`, { allowReport: false });
-  } //*/
+    saveInstallerNotify(api);
+    throw new util.UserCanceled();
+  }
   return Promise.resolve({ instructions });
+}
+
+//Error notification for save installer when not on same partition
+function saveInstallerNotify(api) {
+  const NOTIF_ID = `${GAME_ID}-saveinstaller`;
+  const MESSAGE = 'Could not install mod as Save';
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'error',
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: 'More',
+        action: (dismiss) => {
+          api.showDialog('question', MESSAGE, {
+            text: `You tried installing a Save file mod, but the game, staging folder, and ${SAVE_LOC} folder are not all on the same drive.\n`
+                + `Please move the game and/or staging folder to the same drive as the ${SAVE_LOC} folder (typically C Drive) to install these types of mods with Vortex.\n`
+                + `\n`
+                + `Save Path: ${SAVE_PATH}\n`
+                + `\n`
+                + `If you want to use this mod installer, you must move the game and staging folder to the same partition as the ${SAVE_LOC} folder (typically C Drive).\n`
+                + `\n`
+          }, [
+            { label: 'Continue', action: () => dismiss() },
+            {
+              label: 'Open Save Folder', action: () => {
+                util.opn(SAVE_PATH).catch(() => null);
+                dismiss();
+              }
+            },
+          ]);
+        },
+      },
+    ],
+  });
 }
 
 //Test Fallback installer for binaries folder
@@ -1100,9 +1282,70 @@ function testBinaries(files, gameId) {
   });
 }
 
+function fallbackNotify(api, modName) {
+  const state = api.getState();
+  STAGING_FOLDER = selectors.installPathForGame(state, spec.game.id);
+  modName = path.basename(modName, '.installing');
+  const id = modName.replace(/[^a-zA-Z0-9\s]*( )*/gi, '').slice(0, 20);
+  const NOTIF_ID = `${GAME_ID}-${id}-fallback`;
+  const MESSAGE = 'Fallback installer reached for ' + modName;
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'info',
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: 'More',
+        action: (dismiss) => {
+          api.showDialog('question', MESSAGE, {
+            text: `\n`
+                + `The mod you just installed reached the fallback installer to the Binaries folder. This means Vortex could not determine where to place these mod files.\n`
+                + `Please check the mod page description and review the files in the mod staging folder to determine whether the mod was installed correctly.\n`
+                + `It may be necessary to perform manual file manipulation for the mod, or to manually change the Mod Type.\n`
+                + `\n`
+                + `If you think that Vortex should be capable to install this mod to a specific folder, please contact the extension developer for support at the link below.\n`
+                + `\n`
+                + `Mod Name: ${modName}.\n`
+                + `\n`
+          }, [
+            { label: 'Continue', action: () => dismiss() },
+            {
+              label: 'Contact Ext. Developer', action: () => {
+                util.opn(`${EXTENSION_URL}?tab=posts`).catch(() => null);
+                dismiss();
+              }
+            },
+            { label: `Open Mod Page + Staging Folder`, action: () => {
+              util.opn(path.join(STAGING_FOLDER, modName)).catch(() => null);
+              const mods = util.getSafe(api.store.getState(), ['persistent', 'mods', spec.game.id], {});
+              const modMatch = Object.values(mods).find(mod => mod.installationPath === modName);
+              log('warn', `Found ${modMatch?.id} for ${modName}`);
+              let PAGE = ``;
+              if (modMatch) {
+                const MOD_ID = modMatch.attributes.modId;
+                if (MOD_ID !== undefined) {
+                  PAGE = `${MOD_ID}?tab=description`;
+                }
+              }
+              const MOD_PAGE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${PAGE}`;
+              util.opn(MOD_PAGE_URL).catch(() => null);
+              dismiss();
+            }},
+          ]);
+        },
+      },
+    ],
+  });
+}
+
 //Fallback installer for binaries folder
-function installBinaries(files) {
+function installBinaries(api, files, fileName) {
   const setModTypeInstruction = { type: 'setmodtype', value: BINARIES_ID };
+  const modName = path.basename(fileName, '.installing');
+  if (!updating_mod) {
+    fallbackNotify(api, modName);
+  }
   // Remove empty directories
   const filtered = files.filter(file =>
     (!file.endsWith(path.sep))
@@ -1120,36 +1363,101 @@ function installBinaries(files) {
 
 // UNREAL FUNCTIONS ///////////////////////////////////////////////////////////////
 
-//UNREAL - Pre-sort function
-async function preSort(api, items, direction) {
-  const mods = util.getSafe(api.store.getState(), ['persistent', 'mods', spec.game.id], {});
-  const fileExt = UNREALDATA.fileExt;
+//* FBLO helpers
+function generateProps(context, profileId) {
+  const api = context.api;
+  const state = api.getState();
+  const profile = (profileId !== undefined)
+    ? selectors.profileById(state, profileId)
+    : selectors.activeProfile(state);
+  if (profile?.gameId !== GAME_ID) {
+      return undefined;
+  }
 
-  const loadOrder = items.map(mod => {
-    const modInfo = mods[mod.id];
-    let name = modInfo ? modInfo.attributes.customFileName ?? modInfo.attributes.logicalFileName ?? modInfo.attributes.name : mod.name;
-    const paks = util.getSafe(modInfo.attributes, ['unrealModFiles'], []);
-    if (paks.length > 1) name = name + ` (${paks.length} ${fileExt} files)`;
+  const discovery = util.getSafe(state, ['settings', 'gameMode', 'discovered', GAME_ID], undefined);
+  if (discovery?.path === undefined) {
+    return undefined;
+  }
 
-    return {
-      id: mod.id,
-      name,
-      imgUrl: util.getSafe(modInfo, ['attributes', 'pictureUrl'], path.join(__dirname, spec.game.logo))
-    }
-  });
-
-  return (direction === 'descending') ? Promise.resolve(loadOrder.reverse()) : Promise.resolve(loadOrder);
+  const mods = util.getSafe(state, ['persistent', 'mods', GAME_ID], {});
+  return { api, state, profile, mods, discovery };
 }
 
-var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
-  function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
-  return new (P || (P = Promise))(function (resolve, reject) {
-    function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
-    function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
-    function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
-    step((generator = generator.apply(thisArg, _arguments || [])).next());
-  });
-};
+async function ensureLOFile(context, profileId, props) {
+  if (props === undefined) {
+    props = generateProps(context, profileId);
+  }
+  if (props === undefined) {
+    return Promise.reject(new util.ProcessCanceled('failed to generate game props'));
+  }
+  const targetPath = path.join(props.discovery.path, props.profile.id + '_' + LO_FILE_NAME);
+  try {
+    await fs.ensureFileAsync(targetPath);
+    return targetPath;
+  } catch (err) {
+    return Promise.reject(err);
+  }
+}
+
+async function deserializeLoadOrder(context) {
+  if (mod_update_all_profile) {
+    const message = 'mod update in progress, please wait. Refresh when finished. \n To avoid this wait, only update current profile';
+    return [{ id: message, modId: 'mod_update', name: message, enabled: false }];
+  }
+
+  const props = generateProps(context, undefined);
+  if (props?.profile?.gameId !== GAME_ID) {
+    return Promise.reject(new util.ProcessCanceled('invalid props'));
+  }
+
+  const currentModsState = util.getSafe(props.profile, ['modState'], {});
+  const enabledModIds = Object.keys(currentModsState)
+      .filter(modId => util.getSafe(currentModsState, [modId, 'enabled'], false));
+  const mods = util.getSafe(props.state,
+      ['persistent', 'mods', GAME_ID], {});
+  const loFilePath = await ensureLOFile(context, props.profile.gameId, props);
+  const fileData = await fs.readFileAsync(loFilePath, { encoding: 'utf8' });
+  let data = [];
+  if (fileData.length > 0) {
+    data = JSON.parse(fileData);
+  }
+  try {
+    let filteredData = data.filter(entry => enabledModIds.includes(entry.id));
+    const diff = enabledModIds.filter((id) =>
+      (mods[id]?.type === UE5_SORTABLE_ID)
+      && !filteredData.some((loEntry) => (loEntry.id === id))
+    );
+    diff.forEach(id => {
+      filteredData.push({
+        id: id,
+        modId: id,
+        enabled: true,
+        name: mods[id] !== undefined
+          ? util.renderModName(mods[id])
+          : id,
+      });
+    });
+    return Promise.resolve(filteredData);
+  } catch (err) {
+    return Promise.reject(err);
+  }
+}
+
+async function serializeLoadOrder(context, loadOrder) {
+  if (mod_update_all_profile) {
+    return;
+  }
+
+  const props = generateProps(context, undefined);
+  if (props === undefined) {
+    return Promise.reject(new util.ProcessCanceled('invalid props'));
+  }
+  const loFilePath = await ensureLOFile(context, props.profile.id, props);
+  await fs.writeFileAsync(loFilePath, JSON.stringify(loadOrder, null, 4), { encoding: 'utf8' });
+  requestDeployment(context.api, spec);
+  return Promise.resolve();
+}
+//*/
 
 function makePrefix(input) {
   let res = '';
@@ -1165,132 +1473,401 @@ function loadOrderPrefix(api, mod) {
   const state = api.getState();
   const profile = selectors.lastActiveProfileForGame(state, GAME_ID);
   const loadOrder = util.getSafe(state, ['persistent', 'loadOrder', profile], {});
-  const loKeys = Object.keys(loadOrder);
-  const pos = loKeys.indexOf(mod.id);
+  let pos;
+  if (FBLO) {
+    pos = loadOrder.findIndex((entry) => entry.id === mod.id); //for FBLO (array-shaped state)
+  } else {
+    const loKeys = Object.keys(loadOrder);
+    pos = loKeys.indexOf(mod.id); //for legacy load order page (object-shaped state)
+  }
   if (pos === -1) {
     return 'ZZZZ-';
   }
   return makePrefix(pos) + '-';
 }
 
-function installUnrealMod(api, files, gameId) {
-  return __awaiter(this, void 0, void 0, function* () {
-    const game = gameId;
-    const fileExt = UNREALDATA.fileExt;
-    if (!fileExt)
-      Promise.reject('Unsupported game - UE5 installer failed.');
-    const modFiles = files.filter(file => fileExt.includes(path.extname(file).toLowerCase()));
-    const modType = {
-      type: 'setmodtype',
-      value: UE5_SORTABLE_ID,
+//Test for pak mods
+function testPak(files, gameId) {
+  const supportedGame = gameId === spec.game.id;
+  const isPak = files.some(file => (path.extname(file).toLowerCase() === PAK_EXT));
+  let supported = supportedGame && isPak;
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: []
+  });
+}
+
+//install pak mods
+async function installPak(api, files) {
+  const fileExt = UNREALDATA.fileExt;
+  const modFiles = files.filter(file => fileExt.includes(path.extname(file).toLowerCase()));
+  const modType = {
+    type: 'setmodtype',
+    value: UE5_SORTABLE_ID,
+  };
+  const installFiles = (modFiles.length > PAK_FILE_MIN)
+    ? await chooseFilesToInstall(api, modFiles, UE5_EXT)
+    : modFiles;
+  const unrealModFiles = {
+    type: 'attribute',
+    key: 'unrealModFiles',
+    value: installFiles.map(f => path.basename(f))
+  };
+  let instructions = installFiles.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.basename(file)
     };
-    const installFiles = (modFiles.length > PAK_FILE_MIN)
-      ? yield chooseFilesToInstall(api, modFiles, fileExt)
-      : modFiles;
-    const unrealModFiles = {
-      type: 'attribute',
-      key: 'unrealModFiles',
-      value: modFiles.map(f => path.basename(f))
-    };
-    let instructions = installFiles.map(file => {
+  });
+  instructions.push(modType);
+  instructions.push(unrealModFiles);
+  return Promise.resolve({ instructions });
+}
+
+//file selection dialog for pak mods
+async function chooseFilesToInstall(api, files, fileExt) {
+  const t = api.translate;
+  return api.showDialog('question', t('Multiple {{PAK}} files', { replace: { PAK: fileExt } }), {
+    text: t('The mod you are installing contains {{x}} {{ext}} files.', { replace: { x: files.length, ext: fileExt } }) +
+      `This can be because the author intended for you to chose one of several options. Please select which files to install below:`,
+    checkboxes: files.map((pak) => {
       return {
-        type: 'copy',
-        source: file,
-        destination: path.basename(file)
+        id: path.basename(pak),
+        text: path.basename(pak),
+        value: false
       };
-    });
-    instructions.push(modType);
-    instructions.push(unrealModFiles);
-    return Promise.resolve({ instructions });
+    })
+  }, [
+    { label: 'Cancel' },
+    { label: 'Install Selected' },
+    { label: 'Install All_plural' }
+  ]).then((result) => {
+    if (result.action === 'Cancel')
+      return Promise.reject(new util.UserCanceled('User cancelled.'));
+    else {
+      const installAll = (result.action === 'Install All' || result.action === 'Install All_plural');
+      const installPAKS = installAll ? files : Object.keys(result.input).filter(s => result.input[s])
+        .map(file => files.find(f => path.basename(f) === file));
+      return installPAKS;
+    }
   });
 }
 
-function chooseFilesToInstall(api, files, fileExt) {
-  return __awaiter(this, void 0, void 0, function* () {
-    const t = api.translate;
-    return api.showDialog('question', t('Multiple {{PAK}} files', { replace: { PAK: fileExt } }), {
-      text: t('The mod you are installing contains {{x}} {{ext}} files.', { replace: { x: files.length, ext: fileExt } }) +
-        `This can be because the author intended for you to chose one of several options. Please select which files to install below:`,
-      checkboxes: files.map((pak) => {
-        return {
-          id: path.basename(pak),
-          text: path.basename(pak),
-          value: false
-        };
-      })
-    }, [
-      { label: 'Cancel' },
-      { label: 'Install Selected' },
-      { label: 'Install All_plural' }
-    ]).then((result) => {
-      if (result.action === 'Cancel')
-        return Promise.reject(new util.UserCanceled('User cancelled.'));
-      else {
-        const installAll = (result.action === 'Install All' || result.action === 'Install All_plural');
-        const installPAKS = installAll ? files : Object.keys(result.input).filter(s => result.input[s])
-          .map(file => files.find(f => path.basename(f) === file));
-        return installPAKS;
+async function deserializeUe4ss(api) {
+  if (mod_update_all_profile) {
+    const message = 'mod update in progress, please wait. Refresh when finished. \n To avoid this wait, only update current profile';
+    return [{ id: message, name: message, modId: 'mod_update', enabled: false }];
+  }
+
+  const state = api.getState();
+  const mods = util.getSafe(api.store.getState(), ['persistent', 'mods', spec.game.id], {});
+  GAME_PATH = getDiscoveryPath(api);
+  let modFolderPath = path.join(GAME_PATH, BINARIES_PATH, UE4SS_MOD_PATH);
+  const profile = selectors.activeProfile(state);
+  const filename = profile.id + '_' + UE4SS_LO_FILE;
+  let loadOrderPath = path.join(modFolderPath, filename);
+  let LO_MOD_ARRAY = [];
+  try {
+    const raw = await fs.readFileAsync(loadOrderPath, { encoding: 'utf8' });
+    if (raw.length > 0) LO_MOD_ARRAY = JSON.parse(util.deBOM(raw));
+  } catch { /* file doesn't exist yet; start with empty array */ }
+  if (debug) {
+    log('warn', `UE4SS LO_MOD_ARRAY: ${LO_MOD_ARRAY.map(mod => mod.id).join(', ')}`);
+  }
+
+  let modFolders = [];
+  try {
+    modFolders = await fs.readdirAsync(modFolderPath);
+    modFolders = modFolders.filter((file) => (isDir(modFolderPath, file) && !UE4SS_NATIVE_MODS.includes(file)))
+      .sort((a,b) => a.toLowerCase().localeCompare(b.toLowerCase()));
+  } catch {
+    return Promise.reject(new Error('Failed to read UE4SS Mods folder'));
+  }
+
+  const isVortexManaged = async (modId) => {
+    return fs.statAsync(path.join(modFolderPath, modId, `__folder_managed_by_vortex`))
+      .then(() => true)
+      .catch(() => false)
+  };
+
+  async function getModName(folder) {
+    const VORTEX = await isVortexManaged(folder);
+    if (!VORTEX) {
+      return ('Manual Mod');
+    }
+    try {
+      const modMatch = Object.values(mods).find(mod => (util.getSafe(mods[mod.id]?.attributes, [LO_ATTRIBUTE_UE4SS], '') === folder));
+      if (modMatch) {
+        return modMatch.attributes.customFileName ?? modMatch.attributes.logicalFileName ?? modMatch.attributes.name;
       }
-    });
-  });
+      return folder;
+    } catch {
+      return folder;
+    }
+  }
+
+  async function getModId(folder) {
+    try {
+      const modMatch = Object.values(mods).find(mod => (util.getSafe(mods[mod.id]?.attributes, [LO_ATTRIBUTE_UE4SS], '') === folder));
+      if (modMatch) {
+        return modMatch.id;
+      }
+      return undefined;
+    } catch {
+      return undefined;
+    }
+  }
+
+  let loadOrder = await LO_MOD_ARRAY
+    .reduce(async (accumP, entry) => {
+      const accum = await accumP;
+      const folder = entry.id;
+      if (!modFolders.includes(folder)) {
+        return Promise.resolve(accum);
+      }
+      accum.push(
+        {
+          id: folder,
+          name: `${await getModName(folder)} (${folder})`,
+          modId: await isVortexManaged(folder) ? await getModId(folder) : undefined,
+          enabled: entry.enabled,
+          locked: entry?.locked,
+        }
+      );
+      return Promise.resolve(accum);
+    }, Promise.resolve([]));
+
+  for (let folder of modFolders) {
+    if (!loadOrder.find((mod) => (mod.id === folder))) {
+      loadOrder.push({
+        id: folder,
+        name: `${await getModName(folder)} (${folder})`,
+        modId: await isVortexManaged(folder) ? await getModId(folder) : undefined,
+        enabled: true,
+      });
+    }
+  }
+
+  return loadOrder;
 }
 
-function UNREALEXTENSION(context) {
-  const testUnrealGame = (gameId, withLoadOrder) => {
-    const game = gameId === spec.game.id;
-    const unrealModsPath = UNREALDATA.modsPath;
-    const loadOrder = UNREALDATA.loadOrder;
-    return (!!unrealModsPath && game && loadOrder === true);
-  };
+//Write load order to files
+async function serializeUe4ss(api, loadOrder) {
+  if (mod_update_all_profile) {
+    return;
+  }
 
-  const testForUnrealMod = (files, gameId) => {
-    const supportedGame = testUnrealGame(gameId);
-    const fileExt = UNREALDATA.fileExt;
-    let modFiles = [];
-    if (fileExt) {
-      modFiles = files.filter(file => fileExt.includes(path.extname(file).toLowerCase()));
-    }
-    let supported = ( supportedGame && (gameId === spec.game.id) && modFiles.length > 0 );
-
-    // Test for a mod installer
-    if (supported && files.find(file =>
-      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
-      supported = false;
-    }
-
-    return Promise.resolve({
-      supported,
-      requiredFiles: []
-    });
-  };
-
-  const getUnrealModsPath = (game) => {
-    const modsPath = UNREALDATA.modsPath;
-    const state = context.api.getState();
-    const discoveryPath = util.getSafe(state.settings, ['gameMode', 'discovered', game.id, 'path'], undefined);
-    const installPath = [discoveryPath].concat(modsPath.split(path.sep));
-    return discoveryPath ? path.join.apply(null, installPath) : undefined;
-  };
-
-  context.registerInstaller('ue5-pak-installer', UE5_PAK_PRIORITY, testForUnrealMod, (files, __destinationPath, gameId) => installUnrealMod(context.api, files, gameId));
-
-  context.registerModType(UE5_SORTABLE_ID, 25, 
-    (gameId) => testUnrealGame(gameId, true), 
-    getUnrealModsPath, 
-    () => Promise.resolve(false), 
-    { name: UE5_SORTABLE_NAME,
-      mergeMods: mod => loadOrderPrefix(context.api, mod) + mod.id
-    }
+  const state = api.getState();
+  if (selectors.activeGameId(state) !== GAME_ID) return;
+  GAME_PATH = getDiscoveryPath(api);
+  const profile = selectors.activeProfile(state);
+  const filename = profile.id + '_' + UE4SS_LO_FILE;
+  const jsonPath = path.join(GAME_PATH, BINARIES_PATH, UE4SS_MOD_PATH, filename);
+  await fs.writeFileAsync(
+    jsonPath,
+    JSON.stringify(loadOrder, null, 2),
+    { encoding: "utf8" },
   );
-  context.registerModType(LEGACY_UE5_SORTABLE_ID, 65, 
-    (gameId) => testUnrealGame(gameId, true), 
-    getUnrealModsPath, 
-    () => Promise.resolve(false), 
-    { name: 'Legacy UE - REINSTALL TO SORT',
-      mergeMods: mod => 'ZZZZ-' + mod.id
-    }
+
+  let loadOrderPath = path.join(GAME_PATH, BINARIES_PATH, UE4SS_MOD_PATH, UE4SS_MODSTXT_FILE);
+  await fs.ensureFileAsync(loadOrderPath);
+  let loadOrderMapped = loadOrder
+    .map((mod) => `${mod.id} : ${mod.enabled ? 1 : 0}`);
+  let contents = await fs.readFileAsync(loadOrderPath, 'utf8');
+  const lines = contents.split('\n');
+  const bpIdx = lines.findIndex(l => l.trim().startsWith('BPModLoaderMod'));
+  const kbIdx = lines.findIndex(l => l.trim().startsWith('Keybinds'));
+  const loadOrderOutput = [
+    ...lines.slice(0, bpIdx + 1),
+    ...loadOrderMapped,
+    ...lines.slice(kbIdx),
+  ].join('\n');
+  return fs.writeFileAsync(
+    loadOrderPath,
+    loadOrderOutput,
+    { encoding: "utf8" },
   );
+}
+
+//LogicMods folder is stalker2's LOGICMODS_PATH constant itself (already includes the "LogicMods" subfolder) - do not join LOGICMODS_FOLDER again here
+async function deserializeLogicMods(api) {
+  if (mod_update_all_profile) {
+    const message = 'mod update in progress, please wait. Refresh when finished. \n To avoid this wait, only update current profile';
+    return [{ id: message, name: message, modId: 'mod_update' }];
+  }
+
+  const state = api.getState();
+  const mods = util.getSafe(state, ['persistent', 'mods', spec.game.id], {});
+  GAME_PATH = getDiscoveryPath(api);
+  const logicModsFolder = path.join(GAME_PATH, LOGICMODS_PATH);
+  const bpmlFolder = path.join(GAME_PATH, BINARIES_PATH, UE4SS_MOD_PATH, BPML_FOLDER);
+  const profile = selectors.activeProfile(state);
+  const filename = profile.id + '_' + LOGICMODS_LO_FILE;
+  const jsonPath = path.join(bpmlFolder, filename);
+
+  let LO_MOD_ARRAY = [];
+  try {
+    const raw = await fs.readFileAsync(jsonPath, { encoding: 'utf8' });
+    if (raw.length > 0) LO_MOD_ARRAY = JSON.parse(util.deBOM(raw));
+  } catch { /* file doesn't exist yet; start with empty array */ }
+
+  let pakFiles = [];
+  try {
+    const all = await getAllFiles(logicModsFolder);
+    const seen = new Set();
+    for (const f of all) {
+      if (path.extname(f).toLowerCase() === LOGICMODS_EXT) {
+        const name = path.basename(f, LOGICMODS_EXT);
+        if (!seen.has(name)) { seen.add(name); pakFiles.push(name); }
+      }
+    }
+  } catch {
+    return Promise.reject(new Error('Failed to read LogicMods folder'));
+  }
+
+  const getModName = (pakName) => {
+    try {
+      const modMatch = Object.values(mods).find(mod => {
+        const attr = util.getSafe(mod, ['attributes', LO_ATTRIBUTE_LOGIC], []);
+        return Array.isArray(attr) ? attr.includes(pakName) : attr === pakName;
+      });
+      if (modMatch) {
+        return modMatch.attributes.customFileName ?? modMatch.attributes.logicalFileName ?? modMatch.attributes.name;
+      }
+      return undefined;
+    } catch { return undefined; }
+  };
+
+  const getModId = (pakName) => {
+    try {
+      const modMatch = Object.values(mods).find(mod => {
+        const attr = util.getSafe(mod, ['attributes', LO_ATTRIBUTE_LOGIC], []);
+        return Array.isArray(attr) ? attr.includes(pakName) : attr === pakName;
+      });
+      return modMatch ? modMatch.id : undefined;
+    } catch { return undefined; }
+  };
+
+  const makeEntry = (pakName) => {
+    const modName = getModName(pakName);
+    return {
+      id: pakName,
+      name: modName ? `${modName} (${pakName}${LOGICMODS_EXT})` : `Manual Mod (${pakName}${LOGICMODS_EXT})`,
+      modId: getModId(pakName),
+    };
+  };
+
+  let loadOrder = LO_MOD_ARRAY
+    .filter(entry => pakFiles.includes(entry.id))
+    .map(entry => makeEntry(entry.id));
+
+  for (const pakName of pakFiles) {
+    if (!loadOrder.find(e => e.id === pakName)) {
+      loadOrder.push(makeEntry(pakName));
+    }
+  }
+
+  return loadOrder;
+}
+
+//Write load order for LogicMods/Blueprint pak mods
+async function serializeLogicMods(api, loadOrder) {
+  if (mod_update_all_profile) {
+    return;
+  }
+
+  const state = api.getState();
+  if (selectors.activeGameId(state) !== GAME_ID) return;
+  GAME_PATH = getDiscoveryPath(api);
+  const profile = selectors.activeProfile(state);
+  const bpmlFolder = path.join(GAME_PATH, BINARIES_PATH, UE4SS_MOD_PATH, BPML_FOLDER);
+  const jsonPath = path.join(bpmlFolder, profile.id + '_' + LOGICMODS_LO_FILE);
+  await fs.writeFileAsync(jsonPath, JSON.stringify(loadOrder, null, 2), { encoding: 'utf8' });
+
+  const loTxtPath = path.join(bpmlFolder, BPML_LO_FILE);
+  await fs.ensureFileAsync(loTxtPath);
+  await fs.writeFileAsync(
+    loTxtPath,
+    loadOrder.map(e => e.id).join('\n'),
+    { encoding: 'utf8' },
+  );
+}
+
+//Generate UE4SS + LogicMods load order data for inclusion in a collection
+async function genUe4ssCollectionsData(api, gameId, includedMods) {
+  const state = api.getState();
+  const profileId = selectors.lastActiveProfileForGame(state, gameId);
+  if (profileId === undefined) {
+    return Promise.reject(new Error('Invalid profile - cannot generate UE4SS load order collection data'));
+  }
+  const result = {};
+  if (ue4ssLoadOrder) {
+    const lo = util.getSafe(state, ['persistent', 'ue4ssLoadOrder', profileId, 'loadOrder'], []);
+    result.ue4ssLoadOrder = lo
+      .filter(entry => (entry.modId !== undefined) && includedMods.includes(entry.modId))
+      .map(entry => ({ id: entry.id, enabled: entry.enabled, locked: entry.locked }));
+  }
+  if (logicModsLoadOrder) {
+    const lo = util.getSafe(state, ['persistent', 'logicModsLoadOrder', profileId, 'loadOrder'], []);
+    result.logicModsLoadOrder = lo
+      .filter(entry => (entry.modId !== undefined) && includedMods.includes(entry.modId))
+      .map(entry => ({ id: entry.id }));
+  }
+  return Promise.resolve(result);
+}
+
+//Apply UE4SS + LogicMods load order data from an installed collection
+async function parseUe4ssCollectionsData(api, gameId, collection) {
+  const state = api.getState();
+  const profileId = selectors.lastActiveProfileForGame(state, gameId);
+  if (profileId === undefined) {
+    return Promise.reject(new Error('Invalid profile - cannot apply UE4SS load order collection data'));
+  }
+  const ue4ssLO = collection?.ue4ssLoadOrder;
+  const logicLO = collection?.logicModsLoadOrder;
+  GAME_PATH = getDiscoveryPath(api);
+  if (ue4ssLoadOrder && Array.isArray(ue4ssLO) && (ue4ssLO.length > 0)) {
+    api.store.dispatch(setUe4ssLoadOrder(profileId, ue4ssLO));
+    if (GAME_PATH !== undefined) {
+      try {
+        const modFolderPath = path.join(GAME_PATH, BINARIES_PATH, UE4SS_MOD_PATH);
+        await fs.ensureDirWritableAsync(modFolderPath);
+        await fs.writeFileAsync(
+          path.join(modFolderPath, profileId + '_' + UE4SS_LO_FILE),
+          JSON.stringify(ue4ssLO, null, 2),
+          { encoding: 'utf8' },
+        );
+      } catch (err) {
+        log('warn', `[${GAME_ID}] Failed to write UE4SS load order file from collection`, err);
+      }
+    }
+  }
+  if (logicModsLoadOrder && Array.isArray(logicLO) && (logicLO.length > 0)) {
+    api.store.dispatch(setLogicModsLoadOrder(profileId, logicLO));
+    if (GAME_PATH !== undefined) {
+      try {
+        const bpmlFolder = path.join(GAME_PATH, BINARIES_PATH, UE4SS_MOD_PATH, BPML_FOLDER);
+        await fs.ensureDirWritableAsync(bpmlFolder);
+        await fs.writeFileAsync(
+          path.join(bpmlFolder, profileId + '_' + LOGICMODS_LO_FILE),
+          JSON.stringify(logicLO, null, 2),
+          { encoding: 'utf8' },
+        );
+      } catch (err) {
+        log('warn', `[${GAME_ID}] Failed to write LogicMods load order file from collection`, err);
+      }
+    }
+  }
+  return Promise.resolve();
 }
 
 // AUTOMATIC MOD DOWNLOADERS ///////////////////////////////////////////////////
@@ -1472,7 +2049,7 @@ async function downloadUe4ss(api, gameSpec) {
               util.batchDispatch(api.store, batched); // Will dispatch both actions.
               return resolve();
             });
-          }, 
+          },
           'never',
           { allowInstall: false },
         );
@@ -1597,7 +2174,7 @@ function checkPartitions(folder, discoveryPath) {
     // Ensure all folders exist
     fs.ensureDirSync(path1);
     fs.ensureDirSync(path2);
-    fs.ensureDirSync(path3); 
+    fs.ensureDirSync(path3);
     // Get the stats for all folders
     const stats1 = fs.statSync(path1);
     const stats2 = fs.statSync(path2);
@@ -1659,7 +2236,7 @@ function partitionCheckNotify(api, CHECK_CONFIG) {
 async function resolveGameVersion(gamePath, exePath) {
   GAME_VERSION = await setGameVersionPath(gamePath);
   //SHIPPING_EXE = getShippingExe(gamePath);
-  const READ_FILE = path.join(gamePath, EXEC_DEFAULT);
+  const READ_FILE = path.join(gamePath, SHIPPING_EXE);
   let version = '0.0.0';
   if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
     try { //try to parse appxmanifest.xml
@@ -1677,7 +2254,7 @@ async function resolveGameVersion(gamePath, exePath) {
       const exeVersion = require('exe-version');
       version = await exeVersion.getProductVersion(READ_FILE);
       //log('warn', `Resolved game version for ${GAME_ID} to: ${version}`);
-      return Promise.resolve(version); 
+      return Promise.resolve(version);
     } catch (err) {
       log('error', `Could not read ${READ_FILE} file to get Steam game version: ${err}`);
       return Promise.resolve(version);
@@ -1717,7 +2294,7 @@ function legacyModsNotify(api, legacyMods) {
                   3. Click the "Reinstall" button in the blue ribbon at the bottom of the Mods page.\n
                   4. You can now sort all of your pak mods in the Load Order tab.\n`
                 + `\n`
-                + `Pak Mods to Reinstall:\n` 
+                + `Pak Mods to Reinstall:\n`
                 + `${legacyMods.join('\n')}`
                 + `\n`
                 + `\n`
@@ -1787,10 +2364,12 @@ async function setup(discovery, api, gameSpec) {
       }
     }
   ); //*/
-  downloadModMergerNotify(api, gameSpec);
+  if (!isModMergerInstalled(api, gameSpec)) {
+    downloadModMergerNotify(api, gameSpec);
+  }
   //await downloadUe4ss(api, gameSpec);
   GAME_VERSION = await setGameVersionPath(GAME_PATH);
-  if (GAME_VERSION === 'steam') { 
+  if (GAME_VERSION === 'steam') {
     const SPLIT_PATH = GAME_PATH.split(path.sep);
     const SPLIT_PATH_LENGTH = SPLIT_PATH.length;
     const STEAM_INSTALL_PATH = SPLIT_PATH.slice(0, SPLIT_PATH_LENGTH - 2).join(path.sep);
@@ -1798,6 +2377,9 @@ async function setup(discovery, api, gameSpec) {
   } //*/
   //MODTYPE_FOLDERS.push(SCRIPTS_PATH);
   await fs.ensureDirWritableAsync(path.join(GAME_PATH, SCRIPTS_PATH));
+  if (logicModsLoadOrder) {
+    await fs.ensureDirWritableAsync(path.join(GAME_PATH, SCRIPTS_PATH, BPML_FOLDER));
+  }
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 
@@ -1825,6 +2407,31 @@ function applyGame(context, gameSpec) {
     }, (game) => pathPattern(context.api, game, type.targetPath), () => Promise.resolve(false), { name: type.name });
   });
 
+  //Pak modType (sortable UE5 paks)
+  context.registerModType(UE5_SORTABLE_ID, 25,
+    (gameId) => {
+      var _a;
+      return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
+    },
+    (game) => pathPattern(context.api, game, path.join('{gamePath}', UNREALDATA.modsPath)),
+    () => Promise.resolve(false),
+    { name: UE5_SORTABLE_NAME,
+      mergeMods: mod => loadOrderPrefix(context.api, mod) + mod.id
+    }
+  );
+  //Legacy shared/buggy modtype id from before per-game ids existed - kept only to prompt reinstall via legacyModsNotify (see setup())
+  context.registerModType(LEGACY_UE5_SORTABLE_ID, 65,
+    (gameId) => {
+      var _a;
+      return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
+    },
+    (game) => pathPattern(context.api, game, path.join('{gamePath}', UNREALDATA.modsPath)),
+    () => Promise.resolve(false),
+    { name: 'Legacy UE - REINSTALL TO SORT',
+      mergeMods: mod => 'ZZZZ-' + mod.id
+    }
+  );
+
   //register mod types explicitly
   context.registerModType(SCRIPTS_ID, 40,
     (gameId) => {
@@ -1844,7 +2451,7 @@ function applyGame(context, gameSpec) {
     () => Promise.resolve(false),
     { name: DLL_NAME }
   );
-  context.registerModType(CONFIG_ID, 44, 
+  context.registerModType(CONFIG_ID, 44,
     (gameId) => {
       GAME_PATH = getDiscoveryPath(context.api);
       if (GAME_PATH !== undefined) {
@@ -1852,20 +2459,21 @@ function applyGame(context, gameSpec) {
       }
       return ((gameId === GAME_ID) && (CHECK_CONFIG === true));
     },
-    (game) => pathPattern(context.api, game, CONFIG_PATH), 
-    () => Promise.resolve(false), 
+    (game) => pathPattern(context.api, game, CONFIG_PATH),
+    () => Promise.resolve(false),
     { name: CONFIG_NAME }
   );
-  context.registerModType(SAVE_ID, 46, 
+  context.registerModType(SAVE_ID, 46,
     (gameId) => {
       GAME_PATH = getDiscoveryPath(context.api);
       if (GAME_PATH !== undefined) {
         CHECK_CONFIG = checkPartitions(LOCALAPPDATA, GAME_PATH);
+        GAME_VERSION = setGameVersionSync(GAME_PATH);
       }
-      return ((gameId === GAME_ID) && (CHECK_CONFIG === true));
-    }, 
+      return ((gameId === GAME_ID) && (CHECK_CONFIG === true) && SAVE_COMPAT_VERSIONS.includes(GAME_VERSION));
+    },
     (game) => getSavePath(context.api, game),
-    () => Promise.resolve(false), 
+    () => Promise.resolve(false),
     { name: SAVE_NAME }
   );
   context.registerModType(BINARIES_ID, 48,
@@ -1904,14 +2512,14 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(UE4SSCOMBO_ID, 29, testUe4ssCombo, installUe4ssCombo);
   context.registerInstaller(LOGICMODS_ID, 31, testLogic, installLogic);
   context.registerInstaller(HERBATAMOD_ID, 33, testHerbataMod, installHerbataMod);
-  //35 is pak installer above
+  context.registerInstaller(UE5_SORTABLE_ID, UE5_PAK_PRIORITY, testPak, (files) => installPak(context.api, files));
   context.registerInstaller(UE4SS_ID, 37, testUe4ss, installUe4ss);
-  context.registerInstaller(SCRIPTS_ID, 39, testScripts, installScripts);
-  context.registerInstaller(DLL_ID, 41, testDll, installDll);
+  context.registerInstaller(SCRIPTS_ID, 39, testScripts, (files, fileName) => installScripts(context.api, files, fileName));
+  context.registerInstaller(DLL_ID, 41, testDll, (files, fileName) => installDll(context.api, files, fileName));
   context.registerInstaller(ROOT_ID, 43, testRoot, installRoot);
   context.registerInstaller(CONFIG_ID, 45, testConfig, (files) => installConfig(context.api, files));
   context.registerInstaller(SAVE_ID, 47, testSave, (files) => installSave(context.api, files));
-  context.registerInstaller(BINARIES_ID, 49, testBinaries, installBinaries);
+  context.registerInstaller(BINARIES_ID, 49, testBinaries, (files, fileName) => installBinaries(context.api, files, fileName));
 
   //register actions
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Steam Workshop Mods Folder', () => {
@@ -2004,9 +2612,9 @@ function applyGame(context, gameSpec) {
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open UE4SS mods.json', () => {
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open UE4SS mods.txt', () => {
     GAME_PATH = getDiscoveryPath(context.api);
-    util.opn(path.join(GAME_PATH, BINARIES_PATH, UE4SS_MODSJSON_FILEPATH)).catch(() => null);
+    util.opn(path.join(GAME_PATH, BINARIES_PATH, UE4SS_MODSTXT_FILEPATH)).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
@@ -2053,30 +2661,78 @@ function applyGame(context, gameSpec) {
 
 //Main function
 function main(context) {
-  UNREALEXTENSION(context);
   applyGame(context, spec);
   if (UNREALDATA.loadOrder === true) { //UNREAL - mod load order
-    let previousLO;
-    context.registerLoadOrderPage({
+    context.registerLoadOrder({
       gameId: spec.game.id,
-      gameArtURL: path.join(__dirname, spec.game.logo),
-      preSort: (items, direction) => preSort(context.api, items, direction),
-      filter: mods => mods.filter(mod => mod.type === UE5_SORTABLE_ID),
-      displayCheckboxes: false,
-      callback: (loadOrder) => {
-        if (previousLO === undefined) previousLO = loadOrder;
-        if (loadOrder === previousLO) return;
-        //context.api.store.dispatch(actions.setDeploymentNecessary(spec.game.id, true));
-        requestDeployment(context, spec);
-        previousLO = loadOrder;
+      validate: async () => Promise.resolve(undefined),
+      deserializeLoadOrder: async () => await deserializeLoadOrder(context),
+      serializeLoadOrder: async (loadOrder) => await serializeLoadOrder(context, loadOrder),
+      toggleableEntries: false,
+      usageInstructions: LoadOrderInstructions,
+      customItemRenderer: LoadOrderItemRenderer,
+    });
+  }
+  if (ue4ssLoadOrder) {
+    context.registerReducer(['settings', GAME_ID], {
+      reducers: {
+        [setUe4ssLoEnabled.toString()]: (state, payload) => util.setSafe(state, ['ue4ssLoEnabled'], payload),
       },
-      createInfoPanel: () =>
-        context.api.translate(`Drag and drop the mods on the left to change the order in which they load.\n` 
-          + `${spec.game.name} loads mods in alphanumerical order, so Vortex prefixes the folder names with "AAA, AAB, AAC, ..." to ensure they load in the order you set here.\n`
-          + 'The number in the left column represents the overwrite order. The changes from mods with higher numbers will take priority over other mods which make similar edits.\n'
-          + '\n'
-          + 'YOU MUST DEPLOY MODS AFTER CHANGING THE ORDER TO APPLY CHANGES.'
-        ),
+      defaults: { ue4ssLoEnabled: true },
+    });
+    context.registerSettings('Mods', GameSettings, () => ({}),
+      () => selectors.activeGameId(context.api.getState()) === GAME_ID, 150
+    );
+    context.registerReducer(['persistent', 'ue4ssLoadOrder'], {
+      reducers: {
+        [setUe4ssLoadOrder.toString()]: (state, payload) => util.setSafe(state, [payload.profileId, 'loadOrder'], payload.loadOrder),
+      },
+      defaults: {},
+    });
+    context.registerMainPage('unreal', 'UE4SS Load Order', Ue4ssLoadOrderPage, {
+      id: `${GAME_ID}-ue4ss-loadorder`,
+      priority: 31,
+      group: 'per-game',
+      hotkey: 'U',
+      mdi: UE4SS_ICON,
+      visible: () => {
+        const state = context.api.store.getState();
+        const gameId = selectors.activeGameId(state);
+        return gameId === GAME_ID && ue4ssLoadOrder;
+      },
+      props: () => ({ api: context.api }),
+    });
+  }
+  if (collectionsLoadOrder && (ue4ssLoadOrder || logicModsLoadOrder)) {
+    context.optional.registerCollectionFeature(
+      `${GAME_ID}_ue4ss_collection_data`,
+      (gameId, includedMods) => genUe4ssCollectionsData(context.api, gameId, includedMods),
+      (gameId, collection) => parseUe4ssCollectionsData(context.api, gameId, collection),
+      () => Promise.resolve(),
+      (t) => t('UE4SS Load Orders'),
+      (state, gameId) => gameId === GAME_ID,
+      CollectionsDataView,
+    );
+  }
+  if (logicModsLoadOrder) {
+    context.registerReducer(['persistent', 'logicModsLoadOrder'], {
+      reducers: {
+        [setLogicModsLoadOrder.toString()]: (state, payload) => util.setSafe(state, [payload.profileId, 'loadOrder'], payload.loadOrder),
+      },
+      defaults: {},
+    });
+    context.registerMainPage('unreal', 'LogicMods Load Order', LogicModsLoadOrderPage, {
+      id: `${GAME_ID}-logicmods-loadorder`,
+      priority: 32,
+      group: 'per-game',
+      hotkey: 'L',
+      mdi: BLUEPRINT_ICON,
+      visible: () => {
+        const state = context.api.store.getState();
+        const gameId = selectors.activeGameId(state);
+        return gameId === GAME_ID && logicModsLoadOrder;
+      },
+      props: () => ({ api: context.api }),
     });
   }
   context.once(() => { // put code here that should be run (once) when Vortex starts up
@@ -2089,14 +2745,40 @@ function main(context) {
     }); //*/
     context.api.onAsync('did-deploy', (profileId) => didDeploy(context.api, profileId)); //*/
     context.api.onAsync('did-purge', (profileId) => didPurge(context.api, profileId)); //*/
+    //detect mod update (to maintain LO position)
+    api.events.on('mod-update', (gameId, modId) => {
+      if (GAME_ID === gameId) {
+        updateModIds.add(String(modId));
+      }
+    });
+    //detect mod removal (to maintain LO position) - match on the Nexus mod id
+    //recorded in state (attributes.modId), not the local modId string: the
+    //local id's naming convention varies by when the mod was originally
+    //downloaded (older dash-delimited vs current space-delimited), so string
+    //parsing silently misses old installs.
+    api.events.on('remove-mod', (gameMode, modId) => {
+      const removedMod = util.getSafe(api.getState(), ['persistent', 'mods', GAME_ID, modId], undefined);
+      const nexusModId = removedMod?.attributes?.modId;
+      if (nexusModId !== undefined && updateModIds.has(String(nexusModId))) {
+        mod_update_all_profile = true;
+      }
+    });
+    //detect mod installation (to maintain LO position). This only gates the
+    //fallback-installer re-notify suppression, so a best-effort filename
+    //match (covering both the old dash and current space delimiter) is fine.
+    api.events.on('will-install-mod', (gameId, archiveId, modId) => {
+      updating_mod = GAME_ID === gameId && Array.from(updateModIds).some((id) =>
+        modId.includes('-' + id + '-') || modId.includes(' ' + id + ' ')
+      );
+    });
   });
   return true;
 }
 
-const requestDeployment = (context, spec) => {
-  context.api.store.dispatch(actions.setDeploymentNecessary(spec.game.id, true));
+const requestDeployment = (api, spec) => {
+  api.store.dispatch(actions.setDeploymentNecessary(spec.game.id, true));
 
-  context.api.sendNotification({
+  api.sendNotification({
     id: `${spec.game.id}-loadorderdeploy-notif`,
     type: 'warning',
     message: 'Deployment Required to Apply Load Order Changes',
@@ -2104,7 +2786,10 @@ const requestDeployment = (context, spec) => {
     actions: [
       {
         title: 'Deploy',
-        action: () => deploy(context.api)
+        action: (dismiss) => {
+          deploy(api);
+          dismiss();
+        }
       }
     ],
   });
@@ -2116,6 +2801,68 @@ async function didDeploy(api, profileId) { //run on mod deploy
   const gameId = profile === null || profile === void 0 ? void 0 : profile.gameId;
   if (gameId !== GAME_ID) {
     return Promise.resolve();
+  }
+  mod_update_all_profile = false; //reset all-profile flag on deploy
+  updating_mod = false; //reset updating flag on deploy
+  updateModIds.clear(); //reset tracked updated modIds on deploy
+  if (ue4ssLoadOrder && isUe4ssInstalled(api, spec)) {
+    const loEnabled = util.getSafe(state, ['settings', GAME_ID, 'ue4ssLoEnabled'], true);
+    if (loEnabled) {
+      let UE4SS_LOAD_ORDER;
+      try {
+        UE4SS_LOAD_ORDER = await deserializeUe4ss(api);
+        api.store.dispatch(setUe4ssLoadOrder(profileId, UE4SS_LOAD_ORDER));
+      } catch (err) {
+        log('error', `[${GAME_ID}] didDeploy: deserializeUe4ss failed, falling back to store state`, err);
+        UE4SS_LOAD_ORDER = util.getSafe(state, ['persistent', 'ue4ssLoadOrder', profileId, 'loadOrder'], []);
+      }
+      if (UE4SS_LOAD_ORDER.length > 0) {
+        await serializeUe4ss(api, UE4SS_LOAD_ORDER);
+      }
+    }
+  }
+  if (logicModsLoadOrder && isUe4ssInstalled(api, spec)) {
+    let LO;
+    try {
+      LO = await deserializeLogicMods(api);
+      api.store.dispatch(setLogicModsLoadOrder(profileId, LO));
+    } catch (err) {
+      log('error', `[${GAME_ID}] didDeploy: deserializeLogicMods failed, falling back to store state`, err);
+      LO = util.getSafe(state, ['persistent', 'logicModsLoadOrder', profileId, 'loadOrder'], []);
+    }
+    if (LO.length > 0) {
+      await serializeLogicMods(api, LO);
+    }
+  }
+  if (writeEngineVersion && isUe4ssInstalled(api, spec)) {
+    try {
+      GAME_PATH = getDiscoveryPath(api);
+      const INI_PATH = path.join(GAME_PATH, BINARIES_PATH, UE4SS_SETTINGS_FILEPATH);
+      await fs.statAsync(INI_PATH); //check if UE4SS settings file exists
+      let engineMajor = MAJOR_VERSION;
+      let engineMinor = MINOR_VERSION;
+      try { //try to read the real engine version from the shipping exe file properties first
+        const exeVersion = require('exe-version');
+        const exeProductVersion = await exeVersion.getProductVersion(path.join(GAME_PATH, SHIPPING_EXE));
+        const [exeMajor, exeMinor] = exeProductVersion.split('.');
+        if (exeMajor && exeMinor) {
+          engineMajor = exeMajor;
+          engineMinor = exeMinor;
+        }
+      } catch (err) {
+        log('info', `[${GAME_ID}] Could not read engine version from shipping exe, falling back to ENGINE_VERSION constant: ${err.message}`);
+      }
+      const parser = new IniParser(new WinapiFormat());
+      const contents = await parser.read(INI_PATH);
+      const data = contents.data;
+      data.EngineVersionOverride.MajorVersion = ` ${engineMajor}`; // Set the UE Engine version
+      data.EngineVersionOverride.MinorVersion = ` ${engineMinor}`;
+      //data.EngineVersionOverride.DebugBuild = ` 0`;
+      await parser.write(INI_PATH, contents); //write the INI file
+    }
+    catch (err) {
+      log('info', `[${GAME_ID}] Failed to read UE4SS Settings INI file and write Engine Version: ${err.message}`);
+    }
   }
   api.dismissNotification(`${GAME_ID}-loadorderdeploy-notif`);
   //await deployMerge(api);
@@ -2131,8 +2878,8 @@ async function deployMerge(api) { //run after mod deployment
       [],
       {
         //cwd: path.join(GAME_PATH, MERGER_FOLDER),
-        //shell: true, 
-        //detached: true, 
+        //shell: true,
+        //detached: true,
       }
     );
     //*/
@@ -2140,10 +2887,10 @@ async function deployMerge(api) { //run after mod deployment
     const proc = child_process.spawn(
       'cmd.exe',
       [`start ${path.join(GAME_PATH, MERGER_FOLDER, MERGER_FILE)}`],
-      { 
+      {
         //cwd: path.join(GAME_PATH, MERGER_FOLDER),
-        //shell: true, 
-        //detached: true, 
+        //shell: true,
+        //detached: true,
       }
     );
     //*/
@@ -2215,6 +2962,1476 @@ async function didPurge(api, profileId) { //run on mod purge
     }
   }
   return Promise.resolve();
+}
+
+//React load order instructions renderer
+function LoadOrderInstructions() {
+  const { statusFilter, setStatusFilter } = usePakLOState();
+  const { useSelector } = require('react-redux');
+  const profile = useSelector((state) => selectors.activeProfile(state));
+  const loadOrder = useSelector((state) => util.getSafe(state, ['persistent', 'loadOrder', profile?.id], []));
+  const modState = useSelector((state) => util.getSafe(state, ['persistent', 'profiles', profile?.id, 'modState'], {}));
+  const isLocked = (entry) => [true, 'true', 'always'].includes(entry?.locked);
+  const isEnabled = (entry) => util.getSafe(modState, [entry.modId, 'enabled'], false);
+  const total = loadOrder.length;
+  const matched = statusFilter.size > 0
+    ? loadOrder.filter((e) => matchesStatus(e, statusFilter, isEnabled, isLocked)).length
+    : total;
+  React.useEffect(() => {
+    const styleId = 'fblo-status-filter-hide-style';
+    if (!globalThis.document.getElementById(styleId)) {
+      const style = globalThis.document.createElement('style');
+      style.id = styleId;
+      style.textContent = '.file-based-load-order-list .list-group > div:has(.lo-row-hidden) { display: none !important; }';
+      globalThis.document.head.appendChild(style);
+    }
+  }, []);
+  return React.createElement('div', null,
+    React.createElement(StatusPills, { active: statusFilter, setActive: setStatusFilter, groups: ['enabled', 'locked', 'unmanaged'], count: statusFilter.size > 0 ? { matched, total } : null }),
+    React.createElement('p', { style: { fontStyle: 'italic', color: '#7ec8e3' } },
+      'Filter the list above by status. Clear the filter before reordering mods.',
+    ),
+    React.createElement('br', null),
+    React.createElement('p', null,
+      'Drag and drop the mods on the left to change the order in which they load. ',
+    ),
+    React.createElement('br', null),
+    React.createElement('p', null,
+      `${GAME_NAME_SHORT} loads mods in alphanumerical order, so Vortex prefixes the folder `,
+      'names with "AAA, AAB, AAC, ..." to ensure they load in the order you set here. ',
+      'The number in the left column represents the overwrite order. Changes from ',
+      'mods with higher numbers take priority over mods that make similar edits.'
+    ),
+    React.createElement('br', null),
+    React.createElement('p', { style: { fontWeight: 'bold', color: '#7ec8e3' } },
+      'The Enable/Disable button on each row enables or disables the underlying Vortex mod. ',
+      'Disabling a mod here will remove it from this view and disable it on the Mods tab. ',
+      'Re-enabling it on the Mods tab will restore it to the load order.'
+    ),
+    React.createElement('br', null),
+    React.createElement('p', { style: { fontWeight: 'bold' } },
+      'YOU MUST DEPLOY MODS AFTER CHANGING THE ORDER TO APPLY CHANGES! ',
+      '- This is required to rename the folders for the correct order.'
+    ),
+    React.createElement('br', null),
+    React.createElement('p', { style: { fontStyle: 'italic', color: 'yellow', fontWeight: 'bold' } },
+      'Note: This page manages Pak mods only. UE4SS mod load order is managed on the UE4SS Load Order page.'
+    ),
+    React.createElement('br', null),
+    React.createElement('p', { style: { color: 'yellow', fontWeight: 'bold' } },
+      SPECIAL_LO_INSTRUCTIONS
+    )
+  );
+}
+
+//* PAK LO selection + context menu + status filter state (module-level pub-sub, shared across all item renderer instances)
+let _pakSelectedIds = new Set();
+let _pakContextMenu = null;
+let _pakStatusFilter = new Set();
+const _pakListeners = new Set();
+function _notifyPak() { _pakListeners.forEach(l => l()); }
+function usePakLOState() {
+  const [, forceUpdate] = React.useReducer(x => x + 1, 0);
+  React.useEffect(() => {
+    _pakListeners.add(forceUpdate);
+    return () => _pakListeners.delete(forceUpdate);
+  }, []);
+  return {
+    selectedIds: _pakSelectedIds,
+    setSelectedIds: (fn) => { _pakSelectedIds = fn(_pakSelectedIds); _notifyPak(); },
+    contextMenu: _pakContextMenu,
+    setContextMenu: (val) => { _pakContextMenu = val; _notifyPak(); },
+    statusFilter: _pakStatusFilter,
+    setStatusFilter: (next) => { _pakStatusFilter = next; _notifyPak(); },
+  };
+}
+
+//Resolve the mod page URL for a Vortex-managed load order entry (undefined when not resolvable).
+function getModPageURL(api, vortexModId) {
+  if (vortexModId === undefined) return undefined;
+  const attributes = util.getSafe(api.getState(), ['persistent', 'mods', GAME_ID, vortexModId, 'attributes'], {});
+  if (attributes.homepage) return attributes.homepage;
+  if (attributes.source === 'nexus' && attributes.modId !== undefined) {
+    return `https://www.nexusmods.com/${GAME_ID}/mods/${attributes.modId}`;
+  }
+  return undefined;
+}
+
+//Resolve the staging folder of a Vortex-managed load order entry (undefined when not resolvable)
+function getModStagingFolder(api, vortexModId) {
+  if (vortexModId === undefined) return undefined;
+  const state = api.getState();
+  const installationPath = util.getSafe(state, ['persistent', 'mods', GAME_ID, vortexModId, 'installationPath'], undefined);
+  const stagingPath = selectors.installPathForGame(state, GAME_ID);
+  if (!installationPath || !stagingPath) return undefined;
+  return path.join(stagingPath, installationPath);
+}
+
+//Status filter shared helpers (load order pages). Groups combine with AND across, OR within.
+const STATUS_GROUP_TOKENS = { enabled: ['enabled', 'disabled'], locked: ['locked', 'unlocked'], unmanaged: ['unmanaged'] };
+const STATUS_TOKEN_LABELS = { enabled: 'Enabled', disabled: 'Disabled', locked: 'Locked', unlocked: 'Unlocked', unmanaged: 'Unmanaged' };
+
+function matchesStatus(entry, active, isEnabledFn, isLockedFn) {
+  if (active.has('enabled') || active.has('disabled')) {
+    const en = isEnabledFn(entry);
+    if (!((active.has('enabled') && en) || (active.has('disabled') && !en))) return false;
+  }
+  if (active.has('locked') || active.has('unlocked')) {
+    const lk = isLockedFn(entry);
+    if (!((active.has('locked') && lk) || (active.has('unlocked') && !lk))) return false;
+  }
+  if (active.has('unmanaged') && entry.modId !== undefined) return false;
+  return true;
+}
+
+//Inline toggle pills for status filtering (used in the InfoPanel surfaces, i.e. the core FBLO page)
+function StatusPills({ active, setActive, groups, count }) {
+  const { Button } = require('react-bootstrap');
+  const tokens = groups.reduce((acc, g) => acc.concat(STATUS_GROUP_TOKENS[g] || []), []);
+  const toggle = (token) => {
+    const next = new Set(active);
+    next.has(token) ? next.delete(token) : next.add(token);
+    setActive(next);
+  };
+  return React.createElement('div', { style: { display: 'flex', flexWrap: 'wrap', gap: 4, alignItems: 'center', marginBottom: 8 } },
+    React.createElement('span', { style: { fontWeight: 'bold', marginRight: 4 } }, 'Filter:'),
+    count != null ? React.createElement('span', { style: { color: '#7ec8e3', marginRight: 4 } }, `${count.matched} / ${count.total}`) : null,
+    ...tokens.map(token => React.createElement(Button, {
+      key: token,
+      bsSize: 'xsmall',
+      bsStyle: active.has(token) ? 'success' : 'default',
+      style: active.has(token) ? { fontWeight: 'bold' } : undefined,
+      onClick: () => toggle(token),
+    }, STATUS_TOKEN_LABELS[token])),
+    active.size > 0 ? React.createElement(Button, {
+      key: '__clear',
+      bsSize: 'xsmall',
+      bsStyle: 'link',
+      onClick: () => setActive(new Set()),
+    }, 'Clear') : null,
+  );
+}
+
+//Dropdown status filter (used on the custom UE4SS/LogicMods pages, beside the text search box).
+function LoadOrderStatusFilter({ active, setActive, groups, count }) {
+  const { Button } = require('react-bootstrap');
+  const { Icon } = require('vortex-api');
+  const [open, setOpen] = React.useState(false);
+  const ref = React.useRef(null);
+  const tokens = groups.reduce((acc, g) => acc.concat(STATUS_GROUP_TOKENS[g] || []), []);
+
+  React.useEffect(() => {
+    if (!open) return;
+    const dismiss = (evt) => { if (ref.current && !ref.current.contains(evt.target)) setOpen(false); };
+    const onKey = (evt) => { if (evt.key === 'Escape') setOpen(false); };
+    globalThis.document.addEventListener('click', dismiss);
+    globalThis.document.addEventListener('contextmenu', dismiss);
+    globalThis.document.addEventListener('keydown', onKey);
+    return () => {
+      globalThis.document.removeEventListener('click', dismiss);
+      globalThis.document.removeEventListener('contextmenu', dismiss);
+      globalThis.document.removeEventListener('keydown', onKey);
+    };
+  }, [open]);
+
+  const toggle = (token) => {
+    const next = new Set(active);
+    next.has(token) ? next.delete(token) : next.add(token);
+    setActive(next);
+  };
+
+  return React.createElement('div', { ref, style: { position: 'relative', display: 'inline-block', marginLeft: 8 } },
+    React.createElement(Button, {
+      bsStyle: active.size > 0 ? 'success' : 'primary',
+      style: { display: 'flex', alignItems: 'center', gap: 6, fontWeight: 'bold' },
+      onClick: (evt) => { evt.stopPropagation(); setOpen(o => !o); },
+    },
+      React.createElement(Icon, { name: 'filter' }),
+      `Filter${active.size > 0 ? ` (${active.size})` : ''}${count != null ? ` — ${count.matched}/${count.total}` : ''}`,
+    ),
+    open ? React.createElement('div', {
+      style: {
+        position: 'absolute', top: '100%', right: 0, zIndex: 9999, marginTop: 2,
+        background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.2)', borderRadius: 4,
+        padding: '6px 0', minWidth: 160, boxShadow: '0 4px 12px rgba(0,0,0,0.6)',
+      },
+    },
+      tokens.map(token => React.createElement('label', {
+        key: token,
+        style: { display: 'flex', alignItems: 'center', gap: 6, padding: '4px 12px', cursor: 'pointer', margin: 0 },
+      },
+        React.createElement('input', { type: 'checkbox', checked: active.has(token), onChange: () => toggle(token) }),
+        STATUS_TOKEN_LABELS[token],
+      )),
+      active.size > 0 ? React.createElement('div', {
+        style: { padding: '4px 12px', cursor: 'pointer', color: '#7ec8e3', borderTop: '1px solid rgba(255,255,255,0.1)', marginTop: 4 },
+        onClick: () => setActive(new Set()),
+      }, 'Clear') : null,
+    ) : null,
+  );
+}
+
+function LoadOrderItemRenderer(props) {
+  const { className, item } = props;
+  if (item?.loEntry === undefined) return null;
+
+  const { ListGroupItem, Checkbox } = require('react-bootstrap');
+  const { Icon, LoadOrderIndexInput, MainContext } = require('vortex-api');
+  const { useSelector, useDispatch } = require('react-redux');
+
+  const context = React.useContext(MainContext);
+  const dispatch = useDispatch();
+
+  const profile = useSelector((state) => selectors.activeProfile(state));
+  const loadOrder = useSelector((state) =>
+    util.getSafe(state, ['persistent', 'loadOrder', profile?.id], []),
+  );
+
+  const { loEntry, displayCheckboxes } = item;
+  const mods = useSelector((state) => util.getSafe(state, ['persistent', 'mods', GAME_ID], {}));
+  const pictureUrl = mods[loEntry.modId]?.attributes?.pictureUrl;
+  const currentIdx = loadOrder.findIndex((e) => e.id === loEntry.id) + 1;
+  const isModEnabled = useSelector(state =>
+    util.getSafe(state, ['persistent', 'profiles', profile?.id, 'modState', loEntry.modId, 'enabled'], false));
+
+  const isLocked = (entry) => [true, 'true', 'always'].includes(entry?.locked);
+  const lockedCount = loadOrder.filter(isLocked).length;
+
+  const onApplyIndex = React.useCallback((idx) => {
+    if (currentIdx === idx) return;
+    const newLO = loadOrder.filter((e) => e.id !== loEntry.id);
+    newLO.splice(idx - 1, 0, loEntry);
+    dispatch(actions.setFBLoadOrder(profile.id, newLO));
+  }, [dispatch, profile, loadOrder, loEntry, currentIdx]);
+
+  const onToggle = React.useCallback((evt) => {
+    dispatch(actions.setFBLoadOrderEntry(profile.id, { ...loEntry, enabled: evt.target.checked }));
+  }, [dispatch, profile, loEntry]);
+
+  const onModToggle = React.useCallback(() => {
+    if (!loEntry.modId) return;
+    dispatch(actions.setModEnabled(profile.id, loEntry.modId, !isModEnabled));
+    requestDeployment(context.api, spec);
+  }, [dispatch, profile, loEntry.modId, isModEnabled, context]);
+
+  const isEntryLocked = isLocked(loEntry);
+
+  const { selectedIds, setSelectedIds, contextMenu, setContextMenu, statusFilter } = usePakLOState();
+  const isSelected = selectedIds.has(loEntry.id);
+  const allIds = loadOrder.map(e => e.id);
+
+  const onSelect = React.useCallback((evt) => {
+    const ctrlKey = evt.ctrlKey || evt.metaKey;
+    const shiftKey = evt.shiftKey;
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (ctrlKey) {
+        next.has(loEntry.id) ? next.delete(loEntry.id) : next.add(loEntry.id);
+      } else if (shiftKey) {
+        const lastId = [...prev].at(-1);
+        const start = allIds.indexOf(lastId ?? loEntry.id);
+        const end = allIds.indexOf(loEntry.id);
+        const [lo, hi] = [Math.min(start, end), Math.max(start, end)];
+        for (let i = lo; i <= hi; i++) next.add(allIds[i]);
+      } else {
+        next.clear();
+        next.add(loEntry.id);
+      }
+      return next;
+    });
+  }, [loEntry.id, setSelectedIds, allIds]);
+
+  const onContextMenu = React.useCallback((evt) => {
+    evt.preventDefault();
+    evt.stopPropagation();
+    setContextMenu({ x: evt.clientX, y: evt.clientY, itemId: loEntry.id });
+  }, [loEntry.id, setContextMenu]);
+
+  const onLock = React.useCallback(() => {
+    const newLO = loadOrder.map(e => e.id === loEntry.id ? { ...e, locked: !isEntryLocked } : e);
+    dispatch(actions.setFBLoadOrder(profile.id, newLO));
+    serializeLoadOrder(context, newLO);
+  }, [dispatch, context, profile, loadOrder, loEntry, isEntryLocked]);
+
+  React.useEffect(() => {
+    const styleId = 'lo-index-focus-style';
+    if (!globalThis.document.getElementById(styleId)) {
+      const style = globalThis.document.createElement('style');
+      style.id = styleId;
+      style.textContent = '.load-order-index input:focus { background: white !important; color: black !important; } .layout-flex.file-based-load-order-list-outer { overflow: auto; }';
+      globalThis.document.head.appendChild(style);
+    }
+  }, []);
+
+  const classes = ['load-order-entry'];
+  if (className) classes.push(...className.split(' '));
+
+  if (!matchesStatus(loEntry, statusFilter, () => isModEnabled, isLocked)) {
+    return React.createElement(ListGroupItem, { key: loEntry.id, className: 'lo-row-hidden', style: { display: 'none' } });
+  }
+
+  return React.createElement(
+    ListGroupItem,
+    { key: loEntry.id, className: classes.join(' '), onClick: onSelect, onContextMenu: onContextMenu, style: { outline: isSelected ? '2px solid #337ab7' : 'none', outlineOffset: '-1px' } },
+    React.createElement('div', { style: { visibility: isEntryLocked ? 'hidden' : 'visible' } },
+      React.createElement(Icon, { className: 'drag-handle-icon', name: 'drag-handle' }),
+    ),
+    React.createElement('div', { style: { width: 24, flexShrink: 0, overflow: 'hidden' } },
+      React.createElement(LoadOrderIndexInput, {
+        className: 'load-order-index',
+        api: context.api,
+        item: loEntry,
+        currentPosition: currentIdx,
+        lockedEntriesCount: lockedCount,
+        loadOrder: loadOrder,
+        isLocked: isLocked,
+        onApplyIndex: onApplyIndex,
+      }),
+    ),
+    React.createElement('div', {
+      style: { cursor: 'pointer', display: 'flex', alignItems: 'center' },
+      title: isEntryLocked ? 'Unlock position' : 'Lock position',
+      onClick: onLock,
+    },
+      React.createElement(Icon, { name: isEntryLocked ? 'locked' : 'unlocked', style: { color: isEntryLocked ? '#e2c04c' : 'inherit' } }),
+    ),
+    React.createElement('div', { className: 'load-order-thumb-slot', style: { width: LO_IMAGE_WIDTH, height: LO_IMAGE_HEIGHT, marginRight: 4, flexShrink: 0 } },
+      !loEntry.modId ? React.createElement('div', {
+        className: 'load-order-unmanaged-banner',
+        title: 'Not managed by Vortex',
+        style: { width: LO_IMAGE_WIDTH, height: LO_IMAGE_HEIGHT, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, textAlign: 'center', borderRadius: 2, border: '1px solid #e2c04c', background: 'rgba(226,192,76,0.12)', color: '#e2c04c', fontSize: 9, lineHeight: 1.1, padding: 2, pointerEvents: 'none' },
+      },
+        React.createElement(Icon, { className: 'external-caution-logo', name: 'feedback-warning', style: { color: '#e2c04c' } }),
+        React.createElement('span', null, 'Not managed by Vortex'),
+      ) : pictureUrl ? React.createElement('img', {
+        className: 'load-order-thumb',
+        src: pictureUrl,
+        draggable: false,
+        style: { width: LO_IMAGE_WIDTH, height: LO_IMAGE_HEIGHT, objectFit: 'cover', borderRadius: 2, pointerEvents: 'none' },
+      }) : null,
+    ),
+    React.createElement('p', { className: 'load-order-name', style: { whiteSpace: 'normal', wordBreak: 'break-word' } }, loEntry.name),
+    loEntry.modId ? React.createElement('button', {
+      className: 'btn btn-default btn-sm',
+      style: { margin: '0 4px', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4 },
+      onClick: evt => { evt.stopPropagation(); onModToggle(); },
+    },
+      React.createElement(Icon, { name: isModEnabled ? 'toggle-disabled' : 'toggle-enabled' }),
+      isModEnabled ? 'Disable' : 'Enable',
+    ) : null,
+    displayCheckboxes ? React.createElement(Checkbox, {
+      className: 'entry-checkbox',
+      checked: loEntry.enabled,
+      disabled: isLocked(loEntry),
+      onChange: onToggle,
+    }) : null,
+    contextMenu?.itemId === loEntry.id ? React.createElement(PakContextMenu, {
+      x: contextMenu.x, y: contextMenu.y,
+      item: loEntry, loadOrder, profile, dispatch, context, selectedIds, isModEnabled,
+      onClose: () => setContextMenu(null),
+    }) : null,
+  );
+} //*/
+
+function PakContextMenu({ x, y, item, loadOrder, profile, dispatch, context, selectedIds, isModEnabled, onClose }) {
+  React.useEffect(() => {
+    const onKey = (evt) => { if (evt.key === 'Escape') onClose(); };
+    globalThis.document.addEventListener('keydown', onKey);
+    return () => globalThis.document.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  React.useEffect(() => {
+    const dismiss = onClose;
+    globalThis.document.addEventListener('click', dismiss);
+    globalThis.document.addEventListener('contextmenu', dismiss);
+    return () => {
+      globalThis.document.removeEventListener('click', dismiss);
+      globalThis.document.removeEventListener('contextmenu', dismiss);
+    };
+  }, []);
+
+  React.useEffect(() => {
+    const styleId = 'ue4ss-ctx-menu-style';
+    if (!globalThis.document.getElementById(styleId)) {
+      const style = globalThis.document.createElement('style');
+      style.id = styleId;
+      style.textContent = '.ue4ss-ctx-item:hover { background: rgba(255,255,255,0.1); }';
+      globalThis.document.head.appendChild(style);
+    }
+  }, []);
+
+  const isLocked = (e) => [true, 'true', 'always'].includes(e?.locked);
+  const isMulti = selectedIds.size >= 2 && selectedIds.has(item.id);
+  const targets = isMulti ? loadOrder.filter(e => selectedIds.has(e.id)) : [item];
+
+  const applyToTargets = (transform, serialize = false) => {
+    const newLO = transform(loadOrder, targets);
+    dispatch(actions.setFBLoadOrder(profile.id, newLO));
+    if (serialize) serializeLoadOrder(context, newLO);
+    onClose();
+  };
+
+  const isEntryLocked = isLocked(item);
+
+  const setModsEnabled = (entries, enable) => {
+    const batch = entries.filter(e => e.modId)
+      .map(e => actions.setModEnabled(profile.id, e.modId, enable));
+    if (batch.length) {
+      util.batchDispatch(dispatch, batch);
+      requestDeployment(context.api, spec);
+    }
+    onClose();
+  };
+
+  const clampRef = (el) => {
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const vw = globalThis.window.innerWidth;
+    const vh = globalThis.window.innerHeight;
+    if (x + rect.width > vw) el.style.left = `${Math.max(8, vw - rect.width - 8)}px`;
+    if (y + rect.height > vh) el.style.top = `${Math.max(8, vh - rect.height - 8)}px`;
+  };
+  const menuStyle = {
+    position: 'fixed', left: x, top: y, zIndex: 9999,
+    background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.2)',
+    borderRadius: 4, padding: '4px 0', minWidth: 180,
+    boxShadow: '0 4px 12px rgba(0,0,0,0.6)',
+  };
+  const itemStyle = { padding: '6px 16px', cursor: 'pointer', whiteSpace: 'nowrap' };
+  const sepStyle = { borderTop: '1px solid rgba(255,255,255,0.1)', margin: '4px 0' };
+
+  const menuItem = (label, onClick) => React.createElement('div', {
+    className: 'ue4ss-ctx-item',
+    style: itemStyle,
+    onClick: (evt) => { evt.stopPropagation(); onClick(); },
+  }, label);
+
+  if (isMulti) {
+    const n = targets.length;
+    return React.createElement('div', { ref: clampRef, style: menuStyle },
+      menuItem(`Lock Selected (${n})`, () => applyToTargets((lo) => lo.map(e => targets.find(t => t.id === e.id) ? { ...e, locked: true } : e), true)),
+      menuItem(`Unlock Selected (${n})`, () => applyToTargets((lo) => lo.map(e => targets.find(t => t.id === e.id) ? { ...e, locked: false } : e), true)),
+      React.createElement('div', { style: sepStyle }),
+      menuItem(`Move to Top (${n})`, () => applyToTargets((lo) => {
+        const locked = lo.filter(isLocked);
+        const selected = lo.filter(e => targets.find(t => t.id === e.id) && !isLocked(e));
+        const rest = lo.filter(e => !isLocked(e) && !targets.find(t => t.id === e.id));
+        return [...locked, ...selected, ...rest];
+      })),
+      menuItem(`Move to Bottom (${n})`, () => applyToTargets((lo) => {
+        const selected = lo.filter(e => targets.find(t => t.id === e.id));
+        const rest = lo.filter(e => !targets.find(t => t.id === e.id));
+        return [...rest, ...selected];
+      })),
+      React.createElement('div', { style: sepStyle }),
+      menuItem(`Disable Selected (${n})`, () => setModsEnabled(targets, false)),
+    );
+  }
+
+  const modPageUrl = getModPageURL(context.api, item.modId);
+  const stagingFolder = getModStagingFolder(context.api, item.modId);
+
+  return React.createElement('div', { ref: clampRef, style: menuStyle },
+    menuItem(isEntryLocked ? 'Unlock Position' : 'Lock Position', () => applyToTargets((lo) => lo.map(e => e.id === item.id ? { ...e, locked: !isEntryLocked } : e), true)),
+    React.createElement('div', { style: sepStyle }),
+    menuItem('Move to Top', () => applyToTargets((lo) => {
+      const locked = lo.filter(isLocked);
+      const rest = lo.filter(e => !isLocked(e) && e.id !== item.id);
+      return [...locked, item, ...rest];
+    })),
+    menuItem('Move to Bottom', () => applyToTargets((lo) => {
+      const rest = lo.filter(e => e.id !== item.id);
+      return [...rest, item];
+    })),
+    (stagingFolder || modPageUrl) ? React.createElement('div', { style: sepStyle }) : null,
+    stagingFolder ? menuItem('Open Staging Folder', () => { util.opn(stagingFolder).catch(() => null); onClose(); }) : null,
+    modPageUrl ? menuItem('Open Mod Page', () => { util.opn(modPageUrl).catch(() => null); onClose(); }) : null,
+    item.modId && isModEnabled ? React.createElement('div', { style: sepStyle }) : null,
+    item.modId && isModEnabled ? menuItem('Disable Vortex Mod', () => setModsEnabled([item], false)) : null,
+  );
+}
+
+function GameSettings() {
+  const { Toggle, More, MainContext } = require('vortex-api');
+  const { useSelector, useDispatch } = require('react-redux');
+  const dispatch = useDispatch();
+  const { api } = React.useContext(MainContext);
+  const ue4ssLoEnabled = useSelector(state =>
+    util.getSafe(state, ['settings', GAME_ID, 'ue4ssLoEnabled'], true));
+  const onToggle = React.useCallback((checked) => {
+    dispatch(setUe4ssLoEnabled(checked));
+    reconcileEnabledTxt(api, !checked)
+      .catch(err => log('warn', `UE4SS LO reconcile failed: ${err.message}`));
+  }, [api, dispatch]);
+  return React.createElement('form', null,
+    React.createElement('div', { className: 'settings-group' },
+      React.createElement(Toggle, { checked: ue4ssLoEnabled, onToggle },
+        'UE4SS Load Order',
+        React.createElement(More, { id: `${GAME_ID}-ue4ss-lo-more`, name: 'UE4SS Load Order' },
+          'Enable the UE4SS mod load order page and mods.txt management. '
+          + `Disabling will have the extension write ${ENABLEDTXT_FILE} files with no Load Order control.`,
+        ),
+      ),
+    ),
+  );
+}
+
+async function reconcileEnabledTxt(api, write) {
+  const state = api.getState();
+  const stagingPath = selectors.installPathForGame(state, GAME_ID);
+  if (!stagingPath) return;
+
+  const targets = new Set();
+  await util.walk(stagingPath, (iterPath, stats) => {
+    if (!stats.isDirectory()) return Promise.resolve();
+    const base = path.basename(iterPath).toLowerCase();
+    if (base === 'scripts' || base === 'dlls') {
+      if (!UE4SS_NATIVE_MODS.includes(path.basename(path.dirname(iterPath)))) {
+        targets.add(path.dirname(iterPath));
+      }
+    }
+    return Promise.resolve();
+  }, { ignoreErrors: true });
+
+  let touched = 0;
+  for (const parent of targets) {
+    const marker = path.join(parent, ENABLEDTXT_FILE);
+    try {
+      if (write) {
+        try { await fs.statAsync(marker); }
+        catch { await fs.writeFileAsync(marker, ''); touched++; }
+      } else {
+        try { await fs.removeAsync(marker); touched++; }
+        catch (err) { if (err.code !== 'ENOENT') throw err; }
+      }
+    } catch (err) {
+      log('warn', `${ENABLEDTXT_FILE} ${write ? 'write' : 'delete'} failed at ${marker}: ${err.message}`);
+    }
+  }
+
+  api.sendNotification({
+    id: `${GAME_ID}-ue4ss-lo-reconcile`,
+    type: 'success',
+    message: write
+      ? `UE4SS Load Order disabled: wrote ${ENABLEDTXT_FILE} for ${touched} mod folder(s).`
+      : `UE4SS Load Order enabled: cleared ${ENABLEDTXT_FILE} for ${touched} mod folder(s).`,
+    displayMS: 5000,
+  });
+}
+
+//* React components for UE4SS load order page
+const Ue4ssSelectionContext = React.createContext({ selectedIds: new Set(), setSelectedIds: () => {}, allIds: [], contextMenu: null, setContextMenu: () => {} });
+
+function Ue4ssItemRenderer({ className, item }) {
+  const { Checkbox } = require('react-bootstrap');
+  const { Icon, LoadOrderIndexInput, MainContext } = require('vortex-api');
+  const { useSelector, useDispatch } = require('react-redux');
+
+  const vortexContext = React.useContext(MainContext);
+  const dispatch = useDispatch();
+
+  const profileId = useSelector(state => selectors.activeProfile(state)?.id);
+  const loadOrder = useSelector(state =>
+    util.getSafe(state, ['persistent', 'ue4ssLoadOrder', profileId, 'loadOrder'], []));
+  const mods = useSelector(state => util.getSafe(state, ['persistent', 'mods', GAME_ID], {}));
+  const pictureUrl = mods[item.modId]?.attributes?.pictureUrl;
+  const gamePath = useSelector(state => util.getSafe(state, ['settings', 'gameMode', 'discovered', GAME_ID, 'path'], ''));
+
+  const currentIdx = loadOrder.findIndex((e) => e.id === item.id) + 1;
+  const isLocked = (entry) => [true, 'true', 'always'].includes(entry?.locked);
+  const lockedCount = loadOrder.filter(isLocked).length;
+
+  const onApplyIndex = React.useCallback((idx) => {
+    if (currentIdx === idx) return;
+    const newLO = loadOrder.filter((e) => e.id !== item.id);
+    newLO.splice(idx - 1, 0, item);
+    dispatch(setUe4ssLoadOrder(profileId, newLO));
+    serializeUe4ss(vortexContext.api, newLO);
+  }, [dispatch, vortexContext, profileId, loadOrder, item, currentIdx]);
+
+  const isEntryLocked = isLocked(item);
+
+  const onLock = React.useCallback(() => {
+    const newLO = loadOrder.map(e => e.id === item.id ? { ...e, locked: !isEntryLocked } : e);
+    dispatch(setUe4ssLoadOrder(profileId, newLO));
+    serializeUe4ss(vortexContext.api, newLO);
+  }, [dispatch, vortexContext, profileId, loadOrder, item, isEntryLocked]);
+
+  const [configFilePath, setConfigFilePath] = React.useState('');
+  React.useEffect(() => {
+    if (!gamePath || !item.id) { setConfigFilePath(''); return; }
+    const modFolder = path.join(gamePath, BINARIES_PATH, UE4SS_MOD_PATH, item.id);
+    const localConfigFiles = [...UE4SS_CONFIG_FILES, `${item.id}.txt`, `${item.id}.ini`, `${item.id}.json`];
+    let found = '';
+    util.walk(modFolder, (iterPath, stats) => {
+      if (found === '' && !stats.isDirectory() && localConfigFiles.includes(path.basename(iterPath))) {
+        found = iterPath;
+      }
+      return Promise.resolve();
+    })
+      .then(() => setConfigFilePath(found))
+      .catch(() => setConfigFilePath(''));
+  }, [gamePath, item.id]);
+
+  const onConfigure = React.useCallback(() => {
+    util.opn(configFilePath).catch(() => null);
+  }, [configFilePath]);
+
+  const onToggle = React.useCallback((evt) => {
+    const newLO = loadOrder.map(e => e.id === item.id ? { ...e, enabled: evt.target.checked } : e);
+    dispatch(setUe4ssLoadOrder(profileId, newLO));
+    serializeUe4ss(vortexContext.api, newLO);
+  }, [dispatch, vortexContext, loadOrder, item, profileId]);
+
+  const { selectedIds, setSelectedIds, allIds, contextMenu, setContextMenu } = React.useContext(Ue4ssSelectionContext);
+  const isSelected = selectedIds.has(item.id);
+
+  const onContextMenu = React.useCallback((evt) => {
+    evt.preventDefault();
+    evt.stopPropagation();
+    setContextMenu({ x: evt.clientX, y: evt.clientY, itemId: item.id });
+  }, [item.id, setContextMenu]);
+
+  const onSelect = React.useCallback((evt) => {
+    const ctrlKey = evt.ctrlKey || evt.metaKey;
+    const shiftKey = evt.shiftKey;
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (ctrlKey) {
+        next.has(item.id) ? next.delete(item.id) : next.add(item.id);
+      } else if (shiftKey) {
+        const lastId = [...prev].at(-1);
+        const start = allIds.indexOf(lastId ?? item.id);
+        const end = allIds.indexOf(item.id);
+        const [lo, hi] = [Math.min(start, end), Math.max(start, end)];
+        for (let i = lo; i <= hi; i++) next.add(allIds[i]);
+      } else {
+        next.clear();
+        next.add(item.id);
+      }
+      return next;
+    });
+  }, [item.id, setSelectedIds, allIds]);
+
+  const classes = ['load-order-entry'];
+  if (className) classes.push(...className.split(' ').filter(Boolean));
+
+  return React.createElement('div', {
+    key: item.id,
+    className: classes.join(' '),
+    onClick: onSelect,
+    onContextMenu: onContextMenu,
+    style: {
+      display: 'flex', flexDirection: 'row', alignItems: 'center',
+      gap: 8, padding: '4px 12px', margin: 0,
+      border: '1px solid rgba(255,255,255,0.15)', borderRadius: 4,
+      minHeight: 52,
+      outline: isSelected ? '2px solid #337ab7' : 'none',
+      outlineOffset: '-1px',
+    },
+  },
+    React.createElement('div', { style: { visibility: isEntryLocked ? 'hidden' : 'visible' } },
+      React.createElement(Icon, { className: 'drag-handle-icon', name: 'drag-handle' }),
+    ),
+    React.createElement('div', { style: { width: 24, flexShrink: 0, overflow: 'hidden' } },
+      React.createElement(LoadOrderIndexInput, {
+        className: 'load-order-index',
+        api: vortexContext.api,
+        item: item,
+        currentPosition: currentIdx,
+        lockedEntriesCount: lockedCount,
+        loadOrder: loadOrder,
+        isLocked: isLocked,
+        onApplyIndex: onApplyIndex,
+      }),
+    ),
+    React.createElement('div', {
+      style: { cursor: 'pointer', display: 'flex', alignItems: 'center' },
+      title: isEntryLocked ? 'Unlock position' : 'Lock position',
+      onClick: onLock,
+    },
+      React.createElement(Icon, { name: isEntryLocked ? 'locked' : 'unlocked', style: { color: isEntryLocked ? '#e2c04c' : 'inherit' } }),
+    ),
+    React.createElement('div', { className: 'load-order-thumb-slot', style: { width: LO_IMAGE_WIDTH, height: LO_IMAGE_HEIGHT, flexShrink: 0 } },
+      !item.modId ? React.createElement('div', {
+        className: 'load-order-unmanaged-banner',
+        title: 'Not managed by Vortex',
+        style: { width: LO_IMAGE_WIDTH, height: LO_IMAGE_HEIGHT, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, textAlign: 'center', borderRadius: 2, border: '1px solid #e2c04c', background: 'rgba(226,192,76,0.12)', color: '#e2c04c', fontSize: 9, lineHeight: 1.1, padding: 2, pointerEvents: 'none' },
+      },
+        React.createElement(Icon, { className: 'external-caution-logo', name: 'feedback-warning', style: { color: '#e2c04c' } }),
+        React.createElement('span', null, 'Not managed by Vortex'),
+      ) : pictureUrl ? React.createElement('img', {
+        className: 'load-order-thumb',
+        src: pictureUrl,
+        draggable: false,
+        style: { width: LO_IMAGE_WIDTH, height: LO_IMAGE_HEIGHT, objectFit: 'cover', borderRadius: 2, pointerEvents: 'none' },
+      }) : null,
+    ),
+    React.createElement('p', { className: 'load-order-name', style: { flex: '1 1 0', margin: 0, whiteSpace: 'normal', wordBreak: 'break-word' } }, item.name),
+    configFilePath ? React.createElement('button', {
+      className: 'btn btn-default btn-sm',
+      style: { margin: '0 4px' },
+      title: path.basename(configFilePath),
+      onClick: onConfigure,
+    }, 'Configure') : null,
+    React.createElement('input', {
+      type: 'checkbox',
+      style: { alignSelf: 'center', cursor: 'pointer' },
+      checked: item.enabled ?? true,
+      onChange: onToggle,
+    }),
+    contextMenu?.itemId === item.id ? React.createElement(Ue4ssContextMenu, {
+      x: contextMenu.x, y: contextMenu.y,
+      item, loadOrder, profileId, dispatch,
+      api: vortexContext.api, gamePath, configFilePath, selectedIds,
+      onClose: () => setContextMenu(null),
+    }) : null,
+  );
+}
+
+function Ue4ssContextMenu({ x, y, item, loadOrder, profileId, dispatch, api, gamePath, configFilePath, selectedIds, onClose }) {
+  React.useEffect(() => {
+    const onKey = (evt) => { if (evt.key === 'Escape') onClose(); };
+    globalThis.document.addEventListener('keydown', onKey);
+    return () => globalThis.document.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  React.useEffect(() => {
+    const styleId = 'ue4ss-ctx-menu-style';
+    if (!globalThis.document.getElementById(styleId)) {
+      const style = globalThis.document.createElement('style');
+      style.id = styleId;
+      style.textContent = '.ue4ss-ctx-item:hover { background: rgba(255,255,255,0.1); }';
+      globalThis.document.head.appendChild(style);
+    }
+  }, []);
+
+  const isLocked = (e) => [true, 'true', 'always'].includes(e?.locked);
+  const isMulti = selectedIds.size >= 2 && selectedIds.has(item.id);
+  const targets = isMulti ? loadOrder.filter(e => selectedIds.has(e.id)) : [item];
+
+  const applyToTargets = (transform) => {
+    const newLO = transform(loadOrder, targets);
+    dispatch(setUe4ssLoadOrder(profileId, newLO));
+    serializeUe4ss(api, newLO);
+    onClose();
+  };
+
+  const isEntryLocked = isLocked(item);
+  const isEntryEnabled = item.enabled ?? true;
+
+  const isModEnabled = util.getSafe(api.getState(), ['persistent', 'profiles', profileId, 'modState', item.modId, 'enabled'], false);
+  const setVortexModsEnabled = (entries, enable) => {
+    const batch = entries.filter(e => e.modId).map(e => actions.setModEnabled(profileId, e.modId, enable));
+    if (batch.length) {
+      util.batchDispatch(dispatch, batch);
+      requestDeployment(api, spec);
+    }
+    onClose();
+  };
+
+  const clampRef = (el) => {
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const vw = globalThis.window.innerWidth;
+    const vh = globalThis.window.innerHeight;
+    if (x + rect.width > vw) el.style.left = `${Math.max(8, vw - rect.width - 8)}px`;
+    if (y + rect.height > vh) el.style.top = `${Math.max(8, vh - rect.height - 8)}px`;
+  };
+  const menuStyle = {
+    position: 'fixed', left: x, top: y, zIndex: 9999,
+    background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.2)',
+    borderRadius: 4, padding: '4px 0', minWidth: 180,
+    boxShadow: '0 4px 12px rgba(0,0,0,0.6)',
+  };
+  const itemStyle = { padding: '6px 16px', cursor: 'pointer', whiteSpace: 'nowrap' };
+  const sepStyle = { borderTop: '1px solid rgba(255,255,255,0.1)', margin: '4px 0' };
+
+  const menuItem = (label, onClick) => React.createElement('div', {
+    className: 'ue4ss-ctx-item',
+    style: itemStyle,
+    onClick: (evt) => { evt.stopPropagation(); onClick(); },
+  }, label);
+
+  if (isMulti) {
+    const n = targets.length;
+    return React.createElement('div', { ref: clampRef, style: menuStyle },
+      menuItem(`Enable Selected (${n})`, () => applyToTargets((lo) => lo.map(e => targets.find(t => t.id === e.id) ? { ...e, enabled: true } : e))),
+      menuItem(`Disable Selected (${n})`, () => applyToTargets((lo) => lo.map(e => targets.find(t => t.id === e.id) ? { ...e, enabled: false } : e))),
+      React.createElement('div', { style: sepStyle }),
+      menuItem(`Lock Selected (${n})`, () => applyToTargets((lo) => lo.map(e => targets.find(t => t.id === e.id) ? { ...e, locked: true } : e))),
+      menuItem(`Unlock Selected (${n})`, () => applyToTargets((lo) => lo.map(e => targets.find(t => t.id === e.id) ? { ...e, locked: false } : e))),
+      React.createElement('div', { style: sepStyle }),
+      menuItem(`Move to Top (${n})`, () => applyToTargets((lo) => {
+        const locked = lo.filter(isLocked);
+        const selected = lo.filter(e => targets.find(t => t.id === e.id) && !isLocked(e));
+        const rest = lo.filter(e => !isLocked(e) && !targets.find(t => t.id === e.id));
+        return [...locked, ...selected, ...rest];
+      })),
+      menuItem(`Move to Bottom (${n})`, () => applyToTargets((lo) => {
+        const selected = lo.filter(e => targets.find(t => t.id === e.id));
+        const rest = lo.filter(e => !targets.find(t => t.id === e.id));
+        return [...rest, ...selected];
+      })),
+      React.createElement('div', { style: sepStyle }),
+      menuItem(`Open Mod Folders (${n})`, () => { targets.forEach(t => util.opn(path.join(gamePath, BINARIES_PATH, UE4SS_MOD_PATH, t.id)).catch(() => null)); onClose(); }),
+      targets.some(t => t.modId !== undefined) ? menuItem(`Open Staging Folders (${n})`, () => {
+        targets.forEach(t => {
+          const folder = getModStagingFolder(api, t.modId);
+          if (folder) util.opn(folder).catch(() => null);
+        });
+        onClose();
+      }) : null,
+      React.createElement('div', { style: sepStyle }),
+      menuItem(`Disable Vortex Mod (${n})`, () => setVortexModsEnabled(targets, false)),
+    );
+  }
+
+  const modPageUrl = getModPageURL(api, item.modId);
+  const stagingFolder = getModStagingFolder(api, item.modId);
+
+  return React.createElement('div', { ref: clampRef, style: menuStyle },
+    menuItem(isEntryEnabled ? 'Disable' : 'Enable', () => applyToTargets((lo) => lo.map(e => e.id === item.id ? { ...e, enabled: !isEntryEnabled } : e))),
+    menuItem(isEntryLocked ? 'Unlock Position' : 'Lock Position', () => applyToTargets((lo) => lo.map(e => e.id === item.id ? { ...e, locked: !isEntryLocked } : e))),
+    configFilePath ? menuItem('Configure', () => { util.opn(configFilePath).catch(() => null); onClose(); }) : null,
+    React.createElement('div', { style: sepStyle }),
+    menuItem('Move to Top', () => applyToTargets((lo) => {
+      const locked = lo.filter(isLocked);
+      const rest = lo.filter(e => !isLocked(e) && e.id !== item.id);
+      return [...locked, item, ...rest];
+    })),
+    menuItem('Move to Bottom', () => applyToTargets((lo) => {
+      const rest = lo.filter(e => e.id !== item.id);
+      return [...rest, item];
+    })),
+    React.createElement('div', { style: sepStyle }),
+    menuItem('Open Mod Folder', () => { util.opn(path.join(gamePath, BINARIES_PATH, UE4SS_MOD_PATH, item.id)).catch(() => null); onClose(); }),
+    stagingFolder ? menuItem('Open Staging Folder', () => { util.opn(stagingFolder).catch(() => null); onClose(); }) : null,
+    modPageUrl ? menuItem('Open Mod Page', () => { util.opn(modPageUrl).catch(() => null); onClose(); }) : null,
+    item.modId !== undefined ? React.createElement('div', { style: sepStyle }) : null,
+    item.modId !== undefined
+      ? menuItem(isModEnabled ? 'Disable Vortex Mod' : 'Enable Vortex Mod', () => setVortexModsEnabled([item], !isModEnabled))
+      : null,
+  );
+}
+
+function Ue4ssLoadOrderInfoPanel() {
+  return React.createElement('div', {
+    id: 'loadorderinfo',
+    style: { padding: '12px', borderTop: '1px solid rgba(255,255,255,0.1)' },
+  },
+    React.createElement('h2', { style: { marginTop: 0, display: 'flex', alignItems: 'center', gap: 10 } },
+      React.createElement('svg', {
+        viewBox: '0 0 24 24',
+        style: { width: 28, height: 28, fill: 'currentColor', flexShrink: 0 },
+      },
+        React.createElement('path', { d: UE4SS_ICON }),
+      ),
+      React.createElement('span', null,
+        React.createElement('span', { style: { fontWeight: 'bold' } }, 'UE4SS'),
+        React.createElement('span', { style: { fontWeight: 300, color: 'rgba(255,255,255,0.65)' } }, ' Mod Load Order'),
+      ),
+    ),
+    React.createElement('ul', { style: { margin: 0, paddingLeft: 20, listStyleType: 'disc' } },
+      React.createElement('li', null,
+        'Drag and drop mods to change the order in which UE4SS loads them. Changes write to mods.txt immediately.'
+      ),
+      React.createElement('li', null,
+        'Use the checkboxes to enable or disable each mod. All changes write to mods.txt immediately.'
+      ),
+      React.createElement('li', null,
+        `Mods with a ${UE4SS_CONFIG_FILES.join('/')} file will have a "Configure" button to open the file externally.`
+      ),
+      React.createElement('li', { style: { fontStyle: 'italic', color: 'yellow', fontWeight: 'bold' } },
+        'Note: This page manages UE4SS mods only. Pak mod load order is managed on the Load Order page.'
+      ),
+    ),
+  );
+}
+
+function Ue4ssLoadOrderPage({ api }) {
+  const { useSelector, useDispatch } = require('react-redux');
+  const { FormControl } = require('react-bootstrap');
+
+  const profileId = useSelector(state => selectors.activeProfile(state)?.id);
+  const loadOrder = useSelector(state =>
+    util.getSafe(state, ['persistent', 'ue4ssLoadOrder', profileId, 'loadOrder'], []));
+  const loEnabled = useSelector(state => util.getSafe(state, ['settings', GAME_ID, 'ue4ssLoEnabled'], true));
+  const dispatch = useDispatch();
+  const [filterText, setFilterText] = React.useState('');
+  const [statusFilter, setStatusFilter] = React.useState(new Set());
+  const [selectedIds, setSelectedIds] = React.useState(new Set());
+  const [contextMenu, setContextMenu] = React.useState(null);
+
+  React.useEffect(() => {
+    if (!contextMenu) return;
+    const dismiss = () => setContextMenu(null);
+    globalThis.document.addEventListener('click', dismiss);
+    globalThis.document.addEventListener('contextmenu', dismiss);
+    return () => {
+      globalThis.document.removeEventListener('click', dismiss);
+      globalThis.document.removeEventListener('contextmenu', dismiss);
+    };
+  }, [contextMenu]);
+
+  React.useEffect(() => {
+    if (!profileId) return;
+    if (selectors.activeGameId(api.getState()) !== GAME_ID) return;
+    deserializeUe4ss(api).then(lo => dispatch(setUe4ssLoadOrder(profileId, lo)));
+    setSelectedIds(new Set());
+  }, [profileId]);
+
+  React.useEffect(() => {
+    const styleId = 'lo-index-focus-style';
+    if (!globalThis.document.getElementById(styleId)) {
+      const style = globalThis.document.createElement('style');
+      style.id = styleId;
+      style.textContent = '.load-order-index input:focus { background: white !important; color: black !important; } .layout-flex.file-based-load-order-list-outer { overflow: auto; }';
+      globalThis.document.head.appendChild(style);
+    }
+  }, []);
+
+  const isFiltered = !!filterText || statusFilter.size > 0;
+  const isEntryEnabled = (e) => e.enabled !== false;
+  const isEntryLocked = (e) => [true, 'true', 'always'].includes(e?.locked);
+
+  const onApply = React.useCallback((reordered) => {
+    let newLO;
+    if (isFiltered) {
+      const filteredIds = new Set(reordered.map(e => e.id));
+      const positions = loadOrder.reduce((acc, e, i) => { if (filteredIds.has(e.id)) acc.push(i); return acc; }, []);
+      newLO = [...loadOrder];
+      positions.forEach((pos, i) => { newLO[pos] = reordered[i]; });
+    } else {
+      newLO = reordered;
+    }
+    dispatch(setUe4ssLoadOrder(profileId, newLO));
+    serializeUe4ss(api, newLO);
+  }, [dispatch, loadOrder, isFiltered, profileId]);
+
+  const filteredOrder = loadOrder.filter(e =>
+    (!filterText || e.name.toLowerCase().includes(filterText.toLowerCase()))
+    && matchesStatus(e, statusFilter, isEntryEnabled, isEntryLocked));
+
+  const allIds = filteredOrder.map(e => e.id);
+
+  if (!loEnabled) {
+    return React.createElement(MainPage, null,
+      React.createElement(MainPage.Body, null,
+        React.createElement('p', { style: { padding: '12px', fontWeight: 'bold', color: 'yellow' } }, 'UE4SS load order is disabled in Settings.')));
+  }
+
+  if (!loadOrder.length) {
+    return React.createElement(MainPage, null,
+      React.createElement(MainPage.Body, null,
+        React.createElement('p', { style: { padding: '12px', fontWeight: 'bold', color: 'yellow' } }, 'No UE4SS mods are installed.')));
+  }
+
+  return React.createElement(MainPage, null,
+    React.createElement(MainPage.Header, null,
+      React.createElement('div', { style: { display: 'flex', alignItems: 'center', width: '100%' } },
+        React.createElement(FormControl, {
+          type: 'search',
+          placeholder: 'Filter mods...',
+          className: 'file-based-load-order-filter',
+          style: { flex: 1 },
+          value: filterText,
+          onChange: (evt) => setFilterText(evt.target.value),
+        }),
+        React.createElement(LoadOrderStatusFilter, {
+          active: statusFilter, setActive: setStatusFilter, groups: ['enabled', 'locked', 'unmanaged'],
+          count: statusFilter.size > 0 ? { matched: filteredOrder.length, total: loadOrder.length } : null,
+        }),
+      )
+    ),
+    React.createElement(MainPage.Body, null,
+      React.createElement(DNDContainer, { style: { height: '95%' } },
+        React.createElement(FlexLayout, { type: 'column', className: 'file-based-load-order-container', style: { height: '100%' } },
+          React.createElement(FlexLayout.Flex, { className: 'file-based-load-order-list', style: { overflowY: 'auto', minHeight: 0 } },
+            React.createElement(Ue4ssSelectionContext.Provider, { value: { selectedIds, setSelectedIds, allIds, contextMenu, setContextMenu } },
+              React.createElement(DraggableList, {
+                itemTypeId: `${GAME_ID}-ue4ss-lo-entry`,
+                id: `${GAME_ID}-ue4ss-loadorder-list`,
+                items: filteredOrder,
+                itemRenderer: Ue4ssItemRenderer,
+                apply: onApply,
+                idFunc: entry => entry.id,
+                isLocked: item => [true, 'true', 'always'].includes(item?.locked),
+              })
+            )
+          ),
+          React.createElement('div', { style: { flexShrink: 0 } },
+            React.createElement(Ue4ssLoadOrderInfoPanel)
+          )
+        )
+      )
+    )
+  );
+} //*/
+
+//* React components for LogicMods load order page
+const LogicModsSelectionContext = React.createContext({ selectedIds: new Set(), setSelectedIds: () => {}, allIds: [], contextMenu: null, setContextMenu: () => {} });
+
+function LogicModsItemRenderer({ className, item }) {
+  const { Icon, LoadOrderIndexInput, MainContext } = require('vortex-api');
+  const { useSelector, useDispatch } = require('react-redux');
+
+  const vortexContext = React.useContext(MainContext);
+  const dispatch = useDispatch();
+
+  const profileId = useSelector(state => selectors.activeProfile(state)?.id);
+  const loadOrder = useSelector(state =>
+    util.getSafe(state, ['persistent', 'logicModsLoadOrder', profileId, 'loadOrder'], []));
+  const mods = useSelector(state => util.getSafe(state, ['persistent', 'mods', GAME_ID], {}));
+  const pictureUrl = mods[item.modId]?.attributes?.pictureUrl;
+
+  const isModEnabled = useSelector(state =>
+    util.getSafe(state, ['persistent', 'profiles', profileId, 'modState', item.modId, 'enabled'], false));
+
+  const currentIdx = loadOrder.findIndex((e) => e.id === item.id) + 1;
+  const isLocked = (entry) => [true, 'true', 'always'].includes(entry?.locked);
+  const lockedCount = loadOrder.filter(isLocked).length;
+
+  const onApplyIndex = React.useCallback((idx) => {
+    if (currentIdx === idx) return;
+    const newLO = loadOrder.filter((e) => e.id !== item.id);
+    newLO.splice(idx - 1, 0, item);
+    dispatch(setLogicModsLoadOrder(profileId, newLO));
+    serializeLogicMods(vortexContext.api, newLO);
+  }, [dispatch, vortexContext, profileId, loadOrder, item, currentIdx]);
+
+  const isEntryLocked = isLocked(item);
+
+  const onLock = React.useCallback(() => {
+    const newLO = loadOrder.map(e => e.id === item.id ? { ...e, locked: !isEntryLocked } : e);
+    dispatch(setLogicModsLoadOrder(profileId, newLO));
+    serializeLogicMods(vortexContext.api, newLO);
+  }, [dispatch, vortexContext, profileId, loadOrder, item, isEntryLocked]);
+
+  const onDisable = React.useCallback(() => {
+    if (!item.modId) return;
+    dispatch(actions.setModEnabled(profileId, item.modId, false));
+    requestDeployment(vortexContext.api, spec);
+  }, [dispatch, vortexContext, profileId, item.modId]);
+
+  const { selectedIds, setSelectedIds, allIds, contextMenu, setContextMenu } = React.useContext(LogicModsSelectionContext);
+  const isSelected = selectedIds.has(item.id);
+
+  const onContextMenu = React.useCallback((evt) => {
+    evt.preventDefault();
+    evt.stopPropagation();
+    setContextMenu({ x: evt.clientX, y: evt.clientY, itemId: item.id });
+  }, [item.id, setContextMenu]);
+
+  const onSelect = React.useCallback((evt) => {
+    const ctrlKey = evt.ctrlKey || evt.metaKey;
+    const shiftKey = evt.shiftKey;
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (ctrlKey) {
+        next.has(item.id) ? next.delete(item.id) : next.add(item.id);
+      } else if (shiftKey) {
+        const lastId = [...prev].at(-1);
+        const start = allIds.indexOf(lastId ?? item.id);
+        const end = allIds.indexOf(item.id);
+        const [lo, hi] = [Math.min(start, end), Math.max(start, end)];
+        for (let i = lo; i <= hi; i++) next.add(allIds[i]);
+      } else {
+        next.clear();
+        next.add(item.id);
+      }
+      return next;
+    });
+  }, [item.id, setSelectedIds, allIds]);
+
+  React.useEffect(() => {
+    const styleId = 'lo-index-focus-style';
+    if (!globalThis.document.getElementById(styleId)) {
+      const style = globalThis.document.createElement('style');
+      style.id = styleId;
+      style.textContent = '.load-order-index input:focus { background: white !important; color: black !important; } .layout-flex.file-based-load-order-list-outer { overflow: auto; }';
+      globalThis.document.head.appendChild(style);
+    }
+  }, []);
+
+  const classes = ['load-order-entry'];
+  if (className) classes.push(...className.split(' ').filter(Boolean));
+
+  return React.createElement('div', {
+    key: item.id,
+    className: classes.join(' '),
+    onClick: onSelect,
+    onContextMenu: onContextMenu,
+    style: {
+      display: 'flex', flexDirection: 'row', alignItems: 'center',
+      gap: 8, padding: '4px 12px', margin: 0,
+      border: '1px solid rgba(255,255,255,0.15)', borderRadius: 4,
+      minHeight: 52,
+      outline: isSelected ? '2px solid #337ab7' : 'none',
+      outlineOffset: '-1px',
+    },
+  },
+    React.createElement('div', { style: { visibility: isEntryLocked ? 'hidden' : 'visible' } },
+      React.createElement(Icon, { className: 'drag-handle-icon', name: 'drag-handle' }),
+    ),
+    React.createElement('div', { style: { width: 24, flexShrink: 0, overflow: 'hidden' } },
+      React.createElement(LoadOrderIndexInput, {
+        className: 'load-order-index',
+        api: vortexContext.api,
+        item: item,
+        currentPosition: currentIdx,
+        lockedEntriesCount: lockedCount,
+        loadOrder: loadOrder,
+        isLocked: isLocked,
+        onApplyIndex: onApplyIndex,
+      }),
+    ),
+    React.createElement('div', {
+      style: { cursor: 'pointer', display: 'flex', alignItems: 'center' },
+      title: isEntryLocked ? 'Unlock position' : 'Lock position',
+      onClick: onLock,
+    },
+      React.createElement(Icon, { name: isEntryLocked ? 'locked' : 'unlocked', style: { color: isEntryLocked ? '#e2c04c' : 'inherit' } }),
+    ),
+    React.createElement('div', { className: 'load-order-thumb-slot', style: { width: LO_IMAGE_WIDTH, height: LO_IMAGE_HEIGHT, flexShrink: 0 } },
+      !item.modId ? React.createElement('div', {
+        className: 'load-order-unmanaged-banner',
+        title: 'Not managed by Vortex',
+        style: { width: LO_IMAGE_WIDTH, height: LO_IMAGE_HEIGHT, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 2, textAlign: 'center', borderRadius: 2, border: '1px solid #e2c04c', background: 'rgba(226,192,76,0.12)', color: '#e2c04c', fontSize: 9, lineHeight: 1.1, padding: 2, pointerEvents: 'none' },
+      },
+        React.createElement(Icon, { className: 'external-caution-logo', name: 'feedback-warning', style: { color: '#e2c04c' } }),
+        React.createElement('span', null, 'Not managed by Vortex'),
+      ) : pictureUrl ? React.createElement('img', {
+        className: 'load-order-thumb',
+        src: pictureUrl,
+        draggable: false,
+        style: { width: LO_IMAGE_WIDTH, height: LO_IMAGE_HEIGHT, objectFit: 'cover', borderRadius: 2, pointerEvents: 'none' },
+      }) : null,
+    ),
+    React.createElement('p', { className: 'load-order-name', style: { flex: '1 1 0', margin: 0, whiteSpace: 'normal', wordBreak: 'break-word' } }, item.name),
+    item.modId && isModEnabled ? React.createElement('button', {
+      className: 'btn btn-default btn-sm',
+      style: { margin: '0 4px', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4 },
+      onClick: evt => { evt.stopPropagation(); onDisable(); },
+    },
+      React.createElement(Icon, { name: 'toggle-disabled' }),
+      'Disable',
+    ) : null,
+    contextMenu?.itemId === item.id ? React.createElement(LogicModsContextMenu, {
+      x: contextMenu.x, y: contextMenu.y,
+      item, loadOrder, profileId, dispatch,
+      api: vortexContext.api, selectedIds, isModEnabled,
+      onClose: () => setContextMenu(null),
+    }) : null,
+  );
+}
+
+function LogicModsContextMenu({ x, y, item, loadOrder, profileId, dispatch, api, selectedIds, isModEnabled, onClose }) {
+  React.useEffect(() => {
+    const onKey = (evt) => { if (evt.key === 'Escape') onClose(); };
+    globalThis.document.addEventListener('keydown', onKey);
+    return () => globalThis.document.removeEventListener('keydown', onKey);
+  }, [onClose]);
+
+  React.useEffect(() => {
+    const dismiss = onClose;
+    globalThis.document.addEventListener('click', dismiss);
+    globalThis.document.addEventListener('contextmenu', dismiss);
+    return () => {
+      globalThis.document.removeEventListener('click', dismiss);
+      globalThis.document.removeEventListener('contextmenu', dismiss);
+    };
+  }, []);
+
+  React.useEffect(() => {
+    const styleId = 'ue4ss-ctx-menu-style';
+    if (!globalThis.document.getElementById(styleId)) {
+      const style = globalThis.document.createElement('style');
+      style.id = styleId;
+      style.textContent = '.ue4ss-ctx-item:hover { background: rgba(255,255,255,0.1); }';
+      globalThis.document.head.appendChild(style);
+    }
+  }, []);
+
+  const isLocked = (e) => [true, 'true', 'always'].includes(e?.locked);
+  const isMulti = selectedIds.size >= 2 && selectedIds.has(item.id);
+  const targets = isMulti ? loadOrder.filter(e => selectedIds.has(e.id)) : [item];
+
+  const applyToTargets = (transform) => {
+    const newLO = transform(loadOrder, targets);
+    dispatch(setLogicModsLoadOrder(profileId, newLO));
+    serializeLogicMods(api, newLO);
+    onClose();
+  };
+
+  const isEntryLocked = isLocked(item);
+
+  const clampRef = (el) => {
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const vw = globalThis.window.innerWidth;
+    const vh = globalThis.window.innerHeight;
+    if (x + rect.width > vw) el.style.left = `${Math.max(8, vw - rect.width - 8)}px`;
+    if (y + rect.height > vh) el.style.top = `${Math.max(8, vh - rect.height - 8)}px`;
+  };
+  const menuStyle = {
+    position: 'fixed', left: x, top: y, zIndex: 9999,
+    background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.2)',
+    borderRadius: 4, padding: '4px 0', minWidth: 180,
+    boxShadow: '0 4px 12px rgba(0,0,0,0.6)',
+  };
+  const itemStyle = { padding: '6px 16px', cursor: 'pointer', whiteSpace: 'nowrap' };
+  const sepStyle = { borderTop: '1px solid rgba(255,255,255,0.1)', margin: '4px 0' };
+
+  const menuItem = (label, onClick) => React.createElement('div', {
+    className: 'ue4ss-ctx-item',
+    style: itemStyle,
+    onClick: (evt) => { evt.stopPropagation(); onClick(); },
+  }, label);
+
+  if (isMulti) {
+    const n = targets.length;
+    return React.createElement('div', { ref: clampRef, style: menuStyle },
+      menuItem(`Lock Selected (${n})`, () => applyToTargets((lo) => lo.map(e => targets.find(t => t.id === e.id) ? { ...e, locked: true } : e))),
+      menuItem(`Unlock Selected (${n})`, () => applyToTargets((lo) => lo.map(e => targets.find(t => t.id === e.id) ? { ...e, locked: false } : e))),
+      React.createElement('div', { style: sepStyle }),
+      menuItem(`Move to Top (${n})`, () => applyToTargets((lo) => {
+        const locked = lo.filter(isLocked);
+        const selected = lo.filter(e => targets.find(t => t.id === e.id) && !isLocked(e));
+        const rest = lo.filter(e => !isLocked(e) && !targets.find(t => t.id === e.id));
+        return [...locked, ...selected, ...rest];
+      })),
+      menuItem(`Move to Bottom (${n})`, () => applyToTargets((lo) => {
+        const selected = lo.filter(e => targets.find(t => t.id === e.id));
+        const rest = lo.filter(e => !targets.find(t => t.id === e.id));
+        return [...rest, ...selected];
+      })),
+      React.createElement('div', { style: sepStyle }),
+      menuItem(`Open LogicMods Folder (${n})`, () => { util.opn(path.join(GAME_PATH, LOGICMODS_PATH)).catch(() => null); onClose(); }),
+      React.createElement('div', { style: sepStyle }),
+      menuItem(`Disable Selected (${n})`, () => {
+        const batch = targets.filter(e => e.modId).map(e => actions.setModEnabled(profileId, e.modId, false));
+        if (batch.length) { util.batchDispatch(dispatch, batch); requestDeployment(api, spec); }
+        onClose();
+      }),
+    );
+  }
+
+  const modPageUrl = getModPageURL(api, item.modId);
+  const stagingFolder = getModStagingFolder(api, item.modId);
+
+  return React.createElement('div', { ref: clampRef, style: menuStyle },
+    menuItem(isEntryLocked ? 'Unlock Position' : 'Lock Position', () => applyToTargets((lo) => lo.map(e => e.id === item.id ? { ...e, locked: !isEntryLocked } : e))),
+    React.createElement('div', { style: sepStyle }),
+    menuItem('Move to Top', () => applyToTargets((lo) => {
+      const locked = lo.filter(isLocked);
+      const rest = lo.filter(e => !isLocked(e) && e.id !== item.id);
+      return [...locked, item, ...rest];
+    })),
+    menuItem('Move to Bottom', () => applyToTargets((lo) => {
+      const rest = lo.filter(e => e.id !== item.id);
+      return [...rest, item];
+    })),
+    React.createElement('div', { style: sepStyle }),
+    menuItem('Open LogicMods Folder', () => { util.opn(path.join(GAME_PATH, LOGICMODS_PATH)).catch(() => null); onClose(); }),
+    stagingFolder ? menuItem('Open Staging Folder', () => { util.opn(stagingFolder).catch(() => null); onClose(); }) : null,
+    modPageUrl ? menuItem('Open Mod Page', () => { util.opn(modPageUrl).catch(() => null); onClose(); }) : null,
+    item.modId ? React.createElement('div', { style: sepStyle }) : null,
+    item.modId ? menuItem(isModEnabled ? 'Disable Vortex Mod' : 'Enable Vortex Mod', () => {
+      dispatch(actions.setModEnabled(profileId, item.modId, !isModEnabled));
+      requestDeployment(api, spec);
+      onClose();
+    }) : null,
+  );
+}
+
+function LogicModsLoadOrderInfoPanel() {
+  return React.createElement('div', {
+    id: 'logicmods-loadorderinfo',
+    style: { padding: '12px', borderTop: '1px solid rgba(255,255,255,0.1)' },
+  },
+    React.createElement('h2', { style: { marginTop: 0, display: 'flex', alignItems: 'center', gap: 10 } },
+      React.createElement('svg', {
+        viewBox: '0 0 24 24',
+        style: { width: 28, height: 28, fill: 'currentColor', flexShrink: 0 },
+      },
+        React.createElement('path', { d: BLUEPRINT_ICON }),
+      ),
+      React.createElement('span', null,
+        React.createElement('span', { style: { fontWeight: 'bold' } }, 'LogicMods'),
+        React.createElement('span', { style: { fontWeight: 300, color: 'rgba(255,255,255,0.65)' } }, ' Blueprint Pak Load Order'),
+      ),
+    ),
+    React.createElement('ul', { style: { margin: 0, paddingLeft: 20, listStyleType: 'disc' } },
+      React.createElement('li', null,
+        'Drag and drop mods to change the order in which BPModLoaderMod loads Blueprint paks. Changes write to load_order.txt immediately.'
+      ),
+      React.createElement('li', null,
+        'Use the "Disable" button to disable the underlying Vortex mod. Deploy after disabling to remove the pak from the LogicMods folder.'
+      ),
+      React.createElement('li', null,
+        'Paks not listed in load_order.txt still load, but in random order after the listed ones.'
+      ),
+      React.createElement('li', { style: { fontStyle: 'italic', color: 'yellow', fontWeight: 'bold' } },
+        'Note: This page manages LogicMods/Blueprint paks only. UE4SS script/DLL mod load order is managed on the UE4SS Load Order page.'
+      ),
+    ),
+  );
+}
+
+function LogicModsLoadOrderPage({ api }) {
+  const { useSelector, useDispatch } = require('react-redux');
+  const { FormControl } = require('react-bootstrap');
+
+  const profileId = useSelector(state => selectors.activeProfile(state)?.id);
+  const loadOrder = useSelector(state =>
+    util.getSafe(state, ['persistent', 'logicModsLoadOrder', profileId, 'loadOrder'], []));
+  const modState = useSelector(state => util.getSafe(state, ['persistent', 'profiles', profileId, 'modState'], {}));
+  const dispatch = useDispatch();
+  const [filterText, setFilterText] = React.useState('');
+  const [statusFilter, setStatusFilter] = React.useState(new Set());
+  const [selectedIds, setSelectedIds] = React.useState(new Set());
+  const [contextMenu, setContextMenu] = React.useState(null);
+
+  React.useEffect(() => {
+    if (!contextMenu) return;
+    const dismiss = () => setContextMenu(null);
+    globalThis.document.addEventListener('click', dismiss);
+    globalThis.document.addEventListener('contextmenu', dismiss);
+    return () => {
+      globalThis.document.removeEventListener('click', dismiss);
+      globalThis.document.removeEventListener('contextmenu', dismiss);
+    };
+  }, [contextMenu]);
+
+  React.useEffect(() => {
+    if (!profileId) return;
+    if (selectors.activeGameId(api.getState()) !== GAME_ID) return;
+    deserializeLogicMods(api).then(lo => dispatch(setLogicModsLoadOrder(profileId, lo)));
+    setSelectedIds(new Set());
+  }, [profileId]);
+
+  React.useEffect(() => {
+    const styleId = 'lo-index-focus-style';
+    if (!globalThis.document.getElementById(styleId)) {
+      const style = globalThis.document.createElement('style');
+      style.id = styleId;
+      style.textContent = '.load-order-index input:focus { background: white !important; color: black !important; } .layout-flex.file-based-load-order-list-outer { overflow: auto; }';
+      globalThis.document.head.appendChild(style);
+    }
+  }, []);
+
+  const isFiltered = !!filterText || statusFilter.size > 0;
+  const isEntryEnabled = (e) => util.getSafe(modState, [e.modId, 'enabled'], false);
+  const isEntryLocked = (e) => [true, 'true', 'always'].includes(e?.locked);
+
+  const onApply = React.useCallback((reordered) => {
+    let newLO;
+    if (isFiltered) {
+      const filteredIds = new Set(reordered.map(e => e.id));
+      const positions = loadOrder.reduce((acc, e, i) => { if (filteredIds.has(e.id)) acc.push(i); return acc; }, []);
+      newLO = [...loadOrder];
+      positions.forEach((pos, i) => { newLO[pos] = reordered[i]; });
+    } else {
+      newLO = reordered;
+    }
+    dispatch(setLogicModsLoadOrder(profileId, newLO));
+    serializeLogicMods(api, newLO);
+  }, [dispatch, loadOrder, isFiltered, profileId]);
+
+  const filteredOrder = loadOrder.filter(e =>
+    (!filterText || e.name.toLowerCase().includes(filterText.toLowerCase()))
+    && matchesStatus(e, statusFilter, isEntryEnabled, isEntryLocked));
+
+  const allIds = filteredOrder.map(e => e.id);
+
+  if (!loadOrder.length) {
+    return React.createElement(MainPage, null,
+      React.createElement(MainPage.Body, null,
+        React.createElement('p', { style: { padding: '12px', fontWeight: 'bold', color: 'yellow' } }, 'No LogicMods/Blueprint pak mods are installed.')));
+  }
+
+  return React.createElement(MainPage, null,
+    React.createElement(MainPage.Header, null,
+      React.createElement('div', { style: { display: 'flex', alignItems: 'center', width: '100%' } },
+        React.createElement(FormControl, {
+          type: 'search',
+          placeholder: 'Filter mods...',
+          className: 'file-based-load-order-filter',
+          style: { flex: 1 },
+          value: filterText,
+          onChange: (evt) => setFilterText(evt.target.value),
+        }),
+        React.createElement(LoadOrderStatusFilter, {
+          active: statusFilter, setActive: setStatusFilter, groups: ['enabled', 'locked', 'unmanaged'],
+          count: statusFilter.size > 0 ? { matched: filteredOrder.length, total: loadOrder.length } : null,
+        }),
+      )
+    ),
+    React.createElement(MainPage.Body, null,
+      React.createElement(DNDContainer, { style: { height: '95%' } },
+        React.createElement(FlexLayout, { type: 'column', className: 'file-based-load-order-container', style: { height: '100%' } },
+          React.createElement(FlexLayout.Flex, { className: 'file-based-load-order-list', style: { overflowY: 'auto', minHeight: 0 } },
+            React.createElement(LogicModsSelectionContext.Provider, { value: { selectedIds, setSelectedIds, allIds, contextMenu, setContextMenu } },
+              React.createElement(DraggableList, {
+                itemTypeId: `${GAME_ID}-logicmods-lo-entry`,
+                id: `${GAME_ID}-logicmods-loadorder-list`,
+                items: filteredOrder,
+                itemRenderer: LogicModsItemRenderer,
+                apply: onApply,
+                idFunc: entry => entry.id,
+                isLocked: item => [true, 'true', 'always'].includes(item?.locked),
+              })
+            )
+          ),
+          React.createElement('div', { style: { flexShrink: 0 } },
+            React.createElement(LogicModsLoadOrderInfoPanel)
+          )
+        )
+      )
+    )
+  );
+} //*/
+
+//Read-only view of UE4SS + LogicMods load order data exported with a collection (collection workshop tab)
+function CollectionsDataView({ t, collection }) {
+  const { useSelector } = require('react-redux');
+  const { ListGroup, ListGroupItem } = require('react-bootstrap');
+
+  const profileId = useSelector(state => selectors.lastActiveProfileForGame(state, GAME_ID));
+  const ue4ssLO = useSelector(state =>
+    util.getSafe(state, ['persistent', 'ue4ssLoadOrder', profileId, 'loadOrder'], []));
+  const logicLO = useSelector(state =>
+    util.getSafe(state, ['persistent', 'logicModsLoadOrder', profileId, 'loadOrder'], []));
+
+  const isInCollection = (entry) =>
+    (entry.modId !== undefined) && (collection?.rules ?? []).some(rule => rule.reference?.id === entry.modId);
+  const ue4ssFiltered = ue4ssLoadOrder ? ue4ssLO.filter(isInCollection) : [];
+  const logicFiltered = logicModsLoadOrder ? logicLO.filter(isInCollection) : [];
+
+  const renderSection = (title, entries, showEnabled) =>
+    React.createElement('div', { style: { marginBottom: 16 } },
+      React.createElement('h4', null, t(title)),
+      entries.length > 0
+        ? React.createElement(ListGroup, null,
+            entries.map((entry, idx) => React.createElement(ListGroupItem, { key: entry.id },
+              React.createElement('span', { style: { marginRight: 8, color: 'rgba(255,255,255,0.5)' } }, `${idx + 1}.`),
+              React.createElement('span', null, entry.name ?? entry.id),
+              showEnabled && (entry.enabled === false)
+                ? React.createElement('span', { style: { marginLeft: 8, fontStyle: 'italic', color: 'rgba(255,255,255,0.5)' } }, t('(disabled)'))
+                : null,
+            ))
+          )
+        : React.createElement('p', { style: { fontStyle: 'italic' } },
+            t('No mods of this type from this collection are in the load order.')),
+    );
+
+  return React.createElement('div', { style: { overflow: 'auto', padding: '8px' } },
+    React.createElement('p', null,
+      t('This is a snapshot of the UE4SS and LogicMods load order information that will be exported with this collection.')),
+    ue4ssLoadOrder ? renderSection('UE4SS Mods (mods.txt)', ue4ssFiltered, true) : null,
+    logicModsLoadOrder ? renderSection('LogicMods/Blueprint Mods', logicFiltered, false) : null,
+  );
 }
 
 //export to Vortex

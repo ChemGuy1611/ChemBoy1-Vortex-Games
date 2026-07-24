@@ -4,6 +4,15 @@
 
 - Changed launcher settings so that Steam version launches through Steam (so that Steam launch arguments are used).
 
+## [0.7.0] - 2026-07-22
+
+- Fixed: Updating a mod could uncheck it or move it in the load order, especially on profiles other than the one you were using.
+- Added: Lock button on each load order entry.
+- Added: Multi-select (Ctrl/Shift-click) and right-click context menu for the load order list.
+- Added: Right-click options to open a mod's folder, staging folder, or mod page, and to enable/disable the Vortex mod.
+- Added: Load order status filter (enabled/disabled, locked/unlocked, unmanaged) with a match count.
+- Added: "Not managed by Vortex" indicator on load order entries with no matching mod.
+
 ## [0.6.0] - 2026-04-22
 
 - Improved: Load Order rendering using React - show mod image thumbnails

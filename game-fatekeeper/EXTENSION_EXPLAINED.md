@@ -47,6 +47,8 @@
 | `SYM_LINKS` | `true` | true if symlink deployment is enabled for this game |
 | `CHECK_CONFIG` | `false` | boolean to check if game, staging folder, and config and save folders are on the same drive |
 | `CHECK_SAVE` | `false` | secondary same as above (if save and config are in different locations) |
+| `mod_update_all_profile` | `false` | for mod update to keep them in the load order and not uncheck them |
+| `updating_mod` | `false` | used to see if it's a mod update or not |
 
 ## Mod Types
 

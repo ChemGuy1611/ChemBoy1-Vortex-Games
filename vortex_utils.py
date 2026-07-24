@@ -2206,9 +2206,17 @@ def find_vortex_plugin_folder(game_id, game_name=None):
 
     Cleaning normalizes underscores to spaces (newer deployed folders use the
     underscore-delimited "{Name}_Vortex_Extension_{version}_{hash}" form),
-    normalizes "&" to "and", and applies roman_to_arabic before lowercasing, so
-    display names with "&" or Roman numerals ("DOOM I & II", "Battlefront II")
-    match folders using "and"/Arabic ("DOOM I and II", "battlefront2")."""
+    normalizes "&" to "and", folds "40,000"/"40000" to "40K" (same convention
+    as normalize_game_name), folds "Heart of Chornobyl" to "HoC" (Nexus
+    in-app-update folders abbreviate it), drops "25th Anniversary" (older
+    deployed folders were named before that wording was added to GAME_NAME),
+    and applies roman_to_arabic before lowercasing, so display names with
+    "&", Roman numerals, spelled-out "40,000", "Heart of Chornobyl", or
+    "25th Anniversary" ("DOOM I & II", "Battlefront II", "Warhammer 40,000:
+    Space Marine 2", "S.T.A.L.K.E.R. 2 Heart of Chornobyl", "System Shock 2:
+    25th Anniversary Remaster") match folders using "and"/Arabic/"40K"/"HoC"/
+    dropped-wording ("DOOM I and II", "battlefront2", "Warhammer 40K Space
+    Marine 2", "STALKER 2 HoC", "System Shock 2 Remaster")."""
     plugins_dir = VORTEX_PLUGINS_DIR
     if not os.path.isdir(plugins_dir):
         return None
@@ -2238,10 +2246,15 @@ def find_vortex_plugin_folder(game_id, game_name=None):
         # and roman_to_arabic's \b boundaries fail on underscore forms.
         s = s.replace('_', ' ')
         # Drop trailing " Vortex Extension[ CB1...]" suffix, normalize ampersand
-        # to "and" (display names use "&", deployed folders use "and"), then
+        # to "and" (display names use "&", deployed folders use "and"), fold
+        # spelled-out "40,000"/"40000" to "40K" (mirrors normalize_game_name,
+        # but also catches the comma-less form used in GAME_ID strings), then
         # roman_to_arabic before lowercasing (its patterns are uppercase-cased),
         # so "Battlefront II"/"Battlefront 2" and "I & II"/"I and II" collapse.
         s = _vu_suffix.sub('', s).replace('&', ' and ')
+        s = re.sub(r'40,?000', '40K', s, flags=re.IGNORECASE)
+        s = re.sub(r'heart\s+of\s+chornobyl', 'HoC', s, flags=re.IGNORECASE)
+        s = re.sub(r'25th\s+anniversary\s+', '', s, flags=re.IGNORECASE)
         return re.sub(r'[^a-z0-9]', '', roman_to_arabic(s).lower())
 
     gid_clean = _clean(game_id)

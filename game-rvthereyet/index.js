@@ -2,8 +2,8 @@
 Name: RV There Yet? Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 0.2.0
-Date: 2026-07-19
+Version: 0.3.0
+Date: 2026-07-22
 Notes:
 - Rebuilt on the unified UE4-5 template and added Xbox Game Pass version support
 ////////////////////////////////////////////////*/
@@ -14,6 +14,7 @@ const { actions, fs, util, selectors, log,
 const path = require('path');
 const template = require('string-template');
 const { parseStringPromise } = require('xml2js');
+const { default: IniParser, WinapiFormat } = require('vortex-parse-ini');
 const React = require('react');
 //const fsPromises = require('fs/promises'); //.rm() for recursive folder deletion
 
@@ -59,6 +60,7 @@ const hasModKit = false; //toggle for UE ModKit mod support
 const hasServer = false; //toggle for server pak mod logic
 const preferHardlinks = true; //set true to perform partition checks when IO-STORE=false for Config/Save modtypes so that hardlinks available to more users
 const autoDownloadUe4ss = false; //toggle for auto downloading UE4SS
+const writeEngineVersion = false; //toggle to write ENGINE_VERSION into UE4SS-settings.ini (EngineVersionOverride) on deploy, when UE4SS is installed
 const SIGBYPASS_REQUIRED = false; //set true if there are .sig files in the Paks folder
 const IO_STORE = true; //true if the Paks folder contains .ucas and .utoc files
 const hasUserIdFolder = true; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
@@ -141,6 +143,9 @@ let CHECK_SAVE = false; //secondary same as above (if save and config are in dif
 let STAGING_FOLDER = ''; //Vortex staging folder path
 let DOWNLOAD_FOLDER = ''; //Vortex download folder path
 let GAME_VERSION = '';
+let mod_update_all_profile = false; // for mod update to keep them in the load order and not uncheck them
+let updateModIds = new Set(); // Nexus mod ids currently tracked as being updated (Set, not scalar, so batch updates don't clobber each other)
+let updating_mod = false; // used to see if it's a mod update or not
 let USERID_FOLDER = "";
 let STORE_FOLDER = '';
 
@@ -1408,7 +1413,9 @@ function testBinaries(files, gameId) {
 
 //Fallback installer to Binaries folder
 function installBinaries(api, files, fileName) {
-  fallbackInstallerNotify(api, fileName);
+  if (!updating_mod) {
+    fallbackInstallerNotify(api, fileName);
+  }
   const setModTypeInstruction = { type: 'setmodtype', value: BINARIES_ID };
 
   const filtered = files.filter(file =>
@@ -1742,6 +1749,11 @@ async function ensureLOFile(context, profileId, props) {
 }
 
 async function deserializeLoadOrder(context) {
+  if (mod_update_all_profile) {
+    const message = 'mod update in progress, please wait. Refresh when finished. \n To avoid this wait, only update current profile';
+    return [{ id: message, modId: 'mod_update', name: message, enabled: false }];
+  }
+
   const props = generateProps(context, undefined);
   if (props?.profile?.gameId !== GAME_ID) {
     return Promise.reject(new util.ProcessCanceled('invalid props'));
@@ -1811,6 +1823,10 @@ async function deserializeLoadOrder(context) {
 }
 
 async function serializeLoadOrder(context, loadOrder) {
+  if (mod_update_all_profile) {
+    return;
+  }
+
   const props = generateProps(context, undefined);
   if (props === undefined) {
     return Promise.reject(new util.ProcessCanceled('invalid props'));
@@ -1826,6 +1842,11 @@ async function serializeLoadOrder(context, loadOrder) {
 //*/
 
 async function deserializeUe4ss(api) {
+  if (mod_update_all_profile) {
+    const message = 'mod update in progress, please wait. Refresh when finished. \n To avoid this wait, only update current profile';
+    return [{ id: message, name: message, modId: 'mod_update', enabled: false }];
+  }
+
   //Set basic information for load order paths and data
   const state = api.getState();
   const mods = util.getSafe(api.store.getState(), ['persistent', 'mods', spec.game.id], {});
@@ -1927,6 +1948,10 @@ async function deserializeUe4ss(api) {
 
 //Write load order to files
 async function serializeUe4ss(api, loadOrder) {
+  if (mod_update_all_profile) {
+    return;
+  }
+
   const state = api.getState();
   if (selectors.activeGameId(state) !== GAME_ID) return;
   GAME_PATH = getDiscoveryPath(api);
@@ -1960,6 +1985,11 @@ async function serializeUe4ss(api, loadOrder) {
 }
 
 async function deserializeLogicMods(api) {
+  if (mod_update_all_profile) {
+    const message = 'mod update in progress, please wait. Refresh when finished. \n To avoid this wait, only update current profile';
+    return [{ id: message, name: message, modId: 'mod_update' }];
+  }
+
   const state = api.getState();
   const mods = util.getSafe(state, ['persistent', 'mods', spec.game.id], {});
   GAME_PATH = getDiscoveryPath(api);
@@ -2036,6 +2066,10 @@ async function deserializeLogicMods(api) {
 
 //Write load order for LogicMods/Blueprint pak mods
 async function serializeLogicMods(api, loadOrder) {
+  if (mod_update_all_profile) {
+    return;
+  }
+
   const state = api.getState();
   if (selectors.activeGameId(state) !== GAME_ID) return;
   GAME_PATH = getDiscoveryPath(api);
@@ -2869,6 +2903,32 @@ function main(context) {
     const api = context.api;
     api.onAsync('did-deploy', (profileId) => didDeploy(api, profileId)); //*/
     //api.onAsync('did-purge', (profileId) => didPurge(api, profileId)); //*/
+    //detect mod update (to maintain LO position)
+    api.events.on('mod-update', (gameId, modId) => {
+      if (GAME_ID === gameId) {
+        updateModIds.add(String(modId));
+      }
+    });
+    //detect mod removal (to maintain LO position) - match on the Nexus mod id
+    //recorded in state (attributes.modId), not the local modId string: the
+    //local id's naming convention varies by when the mod was originally
+    //downloaded (older dash-delimited vs current space-delimited), so string
+    //parsing silently misses old installs.
+    api.events.on('remove-mod', (gameMode, modId) => {
+      const removedMod = util.getSafe(api.getState(), ['persistent', 'mods', GAME_ID, modId], undefined);
+      const nexusModId = removedMod?.attributes?.modId;
+      if (nexusModId !== undefined && updateModIds.has(String(nexusModId))) {
+        mod_update_all_profile = true;
+      }
+    });
+    //detect mod installation (to maintain LO position). This only gates the
+    //fallback-installer re-notify suppression, so a best-effort filename
+    //match (covering both the old dash and current space delimiter) is fine.
+    api.events.on('will-install-mod', (gameId, archiveId, modId) => {
+      updating_mod = GAME_ID === gameId && Array.from(updateModIds).some((id) =>
+        modId.includes('-' + id + '-') || modId.includes(' ' + id + ' ')
+      );
+    });
   });
   return true;
 }
@@ -2899,6 +2959,9 @@ async function didDeploy(api, profileId) { //run on mod deploy
   if (gameId !== GAME_ID) {
     return Promise.resolve();
   }
+  mod_update_all_profile = false; //reset all-profile flag on deploy
+  updating_mod = false; //reset updating flag on deploy
+  updateModIds.clear(); //reset tracked updated modIds on deploy
   if (ue4ssLoadOrder && isUe4ssInstalled(api, spec)) {
     const loEnabled = util.getSafe(state, ['settings', GAME_ID, 'ue4ssLoEnabled'], true);
     if (loEnabled) {
@@ -2926,6 +2989,36 @@ async function didDeploy(api, profileId) { //run on mod deploy
     }
     if (LO.length > 0) {
       await serializeLogicMods(api, LO);
+    }
+  }
+  if (writeEngineVersion && isUe4ssInstalled(api, spec)) {
+    try {
+      GAME_PATH = getDiscoveryPath(api);
+      const INI_PATH = path.join(GAME_PATH, BINARIES_PATH, UE4SS_SETTINGS_FILEPATH);
+      await fs.statAsync(INI_PATH); //check if UE4SS settings file exists
+      let engineMajor = MAJOR_VERSION;
+      let engineMinor = MINOR_VERSION;
+      try { //try to read the real engine version from the shipping exe file properties first
+        const exeVersion = require('exe-version');
+        const exeProductVersion = await exeVersion.getProductVersion(path.join(GAME_PATH, SHIPPING_EXE));
+        const [exeMajor, exeMinor] = exeProductVersion.split('.');
+        if (exeMajor && exeMinor) {
+          engineMajor = exeMajor;
+          engineMinor = exeMinor;
+        }
+      } catch (err) {
+        log('info', `[${GAME_ID}] Could not read engine version from shipping exe, falling back to ENGINE_VERSION constant: ${err.message}`);
+      }
+      const parser = new IniParser(new WinapiFormat());
+      const contents = await parser.read(INI_PATH);
+      const data = contents.data;
+      data.EngineVersionOverride.MajorVersion = ` ${engineMajor}`; // Set the UE Engine version
+      data.EngineVersionOverride.MinorVersion = ` ${engineMinor}`;
+      //data.EngineVersionOverride.DebugBuild = ` 0`;
+      await parser.write(INI_PATH, contents); //write the INI file
+    }
+    catch (err) {
+      log('info', `[${GAME_ID}] Failed to read UE4SS Settings INI file and write Engine Version: ${err.message}`);
     }
   }
   api.dismissNotification(`${GAME_ID}-loadorderdeploy-notif`);

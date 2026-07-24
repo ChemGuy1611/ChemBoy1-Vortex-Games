@@ -4,6 +4,11 @@
 
 - None
 
+## [0.2.0]
+
+- Fixed: Updating a mod could uncheck it or move it in the load order, especially on profiles other than the one you were using.
+- Fixed: Load order description incorrectly said mod folders get renamed with alphanumeric prefixes; corrected to describe how the load order is actually written.
+
 ## [0.1.0]
 
 - Initial release of the Warhammer 40,000: Darktide extension.

@@ -4,6 +4,10 @@
 
 - None
 
+## [0.3.0] - 2026-07-22
+
+- Added: Updating a mod no longer unchecks it or moves it in the load order (Pak, UE4SS, and LogicMods pages), including on profiles other than the one you're using.
+
 ## [0.2.0] - 2026-07-19
 
 - Added support for the Xbox Game Pass (PC) version of the game, including game detection, launching through the Xbox app, and WinGDK binaries and config folder pathing

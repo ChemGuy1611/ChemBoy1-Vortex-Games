@@ -4,6 +4,10 @@
 
 - None
 
+## [0.3.0] - 2026-07-22
+
+- Added: Updating a mod no longer unchecks it or moves it in the load order (Pak, UE4SS, and LogicMods pages), including on profiles other than the one you're using.
+
 ## [0.2.0] - 2026-07-22
 
 - Migrated to file-based load order (FBLO) on the unified UE4-5 template; added lock button, multi-select, right-click context menu, UE4SS Load Order page

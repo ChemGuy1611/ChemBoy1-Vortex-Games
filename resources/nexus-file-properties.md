@@ -109,6 +109,41 @@ Cycles are not expected but guard with a `visited` set if robustness is needed.
 
 ---
 
+## Downloaded Archive Filename Convention
+
+Current Nexus-downloaded archive filenames follow a space-delimited pattern:
+
+`{name} {gameScopedModId} {version} {timestamp} {slug}.{ext}`
+
+An earlier dash-delimited format is still present on any mod that hasn't been
+re-downloaded since the change:
+
+`{name}-{gameScopedModId}-{version}-{timestamp}-{slug}.{ext}`
+
+`gameScopedModId` is the mod's ID within its game's domain (same value as
+`mod.attributes.modId` on an installed Vortex mod, and the 2nd argument of
+Vortex's `mod-update` event) — stable across every version of that mod, even
+though the surrounding tokens (version, timestamp) differ per upload. Vortex's
+own local mod ID (the key used in `state.persistent.mods`) is derived from
+this filename with only OS-invalid characters masked — spaces and dashes both
+pass through untouched.
+
+**The convention is stamped per mod at download time, not system-wide.** An
+already-installed mod's local ID keeps whichever convention was active when
+it was last downloaded, so a system can have both dash-delimited (older
+installs) and space-delimited (recent downloads) local IDs side by side.
+Some very old or manually-tracked mods have no `gameScopedModId` token in
+their local ID at all.
+
+Because of this, code that needs to detect "is this install the same mod
+being updated" should not parse the local ID string for either delimiter —
+it should read the already-installed mod's `attributes.modId` directly from
+`state.persistent.mods[gameId][modId]` and compare that. That value is set
+at install time regardless of which filename convention was active, so it's
+unaffected by future convention changes too.
+
+---
+
 ## Nexus Mods File Category IDs
 
 | category_id | name | typical use |

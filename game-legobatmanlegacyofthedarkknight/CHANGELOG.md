@@ -4,6 +4,10 @@
 
 - None
 
+## [0.5.0] - 2026-07-22
+
+- Added: Updating a mod no longer unchecks it or moves it in the load order (Pak, UE4SS, and LogicMods pages), including on profiles other than the one you're using.
+
 ## [0.4.0] - 2026-07-12
 
 - Added: Status filtering on all load order pages (Enabled/Disabled, Locked/Unlocked, Unmanaged). Pak Load Order page gets filter pills in the info panel; UE4SS and LogicMods pages get a dropdown filter beside the search box. Shows a "matched / total" count while a filter is active.

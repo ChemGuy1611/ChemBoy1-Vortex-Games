@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.5.0] - 2026-07-22
+
+- Fixed: Updating a mod could uncheck it or move it in the load order, especially on profiles other than the one you were using.
+
 ## [0.4.1] - 2026-07-18
 
 - Changed: Requirement downloader now uses the native fetch API instead of a bundled axios copy (much smaller extension, same behavior on Vortex 2.0+)

@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.3.0] - 2026-07-22
+
+- Fixed: Updating a mod could uncheck it or move it in the load order, especially on profiles other than the one you were using.
+
 ## [0.2.0] - 2026-04-22
 
 - Improved: Load Order rendering using React - show mod image thumbnails

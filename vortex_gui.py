@@ -26,6 +26,7 @@ Usage:
 import codecs
 import collections
 import os
+import re
 import shutil
 import sys
 
@@ -1161,7 +1162,8 @@ class ScriptRunner(QObject):
             return
         cmd = self._queue.pop(0)
         self.progress_signal.emit(self._total - len(self._queue), self._total)
-        self.log_signal.emit(f"\n> {' '.join(cmd)}\n")
+        ts = datetime.now().strftime("%H:%M:%S")
+        self.log_signal.emit(f"\n[{ts}] > {' '.join(cmd)}\n")
         p = QProcess()
         p.setWorkingDirectory(REPO_ROOT)
         p.setProcessChannelMode(QProcess.MergedChannels)
@@ -2265,7 +2267,7 @@ class MainWindow(QMainWindow):
             stripped = line.lstrip()
             if stripped.startswith("[ERROR") or stripped.startswith("[exited with code"):
                 fmt = error_fmt
-            elif stripped.startswith("> "):
+            elif re.match(r"^\[\d\d:\d\d:\d\d\] > ", stripped):
                 fmt = cmd_fmt
             else:
                 fmt = default_fmt

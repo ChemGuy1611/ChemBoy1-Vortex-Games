@@ -2,8 +2,8 @@
 Name: MENACE Vortex Extension
 Structure: Unity BepinEx/MelonLoader Hybrid
 Author: ChemBoy1
-Version: 0.5.0
-Date: 2026-04-22
+Version: 0.6.0
+Date: 2026-07-22
 //////////////////////////////////////////*/
 
 //Import libraries
@@ -325,7 +325,7 @@ const LO_INCREMENT = 10;
 const LO_ATTRIBUTE = "modName";
 // for mod update to keep them in the load order and not uncheck them
 let mod_update_all_profile = false;
-let updatemodid = undefined;
+let updateModIds = new Set(); // Nexus mod ids currently tracked as being updated (Set, not scalar, so batch updates don't clobber each other)
 let updating_mod = false; // used to see if it's a mod update or not
 let mod_install_name = ""; // used to display the name of the currently installed mod
 
@@ -2838,9 +2838,9 @@ function main(context) {
   context.once(() => { // put code here that should be run (once) when Vortex starts up
     const api = context.api;
     api.onAsync('did-deploy', async (profileId, deployment) => { 
-      mod_update_all_profile = false;
-      updating_mod = false;
-      updatemodid = undefined;
+      mod_update_all_profile = false; //reset all-profile flag on deploy
+      updating_mod = false; //reset updating flag on deploy
+      updateModIds.clear(); //reset tracked updated modIds on deploy
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;
       //await ensureModpackLoader(api, true);
@@ -2887,23 +2887,32 @@ function main(context) {
       }
       return Promise.resolve();
     });
+    //detect mod update (to maintain LO position)
     api.events.on("mod-update", (gameId, modId, fileId) => {
       if (GAME_ID == gameId) {
-        updatemodid = modId;
+        updateModIds.add(String(modId));
       }
     });
+    //detect mod removal (to maintain LO position) - match on the Nexus mod id
+    //recorded in state (attributes.modId), not the local modId string: the
+    //local id's naming convention varies by when the mod was originally
+    //downloaded (older dash-delimited vs current space-delimited), so string
+    //parsing silently misses old installs.
     api.events.on("remove-mod", (gameMode, modId) => {
-      if (modId.includes("-" + updatemodid + "-")) {
+      const removedMod = util.getSafe(api.getState(), ["persistent", "mods", GAME_ID, modId], undefined);
+      const nexusModId = removedMod?.attributes?.modId;
+      if (nexusModId !== undefined && updateModIds.has(String(nexusModId))) {
         mod_update_all_profile = true;
       }
     });
+    //detect mod installation (to maintain LO position). This only gates the
+    //fallback-installer re-notify suppression, so a best-effort filename
+    //match (covering both the old dash and current space delimiter) is fine.
     api.events.on("will-install-mod", (gameId, archiveId, modId) => {
       mod_install_name = modId.split("-")[0];
-      if (GAME_ID == gameId && modId.includes("-" + updatemodid + "-")) {
-        updating_mod = true;
-      } else {
-        updating_mod = false;
-      }
+      updating_mod = GAME_ID == gameId && Array.from(updateModIds).some((id) =>
+        modId.includes("-" + id + "-") || modId.includes(" " + id + " ")
+      );
     }); //*/
   });
   return true;

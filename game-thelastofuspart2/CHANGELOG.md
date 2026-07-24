@@ -4,6 +4,10 @@
 
 - Added check for if sp-common.psarc and bin.psarc files exist in the game folder (indicator of update and need to extract).
 
+## [0.11.0] - 2026-07-22
+
+- Fixed: Updating a mod could uncheck it or move it in the load order, especially on profiles other than the one you were using.
+
 ## [0.10.1] - 2026-07-19
 
 - Removed: Deprecated downloader module. All requirements are downloaded from Nexus Mods.

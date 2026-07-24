@@ -13,7 +13,7 @@ const BAT_FILE_EXT = ".bat";
 let GAME_PATH = '';
 let GAME_VERSION = '';
 let mod_update_all_profile = false; // for mod update to keep them in the load order and not uncheck them
-let updatemodid = undefined;
+let updateModIds = new Set(); // Nexus mod ids currently tracked as being updated (Set, not scalar, so batch updates don't clobber each other)
 let updating_mod = false; // used to see if it's a mod update or not
 const APPMANIFEST_FILE = 'appxmanifest.xml';
 
@@ -694,7 +694,7 @@ function main(context) {
     api.onAsync("did-deploy", () => {
       mod_update_all_profile = false; //reset all-profile flag on deploy
       updating_mod = false; //reset updating flag on deploy
-      updatemodid = undefined; //reset updated modId on deploy
+      updateModIds.clear(); //reset tracked updated modIds on deploy
       /* DISABLED since a mod automates this - Patch exe on deploy
       GAME_PATH = getDiscoveryPath(api);
       if (is_darktide_profile_active(api) && GAME_PATH != null) {
@@ -715,22 +715,28 @@ function main(context) {
     //detect mod update (to maintain LO position)
     api.events.on("mod-update", (gameId, modId) => {
       if (GAME_ID == gameId) {
-        updatemodid = modId;
+        updateModIds.add(String(modId));
       }
     });
-    //detect mod removal (to maintain LO position)
+    //detect mod removal (to maintain LO position) - match on the Nexus mod id
+    //recorded in state (attributes.modId), not the local modId string: the
+    //local id's naming convention varies by when the mod was originally
+    //downloaded (older dash-delimited vs current space-delimited), so string
+    //parsing silently misses old installs.
     api.events.on("remove-mod", (gameMode, modId) => {
-      if (modId.includes("-" + updatemodid + "-")) {
+      const removedMod = util.getSafe(api.getState(), ["persistent", "mods", GAME_ID, modId], undefined);
+      const nexusModId = removedMod?.attributes?.modId;
+      if (nexusModId !== undefined && updateModIds.has(String(nexusModId))) {
         mod_update_all_profile = true;
       }
     });
-    //detect mod installation (to maintain LO position)
+    //detect mod installation (to maintain LO position). This only gates the
+    //fallback-installer re-notify suppression, so a best-effort filename
+    //match (covering both the old dash and current space delimiter) is fine.
     api.events.on("will-install-mod", (gameId, archiveId, modId) => {
-      if (GAME_ID == gameId && modId.includes("-" + updatemodid + "-")) {
-        updating_mod = true;
-      } else {
-        updating_mod = false;
-      }
+      updating_mod = GAME_ID == gameId && Array.from(updateModIds).some((id) =>
+        modId.includes("-" + id + "-") || modId.includes(" " + id + " ")
+      );
     });
   });
 
@@ -772,7 +778,7 @@ function LoadOrderInstructions() {
     ),
     React.createElement('br', null),
     React.createElement('p', null,
-      'Warhammer 40,000: Darktide loads mods in alphanumerical order, so Vortex prefixes the folder names with "AAA, AAB, AAC, ..." to ensure they load in the order you set here. The number in the left column represents the overwrite order. Changes from mods with higher numbers take priority over mods that make similar edits.',
+      'Warhammer 40,000: Darktide loads mods in the order you set here — Vortex writes this order directly to the game\'s mod list file. The number in the left column represents the overwrite order. Changes from mods with higher numbers take priority over mods that make similar edits.',
     ),
   );
 }
