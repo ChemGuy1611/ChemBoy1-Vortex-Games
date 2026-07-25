@@ -691,7 +691,9 @@ function main(context) {
   context.once(() => {
     const api = context.api; //don't move from the top
     // Patch exe on deploy and reset mod update flags
-    api.onAsync("did-deploy", () => {
+    api.onAsync("did-deploy", (profileId) => {
+      const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
+      if (profileId !== LAST_ACTIVE_PROFILE) return; //only reset this game's mod update flags
       mod_update_all_profile = false; //reset all-profile flag on deploy
       updating_mod = false; //reset updating flag on deploy
       updateModIds.clear(); //reset tracked updated modIds on deploy

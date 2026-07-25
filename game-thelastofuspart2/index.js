@@ -1584,6 +1584,8 @@ function main(context) {
     const api = context.api;
     api.onAsync('did-purge', (profileId) => didPurge(api, profileId)); //*/
     api.onAsync("did-deploy", (profileId) => {
+      const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
+      if (profileId !== LAST_ACTIVE_PROFILE) return; //only reset this game's mod update flags
       mod_update_all_profile = false; //reset all-profile flag on deploy
       updating_mod = false; //reset updating flag on deploy
       updateModIds.clear(); //reset tracked updated modIds on deploy

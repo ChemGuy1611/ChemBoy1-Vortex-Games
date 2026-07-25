@@ -1386,11 +1386,11 @@ function main(context) {
   context.once(() => { // put code here that should be run (once) when Vortex starts up
     const api = context.api;
     api.onAsync('did-deploy', async (profileId, deployment) => {
+      const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
+      if (profileId !== LAST_ACTIVE_PROFILE) return;
       mod_update_all_profile = false; //reset all-profile flag on deploy
       updating_mod = false; //reset updating flag on deploy
       updateModIds.clear(); //reset tracked updated modIds on deploy
-      const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
-      if (profileId !== LAST_ACTIVE_PROFILE) return;
       if (hasLoader) {
         deployNotify(api);
       }
