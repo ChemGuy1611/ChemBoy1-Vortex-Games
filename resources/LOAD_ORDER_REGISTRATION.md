@@ -318,8 +318,20 @@ types.ts:81                 interface ILoadOrderGameInfo { ... }
 | `clearStateOnPurge` | `true` | Wipe Redux state when mods are purged |
 | `usageInstructions` | Vortex default | String or `React.ComponentType` shown in the info panel -- always rendered on the **right side** of the list in a `FlexLayout type="row"`; position is hardcoded and not configurable via this API |
 | `customItemRenderer` | Vortex default | `React.ComponentType` for each row in the list |
+| `uniformRowHeight` | `false` | Declare that a custom renderer produces equal-height rows, re-enabling list windowing |
 | `noCollectionGeneration` | `false` | Opt out of automatic Vortex Collections integration |
 | `condition` | `undefined` | `() => boolean` -- hide the LO page when returns `false` |
+
+Two behaviours behind that table:
+
+- A **component-valued `usageInstructions` receives no props at all** -- `InfoPanel.tsx` renders it
+  as `<Info />`, without even `t`. Everything it displays must come from hooks (`useSelector`, a
+  shared module hook, `MainContext`). A string value is run through `bbcode` and translated instead.
+- Supplying `customItemRenderer` turns list virtualization **off** unless `uniformRowHeight: true`
+  is also set: `virtualized = customItemRenderer === undefined || uniformRowHeight === true`.
+  Windowing measures row pitch from the first two rendered rows, so it is only safe for uniform
+  rows. Set the flag when rows are fixed-height and the list can get long; leave it off when rows
+  wrap or grow conditional controls.
 
 ### `ILoadOrderEntry` shape (types.ts:35-60)
 
@@ -570,6 +582,31 @@ the UE4SS sidecar are **two separate systems**:
 `mods.txt` line format: `ModFolderName : 1` (enabled) or `ModFolderName : 0` (disabled).
 `serializeUe4ss` writes user-managed mods between the `BPModLoaderMod` and `Keybinds`
 anchor lines.
+
+### Sidecar orders get none of the core update protections
+
+Because the sidecars are not FBLO state, **none** of the core machinery that keeps a load order
+stable across a mod update applies to them (`UpdateSet`, arming from `will-remove-mods`, serialize
+suppression while an update is in flight, the fileId re-arm — see `VORTEX_LOAD_ORDER.md`). The same
+is true of any other custom `registerMainPage` order that keeps its own reducer.
+
+What that means in practice for a sidecar order:
+
+- Sidecar entry ids are **deployed artifact names** (a UE4SS mod's folder name, a LogicMods pak's
+  basename) read out of the game directory — they are naturally stable across versions, so a mod
+  update does not change them.
+- But both deserializers **drop stored entries whose artifact is currently missing from the game
+  directory** and append unknown artifacts at the end. Updating a mod removes and re-deploys its
+  artifact, so a deserialize+serialize pass that lands inside that window rewrites the order file
+  without the mod — and its position is gone when the artifact comes back.
+- The extension must therefore guard the sidecar itself: while a mod update is in flight, have
+  `deserialize*` return a placeholder and `serialize*` return early (this is what the
+  `mod_update_all_profile` flag in the ChemBoy1 templates does).
+- **Ordering inside `didDeploy` matters.** The template resets that flag at the top of `didDeploy`
+  and runs the sidecar deserialize → dispatch → serialize blocks below it. Any flag reset placed
+  above those blocks disarms the guard for that same pass, so a deploy that fires while other mods
+  are still updating will still rewrite the sidecar order files. Release the guard per updated mod
+  (only once its replacement has actually landed) rather than clearing it wholesale.
 
 ---
 
@@ -1245,3 +1282,7 @@ they change deployment state, not mods.txt.
 - `resources/COLLECTIONS_FEATURE.md` -- collections auto-gen built on `registerLoadOrder` options
 - `resources/GAMEBRYO_PLUGIN_SYSTEM.md` -- plugin-based load order alternative for Bethesda games
 - `resources/TEMPLATES_OVERVIEW.md` -- which templates use FBLO vs the legacy page
+- `resources/UE4_5_REACT_ARCHITECTURE.md` -- the full React layer this registration plugs into, and
+  how the FBLO page compares with the template's two self-hosted load order pages
+- `resources/NON_UE_LOAD_ORDER_PAGES.md` -- non-Unreal games registering this API: generic FBLO
+  tier, minimal-renderer tier, and the one remaining legacy `registerLoadOrderPage` game

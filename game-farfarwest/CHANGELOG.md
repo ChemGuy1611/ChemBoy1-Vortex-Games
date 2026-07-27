@@ -4,6 +4,10 @@
 
 - None
 
+## [0.5.1] - 2026-07-25
+
+- Fixed: Using "Update all" to update several mods at once could move them in the load order or uncheck them, including on the UE4SS and LogicMods load order pages.
+
 ## [0.5.0] - 2026-07-22
 
 - Added: Updating a mod no longer unchecks it or moves it in the load order (Pak, UE4SS, and LogicMods pages), including on profiles other than the one you're using.

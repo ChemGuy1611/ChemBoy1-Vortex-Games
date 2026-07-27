@@ -4,6 +4,10 @@
 
 - None
 
+## [0.5.1] - 2026-07-25
+
+- Fixed: Using "Update all" to update several mods at once could move them in the load order or uncheck them, including on the UE4SS and LogicMods load order pages.
+
 ## [0.5.0] - 2026-07-23
 
 - Added: UE4SS Load Order page - drag-and-drop mods.txt management with lock, multi-select, a Configure button for mods with settings files, and per-profile state.

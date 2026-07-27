@@ -116,4 +116,5 @@ python -c "import os; [print(k, '=', 'SET' if os.environ.get(k) else 'MISSING') 
 ## See also
 
 `TEMPLATES_OVERVIEW.md` (what a working environment builds against). `REGISTER_GAME.md` (the
-required extension file set this environment is set up to develop).
+required extension file set this environment is set up to develop). `VORTEX_DEV_BUILD.md` (the
+separate, much heavier toolchain needed to build the Vortex application itself from source).

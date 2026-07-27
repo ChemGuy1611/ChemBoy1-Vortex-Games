@@ -25,7 +25,7 @@ How the Vortex application and its monorepo are put together, for orientation wh
 
 Vortex is an **nx + pnpm-workspace** monorepo.
 
-- **Package manager:** pnpm `11.5.1`, Node `24.15.0` (pinned in `package.json` `engines`/`devEngines`/`volta`).
+- **Package manager:** pnpm `11.10.0`, Node `24.17.0` (pinned in `package.json` `engines`/`devEngines`/`packageManager`). The Node pin is an exact version and `pnpm-workspace.yaml` sets `engineStrict: true`, so a different Node build fails the install outright — see `VORTEX_DEV_BUILD.md` for the setup that satisfies it.
 - **Task runner:** [nx](https://nx.dev) (`nx.json`). `neverConnectToCloud: true`, analytics off, default base branch `master`. Targets are cached: `build`, `typecheck`, `lint*` cache; `test*` does not. `build`/`typecheck`/`lint` all `dependsOn: ["^build"]` so dependency packages build first.
 - **Dependency versions are centralised** in the pnpm **catalog** (`pnpm-workspace.yaml`). Almost every `devDependency` in the root `package.json` is `"catalog:"`. When checking a dependency version, read the catalog, not the individual `package.json`.
 - **Bundlers:**
@@ -41,8 +41,7 @@ Vortex is an **nx + pnpm-workspace** monorepo.
 | Command | Effect |
 | --- | --- |
 | `pnpm run start` | Launch dev app (`nx run @vortex/main:start`) |
-| `pnpm run build` | `nx run-many -t build lint typecheck` + dependency-report assets |
-| `pnpm run build:all` | Full build used before `start` / F5 debugging (per CONTRIBUTE.md) |
+| `pnpm run build` | `nx run-many -t build lint typecheck` + dependency-report assets. This is the full build to run before `start` / F5 debugging — `CONTRIBUTE.md` still calls it `build:all`, but no such script exists in `package.json` |
 | `pnpm run package` / `package:nosign` | Production build + Electron package (signed / unsigned) |
 | `pnpm run api` | Build the `vortex-api` package only |
 | `pnpm run test` | Run all unit + integration tests except `@vortex/e2e` |
@@ -50,7 +49,9 @@ Vortex is an **nx + pnpm-workspace** monorepo.
 | `pnpm run lint` / `format` / `format:check` | oxlint / oxfmt |
 | `pnpm run generate:query-types` | Regenerate typed query bindings (see Persistence) |
 
-`scripts/create-env-file.mjs` runs on `preinstall` to seed `.env` from `.env.example`.
+`scripts/create-env-file.mjs` runs on `preinstall`; it writes `.local.env` containing `NX_PARALLEL=<cpu core count>`, which nx reads to size its task parallelism.
+
+Full prerequisites, install walkthrough, and per-project task invocation are in `VORTEX_DEV_BUILD.md`.
 
 ## Process model (Electron)
 
@@ -274,3 +275,7 @@ Notifications are session-state entries deduped by `id` (re-send updates in plac
 `node_modules/vortex-api/lib/api.d.ts` (the full typed API surface) · `VORTEX_2_MIGRATION.md` (1.16->2.0 + NPM package) · `REGISTER_GAME.md` · `INSTALLER_SYSTEM.md` · `COLLECTIONS_FEATURE.md` · `EVENTS.md` · `STATE_HELPERS.md` · `UNDERUSED_API_FUNCTIONS.md` · `VORTEX_MOD_LIST.md` (Mods page display/filter mechanics) · `HEALTH_CHECK.md` · `ARCHIVE_HANDLER.md` · `MOD_RULES.md` · `TOOLBAR_ACTIONS.md` · `FOMOD_INSTALLER.md` · `VORTEX_FLOWCHARTS.md` (Mermaid diagrams of the
 install, update, load-order, deployment, discovery/activation, profile-switch, and extension-load
 flows).
+
+Contributing to the app itself: `VORTEX_DEV_BUILD.md` (build from source) ·
+`VORTEX_CODESTYLE.md` (conventions and their enforcement) · `VORTEX_AGENT_GUIDES.md` (the repo's own
+`AGENTS*.md` instruction set and packaged skills).

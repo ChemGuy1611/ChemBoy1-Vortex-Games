@@ -750,11 +750,11 @@ def run_audits(target_ids=None):
             folder_paths.append((d, index_path))
 
     scope = f"{len(folder_paths)} extension(s)"
-    print(f"\n=== Audit: installer priorities (expected range 25-49) — {scope} ===")  # noqa: raw-log-print
+    print(f"\n=== Audit: installer priorities (expected range 25-49) - {scope} ===")  # noqa: raw-log-print
     pri_total = audit_installer_priorities(folder_paths)
     print(f"\nTotal out-of-range calls: {pri_total}")  # noqa: raw-log-print
 
-    print(f"\n=== Audit: testSupported FOMOD check — {scope} ===")  # noqa: raw-log-print
+    print(f"\n=== Audit: testSupported FOMOD check - {scope} ===")  # noqa: raw-log-print
     fomod_total = audit_fomod_check(folder_paths)
     print(f"\nTotal missing FOMOD guard: {fomod_total}")  # noqa: raw-log-print
 

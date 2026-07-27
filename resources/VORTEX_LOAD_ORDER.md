@@ -51,11 +51,62 @@ drag-and-drop list (`ItemRenderer.tsx`).
    state. On **`did-deploy`** the deserialized order is passed through `updateSet.restore(...)` so
    externally-introduced entries are reconciled against the known set.
 
-## UpdateSet — reconciling external changes
+## UpdateSet — surviving mod updates and purge cycles
 
-`UpdateSet.ts` tracks the known load-order entries (`toExtendedLoadOrderEntry`) so that when the
-order file is re-read after a deploy, new/removed entries (e.g. a mod added outside the page) are
-merged in predictably (`updateSet.restore`).
+`UpdateSet.ts` remembers the load-order entries and the **index** each one held
+(`toExtendedLoadOrderEntry`), so a load order re-read from disk can be put back into the order the
+user chose. It is the mechanism that keeps a mod's position when the mod is updated or reinstalled.
+
+**Armed by removals, not by update events.** `onWillRemoveMods` listens on `will-remove-mods` /
+`will-remove-mod` and, when `IRemoveModOptions.willBeReplaced` is `true` (set by the install
+manager's replace path and by profile-replace), stores the affected entries' indices and sets
+`updateSet.shouldRestore = true`. `will-purge` arms it the same way, from the current stored order.
+`diffLoadOrder` arms it too, whenever an entry that stayed at the same index is now backed by a mod
+with a different `fileId` — i.e. an update landed underneath it.
+
+**While armed:**
+
+- `genLoadOrderChange` **skips `applyNewLoadOrder`**, so nothing is serialized to the game's order
+  file. This is what stops a transient mid-update read (a mod's staging folder briefly absent
+  between the old version's removal and the new version's install) from being written back to disk
+  as a shortened order.
+- `updateSet.init(...)` is a no-op, so the remembered indices cannot be overwritten by whatever
+  state the order is in mid-update.
+
+**On `did-deploy`:** the freshly deserialized order is passed through `updateSet.restore(...)`,
+which sorts it by the remembered indices (entries it doesn't know keep their current position),
+disarms itself, and re-seeds from the restored order.
+
+Arming happens **per removal**, so a batch of updates arms once per mod, each time before that
+mod's own vulnerable window.
+
+## Mod updates and load-order position
+
+Two core behaviours matter to an extension author:
+
+- **An updated mod keeps its mod id.** When the install manager takes the replace path for a new
+  version, it reuses the previous mod's id (and therefore its staging folder name). The load-order
+  entry id is unchanged across the update, so a `deserializeLoadOrder` that matches on mod id finds
+  the entry already in the order file — nothing gets appended as if it were a brand-new mod.
+- **The protection is event-source-agnostic.** It hangs off `will-remove-mods`, which fires
+  downstream of both the single-mod update button (`mod-update`) and the bulk "Update all" flow
+  (`mods-update`) — see `VORTEX_NEXUS_INTEGRATION.md`. An extension that arms its own guard from
+  `mod-update` alone will not arm for bulk updates; the core protection still applies.
+- **Only FBLO state is covered.** All of the above operates on
+  `state.persistent.loadOrder[profileId]` and the game entry registered through
+  `registerLoadOrder`. A *sidecar* order — a custom `registerMainPage` list with its own reducer and
+  its own order file, e.g. the UE4SS and LogicMods pages in the Unreal templates — is invisible to
+  core: no arming, no serialize suppression, no restore. Such a page has to guard itself while an
+  update is in flight (`LOAD_ORDER_REGISTRATION.md`, "Sidecar orders get none of the core update
+  protections").
+- **One known gap:** if a deployment completes *mid-batch* (collection installs, `autoDeploy` off,
+  or a manual deploy), `restore()` disarms, the resulting `setFBLoadOrder` re-seeds the `UpdateSet`
+  through the `SET_FB_LOAD_ORDER` action check — dropping the remembered index of a mod that is
+  still mid-update — and the next state diff serializes the shortened order to disk. In the normal
+  auto-deploy path this does not happen: deployment waits for installs to go idle
+  (`installManager.waitForIdle()`), so a batch collapses into a single `did-deploy` after every mod
+  has landed. An extension guard that suppresses its own `serializeLoadOrder` while an update is in
+  flight covers that gap.
 
 ## Sort by deploy order
 
@@ -85,10 +136,16 @@ load order into a collection and restores it on install (`genCollectionLoadOrder
   mods, plugin management for ESPs).
 - `serializeLoadOrder` is the **only** place the on-disk order file is written; it receives both
   the new and previous order so extensions can diff.
+- For games whose deployment purges first (`directoryCleaning: 'tag'` with `requiresCleanup`), every
+  deploy fires `did-purge` as well — so a naive `deserializeLoadOrder` can run at a moment when a
+  mod being updated has no folder on disk. That is what the `UpdateSet` arming above exists for.
+- Don't arm an extension-side update guard from `mod-update` only — the bulk update flow emits
+  `mods-update` instead and never re-emits `mod-update`.
 
 ## See also
 
 Runtime siblings: `VORTEX_PROFILES.md`, `VORTEX_DEPLOYMENT.md`, `VORTEX_GAME_LIFECYCLE.md`,
+`VORTEX_MOD_INSTALL.md` (mod id reuse on update), `VORTEX_NEXUS_INTEGRATION.md` (update events),
 `VORTEX_EVENT_BUS.md`. Overview: `VORTEX_APP.md`. Authoring: `LOAD_ORDER_REGISTRATION.md`,
 `LOAD_ORDER_ITEM_RENDERER.md`, `GAMEBRYO_PLUGIN_SYSTEM.md`. Diagram of the FBLO lifecycle:
 `VORTEX_FLOWCHARTS.md` §3.

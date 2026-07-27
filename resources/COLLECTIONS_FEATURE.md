@@ -16,8 +16,8 @@ distinct mechanisms — pick the right one:
 
 ## Source paths
 
-- `registerCollectionFeature`: `Vortex/extensions/collections/src/index.ts` (grep `registerCollectionFeature`)
-- `IExtendedInterfaceProps`: `Vortex/extensions/collections/src/types/IExtendedInterfaceProps.ts`
+- `registerCollectionFeature`: `Vortex/src/renderer/src/extensions/collections/index.ts` (grep `registerCollectionFeature`)
+- `IExtendedInterfaceProps`: `Vortex/src/renderer/src/extensions/collections/types/IExtendedInterfaceProps.ts`
 - `registerGameSpecificCollectionsData` signature: `Vortex/src/renderer/src/types/IExtensionContext.ts` (grep)
 - `ICollectionsGameSupportEntry`, `ICollection`, `IGameSpecificInterfaceProps`: `Vortex/src/renderer/src/extensions/file_based_loadorder/types/collections.ts`
 - FBLO auto-registration: `Vortex/src/renderer/src/extensions/file_based_loadorder/index.ts` (grep `registerCollectionFeature`)
@@ -55,7 +55,11 @@ context.optional.registerCollectionFeature(
 - `editComponent` props = `IExtendedInterfaceProps`:
   `{ t, gameId, collection, revisionInfo, onSetCollectionAttribute(attrPath[], value) }`.
   Note there is **no `api`** — inject it via closure or read the store with
-  `useSelector`.
+  `useSelector`. `collection` here is the collection **mod** (`IMod`), so
+  `collection.rules` is the membership list to filter against. Worked read-only
+  example: `CollectionsDataView` in `template-ue4-5\index.js`, which lists the
+  UE4SS and LogicMods entries belonging to the collection (see
+  `UE4_5_REACT_ARCHITECTURE.md`).
 
 `ICollection` (what `parse`/`clone` receive):
 
@@ -141,3 +145,5 @@ Note the UI prop shape differs from A's `editComponent`: `interface` gets only
 `VORTEX_LOAD_ORDER.md` (FBLO auto-generates a collections data source from `persistent.loadOrder`).
 `MOD_RULES.md` (collections export/import mod dependency rules alongside custom feature data).
 `LOAD_ORDER_REGISTRATION.md` (FBLO registration options that back the collections auto-gen).
+`UE4_5_REACT_ARCHITECTURE.md` (the `editComponent` this API takes, rendered as a collection
+workshop tab, plus the sidecar orders it displays).

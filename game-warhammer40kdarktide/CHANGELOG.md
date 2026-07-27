@@ -4,6 +4,10 @@
 
 - None
 
+## [0.2.1]
+
+- Fixed: Using "Update all" to update several mods at once could still move them in the load order or uncheck them.
+
 ## [0.2.0]
 
 - Fixed: Updating a mod could uncheck it or move it in the load order, especially on profiles other than the one you were using.

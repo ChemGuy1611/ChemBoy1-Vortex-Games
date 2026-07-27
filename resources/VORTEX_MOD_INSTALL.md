@@ -80,6 +80,22 @@ on disk derives from the archive name; **variant** installs append `+<variant>` 
 name (`util/modName.ts`). At this point the mod exists in `state.persistent.mods[gameId][modId]`
 with state `installed` — but nothing is in the game folder yet.
 
+### Installing over a previous version
+
+When the archive is a newer file of an already-managed mod, `findPreviousVersionMod` locates it and
+`userVersionChoice` asks whether to **replace** it or install **alongside** it — with only one
+profile present, replace is chosen automatically. The replace path:
+
+- emits `remove-mod` for the old version with `{ willBeReplaced: true, reason: 'version_update' }`,
+  so listeners can tell an update apart from a real uninstall (`IRemoveModOptions`);
+- **reuses the old mod's id** for the new version ("so that all profiles keep using it"), which
+  means the new version installs into the **same staging folder name**;
+- carries over the old mod's rules, file overrides, and (for an identical `fileId`) its installer
+  choices.
+
+Anything keyed on the mod id therefore survives an update unchanged — load order entries included
+(`VORTEX_LOAD_ORDER.md`). Choosing "install alongside" instead produces a genuinely new mod id.
+
 ## 5. Mod type routing
 
 `setmodtype` instructions (or modtype auto-detection, `determineModType`, which sorts candidate
@@ -120,5 +136,9 @@ installer, and returns the instructions).
 ## See also
 
 Runtime siblings: `VORTEX_GAME_LIFECYCLE.md`, `VORTEX_DEPLOYMENT.md`, `VORTEX_DOWNLOAD_MGMT.md`,
+`VORTEX_LOAD_ORDER.md` (what mod id reuse means for load order),
+`VORTEX_NEXUS_INTEGRATION.md` (what triggers an update install),
 `VORTEX_EVENT_BUS.md`. Overview: `VORTEX_APP.md`. Authoring: `INSTALLER_SYSTEM.md`,
 `FOMOD_INSTALLER.md`. Diagram of this pipeline: `VORTEX_FLOWCHARTS.md` §1.
+Collection phase-engine invariants the repo asks contributors to preserve:
+`VORTEX_AGENT_GUIDES.md`.

@@ -177,4 +177,5 @@ module.exports = {
 
 `VORTEX_APP.md` (overview of the extension-API surface this guide ports code against).
 `REGISTER_MIGRATION.md` (extension's own runtime state migration on its own version bump — not
-this doc; see disambiguation above).
+this doc; see disambiguation above). `VORTEX_DEV_BUILD.md` (building the 2.x app itself from source
+to test against it).

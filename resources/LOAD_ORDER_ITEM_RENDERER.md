@@ -171,6 +171,28 @@ An object (`IItemRendererProps`) with:
 | --- | --- | --- |
 | `loEntry` | `ILoadOrderEntry_2` | The actual mod entry |
 | `displayCheckboxes` | `boolean` | Whether to show the enable/disable checkbox |
+| `invalidEntries` | `IInvalidResult[]` | Optional; validation failures, for the warning tooltip |
+| `position` | `number` | Optional; 1-based position in the **full** order, computed before filtering |
+| `lockedEntriesCount` | `number` | Optional; number of locked entries in the full order |
+| `setRef` | `(ref) => void` | Declared in the type but **never passed** by `DraggableListItem` |
+
+`position` and `lockedEntriesCount` exist precisely to feed `LoadOrderIndexInput`. The UE4-5
+template ignores both and recomputes them from a `useSelector` over the whole load order — correct,
+but it subscribes every row to the full array, so any change re-renders all rows. Vortex builds
+these row objects through `RenderRowsCache` (`renderRows.ts`), memoised on
+`(loadOrder, invalid, toggleable)` with the filter cached separately, specifically so unrelated
+re-renders reuse the same objects and each row's `React.memo` holds. Reading `item.position` and
+`item.lockedEntriesCount` preserves that; recomputing defeats it.
+
+### Virtualization is disabled by a custom renderer
+
+The FBLO page passes
+`virtualized = customItemRenderer === undefined || uniformRowHeight === true`. Supplying a custom
+renderer therefore turns windowing **off** unless the extension also sets `uniformRowHeight: true`
+in `registerLoadOrder` — windowing measures row pitch from the first two rows and needs uniform
+heights. UE4-5 rows wrap long names, so the template leaves it off and every row stays mounted.
+(`DraggableList` also only windows above 100 rows.) That is what makes the status filter's
+"render a hidden row" approach viable, and why per-row work should stay cheap.
 
 `loEntry` fields:
 
@@ -1098,4 +1120,6 @@ every "Disable/Enable Vortex Mod" menu item.
 `VORTEX_LOAD_ORDER.md` (FBLO runtime orchestration — serialize/deserialize/validate).
 `VORTEX_REACT_PAGES.md` (`DraggableList`/item-renderer patterns shared with general extension
 pages). `COLLECTIONS_FEATURE.md` (locked/enabled status this renderer displays feeds collection
-export).
+export). `UE4_5_REACT_ARCHITECTURE.md` (where this renderer sits among the template's three load
+order surfaces, and the row lifecycle inside `DraggableList`). `NON_UE_LOAD_ORDER_PAGES.md` (the
+reduced variants of this renderer used by non-Unreal games).

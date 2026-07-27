@@ -144,7 +144,8 @@ let STAGING_FOLDER = ''; //Vortex staging folder path
 let DOWNLOAD_FOLDER = ''; //Vortex download folder path
 let GAME_VERSION = '';
 let mod_update_all_profile = false; // for mod update to keep them in the load order and not uncheck them
-let updateModIds = new Set(); // Nexus mod ids currently tracked as being updated (Set, not scalar, so batch updates don't clobber each other)
+let updateModIds = new Map(); // Nexus mod id -> {firstSeen, targetFileId} (Map, not scalar, so batch updates don't clobber each other)
+const MAX_UPDATE_WAIT_MS = 5 * 60 * 1000; // release the guard for an update that never lands (cancelled or failed install)
 let updating_mod = false; // used to see if it's a mod update or not
 let USERID_FOLDER = "";
 let STORE_FOLDER = '';
@@ -2904,9 +2905,26 @@ function main(context) {
     api.onAsync('did-deploy', (profileId) => didDeploy(api, profileId)); //*/
     //api.onAsync('did-purge', (profileId) => didPurge(api, profileId)); //*/
     //detect mod update (to maintain LO position)
-    api.events.on('mod-update', (gameId, modId) => {
+    //fileId is the version being updated TO, and is what tells the new version apart from the
+    //old one on deploy - without it every mod not yet updated still looks "already installed"
+    api.events.on('mod-update', (gameId, modId, fileId) => {
       if (GAME_ID === gameId) {
-        updateModIds.add(String(modId));
+        updateModIds.set(String(modId), { firstSeen: Date.now(), targetFileId: String(fileId ?? '') });
+      }
+    });
+    //detect batch mod update: the "Update all" button emits mods-update with LOCAL mod ids
+    //and never emits mod-update, so resolve each one to its Nexus mod id before tracking it
+    api.events.on('mods-update', (gameId, modIds) => {
+      if (GAME_ID !== gameId) return;
+      const mods = util.getSafe(api.getState(), ['persistent', 'mods', GAME_ID], {});
+      for (const modId of modIds ?? []) {
+        const nexusModId = mods[modId]?.attributes?.modId;
+        if (nexusModId !== undefined) {
+          updateModIds.set(String(nexusModId), {
+            firstSeen: Date.now(),
+            targetFileId: String(mods[modId]?.attributes?.newestFileId ?? ''),
+          });
+        }
       }
     });
     //detect mod removal (to maintain LO position) - match on the Nexus mod id
@@ -2925,7 +2943,7 @@ function main(context) {
     //fallback-installer re-notify suppression, so a best-effort filename
     //match (covering both the old dash and current space delimiter) is fine.
     api.events.on('will-install-mod', (gameId, archiveId, modId) => {
-      updating_mod = GAME_ID === gameId && Array.from(updateModIds).some((id) =>
+      updating_mod = GAME_ID === gameId && Array.from(updateModIds.keys()).some((id) =>
         modId.includes('-' + id + '-') || modId.includes(' ' + id + ' ')
       );
     });
@@ -2959,9 +2977,30 @@ async function didDeploy(api, profileId) { //run on mod deploy
   if (gameId !== GAME_ID) {
     return Promise.resolve();
   }
-  mod_update_all_profile = false; //reset all-profile flag on deploy
+  //release tracking one mod id at a time, and only once that mod's new version has landed
+  //and is enabled, so a deploy that fires mid-batch can't disarm the guard for mods that
+  //haven't been reinstalled yet. Must stay above the UE4SS/LogicMods blocks below, which
+  //rewrite their order files from whatever is on disk at this moment.
+  if (updateModIds.size > 0) {
+    const mods = util.getSafe(state, ['persistent', 'mods', GAME_ID], {});
+    const now = Date.now();
+    for (const [nexusId, { firstSeen, targetFileId }] of Array.from(updateModIds)) {
+      const landed = Object.values(mods).some((mod) =>
+        String(mod?.attributes?.modId ?? '') === nexusId &&
+        //if the target file is unknown, fall back to "installed and enabled"
+        (targetFileId === '' || String(mod?.attributes?.fileId ?? '') === targetFileId) &&
+        util.getSafe(profile, ['modState', mod.id, 'enabled'], false)
+      );
+      if (landed) {
+        updateModIds.delete(nexusId);
+      } else if (now - firstSeen > MAX_UPDATE_WAIT_MS) {
+        log('warn', `[${GAME_ID}] Mod update tracking for Nexus mod ${nexusId} timed out without landing; releasing load order guard for it.`);
+        updateModIds.delete(nexusId);
+      }
+    }
+  }
+  mod_update_all_profile = updateModIds.size > 0; //stay armed while any update is still outstanding
   updating_mod = false; //reset updating flag on deploy
-  updateModIds.clear(); //reset tracked updated modIds on deploy
   if (ue4ssLoadOrder && isUe4ssInstalled(api, spec)) {
     const loEnabled = util.getSafe(state, ['settings', GAME_ID, 'ue4ssLoEnabled'], true);
     if (loEnabled) {

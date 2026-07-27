@@ -45,9 +45,24 @@ instead of downloading.
 ## Mod update checks
 
 - **`checkModVersion(store, nexus, gameId, mod)`** (`util/checkModsVersion.ts`) checks a single
-  managed mod against its Nexus file's latest version. Runs on **`gamemode-activated`** and on the
-  `mod-update` event.
-- **`mods-update`** does a bulk check across managed mods; **`mod-update`** targets one.
+  managed mod against its Nexus file's latest version, writing `newestFileId` etc. into the mod's
+  attributes. Bulk checking goes through the async **`check-mods-version`** event
+  (`onCheckModsVersion`).
+- **Checking is separate from updating.** `mod-update` and `mods-update` *perform* an update —
+  resolve the newest file, download it, and install it over the existing mod.
+
+### `mod-update` vs `mods-update`
+
+| Event | Emitted by | Payload | Handler |
+| --- | --- | --- | --- |
+| `mod-update` | the per-row update button (`VersionIconButton`) | `(gameId, nexusModId, fileId, source)` | `onModUpdate` |
+| `mods-update` | the "Update all" flow (`CheckModVersionsButton`) | `(gameId, localModIds[])` | `onModsUpdate` |
+
+`onModsUpdate` resolves each **local** mod id to its `attributes.modId` / `newestFileId` and then
+calls `onModUpdate(...)` **as a function** — it never re-emits `mod-update`. So an extension that
+listens for `mod-update` sees single-mod updates only, and must listen for `mods-update` as well to
+observe bulk updates (note the payload difference: local mod ids, not Nexus mod ids). What this
+means for load order is covered in `VORTEX_LOAD_ORDER.md`.
 
 ## Endorsements, categories, feedback
 
@@ -74,7 +89,9 @@ Via the extend-API pattern, `nexus_integration` adds methods other extensions ca
 | `request-nexus-login` (cb) | Start login |
 | `refresh-user-info` | Re-fetch account/premium info |
 | `endorse-mod` | Endorse a mod |
-| `mods-update` / `mod-update` | Check for newer mod versions |
+| `check-mods-version` (gameId, modIds?) | Check managed mods for newer versions |
+| `mod-update` (gameId, nexusModId, fileId, source) | Update one mod to a newer file |
+| `mods-update` (gameId, localModIds[]) | Update several mods ("Update all"); calls the single-mod handler directly |
 | `retrieve-category-list` (isUpdate) | Pull Nexus categories |
 | `submit-feedback` / `submit-collection` | Submit to Nexus |
 | `open-mod-page` / `open-collection-page` | Open a Nexus page |
@@ -89,9 +106,13 @@ Via the extend-API pattern, `nexus_integration` adds methods other extensions ca
 - Premium vs free affects download options (free downloads may route through the website / be
   rate-limited); premium status comes from `refresh-user-info`.
 - Two clients (v1/v3) coexist — match the one a given call already uses.
+- `mods-update` carries **local** mod ids while `mod-update` carries a **Nexus** mod id; mixing them
+  up silently breaks any lookup keyed on `attributes.modId`.
 
 ## See also
 
-Runtime siblings: `VORTEX_DOWNLOAD_MGMT.md` (nxm → transfer), `VORTEX_EVENT_BUS.md`. Overview:
+Runtime siblings: `VORTEX_DOWNLOAD_MGMT.md` (nxm → transfer), `VORTEX_LOAD_ORDER.md` (how updates
+affect load order), `VORTEX_MOD_INSTALL.md` (installing over a previous version),
+`VORTEX_EVENT_BUS.md`. Overview:
 `VORTEX_APP.md`. Nexus HTTP API: `NEXUS_MODS_API.md`, `NEXUS_FILE_PROPERTIES.md`. Diagram of the
 update/version-check flow: `VORTEX_FLOWCHARTS.md` §2.

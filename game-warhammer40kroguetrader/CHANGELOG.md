@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.5.1] - 2026-07-25
+
+- Fixed: Using "Update all" to update several mods at once could move them in the load order or uncheck them.
+
 ## [0.5.0] - 2026-07-22
 
 - Fixed: Updating a mod could uncheck it or move it in the load order, especially on profiles other than the one you were using.

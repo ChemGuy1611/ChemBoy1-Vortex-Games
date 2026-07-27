@@ -14,6 +14,24 @@ const React = require('react');
 
 All Vortex UI components come from `vortex-api`. `react-bootstrap` components are required lazily inside component functions. `react-redux` hooks are also required lazily.
 
+### Why these requires resolve at all
+
+An extension has no `node_modules` of its own. Vortex patches `Module.prototype.require`
+(`Vortex\src\renderer\src\util\extensionRequire.ts`) before loading extensions: for any file under a
+registered extension path, the require is resolved from the **application's** location first (via
+`__non_webpack_require__`), and only falls back to normal resolution from the extension folder if
+that fails. Since the renderer bundle externalises `node_modules` (`webpack-node-externals`), the
+extension gets the module objects already in Node's cache — i.e. **the same React, react-dom,
+react-redux and react-bootstrap instances the application uses**.
+
+That singleton guarantee is what makes hooks, `MainContext` and `useSelector` work without the
+extension mounting a provider or a store. It is also the hard limit on imports: a package Vortex does
+not ship cannot be required at runtime.
+
+Three ids are special-cased rather than resolved: `vortex-api` / `@nexusmods/vortex-api` returns a
+per-extension `Proxy` that namespaces `log()` output, `redux-act` returns a `Proxy` that tags actions
+with the originating extension, and `react-select` returns Vortex's `ReactSelectWrap`.
+
 ---
 
 ## 2. `registerMainPage` — Add a Sidebar Page
@@ -211,8 +229,23 @@ React.createElement(DraggableList, {
   idFunc?: (item: any) => string;
   itemRenderer: React.ComponentType<{ item: any; className?: string }>;
   apply: (reordered: any[]) => void;
+  virtualized?: boolean;
 }
 ```
+
+Behaviour worth knowing (`Vortex\src\renderer\src\controls\DraggableList.tsx`):
+
+- `virtualized` only takes effect above `VIRTUALIZE_THRESHOLD = 100` items, and requires **uniform
+  row heights** — the row pitch is measured from the first two rendered rows. Variable-height rows
+  (wrapping names, conditional buttons) must leave it off.
+- `itemTypeId` is the react-dnd drag type *and* the key of a module-level class cache. Two lists
+  sharing an id share the drop target and will accept each other's rows; scope it per game/list.
+- `apply` fires once on drag end, not per hover, and duplicates are removed by id first.
+- Each row is wrapped in two `<div>`s the renderer cannot reach; the drag ref and an `onClick` live
+  on the inner one. The renderer itself receives only `{ className, item }` — `forwardedRef` appears
+  in the type but is never passed.
+- `DraggableList` keeps its own ctrl/shift selection to support multi-row dragging. A page that also
+  implements selection (for context menus) is running a second, independent selection.
 
 ---
 
@@ -979,3 +1012,7 @@ components). `LOAD_ORDER_ITEM_RENDERER.md` / `LOAD_ORDER_REGISTRATION.md` (the F
 and page-registration patterns §8/§9/§10 reference). `VORTEX_MOD_LIST.md` (the Mods page table,
 built on the same `SuperTable`/registration primitives). `HEALTH_CHECK.md` (tabbed page example).
 `UNDERUSED_API_FUNCTIONS.md` (additional page-adjacent API surface not covered here).
+`UE4_5_REACT_ARCHITECTURE.md` (all of the above assembled into one extension — component inventory,
+data flow and the three load order surfaces of `template-ue4-5`).
+`NON_UE_LOAD_ORDER_PAGES.md` (the same primitives in non-Unreal games, plus `actions.setModsEnabled`
+as the supported way to toggle mods from a page).

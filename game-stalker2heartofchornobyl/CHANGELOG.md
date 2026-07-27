@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [1.0.2] - 2026-07-25
+
+- Fixed: Using "Update all" to update several mods at once could move them in the load order or uncheck them, including on the UE4SS and LogicMods load order pages.
+
 ## [1.0.1] - 2026-07-23
 
 - Fixed: Save mod folder path was incorrect for the Xbox version.

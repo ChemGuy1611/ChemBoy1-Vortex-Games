@@ -136,9 +136,18 @@ Register event handlers inside `context.once()` to ensure all extensions are loa
 | `retrieve-category-list` | `(isUpdate: boolean)` | Fetch category list from Nexus |
 | `update-categories` | `(gameId, categories, isUpdate)` | Update mod categories |
 | `open-mod-page` | - | Open mod page on Nexus |
-| `mod-update` | - | A mod has an update available |
-| `mods-update` | - | Multiple mods have updates |
+| `mod-update` | `(gameId, nexusModId: number, fileId: number, source: string)` | Update one mod to a newer file (per-row update button). `fileId` is the file being updated **to**, i.e. the emitting mod's `attributes.newestFileId` |
+| `mods-update` | `(gameId, localModIds: string[])` | Update several mods ("Update all"); its handler calls the single-mod handler directly, it does not re-emit `mod-update` |
 | `submit-feedback` | - | Submit user feedback |
+
+`mods-update` carries no fileId. To get the same "updating to" value a listener
+must read `attributes.newestFileId` off each local mod id in
+`persistent.mods[gameId]` — that is exactly what the core handler forwards to the
+single-mod path. The target fileId is the only reliable way to tell a completed
+update from the version being replaced: until the new file installs, the mod is
+still present and enabled under its old `attributes.fileId`, and the mod id is
+reused across the update. See [VORTEX_LOAD_ORDER.md](VORTEX_LOAD_ORDER.md) and
+[VORTEX_NEXUS_INTEGRATION.md](VORTEX_NEXUS_INTEGRATION.md).
 | `send-metric` | - | Async. Send metric to Nexus |
 
 ## Collections

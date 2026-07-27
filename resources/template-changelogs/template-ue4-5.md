@@ -1,6 +1,10 @@
 # template-ue4-5 Changelog
 
-## [2026-07-22]
+## [2026-07-25]
+
+- Added: `mods-update` listener beside the existing `mod-update` one. The "Update all" button only emits `mods-update` (with local mod ids), so the mod-update load order guard never armed for batch updates. The listener resolves each local id to its `attributes.modId` before tracking it, since `remove-mod` looks tracking up by Nexus mod id.
+- Changed: `updateModIds` is now a `Map` of Nexus mod id to `{ firstSeen, targetFileId }`, and `didDeploy` reconciles it per id instead of clearing it wholesale. Tracking for a mod is released only once a mod with that Nexus id, carrying the `fileId` being updated TO, is installed and enabled for the profile - or after `MAX_UPDATE_WAIT_MS` (5 minutes) if the update never lands. Previously a deploy firing part-way through a batch disarmed the guard for every mod still waiting to be reinstalled, and the UE4SS/LogicMods blocks further down the same handler then rewrote their order files with those mods missing.
+- Note: the `fileId` comparison is what makes the reconciliation correct. A plain "installed and enabled" check cannot tell the new version from the one being replaced, since a mod whose update has not started yet is also still installed and enabled - so it would release tracking for the rest of the batch on the first deploy. `mod-update` supplies the target fileId as its third argument; the `mods-update` path reads `attributes.newestFileId` from state. When the target is unknown (non-Nexus mod, or no update chain) the check falls back to "installed and enabled".
 
 - Added: Mod-update load order guard, ported from game-subnautica2 0.4.1. Updating a mod no longer unchecks it or moves it in the load order (Pak, UE4SS, LogicMods), including on profiles other than the one you're using. Tracks in-flight updates via the `mod-update`/`remove-mod`/`will-install-mod` events and pauses load order read/write until deployment confirms the update settled.
 
