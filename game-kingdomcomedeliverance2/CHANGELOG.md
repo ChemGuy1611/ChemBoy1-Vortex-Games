@@ -4,6 +4,13 @@
 
 - Changed launcher settings so that Steam version launches through Steam (so that Steam launch arguments are used).
 
+## [1.0.2] - 2026-07-30
+
+- Fixed: KCSE Address Library installed correctly to game root folder.
+- Fixed: Mods with only "KCSE" plugins are installed correctly.
+- Fixed: More reliable guarding around Steam Workshop mods LO logic.
+- Added: Fallback installer to game root folder.
+
 ## [1.0.1] - 2026-07-29
 
 - Fixed: The load order could disappear after deploying while a mod update was in progress, and only came back after deploying a second time.

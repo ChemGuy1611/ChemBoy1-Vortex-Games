@@ -2,8 +2,8 @@
 Name: Kingdom Come Deliverance II Vortex Extension
 Structure: Mod Folder and FBLO
 Author: ChemBoy1
-Version: 1.0.1
-Date: 2026-07-29
+Version: 1.0.2
+Date: 2026-07-30
 //////////////////////////////////////////////////*/
 
 //Import libraries
@@ -55,6 +55,7 @@ const EXEC_XBOX = "gamelaunchhelper.exe";
 
 //Data for mod types, tools, load order, and installers
 const USER_DOCS = util.getVortexPath('home');
+const KCSE_FOLDER = "KCSE";
 
 const MOD_ID = `${GAME_ID}-mod`;
 const MOD_NAME = `Mod`;
@@ -63,7 +64,7 @@ const MOD_FILES = [MOD_FILE1];
 const MOD_FOLDER1 = "data";
 const MOD_FOLDER2 = "localization";
 const MOD_FOLDER3 = "engine";
-const MOD_FOLDERS = [MOD_FOLDER1, MOD_FOLDER2, MOD_FOLDER3];
+const MOD_FOLDERS = [MOD_FOLDER1, MOD_FOLDER2, MOD_FOLDER3, KCSE_FOLDER];
 const CFGMOD_FILE = "mod.cfg";
 
 const CFG_EXT = ".cfg";
@@ -72,7 +73,7 @@ const CFGUSER_FILE = "user.cfg";
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = `Root Game Folder`;
 const ROOT_FOLDER1 = "bin";
-const ROOT_FOLDERS = [ROOT_FOLDER1];
+const ROOT_FOLDERS = [ROOT_FOLDER1, KCSE_FOLDER]; //!KCSE folder catches Address Library. should not interfere with regular mods since that installer goes first
 
 const BINARIES_ID = `${GAME_ID}-binaries`;
 const BINARIES_NAME = `Binaries`;
@@ -117,6 +118,10 @@ const spec = {
     "requiredFiles": [
       REQ_FILE,
     ],
+    "compatible": {
+      "dinput": false,
+      "enb": false,
+    },
     "details": {
       "steamAppId": +STEAMAPP_ID,
       "gogAppId": GOGAPP_ID,
@@ -133,12 +138,6 @@ const spec = {
     }
   },
   "modTypes": [
-    /*{
-      "id": MOD_ID,
-      "name": MOD_NAME,
-      "priority": "high",
-      "targetPath": path.join(`{gamePath}`, MOD_PATH)
-    }, //*/
     {
       "id": ROOT_ID,
       "name": ROOT_NAME,
@@ -371,8 +370,9 @@ async function deploy(api) { //useful to deploy mods after doing some action
 
 //Installer test for mod files
 function testMod(files, gameId) {
+  const MOD_FOLDERS_LOWER = MOD_FOLDERS.map(folder => folder.toLowerCase());
   const isModFile = files.some(file => MOD_FILES.includes(path.basename(file).toLowerCase()));
-  const isFolder = files.some(file => MOD_FOLDERS.includes(path.basename(file).toLowerCase()));
+  const isFolder = files.some(file => MOD_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
   const isCfg = files.some(file => path.basename(file).toLowerCase() === CFGMOD_FILE);
   let supported = (gameId === spec.game.id) && ( isModFile || isFolder || isCfg );
 
@@ -391,8 +391,9 @@ function testMod(files, gameId) {
 
 //Installer install mod files
 function installMod(files, fileName) {
+  const MOD_FOLDERS_LOWER = MOD_FOLDERS.map(folder => folder.toLowerCase());
   const modFile1 = files.find(file => MOD_FILES.includes(path.basename(file).toLowerCase()));
-  const modFile2 = files.find(file => MOD_FOLDERS.includes(path.basename(file).toLowerCase()));
+  const modFile2 = files.find(file => MOD_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
   const modFile3 = files.find(file => path.basename(file).toLowerCase() === CFGMOD_FILE);
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_ID };
   const MOD_NAME = path.basename(fileName);
@@ -438,7 +439,7 @@ function installMod(files, fileName) {
                                     + `  <info>\n`
                                     + `    <name>${MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '')}</name>\n`
                                     + `    <modid>${MOD_FOLDER}</modid>\n`
-                                    + `  </info>\n`                                                                             
+                                    + `  </info>\n`
                                     + `</kcd_mod>`
         );
         const MODMANIFEST_PATH = path.join(fileName, rootPath, 'mod.manifest');
@@ -469,7 +470,7 @@ function installMod(files, fileName) {
                                   + `  <info>\n`
                                   + `    <name>${MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '')}</name>\n`
                                   + `    <modid>${MOD_FOLDER}</modid>\n`
-                                  + `  </info>\n`                                                                             
+                                  + `  </info>\n`
                                   + `</kcd_mod>`
       );
       const MODMANIFEST_PATH = path.join(fileName, rootPath, 'mod.manifest');
@@ -499,7 +500,7 @@ function installMod(files, fileName) {
                                   + `  <info>\n`
                                   + `    <name>${MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '')}</name>\n`
                                   + `    <modid>${MOD_FOLDER}</modid>\n`
-                                  + `  </info>\n`                                                                             
+                                  + `  </info>\n`
                                   + `</kcd_mod>`
       );
       const MODMANIFEST_PATH = path.join(fileName, rootPath, 'mod.manifest');
@@ -548,7 +549,8 @@ function installMod(files, fileName) {
 
 //Installer test for Root folder files
 function testRoot(files, gameId) {
-  const isFolder = files.some(file => ROOT_FOLDERS.includes(path.basename(file).toLowerCase()));
+  const ROOT_FOLDERS_LOWER = ROOT_FOLDERS.map(folder => folder.toLowerCase());
+  const isFolder = files.some(file => ROOT_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
   let supported = (gameId === spec.game.id) && ( isFolder );
 
   // Test for a mod installer
@@ -566,7 +568,8 @@ function testRoot(files, gameId) {
 
 //Installer install Root folder files
 function installRoot(files) {
-  const modFile = files.find(file => ROOT_FOLDERS.includes(path.basename(file).toLowerCase()));
+  const ROOT_FOLDERS_LOWER = ROOT_FOLDERS.map(folder => folder.toLowerCase());
+  const modFile = files.find(file => ROOT_FOLDERS_LOWER.includes(path.basename(file).toLowerCase()));
   const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
@@ -632,10 +635,9 @@ function installCfg(files) {
 
 //Test for Mod Loader mods
 function testBinaries(files, gameId) {
-  //const isDll = files.find(file => path.extname(file).toLowerCase() === DLL_EXT) !== undefined;
-  //const isExe = files.find(file => path.extname(file).toLowerCase() === EXE_EXT) !== undefined;
-  let supported = (gameId === spec.game.id);
-  //let supported = (gameId === spec.game.id) && ( isDll || isExe );
+  const isDll = files.find(file => path.extname(file).toLowerCase() === DLL_EXT) !== undefined;
+  const isExe = files.find(file => path.extname(file).toLowerCase() === EXE_EXT) !== undefined;
+  let supported = (gameId === spec.game.id) && ( isDll || isExe );
 
   // Test for a mod installer.
   if (supported && files.find(file =>
@@ -667,6 +669,98 @@ function installBinaries(files) {
   });
   instructions.push(setModTypeInstruction);
   return Promise.resolve({ instructions });
+}
+
+//Fallback installer to root folder
+function testFallback(files, gameId) {
+  let supported = (gameId === spec.game.id);
+
+  // Test for a mod installer.
+  if (supported && files.find(file =>
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Fallback installer to root folder
+function installFallback(api, files, destinationPath) {
+  fallbackInstallerNotify(api, destinationPath);
+  const setModTypeInstruction = { type: 'setmodtype', value: ROOT_ID };
+
+  const filtered = files.filter(file =>
+    (!file.endsWith(path.sep))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: file,
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
+function fallbackInstallerNotify(api, modName) {
+  const state = api.getState();
+  STAGING_FOLDER = selectors.installPathForGame(state, spec.game.id);
+  modName = path.basename(modName, '.installing');
+  const id = modName.replace(/[^a-zA-Z0-9\s]*( )*/gi, '').slice(0, 20);
+  const NOTIF_ID = `${GAME_ID}-${id}-fallback`;
+  const MESSAGE = 'Fallback installer reached for ' + modName;
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'info',
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: 'More',
+        action: (dismiss) => {
+          api.showDialog('question', MESSAGE, {
+            text: `The mod you just installed reached the fallback installer. This means Vortex could not determine where to place these mod files.\n`
+                + `Please check the mod page description and review the files in the mod staging folder to determine if manual file manipulation is required.\n`
+                + `\n`
+                + `If you think that Vortex should be capable to install this mod to a specific folder, please contact the extension developer for support at the link below.\n`
+                + `\n`
+                + `Mod Name: ${modName}.\n`
+                + `\n`
+          }, [
+            { label: 'Continue', action: () => dismiss() },
+            {
+              label: 'Contact Ext. Developer', action: () => {
+                util.opn(`${EXTENSION_URL}?tab=posts`).catch(() => null);
+                dismiss();
+              }
+            }, //*/
+            //*
+            { label: `Open Mod Page + Staging Folder`, action: () => {
+              util.opn(path.join(STAGING_FOLDER, modName)).catch(() => null);
+              const mods = util.getSafe(api.store.getState(), ['persistent', 'mods', spec.game.id], {});
+              const modMatch = Object.values(mods).find(mod => mod.installationPath === modName);
+              log('warn', `Found ${modMatch?.id} for ${modName}`);
+              let PAGE = ``;
+              if (modMatch) {
+                const MOD_ID = modMatch.attributes.modId;
+                if (MOD_ID !== undefined) {
+                  PAGE = `${MOD_ID}?tab=description`;
+                }
+              }
+              const MOD_PAGE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${PAGE}`;
+              util.opn(MOD_PAGE_URL).catch(() => null);
+              dismiss();
+            }}, //*/
+          ]);
+        },
+      },
+    ],
+  });
 }
 
 // LOAD ORDER FUNCTIONS /////////////////////////////////////////////////////////////////////////////////////////////////
@@ -705,7 +799,7 @@ async function deserializeLoadOrder(context) {
     loadOrderPath = LO_PATH_XBOX;
   }
   let loadOrderFile = await fs.readFileAsync(
-    loadOrderPath, 
+    loadOrderPath,
     { encoding: "utf8", }
   );
   let modFolderPath = path.join(gameDir, MOD_PATH);
@@ -727,28 +821,29 @@ async function deserializeLoadOrder(context) {
   //Get all mod folders from Steam Workshop folder
   let modFoldersSteamWorkshop = [];
   let steamWorkshopIds = [];
-  let SWFOLDER_FOUND = '';
+  let SWFOLDER_FOUND = false;
   let STEAMWORKSHOP_PATH = '';
-  if (GAME_VERSION === 'steam') { 
+  //get workshop mods path
+  if (GAME_VERSION === 'steam') {
     try {
       const SPLIT_PATH = gameDir.split(path.sep);
       const SPLIT_PATH_LENGTH = SPLIT_PATH.length;
       const STEAM_INSTALL_PATH = SPLIT_PATH.slice(0, SPLIT_PATH_LENGTH - 2).join(path.sep);
       //const STEAM_INSTALL_PATH = gameDir.replace(/\/common\/KindgomComeDeliverance2/, '');
       STEAMWORKSHOP_PATH = path.join(STEAM_INSTALL_PATH, STEAMWORKSHOP_FOLDER);
-    } catch {
-      log('error', `Could not modify Steam game path to set Steam Workshop mods folder: ${gameDir}`);
+    } catch (err) {
+      log('warn', `Could not modify Steam game path to set Steam Workshop mods folder: ${err}`);
     }
-  }
-  if (GAME_VERSION === 'steam') { // Read Steam Workshop mod folders if on Steam game version
+    // Read Steam Workshop mod folders if on Steam game version
     try {
-      modFoldersSteamWorkshop = await fs.readdirAsync(STEAMWORKSHOP_PATH);
-      modFoldersSteamWorkshop.sort((a,b) => a.toLowerCase().localeCompare(b.toLowerCase()));
-      //modFolders.push(modFoldersSteamWorkshop);
+      await fs.statAsync(STEAMWORKSHOP_PATH);
+      modFoldersSteamWorkshop = await fs.readdirAsync(STEAMWORKSHOP_PATH)
+        .filter(folder => isDir(STEAMWORKSHOP_PATH, folder))
+        .sort((a,b) => a.toLowerCase().localeCompare(b.toLowerCase()));
       SWFOLDER_FOUND = true;
     } catch (err) {
       SWFOLDER_FOUND = false;
-      //context.api.showErrorNotification('Failed to read Steam Workshop mods folder.', err, { allowReport: false });
+      log('warn', `Failed to read Steam Workshop mods folder: ${err}`);
       const NOTIF_ID = `${GAME_ID}-steamworkshopfolder`;
       const MESSAGE = `Could not read Steam Workshop mods folder.`;
       context.api.sendNotification({
@@ -783,89 +878,85 @@ async function deserializeLoadOrder(context) {
         ],
       });
     }
-  }
-
-  //Make an array of all the modid's parsed from the Steam Workshop mods mod.manifest
-  if (SWFOLDER_FOUND === true) {
-    for (let folder of modFoldersSteamWorkshop) {
-      let MOD_ID = '';
-      let modManifest = '';
-      let MOD_FOLDERS = [];
-      let FOLDER_PATH = '';
-      const MOD_ID_ERROR = 'steamworkshop-error-read-modmanifest'
-      try { //Read mod.manifest file to get modid
-        /*
-        const RAW_MOD_FOLDERS = await fs.readdirAsync(path.join(STEAMWORKSHOP_PATH, folder)); //Raw read, with folders and files
-        MOD_FOLDERS = RAW_MOD_FOLDERS.filter(item => fs.statSync(path.join(STEAMWORKSHOP_PATH, folder, item)).isDirectory()); //filter for only folders
-        if (MOD_FOLDERS.length === 0) { //If no folders, mod.manifest is in root
+    //Make an array of all the modid's parsed from the Steam Workshop mods mod.manifest
+    if (SWFOLDER_FOUND === true && modFoldersSteamWorkshop.length > 0) {
+      for (let folder of modFoldersSteamWorkshop) {
+        let MOD_ID = '';
+        let modManifest = '';
+        let FOLDER_PATH = '';
+        const MOD_ID_ERROR = 'steamworkshop-error-read-modmanifest'
+        try { //Read mod.manifest file to get modid
+          /*
+          const RAW_MOD_FOLDERS = await fs.readdirAsync(path.join(STEAMWORKSHOP_PATH, folder)); //Raw read, with folders and files
+          MOD_FOLDERS = RAW_MOD_FOLDERS.filter(item => fs.statSync(path.join(STEAMWORKSHOP_PATH, folder, item)).isDirectory()); //filter for only folders
+          if (MOD_FOLDERS.length === 0) { //If no folders, mod.manifest is in root
+            FOLDER_PATH = path.join(STEAMWORKSHOP_PATH, folder, 'mod.manifest');
+          } else { //Folder found, read mod.manifest in first folder (should be the only folder)
+            FOLDER_PATH = path.join(STEAMWORKSHOP_PATH, folder, MOD_FOLDERS[0], 'mod.manifest');
+          }
+          //*/
           FOLDER_PATH = path.join(STEAMWORKSHOP_PATH, folder, 'mod.manifest');
-        } else { //Folder found, read mod.manifest in first folder (should be the only folder)
-          FOLDER_PATH = path.join(STEAMWORKSHOP_PATH, folder, MOD_FOLDERS[0], 'mod.manifest');
-        }
-        //*/
-        FOLDER_PATH = path.join(STEAMWORKSHOP_PATH, folder, 'mod.manifest');
-        modManifest = await fs.readFileAsync(FOLDER_PATH, 'utf8');
-        const parser = new DOMParser();
-        const XML = parser.parseFromString(modManifest, 'text/xml');
-        try { //try to get the modid from mod.manifest
-          MOD_ID = XML.getElementsByTagName("modid")[0].childNodes[0].nodeValue;
-        } catch { //could not get modid. Try for name, then lowercase and replace whitespace with "_"
-          const MOD_NAME = XML.getElementsByTagName("name")[0].childNodes[0].nodeValue;
-          const MOD_NAME_LOWER = MOD_NAME.toLowerCase();
-          MOD_ID = MOD_NAME_LOWER.replace(/ /gi, '_');
-        }
-        log('info', `Steam Workshop mod.manfest read: #${folder} with ID ${MOD_ID}`);
-        //steamWorkshopIds.push(MOD_ID);
-      } catch (err) { //mod.manifest could not be read
-        MOD_ID = MOD_ID_ERROR;
-        //context.api.showErrorNotification(`Could read mod.manifest file for Steam Workshop mod #${folder}. Please report this error to the mod author.`, err, { allowReport: false });
-        //log('error', `Could read mod.manifest for Steam Workshop mod ${folder}. Please report this error to the mod author.`);
-        const NOTIF_ID = `${GAME_ID}-steamworkshoperror-${folder}`;
-        const MESSAGE = `Corrupt mod.manifest file in Steam Workshop mod #${folder}. Report this error to the mod author.`;
-        const URL = `https://steamcommunity.com/sharedfiles/filedetails/?id=${folder}`;
-        context.api.sendNotification({
-          id: NOTIF_ID,
-          type: 'warning',
-          message: MESSAGE,
-          allowSuppress: true,
-          actions: [
-            {
-              title: 'More',
-              action: (dismiss) => {
-                context.api.showDialog('question', MESSAGE, {
-                  text: `Steam Workshop mod #${folder} contains a corrupt mod.manifest file. This file is required for all KCD2 mods.\n`
-                      + 'This issue prevents the mod from being entered into the mod_order.txt file for load ordering, and thus prevents the game from loading the mod.\n'
-                      + `Vortex tried to read the mod.manifest file at:\n`
-                      + `${FOLDER_PATH}\n`
-                      + '\n'
-                      + 'Please report this error to the mod author.\n'
-                      + `You can open the Steam Workshop mod page with the button below.\n`
-                }, [
-                  { label: 'Dismiss', action: () => dismiss() },
-                  { label: 'Open Steam Workshop Page', action: () => {
-                    util.opn(URL).catch(err => undefined);
-                    dismiss();
-                  }},
-                  {
-                    label: 'Never Show Again', action: () => {
-                      context.api.suppressNotification(NOTIF_ID);
+          modManifest = await fs.readFileAsync(FOLDER_PATH, 'utf8');
+          const parser = new DOMParser();
+          const XML = parser.parseFromString(modManifest, 'text/xml');
+          try { //try to get the modid from mod.manifest
+            MOD_ID = XML.getElementsByTagName("modid")[0].childNodes[0].nodeValue;
+          } catch { //could not get modid. Try for name, then lowercase and replace whitespace with "_"
+            const MOD_NAME = XML.getElementsByTagName("name")[0].childNodes[0].nodeValue;
+            const MOD_NAME_LOWER = MOD_NAME.toLowerCase();
+            MOD_ID = MOD_NAME_LOWER.replace(/ /gi, '_');
+          }
+          log('info', `Steam Workshop mod.manfest read: #${folder} with ID ${MOD_ID}`);
+        } catch (err) { //mod.manifest could not be read
+          MOD_ID = MOD_ID_ERROR;
+          log('warn', `Could read mod.manifest for Steam Workshop mod ${folder}: ${err}`);
+          const NOTIF_ID = `${GAME_ID}-steamworkshoperror-${folder}`;
+          const MESSAGE = `Corrupt mod.manifest file in Steam Workshop mod #${folder}. Report this error to the mod author.`;
+          const URL = `https://steamcommunity.com/sharedfiles/filedetails/?id=${folder}`;
+          context.api.sendNotification({
+            id: NOTIF_ID,
+            type: 'warning',
+            message: MESSAGE,
+            allowSuppress: true,
+            actions: [
+              {
+                title: 'More',
+                action: (dismiss) => {
+                  context.api.showDialog('question', MESSAGE, {
+                    text: `Steam Workshop mod #${folder} contains a corrupt mod.manifest file. This file is required for all KCD2 mods.\n`
+                        + 'This issue prevents the mod from being entered into the mod_order.txt file for load ordering, and thus prevents the game from loading the mod.\n'
+                        + `Vortex tried to read the mod.manifest file at:\n`
+                        + `${FOLDER_PATH}\n`
+                        + '\n'
+                        + 'Please report this error to the mod author.\n'
+                        + `You can open the Steam Workshop mod page with the button below.\n`
+                  }, [
+                    { label: 'Dismiss', action: () => dismiss() },
+                    { label: 'Open Steam Workshop Page', action: () => {
+                      util.opn(URL).catch(() => null);
                       dismiss();
-                    }
-                  },
-                ]);
+                    }},
+                    {
+                      label: 'Never Show Again', action: () => {
+                        context.api.suppressNotification(NOTIF_ID);
+                        dismiss();
+                      }
+                    },
+                  ]);
+                },
               },
-            },
-          ],
-        });
-      }
-      
-      if ((!steamWorkshopIds.includes(MOD_ID) && (MOD_ID !== MOD_ID_ERROR))) {
-        steamWorkshopIds.push(MOD_ID);
+            ],
+          });
+        }
+        //push to array if not error or already present
+        if ((!steamWorkshopIds.includes(MOD_ID) && (MOD_ID !== MOD_ID_ERROR))) {
+          steamWorkshopIds.push(MOD_ID);
+        }
       }
     }
   }
-  
-  //Determine if mod is managed by Vortex (async version)
+
+  //Determine if mod is managed by Vortex
   const isVortexManaged = async (modId) => {
     return fs.statAsync(path.join(modFolderPath, modId, `__folder_managed_by_vortex`))
       .then(() => true)
@@ -920,13 +1011,12 @@ async function deserializeLoadOrder(context) {
           name: `${await getModName(folder)} (${folder})`,
           modId: await isVortexManaged(folder) ? await getModId(folder) : undefined,
           enabled: !line.startsWith("#"),
-          //imgUrl: await getModImage(folder);
         }
       );
       return Promise.resolve(accum);
     }, Promise.resolve([])
   );
-  
+
   //push new mod folders from Mods folder to loadOrder
   for (let folder of modFolders) {
     if (!loadOrder.find((mod) => (mod.id === folder))) {
@@ -935,13 +1025,12 @@ async function deserializeLoadOrder(context) {
         name: `${await getModName(folder)} (${folder})`,
         modId: await isVortexManaged(folder) ? await getModId(folder) : undefined,
         enabled: true,
-        //imgUrl: await getModImage(folder)
       });
     }
   }
 
   //* push new modid's from Steam Workshop mods to loadOrder
-  if (SWFOLDER_FOUND === true) {
+  if (steamWorkshopIds.length > 0) {
     for (let MOD_ID of steamWorkshopIds) {
       if (!loadOrder.find((mod) => (mod.id === MOD_ID))) {
         loadOrder.push({
@@ -949,7 +1038,6 @@ async function deserializeLoadOrder(context) {
           name: `${await getModName(MOD_ID)} (${MOD_ID})`,
           modId: undefined,
           enabled: true,
-          //imgUrl: await getModImage(folder)
         });
       }
     }
@@ -978,72 +1066,12 @@ async function serializeLoadOrder(context, loadOrder) {
     .join("\n");
   return fs.writeFileAsync(
     loadOrderPath,
-    //`#File managed by Vortex\n${loadOrderOutput}`,
     `${loadOrderOutput}`,
     { encoding: "utf8" },
   );
 }
 
 // MAIN FUNCTIONS /////////////////////////////////////////////////////////////////////////////////////////////////
-
-//Notify User of Setup instructions
-function setupNotify(api) {
-  const NOTIF_ID = `setup-notification-${GAME_ID}`;
-  const MESSAGE = `Reinstall Mods for Load Order`;
-  api.sendNotification({
-    id: NOTIF_ID,
-    type: 'warning',
-    message: MESSAGE,
-    allowSuppress: true,
-    actions: [
-      {
-        title: 'More',
-        action: (dismiss) => {
-          api.showDialog('question', MESSAGE, {
-            text: 'If you used the extension before v0.2.1, you will need to reinstall all your mods for the Load Order to work properly.\n'
-                //+ 'You can do this by clicking "Reinstall All Mods" below.\n'
-                + 'You can do this easily by selecting all mods in the mod list and clicking "Reinstall" in the blue bar at the buttom of the list.\n'
-                + 'If you don\'t do this, your mods will most likley not be loaded by the game. You can verify mods are loading by looking at your kcd.log file in the game folder.\n'
-                + 'This only needs to be done once. All subsequent mod installs and updates will work properly.\n'
-          }, [
-            /*
-            {
-              label: 'Reinstall All Mods', action: () => {
-                try {
-                  const mods = util.getSafe(api.store.getState(), ['persistent', 'mods', GAME_ID], {});
-                  api.events.emit('uninstall-mods', GAME_ID, mods, (err) => {
-                    if (err !== null) {
-                      api.showErrorNotification('Failed to reinstall mods. Please do it manually.', err, { allowReport: false });
-                    }
-                  });
-                  api.events.emit('install-mods', GAME_ID, mods, (err) => {
-                    if (err !== null) {
-                      api.showErrorNotification('Failed to reinstall mods. Please do it manually.', err, { allowReport: false });
-                    }
-                  });
-                  api.suppressNotification(NOTIF_ID);
-                  dismiss();
-                } catch (err) {
-                  api.showErrorNotification('Failed to reinstall mods. Please do it manually.', err, { allowReport: false });
-                }
-              }
-            },
-            //*/
-            { label: 'Acknowledge', action: () => dismiss() },
-            //*
-            {
-              label: 'Never Show Again', action: () => {
-                api.suppressNotification(NOTIF_ID);
-                dismiss();
-              }
-            },
-            //*/
-          ]);
-        },
-      },
-    ],
-  });    
-}
 
 //* Resolve game version dynamically for different game versions
 async function resolveGameVersion(gamePath) {
@@ -1064,7 +1092,7 @@ async function resolveGameVersion(gamePath) {
     try {
       const exeVersion = require('exe-version');
       version = exeVersion.getProductVersion(path.join(gamePath, EXEC));
-      return Promise.resolve(version); 
+      return Promise.resolve(version);
     } catch (err) {
       log('error', `Could not read ${EXEC} file to get game version: ${err}`);
       return Promise.resolve(version);
@@ -1076,9 +1104,8 @@ async function resolveGameVersion(gamePath) {
 async function setup(discovery, api, gameSpec) {
   const state = api.getState();
   GAME_PATH = discovery.path;
-  STAGING_FOLDER = selectors.installPathForGame(api.getState(), gameSpec.game.id);
-  DOWNLOAD_FOLDER = selectors.downloadPathForGame(api.getState(), gameSpec.game.id);
-  //setupNotify(api);
+  STAGING_FOLDER = selectors.installPathForGame(state, gameSpec.game.id);
+  DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, gameSpec.game.id);
   GAME_VERSION = await setGameVersion(GAME_PATH);
   if (GAME_VERSION === 'xbox') {
     await fs.ensureDirWritableAsync(MOD_PATH_XBOX);
@@ -1172,7 +1199,7 @@ function applyGame(context, gameSpec) {
     }, (game) => pathPattern(context.api, game, type.targetPath), () => Promise.resolve(false), { name: type.name });
   });
   //register mod types explicitly
-  context.registerModType(MOD_ID, 25,
+  context.registerModType(MOD_ID, 25, //!registered explicity due to Xbox path difference
     (gameId) => {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
@@ -1188,7 +1215,7 @@ function applyGame(context, gameSpec) {
     () => Promise.resolve(false),
     { name: MOD_NAME }
   );
-  context.registerModType(BINARIES_ID, 45,
+  context.registerModType(BINARIES_ID, 45, //!registered explicity due to variable binaries path
     (gameId) => {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
@@ -1203,6 +1230,7 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(ROOT_ID, 30, testRoot, installRoot);
   context.registerInstaller(`${GAME_ID}-cfg`, 35, testCfg, installCfg);
   context.registerInstaller(BINARIES_ID, 40, testBinaries, installBinaries);
+  context.registerInstaller(`${GAME_ID}-fallback`, 45, testFallback, (files, destinationPath) => installFallback(context.api, files, destinationPath));
 
   //register actions and logs
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Log - kcd.log', async () => {
@@ -1291,7 +1319,7 @@ function main(context) {
       //gameArtURL: path.join(__dirname, spec.game.logo),
       validate: async () => Promise.resolve(undefined), // no validation implemented yet
       deserializeLoadOrder: async () => await deserializeLoadOrder(context),
-      serializeLoadOrder: async (loadOrder) => await serializeLoadOrder(context, loadOrder),  
+      serializeLoadOrder: async (loadOrder) => await serializeLoadOrder(context, loadOrder),
       toggleableEntries: true,
       usageInstructions: LoadOrderInstructions,
       customItemRenderer: LoadOrderItemRenderer,
