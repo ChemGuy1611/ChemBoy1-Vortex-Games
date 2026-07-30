@@ -2,7 +2,7 @@
 Name: God of War: Ragnarok Vortex Extension
 Structure: Sony Port, Custom Game Data
 Author: ChemBoy1
-Version: 0.2.2
+Version: 0.3.0
 Date: 2025-04-10
 /////////////////////////////////////////*/
 
@@ -95,7 +95,7 @@ const LOADER_NAME = "GoWR-Script-Loader";
 const LOADER_ZIP = `God.of.War.Ragnarok.zip`;
 const LOADER_URL = `https://github.com/Eiton/GoWR-Script-Loader/releases/latest/download/${LOADER_ZIP}`;
 const LOADER_URL_ERR = "https://github.com/Eiton/GoWR-Script-Loader/releases";
-const LOADER_CONFIG_FILE = "GOWR-Script-Loader.ini"; 
+const LOADER_CONFIG_FILE = "GOWR-Script-Loader.ini";
 const LOADER_CONFIG_FILEPATH = path.join(LOADER_CONFIG_FILE);
 const LOADER_FILE = 'winmm.dll';
 
@@ -636,7 +636,7 @@ const getDiscoveryPath = (api) => {
 };
 
 //* Write texpack and lodpack file names to boot-options.json file (on deployment)
-async function updateBootOptions(api) { 
+async function updateBootOptions(api) {
   GAME_PATH = getDiscoveryPath(api);
   try { //read files and write to boot-options.json file
     //.texpack files
@@ -728,7 +728,7 @@ function applyGame(context, gameSpec) {
         && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
     }, (game) => pathPattern(context.api, game, type.targetPath), () => Promise.resolve(false), { name: type.name });
   });
-  
+
   //register mod installers
   context.registerInstaller(LOADER_ID, 25, testLoader, installLoader);
   context.registerInstaller(DATA_ID, 27, testData, installData);

@@ -1,0 +1,38 @@
+[b][color=#e69138][size=4]Notes for Mod Authors - Mass Effect: Andromeda[/size]
+[/color][/b]Packaging rules for Mass Effect: Andromeda mods, so Vortex installs them to the right place.
+
+Vortex decides what a mod is by looking at the files and folders inside the archive. It tries each installer in order and the first one that matches wins, so archive layout is what determines where your mod ends up.
+
+========================================================================
+
+Frosty Mod Manager (tool):
+
+This installer handles Frosty Mod Manager itself, not mods for it. It exists so users can install Frosty Mod Manager through Vortex, and mod authors normally never package this.
+
+  Requirements:
+    - Recognised by a file named "frostymodmanager.exe" in the archive.
+
+  Common mistakes:
+    - If you bundle Frosty Mod Manager inside your mod archive, Vortex treats the whole download as Frosty Mod Manager rather than as your mod. Ship the mod alone and list Frosty Mod Manager as a requirement.
+
+========================================================================
+
+Frosty Mods:
+
+Frostbite mods in Frosty Mod Manager format. Vortex stages them for Frosty rather than deploying them into the game directly.
+
+  Requirements:
+    - Recognised by any file with the ".fbmod" or ".archive" extensions.
+
+  Installs to: "FrostyModManager\Mods\MassEffectAndromeda"
+
+  Common mistakes:
+    - These mods still have to be applied through Frosty Mod Manager - installing in Vortex alone does not patch the game.
+
+========================================================================
+
+Rules That Apply To Every Mod Type:
+
+    - Archives containing a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to the built-in FOMOD installer instead.
+    - Folder and file name matching is case-insensitive.
+    - Extra wrapper folders around a recognised folder are generally fine.

@@ -109,4 +109,6 @@ async function writeModysTxt(modsJsonPath) {
 `FILE_PARSING.md` (parsing `mods.txt`/`mods.json` — INI vs JSON handling). `FILE_SEARCH.md`
 (locating the UE4SS mods folder on disk). `LOAD_ORDER_REGISTRATION.md` (the UE4SS load-order page
 that reorders entries in `mods.txt`). `COLLECTIONS_FEATURE.md` (exporting/importing UE4SS mod
-order as collection data).
+order as collection data). `UE4_5_REACT_ARCHITECTURE.md` (how the extension rewrites the band
+between the `BPModLoaderMod` and `Keybinds` markers, and why the native mod list must match the
+folders shipped here).

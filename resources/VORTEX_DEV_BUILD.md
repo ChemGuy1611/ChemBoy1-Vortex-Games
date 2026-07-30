@@ -122,7 +122,7 @@ app name, and in dev that comes from `src/main/package.json` — the scoped pack
 To pin the location explicitly, pass the `--user-data` flag (declared in `src/main/src/cli.ts`):
 
 ```powershell
-pnpm -F @vortex/main exec electron . --user-data "C:\vortex-dev-data"
+pnpm -F @vortex/main exec electron . --user-data "$env:LOCALAPPDATA\vortex-dev-data"
 ```
 
 `Application.ts` sets that path as the base for the state database, `vortex.log`, the `temp`

@@ -1,0 +1,139 @@
+# Notes for Mod Authors - Football Manager 26
+
+Packaging rules for Football Manager 26 mods, so Vortex installs them to the right place.
+
+Vortex decides what a mod is by looking at the files and folders inside the archive. It tries each installer in order and the first one that matches wins, so archive layout is what determines where your mod ends up.
+
+## Quick Reference
+
+| Mod Type | Archive must contain | Installs to |
+| --- | --- | --- |
+| BepInEx (mod loader) | a `BepInEx.Core.dll` file | the game folder itself (no subfolder) |
+| MelonLoader (mod loader) | a `MelonLoader.dll` file | the game folder itself (no subfolder) |
+| Root | a file or folder named `fm_Data` | - |
+| BepInEx Configuration Manager | a `configurationmanager.dll` file | `BepInEx` |
+| MelonLoader Preferences Manager | a `melonprefmanager.il2cpp.dll` file | `Mods` |
+| Assembly Replacement Mods | a `GameAssembly.dll` file | the game folder itself (no subfolder) |
+| Plugin Mods | a `.dll` file | `BepInEx` |
+| Asset Replacement Mods | a `.assets` file | `fm_Data` |
+
+Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+
+## BepInEx (mod loader)
+
+This installer handles BepInEx itself, not mods for it. It exists so users can install BepInEx through Vortex, and mod authors normally never package this.
+
+**Requirements:**
+
+- Recognised by a file named `BepInEx.Core.dll` in the archive.
+- Requires BOTH a folder named `BepInEx` and the loader file `BepInEx.Core.dll`.
+
+Installs to: the game folder itself (no subfolder)
+
+**Common mistakes:**
+
+- If you bundle BepInEx inside your mod archive, Vortex treats the whole download as BepInEx rather than as your mod. Ship the mod alone and list BepInEx as a requirement.
+
+## MelonLoader (mod loader)
+
+This installer handles MelonLoader itself, not mods for it. It exists so users can install MelonLoader through Vortex, and mod authors normally never package this.
+
+**Requirements:**
+
+- Recognised by a file named `MelonLoader.dll` in the archive.
+- Requires BOTH a folder named `MelonLoader` and the loader file `MelonLoader.dll`.
+
+Installs to: the game folder itself (no subfolder)
+
+**Common mistakes:**
+
+- If you bundle MelonLoader inside your mod archive, Vortex treats the whole download as MelonLoader rather than as your mod. Ship the mod alone and list MelonLoader as a requirement.
+
+## Root
+
+Recognised when the archive contains a file or folder named `fm_Data`.
+
+## BepInEx Configuration Manager
+
+This installer handles the BepInEx Configuration Manager plugin itself, not mods for it. It exists so users can install the BepInEx Configuration Manager plugin through Vortex, and mod authors normally never package this.
+
+**Requirements:**
+
+- Recognised by a file named `configurationmanager.dll` in the archive.
+- Requires the file `configurationmanager.dll` together with a `plugins` folder.
+
+Installs to: `BepInEx`
+
+**Common mistakes:**
+
+- If you bundle the BepInEx Configuration Manager plugin inside your mod archive, Vortex treats the whole download as the BepInEx Configuration Manager plugin rather than as your mod. Ship the mod alone and list the BepInEx Configuration Manager plugin as a requirement.
+
+## MelonLoader Preferences Manager
+
+This installer handles the MelonLoader Preferences Manager itself, not mods for it. It exists so users can install the MelonLoader Preferences Manager through Vortex, and mod authors normally never package this.
+
+**Requirements:**
+
+- Recognised by a file named `melonprefmanager.il2cpp.dll` in the archive.
+
+Installs to: `Mods`
+
+**Common mistakes:**
+
+- If you bundle the MelonLoader Preferences Manager inside your mod archive, Vortex treats the whole download as the MelonLoader Preferences Manager rather than as your mod. Ship the mod alone and list the MelonLoader Preferences Manager as a requirement.
+
+## Assembly Replacement Mods
+
+Mods that replace a compiled game assembly outright. These overwrite core game files, so they conflict with any other mod touching the same assembly.
+
+**Requirements:**
+
+- Recognised by any file named `GameAssembly.dll`.
+
+Installs to: the game folder itself (no subfolder)
+
+**Common mistakes:**
+
+- Assembly replacements cannot be combined with other assembly mods - state this clearly on the mod page.
+- Shipping an assembly alongside a plugin makes the whole archive install as an assembly mod.
+
+## Plugin Mods
+
+The normal shape for a Unity mod: a compiled plugin DLL. Vortex installs it into the loader's mod folder, so the archive does not need to reproduce the loader folder structure.
+
+```text
+MyPlugin.zip
+└── MyPlugin.dll
+```
+
+**Requirements:**
+
+- Recognised by any file with the `.dll` extension.
+
+Installs to: `BepInEx`
+
+**Common mistakes:**
+
+- Wrapping the DLL in a `BepInEx\plugins` folder as well - it can end up nested one level too deep.
+- Shipping a plugin together with loader files, which makes the archive look like a loader install instead.
+
+## Asset Replacement Mods
+
+Mods that replace packed Unity asset files, deployed into the game's data folder.
+
+**Requirements:**
+
+- Recognised by any file with the `.assets`, `.resource` or `.ress` extensions.
+
+Installs to: `fm_Data`
+
+**Common mistakes:**
+
+- Asset files must keep their original names to replace the right bundle.
+
+## Rules That Apply To Every Mod Type
+
+- Archives that contain a FOMOD installer (a `fomod` folder with `ModuleConfig.xml`) are handed to Vortex's built-in FOMOD installer instead, and none of the rules above apply.
+- Folder and file name matching is case-insensitive.
+- Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
+

@@ -19,7 +19,8 @@ Usage:
     --no-startfile      Skip opening downloaded images and index.js in the default editor.
     --refresh-images    Re-download all 4 images for an existing extension. Pass GAME_ID as
                         the only positional arg. Does not redo lookups or rewrite index.js.
-    --skip-explained    Skip running generate_explained.js after writing index.js.
+    --skip-explained    Skip running generate_explained.js and generate_notes.js
+                        after writing index.js.
     --skip-eslint       Skip running eslint after writing index.js.
 
 Fills in all XXX fields it can resolve automatically from Steam, GOG, Epic,
@@ -31,11 +32,16 @@ banner saved to resources/banner-images/.
 
 Copies all template assets as-is (tfc.png, fluffy.png, reloaded.png, etc.).
 
+New extensions start at version 1.0.0 (vortex_utils.NEW_EXTENSION_VERSION),
+stamped into info.json, the CHANGELOG.md entry, the index.js header, and the
+version .txt filename regardless of the version the template scaffold carries.
+
 After writing index.js, automatically runs:
     1. node generate_explained.js {GAME_ID}
-    2. npx eslint game-{GAME_ID}/index.js  (warns on issues, does not abort)
-    3. python categorize_games.py {GAME_ID}
-    4. python setup_test_folder.py {GAME_ID}
+    2. node generate_notes.js {GAME_ID}
+    3. npx eslint game-{GAME_ID}/index.js  (warns on issues, does not abort)
+    4. python categorize_games.py {GAME_ID}
+    5. python setup_test_folder.py {GAME_ID}
 
 Requirements:
     pip install Pillow
@@ -62,14 +68,15 @@ from vortex_utils import (
     REPO_ROOT, PCGW_API, TITLE_IMAGES_DIR, BANNER_IMAGES_DIR,
     http_get, http_get_bytes, http_get_json,
     roman_to_arabic, arabic_to_roman, name_lookup_variants,
-    lookup_pcgamingwiki, get_api_key, run_generate_explained_batch, eslint_check,
+    lookup_pcgamingwiki, get_api_key, run_generate_explained_batch,
+    run_generate_notes_batch, eslint_check,
     fetch_epic_app_id, add_to_discovery_ids,
     download_exec_icon, download_cover_art, download_title_image, download_banner_image,
     update_index_header, sanitize_game_name, normalize_game_name, write_index_js,
     read_index_js, extract_steamapp_id, extract_game_name,
     nexus_list_games, run_script, open_in_default_app,
     write_text_atomic, is_placeholder_value, find_placeholder_vars, replace_const_rhs,
-    safe_rmtree,
+    safe_rmtree, touch_empty, NEW_EXTENSION_VERSION,
 )
 
 TEMPLATES = [
@@ -556,7 +563,7 @@ def sub(src, var_name, value):
 
 
 def sub_header(src, game_name, today):
-    return update_index_header(src, name=game_name, version="0.1.0", date=today)
+    return update_index_header(src, name=game_name, version=NEW_EXTENSION_VERSION, date=today)
 
 
 def apply_substitutions(src, fields):
@@ -598,21 +605,50 @@ def sub_toggle(src, toggle_name, value):
 # ── File editors ─────────────────────────────────────────────────────────────
 
 def edit_info_json(path, game_name):
-    """Replace the XXX game name in the copied info.json."""
+    """Replace the XXX game name in the copied info.json and stamp the starting version."""
     with open(path, encoding="utf-8") as f:
         content = f.read()
     content = content.replace('"Game: XXX"', f'"Game: {game_name}"')
     content = content.replace('"Vortex support for XXX"', f'"Vortex support for {game_name}"')
+    content = re.sub(
+        r'("version"\s*:\s*)"\d+\.\d+\.\d+"',
+        rf'\g<1>"{NEW_EXTENSION_VERSION}"',
+        content, count=1,
+    )
     write_text_atomic(path, content)
 
 
 def edit_changelog(path, today):
-    """Fill in the date placeholder in the copied CHANGELOG.md."""
+    """Fill in the date placeholder in the copied CHANGELOG.md and stamp the starting version."""
     with open(path, encoding="utf-8") as f:
         content = f.read()
     # Replace date placeholders like 2026-XX-XX or XXXX-XX-XX
     content = re.sub(r'\d{4}-XX-XX', today, content)
+    # The template's scaffold entry carries the template's own version; the new
+    # extension always starts at NEW_EXTENSION_VERSION.
+    content = re.sub(
+        r'^## \[\d+\.\d+\.\d+\]',
+        f'## [{NEW_EXTENSION_VERSION}]',
+        content, count=1, flags=re.MULTILINE,
+    )
     write_text_atomic(path, content)
+
+
+def edit_version_txt(folder):
+    """Rename the copied version .txt to the starting version, creating it if absent.
+
+    The .txt is a marker file whose name shows the current version in a folder
+    listing; release_extension.py keeps it in sync on every release."""
+    expected = f"{NEW_EXTENSION_VERSION}.txt"
+    version_re = re.compile(r'^\d+\.\d+\.\d+\.txt$')
+    existing = sorted(f for f in os.listdir(folder) if version_re.match(f))
+    if expected in existing:
+        return expected
+    if existing:
+        os.rename(os.path.join(folder, existing[0]), os.path.join(folder, expected))
+        return expected
+    touch_empty(os.path.join(folder, expected))
+    return expected
 
 
 # ── Orchestration ─────────────────────────────────────────────────────────────
@@ -850,6 +886,9 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
     edit_changelog(os.path.join(dest, "CHANGELOG.md"), today)
     print("  CHANGELOG.md updated")
 
+    # ── 11. version .txt ──────────────────────────────────────────────────────
+    print(f"  {edit_version_txt(dest)} written")
+
     # ── exec.png ──────────────────────────────────────────────────────────────
     icon_ok = False
     art_ok = False
@@ -964,9 +1003,10 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
 
     print(f"{'=' * 60}\n")
 
-    # ── Generate EXTENSION_EXPLAINED.md ───────────────────────────────────────
+    # ── Generate EXTENSION_EXPLAINED.md + NOTES_FOR_MOD_AUTHORS.md ────────────
     if skip_explained:
         print("[generate_explained.js] skipped (--skip-explained)\n")
+        print("[generate_notes.js] skipped (--skip-explained)\n")
     else:
         print("[generate_explained.js]")
         ok, err = run_generate_explained_batch([game_id])
@@ -974,6 +1014,15 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
             print(f"  EXTENSION_EXPLAINED.md written.\n")
         else:
             print(f"  FAILED -run manually: node generate_explained.js {game_id}")
+            if err:
+                print(f"  {err}\n")
+
+        print("[generate_notes.js]")
+        ok, err = run_generate_notes_batch([game_id])
+        if ok:
+            print(f"  NOTES_FOR_MOD_AUTHORS.md + .bbcode.txt written.\n")
+        else:
+            print(f"  FAILED -run manually: node generate_notes.js {game_id}")
             if err:
                 print(f"  {err}\n")
 
@@ -1120,7 +1169,7 @@ def main():
     )
     parser.add_argument(
         "--skip-explained", action="store_true",
-        help="Skip running generate_explained.js after writing index.js.",
+        help="Skip running generate_explained.js and generate_notes.js after writing index.js.",
     )
     parser.add_argument(
         "--skip-eslint", action="store_true",

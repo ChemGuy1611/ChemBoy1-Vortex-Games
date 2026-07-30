@@ -2,7 +2,7 @@
 Name: Borderlands 3 Vortex Extension
 Structure: UE4 Game (Custom)
 Author: ChemBoy1
-Version: 0.2.0
+Version: 0.2.1
 Date: 2025-09-29
 /////////////////////////////////////////*/
 
@@ -759,7 +759,7 @@ function installSdkMod(files, fileName) {
     MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
   }
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
-  
+
   // Remove empty directories
   const filtered = files.filter(file =>
     (!file.endsWith(path.sep))
@@ -974,7 +974,7 @@ function testBinaries(files, gameId) {
 //Fallback installer to Binaries folder
 function installBinaries(files) {
   const setModTypeInstruction = { type: 'setmodtype', value: BINARIES_ID };
-  
+
   const filtered = files.filter(file =>
     (!file.endsWith(path.sep))
   );
@@ -1180,7 +1180,7 @@ function main(context) {
   applyGame(context, spec);
   context.once(() => { // put code here that should be run (once) when Vortex starts up
     const api = context.api;
-    /*context.api.onAsync('did-deploy', async (profileId, deployment) => { 
+    /*context.api.onAsync('did-deploy', async (profileId, deployment) => {
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;
       return deployNotify(context.api);

@@ -11,19 +11,85 @@ Steps to set up the dev script environment on a new Windows PC.
 | **Git** | Required for all repos |
 | **Python 3.11+** | Must be on `PATH` |
 | **Node.js LTS** | Must be on `PATH`; required for `generate_explained.js`, `node --check`, and ESLint |
-| **Vortex** | Install normally; creates `C:\ProgramData\vortex\` |
+| **Vortex** | Install normally; creates its data folder at `%APPDATA%\Vortex\` |
 
 ---
 
 ## 2. Clone Repos
 
-```text
-C:\Game_Tools\0 GitHub Repos\
-  ChemBoy1-Vortex-Games\   <- primary repo
-  Vortex-Backend\           <- read-only app backend (optional)
-  Personal\                 <- standalone utility scripts
-  Vortex\                   <- read-only app source (optional, needed for API types)
-```
+Everything is cloned side by side into one repos root, referred to below as `<repos>`. The drive
+and folder name are up to you — scripts resolve `REPO_ROOT` from their own file location, so no
+path here is baked in. This setup uses `C:\Game_Tools\0 GitHub Repos\`.
+
+Only `ChemBoy1-Vortex-Games` is required to run the scripts — every other repo below is a reference
+or side project and can be skipped. The multi-root VS Code workspace `vortex-dev.code-workspace`
+sits in `<repos>` and opens the whole set together.
+
+### Owned repos
+
+| Folder | Upstream | Purpose |
+| --- | --- | --- |
+| `ChemBoy1-Vortex-Games` | `ChemGuy1611/ChemBoy1-Vortex-Games` | Primary repo — game extensions, dev scripts, `resources/` docs |
+| `Personal` | `ChemGuy1611/Personal` | Standalone utility scripts; has its own `SCRIPTS.md` |
+| `vortex_readyornot_extension` | `ChemGuy1611/vortex_readyornot_extension` | Ready or Not extension, maintained in its own repo |
+| `vortex-unreal-engine-library` | `ChemGuy1611/vortex-unreal-engine-library` | UEMI — Unreal Engine mod integration library |
+| `MSCModLoader-Vortex` | `ChemGuy1611/MSCModLoader-Vortex` | Editable fork of the My Summer Car mod loader extension |
+| `fork-Vortex` | `ChemGuy1611/Vortex` | Personal fork of the Vortex app, used for upstream pull requests |
+| `vortex-games` | `ChemGuy1611/vortex-games` | Fork of the bundled Nexus Mods game extensions; kept for reference |
+
+### Vortex application and libraries
+
+Reference clones — read for API shapes and runtime behaviour, not modified locally.
+
+| Folder | Upstream | Purpose |
+| --- | --- | --- |
+| `Vortex` | `Nexus-Mods/Vortex` | Application source; the authority on extension API and runtime behaviour |
+| `vortex-api` | `Nexus-Mods/vortex-api` | Published `@nexusmods/vortex-api` package — typings and generated docs |
+| `Vortex-Backend` | `Nexus-Mods/Vortex-Backend` | Backend data, including `extensions-manifest-original.json` (see section 6) |
+| `node-winapi-bindings` | `Nexus-Mods/node-winapi-bindings` | Native Windows calls (registry, INI) used during game discovery |
+| `node-nexus-api` | `Nexus-Mods/node-nexus-api` | Nexus Mods client library (v1 REST plus v2 GraphQL) that Vortex ships |
+| `fomod-installer` | `Nexus-Mods/fomod-installer` | FOMOD installer invoked by Vortex for scripted installers |
+| `game-description-language` | `Nexus-Mods/game-description-language` | GDL game-definition tooling |
+| `vortex-parse-ini` | `Nexus-Mods/vortex-parse-ini` | INI parser available to extensions |
+| `NexusMods.App` | `Nexus-Mods/NexusMods.App` | Next-generation Nexus Mods app; context only, unrelated to these extensions |
+
+### Extension references
+
+Third-party and first-party extensions kept as worked examples.
+
+| Folder | Upstream |
+| --- | --- |
+| `game-subnautica2` | `Nexus-Mods/game-subnautica2` |
+| `game-starfield` | `Nexus-Mods/game-starfield` |
+| `game-oblivionremastered` | `Nexus-Mods/game-oblivionremastered` |
+| `game-residentevilvillage` | `Nexus-Mods/game-residentevilvillage` |
+| `game-mount-and-blade2` | `BUTR/game-mount-and-blade2` |
+| `cyberpunk2077_ext_redux` | `E1337Kat/cyberpunk2077_ext_redux` |
+| `extension-re-engine-wrapper` | `Nexus-Mods/extension-re-engine-wrapper` |
+| `extension-thunderstore-handler` | `Nexus-Mods/extension-thunderstore-handler` |
+| `sample-extension` | `nexus-mods/sample-extension` — clone lands in `sample-extension\sample-extension\` |
+
+### Game tooling
+
+Mod loaders and asset tooling that extensions install or reference — not Vortex components.
+
+| Folder | Upstream |
+| --- | --- |
+| `FrostyToolsuite` | `CadeEvs/FrostyToolsuite` |
+| `RE-UE4SS` | `UE4SS-RE/RE-UE4SS` |
+
+### Local folders (not repos)
+
+These are machine-local and appear in the workspace for convenience; nothing needs to be cloned.
+
+| Path | Contents |
+| --- | --- |
+| `%APPDATA%\Vortex\plugins` | Extensions currently installed in Vortex on this machine |
+| `<repos>\..\00 Example Vortex Extensions` | Downloaded third-party extensions, unpacked for reference |
+
+Vortex stores its data per-user under `%APPDATA%\Vortex\` by default. Enabling **Multi-User Mode**
+in Vortex's settings moves that whole folder to `%PROGRAMDATA%\vortex\` — if that mode is on,
+substitute it in the path above and anywhere else `%APPDATA%\Vortex` appears in this guide.
 
 All paths above are the expected locations. Scripts derive `REPO_ROOT` relative to their own file, but some paths are hardcoded in env vars — match the folder layout or override with env vars (section 4).
 

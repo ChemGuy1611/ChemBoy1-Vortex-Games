@@ -11,7 +11,9 @@ Settings (geometry, column widths, filter text, grouping, flagged-only, category
 filter, checked rows) persist across sessions via QSettings.
 
 Dark theme applied via Fusion palette + stylesheet. Engine grouping inserts
-read-only header rows via GroupProxy. "Flagged Only" restricts the table to
+read-only header rows via GroupProxy. The filter box matches Game ID, name,
+engine, and note, and accepts several comma-separated terms (OR'd together).
+"Flagged Only" restricts the table to
 flagged rows; the category dropdown is a multi-select checkbox list of engines
 (OR'd together) plus special categories (bundled downloader module, non-UE load
 order -- each AND'd on top); Space toggles the checkbox on all selected rows.
@@ -778,13 +780,15 @@ class GameFilterModel(QSortFilterProxyModel):
         super().__init__()
         self.setFilterCaseSensitivity(Qt.CaseInsensitive)
         self.setSortCaseSensitivity(Qt.CaseInsensitive)
-        self._text = ""
+        self._terms: list[str] = []
         self._grouping = False
         self._flagged_only = False
         self._categories: set[str] = set()
 
     def set_text(self, text: str):
-        self._text = text.strip().lower()
+        """Set the filter text. Comma-separated terms are OR'd — a row matches if
+        any one of them hits. Blank terms (trailing comma, "a,,b") are ignored."""
+        self._terms = [t for t in (part.strip().lower() for part in text.split(",")) if t]
         self.invalidate()
 
     def set_flagged_only(self, enabled: bool):
@@ -823,12 +827,10 @@ class GameFilterModel(QSortFilterProxyModel):
             return False
         if "loadorder" in self._categories and not row.has_load_order:
             return False
-        if not self._text:
+        if not self._terms:
             return True
-        return (self._text in row.game_id.lower()
-                or self._text in row.name.lower()
-                or self._text in row.engine.lower()
-                or self._text in row.note.lower())
+        haystack = "\n".join((row.game_id, row.name, row.engine, row.note)).lower()
+        return any(term in haystack for term in self._terms)
 
     def lessThan(self, left, right):
         l_row = self.sourceModel()._rows[left.row()]
@@ -1399,7 +1401,7 @@ class ScriptArgsDialog(QDialog):
 
 
 class BumpTypeDialog(QDialog):
-    """Radio-button popup for selecting major, minor, or manual version bump."""
+    """Radio-button popup for selecting major, minor, patch, or manual version bump."""
 
     _SEMVER = vu.SEMVER_PATTERN
 
@@ -1416,12 +1418,14 @@ class BumpTypeDialog(QDialog):
             ids_text = f"{', '.join(game_ids[:5])}, ... ({len(game_ids)} games)"
         layout.addWidget(QLabel(f"Selected: {ids_text}"))
 
-        self._major = QRadioButton("Major  (0.3.0 -> 0.4.0)")
-        self._minor = QRadioButton("Minor  (0.3.0 -> 0.3.1)")
+        self._major = QRadioButton("Major  (1.2.3 -> 2.0.0)")
+        self._minor = QRadioButton("Minor  (1.2.3 -> 1.3.0)")
+        self._patch = QRadioButton("Patch  (1.2.3 -> 1.2.4)")
         self._manual = QRadioButton("Manual")
-        self._major.setChecked(True)
+        self._minor.setChecked(True)
         layout.addWidget(self._major)
         layout.addWidget(self._minor)
+        layout.addWidget(self._patch)
 
         manual_row = QHBoxLayout()
         manual_row.setContentsMargins(0, 0, 0, 0)
@@ -1459,6 +1463,8 @@ class BumpTypeDialog(QDialog):
             args = ["--major"]
         elif self._minor.isChecked():
             args = ["--minor"]
+        elif self._patch.isChecked():
+            args = ["--patch"]
         else:
             args = ["--version", self._version_edit.text().strip()]
         if self._dry_run_cb.isChecked():
@@ -1589,7 +1595,7 @@ class MainWindow(QMainWindow):
         top_bar = QHBoxLayout()
         top_bar.addWidget(QLabel("Filter:"))
         self._filter_edit = QLineEdit()
-        self._filter_edit.setPlaceholderText("Game ID, name, engine, or note...")
+        self._filter_edit.setPlaceholderText("Game ID, name, engine, or note (comma-separated for multiple)...")
         self._filter_edit.setClearButtonEnabled(True)
         self._filter_edit.textChanged.connect(self._filter_model.set_text)
         self._filter_edit.textChanged.connect(self._update_status_bar)

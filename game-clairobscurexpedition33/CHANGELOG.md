@@ -4,7 +4,7 @@
 
 - None
 
-## [0.2.0] - 2026-02-04
+## [0.2.1] - 2026-02-04
 
 - Fixed: Wrong variable name in a couple open buttons
 

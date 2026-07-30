@@ -4,6 +4,12 @@
 
 - None Planned
 
+## [2.5.2] - 2026-07-29
+
+- Fixed: The load order could disappear after deploying while a mod update was in progress, and only came back after deploying a second time.
+- Added: A message now appears if you change the load order while a mod update is still finishing, so it is clear the change was not applied and needs to be made again.
+- Fixed: After a mod update finished, the load order page could keep showing out-of-date information until another deployment was run.
+
 ## [2.5.1] - 2026-07-25
 
 - Fixed: Using "Update all" to update several mods at once could move them in the load order or uncheck them.

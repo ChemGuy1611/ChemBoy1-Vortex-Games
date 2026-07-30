@@ -4,7 +4,7 @@
 
 - None
 
-## [0.1.0] - 2026-01-13
+## [0.1.1] - 2026-01-13
 
 - Fixed issue with mod deployment
 

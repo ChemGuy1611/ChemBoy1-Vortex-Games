@@ -2,8 +2,8 @@
 Name: Windrose Vortex Extension
 Structure: Unreal Engine Game
 Author: ChemBoy1
-Version: 0.5.0
-Date: 2026-07-23
+Version: 1.0.1
+Date: 2026-07-29
 Notes:
 - User selects where to install pak mods (SP or MP)
 - Dedicated Server registered as a separate game
@@ -257,8 +257,9 @@ const UE4SS_MODSTXT_FILEPATH = path.join(UE4SS_MOD_PATH, UE4SS_MODSTXT_FILE);
 const UE4SS_LO_FILE = 'ue4ss_loadOrder.json';
 const LO_ATTRIBUTE_UE4SS = 'ue4ssModFolder';
 const UE4SS_CONFIG_FILES = ['config.txt', 'settings.json', 'config.lua']; //files that trigger the Configure button on UE4SS LO items
-const UE4SS_NATIVE_MODS = ['BPML_GenericFunctions', 'BPModLoaderMod', 'CheatManagerEnablerMod',
-  'ConsoleCommandsMod', 'ConsoleEnablerMod', 'Keybinds', 'LineTraceMod', 'shared', 'SplitScreenMod'
+const UE4SS_NATIVE_MODS = ['ActorDumperMod', 'BPML_GenericFunctions', 'BPModLoaderMod',
+  'CheatManagerEnablerMod', 'ConsoleCommandsMod', 'ConsoleEnablerMod', 'jsbLuaProfilerMod',
+  'Keybinds', 'LineTraceMod', 'shared', 'SplitScreenMod'
 ];
 const ENABLEDTXT_FILE = 'enabled.txt';
 
@@ -559,7 +560,6 @@ let mod_update_all_profile = { [GAME_ID]: false, [GAME_ID_SERVER]: false };
 let updateModIds = { [GAME_ID]: new Map(), [GAME_ID_SERVER]: new Map() }; //Nexus mod id -> {firstSeen, targetFileId}, per game
 const MAX_UPDATE_WAIT_MS = 5 * 60 * 1000; //release the guard for an update that never lands (cancelled or failed install)
 let updating_mod = { [GAME_ID]: false, [GAME_ID_SERVER]: false };
-const MOD_UPDATE_MESSAGE = 'mod update in progress, please wait. Refresh when finished. \n To avoid this wait, only update current profile';
 
 // BASIC EXTENSION FUNCTIONS ///////////////////////////////////////////////////
 
@@ -1829,9 +1829,25 @@ async function ensureLOFile(context, profileId, props) {
   }
 }
 
+//Reordering is ignored while a mod update is in flight: the deserializers below freeze the stored
+//order and the serializers skip writing, so tell the user their change was not applied.
+function notifyLoadOrderPaused(api, gameId) {
+  api.sendNotification({
+    id: `${gameId}-loadorder-update-paused`,
+    type: 'warning',
+    message: 'Load order changes are paused while a mod update finishes. Reorder again once it completes.',
+    displayMS: 6000,
+  });
+}
+
 async function deserializeLoadOrder(context) {
   if (mod_update_all_profile[GAME_ID]) {
-    return [{ id: MOD_UPDATE_MESSAGE, modId: 'mod_update', name: MOD_UPDATE_MESSAGE, enabled: false }];
+    //A mod update briefly removes and reinstalls mods, so rebuilding the order from disk right now
+    //would drop their entries. Return the stored order untouched instead: positions are preserved
+    //and the page keeps showing the real load order rather than a placeholder row.
+    const updateState = context.api.getState();
+    const updateProfileId = selectors.lastActiveProfileForGame(updateState, GAME_ID);
+    return util.getSafe(updateState, ['persistent', 'loadOrder', updateProfileId], []);
   }
   const props = generateProps(context, undefined);
   if (props?.profile?.gameId !== GAME_ID) {
@@ -1907,6 +1923,7 @@ async function deserializeLoadOrder(context) {
 
 async function serializeLoadOrder(context, loadOrder) {
   if (mod_update_all_profile[GAME_ID]) {
+    notifyLoadOrderPaused(context.api, GAME_ID);
     return;
   }
   const props = generateProps(context, undefined);
@@ -2207,7 +2224,10 @@ async function ensureLOFileServer(context, profileId, props) {
 
 async function deserializeLoadOrderServer(context) {
   if (mod_update_all_profile[GAME_ID_SERVER]) {
-    return [{ id: MOD_UPDATE_MESSAGE, modId: 'mod_update', name: MOD_UPDATE_MESSAGE, enabled: false }];
+    //Freeze the order while a mod update is in flight - see deserializeLoadOrder above.
+    const updateState = context.api.getState();
+    const updateProfileId = selectors.lastActiveProfileForGame(updateState, GAME_ID_SERVER);
+    return util.getSafe(updateState, ['persistent', 'loadOrder', updateProfileId], []);
   }
   const props = generatePropsServer(context, undefined);
   if (props?.profile?.gameId !== GAME_ID_SERVER) {
@@ -2250,6 +2270,7 @@ async function deserializeLoadOrderServer(context) {
 
 async function serializeLoadOrderServer(context, loadOrder) {
   if (mod_update_all_profile[GAME_ID_SERVER]) {
+    notifyLoadOrderPaused(context.api, GAME_ID_SERVER);
     return;
   }
   const props = generatePropsServer(context, undefined);
@@ -2291,7 +2312,9 @@ async function deserializeUe4ss(api) {
   const state = api.getState();
   const activeGameId = selectors.activeGameId(state);
   if (mod_update_all_profile[activeGameId]) {
-    return [{ id: MOD_UPDATE_MESSAGE, modId: 'mod_update', name: MOD_UPDATE_MESSAGE, enabled: false }];
+    //Freeze the order while a mod update is in flight - see deserializeLoadOrder above.
+    const updateProfileId = selectors.lastActiveProfileForGame(state, activeGameId);
+    return util.getSafe(state, ['persistent', 'ue4ssLoadOrder', updateProfileId, 'loadOrder'], []);
   }
   //Set basic information for load order paths and data
   const mods = util.getSafe(state, ['persistent', 'mods', activeGameId], {});
@@ -2393,7 +2416,10 @@ async function serializeUe4ss(api, loadOrder) {
   const state = api.getState();
   const activeGameId = selectors.activeGameId(state);
   if (![GAME_ID, GAME_ID_SERVER].includes(activeGameId)) return;
-  if (mod_update_all_profile[activeGameId]) return;
+  if (mod_update_all_profile[activeGameId]) {
+    notifyLoadOrderPaused(api, activeGameId);
+    return;
+  }
   GAME_PATH = getDiscoveryPath(api, activeGameId);
   const profile = selectors.activeProfile(state);
   const filename = profile.id + '_' + UE4SS_LO_FILE;
@@ -2412,10 +2438,21 @@ async function serializeUe4ss(api, loadOrder) {
   const lines = contents.split('\n');
   const bpIdx = lines.findIndex(l => l.trim().startsWith('BPModLoaderMod'));
   const kbIdx = lines.findIndex(l => l.trim().startsWith('Keybinds'));
+  //A missing marker must degrade to "rebuild the load order band", never truncate the file.
+  const headEnd = bpIdx >= 0 ? bpIdx + 1 : 0;
+  const tailStart = (kbIdx >= headEnd) ? kbIdx : lines.length;
+  //Comments and UE4SS native mod lines inside the band survive; every other line is load order owned.
+  const bandKeep = lines.slice(headEnd, tailStart).filter(l => {
+    const t = l.trim();
+    if (t === '') return false;
+    if (t.startsWith(';')) return true;
+    return UE4SS_NATIVE_MODS.includes(t.split(':')[0].trim());
+  });
   const loadOrderOutput = [
-    ...lines.slice(0, bpIdx + 1),
+    ...lines.slice(0, headEnd),
     ...loadOrderMapped,
-    ...lines.slice(kbIdx),
+    ...bandKeep,
+    ...lines.slice(tailStart),
   ].join('\n');
   return fs.writeFileAsync(
     loadOrderPath,
@@ -2428,7 +2465,9 @@ async function deserializeLogicMods(api) {
   const state = api.getState();
   const activeGameId = selectors.activeGameId(state);
   if (mod_update_all_profile[activeGameId]) {
-    return [{ id: MOD_UPDATE_MESSAGE, name: MOD_UPDATE_MESSAGE, modId: 'mod_update' }];
+    //Freeze the order while a mod update is in flight - see deserializeLoadOrder above.
+    const updateProfileId = selectors.lastActiveProfileForGame(state, activeGameId);
+    return util.getSafe(state, ['persistent', 'logicModsLoadOrder', updateProfileId, 'loadOrder'], []);
   }
   const mods = util.getSafe(state, ['persistent', 'mods', activeGameId], {});
   GAME_PATH = getDiscoveryPath(api, activeGameId);
@@ -2483,18 +2522,20 @@ async function deserializeLogicMods(api) {
     } catch { return undefined; }
   };
 
-  const makeEntry = (pakName) => {
+  //prev carries the persisted entry, so a locked position survives the rebuild on every deploy
+  const makeEntry = (pakName, prev) => {
     const modName = getModName(pakName);
     return {
       id: pakName,
       name: modName ? `${modName} (${pakName}${LOGICMODS_EXT})` : `Manual Mod (${pakName}${LOGICMODS_EXT})`,
       modId: getModId(pakName),
+      ...(prev?.locked !== undefined ? { locked: prev.locked } : {}),
     };
   };
 
   let loadOrder = LO_MOD_ARRAY
     .filter(entry => pakFiles.includes(entry.id))
-    .map(entry => makeEntry(entry.id));
+    .map(entry => makeEntry(entry.id, entry));
 
   for (const pakName of pakFiles) {
     if (!loadOrder.find(e => e.id === pakName)) {
@@ -2510,7 +2551,10 @@ async function serializeLogicMods(api, loadOrder) {
   const state = api.getState();
   const activeGameId = selectors.activeGameId(state);
   if (![GAME_ID, GAME_ID_SERVER].includes(activeGameId)) return;
-  if (mod_update_all_profile[activeGameId]) return;
+  if (mod_update_all_profile[activeGameId]) {
+    notifyLoadOrderPaused(api, activeGameId);
+    return;
+  }
   GAME_PATH = getDiscoveryPath(api, activeGameId);
   const profile = selectors.activeProfile(state);
   const bpmlFolder = path.join(GAME_PATH, BINARIES_PATH, UE4SS_MOD_PATH, BPML_FOLDER);
@@ -3505,6 +3549,9 @@ async function didDeploy(api, profileId) { //run on mod deploy
   //and is enabled, so a deploy that fires mid-batch can't disarm the guard for mods that
   //haven't been reinstalled yet. Must stay above the UE4SS/LogicMods blocks below, which
   //rewrite their order files from whatever is on disk at this moment.
+  //guard state as it stood before the loop below releases it - the FBLO refresh further
+  //down only runs on the deploy that actually clears the guard
+  const guardWasArmed = mod_update_all_profile[gameId];
   if (updateModIds[gameId].size > 0) {
     const mods = util.getSafe(state, ['persistent', 'mods', gameId], {});
     const now = Date.now();
@@ -3524,6 +3571,20 @@ async function didDeploy(api, profileId) { //run on mod deploy
     }
   }
   mod_update_all_profile[gameId] = updateModIds[gameId].size > 0; //stay armed while any update is still outstanding
+  //Core FBLO deserialized this order concurrently with this handler - did-deploy listeners run
+  //in parallel and the core one is registered first - so it read the frozen order before the
+  //guard cleared above, leaving its page stale. Re-run the deserialize it would have got and
+  //push the result into state; cheaper and less disruptive than forcing a second deployment.
+  if (guardWasArmed && !mod_update_all_profile[gameId]) {
+    try {
+      const refreshedLO = (gameId === GAME_ID_SERVER)
+        ? await deserializeLoadOrderServer({ api })
+        : await deserializeLoadOrder({ api });
+      api.store.dispatch(actions.setFBLoadOrder(profileId, refreshedLO));
+    } catch (err) {
+      log('warn', `[${gameId}] post-update load order refresh failed`, err);
+    }
+  }
   updating_mod[gameId] = false; //reset updating flag on deploy
   const gameSpec = (gameId === GAME_ID_SERVER) ? specServer : spec;
   if (ue4ssLoadOrder && isUe4ssInstalled(api, gameSpec)) {
@@ -3614,15 +3675,7 @@ function LoadOrderInstructions() {
   const matched = statusFilter.size > 0
     ? loadOrder.filter((e) => matchesStatus(e, statusFilter, isEnabled, isLocked)).length
     : total;
-  React.useEffect(() => {
-    const styleId = 'fblo-status-filter-hide-style';
-    if (!globalThis.document.getElementById(styleId)) {
-      const style = globalThis.document.createElement('style');
-      style.id = styleId;
-      style.textContent = '.file-based-load-order-list .list-group > div:has(.lo-row-hidden) { display: none !important; }';
-      globalThis.document.head.appendChild(style);
-    }
-  }, []);
+  useInjectStyleOnce('fblo-status-filter-hide-style', LO_ROW_HIDDEN_CSS);
   return React.createElement('div', null,
     React.createElement(StatusPills, { active: statusFilter, setActive: setStatusFilter, groups: ['enabled', 'locked', 'unmanaged'], count: statusFilter.size > 0 ? { matched, total } : null }),
     React.createElement('p', { style: { fontStyle: 'italic', color: '#7ec8e3' } },
@@ -3726,6 +3779,57 @@ function matchesStatus(entry, active, isEnabledFn, isLockedFn) {
   }
   if (active.has('unmanaged') && entry.modId !== undefined) return false;
   return true;
+}
+
+//Style blocks injected by the load order surfaces (see useInjectStyleOnce below)
+const LO_INDEX_FOCUS_CSS = '.load-order-index input:focus { background: white !important; color: black !important; } .layout-flex.file-based-load-order-list-outer { overflow: auto; }';
+const LO_ROW_HIDDEN_CSS = '.file-based-load-order-list .list-group > div:has(.lo-row-hidden) { display: none !important; }';
+const LO_CTX_MENU_CSS = '.ue4ss-ctx-item:hover { background: rgba(255,255,255,0.1); }';
+
+//Extensions cannot ship CSS, so a component injects its styles into the document head on mount.
+//Guarded by a fixed id, so repeated mounts (every row, every page visit) never duplicate the block.
+function useInjectStyleOnce(styleId, css) {
+  React.useEffect(() => {
+    if (globalThis.document.getElementById(styleId)) return;
+    const style = globalThis.document.createElement('style');
+    style.id = styleId;
+    style.textContent = css;
+    globalThis.document.head.appendChild(style);
+  }, [styleId, css]);
+}
+
+//Shared dismiss behaviour for the context menus: any click or right-click outside closes the menu,
+//as does Escape. Menu items call stopPropagation, so their own clicks never reach these listeners.
+function useDismissOnOutside(onClose) {
+  React.useEffect(() => {
+    const dismiss = () => onClose();
+    const onKey = (evt) => { if (evt.key === 'Escape') onClose(); };
+    globalThis.document.addEventListener('click', dismiss);
+    globalThis.document.addEventListener('contextmenu', dismiss);
+    globalThis.document.addEventListener('keydown', onKey);
+    return () => {
+      globalThis.document.removeEventListener('click', dismiss);
+      globalThis.document.removeEventListener('contextmenu', dismiss);
+      globalThis.document.removeEventListener('keydown', onKey);
+    };
+  }, [onClose]);
+}
+
+//Viewport clamp for the context menus. The clamped position is measured once into state and then
+//rendered, rather than written onto el.style after the fact - a fresh callback ref every render
+//makes React detach and reattach it, and the next render would overwrite the mutated style anyway.
+function useClampedMenuPosition(x, y) {
+  const [position, setPosition] = React.useState({ left: x, top: y });
+  const measureRef = React.useCallback((el) => {
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const vw = globalThis.window.innerWidth;
+    const vh = globalThis.window.innerHeight;
+    const left = (x + rect.width > vw) ? Math.max(8, vw - rect.width - 8) : x;
+    const top = (y + rect.height > vh) ? Math.max(8, vh - rect.height - 8) : y;
+    setPosition(prev => (prev.left === left && prev.top === top) ? prev : { left, top });
+  }, [x, y]);
+  return [position, measureRef];
 }
 
 //Inline toggle pills for status filtering (used in the InfoPanel surfaces, i.e. the core FBLO page)
@@ -3840,12 +3944,16 @@ function LoadOrderItemRenderer(props) {
   const { loEntry, displayCheckboxes } = item;
   const mods = useSelector((state) => util.getSafe(state, ['persistent', 'mods', activeGameId], {}));
   const pictureUrl = mods[loEntry.modId]?.attributes?.pictureUrl;
-  const currentIdx = loadOrder.findIndex((e) => e.id === loEntry.id) + 1;
+  //FBLO precomputes these on the item (memoized by its row cache); the fallbacks keep the
+  //renderer working if it is ever mounted outside the FBLO page.
+  const currentIdx = item.position ?? loadOrder.findIndex((e) => e.id === loEntry.id) + 1;
   const isModEnabled = useSelector(state =>
     util.getSafe(state, ['persistent', 'profiles', profile?.id, 'modState', loEntry.modId, 'enabled'], false));
+  const modState = useSelector(state =>
+    util.getSafe(state, ['persistent', 'profiles', profile?.id, 'modState'], {}));
 
   const isLocked = (entry) => [true, 'true', 'always'].includes(entry?.locked);
-  const lockedCount = loadOrder.filter(isLocked).length;
+  const lockedCount = item.lockedEntriesCount ?? loadOrder.filter(isLocked).length;
 
   //this renderer backs both the client and server FBLO registrations, so which serialize function / spec
   //object to use has to follow whichever game is currently active.
@@ -3868,15 +3976,18 @@ function LoadOrderItemRenderer(props) {
 
   const onModToggle = React.useCallback(() => {
     if (!loEntry.modId) return;
-    dispatch(actions.setModEnabled(profile.id, loEntry.modId, !isModEnabled));
-    requestDeployment(context.api, activeGameId === GAME_ID_SERVER ? specServer : spec);
-  }, [dispatch, profile, loEntry.modId, isModEnabled, context, activeGameId]);
+    actions.setModsEnabled(context.api, profile.id, [loEntry.modId], !isModEnabled, { allowAutoDeploy: true });
+  }, [profile, loEntry.modId, isModEnabled, context]);
 
   const isEntryLocked = isLocked(loEntry);
 
   const { selectedIds, setSelectedIds, contextMenu, setContextMenu, statusFilter } = usePakLOState();
   const isSelected = selectedIds.has(loEntry.id);
-  const allIds = loadOrder.map(e => e.id);
+  //Shift-select must span visible rows only, so build the id list from the status-filtered order.
+  //Memoized: a bare filter here would run once per row, i.e. O(n^2) over the whole load order.
+  const allIds = React.useMemo(() => loadOrder
+    .filter(e => matchesStatus(e, statusFilter, (entry) => util.getSafe(modState, [entry.modId, 'enabled'], false), isLocked))
+    .map(e => e.id), [loadOrder, statusFilter, modState]);
 
   const onSelect = React.useCallback((evt) => {
     const ctrlKey = evt.ctrlKey || evt.metaKey;
@@ -3911,15 +4022,7 @@ function LoadOrderItemRenderer(props) {
     serializeForActiveGame(newLO);
   }, [dispatch, serializeForActiveGame, profile, loadOrder, loEntry, isEntryLocked]);
 
-  React.useEffect(() => {
-    const styleId = 'lo-index-focus-style';
-    if (!globalThis.document.getElementById(styleId)) {
-      const style = globalThis.document.createElement('style');
-      style.id = styleId;
-      style.textContent = '.load-order-index input:focus { background: white !important; color: black !important; } .layout-flex.file-based-load-order-list-outer { overflow: auto; }';
-      globalThis.document.head.appendChild(style);
-    }
-  }, []);
+  useInjectStyleOnce('lo-index-focus-style', LO_INDEX_FOCUS_CSS);
 
   const classes = ['load-order-entry'];
   if (className) classes.push(...className.split(' '));
@@ -3952,7 +4055,7 @@ function LoadOrderItemRenderer(props) {
     React.createElement('div', {
       style: { cursor: 'pointer', display: 'flex', alignItems: 'center' },
       title: isEntryLocked ? 'Unlock position' : 'Lock position',
-      onClick: onLock,
+      onClick: (evt) => { evt.stopPropagation(); onLock(); },
     },
       React.createElement(Icon, { name: isEntryLocked ? 'locked' : 'unlocked', style: { color: isEntryLocked ? '#e2c04c' : 'inherit' } }),
     ),
@@ -3995,36 +4098,13 @@ function LoadOrderItemRenderer(props) {
 } //*/
 
 function PakContextMenu({ x, y, item, loadOrder, profile, dispatch, context, selectedIds, isModEnabled, activeGameId, onClose }) {
-  React.useEffect(() => {
-    const onKey = (evt) => { if (evt.key === 'Escape') onClose(); };
-    globalThis.document.addEventListener('keydown', onKey);
-    return () => globalThis.document.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  useDismissOnOutside(onClose);
 
-  React.useEffect(() => {
-    const dismiss = onClose;
-    globalThis.document.addEventListener('click', dismiss);
-    globalThis.document.addEventListener('contextmenu', dismiss);
-    return () => {
-      globalThis.document.removeEventListener('click', dismiss);
-      globalThis.document.removeEventListener('contextmenu', dismiss);
-    };
-  }, []);
-
-  React.useEffect(() => {
-    const styleId = 'ue4ss-ctx-menu-style';
-    if (!globalThis.document.getElementById(styleId)) {
-      const style = globalThis.document.createElement('style');
-      style.id = styleId;
-      style.textContent = '.ue4ss-ctx-item:hover { background: rgba(255,255,255,0.1); }';
-      globalThis.document.head.appendChild(style);
-    }
-  }, []);
+  useInjectStyleOnce('ue4ss-ctx-menu-style', LO_CTX_MENU_CSS);
 
   const isLocked = (e) => [true, 'true', 'always'].includes(e?.locked);
   const isMulti = selectedIds.size >= 2 && selectedIds.has(item.id);
   const targets = isMulti ? loadOrder.filter(e => selectedIds.has(e.id)) : [item];
-  const targetSpec = (activeGameId === GAME_ID_SERVER) ? specServer : spec;
 
   const applyToTargets = (transform, serialize = false) => {
     const newLO = transform(loadOrder, targets);
@@ -4040,25 +4120,16 @@ function PakContextMenu({ x, y, item, loadOrder, profile, dispatch, context, sel
   const isEntryLocked = isLocked(item);
 
   const setModsEnabled = (entries, enable) => {
-    const batch = entries.filter(e => e.modId)
-      .map(e => actions.setModEnabled(profile.id, e.modId, enable));
-    if (batch.length) {
-      util.batchDispatch(dispatch, batch);
-      requestDeployment(context.api, targetSpec);
+    const modIds = entries.filter(e => e.modId !== undefined).map(e => e.modId);
+    if (modIds.length > 0) {
+      actions.setModsEnabled(context.api, profile.id, modIds, enable, { allowAutoDeploy: true });
     }
     onClose();
   };
 
-  const clampRef = (el) => {
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const vw = globalThis.window.innerWidth;
-    const vh = globalThis.window.innerHeight;
-    if (x + rect.width > vw) el.style.left = `${Math.max(8, vw - rect.width - 8)}px`;
-    if (y + rect.height > vh) el.style.top = `${Math.max(8, vh - rect.height - 8)}px`;
-  };
+  const [menuPosition, clampRef] = useClampedMenuPosition(x, y);
   const menuStyle = {
-    position: 'fixed', left: x, top: y, zIndex: 9999,
+    position: 'fixed', left: menuPosition.left, top: menuPosition.top, zIndex: 9999,
     background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.2)',
     borderRadius: 4, padding: '4px 0', minWidth: 180,
     boxShadow: '0 4px 12px rgba(0,0,0,0.6)',
@@ -4085,8 +4156,9 @@ function PakContextMenu({ x, y, item, loadOrder, profile, dispatch, context, sel
         return [...locked, ...selected, ...rest];
       })),
       menuItem(`Move to Bottom (${n})`, () => applyToTargets((lo) => {
-        const selected = lo.filter(e => targets.find(t => t.id === e.id));
-        const rest = lo.filter(e => !targets.find(t => t.id === e.id));
+        //Locked entries stay put, so they have to be counted into rest or they drop out of the order
+        const selected = lo.filter(e => targets.find(t => t.id === e.id) && !isLocked(e));
+        const rest = lo.filter(e => !targets.find(t => t.id === e.id) || isLocked(e));
         return [...rest, ...selected];
       })),
       React.createElement('div', { style: sepStyle }),
@@ -4101,11 +4173,13 @@ function PakContextMenu({ x, y, item, loadOrder, profile, dispatch, context, sel
     menuItem(isEntryLocked ? 'Unlock Position' : 'Lock Position', () => applyToTargets((lo) => lo.map(e => e.id === item.id ? { ...e, locked: !isEntryLocked } : e), true)),
     React.createElement('div', { style: sepStyle }),
     menuItem('Move to Top', () => applyToTargets((lo) => {
+      if (isLocked(item)) return lo;
       const locked = lo.filter(isLocked);
       const rest = lo.filter(e => !isLocked(e) && e.id !== item.id);
       return [...locked, item, ...rest];
     })),
     menuItem('Move to Bottom', () => applyToTargets((lo) => {
+      if (isLocked(item)) return lo;
       const rest = lo.filter(e => e.id !== item.id);
       return [...rest, item];
     })),
@@ -4168,7 +4242,8 @@ async function reconcileEnabledTxt(api, gameId, write) {
         try { await fs.statAsync(marker); }
         catch { await fs.writeFileAsync(marker, ''); touched++; }
       } else {
-        try { await fs.removeAsync(marker); touched++; }
+        //removeAsync never reports a missing file, so stat first to keep the count honest
+        try { await fs.statAsync(marker); await fs.removeAsync(marker); touched++; }
         catch (err) { if (err.code !== 'ENOENT') throw err; }
       }
     } catch (err) {
@@ -4230,15 +4305,23 @@ function Ue4ssItemRenderer({ className, item }) {
     if (!gamePath || !item.id) { setConfigFilePath(''); return; }
     const modFolder = path.join(gamePath, BINARIES_PATH, UE4SS_MOD_PATH, item.id);
     const localConfigFiles = [...UE4SS_CONFIG_FILES, `${item.id}.txt`, `${item.id}.ini`, `${item.id}.json`];
-    let found = '';
-    util.walk(modFolder, (iterPath, stats) => {
-      if (found === '' && !stats.isDirectory() && localConfigFiles.includes(path.basename(iterPath))) {
-        found = iterPath;
+    //Stat the conventional locations rather than walking the folder: the walk ran per row on every
+    //page open and profile switch. UE4SS keeps lua configs beside Scripts/ and dll configs beside
+    //dlls/, so a config below any other subfolder is not found - accepted trade for the IO.
+    const candidates = [modFolder, path.join(modFolder, 'Scripts'), path.join(modFolder, 'dlls')]
+      .reduce((acc, dir) => acc.concat(localConfigFiles.map(name => path.join(dir, name))), []);
+    let cancelled = false;
+    (async () => {
+      for (const candidate of candidates) {
+        try {
+          await fs.statAsync(candidate);
+          if (!cancelled) setConfigFilePath(candidate);
+          return;
+        } catch { /* try the next candidate */ }
       }
-      return Promise.resolve();
-    })
-      .then(() => setConfigFilePath(found))
-      .catch(() => setConfigFilePath(''));
+      if (!cancelled) setConfigFilePath('');
+    })();
+    return () => { cancelled = true; };
   }, [gamePath, item.id]);
 
   const onConfigure = React.useCallback(() => {
@@ -4316,7 +4399,7 @@ function Ue4ssItemRenderer({ className, item }) {
     React.createElement('div', {
       style: { cursor: 'pointer', display: 'flex', alignItems: 'center' },
       title: isEntryLocked ? 'Unlock position' : 'Lock position',
-      onClick: onLock,
+      onClick: (evt) => { evt.stopPropagation(); onLock(); },
     },
       React.createElement(Icon, { name: isEntryLocked ? 'locked' : 'unlocked', style: { color: isEntryLocked ? '#e2c04c' : 'inherit' } }),
     ),
@@ -4335,59 +4418,35 @@ function Ue4ssItemRenderer({ className, item }) {
         style: { width: LO_IMAGE_WIDTH, height: LO_IMAGE_HEIGHT, objectFit: 'cover', borderRadius: 2, pointerEvents: 'none' },
       }) : null,
     ),
-    React.createElement('p', { className: 'load-order-name', style: { flex: '1 1 0', margin: 0, whiteSpace: 'normal', wordBreak: 'break-word' } }, item.name),
+    React.createElement('p', { className: 'load-order-name', style: { flex: '1 1 0', margin: 0, whiteSpace: 'normal', wordBreak: 'break-word' } }, item.name ?? item.id),
     configFilePath ? React.createElement('button', {
       className: 'btn btn-default btn-sm',
       style: { margin: '0 4px' },
       title: path.basename(configFilePath),
       onClick: onConfigure,
     }, 'Configure') : null,
-    React.createElement('input', {
-      type: 'checkbox',
-      style: { alignSelf: 'center', cursor: 'pointer' },
+    React.createElement(Checkbox, {
+      style: { alignSelf: 'center', cursor: 'pointer', margin: 0 },
       checked: item.enabled ?? true,
       onChange: onToggle,
     }),
     contextMenu?.itemId === item.id ? React.createElement(Ue4ssContextMenu, {
       x: contextMenu.x, y: contextMenu.y,
       item, loadOrder, profileId, dispatch,
-      api: vortexContext.api, gamePath, configFilePath, selectedIds, activeGameId,
+      api: vortexContext.api, gamePath, configFilePath, selectedIds,
       onClose: () => setContextMenu(null),
     }) : null,
   );
 }
 
-function Ue4ssContextMenu({ x, y, item, loadOrder, profileId, dispatch, api, gamePath, configFilePath, selectedIds, activeGameId, onClose }) {
-  React.useEffect(() => {
-    const onKey = (evt) => { if (evt.key === 'Escape') onClose(); };
-    globalThis.document.addEventListener('keydown', onKey);
-    return () => globalThis.document.removeEventListener('keydown', onKey);
-  }, [onClose]);
+function Ue4ssContextMenu({ x, y, item, loadOrder, profileId, dispatch, api, gamePath, configFilePath, selectedIds, onClose }) {
+  useDismissOnOutside(onClose);
 
-  React.useEffect(() => {
-    const dismiss = onClose;
-    globalThis.document.addEventListener('click', dismiss);
-    globalThis.document.addEventListener('contextmenu', dismiss);
-    return () => {
-      globalThis.document.removeEventListener('click', dismiss);
-      globalThis.document.removeEventListener('contextmenu', dismiss);
-    };
-  }, []);
-
-  React.useEffect(() => {
-    const styleId = 'ue4ss-ctx-menu-style';
-    if (!globalThis.document.getElementById(styleId)) {
-      const style = globalThis.document.createElement('style');
-      style.id = styleId;
-      style.textContent = '.ue4ss-ctx-item:hover { background: rgba(255,255,255,0.1); }';
-      globalThis.document.head.appendChild(style);
-    }
-  }, []);
+  useInjectStyleOnce('ue4ss-ctx-menu-style', LO_CTX_MENU_CSS);
 
   const isLocked = (e) => [true, 'true', 'always'].includes(e?.locked);
   const isMulti = selectedIds.size >= 2 && selectedIds.has(item.id);
   const targets = isMulti ? loadOrder.filter(e => selectedIds.has(e.id)) : [item];
-  const targetSpec = (activeGameId === GAME_ID_SERVER) ? specServer : spec;
 
   const applyToTargets = (transform) => {
     const newLO = transform(loadOrder, targets);
@@ -4402,24 +4461,16 @@ function Ue4ssContextMenu({ x, y, item, loadOrder, profileId, dispatch, api, gam
   //Vortex mod state (deployment), distinct from the LO-entry enabled flag written to mods.txt
   const isModEnabled = util.getSafe(api.getState(), ['persistent', 'profiles', profileId, 'modState', item.modId, 'enabled'], false);
   const setVortexModsEnabled = (entries, enable) => {
-    const batch = entries.filter(e => e.modId).map(e => actions.setModEnabled(profileId, e.modId, enable));
-    if (batch.length) {
-      util.batchDispatch(dispatch, batch);
-      requestDeployment(api, targetSpec);
+    const modIds = entries.filter(e => e.modId !== undefined).map(e => e.modId);
+    if (modIds.length > 0) {
+      actions.setModsEnabled(api, profileId, modIds, enable, { allowAutoDeploy: true });
     }
     onClose();
   };
 
-  const clampRef = (el) => {
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const vw = globalThis.window.innerWidth;
-    const vh = globalThis.window.innerHeight;
-    if (x + rect.width > vw) el.style.left = `${Math.max(8, vw - rect.width - 8)}px`;
-    if (y + rect.height > vh) el.style.top = `${Math.max(8, vh - rect.height - 8)}px`;
-  };
+  const [menuPosition, clampRef] = useClampedMenuPosition(x, y);
   const menuStyle = {
-    position: 'fixed', left: x, top: y, zIndex: 9999,
+    position: 'fixed', left: menuPosition.left, top: menuPosition.top, zIndex: 9999,
     background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.2)',
     borderRadius: 4, padding: '4px 0', minWidth: 180,
     boxShadow: '0 4px 12px rgba(0,0,0,0.6)',
@@ -4449,8 +4500,9 @@ function Ue4ssContextMenu({ x, y, item, loadOrder, profileId, dispatch, api, gam
         return [...locked, ...selected, ...rest];
       })),
       menuItem(`Move to Bottom (${n})`, () => applyToTargets((lo) => {
-        const selected = lo.filter(e => targets.find(t => t.id === e.id));
-        const rest = lo.filter(e => !targets.find(t => t.id === e.id));
+        //Locked entries stay put, so they have to be counted into rest or they drop out of the order
+        const selected = lo.filter(e => targets.find(t => t.id === e.id) && !isLocked(e));
+        const rest = lo.filter(e => !targets.find(t => t.id === e.id) || isLocked(e));
         return [...rest, ...selected];
       })),
       React.createElement('div', { style: sepStyle }),
@@ -4476,11 +4528,13 @@ function Ue4ssContextMenu({ x, y, item, loadOrder, profileId, dispatch, api, gam
     configFilePath ? menuItem('Configure', () => { util.opn(configFilePath).catch(() => null); onClose(); }) : null,
     React.createElement('div', { style: sepStyle }),
     menuItem('Move to Top', () => applyToTargets((lo) => {
+      if (isLocked(item)) return lo;
       const locked = lo.filter(isLocked);
       const rest = lo.filter(e => !isLocked(e) && e.id !== item.id);
       return [...locked, item, ...rest];
     })),
     menuItem('Move to Bottom', () => applyToTargets((lo) => {
+      if (isLocked(item)) return lo;
       const rest = lo.filter(e => e.id !== item.id);
       return [...rest, item];
     })),
@@ -4544,32 +4598,14 @@ function Ue4ssLoadOrderPage({ api }) {
   const [contextMenu, setContextMenu] = React.useState(null);
 
   React.useEffect(() => {
-    if (!contextMenu) return;
-    const dismiss = () => setContextMenu(null);
-    globalThis.document.addEventListener('click', dismiss);
-    globalThis.document.addEventListener('contextmenu', dismiss);
-    return () => {
-      globalThis.document.removeEventListener('click', dismiss);
-      globalThis.document.removeEventListener('contextmenu', dismiss);
-    };
-  }, [contextMenu]);
-
-  React.useEffect(() => {
     if (!profileId) return;
     if (![GAME_ID, GAME_ID_SERVER].includes(selectors.activeGameId(api.getState()))) return;
-    deserializeUe4ss(api).then(lo => dispatch(setUe4ssLoadOrder(profileId, lo)));
+    deserializeUe4ss(api).then(lo => dispatch(setUe4ssLoadOrder(profileId, lo)))
+      .catch(err => log('warn', `[${GAME_ID}] UE4SS load order refresh failed`, err));
     setSelectedIds(new Set());
   }, [profileId]);
 
-  React.useEffect(() => {
-    const styleId = 'lo-index-focus-style';
-    if (!globalThis.document.getElementById(styleId)) {
-      const style = globalThis.document.createElement('style');
-      style.id = styleId;
-      style.textContent = '.load-order-index input:focus { background: white !important; color: black !important; } .layout-flex.file-based-load-order-list-outer { overflow: auto; }';
-      globalThis.document.head.appendChild(style);
-    }
-  }, []);
+  useInjectStyleOnce('lo-index-focus-style', LO_INDEX_FOCUS_CSS);
 
   const isFiltered = !!filterText || statusFilter.size > 0;
   const isEntryEnabled = (e) => e.enabled !== false;
@@ -4590,7 +4626,7 @@ function Ue4ssLoadOrderPage({ api }) {
   }, [dispatch, loadOrder, isFiltered, profileId]);
 
   const filteredOrder = loadOrder.filter(e =>
-    (!filterText || e.name.toLowerCase().includes(filterText.toLowerCase()))
+    (!filterText || (e.name ?? e.id).toLowerCase().includes(filterText.toLowerCase()))
     && matchesStatus(e, statusFilter, isEntryEnabled, isEntryLocked));
 
   const allIds = filteredOrder.map(e => e.id);
@@ -4691,9 +4727,8 @@ function LogicModsItemRenderer({ className, item }) {
 
   const onDisable = React.useCallback(() => {
     if (!item.modId) return;
-    dispatch(actions.setModEnabled(profileId, item.modId, false));
-    requestDeployment(vortexContext.api, activeGameId === GAME_ID_SERVER ? specServer : spec);
-  }, [dispatch, vortexContext, profileId, item.modId, activeGameId]);
+    actions.setModsEnabled(vortexContext.api, profileId, [item.modId], false, { allowAutoDeploy: true });
+  }, [vortexContext, profileId, item.modId]);
 
   const { selectedIds, setSelectedIds, allIds, contextMenu, setContextMenu } = React.useContext(LogicModsSelectionContext);
   const isSelected = selectedIds.has(item.id);
@@ -4725,15 +4760,7 @@ function LogicModsItemRenderer({ className, item }) {
     });
   }, [item.id, setSelectedIds, allIds]);
 
-  React.useEffect(() => {
-    const styleId = 'lo-index-focus-style';
-    if (!globalThis.document.getElementById(styleId)) {
-      const style = globalThis.document.createElement('style');
-      style.id = styleId;
-      style.textContent = '.load-order-index input:focus { background: white !important; color: black !important; } .layout-flex.file-based-load-order-list-outer { overflow: auto; }';
-      globalThis.document.head.appendChild(style);
-    }
-  }, []);
+  useInjectStyleOnce('lo-index-focus-style', LO_INDEX_FOCUS_CSS);
 
   const classes = ['load-order-entry'];
   if (className) classes.push(...className.split(' ').filter(Boolean));
@@ -4770,7 +4797,7 @@ function LogicModsItemRenderer({ className, item }) {
     React.createElement('div', {
       style: { cursor: 'pointer', display: 'flex', alignItems: 'center' },
       title: isEntryLocked ? 'Unlock position' : 'Lock position',
-      onClick: onLock,
+      onClick: (evt) => { evt.stopPropagation(); onLock(); },
     },
       React.createElement(Icon, { name: isEntryLocked ? 'locked' : 'unlocked', style: { color: isEntryLocked ? '#e2c04c' : 'inherit' } }),
     ),
@@ -4789,7 +4816,7 @@ function LogicModsItemRenderer({ className, item }) {
         style: { width: LO_IMAGE_WIDTH, height: LO_IMAGE_HEIGHT, objectFit: 'cover', borderRadius: 2, pointerEvents: 'none' },
       }) : null,
     ),
-    React.createElement('p', { className: 'load-order-name', style: { flex: '1 1 0', margin: 0, whiteSpace: 'normal', wordBreak: 'break-word' } }, item.name),
+    React.createElement('p', { className: 'load-order-name', style: { flex: '1 1 0', margin: 0, whiteSpace: 'normal', wordBreak: 'break-word' } }, item.name ?? item.id),
     item.modId && isModEnabled ? React.createElement('button', {
       className: 'btn btn-default btn-sm',
       style: { margin: '0 4px', flexShrink: 0, display: 'flex', alignItems: 'center', gap: 4 },
@@ -4808,36 +4835,13 @@ function LogicModsItemRenderer({ className, item }) {
 }
 
 function LogicModsContextMenu({ x, y, item, loadOrder, profileId, dispatch, api, selectedIds, isModEnabled, activeGameId, onClose }) {
-  React.useEffect(() => {
-    const onKey = (evt) => { if (evt.key === 'Escape') onClose(); };
-    globalThis.document.addEventListener('keydown', onKey);
-    return () => globalThis.document.removeEventListener('keydown', onKey);
-  }, [onClose]);
+  useDismissOnOutside(onClose);
 
-  React.useEffect(() => {
-    const dismiss = onClose;
-    globalThis.document.addEventListener('click', dismiss);
-    globalThis.document.addEventListener('contextmenu', dismiss);
-    return () => {
-      globalThis.document.removeEventListener('click', dismiss);
-      globalThis.document.removeEventListener('contextmenu', dismiss);
-    };
-  }, []);
-
-  React.useEffect(() => {
-    const styleId = 'ue4ss-ctx-menu-style';
-    if (!globalThis.document.getElementById(styleId)) {
-      const style = globalThis.document.createElement('style');
-      style.id = styleId;
-      style.textContent = '.ue4ss-ctx-item:hover { background: rgba(255,255,255,0.1); }';
-      globalThis.document.head.appendChild(style);
-    }
-  }, []);
+  useInjectStyleOnce('ue4ss-ctx-menu-style', LO_CTX_MENU_CSS);
 
   const isLocked = (e) => [true, 'true', 'always'].includes(e?.locked);
   const isMulti = selectedIds.size >= 2 && selectedIds.has(item.id);
   const targets = isMulti ? loadOrder.filter(e => selectedIds.has(e.id)) : [item];
-  const targetSpec = (activeGameId === GAME_ID_SERVER) ? specServer : spec;
 
   const applyToTargets = (transform) => {
     const newLO = transform(loadOrder, targets);
@@ -4854,16 +4858,9 @@ function LogicModsContextMenu({ x, y, item, loadOrder, profileId, dispatch, api,
   GAME_PATH = getDiscoveryPath(api, activeGameId);
   const logicModsFolder = path.join(GAME_PATH, LOGICMODS_PATH, 'Content', 'Paks', LOGICMODS_FOLDER);
 
-  const clampRef = (el) => {
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const vw = globalThis.window.innerWidth;
-    const vh = globalThis.window.innerHeight;
-    if (x + rect.width > vw) el.style.left = `${Math.max(8, vw - rect.width - 8)}px`;
-    if (y + rect.height > vh) el.style.top = `${Math.max(8, vh - rect.height - 8)}px`;
-  };
+  const [menuPosition, clampRef] = useClampedMenuPosition(x, y);
   const menuStyle = {
-    position: 'fixed', left: x, top: y, zIndex: 9999,
+    position: 'fixed', left: menuPosition.left, top: menuPosition.top, zIndex: 9999,
     background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.2)',
     borderRadius: 4, padding: '4px 0', minWidth: 180,
     boxShadow: '0 4px 12px rgba(0,0,0,0.6)',
@@ -4890,16 +4887,19 @@ function LogicModsContextMenu({ x, y, item, loadOrder, profileId, dispatch, api,
         return [...locked, ...selected, ...rest];
       })),
       menuItem(`Move to Bottom (${n})`, () => applyToTargets((lo) => {
-        const selected = lo.filter(e => targets.find(t => t.id === e.id));
-        const rest = lo.filter(e => !targets.find(t => t.id === e.id));
+        //Locked entries stay put, so they have to be counted into rest or they drop out of the order
+        const selected = lo.filter(e => targets.find(t => t.id === e.id) && !isLocked(e));
+        const rest = lo.filter(e => !targets.find(t => t.id === e.id) || isLocked(e));
         return [...rest, ...selected];
       })),
       React.createElement('div', { style: sepStyle }),
       menuItem(`Open LogicMods Folder (${n})`, () => { util.opn(logicModsFolder).catch(() => null); onClose(); }),
       React.createElement('div', { style: sepStyle }),
       menuItem(`Disable Selected (${n})`, () => {
-        const batch = targets.filter(e => e.modId).map(e => actions.setModEnabled(profileId, e.modId, false));
-        if (batch.length) { util.batchDispatch(dispatch, batch); requestDeployment(api, targetSpec); }
+        const modIds = targets.filter(e => e.modId !== undefined).map(e => e.modId);
+        if (modIds.length > 0) {
+          actions.setModsEnabled(api, profileId, modIds, false, { allowAutoDeploy: true });
+        }
         onClose();
       }),
     );
@@ -4912,11 +4912,13 @@ function LogicModsContextMenu({ x, y, item, loadOrder, profileId, dispatch, api,
     menuItem(isEntryLocked ? 'Unlock Position' : 'Lock Position', () => applyToTargets((lo) => lo.map(e => e.id === item.id ? { ...e, locked: !isEntryLocked } : e))),
     React.createElement('div', { style: sepStyle }),
     menuItem('Move to Top', () => applyToTargets((lo) => {
+      if (isLocked(item)) return lo;
       const locked = lo.filter(isLocked);
       const rest = lo.filter(e => !isLocked(e) && e.id !== item.id);
       return [...locked, item, ...rest];
     })),
     menuItem('Move to Bottom', () => applyToTargets((lo) => {
+      if (isLocked(item)) return lo;
       const rest = lo.filter(e => e.id !== item.id);
       return [...rest, item];
     })),
@@ -4926,8 +4928,7 @@ function LogicModsContextMenu({ x, y, item, loadOrder, profileId, dispatch, api,
     modPageUrl ? menuItem('Open Mod Page', () => { util.opn(modPageUrl).catch(() => null); onClose(); }) : null,
     item.modId ? React.createElement('div', { style: sepStyle }) : null,
     item.modId ? menuItem(isModEnabled ? 'Disable Vortex Mod' : 'Enable Vortex Mod', () => {
-      dispatch(actions.setModEnabled(profileId, item.modId, !isModEnabled));
-      requestDeployment(api, targetSpec);
+      actions.setModsEnabled(api, profileId, [item.modId], !isModEnabled, { allowAutoDeploy: true });
       onClose();
     }) : null,
   );
@@ -4982,32 +4983,14 @@ function LogicModsLoadOrderPage({ api }) {
   const [contextMenu, setContextMenu] = React.useState(null);
 
   React.useEffect(() => {
-    if (!contextMenu) return;
-    const dismiss = () => setContextMenu(null);
-    globalThis.document.addEventListener('click', dismiss);
-    globalThis.document.addEventListener('contextmenu', dismiss);
-    return () => {
-      globalThis.document.removeEventListener('click', dismiss);
-      globalThis.document.removeEventListener('contextmenu', dismiss);
-    };
-  }, [contextMenu]);
-
-  React.useEffect(() => {
     if (!profileId) return;
     if (![GAME_ID, GAME_ID_SERVER].includes(selectors.activeGameId(api.getState()))) return;
-    deserializeLogicMods(api).then(lo => dispatch(setLogicModsLoadOrder(profileId, lo)));
+    deserializeLogicMods(api).then(lo => dispatch(setLogicModsLoadOrder(profileId, lo)))
+      .catch(err => log('warn', `[${GAME_ID}] LogicMods load order refresh failed`, err));
     setSelectedIds(new Set());
   }, [profileId]);
 
-  React.useEffect(() => {
-    const styleId = 'lo-index-focus-style';
-    if (!globalThis.document.getElementById(styleId)) {
-      const style = globalThis.document.createElement('style');
-      style.id = styleId;
-      style.textContent = '.load-order-index input:focus { background: white !important; color: black !important; } .layout-flex.file-based-load-order-list-outer { overflow: auto; }';
-      globalThis.document.head.appendChild(style);
-    }
-  }, []);
+  useInjectStyleOnce('lo-index-focus-style', LO_INDEX_FOCUS_CSS);
 
   const isFiltered = !!filterText || statusFilter.size > 0;
   const isEntryEnabled = (e) => util.getSafe(modState, [e.modId, 'enabled'], false);
@@ -5028,7 +5011,7 @@ function LogicModsLoadOrderPage({ api }) {
   }, [dispatch, loadOrder, isFiltered, profileId]);
 
   const filteredOrder = loadOrder.filter(e =>
-    (!filterText || e.name.toLowerCase().includes(filterText.toLowerCase()))
+    (!filterText || (e.name ?? e.id).toLowerCase().includes(filterText.toLowerCase()))
     && matchesStatus(e, statusFilter, isEntryEnabled, isEntryLocked));
 
   const allIds = filteredOrder.map(e => e.id);

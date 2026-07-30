@@ -1750,17 +1750,16 @@ async function didPurge(api, profileId) { //run on mod purge
 }
 //deserialize
 async function deserializeLoadOrder(context) {
-  //* on mod update for all profile it would cause the mod if it was selected to be unselected
+  //* on mod update for all profile it would cause the mod if it was selected to be unselected.
+  //A mod update briefly removes and reinstalls mods, so rebuilding the order from disk right now
+  //would drop their entries. Return the stored order untouched instead: positions are preserved
+  //and the page keeps showing the real load order. Never return a synthetic placeholder entry here
+  //- whatever a deserializer returns is dispatched into the load order state verbatim, so a
+  //placeholder replaces the user's order until the next successful deserialize.
   if (mod_update_all_profile) {
-    let allMods = Array("mod_update");
-
-    return allMods.map((modId) => {
-      return {
-        id: "mod update in progress, please wait. Refresh when finished. \n To avoid this wait, only update current profile",
-        modId: modId,
-        enabled: false,
-      };
-    });
+    const updateState = context.api.getState();
+    const updateProfileId = selectors.lastActiveProfileForGame(updateState, GAME_ID);
+    return util.getSafe(updateState, ['persistent', 'loadOrder', updateProfileId], []);
   } //*/
   //Set basic information for load order paths and data
   let gameDir = getDiscoveryPath(context.api);
@@ -1843,8 +1842,16 @@ async function deserializeLoadOrder(context) {
 }
 //Write load order to files
 async function serializeLoadOrder(context, loadOrder) {
-  //* don't write if all profiles are being updated
+  //* don't write if all profiles are being updated. The deserializer above still returns the real
+  //order while the guard is armed, so the page looks interactive - tell the user the reorder was
+  //not applied rather than dropping it silently.
   if (mod_update_all_profile) {
+    context.api.sendNotification({
+      id: `${GAME_ID}-loadorder-update-paused`,
+      type: 'warning',
+      message: 'Load order changes are paused while a mod update finishes. Reorder again once it completes.',
+      displayMS: 6000,
+    });
     return;
   } //*/
   let gameDir = getDiscoveryPath(context.api);

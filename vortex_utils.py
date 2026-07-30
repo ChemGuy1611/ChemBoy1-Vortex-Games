@@ -11,7 +11,7 @@ Usage:
         REPO_ROOT, PCGW_API, EGDATA_API,
         TITLE_IMAGES_DIR, BANNER_IMAGES_DIR, LISTS_DIR,
         GUI_FLAGS_PATH, GUI_STATS_PATH,
-        GAME_PREFIX, TEMPLATE_PREFIX, VORTEX_PLUGINS_DIR,
+        GAME_PREFIX, TEMPLATE_PREFIX, VORTEX_PLUGINS_DIR, NEW_EXTENSION_VERSION,
         read_index_js, write_index_js,
         extract_game_id, extract_steamapp_id, has_real_steamapp_id,
         extract_game_name, extract_extension_url, extract_file_group_id,
@@ -95,6 +95,10 @@ GUI_STATS_PATH = os.path.join(REPO_ROOT, "vortex_gui_nexus_stats.json")
 
 GAME_PREFIX     = "game-"
 TEMPLATE_PREFIX = "template-"
+
+# Starting version stamped into every newly created extension: info.json, the
+# CHANGELOG.md entry, the index.js header, and the version .txt filename.
+NEW_EXTENSION_VERSION = "1.0.0"
 
 VORTEX_PLUGINS_DIR = os.environ.get("VORTEX_PLUGINS_DIR", r"C:\ProgramData\vortex\plugins")
 
@@ -1372,6 +1376,29 @@ def run_generate_explained_batch(game_ids):
     return result.returncode == 0, result.stderr.strip()
 
 
+def run_generate_notes(game_id):
+    """Run generate_notes.js for game_id. Returns (ok: bool, stderr: str)."""
+    result = subprocess.run(
+        ["node", "generate_notes.js", game_id],
+        cwd=REPO_ROOT, capture_output=True, text=True,
+        encoding="utf-8", errors="replace",
+    )
+    return result.returncode == 0, result.stderr.strip()
+
+
+def run_generate_notes_batch(game_ids):
+    """Run generate_notes.js for multiple game IDs in a single node invocation.
+    Returns (ok: bool, stderr: str). No-op (ok=True) for empty input."""
+    if not game_ids:
+        return True, ""
+    result = subprocess.run(
+        ["node", "generate_notes.js"] + list(game_ids),
+        cwd=REPO_ROOT, capture_output=True, text=True,
+        encoding="utf-8", errors="replace",
+    )
+    return result.returncode == 0, result.stderr.strip()
+
+
 def node_check(path):
     """Run `node --check` on a JS file. Returns (ok: bool, stderr: str)."""
     result = subprocess.run(
@@ -1645,7 +1672,7 @@ def make_info_json():
         '{\n'
         '  "name": "Game: XXX",\n'
         '  "author": "ChemBoy1",\n'
-        '  "version": "0.1.0",\n'
+        f'  "version": "{NEW_EXTENSION_VERSION}",\n'
         '  "description": "Vortex support for XXX"\n'
         '}\n'
     )
@@ -1660,7 +1687,7 @@ def make_changelog():
         "\n"
         "- None Planned\n"
         "\n"
-        "## [0.1.0] - 2026-XX-XX\n"
+        f"## [{NEW_EXTENSION_VERSION}] - 2026-XX-XX\n"
         "\n"
         "- Initial Release\n"
     )
@@ -1988,18 +2015,27 @@ def is_valid_semver(s):
 
 
 def bump_semver(version, kind):
-    """Bump a semver string. kind='major' increments minor and resets patch; else increments patch.
+    """Bump a semver string by standard MAJOR.MINOR.PATCH rules.
 
-    Raises ValueError for malformed version strings."""
+    kind='major' -> 1.2.3 -> 2.0.0, kind='minor' -> 1.2.3 -> 1.3.0,
+    kind='patch' -> 1.2.3 -> 1.2.4.
+
+    Raises ValueError for malformed version strings and unknown kinds."""
     parts = version.split(".")
     if len(parts) != 3:
         raise ValueError(f"Unexpected version format: {version!r}")
     major, minor, patch = int(parts[0]), int(parts[1]), int(parts[2])
     if kind == "major":
+        major += 1
+        minor = 0
+        patch = 0
+    elif kind == "minor":
         minor += 1
         patch = 0
-    else:
+    elif kind == "patch":
         patch += 1
+    else:
+        raise ValueError(f"Unknown bump kind: {kind!r} (expected 'major', 'minor', or 'patch')")
     return f"{major}.{minor}.{patch}"
 
 
@@ -2359,3 +2395,13 @@ def requires_unreal_mod_installer(src):
     'Unreal Engine Mod Installer' extension via context.requireExtension in applyGame."""
     return ('context.requireExtension("Unreal Engine Mod Installer")' in src
             or "context.requireExtension('Unreal Engine Mod Installer')" in src)
+
+
+def has_ue4ss_load_order_parity(src):
+    """Return True if a UE4-5 extension carries the full template-ue4-5 load-order shape.
+
+    The marker is the UE4SS context-menu component: it only exists in games that took
+    the whole load-order region (PAK + custom UE4SS + LogicMods pages) from the
+    template. Games still on the older FBLO-only load order never define it.
+    """
+    return "Ue4ssContextMenu" in src and detect_engine(src) == "UE4-5"

@@ -2,8 +2,8 @@
 Name: WH40K Space Marine 2 Vortex Extension
 Structure: Mods Folder w/ LO
 Author: ChemBoy1
-Version: 0.8.0
-Date: 2026-07-22
+Version: 0.8.2
+Date: 2026-07-29
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -977,18 +977,26 @@ function installBinaries(files) {
 
 // LOAD ORDER FUNCTIONS /////////////////////////////////////////////////////////
 
+//Reordering is ignored while a mod update is in flight: the deserializers below freeze the stored
+//order and the serializers skip writing, so tell the user their change was not applied.
+function notifyLoadOrderPaused(api, gameId) {
+  api.sendNotification({
+    id: `${gameId}-loadorder-update-paused`,
+    type: 'warning',
+    message: 'Load order changes are paused while a mod update finishes. Reorder again once it completes.',
+    displayMS: 6000,
+  });
+}
+
 async function deserializeLoadOrder(context) {
   //* on mod update for all profile it would cause the mod if it was selected to be unselected
   if (mod_update_all_profile) {
-    let allMods = Array("mod_update");
-
-    return allMods.map((modId) => {
-      return {
-        id: "mod update in progress, please wait. Refresh when finished. \n To avoid this wait, only update current profile",
-        modId: modId,
-        enabled: false,
-      };
-    });
+    //A mod update briefly removes and reinstalls mods, so rebuilding the order from disk right now
+    //would drop their entries. Return the stored order untouched instead: positions are preserved
+    //and the page keeps showing the real load order rather than a placeholder row.
+    const updateState = context.api.getState();
+    const updateProfileId = selectors.lastActiveProfileForGame(updateState, GAME_ID);
+    return util.getSafe(updateState, ['persistent', 'loadOrder', updateProfileId], []);
   } //*/
 
   //Set basic information for load order paths and data
@@ -1088,6 +1096,7 @@ function modToTemplate(mod) {
 async function serializeLoadOrder(context, loadOrder) {
   //* don't write if all profiles are being updated
   if (mod_update_all_profile) {
+    notifyLoadOrderPaused(context.api, GAME_ID);
     return;
   } //*/
 
@@ -1645,6 +1654,9 @@ function main(context) {
       //release tracking one mod id at a time, and only once that mod's new version has
       //landed and is enabled, so a deploy that fires mid-batch can't disarm the guard for
       //mods that haven't been reinstalled yet
+      //guard state as it stood before the loop below releases it - the FBLO refresh further
+      //down only runs on the deploy that actually clears the guard
+      const guardWasArmed = mod_update_all_profile;
       if (updateModIds.size > 0) {
         const state = context.api.getState();
         const profile = selectors.profileById(state, profileId);
@@ -1666,6 +1678,18 @@ function main(context) {
         }
       }
       mod_update_all_profile = updateModIds.size > 0; //stay armed while any update is still outstanding
+      //Core FBLO deserialized this order concurrently with this handler - did-deploy listeners run
+      //in parallel and the core one is registered first - so it read the frozen order before the
+      //guard cleared above, leaving its page stale. Re-run the deserialize it would have got and
+      //push the result into state; cheaper and less disruptive than forcing a second deployment.
+      if (guardWasArmed && !mod_update_all_profile) {
+        try {
+          const refreshedLO = await deserializeLoadOrder({ api: context.api });
+          context.api.store.dispatch(actions.setFBLoadOrder(profileId, refreshedLO));
+        } catch (err) {
+          log('warn', `[${GAME_ID}] post-update load order refresh failed`, err);
+        }
+      }
       updating_mod = false; //reset updating flag on deploy
     });
     context.api.onAsync('did-purge', async (profileId) => {

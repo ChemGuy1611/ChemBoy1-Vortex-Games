@@ -1,0 +1,20 @@
+[b][color=#e69138][size=4]Notes for Mod Authors - DEATH STRANDING 2: ON THE BEACH[/size]
+[/color][/b]Packaging rules for DEATH STRANDING 2: ON THE BEACH mods, so Vortex installs them to the right place.
+
+Vortex decides what a mod is by looking at the files and folders inside the archive. It tries each installer in order and the first one that matches wins, so archive layout is what determines where your mod ends up.
+
+========================================================================
+
+Managermod:
+
+Recognised when the archive contains a file or folder named one of: "modinfo.json" and a file with one of these extensions: ".core" or ".stream".
+
+  Installs to: "mods"
+
+========================================================================
+
+Rules That Apply To Every Mod Type:
+
+    - Archives containing a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to the built-in FOMOD installer instead.
+    - Folder and file name matching is case-insensitive.
+    - Extra wrapper folders around a recognised folder are generally fine.

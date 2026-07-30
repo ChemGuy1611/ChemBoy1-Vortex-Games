@@ -14,6 +14,7 @@ independently of its engine category and of each other:
     games-downloader-moddb.txt      - games with a bundled moddb_downloader.js module
     games-github.txt     - games that download from GitHub inline (no downloader.js)
     games-uemi.txt       - games that require the "Unreal Engine Mod Installer" extension
+    games-ue4-5-parity.txt - UE4-5 games carrying the full template-ue4-5 load order
 
 Usage:
     python categorize_games.py              # rebuild all category files from scratch
@@ -29,7 +30,7 @@ from vortex_utils import (
     read_id_list, write_id_list,
     is_load_order_game as _is_load_order_game_src,
     has_downloader_js, has_gamebanana_downloader_js, has_moddb_downloader_js,
-    downloads_from_github, requires_unreal_mod_installer,
+    downloads_from_github, requires_unreal_mod_installer, has_ue4ss_load_order_parity,
     log_error, log_dry,
 )
 
@@ -67,6 +68,8 @@ FLAG_LISTS = [
     # GitHub download done inline in index.js, i.e. without the downloader.js module.
     ("games-github.txt",     lambda src, folder: downloads_from_github(src) and not has_downloader_js(folder)),
     ("games-uemi.txt",       lambda src, folder: requires_unreal_mod_installer(src)),
+    # UE4-5 games at template load-order parity (custom UE4SS + LogicMods pages).
+    ("games-ue4-5-parity.txt", lambda src, folder: has_ue4ss_load_order_parity(src)),
 ]
 
 

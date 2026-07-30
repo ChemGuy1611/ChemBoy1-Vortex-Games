@@ -180,18 +180,18 @@ interface IItemRendererProps {
 ```
 
 `position` and `lockedEntriesCount` are precomputed for exactly the two values the template needs
-for `LoadOrderIndexInput`. The template ignores both and recomputes them with `useSelector` over the
-whole load order:
+for `LoadOrderIndexInput`, and the FBLO-hosted renderer reads them, keeping the whole-order scans
+only as a fallback:
 
 ```js
-const currentIdx = loadOrder.findIndex((e) => e.id === loEntry.id) + 1;
-const lockedCount = loadOrder.filter(isLocked).length;
+const currentIdx = item.position ?? loadOrder.findIndex((e) => e.id === loEntry.id) + 1;
+const lockedCount = item.lockedEntriesCount ?? loadOrder.filter(isLocked).length;
 ```
 
-This works and stays correct, but it makes every row subscribe to the entire load order array, so
-any load order change re-renders all rows. Switching to `item.position` and
-`item.lockedEntriesCount` would let the memoised rows stay untouched — worth knowing before adding
-more per-row state.
+Recomputing unconditionally also works and stays correct, but it makes every row subscribe to the
+entire load order array, so any load order change re-renders all rows. The fallbacks matter because
+the same props do not exist on the custom UE4SS and LogicMods pages — those renderers are hosted by
+the extension's own `DraggableList`, which supplies no such fields, so they still compute both.
 
 ### Virtualization is off for this template
 
@@ -378,9 +378,15 @@ Same skeleton as the pak renderer, with three differences:
 - The row's checkbox writes `enabled` into the **load order entry**, which `serializeUe4ss`
   translates into `mods.txt` (`<folder> : 1|0`). This is independent of whether the Vortex mod is
   enabled; the context menu exposes the Vortex mod state separately.
-- A `useEffect` keyed on `[gamePath, item.id]` walks the mod's folder looking for a config file
-  (`UE4SS_CONFIG_FILES` plus `<id>.txt|.ini|.json`) and stores the first hit in local state. When
-  found, the row grows a "Configure" button that opens the file with `util.opn`.
+- A `useEffect` keyed on `[gamePath, item.id]` looks for a config file (`UE4SS_CONFIG_FILES` plus
+  `<id>.txt|.ini|.json`) and stores the first hit in local state. When found, the row grows a
+  "Configure" button that opens the file with `util.opn`. It stats those names in three folders —
+  the mod folder, its `Scripts` folder and its `dlls` folder — rather than walking the mod folder:
+  a recursive walk ran once per row on every page open and profile switch. The trade is that a
+  config kept below some other subfolder is not found, and no error surfaces; the three folders are
+  the UE4SS convention (lua configs beside `Scripts/`, dll configs beside `dlls/`). The effect
+  returns a cleanup that flips a `cancelled` flag, so a fast profile switch cannot write a stale
+  path into state.
 
 ### Write path — `mods.txt`
 
@@ -388,6 +394,27 @@ Same skeleton as the pak renderer, with three differences:
 every line up to and including the `BPModLoaderMod` line, splices the mapped load order in, and
 appends everything from the `Keybinds` line onward. Native UE4SS mods above and below those markers
 are preserved untouched; extension-managed mods occupy the band between them.
+
+Two details make that rewrite safe:
+
+- **Missing markers degrade, they do not truncate.** `headEnd` is `bpIdx + 1` when the
+  `BPModLoaderMod` line exists and `0` otherwise; `tailStart` is the `Keybinds` index only when it
+  sits at or after `headEnd`, otherwise `lines.length`. Using `lines.length` as the `headEnd`
+  fallback instead would be wrong in a subtle way: the head would swallow the previously written
+  load order lines and the mapped order would be appended after them, so the file would gain a
+  duplicate load order block on every write.
+- **The band is filtered, not overwritten.** Upstream `mods.txt` keeps stock lines inside the band
+  (`jsbLuaProfilerMod : 0`, the `; Built-in keybinds, do not move up!` comment). Everything between
+  the markers is re-emitted through a whitelist — comments survive, lines whose folder name is in
+  `UE4SS_NATIVE_MODS` survive, and every other line is treated as load-order-owned and rebuilt from
+  the current order. A blacklist ("keep anything not in the current load order") was rejected: it
+  would preserve the line of a mod the user has since removed forever, and each stale line is a live
+  UE4SS load instruction for a folder that no longer exists.
+
+`UE4SS_NATIVE_MODS` must therefore match the folders RE-UE4SS actually ships (11, including
+`ActorDumperMod` and `jsbLuaProfilerMod`) — see `RE-UE4SS_MODS_CONFIG.md`. A folder missing from the
+list is treated as a user mod: it gets a load order row, an `enabled.txt`, and a second conflicting
+line in the band below its stock entry.
 
 ---
 
@@ -401,10 +428,11 @@ folder, matched back to Vortex mods through the `logicModFiles` install attribut
 basenames, so one mod may own several entries):
 
 ```js
-const makeEntry = (pakName) => ({
+const makeEntry = (pakName, prev) => ({
   id: pakName,
   name: modName ? `${modName} (${pakName}.pak)` : `Manual Mod (${pakName}.pak)`,
   modId: getModId(pakName),
+  ...(prev?.locked !== undefined ? { locked: prev.locked } : {}),
 });
 ```
 
@@ -414,10 +442,11 @@ Notable consequences:
   offers a "Disable" button that disables the underlying Vortex mod and requests a deploy. The
   page's status filter therefore defines "enabled" as the Vortex mod's `modState.enabled`, whereas
   the UE4SS page defines it as `entry.enabled !== false`.
-- `makeEntry` does not carry `locked` across, so a lock set in the UI survives in Redux and in the
-  JSON sidecar but is dropped the next time `deserializeLogicMods` runs — which includes every
-  `did-deploy` and every profile switch. Locks on this page are effectively session-scoped until
-  `makeEntry` preserves the flag from the parsed sidecar entry.
+- `makeEntry` takes the parsed sidecar entry as `prev` and carries `locked` across. This matters
+  because `deserializeLogicMods` rebuilds every entry from disk on each `did-deploy` and each profile
+  switch: without the carry-over, a lock set in the UI would live in Redux and in the JSON sidecar
+  but be dropped from the rebuilt order, making locks on this page session-scoped. The spread is
+  conditional so entries that never had a lock stay free of a `locked` key.
 
 `serializeLogicMods` writes the per-profile JSON sidecar into the `BPModLoaderMod` folder and then
 `load_order.txt` as one pak basename per line. Paks missing from the file still load, after the
@@ -553,39 +582,75 @@ Export deliberately strips machine-specific fields — UE4SS entries export as
 `{ id, enabled, locked }` and LogicMods entries as `{ id }`; `name` and `modId` are recomputed on the
 installing machine.
 
+That recomputation happens in the deserialize functions, so between installing a collection and the
+first deploy the store holds entries with no `name` at all. Anything that reads `entry.name` has to
+fall back to `entry.id` — the page filter boxes (`(e.name ?? e.id).toLowerCase()`) and the row
+renderers (`item.name ?? item.id`). Vortex core guards the same case the same way in its own load
+order components.
+
 ---
 
 ## 11. Cross-cutting patterns
 
-### Stylesheet injection
+### The three shared hooks
 
-Extensions cannot ship CSS, so components inject a `<style>` element into `document.head` from a
-mount effect, guarded by a fixed id so repeated mounts do not duplicate it:
+Three pieces of behaviour repeat across every load order surface, so they live as hooks at the top
+of the React block rather than being copied into each component:
 
 ```js
-React.useEffect(() => {
-  const styleId = 'lo-index-focus-style';
-  if (!globalThis.document.getElementById(styleId)) {
-    const style = globalThis.document.createElement('style');
-    style.id = styleId;
-    style.textContent = '...';
-    globalThis.document.head.appendChild(style);
-  }
-}, []);
+useInjectStyleOnce(styleId, css)      // <style> into document.head, guarded by a fixed id
+useDismissOnOutside(onClose)          // click / contextmenu / Escape close the context menu
+useClampedMenuPosition(x, y)          // -> [position, measureRef] for the context menus
 ```
 
-The style is never removed — deliberate, since the same rules are wanted for the lifetime of the
-session, and the id guard makes re-injection harmless. Note `globalThis.document` rather than bare
-`document`: the file is linted as a Node module.
+`useInjectStyleOnce` exists because extensions cannot ship CSS: the rules are injected from a mount
+effect and never removed, which is deliberate — they are wanted for the whole session, and the id
+guard makes re-injection harmless. The CSS itself sits in module constants (`LO_INDEX_FOCUS_CSS`,
+`LO_ROW_HIDDEN_CSS`, `LO_CTX_MENU_CSS`), so each of the 8 call sites is one line. Note
+`globalThis.document` rather than bare `document`: the file is linted as a Node module. The `use`
+prefix is required on all three — they call `React.useEffect` / `React.useState`, so they are custom
+hooks and the rules-of-hooks lint rejects a bare verb name like `injectStyleOnce`.
+
+`useDismissOnOutside` is the single dismissal path. Menu items stop propagation before acting, so a
+click on the menu never reaches these listeners. The pages used to register their own click and
+contextmenu listeners as well, which meant the LogicMods menu was dismissed twice and the UE4SS menu
+depended on its page for dismissal; the menus now own it.
+
+`useClampedMenuPosition` measures the rendered menu once into state and returns the clamped
+`{ left, top }` alongside the ref that performs the measurement. The earlier version mutated
+`el.style.left/top` from a callback ref created fresh each render. That did keep working — React
+re-invokes a callback ref whose identity changed, so the clamp was reapplied after every render —
+but it caused detach/reattach churn and a possible flicker. Note that the obvious "fix",
+`useRef` + `useLayoutEffect` with `[]` deps, is worse: the effect fires once and every later render
+reapplies the unclamped inline position with nothing to re-clamp it.
 
 ### Context-menu shape
 
-All three context menus share one shape: `position: fixed` at the cursor with a `clampRef` callback
-ref that pulls the menu back inside the viewport after layout, a `menuItem(label, onClick)` factory
-that stops propagation before acting, hairline separators, dismissal effects for click/contextmenu
-and Escape, and a multi-select branch keyed on `selectedIds.size >= 2 && selectedIds.has(item.id)`.
-Actions run through an `applyToTargets(transform)` helper that computes the new order, dispatches,
-serialises when appropriate, and closes the menu.
+All three context menus share one shape: `position: fixed` at the clamped cursor position, a
+`menuItem(label, onClick)` factory that stops propagation before acting, hairline separators,
+`useDismissOnOutside`, and a multi-select branch keyed on
+`selectedIds.size >= 2 && selectedIds.has(item.id)`. Actions run through an `applyToTargets(transform)`
+helper that computes the new order, dispatches, serialises when appropriate, and closes the menu.
+
+The menus and row renderers stay triplicated on purpose. Templates are copy-paste artifacts, so
+consolidation has to stay inside the single file; extracting `ContextMenuShell` / `LoadOrderRowChrome`
+was considered and rejected on those grounds, where the three hooks were not.
+
+### Enabling and disabling mods from a load order surface
+
+Use the core helper, not a hand-rolled batch:
+
+```js
+actions.setModsEnabled(api, profileId, modIds, enable, { allowAutoDeploy: true });
+```
+
+It diffs `willChange` first, runs inside `api.withPrePost('enable-mods')`, batches internally, emits
+`mods-enabled`, and error-notifies on failure. A manual `util.batchDispatch` of `setModEnabled`
+actions plus a custom "deployment required" notification skips both the pre/post hooks and the
+event, so no other extension ever learns the mod's state changed. `allowAutoDeploy: true` does not
+force a deploy: core's `mods-enabled` handler auto-deploys only when the user's
+`settings.automation.deploy` is on, and otherwise dispatches `setDeploymentNecessary`, which raises
+Vortex's own "Deployment Required" banner. Either way the user still gets a deploy prompt.
 
 ### Status filter helpers
 
@@ -616,8 +681,21 @@ dropdown in the header of the custom pages. The dropdown is hand-built rather th
   Multi-row drag follows the internal one; context-menu bulk actions follow the extension's.
 - `visible` on `registerMainPage` intentionally does not check the UE4SS settings toggle; the page
   handles the disabled case itself so users can find it again.
-- The extension owns `mods.txt` only between the `BPModLoaderMod` and `Keybinds` markers. Removing
-  either marker from the file breaks the splice.
+- The extension owns `mods.txt` only between the `BPModLoaderMod` and `Keybinds` markers. Removing a
+  marker by hand does not destroy the file — the write path falls back to rebuilding the band — but
+  the stock native lines then end up below the user mods instead of above them.
+- Shift-select on a page with an active status filter must build its id list from the filtered order,
+  not the full one, or the selection spans rows the user cannot see. On the FBLO pak page the rows
+  are rendered individually, so that filtered list has to be memoised in the renderer
+  (`React.useMemo` keyed on the order, the filter set and `modState`); filtering per row is O(n) per
+  row over the whole order.
+- Any control inside a row that has its own click handler must call `evt.stopPropagation()` first,
+  or the click also reaches the row's `onSelect` and changes the selection. The lock icon is the
+  case that bit: it called `onClick: onLock` bare, so locking a row selected it too.
+- A locked entry never moves. Both the single-item and the multi-select move actions have to honour
+  that, and the multi-select "move to bottom" must count locked entries into its *rest* array — if it
+  only excludes them from the moved selection, they fall out of both arrays and vanish from the
+  order.
 
 ---
 

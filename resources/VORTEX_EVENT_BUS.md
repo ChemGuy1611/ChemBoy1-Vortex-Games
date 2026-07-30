@@ -33,14 +33,24 @@ const results = await api.emitAndAwait('event-name', args);
 
 Mechanism (`emitAndAwait`):
 
-- It builds a serial `queue` (`PromiseBB.resolve()`) and a `results[]` array, then emits the event
+- It builds a `pending: Promise<void>[]` array and a `results[]` array, then emits the event
   with `enqueue` appended: `mEventEmitter.emit(event, ...args, enqueue)`.
 - Each `onAsync` handler **pops the last arg** (the `enqueue` fn) and calls
-  `enqueue(handler(...args))`. `enqueue` chains the returned promise onto `queue`; a non-`null`/
+  `enqueue(handler(...args))`. `enqueue` pushes the returned promise onto `pending`; a non-`null`/
   non-`undefined` resolved value is pushed to `results`.
 - A handler that throws does **not** reject the whole emit — it surfaces as
-  `showErrorNotification("Unhandled error in event ...")` and the queue continues.
-- `emitAndAwait` returns `queue.then(() => results)` — all handlers done, results gathered.
+  `showErrorNotification("Unhandled error in event ...")` and the other handlers still settle.
+- `emitAndAwait` returns `Promise.all(pending).then(() => results)` — all handlers done, results
+  gathered.
+
+**Handlers run concurrently, not in sequence.** `pending` is a plain array awaited with
+`Promise.all`, so one handler's async work never delays another's. What *is* ordered is the
+synchronous head of each handler: `mEventEmitter.emit` invokes listeners in **registration order**,
+and core/bundled extensions register before dynamic ones. So a core handler reliably executes
+everything up to its first `await` before a game extension's handler starts at all. Never rely on
+your own handler having run first — if a core handler reads a module-level flag your handler
+maintains, it sees the value from before your handler ran. `VORTEX_LOAD_ORDER.md` documents the
+concrete case (`did-deploy` vs a mod-update guard flag).
 
 If something `emit`s an `emitAndAwait`-style event **without** the `enqueue` arg, `onAsync` detects
 the missing function, shows an "Invalid event handler" notification, and calls the listener anyway.
@@ -97,5 +107,6 @@ management, and health checks all hang off it.
 
 Catalog: `EVENTS.md`. Runtime siblings that emit
 these: `VORTEX_MOD_INSTALL.md`, `VORTEX_DEPLOYMENT.md`, `VORTEX_PROFILES.md`,
-`VORTEX_GAME_LIFECYCLE.md`, `VORTEX_DOWNLOAD_MGMT.md`. Overview: `VORTEX_APP.md`. Authoring:
+`VORTEX_GAME_LIFECYCLE.md`, `VORTEX_DOWNLOAD_MGMT.md`, `VORTEX_LOAD_ORDER.md` (concrete
+handler-ordering case). Overview: `VORTEX_APP.md`. Authoring:
 `UNDERUSED_API_FUNCTIONS.md` (§7 `api.withPrePost`/`api.onStateChange`/`context.requireVersion`).

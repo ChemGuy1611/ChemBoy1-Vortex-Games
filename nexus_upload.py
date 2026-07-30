@@ -103,26 +103,21 @@ def _v1_primary_file_name(mod_id, domain, api_key):
     return latest.get("name")
 
 
-def pick_file_group(mod_id, domain, api_key, mod_key, name_hint=None, group_id_override=None):
-    """Return the file update group dict to use for this upload.
+# Cached (domain, mod_id) -> active file group list. A mod with many files is
+# released one file at a time, and every file resolves the same group list, so
+# without this each upload would repeat the v1 uid + v3 group lookups.
+_GROUPS_CACHE = {}
 
-    Lookup: v1 mod UID via GET /v1/games/{domain}/mods/{mod_id}.json,
-    then GET /v3/mods/{uid}/files (returns the file groups under `mod_files`;
-    the old /v3/mods/{uid}/file-update-groups path is defunct and 404s).
 
-    group_id_override: when set, skip the v1->v3 group list entirely and target
-    this group id directly. The publish name is derived from the latest primary
-    v1 file, then name_hint, then a generic fallback. Use when the v3 list
-    endpoint 404s for a mod whose files were uploaded via the web/v1 flow.
+def _fetch_file_groups(mod_id, domain, api_key, mod_key):
+    """Return the list of active file groups for this mod (cached per domain+mod_id).
 
-    name_hint: optional string used to auto-select from multiple groups by
-    fuzzy name match (lowercase, spaces/underscores/hyphens stripped).
-    Falls back to interactive picker when hint is ambiguous or absent.
+    Resolves the mod UID via GET /v1/games/{domain}/mods/{mod_id}.json, then reads
+    the groups from GET /v3/mods/{uid}/files.
     """
-    if group_id_override is not None:
-        name = _v1_primary_file_name(mod_id, domain, api_key) or name_hint or f"file group {group_id_override}"
-        log_info(mod_key, f"File group (override): {name} (id: {group_id_override})")
-        return {"id": group_id_override, "name": name}
+    cache_key = (domain, str(mod_id))
+    if cache_key in _GROUPS_CACHE:
+        return _GROUPS_CACHE[cache_key]
 
     log_info(mod_key, "Resolving mod UID from Nexus v1...")
     try:
@@ -154,6 +149,33 @@ def pick_file_group(mod_id, domain, api_key, mod_key, name_hint=None, group_id_o
     groups = [g for g in data.get("mod_files", []) if g.get("is_active")]
     if not groups:
         raise RuntimeError("no active file groups found for this mod")
+    _GROUPS_CACHE[cache_key] = groups
+    return groups
+
+
+def pick_file_group(mod_id, domain, api_key, mod_key, name_hint=None, group_id_override=None):
+    """Return the file update group dict to use for this upload.
+
+    Lookup: v1 mod UID via GET /v1/games/{domain}/mods/{mod_id}.json,
+    then GET /v3/mods/{uid}/files (returns the file groups under `mod_files`;
+    the old /v3/mods/{uid}/file-update-groups path is defunct and 404s). The
+    resolved group list is cached per mod for the lifetime of the process.
+
+    group_id_override: when set, skip the v1->v3 group list entirely and target
+    this group id directly. The publish name is derived from the latest primary
+    v1 file, then name_hint, then a generic fallback. Use when the v3 list
+    endpoint 404s for a mod whose files were uploaded via the web/v1 flow.
+
+    name_hint: optional string used to auto-select from multiple groups by
+    fuzzy name match (lowercase, spaces/underscores/hyphens stripped).
+    Falls back to interactive picker when hint is ambiguous or absent.
+    """
+    if group_id_override is not None:
+        name = _v1_primary_file_name(mod_id, domain, api_key) or name_hint or f"file group {group_id_override}"
+        log_info(mod_key, f"File group (override): {name} (id: {group_id_override})")
+        return {"id": group_id_override, "name": name}
+
+    groups = _fetch_file_groups(mod_id, domain, api_key, mod_key)
     if len(groups) == 1:
         log_info(mod_key, f"File group: {groups[0]['name']} (id: {groups[0]['id']})")
         return groups[0]

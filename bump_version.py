@@ -8,12 +8,14 @@ to CHANGELOG.md.
 Usage:
     python bump_version.py --major GAME_ID [GAME_ID ...]
     python bump_version.py --minor GAME_ID [GAME_ID ...]
+    python bump_version.py --patch GAME_ID [GAME_ID ...]
     python bump_version.py --version 1.2.3 GAME_ID [GAME_ID ...]
-    python bump_version.py --major GAME_ID --dry-run
+    python bump_version.py --minor GAME_ID --dry-run
 
 Options:
-    --major          Bump minor segment: 0.3.0 -> 0.4.0 (resets patch to 0)
-    --minor          Bump patch segment: 0.3.0 -> 0.3.1
+    --major          Bump major segment: 1.2.3 -> 2.0.0 (resets minor and patch)
+    --minor          Bump minor segment: 1.2.3 -> 1.3.0 (resets patch)
+    --patch          Bump patch segment: 1.2.3 -> 1.2.4
     --version VER    Set explicit semver version (X.Y.Z)
     --dry-run        Print changes without writing files
 """
@@ -86,10 +88,13 @@ def main():
     )
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument(
-        "--major", action="store_true", help="Bump minor segment: 0.3.0 -> 0.4.0"
+        "--major", action="store_true", help="Bump major segment: 1.2.3 -> 2.0.0"
     )
     group.add_argument(
-        "--minor", action="store_true", help="Bump patch segment: 0.3.0 -> 0.3.1"
+        "--minor", action="store_true", help="Bump minor segment: 1.2.3 -> 1.3.0"
+    )
+    group.add_argument(
+        "--patch", action="store_true", help="Bump patch segment: 1.2.3 -> 1.2.4"
     )
     group.add_argument(
         "--version", metavar="VER", help="Set explicit version (X.Y.Z semver)"
@@ -100,7 +105,7 @@ def main():
         print(f"ERROR: '{args.version}' is not valid semver (X.Y.Z required)")
         sys.exit(1)
 
-    bump_type = "major" if args.major else ("minor" if args.minor else None)
+    bump_type = "major" if args.major else ("minor" if args.minor else ("patch" if args.patch else None))
     manual_ver = args.version or None
     saved, failed = [], []
     try:

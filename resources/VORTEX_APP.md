@@ -2,7 +2,7 @@
 
 How the Vortex application and its monorepo are put together, for orientation when reading or searching the `Vortex` source tree. This is the **app/repo** view — the extension-facing API surface is covered separately by the `vortex-api` type declarations (`node_modules/vortex-api/lib/api.d.ts`) and the authoring docs in this folder. Crosslinks to those are noted where relevant.
 
-**Repo:** `c:\Game_Tools\0 GitHub Repos\Vortex` (read-only mirror of `Nexus-Mods/Vortex`).
+**Repo:** `Nexus-Mods/Vortex`, cloned locally as `Vortex\` (read-only mirror — see `BOOTSTRAP.md`).
 **Version line (audited 2026-07-14):** v2.3.0 (latest tag; the local checkout's HEAD is on an integration branch that does not contain the tag commit). Default branch is `master`.
 
 ## Top-level layout

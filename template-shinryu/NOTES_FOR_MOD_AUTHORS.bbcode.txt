@@ -1,0 +1,51 @@
+[b][color=#e69138][size=4]Notes for Mod Authors - template-shinryu (template)[/size]
+[/color][/b]Packaging rules for template-shinryu (template) mods, so Vortex installs them to the right place.
+
+Vortex decides what a mod is by looking at the files and folders inside the archive. It tries each installer in order and the first one that matches wins, so archive layout is what determines where your mod ends up.
+
+========================================================================
+
+XXX Modmanager:
+
+Recognised when the archive contains a file or folder named "shinryumodmanager.exe".
+
+  Installs to: "runtime\media"
+
+========================================================================
+
+XXX Mod:
+
+Recognised when the archive contains a file or folder named one of: "mod-meta.yaml" or "modinfo.ini".
+
+  Installs to: "runtime\media\mods"
+
+========================================================================
+
+Root / Game Folder Mods:
+
+For mods laid out the same way the files appear inside the game folder. Vortex copies the matched folder and everything under it straight into the game.
+
+  Requirements:
+    - Recognised by any file named "nvngx_dlss.dll", "dstoragecore.dll", "dstorage.dll", "amd_fidelityfx_dx12.dll", "amd_ags_x64.dll" or "libxess.dll".
+    - Recognised by any file with the ".exe" extension.
+
+  Installs to: the game folder itself (no subfolder)
+
+  Common mistakes:
+    - Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
+
+========================================================================
+
+XXX Data:
+
+Recognised when the archive contains a file with one of these extensions: ".par".
+
+  Installs to: "runtime\media\data"
+
+========================================================================
+
+Rules That Apply To Every Mod Type:
+
+    - Archives containing a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to the built-in FOMOD installer instead.
+    - Folder and file name matching is case-insensitive.
+    - Extra wrapper folders around a recognised folder are generally fine.

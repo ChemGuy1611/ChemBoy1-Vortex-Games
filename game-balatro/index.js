@@ -28,8 +28,8 @@ const DISCOVERY_IDS_ACTIVE = [ // UPDATE THIS WITH ALL VALID IDs
 
 const EXEC_STEAM = `Balatro.exe`;
 const EXEC_XBOX = `gamelaunchhelper.exe`;
-const PCGAMINGWIKI_URL = `https://www.pcgamingwiki.com/wiki/Balatro`;
-const EXTENSION_URL = `https://www.nexusmods.com/site/mods/1315`;
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Balatro";
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1315";
 
 let GAME_VERSION = '';
 let GAME_PATH = '';

@@ -51,6 +51,36 @@ drag-and-drop list (`ItemRenderer.tsx`).
    state. On **`did-deploy`** the deserialized order is passed through `updateSet.restore(...)` so
    externally-introduced entries are reconciled against the known set.
 
+## `deserializeLoadOrder` contract
+
+**Whatever it returns becomes the load order.** Every call site dispatches the result straight into
+`persistent.loadOrder[profileId]` via `setFBLoadOrder` — no filtering, no merging against the
+previous order, no validation on that path (`validate` runs on the reorder and start-up paths, not
+here). A deserializer that returns a stand-in value — a placeholder row, a truncated list, an empty
+array on a transient read failure — has *replaced* the user's load order, and the state persists, so
+it survives until the next successful deserialize. To decline to rebuild (e.g. while a mod update is
+in flight) return the currently stored order unchanged; that is a no-op dispatch and leaves the page
+showing the real order.
+
+**An extension's own `did-deploy` handler cannot pre-empt it.** `emitAndAwait` fans the event out to
+every listener concurrently — it emits synchronously, each listener enqueues a promise, and the
+caller `Promise.all`s them. Listeners are invoked in registration order, and the core
+file_based_loadorder extension registers before any game extension, so `genDeploymentEvent` calls
+`deserializeLoadOrder()` before a game extension's `did-deploy` handler has run a single line. Any
+module-level flag that handler sets or clears is therefore read in its *pre-handler* state by that
+deserialize. An extension that needs the order re-read after its handler has done its work must do
+it itself: call its own deserializer and dispatch `actions.setFBLoadOrder(profileId, lo)` (exported
+through the public `actions` barrel). Dispatching it feeds `genLoadOrderChange`, which diffs against
+the previous order and calls `serializeLoadOrder` when it really changed, so the corrected order also
+reaches disk.
+
+**Rejecting is not a safe "do nothing".** Three of the four call sites — the `gamemode-activated` /
+profile-change seed, `genLoadOrderChange`, and `genDeploymentEvent` — wrap the call in
+`try { … } catch { /* nop */ }` and simply skip the dispatch. But `onStartUp` routes a throw through
+`errorHandler`, which calls `reportError` and shows the user a "Failed load order operation" error.
+`ProcessCanceled` / `DataInvalid` / `UserCanceled` only suppress the *report* button, not the
+notification.
+
 ## UpdateSet — surviving mod updates and purge cycles
 
 `UpdateSet.ts` remembers the load-order entries and the **index** each one held
@@ -141,6 +171,11 @@ load order into a collection and restores it on install (`genCollectionLoadOrder
   mod being updated has no folder on disk. That is what the `UpdateSet` arming above exists for.
 - Don't arm an extension-side update guard from `mod-update` only — the bulk update flow emits
   `mods-update` instead and never re-emits `mod-update`.
+- An extension-side guard must suppress `serializeLoadOrder` **and** make `deserializeLoadOrder`
+  return the stored order — returning a placeholder instead wipes the visible load order for as long
+  as the guard stays armed. Same applies to a sidecar order's own deserializer, which the extension
+  dispatches into its own reducer. Tell the user when a reorder is being skipped: with the real
+  order still on screen the page looks interactive, and a silently dropped drag reads as a bug.
 
 ## See also
 

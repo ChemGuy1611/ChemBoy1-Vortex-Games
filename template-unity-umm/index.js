@@ -2,7 +2,7 @@
 Name: XXX Vortex Extension
 Structure: Unity UMM (Unity Mod Manager)
 Author: ChemBoy1
-Version: 0.1.0
+Version: 1.0.0
 Date: 2026-XX-XX
 Notes:
 -

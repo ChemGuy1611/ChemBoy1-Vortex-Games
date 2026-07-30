@@ -1,0 +1,33 @@
+[b][color=#e69138][size=4]Notes for Mod Authors - Unreal Tournament 2004[/size]
+[/color][/b]Packaging rules for Unreal Tournament 2004 mods, so Vortex installs them to the right place.
+
+Vortex decides what a mod is by looking at the files and folders inside the archive. It tries each installer in order and the first one that matches wins, so archive layout is what determines where your mod ends up.
+
+========================================================================
+
+Mod:
+
+Recognised when the archive contains a file or folder named one of: "Animations", "Benchmark", "ForceFeedback", "Help", "KarmaData", "Maps", "Music", "Sounds", "Speech", "StaticMeshes", "System", "SystemLocalized", "Textures", "Web" or "Saves" and a file with one of these extensions: "...ANIMATIONS_EXTS", "...KARMADATA_EXTS", "...MAPS_EXTS", "...MUSIC_EXTS", "...SOUNDS_EXTS", "...SPEECH_EXTS", "...STATICMESHES_EXTS", "...SYSTEM_EXTS", "...TEXTURES_EXTS" or "...SAVES_EXTS".
+
+========================================================================
+
+Fallback Installer:
+
+The catch-all. Any archive that matched none of the installers above lands here and is copied across unchanged.
+
+[b][color=#ffff00]NOTE: Landing in the fallback installer is a signal your archive layout needs fixing.[/color][/b]
+
+  Requirements:
+    - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
+    - Vortex shows the user a notification when a mod installs through the fallback.
+
+  Common mistakes:
+    - If your mod lands here unintentionally, re-check the layouts above - users will see a fallback warning and may report the mod as broken.
+
+========================================================================
+
+Rules That Apply To Every Mod Type:
+
+    - Archives containing a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to the built-in FOMOD installer instead.
+    - Folder and file name matching is case-insensitive.
+    - Extra wrapper folders around a recognised folder are generally fine.

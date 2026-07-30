@@ -4,6 +4,22 @@
 
 - None
 
+## [0.2.4] - 2026-07-29
+
+- Fixed: The load order could disappear after deploying while a mod update was in progress, and only came back after deploying a second time.
+- Added: A message now appears if you change the load order while a mod update is still finishing, so it is clear the change was not applied and needs to be made again.
+- Fixed: After a mod update finished, the load order page could keep showing out-of-date information until another deployment was run.
+
+## [0.2.3] - 2026-07-29
+
+- Changed: Load order rows redraw less when the order changes.
+- Changed: The right-click menu works out its position once when opened instead of adjusting after it appears.
+
+## [0.2.2] - 2026-07-27
+
+- Fixed: "Move to Top" and "Move to Bottom" now leave locked entries where they are, instead of moving them or adding a duplicate entry.
+- Fixed: Shift-clicking two rows while a status filter is active no longer selects the hidden rows between them.
+
 ## [0.2.1]
 
 - Fixed: Using "Update all" to update several mods at once could still move them in the load order or uncheck them.

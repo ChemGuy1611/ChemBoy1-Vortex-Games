@@ -541,10 +541,10 @@ const UE4SS_MODSTXT_FILE  = 'mods.txt';
 const UE4SS_LO_FILE       = 'ue4ss_loadOrder.json';
 const LO_ATTRIBUTE_UE4SS  = 'ue4ssModFolder'; // installer sets this on each mod
 const UE4SS_CONFIG_FILES  = ['config.txt', 'settings.json', 'config.lua']; // triggers Configure button
-const UE4SS_NATIVE_MODS   = [
-  'BPML_GenericFunctions', 'BPModLoaderMod', 'CheatManagerEnablerMod',
-  'ConsoleCommandsMod', 'ConsoleEnablerMod', 'Keybinds',
-  'LineTraceMod', 'shared', 'SplitScreenMod'
+const UE4SS_NATIVE_MODS   = [ // must match the folders RE-UE4SS ships - see RE-UE4SS_MODS_CONFIG.md
+  'ActorDumperMod', 'BPML_GenericFunctions', 'BPModLoaderMod',
+  'CheatManagerEnablerMod', 'ConsoleCommandsMod', 'ConsoleEnablerMod',
+  'jsbLuaProfilerMod', 'Keybinds', 'LineTraceMod', 'shared', 'SplitScreenMod'
 ];
 ```
 
@@ -600,8 +600,14 @@ What that means in practice for a sidecar order:
   artifact, so a deserialize+serialize pass that lands inside that window rewrites the order file
   without the mod — and its position is gone when the artifact comes back.
 - The extension must therefore guard the sidecar itself: while a mod update is in flight, have
-  `deserialize*` return a placeholder and `serialize*` return early (this is what the
-  `mod_update_all_profile` flag in the ChemBoy1 templates does).
+  `deserialize*` return **the currently stored order for the profile, unchanged** and `serialize*`
+  return early (this is what the `mod_update_all_profile` flag in the ChemBoy1 templates does).
+  Returning a placeholder entry instead is a bug: the caller dispatches whatever a deserializer
+  returns into the order's reducer, so the placeholder *replaces* the visible order and — because
+  the matching `serialize*` is suppressed — it stays replaced until the next successful deserialize.
+  The same rule applies to the game's core FBLO order, see `VORTEX_LOAD_ORDER.md`
+  ("`deserializeLoadOrder` contract"). Since the page then still shows a real, draggable order,
+  notify the user that reordering is paused rather than dropping the drag silently.
 - **Ordering inside `didDeploy` matters.** The template resets that flag at the top of `didDeploy`
   and runs the sidecar deserialize → dispatch → serialize blocks below it. Any flag reset placed
   above those blocks disarms the guard for that same pass, so a deploy that fires while other mods

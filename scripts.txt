@@ -21,7 +21,9 @@ audit_scripts.py
 vortex_gui.py
 
 # Node scripts
+extension_parser.js
 generate_explained.js
+generate_notes.js
 lint_extensions.js
 
 # Documentation

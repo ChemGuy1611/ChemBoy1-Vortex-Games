@@ -42,10 +42,12 @@ turn comes. Read tier B as "not migrated", not as "deliberately smaller". Tier L
 exception: `game-helldivers2` stays on the legacy API because its merge step renames files by load
 order position on deploy.
 
-`game-nioh3` is *not* a load order game despite containing a `registerLoadOrderPage` call: the block
-is gated behind `const loadOrderEnabled = false` and never registers. The generated
-`resources/lists/games-loadorder.txt` still lists it, because the categoriser matches the call and
-not the toggle.
+`game-nioh3` is *not* a load order game. It used to carry a `registerLoadOrderPage` call gated behind
+`const loadOrderEnabled = false`, which never registered; that block and its helpers (`preSort`,
+`loadOrderPrefix`, `makePrefix`, the loose-file `installMod` variant) were removed in 0.3.1, and the
+mod type now merges with `mergeMods: () => ""` unconditionally. Because the categoriser matches the
+`registerLoadOrderPage` call and not the toggle, the game only dropped out of the generated
+`resources/lists/games-loadorder.txt` once the call itself was gone.
 
 ---
 
@@ -188,19 +190,30 @@ Full legacy contract: `LOAD_ORDER_REGISTRATION.md` section 1a.
 Everything in this section is code these games inherited from the same lineage as the UE templates,
 so the same defects travel with it.
 
-- **Locked-entry duplication.** Tier G's single-item "Move to Top" builds
-  `[...lo.filter(isLocked), item, ...rest]`; if `item` is itself locked it appears twice, producing
-  a duplicate id in state and in the written LO file. The multi-select variant already excludes
-  locked entries.
-- **"Move to Bottom" ignores locks** in both variants, while "Move to Top" honours them.
-- **Shift-select spans hidden rows.** `allIds` is built from the full load order, so a shift-click
-  range silently includes rows the status filter has hidden.
-- **Precomputed props ignored.** Rows recompute `currentIdx` and `lockedCount` with a `useSelector`
-  over the whole order instead of reading `item.position` / `item.lockedEntriesCount`, which the
-  FBLO page already memoises. Every row re-renders on any order change. Applies to tier B as well.
-- **`clampRef` churn.** The context menu's viewport clamp is a fresh callback ref every render, so
-  React detaches and reattaches it each time, and a re-render rewrites the inline style over the
-  clamped position.
+- **A locked entry never moves.** Both single-item move handlers open with
+  `if (isLocked(item)) return lo;`. Without it, "Move to Top" builds
+  `[...lo.filter(isLocked), item, ...rest]` and a locked `item` appears twice — a duplicate id in
+  state and in the written LO file — while "Move to Bottom" drags locked entries down.
+  The multi-select "Move to Bottom" needs the matching rule on its side: locked entries are excluded
+  from the moved selection **and** counted into `rest`
+  (`lo.filter(e => !targets.find(t => t.id === e.id) || isLocked(e))`). Excluding them from the
+  selection alone drops locked+selected entries out of both arrays, i.e. out of the load order.
+- **Shift-select must span visible rows only.** `allIds` comes from the status-filtered order, not
+  the full one, and is memoised in the renderer (`React.useMemo` keyed on the order and the filter
+  set) — a bare filter there runs once per row, which is the same O(n²) the precomputed-props item
+  below removes. Tier G defines "enabled" as the entry's own flag, so the memo needs no `modState`
+  selector; the UE4-5 pak page does.
+- **Read the precomputed props.** `currentIdx` and `lockedCount` come from `item.position` /
+  `item.lockedEntriesCount`, which the FBLO page already memoises per row, with the whole-order
+  scans left only as fallbacks. Recomputing them unconditionally subscribes every row to the entire
+  order, so any change re-renders all rows. Tier B still does that — it gets the fixed shape when
+  its migration rewrites the LO region.
+- **Clamp the menu by rendering, not by mutating.** `useClampedMenuPosition(x, y)` returns
+  `[position, measureRef]`: the menu is measured once into state and the clamped `left`/`top` are
+  rendered. The earlier `clampRef` wrote `el.style.left/top` from a callback ref rebuilt every
+  render — it worked (React re-invokes a ref whose identity changed) but caused detach/reattach
+  churn. `useRef` + `useLayoutEffect` with `[]` deps is not the fix: it fires once, and later
+  renders reapply the unclamped inline position with nothing to re-clamp it.
 - **Early return before hooks.** `if (item?.loEntry === undefined) return null;` precedes every hook
   in the renderer. It is a props-shape guard whose result does not flip for a mounted row, but any
   new early return must go after the hook block.

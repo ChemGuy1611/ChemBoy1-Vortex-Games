@@ -231,7 +231,7 @@ root alongside `index.js`.
 {
   "name": "Game: Warhammer 40,000: Darktide",
   "author": "ChemBoy1",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "description": "Vortex support for Warhammer 40,000: Darktide"
 }
 ```
@@ -240,7 +240,7 @@ root alongside `index.js`.
 | --- | --- | --- |
 | `name` | `string` | Display name in the Extensions list. Convention: `"Game: <Full Game Name>"`. |
 | `author` | `string` | Extension author — `"ChemBoy1"` for this repo. |
-| `version` | `string` | Semver `MAJOR.MINOR.PATCH`. **Must match the latest `## [x.x.x]` entry in `CHANGELOG.md`.** New extensions start at `0.1.0`. |
+| `version` | `string` | Semver `MAJOR.MINOR.PATCH`. **Must match the latest `## [x.x.x]` entry in `CHANGELOG.md`.** New extensions start at `1.0.0`. |
 | `description` | `string` | One-line summary. Convention: `"Vortex support for <Full Game Name>"`. |
 
 Notes:

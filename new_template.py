@@ -12,7 +12,7 @@ Substitution rules:
   - Store ID constants with a non-empty value -> "XXX"
   - Store ID constants with an empty string ("") -> null (store not applicable)
   - Store ID constants already null -> left as null
-  - Header Name/Version/Date fields -> reset to XXX / 0.1.0 / 2026-XX-XX
+  - Header Name/Version/Date fields -> reset to XXX / 1.0.0 / 2026-XX-XX
   - String constants whose value embeds the original GAME_ID (exact case) ->
     auto-converted to template literals (e.g. `${GAME_ID}-binaries`)
   - Case-variant GAME_ID matches -> flagged for manual conversion
@@ -76,7 +76,8 @@ from vortex_utils import (
     REPO_ROOT, extract_game_id, find_fn_end, REGISTER_ACTIONS, node_check,
     inject_register_actions, update_index_header, write_index_js,
     make_info_json, make_changelog, is_missing, const_value,
-    write_text_atomic, report_node_check, replace_const_rhs,
+    write_text_atomic, report_node_check, replace_const_rhs, touch_empty,
+    NEW_EXTENSION_VERSION,
 )
 
 # String constants always replaced with "XXX"
@@ -191,7 +192,7 @@ def apply_substitutions(src):
     src, embedded_count = replace_game_id_embedded(src, original_game_id)
     replaced += embedded_count
 
-    src = update_index_header(src, name='XXX', version='0.1.0', date='2026-XX-XX')
+    src = update_index_header(src, name='XXX', version=NEW_EXTENSION_VERSION, date='2026-XX-XX')
     return src, replaced
 
 
@@ -963,6 +964,7 @@ def create_template(template_name, game_ids, dry_run, force, diff=False):
         report_node_check(primary_game, ok, err)
         write_text_atomic(os.path.join(dest_dir, "info.json"), make_info_json())
         write_text_atomic(os.path.join(dest_dir, "CHANGELOG.md"), make_changelog())
+        touch_empty(os.path.join(dest_dir, f"{NEW_EXTENSION_VERSION}.txt"))
         for png in pngs:
             shutil.copy2(os.path.join(src_dir, png), os.path.join(dest_dir, png))
 
@@ -975,6 +977,7 @@ def create_template(template_name, game_ids, dry_run, force, diff=False):
         print(f"               - no fixups needed (source already had standard features)")
     print(f"  {prefix}info.json    - written fresh")
     print(f"  {prefix}CHANGELOG.md - written fresh")
+    print(f"  {prefix}{NEW_EXTENSION_VERSION}.txt    - written fresh")
     if pngs:
         print(f"  {prefix}{', '.join(pngs)} - copied ({len(pngs)} PNG(s))")
     else:

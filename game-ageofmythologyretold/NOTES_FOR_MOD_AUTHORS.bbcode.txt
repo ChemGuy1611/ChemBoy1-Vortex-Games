@@ -1,0 +1,45 @@
+[b][color=#e69138][size=4]Notes for Mod Authors - Age of Mythology: Retold[/size]
+[/color][/b]Packaging rules for Age of Mythology: Retold mods, so Vortex installs them to the right place.
+
+Vortex decides what a mod is by looking at the files and folders inside the archive. It tries each installer in order and the first one that matches wins, so archive layout is what determines where your mod ends up.
+
+========================================================================
+
+Save Game Files:
+
+Save files, deployed to the game's save folder.
+
+  Requirements:
+    - Recognised by any file with the ".mythsav" extension.
+
+  Installs to: "util.getVortexPath('home'\USERID_FOLDER\savegames"
+
+  Common mistakes:
+    - Including an example save alongside a normal mod makes the archive install as a save.
+
+========================================================================
+
+Config:
+
+Recognised when the archive contains a file or folder named "game" and a file with the ".xml" extension.
+
+  Installs to: "util.getVortexPath('home'\USERID_FOLDER\users"
+
+========================================================================
+
+Reshade:
+
+Recognised when the archive contains a file or folder named "reshade-shaders".
+
+========================================================================
+
+Binaries:
+
+Recognised when the archive contains a file with one of these extensions: ".dll" or ".ini".
+
+========================================================================
+
+Rules That Apply To Every Mod Type:
+
+    - Folder and file name matching is case-insensitive.
+    - Extra wrapper folders around a recognised folder are generally fine.

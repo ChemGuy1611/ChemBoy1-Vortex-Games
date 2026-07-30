@@ -345,18 +345,26 @@ function installBinaries(api, files, fileName) {
 
 // LOAD ORDER FUNCTIONS ///////////////////////////////////////////////////
 
+//Reordering is ignored while a mod update is in flight: the deserializers below freeze the stored
+//order and the serializers skip writing, so tell the user their change was not applied.
+function notifyLoadOrderPaused(api, gameId) {
+  api.sendNotification({
+    id: `${gameId}-loadorder-update-paused`,
+    type: 'warning',
+    message: 'Load order changes are paused while a mod update finishes. Reorder again once it completes.',
+    displayMS: 6000,
+  });
+}
+
 async function deserializeLoadOrder(context) {
   // on mod update for all profile it would cause the mod if it was selected to be unselected
   if (mod_update_all_profile) {
-    let allMods = Array("mod_update");
-
-    return allMods.map((modId) => {
-      return {
-        id: "mod update in progress, please wait. Refresh when finished. \n To avoid this wait, only update current profile",
-        modId: modId,
-        enabled: false,
-      };
-    });
+    //A mod update briefly removes and reinstalls mods, so rebuilding the order from disk right now
+    //would drop their entries. Return the stored order untouched instead: positions are preserved
+    //and the page keeps showing the real load order rather than a placeholder row.
+    const updateState = context.api.getState();
+    const updateProfileId = selectors.lastActiveProfileForGame(updateState, GAME_ID);
+    return util.getSafe(updateState, ['persistent', 'loadOrder', updateProfileId], []);
   }
 
   //read current LO file
@@ -455,6 +463,7 @@ async function deserializeLoadOrder(context) {
 
 async function serializeLoadOrder(context, loadOrder) {
   if (mod_update_all_profile) {
+    notifyLoadOrderPaused(context.api, GAME_ID);
     return;
   }
 
@@ -692,12 +701,15 @@ function main(context) {
   context.once(() => {
     const api = context.api; //don't move from the top
     // Patch exe on deploy and reset mod update flags
-    api.onAsync("did-deploy", (profileId) => {
+    api.onAsync("did-deploy", async (profileId) => {
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return; //only reset this game's mod update flags
       //release tracking one mod id at a time, and only once that mod's new version has
       //landed and is enabled, so a deploy that fires mid-batch can't disarm the guard for
       //mods that haven't been reinstalled yet
+      //guard state as it stood before the loop below releases it - the FBLO refresh further
+      //down only runs on the deploy that actually clears the guard
+      const guardWasArmed = mod_update_all_profile;
       if (updateModIds.size > 0) {
         const state = api.getState();
         const profile = selectors.profileById(state, profileId);
@@ -719,6 +731,18 @@ function main(context) {
         }
       }
       mod_update_all_profile = updateModIds.size > 0; //stay armed while any update is still outstanding
+      //Core FBLO deserialized this order concurrently with this handler - did-deploy listeners run
+      //in parallel and the core one is registered first - so it read the frozen order before the
+      //guard cleared above, leaving its page stale. Re-run the deserialize it would have got and
+      //push the result into state; cheaper and less disruptive than forcing a second deployment.
+      if (guardWasArmed && !mod_update_all_profile) {
+        try {
+          const refreshedLO = await deserializeLoadOrder({ api: context.api });
+          context.api.store.dispatch(actions.setFBLoadOrder(profileId, refreshedLO));
+        } catch (err) {
+          log('warn', `[${GAME_ID}] post-update load order refresh failed`, err);
+        }
+      }
       updating_mod = false; //reset updating flag on deploy
       /* DISABLED since a mod automates this - Patch exe on deploy
       GAME_PATH = getDiscoveryPath(api);
@@ -886,6 +910,23 @@ function matchesStatus(entry, active, isEnabledFn, isLockedFn) {
   return true;
 }
 
+//Viewport clamp for the context menu. The clamped position is measured once into state and then
+//rendered, rather than written onto el.style after the fact - a fresh callback ref every render
+//makes React detach and reattach it, and the next render would overwrite the mutated style anyway.
+function useClampedMenuPosition(x, y) {
+  const [position, setPosition] = React.useState({ left: x, top: y });
+  const measureRef = React.useCallback((el) => {
+    if (!el) return;
+    const rect = el.getBoundingClientRect();
+    const vw = globalThis.window.innerWidth;
+    const vh = globalThis.window.innerHeight;
+    const left = (x + rect.width > vw) ? Math.max(8, vw - rect.width - 8) : x;
+    const top = (y + rect.height > vh) ? Math.max(8, vh - rect.height - 8) : y;
+    setPosition(prev => (prev.left === left && prev.top === top) ? prev : { left, top });
+  }, [x, y]);
+  return [position, measureRef];
+}
+
 //Inline toggle pills for status filtering (used in the InfoPanel surfaces)
 function StatusPills({ active, setActive, groups, count }) {
   const { Button } = require('react-bootstrap');
@@ -934,10 +975,12 @@ function LoadOrderItemRenderer(props) {
   const { loEntry, displayCheckboxes } = item;
   const mods = useSelector((state) => util.getSafe(state, ['persistent', 'mods', GAME_ID], {}));
   const pictureUrl = mods[loEntry.modId]?.attributes?.pictureUrl;
-  const currentIdx = loadOrder.findIndex((e) => e.id === loEntry.id) + 1;
+  //FBLO precomputes these on the item (memoized by its row cache); the fallbacks keep the
+  //renderer working if it is ever mounted outside the FBLO page.
+  const currentIdx = item.position ?? loadOrder.findIndex((e) => e.id === loEntry.id) + 1;
 
   const isLocked = (entry) => [true, 'true', 'always'].includes(entry?.locked);
-  const lockedCount = loadOrder.filter(isLocked).length;
+  const lockedCount = item.lockedEntriesCount ?? loadOrder.filter(isLocked).length;
 
   const onApplyIndex = React.useCallback((idx) => {
     if (currentIdx === idx) return;
@@ -953,7 +996,11 @@ function LoadOrderItemRenderer(props) {
   const isEntryLocked = isLocked(loEntry);
   const { selectedIds, setSelectedIds, contextMenu, setContextMenu, statusFilter } = useFbloState();
   const isSelected = selectedIds.has(loEntry.id);
-  const allIds = loadOrder.map(e => e.id);
+  //Shift-select must span visible rows only, so build the id list from the status-filtered order.
+  //Memoized: a bare filter here would run once per row, i.e. O(n^2) over the whole load order.
+  const allIds = React.useMemo(() => loadOrder
+    .filter(e => matchesStatus(e, statusFilter, (entry) => entry.enabled !== false, isLocked))
+    .map(e => e.id), [loadOrder, statusFilter]);
 
   const onSelect = React.useCallback((evt) => {
     const ctrlKey = evt.ctrlKey || evt.metaKey;
@@ -1083,14 +1130,7 @@ function FbloContextMenu({ x, y, item, loadOrder, profile, dispatch, context, se
     }
   }, []);
 
-  const clampRef = (el) => {
-    if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const vw = globalThis.window.innerWidth;
-    const vh = globalThis.window.innerHeight;
-    if (x + rect.width > vw) el.style.left = `${Math.max(8, vw - rect.width - 8)}px`;
-    if (y + rect.height > vh) el.style.top = `${Math.max(8, vh - rect.height - 8)}px`;
-  };
+  const [menuPosition, clampRef] = useClampedMenuPosition(x, y);
 
   const isLocked = (e) => [true, 'true', 'always'].includes(e?.locked);
   const isMulti = selectedIds.size >= 2 && selectedIds.has(item.id);
@@ -1126,7 +1166,7 @@ function FbloContextMenu({ x, y, item, loadOrder, profile, dispatch, context, se
   const stagingFolder = getModStagingFolder(context.api, item.modId);
 
   const menuStyle = {
-    position: 'fixed', left: x, top: y, zIndex: 9999,
+    position: 'fixed', left: menuPosition.left, top: menuPosition.top, zIndex: 9999,
     background: '#1e1e1e', border: '1px solid rgba(255,255,255,0.2)',
     borderRadius: 4, padding: '4px 0', minWidth: 180,
     boxShadow: '0 4px 12px rgba(0,0,0,0.6)',
@@ -1156,8 +1196,9 @@ function FbloContextMenu({ x, y, item, loadOrder, profile, dispatch, context, se
         return [...locked, ...selected, ...rest];
       })),
       menuItem(`Move to Bottom (${n})`, () => applyToTargets((lo) => {
-        const selected = lo.filter(e => targets.find(t => t.id === e.id));
-        const rest = lo.filter(e => !targets.find(t => t.id === e.id));
+        //Locked entries stay put, so they have to be counted into rest or they drop out of the order
+        const selected = lo.filter(e => targets.find(t => t.id === e.id) && !isLocked(e));
+        const rest = lo.filter(e => !targets.find(t => t.id === e.id) || isLocked(e));
         return [...rest, ...selected];
       })),
       React.createElement('div', { style: sepStyle }),
@@ -1179,11 +1220,13 @@ function FbloContextMenu({ x, y, item, loadOrder, profile, dispatch, context, se
     menuItem(isEntryLocked ? 'Unlock Position' : 'Lock Position', () => applyToTargets((lo) => lo.map(e => e.id === item.id ? { ...e, locked: !isEntryLocked } : e), true)),
     React.createElement('div', { style: sepStyle }),
     menuItem('Move to Top', () => applyToTargets((lo) => {
+      if (isLocked(item)) return lo;
       const locked = lo.filter(isLocked);
       const rest = lo.filter(e => !isLocked(e) && e.id !== item.id);
       return [...locked, item, ...rest];
     })),
     menuItem('Move to Bottom', () => applyToTargets((lo) => {
+      if (isLocked(item)) return lo;
       const rest = lo.filter(e => e.id !== item.id);
       return [...rest, item];
     })),

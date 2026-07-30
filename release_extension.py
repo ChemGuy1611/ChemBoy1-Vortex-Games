@@ -17,7 +17,8 @@ Steps performed per game:
     9. node --check on index.js (warns on syntax error; use --skip-node-check to skip)
    10. eslint on index.js (warns on lint errors; use --skip-eslint to skip)
    11. Run generate_explained.js to regenerate EXTENSION_EXPLAINED.md
-   12. Create game-{GAME_ID}.zip with 7-Zip
+   12. Create game-{GAME_ID}.zip with 7-Zip, excluding the repo-facing generated docs
+       (EXTENSION_EXPLAINED.md, NOTES_FOR_MOD_AUTHORS.md, NOTES_FOR_MOD_AUTHORS.bbcode.txt)
    13. Optionally upload zip to Nexus Mods as a new file version (changelog entry as
        description; file group resolved via v1 uid -> v3 groups, or via index.js FILE_GROUP_ID
        override when the v3 list 404s); default: skip; use --upload to enable
@@ -56,6 +57,14 @@ from vortex_utils import (
 from nexus_upload import pick_file_group, upload_zip, extract_changelog_entry
 SEVENZIP = os.environ.get("SEVENZIP_PATH", r"C:\Program Files\7-Zip\7z.exe")
 NEXUS_SITE_URL = "https://www.nexusmods.com/games/site"
+
+# Repo-facing generated documentation. Useful on GitHub, but dead weight inside the
+# extension Vortex installs, so it is kept out of the released zip.
+ZIP_EXCLUDES = [
+    "EXTENSION_EXPLAINED.md",
+    "NOTES_FOR_MOD_AUTHORS.md",
+    "NOTES_FOR_MOD_AUTHORS.bbcode.txt",
+]
 
 
 # == Extension helpers =========================================================
@@ -203,6 +212,7 @@ def release(game_id, open_browser, dry_run=False, skip_eslint=False,
             log_info(game_id, "[DRY RUN] Would run eslint on index.js")
         log_info(game_id, "[DRY RUN] Would generate EXTENSION_EXPLAINED.md")
         log_info(game_id, f"[DRY RUN] Would create: {zip_path}")
+        log_info(game_id, f"[DRY RUN] Would exclude from zip: {', '.join(ZIP_EXCLUDES)}")
         api_key = get_api_key("NEXUS_API_KEY")
         if not api_key:
             log_warn(game_id, "[DRY RUN] NEXUS_API_KEY not set; file group lookup skipped")
@@ -260,7 +270,8 @@ def release(game_id, open_browser, dry_run=False, skip_eslint=False,
 
     log_info(game_id, "Zipping...")
     result = subprocess.run(
-        [SEVENZIP, "a", "-tzip", zip_path, os.path.join(folder, "*")],
+        [SEVENZIP, "a", "-tzip", zip_path, os.path.join(folder, "*")]
+        + [f"-x!{name}" for name in ZIP_EXCLUDES],
         capture_output=True, text=True,
         encoding="utf-8", errors="replace",
     )
@@ -283,6 +294,9 @@ def release(game_id, open_browser, dry_run=False, skip_eslint=False,
         if "index.js" not in names:
             shown = ", ".join(names[:10]) + (f" ... ({len(names)} total)" if len(names) > 10 else "")
             log_warn(game_id, f"index.js not found at zip root (files: {shown})")
+        leaked = [n for n in names if os.path.basename(n) in ZIP_EXCLUDES]
+        if leaked:
+            log_warn(game_id, f"excluded docs present in zip: {', '.join(sorted(leaked))}")
     except Exception as e:
         log_warn(game_id, f"could not verify zip contents: {e}")
 

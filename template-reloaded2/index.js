@@ -2,7 +2,7 @@
 Name: XXX Vortex Extension
 Structure: Reloaded-II Game (Mod Installer)
 Author: ChemBoy1
-Version: 0.1.0
+Version: 1.0.0
 Date: 2026-XX-XX
 Notes:
 - 

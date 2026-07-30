@@ -26,7 +26,7 @@
 - Added .yaml extension to the save file installer.
 - Fixed Save path (added "Profiles/client" to end of path).
 
-## [0.1.0] - 2025-09-12
+## [0.1.1] - 2025-09-12
 
 - Corrected config and save paths (Documents).
 

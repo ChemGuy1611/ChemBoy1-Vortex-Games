@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.3.1] - 2026-07-29
+
+- Changed: Removed the unused load order code. The load order page was never registered for this game, so mod installation and deployment are unchanged.
+
 ## [0.3.0] - 2026-03-10
 
 - Added: Integrated Nioh3ModManager for Loose File mods installation

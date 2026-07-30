@@ -43,7 +43,6 @@ const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1676"; //Nexus link t
 
 //feature toggles
 const reZip = true; //rezip mods for ModManager
-const loadOrderEnabled = false; //true to use load order sorting
 const modInstallerEnabled = true; //enable mod installer (once mod loader is added)
 const hasLoader = true; //for DLL Loader
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
@@ -928,28 +927,6 @@ function testMod(files, gameId) {
 }
 
 //Install Loose .g1t/.g1m mod files
-function installMod(files, fileName) {
-  const MOD_TYPE = MOD_ID;
-  const modFile = files.find(file => MOD_EXTS.includes(path.extname(file).toLowerCase()));
-  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
-
-  // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file => (
-    //(file.indexOf(rootPath) !== -1) && 
-    !file.endsWith(path.sep)
-  ));
-  const instructions = filtered.map(file => {
-    return {
-      type: 'copy',
-      source: file,
-      destination: file,
-    };
-  });
-  instructions.push(setModTypeInstruction);
-  return Promise.resolve({ instructions });
-}
-
-//Install Loose .g1t/.g1m mod files
 async function installModZip(files, destinationPath) {
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_ID };
   const zipFiles = files.filter(file => ['.zip', '.7z', '.rar'].includes(path.extname(file)));
@@ -1533,51 +1510,6 @@ async function downloadRdbExplorerGithub(api, gameSpec, check) {
   }
 } //*/
 
-// LOAD ORDER /////////////////////////////////////////////////////////////////////
-
-function makePrefix(input) {
-  let res = '';
-  let rest = input;
-  while (rest > 0) {
-      res = String.fromCharCode(65 + (rest % 25)) + res;
-      rest = Math.floor(rest / 25);
-  }
-  return util.pad(res, 'A', 3);
-}
-
-function loadOrderPrefix(api, mod) {
-  const state = api.getState();
-  const profile = selectors.lastActiveProfileForGame(state, GAME_ID);
-  const loadOrder = util.getSafe(state, ['persistent', 'loadOrder', profile], {});
-  const loKeys = Object.keys(loadOrder);
-  const pos = loKeys.indexOf(mod.id);
-  if (pos === -1) {
-      return 'ZZZZ-';
-  }
-  return makePrefix(pos) + '-';
-}
-
-//Pre-sort function
-async function preSort(api, items, direction) {
-  const mods = util.getSafe(api.store.getState(), ['persistent', 'mods', spec.game.id], {});
-  //const fileExt = MOD_EXTS.join(', ');
-
-  const loadOrder = items.map(mod => {
-    const modInfo = mods[mod.id];
-    let name = modInfo ? modInfo.attributes.customFileName ?? modInfo.attributes.logicalFileName ?? modInfo.attributes.name : mod.name;
-    /*const files = util.getSafe(modInfo.attributes, ['modFiles'], []);
-    if (files.length > 1) name = name + ` (${files.length} ${fileExt} files)`; //*/
-
-    return {
-      id: mod.id,
-      name,
-      imgUrl: util.getSafe(modInfo, ['attributes', 'pictureUrl'], path.join(__dirname, spec.game.logo))
-    }
-  });
-
-  return (direction === 'descending') ? Promise.resolve(loadOrder.reverse()) : Promise.resolve(loadOrder);
-}
-
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
 function setupNotify(api) {
@@ -1749,13 +1681,7 @@ function applyGame(context, gameSpec) {
     () => Promise.resolve(false), 
     { 
     name: MOD_NAME,
-    mergeMods: (mod) => {
-      if (loadOrderEnabled) {
-        return loadOrderPrefix(context.api, mod) + mod.id;
-      } else { //If load order is disabled, don't use sorting folders
-        return "";
-      }
-    },
+    mergeMods: () => "", //no sorting folders - mods merge into one folder for ModManager
     }
   );
   
@@ -1768,11 +1694,7 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(LOOSELOADER_ID, 28, testLooseLoader, installLooseLoader); // Loose Files Loader
   context.registerInstaller(MOD_MANAGER_ID, 29, testModManager, installModManager);
   if (modInstallerEnabled) {
-    if (loadOrderEnabled) {
-      context.registerInstaller(MOD_ID, 31, testMod, installMod); //.g1t/.g1m Loose File mods
-    } else {
-      context.registerInstaller(MOD_ID, 31, testMod, installModZip); //.g1t/.g1m Loose File mods - REZIPPED for ModManager
-    }
+    context.registerInstaller(MOD_ID, 31, testMod, installModZip); //.g1t/.g1m Loose File mods - REZIPPED for ModManager
   }
   context.registerInstaller(LOADER_MOD_ID, 33, testLoaderMod, installLoaderMod); // dll/asi
   context.registerInstaller(YUMIA_MOD_ID, 35, testYumiaMod, (files) => installYumiaMod(files, context.api)); //.fdata "package"
@@ -1856,30 +1778,6 @@ function applyGame(context, gameSpec) {
 //main function
 function main(context) {
   applyGame(context, spec);
-  //Load Order
-  if (loadOrderEnabled) {
-    let previousLO;
-    context.registerLoadOrderPage({
-      gameId: spec.game.id,
-      gameArtURL: path.join(__dirname, spec.game.logo),
-      preSort: (items, direction) => preSort(context.api, items, direction),
-      filter: mods => mods.filter(mod => mod.type === MOD_ID),
-      displayCheckboxes: false,
-      callback: (loadOrder) => {
-        if (previousLO === undefined) previousLO = loadOrder;
-        if (loadOrder === previousLO) return;
-        requestDeployment(context.api, spec);
-        previousLO = loadOrder;
-      },
-      createInfoPanel: () =>
-        context.api.translate(`Drag and drop the mods on the left to change the order in which they load.\n` 
-          + `${spec.game.name} loads mods in alphanumerical order, so Vortex prefixes the folder names with "AAA, AAB, AAC, ..." to ensure they load in the order you set here.\n`
-          + 'The number in the left column represents the overwrite order. The changes from mods with higher numbers will take priority over other mods which make similar edits.\n'
-          + '\n'
-          + 'YOU MUST DEPLOY MODS AFTER CHANGING THE ORDER TO APPLY CHANGES.'
-        ),
-    });
-  }
 
   context.once(() => { // put code here that should be run (once) when Vortex starts up
     const api = context.api;
