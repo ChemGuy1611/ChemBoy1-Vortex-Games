@@ -120,3 +120,5 @@ The entry points take an array of requirement objects (conventionally a `MODDB_R
 
 `VORTEX_DOWNLOAD_MGMT.md` (the `start-download`/`import-downloads` events `moddb_downloader.js`
 hands off to). `VORTEX_MOD_INSTALL.md` (installing the downloaded requirement as a managed mod).
+`VORTEX_MOD_METADATA.md` — covers the `modmeta-db` **metadata cache**, an unrelated package that
+shares the "moddb" name with this site.

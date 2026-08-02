@@ -113,6 +113,7 @@ Via the extend-API pattern, `nexus_integration` adds methods other extensions ca
 
 Runtime siblings: `VORTEX_DOWNLOAD_MGMT.md` (nxm → transfer), `VORTEX_LOAD_ORDER.md` (how updates
 affect load order), `VORTEX_MOD_INSTALL.md` (installing over a previous version),
-`VORTEX_EVENT_BUS.md`. Overview:
+`VORTEX_MOD_METADATA.md` (where `attributes.modId` comes from, and how it can point at the wrong
+mod page), `VORTEX_EVENT_BUS.md`. Overview:
 `VORTEX_APP.md`. Nexus HTTP API: `NEXUS_MODS_API.md`, `NEXUS_FILE_PROPERTIES.md`. Diagram of the
 update/version-check flow: `VORTEX_FLOWCHARTS.md` §2.

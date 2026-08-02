@@ -408,9 +408,9 @@ function installMod(files, fileName) {
       //parse mod.manifest XML here to get <name>, lowercase and replace whitespace with "_", and use as MOD_FOLDER
       const modManifest = fs.readFileSync(path.join(fileName, modFile1), 'utf8');
       const parser = new DOMParser();
-      const serializer = new XMLSerializer();
+      //const serializer = new XMLSerializer();
       const XML = parser.parseFromString(modManifest, 'text/xml');
-      const XML_SERIAL = serializer.serializeToString(XML);
+      //const XML_SERIAL = serializer.serializeToString(XML);
       //log('info', `mod.manifest: ${XML_SERIAL}`);
       let modName = null;
       try { //try to get the modid from mod.manifest
@@ -424,7 +424,7 @@ function installMod(files, fileName) {
         MOD_FOLDER = modNameLower.replace(/ /gi, '_');
       }
       //log('info', `Mod Folder: ${MOD_FOLDER}`);
-    } catch (err) { //mod.manifest could not be read. Try to overwrite with a clean one.
+    } catch { //mod.manifest could not be read. Try to overwrite with a clean one.
       log('error', `Could not read mod.manifest for mod ${MOD_NAME}. Overwriting with a clean one.`);
       const rootPathLower = path.basename(rootPath).toLowerCase();
       MOD_FOLDER = rootPathLower.replace(/ /gi, '_');

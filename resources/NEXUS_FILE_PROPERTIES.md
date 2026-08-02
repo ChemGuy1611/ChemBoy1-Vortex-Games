@@ -186,3 +186,4 @@ files.sort((a, b) => b.uploaded_timestamp - a.uploaded_timestamp);
 
 `NEXUS_MODS_API.md` (v1/v3 endpoints these file objects come from). `VORTEX_NEXUS_INTEGRATION.md`
 (OAuth/SSO, nxm protocol, and version-check runtime that consumes file properties).
+`VORTEX_MOD_METADATA.md` (the MD5 → file-object lookup Vortex uses to identify an archive).

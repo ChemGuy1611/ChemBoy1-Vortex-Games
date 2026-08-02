@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.4.3] - 2026-08-01
+
+- Fixed: Made 3rd digit in Atlan Mod Loader version pattern optional to support inconsistent versioning.
+
 ## [0.4.2] - 2026-07-18
 
 - Changed: Requirement downloader now uses the native fetch API instead of a bundled axios copy (much smaller extension, same behavior on Vortex 2.0+)

@@ -2,8 +2,8 @@
 Name: DOOM: The Dark Ages Vortex Extension
 Structure: 3rd-Party Mod Loader
 Author: ChemBoy1
-Version: 0.4.2
-Date: 2026-07-18
+Version: 0.4.3
+Date: 2026-08-01
 /////////////////////////////////////////*/
 /*
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣀⣀⣠⣤⣤⣤⡴⣦⡴⣖⠶⣴⠶⡶⣖⡶⣶⢶⣲⡾⠿⢿⡷⣾⢿⣷⣦⢾⣷⣾⣶⣤⣀⣰⣤⣀⡀⠀⠀⢀⣴⣿⡿⡿⣿⣿⣦⣄⠀⠀⣠⣴⣿⡿⢿⡿⣷⣦⡄⠀⠀⢀⣀⣤⣦⣀⣤⣶⣶⣷⣦⣴⡿⢿⡷⣿⠿⡿⣿⣷⢶⣦⢴⡲⣦⢶⡶⢶⡲⣖⡶⣦⣤⣤⣤⣤⣤⣤⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
@@ -121,7 +121,7 @@ const PATCHER_NXM_PAGE_NO = 28;
 const PATCHER_NXM_FILE_NO = 79;
 
 // Information for downloader and updater
-const INJECTOR_ARC_NAME = 'AtlanModLoader_v_4_0_1.zip';
+const INJECTOR_ARC_NAME = 'AtlanModLoader_v_7_0.zip';
 const INJECTOR_URL_API = `https://api.github.com/repos/FlavorfulGecko5/EntityAtlan`;
 const REQUIREMENTS = [
   { //ModManager
@@ -132,7 +132,8 @@ const REQUIREMENTS = [
     githubUrl: INJECTOR_URL_API,
     findMod: (api) => findModByFile(api, INJECTOR_ID, INJECTOR_FILE),
     findDownloadId: (api) => findDownloadIdByFile(api, INJECTOR_ARC_NAME),
-    fileArchivePattern: new RegExp(/^AtlanModLoader_v_(\d+_\d+_\d+)/, 'i'),
+    fileArchivePattern: new RegExp(/^AtlanModLoader_v_(\d+_\d+(?:_\d+)?)/, 'i'), //!3rd digit optional
+    //fileArchivePattern: new RegExp(/^AtlanModLoader_v_(\d+_\d+_\d+)/, 'i'),
     resolveVersion: (api) => resolveVersionByPattern(api, REQUIREMENTS[0]),
   }, //*/
 ];
@@ -403,7 +404,7 @@ async function setGameVersion(discoveryPath) {
     GAME_VERSION = 'xbox';
     return GAME_VERSION;
   }
-  else { 
+  else {
     GAME_VERSION = 'steam';
     return GAME_VERSION;
   };
@@ -425,7 +426,7 @@ async function setSavePath(discoveryPath) {
     SAVE_PATH = SAVE_PATH_XBOX;
     return SAVE_PATH;
   }
-  else { 
+  else {
     GAME_VERSION = 'steam';
     const SPLIT_PATH = discoveryPath.split(path.sep);
     const SPLIT_PATH_LENGTH = SPLIT_PATH.length;
@@ -921,7 +922,7 @@ async function testZipContent(files, gameId) {
 //Install zips
 async function installZipContent(files, destinationPath) {
   const zipFiles = files.filter(file => ['.zip', '.7z', '.rar'].includes(path.extname(file)));
-  if (zipFiles.length > 0) { // If it's a double zip, we don't need to repack. 
+  if (zipFiles.length > 0) { // If it's a double zip, we don't need to repack.
     const instructions = zipFiles.map(file => {
       return {
         type: 'copy',
@@ -1070,7 +1071,7 @@ async function resolveGameVersion(gamePath) {
     try {
       const exeVersion = require('exe-version');
       version = exeVersion.getProductVersion(path.join(gamePath, EXEC));
-      return Promise.resolve(version); 
+      return Promise.resolve(version);
     } catch (err) {
       log('error', `Could not read ${EXEC} file to get Steam game version: ${err}`);
       return Promise.resolve(version);
@@ -1134,13 +1135,13 @@ function applyGame(context, gameSpec) {
   });
 
   /* register mod types explicitly
-  context.registerModType(SAVE_ID, 52, 
+  context.registerModType(SAVE_ID, 52,
     (gameId) => {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, 
+    },
     (game) => pathPattern(context.api, game, path.join('{gamePath}', SAVE_PATH)),
-    () => Promise.resolve(false), 
+    () => Promise.resolve(false),
     { name: SAVE_NAME }
   ); //*/
 
@@ -1293,7 +1294,7 @@ async function writeCfgDeploy(api) {
   const CFG_PATH = path.join(GAME_PATH, CONFIG_PATH);
 
   let EXISTING_CONTENT = await fs.readFileAsync(
-    AUTOEXEC_CFG_PATH, 
+    AUTOEXEC_CFG_PATH,
     { encoding: "utf8", }
   );
   let EXISTING_CONTENT_ARRAY = EXISTING_CONTENT.split("\n");
@@ -1328,7 +1329,7 @@ async function writeCfgPurge(api) {
   const AUTOEXEC_CFG_PATH = path.join(GAME_PATH, CONFIG_PATH, AUTOEXEC_CFG_FILE);
 
   let EXISTING_CONTENT = await fs.readFileAsync(
-    AUTOEXEC_CFG_PATH, 
+    AUTOEXEC_CFG_PATH,
     { encoding: "utf8", }
   );
   let EXISTING_CONTENT_ARRAY = EXISTING_CONTENT.split("\n");

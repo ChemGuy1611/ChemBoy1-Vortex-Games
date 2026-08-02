@@ -102,5 +102,6 @@ nxm:// link (or browser/CLI URL)
 ## See also
 
 Runtime siblings: `VORTEX_NEXUS_INTEGRATION.md` (nxm + Nexus URLs), `VORTEX_MOD_INSTALL.md` (what
-happens after `download-finished`), `VORTEX_EVENT_BUS.md`. Overview: `VORTEX_APP.md`. **Not**
+happens after `download-finished`), `VORTEX_MOD_METADATA.md` (the MD5 meta lookup `finalizeDownload`
+kicks off), `VORTEX_EVENT_BUS.md`. Overview: `VORTEX_APP.md`. **Not**
 `DOWNLOADER.md`.

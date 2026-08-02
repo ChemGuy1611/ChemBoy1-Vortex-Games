@@ -138,7 +138,8 @@ installer, and returns the instructions).
 Runtime siblings: `VORTEX_GAME_LIFECYCLE.md`, `VORTEX_DEPLOYMENT.md`, `VORTEX_DOWNLOAD_MGMT.md`,
 `VORTEX_LOAD_ORDER.md` (what mod id reuse means for load order),
 `VORTEX_NEXUS_INTEGRATION.md` (what triggers an update install),
-`VORTEX_EVENT_BUS.md`. Overview: `VORTEX_APP.md`. Authoring: `INSTALLER_SYSTEM.md`,
+`VORTEX_MOD_METADATA.md` (how `fullInfo.meta` and the mod's `modId`/`source` attributes are
+chosen), `VORTEX_EVENT_BUS.md`. Overview: `VORTEX_APP.md`. Authoring: `INSTALLER_SYSTEM.md`,
 `FOMOD_INSTALLER.md`. Diagram of this pipeline: `VORTEX_FLOWCHARTS.md` §1.
 Collection phase-engine invariants the repo asks contributors to preserve:
 `VORTEX_AGENT_GUIDES.md`.

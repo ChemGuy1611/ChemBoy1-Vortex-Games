@@ -5,7 +5,9 @@ GUI dashboard for ChemBoy1-Vortex-Games developer scripts. Lists all game-*
 extensions in a sortable/filterable table with Nexus stats columns (End, DL),
 image columns (Cover, Title, Banner), flag/note system, and group-by-engine view.
 
-Toolbar buttons run developer scripts against selected games. An always-visible
+Toolbar buttons run developer scripts against the checked games, or the
+highlighted rows when nothing is checked; the right-click context menu always
+targets the highlighted rows, ignoring checkboxes. An always-visible
 log pane streams live subprocess output, coloring error and command-echo lines.
 Settings (geometry, column widths, filter text, grouping, flagged-only, category
 filter, checked rows) persist across sessions via QSettings.
@@ -1567,6 +1569,9 @@ class MainWindow(QMainWindow):
         self._action_btns: dict[str, QAction] = {}
         self._global_action_labels: set[str] = set()  # repo-wide; enabled regardless of selection
         self._refresh_after_run = False
+        # set while a context-menu action runs so it targets the highlighted
+        # rows only, ignoring checkboxes (see _on_context_menu)
+        self._selection_override: list["GameRow"] | None = None
         self._refresh_worker: _RefreshWorker | None = None
         self._splitter: QSplitter | None = None
         # category filter restored from QSettings before the first refresh has
@@ -1882,28 +1887,39 @@ class MainWindow(QMainWindow):
 
     # -- Selection helpers -----------------------------------------------------
 
-    def _selected_rows(self) -> list[GameRow]:
-        if self._model._checked_ids:
-            seen: set[str] = set()
-            result: list[GameRow] = []
-            for row in self._model._rows:
-                if row.game_id in self._model._checked_ids and row.game_id not in seen:
-                    seen.add(row.game_id)
-                    result.append(row)
-            return result
-        sel = self._table.selectionModel().selectedRows()
-        seen2: set[str] = set()
-        result2: list[GameRow] = []
-        for idx in sel:
+    def _checked_rows(self) -> list[GameRow]:
+        """Rows with a ticked checkbox, in table order."""
+        seen: set[str] = set()
+        result: list[GameRow] = []
+        for row in self._model._rows:
+            if row.game_id in self._model._checked_ids and row.game_id not in seen:
+                seen.add(row.game_id)
+                result.append(row)
+        return result
+
+    def _highlighted_rows(self) -> list[GameRow]:
+        """Rows highlighted in the table, ignoring checkbox state."""
+        seen: set[str] = set()
+        result: list[GameRow] = []
+        for idx in self._table.selectionModel().selectedRows():
             if self._proxy.is_header_row(idx.row()):
                 continue
             filter_idx = self._proxy.mapToSource(idx)
             src_idx = self._filter_model.mapToSource(filter_idx)
             row = self._model._rows[src_idx.row()]
-            if row.game_id not in seen2:
-                seen2.add(row.game_id)
-                result2.append(row)
-        return result2
+            if row.game_id not in seen:
+                seen.add(row.game_id)
+                result.append(row)
+        return result
+
+    def _selected_rows(self) -> list[GameRow]:
+        """Rows an action operates on: the context menu's own target if one is
+        active, otherwise the checked rows, falling back to the highlighted rows."""
+        if self._selection_override is not None:
+            return list(self._selection_override)
+        if self._model._checked_ids:
+            return self._checked_rows()
+        return self._highlighted_rows()
 
     def _selected_ids(self) -> list[str]:
         return [r.game_id for r in self._selected_rows()]
@@ -2408,15 +2424,34 @@ class MainWindow(QMainWindow):
 
     # -- Context menu ----------------------------------------------------------
 
+    def _row_at(self, pos) -> GameRow | None:
+        """Row under a viewport position, or None for header rows / empty space."""
+        proxy_idx = self._table.indexAt(pos)
+        if not proxy_idx.isValid() or self._proxy.is_header_row(proxy_idx.row()):
+            return None
+        filter_idx = self._proxy.mapToSource(proxy_idx)
+        src_idx = self._filter_model.mapToSource(filter_idx)
+        return self._model._rows[src_idx.row()]
+
     def _on_context_menu(self, pos):
-        if not self._selected_rows():
+        # Context-menu actions target the highlighted rows only -- checkboxes are
+        # for the toolbar. Right-clicking outside the highlight targets that row.
+        rows = self._highlighted_rows()
+        clicked = self._row_at(pos)
+        if clicked is not None and clicked.game_id not in {r.game_id for r in rows}:
+            rows = [clicked]
+        if not rows:
             return
         menu = QMenu(self)
         for label, slot_name, sep, _global in ACTION_DEFS:
             if sep:
                 menu.addSeparator()
             menu.addAction(label, getattr(self, slot_name))
-        menu.exec(self._table.viewport().mapToGlobal(pos))
+        self._selection_override = rows
+        try:
+            menu.exec(self._table.viewport().mapToGlobal(pos))
+        finally:
+            self._selection_override = None
 
 
 # == Checkbox style ============================================================
