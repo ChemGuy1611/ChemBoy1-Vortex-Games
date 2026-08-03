@@ -204,7 +204,7 @@ async function queryGame() {
   return game;
 }
 
-//Find game install location 
+//Find game install location
 async function queryPath() {
   let game = await queryGame();
   return game.gamePath;
@@ -272,6 +272,9 @@ function installMod(files, fileName) {
   let MOD_FOLDER = path.basename(rootPath);
   if (MOD_FOLDER === '.') {
     MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
+  }
+  if (MOD_FOLDER === 'modules') {
+    MOD_FOLDER = path.basename(modFile, path.extname(modFile));
   }
 
   // Remove directories and anything that isn't in the rootPath.

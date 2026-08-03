@@ -60,7 +60,22 @@ The download-manager route through ModDB's www host is blocked by the bot-protec
 1. **Primary:** resolve the mirror URL via a renderer `fetch` against `/downloads/start/{fileId}`, then hand that URL to Vortex's `start-download` event so the download manager owns progress/resume.
 2. **Fallback:** if the download-manager request fails, re-resolve the mirror URL and `fetch` the file directly in the renderer, stream it to a temp file, and hand that off to the `import-downloads` event — the same fetch-then-import pattern the GitHub `downloader.js` uses (see `DOWNLOADER.md`).
 
-A requirement can skip step 1 entirely with the `skipDownloadManager` flag once the block is confirmed for its page's mirrors — this avoids a doomed download attempt (and a failed entry on the Downloads page) on every install.
+A requirement can skip step 1 entirely with the `skipDownloadManager` flag once the block is confirmed for its page's mirrors — this avoids a doomed download attempt (and a failed entry on the Downloads page) on every install. The trade-off is that the fallback route has no progress UI: the user sees only an "Installing …" activity notification for the whole transfer. That is tolerable even for multi-GB requirements, but it is the reason to leave the flag off wherever the download manager still works.
+
+### Do not use `Readable.fromWeb` on a renderer fetch body
+
+The obvious way to write step 2's response to disk is `pipeline(Readable.fromWeb(response.body), createWriteStream(path))`. It does not work in Vortex's renderer, and the failure is easy to misread:
+
+```text
+TypeError [ERR_INVALID_ARG_TYPE]: The "readableStream" argument must be an instance of
+ReadableStream. Received an instance of ReadableStream
+```
+
+Electron's renderer has two unrelated `ReadableStream` implementations: the global one from Blink, which `fetch` returns, and the one exported by `node:stream/web`, which is what `Readable.fromWeb` brand-checks its argument against. A Blink stream is never an instance of the Node class, so the call always throws — hence the message naming the same type twice.
+
+Drain the web stream by hand instead (`body.getReader()` plus a `read()` loop writing into a `node:fs` write stream, honouring the `write()` return value for backpressure). Buffering the whole response with `response.arrayBuffer()` also sidesteps the problem, but ModDB files run to several GB, so it is not a viable substitute. The hand-drained route is verified against a multi-GB download.
+
+Note that `vortex-api`'s `fs` re-exports `createWriteStream`, but marks it `@deprecated use node:fs directly` — require it from `fs`.
 
 ## Shared moddb_downloader.js Module
 

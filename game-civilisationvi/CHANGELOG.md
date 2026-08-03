@@ -6,7 +6,7 @@
 
 ## [0.2.0] - 2026-08-03
 
-- Multiple technical fixes.
+- Fixed: Multiple technical fixes.
 
 ## [0.1.3] - 2025-07-31
 

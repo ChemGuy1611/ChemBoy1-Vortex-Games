@@ -6,8 +6,9 @@
 
 ## [0.2.0] - 2026-08-03
 
-- Epic support
-- Multiple minor technical fixes
+- Fixed: Mods not being placed in unique folders if mod had "modules" folder in it.
+- Added: Epic support
+- Fixed: Multiple minor technical fixes
 
 ## [0.1.1]
 

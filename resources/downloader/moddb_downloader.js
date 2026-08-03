@@ -18,7 +18,7 @@
 // manager route entirely via skipDownloadManager when the block is confirmed
 // for their host.
 //
-// Externals are vortex-api and node's path/stream (plus the global fetch
+// Externals are vortex-api and node's path/fs/stream (plus the global fetch
 // available in the Electron 43+ renderer).
 //
 // Public API: downloadModDb, checkForModDbUpdate (array-based entry points),
@@ -27,8 +27,8 @@
 // getLatestModDbVersion, resolveModDbDownloadUrl.
 
 const path = require('path');
-const { Readable } = require('stream');
-const { pipeline } = require('stream/promises');
+const { createWriteStream } = require('fs'); //node's fs directly - vortex-api's createWriteStream re-export is deprecated
+const { finished } = require('stream/promises');
 const { actions, fs, log, selectors, util } = require('vortex-api');
 
 // --- requirement helpers --------------------------------------------------
@@ -160,6 +160,39 @@ function filenameFromResponse(response, requirement) {
   return requirement.archiveFileName || `${requirement.modType}.zip`;
 }
 
+//Write a fetch response body to disk without buffering it - these files can be
+//several GB. The web stream is drained by hand rather than through
+//Readable.fromWeb: the renderer's fetch returns Blink's ReadableStream, which
+//is a different class from the node:stream/web ReadableStream that fromWeb
+//brand-checks its argument against, so it always rejects it ("must be an
+//instance of ReadableStream. Received an instance of ReadableStream").
+async function streamToFile(body, targetPath) {
+  const reader = body.getReader();
+  const out = createWriteStream(targetPath);
+  try {
+    for (;;) {
+      const { done, value } = await reader.read();
+      if (done) {
+        break;
+      }
+      if (!out.write(value)) { //respect backpressure instead of queueing the whole file in memory
+        await new Promise((resolve, reject) => {
+          const onDrain = () => { out.off('error', onError); resolve(); };
+          const onError = (err) => { out.off('drain', onDrain); reject(err); };
+          out.once('drain', onDrain);
+          out.once('error', onError);
+        });
+      }
+    }
+  } catch (err) {
+    await reader.cancel().catch(() => null);
+    out.destroy();
+    throw err;
+  }
+  out.end();
+  return finished(out); //resolves once the file is flushed and closed
+}
+
 //Fetch the file in the renderer (real Chromium network stack), stream it to a
 //temp file, and import + install it through Vortex ('cause' preserves the
 //download-manager error when this runs as the fallback route)
@@ -169,7 +202,7 @@ async function fetchAndImportModDbFile(api, requirement, url, cause) {
     throw new Error(`Request failed with status code ${response.status} (${url})`, { cause });
   }
   const tempPath = path.join(util.getVortexPath('temp'), filenameFromResponse(response, requirement));
-  await pipeline(Readable.fromWeb(response.body), fs.createWriteStream(tempPath)); //stream to disk - files can be large
+  await streamToFile(response.body, tempPath);
   try {
     // 'import-downloads' calls back with (dlIds) - no error argument - unlike
     // 'start-download'/'start-install-download', so it can't go through util.toPromise.

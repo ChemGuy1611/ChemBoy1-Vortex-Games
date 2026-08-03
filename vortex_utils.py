@@ -2365,6 +2365,114 @@ def is_load_order_game(src):
 #   github.com/Owner/Repo/releases/latest/download/asset.zip
 _GITHUB_DOWNLOAD_RE = re.compile(r"github\.com/[^\"'\s]+/releases/(?:latest/)?download")
 
+# Chars after which a '/' starts a regex literal rather than a division operator.
+_REGEX_PRECEDERS = set("=({[,;:!&|?+-*~^%<>\n")
+
+
+def strip_js_comments(src):
+    """Return src with // and /* */ comments blanked out.
+
+    String, template and regex literals are preserved, so the '//' inside a URL is
+    never mistaken for a comment. Comment bodies are replaced with spaces (newlines
+    kept) rather than deleted, so character offsets and line numbers stay stable.
+
+    This correctly resolves the extensions' block-toggle idiom, where a leading '/*'
+    disables a region and a leading '//*' enables it, both closed by '//*/':
+
+        /*  ... disabled ...  //*/      -> '/*' opens a block comment, '//*/' ends it
+        //* ... enabled  ...  //*/      -> both markers are just line comments
+    """
+    out = []
+    i = 0
+    n = len(src)
+    prev_significant = "\n"
+    while i < n:
+        c = src[i]
+        nxt = src[i + 1] if i + 1 < n else ""
+
+        if c == "/" and nxt == "/":                      # line comment
+            while i < n and src[i] != "\n":
+                out.append(" ")
+                i += 1
+            continue
+
+        if c == "/" and nxt == "*":                      # block comment
+            out.append("  ")
+            i += 2
+            while i < n and not (src[i] == "*" and i + 1 < n and src[i + 1] == "/"):
+                out.append("\n" if src[i] == "\n" else " ")
+                i += 1
+            out.append("  ")
+            i += 2
+            continue
+
+        if c in "\"'`":                                  # string / template literal
+            quote = c
+            out.append(c)
+            i += 1
+            while i < n:
+                if src[i] == "\\":
+                    out.append(src[i:i + 2])
+                    i += 2
+                    continue
+                out.append(src[i])
+                if src[i] == quote:
+                    i += 1
+                    break
+                i += 1
+            prev_significant = quote
+            continue
+
+        if c == "/" and prev_significant in _REGEX_PRECEDERS:   # regex literal
+            out.append(c)
+            i += 1
+            while i < n:
+                if src[i] == "\\":
+                    out.append(src[i:i + 2])
+                    i += 2
+                    continue
+                out.append(src[i])
+                if src[i] in "/\n":
+                    i += 1
+                    break
+                i += 1
+            prev_significant = "/"
+            continue
+
+        out.append(c)
+        if not c.isspace():
+            prev_significant = c
+        elif c == "\n":
+            prev_significant = "\n"
+        i += 1
+
+    return "".join(out)
+
+
+_JS_FUNC_DEF_RE = re.compile(r"(?:async\s+)?function\s+(\w+)\s*\(")
+
+
+def _js_function_bodies(src):
+    """Yield (name, body_start, body_end) for each `function NAME(...) { ... }` in src.
+
+    src is expected to be comment-stripped already. Brace matching is naive about
+    braces inside string literals, which is acceptable here: the callers only need
+    to know which function a given offset falls inside.
+    """
+    for m in _JS_FUNC_DEF_RE.finditer(src):
+        brace = src.find("{", m.end())
+        if brace == -1:
+            continue
+        depth = 0
+        for i in range(brace, len(src)):
+            if src[i] == "{":
+                depth += 1
+            elif src[i] == "}":
+                depth -= 1
+                if depth == 0:
+                    yield m.group(1), brace, i
+                    break
+
 
 def has_downloader_js(folder):
     """Return True if the extension folder contains a bundled downloader.js module."""
@@ -2386,8 +2494,137 @@ def downloads_from_github(src):
 
     Detects direct release-asset URLs and the browser_download_url field returned
     by the GitHub releases API. Independent of whether a downloader.js module exists.
+
+    Textual only: a URL sitting in commented-out or never-called code still counts.
+    Use github_download_enabled() to require that the download actually runs.
     """
     return bool(_GITHUB_DOWNLOAD_RE.search(src)) or "browser_download_url" in src
+
+
+def github_download_enabled(src):
+    """Return True if index.js has a GitHub download that can actually run.
+
+    Stricter than downloads_from_github(). Two ways a GitHub download is present in
+    the file but dead, both common in these extensions:
+
+      1. Commented out - the whole download block sits inside a '/* ... //*/' toggle.
+      2. Never called  - the download function is defined, but its only call sites
+         are themselves commented out.
+
+    A URL at module scope (e.g. `const BEPINEX_URL = ...`) counts as enabled: it has
+    no enclosing function to test, and proving which live function consumes it is not
+    worth the fragility. Erring toward enabled keeps this from dropping real games.
+    """
+    stripped = strip_js_comments(src)
+    if not downloads_from_github(stripped):
+        return False                                   # case 1: comments only
+
+    bodies = list(_js_function_bodies(stripped))
+    hits = [m.start() for m in _GITHUB_DOWNLOAD_RE.finditer(stripped)]
+    hits += [m.start() for m in re.finditer(r"browser_download_url", stripped)]
+
+    for pos in hits:
+        enclosing = [(nm, s, e) for nm, s, e in bodies if s < pos < e]
+        if not enclosing:
+            return True                                # module scope, assume consumed
+        name, start, end = max(enclosing, key=lambda t: t[1])   # innermost
+        references = [m for m in re.finditer(r"\b" + re.escape(name) + r"\b", stripped)
+                      if not (start < m.start() < end)]
+        if len(references) > 1:                        # definition plus a real call
+            return True
+
+    return False                                       # case 2: all hits unreachable
+
+
+# Third-party mod hosts an extension can pull a requirement from, other than GitHub.
+_GAMEBANANA_HOST_RE = re.compile(r"gamebanana\.com/[^\"'`\s)]*")
+_MODDB_HOST_RE = re.compile(r"moddb\.com/[^\"'`\s)]*")
+
+# An extension reaches one of those hosts through one of these events: a direct asset
+# fetch, or Vortex's browser integration where the user clicks the site's own download
+# button. Anything else that merely mentions a host URL is a browse link, not a download.
+_DOWNLOAD_EVENT_MARKERS = ("start-download", "browse-for-download")
+
+_OPN_CALL_RE = re.compile(r"util\.opn\s*\(")
+
+
+def _is_browse_link_line(stripped, pos):
+    """Return True if the reference at pos sits on a line that just opens a browser."""
+    line_start = stripped.rfind("\n", 0, pos) + 1
+    line_end = stripped.find("\n", pos)
+    line = stripped[line_start:line_end if line_end != -1 else len(stripped)]
+    return bool(_OPN_CALL_RE.search(line))
+
+
+def downloads_from_host(src, host_re):
+    """Return True if index.js downloads a requirement from the given mod host.
+
+    Distinguishes a real download from the far more common case of a host URL that
+    only ever feeds util.opn() to open a browse page (an 'Open ModDB Page' button).
+
+    A host URL counts when it reaches a download event - either directly, or through
+    a const that carries it - from inside a function that actually runs. Downloads in
+    commented-out or never-called code are ignored, same as github_download_enabled().
+    """
+    stripped = strip_js_comments(src)
+    if not host_re.search(stripped):
+        return False
+
+    bodies = list(_js_function_bodies(stripped))
+    uses = []          # positions where a host URL value is consumed
+
+    for m in host_re.finditer(stripped):
+        line_start = stripped.rfind("\n", 0, m.start()) + 1
+        line = stripped[line_start:m.start()]
+        # The host match starts mid-literal (after the scheme), so allow any run of
+        # non-quote characters between the opening quote and the host name.
+        assigned = re.search(r"(?:const|let|var)\s+(\w+)\s*=\s*[\"'`][^\"'`]*$", line)
+        if not assigned:
+            uses.append(m.start())
+            continue
+
+        # URL is stored in a const - the uses that matter are that const's references.
+        # Restrict the search to the const's own scope, so a common name like URL
+        # declared inside one download function is not confused with another's.
+        name = assigned.group(1)
+        defpos = line_start + assigned.start(1)
+        owner = [(s, e) for _, s, e in bodies if s < defpos < e]
+        scope_start, scope_end = max(owner, key=lambda t: t[0]) if owner else (0, len(stripped))
+        for ref in re.finditer(r"\b" + re.escape(name) + r"\b",
+                               stripped[scope_start:scope_end]):
+            pos = scope_start + ref.start()
+            if pos != defpos:
+                uses.append(pos)
+
+    for pos in uses:
+        if _is_browse_link_line(stripped, pos):
+            continue                                   # 'Open <host> page' button
+        enclosing = [(nm, s, e) for nm, s, e in bodies if s < pos < e]
+        if not enclosing:
+            # module scope: cannot tie it to a function, accept if the file downloads
+            if any(mark in stripped for mark in _DOWNLOAD_EVENT_MARKERS):
+                return True
+            continue
+        name, start, end = max(enclosing, key=lambda t: t[1])
+        body = stripped[start:end]
+        if not any(mark in body for mark in _DOWNLOAD_EVENT_MARKERS):
+            continue                                   # used, but not for downloading
+        references = [r for r in re.finditer(r"\b" + re.escape(name) + r"\b", stripped)
+                      if not (start < r.start() < end)]
+        if len(references) > 1:                        # definition plus a real call
+            return True
+
+    return False
+
+
+def downloads_from_gamebanana(src):
+    """Return True if index.js downloads a requirement from GameBanana inline."""
+    return downloads_from_host(src, _GAMEBANANA_HOST_RE)
+
+
+def downloads_from_moddb(src):
+    """Return True if index.js downloads a requirement from ModDB inline."""
+    return downloads_from_host(src, _MODDB_HOST_RE)
 
 
 def requires_unreal_mod_installer(src):

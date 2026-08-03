@@ -4,6 +4,10 @@
 
 - None
 
+## [0.4.1] - 2026-08-03
+
+- Fixed: wiltOS Mod Launcher download failed with a "readableStream" error instead of installing
+
 ## [0.4.0] - 2026-07-18
 
 - Improved: wiltOS Mod Launcher download now auto-resolves and installs the latest file from ModDB's RSS feed (previously required browsing to ModDB and picking the file manually)

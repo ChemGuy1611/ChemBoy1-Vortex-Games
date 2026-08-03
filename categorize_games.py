@@ -12,7 +12,14 @@ independently of its engine category and of each other:
     games-downloader.txt - games with a bundled downloader.js module
     games-downloader-gamebanana.txt - games with a bundled gamebanana_downloader.js module
     games-downloader-moddb.txt      - games with a bundled moddb_downloader.js module
-    games-github.txt     - games that download from GitHub inline (no downloader.js)
+    games-github.txt     - games with a WORKING inline GitHub download (no downloader.js).
+                           Skips downloads that are commented out or never called, plus
+                           GITHUB_LIST_EXCLUDED_ENGINES (engines whose GitHub fetch is
+                           just their standard mod loader) and GITHUB_LIST_EXCLUDED_GAMES
+    games-gamebanana.txt - games that download from GameBanana inline (no
+                           gamebanana_downloader.js); browse-page links do not count
+    games-moddb.txt      - games that download from ModDB inline (no moddb_downloader.js);
+                           browse-page links do not count
     games-uemi.txt       - games that require the "Unreal Engine Mod Installer" extension
     games-ue4-5-parity.txt - UE4-5 games carrying the full template-ue4-5 load order
 
@@ -30,7 +37,8 @@ from vortex_utils import (
     read_id_list, write_id_list,
     is_load_order_game as _is_load_order_game_src,
     has_downloader_js, has_gamebanana_downloader_js, has_moddb_downloader_js,
-    downloads_from_github, requires_unreal_mod_installer, has_ue4ss_load_order_parity,
+    github_download_enabled, downloads_from_gamebanana, downloads_from_moddb,
+    requires_unreal_mod_installer, has_ue4ss_load_order_parity,
     log_error, log_dry,
 )
 
@@ -57,6 +65,34 @@ CATEGORIES = [
 
 _FILE_FOR_LABEL = {label: fname for fname, label in CATEGORIES}
 
+# Engine categories kept out of games-github.txt. These games do download from GitHub
+# inline, but only to fetch the standard mod loader their engine already implies -
+# BepInEx/MelonLoader for Unity, FrostyToolsuite for Frostbite, REFramework for RE
+# Engine, Reloaded-II (which self-updates). Their own engine list already tracks them,
+# so listing them here only dilutes games-github.txt, which exists to find games with
+# bespoke GitHub-sourced requirements.
+GITHUB_LIST_EXCLUDED_ENGINES = {
+    "Unity+Bep",
+    "Unity+Mel/Bep",
+    "Unity+UMM",
+    "Frostbite",
+    "RE/Fluffy",
+    "Reloaded-II",
+}
+
+# Individual games kept out of games-github.txt where the engine category alone does not
+# capture it. Same rationale as above: the GitHub asset is pinned and will not be updated.
+GITHUB_LIST_EXCLUDED_GAMES = {
+    "middleearthshadowofwar",   # Middle-Earth Mod Loader, fixed 'loader' release tag
+    "crimsondesert",            # Ultimate ASI Loader, rolling 'x64-latest' release tag
+}
+
+
+def _game_id_from_folder(folder):
+    """Return the GAME_ID for a game-* extension folder path."""
+    name = os.path.basename(os.path.normpath(folder))
+    return name[len("game-"):] if name.startswith("game-") else name
+
 # Flag lists are non-exclusive and evaluated for every game-* extension: a game
 # may appear in zero or more of these in addition to its single engine category.
 # Each entry pairs an output filename with a predicate(src, folder) -> bool.
@@ -66,7 +102,20 @@ FLAG_LISTS = [
     ("games-downloader-gamebanana.txt", lambda src, folder: has_gamebanana_downloader_js(folder)),
     ("games-downloader-moddb.txt",      lambda src, folder: has_moddb_downloader_js(folder)),
     # GitHub download done inline in index.js, i.e. without the downloader.js module.
-    ("games-github.txt",     lambda src, folder: downloads_from_github(src) and not has_downloader_js(folder)),
+    # github_download_enabled() ignores downloads that are commented out or defined in
+    # a never-called function. Engines in GITHUB_LIST_EXCLUDED_ENGINES are skipped too -
+    # their GitHub fetch is the engine's own mod loader, not a game-specific requirement -
+    # as are the one-off games in GITHUB_LIST_EXCLUDED_GAMES.
+    ("games-github.txt",     lambda src, folder: (github_download_enabled(src)
+                                                  and not has_downloader_js(folder)
+                                                  and detect_engine(src) not in GITHUB_LIST_EXCLUDED_ENGINES
+                                                  and _game_id_from_folder(folder) not in GITHUB_LIST_EXCLUDED_GAMES)),
+    # Same idea for the other two mod hosts: a working inline download, no module.
+    # A host URL that only opens a browse page does not count.
+    ("games-gamebanana.txt", lambda src, folder: (downloads_from_gamebanana(src)
+                                                  and not has_gamebanana_downloader_js(folder))),
+    ("games-moddb.txt",      lambda src, folder: (downloads_from_moddb(src)
+                                                  and not has_moddb_downloader_js(folder))),
     ("games-uemi.txt",       lambda src, folder: requires_unreal_mod_installer(src)),
     # UE4-5 games at template load-order parity (custom UE4SS + LogicMods pages).
     ("games-ue4-5-parity.txt", lambda src, folder: has_ue4ss_load_order_parity(src)),

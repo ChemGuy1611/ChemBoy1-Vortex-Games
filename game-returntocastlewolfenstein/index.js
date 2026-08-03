@@ -2,8 +2,8 @@
 Name: Return to Castle Wolfenstein Vortex Extension
 Structure: Generic Game with Custom Engine Mod (RealRTCW)
 Author: ChemBoy1
-Version: 0.4.1
-Date: 03/20/2025
+Version: 1.0.0
+Date: 2026-08-03
 ////////////////////////////////////////////////////////*/
 
 //Import libraries
@@ -11,6 +11,7 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 const { parseStringPromise } = require('xml2js');
+const { downloadModDb, checkForModDbUpdate } = require('./moddb_downloader');
 
 //Specify all the information about the game
 const STEAMAPP_ID = "9010";
@@ -35,6 +36,20 @@ const IORTCW_EXEC = "iowolfsp.x64.exe";
 const REALRTCW_ID = `${GAME_ID}-realrtcw`;
 const REALRTCW_NAME = "RealRTCW";
 const REALRTCW_EXEC = "realrtcw.x64.exe";
+const REALRTCW_URL = "https://www.moddb.com/mods/realrtcw-realism-mod/downloads";
+const MODDB_REQUIREMENTS = [ //ModDB requirements for moddb_downloader.js
+  { //RealRTCW
+    moddbPath: 'mods/realrtcw-realism-mod',
+    modType: REALRTCW_ID,
+    userFacingName: REALRTCW_NAME,
+    filePattern: /^RealRTCW\s+\d+(\.\d+)*$/i, //main mod only - skips the language packs, localizations and "(OUTDATED)" releases in the feed
+    versionPattern: /(\d+(?:\.\d+)+)\s*$/, //version trails the title ("RealRTCW 5.43"), so the default trailing-bracket pattern does not apply
+    fallbackFileId: '273184', //https://www.moddb.com/downloads/start/273184
+    fallbackVersion: '5.43',
+    pageUrl: REALRTCW_URL,
+    skipDownloadManager: true, //modDB blocks Vortex's download manager - fetch the file directly instead
+  },
+];
 
 const MAIN_ID = `${GAME_ID}-mainfolder`;
 const MAIN_NAME = "Main Folder";
@@ -291,7 +306,7 @@ function isIoRTCWInstalled(api, spec) {
   return Object.keys(mods).some(id => mods[id]?.type === IORTCW_ID);
 }
 
-//Startup notification to download RealRTCW or ioRTCW
+//Startup notification to download RealRTCW
 async function downloadEngine(api, gameSpec) {
   let isInstalled = ( isRealRTCWInstalled(api, gameSpec) || isIoRTCWInstalled(api, gameSpec) );
   if (!isInstalled) {
@@ -308,16 +323,12 @@ async function downloadEngine(api, gameSpec) {
           title: 'More',
           action: (dismiss) => {
             api.showDialog('question', MESSAGE, {
-              text: 'It is highly recommended that you download and install either RealRTCW or ioRTCW to improve your experience on modern systems. \n'
-                  + 'RealRTCW is a fork of ioRTCW and is receiving active support, so it is recommended to use RealRTCW. \n'
-              }, 
+              text: 'It is highly recommended that you download and install RealRTCW to improve your experience on modern systems. \n'
+                  + 'RealRTCW is a fork of ioRTCW and is receiving active support, so it is the recommended engine. \n'
+              },
               [
                 { label: 'Download RealRTCW', action: () => {
                   downloadRealRTCW(api, gameSpec);
-                  dismiss();
-                }},
-                { label: 'Download ioRTCW', action: () => {
-                  downloadIoRTCW(api, gameSpec);
                   dismiss();
                 }},
                 { label: 'Not Now', action: () => dismiss() },
@@ -335,120 +346,9 @@ async function downloadEngine(api, gameSpec) {
   }
 }
 
-//* Function to have user browse to download Mod Launcher from modDB
-async function downloadRealRTCW(api, gameSpec) {
-  let isInstalled = isRealRTCWInstalled(api, gameSpec);
-  const URL = "https://www.moddb.com/mods/realrtcw-realism-mod/downloads";
-  const MOD_NAME = REALRTCW_NAME;
-  const MOD_TYPE = REALRTCW_ID;
-  const ARCHIVE_NAME = "realrtcw";
-  const instructions = api.translate(`Once you allow Vortex to browse to modDB - `
-    + `Navigate to the latest version of ${MOD_NAME} in the Files list`
-    + `and click on "Download Now" button to download and install the mod.`
-  );
-
-  if (!isInstalled) {
-    //*
-    return new Promise((resolve, reject) => { //Browse to modDB and download the mod
-      return api.emitAndAwait('browse-for-download', URL, instructions)
-      .then((result) => { //result is an array with the URL to the downloaded file as the only element
-        if (!result || !result.length) { //user clicks outside the window without downloading
-          return reject(new util.UserCanceled());
-        }
-        if (!result[0].includes(ARCHIVE_NAME)) { //if user downloads the wrong file
-          return reject(new util.UserCanceled('Selected wrong download'));
-        }
-        return Promise.resolve(result);
-      })
-      .catch((error) => {
-        return reject(error);
-      })
-      .then((result) => {
-        const dlInfo = {game: gameSpec.game.id, name: MOD_NAME};
-        api.events.emit('start-download', result, {}, undefined,
-          async (error, id) => { //callback function to check for errors and pass id to and call 'start-install-download' event
-            if (error !== null && (error.name !== 'AlreadyDownloaded')) {
-              return reject(error);
-            }
-            api.events.emit('start-install-download', id, { allowAutoEnable: true }, async (error) => { //callback function to complete the installation
-              if (error !== null) {
-                return reject(error);
-              }
-              const profileId = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
-              const batched = [
-                actions.setModsEnabled(api, profileId, result, true, {
-                  allowAutoDeploy: true,
-                  installed: true,
-                }),
-                actions.setModType(GAME_ID, result[0], MOD_TYPE), // Set the mod type
-              ];
-              util.batchDispatch(api.store, batched); // Will dispatch both actions.
-              return resolve();
-            });
-          }, 
-          'never',
-          { allowInstall: false },
-        );
-      });
-    })
-    .catch(err => {
-      if (err instanceof util.UserCanceled) {
-        api.showErrorNotification(`User cancelled download/install of ${MOD_NAME}. Please re-launch Vortex and try again.`, err, { allowReport: false });
-        //util.opn(URL).catch(() => null);
-        return Promise.resolve();
-      } else if (err instanceof util.ProcessCanceled) {
-        api.showErrorNotification(`Failed to download/install ${MOD_NAME}. Please re-launch Vortex and try again or download manually from modDB at the opened paged and install the zip in Vortex.`, err, { allowReport: false });
-        util.opn(URL).catch(() => null);
-        return Promise.reject(err);
-      } else {
-        return Promise.reject(err);
-      }
-    });
-    //*/
-  }
-}
-
-//Download ioRTCW from GitHub
-async function downloadIoRTCW(api, gameSpec) {
-  //notification indicating install process
-  const MOD_NAME = IORTCW_NAME;
-  const MOD_TYPE = IORTCW_ID;
-  const NOTIF_ID = `${GAME_ID}-${MOD_TYPE}-installing`;
-  api.sendNotification({
-    id: NOTIF_ID,
-    message: `Installing ${MOD_NAME}`,
-    type: 'activity',
-    noDismiss: true,
-    allowSuppress: false,
-  });
-  try {
-    //Download the mod
-    const dlInfo = {
-      game: gameSpec.game.id,
-      name: MOD_NAME,
-    };
-    const URL = `https://github.com/iortcw/iortcw/releases/download/1.51c/iortcw-1.51c-win-x64.zip`;
-    const dlId = await util.toPromise(cb =>
-      api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
-    const modId = await util.toPromise(cb =>
-      api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
-    const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
-    const batched = [
-      actions.setModsEnabled(api, profileId, [modId], true, {
-        allowAutoDeploy: true,
-        installed: true,
-      }),
-      actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the modType
-    ];
-    util.batchDispatch(api.store, batched); // Will dispatch both actions.
-  //Show the user the download page if the download/install process fails
-  } catch (err) {
-    const errPage = `https://github.com/iortcw/iortcw/releases`;
-    api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
-    util.opn(errPage).catch(() => null);
-  } finally {
-    api.dismissNotification(NOTIF_ID);
-  }
+//Function to auto-download RealRTCW from modDB (resolved via the shared moddb_downloader module)
+async function downloadRealRTCW(api, gameSpec, check = true) {
+  return downloadModDb(api, gameSpec, MODDB_REQUIREMENTS, check);
 }
 
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////////////
@@ -640,6 +540,7 @@ async function setup(discovery, api, gameSpec) {
     fs.ensureDirWritableAsync(pathPattern(api, gameSpec.game, type.targetPath));
   });
   await downloadEngine(api, gameSpec);
+  await checkForModDbUpdate(api, gameSpec, MODDB_REQUIREMENTS).catch(() => null); //update check should never block setup
   return fs.ensureDirWritableAsync(path.join(discovery.path, gameSpec.game.modPath));
 }
 
@@ -672,15 +573,8 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(MAIN_ID, 35, testMainFolder, installMainFolder);
   context.registerInstaller(PK3_ID, 40, testPk3, installPk3);
 
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download RealRTCW', () => {
-    downloadRealRTCW(context.api, gameSpec).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download ioRTCW', () => {
-    downloadIoRTCW(context.api, gameSpec).catch(() => null);
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download Latest RealRTCW', () => {
+    downloadRealRTCW(context.api, gameSpec, false).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
@@ -738,7 +632,11 @@ function main(context) {
   applyGame(context, spec);
   context.once(() => { // put code here that should be run (once) when Vortex starts up
     const api = context.api;
-
+    api.onAsync('check-mods-version', (gameId, mods, forced) => {
+      if (gameId !== GAME_ID) return;
+      return checkForModDbUpdate(api, spec, MODDB_REQUIREMENTS)
+        .catch(err => log('warn', `Failed to check for ${REALRTCW_NAME} update: ${err}`));
+    });
   });
   return true;
 }

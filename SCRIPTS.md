@@ -118,7 +118,12 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `has_downloader_js(folder)` | Return `True` if the extension `folder` contains a bundled `downloader.js` module |
 | `has_gamebanana_downloader_js(folder)` | Return `True` if the extension `folder` contains a bundled `gamebanana_downloader.js` module |
 | `has_moddb_downloader_js(folder)` | Return `True` if the extension `folder` contains a bundled `moddb_downloader.js` module |
-| `downloads_from_github(src)` | Return `True` if `src` pulls a mod/requirement from a GitHub release (release-asset URL or `browser_download_url`) |
+| `downloads_from_github(src)` | Return `True` if `src` pulls a mod/requirement from a GitHub release (release-asset URL or `browser_download_url`). Textual only — commented-out and never-called code still counts |
+| `github_download_enabled(src)` | Return `True` if `src` has a GitHub download that can actually run: not commented out, not stranded in a never-called function |
+| `downloads_from_host(src, host_re)` | Return `True` if `src` downloads a requirement from the given mod host. Ignores host URLs that only feed `util.opn()` to open a browse page |
+| `downloads_from_gamebanana(src)` | `downloads_from_host` bound to GameBanana |
+| `downloads_from_moddb(src)` | `downloads_from_host` bound to ModDB |
+| `strip_js_comments(src)` | Return `src` with `//` and `/* */` comments blanked to spaces, preserving string/template/regex literals and character offsets |
 | `requires_unreal_mod_installer(src)` | Return `True` if `src` declares `context.requireExtension("Unreal Engine Mod Installer")` |
 | `has_ue4ss_load_order_parity(src)` | Return `True` if `src` is a UE4-5 extension carrying the full `template-ue4-5` load order (detected via the `Ue4ssContextMenu` component) |
 | `parse_nexus_mod_url(url)` | Parse a Nexus Mods URL into `(domain, mod_id)` or `None`. |
@@ -857,13 +862,31 @@ The engine categories above are mutually exclusive (one per game). The lists bel
 | `resources/lists/games-downloader.txt` | Games with a bundled `downloader.js` module |
 | `resources/lists/games-downloader-gamebanana.txt` | Games with a bundled `gamebanana_downloader.js` module |
 | `resources/lists/games-downloader-moddb.txt` | Games with a bundled `moddb_downloader.js` module |
-| `resources/lists/games-github.txt` | Games that download from GitHub inline in `index.js` (no `downloader.js`) |
+| `resources/lists/games-github.txt` | Games with a working inline GitHub download in `index.js` (no `downloader.js`), excluding dead downloads and the engines listed in `GITHUB_LIST_EXCLUDED_ENGINES` |
+| `resources/lists/games-gamebanana.txt` | Games with a working inline GameBanana download in `index.js` (no `gamebanana_downloader.js`) |
+| `resources/lists/games-moddb.txt` | Games with a working inline ModDB download in `index.js` (no `moddb_downloader.js`) |
 | `resources/lists/games-uemi.txt` | Games that require the `Unreal Engine Mod Installer` extension via `context.requireExtension` |
 | `resources/lists/games-ue4-5-parity.txt` | UE4-5 games at `template-ue4-5` load-order parity (custom UE4SS + LogicMods pages) |
 
 ### categorize_games.py — Detection
 
-Each game is matched against the engine categories in order — the first match wins. Detection uses the `Structure:` comment on line 3 of `index.js` as the primary signal, with fallback checks for unique code markers such as `const UNREALDATA =`, `const ATK_ID =`, `context.requireExtension('modtype-bepinex')`, etc. The flag lists are computed separately via dedicated predicates (`is_load_order_game`, `has_downloader_js`, `has_gamebanana_downloader_js`, `has_moddb_downloader_js`, `downloads_from_github`, `requires_unreal_mod_installer`, `has_ue4ss_load_order_parity`) in `vortex_utils.py`. The parity predicate keys off the `Ue4ssContextMenu` component, which only exists in games that took the whole load-order region (PAK + custom UE4SS + LogicMods pages) from `template-ue4-5`.
+Each game is matched against the engine categories in order — the first match wins. Detection uses the `Structure:` comment on line 3 of `index.js` as the primary signal, with fallback checks for unique code markers such as `const UNREALDATA =`, `const ATK_ID =`, `context.requireExtension('modtype-bepinex')`, etc. The flag lists are computed separately via dedicated predicates (`is_load_order_game`, `has_downloader_js`, `has_gamebanana_downloader_js`, `has_moddb_downloader_js`, `github_download_enabled`, `requires_unreal_mod_installer`, `has_ue4ss_load_order_parity`) in `vortex_utils.py`. The parity predicate keys off the `Ue4ssContextMenu` component, which only exists in games that took the whole load-order region (PAK + custom UE4SS + LogicMods pages) from `template-ue4-5`.
+
+`games-github.txt` applies two extra filters the other flag lists do not.
+
+**Engine exclusions.** Unity (BepInEx, MelonLoader/BepInEx hybrid, UMM), Frostbite, RE Engine, and Reloaded-II games are excluded via the `GITHUB_LIST_EXCLUDED_ENGINES` set in `categorize_games.py`: they do fetch from GitHub inline, but only to pull the standard mod loader their engine already implies (BepInEx/MelonLoader, FrostyToolsuite, REFramework, Reloaded-II — which then self-updates). Their engine list already tracks them, so the list stays focused on games with bespoke GitHub-sourced requirements. Add an engine label to that set to exclude it too.
+
+**Per-game exclusions.** `GITHUB_LIST_EXCLUDED_GAMES` holds individual GAME_IDs the engine rule does not cover — currently `middleearthshadowofwar` (Middle-Earth Mod Loader, fixed `loader` release tag) and `crimsondesert` (Ultimate ASI Loader, rolling `x64-latest` tag). Add an ID there when a game's GitHub asset sits on a fixed or rolling tag rather than real versioned releases.
+
+### categorize_games.py — GameBanana and ModDB lists
+
+`games-gamebanana.txt` and `games-moddb.txt` are the same idea as `games-github.txt` applied to the other two mod hosts, via `downloads_from_gamebanana()` / `downloads_from_moddb()` (both thin wrappers over `downloads_from_host()`). Each excludes games that own the corresponding downloader module, since those are already tracked by `games-downloader-gamebanana.txt` / `games-downloader-moddb.txt` — the two lists compose, so the union is every game using that host.
+
+The hard part is that most host URLs in these extensions are **not** downloads: they are browse links behind an "Open ModDB Page" button. `downloads_from_host()` separates them by asking where the URL value actually goes. A URL that only ever feeds `util.opn()` is a browse link. A URL that reaches a `start-download` or `browse-for-download` event — directly, or through a const that carries it — is a download. Const references are resolved within the const's own scope, so a common name like `URL` declared inside one download function is not confused with another's. The same liveness rule as `github_download_enabled()` applies: commented-out and never-called downloads do not count.
+
+Both mechanisms count as downloads, including Vortex's browser integration where the user clicks the site's own download button (ModDB has no direct-asset API, so `game-returntocastlewolfenstein` uses exactly this).
+
+**Dead-download exclusion.** The predicate is `github_download_enabled()`, not the raw textual `downloads_from_github()`. It ignores a GitHub download that cannot actually run, which happens two ways in these extensions: the block is commented out via the `/* ... //*/` toggle idiom, or the download function is defined but its only call sites are themselves commented out. Detection runs on comment-stripped source (`strip_js_comments()` in `vortex_utils.py`, which preserves string/template/regex literals so the `//` inside a URL is never mistaken for a comment), then brace-matches each URL's enclosing function to check for a live call site. A URL at module scope counts as enabled — there is no enclosing function to test, and assuming enabled avoids dropping real games. Use `downloads_from_github()` when you want every textual mention regardless of whether it runs.
 
 ---
 
@@ -1094,7 +1117,7 @@ Each patch function receives `(game_id, src, context)` and returns `(new_src, ch
 
 ## setup_test_folder.py
 
-Creates a minimal fake game installation for testing a Vortex extension. Reads `GAME_NAME`, `EXEC`/`EXEC_NAME`, `BINARIES_PATH`, `EPIC_CODE_NAME`, `STEAM_EXEC`, `EXEC_STEAM`, `STEAM_EXEC_FOLDER`, and `REQ_FILE` from `index.js` and creates an empty executable file at the correct path so Vortex can detect the game.
+Creates a minimal fake game installation for testing a Vortex extension. Reads the game spec out of `index.js` — its `name`, `executable`, and `requiredFiles` — and creates an empty file at the full path of the executable, including every subfolder, plus every discovery path the spec requires, so Vortex can detect the game.
 
 ### setup_test_folder.py — Requirements
 
@@ -1131,7 +1154,24 @@ python setup_test_folder.py helldivers2 reddeadredemption2
 
 ### setup_test_folder.py — Output
 
-Creates `D:\Game_Tools_D\!TestGameFolders_D\{GAME_NAME}\{BINARIES_PATH}\{EXEC_NAME}` as an empty file with all parent directories. If the file already exists it reports so and skips creation. Uses a symbol table built from `index.js` to resolve template literals, `path.join()` expressions, and variable references. Falls back to `STEAM_EXEC` / `EXEC_STEAM` for games that use store-specific exec constants instead of a single `EXEC`. If `REQ_FILE` is defined in `index.js` and resolves to a different path than the exe, also creates that path — as a directory if the basename has no extension, otherwise as an empty file.
+Creates `D:\Game_Tools_D\!TestGameFolders_D\{GAME_NAME}\{EXEC}` as an empty file with all parent directories. If the file already exists it reports so and skips creation. Values are resolved with a symbol table built from `index.js`, which handles template literals, `path.join()` expressions, and variable references.
+
+The executable is taken from the game spec's `executable` field, since that is the path Vortex launches, and it is used whole — every subfolder in it is recreated (for example `Base\Binaries\Win64\Civ7_Win64_DX12_FinalRelease.exe`). Commented-out spec fields are ignored, and specs that reach the game object through `context.registerGame({ ... })` rather than a `gameSpec` const are read the same way.
+
+Extensions whose spec points at a `getExecutable` function choose their executable at runtime by probing the game folder, so the script falls back to the store and edition constants those extensions declare, in this order:
+
+```text
+EXEC, EXEC_DEFAULT, DEFAULT_EXEC, STEAM_EXEC, EXEC_STEAM,
+EXEC_GOG, EXEC_EPIC, EXEC_CLASSIC, EXEC_NEW, EXEC_XBOX
+```
+
+Default and Steam builds come first. `EXEC_XBOX` is last because it is the `gamelaunchhelper.exe` shim — creating it would make the extension treat the test folder as a Game Pass install and use the Xbox mod paths. If none of those resolve either, the script falls back to `EXEC_NAME` joined with `BINARIES_PATH` (or `STEAM_EXEC_FOLDER`); `BINARIES_PATH` is otherwise ignored, since in most extensions it is a mod deployment target rather than the folder the executable lives in.
+
+Every entry of the spec's `requiredFiles` is created too, because Vortex only reports a game as discovered when all of them are present — as a directory if the entry's basename has no extension, otherwise as an empty file. Extensions that keep the array in a top-level `requiredFiles` const and attach it when registering the game are covered, as is `REQ_FILE`. Entries that resolve to the executable's own path are skipped.
+
+The game's folder name comes from `GAME_NAME`, falling back to the spec's `name` field for extensions that pass the name to `registerGame` as a literal.
+
+Extensions that register several games from one folder (for example `game-ninjagaidenmastercollection`) get a test folder for the first game in the file only.
 
 ---
 
