@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.2.0] - 2026-08-03
+
+- Multiple technical fixes.
+
 ## [0.1.3] - 2025-07-31
 
 - Fixed an undefined variable error that could occur if the game folder is not readable.

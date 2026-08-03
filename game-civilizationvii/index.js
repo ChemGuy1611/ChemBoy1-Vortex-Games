@@ -1,8 +1,8 @@
 /*
 Name: Civilization VII Vortex Extension
 Author: ChemBoy1
-Version: 0.1.1
-Date: 02/12/2025
+Version: 0.2.0
+Date: 2026-08-03
 */
 
 //import libraries
