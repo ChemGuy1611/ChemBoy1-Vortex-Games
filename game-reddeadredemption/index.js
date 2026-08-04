@@ -2,14 +2,15 @@
 Name: Red Dead Redemption Vortex Extension
 Structure: 3rd-Party Mod Installer
 Author: ChemBoy1
-Version: 0.2.5
-Date: 2025-11-14
+Version: 0.3.0
+Date: 2026-08-03
 ////////////////////////////////////////////*/
 
 //Import libraries
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
+const { download, findModByFile, findDownloadIdByFile, resolveVersionByPattern, testRequirementVersion } = require('./downloader');
 
 const DOCUMENTS = util.getVortexPath("documents");
 
@@ -53,6 +54,7 @@ const ASIPLUGIN_EXT = ".asi";
 const MAGIC_ID = `${GAME_ID}-magicrdr`;
 const MAGIC_NAME = "Magic-RDR";
 const MAGIC_EXEC = "MagicRDR.exe";
+const MAGIC_FILE = MAGIC_EXEC.toLowerCase(); //used for case-insensitive file matching
 
 const CONFIG_ID = `${GAME_ID}-config`;
 const CONFIG_NAME = "Config";
@@ -78,6 +80,27 @@ if (USERID_FOLDER === undefined) {
 } //*/
 const SAVE_PATH = path.join(SAVE_FOLDER, USERID_FOLDER);
 const SAVE_EXTS = [""];
+
+// REQUIREMENTS //////////////////////////////////////////////////////////////
+const MAGIC_AUTHOR = 'Foxxyyy';
+const MAGIC_REPO = 'Magic-RDR';
+const MAGIC_VER = '1.3.10';
+const MAGIC_ARC_NAME = `MagicRDR_v${MAGIC_VER}.zip`;
+const MAGIC_URL_API = `https://api.github.com/repos/${MAGIC_AUTHOR}/${MAGIC_REPO}`;
+
+const REQUIREMENTS = [
+  { //Magic RDR
+    archiveFileName: MAGIC_ARC_NAME,
+    modType: MAGIC_ID,
+    assemblyFileName: MAGIC_FILE,
+    userFacingName: MAGIC_NAME,
+    githubUrl: MAGIC_URL_API,
+    findMod: (api) => findModByFile(api, MAGIC_ID, MAGIC_FILE),
+    findDownloadId: (api) => findDownloadIdByFile(api, MAGIC_ARC_NAME),
+    fileArchivePattern: new RegExp(/^MagicRDR_v(\d+\.\d+\.\d+)/, 'i'),
+    resolveVersion: (api) => resolveVersionByPattern(api, REQUIREMENTS[0]),
+  },
+];
 
 //Filled in from information above
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1079"; //Nexus link to this extension. Used for links
@@ -302,11 +325,33 @@ async function requiresLauncher(gamePath, store) {
 
 // AUTOMATIC DOWNLOAD FUNCTIONS ////////////////////////////////////////////////////////
 
-//Check if mod injector is installed
-function isMagicInstalled(api, spec) {
-  const state = api.getState();
-  const mods = state.persistent.mods[spec.game.id] || {};
-  return Object.keys(mods).some(id => mods[id]?.type === MAGIC_ID);
+async function asyncForEachTestVersion(api, requirements) {
+  for (let index = 0; index < requirements.length; index++) {
+    await testRequirementVersion(api, requirements[index]);
+  }
+}
+
+async function asyncForEachCheck(api, requirements) {
+  let mod = [];
+  for (let index = 0; index < requirements.length; index++) {
+    mod[index] = await requirements[index].findMod(api);
+  }
+  let checker = mod.every((entry) => entry === true);
+  return checker;
+}
+
+async function onCheckModVersion(api, gameId, mods, forced) {
+  try {
+    await asyncForEachTestVersion(api, REQUIREMENTS);
+    log('warn', 'Checked requirements versions');
+  } catch (err) {
+    log('warn', `Failed to test requirement version: ${err}`);
+  }
+}
+
+async function checkForRequirements(api) {
+  const CHECK = await asyncForEachCheck(api, REQUIREMENTS);
+  return CHECK;
 }
 
 //Check if ScriptHook is installed
@@ -321,53 +366,6 @@ function isModLoaderInstalled(api, spec) {
   const state = api.getState();
   const mods = state.persistent.mods[spec.game.id] || {};
   return Object.keys(mods).some(id => mods[id]?.type === MODLOADER_ID);
-}
-
-//Function to auto-download Mod Loader
-async function downloadMagic(api, gameSpec) {
-  let isInstalled = isMagicInstalled(api, gameSpec);
-
-  if (!isInstalled) {
-    //notification indicating install process
-    const MOD_NAME = "Magic RDR";
-    const NOTIF_ID = `${GAME_ID}-${MOD_NAME}-installing`;
-    api.sendNotification({
-      id: NOTIF_ID,
-      message: `Installing ${MOD_NAME}`,
-      type: 'activity',
-      noDismiss: true,
-      allowSuppress: false,
-    });
-
-    try {
-      //Download the mod
-      const dlInfo = {
-        game: gameSpec.game.id,
-        name: MOD_NAME,
-      };
-      const URL = `https://github.com/Foxxyyy/Magic-RDR/releases/download/v1.3.10/MagicRDR_v1.3.10.zip`;
-      const dlId = await util.toPromise(cb =>
-        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
-      const modId = await util.toPromise(cb =>
-        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
-      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
-      const batched = [
-        actions.setModsEnabled(api, profileId, [modId], true, {
-          allowAutoDeploy: true,
-          installed: true,
-        }),
-        actions.setModType(gameSpec.game.id, modId, MAGIC_ID), // Set the mod type
-      ];
-      util.batchDispatch(api.store, batched); // Will dispatch both actions.
-    //Show the user the download page if the download, install process fails
-    } catch (err) {
-      const errPage = `https://github.com/Foxxyyy/Magic-RDR/releases`;
-      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
-      util.opn(errPage).catch(() => null);
-    } finally {
-      api.dismissNotification(NOTIF_ID);
-    }
-  }
 }
 
 //Function to auto-download Signature Bypass from Nexus
@@ -619,7 +617,7 @@ function installMagicMod(files, fileName) {
 
 //Installer test for Magic-RDR
 function testMagic(files, gameId) {
-  const isMod = files.some(file => path.basename(file).toLowerCase() === MAGIC_EXEC);
+  const isMod = files.some(file => path.basename(file).toLowerCase() === MAGIC_FILE);
   let supported = (gameId === spec.game.id) && isMod;
 
   // Test for a mod installer.
@@ -637,7 +635,7 @@ function testMagic(files, gameId) {
 
 //Installer install Magic-RDR
 function installMagic(files) {
-  const modFile = files.find(file => path.basename(file).toLowerCase() === MAGIC_EXEC);
+  const modFile = files.find(file => path.basename(file).toLowerCase() === MAGIC_FILE);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MAGIC_ID };
@@ -788,7 +786,10 @@ async function setup(discovery, api, gameSpec) {
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   // ASYNC CODE //////////////////////////////////////////
   await fs.ensureDirWritableAsync(path.join(discovery.path, RPF_PATH));
-  await downloadMagic(api, gameSpec);
+  const requirementsInstalled = await checkForRequirements(api);
+  if (!requirementsInstalled) {
+    await download(api, REQUIREMENTS);
+  }
   await downloadScriptHook(api, gameSpec);
   await downloadModLoader(api, gameSpec);
   return fs.ensureDirWritableAsync(path.join(discovery.path, MAGICMOD_PATH));
@@ -821,8 +822,8 @@ function applyGame(context, gameSpec) {
   //register mod installers
   context.registerInstaller(SCRIPTHOOK_ID, 25, testScriptHook, installScriptHook);
   context.registerInstaller(MODLOADER_ID, 27, testModLoader, installModLoader);
+  context.registerInstaller(MAGIC_ID, 28, testMagic, installMagic); //must precede the loose-file installer below, which matches on extension only
   context.registerInstaller(MAGICMOD_ID, 29, testMagicMod, installMagicMod);
-  context.registerInstaller(MAGIC_ID, 31, testMagic, installMagic);
   context.registerInstaller(RPF_ID, 33, testRPF, installRPF);
   context.registerInstaller(ASIPLUGIN_ID, 35, testAsiPlugin, installAsiPlugin);
 
@@ -887,8 +888,10 @@ function applyGame(context, gameSpec) {
 function main(context) {
   applyGame(context, spec);
   context.once(() => { // put code here that should be run (once) when Vortex starts up
-    const api = context.api;
-
+    context.api.onAsync('check-mods-version', (gameId, mods, forced) => {
+      if (gameId !== GAME_ID) return;
+      return onCheckModVersion(context.api, gameId, mods, forced);
+    });
   });
   return true;
 }

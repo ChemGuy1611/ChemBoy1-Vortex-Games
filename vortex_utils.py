@@ -2255,8 +2255,15 @@ def find_vortex_plugin_folder(game_id, game_name=None):
     Match priority:
       1. Exact game_id match or game_id prefix (e.g. "subnautica2", "subnautica2-1.2.0")
       2. "Vortex Extension Update - <name> v*" folder (deployed via Nexus in-app update);
-         cleaned game_id or game_name as substring
-      3. Fuzzy substring match of cleaned game_id or game_name against any folder
+         cleaned game_id or game_name equal to the folder's name portion, else a
+         substring of it
+      3. Fuzzy match of cleaned game_id or game_name against any folder, again
+         equal before substring
+
+    Passes 2 and 3 each scan every entry and only fall back to a substring hit
+    when no folder matches exactly, so a game id contained in another game's id
+    ("reddeadredemption" in "reddeadredemption2support") cannot resolve to the
+    longer-named extension.
 
     Cleaning normalizes underscores to spaces (newer deployed folders use the
     underscore-delimited "{Name}_Vortex_Extension_{version}_{hash}" form),
@@ -2314,6 +2321,13 @@ def find_vortex_plugin_folder(game_id, game_name=None):
     gid_clean = _clean(game_id)
     name_clean = _clean(game_name) if game_name else None
 
+    # An exact match always beats a substring one, and the whole listing is
+    # scanned before a substring hit is accepted. A game id that is a prefix of
+    # another game's id ("reddeadredemption" inside "reddeadredemption2support",
+    # "doom" inside "doom3") otherwise resolves to whichever folder os.listdir
+    # happened to return first, which silently overwrites the wrong extension.
+    vu_exact = None
+    vu_substr = None
     for entry in entries:
         m = _vu_prefix.match(entry)
         if not m:
@@ -2322,20 +2336,33 @@ def find_vortex_plugin_folder(game_id, game_name=None):
         full = os.path.join(plugins_dir, entry)
         if not os.path.isdir(full):
             continue
-        if gid_clean and gid_clean in entry_name_clean:
-            return full
-        if name_clean and name_clean in entry_name_clean:
-            return full
+        if entry_name_clean and entry_name_clean in (gid_clean, name_clean):
+            vu_exact = full
+            break
+        if vu_substr is None and (
+                (gid_clean and gid_clean in entry_name_clean)
+                or (name_clean and name_clean in entry_name_clean)):
+            vu_substr = full
+    if vu_exact or vu_substr:
+        return vu_exact or vu_substr
 
-    # Pass 3: fuzzy game_name substring match (original fallback)
+    # Pass 3: fuzzy game_name match against any folder (original fallback),
+    # exact before substring for the same reason as pass 2.
+    fuzzy_exact = None
+    fuzzy_substr = None
     for entry in entries:
         ec = _clean(entry)
-        if (gid_clean and gid_clean in ec) or (name_clean and name_clean in ec):
-            full = os.path.join(plugins_dir, entry)
-            if os.path.isdir(full):
-                return full
+        full = os.path.join(plugins_dir, entry)
+        if not os.path.isdir(full):
+            continue
+        if ec and ec in (gid_clean, name_clean):
+            fuzzy_exact = full
+            break
+        if fuzzy_substr is None and (
+                (gid_clean and gid_clean in ec) or (name_clean and name_clean in ec)):
+            fuzzy_substr = full
 
-    return None
+    return fuzzy_exact or fuzzy_substr
 
 
 def open_in_default_app(path):

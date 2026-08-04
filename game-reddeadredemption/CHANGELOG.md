@@ -4,6 +4,12 @@
 
 - Loose Files loader support (once added)
 
+## [0.3.0] - 2026-08-03
+
+- Magic RDR now downloads the latest release automatically instead of a fixed version.
+- Vortex now notifies you when a newer Magic RDR release is available.
+- Fixed the Magic RDR installer not recognizing the tool's files.
+
 ## [0.2.5] - 2025-11-14
 
 - Added buttons to open Config and Save folders (folder icon on Mods page toolbar).

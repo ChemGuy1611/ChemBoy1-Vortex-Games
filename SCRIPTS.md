@@ -114,7 +114,7 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `safe_windows_dirname(name)` | Strip characters invalid in Windows directory names (`<>:"/\|?*`) and strip whitespace |
 | `safe_rmtree(path, hint)` | Remove a directory tree, retrying once on `PermissionError` after 1 second. `hint` shown in the warning (e.g. `"close Vortex first"`). |
 | `touch_empty(path, force)` | Create an empty file at `path` atomically. No-op if file exists and `force=False`. |
-| `find_vortex_plugin_folder(game_id, game_name)` | Return the deployed plugin folder path for `game_id` in Vortex's plugins dir. Reads `VORTEX_PLUGINS_DIR` env (default `C:\ProgramData\vortex\plugins`). Returns `None` if not found. |
+| `find_vortex_plugin_folder(game_id, game_name)` | Return the deployed plugin folder path for `game_id` in Vortex's plugins dir. Reads `VORTEX_PLUGINS_DIR` env (default `C:\ProgramData\vortex\plugins`). Matches on the game-id folder name first, then the `Vortex Extension Update - <name> v*` form, then any folder; the latter two prefer an exact name match and fall back to a substring only when no folder matches exactly, so a game id contained in another's (`reddeadredemption` in `reddeadredemption2support`) cannot resolve to the longer-named extension. Returns `None` if not found. |
 | `read_id_list(filepath)` | Read a text file; return list of stripped non-empty lines (game IDs or similar) |
 | `write_id_list(filepath, game_ids)` | Write a sorted list of IDs to a file, one per line |
 | `is_load_order_game(src)` | Return `True` if `src` calls `registerLoadOrder` and is not a UE4/5 extension |
@@ -879,7 +879,7 @@ Each game is matched against the engine categories in order — the first match 
 
 **Engine exclusions.** Unity (BepInEx, MelonLoader/BepInEx hybrid, UMM), Frostbite, RE Engine, and Reloaded-II games are excluded via the `GITHUB_LIST_EXCLUDED_ENGINES` set in `categorize_games.py`: they do fetch from GitHub inline, but only to pull the standard mod loader their engine already implies (BepInEx/MelonLoader, FrostyToolsuite, REFramework, Reloaded-II — which then self-updates). Their engine list already tracks them, so the list stays focused on games with bespoke GitHub-sourced requirements. Add an engine label to that set to exclude it too.
 
-**Per-game exclusions.** `GITHUB_LIST_EXCLUDED_GAMES` holds individual GAME_IDs the engine rule does not cover — currently `middleearthshadowofwar` (Middle-Earth Mod Loader, fixed `loader` release tag) and `crimsondesert` (Ultimate ASI Loader, rolling `x64-latest` tag). Add an ID there when a game's GitHub asset sits on a fixed or rolling tag rather than real versioned releases.
+**Per-game exclusions.** `GITHUB_LIST_EXCLUDED_GAMES` holds individual GAME_IDs the engine rule does not cover — currently `middleearthshadowofwar` (Middle-Earth Mod Loader, fixed `loader` release tag), `crimsondesert` (Ultimate ASI Loader, rolling `x64-latest` tag), `nioh3` (Yumia fdata Tools on `releases/latest/download`, RDBExplorer downloaded by manual browse of the releases page) and `deusexhumanrevolution` (DXHRDC-ModHook, pinned `v1.1.0.0` release asset). Add an ID there when a game's GitHub asset sits on a fixed or rolling tag rather than real versioned releases, or is not fetched as a versioned asset at all.
 
 ### categorize_games.py — GameBanana and ModDB lists
 

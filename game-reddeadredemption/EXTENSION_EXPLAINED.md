@@ -44,8 +44,8 @@ Installers run in priority order (lower number = tested first). The first instal
 | --- | --- |
 | `reddeadredemption-scripthook` | 25 |
 | `reddeadredemption-modloader` | 27 |
+| `reddeadredemption-magicrdr` | 28 |
 | `reddeadredemption-magicmod` | 29 |
-| `reddeadredemption-magicrdr` | 31 |
 | `reddeadredemption-rpf` | 33 |
 | `reddeadredemption-asiplugin` | 35 |
 

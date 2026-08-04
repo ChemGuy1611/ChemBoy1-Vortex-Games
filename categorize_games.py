@@ -86,6 +86,8 @@ GITHUB_LIST_EXCLUDED_ENGINES = {
 GITHUB_LIST_EXCLUDED_GAMES = {
     "middleearthshadowofwar",   # Middle-Earth Mod Loader, fixed 'loader' release tag
     "crimsondesert",            # Ultimate ASI Loader, rolling 'x64-latest' release tag
+    "nioh3",                    # Yumia fdata Tools on 'releases/latest/download', RDBExplorer manual browse
+    "deusexhumanrevolution",    # DXHRDC-ModHook, pinned 'v1.1.0.0' release asset
 }
 
 # Same idea, for games-gamebanana.txt: the GameBanana asset is pinned to a fixed file/tool

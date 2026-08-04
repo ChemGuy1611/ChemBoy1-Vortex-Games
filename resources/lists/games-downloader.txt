@@ -6,6 +6,7 @@ doom3
 doomthedarkages
 dragonagetheveilguard
 gzdoom
+reddeadredemption
 thelastofuspart1
 warhammer40kdarkheresy
 warhammer40kroguetrader
