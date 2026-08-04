@@ -247,4 +247,5 @@ Shin Ryu Mod Manager (SRMM). Steam + Xbox.
 `INSTALLER_SYSTEM.md` (per-template installer priority ladders referenced throughout).
 `REGISTER_GAME.md` (the `spec`/`applyGame()` structure every template follows).
 `LOAD_ORDER_REGISTRATION.md` (which templates use FBLO vs the legacy load-order page). Requirements
-auto-downloader: `resources/DOWNLOADER.md` (linked above).
+auto-downloader: `resources/DOWNLOADER.md` (linked above). `PCGAMINGWIKI_API.md` (source of the
+`PCGAMINGWIKI_URL` constant and the store-ID/save-path constants filled in at scaffold time).

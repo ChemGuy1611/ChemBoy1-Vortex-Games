@@ -259,4 +259,5 @@ Notes:
 `RUN_EXECUTABLE.md` (launching the game/tools defined here). `TEMPLATES_OVERVIEW.md` (per-template
 `spec`/`applyGame()` conventions). `WINAPI_BINDINGS.md` (`winapi.RegGetValue` fallback detection).
 `ERROR_CLASSES.md` (`SetupError` thrown from `IGame.setup()`). `REQUIRES_LAUNCHER.md` (full
-reference for the `requiresLauncher` field above).
+reference for the `requiresLauncher` field above). `PCGAMINGWIKI_API.md` (looking up the Steam/GOG/
+Epic/Microsoft Store IDs these fields need).

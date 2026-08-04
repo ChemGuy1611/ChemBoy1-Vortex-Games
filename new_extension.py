@@ -68,7 +68,7 @@ from vortex_utils import (
     REPO_ROOT, PCGW_API, TITLE_IMAGES_DIR, BANNER_IMAGES_DIR,
     http_get, http_get_bytes, http_get_json,
     roman_to_arabic, arabic_to_roman, name_lookup_variants,
-    lookup_pcgamingwiki, get_api_key, run_generate_explained_batch,
+    lookup_pcgamingwiki, pcgw_get_json, get_api_key, run_generate_explained_batch,
     run_generate_notes_batch, eslint_check,
     fetch_epic_app_id, add_to_discovery_ids,
     download_exec_icon, download_cover_art, download_title_image, download_banner_image,
@@ -415,7 +415,7 @@ def fetch_pcgw_availability(page_title):
             f"{PCGW_API}?action=parse&page={urllib.parse.quote(page_title)}"
             "&prop=wikitext&format=json"
         )
-        data = http_get_json(url)
+        data = pcgw_get_json(url)
         wikitext = data.get("parse", {}).get("wikitext", {}).get("*", "")
         # Follow redirect if the title resolved to a redirect page
         if wikitext.strip().startswith("#REDIRECT"):
@@ -426,18 +426,20 @@ def fetch_pcgw_availability(page_title):
                     f"{PCGW_API}?action=parse&page={urllib.parse.quote(redirect_title)}"
                     "&prop=wikitext&format=json"
                 )
-                data = http_get_json(url)
+                data = pcgw_get_json(url)
                 wikitext = data.get("parse", {}).get("wikitext", {}).get("*", "")
         if re.search(r'microsoft\s*store|xbox\s*(game\s*pass|store|app)', wikitext, re.IGNORECASE):
             result['xbox'] = True
+        # Store aliases accepted by Template:Availability/store, not just the
+        # display names: "MS Store" and "Epic"/"EGS" are as common as the long forms.
         m_xbox = re.search(
-            r'\{\{Availability/row\|\s*Microsoft Store\s*\|\s*([^|{}\n]+?)\s*\|',
+            r'\{\{Availability/row\|\s*(?:Microsoft Store|MS Store)\s*\|\s*([^|{}\n]+?)\s*\|',
             wikitext, re.IGNORECASE
         )
         if m_xbox:
             result['xbox_url'] = f"https://apps.microsoft.com/detail/{m_xbox.group(1).strip()}"
         m = re.search(
-            r'\{\{Availability/row\|\s*(?:Epic Games Store|EGS)\s*\|\s*([^|{}\n]+?)\s*\|',
+            r'\{\{Availability/row\|\s*(?:Epic Games Store(?: subpage)?|EGS|Epic)\s*\|\s*([^|{}\n]+?)\s*\|',
             wikitext, re.IGNORECASE
         )
         if m:

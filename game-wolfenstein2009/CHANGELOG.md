@@ -4,6 +4,13 @@
 
 - None
 
+## [0.3.0] - 2026-08-03
+
+- Fixed: Readme and changelog files inside mods no longer show up as file conflicts.
+- Fixed: Mod installers no longer match folder entries by mistake.
+- Fixed: Paths are now built safely on all systems.
+- Added: Buttons to open the game's PCGamingWiki page, view the changelog, submit a bug report, and open the downloads folder.
+
 ## [0.2.2]
 
 - Initial release

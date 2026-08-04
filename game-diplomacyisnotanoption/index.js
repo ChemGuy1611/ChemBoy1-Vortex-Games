@@ -2,8 +2,8 @@
 Name: Diplomacy Is Not An Option Vortex Extension
 Structure: Unity BepinEx (Custom Nexus Download)
 Author: ChemBoy1
-Version: 0.1.0
-Date: 10/18/2024
+Version: 0.2.0
+Date: 2026-08-03
 ////////////////////////////////////////////////*/
 
 //Import libraries

@@ -2,8 +2,8 @@
 Name: Mirthwood Vortex Extension
 Structure: Unity BepinEx
 Author: ChemBoy1
-Version: 0.1.1
-Date: 2025-05-14
+Version: 0.2.0
+Date: 2026-08-03
 //////////////////////////////////////////*/
 
 //Import libraries
@@ -42,7 +42,7 @@ const LOADER_ID = `${GAME_ID}-modloader`;
 
 //Filled in from info above
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1272"; //Nexus link to this extension. Used for links
-const PCGAMINGWIKI_URL = "XXX";
+//const PCGAMINGWIKI_URL = ""; //No PCGamingWiki page exists for this game
 const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 const spec = {
@@ -333,13 +333,13 @@ function applyGame(context, gameSpec) {
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   }); //*/
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
+  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
     util.opn(PCGAMINGWIKI_URL).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
-  });
+  }); //*/
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Submit Bug Report', () => {
     util.opn(`${EXTENSION_URL}?tab=bugs`).catch(() => null);
   }, () => {

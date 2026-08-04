@@ -8,7 +8,7 @@ and logging.
 
 Usage:
     from vortex_utils import (
-        REPO_ROOT, PCGW_API, EGDATA_API,
+        REPO_ROOT, PCGW_API, PCGW_USER_AGENT, EGDATA_API,
         TITLE_IMAGES_DIR, BANNER_IMAGES_DIR, LISTS_DIR,
         GUI_FLAGS_PATH, GUI_STATS_PATH,
         GAME_PREFIX, TEMPLATE_PREFIX, VORTEX_PLUGINS_DIR, NEW_EXTENSION_VERSION,
@@ -17,7 +17,7 @@ Usage:
         extract_game_name, extract_extension_url, extract_file_group_id,
         sanitize_game_name, normalize_game_name,
         roman_to_arabic, arabic_to_roman,
-        name_lookup_variants, lookup_pcgamingwiki,
+        name_lookup_variants, lookup_pcgamingwiki, pcgw_get_json,
         get_api_key, http_get, http_get_bytes, http_get_json, http_post_json,
         nexus_v3_get, nexus_v3_post_json,
         fetch_epic_app_id, add_to_discovery_ids,
@@ -80,6 +80,15 @@ REPO_ROOT = os.path.dirname(os.path.abspath(__file__))
 
 PCGW_API    = "https://www.pcgamingwiki.com/w/api.php"
 EGDATA_API  = "https://api.egdata.app"
+
+# PCGamingWiki requires a descriptive User-Agent with contact information and
+# rejects generic library defaults with HTTP 403. Sent on every PCGW request via
+# pcgw_get_json(). Their published rate limit is 30 requests/minute; exceeding it
+# returns HTTP 429 and blocks the IP for 60 seconds.
+PCGW_USER_AGENT = (
+    "ChemBoy1-Vortex-Games/1.0 "
+    "(https://github.com/ChemGuy1611/ChemBoy1-Vortex-Games) python-urllib"
+)
 
 TITLE_IMAGES_DIR  = os.path.join(REPO_ROOT, "resources", "title-images")
 BANNER_IMAGES_DIR = os.path.join(REPO_ROOT, "resources", "banner-images")
@@ -421,6 +430,15 @@ def name_lookup_variants(game_name):
 
 # == PCGamingWiki lookup =======================================================
 
+def pcgw_get_json(url):
+    """Fetch a PCGamingWiki api.php URL and return the parsed JSON response.
+
+    Identical to http_get_json() except that it sends PCGW_USER_AGENT, which the
+    site requires. Use this for every PCGamingWiki request rather than calling
+    http_get()/http_get_json() directly."""
+    return http_get_json(url, headers={"User-Agent": PCGW_USER_AGENT})
+
+
 _pcgw_cache = {}
 
 def lookup_pcgamingwiki(game_name, debug=False):
@@ -445,7 +463,7 @@ def lookup_pcgamingwiki(game_name, debug=False):
                 f"{PCGW_API}?action=query&titles={urllib.parse.quote(variant)}"
                 "&redirects=1&format=json"
             )
-            data = json.loads(http_get(url))
+            data = pcgw_get_json(url)
             pages = data.get("query", {}).get("pages", {})
             for page_id, page in pages.items():
                 if page_id != "-1" and "missing" not in page:
@@ -463,7 +481,7 @@ def lookup_pcgamingwiki(game_name, debug=False):
             f"{PCGW_API}?action=query&list=search&srsearch={urllib.parse.quote(game_name)}"
             "&srwhat=title&format=json&srlimit=20"
         )
-        data = json.loads(http_get(url))
+        data = pcgw_get_json(url)
         results = data.get("query", {}).get("search", [])
         name_variants_norm = {normalize_game_name(v) for v in name_variants}
 
@@ -491,7 +509,7 @@ def lookup_pcgamingwiki(game_name, debug=False):
             f"{PCGW_API}?action=parse&page={urllib.parse.quote(title)}"
             "&prop=wikitext&format=json"
         )
-        wt_data = json.loads(http_get(wt_url))
+        wt_data = pcgw_get_json(wt_url)
         wikitext = wt_data.get("parse", {}).get("wikitext", {}).get("*", "")
         redirect = re.search(r'#REDIRECT\s*\[\[(.+?)\]\]', wikitext)
         if redirect:

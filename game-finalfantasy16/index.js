@@ -2,8 +2,8 @@
 Name: Final Fantasy XVI Vortex Extension
 Structure: 3rd-Party Mod Installer
 Author: ChemBoy1
-Version: 0.1.1
-Date: 09/18/2024
+Version: 0.2.0
+Date: 2026-08-03
 */
 
 //Import libraries

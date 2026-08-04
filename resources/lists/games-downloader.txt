@@ -1,6 +1,7 @@
 balatro
 bloodborne
 bloodthief
+doom
 doom3
 doomthedarkages
 dragonagetheveilguard

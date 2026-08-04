@@ -2,8 +2,8 @@
 Name: Wolfenstein (2009) Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.2.2
-Date: 08/07/2024
+Version: 0.3.0
+Date: 2026-08-03
 //////////////////////////////////////////*/
 
 //Import libraries

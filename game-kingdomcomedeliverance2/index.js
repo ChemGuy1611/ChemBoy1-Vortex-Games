@@ -2,8 +2,8 @@
 Name: Kingdom Come Deliverance II Vortex Extension
 Structure: Mod Folder and FBLO
 Author: ChemBoy1
-Version: 1.0.2
-Date: 2026-07-30
+Version: 1.0.3
+Date: 2026-08-03
 //////////////////////////////////////////////////*/
 
 //Import libraries
@@ -838,7 +838,7 @@ async function deserializeLoadOrder(context) {
     try {
       await fs.statAsync(STEAMWORKSHOP_PATH);
       modFoldersSteamWorkshop = await fs.readdirAsync(STEAMWORKSHOP_PATH)
-        .filter(folder => isDir(STEAMWORKSHOP_PATH, folder))
+      modFoldersSteamWorkshop = modFoldersSteamWorkshop.filter(folder => isDir(STEAMWORKSHOP_PATH, folder))
         .sort((a,b) => a.toLowerCase().localeCompare(b.toLowerCase()));
       SWFOLDER_FOUND = true;
     } catch (err) {

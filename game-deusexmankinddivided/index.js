@@ -2,8 +2,8 @@
 Name: Deus Ex: Mankind Divided Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2025-09-30
+Version: 0.2.0
+Date: 2026-08-03
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -90,7 +90,7 @@ const BINARIES_EXTS = ['.dll', '.exe', '.asi', '.addon64'];
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_NAME = "Save";
 const SAVE_EXT = ".bin";
-const SAVE_FILES = ["XXX"];
+const SAVE_FILES = [];
 
 const ARCHEDIT_ID = `${GAME_ID}-archiveditor`;
 const ARCHEDIT_NAME = "Archive Editor";

@@ -4,6 +4,13 @@
 
 - None Planned
 
+## [0.3.0] - 2026-08-03
+
+- Fixed: Mod installers no longer match folder entries by mistake.
+- Fixed: Paths are now built safely on all systems.
+- Added: Buttons to open the game's PCGamingWiki page and submit a bug report.
+- Changed: Extension is smaller and loads faster.
+
 ## [0.2.1] - 2025-09-29
 
 - Added the user id folder (Steam ID) to the save folder path.

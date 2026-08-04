@@ -2,8 +2,8 @@
 Name: Deus Ex: Invisible War Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2025-09-26
+Version: 0.2.0
+Date: 2026-08-03
 ///////////////////////////////////////////*/
 
 //Import libraries

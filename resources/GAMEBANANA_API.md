@@ -206,3 +206,5 @@ The entry points take an array of requirement objects (conventionally a `GB_REQU
 
 `VORTEX_DOWNLOAD_MGMT.md` (the `start-download`/`import-downloads` events `gamebanana_downloader.js`
 hands off to). `VORTEX_MOD_INSTALL.md` (installing the downloaded requirement as a managed mod).
+`PCGAMINGWIKI_API.md` (game-metadata lookups, and another third-party site with its own
+User-Agent/rate-limit rules).

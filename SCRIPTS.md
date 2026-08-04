@@ -30,6 +30,7 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | --- | --- |
 | `REPO_ROOT` | Absolute path to the repository root directory |
 | `PCGW_API` | PCGamingWiki API base URL |
+| `PCGW_USER_AGENT` | Descriptive User-Agent sent on every PCGamingWiki request (the site returns HTTP 403 for generic library defaults) |
 | `EGDATA_API` | egdata.app API base URL |
 | `TITLE_IMAGES_DIR` | Absolute path to `resources/title-images/` |
 | `BANNER_IMAGES_DIR` | Absolute path to `resources/banner-images/` |
@@ -48,9 +49,11 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `arabic_to_roman(name)` | Convert Arabic digit words to Roman numerals in a game title |
 | `name_lookup_variants(name)` | Generate name variants for PCGamingWiki lookups (title-case, numeral alternates, edition suffix stripping) |
 | `lookup_pcgamingwiki(name, debug)` | Search PCGamingWiki for a game, returns `(page_url, page_title)` with session caching |
+| `pcgw_get_json(url)` | Fetch a PCGamingWiki `api.php` URL as parsed JSON, sending `PCGW_USER_AGENT`. Use for every PCGW request instead of `http_get_json`. |
 | `get_api_key(key_name)` | Load an API key from env var with Windows registry fallback (HKCU, then HKLM) |
 | `http_get(url, headers)` | Fetch a URL and return UTF-8 string. Retries up to 2 times on 429/5xx/network errors (2 s, 4 s delays). |
 | `http_get_bytes(url, headers)` | Fetch a URL and return raw bytes. Same retry behaviour as `http_get`. |
+| `http_get_json(url, headers)` | Fetch a URL and return the parsed JSON body. Same retry behaviour as `http_get`. |
 | `http_post_json(url, data, headers)` | POST a JSON-serializable dict to a URL and return parsed JSON response. Same retry behaviour as `http_get`. |
 | `fetch_epic_app_id(game_name)` | Resolve `EPICAPP_ID` for a game via egdata.app (POST search -> GET offer items -> EXECUTABLE item's `releaseInfo.appId`) |
 | `add_to_discovery_ids(src)` | Add `STEAMAPP_ID_DEMO`, `GOGAPP_ID`, `EPICAPP_ID`, `XBOXAPP_ID`, `UPLAYAPP_ID`, and `EAAPP_ID` to `DISCOVERY_IDS_ACTIVE` if each has a real resolved value in src (not null, `''`, or `'XXX'`) and is not already present. |
@@ -863,7 +866,7 @@ The engine categories above are mutually exclusive (one per game). The lists bel
 | `resources/lists/games-downloader-gamebanana.txt` | Games with a bundled `gamebanana_downloader.js` module |
 | `resources/lists/games-downloader-moddb.txt` | Games with a bundled `moddb_downloader.js` module |
 | `resources/lists/games-github.txt` | Games with a working inline GitHub download in `index.js` (no `downloader.js`), excluding dead downloads and the engines listed in `GITHUB_LIST_EXCLUDED_ENGINES` |
-| `resources/lists/games-gamebanana.txt` | Games with a working inline GameBanana download in `index.js` (no `gamebanana_downloader.js`) |
+| `resources/lists/games-gamebanana.txt` | Games with a working inline GameBanana download in `index.js` (no `gamebanana_downloader.js`), excluding the one-offs in `GAMEBANANA_LIST_EXCLUDED_GAMES` |
 | `resources/lists/games-moddb.txt` | Games with a working inline ModDB download in `index.js` (no `moddb_downloader.js`) |
 | `resources/lists/games-uemi.txt` | Games that require the `Unreal Engine Mod Installer` extension via `context.requireExtension` |
 | `resources/lists/games-ue4-5-parity.txt` | UE4-5 games at `template-ue4-5` load-order parity (custom UE4SS + LogicMods pages) |
@@ -881,6 +884,8 @@ Each game is matched against the engine categories in order — the first match 
 ### categorize_games.py — GameBanana and ModDB lists
 
 `games-gamebanana.txt` and `games-moddb.txt` are the same idea as `games-github.txt` applied to the other two mod hosts, via `downloads_from_gamebanana()` / `downloads_from_moddb()` (both thin wrappers over `downloads_from_host()`). Each excludes games that own the corresponding downloader module, since those are already tracked by `games-downloader-gamebanana.txt` / `games-downloader-moddb.txt` — the two lists compose, so the union is every game using that host.
+
+`games-gamebanana.txt` additionally applies `GAMEBANANA_LIST_EXCLUDED_GAMES` in `categorize_games.py`, same rationale as `GITHUB_LIST_EXCLUDED_GAMES`: `tombraider2013`'s TexMod download is a fixed GameBanana file id (`dl/521607`) that will not be updated, so tracking it as a live requirement adds no value.
 
 The hard part is that most host URLs in these extensions are **not** downloads: they are browse links behind an "Open ModDB Page" button. `downloads_from_host()` separates them by asking where the URL value actually goes. A URL that only ever feeds `util.opn()` is a browse link. A URL that reaches a `start-download` or `browse-for-download` event — directly, or through a const that carries it — is a download. Const references are resolved within the const's own scope, so a common name like `URL` declared inside one download function is not confused with another's. The same liveness rule as `github_download_enabled()` applies: commented-out and never-called downloads do not count.
 

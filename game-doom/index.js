@@ -2,8 +2,8 @@
 Name: DOOM (2016) Vortex Extension
 Structure: 3rd party mod loader
 Author: ChemBoy1
-Version: 0.5.1
-Date: 2025-05-28
+Version: 0.6.0
+Date: 2026-08-03
 ////////////////////////////////////*/
 /*
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣀⣀⣠⣤⣤⣤⡴⣦⡴⣖⠶⣴⠶⡶⣖⡶⣶⢶⣲⡾⠿⢿⡷⣾⢿⣷⣦⢾⣷⣾⣶⣤⣀⣰⣤⣀⡀⠀⠀⢀⣴⣿⡿⡿⣿⣿⣦⣄⠀⠀⣠⣴⣿⡿⢿⡿⣷⣦⡄⠀⠀⢀⣀⣤⣦⣀⣤⣶⣶⣷⣦⣴⡿⢿⡷⣿⠿⡿⣿⣷⢶⣦⢴⡲⣦⢶⡶⢶⡲⣖⡶⣦⣤⣤⣤⣤⣤⣤⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
@@ -39,6 +39,7 @@ Date: 2025-05-28
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
+const { download, findModByFile, findDownloadIdByFile, resolveVersionByPattern, resolveVersionByModVersion, testRequirementVersion } = require('./downloader');
 
 //Specify all the information about the game
 const STEAMAPP_ID = "379720";
@@ -80,6 +81,43 @@ const ROLLBACK_NAME = "Version Rollback Files";
 const ROLLBACK_FILE = 'doomx64vk.exe';
 
 const COMMANDLINE_ARGS = "+devMode_enable 1 +com_skipIntroVideo 1";
+
+// REQUIREMENTS //////////////////////////////////////////////////////////////
+const LOADER_AUTHOR = 'ZwipZwapZapony';
+const LOADER_REPO = 'DOOMModLoader';
+const LOADER_ARC_NAME = 'DOOMModLoader-Windows-x64.zip';
+const LOADER_URL_API = `https://api.github.com/repos/${LOADER_AUTHOR}/${LOADER_REPO}`;
+
+const LAUNCHER_AUTHOR = 'brunoanc';
+const LAUNCHER_REPO = 'DOOMLauncher';
+const LAUNCHER_VER = '3.0.0';
+const LAUNCHER_ARC_NAME = `DOOMLauncher-v${LAUNCHER_VER}.zip`;
+const LAUNCHER_URL_API = `https://api.github.com/repos/${LAUNCHER_AUTHOR}/${LAUNCHER_REPO}`;
+
+const REQUIREMENTS = [
+  { //DOOMModLoader
+    archiveFileName: LOADER_ARC_NAME,
+    modType: LOADER_ID,
+    assemblyFileName: LOADER_FILE,
+    userFacingName: LOADER_NAME,
+    githubUrl: LOADER_URL_API,
+    findMod: (api) => findModByFile(api, LOADER_ID, LOADER_FILE),
+    findDownloadId: (api) => findDownloadIdByFile(api, LOADER_ARC_NAME),
+    fileArchivePattern: new RegExp(/^DOOMModLoader-Windows-x64/, 'i'), //picks the Windows x64 asset; the file name carries no version
+    resolveVersion: (api) => resolveVersionByModVersion(api, REQUIREMENTS[0]), //version only exists in the release tag, so read it back off the installed mod
+  },
+  { //DOOMLauncher
+    archiveFileName: LAUNCHER_ARC_NAME,
+    modType: LAUNCHER_ID,
+    assemblyFileName: LAUNCHER_FILE,
+    userFacingName: LAUNCHER_NAME,
+    githubUrl: LAUNCHER_URL_API,
+    findMod: (api) => findModByFile(api, LAUNCHER_ID, LAUNCHER_FILE),
+    findDownloadId: (api) => findDownloadIdByFile(api, LAUNCHER_ARC_NAME),
+    fileArchivePattern: new RegExp(/^DOOMLauncher-v(\d+\.\d+\.\d+)/, 'i'),
+    resolveVersion: (api) => resolveVersionByPattern(api, REQUIREMENTS[1]),
+  },
+];
 
 const CONFIG_PATH = path.join(USER_HOME, 'Saved Games', 'id Software', 'DOOM', 'base');
 const SAVE_PATH  = path.join(CONFIG_PATH, 'savegame');
@@ -310,100 +348,33 @@ async function requiresLauncher(gamePath, store) {
 
 // AUTO-DOWNLOADER FUNCTIONS ///////////////////////////////////////////////////
 
-//Check if Mod Injector is installed
-function isModLoaderInstalled(api, spec) {
-  const state = api.getState();
-  const mods = state.persistent.mods[spec.game.id] || {};
-  return Object.keys(mods).some(id => mods[id]?.type === LOADER_ID);
-}
-
-//Check if Mod Injector is installed
-function isLauncherInstalled(api, spec) {
-  const state = api.getState();
-  const mods = state.persistent.mods[spec.game.id] || {};
-  return Object.keys(mods).some(id => mods[id]?.type === LAUNCHER_ID);
-}
-
-//Function to auto-download Mod Loader
-async function downloadDoomModLoader(api, gameSpec) {
-  let modLoaderInstalled = isModLoaderInstalled(api, gameSpec);
-  if (!modLoaderInstalled) {
-    const NOTIF_ID = 'doom-doommodloader-installing';
-    api.sendNotification({ //notification indicating install process
-      id: NOTIF_ID,
-      message: 'Installing DOOMModLoader',
-      type: 'activity',
-      noDismiss: true,
-      allowSuppress: false,
-    });
-    try { //Download the mod
-      const dlInfo = {
-        game: gameSpec.game.id,
-        name: LOADER_NAME,
-      };
-      const URL = `https://github.com/ZwipZwapZapony/DOOMModLoader/releases/latest/download/DOOMModLoader.zip`;
-      const dlId = await util.toPromise(cb =>
-        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
-      const modId = await util.toPromise(cb =>
-        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
-      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
-      const batched = [
-        actions.setModsEnabled(api, profileId, [modId], true, {
-          allowAutoDeploy: true,
-          installed: true,
-        }),
-        actions.setModType(gameSpec.game.id, modId, LOADER_ID), // Set the modType
-      ];
-      util.batchDispatch(api.store, batched); // Will dispatch both actions.
-    } catch (err) { //Show the user the download page if the download/install process fails
-      const errPage = `https://github.com/ZwipZwapZapony/DOOMModLoader/releases`;
-      api.showErrorNotification('Failed to download/install DOOMModLoader. You must download manually.', err);
-      util.opn(errPage).catch(() => null);
-    } finally {
-      api.dismissNotification(NOTIF_ID);
-    }
+async function asyncForEachTestVersion(api, requirements) {
+  for (let index = 0; index < requirements.length; index++) {
+    await testRequirementVersion(api, requirements[index]);
   }
 }
 
-//Function to auto-download Mod Loader
-async function downloadLauncher(api, gameSpec) {
-  let modLoaderInstalled = isLauncherInstalled(api, gameSpec);
-  if (!modLoaderInstalled) {
-    const NOTIF_ID = 'doom-doomlauncher-installing';
-    api.sendNotification({ //notification indicating install process
-      id: NOTIF_ID,
-      message: 'Installing DOOMLauncher',
-      type: 'activity',
-      noDismiss: true,
-      allowSuppress: false,
-    });
-    try { //Download the mod
-      const dlInfo = {
-        game: gameSpec.game.id,
-        name: LAUNCHER_NAME,
-      };
-      const URL = `https://github.com/brunoanc/DOOMLauncher/releases/download/v3.0.0/DOOMLauncher-v3.0.0.zip`;
-      const dlId = await util.toPromise(cb =>
-        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
-      const modId = await util.toPromise(cb =>
-        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
-      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
-      const batched = [
-        actions.setModsEnabled(api, profileId, [modId], true, {
-          allowAutoDeploy: true,
-          installed: true,
-        }),
-        actions.setModType(gameSpec.game.id, modId, LAUNCHER_ID), // Set the modType
-      ];
-      util.batchDispatch(api.store, batched); // Will dispatch both actions.
-    } catch (err) { //Show the user the download page if the download/install process fails
-      const errPage = `https://github.com/brunoanc/DOOMLauncher/releases`;
-      api.showErrorNotification('Failed to download/install DOOMLauncher. You must download manually.', err);
-      util.opn(errPage).catch(() => null);
-    } finally {
-      api.dismissNotification(NOTIF_ID);
-    }
+async function asyncForEachCheck(api, requirements) {
+  let mod = [];
+  for (let index = 0; index < requirements.length; index++) {
+    mod[index] = await requirements[index].findMod(api);
   }
+  let checker = mod.every((entry) => entry === true);
+  return checker;
+}
+
+async function onCheckModVersion(api, gameId, mods, forced) {
+  try {
+    await asyncForEachTestVersion(api, REQUIREMENTS);
+    log('warn', 'Checked requirements versions');
+  } catch (err) {
+    log('warn', `Failed to test requirement version: ${err}`);
+  }
+}
+
+async function checkForRequirements(api) {
+  const CHECK = await asyncForEachCheck(api, REQUIREMENTS);
+  return CHECK;
 }
 
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
@@ -554,7 +525,7 @@ async function testZipContent(files, gameId) {
 //Install zips
 async function installZipContent(files, destinationPath) {
   const zipFiles = files.filter(file => ['.zip', '.7z', '.rar'].includes(path.extname(file)));
-  // If it's a double zip, we don't need to repack. 
+  // If it's a double zip, we don't need to repack.
   if (zipFiles.length > 0) {
     const instructions = zipFiles.map(file => {
       return {
@@ -657,8 +628,10 @@ async function setup(discovery, api, gameSpec) {
   GAME_PATH = discovery.path;
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
-  await downloadDoomModLoader(api, gameSpec);
-  await downloadLauncher(api, gameSpec);
+  const requirementsInstalled = await checkForRequirements(api);
+  if (!requirementsInstalled) {
+    await download(api, REQUIREMENTS);
+  }
   return fs.ensureDirWritableAsync(path.join(discovery.path, gameSpec.game.modPath));
 }
 
@@ -752,6 +725,10 @@ function main(context) {
   applyGame(context, spec);
   context.once(() => { // put code here that should be run (once) when Vortex starts up
     const api = context.api;
+    context.api.onAsync('check-mods-version', (gameId, mods, forced) => {
+      if (gameId !== GAME_ID) return;
+      return onCheckModVersion(context.api, gameId, mods, forced);
+    });
     context.api.onAsync('did-deploy', async (profileId, deployment) => {
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;

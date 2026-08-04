@@ -2,8 +2,8 @@
 Name: Age of Mythology: Retold Vortex Extension
 Structure: Generic Game
 Author: ChemBoy1
-Version: 0.1.6
-Date: 11/07/2024
+Version: 0.2.0
+Date: 2026-08-03
 */
 
 //Import libraries

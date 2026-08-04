@@ -2,8 +2,8 @@
 Name: WH40k Space Marine Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.2.0
-Date: 2025-07-30
+Version: 0.3.0
+Date: 2026-08-03
 ///////////////////////////////////////////*/
 
 //Import libraries

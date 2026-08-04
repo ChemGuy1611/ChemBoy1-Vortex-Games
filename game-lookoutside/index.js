@@ -2,8 +2,8 @@
 Name: Look Outside Vortex Extension
 Structure: RPGMaker Engine Game
 Author: ChemBoy1
-Version: 0.1.1
-Date: 2025-09-18
+Version: 0.2.0
+Date: 2026-08-03
 ///////////////////////////////////////////*/
 
 //Import libraries

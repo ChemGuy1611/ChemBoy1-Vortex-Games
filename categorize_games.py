@@ -17,7 +17,8 @@ independently of its engine category and of each other:
                            GITHUB_LIST_EXCLUDED_ENGINES (engines whose GitHub fetch is
                            just their standard mod loader) and GITHUB_LIST_EXCLUDED_GAMES
     games-gamebanana.txt - games that download from GameBanana inline (no
-                           gamebanana_downloader.js); browse-page links do not count
+                           gamebanana_downloader.js); browse-page links do not count.
+                           GAMEBANANA_LIST_EXCLUDED_GAMES drops pinned-asset one-offs
     games-moddb.txt      - games that download from ModDB inline (no moddb_downloader.js);
                            browse-page links do not count
     games-uemi.txt       - games that require the "Unreal Engine Mod Installer" extension
@@ -87,6 +88,12 @@ GITHUB_LIST_EXCLUDED_GAMES = {
     "crimsondesert",            # Ultimate ASI Loader, rolling 'x64-latest' release tag
 }
 
+# Same idea, for games-gamebanana.txt: the GameBanana asset is pinned to a fixed file/tool
+# id and will not be updated, so tracking it as a bespoke requirement adds no value.
+GAMEBANANA_LIST_EXCLUDED_GAMES = {
+    "tombraider2013",           # TexMod, fixed 'dl/521607' file id
+}
+
 
 def _game_id_from_folder(folder):
     """Return the GAME_ID for a game-* extension folder path."""
@@ -111,9 +118,11 @@ FLAG_LISTS = [
                                                   and detect_engine(src) not in GITHUB_LIST_EXCLUDED_ENGINES
                                                   and _game_id_from_folder(folder) not in GITHUB_LIST_EXCLUDED_GAMES)),
     # Same idea for the other two mod hosts: a working inline download, no module.
-    # A host URL that only opens a browse page does not count.
+    # A host URL that only opens a browse page does not count. GAMEBANANA_LIST_EXCLUDED_GAMES
+    # drops one-off games whose GameBanana asset is pinned, same rationale as GitHub's.
     ("games-gamebanana.txt", lambda src, folder: (downloads_from_gamebanana(src)
-                                                  and not has_gamebanana_downloader_js(folder))),
+                                                  and not has_gamebanana_downloader_js(folder)
+                                                  and _game_id_from_folder(folder) not in GAMEBANANA_LIST_EXCLUDED_GAMES)),
     ("games-moddb.txt",      lambda src, folder: (downloads_from_moddb(src)
                                                   and not has_moddb_downloader_js(folder))),
     ("games-uemi.txt",       lambda src, folder: requires_unreal_mod_installer(src)),

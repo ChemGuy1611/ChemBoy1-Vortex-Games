@@ -4,6 +4,10 @@
 
 - Changed launcher settings so that Steam version launches through Steam (so that Steam launch arguments are used).
 
+## [1.0.3] - 2026-08-03
+
+- Fixed: Error notification when trying to read Steam Workshop mods folder, even when present.
+
 ## [1.0.2] - 2026-07-30
 
 - Fixed: KCSE Address Library installed correctly to game root folder.
