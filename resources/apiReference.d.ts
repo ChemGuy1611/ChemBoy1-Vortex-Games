@@ -1,5 +1,18 @@
 // API Reference //////////////////////////////////////////////////////
 ///////////////////////////////////////////////////////////////////////
+//
+// Hand-curated excerpt of the Vortex API surface, kept for quick reading.
+// It is NOT generated and NOT complete.
+//
+// Canonical, complete, machine-generated declarations:
+//   node_modules/vortex-api/lib/api.d.ts   (installed package)
+//   resources/api.d.ts                     (verbatim copy of the above)
+// Newest APIs land in the Vortex source before either of those:
+//   Vortex/src/renderer/src/types/IExtensionContext.ts
+//
+// Signatures below last reconciled against the Vortex source 2026-08-05
+// (v2.4.2 stable / v2.5.0-beta.2 prerelease).
+///////////////////////////////////////////////////////////////////////
 
 //context.registerModType
 export declare function registerModType(id: string, priority: number, isSupported: (gameId: string) => boolean, getPath: (game: IGame) => string, test: (instructions: IInstruction[]) => Promise<boolean>, options?: IModTypeOptions): void;
@@ -40,11 +53,11 @@ export type PropsCallback = () => any;
  */
 export type PersistingType = 'global' | 'game' | 'profile';
 export type CheckFunction = () => Promise<ITestResult>;
-export type RegisterSettings = (title: string, element: React.ComponentClass<any> | React.StatelessComponent<any>, props?: PropsCallback, visible?: () => boolean, priority?: number) => void;
+export type RegisterSettings = (title: string, element: React.ComponentClass<any> | React.FunctionComponent<React.PropsWithChildren<any>>, props?: PropsCallback, visible?: () => boolean, priority?: number) => void;
 export type RegisterAction = (group: string, position: number, iconOrComponent: string | React.ComponentType<any>, options: IActionOptions, titleOrProps?: string | PropsCallback, actionOrCondition?: (instanceIds?: string[]) => void | boolean, condition?: (instanceIds?: string[]) => boolean | string) => void;
-export type RegisterControlWrapper = (group: string, priority: number, wrapper: React.ComponentType<any>) => void;
+export type RegisterControlWrapper = (group: string, priority: number, wrapper: React.ComponentType<React.PropsWithChildren<any>>) => void;
 export type RegisterFooter = (id: string, element: React.ComponentClass<any>, props?: PropsCallback) => void;
-export type RegisterBanner = (group: string, component: React.ComponentType<any>, options: IBannerOptions) => void;
+export type RegisterBanner = (group: string, component: React.ComponentType<React.PropsWithChildren<any>>, options: IBannerOptions) => void;
 export interface IModSourceOptions {
     /**
      * condition for this source to show up. Please make sure this returns quickly, cache if
@@ -71,13 +84,23 @@ export interface IMainPageOptions {
     hotkeyRaw?: string;
     visible?: () => boolean;
     group: 'dashboard' | 'global' | 'per-game' | 'support' | 'hidden';
+    isClassicOnly?: boolean;
+    isModernOnly?: boolean;
+    /**
+     * Opt this page into the redesigned UI. When set, the page renders without the legacy
+     * `.main-page` / header / body-container wrappers and is expected to render its own Page.
+     */
+    newLayout?: boolean;
     priority?: number;
     props?: () => any;
     badge?: ReduxProp<any>;
     activity?: ReduxProp<boolean>;
     onReset?: () => void;
+    mdi?: string;
+    /** Self-subscribing status badge shown on this page's left-menu item. */
+    menuBadge?: React.ComponentType<React.PropsWithChildren<unknown>>;
 }
-export type RegisterMainPage = (icon: string, title: string, element: React.ComponentType<any>, options: IMainPageOptions) => void;
+export type RegisterMainPage = (icon: string, title: string, element: React.ComponentType<React.PropsWithChildren<any>>, options: IMainPageOptions) => void;
 export interface IDashletOptions {
     fixed?: boolean;
     closable?: boolean;
@@ -87,8 +110,8 @@ export interface IDashletOptions {
  *               commonly used in practice
  */
 export type RegisterDashlet = (title: string, width: 1 | 2 | 3, height: 1 | 2 | 3 | 4 | 5 | 6, position: number, component: React.ComponentClass<any> | React.FunctionComponent<any>, isVisible: (state: any) => boolean, props: PropsCallback, options: IDashletOptions) => void;
-export type RegisterDialog = (id: string, element: React.ComponentType<any>, props?: PropsCallback) => void;
-export type RegisterOverlay = (id: string, element: React.ComponentType<any>, props?: PropsCallback) => void;
+export type RegisterDialog = (id: string, element: React.ComponentType<React.PropsWithChildren<any>>, props?: PropsCallback) => void;
+export type RegisterOverlay = (id: string, element: React.ComponentType<React.PropsWithChildren<any>>, props?: PropsCallback) => void;
 export type ToDoType = 'settings' | 'search' | 'workaround' | 'more';
 export interface IToDoButton {
     text: string;
@@ -256,6 +279,9 @@ export interface IRunOptions {
     detach?: boolean;
     expectSuccess?: boolean;
     onSpawned?: (pid?: number) => void;
+    // called when the process exits, with its exit code (null when terminated by a signal).
+    // not called on the elevated path.
+    onExit?: (code: number | null) => void;
 }
 /**
  * all parameters passed to runExecutable. This is used to support interpreters

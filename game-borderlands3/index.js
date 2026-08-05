@@ -2,8 +2,8 @@
 Name: Borderlands 3 Vortex Extension
 Structure: UE4 Game (Custom)
 Author: ChemBoy1
-Version: 0.4.0
-Date: 2026-08-04
+Version: 0.4.1
+Date: 2026-08-05
 /////////////////////////////////////////*/
 
 //Import libraries

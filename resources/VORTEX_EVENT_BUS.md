@@ -55,6 +55,40 @@ concrete case (`did-deploy` vs a mod-update guard flag).
 If something `emit`s an `emitAndAwait`-style event **without** the `enqueue` arg, `onAsync` detects
 the missing function, shows an "Invalid event handler" notification, and calls the listener anyway.
 
+`emitAndAwait`, `onAsync` and `withPrePost` return a **native `Promise`** as of the 2.4.x line
+(previously Bluebird `PromiseBB`). Bluebird-only methods such as `.tap()`, `.finally()` with
+Bluebird semantics, or `.reflect()` no longer exist on the returned value.
+
+### The `ApiEvents` type registry
+
+Vortex 2.4.x introduced a typed registry for event names, in
+`Vortex/src/renderer/src/types/IExtensionContext.ts`:
+
+```ts
+export interface ApiEvents {
+  'start-download': (rawUrls, modInfo, fileName?, callback?, redownload?, options?) => string;
+  'remove-download': (downloadId, callback?) => void;
+  'pause-download': (downloadId, callback?) => void;
+  'resume-download': (downloadId, callback?, options?) => void;
+}
+```
+
+with `ApiEventName`, `ApiEventArgs<T>`, `ApiEventResult<T>` and `ApiEventMap` derived from it.
+`api.events` is now `NodeJS.EventEmitter<ApiEventMap & Record<string, any[]>>`, and
+`emitAndAwait` / `onAsync` / `withPrePost` are overloaded: a typed variant for names in `ApiEvents`
+plus an untyped fallback for everything else.
+
+Practical consequences:
+
+- **The registry is opt-in and deliberately incomplete.** Only those four download events are typed
+  so far. Everything in `EVENTS.md` still works via the fallback overload, untyped.
+- It is an **open interface** — extensions with TypeScript sources can add their own names with
+  `declare module` augmentation and get the same checking on their own events.
+- TypeScript callers can pin a name explicitly: `api.events.emit<'start-download'>('start-download', ...)`.
+- **The types are not the enforcement.** Argument validation for those four events happens at
+  runtime in `IPCDownloadAdapter` and does not match the declared signatures exactly — see
+  `VORTEX_DOWNLOAD_MGMT.md` for what is actually accepted and what happens when it is not.
+
 ### 3. Deferred registration — `context.once` / `onceMain`
 
 Handlers are registered inside **`context.once(() => { ... })`**, which runs only **after all

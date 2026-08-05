@@ -2,8 +2,8 @@
 Name: Borderlands 4 Vortex Extension
 Structure: UE5 (static exe)
 Author: ChemBoy1
-Version: 0.4.0
-Date: 2026-08-04
+Version: 0.4.1
+Date: 2026-08-05
 //////////////////////////////////////////////////*/
 
 //Import libraries
@@ -208,6 +208,7 @@ const REQUIREMENTS = [
     findDownloadId: (api) => findDownloadIdByFile(api, SDK_ARC_NAME),
     fileArchivePattern: new RegExp(/^oak2-sdk/, 'i'), //no capture group - the version is only in the release tag
     resolveVersion: (api) => resolveVersionByModVersion(api, REQUIREMENTS[0]),
+    autoInstall: false, //the SDK is optional here - only the toolbar button installs it, never setup or the update check
   },
 ];
 

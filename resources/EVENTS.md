@@ -139,6 +139,7 @@ Register event handlers inside `context.once()` to ensure all extensions are loa
 | `mod-update` | `(gameId, nexusModId: number, fileId: number, source: string)` | Update one mod to a newer file (per-row update button). `fileId` is the file being updated **to**, i.e. the emitting mod's `attributes.newestFileId` |
 | `mods-update` | `(gameId, localModIds: string[])` | Update several mods ("Update all"); its handler calls the single-mod handler directly, it does not re-emit `mod-update` |
 | `submit-feedback` | - | Submit user feedback |
+| `send-metric` | - | Async. Send metric to Nexus |
 
 `mods-update` carries no fileId. To get the same "updating to" value a listener
 must read `attributes.newestFileId` off each local mod id in
@@ -148,7 +149,6 @@ update from the version being replaced: until the new file installs, the mod is
 still present and enabled under its old `attributes.fileId`, and the mod id is
 reused across the update. See [VORTEX_LOAD_ORDER.md](VORTEX_LOAD_ORDER.md) and
 [VORTEX_NEXUS_INTEGRATION.md](VORTEX_NEXUS_INTEGRATION.md).
-| `send-metric` | - | Async. Send metric to Nexus |
 
 ## Collections
 
@@ -164,9 +164,12 @@ reused across the update. See [VORTEX_LOAD_ORDER.md](VORTEX_LOAD_ORDER.md) and
 | `did-install-collection` | - | Collection was installed |
 | `did-download-collection` | - | Collection was downloaded |
 | `collection-postprocess-complete` | - | Collection post-processing done |
-| `collection-mod-skipped` | - | A mod in the collection was skipped |
 | `submit-collection` | - | Submit collection to Nexus |
 | `update-conflicts-and-rules` | - | Async. Update collection conflicts |
+
+**Removed:** `collection-mod-skipped` is no longer emitted. The collection install driver stopped
+listening for it during the install-session rework, and skip decisions are now resolved through
+`util/collectionSkip.ts` against the install session state instead of an event. Do not subscribe.
 
 ## Extensions
 

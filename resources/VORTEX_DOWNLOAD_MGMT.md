@@ -90,6 +90,41 @@ nxm:// link (or browser/CLI URL)
 
 `queryDLInfo` fills missing download metadata (game, mod info) after the fact.
 
+## Download-event arguments are schema-validated
+
+`IPCDownloadAdapter` (`src/renderer/src/IPCDownloadAdapter.ts`) does not trust the arguments of the
+four download events. Each listener runs the incoming `args` array through a zod tuple with
+`safeParse`, and **on a parse failure it logs a warning and returns** — no download starts, nothing
+pauses, no callback fires, no error surfaces in the UI. From the extension's side an emit with the
+wrong argument shape simply does nothing. The only evidence is a
+`failed to parse '<event>' args` line in `vortex.log`.
+
+What each tuple accepts:
+
+| Event | Positional args |
+| --- | --- |
+| `start-download` | `urls: (string \| URL)[]`, `modInfo: object`, `fileName?: string`, `callback?: fn`, `redownload?: 'never'\|'ask'\|'replace'\|'always'`, `options?: { allowInstall?: boolean \| 'force' }` |
+| `remove-download` | `downloadId: string`, `callback?: fn` |
+| `pause-download` | `downloadId: string`, `callback?: fn` |
+| `resume-download` | `downloadId: string`, `callback?: fn`, `options?: { allowInstall?: boolean \| 'force' }` |
+
+The traps in practice:
+
+- **`start-download` arg 0 must be an array.** Passing a bare URL string is the single most common
+  way to get a silent no-op. `api.events.emit('start-download', [url], modInfo, ...)`.
+- **`redownload` is a closed enum.** Any other string fails the *whole* tuple, so the download
+  doesn't start at all — it isn't just that argument being ignored.
+- `modInfo` is a loose object with a `.catch()` fallback, so it never fails validation. Extra keys
+  pass through.
+- Every tuple ends in `.rest(z.unknown())`, so **surplus trailing arguments are tolerated** and
+  ignored. Vortex's own `DownloadView` relies on this, emitting `remove-download` with a third
+  options argument the schema doesn't declare.
+
+Note that these schemas, not the `ApiEvents` interface in `IExtensionContext.ts`, are what actually
+runs. The two disagree — `ApiEvents` types `start-download` as returning a `string` and omits
+`remove-download`'s third argument. Treat `ApiEvents` as editor assistance and this table as the
+contract. See `VORTEX_EVENT_BUS.md` for the typed-events layer.
+
 ## Gotchas
 
 - Don't confuse with the requirements auto-downloader (`DOWNLOADER.md`).

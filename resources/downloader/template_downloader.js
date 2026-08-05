@@ -17,7 +17,7 @@ const XXX_URL_API = `https://api.github.com/repos/${AUTHOR}/${REPO}`; //api url
 const REQUIREMENTS = [
   {
     archiveFileName: XXX_ARC_NAME,
-    modType: XXX_ID,
+    modType: XXX_ID, //the module assigns this to the installed mod itself; findModByFile only matches mods carrying it (untyped mods are not considered)
     assemblyFileName: XXX_FILE,
     userFacingName: XXX_NAME,
     githubUrl: XXX_URL_API,
@@ -32,6 +32,7 @@ const REQUIREMENTS = [
     //trackByAssetDate: true, //detect updates by the asset's GitHub upload time, not the version tag (rolling pre-release whose tag never changes)
     //resolveVersion: (api) => resolveVersionByAssetDate(api, REQUIREMENTS[0]), //use together with trackByAssetDate
     //resolveVersion: (api) => resolveVersionByModVersion(api, REQUIREMENTS[0]), //reads the version stamped on the installed mod at install time; use when the version is only in the release tag (asset filename is versionless) and fileArchivePattern has no capture group
+    //autoInstall: false, //opt out of unattended installs - setup and the update check both skip it, only an explicit user action (toolbar button) installs it
   },
 ]; //*/
 

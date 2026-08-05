@@ -172,13 +172,14 @@ The entry points take an array of requirement objects (conventionally a `GB_REQU
 | `fileIdAttribute` | optional | Mod attribute tracking the installed GameBanana file id for update checks. Default `'gamebananaFileId'`. |
 | `versionPattern` | optional | RegExp whose capture group 1 is the version, run against the latest Updates title. Default `/\(Update\s+(.+?)\)/` (matches titles like `"2026-05-20 (Update 6.66 Rev 3 N)"`). |
 | `pageUrl` | optional | Manual-download page opened on install failure. Default derived from `gbItemType`/`gbItemId` (e.g. `https://gamebanana.com/tools/7475`). |
+| `autoInstall` | optional | `false` -> never install this requirement unattended; only an explicit user action (a toolbar button) installs it. Default installs a missing requirement automatically when the update check runs. |
 
 ### Exports
 
 | Export | Role |
 | --- | --- |
 | `downloadGameBanana(api, gameSpec, requirements, check = true)` | Download + install each requirement in the array (sequentially) via Vortex's download manager, then enable it, set its mod type, and record version + file id attributes. With `check = true` (default) it is a no-op for requirements already installed; pass `false` to (re)install/update. Main entry point — call in `setup()`. |
-| `checkForGameBananaUpdate(api, gameSpec, requirements)` | For each requirement in the array, compare the tracked file id (or archive name, for mods installed before id tracking) against the latest apiv11 file; raise a warning notification with a Download action when newer. Call from a `check-mods-version` handler and after the `setup()` download. |
+| `checkForGameBananaUpdate(api, gameSpec, requirements)` | For each requirement in the array: install it if it is missing (unless `autoInstall: false`), otherwise compare the tracked file id (or archive name, for mods installed before id tracking) against the latest apiv11 file; raise a warning notification with a Download action when newer. Call from a `check-mods-version` handler and after the `setup()` download. |
 | `downloadGameBananaRequirement(api, gameSpec, requirement, check = true)` | Single-requirement variant of `downloadGameBanana`. |
 | `checkForGameBananaUpdateRequirement(api, gameSpec, requirement)` | Single-requirement variant of `checkForGameBananaUpdate`. |
 | `isGameBananaRequirementInstalled(api, gameId, requirement)` | Whether any mod with the requirement's mod type exists. |
@@ -193,6 +194,8 @@ The entry points take an array of requirement objects (conventionally a `GB_REQU
 - **Overlap guard.** A requirement whose install is already running is skipped (e.g. double-clicked toolbar action), keyed by mod type.
 - **Install failure opens the page.** A failed download/install shows an error notification and opens `pageUrl` for a manual download.
 - **Per-game pieces stay in `index.js`.** The mod type registration and the `registerInstaller` test/install pair for the requirement are not part of this module.
+- **A missing requirement is installed by the update check.** The update check used to return early when the requirement was not installed, so a requirement the user removed (or never got) was never picked up again. It now installs it instead. Requirements that should only be installed by an explicit user action set `autoInstall: false`.
+- **Updating disables the version it replaces.** An update installs a second mod entry rather than replacing the first, so the mod ids carrying the requirement's mod type are captured before the install and disabled once the new one lands (the newly installed id is skipped). Without this both copies stayed enabled and deployed on top of each other.
 
 ## Caveats
 

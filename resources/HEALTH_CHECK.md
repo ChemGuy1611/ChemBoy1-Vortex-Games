@@ -45,24 +45,24 @@ enum HealthCheckSeverity {
 enum HealthCheckTrigger {
   Manual = "manual", Startup = "startup", GameChanged = "game-changed",
   ProfileChanged = "profile-changed", ModsChanged = "mods-changed",
-  ResultsChanged = "health-check-results-changed", SettingsChanged = "settings-changed",
+  LoginChanged = "login-changed", SettingsChanged = "settings-changed",
   PluginsChanged = "plugins-changed", LootUpdated = "loot-updated", Scheduled = "scheduled",
 }
 
-interface IHealthCheckResult {
+interface IHealthCheckResult<TMetadata = unknown> {
   checkId: string;
   status: "passed" | "failed" | "warning" | "error";
   severity: HealthCheckSeverity;
   message: string;
   details?: string;
-  metadata?: { [key: string]: any };
+  metadata?: TMetadata;
   executionTime: number;
   timestamp: Date;
   fixAvailable?: boolean;
   isLegacyTest?: boolean;
 }
 
-type HealthCheckFunction = (api: IExtensionApi) => Promise<IHealthCheckResult>;
+type HealthCheckFunction = (api: IExtensionApi, signal?: AbortSignal) => Promise<IHealthCheckResult>;
 type HealthCheckFixFunction = (api: IExtensionApi) => Promise<void>;
 
 interface IHealthCheck {
@@ -72,8 +72,9 @@ interface IHealthCheck {
   category: HealthCheckCategory;
   severity: HealthCheckSeverity;
   triggers: HealthCheckTrigger[];
+  gameId?: string;           // scope to one game; omit to run for all
   dependencies?: string[];   // ids of checks that must run first
-  timeout?: number;          // ms
+  timeout?: number;          // ms; default 30000
   cacheDuration?: number;    // ms — reuse last result within this window
   check: HealthCheckFunction;
   fix?: HealthCheckFixFunction;
@@ -89,7 +90,8 @@ interface IModCheckContext {
   attributes: Record<string, unknown>;          // install-time attribute instructions
 }
 
-type PerModCheckFunction = (api: IExtensionApi, mod: IModCheckContext) => Promise<IHealthCheckResult>;
+type PerModCheckFunction = (api: IExtensionApi, mod: IModCheckContext, signal?: AbortSignal)
+  => Promise<IHealthCheckResult>;
 
 interface IModHealthCheck extends Omit<IHealthCheck, "check" | "fix"> {
   checkMod: PerModCheckFunction;
@@ -121,6 +123,46 @@ function isModHealthCheck(hc): hc is IModHealthCheck; // typeof hc.checkMod === 
 
 `fix` is only available on game-wide `IHealthCheck` — `HealthCheckFixFunction`
 takes only `(api)` and can't target a single mod, so `IModHealthCheck` omits it.
+
+---
+
+## Timeout and the abort signal
+
+`check` and `checkMod` receive an `AbortSignal` as their last parameter. The registry starts an
+`AbortController` per run and aborts it after `timeout` ms (**default 30000**), racing the abort
+against your promise.
+
+**The abort is cooperative — you must poll it.** The registry cannot stop a function body that
+ignores the signal. When the timeout fires, the user sees a "Health check timed out" notification
+and the previous result is cleared, but your body keeps running and holds the check's concurrency
+slot until it finally returns. Any check that loops over mods or files, or makes network calls,
+should bail out early:
+
+```js
+check: async (api, signal) => {
+  const start = Date.now();
+  for (const file of manyFiles) {
+    if (signal?.aborted) {
+      throw new util.ProcessCanceled('health check aborted');
+    }
+    await inspect(file);
+  }
+  return { /* ... */ };
+},
+```
+
+Pass `signal` straight through to anything that accepts one (`fetch`, `AbortSignal`-aware helpers)
+rather than polling manually where you can.
+
+## Scoping a check to one game
+
+`gameId` on `IHealthCheck` / `IModHealthCheck` restricts the check to a single game. With it set,
+the registry skips the check while any other game is active, and discards a result that arrives
+after the user has switched away — so a check that started under your game can never report against
+someone else's. Omit `gameId` for a check that should run regardless of active game.
+
+This is the cleaner alternative to an early `return { status: 'passed' }` when the active game
+isn't yours: the check simply doesn't run, and no stale result lingers on the page.
 
 ---
 

@@ -280,6 +280,7 @@ in `index.js`), each describing one ModWorkshop-hosted requirement:
 | `fallbackFileId` | optional | File id used to build `https://api.modworkshop.net/files/{id}/download` when the API is unreachable. Without it, an unreachable API fails the install with a manual-download error. |
 | `fileIdAttribute` | optional | Mod attribute tracking the installed ModWorkshop file id for update checks. Default `'modworkshopFileId'`. |
 | `pageUrl` | optional | Manual-download page opened on install failure. Default `https://modworkshop.net/mod/{mwsModId}`. |
+| `autoInstall` | optional | `false` -> never install this requirement unattended; only an explicit user action (a toolbar button) installs it. Default installs a missing requirement automatically when the update check runs. |
 
 There is no `versionPattern` equivalent — ModWorkshop stores a version string on the file record
 itself, so no parsing out of a title is needed.
@@ -289,7 +290,7 @@ itself, so no parsing out of a title is needed.
 | Export | Role |
 | --- | --- |
 | `downloadModWorkshop(api, gameSpec, requirements, check = true)` | Download + install each requirement in the array (sequentially), then enable it, set its mod type, and record version + file id attributes. With `check = true` (default) it is a no-op for requirements already installed; pass `false` to (re)install/update. Main entry point — call in `setup()`. |
-| `checkForModWorkshopUpdate(api, gameSpec, requirements)` | For each requirement, compare the tracked file id against the current API file; raise a warning notification with a Download action when newer. Call from a `check-mods-version` handler and after the `setup()` download. |
+| `checkForModWorkshopUpdate(api, gameSpec, requirements)` | For each requirement: install it if it is missing (unless `autoInstall: false`), otherwise compare the tracked file id against the current API file; raise a warning notification with a Download action when newer. Call from a `check-mods-version` handler and after the `setup()` download. |
 | `downloadModWorkshopRequirement(api, gameSpec, requirement, check = true)` | Single-requirement variant of `downloadModWorkshop`. |
 | `checkForModWorkshopUpdateRequirement(api, gameSpec, requirement)` | Single-requirement variant of `checkForModWorkshopUpdate`. |
 | `isModWorkshopRequirementInstalled(api, gameId, requirement)` | Whether any mod with the requirement's mod type exists. |
@@ -323,6 +324,8 @@ itself, so no parsing out of a title is needed.
   opens `pageUrl` for a manual download.
 - **Per-game pieces stay in `index.js`.** The mod type registration and the `registerInstaller`
   test/install pair for the requirement are not part of this module.
+- **A missing requirement is installed by the update check.** The update check used to return early when the requirement was not installed, so a requirement the user removed (or never got) was never picked up again. It now installs it instead. Requirements that should only be installed by an explicit user action set `autoInstall: false`.
+- **Updating disables the version it replaces.** An update installs a second mod entry rather than replacing the first, so the mod ids carrying the requirement's mod type are captured before the install and disabled once the new one lands (the newly installed id is skipped). Without this both copies stayed enabled and deployed on top of each other.
 
 ## Images
 

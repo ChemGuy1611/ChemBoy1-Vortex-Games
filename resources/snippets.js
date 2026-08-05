@@ -660,11 +660,11 @@ function fallbackInstallerNotify(api, fileName) {
 const { download, findModByFile, findDownloadIdByFile, resolveVersionByPattern, testRequirementVersion } = require('./downloader');
 const SHADPS4_ARC_NAME = `shadps4-win64-qt-${SHADPS4_VERSION}.zip`;
 const SHADPS4_URL_MAIN = `https://api.github.com/repos/shadps4-emu/shadPS4`;
-const SHADPS4_FILE = 'shadPS4.exe'; // <-- CASE SENSITIVE! Must match name exactly or downloader will download the file again.
+const SHADPS4_FILE = 'shadPS4.exe'; // marker file; findModByFile matches it case-insensitively
 const REQUIREMENTS = [
   { //shadPS4
     archiveFileName: SHADPS4_ARC_NAME,
-    modType: SHADPS4_ID,
+    modType: SHADPS4_ID, //the module assigns this to the installed mod itself; findModByFile only matches mods carrying it (untyped mods are not considered)
     assemblyFileName: SHADPS4_FILE,
     userFacingName: SHADPS4_NAME,
     githubUrl: SHADPS4_URL_MAIN,

@@ -1292,3 +1292,5 @@ they change deployment state, not mods.txt.
   how the FBLO page compares with the template's two self-hosted load order pages
 - `resources/NON_UE_LOAD_ORDER_PAGES.md` -- non-Unreal games registering this API: generic FBLO
   tier, minimal-renderer tier, and the one remaining legacy `registerLoadOrderPage` game
+- `resources/VORTEX_2_MIGRATION.md` -- React 17 to 18 move; `usageInstructions` and
+  `customItemRenderer` are now typed `React.ComponentType<React.PropsWithChildren<...>>`

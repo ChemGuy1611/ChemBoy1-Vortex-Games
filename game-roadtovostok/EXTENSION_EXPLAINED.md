@@ -66,6 +66,7 @@ These tools appear in Vortex's Tools panel when this game is active:
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - Download Latest ${MCM_NAME}
+- Download Latest ${LOADER_NAME}
 - Open Modworkshop Page
 - Open Config Folder
 - Open override.cfg

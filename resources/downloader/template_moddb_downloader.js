@@ -24,6 +24,7 @@ const MODDB_REQUIREMENTS = [
     //fileIdAttribute: 'moddbFileId', //mod attribute tracking the installed ModDB file id (default shown)
     //versionPattern: /\[([^[\]]+)\]\s*$/, //RegExp whose capture group 1 is the version, run against the RSS item title (default shown)
     //pageUrl: `https://www.moddb.com/${XXX_MODDB_PATH}/downloads`, //manual-download page (default derived from moddbPath)
+    //autoInstall: false, //opt out of unattended installs - setup and the update check both skip it, only an explicit user action (toolbar button) installs it
     //archiveFileName: 'XXX.zip', //used to name the temp file only if the fallback direct-fetch route can't infer one
   },
   //additional ModDB requirements go here

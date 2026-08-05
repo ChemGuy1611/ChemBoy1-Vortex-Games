@@ -11,7 +11,6 @@ import { ComplexActionCreator1 } from 'redux-act';
 import { ComplexActionCreator2 } from 'redux-act';
 import { ComplexActionCreator3 } from 'redux-act';
 import { ComplexActionCreator4 } from 'redux-act';
-import { ComplexActionCreator5 } from 'redux-act';
 import { ComplexActionCreator6 } from 'redux-act';
 import { constants } from 'fs';
 import { createReadStream } from 'original-fs';
@@ -288,7 +287,8 @@ declare namespace actions {
         setUpdateChannel,
         setPrimaryTool,
         setToolOrder,
-        setToolValid
+        setToolValid,
+        setToolPinned
     }
 }
 export { actions }
@@ -480,6 +480,18 @@ declare function batchDispatch(store: Redux.Dispatch | Redux.Store, actions: Red
 declare function bbcodeToHTML(input: string): string;
 
 /**
+ * Build a `copy` instruction for every non-directory entry. When
+ * `stripCommonRoot` is true and the archive wraps everything in a single
+ * top-level dir, that dir is stripped from destination paths so the mod stages
+ * at game root rather than inside the wrapper. Appends a `setmodtype`
+ * instruction when `modType` is provided.
+ */
+declare function buildCopyInstructions(files: readonly string[], opts: {
+    stripCommonRoot: boolean;
+    modType?: string;
+}): IInstallResult;
+
+/**
  * Button with a tooltip
  *
  */
@@ -492,6 +504,14 @@ declare type ButtonProps = ITooltipProps & typeof Button.prototype.props;
 declare type ButtonType = "text" | "icon" | "both" | "menu";
 
 declare type ButtonType_2 = "text" | "icon" | "both" | "menu";
+
+/**
+ * A range starting at 0 with a length of 500 bytes is represented as start=0, end=499
+ */
+declare type ByteRange = {
+    start: number;
+    end: number;
+};
 
 declare function bytesToString(bytes: number): string;
 
@@ -752,6 +772,12 @@ declare class CollectionsInstallationStartedEvent implements MixpanelEvent {
     constructor(collection_id: string, revision_id: string, game_id: number, mod_count: number);
 }
 
+/**
+ * Compile string stopPatterns (typically taken from `IGame.details.stopPatterns`)
+ * to case-insensitive RegExp objects.
+ */
+declare function compileStopPatterns(patterns: readonly string[]): RegExp[];
+
 declare const completeMigration: reduxAct.ComplexActionCreator1<any, any, {}>;
 
 /**
@@ -944,9 +970,17 @@ declare class DateTimeFilterComponent extends ComponentEx<IFilterProps, {}> {
  */
 declare function deBOM(input: string): string;
 
-declare class Debouncer extends GenericDebouncer<number, typeof window.setTimeout, typeof window.clearTimeout> {
-    constructor(func: (...args: any[]) => Error | PromiseLike<void>, debounceMS: number, reset?: boolean, triggerImmediately?: boolean);
+declare class Debouncer<Args extends unknown[] = unknown[]> extends GenericDebouncer<number, typeof window.setTimeout, typeof window.clearTimeout, Args> {
+    constructor(func: (...args: Args) => Error | PromiseLike<void>, debounceMS: number, reset?: boolean, triggerImmediately?: boolean);
 }
+
+/**
+ * Register a data-driven installer table for one game. For each spec, builds a
+ * `testSupported`/`install` pair from the match + install config and calls
+ * `context.registerInstaller`. Registration id defaults to `${gameId}-${spec.id}`
+ * when no `modType` is provided.
+ */
+declare function declareInstallers(context: IExtensionContext, gameId: string, specs: readonly IInstallerSpec[]): void;
 
 /**
  * very simplistic deep merge.
@@ -1040,6 +1074,14 @@ itemId: string;
  */
 export declare const DNDContainer: FC<IDNDContainerProps>;
 
+declare type DownloadCheckpoint<T = unknown> = {
+    downloadId: string;
+    resource: T;
+    dest: string;
+    completedRanges: ByteRange[];
+    etag: string | undefined;
+};
+
 declare const downloadPath: (state: IState) => string;
 
 declare function downloadPathForGame(state: IState, gameId?: string): string;
@@ -1047,11 +1089,10 @@ declare function downloadPathForGame(state: IState, gameId?: string): string;
 /**
  * set download progress (in percent)
  */
-declare const downloadProgress: ComplexActionCreator5<string, number, number, IChunk[], string[], {
+declare const downloadProgress: ComplexActionCreator4<string, number, number, string[], {
 id: string;
 received: number;
 total: number;
-chunks: IChunk[];
 urls: string[];
 }, {}>;
 
@@ -1160,7 +1201,7 @@ declare type ExtensionType = "game" | "translation" | "theme";
 
 declare function extractExeIcon(exePath: string, destPath: string): Promise<void>;
 
-declare function fileMD5(filePath: string): Promise<string>;
+declare function fileMD5(input: string | Buffer, progress?: (bytesProcessed: number, totalBytes: number) => void): Promise<string>;
 
 /**
  * mark download as finalizing, meaning the file has been downloaded fully,
@@ -1174,6 +1215,13 @@ declare const finalizingProgress: ComplexActionCreator2<string, number, {
 id: string;
 progress: number;
 }, {}>;
+
+/**
+ * Returns the single top-level directory that contains every entry in `files`,
+ * or `undefined` if files live at the root or under different top-level dirs.
+ * Entries may use either `/` or `\` separators; both are recognised.
+ */
+declare function findCommonRootDir(files: readonly string[]): string | undefined;
 
 declare function findDownloadByRef(reference: IReference, downloads: {
     [dlId: string]: IDownload;
@@ -1374,7 +1422,9 @@ declare class GameStoreHelper {
     isGameInstalled(id: string, storeId?: string): Bluebird<string | undefined>;
     isGameStoreInstalled(storeId: string): Bluebird<boolean>;
     registryLookup(lookup: string): Bluebird<IGameStoreEntry>;
-    find: (query: IStoreQuery) => Bluebird<IGameStoreEntry[]>;
+    find: (query: {
+        [storeId: string]: IQueryArgEntry;
+    }) => Bluebird<IGameStoreEntry[]>;
     findByName(name: string | string[], storeId?: string): Bluebird<IGameStoreEntry>;
     findByAppId(appId: string | string[], storeId?: string): Bluebird<IGameStoreEntry>;
     launchGameStore(api: IExtensionApi, gameStoreId: string, parameters?: string[], askConsent?: boolean): Bluebird<void>;
@@ -1413,7 +1463,7 @@ declare function generateCollectionSessionId(collectionId: string, profileId: st
  * and, for function returning a promise, it ensures that it's not run
  * again (through this Debouncer) before the promise is resolved.
  */
-declare class GenericDebouncer<Timeout, SetTimeout extends SetTimeoutFunc<Timeout>, ClearTimeout extends ClearTimeoutFunc<Timeout>> {
+declare class GenericDebouncer<Timeout, SetTimeout extends SetTimeoutFunc<Timeout>, ClearTimeout extends ClearTimeoutFunc<Timeout>, Args extends unknown[] = unknown[]> {
     #private;
     private mDebounceMS;
     private mFunc;
@@ -1422,7 +1472,7 @@ declare class GenericDebouncer<Timeout, SetTimeout extends SetTimeoutFunc<Timeou
     private mAddCallbacks;
     private mRunning;
     private mReschedule;
-    private mArgs;
+    private mArgs?;
     private mResetting;
     private mTriggerImmediately;
     private mRetrigger;
@@ -1439,7 +1489,7 @@ declare class GenericDebouncer<Timeout, SetTimeout extends SetTimeoutFunc<Timeou
      *                           until the timer expires. Otherwise (the default)
      *                           the initial call is delay.
      */
-    constructor(setTimeoutFunc: SetTimeout, clearTimeoutFunc: ClearTimeout, func: (...args: any[]) => Error | PromiseLike<void>, debounceMS: number, reset?: boolean, triggerImmediately?: boolean);
+    constructor(setTimeoutFunc: SetTimeout, clearTimeoutFunc: ClearTimeout, func: (...args: Args) => Error | PromiseLike<void>, debounceMS: number, reset?: boolean, triggerImmediately?: boolean);
     /**
      * schedule the function and invoke the callback once that is done
      * @param callback the callback to invoke upon completion
@@ -1447,7 +1497,7 @@ declare class GenericDebouncer<Timeout, SetTimeout extends SetTimeoutFunc<Timeou
      *             and the function actually gets invoked, only the last set of
      *             parameters will be used
      */
-    schedule(callback?: Callback, ...args: any[]): void;
+    schedule(callback?: Callback, ...args: Args): void;
     /**
      * run the function immediately without waiting for the timer
      * to run out. (It does cancel the timer though and invokes all
@@ -1456,9 +1506,9 @@ declare class GenericDebouncer<Timeout, SetTimeout extends SetTimeoutFunc<Timeou
      * @param {(err: Error) => void} callback
      * @param {...any[]} args
      *
-     * @memberOf Debouncer
+     * @memberof Debouncer
      */
-    runNow(callback: Callback, ...args: any[]): void;
+    runNow(callback: Callback, ...args: Args): void;
     /**
      * wait for the completion of the current timer without scheduling it.
      * if the function is not scheduled currently the callback will be
@@ -1469,7 +1519,7 @@ declare class GenericDebouncer<Timeout, SetTimeout extends SetTimeoutFunc<Timeou
      * @param {boolean} immediately if set (default is false) the function gets called
      *                              immediately instead of awaiting the timer
      *
-     * @memberOf Debouncer
+     * @memberof Debouncer
      */
     wait(callback: (err: Error | null) => void, immediately?: boolean): void;
     clear(): void;
@@ -1846,6 +1896,20 @@ declare type GroupType = "SelectAtLeastOne" | "SelectAtMostOne" | "SelectExactly
  */
 declare const hasCollectionActiveSession: (state: IState) => boolean;
 
+declare enum HealthCheckCategory {
+    System = "system",
+    Game = "game",
+    Mods = "mods",
+    Requirements = "requirements",
+    Tools = "tools",
+    Performance = "performance",
+    Legacy = "legacy"
+}
+
+declare type HealthCheckFixFunction = (api: IExtensionApi) => Promise<void>;
+
+declare type HealthCheckFunction = (api: IExtensionApi) => Promise<IHealthCheckResult>;
+
 declare enum HealthCheckSeverity {
     Info = "info",
     Warning = "warning",
@@ -1853,12 +1917,17 @@ declare enum HealthCheckSeverity {
     Critical = "critical"
 }
 
-declare enum IAccountStatus {
-    Premium = 0,
-    Supporter = 1,
-    Free = 2,
-    Banned = 3,
-    Closed = 4
+declare enum HealthCheckTrigger {
+    Manual = "manual",
+    Startup = "startup",
+    GameChanged = "game-changed",
+    ProfileChanged = "profile-changed",
+    ModsChanged = "mods-changed",
+    ResultsChanged = "health-check-results-changed",
+    SettingsChanged = "settings-changed",
+    PluginsChanged = "plugins-changed",
+    LootUpdated = "loot-updated",
+    Scheduled = "scheduled"
 }
 
 declare interface IActionControlProps {
@@ -2897,10 +2966,6 @@ declare interface IDownload {
      */
     verified: number;
     /**
-     * for paused downloads, this contains the list segments that are still missing
-     */
-    chunks?: IChunk[];
-    /**
      * whether the download server supports resuming downloads
      */
     pausable?: boolean;
@@ -3541,6 +3606,16 @@ declare interface IExtensionContext {
      */
     registerSettingsHive: (type: PersistingType, hive: string) => void;
     /**
+     * registers a handler for a download URL scheme (e.g. "nxm"). The handler
+     * resolves the scheme-specific URL to a plain http/https URL that can be
+     * downloaded directly.
+     */
+    registerDownloadProtocol: (scheme: string, handler: (inputUrl: string) => PromiseLike<{
+        urls: string[];
+        updatedUrl?: string;
+        meta: unknown;
+    }>) => void;
+    /**
      * register a new persistor that will hook a data file into the application store,
      * meaning any part of the application can access that data like any other data in the application
      * state and the UI will automatically refresh if it's tied to that data.
@@ -3576,6 +3651,16 @@ declare interface IExtensionContext {
      * @memberOf IExtensionContext
      */
     registerTest: (id: string, event: string, check: CheckFunction) => void;
+    /**
+     * register a health check. Pass an IHealthCheck for whole-game checks, or
+     * an IModHealthCheck for per-mod checks (the registry iterates mods and
+     * aggregates per-mod results).
+     *
+     * Prefer this over the legacy `registerTest` for new code.
+     *
+     * @memberOf IExtensionContext
+     */
+    registerHealthCheck: (healthCheck: IHealthCheck | IModHealthCheck) => void;
     /**
      * register a handler for archive types so the content of such archives is exposed to
      * the application (especially other extensions)
@@ -4034,10 +4119,18 @@ declare interface IGame extends ITool {
      */
     queryModPath: (gamePath: string) => string;
     /**
-     * use instead of queryPath for simpler specification of search arguments
+     * use instead of queryPath for simpler specification of search arguments.
+     *
+     * Each store key accepts:
+     * - a string (treated as an app ID): `{ steam: "2870" }`
+     * - a single query object: `{ steam: { id: "2870" } }`
+     * - an array of query objects: `{ steam: [{ id: "2870" }] }`
+     *
+     * Consumers should pass the per-store value through
+     * `normalizeStoreQuery` rather than branching on the three forms by hand.
      */
     queryArgs?: {
-        [storeId: string]: IStoreQuery[];
+        [storeId: string]: IQueryArgEntry;
     };
     /**
      * returns all directories where mods for this game
@@ -4144,7 +4237,7 @@ declare interface IGame extends ITool {
      * TODO The name "mergeMods" is horrible since we also talk about "merging" in the context of
      *      combining individual files (archives) during mod deployment which is independent of this
      */
-    mergeMods: boolean | ((mod: IMod) => string);
+    mergeMods?: boolean | ((mod: IMod) => string);
     /**
      * determines if a file is to be merged with others with the same path, instead of the
      * highest-priority one being used. This only works if support for repackaging the file type
@@ -4518,6 +4611,29 @@ declare interface IHeaderImage {
     height: number;
 }
 
+declare interface IHealthCheck {
+    id: string;
+    name: string;
+    description: string;
+    category: HealthCheckCategory;
+    severity: HealthCheckSeverity;
+    triggers: HealthCheckTrigger[];
+    dependencies?: string[];
+    timeout?: number;
+    cacheDuration?: number;
+    check: HealthCheckFunction;
+    fix?: HealthCheckFixFunction;
+    extensionName?: string;
+}
+
+declare interface IHealthCheckEntry {
+    healthCheck: IHealthCheck | IModHealthCheck | ILegacyTestAdapter;
+    lastResult?: IHealthCheckResult;
+    lastExecuted?: Date;
+    enabled: boolean;
+    cachedUntil?: Date;
+}
+
 declare interface IHealthCheckPersistentState {
     /**
      * Map of mod nexusModId to array of hidden requirement IDs (from Nexus API)
@@ -4671,6 +4787,63 @@ declare interface IInstallerInfoState {
     dataPath: string;
 }
 
+/**
+ * How matched files are turned into install instructions. `declareInstallers`
+ * always emits `copy` instructions for every non-directory entry; this struct
+ * tweaks paths and tagging.
+ */
+declare interface IInstallerInstall {
+    /**
+     * If true and the archive wraps everything in a single top-level directory,
+     * that directory is stripped from destination paths so the mod stages at
+     * game root rather than inside the wrapper.
+     */
+    stripCommonRoot: boolean;
+}
+
+/**
+ * Discriminated union describing how an installer decides whether it supports
+ * an archive. Directory entries (paths ending in path-sep) are filtered out
+ * before evaluation in all modes.
+ */
+declare type IInstallerMatch = {
+    kind: "extensions";
+    list: readonly string[];
+    mode: InstallerMatchMode;
+} | {
+    kind: "regex";
+    patterns: readonly RegExp[];
+    mode: InstallerMatchMode;
+} | {
+    kind: "filename";
+    names: readonly string[];
+    mode: InstallerMatchMode;
+}
+/** Any file matches any of `game.details.stopPatterns` for the active game. */
+| {
+    kind: "stopPatterns";
+}
+/** Escape hatch: caller-supplied predicate over the (raw) file list. */
+| {
+    kind: "custom";
+    predicate: (files: string[]) => boolean;
+};
+
+/**
+ * One row in a game's installer config table.
+ *
+ * `id` doubles as the `registerInstaller` id (prefixed with `${gameId}-` if
+ * `modType` is unset) and, when `modType` is set, gets emitted as a
+ * `setmodtype` instruction at install time so deployment can be routed.
+ */
+declare interface IInstallerSpec {
+    id: string;
+    priority: number;
+    modType?: string;
+    match: IInstallerMatch;
+    install: IInstallerInstall;
+}
+
 declare interface IInstallerState {
     installSteps: IInstallStep[];
     currentStep: number;
@@ -4714,6 +4887,13 @@ declare interface IItemRendererProps {
     displayCheckboxes: boolean;
     invalidEntries?: IInvalidResult[];
     setRef?: (ref: any) => void;
+}
+
+declare interface ILegacyTestAdapter extends IHealthCheck {
+    eventType: string;
+    originalCheck: CheckFunction;
+    fix?: HealthCheckFixFunction;
+    isLegacyTest: true;
 }
 
 declare interface ILink {
@@ -4946,6 +5126,17 @@ declare interface IMainPageOptions {
     mdi?: string;
 }
 
+/**
+ * Membership-related fields of a user, derived from the role strings in the API
+ * user payload / JWT. Single source of truth for these flags so they can be
+ * derived, spread and compared as a unit instead of field-by-field.
+ */
+declare interface IMembership {
+    isPremium: boolean;
+    isSupporter: boolean;
+    isLifetime: boolean;
+}
+
 declare interface IMergeFilter {
     baseFiles: (deployedFiles: IDeployedFile[]) => Array<{
         in: string;
@@ -5001,6 +5192,21 @@ declare type IModAttributes = Partial<ICommonModAttributes & ICollectionAttribut
 };
 
 /**
+ * Context passed to a per-mod healthcheck for a single installed mod.
+ *
+ * - `files` lists paths relative to the mod's staging root.
+ * - `readFile(p)` resolves a path under the mod root and returns its bytes.
+ * - `attributes` reflects the attribute instructions emitted at install time
+ *   (e.g. customFileName, author, version).
+ */
+declare interface IModCheckContext {
+    modId: string;
+    files: string[];
+    readFile: (path: string) => Promise<Buffer>;
+    attributes: Record<string, unknown>;
+}
+
+/**
  * File information for a mod from Nexus
  */
 declare interface IModFileInfo {
@@ -5030,6 +5236,19 @@ declare interface IModFileInfo {
     thumbnailUrl?: string;
 }
 
+/**
+ * Per-mod variant of IHealthCheck. The registry iterates installed mods for the
+ * active game, calls `checkMod` per mod, and aggregates the results.
+ * Identical metadata fields to IHealthCheck, with `checkMod` in place of `check`.
+ *
+ * `fix` is also omitted from the inherited fields: `HealthCheckFixFunction`
+ * takes only `(api)` and can't meaningfully fix a per-mod problem. A per-mod
+ * fix shape can be added in the future if needed.
+ */
+declare interface IModHealthCheck extends Omit<IHealthCheck, "check" | "fix"> {
+    checkMod: PerModCheckFunction;
+}
+
 declare interface IModifiers {
     alt: boolean;
     ctrl: boolean;
@@ -5054,6 +5273,14 @@ declare interface IModInfo_3 {
             revisionId?: number;
             revisionNumber?: number;
         };
+        /**
+         * Id of the collection that triggered this download as a dependency, when the
+         * download is a mod installed as part of a collection. Kept distinct from
+         * `ids.collectionId` (which marks the download as being the collection archive
+         * itself) so it doesn't propagate into the installed mod's attributes via the
+         * install attribute extractor. Consumed by Mixpanel mod download analytics.
+         */
+        parentCollectionId?: string;
         [key: string]: any;
     };
     referenceTag?: string;
@@ -5212,7 +5439,7 @@ declare interface INexusAPIExtension {
     }, forceFull: boolean | "silent") => void;
     nexusDownload?: (gameId: string, modId: number, fileId: number, fileName?: string, allowInstall?: boolean) => PromiseLike<string>;
     nexusGetCollection?: (slug: string) => PromiseLike<ICollection>;
-    nexusGetCollections?: (gameId: string) => PromiseLike<ICollection[]>;
+    nexusGetCollections?: (gameId: string) => PromiseLike<Partial<ICollection>[] | undefined>;
     nexusSearchCollections?: (options: ICollectionSearchOptions) => PromiseLike<ICollectionSearchResult>;
     nexusGetMyCollections?: (gameId: string, count?: number, offset?: number) => PromiseLike<IRevision[]>;
     nexusResolveCollectionUrl?: (apiLink: string) => PromiseLike<IDownloadURL[]>;
@@ -5456,6 +5683,17 @@ declare interface INotificationState {
     dialogs: IDialog[];
 }
 
+/**
+ * `extensions`/`regex`/`filename` matches support two evaluation modes:
+ *   - `any`: at least one file matches → installer accepts.
+ *   - `all`: every (non-directory) file matches → installer accepts. Empty
+ *     archives are rejected.
+ */
+declare type InstallerMatchMode = "any" | "all";
+
+/** Public signature of the install function `declareInstallers` synthesises. */
+declare type InstallerSpecInstallFunc = (files: string[], destinationPath: string) => Promise<IInstallResult>;
+
 declare type InstallFunc = (files: string[], destinationPath: string, gameId: string, progressDelegate: ProgressDelegate, choices?: any, unattended?: boolean, archivePath?: string, options?: IInstallationDetails) => PromiseLike<IInstallResult>;
 
 /**
@@ -5562,6 +5800,11 @@ declare interface IPersistor {
         key: PersistorKey;
         value: string;
     }>>;
+    bulkSetItem?(items: ReadonlyArray<{
+        key: PersistorKey;
+        value: string;
+    }>): PromiseLike<void>;
+    bulkRemoveItem?(keys: ReadonlyArray<PersistorKey>): PromiseLike<void>;
 }
 
 declare interface IPlugin {
@@ -5705,6 +5948,9 @@ declare type IProps_8 = ISelectUpDownProps & ReactSelectProps;
 
 declare type IProps_9 = React_2.HTMLAttributes<any> & IStepsProps;
 
+/** Normalized form of one store's IGame.queryArgs entry. */
+declare type IQueryArgEntry = string | IStoreQuery | IStoreQuery[];
+
 /**
  * specification a reducer registration has to follow.
  * defaults must be an object with the same keys as
@@ -5735,7 +5981,7 @@ declare interface IRegisteredExtension {
 }
 
 declare interface IRegisterProtocol {
-    (protocol: string, def: boolean, callback: (url: string, install: boolean) => void): any;
+    (protocol: string, def: boolean, callback: (url: string, install: boolean) => void): Promise<boolean>;
 }
 
 declare interface IRegisterRepositoryLookup {
@@ -5969,6 +6215,11 @@ declare interface ISettingsInterface {
         order?: {
             [gameId: string]: string[];
         };
+        pinned?: {
+            [gameId: string]: {
+                [toolId: string]: boolean;
+            };
+        };
     };
     primaryTool?: {
         [gameId: string]: string;
@@ -6020,6 +6271,11 @@ declare function isFilenameValid(input: string): boolean;
 declare function isFuzzyVersion(input: string): boolean;
 
 declare const isLoggedIn: (state: IState) => boolean;
+
+/**
+ * Type guard distinguishing the per-mod variant from a normal IHealthCheck.
+ */
+declare function isModHealthCheck(hc: IHealthCheck | IModHealthCheck | ILegacyTestAdapter): hc is IModHealthCheck;
 
 declare function isPathValid(input: string, allowRelative?: boolean): boolean;
 
@@ -6106,6 +6362,9 @@ declare interface IState {
             needToDeploy: {
                 [gameId: string]: boolean;
             };
+            deploymentCounter: {
+                [gameId: string]: number;
+            };
         };
         transactions: IStateTransactions;
         history: IHistoryPersistent;
@@ -6118,6 +6377,9 @@ declare interface IStateDownloads {
     speedHistory: number[];
     files: {
         [id: string]: IDownload;
+    };
+    checkpoints: {
+        [id: string]: DownloadCheckpoint<string>;
     };
 }
 
@@ -6150,7 +6412,7 @@ declare interface IStateVerifier {
     };
     required?: boolean;
     deleteBroken?: boolean | "parent";
-    repair?: (input: any, def: any) => any;
+    repair?: (input: any, def: any, context?: IVerifierRepairContext) => any;
 }
 
 declare interface ISteamEntry extends IGameStoreEntry {
@@ -6833,36 +7095,36 @@ declare interface IUser {
 }
 
 /**
- * Data retrieved with a correct API Key
+ * Data retrieved with a correct API Key (legacy /users/validate shape).
  *
  * @export
  * @interface IValidateKeyData
  */
-declare interface IValidateKeyData {
+declare interface IValidateKeyData extends Pick<IMembership, "isPremium" | "isSupporter"> {
     email: string;
-    isPremium: boolean;
-    isSupporter: boolean;
     name: string;
     profileUrl: string;
     userId: number;
 }
 
-declare interface IValidateKeyDataV2 extends IValidateKeyData, Partial<IPreference> {
-    isLifetime?: boolean;
-    isBanned?: boolean;
-    isClosed?: boolean;
-    status?: IAccountStatus;
+declare interface IValidateKeyDataV2 extends IValidateKeyData, IMembership, Partial<IPreference> {
 }
 
 declare interface IValidationResult {
     invalid: IInvalidResult[];
 }
 
+declare interface IVerifierRepairContext {
+    parentKey?: string;
+    parent?: unknown;
+    key: string;
+}
+
 declare interface IWalkOptions {
     ignoreErrors?: string[] | true;
 }
 
-declare interface IWebView_2 extends React_2.DetailedHTMLProps<React_2.WebViewHTMLAttributes<HTMLWebViewElement>, HTMLWebViewElement> {
+declare interface IWebView extends React_2.DetailedHTMLProps<React_2.WebViewHTMLAttributes<HTMLWebViewElement>, HTMLWebViewElement> {
     src?: string;
     style?: any;
     autosize?: boolean;
@@ -6984,6 +7246,17 @@ declare const MainPageInner: React_3.ForwardRefExoticComponent<IBaseProps_12 & R
 declare function makeFileWritableAsync(filePath: string): Promise_2<void>;
 
 export declare function makeGetSelection(tableId: string): GetSelection;
+
+/**
+ * Build a `(testSupported, install)` pair from a spec. Exposed primarily so
+ * callers can wire the pair into `context.registerInstaller` directly without
+ * the loop in `declareInstallers` — useful when a game wants to mix
+ * spec-driven installers with hand-written ones at custom priorities.
+ */
+declare function makeInstallerFromSpec(spec: IInstallerSpec, gameId: string): {
+    testSupported: TestSupported;
+    install: (files: string[]) => Promise<IInstallResult>;
+};
 
 declare function makeModReference(mod: IMod): IReference;
 
@@ -7212,7 +7485,7 @@ declare const nexusIdsFromDownloadId: ((state: IState, downloadId: string) => {
     modId: string;
     numericGameId: number;
     collectionSlug: string;
-    collectionId: any;
+    collectionId: string;
     revisionId: string;
 }) & OutputSelectorFields<(args_0: {
 [id: string]: IDownload;
@@ -7222,7 +7495,7 @@ fileId: string;
 modId: string;
 numericGameId: number;
 collectionSlug: string;
-collectionId: any;
+collectionId: string;
 revisionId: string;
 }, {
 clearCache: () => void;
@@ -7233,6 +7506,14 @@ clearCache: () => void;
 declare function nexusModsURL(reqPath: string[], options?: INexusURLOptions): string;
 
 declare type Normalize = (input: string) => string;
+
+/**
+ * Normalize the polymorphic form `IGame.queryArgs` accepts (string app ID,
+ * single query, or array) into a single array of IStoreQuery. Callers that
+ * iterate per-store entries should funnel through this so the three forms
+ * are handled in one place.
+ */
+declare function normalizeStoreQuery(raw: IQueryArgEntry | undefined): IStoreQuery[];
 
 declare class NotFound extends Error {
     constructor(what: string);
@@ -7365,13 +7646,14 @@ declare function pad(value: number, padding: string, width: number): string;
 /**
  * mark download paused
  */
-declare const pauseDownload: ComplexActionCreator3<string, boolean, IChunk[], {
+declare const pauseDownload: ComplexActionCreator2<string, boolean, {
 id: string;
 paused: boolean;
-chunks: IChunk[];
 }, {}>;
 
 declare type PayloadT<Type> = Type extends ComplexActionCreator<infer X> ? X : never;
+
+declare type PerModCheckFunction = (api: IExtensionApi, mod: IModCheckContext) => Promise<IHealthCheckResult>;
 
 /**
  * determines where persisted state is stored and when it gets loaded.
@@ -7409,7 +7691,7 @@ declare type ProblemSeverity = "warning" | "error" | "fatal";
 declare class ProcessCanceled extends Error {
     private mExtraInfo;
     constructor(message: string, extraInfo?: unknown);
-    get extraInfo(): any;
+    get extraInfo(): unknown;
 }
 
 declare function profileById(state: IState, profileId: string): IProfile;
@@ -8291,6 +8573,12 @@ pid: number;
 exclusive: boolean;
 }, {}>;
 
+declare const setToolPinned: ComplexActionCreator3<string, string, boolean, {
+gameId: string;
+toolId: string;
+pinned: boolean;
+}, {}>;
+
 declare const setToolRunning: ComplexActionCreator3<string, number, boolean, {
 exePath: string;
 started: number;
@@ -8728,6 +9016,7 @@ declare namespace types {
         TFunction,
         IDiscoveredTool,
         IExecInfo,
+        IQueryArgEntry,
         IStoreQuery,
         IGameStoreEntry,
         GameEntryNotFound,
@@ -8780,6 +9069,7 @@ declare namespace types {
         IProfile,
         IProfileMod,
         IEnableOptions,
+        IMembership,
         IValidateKeyData,
         ILoadOrderDisplayItem,
         SortType,
@@ -8859,6 +9149,7 @@ declare namespace types {
         IApiFuncOptions,
         IExtensionApiExtension,
         IExtensionApi,
+        IVerifierRepairContext,
         IStateVerifier,
         VerifierDrop,
         VerifierDropParent,
@@ -8869,6 +9160,24 @@ declare namespace types {
         IModType,
         DirectoryCleaningMode,
         IGame,
+        isModHealthCheck,
+        HealthCheckCategory,
+        HealthCheckSeverity,
+        HealthCheckTrigger,
+        IHealthCheckResult,
+        HealthCheckFunction,
+        HealthCheckFixFunction,
+        IHealthCheck,
+        ILegacyTestAdapter,
+        IHealthCheckEntry,
+        IModCheckContext,
+        PerModCheckFunction,
+        IModHealthCheck,
+        InstallerMatchMode,
+        IInstallerMatch,
+        IInstallerInstall,
+        IInstallerSpec,
+        InstallerSpecInstallFunc,
         IModifiers,
         NotificationDismiss,
         INotificationAction,
@@ -8989,16 +9298,19 @@ declare namespace util {
         preProcess as bbcodePreProcess,
         bbcodeToHTML,
         renderBBCode as bbcodeToReact,
+        buildCopyInstructions,
         bytesToString,
         calculateFolderSize,
         Campaign,
         checksum,
         convertGameIdReverse,
+        compileStopPatterns,
         copyFileAtomic,
         copyRecursive,
         ConcurrencyLimiter,
         Content,
         CycleError,
+        declareInstallers,
         DataInvalid,
         Debouncer,
         deBOM,
@@ -9008,10 +9320,12 @@ declare namespace util {
         instance as epicGamesLauncher,
         extractExeIcon,
         fileMD5,
+        findCommonRootDir,
         findDownloadByRef,
         findModByRef,
         GameNotFound,
         instance_2 as GameStoreHelper,
+        normalizeStoreQuery,
         generateCollectionSessionId,
         getActivator,
         getApplication,
@@ -9038,6 +9352,7 @@ declare namespace util {
         lazyRequire,
         local,
         lookupFromDownload,
+        makeInstallerFromSpec,
         makeModReference,
         coerceToSemver,
         makeNormalizingDict,
@@ -9112,6 +9427,12 @@ declare namespace util {
         renderError,
         IPrettifiedError,
         IErrorRendered,
+        rawRequest,
+        jsonRequest,
+        request,
+        upload,
+        IRequestOptions,
+        Method,
         getSafe,
         getSafeCI,
         mutateSafe,
@@ -9126,13 +9447,7 @@ declare namespace util {
         removeValueIf,
         merge,
         rehydrate,
-        currentGame_2 as currentGame,
-        rawRequest,
-        jsonRequest,
-        request,
-        upload,
-        IRequestOptions,
-        Method
+        currentGame_2 as currentGame
     }
 }
 export { util }
@@ -9182,6 +9497,7 @@ declare type VortexInstallType = "regular" | "managed";
 /** Vortex application paths */
 declare type VortexPaths = {
     base: string;
+    base_unpacked: string;
     assets: string;
     assets_unpacked: string;
     modules: string;
@@ -9213,7 +9529,7 @@ declare type VortexPaths = {
  */
 declare function walk(target: string, callback: (iterPath: string, stats: fs.Stats) => PromiseLike<any>, options?: IWalkOptions): Promise<void>;
 
-export declare class Webview extends React_2.Component<IWebviewProps & IWebView_2, {}> {
+export declare class Webview extends React_2.Component<IWebviewProps & IWebView, {}> {
     private mNode;
     componentDidMount(): void;
     componentWillUnmount(): void;

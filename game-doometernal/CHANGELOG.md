@@ -4,6 +4,11 @@
 
 - Config and save modtypes, installers, and open buttons.
 
+## [0.4.3] - 2026-08-05
+
+- Added: Checking for updates now installs a missing requirement instead of reporting an update for something that is not installed
+- Fixed: Updating a requirement now disables the version it replaces before the new one is installed, so the two cannot deploy on top of each other
+
 ## [0.4.2] - 2026-07-18
 
 - Fixed: Minor technical changes.

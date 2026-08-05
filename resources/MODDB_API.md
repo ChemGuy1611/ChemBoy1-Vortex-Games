@@ -99,6 +99,7 @@ The entry points take an array of requirement objects (conventionally a `MODDB_R
 | `fileIdAttribute` | optional | Mod attribute tracking the installed ModDB file id for update checks. Default `'moddbFileId'`. |
 | `versionPattern` | optional | RegExp whose capture group 1 is the version, run against the RSS item title. Default `/\[([^[\]]+)\]\s*$/` (matches titles like `"[wOS] Dark Messiah Mod Launcher [R1-08.16]"`). |
 | `pageUrl` | optional | Manual-download page opened on install failure. Default derived from `moddbPath` (`https://www.moddb.com/{moddbPath}/downloads`). |
+| `autoInstall` | optional | `false` -> never install this requirement unattended; only an explicit user action (a toolbar button) installs it. Default installs a missing requirement automatically when the update check runs. |
 | `archiveFileName` | optional | Fallback name for the temp file used only by the direct-fetch fallback route, when neither the response URL nor `content-disposition` yields a usable name. |
 
 ### Exports
@@ -106,7 +107,7 @@ The entry points take an array of requirement objects (conventionally a `MODDB_R
 | Export | Role |
 | --- | --- |
 | `downloadModDb(api, gameSpec, requirements, check = true)` | Download + install each requirement in the array (sequentially) — mirror URL via the download manager, falling back to a direct fetch + import if that fails — then enable it, set its mod type, and record version + file id attributes. With `check = true` (default) it is a no-op for requirements already installed; pass `false` to (re)install/update. Main entry point — call in `setup()`. |
-| `checkForModDbUpdate(api, gameSpec, requirements)` | For each requirement in the array, compare the tracked file id against the latest RSS feed item; raise a warning notification with a Download action when newer. Call from a `check-mods-version` handler and after the `setup()` download. |
+| `checkForModDbUpdate(api, gameSpec, requirements)` | For each requirement in the array: install it if it is missing (unless `autoInstall: false`), otherwise compare the tracked file id against the latest RSS feed item; raise a warning notification with a Download action when newer. Call from a `check-mods-version` handler and after the `setup()` download. |
 | `downloadModDbRequirement(api, gameSpec, requirement, check = true)` | Single-requirement variant of `downloadModDb`. |
 | `checkForModDbUpdateRequirement(api, gameSpec, requirement)` | Single-requirement variant of `checkForModDbUpdate`. |
 | `isModDbRequirementInstalled(api, gameId, requirement)` | Whether any mod with the requirement's mod type exists. |
@@ -122,6 +123,8 @@ The entry points take an array of requirement objects (conventionally a `MODDB_R
 - **Overlap guard.** A requirement whose install is already running is skipped (e.g. double-clicked toolbar action), keyed by mod type.
 - **Install failure opens the page.** A failed download/install shows an error notification and opens `pageUrl` for a manual download.
 - **Per-game pieces stay in `index.js`.** The mod type registration and the `registerInstaller` test/install pair for the requirement are not part of this module.
+- **A missing requirement is installed by the update check.** The update check used to return early when the requirement was not installed, so a requirement the user removed (or never got) was never picked up again. It now installs it instead. Requirements that should only be installed by an explicit user action set `autoInstall: false`.
+- **Updating disables the version it replaces.** An update installs a second mod entry rather than replacing the first, so the mod ids carrying the requirement's mod type are captured before the install and disabled once the new one lands (the newly installed id is skipped). Without this both copies stayed enabled and deployed on top of each other.
 
 ## Caveats
 

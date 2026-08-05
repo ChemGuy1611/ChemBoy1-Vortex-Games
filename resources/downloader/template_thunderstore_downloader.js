@@ -23,6 +23,7 @@ const TS_REQUIREMENTS = [
     fallbackVersion: XXX_REV, //optional - omit to fail with a manual-download error page when the API is down
     //versionAttribute: 'thunderstoreVersion', //mod attribute tracking the installed version for update checks (default shown)
     //pageUrl: `https://thunderstore.io/c/${XXX_TS_COMMUNITY}/p/${XXX_TS_NAMESPACE}/${XXX_TS_NAME}/`, //manual-download page (default derived from the fields above)
+    //autoInstall: false, //opt out of unattended installs - setup and the update check both skip it, only an explicit user action (toolbar button) installs it
   },
   //additional Thunderstore requirements go here
 ];

@@ -2,8 +2,8 @@
 Name: Warhammer 40,000: Rogue Trader Vortex Extension
 Structure: Game with Integrated Mod Loader (UnityModManager)
 Author: ChemBoy1
-Version: 0.5.2
-Date: 2026-07-29
+Version: 0.5.3
+Date: 2026-08-05
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -39,7 +39,7 @@ const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Warhammer_40,000:_Ro
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1627"; //Nexus link to this extension. Used for links
 
 const LOAD_ORDER_ENABLED = true;
-const debug = true;
+const debug = false;
 
 const DATA_FOLDER = path.join(USER_HOME, 'AppData', 'LocalLow', 'Owlcat Games', 'Warhammer 40000 Rogue Trader');
 const ROOT_FOLDERS = ['']; //not using root installer

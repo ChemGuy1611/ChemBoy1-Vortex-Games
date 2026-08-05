@@ -25,6 +25,7 @@ const GB_REQUIREMENTS = [
     //fileIdAttribute: 'gamebananaFileId', //mod attribute tracking the installed GameBanana file id (default shown)
     //versionPattern: /\(Update\s+(.+?)\)/, //RegExp whose capture group 1 is the version, run against the Updates title (default shown)
     //pageUrl: `https://gamebanana.com/tools/${XXX_GB_ITEM_ID}`, //manual-download page (default derived from gbItemType + gbItemId)
+    //autoInstall: false, //opt out of unattended installs - setup and the update check both skip it, only an explicit user action (toolbar button) installs it
   },
   //additional GameBanana requirements go here
 ];

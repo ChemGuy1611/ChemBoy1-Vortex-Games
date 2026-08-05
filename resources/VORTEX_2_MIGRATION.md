@@ -43,6 +43,69 @@ Notes:
 
 ---
 
+## Update (July 2026) — React 17 → 18
+
+Vortex's runtime React moved from 17.0.2 to **18.3.1** during the 2.4.x line, and the `@nexusmods/vortex-api` peer dependencies for `@types/react` / `@types/react-dom` moved to 18. The renderer still uses React's legacy rendering mode, so **runtime behavior is identical to React 17**.
+
+**Already-published extensions need no action.** Compiled extensions keep working unmodified — Vortex supplies React at runtime.
+
+**On your next rebuild**, `@types/react` 18 will surface new TypeScript errors. They are type-level only:
+
+### `Property 'children' does not exist on type ...`
+
+`@types/react` 18 removed the implicit `children` prop. Declare it explicitly:
+
+```ts
+// before
+interface IMyPanelProps {
+  title: string;
+}
+
+// after
+interface IMyPanelProps {
+  title: string;
+  children?: React.ReactNode;
+}
+```
+
+For function components, `React.FC<React.PropsWithChildren<IMyPanelProps>>` does the same job.
+
+### Removed type aliases
+
+| Removed in `@types/react` 18 | Replace with |
+| --- | --- |
+| `React.StatelessComponent<P>` / `React.SFC<P>` | `React.FC<P>` |
+| `React.ReactText` | `string \| number` |
+| `React.ReactChild` | `React.ReactElement \| string \| number` |
+
+Vortex's own registration surfaces (`RegisterSettings`, `RegisterMainPage`, `RegisterDashlet`, `RegisterDialog`, `RegisterOverlay`, `RegisterBanner`, `RegisterControlWrapper`) and `IMainPage.component` now use `React.FC` / `React.ComponentType<React.PropsWithChildren<any>>` instead of `StatelessComponent`. This is source-compatible — no change needed unless you aliased those types yourself.
+
+The same `PropsWithChildren` treatment reached `IExtensibleProps`, `ITableFilter.component` / `IFilterProps`, `IActionDefinition.component`, and load-order `usageInstructions` / `customItemRenderer` (see `LOAD_ORDER_REGISTRATION.md`).
+
+### `Type '...' is not assignable to type 'ReactNode'`
+
+`ReactNode` is stricter in the 18 types — plain objects and component *instances* no longer qualify. Render the value explicitly rather than passing it as a child.
+
+### `npm install` fails with ERESOLVE
+
+Vortex pins `react-select@1.3.0`, whose React peer range is capped below 18, which strict npm resolution rejects:
+
+```text
+npm install --legacy-peer-deps
+```
+
+(pnpm: `peerDependencyRules.allowedVersions`; yarn: `resolutions`.) Vortex supplies these packages at runtime, so the peer warning has no runtime effect.
+
+### Still working, warning only
+
+`ReactDOM.render`, `ReactDOM.findDOMNode`, and the legacy context API (`contextTypes` / `childContextTypes`) continue to work under Vortex's React 18 and log deprecation warnings in development builds. React will remove them in a future major, so migrate when convenient.
+
+### Do not target React 19
+
+If your own `devDependencies` carry React 19 typings, your editor will offer APIs the host does not have. The runtime is 18.3.1 — `use`, `useActionState`, and ref-as-prop (without `forwardRef`) are not available.
+
+---
+
 ## Summary of breaking changes
 
 | Area | 1.16 | 2.0 |
@@ -178,4 +241,6 @@ module.exports = {
 `VORTEX_APP.md` (overview of the extension-API surface this guide ports code against).
 `REGISTER_MIGRATION.md` (extension's own runtime state migration on its own version bump — not
 this doc; see disambiguation above). `VORTEX_DEV_BUILD.md` (building the 2.x app itself from source
-to test against it).
+to test against it). `VORTEX_REACT_PAGES.md` (page and component authoring against the React 18
+runtime this guide's React section covers). `LOAD_ORDER_REGISTRATION.md` (`usageInstructions` and
+`customItemRenderer`, two of the registration surfaces retyped for React 18).

@@ -23,6 +23,7 @@ const MWS_REQUIREMENTS = [
     //filePattern: /Windows/i, //RegExp tested against the file's display name - narrows multi-file submissions further (default: the mod's primary file)
     //fileIdAttribute: 'modworkshopFileId', //mod attribute tracking the installed ModWorkshop file id (default shown)
     //pageUrl: `https://modworkshop.net/mod/${XXX_MWS_MOD_ID}`, //manual-download page (default derived from mwsModId)
+    //autoInstall: false, //opt out of unattended installs - setup and the update check both skip it, only an explicit user action (toolbar button) installs it
   },
   //additional ModWorkshop requirements go here
 ];

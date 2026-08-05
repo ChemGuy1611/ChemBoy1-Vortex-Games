@@ -3,7 +3,7 @@
 How the Vortex application and its monorepo are put together, for orientation when reading or searching the `Vortex` source tree. This is the **app/repo** view — the extension-facing API surface is covered separately by the `vortex-api` type declarations (`node_modules/vortex-api/lib/api.d.ts`) and the authoring docs in this folder. Crosslinks to those are noted where relevant.
 
 **Repo:** `Nexus-Mods/Vortex`, cloned locally as `Vortex\` (read-only mirror — see `BOOTSTRAP.md`).
-**Version line (audited 2026-07-14):** v2.3.0 (latest tag; the local checkout's HEAD is on an integration branch that does not contain the tag commit). Default branch is `master`.
+**Version line (audited 2026-08-05):** v2.4.2 is the latest stable tag and v2.5.0-beta.2 the latest prerelease (both 2026-07-30); the local checkout's HEAD is on `master` at 2026-08-04, past v2.4.2 and carrying unreleased 2.5.0-line work. Default branch is `master`.
 
 ## Top-level layout
 
@@ -103,7 +103,7 @@ Vortex has **two** extension directories. Do not confuse them.
 1. **Core extensions** — `src/renderer/src/extensions/`. These are first-party feature modules compiled into the renderer (not separately packaged). ~50 of them, e.g.:
    - Mod pipeline: `mod_management`, `download_management`, `installer_fomod_native` / `installer_fomod_ipc` / `installer_fomod_shared` / `installer_nested_fomod`, `installer_dotnet`, `mod_load_order`, `file_based_loadorder`.
    - Deployment methods: `hardlink_activator`, `symlink_activator` (+ `_elevate`), `move_activator`, `null_activator`.
-   - Platform/integration: `nexus_integration`, `browse_nexus`, `gamemode_management`, `gameversion_management`, `profile_management`, `category_management`, `collections_integration`, `updater`, `health_check`, `recovery`.
+   - Platform/integration: `nexus_integration`, `browse_nexus`, `gamemode_management`, `gameversion_management`, `profile_management`, `category_management`, `collections`, `updater`, `health_check`, `recovery`. (`collections_integration` was folded into `collections` during the install-session rework; its install-session types now live at `src/renderer/src/types/collections/ICollectionInstallSession.ts`.)
    - UI/dashlets: `dashboard`, `*_dashlet` (announcement, firststeps, news, starter, mod_spotlights, onboarding), `settings_*`.
    - Note: `extensions/collections/` phased-install logic actually lives at `src/renderer/src/extensions/mod_management/InstallManager.ts` (see Collections below) — the `AGENTS-COLLECTIONS.md` path `src/extensions/...` is stale.
 

@@ -4,6 +4,11 @@
 
 - None
 
+## [1.0.1] - 2026-08-05
+
+- Added: Checking for updates now installs a missing requirement instead of reporting an update for something that is not installed
+- Fixed: Updating a requirement now disables the version it replaces before the new one is installed, so the two cannot deploy on top of each other
+
 ## [1.0.0] - 2026-08-03
 
 - Automated the RealRTCW download - Vortex now finds the latest version on ModDB and installs it for you

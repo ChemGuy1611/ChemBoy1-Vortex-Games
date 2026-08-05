@@ -2,13 +2,15 @@
 
 Functions available in the Vortex API that are **not used by any of the 16 templates** in this repo, but are genuinely useful for building richer extensions. Organized by use case.
 
-For the exhaustive API reference see the bundled type declarations in `node_modules/vortex-api/lib/api.d.ts`. Line numbers below refer to that file and drift between builds — grep by symbol name instead of trusting them.
+For the exhaustive API reference see the bundled type declarations in `node_modules/vortex-api/lib/api.d.ts`. Grep it by symbol name — the file is a build artifact and its line numbers move with every release, so nothing here cites them.
+
+Entries marked **(2.4.x)** were added during the Vortex 2.4 line and are absent from older bundles. Entries marked **(2.5.0-beta.1+)** are not in the current stable line at all — check what your users are running before relying on them.
 
 ---
 
 ## 1. UI Extension Points
 
-### `context.registerControlWrapper(group, priority, wrapper)` — line 3545
+### `context.registerControlWrapper(group, priority, wrapper)`
 
 **Why useful:** Injects a HOC around an existing Vortex control group without forking it. Add badges, tooltips, or overlay icons to existing table rows or toolbar buttons.
 
@@ -16,7 +18,7 @@ For the exhaustive API reference see the bundled type declarations in `node_modu
 
 ---
 
-### `context.registerOverlay(id, element, props?)` — line 3539
+### `context.registerOverlay(id, element, props?)`
 
 **Why useful:** Renders a component that floats above the main Vortex window in a managed layer. Visibility is controlled by the extension.
 
@@ -24,7 +26,7 @@ For the exhaustive API reference see the bundled type declarations in `node_modu
 
 ---
 
-### `context.registerToDo(id, type, props, icon, text, action, condition, value, priority)` — line 3557
+### `context.registerToDo(id, type, props, icon, text, action, condition, value, priority)`
 
 **Why useful:** Shows a one-time onboarding item on the Vortex dashboard that auto-dismisses when its condition is met.
 
@@ -32,7 +34,7 @@ For the exhaustive API reference see the bundled type declarations in `node_modu
 
 ---
 
-### `context.registerDashlet(title, width, height, position, component, isVisible, props, opts)` — line 3570
+### `context.registerDashlet(title, width, height, position, component, isVisible, props, opts)`
 
 **Why useful:** Add a tile to the Vortex dashboard (grid layout; width 1-3, height 1-6).
 
@@ -40,7 +42,7 @@ For the exhaustive API reference see the bundled type declarations in `node_modu
 
 ---
 
-### `context.registerBanner(group, component, opts)` — line 3564
+### `context.registerBanner(group, component, opts)`
 
 **Why useful:** A cycling banner shown at the top of a Vortex page group.
 
@@ -48,7 +50,7 @@ For the exhaustive API reference see the bundled type declarations in `node_modu
 
 ---
 
-### `context.registerFooter(id, element, props?)` — line 3548
+### `context.registerFooter(id, element, props?)`
 
 **Why useful:** Persistent status element in the bottom status bar.
 
@@ -56,7 +58,7 @@ For the exhaustive API reference see the bundled type declarations in `node_modu
 
 ---
 
-### `context.registerDialog(id, element, props?)` — line 3536
+### `context.registerDialog(id, element, props?)`
 
 **Why useful:** Self-controlled modal with full React component (unlike `api.showDialog` which is declarative). Manages its own show/hide state via `actions.setDialogVisible`.
 
@@ -64,7 +66,23 @@ For the exhaustive API reference see the bundled type declarations in `node_modu
 
 ---
 
-### `api.highlightControl(selector, durationMS, text?, altStyle?)` — line 3117
+### `IMainPageOptions.menuBadge` — **(2.4.x)**
+
+**Why useful:** A component mounted on your page's entry in the left menu, which subscribes to state itself. Where `badge` can only show a number from a `ReduxProp`, `menuBadge` can render anything — a severity dot, a warning icon, a coloured pill.
+
+**Use case:** Flag "3 load order conflicts" on the sidebar with a red dot rather than an ambiguous count, so the user sees there is a problem without opening the page. Vortex's own Health Check page uses it for its severity indicator.
+
+---
+
+### `IMainPageOptions.newLayout` — **(2.4.x)**
+
+**Why useful:** Opts your page out of the legacy `.main-page` / header / body-container chrome so it renders as the flat root of its own subtree, for building against Vortex's redesigned UI.
+
+**Caution:** With this set, the page component is expected to render its own `Page`. Set it without doing so and your page renders with no chrome at all. Leave it unset unless you are deliberately targeting the new design system.
+
+---
+
+### `api.highlightControl(selector, durationMS, text?, altStyle?)`
 
 **Why useful:** Briefly pulse-highlights a DOM element by CSS selector to onboard users to a button or control you just added.
 
@@ -72,7 +90,7 @@ For the exhaustive API reference see the bundled type declarations in `node_modu
 
 ---
 
-### `api.awaitUI()` — line 3121
+### `api.awaitUI()`
 
 **Why useful:** Returns a Promise that resolves once the Vortex UI is fully mounted. Gate event emissions or notifications that must appear on screen.
 
@@ -80,7 +98,7 @@ For the exhaustive API reference see the bundled type declarations in `node_modu
 
 ---
 
-### `api.setStylesheet(key, filePath)` — line 3350
+### `api.setStylesheet(key, filePath)`
 
 **Why useful:** Injects a SASS stylesheet into Vortex's styling pipeline. Three built-in keys: `'variables'` (colors/sizes/margins), `'details'` (controls), `'style'` (component-specific). A custom key inserts before `'style'`. Call `api.clearStylesheet()` to force the cache to rebuild.
 
@@ -94,7 +112,7 @@ context.once(() => {
 
 ---
 
-### `api.closeDialog(id, actionKey?, input?)` — line 3153
+### `api.closeDialog(id, actionKey?, input?)`
 
 **Why useful:** Programmatically close a dialog that was opened with `api.showDialog`. Optionally simulate clicking an action button by passing its `action` key.
 
@@ -102,7 +120,7 @@ context.once(() => {
 
 ---
 
-### `context.registerPreview(priority, handler)` — line 3883
+### `context.registerPreview(priority, handler)`
 
 **Why useful:** Registers a handler that can show a preview or diff of files. Vortex calls handlers in priority order, skipping any that reject with `ProcessCanceled`. Priority guide: 0–100 = diff + pick, 100–200 = diff only, 300+ = view-only.
 
@@ -114,7 +132,7 @@ context.once(() => {
 
 ## 2. State & Reducers
 
-### `context.registerSettingsHive(type, hive)` — line 3632
+### `context.registerSettingsHive(type, hive)`
 
 **Why useful:** Declares that a top-level state hive should be scoped to `'global' | 'game' | 'profile'` for persistence. Game-scoped hives automatically switch content when the active game changes.
 
@@ -122,7 +140,7 @@ context.once(() => {
 
 ---
 
-### `context.registerPersistor(hive, persistor, debounce?)` — line 3640
+### `context.registerPersistor(hive, persistor, debounce?)`
 
 **Why useful:** Back a state hive with a custom file format (e.g., YAML, INI, or a game-native config). Vortex treats it like any other state slice — React re-renders, onStateChange, etc.
 
@@ -130,7 +148,7 @@ context.once(() => {
 
 ---
 
-### `context.registerActionCheck(actionType, check)` — line 3657
+### `context.registerActionCheck(actionType, check)`
 
 **Why useful:** Pre-dispatch guard on any Redux action type. Throw or return an error string to block bad dispatches before they corrupt state.
 
@@ -138,7 +156,7 @@ context.once(() => {
 
 ---
 
-### `util.makeReactive(obj)` — line 7017
+### `util.makeReactive(obj)`
 
 **Why useful:** Wraps a plain JS object so property assignments trigger React re-renders in components that reference it — without Redux. Useful for ephemeral UI state that doesn't need to persist.
 
@@ -146,7 +164,7 @@ context.once(() => {
 
 ---
 
-### `util.setDefaultArray(state, path, fallback)` — line 7901
+### `util.setDefaultArray(state, path, fallback)`
 
 **Why useful:** Like `setdefault` but initializes the path with `fallback` (an array) if missing. Safe for use inside reducers.
 
@@ -156,7 +174,7 @@ context.once(() => {
 
 ## 3. Mod Metadata & Lookup
 
-### `api.lookupModReference(ref, opts?)` — line 3206
+### `api.lookupModReference(ref, opts?)`
 
 **Why useful:** Resolves an `IModReference` (by md5, repo id, or expression) to candidate download entries. Use in complex installers that need to verify or find dependencies.
 
@@ -164,7 +182,7 @@ context.once(() => {
 
 ---
 
-### `api.lookupModMeta(details, ignoreCache?)` — line 3215
+### `api.lookupModMeta(details, ignoreCache?)`
 
 **Why useful:** Hash+size lookup against the mod metadata database. Enriches mod attributes (name, version, author) from just the file.
 
@@ -172,7 +190,7 @@ context.once(() => {
 
 ---
 
-### `api.genMd5Hash(data, progressCb?)` — line 3197
+### `api.genMd5Hash(data, progressCb?)`
 
 **Why useful:** Streamed MD5 hash with a progress callback — preferable to a custom implementation for large archives.
 
@@ -180,7 +198,7 @@ context.once(() => {
 
 ---
 
-### `api.saveModMeta(modInfo)` — line 3316
+### `api.saveModMeta(modInfo)`
 
 **Why useful:** Persists a manually computed or scraped `IModInfo` record to Vortex's local meta database. The meta DB is the backing store for `lookupModMeta` — saving here means subsequent lookups will find your data without hitting the network.
 
@@ -188,7 +206,7 @@ context.once(() => {
 
 ---
 
-### `api.addMetaServer(id, server?)` — line 3292
+### `api.addMetaServer(id, server?)`
 
 **Why useful:** Registers an additional metadata lookup server. Vortex queries all registered servers and merges results. Pass `undefined` as the server argument to remove a previously added server with the same `id`.
 
@@ -196,7 +214,7 @@ context.once(() => {
 
 ---
 
-### `context.registerAttributeExtractor(priority, extractor)` — line 3755
+### `context.registerAttributeExtractor(priority, extractor)`
 
 **Why useful:** Inject extra attributes into any mod at install time by parsing its files. Default meta-db extractor runs at priority 100 — use 90 or lower to run first.
 
@@ -204,7 +222,7 @@ context.once(() => {
 
 ---
 
-### `context.registerGameInfoProvider(id, priority, expireMS, keys, query)` — line 3741
+### `context.registerGameInfoProvider(id, priority, expireMS, keys, query)`
 
 **Why useful:** Cache per-game info (fetched from any source) and expose it in Vortex's game info panel. Auto-refreshed after `expireMS` milliseconds.
 
@@ -212,7 +230,7 @@ context.once(() => {
 
 ---
 
-### `util.coerceToSemver(version)` vs `util.semverCoerce(version, opts?)` — lines 831 / 7812
+### `util.coerceToSemver(version)` vs `util.semverCoerce(version, opts?)`
 
 **Why useful:** Game versions are rarely strict semver. `coerceToSemver` returns a string; `semverCoerce` returns a `SemVer` object (access `.major`, `.minor`, `.patch`).
 
@@ -220,7 +238,7 @@ context.once(() => {
 
 ---
 
-### `util.isFuzzyVersion(input)` — line 6026
+### `util.isFuzzyVersion(input)`
 
 **Why useful:** Returns `true` if a version string is not strict semver (e.g. `"1.2"`, `"latest"`, `"beta"`). Gate strict semver operations on this check to avoid crashes.
 
@@ -230,7 +248,7 @@ context.once(() => {
 
 ## 4. Install / Launch Hooks
 
-### `context.registerStartHook(priority, id, hook)` — line 3833
+### `context.registerStartHook(priority, id, hook)`
 
 **Why useful:** Intercept any tool launch. The hook receives `IRunParameters` and can mutate args, environment, or cancel the launch by throwing `UserCanceled` / `ProcessCanceled`.
 
@@ -240,7 +258,17 @@ Priority guide: first-party check-deployment hook runs at 100. Use 50-90 for ext
 
 ---
 
-### `context.registerInterpreter(extension, apply)` — line 3827
+### `IRunOptions.onExit` — **(2.4.x)**
+
+**Why useful:** `api.runExecutable(exe, args, { onExit: (code) => ... })` hands you the process's actual exit code (`null` when it was killed by a signal). Without it there is no way to read the code: the promise resolves with no value, and `expectSuccess` only turns a bad code into a notification.
+
+**Use case:** Re-scan a game's config directory after an external tool the user launched from your extension finishes, or warn only when the tool actually failed rather than every time it closes.
+
+**Caution:** not called on the elevated path — `runElevated` receives only `onSpawned`.
+
+---
+
+### `context.registerInterpreter(extension, apply)`
 
 **Why useful:** Map a file extension (e.g. `.py`, `.jar`, `.bat`) to an actual interpreter when Vortex tries to launch it. Throw `util.MissingInterpreter(msg, url)` for a nice error UI.
 
@@ -248,7 +276,7 @@ Priority guide: first-party check-deployment hook runs at 100. Use 50-90 for ext
 
 ---
 
-### `context.registerDownloadProtocol(scheme, handler)` — line 3621
+### `context.registerDownloadProtocol(scheme, handler)`
 
 **Why useful:** Register a custom URI scheme that resolves to direct download URLs. When a URL starting with your scheme arrives, Vortex calls your handler to resolve it to `{ urls: string[], updatedUrl?, meta }`.
 
@@ -258,7 +286,7 @@ Priority guide: first-party check-deployment hook runs at 100. Use 50-90 for ext
 
 ## 5. File Operations Beyond fs Basics
 
-### `fs.forcePerm(t, op, filePath?, maxTries?)` — line 1258 (fs namespace)
+### `fs.forcePerm(t, op, filePath?, maxTries?)`
 
 **Why useful:** Retries a file operation while temporarily granting write permissions (read-only files, protected directories). Falls back to elevation if needed.
 
@@ -266,7 +294,7 @@ Priority guide: first-party check-deployment hook runs at 100. Use 50-90 for ext
 
 ---
 
-### `util.withTmpDir` / `fs.withTmpFile` — util line 9256, fs namespace
+### `util.withTmpDir` / `fs.withTmpFile`
 
 **Why useful:** Scoped temporary directory/file that is auto-deleted when the callback resolves or rejects. No manual cleanup.
 
@@ -279,7 +307,7 @@ await util.withTmpDir(async (tmpPath) => {
 
 ---
 
-### `util.copyFileAtomic(src, dest)` / `util.writeFileAtomic(path, data)` — lines 9012 / 9108
+### `util.copyFileAtomic(src, dest)` / `util.writeFileAtomic(path, data)`
 
 **Why useful:** Write-via-temp-then-rename pattern — crash-safe for config files. If the process dies mid-write, the original file is unaffected.
 
@@ -287,7 +315,7 @@ await util.withTmpDir(async (tmpPath) => {
 
 ---
 
-### `util.calculateFolderSize(dirPath)` — line 9008
+### `util.calculateFolderSize(dirPath)`
 
 **Why useful:** Async total size of a directory tree in bytes. No wheel to reinvent.
 
@@ -295,7 +323,7 @@ await util.withTmpDir(async (tmpPath) => {
 
 ---
 
-### `util.ConcurrencyLimiter` — line 9014
+### `util.ConcurrencyLimiter`
 
 **Why useful:** Caps how many async operations run in parallel. Prevents I/O floods when processing hundreds of mod files.
 
@@ -306,7 +334,7 @@ await Promise.all(modFiles.map(f => limiter.do(() => processFile(f))));
 
 ---
 
-### `api.openArchive(archivePath, options?, extension?)` — line 3320
+### `api.openArchive(archivePath, options?, extension?)`
 
 **Why useful:** Opens an archive through Vortex's archive subsystem (7z + any registered `registerArchiveType` handlers) and returns an `Archive` object. The `extension` parameter overrides file extension detection — useful for archives without conventional extensions.
 
@@ -322,7 +350,7 @@ const data = await archive.extractFile('data/config.json');
 
 ## 6. Inter-Extension API
 
-### `context.registerAPI(name, func, opts)` — line 3855
+### `context.registerAPI(name, func, opts)`
 
 **Why useful:** Exposes a function on `api.ext.<name>` for other extensions to call. The standard way to build an extension that others can integrate with.
 
@@ -330,7 +358,7 @@ const data = await archive.extractFile('data/config.json');
 
 ---
 
-### `api.getLoadedExtensions()` — line 3125
+### `api.getLoadedExtensions()`
 
 **Why useful:** Returns the list of all currently loaded extensions at runtime. Use to detect optional peer extensions and enable conditional behavior.
 
@@ -359,7 +387,17 @@ All are sync (NodeJS.EventEmitter). Subscribe in `context.once()`.
 
 ---
 
-### `context.requireVersion(versionRange)` — line 3922
+### The `ApiEvents` type registry — **(2.4.x)**
+
+**Why useful:** `api.events` is now typed as `NodeJS.EventEmitter<ApiEventMap & Record<string, any[]>>`, and `ApiEvents` is an **open interface** — a TypeScript extension can add its own event names via `declare module` augmentation and get argument checking on `emit`, `onAsync` and `emitAndAwait` for them. `emit<'my-event'>(...)` then fails to compile on a wrong argument list instead of failing silently at runtime.
+
+**Use case:** An extension that exposes events for other extensions to hook (paired with `context.registerAPI`) can publish the signatures as types rather than as prose in a README.
+
+Only Vortex's four download events are typed out of the box; everything else falls through the `Record<string, any[]>` fallback and stays untyped. The same three methods now return **native `Promise`**, not Bluebird — `.tap()` and `.reflect()` are gone. See `VORTEX_EVENT_BUS.md`.
+
+---
+
+### `context.requireVersion(versionRange)`
 
 **Why useful:** Declares a semver version range that the running Vortex must satisfy. Vortex will show a clear error if the constraint isn't met rather than crashing at runtime. Multiple calls are ANDed together.
 
@@ -367,7 +405,7 @@ All are sync (NodeJS.EventEmitter). Subscribe in `context.once()`.
 
 ---
 
-### `api.withPrePost(event, cb)` — line 3108
+### `api.withPrePost(event, cb)`
 
 **Why useful:** Wraps a function so it automatically emits `will-<event>` before and `did-<event>` after — a cheap way to make your extension's operations hookable by others.
 
@@ -375,7 +413,7 @@ All are sync (NodeJS.EventEmitter). Subscribe in `context.once()`.
 
 ---
 
-### `api.onStateChange(path, callback)` — line 3088
+### `api.onStateChange(path, callback)`
 
 **Why useful:** Subscribe to a specific Redux state path with `(prev, cur) => void`. Much cheaper than `store.subscribe` + manual diffing.
 
@@ -385,7 +423,7 @@ All are sync (NodeJS.EventEmitter). Subscribe in `context.once()`.
 
 ## 8. Profile, Tools & Load Order
 
-### `context.registerProfileFile(gameId, filePath)` — line 3878
+### `context.registerProfileFile(gameId, filePath)`
 
 **Why useful:** Mark a file as "profile-specific" — Vortex backs it up when switching profiles and restores the right version per profile.
 
@@ -393,7 +431,7 @@ All are sync (NodeJS.EventEmitter). Subscribe in `context.once()`.
 
 ---
 
-### `context.registerProfileFeature(featureId, type, icon, label, desc, supported)` — line 3879
+### `context.registerProfileFeature(featureId, type, icon, label, desc, supported)`
 
 **Why useful:** Add a toggleable per-profile feature (stored at `state.persistent.profiles[id].features[featureId]`). Appears as a checkbox in the profile management UI.
 
@@ -401,7 +439,7 @@ All are sync (NodeJS.EventEmitter). Subscribe in `context.once()`.
 
 ---
 
-### `context.registerToolVariables(cb)` — line 3880
+### `context.registerToolVariables(cb)`
 
 **Why useful:** Inject `${MY_VARIABLE}` token substitutions into tool command line arguments. Keys must be `UPPERCASE_UNDERSCORE`.
 
@@ -409,7 +447,7 @@ All are sync (NodeJS.EventEmitter). Subscribe in `context.once()`.
 
 ---
 
-### `context.registerHistoryStack(id, opts)` — line 3881
+### `context.registerHistoryStack(id, opts)`
 
 **Why useful:** Add a named undo/redo lane to Vortex's history system. Provide `describe`, `describeRevert`, `canRevert`, and `revert` callbacks.
 
@@ -417,7 +455,7 @@ All are sync (NodeJS.EventEmitter). Subscribe in `context.once()`.
 
 ---
 
-### `context.registerGameVersionProvider(id, priority, supported, getVersion, opts?)` — line 3875
+### `context.registerGameVersionProvider(id, priority, supported, getVersion, opts?)`
 
 **Why useful:** Override how Vortex detects the installed game version. Use when the default exe-header approach gives wrong results.
 
@@ -427,19 +465,19 @@ All are sync (NodeJS.EventEmitter). Subscribe in `context.once()`.
 
 ## 9. Useful `util.*` Helpers
 
-### `util.sanitizeFilename(input)` / `util.isFilenameValid(input)` / `util.isPathValid(input, allowRelative?)` — lines 9088 / 9049 / 9051
+### `util.sanitizeFilename(input)` / `util.isFilenameValid(input)` / `util.isPathValid(input, allowRelative?)`
 
 Cross-platform filename/path safety. `isFilenameValid` checks the name component; `isPathValid` checks the full path; `sanitizeFilename` strips illegal characters. Use before any user-provided path reaches the filesystem.
 
 ---
 
-### `util.isChildPath(child, parent, normalize?)` — line 9048
+### `util.isChildPath(child, parent, normalize?)`
 
 Reliable Windows-aware child-path check (case-insensitive by default). Never use string `.startsWith()` for path containment on Windows — drive letter casing and trailing-slash differences will break it.
 
 ---
 
-### `util.makeQueue()` — line 9060
+### `util.makeQueue()`
 
 Returns a serial async queue. Enqueue functions that return Promises; they run one at a time, in order. Useful for IPC-with-game-server style operations that must not overlap.
 
@@ -451,13 +489,13 @@ queue(() => writeConfigFile(data2)); // waits for the first to finish
 
 ---
 
-### `util.objDiff(lhs, rhs, skip?)` — line 7276
+### `util.objDiff(lhs, rhs, skip?)`
 
 Shallow diff of two objects; returns `{ key: { lhs, rhs } }` for changed keys. Use for state-change debugging or change-log generation.
 
 ---
 
-### `util.Debouncer` — line 9018
+### `util.Debouncer`
 
 Class with `schedule(delay, cb)`, `runNow()`, `wait()`, `clear()`. Debounce expensive reactions to rapid state changes (e.g., user typing in a search box, rapid mod enable/disable toggles).
 
@@ -466,15 +504,25 @@ Class with `schedule(delay, cb)`, `runNow()`, `wait()`, `clear()`. Debounce expe
 ### Custom error classes
 
 Throw semantic `util.*` error classes (`UserCanceled`, `ProcessCanceled`, `DataInvalid`,
-`SetupError`, `MissingInterpreter`, `NotFound`, `ArgumentInvalid`, `CycleError`,
+`SetupError`, `MissingInterpreter`, `NotFound`, `ArgumentInvalid`, `CycleError`, `GameNotFound`,
 `NotSupportedError`) instead of a generic `Error` to get the right Vortex error UI. Full table +
 cancel semantics: see `ERROR_CLASSES.md`.
 
 ---
 
+### `VortexError` — **(2.5.0-beta.1+)**
+
+Exported from the `vortex-api` barrel alongside the classes above, which now all derive from it.
+Its identity is in `err.data.kind`, a discriminated union, so a `catch` block can branch on a
+specific failure (`'fs:no-permissions'`, `'http:timeout'`, `'user-canceled'`, …) with the payload
+correctly narrowed — rather than string-matching a message or testing ten `instanceof`s. Also
+carries `isTransient`. Not present in 2.4.2; see `ERROR_CLASSES.md` for the kind catalog.
+
+---
+
 ## 10. Table Attributes
 
-### `context.registerTableAttribute(tableId, attribute)` — line 3653
+### `context.registerTableAttribute(tableId, attribute)`
 
 **Why useful:** Adds a new column or detail-pane field to any existing Vortex table without touching the table component itself. The mods table id is `'mods'`; download table is `'downloads'`.
 
@@ -516,11 +564,21 @@ extension run automated integrity checks against the active game or each install
 optional one-click fixes surfaced on the Health Check page. Full `IHealthCheck`/`IModHealthCheck`
 shape, category/severity/trigger enums, and worked examples: see `HEALTH_CHECK.md`.
 
+Two options there are easy to miss — both **(2.4.x)**:
+
+- **`gameId`** scopes a check to one game. The registry then skips it while another game is active
+  and discards a result that lands after the user switched away. Cleaner than an early
+  `return { status: 'passed' }` guard, which leaves a stale row on the page.
+- **The `AbortSignal`** passed as the last parameter of `check` / `checkMod` is how you honour
+  `timeout` (default 30s). It is cooperative: a body that never polls `signal.aborted` keeps
+  running past the timeout and holds the check's slot, even though the user has already been told
+  it timed out.
+
 ---
 
 ## 12. OS File Dialogs
 
-### `api.selectFile(options)` / `api.saveFile(options)` / `api.selectDir(options)` / `api.selectExecutable(options)` — lines 3172–3190
+### `api.selectFile(options)` / `api.saveFile(options)` / `api.selectDir(options)` / `api.selectExecutable(options)`
 
 **Why useful:** Native OS file/directory picker dialogs. These return a `Promise<string>` resolving to the selected path (or `undefined` if the user cancels).
 

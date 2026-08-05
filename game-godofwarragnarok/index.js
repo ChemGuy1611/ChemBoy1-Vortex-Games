@@ -2,17 +2,16 @@
 Name: God of War: Ragnarok Vortex Extension
 Structure: Sony Port, Custom Game Data
 Author: ChemBoy1
-Version: 0.4.0
-Date: 2026-08-04
+Version: 0.4.1
+Date: 2026-08-05
 /////////////////////////////////////////*/
 
 //import libraries
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
-const semver = require('semver');
 const template = require('string-template');
 const fsPromises = require('fs/promises'); //.readdir() for recursive folder reading
-const { download, findModByFile, findDownloadIdByFile, resolveVersionByModVersion, getLatestGithubReleaseAsset, testRequirementVersion } = require('./downloader');
+const { download, findModByFile, findDownloadIdByFile, resolveVersionByModVersion, testRequirementVersion } = require('./downloader');
 
 //Specify all the information about the game
 const STEAMAPP_ID = "2322010";
@@ -115,6 +114,7 @@ const REQUIREMENTS = [
     findDownloadId: (api) => findDownloadIdByFile(api, LOADER_ARC_NAME),
     fileArchivePattern: new RegExp(/^God\.of\.War\.Ragnarok/, 'i'), //asset selection only - no capture group, the name carries no version
     resolveVersion: (api) => resolveVersionByModVersion(api, REQUIREMENTS[0]), //version only exists in the release tag, so read it back off the installed mod
+    autoInstall: false, //the loader is optional here - only the toolbar button installs it, never setup or the update check
   },
 ];
 
@@ -618,25 +618,8 @@ async function onCheckModVersion(api, gameId, mods, forced) {
 }
 
 //Download the mod loader on demand (toolbar button only - never called from setup).
-//download() with force=true silently does nothing when the requirement is already
-//current, so compare versions first and tell the user instead of flashing a notification.
+//download() raises its own "already up to date" notification when there is nothing to do.
 async function downloadLoader(api) {
-  const requirement = REQUIREMENTS[0];
-  const mod = await requirement.findMod(api);
-  if (mod !== undefined) {
-    const installed = await requirement.resolveVersion(api);
-    const asset = await getLatestGithubReleaseAsset(api, requirement);
-    const latest = semver.coerce(asset?.release?.tag_name)?.version;
-    if (latest && !semver.gt(latest, installed)) {
-      api.sendNotification({
-        id: `${LOADER_ID}-current`,
-        type: 'success',
-        message: `${LOADER_NAME} is already up to date (v${installed})`,
-        displayMS: 5000,
-      });
-      return;
-    }
-  }
   return download(api, REQUIREMENTS, true);
 }
 

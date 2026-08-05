@@ -24,9 +24,44 @@ api.runExecutable(
 | `env` | `{ [key: string]: string }` | — | Additional environment variables (merged with process.env) |
 | `suggestDeploy` | `boolean` | `true` | If true, Vortex prompts to deploy before running if needed |
 | `shell` | `boolean` | `false` | Run through OS shell (enables pipes, env expansion) |
-| `detach` | `boolean` | `false` | Detach from Vortex process tree — promise resolves immediately |
+| `detach` | `boolean` | `false` | Also `unref()` the child so it can outlive Vortex. Does **not** resolve the promise early |
 | `expectSuccess` | `boolean` | `false` | Show error notification if process exits with non-zero code |
 | `onSpawned` | `(pid?: number) => void` | — | Callback immediately after process spawns; receives PID |
+| `onExit` | `(code: number \| null) => void` | — | Callback when the process exits; `null` when terminated by a signal |
+
+`onSpawned` receives no pid when Vortex doesn't know it — chiefly when the target runs elevated.
+
+**`detach` does not make the promise resolve early.** Whatever the flag, `runExecutable` resolves
+from the child's `close` event, so `await api.runExecutable(...)` waits for the process to exit.
+Two separate things are going on: Vortex passes `detached: true` to `spawn` by default (only
+`detach: false` turns that off), and `detach: true` additionally calls `child.unref()` so the
+child can outlive Vortex. Neither changes when the promise settles. If you want to launch and
+carry on, don't await it.
+
+`onExit` (added in the 2.4.x line) is the counterpart, fired from the child process's `close`
+event. It is the only way to read the actual exit code: `runExecutable`'s promise resolves with no
+value, and `expectSuccess` turns a bad code into a notification rather than handing it to you.
+Vortex uses it internally to pair a game launch with its exit.
+
+Two caveats:
+
+- **Not called on the elevated path.** When the launch is escalated, Vortex routes through
+  `runElevated`, which forwards only `onSpawned`. An elevated process never fires `onExit`.
+- `detach: true` only `unref()`s the child; the `close` handler stays attached, so `onExit` still
+  fires while Vortex is running.
+
+```js
+await api.runExecutable(exePath, args, {
+  cwd: path.dirname(exePath),
+  onSpawned: (pid) => log('info', 'tool started', { pid }),
+  onExit: (code) => {
+    if (code !== 0) {
+      log('warn', 'tool exited badly', { code });   // null => killed by signal
+    }
+    refreshAfterToolRun();
+  },
+});
+```
 
 ---
 
@@ -73,7 +108,8 @@ api.runExecutable(launcherPath, [], {
   detach: true,
   suggestDeploy: false,
 });
-// Promise resolves immediately — process runs independently
+// Not awaited — so execution continues here right away, and the unref'd
+// launcher can outlive Vortex. The promise itself still settles on exit.
 ```
 
 ### Capture spawn PID

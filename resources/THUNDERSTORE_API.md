@@ -292,6 +292,7 @@ in `index.js`), each describing one Thunderstore-hosted requirement:
 | `fallbackVersion` | optional | Version used to build a download URL when the API is unreachable, and recorded as the version attribute. Without it, an unreachable API fails the install with a manual-download error. |
 | `versionAttribute` | optional | Mod attribute tracking the installed version for update checks. Default `'thunderstoreVersion'`. |
 | `pageUrl` | optional | Manual-download page opened on install failure. Default is the community package page when `tsCommunity` is set, the bare package page otherwise. |
+| `autoInstall` | optional | `false` -> never install this requirement unattended; only an explicit user action (a toolbar button) installs it. Default installs a missing requirement automatically when the update check runs. |
 
 There is no `fileType`, `filePattern`, or `versionPattern` equivalent: a Thunderstore version has
 exactly one artifact, always a `.zip`.
@@ -301,7 +302,7 @@ exactly one artifact, always a `.zip`.
 | Export | Role |
 | --- | --- |
 | `downloadThunderstore(api, gameSpec, requirements, check = true)` | Download + install each requirement in the array (sequentially), then enable it, set its mod type, and record the version attributes. With `check = true` (default) it is a no-op for requirements already installed; pass `false` to (re)install/update. Main entry point — call in `setup()`. |
-| `checkForThunderstoreUpdate(api, gameSpec, requirements)` | For each requirement, compare the tracked version against the current one; raise a warning notification with a Download action when newer. Call from a `check-mods-version` handler and after the `setup()` download. |
+| `checkForThunderstoreUpdate(api, gameSpec, requirements)` | For each requirement: install it if it is missing (unless `autoInstall: false`), otherwise compare the tracked version against the current one; raise a warning notification with a Download action when newer. Call from a `check-mods-version` handler and after the `setup()` download. |
 | `downloadThunderstoreRequirement(api, gameSpec, requirement, check = true)` | Single-requirement variant of `downloadThunderstore`. |
 | `checkForThunderstoreUpdateRequirement(api, gameSpec, requirement)` | Single-requirement variant of `checkForThunderstoreUpdate`. |
 | `isThunderstoreRequirementInstalled(api, gameId, requirement)` | Whether any mod with the requirement's mod type exists. |
@@ -340,6 +341,8 @@ exactly one artifact, always a `.zip`.
   opens `pageUrl` for a manual download.
 - **Per-game pieces stay in `index.js`.** The mod type registration and the `registerInstaller`
   test/install pair for the requirement are not part of this module.
+- **A missing requirement is installed by the update check.** The update check used to return early when the requirement was not installed, so a requirement the user removed (or never got) was never picked up again. It now installs it instead. Requirements that should only be installed by an explicit user action set `autoInstall: false`.
+- **Updating disables the version it replaces.** An update installs a second mod entry rather than replacing the first, so the mod ids carrying the requirement's mod type are captured before the install and disabled once the new one lands (the newly installed id is skipped). Without this both copies stayed enabled and deployed on top of each other.
 
 ## Caveats
 

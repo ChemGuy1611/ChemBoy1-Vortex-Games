@@ -26,7 +26,7 @@ IGame extends ITool. Fields marked **required** will cause discovery or deployme
 | Field | Type | Notes |
 | --- | --- | --- |
 | `shortName` | `string` | Up to ~8 chars; used in tight UI spaces. |
-| `logo` | `string` | Image path. Conventionally `${GAME_ID}.jpg`. 3:4 portrait ratio recommended. |
+| `logo` | `string` | Image path. Conventionally `${GAME_ID}.jpg`. **2:3 portrait (400×600)** — see note below. |
 | `queryPath` | `() => string \| Promise<string \| IGameStoreEntry>` | Auto-resolve install path. In templates this is built by `makeFindGame()`. |
 | `parameters` | `string[]` | CLI args passed at launch. Omit (not empty array) to avoid sending blank arg. |
 | `environment` | `{ [key: string]: string }` | Extra env vars set at launch. Commonly contains store app IDs. |
@@ -215,6 +215,11 @@ supportedTools: [
 - `steamAppId` in `details` must be a **number** (`+STEAMAPP_ID`). The `environment` copy stays a string.
 - `parameters` field: omit it entirely (or comment it out) when empty — sending `[]` or `['']` passes a blank arg to the exe.
 - `logo` must match the actual filename in the extension folder (conventionally `${GAME_ID}.jpg`).
+- **`logo` aspect ratio is 2:3 portrait (400×600), not 3:4.** Vortex resizes preserving aspect
+  ratio onto a 2:3 canvas, so anything else gets letterboxed. The same image is the offline
+  fallback for the game tile on the Games page (which normally pulls Nexus's `tile.jpg`), so an
+  off-ratio logo shows up as an awkward crop there too. Prefer a transparent background, and leave
+  the game name out of the artwork — Vortex renders the localised name as text beside it.
 - `queryPath` and `executable` are always functions even though IGameStored stores them as strings.
 - `IDiscoveryResult` is the type for discovered game state — there is no `IDiscoveredGame`.
 

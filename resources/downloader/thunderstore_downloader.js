@@ -157,11 +157,18 @@ async function getThunderstoreDependencies(requirement, pkg) {
 // against overlapping runs (e.g. double-clicking the toolbar download action).
 const activeInstalls = new Set();
 
-//Check if the requirement is installed (any mod with the requirement's mod type)
-function isThunderstoreRequirementInstalled(api, gameId, requirement) {
+//Mod ids currently carrying this requirement's mod type. Captured before an install so the
+//previous version can be disabled once the new one lands - an update installs a second mod
+//entry rather than replacing the first, and two enabled copies deploy on top of each other.
+function requirementModIds(api, gameId, requirement) {
   const state = api.getState();
   const mods = state.persistent.mods[gameId] || {};
-  return Object.keys(mods).some(id => mods[id]?.type === requirement.modType);
+  return Object.keys(mods).filter(id => mods[id]?.type === requirement.modType);
+}
+
+//Check if the requirement is installed (any mod with the requirement's mod type)
+function isThunderstoreRequirementInstalled(api, gameId, requirement) {
+  return requirementModIds(api, gameId, requirement).length > 0;
 }
 
 //Download and install a single requirement (with check = false, (re)install even if already installed)
@@ -183,6 +190,8 @@ async function downloadThunderstoreRequirement(api, gameSpec, requirement, check
     noDismiss: true,
     allowSuppress: false,
   });
+  //captured before the install: these are the versions being replaced
+  const previousModIds = requirementModIds(api, gameSpec.game.id, requirement);
   try { //Download the mod
     const latestPackage = await getLatestThunderstorePackage(requirement); //resolve current version from Thunderstore API
     //fall back to the hardcoded version if the API is unreachable - every version has a predictable download URL
@@ -212,6 +221,11 @@ async function downloadThunderstoreRequirement(api, gameSpec, requirement, check
       actions.setModAttribute(gameSpec.game.id, modId, 'source', 'website'),
       actions.setModAttribute(gameSpec.game.id, modId, 'url', pageUrl(requirement)), // Shown as the mod's "Source" link in the mod details (only rendered when source === 'website')
     ];
+    for (const oldModId of previousModIds) { // Disable the version this install replaces, so only one copy deploys
+      if (oldModId !== modId) {
+        batched.push(actions.setModEnabled(profileId, oldModId, false));
+      }
+    }
     util.batchDispatch(api.store, batched); // Will dispatch all actions.
     if (latestPackage && (latestPackage.dependencies.length > 0)) { //dependencies are not installed automatically - each one needs its own requirement entry
       log('info', `${requirement.userFacingName} declares Thunderstore dependencies: ${latestPackage.dependencies.join(', ')}`);
@@ -235,7 +249,13 @@ async function downloadThunderstore(api, gameSpec, requirements, check = true) {
 //Check the Thunderstore API for a newer version for a single requirement and notify the user
 async function checkForThunderstoreUpdateRequirement(api, gameSpec, requirement) {
   if (!isThunderstoreRequirementInstalled(api, gameSpec.game.id, requirement)) {
-    return;
+    // Missing rather than outdated - install it instead of checking for updates to something
+    // that is not there. Requirements the user installs manually opt out with autoInstall: false.
+    if (requirement.autoInstall === false) {
+      return;
+    }
+    log('info', `${requirement.userFacingName} is not installed - installing it`);
+    return downloadThunderstoreRequirement(api, gameSpec, requirement);
   }
   const latestPackage = await getLatestThunderstorePackage(requirement);
   if (!latestPackage) {

@@ -4,6 +4,16 @@
 
 - None Planned
 
+## [0.5.3] - 2026-08-05
+
+- Fixed: A required mod loader or tool that can no longer be found in its GitHub release is now reported, listing the files the release actually contains, instead of failing quietly
+- Fixed: Requirement downloads are written to disk as they arrive rather than held in memory, and a failed download no longer leaves a temporary file behind
+- Fixed: Pressing a requirement download button twice no longer starts the same download twice
+- Fixed: Requirement update checks no longer stop working when a version number cannot be read
+- Changed: Installed requirements are now identified by their own mod type. A requirement installed earlier without one is downloaded once more, after which it is identified correctly
+- Added: Checking for updates now installs a missing requirement instead of reporting an update for something that is not installed
+- Fixed: Updating a requirement now disables the version it replaces before the new one is installed, so the two cannot deploy on top of each other
+
 ## [0.5.2] - 2026-07-29
 
 - Fixed: The load order could disappear after deploying while a mod update was in progress, and only came back after deploying a second time.

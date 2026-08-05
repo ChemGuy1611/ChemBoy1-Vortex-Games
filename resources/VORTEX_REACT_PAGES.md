@@ -64,8 +64,25 @@ context.registerMainPage(icon, title, Component, options);
   badge: ReduxProp,     // shows a badge on the sidebar icon
   activity: ReduxProp,  // shows a spinner on the sidebar icon
   onReset: () => void,  // called when page is reset
+  isClassicOnly: bool,  // show only in the classic layout
+  isModernOnly: bool,   // show only in the modern layout
+  menuBadge: React.ComponentType,  // self-subscribing badge on the left-menu item
+  newLayout: bool,      // opt into the redesigned page chrome (see below)
 }
 ```
+
+`menuBadge` and `newLayout` were added during the 2.4.x line and are absent from older
+`api.d.ts` bundles.
+
+- **`menuBadge`** takes a component rather than a `ReduxProp`. Vortex mounts it on this page's
+  left-menu item and the component subscribes to whatever state it needs itself, so it can render
+  arbitrary content (an icon, a severity dot) instead of `badge`'s numeric count. Vortex's own
+  Health Check page uses it for its severity indicator.
+- **`newLayout`** opts the page into the redesigned UI. When set, `MainPageContainer` skips the
+  legacy `.main-page` / header / body-container wrappers and renders your component as the sole
+  subtree root — the component is then expected to render its own `Page`. Leave it unset unless you
+  are deliberately building against the new design system; with it set and no `Page` of your own,
+  the page renders without any chrome.
 
 ### Minimal example
 
@@ -749,7 +766,7 @@ Full `registerAction` signature: see `REGISTER_ACTION.md`.
 
 ## 20. Tab-Based Page Layout
 
-Vortex's own Health Check page builds its tabs from `TabProvider`, `TabBar`, and `TabPanel` — but these are **internal components** (`src/renderer/src/ui/components/tabs/`), imported by relative path inside the Vortex source. They are **not exported through the `vortex-api` runtime barrel** (`src/renderer/src/api.ts`), so `require('vortex-api')` in an extension does not provide them (verified against Vortex 2.3.0, 2026-07-14).
+Vortex's own Health Check page builds its tabs from `TabProvider`, `TabBar`, and `TabPanel` — but these are **internal components** (`src/renderer/src/ui/components/tabs/`), imported by relative path inside the Vortex source. They are **not exported through the `vortex-api` runtime barrel** (`src/renderer/src/api.ts`), so `require('vortex-api')` in an extension does not provide them (re-verified against the Vortex source 2026-08-05).
 
 For an extension-built tabbed page, hand-roll the same pattern: keep an `activeTab` state, render a row of buttons as the tab bar, and show/hide panels by comparing against `activeTab`. The example below sketches the equivalent structure (the internal components referenced are shown for shape only — substitute your own):
 
@@ -1015,4 +1032,5 @@ built on the same `SuperTable`/registration primitives). `HEALTH_CHECK.md` (tabb
 `UE4_5_REACT_ARCHITECTURE.md` (all of the above assembled into one extension — component inventory,
 data flow and the three load order surfaces of `template-ue4-5`).
 `NON_UE_LOAD_ORDER_PAGES.md` (the same primitives in non-Unreal games, plus `actions.setModsEnabled`
-as the supported way to toggle mods from a page).
+as the supported way to toggle mods from a page). `VORTEX_2_MIGRATION.md` (the React 17 → 18 move
+and the `@types/react` 18 fixes every page component needs on its next rebuild).
