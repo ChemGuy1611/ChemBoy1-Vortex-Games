@@ -2,8 +2,8 @@
 Name: Borderlands 2 Vortex Extension
 Structure: UE2/3 Game (TFC Installer)
 Author: ChemBoy1
-Version: 0.3.5
-Date: 2025-11-16
+Version: 0.4.0
+Date: 2026-08-04
 /////////////////////////////////////////*/
 
 //Import libraries
@@ -11,6 +11,7 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 //const winapi = require('winapi-bindings');
+const { download, findModByFile, findDownloadIdByFile, resolveVersionByPattern, resolveVersionByModVersion, testRequirementVersion } = require('./downloader');
 
 //const USER_HOME = util.getVortexPath("home");
 const DOCUMENTS = util.getVortexPath("documents");
@@ -71,7 +72,8 @@ const BLCMM_ID = `${GAME_ID}-blcmm`;
 const BLCMM_NAME = "OpenBLCMM";
 const BLCMM_PATH = '.';
 const BLCMM_EXEC = 'openblcmm.exe';
-const BLCMM_URL = `https://github.com/BLCM/OpenBLCMM/releases/download/v1.4.1/OpenBLCMM-1.4.1-Windows.zip`;
+const BLCMM_ARC_NAME = 'OpenBLCMM-1.4.1-Windows.zip';
+const BLCMM_URL_API = `https://api.github.com/repos/BLCM/OpenBLCMM`;
 
 const BLCMMMOD_ID = `${GAME_ID}-blcmmmod`;
 const BLCMMMOD_NAME = "BLCMM Mod";
@@ -88,8 +90,33 @@ const SDK_NAME = "Python SDK";
 const SDK_FOLDER = "sdk_mods";
 const SDK_DLL = "unrealsdk.dll";
 const SDK_PATH = '.';
-const SDK_URL = `https://github.com/bl-sdk/willow2-mod-manager/releases/latest/download/willow2-sdk.zip`;
-const SDK_URL_ERR = `https://github.com/bl-sdk/willow2-mod-manager/releases`;
+const SDK_ARC_NAME = 'willow2-sdk.zip';
+const SDK_URL_API = `https://api.github.com/repos/bl-sdk/willow2-mod-manager`;
+
+const REQUIREMENTS = [
+  { //OpenBLCMM
+    archiveFileName: BLCMM_ARC_NAME,
+    modType: BLCMM_ID,
+    assemblyFileName: BLCMM_EXEC,
+    userFacingName: BLCMM_NAME,
+    githubUrl: BLCMM_URL_API,
+    findMod: (api) => findModByFile(api, BLCMM_ID, BLCMM_EXEC),
+    findDownloadId: (api) => findDownloadIdByFile(api, BLCMM_ARC_NAME),
+    fileArchivePattern: new RegExp(/^OpenBLCMM-(\d+\.\d+\.\d+)-Windows/, 'i'), //picks the Windows build over the Java and installer assets
+    resolveVersion: (api) => resolveVersionByPattern(api, REQUIREMENTS[0]),
+  },
+  { //Python SDK
+    archiveFileName: SDK_ARC_NAME,
+    modType: SDK_ID,
+    assemblyFileName: SDK_DLL,
+    userFacingName: SDK_NAME,
+    githubUrl: SDK_URL_API,
+    findMod: (api) => findModByFile(api, SDK_ID, SDK_DLL),
+    findDownloadId: (api) => findDownloadIdByFile(api, SDK_ARC_NAME),
+    fileArchivePattern: new RegExp(/^willow2-sdk/, 'i'), //no capture group - the version is only in the release tag
+    resolveVersion: (api) => resolveVersionByModVersion(api, REQUIREMENTS[1]),
+  },
+];
 
 const SDKMOD_ID = `${GAME_ID}-sdkmod`;
 const SDKMOD_NAME = "SDK Mod";
@@ -468,18 +495,35 @@ function isTfcInstalled(api, spec) {
   return Object.keys(mods).some(id => mods[id]?.type === TFC_ID);
 }
 
-//Check if BLCMM is installed
-function isBlcmmInstalled(api, spec) {
-  const state = api.getState();
-  const mods = state.persistent.mods[spec.game.id] || {};
-  return Object.keys(mods).some(id => mods[id]?.type === BLCMM_ID);
+// AUTO-DOWNLOADER FUNCTIONS ///////////////////////////////////////////////////
+
+async function asyncForEachTestVersion(api, requirements) {
+  for (let index = 0; index < requirements.length; index++) {
+    await testRequirementVersion(api, requirements[index]);
+  }
 }
 
-//Check if SDK is installed
-function isSdkInstalled(api, spec) {
-  const state = api.getState();
-  const mods = state.persistent.mods[spec.game.id] || {};
-  return Object.keys(mods).some(id => mods[id]?.type === SDK_ID);
+async function asyncForEachCheck(api, requirements) {
+  let mod = [];
+  for (let index = 0; index < requirements.length; index++) {
+    mod[index] = await requirements[index].findMod(api);
+  }
+  let checker = mod.every((entry) => entry !== undefined); //findMod resolves to a mod object or undefined, never a boolean
+  return checker;
+}
+
+async function onCheckModVersion(api, gameId, mods, forced) {
+  try {
+    await asyncForEachTestVersion(api, REQUIREMENTS);
+    log('warn', 'Checked requirements versions');
+  } catch (err) {
+    log('warn', `Failed to test requirement version: ${err}`);
+  }
+}
+
+async function checkForRequirements(api) {
+  const CHECK = await asyncForEachCheck(api, REQUIREMENTS);
+  return CHECK;
 }
 
 //* Function to auto-download TFC from Nexus Mods
@@ -540,96 +584,6 @@ async function downloadTfc(api, gameSpec) {
       util.batchDispatch(api.store, batched); // Will dispatch both actions
     } catch (err) { //Show the user the download page if the download, install process fails
       const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
-      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
-      util.opn(errPage).catch(() => null);
-    } finally {
-      api.dismissNotification(NOTIF_ID);
-    }
-  }
-} //*/
-
-//* Function to auto-download Hotfix Merger from Nexus Mods
-async function downloadBlcmm(api, gameSpec) {
-  let isInstalled = isBlcmmInstalled(api, gameSpec);
-  if (!isInstalled) {
-    const MOD_NAME = BLCMM_NAME;
-    const MOD_TYPE = BLCMM_ID;
-    const NOTIF_ID = `${MOD_TYPE}-installing`;
-    const GAME_DOMAIN = GAME_ID;
-    const URL = BLCMM_URL;
-    const ERR_URL = `https://github.com/BLCM/OpenBLCMM/releases/`;
-    api.sendNotification({ //notification indicating install process
-      id: NOTIF_ID,
-      message: `Installing ${MOD_NAME}`,
-      type: 'activity',
-      noDismiss: true,
-      allowSuppress: false,
-    });
-    try {
-      const dlInfo = { //Download the mod
-        game: GAME_DOMAIN,
-        name: MOD_NAME,
-      };
-      const dlId = await util.toPromise(cb =>
-        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
-      const modId = await util.toPromise(cb =>
-        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
-      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
-      const batched = [
-        actions.setModsEnabled(api, profileId, [modId], true, {
-          allowAutoDeploy: true,
-          installed: true,
-        }),
-        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
-      ];
-      util.batchDispatch(api.store, batched); // Will dispatch both actions
-    } catch (err) { //Show the user the download page if the download, install process fails
-      const errPage = ERR_URL;
-      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
-      util.opn(errPage).catch(() => null);
-    } finally {
-      api.dismissNotification(NOTIF_ID);
-    }
-  }
-} //*/
-
-//* Function to SDK from GitHub
-async function downloadSdk(api, gameSpec) {
-  let isInstalled = isSdkInstalled(api, gameSpec);
-  if (!isInstalled) {
-    const MOD_NAME = SDK_NAME;
-    const MOD_TYPE = SDK_ID;
-    const NOTIF_ID = `${MOD_TYPE}-installing`;
-    const GAME_DOMAIN = GAME_ID;
-    const URL = SDK_URL;
-    const ERR_URL = SDK_URL_ERR;
-    api.sendNotification({ //notification indicating install process
-      id: NOTIF_ID,
-      message: `Installing ${MOD_NAME}`,
-      type: 'activity',
-      noDismiss: true,
-      allowSuppress: false,
-    });
-    try {
-      const dlInfo = { //Download the mod
-        game: GAME_DOMAIN,
-        name: MOD_NAME,
-      };
-      const dlId = await util.toPromise(cb =>
-        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
-      const modId = await util.toPromise(cb =>
-        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
-      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
-      const batched = [
-        actions.setModsEnabled(api, profileId, [modId], true, {
-          allowAutoDeploy: true,
-          installed: true,
-        }),
-        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
-      ];
-      util.batchDispatch(api.store, batched); // Will dispatch both actions
-    } catch (err) { //Show the user the download page if the download, install process fails
-      const errPage = ERR_URL;
       api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
       util.opn(errPage).catch(() => null);
     } finally {
@@ -1315,8 +1269,10 @@ async function setup(discovery, api, gameSpec) {
   //setupNotify(api);
   // ASYNC CODE //////////////////////////////////////////
   await downloadTfc(api, gameSpec);
-  await downloadBlcmm(api, gameSpec);
-  await downloadSdk(api, gameSpec);
+  const requirementsInstalled = await checkForRequirements(api);
+  if (!requirementsInstalled) {
+    await download(api, REQUIREMENTS);
+  }
   await modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
   return fs.ensureFileAsync(
     path.join(GAME_PATH, TFCMOD_PATH, "TFC_Mods_Go_Here.txt")
@@ -1419,6 +1375,10 @@ function main(context) {
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;
       return deployNotify(context.api);
+    });
+    context.api.onAsync('check-mods-version', (gameId, mods, forced) => {
+      if (gameId !== GAME_ID) return;
+      return onCheckModVersion(context.api, gameId, mods, forced);
     });
   });
   return true;

@@ -4,6 +4,13 @@
 
 - None Planned
 
+## [0.3.0] - 2026-08-04
+
+- Fixed: Python SDK download failed because the download link no longer existed
+- Added: The correct Python SDK is now installed for the version of the game you have (standard or Game of the Year Enhanced)
+- Added: Notification when a new version of the Python SDK is released
+- Fixed: Game of the Year Enhanced was not detected, so its launch tool did not work
+
 ## [0.2.3] - 2025-11-16
 
 - Further improvemnents to the TFC mod installer.

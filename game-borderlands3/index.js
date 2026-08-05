@@ -2,8 +2,8 @@
 Name: Borderlands 3 Vortex Extension
 Structure: UE4 Game (Custom)
 Author: ChemBoy1
-Version: 0.3.0
-Date: 2026-08-03
+Version: 0.4.0
+Date: 2026-08-04
 /////////////////////////////////////////*/
 
 //Import libraries
@@ -11,6 +11,7 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 //const winapi = require('winapi-bindings');
+const { download, findModByFile, findDownloadIdByFile, resolveVersionByModVersion, testRequirementVersion } = require('./downloader');
 
 //const USER_HOME = util.getVortexPath("home");
 const DOCUMENTS = util.getVortexPath("documents");
@@ -44,17 +45,14 @@ const MERGER_PATH = path.join(BINARIES_PATH, 'Plugins');
 const MERGER_EXEC_PATH = path.join(MERGER_PATH, MERGER_EXEC);
 //const MERGER_DLL = "b3hm.dll";
 const MERGER_DLL = "openhotfixloader.dll";
-const MERGER_PAGE_NO = 244;
-const MERGER_FILE_NO = 1377;
 const MERGER_WEBUI_URL = `https://c0dycode.github.io/BL3HotfixWebUI/v2`; //legacy merger UI (not used)
-const MERGER_URL = `https://github.com/apple1417/OpenHotfixLoader/releases/latest/download/OpenHotfixLoader.zip`;
-const MERGER_URL_ERR = `https://github.com/apple1417/OpenHotfixLoader/releases`;
+const MERGER_ARC_NAME = 'OpenHotfixLoader.zip';
+const MERGER_URL_API = `https://api.github.com/repos/apple1417/OpenHotfixLoader`;
 
 const PLUGINLOADER_ID = `${GAME_ID}-pluginloader`; //not used
 const PLUGINLOADER_NAME = "Plugin Loader";
 const PLUGINLOADER_FILE = 'd3d11.dll';
-const PLUGINLOADER_PATH = BINARIES_PATH;
-const PLUGINLOADER_URL = `https://github.com/FromDarkHell/BL3DX11Injection/releases/download/v1.1.3/D3D11.zip`;
+const PLUGINLOADER_PATH = BINARIES_PATH; //installer only - not auto-downloaded
 
 const HOTFIX_ID = `${GAME_ID}-hotfix`;
 const HOTFIX_NAME = "Hotfix Mod";
@@ -66,8 +64,33 @@ const SDK_NAME = "Python SDK";
 const SDK_FOLDER = "sdk_mods";
 const SDK_DLL = "unrealsdk.dll";
 const SDK_PATH = '.';
-const SDK_URL = `https://github.com/bl-sdk/oak-mod-manager/releases/latest/download/bl3-sdk.zip`;
-const SDK_URL_ERR = `https://github.com/bl-sdk/oak-mod-manager/releases`;
+const SDK_ARC_NAME = 'bl3-sdk.zip';
+const SDK_URL_API = `https://api.github.com/repos/bl-sdk/oak-mod-manager`;
+
+const REQUIREMENTS = [
+  { //OpenHotfixLoader
+    archiveFileName: MERGER_ARC_NAME,
+    modType: MERGER_ID,
+    assemblyFileName: MERGER_DLL,
+    userFacingName: MERGER_NAME,
+    githubUrl: MERGER_URL_API,
+    findMod: (api) => findModByFile(api, MERGER_ID, MERGER_DLL),
+    findDownloadId: (api) => findDownloadIdByFile(api, MERGER_ARC_NAME),
+    fileArchivePattern: new RegExp(/^OpenHotfixLoader/, 'i'), //no capture group - the version is only in the release tag
+    resolveVersion: (api) => resolveVersionByModVersion(api, REQUIREMENTS[0]),
+  },
+  { //Python SDK
+    archiveFileName: SDK_ARC_NAME,
+    modType: SDK_ID,
+    assemblyFileName: SDK_DLL,
+    userFacingName: SDK_NAME,
+    githubUrl: SDK_URL_API,
+    findMod: (api) => findModByFile(api, SDK_ID, SDK_DLL),
+    findDownloadId: (api) => findDownloadIdByFile(api, SDK_ARC_NAME),
+    fileArchivePattern: new RegExp(/^bl3-sdk/, 'i'), //anchored so the Wonderlands asset in the same release is not picked
+    resolveVersion: (api) => resolveVersionByModVersion(api, REQUIREMENTS[1]),
+  },
+];
 
 const SDKMOD_ID = `${GAME_ID}-sdkmod`;
 const SDKMOD_NAME = "SDK Mod";
@@ -371,229 +394,36 @@ async function deploy(api) { //useful to deploy mods after doing some action
   return new Promise((resolve, reject) => api.events.emit('deploy-mods', (err) => err ? reject(err) : resolve()));
 }
 
-// AUTOMATIC MOD DOWNLOADERS ///////////////////////////////////////////////////
+// AUTO-DOWNLOADER FUNCTIONS ///////////////////////////////////////////////////
 
-//Check if Hotfix Merger is installed
-function isHotfixMergerInstalled(api, spec) {
-  const state = api.getState();
-  const mods = state.persistent.mods[spec.game.id] || {};
-  return Object.keys(mods).some(id => mods[id]?.type === MERGER_ID);
+async function asyncForEachTestVersion(api, requirements) {
+  for (let index = 0; index < requirements.length; index++) {
+    await testRequirementVersion(api, requirements[index]);
+  }
 }
 
-//Check if plugin loader is installed
-function isPluginLoaderInstalled(api, spec) {
-  const state = api.getState();
-  const mods = state.persistent.mods[spec.game.id] || {};
-  return Object.keys(mods).some(id => mods[id]?.type === PLUGINLOADER_ID);
+async function asyncForEachCheck(api, requirements) {
+  let mod = [];
+  for (let index = 0; index < requirements.length; index++) {
+    mod[index] = await requirements[index].findMod(api);
+  }
+  let checker = mod.every((entry) => entry !== undefined); //findMod resolves to a mod object or undefined, never a boolean
+  return checker;
 }
 
-//Check if SDK is installed
-function isSdkInstalled(api, spec) {
-  const state = api.getState();
-  const mods = state.persistent.mods[spec.game.id] || {};
-  return Object.keys(mods).some(id => mods[id]?.type === SDK_ID);
+async function onCheckModVersion(api, gameId, mods, forced) {
+  try {
+    await asyncForEachTestVersion(api, REQUIREMENTS);
+    log('warn', 'Checked requirements versions');
+  } catch (err) {
+    log('warn', `Failed to test requirement version: ${err}`);
+  }
 }
 
-/* Function to auto-download Hotfix Merger from Nexus Mods
-async function downloadHotfixMerger(api, gameSpec) {
-  let isInstalled = isHotfixMergerInstalled(api, gameSpec);
-  if (!isInstalled) {
-    const MOD_NAME = MERGER_NAME;
-    const MOD_TYPE = MERGER_ID;
-    const NOTIF_ID = `${MOD_TYPE}-installing`;
-    let FILE_ID = MERGER_FILE_NO;  //If using a specific file id because "input" below gives an error
-    const PAGE_ID = MERGER_PAGE_NO;
-    const GAME_DOMAIN = GAME_ID;
-    api.sendNotification({ //notification indicating install process
-      id: NOTIF_ID,
-      message: `Installing ${MOD_NAME}`,
-      type: 'activity',
-      noDismiss: true,
-      allowSuppress: false,
-    });
-    if (api.ext?.ensureLoggedIn !== undefined) { //make sure user is logged into Nexus Mods account in Vortex
-      await api.ext.ensureLoggedIn();
-    }
-    try {
-      let FILE = FILE_ID; //use the FILE_ID directly for the correct game store version
-      let URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      try { //get the mod files information from Nexus
-        const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
-        const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
-        const file = modFiles
-          .filter(file => file.category_id === 1)
-          .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
-          .reverse()[0];
-        if (file === undefined) {
-          throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
-        }
-        FILE = file.file_id;
-        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      } catch { // use defined file ID if input is undefined above
-        FILE = FILE_ID;
-        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      } //
-      const dlInfo = { //Download the mod
-        game: GAME_DOMAIN,
-        name: MOD_NAME,
-      };
-      const dlId = await util.toPromise(cb =>
-        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
-      const modId = await util.toPromise(cb =>
-        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
-      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
-      const batched = [
-        actions.setModsEnabled(api, profileId, [modId], true, {
-          allowAutoDeploy: true,
-          installed: true,
-        }),
-        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
-      ];
-      util.batchDispatch(api.store, batched); // Will dispatch both actions
-    } catch (err) { //Show the user the download page if the download, install process fails
-      const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
-      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
-      util.opn(errPage).catch(() => null);
-    } finally {
-      api.dismissNotification(NOTIF_ID);
-    }
-  }
-} //*/
-
-//* Function to auto-download Hotfix Merger from GitHub
-async function downloadHotfixMerger(api, gameSpec) {
-  let isInstalled = isHotfixMergerInstalled(api, gameSpec);
-  if (!isInstalled) {
-    const MOD_NAME = MERGER_NAME;
-    const MOD_TYPE = MERGER_ID;
-    const NOTIF_ID = `${MOD_TYPE}-installing`;
-    const GAME_DOMAIN = GAME_ID;
-    const URL = MERGER_URL;
-    const ERR_URL = MERGER_URL_ERR;
-    api.sendNotification({ //notification indicating install process
-      id: NOTIF_ID,
-      message: `Installing ${MOD_NAME}`,
-      type: 'activity',
-      noDismiss: true,
-      allowSuppress: false,
-    });
-    try {
-      const dlInfo = { //Download the mod
-        game: GAME_DOMAIN,
-        name: MOD_NAME,
-      };
-      const dlId = await util.toPromise(cb =>
-        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
-      const modId = await util.toPromise(cb =>
-        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
-      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
-      const batched = [
-        actions.setModsEnabled(api, profileId, [modId], true, {
-          allowAutoDeploy: true,
-          installed: true,
-        }),
-        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
-      ];
-      util.batchDispatch(api.store, batched); // Will dispatch both actions
-    } catch (err) { //Show the user the download page if the download, install process fails
-      const errPage = ERR_URL;
-      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
-      util.opn(errPage).catch(() => null);
-    } finally {
-      api.dismissNotification(NOTIF_ID);
-    }
-  }
-} //*/
-
-//* Function to auto-download Plugin Loader from GitHub
-async function downloadPluginLoader(api, gameSpec) {
-  let isInstalled = isPluginLoaderInstalled(api, gameSpec);
-  if (!isInstalled) {
-    const MOD_NAME = PLUGINLOADER_NAME;
-    const MOD_TYPE = PLUGINLOADER_ID;
-    const NOTIF_ID = `${MOD_TYPE}-installing`;
-    const GAME_DOMAIN = GAME_ID;
-    const URL = PLUGINLOADER_URL;
-    const ERR_URL = `https://github.com/FromDarkHell/BL3DX11Injection/releases/latest`;
-    api.sendNotification({ //notification indicating install process
-      id: NOTIF_ID,
-      message: `Installing ${MOD_NAME}`,
-      type: 'activity',
-      noDismiss: true,
-      allowSuppress: false,
-    });
-    try {
-      const dlInfo = { //Download the mod
-        game: GAME_DOMAIN,
-        name: MOD_NAME,
-      };
-      const dlId = await util.toPromise(cb =>
-        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
-      const modId = await util.toPromise(cb =>
-        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
-      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
-      const batched = [
-        actions.setModsEnabled(api, profileId, [modId], true, {
-          allowAutoDeploy: true,
-          installed: true,
-        }),
-        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
-      ];
-      util.batchDispatch(api.store, batched); // Will dispatch both actions
-    } catch (err) { //Show the user the download page if the download, install process fails
-      const errPage = ERR_URL;
-      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
-      util.opn(errPage).catch(() => null);
-    } finally {
-      api.dismissNotification(NOTIF_ID);
-    }
-  }
-} //*/
-
-//* Function to auto-download SDK from GitHub
-async function downloadSdk(api, gameSpec) {
-  let isInstalled = isSdkInstalled(api, gameSpec);
-  if (!isInstalled) {
-    const MOD_NAME = SDK_NAME;
-    const MOD_TYPE = SDK_ID;
-    const NOTIF_ID = `${MOD_TYPE}-installing`;
-    const GAME_DOMAIN = GAME_ID;
-    const URL = SDK_URL;
-    const ERR_URL = SDK_URL_ERR;
-    api.sendNotification({ //notification indicating install process
-      id: NOTIF_ID,
-      message: `Installing ${MOD_NAME}`,
-      type: 'activity',
-      noDismiss: true,
-      allowSuppress: false,
-    });
-    try {
-      const dlInfo = { //Download the mod
-        game: GAME_DOMAIN,
-        name: MOD_NAME,
-      };
-      const dlId = await util.toPromise(cb =>
-        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
-      const modId = await util.toPromise(cb =>
-        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
-      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
-      const batched = [
-        actions.setModsEnabled(api, profileId, [modId], true, {
-          allowAutoDeploy: true,
-          installed: true,
-        }),
-        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
-      ];
-      util.batchDispatch(api.store, batched); // Will dispatch both actions
-    } catch (err) { //Show the user the download page if the download, install process fails
-      const errPage = ERR_URL;
-      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
-      util.opn(errPage).catch(() => null);
-    } finally {
-      api.dismissNotification(NOTIF_ID);
-    }
-  }
-} //*/
+async function checkForRequirements(api) {
+  const CHECK = await asyncForEachCheck(api, REQUIREMENTS);
+  return CHECK;
+}
 
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////
 
@@ -1077,9 +907,10 @@ async function setup(discovery, api, gameSpec) {
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, gameSpec.game.id);
   // ASYNC CODE //////////////////////////////////////////
   await fs.ensureDirWritableAsync(path.join(GAME_PATH, MERGER_PATH));
-  await downloadHotfixMerger(api, gameSpec);
-  //await downloadPluginLoader(api, gameSpec);
-  await downloadSdk(api, gameSpec);
+  const requirementsInstalled = await checkForRequirements(api);
+  if (!requirementsInstalled) {
+    await download(api, REQUIREMENTS);
+  }
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 
@@ -1185,6 +1016,10 @@ function main(context) {
       if (profileId !== LAST_ACTIVE_PROFILE) return;
       return deployNotify(context.api);
     }); //*/
+    context.api.onAsync('check-mods-version', (gameId, mods, forced) => {
+      if (gameId !== GAME_ID) return;
+      return onCheckModVersion(context.api, gameId, mods, forced);
+    });
   });
   return true;
 }

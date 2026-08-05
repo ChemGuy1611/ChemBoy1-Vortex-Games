@@ -59,7 +59,7 @@ Installers run in priority order (lower number = tested first). The first instal
 These tools appear in Vortex's Tools panel when this game is active:
 
 - **Custom Launch** (`Binaries/Borderlands.exe`)
-- **Custom Launch** (`Binaries/Binaries/Win64`)
+- **Custom Launch** (`Binaries/Win64/BorderlandsGOTY.exe`)
 
 ## Toolbar Actions
 

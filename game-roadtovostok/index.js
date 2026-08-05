@@ -2,8 +2,8 @@
 Name: Road to Vostok Vortex Extension
 Structure: Godot Engine Game
 Author: ChemBoy1
-Version: 0.1.2
-Date: 2026-05-03
+Version: 0.3.0
+Date: 2026-08-04
 Notes:
 - 
 ///////////////////////////////////////////*/
@@ -13,6 +13,8 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 const { parseStringPromise } = require('xml2js');
+const { download, findModByFile, findDownloadIdByFile, resolveVersionByModVersion, testRequirementVersion } = require('./downloader');
+const { downloadModWorkshop, checkForModWorkshopUpdate } = require('./modworkshop_downloader');
 //const winapi = require('winapi-bindings');
 
 //const USER_HOME = util.getVortexPath("home");
@@ -103,20 +105,49 @@ const TOOL_EXEC = path.join('XXX', 'XXX.exe');
 const LOADER_ID = `${GAME_ID}-godotmodloader`;
 const LOADER_NAME = "Metro Mod Loader";
 const LOADER_FILE = 'modloader.gd';
-const LOADER_PAGE_NO = 20;
-const LOADER_FILE_NO = 52;
-const LOADER_DOMAIN = GAME_ID;
+const LOADER_MWS_ID = '55623'; //ModWorkshop mod id - https://modworkshop.net/mod/55623
+const LOADER_REV = '3.2.1'; //fallback version if the ModWorkshop API is unreachable
+const LOADER_DL_ID = '98157'; //fallback file id if the ModWorkshop API is unreachable
 const OVERRIDE_FILE = 'override.cfg';
-const LOADER_URL = `https://github.com/ametrocavich/vostok-mod-loader/releases`;
 
 const WORKSHOP_URL = `https://modworkshop.net/g/roadtovostok`;
+
+const MWS_REQUIREMENTS = [
+  { //Metro Mod Loader
+    mwsModId: LOADER_MWS_ID,
+    modType: LOADER_ID,
+    userFacingName: LOADER_NAME,
+    fallbackVersion: LOADER_REV,
+    fallbackFileId: LOADER_DL_ID,
+    //every file on this mod is a .zip, so the mod's primary file is taken as-is - add fileType if that ever changes
+  },
+];
 
 const MCM_ID = `${GAME_ID}-mcm`;
 const MCM_NAME = "ModConfigurationMenu";
 const MCM_PATH = MOD_PATH;
-const MCM_FILE = 'ModConfigurationMenu';
-const MCM_URL = `https://github.com/DoinkOink/Mod-Configuration-Menu-Road-To-Vostok/releases/latest/download/00ModConfigurationMenu.vmz`;
-const MCM_URL_ERR = `https://github.com/DoinkOink/Mod-Configuration-Menu-Road-To-Vostok/releases`;
+const MCM_FILE = 'ModConfigurationMenu'; //marker folder inside the extracted archive, used by the installer test
+const MCM_AUTHOR = 'DoinkOink';
+const MCM_REPO = 'Mod-Configuration-Menu-Road-To-Vostok';
+//The release also carries an identical .vmz asset. Take the .zip: Vortex only treats known archive
+//extensions as archives, so the .vmz never reaches the installers with a usable file list.
+const MCM_ARC_NAME = '00ModConfigurationMenu.zip';
+const MCM_STAGED_FILE = '00ModConfigurationMenu.zip'; //what installMcm repacks the extracted mod into
+const MCM_URL_API = `https://api.github.com/repos/${MCM_AUTHOR}/${MCM_REPO}`;
+
+const REQUIREMENTS = [
+  { //ModConfigurationMenu
+    archiveFileName: MCM_ARC_NAME,
+    modType: MCM_ID,
+    assemblyFileName: MCM_STAGED_FILE,
+    userFacingName: MCM_NAME,
+    githubUrl: MCM_URL_API,
+    findMod: (api) => findModByFile(api, MCM_ID, MCM_STAGED_FILE),
+    findDownloadId: (api) => findDownloadIdByFile(api, MCM_ARC_NAME),
+    fileArchivePattern: new RegExp(/^00ModConfigurationMenu\.zip/, 'i'), //selects the asset only - the file name carries no version
+    resolveVersion: (api) => resolveVersionByModVersion(api, REQUIREMENTS[0]), //version only exists in the release tag, so read it back off the installed mod
+  },
+];
 
 const MOD_PATH_DEFAULT = MOD_PATH;
 const REQ_FILE = EXEC;
@@ -649,131 +680,39 @@ function fallbackInstallerNotify(api, modName) {
 
 // AUTOMATIC MOD DOWNLOADERS ///////////////////////////////////////////////////
 
-//Check if mod loader is installed
-function isModLoaderInstalled(api, spec) {
-  const state = api.getState();
-  const mods = state.persistent.mods[spec.game.id] || {};
-  return Object.keys(mods).some(id => mods[id]?.type === LOADER_ID);
+async function asyncForEachTestVersion(api, requirements) {
+  for (let index = 0; index < requirements.length; index++) {
+    await testRequirementVersion(api, requirements[index]);
+  }
 }
 
-//Check if MCM is installed
-function isMcmInstalled(api, spec) {
-  const state = api.getState();
-  const mods = state.persistent.mods[spec.game.id] || {};
-  return Object.keys(mods).some(id => mods[id]?.type === MCM_ID);
+async function asyncForEachCheck(api, requirements) {
+  let mod = [];
+  for (let index = 0; index < requirements.length; index++) {
+    mod[index] = await requirements[index].findMod(api);
+  }
+  let checker = mod.every((entry) => entry !== undefined); //findMod resolves to a mod object or undefined, never a boolean
+  return checker;
 }
 
-//* Function to auto-download Mod Loader from Nexus
-async function downloadModLoaderNexus(api, gameSpec, check = true) {
-  let isInstalled = isModLoaderInstalled(api, gameSpec);
-  if (!isInstalled || !check) {
-    //notification indicating install process
-    const MOD_NAME = LOADER_NAME;
-    const MOD_TYPE = LOADER_ID;
-    const NOTIF_ID = `${MOD_TYPE}-installing`;
-    const PAGE_ID = LOADER_PAGE_NO;
-    const FILE_ID = LOADER_FILE_NO;  //If using a specific file id because "input" below gives an error
-    const GAME_DOMAIN = LOADER_DOMAIN;
-    api.sendNotification({
-      id: NOTIF_ID,
-      message: `Installing ${MOD_NAME}`,
-      type: 'activity',
-      noDismiss: true,
-      allowSuppress: false,
-    });
-    //make sure user is logged into Nexus Mods account in Vortex
-    if (api.ext?.ensureLoggedIn !== undefined) {
-      await api.ext.ensureLoggedIn();
-    }
-    try {
-      let FILE = null;
-      let URL = null;
-      try { //get the mod files information from Nexus
-        const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
-        const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
-        const file = modFiles
-          .filter(file => file.category_id === 1)
-          .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
-          .reverse()[0];
-        if (file === undefined) {
-          throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
-        }
-        FILE = file.file_id;
-        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      } catch { // use defined file ID if input is undefined above
-        FILE = FILE_ID;
-        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      }
-      const dlInfo = { //Download the mod
-        game: GAME_DOMAIN,
-        name: MOD_NAME,
-      };
-      const dlId = await util.toPromise(cb =>
-        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
-      const modId = await util.toPromise(cb =>
-        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
-      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
-      const batched = [
-        actions.setModsEnabled(api, profileId, [modId], true, {
-          allowAutoDeploy: true,
-          installed: true,
-        }),
-        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
-      ];
-      util.batchDispatch(api.store, batched); // Will dispatch both actions
-    } catch (err) { //Show the user the download page if the download, install process fails
-      const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
-      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err, { allowReport: false });
-      util.opn(errPage).catch(() => null);
-    } finally {
-      api.dismissNotification(NOTIF_ID);
-    }
+async function onCheckModVersion(api, gameId, mods, forced) {
+  try {
+    await asyncForEachTestVersion(api, REQUIREMENTS);
+    log('warn', 'Checked requirements versions');
+  } catch (err) {
+    log('warn', `Failed to test requirement version: ${err}`);
   }
-} //*/
+  try { //separate from the block above so a ModWorkshop failure cannot suppress the GitHub check
+    await checkForModWorkshopUpdate(api, spec, MWS_REQUIREMENTS);
+  } catch (err) {
+    log('warn', `Failed to check for ${LOADER_NAME} update: ${err}`);
+  }
+}
 
-//* Function to auto-download MCM from GitHub
-async function downloadMcm(api, gameSpec, check = true) {
-  let isInstalled = isMcmInstalled(api, gameSpec);
-  if (!isInstalled || !check) {
-    const MOD_NAME = MCM_NAME;
-    const MOD_TYPE = MCM_ID;
-    const NOTIF_ID = `${MOD_TYPE}-installing`;
-    const GAME_DOMAIN = GAME_ID;
-    const URL = MCM_URL;
-    const URL_ERR = MCM_URL_ERR;
-    api.sendNotification({ //notification indicating install process
-      id: NOTIF_ID,
-      message: `Installing ${MOD_NAME}`,
-      type: 'activity',
-      noDismiss: true,
-      allowSuppress: false,
-    });
-    try {
-      const dlInfo = { //Download the mod
-        game: GAME_DOMAIN,
-        name: MOD_NAME,
-      };
-      const dlId = await util.toPromise(cb =>
-        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
-      const modId = await util.toPromise(cb =>
-        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
-      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
-      const batched = [
-        actions.setModsEnabled(api, profileId, [modId], true, {
-          allowAutoDeploy: true,
-          installed: true,
-        }),
-        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
-      ];
-      util.batchDispatch(api.store, batched); // Will dispatch both actions
-    } catch (err) { //Show the user the download page if the download, install process fails
-      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
-      util.opn(URL_ERR).catch(() => null);
-    } finally {
-      api.dismissNotification(NOTIF_ID);
-    }
-  }
-} //*/
+async function checkForRequirements(api) {
+  const CHECK = await asyncForEachCheck(api, REQUIREMENTS);
+  return CHECK;
+}
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
@@ -821,8 +760,12 @@ async function setup(discovery, api, gameSpec) {
   /*await fs.ensureDirWritableAsync(CONFIG_PATH);
   await fs.ensureDirWritableAsync(SAVE_PATH); //*/
   //GAME_VERSION = await setGameVersion(GAME_PATH);
-  await downloadModLoaderNexus(api, gameSpec);
-  await downloadMcm(api, gameSpec, true);
+  await downloadModWorkshop(api, gameSpec, MWS_REQUIREMENTS);
+  await checkForModWorkshopUpdate(api, gameSpec, MWS_REQUIREMENTS).catch(() => null); //update check should never block setup
+  const requirementsInstalled = await checkForRequirements(api);
+  if (!requirementsInstalled) {
+    await download(api, REQUIREMENTS);
+  }
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 
@@ -870,7 +813,9 @@ function applyGame(context, gameSpec) {
     { name: SAVE_NAME }
   ); //*/
   
-  //* register .vmz archive so Vortex handles like a zip
+  /* Register a .vmz reader. This only serves api.openArchive (merges, archive inspection) -
+  it does NOT make Vortex treat .vmz as a downloadable/installable archive, because that list
+  (knownArchiveExt) is hardcoded in Vortex core and cannot be extended by an extension. */
   context.registerArchiveType('vmz', (fileName, options) => {
     const szip = new util.SevenZip();
     const handler = {
@@ -903,7 +848,14 @@ function applyGame(context, gameSpec) {
 
   //register actions
   context.registerAction('mod-icons', 300, 'open-ext', {}, `Download Latest ${MCM_NAME}`, () => {
-    downloadMcm(context.api, spec, false);
+    download(context.api, [REQUIREMENTS[0]], true);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, `Download Latest ${LOADER_NAME}`, () => {
+    downloadModWorkshop(context.api, spec, MWS_REQUIREMENTS, false);
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
@@ -974,7 +926,10 @@ function applyGame(context, gameSpec) {
 function main(context) {
   applyGame(context, spec);
   context.once(() => { // put code here that should be run (once) when Vortex starts up
-    const api = context.api;
+    context.api.onAsync('check-mods-version', (gameId, mods, forced) => {
+      if (gameId !== GAME_ID) return;
+      return onCheckModVersion(context.api, gameId, mods, forced);
+    });
   });
   return true;
 }

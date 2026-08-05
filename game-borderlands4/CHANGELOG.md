@@ -4,6 +4,11 @@
 
 - tool to launch bl4-crypt (by Cr4nkSt4r, naked exe file)
 
+## [0.4.0] - 2026-08-04
+
+- Added: Notification when a new version of the Python SDK is released
+- Changed: The Python SDK is now downloaded from the latest GitHub release instead of a fixed link
+
 ## [0.3.1] - 2026-04-23
 
 - Added: Launch tool for Item and Save Editor.

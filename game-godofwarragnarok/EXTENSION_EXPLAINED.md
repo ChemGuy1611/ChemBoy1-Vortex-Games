@@ -54,7 +54,7 @@ Installers run in priority order (lower number = tested first). The first instal
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- Download ${LOADER_NAME}
+- Download Latest ${LOADER_NAME}
 - Open Settings INI
 - Open boot-options.json
 - Open GoWR-Script-Loader Config

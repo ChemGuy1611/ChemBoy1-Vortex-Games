@@ -4,6 +4,11 @@
 
 - None Planned
 
+## [0.4.0] - 2026-08-04
+
+- Added: Notification when a new version of OpenBLCMM or the Python SDK is released
+- Changed: OpenBLCMM and the Python SDK are now downloaded from the latest GitHub release instead of a fixed link, so OpenBLCMM is no longer locked to version 1.4.1
+
 ## [0.3.5] - 2025-11-16
 
 - Further improvements to TFC mod installer.

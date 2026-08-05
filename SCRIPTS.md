@@ -121,11 +121,13 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `has_downloader_js(folder)` | Return `True` if the extension `folder` contains a bundled `downloader.js` module |
 | `has_gamebanana_downloader_js(folder)` | Return `True` if the extension `folder` contains a bundled `gamebanana_downloader.js` module |
 | `has_moddb_downloader_js(folder)` | Return `True` if the extension `folder` contains a bundled `moddb_downloader.js` module |
+| `has_modworkshop_downloader_js(folder)` | Return `True` if the extension `folder` contains a bundled `modworkshop_downloader.js` module |
 | `downloads_from_github(src)` | Return `True` if `src` pulls a mod/requirement from a GitHub release (release-asset URL or `browser_download_url`). Textual only — commented-out and never-called code still counts |
 | `github_download_enabled(src)` | Return `True` if `src` has a GitHub download that can actually run: not commented out, not stranded in a never-called function |
 | `downloads_from_host(src, host_re)` | Return `True` if `src` downloads a requirement from the given mod host. Ignores host URLs that only feed `util.opn()` to open a browse page |
 | `downloads_from_gamebanana(src)` | `downloads_from_host` bound to GameBanana |
 | `downloads_from_moddb(src)` | `downloads_from_host` bound to ModDB |
+| `downloads_from_modworkshop(src)` | `downloads_from_host` bound to ModWorkshop (web, `api.`, and `storage.` subdomains) |
 | `strip_js_comments(src)` | Return `src` with `//` and `/* */` comments blanked to spaces, preserving string/template/regex literals and character offsets |
 | `requires_unreal_mod_installer(src)` | Return `True` if `src` declares `context.requireExtension("Unreal Engine Mod Installer")` |
 | `has_ue4ss_load_order_parity(src)` | Return `True` if `src` is a UE4-5 extension carrying the full `template-ue4-5` load order (detected via the `Ue4ssContextMenu` component) |
@@ -865,15 +867,17 @@ The engine categories above are mutually exclusive (one per game). The lists bel
 | `resources/lists/games-downloader.txt` | Games with a bundled `downloader.js` module |
 | `resources/lists/games-downloader-gamebanana.txt` | Games with a bundled `gamebanana_downloader.js` module |
 | `resources/lists/games-downloader-moddb.txt` | Games with a bundled `moddb_downloader.js` module |
+| `resources/lists/games-downloader-modworkshop.txt` | Games with a bundled `modworkshop_downloader.js` module |
 | `resources/lists/games-github.txt` | Games with a working inline GitHub download in `index.js` (no `downloader.js`), excluding dead downloads and the engines listed in `GITHUB_LIST_EXCLUDED_ENGINES` |
 | `resources/lists/games-gamebanana.txt` | Games with a working inline GameBanana download in `index.js` (no `gamebanana_downloader.js`), excluding the one-offs in `GAMEBANANA_LIST_EXCLUDED_GAMES` |
 | `resources/lists/games-moddb.txt` | Games with a working inline ModDB download in `index.js` (no `moddb_downloader.js`) |
+| `resources/lists/games-modworkshop.txt` | Games with a working inline ModWorkshop download in `index.js` (no `modworkshop_downloader.js`) |
 | `resources/lists/games-uemi.txt` | Games that require the `Unreal Engine Mod Installer` extension via `context.requireExtension` |
 | `resources/lists/games-ue4-5-parity.txt` | UE4-5 games at `template-ue4-5` load-order parity (custom UE4SS + LogicMods pages) |
 
 ### categorize_games.py — Detection
 
-Each game is matched against the engine categories in order — the first match wins. Detection uses the `Structure:` comment on line 3 of `index.js` as the primary signal, with fallback checks for unique code markers such as `const UNREALDATA =`, `const ATK_ID =`, `context.requireExtension('modtype-bepinex')`, etc. The flag lists are computed separately via dedicated predicates (`is_load_order_game`, `has_downloader_js`, `has_gamebanana_downloader_js`, `has_moddb_downloader_js`, `github_download_enabled`, `requires_unreal_mod_installer`, `has_ue4ss_load_order_parity`) in `vortex_utils.py`. The parity predicate keys off the `Ue4ssContextMenu` component, which only exists in games that took the whole load-order region (PAK + custom UE4SS + LogicMods pages) from `template-ue4-5`.
+Each game is matched against the engine categories in order — the first match wins. Detection uses the `Structure:` comment on line 3 of `index.js` as the primary signal, with fallback checks for unique code markers such as `const UNREALDATA =`, `const ATK_ID =`, `context.requireExtension('modtype-bepinex')`, etc. The flag lists are computed separately via dedicated predicates (`is_load_order_game`, `has_downloader_js`, `has_gamebanana_downloader_js`, `has_moddb_downloader_js`, `has_modworkshop_downloader_js`, `github_download_enabled`, `requires_unreal_mod_installer`, `has_ue4ss_load_order_parity`) in `vortex_utils.py`. The parity predicate keys off the `Ue4ssContextMenu` component, which only exists in games that took the whole load-order region (PAK + custom UE4SS + LogicMods pages) from `template-ue4-5`.
 
 `games-github.txt` applies two extra filters the other flag lists do not.
 
@@ -881,9 +885,11 @@ Each game is matched against the engine categories in order — the first match 
 
 **Per-game exclusions.** `GITHUB_LIST_EXCLUDED_GAMES` holds individual GAME_IDs the engine rule does not cover — currently `middleearthshadowofwar` (Middle-Earth Mod Loader, fixed `loader` release tag), `crimsondesert` (Ultimate ASI Loader, rolling `x64-latest` tag), `nioh3` (Yumia fdata Tools on `releases/latest/download`, RDBExplorer downloaded by manual browse of the releases page) and `deusexhumanrevolution` (DXHRDC-ModHook, pinned `v1.1.0.0` release asset). Add an ID there when a game's GitHub asset sits on a fixed or rolling tag rather than real versioned releases, or is not fetched as a versioned asset at all.
 
-### categorize_games.py — GameBanana and ModDB lists
+### categorize_games.py — GameBanana, ModDB, and ModWorkshop lists
 
-`games-gamebanana.txt` and `games-moddb.txt` are the same idea as `games-github.txt` applied to the other two mod hosts, via `downloads_from_gamebanana()` / `downloads_from_moddb()` (both thin wrappers over `downloads_from_host()`). Each excludes games that own the corresponding downloader module, since those are already tracked by `games-downloader-gamebanana.txt` / `games-downloader-moddb.txt` — the two lists compose, so the union is every game using that host.
+`games-gamebanana.txt`, `games-moddb.txt`, and `games-modworkshop.txt` are the same idea as `games-github.txt` applied to the other three mod hosts, via `downloads_from_gamebanana()` / `downloads_from_moddb()` / `downloads_from_modworkshop()` (all thin wrappers over `downloads_from_host()`). Each excludes games that own the corresponding downloader module, since those are already tracked by `games-downloader-gamebanana.txt` / `games-downloader-moddb.txt` / `games-downloader-modworkshop.txt` — each pair composes, so the union is every game using that host.
+
+The ModWorkshop host pattern matches the `modworkshop.net` web, `api.modworkshop.net`, and `storage.modworkshop.net` hosts alike, since all three are subdomains of the same name. As with the other hosts, a URL that only opens a browse page does not count — `game-roadtovostok`'s `Open Modworkshop Page` action is why `games-modworkshop.txt` is empty while that game sits in `games-downloader-modworkshop.txt`.
 
 `games-gamebanana.txt` additionally applies `GAMEBANANA_LIST_EXCLUDED_GAMES` in `categorize_games.py`, same rationale as `GITHUB_LIST_EXCLUDED_GAMES`: `tombraider2013`'s TexMod download is a fixed GameBanana file id (`dl/521607`) that will not be updated, so tracking it as a live requirement adds no value.
 

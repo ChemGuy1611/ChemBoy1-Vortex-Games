@@ -12,6 +12,7 @@ independently of its engine category and of each other:
     games-downloader.txt - games with a bundled downloader.js module
     games-downloader-gamebanana.txt - games with a bundled gamebanana_downloader.js module
     games-downloader-moddb.txt      - games with a bundled moddb_downloader.js module
+    games-downloader-modworkshop.txt - games with a bundled modworkshop_downloader.js module
     games-github.txt     - games with a WORKING inline GitHub download (no downloader.js).
                            Skips downloads that are commented out or never called, plus
                            GITHUB_LIST_EXCLUDED_ENGINES (engines whose GitHub fetch is
@@ -21,6 +22,8 @@ independently of its engine category and of each other:
                            GAMEBANANA_LIST_EXCLUDED_GAMES drops pinned-asset one-offs
     games-moddb.txt      - games that download from ModDB inline (no moddb_downloader.js);
                            browse-page links do not count
+    games-modworkshop.txt - games that download from ModWorkshop inline (no
+                           modworkshop_downloader.js); browse-page links do not count
     games-uemi.txt       - games that require the "Unreal Engine Mod Installer" extension
     games-ue4-5-parity.txt - UE4-5 games carrying the full template-ue4-5 load order
 
@@ -38,7 +41,9 @@ from vortex_utils import (
     read_id_list, write_id_list,
     is_load_order_game as _is_load_order_game_src,
     has_downloader_js, has_gamebanana_downloader_js, has_moddb_downloader_js,
+    has_modworkshop_downloader_js,
     github_download_enabled, downloads_from_gamebanana, downloads_from_moddb,
+    downloads_from_modworkshop,
     requires_unreal_mod_installer, has_ue4ss_load_order_parity,
     log_error, log_dry,
 )
@@ -110,6 +115,7 @@ FLAG_LISTS = [
     ("games-downloader.txt", lambda src, folder: has_downloader_js(folder)),
     ("games-downloader-gamebanana.txt", lambda src, folder: has_gamebanana_downloader_js(folder)),
     ("games-downloader-moddb.txt",      lambda src, folder: has_moddb_downloader_js(folder)),
+    ("games-downloader-modworkshop.txt", lambda src, folder: has_modworkshop_downloader_js(folder)),
     # GitHub download done inline in index.js, i.e. without the downloader.js module.
     # github_download_enabled() ignores downloads that are commented out or defined in
     # a never-called function. Engines in GITHUB_LIST_EXCLUDED_ENGINES are skipped too -
@@ -127,6 +133,8 @@ FLAG_LISTS = [
                                                   and _game_id_from_folder(folder) not in GAMEBANANA_LIST_EXCLUDED_GAMES)),
     ("games-moddb.txt",      lambda src, folder: (downloads_from_moddb(src)
                                                   and not has_moddb_downloader_js(folder))),
+    ("games-modworkshop.txt", lambda src, folder: (downloads_from_modworkshop(src)
+                                                  and not has_modworkshop_downloader_js(folder))),
     ("games-uemi.txt",       lambda src, folder: requires_unreal_mod_installer(src)),
     # UE4-5 games at template load-order parity (custom UE4SS + LogicMods pages).
     ("games-ue4-5-parity.txt", lambda src, folder: has_ue4ss_load_order_parity(src)),

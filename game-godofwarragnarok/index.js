@@ -2,15 +2,17 @@
 Name: God of War: Ragnarok Vortex Extension
 Structure: Sony Port, Custom Game Data
 Author: ChemBoy1
-Version: 0.3.0
-Date: 2025-04-10
+Version: 0.4.0
+Date: 2026-08-04
 /////////////////////////////////////////*/
 
 //import libraries
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
+const semver = require('semver');
 const template = require('string-template');
 const fsPromises = require('fs/promises'); //.readdir() for recursive folder reading
+const { download, findModByFile, findDownloadIdByFile, resolveVersionByModVersion, getLatestGithubReleaseAsset, testRequirementVersion } = require('./downloader');
 
 //Specify all the information about the game
 const STEAMAPP_ID = "2322010";
@@ -92,12 +94,29 @@ const LUAMOD_EXTS = ['.lua'];
 
 const LOADER_ID = `${GAME_ID}-scriptloader`;
 const LOADER_NAME = "GoWR-Script-Loader";
-const LOADER_ZIP = `God.of.War.Ragnarok.zip`;
-const LOADER_URL = `https://github.com/Eiton/GoWR-Script-Loader/releases/latest/download/${LOADER_ZIP}`;
-const LOADER_URL_ERR = "https://github.com/Eiton/GoWR-Script-Loader/releases";
 const LOADER_CONFIG_FILE = "GOWR-Script-Loader.ini";
 const LOADER_CONFIG_FILEPATH = path.join(LOADER_CONFIG_FILE);
 const LOADER_FILE = 'winmm.dll';
+
+// REQUIREMENTS //////////////////////////////////////////////////////////////
+const LOADER_AUTHOR = 'Eiton';
+const LOADER_REPO = 'GoWR-Script-Loader';
+const LOADER_ARC_NAME = 'God.of.War.Ragnarok.zip';
+const LOADER_URL_API = `https://api.github.com/repos/${LOADER_AUTHOR}/${LOADER_REPO}`;
+
+const REQUIREMENTS = [
+  { //GoWR-Script-Loader
+    archiveFileName: LOADER_ARC_NAME,
+    modType: LOADER_ID,
+    assemblyFileName: LOADER_FILE,
+    userFacingName: LOADER_NAME,
+    githubUrl: LOADER_URL_API,
+    findMod: (api) => findModByFile(api, LOADER_ID, LOADER_FILE),
+    findDownloadId: (api) => findDownloadIdByFile(api, LOADER_ARC_NAME),
+    fileArchivePattern: new RegExp(/^God\.of\.War\.Ragnarok/, 'i'), //asset selection only - no capture group, the name carries no version
+    resolveVersion: (api) => resolveVersionByModVersion(api, REQUIREMENTS[0]), //version only exists in the release tag, so read it back off the installed mod
+  },
+];
 
 // FILLED IN FROM DATA ABOVE
 const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
@@ -582,50 +601,44 @@ function installSave(files) {
 
 // AUTO-DOWNLOAD FUNCTIONS /////////////////////////////////////////////////////////
 
-//* Function to auto-download from GitHub or external site //////////////////////////////////////////////////////
-async function downloadLoader(api, gameSpec) {
-  //let isInstalled = isLoaderInstalled(api, gameSpec);
-  //if (!isInstalled) {
-    const MOD_NAME = LOADER_NAME;
-    const MOD_TYPE = LOADER_ID;
-    const NOTIF_ID = `${MOD_TYPE}-installing`;
-    const GAME_DOMAIN = GAME_ID;
-    const URL = LOADER_URL;
-    const ERR_URL = LOADER_URL_ERR;
-    api.sendNotification({ //notification indicating install process
-      id: NOTIF_ID,
-      message: `Installing ${MOD_NAME}`,
-      type: 'activity',
-      noDismiss: true,
-      allowSuppress: false,
-    });
-    try {
-      const dlInfo = { //Download the mod
-        game: GAME_DOMAIN,
-        name: MOD_NAME,
-      };
-      const dlId = await util.toPromise(cb =>
-        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
-      const modId = await util.toPromise(cb =>
-        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
-      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
-      const batched = [
-        actions.setModsEnabled(api, profileId, [modId], true, {
-          allowAutoDeploy: true,
-          installed: true,
-        }),
-        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
-      ];
-      util.batchDispatch(api.store, batched); // Will dispatch both actions
-    } catch (err) { //Show the user the download page if the download, install process fails
-      const errPage = ERR_URL;
-      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
-      util.opn(errPage).catch(() => null);
-    } finally {
-      api.dismissNotification(NOTIF_ID);
+//Check the installed requirements against the latest GitHub releases
+async function asyncForEachTestVersion(api, requirements) {
+  for (let index = 0; index < requirements.length; index++) {
+    await testRequirementVersion(api, requirements[index]);
+  }
+}
+
+async function onCheckModVersion(api, gameId, mods, forced) {
+  try {
+    await asyncForEachTestVersion(api, REQUIREMENTS);
+    log('warn', 'Checked requirements versions');
+  } catch (err) {
+    log('warn', `Failed to test requirement version: ${err}`);
+  }
+}
+
+//Download the mod loader on demand (toolbar button only - never called from setup).
+//download() with force=true silently does nothing when the requirement is already
+//current, so compare versions first and tell the user instead of flashing a notification.
+async function downloadLoader(api) {
+  const requirement = REQUIREMENTS[0];
+  const mod = await requirement.findMod(api);
+  if (mod !== undefined) {
+    const installed = await requirement.resolveVersion(api);
+    const asset = await getLatestGithubReleaseAsset(api, requirement);
+    const latest = semver.coerce(asset?.release?.tag_name)?.version;
+    if (latest && !semver.gt(latest, installed)) {
+      api.sendNotification({
+        id: `${LOADER_ID}-current`,
+        type: 'success',
+        message: `${LOADER_NAME} is already up to date (v${installed})`,
+        displayMS: 5000,
+      });
+      return;
     }
-  //}
-} //*/
+  }
+  return download(api, REQUIREMENTS, true);
+}
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
@@ -739,8 +752,8 @@ function applyGame(context, gameSpec) {
   context.registerInstaller(SAVE_ID, 37, testSave, installSave);
 
   //register actions
-  context.registerAction('mod-icons', 300, 'open-ext', {}, `Download ${LOADER_NAME}`, () => {
-    downloadLoader(context.api, spec).catch(() => null);
+  context.registerAction('mod-icons', 300, 'open-ext', {}, `Download Latest ${LOADER_NAME}`, () => {
+    downloadLoader(context.api).catch(() => null);
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
@@ -827,6 +840,10 @@ function main(context) {
   applyGame(context, spec);
   context.once(() => { // put code here that should be run (once) when Vortex starts up
     const api = context.api;
+    context.api.onAsync('check-mods-version', (gameId, mods, forced) => {
+      if (gameId !== GAME_ID) return;
+      return onCheckModVersion(context.api, gameId, mods, forced);
+    });
     context.api.onAsync('did-deploy', async (profileId, deployment) => {
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;

@@ -2,8 +2,8 @@
 Name: Borderlands Vortex Extension
 Structure: UE2/3 Game (TFC Installer)
 Author: ChemBoy1
-Version: 0.2.3
-Date: 2025-11-16
+Version: 0.3.0
+Date: 2026-08-04
 /////////////////////////////////////////*/
 
 //Import libraries
@@ -11,6 +11,7 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 //const winapi = require('winapi-bindings');
+const { download, findModByFile, findDownloadIdByFile, resolveVersionByModVersion, testRequirementVersion } = require('./downloader');
 
 //const USER_HOME = util.getVortexPath("home");
 const DOCUMENTS = util.getVortexPath("documents");
@@ -41,7 +42,7 @@ const EXEC_NAME = "Borderlands.exe";
 const EXEC = path.join(BINARIES_PATH, EXEC_NAME);
 const EXEC_NAME_GOTY = "BorderlandsGOTY.exe";
 const BINARIES_PATH_GOTY = path.join("Binaries", "Win64");
-const EXEC_GOTY = path.join(BINARIES_PATH, BINARIES_PATH_GOTY);
+const EXEC_GOTY = path.join(BINARIES_PATH_GOTY, EXEC_NAME_GOTY);
 const DATA_FOLDER = path.join('Borderlands', 'WillowGame');
 
 let GAME_PATH = ''; //patched in the setup function to the discovered game path
@@ -76,8 +77,37 @@ const SDK_NAME = "Python SDK";
 const SDK_FOLDER = "sdk_mods";
 const SDK_DLL = "unrealsdk.dll";
 const SDK_PATH = '.';
-const SDK_URL = `https://github.com/bl-sdk/willow1-mod-manager/releases/latest/download/willow1-sdk.zip`;
-const SDK_URL_ERR = `https://github.com/bl-sdk/willow1-mod-manager/releases`;
+const SDK_URL_API = `https://api.github.com/repos/bl-sdk/willow1-mod-manager`;
+const SDK_ARC_NAME = 'bl1-sdk.zip'; //original Borderlands
+const SDK_ARC_NAME_ENHANCED = 'bl1-enhanced-sdk.zip'; //Borderlands Game of the Year Enhanced
+
+//The SDK ships a separate build per game version, so each one gets its own requirement.
+const REQUIREMENTS = [
+  { //Python SDK - original Borderlands
+    archiveFileName: SDK_ARC_NAME,
+    modType: SDK_ID,
+    assemblyFileName: SDK_DLL,
+    userFacingName: SDK_NAME,
+    githubUrl: SDK_URL_API,
+    findMod: (api) => findModByFile(api, SDK_ID, SDK_DLL),
+    findDownloadId: (api) => findDownloadIdByFile(api, SDK_ARC_NAME),
+    fileArchivePattern: new RegExp(/^bl1-sdk/, 'i'), //no capture group - the version is only in the release tag
+    resolveVersion: (api) => resolveVersionByModVersion(api, REQUIREMENTS[0]),
+  },
+];
+const REQUIREMENTS_ENHANCED = [
+  { //Python SDK - Game of the Year Enhanced
+    archiveFileName: SDK_ARC_NAME_ENHANCED,
+    modType: SDK_ID,
+    assemblyFileName: SDK_DLL,
+    userFacingName: SDK_NAME,
+    githubUrl: SDK_URL_API,
+    findMod: (api) => findModByFile(api, SDK_ID, SDK_DLL),
+    findDownloadId: (api) => findDownloadIdByFile(api, SDK_ARC_NAME_ENHANCED),
+    fileArchivePattern: new RegExp(/^bl1-enhanced-sdk/, 'i'), //no capture group - the version is only in the release tag
+    resolveVersion: (api) => resolveVersionByModVersion(api, REQUIREMENTS_ENHANCED[0]),
+  },
+];
 
 const SDKMOD_ID = `${GAME_ID}-sdkmod`;
 const SDKMOD_NAME = "SDK Mod";
@@ -425,11 +455,51 @@ function isTfcInstalled(api, spec) {
   return Object.keys(mods).some(id => mods[id]?.type === TFC_ID);
 }
 
-//Check if SDK is installed
-function isSdkInstalled(api, spec) {
-  const state = api.getState();
-  const mods = state.persistent.mods[spec.game.id] || {};
-  return Object.keys(mods).some(id => mods[id]?.type === SDK_ID);
+//Check which game version is installed so the matching SDK build is requested
+function isEnhanced(gamePath) {
+  try {
+    fs.statSync(path.join(gamePath, EXEC_GOTY));
+    return true;
+  }
+  catch {
+    return false;
+  }
+}
+
+//Get the requirements for the installed game version
+function getRequirements(api) {
+  return isEnhanced(getDiscoveryPath(api)) ? REQUIREMENTS_ENHANCED : REQUIREMENTS;
+}
+
+// AUTO-DOWNLOADER FUNCTIONS ///////////////////////////////////////////////////
+
+async function asyncForEachTestVersion(api, requirements) {
+  for (let index = 0; index < requirements.length; index++) {
+    await testRequirementVersion(api, requirements[index]);
+  }
+}
+
+async function asyncForEachCheck(api, requirements) {
+  let mod = [];
+  for (let index = 0; index < requirements.length; index++) {
+    mod[index] = await requirements[index].findMod(api);
+  }
+  let checker = mod.every((entry) => entry !== undefined); //findMod resolves to a mod object or undefined, never a boolean
+  return checker;
+}
+
+async function onCheckModVersion(api, gameId, mods, forced) {
+  try {
+    await asyncForEachTestVersion(api, getRequirements(api));
+    log('warn', 'Checked requirements versions');
+  } catch (err) {
+    log('warn', `Failed to test requirement version: ${err}`);
+  }
+}
+
+async function checkForRequirements(api) {
+  const CHECK = await asyncForEachCheck(api, getRequirements(api));
+  return CHECK;
 }
 
 //* Function to auto-download TFC from Nexus Mods
@@ -490,51 +560,6 @@ async function downloadTfc(api, gameSpec) {
       util.batchDispatch(api.store, batched); // Will dispatch both actions
     } catch (err) { //Show the user the download page if the download, install process fails
       const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
-      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
-      util.opn(errPage).catch(() => null);
-    } finally {
-      api.dismissNotification(NOTIF_ID);
-    }
-  }
-} //*/
-
-//* Function to auto-download SDK from GitHub
-async function downloadSdk(api, gameSpec) {
-  let isInstalled = isSdkInstalled(api, gameSpec);
-  if (!isInstalled) {
-    const MOD_NAME = SDK_NAME;
-    const MOD_TYPE = SDK_ID;
-    const NOTIF_ID = `${MOD_TYPE}-installing`;
-    const GAME_DOMAIN = GAME_ID;
-    const URL = SDK_URL;
-    const ERR_URL = SDK_URL_ERR;
-    api.sendNotification({ //notification indicating install process
-      id: NOTIF_ID,
-      message: `Installing ${MOD_NAME}`,
-      type: 'activity',
-      noDismiss: true,
-      allowSuppress: false,
-    });
-    try {
-      const dlInfo = { //Download the mod
-        game: GAME_DOMAIN,
-        name: MOD_NAME,
-      };
-      const dlId = await util.toPromise(cb =>
-        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
-      const modId = await util.toPromise(cb =>
-        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
-      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
-      const batched = [
-        actions.setModsEnabled(api, profileId, [modId], true, {
-          allowAutoDeploy: true,
-          installed: true,
-        }),
-        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
-      ];
-      util.batchDispatch(api.store, batched); // Will dispatch both actions
-    } catch (err) { //Show the user the download page if the download, install process fails
-      const errPage = ERR_URL;
       api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
       util.opn(errPage).catch(() => null);
     } finally {
@@ -1108,7 +1133,10 @@ async function setup(discovery, api, gameSpec) {
   //setupNotify(api);
   // ASYNC CODE //////////////////////////////////////////
   await downloadTfc(api, gameSpec);
-  await downloadSdk(api, gameSpec);
+  const requirementsInstalled = await checkForRequirements(api);
+  if (!requirementsInstalled) {
+    await download(api, getRequirements(api));
+  }
   await modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
   return fs.ensureFileAsync(
     path.join(GAME_PATH, TFCMOD_PATH, "TFC_Mods_Go_Here.txt")
@@ -1219,6 +1247,10 @@ function main(context) {
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;
       return deployNotify(context.api);
+    });
+    context.api.onAsync('check-mods-version', (gameId, mods, forced) => {
+      if (gameId !== GAME_ID) return;
+      return onCheckModVersion(context.api, gameId, mods, forced);
     });
   });
   return true;

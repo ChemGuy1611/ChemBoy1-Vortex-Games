@@ -986,7 +986,7 @@ async function asyncForEachCheck(api, requirements) {
   for (let index = 0; index < requirements.length; index++) {
     mod[index] = await requirements[index].findMod(api);
   }
-  let checker = mod.every((entry) => entry === true);
+  let checker = mod.every((entry) => entry !== undefined); //findMod resolves to a mod object or undefined, never a boolean
   return checker;
 }
 

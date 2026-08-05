@@ -1,16 +1,44 @@
 # Archive Handler Reference
 
-Source: `Vortex/src/renderer/src/types/IExtensionContext.ts` lines 293-326, 1229-1232
+Source: `IArchiveOptions` / `IArchiveHandler` / `registerArchiveType` in
+`Vortex/src/renderer/src/types/IExtensionContext.ts`; registration and dispatch in
+`ExtensionManager.registerArchiveHandler` / `ExtensionManager.openArchive`.
 
 ## How Vortex Handles Archives
 
-When a user drops a mod file into Vortex, Vortex determines how to extract it based on the file extension.
+Vortex has **two separate archive paths**, and `registerArchiveType` only feeds one of them.
 
-- Standard extensions (`.zip`, `.7z`, `.rar`) are handled natively by the Vortex download manager via the bundled `node-7z` bindings.
-- Unknown or game-specific extensions (`.vmz`, `.ba2`, `.bsa`, `.arc`, etc.) require an extension to register a handler before Vortex knows how to open them.
-- Without a registered handler, Vortex either refuses the file or treats it as a raw (non-archive) download.
+**1. The install pipeline (does not use registered handlers).** `InstallManager` extracts every
+downloaded mod with its own bundled `node-7z` instance (`extractFull`). It never consults
+`registerArchiveType`. Because 7z identifies formats by content signature rather than by
+extension, a renamed zip extracts here on its own. The only extension-based rule is the avoid
+list (`.dll`).
 
-`context.registerArchiveType` maps a file extension to a handler creator. Vortex calls the creator when it needs to open a file of that type, then calls methods on the returned handler to list or extract its contents.
+**2. `api.openArchive` (the only consumer of registered handlers).** `registerArchiveType` stores
+the creator in a map that is read exclusively by `ExtensionManager.openArchive`. In-app callers
+are mod merging (`mod_management/modMerging.ts`) and the gamebryo extensions. Registering a type
+is what lets those paths — and your own `api.openArchive` calls — read a format Vortex otherwise
+knows nothing about.
+
+### What registerArchiveType does NOT do
+
+Vortex's "is this file an archive?" test is `knownArchiveExt()` in
+`Vortex/src/renderer/src/util/archives.ts`, a **hardcoded** set (`.zip`, `.7z`, `.rar`, `.tar`,
+… plus `.fomod` and `.dazip`). Extensions cannot add to it. So a custom extension such as `.vmz`
+stays a non-archive as far as the surrounding UI is concerned, even with a handler registered:
+
+- the downloads-folder scan skips it, and — because the same filtered scan decides what counts as
+  removed — an existing entry for it is dropped from the Downloads list on refresh (the file
+  itself stays on disk);
+- the download-folder watcher ignores changes to it;
+- dragging it onto the mods list takes the "non-archive files" branch.
+
+Downloads created programmatically (`start-download`, `import-downloads`) are unaffected, since
+they register state directly.
+
+**Practical consequence:** when an extension auto-downloads a requirement from a mod site or a
+GitHub release, prefer an asset with a standard archive extension. If the upstream project ships
+both (e.g. an identical `.zip` and `.vmz` pair), take the `.zip`.
 
 ---
 
@@ -26,6 +54,9 @@ context.registerArchiveType(
 - Call inside `applyGame()` / `main()` — must be synchronous.
 - Registers globally for the lifetime of the extension; no game-id filter is built in.
 - One handler per file extension. Registering the same extension twice overwrites the first.
+- Lookup key is the file's own extension with the leading dot stripped, **with no case
+  normalization** — a handler registered as `vmz` is not found for a file named `MOD.VMZ`.
+  `openArchive`'s optional third argument overrides extension detection entirely.
 
 ---
 
@@ -78,14 +109,17 @@ interface IArchiveHandler {
 | Method | Required | Description |
 | --- | --- | --- |
 | `readDir(archPath)` | YES | List all file paths in the archive. `archPath` may be a subdirectory filter or the archive root — handling both is safest. Return flat list of relative paths. |
-| `extractAll(outputPath)` | YES | Extract entire archive to `outputPath`. This is called by the installer pipeline to get files into the staging temp folder. |
+| `extractAll(outputPath)` | YES | Extract entire archive to `outputPath`. |
 | `readFile(filePath)` | no | Return a readable stream for a single file. Used by FOMOD reader and preview features. |
 | `extractFile(filePath, outputPath)` | no | Extract a single file. Called when Vortex only needs one item. |
 | `addFile(filePath, sourcePath)` | no | Add/update a file in the archive. Only needed for mutable archives. |
 | `create(sourcePath)` | no | Create a new archive from a directory. Only needed if `options.create` mode matters. |
 | `write()` | no | Flush pending changes. Called after a series of `addFile` calls. |
 
-Vortex will call `readDir` and `extractAll` for every install. Implement the optional methods only when your format requires them.
+`readDir` and `extractAll` are the two methods `Archive` always exposes, so implement both.
+They run when something opens the archive through `api.openArchive` — not on every mod install
+(see "How Vortex Handles Archives" above). Implement the optional methods only when your format
+requires them.
 
 ---
 
@@ -153,7 +187,9 @@ When a game distributes mods as renamed zips (`.vmz`), the installer pipeline ne
 
 ### Why two installers are needed
 
-Vortex, once it can extract `.vmz` via `registerArchiveType`, extracts the archive contents into a temp folder. If the mod *is itself* a renamed zip (no wrapper folder), Vortex sees the raw contents — e.g., `mod.txt`, `mod_data/`, etc.
+Vortex extracts the download into a temp folder before running installer tests. If the mod *is
+itself* a renamed zip (no wrapper folder), the installers see the raw contents — e.g. `mod.txt`,
+`mod_data/`, etc.
 
 The game's mod loader expects a `.vmz` file in the mods folder, not extracted contents. So the installer must repack the files back into a zip and rename it `.vmz`.
 
@@ -198,8 +234,7 @@ async function installRezip(files, destinationPath) {
 ### Pipeline summary
 
 ```text
-User drops .vmz onto Vortex
-  -> registerArchiveType('vmz') allows extraction
+A .vmz reaches the install pipeline (e.g. inside a downloaded .zip)
   -> Vortex extracts contents to temp folder
   -> testMod fires? NO (no .vmz inside)
   -> testRezip fires? YES (mod.txt found)
@@ -207,13 +242,19 @@ User drops .vmz onto Vortex
   -> Vortex deploys .zip to mod folder (game reads it as .vmz via its own loader)
 ```
 
+Note what this pipeline does **not** depend on: `registerArchiveType`. Extraction is 7z's
+signature detection. Conversely, a bare `.vmz` handed to Vortex as a download is the weak case —
+it is not a `knownArchiveExt`, so prefer a `.zip`-named asset for anything the extension
+downloads automatically.
+
 Working example: `game-roadtovostok/index.js`
 
 ---
 
 ## See also
 
-`INSTALLER_SYSTEM.md` (the `files` list installers test against comes from an archive opened
-through this system). `UNDERUSED_API_FUNCTIONS.md` (§5 `api.openArchive` — inspecting archive
-contents without extracting). `VORTEX_APP.md` (overview of where archive handling fits among
-other extension systems).
+`INSTALLER_SYSTEM.md` (the `files` list installers test against, produced by the extraction step
+described above). `UNDERUSED_API_FUNCTIONS.md` (§5 `api.openArchive` — the one caller of the
+handlers registered here). `DOWNLOADER.md` (auto-downloading requirements from GitHub releases —
+why the asset it fetches should carry a standard archive extension). `VORTEX_APP.md` (overview of
+where archive handling fits among other extension systems).

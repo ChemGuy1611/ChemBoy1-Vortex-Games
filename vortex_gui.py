@@ -611,7 +611,8 @@ class GameModel(QAbstractTableModel):
             # index.js parse cache (same rule as image existence)
             has_downloader = (vu.has_downloader_js(folder)
                               or vu.has_gamebanana_downloader_js(folder)
-                              or vu.has_moddb_downloader_js(folder))
+                              or vu.has_moddb_downloader_js(folder)
+                              or vu.has_modworkshop_downloader_js(folder))
 
             icon_path = os.path.join(folder, "exec.png")
             cover_path = os.path.join(folder, f"{game_id}.jpg")

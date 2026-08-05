@@ -309,5 +309,5 @@ Two things to keep in mind when touching that code:
 
 `REGISTER_GAME.md` (the `IGame` store-ID fields these lookups populate).
 `TEMPLATES_OVERVIEW.md` (the `PCGAMINGWIKI_URL` constant and the toolbar action every template ships).
-`GAMEBANANA_API.md` and `MODDB_API.md` (the other third-party sites this repo queries, both with
-their own bot-protection behaviour).
+`GAMEBANANA_API.md`, `MODDB_API.md`, and `MODWORKSHOP_API.md` (the other third-party sites this repo
+queries, each with its own bot-protection behaviour and usage rules).

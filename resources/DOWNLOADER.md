@@ -8,6 +8,10 @@ For **GameBanana**-hosted requirements, use the companion module `resources/down
 
 For **ModDB**-hosted requirements, use the companion module `resources/downloader/moddb_downloader.js` instead (same local-copy model, with `template_moddb_downloader.js` for wiring) — documented in `MODDB_API.md`.
 
+For **ModWorkshop**-hosted requirements, use the companion module `resources/downloader/modworkshop_downloader.js` instead (same local-copy model, with `template_modworkshop_downloader.js` for wiring) — documented in `MODWORKSHOP_API.md`.
+
+For **Thunderstore**-hosted requirements, use the companion module `resources/downloader/thunderstore_downloader.js` instead (same local-copy model, with `template_thunderstore_downloader.js` for wiring) — documented in `THUNDERSTORE_API.md`.
+
 ---
 
 ## Architecture
@@ -155,5 +159,10 @@ The template also includes a full `resolveVersionByFile` implementation (extract
 
 `VORTEX_DOWNLOAD_MGMT.md` (the `start-download`/`import-downloads` events this module hands off
 to). `TEMPLATES_OVERVIEW.md` (which templates bundle a `downloader.js` copy).
+`ARCHIVE_HANDLER.md` (why `archiveFileName` should point at an asset with a standard archive
+extension, and what a custom extension like `.vmz` costs).
 `VORTEX_MOD_METADATA.md` (why a GitHub-sourced requirement can end up tagged with an unrelated
 Nexus `modId`, and what an extension can do about it).
+`GAMEBANANA_API.md`, `MODDB_API.md`, `MODWORKSHOP_API.md`, and `THUNDERSTORE_API.md` (the non-GitHub
+mod hosts — each has a sibling downloader module; the ModWorkshop and Thunderstore ones are the
+simplest, since both hosts serve direct download URLs).

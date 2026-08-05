@@ -206,5 +206,8 @@ The entry points take an array of requirement objects (conventionally a `GB_REQU
 
 `VORTEX_DOWNLOAD_MGMT.md` (the `start-download`/`import-downloads` events `gamebanana_downloader.js`
 hands off to). `VORTEX_MOD_INSTALL.md` (installing the downloaded requirement as a managed mod).
+`MODWORKSHOP_API.md`, `MODDB_API.md`, and `THUNDERSTORE_API.md` (the other third-party mod hosts
+this repo queries — ModWorkshop and Thunderstore both publish a machine-readable API spec and serve
+direct download URLs; GameBanana and ModDB do not).
 `PCGAMINGWIKI_API.md` (game-metadata lookups, and another third-party site with its own
 User-Agent/rate-limit rules).

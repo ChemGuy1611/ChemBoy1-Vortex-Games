@@ -2534,6 +2534,11 @@ def has_moddb_downloader_js(folder):
     return os.path.isfile(os.path.join(folder, "moddb_downloader.js"))
 
 
+def has_modworkshop_downloader_js(folder):
+    """Return True if the extension folder contains a bundled modworkshop_downloader.js module."""
+    return os.path.isfile(os.path.join(folder, "modworkshop_downloader.js"))
+
+
 def downloads_from_github(src):
     """Return True if index.js pulls a mod/requirement from a GitHub release.
 
@@ -2584,6 +2589,8 @@ def github_download_enabled(src):
 # Third-party mod hosts an extension can pull a requirement from, other than GitHub.
 _GAMEBANANA_HOST_RE = re.compile(r"gamebanana\.com/[^\"'`\s)]*")
 _MODDB_HOST_RE = re.compile(r"moddb\.com/[^\"'`\s)]*")
+# Matches the web, api, and storage hosts alike - all three are modworkshop.net subdomains.
+_MODWORKSHOP_HOST_RE = re.compile(r"modworkshop\.net/[^\"'`\s)]*")
 
 # An extension reaches one of those hosts through one of these events: a direct asset
 # fetch, or Vortex's browser integration where the user clicks the site's own download
@@ -2670,6 +2677,11 @@ def downloads_from_gamebanana(src):
 def downloads_from_moddb(src):
     """Return True if index.js downloads a requirement from ModDB inline."""
     return downloads_from_host(src, _MODDB_HOST_RE)
+
+
+def downloads_from_modworkshop(src):
+    """Return True if index.js downloads a requirement from ModWorkshop inline."""
+    return downloads_from_host(src, _MODWORKSHOP_HOST_RE)
 
 
 def requires_unreal_mod_installer(src):

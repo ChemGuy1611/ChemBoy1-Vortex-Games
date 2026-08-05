@@ -136,5 +136,8 @@ The entry points take an array of requirement objects (conventionally a `MODDB_R
 `VORTEX_DOWNLOAD_MGMT.md` (the `start-download`/`import-downloads` events `moddb_downloader.js`
 hands off to). `VORTEX_MOD_INSTALL.md` (installing the downloaded requirement as a managed mod).
 `VORTEX_MOD_METADATA.md` — covers the `modmeta-db` **metadata cache**, an unrelated package that
-shares the "moddb" name with this site. `PCGAMINGWIKI_API.md` (game-metadata lookups, and another
-site where Cloudflare blocks part of the surface).
+shares the "moddb" name with this site. `GAMEBANANA_API.md`, `MODWORKSHOP_API.md`, and
+`THUNDERSTORE_API.md` (the other third-party mod hosts this repo queries; ModWorkshop inverts the
+block described above — its API host answers any client while its web host returns `403` — and
+Thunderstore blocks nothing at all). `PCGAMINGWIKI_API.md` (game-metadata lookups, and another site
+where Cloudflare blocks part of the surface).

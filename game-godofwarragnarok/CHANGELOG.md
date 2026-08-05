@@ -4,6 +4,12 @@
 
 - None Planned
 
+## [0.4.0] - 2026-08-04
+
+- Changed: GoWR-Script-Loader is now downloaded from the latest GitHub release instead of a fixed link
+- Added: Update notifications when a new version of GoWR-Script-Loader is released
+- Changed: The download button now reports when the installed loader is already up to date
+
 ## [0.3.0] - 2026-01-30
 
 - Improved: Finds .texpack and .lodpack files in any subdirectory of the "exec\patch" folder

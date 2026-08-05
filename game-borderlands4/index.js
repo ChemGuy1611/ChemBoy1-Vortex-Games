@@ -2,14 +2,15 @@
 Name: Borderlands 4 Vortex Extension
 Structure: UE5 (static exe)
 Author: ChemBoy1
-Version: 0.3.1
-Date: 2026-04-23
+Version: 0.4.0
+Date: 2026-08-04
 //////////////////////////////////////////////////*/
 
 //Import libraries
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
+const { download, findModByFile, findDownloadIdByFile, resolveVersionByModVersion, testRequirementVersion } = require('./downloader');
 
 //const USER_HOME = util.getVortexPath("home");
 const DOCUMENTS = util.getVortexPath("documents");
@@ -193,8 +194,22 @@ const SDK_NAME = "Python SDK";
 const SDK_FOLDER = "sdk_mods";
 const SDK_DLL = "unrealsdk.dll";
 const SDK_PATH = '.';
-const SDK_URL = `https://github.com/bl-sdk/oak2-mod-manager/releases/latest/download/oak2-sdk.zip`;
-const SDK_URL_ERR = `https://github.com/bl-sdk/oak2-mod-manager/releases`;
+const SDK_ARC_NAME = 'oak2-sdk.zip';
+const SDK_URL_API = `https://api.github.com/repos/bl-sdk/oak2-mod-manager`;
+
+const REQUIREMENTS = [
+  { //Python SDK
+    archiveFileName: SDK_ARC_NAME,
+    modType: SDK_ID,
+    assemblyFileName: SDK_DLL,
+    userFacingName: SDK_NAME,
+    githubUrl: SDK_URL_API,
+    findMod: (api) => findModByFile(api, SDK_ID, SDK_DLL),
+    findDownloadId: (api) => findDownloadIdByFile(api, SDK_ARC_NAME),
+    fileArchivePattern: new RegExp(/^oak2-sdk/, 'i'), //no capture group - the version is only in the release tag
+    resolveVersion: (api) => resolveVersionByModVersion(api, REQUIREMENTS[0]),
+  },
+];
 
 const SDKMOD_ID = `${GAME_ID}-pysdkmod`;
 const SDKMOD_NAME = "SDK Mod";
@@ -1193,57 +1208,22 @@ function isSigBypassInstalled(api, spec) {
   return Object.keys(mods).some(id => mods[id]?.type === SIGBYPASS_ID);
 }
 
-//Check if SDK is installed
-function isSdkInstalled(api, spec) {
-  const state = api.getState();
-  const mods = state.persistent.mods[spec.game.id] || {};
-  return Object.keys(mods).some(id => mods[id]?.type === SDK_ID);
+// AUTO-DOWNLOADER FUNCTIONS ///////////////////////////////////////////////////
+
+async function asyncForEachTestVersion(api, requirements) {
+  for (let index = 0; index < requirements.length; index++) {
+    await testRequirementVersion(api, requirements[index]);
+  }
 }
 
-//* Function to SDK from GitHub
-async function downloadSdk(api, gameSpec, check = true) {
-  let isInstalled = isSdkInstalled(api, gameSpec);
-  if (!isInstalled || !check) {
-    const MOD_NAME = SDK_NAME;
-    const MOD_TYPE = SDK_ID;
-    const NOTIF_ID = `${MOD_TYPE}-installing`;
-    const GAME_DOMAIN = GAME_ID;
-    const URL = SDK_URL;
-    const ERR_URL = SDK_URL_ERR;
-    api.sendNotification({ //notification indicating install process
-      id: NOTIF_ID,
-      message: `Installing ${MOD_NAME}`,
-      type: 'activity',
-      noDismiss: true,
-      allowSuppress: false,
-    });
-    try {
-      const dlInfo = { //Download the mod
-        game: GAME_DOMAIN,
-        name: MOD_NAME,
-      };
-      const dlId = await util.toPromise(cb =>
-        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
-      const modId = await util.toPromise(cb =>
-        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
-      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
-      const batched = [
-        actions.setModsEnabled(api, profileId, [modId], true, {
-          allowAutoDeploy: true,
-          installed: true,
-        }),
-        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
-      ];
-      util.batchDispatch(api.store, batched); // Will dispatch both actions
-    } catch (err) { //Show the user the download page if the download, install process fails
-      const errPage = ERR_URL;
-      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
-      util.opn(errPage).catch(() => null);
-    } finally {
-      api.dismissNotification(NOTIF_ID);
-    }
+async function onCheckModVersion(api, gameId, mods, forced) {
+  try {
+    await asyncForEachTestVersion(api, REQUIREMENTS);
+    log('warn', 'Checked requirements versions');
+  } catch (err) {
+    log('warn', `Failed to test requirement version: ${err}`);
   }
-} //*/
+}
 
 //* Download UE4SS from GitHub page (user browse for download)
 async function downloadUe4ss(api, gameSpec) {
@@ -1760,7 +1740,7 @@ async function setup(discovery, api, gameSpec) {
   if (SIGBYPASS_REQUIRED === true) {
     await downloadSigBypass(api, gameSpec);
   }
-  //await downloadSdk(api, gameSpec);
+  //The Python SDK is optional here, so it is only downloaded from the toolbar button.
   //await fs.ensureDirWritableAsync(path.join(GAME_PATH, MENU_PATH));
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
@@ -1852,7 +1832,7 @@ function applyGame(context, gameSpec) {
 
   //register actions
   context.registerAction('mod-icons', 300, 'open-ext', {}, `Download ${SDK_NAME} Latest`, () => {
-    downloadSdk(context.api, spec, false);
+    download(context.api, REQUIREMENTS, true); //force, so an installed SDK is re-downloaded
   }, () => {
     const state = context.api.getState();
     const gameId = selectors.activeGameId(state);
@@ -1981,7 +1961,10 @@ function main(context) {
   }
   context.once(() => { // put code here that should be run (once) when Vortex starts up
     const api = context.api;
-
+    context.api.onAsync('check-mods-version', (gameId, mods, forced) => {
+      if (gameId !== GAME_ID) return;
+      return onCheckModVersion(context.api, gameId, mods, forced);
+    });
   });
   return true;
 }
