@@ -1,9 +1,9 @@
 /*////////////////////////////////////////////////
-Name: XXX Vortex Extension
+Name: Beast of Reincarnation Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
 Version: 1.0.0
-Date: 2026-XX-XX
+Date: 2026-08-06
 Notes:
 -
 ////////////////////////////////////////////////*/
@@ -28,29 +28,29 @@ const LOCALLOW = path.join(USER_HOME, 'AppData', 'LocalLow'); //*/
 const LOCALAPPDATA = util.getVortexPath('localAppData');
 
 //Specify all information about the game
-const GAME_ID = "XXX"; //same as Nexus domain
-const STEAMAPP_ID = "XXX"; //from steamdb.info
-const STEAMAPP_ID_DEMO = "XXX"; //VERIFY if the EPIC_CODE_NAME and EXEC_DEMO match Steam full game
-const EPICAPP_ID = "XXX"; //from egdata.app
-const GOGAPP_ID = "XXX"; // from gogdb.org
-const XBOXAPP_ID = "XXX"; //from appxmanifest.xml
-const XBOXEXECNAME = "AppUEGameShipping"; //from appxmanifest.xml
-const XBOX_PUB_ID = "XXX"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const GAME_ID = "beastofreincarnation"; //same as Nexus domain
+const STEAMAPP_ID = "2001760"; // https://steamdb.info/app/2001760/
+const STEAMAPP_ID_DEMO = null; //VERIFY if the EPIC_CODE_NAME and EXEC_DEMO match Steam full game
+const EPICAPP_ID = null; //from egdata.app
+const GOGAPP_ID = null; // from gogdb.org
+const XBOXAPP_ID = "Fictions.ProjectAibou"; // https://apps.microsoft.com/detail/9NXWSWBM4H6T
+const XBOXEXECNAME = "AppBeastOfReincarnationShipping"; //from appxmanifest.xml
+const XBOX_PUB_ID = "qj8vnfjar8dk2"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, XBOXAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
-const GAME_NAME = "XXX";
-const GAME_NAME_SHORT = "XXX"; //Try for 8-10 characters
-const EPIC_CODE_NAME = "XXX"; //Folder in root
+const GAME_NAME = "Beast of Reincarnation";
+const GAME_NAME_SHORT = "Beast of Reincarnation"; //Try for 8-10 characters
+const EPIC_CODE_NAME = "BeastOfReincarnation"; //Folder in root
 const EXEC = `${EPIC_CODE_NAME}.exe`; //This is true ~80% of the time. Change if different
 const EXEC_EPIC = EXEC; //change these 3 if different
 const EXEC_GOG = EXEC;
 const EXEC_DEMO = EXEC;
 const PARAMETERS_STRING = ''; //launch arguments to pass when launching the game
-const PCGAMINGWIKI_URL = "XXX";
-const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Beast_of_Reincarnation";
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/2163"; //Nexus link to this extension. Used for links
 
 //feature toggles
-const hasXbox = false; //toggle for Xbox version logic.
+const hasXbox = true; //toggle for Xbox version logic.
 let multiExe = false; //toggle for multiple executables (Epic/GOG/Demo don't match Steam)
 if ( (EXEC !== EXEC_EPIC) || (EXEC !== EXEC_GOG) || (EXEC !== EXEC_DEMO) ) {
   multiExe = true;
@@ -60,14 +60,14 @@ const hasModKit = false; //toggle for UE ModKit mod support
 const hasServer = false; //toggle for server pak mod logic
 const preferHardlinks = true; //set true to perform partition checks when IO-STORE=false for Config/Save modtypes so that hardlinks available to more users
 const autoDownloadUe4ss = false; //toggle for auto downloading UE4SS
-const writeEngineVersion = false; //toggle to write ENGINE_VERSION into UE4SS-settings.ini (EngineVersionOverride) on deploy, when UE4SS is installed
-const SIGBYPASS_REQUIRED = false; //set true if there are .sig files in the Paks folder
+const writeEngineVersion = true; //toggle to write ENGINE_VERSION into UE4SS-settings.ini (EngineVersionOverride) on deploy, when UE4SS is installed
+const SIGBYPASS_REQUIRED = true; //set true if there are .sig files in the Paks folder
 const IO_STORE = true; //true if the Paks folder contains .ucas and .utoc files
 const hasUserIdFolder = false; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
 const debug = false; //toggle for debug mode
 
 //UE specific
-const ENGINE_VERSION = '5.X.X.0'; //Unreal Engine version. usually '4.27.2.0' or '5.X.X.0'. Written to UE4SS-settings.ini if writeEngineVersion is enabled
+const ENGINE_VERSION = '5.4.4.0'; //Unreal Engine version. usually '4.27.2.0' or '5.X.X.0'. Written to UE4SS-settings.ini if writeEngineVersion is enabled
 const MAJOR_VERSION = ENGINE_VERSION.split('.')[0]; //major UE version
 const MINOR_VERSION = ENGINE_VERSION.split('.')[1]; //minor UE version
 const ROOT_FOLDERS = [EPIC_CODE_NAME, 'Engine']; //addressable folders in root
