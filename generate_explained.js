@@ -5,7 +5,7 @@
  * Always overwrites any existing EXTENSION_EXPLAINED.md.
  *
  * Run with:  node generate_explained.js
- *            node generate_explained.js thelongdark [GAME_ID ...]
+ *            node generate_explained.js megabonk [GAME_ID ...]
  *
  * Flags:
  *   --json       Write machine-readable JSON to stdout; progress goes to stderr.

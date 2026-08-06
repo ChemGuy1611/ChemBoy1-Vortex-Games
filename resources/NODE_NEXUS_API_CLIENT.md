@@ -18,7 +18,7 @@ REST Collections endpoints documented in `NEXUS_MODS_API.md`.
 
 ## Package & Base URLs
 
-`package.json`: name `@nexusmods/nexus-api`, `main: ./lib/index.js`. Source of truth is
+`package.json`: name `@nexusmods/nexus-api`, version `1.7.3`, `main: ./lib/index.js`. Source of truth is
 `src/Nexus.ts` (the `Nexus` class, ~1900 lines) plus `src/types.ts` (data shapes) and
 `src/typesGraphQL.ts` (GraphQL query-builder types). The compiled `lib/` and generated `docs/`
 folders can lag behind `src/` — `docs/classes/_nexus_.nexus.md` is missing several newer methods
@@ -106,11 +106,11 @@ v3 access goes through a different, separate package (`packages/nexus-api-v3` /
 | --- | --- |
 | `userById(query, userId)` | GraphQL user lookup. |
 | `getPreferences(query, useCache=true)` | User site preferences (comments/media-tab/search defaults etc. — see the `Preferences*Enum` types in `types.ts`). Cached client-side; `clearPreferencesCache()` invalidates. |
-| `modsByUid(query, uids)` | Batch mod lookup by composite uid via GraphQL. |
-| `modFilesByUid(query)` | Batch file lookup via GraphQL. |
-| `fileHashes(query)` | Batch file-hash lookup via GraphQL. |
+| `modsByUid(query, uids, count?)` | Batch mod lookup by composite uid via GraphQL. Chunks `uids` internally; the optional `count` sets the per-chunk node count, clamped to at least 1 and at most `MODS_BY_UID_MAX_COUNT` (a ModPage never returns more than that many nodes). Omit it to request the max per chunk. |
+| `modFilesByUid(query, uids)` | Batch file lookup via GraphQL; chunked at `MAX_BATCH_SIZE`. |
+| `fileHashes(query, md5Hashes)` | Batch file-hash lookup via GraphQL. Returns `{ data: Partial<IFileHash>[], errors: IGraphQLError[] }` — a partial-failure shape, not a bare array, so check `errors` as well as `data`. |
 | `modFileContents(query, filter?, offset?, count?)` | Search inside mod archive contents (file paths/names/extensions/sizes) — see the README's extensive filter-operator documentation (`EQUALS`/`WILDCARD`/`MATCHES`/`GT`/`LT`/etc., `AND`/`OR` composition, all filter values passed as strings). Paginated via `offset`/`count`. |
-| `modRequirements(...)` | GraphQL mod-requirements query (signature not fully inspected — see `src/Nexus.ts` around `modRequirements`). |
+| `modRequirements(query, modId, gameId)` | GraphQL mod-requirements query. `query: IModRequirementsQuery`, `modId: number` (the per-domain mod id), `gameId: string` (domain name, sent as the `gameDomainName` variable). Resolves to `Partial<IModRequirements>`. |
 
 GraphQL query shape uses a field-selection object (`{ name: true, headerImage: { url: true,
 thumbnailUrl: { $filter: { size: 'MED' } } } }`) rather than raw query strings — `$filter` marks
@@ -147,7 +147,7 @@ serve overlapping purposes; which one is authoritative/current was not resolved 
 
 ---
 
-## Key Types (`src/types.ts`, ~89 exported names — not exhaustively catalogued here)
+## Key Types (`src/types.ts`, 122 exported names — 84 interfaces + 38 type aliases, not exhaustively catalogued here)
 
 Most directly useful ones, matching the methods above: `IValidateKeyResponse`, `IUserInfo`,
 `IModInfo` / `IModInfoEx`, `IFileInfo`, `IModFiles`, `IFileUpdate`, `IGameListEntry` /

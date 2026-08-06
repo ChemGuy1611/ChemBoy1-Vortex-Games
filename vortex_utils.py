@@ -58,6 +58,7 @@ Usage:
 import argparse
 import json
 import os
+import platform
 import re
 import shutil
 import ssl
@@ -88,6 +89,18 @@ EGDATA_API  = "https://api.egdata.app"
 PCGW_USER_AGENT = (
     "ChemBoy1-Vortex-Games/1.0 "
     "(https://github.com/ChemGuy1611/ChemBoy1-Vortex-Games) python-urllib"
+)
+
+# The Nexus Mods API asks every client to identify itself with an application
+# name, version, and system information so traffic can be attributed and
+# problems debugged (their example: "NexusApiClient/0.7.3 (Windows_NT 10.0.17134;
+# x64) Node/8.9.3"). Sent on every v1 and v3 request. Unlike PCGamingWiki, Nexus
+# does not reject generic agents -- this is a good-citizen requirement, not a
+# hard gate.
+NEXUS_USER_AGENT = (
+    f"ChemBoy1-Vortex-Games/1.0 "
+    f"(https://github.com/ChemGuy1611/ChemBoy1-Vortex-Games; {platform.system()} "
+    f"{platform.release()}; {platform.machine()}) python-urllib/{platform.python_version()}"
 )
 
 TITLE_IMAGES_DIR  = os.path.join(REPO_ROOT, "resources", "title-images")
@@ -2090,7 +2103,7 @@ def parse_nexus_mod_url(url):
 
 
 _NEXUS_HEADERS = {
-    "User-Agent": "Mozilla/5.0",
+    "User-Agent": NEXUS_USER_AGENT,
     "Accept": "application/json",
 }
 
@@ -2139,7 +2152,7 @@ def nexus_get_mod(domain, mod_id, api_key):
 
 
 _NEXUS_V3 = "https://api.nexusmods.com/v3"
-_NEXUS_V3_HEADERS = {"Accept": "application/json", "User-Agent": "Mozilla/5.0"}
+_NEXUS_V3_HEADERS = {"Accept": "application/json", "User-Agent": NEXUS_USER_AGENT}
 
 
 def nexus_v3_get(path, api_key):
@@ -2586,109 +2599,26 @@ def github_download_enabled(src):
     return False                                       # case 2: all hits unreachable
 
 
-# Third-party mod hosts an extension can pull a requirement from, other than GitHub.
-_GAMEBANANA_HOST_RE = re.compile(r"gamebanana\.com/[^\"'`\s)]*")
-_MODDB_HOST_RE = re.compile(r"moddb\.com/[^\"'`\s)]*")
-# Matches the web, api, and storage hosts alike - all three are modworkshop.net subdomains.
-_MODWORKSHOP_HOST_RE = re.compile(r"modworkshop\.net/[^\"'`\s)]*")
-
-# An extension reaches one of those hosts through one of these events: a direct asset
-# fetch, or Vortex's browser integration where the user clicks the site's own download
-# button. Anything else that merely mentions a host URL is a browse link, not a download.
-_DOWNLOAD_EVENT_MARKERS = ("start-download", "browse-for-download")
-
-_OPN_CALL_RE = re.compile(r"util\.opn\s*\(")
-
-
-def _is_browse_link_line(stripped, pos):
-    """Return True if the reference at pos sits on a line that just opens a browser."""
-    line_start = stripped.rfind("\n", 0, pos) + 1
-    line_end = stripped.find("\n", pos)
-    line = stripped[line_start:line_end if line_end != -1 else len(stripped)]
-    return bool(_OPN_CALL_RE.search(line))
-
-
-def downloads_from_host(src, host_re):
-    """Return True if index.js downloads a requirement from the given mod host.
-
-    Distinguishes a real download from the far more common case of a host URL that
-    only ever feeds util.opn() to open a browse page (an 'Open ModDB Page' button).
-
-    A host URL counts when it reaches a download event - either directly, or through
-    a const that carries it - from inside a function that actually runs. Downloads in
-    commented-out or never-called code are ignored, same as github_download_enabled().
-    """
-    stripped = strip_js_comments(src)
-    if not host_re.search(stripped):
-        return False
-
-    bodies = list(_js_function_bodies(stripped))
-    uses = []          # positions where a host URL value is consumed
-
-    for m in host_re.finditer(stripped):
-        line_start = stripped.rfind("\n", 0, m.start()) + 1
-        line = stripped[line_start:m.start()]
-        # The host match starts mid-literal (after the scheme), so allow any run of
-        # non-quote characters between the opening quote and the host name.
-        assigned = re.search(r"(?:const|let|var)\s+(\w+)\s*=\s*[\"'`][^\"'`]*$", line)
-        if not assigned:
-            uses.append(m.start())
-            continue
-
-        # URL is stored in a const - the uses that matter are that const's references.
-        # Restrict the search to the const's own scope, so a common name like URL
-        # declared inside one download function is not confused with another's.
-        name = assigned.group(1)
-        defpos = line_start + assigned.start(1)
-        owner = [(s, e) for _, s, e in bodies if s < defpos < e]
-        scope_start, scope_end = max(owner, key=lambda t: t[0]) if owner else (0, len(stripped))
-        for ref in re.finditer(r"\b" + re.escape(name) + r"\b",
-                               stripped[scope_start:scope_end]):
-            pos = scope_start + ref.start()
-            if pos != defpos:
-                uses.append(pos)
-
-    for pos in uses:
-        if _is_browse_link_line(stripped, pos):
-            continue                                   # 'Open <host> page' button
-        enclosing = [(nm, s, e) for nm, s, e in bodies if s < pos < e]
-        if not enclosing:
-            # module scope: cannot tie it to a function, accept if the file downloads
-            if any(mark in stripped for mark in _DOWNLOAD_EVENT_MARKERS):
-                return True
-            continue
-        name, start, end = max(enclosing, key=lambda t: t[1])
-        body = stripped[start:end]
-        if not any(mark in body for mark in _DOWNLOAD_EVENT_MARKERS):
-            continue                                   # used, but not for downloading
-        references = [r for r in re.finditer(r"\b" + re.escape(name) + r"\b", stripped)
-                      if not (start < r.start() < end)]
-        if len(references) > 1:                        # definition plus a real call
-            return True
-
-    return False
-
-
-def downloads_from_gamebanana(src):
-    """Return True if index.js downloads a requirement from GameBanana inline."""
-    return downloads_from_host(src, _GAMEBANANA_HOST_RE)
-
-
-def downloads_from_moddb(src):
-    """Return True if index.js downloads a requirement from ModDB inline."""
-    return downloads_from_host(src, _MODDB_HOST_RE)
-
-
-def downloads_from_modworkshop(src):
-    """Return True if index.js downloads a requirement from ModWorkshop inline."""
-    return downloads_from_host(src, _MODWORKSHOP_HOST_RE)
-
-
 def requires_unreal_mod_installer(src):
     """Return True if the extension declares a dependency on the
     'Unreal Engine Mod Installer' extension via context.requireExtension in applyGame."""
     return ('context.requireExtension("Unreal Engine Mod Installer")' in src
             or "context.requireExtension('Unreal Engine Mod Installer')" in src)
+
+
+def is_unreleased_extension(src):
+    """Return True if index.js carries no real Nexus page URL in EXTENSION_URL.
+
+    EXTENSION_URL is filled in by hand once the extension's Nexus Mods page exists,
+    so a missing, empty, "XXX" or non-Nexus value means it has never been published.
+
+    This is a hand-maintained const, not a Nexus lookup, and it is weak in both
+    directions: a published extension whose const was never filled in would be listed,
+    and an extension that parked a real URL in the const without ever shipping would
+    not. It also cannot distinguish a never-to-be-released test bed from a genuine
+    pre-release. Confirm before acting on the result.
+    """
+    return extract_extension_url(src) is None
 
 
 def has_ue4ss_load_order_parity(src):

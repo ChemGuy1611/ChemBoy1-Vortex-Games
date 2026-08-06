@@ -23,9 +23,16 @@ import time
 import urllib.error
 import urllib.request
 
-from vortex_utils import log_info, log_warn, log_error, nexus_v3_get, nexus_v3_post_json
+from vortex_utils import (
+    log_info, log_warn, log_error, nexus_v3_get, nexus_v3_post_json, NEXUS_USER_AGENT,
+)
 
 NEXUS_V3 = "https://api.nexusmods.com/v3"
+
+# Headers for the two direct v1 calls below. The v3 calls route through
+# vortex_utils, which sends the same identifying User-Agent the Nexus API asks
+# clients for; these hand-rolled requests need it added explicitly.
+_V1_HEADERS = {"Accept": "application/json", "User-Agent": NEXUS_USER_AGENT}
 
 # S3 presigned-URL requests go directly to AWS — use a plain SSL context, not the
 # Nexus-specific certifi one that vu builds for its own helpers.
@@ -85,7 +92,7 @@ def _v1_primary_file_name(mod_id, domain, api_key):
     try:
         req = urllib.request.Request(
             f"https://api.nexusmods.com/v1/games/{domain}/mods/{mod_id}/files.json",
-            headers={"apikey": api_key, "Accept": "application/json"},
+            headers={"apikey": api_key, **_V1_HEADERS},
         )
         with urllib.request.urlopen(req, timeout=15, context=_SSL_CTX) as resp:
             data = json.loads(resp.read())
@@ -123,7 +130,7 @@ def _fetch_file_groups(mod_id, domain, api_key, mod_key):
     try:
         req = urllib.request.Request(
             f"https://api.nexusmods.com/v1/games/{domain}/mods/{mod_id}.json",
-            headers={"apikey": api_key, "Accept": "application/json"},
+            headers={"apikey": api_key, **_V1_HEADERS},
         )
         with urllib.request.urlopen(req, timeout=15, context=_SSL_CTX) as resp:
             v1_data = json.loads(resp.read())

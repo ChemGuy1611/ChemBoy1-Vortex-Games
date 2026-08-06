@@ -31,6 +31,7 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `REPO_ROOT` | Absolute path to the repository root directory |
 | `PCGW_API` | PCGamingWiki API base URL |
 | `PCGW_USER_AGENT` | Descriptive User-Agent sent on every PCGamingWiki request (the site returns HTTP 403 for generic library defaults) |
+| `NEXUS_USER_AGENT` | Identifying User-Agent sent on every Nexus Mods v1/v3 request (repo name + URL + OS + Python version), which the Nexus API asks clients to supply. Applied via `_NEXUS_HEADERS` / `_NEXUS_V3_HEADERS`; also imported by `nexus_upload.py` and `check_nexus_api.py`. Non-Nexus hosts keep the generic browser-style agent — some of them bot-block anything else. |
 | `EGDATA_API` | egdata.app API base URL |
 | `TITLE_IMAGES_DIR` | Absolute path to `resources/title-images/` |
 | `BANNER_IMAGES_DIR` | Absolute path to `resources/banner-images/` |
@@ -124,13 +125,10 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `has_modworkshop_downloader_js(folder)` | Return `True` if the extension `folder` contains a bundled `modworkshop_downloader.js` module |
 | `downloads_from_github(src)` | Return `True` if `src` pulls a mod/requirement from a GitHub release (release-asset URL or `browser_download_url`). Textual only — commented-out and never-called code still counts |
 | `github_download_enabled(src)` | Return `True` if `src` has a GitHub download that can actually run: not commented out, not stranded in a never-called function |
-| `downloads_from_host(src, host_re)` | Return `True` if `src` downloads a requirement from the given mod host. Ignores host URLs that only feed `util.opn()` to open a browse page |
-| `downloads_from_gamebanana(src)` | `downloads_from_host` bound to GameBanana |
-| `downloads_from_moddb(src)` | `downloads_from_host` bound to ModDB |
-| `downloads_from_modworkshop(src)` | `downloads_from_host` bound to ModWorkshop (web, `api.`, and `storage.` subdomains) |
 | `strip_js_comments(src)` | Return `src` with `//` and `/* */` comments blanked to spaces, preserving string/template/regex literals and character offsets |
 | `requires_unreal_mod_installer(src)` | Return `True` if `src` declares `context.requireExtension("Unreal Engine Mod Installer")` |
 | `has_ue4ss_load_order_parity(src)` | Return `True` if `src` is a UE4-5 extension carrying the full `template-ue4-5` load order (detected via the `Ue4ssContextMenu` component) |
+| `is_unreleased_extension(src)` | Return `True` if `EXTENSION_URL` holds no real Nexus page URL (missing, empty, `"XXX"`, or non-Nexus), i.e. the extension has never been published |
 | `parse_nexus_mod_url(url)` | Parse a Nexus Mods URL into `(domain, mod_id)` or `None`. |
 | `nexus_list_games(api_key)` | Fetch all approved Nexus Mods games; caches result for the process lifetime. Returns `[]` on error. |
 | `nexus_get_mod(domain, mod_id, api_key)` | Fetch Nexus v1 mod details with retry. Returns `(data_dict, rate_remaining_or_None)`. Raises on 404 / non-retryable errors. |
@@ -184,13 +182,15 @@ No additional packages required (Python stdlib only). Requires `vortex_utils.py`
 
 ## check_nexus_api.py
 
-Verifies Nexus Mods v1 and v3 API response shapes against documentation. Tests read-only endpoints only — does not create or modify any data. Checks v1 mod field types, rate limit headers, v3 mod-files shape (`GET /v3/mods/{uid}/files`, including undocumented `archived_count`/`removed_count` fields), and expected error codes for dead endpoints. Defaults to `site/1960` (Fatekeeper) as the test target; pass `--domain` and `--mod-id` to test another mod. Step 8 field-validation checks (`--test-upload`) target `POST /v3/mod-files/{id}/versions`, the current endpoint since the 2026-07-24 migration off the deprecated `/mod-file-update-groups/{id}/versions` path (removed on/after 2026-09-09).
+Verifies Nexus Mods v1 and v3 API response shapes against documentation. Tests read-only endpoints only — does not create or modify any data. Checks v1 mod field types, rate limit headers (presence *and* whether the limit values still match a documented tier), v3 mod-files shape (`GET /v3/mods/{uid}/files`, including undocumented `archived_count`/`removed_count` fields), and expected error codes for dead endpoints. Defaults to `site/1960` (Fatekeeper) as the test target; pass `--domain` and `--mod-id` to test another mod. Step 8 field-validation checks (`--test-upload`) target `POST /v3/mod-files/{id}/versions`, the current endpoint since the 2026-07-24 migration off the deprecated `/mod-file-update-groups/{id}/versions` path (removed on/after 2026-09-09).
+
+`--check-spec` adds a drift check against the live OpenAPI document at `https://api.nexusmods.com/openapi.yaml`: it diffs the path list against the catalog baked into `SPEC_KNOWN_PATHS` (which mirrors the endpoint catalog in `resources/NEXUS_MODS_API.md`), confirms every endpoint the upload flow depends on is still present and not deprecated, and flags any deprecation that is not already documented. This is what catches endpoints being *added* or *removed* — the per-endpoint probes can only see the paths they already know about. When it reports drift, update both `SPEC_KNOWN_PATHS` and `resources/NEXUS_MODS_API.md` in the same pass.
 
 ### check_nexus_api.py — Environment Variables
 
 | Variable | Required | Description |
 | --- | --- | --- |
-| `NEXUS_API_KEY` | Required | Nexus Mods API key. Read from env var, with HKCU/HKLM registry fallback. |
+| `NEXUS_API_KEY` | Required, except with `--check-spec --spec-only` | Nexus Mods API key. Read from env var, with HKCU/HKLM registry fallback. The OpenAPI document is served unauthenticated, so the spec diff alone needs no key. |
 
 ### check_nexus_api.py — Usage
 
@@ -198,15 +198,23 @@ Verifies Nexus Mods v1 and v3 API response shapes against documentation. Tests r
 python check_nexus_api.py
 python check_nexus_api.py --domain site --mod-id 1960
 python check_nexus_api.py --test-upload
+python check_nexus_api.py --check-spec
+python check_nexus_api.py --check-spec --spec-only
 ```
 
 - No arguments — runs read-only checks only.
 - `--domain` / `--mod-id` — override the default test target (site/1960 Fatekeeper).
 - `--test-upload` — also POSTs a 1-byte upload session to verify step 3 + step 7 shapes. Creates a dangling session that expires automatically; does not upload data or publish files.
+- `--check-spec` — also diff the live OpenAPI document against the documented endpoint catalog.
+- `--spec-only` — with `--check-spec`, skip the live endpoint probes and run only the spec diff. Needs no API key.
+
+### check_nexus_api.py — Requirements
+
+`PyYAML` for `--check-spec` (`pip install pyyaml`); the check degrades to a `[WARN]` if it is missing. Everything else is Python stdlib.
 
 ### check_nexus_api.py — Output
 
-Per-check `[PASS]` / `[FAIL]` / `[WARN]` lines for: v1 mod shape (13 required fields), rate limit headers (daily + hourly limit and remaining), v3 mod-files shape (5 required fields + known extras), 4 dead-endpoint status codes, and (with `--test-upload`) upload session shape (step 3) + upload state shape (step 7) + step 8 field-validation against `POST /v3/mod-files/{id}/versions`. Summary: `Passed: N/total`. Exits `0` if all pass, `1` if any fail.
+Per-check `[PASS]` / `[FAIL]` / `[WARN]` lines for: v1 mod shape (13 required fields), rate limit headers (daily + hourly limit and remaining, plus a documented-tier match), v3 mod-files shape (5 required fields + known extras), 4 dead-endpoint status codes, and (with `--test-upload`) upload session shape (step 3) + upload state shape (step 7) + step 8 field-validation against `POST /v3/mod-files/{id}/versions`. With `--check-spec`, adds spec version, path-count diff (naming any added or removed path), per-endpoint presence and stability tier for the upload flow, new-deprecation detection, and an operations-by-tier tally. Summary: `Passed: N/total`. Exits `0` if all pass, `1` if any fail.
 
 ---
 
@@ -647,7 +655,7 @@ node generate_explained.js --check
 ```
 
 Run without arguments to process all `game-*` folders.
-Pass one or more bare `GAME_ID` values to target specific extensions (e.g. `thelongdark`).
+Pass one or more bare `GAME_ID` values to target specific extensions (e.g. `megabonk`).
 `--json` writes machine-readable JSON to stdout; progress and summary go to stderr instead.
 `--templates` also processes `template-*` folders (only effective when no `GAME_ID` args are given).
 `--check` runs in drift-detection mode: compares what would be generated against each existing `EXTENSION_EXPLAINED.md` without writing any files. Exits with code `1` if any file would change or is missing. Useful in CI to detect stale docs.
@@ -657,7 +665,7 @@ Pass one or more bare `GAME_ID` values to target specific extensions (e.g. `thel
 ```sh
 node generate_explained.js
 node generate_explained.js deathstranding2onthebeach
-node generate_explained.js thelongdark hogwartslegacy
+node generate_explained.js megabonk hogwartslegacy
 ```
 
 ### generate_explained.js — Output
@@ -676,7 +684,7 @@ With `--json`, stdout receives a JSON object:
   "errors": 0,
   "drifted": 0,
   "unresolvedTotal": 2,
-  "results": [{ "id": "game-thelongdark", "ok": true, "unresolved": 0 }, ...]
+  "results": [{ "id": "game-megabonk", "ok": true, "unresolved": 0 }, ...]
 }
 ```
 
@@ -802,8 +810,8 @@ With `--json`, stdout receives a JSON object instead:
   "total": 6,
   "totalErrors": 2,
   "totalWarnings": 7,
-  "results": [{ "id": "thelongdark", "path": "game-thelongdark/index.js", "ok": true, "errorCount": 0, "warningCount": 0, "messages": [] }, ...],
-  "failedIds": ["thelongdark"]
+  "results": [{ "id": "megabonk", "path": "game-megabonk/index.js", "ok": true, "errorCount": 0, "warningCount": 0, "messages": [] }, ...],
+  "failedIds": ["megabonk"]
 }
 ```
 
@@ -811,7 +819,7 @@ With `--json`, stdout receives a JSON object instead:
 
 ## categorize_games.py
 
-Scans all `game-*` extension folders and categorizes them by engine or framework based on the `Structure:` header comment and key code markers in each `index.js`. Writes one `.txt` file per engine category into `resources/lists/`, plus several non-exclusive "flag" lists (load order, `downloader.js`, `gamebanana_downloader.js`, `moddb_downloader.js`, inline GitHub download, Unreal Engine Mod Installer dependency) evaluated for every game independently. Each line in the file is a `GAME_ID`.
+Scans all `game-*` extension folders and categorizes them by engine or framework based on the `Structure:` header comment and key code markers in each `index.js`. Writes one `.txt` file per engine category into `resources/lists/`, plus several non-exclusive "flag" lists (load order, `downloader.js`, `gamebanana_downloader.js`, `moddb_downloader.js`, inline GitHub download, Unreal Engine Mod Installer dependency, unreleased extensions) evaluated for every game independently. Each line in the file is a `GAME_ID`.
 
 Also called automatically by `new_extension.py` to add a newly created extension to the correct category file.
 
@@ -869,15 +877,13 @@ The engine categories above are mutually exclusive (one per game). The lists bel
 | `resources/lists/games-downloader-moddb.txt` | Games with a bundled `moddb_downloader.js` module |
 | `resources/lists/games-downloader-modworkshop.txt` | Games with a bundled `modworkshop_downloader.js` module |
 | `resources/lists/games-github.txt` | Games with a working inline GitHub download in `index.js` (no `downloader.js`), excluding dead downloads and the engines listed in `GITHUB_LIST_EXCLUDED_ENGINES` |
-| `resources/lists/games-gamebanana.txt` | Games with a working inline GameBanana download in `index.js` (no `gamebanana_downloader.js`), excluding the one-offs in `GAMEBANANA_LIST_EXCLUDED_GAMES` |
-| `resources/lists/games-moddb.txt` | Games with a working inline ModDB download in `index.js` (no `moddb_downloader.js`) |
-| `resources/lists/games-modworkshop.txt` | Games with a working inline ModWorkshop download in `index.js` (no `modworkshop_downloader.js`) |
 | `resources/lists/games-uemi.txt` | Games that require the `Unreal Engine Mod Installer` extension via `context.requireExtension` |
 | `resources/lists/games-ue4-5-parity.txt` | UE4-5 games at `template-ue4-5` load-order parity (custom UE4SS + LogicMods pages) |
+| `resources/lists/games-unreleased.txt` | Extensions with no real Nexus page URL in `EXTENSION_URL` — never published, excluding the permanent test beds in `UNRELEASED_LIST_EXCLUDED_GAMES` |
 
 ### categorize_games.py — Detection
 
-Each game is matched against the engine categories in order — the first match wins. Detection uses the `Structure:` comment on line 3 of `index.js` as the primary signal, with fallback checks for unique code markers such as `const UNREALDATA =`, `const ATK_ID =`, `context.requireExtension('modtype-bepinex')`, etc. The flag lists are computed separately via dedicated predicates (`is_load_order_game`, `has_downloader_js`, `has_gamebanana_downloader_js`, `has_moddb_downloader_js`, `has_modworkshop_downloader_js`, `github_download_enabled`, `requires_unreal_mod_installer`, `has_ue4ss_load_order_parity`) in `vortex_utils.py`. The parity predicate keys off the `Ue4ssContextMenu` component, which only exists in games that took the whole load-order region (PAK + custom UE4SS + LogicMods pages) from `template-ue4-5`.
+Each game is matched against the engine categories in order — the first match wins. Detection uses the `Structure:` comment on line 3 of `index.js` as the primary signal, with fallback checks for unique code markers such as `const UNREALDATA =`, `const ATK_ID =`, `context.requireExtension('modtype-bepinex')`, etc. The flag lists are computed separately via dedicated predicates (`is_load_order_game`, `has_downloader_js`, `has_gamebanana_downloader_js`, `has_moddb_downloader_js`, `has_modworkshop_downloader_js`, `github_download_enabled`, `requires_unreal_mod_installer`, `has_ue4ss_load_order_parity`, `is_unreleased_extension`) in `vortex_utils.py`. The parity predicate keys off the `Ue4ssContextMenu` component, which only exists in games that took the whole load-order region (PAK + custom UE4SS + LogicMods pages) from `template-ue4-5`.
 
 `games-github.txt` applies two extra filters the other flag lists do not.
 
@@ -885,19 +891,15 @@ Each game is matched against the engine categories in order — the first match 
 
 **Per-game exclusions.** `GITHUB_LIST_EXCLUDED_GAMES` holds individual GAME_IDs the engine rule does not cover — currently `middleearthshadowofwar` (Middle-Earth Mod Loader, fixed `loader` release tag), `crimsondesert` (Ultimate ASI Loader, rolling `x64-latest` tag), `nioh3` (Yumia fdata Tools on `releases/latest/download`, RDBExplorer downloaded by manual browse of the releases page) and `deusexhumanrevolution` (DXHRDC-ModHook, pinned `v1.1.0.0` release asset). Add an ID there when a game's GitHub asset sits on a fixed or rolling tag rather than real versioned releases, or is not fetched as a versioned asset at all.
 
-### categorize_games.py — GameBanana, ModDB, and ModWorkshop lists
-
-`games-gamebanana.txt`, `games-moddb.txt`, and `games-modworkshop.txt` are the same idea as `games-github.txt` applied to the other three mod hosts, via `downloads_from_gamebanana()` / `downloads_from_moddb()` / `downloads_from_modworkshop()` (all thin wrappers over `downloads_from_host()`). Each excludes games that own the corresponding downloader module, since those are already tracked by `games-downloader-gamebanana.txt` / `games-downloader-moddb.txt` / `games-downloader-modworkshop.txt` — each pair composes, so the union is every game using that host.
-
-The ModWorkshop host pattern matches the `modworkshop.net` web, `api.modworkshop.net`, and `storage.modworkshop.net` hosts alike, since all three are subdomains of the same name. As with the other hosts, a URL that only opens a browse page does not count — `game-roadtovostok`'s `Open Modworkshop Page` action is why `games-modworkshop.txt` is empty while that game sits in `games-downloader-modworkshop.txt`.
-
-`games-gamebanana.txt` additionally applies `GAMEBANANA_LIST_EXCLUDED_GAMES` in `categorize_games.py`, same rationale as `GITHUB_LIST_EXCLUDED_GAMES`: `tombraider2013`'s TexMod download is a fixed GameBanana file id (`dl/521607`) that will not be updated, so tracking it as a live requirement adds no value.
-
-The hard part is that most host URLs in these extensions are **not** downloads: they are browse links behind an "Open ModDB Page" button. `downloads_from_host()` separates them by asking where the URL value actually goes. A URL that only ever feeds `util.opn()` is a browse link. A URL that reaches a `start-download` or `browse-for-download` event — directly, or through a const that carries it — is a download. Const references are resolved within the const's own scope, so a common name like `URL` declared inside one download function is not confused with another's. The same liveness rule as `github_download_enabled()` applies: commented-out and never-called downloads do not count.
-
-Both mechanisms count as downloads, including Vortex's browser integration where the user clicks the site's own download button (ModDB has no direct-asset API, so `game-returntocastlewolfenstein` uses exactly this).
-
 **Dead-download exclusion.** The predicate is `github_download_enabled()`, not the raw textual `downloads_from_github()`. It ignores a GitHub download that cannot actually run, which happens two ways in these extensions: the block is commented out via the `/* ... //*/` toggle idiom, or the download function is defined but its only call sites are themselves commented out. Detection runs on comment-stripped source (`strip_js_comments()` in `vortex_utils.py`, which preserves string/template/regex literals so the `//` inside a URL is never mistaken for a comment), then brace-matches each URL's enclosing function to check for a live call site. A URL at module scope counts as enabled — there is no enclosing function to test, and assuming enabled avoids dropping real games. Use `downloads_from_github()` when you want every textual mention regardless of whether it runs.
+
+### categorize_games.py — unreleased list
+
+`games-unreleased.txt` flags extensions that have never been published to Nexus Mods. The signal is the `EXTENSION_URL` const, which is filled in by hand once the extension's Nexus page exists: a missing, empty, `"XXX"` or non-Nexus value means unpublished. All three JavaScript quote styles are matched, since single-quoted and backtick literals both occur in these extensions.
+
+Because the const is hand-maintained rather than checked against Nexus, the list is a starting point rather than proof. An extension that shipped without its const being updated would be listed, and one that parked a real URL before shipping would not.
+
+Nothing in `index.js` marks a permanent test bed — an extension run live to verify changes, versioned and changelogged normally, but never uploaded — so those are excluded by ID through `UNRELEASED_LIST_EXCLUDED_GAMES` in `categorize_games.py`. It currently holds `warhammer40kdarktide`; the other test bed, `subnautica2`, drops out on its own because a real extension URL is already parked in its `EXTENSION_URL`. Add an ID there when a new test bed appears, so the list stays a list of extensions genuinely awaiting a first release.
 
 ---
 

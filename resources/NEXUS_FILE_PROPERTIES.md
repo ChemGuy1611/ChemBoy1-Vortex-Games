@@ -6,7 +6,9 @@ Properties returned by the mod files endpoints:
 - `GET /v1/games/{domain}/mods/{mod_id}/files/{file_id}.json`
 
 **Auth:** header `apikey: {key}` required on all requests.  
-**Rate limit:** 2500 requests/day (free tier). Check `X-RL-Daily-Remaining` response header.
+**Rate limit:** 2500 requests/day on a free key, dropping to 100/hour once that daily allowance is
+spent; premium keys get 20000/day and 2000/hour. Check the `X-RL-Daily-Remaining` and
+`X-RL-Hourly-Remaining` response headers — full header set and limits in `NEXUS_MODS_API.md`.
 
 The list endpoint returns the wrapper object below. The single-file endpoint returns a bare `ModFile` object with no wrapper.
 
@@ -155,6 +157,11 @@ unaffected by future convention changes too.
 | 5 | MISCELLANEOUS | Utilities, docs, or assets not directly installed |
 | 6 | *(deleted/removed)* | Removed by Nexus; never returned in active API responses |
 | 7 | ARCHIVED | Mod author manually archived; excluded from most queries |
+
+These are the read-side categories the v1 files endpoint returns. The publish-side enum is a
+strict subset — a file can only be *uploaded* as `main`, `optional`, or `miscellaneous`
+(`NewModFileCategory` in `NEXUS_MODS_API.md`); UPDATE, OLD_VERSION, and ARCHIVED are states a file
+reaches later through archiving or supersession, not values you can choose at upload time.
 
 ---
 

@@ -5,14 +5,19 @@ Verify Nexus Mods v1 and v3 API response shapes match documentation.
 Read-only checks run by default. Use --test-upload to also verify the
 multipart upload session shape (creates a dangling 1-byte upload session
 on Nexus/S3 that expires automatically; does not publish any files).
+Use --check-spec to diff the live OpenAPI document against the endpoint
+catalog recorded in resources/NEXUS_MODS_API.md (no API key needed).
 
 Usage:
     python check_nexus_api.py
     python check_nexus_api.py --domain site --mod-id 1960
     python check_nexus_api.py --test-upload
+    python check_nexus_api.py --check-spec
+    python check_nexus_api.py --check-spec --spec-only
 
 Environment variables:
-    NEXUS_API_KEY  Required. Read from env var, with HKCU/HKLM registry fallback.
+    NEXUS_API_KEY  Required, except for --check-spec --spec-only.
+                   Read from env var, with HKCU/HKLM registry fallback.
 """
 
 import argparse
@@ -23,6 +28,7 @@ import urllib.error
 import urllib.request
 
 from vortex_utils import get_api_key as vu_get_api_key
+from vortex_utils import NEXUS_USER_AGENT
 
 try:
     import certifi
@@ -32,7 +38,9 @@ except ImportError:
 
 NEXUS_V1 = "https://api.nexusmods.com/v1"
 NEXUS_V3 = "https://api.nexusmods.com/v3"
-UA = "ChemBoy1-nexus-shape-check/1.0"
+# The live OpenAPI document lives at the domain root, NOT under /v3/ (that 404s).
+NEXUS_SPEC_URL = "https://api.nexusmods.com/openapi.yaml"
+UA = NEXUS_USER_AGENT
 
 # Default test target: Fatekeeper Vortex Extension (site/1960)
 DEFAULT_DOMAIN = "site"
@@ -105,6 +113,68 @@ V1_RATE_HEADERS = ["x-rl-daily-limit", "x-rl-daily-remaining",
                    "x-rl-hourly-limit", "x-rl-hourly-remaining"]
 
 KNOWN_UPLOAD_STATES = {"created", "pending", "processing", "available", "failed"}
+
+# Rate limits as documented in resources/NEXUS_MODS_API.md. A live response whose
+# limit headers match neither tier means the docs have drifted.
+DOCUMENTED_RATE_LIMITS = {
+    "premium": {"daily": 20000, "hourly": 2000},
+    "free": {"daily": 2500, "hourly": 100},
+}
+
+# == Live OpenAPI spec baseline ================================================
+# Mirrors the "V3 Endpoint Catalog" table in resources/NEXUS_MODS_API.md. When
+# --check-spec reports drift, update BOTH this list and that doc in the same pass.
+SPEC_EXPECTED_VERSION = "3.0.0"
+SPEC_KNOWN_PATHS = {
+    "/collections",
+    "/collections/{id}",
+    "/collections/{id}/revisions",
+    "/games/{game_domain}/dlcs",
+    "/games/{game_domain}/mod-file-versions/{game_scoped_id}",
+    "/games/{game_domain}/mods/{game_scoped_id}",
+    "/games/{game_domain}/trending-mods",
+    "/mod-file-update-groups/{group_id}/versions",
+    "/mod-file-versions/batch",
+    "/mod-file-versions/dependencies/materialized/batch",
+    "/mod-file-versions/dependencies/ranges/materialized/batch",
+    "/mod-file-versions/move",
+    "/mod-file-versions/move-to-new-mod-file",
+    "/mod-file-versions/{id}",
+    "/mod-file-versions/{id}/dependencies",
+    "/mod-file-versions/{id}/dependencies/dlc",
+    "/mod-file-versions/{id}/dependencies/ranges",
+    "/mod-file-versions/{id}/dependencies/ranges/materialized",
+    "/mod-files",
+    "/mod-files/{id}",
+    "/mod-files/{id}/versions",
+    "/mods/batch",
+    "/mods/{id}/changelogs",
+    "/mods/{id}/files",
+    "/mods/{id}/toggle-legacy-mod-requirements",
+    "/uploads",
+    "/uploads/multipart",
+    "/uploads/{id}",
+    "/uploads/{id}/finalise",
+    "/vortex/extensions",
+}
+
+# Endpoints release_extension.py --upload depends on. Both are Experimental tier,
+# so they carry no deprecation-notice guarantee -- their disappearance from the
+# spec is the failure this check exists to catch early.
+SPEC_PIPELINE_PATHS = {
+    "/mods/{id}/files": "get",            # upload flow step 2
+    "/mod-files/{id}/versions": "post",   # upload flow step 8
+    "/uploads/multipart": "post",         # step 3
+    "/uploads/{id}": "get",               # step 7
+    "/uploads/{id}/finalise": "post",     # step 6
+}
+
+# Deprecations already recorded in the docs. Anything else the spec marks
+# deprecated is new since the last audit and gets flagged loudly.
+SPEC_KNOWN_DEPRECATIONS = {
+    "/mod-file-update-groups/{group_id}/versions",
+    "/mod-file-versions/dependencies/materialized/batch",
+}
 
 
 # == HTTP helpers ==============================================================
@@ -225,6 +295,30 @@ def run_read_only_checks(domain, mod_id, api_key):
             ok(f"{h}: {lower_headers[h]}")
         else:
             fail(f"Missing header: {h}")
+
+    # The limit values themselves are documented -- catch it when Nexus changes
+    # them, instead of only noticing that the headers exist.
+    try:
+        live_daily = int(lower_headers.get("x-rl-daily-limit", ""))
+        live_hourly = int(lower_headers.get("x-rl-hourly-limit", ""))
+    except ValueError:
+        warn("Could not parse limit values - skipping documented-limit comparison")
+    else:
+        matched = [
+            tier for tier, lim in DOCUMENTED_RATE_LIMITS.items()
+            if lim["daily"] == live_daily and lim["hourly"] == live_hourly
+        ]
+        if matched:
+            ok(f"Limits match documented '{matched[0]}' tier ({live_daily}/day, {live_hourly}/hour)")
+        else:
+            documented = ", ".join(
+                f"{t}={lim['daily']}/day+{lim['hourly']}/hour"
+                for t, lim in DOCUMENTED_RATE_LIMITS.items()
+            )
+            fail(
+                f"Live limits {live_daily}/day, {live_hourly}/hour match no documented tier "
+                f"({documented}) - update resources/NEXUS_MODS_API.md"
+            )
 
     # ------------------------------------------------------------------
     print(f"\n=== v3 Mod Files: mods/{uid}/files ===")
@@ -476,6 +570,115 @@ def run_step8_shape_checks(api_key, group_id, upload_id, results):
         warn("No upload_id available - skipping valid-body schema-pass check")
 
 
+# == Live OpenAPI spec drift check =============================================
+
+_HTTP_METHODS = ("get", "post", "put", "patch", "delete")
+
+
+def _operation_tier(op):
+    """Return the stability badge name for an operation ('Stable' when unbadged)."""
+    for badge in (op.get("x-badges") or []):
+        name = badge.get("name")
+        if name:
+            return name
+    return "Stable"
+
+
+def run_spec_check(results):
+    """Diff the live OpenAPI document against the catalog recorded in the docs.
+
+    Needs no API key -- the spec is served unauthenticated. Catches new, renamed,
+    and removed endpoints plus newly deprecated operations, none of which the
+    endpoint-by-endpoint probes above can see."""
+
+    def ok(msg):
+        print(f"  {PASS} {msg}")
+        results["pass"] += 1
+
+    def fail(msg):
+        print(f"  {FAIL} {msg}")
+        results["fail"] += 1
+
+    def warn(msg):
+        print(f"  {WARN} {msg}")
+        results["warn"] += 1
+
+    print(f"\n=== Live OpenAPI Spec vs Documented Catalog ===")
+
+    try:
+        import yaml
+    except ImportError:
+        warn("PyYAML not installed - run 'pip install pyyaml' to enable --check-spec")
+        return
+
+    req = urllib.request.Request(NEXUS_SPEC_URL, headers={"User-Agent": UA})
+    try:
+        with urllib.request.urlopen(req, timeout=30, context=_SSL_CTX) as resp:
+            spec = yaml.safe_load(resp.read())
+    except (urllib.error.HTTPError, urllib.error.URLError, yaml.YAMLError) as e:
+        fail(f"Could not fetch/parse {NEXUS_SPEC_URL}: {e}")
+        return
+
+    version = (spec.get("info") or {}).get("version")
+    if version == SPEC_EXPECTED_VERSION:
+        ok(f"info.version: {version}")
+    else:
+        warn(f"info.version: {version} (docs record {SPEC_EXPECTED_VERSION})")
+
+    live_paths = set(spec.get("paths") or {})
+    added = sorted(live_paths - SPEC_KNOWN_PATHS)
+    removed = sorted(SPEC_KNOWN_PATHS - live_paths)
+
+    if not added and not removed:
+        ok(f"Path count {len(live_paths)} - catalog matches live spec exactly")
+    else:
+        for p in added:
+            fail(f"NEW path not in docs: {p} - add it to resources/NEXUS_MODS_API.md")
+        for p in removed:
+            fail(f"Documented path GONE from spec: {p} - update resources/NEXUS_MODS_API.md")
+        print(f"  {INFO} live spec has {len(live_paths)} paths, docs record {len(SPEC_KNOWN_PATHS)}")
+
+    # Upload-flow endpoints -- Experimental tier, so they can vanish without notice.
+    for path, method in sorted(SPEC_PIPELINE_PATHS.items()):
+        op = (spec.get("paths") or {}).get(path, {}).get(method)
+        if op is None:
+            fail(f"UPLOAD FLOW BROKEN: {method.upper()} {path} no longer in spec")
+        elif op.get("deprecated"):
+            fail(f"UPLOAD FLOW: {method.upper()} {path} is now DEPRECATED - migrate")
+        else:
+            ok(f"{method.upper()} {path} present ({_operation_tier(op)})")
+
+    # Deprecations -- the main thing this audit exists to catch early.
+    live_deprecated = {}
+    for path, ops in (spec.get("paths") or {}).items():
+        for method, op in ops.items():
+            if method not in _HTTP_METHODS:
+                continue
+            if op.get("deprecated") or _operation_tier(op) == "Deprecated":
+                live_deprecated.setdefault(path, []).append(method.upper())
+
+    new_deprecations = set(live_deprecated) - SPEC_KNOWN_DEPRECATIONS
+    if new_deprecations:
+        for path in sorted(new_deprecations):
+            fail(
+                f"NEW DEPRECATION: {'/'.join(live_deprecated[path])} {path} - "
+                "check its description for a removal date and plan a migration"
+            )
+    else:
+        ok(f"No new deprecations ({len(live_deprecated)} known deprecated path(s))")
+
+    for path in sorted(set(live_deprecated) & SPEC_KNOWN_DEPRECATIONS):
+        print(f"  {INFO} still deprecated (known): {'/'.join(live_deprecated[path])} {path}")
+
+    tiers = {}
+    for ops in (spec.get("paths") or {}).values():
+        for method, op in ops.items():
+            if method in _HTTP_METHODS:
+                tiers[_operation_tier(op)] = tiers.get(_operation_tier(op), 0) + 1
+    print(f"  {INFO} operations by tier: "
+          + ", ".join(f"{t}={n}" for t, n in sorted(tiers.items())))
+
+
 # == Entry point ===============================================================
 
 def main():
@@ -490,22 +693,41 @@ def main():
         action="store_true",
         help="Also verify step 3 + step 7 upload session shapes (creates a dangling 1-byte session)",
     )
+    parser.add_argument(
+        "--check-spec",
+        action="store_true",
+        help="Also diff the live OpenAPI document against the documented endpoint catalog",
+    )
+    parser.add_argument(
+        "--spec-only",
+        action="store_true",
+        help="With --check-spec, run only the spec diff (needs no API key)",
+    )
     args = parser.parse_args()
 
-    api_key = _get_api_key()
-    if not api_key:
-        print("ERROR: NEXUS_API_KEY not found in env / registry")
-        sys.exit(1)
-    print(f"API key loaded ({len(api_key)} chars)")
+    if args.spec_only and not args.check_spec:
+        parser.error("--spec-only requires --check-spec")
 
-    results, uid, group_id = run_read_only_checks(args.domain, args.mod_id, api_key)
+    results = {"pass": 0, "fail": 0, "warn": 0}
 
-    if args.test_upload:
-        upload_id = run_upload_shape_checks(api_key, results)
-        if group_id:
-            run_step8_shape_checks(api_key, group_id, upload_id, results)
-        else:
-            print(f"\n  {WARN} No group_id - skipping step 8 checks")
+    if not args.spec_only:
+        api_key = _get_api_key()
+        if not api_key:
+            print("ERROR: NEXUS_API_KEY not found in env / registry")
+            sys.exit(1)
+        print(f"API key loaded ({len(api_key)} chars)")
+
+        results, uid, group_id = run_read_only_checks(args.domain, args.mod_id, api_key)
+
+        if args.test_upload:
+            upload_id = run_upload_shape_checks(api_key, results)
+            if group_id:
+                run_step8_shape_checks(api_key, group_id, upload_id, results)
+            else:
+                print(f"\n  {WARN} No group_id - skipping step 8 checks")
+
+    if args.check_spec:
+        run_spec_check(results)
 
     print(f"\n=== Summary ===")
     total = results["pass"] + results["fail"]

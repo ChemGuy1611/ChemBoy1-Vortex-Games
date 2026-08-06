@@ -17,15 +17,11 @@ independently of its engine category and of each other:
                            Skips downloads that are commented out or never called, plus
                            GITHUB_LIST_EXCLUDED_ENGINES (engines whose GitHub fetch is
                            just their standard mod loader) and GITHUB_LIST_EXCLUDED_GAMES
-    games-gamebanana.txt - games that download from GameBanana inline (no
-                           gamebanana_downloader.js); browse-page links do not count.
-                           GAMEBANANA_LIST_EXCLUDED_GAMES drops pinned-asset one-offs
-    games-moddb.txt      - games that download from ModDB inline (no moddb_downloader.js);
-                           browse-page links do not count
-    games-modworkshop.txt - games that download from ModWorkshop inline (no
-                           modworkshop_downloader.js); browse-page links do not count
     games-uemi.txt       - games that require the "Unreal Engine Mod Installer" extension
     games-ue4-5-parity.txt - UE4-5 games carrying the full template-ue4-5 load order
+    games-unreleased.txt - games with no real Nexus page URL in EXTENSION_URL, i.e.
+                           extensions that have never been published. Permanent test
+                           beds are dropped via UNRELEASED_LIST_EXCLUDED_GAMES
 
 Usage:
     python categorize_games.py              # rebuild all category files from scratch
@@ -42,9 +38,9 @@ from vortex_utils import (
     is_load_order_game as _is_load_order_game_src,
     has_downloader_js, has_gamebanana_downloader_js, has_moddb_downloader_js,
     has_modworkshop_downloader_js,
-    github_download_enabled, downloads_from_gamebanana, downloads_from_moddb,
-    downloads_from_modworkshop,
+    github_download_enabled,
     requires_unreal_mod_installer, has_ue4ss_load_order_parity,
+    is_unreleased_extension,
     log_error, log_dry,
 )
 
@@ -95,10 +91,15 @@ GITHUB_LIST_EXCLUDED_GAMES = {
     "deusexhumanrevolution",    # DXHRDC-ModHook, pinned 'v1.1.0.0' release asset
 }
 
-# Same idea, for games-gamebanana.txt: the GameBanana asset is pinned to a fixed file/tool
-# id and will not be updated, so tracking it as a bespoke requirement adds no value.
-GAMEBANANA_LIST_EXCLUDED_GAMES = {
-    "tombraider2013",           # TexMod, fixed 'dl/521607' file id
+# Games kept out of games-unreleased.txt. These have no Nexus page and never will, but
+# they are permanent test beds rather than extensions awaiting a first release, so they
+# are versioned and changelogged like published ones. Listing them alongside genuine
+# pre-release extensions would wrongly suggest their versions should be frozen.
+# game-subnautica2 is the other test bed; it already falls out of the list on its own
+# because a real extension URL is parked in its EXTENSION_URL.
+UNRELEASED_LIST_EXCLUDED_GAMES = {
+    "warhammer40kdarktide",     # non-UE / generic load order test bed
+    "subnautica2",              # UE4-5 test bed
 }
 
 
@@ -125,19 +126,16 @@ FLAG_LISTS = [
                                                   and not has_downloader_js(folder)
                                                   and detect_engine(src) not in GITHUB_LIST_EXCLUDED_ENGINES
                                                   and _game_id_from_folder(folder) not in GITHUB_LIST_EXCLUDED_GAMES)),
-    # Same idea for the other two mod hosts: a working inline download, no module.
-    # A host URL that only opens a browse page does not count. GAMEBANANA_LIST_EXCLUDED_GAMES
-    # drops one-off games whose GameBanana asset is pinned, same rationale as GitHub's.
-    ("games-gamebanana.txt", lambda src, folder: (downloads_from_gamebanana(src)
-                                                  and not has_gamebanana_downloader_js(folder)
-                                                  and _game_id_from_folder(folder) not in GAMEBANANA_LIST_EXCLUDED_GAMES)),
-    ("games-moddb.txt",      lambda src, folder: (downloads_from_moddb(src)
-                                                  and not has_moddb_downloader_js(folder))),
-    ("games-modworkshop.txt", lambda src, folder: (downloads_from_modworkshop(src)
-                                                  and not has_modworkshop_downloader_js(folder))),
     ("games-uemi.txt",       lambda src, folder: requires_unreal_mod_installer(src)),
     # UE4-5 games at template load-order parity (custom UE4SS + LogicMods pages).
     ("games-ue4-5-parity.txt", lambda src, folder: has_ue4ss_load_order_parity(src)),
+    # Extensions never published to Nexus: EXTENSION_URL is still a placeholder, empty,
+    # absent, or points somewhere other than nexusmods.com. It is a hand-maintained
+    # const rather than a live lookup, so treat the list as a starting point. Permanent
+    # test beds are dropped via UNRELEASED_LIST_EXCLUDED_GAMES - nothing in index.js
+    # distinguishes one from an extension that is genuinely awaiting its first release.
+    ("games-unreleased.txt", lambda src, folder: (is_unreleased_extension(src)
+                                                  and _game_id_from_folder(folder) not in UNRELEASED_LIST_EXCLUDED_GAMES)),
 ]
 
 
