@@ -65,7 +65,7 @@ import urllib.parse
 from datetime import date
 from io import BytesIO
 from vortex_utils import (
-    REPO_ROOT, PCGW_API, TITLE_IMAGES_DIR, BANNER_IMAGES_DIR,
+    REPO_ROOT, PCGW_API, TITLE_IMAGES_DIR, BANNER_IMAGES_DIR, js_string_literal,
     http_get, http_get_bytes, http_get_json,
     roman_to_arabic, arabic_to_roman, name_lookup_variants,
     lookup_pcgamingwiki, pcgw_get_json, get_api_key, run_generate_explained_batch,
@@ -560,7 +560,7 @@ def sub(src, var_name, value):
         src, re.MULTILINE
     ):
         return src
-    new_rhs = "null" if value is None else f'"{value.replace(chr(92), chr(92)*2)}"'
+    new_rhs = "null" if value is None else js_string_literal(value)
     return replace_const_rhs(src, var_name, new_rhs)
 
 

@@ -1,11 +1,13 @@
 """
 audit_scripts.py
 
-Runs six audits and reports drift found in any:
+Runs seven audits and reports drift found in any:
 
-  1. Header docstring audit -- compares each script's argparse flags and
-     env-var reads against the flags and env vars documented in its own
-     header docstring (Usage: and Environment variables: sections).
+  1. Header docstring audit -- compares each script's flags and env-var reads
+     against the flags and env vars documented in its own header (Usage: and
+     Environment variables: sections). Covers Python scripts (argparse) and
+     Node scripts (flags.has('--x') lookups and KNOWN_FLAGS sets, documented
+     under Run with: / Flags: in the banner comment).
 
   2. SCRIPTS.md audit -- compares the same code-extracted flags and env vars
      against the corresponding script section in SCRIPTS.md (### name --
@@ -14,13 +16,18 @@ Runs six audits and reports drift found in any:
   3. scripts.txt cross-check -- warns when a *.py or *.js in the repo root is
      not listed in scripts.txt, or when scripts.txt references a missing file.
 
-  4. vortex_utils.py exports audit -- detects public functions defined in
-     vortex_utils.py that are missing from its module docstring export list.
+  4. vortex_utils.py exports audit -- detects public functions, and constants
+     that another script imports, defined in vortex_utils.py but missing from
+     its module docstring export list.
 
-  5. Raw log-print audit -- detects raw print(f"  [{...}]") calls in scripts
+  5. SCRIPTS.md contents-table audit -- detects public vortex_utils names
+     missing from the "### vortex_utils.py -- Contents" table. Separate from
+     audit 4: a name can be correctly exported yet undocumented for a reader.
+
+  6. Raw log-print audit -- detects raw print(f"  [{...}]") calls in scripts
      outside vortex_utils.py that should use log_info/log_warn/log_error.
 
-  6. Non-atomic write audit -- detects plain open(<managed file>, "w") writes
+  7. Non-atomic write audit -- detects plain open(<managed file>, "w") writes
      to index.js / info.json / CHANGELOG outside the atomic helpers
      (write_index_js / write_*_atomic / os.replace). Blocking. Suppress a line
      with  # noqa: nonatomic-write  when a non-atomic write is intentional.
@@ -38,9 +45,11 @@ Examples:
     python audit_scripts.py --json | jq .drift_found
 
 Details:
-    Skips vortex_utils.py (library), gui_tray.py (GUI library),
-    generate_explained.js (Node), eslint.config.js (config), and SCRIPTS.md.
-    These are listed in the SKIP set.
+    Audits every *.py and *.js script in scripts.txt except those in the SKIP
+    set: vortex_utils.py (library), gui_tray.py (GUI library),
+    extension_parser.js (parser library, no CLI), eslint.config.js (config),
+    and SCRIPTS.md. Libraries are skipped because they expose no CLI flags to
+    compare; they are still listed in scripts.txt and documented in SCRIPTS.md.
 
     Env vars consumed inside vortex_utils helpers (STEAMGRIDDB_API_KEY,
     NEXUS_API_KEY, STEAM_API_KEY) are listed in INDIRECT_ENVVARS and
@@ -64,11 +73,12 @@ import sys
 from vortex_utils import iter_repo_scripts, REPO_ROOT
 
 # Scripts that are libraries, config files, or otherwise not dev scripts
-SKIP = {"vortex_utils.py", "gui_tray.py", "generate_explained.js", "SCRIPTS.md", "eslint.config.js"}
+SKIP = {"vortex_utils.py", "gui_tray.py", "extension_parser.js", "SCRIPTS.md", "eslint.config.js"}
 
 # Env vars consumed inside vortex_utils helpers (indirect use).
 # Scripts that document these but don't call os.environ.get() directly are correct.
-INDIRECT_ENVVARS = {"STEAMGRIDDB_API_KEY", "NEXUS_API_KEY", "STEAM_API_KEY"}
+INDIRECT_ENVVARS = {"STEAMGRIDDB_API_KEY", "NEXUS_API_KEY", "STEAM_API_KEY",
+                    "VORTEX_PLUGINS_DIR"}
 
 SCRIPTS_MD  = os.path.join(REPO_ROOT, "SCRIPTS.md")
 SCRIPTS_TXT = os.path.join(REPO_ROOT, "scripts.txt")
@@ -88,6 +98,36 @@ def _extract_module_docstring(src):
             and isinstance(tree.body[0].value.value, str)):
         return tree.body[0].value.value
     return ''
+
+
+def _extract_js_module_docstring(src):
+    """Return the leading /* ... */ block comment from JS source, or ''.
+
+    The Node scripts carry their usage text in a banner comment at the top of the
+    file, the same role a module docstring plays in the Python scripts."""
+    m = re.match(r'\s*(?:#![^\n]*\n)?\s*/\*+([\s\S]*?)\*/', src)
+    if not m:
+        return ''
+    # Strip the leading " * " gutter each line carries.
+    return '\n'.join(re.sub(r'^\s*\*\s?', '', ln) for ln in m.group(1).splitlines())
+
+
+def _extract_js_flags(src):
+    """Return the set of --flag strings a Node script actually recognises.
+
+    Both idioms in this repo are covered: `flags.has('--x')` lookups and the
+    `KNOWN_FLAGS = new Set([...])` whitelist that lint_extensions.js validates
+    against."""
+    flags = set(re.findall(r'\.has\(\s*[\'"](--[\w-]+)[\'"]\s*\)', src))
+    for m in re.finditer(r'KNOWN_FLAGS\s*=\s*new Set\(\[([^\]]*)\]', src):
+        flags.update(re.findall(r'[\'"](--[\w-]+)[\'"]', m.group(1)))
+    return flags
+
+
+def _extract_js_envvars(src):
+    """Return the set of environment variables a Node script reads."""
+    return (set(re.findall(r'process\.env\.([A-Z][A-Z0-9_]+)', src))
+            | set(re.findall(r'process\.env\[\s*[\'"]([A-Z][A-Z0-9_]+)[\'"]\s*\]', src)))
 
 
 _BUILD_ARG_PARSER_FLAGS = {
@@ -152,12 +192,16 @@ _SECTION_HEADERS = {
 
 
 def _parse_docstring_flags(docstring):
-    """Return set of --flag-name strings found in the Usage: section."""
+    """Return set of --flag-name strings found in the Usage: section.
+
+    The Node scripts head their banner comment with "Run with:" and list options
+    under "Flags:" rather than the Python scripts' single "Usage:" section, so all
+    three spellings open the scanned region."""
     flags = set()
     in_usage = False
     for line in docstring.splitlines():
         stripped = line.strip()
-        if re.match(r'^Usage\s*:', stripped, re.IGNORECASE):
+        if re.match(r'^(?:Usage|Run with|Flags)\s*:', stripped, re.IGNORECASE):
             in_usage = True
             continue
         if in_usage:
@@ -204,8 +248,13 @@ def _parse_scripts_md():
     result = {}
     current_script = None
     current_sub = None
+    in_fence = False
 
     for line in content.splitlines():
+        if line.lstrip().startswith('```'):
+            in_fence = not in_fence
+            continue
+
         # Level-2 heading that names a script file
         m = re.match(r'^## (\S+\.(?:py|js))\b', line)
         if m:
@@ -232,7 +281,17 @@ def _parse_scripts_md():
             # Strip `node --flag` and `npx --flag` spans so prose like
             # "skip the `node --check` step" doesn't produce phantom flags.
             cleaned = re.sub(r'`(?:node|npx)\s[^`]*`', '', line)
-            result[current_script]['flags'].update(re.findall(r'--[\w-]+', cleaned))
+            if in_fence:
+                # Inside a fenced example block every flag shown is a real one.
+                result[current_script]['flags'].update(re.findall(r'--[\w-]+', cleaned))
+            else:
+                # Outside a fence, only treat a line that OPENS with the flag as a
+                # declaration of it. Explanatory prose mentions flags mid-sentence --
+                # notably "There is deliberately no `--check` flag", which otherwise
+                # registers --check as documented and reports phantom drift.
+                m = re.match(r'^\s*(?:[-*]\s*)?`?(--[\w-]+)', cleaned)
+                if m:
+                    result[current_script]['flags'].add(m.group(1))
         elif current_sub == 'envvars':
             # Match backtick-quoted VAR_NAME in first table column
             m = re.match(r'\|\s*`([A-Z][A-Z0-9_]+)`', line)
@@ -245,16 +304,20 @@ def _parse_scripts_md():
 # ── Audit ─────────────────────────────────────────────────────────────────────
 
 def audit_script(path):
-    """Return a dict with drift findings for a single script."""
-    with open(path, encoding='utf-8') as f:
+    """Return a dict with drift findings for a single script (Python or Node)."""
+    with open(path, encoding='utf-8', errors='replace') as f:
         src = f.read()
 
-    docstring = _extract_module_docstring(src)
+    if path.endswith('.js'):
+        docstring    = _extract_js_module_docstring(src)
+        code_flags   = _extract_js_flags(src)
+        code_envvars = _extract_js_envvars(src)
+    else:
+        docstring    = _extract_module_docstring(src)
+        code_flags   = _extract_argparse_flags(src)
+        code_envvars = _extract_code_envvars(src)
 
-    code_flags = _extract_argparse_flags(src)
     doc_flags = _parse_docstring_flags(docstring)
-
-    code_envvars = _extract_code_envvars(src)
     doc_envvars = _parse_docstring_envvars(docstring)
 
     return {
@@ -279,14 +342,15 @@ def audit_scripts_md(paths):
     # Orphan sections: headings in SCRIPTS.md for files that don't exist on disk
     auditable_names = {os.path.basename(p) for p in paths}
     for script_name in md_data:
-        if script_name.endswith('.py') and not os.path.isfile(os.path.join(REPO_ROOT, script_name)):
+        if (script_name.endswith(('.py', '.js'))
+                and not os.path.isfile(os.path.join(REPO_ROOT, script_name))):
             orphan_sections.append(script_name)
 
     any_drift = bool(orphan_sections)
 
     for path in paths:
         name = os.path.basename(path)
-        if name in SKIP or not name.endswith('.py'):
+        if name in SKIP or not name.endswith(('.py', '.js')):
             continue
         if name not in md_data:
             missing_from_md.append(name)
@@ -294,12 +358,16 @@ def audit_scripts_md(paths):
             continue
         if not os.path.isfile(path):
             continue
-        with open(path, encoding='utf-8') as f:
+        with open(path, encoding='utf-8', errors='replace') as f:
             src = f.read()
 
-        code_flags   = _extract_argparse_flags(src)
+        if name.endswith('.js'):
+            code_flags   = _extract_js_flags(src)
+            code_envvars = _extract_js_envvars(src)
+        else:
+            code_flags   = _extract_argparse_flags(src)
+            code_envvars = _extract_code_envvars(src)
         md_flags     = md_data[name]['flags']
-        code_envvars = _extract_code_envvars(src)
         md_envvars   = md_data[name]['envvars']
 
         findings = {
@@ -369,31 +437,106 @@ def audit_scripts_txt():
 
 # ── vortex_utils.py exports audit (D5) ───────────────────────────────────────
 
-def audit_vortex_utils_exports():
-    """Detect public functions in vortex_utils.py missing from its module docstring.
-    Returns (any_drift, missing_names)."""
+def _vortex_utils_public_names():
+    """Return (public_functions, public_constants) defined at module level in
+    vortex_utils.py, or (None, None) if it cannot be parsed."""
     utils_path = os.path.join(REPO_ROOT, "vortex_utils.py")
     if not os.path.isfile(utils_path):
-        return False, []
-    with open(utils_path, encoding="utf-8") as f:
+        return None, None
+    with open(utils_path, encoding="utf-8", errors="replace") as f:
         src = f.read()
     try:
         tree = ast.parse(src)
     except SyntaxError:
-        return False, []
+        return None, None
 
-    defined = {
+    funcs = {
         node.name for node in tree.body
         if isinstance(node, ast.FunctionDef) and not node.name.startswith("_")
     }
+    consts = {
+        t.id for node in tree.body if isinstance(node, ast.Assign)
+        for t in node.targets
+        if isinstance(t, ast.Name) and t.id.isupper() and not t.id.startswith("_")
+    }
+    return funcs, consts
+
+
+def _names_imported_from_vortex_utils():
+    """Return the set of names any repo script imports from vortex_utils."""
+    names = set()
+    for path in iter_repo_scripts():
+        if not path.endswith(".py") or os.path.basename(path) == "vortex_utils.py":
+            continue
+        if not os.path.isfile(path):
+            continue
+        with open(path, encoding="utf-8", errors="replace") as f:
+            try:
+                tree = ast.parse(f.read())
+            except SyntaxError:
+                continue
+        for node in ast.walk(tree):
+            if isinstance(node, ast.ImportFrom) and node.module == "vortex_utils":
+                names.update(a.name for a in node.names)
+    return names
+
+
+def audit_vortex_utils_exports():
+    """Detect public names in vortex_utils.py missing from its module docstring.
+
+    Covers module-level CONSTANTS as well as functions -- but only constants that
+    another script actually imports, so internal tuning values do not create noise.
+    NEXUS_USER_AGENT was imported by two scripts while absent from the docstring and
+    this audit could not see it, because it walked only ast.FunctionDef.
+    Returns (any_drift, missing_names)."""
+    funcs, consts = _vortex_utils_public_names()
+    if funcs is None:
+        return False, []
+
+    utils_path = os.path.join(REPO_ROOT, "vortex_utils.py")
+    with open(utils_path, encoding="utf-8", errors="replace") as f:
+        src = f.read()
+
+    defined = funcs | (consts & _names_imported_from_vortex_utils())
 
     docstring = _extract_module_docstring(src)
     m = re.search(r'from vortex_utils import\s*\(([\s\S]+?)\)', docstring)
     if not m:
         return bool(defined), sorted(defined)
-    exported = set(re.findall(r'\b([a-z_]\w+)\b', m.group(1)))
+    # Case-insensitive name harvest: an uppercase-only pattern would skip every
+    # constant listed in the docstring and report all of them as missing.
+    exported = set(re.findall(r'\b([A-Za-z_]\w+)\b', m.group(1)))
 
     missing = sorted(defined - exported)
+    return bool(missing), missing
+
+
+# ── SCRIPTS.md vortex_utils contents-table audit (D7) ─────────────────────────
+
+_VU_CONTENTS_START = "### vortex_utils.py -- Contents"
+_VU_CONTENTS_END   = "### vortex_utils.py -- Requirements"
+
+
+def audit_vortex_utils_contents():
+    """Detect public vortex_utils names missing from the SCRIPTS.md contents table.
+
+    The module docstring and this table are maintained separately, so a name can be
+    correctly exported and still be undocumented for a reader. Nothing checked this
+    table before; 11 names had accumulated in it unnoticed.
+    Returns (any_drift, missing_names)."""
+    funcs, consts = _vortex_utils_public_names()
+    if funcs is None or not os.path.isfile(SCRIPTS_MD):
+        return False, []
+
+    with open(SCRIPTS_MD, encoding="utf-8", errors="replace") as f:
+        content = f.read()
+    if _VU_CONTENTS_START not in content or _VU_CONTENTS_END not in content:
+        return False, []
+
+    section = content.split(_VU_CONTENTS_START, 1)[1].split(_VU_CONTENTS_END, 1)[0]
+    documented = set(re.findall(r'`([A-Za-z_]\w*)', section))
+
+    missing = sorted((funcs | consts) - documented)
     return bool(missing), missing
 
 
@@ -493,7 +636,7 @@ def main():
     else:
         paths = [p for p in iter_repo_scripts()
                  if os.path.basename(p) not in SKIP
-                 and p.endswith('.py')]
+                 and (p.endswith('.py') or p.endswith('.js'))]
 
     # -- Header docstring audit --
     header_findings = {}
@@ -520,6 +663,9 @@ def main():
     # -- vortex_utils.py exports audit --
     exports_drift, missing_exports = audit_vortex_utils_exports()
 
+    # -- SCRIPTS.md vortex_utils contents-table audit --
+    contents_drift, missing_contents = audit_vortex_utils_contents()
+
     # -- raw log-print audit --
     # Collect all .py paths including vortex_utils itself for the filter inside
     all_py_paths = [p for p in iter_repo_scripts() if p.endswith('.py')]
@@ -529,7 +675,8 @@ def main():
     nonatomic_issue, nonatomic_hits = audit_nonatomic_writes(all_py_paths)
 
     # prints_issue is informational only -- raw-print calls are migration candidates, not blocking
-    any_drift = header_drift or md_drift or txt_issue or exports_drift or nonatomic_issue
+    any_drift = (header_drift or md_drift or txt_issue or exports_drift
+                 or contents_drift or nonatomic_issue)
 
     if args.json:
         output = {
@@ -553,6 +700,7 @@ def main():
             },
             "vortex_utils_exports_audit": {
                 "missing_from_docstring": missing_exports,
+                "missing_from_scripts_md_contents": missing_contents,
             },
             "raw_log_prints_audit": {
                 name: lines for name, lines in raw_print_hits.items()
@@ -606,6 +754,14 @@ def main():
             print(f"  {name}: defined in vortex_utils.py but missing from module docstring")
     else:
         print("  vortex_utils.py: OK")
+
+    print()
+    print("Auditing SCRIPTS.md vortex_utils contents table against code...\n")
+    if missing_contents:
+        for name in missing_contents:
+            print(f"  {name}: defined in vortex_utils.py but missing from the SCRIPTS.md contents table")
+    else:
+        print("  SCRIPTS.md contents table: OK")
 
     print()
     print("Checking for raw print(f'  [{...}]') log calls outside vortex_utils.py...\n")

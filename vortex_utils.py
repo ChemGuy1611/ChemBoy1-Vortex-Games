@@ -8,7 +8,7 @@ and logging.
 
 Usage:
     from vortex_utils import (
-        REPO_ROOT, PCGW_API, PCGW_USER_AGENT, EGDATA_API,
+        REPO_ROOT, PCGW_API, PCGW_USER_AGENT, NEXUS_USER_AGENT, EGDATA_API,
         TITLE_IMAGES_DIR, BANNER_IMAGES_DIR, LISTS_DIR,
         GUI_FLAGS_PATH, GUI_STATS_PATH,
         GAME_PREFIX, TEMPLATE_PREFIX, VORTEX_PLUGINS_DIR, NEW_EXTENSION_VERSION,
@@ -22,6 +22,7 @@ Usage:
         nexus_v3_get, nexus_v3_post_json,
         fetch_epic_app_id, add_to_discovery_ids,
         const_value, is_unset, is_missing, set_or_insert, replace_const_rhs,
+        js_string_literal, strip_js_comments,
         XXX_PATTERN, is_placeholder_value, is_real_value, find_placeholder_vars,
         const_decl_match, const_array_value,
         find_js_function,
@@ -38,8 +39,13 @@ Usage:
         build_arg_parser, assert_is_game_id, report_node_check,
         node_check, node_check_source, eslint_check,
         run_generate_explained, run_generate_explained_batch,
+        run_generate_notes, run_generate_notes_batch,
         get_discovery_ids, detect_engine, detect_stores,
-        has_downloader_js, downloads_from_github, requires_unreal_mod_installer,
+        has_downloader_js, has_gamebanana_downloader_js, has_moddb_downloader_js,
+        has_modworkshop_downloader_js,
+        downloads_from_github, github_download_enabled,
+        requires_unreal_mod_installer, has_ue4ss_load_order_parity,
+        is_unreleased_extension,
         validate_index_js,
         log_info, log_error, log_warn,
         find_vortex_exe, safe_windows_dirname,
@@ -2033,6 +2039,17 @@ def replace_const_rhs(src, name, new_rhs, *, count=1):
     declaration is targeted when count=1 (default)."""
     pattern = rf'^([ \t]*(?:const|let)\s+{re.escape(name)}\s*=\s*)["\'][^"\']*["\']'
     return re.sub(pattern, rf'\g<1>{new_rhs}', src, count=count, flags=re.MULTILINE)
+
+
+def js_string_literal(value):
+    """Return value as a double-quoted JavaScript string literal.
+
+    Escapes backslashes first, then double quotes. Game names sourced from store
+    pages routinely contain both -- an unescaped quote produces
+    `const GAME_NAME = "Foo "Bar" Baz";`, a syntax error that only surfaces later
+    as a wall of eslint parse errors."""
+    escaped = str(value).replace("\\", "\\\\").replace('"', '\\"')
+    return f'"{escaped}"'
 
 
 SEMVER_PATTERN = re.compile(r'^\d+\.\d+\.\d+$')

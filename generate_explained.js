@@ -1,7 +1,8 @@
 /**
  * generate_explained.js
- * Scans every game-* and template-* folder in this repo, reads index.js,
- * and writes an EXTENSION_EXPLAINED.md describing how the extension works.
+ * Scans every game-* folder in this repo, reads index.js, and writes an
+ * EXTENSION_EXPLAINED.md describing how the extension works. template-* folders
+ * are included only with --templates.
  * Always overwrites any existing EXTENSION_EXPLAINED.md.
  *
  * Run with:  node generate_explained.js

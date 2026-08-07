@@ -1,8 +1,8 @@
 /**
  * generate_notes.js
- * Scans every game-* and template-* folder in this repo, reads index.js, and writes
- * mod-author packaging documentation describing how a mod archive must be laid out
- * for each installer to recognise it.
+ * Scans every game-* folder in this repo, reads index.js, and writes mod-author
+ * packaging documentation describing how a mod archive must be laid out for each
+ * installer to recognise it. template-* folders are included only with --templates.
  *
  * Two files are written per extension, always:
  *   NOTES_FOR_MOD_AUTHORS.md          markdown, for the repo / GitHub

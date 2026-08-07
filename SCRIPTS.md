@@ -82,9 +82,12 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `const_value(src, var_name)` | Extract the RHS of a `const`/`let` declaration from JS source; returns string or `None` |
 | `is_unset(value_str)` | Return `True` if a const RHS string is `"XXX"` or `'XXX'` (placeholder not yet filled) |
 | `is_missing(src, var_name)` | Return `True` if a `const`/`let` declaration for `var_name` is absent from src |
+| `replace_const_rhs(src, name, new_rhs, *, count=1)` | Replace the quoted RHS of a `const`/`let` declaration. Anchored to the start of a line with MULTILINE, so only top-level declarations match |
+| `js_string_literal(value)` | Return `value` as a double-quoted JS string literal, escaping backslashes then double quotes |
 | `set_or_insert(src, var_name, value, comment)` | Replace an `XXX` placeholder for `var_name`, or insert the const before the `spec` block |
 | `XXX_PATTERN` | Compiled regex matching any quoted `XXX` placeholder value (e.g. `"XXX"`, `"XXX.exe"`, `"XXX_Demo"`). |
 | `is_placeholder_value(rhs)` | Return `True` if `rhs` is a placeholder value: `"XXX"`, `"XXX.exe"`, `"XXX_Demo"`, etc. Uses `XXX_PATTERN`. |
+| `find_placeholder_vars(src)` | Return the list of `const`/`let` variable names whose RHS is still a placeholder value |
 | `is_real_value(v)` | Return `True` if `v` is a filled-in, non-empty, non-placeholder value. Returns `False` for `None`, empty string, `null`, `N/A`, `XXX*`, and `${...}` template refs. |
 | `const_decl_match(src, name)` | Return the `re.Match` for the `const`/`let` declaration line of `name`. Useful for line-position edits. |
 | `const_array_value(src, name)` | Return the raw array content (between `[` and `]`) for `const NAME = [...]` via bracket-depth scanning. Returns `None` if not found. |
@@ -94,19 +97,25 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `sanitize_game_name(name)` | Strip `®`, `™`, `©` symbols and collapse extra whitespace from a game name string |
 | `normalize_game_name(s)` | Lowercase + strip right-quotes, colons, ` - ` separators, and extra whitespace. For fuzzy title comparison. |
 | `list_game_ids()` | Return a sorted list of all `GAME_ID` values found across `game-*` extension folders |
+| `iter_steam_image_targets(target_game_ids=None, force=False, target_path_fn=None)` | Yield `(folder, game_id, steamapp_id, game_name)` for extensions needing a Steam-sourced image |
 | `iter_repo_scripts()` | Yield absolute paths of every script listed in `scripts.txt` (skips blank lines and `#` comments) |
 | `read_info_json(folder)` | Read and parse `info.json` from an extension folder; returns the dict, or `None` if missing/invalid |
 | `make_info_json()` | Return an `info.json` template string (name `Game: XXX`, version `NEW_EXTENSION_VERSION`) for a new extension |
 | `make_changelog()` | Return a `CHANGELOG.md` template string with a `NEW_EXTENSION_VERSION - 2026-XX-XX` initial entry |
 | `parse_changelog_latest(folder)` | Parse `CHANGELOG.md` in a folder; returns `(version, date)` of the most recent entry (either may be `None`) |
 | `bump_semver(version, kind)` | Bump a version string by standard semver rules — `major` `1.2.3 -> 2.0.0`, `minor` `1.2.3 -> 1.3.0`, `patch` `1.2.3 -> 1.2.4`. Raises `ValueError` on a malformed version or unknown kind |
+| `is_valid_semver(version)` | Return `True` if `version` is strict `X.Y.Z` (no pre-release suffix) |
+| `SEMVER_PATTERN` | Compiled regex behind `is_valid_semver()`; use the function for a boolean check |
 | `prepend_changelog_entry(folder, version, date)` | Prepend a `## [version] - date` section to `CHANGELOG.md`, before the first existing entry. No-op if the file is missing |
 | `mutate_index_js(folder, game_id, mutator_fn, *, dry_run, changed_msg, unchanged_msg, dry_run_msg)` | Read `index.js`, apply `mutator_fn(src) -> new_src`, write back if changed. Handles all error printing. Returns `True` if changed. |
 | `mutate_text_file(path, fn, *, dry_run, atomic)` | Like `mutate_index_js` but for non-`index.js` files. Reads, applies `fn(src)->new_src`, writes atomically if changed. Returns `True` if changed. |
 | `read_json(path, default)` | Read and parse a JSON file; returns `default` (empty dict) on missing/corrupt file |
+| `read_gui_stats()` | Read the shared GUI nexus-stats JSON (`{game_id: stats_dict}`); returns `{}` on error |
+| `write_gui_stats(data)` | Write the stats dict to `GUI_STATS_PATH` atomically, with `sort_keys=True` |
 | `write_json_atomic(path, data, *, indent, sort_keys)` | Write JSON atomically via tmp file + `os.replace` |
 | `dry_prefix(dry_run)` | Return `"[DRY RUN] "` if `dry_run` is `True`, else `""` |
 | `print_run_summary(saved, failed, skipped, *, skip_label)` | Print a standardized saved / failed / skipped run summary block (separator line + counts + per-item lists) |
+| `print_count_summary(label_counts)` | Print a compact summary of named counters (used where saved/failed/skipped does not fit) |
 | `run_concurrent_batch(items, worker_fn, max_workers=8)` | Run `worker_fn` over `items` in a thread pool; returns `{key: result_tuple}` keyed by the first element of each result. Worker must catch its own exceptions. KeyboardInterrupt returns the partial batch. |
 | `report_download_results(targets, results, label_fn, saved, failed, skipped)` | Classify and print results from `run_concurrent_batch` for download workers. Worker results must be `(game_id, status, source_or_none, msg_or_none)`; status one of `"ok"`, `"fail"`, `"error"`, `"skip"`. Updates `saved`/`failed`/`skipped` in-place. |
 | `retry_failed_downloads(targets, failed, worker_fn, concurrency, saved, skipped)` | Retry failed downloads once via `run_concurrent_batch`; clears and rebuilds `failed` in-place; updates `saved`/`skipped`. |
@@ -116,6 +125,7 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `safe_rmtree(path, hint)` | Remove a directory tree, retrying once on `PermissionError` after 1 second. `hint` shown in the warning (e.g. `"close Vortex first"`). |
 | `touch_empty(path, force)` | Create an empty file at `path` atomically. No-op if file exists and `force=False`. |
 | `find_vortex_plugin_folder(game_id, game_name)` | Return the deployed plugin folder path for `game_id` in Vortex's plugins dir. Reads `VORTEX_PLUGINS_DIR` env (default `C:\ProgramData\vortex\plugins`). Matches on the game-id folder name first, then the `Vortex Extension Update - <name> v*` form, then any folder; the latter two prefer an exact name match and fall back to a substring only when no folder matches exactly, so a game id contained in another's (`reddeadredemption` in `reddeadredemption2support`) cannot resolve to the longer-named extension. Returns `None` if not found. |
+| `normalize_target_ids(arg)` | Convert an argparse game-ID list to a set, or `None` meaning "all games" |
 | `read_id_list(filepath)` | Read a text file; return list of stripped non-empty lines (game IDs or similar) |
 | `write_id_list(filepath, game_ids)` | Write a sorted list of IDs to a file, one per line |
 | `is_load_order_game(src)` | Return `True` if `src` calls `registerLoadOrder` and is not a UE4/5 extension |
@@ -130,6 +140,8 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `has_ue4ss_load_order_parity(src)` | Return `True` if `src` is a UE4-5 extension carrying the full `template-ue4-5` load order (detected via the `Ue4ssContextMenu` component) |
 | `is_unreleased_extension(src)` | Return `True` if `EXTENSION_URL` holds no real Nexus page URL (missing, empty, `"XXX"`, or non-Nexus), i.e. the extension has never been published |
 | `parse_nexus_mod_url(url)` | Parse a Nexus Mods URL into `(domain, mod_id)` or `None`. |
+| `nexus_v3_get(path, api_key)` | GET a Nexus Mods v3 endpoint, with retry and `Retry-After` handling |
+| `nexus_v3_post_json(path, body, api_key)` | POST JSON to a Nexus Mods v3 endpoint, with retry and `Retry-After` handling |
 | `nexus_list_games(api_key)` | Fetch all approved Nexus Mods games; caches result for the process lifetime. Returns `[]` on error. |
 | `nexus_get_mod(domain, mod_id, api_key)` | Fetch Nexus v1 mod details with retry. Returns `(data_dict, rate_remaining_or_None)`. Raises on 404 / non-retryable errors. |
 | `write_text_atomic(path, entries, encoding)` | Write list-of-strings (or a single string) to `path` atomically via `.tmp` + `os.replace`. |
@@ -885,7 +897,9 @@ The engine categories above are mutually exclusive (one per game). The lists bel
 
 Each game is matched against the engine categories in order — the first match wins. Detection uses the `Structure:` comment on line 3 of `index.js` as the primary signal, with fallback checks for unique code markers such as `const UNREALDATA =`, `const ATK_ID =`, `context.requireExtension('modtype-bepinex')`, etc. The flag lists are computed separately via dedicated predicates (`is_load_order_game`, `has_downloader_js`, `has_gamebanana_downloader_js`, `has_moddb_downloader_js`, `has_modworkshop_downloader_js`, `github_download_enabled`, `requires_unreal_mod_installer`, `has_ue4ss_load_order_parity`, `is_unreleased_extension`) in `vortex_utils.py`. The parity predicate keys off the `Ue4ssContextMenu` component, which only exists in games that took the whole load-order region (PAK + custom UE4SS + LogicMods pages) from `template-ue4-5`.
 
-`games-github.txt` applies two extra filters the other flag lists do not.
+GitHub is the only host with an inline-download list. GameBanana, ModDB, and ModWorkshop are tracked solely by their `games-downloader-*.txt` module lists: every extension fetching a requirement from those hosts carries the matching downloader module, so the module list is the complete list. A bare host URL left in an extension is a browse link behind an `Open <host> Page` button, which was never counted as a download.
+
+`games-github.txt` applies three extra filters the other flag lists do not.
 
 **Engine exclusions.** Unity (BepInEx, MelonLoader/BepInEx hybrid, UMM), Frostbite, RE Engine, and Reloaded-II games are excluded via the `GITHUB_LIST_EXCLUDED_ENGINES` set in `categorize_games.py`: they do fetch from GitHub inline, but only to pull the standard mod loader their engine already implies (BepInEx/MelonLoader, FrostyToolsuite, REFramework, Reloaded-II — which then self-updates). Their engine list already tracks them, so the list stays focused on games with bespoke GitHub-sourced requirements. Add an engine label to that set to exclude it too.
 
@@ -1295,16 +1309,19 @@ Console summary prints total entry count and per-level breakdown.
 
 ## audit_scripts.py
 
-Runs six audits and reports drift found in any:
+Runs seven audits and reports drift found in any:
 
-1. **Header docstring audit** — compares each script's argparse flags and env-var reads against the flags and env vars documented in its own header docstring (`Usage:` and `Environment variables:` sections).
+1. **Header docstring audit** — compares each script's flags and env-var reads against the flags and env vars documented in its own header (`Usage:` and `Environment variables:` sections). Covers Python scripts (argparse) and Node scripts, whose flags are read from `flags.has('--x')` lookups and `KNOWN_FLAGS` sets and documented under `Run with:` / `Flags:` in the banner comment.
 2. **SCRIPTS.md audit** — compares the same code-extracted flags and env vars against the corresponding script section in SCRIPTS.md (`### name — Usage` and `### name — Environment Variables` subsections).
 3. **scripts.txt cross-check** — warns when a `*.py` or `*.js` in the repo root is not listed in `scripts.txt`, or when `scripts.txt` references a missing file.
-4. **vortex_utils.py exports audit** — detects public functions defined in `vortex_utils.py` that are missing from its module docstring import list.
-5. **Raw log-print audit** — detects `print(f"  [{...}]")` calls in scripts outside `vortex_utils.py` that should use `log_info`/`log_warn`/`log_error` (informational; does not affect exit code).
-6. **Non-atomic write audit** — detects plain `open(<managed file>, "w")` writes to `index.js` / `info.json` / `CHANGELOG` outside the atomic helpers (`write_index_js` / `write_*_atomic` / `os.replace`). Blocking. Suppress an intentional non-atomic write with `# noqa: nonatomic-write`.
+4. **vortex_utils.py exports audit** — detects public functions, and constants that another script imports, defined in `vortex_utils.py` but missing from its module docstring import list.
+5. **SCRIPTS.md contents-table audit** — detects public `vortex_utils` names missing from the `### vortex_utils.py -- Contents` table. Separate from audit 4: a name can be correctly exported yet still undocumented for a reader.
+6. **Raw log-print audit** — detects `print(f"  [{...}]")` calls in scripts outside `vortex_utils.py` that should use `log_info`/`log_warn`/`log_error` (informational; does not affect exit code).
+7. **Non-atomic write audit** — detects plain `open(<managed file>, "w")` writes to `index.js` / `info.json` / `CHANGELOG` outside the atomic helpers (`write_index_js` / `write_*_atomic` / `os.replace`). Blocking. Suppress an intentional non-atomic write with `# noqa: nonatomic-write`.
 
-Read-only; never modifies any file. Uses `iter_repo_scripts()` from `vortex_utils` to iterate the canonical script list in `scripts.txt`. Skips `vortex_utils.py` (library), `generate_explained.js` (Node), `eslint.config.js` (config), and `SCRIPTS.md`.
+Read-only; never modifies any file. Uses `iter_repo_scripts()` from `vortex_utils` to iterate the canonical script list in `scripts.txt`. Skips the libraries and config files in the `SKIP` set — `vortex_utils.py`, `gui_tray.py`, `extension_parser.js`, `eslint.config.js`, and `SCRIPTS.md` — since they expose no CLI flags to compare. They remain listed in `scripts.txt` and documented here.
+
+In the `Usage` subsections above, a flag is only counted as documented when it appears inside a fenced example block or opens its own line. Flags mentioned mid-sentence in prose are ignored, so a line such as "There is deliberately no `--check` flag" does not register `--check` as supported.
 
 ### audit_scripts.py — Requirements
 

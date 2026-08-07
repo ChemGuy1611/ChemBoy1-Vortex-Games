@@ -7,10 +7,13 @@ image columns (Cover, Title, Banner), flag/note system, and group-by-engine view
 
 Toolbar buttons run developer scripts against the checked games, or the
 highlighted rows when nothing is checked; the right-click context menu always
-targets the highlighted rows, ignoring checkboxes. An always-visible
-log pane streams live subprocess output, coloring error and command-echo lines.
-Settings (geometry, column widths, filter text, grouping, flagged-only, category
-filter, checked rows) persist across sessions via QSettings.
+targets the highlighted rows, ignoring checkboxes. A log pane in the lower half of a
+splitter streams live subprocess output, coloring error and command-echo lines;
+because that splitter can be dragged shut, a failed run is also reported in the
+status bar, which holds the notice until the next run starts.
+Settings (geometry, splitter position, column widths, filter text, grouping,
+flagged-only, category filter, checked rows) persist across sessions via
+QSettings.
 
 Dark theme applied via Fusion palette + stylesheet. Engine grouping inserts
 read-only header rows via GroupProxy. The filter box matches Game ID, name,
@@ -1570,6 +1573,9 @@ class MainWindow(QMainWindow):
         self._action_btns: dict[str, QAction] = {}
         self._global_action_labels: set[str] = set()  # repo-wide; enabled regardless of selection
         self._refresh_after_run = False
+        # True when the last script run exited non-zero; keeps a failure notice in
+        # the status bar until the next run starts.
+        self._run_failed = False
         # set while a context-menu action runs so it targets the highlighted
         # rows only, ignoring checkboxes (see _on_context_menu)
         self._selection_override: list["GameRow"] | None = None
@@ -2379,6 +2385,7 @@ class MainWindow(QMainWindow):
         self._new_game_btn.setEnabled(False)
         for action in self._action_btns.values():
             action.setEnabled(False)
+        self._run_failed = False
         self.statusBar().showMessage(f"Running: {desc}")
 
     def _on_run_progress(self, current: int, total: int):
@@ -2389,8 +2396,13 @@ class MainWindow(QMainWindow):
         self._stop_btn.setEnabled(False)
         self._refresh_btn.setEnabled(True)
         self._new_game_btn.setEnabled(True)
-        refresh = self._refresh_after_run and code == 0
+        # Refresh on "the run finished", not on "the run succeeded". Batch scripts
+        # report a non-zero code when ANY game failed, so gating the reload on
+        # code == 0 hid the games that did succeed until the user hit Refresh by
+        # hand. Failure is surfaced in the status bar instead -- see below.
+        refresh = self._refresh_after_run
         self._refresh_after_run = False
+        self._run_failed = code != 0
         if refresh:
             self._refresh_data()
         else:
@@ -2421,7 +2433,15 @@ class MainWindow(QMainWindow):
         self._status_label.setText("  |  ".join(parts))
         self._clear_checks_btn.setEnabled(bool(checked))
         if not self._runner.is_running:
-            self.statusBar().clearMessage()
+            # Persist the failure notice until the next run starts. The log pane is
+            # the bottom half of a splitter the user can drag shut, so a red log line
+            # is not on its own a reliable failure signal.
+            if getattr(self, "_run_failed", False):
+                self.statusBar().showMessage(
+                    "Last run reported errors -- see the log pane for details."
+                )
+            else:
+                self.statusBar().clearMessage()
 
     # -- Context menu ----------------------------------------------------------
 

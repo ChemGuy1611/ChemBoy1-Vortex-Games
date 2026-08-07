@@ -10,8 +10,12 @@ Arguments:
     GAME_ID     One or more game IDs (e.g. thelastofuspart2)
     --all       Deploy every game-* extension in the repo
     --dry-run   Preview what would change without copying
-    --force     Always do a full folder replace instead of updating only
-                index.js and any *downloader.js modules
+    --force     Fully replace the deployed folder instead of updating only
+                index.js and any *downloader.js modules inside it. The deployed
+                folder is always located by name first, with or without --force,
+                so this replaces the existing extension rather than creating a
+                second copy beside it. A new "game-<id>" folder is created only
+                when no deployed folder can be found at all.
     --restart-vortex
                 Close Vortex before copying (graceful taskkill, force-kill
                 after 30s) and launch it again (no CLI args) after all copies.
@@ -19,7 +23,9 @@ Arguments:
                 even if it was not running. Ignored with --dry-run.
 
 Environment variables:
-    (none -- VORTEX_PLUGINS_DIR is read from vortex_utils.VORTEX_PLUGINS_DIR)
+    VORTEX_PLUGINS_DIR  Optional. Target plugins directory. Read by vortex_utils
+                        at import time, so setting it changes where this script
+                        deploys. Defaults to %ProgramData%\\vortex\\plugins.
 """
 
 import os
@@ -82,34 +88,42 @@ def deploy_game(game_id: str, dry_run: bool, force: bool) -> bool:
 
     js_src = vu.read_index_js(src)
     game_name = vu.extract_game_name(js_src) if js_src else None
-    existing = None if force else vu.find_vortex_plugin_folder(game_id, game_name)
-    dest = existing or os.path.join(PLUGINS_DIR, f"game-{game_id}")
+
+    # Always resolve the deployed folder, including under --force. Extensions
+    # installed through Vortex are named e.g. "Atomic Heart Vortex Extension 1832
+    # 1.0.4", not "game-<id>", so skipping the lookup would deploy a second copy
+    # alongside the live one and leave Vortex loading two registrations of the
+    # same game. --force selects a full-tree replace of the resolved folder; the
+    # "game-<id>" fallback is only for a genuine first-time deploy.
+    resolved = vu.find_vortex_plugin_folder(game_id, game_name)
+    dest = resolved or os.path.join(PLUGINS_DIR, f"game-{game_id}")
+    partial = bool(resolved) and not force
     copy_names = ["index.js"] + sorted(
         n for n in os.listdir(src) if n.endswith("downloader.js")
     )
     if dry_run:
-        if existing:
-            vu.log_info(game_id, f"copy {', '.join(copy_names)} -> {existing}")
+        if partial:
+            vu.log_info(game_id, f"copy {', '.join(copy_names)} -> {dest}")
         else:
-            action = "overwrite" if os.path.isdir(dest) else "create"
+            action = "replace" if os.path.isdir(dest) else "create"
             vu.log_info(game_id, f"{action} -> {dest}")
             for name in sorted(os.listdir(src)):
                 status = "(overwrite)" if os.path.exists(os.path.join(dest, name)) else "(new)"
                 print(f"  {name} {status}")
         return True
 
-    if existing:
+    if partial:
         for name in copy_names:
             src_file = os.path.join(src, name)
-            dest_file = os.path.join(existing, name)
+            dest_file = os.path.join(dest, name)
             dest_tmp = dest_file + ".tmp"
             try:
                 shutil.copy2(src_file, dest_tmp)
                 os.replace(dest_tmp, dest_file)
             except PermissionError:
-                vu.log_error(game_id, f"{name} locked in {os.path.basename(existing)} -- close Vortex first (or use --restart-vortex)")
+                vu.log_error(game_id, f"{name} locked in {os.path.basename(dest)} -- close Vortex first (or use --restart-vortex)")
                 return False
-        vu.log_info(game_id, f"updated {', '.join(copy_names)} in {os.path.basename(existing)}")
+        vu.log_info(game_id, f"updated {', '.join(copy_names)} in {os.path.basename(dest)}")
     else:
         if os.path.isdir(dest):
             vu.safe_rmtree(dest, "close Vortex first")

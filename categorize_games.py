@@ -30,6 +30,7 @@ Usage:
 """
 
 import os
+import sys
 import argparse
 
 from vortex_utils import (
@@ -285,10 +286,12 @@ def main():
         finally:
             tag = " [DRY RUN]" if args.dry_run else ""
             print(f"\nDone{tag}. {success}/{len(target_ids)} succeeded.")
+        return 1 if failed else 0
     else:
         print(f"Rebuilding all category files{'  [DRY RUN]' if args.dry_run else ''}...")
         rebuild_all(args.dry_run)
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main() or 0)

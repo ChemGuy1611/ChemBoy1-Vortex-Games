@@ -10,8 +10,8 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | --- | --- | --- |
 | Scripthook | a file or folder named `dinput8.dll` and a file or folder named `scripthookrdr.dll` | - |
 | Modloader | a file or folder named `kml.asi` | - |
+| Magicrdr | - | - |
 | Magicmod | a file with one of these extensions: `.wtd`, `.was`, `.dds`, `.mtl` or `.wsc` | `MagicRDR_Mods` |
-| Magicrdr | a file or folder named `MagicRDR.exe` | - |
 | Rpf | a file with the `.rpf` extension | `kml\rpf` |
 | Asiplugin | a file with the `.asi` extension | - |
 
@@ -25,15 +25,15 @@ Recognised when the archive contains a file or folder named `dinput8.dll` and a 
 
 Recognised when the archive contains a file or folder named `kml.asi`.
 
+## Magicrdr
+
+Handled by the `testMagic` installer. Inspect the extension source for the exact archive layout it expects.
+
 ## Magicmod
 
 Recognised when the archive contains a file with one of these extensions: `.wtd`, `.was`, `.dds`, `.mtl` or `.wsc`.
 
 Installs to: `MagicRDR_Mods`
-
-## Magicrdr
-
-Recognised when the archive contains a file or folder named `MagicRDR.exe`.
 
 ## Rpf
 

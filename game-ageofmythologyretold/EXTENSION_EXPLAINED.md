@@ -31,8 +31,8 @@ Mod types define where each category of mod gets deployed:
 | --- | --- | --- | --- |
 | Game Data Folder | `ageofmythologyretold-data` | high | `{gamePath}/game` |
 | Binaries / Root Game Folder | `ageofmythologyretold-binaries` | high | `{gamePath}` |
-| Config (UserGames) | `ageofmythologyretold-config` | high | `util.getVortexPath('home'/USERID_FOLDER/users` |
-| Save (UserGames) | `ageofmythologyretold-save` | high | `util.getVortexPath('home'/USERID_FOLDER/savegames` |
+| Config (UserGames) | `ageofmythologyretold-config` | high | `util.getVortexPath('home')/Games/Age of Mythology Retold/USERID_FOLDER/users` |
+| Save (UserGames) | `ageofmythologyretold-save` | high | `util.getVortexPath('home')/Games/Age of Mythology Retold/USERID_FOLDER/savegames` |
 
 ## Mod Installers
 

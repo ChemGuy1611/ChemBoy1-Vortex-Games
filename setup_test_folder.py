@@ -447,8 +447,12 @@ def main():
             print(f"Cleaning test folder(s) in {TEST_ROOT}{label}...\n")
             for game_id in args.game:
                 try:
-                    if clean(game_id, args.dry_run):
-                        saved.append(game_id)
+                    # clean()/setup() return False for soft failures (no index.js,
+                    # unresolvable GAME_NAME or executable). Counting those as
+                    # neither saved nor failed dropped them from the summary
+                    # entirely, so a run that resolved nothing reported "Saved: 0"
+                    # with no failure list.
+                    (saved if clean(game_id, args.dry_run) else failed).append(game_id)
                 except Exception as e:
                     log_error(game_id, str(e))
                     failed.append(game_id)
@@ -456,8 +460,8 @@ def main():
             print(f"Setting up test folder(s) in {TEST_ROOT}{label}...\n")
             for game_id in args.game:
                 try:
-                    if setup(game_id, args.dry_run, args.force):
-                        saved.append(game_id)
+                    (saved if setup(game_id, args.dry_run, args.force)
+                     else failed).append(game_id)
                 except Exception as e:
                     log_error(game_id, str(e))
                     failed.append(game_id)
@@ -465,7 +469,8 @@ def main():
         print("\n\n  Interrupted.")
     finally:
         print_run_summary(saved, failed, [])
+    return 1 if failed else 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main() or 0)

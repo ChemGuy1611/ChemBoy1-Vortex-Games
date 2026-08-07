@@ -118,9 +118,11 @@ function buildSymbolTable(src) {
         let allResolved = true;
         const resolved = args.map(arg => {
           const a = arg.trim();
-          // String literal
-          const sm = a.match(/^['"]([^'"]*)['"]\s*$/);
-          if (sm) return sm[1];
+          // String literal. Backreference the opening quote so the body may contain
+          // the other quote character -- path.join("Don's Folder", X) previously
+          // failed to match and left the whole path unresolved.
+          const sm = a.match(/^(['"])(.*?)\1\s*$/);
+          if (sm) return sm[2];
           // Variable reference (including property access)
           if (/^[A-Za-z_$][\w.]*$/.test(a) && table.has(a)) return table.get(a);
           // Template literal
@@ -322,9 +324,20 @@ function resolveWithFallback(expr, table, src) {
       return dm ? dm[1] : k;
     });
   }
-  // If it's itself a path.join declaration, recurse into it
-  const pjDecl = src.match(new RegExp(`(?:const|let)\\s+${e}\\s*=\\s*(path\\.join\\([^)]+\\))`));
-  if (pjDecl) return resolveWithFallback(pjDecl[1], table, src);
+  // If it's itself a path.join declaration, recurse into it. Match only up to the
+  // opening paren and then depth-scan for the matching close: a flat [^)]+ stops at
+  // the first ')', so a nested call such as
+  //   path.join('mods', path.basename(GAME_DIR))
+  // was captured one paren short of balanced and recursed into a malformed expression.
+  const pjStart = src.match(new RegExp(`(?:const|let)\\s+${e}\\s*=\\s*path\\.join\\s*\\(`));
+  if (pjStart) {
+    const parenOpen = src.indexOf('(', pjStart.index + pjStart[0].length - 1);
+    const parenClose = scanToMatchingClose(src, parenOpen, '(', ')');
+    if (parenClose !== -1) {
+      const expr = src.slice(pjStart.index + pjStart[0].indexOf('path.'), parenClose + 1);
+      return resolveWithFallback(expr, table, src);
+    }
+  }
   return resolved;
 }
 
@@ -399,11 +412,18 @@ function discoverFlags(src) {
  */
 function extractModTypes(src, table) {
   const results = [];
-  const modTypesBlock = src.match(/"modTypes"\s*:\s*\[([\s\S]*?)\]\s*[,}]/);
-  if (!modTypesBlock) return results;
+  // Locate the modTypes array and depth-scan to its matching close bracket. A lazy
+  // /\[([\s\S]*?)\]\s*[,}]/ ends at the first ']' followed by ',' or '}', so any
+  // array-valued property inside an entry (an "exclusions": [...], say) truncated
+  // the block and silently dropped every modType after it.
+  const modTypesStart = src.match(/"modTypes"\s*:\s*\[/);
+  if (!modTypesStart) return results;
+  const bracketOpen = modTypesStart.index + modTypesStart[0].length - 1;
+  const bracketClose = scanToMatchingClose(src, bracketOpen, '[', ']');
+  if (bracketClose === -1) return results;
 
   // Split into individual object entries
-  const block = modTypesBlock[1];
+  const block = src.slice(bracketOpen + 1, bracketClose);
   const entries = [];
   let depth = 0;
   let current = '';
@@ -513,24 +533,36 @@ function extractRegisterModTypes(src, table) {
  * Extract a field value from a JS object-like string.
  * Handles quoted values containing special characters like }.
  */
+/**
+ * Regex source matching an object key, quoted with either quote style or bare.
+ * Repo convention is double-quoted keys, but a bare `id:` is valid JS and used to
+ * return null from every branch below with no diagnostic, silently dropping that
+ * modType's fields from both generated documents.
+ */
+function keyPattern(fieldName) {
+  return `(?:["']${fieldName}["']|\\b${fieldName})`;
+}
+
 function extractField(objStr, fieldName) {
+  const key = keyPattern(fieldName);
+
   // Try double-quoted value
-  const dqRe = new RegExp(`"${fieldName}"\\s*:\\s*"([^"]*)"`, 's');
+  const dqRe = new RegExp(`${key}\\s*:\\s*"([^"]*)"`, 's');
   const dqM = objStr.match(dqRe);
   if (dqM) return '"' + dqM[1] + '"';
 
   // Try single-quoted value (may contain double quotes)
-  const sqRe = new RegExp(`"${fieldName}"\\s*:\\s*'([^']*)'`, 's');
+  const sqRe = new RegExp(`${key}\\s*:\\s*'([^']*)'`, 's');
   const sqM = objStr.match(sqRe);
   if (sqM) return "'" + sqM[1] + "'";
 
   // Try template literal with interpolation
-  const templateRe = new RegExp(`"${fieldName}"\\s*:\\s*(\`[^\`]*\`)`);
+  const templateRe = new RegExp(`${key}\\s*:\\s*(\`[^\`]*\`)`);
   const templateM = objStr.match(templateRe);
   if (templateM) return templateM[1].trim();
 
   // Try bare identifier or expression
-  const bareRe = new RegExp(`"${fieldName}"\\s*:\\s*([A-Za-z_$]\\w*)`);
+  const bareRe = new RegExp(`${key}\\s*:\\s*([A-Za-z_$]\\w*)`);
   const bareM = objStr.match(bareRe);
   if (bareM) return bareM[1].trim();
 
@@ -543,7 +575,7 @@ function extractField(objStr, fieldName) {
 function extractFieldRaw(objStr, fieldName) {
   // Try path.join first; use depth-tracked paren scan so nested path.join
   // calls (e.g. path.join(a, path.join(b,c))) don't truncate the expression.
-  const pjStartRe = new RegExp(`"${fieldName}"\\s*:\\s*(path\\.join\\()`);
+  const pjStartRe = new RegExp(`${keyPattern(fieldName)}\\s*:\\s*(path\\.join\\()`);
   const pjM = pjStartRe.exec(objStr);
   if (pjM) {
     const parenOpenPos = pjM.index + pjM[0].length - 1;

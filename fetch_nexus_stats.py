@@ -107,10 +107,13 @@ def fetch_all(target_ids=None, dry_run=False, force=False, max_age=None):
                 file_groups = []
                 if uid:
                     try:
-                        fg_data = v3_get(f"/mods/{uid}/file-update-groups", api_key)
+                        # File groups live under GET /v3/mods/{uid}/files as `mod_files`.
+                        # The older /file-update-groups path is defunct and 404s, which
+                        # was silently leaving file_groups empty for every extension.
+                        fg_data = v3_get(f"/mods/{uid}/files", api_key)
                         file_groups = [
                             {"id": g["id"], "name": g["name"]}
-                            for g in fg_data.get("groups", [])
+                            for g in fg_data.get("mod_files", [])
                             if g.get("is_active")
                         ]
                     except RuntimeError as e:
@@ -171,6 +174,7 @@ def fetch_all(target_ids=None, dry_run=False, force=False, max_age=None):
         print(f"Daily remaining: {last_remaining}")
 
     report_groups(cache)
+    return failed
 
 
 # == Multi-group report ========================================================
@@ -240,13 +244,14 @@ def main():
     if args.prune:
         prune(dry_run=args.dry_run)
         return
-    fetch_all(
+    failed = fetch_all(
         target_ids=vu.normalize_target_ids(args.game),
         dry_run=args.dry_run,
         force=args.force,
         max_age=args.max_age,
     )
+    return 1 if failed else 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main() or 0)

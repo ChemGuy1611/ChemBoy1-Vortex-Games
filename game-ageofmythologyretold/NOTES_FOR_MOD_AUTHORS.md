@@ -8,8 +8,8 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Save Game Files | a `.mythsav` file | `util.getVortexPath('home'\USERID_FOLDER\savegames` |
-| Config | a file or folder named `game` and a file with the `.xml` extension | `util.getVortexPath('home'\USERID_FOLDER\users` |
+| Save Game Files | a `.mythsav` file | `util.getVortexPath('home')\Games\Age of Mythology Retold\USERID_FOLDER\savegames` |
+| Config | a file or folder named `game` and a file with the `.xml` extension | `util.getVortexPath('home')\Games\Age of Mythology Retold\USERID_FOLDER\users` |
 | Reshade | a file or folder named `reshade-shaders` | - |
 | Binaries | a file with one of these extensions: `.dll` or `.ini` | - |
 
@@ -23,7 +23,7 @@ Save files, deployed to the game's save folder.
 
 - Recognised by any file with the `.mythsav` extension.
 
-Installs to: `util.getVortexPath('home'\USERID_FOLDER\savegames`
+Installs to: `util.getVortexPath('home')\Games\Age of Mythology Retold\USERID_FOLDER\savegames`
 
 **Common mistakes:**
 
@@ -33,7 +33,7 @@ Installs to: `util.getVortexPath('home'\USERID_FOLDER\savegames`
 
 Recognised when the archive contains a file or folder named `game` and a file with the `.xml` extension.
 
-Installs to: `util.getVortexPath('home'\USERID_FOLDER\users`
+Installs to: `util.getVortexPath('home')\Games\Age of Mythology Retold\USERID_FOLDER\users`
 
 ## Reshade
 

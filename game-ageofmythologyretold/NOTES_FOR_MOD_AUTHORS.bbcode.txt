@@ -12,7 +12,7 @@ Save files, deployed to the game's save folder.
   Requirements:
     - Recognised by any file with the ".mythsav" extension.
 
-  Installs to: "util.getVortexPath('home'\USERID_FOLDER\savegames"
+  Installs to: "util.getVortexPath('home')\Games\Age of Mythology Retold\USERID_FOLDER\savegames"
 
   Common mistakes:
     - Including an example save alongside a normal mod makes the archive install as a save.
@@ -23,7 +23,7 @@ Config:
 
 Recognised when the archive contains a file or folder named "game" and a file with the ".xml" extension.
 
-  Installs to: "util.getVortexPath('home'\USERID_FOLDER\users"
+  Installs to: "util.getVortexPath('home')\Games\Age of Mythology Retold\USERID_FOLDER\users"
 
 ========================================================================
 

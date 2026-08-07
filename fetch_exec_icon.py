@@ -28,6 +28,7 @@ Environment variables:
 """
 
 import os
+import sys
 
 from vortex_utils import (
     iter_steam_image_targets, run_concurrent_batch,
@@ -75,6 +76,7 @@ def fetch_all(target_game_ids=None, dry_run=False, force=False,
         retry_failed_downloads(targets, failed, _download_one, concurrency, saved, skipped)
 
     print_run_summary(saved, failed, skipped)
+    return failed
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────
@@ -93,14 +95,15 @@ def main():
         help="Automatically retry failed downloads once after the main pass.",
     )
     args = parser.parse_args()
-    fetch_all(
+    failed = fetch_all(
         target_game_ids=normalize_target_ids(args.game),
         dry_run=args.dry_run,
         force=args.force,
         concurrency=args.concurrency,
         retry_failed=args.retry_failed,
     )
+    return 1 if failed else 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

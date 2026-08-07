@@ -120,7 +120,16 @@ def main():
         print("\n\n  Interrupted.")
     finally:
         vu.print_run_summary(saved, failed, [])
+    # Explicit IDs that match no extension folder used to print "Saved: 0" and exit
+    # 0, so a typo looked exactly like a successful no-op run.
+    if args.game_ids and not saved and not failed:
+        matched = {gid for _, gid, _ in vu.iter_game_folders(None)}
+        unmatched = sorted(set(args.game_ids) - matched)
+        if unmatched:
+            print(f"\n  ERROR - no extension found for: {', '.join(unmatched)}")
+            return 1
+    return 1 if failed else 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main() or 0)

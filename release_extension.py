@@ -16,14 +16,21 @@ Steps performed per game:
     8. Add resolved store IDs to DISCOVERY_IDS_ACTIVE if missing
     9. node --check on index.js (warns on syntax error; use --skip-node-check to skip)
    10. eslint on index.js (warns on lint errors; use --skip-eslint to skip)
-   11. Run generate_explained.js to regenerate EXTENSION_EXPLAINED.md
-   12. Create game-{GAME_ID}.zip with 7-Zip, excluding the repo-facing generated docs
+   11. Create game-{GAME_ID}.zip with 7-Zip, excluding the repo-facing generated docs
        (EXTENSION_EXPLAINED.md, NOTES_FOR_MOD_AUTHORS.md, NOTES_FOR_MOD_AUTHORS.bbcode.txt)
-   13. Optionally upload zip to Nexus Mods as a new file version (changelog entry as
+   12. Optionally upload zip to Nexus Mods as a new file version (changelog entry as
        description; file group resolved via v1 uid -> v3 groups, or via index.js FILE_GROUP_ID
        override when the v3 list 404s); default: skip; use --upload to enable
-   14. Open EXTENSION_URL?tab=files in browser (or nexusmods.com/games/site if not set)
-   15. Optionally open EXTENSION_URL/edit/documents (changelog editor) in browser
+   13. Open EXTENSION_URL?tab=files in browser (or nexusmods.com/games/site if not set)
+   14. Optionally open EXTENSION_URL/edit/documents (changelog editor) in browser
+
+Once per run, after every game has been processed:
+    Run generate_explained.js over the games that released successfully, in a single
+    Node invocation, to regenerate their EXTENSION_EXPLAINED.md. This runs after the
+    per-game steps because step 7 rewrites the index.js header and step 8 updates
+    DISCOVERY_IDS_ACTIVE -- generating earlier would document the previous release.
+    The doc is repo-only, so regenerating it after the zip is written is harmless.
+    Skipped entirely with --dry-run.
 
 Usage:
     python release_extension.py GAME_ID [GAME_ID ...]
@@ -100,14 +107,18 @@ def update_version_txt(folder, game_id, version, dry_run=False):
         log_warn(game_id, "no version .txt file found in folder")
         return
 
-    renamed = False
+    # `renamed` also starts true when the correctly-named file is already present, so a
+    # stale sibling (e.g. 1.0.0.txt left over beside 1.1.0.txt) is reported and skipped
+    # rather than renamed on top of it -- os.rename onto an existing path raises
+    # FileExistsError on Windows, which would fail the whole release for that game.
+    renamed = expected in existing
     for txt_file in existing:
         if txt_file == expected:
             log_info(game_id, f"Version .txt already correct: {txt_file}")
-        elif dry_run:
-            log_info(game_id, f"[DRY RUN] Would rename: {txt_file} -> {expected}")
         elif renamed:
             log_warn(game_id, f"extra version .txt found and skipped: {txt_file}")
+        elif dry_run:
+            log_info(game_id, f"[DRY RUN] Would rename: {txt_file} -> {expected}")
         else:
             os.rename(os.path.join(folder, txt_file), os.path.join(folder, expected))
             log_info(game_id, f"Renamed: {txt_file} -> {expected}")
@@ -407,17 +418,6 @@ def main():
     dry_label = " [DRY RUN]" if args.dry_run else ""
     print(f"Releasing {len(args.game)} extension(s){dry_label}...\n")
 
-    # Batch generate_explained for all valid game folders in a single Node invocation.
-    if not args.dry_run:
-        batch_ids = [gid for gid in args.game if os.path.isdir(os.path.join(REPO_ROOT, f"game-{gid}"))]
-        if batch_ids:
-            n = len(batch_ids)
-            label = f"{n} games" if n > 1 else "1 game"
-            print(f"  Generating EXTENSION_EXPLAINED.md ({label})...")
-            ok, err = run_generate_explained_batch(batch_ids)
-            if not ok:
-                print(f"  WARNING - generate_explained.js batch failed: {err}")
-
     saved = []
     failed = []
     details = {}
@@ -453,10 +453,23 @@ def main():
     except KeyboardInterrupt:
         print("\n\n  Interrupted.")
     finally:
+        # Regenerate EXTENSION_EXPLAINED.md AFTER the release loop, for the games that
+        # actually released. release() rewrites the index.js header (Version, Date) and
+        # DISCOVERY_IDS_ACTIVE, so generating beforehand documented the previous release.
+        # Safe to run after zipping: the doc is repo-only and is in ZIP_EXCLUDES.
+        if not args.dry_run and saved:
+            n = len(saved)
+            label = f"{n} games" if n > 1 else "1 game"
+            print(f"\n  Generating EXTENSION_EXPLAINED.md ({label})...")
+            ok, err = run_generate_explained_batch(saved)
+            if not ok:
+                print(f"  WARNING - generate_explained.js batch failed: {err}")
+
         print_run_summary(saved, failed, skipped=[])
         if not args.dry_run:
             _print_per_game_summary(details)
+    return 1 if failed else 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main() or 0)

@@ -8,16 +8,17 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Mod | a file or folder named `mod.cfg`, a file or folder named one of: `mod.manifest` and a file or folder named one of: `data`, `localization` or `engine` | - |
+| Mod | a file or folder named `mod.cfg`, a file or folder named one of: `mod.manifest` and a file or folder named one of: `data`, `localization`, `engine` or `KCSE` | - |
 | Root / Game Folder Mods | a `bin` folder | the game folder itself (no subfolder) |
 | Cfg | a file with the `.cfg` extension | - |
 | Binaries | a file with the `.dll` extension and a file with the `.exe` extension | - |
+| Fallback Installer | anything not matched above | - |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 
 ## Mod
 
-Recognised when the archive contains a file or folder named `mod.cfg`, a file or folder named one of: `mod.manifest` and a file or folder named one of: `data`, `localization` or `engine`.
+Recognised when the archive contains a file or folder named `mod.cfg`, a file or folder named one of: `mod.manifest` and a file or folder named one of: `data`, `localization`, `engine` or `KCSE`.
 
 ## Root / Game Folder Mods
 
@@ -31,7 +32,7 @@ MyRootMod.zip
 
 **Requirements:**
 
-- Recognised by a folder named `bin` in the archive.
+- Recognised by a folder named `bin` or `KCSE` in the archive.
 
 Installs to: the game folder itself (no subfolder)
 
@@ -46,6 +47,21 @@ Recognised when the archive contains a file with the `.cfg` extension.
 ## Binaries
 
 Recognised when the archive contains a file with the `.dll` extension and a file with the `.exe` extension.
+
+## Fallback Installer
+
+The catch-all. Any archive that matched none of the installers above lands here and is copied across unchanged.
+
+> **NOTE:** Landing in the fallback installer is a signal your archive layout needs fixing.
+
+**Requirements:**
+
+- Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
+- Vortex shows the user a notification when a mod installs through the fallback.
+
+**Common mistakes:**
+
+- If your mod lands here unintentionally, re-check the layouts above - users will see a fallback warning and may report the mod as broken.
 
 ## Rules That Apply To Every Mod Type
 

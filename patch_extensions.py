@@ -38,13 +38,13 @@ import sys
 from vortex_utils import (
     REPO_ROOT, TITLE_IMAGES_DIR,
     lookup_pcgamingwiki, extract_game_name,
-    REGISTER_ACTIONS, run_generate_explained, run_generate_explained_batch,
+    run_generate_explained_batch,
     fetch_epic_app_id, add_to_discovery_ids,
     const_value, is_unset, is_missing, set_or_insert,
     inject_register_actions, find_fn_body,
-    list_game_ids, write_index_js, resize_images_to, log_info, log_warn,
+    list_game_ids, write_index_js, resize_images_to, log_info, log_warn, log_error,
     load_vortex_manifest, resize_pngs_in_dirs,
-    is_placeholder_value, replace_const_rhs, print_count_summary,
+    is_placeholder_value, replace_const_rhs, print_count_summary, js_string_literal,
 )
 MANIFEST_PATH = os.environ.get("VORTEX_MANIFEST_PATH", os.path.join(os.environ.get("APPDATA", ""), "Vortex", "temp", "extensions-manifest.json"))
 NEXUS_SITE_BASE = "https://www.nexusmods.com/site/mods"
@@ -220,8 +220,7 @@ def patch_game_name(game_id, src, context):
     if not name:
         return src, False, "could not extract game name from source"
 
-    escaped = name.replace("\\", "\\\\").replace('"', '\\"')
-    new_line = f'const GAME_NAME = "{escaped}";'
+    new_line = f'const GAME_NAME = {js_string_literal(name)};'
 
     # Insert immediately after the GAME_ID line
     m = re.search(r'^((?:const|let)\s+GAME_ID\s*=\s*[^\n]+)', src, re.MULTILINE)

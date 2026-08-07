@@ -17,17 +17,17 @@ Recognised when the archive contains a file or folder named "kml.asi".
 
 ========================================================================
 
+Magicrdr:
+
+Handled by the "testMagic" installer. Inspect the extension source for the exact archive layout it expects.
+
+========================================================================
+
 Magicmod:
 
 Recognised when the archive contains a file with one of these extensions: ".wtd", ".was", ".dds", ".mtl" or ".wsc".
 
   Installs to: "MagicRDR_Mods"
-
-========================================================================
-
-Magicrdr:
-
-Recognised when the archive contains a file or folder named "MagicRDR.exe".
 
 ========================================================================
 

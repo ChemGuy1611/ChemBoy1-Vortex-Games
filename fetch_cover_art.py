@@ -3,7 +3,9 @@
 fetch_cover_art.py
 ------------------
 Finds all game-* extension folders missing their {GAME_ID}.jpg cover art and
-downloads it from SteamGridDB (heroes) or Steam library_hero.jpg.
+downloads it, trying in order: SteamGridDB 920x430 grids (no_logo style only),
+then SteamGridDB heroes, then Steam library_hero.jpg. Every source is
+title-free; art with baked-in title text is never used.
 
 With --title, fetches {GAME_ID}_title.jpg (1920x1080, with title text) to
 resources/title-images/ instead of the usual cover art.
@@ -43,6 +45,7 @@ Environment variables:
 """
 
 import os
+import sys
 
 from vortex_utils import (
     TITLE_IMAGES_DIR, BANNER_IMAGES_DIR,
@@ -76,7 +79,7 @@ def fetch_all(target_game_ids=None, dry_run=False, force=False, mode="cover",
                 print("No SteamGridDB API key -- title images will fall back to Steam capsule art.")
     else:
         if not dry_run and sgdb_key:
-            print("SteamGridDB API key found -- will try heroes first.")
+            print("SteamGridDB API key found -- will try no_logo grids, then heroes.")
         elif not dry_run:
             print("No SteamGridDB API key -- will use Steam library_hero.jpg.")
 
@@ -155,6 +158,7 @@ def fetch_all(target_game_ids=None, dry_run=False, force=False, mode="cover",
         retry_failed_downloads(targets, failed, _download_one, concurrency, saved, skipped)
 
     print_run_summary(saved, failed, skipped)
+    return failed
 
 
 # ── Entry point ───────────────────────────────────────────────────────────────
@@ -185,7 +189,7 @@ def main():
     )
     args = parser.parse_args()
     mode = "title" if args.title else "banner" if args.banner else "cover"
-    fetch_all(
+    failed = fetch_all(
         target_game_ids=normalize_target_ids(args.game),
         dry_run=args.dry_run,
         force=args.force,
@@ -193,7 +197,8 @@ def main():
         concurrency=args.concurrency,
         retry_failed=args.retry_failed,
     )
+    return 1 if failed else 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

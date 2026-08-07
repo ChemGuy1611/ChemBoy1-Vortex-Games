@@ -59,19 +59,26 @@ _DEFAULT_LOG_FALLBACK = os.path.join(
     os.environ.get("APPDATA", ""), "Vortex", "vortex.log"
 )
 
-_ENTRY_RE     = re.compile(r"^\d{4}-\d{2}-\d{2}T\S+(?:Z|[+-]\d{2}:?\d{2}) \[(DEBG|INFO|WARN|ERROR)\] ")
+# Vortex writes four-character level tokens: DEBG, INFO, WARN, ERRO. "ERROR" is
+# accepted as well so a future change to the log format does not silently drop
+# entries -- both spellings normalize to the internal ERRO token via _CANON_TOKEN.
+_ENTRY_RE     = re.compile(r"^\d{4}-\d{2}-\d{2}T\S+(?:Z|[+-]\d{2}:?\d{2}) \[(DEBG|INFO|WARN|ERRO|ERROR)\] ")
 _ANY_LEVEL_RE = re.compile(r"^\d{4}-\d{2}-\d{2}T\S+(?:Z|[+-]\d{2}:?\d{2}) \[([A-Z]+)\] ")
 _HOUR_RE      = re.compile(r"^(\d{4}-\d{2}-\d{2})T(\d{2}):")
 _TS_RE        = re.compile(r"^(\d{4}-\d{2}-\d{2})T(\d{2}):(\d{2}):(\d{2})")
 
+# Maps a captured log token to the canonical internal token.
+_CANON_TOKEN = {"ERROR": "ERRO"}
+
+# User-facing --levels spellings -> internal token.
 _USER_TO_TOKEN = {
     "DEBUG": "DEBG",
     "INFO":  "INFO",
     "WARN":  "WARN",
-    "ERROR": "ERROR",
+    "ERROR": "ERRO",
 }
-_DISPLAY_ORDER = ["ERROR", "WARN", "INFO", "DEBG", "OTHER"]
-_DISPLAY_LABEL = {"DEBG": "DEBUG", "INFO": "INFO", "WARN": "WARN", "ERROR": "ERROR", "OTHER": "OTHER"}
+_DISPLAY_ORDER = ["ERRO", "WARN", "INFO", "DEBG", "OTHER"]
+_DISPLAY_LABEL = {"DEBG": "DEBUG", "INFO": "INFO", "WARN": "WARN", "ERRO": "ERROR", "OTHER": "OTHER"}
 
 _SEP = "=" * 80
 
@@ -215,7 +222,8 @@ def _parse_log(
             if m:
                 _flush()
                 current_lines = [line]
-                current_level = m.group(1)
+                token = m.group(1)
+                current_level = _CANON_TOKEN.get(token, token)
                 current_is_other = False
             else:
                 # Catch-all: line that starts with a timestamp + unknown level token
@@ -269,8 +277,10 @@ def _build_output(
 
     parts.append("\n")
 
-    # per-severity sections
-    for tok in [t for t in _DISPLAY_ORDER if t in selected]:
+    # Per-severity sections. OTHER is always emitted when non-empty: it holds any
+    # entry whose level token this script does not recognize, and dropping it would
+    # hide exactly the entries most worth seeing.
+    for tok in [t for t in _DISPLAY_ORDER if t in selected or t == "OTHER"]:
         entries = buckets[tok]
         if not entries:
             continue
