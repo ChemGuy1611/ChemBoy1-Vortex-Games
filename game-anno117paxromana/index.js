@@ -2,8 +2,8 @@
 Name: Anno 117: Pax Romana Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2025-11-13
+Version: 0.1.1
+Date: 2026-08-11
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -21,12 +21,12 @@ const DOCUMENTS = util.getVortexPath("documents");
 const GAME_ID = "anno117paxromana";
 const STEAMAPP_ID = "3274580";
 const STEAMAPP_ID_DEMO = "XXX";
-const EPICAPP_ID = null;
+const EPICAPP_ID = "feeef62ced99452d87cf9cd14ced4030";
 const GOGAPP_ID = null;
 const UPLAYAPP_ID = "XXX";
 const XBOXAPP_ID = null;
 const XBOXEXECNAME = null;
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 const GAME_NAME = "Anno 117: Pax Romana";
 const GAME_NAME_SHORT = "Anno 117 PR";
 const BINARIES_PATH = path.join('Bin', 'Win64');

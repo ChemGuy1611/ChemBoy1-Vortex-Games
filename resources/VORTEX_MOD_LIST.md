@@ -23,6 +23,14 @@ newModsWithState[modId] = {
 
 Finished-but-not-installed downloads for the active game are also synthesized into pseudo-mod rows (`state: "downloaded"`) so archives appear before install.
 
+**Displayed name:** the `name` column does not read `attributes.name` directly. `modNameFromAttributes` (`mod_management/util/modName.ts`) takes the first non-empty of:
+
+```text
+attributes.customFileName || attributes.logicalFileName || attributes.fileName || attributes.name
+```
+
+falling back to `mod.installationPath` when all four are empty. `fileName` is stamped by the install pipeline with the archive the mod came from, and it outranks `name` — so a mod whose extension set only `attributes.name` still displays as `SomeArchive_v1.2.3.zip`. Anything that wants a specific display name must set `customFileName`, which is also what the user edits when renaming a row in the UI. `renderModReference` reuses the same function, so mod rules and collection rows show the same name. (This is why the downloader modules stamp `customFileName` from their requirement's `userFacingName` — see `DOWNLOADER.md`.)
+
 **Row grouping (variants):** mods sharing the same logical identity (matched by `modId`/`collectionSlug`, then `newestFileId`/`logicalFileName`) are collapsed into a single row via `groupMods()` (`util/modGrouping.ts`) — this produces `primaryMods`, the actual `data` passed to the table. Other installed versions of the same mod are reachable through the Version column's dropdown, not as separate rows. This is a different mechanism from the generic table's column-based `isGroupable` grouping (see below).
 
 ---
@@ -107,4 +115,4 @@ Any other `tableId` (downloads table, plugins table, etc.) is a fully independen
 
 ## See also
 
-`VORTEX_APP.md` (repo/app overview, runtime subsystem index) · `REGISTER_ACTION.md` (`mod-icons`/`mod-context-icons`/`mods-multirow-actions` groups render on this table's toolbar and row context menus) · `STATE_HELPERS.md` (`getSafe` used throughout ModList's calc/filter code).
+`VORTEX_APP.md` (repo/app overview, runtime subsystem index) · `REGISTER_ACTION.md` (`mod-icons`/`mod-context-icons`/`mods-multirow-actions` groups render on this table's toolbar and row context menus) · `STATE_HELPERS.md` (`getSafe` used throughout ModList's calc/filter code) · `DOWNLOADER.md` (requirement mods stamp `customFileName` so they show their readable name here instead of their archive name).

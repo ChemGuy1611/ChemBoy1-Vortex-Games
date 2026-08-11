@@ -287,15 +287,27 @@ in `index.js`), each describing one Thunderstore-hosted requirement:
 | `tsNamespace` | yes | Team/uploader, the first path segment of the package page (`SGG_Modding`). |
 | `tsName` | yes | Package name, the second path segment (`ENVY`). |
 | `modType` | yes | Vortex mod type id the requirement installs as; also the installed-detection key (any mod with this type counts as installed). |
-| `userFacingName` | yes | Display name in notifications and on the download. |
+| `userFacingName` | yes | Display name in notifications, on the download, and in the mod list (stamped as the mod's `customFileName`). |
 | `tsCommunity` | optional | Community slug (`hades-ii`). With it, the community listing endpoint is used, which also reports size, deprecation, and resolved dependencies. Without it — or when the package is not listed in that community — resolution falls back to the community-independent package endpoint. |
 | `fallbackVersion` | optional | Version used to build a download URL when the API is unreachable, and recorded as the version attribute. Without it, an unreachable API fails the install with a manual-download error. |
 | `versionAttribute` | optional | Mod attribute tracking the installed version for update checks. Default `'thunderstoreVersion'`. |
 | `pageUrl` | optional | Manual-download page opened on install failure. Default is the community package page when `tsCommunity` is set, the bare package page otherwise. |
 | `autoInstall` | optional | `false` -> never install this requirement unattended; only an explicit user action (a toolbar button) installs it. Default installs a missing requirement automatically when the update check runs. |
 
+| `pinVersion` | optional | Hold the requirement at this package version instead of tracking the newest. Needs no companion field — every version has a predictable download URL. See **Version pinning** below. |
+
 There is no `fileType`, `filePattern`, or `versionPattern` equivalent: a Thunderstore version has
 exactly one artifact, always a `.zip`.
+
+### Version pinning
+
+`pinVersion` holds the requirement at one package version instead of following the newest one. It is opt-in and unset by default. This is the simplest of the five modules to pin, because `thunderstore.io/package/download/{namespace}/{name}/{version}/` is fully predictable — no companion `pinFileId` is needed.
+
+While the tracked `thunderstoreVersion` equals the pin, `checkForThunderstoreUpdate` returns **before making any request** — a pinned requirement costs nothing against the API. The comparison is exact-string first, falling back to coerced-semver equality so `1.2` and `1.2.0` match. A pinned install skips the API too, building the download URL directly.
+
+When the installed version is not the pinned one — including when nothing is installed — the module installs the *pinned* version, never the newest. The notification reads "pinned version available" rather than "update available", because the user may be *ahead* of the pin and installing it is then a deliberate downgrade. `autoInstall` stays orthogonal: the pin says which version, `autoInstall` says whether anything installs unattended. Since a pinned install makes no API call, a pinned requirement also logs no dependency list — pin each dependency's own requirement entry alongside it.
+
+The same field name and behavior exist in all five downloader modules; `DOWNLOADER.md` has the cross-module table.
 
 ### Exports
 
@@ -312,6 +324,11 @@ exactly one artifact, always a `.zip`.
 
 ### Behaviors worth knowing
 
+- **The mod list shows `userFacingName`, not the archive name.** Vortex renders a mod as
+  `customFileName || logicalFileName || fileName || name`, and the install pipeline stamps
+  `fileName` with the downloaded archive (`Namespace-Name-Version.zip`) — so the install also
+  stamps `customFileName` from `userFacingName`. Written at install only, so it cannot overwrite a
+  name the user set afterwards. Rendering rule: `VORTEX_MOD_LIST.md`.
 - **Two resolution routes, one shape.** With `tsCommunity` set the module reads
   `/api/cyberstorm/listing/{community}/{namespace}/{name}/`; without it — or if that call fails —
   it reads `/api/experimental/package/{namespace}/{name}/`. The two endpoints describe dependencies

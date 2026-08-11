@@ -48,7 +48,7 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `extract_game_name(src)` | Extract `GAME_NAME` value from `index.js` source |
 | `roman_to_arabic(name)` | Convert Roman numeral words to Arabic digits in a game title |
 | `arabic_to_roman(name)` | Convert Arabic digit words to Roman numerals in a game title |
-| `name_lookup_variants(name)` | Generate name variants for PCGamingWiki lookups (title-case, numeral alternates, edition suffix stripping) |
+| `name_lookup_variants(name)` | Generate name variants for PCGamingWiki and Nexus Mods title lookups (title-case, numeral alternates, edition suffix stripping, franchise prefix stripping — `Tom Clancy's Ghost Recon Wildlands` also yields `Ghost Recon Wildlands`). Ordered original-first, loosest-last, so callers taking the first hit prefer an exact match. `_TITLE_PREFIXES` currently holds `Tom Clancy's` only; further prefixes (`Sid Meier's`, `Disney's`, `Marvel's`, …) sit commented out in the list, to be enabled once confirmed against the Nexus game list |
 | `lookup_pcgamingwiki(name, debug)` | Search PCGamingWiki for a game, returns `(page_url, page_title)` with session caching |
 | `pcgw_get_json(url)` | Fetch a PCGamingWiki `api.php` URL as parsed JSON, sending `PCGW_USER_AGENT`. Use for every PCGW request instead of `http_get_json`. |
 | `get_api_key(key_name)` | Load an API key from env var with Windows registry fallback (HKCU, then HKLM) |
@@ -56,7 +56,10 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `http_get_bytes(url, headers)` | Fetch a URL and return raw bytes. Same retry behaviour as `http_get`. |
 | `http_get_json(url, headers)` | Fetch a URL and return the parsed JSON body. Same retry behaviour as `http_get`. |
 | `http_post_json(url, data, headers)` | POST a JSON-serializable dict to a URL and return parsed JSON response. Same retry behaviour as `http_get`. |
-| `fetch_epic_app_id(game_name)` | Resolve `EPICAPP_ID` for a game via egdata.app (POST search -> GET offer items -> EXECUTABLE item's `releaseInfo.appId`) |
+| `egdata_search_queries(game_name)` | Ordered title strings to try against egdata's `/search`: every `name_lookup_variants()` alternate, each also offered with apostrophes replaced by a space. egdata returns zero results for any query containing an apostrophe (straight or curly), even when the indexed title has one. |
+| `normalize_title_for_match(title)` | Fold a title to bare lowercase words — drops `®`/`™`, apostrophes and all other punctuation — so store and game spellings compare equal. |
+| `egdata_title_matches(game_name, offer_title)` | True if an egdata offer title plausibly names the same game. Compares against every `name_lookup_variants()` alternate, accepts containment in either direction (store titles carry edition suffixes) or a `difflib` ratio >= 0.85. Needed because egdata's fuzzy search returns unrelated titles for loose queries (`Gate 3` -> `Realpolitiks 3: Earth and Beyond`). |
+| `fetch_epic_app_id(game_name)` | Resolve `EPICAPP_ID` for a game via egdata.app (POST search -> GET offer items -> EXECUTABLE item's `releaseInfo.appId`). Tries each `egdata_search_queries()` title in turn and takes the first result that passes `egdata_title_matches()`. |
 | `add_to_discovery_ids(src)` | Add `STEAMAPP_ID_DEMO`, `GOGAPP_ID`, `EPICAPP_ID`, `XBOXAPP_ID`, `UPLAYAPP_ID`, and `EAAPP_ID` to `DISCOVERY_IDS_ACTIVE` if each has a real resolved value in src (not null, `''`, or `'XXX'`) and is not already present. |
 | `log_info(game_id, msg)` | Print `[game_id] msg` |
 | `log_error(game_id, msg)` | Print `[game_id] ERROR - msg` |
@@ -130,6 +133,7 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `write_id_list(filepath, game_ids)` | Write a sorted list of IDs to a file, one per line |
 | `is_load_order_game(src)` | Return `True` if `src` calls `registerLoadOrder` and is not a UE4/5 extension |
 | `has_downloader_js(folder)` | Return `True` if the extension `folder` contains a bundled `downloader.js` module |
+| `has_bepinexbe_downloader_js(folder)` | Return `True` if the extension `folder` contains a bundled `bepinexbe_downloader.js` module |
 | `has_gamebanana_downloader_js(folder)` | Return `True` if the extension `folder` contains a bundled `gamebanana_downloader.js` module |
 | `has_moddb_downloader_js(folder)` | Return `True` if the extension `folder` contains a bundled `moddb_downloader.js` module |
 | `has_modworkshop_downloader_js(folder)` | Return `True` if the extension `folder` contains a bundled `modworkshop_downloader.js` module |
@@ -584,7 +588,7 @@ python new_extension.py unitymelonloaderbepinex-hybrid "The Long Dark" --force
 
 | Field | Source |
 | --- | --- |
-| `GAME_ID` | Nexus Mods domain name (`NEXUS_API_KEY` required); falls back to derived name (lowercase, alphanumeric) |
+| `GAME_ID` | Nexus Mods domain name (`NEXUS_API_KEY` required); falls back to a name derived from the game name. Never contains hyphens or spaces — lowercase letters and digits only (`FIFA 24` -> `fifa24`). If the Nexus domain itself contains a hyphen, it is stripped and the script warns to add a `nexusPageId` entry to `spec.game.details` |
 | `GAME_NAME` | Steam Store canonical name |
 | `GAME_NAME_SHORT` | Steam name with subtitle stripped at `:` |
 | `STEAMAPP_ID` | Steam search or direct App ID input |
@@ -885,6 +889,7 @@ The engine categories above are mutually exclusive (one per game). The lists bel
 | --- | --- |
 | `resources/lists/games-loadorder.txt` | Non-UE4/5 games that call `context.registerLoadOrder` |
 | `resources/lists/games-downloader.txt` | Games with a bundled `downloader.js` module |
+| `resources/lists/games-downloader-bepinexbe.txt` | Games with a bundled `bepinexbe_downloader.js` module (BepInEx bleeding-edge builds) |
 | `resources/lists/games-downloader-gamebanana.txt` | Games with a bundled `gamebanana_downloader.js` module |
 | `resources/lists/games-downloader-moddb.txt` | Games with a bundled `moddb_downloader.js` module |
 | `resources/lists/games-downloader-modworkshop.txt` | Games with a bundled `modworkshop_downloader.js` module |
@@ -895,9 +900,9 @@ The engine categories above are mutually exclusive (one per game). The lists bel
 
 ### categorize_games.py — Detection
 
-Each game is matched against the engine categories in order — the first match wins. Detection uses the `Structure:` comment on line 3 of `index.js` as the primary signal, with fallback checks for unique code markers such as `const UNREALDATA =`, `const ATK_ID =`, `context.requireExtension('modtype-bepinex')`, etc. The flag lists are computed separately via dedicated predicates (`is_load_order_game`, `has_downloader_js`, `has_gamebanana_downloader_js`, `has_moddb_downloader_js`, `has_modworkshop_downloader_js`, `github_download_enabled`, `requires_unreal_mod_installer`, `has_ue4ss_load_order_parity`, `is_unreleased_extension`) in `vortex_utils.py`. The parity predicate keys off the `Ue4ssContextMenu` component, which only exists in games that took the whole load-order region (PAK + custom UE4SS + LogicMods pages) from `template-ue4-5`.
+Each game is matched against the engine categories in order — the first match wins. Detection uses the `Structure:` comment on line 3 of `index.js` as the primary signal, with fallback checks for unique code markers such as `const UNREALDATA =`, `const ATK_ID =`, `context.requireExtension('modtype-bepinex')`, etc. The flag lists are computed separately via dedicated predicates (`is_load_order_game`, `has_downloader_js`, `has_bepinexbe_downloader_js`, `has_gamebanana_downloader_js`, `has_moddb_downloader_js`, `has_modworkshop_downloader_js`, `github_download_enabled`, `requires_unreal_mod_installer`, `has_ue4ss_load_order_parity`, `is_unreleased_extension`) in `vortex_utils.py`. The parity predicate keys off the `Ue4ssContextMenu` component, which only exists in games that took the whole load-order region (PAK + custom UE4SS + LogicMods pages) from `template-ue4-5`.
 
-GitHub is the only host with an inline-download list. GameBanana, ModDB, and ModWorkshop are tracked solely by their `games-downloader-*.txt` module lists: every extension fetching a requirement from those hosts carries the matching downloader module, so the module list is the complete list. A bare host URL left in an extension is a browse link behind an `Open <host> Page` button, which was never counted as a download.
+GitHub is the only host with an inline-download list. GameBanana, ModDB, ModWorkshop, and builds.bepinex.dev are tracked solely by their `games-downloader-*.txt` module lists: every extension fetching a requirement from those hosts carries the matching downloader module, so the module list is the complete list. A bare host URL left in an extension is a browse link behind an `Open <host> Page` button, which was never counted as a download.
 
 `games-github.txt` applies three extra filters the other flag lists do not.
 
@@ -961,6 +966,8 @@ python port_to_template.py dragonsdogma2 reframework-fluffy
 | `IGNORE_CONFLICTS` / `IGNORE_DEPLOY` | Game has different values | Substitute game's array literal |
 | Boolean toggles | Always | Left at template defaults |
 | Not found in game | — | Left at template default (listed as skipped) |
+
+A trailing `//` comment on a declaration is preserved, and a `//` inside the value itself (a URL such as `"https://www.pcgamingwiki.com/wiki/Foo"`) is not mistaken for one — the comment split is quote-aware rather than regex-only.
 
 Game constants that have no mapping in the template are printed as **manual review** items.
 

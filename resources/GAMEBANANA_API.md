@@ -165,7 +165,7 @@ The entry points take an array of requirement objects (conventionally a `GB_REQU
 | `gbItemType` | yes | apiv11 model name in URL paths: `'Tool'`, `'Mod'`, `'Sound'`, ... |
 | `gbItemId` | yes | GameBanana item id (e.g. `'7475'` from `gamebanana.com/tools/7475`). |
 | `modType` | yes | Vortex mod type id the requirement installs as; also the installed-detection key (any mod with this type counts as installed). |
-| `userFacingName` | yes | Display name in notifications and on the download. |
+| `userFacingName` | yes | Display name in notifications, on the download, and in the mod list (stamped as the mod's `customFileName`). |
 | `fileNamePattern` | optional | RegExp tested against `_aFiles[]._sFile`, narrowing multi-file submissions (e.g. Windows/Linux variants) to this requirement's file. Default: the newest file. |
 | `fallbackVersion` | optional | Version attribute to record when the API is unreachable. |
 | `fallbackFileId` | optional | File id used to build a `https://gamebanana.com/dl/{fileId}` fallback link when the API is unreachable. Without it, an unreachable API fails the install with a manual-download error. |
@@ -173,6 +173,16 @@ The entry points take an array of requirement objects (conventionally a `GB_REQU
 | `versionPattern` | optional | RegExp whose capture group 1 is the version, run against the latest Updates title. Default `/\(Update\s+(.+?)\)/` (matches titles like `"2026-05-20 (Update 6.66 Rev 3 N)"`). |
 | `pageUrl` | optional | Manual-download page opened on install failure. Default derived from `gbItemType`/`gbItemId` (e.g. `https://gamebanana.com/tools/7475`). |
 | `autoInstall` | optional | `false` -> never install this requirement unattended; only an explicit user action (a toolbar button) installs it. Default installs a missing requirement automatically when the update check runs. |
+| `pinVersion` | optional | Hold the requirement at this submission version instead of tracking the newest file. Requires `pinFileId`; without it the pin is ignored with a warning. See **Version pinning** below. |
+| `pinFileId` | with `pinVersion` | The file id to install for the pinned version — the API has no version-to-file lookup, so the pin cannot be resolved without it. |
+
+### Version pinning
+
+`pinVersion` + `pinFileId` hold the requirement at one file instead of following the newest one. It is opt-in and unset by default. While the tracked `gamebananaFileId` equals `pinFileId`, `checkForGameBananaUpdate` returns **before making any request** — a pinned requirement costs nothing against the API. A pinned install skips the API entirely as well, since `https://gamebanana.com/dl/{fileId}` is a complete download URL on its own.
+
+When the installed file is not the pinned one — including when nothing is installed — the module resolves the *pinned* file, never the newest. The notification reads "pinned version available" rather than "update available", because the user may be *ahead* of the pin and installing it is then a deliberate downgrade. `autoInstall` stays orthogonal: the pin says which file, `autoInstall` says whether anything installs unattended.
+
+The same field name and behavior exist in all five downloader modules; `DOWNLOADER.md` has the cross-module table.
 
 ### Exports
 
@@ -189,6 +199,7 @@ The entry points take an array of requirement objects (conventionally a `GB_REQU
 ### Behaviors worth knowing
 
 - **Source attribution.** A successful install sets the mod's `source` attribute to `'website'` and `url` to `pageUrl(requirement)` (the GameBanana item page) — Vortex renders this as a clickable "Source" link in the mod details panel.
+- **The mod list shows `userFacingName`, not the archive name.** Vortex renders a mod as `customFileName || logicalFileName || fileName || name`, and the install pipeline stamps `fileName` with the downloaded archive — so the install also stamps `customFileName` from `userFacingName`. Written at install only, so it cannot overwrite a name the user set afterwards. Rendering rule: `VORTEX_MOD_LIST.md`.
 - **API-unreachable fallback.** Both API helpers return `null` on failure. The installer then falls back to `fallbackFileId`/`fallbackVersion`; the update check silently skips (nothing to compare against).
 - **No silent auto-update.** `checkForGameBananaUpdate` only notifies; the user-driven Download action performs the update via `downloadGameBananaRequirement(..., false)`.
 - **Overlap guard.** A requirement whose install is already running is skipped (e.g. double-clicked toolbar action), keyed by mod type.

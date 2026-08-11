@@ -51,7 +51,8 @@ const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Trepang2";
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/981"; //Nexus link to this extension. Used for links
 
 //feature toggles
-const hasXbox = true; //toggle for Xbox version logic.
+let hasXbox = true; //toggle for Xbox version logic.
+if (DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID)) hasXbox = true;
 let multiExe = false; //toggle for multiple executables (Epic/GOG/Demo don't match Steam)
 if ( (EXEC !== EXEC_EPIC) || (EXEC !== EXEC_GOG) || (EXEC !== EXEC_DEMO) ) {
   multiExe = true;
@@ -60,7 +61,7 @@ const setupNotification = false; //enable to show the user a notification with s
 const hasModKit = false; //toggle for UE ModKit mod support
 const hasServer = false; //toggle for server pak mod logic
 const preferHardlinks = true; //set true to perform partition checks when IO-STORE=false for Config/Save modtypes so that hardlinks available to more users
-const autoDownloadUe4ss = false; //toggle for auto downloading UE4SS
+const autoDownloadUe4ss = false; //toggle for auto downloading UE4SS (only applies when ue4ssLoadOrder is enabled)
 const writeEngineVersion = false; //toggle to write ENGINE_VERSION into UE4SS-settings.ini (EngineVersionOverride) on deploy, when UE4SS is installed
 const SIGBYPASS_REQUIRED = false; //set true if there are .sig files in the Paks folder
 const IO_STORE = false; //true if the Paks folder contains .ucas and .utoc files
@@ -87,7 +88,7 @@ const FBLO = true; //set to false to use legacy load order page
 const LO_IMAGE_WIDTH = 96; //Width of the load order thumbnail image
 const SPECIAL_LO_INSTRUCTIONS = ''; //Show special load order instructions
 const PAKMOD_EXTRA_EXTS = []; //extra extensions to include with paks (usually for custom modding frameworks, i.e .toml, .json)
-const ue4ssLoadOrder = true; //enable load order and mods.txt writing for UE4SS mods
+const ue4ssLoadOrder = true; //master toggle for UE4SS support: UE4SS/Scripts/DLL/LogicMods mod types and installers, UE4SS buttons, load order page, and mods.txt writing
 const logicModsLoadOrder = true; //enable load order page and load_order.txt writing for LogicMods/Blueprint pak mods
 const collectionsLoadOrder = true; //include UE4SS and LogicMods load orders in collections (ANDed with the toggles above)
 const UE4SS_PAGE_NO = 0; //set these if there is a customized UE4SS Nexus page
@@ -321,7 +322,10 @@ const PARAMETERS = [PARAMETERS_STRING];
 
 const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
-let MODTYPE_FOLDERS = [path.join(LOGICMODS_PATH, LOGICMODS_FOLDER), PAK_PATH, PAK_ALT_PATH];
+let MODTYPE_FOLDERS = [PAK_PATH, PAK_ALT_PATH];
+if (ue4ssLoadOrder) { //LogicMods are only loaded when UE4SS's BPModLoaderMod is present
+  MODTYPE_FOLDERS.push(path.join(LOGICMODS_PATH, LOGICMODS_FOLDER));
+}
 if (hasModKit) {
   MODTYPE_FOLDERS.push(MODKITMOD_PATH);
 }
@@ -398,6 +402,10 @@ const spec = {
     "names": []
   }
 };
+
+if (!ue4ssLoadOrder) { //LogicMods are blueprint paks loaded by UE4SS's BPModLoaderMod, so they need UE4SS
+  spec.modTypes = spec.modTypes.filter(type => type.id !== LOGICMODS_ID);
+}
 
 if (hasModKit) {
   spec.modTypes.push({
@@ -2441,7 +2449,7 @@ async function setup(discovery, api, gameSpec) {
       await fs.ensureDirWritableAsync(SAVE_PATH);
     }
   }
-  if (autoDownloadUe4ss) {
+  if (ue4ssLoadOrder && autoDownloadUe4ss) {
     if (UE4SS_PAGE_NO !== 0) {
       await downloadUe4ssNexus(api, gameSpec);
     } else {
@@ -2451,9 +2459,11 @@ async function setup(discovery, api, gameSpec) {
   if (SIGBYPASS_REQUIRED === true) {
     await downloadSigBypass(api, gameSpec);
   }
-  MODTYPE_FOLDERS.push(SCRIPTS_PATH);
-  if (logicModsLoadOrder) {
-    MODTYPE_FOLDERS.push(path.join(SCRIPTS_PATH, BPML_FOLDER));
+  if (ue4ssLoadOrder) {
+    MODTYPE_FOLDERS.push(SCRIPTS_PATH);
+    if (logicModsLoadOrder) {
+      MODTYPE_FOLDERS.push(path.join(SCRIPTS_PATH, BPML_FOLDER));
+    }
   }
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
@@ -2560,24 +2570,26 @@ function applyGame(context, gameSpec) {
   //('ue4-sortable-modtype') globally itself, reading UNREALDATA via spec.game.details.unrealEngine below.
 
   //register mod types explicitly (due to potentially dynamic Binaries folder)
-  context.registerModType(SCRIPTS_ID, 50,
-    (gameId) => {
-      var _a;
-      return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    },
-    (game) => pathPattern(context.api, game, path.join('{gamePath}', SCRIPTS_PATH)),
-    () => Promise.resolve(false),
-    { name: SCRIPTS_NAME }
-  );
-  context.registerModType(DLL_ID, 52,
-    (gameId) => {
-      var _a;
-      return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    },
-    (game) => pathPattern(context.api, game, path.join('{gamePath}', SCRIPTS_PATH)),
-    () => Promise.resolve(false),
-    { name: DLL_NAME }
-  );
+  if (ue4ssLoadOrder) {
+    context.registerModType(SCRIPTS_ID, 50,
+      (gameId) => {
+        var _a;
+        return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
+      },
+      (game) => pathPattern(context.api, game, path.join('{gamePath}', SCRIPTS_PATH)),
+      () => Promise.resolve(false),
+      { name: SCRIPTS_NAME }
+    );
+    context.registerModType(DLL_ID, 52,
+      (gameId) => {
+        var _a;
+        return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
+      },
+      (game) => pathPattern(context.api, game, path.join('{gamePath}', SCRIPTS_PATH)),
+      () => Promise.resolve(false),
+      { name: DLL_NAME }
+    );
+  }
   context.registerModType(BINARIES_ID, 54,
     (gameId) => {
       var _a;
@@ -2587,15 +2599,17 @@ function applyGame(context, gameSpec) {
     () => Promise.resolve(false),
     { name: BINARIES_NAME }
   );
-  context.registerModType(UE4SS_ID, 56,
-    (gameId) => {
-      var _a;
-      return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    },
-    (game) => pathPattern(context.api, game, path.join('{gamePath}', BINARIES_PATH)),
-    () => Promise.resolve(false),
-    { name: UE4SS_NAME }
-  );
+  if (ue4ssLoadOrder) {
+    context.registerModType(UE4SS_ID, 56,
+      (gameId) => {
+        var _a;
+        return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
+      },
+      (game) => pathPattern(context.api, game, path.join('{gamePath}', BINARIES_PATH)),
+      () => Promise.resolve(false),
+      { name: UE4SS_NAME }
+    );
+  }
 
   //register sigbypass modtype
   if (SIGBYPASS_REQUIRED === true) {
@@ -2649,14 +2663,18 @@ function applyGame(context, gameSpec) {
   if (hasModKit === true) {
     context.registerInstaller(MODKITMOD_ID, 22, testModKitMod, installModKitMod);
   }
-  context.registerInstaller(UE4SSCOMBO_ID, 23, testUe4ssCombo, installUe4ssCombo);
-  context.registerInstaller(LOGICMODS_ID, 24, testLogic, installLogic);
-  context.registerInstaller(UE4SS_ID, 31, testUe4ss, installUe4ss);
+  context.registerInstaller(UE4SSCOMBO_ID, 23, testUe4ssCombo, installUe4ssCombo); //not gated on ue4ssLoadOrder - also handles mods with both Binaries and Content folders that are not for UE4SS
+  if (ue4ssLoadOrder) {
+    context.registerInstaller(LOGICMODS_ID, 24, testLogic, installLogic);
+    context.registerInstaller(UE4SS_ID, 31, testUe4ss, installUe4ss);
+  }
   if (SIGBYPASS_REQUIRED === true) {
     context.registerInstaller(SIGBYPASS_ID, 33, testSigBypass, installSigBypass);
   }
-  context.registerInstaller(SCRIPTS_ID, 35, testScripts, (files, fileName) => installScripts(context.api, files, fileName));
-  context.registerInstaller(DLL_ID, 37, testDll, (files, fileName) => installDll(context.api, files, fileName));
+  if (ue4ssLoadOrder) {
+    context.registerInstaller(SCRIPTS_ID, 35, testScripts, (files, fileName) => installScripts(context.api, files, fileName));
+    context.registerInstaller(DLL_ID, 37, testDll, (files, fileName) => installDll(context.api, files, fileName));
+  }
   context.registerInstaller(ROOT_ID, 39, testRoot, installRoot);
   context.registerInstaller(CONFIG_ID, 41, testConfig, (files) => installConfig(context.api, files));
   context.registerInstaller(SAVE_ID, 43, testSave, (files) => installSave(context.api, files));
@@ -2679,22 +2697,24 @@ function applyGame(context, gameSpec) {
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open UE4SS Mods Folder', () => {
-    GAME_PATH = getDiscoveryPath(context.api);
-    util.opn(path.join(GAME_PATH, SCRIPTS_PATH)).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open LogicMods Folder', () => {
-    GAME_PATH = getDiscoveryPath(context.api);
-    util.opn(path.join(GAME_PATH, LOGICMODS_PATH)).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
+  if (ue4ssLoadOrder) {
+    context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open UE4SS Mods Folder', () => {
+      GAME_PATH = getDiscoveryPath(context.api);
+      util.opn(path.join(GAME_PATH, SCRIPTS_PATH)).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    });
+    context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open LogicMods Folder', () => {
+      GAME_PATH = getDiscoveryPath(context.api);
+      util.opn(path.join(GAME_PATH, LOGICMODS_PATH)).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    });
+  }
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', async () => {
     //CONFIG_PATH = await setConfigPath(GAME_VERSION);
     util.opn(CONFIG_PATH).catch(() => null);
@@ -2711,33 +2731,35 @@ function applyGame(context, gameSpec) {
     const gameId = selectors.activeGameId(state);
     return gameId === GAME_ID;
   });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download UE4SS', () => {
-    if (UE4SS_PAGE_NO !== 0) { //download from Nexus if the page exists
-      downloadUe4ssNexus(context.api, gameSpec);
-    } else {
-      downloadUe4ss(context.api, gameSpec, false);
-    }
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open UE4SS Settings INI', () => {
-    GAME_PATH = getDiscoveryPath(context.api);
-    util.opn(path.join(GAME_PATH, BINARIES_PATH, UE4SS_SETTINGS_FILEPATH)).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open UE4SS mods.txt', () => {
-    GAME_PATH = getDiscoveryPath(context.api);
-    util.opn(path.join(GAME_PATH, BINARIES_PATH, UE4SS_MODSTXT_FILEPATH)).catch(() => null);
-  }, () => {
-    const state = context.api.getState();
-    const gameId = selectors.activeGameId(state);
-    return gameId === GAME_ID;
-  });
+  if (ue4ssLoadOrder) {
+    context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download UE4SS', () => {
+      if (UE4SS_PAGE_NO !== 0) { //download from Nexus if the page exists
+        downloadUe4ssNexus(context.api, gameSpec);
+      } else {
+        downloadUe4ss(context.api, gameSpec, false);
+      }
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    });
+    context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open UE4SS Settings INI', () => {
+      GAME_PATH = getDiscoveryPath(context.api);
+      util.opn(path.join(GAME_PATH, BINARIES_PATH, UE4SS_SETTINGS_FILEPATH)).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    });
+    context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open UE4SS mods.txt', () => {
+      GAME_PATH = getDiscoveryPath(context.api);
+      util.opn(path.join(GAME_PATH, BINARIES_PATH, UE4SS_MODSTXT_FILEPATH)).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    });
+  }
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
     util.opn(PCGAMINGWIKI_URL).catch(() => null);
   }, () => {

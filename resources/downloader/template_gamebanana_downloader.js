@@ -18,7 +18,7 @@ const GB_REQUIREMENTS = [
     gbItemType: XXX_GB_ITEM_TYPE,
     gbItemId: XXX_GB_ITEM_ID,
     modType: XXX_ID,
-    userFacingName: XXX_NAME,
+    userFacingName: XXX_NAME, //notifications, error messages, and the name shown in the mod list
     fallbackVersion: XXX_REV, //optional - omit to leave the version attribute empty when the API is down
     fallbackFileId: XXX_DL_ID, //optional - omit to fail with a manual-download error page when the API is down
     //fileNamePattern: /Windows/i, //RegExp tested against _aFiles[]._sFile - narrows multi-file submissions to this requirement's file (default: newest file)
@@ -26,6 +26,8 @@ const GB_REQUIREMENTS = [
     //versionPattern: /\(Update\s+(.+?)\)/, //RegExp whose capture group 1 is the version, run against the Updates title (default shown)
     //pageUrl: `https://gamebanana.com/tools/${XXX_GB_ITEM_ID}`, //manual-download page (default derived from gbItemType + gbItemId)
     //autoInstall: false, //opt out of unattended installs - setup and the update check both skip it, only an explicit user action (toolbar button) installs it
+    //pinVersion: XXX_REV, //hold at this submission version - while it is installed the update check returns without making any request; requires pinFileId, since the API has no version-to-file lookup
+    //pinFileId: XXX_DL_ID, //the file id to install for pinVersion - https://gamebanana.com/dl/000000
   },
   //additional GameBanana requirements go here
 ];

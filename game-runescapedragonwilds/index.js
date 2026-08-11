@@ -2,8 +2,8 @@
 Name: RuneScape: Dragonwilds Vortex Extension
 Structure: UE5
 Author: ChemBoy1
-Version: 0.2.0
-Date: 2026-05-07
+Version: 0.2.1
+Date: 2026-08-11
 //////////////////////////////////////////////////*/
 
 //Import libraries
@@ -14,7 +14,7 @@ const template = require('string-template');
 //Specify all information about the game
 const GAME_ID = "runescapedragonwilds";
 const STEAMAPP_ID = "1374490";
-const EPICAPP_ID = null;
+const EPICAPP_ID = "9d918774f1db4b26b23a93a78847f4eb";
 const GOGAPP_ID = null;
 const XBOXAPP_ID = null;
 const XBOXEXECNAME = null;
@@ -222,7 +222,7 @@ const spec = {
   "discovery": {
     "ids": [
       STEAMAPP_ID,
-      //EPICAPP_ID,
+      EPICAPP_ID,
     ],
     "names": []
   }
@@ -327,12 +327,17 @@ async function requiresLauncher(gamePath, store) {
           },
       });
   } //*/
-  /*if (store === 'epic') {
+  if (store === 'epic') {
     return Promise.resolve({
         launcher: 'epic',
         addInfo: {
             appId: EPICAPP_ID,
         },
+    });
+  } //*/
+  if (store === 'steam') {
+    return Promise.resolve({
+      launcher: 'steam',
     });
   } //*/
   return Promise.resolve(undefined);

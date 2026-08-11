@@ -26,6 +26,13 @@ Usage:
 Fills in all XXX fields it can resolve automatically from Steam, GOG, Epic,
 and PCGamingWiki. Remaining XXX fields are reported at the end for manual entry.
 
+GAME_ID comes from the Nexus Mods domain name when the lookup succeeds, and is
+otherwise derived from the game name. Either way it never contains hyphens or
+spaces - only lowercase letters and digits. In the rare case that the Nexus
+domain itself contains a hyphen, the hyphen is stripped from GAME_ID and a
+warning is printed telling you to add a "nexusPageId" entry to spec.game.details
+so Vortex still resolves the right Nexus page.
+
 Downloads exec.png (64x64, Steam CDN), a 640x360 cover art JPG with no title
 text, a 1920x1080 title image saved to resources/title-images/, and a full-size
 banner saved to resources/banner-images/.
@@ -228,18 +235,26 @@ def lookup_nexus_domain(game_name, api_key):
     """Look up the Nexus Mods domain name for a game using the v1 games list.
     Fetches all games once and caches the result for the session (via vortex_utils).
     Builds name variants via name_lookup_variants (roman/arabic numerals, edition suffixes
-    like 'Game of the Year Edition', 'Definitive Edition', etc.) so GOTY/edition titles
-    match the base game domain on Nexus.
+    like 'Game of the Year Edition', 'Definitive Edition', etc., and franchise prefixes
+    like "Tom Clancy's ") so GOTY/edition/franchise titles match the base game domain on
+    Nexus. Variants are tried in order, loosest last, so an exact title match always wins
+    over a stripped one.
     Returns the domain_name string, or None if not found."""
     try:
         games = nexus_list_games(api_key)
         if not games:
             return None
-        name_variants = {normalize_game_name(v) for v in name_lookup_variants(game_name)}
+        by_name = {}
         for game in games:
-            t = normalize_game_name(game.get("name", ""))
-            if t in name_variants or any(t.startswith(v + " (") for v in name_variants):
-                return game["domain_name"]
+            by_name.setdefault(normalize_game_name(game.get("name", "")), game["domain_name"])
+        for variant in name_lookup_variants(game_name):
+            v = normalize_game_name(variant)
+            if v in by_name:
+                return by_name[v]
+            # Disambiguated Nexus titles, e.g. "Prey (2017)" for a lookup of "Prey"
+            for t, domain in by_name.items():
+                if t.startswith(v + " ("):
+                    return domain
     except Exception as e:
         print(f"    Nexus domain lookup error: {e}")
     return None
@@ -536,9 +551,12 @@ def parse_unity_data_paths(wikitext):
 # ── Derivation helpers ────────────────────────────────────────────────────────
 
 def derive_game_id(name):
-    """'FIFA 24' -> 'fifa-24'"""
+    """'FIFA 24' -> 'fifa24'
+
+    A GAME_ID never contains hyphens or spaces - Nexus Mods domain names are
+    lowercase alphanumeric, and the extension folder is named after the ID."""
     clean = re.sub(r"[^a-z0-9 ]", "", name.lower()).strip()
-    return re.sub(r" +", "-", clean)
+    return re.sub(r" +", "", clean)
 
 
 def derive_short_name(name):
@@ -685,8 +703,13 @@ def create_extension(template_name, game_input, force=False, dry_run=False, no_i
 
     nexus_domain = lookup_nexus_domain(game_name, nexus_key)
     if nexus_domain:
-        game_id = nexus_domain
-        print(f"  Game ID  : {game_id} (from Nexus Mods)")
+        game_id = nexus_domain.replace("-", "")
+        if game_id != nexus_domain:
+            print(f"  Game ID  : {game_id} (from Nexus Mods domain '{nexus_domain}', hyphens stripped)")
+            print("    WARNING: GAME_ID differs from the Nexus domain - add")
+            print(f'             "nexusPageId": "{nexus_domain}" to spec.game.details')
+        else:
+            print(f"  Game ID  : {game_id} (from Nexus Mods)")
     else:
         game_id = derive_game_id(game_name)
         print(f"  Game ID  : {game_id} (derived -verify Nexus domain manually)")

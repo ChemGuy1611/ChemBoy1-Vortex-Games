@@ -2,8 +2,8 @@
 Name: Far Cry 4 Vortex Extension
 Structure: Far Cry Game (Mod Installer)
 Author: ChemBoy1
-Version: 0.1.1
-Date: 2025-10-24
+Version: 0.1.2
+Date: 2026-08-11
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -18,6 +18,7 @@ const DOCUMENTS = util.getVortexPath("documents");
 const GAME_ID = "farcry4";
 const STEAMAPP_ID = "298110";
 const UPLAYAPP_ID = "420"; //969, 856, 971
+const EPICAPP_ID = "Tautog";
 const GAME_NAME = "Far Cry 4";
 const GAME_NAME_SHORT = "FC4";
 
@@ -126,12 +127,14 @@ const spec = {
     ],
     "details": {
       "steamAppId": +STEAMAPP_ID,
+      "epicAppId": EPICAPP_ID,
       "uPlayAppId": UPLAYAPP_ID,
       "ignoreConflicts": IGNORE_CONFLICTS,
       "ignoreDeploy": IGNORE_DEPLOY,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
+      "EpicAPPId": EPICAPP_ID,
       "UPlayAPPId": UPLAYAPP_ID,
     }
   },
@@ -181,8 +184,9 @@ const spec = {
   ],
   "discovery": {
     "ids": [
-      STEAMAPP_ID,
       UPLAYAPP_ID,
+      STEAMAPP_ID,
+      EPICAPP_ID,
     ],
     "names": []
   }
@@ -325,6 +329,26 @@ function makeFindGame(api, gameSpec) {
     return () => util.GameStoreHelper.findByAppId(gameSpec.discovery.ids)
       .then((game) => game.gamePath);
   }
+}
+
+//Set launcher requirements
+async function requiresLauncher(gamePath, store) {
+  if (store === 'steam') {
+    return Promise.resolve({
+      launcher: 'steam',
+    });
+  } //*/
+  if (store === 'epic') {
+    return Promise.resolve({
+      launcher: 'epic',
+      addInfo: {
+        appId: EPICAPP_ID,
+        //parameters: PARAMETERS,
+        //launchType: 'gamestore',
+      },
+    });
+  } //*/
+  return Promise.resolve(undefined);
 }
 
 //Find the save folder (inside Ubisoft Launcher install path)
@@ -868,6 +892,7 @@ function applyGame(context, gameSpec) {
     ...gameSpec.game,
     queryPath: makeFindGame(context.api, gameSpec),
     queryModPath: makeGetModPath(context.api, gameSpec),
+    requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     executable: () => gameSpec.game.executable,
     supportedTools: tools,

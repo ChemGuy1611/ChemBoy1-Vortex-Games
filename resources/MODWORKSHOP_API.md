@@ -273,7 +273,7 @@ in `index.js`), each describing one ModWorkshop-hosted requirement:
 | --- | --- | --- |
 | `mwsModId` | yes | ModWorkshop numeric mod id, e.g. `'55623'` for `https://modworkshop.net/mod/55623`. Builds every API URL and the default `pageUrl`. |
 | `modType` | yes | Vortex mod type id the requirement installs as; also the installed-detection key (any mod with this type counts as installed). |
-| `userFacingName` | yes | Display name in notifications and on the download. |
+| `userFacingName` | yes | Display name in notifications, on the download, and in the mod list (stamped as the mod's `customFileName`). |
 | `fileType` | optional | File extension to require (`'zip'`). **Set this on any mod that also uploads a non-archive format.** Without it the primary file is used, which may be a `.vmz` Vortex cannot treat as an archive. |
 | `filePattern` | optional | RegExp tested against the file's display name, narrowing multi-file submissions further. Combines with `fileType`. |
 | `fallbackVersion` | optional | Version attribute to record when the API is unreachable. |
@@ -281,9 +281,19 @@ in `index.js`), each describing one ModWorkshop-hosted requirement:
 | `fileIdAttribute` | optional | Mod attribute tracking the installed ModWorkshop file id for update checks. Default `'modworkshopFileId'`. |
 | `pageUrl` | optional | Manual-download page opened on install failure. Default `https://modworkshop.net/mod/{mwsModId}`. |
 | `autoInstall` | optional | `false` -> never install this requirement unattended; only an explicit user action (a toolbar button) installs it. Default installs a missing requirement automatically when the update check runs. |
+| `pinVersion` | optional | Hold the requirement at this file version instead of tracking the current one. Requires `pinFileId`; without it the pin is ignored with a warning. See **Version pinning** below. |
+| `pinFileId` | with `pinVersion` | The file id to install for the pinned version — a pinned version cannot be looked up by version string alone. |
 
 There is no `versionPattern` equivalent — ModWorkshop stores a version string on the file record
 itself, so no parsing out of a title is needed.
+
+### Version pinning
+
+`pinVersion` + `pinFileId` hold the requirement at one file instead of following the current one. It is opt-in and unset by default. While the tracked `modworkshopFileId` equals `pinFileId`, `checkForModWorkshopUpdate` returns **before making any request** — a pinned requirement costs nothing against the API. A pinned install skips the API entirely as well, since `https://api.modworkshop.net/files/{id}/download` is a complete URL on its own.
+
+When the installed file is not the pinned one — including when nothing is installed — the module resolves the *pinned* file, never the current one. The notification reads "pinned version available" rather than "update available", because the user may be *ahead* of the pin and installing it is then a deliberate downgrade. `autoInstall` stays orthogonal: the pin says which file, `autoInstall` says whether anything installs unattended. Note that a pin bypasses `fileType`/`filePattern` selection — the pinned file id is taken as given, so pin the id of a file Vortex can actually treat as an archive.
+
+The same field name and behavior exist in all five downloader modules; `DOWNLOADER.md` has the cross-module table.
 
 ### Exports
 
@@ -299,6 +309,11 @@ itself, so no parsing out of a title is needed.
 
 ### Behaviors worth knowing
 
+- **The mod list shows `userFacingName`, not the archive name.** Vortex renders a mod as
+  `customFileName || logicalFileName || fileName || name`, and the install pipeline stamps
+  `fileName` with the downloaded archive — so the install also stamps `customFileName` from
+  `userFacingName`. Written at install only, so it cannot overwrite a name the user set
+  afterwards. Rendering rule: `VORTEX_MOD_LIST.md`.
 - **File selection avoids `/files/latest`.** With neither `fileType` nor `filePattern` set, the
   module reads `/mods/{id}/files/primary`. With either set, it lists `/mods/{id}/files?limit=50`,
   filters, and sorts newest-first by coerced version with upload date as the tiebreak. The

@@ -42,7 +42,8 @@ const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
 const ENGINE_VERSION = '4'; // 4 or 3 - can see when running console.exe for game
 
 //feature toggles
-const hasXbox = false; //toggle for Xbox version logic
+let hasXbox = false; //toggle for Xbox version logic
+if (DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID)) hasXbox = true;
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
 const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
 const customLoader = true;

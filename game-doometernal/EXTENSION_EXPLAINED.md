@@ -21,6 +21,7 @@
 ## Supported Stores
 
 - **Steam** — `782330`
+- **Epic Games Store** — `Brant`
 - **Xbox / Microsoft Store** — `BethesdaSoftworks.DOOMEternal-PC`
 
 ## Mod Types
@@ -67,5 +68,6 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - **Deploy Hook** (`did-deploy`) — runs custom logic (e.g., notifications, metadata patching) every time mods are deployed.
 - **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
+- **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 

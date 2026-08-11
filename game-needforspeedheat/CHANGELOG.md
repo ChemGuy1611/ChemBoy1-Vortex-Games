@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.1.2] - 2026-08-11
+
+- Added Epic Games Store support
+
 ## [0.1.1] - 2026-07-02
 
 - Fixed: Path typo in Frosty install check fallback

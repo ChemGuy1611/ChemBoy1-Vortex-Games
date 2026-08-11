@@ -20,6 +20,7 @@
 ## Supported Stores
 
 - **Steam** — `1939970`
+- **Epic Games Store** — `7ba101a6119b460b9f272a0d02197ee0`
 - **GOG** — `1484887196`
 
 ## Feature Flags
@@ -72,4 +73,5 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 ## Special Features
 
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
+- **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 

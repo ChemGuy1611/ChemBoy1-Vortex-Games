@@ -16,7 +16,7 @@ const MODDB_REQUIREMENTS = [
   {
     moddbPath: XXX_MODDB_PATH,
     modType: XXX_ID,
-    userFacingName: XXX_NAME,
+    userFacingName: XXX_NAME, //notifications, error messages, and the name shown in the mod list
     fallbackVersion: XXX_REV, //optional - omit to leave the version attribute empty when the feed is down
     fallbackFileId: XXX_DL_ID, //optional - omit to fail with a manual-download error page when the feed is down
     //filePattern: /XXX/i, //RegExp tested against RSS item titles - narrows the feed to this requirement's files (default: newest item in the feed)
@@ -26,6 +26,8 @@ const MODDB_REQUIREMENTS = [
     //pageUrl: `https://www.moddb.com/${XXX_MODDB_PATH}/downloads`, //manual-download page (default derived from moddbPath)
     //autoInstall: false, //opt out of unattended installs - setup and the update check both skip it, only an explicit user action (toolbar button) installs it
     //archiveFileName: 'XXX.zip', //used to name the temp file only if the fallback direct-fetch route can't infer one
+    //pinVersion: XXX_REV, //hold at this file revision - while it is installed the update check returns without making any request; requires pinFileId, since the feed is newest-first with no version index
+    //pinFileId: XXX_DL_ID, //the file id to install for pinVersion - resolved via https://www.moddb.com/downloads/start/000000
   },
   //additional ModDB requirements go here
 ];

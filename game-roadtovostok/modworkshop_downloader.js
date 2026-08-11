@@ -7,7 +7,9 @@
 // requirement objects, processed sequentially. Each requirement's current file
 // is resolved through the ModWorkshop REST API, with an optional hardcoded
 // fallback file id for when the API is unreachable. An "update available"
-// notification is raised when a newer file appears on ModWorkshop.
+// notification is raised when a newer file appears on ModWorkshop. A
+// requirement can instead be pinned to one file version (pinVersion +
+// pinFileId), which holds it there and makes update checks skip the API.
 //
 // ModWorkshop's API returns a complete, unauthenticated download URL on every
 // file record, so - unlike the GitHub, GameBanana, and ModDB counterparts -
@@ -61,6 +63,41 @@ function filesUrl(requirement) {
 
 function primaryFileUrl(requirement) {
   return `${API_BASE}/mods/${requirement.mwsModId}/files/primary`;
+}
+
+// Direct download for a known file id - redirects to the same storage URL the API reports.
+function fileDownloadUrl(fileId) {
+  return `${API_BASE}/files/${fileId}/download`;
+}
+
+// --- version pinning ------------------------------------------------------
+// An opt-in pin holds a requirement at one specific file version instead of tracking the
+// current one. pinVersion is the label shown to the user and pinFileId is the file to install:
+// both are needed, because the pinned version cannot be looked up by version alone. With
+// pinVersion unset - the default - none of this code runs and the module behaves exactly as it
+// does without it.
+function isPinned(requirement) {
+  if (!requirement.pinVersion) {
+    return false;
+  }
+  if (!requirement.pinFileId) {
+    log('warn', `${requirement.userFacingName} sets pinVersion without pinFileId - ignoring the pin`);
+    return false;
+  }
+  return true;
+}
+
+//Whether the installed copy is already the pinned file, compared on the tracked file id. True
+//short-circuits the update check before any HTTP request is made.
+function isAtPinnedVersion(api, gameId, requirement) {
+  if (!isPinned(requirement)) {
+    return false;
+  }
+  const state = api.getState();
+  const mods = state.persistent.mods[gameId] || {};
+  const attr = fileIdAttribute(requirement);
+  return Object.values(mods).some(mod => (mod?.type === requirement.modType)
+    && (String(mod?.attributes?.[attr]) === String(requirement.pinFileId)));
 }
 
 // The API stores the display name and the extension separately, but only
@@ -187,16 +224,19 @@ async function downloadModWorkshopRequirement(api, gameSpec, requirement, check 
   });
   //captured before the install: these are the versions being replaced
   const previousModIds = requirementModIds(api, gameSpec.game.id, requirement);
+  const pinned = isPinned(requirement);
   try { //Download the mod
-    const latestFile = await getLatestModWorkshopFile(requirement); //resolve current file from ModWorkshop API
-    const latestVersion = await getLatestModWorkshopVersion(requirement, latestFile);
+    //A pin overrides current-file selection, and skips the API entirely: the per-file download
+    //endpoint is a complete URL on its own, so a pinned install makes no API request.
+    const latestFile = pinned ? null : await getLatestModWorkshopFile(requirement); //resolve current file from ModWorkshop API
+    const latestVersion = pinned ? requirement.pinVersion : await getLatestModWorkshopVersion(requirement, latestFile);
     const dlInfo = {
       game: gameSpec.game.id,
       name: requirement.userFacingName,
     };
     //fall back to the hardcoded file id if the API is unreachable - this endpoint redirects to the same storage URL
-    const fallbackUrl = requirement.fallbackFileId ? `${API_BASE}/files/${requirement.fallbackFileId}/download` : undefined;
-    const URL = latestFile ? latestFile.download_url : fallbackUrl;
+    const fallbackUrl = requirement.fallbackFileId ? fileDownloadUrl(requirement.fallbackFileId) : undefined;
+    const URL = pinned ? fileDownloadUrl(requirement.pinFileId) : (latestFile ? latestFile.download_url : fallbackUrl);
     if (!URL) {
       throw new util.ProcessCanceled('ModWorkshop API is unreachable and no fallback file id is set');
     }
@@ -212,9 +252,10 @@ async function downloadModWorkshopRequirement(api, gameSpec, requirement, check 
       }),
       actions.setModType(gameSpec.game.id, modId, requirement.modType), // Set the modType
       actions.setModAttribute(gameSpec.game.id, modId, 'version', latestVersion || requirement.fallbackVersion || ''),
-      actions.setModAttribute(gameSpec.game.id, modId, fileIdAttribute(requirement), latestFile ? latestFile.id : Number(requirement.fallbackFileId)), // Track the installed file id for update checks
+      actions.setModAttribute(gameSpec.game.id, modId, fileIdAttribute(requirement), pinned ? Number(requirement.pinFileId) : (latestFile ? latestFile.id : Number(requirement.fallbackFileId))), // Track the installed file id for update checks
       actions.setModAttribute(gameSpec.game.id, modId, 'source', 'website'),
       actions.setModAttribute(gameSpec.game.id, modId, 'url', pageUrl(requirement)), // Shown as the mod's "Source" link in the mod details (only rendered when source === 'website')
+      actions.setModAttribute(gameSpec.game.id, modId, 'customFileName', requirement.userFacingName), // Vortex renders a mod as customFileName || logicalFileName || fileName || name, and the install pipeline stamps fileName with the archive name - without this the mod list shows the raw archive
     ];
     for (const oldModId of previousModIds) { // Disable the version this install replaces, so only one copy deploys
       if (oldModId !== modId) {
@@ -240,6 +281,11 @@ async function downloadModWorkshop(api, gameSpec, requirements, check = true) {
 
 //Check the ModWorkshop API for a newer file for a single requirement and notify the user
 async function checkForModWorkshopUpdateRequirement(api, gameSpec, requirement) {
+  // Pinned and already on the pinned file: nothing to check, and deliberately no HTTP request
+  // at all - this is what makes a pinned requirement free against the ModWorkshop API.
+  if (isAtPinnedVersion(api, gameSpec.game.id, requirement)) {
+    return;
+  }
   if (!isModWorkshopRequirementInstalled(api, gameSpec.game.id, requirement)) {
     // Missing rather than outdated - install it instead of checking for updates to something
     // that is not there. Requirements the user installs manually opt out with autoInstall: false.
@@ -248,6 +294,26 @@ async function checkForModWorkshopUpdateRequirement(api, gameSpec, requirement) 
     }
     log('info', `${requirement.userFacingName} is not installed - installing it`);
     return downloadModWorkshopRequirement(api, gameSpec, requirement);
+  }
+  if (isPinned(requirement)) {
+    // Installed, but not the pinned file. The wording covers a user who is ahead of the pin as
+    // well as behind it - installing it from that state is a deliberate downgrade.
+    api.sendNotification({
+      id: `${requirement.modType}-update`,
+      type: 'warning',
+      message: `${requirement.userFacingName} pinned version available (${requirement.pinVersion})`,
+      allowSuppress: true,
+      actions: [
+        {
+          title: 'Download',
+          action: (dismiss) => {
+            downloadModWorkshopRequirement(api, gameSpec, requirement, false);
+            dismiss();
+          },
+        },
+      ],
+    });
+    return;
   }
   const latestFile = await getLatestModWorkshopFile(requirement);
   if (!latestFile) {

@@ -13,8 +13,6 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 const winapi = require('winapi-bindings');
-//const fsPromises = require('fs/promises'); //.rm() for recursive folder deletion
-//const fsExtra = require('fs-extra');
 
 const DOCUMENTS = util.getVortexPath("documents");
 
@@ -23,11 +21,10 @@ const GAME_ID = "watchdogs";
 const STEAMAPP_ID = "243470"; // https://steamdb.info/app/243470/
 const UPLAYAPP_ID = "274";
 const EPICAPP_ID = "Jasper"; // https://store.epicgames.com/en-US/p/watch-dogs
-const GOGAPP_ID = null;
 const INSTALL_HIVE = 'HKEY_LOCAL_MACHINE'; //typically HKEY_LOCAL_MACHINE or HKEY_CURRENT_USER
 const INSTALL_KEY = `SOFTWARE\\WOW6432Node\\Ubisoft\\Launcher\\Installs\\${UPLAYAPP_ID}`; //for finding install in registry - requires winapi-bindings
 const INSTALL_VALUE = "InstallDir"; //often InstallDir or InstallPath
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID, UPLAYAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const DISCOVERY_IDS_ACTIVE = [UPLAYAPP_ID, STEAMAPP_ID, EPICAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
 const gameFinderQuery = {
   steam: [{ id: STEAMAPP_ID, prefer: 0 }],
@@ -53,7 +50,7 @@ const fallbackInstaller = true; //enable fallback installer. Set false if you ne
 const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
 const hasUserIdFolder = true; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
 const binariesInstaller = true;
-const debug = false; //toggle for debug mode
+//const debug = false; //toggle for debug mode
 
 //info for modtypes, installers, tools, and actions
 const DATA_FOLDER = 'data_win64';
@@ -92,7 +89,7 @@ const BINARIES_EXTS = ['.exe', '.dll', '.asi', '.addon64'];
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_NAME = "Save";
 let USERID_FOLDER = "";
-let SAVE_PATH = ''; //Defined in setup fn <Ubisoft-Connect-folder>\savegames\<user-id>\274\
+let SAVE_PATH = ''; //Defined in setup fn <Ubisoft-Connect-folder>\savegames\<user-id>\${UPLAYAPP_ID}
 const SAVE_EXTS = [".save"];
 
 let CONFIG_FOLDER = path.join(CONFIGMOD_LOCATION, APPDATA_FOLDER);
@@ -112,7 +109,6 @@ const CONFIG_FILES = ["GamerProfile.xml"];
 const CONFIG_FILE_PATH = path.join(CONFIG_PATH, CONFIG_FILES[0]);
 
 let MOD_PATH_DEFAULT = MOD_PATH;
-//if (!needsModInstaller) MOD_PATH_DEFAULT = '.';
 const REQ_FILE = EXEC;
 const PARAMETERS_STRING = '';
 const PARAMETERS = [PARAMETERS_STRING];
@@ -142,7 +138,6 @@ const spec = {
     },
     "details": {
       "steamAppId": +STEAMAPP_ID,
-      "gogAppId": GOGAPP_ID,
       "epicAppId": EPICAPP_ID,
       "supportsSymlinks": allowSymlinks,
       "ignoreConflicts": IGNORE_CONFLICTS,
@@ -150,7 +145,6 @@ const spec = {
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
-      "GogAPPId": GOGAPP_ID,
       "EpicAPPId": EPICAPP_ID,
     }
   },
@@ -540,47 +534,6 @@ function installBinaries(files) {
   return Promise.resolve({ instructions });
 }
 
-//Test for save files
-function testSave(files, gameId) {
-  const isMod = files.some(file => SAVE_EXTS.includes(path.extname(file).toLowerCase()));
-  let supported = (gameId === spec.game.id) && isMod;
-
-  // Test for a mod installer
-  if (supported && files.find(file =>
-      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
-    supported = false;
-  }
-
-  return Promise.resolve({
-    supported,
-    requiredFiles: [],
-  });
-}
-
-//Install save files
-function installSave(files) {
-  const MOD_TYPE = SAVE_ID;
-  const modFile = files.find(file => SAVE_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
-  const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
-
-  // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
-  );
-  const instructions = filtered.map(file => {
-    return {
-      type: 'copy',
-      source: file,
-      destination: path.join(file.substr(idx)),
-    };
-  });
-  instructions.push(setModTypeInstruction);
-  return Promise.resolve({ instructions });
-}
-
 //Fallback installer to root folder
 function testFallback(files, gameId) {
   let supported = (gameId === spec.game.id);
@@ -683,9 +636,9 @@ function isLoaderInstalled(api, spec) {
 }
 
 //* Function to auto-download mod loader from Nexus Mods
-async function downloadLoader(api, gameSpec) {
+async function downloadLoader(api, gameSpec, check = true) {
   let isInstalled = isLoaderInstalled(api, gameSpec);
-  if (!isInstalled) {
+  if (!isInstalled || !check) {
     const MOD_NAME = LOADER_NAME;
     const MOD_TYPE = LOADER_ID;
     const NOTIF_ID = `${MOD_TYPE}-installing`;
@@ -924,17 +877,14 @@ function applyGame(context, gameSpec) {
   if (hasLoader) {
     context.registerInstaller(LOADER_ID, 25, testLoader, installLoader);
   }
-  if (saveInstaller) {
-    context.registerInstaller(SAVE_ID, 27, testSave, installSave);
-  }
   if (needsModInstaller) {
-    context.registerInstaller(MOD_ID, 30, testMod, installMod);
+    context.registerInstaller(MOD_ID, 27, testMod, installMod);
   }
   if (rootInstaller) {
-    context.registerInstaller(ROOT_ID, 35, testRoot, installRoot);
+    context.registerInstaller(ROOT_ID, 29, testRoot, installRoot);
   }
   if (binariesInstaller) {
-    context.registerInstaller(BINARIES_ID, 40, testBinaries, installBinaries);
+    context.registerInstaller(BINARIES_ID, 31, testBinaries, installBinaries);
   }
   if (fallbackInstaller) {
     context.registerInstaller(`${GAME_ID}-fallback`, 49, testFallback, (files, destinationPath) => installFallback(context.api, files, destinationPath));

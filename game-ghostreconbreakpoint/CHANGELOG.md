@@ -4,6 +4,11 @@
 
 - None Planned
 
+## [0.2.9] - 2026-08-11
+
+- Added: Epic Games Store support
+- Fixed: Steam version launch error
+
 ## [0.2.8] - 2026-04-06
 
 - Fixed: Prevent folder rename dialogue from calling when mod info is missing.

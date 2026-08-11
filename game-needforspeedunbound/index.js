@@ -2,8 +2,8 @@
 Name: Need for Speed Unbound Vortex Extension
 Structure: Frostbite Engine - Frosty Mod Manager
 Author: ChemBoy1
-Version: 0.1.1
-Date: 2026-07-02
+Version: 0.1.2
+Date: 2026-08-11
 Notes:
 -
 /////////////////////////////////////////////*/
@@ -23,11 +23,12 @@ const GAME_ID = "needforspeedunbound";
 const EAAPP_ID = "XXX";
 const STEAMAPP_ID = "1846380"; // https://steamdb.info/app/1846380/
 const GOGAPP_ID = null; //not typically available for EA games
-//not typically available on Xbox/Epic - available through EA Play instead
+const EPICAPP_ID = "Chokeberry";
+//not typically available on Xbox - available through EA Play instead
 const REGISTRY_HIVE = 'HKEY_LOCAL_MACHINE';
 const REGISTRY_KEY = 'SOFTWARE\\WOW6432Node\\EA Games\\Need for Speed Unbound'; // e.g. 'SOFTWARE\\WOW6432Node\\BioWare\\Mass Effect Andromeda'
 const REGISTRY_VALUE = 'Install Dir'; // e.g. 'Install Dir'
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
 const gameFinderQuery = {
   steam: [{ id: STEAMAPP_ID, prefer: 0 }],
@@ -128,6 +129,7 @@ const spec = {
     ],
     "details": {
       "steamAppId": +STEAMAPP_ID,
+      "epicAppId": EPICAPP_ID,
       //"EAAppId": EAAPP_ID,
       //"gogAppId": null,
       "supportsSymlinks": allowSymlinks,
@@ -137,6 +139,7 @@ const spec = {
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
+      "EpicAPPId": EPICAPP_ID,
       //"GogAPPId": GOGAPP_ID,
       //"EAAPPId": EAAPP_ID,
     }
@@ -323,6 +326,14 @@ async function requiresLauncher(gamePath, store) {
   if (store === 'steam') {
     return Promise.resolve({
       launcher: 'steam',
+    });
+  } //*/
+  if (store === 'epic' && (DISCOVERY_IDS_ACTIVE.includes(EPICAPP_ID))) {
+    return Promise.resolve({
+      launcher: 'epic',
+      addInfo: {
+        appId: EPICAPP_ID,
+      },
     });
   } //*/
   return Promise.resolve(undefined);

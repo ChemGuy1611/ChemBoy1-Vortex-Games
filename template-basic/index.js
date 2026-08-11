@@ -50,7 +50,8 @@ const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
 
 //feature toggles
 const hasLoader = false; //true if game needs a mod loader
-const hasXbox = false; //toggle for Xbox version logic
+let hasXbox = false; //toggle for Xbox version logic
+if (DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID)) hasXbox = true;
 const multiExe = false; //set to true if there are multiple executable names
 const multiModPath = false; //set to true if there are multiple possible mod paths (i.e. different path for Xbox version)
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
@@ -1002,15 +1003,15 @@ function applyGame(context, gameSpec) {
   if (rootInstaller) {
     context.registerInstaller(ROOT_ID, 27, testRoot, installRoot);
   }
-  if (binariesInstaller) {
-    context.registerInstaller(BINARIES_ID, 29, testBinaries, installBinaries);
-  }
-  //context.registerInstaller(CONFIG_ID, 31, testConfig, installConfig);
-  if (saveInstaller) {
-    context.registerInstaller(SAVE_ID, 33, testSave, installSave);
-  }
   if (needsModInstaller) {
-    context.registerInstaller(MOD_ID, 35, testMod, installMod);
+    context.registerInstaller(MOD_ID, 29, testMod, installMod);
+  }
+  if (binariesInstaller) {
+    context.registerInstaller(BINARIES_ID, 31, testBinaries, installBinaries);
+  }
+  //context.registerInstaller(CONFIG_ID, 33, testConfig, installConfig);
+  if (saveInstaller) {
+    context.registerInstaller(SAVE_ID, 35, testSave, installSave);
   }
   if (fallbackInstaller) {
     context.registerInstaller(`${GAME_ID}-fallback`, 49, testFallback, (files, destinationPath) => installFallback(context.api, files, destinationPath));

@@ -2,8 +2,8 @@
 Name: Nobody Wants to Die Vortex Extension
 Structure: UE5
 Author: ChemBoy1
-Version: 0.3.0
-Date: 2026-05-07
+Version: 0.3.1
+Date: 2026-08-11
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -14,7 +14,7 @@ const template = require('string-template');
 //Specify all information about the game
 const GAME_ID = "nobodywantstodie";
 const STEAMAPP_ID = "1939970";
-const EPICAPP_ID = null;
+const EPICAPP_ID = "7ba101a6119b460b9f272a0d02197ee0";
 const GOGAPP_ID = "1484887196";
 const XBOXAPP_ID = null;
 const XBOXEXECNAME = null;
@@ -158,7 +158,7 @@ const spec = {
   "discovery": {
     "ids": [
       STEAMAPP_ID,
-      //EPICAPP_ID,
+      EPICAPP_ID,
       GOGAPP_ID,
       //XBOXAPP_ID
     ],

@@ -5,6 +5,11 @@
 - UE4SS support
 - Remove UEMI dependency
 
+## [0.5.1] - 2026-08-11
+
+- Added Epic Games Store support
+- Steam version now launches through Steam
+
 ## [0.5.0] - 2026-05-07
 
 - Fixed: Multiple technical issues

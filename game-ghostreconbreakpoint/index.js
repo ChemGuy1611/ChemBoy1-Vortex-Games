@@ -2,8 +2,8 @@
 Name: Ghost Recon Breakpoint Vortex Extension
 Structure: Ubisoft AnvilToolkit
 Author: ChemBoy1
-Version: 0.2.8
-Date: 2026-04-06
+Version: 0.2.9
+Date: 2026-08-11
 //////////////////////////////////////////////////////////*/
 
 //Import libraries
@@ -15,6 +15,7 @@ const winapi = require('winapi-bindings');
 //Specify all the information about the game
 const UPLAYAPP_ID = "11903";
 const STEAMAPP_ID = "2231380";
+const EPICAPP_ID = "Saffron";
 const GAME_ID = "ghostreconbreakpoint";
 const EXEC = "GRB.exe";
 const EXEC_PLUS = "GRB_UPP.exe";
@@ -109,6 +110,7 @@ const spec = {
     ],
     "details": {
       "steamAppId": +STEAMAPP_ID,
+      "epicAppId": EPICAPP_ID,
       "uPlayAppId": UPLAYAPP_ID,
       "supportsSymlinks": true,
       "ignoreDeploy": IGNORE_DEPLOY,
@@ -116,6 +118,7 @@ const spec = {
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
+      "EpicAPPId": EPICAPP_ID,
       "UPlayAPPId": UPLAYAPP_ID
     }
   },
@@ -183,8 +186,9 @@ const spec = {
   ],
   "discovery": {
     "ids": [
+      UPLAYAPP_ID,
       STEAMAPP_ID,
-      UPLAYAPP_ID
+      EPICAPP_ID
     ],
     "names": []
   }
@@ -340,9 +344,26 @@ function makeGetModPath(api, gameSpec) {
 
 //Setup launcher requirements (Steam, Epic, GOG, GamePass, etc.). More parameters required for Epic and GamePass
 function makeRequiresLauncher(api, gameSpec) {
-  return () => Promise.resolve((gameSpec.game.requiresLauncher !== undefined)
-    ? { launcher: gameSpec.game.requiresLauncher }
-    : undefined);
+  return (gamePath, store) => {
+    if (store === 'steam') {
+      return Promise.resolve({
+        launcher: 'steam',
+      });
+    } //*/
+    if (store === 'epic') {
+      return Promise.resolve({
+        launcher: 'epic',
+        addInfo: {
+          appId: EPICAPP_ID,
+          //parameters: PARAMETERS,
+          //launchType: 'gamestore',
+        },
+      });
+    } //*/
+    return Promise.resolve((gameSpec.game.requiresLauncher !== undefined)
+      ? { launcher: gameSpec.game.requiresLauncher }
+      : undefined);
+  };
 }
 
 // AUTOMATIC MOD DOWNLOADERS ///////////////////////////////////////////////////

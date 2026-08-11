@@ -2,8 +2,8 @@
 Name: Balatro Vortex Extension
 Structure: Mod Loader (Mods in AppData Folder)
 Author: ChemBoy1
-Version: 0.3.1
-Date: 2026-08-05
+Version: 0.3.2
+Date: 2026-08-11
 ///////////////////////////////////////*/
 
 //Import libraries
@@ -18,11 +18,13 @@ const GAME_ID = "balatro";
 const GAME_NAME = "Balatro";
 const GAME_NAME_SHORT = "Balatro";
 const STEAMAPP_ID = "2379780";
+const EPICAPP_ID = "0e66f423d20646b49440cfbb451bccca";
 const XBOXAPP_ID = "PlayStack.Balatro";
 const XBOXEXECNAME = "Balatro";
 const XBOX_PUB_ID = "3wcqaesafpzfy";
 const DISCOVERY_IDS_ACTIVE = [ // UPDATE THIS WITH ALL VALID IDs
   STEAMAPP_ID,
+  EPICAPP_ID,
   //XBOXAPP_ID, //!disabled until support is available and implemented
 ];
 
@@ -135,12 +137,14 @@ const spec = {
     ],
     "details": {
       "steamAppId": +STEAMAPP_ID,
+      "epicAppId": EPICAPP_ID,
       "xboxAppId": XBOXAPP_ID,
       "ignoreConflicts": IGNORE_CONFLICTS,
       "ignoreDeploy": IGNORE_DEPLOY,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
+      "EpicAPPId": EPICAPP_ID,
       "XboxAPPId": XBOXAPP_ID
     }
   },
@@ -285,6 +289,14 @@ async function requiresLauncher(gamePath, store) {
   if (store === 'steam') {
     return Promise.resolve({
       launcher: 'steam',
+    });
+  } //*/
+  if (store === 'epic' && (DISCOVERY_IDS_ACTIVE.includes(EPICAPP_ID))) {
+    return Promise.resolve({
+      launcher: 'epic',
+      addInfo: {
+        appId: EPICAPP_ID,
+      },
     });
   } //*/
   return Promise.resolve(undefined);

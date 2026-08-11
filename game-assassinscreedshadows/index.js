@@ -2,8 +2,8 @@
 Name: AC Shadows Vortex Extension
 Structure: Ubisoft AnvilToolkit & Forger Patch Manager
 Author: ChemBoy1
-Version: 0.1.1
-Date: 2025-10-07
+Version: 0.1.2
+Date: 2026-08-11
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -16,6 +16,7 @@ const winapi = require('winapi-bindings');
 const GAME_ID = "assassinscreedshadows";
 const UPLAYAPP_ID = "8006";
 const STEAMAPP_ID = "3159330";
+const EPICAPP_ID = "a1a86c2450de45989bda712385f66c9d";
 const GAME_NAME = "Assassin's Creed Shadows";
 const GAME_NAME_SHORT = "AC Shadows";
 const EXEC = "ACShadows.exe";
@@ -187,12 +188,14 @@ const spec = {
     ],
     "details": {
       "steamAppId": +STEAMAPP_ID,
+      "epicAppId": EPICAPP_ID,
       "uPlayAppId": UPLAYAPP_ID,
       "ignoreDeploy": IGNORE_DEPLOY,
       "ignoreConflicts": IGNORE_CONFLICTS,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
+      "EpicAPPId": EPICAPP_ID,
       "UPlayAPPId": UPLAYAPP_ID
     }
   },
@@ -296,8 +299,9 @@ const spec = {
   ],
   "discovery": {
     "ids": [
-      STEAMAPP_ID,
       UPLAYAPP_ID,
+      STEAMAPP_ID,
+      EPICAPP_ID,
     ],
     "names": []
   }
@@ -438,6 +442,19 @@ function makeGetModPath(api, gameSpec) {
 
 //Set launcher requirements
 async function requiresLauncher(gamePath, store) {
+  if (store === 'steam') {
+    return Promise.resolve({
+      launcher: 'steam',
+    });
+  } //*/
+  if (store === 'epic') {
+    return Promise.resolve({
+      launcher: 'epic',
+      addInfo: {
+        appId: EPICAPP_ID,
+      },
+    });
+  } //*/
   return Promise.resolve(undefined);
   /*
   if (store === 'steam') {

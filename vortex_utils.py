@@ -20,6 +20,7 @@ Usage:
         name_lookup_variants, lookup_pcgamingwiki, pcgw_get_json,
         get_api_key, http_get, http_get_bytes, http_get_json, http_post_json,
         nexus_v3_get, nexus_v3_post_json,
+        egdata_search_queries, normalize_title_for_match, egdata_title_matches,
         fetch_epic_app_id, add_to_discovery_ids,
         const_value, is_unset, is_missing, set_or_insert, replace_const_rhs,
         js_string_literal, strip_js_comments,
@@ -41,8 +42,8 @@ Usage:
         run_generate_explained, run_generate_explained_batch,
         run_generate_notes, run_generate_notes_batch,
         get_discovery_ids, detect_engine, detect_stores,
-        has_downloader_js, has_gamebanana_downloader_js, has_moddb_downloader_js,
-        has_modworkshop_downloader_js,
+        has_downloader_js, has_bepinexbe_downloader_js, has_gamebanana_downloader_js,
+        has_moddb_downloader_js, has_modworkshop_downloader_js,
         downloads_from_github, github_download_enabled,
         requires_unreal_mod_installer, has_ue4ss_load_order_parity,
         is_unreleased_extension,
@@ -388,6 +389,19 @@ _EDITION_SUFFIXES = [
     ' Gold', ' Plus Edition',
 ]
 
+# Franchise/author prefixes that storefronts keep but Nexus Mods and
+# PCGamingWiki often drop ("Tom Clancy's Ghost Recon Wildlands" is listed on
+# Nexus as "Ghost Recon Wildlands"). Deliberately an explicit list rather than a
+# possessive regex, which would maul titles whose first word is possessive
+# ("Assassin's Creed" -> "Creed", "Baldur's Gate" -> "Gate").
+_TITLE_PREFIXES = [
+    "Tom Clancy's ",
+    # Uncomment as each is confirmed against the Nexus game list:
+    # "Sid Meier's ", "Disney's ", "Marvel's ",
+    # "Peter Jackson's ", "Clive Barker's ", "American McGee's ",
+    # "Tony Hawk's ", "Will Wright's ", "John Romero's ",
+]
+
 
 def roman_to_arabic(name):
     """Convert standalone Roman numeral words in a game title to Arabic digits."""
@@ -405,9 +419,16 @@ def arabic_to_roman(name):
 
 def name_lookup_variants(game_name):
     """
-    Return a list of name strings to try for PCGW direct title lookup.
-    Includes the original, title-cased (for all-caps names), roman<->arabic
-    numeral alternates, and edition-suffix-stripped variants of all the above.
+    Return a list of name strings to try for a direct title lookup (PCGamingWiki,
+    Nexus Mods game list). Includes the original, title-cased (for all-caps names),
+    roman<->arabic numeral alternates, edition-suffix-stripped variants of all the
+    above, and finally the same set with a franchise prefix removed
+    ("Tom Clancy's Ghost Recon Wildlands" -> "Ghost Recon Wildlands").
+
+    Order is significant: the original name comes first and the loosest variants
+    last, so callers that return the first hit prefer an exact match. Prefix
+    stripping matches case-insensitively, since the title-cased variant renders
+    the possessive as "Tom Clancy'S ".
     """
     candidates = [game_name]
 
@@ -436,6 +457,15 @@ def name_lookup_variants(game_name):
                 stripped.append(c[: -len(suffix)].rstrip())
                 break
     candidates.extend(stripped)
+
+    # Franchise-prefix-stripped variants, appended last so they act as a fallback
+    deprefixed = []
+    for c in candidates:
+        for prefix in _TITLE_PREFIXES:
+            if c.lower().startswith(prefix.lower()):
+                deprefixed.append(c[len(prefix):].lstrip())
+                break
+    candidates.extend(deprefixed)
 
     # Deduplicate while preserving order
     seen = set()
@@ -548,29 +578,109 @@ def lookup_pcgamingwiki(game_name, debug=False):
 
 # == egdata.app helpers ========================================================
 
+def egdata_search_queries(game_name):
+    """Return the ordered list of title strings to try against egdata's /search.
+
+    egdata's search returns zero results for any query containing an apostrophe
+    (straight or curly), even when the indexed title contains one - so every name
+    variant is also offered with apostrophes replaced by a space. Built on top of
+    name_lookup_variants(), so franchise-prefix, numeral and edition-suffix
+    alternates are covered too. Order runs exact-first, loosest-last.
+    """
+    queries = []
+    for base in name_lookup_variants(game_name):
+        for candidate in (base, re.sub(r"['’]", " ", base)):
+            candidate = re.sub(r"\s+", " ", candidate).strip()
+            if candidate and candidate not in queries:
+                queries.append(candidate)
+    return queries
+
+
+def normalize_title_for_match(title):
+    """Fold a store/game title down to bare lowercase words for comparison.
+
+    Drops trademark glyphs, apostrophes and all other punctuation, so
+    "Assassin's Creed® Valhalla" and "Assassin s Creed Valhalla" both become
+    "assassins creed valhalla".
+    """
+    folded = re.sub(r"['’]", "", title.lower())
+    folded = re.sub(r"[^a-z0-9]+", " ", folded)
+    return re.sub(r"\s+", " ", folded).strip()
+
+
+_EGDATA_EDITION_SUFFIX = re.compile(
+    r"\s*(?:standard|deluxe|ultimate|gold|complete|definitive|premium|special|"
+    r"anniversary|enhanced|remastered|goty|game of the year)?\s*edition$"
+)
+
+
+def strip_edition_suffix(normalized_title):
+    """Drop a trailing "... Edition" phrase from an already-normalized title.
+
+    Store listings append edition names the game title lacks ("Far Cry 5
+    Standard Edition"). Only a suffix ending in the word "edition" is removed,
+    so a distinct product like "Assassin's Creed III Remastered" keeps its
+    qualifier and stays distinguishable from the base game.
+    """
+    return _EGDATA_EDITION_SUFFIX.sub("", normalized_title).strip()
+
+
+def egdata_title_matches(game_name, offer_title):
+    """Return True if an egdata offer title names the same game.
+
+    egdata's search is fuzzy and will happily return an unrelated title for a
+    loose query ("Gate 3" -> "Realpolitiks 3: Earth and Beyond"), so every hit
+    is checked before its ID is trusted. Matching is exact after normalization,
+    against every name_lookup_variants() alternate so numeral, edition and
+    franchise-prefix spellings all count. Substring and fuzzy-ratio matching are
+    deliberately NOT used - they cannot separate a game from its own sequel
+    ("Europa Universalis V" vs "Europa Universalis IV") or from an unrelated
+    title that happens to contain its name ("Borderlands" vs "Tales from the
+    Borderlands"). Spaces are ignored on the final comparison so store spellings
+    like "FARCRY 6" still match "Far Cry 6".
+    """
+    offer = normalize_title_for_match(offer_title or "")
+    if not offer:
+        return False
+    forms = {offer, strip_edition_suffix(offer)}
+    forms |= {form.replace(" ", "") for form in list(forms)}
+    for variant in name_lookup_variants(game_name):
+        normalized = normalize_title_for_match(variant)
+        if normalized and (normalized in forms or normalized.replace(" ", "") in forms):
+            return True
+    return False
+
+
 def fetch_epic_app_id(game_name):
     """Fetch the EPICAPP_ID for a game from egdata.app using a two-step chain.
 
-    Step 1: POST /search with {"title": game_name, "offerType": "BASE_GAME", "limit": 1}
-            -> elements[0].id (offer ID)
+    Step 1: POST /search with {"title": <query>, "offerType": "BASE_GAME", "limit": 5}
+            for each query from egdata_search_queries(game_name), taking the first
+            element whose title passes egdata_title_matches() -> its id (offer ID)
     Step 2: GET /offers/{offer_id}/items
             -> find item with entitlementType == "EXECUTABLE"
             -> return releaseInfo[0].appId
 
     Returns (app_id, offer_id) tuple, or (None, None) if not found or on any error.
     """
-    try:
-        result = http_post_json(
-            f"{EGDATA_API}/search",
-            {"title": game_name, "offerType": "BASE_GAME", "limit": 1},
-        )
-        elements = result.get("elements", [])
-        if not elements:
+    offer_id = None
+    for i, query in enumerate(egdata_search_queries(game_name)):
+        try:
+            if i:
+                time.sleep(0.3)
+            result = http_post_json(
+                f"{EGDATA_API}/search",
+                {"title": query, "offerType": "BASE_GAME", "limit": 5},
+            )
+            for element in result.get("elements", []):
+                if element.get("id") and egdata_title_matches(game_name, element.get("title")):
+                    offer_id = element["id"]
+                    break
+            if offer_id:
+                break
+        except Exception:
             return None, None
-        offer_id = elements[0].get("id")
-        if not offer_id:
-            return None, None
-    except Exception:
+    if not offer_id:
         return None, None
 
     try:
@@ -2552,6 +2662,11 @@ def _js_function_bodies(src):
 def has_downloader_js(folder):
     """Return True if the extension folder contains a bundled downloader.js module."""
     return os.path.isfile(os.path.join(folder, "downloader.js"))
+
+
+def has_bepinexbe_downloader_js(folder):
+    """Return True if the extension folder contains a bundled bepinexbe_downloader.js module."""
+    return os.path.isfile(os.path.join(folder, "bepinexbe_downloader.js"))
 
 
 def has_gamebanana_downloader_js(folder):

@@ -2,8 +2,8 @@
 Name: AC Unity Vortex Extension
 Structure: Ubisoft AnvilToolkit
 Author: ChemBoy1
-Version: 0.4.3
-Date: 2026-06-30
+Version: 0.4.4
+Date: 2026-08-11
 */
 
 //Import libraries
@@ -15,6 +15,7 @@ const winapi = require('winapi-bindings');
 //Specify all the information about the game
 const UPLAYAPP_ID = "720";
 const STEAMAPP_ID = "289650";
+const EPICAPP_ID = "Amberjack";
 const GAME_ID = "assassinscreedunity";
 const GAME_NAME = "Assassin's Creed Unity";
 const GAME_NAME_SHORT = "AC Unity";
@@ -130,6 +131,7 @@ const spec = {
     ],
     "details": {
       "steamAppId": +STEAMAPP_ID,
+      "epicAppId": EPICAPP_ID,
       "uPlayAppId": UPLAYAPP_ID,
       "supportsSymlinks": true,
       "ignoreDeploy": IGNORE_DEPLOY,
@@ -137,6 +139,7 @@ const spec = {
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
+      "EpicAPPId": EPICAPP_ID,
       "UPlayAPPId": UPLAYAPP_ID
     }
   },
@@ -216,8 +219,9 @@ const spec = {
   ],
   "discovery": {
     "ids": [
+      UPLAYAPP_ID,
       STEAMAPP_ID,
-      UPLAYAPP_ID
+      EPICAPP_ID
     ],
     "names": []
   }
@@ -344,6 +348,19 @@ function makeGetModPath(api, gameSpec) {
 
 //Set launcher requirements
 async function requiresLauncher(gamePath, store) {
+  if (store === 'steam') {
+    return Promise.resolve({
+      launcher: 'steam',
+    });
+  } //*/
+  if (store === 'epic') {
+    return Promise.resolve({
+      launcher: 'epic',
+      addInfo: {
+        appId: EPICAPP_ID,
+      },
+    });
+  } //*/
   return Promise.resolve(undefined);
   /*
   if (store === 'steam') {

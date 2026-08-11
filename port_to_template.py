@@ -23,6 +23,7 @@ Substitution rules:
   - Boolean feature toggles -> left as template defaults
   - Constants not found in game -> left as template defaults (skipped list)
   - Constants in game but not in template -> listed for manual review
+  - Trailing // comments preserved; a // inside a value (URLs) is not one
 
 A .bak copy of the original index.js is written before overwriting.
 
@@ -71,34 +72,64 @@ BOOLEAN_TOGGLES = {
 ARRAY_CONSTS = {'IGNORE_CONFLICTS', 'IGNORE_DEPLOY', 'DISCOVERY_IDS_ACTIVE'}
 
 
+# Top-level (column 0) single-line const/let declaration. The RHS is captured whole
+# and split from any trailing comment by _split_trailing_comment, which is quote-aware.
+DECL_RE = re.compile(
+    r'^(?:const|let)\s+([A-Za-z_][A-Za-z0-9_]*)\s*=\s*([^\n]+)$',
+    re.MULTILINE
+)
+
+
+def _split_trailing_comment(text):
+    """
+    Split a declaration's right-hand side into (code, comment) at the first '//'
+    that is NOT inside a string literal. A plain regex cannot do this: the '//' in
+    "https://www.pcgamingwiki.com/wiki/Foo" is part of the value, and treating it
+    as a comment truncates every URL constant to "https:".
+    """
+    quote = None
+    i = 0
+    while i < len(text):
+        ch = text[i]
+        if quote is not None:
+            if ch == '\\':
+                i += 2
+                continue
+            if ch == quote:
+                quote = None
+        elif ch in ('"', "'", '`'):
+            quote = ch
+        elif ch == '/' and text[i + 1:i + 2] == '/':
+            return text[:i], text[i:]
+        i += 1
+    return text, ''
+
+
 def _find_consts_with_trailing_comments(src):
     """Return the set of top-level const/let names whose declaration line has a trailing // comment."""
-    pattern = re.compile(
-        r'^(?:const|let)\s+([A-Za-z_][A-Za-z0-9_]*)\s*=\s*[^;\n]+?\s*;?\s*//[^\n]*$',
-        re.MULTILINE
-    )
-    return {m.group(1) for m in pattern.finditer(src)}
+    names = set()
+    for m in DECL_RE.finditer(src):
+        _, comment = _split_trailing_comment(m.group(2))
+        if comment:
+            names.add(m.group(1))
+    return names
 
 
 def extract_constants(src):
     """
     Return a dict {name: raw_rhs_string} for every top-level single-line const/let
     declaration (i.e. not indented -- column 0). raw_rhs_string is everything after
-    the '=' up to (but not including) the trailing semicolon and newline.
+    the '=' up to (but not including) the trailing semicolon, any trailing // comment
+    and the newline.
     Multi-line declarations (arrays, objects that span lines) are NOT captured here
     -- they are handled separately.
     """
     consts = {}
-    # Anchor at start of line (^) with no leading whitespace to skip function-body locals.
-    # Allow an optional trailing // comment (e.g. URL comments added by new_extension.py).
-    pattern = re.compile(
-        r'^(?:const|let)\s+([A-Za-z_][A-Za-z0-9_]*)\s*=\s*([^;\n]+?)\s*;?\s*(?://[^\n]*)?$',
-        re.MULTILINE
-    )
-    for m in pattern.finditer(src):
-        name = m.group(1)
-        rhs = m.group(2).strip()
-        consts[name] = rhs
+    for m in DECL_RE.finditer(src):
+        rhs, _ = _split_trailing_comment(m.group(2))
+        rhs = rhs.strip().rstrip(';').strip()
+        if rhs:
+            consts[m.group(1)] = rhs
     return consts
 
 
@@ -258,7 +289,9 @@ def apply_port(template_src, game_consts, game_src):
         game_array = const_array_value(game_src, name)
         tmpl_array = const_array_value(template_src, name)
         if game_array and tmpl_array and game_array.strip() != tmpl_array.strip():
-            replaced, count = _sub_array_rhs(new_src, name, game_array)
+            # const_array_value strips the brackets; _sub_array_rhs replaces them too,
+            # so put them back or the declaration becomes a comma expression.
+            replaced, count = _sub_array_rhs(new_src, name, f'[{game_array}]')
             if count:
                 new_src = replaced
                 substituted.append((name, tmpl_array.strip(), game_array.strip()))

@@ -1,5 +1,20 @@
 # template-ue4-5 Changelog
 
+## [2026-08-10] (2)
+
+- Changed: `hasXbox` is now derived from the active discovery IDs. It is declared with `let` and initialised to `false`, followed by `if (DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID)) hasXbox = true;`, so adding the Xbox app ID to `DISCOVERY_IDS_ACTIVE` is enough to switch on the Xbox version logic. Setting the initialiser to `true` still forces it on for games that need it without an Xbox ID in the list.
+
+## [2026-08-10]
+
+- Changed: `ue4ssLoadOrder` is now the master toggle for UE4SS support, not just for the load order page. Its comment says so. When it is off, the template no longer registers any of the UE4SS pieces:
+  - Mod types: `SCRIPTS_ID`, `DLL_ID`, `UE4SS_ID` and the declarative `LOGICMODS_ID` entry (removed from `spec.modTypes` by a filter next to the existing `hasModKit` block).
+  - Installers: `LOGICMODS_ID`, `UE4SS_ID`, `SCRIPTS_ID`, `DLL_ID`.
+  - Folders created by `setup()`: the UE4SS Mods folder, its `BPModLoaderMod` subfolder, and the LogicMods entry in `MODTYPE_FOLDERS`.
+  - The UE4SS auto-download in `setup()`: `autoDownloadUe4ss` keeps its own toggle but now only applies when `ue4ssLoadOrder` is on, so a game with UE4SS support off cannot download UE4SS on setup.
+  - Toolbar buttons: "Open UE4SS Mods Folder", "Open LogicMods Folder", "Download UE4SS", "Open UE4SS Settings INI", "Open UE4SS mods.txt".
+
+  `UE4SSCOMBO_ID` is deliberately left ungated - that installer also handles mods with both Binaries and Content folders that have nothing to do with UE4SS. LogicMods is gated on `ue4ssLoadOrder` rather than `logicModsLoadOrder` because LogicMods are blueprint paks loaded by UE4SS's `BPModLoaderMod`. Button order is unchanged: the guards wrap the buttons where they already sat, so no button moves relative to the ungated ones. Propagated to all 11 games at template parity; no behavior change there, since every one of them has `ue4ssLoadOrder = true`.
+
 ## [2026-07-29] (2)
 
 Mod-update load order guard: placeholder row replaced by a freeze. Applied across all 20 files carrying the guard, template included.

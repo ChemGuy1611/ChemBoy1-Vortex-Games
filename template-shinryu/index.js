@@ -47,7 +47,8 @@ const SAVE_FOLDERNAME = CONFIG_FOLDERNAME;
 const hasUserIdFolder = true; //true if there is a user ID folder in the Save path that must be read (i.e. Steam ID)
 
 //feature toggles
-const hasXbox = false; //toggle for Xbox version logic
+let hasXbox = false; //toggle for Xbox version logic
+if (DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID)) hasXbox = true;
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
 const needsModInstaller = true; //set to true if standard mods should run through an installer - set false to have mods installed to the mods folder without any processing
 const rootInstaller = true; //enable root installer. Set false if you need to avoid installer collisions

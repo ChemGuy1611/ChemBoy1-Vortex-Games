@@ -2,8 +2,8 @@
 Name: AC Odyssey Vortex Extension
 Structure: Ubisoft AnvilToolkit
 Author: ChemBoy1
-Version: 0.2.1
-Date: 07/31/2024
+Version: 0.2.2
+Date: 2026-08-11
 */
 
 //Import libraries
@@ -15,6 +15,7 @@ const winapi = require('winapi-bindings');
 //Specify all the information about the game
 const UPLAYAPP_ID = "5059";
 const STEAMAPP_ID = "812140";
+const EPICAPP_ID = "Clary";
 const GAME_ID = "assassinscreedodyssey";
 const GAME_NAME = "Assassin's Creed Odyssey";
 const EXEC = "ACOdyssey.exe";
@@ -53,12 +54,14 @@ const spec = {
     ],
     "details": {
       "steamAppId": +STEAMAPP_ID,
+      "epicAppId": EPICAPP_ID,
       "uPlayAppId": UPLAYAPP_ID,
       "ignoreConflicts": IGNORE_CONFLICTS,
       "ignoreDeploy": IGNORE_DEPLOY,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
+      "EpicAPPId": EPICAPP_ID,
       "UPlayAPPId": UPLAYAPP_ID
     }
   },
@@ -102,8 +105,9 @@ const spec = {
   ],
   "discovery": {
     "ids": [
+      UPLAYAPP_ID,
       STEAMAPP_ID,
-      //UPLAYAPP_ID
+      EPICAPP_ID
     ],
     "names": []
   }
@@ -239,9 +243,26 @@ function makeGetModPath(api, gameSpec) {
 
 //Setup launcher requirements (Steam, Epic, GOG, GamePass, etc.). More parameters required for Epic and GamePass
 function makeRequiresLauncher(api, gameSpec) {
-  return () => Promise.resolve((gameSpec.game.requiresLauncher !== undefined)
-    ? { launcher: gameSpec.game.requiresLauncher }
-    : undefined);
+  return (gamePath, store) => {
+    if (store === 'steam') {
+      return Promise.resolve({
+        launcher: 'steam',
+      });
+    } //*/
+    if (store === 'epic') {
+      return Promise.resolve({
+        launcher: 'epic',
+        addInfo: {
+          appId: EPICAPP_ID,
+          //parameters: PARAMETERS,
+          //launchType: 'gamestore',
+        },
+      });
+    } //*/
+    return Promise.resolve((gameSpec.game.requiresLauncher !== undefined)
+      ? { launcher: gameSpec.game.requiresLauncher }
+      : undefined);
+  };
 }
 
 //Check if AnvilToolkit is installed

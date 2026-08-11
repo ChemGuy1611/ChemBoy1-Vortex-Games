@@ -4,6 +4,11 @@
 
 - Config and save modtypes, installers, and open buttons.
 
+## [0.5.3] - 2026-08-11
+
+- Added Epic Games Store support for DOOM 3: BFG Edition
+- Steam version now launches through Steam
+
 ## [0.5.2] - 2026-08-05
 
 - Fixed: A required mod loader or tool that can no longer be found in its GitHub release is now reported, listing the files the release actually contains, instead of failing quietly

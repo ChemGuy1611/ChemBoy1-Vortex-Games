@@ -4,7 +4,7 @@ const GAME_ID = 'placeholder';
 const api = require('vortex-api'); //DUMMY PLACEHOLDER TO AVOID LINT FREAKING OUT
 
 // REQUIREMENTS ///////////////////////////////////////////////////
-const { download, findModByFile, findDownloadIdByFile, resolveVersionByPattern, resolveVersionByAssetDate, resolveVersionByModVersion, testRequirementVersion } = require('./downloader');
+const { download, findModByFile, findDownloadIdByFile, resolveVersionByPattern, resolveVersionByAssetDate, resolveVersionByModVersion, resolveVersionByDirectCopyMarker, resolveVersionByNightlyRun, testRequirementVersion } = require('./downloader');
 const semver = require('semver');
 const XXX_ID = `${GAME_ID}-XXX`;
 const XXX_NAME = "XXX";
@@ -19,7 +19,7 @@ const REQUIREMENTS = [
     archiveFileName: XXX_ARC_NAME,
     modType: XXX_ID, //the module assigns this to the installed mod itself; findModByFile only matches mods carrying it (untyped mods are not considered)
     assemblyFileName: XXX_FILE,
-    userFacingName: XXX_NAME,
+    userFacingName: XXX_NAME, //notifications, error messages, and the name shown in the mod list
     githubUrl: XXX_URL_API,
     findMod: (api) => findModByFile(api, XXX_ID, XXX_FILE),
     findDownloadId: (api) => findDownloadIdByFile(api, XXX_ARC_NAME),
@@ -33,8 +33,62 @@ const REQUIREMENTS = [
     //resolveVersion: (api) => resolveVersionByAssetDate(api, REQUIREMENTS[0]), //use together with trackByAssetDate
     //resolveVersion: (api) => resolveVersionByModVersion(api, REQUIREMENTS[0]), //reads the version stamped on the installed mod at install time; use when the version is only in the release tag (asset filename is versionless) and fileArchivePattern has no capture group
     //autoInstall: false, //opt out of unattended installs - setup and the update check both skip it, only an explicit user action (toolbar button) installs it
+    //pinVersion: VER, //hold at this exact release - while it is the installed version the update check returns without making any request, and it overrides allowPrerelease/prereleaseTag/trackByAssetDate
+    //pinTag: `v${VER}`, //only if the release tag is not just pinVersion - the same tag with the leading 'v' toggled is retried automatically on a 404
   },
 ]; //*/
+
+/* Direct-copy requirement: for upstreams that publish a naked file instead of an archive
+// (a bare .dll, .exe, ...). Vortex's install pipeline can only take archives, so setting
+// directCopyPath fetches the matched asset straight to that path and never registers a mod -
+// findMod/findDownloadId/modType/assemblyFileName are not read for this requirement.
+const XXX_TARGET_SUBFOLDER = 'Mods'; //game-relative folder the file belongs in
+const DIRECT_REQUIREMENTS = [
+  {
+    archiveFileName: XXX_FILE,             //matched against the release asset name
+    userFacingName: XXX_NAME,
+    githubUrl: XXX_URL_API,
+    //placeholder only - GAME_PATH is '' at module load, so setup() must reassign this (see below)
+    directCopyPath: path.join(GAME_PATH, XXX_TARGET_SUBFOLDER, XXX_FILE),
+    //directCopyModType: XXX_ID,           //optional - counts as installed when a mod of this type exists (user installed an archived build from Nexus instead)
+    fileArchivePattern: new RegExp(/^XXX\.dll$/, 'i'),
+    resolveVersion: (api) => resolveVersionByDirectCopyMarker(api, DIRECT_REQUIREMENTS[0]), //reads the <directCopyPath>.version.json marker written at install
+    autoInstall: false,
+    //pinVersion: VER,
+  },
+];
+
+// *** In setup(), immediately after GAME_PATH = discovery.path ////////////////////
+// REQUIRED: the array above is built at module load, when GAME_PATH is still '' - without
+// this line the baked-in path stays relative and never resolves.
+DIRECT_REQUIREMENTS[0].directCopyPath = path.join(GAME_PATH, XXX_TARGET_SUBFOLDER, XXX_FILE);
+//*/
+
+/* Nightly requirement: for upstreams whose bleeding-edge builds are GitHub Actions CI
+// artifacts rather than releases (served through nightly.link). Setting nightlyUrl switches
+// the requirement to resolving its identity from the Actions run listing - the newest
+// successful run of nightlyWorkflow on nightlyBranch - and comparing by run number.
+// The download itself is an ordinary archive install; only the version identity differs.
+const XXX_URL_NIGHTLY = `https://nightly.link/${AUTHOR}/${REPO}/workflows/build/main/XXX.CI.Release.zip`;
+const NIGHTLY_REQUIREMENTS = [
+  {
+    archiveFileName: 'XXX.CI.Release.zip', //the artifact's (constant) file name
+    modType: XXX_ID,
+    assemblyFileName: XXX_FILE,
+    userFacingName: XXX_NAME,
+    githubUrl: XXX_URL_API,                //the Actions run listing is read from here
+    nightlyUrl: XXX_URL_NIGHTLY,           //presence of this field switches the mode on
+    nightlyWorkflow: 'build.yml',          //workflow file name, as it appears in .github/workflows
+    nightlyBranch: 'main',                 //branch the nightly is built from
+    findMod: (api) => findModByFile(api, XXX_ID, XXX_FILE),
+    //no findDownloadId: the artifact file name never changes, so a local archive matching it
+    //is a stale build - the module always re-resolves the newest run instead
+    resolveVersion: (api) => resolveVersionByNightlyRun(api, NIGHTLY_REQUIREMENTS[0]), //reads the run number stamped at install
+    autoInstall: false,
+    //pinVersion has no effect here - nightlyUrl only ever serves the newest run's artifact
+  },
+];
+//*/
 
 //* Alternative to resolveVersionByPattern for when the version is NOT in the archive
 // file name. Finds the newest matching downloaded archive, extracts it to a temp dir,

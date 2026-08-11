@@ -72,8 +72,8 @@ const spec = {
   ],
   "discovery": {
     "ids": [
-      STEAMAPP_ID,
-      //UPLAYAPP_ID
+      UPLAYAPP_ID,
+      STEAMAPP_ID
     ],
     "names": []
   }

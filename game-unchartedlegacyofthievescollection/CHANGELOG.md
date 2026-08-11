@@ -4,6 +4,10 @@
 
 - None
 
+## [0.3.1] - 2026-08-11
+
+- Added Epic Games Store support
+
 ## [0.3.0] - 2026-08-03
 
 - Fixed: Readme and changelog files inside mods no longer show up as file conflicts.

@@ -19,11 +19,12 @@ const TS_REQUIREMENTS = [
     tsNamespace: XXX_TS_NAMESPACE,
     tsName: XXX_TS_NAME,
     modType: XXX_ID,
-    userFacingName: XXX_NAME,
+    userFacingName: XXX_NAME, //notifications, error messages, and the name shown in the mod list
     fallbackVersion: XXX_REV, //optional - omit to fail with a manual-download error page when the API is down
     //versionAttribute: 'thunderstoreVersion', //mod attribute tracking the installed version for update checks (default shown)
     //pageUrl: `https://thunderstore.io/c/${XXX_TS_COMMUNITY}/p/${XXX_TS_NAMESPACE}/${XXX_TS_NAME}/`, //manual-download page (default derived from the fields above)
     //autoInstall: false, //opt out of unattended installs - setup and the update check both skip it, only an explicit user action (toolbar button) installs it
+    //pinVersion: XXX_REV, //hold at this package version - while it is installed the update check returns without making any request; no companion field needed, every version has a predictable download URL
   },
   //additional Thunderstore requirements go here
 ];

@@ -2,8 +2,8 @@
 Name: Uncharted: Legacy of Thieves Collection Vortex Extension
 Structure: 3rd Party Mod Manager (Fluffy)
 Author: ChemBoy1
-Version: 0.3.0
-Date: 2026-08-03
+Version: 0.3.1
+Date: 2026-08-11
 */
 
 //Import libraries
@@ -13,6 +13,7 @@ const template = require('string-template');
 
 //Specify all information about the game
 const STEAMAPP_ID = "1659420";
+const EPICAPP_ID = "0ef5f1eaa6be4d648f6e9252aa02c5cf";
 const GAME_ID = "unchartedlegacyofthievescollection";
 const GAME_NAME = "Uncharted: Legacy of Thieves Collection";
 const GAME_NAME_SHORT = "Uncharted: LoTC";
@@ -55,11 +56,13 @@ const spec = {
     ],
     "details": {
       "steamAppId": +STEAMAPP_ID,
+      "epicAppId": EPICAPP_ID,
       "ignoreConflicts": IGNORE_CONFLICTS,
       "ignoreDeploy": IGNORE_DEPLOY,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
+      "EpicAPPId": EPICAPP_ID,
     }
   },
   "modTypes": [
@@ -84,7 +87,8 @@ const spec = {
   ],
   "discovery": {
     "ids": [
-      STEAMAPP_ID
+      STEAMAPP_ID,
+      EPICAPP_ID
     ],
     "names": []
   }
@@ -220,9 +224,26 @@ function makeGetModPath(api, gameSpec) {
 
 //Set launcher requirements
 function makeRequiresLauncher(api, gameSpec) {
-  return () => Promise.resolve((gameSpec.game.requiresLauncher !== undefined)
-    ? { launcher: gameSpec.game.requiresLauncher }
-    : undefined);
+  return (gamePath, store) => {
+    if (store === 'steam') {
+      return Promise.resolve({
+        launcher: 'steam',
+      });
+    } //*/
+    if (store === 'epic') {
+      return Promise.resolve({
+        launcher: 'epic',
+        addInfo: {
+          appId: EPICAPP_ID,
+          //parameters: PARAMETERS,
+          //launchType: 'gamestore',
+        },
+      });
+    } //*/
+    return Promise.resolve((gameSpec.game.requiresLauncher !== undefined)
+      ? { launcher: gameSpec.game.requiresLauncher }
+      : undefined);
+  };
 }
 
 //Check if Fluffy Mod Manager is installed

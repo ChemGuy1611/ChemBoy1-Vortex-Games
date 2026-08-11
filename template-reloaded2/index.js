@@ -44,7 +44,8 @@ const RELOADEDMODLOADER_URL = `XXX`; //if from GitHub or another site
 const RELOADEDMODLOADER_URL_ERR = `XXX`;
 
 //feature toggles
-const hasXbox = false; //toggle for Xbox version logic
+let hasXbox = false; //toggle for Xbox version logic
+if (DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID)) hasXbox = true;
 const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
 const setupNotification = true; //enable to show the user a notification with special instructions (specify below) - default true: Reloaded-II Mod Manager setup instructions are always relevant
 const debug = false; //toggle for debug mode

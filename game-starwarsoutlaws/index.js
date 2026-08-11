@@ -2,8 +2,8 @@
 Name: Star Wars Outlaws Vortex Extension
 Structure: Snowdrop Mod Loader
 Author: ChemBoy1
-Version: 0.2.4
-Date: 2025-10-03
+Version: 0.2.5
+Date: 2026-08-11
 ////////////////////////////////////////////*/
 
 //Import libraries
@@ -18,6 +18,7 @@ const DOCUMENTS = util.getVortexPath("documents");
 const GAME_ID = "starwarsoutlaws";
 const UPLAYAPP_ID = "17903";
 const STEAMAPP_ID = "2842040";
+const EPICAPP_ID = "02636c0284e8474f8c0b066ac7d9807f";
 const EXEC = "Outlaws.exe";
 const EXEC_PLUS = "Outlaws_Plus.exe";
 const GAME_NAME = "Star Wars Outlaws";
@@ -73,12 +74,14 @@ const spec = {
     "details": {
       "uPlayAppId": UPLAYAPP_ID,
       "steamAppId": +STEAMAPP_ID,
+      "epicAppId": EPICAPP_ID,
       "ignoreConflicts": IGNORE_CONFLICTS,
       "ignoreDeploy": IGNORE_DEPLOY,
     },
     "environment": {
       "UPlayAPPId": UPLAYAPP_ID,
       "SteamAPPId": STEAMAPP_ID,
+      "EpicAPPId": EPICAPP_ID,
     }
   },
   "modTypes": [
@@ -109,8 +112,9 @@ const spec = {
   ],
   "discovery": {
     "ids": [
-      STEAMAPP_ID,
       UPLAYAPP_ID,
+      STEAMAPP_ID,
+      EPICAPP_ID,
     ],
     "names": []
   }
@@ -238,9 +242,26 @@ function makeGetModPath(api, gameSpec) {
 
 //Setup launcher requirements (Steam, Epic, GOG, GamePass, etc.). More parameters required for Epic and GamePass
 function makeRequiresLauncher(api, gameSpec) {
-  return () => Promise.resolve((gameSpec.game.requiresLauncher !== undefined)
-    ? { launcher: gameSpec.game.requiresLauncher }
-    : undefined);
+  return (gamePath, store) => {
+    if (store === 'steam') {
+      return Promise.resolve({
+        launcher: 'steam',
+      });
+    } //*/
+    if (store === 'epic') {
+      return Promise.resolve({
+        launcher: 'epic',
+        addInfo: {
+          appId: EPICAPP_ID,
+          //parameters: PARAMETERS,
+          //launchType: 'gamestore',
+        },
+      });
+    } //*/
+    return Promise.resolve((gameSpec.game.requiresLauncher !== undefined)
+      ? { launcher: gameSpec.game.requiresLauncher }
+      : undefined);
+  };
 }
 
 // MOD INSTALLER FUNCTIONS ///////////////////////////////////////////////////

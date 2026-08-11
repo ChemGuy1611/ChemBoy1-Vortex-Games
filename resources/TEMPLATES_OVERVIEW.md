@@ -55,7 +55,9 @@ All 16 templates live in `template-*/`. Use `new_extension.py <short-name> <game
 
 **Mod types:** `BEPCFGMAN_ID` → `BEPMOD_ID` (BepInEx/plugins) → `ASSEMBLY_ID` → `ASSETS_ID` → `ROOT_ID` → fallback
 
-**requireExtension:** `'modtype-bepinex'`. Auto-download: BepInEx (Nexus or GitHub) + ConfigurationManager (GitHub).
+**requireExtension:** `'modtype-bepinex'`. BepInEx itself is downloaded by that extension (Nexus or GitHub).
+
+**downloader.js required** — ConfigurationManager is a `downloader.js` requirement (`BEPCFGMAN_REQUIREMENTS`), so it is version-checked against its GitHub releases rather than pinned to a hardcoded URL. See the shared downloader notes below.
 
 ---
 
@@ -64,6 +66,8 @@ All 16 templates live in `template-*/`. Use `new_extension.py <short-name> <game
 **Toggles:** `recommendedLoader` (`''`/`'bepinex'`/`'melon'`), `preventPluginInstall`, `loaderSwitchRestart`, `enableSaveInstaller`, `hasCustomMods`/`hasCustomLoader`/`customLoaderInstaller`, `allowBepCfgMan`/`allowMelPrefMan`, `useMelonNightly`, `BEPINEX_BUILD`/`MELON_STRING`
 
 **Behavior:** Loader switching mutually exclusive. `preventPluginInstall` blocks mismatched loader plugins. Downloads both loaders' utilities as needed.
+
+**downloader.js + bepinexbe_downloader.js required** — MelonLoader, BepInEx mono and ConfigurationManager are `downloader.js` requirements; MelonPreferencesManager uses its direct-copy mode (naked `.dll`); IL2CPP BepInEx comes from `bepinexbe_downloader.js`. `getRequirements(api)` returns only the requirements belonging to the loader that is currently installed — never both loaders, which would break the game. Mono extensions drop the `bepinexbe_downloader.js` copy entirely. See the shared downloader notes below.
 
 ---
 
@@ -172,6 +176,12 @@ Full reference — architecture, exports, the requirement-object fields, the thr
 version-resolve strategies, and the `template_downloader.js` wiring — lives in
 `resources/DOWNLOADER.md`.
 
+Requirements hosted somewhere other than GitHub use a sibling module with the same local-copy
+model, one per host: `gamebanana_downloader.js`, `moddb_downloader.js`,
+`modworkshop_downloader.js`, `thunderstore_downloader.js`, and `bepinexbe_downloader.js` (the
+BepInEx bleeding-edge CI builds that IL2CPP Unity games need — `resources/BEPINEX_BE_BUILDS.md`).
+Each is documented in its host's API doc, all linked from `resources/DOWNLOADER.md`.
+
 ---
 
 ### template-snowdropengine
@@ -247,5 +257,6 @@ Shin Ryu Mod Manager (SRMM). Steam + Xbox.
 `INSTALLER_SYSTEM.md` (per-template installer priority ladders referenced throughout).
 `REGISTER_GAME.md` (the `spec`/`applyGame()` structure every template follows).
 `LOAD_ORDER_REGISTRATION.md` (which templates use FBLO vs the legacy load-order page). Requirements
-auto-downloader: `resources/DOWNLOADER.md` (linked above). `PCGAMINGWIKI_API.md` (source of the
+auto-downloader: `resources/DOWNLOADER.md` (linked above), plus `BEPINEX_BE_BUILDS.md` for the
+BepInEx bleeding-edge sibling module. `PCGAMINGWIKI_API.md` (source of the
 `PCGAMINGWIKI_URL` constant and the store-ID/save-path constants filled in at scaffold time).

@@ -4,6 +4,10 @@
 
 - Xbox support - waiting on stable (and easy to install) mod injector for Xbox version
 
+## [0.3.2] - 2026-08-11
+
+- Added Epic Games Store support
+
 ## [0.3.1] - 2026-08-05
 
 - Fixed: A required mod loader or tool that can no longer be found in its GitHub release is now reported, listing the files the release actually contains, instead of failing quietly

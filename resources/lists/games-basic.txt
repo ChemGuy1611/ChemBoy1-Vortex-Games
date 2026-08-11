@@ -29,6 +29,7 @@ europauniversalisv
 farmingsimulator25
 forzahorizon6
 ghostoftsushima
+ghostreconwildlands
 godofwar
 godofwarragnarok
 gzdoom

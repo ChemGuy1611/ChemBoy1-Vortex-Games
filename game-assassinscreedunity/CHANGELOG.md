@@ -4,6 +4,11 @@
 
 - AC extension re-vamp (WIP)
 
+## [0.4.4] - 2026-08-11
+
+- Added Epic Games Store support
+- Steam version now launches through Steam
+
 ## [0.4.3] - 2026-06-30
 
 - Fixed: ResoRep original system dll file copy location corrected to System 32 folder (needed for 64-bit).

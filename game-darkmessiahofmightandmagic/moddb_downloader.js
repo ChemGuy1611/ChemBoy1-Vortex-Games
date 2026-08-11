@@ -8,7 +8,8 @@
 // latest file is resolved from the page's own RSS feed (rss.moddb.com), with
 // an optional hardcoded fallback file id for when the feed is unreachable. An
 // "update available" notification is raised when a newer file appears in the
-// feed.
+// feed. A requirement can instead be pinned to one file revision (pinVersion +
+// pinFileId), which holds it there and makes update checks skip the feed.
 //
 // ModDB's www host blocks some non-browser HTTP clients at the TLS/request
 // level, so the mirror URL is resolved with a renderer fetch before handing
@@ -49,6 +50,36 @@ function pageUrl(requirement) {
 
 function rssUrl(requirement) {
   return `https://rss.moddb.com/${requirement.moddbPath}/downloads/feed/rss.xml`;
+}
+
+// --- version pinning ------------------------------------------------------
+// An opt-in pin holds a requirement at one specific file revision instead of tracking the
+// newest one. pinVersion is the label shown to the user and pinFileId is the file to install:
+// both are needed, because the RSS feed is newest-first with no version index. With pinVersion
+// unset - the default - none of this code runs and the module behaves exactly as it does
+// without it.
+function isPinned(requirement) {
+  if (!requirement.pinVersion) {
+    return false;
+  }
+  if (!requirement.pinFileId) {
+    log('warn', `${requirement.userFacingName} sets pinVersion without pinFileId - ignoring the pin`);
+    return false;
+  }
+  return true;
+}
+
+//Whether the installed copy is already the pinned file, compared on the tracked file id. True
+//short-circuits the update check before any HTTP request is made.
+function isAtPinnedVersion(api, gameId, requirement) {
+  if (!isPinned(requirement)) {
+    return false;
+  }
+  const state = api.getState();
+  const mods = state.persistent.mods[gameId] || {};
+  const attr = fileIdAttribute(requirement);
+  return Object.values(mods).some(mod => (mod?.type === requirement.modType)
+    && (String(mod?.attributes?.[attr]) === String(requirement.pinFileId)));
 }
 
 // --- ModDB RSS feed --------------------------------------------------------
@@ -262,10 +293,14 @@ async function downloadModDbRequirement(api, gameSpec, requirement, check = true
   });
   //captured before the install: these are the versions being replaced
   const previousModIds = requirementModIds(api, gameSpec.game.id, requirement);
+  const pinned = isPinned(requirement);
   try {
-    const latestFile = await getLatestModDbFile(requirement); //resolve current file from the ModDB RSS feed
-    const latestVersion = getLatestModDbVersion(requirement, latestFile);
-    const fileId = latestFile ? latestFile.id : requirement.fallbackFileId; //fall back to the hardcoded file id if the feed is unreachable
+    //A pin overrides newest-file selection, and skips the feed entirely: the pinned file id is
+    //all the mirror lookup below needs, so a pinned install makes no feed request.
+    const latestFile = pinned ? null : await getLatestModDbFile(requirement); //resolve current file from the ModDB RSS feed
+    const latestVersion = pinned ? requirement.pinVersion : getLatestModDbVersion(requirement, latestFile);
+    //fall back to the hardcoded file id if the feed is unreachable
+    const fileId = pinned ? requirement.pinFileId : (latestFile ? latestFile.id : requirement.fallbackFileId);
     if (!fileId) {
       throw new util.ProcessCanceled('ModDB RSS feed is unreachable and no fallback file id is set');
     }
@@ -303,6 +338,7 @@ async function downloadModDbRequirement(api, gameSpec, requirement, check = true
       actions.setModAttribute(gameSpec.game.id, modId, fileIdAttribute(requirement), latestFile ? Number(latestFile.id) : Number(fileId)), // Track the installed file id for update checks
       actions.setModAttribute(gameSpec.game.id, modId, 'source', 'website'),
       actions.setModAttribute(gameSpec.game.id, modId, 'url', pageUrl(requirement)), // Shown as the mod's "Source" link in the mod details (only rendered when source === 'website')
+      actions.setModAttribute(gameSpec.game.id, modId, 'customFileName', requirement.userFacingName), // Vortex renders a mod as customFileName || logicalFileName || fileName || name, and the install pipeline stamps fileName with the archive name - without this the mod list shows the raw archive
     ];
     for (const oldModId of previousModIds) { // Disable the version this install replaces, so only one copy deploys
       if (oldModId !== modId) {
@@ -328,6 +364,11 @@ async function downloadModDb(api, gameSpec, requirements, check = true) {
 
 //Check the ModDB RSS feed for a newer file for a single requirement and notify the user
 async function checkForModDbUpdateRequirement(api, gameSpec, requirement) {
+  // Pinned and already on the pinned file: nothing to check, and deliberately no HTTP request
+  // at all - this is what makes a pinned requirement free against the ModDB feed.
+  if (isAtPinnedVersion(api, gameSpec.game.id, requirement)) {
+    return;
+  }
   if (!isModDbRequirementInstalled(api, gameSpec.game.id, requirement)) {
     // Missing rather than outdated - install it instead of checking for updates to something
     // that is not there. Requirements the user installs manually opt out with autoInstall: false.
@@ -336,6 +377,26 @@ async function checkForModDbUpdateRequirement(api, gameSpec, requirement) {
     }
     log('info', `${requirement.userFacingName} is not installed - installing it`);
     return downloadModDbRequirement(api, gameSpec, requirement);
+  }
+  if (isPinned(requirement)) {
+    // Installed, but not the pinned file. The wording covers a user who is ahead of the pin as
+    // well as behind it - installing it from that state is a deliberate downgrade.
+    api.sendNotification({
+      id: `${requirement.modType}-update`,
+      type: 'warning',
+      message: `${requirement.userFacingName} pinned version available (${requirement.pinVersion})`,
+      allowSuppress: true,
+      actions: [
+        {
+          title: 'Download',
+          action: (dismiss) => {
+            downloadModDbRequirement(api, gameSpec, requirement, false);
+            dismiss();
+          },
+        },
+      ],
+    });
+    return;
   }
   const latestFile = await getLatestModDbFile(requirement);
   if (!latestFile) {

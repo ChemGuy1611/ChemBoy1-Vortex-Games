@@ -91,7 +91,7 @@ The entry points take an array of requirement objects (conventionally a `MODDB_R
 | --- | --- | --- |
 | `moddbPath` | yes | URL path relative to moddb.com, e.g. `'games/dark-messiah-of-might-magic'` or `'mods/edain-mod'`. Builds the RSS feed URL and the default `pageUrl`. |
 | `modType` | yes | Vortex mod type id the requirement installs as; also the installed-detection key (any mod with this type counts as installed). |
-| `userFacingName` | yes | Display name in notifications and on the download. |
+| `userFacingName` | yes | Display name in notifications, on the download, and in the mod list (stamped as the mod's `customFileName`). |
 | `filePattern` | optional | RegExp tested against RSS item titles, narrowing the feed to this requirement's files. Default: the newest item in the feed. |
 | `fallbackVersion` | optional | Version attribute to record when the feed is unreachable. |
 | `fallbackFileId` | optional | File id used to resolve a download when the feed is unreachable. Without it, an unreachable feed fails the install with a manual-download error. |
@@ -101,6 +101,16 @@ The entry points take an array of requirement objects (conventionally a `MODDB_R
 | `pageUrl` | optional | Manual-download page opened on install failure. Default derived from `moddbPath` (`https://www.moddb.com/{moddbPath}/downloads`). |
 | `autoInstall` | optional | `false` -> never install this requirement unattended; only an explicit user action (a toolbar button) installs it. Default installs a missing requirement automatically when the update check runs. |
 | `archiveFileName` | optional | Fallback name for the temp file used only by the direct-fetch fallback route, when neither the response URL nor `content-disposition` yields a usable name. |
+| `pinVersion` | optional | Hold the requirement at this file revision instead of tracking the newest feed item. Requires `pinFileId`; without it the pin is ignored with a warning. See **Version pinning** below. |
+| `pinFileId` | with `pinVersion` | The file id to install for the pinned revision — the feed is newest-first with no version index, so the pin cannot be resolved without it. |
+
+### Version pinning
+
+`pinVersion` + `pinFileId` hold the requirement at one file revision instead of following the newest one. It is opt-in and unset by default. While the tracked `moddbFileId` equals `pinFileId`, `checkForModDbUpdate` returns **before making any request** — a pinned requirement costs nothing against the feed. A pinned install skips the feed too; only the mirror-URL resolution still runs, since a ModDB file id always has to be turned into a mirror link.
+
+When the installed file is not the pinned one — including when nothing is installed — the module resolves the *pinned* file, never the newest. The notification reads "pinned version available" rather than "update available", because the user may be *ahead* of the pin and installing it is then a deliberate downgrade. `autoInstall` stays orthogonal: the pin says which file, `autoInstall` says whether anything installs unattended.
+
+The same field name and behavior exist in all five downloader modules; `DOWNLOADER.md` has the cross-module table.
 
 ### Exports
 
@@ -118,6 +128,7 @@ The entry points take an array of requirement objects (conventionally a `MODDB_R
 ### Behaviors worth knowing
 
 - **Source attribution.** A successful install sets the mod's `source` attribute to `'website'` and `url` to `pageUrl(requirement)` (the ModDB page, not the download link) — Vortex renders this as a clickable "Source" link in the mod details panel.
+- **The mod list shows `userFacingName`, not the archive name.** Vortex renders a mod as `customFileName || logicalFileName || fileName || name`, and the install pipeline stamps `fileName` with the downloaded archive — so the install also stamps `customFileName` from `userFacingName`. Written at install only, so it cannot overwrite a name the user set afterwards. Rendering rule: `VORTEX_MOD_LIST.md`.
 - **Feed-unreachable fallback.** `getLatestModDbFile` returns `null` on failure. The installer then falls back to `fallbackFileId`/`fallbackVersion`; the update check silently skips (nothing to compare against).
 - **No silent auto-update.** `checkForModDbUpdate` only notifies; the user-driven Download action performs the update via `downloadModDbRequirement(..., false)`.
 - **Overlap guard.** A requirement whose install is already running is skipped (e.g. double-clicked toolbar action), keyed by mod type.

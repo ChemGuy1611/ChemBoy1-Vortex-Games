@@ -49,7 +49,8 @@ const CONFIG_FILE = 'config.ini';
 
 //feature toggles
 const useRefNightly = false; //toggle for using the REFramework nightly instead of Nexus release
-const hasXbox = false; //toggle for Xbox version logic
+let hasXbox = false; //toggle for Xbox version logic
+if (DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID)) hasXbox = true;
 const reZip = true; //NOT WORKING YET - KEEP AS TRUE FOR NOW - set to true to re-zip Fluffy Mods (possibly not necessary for FLUFFY v3.069+)
 //could index on modinfo.ini to avoid extra top level folder. should work?
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)

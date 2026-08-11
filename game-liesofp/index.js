@@ -2,8 +2,8 @@
 Name: Lies of P Vortex Extension
 Structure: UE4 (XBOX Integrated)
 Author: ChemBoy1
-Version: 0.5.0
-Date: 2026-05-07
+Version: 0.5.1
+Date: 2026-08-11
 *//////////////////////////////////////////////////
 
 //Import libraries
@@ -16,7 +16,7 @@ const { parseStringPromise } = require('xml2js');
 const GAME_ID = "liesofp";
 const STEAMAPP_ID = "1627720";
 const GOGAPP_ID = null;
-const EPICAPP_ID = null;
+const EPICAPP_ID = "414c01a544a84928be40c1e86e0fd169";
 const XBOXAPP_ID = "Neowiz.3616725F496B";
 const XBOXEXECNAME = "AppLiesofPShipping";
 const EPIC_CODE_NAME = "LiesofP";
@@ -32,7 +32,7 @@ const APPMANIFEST_FILE = 'appxmanifest.xml';
 const gameFinderQuery = {
   steam: [{ id: STEAMAPP_ID, prefer: 0 }],
   //gog: [{ id: GOGAPP_ID }],
-  //epic: [{ id: EPICAPP_ID }],
+  epic: [{ id: EPICAPP_ID }],
   xbox: [{ id: XBOXAPP_ID }],
 };
 
@@ -105,7 +105,7 @@ const spec = {
       "unrealEngine": UNREALDATA,
       "steamAppId": +STEAMAPP_ID,
       //"gogAppId": GOGAPP_ID,
-      //"epicAppId": EPICAPP_ID,
+      "epicAppId": EPICAPP_ID,
       "xboxAppId": XBOXAPP_ID,
       "customOpenModsPath": UNREALDATA.absModsPath || UNREALDATA.modsPath,
       "ignoreConflicts": IGNORE_CONFLICTS,
@@ -117,7 +117,7 @@ const spec = {
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
       //"GogAPPId": GOGAPP_ID,
-      //"EpicAPPId": EPICAPP_ID,
+      "EpicAPPId": EPICAPP_ID,
       "XboxAPPId": XBOXAPP_ID,
     }
   },
@@ -223,12 +223,17 @@ async function requiresLauncher(gamePath, store) {
       },
     });
   } //*/
-  /*if (store === 'epic') {
+  if (store === 'epic') {
     return Promise.resolve({
         launcher: 'epic',
         addInfo: {
             appId: EPICAPP_ID,
         },
+    });
+  } //*/
+  if (store === 'steam') {
+    return Promise.resolve({
+      launcher: 'steam',
     });
   } //*/
   return Promise.resolve(undefined);

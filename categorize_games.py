@@ -10,6 +10,7 @@ Also writes these non-exclusive "flag" lists, evaluated for every game-* extensi
 independently of its engine category and of each other:
     games-loadorder.txt  - non-UE4/5 games that call context.registerLoadOrder
     games-downloader.txt - games with a bundled downloader.js module
+    games-downloader-bepinexbe.txt  - games with a bundled bepinexbe_downloader.js module
     games-downloader-gamebanana.txt - games with a bundled gamebanana_downloader.js module
     games-downloader-moddb.txt      - games with a bundled moddb_downloader.js module
     games-downloader-modworkshop.txt - games with a bundled modworkshop_downloader.js module
@@ -37,8 +38,8 @@ from vortex_utils import (
     REPO_ROOT, LISTS_DIR, list_game_ids, detect_engine, read_index_js,
     read_id_list, write_id_list,
     is_load_order_game as _is_load_order_game_src,
-    has_downloader_js, has_gamebanana_downloader_js, has_moddb_downloader_js,
-    has_modworkshop_downloader_js,
+    has_downloader_js, has_bepinexbe_downloader_js, has_gamebanana_downloader_js,
+    has_moddb_downloader_js, has_modworkshop_downloader_js,
     github_download_enabled,
     requires_unreal_mod_installer, has_ue4ss_load_order_parity,
     is_unreleased_extension,
@@ -115,6 +116,7 @@ def _game_id_from_folder(folder):
 FLAG_LISTS = [
     ("games-loadorder.txt",  lambda src, folder: _is_load_order_game_src(src)),
     ("games-downloader.txt", lambda src, folder: has_downloader_js(folder)),
+    ("games-downloader-bepinexbe.txt",  lambda src, folder: has_bepinexbe_downloader_js(folder)),
     ("games-downloader-gamebanana.txt", lambda src, folder: has_gamebanana_downloader_js(folder)),
     ("games-downloader-moddb.txt",      lambda src, folder: has_moddb_downloader_js(folder)),
     ("games-downloader-modworkshop.txt", lambda src, folder: has_modworkshop_downloader_js(folder)),

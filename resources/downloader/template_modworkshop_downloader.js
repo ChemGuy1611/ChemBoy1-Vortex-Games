@@ -16,7 +16,7 @@ const MWS_REQUIREMENTS = [
   {
     mwsModId: XXX_MWS_MOD_ID,
     modType: XXX_ID,
-    userFacingName: XXX_NAME,
+    userFacingName: XXX_NAME, //notifications, error messages, and the name shown in the mod list
     fallbackVersion: XXX_REV, //optional - omit to leave the version attribute empty when the API is down
     fallbackFileId: XXX_DL_ID, //optional - omit to fail with a manual-download error page when the API is down
     //fileType: 'zip', //file extension to require - REQUIRED when the mod also ships .vmz (or any other non-archive extension), which Vortex will not treat as an archive
@@ -24,6 +24,8 @@ const MWS_REQUIREMENTS = [
     //fileIdAttribute: 'modworkshopFileId', //mod attribute tracking the installed ModWorkshop file id (default shown)
     //pageUrl: `https://modworkshop.net/mod/${XXX_MWS_MOD_ID}`, //manual-download page (default derived from mwsModId)
     //autoInstall: false, //opt out of unattended installs - setup and the update check both skip it, only an explicit user action (toolbar button) installs it
+    //pinVersion: XXX_REV, //hold at this file version - while it is installed the update check returns without making any request; requires pinFileId, since the pinned version cannot be looked up by version alone
+    //pinFileId: XXX_DL_ID, //the file id to install for pinVersion - https://api.modworkshop.net/files/000000/download
   },
   //additional ModWorkshop requirements go here
 ];

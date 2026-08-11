@@ -4,6 +4,10 @@
 
 - Config and save modtypes, installers, and open buttons.
 
+## [0.4.4] - 2026-08-11
+
+- Added Epic Games Store support
+
 ## [0.4.3] - 2026-08-05
 
 - Added: Checking for updates now installs a missing requirement instead of reporting an update for something that is not installed

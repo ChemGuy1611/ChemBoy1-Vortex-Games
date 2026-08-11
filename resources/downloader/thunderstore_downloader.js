@@ -7,7 +7,9 @@
 // requirement objects, processed sequentially. Each requirement's current
 // version is resolved through the Thunderstore API, with an optional hardcoded
 // fallback version for when the API is unreachable. An "update available"
-// notification is raised when a newer version is published.
+// notification is raised when a newer version is published. A requirement can
+// instead be pinned to one package version (pinVersion, no companion field
+// needed), which holds it there and makes update checks skip the API.
 //
 // Thunderstore versions are plain semver strings and every version has a
 // predictable direct download URL
@@ -81,6 +83,42 @@ function archiveName(requirement, version) {
 function normalizeVersion(raw) {
   const coerced = semver.coerce(String(raw || '').replace(/^v/i, ''));
   return coerced ? coerced.version : null;
+}
+
+// --- version pinning ------------------------------------------------------
+// An opt-in pin holds a requirement at one specific package version instead of tracking the
+// newest one. pinVersion is both the compare key and the label shown to the user, and it needs
+// no companion field: every version has a predictable download URL. With pinVersion unset - the
+// default - none of this code runs and the module behaves exactly as it does without it.
+function isPinned(requirement) {
+  return !!requirement.pinVersion;
+}
+
+//Whether the installed copy is already the pinned version, compared on the tracked version
+//attribute. True short-circuits the update check before any HTTP request is made.
+function isAtPinnedVersion(api, gameId, requirement) {
+  if (!isPinned(requirement)) {
+    return false;
+  }
+  const state = api.getState();
+  const mods = state.persistent.mods[gameId] || {};
+  const attr = versionAttribute(requirement);
+  const pinNormalized = normalizeVersion(requirement.pinVersion);
+  return Object.values(mods).some(mod => {
+    if (mod?.type !== requirement.modType) {
+      return false;
+    }
+    const tracked = mod?.attributes?.[attr];
+    if (!tracked) {
+      return false;
+    }
+    if (String(tracked) === String(requirement.pinVersion)) {
+      return true;
+    }
+    // versions stamped in a different shape than the pin is written in ('1.2' vs '1.2.0')
+    const trackedNormalized = normalizeVersion(tracked);
+    return !!pinNormalized && (trackedNormalized === pinNormalized);
+  });
 }
 
 // The two endpoints describe dependencies differently - the listing endpoint
@@ -192,15 +230,18 @@ async function downloadThunderstoreRequirement(api, gameSpec, requirement, check
   });
   //captured before the install: these are the versions being replaced
   const previousModIds = requirementModIds(api, gameSpec.game.id, requirement);
+  const pinned = isPinned(requirement);
   try { //Download the mod
-    const latestPackage = await getLatestThunderstorePackage(requirement); //resolve current version from Thunderstore API
+    //A pin overrides newest-version selection, and skips the API entirely: the pinned version's
+    //download URL is predictable, so a pinned install makes no API request.
+    const latestPackage = pinned ? null : await getLatestThunderstorePackage(requirement); //resolve current version from Thunderstore API
     //fall back to the hardcoded version if the API is unreachable - every version has a predictable download URL
     const fallbackUrl = requirement.fallbackVersion ? downloadUrl(requirement, requirement.fallbackVersion) : undefined;
-    const URL = latestPackage ? latestPackage.downloadUrl : fallbackUrl;
+    const URL = pinned ? downloadUrl(requirement, requirement.pinVersion) : (latestPackage ? latestPackage.downloadUrl : fallbackUrl);
     if (!URL) {
       throw new util.ProcessCanceled('Thunderstore API is unreachable and no fallback version is set');
     }
-    const latestVersion = latestPackage ? latestPackage.version : requirement.fallbackVersion;
+    const latestVersion = pinned ? requirement.pinVersion : (latestPackage ? latestPackage.version : requirement.fallbackVersion);
     const dlInfo = {
       game: gameSpec.game.id,
       name: requirement.userFacingName,
@@ -220,6 +261,7 @@ async function downloadThunderstoreRequirement(api, gameSpec, requirement, check
       actions.setModAttribute(gameSpec.game.id, modId, versionAttribute(requirement), latestVersion || ''), // Track the installed version for update checks
       actions.setModAttribute(gameSpec.game.id, modId, 'source', 'website'),
       actions.setModAttribute(gameSpec.game.id, modId, 'url', pageUrl(requirement)), // Shown as the mod's "Source" link in the mod details (only rendered when source === 'website')
+      actions.setModAttribute(gameSpec.game.id, modId, 'customFileName', requirement.userFacingName), // Vortex renders a mod as customFileName || logicalFileName || fileName || name, and the install pipeline stamps fileName with the archive name - without this the mod list shows the raw archive
     ];
     for (const oldModId of previousModIds) { // Disable the version this install replaces, so only one copy deploys
       if (oldModId !== modId) {
@@ -248,6 +290,11 @@ async function downloadThunderstore(api, gameSpec, requirements, check = true) {
 
 //Check the Thunderstore API for a newer version for a single requirement and notify the user
 async function checkForThunderstoreUpdateRequirement(api, gameSpec, requirement) {
+  // Pinned and already on the pinned version: nothing to check, and deliberately no HTTP
+  // request at all - this is what makes a pinned requirement free against the Thunderstore API.
+  if (isAtPinnedVersion(api, gameSpec.game.id, requirement)) {
+    return;
+  }
   if (!isThunderstoreRequirementInstalled(api, gameSpec.game.id, requirement)) {
     // Missing rather than outdated - install it instead of checking for updates to something
     // that is not there. Requirements the user installs manually opt out with autoInstall: false.
@@ -256,6 +303,26 @@ async function checkForThunderstoreUpdateRequirement(api, gameSpec, requirement)
     }
     log('info', `${requirement.userFacingName} is not installed - installing it`);
     return downloadThunderstoreRequirement(api, gameSpec, requirement);
+  }
+  if (isPinned(requirement)) {
+    // Installed, but not the pinned version. The wording covers a user who is ahead of the pin
+    // as well as behind it - installing it from that state is a deliberate downgrade.
+    api.sendNotification({
+      id: `${requirement.modType}-update`,
+      type: 'warning',
+      message: `${requirement.userFacingName} pinned version available (${requirement.pinVersion})`,
+      allowSuppress: true,
+      actions: [
+        {
+          title: 'Download',
+          action: (dismiss) => {
+            downloadThunderstoreRequirement(api, gameSpec, requirement, false);
+            dismiss();
+          },
+        },
+      ],
+    });
+    return;
   }
   const latestPackage = await getLatestThunderstorePackage(requirement);
   if (!latestPackage) {

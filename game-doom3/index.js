@@ -2,8 +2,8 @@
 Name: DOOM 3 & DOOM 3: BFG Edition Vortex Extension
 Structure: Basic multi-game with multiple exes
 Author: ChemBoy1
-Version: 0.5.2
-Date: 2026-08-05
+Version: 0.5.3
+Date: 2026-08-11
 /////////////////////////////////////////*/
 /*
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣀⣀⣠⣤⣤⣤⡴⣦⡴⣖⠶⣴⠶⡶⣖⡶⣶⢶⣲⡾⠿⢿⡷⣾⢿⣷⣦⢾⣷⣾⣶⣤⣀⣰⣤⣀⡀⠀⠀⢀⣴⣿⡿⡿⣿⣿⣦⣄⠀⠀⣠⣴⣿⡿⢿⡿⣷⣦⡄⠀⠀⢀⣀⣤⣦⣀⣤⣶⣶⣷⣦⣴⡿⢿⡷⣿⠿⡿⣿⣷⢶⣦⢴⡲⣦⢶⡶⢶⡲⣖⡶⣦⣤⣤⣤⣤⣤⣤⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
@@ -53,6 +53,7 @@ const XBOXAPP_ID = "BethesdaSoftworks.Doom32004";
 const XBOXEXECNAME = "Game";
 const XBOXAPP_ID_BFG = "BethesdaSoftworks.Doom32004";
 const XBOXEXECNAME_BFG = "Game";
+const EPICAPP_ID_BFG = "83e46676e06541d9a22d96ee852ad912"; //Epic lists one "DOOM 3" offer, which is the BFG Edition re-release
 const GAME_NAME = "DOOM 3";
 const GAME_NAME_BFG = "DOOM 3: BFG Edition";
 const GAME_NAME_SHORT_BFG = "DOOM 3 BFG";
@@ -226,6 +227,7 @@ const specBfg = {
     "details": {
       "steamAppId": +STEAMAPP_ID_BFG,
       "gogAppId": GOGAPP_ID_BFG,
+      "epicAppId": EPICAPP_ID_BFG,
       "xboxAppId": XBOXAPP_ID_BFG,
       "nexusPageId": GAME_ID,
       "compatibleDownloads": [GAME_ID],
@@ -235,6 +237,7 @@ const specBfg = {
     "environment": {
       "SteamAPPId": STEAMAPP_ID_BFG,
       "gogAPPId": GOGAPP_ID_BFG,
+      "EpicAPPId": EPICAPP_ID_BFG,
       "XboxAppId": XBOXAPP_ID_BFG,
     }
   },
@@ -256,6 +259,7 @@ const specBfg = {
     "ids": [
       STEAMAPP_ID_BFG,
       GOGAPP_ID_BFG,
+      EPICAPP_ID_BFG,
       XBOXAPP_ID_BFG,
     ],
     "names": []
@@ -492,7 +496,7 @@ async function requiresLauncher(gamePath, store) {
       },
     });
   }
-  /*if (store === 'steam') {
+  if (store === 'steam') {
     return Promise.resolve({
         launcher: 'steam'
     });
@@ -511,9 +515,17 @@ async function requiresLauncherBfg(gamePath, store) {
       },
     });
   } //*/
-  /*if (store === 'steam') {
+  if (store === 'steam') {
     return Promise.resolve({
         launcher: 'steam'
+    });
+  } //*/
+  if (store === 'epic') {
+    return Promise.resolve({
+      launcher: 'epic',
+      addInfo: {
+        appId: EPICAPP_ID_BFG,
+      },
     });
   } //*/
   return Promise.resolve(undefined);

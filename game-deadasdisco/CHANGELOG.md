@@ -4,6 +4,10 @@
 
 - None
 
+## [0.2.1] - 2026-08-11
+
+- Added Epic Games Store support
+
 ## [0.2.0] - 2026-05-05
 
 - Fixed: Updated game launch for release version
