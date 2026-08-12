@@ -4,6 +4,10 @@
 
 - Config and save modtypes, installers, and open buttons.
 
+## [0.4.5] - 2026-08-11
+
+- Added GOG support
+
 ## [0.4.4] - 2026-08-11
 
 - Added Epic Games Store support

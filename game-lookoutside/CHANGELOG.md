@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.2.1] - 2026-08-11
+
+- Added GOG support
+
 ## [0.2.0] - 2026-08-03
 
 - Fixed: Paths are now built safely on all systems.

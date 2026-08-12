@@ -16,7 +16,7 @@ const { default: IniParser, WinapiFormat } = require('vortex-parse-ini');
 //Specify all information about the game
 const GAME_ID = "lordsofthefallen2023";
 const STEAMAPP_ID = "1501750";
-const EPICAPP_ID = "ce98de7d9e9c47ea8d9ba8e46a5063b4";
+const EPICAPP_ID = "ce98de7d9e9c47ea8d9ba8e46a5063b4"; //!audit-skip: store-id - epic and xbox launcher branches are deliberately off: DO NOT launch from store due to EAC bypass
 const GOGAPP_ID = null;
 const XBOXAPP_ID = "CIGamesS.A.LordsoftheFallen-PC";
 const XBOXEXECNAME = "AppLordsoftheFallenShipping";

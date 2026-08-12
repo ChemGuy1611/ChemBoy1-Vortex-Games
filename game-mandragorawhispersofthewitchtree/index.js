@@ -2,8 +2,8 @@
 Name: Mandragora: Whispers of the Witch Tree Vortex Extension
 Structure: UE + Sigbypass
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2025-04-28
+Version: 0.1.1
+Date: 2026-08-11
 //////////////////////////////////////////////////*/
 
 //Import libraries
@@ -15,7 +15,7 @@ const template = require('string-template');
 const GAME_ID = "mandragorawhispersofthewitchtree";
 const STEAMAPP_ID = "1721060";
 const EPICAPP_ID = "ed2feac9c1de4248a6d297959d1da411";
-const GOGAPP_ID = null;
+const GOGAPP_ID = "1716387415";
 const XBOXAPP_ID = null;
 const XBOXEXECNAME = null;
 const GAME_NAME = "Mandragora: Whispers of the Witch Tree";
@@ -168,13 +168,15 @@ const spec = {
     "details": {
       "epicAppId": EPICAPP_ID,
       "steamAppId": +STEAMAPP_ID,
+      "gogAppId": GOGAPP_ID,
       "supportsSymlinks": SYM_LINKS,
       "ignoreConflicts": IGNORE_CONFLICTS,
       "ignoreDeploy": IGNORE_DEPLOY,
     },
     "environment": {
-      "EpicAppId": EPICAPP_ID,
+      "EpicAPPId": EPICAPP_ID,
       "SteamAPPId": STEAMAPP_ID,
+      "GogAPPId": GOGAPP_ID,
     },
   },
   "modTypes": [
@@ -236,6 +238,7 @@ const spec = {
   "discovery": {
     "ids": [
       STEAMAPP_ID,
+      GOGAPP_ID,
       EPICAPP_ID,
     ],
     "names": []

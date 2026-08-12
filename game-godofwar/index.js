@@ -2,8 +2,8 @@
 Name: God of War (2018) Vortex Extension
 Structure: Sony Port, Custom Game Data
 Author: ChemBoy1
-Version: 0.2.0
-Date: 2026-01-30
+Version: 0.2.1
+Date: 2026-08-11
 /////////////////////////////////////////*/
 
 //import libraries
@@ -15,6 +15,7 @@ const fsPromises = require('fs/promises'); //.readdir() for recursive folder rea
 //Specify all the information about the game
 const STEAMAPP_ID = "1593500";
 const EPICAPP_ID = "456afef39a4c4cbbb6b17e92201443d7"; //from egdata.app
+const GOGAPP_ID = "1074905459"; //https://www.gogdb.org/product/1074905459
 const GAME_ID = "godofwar";
 const EXEC = "GoW.exe";
 const GAME_NAME = "God of War (2018)";
@@ -120,12 +121,14 @@ const spec = {
     ],
     "details": {
       "steamAppId": +STEAMAPP_ID,
+      "gogAppId": GOGAPP_ID,
       "epicAppId": EPICAPP_ID,
       "ignoreConflicts": IGNORE_CONFLICTS,
       "ignoreDeploy": IGNORE_DEPLOY,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
+      "GogAPPId": GOGAPP_ID,
       "EpicAPPId": EPICAPP_ID,
     },
   },
@@ -182,6 +185,7 @@ const spec = {
   "discovery": {
     "ids": [
       STEAMAPP_ID,
+      GOGAPP_ID,
       EPICAPP_ID
     ],
     "names": []

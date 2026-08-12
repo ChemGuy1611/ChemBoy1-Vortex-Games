@@ -4,6 +4,10 @@
 
 - Config and save modtypes, installers, and open buttons.
 
+## [0.5.4] - 2026-08-12
+
+- Fixed: The Xbox version is now only recognised by DOOM 3: BFG Edition. There is no Xbox release of the classic game, so the classic entry no longer claims it.
+
 ## [0.5.3] - 2026-08-11
 
 - Added Epic Games Store support for DOOM 3: BFG Edition

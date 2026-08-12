@@ -139,6 +139,7 @@ const spec = {
     "details": {
       "steamAppId": +STEAMAPP_ID,
       "epicAppId": EPICAPP_ID,
+      "uPlayAppId": UPLAYAPP_ID,
       "supportsSymlinks": allowSymlinks,
       "ignoreConflicts": IGNORE_CONFLICTS,
       "ignoreDeploy": IGNORE_DEPLOY,
@@ -146,6 +147,7 @@ const spec = {
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
       "EpicAPPId": EPICAPP_ID,
+      "UPlayAPPId": UPLAYAPP_ID,
     }
   },
   "modTypes": [

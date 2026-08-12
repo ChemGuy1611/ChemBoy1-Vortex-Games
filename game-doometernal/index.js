@@ -2,7 +2,7 @@
 Name: DOOM Eternal Vortex Extension
 Structure: 3rd party mod loader
 Author: ChemBoy1
-Version: 0.4.4
+Version: 0.4.5
 Date: 2026-08-11
 ////////////////////////////////////////////////*/
 /*
@@ -46,9 +46,10 @@ const { downloadGameBanana, checkForGameBananaUpdate } = require('./gamebanana_d
 const GAME_ID = "doometernal";
 const STEAMAPP_ID = "782330";
 const EPICAPP_ID = "Brant";
+const GOGAPP_ID = "1344230395"; //https://www.gogdb.org/product/1344230395
 const XBOXAPP_ID = "BethesdaSoftworks.DOOMEternal-PC";
 const XBOXEXECNAME = "Game";
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID, XBOXAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID, XBOXAPP_ID, GOGAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 const GAME_NAME = "DOOM Eternal";
 const EXEC = path.join('launcher', "idTechLauncher.exe");
 const EXEC_ALT = "DOOMEternalx64vk.exe";
@@ -127,6 +128,7 @@ const spec = {
     ],
     "details": {
       "steamAppId": +STEAMAPP_ID,
+      "gogAppId": GOGAPP_ID,
       "epicAppId": EPICAPP_ID,
       "xboxAppId": XBOXAPP_ID,
       "ignoreDeploy": IGNORE_DEPLOY,
@@ -134,6 +136,7 @@ const spec = {
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
+      "GogAPPId": GOGAPP_ID,
       "EpicAPPId": EPICAPP_ID,
       "XboxAPPId": XBOXAPP_ID
     }

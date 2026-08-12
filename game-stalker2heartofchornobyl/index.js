@@ -2426,6 +2426,7 @@ async function setup(discovery, api, gameSpec) {
       await fs.ensureDirWritableAsync(path.join(GAME_PATH, SCRIPTS_PATH, BPML_FOLDER));
     }
   }
+  await fs.ensureDirWritableAsync(path.join(GAME_PATH, BINARIES_PATH));
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 

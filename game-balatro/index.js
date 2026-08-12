@@ -25,7 +25,7 @@ const XBOX_PUB_ID = "3wcqaesafpzfy";
 const DISCOVERY_IDS_ACTIVE = [ // UPDATE THIS WITH ALL VALID IDs
   STEAMAPP_ID,
   EPICAPP_ID,
-  //XBOXAPP_ID, //!disabled until support is available and implemented
+  //XBOXAPP_ID, //!audit-skip: store-id - disabled until support is available and implemented
 ];
 
 const EXEC_STEAM = `Balatro.exe`;

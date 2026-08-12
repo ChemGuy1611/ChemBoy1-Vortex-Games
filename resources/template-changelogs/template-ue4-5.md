@@ -1,5 +1,9 @@
 # template-ue4-5 Changelog
 
+## [2026-08-11]
+
+- Fixed: `setup()` now pushes `BINARIES_PATH` onto `MODTYPE_FOLDERS` unconditionally, so the Binaries folder is created and checked for write access regardless of `ue4ssLoadOrder`. `SCRIPTS_PATH` is `BINARIES_PATH` plus the UE4SS mods subfolder, so before the previous release's gating that push was also what ensured the Binaries folder existed. Once `ue4ssLoadOrder` gated it, a game with UE4SS support off left the `BINARIES_ID` mod type — which is never gated — without an ensured target folder. Propagated to all 13 games at template parity. No behavior change on the 11 that run `ue4ssLoadOrder = true`, since the folder was already being created via `SCRIPTS_PATH`; it is a real fix only for `game-tekken8` and `game-fantasylifeithegirlwhostealstime`. `game-stalker2heartofchornobyl` uses a direct `fs.ensureDirWritableAsync` call instead of a `MODTYPE_FOLDERS` push, matching how that file already handles `SCRIPTS_PATH`; `game-windrose` needed the push in both `setup()` and `setupServer()`.
+
 ## [2026-08-10] (2)
 
 - Changed: `hasXbox` is now derived from the active discovery IDs. It is declared with `let` and initialised to `false`, followed by `if (DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID)) hasXbox = true;`, so adding the Xbox app ID to `DISCOVERY_IDS_ACTIVE` is enough to switch on the Xbox version logic. Setting the initialiser to `true` still forces it on for games that need it without an Xbox ID in the list.

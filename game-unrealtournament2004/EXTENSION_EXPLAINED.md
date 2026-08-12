@@ -18,6 +18,11 @@
 | Extension Page | [https://www.nexusmods.com/site/mods/1703](https://www.nexusmods.com/site/mods/1703) |
 | PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Unreal_Tournament_2004](https://www.pcgamingwiki.com/wiki/Unreal_Tournament_2004) |
 
+## Supported Stores
+
+- **Steam** — `13230`
+- **GOG** — `1207658691`
+
 ## Feature Flags
 
 | Flag | Value | Description |

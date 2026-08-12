@@ -21,6 +21,7 @@
 
 - **Steam** — `1659420`
 - **Epic Games Store** — `0ef5f1eaa6be4d648f6e9252aa02c5cf`
+- **GOG** — `1451150270`
 
 ## Mod Types
 

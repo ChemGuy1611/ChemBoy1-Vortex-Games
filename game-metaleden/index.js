@@ -188,13 +188,15 @@ const spec = {
     "details": {
       "epicAppId": EPICAPP_ID,
       "steamAppId": +STEAMAPP_ID,
+      "gogAppId": GOGAPP_ID,
       "supportsSymlinks": SYM_LINKS,
       "ignoreConflicts": IGNORE_CONFLICTS,
       "ignoreDeploy": IGNORE_DEPLOY,
     },
     "environment": {
-      "EpicAppId": EPICAPP_ID,
+      "EpicAPPId": EPICAPP_ID,
       "SteamAPPId": STEAMAPP_ID,
+      "GogAPPId": GOGAPP_ID,
     },
   },
   "modTypes": [

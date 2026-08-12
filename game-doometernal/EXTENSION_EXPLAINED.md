@@ -22,6 +22,7 @@
 
 - **Steam** — `782330`
 - **Epic Games Store** — `Brant`
+- **GOG** — `1344230395`
 - **Xbox / Microsoft Store** — `BethesdaSoftworks.DOOMEternal-PC`
 
 ## Mod Types

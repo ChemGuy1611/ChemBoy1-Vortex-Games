@@ -2,8 +2,8 @@
 Name: Final Fantasy VII Rebirth Vortex Extension
 Structure: UE4 with IO Store
 Author: ChemBoy1
-Version: 0.5.2
-Date: 2026-02-03
+Version: 0.5.3
+Date: 2026-08-12
 //////////////////////////////////////////////////*/
 
 //Import libraries
@@ -47,7 +47,7 @@ if (IO_STORE) { //Set file number for pak installer file selection (needs to be 
 }
 
 // Unreal Engine Game Data
-const UNREALDATA = { 
+const UNREALDATA = {
   modsPath: path.join(EPIC_CODE_NAME, 'Content', 'Paks', '~mods'),
   fileExt: PAKMOD_EXTS,
   loadOrder: true,
@@ -172,7 +172,7 @@ const spec = {
       "ignoreDeploy": IGNORE_DEPLOY,
     },
     "environment": {
-      "EpicAppId": EPICAPP_ID,
+      "EpicAPPId": EPICAPP_ID,
       "SteamAPPId": STEAMAPP_ID,
     },
   },
@@ -346,7 +346,7 @@ async function requiresLauncher(gamePath, store) {
           },
       });
   } //*/
-  /*if (store === 'epic') {
+  if (store === 'epic') {
     return Promise.resolve({
         launcher: 'epic',
         addInfo: {
@@ -619,7 +619,7 @@ function installScripts(files, fileName) {
   if (MOD_FOLDER === '.') {
     MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
   }
-  
+
   const ENABLEDTXT_FILE = 'enabled.txt'
   const ENABLEDTXT_PATH = path.join(fileName, rootPath, ENABLEDTXT_FILE);
   try {
@@ -683,7 +683,7 @@ function installDll(files, fileName) {
   if (MOD_FOLDER === '.') {
     MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
   }
-  
+
   const ENABLEDTXT_FILE = 'enabled.txt'
   const ENABLEDTXT_PATH = path.join(fileName, rootPath, ENABLEDTXT_FILE);
   try {
@@ -822,7 +822,7 @@ function configInstallerNotify(api) {
                 + `Please move the game and/or staging folder to the same drive as the ${CONFIG_LOC} folder (typically C Drive) to install these types of mods with Vortex.\n`
                 + `\n`
                 + `Config Path: ${CONFIG_PATH}\n`
-                + `\n`             
+                + `\n`
                 + `If you want to use this mod installer, you must move the game and staging folder to the same partition as the ${CONFIG_LOC} folder (typically C Drive).\n`
                 + `\n`
           }, [
@@ -883,7 +883,7 @@ function installSave(api, files) {
     //api.showErrorNotification(`Could not install mod as Save`, `You tried installing a Save file mod, but the game, staging folder, and Documents folder are not all on the same drive. Please move the game and/or staging folder to the same drive as the Documents folder (typically C Drive) to install these types of mods with Vortex.`, { allowReport: false });
     saveInstallerNotify(api);
     throw new util.UserCanceled();
-  } 
+  }
   return Promise.resolve({ instructions });
 }
 
@@ -905,7 +905,7 @@ function saveInstallerNotify(api) {
                 + `Please move the game and/or staging folder to the same drive as the ${SAVE_LOC} folder (typically C Drive) to install these types of mods with Vortex.\n`
                 + `\n`
                 + `Save Path: ${SAVE_PATH}\n`
-                + `\n`             
+                + `\n`
                 + `If you want to use this mod installer, you must move the game and staging folder to the same partition as the ${SAVE_LOC} folder (typically C Drive).\n`
                 + `\n`
           }, [
@@ -944,7 +944,7 @@ function testBinaries(files, gameId) {
 //Install Mod Loader mods
 function installBinaries(files) {
   const setModTypeInstruction = { type: 'setmodtype', value: BINARIES_ID };
-  
+
   const filtered = files.filter(file =>
     (!file.endsWith(path.sep))
   );
@@ -1017,7 +1017,7 @@ async function downloadUe4ss(api, gameSpec) {
               util.batchDispatch(api.store, batched); // Will dispatch both actions.
               return resolve();
             });
-          }, 
+          },
           'never',
           { allowInstall: false },
         );
@@ -1265,10 +1265,10 @@ function UNREALEXTENSION(context) {
     name: 'UE5 Sortable Mod',
     mergeMods: mod => loadOrderPrefix(context.api, mod) + mod.id
   });
-  context.registerModType(LEGACY_UE5_SORTABLE_ID, 65, 
-    (gameId) => testUnrealGame(gameId, true), 
-    getUnrealModsPath, 
-    () => Promise.resolve(false), 
+  context.registerModType(LEGACY_UE5_SORTABLE_ID, 65,
+    (gameId) => testUnrealGame(gameId, true),
+    getUnrealModsPath,
+    () => Promise.resolve(false),
     { name: 'Legacy UE - REINSTALL TO SORT',
       mergeMods: mod => 'ZZZZ-' + mod.id
     }
@@ -1290,7 +1290,7 @@ function checkPartitions(folder, discoveryPath) {
     // Ensure all folders exist
     fs.ensureDirSync(path1);
     fs.ensureDirSync(path2);
-    fs.ensureDirSync(path3); 
+    fs.ensureDirSync(path3);
     // Get the stats for all folders
     const stats1 = fs.statSync(path1);
     const stats2 = fs.statSync(path2);
@@ -1374,7 +1374,7 @@ function legacyModsNotify(api, legacyMods) {
                   3. Click the "Reinstall" button in the blue ribbon at the bottom of the Mods page.\n
                   4. You can now sort all of your pak mods in the Load Order tab.\n`
                 + `\n`
-                + `Pak Mods to Reinstall:\n` 
+                + `Pak Mods to Reinstall:\n`
                 + `${legacyMods.join('\n')}`
                 + `\n`
                 + `\n`
@@ -1445,7 +1445,7 @@ function applyGame(context, gameSpec) {
   });
 
   //register mod types for Config and Saves (conditional on all folders being on same drive partition)
-  context.registerModType(CONFIG_ID, 45, 
+  context.registerModType(CONFIG_ID, 45,
     (gameId) => {
       GAME_PATH = getDiscoveryPath(context.api);
       if (GAME_PATH !== undefined) {
@@ -1453,11 +1453,11 @@ function applyGame(context, gameSpec) {
       }
       return ((gameId === GAME_ID) && (CHECK_DOCS === true));
     },
-    (game) => pathPattern(context.api, game, CONFIG_PATH), 
-    () => Promise.resolve(false), 
+    (game) => pathPattern(context.api, game, CONFIG_PATH),
+    () => Promise.resolve(false),
     { name: CONFIG_NAME }
   );
-  context.registerModType(SAVE_ID, 47, 
+  context.registerModType(SAVE_ID, 47,
     (gameId) => {
       GAME_PATH = getDiscoveryPath(context.api);
       if (GAME_PATH !== undefined) {
@@ -1465,8 +1465,8 @@ function applyGame(context, gameSpec) {
       }
       return ((gameId === GAME_ID) && (CHECK_DOCS === true));
     },
-    (game) => pathPattern(context.api, game, SAVE_PATH), 
-    () => Promise.resolve(false), 
+    (game) => pathPattern(context.api, game, SAVE_PATH),
+    () => Promise.resolve(false),
     { name: SAVE_NAME }
   );
 

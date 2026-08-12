@@ -2,8 +2,8 @@
 Name: Look Outside Vortex Extension
 Structure: RPGMaker Engine Game
 Author: ChemBoy1
-Version: 0.2.0
-Date: 2026-08-03
+Version: 0.2.1
+Date: 2026-08-11
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -23,10 +23,10 @@ const GAME_ID = "lookoutside";
 const STEAMAPP_ID = "3373660";
 const STEAMAPP_ID_DEMO = null;
 const EPICAPP_ID = null;
-const GOGAPP_ID = null;
+const GOGAPP_ID = "1582305837";
 const XBOXAPP_ID = null;
 const XBOXEXECNAME = null;
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, GOGAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 const GAME_NAME = "Look Outside";
 const GAME_NAME_SHORT = "Look Outside";
 const EXEC = "Game.exe";

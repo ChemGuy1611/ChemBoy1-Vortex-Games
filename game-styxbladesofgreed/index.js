@@ -2,7 +2,7 @@
 Name: Styx BOG Vortex Extension
 Structure: Unreal Engine Game
 Author: ChemBoy1
-Version: 0.1.2
+Version: 0.1.3
 Date: 2026-08-11
 ////////////////////////////////////////////////*/
 
@@ -28,11 +28,11 @@ const GAME_ID = "styxbladesofgreed"; //same as Nexus domain
 const STEAMAPP_ID = "3290690"; //from steamdb.info
 const STEAMAPP_ID_DEMO = "4126390"; //VERIFY if the EPIC_CODE_NAME and EXEC_DEMO match Steam full game
 const EPICAPP_ID = "c7eaa439ee0145a694eb72000885f171"; //from egdata.app
-const GOGAPP_ID = null; // from gogdb.org
+const GOGAPP_ID = "2126587036"; // from gogdb.org
 const XBOXAPP_ID = null; //from appxmanifest.xml
 const XBOXEXECNAME = "AppUEGameShipping"; //from appxmanifest.xml
 const XBOX_PUB_ID = ""; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID, STEAMAPP_ID_DEMO]; // UPDATE THIS WITH ALL VALID IDs
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID, STEAMAPP_ID_DEMO, GOGAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
 const GAME_NAME = "Styx: Blades of Greed";
 const GAME_NAME_SHORT = "Styx BOG"; //Try for 8-10 characters

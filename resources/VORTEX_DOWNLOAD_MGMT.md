@@ -139,4 +139,6 @@ contract. See `VORTEX_EVENT_BUS.md` for the typed-events layer.
 Runtime siblings: `VORTEX_NEXUS_INTEGRATION.md` (nxm + Nexus URLs), `VORTEX_MOD_INSTALL.md` (what
 happens after `download-finished`), `VORTEX_MOD_METADATA.md` (the MD5 meta lookup `finalizeDownload`
 kicks off), `VORTEX_EVENT_BUS.md`. Overview: `VORTEX_APP.md`. **Not**
-`DOWNLOADER.md`.
+`DOWNLOADER.md`. `EMBEDDED_BROWSER.md` (how a click inside embedded web content becomes a download:
+`will-download` → `received-url` → `start-download-url` → the `https` protocol handler registered
+here).

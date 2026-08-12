@@ -4,6 +4,10 @@
 
 - None planned
 
+## [0.5.3] - 2026-08-12
+
+- Fixed: The Epic Games Store version now launches through the Epic launcher
+
 ## [0.5.2] - 2026-02-03
 
 - Improved: Made UE4SS Scripts, UE4SS DLL, LogicMods, and Root Folder mod installers case-insensitive to folder names

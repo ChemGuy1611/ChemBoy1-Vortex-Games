@@ -187,7 +187,7 @@ const spec = {
       "ignoreDeploy": IGNORE_DEPLOY,
     },
     "environment": {
-      "EpicAppId": EPICAPP_ID,
+      "EpicAPPId": EPICAPP_ID,
       "SteamAPPId": STEAMAPP_ID,
     },
   },

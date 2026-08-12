@@ -77,7 +77,7 @@ from vortex_utils import (
     roman_to_arabic, arabic_to_roman, name_lookup_variants,
     lookup_pcgamingwiki, pcgw_get_json, get_api_key, run_generate_explained_batch,
     run_generate_notes_batch, eslint_check,
-    fetch_epic_app_id, add_to_discovery_ids,
+    fetch_epic_app_id, fetch_gog_app_id, add_to_discovery_ids,
     download_exec_icon, download_cover_art, download_title_image, download_banner_image,
     update_index_header, sanitize_game_name, normalize_game_name, write_index_js,
     read_index_js, extract_steamapp_id, extract_game_name,
@@ -271,25 +271,17 @@ def _gog_product_type(pid):
 
 def lookup_gog(game_name):
     """Search gogdb.org for a matching game. Returns GOG ID string or None.
-    Uses gogdb.org/products?search= (HTML scrape) — the GOG catalog API search
-    parameter is broken and returns unrelated results regardless of query.
-    Prefers type:game over type:pack/dlc; within each tier prefers exact title match."""
-    url = f"https://www.gogdb.org/products?search={urllib.parse.quote(game_name)}"
+
+    Delegates to vortex_utils.fetch_gog_app_id(), which guards every hit against
+    the game name. gogdb's search matches on a space-insensitive substring, so an
+    unguarded containment test resolves "Borderlands" to "Tales from the
+    Borderlands" and "Hades" to "Grimshade Soundtrack". Edition variants
+    ("Painkiller" -> "Painkiller Black Edition") are deliberately NOT accepted
+    here: when scaffolding, no ID is better than one naming an earlier release.
+    """
     try:
-        html = http_get(url)
-        hits = re.findall(r'href="/product/(\d+)"[^>]*>\s*([^<]+)', html)
-        candidates = [(pid, t.strip()) for pid, t in hits if not t.strip().isdigit()]
-        name_lower = game_name.lower()
-
-        exact   = [pid for pid, t in candidates if t.lower() == name_lower]
-        partial = [pid for pid, t in candidates if name_lower in t.lower() and t.lower() != name_lower]
-
-        for pool in (exact, partial):
-            for pid in pool:
-                if _gog_product_type(pid) == "game":
-                    return pid
-        # Fallback: no type:game found — return first title match of any type
-        return exact[0] if exact else (partial[0] if partial else None)
+        gog_id, _title = fetch_gog_app_id(game_name)
+        return gog_id
     except Exception as e:
         print(f"    GOG lookup error: {e}")
     return None

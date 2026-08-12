@@ -2875,6 +2875,7 @@ async function setup(discovery, api, gameSpec) {
   if (ue4ssLoadOrder) {
     MODTYPE_FOLDERS.push(SCRIPTS_PATH);
   }
+  MODTYPE_FOLDERS.push(BINARIES_PATH);
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 
@@ -2897,6 +2898,7 @@ async function setupServer(discovery, api, gameSpec) {
   if (ue4ssLoadOrder) {
     MODTYPE_FOLDERS.push(SCRIPTS_PATH);
   }
+  MODTYPE_FOLDERS.push(BINARIES_PATH);
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 

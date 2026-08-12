@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.1.4] - 2026-08-12
+
+- Fixed: The Epic Games Store version now launches through the Epic launcher
+
 ## [0.1.3] - 2026-03-05
 
 - Added: Installer for Fluffy Preset files (.prt) - useful for collections

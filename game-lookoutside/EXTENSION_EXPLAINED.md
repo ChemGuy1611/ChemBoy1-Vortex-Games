@@ -20,6 +20,7 @@
 ## Supported Stores
 
 - **Steam** — `3373660`
+- **GOG** — `1582305837`
 
 ## Mod Types
 

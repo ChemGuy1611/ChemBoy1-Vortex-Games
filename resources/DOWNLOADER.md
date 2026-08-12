@@ -278,3 +278,5 @@ mod hosts — each has a sibling downloader module; the ModWorkshop and Thunders
 simplest, since both hosts serve direct download URLs).
 `BEPINEX_BE_BUILDS.md` (the sixth sibling module, for the IL2CPP-capable BepInEx 6 CI builds —
 the only one whose requirements are ordered by build number instead of by version).
+`EMBEDDED_BROWSER.md` (the `browse-for-download` hand-off used when a requirement has no predictable
+URL, and how to embed a mod site in a page instead).

@@ -1034,3 +1034,6 @@ data flow and the three load order surfaces of `template-ue4-5`).
 `NON_UE_LOAD_ORDER_PAGES.md` (the same primitives in non-Unreal games, plus `actions.setModsEnabled`
 as the supported way to toggle mods from a page). `VORTEX_2_MIGRATION.md` (the React 17 → 18 move
 and the `@types/react` 18 fixes every page component needs on its next rebuild).
+`EMBEDDED_BROWSER.md` (hosting a live web page inside a main page with the `Webview` control — the
+props it exposes, the chrome you have to build yourself, and how downloads from that content reach
+Vortex).

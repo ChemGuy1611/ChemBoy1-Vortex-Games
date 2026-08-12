@@ -22,7 +22,6 @@
 
 - **Steam** — `9050`
 - **GOG** — `1492054092`
-- **Xbox / Microsoft Store** — `BethesdaSoftworks.Doom32004`
 
 ## Mod Types
 
@@ -61,6 +60,5 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
-- **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 

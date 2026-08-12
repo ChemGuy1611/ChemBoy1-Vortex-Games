@@ -15,7 +15,7 @@ const { parseStringPromise } = require('xml2js');
 //Specify all information about the game
 const STEAMAPP_ID = "418370";
 const STEAMAPP_ID_DEMO = "530620";
-const XBOXAPP_ID = "F024294D.RESIDENTEVIL7biohazard"; //there is an xbox version, but it will never be moddable because it is in protected WindowsApps folder.
+const XBOXAPP_ID = "F024294D.RESIDENTEVIL7biohazard"; //!audit-skip: store-id - there is an xbox version, but it will never be moddable because it is in the protected WindowsApps folder
 const XBOXEXECNAME = "runtime";
 const GAME_ID = "residentevil7";
 const GAME_NAME = "Resident Evil 7";

@@ -2,8 +2,8 @@
 Name: DOOM 3 & DOOM 3: BFG Edition Vortex Extension
 Structure: Basic multi-game with multiple exes
 Author: ChemBoy1
-Version: 0.5.3
-Date: 2026-08-11
+Version: 0.5.4
+Date: 2026-08-12
 /////////////////////////////////////////*/
 /*
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣀⣀⣠⣤⣤⣤⡴⣦⡴⣖⠶⣴⠶⡶⣖⡶⣶⢶⣲⡾⠿⢿⡷⣾⢿⣷⣦⢾⣷⣾⣶⣤⣀⣰⣤⣀⡀⠀⠀⢀⣴⣿⡿⡿⣿⣿⣦⣄⠀⠀⣠⣴⣿⡿⢿⡿⣷⣦⡄⠀⠀⢀⣀⣤⣦⣀⣤⣶⣶⣷⣦⣴⡿⢿⡷⣿⠿⡿⣿⣷⢶⣦⢴⡲⣦⢶⡶⢶⡲⣖⡶⣦⣤⣤⣤⣤⣤⣤⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
@@ -49,9 +49,7 @@ const STEAMAPP_ID = "9050";
 const STEAMAPP_ID_BFG = "208200";
 const GOGAPP_ID = "1492054092";
 const GOGAPP_ID_BFG = "1135892318";
-const XBOXAPP_ID = "BethesdaSoftworks.Doom32004";
-const XBOXEXECNAME = "Game";
-const XBOXAPP_ID_BFG = "BethesdaSoftworks.Doom32004";
+const XBOXAPP_ID_BFG = "BethesdaSoftworks.Doom32004"; //the xbox release is the BFG Edition only, so the classic spec carries no xbox ID
 const XBOXEXECNAME_BFG = "Game";
 const EPICAPP_ID_BFG = "83e46676e06541d9a22d96ee852ad912"; //Epic lists one "DOOM 3" offer, which is the BFG Edition re-release
 const GAME_NAME = "DOOM 3";
@@ -67,9 +65,8 @@ let DOWNLOAD_FOLDER_BFG = '';
 const APPMANIFEST_FILE = 'appxmanifest.xml';
 
 const gameFinderQuery = {
-  steam: [{ id: STEAMAPP_ID, prefer: 0 }, { id: STEAMAPP_ID_BFG }],
-  gog: [{ id: GOGAPP_ID }, { id: GOGAPP_ID_BFG }],
-  xbox: [{ id: XBOXAPP_ID }],
+  steam: [{ id: STEAMAPP_ID, prefer: 0 }],
+  gog: [{ id: GOGAPP_ID }],
 };
 
 // Information for setting executable and variables based on game store version
@@ -166,14 +163,12 @@ const spec = {
     "details": {
       "steamAppId": +STEAMAPP_ID,
       "gogAppId": GOGAPP_ID,
-      "xboxAppId": XBOXAPP_ID,
       "ignoreDeploy": IGNORE_DEPLOY,
       "ignoreConflicts": IGNORE_CONFLICTS,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
       "GogAPPId": GOGAPP_ID,
-      "XboxAppId": XBOXAPP_ID,
     }
   },
   "modTypes": [
@@ -236,9 +231,9 @@ const specBfg = {
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID_BFG,
-      "gogAPPId": GOGAPP_ID_BFG,
+      "GogAPPId": GOGAPP_ID_BFG,
       "EpicAPPId": EPICAPP_ID_BFG,
-      "XboxAppId": XBOXAPP_ID_BFG,
+      "XboxAPPId": XBOXAPP_ID_BFG,
     }
   },
   "modTypes": [
@@ -487,15 +482,6 @@ function makeFindGame(api, gameSpec) {
 
 //Set launcher requirements
 async function requiresLauncher(gamePath, store) {
-  if (store === 'xbox') {
-    return Promise.resolve({
-      launcher: 'xbox',
-      addInfo: {
-        appId: XBOXAPP_ID,
-        parameters: [{ appExecName: XBOXEXECNAME }],
-      },
-    });
-  }
   if (store === 'steam') {
     return Promise.resolve({
         launcher: 'steam'
@@ -821,7 +807,7 @@ async function resolveGameVersion(gamePath) {
     try {
       const exeVersion = require('exe-version');
       version = exeVersion.getProductVersion(path.join(gamePath, EXEC_CLASSIC));
-      return Promise.resolve(version); 
+      return Promise.resolve(version);
     } catch (err) {
       log('error', `Could not read ${EXEC_CLASSIC} file to get Steam game version: ${err}`);
       return Promise.resolve(version);
@@ -831,7 +817,7 @@ async function resolveGameVersion(gamePath) {
     try {
       const exeVersion = require('exe-version');
       version = exeVersion.getProductVersion(path.join(gamePath, EXEC_BFG));
-      return Promise.resolve(version); 
+      return Promise.resolve(version);
     } catch (err) {
       log('error', `Could not read ${EXEC_BFG} file to get Steam game version: ${err}`);
       return Promise.resolve(version);
@@ -857,7 +843,7 @@ async function resolveGameVersionBfg(gamePath) {
     try {
       const exeVersion = require('exe-version');
       version = exeVersion.getProductVersion(path.join(gamePath, EXEC_BFG));
-      return Promise.resolve(version); 
+      return Promise.resolve(version);
     } catch (err) {
       log('error', `Could not read ${EXEC_BFG} file to get Steam game version: ${err}`);
       return Promise.resolve(version);
@@ -943,11 +929,11 @@ function applyGame(context, gameSpec) {
         && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
     }, (game) => pathPattern(context.api, game, type.targetPath), () => Promise.resolve(false), { name: type.name });
   });
-  
+
   //register mod installers
   context.registerInstaller(DHEWM3_ID, 25, testDhewm3, installDhewm3);
   context.registerInstaller(ROOT_ID, 27, testRoot, (files, fileName) => installRoot(context.api, files, fileName));
-  
+
   //register actions
   /*
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
@@ -1073,9 +1059,9 @@ function main(context) {
   applyGameBfg(context, specBfg);
   context.once(() => { //run (once) when Vortex starts up
     const api = context.api;
-    context.api.onAsync('check-mods-version', (gameId, mods, forced) => {
+    api.onAsync('check-mods-version', (gameId, mods, forced) => {
       if (gameId !== GAME_ID) return;
-      return onCheckModVersion(context.api, gameId, mods, forced);
+      return onCheckModVersion(api, gameId, mods, forced);
     }); //*/
   });
   return true;

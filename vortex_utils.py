@@ -3,8 +3,8 @@ vortex_utils.py
 
 Shared utility functions for Vortex extension developer scripts.
 Centralizes common patterns: index.js parsing, name processing,
-API key loading, HTTP helpers, PCGamingWiki lookups, egdata.app lookups,
-and logging.
+API key loading, HTTP helpers, PCGamingWiki lookups, egdata.app and gogdb.org
+lookups, and logging.
 
 Usage:
     from vortex_utils import (
@@ -20,10 +20,13 @@ Usage:
         name_lookup_variants, lookup_pcgamingwiki, pcgw_get_json,
         get_api_key, http_get, http_get_bytes, http_get_json, http_post_json,
         nexus_v3_get, nexus_v3_post_json,
-        egdata_search_queries, normalize_title_for_match, egdata_title_matches,
-        fetch_epic_app_id, add_to_discovery_ids,
+        egdata_search_queries, normalize_title_for_match, store_title_matches,
+        strip_edition_suffix, is_edition_variant_title,
+        fetch_epic_app_id, gogdb_search, fetch_gog_app_id, add_to_discovery_ids,
         const_value, is_unset, is_missing, set_or_insert, replace_const_rhs,
         js_string_literal, strip_js_comments,
+        audit_skip_rules, audit_skip_lines,
+        AUDIT_SKIP_STORE_ID, AUDIT_SKIP_FOMOD, AUDIT_SKIP_PRIORITY,
         XXX_PATTERN, is_placeholder_value, is_real_value, find_placeholder_vars,
         const_decl_match, const_array_value,
         find_js_function,
@@ -63,6 +66,7 @@ Usage:
 """
 
 import argparse
+import html
 import json
 import os
 import platform
@@ -467,6 +471,18 @@ def name_lookup_variants(game_name):
                 break
     candidates.extend(deprefixed)
 
+    # Parenthetical-disambiguator-stripped variants ("God of War (2018)" -> "God
+    # of War", "Wolfenstein (2009)" -> "Wolfenstein"). Extensions add these to
+    # tell re-releases apart; no store listing carries them. Appended last, so a
+    # game whose real title contains parentheses still tries the full form first.
+    deparenthesized = []
+    for c in candidates:
+        bare = re.sub(r"\s*\([^)]*\)", " ", c)
+        bare = re.sub(r"\s+", " ", bare).strip()
+        if bare and bare != c:
+            deparenthesized.append(bare)
+    candidates.extend(deparenthesized)
+
     # Deduplicate while preserving order
     seen = set()
     result = []
@@ -625,12 +641,13 @@ def strip_edition_suffix(normalized_title):
     return _EGDATA_EDITION_SUFFIX.sub("", normalized_title).strip()
 
 
-def egdata_title_matches(game_name, offer_title):
-    """Return True if an egdata offer title names the same game.
+def store_title_matches(game_name, offer_title):
+    """Return True if a store listing title names the same game.
 
-    egdata's search is fuzzy and will happily return an unrelated title for a
-    loose query ("Gate 3" -> "Realpolitiks 3: Earth and Beyond"), so every hit
-    is checked before its ID is trusted. Matching is exact after normalization,
+    Store search is fuzzy everywhere and will happily return an unrelated title
+    for a loose query (egdata: "Gate 3" -> "Realpolitiks 3: Earth and Beyond";
+    gogdb: "Hades" -> "Grimshade Soundtrack"), so every hit is checked before
+    its ID is trusted. Matching is exact after normalization,
     against every name_lookup_variants() alternate so numeral, edition and
     franchise-prefix spellings all count. Substring and fuzzy-ratio matching are
     deliberately NOT used - they cannot separate a game from its own sequel
@@ -656,7 +673,7 @@ def fetch_epic_app_id(game_name):
 
     Step 1: POST /search with {"title": <query>, "offerType": "BASE_GAME", "limit": 5}
             for each query from egdata_search_queries(game_name), taking the first
-            element whose title passes egdata_title_matches() -> its id (offer ID)
+            element whose title passes store_title_matches() -> its id (offer ID)
     Step 2: GET /offers/{offer_id}/items
             -> find item with entitlementType == "EXECUTABLE"
             -> return releaseInfo[0].appId
@@ -673,7 +690,7 @@ def fetch_epic_app_id(game_name):
                 {"title": query, "offerType": "BASE_GAME", "limit": 5},
             )
             for element in result.get("elements", []):
-                if element.get("id") and egdata_title_matches(game_name, element.get("title")):
+                if element.get("id") and store_title_matches(game_name, element.get("title")):
                     offer_id = element["id"]
                     break
             if offer_id:
@@ -695,6 +712,155 @@ def fetch_epic_app_id(game_name):
     except Exception:
         return None, None
 
+    return None, None
+
+
+# == gogdb.org helpers =========================================================
+
+# gogdb's product search is an HTML page, not an API. Its behaviour differs from
+# egdata's in ways that matter:
+#   - it matches a space-insensitive SUBSTRING, so it is fuzzy in a different
+#     way: "Hades" returns "Grimshade Soundtrack" and "Warhammer Underworlds -
+#     Shadespire Edition" (both contain "hades" once spaces are dropped)
+#   - apostrophes do NOT break it - "Baldur's Gate 3" and "Baldurs Gate 3"
+#     return identical rows, so no apostrophe workaround is needed here
+#   - results paginate; the real match can sit on page 2
+#   - titles come HTML-escaped (&#39;, &amp;)
+#   - the listing carries a type column, so type filtering costs no extra request
+GOGDB_BASE = "https://www.gogdb.org"
+
+_GOGDB_ROW = re.compile(
+    r'<a href="/product/(\d+)" class="hoveronly">\s*([^<]+?)\s*</a>\s*</td>\s*'
+    r'<td class="col-type">([^<]*)</td>'
+)
+_GOGDB_PAGES = re.compile(r"(\d+) of (\d+)")
+# Vortex's gamestore-gog matches the registry gameID, which is the installable
+# game product - so a Game row is always preferred over the Package that bundles
+# it, and a DLC row is never the answer.
+_GOGDB_TYPE_RANK = {"game": 0, "package": 1, "dlc": 2}
+
+# Words that may trail a game name in a store listing without making it a
+# different product ("Painkiller Black Edition"). A whitelist, not free text:
+# allowing arbitrary words before "edition" matches "RAGE" to "Rage in Peace
+# Collector's Edition".
+_EDITION_QUALIFIER_WORDS = {
+    "edition", "editions", "goty", "game", "of", "the", "year", "standard",
+    "deluxe", "ultimate", "gold", "black", "complete", "definitive", "premium",
+    "special", "anniversary", "enhanced", "remaster", "remastered", "redux",
+    "collector", "collectors", "collection", "editor", "editors", "choice",
+    "digital", "extended", "director", "directors", "cut", "classic", "classics",
+    "hd", "plus", "bundle", "anthology", "legacy", "pack", "s",
+}
+# The tail has to actually mark an edition, not just be filler words.
+_EDITION_QUALIFIER_ANCHORS = {
+    "edition", "editions", "goty", "remaster", "remastered", "redux",
+    "collection", "cut", "anthology",
+}
+
+
+def gogdb_search(query, max_pages=4):
+    """Search gogdb.org and return [(product_id, title, type)] across all pages.
+
+    Titles are HTML-unescaped. Type is the listing's own label ("Game",
+    "Package", "DLC"). Returns [] on any error.
+    """
+    rows = []
+    page, total = 1, 1
+    while page <= min(total, max_pages):
+        url = f"{GOGDB_BASE}/products?search={urllib.parse.quote(query)}"
+        if page > 1:
+            url += f"&page={page}"
+            time.sleep(0.3)
+        try:
+            page_html = http_get(url)
+        except Exception:
+            break
+        m = _GOGDB_PAGES.search(page_html)
+        if m:
+            total = int(m.group(2))
+        for pid, title, typ in _GOGDB_ROW.findall(page_html):
+            rows.append((pid, html.unescape(title).strip(), typ.strip()))
+        page += 1
+    return rows
+
+
+def is_edition_variant_title(game_name, offer_title):
+    """Return True if a store title is the game name plus an edition qualifier.
+
+    "Painkiller" -> "Painkiller Black Edition" is the same product; "RAGE" ->
+    "Rage of Mages II" is not. A prefix test alone cannot tell those apart, so
+    the trailing words must all come from _EDITION_QUALIFIER_WORDS and must
+    include an anchor word. Weaker than store_title_matches() - a caller should
+    treat a hit as needing human confirmation, not as a resolved ID.
+    """
+    offer = normalize_title_for_match(offer_title or "")
+    for variant in name_lookup_variants(game_name):
+        base = normalize_title_for_match(variant)
+        if not base or not offer.startswith(base + " "):
+            continue
+        tail = offer[len(base):].split()
+        if tail and _EDITION_QUALIFIER_ANCHORS & set(tail) \
+                and all(w in _EDITION_QUALIFIER_WORDS for w in tail):
+            return True
+    return False
+
+
+def _gogdb_resolve_to_game(product_id):
+    """Map a gogdb Package product to the game product it bundles.
+
+    Vortex matches the installable game's ID, so a Package ID must not be
+    written as a GOGAPP_ID. Returns the game product ID, or None.
+    """
+    try:
+        data = http_get_json(f"{GOGDB_BASE}/data/products/{product_id}/product.json")
+    except Exception:
+        return None
+    if (data.get("type") or "").lower() == "game":
+        return product_id
+    included = data.get("includes_games") or []
+    return str(included[0]) if included else None
+
+
+def fetch_gog_app_id(game_name, accept_edition_variant=False):
+    """Resolve GOGAPP_ID for a game from gogdb.org. Returns (product_id, title).
+
+    Walks name_lookup_variants() as search queries and keeps the first row whose
+    title passes store_title_matches(), preferring a Game row over the Package
+    that bundles it. A Package-only hit is resolved through includes_games,
+    because Vortex's gamestore-gog matches the registry gameID of the
+    installable game.
+
+    accept_edition_variant additionally accepts an is_edition_variant_title()
+    hit ("Painkiller" -> "Painkiller Black Edition"). Off by default: those need
+    a human to confirm the store product is the same game the extension targets,
+    not an earlier release with a similar name.
+
+    Returns (None, None) if nothing matched - which for gogdb reliably means the
+    game is absent from GOG, since its search matches on plain substrings.
+    """
+    seen = {}
+    for i, query in enumerate(name_lookup_variants(game_name)):
+        if i:
+            time.sleep(0.2)
+        for pid, title, typ in gogdb_search(query):
+            seen.setdefault(pid, (title, typ))
+        if any(store_title_matches(game_name, t) for t, _ in seen.values()):
+            break
+
+    rows = sorted(
+        ((pid, t, typ) for pid, (t, typ) in seen.items()),
+        key=lambda r: _GOGDB_TYPE_RANK.get(r[2].lower(), 3),
+    )
+    tests = [store_title_matches]
+    if accept_edition_variant:
+        tests.append(is_edition_variant_title)
+    for test in tests:
+        for pid, title, typ in rows:
+            if typ.lower() == "dlc" or not test(game_name, title):
+                continue
+            resolved = pid if typ.lower() == "game" else _gogdb_resolve_to_game(pid)
+            if resolved:
+                return resolved, title
     return None, None
 
 
@@ -767,9 +933,14 @@ def add_to_discovery_ids(src):
         m = re.search(r'const\s+DISCOVERY_IDS_ACTIVE\s*=\s*\[([^\]]*)\]', s)
         if not m or re.search(rf'\b{re.escape(var_name)}\b', m.group(1)):
             return s
+        # An empty array takes the name alone. Appending ", NAME" to "[]" yields
+        # "[, NAME]" - a sparse array whose first element is a hole, which is
+        # valid JS and so survives node --check while feeding undefined to
+        # discovery.
+        separator = "" if not m.group(1).strip() else ", "
         return re.sub(
             r'(const\s+DISCOVERY_IDS_ACTIVE\s*=\s*\[[^\]]*?)(\s*\])',
-            rf'\1, {var_name}\2',
+            rf'\1{separator}{var_name}\2',
             s,
             count=1,
         )
@@ -2142,12 +2313,21 @@ def print_count_summary(counters):
 
 
 def replace_const_rhs(src, name, new_rhs, *, count=1):
-    """Replace the quoted RHS of a const/let declaration with new_rhs.
+    """Replace the literal RHS of a const/let declaration with new_rhs.
 
     new_rhs is the literal replacement string, e.g. '"value"' or 'null'.
     Anchored with ^[ \\t]* and MULTILINE so only the first top-level
-    declaration is targeted when count=1 (default)."""
-    pattern = rf'^([ \t]*(?:const|let)\s+{re.escape(name)}\s*=\s*)["\'][^"\']*["\']'
+    declaration is targeted when count=1 (default).
+
+    Handles a quoted string or a bare literal (null/undefined/true/false/number)
+    - store ID consts sit at `= null` until they are resolved, so a
+    quoted-only pattern silently no-ops on exactly the case a store sweep needs.
+    The trailing lookahead keeps the bare-literal branch from eating the first
+    operand of an expression like `= 2 + OFFSET`."""
+    pattern = (
+        rf'^([ \t]*(?:const|let)\s+{re.escape(name)}\s*=\s*)'
+        rf'''(?:["'][^"']*["']|(?:null|undefined|true|false|\d+(?:\.\d+)?)(?=\s*(?:;|//|$)))'''
+    )
     return re.sub(pattern, rf'\g<1>{new_rhs}', src, count=count, flags=re.MULTILINE)
 
 
@@ -2632,6 +2812,50 @@ def strip_js_comments(src):
         i += 1
 
     return "".join(out)
+
+
+# Audit suppression marker. A JS comment that records a deliberate exception to one of
+# patch_extensions.py's --audit rules, so the finding is reported as suppressed instead
+# of coming back as a fresh to-do on every run:
+#
+#     //!audit-skip: store-id - xbox build sits in the protected WindowsApps folder
+#
+# Rule names are comma-separated; the reason after the ' - ' separator is required,
+# because a bare marker is how a suppression list rots. Same contract as the Python
+# side's `# noqa: <rule>`. The '//!' prefix is an existing convention in the extensions.
+AUDIT_SKIP_STORE_ID = "store-id"
+AUDIT_SKIP_FOMOD = "fomod-check"
+AUDIT_SKIP_PRIORITY = "installer-priority"
+
+_AUDIT_SKIP_RE = re.compile(
+    r'//!\s*audit-skip\s*:\s*([A-Za-z0-9_\-]+(?:\s*,\s*[A-Za-z0-9_\-]+)*)\s+-\s+(\S.*?)\s*$'
+)
+
+
+def audit_skip_rules(line):
+    """Return {rule: reason} for every audit-skip rule marked on a single source line.
+
+    Empty dict when the line carries no marker, or carries one with no reason text.
+    An unexplained suppression is ignored on purpose: the finding stays live and shows
+    up in the report rather than being silently hidden.
+    """
+    m = _AUDIT_SKIP_RE.search(line)
+    if not m:
+        return {}
+    reason = m.group(2).strip()
+    if not reason:
+        return {}
+    return {r.strip(): reason for r in m.group(1).split(",") if r.strip()}
+
+
+def audit_skip_lines(src, rule):
+    """Return {1-based line number: reason} for every line in src suppressing rule."""
+    hits = {}
+    for lineno, line in enumerate(src.splitlines(), 1):
+        rules = audit_skip_rules(line)
+        if rule in rules:
+            hits[lineno] = rules[rule]
+    return hits
 
 
 _JS_FUNC_DEF_RE = re.compile(r"(?:async\s+)?function\s+(\w+)\s*\(")

@@ -4,6 +4,11 @@
 
 - None Planned
 
+## [0.1.2] - 2026-08-11
+
+- Added: GOG support
+- Added: Steam ID for discovery
+
 ## [0.1.1] - 2026-03-27
 
 - Added: Button to browse and download OldUnreal patches from GitHub

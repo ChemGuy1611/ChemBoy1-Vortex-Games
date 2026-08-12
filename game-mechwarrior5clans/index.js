@@ -2,8 +2,8 @@
 Name: MechWarrior 5: Clans Vortex Extension
 Structure: UE5 (Xbox-Integrated)
 Author: ChemBoy1
-Version: 0.3.0
-Date: 2026-05-07
+Version: 0.3.1
+Date: 2026-08-12
 ////////////////////////////////////////////////*/
 
 //Import libraries
@@ -30,7 +30,7 @@ const IO_STORE = true; //true if the Paks folder contains .ucas and .utoc files
 const gameFinderQuery = {
   steam: [{ id: STEAMAPP_ID, prefer: 0 }],
   //gog: [{ id: GOGAPP_ID }],
-  //epic: [{ id: EPICAPP_ID }],
+  epic: [{ id: EPICAPP_ID }],
   xbox: [{ id: XBOXAPP_ID }],
 };
 
@@ -328,7 +328,7 @@ async function requiresLauncher(gamePath, store) {
         },
     });
   }
-  
+
   return Promise.resolve(undefined);
 }
 
@@ -761,7 +761,7 @@ function isUe4ssInstalled(api, spec) {
 //Function to auto-download UE4SS from Nexus
 async function downloadUe4ss(api, gameSpec) {
   let modLoaderInstalled = isUe4ssInstalled(api, gameSpec);
-  
+
   if (!modLoaderInstalled) {
     //notification indicating install process
     const MOD_NAME = `UE4SS`;
@@ -978,10 +978,10 @@ function UNREALEXTENSION(context) {
     name: 'UE5 Sortable Mod',
     mergeMods: mod => loadOrderPrefix(context.api, mod) + mod.id
   });
-  context.registerModType(LEGACY_UE5_SORTABLE_ID, 65, 
-    (gameId) => testUnrealGame(gameId, true), 
-    getUnrealModsPath, 
-    () => Promise.resolve(false), 
+  context.registerModType(LEGACY_UE5_SORTABLE_ID, 65,
+    (gameId) => testUnrealGame(gameId, true),
+    getUnrealModsPath,
+    () => Promise.resolve(false),
     { name: 'Legacy UE - REINSTALL TO SORT',
       mergeMods: mod => 'ZZZZ-' + mod.id
     }
@@ -1011,7 +1011,7 @@ async function resolveGameVersion(gamePath, exePath) {
       const exeVersion = require('exe-version');
       version = await exeVersion.getProductVersion(READ_FILE);
       //log('warn', `Resolved game version for ${GAME_ID} to: ${version}`);
-      return Promise.resolve(version); 
+      return Promise.resolve(version);
     } catch (err) {
       log('error', `Could not read ${READ_FILE} file to get Steam game version: ${err}`);
       return Promise.resolve(version);
@@ -1045,7 +1045,7 @@ function legacyModsNotify(api, legacyMods) {
                   3. Click the "Reinstall" button in the blue ribbon at the bottom of the Mods page.\n
                   4. You can now sort all of your pak mods in the Load Order tab.\n`
                 + `\n`
-                + `Pak Mods to Reinstall:\n` 
+                + `Pak Mods to Reinstall:\n`
                 + `${legacyMods.join('\n')}`
                 + `\n`
                 + `\n`
@@ -1111,51 +1111,51 @@ function applyGame(context, gameSpec) {
     }, (game) => pathPattern(context.api, game, type.targetPath), () => Promise.resolve(false), { name: type.name });
   });
   //register mod types explicitly
-  context.registerModType(SCRIPTS_ID, 40, 
+  context.registerModType(SCRIPTS_ID, 40,
     (gameId) => {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, 
-    (game) => pathPattern(context.api, game, SCRIPTS_TARGET), 
-    () => Promise.resolve(false), 
+    },
+    (game) => pathPattern(context.api, game, SCRIPTS_TARGET),
+    () => Promise.resolve(false),
     { name: SCRIPTS_NAME }
   );
   /*
-  context.registerModType(CONFIG_ID, 45, 
+  context.registerModType(CONFIG_ID, 45,
     (gameId) => {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, 
-    (game) => pathPattern(context.api, game, CONFIG_TARGET), 
-    () => Promise.resolve(false), 
+    },
+    (game) => pathPattern(context.api, game, CONFIG_TARGET),
+    () => Promise.resolve(false),
     { name: CONFIG_NAME }
   );
-  context.registerModType(SAVE_ID, 50, 
+  context.registerModType(SAVE_ID, 50,
     (gameId) => {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, 
-    (game) => pathPattern(context.api, game, SAVE_TARGET), 
-    () => Promise.resolve(false), 
+    },
+    (game) => pathPattern(context.api, game, SAVE_TARGET),
+    () => Promise.resolve(false),
     { name: SAVE_NAME }
   );
   */
-  context.registerModType(BINARIES_ID, 65, 
+  context.registerModType(BINARIES_ID, 65,
     (gameId) => {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, 
-    (game) => pathPattern(context.api, game, BINARIES_TARGET), 
-    () => Promise.resolve(false), 
+    },
+    (game) => pathPattern(context.api, game, BINARIES_TARGET),
+    () => Promise.resolve(false),
     { name: BINARIES_NAME }
   );
-  context.registerModType(UE4SS_ID, 70, 
+  context.registerModType(UE4SS_ID, 70,
     (gameId) => {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, 
-    (game) => pathPattern(context.api, game, BINARIES_TARGET), 
-    () => Promise.resolve(false), 
+    },
+    (game) => pathPattern(context.api, game, BINARIES_TARGET),
+    () => Promise.resolve(false),
     { name: UE4SS_NAME }
   );
 

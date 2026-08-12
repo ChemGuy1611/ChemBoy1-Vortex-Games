@@ -4,6 +4,10 @@
 
 - None
 
+## [0.1.3] - 2026-08-11
+
+- Added GOG support
+
 ## [0.1.2] - 2026-08-11
 
 - Added Epic Games Store support

@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.2.1] - 2026-08-11
+
+- Added GOG support
+
 ## [0.2.0] - 2026-01-30
 
 - Improved: Finds .texpack and .lodpack files in any subdirectory of the "exec\patch" or "exec\wad" folders

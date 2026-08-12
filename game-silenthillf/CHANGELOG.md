@@ -4,6 +4,10 @@
 
 - None
 
+## [0.1.1] - 2026-08-11
+
+- Added GOG support
+
 ## [0.1.0] - 2025-09-23
 
 - Initial release

@@ -2,8 +2,8 @@
 Name: Borderlands 4 Vortex Extension
 Structure: UE5 (static exe)
 Author: ChemBoy1
-Version: 0.4.1
-Date: 2026-08-05
+Version: 0.4.2
+Date: 2026-08-12
 //////////////////////////////////////////////////*/
 
 //Import libraries
@@ -250,7 +250,7 @@ const spec = {
       "ignoreDeploy": IGNORE_DEPLOY,
     },
     "environment": {
-      "EpicAppId": EPICAPP_ID,
+      "EpicAPPId": EPICAPP_ID,
       "SteamAPPId": STEAMAPP_ID,
     },
   },
@@ -460,7 +460,7 @@ function makeFindGame(api, gameSpec) {
 }
 
 async function requiresLauncher(gamePath, store) {
-  /*if (store === 'epic') {
+  if (store === 'epic' && (DISCOVERY_IDS_ACTIVE.includes(EPICAPP_ID))) {
     return Promise.resolve({
         launcher: 'epic',
         addInfo: {

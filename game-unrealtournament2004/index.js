@@ -2,8 +2,8 @@
 Name: Unreal Tournament 2004 Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 0.1.1
-Date: 2026-03-27
+Version: 0.1.2
+Date: 2026-08-11
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -23,9 +23,9 @@ const LOCALLOW = path.join(USER_HOME, 'AppData', 'LocalLow'); //*/
 
 //Specify all the information about the game
 const GAME_ID = "unrealtournament2004";
-const STEAMAPP_ID = null;
-const GOGAPP_ID = null;
-const DISCOVERY_IDS_ACTIVE = []; // UPDATE THIS WITH ALL VALID IDs
+const STEAMAPP_ID = "13230";
+const GOGAPP_ID = "1207658691";
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, GOGAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 const GAME_NAME = "Unreal Tournament 2004";
 const GAME_NAME_SHORT = "UT2004";
 const BINARIES_PATH = 'System';
@@ -142,7 +142,7 @@ const spec = {
     },
     "details": {
       //"steamAppId": +STEAMAPP_ID,
-      //"gogAppId": GOGAPP_ID,
+      "gogAppId": GOGAPP_ID,
       //"epicAppId": EPICAPP_ID,
       //"xboxAppId": XBOXAPP_ID,
       "supportsSymlinks": allowSymlinks,
@@ -151,7 +151,7 @@ const spec = {
     },
     "environment": {
       //"SteamAPPId": STEAMAPP_ID,
-      //"GogAPPId": GOGAPP_ID,
+      "GogAPPId": GOGAPP_ID,
       //"EpicAPPId": EPICAPP_ID,
       //"XboxAPPId": XBOXAPP_ID,
     }
@@ -470,7 +470,7 @@ function fallbackInstallerNotify(api, modName) {
                 + `If you think that Vortex should be capable to install this mod to a specific folder, please contact the extension developer for support at the link below.\n`
                 + `\n`
                 + `Mod Name: ${modName}.\n`
-                + `\n`             
+                + `\n`
           }, [
             { label: 'Continue', action: () => dismiss() },
             {
@@ -494,7 +494,7 @@ function fallbackInstallerNotify(api, modName) {
               if (modMatch) {
                 const MOD_ID = modMatch.attributes.modId;
                 if (MOD_ID !== undefined) {
-                  PAGE = `${MOD_ID}?tab=description`; 
+                  PAGE = `${MOD_ID}?tab=description`;
                 }
               }
               const MOD_PAGE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${PAGE}`;
@@ -557,7 +557,7 @@ async function downloadPatches(api, gameSpec) {
             util.batchDispatch(api.store, batched); // Will dispatch both actions.
             return resolve();
           });
-        }, 
+        },
         'never',
         { allowInstall: false },
       );

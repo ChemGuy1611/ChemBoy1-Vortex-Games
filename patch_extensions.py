@@ -20,9 +20,13 @@ Usage:
     python patch_extensions.py GAME_ID [GAME_ID ...] --debug  # print raw PCGW search results for diagnosis
     python patch_extensions.py --list-patches                 # list all patches with enabled status and description
     python patch_extensions.py --only PATCH_NAME              # run only the named patch (bypasses enabled flag)
+    python patch_extensions.py --only gog_app_id              # resolve GOGAPP_ID from gogdb.org (registered disabled: several requests per unresolved game)
     python patch_extensions.py GAME_ID [GAME_ID ...] --only PATCH_NAME
-    python patch_extensions.py --audit                        # run both read-only audits (installer priorities + FOMOD checks) then exit
+    python patch_extensions.py --audit                        # run the read-only audits (installer priorities + FOMOD checks + store ID wiring) then exit
     python patch_extensions.py GAME_ID [GAME_ID ...] --audit  # scope audits to specific games only
+    python patch_extensions.py --audit --resolve              # also re-query egdata + gogdb for every unresolved EPICAPP_ID/GOGAPP_ID (network-bound, read-only)
+    python patch_extensions.py --audit --resolve gog          # limit the resolution pass to one store (epic, gog, or both)
+    python patch_extensions.py --audit --show-suppressed      # also list the findings parked by an '//!audit-skip: <rule> - <reason>' marker, with their reasons
 
 Environment variables:
     VORTEX_MANIFEST_PATH  (optional) Path to Vortex extensions-manifest.json.
@@ -39,12 +43,14 @@ from vortex_utils import (
     REPO_ROOT, TITLE_IMAGES_DIR,
     lookup_pcgamingwiki, extract_game_name,
     run_generate_explained_batch,
-    fetch_epic_app_id, add_to_discovery_ids,
+    fetch_epic_app_id, fetch_gog_app_id, add_to_discovery_ids,
     const_value, is_unset, is_missing, set_or_insert,
     inject_register_actions, find_fn_body,
     list_game_ids, write_index_js, resize_images_to, log_info, log_warn, log_error,
     load_vortex_manifest, resize_pngs_in_dirs,
     is_placeholder_value, replace_const_rhs, print_count_summary, js_string_literal,
+    strip_js_comments, is_real_value,
+    audit_skip_lines, AUDIT_SKIP_STORE_ID, AUDIT_SKIP_FOMOD, AUDIT_SKIP_PRIORITY,
 )
 MANIFEST_PATH = os.environ.get("VORTEX_MANIFEST_PATH", os.path.join(os.environ.get("APPDATA", ""), "Vortex", "temp", "extensions-manifest.json"))
 NEXUS_SITE_BASE = "https://www.nexusmods.com/site/mods"
@@ -102,6 +108,45 @@ def patch_epic_app_id(game_id, src, context):
     if new_src == src:
         return src, False, "regex substitution had no effect"
     return new_src, True, f"set to {app_id}"
+
+
+def patch_gog_app_id(game_id, src, context):
+    """
+    Fill in GOGAPP_ID by querying gogdb.org with the game name.
+
+    Gate differs from patch_epic_app_id on purpose: a null value counts as
+    unresolved here. The GOG survey found 127 nulls, 62 missing consts and zero
+    empty strings, and null has only ever meant "never looked up", not "verified
+    absent from GOG" - so the Epic patch's empty-string-only gate would no-op on
+    every candidate. Skips "XXX" placeholders and already-set real IDs; use
+    --force to overwrite those.
+
+    Registered disabled because it issues several gogdb requests per unresolved
+    game. Run it with --only gog_app_id.
+    """
+    current = const_value(src, "GOGAPP_ID")
+    if current is not None and not context.get("force"):
+        if is_placeholder_value(current):
+            return src, False, SKIP_XXX_INTENTIONAL
+        if current != "null" and not re.match(r'^["\']["\']$', current):
+            return src, False, SKIP_ALREADY_SET
+
+    game_name = extract_game_name(src)
+    if not game_name:
+        return src, False, "could not extract game name"
+
+    app_id, title = fetch_gog_app_id(game_name)
+    if not app_id:
+        return src, False, f"not found on gogdb.org for '{game_name}'"
+
+    if current is None:
+        new_src = set_or_insert(src, "GOGAPP_ID", app_id,
+                                comment=f"https://www.gogdb.org/product/{app_id}")
+    else:
+        new_src = replace_const_rhs(src, "GOGAPP_ID", f'"{app_id}"')
+    if new_src == src:
+        return src, False, "regex substitution had no effect"
+    return new_src, True, f"set to {app_id} ({title})"
 
 
 def patch_discovery_ids(game_id, src, context):
@@ -660,27 +705,41 @@ PATCHES = [
     {"name": "extension_url",                    "enabled": True, "fn": patch_extension_url},
     {"name": "pcgamingwiki_url",                 "enabled": True, "fn": patch_pcgamingwiki_url},
     {"name": "epic_app_id",                      "enabled": True, "fn": patch_epic_app_id},
+    {"name": "gog_app_id",                       "enabled": False,"fn": patch_gog_app_id},
     {"name": "discovery_ids",                    "enabled": True, "fn": patch_discovery_ids},
 ]
 
 
 # ── Audits (read-only, flag-only reports) ─────────────────────────────────────
 
+def _marker_reason(skip_lines, lineno):
+    """Return the audit-skip reason marked on this line or the line above it, else None."""
+    return skip_lines.get(lineno) or skip_lines.get(lineno - 1)
+
+
 def audit_installer_priorities(folder_paths):
     """
     Scan context.registerInstaller calls across the given index.js files and report
-    any with a priority literal outside the 25-49 range. Read-only; no files modified.
-    Returns total outlier count.
+    any with a priority literal outside the 25-49 range.
+
+    A value chosen on purpose - intra-extension ordering that has to sit outside the
+    band - is marked on the registerInstaller line, or the line above it, with
+    `//!audit-skip: installer-priority - <reason>`, and is then reported as suppressed
+    rather than as a finding.
+
+    Read-only; no files modified. Returns (outlier count, suppressed rows).
     """
     pat = re.compile(
         r'^\s*context\.registerInstaller\(\s*([^,]+?)\s*,\s*(\d+)\s*,',
         re.MULTILINE
     )
     total = 0
+    suppressed = []
     for folder, index_path in folder_paths:
         with open(index_path, encoding="utf-8", errors="replace") as f:
             src = f.read()
         lines = src.splitlines()
+        skip_lines = audit_skip_lines(src, AUDIT_SKIP_PRIORITY)
         file_hits = []
         for lineno, line in enumerate(lines, 1):
             if line.lstrip().startswith('//'):
@@ -690,29 +749,43 @@ def audit_installer_priorities(folder_paths):
                 installer_id = m.group(1).strip()
                 priority = int(m.group(2))
                 if priority < 25 or priority > 49:
-                    file_hits.append((lineno, priority, installer_id))
+                    reason = _marker_reason(skip_lines, lineno)
+                    if reason:
+                        suppressed.append((folder, lineno,
+                                           f"priority={priority}  id={installer_id}", reason))
+                    else:
+                        file_hits.append((lineno, priority, installer_id))
         if file_hits:
             print(f"\n{folder}/index.js:")  # noqa: raw-log-print
             for lineno, priority, installer_id in file_hits:
                 print(f"  :{lineno}  priority={priority}  id={installer_id}")  # noqa: raw-log-print
                 total += 1
-    return total
+    return total, suppressed
 
 
 def audit_fomod_check(folder_paths):
     """
     Scan testSupported functions (function test<Name>(files, gameId)) across the given
     index.js files and report any whose body lacks a moduleconfig.xml FOMOD guard.
-    Read-only; no files modified. Returns total flagged count.
+
+    An installer that omits the guard on purpose - a custom handler for FOMOD-shaped
+    archives, which must not bail out on moduleconfig.xml - is marked on the
+    `function test<Name>` line, or the line above it, with
+    `//!audit-skip: fomod-check - <reason>`, and is then reported as suppressed rather
+    than as a finding.
+
+    Read-only; no files modified. Returns (flagged count, suppressed rows).
     """
     fn_pat = re.compile(
         r'^(?:async\s+)?function\s+(test\w+)\s*\(\s*files\s*,\s*gameId\s*\)',
         re.MULTILINE
     )
     total = 0
+    suppressed = []
     for folder, index_path in folder_paths:
         with open(index_path, encoding="utf-8", errors="replace") as f:
             src = f.read()
+        skip_lines = audit_skip_lines(src, AUDIT_SKIP_FOMOD)
         file_hits = []
         for m in fn_pat.finditer(src):
             fn_name = m.group(1)
@@ -722,17 +795,279 @@ def audit_fomod_check(folder_paths):
                 continue
             body = src[m.start():body_end]
             if 'moduleconfig.xml' not in body.lower():
-                file_hits.append((lineno, fn_name))
+                reason = _marker_reason(skip_lines, lineno)
+                if reason:
+                    suppressed.append((folder, lineno,
+                                       f"function {fn_name}  -- no FOMOD check", reason))
+                else:
+                    file_hits.append((lineno, fn_name))
         if file_hits:
             print(f"\n{folder}/index.js:")  # noqa: raw-log-print
             for lineno, fn_name in file_hits:
                 print(f"  :{lineno}  function {fn_name}  -- no FOMOD check")  # noqa: raw-log-print
                 total += 1
+    return total, suppressed
+
+
+# Severity tags for store ID findings. Functional gaps change what Vortex does;
+# convention gaps only diverge from the template's spec shape.
+FUNCTIONAL = "functional"
+CONVENTION = "convention"
+
+# Store ID constants and the four sites each one has to reach to be usable.
+# Fields: (constant, details key, environment key, gameFinderQuery key, launcher store token)
+# launcher token is None for stores whose copies launch directly (GOG, Ubisoft, EA)
+# and therefore need no requiresLauncher branch.
+STORE_ID_SPECS = [
+    ("GOGAPP_ID",   "gogAppId",   "GogAPPId",   "gog",    None),
+    ("EPICAPP_ID",  "epicAppId",  "EpicAPPId",  "epic",   "epic"),
+    ("XBOXAPP_ID",  "xboxAppId",  "XboxAPPId",  "xbox",   "xbox"),
+    ("UPLAYAPP_ID", "uPlayAppId", "UPlayAPPId", "uplay",  None),
+    ("EAAPP_ID",    "EAAppId",    "EAAPPId",    "origin", None),
+]
+
+# Which resolver fills each constant, for the --resolve pass. The third field names
+# the resolver's second return value: egdata returns the offer ID, gogdb the title.
+STORE_RESOLVERS = {
+    "epic": ("EPICAPP_ID", fetch_epic_app_id, "offer"),
+    "gog":  ("GOGAPP_ID",  fetch_gog_app_id,  "title"),
+}
+
+
+def _spec_key_state(active_src, key, sibling_key):
+    """Return (present, misspellings) for an object key in comment-stripped source.
+
+    A key is present only when the exact casing appears; case variants are reported
+    separately. The sibling key is excluded from the variant list - details.epicAppId
+    and environment.EpicAPPId differ only in case, so each would otherwise report the
+    other as its own misspelling.
+    """
+    found = set(re.findall(rf'["\']?({re.escape(key)})["\']?\s*:', active_src, re.IGNORECASE))
+    if key in found:
+        return True, []
+    return False, sorted(v for v in found if v != sibling_key)
+
+
+def _discovery_blocks(active_src):
+    """Return [(mechanism name, block text)] for every discovery mechanism in the file.
+
+    Four shapes are in use across the repo and a constant counts as wired into
+    discovery if any one of them references it:
+      DISCOVERY_IDS_ACTIVE  - the const array, current template structure
+      spec.discovery.ids    - an inline array literal in the spec
+      gameFinderQuery       - per-store object passed as queryArgs
+      findByAppId([...])    - array passed straight to GameStoreHelper
+    """
+    blocks = []
+    m = re.search(r'DISCOVERY_IDS_ACTIVE\s*=\s*\[([^\]]*)\]', active_src, re.DOTALL)
+    if m:
+        blocks.append(("DISCOVERY_IDS_ACTIVE", m.group(1)))
+    m = re.search(
+        r'["\']?discovery["\']?\s*:\s*\{.*?["\']?ids["\']?\s*:\s*\[([^\]]*)\]',
+        active_src, re.DOTALL,
+    )
+    if m:
+        blocks.append(("spec.discovery.ids", m.group(1)))
+    m = re.search(r'gameFinderQuery\s*=\s*\{(.*?)\n\s*\}\s*;', active_src, re.DOTALL)
+    if m:
+        blocks.append(("gameFinderQuery", m.group(1)))
+    for m in re.finditer(r'findByAppId\(\s*\[([^\]]*)\]', active_src, re.DOTALL):
+        blocks.append(("findByAppId", m.group(1)))
+    return blocks
+
+
+def _has_launcher_branch(active_src, token):
+    """Return True if an active requiresLauncher branch handles the given store.
+
+    Accepts every branching idiom in the repo: the template's
+    `store === 'epic'`, the `game.gameStoreId === 'epic'` variant, switch cases,
+    and a bare `launcher: 'epic'` for files that decide the store elsewhere.
+    """
+    return bool(re.search(
+        rf"===\s*['\"]{token}['\"]|case\s*['\"]{token}['\"]|launcher\s*:\s*['\"]{token}['\"]",
+        active_src,
+    ))
+
+
+def _skip_reason_for_const(src_lines, skip_lines, const):
+    """Return the audit-skip reason covering const in this file, or None.
+
+    A marker covers a constant when it sits on a line that names it - the const
+    declaration itself, or the commented-out wiring line - or on the line directly
+    above such a line. A covered constant is parked whole: every finding it carries
+    is suppressed together, because a half-wired store is not a state worth reporting.
+    """
+    name_re = re.compile(rf'\b{re.escape(const)}\b')
+    for lineno, reason in skip_lines.items():
+        for probe in (lineno, lineno + 1):
+            if 1 <= probe <= len(src_lines) and name_re.search(src_lines[probe - 1]):
+                return reason
+    return None
+
+
+def _print_suppressed(rows):
+    """Print the suppressed-findings list gathered by an audit.
+
+    Rows are (folder, lineno, detail, reason). Grouped by folder, mirroring the
+    layout of the live report so the two read the same way.
+    """
+    if not rows:
+        print("\n--- suppressed (intentional): none ---")  # noqa: raw-log-print
+        return
+    print(f"\n--- suppressed (intentional): {len(rows)} ---")  # noqa: raw-log-print
+    current = None
+    for folder, lineno, detail, reason in rows:
+        if folder != current:
+            print(f"\n{folder}/index.js:")  # noqa: raw-log-print
+            current = folder
+        print(f"  :{lineno}  {detail}")  # noqa: raw-log-print
+        print(f"         reason: {reason}")  # noqa: raw-log-print
+
+
+def audit_store_ids(folder_paths):
+    """
+    Report store ID constants that hold a real value but are not wired through to
+    every site that consumes them: discovery, a requiresLauncher branch (Epic/Xbox
+    only), and the spec's details/environment blocks.
+
+    Findings carry a severity tag, because the sites are not equally load-bearing:
+
+      [functional]  discovery membership, launcher branch, sparse discovery array.
+                    These decide whether Vortex finds and launches the store copy.
+      [convention]  details.<store>AppId and environment.<Store>APPId. Vortex core
+                    reads neither for GOG/Epic/Xbox/Ubisoft - only details.steamAppId
+                    and environment.SteamAPPId, both of which GameModeManager.storeGame
+                    backfills from queryArgs.steam anyway. The rest are template
+                    convention, consumed by the launched game process and by readers.
+
+    Comments are stripped with strip_js_comments, so a commented-out wiring line
+    reads as absent - the classification trap that mis-filed extensions in both the
+    Epic and GOG store ID sweeps.
+
+    A store that is left unwired on purpose is marked in the file it concerns:
+
+        //!audit-skip: store-id - <reason>
+
+    on the constant's line, on the commented-out wiring line, or directly above it.
+    Marked constants are counted as suppressed rather than dropped, so the decision
+    stays visible and can be re-reviewed with --show-suppressed.
+
+    Read-only; no files modified. Returns (functional count, convention count,
+    suppressed rows) where each row is (folder, lineno, detail, reason).
+    """
+    functional = 0
+    convention = 0
+    suppressed = []
+    for folder, index_path in folder_paths:
+        with open(index_path, encoding="utf-8", errors="replace") as f:
+            src = f.read()
+        active = strip_js_comments(src)
+        src_lines = src.splitlines()
+        skip_lines = audit_skip_lines(src, AUDIT_SKIP_STORE_ID)
+        skip_cache = {}
+        file_hits = []
+
+        m = re.search(r'DISCOVERY_IDS_ACTIVE\s*=\s*\[\s*,', active)
+        if m:
+            lineno = active[:m.start()].count('\n') + 1
+            file_hits.append((lineno, "DISCOVERY_IDS_ACTIVE", FUNCTIONAL,
+                              "sparse array -- first element is a hole (feeds undefined to discovery)"))
+
+        blocks = _discovery_blocks(active)
+        for const, details_key, env_key, _query_key, launcher_token in STORE_ID_SPECS:
+            if not is_real_value(const_value(src, const)):
+                continue
+            m = re.search(rf'(?:const|let)\s+{const}\s*=', active)
+            lineno = active[:m.start()].count('\n') + 1 if m else 0
+
+            for label, key, sibling in (("details", details_key, env_key),
+                                        ("environment", env_key, details_key)):
+                present, variants = _spec_key_state(active, key, sibling)
+                if present:
+                    continue
+                if variants:
+                    shown = ", ".join(f'"{v}"' for v in variants)
+                    file_hits.append((lineno, const, CONVENTION,
+                                      f"{label}.{key} miscased as {shown}"))
+                else:
+                    file_hits.append((lineno, const, CONVENTION,
+                                      f"{label}.{key} missing or commented out"))
+
+            if not blocks:
+                file_hits.append((lineno, const, FUNCTIONAL, "no discovery mechanism found in file"))
+            elif not any(re.search(rf'\b{const}\b', block) for _name, block in blocks):
+                mechanisms = "+".join(sorted({name for name, _ in blocks}))
+                file_hits.append((lineno, const, FUNCTIONAL,
+                                  f"not referenced by discovery ({mechanisms})"))
+
+            if launcher_token and not _has_launcher_branch(active, launcher_token):
+                file_hits.append((lineno, const, FUNCTIONAL,
+                                  f"no active '{launcher_token}' branch in requiresLauncher"))
+
+        live_hits = []
+        for lineno, const, severity, msg in file_hits:
+            if skip_lines:
+                if const not in skip_cache:
+                    skip_cache[const] = _skip_reason_for_const(src_lines, skip_lines, const)
+                reason = skip_cache[const]
+            else:
+                reason = None
+            if reason:
+                suppressed.append((folder, lineno, f"{const}  [{severity}] {msg}", reason))
+            else:
+                live_hits.append((lineno, const, severity, msg))
+
+        if live_hits:
+            print(f"\n{folder}/index.js:")  # noqa: raw-log-print
+            for lineno, const, severity, msg in live_hits:
+                print(f"  :{lineno}  {const}  [{severity}] {msg}")  # noqa: raw-log-print
+                if severity == FUNCTIONAL:
+                    functional += 1
+                else:
+                    convention += 1
+    return functional, convention, suppressed
+
+
+def audit_store_id_resolve(folder_paths, stores):
+    """
+    Re-run the store ID resolution passes over every extension whose constant is
+    still unresolved (null, "", "XXX", or absent), and report the candidates.
+
+    Network-bound: several requests per unresolved extension, which is why it only
+    runs behind --resolve. Read-only by design - a resolver hit is a candidate, not
+    a fact. Both sweeps rejected real hits by hand (GOG offered the 1992 Mortal
+    Kombat for the 2023 game), so every row here needs checking against the store
+    page before it is written anywhere. Returns total candidate count.
+    """
+    total = 0
+    for store in stores:
+        const, resolver, second_field = STORE_RESOLVERS[store]
+        targets = []
+        for folder, index_path in folder_paths:
+            with open(index_path, encoding="utf-8", errors="replace") as f:
+                src = f.read()
+            if is_real_value(const_value(src, const)):
+                continue
+            game_name = extract_game_name(src)
+            if game_name:
+                targets.append((folder, game_name))
+
+        print(f"\n--- {store}: {len(targets)} extension(s) with an unresolved {const} ---")  # noqa: raw-log-print
+        for folder, game_name in targets:
+            try:
+                app_id, extra = resolver(game_name)
+            except Exception as err:  # network/parse failures must not abort the pass
+                print(f"  {folder}: lookup failed for '{game_name}' -- {err}")  # noqa: raw-log-print
+                continue
+            if app_id:
+                print(f"  {folder}: {const} = {app_id}"  # noqa: raw-log-print
+                      f"  ('{game_name}' -> {second_field} {extra})")
+                total += 1
     return total
 
 
-def run_audits(target_ids=None):
-    """Run both read-only audits across all game-* and template-* index.js files."""
+def run_audits(target_ids=None, resolve_stores=None, show_suppressed=False):
+    """Run the read-only audits across all game-* and template-* index.js files."""
     folder_paths = []
     for d in sorted(os.listdir(REPO_ROOT)):
         full = os.path.join(REPO_ROOT, d)
@@ -750,12 +1085,33 @@ def run_audits(target_ids=None):
 
     scope = f"{len(folder_paths)} extension(s)"
     print(f"\n=== Audit: installer priorities (expected range 25-49) - {scope} ===")  # noqa: raw-log-print
-    pri_total = audit_installer_priorities(folder_paths)
-    print(f"\nTotal out-of-range calls: {pri_total}")  # noqa: raw-log-print
+    pri_total, pri_suppressed = audit_installer_priorities(folder_paths)
+    if show_suppressed:
+        _print_suppressed(pri_suppressed)
+    print(f"\nTotal out-of-range calls: {pri_total}, "  # noqa: raw-log-print
+          f"{len(pri_suppressed)} suppressed (intentional)")
 
     print(f"\n=== Audit: testSupported FOMOD check - {scope} ===")  # noqa: raw-log-print
-    fomod_total = audit_fomod_check(folder_paths)
-    print(f"\nTotal missing FOMOD guard: {fomod_total}")  # noqa: raw-log-print
+    fomod_total, fomod_suppressed = audit_fomod_check(folder_paths)
+    if show_suppressed:
+        _print_suppressed(fomod_suppressed)
+    print(f"\nTotal missing FOMOD guard: {fomod_total}, "  # noqa: raw-log-print
+          f"{len(fomod_suppressed)} suppressed (intentional)")
+
+    print(f"\n=== Audit: store ID wiring - {scope} ===")  # noqa: raw-log-print
+    store_functional, store_convention, store_suppressed = audit_store_ids(folder_paths)
+    if show_suppressed:
+        _print_suppressed(store_suppressed)
+    print(f"\nTotal store ID wiring gaps: {store_functional} functional "  # noqa: raw-log-print
+          f"(discovery/launcher), {store_convention} convention (spec keys), "
+          f"{len(store_suppressed)} suppressed (intentional)")
+
+    if resolve_stores:
+        print(f"\n=== Audit: store ID resolution ({', '.join(resolve_stores)}) - {scope} ===")  # noqa: raw-log-print
+        print("Read-only. Every candidate needs a hand-check against the store page "  # noqa: raw-log-print
+              "before it is written anywhere.")
+        resolved_total = audit_store_id_resolve(folder_paths, resolve_stores)
+        print(f"\nTotal unresolved constants with a candidate: {resolved_total}")  # noqa: raw-log-print
 
 
 def run_title_image_resize(game_ids, dry_run):
@@ -927,7 +1283,20 @@ def main():
     parser.add_argument(
         "--audit",
         action="store_true",
-        help="Run both read-only audits (installer priorities + FOMOD checks) across all game-* and template-* folders, then exit without patching.",
+        help="Run the read-only audits (installer priorities + FOMOD checks + store ID wiring) across all game-* and template-* folders, then exit without patching.",
+    )
+    parser.add_argument(
+        "--resolve",
+        nargs="?",
+        const="both",
+        choices=["epic", "gog", "both"],
+        metavar="STORE",
+        help="With --audit: also re-query egdata/gogdb for every unresolved EPICAPP_ID/GOGAPP_ID and report candidates. Network-bound and read-only. Default 'both'.",
+    )
+    parser.add_argument(
+        "--show-suppressed",
+        action="store_true",
+        help="With --audit: list the findings suppressed by an '//!audit-skip: <rule> - <reason>' marker, with their reasons, instead of only counting them.",
     )
     args = parser.parse_args()
 
@@ -935,9 +1304,20 @@ def main():
         list_patches()
         sys.exit(0)
 
+    if args.resolve and not args.audit:
+        print("ERROR: --resolve only applies to --audit. Add --audit.")
+        sys.exit(1)
+
+    if args.show_suppressed and not args.audit:
+        print("ERROR: --show-suppressed only applies to --audit. Add --audit.")
+        sys.exit(1)
+
     if args.audit:
         target_ids = args.game if args.game else None
-        run_audits(target_ids)
+        resolve_stores = None
+        if args.resolve:
+            resolve_stores = ["epic", "gog"] if args.resolve == "both" else [args.resolve]
+        run_audits(target_ids, resolve_stores, args.show_suppressed)
         sys.exit(0)
 
     if args.only:

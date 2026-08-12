@@ -167,6 +167,7 @@ const spec = {
       "steamAppId": +STEAMAPP_ID,
       //"gogAppId": GOGAPP_ID,
       "epicAppId": EPICAPP_ID,
+      "xboxAppId": XBOXAPP_ID,
       //"xboxAppId": XBOXAPP_ID,
       "supportsSymlinks": false,
       "ignoreConflicts": IGNORE_CONFLICTS,
@@ -176,6 +177,7 @@ const spec = {
       "SteamAPPId": STEAMAPP_ID,
       //"GogAPPId": GOGAPP_ID,
       "EpicAPPId": EPICAPP_ID,
+      "XboxAPPId": XBOXAPP_ID,
       //"XboxAPPId": XBOXAPP_ID
     }
   },

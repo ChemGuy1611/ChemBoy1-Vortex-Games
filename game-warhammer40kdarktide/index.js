@@ -583,9 +583,11 @@ function main(context) {
     getGameVersion: resolveGameVersion,
     environment: {
       SteamAPPId: STEAMAPP_ID,
+      XboxAPPId: XBOXAPP_ID,
     },
     details: {
       steamAppId: +STEAMAPP_ID,
+      xboxAppId: XBOXAPP_ID,
     },
   });
 

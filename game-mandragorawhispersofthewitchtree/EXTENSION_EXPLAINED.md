@@ -21,6 +21,7 @@
 
 - **Steam** — `1721060`
 - **Epic Games Store** — `ed2feac9c1de4248a6d297959d1da411`
+- **GOG** — `1716387415`
 
 ## Feature Flags
 

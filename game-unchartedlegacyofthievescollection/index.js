@@ -2,7 +2,7 @@
 Name: Uncharted: Legacy of Thieves Collection Vortex Extension
 Structure: 3rd Party Mod Manager (Fluffy)
 Author: ChemBoy1
-Version: 0.3.1
+Version: 0.3.2
 Date: 2026-08-11
 */
 
@@ -14,6 +14,7 @@ const template = require('string-template');
 //Specify all information about the game
 const STEAMAPP_ID = "1659420";
 const EPICAPP_ID = "0ef5f1eaa6be4d648f6e9252aa02c5cf";
+const GOGAPP_ID = "1451150270"; //https://www.gogdb.org/product/1451150270
 const GAME_ID = "unchartedlegacyofthievescollection";
 const GAME_NAME = "Uncharted: Legacy of Thieves Collection";
 const GAME_NAME_SHORT = "Uncharted: LoTC";
@@ -56,12 +57,14 @@ const spec = {
     ],
     "details": {
       "steamAppId": +STEAMAPP_ID,
+      "gogAppId": GOGAPP_ID,
       "epicAppId": EPICAPP_ID,
       "ignoreConflicts": IGNORE_CONFLICTS,
       "ignoreDeploy": IGNORE_DEPLOY,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
+      "GogAPPId": GOGAPP_ID,
       "EpicAPPId": EPICAPP_ID,
     }
   },
@@ -88,6 +91,7 @@ const spec = {
   "discovery": {
     "ids": [
       STEAMAPP_ID,
+      GOGAPP_ID,
       EPICAPP_ID
     ],
     "names": []

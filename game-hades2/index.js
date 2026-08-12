@@ -72,6 +72,7 @@ const spec = {
     "details": {
       "steamAppId": +STEAMAPP_ID,
       "epicAppId": EPICAPP_ID,
+      "xboxAppId": XBOXAPP_ID,
       "supportsSymlinks": false,
       "ignoreConflicts": IGNORE_CONFLICTS,
       "ignoreDeploy": IGNORE_DEPLOY,
@@ -79,6 +80,7 @@ const spec = {
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
       "EpicAPPId": EPICAPP_ID,
+      "XboxAPPId": XBOXAPP_ID,
     }
   },
   "modTypes": [

@@ -158,11 +158,13 @@ const spec = {
     ],
     "details": {
       "steamAppId": +STEAMAPP_ID,
+      "xboxAppId": XBOXAPP_ID,
       "ignoreConflicts": IGNORE_CONFLICTS,
       "ignoreDeploy": IGNORE_DEPLOY,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
+      "XboxAPPId": XBOXAPP_ID,
     }
   },
   "modTypes": [

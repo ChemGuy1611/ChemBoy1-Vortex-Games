@@ -33,6 +33,7 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `PCGW_USER_AGENT` | Descriptive User-Agent sent on every PCGamingWiki request (the site returns HTTP 403 for generic library defaults) |
 | `NEXUS_USER_AGENT` | Identifying User-Agent sent on every Nexus Mods v1/v3 request (repo name + URL + OS + Python version), which the Nexus API asks clients to supply. Applied via `_NEXUS_HEADERS` / `_NEXUS_V3_HEADERS`; also imported by `nexus_upload.py` and `check_nexus_api.py`. Non-Nexus hosts keep the generic browser-style agent — some of them bot-block anything else. |
 | `EGDATA_API` | egdata.app API base URL |
+| `GOGDB_BASE` | gogdb.org base URL (product search pages and `product.json` data files) |
 | `TITLE_IMAGES_DIR` | Absolute path to `resources/title-images/` |
 | `BANNER_IMAGES_DIR` | Absolute path to `resources/banner-images/` |
 | `LISTS_DIR` | Absolute path to `resources/lists/` |
@@ -48,7 +49,7 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `extract_game_name(src)` | Extract `GAME_NAME` value from `index.js` source |
 | `roman_to_arabic(name)` | Convert Roman numeral words to Arabic digits in a game title |
 | `arabic_to_roman(name)` | Convert Arabic digit words to Roman numerals in a game title |
-| `name_lookup_variants(name)` | Generate name variants for PCGamingWiki and Nexus Mods title lookups (title-case, numeral alternates, edition suffix stripping, franchise prefix stripping — `Tom Clancy's Ghost Recon Wildlands` also yields `Ghost Recon Wildlands`). Ordered original-first, loosest-last, so callers taking the first hit prefer an exact match. `_TITLE_PREFIXES` currently holds `Tom Clancy's` only; further prefixes (`Sid Meier's`, `Disney's`, `Marvel's`, …) sit commented out in the list, to be enabled once confirmed against the Nexus game list |
+| `name_lookup_variants(name)` | Generate name variants for PCGamingWiki, Nexus Mods and store title lookups (title-case, numeral alternates, edition suffix stripping, franchise prefix stripping — `Tom Clancy's Ghost Recon Wildlands` also yields `Ghost Recon Wildlands` — and parenthetical-disambiguator stripping, so `God of War (2018)` also yields `God of War`; extensions add those to tell re-releases apart but no store listing carries them). Ordered original-first, loosest-last, so callers taking the first hit prefer an exact match. `_TITLE_PREFIXES` currently holds `Tom Clancy's` only; further prefixes (`Sid Meier's`, `Disney's`, `Marvel's`, …) sit commented out in the list, to be enabled once confirmed against the Nexus game list |
 | `lookup_pcgamingwiki(name, debug)` | Search PCGamingWiki for a game, returns `(page_url, page_title)` with session caching |
 | `pcgw_get_json(url)` | Fetch a PCGamingWiki `api.php` URL as parsed JSON, sending `PCGW_USER_AGENT`. Use for every PCGW request instead of `http_get_json`. |
 | `get_api_key(key_name)` | Load an API key from env var with Windows registry fallback (HKCU, then HKLM) |
@@ -58,8 +59,12 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `http_post_json(url, data, headers)` | POST a JSON-serializable dict to a URL and return parsed JSON response. Same retry behaviour as `http_get`. |
 | `egdata_search_queries(game_name)` | Ordered title strings to try against egdata's `/search`: every `name_lookup_variants()` alternate, each also offered with apostrophes replaced by a space. egdata returns zero results for any query containing an apostrophe (straight or curly), even when the indexed title has one. |
 | `normalize_title_for_match(title)` | Fold a title to bare lowercase words — drops `®`/`™`, apostrophes and all other punctuation — so store and game spellings compare equal. |
-| `egdata_title_matches(game_name, offer_title)` | True if an egdata offer title plausibly names the same game. Compares against every `name_lookup_variants()` alternate, accepts containment in either direction (store titles carry edition suffixes) or a `difflib` ratio >= 0.85. Needed because egdata's fuzzy search returns unrelated titles for loose queries (`Gate 3` -> `Realpolitiks 3: Earth and Beyond`). |
-| `fetch_epic_app_id(game_name)` | Resolve `EPICAPP_ID` for a game via egdata.app (POST search -> GET offer items -> EXECUTABLE item's `releaseInfo.appId`). Tries each `egdata_search_queries()` title in turn and takes the first result that passes `egdata_title_matches()`. |
+| `strip_edition_suffix(normalized_title)` | Drop a trailing `... Edition` phrase from an already-normalized title, so `Far Cry 5 Standard Edition` compares equal to `Far Cry 5`. Only a suffix ending in the word `edition` is removed, keeping a distinct product like `Assassin's Creed III Remastered` distinguishable from the base game. |
+| `store_title_matches(game_name, offer_title)` | True if a store listing title names the same game. Match is **exact after normalization** against every `name_lookup_variants()` alternate, edition suffix stripped, spaces ignored on the final compare. Substring and fuzzy-ratio matching are deliberately not used — neither can separate a game from its own sequel (`Europa Universalis V` vs `IV`) or from an unrelated title containing its name (`Borderlands` vs `Tales from the Borderlands`). Needed because every store search is fuzzy: egdata `Gate 3` -> `Realpolitiks 3`, gogdb `Hades` -> `Grimshade Soundtrack`. |
+| `is_edition_variant_title(game_name, offer_title)` | True if a store title is the game name plus a pure edition qualifier (`Painkiller` -> `Painkiller Black Edition`). Trailing words must all come from a fixed edition vocabulary and include an anchor word (`edition`, `goty`, `remastered`, …) — a prefix test alone matches `RAGE` to `Rage of Mages II`, and a free-text `.*edition$` tail matches it to `Rage in Peace Collector's Edition`. Weaker than `store_title_matches()`; treat a hit as needing human confirmation, not a resolved ID. |
+| `fetch_epic_app_id(game_name)` | Resolve `EPICAPP_ID` for a game via egdata.app (POST search -> GET offer items -> EXECUTABLE item's `releaseInfo.appId`). Tries each `egdata_search_queries()` title in turn and takes the first result that passes `store_title_matches()`. |
+| `gogdb_search(query, max_pages=4)` | Search gogdb.org and return `[(product_id, title, type)]` across all result pages. HTML scrape, not an API: titles arrive HTML-escaped and are unescaped, results paginate (`1 of 2` — the real match can sit on page 2), and the listing's own type column (`Game`/`Package`/`DLC`) avoids a `product.json` request per candidate. Returns `[]` on any error. |
+| `fetch_gog_app_id(game_name, accept_edition_variant=False)` | Resolve `GOGAPP_ID` from gogdb.org, returning `(product_id, title)`. Walks `name_lookup_variants()` as queries, keeps the first row passing `store_title_matches()`, prefers a `Game` row over the `Package` bundling it, and resolves a Package-only hit through `includes_games` — Vortex's `gamestore-gog` matches the registry `gameID` of the **installable game**, so a Package ID must never be written. Set `accept_edition_variant` to also take an `is_edition_variant_title()` hit. gogdb's search matches plain substrings, so `(None, None)` reliably means the game is absent from GOG. |
 | `add_to_discovery_ids(src)` | Add `STEAMAPP_ID_DEMO`, `GOGAPP_ID`, `EPICAPP_ID`, `XBOXAPP_ID`, `UPLAYAPP_ID`, and `EAAPP_ID` to `DISCOVERY_IDS_ACTIVE` if each has a real resolved value in src (not null, `''`, or `'XXX'`) and is not already present. |
 | `log_info(game_id, msg)` | Print `[game_id] msg` |
 | `log_error(game_id, msg)` | Print `[game_id] ERROR - msg` |
@@ -85,7 +90,7 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `const_value(src, var_name)` | Extract the RHS of a `const`/`let` declaration from JS source; returns string or `None` |
 | `is_unset(value_str)` | Return `True` if a const RHS string is `"XXX"` or `'XXX'` (placeholder not yet filled) |
 | `is_missing(src, var_name)` | Return `True` if a `const`/`let` declaration for `var_name` is absent from src |
-| `replace_const_rhs(src, name, new_rhs, *, count=1)` | Replace the quoted RHS of a `const`/`let` declaration. Anchored to the start of a line with MULTILINE, so only top-level declarations match |
+| `replace_const_rhs(src, name, new_rhs, *, count=1)` | Replace the literal RHS of a `const`/`let` declaration — a quoted string or a bare literal (`null`/`undefined`/`true`/`false`/number). Store ID consts sit at `= null` until resolved, so a quoted-only pattern no-ops on exactly the case a store sweep needs. A trailing lookahead keeps the bare-literal branch from eating the first operand of an expression like `= 2 + OFFSET`. Anchored to the start of a line with MULTILINE, so only top-level declarations match |
 | `js_string_literal(value)` | Return `value` as a double-quoted JS string literal, escaping backslashes then double quotes |
 | `set_or_insert(src, var_name, value, comment)` | Replace an `XXX` placeholder for `var_name`, or insert the const before the `spec` block |
 | `XXX_PATTERN` | Compiled regex matching any quoted `XXX` placeholder value (e.g. `"XXX"`, `"XXX.exe"`, `"XXX_Demo"`). |
@@ -140,6 +145,11 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `downloads_from_github(src)` | Return `True` if `src` pulls a mod/requirement from a GitHub release (release-asset URL or `browser_download_url`). Textual only — commented-out and never-called code still counts |
 | `github_download_enabled(src)` | Return `True` if `src` has a GitHub download that can actually run: not commented out, not stranded in a never-called function |
 | `strip_js_comments(src)` | Return `src` with `//` and `/* */` comments blanked to spaces, preserving string/template/regex literals and character offsets |
+| `audit_skip_rules(line)` | Parse an `//!audit-skip: <rule>[,<rule>] - <reason>` marker on one source line into `{rule: reason}`. Empty when there is no marker, or the marker states no reason |
+| `audit_skip_lines(src, rule)` | Return `{line number: reason}` for every line in `src` that suppresses `rule` |
+| `AUDIT_SKIP_STORE_ID` | Rule name (`store-id`) suppressing a store ID wiring finding |
+| `AUDIT_SKIP_FOMOD` | Rule name (`fomod-check`) suppressing a missing-FOMOD-guard finding |
+| `AUDIT_SKIP_PRIORITY` | Rule name (`installer-priority`) suppressing an out-of-range installer priority finding |
 | `requires_unreal_mod_installer(src)` | Return `True` if `src` declares `context.requireExtension("Unreal Engine Mod Installer")` |
 | `has_ue4ss_load_order_parity(src)` | Return `True` if `src` is a UE4-5 extension carrying the full `template-ue4-5` load order (detected via the `Ue4ssContextMenu` component) |
 | `is_unreleased_extension(src)` | Return `True` if `EXTENSION_URL` holds no real Nexus page URL (missing, empty, `"XXX"`, or non-Nexus), i.e. the extension has never been published |
@@ -1094,6 +1104,9 @@ python patch_extensions.py --only PATCH_NAME
 python patch_extensions.py GAME_ID [GAME_ID ...] --only PATCH_NAME
 python patch_extensions.py --audit
 python patch_extensions.py GAME_ID [GAME_ID ...] --audit
+python patch_extensions.py --audit --resolve
+python patch_extensions.py --audit --resolve gog
+python patch_extensions.py --audit --show-suppressed
 ```
 
 Run without arguments to apply all enabled patches to every `game-*` folder.
@@ -1103,7 +1116,9 @@ Use `--force-pcgw` to re-evaluate `PCGAMINGWIKI_URL` values that are already set
 Use `--debug` to print raw PCGamingWiki search results and match status for each game (useful for diagnosing lookup failures).
 Use `--list-patches` to print all registered patches with their enabled status and description, then exit without running anything.
 Use `--only PATCH_NAME` to run exactly one named patch, bypassing the `enabled` flag. Combine with `GAME_ID` to target a specific game.
-Use `--audit` to run both read-only audits (installer priorities + FOMOD checks) across all `game-*` and `template-*` folders, then exit without patching. Combine with `GAME_ID` args to scope the audit. Output goes to stdout — pipe to a file for triage (e.g. `python patch_extensions.py --audit > resources/audit_2026-05-24.txt`).
+Use `--audit` to run the read-only audits (installer priorities + FOMOD checks + store ID wiring) across all `game-*` and `template-*` folders, then exit without patching. Combine with `GAME_ID` args to scope the audit. Output goes to stdout — pipe to a file for triage (e.g. `python patch_extensions.py --audit > resources/audit_2026-05-24.txt`).
+Use `--resolve` with `--audit` to add the store ID resolution pass: every extension whose `EPICAPP_ID`/`GOGAPP_ID` is still unresolved is re-queried against egdata.app and gogdb.org, and any candidate is reported. Network-bound (several requests per unresolved extension) and read-only — candidates are never written. Takes an optional store: `--resolve epic`, `--resolve gog`, or `--resolve` for both. Only valid alongside `--audit`.
+Use `--show-suppressed` with `--audit` to list the findings parked by an audit-skip marker, each with the reason recorded in the file, instead of only counting them in the summary line. Only valid alongside `--audit`.
 
 ### patch_extensions.py — Built-in Patches
 
@@ -1122,6 +1137,7 @@ Use `--audit` to run both read-only audits (installer priorities + FOMOD checks)
 | `extension_url` | Sets `EXTENSION_URL` from the Vortex extensions manifest (`modId` → Nexus URL). Inserts the constant if missing. |
 | `pcgamingwiki_url` | Sets `PCGAMINGWIKI_URL` by looking up the game on PCGamingWiki. Inserts as `"XXX"` if not found or API unreachable. |
 | `epic_app_id` | Fills in `EPICAPP_ID = ""` by searching egdata.app for the game title and reading the EXECUTABLE item's `releaseInfo.appId`. Skips `null`, `"XXX"`, and already-set IDs. |
+| `gog_app_id` | Fills in `GOGAPP_ID` by searching gogdb.org for the game title. **Registered disabled** (several requests per unresolved game) — run with `--only gog_app_id`. Unlike `epic_app_id`, treats `null` and a missing const as unresolved: `null` here has only ever meant "never looked up", and a survey of 191 extensions found 127 nulls, 62 missing consts and zero empty strings, so an empty-string-only gate would no-op on every candidate. Skips `"XXX"` and already-set IDs unless `--force`. |
 | `discovery_ids` | Adds all resolved store IDs (`STEAMAPP_ID_DEMO`, `GOGAPP_ID`, `EPICAPP_ID`, `XBOXAPP_ID`, `UPLAYAPP_ID`, `EAAPP_ID`) to `DISCOVERY_IDS_ACTIVE` if not already present. Uses `add_to_discovery_ids()` from `vortex_utils`. |
 
 Each patch skips a game if the value is already set (unless `--force-pcgw` is used for `pcgamingwiki_url`). Games that fail a non-trivial step are always printed in the output so failures are visible. After writing any changed `index.js`, `generate_explained.js` is run automatically to keep `EXTENSION_EXPLAINED.md` in sync.
@@ -1132,8 +1148,24 @@ Read-only flag-only reports. Scan `game-*/index.js` and `template-*/index.js`; p
 
 | Audit | Description |
 | --- | --- |
-| installer priorities | Reports every `context.registerInstaller(ID, PRIORITY, ...)` call where `PRIORITY` is an integer literal outside 25–49. Comment-only occurrences are ignored. `registerModType` priorities are out of scope. Output format: `<folder>/index.js: :<line>  priority=<N>  id=<INSTALLER_ID>` grouped by file. |
-| FOMOD check | Reports every `function test<Name>(files, gameId)` (or `async` variant) whose body does not contain a `moduleconfig.xml` reference. Output format: `<folder>/index.js: :<line>  function <name>  -- no FOMOD check` grouped by file. |
+| installer priorities | Reports every `context.registerInstaller(ID, PRIORITY, ...)` call where `PRIORITY` is an integer literal outside 25–49. Comment-only occurrences are ignored. `registerModType` priorities are out of scope. Honours the `installer-priority` audit-skip marker (see below) on the `registerInstaller` line or the line above it. Output format: `<folder>/index.js: :<line>  priority=<N>  id=<INSTALLER_ID>` grouped by file. |
+| FOMOD check | Reports every `function test<Name>(files, gameId)` (or `async` variant) whose body does not contain a `moduleconfig.xml` reference. Honours the `fomod-check` audit-skip marker (see below) on the `function test<Name>` line or the line above it. Output format: `<folder>/index.js: :<line>  function <name>  -- no FOMOD check` grouped by file. |
+| store ID wiring | For every store ID constant holding a real value (`GOGAPP_ID`, `EPICAPP_ID`, `XBOXAPP_ID`, `UPLAYAPP_ID`, `EAAPP_ID`), reports the consuming sites it never reaches. Findings are tagged `[functional]` — absent from discovery, or an Epic/Xbox ID with no `requiresLauncher` branch, or a sparse `DISCOVERY_IDS_ACTIVE` array — or `[convention]` — a missing or miscased `details.<store>AppId` / `environment.<Store>APPId`. Comments are stripped first, so a commented-out line counts as absent. Honours the `store-id` audit-skip marker (see below). Output format: `<folder>/index.js: :<line>  <CONST>  [<severity>] <finding>` grouped by file. |
+| store ID resolution (`--resolve`) | Opt-in, network-bound. Re-queries egdata.app and gogdb.org for every unresolved `EPICAPP_ID`/`GOGAPP_ID` and reports candidates. Read-only: a resolver hit is a candidate for hand-checking, never a value to write. Output format: `<folder>: <CONST> = <id>  ('<GAME_NAME>' -> offer\|title <value>)`. |
+
+#### Suppressing a finding
+
+An audit cannot see intent. Where an extension leaves something unwired on purpose, the decision is recorded in the file it concerns with a marker comment:
+
+```js
+//!audit-skip: <rule>[,<rule>] - <reason>
+```
+
+The reason text after the ` - ` separator is required; a marker without one is ignored and the finding stays live. Rule names are `store-id`, `fomod-check`, and `installer-priority`, matching the audits above, and the marker is parsed by `audit_skip_rules()` in `vortex_utils.py`. This is the JavaScript-side counterpart of `# noqa: <rule>` in the Python scripts.
+
+For the store ID audit, the marker goes on the constant's declaration line, on the commented-out wiring line, or directly above it, and it parks that constant whole — every finding it carries is suppressed together, since a half-wired store is not a state worth reporting.
+
+Suppressed findings are counted, never dropped. The summary line reports `N suppressed (intentional)`, and `--show-suppressed` prints each one with its reason so the list can be re-reviewed.
 
 After all patches run, PNGs are resized to 64x64, title images in `resources/title-images/` are resized to 1920x1080, and cover art (`GAME_ID.jpg`) in each `game-*` folder is resized to 640x360 (all require Pillow). When targeting specific games, only those game folders are checked. When running on all, all `game-*` and `template-*` folders are checked for PNGs.
 

@@ -88,6 +88,12 @@ environment: {
 }
 ```
 
+### Which store keys Vortex actually reads
+
+Only the Steam pair. `GameModeManager.storeGame` pulls the Steam ID out of `queryArgs.steam[0].id` and backfills `details.steamAppId` (as a number) and `environment.SteamAPPId` when the game object leaves either undefined. Nothing in Vortex core reads `gogAppId`, `epicAppId`, `xboxAppId`, `uPlayAppId` or their `*APPId` environment twins.
+
+That makes the non-Steam keys documentation and process environment variables, not wiring. What actually drives behaviour for those stores is the discovery ID list (`discovery.ids` / `queryArgs`) and the matching `requiresLauncher` branch — a resolved ID that reaches neither is invisible to Vortex no matter how many `details` keys carry it. The keys are still worth filling in for consistency: they are the only in-file record of which stores an extension supports.
+
 ---
 
 ## The spec / applyGame pattern

@@ -2,8 +2,8 @@
 Name: Silent Hill f Vortex Extension
 Structure: UE5 (static exe)
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2025-09-23
+Version: 0.1.1
+Date: 2026-08-11
 //////////////////////////////////////////////////*/
 
 //Import libraries
@@ -21,8 +21,8 @@ const GAME_ID = "silenthillf";
 const STEAMAPP_ID = "2947440";
 const STEAMAPP_ID_DEMO = null;
 const EPICAPP_ID = "dc2af50022074452a20293a88da9940f";
-const GOGAPP_ID = null;
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const GOGAPP_ID = "1901861030";
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, EPICAPP_ID, GOGAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 const GAME_NAME = "Silent Hill f";
 const GAME_NAME_SHORT = "Silent Hill f";
 const EXEC = "SHf.exe";
@@ -191,13 +191,15 @@ const spec = {
     "details": {
       "epicAppId": EPICAPP_ID,
       "steamAppId": +STEAMAPP_ID,
+      "gogAppId": GOGAPP_ID,
       "supportsSymlinks": SYM_LINKS,
       "ignoreConflicts": IGNORE_CONFLICTS,
       "ignoreDeploy": IGNORE_DEPLOY,
     },
     "environment": {
-      "EpicAppId": EPICAPP_ID,
+      "EpicAPPId": EPICAPP_ID,
       "SteamAPPId": STEAMAPP_ID,
+      "GogAPPId": GOGAPP_ID,
     },
   },
   "modTypes": [

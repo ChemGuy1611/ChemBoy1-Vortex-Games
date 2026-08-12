@@ -123,7 +123,7 @@ const spec = {
       "unrealEngine": true
     },
     "environment": {
-      "EpicAppId": EPICAPP_ID,
+      "EpicAPPId": EPICAPP_ID,
       "SteamAPPId": STEAMAPP_ID,
       //"GogAPPId": GOGAPP_ID,
       "XboxAPPId": XBOXAPP_ID,

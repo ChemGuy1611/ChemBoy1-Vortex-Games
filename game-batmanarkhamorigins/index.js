@@ -2,8 +2,8 @@
 Name: Batman: Arkham Origins Vortex Extension
 Structure: UE 2-3 Game + TFC Installer
 Author: ChemBoy1
-Version: 0.1.0
-Date: 2026-06-15
+Version: 0.1.1
+Date: 2026-08-11
 Notes:
 -
 /////////////////////////////////////////*/
@@ -24,11 +24,11 @@ const DOCUMENTS = util.getVortexPath("documents");
 const GAME_ID = "batmanarkhamorigins";
 const STEAMAPP_ID = "209000"; // https://steamdb.info/app/209000/
 const EPICAPP_ID = null;
-const GOGAPP_ID = null;
+const GOGAPP_ID = "1908486934";
 const XBOXAPP_ID = null;
 const XBOXEXECNAME = "XXX";
 const XBOX_PUB_ID = "XXX"; //string after "ID_"
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, GOGAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
 const TOP_LEVEL_FOLDER = "SinglePlayer";
 const GAME_NAME = "Batman: Arkham Origins";

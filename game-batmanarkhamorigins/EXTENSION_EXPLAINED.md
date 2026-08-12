@@ -21,6 +21,7 @@
 ## Supported Stores
 
 - **Steam** — `209000`
+- **GOG** — `1908486934`
 
 ## Feature Flags
 

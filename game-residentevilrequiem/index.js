@@ -2,8 +2,8 @@
 Name: Resident Evil Requiem Vortex Extension
 Structure: Fluffy + REFramework (RE Engine)
 Author: ChemBoy1
-Version: 0.1.3
-Date: 2026-03-05
+Version: 0.1.4
+Date: 2026-08-12
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -121,12 +121,14 @@ const spec = {
     },
     "details": {
       "steamAppId": +STEAMAPP_ID,
+      "epicAppId": EPICAPP_ID,
       "supportsSymlinks": allowSymlinks,
       "ignoreDeploy": IGNORE_DEPLOY,
       "ignoreConflicts": IGNORE_CONFLICTS,
     },
     "environment": {
       "SteamAPPId": STEAMAPP_ID,
+      "EpicAPPId": EPICAPP_ID,
     }
   },
   "modTypes": [
@@ -279,8 +281,7 @@ async function requiresLauncher(gamePath, store) {
           launcher: 'steam',
       });
   }
-  /*
-  if (store === 'epic') {
+  if (store === 'epic' && (DISCOVERY_IDS_ACTIVE.includes(EPICAPP_ID))) {
     return Promise.resolve({
         launcher: 'epic',
         addInfo: {
@@ -687,7 +688,7 @@ function installFluffyMod(files) {
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file => (
-    //(file.indexOf(rootPath) !== -1) && 
+    //(file.indexOf(rootPath) !== -1) &&
     (!file.endsWith(path.sep))
   ));
   const instructions = filtered.map(file => {
@@ -852,7 +853,7 @@ async function testZipContent(files, gameId) {
 //install zips for Fluffy
 async function installZipContent(files, destinationPath) {
   const zipFiles = files.filter(file => ['.zip', '.7z', '.rar'].includes(path.extname(file)));
-  if (zipFiles.length > 0) { // If it's a double zip, we don't need to repack. 
+  if (zipFiles.length > 0) { // If it's a double zip, we don't need to repack.
     const instructions = zipFiles.map(file => {
       return {
         type: 'copy',
@@ -909,7 +910,7 @@ function setupNotify(api) {
         },
       },
     ],
-  });    
+  });
 }
 
 //Notify User to run Fluffy Mod Manager after deployment
@@ -1027,27 +1028,27 @@ function applyGame(context, gameSpec) {
   });
 
   //register mod types explicitly
-  context.registerModType(FLUFFYMOD_ID, 25, 
+  context.registerModType(FLUFFYMOD_ID, 25,
     (gameId) => {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, 
-    (game) => pathPattern(context.api, game, path.join('{gamePath}', FLUFFYMOD_PATH)), 
-    () => Promise.resolve(false), 
-    { 
-      name: FLUFFYMOD_NAME, 
+    },
+    (game) => pathPattern(context.api, game, path.join('{gamePath}', FLUFFYMOD_PATH)),
+    () => Promise.resolve(false),
+    {
+      name: FLUFFYMOD_NAME,
       mergeMods: reZip,
     }
   );
-  context.registerModType(PRESET_ID, 40, 
+  context.registerModType(PRESET_ID, 40,
     (gameId) => {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, 
-    (game) => pathPattern(context.api, game, path.join('{gamePath}', PRESET_PATH)), 
-    () => Promise.resolve(false), 
-    { 
-      name: PRESET_NAME, 
+    },
+    (game) => pathPattern(context.api, game, path.join('{gamePath}', PRESET_PATH)),
+    () => Promise.resolve(false),
+    {
+      name: PRESET_NAME,
     }
   );
 

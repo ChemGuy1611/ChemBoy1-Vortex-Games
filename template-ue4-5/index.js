@@ -2519,6 +2519,7 @@ async function setup(discovery, api, gameSpec) {
       MODTYPE_FOLDERS.push(path.join(SCRIPTS_PATH, BPML_FOLDER));
     }
   }
+  MODTYPE_FOLDERS.push(BINARIES_PATH);
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 
