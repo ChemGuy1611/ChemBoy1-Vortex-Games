@@ -15,9 +15,25 @@ Recognised when the archive contains a file or folder named "modimporter.exe".
 
 Modutility:
 
-Recognised when the archive contains a file or folder named "modutil.lua".
+Recognised when the archive contains a file or folder named "modutil.lua" and a file or folder named "main.lua".
 
   Installs to: "Content\Mods\ModUtil"
+
+========================================================================
+
+Loader:
+
+Recognised when the archive contains a file or folder named "d3d12.dll".
+
+  Installs to: "Ship"
+
+========================================================================
+
+Plugin:
+
+Recognised when the archive contains a file or folder named "manifest.json", a file or folder named "main.lua" and a file or folder named "d3d12.dll".
+
+  Installs to: "Ship\ReturnOfModding\plugins"
 
 ========================================================================
 

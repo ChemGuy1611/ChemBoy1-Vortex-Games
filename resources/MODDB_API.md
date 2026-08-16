@@ -155,3 +155,5 @@ shares the "moddb" name with this site. `GAMEBANANA_API.md`, `MODWORKSHOP_API.md
 block described above — its API host answers any client while its web host returns `403` — and
 Thunderstore blocks nothing at all). `PCGAMINGWIKI_API.md` (game-metadata lookups, and another site
 where Cloudflare blocks part of the surface).
+`FCMODDING_API.md` (the Far Cry Mod Installer host — `fcmodding_downloader.js` is modelled on
+`moddb_downloader.js`, minus the bot-block fallback route this host does not need).

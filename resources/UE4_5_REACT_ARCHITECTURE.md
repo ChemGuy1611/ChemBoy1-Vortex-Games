@@ -709,5 +709,7 @@ dropdown in the header of the custom pages. The dropdown is hand-built rather th
 `VORTEX_EXTENSION_LOADING.md` (extension discovery and the context recording proxy).
 `RE-UE4SS_MODS_CONFIG.md` (`mods.txt` / `mods.json` / `enabled.txt` semantics).
 `TEMPLATES_OVERVIEW.md` (which templates carry this React layer).
+`templates/TEMPLATE_UE4_5.md` (that template in full — the toggles, mod types, and installer ladder
+the three load-order surfaces sit on top of).
 `NON_UE_LOAD_ORDER_PAGES.md` (the same lineage in non-Unreal games — generic FBLO tier, minimal
 renderer tier, and the legacy holdout, all written as deltas against this document).

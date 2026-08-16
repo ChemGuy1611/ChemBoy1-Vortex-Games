@@ -10,6 +10,7 @@ patch_extensions.py
 fetch_cover_art.py
 make_title_image.py
 fetch_exec_icon.py
+render_svg.py
 fetch_nexus_stats.py
 release_extension.py
 bump_version.py

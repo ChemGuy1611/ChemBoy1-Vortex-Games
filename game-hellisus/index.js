@@ -1,6 +1,6 @@
 /*//////////////////////////////////////////////////
 Name: Hell is Us Vortex Extension
-Structure: UE5 (static exe)
+Structure: UE5 w/ Xbox
 Author: ChemBoy1
 Version: 0.1.0
 Date: 2025-09-02
@@ -21,6 +21,9 @@ const GAME_ID = "hellisus";
 const STEAMAPP_ID = "1620730";
 const STEAMAPP_ID_DEMO = "3623800";
 const EPICAPP_ID = "14ce1acff0db4cf8bf59533318058c7c";
+const XBOXAPP_ID = "BigbenInteractiveSA.HellisUs";
+const XBOXEXECNAME = "AppHellisUsShipping";
+const XBOX_PUB_ID = "tqjv3vrxr8ppw"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
 const GOGAPP_ID = null;
 const GAME_NAME = "Hell is Us";
 const GAME_NAME_SHORT = "Hell is Us";
@@ -594,7 +597,7 @@ function installScripts(files, fileName) {
   if (MOD_FOLDER === '.') {
     MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
   }
-  
+
   const ENABLEDTXT_FILE = 'enabled.txt'
   const ENABLEDTXT_PATH = path.join(fileName, rootPath, ENABLEDTXT_FILE);
   try {
@@ -658,7 +661,7 @@ function installDll(files, fileName) {
   if (MOD_FOLDER === '.') {
     MOD_FOLDER = MOD_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
   }
-  
+
   const ENABLEDTXT_FILE = 'enabled.txt'
   const ENABLEDTXT_PATH = path.join(fileName, rootPath, ENABLEDTXT_FILE);
   try {
@@ -837,7 +840,7 @@ function configInstallerNotify(api) {
                 + `Please move the game and/or staging folder to the same drive as the ${CONFIG_LOC} folder (typically C Drive) to install these types of mods with Vortex.\n`
                 + `\n`
                 + `Config Path: ${CONFIG_PATH}\n`
-                + `\n`             
+                + `\n`
                 + `If you want to use this mod installer, you must move the game and staging folder to the same partition as the ${CONFIG_LOC} folder (typically C Drive).\n`
                 + `\n`
           }, [
@@ -898,7 +901,7 @@ function installSave(api, files) {
     //api.showErrorNotification(`Could not install mod as Save`, `You tried installing a Save mod, but the game, staging folder, and Local AppData folder are not all on the same drive. Please move the game and/or staging folder to the same drive as the Local AppData folder (typically C Drive) to install these types of mods with Vortex.`, { allowReport: false });
     saveInstallerNotify(api);
     throw new util.UserCanceled();
-  } 
+  }
   return Promise.resolve({ instructions });
 }
 
@@ -920,7 +923,7 @@ function saveInstallerNotify(api) {
                 + `Please move the game and/or staging folder to the same drive as the ${SAVE_LOC} folder (typically C Drive) to install these types of mods with Vortex.\n`
                 + `\n`
                 + `Save Path: ${SAVE_PATH}\n`
-                + `\n`             
+                + `\n`
                 + `If you want to use this mod installer, you must move the game and staging folder to the same partition as the ${SAVE_LOC} folder (typically C Drive).\n`
                 + `\n`
           }, [
@@ -959,7 +962,7 @@ function testBinaries(files, gameId) {
 //Install Mod Loader mods
 function installBinaries(files) {
   const setModTypeInstruction = { type: 'setmodtype', value: BINARIES_ID };
-  
+
   const filtered = files.filter(file =>
     (!file.endsWith(path.sep))
   );
@@ -1039,7 +1042,7 @@ async function downloadUe4ss(api, gameSpec) {
               util.batchDispatch(api.store, batched); // Will dispatch both actions.
               return resolve();
             });
-          }, 
+          },
           'never',
           { allowInstall: false },
         );
@@ -1364,7 +1367,7 @@ function checkPartitions(folder, discoveryPath) {
     // Ensure all folders exist
     fs.ensureDirSync(path1);
     fs.ensureDirSync(path2);
-    fs.ensureDirSync(path3); 
+    fs.ensureDirSync(path3);
     // Get the stats for all folders
     const stats1 = fs.statSync(path1);
     const stats2 = fs.statSync(path2);
@@ -1432,7 +1435,7 @@ async function resolveGameVersion(gamePath, exePath) {
     const exeVersion = require('exe-version');
     version = await exeVersion.getProductVersion(READ_FILE);
     //log('warn', `Resolved game version for ${GAME_ID} to: ${version}`);
-    return Promise.resolve(version); 
+    return Promise.resolve(version);
   } catch (err) {
     log('error', `Could not read ${READ_FILE} file to get game version: ${err}`);
     return Promise.resolve(version);
@@ -1504,19 +1507,19 @@ function applyGame(context, gameSpec) {
 
   //register sibypass modtype
   if (SIGBYPASS_PAGE_NO !== 0) { //only enable modtype if there is a sigbypass Nexus page
-    context.registerModType(SIGBYPASS_ID, 60, 
+    context.registerModType(SIGBYPASS_ID, 60,
       (gameId) => {
         var _a;
         return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-      }, 
+      },
       (game) => pathPattern(context.api, game, path.join('{gamePath}', BINARIES_PATH)),
-      () => Promise.resolve(false), 
+      () => Promise.resolve(false),
       { name: SIGBYPASS_NAME }
     );
   }
 
   //register mod types for Config and Saves (conditional on all folders being on same drive partition)
-  context.registerModType(CONFIG_ID, 45, 
+  context.registerModType(CONFIG_ID, 45,
     (gameId) => {
       GAME_PATH = getDiscoveryPath(context.api);
       if (GAME_PATH !== undefined) {
@@ -1524,11 +1527,11 @@ function applyGame(context, gameSpec) {
       }
       return ((gameId === GAME_ID) && (CHECK_DATA === true));
     },
-    (game) => pathPattern(context.api, game, CONFIG_PATH), 
-    () => Promise.resolve(false), 
+    (game) => pathPattern(context.api, game, CONFIG_PATH),
+    () => Promise.resolve(false),
     { name: CONFIG_NAME }
   );
-  context.registerModType(SAVE_ID, 47, 
+  context.registerModType(SAVE_ID, 47,
     (gameId) => {
       GAME_PATH = getDiscoveryPath(context.api);
       if (GAME_PATH !== undefined) {
@@ -1540,8 +1543,8 @@ function applyGame(context, gameSpec) {
       }
       return ((gameId === GAME_ID) && (CHECK_DOCS === true)); //*/
     },
-    (game) => pathPattern(context.api, game, SAVE_PATH), 
-    () => Promise.resolve(false), 
+    (game) => pathPattern(context.api, game, SAVE_PATH),
+    () => Promise.resolve(false),
     { name: SAVE_NAME }
   );
 

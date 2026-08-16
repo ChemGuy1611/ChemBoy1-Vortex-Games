@@ -1288,6 +1288,8 @@ they change deployment state, not mods.txt.
 - `resources/COLLECTIONS_FEATURE.md` -- collections auto-gen built on `registerLoadOrder` options
 - `resources/GAMEBRYO_PLUGIN_SYSTEM.md` -- plugin-based load order alternative for Bethesda games
 - `resources/TEMPLATES_OVERVIEW.md` -- which templates use FBLO vs the legacy page
+- `resources/templates/TEMPLATE_UE4_5.md` -- the three load-order surfaces and the toggles
+  (`PAKMOD_LOADORDER`, `FBLO`, `ue4ssLoadOrder`, `logicModsLoadOrder`) that gate them
 - `resources/UE4_5_REACT_ARCHITECTURE.md` -- the full React layer this registration plugs into, and
   how the FBLO page compares with the template's two self-hosted load order pages
 - `resources/NON_UE_LOAD_ORDER_PAGES.md` -- non-Unreal games registering this API: generic FBLO

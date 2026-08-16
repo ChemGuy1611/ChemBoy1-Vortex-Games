@@ -147,3 +147,5 @@ Note the UI prop shape differs from A's `editComponent`: `interface` gets only
 `LOAD_ORDER_REGISTRATION.md` (FBLO registration options that back the collections auto-gen).
 `UE4_5_REACT_ARCHITECTURE.md` (the `editComponent` this API takes, rendered as a collection
 workshop tab, plus the sidecar orders it displays).
+`templates/TEMPLATE_UE4_5.md` (the `collectionsLoadOrder` toggle, the only template-level
+consumer of this API).

@@ -149,3 +149,5 @@ async function reconcileEnabledTxt(api, write) {
 
 `RE-UE4SS_MODS_CONFIG.md` (locating `mods.txt`/`mods.json` on disk). `UNDERUSED_API_FUNCTIONS.md`
 (§5 file operations beyond the basics — `fs.forcePerm`, `util.withTmpDir`, `util.calculateFolderSize`).
+`NTFS_LINKS.md` (turbowalk's `details`/`idStr`/`linkCount`/`isReparsePoint` fields in anger — they
+are how link-based purge identifies deployed files).

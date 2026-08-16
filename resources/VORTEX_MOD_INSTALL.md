@@ -41,6 +41,37 @@ archivePath)`, which walks the sorted list and returns the **first** installer w
   catch-all that copies everything.
 - A `testSupported` may also return `requiredFiles` so the manager knows which files matter.
 
+### How the `fileList` is built
+
+The archive is extracted to a temp directory first; the `fileList` handed to `testSupported`
+and `install` is then produced by `buildFileList()` in `mod_management/InstallManager.ts`,
+which walks that directory with `util/walk` and classifies each entry by its real `fs.Stats`:
+
+```ts
+await walk(basePath, (iterPath, stats) => {
+  const relPath = path.normalize(path.relative(basePath, iterPath));
+  if (stats.isFile()) {
+    fileList.push(relPath);
+  } else {
+    // unfortunately we also have to pass directories because
+    // some mods contain empty directories to control stop-folder
+    // management...
+    fileList.push(relPath + path.sep);
+  }
+```
+
+Consequences for installer authors:
+
+- Paths are **relative to the extraction root** and use OS-native separators.
+- **Directories are included**, each with a trailing `path.sep`. That marker is the only
+  file-vs-directory signal, and it is exact — it comes from `stats.isFile()`, not from the
+  path text. A file with no extension is still a file. Re-stating entries yourself is
+  redundant. Authoring guidance: `INSTALLER_SYSTEM.md`.
+- `registerArchiveType` handlers are **not** involved; they serve `api.openArchive` only.
+
+The second argument to `install()` (`destinationPath`) is this same temp extraction directory,
+not the final staging folder.
+
 ## 3. Run the installer → instructions
 
 The chosen `install()` returns an `IInstallResult` = a list of `IInstruction`s. `InstallManager`

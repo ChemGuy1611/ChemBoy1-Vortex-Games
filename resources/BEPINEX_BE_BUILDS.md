@@ -108,7 +108,7 @@ Unlike the file-id based companions, no second field is required: the index list
 
 When the installed build is not the pinned one — including when nothing is installed — the module resolves the *pinned* build, never the newest. If that build cannot be resolved (scrolled off the index, or carrying no artifact matching `artifactPattern` — see the naming change at 647), the install fails with a message pointing at `pinArtifactUrl` rather than silently installing the newest build in its place. The notification reads "pinned version available" rather than "update available", because the user may be *ahead* of the pin and installing it is then a deliberate downgrade. `autoInstall` stays orthogonal: the pin says which build, `autoInstall` says whether anything installs unattended.
 
-The same field name and behavior exist in all six downloader modules; `DOWNLOADER.md` has the cross-module table.
+The same field name and behavior exist in six of the seven downloader modules — the fcmodding.com one has no pin at all, because its host culls old builds; `DOWNLOADER.md` has the cross-module table.
 
 ### Exports
 
@@ -151,6 +151,8 @@ The same field name and behavior exist in all six downloader modules; `DOWNLOADE
 `DOWNLOADER.md` (the GitHub requirements auto-downloader, the cross-module version-pinning table,
 and the mono BepInEx 5.x path these builds are the IL2CPP alternative to).
 `TEMPLATES_OVERVIEW.md` (which templates bundle a downloader module copy).
+`templates/TEMPLATE_UNITYMELONLOADERBEPINEX_HYBRID.md` (the only template carrying this module,
+and how its requirement sets are kept apart from the GitHub ones).
 `VORTEX_DOWNLOAD_MGMT.md` (the `start-download`/`start-install-download` events this module hands
 off to). `VORTEX_MOD_INSTALL.md` (installing the downloaded artifact as a managed mod).
 `VORTEX_MOD_LIST.md` (the `customFileName || logicalFileName || fileName || name` rule that decides
@@ -158,3 +160,5 @@ which name a requirement shows under).
 `GAMEBANANA_API.md`, `MODDB_API.md`, `MODWORKSHOP_API.md`, and `THUNDERSTORE_API.md` (the other
 non-GitHub hosts with a sibling downloader module; ModDB is the other "no API, parse the page" case,
 and the only one whose host bot-blocks non-browser clients).
+`FCMODDING_API.md` (the Far Cry Mod Installer host — the other module ordering requirements
+numerically rather than by semver, there by build timestamp).

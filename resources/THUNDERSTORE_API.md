@@ -361,6 +361,36 @@ The same field name and behavior exist in all five downloader modules; `DOWNLOAD
 - **A missing requirement is installed by the update check.** The update check used to return early when the requirement was not installed, so a requirement the user removed (or never got) was never picked up again. It now installs it instead. Requirements that should only be installed by an explicit user action set `autoInstall: false`.
 - **Updating disables the version it replaces.** An update installs a second mod entry rather than replacing the first, so the mod ids carrying the requirement's mod type are captured before the install and disabled once the new one lands (the newly installed id is skipped). Without this both copies stayed enabled and deployed on top of each other.
 
+## Shared thunderstore_browser.js Module
+
+`resources/browsers/thunderstore_browser.js` registers a sidebar page that embeds the live
+thunderstore.io community page inside Vortex, so the user browses the real site and installs from it.
+It is a separate module from the downloader and requires nothing from it: the downloader installs
+known requirements unattended, the browser serves human browsing. Adopters carry a byte-identical
+copy; the roster is `resources/lists/games-browser-thunderstore.txt`. Full contract, exports and the
+rules a new source module must follow: `BROWSER_MODULES.md`.
+
+Thunderstore-specific pieces of that module:
+
+- **Home URL** is `https://thunderstore.io/c/{community}/`, and `thunderstore.io` +
+  `gcdn.thunderstore.io` are the default allowed hosts. Anything else opens in the system browser.
+- **Claim patterns.** `thunderstore.io/package/download/{namespace}/{name}/{version}/` is what a
+  "Manual Download" click hits; it redirects to `gcdn.thunderstore.io/.../Namespace-Name-Version.zip`,
+  so both shapes are matched, with the archive name as a last resort for a thunderstore.io download
+  whose URL did not parse.
+- **`ror2mm://v1/install/thunderstore.io/{ns}/{name}/{version}/`** — the site's "Install with Mod
+  Manager" button. The module parses it as an install trigger from inside the page; it is not
+  registered as a protocol handler, so it does not compete with a mod-manager extension that does.
+- **Package key.** `Namespace-Name`, stamped on the mod's `thunderstorePackage` attribute and used as
+  `customFileName`. Thunderstore namespaces and package names are `[a-zA-Z0-9_]` only, so the first
+  hyphen splits the key unambiguously.
+- **Dependency closure** comes from the same cyberstorm listing endpoint the downloader uses, walked
+  with a visited set and a depth cap, skipping anything already installed. Packages in the adopter's
+  requirement table are routed to the requirement downloader so they keep their dedicated mod types;
+  everything else installs as a generic mod of whatever type the extension's own installers assign.
+- **Update checks** cover the browsed mods only — requirement packages are skipped there, because
+  `checkForThunderstoreUpdate` already reports those and its notification carries the right action.
+
 ## Caveats
 
 - No documented rate limit and no rate-limit response headers, but the site is Cloudflare-fronted —
@@ -386,4 +416,5 @@ hands off to). `VORTEX_MOD_INSTALL.md` (installing a downloaded package as a man
 `DOWNLOADER.md` (the GitHub requirements auto-downloader — same download-then-install flow once a
 URL is resolved). `GAMEBANANA_API.md` and `MODDB_API.md` (the other third-party mod sites this repo
 queries). `REGISTER_GAME.md` (the `IGame` store-ID and `details` fields the ecosystem schema maps
-onto).
+onto). `BROWSER_MODULES.md` and `EMBEDDED_BROWSER.md` (the browse-page module built on this source,
+and the Vortex mechanics it sits on).

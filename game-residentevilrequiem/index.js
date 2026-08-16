@@ -2,8 +2,8 @@
 Name: Resident Evil Requiem Vortex Extension
 Structure: Fluffy + REFramework (RE Engine)
 Author: ChemBoy1
-Version: 0.1.4
-Date: 2026-08-12
+Version: 0.1.5
+Date: 2026-08-14
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -32,7 +32,7 @@ const ROOT_EXTS = [".exe"];
 const REF_PAGE_NO = 13;
 const REF_FILE_NO = 27;
 const REF_DOMAIN = GAME_ID;
-const REF_URL_LATEST = "https://github.com/praydog/REFramework-nightly/releases/latest/download/RE9.zip"; //latest release of REFramework Nightly
+const REF_URL_LATEST = "https://github.com/praydog/REFramework-nightly/releases/latest/download/REFramework.zip"; //latest release of REFramework Nightly
 const REF_URL_ERR = "https://github.com/praydog/REFramework-nightly/releases";
 const EMVENGINE_URL = "https://github.com/SilverEzredes/EMV-Engine-SILVER/archive/refs/heads/main.zip"; //tools for modders
 const EMVENGINE_URL_ERR = "https://github.com/SilverEzredes/EMV-Engine-SILVER"; //tools for modders

@@ -110,4 +110,9 @@ Full signatures: `node_modules/winapi-bindings/index.d.ts`.
 
 `resources/FILE_PARSING.md` (the INI read/mutate/write cycle these bindings back via
 `vortex-parse-ini`). `REGISTER_GAME.md` (`winapi.RegGetValue` as the discovery fallback after
-`GameStoreHelper.findByAppId()`).
+`GameStoreHelper.findByAppId()`). `NTFS_LINKS.md` (the one place the permission, Task Scheduler and
+`GetVolumePathName` functions above are actually used — elevated symlink deployment).
+`TEMPLATES_OVERVIEW.md` (the registry-fallback slot in every template's `makeFindGame`) and
+`templates/` (the templates that actually use it — the two Ubisoft families in
+`TEMPLATE_ANVILENGINE.md` / `TEMPLATE_SNOWDROPENGINE.md` / `TEMPLATE_FARCRY.md`,
+`TEMPLATE_FROSTBITE.md`, and the hybrid's .NET runtime probe).

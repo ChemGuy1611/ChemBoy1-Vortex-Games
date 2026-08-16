@@ -249,4 +249,6 @@ Source: `Vortex/src/renderer/src/extensions/installer_fomod_native/index.ts:89-1
 `INSTALLER_SYSTEM.md` (custom `registerInstaller`/`testSupported`/`install` contracts, priority
 ordering, canonical FOMOD Avoidance check). `VORTEX_MOD_INSTALL.md` (InstallManager orchestration
 that runs installer `testSupported` in priority order). `ARCHIVE_HANDLER.md` (archive extraction
-that produces the `files` list installers test against).
+that produces the `files` list installers test against). `TEMPLATES_OVERVIEW.md` (the
+`ModuleConfig.xml` early-return every template's `testSupported` carries; the per-template files
+under `templates/` give each template's installer ladder, all of which yield to this one).

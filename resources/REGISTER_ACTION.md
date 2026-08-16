@@ -120,3 +120,6 @@ context.registerAction(
 ## See also
 
 `VORTEX_MOD_LIST.md` (the Mods page table that `mod-icons`/`mod-context-icons`/`mods-multirow-actions` render onto). `TOOLBAR_ACTIONS.md` (how-to guide: `instanceIds` flow, worked examples, full group-string list, `IconBar`/`staticElements`).
+`NOTIFICATIONS_DIALOGS.md` (the notifications and dialogs most of these actions open).
+`TEMPLATES_OVERVIEW.md` (the `mod-icons` priority-300 convention every game template follows) and
+the per-template files under `templates/` (the extra action sets each template adds).

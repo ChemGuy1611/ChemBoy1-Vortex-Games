@@ -139,9 +139,12 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `is_load_order_game(src)` | Return `True` if `src` calls `registerLoadOrder` and is not a UE4/5 extension |
 | `has_downloader_js(folder)` | Return `True` if the extension `folder` contains a bundled `downloader.js` module |
 | `has_bepinexbe_downloader_js(folder)` | Return `True` if the extension `folder` contains a bundled `bepinexbe_downloader.js` module |
+| `has_fcmodding_downloader_js(folder)` | Return `True` if the extension `folder` contains a bundled `fcmodding_downloader.js` module |
 | `has_gamebanana_downloader_js(folder)` | Return `True` if the extension `folder` contains a bundled `gamebanana_downloader.js` module |
 | `has_moddb_downloader_js(folder)` | Return `True` if the extension `folder` contains a bundled `moddb_downloader.js` module |
 | `has_modworkshop_downloader_js(folder)` | Return `True` if the extension `folder` contains a bundled `modworkshop_downloader.js` module |
+| `has_thunderstore_downloader_js(folder)` | Return `True` if the extension `folder` contains a bundled `thunderstore_downloader.js` module |
+| `has_thunderstore_browser_js(folder)` | Return `True` if the extension `folder` contains a bundled `thunderstore_browser.js` module |
 | `downloads_from_github(src)` | Return `True` if `src` pulls a mod/requirement from a GitHub release (release-asset URL or `browser_download_url`). Textual only — commented-out and never-called code still counts |
 | `github_download_enabled(src)` | Return `True` if `src` has a GitHub download that can actually run: not commented out, not stranded in a never-called function |
 | `strip_js_comments(src)` | Return `src` with `//` and `/* */` comments blanked to spaces, preserving string/template/regex literals and character offsets |
@@ -373,6 +376,49 @@ python make_title_image.py GAME_ID --hero HERO_ID --dry-run
 
 - Title image saved as `{GAME_ID}_title.jpg` (1920x1080 JPEG) in `resources/title-images/`.
 - Exit code `0` on success, `1` on failure.
+
+---
+
+## render_svg.py
+
+Rasterizes an SVG file, or a single SVG path string, to PNG. Written for extension icons: the `mdi:` option on `registerMainPage` takes raw path data in a 24x24 viewBox, and this is the only way to see what a hand-scaled or vendor-traced path actually looks like before it ships. `--js-const NAME` reads the path straight out of a `const NAME = '...'` declaration in an `index.js` or a bundled module, which is how these extensions store icon paths.
+
+### render_svg.py — Requirements
+
+```sh
+pip install svglib reportlab pycairo rlPyCairo pillow
+```
+
+Two backends, split by mode. `--path` / `--js-const` are drawn with **pycairo** through the script's own SVG path parser (`M L H V C S Q T A Z`, absolute and relative, arcs converted to beziers); `FILE.svg` goes through **svglib + reportlab renderPM**, which handles whole documents — groups, gradients, text — that the parser deliberately does not.
+
+The split exists because svglib's path parser drops paths it cannot handle and reports nothing, so the icon renders as an empty image; `UE4SS_ICON` in `game-subnautica2/index.js` is a live example. Drawing icon paths here means a malformed path raises instead of silently vanishing, and cairo gives a real alpha channel.
+
+reportlab 5.x also dropped its bundled `_renderPM` C backend, so `rlPyCairo` + `pycairo` are what actually draw the file-mode pixels. The pycairo wheel is self-contained on Windows — no GTK or Cairo install needed.
+
+### render_svg.py — Usage
+
+```sh
+python render_svg.py FILE.svg
+python render_svg.py FILE.svg -o out.png --size 256
+python render_svg.py FILE.svg --out out.png
+python render_svg.py --path "M11 15H6L13 1V9H18L11 23V15Z" --bg none
+python render_svg.py --js-const UE4SS_ICON game-subnautica2/index.js
+python render_svg.py --js-const DEFAULT_MDI resources/browsers/thunderstore_browser.js --fill "#23FFB1"
+```
+
+- `FILE.svg` — SVG file to rasterize (omit when using `--path` or `--js-const`).
+- `-o, --out PATH` — output PNG (default: alongside the input, or `./<name>.png`).
+- `--size N` — output size in pixels (default 256). Square in the path modes; for a file it is the bounding box and the aspect ratio is preserved (a wide wordmark comes out short).
+- `--path DATA` — raw SVG path data instead of a file.
+- `--js-const NAME` — read the path out of `const NAME = '...'` in the given `.js` file (passed as the positional argument).
+- `--viewbox "0 0 24 24"` — viewBox for `--path` / `--js-const` (default shown).
+- `--fill`, `--bg` — path and background colours, **path modes only**; an SVG file keeps its own colours on a white canvas (a white-filled logo therefore looks blank — pass it through `--path` with a `--bg` instead). `--bg none` writes a transparent PNG, again path modes only, since that mode draws on a cairo ARGB surface while renderPM always paints an opaque canvas.
+- Fill rule is nonzero, matching the SVG default: a hole needs its inner subpath wound the opposite way, exactly as it would in a browser.
+
+### render_svg.py — Output
+
+- PNG at the requested size, plus the intermediate `.svg` next to it when rendering from a path string.
+- Exit code `0` on success, `1` on a missing file, unparseable SVG, or a const the regex cannot find.
 
 ---
 
@@ -900,9 +946,12 @@ The engine categories above are mutually exclusive (one per game). The lists bel
 | `resources/lists/games-loadorder.txt` | Non-UE4/5 games that call `context.registerLoadOrder` |
 | `resources/lists/games-downloader.txt` | Games with a bundled `downloader.js` module |
 | `resources/lists/games-downloader-bepinexbe.txt` | Games with a bundled `bepinexbe_downloader.js` module (BepInEx bleeding-edge builds) |
+| `resources/lists/games-downloader-fcmodding.txt` | Games with a bundled `fcmodding_downloader.js` module (Far Cry Mod Installer) |
 | `resources/lists/games-downloader-gamebanana.txt` | Games with a bundled `gamebanana_downloader.js` module |
 | `resources/lists/games-downloader-moddb.txt` | Games with a bundled `moddb_downloader.js` module |
 | `resources/lists/games-downloader-modworkshop.txt` | Games with a bundled `modworkshop_downloader.js` module |
+| `resources/lists/games-downloader-thunderstore.txt` | Games with a bundled `thunderstore_downloader.js` module |
+| `resources/lists/games-browser-thunderstore.txt` | Games with a bundled `thunderstore_browser.js` module (embedded Thunderstore browse page) |
 | `resources/lists/games-github.txt` | Games with a working inline GitHub download in `index.js` (no `downloader.js`), excluding dead downloads and the engines listed in `GITHUB_LIST_EXCLUDED_ENGINES` |
 | `resources/lists/games-uemi.txt` | Games that require the `Unreal Engine Mod Installer` extension via `context.requireExtension` |
 | `resources/lists/games-ue4-5-parity.txt` | UE4-5 games at `template-ue4-5` load-order parity (custom UE4SS + LogicMods pages) |
@@ -910,9 +959,11 @@ The engine categories above are mutually exclusive (one per game). The lists bel
 
 ### categorize_games.py — Detection
 
-Each game is matched against the engine categories in order — the first match wins. Detection uses the `Structure:` comment on line 3 of `index.js` as the primary signal, with fallback checks for unique code markers such as `const UNREALDATA =`, `const ATK_ID =`, `context.requireExtension('modtype-bepinex')`, etc. The flag lists are computed separately via dedicated predicates (`is_load_order_game`, `has_downloader_js`, `has_bepinexbe_downloader_js`, `has_gamebanana_downloader_js`, `has_moddb_downloader_js`, `has_modworkshop_downloader_js`, `github_download_enabled`, `requires_unreal_mod_installer`, `has_ue4ss_load_order_parity`, `is_unreleased_extension`) in `vortex_utils.py`. The parity predicate keys off the `Ue4ssContextMenu` component, which only exists in games that took the whole load-order region (PAK + custom UE4SS + LogicMods pages) from `template-ue4-5`.
+Each game is matched against the engine categories in order — the first match wins. Detection uses the `Structure:` comment on line 3 of `index.js` as the primary signal, with fallback checks for unique code markers such as `const UNREALDATA =`, `const ATK_ID =`, `context.requireExtension('modtype-bepinex')`, etc. The flag lists are computed separately via dedicated predicates (`is_load_order_game`, `has_downloader_js`, `has_bepinexbe_downloader_js`, `has_fcmodding_downloader_js`, `has_gamebanana_downloader_js`, `has_moddb_downloader_js`, `has_modworkshop_downloader_js`, `has_thunderstore_downloader_js`, `has_thunderstore_browser_js`, `github_download_enabled`, `requires_unreal_mod_installer`, `has_ue4ss_load_order_parity`, `is_unreleased_extension`) in `vortex_utils.py`. The parity predicate keys off the `Ue4ssContextMenu` component, which only exists in games that took the whole load-order region (PAK + custom UE4SS + LogicMods pages) from `template-ue4-5`.
 
-GitHub is the only host with an inline-download list. GameBanana, ModDB, ModWorkshop, and builds.bepinex.dev are tracked solely by their `games-downloader-*.txt` module lists: every extension fetching a requirement from those hosts carries the matching downloader module, so the module list is the complete list. A bare host URL left in an extension is a browse link behind an `Open <host> Page` button, which was never counted as a download.
+GitHub is the only host with an inline-download list. GameBanana, ModDB, ModWorkshop, Thunderstore, and builds.bepinex.dev are tracked solely by their `games-downloader-*.txt` module lists: every extension fetching a requirement from those hosts carries the matching downloader module, so the module list is the complete list. A bare host URL left in an extension is a browse link behind an `Open <host> Page` button, which was never counted as a download.
+
+Browser modules (`resources/browsers/`) are tracked the same way, by their own `games-browser-*.txt` lists. They are independent of the downloader lists: a downloader installs requirements unattended, a browser embeds the source's site for the user to browse, and an extension can carry either, both, or neither.
 
 `games-github.txt` applies three extra filters the other flag lists do not.
 
@@ -1243,7 +1294,7 @@ Extensions that register several games from one folder (for example `game-ninjag
 
 ## deploy_to_vortex.py
 
-Copies one or more CB1 game extension folders from the repo into the Vortex plugins directory (`C:\ProgramData\vortex\plugins`). If a matching plugin folder already exists (exact `game-{id}` or a versioned `Vortex Extension Update - {GAME_NAME} Vortex Extension v*` folder), only `index.js` plus any downloader modules (files ending in `downloader.js`, e.g. `downloader.js`, `gamebanana_downloader.js`, `moddb_downloader.js`) are copied. If no match is found, the full folder is deployed. Use `--force` to always do a full replace.
+Copies one or more CB1 game extension folders from the repo into the Vortex plugins directory (`C:\ProgramData\vortex\plugins`). If a matching plugin folder already exists (exact `game-{id}` or a versioned `Vortex Extension Update - {GAME_NAME} Vortex Extension v*` folder), only `index.js` plus any bundled shared modules (files ending in `downloader.js` or `browser.js`, e.g. `downloader.js`, `gamebanana_downloader.js`, `moddb_downloader.js`, `thunderstore_browser.js`) are copied. If no match is found, the full folder is deployed. Use `--force` to always do a full replace.
 
 ### deploy_to_vortex.py — Requirements
 
@@ -1280,7 +1331,7 @@ python deploy_to_vortex.py thelastofuspart2 --dry-run
 
 ### deploy_to_vortex.py — Output
 
-Per-game status: `[game_id] updated <file list> in <folder>` (existing match; file list is `index.js` plus any `*downloader.js` modules) or `[game_id] deployed to <path> (N files)` (full deploy) on success, or `[game_id] ERROR - ...` on failure. Exits with code `1` if any game fails.
+Per-game status: `[game_id] updated <file list> in <folder>` (existing match; file list is `index.js` plus any `*downloader.js` / `*browser.js` modules) or `[game_id] deployed to <path> (N files)` (full deploy) on success, or `[game_id] ERROR - ...` on failure. Exits with code `1` if any game fails.
 
 ---
 

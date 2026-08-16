@@ -2,29 +2,43 @@
 Name: Hades II Vortex Extension
 Structure: 3rd-Party Mod Installer
 Author: ChemBoy1
-Version: 0.2.0
-Date: 2026-08-03
+Version: 1.1.0
+Date: 2026-08-16
 ////////////////////////////////*/
 
 //Import libraries
 const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
+const { downloadThunderstore, checkForThunderstoreUpdate, downloadThunderstoreRequirement } = require('./thunderstore_downloader');
+const { registerThunderstoreBrowser, onceThunderstoreBrowser } = require('./thunderstore_browser');
+const { parseStringPromise } = require('xml2js');
+
+//Feature toggles
+const thunderstoreBrowser = true; //register the "Browse Thunderstore" page
 
 //Specify all the information about the game
 const STEAMAPP_ID = "1145350";
 const EPICAPP_ID = "07c634c7291a49b5b2455e14b9a83950";
 const XBOXAPP_ID = "SupergiantGamesLLC.HadesII";
 const XBOXEXECNAME = "Game";
+const XBOX_PUB_ID = "8fty0by31jkny"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
 const GAME_ID = "hades2";
 const GAME_NAME = "Hades II"
 const EXEC = path.join("Ship", "Hades2.exe");
 //const EXEC_VK = path.join("Ship", "Hades2.exe");
-//const EXEC_XBOX = path.join("Ship", "Hades2.exe");
+const REQ_FILE = path.join("Content", "Audio", "Desktop", "VO", "Hades.fsb");
 
-const MODUTIL_URL = 'https://github.com/SGG-Modding/ModUtil/releases/download/2.10.1/SGG_Modding-ModUtil-2.10.1.zip';
+const MODUTIL_URL = 'https://github.com/SGG-Modding/ModUtil/releases/download/2.10.1/SGG_Modding-ModUtil-2.10.1.zip'; //legacy, pre-1.0
 
 //Data for mod types, tools, and installers
+let GAME_PATH = '';
+let GAME_VERSION = '';
+let STAGING_FOLDER = '';
+let DOWNLOAD_FOLDER = '';
+const APPMANIFEST_FILE = 'appxmanifest.xml';
+const EXEC_XBOX = 'gamelaunchhelper.exe';
+
 const MOD_PATH = path.join("Content", "Mods");
 const MOD_ID = `${GAME_ID}-mod`;
 const MOD_NAME = `Mod`;
@@ -48,13 +62,126 @@ const UTILITY_PATH = path.join(MOD_PATH, 'ModUtil');
 const UTILITY_FILE = "modutil.lua";
 //const UTILITY_FILE = "ModUtil";
 
+//Hell2Modding (ReturnOfModding) route - the current Hades II modding ecosystem, hosted on Thunderstore
+const TS_COMMUNITY = 'hades-ii'; //https://thunderstore.io/c/hades-ii/
+
+const LOADER_ID = `${GAME_ID}-loader`;
+const LOADER_NAME = `Mod Loader (Hell2Modding)`;
+const LOADER_PATH = path.join("Ship");
+const LOADER_FILE = "d3d12.dll";
+
+const PLUGIN_ID = `${GAME_ID}-plugin`;
+const PLUGIN_NAME = `ReturnOfModding Plugin`;
+const PLUGIN_PATH = path.join("Ship", "ReturnOfModding", "plugins");
+const PLUGIN_FILE = "manifest.json";
+const PLUGIN_ENTRY_FILE = "main.lua"; //ReturnOfModding plugin entry point - also what separates a plugin from a legacy Mod Importer mod, which ships manifest.json too
+
+const LUAENVY_ID = `${GAME_ID}-luaenvy`;
+const LUAENVY_NAME = `ENVY (LuaENVY)`;
+
+const ENVY_ID = `${GAME_ID}-envy`;
+const ENVY_NAME = `ENVY (SGG Modding)`;
+
+const CHALK_ID = `${GAME_ID}-chalk`;
+const CHALK_NAME = `Chalk`;
+
+const RELOAD_ID = `${GAME_ID}-reload`;
+const RELOAD_NAME = `ReLoad`;
+
+const SJSON_ID = `${GAME_ID}-sjson`;
+const SJSON_NAME = `SJSON`;
+
+const DAEMON_ID = `${GAME_ID}-demondaemon`;
+const DAEMON_NAME = `DemonDaemon`;
+
+const MODUTIL_ROM_ID = `${GAME_ID}-modutil-rom`;
+const MODUTIL_ROM_NAME = `ModUtil (Hell2Modding)`;
+
+//Mod loader plus the full ModUtil dependency closure. Each entry needs its own mod type - the
+//downloader keys installed-detection on the mod type, so a shared type would make every later
+//requirement look installed as soon as the first one landed.
+const TS_REQUIREMENTS = [
+  {
+    tsCommunity: TS_COMMUNITY,
+    tsNamespace: 'Hell2Modding',
+    tsName: 'Hell2Modding',
+    modType: LOADER_ID,
+    userFacingName: LOADER_NAME,
+    fallbackVersion: '1.0.110',
+  },
+  {
+    tsCommunity: TS_COMMUNITY,
+    tsNamespace: 'LuaENVY',
+    tsName: 'ENVY',
+    modType: LUAENVY_ID,
+    userFacingName: LUAENVY_NAME,
+    fallbackVersion: '1.2.0',
+  },
+  {
+    tsCommunity: TS_COMMUNITY,
+    tsNamespace: 'SGG_Modding',
+    tsName: 'ENVY',
+    modType: ENVY_ID,
+    userFacingName: ENVY_NAME,
+    fallbackVersion: '1.2.0',
+  },
+  {
+    tsCommunity: TS_COMMUNITY,
+    tsNamespace: 'SGG_Modding',
+    tsName: 'Chalk',
+    modType: CHALK_ID,
+    userFacingName: CHALK_NAME,
+    fallbackVersion: '2.1.1',
+  },
+  {
+    tsCommunity: TS_COMMUNITY,
+    tsNamespace: 'SGG_Modding',
+    tsName: 'ReLoad',
+    modType: RELOAD_ID,
+    userFacingName: RELOAD_NAME,
+    fallbackVersion: '1.0.2',
+  },
+  {
+    tsCommunity: TS_COMMUNITY,
+    tsNamespace: 'SGG_Modding',
+    tsName: 'SJSON',
+    modType: SJSON_ID,
+    userFacingName: SJSON_NAME,
+    fallbackVersion: '1.0.1',
+  },
+  {
+    tsCommunity: TS_COMMUNITY,
+    tsNamespace: 'SGG_Modding',
+    tsName: 'DemonDaemon',
+    modType: DAEMON_ID,
+    userFacingName: DAEMON_NAME,
+    fallbackVersion: '1.1.0',
+  },
+  {
+    tsCommunity: TS_COMMUNITY,
+    tsNamespace: 'SGG_Modding',
+    tsName: 'ModUtil',
+    modType: MODUTIL_ROM_ID,
+    userFacingName: MODUTIL_ROM_NAME,
+    fallbackVersion: '4.0.1',
+  },
+];
+
+//Embedded Thunderstore browser page - the user browses the live site and installs from it.
+//Managed requirements above keep their own mod types; anything else lands as a generic plugin.
+const TS_BROWSER_CONFIG = {
+  tsCommunity: TS_COMMUNITY,
+  requirements: TS_REQUIREMENTS,
+  installRequirement: (api, gameSpec, requirement) =>
+    downloadThunderstoreRequirement(api, gameSpec, requirement, true),
+  pageId: `${GAME_ID}-thunderstore-browse`,
+  pageTitle: 'Browse Thunderstore',
+  hotkey: 'B',
+};
+
 //Filled in from data above
 const EXTENSION_URL = "https://www.nexusmods.com/site/mods/1138"; //Nexus link to this extension. Used for links
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Hades_II";
-let STAGING_FOLDER = ''; //Vortex staging folder path
-let DOWNLOAD_FOLDER = ''; //Vortex download folder path
-let GAME_PATH = ''; //Game installation path
-let GAME_VERSION = ''; //Game version
 const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 const spec = {
@@ -67,7 +194,7 @@ const spec = {
     "modPath": MOD_PATH,
     "modPathIsRelative": true,
     "requiredFiles": [
-      EXEC
+      REQ_FILE
     ],
     "details": {
       "steamAppId": +STEAMAPP_ID,
@@ -116,6 +243,60 @@ const spec = {
       "targetPath": path.join('{gamePath}', UTILITY_PATH)
     },
     //*/
+    {
+      "id": LOADER_ID,
+      "name": LOADER_NAME,
+      "priority": "high",
+      "targetPath": path.join('{gamePath}', LOADER_PATH)
+    },
+    {
+      "id": PLUGIN_ID,
+      "name": PLUGIN_NAME,
+      "priority": "high",
+      "targetPath": path.join('{gamePath}', PLUGIN_PATH)
+    },
+    {
+      "id": LUAENVY_ID,
+      "name": LUAENVY_NAME,
+      "priority": "high",
+      "targetPath": path.join('{gamePath}', PLUGIN_PATH)
+    },
+    {
+      "id": ENVY_ID,
+      "name": ENVY_NAME,
+      "priority": "high",
+      "targetPath": path.join('{gamePath}', PLUGIN_PATH)
+    },
+    {
+      "id": CHALK_ID,
+      "name": CHALK_NAME,
+      "priority": "high",
+      "targetPath": path.join('{gamePath}', PLUGIN_PATH)
+    },
+    {
+      "id": RELOAD_ID,
+      "name": RELOAD_NAME,
+      "priority": "high",
+      "targetPath": path.join('{gamePath}', PLUGIN_PATH)
+    },
+    {
+      "id": SJSON_ID,
+      "name": SJSON_NAME,
+      "priority": "high",
+      "targetPath": path.join('{gamePath}', PLUGIN_PATH)
+    },
+    {
+      "id": DAEMON_ID,
+      "name": DAEMON_NAME,
+      "priority": "high",
+      "targetPath": path.join('{gamePath}', PLUGIN_PATH)
+    },
+    {
+      "id": MODUTIL_ROM_ID,
+      "name": MODUTIL_ROM_NAME,
+      "priority": "high",
+      "targetPath": path.join('{gamePath}', PLUGIN_PATH)
+    },
   ],
   "discovery": {
     "ids": [
@@ -154,6 +335,8 @@ const tools = [
   //*/
 ];
 
+// BASIC EXTENSION FUNCTIONS ///////////////////////////////////////////////////
+
 //Set mod type priorities
 function isDir(folder, file) {
   const stats = fs.statSync(path.join(folder, file));
@@ -177,6 +360,31 @@ async function statCheckAsync(gamePath, file) {
   }
   catch {
     return false;
+  }
+}
+
+//Get correct executable for game version
+function getExecutable(discoveryPath) {
+  if (statCheckSync(discoveryPath, EXEC_XBOX)) {
+    GAME_VERSION = 'xbox';
+    //SAVE_PATH = SAVE_PATH_XBOX;
+    //CONFIG_PATH = CONFIG_PATH_XBOX;
+    return EXEC_XBOX;
+  };
+  GAME_VERSION = 'default';
+  return EXEC;
+}
+
+//Get correct game version
+async function setGameVersion(gamePath) {
+  if (await statCheckAsync(gamePath, EXEC_XBOX)) {
+    GAME_VERSION = 'xbox';
+    //SAVE_PATH = SAVE_PATH_XBOX;
+    //CONFIG_PATH = CONFIG_PATH_XBOX;
+    return GAME_VERSION;
+  } else {
+    GAME_VERSION = 'default';
+    return GAME_VERSION;
   }
 }
 
@@ -473,7 +681,10 @@ function installModManager(files) {
 //Installer test for Mod Importer
 function testModUtility(files, gameId) {
   const isMod = files.some(file => path.basename(file).toLowerCase() === UTILITY_FILE);
-  let supported = (gameId === spec.game.id) && isMod;
+  //ModUtil 4.x carries the legacy files alongside the ReturnOfModding ones, so it matches on
+  //UTILITY_FILE too - main.lua marks it as a plugin and hands it to the plugin installer instead.
+  const isPlugin = files.some(file => path.basename(file).toLowerCase() === PLUGIN_ENTRY_FILE);
+  let supported = (gameId === spec.game.id) && isMod && !isPlugin;
 
   // Test for a mod installer
   if (supported && files.find(file =>
@@ -505,6 +716,108 @@ function installModUtility(files) {
       type: 'copy',
       source: file,
       destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+
+  return Promise.resolve({ instructions });
+}
+
+//Installer test for the Hell2Modding mod loader
+function testLoader(files, gameId) {
+  const isMod = files.some(file => path.basename(file).toLowerCase() === LOADER_FILE);
+  let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Installer install the Hell2Modding mod loader
+function installLoader(files) {
+  const modFile = files.find(file => path.basename(file).toLowerCase() === LOADER_FILE);
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const rootPrefix = (rootPath === '.') ? '' : rootPath + path.sep;
+  const setModTypeInstruction = { type: 'setmodtype', value: LOADER_ID };
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    (file.startsWith(rootPrefix) && (!file.endsWith(path.sep)))
+  );
+
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+
+  return Promise.resolve({ instructions });
+}
+
+//Installer test for ReturnOfModding plugins
+function testPlugin(files, gameId) {
+  //A legacy Mod Importer mod ships manifest.json as well, so the plugin entry point is what
+  //identifies a ReturnOfModding plugin. The mod loader package carries a manifest too and is
+  //claimed by its own installer.
+  const isMod = files.some(file => path.basename(file).toLowerCase() === PLUGIN_FILE)
+    && files.some(file => path.basename(file).toLowerCase() === PLUGIN_ENTRY_FILE);
+  const isLoader = files.some(file => path.basename(file).toLowerCase() === LOADER_FILE);
+  let supported = (gameId === spec.game.id) && isMod && !isLoader;
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Installer install ReturnOfModding plugins
+function installPlugin(files, destinationPath) {
+  const modFile = files.find(file => path.basename(file).toLowerCase() === PLUGIN_FILE);
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: PLUGIN_ID };
+  //A package that already ships its own plugins folder only needs that prefix removed. Anything
+  //else is flat at the archive root and has to be wrapped in the plugin's own folder, since
+  //ReturnOfModding resolves plugins by the folder name.
+  const segments = (rootPath === '.') ? [] : rootPath.split(path.sep);
+  const hasPluginsFolder = (segments.length > 0) && (segments[0].toLowerCase() === 'plugins');
+  const stripPath = hasPluginsFolder ? segments[0] : rootPath;
+  const stripPrefix = (stripPath === '.') ? '' : stripPath + path.sep;
+  //Thunderstore serves Namespace-Name-Version.zip and Vortex names the staging folder after the
+  //archive, so stripping the version off the folder name yields the Namespace-Name plugin folder.
+  const MOD_FOLDER = path.basename(destinationPath)
+    .replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '')
+    .replace(/-\d+(\.\d+)*$/, '');
+
+  // Remove directories and anything that isn't in the rootPath.
+  const filtered = files.filter(file =>
+    (file.startsWith(stripPrefix) && (!file.endsWith(path.sep)))
+  );
+
+  const instructions = filtered.map(file => {
+    const relPath = file.substr(stripPrefix.length);
+    return {
+      type: 'copy',
+      source: file,
+      destination: hasPluginsFolder ? relPath : path.join(MOD_FOLDER, relPath),
     };
   });
   instructions.push(setModTypeInstruction);
@@ -585,8 +898,36 @@ function setupNotify(api) {
         },
       },
     ],
-  });    
+  });
 }
+
+//* Resolve game version dynamically for different game versions
+async function resolveGameVersion(gamePath) {
+  GAME_VERSION = await setGameVersion(gamePath);
+  let version = '0.0.0';
+  if (GAME_VERSION === 'xbox') { // use appxmanifest.xml for Xbox version
+    try {
+      const appManifest = await fs.readFileAsync(path.join(gamePath, APPMANIFEST_FILE), 'utf8');
+      const parsed = await parseStringPromise(appManifest);
+      version = parsed?.Package?.Identity?.[0]?.$?.Version;
+      return Promise.resolve(version);
+    } catch (err) {
+      log('error', `Could not read appmanifest.xml file to get Xbox game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+  else { // use exe
+    try {
+      const exeVersion = require('exe-version');
+      const EXEC = getExecutable(gamePath);
+      version = exeVersion.getProductVersion(path.join(gamePath, EXEC)); //can also use getFileVersion if this doesn't return the correct number (rare)
+      return Promise.resolve(version);
+    } catch (err) {
+      log('error', `Could not read executable file to get game version: ${err}`);
+      return Promise.resolve(version);
+    }
+  }
+} //*/
 
 //Setup function
 async function setup(discovery, api, gameSpec) {
@@ -594,10 +935,14 @@ async function setup(discovery, api, gameSpec) {
   GAME_PATH = discovery.path;
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
-  setupNotify(api);
-  await downloadModManager(api, gameSpec);
+  //setupNotify(api); //!disabled for 1.0 - only related to mod manager
+  GAME_VERSION = await setGameVersion(GAME_PATH);
+  //await downloadModManager(api, gameSpec); //!disabled for 1.0
   await fs.ensureDirWritableAsync(path.join(discovery.path, UTILITY_PATH));
-  await downloadModUtility(api, gameSpec);
+  //await downloadModUtility(api, gameSpec); //!disabled for 1.0
+  await fs.ensureDirWritableAsync(path.join(discovery.path, PLUGIN_PATH));
+  await downloadThunderstore(api, gameSpec, TS_REQUIREMENTS);
+  await checkForThunderstoreUpdate(api, gameSpec, TS_REQUIREMENTS).catch(() => null); //update check should never block setup
   await fs.ensureDirWritableAsync(path.join(discovery.path, BINARIES_PATH));
   //await fs.ensureDirWritableAsync(path.join(discovery.path, BINARIESVK_PATH));
   return fs.ensureDirWritableAsync(path.join(discovery.path, MOD_PATH));
@@ -613,8 +958,9 @@ function applyGame(context, gameSpec) {
     requiresLauncher: requiresLauncher,
     requiresCleanup: true,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
-    executable: () => gameSpec.game.executable,
+    executable: getExecutable,
     supportedTools: tools,
+    getGameVersion: resolveGameVersion,
   };
   context.registerGame(game);
 
@@ -627,9 +973,16 @@ function applyGame(context, gameSpec) {
     }, (game) => pathPattern(context.api, game, type.targetPath), () => Promise.resolve(false), { name: type.name });
   });
 
+  //register the embedded Thunderstore browser page
+  if (thunderstoreBrowser) {
+    registerThunderstoreBrowser(context, gameSpec, TS_BROWSER_CONFIG);
+  }
+
   //register mod installers
   context.registerInstaller(MANAGER_ID, 25, testModManger, installModManager);
   context.registerInstaller(UTILITY_ID, 27, testModUtility, installModUtility);
+  context.registerInstaller(LOADER_ID, 29, testLoader, installLoader);
+  context.registerInstaller(PLUGIN_ID, 31, testPlugin, installPlugin);
   //context.registerInstaller(MOD_ID, 35, testMod, installMod);
 
   //register actions
@@ -647,6 +1000,13 @@ function applyGame(context, gameSpec) {
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   }); //*/
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Download Latest Hell2Modding Mod Loader', () => {
+    downloadThunderstore(context.api, spec, TS_REQUIREMENTS, false);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
     util.opn(PCGAMINGWIKI_URL).catch(() => null);
   }, () => {
@@ -683,7 +1043,14 @@ function main(context) {
   applyGame(context, spec);
   context.once(() => { // put code here that should be run (once) when Vortex starts up
     const api = context.api;
-    
+    api.onAsync('check-mods-version', (gameId, mods, forced) => {
+      if (gameId !== GAME_ID) return;
+      return checkForThunderstoreUpdate(api, spec, TS_REQUIREMENTS)
+        .catch(err => log('warn', `Failed to check for Hell2Modding requirement updates: ${err}`));
+    });
+    if (thunderstoreBrowser) { //claims downloads started from the browse page, and update-checks the mods installed through it
+      onceThunderstoreBrowser(api, spec, TS_BROWSER_CONFIG);
+    }
   });
   return true;
 }

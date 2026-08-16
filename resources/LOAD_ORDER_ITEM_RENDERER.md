@@ -1122,4 +1122,5 @@ every "Disable/Enable Vortex Mod" menu item.
 pages). `COLLECTIONS_FEATURE.md` (locked/enabled status this renderer displays feeds collection
 export). `UE4_5_REACT_ARCHITECTURE.md` (where this renderer sits among the template's three load
 order surfaces, and the row lifecycle inside `DraggableList`). `NON_UE_LOAD_ORDER_PAGES.md` (the
-reduced variants of this renderer used by non-Unreal games).
+reduced variants of this renderer used by non-Unreal games). `templates/TEMPLATE_UE4_5.md` (the
+template these renderers ship in, and the toggles deciding whether a load-order page exists at all).

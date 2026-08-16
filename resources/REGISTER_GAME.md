@@ -267,8 +267,13 @@ Notes:
 ## See also
 
 `VORTEX_GAME_LIFECYCLE.md` (discovery -> gamemode-activated runtime flow this spec feeds).
-`RUN_EXECUTABLE.md` (launching the game/tools defined here). `TEMPLATES_OVERVIEW.md` (per-template
-`spec`/`applyGame()` conventions). `WINAPI_BINDINGS.md` (`winapi.RegGetValue` fallback detection).
-`ERROR_CLASSES.md` (`SetupError` thrown from `IGame.setup()`). `REQUIRES_LAUNCHER.md` (full
+`RUN_EXECUTABLE.md` (launching the game/tools defined here). `TEMPLATES_OVERVIEW.md`
+(`spec`/`applyGame()` conventions shared by all templates; the per-template files under
+`templates/` give each template's own mod types, constants, and discovery quirks).
+`WINAPI_BINDINGS.md`
+(`winapi.RegGetValue` fallback detection).
+`NTFS_LINKS.md` (`details.supportsSymlinks` / `compatible.symlinks` and the same-volume
+constraint they interact with). `ERROR_CLASSES.md` (`SetupError` thrown from `IGame.setup()`).
+`REQUIRES_LAUNCHER.md` (full
 reference for the `requiresLauncher` field above). `PCGAMINGWIKI_API.md` (looking up the Steam/GOG/
 Epic/Microsoft Store IDs these fields need).

@@ -193,4 +193,8 @@ Or inline in `context.registerGame()` — both work identically.
 
 `REGISTER_GAME.md` (the `IGame` spec `requiresLauncher` hangs off). `RUN_EXECUTABLE.md`
 (`api.runExecutable`/`IRunOptions` — the actual launch path this hook gates). `VORTEX_GAME_LIFECYCLE.md`
-(where launcher resolution fits in the discovery-to-launch flow).
+(where launcher resolution fits in the discovery-to-launch flow). `TEMPLATES_OVERVIEW.md` (the
+`requiresLauncher` implementation every template ships). `templates/TEMPLATE_ANVILENGINE.md`,
+`templates/TEMPLATE_FARCRY.md`, `templates/TEMPLATE_SNOWDROPENGINE.md`, and
+`templates/TEMPLATE_FROSTBITE.md` (the storefront-locked families — Ubisoft Connect and EA App —
+that need a non-default hand-off).

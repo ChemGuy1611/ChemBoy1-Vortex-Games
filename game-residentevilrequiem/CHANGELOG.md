@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [0.1.5] - 2026-08-14
+
+- Fixed: Corrected REFramework Nightly latest download file URL
+
 ## [0.1.4] - 2026-08-12
 
 - Fixed: The Epic Games Store version now launches through the Epic launcher

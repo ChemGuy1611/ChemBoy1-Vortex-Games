@@ -26,9 +26,15 @@
 
 | Flag | Value | Description |
 | --- | --- | --- |
-| `CHECK_CONFIG` | `false` |  |
+| `preferHardlinks` | `true` | set true to perform partition checks when IO_STORE is false so that hardlinks are available to more users |
+| `SIGBYPASS_REQUIRED` | `true` | set true if there are .sig files in the Paks folder |
 | `IO_STORE` | `true` | true if the Paks folder contains .ucas and .utoc files |
+| `PAKMOD_LOADORDER` | `true` | set to false if you don't want loadOrder. If must be in "Paks" root, disable loadOrder. |
+| `FBLO` | `true` | set to false to use legacy load order page |
 | `SYM_LINKS` | `true` | true if symlink deployment is enabled for this game |
+| `CHECK_CONFIG` | `false` | boolean to check if game, staging folder, and config folder are on the same drive |
+| `mod_update_all_profile` | `false` | for mod update to keep them in the load order and not uncheck them |
+| `updating_mod` | `false` | used to see if it's a mod update or not |
 
 ## Mod Types
 
@@ -50,8 +56,8 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
-| `ue5-pak-installer` | 35 |
 | `marvelrivals-root` | 30 |
+| `marvelrivals-ue5-sortable-modtype` | 35 |
 | `marvelrivals-sigbypass` | 37 |
 | `marvelrivals-config` | 40 |
 
@@ -59,16 +65,22 @@ Installers run in priority order (lower number = tested first). The first instal
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
+- Open Paks Folder
+- Open Binaries Folder
 - Open Config Folder (LocalAppData)
-- View Changelog
-- Open Downloads Folder
 - Open PCGamingWiki Page
+- View Changelog
 - Submit Bug Report
+- Open Downloads Folder
 
 ## Special Features
 
+- **Load Order** — mods are assigned numbered folder names or sorted based on their position in the load order.
 - **Deploy Hook** (`did-deploy`) — runs custom logic (e.g., notifications, metadata patching) every time mods are deployed.
+- **Purge Hook** (`did-purge`) — runs custom logic when mods are purged.
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
+- **Signature Bypass** — .sig file bypass is required for pak mods.
+- **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 

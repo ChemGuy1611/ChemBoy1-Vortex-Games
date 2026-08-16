@@ -111,4 +111,5 @@ async function writeModysTxt(modsJsonPath) {
 that reorders entries in `mods.txt`). `COLLECTIONS_FEATURE.md` (exporting/importing UE4SS mod
 order as collection data). `UE4_5_REACT_ARCHITECTURE.md` (how the extension rewrites the band
 between the `BPModLoaderMod` and `Keybinds` markers, and why the native mod list must match the
-folders shipped here).
+folders shipped here). `templates/TEMPLATE_UE4_5.md` (the `ue4ssLoadOrder` and
+`logicModsLoadOrder` toggles, which decide whether these files get written at all).

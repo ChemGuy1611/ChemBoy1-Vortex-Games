@@ -207,3 +207,5 @@ queue, chunked transfer, protocol handlers). `VORTEX_MOD_INSTALL.md` (the instal
 extension hands the finished download to). `DOWNLOADER.md` (the requirements auto-downloader, and
 where `browse-for-download` fits among its routes). `NOTIFICATIONS_DIALOGS.md` (the dialog surface
 a confirmation gate uses). `THUNDERSTORE_API.md` (a source whose site is browsed this way).
+`BROWSER_MODULES.md` (the shared modules that assemble everything on this page into a browse-and-
+install page an extension can adopt).

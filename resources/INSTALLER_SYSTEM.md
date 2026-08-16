@@ -200,10 +200,11 @@ function installMod(files) {
   const modFile = files.find(file => MOD_EXTS.includes(path.extname(file).toLowerCase()));
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
+  const rootPrefix = (rootPath === '.') ? '' : rootPath + path.sep;
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_ID };
 
   const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
+    ((!file.endsWith(path.sep)) && file.startsWith(rootPrefix))
   );
   const instructions = filtered.map(file => ({
     type: 'copy',
@@ -255,6 +256,7 @@ function installRoot(files) {
   const ROOT_IDX = `${path.basename(modFile)}${path.sep}`;
   const idx = modFile.indexOf(ROOT_IDX);
   const rootPath = path.dirname(modFile);
+  const rootPrefix = (rootPath === '.') ? '' : rootPath + path.sep;
   // ...
 }
 ```
@@ -306,7 +308,70 @@ idx:           modFile.indexOf("Data\")  →  11
 file.substr(11) → "Data\plugin.esp"
 ```
 
-The `filtered` step removes directory entries (`file.endsWith(path.sep)`) and anything not under `rootPath` to avoid installing unrelated archive siblings.
+---
+
+## Scoping to `rootPath`
+
+The `filtered` step in an installer does two independent jobs:
+
+1. Drop directory entries, so no `copy` instruction ever names a folder.
+2. Drop files outside the mod's own root, so unrelated archive siblings are not installed.
+
+Job 1 is `!file.endsWith(path.sep)`. Vortex builds the `files` array from real filesystem
+stats and appends `path.sep` to every directory entry, so this test is exact — a file with
+no extension (`LICENSE`, a content-hash blob in a `Bundles` folder) is never mistaken for a
+directory.
+
+Job 2 must be a **prefix** test against a guarded prefix:
+
+```js
+const rootPath = path.dirname(modFile);
+// path.dirname() returns "." when the mod file sits at the archive root, in which case
+// every file is already inside the root and no scoping is needed. An empty prefix makes
+// startsWith() accept everything. path.join() cannot build this prefix - it strips the
+// trailing separator the comparison depends on.
+const rootPrefix = (rootPath === '.') ? '' : rootPath + path.sep;
+
+const filtered = files.filter(file =>
+  ((!file.endsWith(path.sep)) && file.startsWith(rootPrefix))
+);
+```
+
+### Why not `indexOf`
+
+The older form `file.indexOf(rootPath) !== -1` is a substring search, and it fails in two ways.
+
+**Extension-less files disappear when the mod file sits at the archive root.** `path.dirname()`
+returns `"."` for a root-level file, so the test collapses into `file.indexOf(".") !== -1` —
+"does this path contain a dot anywhere", which is approximately "does this have a file
+extension". Every extension-less file is silently dropped from the install:
+
+```text
+modFile = "MyMod.dll"   ->   rootPath = "."
+
+indexOf:     MyMod.dll, Bundles\manifest.json, Data\config.ini
+startsWith:  MyMod.dll, LICENSE, README, Bundles\a1b2c3d4e5f6,
+             Bundles\deadbeefcafe, Bundles\manifest.json, Data\config.ini
+```
+
+This is easy to misread as the directory filter misbehaving, because directory entries have
+no dot either and vanish alongside the files. The directory filter is not involved.
+
+**Sibling folders whose names share a prefix are pulled in.** A substring match has no
+concept of a path boundary:
+
+```text
+rootPath = "natives"
+
+indexOf:     natives\good.pak, natives_backup\stale.pak, Extras\natives\other.pak
+startsWith:  natives\good.pak
+```
+
+The two strays are then mangled by `file.substr(idx)`, which assumes every surviving path
+begins with `rootPath` + separator.
+
+Both failures disappear with the prefix form, and `idx` needs no change: when `rootPath` is
+`"."`, `idx` is already `0`, so `file.substr(idx)` returns the full relative path.
 
 ---
 
@@ -369,6 +434,9 @@ Always read existing toggles before adding or removing conditional registration 
 ## Gotchas
 
 - `files` includes directory entries (paths ending with `path.sep`). Always filter them out before building `copy` instructions.
+- Scope to the mod root with `file.startsWith(rootPrefix)`, never `file.indexOf(rootPath) !== -1`. The substring form drops every extension-less file when `rootPath` is `"."` and matches sibling folders that share a name prefix. See Scoping to `rootPath` above.
+- `path.dirname()` returns `"."`, not `""`, for a path with no directory component. Any comparison against `rootPath` has to handle that case explicitly.
+- `path.join()` strips a trailing separator, so it cannot build a prefix string used for `startsWith`. Concatenate `path.sep` instead. `path.relative()`, `path.dirname()` and `path.basename()` strip it too — never derive a path before testing whether the entry is a directory.
 - `testSupported` must return a `Promise` even if the logic is synchronous — wrap with `Promise.resolve()`.
 - `install` receives the same `files` list as `testSupported`; no need to re-derive the anchor file, but you must find it again.
 - The `setmodtype` instruction overrides whatever mod type Vortex would normally assign. Push it last so copy instructions come first.
@@ -382,7 +450,9 @@ Always read existing toggles before adding or removing conditional registration 
 ## See also
 
 `FOMOD_INSTALLER.md` (the built-in priority-10/100 installer custom installers must yield to).
-`MOD_RULES.md` (`rule` instruction type / `IRule` shape). `ARCHIVE_HANDLER.md` (where the `files`
-list passed to `testSupported`/`install` comes from). `ERROR_CLASSES.md` (throwing from
-`install`/`testSupported`). `TEMPLATES_OVERVIEW.md` (per-template installer sets). `VORTEX_MOD_INSTALL.md`
-(runtime InstallManager orchestration).
+`MOD_RULES.md` (`rule` instruction type / `IRule` shape). `ERROR_CLASSES.md` (throwing from
+`install`/`testSupported`). `TEMPLATES_OVERVIEW.md` (the shared 25-49 priority convention across
+templates; the per-template files under `templates/` give each template's actual ladder).
+`VORTEX_MOD_INSTALL.md` (runtime InstallManager orchestration, and where the `files` list passed
+to `testSupported`/`install` is built). `ARCHIVE_HANDLER.md` (`registerArchiveType`, which serves
+`api.openArchive` and does **not** feed the installer `files` list).

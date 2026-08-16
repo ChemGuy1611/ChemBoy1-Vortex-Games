@@ -2,8 +2,8 @@
 Name: Far Cry 3 Vortex Extension
 Structure: Basic Game (Mod Installer)
 Author: ChemBoy1
-Version: 0.2.4
-Date: 2026-08-11
+Version: 1.0.0
+Date: 2026-08-14
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -11,6 +11,7 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 const winapi = require('winapi-bindings');
+const { downloadFcModding, checkForFcModdingUpdate } = require('./fcmodding_downloader');
 
 const DOCUMENTS = util.getVortexPath("documents");
 
@@ -52,8 +53,16 @@ const MI_PATH = "FCModInstaller";
 const MI_FILE = "fcmodinstaller.exe";
 const MI_EXEC = "FC3ModInstaller.exe";
 const MI_EXEC_PATH = path.join(MI_PATH, MI_EXEC);
-const MI_URL = "https://downloads.fcmodding.com/files/FCModInstaller.zip";
+const MI_FILENAME = "FCModInstaller.zip";
 const MI_URL_ERR = "https://downloads.fcmodding.com/all/mod-installer/";
+const MI_REQUIREMENTS = [
+  {
+    fileName: MI_FILENAME,
+    modType: MI_ID,
+    userFacingName: MI_NAME,
+    pageUrl: MI_URL_ERR,
+  },
+];
 
 const LAA_ID = `${GAME_ID}-largeaddressaware`;
 const LAA_NAME = "Large Address Aware App";
@@ -737,13 +746,6 @@ function installXml(files) {
 
 // AUTOMATIC DOWNLOAD FUNCTIONS //////////////////////////////////////////////
 
-//Check if Mod Installer is installed
-function isModInstallerInstalled(api, spec) {
-  const state = api.getState();
-  const mods = state.persistent.mods[spec.game.id] || {};
-  return Object.keys(mods).some(id => mods[id]?.type === MI_ID);
-}
-
 //Check if Large Address Aware is installed
 function isLaaInstalled(api, spec) {
   const state = api.getState();
@@ -757,51 +759,6 @@ function isXmlInstalled(api, spec) {
   const mods = state.persistent.mods[spec.game.id] || {};
   return Object.keys(mods).some(id => mods[id]?.type === XML_ID);
 }
-
-//* Function to auto-download Mod Installer from site
-async function downloadModInstaller(api, gameSpec) {
-  let isInstalled = isModInstallerInstalled(api, gameSpec);
-  if (!isInstalled) {
-    const MOD_NAME = MI_NAME;
-    const MOD_TYPE = MI_ID;
-    const NOTIF_ID = `${MOD_TYPE}-installing`;
-    const GAME_DOMAIN = GAME_ID;
-    const URL = MI_URL;
-    const ERR_URL = MI_URL_ERR;
-    api.sendNotification({ //notification indicating install process
-      id: NOTIF_ID,
-      message: `Installing ${MOD_NAME}`,
-      type: 'activity',
-      noDismiss: true,
-      allowSuppress: false,
-    });
-    try {
-      const dlInfo = { //Download the mod
-        game: GAME_DOMAIN,
-        name: MOD_NAME,
-      };
-      const dlId = await util.toPromise(cb =>
-        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
-      const modId = await util.toPromise(cb =>
-        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
-      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
-      const batched = [
-        actions.setModsEnabled(api, profileId, [modId], true, {
-          allowAutoDeploy: true,
-          installed: true,
-        }),
-        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
-      ];
-      util.batchDispatch(api.store, batched); // Will dispatch both actions
-    } catch (err) { //Show the user the download page if the download, install process fails
-      const errPage = ERR_URL;
-      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
-      util.opn(errPage).catch(() => null);
-    } finally {
-      api.dismissNotification(NOTIF_ID);
-    }
-  }
-} //*/
 
 //* Function to auto-download LAA app from TechPowerUp
 async function downloadLaa(api, gameSpec) {
@@ -957,7 +914,8 @@ async function setup(discovery, api, gameSpec) {
   STAGING_FOLDER = selectors.installPathForGame(state, GAME_ID);
   DOWNLOAD_FOLDER = selectors.downloadPathForGame(state, GAME_ID);
   // ASYNC CODE //////////////////////////////////////////
-  await downloadModInstaller(api, gameSpec);
+  await downloadFcModding(api, gameSpec, MI_REQUIREMENTS); //install if missing
+  await checkForFcModdingUpdate(api, gameSpec, MI_REQUIREMENTS).catch(() => null); //update check should never block setup
   await downloadXml(api, gameSpec);
   await downloadLaa(api, gameSpec);
   await fs.ensureDirWritableAsync(XML_PATH);
@@ -1009,6 +967,13 @@ function applyGame(context, gameSpec) {
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Far Cry Mod Installer Site', () => {
     const openPath = MI_URL_ERR;
     util.opn(openPath).catch(() => null);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+  });
+  context.registerAction('mod-icons', 300, 'open-ext', {}, `Download Latest ${MI_NAME}`, () => {
+    downloadFcModding(context.api, spec, MI_REQUIREMENTS, false);
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
@@ -1074,6 +1039,11 @@ function main(context) {
       if (profileId !== lastActiveProfile) return;
       return deployNotify(context.api);
     });
+    api.onAsync('check-mods-version', (gameId, mods, forced) => {
+      if (gameId !== GAME_ID) return;
+      return checkForFcModdingUpdate(api, spec, MI_REQUIREMENTS)
+        .catch(err => log('warn', `Failed to check for ${MI_NAME} update: ${err}`));
+    }); //*/
   });
   return true;
 }

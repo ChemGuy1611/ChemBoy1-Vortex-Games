@@ -11,9 +11,12 @@ independently of its engine category and of each other:
     games-loadorder.txt  - non-UE4/5 games that call context.registerLoadOrder
     games-downloader.txt - games with a bundled downloader.js module
     games-downloader-bepinexbe.txt  - games with a bundled bepinexbe_downloader.js module
+    games-downloader-fcmodding.txt  - games with a bundled fcmodding_downloader.js module
     games-downloader-gamebanana.txt - games with a bundled gamebanana_downloader.js module
     games-downloader-moddb.txt      - games with a bundled moddb_downloader.js module
     games-downloader-modworkshop.txt - games with a bundled modworkshop_downloader.js module
+    games-downloader-thunderstore.txt - games with a bundled thunderstore_downloader.js module
+    games-browser-thunderstore.txt  - games with a bundled thunderstore_browser.js module
     games-github.txt     - games with a WORKING inline GitHub download (no downloader.js).
                            Skips downloads that are commented out or never called, plus
                            GITHUB_LIST_EXCLUDED_ENGINES (engines whose GitHub fetch is
@@ -38,8 +41,10 @@ from vortex_utils import (
     REPO_ROOT, LISTS_DIR, list_game_ids, detect_engine, read_index_js,
     read_id_list, write_id_list,
     is_load_order_game as _is_load_order_game_src,
-    has_downloader_js, has_bepinexbe_downloader_js, has_gamebanana_downloader_js,
+    has_downloader_js, has_bepinexbe_downloader_js, has_fcmodding_downloader_js,
+    has_gamebanana_downloader_js,
     has_moddb_downloader_js, has_modworkshop_downloader_js,
+    has_thunderstore_downloader_js, has_thunderstore_browser_js,
     github_download_enabled,
     requires_unreal_mod_installer, has_ue4ss_load_order_parity,
     is_unreleased_extension,
@@ -117,9 +122,14 @@ FLAG_LISTS = [
     ("games-loadorder.txt",  lambda src, folder: _is_load_order_game_src(src)),
     ("games-downloader.txt", lambda src, folder: has_downloader_js(folder)),
     ("games-downloader-bepinexbe.txt",  lambda src, folder: has_bepinexbe_downloader_js(folder)),
+    ("games-downloader-fcmodding.txt",  lambda src, folder: has_fcmodding_downloader_js(folder)),
     ("games-downloader-gamebanana.txt", lambda src, folder: has_gamebanana_downloader_js(folder)),
     ("games-downloader-moddb.txt",      lambda src, folder: has_moddb_downloader_js(folder)),
     ("games-downloader-modworkshop.txt", lambda src, folder: has_modworkshop_downloader_js(folder)),
+    ("games-downloader-thunderstore.txt", lambda src, folder: has_thunderstore_downloader_js(folder)),
+    # Embedded browser modules (resources/browsers/), which register a page that browses a
+    # mod site inside Vortex. Independent of the downloader module for the same source.
+    ("games-browser-thunderstore.txt", lambda src, folder: has_thunderstore_browser_js(folder)),
     # GitHub download done inline in index.js, i.e. without the downloader.js module.
     # github_download_enabled() ignores downloads that are commented out or defined in
     # a never-called function. Engines in GITHUB_LIST_EXCLUDED_ENGINES are skipped too -

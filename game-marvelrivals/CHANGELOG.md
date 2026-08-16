@@ -4,6 +4,17 @@
 
 - None Planned
 
+## [1.0.0] - 2026-08-16
+
+- Added: New load order page. Mods can be locked in place, selected in groups with Ctrl and Shift, and reordered from a right-click menu with Move to Top and Move to Bottom.
+- Added: Filter the load order by status (enabled, disabled, locked, unlocked, unmanaged).
+- Added: Right-click a load order entry to open its staging folder or its mod page.
+- Added: Enable or disable a mod directly from its load order entry.
+- Added: "Open Paks Folder" and "Open Binaries Folder" buttons.
+- Added: Game version is now reported on the game tile.
+- Fixed: The pak file count shown beside a mod name counted files that were not installed.
+- Fixed: Load order positions were lost when updating a mod.
+
 ## [0.5.2] - 2026-03-16
 
 - Fixed: Removed checkboxes from Load Order as they are not functional

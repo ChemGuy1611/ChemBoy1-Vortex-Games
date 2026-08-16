@@ -5,7 +5,7 @@ Author: ChemBoy1
 Version: 1.0.0
 Date: 2026-XX-XX
 Notes:
-- 
+-
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -26,19 +26,19 @@ const EPICAPP_ID = "XXX";
 const GOGAPP_ID = "XXX";
 const XBOXAPP_ID = "XXX";
 const XBOXEXECNAME = "XXX";
-const XBOX_PUB_ID = "XXX"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
+const XBOX_PUB_ID = "8fty0by30jkny"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
 const EXEC = "XXX.exe";
 const EXEC_DEMO = "XXX.exe";
-const REF_STRING = "XXX";
+const REF_STRING = "REFramework"; //file name for nightly latest URL - constant in recent versions. Not named per game any longer.
 const GAME_NAME = "XXX";
 const GAME_NAME_SHORT = "XXX";
 const PCGAMINGWIKI_URL = "XXX";
 const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
 
 const FLUFFY_FOLDER = "XXX";
-const FLUFFY_FOLDER_DEMO = "XXX_Demo";
+const FLUFFY_FOLDER_DEMO = `${FLUFFY_FOLDER}_Demo`; //!set as null if no demo
 const ROOT_FILES = ['nvngx_dlss.dll', "dstoragecore.dll", "dstorage.dll", "amd_fidelityfx_dx12.dll", "amd_ags_x64.dll", "libxess.dll"];
 const ROOT_EXTS = [".exe"];
 const REF_PAGE_NO = 0;
@@ -51,11 +51,11 @@ const CONFIG_FILE = 'config.ini';
 const useRefNightly = false; //toggle for using the REFramework nightly instead of Nexus release
 let hasXbox = false; //toggle for Xbox version logic
 if (DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID)) hasXbox = true;
-const reZip = true; //NOT WORKING YET - KEEP AS TRUE FOR NOW - set to true to re-zip Fluffy Mods (possibly not necessary for FLUFFY v3.069+)
+const reZip = true; //! NOT WORKING YET - KEEP AS TRUE FOR NOW - set to true to re-zip Fluffy Mods (possibly not necessary for FLUFFY v3.069+)
 //could index on modinfo.ini to avoid extra top level folder. should work?
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
 let multiExe = false; //set to true if there are multiple executables (and multiple FLUFFY_FOLDERs) (typically for Demo)
-if (EXEC !== EXEC_DEMO) {
+if ((EXEC !== EXEC_DEMO && EXEC_DEMO !== null) || hasXbox) {
   multiExe = true;
 }
 const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
@@ -358,6 +358,15 @@ async function requiresLauncher(gamePath, store) {
       launcher: 'epic',
       addInfo: {
         appId: EPICAPP_ID,
+      },
+    });
+  } //*/
+  if (store === 'xbox' && DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID)) {
+    return Promise.resolve({
+      launcher: 'xbox',
+      addInfo: {
+        appId: XBOXAPP_ID,
+        parameters: [{ appExecName: XBOXEXECNAME }],
       },
     });
   } //*/
@@ -741,7 +750,7 @@ function installFluffyMod(files) {
 
   // Remove directories and anything that isn't in the rootPath.
   const filtered = files.filter(file => (
-    //(file.indexOf(rootPath) !== -1) && 
+    //(file.indexOf(rootPath) !== -1) &&
     (!file.endsWith(path.sep))
   ));
   const instructions = filtered.map(file => {
@@ -906,7 +915,7 @@ async function testZipContent(files, gameId) {
 //install zips for Fluffy
 async function installZipContent(files, destinationPath) {
   const zipFiles = files.filter(file => ['.zip', '.7z', '.rar'].includes(path.extname(file)));
-  if (zipFiles.length > 0) { // If it's a double zip, we don't need to repack. 
+  if (zipFiles.length > 0) { // If it's a double zip, we don't need to repack.
     const instructions = zipFiles.map(file => {
       return {
         type: 'copy',
@@ -963,7 +972,7 @@ function setupNotify(api) {
         },
       },
     ],
-  });    
+  });
 }
 
 //Notify User to run Fluffy Mod Manager after deployment
@@ -1054,7 +1063,7 @@ async function resolveGameVersion(gamePath) {
       const exeVersion = require('exe-version');
       const EXEC = getExecutable(gamePath);
       version = exeVersion.getProductVersion(path.join(gamePath, EXEC)); //can also use getFileVersion if this doesn't return the correct number (rare)
-      return Promise.resolve(version); 
+      return Promise.resolve(version);
     } catch (err) {
       log('error', `Could not read executable file to get game version: ${err}`);
       return Promise.resolve(version);
@@ -1100,7 +1109,7 @@ function applyGame(context, gameSpec) {
     requiresLauncher: requiresLauncher,
     setup: async (discovery) => await setup(discovery, context.api, gameSpec),
     supportedTools: tools,
-    //getGameVersion: resolveGameVersion,
+    getGameVersion: resolveGameVersion,
   };
   context.registerGame(game);
 
@@ -1114,27 +1123,27 @@ function applyGame(context, gameSpec) {
   });
 
   //register mod types explicitly (due to potentially dynamic FLUFFY_FOLDER)
-  context.registerModType(FLUFFYMOD_ID, 25, 
+  context.registerModType(FLUFFYMOD_ID, 25,
     (gameId) => {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, 
-    (game) => pathPattern(context.api, game, path.join('{gamePath}', FLUFFYMOD_PATH)), 
-    () => Promise.resolve(false), 
-    { 
-      name: FLUFFYMOD_NAME, 
+    },
+    (game) => pathPattern(context.api, game, path.join('{gamePath}', FLUFFYMOD_PATH)),
+    () => Promise.resolve(false),
+    {
+      name: FLUFFYMOD_NAME,
       mergeMods: reZip,
     }
   );
-  context.registerModType(PRESET_ID, 40, 
+  context.registerModType(PRESET_ID, 40,
     (gameId) => {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
-    }, 
-    (game) => pathPattern(context.api, game, path.join('{gamePath}', PRESET_PATH)), 
-    () => Promise.resolve(false), 
-    { 
-      name: PRESET_NAME, 
+    },
+    (game) => pathPattern(context.api, game, path.join('{gamePath}', PRESET_PATH)),
+    () => Promise.resolve(false),
+    {
+      name: PRESET_NAME,
     }
   );
 
@@ -1208,11 +1217,11 @@ function applyGame(context, gameSpec) {
 function main(context) {
   applyGame(context, spec);
   context.once(() => { // put code here that should be run (once) when Vortex starts up
-    context.api.onAsync('did-deploy', async (profileId, deployment) => {
+    context.api.onAsync('did-deploy', async (profileId) => {
       const api = context.api;
-      const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
+      const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;
-      return deployNotify(context.api);
+      return deployNotify(api);
     });
 
   });

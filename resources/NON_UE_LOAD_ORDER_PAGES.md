@@ -249,3 +249,4 @@ so the same defects travel with it.
 `VORTEX_REACT_PAGES.md` (page/settings registration primitives).
 `VORTEX_LOAD_ORDER.md` (FBLO runtime orchestration).
 `TEMPLATES_OVERVIEW.md` (which template each game derives from).
+`templates/` (one file per template, with the mechanics of each).

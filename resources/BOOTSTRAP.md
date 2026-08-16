@@ -110,6 +110,14 @@ pip install PySide6 Pillow
 
 `vortex_utils.py` itself uses stdlib only. Pillow is lazy-imported — scripts run without it but image operations are skipped with a warning.
 
+**SVG rasterizing (`render_svg.py` only):**
+
+```text
+pip install svglib reportlab pycairo rlPyCairo
+```
+
+reportlab 5.x no longer ships its own `_renderPM` drawing backend, so `rlPyCairo` plus `pycairo` are what render the pixels — without them `renderPM` raises `RenderPMError: cannot import desired renderPM backend rlPyCairo`. The Windows `pycairo` wheel is self-contained; no GTK or system Cairo install is needed.
+
 **Personal repo only:**
 
 ```text

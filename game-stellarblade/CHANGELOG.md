@@ -4,6 +4,20 @@
 
 - None
 
+## [1.0.0] - 2026-08-15
+
+- Changed: Rebuilt the pak mod load order page. Entries can now be locked in place, selected in bulk with Ctrl-click, and managed from a right-click menu, and the list can be filtered by status.
+- Added: UE4SS Load Order page for script and DLL mods, with a Configure button for mods that ship a config file and a checkbox to enable or disable each mod.
+- Added: LogicMods Load Order page for blueprint pak mods.
+- Added: UE4SS and LogicMods load orders are now included in collections.
+- Added: Buttons to open the UE4SS settings INI and the UE4SS mods.txt file.
+- Added: Setting to control whether the UE4SS load order manages mods.txt or the older enabled.txt files are used instead.
+- Added: Notification when a mod reaches the fallback installer, so it is clear when Vortex could not determine where mod files belong.
+- Added: UE4SS is now downloaded and installed automatically from the Stellar Blade build's release page, and Vortex checks it for updates.
+- Fixed: Reordering pak mods had no effect on the order they loaded.
+- Fixed: Updating a mod no longer removes it from the load order or changes its position.
+- Fixed: Downloading UE4SS could pick up the large developer build instead of the standard one.
+
 ## [0.2.0] - 2026-02-03
 
 - Improved: Made UE4SS Scripts, UE4SS DLL, LogicMods, and Root Folder mod installers case-insensitive to folder names

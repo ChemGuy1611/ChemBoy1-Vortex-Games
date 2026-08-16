@@ -45,8 +45,10 @@ Usage:
         run_generate_explained, run_generate_explained_batch,
         run_generate_notes, run_generate_notes_batch,
         get_discovery_ids, detect_engine, detect_stores,
-        has_downloader_js, has_bepinexbe_downloader_js, has_gamebanana_downloader_js,
+        has_downloader_js, has_bepinexbe_downloader_js, has_fcmodding_downloader_js,
+        has_gamebanana_downloader_js,
         has_moddb_downloader_js, has_modworkshop_downloader_js,
+        has_thunderstore_downloader_js, has_thunderstore_browser_js,
         downloads_from_github, github_download_enabled,
         requires_unreal_mod_installer, has_ue4ss_load_order_parity,
         is_unreleased_extension,
@@ -2893,6 +2895,11 @@ def has_bepinexbe_downloader_js(folder):
     return os.path.isfile(os.path.join(folder, "bepinexbe_downloader.js"))
 
 
+def has_fcmodding_downloader_js(folder):
+    """Return True if the extension folder contains a bundled fcmodding_downloader.js module."""
+    return os.path.isfile(os.path.join(folder, "fcmodding_downloader.js"))
+
+
 def has_gamebanana_downloader_js(folder):
     """Return True if the extension folder contains a bundled gamebanana_downloader.js module."""
     return os.path.isfile(os.path.join(folder, "gamebanana_downloader.js"))
@@ -2906,6 +2913,16 @@ def has_moddb_downloader_js(folder):
 def has_modworkshop_downloader_js(folder):
     """Return True if the extension folder contains a bundled modworkshop_downloader.js module."""
     return os.path.isfile(os.path.join(folder, "modworkshop_downloader.js"))
+
+
+def has_thunderstore_downloader_js(folder):
+    """Return True if the extension folder contains a bundled thunderstore_downloader.js module."""
+    return os.path.isfile(os.path.join(folder, "thunderstore_downloader.js"))
+
+
+def has_thunderstore_browser_js(folder):
+    """Return True if the extension folder contains a bundled thunderstore_browser.js module."""
+    return os.path.isfile(os.path.join(folder, "thunderstore_browser.js"))
 
 
 def downloads_from_github(src):

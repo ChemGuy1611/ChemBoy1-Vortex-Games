@@ -1,262 +1,249 @@
 # Extension Templates Overview
 
-All 16 templates live in `template-*/`. Use `new_extension.py <short-name> <game>` to scaffold a new extension.
+Scaffolding reference for the 16 game-extension templates in `template-*/`. This file covers how to
+pick a template and the anatomy every template shares. Per-template mechanics — what each engine or
+mod loader actually requires and how the template is shaped around it — live one file per template
+in `templates/`, indexed below.
 
-**Changelogs:** each template's own `CHANGELOG.md` is scaffold boilerplate copied verbatim into every new extension by `new_extension.py` — never edit it. Real changes to a template's `index.js`/`info.json`/etc. are logged in `resources/template-changelogs/<template-folder>.md` instead. Update that file in the same session as any template edit.
+Create a new extension with `new_extension.py <short-name> <game>`.
 
-**index.js header:** never reformat the `/*////.../*` header block (Name/Structure/Author/Version/Date/Notes). `new_extension.py`'s `update_index_header()` parses it with a fixed regex — changing its shape breaks scaffolding for every template.
+**Reading the per-template files:** paths shown as `<code>` or `<game>` are per-game placeholders the
+scaffold fills in, and mod-type target paths are relative to the game folder unless stated otherwise.
+Each file is written as a delta against this one, so read this page first.
 
 ---
 
-## Template Selection Guide
+## Scaffold rules
 
-| Short name (CLI) | Template folder | Engine / Framework | Stores |
+**Template `CHANGELOG.md` is boilerplate, never history.** `new_extension.py` copies each template's
+own `CHANGELOG.md` verbatim into every new extension, so it must stay generic. Real changes to a
+template's `index.js`, `info.json`, or assets are logged in `resources/template-changelogs/<template-folder>.md`
+instead, in the same session as the edit.
+
+**Never reformat the `index.js` header block.** The `/*////` … `Name / Structure / Author / Version /
+Date / Notes` block at the top of every template is parsed by `new_extension.py`'s
+`update_index_header()` with a fixed regex. Changing its shape breaks scaffolding for every template.
+The `Structure:` line is also the in-file record of which template an extension came from.
+
+**Edit zones.** Larger templates (`ue4-5`, `unitymelonloaderbepinex-hybrid`, `unitybepinex`) bracket
+the fields a new extension must fill in between `-- START EDIT ZONE --` and `-- END EDIT ZONE --`
+comment banners. Everything outside those banners is derived and normally left alone.
+
+**Version stamping.** All 16 templates carry `1.0.0` in `info.json`, their `CHANGELOG.md` entry, the
+`index.js` header, and a `1.0.0.txt` marker file. `new_extension.py` overwrites that with its own
+configured new-extension version, so the scaffold value is cosmetic.
+
+**Per-template docs.** Each template folder also carries `EXTENSION_EXPLAINED.md` and
+`NOTES_FOR_MOD_AUTHORS.md` (plus a `.bbcode.txt` form of the latter, for pasting into a Nexus mod
+page). Those are scaffold documents with `XXX` placeholders, regenerated per extension — they are
+not the place to record template mechanics.
+
+---
+
+## Template selection guide
+
+| Short name (CLI) | Template folder | Engine / framework | Stores |
 | --- | --- | --- | --- |
 | `basic` | template-basic | Generic / proprietary engines | S E G X |
-| `cobraengineACSE` | template-cobraengineACSE | Cobra Engine + ACSE script extender | S E |
-| `anvilengine` | template-anvilengine | Ubisoft Anvil Engine (AC series, Ghost Recon) | S Uplay |
-| `frostbite` | template-frostbite | Frostbite Engine (EA games, Frosty Mod Manager) | S EA |
-| `farcry` | template-farcry | Far Cry / Dunia Engine | S Uplay |
-| `godot` | template-godot | Godot 3 & 4 | S E G X |
-| `reframework-fluffy` | template-reframework-fluffy | RE Engine (RE7/RE8/DD2 etc.) | S only |
+| `anvilengine` | template-anvilengine | Ubisoft Anvil (AC series, Ghost Recon) | S Uplay |
+| `cobraengineACSE` | template-cobraengineACSE | Frontier Cobra Engine + ACSE | S E X |
+| `farcry` | template-farcry | Far Cry / Dunia + FC Mod Installer | S Uplay |
+| `frostbite` | template-frostbite | EA Frostbite + Frosty Mod Manager | S EA |
+| `godot` | template-godot | Godot 3 & 4 + Godot Mod Loader | S E G X |
+| `reframework-fluffy` | template-reframework-fluffy | RE Engine + Fluffy Mod Manager / REFramework | S E G X |
 | `reloaded2` | template-reloaded2 | Reloaded-II framework | S E G X |
-| `shinryu` | template-shinryu | Shin Ryu Mod Manager (SRMM) | S X |
 | `rpgmaker` | template-rpgmaker | RPG Maker MV/MZ | S E G X |
-| `snowdropengine` | template-snowdropengine | Snowdrop Engine (Division, Avatar) | S Uplay |
+| `shinryu` | template-shinryu | Shin Ryu Mod Manager (Yakuza / RGG) | S E G X |
+| `snowdropengine` | template-snowdropengine | Ubisoft Snowdrop (Division, Avatar) | S Uplay |
 | `tfcinstaller-ue2-3` | template-tfcinstaller-ue2-3 | Unreal Engine 2/3 + TFC Installer | S E G X |
 | `ue4-5` | template-ue4-5 | Unreal Engine 4/5 | S E G X |
 | `unity-umm` | template-unity-umm | Unity + Unity Mod Manager | S E G X |
 | `unitybepinex` | template-unitybepinex | Unity + BepInEx 5/6 | S E G X |
-| `unitymelonloaderbepinex-hybrid` | template-unitymelonloaderbepinex-hybrid | Unity + BepInEx AND MelonLoader (user-selectable) | S E G X |
+| `unitymelonloaderbepinex-hybrid` | template-unitymelonloaderbepinex-hybrid | Unity + BepInEx **and** MelonLoader (user picks) | S E G X |
 
-**Stores legend:** S=Steam, E=Epic, G=GOG, X=Xbox, Uplay=Ubisoft Connect, EA=EA App
+**Stores legend:** S = Steam, E = Epic, G = GOG, X = Xbox / Microsoft Store, Uplay = Ubisoft Connect,
+EA = EA App.
 
----
+The Stores column is what the template's `spec` has slots for, not a promise that every game in that
+family ships on all of them. The three storefront-locked families are genuinely locked: the two
+Ubisoft templates and `frostbite` set `gogAppId` to `null` outright and carry a `UPLAYAPP_ID` /
+`EAAPP_ID` instead of the Epic/GOG/Xbox set.
 
-## Per-Template Details
-
-### template-ue4-5
-
-**Toggles:** `IO_STORE`, `autoDownloadUe4ss`, `SIGBYPASS_REQUIRED`, `PAKMOD_LOADORDER`/`FBLO`, `hasModKit`, `hasXbox`/`multiExe`/`hasUserIdFolder`, `preferHardlinks` (default true), `ue4ssLoadOrder` (default false — enables UE4SS custom LO page + mods.txt + `GameSettings` toggle)
-
-**Constants:** `EPIC_CODE_NAME` (root subfolder), `PAKMOD_PATH` = `EPIC_CODE_NAME/Content/Paks/~mods`, `CONFIG_FOLDERNAME` = `Windows` (UE5) or `WindowsNoEditor` (UE4), `ENGINE_VERSION`, `REQ_FILE`
-
-**Mod types:** `BINARIES_ID` → `LOOSELUA_ID` → `UE4SS_ID` → pak types → `CONFIG_ID` → `SAVE_ID` → `ROOT_ID`/`ROOTSUB_ID` → fallback
-
-**Setup:** Reads store-specific files to set `BINARIES_PATH` (Epic uses `EPIC_CODE_NAME/Binaries/Win64`).
+**Which template a given game uses:** check `resources/lists/games-*.txt` (generated by
+`categorize_games.py`) or the `Structure:` line in that extension's `index.js` header. Do not infer
+it from the game or folder name.
 
 ---
 
-### template-unitybepinex
+## Shared anatomy
 
-**Toggles:** `BEPINEX_BUILD` (`'mono'`/`'il2cpp'`), `bleedingEdge`, `allowBepinexNexus`, `downloadCfgMan`, `BEPINEX_VERSION`
+Every template is a single `index.js` following the same top-to-bottom order:
 
-**Constants:** `GAME_STRING`, `DATA_FOLDER_DEFAULT`, `ASSEMBLY_PATH`, `BEPINEX_ARCH`
+```text
+imports  ->  feature toggles  ->  constants  ->  spec  ->  helper functions
+         ->  installers  ->  auto-downloaders  ->  setup()  ->  applyGame()
+         ->  main()  ->  module.exports
+```
 
-**Mod types:** `BEPCFGMAN_ID` → `BEPMOD_ID` (BepInEx/plugins) → `ASSEMBLY_ID` → `ASSETS_ID` → `ROOT_ID` → fallback
+`applyGame(context, spec)` does all the `context.register*` work: `registerGame`, then mod types,
+then installers, then toolbar actions. `main(context)` calls `applyGame()` and puts anything that
+must run once at Vortex startup — event handlers, hand-offs to helper extensions — inside
+`context.once()`. Load-order and Redux registrations are the exception: they happen in `main()`
+directly, before `context.once()`, because they are registrations rather than handlers.
 
-**requireExtension:** `'modtype-bepinex'`. BepInEx itself is downloaded by that extension (Nexus or GitHub).
+`template-basic` is the reference skeleton. Every other template is that skeleton plus engine- or
+loader-specific mod types, installers, and tooling, so reading it first makes the other 15 legible
+as deltas. It is also the checklist for a *new* template: the `spec` must carry every store ID slot
+(`null` where unused), `compatible`, and the discovery ID array, even if a given engine never uses
+them.
 
-**downloader.js required** — ConfigurationManager is a `downloader.js` requirement (`BEPCFGMAN_REQUIREMENTS`), so it is version-checked against its GitHub releases rather than pinned to a hardcoded URL. See the shared downloader notes below.
+### Helper functions in every template
 
----
+| Function | Role |
+| --- | --- |
+| `isDir` / `statCheckSync` / `statCheckAsync` | Filesystem probes used by version and path detection |
+| `modTypePriority` | Maps the `spec` string `high` -> 25, `low` -> 75 |
+| `pathPattern` | Expands `{gamePath}`, `{documents}`, `{localAppData}`, `{appData}` in a mod type's `targetPath` |
+| `makeFindGame` | Discovery: `util.GameStoreHelper.findByAppId(...)`, optionally behind a `winapi.RegGetValue()` registry probe |
+| `requiresLauncher` | Returns the per-store launcher hand-off (Steam / Xbox `appExecName` / Epic `appId`) |
+| `getExecutable` / `setGameVersion` | Resolve which store's build is installed and switch paths accordingly |
+| `resolveGameVersion` | Xbox reads `appxmanifest.xml`; everything else reads the exe with `exe-version` |
+| `getDiscoveryPath` | Reads the discovered game path out of state |
+| `purge` / `deploy` | Promise wrappers over the `purge-mods` / `deploy-mods` events |
+| `modFoldersEnsureWritable` | `fs.ensureDirWritableAsync()` over every mod-type folder, called at the end of `setup()` |
+| `setup` | Caches game path, staging folder, download folder; detects version; fires setup notification; kicks off auto-downloads |
 
-### template-unitymelonloaderbepinex-hybrid
+### Universal feature toggles
 
-**Toggles:** `recommendedLoader` (`''`/`'bepinex'`/`'melon'`), `preventPluginInstall`, `loaderSwitchRestart`, `enableSaveInstaller`, `hasCustomMods`/`hasCustomLoader`/`customLoaderInstaller`, `allowBepCfgMan`/`allowMelPrefMan`, `useMelonNightly`, `BEPINEX_BUILD`/`MELON_STRING`
+Toggles are plain module-level `const` booleans read at load time, not user settings. Flipping one
+in an extension turns a whole feature off across all of its touch points — the `spec.modTypes` entry,
+the tool entry, the `setup()` download call, the `registerInstaller` call, and the guard at the top
+of the gated function.
 
-**Behavior:** Loader switching mutually exclusive. `preventPluginInstall` blocks mismatched loader plugins. Downloads both loaders' utilities as needed.
+| Toggle | In | Default | Effect |
+| --- | --- | --- | --- |
+| `debug` | all 16 | `false` | Extra logging |
+| `setupNotification` | all 16 | `false`, except `farcry`, `frostbite`, `reloaded2`, `rpgmaker` | Fires `setupNotify()` from `setup()`. The four exceptions default `true` because each already had real, always-relevant instructions firing unconditionally before the toggle existed |
+| `allowSymlinks` | 14 (not `reloaded2`, `ue4-5`) | `true`, except `anvilengine` and `frostbite` (`false`) | Feeds `details.supportsSymlinks`. Must be `false` when files carry internal references or a repacking tool rewrites them |
+| `fallbackInstaller` | 13 (not `reframework-fluffy`, `shinryu`, `ue4-5`) | `true` | Registers the catch-all installer at priority 49. Set `false` to avoid installer collisions |
+| `hasXbox` | 12 | `false`, auto-set `true` when `XBOXAPP_ID` is in `DISCOVERY_IDS_ACTIVE` | Xbox executable, save path, and `appxmanifest.xml` version reading |
+| `multiExe` | 6 | `false`, several templates auto-derive it | More than one store's executable name differs from the Steam default |
+| `hasUserIdFolder` | 6 | `false`, except `shinryu` (`true`) | Scans the save/config folder for a single numeric-account subfolder and splices it into the path |
 
-**downloader.js + bepinexbe_downloader.js required** — MelonLoader, BepInEx mono and ConfigurationManager are `downloader.js` requirements; MelonPreferencesManager uses its direct-copy mode (naked `.dll`); IL2CPP BepInEx comes from `bepinexbe_downloader.js`. `getRequirements(api)` returns only the requirements belonging to the loader that is currently installed — never both loaders, which would break the game. Mono extensions drop the `bepinexbe_downloader.js` copy entirely. See the shared downloader notes below.
+The three templates without `fallbackInstaller` and the two without `allowSymlinks` are deliberate:
+`reframework-fluffy`, `shinryu`, and `ue4-5` each route unrecognised archives through their own
+architecture (Fluffy re-zipping, SRMM's manager, or the pak load order) rather than a generic
+catch-all, and `reloaded2` / `ue4-5` are hardlink-only by nature.
 
----
+### Mod type priorities
 
-### template-unity-umm
+`spec.modTypes` entries declare `high` or `low`, which `modTypePriority()` turns into 25 or 75, plus
+the entry's array index. Anything needing an exact number — usually because its target path is
+computed at runtime rather than templated — is registered explicitly instead, in the 8–72 band:
 
-**Constants:** `GAME_STRING`, `UNITY_ARCH`, `UNITY_BUILD` (`'mono'`/`'il2cpp'`), `DEV_REGSTRING`/`GAME_REGSTRING` (registry paths), `UMM_FOLDER`, `PLUGIN_FOLDER`, `ASSEMBLY_FILES`
+| Band | Typical use |
+| --- | --- |
+| 8–9 | Must beat a helper extension's own mod types (`unitybepinex` registers ConfigurationManager at 9 because the BepInEx extension's types start at 10) |
+| 25–58 | Engine-specific types with runtime-computed paths |
+| 60–72 | Config, save, assembly, assets, loader — the tail types |
 
-**Mod types:** `UMM_ID` → `PLUGIN_ID` → `ASSEMBLY_ID` → `ASSETS_ID` → `ROOT_ID` → fallback
+### Installer ladder
 
----
+Installers register in the 25–49 band, lowest tested first, first `supported: true` wins. Templates
+step by 2 (25, 27, 29, …) so a game extension can slot an extra installer between two template ones
+without renumbering. The fallback installer, where present, always sits at 49 and is registered
+last.
 
-### template-basic
+Every `testSupported` checks the game ID and early-returns `supported: false` when the archive
+contains `fomod/ModuleConfig.xml`, so FOMOD archives fall through to Vortex's own FOMOD installer.
 
-**Toggles:** `hasLoader`, `multiModPath`, `needsModInstaller`, `rootInstaller`, `hasUserIdFolder`, `binariesInstaller`
+### Notification vocabulary
 
-**Constants:** `MOD_PATH`, `BINARIES_PATH`, `INSTALL_HIVE`/`INSTALL_KEY`/`INSTALL_VALUE` (registry discovery), `EXEC_EPIC`/`EXEC_GOG`/`EXEC_DEMO`
+Three notification shapes recur across templates, all built on `api.sendNotification` with an
+`allowSuppress: true` flag and a "More" action that opens an `api.showDialog`:
 
-**Discovery:** `winapi.RegGetValue()` fallback before `GameStoreHelper`.
+- **`setupNotify(api)`** — one-time setup instructions, fired from `setup()` behind
+  `setupNotification`. Offers "Acknowledge" and "Never Show Again".
+- **`deployNotify(api)`** — fired from a `did-deploy` handler in templates whose games need an
+  external tool run after deployment to actually apply mods. Carries a `Run <tool>` button wired to
+  a `runDeployTool` / `runFrosty` / `runFluffy` / `runModManager` helper that looks the tool path up
+  out of `settings.gameMode.discovered[GAME_ID].tools` and calls `api.runExecutable`. Present in
+  `anvilengine`, `farcry`, `frostbite`, `reframework-fluffy`, `reloaded2`, `shinryu`, and
+  `tfcinstaller-ue2-3`.
+- **`fallbackInstallerNotify(api, modName)`** — fired from the fallback installer, telling the user
+  Vortex could not place the files. Offers "Contact Ext. Developer" (`EXTENSION_URL?tab=posts`) and
+  "Open Mod Page + Staging Folder", which resolves the mod's Nexus `modId` out of state to build the
+  page URL.
 
----
+### Toolbar actions
 
-### template-reframework-fluffy
+Every template registers `mod-icons` toolbar buttons at priority 300, each guarded by a
+`selectors.activeGameId(state) === GAME_ID` check. Five are effectively universal — Open Config
+Folder, Open Save Folder, Open PCGamingWiki Page, View Changelog, Submit Bug Report, Open Downloads
+Folder — and each template adds its own on top (Open Paks Folder, Open plugins.js File, Open
+override.cfg, Delete ModData Folder, Download BepInExConfigManager, and so on).
 
-Steam only. RE Engine games.
+### Auto-download routes
 
-**Toggles:** `reZip` (default true), `multiExe`
+Templates fetch their required loader or tool through one of four routes:
 
-**Constants:** `FLUFFY_FOLDER`, `ROOT_FILES`, `REF_PAGE_NO`/`REF_FILE_NO`, `CONFIG_FILE`
+| Route | Used by | Mechanism |
+| --- | --- | --- |
+| Inline Nexus | `anvilengine`, `cobraengineACSE`, `farcry`, `reframework-fluffy`, `reloaded2`, `shinryu`, `snowdropengine`, `tfcinstaller-ue2-3`, `ue4-5` | `api.ext.nexusGetModFiles(domain, pageId)`, newest category-1 file wins, falls back to a hardcoded file ID, then `start-download` + `start-install-download`, then `setModsEnabled` + `setModType` via `util.batchDispatch` |
+| Inline direct URL | `frostbite`, `farcry`, `reframework-fluffy` (nightly) | `start-download` against a fixed vendor or GitHub URL, sometimes followed by a manual copy into the game folder for naked `.dll` payloads |
+| `downloader.js` module | `godot`, `unitybepinex`, `unitymelonloaderbepinex-hybrid` | A bundled module resolving the newest GitHub release, with version comparison and an update check wired to `check-mods-version`. Full contract in `DOWNLOADER.md` |
+| Delegated to a helper extension | `unity-umm` (`modtype-umm`), `unitybepinex` (`modtype-bepinex`) | `context.requireExtension(...)` plus an `api.ext.ummAddGame` / `api.ext.bepinexAddGame` registration in `context.once()`; the helper extension owns fetching and installing the loader |
 
-**Mod types:** `ROOT_ID` → `LOOSELUA_ID` → `FLUFFY_ID` → `FLUFFYMOD_ID` → `FLUFFYPAK_ID` → `PRESET_ID` → `CONFIG_ID`
+Requirements hosted somewhere other than GitHub use a sibling module with the same local-copy model,
+one per host: `gamebanana_downloader.js`, `moddb_downloader.js`, `modworkshop_downloader.js`,
+`thunderstore_downloader.js`, and `bepinexbe_downloader.js` (the BepInEx bleeding-edge CI builds
+IL2CPP Unity games need — see `BEPINEX_BE_BUILDS.md`). Each is documented in its host's API doc, all
+linked from `DOWNLOADER.md`.
 
-**Auto-download:** Fluffy + REFramework from Nexus. Save: Registry → `Steam/userdata/{userid}/{appid}/remote`.
-
----
-
-### template-cobraengineACSE
-
-Frontier games (Planet Zoo/Coaster). Cobra Engine + ACSE.
-
-**Constants:** `DEV_FOLDER`, `ROOT_FOLDERS`, `MOD_PATH` = `Win64/ovldata`, `MOD_EXT` = `'.ovl'`, `GAME_FOLDER`
-
-**Mod types:** `ACSE_ID` → `ROOT_ID` → `OVLDATA_ID` → `LOCALISED_ID` → `MOVIES_ID` → `SAVE_ID` → `CONFIG_ID`
-
-**Save/Config:** `Saved Games/Frontier Developments/GAME_FOLDER/USERID`. Auto-download ACSE from Nexus.
-
----
-
-### template-tfcinstaller-ue2-3
-
-Older UE2/3 games with TFC Installer.
-
-**Constants:** `EPIC_CODE_NAME`, `COOKED_FOLDER` = `'CookedPC'`, `BITS`, `ROOTSUB_FOLDERS`, `TFCMOD_EXTS`. Tools: TFC Installer + UPK Explorer.
-
-**Mod types:** `TFCMOD_ID` → `ROOT_ID` → `ROOTSUB_ID` → `COOKEDSUB_ID` → `BINARIES_ID` → `MOVIES_ID` → `TFC_ID` → `UPKEXPLORER_ID`
-
-**Auto-download:** TFC Installer from Nexus.
-
----
-
-### template-reloaded2
-
-Reloaded-II framework games.
-
-**Constants:** `MOD_LOADER_FOLDER`, `RELOADEDMODLOADER_FILE`, `RELOADEDMODLOADER_PAGE_NO`/`RELOADEDMODLOADER_FILE_NO`
-
-**Mod types:** `RELOADEDMOD_ID` → `RELOADEDMODLOADER_ID` → `RELOADED_ID` → optional `SAVE_ID`
-
-**Detection:** `modconfig.json`. Symlinks disabled (hardlinks only). Uses `elevate.exe` for elevated launches.
-
----
-
-### template-rpgmaker
-
-RPG Maker MV/MZ with `plugins.js` auto-update.
-
-**Constants:** `NAME_FOLDER`, `ROOT_FOLDERS`, `JSFILE_PATH` = `'js/plugins'`, `JSLIST_FILE` = `'plugins.js'`
-
-**Mod types:** `JSFOLDER_ID` → `JSFILE_ID` → `ROOT_ID` → `JSON_ID`
-
-**Auto-update:** On JS install, appends new entries to `plugins.js` with `"status": true`.
-
----
-
-### template-godot
-
-Godot 3/4 with Godot Mod Loader.
-
-**Toggles:** `ENGINE_VERSION` (`'3'`/`'4'`), `customLoader`, `keepZips`
-
-**Constants:** `LOADER_FILE`, `LOADER_VERSION`, `LOADER_URL_API` (GitHub), `DATA_FOLDER`
-
-**Mod types:** `LOADER_ID` → `MOD_ID` → optional `CONFIG_ID`/`SAVE_ID`
-
-**downloader.js required** — see the shared downloader notes below.
-
----
-
-### Shared: downloader.js (requirements auto-downloader)
-
-A shared module copied into each extension that auto-downloads/installs a modding
-requirement (loader, framework) from its **GitHub releases**. The canonical copy lives at
-`resources/downloader/downloader.js`; each adopter carries its own copy (propagate changes
-manually to every extension that bundles a `downloader.js`).
-
-Full reference — architecture, exports, the requirement-object fields, the three
-version-resolve strategies, and the `template_downloader.js` wiring — lives in
-`resources/DOWNLOADER.md`.
-
-Requirements hosted somewhere other than GitHub use a sibling module with the same local-copy
-model, one per host: `gamebanana_downloader.js`, `moddb_downloader.js`,
-`modworkshop_downloader.js`, `thunderstore_downloader.js`, and `bepinexbe_downloader.js` (the
-BepInEx bleeding-edge CI builds that IL2CPP Unity games need — `resources/BEPINEX_BE_BUILDS.md`).
-Each is documented in its host's API doc, all linked from `resources/DOWNLOADER.md`.
+Because each adopter carries its own copy of a downloader module, a change to the canonical copy at
+`resources/downloader/downloader.js` has to be propagated by hand to every extension that bundles
+one, the three templates above included.
 
 ---
 
-### template-snowdropengine
+## Per-template details
 
-Ubisoft Snowdrop Engine (Division, Avatar).
+Each template's own mechanics — the engine constraint it exists to solve, its toggles, mod types with
+real target paths, installer ladder, tools, auto-downloads, and known traps — live in its own file:
 
-**Constants:** `DATA_FILE`, `CONFIG_FOLDER`, `DATASUB_FOLDERS`, `MODLOADER_FILE` = `'version.dll'`
-
-**Mod types:** `MODLOADER_ID` → `DATA_ID` → `DATASUB_ID` → `CONFIG_ID`
-
-**Discovery:** Ubisoft registry (`WOW6432Node\Ubisoft\Launcher\Installs\{UPLAYAPP_ID}`), then `GameStoreHelper`. Auto-download Snowdrop ModLoader from Nexus.
-
----
-
-### template-anvilengine
-
-Ubisoft Anvil Engine (AC series, Ghost Recon). Steam + Ubisoft Connect.
-
-**Toggles:** `hasAtk` (AnvilToolkit), `hasForger` (.forger2, older AC games), `setupNotification`, `allowSymlinks` (default true)
-
-**Constants:** `UPLAYAPP_ID`, `ROOT_FOLDERS`, `EXTRACTED_FOLDER`, `RENAME_FOLDER`, `ATK_PAGE`/`ATK_FILE`, `MOD_PATH_DEFAULT`
-
-**Mod types (hasAtk):** `EXTRACTED_ID` → `FORGEFOLDER_ID` → `DATAFOLDER_ID` → `LOOSE_ID` → `FORGE_ID` → `ROOT_ID` → `ATK_ID`
-
-**Discovery:** Ubisoft registry → `GameStoreHelper`. Auto-download ATK + Forger. deployNotify reminds user to run ATK.
-
----
-
-### template-farcry
-
-Far Cry / Dunia Engine with FC Mod Installer.
-
-**Constants:** `FC` (code string), `BIN_PATH`, `DATA_PATH` = `'data_win32'`, `MI_EXEC`, `MIMOD_FOLDER`
-
-**Mod types:** `ROOT_ID` → `BIN_ID` → `DATA_ID` → `MI_ID` → `MIMOD_ID` → `XML_ID`
-
-**User ID folder** for save/config paths, detected at `setup()`.
-
----
-
-### template-frostbite
-
-EA Frostbite Engine with Frosty Mod Manager. Steam + EA App.
-
-**Toggles:** `allowSymlinks` (default false)
-
-**Constants:** `EAAPP_ID`, `FROSTYMOD_FOLDER`, `FROSTYMOD_EXTS` = `[".fbmod", ".archive"]`, `FROSTY_EXEC`
-
-**Mod types:** `BINARIES_ID` → `FROSTYMOD_ID` → `FROSTY_ID`
-
-**Tools:** `FrostyModManagerLaunch` (primary, `-launch Default`) + `FrostyModManager` (UI)
-
-**Auto-download:** Frosty from GitHub. deployNotify active. `EPICAPP_ID`/`gogAppId` = null.
-
----
-
-### template-shinryu
-
-Shin Ryu Mod Manager (SRMM). Steam + Xbox.
-
-**Toggles:** `needsModInstaller`, `rootInstaller`/`fallbackInstaller`, `hasXbox`, `allowSymlinks`
-
-**Constants:** `TOPLEVEL_FOLDER`, `MODMANAGER_EXEC` = `"shinryumodmanager.exe"`, `MODMANAGERMOD_FILE` = `"modinfo.ini"`, `DATAMOD_EXTS` = `[".par"]`
-
-**Mod types:** `ROOT_ID` → `MODMANAGERMOD_ID` → `DATAMOD_ID` → `MODMANAGER_ID`
-
-**Tools:** `Launch Modded Game` (SRMM `--run --silent`) + `Shin Ryu MM` (UI). Auto-download SRMM from Nexus. deployNotify with "Run SRMM" button.
+| Template | File | Defining mechanic |
+| --- | --- | --- |
+| `template-basic` | `templates/TEMPLATE_BASIC.md` | Reference skeleton; everything opt-in behind a toggle |
+| `template-anvilengine` | `templates/TEMPLATE_ANVILENGINE.md` | ATK repacks `.forge`; `.forge` rename dialog |
+| `template-cobraengineACSE` | `templates/TEMPLATE_COBRAENGINEACSE.md` | `.ovl` overlays under `Win64/ovldata`; ACSE extender |
+| `template-farcry` | `templates/TEMPLATE_FARCRY.md` | FC Mod Installer patches `.dat`/`.fat`; `.a3` repack trap |
+| `template-frostbite` | `templates/TEMPLATE_FROSTBITE.md` | Frosty owns patching; ModData and DatapathFix actions |
+| `template-godot` | `templates/TEMPLATE_GODOT.md` | `keepZips` and `customLoader` change file layout |
+| `template-reframework-fluffy` | `templates/TEMPLATE_REFRAMEWORK_FLUFFY.md` | Two ecosystems at once; the re-zip trap |
+| `template-reloaded2` | `templates/TEMPLATE_RELOADED2.md` | `modconfig.json` mods; `elevate.exe` launch |
+| `template-rpgmaker` | `templates/TEMPLATE_RPGMAKER.md` | Auto-registers plugins into `js/plugins.js` |
+| `template-shinryu` | `templates/TEMPLATE_SHINRYU.md` | Nested `runtime/media` root; 27/27 priority collision |
+| `template-snowdropengine` | `templates/TEMPLATE_SNOWDROPENGINE.md` | `version.dll` proxy loader; smallest template |
+| `template-tfcinstaller-ue2-3` | `templates/TEMPLATE_TFCINSTALLER_UE2_3.md` | `.tfc` texture caches; `.tfc` excluded from mod exts |
+| `template-ue4-5` | `templates/TEMPLATE_UE4_5.md` | Three load-order surfaces, React layer, update guard |
+| `template-unity-umm` | `templates/TEMPLATE_UNITY_UMM.md` | Loader fully delegated to `modtype-umm` |
+| `template-unitybepinex` | `templates/TEMPLATE_UNITYBEPINEX.md` | Loader delegated; ConfigurationManager is not |
+| `template-unitymelonloaderbepinex-hybrid` | `templates/TEMPLATE_UNITYMELONLOADERBEPINEX_HYBRID.md` | Two mutually exclusive loaders, user picks |
 
 ---
 
 ## See also
 
-`INSTALLER_SYSTEM.md` (per-template installer priority ladders referenced throughout).
-`REGISTER_GAME.md` (the `spec`/`applyGame()` structure every template follows).
-`LOAD_ORDER_REGISTRATION.md` (which templates use FBLO vs the legacy load-order page). Requirements
-auto-downloader: `resources/DOWNLOADER.md` (linked above), plus `BEPINEX_BE_BUILDS.md` for the
-BepInEx bleeding-edge sibling module. `PCGAMINGWIKI_API.md` (source of the
-`PCGAMINGWIKI_URL` constant and the store-ID/save-path constants filled in at scaffold time).
+`REGISTER_GAME.md` (the `spec` / `applyGame()` structure every template follows).
+`INSTALLER_SYSTEM.md` (`registerInstaller` contract behind the priority ladder above).
+`FOMOD_INSTALLER.md` (the built-in installer the `ModuleConfig.xml` check yields to).
+`LOAD_ORDER_REGISTRATION.md` (`registerLoadOrder` / legacy `registerLoadOrderPage`, used by `ue4-5`).
+`UE4_5_REACT_ARCHITECTURE.md` and `NON_UE_LOAD_ORDER_PAGES.md` (the load-order React layers).
+`DOWNLOADER.md` and `BEPINEX_BE_BUILDS.md` (the auto-downloader modules).
+`REQUIRES_LAUNCHER.md` (the `requiresLauncher` hand-off every template implements).
+`WINAPI_BINDINGS.md` (the `winapi.RegGetValue` registry-discovery fallback).
+`RUN_EXECUTABLE.md` (`api.runExecutable`, behind every `runDeployTool` helper).
+`NOTIFICATIONS_DIALOGS.md` (the notification and dialog primitives behind the vocabulary above).
+`REGISTER_ACTION.md` and `TOOLBAR_ACTIONS.md` (the `mod-icons` toolbar buttons every template ships).
+`PCGAMINGWIKI_API.md` (source of the `PCGAMINGWIKI_URL` constant and the store-ID and save-path
+values filled in at scaffold time).

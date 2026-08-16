@@ -158,3 +158,6 @@ Hook priority: non-extension hooks use steps of 100 (50 = between built-ins). Th
 (store-launcher redirection that runs before `api.runExecutable`). `ERROR_CLASSES.md`
 (`MissingInterpreter`/`ProcessCanceled` thrown from start hooks around a launch).
 `UNDERUSED_API_FUNCTIONS.md` (§4 `registerStartHook`/`registerInterpreter`).
+`TEMPLATES_OVERVIEW.md` (the `runDeployTool` helper pattern built on this call) and
+the per-template files under `templates/` (those that launch an external mod manager after
+deployment, including `TEMPLATE_RELOADED2.md`'s `elevate.exe` indirection).

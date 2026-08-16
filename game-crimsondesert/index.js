@@ -2138,7 +2138,7 @@ function downloadUalNotify(api) {
   });
 }
 
-// Download MelonLoader latest from GitHub
+// Download UAL latest from GitHub
 async function downloadUal(api, gameSpec, check = true) {
   let isInstalled = await checkForUal(api, gameSpec);
   if (!isInstalled || !check) {

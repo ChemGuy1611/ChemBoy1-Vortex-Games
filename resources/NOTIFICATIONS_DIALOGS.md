@@ -393,3 +393,14 @@ the promise + callback bookkeeping stays consistent.
   additional UI extension points: `registerDialog`, `registerBanner`, `registerToDo`),
   `MOD_RULES.md` (dialogs prompting for rule conflicts), `REGISTER_MIGRATION.md` (`api.showDialog`
   usage after `api.awaitUI()` in a migration).
+
+---
+
+## See also
+
+`TEMPLATES_OVERVIEW.md` (the three recurring notification shapes game extensions build on this API —
+setup, post-deploy tool prompt, and fallback-installer warning).
+`templates/` (per-template variants, including the `.forge` rename input dialog in
+`TEMPLATE_ANVILENGINE.md` and the destructive-action confirmations in `TEMPLATE_FROSTBITE.md`).
+`VORTEX_EVENT_BUS.md` (the event plumbing notifications are raised from).
+`REGISTER_ACTION.md` (the toolbar actions that open most of these dialogs).

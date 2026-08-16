@@ -14,6 +14,8 @@ For **Thunderstore**-hosted requirements, use the companion module `resources/do
 
 For **BepInEx bleeding-edge** builds (`builds.bepinex.dev`, the only source of an IL2CPP-capable BepInEx 6), use the companion module `resources/downloader/bepinexbe_downloader.js` instead (same local-copy model, with `template_bepinexbe_downloader.js` for wiring) — documented in `BEPINEX_BE_BUILDS.md`. Mono Unity games stay on this module: BepInEx 5.x ships as ordinary GitHub releases.
 
+For **fcmodding.com**-hosted requirements (`downloads.fcmodding.com`, the Far Cry Mod Installer), use the companion module `resources/downloader/fcmodding_downloader.js` instead (same local-copy model, with `template_fcmodding_downloader.js` for wiring) — documented in `FCMODDING_API.md`.
+
 ---
 
 ## Architecture
@@ -109,7 +111,7 @@ The inverse case needs care: when the version lives only in the release **tag** 
 
 `pinVersion` holds a requirement at one specific release instead of tracking the newest one. It is opt-in and unset by default; with no pin the module behaves exactly as it does without the feature. The intended use is a specific upstream release that breaks a specific game — not general version freezing, since tracking the latest release is the whole point of the module.
 
-The same field name exists in all six downloader modules. Only the way each one *reaches* the pinned release differs, because their hosts do:
+The same field name exists in six of the seven downloader modules. Only the way each one *reaches* the pinned release differs, because their hosts do:
 
 | Module | `pinVersion` means | Reach-the-release field |
 | --- | --- | --- |
@@ -119,8 +121,9 @@ The same field name exists in all six downloader modules. Only the way each one 
 | `modworkshop_downloader.js` | file version | `pinFileId` — **required** |
 | `thunderstore_downloader.js` | package version | none — the per-version download URL is fully predictable |
 | `bepinexbe_downloader.js` | BE build number | `pinArtifactUrl` — optional; only needed once the pinned build has scrolled off the index page |
+| `fcmodding_downloader.js` | *not supported* | — the host keeps only the current build and one prior, so any pin 404s within a release or two (`FCMODDING_API.md`) |
 
-Behavior, identical across all six:
+Behavior, identical across all six that support it:
 
 - **Installed identity equals the pin -> the update check returns immediately**, before any HTTP request. A pinned requirement therefore costs nothing against the GitHub rate limit or any host API. This is the headline behavior, and it is what the short-circuit at the top of each module's update-check entry point exists for.
 - Installed identity differs from the pin — **including not installed at all** — and the module resolves the *pinned* release, never the latest one.
@@ -188,7 +191,7 @@ The newest successful run's `run_number` is the compare key. It is a monotonic i
 - **Detection is scoped to the requirement's mod type.** `getMods` returns only mods whose `type` equals the requirement's `modType`; untyped mods are not searched. Marker files are frequently generic — `winmm.dll`, `dinput8.dll` and friends ship with any number of ordinary ASI mods — and including untyped mods meant such a mod could satisfy the requirement, leaving it permanently "installed" (never downloaded, with update checks reading an unrelated mod's version). Scoping also avoids walking every untyped mod's staging folder on each setup and update check. To keep that safe, `installDownload` dispatches `actions.setModType` for the requirement's `modType` itself rather than relying solely on the extension's own installer firing its `setmodtype` instruction; when the installer already assigned it, the dispatch is a no-op. A requirement that was installed previously without a mod type is re-downloaded once, after which it is typed correctly.
 - **A missing or renamed asset is reported, not swallowed.** When no release contains an asset matching `fileArchivePattern` (or `archiveFileName`), `getLatestGithubReleaseAsset` logs a warning and raises an error notification naming the pattern and listing the file names the release actually ships. This is what an upstream asset rename looks like from the extension's side, and it used to fail silently.
 - **One bad requirement does not cancel the rest.** Each requirement in the array is processed inside its own `try`, so an unreachable repository, an exhausted rate limit or a failed install affects only that requirement — the remaining ones still install. Rate-limit cancellations are logged rather than raised as error notifications.
-- **Concurrent runs are guarded.** `download()` keeps a module-level set of in-flight requirements keyed by mod type, so pressing a `Download <requirement>` toolbar action twice does not start two downloads of the same asset. Matches the guard used by the GameBanana, ModDB, ModWorkshop and Thunderstore modules.
+- **Concurrent runs are guarded.** `download()` keeps a module-level set of in-flight requirements keyed by mod type, so pressing a `Download <requirement>` toolbar action twice does not start two downloads of the same asset. Matches the guard used by every sibling module.
 - **A forced run reports when there is nothing to do.** `download(api, requirements, true)` from a toolbar button previously just flashed the activity notification when everything was already current. It now raises a success notification listing the up-to-date requirements and their versions, so a manual button press always produces visible feedback.
 - **Downloads are streamed, not buffered.** `doDownload` writes the response body to disk through a backpressure-aware stream instead of materializing the whole asset in memory — mod loaders and emulator builds run to hundreds of megabytes. The web stream is drained by hand rather than via `Readable.fromWeb`, because the renderer's `fetch` returns Blink's `ReadableStream`, a different class from the `node:stream/web` one `fromWeb` brand-checks against. The temp file is removed if the import or install step does not complete.
 - **No auto-update on setup.** `download()` installs a missing requirement, but if one is already installed it does **not** silently pull a newer release. Instead it calls `testRequirementVersion`, which raises the "update available" notification. Only the user-driven Download action actually updates — it calls `download(api, [req], true)` (the forced branch).
@@ -199,7 +202,7 @@ The newest successful run's `run_number` is the compare key. It is a monotonic i
 - **The already-downloaded shortcut is narrow, and its exact-name match is deliberate.** `download()` only reaches the `findDownloadId` lookup after the installed-requirement branches have had their turn: an installed requirement with a `resolveVersion` either raises the update notification (non-forced) or compares versions (forced) and returns either way, and an installed requirement without a resolver is simply re-enabled and returns. The shortcut gate itself (`!versionMismatch && !force && dlId`) therefore fires in exactly one situation — the requirement is **not installed** and a matching archive is already in Vortex's downloads. `findDownloadIdByFile` compares the full base file name (case-insensitively) against `archiveFileName`, so any other file name yields no id and the flow correctly falls through to a fresh GitHub fetch. Do not loosen that comparison to `fileArchivePattern`: a stale older archive left in downloads would then satisfy the requirement and get installed instead of the current release. Outside this lookup, `archiveFileName` is only used to build the update notification's id, so it does not need updating when a project publishes a new archive name.
 - **`start-download` arg shape is load-bearing.** The handoff to Vortex's own download manager is `api.events.emit('start-download', [url], dlInfo, undefined, cb, redownload, { allowInstall: false })`. Vortex schema-validates those arguments and, on a mismatch, logs a warning and does nothing at all — no download, no callback, no error dialog. Keep the URL wrapped in an array and keep `redownload` to `'never' | 'ask' | 'replace' | 'always'` (or `undefined`). Details and the full tuples: `VORTEX_DOWNLOAD_MGMT.md`.
 - **`prereleaseTag` needs the tag upstream actually moves.** A project can publish several pre-release tags whose names all sound current, and picking the wrong one silently installs an ancient build rather than failing. RE-UE4SS is the cautionary example: `experimental` is an **archive** holding 857 assets accumulated since 2023, so `assets.find` returns whichever 2023 build matches first, while the tag that genuinely rolls is `experimental-latest` (four assets, replaced on each build). Before wiring a `prereleaseTag`, fetch `/releases/tags/<tag>` once and check the asset count and their upload dates — a rolling tag holds a handful of assets all sharing a recent timestamp.
-- **The mod list shows `userFacingName`, not the archive name.** Vortex renders a mod as `customFileName || logicalFileName || fileName || name`, and the install pipeline stamps `fileName` with the downloaded archive — so a requirement used to appear as `BepInEx_win_x64_5.4.23.5.zip` even though the module was already setting `name`. Every install now stamps `customFileName` from `userFacingName` as well. It is written at install only, so it cannot overwrite a name the user set afterwards. (The one older exception: the installed-without-resolver branch of `download()` re-stamps it on every non-forced run.) The same stamp exists in all five modules. Rendering rule: `VORTEX_MOD_LIST.md`.
+- **The mod list shows `userFacingName`, not the archive name.** Vortex renders a mod as `customFileName || logicalFileName || fileName || name`, and the install pipeline stamps `fileName` with the downloaded archive — so a requirement used to appear as `BepInEx_win_x64_5.4.23.5.zip` even though the module was already setting `name`. Every install now stamps `customFileName` from `userFacingName` as well. It is written at install only, so it cannot overwrite a name the user set afterwards. (The one older exception: the installed-without-resolver branch of `download()` re-stamps it on every non-forced run.) The same stamp exists in every sibling module. Rendering rule: `VORTEX_MOD_LIST.md`.
 - **Every install path stamps a version when one is parsable.** The stamped `attributes.version` is the source of truth for the installed version — the semver-coerced release tag, or the `fileArchivePattern` capture taken from the asset name. The fresh-download path always stamps `latestAssetVersion()`. The already-downloaded shortcut path stamps the `resolveVersion` result, but deliberately skips stamping on a failed resolve (`''` or the `'0.0.0'` sentinel), so the next forced update records the real release version instead of a floor that would misreport the install and suppress nothing.
 - **Tracking attributes, one per mode.** Which attribute holds the installed identity depends on the requirement: `version` by default (and for `pinVersion`), `githubAssetDate` for `trackByAssetDate`, `nightlyRunNumber` for `nightlyUrl`, and the `<directCopyPath>.version.json` marker file instead of any attribute for `directCopyPath`. `pinVersion` deliberately reads `version` directly rather than going through `resolveVersion`, so a pin works whichever strategy the requirement is configured with.
 - **Source attribution + version.** A successful install sets `source: 'website'` and `url` to the repo's human page (derived from `githubUrl`, e.g. `https://api.github.com/repos/{owner}/{repo}` -> `https://github.com/{owner}/{repo}`) — Vortex renders this as a clickable "Source" link in the mod details panel. It also records the `version` attribute: the archive-derived version on the already-downloaded shortcut path (no extra GitHub request), or `latestAssetVersion(requirement, asset)` on a fresh download (the same value used in the update-check dialog). When the shortcut path cannot resolve a version (no resolver, or the `''`/`'0.0.0'` sentinel for a versionless archive), the attribute is left unset rather than stamped with a bogus floor — the next forced update stamps the real release version.
@@ -266,17 +269,24 @@ The template also includes a full `resolveVersionByFile` implementation (extract
 ## See also
 
 `VORTEX_DOWNLOAD_MGMT.md` (the `start-download`/`import-downloads` events this module hands off
-to). `TEMPLATES_OVERVIEW.md` (which templates bundle a `downloader.js` copy).
+to). `TEMPLATES_OVERVIEW.md` (which templates bundle a `downloader.js` copy, and the four
+auto-download routes templates choose between). `templates/TEMPLATE_GODOT.md`,
+`templates/TEMPLATE_UNITYBEPINEX.md`, and `templates/TEMPLATE_UNITYMELONLOADERBEPINEX_HYBRID.md`
+(the requirement sets those three templates actually declare).
 `ARCHIVE_HANDLER.md` (why `archiveFileName` should point at an asset with a standard archive
 extension, and what a custom extension like `.vmz` costs).
 `VORTEX_MOD_METADATA.md` (why a GitHub-sourced requirement can end up tagged with an unrelated
 Nexus `modId`, and what an extension can do about it).
 `VORTEX_MOD_LIST.md` (the `customFileName || logicalFileName || fileName || name` rule that decides
 which name a requirement shows under).
+`BROWSER_MODULES.md` (the sibling module family in `resources/browsers/`: same local-copy adopter
+model, but for browsing a source's site instead of installing known requirements unattended).
 `GAMEBANANA_API.md`, `MODDB_API.md`, `MODWORKSHOP_API.md`, and `THUNDERSTORE_API.md` (the non-GitHub
 mod hosts — each has a sibling downloader module; the ModWorkshop and Thunderstore ones are the
 simplest, since both hosts serve direct download URLs).
 `BEPINEX_BE_BUILDS.md` (the sixth sibling module, for the IL2CPP-capable BepInEx 6 CI builds —
-the only one whose requirements are ordered by build number instead of by version).
+ordered by build number instead of by version).
+`FCMODDING_API.md` (the seventh sibling module, for the Far Cry Mod Installer — ordered by build
+timestamp, and the only one with no version pinning at all).
 `EMBEDDED_BROWSER.md` (the `browse-for-download` hand-off used when a requirement has no predictable
 URL, and how to embed a mod site in a page instead).

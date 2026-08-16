@@ -11,7 +11,8 @@ Arguments:
     --all       Deploy every game-* extension in the repo
     --dry-run   Preview what would change without copying
     --force     Fully replace the deployed folder instead of updating only
-                index.js and any *downloader.js modules inside it. The deployed
+                index.js and any *downloader.js / *browser.js modules inside it.
+                The deployed
                 folder is always located by name first, with or without --force,
                 so this replaces the existing extension rather than creating a
                 second copy beside it. A new "game-<id>" folder is created only
@@ -98,8 +99,12 @@ def deploy_game(game_id: str, dry_run: bool, force: bool) -> bool:
     resolved = vu.find_vortex_plugin_folder(game_id, game_name)
     dest = resolved or os.path.join(PLUGINS_DIR, f"game-{game_id}")
     partial = bool(resolved) and not force
+    # Shared modules bundled beside index.js: the *downloader.js family and the
+    # *browser.js family (resources/browsers/). Both are edited in the repo and
+    # have to travel with index.js or the deployed extension fails to require them.
     copy_names = ["index.js"] + sorted(
-        n for n in os.listdir(src) if n.endswith("downloader.js")
+        n for n in os.listdir(src)
+        if n.endswith("downloader.js") or n.endswith("browser.js")
     )
     if dry_run:
         if partial:

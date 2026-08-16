@@ -4,6 +4,11 @@
 
 - None Planned
 
+## [1.0.0] - 2026-08-14
+
+- The FC3 Mod Installer is now kept up to date. Vortex checks for new builds and installs them, and a "Download Latest FC3 Mod Installer" button has been added to the Mods toolbar.
+- If you already have the Mod Installer installed, you will see one update notification the first time this runs, even if your build is current. Taking the update clears it.
+
 ## [0.2.4] - 2026-08-11
 
 - Added Epic Games Store support

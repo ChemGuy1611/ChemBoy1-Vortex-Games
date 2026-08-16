@@ -9,7 +9,9 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | Manager | a file or folder named `modimporter.exe` | `Content` |
-| Modutility | a file or folder named `modutil.lua` | `Content\Mods\ModUtil` |
+| Modutility | a file or folder named `modutil.lua` and a file or folder named `main.lua` | `Content\Mods\ModUtil` |
+| Loader | a file or folder named `d3d12.dll` | `Ship` |
+| Plugin | a file or folder named `manifest.json`, a file or folder named `main.lua` and a file or folder named `d3d12.dll` | `Ship\ReturnOfModding\plugins` |
 
 Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
 
@@ -21,9 +23,21 @@ Installs to: `Content`
 
 ## Modutility
 
-Recognised when the archive contains a file or folder named `modutil.lua`.
+Recognised when the archive contains a file or folder named `modutil.lua` and a file or folder named `main.lua`.
 
 Installs to: `Content\Mods\ModUtil`
+
+## Loader
+
+Recognised when the archive contains a file or folder named `d3d12.dll`.
+
+Installs to: `Ship`
+
+## Plugin
+
+Recognised when the archive contains a file or folder named `manifest.json`, a file or folder named `main.lua` and a file or folder named `d3d12.dll`.
+
+Installs to: `Ship\ReturnOfModding\plugins`
 
 ## Rules That Apply To Every Mod Type
 
