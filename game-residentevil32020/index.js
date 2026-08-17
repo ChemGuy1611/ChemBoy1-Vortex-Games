@@ -35,7 +35,7 @@ const REF_STRING = "REFramework"; //file name for nightly latest URL - constant 
 const GAME_NAME = "Resident Evil 3";
 const GAME_NAME_SHORT = "RE 3";
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Resident_Evil_3_%282020%29";
-const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/433"; //Nexus link to this extension. Used for links
 
 const FLUFFY_FOLDER = "RE3R";
 const FLUFFY_FOLDER_DEMO = `${FLUFFY_FOLDER}_Demo`; //!set as null if no demo

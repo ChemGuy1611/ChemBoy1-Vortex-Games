@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [1.1.1] - 2026-08-17
+
+- Fixed: On the Xbox version, the mod loader, plugins, and Binaries mods now install beside the game executable in the game's main folder, instead of the Ship folder used by the other versions.
+
 ## [1.1.0] - 2026-08-16
 
 - Added: "Browse Thunderstore" page, which opens the Hades II Thunderstore site inside Vortex. Downloads started from it are installed, enabled, and named automatically, and any mods they depend on can be installed with them.

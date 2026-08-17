@@ -35,7 +35,7 @@ const REF_STRING = "REFramework"; //file name for nightly latest URL - constant 
 const GAME_NAME = "MONSTER HUNTER RISE";
 const GAME_NAME_SHORT = "MH RISE";
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Monster_Hunter_Rise";
-const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/349"; //Nexus link to this extension. Used for links
 
 const FLUFFY_FOLDER = "MHRISE";
 const FLUFFY_FOLDER_DEMO = `${FLUFFY_FOLDER}_Demo`; //!set as null if no demo

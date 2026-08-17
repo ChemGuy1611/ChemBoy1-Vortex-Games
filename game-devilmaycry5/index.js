@@ -35,7 +35,7 @@ const REF_STRING = "REFramework"; //file name for nightly latest URL - constant 
 const GAME_NAME = "Devil May Cry 5";
 const GAME_NAME_SHORT = "DMC 5";
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Devil_May_Cry_5";
-const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/434"; //Nexus link to this extension. Used for links
 
 const FLUFFY_FOLDER = "DMC5";
 const FLUFFY_FOLDER_DEMO = null; //!set as null if no demo

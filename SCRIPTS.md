@@ -1311,6 +1311,7 @@ python deploy_to_vortex.py GAME_ID [GAME_ID ...]
 python deploy_to_vortex.py GAME_ID --dry-run
 python deploy_to_vortex.py GAME_ID --force
 python deploy_to_vortex.py GAME_ID --restart-vortex
+python deploy_to_vortex.py GAME_ID --launch-game
 python deploy_to_vortex.py --all
 python deploy_to_vortex.py --all --dry-run
 ```
@@ -1320,6 +1321,7 @@ python deploy_to_vortex.py --all --dry-run
 - `--dry-run` — lists what would be copied without writing anything.
 - `--force` — always do a full folder replace instead of updating only `index.js` and downloader modules.
 - `--restart-vortex` — close Vortex before copying (graceful `taskkill`, force-kill after 30s) and launch it again (no CLI args) after all copies. One close + one launch per run, not per game. Launches Vortex even if it was not running. Ignored with `--dry-run`.
+- `--launch-game` — same restart, but relaunch straight into the deployed game (`Vortex.exe --game <GAME_ID>`), the same command the GUI's "Launch in Vortex" button runs. Implies `--restart-vortex`, so it does not need to be combined with it. Requires exactly one `GAME_ID` (rejected with `--all` or multiple ids). The id handed to Vortex is the `GAME_ID` declared in the extension's `index.js`, falling back to the folder id. Ignored with `--dry-run`.
 
 ### deploy_to_vortex.py — Examples
 
@@ -1510,7 +1512,7 @@ The per-folder `index.js`/`info.json`/`CHANGELOG.md` parse is cached in `vortex_
 | --- | --- |
 | Bump Version | Dialog (`--major`, `--minor` (default), `--patch`, Manual `--version X.Y.Z`, `--dry-run`), then `python bump_version.py <id> [flags]` |
 | Release | Dialog (`--no-open`, `--dry-run`, `--upload`, `--edit-changelog`), then `python release_extension.py <ids> [flags]` |
-| Deploy to Vortex | Dialog (`--dry-run`, `--force`, `--restart-vortex` default-checked), then `python deploy_to_vortex.py [flags] <ids>` |
+| Deploy to Vortex | Dialog (`--dry-run`, `--force`, `--restart-vortex` default-checked, `--launch-game`), then `python deploy_to_vortex.py [flags] <ids>` |
 | Launch in Vortex | `subprocess.Popen(VortexExe, ...)` — opens Vortex with `--game` for the selected game |
 | Open Folder | `os.startfile(folder)` — no subprocess |
 | Open in Editor | `os.startfile(index.js)` — no subprocess |

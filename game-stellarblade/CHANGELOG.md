@@ -4,7 +4,7 @@
 
 - None
 
-## [1.0.0] - 2026-08-15
+## [1.0.0] - 2026-08-17
 
 - Changed: Rebuilt the pak mod load order page. Entries can now be locked in place, selected in bulk with Ctrl-click, and managed from a right-click menu, and the list can be filtered by status.
 - Added: UE4SS Load Order page for script and DLL mods, with a Configure button for mods that ship a config file and a checkbox to enable or disable each mod.

@@ -37,19 +37,11 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | Mod | `hades2-mod` | high | `{gamePath}/Content/Mods` |
-| Binaries | `hades2-binaries` | high | `{gamePath}/Ship` |
 | Root Game Folder | `hades2-root` | high | `{gamePath}` |
 | Mod Importer | `hades2-manager` | low | `{gamePath}/Content` |
 | Mod Utility | `hades2-modutility` | low | `{gamePath}/Content/Mods/ModUtil` |
-| Mod Loader (Hell2Modding) | `hades2-loader` | high | `{gamePath}/Ship` |
-| ReturnOfModding Plugin | `hades2-plugin` | high | `{gamePath}/Ship/ReturnOfModding/plugins` |
-| ENVY (LuaENVY) | `hades2-luaenvy` | high | `{gamePath}/Ship/ReturnOfModding/plugins` |
-| ENVY (SGG Modding) | `hades2-envy` | high | `{gamePath}/Ship/ReturnOfModding/plugins` |
-| Chalk | `hades2-chalk` | high | `{gamePath}/Ship/ReturnOfModding/plugins` |
-| ReLoad | `hades2-reload` | high | `{gamePath}/Ship/ReturnOfModding/plugins` |
-| SJSON | `hades2-sjson` | high | `{gamePath}/Ship/ReturnOfModding/plugins` |
-| DemonDaemon | `hades2-demondaemon` | high | `{gamePath}/Ship/ReturnOfModding/plugins` |
-| ModUtil (Hell2Modding) | `hades2-modutil-rom` | high | `{gamePath}/Ship/ReturnOfModding/plugins` |
+| Binaries | `hades2-binaries` | 50 | `?` |
+| Mod Loader (Hell2Modding) | `hades2-loader` | 51 | `?` |
 
 ## Mod Installers
 

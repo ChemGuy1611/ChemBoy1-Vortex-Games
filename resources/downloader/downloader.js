@@ -39,6 +39,45 @@ function normalizeVersion(version) {
   return version.replace(/(\d)[-_](?=\d)/g, '$1.');
 }
 
+// Parse a release/asset version into something semver can compare, most-trustworthy
+// interpretation first. Returns undefined when nothing parses, so callers keep their own
+// '0.0.0' floor.
+//   1. Already valid semver -> take it as authored. This is what keeps a real prerelease
+//      identifier alive: some UE4SS forks tag 3.1.0-6, where -6 is a prerelease, not a fourth
+//      segment, and normalizing it first would flatten it to 3.1.0.6 and then coerce away to
+//      3.1.0 - so 3.1.0-4/-5/-6 would all compare equal and no update would ever be detected.
+//   2. Four numeric segments -> the fourth is a build counter, so map it onto a prerelease
+//      identifier (BepInEx's 5.4.23.5 -> 5.4.23-5). coerce keeps only three segments, so every
+//      5.4.23.x bump used to compare equal too. Applied to the NORMALIZED string, so a
+//      mis-separated 1-2-3-4 reaches this rule as 1.2.3.4 and keeps its counter as well.
+//   3. Anything else -> normalizeVersion + coerce, unchanged: the mis-tagged-release repair
+//      (v1-2-3, 6_1_1) and the loose 19.0 -> 19.0.0 widening both still happen here.
+// Note that semver orders X.Y.Z-N BELOW a bare X.Y.Z. That is correct within each of these
+// upstreams (5.4.23-6 > 5.4.23-5, 3.1.0-6 > 3.1.0-5), which is the only ordering they produce -
+// neither ships a bare version after a numbered one. An upstream that DOES needs
+// trackByAssetDate instead.
+function toComparableVersion(version) {
+  if (version === null || version === undefined) {
+    return undefined;
+  }
+  const raw = String(version).trim();
+  const strict = semver.valid(raw);
+  if (strict !== null) {
+    return strict;
+  }
+  const normalized = normalizeVersion(raw);
+  const fourSegment = /^v?(\d+\.\d+\.\d+)\.(\d+)$/.exec(normalized);
+  if (fourSegment !== null) {
+    // re-validated rather than trusted: a segment with a leading zero (2026.02.01.0) is not a
+    // legal semver identifier, and those must keep falling through to the coerce branch.
+    const mapped = semver.valid(`${fourSegment[1]}-${fourSegment[2]}`);
+    if (mapped !== null) {
+      return mapped;
+    }
+  }
+  return semver.coerce(normalized)?.version;
+}
+
 // Whether a requirement tracks a GitHub Actions CI artifact instead of a release. Setting
 // nightlyUrl is what switches the mode on; see the nightly section further down.
 function isNightly(requirement) {
@@ -85,8 +124,8 @@ function isSamePinVersion(pinVersion, installed) {
   if (pinned === current) {
     return true;
   }
-  const coercedPin = semver.coerce(normalizeVersion(pinned))?.version;
-  const coercedCurrent = semver.coerce(normalizeVersion(current))?.version;
+  const coercedPin = toComparableVersion(pinned);
+  const coercedCurrent = toComparableVersion(current);
   return (coercedPin !== undefined) && (coercedPin === coercedCurrent);
 }
 
@@ -124,12 +163,12 @@ function latestAssetVersion(requirement, latest) {
   // Patterns without a capture group (or non-matching assets) fall through to the tag.
   const match = requirement.fileArchivePattern?.exec(latest.name);
   if (match?.[1]) {
-    const fromAsset = semver.coerce(normalizeVersion(match[1]))?.version;
+    const fromAsset = toComparableVersion(match[1]);
     if (fromAsset) {
       return fromAsset;
     }
   }
-  return semver.coerce(normalizeVersion(latest.release.tag_name))?.version ?? '0.0.0';
+  return toComparableVersion(latest.release.tag_name) ?? '0.0.0';
 }
 
 // Whether the fetched `latest` asset is newer than the `installed` marker. Asset-date mode
@@ -156,9 +195,11 @@ function isUpdateAvailable(requirement, latest, installed) {
     return Number.isNaN(installedTime) ? true : latestTime > installedTime;
   }
   // semver.gt throws on an unparseable version, and ?? does not catch the '' that a
-  // resolveVersion may legitimately return - coerce down to the 0.0.0 floor instead, which
-  // reads as "update available" like any other missing marker.
-  const installedVersion = semver.coerce(installed)?.version ?? '0.0.0';
+  // resolveVersion may legitimately return - fall to the 0.0.0 floor instead, which reads as
+  // "update available" like any other missing marker. Parsed through the same helper as the
+  // latest side: if one side kept a prerelease identifier and the other coerced it away, every
+  // check would compare 3.1.0-6 against 3.1.0 and report "up to date" forever.
+  const installedVersion = toComparableVersion(installed) ?? '0.0.0';
   return semver.gt(latestAssetVersion(requirement, latest), installedVersion);
 }
 
@@ -653,7 +694,7 @@ async function resolveVersionByDirectCopyMarker(api, requirement) {
   if (requirement.trackByAssetDate === true) {
     return marker.assetDate ?? '';
   }
-  return semver.coerce(normalizeVersion(marker.version))?.version ?? '0.0.0';
+  return toComparableVersion(marker.version) ?? '0.0.0';
 }
 
 async function isDirectCopyInstalled(api, requirement) {
@@ -756,8 +797,8 @@ async function resolveVersionByPattern(api, requirement) {
       return prev;
     }
     const match = requirement.fileArchivePattern.exec(file.localPath);
-    // coerce so an unparseable capture can't make semver.gt throw
-    const version = match?.[1] ? semver.coerce(normalizeVersion(match[1]))?.version : undefined;
+    // parsed so an unparseable capture can't make semver.gt throw
+    const version = match?.[1] ? toComparableVersion(match[1]) : undefined;
     if (version && semver.gt(version, prev)) {
       prev = version;
     }
@@ -787,7 +828,7 @@ async function resolveVersionByAssetDate(api, requirement) {
 async function resolveVersionByModVersion(api, requirement) {
   const mod = await requirement.findMod(api);
   const stamped = util.getSafe(mod, ['attributes', 'version'], '');
-  return semver.coerce(stamped)?.version ?? '0.0.0';
+  return toComparableVersion(stamped) ?? '0.0.0';
 }
 
 // resolveVersion implementation for nightly requirements: reads back the workflow run number

@@ -35,7 +35,7 @@ const REF_STRING = "REFramework"; //file name for nightly latest URL - constant 
 const GAME_NAME = "Resident Evil Village";
 const GAME_NAME_SHORT = "RE Village";
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Resident_Evil_Village";
-const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/237"; //Nexus link to this extension. Used for links
 
 const FLUFFY_FOLDER = "RE8";
 const FLUFFY_FOLDER_DEMO = `${FLUFFY_FOLDER}_Demo`; //!set as null if no demo

@@ -2,8 +2,8 @@
 Name: Stellar Blade Vortex Extension
 Structure: UE5 (static exe)
 Author: ChemBoy1
-Version: 0.2.0
-Date: 2026-02-03
+Version: 1.0.0
+Date: 2026-08-17
 //////////////////////////////////////////////////*/
 
 //Import libraries
@@ -59,7 +59,7 @@ const logicModsLoadOrder = true; //enable load order page and load_order.txt wri
 const collectionsLoadOrder = true; //include UE4SS and LogicMods load orders in collections (ANDed with the toggles above)
 const autoDownloadUe4ss = true; //toggle for auto downloading UE4SS (only applies when ue4ssLoadOrder is enabled)
 const writeEngineVersion = false; //toggle to write ENGINE_VERSION into UE4SS-settings.ini (EngineVersionOverride) on deploy, when UE4SS is installed
-const ENGINE_VERSION = '5.X.X.0'; //Unreal Engine version. usually '4.27.2.0' or '5.X.X.0'. Written to UE4SS-settings.ini if writeEngineVersion is enabled
+const ENGINE_VERSION = '4.26.2'; //Unreal Engine version. usually '4.27.2.0' or '5.X.X.0'. Written to UE4SS-settings.ini if writeEngineVersion is enabled
 const MAJOR_VERSION = ENGINE_VERSION.split('.')[0]; //major UE version
 const MINOR_VERSION = ENGINE_VERSION.split('.')[1]; //minor UE version
 const debug = false; //toggle for debug mode
@@ -161,7 +161,10 @@ const UE4SS_ID = `${GAME_ID}-ue4ss`;
 const UE4SS_NAME = "UE4SS";
 const UE4SS_FILE = "dwmapi.dll";
 const UE4SS_DLFILE_STRING = "ue4ss_v";
-const UE4SS_ARC_PATTERN = /^UE4SS_v/i; //anchored: matches UE4SS_v3.1.0-6.zip, excludes the much larger zDEV- sibling
+//anchored so the much larger zDEV- sibling in the same release is excluded. The capture group feeds the version
+//comparison; the build suffix is optional so a future UE4SS_v3.1.1.zip still matches (an unmatched pattern means
+//no asset is selected at all, not a fallback)
+const UE4SS_ARC_PATTERN = /^UE4SS_v(\d+\.\d+\.\d+(?:-\d+)?)/i;
 const UE4SS_AUTHOR = 'Chrisr0'; //Stellar Blade-specific UE4SS fork, NOT upstream UE4SS-RE/RE-UE4SS
 const UE4SS_REPO = 'RE-UE4SS';
 const UE4SS_URL_API = `https://api.github.com/repos/${UE4SS_AUTHOR}/${UE4SS_REPO}`;
@@ -177,9 +180,9 @@ const UE4SS_REQUIREMENTS = [
     findMod: (api) => findModByFile(api, UE4SS_ID, UE4SS_FILE),
     findDownloadId: (api) => findDownloadIdByFile(api, UE4SS_DLFILE_STRING),
     fileArchivePattern: UE4SS_ARC_PATTERN,
-    //this fork's tags (3.1.0-4/-5/-6) all coerce to 3.1.0, so version comparison must use the asset upload time
-    trackByAssetDate: true,
-    resolveVersion: (api) => resolveVersionByAssetDate(api, UE4SS_REQUIREMENTS[0]),
+    //this fork's builds are 3.1.0-4/-5/-6, which is a semver prerelease and compares correctly - the version
+    //stamped at install is read back from the mod entry rather than tracked by asset upload time
+    resolveVersion: (api) => resolveVersionByModVersion(api, UE4SS_REQUIREMENTS[0]),
   },
 ];
 const UE4SS_SETTINGS_FILE = 'UE4SS-settings.ini';
@@ -893,7 +896,7 @@ function configInstallerNotify(api) {
                 + `Please move the game and/or staging folder to the same drive as the ${CONFIG_LOC} folder (typically C Drive) to install these types of mods with Vortex.\n`
                 + `\n`
                 + `Config Path: ${CONFIG_PATH}\n`
-                + `\n`             
+                + `\n`
                 + `If you want to use this mod installer, you must move the game and staging folder to the same partition as the ${CONFIG_LOC} folder (typically C Drive).\n`
                 + `\n`
           }, [
@@ -954,7 +957,7 @@ function installSave(api, files) {
     //api.showErrorNotification(`Could not install mod as Save`, `You tried installing a Save mod, but the game, staging folder, and Local AppData folder are not all on the same drive. Please move the game and/or staging folder to the same drive as the Local AppData folder (typically C Drive) to install these types of mods with Vortex.`, { allowReport: false });
     saveInstallerNotify(api);
     throw new util.UserCanceled();
-  } 
+  }
   return Promise.resolve({ instructions });
 }
 
@@ -976,7 +979,7 @@ function saveInstallerNotify(api) {
                 + `Please move the game and/or staging folder to the same drive as the ${SAVE_LOC} folder (typically C Drive) to install these types of mods with Vortex.\n`
                 + `\n`
                 + `Save Path: ${SAVE_PATH}\n`
-                + `\n`             
+                + `\n`
                 + `If you want to use this mod installer, you must move the game and staging folder to the same partition as the ${SAVE_LOC} folder (typically C Drive).\n`
                 + `\n`
           }, [
@@ -1950,7 +1953,7 @@ function checkPartitions(folder, discoveryPath) {
     // Ensure all folders exist
     fs.ensureDirSync(path1);
     fs.ensureDirSync(path2);
-    fs.ensureDirSync(path3); 
+    fs.ensureDirSync(path3);
     // Get the stats for all folders
     const stats1 = fs.statSync(path1);
     const stats2 = fs.statSync(path2);
@@ -2094,7 +2097,7 @@ function applyGame(context, gameSpec) {
   );
 
   //register mod types for Config and Saves (conditional on all folders being on same drive partition)
-  context.registerModType(CONFIG_ID, 45, 
+  context.registerModType(CONFIG_ID, 45,
     (gameId) => {
       GAME_PATH = getDiscoveryPath(context.api);
       if (GAME_PATH !== undefined) {
@@ -2102,11 +2105,11 @@ function applyGame(context, gameSpec) {
       }
       return ((gameId === GAME_ID) && (CHECK_DATA === true));
     },
-    (game) => pathPattern(context.api, game, CONFIG_PATH), 
-    () => Promise.resolve(false), 
+    (game) => pathPattern(context.api, game, CONFIG_PATH),
+    () => Promise.resolve(false),
     { name: CONFIG_NAME }
   );
-  context.registerModType(SAVE_ID, 47, 
+  context.registerModType(SAVE_ID, 47,
     (gameId) => {
       GAME_PATH = getDiscoveryPath(context.api);
       if (GAME_PATH !== undefined) {
@@ -2118,8 +2121,8 @@ function applyGame(context, gameSpec) {
       }
       return ((gameId === GAME_ID) && (CHECK_DOCS === true)); //*/
     },
-    (game) => pathPattern(context.api, game, SAVE_PATH), 
-    () => Promise.resolve(false), 
+    (game) => pathPattern(context.api, game, SAVE_PATH),
+    () => Promise.resolve(false),
     { name: SAVE_NAME }
   );
 

@@ -2170,6 +2170,7 @@ class MainWindow(QMainWindow):
                 ("--dry-run", "Preview only, no copies", False),
                 ("--force", "Overwrite existing plugin folder without prompting", False),
                 ("--restart-vortex", "Close Vortex before copying, relaunch after", True),
+                ("--launch-game", "Relaunch straight into the game (one game only)", False),
             ],
         )
         if dlg is None:

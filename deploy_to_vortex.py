@@ -3,7 +3,7 @@
 deploy_to_vortex.py -- Copy CB1 game extension folder(s) to the Vortex plugins directory.
 
 Usage:
-    python deploy_to_vortex.py GAME_ID [GAME_ID ...] [--dry-run] [--force] [--restart-vortex]
+    python deploy_to_vortex.py GAME_ID [GAME_ID ...] [--dry-run] [--force] [--restart-vortex] [--launch-game]
     python deploy_to_vortex.py --all [--dry-run] [--force] [--restart-vortex]
 
 Arguments:
@@ -22,6 +22,12 @@ Arguments:
                 after 30s) and launch it again (no CLI args) after all copies.
                 One close + one launch per run, not per game. Launches Vortex
                 even if it was not running. Ignored with --dry-run.
+    --launch-game
+                Same restart, but relaunch straight into the deployed game
+                ("Vortex.exe --game <GAME_ID>"). Implies --restart-vortex.
+                Requires exactly one GAME_ID (not valid with --all). The id
+                passed to Vortex is the GAME_ID declared in the extension's
+                index.js, falling back to the folder id. Ignored with --dry-run.
 
 Environment variables:
     VORTEX_PLUGINS_DIR  Optional. Target plugins directory. Read by vortex_utils
@@ -72,13 +78,24 @@ def _close_vortex(timeout: int = 30) -> None:
     time.sleep(1)
 
 
-def _start_vortex() -> None:
+def _start_vortex(game_id: "str | None" = None) -> None:
     exe = vu.find_vortex_exe()
     if not exe:
         print("[WARN] Vortex.exe not found -- skipping launch.")
         return
-    print(f"Starting Vortex: {exe}")
-    subprocess.Popen([exe], cwd=os.path.dirname(exe))
+    cmd = [exe] + (["--game", game_id] if game_id else [])
+    print(f"Starting Vortex: {' '.join(cmd)}")
+    subprocess.Popen(cmd, cwd=os.path.dirname(exe))
+
+
+def _vortex_game_id(folder_id: str) -> str:
+    """Vortex's registered game id for a repo folder id.
+
+    Vortex's --game switch expects the GAME_ID the extension registers, which is
+    not always the game-<id> folder suffix. Falls back to the folder id when
+    index.js is missing or has no GAME_ID const."""
+    js_src = vu.read_index_js(os.path.join(vu.REPO_ROOT, f"game-{folder_id}"))
+    return (vu.extract_game_id(js_src) if js_src else None) or folder_id
 
 
 def deploy_game(game_id: str, dry_run: bool, force: bool) -> bool:
@@ -152,6 +169,11 @@ def main():
         "--restart-vortex", action="store_true",
         help="Close Vortex before copying and relaunch it after all copies. Ignored with --dry-run.",
     )
+    parser.add_argument(
+        "--launch-game", action="store_true",
+        help="Relaunch Vortex straight into the deployed game (Vortex.exe --game <id>). "
+             "Implies --restart-vortex, requires exactly one GAME_ID. Ignored with --dry-run.",
+    )
     args = parser.parse_args()
 
     if args.all:
@@ -164,11 +186,15 @@ def main():
     else:
         parser.error("Provide at least one GAME_ID or use --all.")
 
+    if args.launch_game and len(game_ids) != 1:
+        parser.error("--launch-game requires exactly one GAME_ID (Vortex opens a single game).")
+
     if not os.path.isdir(PLUGINS_DIR):
         print(f"[ERROR] Vortex plugins folder not found: {PLUGINS_DIR}")
         sys.exit(1)
 
-    restart = args.restart_vortex and not args.dry_run
+    launch_id = _vortex_game_id(game_ids[0]) if args.launch_game else None
+    restart = (args.restart_vortex or args.launch_game) and not args.dry_run
     if restart:
         _close_vortex()
 
@@ -185,7 +211,7 @@ def main():
         results.append(False)
 
     if restart:
-        _start_vortex()
+        _start_vortex(launch_id)
 
     if not all(results):
         sys.exit(1)

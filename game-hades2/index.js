@@ -2,8 +2,8 @@
 Name: Hades II Vortex Extension
 Structure: 3rd-Party Mod Installer
 Author: ChemBoy1
-Version: 1.1.0
-Date: 2026-08-16
+Version: 1.1.1
+Date: 2026-08-17
 ////////////////////////////////*/
 
 //Import libraries
@@ -46,7 +46,9 @@ const MOD_EXTS = [".lua"];
 
 const BINARIES_ID = `${GAME_ID}-binaries`;
 const BINARIES_NAME = `Binaries`;
-const BINARIES_PATH = path.join("Ship");
+const BINARIES_PATH_DEFAULT = path.join("Ship");
+const BINARIES_PATH_XBOX = '.'; //XBOX Version - the executable sits in the game root instead of Ship
+let BINARIES_PATH = BINARIES_PATH_DEFAULT;
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = `Root Game Folder`;
@@ -67,12 +69,17 @@ const TS_COMMUNITY = 'hades-ii'; //https://thunderstore.io/c/hades-ii/
 
 const LOADER_ID = `${GAME_ID}-loader`;
 const LOADER_NAME = `Mod Loader (Hell2Modding)`;
-const LOADER_PATH = path.join("Ship");
+const LOADER_PATH_DEFAULT = BINARIES_PATH_DEFAULT;
+const LOADER_PATH_XBOX = BINARIES_PATH_XBOX; //XBOX Version - the loader DLL has to sit beside the executable
+let LOADER_PATH = LOADER_PATH_DEFAULT;
 const LOADER_FILE = "d3d12.dll";
 
 const PLUGIN_ID = `${GAME_ID}-plugin`;
 const PLUGIN_NAME = `ReturnOfModding Plugin`;
-const PLUGIN_PATH = path.join("Ship", "ReturnOfModding", "plugins");
+const PLUGIN_FOLDER = path.join("ReturnOfModding", "plugins");
+const PLUGIN_PATH_DEFAULT = path.join(BINARIES_PATH_DEFAULT, PLUGIN_FOLDER);
+const PLUGIN_PATH_XBOX = path.join(BINARIES_PATH_XBOX, PLUGIN_FOLDER); //XBOX Version - ReturnOfModding creates its folder beside the executable
+let PLUGIN_PATH = PLUGIN_PATH_DEFAULT;
 const PLUGIN_FILE = "manifest.json";
 const PLUGIN_ENTRY_FILE = "main.lua"; //ReturnOfModding plugin entry point - also what separates a plugin from a legacy Mod Importer mod, which ships manifest.json too
 
@@ -96,6 +103,19 @@ const DAEMON_NAME = `DemonDaemon`;
 
 const MODUTIL_ROM_ID = `${GAME_ID}-modutil-rom`;
 const MODUTIL_ROM_NAME = `ModUtil (Hell2Modding)`;
+
+//Every mod type that deploys into the ReturnOfModding plugins folder. They are registered
+//explicitly in applyGame() because that folder is only known once the game version is.
+const PLUGIN_MODTYPES = [
+  { id: PLUGIN_ID, name: PLUGIN_NAME },
+  { id: LUAENVY_ID, name: LUAENVY_NAME },
+  { id: ENVY_ID, name: ENVY_NAME },
+  { id: CHALK_ID, name: CHALK_NAME },
+  { id: RELOAD_ID, name: RELOAD_NAME },
+  { id: SJSON_ID, name: SJSON_NAME },
+  { id: DAEMON_ID, name: DAEMON_NAME },
+  { id: MODUTIL_ROM_ID, name: MODUTIL_ROM_NAME },
+];
 
 //Mod loader plus the full ModUtil dependency closure. Each entry needs its own mod type - the
 //downloader keys installed-detection on the mod type, so a shared type would make every later
@@ -217,12 +237,7 @@ const spec = {
       "priority": "high",
       "targetPath": path.join('{gamePath}', MOD_PATH)
     },
-    {
-      "id": BINARIES_ID,
-      "name": BINARIES_NAME,
-      "priority": "high",
-      "targetPath": path.join('{gamePath}', BINARIES_PATH)
-    },
+    //Binaries is registered explicitly in applyGame() - its folder varies by game version
     {
       "id": ROOT_ID,
       "name": ROOT_NAME,
@@ -243,60 +258,8 @@ const spec = {
       "targetPath": path.join('{gamePath}', UTILITY_PATH)
     },
     //*/
-    {
-      "id": LOADER_ID,
-      "name": LOADER_NAME,
-      "priority": "high",
-      "targetPath": path.join('{gamePath}', LOADER_PATH)
-    },
-    {
-      "id": PLUGIN_ID,
-      "name": PLUGIN_NAME,
-      "priority": "high",
-      "targetPath": path.join('{gamePath}', PLUGIN_PATH)
-    },
-    {
-      "id": LUAENVY_ID,
-      "name": LUAENVY_NAME,
-      "priority": "high",
-      "targetPath": path.join('{gamePath}', PLUGIN_PATH)
-    },
-    {
-      "id": ENVY_ID,
-      "name": ENVY_NAME,
-      "priority": "high",
-      "targetPath": path.join('{gamePath}', PLUGIN_PATH)
-    },
-    {
-      "id": CHALK_ID,
-      "name": CHALK_NAME,
-      "priority": "high",
-      "targetPath": path.join('{gamePath}', PLUGIN_PATH)
-    },
-    {
-      "id": RELOAD_ID,
-      "name": RELOAD_NAME,
-      "priority": "high",
-      "targetPath": path.join('{gamePath}', PLUGIN_PATH)
-    },
-    {
-      "id": SJSON_ID,
-      "name": SJSON_NAME,
-      "priority": "high",
-      "targetPath": path.join('{gamePath}', PLUGIN_PATH)
-    },
-    {
-      "id": DAEMON_ID,
-      "name": DAEMON_NAME,
-      "priority": "high",
-      "targetPath": path.join('{gamePath}', PLUGIN_PATH)
-    },
-    {
-      "id": MODUTIL_ROM_ID,
-      "name": MODUTIL_ROM_NAME,
-      "priority": "high",
-      "targetPath": path.join('{gamePath}', PLUGIN_PATH)
-    },
+    //Binaries, the mod loader and every plugin mod type are registered explicitly in applyGame() -
+    //their folders vary by game version
   ],
   "discovery": {
     "ids": [
@@ -363,15 +326,27 @@ async function statCheckAsync(gamePath, file) {
   }
 }
 
+//Point the version-dependent mod type folders at the right place. The binaries folder, the mod
+//loader DLL and the ReturnOfModding plugins folder all sit beside the game executable, which the
+//Xbox version keeps in the game root instead of the Ship folder.
+function setVersionPaths(gameVersion) {
+  const isXbox = (gameVersion === 'xbox');
+  BINARIES_PATH = isXbox ? BINARIES_PATH_XBOX : BINARIES_PATH_DEFAULT;
+  LOADER_PATH = isXbox ? LOADER_PATH_XBOX : LOADER_PATH_DEFAULT;
+  PLUGIN_PATH = isXbox ? PLUGIN_PATH_XBOX : PLUGIN_PATH_DEFAULT;
+}
+
 //Get correct executable for game version
 function getExecutable(discoveryPath) {
   if (statCheckSync(discoveryPath, EXEC_XBOX)) {
     GAME_VERSION = 'xbox';
+    setVersionPaths(GAME_VERSION);
     //SAVE_PATH = SAVE_PATH_XBOX;
     //CONFIG_PATH = CONFIG_PATH_XBOX;
     return EXEC_XBOX;
   };
   GAME_VERSION = 'default';
+  setVersionPaths(GAME_VERSION);
   return EXEC;
 }
 
@@ -379,11 +354,13 @@ function getExecutable(discoveryPath) {
 async function setGameVersion(gamePath) {
   if (await statCheckAsync(gamePath, EXEC_XBOX)) {
     GAME_VERSION = 'xbox';
+    setVersionPaths(GAME_VERSION);
     //SAVE_PATH = SAVE_PATH_XBOX;
     //CONFIG_PATH = CONFIG_PATH_XBOX;
     return GAME_VERSION;
   } else {
     GAME_VERSION = 'default';
+    setVersionPaths(GAME_VERSION);
     return GAME_VERSION;
   }
 }
@@ -445,6 +422,15 @@ function makeGetModPath(api, gameSpec) {
   return () => gameSpec.game.modPathIsRelative !== false
     ? gameSpec.game.modPath || '.'
     : pathPattern(api, gameSpec.game, gameSpec.game.modPath);
+}
+
+//Shared support check for the explicitly registered mod types
+function makeIsSupported(api) {
+  return (gameId) => {
+    var _a;
+    return (gameId === GAME_ID)
+      && !!((_a = api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
+  };
 }
 
 //Find game installation directory
@@ -971,6 +957,27 @@ function applyGame(context, gameSpec) {
       return (gameId === gameSpec.game.id)
         && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
     }, (game) => pathPattern(context.api, game, type.targetPath), () => Promise.resolve(false), { name: type.name });
+  });
+
+  //register mod types explicitly (their folders vary by game version, so the path has to be
+  //resolved when Vortex asks for it rather than baked into the spec at load time)
+  const isSupported = makeIsSupported(context.api);
+  context.registerModType(BINARIES_ID, 50, isSupported,
+    (game) => pathPattern(context.api, game, path.join('{gamePath}', BINARIES_PATH)),
+    () => Promise.resolve(false),
+    { name: BINARIES_NAME }
+  );
+  context.registerModType(LOADER_ID, 51, isSupported,
+    (game) => pathPattern(context.api, game, path.join('{gamePath}', LOADER_PATH)),
+    () => Promise.resolve(false),
+    { name: LOADER_NAME }
+  );
+  PLUGIN_MODTYPES.forEach((type, idx) => {
+    context.registerModType(type.id, 52 + idx, isSupported,
+      (game) => pathPattern(context.api, game, path.join('{gamePath}', PLUGIN_PATH)),
+      () => Promise.resolve(false),
+      { name: type.name }
+    );
   });
 
   //register the embedded Thunderstore browser page

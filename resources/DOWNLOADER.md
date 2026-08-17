@@ -99,7 +99,20 @@ Set one `resolveVersion` per requirement:
 - **`resolveVersionByModVersion`** — reads the `version` attribute stamped on the installed mod at install time. For requirements whose asset filename is versionless and whose version only exists in the release tag: the install stamps the tag-derived version, and update checks read it back — closing the version-tracking loop that `resolveVersionByPattern` cannot close there.
 - **`resolveVersionByNightlyRun`** — paired with `nightlyUrl`; reads the workflow run number recorded on the installed mod (`nightlyRunNumber` attribute) at install time.
 
-Version comparison is centralized: `latestAssetVersion()` and `isUpdateAvailable()` switch between semver comparison and `Date.parse` comparison based on `trackByAssetDate`. Mis-tagged release versions are normalized first via `normalizeVersion()` — every `-`/`_` between digits becomes `.` (e.g. `v1-2-3` -> `v1.2.3`, `6_1_1` -> `6.1.1`) so semver can parse them.
+Version comparison is centralized: `latestAssetVersion()` and `isUpdateAvailable()` switch between semver comparison and `Date.parse` comparison based on `trackByAssetDate`.
+
+### How a version string is parsed
+
+Every version string — release tag, asset-filename capture, stamped mod attribute, direct-copy marker, pin — goes through one helper, `toComparableVersion()`, which tries three interpretations in order and validates before returning. Both sides of a comparison run through it; if one side kept a prerelease identifier and the other coerced it away, every check would report "up to date" forever.
+
+1. **Already valid semver — taken as authored.** A prerelease identifier is real version information and survives. Some UE4SS forks tag `3.1.0-6`, where `-6` is a prerelease, not a fourth segment.
+2. **Four numeric segments — the fourth becomes a prerelease identifier.** `5.4.23.5` -> `5.4.23-5`. semver holds only three segments, so BepInEx's fourth-segment builds used to compare equal and no `5.4.23.x` bump was ever detected. Applied to the normalized string, so a mis-separated `1-2-3-4` reaches this rule as `1.2.3.4` and keeps its counter too.
+3. **Anything else — `normalizeVersion()` then `semver.coerce()`.** This is the mis-tagged-release repair: every `-`/`_` between digits becomes `.` (`v1-2-3` -> `v1.2.3`, `6_1_1` -> `6.1.1`), and short versions widen (`19.0` -> `19.0.0`).
+
+Two consequences worth knowing:
+
+- **semver orders `X.Y.Z-N` below a bare `X.Y.Z`.** Ordering within a series is correct (`5.4.23-6` > `5.4.23-5`, `3.1.0-6` > `3.1.0-5`), which is all these upstreams produce. An upstream that ships a bare version *after* a numbered one needs `trackByAssetDate` instead — that is the escape hatch for sources that do not order by semver.
+- **`semver.coerce()` rejects components with leading zeros** (`2026.02.01` -> `null`), so such versions reach the caller's `0.0.0` floor. A source that versions this way needs a game-specific transform applied *before* this ladder, not after — `game-dragonagetheveilguard`'s `normalizeFrostyVersion` (`2026.02.01.0` -> `26.2.1`) is the reference case.
 
 When the latest release is fetched, `latestAssetVersion()` prefers the version embedded in the **asset filename** (the `fileArchivePattern` capture group run against the asset name) over the release tag. This makes update detection work for rolling-tag repositories whose tag carries no version at all (e.g. EntityAtlan publishes `AtlanModLoader_v_6_1_1.zip` under the permanent tag `ModLoader`). Patterns without a capture group, or assets that don't match, fall back to the semver-coerced tag name as before. The same asset-derived version flows through every stamp point: the fresh-download install stamps it as the mod's `version` attribute, the already-downloaded shortcut path stamps the equivalent value extracted from the local archive name, and both the update check and the update dialog label use it — so a static tag never leaks into comparisons or the UI.
 

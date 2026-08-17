@@ -35,7 +35,7 @@ const REF_STRING = "REFramework"; //file name for nightly latest URL - constant 
 const GAME_NAME = "Resident Evil 2";
 const GAME_NAME_SHORT = "RE 2";
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Resident_Evil_2_(2019)";
-const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/432"; //Nexus link to this extension. Used for links
 
 const FLUFFY_FOLDER = "RE2R";
 const FLUFFY_FOLDER_DEMO = `${FLUFFY_FOLDER}_Demo`; //!set as null if no demo
