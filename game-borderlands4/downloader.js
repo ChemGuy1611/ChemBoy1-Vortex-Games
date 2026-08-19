@@ -279,7 +279,17 @@ async function download(api, requirements, force) {
             // each other) - and worse, whenever Vortex reuses the same mod id for the
             // replacement (common here, where many requirements ship a versionless archive
             // name) the deferred disable landed on the mod that had just been installed.
-            api.store.dispatch(actions.setModEnabled(profileId, mod.id, false));
+            // Every installed copy is disabled, not only the one findMod returned: a
+            // version-bearing archive name installs each update under its own mod id, so past
+            // versions pile up and any one of them left enabled keeps deploying over the new
+            // one. installDownload re-enables the incoming mod immediately afterwards, so a
+            // same-mod-id replacement still ends up enabled.
+            const outgoing = (req.modType && req.assemblyFileName)
+              ? await findModsByFile(api, req.modType, req.assemblyFileName)
+              : [mod];
+            for (const stale of outgoing) {
+              api.store.dispatch(actions.setModEnabled(profileId, stale.id, false));
+            }
           } else {
             upToDate.push(`${req.userFacingName} (v${version})`);
             continue;
@@ -755,22 +765,43 @@ function getMods(api, modType) {
   return Object.values(mods).filter((mod) => mod.type === modType);
 }
 
-async function findModByFile(api, modType, fileName) {
+// Every installed copy of the requirement, not just the first. A requirement whose release
+// asset carries the version in its file name (shadps4-win64-sdl-0.18.0.zip) installs under a
+// new mod id on every update, so the staging folder accumulates one mod per version - all of
+// them carrying the requirement's mod type and its assembly file.
+async function findModsByFile(api, modType, fileName) {
   const state = api.getState();
   const gameId = selectors.activeGameId(state);
   const mods = getMods(api, modType);
   const installationPath = selectors.installPathForGame(api.getState(), gameId);
+  // case-insensitive match: maintainers may change assemblyFileName capitalization,
+  // and a case-sensitive compare would miss the installed file -> re-download loop.
+  const needle = fileName.toLowerCase();
+  const matches = [];
   for (const mod of mods) {
     const modPath = path.join(installationPath, mod.installationPath);
     const files = await walkPath(modPath);
-    // case-insensitive match: maintainers may change assemblyFileName capitalization,
-    // and a case-sensitive compare would miss the installed file -> re-download loop.
-    const needle = fileName.toLowerCase();
     if (files.find(file => file.filePath.toLowerCase().endsWith(needle))) {
-      return mod;
+      matches.push(mod);
     }
   }
-  return undefined;
+  return matches;
+}
+
+async function findModByFile(api, modType, fileName) {
+  const state = api.getState();
+  const gameId = selectors.activeGameId(state);
+  const matches = await findModsByFile(api, modType, fileName);
+  // Which copy is "the installed one" matters: resolveVersionByModVersion and friends read
+  // their version marker straight off this mod, and download() disables it as the outgoing
+  // version. Mods are iterated in the order the state object holds them, which is neither the
+  // install order nor version order - so with several copies present, returning the first hit
+  // picks an arbitrary (in practice the lexicographically lowest, i.e. oldest) one. The copy
+  // enabled in the active profile is the one actually in use; fall back to the first match
+  // when none is enabled, which is what a single-copy install always yields anyway.
+  const profileId = selectors.lastActiveProfileForGame(state, gameId);
+  const modState = util.getSafe(state, ['persistent', 'profiles', profileId, 'modState'], {});
+  return matches.find(mod => util.getSafe(modState, [mod.id, 'enabled'], false)) ?? matches[0];
 }
 
 function findDownloadIdByFile(api, fileName) {

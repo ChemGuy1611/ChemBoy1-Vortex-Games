@@ -122,20 +122,60 @@ Returns newest submissions as positional pairs: `[["Mod", 678437], ["Mod", 51076
 | URL | Behavior |
 | --- | --- |
 | `https://gamebanana.com/dl/{fileId}` | Direct file download (HTTP redirect to CDN) |
+| `https://gamebanana.com/mmdl/{fileId}` | The one-click "install with mod manager" target; redirects exactly like `/dl/` |
 | `https://gamebanana.com/{section}/download/{itemId}` | Human download page listing all files |
 | `https://gamebanana.com/{section}/{itemId}` | Item profile page (e.g. `/tools/7475`, `/mods/428520`) |
 
+The redirect chain for a current file, verified August 2026:
+
+```text
+https://gamebanana.com/dl/1765017
+  302 -> https://files.gamebanana.com/tools/eternalmodinjector_e3b59.zip
+  302 -> https://filecache40.gamebanana.com/tools/eternalmodinjector_e3b59.zip
+  200    application/zip
+```
+
+Two things follow from it:
+
+- **A stale file id does not fail loudly.** `/dl/{fileId}` for a file the submission has since replaced
+  redirects to the submission's download *page* (`/{section}/download/{itemId}`) and returns HTML with a
+  `200`. Anything holding a hardcoded file id — a fallback, a pin — therefore has to be checked against
+  the API rather than trusted to error out.
+- **The CDN URL carries no ids**, only the section and the file name, so a download captured at the CDN
+  cannot be traced back to its submission from the URL alone. There is no endpoint that maps a file id
+  to its item either: `apiv11/File/{fileId}` returns the file record with no parent field, and the Core
+  API's `Url().sProfileUrl()` for a `File` returns a malformed URL (`gamebanana.com//{fileId}`).
+
+The one-click links the site renders for registered managers take the form
+`{manager}:https://gamebanana.com/mmdl/{fileId},{Model},{itemId}` — the only download link on the site
+that names the submission it belongs to.
+
 ## Usage in Vortex Extensions
 
-`util.jsonRequest<T>(url)` from `vortex-api` fetches and parses JSON in one call — no extra dependencies needed:
+**`util.jsonRequest` does not work against this API.** GameBanana serves apiv11 responses with
+`Content-Type: text/html` even though the body is JSON — verified live in August 2026 against
+`ProfilePage`, `DownloadPage` and `Updates`, on repeated calls. (An occasional Cloudflare `BYPASS`
+response is labelled `application/json`, which is why a one-off check can look fine.) Vortex's
+`jsonRequest` accepts only `application/json` or `text/plain`; anything else is rejected before the
+body is ever parsed, and the resulting `TemporaryError` carries the *response body* as its message,
+so the failure reads like a successful fetch in a log.
+
+Use `util.rawRequest` with a content type this API actually sends, and parse locally:
 
 ```js
 const { util } = require('vortex-api');
 
+const GB_CONTENT_TYPE = /^(application\/json|text\/html|text\/plain)/;
+
+async function gamebananaJson(url) {
+  const raw = await util.rawRequest(url, { expectedContentType: GB_CONTENT_TYPE, encoding: 'utf-8' });
+  return JSON.parse(String(raw));
+}
+
 // Resolve the current file ID for a GameBanana tool at runtime
 async function getLatestGamebananaFile(itemType, itemId) {
   const url = `https://gamebanana.com/apiv11/${itemType}/${itemId}/DownloadPage`;
-  const data = await util.jsonRequest(url);
+  const data = await gamebananaJson(url);
   const files = data._aFiles || [];
   if (files.length === 0) {
     throw new Error(`No files found for GameBanana ${itemType} ${itemId}`);
@@ -208,8 +248,57 @@ The same field name and behavior exist in all five downloader modules; `DOWNLOAD
 - **A missing requirement is installed by the update check.** The update check used to return early when the requirement was not installed, so a requirement the user removed (or never got) was never picked up again. It now installs it instead. Requirements that should only be installed by an explicit user action set `autoInstall: false`.
 - **Updating disables the version it replaces.** An update installs a second mod entry rather than replacing the first, so the mod ids carrying the requirement's mod type are captured before the install and disabled once the new one lands (the newly installed id is skipped). Without this both copies stayed enabled and deployed on top of each other.
 
+## Shared gamebanana_browser.js Module
+
+`resources/browsers/gamebanana_browser.js` registers a Vortex page that embeds gamebanana.com itself
+and turns a click on the site's download button into a managed install. It is the browsing counterpart
+to the downloader above — the downloader installs requirements unattended, the browser serves a user
+picking mods — and an extension can carry both, as `game-doometernal` does. The shared contract, the
+adopter model and the claim chain are in `BROWSER_MODULES.md`; what is GameBanana-specific:
+
+| Piece | How this source does it |
+| --- | --- |
+| Home URL | `/{gbSection}/games/{gbGameId}`, i.e. the game's mod section (`gbSection` defaults to `mods`) |
+| Submission key | `Model-itemId` (`Mod-428520`), stored in the `gamebananaItem` mod attribute |
+| Identity of a download | Not in the URL — the page records the submissions the user opens and matches a claimed download against them by file id or file name (see Direct Downloads above) |
+| Resolution | One `ProfilePage` call per submission: `_aFiles` for the file, `_sVersion` for the version, `_aGame` for the game it belongs to |
+| Version | `_sVersion`, else group 1 of `versionPattern` against the newest `Updates` title, else the file's `_tsDateAdded` as a date, else the file id |
+| Update comparison | File id, numerically. Free-text versions make `semver` useless here |
+| Dependencies | No resolvable graph, so nothing is offered alongside an install — but see `_aRequirements` below, which is structured enough for a best-effort requirement list |
+| One-click links | `{manager}:https://gamebanana.com/mmdl/{fileId},{Model},{itemId}` is parsed when the user clicks it; Vortex is not a registered manager, so no button on the site will say "Vortex" |
+
+The file id is stored in `gamebananaFileId` — deliberately the same attribute
+`gamebanana_downloader.js` writes, so a submission installed by either route is recognised by both.
+
+### `_aRequirements`
+
+`ProfilePage` carries `_aRequirements` when the submitter filled it in: an array of `[label, url]`
+pairs, **not** free prose.
+
+```json
+[["EternalModInjector", "https://gamebanana.com/tools/download/7475"]]
+```
+
+The URL is usually a submission download page (`/{section}/download/{itemId}`), which is the same
+shape a submission page URL parser already handles — so the requirement resolves to a `Model-itemId`
+identity without a second endpoint. Three limits decide what can be built on it (all verified against
+the live API in August 2026):
+
+- **Sparse.** Absent entirely on most submissions — 0 of the 25 newest site-wide and 0 of 12 recent
+  DOOM Eternal mods carried one, while `Mod/428520` does. Treat a missing field as "no information",
+  never as "no requirements".
+- **Unversioned.** A pair names a submission, never a version, so "installed but too old" cannot be
+  expressed.
+- **Not always on-site.** The URL may point anywhere. Anything that does not parse as a GameBanana
+  submission can only be shown to the user as a labelled link.
+
+That is enough for a best-effort requirement list and not enough for a dependency graph.
+
 ## Caveats
 
+- **`util.jsonRequest` rejects every response from this API** (`Content-Type: text/html`); use
+  `util.rawRequest` as shown above. The failure is quiet: both shared modules kept working off their
+  hardcoded fallback file id, and update checks reported nothing, for as long as it went unnoticed.
 - No official rate-limit documentation; keep request volume low and cache results where possible.
 - Field sets are not formally versioned — code should tolerate missing fields and fall back gracefully (e.g. to a hardcoded file ID).
 - The `Generic_Game` filter requires GameBanana's own game ID (from `_aGame._idRow` or the game page URL), which is unrelated to Steam/Nexus IDs.
@@ -223,5 +312,7 @@ hands off to). `VORTEX_MOD_INSTALL.md` (installing the downloaded requirement as
 `MODWORKSHOP_API.md`, `MODDB_API.md`, and `THUNDERSTORE_API.md` (the other third-party mod hosts
 this repo queries — ModWorkshop and Thunderstore both publish a machine-readable API spec and serve
 direct download URLs; GameBanana and ModDB do not).
+`BROWSER_MODULES.md` (the shared browser-module contract `gamebanana_browser.js` implements) and
+`EMBEDDED_BROWSER.md` (the `Webview` control and the download capture chain it relies on).
 `PCGAMINGWIKI_API.md` (game-metadata lookups, and another third-party site with its own
 User-Agent/rate-limit rules).

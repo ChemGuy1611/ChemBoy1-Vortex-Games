@@ -336,12 +336,12 @@ const BEPINEX_REQUIREMENTS = [
     findDownloadId: (api) => findDownloadIdByFile(api, BEPINEX_ARC_NAME),
     //selects the win-x64 asset over its linux/macos/Patcher siblings
     fileArchivePattern: new RegExp(`^BepInEx_win_${ARCH}_`, 'i'),
-    //BepInEx ships 4-segment versions (5.4.23.5) and semver.coerce drops the fourth segment, so
-    //every 5.4.23.x bump would compare as "up to date" - track the asset's upload time instead.
-    trackByAssetDate: true,
-    resolveVersion: (api) => resolveVersionByAssetDate(api, BEPINEX_REQUIREMENTS[0]),
+    //no capture group - the release tag carries the version (v5.4.23.5), and the module maps a
+    //fourth segment onto a prerelease identifier (5.4.23-5), so every 5.4.23.x bump now compares
+    //as newer. The mod list shows the release version rather than an asset upload timestamp.
+    resolveVersion: (api) => resolveVersionByModVersion(api, BEPINEX_REQUIREMENTS[0]),
     autoInstall: false,
-    //pinVersion: BEP_VER, //trackByAssetDate is ignored while pinned
+    //pinVersion: BEP_VER, //hold at this release - update checks go silent once it is installed
   },
 ];
 

@@ -12,7 +12,7 @@
 // pinFileId), which holds it there and makes update checks skip the API.
 // Extracted from the DOOM Eternal extension's EternalModInjector downloader.
 //
-// All HTTP goes through util.jsonRequest and Vortex's download manager, so the
+// All HTTP goes through util.rawRequest and Vortex's download manager, so the
 // only external is vortex-api.
 //
 // Public API: downloadGameBanana, checkForGameBananaUpdate (array-based entry
@@ -83,10 +83,26 @@ function isAtPinnedVersion(api, gameId, requirement) {
 
 // --- GameBanana API -------------------------------------------------------
 
+// GameBanana serves apiv11 responses with "Content-Type: text/html" (verified against every
+// endpoint in August 2026 - an occasional Cloudflare BYPASS response says application/json, the
+// cached ones do not). util.jsonRequest only accepts application/json or text/plain and rejects
+// anything else outright, replacing the error message with the response body, so every call
+// through it fails even though the body is valid JSON - which silently reduced this module to
+// its hardcoded fallback file id. The raw request is therefore made here and parsed locally.
+const GB_CONTENT_TYPE = /^(application\/json|text\/html|text\/plain)/;
+
+async function gamebananaJson(url) {
+  if (util.rawRequest === undefined) { //older Vortex builds: no worse than before
+    return util.jsonRequest(url);
+  }
+  const raw = await util.rawRequest(url, { expectedContentType: GB_CONTENT_TYPE, encoding: 'utf-8' });
+  return JSON.parse(String(raw));
+}
+
 //Get the latest file for the requirement from the GameBanana API (returns null if unreachable)
 async function getLatestGameBananaFile(requirement) {
   try {
-    const data = await util.jsonRequest(filesUrl(requirement));
+    const data = await gamebananaJson(filesUrl(requirement));
     let files = (data?._aFiles || []).filter(file => (file?._idRow && file?._sDownloadUrl));
     if (requirement.fileNamePattern) { //narrow multi-file submissions (e.g. Windows/Linux variants) to this requirement's file
       files = files.filter(file => requirement.fileNamePattern.test(String(file._sFile || '')));
@@ -105,7 +121,7 @@ async function getLatestGameBananaFile(requirement) {
 //Get the latest version for the requirement from the GameBanana API (returns null if unreachable)
 async function getLatestGameBananaVersion(requirement) {
   try {
-    const data = await util.jsonRequest(updatesUrl(requirement));
+    const data = await gamebananaJson(updatesUrl(requirement));
     const title = data?._aRecords?.[0]?._sName || '';
     const match = title.match(requirement.versionPattern || DEFAULT_VERSION_PATTERN);
     return match ? match[1] : null;

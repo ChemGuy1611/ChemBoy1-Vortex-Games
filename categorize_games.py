@@ -16,11 +16,11 @@ independently of its engine category and of each other:
     games-downloader-moddb.txt      - games with a bundled moddb_downloader.js module
     games-downloader-modworkshop.txt - games with a bundled modworkshop_downloader.js module
     games-downloader-thunderstore.txt - games with a bundled thunderstore_downloader.js module
-    games-browser-thunderstore.txt  - games with a bundled thunderstore_browser.js module
     games-github.txt     - games with a WORKING inline GitHub download (no downloader.js).
                            Skips downloads that are commented out or never called, plus
                            GITHUB_LIST_EXCLUDED_ENGINES (engines whose GitHub fetch is
-                           just their standard mod loader) and GITHUB_LIST_EXCLUDED_GAMES
+                           just their standard mod loader), GITHUB_LIST_EXCLUDED_GAMES,
+                           and anything in games-unreleased.txt
     games-uemi.txt       - games that require the "Unreal Engine Mod Installer" extension
     games-ue4-5-parity.txt - UE4-5 games carrying the full template-ue4-5 load order
     games-unreleased.txt - games with no real Nexus page URL in EXTENSION_URL, i.e.
@@ -44,7 +44,7 @@ from vortex_utils import (
     has_downloader_js, has_bepinexbe_downloader_js, has_fcmodding_downloader_js,
     has_gamebanana_downloader_js,
     has_moddb_downloader_js, has_modworkshop_downloader_js,
-    has_thunderstore_downloader_js, has_thunderstore_browser_js,
+    has_thunderstore_downloader_js,
     github_download_enabled,
     requires_unreal_mod_installer, has_ue4ss_load_order_parity,
     is_unreleased_extension,
@@ -96,6 +96,9 @@ GITHUB_LIST_EXCLUDED_GAMES = {
     "crimsondesert",            # Ultimate ASI Loader, rolling 'x64-latest' release tag
     "nioh3",                    # Yumia fdata Tools on 'releases/latest/download', RDBExplorer manual browse
     "deusexhumanrevolution",    # DXHRDC-ModHook, pinned 'v1.1.0.0' release asset
+    "hades2",                   # ModUtil, pinned '2.10.1' asset; legacy pre-1.0 and its only
+                                # call site is commented out, but the URL const is at module
+                                # scope so github_download_enabled() cannot see that
 }
 
 # Games kept out of games-unreleased.txt. These have no Nexus page and never will, but
@@ -115,6 +118,18 @@ def _game_id_from_folder(folder):
     name = os.path.basename(os.path.normpath(folder))
     return name[len("game-"):] if name.startswith("game-") else name
 
+
+def _in_unreleased_list(src, folder):
+    """Return True if the game belongs in games-unreleased.txt.
+
+    Shared by that list's own predicate and by games-github.txt, which excludes its
+    members. Membership is the full rule, not the raw is_unreleased_extension() test:
+    a permanent test bed is a released-like extension that simply has no Nexus page,
+    so it stays out of the unreleased list and therefore stays eligible for the others.
+    """
+    return (is_unreleased_extension(src)
+            and _game_id_from_folder(folder) not in UNRELEASED_LIST_EXCLUDED_GAMES)
+
 # Flag lists are non-exclusive and evaluated for every game-* extension: a game
 # may appear in zero or more of these in addition to its single engine category.
 # Each entry pairs an output filename with a predicate(src, folder) -> bool.
@@ -127,18 +142,19 @@ FLAG_LISTS = [
     ("games-downloader-moddb.txt",      lambda src, folder: has_moddb_downloader_js(folder)),
     ("games-downloader-modworkshop.txt", lambda src, folder: has_modworkshop_downloader_js(folder)),
     ("games-downloader-thunderstore.txt", lambda src, folder: has_thunderstore_downloader_js(folder)),
-    # Embedded browser modules (resources/browsers/), which register a page that browses a
-    # mod site inside Vortex. Independent of the downloader module for the same source.
-    ("games-browser-thunderstore.txt", lambda src, folder: has_thunderstore_browser_js(folder)),
     # GitHub download done inline in index.js, i.e. without the downloader.js module.
     # github_download_enabled() ignores downloads that are commented out or defined in
     # a never-called function. Engines in GITHUB_LIST_EXCLUDED_ENGINES are skipped too -
     # their GitHub fetch is the engine's own mod loader, not a game-specific requirement -
-    # as are the one-off games in GITHUB_LIST_EXCLUDED_GAMES.
+    # as are the one-off games in GITHUB_LIST_EXCLUDED_GAMES. Unreleased extensions are
+    # dropped too: the list exists to find GitHub requirements that need watching on
+    # published extensions, and an extension awaiting its first release is still being
+    # authored - its requirements get reviewed as part of shipping it, not from here.
     ("games-github.txt",     lambda src, folder: (github_download_enabled(src)
                                                   and not has_downloader_js(folder)
                                                   and detect_engine(src) not in GITHUB_LIST_EXCLUDED_ENGINES
-                                                  and _game_id_from_folder(folder) not in GITHUB_LIST_EXCLUDED_GAMES)),
+                                                  and _game_id_from_folder(folder) not in GITHUB_LIST_EXCLUDED_GAMES
+                                                  and not _in_unreleased_list(src, folder))),
     ("games-uemi.txt",       lambda src, folder: requires_unreal_mod_installer(src)),
     # UE4-5 games at template load-order parity (custom UE4SS + LogicMods pages).
     ("games-ue4-5-parity.txt", lambda src, folder: has_ue4ss_load_order_parity(src)),
@@ -147,8 +163,7 @@ FLAG_LISTS = [
     # const rather than a live lookup, so treat the list as a starting point. Permanent
     # test beds are dropped via UNRELEASED_LIST_EXCLUDED_GAMES - nothing in index.js
     # distinguishes one from an extension that is genuinely awaiting its first release.
-    ("games-unreleased.txt", lambda src, folder: (is_unreleased_extension(src)
-                                                  and _game_id_from_folder(folder) not in UNRELEASED_LIST_EXCLUDED_GAMES)),
+    ("games-unreleased.txt", lambda src, folder: _in_unreleased_list(src, folder)),
 ]
 
 

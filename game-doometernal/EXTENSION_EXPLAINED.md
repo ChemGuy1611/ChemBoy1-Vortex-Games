@@ -25,6 +25,12 @@
 - **GOG** — `1344230395`
 - **Xbox / Microsoft Store** — `BethesdaSoftworks.DOOMEternal-PC`
 
+## Feature Flags
+
+| Flag | Value | Description |
+| --- | --- | --- |
+| `gamebananaBrowser` | `true` | register the "Browse GameBanana" page |
+
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:

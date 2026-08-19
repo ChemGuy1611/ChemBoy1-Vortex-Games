@@ -2,7 +2,12 @@
 
 ## Planned Improvements (Not Yet Released)
 
-- None Planned
+- Fixed: The Browse Thunderstore page no longer registers a keyboard shortcut that was already in use elsewhere in Vortex.
+
+## [1.1.2] - 2026-08-17
+
+- Changed: The Browse Thunderstore page asks you to confirm opening an external site once per Vortex session, instead of every time the page is opened.
+- Fixed: After a download is started from the Browse Thunderstore page, the Back button no longer returns to the download link.
 
 ## [1.1.1] - 2026-08-17
 

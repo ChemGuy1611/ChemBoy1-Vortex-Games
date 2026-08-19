@@ -4,6 +4,15 @@
 
 - Config and save modtypes, installers, and open buttons.
 
+## [1.0.0] - 2026-08-17
+
+- Added: "Browse GameBanana" page - browse the DOOM Eternal mod section inside Vortex, and a download started from it installs, enables and names itself like any managed mod
+- Added: Update check for mods installed from the new page, shown with the "Check for Updates" button on the Mods page
+- Added: Ad slots are hidden on the browse page, and ad links no longer open in your web browser
+- Changed: The browse page asks you to confirm opening an external site once per Vortex session, instead of every time the page is opened
+- Fixed: EternalModInjector lookups against GameBanana always failed, so the extension silently used its built-in download link and never reported an available update
+- Fixed: EternalModInjector built-in download link, used only when GameBanana cannot be reached, pointed at a file that no longer exists
+
 ## [0.4.5] - 2026-08-11
 
 - Added GOG support

@@ -14,16 +14,25 @@
 | --- | --- |
 | Game ID | `XXX` |
 | Executable | `XXX.exe` |
-| Extension Page | XXX |
-| PCGamingWiki | XXX |
 
 ## Feature Flags
 
 | Flag | Value | Description |
 | --- | --- | --- |
-| `hasAtk` | `true` | true if game supports AnvilToolkit — set to false for games that don't use ATK |
+| `hasAtk` | `true` | true if game supports AnvilToolkit — also gates the Extracted/.forge/.data/loose workflow and the rename dialog |
 | `hasForger` | `false` | true if game supports Forger Patch Manager (.forger2 files) — typically older AC games |
+| `hasReforger` | `false` | true if game uses ReForger (Xbox package, found through the registry) |
+| `hasDlcFolders` | `false` | true if game has dlc_NN folders — adds the DLC mod type, per-DLC .forge mod types and .forge routing |
+| `hasResorep` | `false` | true if game uses ResoRep for runtime texture injection |
+| `autoCopyResorepDll` | `false` | true to copy the system d3d11.dll automatically instead of leaving the bundled .bat to the user |
+| `hasPatchTextures` | `false` | true if game takes loose .dds textures as Forger patches — mutually exclusive with hasResorep |
+| `hasSound` | `false` | true if game takes .pck sound bank replacements |
+| `hasFixes` | `false` | true if game has a community "fixes" DLL package |
+| `hasBinariesType` | `false` | true if game ships a separate "-binaries" mod type alongside "-root" |
+| `hasCustomLaunchers` | `false` | true if game has extra launcher executables (Ubisoft Plus / Vulkan) |
+| `hasSettingsIni` | `false` | true to add an "Open Settings INI" toolbar button |
 | `setupNotification` | `false` | enable to show the user a notification with special instructions on first setup |
+| `deployNotification` | `true` | enable the post-deployment notification reminding the user to run the tools |
 | `allowSymlinks` | `false` | symlinks can cause issues when repacking with ATK — set to false when hasAtk = true |
 | `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |
 | `debug` | `false` | toggle for debug mode |
@@ -40,6 +49,7 @@ Mod types define where each category of mod gets deployed:
 | Loose Data Files | `XXX-loosedata` | high | `{gamePath}` |
 | Forge Replacement | `XXX-forgefile` | high | `{gamePath}` |
 | Binaries / Root Folder | `XXX-root` | high | `{gamePath}` |
+| AnvilToolkit | `XXX-atk` | low | `{gamePath}` |
 
 ## Mod Installers
 
@@ -48,23 +58,19 @@ Installers run in priority order (lower number = tested first). The first instal
 | Installer ID | Priority |
 | --- | --- |
 | `XXX-atk` | 25 |
-| `XXX-extracted` | 27 |
-| `XXX-forgefolder` | 29 |
-| `XXX-datafolder` | 31 |
-| `XXX-loosedata` | 33 |
-| `XXX-forgefile` | 35 |
-| `XXX-root` | 37 |
-| `XXX-forger` | 41 |
-| `XXX-forgerpatch` | 43 |
+| `XXX-extracted` | 35 |
+| `XXX-forgefolder` | 36 |
+| `XXX-datafolder` | 37 |
+| `XXX-loosedata` | 38 |
+| `XXX-forgefile` | 39 |
+| `XXX-root` | 41 |
 | `XXX-fallback` | 49 |
 
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Launch Game Ubisoft Plus**
-- **Launch Vulkan**
-- **Custom Launch**
+- **Custom Launch** (`XXX.exe`)
 
 ## Toolbar Actions
 
@@ -89,19 +95,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

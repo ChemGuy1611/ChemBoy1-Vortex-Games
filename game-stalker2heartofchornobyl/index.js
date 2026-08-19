@@ -12,7 +12,6 @@ const { actions, fs, util, selectors, log,
 const path = require('path');
 const template = require('string-template');
 //const Shell = require('node-powershell');
-const child_process = require("child_process");
 const fsPromises = require('fs/promises');
 const { parseStringPromise } = require('xml2js');
 const { default: IniParser, WinapiFormat } = require('vortex-parse-ini');
@@ -79,6 +78,7 @@ const SPECIAL_LO_INSTRUCTIONS = '';
 const ue4ssLoadOrder = true; //master toggle for UE4SS support: UE4SS/Scripts/DLL/LogicMods mod types and installers, UE4SS buttons, load order page, and mods.txt writing
 const logicModsLoadOrder = true; //enable load order page and load_order.txt writing for LogicMods/Blueprint pak mods
 const collectionsLoadOrder = true; //include UE4SS and LogicMods load orders in collections (ANDed with the toggles above)
+const autoDeployMerge = false; //automatically run the merge tool on deploy (takes a long time and requires user input)
 const debug = false;
 
 //Discovery IDs
@@ -95,11 +95,9 @@ const MERGER_NAME = 'Simple Mod Merger';
 const MERGER_FOLDER = "Stalker2SimpleModMerger";
 const MERGER_PATH = MERGER_FOLDER;
 const MERGER_FILE = "simple_mod_merger.exe";
-const MERGER_URL = `https://github.com/AlanParadis/Stalker2SimpleModMerger/releases/download/Vortex-v1.4.5/Stalker2SimpleModMergerForVortex.zip`;
-const MERGER_URL_MANUAL = `https://github.com/AlanParadis/Stalker2SimpleModMerger/releases`;
 const GAMEPATH_FILE = "gamepath.txt";
 const AES_KEY_FILE = "key.txt";
-const AES_KEY = "0x33A604DF49A07FFD4A4C919962161F5C35A134D37EFA98DB37A34F6450D7D386";
+const AES_KEY = "0x33A604DF49A07FFD4A4C919962161F5C35A134D37EFA98DB37A34F6450D7D386"; //encryption key for game pak files
 const MERGER_PAGE = 369;
 const MERGER_FILE_ID = 3859;
 const MERGED_PAK = "zzzzzzzzzz_MERGED_MOD.pak";
@@ -204,9 +202,7 @@ const UE4SS_DLFILE_STRING = "ue4ss_v";
 const UE4SS_URL = "https://github.com/UE4SS-RE/RE-UE4SS/releases";
 const UE4SS_SETTINGS_FILE = 'UE4SS-settings.ini';
 const UE4SS_SETTINGS_FILEPATH = path.join('ue4ss', UE4SS_SETTINGS_FILE); //relative to Binaries folder
-const UE4SS_MODSJSON_FILE = 'mods.json';
 const UE4SS_MODSTXT_FILE = 'mods.txt';
-const UE4SS_MODSJSON_FILEPATH = path.join(UE4SS_MOD_PATH, UE4SS_MODSJSON_FILE); //relative to Binaries folder
 const UE4SS_MODSTXT_FILEPATH = path.join(UE4SS_MOD_PATH, UE4SS_MODSTXT_FILE);
 const UE4SS_LO_FILE = 'ue4ss_loadOrder.json';
 const LO_ATTRIBUTE_UE4SS = 'ue4ssModFolder';
@@ -571,7 +567,7 @@ function setGameVersionSync(gamePath) {
 }
 
 //Get correct save path for game version - synchronous
-function getSavePath(api, game) {
+function getSavePath(api) {
   GAME_PATH = getDiscoveryPath(api);
   if (statCheckSync(GAME_PATH, STEAM_FILE)) {
     SAVE_PATH = SAVE_PATH_STEAM;
@@ -667,7 +663,7 @@ function installModMerger(files) {
   return Promise.resolve({ instructions });
 }
 
-//Installer test for Herbata's Mod-as-DLC Loader files
+/*Installer test for Herbata's Mod-as-DLC Loader files
 function testHerbata(files, gameId) {
   const isMod = files.some(file => (path.basename(file).toLowerCase() === HERBATA_FILE));
   let supported = (gameId === spec.game.id) && isMod;
@@ -706,8 +702,7 @@ function installHerbata(files) {
   });
   instructions.push(setModTypeInstruction);
   return Promise.resolve({ instructions });
-}
-
+} //*/
 
 //Test for UE4SS combo (pak and lua/dll) mod files
 function testUe4ssCombo(files, gameId) {
@@ -940,7 +935,7 @@ function installScripts(api, files, fileName) {
     const ENABLEDTXT_PATH = path.join(fileName, rootPath, ENABLEDTXT_FILE);
     try {
       fs.statSync(ENABLEDTXT_PATH);
-    } catch (err) {
+    } catch {
       try {
         fs.writeFileSync(
           ENABLEDTXT_PATH,
@@ -1009,7 +1004,7 @@ function installDll(api, files, fileName) {
     const ENABLEDTXT_PATH = path.join(fileName, rootPath, ENABLEDTXT_FILE);
     try {
       fs.statSync(ENABLEDTXT_PATH);
-    } catch (err) {
+    } catch {
       try {
         fs.writeFileSync(
           ENABLEDTXT_PATH,
@@ -1018,8 +1013,8 @@ function installDll(api, files, fileName) {
         );
         files.push(path.join(rootPath, ENABLEDTXT_FILE));
         log('info', `Successfully created enabled.txt for UE4SS DLL Mod: ${MOD_NAME}`);
-      } catch {
-        log('error', `Could not create enabled.txt for UE4SS DLL Mod: ${MOD_NAME}`);
+      } catch (err) {
+        log('error', `Could not create enabled.txt for UE4SS DLL Mod: ${MOD_NAME}: ${err}`);
       }
     }
   } else {
@@ -2072,7 +2067,7 @@ async function downloadUe4ss(api, gameSpec) {
         return reject(error);
       })
       .then((result) => {
-        const dlInfo = {game: gameSpec.game.id, name: MOD_NAME};
+        //const dlInfo = {game: gameSpec.game.id, name: MOD_NAME};
         api.events.emit('start-download', result, {}, undefined,
           async (error, id) => { //callback function to check for errors and pass id to and call 'start-install-download' event
             if (error !== null && (error.name !== 'AlreadyDownloaded')) {
@@ -2277,7 +2272,7 @@ function partitionCheckNotify(api, CHECK_CONFIG) {
   });
 }
 
-async function resolveGameVersion(gamePath, exePath) {
+async function resolveGameVersion(gamePath) {
   GAME_VERSION = await setGameVersionPath(gamePath);
   //SHIPPING_EXE = getShippingExe(gamePath);
   const READ_FILE = path.join(gamePath, SHIPPING_EXE);
@@ -2979,41 +2974,23 @@ async function didDeploy(api, profileId) { //run on mod deploy
     }
   }
   api.dismissNotification(`${GAME_ID}-loadorderdeploy-notif`);
-  //await deployMerge(api);
+  if (autoDeployMerge) await deployMerge(api);
   return Promise.resolve();
 }
 
 async function deployMerge(api) { //run after mod deployment
   try { //run merge tool
     log('info', 'Running merge tool');
-    ///*
-    const proc = child_process.spawn(
-      path.join(GAME_PATH, MERGER_FOLDER, MERGER_FILE),
-      [],
-      {
-        //cwd: path.join(GAME_PATH, MERGER_FOLDER),
-        //shell: true,
-        //detached: true,
-      }
-    );
-    //*/
-    /*
-    const proc = child_process.spawn(
-      'cmd.exe',
-      [`start ${path.join(GAME_PATH, MERGER_FOLDER, MERGER_FILE)}`],
-      {
-        //cwd: path.join(GAME_PATH, MERGER_FOLDER),
-        //shell: true,
-        //detached: true,
-      }
-    );
-    //*/
-    proc.on("error", () => { });
-  }
-  catch (err) {
+    const exePath = path.join(GAME_PATH, MERGER_FOLDER, MERGER_FILE);
+    await fs.statAsync (exePath);
+    api.runExecutable(exePath, [], {
+      cwd: path.join(GAME_PATH, MERGER_FOLDER),
+      shell: true,
+      detached: true,
+    });
+  } catch (err) {
     api.showErrorNotification('Failed to run merge tool', err);
   }
-
   return Promise.resolve();
 }
 
@@ -3024,12 +3001,10 @@ async function didPurge(api, profileId) { //run on mod purge
   if (gameId !== GAME_ID) {
     return Promise.resolve();
   }
-
   try { //Delete merged pak on purge
     log('info', `Deleting "${MERGED_PAK}" on purge`);
     await fs.unlinkAsync(path.join(GAME_PATH, UE5_PATH, MERGED_PAK));
-  }
-  catch (err) {
+  } catch (err) {
     if (err.code === 'ENOENT') {
       log('info', `"${MERGED_PAK}" does not exist on purge`);
     }
@@ -3040,8 +3015,7 @@ async function didPurge(api, profileId) { //run on mod purge
   try { //Delete HerbatasDLCModLoader.pak on purge
     log('info', `Deleting "${HERBATA_PAK}" on purge`);
     await fs.unlinkAsync(path.join(GAME_PATH, UE5_PATH, HERBATA_PAK));
-  }
-  catch (err) {
+  } catch (err) {
     if (err.code === 'ENOENT') {
       log('info', `"${HERBATA_PAK}" does not exist on purge`);
     }
@@ -3053,8 +3027,7 @@ async function didPurge(api, profileId) { //run on mod purge
     log('info', `Deleting "${PAKCHUNK0_FOLDER_STEAM}" folder on purge`);
     const FOLDER = path.join(GAME_PATH, UE5_ALT_PATH, PAKCHUNK0_FOLDER_STEAM);
     await fsPromises.rm(FOLDER, { recursive: true });
-  }
-  catch (err) {
+  } catch (err) {
     if (err.code === 'ENOENT') {
       log('info', `"${PAKCHUNK0_FOLDER_STEAM}" folder does not exist on purge`);
     }
@@ -3066,8 +3039,7 @@ async function didPurge(api, profileId) { //run on mod purge
     log('info', `Deleting "${PAKCHUNK0_FOLDER_XBOX}" folder on purge`);
     const FOLDER = path.join(GAME_PATH, UE5_ALT_PATH, PAKCHUNK0_FOLDER_XBOX);
     await fsPromises.rm(FOLDER, { recursive: true });
-  }
-  catch (err) {
+  } catch (err) {
     if (err.code === 'ENOENT') {
       log('info', `"${PAKCHUNK0_FOLDER_XBOX}" folder does not exist on purge`);
     }

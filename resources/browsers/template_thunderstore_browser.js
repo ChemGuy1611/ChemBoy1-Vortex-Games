@@ -12,6 +12,8 @@ const PLUGIN_PATH = path.join('Mods'); //DUMMY PLACEHOLDER - the adopter's mod f
 // A sidebar page that embeds the live thunderstore.io community site. The user browses the
 // real site and a click on a download link becomes a managed install: the mod is enabled,
 // stamped with its package and version, and its dependencies are offered for installation.
+// The adopter must carry TWO files beside index.js: thunderstore_browser.js and base_browser.js,
+// which it requires from beside itself. Copying only the first fails at require time.
 const thunderstoreBrowser = true; //toggle - set false to leave the page unregistered
 const { registerThunderstoreBrowser, onceThunderstoreBrowser } = require('./thunderstore_browser');
 const TS_COMMUNITY = 'community-slug'; //Thunderstore community for this game - https://thunderstore.io/c/community-slug/
@@ -22,7 +24,7 @@ const TS_BROWSER_CONFIG = {
     downloadThunderstoreRequirement(api, gameSpec, requirement, true),
   pageId: `${GAME_ID}-thunderstore-browse`, //optional (default shown)
   pageTitle: 'Browse Thunderstore', //optional - sidebar label
-  hotkey: 'B', //optional - Ctrl+Shift+<key>
+  //hotkey: 'G', //optional - Ctrl+Shift+<key>. Pick a free one: Vortex logs "hotkey already used" and drops the second claim (B is taken)
   //priority: 40, //optional - sidebar position, lower is higher up
   //pageGroup: 'per-game', //optional - 'per-game' hides the page while another game is active
   //icon: 'flash', //optional - icon name, overridden by mdi

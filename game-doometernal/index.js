@@ -2,8 +2,8 @@
 Name: DOOM Eternal Vortex Extension
 Structure: 3rd party mod loader
 Author: ChemBoy1
-Version: 0.4.5
-Date: 2026-08-11
+Version: 1.0.0
+Date: 2026-08-17
 ////////////////////////////////////////////////*/
 /*
 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣀⣀⣀⣀⣠⣤⣤⣤⡴⣦⡴⣖⠶⣴⠶⡶⣖⡶⣶⢶⣲⡾⠿⢿⡷⣾⢿⣷⣦⢾⣷⣾⣶⣤⣀⣰⣤⣀⡀⠀⠀⢀⣴⣿⡿⡿⣿⣿⣦⣄⠀⠀⣠⣴⣿⡿⢿⡿⣷⣦⡄⠀⠀⢀⣀⣤⣦⣀⣤⣶⣶⣷⣦⣴⡿⢿⡷⣿⠿⡿⣿⣷⢶⣦⢴⡲⣦⢶⡶⢶⡲⣖⡶⣦⣤⣤⣤⣤⣤⣤⣀⣀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
@@ -40,7 +40,11 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 const { parseStringPromise } = require('xml2js');
-const { downloadGameBanana, checkForGameBananaUpdate } = require('./gamebanana_downloader');
+const { downloadGameBanana, checkForGameBananaUpdate, downloadGameBananaRequirement } = require('./gamebanana_downloader');
+const { registerGameBananaBrowser, onceGameBananaBrowser } = require('./gamebanana_browser');
+
+//Toggles
+const gamebananaBrowser = true; //register the "Browse GameBanana" page
 
 //Specify all the information about the game
 const GAME_ID = "doometernal";
@@ -55,9 +59,10 @@ const EXEC = path.join('launcher', "idTechLauncher.exe");
 const EXEC_ALT = "DOOMEternalx64vk.exe";
 const EXEC_XBOX = "gamelaunchhelper.exe";
 
+const GB_GAME_ID = "8756"; //GameBanana game id for DOOM Eternal - https://gamebanana.com/games/8756
 const INJ_TOOL_ID = "7475"; //GameBanana tool id for EternalModInjector
-const INJ_REV = "6.66 Rev 3 N"; //fallback version if the GameBanana API is unreachable
-const INJ_DL_ID = "1706519"; //fallback file id if the GameBanana API is unreachable - https://gamebanana.com/tools/7475
+const INJ_REV = "6.66 Rev 3 O"; //fallback version if the GameBanana API is unreachable
+const INJ_DL_ID = "1765017"; //fallback file id if the GameBanana API is unreachable - https://gamebanana.com/tools/7475
 const INJ_URL = `https://gamebanana.com/tools/${INJ_TOOL_ID}`;
 const INJ_INSTR_URL = `https://gamebanana.com/posts/10737067`;
 const INJ_FILE_ATTR = "gamebananaFileId"; //mod attribute used to track the installed GameBanana file id
@@ -95,6 +100,18 @@ const GB_REQUIREMENTS = [ //GameBanana requirements for gamebanana_downloader.js
     pageUrl: INJ_URL,
   },
 ];
+
+//Embedded GameBanana browser page - the user browses the live site and installs from it.
+//GameBanana has no dependency graph, so nothing is offered alongside an install.
+const GB_BROWSER_CONFIG = {
+  gbGameId: GB_GAME_ID,
+  requirements: GB_REQUIREMENTS, //EternalModInjector installs to its own mod type, not as a browsed mod
+  installRequirement: (api, gameSpec, requirement) =>
+    downloadGameBananaRequirement(api, gameSpec, requirement, true),
+  pageId: `${GAME_ID}-gamebanana-browse`,
+  pageTitle: 'Browse GameBanana',
+  //no hotkey: Ctrl+Shift+B is already taken, and a second claim on it is dropped with a warning
+};
 
 const ROLLBACK_FILE = "doometernalx64vk.exe";
 const KTDE_FILE = "keep the dead eternal - readme - install instructions.rtf";
@@ -691,6 +708,11 @@ function applyGame(context, gameSpec) {
     }, (game) => pathPattern(context.api, game, type.targetPath), () => Promise.resolve(false), { name: type.name });
   });
 
+  //register the embedded GameBanana browser page
+  if (gamebananaBrowser) {
+    registerGameBananaBrowser(context, gameSpec, GB_BROWSER_CONFIG);
+  }
+
   //register mod installers
   context.registerInstaller('doometernal-rollback', 25, testRollback, installRollback);
   context.registerInstaller('doometernal-injector', 30, testInjector, installInjector);
@@ -774,6 +796,9 @@ function main(context) {
       if (gameId !== GAME_ID) return;
       return onCheckModVersion(api, gameId, mods, forced);
     });
+    if (gamebananaBrowser) { //claims downloads started from the browse page, and update-checks the mods installed through it
+      onceGameBananaBrowser(api, spec, GB_BROWSER_CONFIG);
+    }
   });
   return true;
 }

@@ -348,6 +348,23 @@ const data = await archive.extractFile('data/config.json');
 
 ---
 
+### `util.rawRequest(url, options?)`
+
+**Why useful:** The escape hatch when `util.jsonRequest` refuses a perfectly good API. `jsonRequest` is `rawRequest` plus a hardcoded `expectedContentType` of `/^(application\/json|text\/plain)/` and a `JSON.parse`; `rawRequest` lets you name the content type yourself. Both reject any status other than `200`, and on rejection they **replace the error message with the response body**, so a content-type refusal reads like a successful fetch in the log — the error text is the JSON you wanted.
+
+```js
+const GB_CONTENT_TYPE = /^(application\/json|text\/html|text\/plain)/;
+
+async function apiJson(url) {
+  const raw = await util.rawRequest(url, { expectedContentType: GB_CONTENT_TYPE, encoding: 'utf-8' });
+  return JSON.parse(String(raw));
+}
+```
+
+**Use case:** GameBanana's apiv11 returns JSON labelled `Content-Type: text/html`, so every `jsonRequest` call against it fails; see `GAMEBANANA_API.md`. Neither helper follows redirects, so a URL that `301`s needs the final address.
+
+---
+
 ## 6. Inter-Extension API
 
 ### `context.registerAPI(name, func, opts)`

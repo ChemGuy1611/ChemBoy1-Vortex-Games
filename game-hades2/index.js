@@ -2,7 +2,7 @@
 Name: Hades II Vortex Extension
 Structure: 3rd-Party Mod Installer
 Author: ChemBoy1
-Version: 1.1.1
+Version: 1.1.2
 Date: 2026-08-17
 ////////////////////////////////*/
 
@@ -196,7 +196,7 @@ const TS_BROWSER_CONFIG = {
     downloadThunderstoreRequirement(api, gameSpec, requirement, true),
   pageId: `${GAME_ID}-thunderstore-browse`,
   pageTitle: 'Browse Thunderstore',
-  hotkey: 'B',
+  //no hotkey: Ctrl+Shift+B is already taken, and a second claim on it is dropped with a warning
 };
 
 //Filled in from data above

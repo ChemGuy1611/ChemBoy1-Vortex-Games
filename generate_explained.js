@@ -161,7 +161,7 @@ function extractTools(src, table) {
 /**
  * Extract action labels from context.registerAction calls.
  */
-function extractActions(src) {
+function extractActions(src, table) {
   const results = [];
   const stripped = src.replace(/(?<!\/)\/\*[\s\S]*?\*\//g, '');
   // Find each context.registerAction( call; use depth-tracked arg parsing so
@@ -178,9 +178,15 @@ function extractActions(src) {
     const argsStr = stripped.slice(parenOpenPos + 1, parenClosePos);
     const args = splitAtTopLevelCommas(argsStr);
     if (args.length < 5) continue;
+    // An action wrapped in `if (FLAG) {` only exists when that flag is on
+    const guardFlagAction = getGuardFlag(stripped, m.index);
+    if (guardFlagAction && table.get(guardFlagAction) === 'false') continue;
     const labelArg = args[4].trim();
     const labelM = labelArg.match(/^[`'"]([^`'"]+)[`'"]$/);
-    if (labelM) results.push(labelM[1]);
+    if (!labelM) continue;
+    // Backtick labels can interpolate constants (`Force Copy System ${RESOREP_DLL_FILE}`),
+    // so resolve them against the symbol table instead of emitting the raw ${...}.
+    results.push(labelArg.startsWith('`') ? resolveWithFallback(labelArg, table, src) : labelM[1]);
   }
   return results;
 }
@@ -497,7 +503,7 @@ function buildMarkdown(dirName, src) {
   const modTypes = [...specModTypes, ...registeredModTypes.filter(mt => !seenModTypeIds.has(mt.id))];
   const installers = extractInstallers(src, table);
   const tools = extractTools(src, table);
-  const actions = extractActions(src);
+  const actions = extractActions(src, table);
   const stores = detectStores(table);
   const deps = extractDependencies(src, table);
   const configSave = extractConfigSavePaths(table);

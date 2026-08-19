@@ -367,8 +367,9 @@ The same field name and behavior exist in all five downloader modules; `DOWNLOAD
 thunderstore.io community page inside Vortex, so the user browses the real site and installs from it.
 It is a separate module from the downloader and requires nothing from it: the downloader installs
 known requirements unattended, the browser serves human browsing. Adopters carry a byte-identical
-copy; the roster is `resources/lists/games-browser-thunderstore.txt`. Full contract, exports and the
-rules a new source module must follow: `BROWSER_MODULES.md`.
+copy; the roster is `resources/lists/games-downloader-thunderstore.txt` (a Thunderstore game gets the
+browser page as standard equipment alongside the downloader, so there is no separate browser-only
+list). Full contract, exports and the rules a new source module must follow: `BROWSER_MODULES.md`.
 
 Thunderstore-specific pieces of that module:
 

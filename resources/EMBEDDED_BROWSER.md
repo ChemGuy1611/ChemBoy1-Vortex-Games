@@ -152,6 +152,13 @@ Consequences to design around:
 - **An extension that wants more takes over afterwards** — for example on `did-finish-download`,
   matching the finished download's URL, then emitting `start-install-download` and stamping
   attributes itself.
+- **The URL you get back is the final URL after redirects, not the link the user clicked.** Verified
+  live in August 2026: clicking `gamebanana.com/dl/{fileId}` produced a Vortex download whose recorded
+  URL was `filecache37.gamebanana.com/mods/intro_skip.zip` — the CDN target. A page that recognises its
+  own downloads must therefore match the CDN form, and cannot rely on the clicked URL being visible at
+  all. When that final URL carries no identifying ids (GameBanana's CDN path is only a section and a
+  file name), the page has to supply the identity from the browsing context it kept.
+  `BROWSER_MODULES.md` has the pattern.
 - `blob:` URLs are the exception: they are saved to the temp folder first and signalled once
   complete, with the filename appended to the URL after a `|`.
 - When the core browse modal is open it consumes the URL instead, and appends `<` plus the last

@@ -235,8 +235,13 @@ function scanToMatchingClose(str, openPos, openCh, closeCh) {
 
 /**
  * Scan backwards from callIndex to find the enclosing if-block guard.
- * Returns the flag name if the enclosing block is `if (FLAG)` or
+ * Returns the flag name if an enclosing block is `if (FLAG)` or
  * `if (FLAG === true)`; returns null for anything more complex.
+ *
+ * Walks outward through every enclosing block rather than stopping at the
+ * innermost one, so a call nested in a loop or callback inside the guarded
+ * block still resolves to its guard (e.g. a `spec.modTypes.push` inside
+ * `DLC_FORGE_TYPES.forEach(...)` inside `if (hasDlcFolders) {`).
  */
 function getGuardFlag(stripped, callIndex) {
   let depth = 0;
@@ -249,9 +254,11 @@ function getGuardFlag(stripped, callIndex) {
         const lineStart = stripped.lastIndexOf('\n', i);
         const lineText = stripped.substring(lineStart + 1, i + 1).trim();
         const m = lineText.match(/^if\s*\(\s*([A-Za-z_$]\w*)\s*(?:===\s*true\s*)?\)\s*\{?$/);
-        return m ? m[1] : null;
+        if (m) return m[1];
+        //not an if-guard: keep scanning outward into the parent scope
+      } else {
+        depth--;
       }
-      depth--;
     }
     i--;
   }

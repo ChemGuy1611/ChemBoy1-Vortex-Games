@@ -144,7 +144,6 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `has_moddb_downloader_js(folder)` | Return `True` if the extension `folder` contains a bundled `moddb_downloader.js` module |
 | `has_modworkshop_downloader_js(folder)` | Return `True` if the extension `folder` contains a bundled `modworkshop_downloader.js` module |
 | `has_thunderstore_downloader_js(folder)` | Return `True` if the extension `folder` contains a bundled `thunderstore_downloader.js` module |
-| `has_thunderstore_browser_js(folder)` | Return `True` if the extension `folder` contains a bundled `thunderstore_browser.js` module |
 | `downloads_from_github(src)` | Return `True` if `src` pulls a mod/requirement from a GitHub release (release-asset URL or `browser_download_url`). Textual only — commented-out and never-called code still counts |
 | `github_download_enabled(src)` | Return `True` if `src` has a GitHub download that can actually run: not commented out, not stranded in a never-called function |
 | `strip_js_comments(src)` | Return `src` with `//` and `/* */` comments blanked to spaces, preserving string/template/regex literals and character offsets |
@@ -702,6 +701,8 @@ Not a runnable script — it is required by `generate_explained.js` and `generat
 
 `extractInstallers` returns `{ id, priority, testFn, guardFlag }` per registration. `testFn` is the installer's test function name, which is the stable cross-extension identity of an installer and the key `generate_notes.js` uses to attach documentation. Installers behind a disabled boolean flag are omitted.
 
+`getGuardFlag` walks outward through every enclosing block rather than stopping at the innermost one, so a registration nested inside a loop or callback still resolves to the `if (FLAG)` that guards it — for example a `spec.modTypes.push` inside a `.forEach` inside `if (hasDlcFolders) {`. A registration whose guard flag is `false` is omitted from the generated docs.
+
 ---
 
 ## generate_explained.js
@@ -709,6 +710,8 @@ Not a runnable script — it is required by `generate_explained.js` and `generat
 Reads each extension's `index.js` and generates an `EXTENSION_EXPLAINED.md` file describing how the extension works — game info, store IDs, mod types, installers, tools, paths, and feature toggles.
 
 Parsing is provided by `extension_parser.js`.
+
+Toolbar actions are read from `context.registerAction` calls. An action wrapped in `if (FLAG) {` is listed only when that flag is on, and a backtick label that interpolates a constant is resolved against the symbol table rather than emitted as a raw `${...}`.
 
 ### generate_explained.js — Requirements
 
@@ -951,25 +954,28 @@ The engine categories above are mutually exclusive (one per game). The lists bel
 | `resources/lists/games-downloader-moddb.txt` | Games with a bundled `moddb_downloader.js` module |
 | `resources/lists/games-downloader-modworkshop.txt` | Games with a bundled `modworkshop_downloader.js` module |
 | `resources/lists/games-downloader-thunderstore.txt` | Games with a bundled `thunderstore_downloader.js` module |
-| `resources/lists/games-browser-thunderstore.txt` | Games with a bundled `thunderstore_browser.js` module (embedded Thunderstore browse page) |
-| `resources/lists/games-github.txt` | Games with a working inline GitHub download in `index.js` (no `downloader.js`), excluding dead downloads and the engines listed in `GITHUB_LIST_EXCLUDED_ENGINES` |
+| `resources/lists/games-github.txt` | Games with a working inline GitHub download in `index.js` (no `downloader.js`), excluding dead downloads, the engines listed in `GITHUB_LIST_EXCLUDED_ENGINES`, and anything in `games-unreleased.txt` |
 | `resources/lists/games-uemi.txt` | Games that require the `Unreal Engine Mod Installer` extension via `context.requireExtension` |
 | `resources/lists/games-ue4-5-parity.txt` | UE4-5 games at `template-ue4-5` load-order parity (custom UE4SS + LogicMods pages) |
 | `resources/lists/games-unreleased.txt` | Extensions with no real Nexus page URL in `EXTENSION_URL` — never published, excluding the permanent test beds in `UNRELEASED_LIST_EXCLUDED_GAMES` |
 
 ### categorize_games.py — Detection
 
-Each game is matched against the engine categories in order — the first match wins. Detection uses the `Structure:` comment on line 3 of `index.js` as the primary signal, with fallback checks for unique code markers such as `const UNREALDATA =`, `const ATK_ID =`, `context.requireExtension('modtype-bepinex')`, etc. The flag lists are computed separately via dedicated predicates (`is_load_order_game`, `has_downloader_js`, `has_bepinexbe_downloader_js`, `has_fcmodding_downloader_js`, `has_gamebanana_downloader_js`, `has_moddb_downloader_js`, `has_modworkshop_downloader_js`, `has_thunderstore_downloader_js`, `has_thunderstore_browser_js`, `github_download_enabled`, `requires_unreal_mod_installer`, `has_ue4ss_load_order_parity`, `is_unreleased_extension`) in `vortex_utils.py`. The parity predicate keys off the `Ue4ssContextMenu` component, which only exists in games that took the whole load-order region (PAK + custom UE4SS + LogicMods pages) from `template-ue4-5`.
+Each game is matched against the engine categories in order — the first match wins. Detection uses the `Structure:` comment on line 3 of `index.js` as the primary signal, with fallback checks for unique code markers such as `const UNREALDATA =`, `const ATK_ID =`, `context.requireExtension('modtype-bepinex')`, etc. The flag lists are computed separately via dedicated predicates (`is_load_order_game`, `has_downloader_js`, `has_bepinexbe_downloader_js`, `has_fcmodding_downloader_js`, `has_gamebanana_downloader_js`, `has_moddb_downloader_js`, `has_modworkshop_downloader_js`, `has_thunderstore_downloader_js`, `github_download_enabled`, `requires_unreal_mod_installer`, `has_ue4ss_load_order_parity`, `is_unreleased_extension`) in `vortex_utils.py`. The parity predicate keys off the `Ue4ssContextMenu` component, which only exists in games that took the whole load-order region (PAK + custom UE4SS + LogicMods pages) from `template-ue4-5`.
 
 GitHub is the only host with an inline-download list. GameBanana, ModDB, ModWorkshop, Thunderstore, and builds.bepinex.dev are tracked solely by their `games-downloader-*.txt` module lists: every extension fetching a requirement from those hosts carries the matching downloader module, so the module list is the complete list. A bare host URL left in an extension is a browse link behind an `Open <host> Page` button, which was never counted as a download.
 
-Browser modules (`resources/browsers/`) are tracked the same way, by their own `games-browser-*.txt` lists. They are independent of the downloader lists: a downloader installs requirements unattended, a browser embeds the source's site for the user to browse, and an extension can carry either, both, or neither.
+Browser modules (`resources/browsers/`) have no list of their own. A game gets a source's browser page as standard equipment alongside that source's downloader module, so its roster is the same `games-downloader-*.txt` list — a separate `games-browser-*.txt` would just be a copy that drifts. Find current adopters by grepping which of those games also carry a `*_browser.js` file.
 
-`games-github.txt` applies three extra filters the other flag lists do not.
+`games-github.txt` applies four extra filters the other flag lists do not.
 
 **Engine exclusions.** Unity (BepInEx, MelonLoader/BepInEx hybrid, UMM), Frostbite, RE Engine, and Reloaded-II games are excluded via the `GITHUB_LIST_EXCLUDED_ENGINES` set in `categorize_games.py`: they do fetch from GitHub inline, but only to pull the standard mod loader their engine already implies (BepInEx/MelonLoader, FrostyToolsuite, REFramework, Reloaded-II — which then self-updates). Their engine list already tracks them, so the list stays focused on games with bespoke GitHub-sourced requirements. Add an engine label to that set to exclude it too.
 
-**Per-game exclusions.** `GITHUB_LIST_EXCLUDED_GAMES` holds individual GAME_IDs the engine rule does not cover — currently `middleearthshadowofwar` (Middle-Earth Mod Loader, fixed `loader` release tag), `crimsondesert` (Ultimate ASI Loader, rolling `x64-latest` tag), `nioh3` (Yumia fdata Tools on `releases/latest/download`, RDBExplorer downloaded by manual browse of the releases page) and `deusexhumanrevolution` (DXHRDC-ModHook, pinned `v1.1.0.0` release asset). Add an ID there when a game's GitHub asset sits on a fixed or rolling tag rather than real versioned releases, or is not fetched as a versioned asset at all.
+**Per-game exclusions.** `GITHUB_LIST_EXCLUDED_GAMES` holds individual GAME_IDs the engine rule does not cover — currently `middleearthshadowofwar` (Middle-Earth Mod Loader, fixed `loader` release tag), `crimsondesert` (Ultimate ASI Loader, rolling `x64-latest` tag), `nioh3` (Yumia fdata Tools on `releases/latest/download`, RDBExplorer downloaded by manual browse of the releases page) `deusexhumanrevolution` (DXHRDC-ModHook, pinned `v1.1.0.0` release asset) and `hades2` (ModUtil, pinned `2.10.1` asset — legacy pre-1.0, and its only call site is commented out). Add an ID there when a game's GitHub asset sits on a fixed or rolling tag rather than real versioned releases, or is not fetched as a versioned asset at all.
+
+That last case is also the one the detector cannot catch on its own: `github_download_enabled()` treats a URL constant declared at module scope as live, because there is no enclosing function whose call sites it could check, and erring toward enabled keeps it from dropping real games. A game whose GitHub download is dead only because the call is commented out therefore needs a manual entry here.
+
+**Unreleased exclusion.** Anything that lands in `games-unreleased.txt` is dropped from `games-github.txt` as well, via the shared `_in_unreleased_list()` helper both predicates call. The list exists to find GitHub-sourced requirements that need watching on published extensions; an extension awaiting its first release is still being authored, and its requirements get reviewed as part of shipping it. Note this keys on *list membership*, not on the raw `is_unreleased_extension()` test — a permanent test bed sits in `UNRELEASED_LIST_EXCLUDED_GAMES`, stays out of the unreleased list, and so remains eligible here.
 
 **Dead-download exclusion.** The predicate is `github_download_enabled()`, not the raw textual `downloads_from_github()`. It ignores a GitHub download that cannot actually run, which happens two ways in these extensions: the block is commented out via the `/* ... //*/` toggle idiom, or the download function is defined but its only call sites are themselves commented out. Detection runs on comment-stripped source (`strip_js_comments()` in `vortex_utils.py`, which preserves string/template/regex literals so the `//` inside a URL is never mistaken for a comment), then brace-matches each URL's enclosing function to check for a live call site. A URL at module scope counts as enabled — there is no enclosing function to test, and assuming enabled avoids dropping real games. Use `downloads_from_github()` when you want every textual mention regardless of whether it runs.
 
