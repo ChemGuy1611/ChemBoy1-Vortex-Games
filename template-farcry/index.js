@@ -5,7 +5,7 @@ Author: ChemBoy1
 Version: 1.0.0
 Date: 2026-XX-XX
 Notes:
-- 
+-
 ///////////////////////////////////////////*/
 
 //Import libraries
@@ -238,7 +238,7 @@ const tools = [
     exclusive: true,
     shell: true,
     //defaultPrimary: true,
-    parameters: PARAMETERS,
+    //parameters: PARAMETERS,
   },
   {
     id: SAVEMANAGER_ID,
@@ -677,7 +677,7 @@ function testFallback(files, gameId) {
 //Fallback installer to root folder
 function installFallback(api, files, destinationPath) {
   fallbackInstallerNotify(api, destinationPath);
-  
+
   const filtered = files.filter(file =>
     (!file.endsWith(path.sep))
   );
@@ -714,7 +714,7 @@ function fallbackInstallerNotify(api, modName) {
                 + `If you think that Vortex should be capable to install this mod to a specific folder, please contact the extension developer for support at the link below.\n`
                 + `\n`
                 + `Mod Name: ${modName}.\n`
-                + `\n`             
+                + `\n`
           }, [
             { label: 'Continue', action: () => dismiss() },
             {
@@ -733,7 +733,7 @@ function fallbackInstallerNotify(api, modName) {
               if (modMatch) {
                 const MOD_ID = modMatch.attributes.modId;
                 if (MOD_ID !== undefined) {
-                  PAGE = `${MOD_ID}?tab=description`; 
+                  PAGE = `${MOD_ID}?tab=description`;
                 }
               }
               const MOD_PAGE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${PAGE}`;
@@ -852,7 +852,7 @@ function setupNotify(api) {
         },
       },
     ],
-  });    
+  });
 }
 
 async function modFoldersEnsureWritable(gamePath, relPaths) {
@@ -988,10 +988,10 @@ function main(context) {
   applyGame(context, spec);
   context.once(() => { // put code here that should be run (once) when Vortex starts up
     const api = context.api;
-    context.api.onAsync('did-deploy', async (profileId, deployment) => {
-      const lastActiveProfile = selectors.lastActiveProfileForGame(context.api.getState(), GAME_ID);
+    api.onAsync('did-deploy', async (profileId, deployment) => {
+      const lastActiveProfile = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
       if (profileId !== lastActiveProfile) return;
-      return deployNotify(context.api);
+      return deployNotify(api);
     });
     api.onAsync('check-mods-version', (gameId, mods, forced) => {
       if (gameId !== GAME_ID) return;

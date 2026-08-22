@@ -157,3 +157,6 @@ Thunderstore blocks nothing at all). `PCGAMINGWIKI_API.md` (game-metadata lookup
 where Cloudflare blocks part of the surface).
 `FCMODDING_API.md` (the Far Cry Mod Installer host — `fcmodding_downloader.js` is modelled on
 `moddb_downloader.js`, minus the bot-block fallback route this host does not need).
+`CODEBERG_API.md` (the Forgejo/Gitea release API — the inverse of this host in every respect: a
+documented JSON API, no bot check, and asset URLs that answer a plain `200` with nothing to resolve).
+`GITHUB_API.md` (the default requirement host, and the API `downloader.js` talks to).

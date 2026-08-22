@@ -26,8 +26,13 @@
 
 | Flag | Value | Description |
 | --- | --- | --- |
+| `hasXbox` | `false` | toggle for Xbox version logic |
+| `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
+| `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |
 | `customLoader` | `true` | enables custom mod loader support |
 | `keepZips` | `false` | downloaded tool archives are kept on disk after extraction |
+| `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below) |
+| `debug` | `false` | toggle for debug mode |
 
 ## Mod Types
 
@@ -36,6 +41,7 @@ Mod types define where each category of mod gets deployed:
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
 | Godot Mod | `bloodthief-mod` | high | `{gamePath}/mods-unpacked` |
+| Map | `bloodthief-maps` | high | `{gamePath}/maps` |
 | Godot Mod Loader | `bloodthief-godotmodloader` | low | `{gamePath}` |
 
 ## Mod Installers
@@ -45,7 +51,9 @@ Installers run in priority order (lower number = tested first). The first instal
 | Installer ID | Priority |
 | --- | --- |
 | `bloodthief-godotmodloader` | 25 |
+| `bloodthief-maps` | 26 |
 | `bloodthief-mod` | 27 |
+| `bloodthief-fallback` | 49 |
 
 ## Registered Tools
 

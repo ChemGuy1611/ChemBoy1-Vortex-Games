@@ -419,3 +419,6 @@ URL is resolved). `GAMEBANANA_API.md` and `MODDB_API.md` (the other third-party 
 queries). `REGISTER_GAME.md` (the `IGame` store-ID and `details` fields the ecosystem schema maps
 onto). `BROWSER_MODULES.md` and `EMBEDDED_BROWSER.md` (the browse-page module built on this source,
 and the Vortex mechanics it sits on).
+`CODEBERG_API.md` (the Forgejo/Gitea release API — a third host whose download URL comes straight
+out of the API response, with no resolution step between listing and download).
+`GITHUB_API.md` (the default requirement host, and the API `downloader.js` talks to).

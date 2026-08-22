@@ -1,5 +1,9 @@
 # template-farcry Changelog
 
+## [2026-08-21]
+
+- Changed: `context.once()` now calls through the local `api` constant declared at the top of the block instead of repeating `context.api` on each call.
+
 ## [2026-08-14]
 
 - Added: `fcmodding_downloader.js` shipped alongside `index.js`. The Far Cry Mod Installer is now installed and kept up to date through the shared module rather than an inline download function.

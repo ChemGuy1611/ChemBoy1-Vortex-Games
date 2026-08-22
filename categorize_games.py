@@ -11,16 +11,12 @@ independently of its engine category and of each other:
     games-loadorder.txt  - non-UE4/5 games that call context.registerLoadOrder
     games-downloader.txt - games with a bundled downloader.js module
     games-downloader-bepinexbe.txt  - games with a bundled bepinexbe_downloader.js module
+    games-downloader-codeberg.txt   - games with a bundled codeberg_downloader.js module
     games-downloader-fcmodding.txt  - games with a bundled fcmodding_downloader.js module
     games-downloader-gamebanana.txt - games with a bundled gamebanana_downloader.js module
     games-downloader-moddb.txt      - games with a bundled moddb_downloader.js module
     games-downloader-modworkshop.txt - games with a bundled modworkshop_downloader.js module
     games-downloader-thunderstore.txt - games with a bundled thunderstore_downloader.js module
-    games-github.txt     - games with a WORKING inline GitHub download (no downloader.js).
-                           Skips downloads that are commented out or never called, plus
-                           GITHUB_LIST_EXCLUDED_ENGINES (engines whose GitHub fetch is
-                           just their standard mod loader), GITHUB_LIST_EXCLUDED_GAMES,
-                           and anything in games-unreleased.txt
     games-uemi.txt       - games that require the "Unreal Engine Mod Installer" extension
     games-ue4-5-parity.txt - UE4-5 games carrying the full template-ue4-5 load order
     games-unreleased.txt - games with no real Nexus page URL in EXTENSION_URL, i.e.
@@ -41,11 +37,11 @@ from vortex_utils import (
     REPO_ROOT, LISTS_DIR, list_game_ids, detect_engine, read_index_js,
     read_id_list, write_id_list,
     is_load_order_game as _is_load_order_game_src,
-    has_downloader_js, has_bepinexbe_downloader_js, has_fcmodding_downloader_js,
+    has_downloader_js, has_bepinexbe_downloader_js, has_codeberg_downloader_js,
+    has_fcmodding_downloader_js,
     has_gamebanana_downloader_js,
     has_moddb_downloader_js, has_modworkshop_downloader_js,
     has_thunderstore_downloader_js,
-    github_download_enabled,
     requires_unreal_mod_installer, has_ue4ss_load_order_parity,
     is_unreleased_extension,
     log_error, log_dry,
@@ -74,33 +70,6 @@ CATEGORIES = [
 
 _FILE_FOR_LABEL = {label: fname for fname, label in CATEGORIES}
 
-# Engine categories kept out of games-github.txt. These games do download from GitHub
-# inline, but only to fetch the standard mod loader their engine already implies -
-# BepInEx/MelonLoader for Unity, FrostyToolsuite for Frostbite, REFramework for RE
-# Engine, Reloaded-II (which self-updates). Their own engine list already tracks them,
-# so listing them here only dilutes games-github.txt, which exists to find games with
-# bespoke GitHub-sourced requirements.
-GITHUB_LIST_EXCLUDED_ENGINES = {
-    "Unity+Bep",
-    "Unity+Mel/Bep",
-    "Unity+UMM",
-    "Frostbite",
-    "RE/Fluffy",
-    "Reloaded-II",
-}
-
-# Individual games kept out of games-github.txt where the engine category alone does not
-# capture it. Same rationale as above: the GitHub asset is pinned and will not be updated.
-GITHUB_LIST_EXCLUDED_GAMES = {
-    "middleearthshadowofwar",   # Middle-Earth Mod Loader, fixed 'loader' release tag
-    "crimsondesert",            # Ultimate ASI Loader, rolling 'x64-latest' release tag
-    "nioh3",                    # Yumia fdata Tools on 'releases/latest/download', RDBExplorer manual browse
-    "deusexhumanrevolution",    # DXHRDC-ModHook, pinned 'v1.1.0.0' release asset
-    "hades2",                   # ModUtil, pinned '2.10.1' asset; legacy pre-1.0 and its only
-                                # call site is commented out, but the URL const is at module
-                                # scope so github_download_enabled() cannot see that
-}
-
 # Games kept out of games-unreleased.txt. These have no Nexus page and never will, but
 # they are permanent test beds rather than extensions awaiting a first release, so they
 # are versioned and changelogged like published ones. Listing them alongside genuine
@@ -122,10 +91,9 @@ def _game_id_from_folder(folder):
 def _in_unreleased_list(src, folder):
     """Return True if the game belongs in games-unreleased.txt.
 
-    Shared by that list's own predicate and by games-github.txt, which excludes its
-    members. Membership is the full rule, not the raw is_unreleased_extension() test:
-    a permanent test bed is a released-like extension that simply has no Nexus page,
-    so it stays out of the unreleased list and therefore stays eligible for the others.
+    Membership is the full rule, not the raw is_unreleased_extension() test: a
+    permanent test bed is a released-like extension that simply has no Nexus page,
+    so it stays out of the unreleased list.
     """
     return (is_unreleased_extension(src)
             and _game_id_from_folder(folder) not in UNRELEASED_LIST_EXCLUDED_GAMES)
@@ -137,24 +105,12 @@ FLAG_LISTS = [
     ("games-loadorder.txt",  lambda src, folder: _is_load_order_game_src(src)),
     ("games-downloader.txt", lambda src, folder: has_downloader_js(folder)),
     ("games-downloader-bepinexbe.txt",  lambda src, folder: has_bepinexbe_downloader_js(folder)),
+    ("games-downloader-codeberg.txt",   lambda src, folder: has_codeberg_downloader_js(folder)),
     ("games-downloader-fcmodding.txt",  lambda src, folder: has_fcmodding_downloader_js(folder)),
     ("games-downloader-gamebanana.txt", lambda src, folder: has_gamebanana_downloader_js(folder)),
     ("games-downloader-moddb.txt",      lambda src, folder: has_moddb_downloader_js(folder)),
     ("games-downloader-modworkshop.txt", lambda src, folder: has_modworkshop_downloader_js(folder)),
     ("games-downloader-thunderstore.txt", lambda src, folder: has_thunderstore_downloader_js(folder)),
-    # GitHub download done inline in index.js, i.e. without the downloader.js module.
-    # github_download_enabled() ignores downloads that are commented out or defined in
-    # a never-called function. Engines in GITHUB_LIST_EXCLUDED_ENGINES are skipped too -
-    # their GitHub fetch is the engine's own mod loader, not a game-specific requirement -
-    # as are the one-off games in GITHUB_LIST_EXCLUDED_GAMES. Unreleased extensions are
-    # dropped too: the list exists to find GitHub requirements that need watching on
-    # published extensions, and an extension awaiting its first release is still being
-    # authored - its requirements get reviewed as part of shipping it, not from here.
-    ("games-github.txt",     lambda src, folder: (github_download_enabled(src)
-                                                  and not has_downloader_js(folder)
-                                                  and detect_engine(src) not in GITHUB_LIST_EXCLUDED_ENGINES
-                                                  and _game_id_from_folder(folder) not in GITHUB_LIST_EXCLUDED_GAMES
-                                                  and not _in_unreleased_list(src, folder))),
     ("games-uemi.txt",       lambda src, folder: requires_unreal_mod_installer(src)),
     # UE4-5 games at template load-order parity (custom UE4SS + LogicMods pages).
     ("games-ue4-5-parity.txt", lambda src, folder: has_ue4ss_load_order_parity(src)),

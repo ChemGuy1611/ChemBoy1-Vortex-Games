@@ -254,3 +254,4 @@ mitigations:
 the file objects they return), `DOWNLOADER.md` (the GitHub requirements downloader whose files hit
 this path), `VORTEX_EVENT_BUS.md` (`set-download-games`, `did-import-downloads`).
 **Not** `MODDB_API.md` — different "moddb".
+`GITHUB_API.md` (where the GitHub-sourced archives that get mis-tagged come from).

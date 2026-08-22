@@ -190,4 +190,7 @@ the only one whose host bot-blocks non-browser clients).
 off to). `VORTEX_MOD_INSTALL.md` (installing the downloaded archive as a managed mod).
 `VORTEX_MOD_LIST.md` (the `customFileName || logicalFileName || fileName || name` rule that decides
 which name a requirement shows under).
+`CODEBERG_API.md` (the Forgejo/Gitea release API — the sibling host with a real versioned release
+history, so unlike this one it supports version pinning).
 `TEMPLATES_OVERVIEW.md` (which templates bundle a downloader module copy).
+`GITHUB_API.md` (the default requirement host, and the API the sibling `downloader.js` talks to).

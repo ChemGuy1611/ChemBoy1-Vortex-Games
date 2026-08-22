@@ -611,3 +611,5 @@ endpoints). `NODE_NEXUS_API_CLIENT.md` documents a separate client library (`@ne
 that covers v1 REST + v2 GraphQL — it does not touch this v3 REST API at all.
 `VORTEX_MOD_METADATA.md` (how Vortex uses the `md5_search` / `fileHashes` lookups to decide which
 mod an archive belongs to).
+`GITHUB_API.md` (the other API this project depends on - unauthenticated, 60 requests per hour
+per IP, and the source of most modding requirements).

@@ -162,3 +162,7 @@ non-GitHub hosts with a sibling downloader module; ModDB is the other "no API, p
 and the only one whose host bot-blocks non-browser clients).
 `FCMODDING_API.md` (the Far Cry Mod Installer host — the other module ordering requirements
 numerically rather than by semver, there by build timestamp).
+`CODEBERG_API.md` (the Forgejo/Gitea release API — the sibling module closest to the GitHub one,
+since its releases carry real version tags and the same payload field names).
+`GITHUB_API.md` (where BepInEx 5.x ships instead - ordinary GitHub releases - plus GitHub's own
+CI-artifact route, which has the same "builds, not releases" ordering problem this host does).

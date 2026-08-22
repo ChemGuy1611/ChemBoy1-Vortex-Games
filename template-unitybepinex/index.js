@@ -286,7 +286,7 @@ const tools = [
     exclusive: true,
     shell: true,
     //defaultPrimary: true,
-    parameters: PARAMETERS
+    //parameters: PARAMETERS
   }, //*/
 ];
 
@@ -1014,13 +1014,13 @@ function main(context) {
   applyGame(context, spec);
   context.once(() => {
     const api = context.api;
-    context.api.onAsync('check-mods-version', (gameId, mods, forced) => {
+    api.onAsync('check-mods-version', (gameId, mods, forced) => {
       if (gameId !== GAME_ID) return Promise.resolve();
       return onCheckModVersion(api, gameId, mods, forced);
     });
-    if (context.api.ext.bepinexAddGame !== undefined) {
+    if (api.ext.bepinexAddGame !== undefined) {
       if (BEPINEX_PAGE_ID !== '0' && allowBepinexNexus) { //if Nexus page exists and is allowed, download from Nexus
-        context.api.ext.bepinexAddGame({
+        api.ext.bepinexAddGame({
           gameId: GAME_ID,
           autoDownloadBepInEx: true,
           customPackDownloader: () => {
@@ -1038,7 +1038,7 @@ function main(context) {
         });
       } else {
         if (BEPINEX_BUILD === 'mono') { //* download from GitHub (mono)
-          context.api.ext.bepinexAddGame({
+          api.ext.bepinexAddGame({
             gameId: GAME_ID,
             autoDownloadBepInEx: true,
             architecture: BEPINEX_ARCH, // <--- Select version for 64-bit or 32-bit game ('x64' or 'x86')
@@ -1048,13 +1048,13 @@ function main(context) {
             unityBuild: BEPINEX_BUILD, // <--- Download version 6.0.0 of BepInEx that supports IL2CPP or 5.4.23.x Mono ('il2cpp' or 'mono')
           });
         } else { //* Download the IL2CPP Bleeding Edge build
-          context.api.ext.bepinexAddGame({
+          api.ext.bepinexAddGame({
             gameId: GAME_ID,
             autoDownloadBepInEx: true,
             architecture: BEPINEX_ARCH,
             bepinexVersion: BEPINEX_VERSION,
             customPackDownloader: () => {
-              return downloadBepinexBleedingEdge(context.api, spec);
+              return downloadBepinexBleedingEdge(api, spec);
             },
           });
         }

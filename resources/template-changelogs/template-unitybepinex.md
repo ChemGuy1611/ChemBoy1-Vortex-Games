@@ -1,5 +1,9 @@
 # template-unitybepinex Changelog
 
+## [2026-08-21]
+
+- Changed: `context.once()` now calls through the local `api` constant declared at the top of the block instead of repeating `context.api` on each call.
+
 ## [2026-08-10]
 
 - Added: `downloader.js` is now bundled with the template, and BepInExConfigManager is defined as a requirement (`BEPCFGMAN_REQUIREMENTS`) resolved from its GitHub releases instead of a hardcoded version URL. A `check-mods-version` handler in `context.once()` offers an update when a newer release appears, and the mod list shows the readable name rather than the archive file name. BepInEx itself is untouched and still comes from the `modtype-bepinex` extension.

@@ -1,9 +1,9 @@
 /*///////////////////////////////////////////
-Name: XXX Vortex Extension
+Name: METAL GEAR SOLID V: THE PHANTOM PAIN Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
 Version: 1.0.0
-Date: 2026-XX-XX
+Date: 2026-08-19
 Notes:
 -
 ///////////////////////////////////////////*/
@@ -13,6 +13,7 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 const { parseStringPromise } = require('xml2js');
+const { downloadCodeberg, checkForCodebergUpdate, isCodebergRequirementInstalled } = require('./codeberg_downloader');
 //const winapi = require('winapi-bindings');
 //const fsPromises = require('fs/promises'); //.rm() for recursive folder deletion
 //const fsExtra = require('fs-extra');
@@ -24,12 +25,12 @@ const DOCUMENTS = util.getVortexPath("documents");
 const LOCALAPPDATA = util.getVortexPath("localAppData");
 
 //Specify all the information about the game
-const GAME_ID = "XXX";
-const STEAMAPP_ID = "XXX";
-const STEAMAPP_ID_DEMO = "XXX";
-const EPICAPP_ID = "XXX";
-const GOGAPP_ID = "XXX";
-const XBOXAPP_ID = "XXX";
+const GAME_ID = "metalgearsolidvtpp";
+const STEAMAPP_ID = "287700"; // https://steamdb.info/app/287700/
+const STEAMAPP_ID_DEMO = null;
+const EPICAPP_ID = null;
+const GOGAPP_ID = null;
+const XBOXAPP_ID = null;
 const XBOXEXECNAME = "XXX";
 const XBOX_PUB_ID = "XXX"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
 const INSTALL_HIVE = 'HKEY_LOCAL_MACHINE'; //typically HKEY_LOCAL_MACHINE or HKEY_CURRENT_USER
@@ -37,36 +38,35 @@ const INSTALL_KEY = `SOFTWARE\\WOW6432Node\\XXX\\XXX`; //for finding install in 
 const INSTALL_VALUE = "XXX"; //often InstallDir or InstallPath
 const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
-const GAME_NAME = "XXX";
-const GAME_NAME_SHORT = "XXX";
-const BINARIES_PATH = path.join('.');
-const EXEC_NAME = "XXX.exe";
+const GAME_NAME = "METAL GEAR SOLID V: THE PHANTOM PAIN";
+const GAME_NAME_SHORT = "MGSV";
+const BINARIES_PATH = '.';
+const EXEC_NAME = "mgsvtpp.exe";
 const EXEC = path.join(BINARIES_PATH, EXEC_NAME);
 const EXEC_EGS = EXEC; //change other versions if different than Steam/default
 const EXEC_GOG = EXEC;
 const EXEC_DEMO = EXEC;
-const PCGAMINGWIKI_URL = "XXX";
-const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/Metal_Gear_Solid_V%3A_The_Phantom_Pain";
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/2196"; //Nexus link to this extension. Used for links
 
 //feature toggles
-const hasLoader = false; //true if game needs a mod loader
+const hasLoader = true; //true if game needs a mod loader
+const allowMgsvFix = true; //should MGSVFix be offered to the user (via a notification at setup)?
 let hasXbox = false; //toggle for Xbox version logic
 if (DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID)) hasXbox = true;
 const multiExe = false; //set to true if there are multiple executable names
 const multiModPath = false; //set to true if there are multiple possible mod paths (i.e. different path for Xbox version)
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
-const needsModInstaller = false; //set to true if standard mods should run through an installer - set false to have mods installed to the mods folder without any processing
+const needsModInstaller = true; //set to true if standard mods should run through an installer - set false to have mods installed to the mods folder without any processing
 const rootInstaller = true; //enable root installer. Set false if you need to avoid installer collisions
 const saveInstaller = false; //enable save installer. Set false if path is outside of game folder
-const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
+const fallbackInstaller = false; //enable fallback installer. Set false if you need to avoid installer collisions
 const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
-const hasUserIdFolder = false; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
-let binariesInstaller = false;
-if (BINARIES_PATH !== '.') binariesInstaller = true; //only enable Binaries installer if not in root
+const hasUserIdFolder = true; //true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID)
 const debug = false; //toggle for debug mode
 
 //info for modtypes, installers, tools, and actions
-const DATA_FOLDER = 'XXX';
+const DATA_FOLDER = 'master';
 let ROOT_FOLDERS = [DATA_FOLDER];
 if (BINARIES_PATH !== '.') ROOT_FOLDERS.push(BINARIES_PATH.split(path.sep)[0]);
 const ROOTSUB_FOLDERS = [];
@@ -91,26 +91,44 @@ const EPIC_FILE = 'EOSSDK-Win64-Shipping.dll';
 const XBOX_FILE = APPMANIFEST_FILE;
 
 const LOADER_ID = `${GAME_ID}-loader`;
-const LOADER_NAME = "Mod Loader";
+const LOADER_NAME = "Snakebite Mod Manager";
 const LOADER_PATH = BINARIES_PATH;
-const LOADER_FILE = 'XXX.dll';
-const LOADER_PAGE_NO = 0;
+const LOADER_FILE = 'SnakeBite Installer.exe';
+const LOADER_INST_EXEC = LOADER_FILE;
+const LOADER_EXEC = 'SnakeBite.exe';
+const LOADER_PAGE_NO = 106;
 const LOADER_FILE_NO = 0;
 const LOADER_DOMAIN = GAME_ID;
 const LOADER_URL = `XXX`; //if not on Nexus
 
+const MGSVFIX_ID = `${GAME_ID}-mgsvfix`;
+const MGSVFIX_NAME = "MGSVFix";
+const MGSVFIX_PATH = BINARIES_PATH;
+const MGSVFIX_FILES = ['mgsvfix.asi']; //lowercased - marker file identifying the archive
+const MGSVFIX_IGNORE_FILES = ['extract_to_game_folder']; //lowercased - empty marker file shipped in the archive, not wanted in the game folder
+const MGSVFIX_REPO = 'Lyall/MGSVFix'; //https://codeberg.org/Lyall/MGSVFix
+const MGSVFIX_VER = '0.0.3'; //fallback version if the Codeberg API is unreachable
+const MGSVFIX_ARC_PATTERN = /^MGSVFix_(\d+\.\d+(?:\.\d+)?)/i; //capture group 1 is the version
+const CODEBERG_REQUIREMENTS = [
+  {
+    repo: MGSVFIX_REPO,
+    modType: MGSVFIX_ID,
+    userFacingName: MGSVFIX_NAME,
+    assetPattern: MGSVFIX_ARC_PATTERN,
+    fallbackVersion: MGSVFIX_VER,
+    autoInstall: false, //an optional fix rather than a requirement - only the setup notification or the toolbar action installs it
+  },
+];
+
 const MOD_ID = `${GAME_ID}-mod`;
-const MOD_NAME = "Mod";
-const MOD_PATH = ".";
+const MOD_NAME = "SnakeBite Mod (.mgsv)";
+const MOD_PATH = "SnakeBite_Mods";
 const MOD_PATH_XBOX = MOD_PATH;
-const MOD_EXTS = ['.XXX'];
+const MOD_EXTS = ['.mgsv'];
+const MOD_ATTR_KEY = 'mgsvFiles';
 
 const ROOT_ID = `${GAME_ID}-root`;
 const ROOT_NAME = "Root Folder";
-
-const BINARIES_ID = `${GAME_ID}-binaries`;
-const BINARIES_NAME = "Binaries (Engine Injector)";
-const BINARIES_EXTS = ['.exe', '.dll', '.asi', '.addon64'];
 
 const SAVE_ID = `${GAME_ID}-save`;
 const SAVE_NAME = "Save";
@@ -252,36 +270,27 @@ const tools = [ //accepts: exe, jar, py, vbs, bat
     //defaultPrimary: true,
     //parameters: PARAMETERS,
   }, //*/
-  /*{
-    id: `${GAME_ID}-customlaunchxbox`,
-    name: 'Custom Launch',
-    logo: 'exec.png',
-    executable: () => EXEC_XBOX,
+  {
+    id: LOADER_ID,
+    name: LOADER_NAME,
+    logo: 'snakebite.png',
+    queryPath: getSnakeBite,
+    executable: () => LOADER_EXEC,
     requiredFiles: [
-      EXEC_XBOX,
-    ],
-    relative: true,
-    exclusive: true,
-    shell: true,
-    //defaultPrimary: true,
-    //parameters: PARAMETERS,
-  }, //*/
-  /*{
-    id: TOOL_ID,
-    name: TOOL_NAME,
-    logo: 'tool.png',
-    //queryPath: () => TOOL_EXEC_FOLDER,
-    executable: () => TOOL_EXEC,
-    requiredFiles: [
-      TOOL_EXEC,
+      LOADER_EXEC,
     ],
     relative: true,
     exclusive: true,
     //shell: true,
     //defaultPrimary: true,
-    //parameters: [],
+    //parameters: PARAMETERS,
   }, //*/
 ];
+
+function getSnakeBite() {
+  const sbPath = path.join(LOCALAPPDATA, 'SnakeBite');
+  return sbPath;
+}
 
 // BASIC EXTENSION FUNCTIONS ///////////////////////////////////////////////////
 
@@ -506,6 +515,49 @@ function installLoader(files) {
   return Promise.resolve({ instructions });
 }
 
+//Test for MGSVFix files
+function testMgsvFix(files, gameId) {
+  const isMod = files.some(file => MGSVFIX_FILES.includes(path.basename(file).toLowerCase()));
+  let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Install MGSVFix files
+function installMgsvFix(files) {
+  const MOD_TYPE = MGSVFIX_ID;
+  const modFile = files.find(file => MGSVFIX_FILES.includes(path.basename(file).toLowerCase()));
+  const idx = modFile.indexOf(path.basename(modFile));
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+
+  // Remove directories, anything that isn't in the rootPath, and the archive's own
+  // "extract here" marker file, which has no business in the game folder.
+  const filtered = files.filter(file =>
+    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep))
+      && (!MGSVFIX_IGNORE_FILES.includes(path.basename(file).toLowerCase())))
+  );
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: path.join(file.substr(idx)),
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
+}
+
 //Test for mod files
 function testMod(files, gameId) {
   const isMod = files.some(file => MOD_EXTS.includes(path.extname(file).toLowerCase()));
@@ -524,27 +576,66 @@ function testMod(files, gameId) {
   });
 }
 
-//Install mod files
-function installMod(files) {
-  const MOD_TYPE = MOD_ID;
-  const modFile = files.find(file => MOD_EXTS.includes(path.extname(file).toLowerCase()));
-  const idx = modFile.indexOf(path.basename(modFile));
-  const rootPath = path.dirname(modFile);
-  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
-
-  // Remove directories and anything that isn't in the rootPath.
-  const filtered = files.filter(file =>
-    ((file.indexOf(rootPath) !== -1) && (!file.endsWith(path.sep)))
-  );
-  const instructions = filtered.map(file => {
+//install pak mods
+async function installMod(api, files, fileName) {
+  const fileExt = MOD_EXTS[0];
+  const modFiles = files.filter(file => (
+    fileExt.includes(path.extname(file).toLowerCase())
+    && path.extname(file).toLowerCase() === fileExt
+  ));
+  const folder = path.basename(fileName).slice(0, 20);
+  const modType = {
+    type: 'setmodtype',
+    value: MOD_ID,
+  };
+  const installFiles = (modFiles.length > 1)
+    ? await chooseFilesToInstall(api, modFiles, fileExt)
+    : modFiles;
+  const mgsvModFiles = {
+    type: 'attribute',
+    key: MOD_ATTR_KEY,
+    value: installFiles.map(f => path.basename(f))
+  };
+  let instructions = installFiles.map(file => {
     return {
       type: 'copy',
       source: file,
-      destination: path.join(file.substr(idx)),
+      destination: path.join(folder, path.basename(file))
     };
   });
-  instructions.push(setModTypeInstruction);
+  instructions.push(modType);
+  instructions.push(mgsvModFiles);
   return Promise.resolve({ instructions });
+}
+
+//file selection dialog for .mgsv mods
+async function chooseFilesToInstall(api, files, fileExt) {
+  const t = api.translate;
+  return api.showDialog('question', t('Multiple {{ext}} files', { replace: { ext: fileExt } }), {
+    text: t('The mod you are installing contains {{x}} {{ext}} files.', { replace: { x: files.length, ext: fileExt } }) +
+        `This can be because the author intended for you to chose one of several options. Please select which files to install below:`,
+    checkboxes: files.map((mgsv) => {
+      return {
+          id: mgsv,
+          text: mgsv,
+          subtext: path.basename(mgsv),
+          value: false
+      };
+    })
+    }, [
+      { label: 'Cancel' },
+      { label: 'Install Selected' },
+      { label: 'Install All_plural' }
+  ]).then((result) => {
+      if (result.action === 'Cancel')
+          return Promise.reject(new util.UserCanceled('User cancelled.'));
+      else {
+          const installAll = (result.action === 'Install All' || result.action === 'Install All_plural');
+          const installMgsvs = installAll ? files : Object.keys(result.input).filter(s => result.input[s])
+            .map(file => files.find(f => f === file));
+          return installMgsvs;
+      }
+  });
 }
 
 //Installer test for Root folder files
@@ -592,42 +683,6 @@ function installRoot(files) {
       type: 'copy',
       source: file,
       destination: path.join(folder, file.substr(idx)),
-    };
-  });
-  instructions.push(setModTypeInstruction);
-  return Promise.resolve({ instructions });
-}
-
-//Fallback installer to Binaries folder
-function testBinaries(files, gameId) {
-  const isMod = files.some(file => BINARIES_EXTS.includes(path.extname(file).toLowerCase()));
-  let supported = (gameId === spec.game.id) && isMod;
-
-  // Test for a mod installer.
-  if (supported && files.find(file =>
-    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
-    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
-    supported = false;
-  }
-
-  return Promise.resolve({
-    supported,
-    requiredFiles: [],
-  });
-}
-
-//Fallback installer to Binaries folder
-function installBinaries(files) {
-  const setModTypeInstruction = { type: 'setmodtype', value: BINARIES_ID };
-
-  const filtered = files.filter(file =>
-    (!file.endsWith(path.sep))
-  );
-  const instructions = filtered.map(file => {
-    return {
-      type: 'copy',
-      source: file,
-      destination: file,
     };
   });
   instructions.push(setModTypeInstruction);
@@ -788,7 +843,7 @@ async function downloadLoader(api, gameSpec, check = true) {
     const GAME_DOMAIN = LOADER_DOMAIN;
     api.sendNotification({ //notification indicating install process
       id: NOTIF_ID,
-      message: `Installing ${MOD_NAME}`,
+      message: `Installing ${MOD_NAME} - DO NOT CHANGE THE INSTALL DIRECTORY`,
       type: 'activity',
       noDismiss: true,
       allowSuppress: false,
@@ -796,51 +851,122 @@ async function downloadLoader(api, gameSpec, check = true) {
     if (api.ext?.ensureLoggedIn !== undefined) { //make sure user is logged into Nexus Mods account in Vortex
       await api.ext.ensureLoggedIn();
     }
-    try {
-      let FILE = null;
-      let URL = null;
-      try { //get the mod files information from Nexus
-        const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
-        const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
-        const file = modFiles
-          .filter(file => file.category_id === 1)
-          .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
-          .reverse()[0];
-        if (file === undefined) {
-          throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
+      try {
+        let FILE = null;
+        let URL = null;
+        try { //get the mod files information from Nexus
+          const modFiles = await api.ext.nexusGetModFiles(GAME_DOMAIN, PAGE_ID);
+          const fileTime = (input) => Number.parseInt(input.uploaded_time, 10);
+          const file = modFiles
+            .filter(file => file.category_id === 1)
+            .sort((lhs, rhs) => fileTime(lhs) - fileTime(rhs))
+            .reverse()[0];
+          if (file === undefined) {
+            throw new util.ProcessCanceled(`No ${MOD_NAME} main file found`);
+          }
+          FILE = file.file_id;
+          URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+        } catch { // use defined file ID if input is undefined above
+          FILE = FILE_ID;
+          URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
         }
-        FILE = file.file_id;
-        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
-      } catch { // use defined file ID if input is undefined above
-        FILE = FILE_ID;
-        URL = `nxm://${GAME_DOMAIN}/mods/${PAGE_ID}/files/${FILE}`;
+        const dlInfo = { //Download the mod
+          game: GAME_DOMAIN,
+          name: MOD_NAME,
+        };
+        const dlId = await util.toPromise(cb =>
+          api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
+        const modId = await util.toPromise(cb =>
+          api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
+        const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
+        const batched = [
+          actions.setModsEnabled(api, profileId, [modId], true, {
+            allowAutoDeploy: true,
+            installed: true,
+          }),
+          actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
+        ];
+        await util.batchDispatch(api.store, batched); // Will dispatch both actions
+        try { //run the installer exe from staging
+          const folder = await fs.readdirAsync(STAGING_FOLDER);
+          const STAGING_PATH = folder.filter(f => f.includes(LOADER_PAGE_NO) && f.includes('SnakeBite'))
+            .sort((a,b) => a.toLowerCase().localeCompare(b.toLowerCase()))[0];
+          const RUN_PATH = path.join(STAGING_FOLDER, STAGING_PATH, LOADER_INST_EXEC);
+          log('warn', `Found ${LOADER_NAME} installer at ${RUN_PATH}`);
+          await api.runExecutable(RUN_PATH, [], { suggestDeploy: false });
+          log('warn', `${LOADER_NAME} installer completed from staging folder`);
+        } catch (err) {
+          log('error', `Failed to run ${LOADER_NAME} installer from staging folder: ${err}`);
+        }
+        //return new Promise((resolve, reject) => { //download, install, run installer exe
+        //return resolve();
+        //});
+      } catch (err) { //Show the user the download page if the download, install process fails
+        const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
+        api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
+        util.opn(errPage).catch(() => null);
+        //return reject(err);
+      } finally {
+        api.dismissNotification(NOTIF_ID);
       }
-      const dlInfo = { //Download the mod
-        game: GAME_DOMAIN,
-        name: MOD_NAME,
-      };
-      const dlId = await util.toPromise(cb =>
-        api.events.emit('start-download', [URL], dlInfo, undefined, cb, undefined, { allowInstall: false }));
-      const modId = await util.toPromise(cb =>
-        api.events.emit('start-install-download', dlId, { allowAutoEnable: false }, cb));
-      const profileId = selectors.lastActiveProfileForGame(api.getState(), gameSpec.game.id);
-      const batched = [
-        actions.setModsEnabled(api, profileId, [modId], true, {
-          allowAutoDeploy: true,
-          installed: true,
-        }),
-        actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
-      ];
-      util.batchDispatch(api.store, batched); // Will dispatch both actions
-    } catch (err) { //Show the user the download page if the download, install process fails
-      const errPage = `https://www.nexusmods.com/${GAME_DOMAIN}/mods/${PAGE_ID}/files/?tab=files`;
-      api.showErrorNotification(`Failed to download/install ${MOD_NAME}`, err);
-      util.opn(errPage).catch(() => null);
-    } finally {
-      api.dismissNotification(NOTIF_ID);
-    }
   }
 } //*/
+
+//Check if MGSVFix is installed
+function isMgsvFixInstalled(api, gameSpec) {
+  return isCodebergRequirementInstalled(api, gameSpec.game.id, CODEBERG_REQUIREMENTS[0]);
+}
+
+//Notify the user to ask if they want to download MGSVFix. It is an optional fix rather than a
+//requirement, so it is never installed unattended: the requirement carries autoInstall: false,
+//and this notification (or the toolbar action) is the only way in.
+function downloadMgsvFixNotify(api) {
+  if (isMgsvFixInstalled(api, spec)) return;
+  const NOTIF_ID = `${GAME_ID}-mgsvfix`;
+  const MOD_NAME = MGSVFIX_NAME;
+  const MESSAGE = `Would you like to download ${MOD_NAME}?`;
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'warning',
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: 'Download Fix',
+        action: (dismiss) => {
+          downloadCodeberg(api, spec, CODEBERG_REQUIREMENTS);
+          dismiss();
+        },
+      },
+      {
+        title: 'More',
+        action: (dismiss) => {
+          api.showDialog('question', MESSAGE, {
+            text: `${MOD_NAME} is an ASI plugin that skips the intro logos, unlocks the framerate and the resolution options, fixes HUD and graphical effects at ultrawide resolutions, and lets you tweak LOD distances.\n`
+                + `Click the button below to download and install ${MOD_NAME}.\n`
+                + `Once installed, open "MGSVFix.ini" in the game folder to change its settings.\n`
+                + `\n`
+                + `You can also install it at any time with the "Download Latest ${MOD_NAME}" button above the mod list.\n`
+          }, [
+            {
+              label: `Download ${MOD_NAME}`, action: () => {
+                downloadCodeberg(api, spec, CODEBERG_REQUIREMENTS);
+                dismiss();
+              }
+            },
+            { label: 'Not Now', action: () => dismiss() },
+            {
+              label: 'Never Show Again', action: () => {
+                api.suppressNotification(NOTIF_ID);
+                dismiss();
+              }
+            },
+          ]);
+        },
+      },
+    ],
+  });
+}
 
 // MAIN FUNCTIONS ///////////////////////////////////////////////////////////////
 
@@ -905,6 +1031,75 @@ async function resolveGameVersion(gamePath) {
   }
 } //*/
 
+//Notify User to run TFC Installer after deployment
+function deployNotify(api) {
+  const NOTIF_ID = `${GAME_ID}-deploy`;
+  const MOD_NAME = "SnakeBite";
+  const MESSAGE = `Run ${MOD_NAME} to Install Mods`;
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'warning',
+    message: MESSAGE,
+    allowSuppress: true,
+    actions: [
+      {
+        title: 'Run SB',
+        action: (dismiss) => {
+          runModManager(api);
+          dismiss();
+        },
+      },
+      {
+        title: 'More',
+        action: (dismiss) => {
+          api.showDialog('question', MESSAGE, {
+            text: `For most mods, you must use ${MOD_NAME} to install the mod to the game files after installing with Vortex.\n`
+                + `Mods requiring installation will be found in the folder: "<GameFolder>\\${MOD_PATH}".\n`
+                + `If you don't see your mod's folder there, check in the root game folder.\n`
+                + `Use the included tool to launch ${MOD_NAME} (button on notification or in "Tools" tab).\n`
+          }, [
+            {
+              label: 'Run SB', action: () => {
+                runModManager(api);
+                dismiss();
+              }
+            },
+            { label: 'Continue', action: () => dismiss() },
+            {
+              label: 'Never Show Again', action: () => {
+                api.suppressNotification(NOTIF_ID);
+                dismiss();
+              }
+            },
+          ]);
+        },
+      },
+    ],
+  });
+}
+
+function runModManager(api) {
+  const TOOL_ID = LOADER_ID;
+  const TOOL_NAME = LOADER_NAME;
+  const state = api.store.getState();
+  const tool = util.getSafe(state, ['settings', 'gameMode', 'discovered', GAME_ID, 'tools', TOOL_ID], undefined);
+
+  try {
+    const TOOL_PATH = tool.path;
+    if (TOOL_PATH !== undefined) {
+      return api.runExecutable(TOOL_PATH, [], { suggestDeploy: false })
+        .catch(err => api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err,
+          { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 })
+        );
+    }
+    else {
+      return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, `Path to ${TOOL_NAME} executable could not be found. Ensure ${TOOL_NAME} is installed through Vortex.`);
+    }
+  } catch (err) {
+    return api.showErrorNotification(`Failed to run ${TOOL_NAME}`, err, { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 });
+  }
+}
+
 async function modFoldersEnsureWritable(gamePath, relPaths) {
   for (let index = 0; index < relPaths.length; index++) {
     await fs.ensureDirWritableAsync(path.join(gamePath, relPaths[index]));
@@ -927,6 +1122,7 @@ async function setup(discovery, api, gameSpec) {
   if (hasLoader) {
     await downloadLoader(api, gameSpec);
   }
+  if (allowMgsvFix) downloadMgsvFixNotify(api);
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
 }
 
@@ -984,15 +1180,15 @@ function applyGame(context, gameSpec) {
       { name: LOADER_NAME }
     );
   }
-  if (binariesInstaller) {
-    context.registerModType(BINARIES_ID, 72,
+  if (allowMgsvFix) {
+    context.registerModType(MGSVFIX_ID, 72,
       (gameId) => {
         var _a;
         return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
       },
-      (game) => pathPattern(context.api, game, path.join('{gamePath}', BINARIES_PATH)),
+      (game) => pathPattern(context.api, game, path.join('{gamePath}', MGSVFIX_PATH)),
       () => Promise.resolve(false),
-      { name: BINARIES_NAME }
+      { name: MGSVFIX_NAME }
     );
   }
 
@@ -1000,14 +1196,14 @@ function applyGame(context, gameSpec) {
   if (hasLoader) {
     context.registerInstaller(LOADER_ID, 25, testLoader, installLoader);
   }
+  if (allowMgsvFix) {
+    context.registerInstaller(MGSVFIX_ID, 26, testMgsvFix, installMgsvFix);
+  }
   if (rootInstaller) {
     context.registerInstaller(ROOT_ID, 27, testRoot, installRoot);
   }
   if (needsModInstaller) {
-    context.registerInstaller(MOD_ID, 29, testMod, installMod);
-  }
-  if (binariesInstaller) {
-    context.registerInstaller(BINARIES_ID, 31, testBinaries, installBinaries);
+    context.registerInstaller(MOD_ID, 29, testMod, (files, fileName) => installMod(context.api, files, fileName));
   }
   //context.registerInstaller(CONFIG_ID, 33, testConfig, installConfig);
   if (saveInstaller) {
@@ -1018,7 +1214,16 @@ function applyGame(context, gameSpec) {
   }
 
   //register actions
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
+  if (allowMgsvFix) { //the notification is otherwise the only install path, and "Never Show Again" would leave no way back
+    context.registerAction('mod-icons', 300, 'open-ext', {}, `Download Latest ${MGSVFIX_NAME}`, () => {
+      downloadCodeberg(context.api, spec, CODEBERG_REQUIREMENTS, false);
+    }, () => {
+      const state = context.api.getState();
+      const gameId = selectors.activeGameId(state);
+      return gameId === GAME_ID;
+    });
+  }
+  /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
     util.opn(CONFIG_PATH).catch(() => null);
     }, () => {
       const state = context.api.getState();
@@ -1068,6 +1273,16 @@ function main(context) {
   applyGame(context, spec);
   context.once(() => { // put code here that should be run (once) when Vortex starts up
     const api = context.api;
+    api.onAsync('did-deploy', async (profileId) => {
+      const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
+      if (profileId !== LAST_ACTIVE_PROFILE) return;
+      return deployNotify(api);
+    });
+    api.onAsync('check-mods-version', (gameId, mods, forced) => {
+      if (gameId !== GAME_ID) return;
+      return checkForCodebergUpdate(api, spec, CODEBERG_REQUIREMENTS)
+        .catch(err => log('warn', `Failed to check for ${MGSVFIX_NAME} update: ${err}`));
+    });
   });
   return true;
 }

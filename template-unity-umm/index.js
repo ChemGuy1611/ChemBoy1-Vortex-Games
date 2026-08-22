@@ -203,7 +203,7 @@ const tools = [
     exclusive: true,
     shell: true,
     //defaultPrimary: true,
-    parameters: PARAMETERS
+    //parameters: PARAMETERS
   }, //*/
   {
     id: `${GAME_ID}-customlaunchalt`,
@@ -216,7 +216,7 @@ const tools = [
     exclusive: true,
     shell: true,
     //defaultPrimary: true,
-    parameters: PARAMETERS
+    //parameters: PARAMETERS
   }, //*/
 ];
 
@@ -841,8 +841,8 @@ function main(context) {
   applyGame(context, spec);
   context.once(() => {
     const api = context.api;
-    if (context.api.ext.ummAddGame !== undefined) {
-      context.api.ext.ummAddGame({
+    if (api.ext.ummAddGame !== undefined) {
+      api.ext.ummAddGame({
         gameId: GAME_ID,
         autoDownloadUMM: true,
       });

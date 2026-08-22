@@ -240,6 +240,7 @@ real target paths, installer ladder, tools, auto-downloads, and known traps — 
 `LOAD_ORDER_REGISTRATION.md` (`registerLoadOrder` / legacy `registerLoadOrderPage`, used by `ue4-5`).
 `UE4_5_REACT_ARCHITECTURE.md` and `NON_UE_LOAD_ORDER_PAGES.md` (the load-order React layers).
 `DOWNLOADER.md` and `BEPINEX_BE_BUILDS.md` (the auto-downloader modules).
+`GODOT_MOD_LOADER.md` (the loader behind `template-godot`, and its two engine release lines).
 `REQUIRES_LAUNCHER.md` (the `requiresLauncher` hand-off every template implements).
 `WINAPI_BINDINGS.md` (the `winapi.RegGetValue` registry-discovery fallback).
 `RUN_EXECUTABLE.md` (`api.runExecutable`, behind every `runDeployTool` helper).

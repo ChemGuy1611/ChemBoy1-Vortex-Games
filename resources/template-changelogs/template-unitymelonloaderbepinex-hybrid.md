@@ -1,5 +1,9 @@
 # template-unitymelonloaderbepinex-hybrid Changelog
 
+## [2026-08-21]
+
+- Changed: `context.once()` now calls through the local `api` constant declared at the top of the block instead of repeating `context.api` on each call.
+
 ## [2026-08-17]
 
 - Changed: the BepInEx mono requirement tracks its release version instead of the GitHub asset upload time. `trackByAssetDate` is gone and `resolveVersion` now uses `resolveVersionByModVersion`, so the mod list shows `5.4.23-5` rather than a timestamp. This is possible because `downloader.js` maps a fourth version segment onto a prerelease identifier — the reason the requirement was on asset-date is fixed at the module level. Asset selection is unchanged; the version comes from the release tag. An install made under the old behaviour reports one update, which the update re-stamps.

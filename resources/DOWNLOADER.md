@@ -14,6 +14,8 @@ For **Thunderstore**-hosted requirements, use the companion module `resources/do
 
 For **BepInEx bleeding-edge** builds (`builds.bepinex.dev`, the only source of an IL2CPP-capable BepInEx 6), use the companion module `resources/downloader/bepinexbe_downloader.js` instead (same local-copy model, with `template_bepinexbe_downloader.js` for wiring) — documented in `BEPINEX_BE_BUILDS.md`. Mono Unity games stay on this module: BepInEx 5.x ships as ordinary GitHub releases.
 
+For **Codeberg**-hosted requirements (and any other Forgejo or Gitea instance), use the companion module `resources/downloader/codeberg_downloader.js` instead (same local-copy model, with `template_codeberg_downloader.js` for wiring) — documented in `CODEBERG_API.md`. Forgejo's release API is shaped like GitHub's, so that module is the closest sibling to this one; the field-level difference that matters is that a Forgejo asset carries `created_at` and no `updated_at`.
+
 For **fcmodding.com**-hosted requirements (`downloads.fcmodding.com`, the Far Cry Mod Installer), use the companion module `resources/downloader/fcmodding_downloader.js` instead (same local-copy model, with `template_fcmodding_downloader.js` for wiring) — documented in `FCMODDING_API.md`.
 
 ---
@@ -124,11 +126,12 @@ The inverse case needs care: when the version lives only in the release **tag** 
 
 `pinVersion` holds a requirement at one specific release instead of tracking the newest one. It is opt-in and unset by default; with no pin the module behaves exactly as it does without the feature. The intended use is a specific upstream release that breaks a specific game — not general version freezing, since tracking the latest release is the whole point of the module.
 
-The same field name exists in six of the seven downloader modules. Only the way each one *reaches* the pinned release differs, because their hosts do:
+The same field name exists in seven of the eight downloader modules. Only the way each one *reaches* the pinned release differs, because their hosts do:
 
 | Module | `pinVersion` means | Reach-the-release field |
 | --- | --- | --- |
 | `downloader.js` | GitHub release version | `pinTag` — optional; defaults to `pinVersion`, retried once with the leading `v` toggled on a 404 |
+| `codeberg_downloader.js` | Codeberg/Forgejo release version | `pinTag` — optional; defaults to `pinVersion`, retried once with the leading `v` toggled |
 | `gamebanana_downloader.js` | submission version | `pinFileId` — **required**; the API has no version-to-file lookup |
 | `moddb_downloader.js` | file revision | `pinFileId` — **required**; the RSS feed is newest-first with no version index |
 | `modworkshop_downloader.js` | file version | `pinFileId` — **required** |
@@ -136,7 +139,7 @@ The same field name exists in six of the seven downloader modules. Only the way 
 | `bepinexbe_downloader.js` | BE build number | `pinArtifactUrl` — optional; only needed once the pinned build has scrolled off the index page |
 | `fcmodding_downloader.js` | *not supported* | — the host keeps only the current build and one prior, so any pin 404s within a release or two (`FCMODDING_API.md`) |
 
-Behavior, identical across all six that support it:
+Behavior, identical across all seven that support it:
 
 - **Installed identity equals the pin -> the update check returns immediately**, before any HTTP request. A pinned requirement therefore costs nothing against the GitHub rate limit or any host API. This is the headline behavior, and it is what the short-circuit at the top of each module's update-check entry point exists for.
 - Installed identity differs from the pin — **including not installed at all** — and the module resolves the *pinned* release, never the latest one.
@@ -287,6 +290,8 @@ to). `TEMPLATES_OVERVIEW.md` (which templates bundle a `downloader.js` copy, and
 auto-download routes templates choose between). `templates/TEMPLATE_GODOT.md`,
 `templates/TEMPLATE_UNITYBEPINEX.md`, and `templates/TEMPLATE_UNITYMELONLOADERBEPINEX_HYBRID.md`
 (the requirement sets those three templates actually declare).
+`GODOT_MOD_LOADER.md` (a requirement whose repo ships two incompatible product lines from one
+release stream — the case where `/releases/latest` is the wrong endpoint and a pin is required).
 `ARCHIVE_HANDLER.md` (why `archiveFileName` should point at an asset with a standard archive
 extension, and what a custom extension like `.vmz` costs).
 `VORTEX_MOD_METADATA.md` (why a GitHub-sourced requirement can end up tagged with an unrelated
@@ -302,5 +307,11 @@ simplest, since both hosts serve direct download URLs).
 ordered by build number instead of by version).
 `FCMODDING_API.md` (the seventh sibling module, for the Far Cry Mod Installer — ordered by build
 timestamp, and the only one with no version pinning at all).
+`CODEBERG_API.md` (the eighth sibling module, for Codeberg and any other Forgejo/Gitea instance —
+the closest sibling to this one, since Forgejo's release payload uses GitHub's field names; the
+difference that bites is the missing asset `updated_at`).
 `EMBEDDED_BROWSER.md` (the `browse-for-download` hand-off used when a requirement has no predictable
 URL, and how to embed a mod site in a page instead).
+`GITHUB_API.md` (the API this module is built on: release and asset payload fields, the three
+release endpoints, the signed asset redirect, the 60-per-hour anonymous rate limit and how to
+recognise it, and the Actions-artifact route behind nightly mode).

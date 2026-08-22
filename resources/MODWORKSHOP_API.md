@@ -407,3 +407,7 @@ site. An integration should respect the flag rather than offering a one-click in
 repo queries — compare bot-protection behaviour and download-resolution routes; Thunderstore is the
 other host with a machine-readable spec).
 `PCGAMINGWIKI_API.md` (game-metadata lookups, another site with its own usage rules).
+`CODEBERG_API.md` (the Forgejo/Gitea release API — the other host serving complete unauthenticated
+download URLs, which is why `codeberg_downloader.js` is built on the same shape as
+`modworkshop_downloader.js`).
+`GITHUB_API.md` (the default requirement host, and the API `downloader.js` talks to).

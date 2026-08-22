@@ -21,7 +21,8 @@ engine, and note, and accepts several comma-separated terms (OR'd together).
 "Flagged Only" restricts the table to
 flagged rows; the category dropdown is a multi-select checkbox list of engines
 (OR'd together) plus special categories (bundled downloader module, non-UE load
-order -- each AND'd on top); Space toggles the checkbox on all selected rows.
+order -- each AND'd on top); Space toggles the checkbox on all selected rows, and
+the checkbox in the table header toggles every row the current filter leaves visible.
 
 Requirements:
     pip install pyside6
@@ -42,7 +43,7 @@ from datetime import datetime
 
 from PySide6.QtCore import (
     QAbstractProxyModel, QAbstractTableModel, QEvent, QItemSelectionModel, QModelIndex,
-    QObject, QPointF, QProcess, QProcessEnvironment, QSettings, QSize, QSortFilterProxyModel, Qt, QThread, QUrl, Signal,
+    QObject, QPointF, QProcess, QProcessEnvironment, QRect, QSettings, QSize, QSortFilterProxyModel, Qt, QThread, QUrl, Signal,
 )
 from PySide6.QtGui import (
     QAction, QColor, QDesktopServices, QFont, QIcon, QKeySequence, QPainter, QPainterPath,
@@ -53,7 +54,8 @@ from PySide6.QtWidgets import (
     QAbstractItemView, QApplication, QCheckBox, QComboBox, QDialog, QDialogButtonBox,
     QFileDialog, QFormLayout, QHBoxLayout, QHeaderView, QInputDialog, QLabel, QLineEdit,
     QMainWindow, QMenu, QMessageBox, QPlainTextEdit, QProxyStyle, QPushButton,
-    QRadioButton, QSplitter, QStyle, QTableView, QToolBar, QVBoxLayout, QWidget,
+    QRadioButton, QSplitter, QStyle, QStyleOptionButton, QTableView, QToolBar,
+    QVBoxLayout, QWidget,
 )
 
 import vortex_utils as vu
@@ -611,11 +613,19 @@ class GameModel(QAbstractTableModel):
                 "mtimes": mtimes,
             }
             # downloader modules are separate files -- check live, independent of the
-            # index.js parse cache (same rule as image existence)
-            has_downloader = (vu.has_downloader_js(folder)
-                              or vu.has_gamebanana_downloader_js(folder)
-                              or vu.has_moddb_downloader_js(folder)
-                              or vu.has_modworkshop_downloader_js(folder))
+            # index.js parse cache (same rule as image existence).
+            # Every module in the family counts: the filter asks whether the extension
+            # auto-downloads a requirement at all, not which host it comes from.
+            has_downloader = any(check(folder) for check in (
+                vu.has_downloader_js,
+                vu.has_bepinexbe_downloader_js,
+                vu.has_codeberg_downloader_js,
+                vu.has_fcmodding_downloader_js,
+                vu.has_gamebanana_downloader_js,
+                vu.has_moddb_downloader_js,
+                vu.has_modworkshop_downloader_js,
+                vu.has_thunderstore_downloader_js,
+            ))
 
             icon_path = os.path.join(folder, "exec.png")
             cover_path = os.path.join(folder, f"{game_id}.jpg")
@@ -756,6 +766,8 @@ class GameModel(QAbstractTableModel):
     def headerData(self, section, orientation, role=Qt.DisplayRole):
         if orientation == Qt.Horizontal and role == Qt.DisplayRole:
             return HEADERS[section]
+        if orientation == Qt.Horizontal and role == Qt.ToolTipRole and section == COL_CHECK:
+            return "Check / uncheck every game currently shown"
         return None
 
     def clear_checked(self):
@@ -1009,6 +1021,66 @@ class GroupProxy(QAbstractProxyModel):
         if 0 <= proxy_row < len(self._map):
             return self._map[proxy_row][0]
         return False
+
+
+# == Table header ==============================================================
+
+class CheckHeaderView(QHeaderView):
+    """Horizontal header carrying a master checkbox in the check column. Clicking it
+    asks the window to tick every row the current filter leaves visible, or to clear
+    them when they are all ticked already. The indicator is tri-state: partial while
+    only some of the visible rows are ticked."""
+
+    toggle_all_requested = Signal()
+
+    def __init__(self, parent=None):
+        super().__init__(Qt.Horizontal, parent)
+        self._check_state = Qt.Unchecked
+
+    def set_check_state(self, state):
+        if state == self._check_state:
+            return
+        self._check_state = state
+        self.updateSection(COL_CHECK)
+
+    def paintSection(self, painter, rect, logical_index):
+        super().paintSection(painter, rect, logical_index)
+        if logical_index != COL_CHECK:
+            return
+        size = max(0, min(14, rect.width() - 2, rect.height() - 2))
+        if not size:
+            return
+        opt = QStyleOptionButton()
+        opt.rect = QRect(
+            rect.x() + (rect.width() - size) // 2,
+            rect.y() + (rect.height() - size) // 2,
+            size, size,
+        )
+        opt.state = QStyle.State_Enabled
+        if self._check_state == Qt.Checked:
+            opt.state |= QStyle.State_On
+        elif self._check_state == Qt.PartiallyChecked:
+            opt.state |= QStyle.State_NoChange
+        else:
+            opt.state |= QStyle.State_Off
+        self.style().drawPrimitive(QStyle.PE_IndicatorCheckBox, opt, painter, self)
+
+    def _hits_check_section(self, event) -> bool:
+        return self.logicalIndexAt(event.position().toPoint()) == COL_CHECK
+
+    # press and release are both swallowed so the click toggles instead of sorting
+    def mousePressEvent(self, event):
+        if self._hits_check_section(event):
+            event.accept()
+            return
+        super().mousePressEvent(event)
+
+    def mouseReleaseEvent(self, event):
+        if self._hits_check_section(event):
+            self.toggle_all_requested.emit()
+            event.accept()
+            return
+        super().mouseReleaseEvent(event)
 
 
 # == Check combo box ===========================================================
@@ -1667,6 +1739,9 @@ class MainWindow(QMainWindow):
         # --- game table ---
         self._table = QTableView()
         self._table.setModel(self._proxy)
+        self._check_header = CheckHeaderView(self._table)
+        self._table.setHorizontalHeader(self._check_header)
+        self._check_header.toggle_all_requested.connect(self._toggle_check_all_visible)
         self._table.setSortingEnabled(True)
         self._table.setSelectionBehavior(QTableView.SelectRows)
         self._table.setSelectionMode(QTableView.ExtendedSelection)
@@ -1715,6 +1790,10 @@ class MainWindow(QMainWindow):
         splitter.addWidget(self._table)
         self._proxy.modelReset.connect(self._apply_spans)
         self._model.dataChanged.connect(self._on_model_data_changed)
+        # every filter change lands as a row insert/remove/reset on the filter model
+        for signal in (self._filter_model.rowsInserted, self._filter_model.rowsRemoved,
+                       self._filter_model.modelReset, self._filter_model.layoutChanged):
+            signal.connect(lambda *_: self._update_header_check_state())
 
         # --- log pane ---
         self._log_pane = QPlainTextEdit()
@@ -1903,6 +1982,51 @@ class MainWindow(QMainWindow):
                 seen.add(row.game_id)
                 result.append(row)
         return result
+
+    def _visible_source_rows(self) -> list[int]:
+        """Source-model row numbers for every game row the current filter leaves
+        visible, in table order and skipping engine group header rows."""
+        rows: list[int] = []
+        for r in range(self._proxy.rowCount()):
+            if self._proxy.is_header_row(r):
+                continue
+            filter_idx = self._proxy.mapToSource(self._proxy.index(r, COL_CHECK))
+            src_idx = self._filter_model.mapToSource(filter_idx)
+            if src_idx.isValid():
+                rows.append(src_idx.row())
+        return rows
+
+    def _toggle_check_all_visible(self):
+        """Header checkbox: tick every visible row, or clear them all when every one
+        of them is ticked already."""
+        rows = self._visible_source_rows()
+        if not rows:
+            return
+        ids = {self._model._rows[r].game_id for r in rows}
+        if ids <= self._model._checked_ids:
+            self._model._checked_ids -= ids
+        else:
+            self._model._checked_ids |= ids
+        # one range emit rather than one per row: each emit re-runs the filter, which
+        # would remap proxy rows out from under a loop
+        self._model.dataChanged.emit(
+            self._model.index(0, COL_CHECK),
+            self._model.index(len(self._model._rows) - 1, COL_CHECK),
+            [Qt.CheckStateRole],
+        )
+
+    def _update_header_check_state(self):
+        """Sync the header indicator with how many visible rows are ticked."""
+        rows = self._visible_source_rows()
+        checked = sum(1 for r in rows
+                      if self._model._rows[r].game_id in self._model._checked_ids)
+        if not rows or not checked:
+            state = Qt.Unchecked
+        elif checked == len(rows):
+            state = Qt.Checked
+        else:
+            state = Qt.PartiallyChecked
+        self._check_header.set_check_state(state)
 
     def _highlighted_rows(self) -> list[GameRow]:
         """Rows highlighted in the table, ignoring checkbox state."""
@@ -2415,6 +2539,7 @@ class MainWindow(QMainWindow):
 
     def _on_model_data_changed(self, top_left, _bottom_right, _roles):
         if top_left.column() == COL_CHECK:
+            self._update_header_check_state()
             self._update_status_bar()
             if not self._runner.is_running:
                 self._set_actions_enabled()
@@ -2489,10 +2614,11 @@ class _CheckboxStyle(QProxyStyle):
             super().drawPrimitive(element, option, painter, widget)
             return
         checked = bool(option.state & QStyle.State_On)
+        partial = bool(option.state & QStyle.State_NoChange)
         r = option.rect.adjusted(1, 1, -1, -1)
         painter.save()
         painter.setRenderHint(QPainter.Antialiasing)
-        painter.fillRect(r, self._GREEN if checked else self._UNCHECKED_BG)
+        painter.fillRect(r, self._GREEN if checked or partial else self._UNCHECKED_BG)
         border_pen = QPen(self._BORDER, 1.5)
         painter.setPen(border_pen)
         painter.drawRect(r)
@@ -2507,6 +2633,13 @@ class _CheckboxStyle(QProxyStyle):
             p3 = QPointF(x + w * 0.80, y + h * 0.22)
             painter.drawLine(p1, p2)
             painter.drawLine(p2, p3)
+        elif partial:
+            dash_pen = QPen(self._WHITE, 2.0)
+            dash_pen.setCapStyle(Qt.RoundCap)
+            painter.setPen(dash_pen)
+            x, y, w, h = float(r.x()), float(r.y()), float(r.width()), float(r.height())
+            painter.drawLine(QPointF(x + w * 0.22, y + h * 0.5),
+                             QPointF(x + w * 0.78, y + h * 0.5))
         painter.restore()
 
 

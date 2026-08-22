@@ -142,3 +142,5 @@ kicks off), `VORTEX_EVENT_BUS.md`. Overview: `VORTEX_APP.md`. **Not**
 `DOWNLOADER.md`. `EMBEDDED_BROWSER.md` (how a click inside embedded web content becomes a download:
 `will-download` → `received-url` → `start-download-url` → the `https` protocol handler registered
 here).
+`GITHUB_API.md` (GitHub's `302` to a short-lived signed storage URL and its `accept-ranges: bytes`
+support - what the chunked/resumable path is relying on when a requirement is downloaded).

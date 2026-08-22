@@ -45,11 +45,11 @@ Usage:
         run_generate_explained, run_generate_explained_batch,
         run_generate_notes, run_generate_notes_batch,
         get_discovery_ids, detect_engine, detect_stores,
-        has_downloader_js, has_bepinexbe_downloader_js, has_fcmodding_downloader_js,
+        has_downloader_js, has_bepinexbe_downloader_js, has_codeberg_downloader_js,
+        has_fcmodding_downloader_js,
         has_gamebanana_downloader_js,
         has_moddb_downloader_js, has_modworkshop_downloader_js,
         has_thunderstore_downloader_js,
-        downloads_from_github, github_download_enabled,
         requires_unreal_mod_installer, has_ue4ss_load_order_parity,
         is_unreleased_extension,
         validate_index_js,
@@ -292,10 +292,14 @@ def read_index_js(folder):
 
 
 def write_index_js(folder, src):
-    """Write src to index.js in a game extension folder (atomic via tmp + os.replace)."""
+    """Write src to index.js in a game extension folder (atomic via tmp + os.replace).
+
+    newline="\n" keeps the repo's declared line endings (.editorconfig end_of_line = lf,
+    .gitattributes eol=lf); a bare open(..., "w") would rewrite every \n as CRLF on
+    Windows. Endings already present in src are passed through untouched."""
     dst = os.path.join(folder, "index.js")
     tmp = dst + ".tmp"
-    with open(tmp, "w", encoding="utf-8") as f:
+    with open(tmp, "w", encoding="utf-8", newline="\n") as f:
         f.write(src)
     os.replace(tmp, dst)
 
@@ -2234,7 +2238,7 @@ def mutate_text_file(path, fn, *, dry_run=False, atomic=True,
         if atomic:
             write_text_atomic(path, new_src)
         else:
-            with open(path, "w", encoding="utf-8") as f:
+            with open(path, "w", encoding="utf-8", newline="\n") as f:
                 f.write(new_src)
         print(f"  {changed_msg}: {label}")
         return True
@@ -2257,10 +2261,17 @@ def read_json(path, default=None):
 
 
 def write_json_atomic(path, data, *, indent=2, sort_keys=False):
-    """Write data as JSON to path atomically (tmp file + os.replace)."""
+    """Write data as JSON to path atomically (tmp file + os.replace).
+
+    Both newline="\n" and the trailing newline exist to match the repo's own config:
+    .editorconfig declares end_of_line = lf and insert_final_newline = true, and
+    .gitattributes declares eol=lf. A bare open(..., "w") plus json.dump honours
+    neither -- it emits CRLF on Windows and no final newline, which is why opening a
+    written file in an editor and saving it produced a spurious diff."""
     tmp = path + ".tmp"
-    with open(tmp, "w", encoding="utf-8") as f:
+    with open(tmp, "w", encoding="utf-8", newline="\n") as f:
         json.dump(data, f, indent=indent, sort_keys=sort_keys)
+        f.write("\n")
     os.replace(tmp, path)
 
 
@@ -2268,11 +2279,14 @@ def write_text_atomic(path, entries, encoding="utf-8"):
     """Write entries to path atomically via a .tmp file + os.replace.
 
     entries may be a list of strings (each written in order) or a single string.
-    path may be a str or pathlib.Path."""
+    path may be a str or pathlib.Path.
+
+    newline="\n" keeps the repo's declared line endings (.editorconfig end_of_line = lf);
+    endings already present in entries are passed through untouched."""
     tmp = str(path) + ".tmp"
     if isinstance(entries, str):
         entries = [entries]
-    with open(tmp, "w", encoding=encoding) as f:
+    with open(tmp, "w", encoding=encoding, newline="\n") as f:
         for entry in entries:
             f.write(entry)
     os.replace(tmp, path)
@@ -2727,11 +2741,6 @@ def is_load_order_game(src):
     return "context.registerLoadOrder" in src and detect_engine(src) != "UE4-5"
 
 
-# Matches a GitHub release-asset download URL, e.g.
-#   github.com/Owner/Repo/releases/download/v1.2.3/asset.zip
-#   github.com/Owner/Repo/releases/latest/download/asset.zip
-_GITHUB_DOWNLOAD_RE = re.compile(r"github\.com/[^\"'\s]+/releases/(?:latest/)?download")
-
 # Chars after which a '/' starts a regex literal rather than a division operator.
 _REGEX_PRECEDERS = set("=({[,;:!&|?+-*~^%<>\n")
 
@@ -2860,31 +2869,6 @@ def audit_skip_lines(src, rule):
     return hits
 
 
-_JS_FUNC_DEF_RE = re.compile(r"(?:async\s+)?function\s+(\w+)\s*\(")
-
-
-def _js_function_bodies(src):
-    """Yield (name, body_start, body_end) for each `function NAME(...) { ... }` in src.
-
-    src is expected to be comment-stripped already. Brace matching is naive about
-    braces inside string literals, which is acceptable here: the callers only need
-    to know which function a given offset falls inside.
-    """
-    for m in _JS_FUNC_DEF_RE.finditer(src):
-        brace = src.find("{", m.end())
-        if brace == -1:
-            continue
-        depth = 0
-        for i in range(brace, len(src)):
-            if src[i] == "{":
-                depth += 1
-            elif src[i] == "}":
-                depth -= 1
-                if depth == 0:
-                    yield m.group(1), brace, i
-                    break
-
-
 def has_downloader_js(folder):
     """Return True if the extension folder contains a bundled downloader.js module."""
     return os.path.isfile(os.path.join(folder, "downloader.js"))
@@ -2893,6 +2877,11 @@ def has_downloader_js(folder):
 def has_bepinexbe_downloader_js(folder):
     """Return True if the extension folder contains a bundled bepinexbe_downloader.js module."""
     return os.path.isfile(os.path.join(folder, "bepinexbe_downloader.js"))
+
+
+def has_codeberg_downloader_js(folder):
+    """Return True if the extension folder contains a bundled codeberg_downloader.js module."""
+    return os.path.isfile(os.path.join(folder, "codeberg_downloader.js"))
 
 
 def has_fcmodding_downloader_js(folder):
@@ -2918,53 +2907,6 @@ def has_modworkshop_downloader_js(folder):
 def has_thunderstore_downloader_js(folder):
     """Return True if the extension folder contains a bundled thunderstore_downloader.js module."""
     return os.path.isfile(os.path.join(folder, "thunderstore_downloader.js"))
-
-
-def downloads_from_github(src):
-    """Return True if index.js pulls a mod/requirement from a GitHub release.
-
-    Detects direct release-asset URLs and the browser_download_url field returned
-    by the GitHub releases API. Independent of whether a downloader.js module exists.
-
-    Textual only: a URL sitting in commented-out or never-called code still counts.
-    Use github_download_enabled() to require that the download actually runs.
-    """
-    return bool(_GITHUB_DOWNLOAD_RE.search(src)) or "browser_download_url" in src
-
-
-def github_download_enabled(src):
-    """Return True if index.js has a GitHub download that can actually run.
-
-    Stricter than downloads_from_github(). Two ways a GitHub download is present in
-    the file but dead, both common in these extensions:
-
-      1. Commented out - the whole download block sits inside a '/* ... //*/' toggle.
-      2. Never called  - the download function is defined, but its only call sites
-         are themselves commented out.
-
-    A URL at module scope (e.g. `const BEPINEX_URL = ...`) counts as enabled: it has
-    no enclosing function to test, and proving which live function consumes it is not
-    worth the fragility. Erring toward enabled keeps this from dropping real games.
-    """
-    stripped = strip_js_comments(src)
-    if not downloads_from_github(stripped):
-        return False                                   # case 1: comments only
-
-    bodies = list(_js_function_bodies(stripped))
-    hits = [m.start() for m in _GITHUB_DOWNLOAD_RE.finditer(stripped)]
-    hits += [m.start() for m in re.finditer(r"browser_download_url", stripped)]
-
-    for pos in hits:
-        enclosing = [(nm, s, e) for nm, s, e in bodies if s < pos < e]
-        if not enclosing:
-            return True                                # module scope, assume consumed
-        name, start, end = max(enclosing, key=lambda t: t[1])   # innermost
-        references = [m for m in re.finditer(r"\b" + re.escape(name) + r"\b", stripped)
-                      if not (start < m.start() < end)]
-        if len(references) > 1:                        # definition plus a real call
-            return True
-
-    return False                                       # case 2: all hits unreachable
 
 
 def requires_unreal_mod_installer(src):

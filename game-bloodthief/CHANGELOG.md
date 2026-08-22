@@ -4,6 +4,16 @@
 
 - None Planned
 
+## [0.3.0] - 2026-08-22
+
+- Fixed: Installing the mod loader no longer copies about 2600 unrelated files into the game folder. Only the loader itself is installed
+- Added: Map mods are now recognised and installed to the game's `maps` folder
+- Added: The mod loader is now checked for updates. When a newer release is available you are offered the update instead of having to reinstall it by hand
+- Fixed: Mods that keep their scripts in a subfolder are now installed with the correct folder layout instead of losing everything above that subfolder
+- Added: An archive that matches no known mod layout is now installed unchanged and reported, instead of being unpacked loose into the mods folder
+- Fixed: The game and its launch tools no longer start with an empty launch argument
+- Removed: Support for the game's demo, which cannot use the mod loader
+
 ## [0.2.1] - 2026-08-05
 
 - Fixed: A required mod loader or tool that can no longer be found in its GitHub release is now reported, listing the files the release actually contains, instead of failing quietly

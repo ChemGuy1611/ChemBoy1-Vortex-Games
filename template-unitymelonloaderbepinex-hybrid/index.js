@@ -618,7 +618,7 @@ let tools = [
     exclusive: true,
     shell: true,
     //defaultPrimary: true,
-    parameters: PARAMETERS,
+    //parameters: PARAMETERS,
   }, //*/
   /*{
     id: SAVEEDITOR_ID,
@@ -2573,11 +2573,11 @@ function main(context) {
   applyGame(context, spec);
   context.once(() => { // put code here that should be run (once) when Vortex starts up
     const api = context.api;
-    context.api.onAsync('check-mods-version', (gameId, mods, forced) => {
+    api.onAsync('check-mods-version', (gameId, mods, forced) => {
       if (gameId !== GAME_ID) return Promise.resolve();
       return onCheckModVersion(api, gameId, mods, forced);
     });
-    context.api.onAsync('did-deploy', async (profileId, deployment) => {
+    api.onAsync('did-deploy', async (profileId, deployment) => {
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;
       bepinexInstalled = isBepinexInstalled(api, spec);
@@ -2611,7 +2611,7 @@ function main(context) {
       } //*/
       return Promise.resolve();
     });
-    context.api.onAsync('did-purge', async (profileId) => {
+    api.onAsync('did-purge', async (profileId) => {
       const LAST_ACTIVE_PROFILE = selectors.lastActiveProfileForGame(api.getState(), GAME_ID);
       if (profileId !== LAST_ACTIVE_PROFILE) return;
       if (hasCustomLoader) {

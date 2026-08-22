@@ -316,3 +316,6 @@ direct download URLs; GameBanana and ModDB do not).
 `EMBEDDED_BROWSER.md` (the `Webview` control and the download capture chain it relies on).
 `PCGAMINGWIKI_API.md` (game-metadata lookups, and another third-party site with its own
 User-Agent/rate-limit rules).
+`CODEBERG_API.md` (the Forgejo/Gitea release API — the opposite case to this one: its listing hands
+back a complete unauthenticated download URL, so its module has no file-id resolution step at all).
+`GITHUB_API.md` (the default requirement host, and the API `downloader.js` talks to).

@@ -5,7 +5,7 @@ Author: ChemBoy1
 Version: 1.0.0
 Date: 2026-XX-XX
 Notes:
-- 
+-
 ////////////////////////////////////////////*/
 
 //Import libraries
@@ -38,7 +38,7 @@ const debug = false; //toggle for debug mode
 
 const DATA_FILE = "XXX";
 const CONFIG_FOLDER = "XXX";
-const DATASUB_FOLDERS = ["baked", "graph objects", "game system data"]; // <-- Update to incorporate all subfolders 
+const DATASUB_FOLDERS = ["baked", "graph objects", "game system data"]; // <-- Update to incorporate all subfolders
 const MODLOADER_PAGE_NO = 24;
 const MODLOADER_FILE_NO = 294;
 
@@ -149,7 +149,7 @@ const tools = [
     relative: true,
     exclusive: true,
     defaultPrimary: true,
-    parameters: []
+    //parameters: PARAMETERS,
   },
 ];
 
@@ -386,7 +386,7 @@ function testFallback(files, gameId) {
 //Fallback installer to root folder
 function installFallback(api, files, destinationPath) {
   fallbackInstallerNotify(api, destinationPath);
-  
+
   const filtered = files.filter(file =>
     (!file.endsWith(path.sep))
   );
@@ -423,7 +423,7 @@ function fallbackInstallerNotify(api, modName) {
                 + `If you think that Vortex should be capable to install this mod to a specific folder, please contact the extension developer for support at the link below.\n`
                 + `\n`
                 + `Mod Name: ${modName}.\n`
-                + `\n`             
+                + `\n`
           }, [
             { label: 'Continue', action: () => dismiss() },
             {
@@ -442,7 +442,7 @@ function fallbackInstallerNotify(api, modName) {
               if (modMatch) {
                 const MOD_ID = modMatch.attributes.modId;
                 if (MOD_ID !== undefined) {
-                  PAGE = `${MOD_ID}?tab=description`; 
+                  PAGE = `${MOD_ID}?tab=description`;
                 }
               }
               const MOD_PAGE_URL = `https://www.nexusmods.com/${GAME_ID}/mods/${PAGE}`;
