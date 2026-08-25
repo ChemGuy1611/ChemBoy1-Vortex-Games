@@ -5,15 +5,31 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ========================================================================
 
-Root:
+Root / Game Folder Mods:
 
-Handled by the "testRoot" installer. Inspect the extension source for the exact archive layout it expects.
+For mods laid out the same way the files appear inside the game folder. Vortex copies the matched folder and everything under it straight into the game.
+
+[code]
+MyRootMod.zip
+└── sounddata\
+    └── ... files in their real relative locations
+[/code]
+
+  Requirements:
+    - Recognised by a folder named "sounddata", "videos" or "EasyAntiCheat" in the archive.
+
+  Installs to: the game folder itself (no subfolder)
+
+  Common mistakes:
+    - Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
 
 ========================================================================
 
-Fallback:
+Mod:
 
-Handled by the "testFallback" installer. Inspect the extension source for the exact archive layout it expects.
+Recognised when the archive contains a file with one of these extensions: ".pck" or ".bk2".
+
+  Installs to: the game folder itself (no subfolder)
 
 ========================================================================
 

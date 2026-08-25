@@ -14,7 +14,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Binaries | a file with the `.dll` extension and a file with the `.exe` extension | - |
 | Fallback Installer | anything not matched above | - |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder.
 
 ## Mod
 

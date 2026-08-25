@@ -54,7 +54,6 @@ Installers run in priority order (lower number = tested first). The first instal
 | `monsterhunterstories3twistedreflection-looselua` | 29 |
 | `monsterhunterstories3twistedreflection-root` | 31 |
 | `monsterhunterstories3twistedreflection-preset` | 33 |
-| `monsterhunterstories3twistedreflection-fluffymod` | 49 |
 | `monsterhunterstories3twistedreflection-fluffymodzip` | 49 |
 
 ## Registered Tools

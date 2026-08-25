@@ -20,6 +20,7 @@
 ## Supported Stores
 
 - **Steam** — `1846380`
+- **Epic Games Store** — `Chokeberry`
 
 ## Feature Flags
 
@@ -67,12 +68,12 @@ These tools appear in Vortex's Tools panel when this game is active:
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- Download ${PATCH_NAME}
-- Remove ${PATCH_NAME}
+- Download DatapathFix Plugin
+- Remove DatapathFix Plugin
 - Delete ModData Folder
-- Open Frosty ${FROSTY_CONFIG_FILE}
-- Set ${PATCH_NAME} Enabled
-- Set ${PATCH_NAME} Disabled
+- Open Frosty manager_config.json
+- Set DatapathFix Plugin Enabled
+- Set DatapathFix Plugin Disabled
 - Open Config Folder
 - Open Frosty Mods Folder
 - Open PCGamingWiki Page
@@ -91,6 +92,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Deploy Hook** (`did-deploy`) — runs custom logic (e.g., notifications, metadata patching) every time mods are deployed.
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
+- **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Symlinks Disabled** — hardlink or copy deployment is used instead of symlinks.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 

@@ -13,7 +13,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Dlcruntime | a file or folder named one of: `DLC01.layer.0.all.archive`, `DLC02.layer.0.all.archive`, `DLCPackAssault.layer.0.all.archive`, `DLCPackClassic.layer.0.all.archive`, `DLCPackEnforcer.layer.0.all.archive`, `DLCPackIntruder.layer.0.all.archive`, `DLCPackTactical.layer.0.all.archive` or `DLCPreOrder.layer.0.all.archive` | `DLC\runtime` |
 | Binaries | a file with one of these extensions: `.dll`, `.exe`, `.asi` or `.addon64` | `retail` |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder.
 
 ## Root / Game Folder Mods
 

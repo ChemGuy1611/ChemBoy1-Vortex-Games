@@ -24,12 +24,12 @@ const MWS_BROWSER_CONFIG = {
   installRequirement: (api, gameSpec, requirement) => //optional - required only when requirements is set
     downloadModWorkshopRequirement(api, gameSpec, requirement, true),
   pageId: `${GAME_ID}-modworkshop-browse`, //optional (default shown)
-  pageTitle: 'Browse Mods', //optional - sidebar label
+  pageTitle: 'Browse ModWorkshop', //optional - sidebar label. Keep it short - the sidebar truncates past ~20 characters ('Browse ModWorkshop.net' did not fit)
   //hotkey: 'M', //optional - Ctrl+Shift+<key>. Pick a free one: Vortex logs "hotkey already used" and drops the second claim (B is taken)
   //priority: 40, //optional - sidebar position, lower is higher up
   //pageGroup: 'per-game', //optional - 'per-game' hides the page while another game is active
   //icon: 'plugin', //optional - icon name, overridden by mdi
-  //mdi: 'M22.7,19L13.6,9.9C14.5,7.6,14,4.9,12.1,3C10.1,1,7.1,0.6,4.7,1.7L9,6L6,9L1.6,4.7C0.4,7.1,0.9,10.1,2.9,12.1C4.8,14,7.5,14.5,9.8,13.6L18.9,22.7C19.3,23.1,19.9,23.1,20.3,22.7L22.6,20.4C23.1,20,23.1,19.3,22.7,19Z', //optional - raw SVG path data for the sidebar icon (default is a generic wrench - ModWorkshop's own mark could not be traced from a probeable source)
+  //mdi: 'M12.05,0.64L9.97,1.84L10.4,2.58L4.74,5.85L4.31,5.1L2.23,6.31L2.23,8.71L3.09,8.71L3.09,15.24L2.23,15.24L2.23,17.64L4.31,18.85L4.74,18.1L10.4,21.37L9.97,22.11L12.05,23.31L14.13,22.11L13.7,21.37L19.36,18.1L19.79,18.85L21.87,17.64L21.87,15.24L21.01,15.24L21.01,8.71L21.87,8.71L21.87,6.31L19.79,5.1L19.36,5.85L13.7,2.58L14.13,1.84ZM12.05,1.63L12.24,1.74L12.24,4.65L18.3,8.15L20.82,6.69L21.01,6.8L21.01,7.02L18.49,8.47L18.49,15.48L21.01,16.93L21.01,17.15L20.82,17.26L18.3,15.8L12.24,19.3L12.24,22.21L12.05,22.32L11.86,22.21L11.86,19.3L5.8,15.8L3.28,17.26L3.09,17.15L3.09,16.93L5.61,15.48L5.61,8.47L3.09,7.02L3.09,6.8L3.28,6.69L5.8,8.15L11.86,4.65L11.86,1.74ZM12.05,5.28L6.25,8.63L6.25,15.32L12.05,18.67L17.85,15.32L17.85,8.63ZM11.86,5.76L11.86,7.67L8.41,9.66L6.76,8.7ZM12.24,5.76L17.34,8.7L15.69,9.66L12.24,7.67ZM6.57,9.03L8.22,9.99L8.22,13.96L6.57,14.92ZM17.53,9.03L17.53,14.92L15.88,13.96L15.88,9.99ZM8.41,14.29L11.86,16.28L11.86,18.19L6.76,15.25ZM15.69,14.29L17.34,15.25L12.24,18.19L12.24,16.28Z', //optional - raw SVG path data for the sidebar icon (default shown: ModWorkshop's own hexagon-and-cube mark, traced from the site's vector logo)
   //packageAttribute: 'modworkshopMod', //optional - mod attribute holding the mod id (default shown)
   //versionAttribute: 'modworkshopVersion', //optional - mod attribute holding the installed version (default shown)
   //fileIdAttribute: 'modworkshopFileId', //optional - mod attribute holding the installed file id (default shown, shared with modworkshop_downloader.js)

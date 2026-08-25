@@ -4,6 +4,18 @@
 
 - None Planned
 
+## [2.0.2] - 2026-08-24
+
+- Fixed: The load order no longer stops working for the rest of the session if its file cannot be read or is damaged.
+
+## [2.0.1] - 2026-08-24
+
+- Fixed: Error that could occur if the user had never opened the load order page before deploying.
+
+## [2.0.0] - 2026-08-22
+
+- Added: Support for 2.0 mod structure. No load order support for them at this time.
+
 ## [1.0.5] - 2026-07-29
 
 - Fixed: The load order could disappear after deploying while a mod update was in progress, and only came back after deploying a second time.

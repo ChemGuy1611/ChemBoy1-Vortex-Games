@@ -16,8 +16,6 @@
 | Executable | `XXX.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 | Executable (Demo) | `XXX.exe` |
-| Extension Page | XXX |
-| PCGamingWiki | XXX |
 
 ## Feature Flags
 
@@ -25,9 +23,10 @@
 | --- | --- | --- |
 | `useRefNightly` | `false` | toggle for using the REFramework nightly instead of Nexus release |
 | `hasXbox` | `false` | toggle for Xbox version logic |
-| `reZip` | `true` | NOT WORKING YET - KEEP AS TRUE FOR NOW - set to true to re-zip Fluffy Mods (possibly not necessary for FLUFFY v3.069+) |
+| `reZip` | `true` | ! NOT WORKING YET - KEEP AS TRUE FOR NOW - set to true to re-zip Fluffy Mods (possibly not necessary for FLUFFY v3.069+) |
 | `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
 | `multiExe` | `false` | set to true if there are multiple executables (and multiple FLUFFY_FOLDERs) (typically for Demo) |
+| `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below) |
 | `debug` | `false` | toggle for debug mode |
 
 ## Mod Types
@@ -40,6 +39,8 @@ Mod types define where each category of mod gets deployed:
 | Loose Lua/Plugin (REFramework) | `XXX-looselua` | high | `{gamePath}/.` |
 | Fluffy Mod Manager | `XXX-fluffymanager` | low | `{gamePath}` |
 | REFramework | `XXX-reframework` | low | `{gamePath}` |
+| Fluffy Mod | `XXX-fluffymod` | 25 | `?` |
+| Fluffy Preset | `XXX-preset` | 40 | `?` |
 
 ## Mod Installers
 
@@ -52,15 +53,14 @@ Installers run in priority order (lower number = tested first). The first instal
 | `XXX-looselua` | 29 |
 | `XXX-root` | 31 |
 | `XXX-preset` | 33 |
-| `XXX-fluffymod` | 49 |
 | `XXX-fluffymodzip` | 49 |
 
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch**
-- **Custom Launch (Demo)**
+- **Custom Launch** (`XXX.exe`)
+- **Custom Launch (Demo)** (`XXX.exe`)
 
 ## Toolbar Actions
 
@@ -86,6 +86,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 | Type | Path |
 | --- | --- |
 | Config | `.` |
+| Save | `/userdata` |
 
 ## Special Features
 
@@ -95,19 +96,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

@@ -5,23 +5,42 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ========================================================================
 
-Fluffymanager:
+Fluffy Mod Manager (tool):
 
-Recognised when the archive contains a file or folder named "modmanager.exe".
+This installer handles Fluffy Mod Manager itself, not mods for it. It exists so users can install Fluffy Mod Manager through Vortex, and mod authors normally never package this.
+
+  Requirements:
+    - Recognised by a file named "modmanager.exe" in the archive.
+
+  Common mistakes:
+    - If you bundle Fluffy Mod Manager inside your mod archive, Vortex treats the whole download as Fluffy Mod Manager rather than as your mod. Ship the mod alone and list Fluffy Mod Manager as a requirement.
 
 ========================================================================
 
-Reframework:
+REFramework (mod loader):
 
-Recognised when the archive contains a file or folder named "dinput8.dll".
+This installer handles REFramework itself, not mods for it. It exists so users can install REFramework through Vortex, and mod authors normally never package this.
+
+  Requirements:
+    - Recognised by a file named "dinput8.dll" in the archive.
+
+  Common mistakes:
+    - If you bundle REFramework inside your mod archive, Vortex treats the whole download as REFramework rather than as your mod. Ship the mod alone and list REFramework as a requirement.
 
 ========================================================================
 
-Looselua:
+Loose Lua Scripts:
 
-Recognised when the archive contains a file with the ".lua" extension and a file or folder named one of: "reframework" or "autorun".
+Standalone REFramework Lua scripts, shipped without the surrounding REFramework folder structure.
+
+  Requirements:
+    - Recognised by a ".lua" file in an archive that does NOT already contain a REFramework folder ("reframework" or "autorun").
+    - Vortex adds the correct folder structure around the script for you.
 
   Installs to: the game folder itself (no subfolder)
+
+  Common mistakes:
+    - Including an REFramework folder as well switches the archive to a different installer, which expects the full structure to already be correct.
 
 ========================================================================
 
@@ -40,21 +59,25 @@ For mods laid out the same way the files appear inside the game folder. Vortex c
 
 ========================================================================
 
-Preset:
+Preset Files:
 
-Recognised when the archive contains a file or folder named "modinfo.ini" and a file with one of these extensions: ".prt".
+Configuration presets for REFramework mods.
 
-========================================================================
-
-Fluffymod:
-
-Recognised when the archive contains a file or folder named "modinfo.ini" and a file with the ".pak" extension.
+  Requirements:
+    - Recognised by any file with the ".prt" extension.
 
 ========================================================================
 
-Fluffymodzip:
+Fluffy-Format Mods:
 
-Recognised when the archive contains a file or folder named "modmanager.exe" and a file or folder named "dinput8.dll".
+The catch-all for RE Engine mods packaged in the normal Fluffy Mod Manager layout. Most content mods for this game land here, which is the intended outcome.
+
+  Requirements:
+    - Any archive not claimed by an earlier installer is treated as a Fluffy-format mod.
+    - An archive already zipped in the Fluffy layout is installed as it is, with no repacking.
+
+  Common mistakes:
+    - Because this is a catch-all, a badly laid-out archive still installs - it just may not work. Match the layout Fluffy Mod Manager expects.
 
 ========================================================================
 

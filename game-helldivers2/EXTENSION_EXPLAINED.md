@@ -21,6 +21,13 @@
 
 - **Steam** — `553850`
 
+## Feature Flags
+
+| Flag | Value | Description |
+| --- | --- | --- |
+| `mod_update_all_profile` | `false` | for mod update to keep them in the load order and not uncheck them |
+| `updating_mod` | `false` | used to see if it's a mod update or not |
+
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
@@ -41,7 +48,6 @@ Installers run in priority order (lower number = tested first). The first instal
 | --- | --- |
 | `helldivers2-data` | 25 |
 | `helldivers2-patch--MergedMods--This-is-fine--Ignore-this--SELECT-APPLY-CHANGES--DO-NOT-ENABLE` | 27 |
-| `helldivers2-soundpatch` | 27 |
 | `helldivers2-stream` | 31 |
 
 ## Toolbar Actions
@@ -50,6 +56,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - View Changelog
 - Open Downloads Folder
+- Open Patch Order Folder
 - Open PCGamingWiki Page
 - Submit Bug Report
 

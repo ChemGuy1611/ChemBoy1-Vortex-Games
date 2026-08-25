@@ -16,12 +16,12 @@
 | Executable | `WH40KDH.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 | Executable (GOG) | `WH40KDH.exe` |
-| Extension Page | [XXX](XXX) |
 | PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Warhammer_40,000:_Dark_Heresy](https://www.pcgamingwiki.com/wiki/Warhammer_40,000:_Dark_Heresy) |
 
 ## Supported Stores
 
 - **Steam** — `3710600`
+- **GOG** — `1591170775`
 
 ## Feature Flags
 
@@ -89,6 +89,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Purge Hook** (`did-purge`) — runs custom logic when mods are purged.
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
+- **GOG Support** — detects GOG version with adjusted executable/data paths.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 

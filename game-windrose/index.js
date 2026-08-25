@@ -2,8 +2,8 @@
 Name: Windrose Vortex Extension
 Structure: Unreal Engine Game
 Author: ChemBoy1
-Version: 1.0.1
-Date: 2026-07-29
+Version: 1.0.2
+Date: 2026-08-24
 Notes:
 - User selects where to install pak mods (SP or MP)
 - Dedicated Server registered as a separate game
@@ -1876,11 +1876,24 @@ async function deserializeLoadOrder(context) {
       .filter(modId => util.getSafe(currentModsState, [modId, 'enabled'], false));
   const mods = util.getSafe(props.state,
       ['persistent', 'mods', GAME_ID], {});
-  const loFilePath = await ensureLOFile(context, props.profile.gameId, props);
-  const fileData = await fs.readFileAsync(loFilePath, { encoding: 'utf8' });
   let data = [];
-  if (fileData.length > 0) {
-    data = JSON.parse(fileData);
+  try {
+    const loFilePath = await ensureLOFile(context, props.profile.gameId, props);
+    const fileData = await fs.readFileAsync(loFilePath, { encoding: 'utf8' });
+    if (fileData.length > 0) {
+      data = JSON.parse(fileData);
+    }
+    if (!Array.isArray(data)) {
+      data = [];
+    }
+  } catch (err) {
+    //Vortex discards a rejection from here without storing anything, so an unreadable or malformed
+    //file would leave the load order unset for the whole session and mod types that sort by it
+    //would deploy unsorted. Fall back to the order already in state - never to an empty list,
+    //which would be serialized straight back over the file.
+    log('warn', 'failed to read load order file', err);
+    const storedLO = util.getSafe(props.state, ['persistent', 'loadOrder', props.profile.id], []);
+    data = Array.isArray(storedLO) ? storedLO : [];
   }
   try {
     /*try {
@@ -1990,15 +2003,13 @@ function makePrefix(input) {
 function loadOrderPrefix(api, mod) {
   const state = api.getState();
   const profile = selectors.lastActiveProfileForGame(state, GAME_ID);
-  const loadOrder = util.getSafe(state, ['persistent', 'loadOrder', profile], {});
-  let pos;
-  if (FBLO) {
-    pos = loadOrder.findIndex((entry) => entry.id === mod.id); //for FBLO
-  } else {
-    const loKeys = Object.keys(loadOrder);
-    pos = loKeys.indexOf(mod.id); //for legacy load order page
+  const loadOrder = util.getSafe(state, ['persistent', 'loadOrder', profile], undefined);
+  let pos = -1;
+  if (Array.isArray(loadOrder)) {
+    pos = loadOrder.findIndex((entry) => entry.id === mod.id); //FBLO stores an array
+  } else if ((loadOrder !== undefined) && (loadOrder !== null) && (typeof loadOrder === 'object')) {
+    pos = Object.keys(loadOrder).indexOf(mod.id); //legacy load order page stores an object
   }
-  //
   if (pos === -1) {
     return 'ZZZZ-';
   }
@@ -2250,11 +2261,24 @@ async function deserializeLoadOrderServer(context) {
       .filter(modId => util.getSafe(currentModsState, [modId, 'enabled'], false));
   const mods = util.getSafe(props.state,
       ['persistent', 'mods', GAME_ID_SERVER], {});
-  const loFilePath = await ensureLOFileServer(context, props.profile.gameId, props);
-  const fileData = await fs.readFileAsync(loFilePath, { encoding: 'utf8' });
   let data = [];
-  if (fileData.length > 0) {
-    data = JSON.parse(fileData);
+  try {
+    const loFilePath = await ensureLOFileServer(context, props.profile.gameId, props);
+    const fileData = await fs.readFileAsync(loFilePath, { encoding: 'utf8' });
+    if (fileData.length > 0) {
+      data = JSON.parse(fileData);
+    }
+    if (!Array.isArray(data)) {
+      data = [];
+    }
+  } catch (err) {
+    //Vortex discards a rejection from here without storing anything, so an unreadable or malformed
+    //file would leave the load order unset for the whole session and mod types that sort by it
+    //would deploy unsorted. Fall back to the order already in state - never to an empty list,
+    //which would be serialized straight back over the file.
+    log('warn', 'failed to read load order file', err);
+    const storedLO = util.getSafe(props.state, ['persistent', 'loadOrder', props.profile.id], []);
+    data = Array.isArray(storedLO) ? storedLO : [];
   }
   try {
     let filteredData = data.filter(entry => enabledModIds.includes(entry.id));
@@ -2300,15 +2324,13 @@ async function serializeLoadOrderServer(context, loadOrder) {
 function loadOrderPrefixServer(api, mod) {
   const state = api.getState();
   const profile = selectors.lastActiveProfileForGame(state, GAME_ID_SERVER);
-  const loadOrder = util.getSafe(state, ['persistent', 'loadOrder', profile], {});
-  let pos;
-  if (FBLO) {
-    pos = loadOrder.findIndex((entry) => entry.id === mod.id); //for FBLO
-  } else {
-    const loKeys = Object.keys(loadOrder);
-    pos = loKeys.indexOf(mod.id); //for legacy load order page
+  const loadOrder = util.getSafe(state, ['persistent', 'loadOrder', profile], undefined);
+  let pos = -1;
+  if (Array.isArray(loadOrder)) {
+    pos = loadOrder.findIndex((entry) => entry.id === mod.id); //FBLO stores an array
+  } else if ((loadOrder !== undefined) && (loadOrder !== null) && (typeof loadOrder === 'object')) {
+    pos = Object.keys(loadOrder).indexOf(mod.id); //legacy load order page stores an object
   }
-  //
   if (pos === -1) {
     return 'ZZZZ-';
   }

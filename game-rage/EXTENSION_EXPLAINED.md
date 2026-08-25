@@ -66,7 +66,7 @@ These tools appear in Vortex's Tools panel when this game is active:
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- Open ${LOADER_INI}
+- Open id5Tweaker.ini
 - Open Cache Folder
 - Open Config Folder
 - Open Save Folder

@@ -5,6 +5,38 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 ========================================================================
 
+Combo Mods (pak + UE4SS script/DLL together):
+
+Use this layout when one download ships both game content and UE4SS mods. It is recognised by the presence of BOTH a "Content" folder and a "Binaries" folder, laid out exactly as they appear inside the game folder.
+
+[code]
+MyComboMod.zip
+├── Content\
+│   └── Paks\
+│       └── LogicMods\
+│           └── MyBlueprintMod.pak
+└── Binaries\
+    └── Win64\
+        └── ue4ss\
+            └── Mods\
+                └── MyScriptMod\
+                    └── Scripts\
+                        └── main.lua
+[/code]
+
+  Requirements:
+    - Both a "Content" folder and a "Binaries" folder must be present, or this installer is skipped.
+    - Mirror the real in-game folder structure below those two folders.
+    - This installer is tested before the individual pak/script/DLL installers, so a matching archive is always handled as a combo.
+
+  Installs to: "Game"
+
+  Common mistakes:
+    - Including only one of "Content" or "Binaries" - the archive then falls through to a different installer.
+    - Adding an extra wrapper folder between "Binaries" and "Win64".
+
+========================================================================
+
 Pak Mods:
 
 Standard content mods: one or more ".pak" files. Vortex copies just the pak files themselves, flattened, so the folder structure around them does not matter.

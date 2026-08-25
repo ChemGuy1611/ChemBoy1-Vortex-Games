@@ -14,7 +14,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Root / Game Folder Mods | a top-level folder such as `StateOfDecay2` | the game folder itself (no subfolder) |
 | Fallback Installer | anything unrecognised with no pak file | - |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder.
 
 ## Modmanager
 

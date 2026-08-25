@@ -7,7 +7,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 XXX Godotmodloader:
 
-Recognised when the archive contains a file or folder named "mod_loader_setup.gd".
+Recognised when the archive contains a file or folder named "mod_loader.gd".
 
 ========================================================================
 

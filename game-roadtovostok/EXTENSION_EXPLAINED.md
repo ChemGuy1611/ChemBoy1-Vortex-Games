@@ -31,6 +31,7 @@
 | `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |
 | `customLoader` | `true` | enables custom mod loader support |
 | `keepZips` | `false` | downloaded tool archives are kept on disk after extraction |
+| `modworkshopBrowser` | `true` | register the "Browse ModWorkshop" page |
 | `debug` | `false` | toggle for debug mode |
 
 ## Mod Types
@@ -65,8 +66,8 @@ These tools appear in Vortex's Tools panel when this game is active:
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- Download Latest ${MCM_NAME}
-- Download Latest ${LOADER_NAME}
+- Download Latest ModConfigurationMenu
+- Download Latest Metro Mod Loader
 - Open Modworkshop Page
 - Open Config Folder
 - Open override.cfg

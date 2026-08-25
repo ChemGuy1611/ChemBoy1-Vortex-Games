@@ -62,7 +62,7 @@ These tools appear in Vortex's Tools panel when this game is active:
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- Download ${LOADER_NAME}
+- Download Script Loader
 - Open Settings INI
 - Open boot-options.json
 - Open Script Loader Config

@@ -8,15 +8,15 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| XXX Godotmodloader | a file or folder named `mod_loader_setup.gd` | - |
+| XXX Godotmodloader | a file or folder named `mod_loader.gd` | - |
 | XXX Mod | a file with one of these extensions: `.gd` | `mods-unpacked` |
 | Fallback Installer | anything not matched above | - |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder.
 
 ## XXX Godotmodloader
 
-Recognised when the archive contains a file or folder named `mod_loader_setup.gd`.
+Recognised when the archive contains a file or folder named `mod_loader.gd`.
 
 ## XXX Mod
 

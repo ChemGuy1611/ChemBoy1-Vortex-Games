@@ -2,8 +2,8 @@
 Name: S.T.A.L.K.E.R. 2: Heart of Chornobyl Vortex Extension
 Structure: UE5 (Xbox-Integrated)
 Author: ChemBoy1
-Version: 1.0.5
-Date: 2026-07-29
+Version: 2.0.2
+Date: 2026-08-24
 //////////////////////////////////////////////////////////*/
 
 //Import libraries
@@ -147,6 +147,11 @@ const UE5_PAK_PRIORITY = 35;
 const UE5_SORTABLE_ID = `${GAME_ID}-ue5-sortable-modtype`; //this game's own pre-Plan-C sortable pak modtype id - already game-specific, so kept as-is (no rename/migration needed)
 const LEGACY_UE5_SORTABLE_ID = 'ue5-sortable-modtype'; //very old shared/buggy modtype id from before per-game ids existed - kept for legacyModsNotify reinstall prompt only
 const UE5_SORTABLE_NAME = 'UE5 Sortable Mod';
+
+const NEWPAK_ID = `${GAME_ID}-newpak`;
+const NEWPAK_NAME = "2.0 Pak";
+const NEWPAK_PATH = UE5_PATH;
+const NEWPAK_FOLDERS = ['NewContent', 'OverrrideContent'];
 
 const LOGICMODS_ID = `${GAME_ID}-logicmods`;
 const LOGICMODS_NAME = "UE4SS LogicMods (Blueprint)";
@@ -311,6 +316,12 @@ const spec = {
       "name": UE5_NAME,
       "priority": "high",
       "targetPath": path.join(`{gamePath}`, UE5_PATH)
+    },
+    {
+      "id": NEWPAK_ID,
+      "name": NEWPAK_NAME,
+      "priority": "high",
+      "targetPath": path.join(`{gamePath}`, NEWPAK_PATH)
     },
     {
       "id": UE5_ALT_ID,
@@ -1434,11 +1445,24 @@ async function deserializeLoadOrder(context) {
       .filter(modId => util.getSafe(currentModsState, [modId, 'enabled'], false));
   const mods = util.getSafe(props.state,
       ['persistent', 'mods', GAME_ID], {});
-  const loFilePath = await ensureLOFile(context, props.profile.gameId, props);
-  const fileData = await fs.readFileAsync(loFilePath, { encoding: 'utf8' });
   let data = [];
-  if (fileData.length > 0) {
-    data = JSON.parse(fileData);
+  try {
+    const loFilePath = await ensureLOFile(context, props.profile.gameId, props);
+    const fileData = await fs.readFileAsync(loFilePath, { encoding: 'utf8' });
+    if (fileData.length > 0) {
+      data = JSON.parse(fileData);
+    }
+    if (!Array.isArray(data)) {
+      data = [];
+    }
+  } catch (err) {
+    //Vortex discards a rejection from here without storing anything, so an unreadable or malformed
+    //file would leave the load order unset for the whole session and mod types that sort by it
+    //would deploy unsorted. Fall back to the order already in state - never to an empty list,
+    //which would be serialized straight back over the file.
+    log('warn', 'failed to read load order file', err);
+    const storedLO = util.getSafe(props.state, ['persistent', 'loadOrder', props.profile.id], []);
+    data = Array.isArray(storedLO) ? storedLO : [];
   }
   try {
     let filteredData = data.filter(entry => enabledModIds.includes(entry.id));
@@ -1489,21 +1513,62 @@ function makePrefix(input) {
   return util.pad(res, 'A', 3);
 }
 
+//Find the loadOrder index and convert to prefix
 function loadOrderPrefix(api, mod) {
   const state = api.getState();
   const profile = selectors.lastActiveProfileForGame(state, GAME_ID);
-  const loadOrder = util.getSafe(state, ['persistent', 'loadOrder', profile], {});
-  let pos;
-  if (FBLO) {
-    pos = loadOrder.findIndex((entry) => entry.id === mod.id); //for FBLO (array-shaped state)
-  } else {
-    const loKeys = Object.keys(loadOrder);
-    pos = loKeys.indexOf(mod.id); //for legacy load order page (object-shaped state)
+  const loadOrder = util.getSafe(state, ['persistent', 'loadOrder', profile], undefined);
+  let pos = -1;
+  if (Array.isArray(loadOrder)) {
+    pos = loadOrder.findIndex((entry) => entry.id === mod.id); //FBLO stores an array
+  } else if ((loadOrder !== undefined) && (loadOrder !== null) && (typeof loadOrder === 'object')) {
+    pos = Object.keys(loadOrder).indexOf(mod.id); //legacy load order page stores an object
   }
   if (pos === -1) {
     return 'ZZZZ-';
   }
   return makePrefix(pos) + '-';
+}
+
+//Test for new 2.0 pak mod folders and files
+function testNewPakMod(files, gameId) {
+  const isMod = files.some(file => NEWPAK_FOLDERS.includes(path.basename(file)));
+  let supported = (gameId === spec.game.id) && isMod;
+
+  // Test for a mod installer
+  if (supported && files.find(file =>
+    (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+    (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+    supported = false;
+  }
+
+  return Promise.resolve({
+    supported,
+    requiredFiles: [],
+  });
+}
+
+//Installer install new 2.0 pak mod folders and files (no LO)
+function installNewPakMod(files) {
+  const modFile = files.find(file => NEWPAK_FOLDERS.includes(path.basename(file)));
+  const idx = modFile.indexOf(`${path.basename(modFile)}${path.sep}`);
+  const rootPath = path.dirname(modFile);
+  const setModTypeInstruction = { type: 'setmodtype', value: NEWPAK_ID };
+
+  // Minimal filtering since no rootPath
+  const filtered = files.filter(file =>
+    !file.endsWith(path.sep)
+  );
+
+  const instructions = filtered.map(file => {
+    return {
+      type: 'copy',
+      source: file,
+      destination: file, //copy file directly, no indexing, rely on poper packaging (for now...)
+    };
+  });
+  instructions.push(setModTypeInstruction);
+  return Promise.resolve({ instructions });
 }
 
 //Test for pak mods
@@ -2560,6 +2625,7 @@ function applyGame(context, gameSpec) {
     context.registerInstaller(LOGICMODS_ID, 31, testLogic, installLogic);
   }
   context.registerInstaller(HERBATAMOD_ID, 33, testHerbataMod, installHerbataMod);
+  context.registerInstaller(NEWPAK_ID, 34, testNewPakMod, installNewPakMod);
   context.registerInstaller(UE5_SORTABLE_ID, UE5_PAK_PRIORITY, testPak, (files) => installPak(context.api, files));
   if (ue4ssLoadOrder) {
     context.registerInstaller(UE4SS_ID, 37, testUe4ss, installUe4ss);

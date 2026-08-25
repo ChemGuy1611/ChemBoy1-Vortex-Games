@@ -13,7 +13,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Binaries | a file with one of these extensions: `.dll`, `.exe`, `.tiger`, `.asi` or `.addon64` | - |
 | Modmanagermod | a file with one of these extensions: `tr2mesh`, `.tr2pcd`, `.drm`, `.skl`, `.tr10dtp`, `.tr10material`, `.tr10modeldata`, `.t10script`, `.t10shaderlib`, `.tr10sound`, `.dds`, `.tr10objectref`, `.tr10dtp` or `.tr10anim` | `Mods` |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder.
 
 ## Manager
 

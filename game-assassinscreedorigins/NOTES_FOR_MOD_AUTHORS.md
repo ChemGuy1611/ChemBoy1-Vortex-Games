@@ -11,7 +11,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Forger | a file with the `.forger2` extension | - |
 | AnvilToolkit (tool) | a `anviltoolkit.exe` file | - |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder.
 
 ## Forger
 

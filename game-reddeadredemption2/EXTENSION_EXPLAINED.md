@@ -14,6 +14,7 @@
 | --- | --- |
 | Game ID | `reddeadredemption2` |
 | Executable | `./RDR2.exe` |
+| Extension Page | []() |
 | PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Red_Dead_Redemption_2](https://www.pcgamingwiki.com/wiki/Red_Dead_Redemption_2) |
 
 ## Supported Stores

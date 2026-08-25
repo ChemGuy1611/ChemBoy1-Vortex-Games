@@ -4,6 +4,13 @@
 
 - None Planned
 
+## [1.0.0] - 2026-08-23
+
+- Added: "Browse ModWorkshop" page - browse the Road to Vostok section of ModWorkshop inside Vortex, and a download started from it installs, enables and names itself like any managed mod
+- Added: A mod installed from the new page that lists other mods it needs offers to install them alongside it
+- Added: Update check for mods installed from the new page, shown with the "Check for Updates" button on the Mods page
+- Added: Ad slots are hidden on the browse page, and ad links no longer open in your web browser
+
 ## [0.3.1] - 2026-08-05
 
 - Fixed: A required mod loader or tool that can no longer be found in its GitHub release is now reported, listing the files the release actually contains, instead of failing quietly

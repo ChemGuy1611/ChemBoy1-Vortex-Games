@@ -25,15 +25,11 @@ Loader:
 
 Recognised when the archive contains a file or folder named "d3d12.dll".
 
-  Installs to: "Ship"
-
 ========================================================================
 
 Plugin:
 
 Recognised when the archive contains a file or folder named "manifest.json", a file or folder named "main.lua" and a file or folder named "d3d12.dll".
-
-  Installs to: "Ship\ReturnOfModding\plugins"
 
 ========================================================================
 

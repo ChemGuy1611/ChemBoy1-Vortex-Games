@@ -8,11 +8,44 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
+| Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `Game` |
 | Pak Mods | a `.pak` file | `Game\Content\Paks\~mods` |
 | Root / Game Folder Mods | a top-level folder such as `Game`, `Engine` or `Content` | the game folder itself (no subfolder) |
 | Fallback Installer | anything unrecognised with no pak file | `Game\Binaries\Win64` |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder.
+
+## Combo Mods (pak + UE4SS script/DLL together)
+
+Use this layout when one download ships both game content and UE4SS mods. It is recognised by the presence of BOTH a `Content` folder and a `Binaries` folder, laid out exactly as they appear inside the game folder.
+
+```text
+MyComboMod.zip
+├── Content\
+│   └── Paks\
+│       └── LogicMods\
+│           └── MyBlueprintMod.pak
+└── Binaries\
+    └── Win64\
+        └── ue4ss\
+            └── Mods\
+                └── MyScriptMod\
+                    └── Scripts\
+                        └── main.lua
+```
+
+**Requirements:**
+
+- Both a `Content` folder and a `Binaries` folder must be present, or this installer is skipped.
+- Mirror the real in-game folder structure below those two folders.
+- This installer is tested before the individual pak/script/DLL installers, so a matching archive is always handled as a combo.
+
+Installs to: `Game`
+
+**Common mistakes:**
+
+- Including only one of `Content` or `Binaries` - the archive then falls through to a different installer.
+- Adding an extra wrapper folder between `Binaries` and `Win64`.
 
 ## Pak Mods
 

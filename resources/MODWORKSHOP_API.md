@@ -342,7 +342,56 @@ The same field name and behavior exist in all five downloader modules; `DOWNLOAD
 - **A missing requirement is installed by the update check.** The update check used to return early when the requirement was not installed, so a requirement the user removed (or never got) was never picked up again. It now installs it instead. Requirements that should only be installed by an explicit user action set `autoInstall: false`.
 - **Updating disables the version it replaces.** An update installs a second mod entry rather than replacing the first, so the mod ids carrying the requirement's mod type are captured before the install and disabled once the new one lands (the newly installed id is skipped). Without this both copies stayed enabled and deployed on top of each other.
 
+## Shared modworkshop_browser.js Module
+
+`resources/browsers/modworkshop_browser.js` registers a sidebar page that embeds the live
+modworkshop.net game section inside Vortex, so the user browses the real site and a click on a
+download link becomes a managed install. It is a separate module from the downloader and requires
+nothing from it: the downloader installs known requirements unattended, the browser serves human
+browsing. Adopters carry byte-identical copies of **both** it and `base_browser.js`, which it
+requires from beside itself; the roster is `resources/lists/games-downloader-modworkshop.txt` (a
+ModWorkshop game gets the browser page as standard equipment alongside the downloader, so there is
+no separate browser-only list). Full contract, exports and the rules a new source module must
+follow: `BROWSER_MODULES.md`.
+
+ModWorkshop-specific pieces of that module:
+
+- **Home URL** is `https://modworkshop.net/g/{game}`, and `modworkshop.net` +
+  `storage.modworkshop.net` are the default allowed hosts. Anything else opens in the system browser.
+- **Claim patterns.** `api.modworkshop.net/mods/{id}/download` is what a Download click hits (the
+  site-host form `modworkshop.net/mods/{id}/download` 404s — verified live), and it redirects to a
+  `storage.modworkshop.net/mods/files/{modId}_{uploaderId}_….zip` URL whose name prefix carries the
+  mod id, so both shapes identify the mod without an API call. `/files/{fileId}/download` is matched
+  too and costs one `GET /files/{id}` to map the file id back to its mod.
+- **`mws-mo2://install/{game}/{mod}/{file}`** and **`mws-manager://mws/install/{file}`** — the site's
+  "Install with …" buttons. The module parses them as install triggers from inside the page; it is
+  not registered as a protocol handler, so it does not compete with an installed mod manager. A mod
+  flagged `disable_mod_managers` is skipped on this path only — its plain Download button still
+  captures normally.
+- **Package key** is the bare numeric mod id, stamped on `modworkshopMod`. No namespace, no model
+  prefix, and therefore no splitting rule. The installed file id is stamped on `modworkshopFileId`,
+  the same attribute `modworkshop_downloader.js` tracks, so a mod installed by either route is
+  recognised by both.
+- **Dependencies** come from `dependencies[]` on the mod record already fetched, with each entry
+  embedding the dependency's whole mod record — the walk costs no extra requests. The `optional` flag
+  is not used to filter the prompt, since the user is choosing from a list either way. Mods in the
+  adopter's requirement table are routed to the requirement downloader so they keep their dedicated
+  mod types; everything else installs as a generic mod of whatever type the extension's own
+  installers assign.
+- **Update comparison runs on file id, not version.** Versions here are free text (see the
+  version-string pitfalls above), while file ids are an autoincrement that orders newest-last. A mod
+  installed before file ids were tracked falls back to a string comparison of the versions.
+- **Update checks** cover the browsed mods only — requirement mods are skipped there, because
+  `checkForModWorkshopUpdate` already reports those and its notification carries the right action.
+
 ## Images
+
+The site's own branding is fetchable too: `https://modworkshop.net/assets/mws_logo_white.svg` (linked
+from the homepage as `og:image`'s vector sibling, with `mws_logo_black.png`/`mws_logo_white.png`
+raster variants beside it) and `https://modworkshop.net/favicon.ico`. The SVG is a four-path Inkscape
+file on a 14x14 viewBox — one monochrome outline path (hexagonal frame around an isometric cube) plus
+three coloured cube faces. `modworkshop_browser.js` ships the outline path, rescaled to the 24x24
+viewBox Vortex's `mdi:` option expects, as its sidebar icon.
 
 Image records (`thumbnail`, and the entries from `GET /mods/{mod_id}/images`) expose a `file` field
 holding a stored filename. Resolve it against the storage host:
@@ -381,10 +430,14 @@ site. An integration should respect the flag rather than offering a one-click in
 
 ## Caveats
 
-- **The web host blocks bots; the API host does not.** `modworkshop.net/document/api-rules` returns
-  `403` to non-browser clients, while `api.modworkshop.net` answers plain `curl` requests without
-  complaint. Fetch site content through the API (`/documents/{slug}`), not by scraping pages. This
-  is the inverse of the ModDB situation, where the RSS host is open and everything else is blocked.
+- **The web host's bot block is intermittent, and re-probing beats trusting an old result.** An
+  earlier probe had `modworkshop.net/document/api-rules` returning `403` to non-browser clients; a
+  re-probe on 2026-08-23 returned `200` to plain `curl` with no User-Agent, no referer and no
+  cookies, as did a game page and `/assets/*` static files. `api.modworkshop.net` has never blocked.
+  Prefer the API (`/documents/{slug}`) for site content anyway — it is stable and documented — but do
+  not record "the site cannot be fetched" as a permanent fact, and never conclude an asset does not
+  exist from one blocked request. This is unlike ModDB, whose block on everything but RSS has held
+  across every probe.
 - Write endpoints exist in the spec but are off-limits under the current rules — including the
   counter endpoints `POST /files/{file_id}/register-download` and `POST /mods/{mod_id}/register-view`.
   A third-party downloader cannot currently report its downloads back to the site.
@@ -403,6 +456,7 @@ site. An integration should respect the flag rather than offering a one-click in
 `VORTEX_DOWNLOAD_MGMT.md` (the `start-download` event a `download_url` is handed to).
 `VORTEX_MOD_INSTALL.md` (installing a downloaded requirement as a managed mod).
 `DOWNLOADER.md` (the shared requirements-downloader modules this API would plug into).
+`BROWSER_MODULES.md` (the embedded-site browser modules, including `modworkshop_browser.js`).
 `GAMEBANANA_API.md`, `MODDB_API.md`, and `THUNDERSTORE_API.md` (the other third-party mod hosts this
 repo queries — compare bot-protection behaviour and download-resolution routes; Thunderstore is the
 other host with a machine-readable spec).

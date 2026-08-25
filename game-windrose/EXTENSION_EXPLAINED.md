@@ -41,14 +41,14 @@
 | `hasModKit` | `false` | toggle for UE ModKit mod support |
 | `hasServer` | `true` | toggle for server pak mod logic |
 | `preferHardlinks` | `true` | set true to perform partition checks when IO-STORE=false for Config/Save modtypes so that hardlinks available to more users |
-| `autoDownloadUe4ss` | `false` | toggle for auto downloading UE4SS |
+| `autoDownloadUe4ss` | `false` | toggle for auto downloading UE4SS (only applies when ue4ssLoadOrder is enabled) |
 | `writeEngineVersion` | `false` | toggle to write ENGINE_VERSION into UE4SS-settings.ini (EngineVersionOverride) on deploy, when UE4SS is installed |
 | `SIGBYPASS_REQUIRED` | `false` | set true if there are .sig files in the Paks folder |
 | `IO_STORE` | `true` | true if the Paks folder contains .ucas and .utoc files |
 | `hasUserIdFolder` | `false` | true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID) |
 | `PAKMOD_LOADORDER` | `true` | set to false if you don't want loadOrder. If must be in "Paks" root, disable loadOrder. |
 | `FBLO` | `true` | set to false to use legacy load order page |
-| `ue4ssLoadOrder` | `true` | enable load order and mods.txt writing for UE4SS mods |
+| `ue4ssLoadOrder` | `true` | master toggle for UE4SS support: UE4SS/Scripts/DLL/LogicMods mod types and installers, UE4SS buttons, load order page, and mods.txt writing |
 | `logicModsLoadOrder` | `true` | enable load order page and load_order.txt writing for LogicMods/Blueprint pak mods |
 | `collectionsLoadOrder` | `true` | include UE4SS and LogicMods load orders in collections (ANDed with the toggles above) |
 | `SYM_LINKS` | `true` | true if symlink deployment is enabled for this game |

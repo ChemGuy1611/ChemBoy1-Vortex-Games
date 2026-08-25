@@ -70,7 +70,7 @@ These tools appear in Vortex's Tools panel when this game is active:
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - Open Config Folder
-- Open ${CONFIG_FILE_GAME}
+- Open settings.ini
 - Open Save Folder
 - Open PCGamingWiki Page
 - View Changelog

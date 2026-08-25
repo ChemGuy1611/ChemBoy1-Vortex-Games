@@ -59,66 +59,6 @@ MyPakMod.zip
 
 ========================================================================
 
-UE4SS Itself:
-
-This installer handles the UE4SS runtime package, not individual mods. Most authors never need it - it exists so users can install UE4SS through Vortex.
-
-  Requirements:
-    - Recognised by a file named "dwmapi.dll" at any level of the archive.
-
-  Installs to: "Polaris\Binaries\Win64"
-
-  Common mistakes:
-    - If your script mod archive happens to contain a file named "dwmapi.dll", it will be treated as a UE4SS install rather than as your mod.
-
-========================================================================
-
-UE4SS Script Mods (Lua):
-
-Lua mods for UE4SS. Recognised when the archive holds both a ".lua" file and a folder named "Scripts".
-
-[code]
-MyScriptMod.zip
-└── MyScriptMod\
-    └── Scripts\
-        └── main.lua
-[/code]
-
-  Requirements:
-    - The archive must contain a ".lua" file AND a folder named "Scripts".
-    - Wrap the "Scripts" folder in a folder named after your mod. That folder name becomes the mod's UE4SS name and is what gets written to the load order.
-    - If you omit the wrapper folder, Vortex falls back to naming the mod after the archive file.
-
-  Installs to: "Polaris\Binaries\Win64\ue4ss\Mods"
-
-  Common mistakes:
-    - Putting "main.lua" directly in the archive root with no "Scripts" folder - the mod is not recognised as a script mod.
-    - Naming the wrapper folder something generic like "Mods" - that name is what appears in the load order.
-
-========================================================================
-
-UE4SS DLL Mods (C++):
-
-Compiled UE4SS mods. Recognised when the archive holds both a ".dll" file and a folder named "dlls".
-
-[code]
-MyDllMod.zip
-└── MyDllMod\
-    └── dlls\
-        └── main.dll
-[/code]
-
-  Requirements:
-    - The archive must contain a ".dll" file AND a folder named "dlls".
-    - Wrap the "dlls" folder in a folder named after your mod - that name is used in the load order.
-
-  Installs to: "Polaris\Binaries\Win64\ue4ss\Mods"
-
-  Common mistakes:
-    - A bare ".dll" with no "dlls" folder is not recognised as a UE4SS DLL mod and will reach the fallback installer.
-
-========================================================================
-
 Root / Game Folder Mods:
 
 For mods that replace or add files inside the game installation, laid out the same way they appear in the game folder.

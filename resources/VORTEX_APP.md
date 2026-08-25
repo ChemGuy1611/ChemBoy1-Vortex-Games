@@ -88,8 +88,8 @@ The app under `src/` is split by Electron process plus shared and query layers:
 
 Vortex 2.x has a notable persistence/query architecture under `src/main/src/store/`:
 
-- **`LevelPersist.ts`** — LevelDB-backed Redux persistor (the long-standing state store). Supports `setItem`/`removeItem`/`bulkSetItem`/`bulkRemoveItem`. `VORTEX_TRACE_DB_WRITES=1` emits per-write breadcrumb logging; a `level_pivot slow Write` warning fires when a write exceeds `SLOW_WRITE_THRESHOLD_MS` (250 ms) even without the env var.
-- **`Database.ts` + `DuckDBSingleton.ts`** — a DuckDB-backed database used by the typed query system.
+- **`LevelPersist.ts`** — the Redux persistor. Despite the name it no longer uses a LevelDB binding: it opens the `state.v2` directory through DuckDB's `level_pivot` extension and runs SQL against a `kv(key, value)` view of it. The on-disk format is still LevelDB (see `VORTEX_DATABASES.md`). Supports `setItem`/`removeItem`/`bulkSetItem`/`bulkRemoveItem`. `VORTEX_TRACE_DB_WRITES=1` emits per-write breadcrumb logging; a `level_pivot slow Write` warning fires when a write exceeds `SLOW_WRITE_THRESHOLD_MS` (250 ms) even without the env var.
+- **`Database.ts` + `DuckDBSingleton.ts`** — `DuckDBSingleton` owns one shared `:memory:` DuckDB instance, loads `level_pivot`, and `ATTACH`es each store under an alias; `Database` wraps that connection for the typed query system and drives transactions through `LevelPersist`.
 - **Query system** — `QueryRegistry.ts`, `QueryWatcher.ts`, `QueryInvalidator.ts`, `queryParser.ts`, `flattenState.ts`, plus `generated/`. SQL lives in `src/queries/` (`select/profiles.sql`, `setup/tables.sql`). `pnpm run generate:query-types` (`scripts/generate-query-types.ts`) produces typed bindings from the SQL.
 - **IPC persistence bridge** — `ReduxPersistorIPC.ts`, `persistenceIPC.ts`, `mainPersistence.ts`, `SubPersistor.ts` move state between processes.
 - Renderer side mirrors with `store/persistDiffMiddleware.ts` (diff-based persistence) and `stateDiff.ts`.
@@ -278,4 +278,5 @@ flows).
 
 Contributing to the app itself: `VORTEX_DEV_BUILD.md` (build from source) ·
 `VORTEX_CODESTYLE.md` (conventions and their enforcement) · `VORTEX_AGENT_GUIDES.md` (the repo's own
-`AGENTS*.md` instruction set and packaged skills).
+`AGENTS*.md` instruction set and packaged skills) · `VORTEX_DATABASES.md` (what these persistence
+layers actually write to disk, and how to read it back without the app).

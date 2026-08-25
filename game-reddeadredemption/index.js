@@ -2,8 +2,8 @@
 Name: Red Dead Redemption Vortex Extension
 Structure: 3rd-Party Mod Installer
 Author: ChemBoy1
-Version: 0.3.1
-Date: 2026-08-05
+Version: 0.3.2
+Date: 2026-08-22
 ////////////////////////////////////////////*/
 
 //Import libraries

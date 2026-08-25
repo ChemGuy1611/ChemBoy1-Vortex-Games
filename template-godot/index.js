@@ -46,8 +46,16 @@ let hasXbox = false; //toggle for Xbox version logic
 if (DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID)) hasXbox = true;
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
 const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
+const useOverrideCfg = false; //true to run loader setup in override.cfg mode instead of patching the game's .pck
 const customLoader = true;
-const keepZips = false;
+let keepZips = false;
+//Stock Godot Mod Loader resolves mods/ off the executable folder but mods-unpacked off
+//res://, and a res:// directory listing never falls back to disk. A loose mods-unpacked
+//folder is therefore invisible to the stock loader, so the two toggles have to move
+//together. Only a fork that resolves off the executable folder can set keepZips false.
+if (!customLoader) {
+  keepZips = true;
+}
 const setupNotification = false; //enable to show the user a notification with special instructions (specify below)
 const debug = false; //toggle for debug mode
 
@@ -75,6 +83,20 @@ if (keepZips) {
 }
 const MOD_PATH = MOD_FOLDER;
 const MOD_EXTS = ['.gd'];
+//Files the loader guarantees at a mod's root. Used to anchor the install folder.
+const MOD_ROOT_FILES = ['mod_main.gd', 'manifest.json'];
+
+//Some loader forks add a second content directory alongside the mod folder - one Godot fork
+//loads levels from <game>/maps/<Name>/, for example. Uncomment and rename this block when the
+//game's loader has one, add EXTRA_PATH to MODTYPE_FOLDERS so setup creates it, uncomment the
+//spec.modTypes entry, and register the installer between the loader (25) and the mod
+//installer (27). Kept as line comments because installExtra's filename regex ends in */gi,
+//which would close a block comment early.
+//const EXTRA_ID = `${GAME_ID}-XXX`;
+//const EXTRA_NAME = "XXX";
+//const EXTRA_FOLDER = "XXX";
+//const EXTRA_PATH = EXTRA_FOLDER;
+//const EXTRA_EXTS = ['.XXX'];
 
 const CONFIG_ID = `${GAME_ID}-config`;
 const CONFIG_NAME = "Config";
@@ -120,9 +142,16 @@ let LOADER_ARC_NAME = `ModLoader-Self-Setup_${LOADER_VERSION}-WIN.zip`;
 let ARCHIVE_PATTERN = new RegExp(/^ModLoader-Self-Setup_(\d+\.\d+\.\d+)-WIN/, 'i');
 if (ENGINE_VERSION === '3') {
   LOADER_VERSION = '6.3.0';
-  LOADER_ARC_NAME = `godot-mod-loader_${LOADER_VERSION}_self-setup.zip`;
-  ARCHIVE_PATTERN = new RegExp(/^godot-mod-loader_(\d+\.\d+\.\d+)_self-setup/, 'i');
+  LOADER_ARC_NAME = `godot-mod-loader_v${LOADER_VERSION}_self-setup.zip`;
+  ARCHIVE_PATTERN = new RegExp(/^godot-mod-loader_v?(\d+\.\d+\.\d+)_self-setup/, 'i');
 }
+//The loader ships both engine lines from one release stream, and /releases/latest is always
+//the Godot 4 release, so a Godot 3 game cannot reach its own release without a pin. 6.3.0 is
+//the last Godot 3 build - older tags ship a mis-named asset or none at all - so pinning costs
+//nothing. The downloader tries the other tag spelling if the first one 404s.
+const LOADER_PIN = (ENGINE_VERSION === '3')
+  ? { pinVersion: LOADER_VERSION, pinTag: `v${LOADER_VERSION}` }
+  : {};
 const REQUIREMENTS = [
   { //Godot Mod Loader
     archiveFileName: LOADER_ARC_NAME,
@@ -134,6 +163,7 @@ const REQUIREMENTS = [
     findDownloadId: (api) => findDownloadIdByFile(api, LOADER_ARC_NAME),
     fileArchivePattern: ARCHIVE_PATTERN,
     resolveVersion: (api) => resolveVersionByPattern(api, REQUIREMENTS[0]),
+    ...LOADER_PIN,
   }, //*/
 ];
 const LOADER3_DL_URL = 'https://github.com/GodotModding/godot-mod-loader/releases/download/v6.3.0/godot-mod-loader_v6.3.0_self-setup.zip';
@@ -143,17 +173,45 @@ const OVERRIDE_FILE = 'override.cfg';
 
 const MOD_PATH_DEFAULT = MOD_PATH;
 const REQ_FILE = EXEC;
+const SETUP_SCRIPT = '--script addons/mod_loader/mod_loader_setup.gd';
+//The default setup path renames the game's .pck to -vanilla.pck and swaps in a patched copy,
+//which store validation reverts. --setup-create-override-cfg writes an override.cfg instead
+//and leaves the .pck alone - it is also the only setup method off Windows, because the
+//loader's get_gdre_path() returns "" there. Safer under a mod manager; enable per game.
+const PAR_STRING2 = '--setup-create-override-cfg';
+//--only-setup makes the setup script quit(0) when it finishes instead of firing OS.alert()
+//and demanding a restart, which is what makes a deliberate setup button possible.
+const PAR_ONLY_SETUP = '--only-setup';
+//Setup decides the pack is embedded from `not FileAccess.file_exists(path.pck)` and assumes
+//the pack is named after the executable. That is wrong for launcher-wrapped and Xbox builds,
+//where it then tries to patch the executable itself. Uncomment and set these when the pack
+//name does not match the exe name.
+//const PAR_EXE_NAME = '--exe-name=XXX.exe';
+//const PAR_PCK_NAME = '--pck-name=XXX.pck';
+
 let PARAMETERS_STRING = '';
 if (!customLoader) {
-  PARAMETERS_STRING = '--script addons/mod_loader/mod_loader_setup.gd';
+  PARAMETERS_STRING = SETUP_SCRIPT;
+  if (useOverrideCfg) {
+    PARAMETERS_STRING = `${SETUP_SCRIPT} ${PAR_STRING2}`;
+  }
 }
-const PAR_STRING2 = '--setup-create-override-cfg';
-const PARAMETERS = [PARAMETERS_STRING];
+//Parameters for the headless "Run Mod Loader Setup" tool below.
+let SETUP_PARAMETERS_STRING = `${SETUP_SCRIPT} ${PAR_ONLY_SETUP}`;
+if (useOverrideCfg) {
+  SETUP_PARAMETERS_STRING = `${SETUP_SCRIPT} ${PAR_ONLY_SETUP} ${PAR_STRING2}`;
+}
+const SETUP_PARAMETERS = [SETUP_PARAMETERS_STRING];
+//An empty string here would launch the game with a blank argv element, so emit no
+//parameters at all when there is nothing to pass.
+const PARAMETERS = (PARAMETERS_STRING === '') ? [] : [PARAMETERS_STRING];
 
 const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 
-let MODTYPE_FOLDERS = [MOD_PATH, 'mods'];
+//Deduped: MOD_PATH is itself 'mods' whenever keepZips is on, and ensuring the same folder
+//twice is pointless. Add EXTRA_PATH here when the extra content modType is in use.
+let MODTYPE_FOLDERS = [...new Set([MOD_PATH, 'mods'])];
 
 //filled in from data above
 const spec = {
@@ -197,6 +255,12 @@ const spec = {
       "priority": "high",
       "targetPath": path.join("{gamePath}", MOD_PATH)
     },
+    //{
+    //  "id": EXTRA_ID,
+    //  "name": EXTRA_NAME,
+    //  "priority": "high",
+    //  "targetPath": path.join("{gamePath}", EXTRA_PATH)
+    //},
     {
       "id": LOADER_ID,
       "name": LOADER_NAME,
@@ -212,6 +276,22 @@ const spec = {
 
 //3rd party tools and launchers
 const tools = [ //accepts: exe, jar, py, vbs, bat
+  //Stock Godot Mod Loader runs its setup on first launch and then forces a restart. This tool
+  //runs the same setup headlessly so it is a deliberate button instead of an ambush. Only
+  //meaningful for the stock loader, so it is omitted entirely when customLoader is set.
+  ...(!customLoader ? [{
+    id: `${GAME_ID}-loadersetup`,
+    name: 'Run Mod Loader Setup',
+    logo: 'exec.png',
+    executable: () => EXEC,
+    requiredFiles: [
+      EXEC,
+    ],
+    relative: true,
+    exclusive: true,
+    shell: true,
+    parameters: SETUP_PARAMETERS,
+  }] : []),
   {
     id: `${GAME_ID}-customlaunch`,
     name: 'Custom Launch',
@@ -422,16 +502,25 @@ function testLoader(files, gameId) {
   });
 }
 
+//Folders a published loader archive can pick up by mistake - build caches, version control
+//metadata, stray virtual environments. None of them are part of the loader and none of them
+//should reach the game folder. Add to this list rather than adding another filter term.
+const LOADER_EXCLUDE_FOLDERS = ['.venv', '__pycache__', '.git', '.github'];
+
+function isExcludedLoaderFile(file) {
+  const segments = file.toLowerCase().split(/[\\/]/);
+  return LOADER_EXCLUDE_FOLDERS.some(folder => segments.includes(folder));
+}
+
 //Install Godot Mod Loader files
 function installLoader(files) {
   const MOD_TYPE = LOADER_ID;
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
 
-  // Remove directories and anything that isn't in the rootPath.
+  // Remove directories, excluded build folders, and anything that isn't in the rootPath.
   const filtered = files.filter(file =>
   (
-    //(file.indexOf(rootPath) !== -1) &&
-    //!file.includes('.venv') &&
+    !isExcludedLoaderFile(file) &&
     !file.endsWith(path.sep)
   ));
 
@@ -464,10 +553,25 @@ function testMod(files, gameId) {
   });
 }
 
+//Find the file that marks a mod's root folder. The loader guarantees mod_main.gd and
+//manifest.json sit there, so key on those and let the shallowest match win - a nested copy
+//must not out-rank the real root. Falls back to the first .gd file when a mod carries
+//neither, which is what this installer has always done.
+function findModRootFile(files) {
+  for (const rootName of MOD_ROOT_FILES) {
+    const matches = files.filter(file => path.basename(file).toLowerCase() === rootName);
+    if (matches.length > 0) {
+      return matches.reduce((best, file) =>
+        (file.split(/[\\/]/).length < best.split(/[\\/]/).length) ? file : best);
+    }
+  }
+  return files.find(file => MOD_EXTS.includes(path.extname(file).toLowerCase()));
+}
+
 //* Install mod files (non-zip)
 function installMod(files, fileName) {
   const MOD_TYPE = MOD_ID;
-  const modFile = files.find(file => MOD_EXTS.includes(path.extname(file).toLowerCase()));
+  const modFile = findModRootFile(files);
   const idx = modFile.indexOf(path.basename(modFile));
   const rootPath = path.dirname(modFile);
   const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
@@ -499,6 +603,65 @@ function installMod(files, fileName) {
   instructions.push(setModTypeInstruction);
   return Promise.resolve({ instructions });
 } //*/
+
+//Extra content installer scaffold - see the EXTRA_ID constants near the top of the file.
+//Keyed on an extension plus a same-named .json sibling, so a lone file of that type does not
+//trigger the installer. Preserves the archive's own content folder as the install root.
+//function findExtraFile(files) {
+//  return files.find(file => {
+//    if (!EXTRA_EXTS.includes(path.extname(file).toLowerCase())) {
+//      return false;
+//    }
+//    const sibling = `${file.slice(0, file.length - path.extname(file).length)}.json`.toLowerCase();
+//    return files.some(entry => entry.toLowerCase() === sibling);
+//  });
+//}
+//
+//function testExtra(files, gameId) {
+//  const isMod = (findExtraFile(files) !== undefined);
+//  let supported = (gameId === spec.game.id) && isMod;
+//
+//  if (supported && files.find(file =>
+//      (path.basename(file).toLowerCase() === 'moduleconfig.xml') &&
+//      (path.basename(path.dirname(file)).toLowerCase() === 'fomod'))) {
+//    supported = false;
+//  }
+//
+//  return Promise.resolve({
+//    supported,
+//    requiredFiles: [],
+//  });
+//}
+//
+//function installExtra(files, fileName) {
+//  const MOD_TYPE = EXTRA_ID;
+//  const extraFile = findExtraFile(files);
+//  const idx = extraFile.indexOf(path.basename(extraFile));
+//  const rootPath = path.dirname(extraFile);
+//  const setModTypeInstruction = { type: 'setmodtype', value: MOD_TYPE };
+//
+//  let EXTRA_SUBFOLDER = path.basename(rootPath);
+//  const ARCHIVE_NAME = path.basename(fileName);
+//  if (EXTRA_SUBFOLDER === '.') {
+//    EXTRA_SUBFOLDER = ARCHIVE_NAME.replace(/(\.installing)*(\.zip)*(\.rar)*(\.7z)*( )*/gi, '');
+//    EXTRA_SUBFOLDER = truncateString(EXTRA_SUBFOLDER, 29);
+//  }
+//
+//  // Remove directories and anything that isn't in the rootPath.
+//  const filtered = files.filter(file =>
+//  ((file.indexOf(rootPath) !== -1) &&
+//    (!file.endsWith(path.sep))));
+//
+//  const instructions = filtered.map(file => {
+//    return {
+//      type: 'copy',
+//      source: file,
+//      destination: path.join(EXTRA_SUBFOLDER, file.substr(idx)),
+//    };
+//  });
+//  instructions.push(setModTypeInstruction);
+//  return Promise.resolve({ instructions });
+//}
 
 //Install mod files in zips
 async function installModZip(files, destinationPath) {
@@ -846,6 +1009,7 @@ function applyGame(context, gameSpec) {
 
   //register mod installers
   context.registerInstaller(LOADER_ID, 25, testLoader, installLoader);
+  //context.registerInstaller(EXTRA_ID, 26, testExtra, installExtra);
   if (keepZips) {
     context.registerInstaller(MOD_ID, 27, testMod, installModZip); //keep in zips
   } else {

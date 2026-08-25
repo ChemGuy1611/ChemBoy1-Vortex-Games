@@ -13,11 +13,11 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | XXX Forgefolder | - | - |
 | XXX Datafolder | - | - |
 | Loose Data Files | a `.data` file | - |
-| Forge File Mods | a `.forge` file | - |
+| XXX Forgefile | a file with one of these extensions: `.forge` | - |
 | Root / Game Folder Mods | a `videos` folder | the game folder itself (no subfolder) |
 | Fallback Installer | anything not matched above | - |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder.
 
 ## AnvilToolkit (tool)
 
@@ -55,17 +55,9 @@ Individual data files deployed into the game folder.
 
 - Recognised by any file with the `.data` extension.
 
-## Forge File Mods
+## XXX Forgefile
 
-Replacement `.forge` archives, deployed into the game's data folder.
-
-**Requirements:**
-
-- Recognised by any file with the `.forge` extension.
-
-**Common mistakes:**
-
-- Forge files must keep their original names to replace the right archive.
+Recognised when the archive contains a file with one of these extensions: `.forge`.
 
 ## Root / Game Folder Mods
 

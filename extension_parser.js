@@ -61,6 +61,49 @@ function buildSymbolTable(src) {
     }
   }
 
+  // Harvest guarded reassignments, e.g. `let X = 'a'; if (FLAG) { X = 'b'; }`. The
+  // declaration on its own is the wrong answer whenever the toggle that overrides it is on,
+  // which is what made both Godot extensions report the wrong loader file.
+  //
+  // A reassignment is taken only when its branch is provably live: either there is no
+  // enclosing block at all, or the block is an `if` on a discovered boolean flag (optionally
+  // negated) whose value selects it. Every other shape - a string comparison like
+  // `if (BEPINEX_BUILD === 'mono')`, a compound condition, a function body - is left alone.
+  // That conservative default matters: those shapes are the common case across the repo, and
+  // taking a dead branch would silently rewrite a value that is correct today.
+  // Only names declared at top level are eligible. The declaration harvest above is
+  // line-based, so it also picks up locals declared inside functions; without this filter a
+  // local assignment could overwrite a module constant that happens to share its name.
+  const topLevelDeclared = new Set();
+  const declPosRe = /^[ \t]*(?:const|let)\s+([A-Za-z_$]\w*)\s*=/gm;
+  let declM;
+  while ((declM = declPosRe.exec(stripped)) !== null) {
+    if (findInnermostBlockHead(stripped, declM.index) === null) topLevelDeclared.add(declM[1]);
+  }
+  const declaredNames = new Set(raw.map(d => d.name).filter(n => topLevelDeclared.has(n)));
+  const flagValues = new Map(discoverFlags(src).map(f => [f.name, f.value === 'true']));
+  const reassignRe = /^[ \t]*([A-Za-z_$]\w*)\s*=\s*([^=][^;\n]*?)\s*;[ \t]*$/gm;
+  let reM;
+  while ((reM = reassignRe.exec(stripped)) !== null) {
+    const name = reM[1];
+    if (!declaredNames.has(name)) continue;
+    const head = findInnermostBlockHead(stripped, reM.index);
+    let active;
+    if (head === null) {
+      active = true; // top level: last write wins
+    } else {
+      const pos = head.match(/^if\s*\(\s*([A-Za-z_$]\w*)\s*(?:===\s*true\s*)?\)\s*\{$/);
+      const neg = head.match(/^if\s*\(\s*!\s*([A-Za-z_$]\w*)\s*\)\s*\{$/);
+      if (pos && flagValues.has(pos[1])) active = flagValues.get(pos[1]);
+      else if (neg && flagValues.has(neg[1])) active = !flagValues.get(neg[1]);
+      else active = false;
+    }
+    if (!active) continue;
+    for (let k = raw.length - 1; k >= 0; k--) {
+      if (raw[k].name === name) { raw[k].rawValue = reM[2].trim(); break; }
+    }
+  }
+
   // Pass 1: resolve simple literals
   for (const decl of raw) {
     const v = decl.rawValue;
@@ -263,6 +306,96 @@ function getGuardFlag(stripped, callIndex) {
     i--;
   }
   return null;
+}
+
+/**
+ * Text of the line that opens the innermost block enclosing `idx`, or null when `idx` sits at
+ * top level. Unlike getGuardFlag this does NOT keep scanning outward past a block it does not
+ * recognise - the caller needs to tell "no enclosing block" apart from "enclosing block whose
+ * condition I cannot evaluate", and treating the second as the first would let a dead branch
+ * overwrite a live declaration.
+ */
+function findInnermostBlockHead(stripped, idx) {
+  let depth = 0;
+  let i = idx - 1;
+  while (i >= 0) {
+    const ch = stripped[i];
+    if (ch === '}') depth++;
+    else if (ch === '{') {
+      if (depth === 0) {
+        const lineStart = stripped.lastIndexOf('\n', i);
+        return stripped.substring(lineStart + 1, i + 1).trim();
+      }
+      depth--;
+    }
+    i--;
+  }
+  return null;
+}
+
+/**
+ * Guard condition governing the statement at `idx`, as { flag, negated }, or null when there
+ * is none this function can evaluate.
+ *
+ * getGuardFlag only recognises the `if (FLAG) {` arm. The matching `} else {` arm reads as
+ * unguarded, so a registration inside it is emitted even when the `if` arm was emitted too -
+ * which is how an if/else installer pair came to be listed twice. Resolving the else arm to
+ * the same flag, negated, makes exactly one arm of the pair survive.
+ *
+ * `else if` is deliberately not handled: the chain would need every preceding condition
+ * evaluated to be correct, so it returns null and the caller keeps the registration.
+ */
+function getGuardCondition(stripped, idx) {
+  const head = findInnermostBlockHead(stripped, idx);
+  if (head === null) return null;
+
+  const direct = head.match(/^if\s*\(\s*([A-Za-z_$]\w*)\s*(?:===\s*true\s*)?\)\s*\{$/);
+  if (direct) return { flag: direct[1], negated: false };
+
+  const negated = head.match(/^if\s*\(\s*!\s*([A-Za-z_$]\w*)\s*\)\s*\{$/);
+  if (negated) return { flag: negated[1], negated: true };
+
+  // `} else {` - walk back over the if-block it closes and read that block's own head.
+  if (/^\}\s*else\s*\{$/.test(head)) {
+    const elseBraceIdx = stripped.lastIndexOf('}', idx);
+    if (elseBraceIdx === -1) return null;
+    const ifOpenIdx = scanToMatchingOpen(stripped, elseBraceIdx);
+    if (ifOpenIdx === -1) return null;
+    const lineStart = stripped.lastIndexOf('\n', ifOpenIdx);
+    const ifHead = stripped.substring(lineStart + 1, ifOpenIdx + 1).trim();
+    const ifM = ifHead.match(/^if\s*\(\s*([A-Za-z_$]\w*)\s*(?:===\s*true\s*)?\)\s*\{$/);
+    if (ifM) return { flag: ifM[1], negated: true };
+    const ifNeg = ifHead.match(/^if\s*\(\s*!\s*([A-Za-z_$]\w*)\s*\)\s*\{$/);
+    if (ifNeg) return { flag: ifNeg[1], negated: false };
+  }
+  return null;
+}
+
+/**
+ * Index of the `{` matching the `}` at `closeIdx`, or -1.
+ */
+function scanToMatchingOpen(stripped, closeIdx) {
+  let depth = 0;
+  for (let i = closeIdx; i >= 0; i--) {
+    const ch = stripped[i];
+    if (ch === '}') depth++;
+    else if (ch === '{') {
+      depth--;
+      if (depth === 0) return i;
+    }
+  }
+  return -1;
+}
+
+/**
+ * True when a guard condition is satisfied by the symbol table. Unknown flags count as live,
+ * matching the previous behaviour of only skipping on an explicit `false`.
+ */
+function isGuardActive(guard, table) {
+  if (!guard) return true;
+  const val = table.get(guard.flag);
+  if (val !== 'true' && val !== 'false') return true;
+  return guard.negated ? (val === 'false') : (val === 'true');
 }
 
 /**
@@ -617,8 +750,9 @@ function extractInstallers(src, table) {
     const lineStart = stripped.lastIndexOf('\n', m.index);
     const linePrefix = stripped.substring(lineStart + 1, m.index).trim();
     if (linePrefix.startsWith('//')) continue;
-    const guardFlagInst = getGuardFlag(stripped, m.index);
-    if (guardFlagInst && table.get(guardFlagInst) === 'false') continue;
+    const guardInst = getGuardCondition(stripped, m.index);
+    if (!isGuardActive(guardInst, table)) continue;
+    const guardFlagInst = guardInst ? guardInst.flag : null;
 
     const rawId = m[1].trim();
     const priority = m[2];
@@ -656,6 +790,10 @@ module.exports = {
   splitAtTopLevelCommas,
   scanToMatchingClose,
   getGuardFlag,
+  findInnermostBlockHead,
+  getGuardCondition,
+  isGuardActive,
+  scanToMatchingOpen,
   resolveValue,
   resolveWithFallback,
   isRealValue,

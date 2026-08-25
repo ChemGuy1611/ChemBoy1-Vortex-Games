@@ -14,7 +14,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Root / Game Folder Mods | a `ph_ft` folder | the game folder itself (no subfolder) |
 | Binaries | a file with the `.pak` extension | `ph_ft\work\bin\x64` |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder.
 
 ## Mergerutility
 

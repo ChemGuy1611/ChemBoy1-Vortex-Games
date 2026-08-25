@@ -35,9 +35,15 @@ drag-and-drop list (`ItemRenderer.tsx`).
 
 ## Lifecycle (runtime)
 
-1. **Load** — on `gamemode-activated` / profile change, the core ext calls the game's
-   `deserializeLoadOrder()` (reads the game's order file), seeds the `UpdateSet`
-   (`updateSet.init(gameId, …)`), and dispatches `setFBLoadOrder(profile.id, loadOrder)`.
+1. **Load** — the core ext calls the game's `deserializeLoadOrder()` (reads the game's order
+   file), seeds the `UpdateSet` (`updateSet.init(gameId, …)`), and dispatches
+   `setFBLoadOrder(profile.id, loadOrder)`. **`gamemode-activated` is not a trigger** — that
+   listener exists (`onGameModeActivated`) but its registration is commented out in `context.once`.
+   What actually fires a load is: an `onStateChange` on `['persistent','profiles']`
+   (`genProfilesChange`, so any profile write including a mod being enabled), `did-deploy` /
+   `did-purge`, an `onStateChange` on `['session','base','toolsRunning']`, `onStartUp`, and the
+   page mounting. **All of them are skipped while `session.base.activity.installing_dependencies`
+   is non-empty**, so nothing seeds the load order during a collection install.
 2. **Reorder** — the user drags items; `setFBLoadOrder` changes `persistent.loadOrder[profileId]`.
    An `onStateChange` on that path computes prev vs new and calls **`applyNewLoadOrder`**, which:
    - `findGameEntry(profile.gameId)` (warns if the game isn't registered),
@@ -73,6 +79,14 @@ it itself: call its own deserializer and dispatch `actions.setFBLoadOrder(profil
 through the public `actions` barrel). Dispatching it feeds `genLoadOrderChange`, which diffs against
 the previous order and calls `serializeLoadOrder` when it really changed, so the corrected order also
 reaches disk.
+
+**Rejecting leaves the order unset, not preserved.** On the three swallowing call sites a rejection
+means `setFBLoadOrder` is never dispatched, so `persistent.loadOrder[profileId]` keeps whatever it
+had — which on a profile that has never deserialized successfully is *nothing at all*. A deserializer
+that reads its order file outside its `try` block therefore turns one unwritable game folder or one
+damaged order file into a load order that stays unset for the whole session. Read the file inside the
+try and fall back to the stored order (never to `[]`, which would diff against the stored order and
+serialize straight back over the file).
 
 **Rejecting is not a safe "do nothing".** Three of the four call sites — the `gamemode-activated` /
 profile-change seed, `genLoadOrderChange`, and `genDeploymentEvent` — wrap the call in
@@ -160,6 +174,19 @@ load order into a collection and restores it on install (`genCollectionLoadOrder
 
 ## Gotchas
 
+- **`persistent.loadOrder[profileId]` may not exist, and may not be an array.** It is written only
+  by the triggers listed above, so a fresh profile — or any profile whose first deployment comes out
+  of a collection install, where those triggers are all suppressed — reaches deploy time with no key
+  at all. Installs carried over from the deprecated `registerLoadOrderPage` hold the *legacy object*
+  (`{ modId: { pos, enabled } }`) at the same state path. Core defends itself
+  (`if (!Array.isArray(currentStoredLO)) currentStoredLO = []` in `genDeploymentEvent`); extension
+  code reading the path must do the same. Branch on `Array.isArray`, not on a local "am I FBLO"
+  flag, and give `getSafe` a default that matches the branch you are about to take — a `{}` default
+  in front of a `.findIndex` call is the classic crash.
+- **A `mergeMods` callback that reads load order state runs during deployment and its throws are
+  fatal.** `genSubDirFunc` (`mod_management/util/deploy.ts`) only swallows the error when `mod` is
+  `null` (the merge pseudo-mod); for a real mod it rethrows and the deployment fails. The safe
+  fallback is a sentinel prefix that sorts last, not an exception.
 - `applyNewLoadOrder` reacts to state change — dispatching `setFBLoadOrder` inside it loops forever.
 - If the profile can't be resolved when setting order, the user is told to re-activate the game.
 - FBLO and Gamebryo plugins are independent; a Bethesda game can use both (FBLO for non-plugin
@@ -183,4 +210,5 @@ Runtime siblings: `VORTEX_PROFILES.md`, `VORTEX_DEPLOYMENT.md`, `VORTEX_GAME_LIF
 `VORTEX_MOD_INSTALL.md` (mod id reuse on update), `VORTEX_NEXUS_INTEGRATION.md` (update events),
 `VORTEX_EVENT_BUS.md`. Overview: `VORTEX_APP.md`. Authoring: `LOAD_ORDER_REGISTRATION.md`,
 `LOAD_ORDER_ITEM_RENDERER.md`, `GAMEBRYO_PLUGIN_SYSTEM.md`. Diagram of the FBLO lifecycle:
-`VORTEX_FLOWCHARTS.md` §3.
+`VORTEX_FLOWCHARTS.md` §3. On-disk shape of `persistent###loadOrder` (array vs per-entry
+children): `VORTEX_DATABASES.md`.

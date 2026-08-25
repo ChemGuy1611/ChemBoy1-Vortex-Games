@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [2.2.3] - 2026-08-22
+
+- Fixed: Updating a required mod loader or tool now disables every older copy of it, so an out-of-date version can no longer stay enabled alongside the new one
+
 ## [2.2.2] - 2026-08-05
 
 - Fixed: A required mod loader or tool that can no longer be found in its GitHub release is now reported, listing the files the release actually contains, instead of failing quietly

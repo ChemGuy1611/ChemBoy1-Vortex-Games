@@ -151,7 +151,9 @@ Shared utility module imported by all other scripts. Centralizes common patterns
 | `AUDIT_SKIP_STORE_ID` | Rule name (`store-id`) suppressing a store ID wiring finding |
 | `AUDIT_SKIP_FOMOD` | Rule name (`fomod-check`) suppressing a missing-FOMOD-guard finding |
 | `AUDIT_SKIP_PRIORITY` | Rule name (`installer-priority`) suppressing an out-of-range installer priority finding |
-| `requires_unreal_mod_installer(src)` | Return `True` if `src` declares `context.requireExtension("Unreal Engine Mod Installer")` |
+| `requires_extensions(src)` | Return the `context.requireExtension` dependencies declared in `src` as `(name, optional)` tuples. `optional` is `True` when the call passes a third argument of `true` |
+| `has_extension_dependency(src)` | Return `True` if `src` declares any `context.requireExtension` dependency, hard or optional |
+| `requires_unreal_mod_installer(src)` | Return `True` if `src` declares a `context.requireExtension` dependency on `Unreal Engine Mod Installer`, in either the hard or the optional form |
 | `has_ue4ss_load_order_parity(src)` | Return `True` if `src` is a UE4-5 extension carrying the full `template-ue4-5` load order (detected via the `Ue4ssContextMenu` component) |
 | `is_unreleased_extension(src)` | Return `True` if `EXTENSION_URL` holds no real Nexus page URL (missing, empty, `"XXX"`, or non-Nexus), i.e. the extension has never been published |
 | `parse_nexus_mod_url(url)` | Parse a Nexus Mods URL into `(domain, mod_id)` or `None`. |
@@ -786,12 +788,14 @@ node generate_notes.js GAME_ID [GAME_ID ...]
 node generate_notes.js --json
 node generate_notes.js --templates
 node generate_notes.js --templates --json
+node generate_notes.js GAME_ID --description
 ```
 
 Run without arguments to process all `game-*` folders.
 Pass one or more bare `GAME_ID` values to target specific extensions.
 `--json` writes machine-readable JSON to stdout; progress and summary go to stderr instead.
 `--templates` also processes `template-*` folders (only effective when no `GAME_ID` args are given).
+`--description` writes `DESCRIPTION.bbcode.txt`, the Nexus mod page description, instead of the notes files. Its `Mod Installation Notes` list is one line per installer, trigger plus destination.
 
 There is deliberately no `--check` flag. Drift between these files and their `index.js` is handled by the generated-docs audit, which regenerates and diffs.
 
@@ -811,6 +815,23 @@ Always writes two files into each processed extension folder, overwriting any ex
 | --- | --- |
 | `NOTES_FOR_MOD_AUTHORS.md` | Markdown, for the repo and GitHub |
 | `NOTES_FOR_MOD_AUTHORS.bbcode.txt` | BBCode, paste-ready for a Nexus mod page |
+
+`--description` writes neither of those. It writes `DESCRIPTION.bbcode.txt` into the extension folder — the whole Nexus mod page description — whose install list is built from the same sections as the notes:
+
+```text
+[*]Installs mods with an "info.json" file and a ".dll" to the "Mods\<ModName>" folder.[/*]
+[*]Installs Unity Mod Manager itself to the game folder itself (no subfolder), recognised by a "UnityModManager.exe" file.[/*]
+[*]Any other mod not described above is installed to the game folder itself (no subfolder).[/*]
+```
+
+Loader and manager installers are phrased as installing the tool itself rather than mods, the catch-all installer gets the "any other mod" wording, and a closing FOMOD line is added when every installer checks for `fomod/ModuleConfig.xml`. Each line names only the first trigger file or extension a section matched, so a mod type recognised by several extensions needs that list widened by hand before posting.
+
+Two paths, depending on whether the page already exists:
+
+- **File present** — only the list between `[b]🛠️ Mod Installation Notes:[/b]` and its closing `[/list]` is replaced. Everything else the author wrote is untouched. List items carrying BBCode markup (`[b]`, `[color=`, `[url=`, …) are kept and moved to the top of the rebuilt list: those are the lines no generator can produce — the yellow "downloaded automatically" loader line, a red caveat — and the house style already puts them first. Generated lines are always plain text, so nothing is duplicated. If the heading is missing the extension is skipped rather than overwritten.
+- **File absent** — a full page is scaffolded: opening line, `✅ Supported Versions` built from whichever of `STEAMAPP_ID`, `GOGAPP_ID`, `EPICAPP_ID`, `UPLAYAPP_ID`, `EAAPP_ID` and `XBOXAPP_ID` resolve to a real value, the install list, a stub `📋 Usage Notes`, and the donation block. Loader warnings, per-game usage notes and credits are left for the author to add.
+
+`DESCRIPTION.bbcode.txt` is repo-only — `release_extension.py` excludes it from the released zip.
 
 Exits with code `1` if any extension threw an error during generation; `0` otherwise.
 
@@ -893,7 +914,7 @@ With `--json`, stdout receives a JSON object instead:
 
 ## categorize_games.py
 
-Scans all `game-*` extension folders and categorizes them by engine or framework based on the `Structure:` header comment and key code markers in each `index.js`. Writes one `.txt` file per engine category into `resources/lists/`, plus several non-exclusive "flag" lists (load order, one per downloader module in the family, Unreal Engine Mod Installer dependency, UE4-5 load-order parity, unreleased extensions) evaluated for every game independently. Each line in the file is a `GAME_ID`.
+Scans all `game-*` extension folders and categorizes them by engine or framework based on the `Structure:` header comment and key code markers in each `index.js`. Writes one `.txt` file per engine category into `resources/lists/`, plus several non-exclusive "flag" lists (load order, one per downloader module in the family, Unreal Engine Mod Installer dependency, any inter-extension dependency, UE4-5 load-order parity, unreleased extensions) evaluated for every game independently. Each line in the file is a `GAME_ID`.
 
 Also called automatically by `new_extension.py` to add a newly created extension to the correct category file.
 
@@ -955,12 +976,13 @@ The engine categories above are mutually exclusive (one per game). The lists bel
 | `resources/lists/games-downloader-modworkshop.txt` | Games with a bundled `modworkshop_downloader.js` module |
 | `resources/lists/games-downloader-thunderstore.txt` | Games with a bundled `thunderstore_downloader.js` module |
 | `resources/lists/games-uemi.txt` | Games that require the `Unreal Engine Mod Installer` extension via `context.requireExtension` |
+| `resources/lists/games-requires-extension.txt` | Games that declare any `context.requireExtension` dependency on another Vortex extension, hard or optional. A hard dependency (no third argument) stops the extension loading at all when the other one is missing |
 | `resources/lists/games-ue4-5-parity.txt` | UE4-5 games at `template-ue4-5` load-order parity (custom UE4SS + LogicMods pages) |
 | `resources/lists/games-unreleased.txt` | Extensions with no real Nexus page URL in `EXTENSION_URL` — never published, excluding the permanent test beds in `UNRELEASED_LIST_EXCLUDED_GAMES` |
 
 ### categorize_games.py — Detection
 
-Each game is matched against the engine categories in order — the first match wins. Detection uses the `Structure:` comment on line 3 of `index.js` as the primary signal, with fallback checks for unique code markers such as `const UNREALDATA =`, `const ATK_ID =`, `context.requireExtension('modtype-bepinex')`, etc. The flag lists are computed separately via dedicated predicates (`is_load_order_game`, `has_downloader_js`, `has_bepinexbe_downloader_js`, `has_fcmodding_downloader_js`, `has_gamebanana_downloader_js`, `has_moddb_downloader_js`, `has_modworkshop_downloader_js`, `has_thunderstore_downloader_js`, `requires_unreal_mod_installer`, `has_ue4ss_load_order_parity`, `is_unreleased_extension`) in `vortex_utils.py`. The parity predicate keys off the `Ue4ssContextMenu` component, which only exists in games that took the whole load-order region (PAK + custom UE4SS + LogicMods pages) from `template-ue4-5`.
+Each game is matched against the engine categories in order — the first match wins. Detection uses the `Structure:` comment on line 3 of `index.js` as the primary signal, with fallback checks for unique code markers such as `const UNREALDATA =`, `const ATK_ID =`, `context.requireExtension('modtype-bepinex')`, etc. The flag lists are computed separately via dedicated predicates (`is_load_order_game`, `has_downloader_js`, `has_bepinexbe_downloader_js`, `has_fcmodding_downloader_js`, `has_gamebanana_downloader_js`, `has_moddb_downloader_js`, `has_modworkshop_downloader_js`, `has_thunderstore_downloader_js`, `requires_unreal_mod_installer`, `has_extension_dependency`, `has_ue4ss_load_order_parity`, `is_unreleased_extension`) in `vortex_utils.py`. The parity predicate keys off the `Ue4ssContextMenu` component, which only exists in games that took the whole load-order region (PAK + custom UE4SS + LogicMods pages) from `template-ue4-5`.
 
 No host has an inline-download list. GitHub requirements are tracked by `games-downloader.txt` — the shared `downloader.js` module is GitHub-sourced — and GameBanana, ModDB, ModWorkshop, Thunderstore, Codeberg, and builds.bepinex.dev by their own `games-downloader-*.txt` module lists: every extension fetching a requirement from those hosts carries the matching downloader module, so the module list is the complete list. A bare host URL left in an extension is a browse link behind an `Open <host> Page` button, which was never counted as a download.
 
@@ -1042,7 +1064,7 @@ A `.bak` file is written alongside `index.js` before overwriting. Use `--force` 
 
 Packages a game extension folder into a `.zip` archive using 7-Zip, optionally uploads it to the Nexus Mods mod page as a new file version, and opens the extension's Nexus Mods Files tab in the default browser.
 
-The repo-facing generated documentation is excluded from the zip — `EXTENSION_EXPLAINED.md`, `NOTES_FOR_MOD_AUTHORS.md` and `NOTES_FOR_MOD_AUTHORS.bbcode.txt`. They stay in the repo for GitHub, but are not shipped in the extension Vortex installs. The exclusion list is the `ZIP_EXCLUDES` constant; after zipping, the script warns if any of those files ended up in the archive anyway.
+The repo-facing documentation is excluded from the zip — `EXTENSION_EXPLAINED.md`, `NOTES_FOR_MOD_AUTHORS.md`, `NOTES_FOR_MOD_AUTHORS.bbcode.txt` and `DESCRIPTION.bbcode.txt`. They stay in the repo for GitHub, but are not shipped in the extension Vortex installs. The exclusion list is the `ZIP_EXCLUDES` constant; after zipping, the script warns if any of those files ended up in the archive anyway.
 
 ### release_extension.py — Environment Variables
 
@@ -1389,6 +1411,72 @@ File structure:
 2. **Per-severity sections** (DEBUG, INFO, WARN, ERROR) — each headed by a `===` banner; skipped when empty. Within each section entries are sub-grouped by `YYYY-MM-DD HH:00` with newest entries first within each bucket, each sub-group preceded by a `--- hour (N entries) ---` marker.
 
 Console summary prints total entry count and per-level breakdown.
+
+---
+
+## read_vortex_db.py
+
+Reads Vortex's on-disk LevelDB stores directly and prints the live application state -- discovered games, installed mods, profiles, load orders, settings, the Nexus metadata cache. Pure Python stdlib: the script implements Snappy decompression, the SST (`.ldb`) table format and the write-ahead log format itself, so it needs no LevelDB binding, no DuckDB and no Node.
+
+The active store is resolved the same way Vortex resolves it: read `user.multiUser` from `%APPDATA%\Vortex\state.v2`, and if it is true use `%PROGRAMDATA%\vortex` instead. Values in the `confidential` hive (the Nexus OAuth token) are redacted unless `--show-secrets` is passed.
+
+While Vortex is running it holds an exclusive lock on `MANIFEST-*` and the current `.log`, so only the compacted `.ldb` tables can be read. That still yields the whole store minus writes made since the last compaction; the script prints a warning to stderr when it happens. Close Vortex for an exact read. Format details are in [resources/VORTEX_DATABASES.md](resources/VORTEX_DATABASES.md).
+
+The module is importable: `read_db(dir)` returns a `{key: json_string}` dict, and `unflatten(store, path_parts)` rebuilds a nested object from it.
+
+### read_vortex_db.py -- Requirements
+
+No additional packages required (Python stdlib only).
+
+### read_vortex_db.py -- Usage
+
+```sh
+python read_vortex_db.py --hives
+python read_vortex_db.py --get persistent.nexus.userInfo
+python read_vortex_db.py --keys persistent.mods
+python read_vortex_db.py --tree settings.gameMode.discovered.skyrimse --depth 2
+python read_vortex_db.py --json persistent.profiles.PROFILE_ID
+python read_vortex_db.py --stats
+python read_vortex_db.py --games
+python read_vortex_db.py --mods GAME_ID
+python read_vortex_db.py --profiles [GAME_ID]
+python read_vortex_db.py --loadorder GAME_ID
+python read_vortex_db.py --db metadb --get hash:MD5
+python read_vortex_db.py --path DIR --stats
+python read_vortex_db.py --get PATH --no-wal --show-secrets --out FILE
+```
+
+### read_vortex_db.py -- Environment Variables
+
+| Variable | Required | Description |
+| --- | --- | --- |
+| `APPDATA` | Optional | Standard Windows variable used to locate the per-user store (`%APPDATA%\Vortex`) and the source-build store (`%APPDATA%\@vortex\main`). Not a user-configurable input. |
+| `PROGRAMDATA` | Optional | Standard Windows variable used to locate the Multi-User Mode store (`%PROGRAMDATA%\vortex`). Not a user-configurable input. |
+
+### read_vortex_db.py -- Options
+
+| Option | Description |
+| --- | --- |
+| `--db WHICH` | Which store to read: `state` (default, follows Multi-User Mode), `metadb`, `per-user`, `shared`, `dev`. |
+| `--path DIR` | Read this LevelDB directory instead of a named store. |
+| `--get PATH` | Print every key at or under PATH as `path = json`. Dotted path, `\.` escapes a literal dot -- the same syntax as Vortex's own `--get`. Falls back to a raw key prefix match for `metadb`. |
+| `--keys PATH` | Print the immediate child segment names under PATH. |
+| `--tree PATH` | Print keys under PATH, collapsed at `--depth` levels. |
+| `--depth N` | Depth for `--tree`, counted from PATH. Default: 1. |
+| `--json PATH` | Rebuild the nested object under PATH and print it as JSON. |
+| `--hives` | Print every top-level hive with its key count. |
+| `--stats` | Print store location, file inventory, size, key count and any locked files. |
+| `--games` | Print discovered games with mod count, active profile and install path. |
+| `--mods GAME_ID` | Print installed mods for a game with version, mod type and enable state. |
+| `--profiles [GAME_ID]` | Print profiles, optionally filtered to one game id. |
+| `--loadorder GAME_ID` | Print the stored load order for the game's last active profile. |
+| `--no-wal` | Skip the write-ahead log even when it is readable. |
+| `--show-secrets` | Print confidential values instead of redacting them. |
+| `--out FILE` | Write output to FILE instead of stdout. |
+
+### read_vortex_db.py -- Output
+
+Plain text on stdout, one record per line, or the file named by `--out`. `--json` emits indented JSON. Lock warnings go to stderr so they never contaminate piped output.
 
 ---
 

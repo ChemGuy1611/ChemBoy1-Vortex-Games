@@ -2,8 +2,8 @@
 Name: Marvel's Spider-Man 2 Vortex Extension
 Structure: 3rd-Party Mod Manager (Overstrike)
 Author: ChemBoy1
-Version: 0.2.0
-Date: 2026-03-06
+Version: 1.0.0
+Date: 2026-08-23
 ////////////////////////////////////////////*/
 
 //Import libraries
@@ -48,6 +48,9 @@ const OSMOD_EXTS = ['.smpcmod', '.suit', '.suit_style', '.stage', '.modular', '.
 
 const TOC_FILE = "toc";
 const TOC_FILE_BAK = "toc.BAK";
+//Files handed to Steam for hash verification. Paths must be absolute and the file must exist,
+//so the list is filtered against the disk before it is sent.
+const VERIFY_FILES = [EXEC, TOC_FILE];
 
 const SAVE_FOLDER = path.join(DOCUMENTS, 'Marvel\'s Spider-Man 2');
 try {
@@ -428,10 +431,10 @@ function updateNotify(api) {
         action: (dismiss) => {
           api.showDialog('question', MESSAGE, {
             text: `You must verify the game files after an update to avoid crashing with mods installed.\n`
-                + `Use the button below to verify the game files.\n`
+                + `Use the button below to remove Overstrike's '${TOC_FILE_BAK}' backup and verify the game files.\n`
                 + `\n`
-                + `NOTE: This will only work with the Steam version of the game.\n`
-                + `EGS version needs to delete 'toc' and 'toc.BAK' files manually, then verify game files in EGS app.\n`
+                + `NOTE: Verification only works with the Steam version of the game.\n`
+                + `EGS version needs to verify the game files in the Epic Games launcher afterwards.\n`
                 + `\n`
                 + `You must reinstall mods in Overstrike after verifying game files.\n`
           }, [
@@ -523,35 +526,69 @@ function runOverstrike(api) {
 }
 
 async function verifyGameFiles(api) {
+  const state = api.getState();
   GAME_PATH = await getDiscoveryPath(api);
   GAME_VERSION = await setGameVersion(GAME_PATH);
+  //the store recorded at discovery is authoritative; fall back to the file check for older discoveries
+  const STORE_ID = util.getSafe(state, ['settings', 'gameMode', 'discovered', GAME_ID, 'store'], undefined);
+  const IS_STEAM = (STORE_ID !== undefined) ? (STORE_ID === 'steam') : (GAME_VERSION === 'steam');
+
+  //Remove Overstrike's backup of the pre-update table of contents. A stale backup lets Overstrike
+  //put the old table of contents back over the updated one. The game's own 'toc' is left in place
+  //so Steam can check it and repair it if it has been altered.
+  if (await statCheckAsync(GAME_PATH, TOC_FILE_BAK)) {
+    try {
+      await fs.unlinkAsync(path.join(GAME_PATH, TOC_FILE_BAK));
+    } catch (err) {
+      return api.showErrorNotification(`Failed to delete ${TOC_FILE_BAK}`, err, { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 });
+    }
+  }
+
+  if (!IS_STEAM) {
+    api.sendNotification({ //non-Steam versions have to use their own launcher to repair the game
+      id: `${GAME_ID}-tocreset-success`,
+      message: `Removed the Overstrike backup file. Verify the game files in the Epic Games launcher to restore the original 'toc' file, then reinstall your mods in Overstrike.`,
+      type: 'success',
+      noDismiss: false,
+      allowSuppress: true,
+    });
+    return;
+  }
+
+  //The Steam File Downloader opens and hashes every path in FileList, so entries have to be
+  //absolute and the files have to exist. VerifyAll must be true whenever FileList is set, or
+  //nothing is ever restored. Files missing from the Steam depot are reported either way.
+  const FILE_LIST = [];
+  for (const file of VERIFY_FILES) {
+    if (await statCheckAsync(GAME_PATH, file)) {
+      FILE_LIST.push(path.join(GAME_PATH, file));
+    }
+  }
   const parameters = {
-    "FileList": `${TOC_FILE}`,
+    "FileList": `${FILE_LIST.join('\n')}`,
     "InstallDirectory": GAME_PATH,
-    "VerifyAll": false,
+    "VerifyAll": true,
     "AppId": +STEAMAPP_ID,
   };
 
+  //this API reports through a callback - awaiting the call itself returns immediately and never throws
   try {
-    await fs.statAsync(path.join(GAME_PATH, TOC_FILE));
-    await fs.unlinkAsync(path.join(GAME_PATH, TOC_FILE));
-    await fs.statAsync(path.join(GAME_PATH, TOC_FILE_BAK));
-    await fs.unlinkAsync(path.join(GAME_PATH, TOC_FILE_BAK));
+    await new Promise((resolve, reject) =>
+      api.ext.steamkitVerifyFileIntegrity(parameters, GAME_ID, (err) => err ? reject(err) : resolve()));
   } catch (err) {
-    return api.showErrorNotification('Failed to delete toc and toc.BAK files', err, { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 });
+    //the Steam File Downloader has already shown its own notification for this failure
+    log('warn', `Steam file verification failed: ${err.message}`);
+    return;
   }
-  if (GAME_VERSION === 'steam') {
-    try {
-      await api.ext.steamkitVerifyFileIntegrity(parameters, GAME_ID);
-      log('warn', `Steam verification complete`);
-      return;
-    } catch (err) {
-      return api.showErrorNotification('Failed to verify game files through Steam. Do it in the Steam app instead.', err, { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 });
-    }
+  //verification purges mods and only flags deployment as necessary, so deploy again here
+  try {
+    await deploy(api);
+  } catch (err) {
+    log('warn', `Failed to deploy mods after Steam verification: ${err.message}`);
   }
   api.sendNotification({ //success notification
     id: `${GAME_ID}-tocreset-success`,
-    message: `Successfully performed TOC reset. You may need to verify the game files again.`,
+    message: `TOC reset complete. Reinstall your mods in Overstrike before launching the game.`,
     type: 'success',
     noDismiss: false,
     allowSuppress: true,
@@ -572,7 +609,9 @@ async function setup(discovery, api, gameSpec) {
 
 //Let Vortex know about the game
 function applyGame(context, gameSpec) {
-  context.requireExtension('Vortex Steam File Downloader');
+  //optional dependency - without the third argument Vortex unloads this whole extension
+  //for anyone who does not have the Steam File Downloader installed
+  context.requireExtension('Vortex Steam File Downloader', undefined, true);
   //register the game
   const game = {
     ...gameSpec.game,

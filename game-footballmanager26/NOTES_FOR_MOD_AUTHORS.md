@@ -17,7 +17,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Plugin Mods | a `.dll` file | `BepInEx` |
 | Asset Replacement Mods | a `.assets` file | `fm_Data` |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder.
 
 ## BepInEx (mod loader)
 

@@ -1,0 +1,9 @@
+{
+  "_comment": "Display-only catalog of Helldivers 2 data archives. Maps an archive hash to a friendly name and a kind (graphics | sound | other) used for labelling and grouping on the Patch Conflicts page. This file is NOT the authority on which archives exist - that comes from scanning the game's own data folder - so an entry missing here is cosmetic only and an entry present here for an archive the install does not have is harmless. Keys that are not a 16-character hex hash are ignored, so comments like this one are safe to keep.",
+  "9ba626afa44a3aa3": { "name": "Main game data", "kind": "graphics" },
+  "2e24ba9dd702da5c": { "name": "Sound archive", "kind": "sound" },
+  "5ab4204a4e0ccbe8": { "name": "Sound archive", "kind": "sound" },
+  "7c221cf5b12213ac": { "name": "Sound archive", "kind": "sound" },
+  "9bc33b7058a2bd5a": { "name": "Sound archive", "kind": "sound" },
+  "e75f556a740e00c9": { "name": "Sound archive", "kind": "sound" }
+}

@@ -35,6 +35,7 @@ files, required with a relative path. Two files, not one — the source module a
 ```js
 const { registerThunderstoreBrowser, onceThunderstoreBrowser } = require('./thunderstore_browser');
 const { registerGameBananaBrowser, onceGameBananaBrowser } = require('./gamebanana_browser');
+const { registerModWorkshopBrowser, onceModWorkshopBrowser } = require('./modworkshop_browser');
 ```
 
 `index.js` never requires the base directly; the source module does. Copying only the source module
@@ -120,7 +121,7 @@ about fifteen lines. Fields marked source-specific are defined by the module for
 
 | Field | Required | Purpose |
 | --- | --- | --- |
-| source key | yes | Identifies the site section to open; sets the home URL. `tsCommunity` (Thunderstore), `gbGameId` (GameBanana) |
+| source key | yes | Identifies the site section to open; sets the home URL. `tsCommunity` (Thunderstore), `gbGameId` (GameBanana), `mwsGame` (ModWorkshop), `fcGame` (fcmodding) |
 | `requirements` | no | The adopter's requirement table, for install routing and installed-detection |
 | `installRequirement` | no | `(api, gameSpec, requirement) => Promise` — adopter injects its requirement downloader |
 | `packageAttribute` | no | Mod attribute holding the package key (default `thunderstorePackage` / `gamebananaItem`) |
@@ -136,6 +137,7 @@ Fields only one source needs stay on that source's adapter:
 | `hideAds` / `adSelectors` | any source with an `adSelectors` default (today `gamebanana_browser.js`) | Hide the site's ad slots in the embedded view (default on). `adSelectors` replaces the adapter's list rather than extending it; a source with no list injects nothing |
 | `blockAdPopups` / `blockedHosts` | any source with a `blockedHosts` default (today `gamebanana_browser.js`) | Drop links that lead to an ad network instead of opening them in the system browser (default on) |
 | `gbSection` | `gamebanana_browser.js` | Section the page opens on, e.g. `mods` (default) or `tools` — GameBanana listings are `/{section}/games/{gameId}` |
+| `fcGame` | `fcmodding_browser.js` | Section the page opens on — `fc3`, `fc4`, `fc5`, `fc6`, `fcnd` or `fcp`, the same slug the extension already uses |
 | `homeUrl` | `gamebanana_browser.js` | Full override for the home URL, e.g. the game's hub page instead of one section |
 | `fileIdAttribute` | `gamebanana_browser.js` | Mod attribute holding the installed file id (default `gamebananaFileId`, the same one `gamebanana_downloader.js` tracks) |
 | `versionPattern` | `gamebanana_browser.js` | RegExp whose group 1 is a version inside an update title, for submissions that leave `_sVersion` empty |
@@ -261,6 +263,11 @@ Three traps the two live adapters already hit:
   `name` is a *package* name, GameBanana's is a *human title*; the base treats neither as a display
   name, so a source with a title opts in through `displayName`.
 - **The file name must end in `browser.js`** — see the adopter model above.
+- **Trace the source's real mark for `defaults.mdi` rather than picking a generic glyph.** Every site so
+  far has had a fetchable logo — check `/favicon.ico`, an `og:image` or `apple-touch-icon` in the served
+  HTML, and `/assets/*logo*.svg` before concluding otherwise, retrying with a browser `User-Agent` since
+  an intermittent bot-block looks exactly like a missing file. A vendor SVG's outline path rescaled into
+  the 24x24 viewBox beats anything hand-drawn.
 - **Anything used by exactly one source stays in that adapter.** The base is only allowed to grow when
   two sources do the same thing the same way.
 
@@ -269,6 +276,10 @@ session is exactly the client the challenge admits, where a fetch-and-parse down
 
 ## Page mechanics worth knowing
 
+- **A `pageTitle` longer than about 20 characters is clipped in the sidebar**, so name the page after the
+  site alone: `Browse ModWorkshop`, not `Browse ModWorkshop.net`, which was cut off in the live UI. Each
+  adapter's `defaults.pageTitle` stays the generic `Browse Mods`; the site-named title belongs in the
+  adopter's config and in that source's template.
 - The exported `Webview` control is the embed variant. It exposes `loadURL` but no history API, so
   the page keeps its own history array and index.
 - The control wires only a fixed event set and drops its `events` prop, so `did-navigate` and
@@ -308,6 +319,8 @@ base skips both.
 | `base_browser.js` | — | every adopter of every source below |
 | `thunderstore_browser.js` | thunderstore.io | `game-hades2` |
 | `gamebanana_browser.js` | gamebanana.com | `game-doometernal` |
+| `modworkshop_browser.js` | modworkshop.net | `game-roadtovostok` |
+| `fcmodding_browser.js` | downloads.fcmodding.com | `game-farcry3`, `game-farcry4`, `game-farcry5`, `game-farcry6`, `game-farcrynewdawn`, `game-farcryprimal`, `template-farcry` |
 
 ### Quirks per source
 
@@ -327,7 +340,25 @@ base skips both.
   satisfies both.
 - **ModWorkshop** publishes `dependencies[]` on the mod record with the dependency's whole mod record
   embedded, so a requirement resolves without a second call. Entries carry an `optional` flag and no
-  version at all.
+  version at all. A mod is one numeric id, so the package key needs no splitting rule. Versions are
+  free text - `v`-prefixed, date-based and single-segment values all occur - so update comparison runs
+  on the file id, a Laravel autoincrement that reliably orders newest-last. The click-through download
+  URL is **not** on the site host: `modworkshop.net/mods/{id}/download` 404s, and the working endpoint
+  is `api.modworkshop.net/mods/{id}/download`, which redirects to `storage.modworkshop.net`. A mod
+  flagged `disable_mod_managers` has opted out of one-click installs, so its `mws-mo2://` /
+  `mws-manager://` protocol links are skipped; its plain Download button still captures normally.
+
+- **fcmodding** has no API of any kind. The catalog is a handful of static pages, so the module reads
+  a section index, then each mod page, for the title, the printed `<i>v1.68</i>` version and the
+  `/files/` links that page offers — one fetch per page, cached for the session, over a catalog of
+  well under twenty entries. A mod's identity is therefore its **download file name**: the host
+  publishes no mod id anywhere. Versions are not semver — mod packs use `4.52`-style numbers and the
+  Mod Installer uses a `20250412-1300` build stamp — so comparison is a numeric segment compare, which
+  orders both where semver coercion orders neither. Two shapes of link on this host are deliberately
+  not claimed: `/files/` aliases that are opaque 30-character ids (they redirect to a Google Drive
+  folder, and `drive.google.com` is kept off `allowedHosts` so they open in the system browser), and
+  anything without an archive extension. The sibling database at `mods.farcry.info` is **not** a
+  source: every entry there links to a Discord message rather than a file (`FCMODDING_API.md`).
 
 ## See also
 
@@ -335,6 +366,9 @@ base skips both.
 `DOWNLOADER.md` (the requirements auto-downloader family these modules sit beside).
 `THUNDERSTORE_API.md` (the first source: endpoints, community slugs, package URL shapes).
 `GAMEBANANA_API.md` (the second source: apiv11 endpoints, item models, file records, download URLs).
+`MODWORKSHOP_API.md` (the third source: mod and file endpoints, storage download URLs, dependencies).
+`FCMODDING_API.md` (the fourth source: the download catalog, the `/files/` alias redirect, and why
+the `mods.farcry.info` database is not a download route).
 `VORTEX_REACT_PAGES.md` (`registerMainPage` and the page component API).
 `VORTEX_MOD_INSTALL.md` (what `start-install-download` hands the archive to).
 `VORTEX_DOWNLOAD_MGMT.md` (download states, protocol handlers, `did-finish-download`).

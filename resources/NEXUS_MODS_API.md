@@ -609,6 +609,9 @@ Full `ModFile` / `FileUpdate` object shapes, the `content_preview_link` tree for
 `VORTEX_NEXUS_INTEGRATION.md` (OAuth/SSO login, `NXMUrl`, and the runtime client wired to these
 endpoints). `NODE_NEXUS_API_CLIENT.md` documents a separate client library (`@nexusmods/nexus-api`)
 that covers v1 REST + v2 GraphQL — it does not touch this v3 REST API at all.
+`NEXUS_GRAPHQL_API.md` documents the **v2 GraphQL API** in full: introspection is open with no auth,
+and it is the only tier that can read a mod's **tags** (no tier can write them). It is also where
+the search/filter grammar and the batch mod/file lookups live.
 `VORTEX_MOD_METADATA.md` (how Vortex uses the `md5_search` / `fileHashes` lookups to decide which
 mod an archive belongs to).
 `GITHUB_API.md` (the other API this project depends on - unauthenticated, 60 requests per hour

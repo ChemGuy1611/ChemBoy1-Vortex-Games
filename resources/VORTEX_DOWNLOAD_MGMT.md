@@ -116,9 +116,24 @@ The traps in practice:
   doesn't start at all — it isn't just that argument being ignored.
 - `modInfo` is a loose object with a `.catch()` fallback, so it never fails validation. Extra keys
   pass through.
-- Every tuple ends in `.rest(z.unknown())`, so **surplus trailing arguments are tolerated** and
-  ignored. Vortex's own `DownloadView` relies on this, emitting `remove-download` with a third
-  options argument the schema doesn't declare.
+- **`modInfo.game` decides where the download is filed, and the install target follows the
+  *active* game.** `#resolveDownloadTarget` computes
+  `toInternalGameId(api, modInfo.game ?? activeGameId(state))`, which picks the download folder and
+  stamps the download. A Nexus domain that is not itself a game - `site`, the domain for site-wide
+  tools - is the normal, intended value there: one shared `downloads/site/` copy serves every game.
+  At install time `InstallManager` cannot resolve `site` in the known games, logs
+  `Game extension for download not installed`, and installs into `currentProfile.gameId`. That
+  fallback is exactly what makes a site-hosted tool land in the game being managed.
+- **The trap is ordering, and it sits in Vortex, not the extension.** Vortex calls a game's
+  `setup()` while the *previously* active game is still current - `set game mode` is logged after
+  the install finishes. A download started from `setup()`, which is where every requirement download
+  in this repo starts, therefore resolves `currentProfile.gameId` to the old game: the archive
+  installs into that game's staging folder, that game's installers are the ones tested (so the
+  intended extension's `testSupported` is never called with its own id and the archive falls through
+  to a plain copy with no mod type), and any follow-up `setModType` / `setModsEnabled` aimed at the
+  intended game throws `Cannot read properties of undefined` in a state-change handler, because the
+  mod id does not exist there. Repeating the same action once the game *is* active works correctly.
+  Observed 2026-08-23.
 
 Note that these schemas, not the `ApiEvents` interface in `IExtensionContext.ts`, are what actually
 runs. The two disagree — `ApiEvents` types `start-download` as returning a `string` and omits

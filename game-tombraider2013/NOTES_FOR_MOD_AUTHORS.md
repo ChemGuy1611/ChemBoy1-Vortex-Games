@@ -13,7 +13,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Texmodpack | a file with the `.tpf` extension | `TexMod` |
 | Managermod | a file with one of these extensions: `.tr9dtp`, `.tr9material`, `.tr9modeldata`, `.t9script`, `.t9shaderlib`, `.tr9sound`, `.dds`, `.tr9objectref`, `.tr9dtp` or `.tr9anim` | `Mods` |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder.
 
 ## Trmodmanager
 

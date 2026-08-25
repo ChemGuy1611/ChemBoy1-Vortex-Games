@@ -17,8 +17,6 @@
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 | Executable (GOG) | `./XXX.exe` |
 | Executable (Demo) | `./XXX.exe` |
-| Extension Page | XXX |
-| PCGamingWiki | XXX |
 
 ## Feature Flags
 
@@ -29,7 +27,7 @@
 | `multiExe` | `false` | set to true if there are multiple executable names |
 | `multiModPath` | `false` | set to true if there are multiple possible mod paths (i.e. different path for Xbox version) |
 | `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
-| `needsModInstaller` | `true` | set to true if standard mods should run through an installer - set false to have mods installed to the mods folder without any processing |
+| `needsModInstaller` | `false` | set to true if standard mods should run through an installer - set false to have mods installed to the mods folder without any processing |
 | `rootInstaller` | `true` | enable root installer. Set false if you need to avoid installer collisions |
 | `saveInstaller` | `false` | enable save installer. Set false if path is outside of game folder |
 | `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |
@@ -52,11 +50,7 @@ Installers run in priority order (lower number = tested first). The first instal
 
 | Installer ID | Priority |
 | --- | --- |
-| `XXX-loader` | 25 |
 | `XXX-root` | 27 |
-| `XXX-binaries` | 29 |
-| `XXX-save` | 33 |
-| `XXX-mod` | 35 |
 | `XXX-fallback` | 49 |
 
 ## Registered Tools
@@ -70,6 +64,8 @@ These tools appear in Vortex's Tools panel when this game is active:
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
+- Open Config Folder
+- Open Save Folder
 - Open PCGamingWiki Page
 - View Changelog
 - Submit Bug Report
@@ -88,18 +84,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

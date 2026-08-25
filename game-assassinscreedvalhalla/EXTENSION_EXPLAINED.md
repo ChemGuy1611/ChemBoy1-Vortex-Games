@@ -19,6 +19,7 @@
 ## Supported Stores
 
 - **Steam** — `2208920`
+- **Epic Games Store** — `965ccf8b2eba4f9381ef43183c08e205`
 
 ## Mod Types
 
@@ -58,5 +59,6 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
+- **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 

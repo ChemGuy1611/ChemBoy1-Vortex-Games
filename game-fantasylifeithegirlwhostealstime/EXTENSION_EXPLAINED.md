@@ -81,13 +81,8 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - Open Paks Folder
 - Open Binaries Folder
-- Open UE4SS Mods Folder
-- Open LogicMods Folder
 - Open Config Folder
 - Open Saves Folder
-- Download UE4SS
-- Open UE4SS Settings INI
-- Open UE4SS mods.txt
 - Open PCGamingWiki Page
 - View Changelog
 - Submit Bug Report

@@ -4,6 +4,10 @@
 
 - Config and save modtypes, installers, and open buttons.
 
+## [0.5.5] - 2026-08-22
+
+- Fixed: Updating a required mod loader or tool now disables every older copy of it, so an out-of-date version can no longer stay enabled alongside the new one
+
 ## [0.5.4] - 2026-08-12
 
 - Fixed: The Xbox version is now only recognised by DOOM 3: BFG Edition. There is no Xbox release of the classic game, so the classic entry no longer claims it.

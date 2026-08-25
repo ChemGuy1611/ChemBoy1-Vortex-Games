@@ -13,9 +13,9 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Loose Lua Scripts | a `.lua` file outside the REFramework folders | the game folder itself (no subfolder) |
 | Root / Game Folder Mods | a `nvngx_dlss.dll` file or a `.exe` file | the game folder itself (no subfolder) |
 | Preset Files | a `.prt` file | `Games\MonsterHunterWilds\Presets` |
-| Fluffymodzip | a file or folder named `modmanager.exe` and a file or folder named `dinput8.dll` | - |
+| Fluffy-Format Mods | anything not matched above | - |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder.
 
 ## Fluffy Mod Manager (tool)
 
@@ -81,9 +81,18 @@ Configuration presets for REFramework mods.
 
 Installs to: `Games\MonsterHunterWilds\Presets`
 
-## Fluffymodzip
+## Fluffy-Format Mods
 
-Recognised when the archive contains a file or folder named `modmanager.exe` and a file or folder named `dinput8.dll`.
+The catch-all for RE Engine mods packaged in the normal Fluffy Mod Manager layout. Most content mods for this game land here, which is the intended outcome.
+
+**Requirements:**
+
+- Any archive not claimed by an earlier installer is treated as a Fluffy-format mod.
+- An archive already zipped in the Fluffy layout is installed as it is, with no repacking.
+
+**Common mistakes:**
+
+- Because this is a catch-all, a badly laid-out archive still installs - it just may not work. Match the layout Fluffy Mod Manager expects.
 
 ## Rules That Apply To Every Mod Type
 

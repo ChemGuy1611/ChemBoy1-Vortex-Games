@@ -11,7 +11,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod | a file or folder named one of: `Animations`, `Benchmark`, `ForceFeedback`, `Help`, `KarmaData`, `Maps`, `Music`, `Sounds`, `Speech`, `StaticMeshes`, `System`, `SystemLocalized`, `Textures`, `Web` or `Saves` and a file with one of these extensions: `...ANIMATIONS_EXTS`, `...KARMADATA_EXTS`, `...MAPS_EXTS`, `...MUSIC_EXTS`, `...SOUNDS_EXTS`, `...SPEECH_EXTS`, `...STATICMESHES_EXTS`, `...SYSTEM_EXTS`, `...TEXTURES_EXTS` or `...SAVES_EXTS` | - |
 | Fallback Installer | anything not matched above | - |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder.
 
 ## Mod
 

@@ -2,8 +2,8 @@
 Name: The Last of Us Part I Vortex Extension
 Author: ChemBoy1
 Structure: Gemeric Game w/ File Extraction
-Version: 2.2.2
-Date: 2026-08-05
+Version: 2.2.3
+Date: 2026-08-22
 ////////////////////////////////////////////////*/
 
 //Import libraries

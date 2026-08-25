@@ -11,7 +11,11 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 const winapi = require('winapi-bindings');
-const { downloadFcModding, checkForFcModdingUpdate } = require('./fcmodding_downloader');
+const { downloadFcModding, checkForFcModdingUpdate, downloadFcModdingRequirement } = require('./fcmodding_downloader');
+const { registerFcModdingBrowser, onceFcModdingBrowser } = require('./fcmodding_browser');
+
+//feature toggles
+const fcmoddingBrowser = true; //register the "Browse Far Cry Mods" page (downloads.fcmodding.com)
 
 const DOCUMENTS = util.getVortexPath("documents");
 
@@ -24,6 +28,7 @@ const EPICAPP_ID = "Hellebore";
 const BIN_PATH = "bin";
 const EXEC_NAME = "farcry3_d3d11.exe";
 const EXEC = path.join(BIN_PATH, EXEC_NAME);
+const FC = 'fc3';
 const GAME_NAME = "Far Cry 3";
 const GAME_NAME_SHORT = "FC3";
 
@@ -63,6 +68,18 @@ const MI_REQUIREMENTS = [
     pageUrl: MI_URL_ERR,
   },
 ];
+
+//Embedded fcmodding.com browser page - the user browses the live download catalog for this
+//game and installs from it. The Mod Installer keeps its own mod type when downloaded there.
+const FCM_BROWSER_CONFIG = {
+  fcGame: FC,
+  requirements: MI_REQUIREMENTS,
+  installRequirement: (api, gameSpec, requirement) =>
+    downloadFcModdingRequirement(api, gameSpec, requirement, true),
+  pageId: `${GAME_ID}-fcmodding-browse`,
+  pageTitle: 'Browse Far Cry Mods',
+  //no hotkey: Ctrl+Shift+B is already taken, and a second claim on it is dropped with a warning
+};
 
 const LAA_ID = `${GAME_ID}-largeaddressaware`;
 const LAA_NAME = "Large Address Aware App";
@@ -901,7 +918,7 @@ function setupNotify(api) {
         },
       },
     ],
-  });    
+  });
 }
 
 //Setup function
@@ -935,6 +952,11 @@ function applyGame(context, gameSpec) {
     supportedTools: tools,
   };
   context.registerGame(game);
+
+  //register the embedded fcmodding.com browser page
+  if (fcmoddingBrowser) {
+    registerFcModdingBrowser(context, gameSpec, FCM_BROWSER_CONFIG);
+  }
 
   //register mod types
   (gameSpec.modTypes || []).forEach((type, idx) => {
@@ -1044,6 +1066,9 @@ function main(context) {
       return checkForFcModdingUpdate(api, spec, MI_REQUIREMENTS)
         .catch(err => log('warn', `Failed to check for ${MI_NAME} update: ${err}`));
     }); //*/
+    if (fcmoddingBrowser) { //claims downloads started from the browse page, and update-checks the mods installed through it
+      onceFcModdingBrowser(context.api, spec, FCM_BROWSER_CONFIG);
+    }
   });
   return true;
 }

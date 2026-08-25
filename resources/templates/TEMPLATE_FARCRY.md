@@ -39,6 +39,13 @@ in the family, so they always fire. `deployNotify` plus `runModManager` cover th
 `savemanager.png`). Extra toolbar actions: Open Far Cry Mods Site, Open Far Cry Mod Installer Site.
 The user-ID folder used by the save and config paths is resolved during `setup()`.
 
+**Bundled modules:** `fcmodding_downloader.js` keeps the FC Mod Installer installed and up to date,
+and `fcmodding_browser.js` + `base_browser.js` register a "Browse Far Cry Mods" page that embeds
+`downloads.fcmodding.com/<code>/` so mods can be browsed and installed without leaving Vortex. The
+page is behind the `fcmoddingBrowser` toggle and takes one config field, `fcGame`, which is the
+existing `FC` code. The Open Far Cry Mods Site action is unaffected: `mods.farcry.info` indexes mods
+posted in the FCModding Discord, which is not a download route.
+
 ---
 
 ## See also
@@ -47,6 +54,8 @@ The user-ID folder used by the save and config paths is resolved during `setup()
 `../WINAPI_BINDINGS.md` (the Ubisoft Connect registry probe).
 `../REQUIRES_LAUNCHER.md` (the Ubisoft Connect hand-off).
 `../RUN_EXECUTABLE.md` (`runModManager`, behind the deploy notification).
+`../FCMODDING_API.md` (the host both bundled modules talk to).
+`../BROWSER_MODULES.md` (the browse-page family `fcmodding_browser.js` belongs to).
 `../ARCHIVE_HANDLER.md` (why Vortex treats a naked `.a3` as an archive).
 `../REGISTER_GAME.md` (the `spec` / `applyGame()` contract).
 `../INSTALLER_SYSTEM.md` (`registerInstaller` semantics behind the ladder above).

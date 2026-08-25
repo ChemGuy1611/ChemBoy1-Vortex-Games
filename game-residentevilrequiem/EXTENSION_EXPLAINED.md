@@ -55,7 +55,6 @@ Installers run in priority order (lower number = tested first). The first instal
 | `residentevilrequiem-looselua` | 29 |
 | `residentevilrequiem-root` | 31 |
 | `residentevilrequiem-preset` | 33 |
-| `residentevilrequiem-fluffymod` | 45 |
 | `residentevilrequiem-fluffymodzip` | 45 |
 
 ## Registered Tools

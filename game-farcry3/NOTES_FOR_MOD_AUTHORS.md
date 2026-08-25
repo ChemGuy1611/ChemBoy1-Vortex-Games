@@ -17,7 +17,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mimoda3 | a file or folder named `info.xml` | `FCModInstaller\ModifiedFilesFC3` |
 | Mod Installer Mods | a `.a2` file | `FCModInstaller\ModifiedFilesFC3` |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder.
 
 ## Mod Installer (tool)
 

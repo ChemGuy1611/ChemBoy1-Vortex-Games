@@ -14,13 +14,12 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Specialpatchmod | a file with the `.exe` extension and a file with one of these extensions: `.dll`, `.asi` or `.addon64` | - |
 | Browsermod | a file or folder named `manifest.json`, a file or folder named `files` and a file or folder named one of: `meta`, `0000`, `0001`, `0002`, `0003`, `0004`, `0005`, `0006`, `0007`, `0008`, `0009`, `0010`, `0011`, `0012`, `0013`, `0014`, `0015`, `0016`, `0017`, `0018`, `0019`, `0020`, `0021`, `0022`, `0023`, `0024`, `0025`, `0026`, `0027`, `0028`, `0029`, `0030`, `0031`, `0032`, `0033`, `0034`, `0035`, `//'0036'`, `//this folder is used by patch mods` or `so we don't want to put it in root` | `mods` |
 | Patchmod | a file or folder named one of: `modinfo.json` | `mods` |
-| Vortexmod | a file with one of these extensions: `.paz` or `.pamt` and a file with one of these extensions: `.papgt`, `.pathc` or `.paver` | - |
 | Texture | a file or folder named one of: `meta`, `0000`, `0001`, `0002`, `0003`, `0004`, `0005`, `0006`, `0007`, `0008`, `0009`, `0010`, `0011`, `0012`, `0013`, `0014`, `0015`, `0016`, `0017`, `0018`, `0019`, `0020`, `0021`, `0022`, `0023`, `0024`, `0025`, `0026`, `0027`, `0028`, `0029`, `0030`, `0031`, `0032`, `0033`, `0034`, `0035`, `//'0036'`, `//this folder is used by patch mods` or `so we don't want to put it in root` and a file with one of these extensions: `.dds` | - |
 | Json | a file with the `.json` extension and a file or folder named one of: `modinfo.json` | - |
 | Binaries | a file with the `.exe` extension and a file with one of these extensions: `.dll`, `.asi` or `.addon64` | `bin64` |
 | Fallback Installer | anything not matched above | - |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder.
 
 ## Root / Game Folder Mods
 
@@ -65,10 +64,6 @@ Installs to: `mods`
 Recognised when the archive contains a file or folder named one of: `modinfo.json`.
 
 Installs to: `mods`
-
-## Vortexmod
-
-Recognised when the archive contains a file with one of these extensions: `.paz` or `.pamt` and a file with one of these extensions: `.papgt`, `.pathc` or `.paver`.
 
 ## Texture
 

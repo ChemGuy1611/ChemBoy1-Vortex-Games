@@ -474,13 +474,22 @@ function detectSpecialFeatures(src, flags, stores) {
 
   // Context extension requirements
   if (src.includes('context.requireExtension')) {
-    const reqMatch = src.match(/context\.requireExtension\(['"]([^'"]+)['"]\)/g);
+    // a third argument of `true` marks the dependency optional, so match any argument list
+    const REQUIRE_EXT = /context\.requireExtension\(\s*['"]([^'"]+)['"]([^)]*)\)/;
+    const reqMatch = src.match(new RegExp(REQUIRE_EXT, 'g'));
     if (reqMatch) {
       const exts = reqMatch.map(r => {
-        const em = r.match(/['"]([^'"]+)['"]/);
-        return em ? em[1] : null;
+        const em = r.match(REQUIRE_EXT);
+        return em ? { name: em[1], optional: /,\s*true\s*$/.test(em[2].trim()) } : null;
       }).filter(Boolean);
-      features.push(`**Required Extensions** — depends on: ${exts.map(e => '`' + e + '`').join(', ')}.`);
+      const required = exts.filter(e => !e.optional).map(e => '`' + e.name + '`');
+      const optional = exts.filter(e => e.optional).map(e => '`' + e.name + '`');
+      if (required.length > 0) {
+        features.push(`**Required Extensions** — depends on: ${required.join(', ')}.`);
+      }
+      if (optional.length > 0) {
+        features.push(`**Optional Extensions** — uses these if the user has them installed: ${optional.join(', ')}.`);
+      }
     }
   }
 

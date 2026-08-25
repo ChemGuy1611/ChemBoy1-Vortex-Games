@@ -29,6 +29,7 @@
 | Flag | Value | Description |
 | --- | --- | --- |
 | `hasLoader` | `true` | true if game needs a mod loader |
+| `loaderSilentUpdate` | `true` | true to re-run the mod loader installer unattended when updating an existing install |
 | `allowMgsvFix` | `true` | should MGSVFix be offered to the user (via a notification at setup)? |
 | `hasXbox` | `false` | toggle for Xbox version logic |
 | `multiExe` | `false` | set to true if there are multiple executable names |
@@ -75,6 +76,7 @@ These tools appear in Vortex's Tools panel when this game is active:
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - Download Latest MGSVFix
+- Open Snakebite Mod Manager Folder
 - Open PCGamingWiki Page
 - View Changelog
 - Submit Bug Report

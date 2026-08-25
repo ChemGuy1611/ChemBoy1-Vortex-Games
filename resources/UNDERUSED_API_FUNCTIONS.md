@@ -640,3 +640,5 @@ and settings hooked up alongside §2's reducer functions). `VORTEX_PROFILES.md`
 (`registerProfileFile`/`registerProfileFeature` in §8). `VORTEX_MOD_LIST.md`
 (`registerTableAttribute` in §10, the mods-table column system). `ARCHIVE_HANDLER.md`
 (`api.openArchive` in §5). `RUN_EXECUTABLE.md` (`registerStartHook`/`registerInterpreter` in §4).
+`STEAM_FILE_DOWNLOADER.md` (a worked example of consuming another extension's `registerAPI`
+function through `api.ext`, including the callback-vs-promise trap).

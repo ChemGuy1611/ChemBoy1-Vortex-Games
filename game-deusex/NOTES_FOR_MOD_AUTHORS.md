@@ -13,7 +13,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Launcher | a file or folder named `deusex.exe` | `System` |
 | Binaries | a file or folder named one of: `engine.dll`, `deusexechelonrenderer.dll`, `d3d9.dll` or `rtx.conf` | `System` |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder.
 
 ## Mod
 

@@ -1,5 +1,11 @@
 # template-farcry Changelog
 
+## [2026-08-24]
+
+- Added: `fcmodding_browser.js` and `base_browser.js` shipped alongside `index.js`. A "Browse Far Cry Mods" sidebar page embeds the game's own section of `downloads.fcmodding.com`, and a click on a download there installs as a managed mod.
+- Added: `fcmoddingBrowser` feature toggle, `FCM_BROWSER_CONFIG`, the `registerFcModdingBrowser` call in `applyGame()` and the `onceFcModdingBrowser` call in `context.once()`.
+- Changed: the `fcmodding_downloader.js` import now also pulls in `downloadFcModdingRequirement`, which the browser config uses so the Mod Installer downloaded from the page keeps its own mod type.
+
 ## [2026-08-21]
 
 - Changed: `context.once()` now calls through the local `api` constant declared at the top of the block instead of repeating `context.api` on each call.

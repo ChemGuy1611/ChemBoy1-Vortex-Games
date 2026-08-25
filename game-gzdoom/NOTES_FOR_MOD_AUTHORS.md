@@ -14,7 +14,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod | a file with one of these extensions: `.wad`, `.pk3`, `.zip`, `.pak`, `.pk7`, `.grp`, `.rff`, `.deh`, `.iwad` or `.ipk3` | `DML\FILE\PWAD` |
 | Zipmod | - | - |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder.
 
 ## Dml
 

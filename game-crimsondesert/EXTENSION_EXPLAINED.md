@@ -73,7 +73,6 @@ Installers run in priority order (lower number = tested first). The first instal
 | `crimsondesert-patchmod` | 33 |
 | `crimsondesert-texture` | 34 |
 | `crimsondesert-json` | 35 |
-| `crimsondesert-vortexmod` | 33 |
 | `crimsondesert-binaries` | 37 |
 | `crimsondesert-fallback` | 49 |
 
@@ -87,10 +86,10 @@ These tools appear in Vortex's Tools panel when this game is active:
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- Download ${BROWSER_NAME} + Setup
-- Download ${DMM_NAME}
-- Download ${UAL_NAME}
-- Download ${SAVE_EDITOR_NAME}
+- Download Crimson Sharp + Setup
+- Download Definitive Mod Manager
+- Download Ultimate ASI Loader
+- Download Save Editor
 - Open Config File
 - Open Save Folder
 - Open PCGamingWiki Page

@@ -15,7 +15,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Pk4 | a file or folder named `SP`, a file or folder named `MP` and a file with the `.pk4` extension | - |
 | Exe | a file or folder named `SP`, a file or folder named `MP` and a file with the `.exe` extension | - |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder.
 
 ## Base
 

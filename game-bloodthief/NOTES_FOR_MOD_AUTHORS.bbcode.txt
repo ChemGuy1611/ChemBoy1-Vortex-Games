@@ -7,15 +7,32 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 Godotmodloader:
 
-Recognised when the archive contains a file or folder named "mod_loader_setup.gd".
+Recognised when the archive contains a file or folder named "mod_loader.gd".
 
 ========================================================================
 
-Maps:
+Map Mods:
 
-Handled by the "testMaps" installer. Inspect the extension source for the exact archive layout it expects.
+Levels for the game's map loader. A map is a pair of files sharing one name, kept together in a folder named after the map.
+
+[code]
+MyMap.zip
+└── Author-MyMap\
+    ├── mymap.map
+    ├── mymap.json
+    └── textures\
+[/code]
+
+  Requirements:
+    - Recognised by a file with the ".map" extension that has a ".json" file of the same name beside it.
+    - The folder holding the pair is kept as the installed map folder, so name it after the map.
+    - A "textures" subfolder alongside the pair is installed with it.
 
   Installs to: "maps"
+
+  Common mistakes:
+    - Shipping the map file without its matching ".json" - the pair is what identifies a map, so a lone map file is not recognised and falls through to another installer.
+    - Putting the map files at the archive root - the installer then has to invent a folder name from the archive filename.
 
 ========================================================================
 

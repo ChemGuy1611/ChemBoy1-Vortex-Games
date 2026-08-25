@@ -18,6 +18,7 @@
 | Executable (GOG) | `Gnomium.exe` |
 | Executable (Demo) | `Gnomium.exe` |
 | Extension Page | [https://www.nexusmods.com/site/mods/1702](https://www.nexusmods.com/site/mods/1702) |
+| PCGamingWiki | []() |
 
 ## Supported Stores
 

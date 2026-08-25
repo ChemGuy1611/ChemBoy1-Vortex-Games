@@ -22,6 +22,12 @@
 - **Steam** — `552520`
 - **Epic Games Store** — `Coriander`
 
+## Feature Flags
+
+| Flag | Value | Description |
+| --- | --- | --- |
+| `fcmoddingBrowser` | `true` | register the "Browse Far Cry Mods" page (downloads.fcmodding.com) |
+
 ## Mod Types
 
 Mod types define where each category of mod gets deployed:
@@ -62,7 +68,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - Open Far Cry Mods Site
 - Open Far Cry Mod Installer Site
-- Download Latest ${MI_NAME}
+- Download Latest FC Mod Installer
 - Open Config Folder
 - Open Save Folder
 - View Changelog

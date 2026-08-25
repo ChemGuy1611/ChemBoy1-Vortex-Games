@@ -99,7 +99,6 @@ These tools appear in Vortex's Tools panel when this game is active:
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - Download Latest MelonLoader
-- Download MelonPreferencesManager
 - Open Data Folder
 - Open Save Folder
 - Open Config Folder

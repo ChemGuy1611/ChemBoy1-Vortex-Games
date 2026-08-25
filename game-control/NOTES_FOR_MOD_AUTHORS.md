@@ -13,7 +13,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Loosefileloader | a file or folder named `iphlpapi.dll` | - |
 | Pluginloader | a file or folder named `xinput1_4.dll` | - |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder.
 
 ## Modfolder
 

@@ -2909,11 +2909,35 @@ def has_thunderstore_downloader_js(folder):
     return os.path.isfile(os.path.join(folder, "thunderstore_downloader.js"))
 
 
+_REQUIRE_EXTENSION_RE = re.compile(
+    r"""context\.requireExtension\(\s*['"]([^'"]+)['"]([^)]*)\)""")
+
+
+def requires_extensions(src):
+    """Return the extensions this index.js declares a dependency on.
+
+    Each entry is a (name, optional) tuple. `optional` is True when the call passes
+    a third argument of `true`, which makes Vortex prompt for the missing extension
+    instead of refusing to load the calling extension.
+    """
+    found = []
+    for name, rest in _REQUIRE_EXTENSION_RE.findall(src):
+        optional = re.search(r",\s*true\s*$", rest.strip()) is not None
+        found.append((name, optional))
+    return found
+
+
+def has_extension_dependency(src):
+    """Return True if the extension declares any context.requireExtension dependency,
+    required or optional."""
+    return len(requires_extensions(src)) > 0
+
+
 def requires_unreal_mod_installer(src):
     """Return True if the extension declares a dependency on the
     'Unreal Engine Mod Installer' extension via context.requireExtension in applyGame."""
-    return ('context.requireExtension("Unreal Engine Mod Installer")' in src
-            or "context.requireExtension('Unreal Engine Mod Installer')" in src)
+    return any(name == "Unreal Engine Mod Installer"
+               for name, _optional in requires_extensions(src))
 
 
 def is_unreleased_extension(src):

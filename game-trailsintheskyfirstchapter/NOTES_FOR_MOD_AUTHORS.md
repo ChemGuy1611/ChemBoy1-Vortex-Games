@@ -11,7 +11,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Pac | a file with one of these extensions: `.pac` | `pac\steam` |
 | Root / Game Folder Mods | a `asset` folder | the game folder itself (no subfolder) |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder.
 
 ## Pac
 

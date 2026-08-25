@@ -12,7 +12,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Patcher | a file or folder named `DXHR-Patcher_1.5.jar` | the game folder itself (no subfolder) |
 | Modhook | a file or folder named `DFEngine.dll` | the game folder itself (no subfolder) |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder.
 
 ## Mod000
 

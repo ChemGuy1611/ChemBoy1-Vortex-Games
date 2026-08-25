@@ -14,9 +14,8 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Root / Game Folder Mods | a `nvngx_dlss.dll` file or a `.exe` file | the game folder itself (no subfolder) |
 | Preset Files | a `.prt` file | - |
 | Fluffy-Format Mods | anything not matched above | - |
-| XXX Fluffymodzip | a file or folder named `modmanager.exe` and a file or folder named `dinput8.dll` | - |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder.
 
 ## Fluffy Mod Manager (tool)
 
@@ -87,14 +86,11 @@ The catch-all for RE Engine mods packaged in the normal Fluffy Mod Manager layou
 **Requirements:**
 
 - Any archive not claimed by an earlier installer is treated as a Fluffy-format mod.
+- An archive already zipped in the Fluffy layout is installed as it is, with no repacking.
 
 **Common mistakes:**
 
 - Because this is a catch-all, a badly laid-out archive still installs - it just may not work. Match the layout Fluffy Mod Manager expects.
-
-## XXX Fluffymodzip
-
-Recognised when the archive contains a file or folder named `modmanager.exe` and a file or folder named `dinput8.dll`.
 
 ## Rules That Apply To Every Mod Type
 

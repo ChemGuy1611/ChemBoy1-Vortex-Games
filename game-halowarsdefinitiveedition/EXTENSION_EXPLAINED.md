@@ -17,7 +17,6 @@
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 | Executable (GOG) | `./xgameFinal.exe` |
 | Executable (Demo) | `./xgameFinal.exe` |
-| Extension Page | [XXX](XXX) |
 | PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Halo_Wars:_Definitive_Edition](https://www.pcgamingwiki.com/wiki/Halo_Wars:_Definitive_Edition) |
 
 ## Supported Stores

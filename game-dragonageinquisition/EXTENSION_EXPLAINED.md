@@ -60,12 +60,12 @@ These tools appear in Vortex's Tools panel when this game is active:
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- Download ${PATCH_NAME}
-- Remove ${PATCH_NAME}
+- Download DatapathFix Plugin
+- Remove DatapathFix Plugin
 - Delete ModData Folder
-- Open Frosty ${FROSTY_CONFIG_FILE}
-- Set ${PATCH_NAME} Enabled
-- Set ${PATCH_NAME} Disabled
+- Open Frosty manager_config.json
+- Set DatapathFix Plugin Enabled
+- Set DatapathFix Plugin Disabled
 - Open Frosty Mods Folder
 - Open Config/Save Folder
 - Open PCGamingWiki Page

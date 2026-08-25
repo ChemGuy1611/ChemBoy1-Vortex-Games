@@ -126,7 +126,7 @@ declare type InstructionType =
 | `copy` | Copy a file from archive to staging folder | `source`, `destination` |
 | `mkdir` | Create a directory | `path` |
 | `submodule` | Install a submodule or framework | `submoduleType` |
-| `generatefile` | Write generated content as a new file | `path`, `data` (string or Buffer) |
+| `generatefile` | Write generated content as a new file | `destination`, `data` (string or Buffer) |
 | `iniedit` | Patch a key-value pair in an INI file | `path`, `section`, `key`, `value` |
 | `unsupported` | Mark the mod as unsupported | - |
 | `attribute` | Set a metadata attribute on the mod | `key`, `value` |
@@ -161,8 +161,12 @@ Always push this as the last instruction in the array.
 ### generatefile
 
 ```js
-{ type: 'generatefile', path: 'config/settings.ini', data: '[Settings]\nKey=Value\n' }
+{ type: 'generatefile', destination: 'config/settings.ini', data: '[Settings]\nKey=Value\n' }
 ```
+
+The field is `destination`, not `path` — Vortex's `processGenerateFiles` joins the staging folder
+with `gen.destination` and ignores `path` entirely, so an instruction using `path` writes nothing
+and fails silently. `data` may be a string or a `Buffer`.
 
 ### iniedit
 

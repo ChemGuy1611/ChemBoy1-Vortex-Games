@@ -65,7 +65,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - === RESTORE SAVES ===
 - Open Saves (Profile) Folder
-- Open ${LO_FILE} (Load Order)
+- Open pak_config.yaml (Load Order)
 - Download Integration Studio
 - Download Index V2
 - Open Binaries Folder

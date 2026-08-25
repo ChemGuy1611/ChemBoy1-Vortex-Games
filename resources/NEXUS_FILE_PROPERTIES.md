@@ -191,6 +191,8 @@ files.sort((a, b) => b.uploaded_timestamp - a.uploaded_timestamp);
 
 ## See also
 
-`NEXUS_MODS_API.md` (v1/v3 endpoints these file objects come from). `VORTEX_NEXUS_INTEGRATION.md`
+`NEXUS_MODS_API.md` (v1/v3 endpoints these file objects come from). `NEXUS_GRAPHQL_API.md` (the v2
+GraphQL `ModFile` type and its wider read-side `ModFileCategory` / `VirusScanStatus` enums).
+`VORTEX_NEXUS_INTEGRATION.md`
 (OAuth/SSO, nxm protocol, and version-check runtime that consumes file properties).
 `VORTEX_MOD_METADATA.md` (the MD5 → file-object lookup Vortex uses to identify an archive).

@@ -12,6 +12,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `Stalker2` |
 | Blueprint Mods (LogicMods) | a `LogicMods` folder | `Stalker2\Content\Paks\LogicMods\LogicMods` |
 | Herbatamod | a file or folder named `GameLite` | `Stalker2\Content` |
+| Newpak | a file or folder named one of: `NewContent` or `OverrrideContent` | `Stalker2\Content\Paks\~mods` |
 | UE4SS Itself | a `dwmapi.dll` file | - |
 | UE4SS Script Mods (Lua) | a `.lua` file and a `Scripts` folder | - |
 | UE4SS DLL Mods (C++) | a `.dll` file and a `dlls` folder | - |
@@ -90,6 +91,12 @@ Installs to: `Stalker2\Content\Paks\LogicMods\LogicMods`
 Recognised when the archive contains a file or folder named `GameLite`.
 
 Installs to: `Stalker2\Content`
+
+## Newpak
+
+Recognised when the archive contains a file or folder named one of: `NewContent` or `OverrrideContent`.
+
+Installs to: `Stalker2\Content\Paks\~mods`
 
 ## UE4SS Itself
 

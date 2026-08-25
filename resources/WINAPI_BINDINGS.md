@@ -103,6 +103,8 @@ Full signatures: `node_modules/winapi-bindings/index.d.ts`.
 - `RegGetValue` throws on any failure (missing hive, missing path, missing value) — never returns `undefined`/`null`. Always wrap in `try`/`catch`.
 - `WithRegOpen`'s callback is synchronous and the key handle dies the instant the callback returns — don't `await` inside it.
 - Prefer `util.GameStoreHelper.findByAppId()` for game discovery; use `RegGetValue`/`WithRegOpen` only as a fallback when a store isn't the source of truth (e.g. standalone installers, dependency detection like .NET/Python versions).
+- A registry key path is **not** a filesystem path. Write the separators as literal backslashes (`'SOFTWARE\SnakeBite'`); `path.join()` produces forward slashes on non-Windows and silently breaks the lookup.
+- When a third-party installer records its own install folder in the registry, that key is the authority for where the thing lives — read it rather than assuming the installer's default folder, since the user can usually override the directory during setup. On a missing key, report "not installed" from the `catch`; substituting a guessed default path makes a leftover folder from an old uninstall look like a live install.
 
 ---
 
@@ -110,7 +112,8 @@ Full signatures: `node_modules/winapi-bindings/index.d.ts`.
 
 `resources/FILE_PARSING.md` (the INI read/mutate/write cycle these bindings back via
 `vortex-parse-ini`). `REGISTER_GAME.md` (`winapi.RegGetValue` as the discovery fallback after
-`GameStoreHelper.findByAppId()`). `NTFS_LINKS.md` (the one place the permission, Task Scheduler and
+`GameStoreHelper.findByAppId()`, and as the way a tool's `queryPath` locates an externally
+installed tool). `NTFS_LINKS.md` (the one place the permission, Task Scheduler and
 `GetVolumePathName` functions above are actually used — elevated symlink deployment).
 `TEMPLATES_OVERVIEW.md` (the registry-fallback slot in every template's `makeFindGame`) and
 `templates/` (the templates that actually use it — the two Ubisoft families in

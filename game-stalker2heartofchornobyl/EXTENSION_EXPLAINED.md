@@ -38,9 +38,10 @@
 | `SYM_LINKS` | `true` | true if symlink deployment is enabled for this game |
 | `PAKMOD_LOADORDER` | `true` | set to false if you don't want loadOrder |
 | `FBLO` | `true` | set to false to use legacy load order page |
-| `ue4ssLoadOrder` | `true` | enable load order and mods.txt writing for UE4SS mods |
+| `ue4ssLoadOrder` | `true` | master toggle for UE4SS support: UE4SS/Scripts/DLL/LogicMods mod types and installers, UE4SS buttons, load order page, and mods.txt writing |
 | `logicModsLoadOrder` | `true` | enable load order page and load_order.txt writing for LogicMods/Blueprint pak mods |
 | `collectionsLoadOrder` | `true` | include UE4SS and LogicMods load orders in collections (ANDed with the toggles above) |
+| `autoDeployMerge` | `false` | automatically run the merge tool on deploy (takes a long time and requires user input) |
 | `debug` | `false` | enables verbose debug logging |
 
 ## Mod Types
@@ -53,6 +54,7 @@ Mod types define where each category of mod gets deployed:
 | UE4SS Script-LogicMod Combo | `stalker2heartofchornobyl-ue4sscombo` | high | `{gamePath}` |
 | Root Game Folder | `stalker2heartofchornobyl-root` | high | `{gamePath}` |
 | UE5 Paks | `stalker2heartofchornobyl-ue5` | high | `{gamePath}/Stalker2/Content/Paks/~mods` |
+| 2.0 Pak | `stalker2heartofchornobyl-newpak` | high | `{gamePath}/Stalker2/Content/Paks/~mods` |
 | UE5 Paks (no ~mods) | `stalker2heartofchornobyl-pakalt` | high | `{gamePath}/Stalker2/Content/Paks` |
 | Herbata Mod (GameLite) | `stalker2heartofchornobyl-herbatamod` | high | `{gamePath}/Stalker2/Content` |
 | Simple Mod Merger | `stalker2heartofchornobyl-merger` | low | `{gamePath}/Stalker2SimpleModMerger` |
@@ -75,6 +77,7 @@ Installers run in priority order (lower number = tested first). The first instal
 | `stalker2heartofchornobyl-ue4sscombo` | 29 |
 | `stalker2heartofchornobyl-logicmods` | 31 |
 | `stalker2heartofchornobyl-herbatamod` | 33 |
+| `stalker2heartofchornobyl-newpak` | 34 |
 | `stalker2heartofchornobyl-ue4ss` | 37 |
 | `stalker2heartofchornobyl-scripts` | 39 |
 | `stalker2heartofchornobyl-ue4ssdll` | 41 |

@@ -17,7 +17,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Binaries / Injector Mods | a `BmLauncher.exe` file or a `.exe` file | `Binaries\Win32` |
 | Fallback Installer | anything not matched above | - |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder.
 
 ## TFC Installer (tool)
 

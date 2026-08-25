@@ -116,6 +116,22 @@ GraphQL query shape uses a field-selection object (`{ name: true, headerImage: {
 thumbnailUrl: { $filter: { size: 'MED' } } } }`) rather than raw query strings — `$filter` marks
 fields that need parameters (documented at length in the README with `modFileContents` examples).
 
+#### The client wraps only a slice of v2
+
+The v2 schema is far wider than the seven methods above — 66 query fields and 96 mutations, against
+which this client exposes a handful. Introspection on the endpoint is open and unauthenticated, so
+the full surface is discoverable directly. **`NEXUS_GRAPHQL_API.md` documents it**: the operation
+catalogs, the Elasticsearch filter/sort/facet grammar behind `mods` and `games`, both pagination
+systems, the key type fields, and the gotchas (`count` silently caps at 80; `mod(gameId:)` wants a
+numeric game id, not a domain string; deprecated fields are hidden from introspection unless you
+ask for them).
+
+Two facts from that doc worth repeating here, because they bound what any client can do: **mod tags
+are readable but not writable from any API tier**, and the same is true of a mod's images, videos,
+and page permission switches. The whole tag/media mutation family is collection-scoped. The only
+mod-level write mutations in the entire schema are endorse/abstain, track/untrack,
+`updateModDirectDownloadEnabled`, and the donation-point block pair.
+
 ### Collections (GraphQL-backed — distinct from the v3 REST Collections API)
 
 | Method | Purpose |
@@ -178,6 +194,7 @@ heavy load (global or per-user) and resets the client's local quota to 0 when th
 
 ## See also
 
-`NEXUS_MODS_API.md` (the v3 REST API this library does *not* cover), `NEXUS_FILE_PROPERTIES.md`,
-`VORTEX_NEXUS_INTEGRATION.md` (how Vortex core wires this library in as the "v1 nexus-node"
-client, alongside the separate `packages/nexus-api-v3` v3 client).
+`NEXUS_MODS_API.md` (the v3 REST API this library does *not* cover),
+`NEXUS_GRAPHQL_API.md` (the full v2 GraphQL schema this library wraps a slice of),
+`NEXUS_FILE_PROPERTIES.md`, `VORTEX_NEXUS_INTEGRATION.md` (how Vortex core wires this library in as
+the "v1 nexus-node" client, alongside the separate `packages/nexus-api-v3` v3 client).

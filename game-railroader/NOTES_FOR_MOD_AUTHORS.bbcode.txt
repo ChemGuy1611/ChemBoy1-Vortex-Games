@@ -25,6 +25,81 @@ MyRootMod.zip
 
 ========================================================================
 
+Railloader (tool):
+
+This installer handles Railloader itself, not mods for it. It exists so users can install Railloader through Vortex, and mod authors normally never package this.
+
+  Requirements:
+    - Recognised by a file named "railloader.exe" in the archive.
+    - Railloader has no working download site at the moment, so Vortex cannot fetch it. This installer exists so an archive you already have installs to the right place.
+
+  Installs to: the game folder itself (no subfolder)
+
+  Common mistakes:
+    - If you bundle Railloader inside your mod archive, Vortex treats the whole download as Railloader rather than as your mod. Ship the mod alone and list Railloader as a requirement.
+
+========================================================================
+
+Unity Mod Manager (tool):
+
+This installer handles Unity Mod Manager itself, not mods for it. It exists so users can install Unity Mod Manager through Vortex, and mod authors normally never package this.
+
+  Requirements:
+    - Recognised by a file named "UnityModManager.exe" in the archive.
+    - Vortex reproduces the loader patch the manager would apply itself, so it deploys and purges like any other mod.
+
+  Installs to: the game folder itself (no subfolder)
+
+  Common mistakes:
+    - If you bundle Unity Mod Manager inside your mod archive, Vortex treats the whole download as Unity Mod Manager rather than as your mod. Ship the mod alone and list Unity Mod Manager as a requirement.
+
+========================================================================
+
+Unity Mod Manager Mods:
+
+Mods for Unity Mod Manager: a manifest plus the assembly that implements the mod. Each one gets its own folder under "Mods".
+
+[code]
+MyUmmMod.zip
+├── info.json
+└── MyUmmMod.dll
+[/code]
+
+  Requirements:
+    - Recognised by a file named "info.json" together with a ".dll" beside it.
+    - The mod folder name comes from the folder wrapping the manifest. A flat archive is named from the "Id" field in "info.json" instead, so keep that field filled in.
+
+  Installs to: "Mods\<ModName>"
+
+  Common mistakes:
+    - Shipping the manifest without the assembly - the archive is not recognised as a mod.
+    - Wrapping the mod in an extra "Mods" folder is fine, but a second level of wrapping folders becomes part of the mod folder name.
+
+========================================================================
+
+Railloader Mods:
+
+Mods for Railloader, the game's second mod loader. They live in the same "Mods" folder as Unity Mod Manager mods, and are told apart by their manifest.
+
+[code]
+MyRailloaderMod.zip
+└── MyRailloaderMod\
+    ├── Definition.json
+    └── MyRailloaderMod.dll
+[/code]
+
+  Requirements:
+    - Recognised by a file named "Definition.json".
+    - A leading "Mods" folder in the archive is dropped - the installer already targets "Mods", so it is not doubled up.
+    - A flat archive is named from the "id" field in "Definition.json".
+
+  Installs to: "Mods\<ModName>"
+
+  Common mistakes:
+    - Mixing the two formats in one archive. A mod needs either "Definition.json" for Railloader or a Unity Mod Manager manifest, not both - each loader rejects the other's mods.
+
+========================================================================
+
 Assembly Replacement Mods:
 
 Mods that replace a compiled game assembly outright. These overwrite core game files, so they conflict with any other mod touching the same assembly.
@@ -51,6 +126,21 @@ Mods that replace packed Unity asset files, deployed into the game's data folder
 
   Common mistakes:
     - Asset files must keep their original names to replace the right bundle.
+
+========================================================================
+
+Fallback Installer:
+
+The catch-all. Any archive that matched none of the installers above lands here and is copied across unchanged.
+
+[b][color=#ffff00]NOTE: Landing in the fallback installer is a signal your archive layout needs fixing.[/color][/b]
+
+  Requirements:
+    - Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
+    - Vortex shows the user a notification when a mod installs through the fallback.
+
+  Common mistakes:
+    - If your mod lands here unintentionally, re-check the layouts above - users will see a fallback warning and may report the mod as broken.
 
 ========================================================================
 

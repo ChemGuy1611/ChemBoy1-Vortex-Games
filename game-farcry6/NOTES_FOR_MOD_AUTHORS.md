@@ -16,7 +16,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Installer Mods | a `.a2` file | `FCModInstaller\ModifiedFilesFC6` |
 | Xml | a file or folder named `gamerprofile.xml` and a file with the `.xml` extension | `DOCUMENTS\My Games\Far Cry 6\USERID_FOLDER` |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder.
 
 ## Mod Installer (tool)
 

@@ -9,11 +9,10 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | Data | a file with the `.dl_bin` extension | `data\game` |
-| Patch MergedMods This Is Fine Ignore This SELECT APPLY CHANGES DO NOT ENABLE | a file or folder named `9ba626afa44a3aa3.patch_0.gpu_resources` and a file with the `.patch_0` extension | - |
-| Soundpatch | a file with the `.patch_0` extension | - |
+| Patch Mods (.patch_0) | a file named `<archive hash>.patch_0` | - |
 | Stream | a file with the `.stream` extension | `data` |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder.
 
 ## Data
 
@@ -21,13 +20,33 @@ Recognised when the archive contains a file with the `.dl_bin` extension.
 
 Installs to: `data\game`
 
-## Patch MergedMods This Is Fine Ignore This SELECT APPLY CHANGES DO NOT ENABLE
+## Patch Mods (.patch_0)
 
-Recognised when the archive contains a file or folder named `9ba626afa44a3aa3.patch_0.gpu_resources` and a file with the `.patch_0` extension.
+Almost every Helldivers 2 mod is a patch mod. A patch file is named after the game archive it edits - a 16-character hex hash - followed by a patch number. Graphics and sound mods use the same format and are installed the same way.
 
-## Soundpatch
+```text
+MyArmourMod.zip
+├── 9ba626afa44a3aa3.patch_0
+├── 9ba626afa44a3aa3.patch_0.gpu_resources
+├── 9ba626afa44a3aa3.patch_0.stream
+└── readme.txt
+```
 
-Recognised when the archive contains a file with the `.patch_0` extension.
+**Requirements:**
+
+- Recognised by any file matching `<16 hex characters>.patch_<number>`, for example `9ba626afa44a3aa3.patch_0`. Any archive hash works - there is no fixed list.
+- The `.gpu_resources` and `.stream` sidecar files are optional. Ship whichever ones your mod actually needs; some archives have them and some do not.
+- Always number your files from `patch_0`. Vortex renumbers them at deploy time so that every mod editing the same archive gets a unique, gap-free number, in the order the user sets on the Mod Priority page. Your own numbering only decides the order of your own files within one archive.
+- A mod may ship patch files for several archives at once, and several files for one archive (`x.patch_0` and `x.patch_1`). Both are handled.
+- To offer variants, put each complete set of patch files in its own folder. Vortex asks the user which folder to install. Name the folders after what they contain, because those names are what the user picks from.
+- Documentation files at the top level of the archive are installed alongside the patch files and are left untouched.
+
+**Common mistakes:**
+
+- Numbering files `patch_1` or higher to "load later" - the number in your archive is not the number the game sees. Priority is set by the user in Vortex, not by the file name.
+- Renaming a patch file to a hash the installed game does not have. The game silently ignores a patch for an archive it does not know, so the mod appears to do nothing. Vortex warns about this at install time.
+- Putting a readme inside each variant folder - only files at the top level of the archive are installed alongside the patch files, so keep shared documentation at the root.
+- Leaving out a `.patch_0` file but shipping its `.gpu_resources` or `.stream` sidecar. A sidecar is only ever installed next to the patch file it belongs to.
 
 ## Stream
 

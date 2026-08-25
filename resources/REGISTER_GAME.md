@@ -210,6 +210,30 @@ supportedTools: [
 ```
 
 `queryPath` on a tool is used when the tool lives outside the game dir (e.g. a separate ModKit install).
+It returns the tool's **folder**, not the executable — Vortex joins `executable()` onto it.
+
+A tool that is not installed must report that by returning an **empty string**, never `undefined`.
+`quickDiscoveryTools` branches on `typeof toolPath === 'string'`: an empty string is handled as
+"not found" and logged at debug level, while `undefined` falls through to the promise branch and
+throws on `.then`. Resolve the folder from whatever the tool actually recorded — a registry key
+written by its installer, for instance — and return `''` from the `catch` when that lookup fails.
+Do not substitute a guessed default path: a stale folder left behind by an uninstall would then
+be reported as a live install.
+
+```js
+function getToolFolder() {
+  try {
+    const winapi = require('winapi-bindings');
+    const installPath = winapi.RegGetValue('HKEY_CURRENT_USER', 'SOFTWARE\SomeTool', '');
+    return installPath?.value ?? '';
+  } catch { //RegGetValue throws when the key is missing, see WINAPI_BINDINGS.md
+    return '';
+  }
+}
+```
+
+The registry path is **not** a filesystem path — write the backslashes literally, never build it
+with `path.join()`, which emits forward slashes off Windows.
 
 ---
 
@@ -276,4 +300,5 @@ Notes:
 constraint they interact with). `ERROR_CLASSES.md` (`SetupError` thrown from `IGame.setup()`).
 `REQUIRES_LAUNCHER.md` (full
 reference for the `requiresLauncher` field above). `PCGAMINGWIKI_API.md` (looking up the Steam/GOG/
-Epic/Microsoft Store IDs these fields need).
+Epic/Microsoft Store IDs these fields need). `STEAM_FILE_DOWNLOADER.md` (`details.steamAppId`
+and the `details.hideSteamKit` opt-out, both read by the Steam file-verification extension).

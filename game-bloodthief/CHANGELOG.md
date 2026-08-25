@@ -4,7 +4,7 @@
 
 - None Planned
 
-## [0.3.0] - 2026-08-22
+## [1.0.0] - 2026-08-22
 
 - Fixed: Installing the mod loader no longer copies about 2600 unrelated files into the game folder. Only the loader itself is installed
 - Added: Map mods are now recognised and installed to the game's `maps` folder

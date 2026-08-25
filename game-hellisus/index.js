@@ -2,8 +2,8 @@
 Name: Hell is Us Vortex Extension
 Structure: UE5 (Xbox-Integrated)
 Author: ChemBoy1
-Version: 1.0.0
-Date: 2026-08-21
+Version: 1.0.1
+Date: 2026-08-24
 Notes:
 - LOGICMODS_PATH ends in the LogicMods folder for this game (kept from the 0.1.0 extension)
 ////////////////////////////////////////////////*/
@@ -1763,11 +1763,24 @@ async function deserializeLoadOrder(context) {
       .filter(modId => util.getSafe(currentModsState, [modId, 'enabled'], false));
   const mods = util.getSafe(props.state,
       ['persistent', 'mods', GAME_ID], {});
-  const loFilePath = await ensureLOFile(context, props.profile.gameId, props);
-  const fileData = await fs.readFileAsync(loFilePath, { encoding: 'utf8' });
   let data = [];
-  if (fileData.length > 0) {
-    data = JSON.parse(fileData);
+  try {
+    const loFilePath = await ensureLOFile(context, props.profile.gameId, props);
+    const fileData = await fs.readFileAsync(loFilePath, { encoding: 'utf8' });
+    if (fileData.length > 0) {
+      data = JSON.parse(fileData);
+    }
+    if (!Array.isArray(data)) {
+      data = [];
+    }
+  } catch (err) {
+    //Vortex discards a rejection from here without storing anything, so an unreadable or malformed
+    //file would leave the load order unset for the whole session and mod types that sort by it
+    //would deploy unsorted. Fall back to the order already in state - never to an empty list,
+    //which would be serialized straight back over the file.
+    log('warn', 'failed to read load order file', err);
+    const storedLO = util.getSafe(props.state, ['persistent', 'loadOrder', props.profile.id], []);
+    data = Array.isArray(storedLO) ? storedLO : [];
   }
   try {
     /*try {
@@ -2205,15 +2218,13 @@ function makePrefix(input) {
 function loadOrderPrefix(api, mod) {
   const state = api.getState();
   const profile = selectors.lastActiveProfileForGame(state, GAME_ID);
-  const loadOrder = util.getSafe(state, ['persistent', 'loadOrder', profile], {});
-  let pos;
-  if (FBLO) {
-    pos = loadOrder.findIndex((entry) => entry.id === mod.id); //for FBLO
-  } else {
-    const loKeys = Object.keys(loadOrder);
-    pos = loKeys.indexOf(mod.id); //for legacy load order page
+  const loadOrder = util.getSafe(state, ['persistent', 'loadOrder', profile], undefined);
+  let pos = -1;
+  if (Array.isArray(loadOrder)) {
+    pos = loadOrder.findIndex((entry) => entry.id === mod.id); //FBLO stores an array
+  } else if ((loadOrder !== undefined) && (loadOrder !== null) && (typeof loadOrder === 'object')) {
+    pos = Object.keys(loadOrder).indexOf(mod.id); //legacy load order page stores an object
   }
-  //
   if (pos === -1) {
     return 'ZZZZ-';
   }

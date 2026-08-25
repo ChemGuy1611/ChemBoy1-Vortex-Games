@@ -9,10 +9,15 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | Root / Game Folder Mods | a `Railroader_Data` folder | the game folder itself (no subfolder) |
+| Railloader (tool) | a `railloader.exe` file | the game folder itself (no subfolder) |
+| Unity Mod Manager (tool) | a `UnityModManager.exe` file | the game folder itself (no subfolder) |
+| Unity Mod Manager Mods | an `info.json` file and a `.dll` | `Mods\<ModName>` |
+| Railloader Mods | a `Definition.json` file | `Mods\<ModName>` |
 | Assembly Replacement Mods | a `Assembly-CSharp.dll` file | `Railroader_Data\Managed` |
 | Asset Replacement Mods | a `.assets` file | `Railroader_Data` |
+| Fallback Installer | anything not matched above | - |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder.
 
 ## Root / Game Folder Mods
 
@@ -33,6 +38,81 @@ Installs to: the game folder itself (no subfolder)
 **Common mistakes:**
 
 - Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
+
+## Railloader (tool)
+
+This installer handles Railloader itself, not mods for it. It exists so users can install Railloader through Vortex, and mod authors normally never package this.
+
+**Requirements:**
+
+- Recognised by a file named `railloader.exe` in the archive.
+- Railloader has no working download site at the moment, so Vortex cannot fetch it. This installer exists so an archive you already have installs to the right place.
+
+Installs to: the game folder itself (no subfolder)
+
+**Common mistakes:**
+
+- If you bundle Railloader inside your mod archive, Vortex treats the whole download as Railloader rather than as your mod. Ship the mod alone and list Railloader as a requirement.
+
+## Unity Mod Manager (tool)
+
+This installer handles Unity Mod Manager itself, not mods for it. It exists so users can install Unity Mod Manager through Vortex, and mod authors normally never package this.
+
+**Requirements:**
+
+- Recognised by a file named `UnityModManager.exe` in the archive.
+- Vortex reproduces the loader patch the manager would apply itself, so it deploys and purges like any other mod.
+
+Installs to: the game folder itself (no subfolder)
+
+**Common mistakes:**
+
+- If you bundle Unity Mod Manager inside your mod archive, Vortex treats the whole download as Unity Mod Manager rather than as your mod. Ship the mod alone and list Unity Mod Manager as a requirement.
+
+## Unity Mod Manager Mods
+
+Mods for Unity Mod Manager: a manifest plus the assembly that implements the mod. Each one gets its own folder under `Mods`.
+
+```text
+MyUmmMod.zip
+├── info.json
+└── MyUmmMod.dll
+```
+
+**Requirements:**
+
+- Recognised by a file named `info.json` together with a `.dll` beside it.
+- The mod folder name comes from the folder wrapping the manifest. A flat archive is named from the `Id` field in `info.json` instead, so keep that field filled in.
+
+Installs to: `Mods\<ModName>`
+
+**Common mistakes:**
+
+- Shipping the manifest without the assembly - the archive is not recognised as a mod.
+- Wrapping the mod in an extra `Mods` folder is fine, but a second level of wrapping folders becomes part of the mod folder name.
+
+## Railloader Mods
+
+Mods for Railloader, the game's second mod loader. They live in the same `Mods` folder as Unity Mod Manager mods, and are told apart by their manifest.
+
+```text
+MyRailloaderMod.zip
+└── MyRailloaderMod\
+    ├── Definition.json
+    └── MyRailloaderMod.dll
+```
+
+**Requirements:**
+
+- Recognised by a file named `Definition.json`.
+- A leading `Mods` folder in the archive is dropped - the installer already targets `Mods`, so it is not doubled up.
+- A flat archive is named from the `id` field in `Definition.json`.
+
+Installs to: `Mods\<ModName>`
+
+**Common mistakes:**
+
+- Mixing the two formats in one archive. A mod needs either `Definition.json` for Railloader or a Unity Mod Manager manifest, not both - each loader rejects the other's mods.
 
 ## Assembly Replacement Mods
 
@@ -62,6 +142,21 @@ Installs to: `Railroader_Data`
 **Common mistakes:**
 
 - Asset files must keep their original names to replace the right bundle.
+
+## Fallback Installer
+
+The catch-all. Any archive that matched none of the installers above lands here and is copied across unchanged.
+
+> **NOTE:** Landing in the fallback installer is a signal your archive layout needs fixing.
+
+**Requirements:**
+
+- Reaching this installer usually means the archive was not laid out in a way Vortex recognised.
+- Vortex shows the user a notification when a mod installs through the fallback.
+
+**Common mistakes:**
+
+- If your mod lands here unintentionally, re-check the layouts above - users will see a fallback warning and may report the mod as broken.
 
 ## Rules That Apply To Every Mod Type
 

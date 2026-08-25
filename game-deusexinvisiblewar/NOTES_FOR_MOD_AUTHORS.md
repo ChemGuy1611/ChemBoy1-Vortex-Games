@@ -12,7 +12,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Datamodfolder | a file or folder named one of: `AcquiredDataText`, `Bitmaps`, `Conversations`, `Flags`, `LipsincData`, `Maps`, `MatLib`, `SkeletalAnimations`, `SkeletalMeshes`, `Sounds`, `StaticMeshes`, `TagDatabase`, `Textures`, `UTX` or `VideoTextures` | `content\DX2` |
 | Binaries | - | `System` |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder.
 
 ## Root / Game Folder Mods
 

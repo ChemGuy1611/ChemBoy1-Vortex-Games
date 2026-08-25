@@ -54,7 +54,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Open Config File
 - Open Save Folder (Steam)
 - Download Lovely-Injector Latest
-- Download ${MALVERK_NAME} Latest
+- Download Malverk (Texture Pack Manager) Latest
 - Open PCGamingWiki Page
 - View Changelog
 - Submit Bug Report

@@ -255,3 +255,5 @@ the file objects they return), `DOWNLOADER.md` (the GitHub requirements download
 this path), `VORTEX_EVENT_BUS.md` (`set-download-games`, `did-import-downloads`).
 **Not** `MODDB_API.md` — different "moddb".
 `GITHUB_API.md` (where the GitHub-sourced archives that get mis-tagged come from).
+`VORTEX_DATABASES.md` (the `metadb` store on disk, its `hash:<md5>:<size>:<gameId>:` key format,
+and how to read a cached lookup back out).

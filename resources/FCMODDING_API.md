@@ -169,12 +169,104 @@ context.registerAction('mod-icons', 300, 'open-ext', {}, `Download Latest ${MI_N
 }, () => selectors.activeGameId(context.api.getState()) === GAME_ID);
 ```
 
+## The Download Catalog
+
+The host is not just the mod installer's home — it is a small, fully browsable mod catalog, and unlike `mods.farcry.info` it answers a plain HTTP client with `200`. Probed 2026-08-24:
+
+| Path | Holds |
+| --- | --- |
+| `/` | Section index: `/fc3/`, `/fc4/`, `/fc5/`, `/fc6/`, `/fcnd/`, `/fcp/`, `/others/`, `/all/`, `/faq/` |
+| `/{game}/` | That game's mod pages |
+| `/{game}/{mod}/` | One mod: description, screenshots, and its `/files/` links |
+| `/all/mod-installer/` | FCMI itself |
+| `/others/` | `crs`, `dominovisualizer`, `fcbconverter`, `mod-installer-cmd`, `sandbox` |
+
+The catalog is deliberately small — these are the curated mod packs, not the community's day-to-day output (that lives in Discord, see the next section):
+
+| Game | Mods |
+| --- | --- |
+| Far Cry 3 | `rakyat-mod` |
+| Far Cry 4 | `golden-path-mod` |
+| Far Cry 5 | `green-hope-county`, `resistance-mod`, `winter-hope-county` |
+| Far Cry 6 | `libertad-mod` |
+| Far Cry New Dawn | `dark-hope-county`, `scavenger-mod`, `winter-hope-county-2035` |
+| Far Cry Primal | `wenja-mod` |
+
+Every mod page links its downloads through the same `/files/{name}` alias the installer uses, and the same redirect rule resolves them:
+
+```text
+/files/FC6Libertad.zip            -> /version/FC6Libertad_1.68.zip
+/files/CustomRadioStationCCR_FC6.zip -> /version/CustomRadioStationCCR_FC6.zip   (unversioned)
+/files/1ssSRXZYGJDgNd17k5JPjPqjq5g3wr -> drive.google.com/drive/folders/…        (off-host)
+```
+
+Three things follow, and all three differ from the installer's own file:
+
+- **Mod versions are semver-ish, not build stamps.** `FC6Libertad_1.68.zip` against the installer's `FCModInstaller_20250412-1300.zip`. Any comparison shared between the two has to branch on the shape; the numeric-strip key that orders build stamps would read `1.68` as `168` and `1.7` as `17`, inverting them.
+- **Some files carry no version at all** in the redirect target, so the page's own `<i>v1.68</i>` / `Last updated:` line is the only signal for those.
+- **Some `/files/` aliases are opaque 30-character ids that redirect off-host**, usually to a Google Drive folder rather than a file. Anything walking this catalog has to expect a redirect target it cannot fetch.
+
+## The mods.farcry.info Database
+
+`mods.farcry.info` is the mod database FCMI installs from. It is an index, not a host: probed live on 2026-08-24, it publishes no files of its own.
+
+**Cloudflare challenges the site's own paths.** `GET https://mods.farcry.info/fc5` answers `403` with `cf-mitigated: challenge` and a Turnstile page; so do `/`, `/fc5/` and `/robots.txt`. No plain HTTP client reads the listing — only a real browser engine that can run the challenge.
+
+The challenge is path-scoped, and one static-looking path slips it: `/favicon.ico` answers `200 text/html` with the site's entire listing (~1.5 MB, `<title> Mods for Far Cry</title>`). The app serves its default document for paths it does not route, and that document is the whole database in one file.
+
+The per-game pages are reachable the same way. `mods.farcry.info/{code}` is the human URL, but the code also works as a query parameter on the unchallenged path — `/favicon.ico?game=fc5` returns `<title>FC5 Mods for Far Cry</title>` and only that game's rows. Every game was read this way:
+
+| Code | Game | Entries | Entries whose download is a Discord message |
+| --- | --- | --- | --- |
+| `fc3` | Far Cry 3 | 130 | 130 |
+| `fc4` | Far Cry 4 | 171 | 171 |
+| `fc5` | Far Cry 5 | 168 | 168 |
+| `fc6` | Far Cry 6 | 343 | 343 |
+| `fcnd` | Far Cry New Dawn | 85 | 85 |
+| `fcp` | Far Cry Primal | 14 | 14 |
+| (none) | all games | 911 | 911 |
+
+An unrecognised code falls back to the unfiltered listing rather than erroring.
+
+**Every download link points into Discord.** All 911 entries — in the combined document and in all six per-game views alike — carry the same shape:
+
+```html
+<h2>Download:</h2>Link to Discord message:
+<a name="898187189698052096" title="Download in the FCModding Discord"
+   href="https://discord.com/channels/846424998888734731/895387581154488331/898187189698052096">
+```
+
+Link hosts across the page: `discord.com` 1823, `discord.gg` 914 (the server invite), `downloads.fcmodding.com` 14 (tool links — the mod installer and a handful of large mods, not the database's entries). The per-game views break down identically; `fcp`, the smallest, has 14 Discord entries and no direct file link at all. There is no per-mod URL on the site itself, no file id, and no version field.
+
+The consequence for tooling: the actual bytes are Discord attachments, reachable only after a Discord login with membership in the FCModding server, and `cdn.discordapp.com` attachment URLs are HMAC-signed with an expiry. A download route for this database is a Discord route, not a `mods.farcry.info` one.
+
+## Shared fcmodding_browser.js Module
+
+`resources/browsers/fcmodding_browser.js` is the other half: where the downloader installs one known requirement unattended, the browser module registers a **"Browse Far Cry Mods" sidebar page** that embeds this host's own catalog for one game, and turns a click on any download there into a managed install. It is an adapter over `base_browser.js`, which owns the page, the claim and the update check; the contract is in `BROWSER_MODULES.md`. An adopting extension carries both files beside its `index.js`.
+
+What the adapter has to supply for a host with no API:
+
+| Concern | How it is answered here |
+| --- | --- |
+| Identity | The download's **file name** (`FC6Libertad.zip`). The host publishes no mod id |
+| Catalog | The section index and each mod page are fetched and parsed once per session — title, `<i>v…</i>` version, and the `/files/` links that page offers |
+| Version | The redirect target's file name, falling back to the mod page's printed version |
+| Download URL | The versioned target rather than the alias, so two builds do not collide under one name in the download folder |
+| Ordering | A numeric segment compare, which orders `4.52` above `4.9` and separates two builds released on the same day |
+| Dependencies | None — the host publishes no dependency data |
+
+Two link shapes on this host are deliberately never claimed: an opaque `/files/{id}` that redirects to a Google Drive folder (`drive.google.com` is kept off the page's allowed hosts, so it opens in the system browser), and any alias without an archive extension.
+
+The config is one field, `fcGame`, holding the section slug the extension already keeps — so an adopter is the two module files plus a config object. Consumer wiring lives in `resources/browsers/template_fcmodding_browser.js`.
+
+Adopters: `game-farcry3`, `game-farcry4`, `game-farcry5`, `game-farcry6`, `game-farcrynewdawn`, `game-farcryprimal` and `template-farcry` — the same set that carries the downloader.
+
 ## Caveats
 
 - No API — the redirect and the landing page are the whole contract, and neither is versioned by the site. Keep `fallbackVersion` in mind if the redirect scheme changes.
 - Old builds are culled, so there is no way to install anything but the current one. Pinning is impossible by construction.
 - FCMI has its own in-app updater. It writes into the deployed (hardlinked) folder, which desyncs Vortex's staging copy — users should let Vortex handle updates instead.
-- `mods.farcry.info` (the mod database FCMI installs from) is a different site with no predictable per-mod URL scheme. It stays a plain toolbar link, not a download route.
+- `mods.farcry.info` publishes no files: every entry links to a Discord message, and the site itself sits behind a Cloudflare challenge. See the section above for what that rules out.
 
 ---
 
@@ -192,5 +284,7 @@ off to). `VORTEX_MOD_INSTALL.md` (installing the downloaded archive as a managed
 which name a requirement shows under).
 `CODEBERG_API.md` (the Forgejo/Gitea release API — the sibling host with a real versioned release
 history, so unlike this one it supports version pinning).
+`BROWSER_MODULES.md` (the browser-page family this host's second module belongs to: the base, the
+adapter contract, and the other three sources).
 `TEMPLATES_OVERVIEW.md` (which templates bundle a downloader module copy).
 `GITHUB_API.md` (the default requirement host, and the API the sibling `downloader.js` talks to).

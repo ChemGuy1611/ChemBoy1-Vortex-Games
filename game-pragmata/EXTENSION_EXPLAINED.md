@@ -58,7 +58,6 @@ Installers run in priority order (lower number = tested first). The first instal
 | `pragmata-looselua` | 29 |
 | `pragmata-root` | 31 |
 | `pragmata-preset` | 33 |
-| `pragmata-fluffymod` | 49 |
 | `pragmata-fluffymodzip` | 49 |
 
 ## Registered Tools

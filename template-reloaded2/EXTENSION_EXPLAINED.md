@@ -15,8 +15,6 @@
 | Game ID | `XXX` |
 | Executable | `XXX.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
-| Extension Page | XXX |
-| PCGamingWiki | XXX |
 
 ## Feature Flags
 
@@ -24,6 +22,7 @@
 | --- | --- | --- |
 | `hasXbox` | `false` | toggle for Xbox version logic |
 | `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |
+| `setupNotification` | `true` | enable to show the user a notification with special instructions (specify below) - default true: Reloaded-II Mod Manager setup instructions are always relevant |
 | `debug` | `false` | toggle for debug mode |
 
 ## Mod Types
@@ -35,7 +34,7 @@ Mod types define where each category of mod gets deployed:
 | Reloaded Mod | `XXX-reloadedmod` | high | `{gamePath}/Reloaded/Mods` |
 | Mod Loader | `XXX-reloadedmodloader` | low | `{gamePath}/Reloaded/Mods/XXX_Mod_Loader` |
 | Reloaded-II Mod Manager | `XXX-reloadedmanager` | low | `{gamePath}` |
-| Save File | `XXX-save` | high | `{gamePath}/SAVE_PATH` |
+| Save File | `XXX-save` | high | `{gamePath}/gamedata/savedata/` |
 
 ## Mod Installers
 
@@ -53,6 +52,7 @@ Installers run in priority order (lower number = tested first). The first instal
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - Download Reloaded Mod Manager
+- Open Save Folder
 - Open PCGamingWiki Page
 - View Changelog
 - Open Downloads Folder
@@ -68,7 +68,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 | Type | Path |
 | --- | --- |
-| Save | `gamedata/savedata` |
+| Save | `gamedata/savedata/` |
 
 ## Special Features
 
@@ -77,19 +77,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

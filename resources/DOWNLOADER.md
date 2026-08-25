@@ -310,6 +310,9 @@ timestamp, and the only one with no version pinning at all).
 `CODEBERG_API.md` (the eighth sibling module, for Codeberg and any other Forgejo/Gitea instance —
 the closest sibling to this one, since Forgejo's release payload uses GitHub's field names; the
 difference that bites is the missing asset `updated_at`).
+`UNITY_MOD_MANAGER.md` (a requirement this module explicitly **cannot** serve — UMM publishes no
+GitHub releases at all, so it takes the inline-Nexus route instead of a downloader module).
+`RAILLOADER.md` (a requirement with no reachable host of any kind — manual import only).
 `EMBEDDED_BROWSER.md` (the `browse-for-download` hand-off used when a requirement has no predictable
 URL, and how to embed a mod site in a page instead).
 `GITHUB_API.md` (the API this module is built on: release and asset payload fields, the three

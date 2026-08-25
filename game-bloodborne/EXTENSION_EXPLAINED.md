@@ -54,7 +54,7 @@ These tools appear in Vortex's Tools panel when this game is active:
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- Download ${SHADLAUNCHER_NAME}
+- Download shadPS4QtLauncher
 - View Changelog
 - Submit Bug Report
 - Open Downloads Folder

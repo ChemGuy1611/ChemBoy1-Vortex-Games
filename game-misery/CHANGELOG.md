@@ -4,6 +4,11 @@
 
 - None
 
+## [1.0.5] - 2026-08-24
+
+- Fixed: Deploying could fail with an error when the load order had not been read yet, which can happen while installing a collection.
+- Fixed: The load order no longer stops working for the rest of the session if its file cannot be read or is damaged.
+
 ## [1.0.4] - 2026-07-29
 
 - Fixed: The load order could disappear after deploying while a mod update was in progress, and only came back after deploying a second time.

@@ -11,7 +11,11 @@ const { actions, fs, util, selectors, log } = require('vortex-api');
 const path = require('path');
 const template = require('string-template');
 const winapi = require('winapi-bindings');
-const { downloadFcModding, checkForFcModdingUpdate } = require('./fcmodding_downloader');
+const { downloadFcModding, checkForFcModdingUpdate, downloadFcModdingRequirement } = require('./fcmodding_downloader');
+const { registerFcModdingBrowser, onceFcModdingBrowser } = require('./fcmodding_browser');
+
+//feature toggles
+const fcmoddingBrowser = true; //register the "Browse Far Cry Mods" page (downloads.fcmodding.com)
 
 const DOCUMENTS = util.getVortexPath("documents");
 
@@ -70,6 +74,18 @@ const MI_REQUIREMENTS = [
     pageUrl: MI_URL_ERR,
   },
 ];
+
+//Embedded fcmodding.com browser page - the user browses the live download catalog for this
+//game and installs from it. The Mod Installer keeps its own mod type when downloaded there.
+const FCM_BROWSER_CONFIG = {
+  fcGame: FC,
+  requirements: MI_REQUIREMENTS,
+  installRequirement: (api, gameSpec, requirement) =>
+    downloadFcModdingRequirement(api, gameSpec, requirement, true),
+  pageId: `${GAME_ID}-fcmodding-browse`,
+  pageTitle: 'Browse Far Cry Mods',
+  //no hotkey: Ctrl+Shift+B is already taken, and a second claim on it is dropped with a warning
+};
 
 const XML_ID = `${GAME_ID}-xml`;
 const XML_NAME = "XML Settings Mod";
@@ -858,6 +874,11 @@ function applyGame(context, gameSpec) {
   };
   context.registerGame(game);
 
+  //register the embedded fcmodding.com browser page
+  if (fcmoddingBrowser) {
+    registerFcModdingBrowser(context, gameSpec, FCM_BROWSER_CONFIG);
+  }
+
   //register mod types
   (gameSpec.modTypes || []).forEach((type, idx) => {
     context.registerModType(type.id, modTypePriority(type.priority) + idx, (gameId) => {
@@ -967,6 +988,9 @@ function main(context) {
       return checkForFcModdingUpdate(api, spec, MI_REQUIREMENTS)
         .catch(err => log('warn', `Failed to check for ${MI_NAME} update: ${err}`));
     }); //*/
+    if (fcmoddingBrowser) { //claims downloads started from the browse page, and update-checks the mods installed through it
+      onceFcModdingBrowser(context.api, spec, FCM_BROWSER_CONFIG);
+    }
   });
   return true;
 }

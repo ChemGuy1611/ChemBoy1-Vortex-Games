@@ -2,8 +2,8 @@
 Name: METAL GEAR SOLID V: THE PHANTOM PAIN Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 1.0.0
-Date: 2026-08-19
+Version: 1.1.0
+Date: 2026-08-22
 Notes:
 -
 ///////////////////////////////////////////*/
@@ -51,6 +51,7 @@ const EXTENSION_URL = "https://www.nexusmods.com/site/mods/2196"; //Nexus link t
 
 //feature toggles
 const hasLoader = true; //true if game needs a mod loader
+const loaderSilentUpdate = true; //true to re-run the mod loader installer unattended when updating an existing install
 const allowMgsvFix = true; //should MGSVFix be offered to the user (via a notification at setup)?
 let hasXbox = false; //toggle for Xbox version logic
 if (DISCOVERY_IDS_ACTIVE.includes(XBOXAPP_ID)) hasXbox = true;
@@ -100,6 +101,10 @@ const LOADER_PAGE_NO = 106;
 const LOADER_FILE_NO = 0;
 const LOADER_DOMAIN = GAME_ID;
 const LOADER_URL = `XXX`; //if not on Nexus
+const LOADER_REG_HIVE = 'HKEY_CURRENT_USER';
+const LOADER_REG_KEY = 'SOFTWARE\\SnakeBite'; //registry path, not a file path - always backslash-separated
+const LOADER_REG_VALUE = ''; //the installer records its install folder as this key's default (unnamed) value
+const LOADER_SILENT_PARAMS = ['/S']; //silent switch for the installer
 
 const MGSVFIX_ID = `${GAME_ID}-mgsvfix`;
 const MGSVFIX_NAME = "MGSVFix";
@@ -287,9 +292,18 @@ const tools = [ //accepts: exe, jar, py, vbs, bat
   }, //*/
 ];
 
+//The installer records the folder it installed to in the registry. That is the only reliable
+//source for the location, since the user can choose a different folder during setup. Returns an
+//empty string when the key is absent, which is how a tool reports that it could not be found.
 function getSnakeBite() {
-  const sbPath = path.join(LOCALAPPDATA, 'SnakeBite');
-  return sbPath;
+  try {
+    const winapi = require('winapi-bindings');
+    const installPath = winapi.RegGetValue(LOADER_REG_HIVE, LOADER_REG_KEY, LOADER_REG_VALUE);
+    return installPath?.value ?? '';
+  } catch (err) { //RegGetValue throws when the key is missing rather than returning undefined
+    log('debug', `Could not read the ${LOADER_NAME} install folder from the registry: ${err}`);
+    return '';
+  }
 }
 
 // BASIC EXTENSION FUNCTIONS ///////////////////////////////////////////////////
@@ -831,6 +845,99 @@ function isLoaderInstalled(api, spec) {
   return Object.keys(mods).some(id => mods[id]?.type === LOADER_ID);
 }
 
+//The mod loader uses four-part version numbers, while the version published on the mod page may
+//have three. Pad both to four parts so they can be compared as plain strings - these versions are
+//not semver, so a semver comparison would treat 0.9.2.5 and 0.9.2.6 as the same release.
+function normalizeLoaderVersion(version) {
+  if (!version) {
+    return undefined;
+  }
+  const parts = String(version).trim().split('.').slice(0, 4);
+  while (parts.length < 4) {
+    parts.push('0');
+  }
+  return parts.join('.');
+}
+
+//Read the version of the mod loader that is currently installed on the system. Its executable
+//carries the same version that is published on the mod page, so the two can be compared directly.
+//Returns undefined when the mod loader is not installed.
+function getLoaderInstalledVersion() {
+  const installPath = getSnakeBite();
+  if (!installPath) {
+    return undefined; //not installed, so there is no version to read
+  }
+  try {
+    const exeVersion = require('exe-version');
+    return normalizeLoaderVersion(exeVersion.getProductVersion(path.join(installPath, LOADER_EXEC)));
+  } catch (err) {
+    log('debug', `Could not read the installed ${LOADER_NAME} version: ${err}`);
+    return undefined;
+  }
+}
+
+//The mod loader ships as an installer rather than as files to deploy, so it has to be run out of
+//its staging folder. Resolve that folder from the mod entry instead of searching the staging
+//folder by name, so that an update always runs the installer it just downloaded.
+async function runLoaderInstaller(api, modId, silent) {
+  const state = api.getState();
+  const mod = state.persistent.mods[GAME_ID]?.[modId];
+  if (mod === undefined) {
+    throw new util.ProcessCanceled(`${LOADER_NAME} is no longer installed`);
+  }
+  const stagingFolder = selectors.installPathForGame(state, GAME_ID);
+  const runPath = path.join(stagingFolder, mod.installationPath ?? modId, LOADER_INST_EXEC);
+  log('info', `Running the ${LOADER_NAME} installer at ${runPath}`);
+  await api.runExecutable(runPath, silent ? LOADER_SILENT_PARAMS : [], { suggestDeploy: false });
+  log('info', `The ${LOADER_NAME} installer completed`);
+}
+
+//Guards against launching the installer twice for the same mod, since the install event and the
+//download routine can both ask for it at the same time.
+const loaderSyncInFlight = new Set();
+
+//Run the mod loader installer whenever the version Vortex has staged is not the version installed
+//on the system. This is what carries an update through: Vortex downloading a newer version only
+//puts the installer in the staging folder, and the installer still has to run to apply it.
+//Re-installing the same version is skipped, so nothing happens when there is no update.
+async function syncLoaderInstall(api, modId) {
+  const mod = api.getState().persistent.mods[GAME_ID]?.[modId];
+  if (mod?.type !== LOADER_ID) {
+    return;
+  }
+  if (loaderSyncInFlight.has(modId)) {
+    return;
+  }
+  const staged = normalizeLoaderVersion(mod.attributes?.version);
+  const installed = getLoaderInstalledVersion();
+  if ((staged !== undefined) && (installed !== undefined) && (staged === installed)) {
+    return; //already applied - nothing was updated
+  }
+  loaderSyncInFlight.add(modId);
+  const NOTIF_ID = `${LOADER_ID}-updating`;
+  api.sendNotification({
+    id: NOTIF_ID,
+    type: 'activity',
+    //a first install has no recorded folder, so the user has to be warned about the directory page
+    message: (installed === undefined)
+      ? `Installing ${LOADER_NAME} - DO NOT CHANGE THE INSTALL DIRECTORY`
+      : `Updating ${LOADER_NAME} to ${staged ?? 'the staged version'}`,
+    noDismiss: true,
+    allowSuppress: false,
+  });
+  try {
+    //an update re-uses the folder recorded in the registry, so it can run unattended; a first
+    //install has no folder to re-use and must show its directory page
+    await runLoaderInstaller(api, modId, loaderSilentUpdate && (installed !== undefined));
+  } catch (err) {
+    api.showErrorNotification(`Failed to run the ${LOADER_NAME} installer`, err,
+      { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 });
+  } finally {
+    loaderSyncInFlight.delete(modId);
+    api.dismissNotification(NOTIF_ID);
+  }
+}
+
 //* Function to auto-download mod loader from Nexus Mods
 async function downloadLoader(api, gameSpec, check = true) {
   let isInstalled = isLoaderInstalled(api, gameSpec);
@@ -843,7 +950,7 @@ async function downloadLoader(api, gameSpec, check = true) {
     const GAME_DOMAIN = LOADER_DOMAIN;
     api.sendNotification({ //notification indicating install process
       id: NOTIF_ID,
-      message: `Installing ${MOD_NAME} - DO NOT CHANGE THE INSTALL DIRECTORY`,
+      message: `Downloading ${MOD_NAME}`, //the installer run that follows puts up its own notification
       type: 'activity',
       noDismiss: true,
       allowSuppress: false,
@@ -887,17 +994,7 @@ async function downloadLoader(api, gameSpec, check = true) {
           actions.setModType(gameSpec.game.id, modId, MOD_TYPE), // Set the mod type
         ];
         await util.batchDispatch(api.store, batched); // Will dispatch both actions
-        try { //run the installer exe from staging
-          const folder = await fs.readdirAsync(STAGING_FOLDER);
-          const STAGING_PATH = folder.filter(f => f.includes(LOADER_PAGE_NO) && f.includes('SnakeBite'))
-            .sort((a,b) => a.toLowerCase().localeCompare(b.toLowerCase()))[0];
-          const RUN_PATH = path.join(STAGING_FOLDER, STAGING_PATH, LOADER_INST_EXEC);
-          log('warn', `Found ${LOADER_NAME} installer at ${RUN_PATH}`);
-          await api.runExecutable(RUN_PATH, [], { suggestDeploy: false });
-          log('warn', `${LOADER_NAME} installer completed from staging folder`);
-        } catch (err) {
-          log('error', `Failed to run ${LOADER_NAME} installer from staging folder: ${err}`);
-        }
+        await syncLoaderInstall(api, modId); //run the installer exe from staging
         //return new Promise((resolve, reject) => { //download, install, run installer exe
         //return resolve();
         //});
@@ -1121,6 +1218,13 @@ async function setup(discovery, api, gameSpec) {
   //await fs.ensureDirWritableAsync(CONFIG_PATH);
   if (hasLoader) {
     await downloadLoader(api, gameSpec);
+    //catches an update that was installed while another game was active, and a mod loader that was
+    //uninstalled outside of Vortex
+    const loaderMod = Object.values(api.getState().persistent.mods[GAME_ID] ?? {})
+      .find(mod => mod.type === LOADER_ID);
+    if (loaderMod !== undefined) {
+      await syncLoaderInstall(api, loaderMod.id);
+    }
   }
   if (allowMgsvFix) downloadMgsvFixNotify(api);
   return modFoldersEnsureWritable(GAME_PATH, MODTYPE_FOLDERS);
@@ -1223,6 +1327,14 @@ function applyGame(context, gameSpec) {
       return gameId === GAME_ID;
     });
   }
+  context.registerAction('mod-icons', 300, 'open-ext', {}, `Open ${LOADER_NAME} Folder`, () => {
+    const folder = getSnakeBite(context.api);
+    util.opn(folder).catch(() => null);
+  }, () => {
+    const state = context.api.getState();
+    const gameId = selectors.activeGameId(state);
+    return gameId === GAME_ID;
+  });
   /*context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
     util.opn(CONFIG_PATH).catch(() => null);
     }, () => {
@@ -1283,6 +1395,13 @@ function main(context) {
       return checkForCodebergUpdate(api, spec, CODEBERG_REQUIREMENTS)
         .catch(err => log('warn', `Failed to check for ${MGSVFIX_NAME} update: ${err}`));
     });
+    if (hasLoader) { //updating the mod loader in Vortex only stages the installer, so run it afterwards
+      api.events.on('did-install-mod', (gameId, archiveId, modId) => {
+        if (gameId !== GAME_ID) return;
+        syncLoaderInstall(api, modId)
+          .catch(err => log('warn', `Failed to apply the ${LOADER_NAME} install: ${err}`));
+      });
+    }
   });
   return true;
 }

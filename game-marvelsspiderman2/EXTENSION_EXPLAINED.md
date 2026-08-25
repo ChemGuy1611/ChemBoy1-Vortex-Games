@@ -60,5 +60,5 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Epic Games Store Support** — detects EGS version and uses the Epic launcher.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
-- **Required Extensions** — depends on: `Vortex Steam File Downloader`.
+- **Optional Extensions** — uses these if the user has them installed: `Vortex Steam File Downloader`.
 

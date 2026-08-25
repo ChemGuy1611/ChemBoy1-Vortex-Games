@@ -78,6 +78,14 @@ Recognised when the archive contains a file or folder named "GameLite".
 
 ========================================================================
 
+Newpak:
+
+Recognised when the archive contains a file or folder named one of: "NewContent" or "OverrrideContent".
+
+  Installs to: "Stalker2\Content\Paks\~mods"
+
+========================================================================
+
 UE4SS Itself:
 
 This installer handles the UE4SS runtime package, not individual mods. Most authors never need it - it exists so users can install UE4SS through Vortex.

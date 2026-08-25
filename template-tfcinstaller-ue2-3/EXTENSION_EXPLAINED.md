@@ -15,8 +15,6 @@
 | Game ID | `XXX` |
 | Executable | `Binaries/Win32/XXX.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
-| Extension Page | XXX |
-| PCGamingWiki | XXX |
 
 ## Feature Flags
 
@@ -26,6 +24,7 @@
 | `has64Bit` | `false` | toggle for 64-bit version logic |
 | `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
 | `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |
+| `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below) |
 | `debug` | `false` | toggle for debug mode |
 
 ## Mod Types
@@ -36,7 +35,6 @@ Mod types define where each category of mod gets deployed:
 | --- | --- | --- | --- |
 | TFC Mod | `XXX-tfcmod` | high | `{gamePath}/TFCInstaller/Mods` |
 | Root Folder | `XXX-root` | high | `{gamePath}` |
-| Root Sub Folder | `XXX-rootsub` | high | `{gamePath}/XXX` |
 | Cooked Sub Folder | `XXX-cookedsub` | high | `{gamePath}/XXX/CookedPC` |
 | Binaries (Engine Injector) | `XXX-binaries` | high | `{gamePath}/Binaries/Win32` |
 | Movies Mod | `XXX-movies` | high | `{gamePath}/XXX/Movies` |
@@ -62,7 +60,7 @@ Installers run in priority order (lower number = tested first). The first instal
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch**
+- **Custom Launch** (`Binaries/Win32/XXX.exe`)
 
 ## Toolbar Actions
 
@@ -83,19 +81,3 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-                                └── did-deploy fires → post-deploy logic runs
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

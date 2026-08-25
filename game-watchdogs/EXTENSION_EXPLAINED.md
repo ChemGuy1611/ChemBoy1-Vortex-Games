@@ -35,7 +35,6 @@
 | `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below) |
 | `hasUserIdFolder` | `true` | true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID) |
 | `binariesInstaller` | `true` | enables the Binaries folder installer (for engine injectors) |
-| `debug` | `false` | toggle for debug mode |
 
 ## Mod Types
 
@@ -55,9 +54,9 @@ Installers run in priority order (lower number = tested first). The first instal
 | Installer ID | Priority |
 | --- | --- |
 | `watchdogs-loader` | 25 |
-| `watchdogs-mod` | 30 |
-| `watchdogs-root` | 35 |
-| `watchdogs-binaries` | 40 |
+| `watchdogs-mod` | 27 |
+| `watchdogs-root` | 29 |
+| `watchdogs-binaries` | 31 |
 | `watchdogs-fallback` | 49 |
 
 ## Registered Tools

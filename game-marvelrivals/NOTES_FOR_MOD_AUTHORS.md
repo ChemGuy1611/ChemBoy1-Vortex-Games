@@ -38,7 +38,7 @@ Installs to: the game folder itself (no subfolder)
 
 ## Pak Mods
 
-Standard content mods: one or more `.pak` files. Vortex installs the mod files themselves, so the folder structure around them in the archive does not matter.
+Standard content mods: one or more `.pak` files. Vortex copies just the pak files themselves, flattened, so the folder structure around them does not matter.
 
 ```text
 MyPakMod.zip
@@ -47,15 +47,16 @@ MyPakMod.zip
 
 **Requirements:**
 
-- Recognised by any file with the `.pak` extension.
-- Surrounding folders are discarded - only the mod files are installed.
-- If the archive holds several mod files, Vortex asks the user which to install, which is useful for shipping optional variants in one download.
+- Any archive containing a `.pak` file reaches this installer (unless an earlier one claimed it).
+- Only the pak files are installed - surrounding folders are discarded.
+- If the archive holds more than one pak, Vortex asks the user which to install - useful for optional variants.
 
 Installs to: `MarvelGame\Marvel\Content\Paks\~mods`
 
 **Common mistakes:**
 
 - Shipping several unrelated paks in one archive when you meant them all to install - the user gets a choice dialog and may pick only one.
+- Blueprint mods belong in a `LogicMods` folder instead - see above.
 
 ## Signature Bypass
 
@@ -88,6 +89,7 @@ Installs to: `LOCALAPPDATA\Marvel\Saved\Config\Windows`
 
 ## Rules That Apply To Every Mod Type
 
+- Archives that contain a FOMOD installer (a `fomod` folder with `ModuleConfig.xml`) are handed to Vortex's built-in FOMOD installer instead, and none of the rules above apply.
 - Folder and file name matching is case-insensitive.
 - Extra wrapper folders around a recognised folder are generally fine; the installer searches at any depth.
 

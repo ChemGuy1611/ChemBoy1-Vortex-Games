@@ -18,7 +18,6 @@
 | Executable (GOG) | `Grimshire.exe` |
 | Executable (Demo) | `Grimshire.exe` |
 | Extension Page | [https://www.nexusmods.com/site/mods/1797](https://www.nexusmods.com/site/mods/1797) |
-| PCGamingWiki | [XXX](XXX) |
 
 ## Supported Stores
 

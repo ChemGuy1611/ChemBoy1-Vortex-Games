@@ -8,18 +8,36 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
-| Root | - | - |
-| Fallback | - | - |
+| Root / Game Folder Mods | a `sounddata` folder | the game folder itself (no subfolder) |
+| Mod | a file with one of these extensions: `.pck` or `.bk2` | the game folder itself (no subfolder) |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder.
 
-## Root
+## Root / Game Folder Mods
 
-Handled by the `testRoot` installer. Inspect the extension source for the exact archive layout it expects.
+For mods laid out the same way the files appear inside the game folder. Vortex copies the matched folder and everything under it straight into the game.
 
-## Fallback
+```text
+MyRootMod.zip
+└── sounddata\
+    └── ... files in their real relative locations
+```
 
-Handled by the `testFallback` installer. Inspect the extension source for the exact archive layout it expects.
+**Requirements:**
+
+- Recognised by a folder named `sounddata`, `videos` or `EasyAntiCheat` in the archive.
+
+Installs to: the game folder itself (no subfolder)
+
+**Common mistakes:**
+
+- Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
+
+## Mod
+
+Recognised when the archive contains a file with one of these extensions: `.pck` or `.bk2`.
+
+Installs to: the game folder itself (no subfolder)
 
 ## Rules That Apply To Every Mod Type
 

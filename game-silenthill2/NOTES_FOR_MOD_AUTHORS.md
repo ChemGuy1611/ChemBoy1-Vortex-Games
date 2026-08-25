@@ -16,7 +16,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | UE4SS DLL Mods (C++) | a `.dll` file and a `dlls` folder | `SHProto\Binaries\Win64\ue4ss\Mods` |
 | Root / Game Folder Mods | a top-level folder such as `SHProto` | the game folder itself (no subfolder) |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder.
 
 ## Combo Mods (pak + UE4SS script/DLL together)
 

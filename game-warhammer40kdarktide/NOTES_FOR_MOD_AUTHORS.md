@@ -13,7 +13,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | //Regular Mods & DMF
     "Warhammer40kdarktide Mod" | a file with the `.mod` extension | - |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder.
 
 ## //Covers DML And LOFM
     "Warhammer40kdarktide Dmfdml"

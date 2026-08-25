@@ -14,8 +14,6 @@
 | --- | --- |
 | Game ID | `XXX` |
 | Executable | `XXX.exe` |
-| Extension Page | XXX |
-| PCGamingWiki | XXX |
 
 ## Feature Flags
 
@@ -23,6 +21,7 @@
 | --- | --- | --- |
 | `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
 | `fallbackInstaller` | `true` | enable fallback installer. Set false if you need to avoid installer collisions |
+| `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below) |
 | `debug` | `false` | toggle for debug mode |
 
 ## Mod Types
@@ -31,7 +30,7 @@ Mod types define where each category of mod gets deployed:
 
 | Name | ID | Priority | Target Path |
 | --- | --- | --- | --- |
-| Config (Documents) | `XXX-config` | high | `CONFIG_PATH` |
+| Config (Documents) | `XXX-config` | high | `DOCUMENTS/My Games/XXX` |
 | Game Data Folder | `XXX-data` | high | `{gamePath}` |
 | Game Data Subfolder | `XXX-datasub` | high | `{gamePath}/XXX` |
 | Snowdrop ModLoader | `XXX-modloader` | low | `{gamePath}` |
@@ -52,7 +51,7 @@ Installers run in priority order (lower number = tested first). The first instal
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Launch Game Ubisoft Plus**
+- **Launch Game Ubisoft Plus** (`XXX_Plus.exe`)
 
 ## Toolbar Actions
 
@@ -64,30 +63,9 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - Open Downloads Folder
 - Submit Bug Report
 
-## Config & Save Paths
-
-| Type | Path |
-| --- | --- |
-| Config | `XXX` |
-
 ## Special Features
 
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 
-## How Mod Installation Works
-
-```
-User drops archive into Vortex
-  └── Each installer's test() runs in priority order
-       └── First supported=true wins
-            └── install() returns copy instructions + setmodtype
-                 └── Vortex stages files
-                      └── User deploys
-                           └── Vortex links/copies to game folder
-```
-
-## Entry Point
-
-The extension is registered via `module.exports = { default: main }`. The `main(context)` function calls `applyGame(context, spec)` which registers the game, mod types, installers, and actions with Vortex.

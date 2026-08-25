@@ -13,7 +13,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Fbmod | a file with the `.fbmod` extension | - |
 | Daimod | a file with the `.daimod` extension | `DAIMod` |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder.
 
 ## Daimodmanager
 

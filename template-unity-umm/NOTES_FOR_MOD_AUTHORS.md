@@ -9,11 +9,13 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Mod Type | Archive must contain | Installs to |
 | --- | --- | --- |
 | Root / Game Folder Mods | a `XXX_Data` folder | the game folder itself (no subfolder) |
+| Unity Mod Manager (tool) | a `UnityModManager.exe` file | the game folder itself (no subfolder) |
+| Unity Mod Manager Mods | an `info.json` file and a `.dll` | `Mods\<ModName>` |
 | Assembly Replacement Mods | a `Assembly-CSharp.dll` file | `XXX_Data\Managed` |
 | Asset Replacement Mods | a `.assets` file | `XXX_Data` |
 | Fallback Installer | anything not matched above | - |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder.
 
 ## Root / Game Folder Mods
 
@@ -34,6 +36,43 @@ Installs to: the game folder itself (no subfolder)
 **Common mistakes:**
 
 - Zipping the folder that CONTAINS the game folders, instead of the game folders themselves, adds an extra level and misplaces every file.
+
+## Unity Mod Manager (tool)
+
+This installer handles Unity Mod Manager itself, not mods for it. It exists so users can install Unity Mod Manager through Vortex, and mod authors normally never package this.
+
+**Requirements:**
+
+- Recognised by a file named `UnityModManager.exe` in the archive.
+- Vortex reproduces the loader patch the manager would apply itself, so it deploys and purges like any other mod.
+
+Installs to: the game folder itself (no subfolder)
+
+**Common mistakes:**
+
+- If you bundle Unity Mod Manager inside your mod archive, Vortex treats the whole download as Unity Mod Manager rather than as your mod. Ship the mod alone and list Unity Mod Manager as a requirement.
+
+## Unity Mod Manager Mods
+
+Mods for Unity Mod Manager: a manifest plus the assembly that implements the mod. Each one gets its own folder under `Mods`.
+
+```text
+MyUmmMod.zip
+├── info.json
+└── MyUmmMod.dll
+```
+
+**Requirements:**
+
+- Recognised by a file named `info.json` together with a `.dll` beside it.
+- The mod folder name comes from the folder wrapping the manifest. A flat archive is named from the `Id` field in `info.json` instead, so keep that field filled in.
+
+Installs to: `Mods\<ModName>`
+
+**Common mistakes:**
+
+- Shipping the manifest without the assembly - the archive is not recognised as a mod.
+- Wrapping the mod in an extra `Mods` folder is fine, but a second level of wrapping folders becomes part of the mod folder name.
 
 ## Assembly Replacement Mods
 

@@ -13,9 +13,9 @@
 | Property | Value |
 | --- | --- |
 | Game ID | `devilmaycry5` |
-| Executable | `XXX.exe` |
+| Executable | `DevilMayCry5.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
-| Executable (Demo) | `XXX.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/434](https://www.nexusmods.com/site/mods/434) |
 | PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Devil_May_Cry_5](https://www.pcgamingwiki.com/wiki/Devil_May_Cry_5) |
 
 ## Supported Stores
@@ -58,15 +58,14 @@ Installers run in priority order (lower number = tested first). The first instal
 | `devilmaycry5-looselua` | 29 |
 | `devilmaycry5-root` | 31 |
 | `devilmaycry5-preset` | 33 |
-| `devilmaycry5-fluffymod` | 49 |
 | `devilmaycry5-fluffymodzip` | 49 |
 
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch** (`XXX.exe`)
-- **Custom Launch (Demo)** (`XXX.exe`)
+- **Custom Launch** (`DevilMayCry5.exe`)
+- **Custom Launch (Demo)** (`null`)
 
 ## Toolbar Actions
 

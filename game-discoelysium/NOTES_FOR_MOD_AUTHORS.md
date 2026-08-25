@@ -13,7 +13,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Assembly Replacement Mods | a `Assembly-CSharp.dll` file | `disco_Data\Managed` |
 | Asset Replacement Mods | a `.assets` file | `disco_Data` |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder.
 
 ## Root / Game Folder Mods
 

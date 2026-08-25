@@ -11,7 +11,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Reloaded-II (mod loader) | a `reloaded-ii.exe` file | - |
 | Reloadedmod | a file or folder named `modconfig.json` | `Reloaded` |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder.
 
 ## Reloaded-II (mod loader)
 

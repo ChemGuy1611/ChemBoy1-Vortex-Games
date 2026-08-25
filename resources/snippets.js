@@ -264,25 +264,43 @@ function checkPartitions(folder, discoveryPath) {
 }
 
 // verify files through Steam ////////////////////////////////////////////////////////////
-//in applyGame function
-context.requireExtension('Vortex Steam File Downloader');
+// Full reference for this API, including the parameter interactions below: resources/STEAM_FILE_DOWNLOADER.md
+//in applyGame function - third argument makes it an OPTIONAL dependency; without it Vortex
+//unloads this whole extension when the user does not have the Steam File Downloader installed
+context.requireExtension('Vortex Steam File Downloader', undefined, true);
 //verify files
 async function verifyGameFiles(api) {
   GAME_PATH = await getDiscoveryPath(api);
-  const FILES = ['file'];
+  const state = api.getState();
+  //the Steam File Downloader rejects non-Steam copies; checking first gives a clearer message
+  if (state.settings.gameMode.discovered?.[GAME_ID]?.store !== 'steam') {
+    return api.showErrorNotification('Steam verification unavailable',
+      'This feature only works with the Steam version of the game.', { allowReport: false });
+  }
+  //FileList entries are ABSOLUTE paths to files that must EXIST - each one is opened and hashed.
+  //A relative path or an already-deleted file throws inside the downloader process.
+  //Omitting FileList makes it walk the whole game folder, which has a hard 5 second timeout.
+  //Files missing from the depot are reported whether or not they are listed here, so to restore
+  //a file you deleted on purpose, delete it and leave it OUT of this list.
+  const FILES = [path.join(GAME_PATH, EXEC)];
   const parameters = {
     "FileList": `${FILES.join('\n')}`,
     "InstallDirectory": GAME_PATH,
-    "VerifyAll": false,
+    "VerifyAll": true, //MUST be true whenever FileList is set, or nothing is ever restored
     "AppId": +STEAMAPP_ID,
   };
+  //this API is callback-based - `await api.ext.steamkitVerifyFileIntegrity(...)` returns undefined,
+  //resolves immediately and never throws, so the third argument has to be wrapped by hand
   try {
-    await api.ext.steamkitVerifyFileIntegrity(parameters, GAME_ID);
-    log('warn', `Steam verification complete`);
-    return;
+    await new Promise((resolve, reject) =>
+      api.ext.steamkitVerifyFileIntegrity(parameters, GAME_ID, (err) => err ? reject(err) : resolve()));
   } catch (err) {
-    return api.showErrorNotification('Failed to verify game files through Steam', err, { allowReport: ['EPERM', 'EACCESS', 'ENOENT'].indexOf(err.code) !== -1 });
+    //the Steam File Downloader has already shown its own notification for this failure
+    log('warn', `Steam file verification failed: ${err.message}`);
+    return;
   }
+  //verification purges mods and only flags deployment as necessary, so deploy again here
+  return deploy(api);
 }
 
 //Run a function with an activity notification

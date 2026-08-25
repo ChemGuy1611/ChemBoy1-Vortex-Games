@@ -155,6 +155,25 @@ installer, and returns the instructions).
 | `did-install-mod` (gameId, archiveId, modId, modInfo) | A mod finished installing |
 | `did-install-dependencies` / related | Dependency/collection completion |
 
+### What is already true when `did-install-mod` fires
+
+It is emitted at the very end of the install chain, **after** `processInstructions` has run.
+`processSetModType` dispatches `setModType` inside that step, so by the time a listener runs,
+`state.persistent.mods[gameId][modId].type` is already the final modtype — a handler can filter
+on modtype without waiting or re-checking. The mod's attributes (including `version`) and its
+`installationPath` are set as well.
+
+Because a version update reuses the existing mod id and re-runs this whole chain (see "Install
+over previous version" above), **one `did-install-mod` handler covers both a first install and
+an update** — there is no separate update event to subscribe to. Anything that must react to a
+mod's content changing on disk (running a bundled installer, re-reading a manifest) belongs
+here rather than on a deploy hook.
+
+Handlers registered with `api.events.on` are fire-and-forget: the emit is synchronous and does
+not await them, so a slow handler runs concurrently with whatever the caller does next. When a
+second code path can request the same work (an auto-download routine that also installs the
+mod, say), guard against running it twice rather than assuming ordering.
+
 ## Gotchas
 
 - Lower priority number wins — FOMOD sits high (small number) so it pre-empts `basicInstaller`.

@@ -17,7 +17,6 @@
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 | Executable (GOG) | `./XXX.exe` |
 | Executable (Demo) | `./XXX.exe` |
-| Extension Page | [XXX](XXX) |
 | PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Armored_Core_VI%3A_Fires_of_Rubicon](https://www.pcgamingwiki.com/wiki/Armored_Core_VI%3A_Fires_of_Rubicon) |
 
 ## Supported Stores

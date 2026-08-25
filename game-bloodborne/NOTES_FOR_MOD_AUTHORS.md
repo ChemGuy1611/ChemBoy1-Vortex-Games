@@ -15,7 +15,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Dvdroot Ps4 | a file or folder named one of: `action`, `chr`, `event`, `facegen`, `map`, `menu`, `movie`, `msg`, `mtd`, `obj`, `other`, `param`, `paramdef`, `parts`, `remo`, `script`, `sfx`, `shader` or `sound` | `CUSA03173\dvdroot_ps4` |
 | Save | a file or folder named `userdata0000` | `user\savedata\1\CUSA03173\SPRJ0005` |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder.
 
 ## Shadps4
 

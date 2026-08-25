@@ -73,7 +73,7 @@ These tools appear in Vortex's Tools panel when this game is active:
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - Open default.archcfg File
-- Open ${PACKETLOADER_INI}
+- Open PacketLoader.ini
 - Open Config / Save Folder
 - Download Middle-Earth-Mod-Loader
 - Get MEML Mods (GitHub)

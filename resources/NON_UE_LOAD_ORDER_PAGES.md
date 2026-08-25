@@ -24,7 +24,7 @@ lifecycle, `IItemRendererProps`, virtualization). Everything here is stated as a
 | `game-warhammer40000spacemarine2` | Swarm | B | Minimal renderer |
 | `game-warhammer40kdarkheresy` | — | B | Minimal renderer |
 | `game-warhammer40kroguetrader` | Unity | B | Minimal renderer |
-| `game-helldivers2` | Autodesk Stingray | L | None — legacy `registerLoadOrderPage` |
+| `game-helldivers2` | Autodesk Stingray | G | Full FBLO renderer + context menu + status filter |
 
 Two Unreal games also sit in tier B (`game-fantasylifeithegirlwhostealstime`, `game-tekken8`) —
 they carry the minimal renderer without the UE4SS stack, so tier B guidance applies to them too.
@@ -33,14 +33,18 @@ Tier names used throughout:
 
 - **Tier G — generic FBLO stack.** Everything the UE4-5 pak surface has, minus UE4SS and LogicMods.
 - **Tier B — minimal renderer.** A custom row renderer and custom instructions, nothing else.
-- **Tier L — legacy.** `registerLoadOrderPage`, no React at all.
 
 **These tiers describe current state, not a design decision.** Tier B is the older baseline every
 FBLO game had before the lock-button / multi-select / context-menu work landed; the games listed
 there are the ones that rollout has not reached yet, and each is expected to become tier G when its
-turn comes. Read tier B as "not migrated", not as "deliberately smaller". Tier L is the one genuine
-exception: `game-helldivers2` stays on the legacy API because its merge step renames files by load
-order position on deploy.
+turn comes. Read tier B as "not migrated", not as "deliberately smaller".
+
+There used to be a third tier, **L — legacy**, for extensions still on the deprecated
+`registerLoadOrderPage` with no React at all. It held one game, `game-helldivers2`, and it was
+described as a permanent exception on the grounds that its merge step renames files by load order
+position at deploy time. That reasoning does not hold: how a game consumes its order is independent
+of which API registers the page. Version 1.0.0 moved it to tier G and left the merge step untouched.
+A future merge-based game belongs in tier G too.
 
 `game-nioh3` is *not* a load order game. It used to carry a `registerLoadOrderPage` call gated behind
 `const loadOrderEnabled = false`, which never registered; that block and its helpers (`preSort`,
@@ -173,15 +177,36 @@ section 5 rather than patching them into the old shape first.
 
 ---
 
-## 4. Tier L — legacy `registerLoadOrderPage`
+## 4. When the load order is not what the engine reads
 
-`game-helldivers2` still uses the deprecated API. There is no React component anywhere in its load
-order path: `createInfoPanel` returns a translated string, `preSort` supplies the ordering, and a
-`callback` requests deployment when the order changes. It also registers a merge for `.patch0`
-graphics mods, which re-runs on deploy — that is why its info panel keeps the "deploy to apply"
-wording that generic FBLO games should not show.
+Every other game in this document writes its order somewhere the game reads directly, so a row's
+position is the thing that takes effect. `game-helldivers2` is the exception worth understanding
+before copying its shape.
 
-Full legacy contract: `LOAD_ORDER_REGISTRATION.md` section 1a.
+It patches archives by adding files named `<archive hash>.patch_N` beside the archive they modify.
+Order only matters between two mods patching the *same* archive, and the numbering for one archive
+has to run `0..N-1` with no gaps — a hole does not reorder the mods, it stops them loading. So the
+load order page presents a single list of every patch mod, and each archive derives its own
+numbering from that one list by walking it and handing out consecutive numbers to whichever mods
+touch that archive. A separate page lists only the archives that more than one enabled mod touches,
+and lets the order be overridden for one of those archives on its own.
+
+Two consequences for anyone reading that code as a model:
+
+- **A row's position is not its `patch_N`.** The order is an input to a computation, not the output.
+  Do not copy the indirection into a game whose order maps 1:1 onto what the engine consumes.
+- **The order does nothing until deployment**, because the renaming happens in the merge step. This
+  is the one generic-FBLO game whose info panel legitimately keeps the "deploy to apply" wording.
+
+Its enablement model also differs, and copying it blind is the usual mistake: the game has no list
+of its own in which an entry can be marked active, so `toggleableEntries` is `false` and "enabled"
+means the Vortex mod is enabled. The status filter therefore reads the profile's mod state rather
+than the entry's own `enabled` flag, and the context menu offers a single Enable/Disable pair
+instead of the usual two.
+
+Until version 1.0.0 this extension was the sole occupant of a "tier L" for the deprecated
+`registerLoadOrderPage` API. Full legacy contract, for extensions still on it:
+`LOAD_ORDER_REGISTRATION.md` section 1a.
 
 ---
 

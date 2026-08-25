@@ -127,15 +127,29 @@ Configuration presets for REFramework mods.
 
 ========================================================================
 
-Fluffymodzip:
+Fluffy-Format Mods:
 
-Recognised when the archive contains a file or folder named "modmanager.exe" and a file or folder named "dinput8.dll".
+The catch-all for RE Engine mods packaged in the normal Fluffy Mod Manager layout. Most content mods for this game land here, which is the intended outcome.
+
+  Requirements:
+    - Any archive not claimed by an earlier installer is treated as a Fluffy-format mod.
+    - An archive already zipped in the Fluffy layout is installed as it is, with no repacking.
+
+  Common mistakes:
+    - Because this is a catch-all, a badly laid-out archive still installs - it just may not work. Match the layout Fluffy Mod Manager expects.
 
 ========================================================================
 
-Fluffymodzip:
+Fluffy-Format Mods:
 
-Recognised when the archive contains a file or folder named "modmanager.exe" and a file or folder named "dinput8.dll".
+The catch-all for RE Engine mods packaged in the normal Fluffy Mod Manager layout. Most content mods for this game land here, which is the intended outcome.
+
+  Requirements:
+    - Any archive not claimed by an earlier installer is treated as a Fluffy-format mod.
+    - An archive already zipped in the Fluffy layout is installed as it is, with no repacking.
+
+  Common mistakes:
+    - Because this is a catch-all, a badly laid-out archive still installs - it just may not work. Match the layout Fluffy Mod Manager expects.
 
 ========================================================================
 

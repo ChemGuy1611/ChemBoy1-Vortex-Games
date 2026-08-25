@@ -175,4 +175,5 @@ async function setup(discovery) {
 `INSTALLER_SYSTEM.md` (`DataInvalid` and the `error`/`unsupported` instruction types thrown from
 `install`/`testSupported`). `UNDERUSED_API_FUNCTIONS.md` (§9, short pointer back to this doc).
 `HEALTH_CHECK.md` (health-check results use a similar severity vocabulary, though not these
-classes directly).
+classes directly). `STEAM_FILE_DOWNLOADER.md` (`ProcessCanceled` for invalid Steam credentials,
+`UserCanceled` from the login/Steam Guard dialogs).

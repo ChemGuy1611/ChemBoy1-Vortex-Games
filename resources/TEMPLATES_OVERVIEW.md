@@ -189,10 +189,20 @@ Templates fetch their required loader or tool through one of four routes:
 
 | Route | Used by | Mechanism |
 | --- | --- | --- |
-| Inline Nexus | `anvilengine`, `cobraengineACSE`, `farcry`, `reframework-fluffy`, `reloaded2`, `shinryu`, `snowdropengine`, `tfcinstaller-ue2-3`, `ue4-5` | `api.ext.nexusGetModFiles(domain, pageId)`, newest category-1 file wins, falls back to a hardcoded file ID, then `start-download` + `start-install-download`, then `setModsEnabled` + `setModType` via `util.batchDispatch` |
+| Inline Nexus | `anvilengine`, `cobraengineACSE`, `farcry`, `reframework-fluffy`, `reloaded2`, `shinryu`, `snowdropengine`, `tfcinstaller-ue2-3`, `ue4-5`, `unity-umm` | `api.ext.nexusGetModFiles(domain, pageId)`, newest category-1 file wins, falls back to a hardcoded file ID, then `start-download` + `start-install-download`, then `setModsEnabled` + `setModType` via `util.batchDispatch` |
 | Inline direct URL | `frostbite`, `farcry`, `reframework-fluffy` (nightly) | `start-download` against a fixed vendor or GitHub URL, sometimes followed by a manual copy into the game folder for naked `.dll` payloads |
 | `downloader.js` module | `godot`, `unitybepinex`, `unitymelonloaderbepinex-hybrid` | A bundled module resolving the newest GitHub release, with version comparison and an update check wired to `check-mods-version`. Full contract in `DOWNLOADER.md` |
-| Delegated to a helper extension | `unity-umm` (`modtype-umm`), `unitybepinex` (`modtype-bepinex`) | `context.requireExtension(...)` plus an `api.ext.ummAddGame` / `api.ext.bepinexAddGame` registration in `context.once()`; the helper extension owns fetching and installing the loader |
+| Delegated to a helper extension | `unitybepinex` (`modtype-bepinex`) | `context.requireExtension(...)` plus an `api.ext.bepinexAddGame` registration in `context.once()`; the helper extension owns fetching and installing the loader |
+
+The `game` field of the `start-download` `modInfo` is the Nexus domain the file comes from, which
+for site-wide tools is `site`. Vortex files the archive under that domain and installs it into the
+game currently being managed. Note the ordering caveat in `VORTEX_DOWNLOAD_MGMT.md`: Vortex runs a
+game's `setup()` before that game becomes the active one, so a download started there can end up
+installed into the previously active game.
+
+`unity-umm` used to sit in the delegated row and no longer does: the bundled `modtype-umm` extension
+is broken four ways over (`UNITY_MOD_MANAGER.md`), so the template fetches UMM from Nexus and
+reproduces its DoorstopProxy patch as installer instructions itself.
 
 Requirements hosted somewhere other than GitHub use a sibling module with the same local-copy model,
 one per host: `gamebanana_downloader.js`, `moddb_downloader.js`, `modworkshop_downloader.js`,
@@ -226,7 +236,7 @@ real target paths, installer ladder, tools, auto-downloads, and known traps — 
 | `template-snowdropengine` | `templates/TEMPLATE_SNOWDROPENGINE.md` | `version.dll` proxy loader; smallest template |
 | `template-tfcinstaller-ue2-3` | `templates/TEMPLATE_TFCINSTALLER_UE2_3.md` | `.tfc` texture caches; `.tfc` excluded from mod exts |
 | `template-ue4-5` | `templates/TEMPLATE_UE4_5.md` | Three load-order surfaces, React layer, update guard |
-| `template-unity-umm` | `templates/TEMPLATE_UNITY_UMM.md` | Loader fully delegated to `modtype-umm` |
+| `template-unity-umm` | `templates/TEMPLATE_UNITY_UMM.md` | Fetches UMM from Nexus and reproduces its DoorstopProxy patch |
 | `template-unitybepinex` | `templates/TEMPLATE_UNITYBEPINEX.md` | Loader delegated; ConfigurationManager is not |
 | `template-unitymelonloaderbepinex-hybrid` | `templates/TEMPLATE_UNITYMELONLOADERBEPINEX_HYBRID.md` | Two mutually exclusive loaders, user picks |
 
@@ -241,6 +251,9 @@ real target paths, installer ladder, tools, auto-downloads, and known traps — 
 `UE4_5_REACT_ARCHITECTURE.md` and `NON_UE_LOAD_ORDER_PAGES.md` (the load-order React layers).
 `DOWNLOADER.md` and `BEPINEX_BE_BUILDS.md` (the auto-downloader modules).
 `GODOT_MOD_LOADER.md` (the loader behind `template-godot`, and its two engine release lines).
+`UNITY_MOD_MANAGER.md` (the loader behind `template-unity-umm`: its Nexus-only distribution, the
+DoorstopProxy file set an extension reproduces, and its `info.json` mod format).
+`RAILLOADER.md` (the second loader Railroader mods use, sharing UMM's `Mods` folder).
 `REQUIRES_LAUNCHER.md` (the `requiresLauncher` hand-off every template implements).
 `WINAPI_BINDINGS.md` (the `winapi.RegGetValue` registry-discovery fallback).
 `RUN_EXECUTABLE.md` (`api.runExecutable`, behind every `runDeployTool` helper).

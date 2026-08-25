@@ -1,5 +1,17 @@
 # template-godot Changelog
 
+## [2026-08-22]
+
+- Fixed: `keepZips` is now forced on whenever `customLoader` is off. Stock Godot Mod Loader resolves `mods/` off the executable folder but `mods-unpacked` off `res://`, and a `res://` directory listing never falls back to disk, so an unpacked mods folder is invisible to it. The two toggles cannot be set independently, and a game scaffolded on the previous defaults deployed mods the stock loader could not see.
+- Fixed: the Godot 3 loader route. The published asset is named `godot-mod-loader_v6.3.0_self-setup.zip` with a leading `v`, which both the archive name and the match pattern omitted. The pattern now accepts either spelling, and the requirement is pinned to `6.3.0` / tag `v6.3.0` for Godot 3, because the loader ships both engine lines from one release stream and `/releases/latest` is always the Godot 4 release.
+- Fixed: the mod installer anchored the install folder on the first `.gd` file in the archive, so a mod whose nested script enumerated first was installed with that subfolder as its root and everything above it was dropped. It now keys on `mod_main.gd` or `manifest.json`, preferring the shallowest match, and falls back to the previous behaviour only when a mod carries neither.
+- Fixed: installing the mod loader no longer copies build caches, version control metadata, or stray virtual environments into the game folder. Excluded folder names are listed in `LOADER_EXCLUDE_FOLDERS`.
+- Fixed: the game and its launch tools no longer start with an empty launch argument when no parameters are configured.
+- Added: a `useOverrideCfg` toggle that appends `--setup-create-override-cfg` to the launch parameters. The default setup path renames the game's `.pck` and swaps in a patched copy, which store validation reverts; the override path leaves the `.pck` alone and is the only setup method available off Windows.
+- Added: a "Run Mod Loader Setup" tool that runs the loader's setup headlessly with `--only-setup`, so first-run setup is a deliberate action instead of an alert and forced restart on first launch. Registered only when `customLoader` is off.
+- Added: a commented scaffold for a second content folder, modelled on a loader fork that installs levels to `<game>/maps/<Name>/`, plus commented `--exe-name` / `--pck-name` parameters for builds whose pack name does not match the executable name.
+- Changed: `MODTYPE_FOLDERS` is deduplicated, since `MOD_PATH` is itself `mods` whenever `keepZips` is on.
+
 ## [2026-08-21]
 
 - Changed: `context.once()` now calls through the local `api` constant declared at the top of the block instead of repeating `context.api` on each call.

@@ -2,8 +2,8 @@
 Name: Road to Vostok Vortex Extension
 Structure: Godot Engine Game
 Author: ChemBoy1
-Version: 0.3.1
-Date: 2026-08-05
+Version: 1.0.0
+Date: 2026-08-23
 Notes:
 - 
 ///////////////////////////////////////////*/
@@ -14,7 +14,8 @@ const path = require('path');
 const template = require('string-template');
 const { parseStringPromise } = require('xml2js');
 const { download, findModByFile, findDownloadIdByFile, resolveVersionByModVersion, testRequirementVersion } = require('./downloader');
-const { downloadModWorkshop, checkForModWorkshopUpdate } = require('./modworkshop_downloader');
+const { downloadModWorkshop, checkForModWorkshopUpdate, downloadModWorkshopRequirement } = require('./modworkshop_downloader');
+const { registerModWorkshopBrowser, onceModWorkshopBrowser } = require('./modworkshop_browser');
 //const winapi = require('winapi-bindings');
 
 //const USER_HOME = util.getVortexPath("home");
@@ -47,6 +48,7 @@ const allowSymlinks = true; //true if game can use symlinks without issues. Typi
 const fallbackInstaller = true; //enable fallback installer. Set false if you need to avoid installer collisions
 const customLoader = true;
 const keepZips = false;
+const modworkshopBrowser = true; //register the "Browse ModWorkshop" page
 const debug = false; //toggle for debug mode
 
 const DATA_FOLDER = path.join('Godot', 'app_userdata', 'Road to Vostok');
@@ -110,7 +112,8 @@ const LOADER_REV = '3.2.1'; //fallback version if the ModWorkshop API is unreach
 const LOADER_DL_ID = '98157'; //fallback file id if the ModWorkshop API is unreachable
 const OVERRIDE_FILE = 'override.cfg';
 
-const WORKSHOP_URL = `https://modworkshop.net/g/roadtovostok`;
+const MWS_GAME = 'roadtovostok'; //ModWorkshop game slug - https://modworkshop.net/g/roadtovostok
+const WORKSHOP_URL = `https://modworkshop.net/g/${MWS_GAME}`;
 
 const MWS_REQUIREMENTS = [
   { //Metro Mod Loader
@@ -122,6 +125,18 @@ const MWS_REQUIREMENTS = [
     //every file on this mod is a .zip, so the mod's primary file is taken as-is - add fileType if that ever changes
   },
 ];
+
+//Embedded ModWorkshop browser page - the user browses the live site and installs from it.
+//Mods that declare dependencies offer them alongside the install.
+const MWS_BROWSER_CONFIG = {
+  mwsGame: MWS_GAME,
+  requirements: MWS_REQUIREMENTS, //Metro Mod Loader installs to its own mod type, not as a browsed mod
+  installRequirement: (api, gameSpec, requirement) =>
+    downloadModWorkshopRequirement(api, gameSpec, requirement, true),
+  pageId: `${GAME_ID}-modworkshop-browse`,
+  pageTitle: 'Browse ModWorkshop',
+  //no hotkey: Ctrl+Shift+B is already taken, and a second claim on it is dropped with a warning
+};
 
 const MCM_ID = `${GAME_ID}-mcm`;
 const MCM_NAME = "ModConfigurationMenu";
@@ -153,7 +168,9 @@ const MOD_PATH_DEFAULT = MOD_PATH;
 const REQ_FILE = EXEC;
 let PARAMETERS_STRING = '';
 const PAR_STRING2 = '--setup-create-override-cfg';
-const PARAMETERS = [PARAMETERS_STRING];
+//An empty string here would launch the game with a blank argv element, so emit no
+//parameters at all when there is nothing to pass.
+const PARAMETERS = (PARAMETERS_STRING === '') ? [] : [PARAMETERS_STRING];
 
 const IGNORE_CONFLICTS = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
 const IGNORE_DEPLOY = [path.join('**', 'changelog*'), path.join('**', 'readme*')];
@@ -793,8 +810,13 @@ function applyGame(context, gameSpec) {
     }, (game) => pathPattern(context.api, game, type.targetPath), () => Promise.resolve(false), { name: type.name });
   });
 
+  //register the embedded ModWorkshop browser page
+  if (modworkshopBrowser) {
+    registerModWorkshopBrowser(context, gameSpec, MWS_BROWSER_CONFIG);
+  }
+
   /*register mod types explicitly
-  context.registerModType(CONFIG_ID, 60, 
+  context.registerModType(CONFIG_ID, 60,
     (gameId) => {
       var _a;
       return (gameId === GAME_ID) && !!((_a = context.api.getState().settings.gameMode.discovered[gameId]) === null || _a === void 0 ? void 0 : _a.path);
@@ -930,6 +952,9 @@ function main(context) {
       if (gameId !== GAME_ID) return;
       return onCheckModVersion(context.api, gameId, mods, forced);
     });
+    if (modworkshopBrowser) { //claims downloads started from the browse page, and update-checks the mods installed through it
+      onceModWorkshopBrowser(context.api, spec, MWS_BROWSER_CONFIG);
+    }
   });
   return true;
 }

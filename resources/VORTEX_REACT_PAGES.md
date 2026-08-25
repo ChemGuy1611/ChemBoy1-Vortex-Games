@@ -45,7 +45,7 @@ context.registerMainPage(icon, title, Component, options);
 | Param | Type | Notes |
 | --- | --- | --- |
 | `icon` | `string` | Icon name string (e.g. `'unreal'`, `'gamepad'`) |
-| `title` | `string` | Label shown in the sidebar |
+| `title` | `string` | Label shown in the sidebar. **Keep it under roughly 20 characters** - the sidebar clips a longer label rather than wrapping it. `Browse ModWorkshop.net` (22) was cut off in the live UI; `Browse Thunderstore` (19) is the longest label known to fit |
 | `Component` | `React.ComponentType` | Page component — receives `props` from the `props` callback |
 | `options` | `IMainPageOptions` | See below |
 

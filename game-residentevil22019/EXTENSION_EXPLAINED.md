@@ -13,24 +13,26 @@
 | Property | Value |
 | --- | --- |
 | Game ID | `residentevil22019` |
-| Executable | `ClaireJ.exe` |
+| Executable | `re2.exe` |
 | Executable (Xbox) | `gamelaunchhelper.exe` |
-| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Resident_Evil_2](https://www.pcgamingwiki.com/wiki/Resident_Evil_2) |
+| Executable (Demo) | `re2.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/432](https://www.nexusmods.com/site/mods/432) |
+| PCGamingWiki | [https://www.pcgamingwiki.com/wiki/Resident_Evil_2_(2019)](https://www.pcgamingwiki.com/wiki/Resident_Evil_2_(2019)) |
 
 ## Supported Stores
 
 - **Steam** — `883710`
-- **GOG** — `1534123252`
+- **Xbox / Microsoft Store** — `F024294D.GAMEResidentEvil2biohazard2`
 
 ## Feature Flags
 
 | Flag | Value | Description |
 | --- | --- | --- |
 | `useRefNightly` | `false` | toggle for using the REFramework nightly instead of Nexus release |
-| `hasXbox` | `false` | toggle for Xbox version logic |
-| `reZip` | `true` | NOT WORKING YET - KEEP AS TRUE FOR NOW - set to true to re-zip Fluffy Mods (possibly not necessary for FLUFFY v3.069+) |
+| `hasXbox` | `true` | toggle for Xbox version logic |
+| `reZip` | `true` | ! NOT WORKING YET - KEEP AS TRUE FOR NOW - set to true to re-zip Fluffy Mods (possibly not necessary for FLUFFY v3.069+) |
 | `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
-| `multiExe` | `false` | set to true if there are multiple executables (and multiple FLUFFY_FOLDERs) (typically for Demo) |
+| `multiExe` | `true` | set to true if there are multiple executables (and multiple FLUFFY_FOLDERs) (typically for Demo) |
 | `setupNotification` | `false` | enable to show the user a notification with special instructions (specify below) |
 | `debug` | `false` | toggle for debug mode |
 
@@ -58,15 +60,14 @@ Installers run in priority order (lower number = tested first). The first instal
 | `residentevil22019-looselua` | 29 |
 | `residentevil22019-root` | 31 |
 | `residentevil22019-preset` | 33 |
-| `residentevil22019-fluffymod` | 49 |
 | `residentevil22019-fluffymodzip` | 49 |
 
 ## Registered Tools
 
 These tools appear in Vortex's Tools panel when this game is active:
 
-- **Custom Launch** (`ClaireJ.exe`)
-- **Custom Launch (Demo)** (`null`)
+- **Custom Launch** (`re2.exe`)
+- **Custom Launch (Demo)** (`re2.exe`)
 
 ## Toolbar Actions
 
@@ -99,6 +100,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 - **Deploy Hook** (`did-deploy`) — runs custom logic (e.g., notifications, metadata patching) every time mods are deployed.
 - **Auto-Downloader** — can automatically download required tools (mod loader, managers, etc.).
 - **FOMOD Awareness** — installers check for and skip `fomod/ModuleConfig.xml` to avoid conflicts with the built-in FOMOD installer.
+- **Xbox Game Pass Support** — detects Xbox version of the game and adjusts executable/launcher accordingly.
 - **Registry Lookup** — uses Windows registry for game detection or configuration paths.
 - **Version Detection** — detects game version (Steam/Xbox/GOG/Demo) and adjusts paths accordingly.
 

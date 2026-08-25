@@ -67,7 +67,7 @@ These tools appear in Vortex's Tools panel when this game is active:
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- Download Latest ${LAUNCHER_NAME}
+- Download Latest wiltOS Mod Launcher
 - Open config.cfg
 - Open Saves Folder
 - Open PCGamingWiki Page

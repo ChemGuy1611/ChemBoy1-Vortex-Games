@@ -65,12 +65,14 @@ from nexus_upload import pick_file_group, upload_zip, extract_changelog_entry
 SEVENZIP = os.environ.get("SEVENZIP_PATH", r"C:\Program Files\7-Zip\7z.exe")
 NEXUS_SITE_URL = "https://www.nexusmods.com/games/site"
 
-# Repo-facing generated documentation. Useful on GitHub, but dead weight inside the
-# extension Vortex installs, so it is kept out of the released zip.
+# Repo-facing documentation. Useful on GitHub, but dead weight inside the extension
+# Vortex installs, so it is kept out of the released zip. DESCRIPTION.bbcode.txt is the
+# mod page description, hand-written per extension rather than generated.
 ZIP_EXCLUDES = [
     "EXTENSION_EXPLAINED.md",
     "NOTES_FOR_MOD_AUTHORS.md",
     "NOTES_FOR_MOD_AUTHORS.bbcode.txt",
+    "DESCRIPTION.bbcode.txt",
 ]
 
 

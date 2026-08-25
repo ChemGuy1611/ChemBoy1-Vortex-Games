@@ -55,7 +55,6 @@ Installers run in priority order (lower number = tested first). The first instal
 | `re4-root` | 31 |
 | `residentevil42023-upscaler` | 33 |
 | `residentevil42023-preset` | 35 |
-| `residentevil42023-fluffymod` | 45 |
 | `residentevil42023-fluffymodzip` | 45 |
 
 ## Registered Tools

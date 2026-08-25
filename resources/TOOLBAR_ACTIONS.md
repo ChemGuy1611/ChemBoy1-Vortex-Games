@@ -448,3 +448,5 @@ table). `VORTEX_MOD_LIST.md` (the Mods page table `mod-icons`/`mod-context-icons
 `IconBar` toolbar group). `LOAD_ORDER_REGISTRATION.md` (`fb-load-order-icons` toolbar group).
 `TEMPLATES_OVERVIEW.md` (the universal `mod-icons` button set at priority 300) and
 the per-template files under `templates/` (the extra buttons each template adds on top).
+`STEAM_FILE_DOWNLOADER.md` (the third-party "Verify Files" button that appears in `mod-icons`
+for every game carrying `details.steamAppId`).

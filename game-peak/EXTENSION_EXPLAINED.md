@@ -43,7 +43,7 @@ Installers run in priority order (lower number = tested first). The first instal
 
 These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
-- Download ${BEPCFGMAN_NAME}
+- Download BepInEx Configuration Manager
 - View Changelog
 - Open Downloads Folder
 - Open PCGamingWiki Page

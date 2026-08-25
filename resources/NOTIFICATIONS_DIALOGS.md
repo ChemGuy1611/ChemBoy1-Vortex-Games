@@ -404,3 +404,5 @@ setup, post-deploy tool prompt, and fallback-installer warning).
 `TEMPLATE_ANVILENGINE.md` and the destructive-action confirmations in `TEMPLATE_FROSTBITE.md`).
 `VORTEX_EVENT_BUS.md` (the event plumbing notifications are raised from).
 `REGISTER_ACTION.md` (the toolbar actions that open most of these dialogs).
+`STEAM_FILE_DOWNLOADER.md` (the Steam login, Steam Guard, 2FA, and mismatch-selection dialogs
+that extension raises on a game extension's behalf).

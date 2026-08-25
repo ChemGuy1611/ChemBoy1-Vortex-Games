@@ -12,10 +12,18 @@
  *
  * Run with:  node generate_notes.js
  *            node generate_notes.js subnautica2 [GAME_ID ...]
+ *            node generate_notes.js railroader --description
  *
  * Flags:
  *   --json       Write machine-readable JSON to stdout; progress goes to stderr.
  *   --templates  Also process template-* folders (when no GAME_ID args given).
+ *   --description  Write DESCRIPTION.bbcode.txt, the Nexus mod page description, in
+ *                  place of the notes files. Its "Mod Installation Notes" list is one
+ *                  line per installer, trigger + destination ("Installs mods with an
+ *                  "info.json" file to the "Mods" folder."). An existing page keeps
+ *                  everything the author wrote - only the list between the heading and
+ *                  its closing [/list] is replaced. A missing page is scaffolded with
+ *                  the standard section order for the author to finish.
  *
  * Drift checking is deliberately NOT a flag here - it is handled by the
  * generated-docs audit, which regenerates and diffs.
@@ -41,6 +49,7 @@ const {
   scanToMatchingClose,
   resolveValue,
   resolveWithFallback,
+  isRealValue,
   parseHeader,
   extractModTypes,
   extractRegisterModTypes,
@@ -241,7 +250,7 @@ function toolBlock({ title, tool, marker, installsTo, extra }) {
  * Section for an installer matched by a set of file names and/or extensions.
  * Returns null when nothing resolved, so the caller can fall through to tier 2.
  */
-function matchBlock({ title, lead, files, exts, folders, installsTo, tree, pitfalls, warn, targetIsProse }) {
+function matchBlock({ title, lead, files, exts, folders, installsTo, tree, pitfalls, warn, targetIsProse, userProfile }) {
   const rules = [];
   if (folders && folders.length) {
     rules.push(`Recognised by a folder named ${orList(folders)} in the archive.`);
@@ -268,10 +277,89 @@ function matchBlock({ title, lead, files, exts, folders, installsTo, tree, pitfa
     rules,
     pitfalls: pitfalls || [],
     warn: warn || null,
+    userProfile: !!userProfile,
   };
 }
 
 const PROSE = [
+  {
+    fn: 'testPatch', game: 'game-helldivers2',
+    build: () => ({
+      title: 'Patch Mods (.patch_0)',
+      quick: 'a file named `<archive hash>.patch_0`',
+      lead: 'Almost every Helldivers 2 mod is a patch mod. A patch file is named after the game ' +
+            'archive it edits - a 16-character hex hash - followed by a patch number. Graphics ' +
+            'and sound mods use the same format and are installed the same way.',
+      tree: [
+        'MyArmourMod.zip',
+        '├── 9ba626afa44a3aa3.patch_0',
+        '├── 9ba626afa44a3aa3.patch_0.gpu_resources',
+        '├── 9ba626afa44a3aa3.patch_0.stream',
+        '└── readme.txt',
+      ].join('\n'),
+      rules: [
+        'Recognised by any file matching `<16 hex characters>.patch_<number>`, for example ' +
+          '`9ba626afa44a3aa3.patch_0`. Any archive hash works - there is no fixed list.',
+        'The `.gpu_resources` and `.stream` sidecar files are optional. Ship whichever ones your ' +
+          'mod actually needs; some archives have them and some do not.',
+        'Always number your files from `patch_0`. Vortex renumbers them at deploy time so that ' +
+          'every mod editing the same archive gets a unique, gap-free number, in the order the ' +
+          'user sets on the Mod Priority page. Your own numbering only decides the order of your ' +
+          'own files within one archive.',
+        'A mod may ship patch files for several archives at once, and several files for one ' +
+          'archive (`x.patch_0` and `x.patch_1`). Both are handled.',
+        'To offer variants, put each complete set of patch files in its own folder. Vortex asks ' +
+          'the user which folder to install. Name the folders after what they contain, because ' +
+          'those names are what the user picks from.',
+        'Documentation files at the top level of the archive are installed alongside the patch ' +
+          'files and are left untouched.',
+      ],
+      pitfalls: [
+        'Numbering files `patch_1` or higher to "load later" - the number in your archive is not ' +
+          'the number the game sees. Priority is set by the user in Vortex, not by the file name.',
+        'Renaming a patch file to a hash the installed game does not have. The game silently ' +
+          'ignores a patch for an archive it does not know, so the mod appears to do nothing. ' +
+          'Vortex warns about this at install time.',
+        'Putting a readme inside each variant folder - only files at the top level of the archive ' +
+          'are installed alongside the patch files, so keep shared documentation at the root.',
+        'Leaving out a `.patch_0` file but shipping its `.gpu_resources` or `.stream` sidecar. A ' +
+          'sidecar is only ever installed next to the patch file it belongs to.',
+      ],
+    }),
+  },
+  {
+    fn: 'testMaps', engine: 'godot',
+    build: (v) => {
+      const exts = v.MAPS_EXTS && v.MAPS_EXTS.length ? v.MAPS_EXTS : ['.map'];
+      const target = v.MAPS_PATH || v.MAPS_FOLDER || 'maps';
+      return {
+        title: 'Map Mods',
+        quick: `a \`${exts[0]}\` file with a matching \`.json\` file`,
+        installsTo: target,
+        lead: 'Levels for the game\'s map loader. A map is a pair of files sharing one name, ' +
+              'kept together in a folder named after the map.',
+        tree: [
+          'MyMap.zip',
+          '└── Author-MyMap\\',
+          '    ├── mymap.map',
+          '    ├── mymap.json',
+          '    └── textures\\',
+        ].join('\n'),
+        rules: [
+          `Recognised by a file with the ${orList(exts)} extension that has a \`.json\` file ` +
+            `of the same name beside it.`,
+          'The folder holding the pair is kept as the installed map folder, so name it after the map.',
+          'A `textures` subfolder alongside the pair is installed with it.',
+        ],
+        pitfalls: [
+          'Shipping the map file without its matching `.json` - the pair is what identifies a map, ' +
+            'so a lone map file is not recognised and falls through to another installer.',
+          'Putting the map files at the archive root - the installer then has to invent a folder ' +
+            'name from the archive filename.',
+        ],
+      };
+    },
+  },
   {
     fn: 'testLogic', engine: 'ue4-5',
     build: (v) => {
@@ -490,6 +578,7 @@ const PROSE = [
       if (!files.length) return null;
       return {
         title: 'Config File Mods',
+        userProfile: true,
         quick: `a config file such as ${orList(files.slice(0, 2))}`,
         installsTo: v.CONFIG_PATH || null,
         lead: 'Config tweaks are deployed to the game\'s config folder in your user profile, not into the game installation.',
@@ -510,6 +599,7 @@ const PROSE = [
       if (!exts.length) return null;
       return {
         title: 'Save Game Files',
+        userProfile: true,
         quick: `a ${orList(exts)} file`,
         installsTo: null,
         lead: 'Save files are deployed to the game\'s save folder in your user profile.',
@@ -656,6 +746,94 @@ const PROSE = [
       });
     },
   },
+  // ── Unity Mod Manager / Railloader ─────────────────────────────────────────
+  {
+    fn: 'testUmm', engine: 'unity-umm',
+    build: (v) => v.UMM_INST_EXEC ? toolBlock({
+      title: 'Unity Mod Manager (tool)',
+      tool: 'Unity Mod Manager',
+      marker: v.UMM_INST_EXEC,
+      installsTo: '.',
+      extra: [
+        'Vortex reproduces the loader patch the manager would apply itself, so it deploys and ' +
+          'purges like any other mod.',
+      ],
+    }) : null,
+  },
+  {
+    fn: 'testUmmMod', engine: 'unity-umm',
+    build: (v) => {
+      if (!v.UMM_MOD_FILE) return null;
+      const folder = v.MODS_FOLDER || 'Mods';
+      return {
+        title: 'Unity Mod Manager Mods',
+        quick: `an \`${v.UMM_MOD_FILE}\` file and a \`.dll\``,
+        installsTo: `${folder}\\<ModName>`,
+        lead: `Mods for Unity Mod Manager: a manifest plus the assembly that implements the mod. ` +
+              `Each one gets its own folder under \`${folder}\`.`,
+        tree: [
+          'MyUmmMod.zip',
+          `├── ${v.UMM_MOD_FILE}`,
+          '└── MyUmmMod.dll',
+        ].join('\n'),
+        rules: [
+          `Recognised by a file named \`${v.UMM_MOD_FILE}\` together with a \`.dll\` beside it.`,
+          `The mod folder name comes from the folder wrapping the manifest. A flat archive is ` +
+            `named from the \`Id\` field in \`${v.UMM_MOD_FILE}\` instead, so keep that field filled in.`,
+        ],
+        pitfalls: [
+          `Shipping the manifest without the assembly - the archive is not recognised as a mod.`,
+          `Wrapping the mod in an extra \`${folder}\` folder is fine, but a second level of ` +
+            `wrapping folders becomes part of the mod folder name.`,
+        ],
+      };
+    },
+  },
+  {
+    fn: 'testRailloaderMod', engine: 'unity-umm',
+    build: (v) => {
+      if (!v.RAILLOADER_MOD_FILE) return null;
+      const folder = v.MODS_FOLDER || 'Mods';
+      // The constant is lower case because matching is case-insensitive; mods ship it capitalised.
+      const manifest = v.RAILLOADER_MOD_FILE.charAt(0).toUpperCase() + v.RAILLOADER_MOD_FILE.slice(1);
+      return {
+        title: 'Railloader Mods',
+        quick: `a \`${manifest}\` file`,
+        installsTo: `${folder}\\<ModName>`,
+        lead: `Mods for Railloader, the game's second mod loader. They live in the same ` +
+              `\`${folder}\` folder as Unity Mod Manager mods, and are told apart by their manifest.`,
+        tree: [
+          'MyRailloaderMod.zip',
+          `└── MyRailloaderMod\\`,
+          `    ├── ${manifest}`,
+          '    └── MyRailloaderMod.dll',
+        ].join('\n'),
+        rules: [
+          `Recognised by a file named \`${manifest}\`.`,
+          `A leading \`${folder}\` folder in the archive is dropped - the installer already ` +
+            `targets \`${folder}\`, so it is not doubled up.`,
+          `A flat archive is named from the \`id\` field in \`${manifest}\`.`,
+        ],
+        pitfalls: [
+          `Mixing the two formats in one archive. A mod needs either \`${manifest}\` for ` +
+            `Railloader or a Unity Mod Manager manifest, not both - each loader rejects the other's mods.`,
+        ],
+      };
+    },
+  },
+  {
+    fn: 'testRailloaderApp', engine: 'unity-umm',
+    build: (v) => (v.RAILLOADER_FILES && v.RAILLOADER_FILES.length) ? toolBlock({
+      title: 'Railloader (tool)',
+      tool: 'Railloader',
+      marker: v.RAILLOADER_FILES[0],
+      installsTo: '.',
+      extra: [
+        'Railloader has no working download site at the moment, so Vortex cannot fetch it. ' +
+          'This installer exists so an archive you already have installs to the right place.',
+      ],
+    }) : null,
+  },
   {
     fn: 'testAssembly', engine: ['unity-bepinex', 'unity-melon-bepinex', 'unity-umm'],
     build: (v) => matchBlock({
@@ -794,6 +972,27 @@ const PROSE = [
       lead: 'The catch-all for RE Engine mods packaged in the normal Fluffy Mod Manager layout. ' +
             'Most content mods for this game land here, which is the intended outcome.',
       rules: ['Any archive not claimed by an earlier installer is treated as a Fluffy-format mod.'],
+      pitfalls: [
+        'Because this is a catch-all, a badly laid-out archive still installs - it just may not work. ' +
+          'Match the layout Fluffy Mod Manager expects.',
+      ],
+    }),
+  },
+  {
+    // The live half of the reZip pair. testFluffyMod above is its dead twin: the two are
+    // registered from opposite arms of `if (!reZip)`, so exactly one of them exists in any
+    // given extension, and every current RE Engine game ships reZip = true.
+    fn: 'testZipContent', engine: 'reengine',
+    build: () => ({
+      title: 'Fluffy-Format Mods',
+      quick: 'anything not matched above',
+      installsTo: null,
+      lead: 'The catch-all for RE Engine mods packaged in the normal Fluffy Mod Manager layout. ' +
+            'Most content mods for this game land here, which is the intended outcome.',
+      rules: [
+        'Any archive not claimed by an earlier installer is treated as a Fluffy-format mod.',
+        'An archive already zipped in the Fluffy layout is installed as it is, with no repacking.',
+      ],
       pitfalls: [
         'Because this is a catch-all, a badly laid-out archive still installs - it just may not work. ' +
           'Match the layout Fluffy Mod Manager expects.',
@@ -953,6 +1152,7 @@ const PROSE = [
     build: (v) => matchBlock({
       title: 'Save Game Files',
       lead: 'Save files, deployed to the game\'s save folder.',
+      userProfile: true,
       exts: v.SAVE_EXTS,
       pitfalls: ['Including an example save alongside a normal mod makes the archive install as a save.'],
     }),
@@ -962,6 +1162,7 @@ const PROSE = [
     build: (v) => matchBlock({
       title: 'Config File Mods',
       lead: 'Configuration tweaks, deployed to the game\'s config location.',
+      userProfile: true,
       files: v.CONFIG_FILES,
       installsTo: v.CONFIG_PATH,
       pitfalls: [
@@ -1002,6 +1203,8 @@ function buildVars(src, table) {
     'MELON_DLL_FILE', 'MELON_MODS_PATH', 'MELON_PLUGINS_PATH', 'BEPCFGMAN_FILE',
     'BEPCFGMAN_PATH', 'MELONPREFMAN_FILE', 'MELONPREFMAN_PATH', 'ASSEMBLY_PATH',
     'ASSETS_PATH', 'PLUGIN_PATH', 'DATA_FOLDER',
+    // Unity (Unity Mod Manager / Railloader)
+    'UMM_INST_EXEC', 'UMM_MOD_FILE', 'MODS_FOLDER', 'RAILLOADER_MOD_FILE',
     // UE2-3 / TFC
     'TFC_EXEC', 'UPKEXPLORER_EXEC',
     // RE Engine / Fluffy
@@ -1016,6 +1219,8 @@ function buildVars(src, table) {
     'RELOADED_EXEC',
     // Cobra / ACSE
     'ACSE_FILE', 'ACSE_MOD_FILE', 'OVLDATA_FILE', 'LOCALISED_FILE',
+    // Godot
+    'MAPS_PATH', 'MAPS_FOLDER',
   ]) {
     v[n] = val(n, src, table);
   }
@@ -1025,7 +1230,7 @@ function buildVars(src, table) {
     'TFCMOD_EXTS', 'TFCMOD_FILES', 'COOKEDSUB_FOLDERS', 'COOKEDSUB_EXTS',
     'MOVIES_EXTS', 'BINARIES_FILES', 'BINARIES_EXTS', 'DLCSUB_FOLDERS',
     'PRESET_EXTS', 'REF_FOLDERS', 'LOOSE_EXTS', 'FROSTYMOD_EXTS',
-    'DATA_EXTS', 'MIMOD_EXTS']) {
+    'DATA_EXTS', 'MIMOD_EXTS', 'RAILLOADER_FILES', 'MAPS_EXTS']) {
     v[n] = resolveArray(n, src, table);
   }
   // Older/simpler extensions use singular names instead of the plural arrays.
@@ -1163,8 +1368,14 @@ function renderMarkdown(ctx) {
   for (const s of sections) {
     md += `| ${s.title} | ${s.quickTrigger || '-'} | ${fmtTarget(s)} |\n`;
   }
-  md += `\nPaths are relative to the game's install folder. Config and save mods deploy into your ` +
-        `user profile instead, so no game-relative path is shown for them.\n\n`;
+  md += `\nPaths are relative to the game's install folder.`;
+  // Only mention the user-profile exception when a mod type actually deploys there. Games
+  // with no config or save mod type were being told about a rule that does not apply to them.
+  if (sections.some(s => s.userProfile)) {
+    md += ` Config and save mods deploy into your ` +
+          `user profile instead, so no game-relative path is shown for them.`;
+  }
+  md += `\n\n`;
 
   for (const s of sections) {
     md += `## ${s.title}\n\n`;
@@ -1244,6 +1455,149 @@ function stripMd(s) {
   return String(s).replace(/`/g, '"').replace(/\*\*/g, '');
 }
 
+/**
+ * `a "info.json" file` reads badly - fix the article ahead of a vowel sound.
+ * `u` is excluded on purpose: every u-initial token these lines carry is a
+ * consonant sound ("a UnityModManager.exe file", "a UE4SS folder").
+ */
+function fixArticle(s) {
+  return String(s).replace(/\ba (?=["']?[aeioAEIO])/g, 'an ');
+}
+
+/**
+ * One line per installer, for the "Mod Installation Notes" list on a Nexus mod page.
+ * Same sections the notes are built from, collapsed to trigger + destination:
+ *   [*]Installs mods with an "info.json" file to the "Mods" folder.[/*]
+ * Loader installers (the ones whose section carries a tool lead) are marked so the
+ * author can move them to the top of the list, where the house style puts them.
+ */
+const DESCRIPTION_FILE = 'DESCRIPTION.bbcode.txt';
+const INSTALL_HEADING = '[b]🛠️ Mod Installation Notes:[/b]';
+
+function renderDescription(ctx) {
+  const { sections, allFomodGuarded } = ctx;
+  const L = [];
+  L.push(INSTALL_HEADING);
+  L.push('[list]');
+  for (const s of sections) {
+    const trigger = s.quickTrigger && s.quickTrigger !== '-'
+      ? fixArticle(stripMd(s.quickTrigger))
+      : null;
+    const rawTarget = fmtTarget(s);
+    const target = rawTarget === '-' ? null
+      : (s.targetIsProse || rawTarget === GAME_FOLDER_PROSE)
+        ? rawTarget
+        : `the ${stripMd(rawTarget)} folder`;
+    // A tool installer handles the loader/manager itself, so "installs mods with" is wrong for it.
+    const isTool = s.lead && /not mods for it/i.test(s.lead);
+    // The catch-all installer has no trigger worth naming and usually no mod type.
+    const isFallback = trigger && /anything not matched/i.test(trigger);
+    let line;
+    if (isFallback) {
+      line = `Any other mod not described above is installed to ${target || GAME_FOLDER_PROSE}.`;
+    } else if (isTool) {
+      // Section titles carry a "(tool)" / "(mod loader)" qualifier that reads as clutter here.
+      const toolName = s.title.replace(/\s*\([^)]*\)\s*$/, '');
+      line = target
+        ? `Installs ${toolName} itself to ${target}, recognised by ${trigger || 'its own files'}.`
+        : `Installs ${toolName} itself, recognised by ${trigger || 'its own files'}.`;
+    } else if (trigger && target) {
+      line = `Installs mods with ${trigger} to ${target}.`;
+    } else if (trigger) {
+      line = `Installs mods with ${trigger}.`;
+    } else if (target) {
+      line = `${s.title} mods are installed to ${target}.`;
+    } else {
+      line = `${s.title} mods are recognised by the ${s.title} installer.`;
+    }
+    L.push(`[*]${line}[/*]`);
+  }
+  if (allFomodGuarded) {
+    L.push('[*]Archives with a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to Vortex\'s built-in FOMOD installer instead.[/*]');
+  }
+  L.push('[/list]');
+  return L.join('\n');
+}
+
+/** Store label per resolved app-id constant, in the order the pages list them. */
+const STORE_IDS = [
+  ['STEAMAPP_ID', 'Steam'],
+  ['GOGAPP_ID', 'GOG'],
+  ['EPICAPP_ID', 'Epic'],
+  ['UPLAYAPP_ID', 'Ubisoft Connect'],
+  ['EAAPP_ID', 'EA'],
+  ['XBOXAPP_ID', 'Xbox (Game Pass)'],
+];
+
+/** Donation block, byte-identical across every published extension page. */
+const SUPPORT_BLOCK = [
+  '[b]❤️ Support the Mod Author: [/b]',
+  'If you would like to support my work, you can do so below. Your support is greatly appreciated!',
+  '',
+  '',
+  '[url=https://www.paypal.com/donate/?hosted_button_id=ZFE99JKP43D2G][img]https://live.staticflickr.com/65535/54395661414_10e6ef111d_m.jpg[/img][/url]',
+  '',
+  '',
+  '[url=https://ko-fi.com/chemboy1nexusmods/][img]https://live.staticflickr.com/65535/54380730333_357df43249_n.jpg[/img][/url]',
+  '',
+  '',
+  '[url=https://buymeacoffee.com/chemboy1/][img]https://live.staticflickr.com/65535/54379586002_8dcc6370e5_m.jpg[/img][/url]',
+].join('\n');
+
+/**
+ * Whole-page scaffold, used only when no DESCRIPTION.bbcode.txt exists yet. Follows
+ * the section order every published extension page uses. The parts a generator cannot
+ * know - loader warnings, per-game usage notes, credits - are left for the author.
+ */
+function scaffoldDescription(ctx, installBlock) {
+  const stores = STORE_IDS
+    .filter(([name]) => isRealValue(ctx.table.get(name)))
+    .map(([, label]) => label);
+  const L = [];
+  L.push(`This extension adds ${ctx.gameName} modding support to Vortex Mod Manager.`);
+  L.push('');
+  L.push('[b]✅ Supported Versions:[/b]');
+  L.push('[list]');
+  for (const s of stores) L.push(`[*]${s}[/*]`);
+  L.push('[*]Other versions may need to select the installation location manually.[/*]');
+  L.push('[/list]');
+  L.push(installBlock);
+  L.push('[b]📋 Usage Notes:[/b]');
+  L.push('[list]');
+  L.push('[*]You can open several useful files/folders/URLs using the buttons within the folder icon on the Mods toolbar.[/*]');
+  L.push('[/list]');
+  L.push('');
+  L.push(SUPPORT_BLOCK);
+  L.push('');
+  return L.join('\n');
+}
+
+/**
+ * Replace just the install list inside a page that already exists, from the heading
+ * through its closing [/list]. Everything the author wrote around it survives.
+ * Returns null when the heading is absent, so the caller can refuse rather than
+ * overwrite a page laid out some other way.
+ *
+ * Items carrying BBCode markup are kept and moved to the top of the rebuilt list.
+ * Those are the lines no generator can produce - the yellow "downloaded automatically"
+ * loader line, a red caveat - and the house style already puts them first. Generated
+ * lines are always plain text, so nothing is duplicated by keeping them.
+ */
+const AUTHOR_ITEM = /\[(?:b|i|u|color|size|url|img)[=\]]/i;
+
+function spliceDescription(existing, installBlock) {
+  const start = existing.indexOf(INSTALL_HEADING);
+  if (start === -1) return null;
+  const listEnd = existing.indexOf('[/list]', start);
+  if (listEnd === -1) return null;
+  const oldItems = existing.slice(start, listEnd).match(/^\[\*\].*$/gm) || [];
+  const kept = oldItems.filter(item => AUTHOR_ITEM.test(item));
+  const lines = installBlock.split('\n');
+  const listOpen = lines.indexOf('[list]');
+  if (kept.length && listOpen !== -1) lines.splice(listOpen + 1, 0, ...kept);
+  return existing.slice(0, start) + lines.join('\n') + existing.slice(listEnd + '[/list]'.length);
+}
+
 // ── per-extension build ─────────────────────────────────────────────────────
 
 function buildNotes(dirName, src) {
@@ -1285,8 +1639,11 @@ function buildNotes(dirName, src) {
   const unknownFns = [];
 
   for (const inst of sorted) {
-    const block = PROSE.find(p => p.fn === inst.testFn &&
-      (Array.isArray(p.engine) ? p.engine.includes(engine) : p.engine === engine));
+    // A block pinned with `game` applies to that one extension folder only. Needed where a test
+    // function name is shared across extensions that have no engine key to tell them apart.
+    const block = PROSE.find(p => p.fn === inst.testFn && (p.game !== undefined
+      ? p.game === dirName
+      : (Array.isArray(p.engine) ? p.engine.includes(engine) : p.engine === engine)));
     let section = null;
     if (block) {
       const built = block.build(vars);
@@ -1316,10 +1673,13 @@ function buildNotes(dirName, src) {
   }
 
   const title = `Notes for Mod Authors - ${gameName}`;
-  const ctx = { title, gameName, sections, allFomodGuarded };
+  const ctx = { title, gameName, sections, allFomodGuarded, table };
+  const installBlock = renderDescription(ctx);
   return {
     md: renderMarkdown(ctx),
     bbcode: renderBBCode(ctx),
+    description: installBlock,
+    scaffold: () => scaffoldDescription(ctx, installBlock),
     tier1, tier2, unknownFns,
   };
 }
@@ -1360,6 +1720,7 @@ const cliFlags    = new Set(rawArgs.filter(a => a.startsWith('--')));
 const gameArgs    = rawArgs.filter(a => !a.startsWith('--'));
 const doJson      = cliFlags.has('--json');
 const doTemplates = cliFlags.has('--templates');
+const doDescription = cliFlags.has('--description');
 const jsonResults = [];
 
 function emit(line = '') {
@@ -1397,7 +1758,34 @@ for (const dir of extDirs) {
   }
   try {
     const src = fs.readFileSync(indexPath, 'utf8');
-    const { md, bbcode, tier1, tier2, unknownFns } = buildNotes(dir, src);
+    const { md, bbcode, description, scaffold, tier1, tier2, unknownFns } = buildNotes(dir, src);
+    if (doDescription) {
+      // The page is hand-written around this list, so an existing file is spliced,
+      // never rewritten. Only a brand new page gets the full scaffold.
+      const descPath = path.join(ROOT, dir, DESCRIPTION_FILE);
+      if (fs.existsSync(descPath)) {
+        const existing = fs.readFileSync(descPath, 'utf8');
+        const merged = spliceDescription(existing, description);
+        if (merged === null) {
+          emit(`  SKIP  ${dir} (${DESCRIPTION_FILE} has no "${INSTALL_HEADING}" list to replace)`);
+          skipped++;
+          jsonResults.push({ id: dir, ok: false, error: 'no install list heading' });
+          continue;
+        }
+        if (merged === existing) {
+          emit(`  OK    ${dir} (${DESCRIPTION_FILE} already up to date)`);
+        } else {
+          fs.writeFileSync(descPath, merged);
+          emit(`  OK    ${dir} (${DESCRIPTION_FILE} install list updated)`);
+        }
+      } else {
+        fs.writeFileSync(descPath, scaffold());
+        emit(`  NEW   ${dir} (${DESCRIPTION_FILE} scaffolded - fill in the loader, usage and credit lines)`);
+      }
+      created++;
+      jsonResults.push({ id: dir, ok: true, description: true });
+      continue;
+    }
     fs.writeFileSync(path.join(ROOT, dir, 'NOTES_FOR_MOD_AUTHORS.md'), md);
     fs.writeFileSync(path.join(ROOT, dir, 'NOTES_FOR_MOD_AUTHORS.bbcode.txt'), bbcode);
     created++;
@@ -1416,7 +1804,7 @@ for (const dir of extDirs) {
 
 emit('');
 emit(`Done.  Written: ${created}  Skipped: ${skipped}  Errors: ${errors}`);
-emit(`Sections: ${tier1Total} documented, ${tier2Total} auto-derived`);
+if (!doDescription) emit(`Sections: ${tier1Total} documented, ${tier2Total} auto-derived`);
 if (tier2Heavy.length) {
   emit(`Extensions with no documented sections yet: ${tier2Heavy.length}`);
 }

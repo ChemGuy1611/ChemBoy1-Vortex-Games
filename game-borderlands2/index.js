@@ -2,8 +2,8 @@
 Name: Borderlands 2 Vortex Extension
 Structure: UE2/3 Game (TFC Installer)
 Author: ChemBoy1
-Version: 0.4.1
-Date: 2026-08-05
+Version: 0.4.2
+Date: 2026-08-22
 /////////////////////////////////////////*/
 
 //Import libraries

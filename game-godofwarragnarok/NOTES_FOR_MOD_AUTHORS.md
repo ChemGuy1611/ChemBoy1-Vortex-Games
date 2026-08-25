@@ -16,7 +16,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Luamod | a file or folder named `int9` and a file with one of these extensions: `.lua` | `mod` |
 | Save | - | `userHomePathSanitize\Saved Games\God of War Ragnar\u00F6k\USERID_FOLDER` |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder.
 
 ## Scriptloader
 

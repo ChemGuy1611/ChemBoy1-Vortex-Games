@@ -10,9 +10,6 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | --- | --- | --- |
 | Combo Mods (pak + UE4SS script/DLL together) | both a `Content` and a `Binaries` folder | `Polaris` |
 | Pak Mods | a `.pak` file | `Polaris\Content\Paks\~mods` |
-| UE4SS Itself | a `dwmapi.dll` file | `Polaris\Binaries\Win64` |
-| UE4SS Script Mods (Lua) | a `.lua` file and a `Scripts` folder | `Polaris\Binaries\Win64\ue4ss\Mods` |
-| UE4SS DLL Mods (C++) | a `.dll` file and a `dlls` folder | `Polaris\Binaries\Win64\ue4ss\Mods` |
 | Root / Game Folder Mods | a top-level folder such as `Polaris`, `Engine` or `Content` | the game folder itself (no subfolder) |
 | Config File Mods | a config file such as `engine.ini` or `game.ini` | - |
 | Save Game Files | a `.sav` file | - |
@@ -73,66 +70,6 @@ Installs to: `Polaris\Content\Paks\~mods`
 
 - Shipping several unrelated paks in one archive when you meant them all to install - the user gets a choice dialog and may pick only one.
 - Blueprint mods belong in a `LogicMods` folder instead - see above.
-
-## UE4SS Itself
-
-This installer handles the UE4SS runtime package, not individual mods. Most authors never need it - it exists so users can install UE4SS through Vortex.
-
-**Requirements:**
-
-- Recognised by a file named `dwmapi.dll` at any level of the archive.
-
-Installs to: `Polaris\Binaries\Win64`
-
-**Common mistakes:**
-
-- If your script mod archive happens to contain a file named `dwmapi.dll`, it will be treated as a UE4SS install rather than as your mod.
-
-## UE4SS Script Mods (Lua)
-
-Lua mods for UE4SS. Recognised when the archive holds both a `.lua` file and a folder named `Scripts`.
-
-```text
-MyScriptMod.zip
-└── MyScriptMod\
-    └── Scripts\
-        └── main.lua
-```
-
-**Requirements:**
-
-- The archive must contain a `.lua` file AND a folder named `Scripts`.
-- Wrap the `Scripts` folder in a folder named after your mod. That folder name becomes the mod's UE4SS name and is what gets written to the load order.
-- If you omit the wrapper folder, Vortex falls back to naming the mod after the archive file.
-
-Installs to: `Polaris\Binaries\Win64\ue4ss\Mods`
-
-**Common mistakes:**
-
-- Putting `main.lua` directly in the archive root with no `Scripts` folder - the mod is not recognised as a script mod.
-- Naming the wrapper folder something generic like `Mods` - that name is what appears in the load order.
-
-## UE4SS DLL Mods (C++)
-
-Compiled UE4SS mods. Recognised when the archive holds both a `.dll` file and a folder named `dlls`.
-
-```text
-MyDllMod.zip
-└── MyDllMod\
-    └── dlls\
-        └── main.dll
-```
-
-**Requirements:**
-
-- The archive must contain a `.dll` file AND a folder named `dlls`.
-- Wrap the `dlls` folder in a folder named after your mod - that name is used in the load order.
-
-Installs to: `Polaris\Binaries\Win64\ue4ss\Mods`
-
-**Common mistakes:**
-
-- A bare `.dll` with no `dlls` folder is not recognised as a UE4SS DLL mod and will reach the fallback installer.
 
 ## Root / Game Folder Mods
 

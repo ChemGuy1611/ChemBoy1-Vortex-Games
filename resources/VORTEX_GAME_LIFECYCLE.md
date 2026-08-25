@@ -84,6 +84,23 @@ hangs off this event: deployment redeploy/validators, load-order pages, plugin m
 checks. It fires **after** the profile is already active and the UI is usable again — so handlers
 must tolerate the user switching game/profile again immediately.
 
+**It is a global event, not a per-game one.** Every registered handler runs on every activation,
+whatever game was activated, because there is one shared event bus and no per-game subscription. A
+game extension's handler therefore has to gate on the id before doing anything at all:
+
+```js
+api.events.on('gamemode-activated', (gameId) => {
+  if (gameId !== GAME_ID) return;   // FIRST line - not after the side effects
+  // ...
+});
+```
+
+The failure this prevents is quiet rather than loud: work placed above the check — cache
+invalidation, folder scans, state dispatches — runs while the user is managing a completely
+different game. Nothing errors, so it survives testing; it just wastes work and can clobber state
+the extension had every reason to keep. Put every statement inside the guard, including the ones
+that look harmless.
+
 ## Tools & launching
 
 `primaryTool` (`state.settings.interface.primaryTool[gameId]`) is the tool the big play button

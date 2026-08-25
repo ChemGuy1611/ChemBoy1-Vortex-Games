@@ -29,7 +29,6 @@
 | Flag | Value | Description |
 | --- | --- | --- |
 | `reZip` | `true` | rezip mods for ModManager |
-| `loadOrderEnabled` | `false` | true to use load order sorting |
 | `modInstallerEnabled` | `true` | enable mod installer (once mod loader is added) |
 | `hasLoader` | `true` | for DLL Loader |
 | `allowSymlinks` | `true` | true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp) |
@@ -84,7 +83,7 @@ These buttons appear in the Vortex mod-icons toolbar when this game is active:
 
 - Run Merge (Yumia)
 - Reset root.rdb Files (Yumia)
-- Download ${RDBEXPLORER_NAME}
+- Download RDBExplorer
 - Open Config Folder
 - Open Save Folder
 - Open PCGamingWiki Page

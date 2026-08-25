@@ -14,7 +14,7 @@ Vortex decides what a mod is by looking at the files and folders inside the arch
 | Root / Game Folder Mods | a `GameSDK` folder | the game folder itself (no subfolder) |
 | Binaries | a file with one of these extensions: `.exe`, `.dll`, `.asi` or `.addon64` | - |
 
-Paths are relative to the game's install folder. Config and save mods deploy into your user profile instead, so no game-relative path is shown for them.
+Paths are relative to the game's install folder.
 
 ## Pric
 
