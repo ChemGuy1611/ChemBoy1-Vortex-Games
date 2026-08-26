@@ -17,6 +17,7 @@
 | Executable (Xbox) | `gamelaunchhelper.exe` |
 | Executable (GOG) | `How To Fish.exe` |
 | Executable (Demo) | `How To Fish.exe` |
+| Extension Page | [https://www.nexusmods.com/site/mods/2211](https://www.nexusmods.com/site/mods/2211) |
 | PCGamingWiki | [https://www.pcgamingwiki.com/wiki/How_to_Fish](https://www.pcgamingwiki.com/wiki/How_to_Fish) |
 
 ## Supported Stores
@@ -41,7 +42,7 @@
 | `debug` | `false` | toggle for debug mode |
 | `hasVersionFile` | `false` | set to true if there is a Version.info file that contains the game version number |
 | `hasUserIdFolder` | `false` | true if there is a folder in the Save path that is a user ID that must be read (i.e. Steam ID) |
-| `loaderChoice` | `false` | true if loader choice is enabled |
+| `loaderChoice` | `true` | true if loader choice is enabled |
 | `allowBepCfgMan` | `true` | should BepInExConfigManager be downloaded (via notification)? |
 | `allowMelPrefMan` | `true` | should MelonPreferencesManager be downloaded (via notification)? |
 | `allowBepinexNexus` | `true` | allow Nexus Mods download of BepInEx/MelonLoader |

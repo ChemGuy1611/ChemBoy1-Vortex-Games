@@ -2,8 +2,8 @@
 Name: How to Fish Vortex Extension
 Structure: Unity BepinEx/MelonLoader/Custom Loader Hybrid
 Author: ChemBoy1
-Version: 1.0.0
-Date: 2026-08-25
+Version: 1.0.1
+Date: 2026-08-26
 Notes:
 -
 //////////////////////////////////////////*/
@@ -52,7 +52,7 @@ const EXEC_DEMO = EXEC;
 const EXEC_XBOX = 'gamelaunchhelper.exe';
 const EXEC_ALT = `${GAME_STRING_ALT}.exe`;
 const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/How_to_Fish";
-const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/2211"; //Nexus link to this extension. Used for links
 
 //feature toggles
 const allowSymlinks = true; //true if game can use symlinks without issues. Typically needs to be false if files have internal references (i.e. pak/ucas/utoc or ba2/esp)
@@ -91,8 +91,8 @@ const hasUserIdFolder = false; //true if there is a folder in the Save path that
 
 //Data to determine BepinEx/MelonLoader versions and URLs
 const ENGINE_VERSION = '6'; //Unity Engine version - info only atm.
-const loaderChoice = false; //true if loader choice is enabled
-const recommendedLoader = 'bep'; // bep/mel - If loaderChoice false, this determines downloaded loader. Otherwise shows as "(Recommended)" in selector.
+const loaderChoice = true; //true if loader choice is enabled
+const recommendedLoader = 'mel'; // bep/mel - If loaderChoice false, this determines downloaded loader. Otherwise shows as "(Recommended)" in selector.
 const BEPINEX_BUILD = 'mono'; // 'mono' or 'il2cpp' - check for "il2cpp_data" folder
 const ARCH = 'x64'; //'x64' or 'x86' game architecture (64-bit or 32-bit)
 const BEP_VER = '5.4.23.5'; //set BepInEx version for mono URLs
