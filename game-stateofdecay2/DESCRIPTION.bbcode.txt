@@ -1,0 +1,34 @@
+This extension adds State of Decay 2 modding support to Vortex Mod Manager.
+
+[b]✅ Supported Versions:[/b]
+[list]
+[*]Steam[/*]
+[*]Epic[/*]
+[*]Xbox (Game Pass)[/*]
+[*]Other versions may need to select the installation location manually.[/*]
+[/list]
+[b]🛠️ Mod Installation Notes:[/b]
+[list]
+[*]Installs mods with a file or folder named "modintegrator.exe".[/*]
+[*]Config mods are installed to the "{localAppData}\StateOfDecay2\Saved\Config\WindowsNoEditor" folder.[/*]
+[*]Installs mods with a file or folder named "Cooked" to the "{localAppData}\StateOfDecay2\Saved" folder.[/*]
+[*]Installs mods with a top-level folder such as "StateOfDecay2" to the game folder itself (no subfolder).[/*]
+[*]Installs mods with anything unrecognised with no pak file.[/*]
+[*]Archives with a FOMOD installer (a "fomod" folder with ModuleConfig.xml) are handed to Vortex's built-in FOMOD installer instead.[/*]
+[/list]
+[b]📋 Usage Notes:[/b]
+[list]
+[*]You can open several useful files/folders/URLs using the buttons within the folder icon on the Mods toolbar.[/*]
+[/list]
+
+[b]❤️ Support the Mod Author: [/b]
+If you would like to support my work, you can do so below. Your support is greatly appreciated!
+
+
+[url=https://www.paypal.com/donate/?hosted_button_id=ZFE99JKP43D2G][img]https://live.staticflickr.com/65535/54395661414_10e6ef111d_m.jpg[/img][/url]
+
+
+[url=https://ko-fi.com/chemboy1nexusmods/][img]https://live.staticflickr.com/65535/54380730333_357df43249_n.jpg[/img][/url]
+
+
+[url=https://buymeacoffee.com/chemboy1/][img]https://live.staticflickr.com/65535/54379586002_8dcc6370e5_m.jpg[/img][/url]

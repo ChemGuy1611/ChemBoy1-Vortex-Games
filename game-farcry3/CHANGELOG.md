@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [1.1.0] - 2026-08-25
+
+- Added: A page to browse mods on fcmodding.com.
+
 ## [1.0.0] - 2026-08-14
 
 - The FC3 Mod Installer is now kept up to date. Vortex checks for new builds and installs them, and a "Download Latest FC3 Mod Installer" button has been added to the Mods toolbar.

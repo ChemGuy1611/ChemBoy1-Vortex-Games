@@ -2,8 +2,8 @@
 Name: Beast of Reincarnation Vortex Extension
 Structure: Unreal Engine 4-5 Game
 Author: ChemBoy1
-Version: 1.0.1
-Date: 2026-08-24
+Version: 1.0.2
+Date: 2026-08-25
 Notes:
 -
 ////////////////////////////////////////////////*/
@@ -86,8 +86,8 @@ const PAKMOD_EXTRA_EXTS = []; //extra extensions to include with paks (usually f
 const ue4ssLoadOrder = true; //master toggle for UE4SS support: UE4SS/Scripts/DLL/LogicMods mod types and installers, UE4SS buttons, load order page, and mods.txt writing
 const logicModsLoadOrder = true; //enable load order page and load_order.txt writing for LogicMods/Blueprint pak mods
 const collectionsLoadOrder = true; //include UE4SS and LogicMods load orders in collections (ANDed with the toggles above)
-const UE4SS_PAGE_NO = 0; //set these if there is a customized UE4SS Nexus page
-const UE4SS_FILE_NO = 0;
+const UE4SS_PAGE_NO = 37; //set these if there is a customized UE4SS Nexus page
+const UE4SS_FILE_NO = 78;
 const UE4SS_DOMAIN = GAME_ID; //either GAME_ID or 'site'
 const UE4SS_FOLDER = 'ue4ss'; //this should probably never change
 const UE4SS_MOD_PATH = path.join(UE4SS_FOLDER, 'Mods'); //this should probably never change (unless UE4SS team changes it again lol)

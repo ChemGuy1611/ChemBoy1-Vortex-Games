@@ -11,6 +11,7 @@ doomthedarkages
 dragonagetheveilguard
 godofwarragnarok
 gzdoom
+howtofish
 megabonk
 reddeadredemption
 roadtovostok
