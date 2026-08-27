@@ -1,9 +1,9 @@
 /*///////////////////////////////////////////
-Name: XXX Vortex Extension
+Name: The Lord of the Rings: War in the North - Legacy Edition Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
 Version: 1.0.0
-Date: 2026-XX-XX
+Date: 2026-08-26
 Notes:
 -
 ///////////////////////////////////////////*/
@@ -19,34 +19,34 @@ const { parseStringPromise } = require('xml2js');
 
 /*const USER_HOME = util.getVortexPath("home");
 const LOCALLOW = path.join(USER_HOME, 'AppData', 'LocalLow'); //*/
-const DOCUMENTS = util.getVortexPath("documents");
+//const DOCUMENTS = util.getVortexPath("documents");
 //const ROAMINGAPPDATA = util.getVortexPath("appData");
 const LOCALAPPDATA = util.getVortexPath("localAppData");
 
 //Specify all the information about the game
-const GAME_ID = "XXX";
-const STEAMAPP_ID = "XXX";
-const STEAMAPP_ID_DEMO = "XXX";
-const EPICAPP_ID = "XXX";
-const GOGAPP_ID = "XXX";
-const XBOXAPP_ID = "XXX";
+const GAME_ID = "lotrwarinthenorthle";
+const STEAMAPP_ID = "2523770"; // https://steamdb.info/app/2523770/
+const STEAMAPP_ID_DEMO = null;
+const EPICAPP_ID = "XXX"; // https://store.epicgames.com/en-US/p/the-lord-of-the-rings-war-in-the-north-702913
+const GOGAPP_ID = "1134024811"; // https://www.gogdb.org/product/1134024811
+const XBOXAPP_ID = null;
 const XBOXEXECNAME = "XXX";
 const XBOX_PUB_ID = "XXX"; //get from Save folder. '8wekyb3d8bbwe' if published by Microsoft
 const INSTALL_HIVE = 'HKEY_LOCAL_MACHINE'; //typically HKEY_LOCAL_MACHINE or HKEY_CURRENT_USER
 const INSTALL_KEY = `SOFTWARE\\WOW6432Node\\XXX\\XXX`; //for finding install in registry - requires winapi-bindings
 const INSTALL_VALUE = "XXX"; //often InstallDir or InstallPath
-const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
+const DISCOVERY_IDS_ACTIVE = [STEAMAPP_ID, GOGAPP_ID]; // UPDATE THIS WITH ALL VALID IDs
 
-const GAME_NAME = "XXX";
-const GAME_NAME_SHORT = "XXX";
-const BINARIES_PATH = path.join('.');
-const EXEC_NAME = "XXX.exe";
-const EXEC = path.join(BINARIES_PATH, EXEC_NAME);
+const GAME_NAME = "The Lord of the Rings: War in the North - Legacy Edition";
+const GAME_NAME_SHORT = "The Lord of the Rings";
+const BINARIES_PATH = '.';
+const EXEC_NAME = "witn.exe";
+const EXEC = EXEC_NAME;
 const EXEC_EGS = EXEC; //change other versions if different than Steam/default
 const EXEC_GOG = EXEC;
 const EXEC_DEMO = EXEC;
-const PCGAMINGWIKI_URL = "XXX";
-const EXTENSION_URL = "XXX"; //Nexus link to this extension. Used for links
+const PCGAMINGWIKI_URL = "https://www.pcgamingwiki.com/wiki/The_Lord_of_the_Rings%3A_War_in_the_North_-_Legacy_Edition";
+const EXTENSION_URL = "https://www.nexusmods.com/site/mods/2214"; //Nexus link to this extension. Used for links
 
 //feature toggles
 const hasLoader = false; //true if game needs a mod loader
@@ -66,17 +66,35 @@ if (BINARIES_PATH !== '.') binariesInstaller = true; //only enable Binaries inst
 const debug = false; //toggle for debug mode
 
 //info for modtypes, installers, tools, and actions
-const DATA_FOLDER = 'XXX';
+const DATA_FOLDER = 'res';
 let ROOT_FOLDERS = [DATA_FOLDER];
 if (BINARIES_PATH !== '.') ROOT_FOLDERS.push(BINARIES_PATH.split(path.sep)[0]);
-const ROOTSUB_FOLDERS = [];
+const ROOTSUB_FOLDERS = [
+  'audio',
+  'characters',
+  'cinematics',
+  'effects',
+  'engine',
+  'entities',
+  'environments',
+  'equipment',
+  'fonts',
+  'gamedata',
+  'gui',
+  'quests',
+  'scripts',
+  'speedgrass',
+  'speedtree',
+  'video',
+  'worlds'
+];
 const ROOTSUB_PATH = DATA_FOLDER;
 
-const CONFIGMOD_LOCATION = DOCUMENTS;
-const SAVEMOD_LOCATION = DOCUMENTS;
-const APPDATA_FOLDER = path.join('XXX');
-const CONFIG_FOLDERNAME = 'XXX';
-const SAVE_FOLDERNAME = 'XXX';
+const CONFIGMOD_LOCATION = LOCALAPPDATA;
+const SAVEMOD_LOCATION = LOCALAPPDATA;
+const APPDATA_FOLDER = path.join('Aspyr', 'War in the North');
+const CONFIG_FOLDERNAME = '';
+const SAVE_FOLDERNAME = '';
 
 let GAME_PATH = '';
 let GAME_VERSION = '';
@@ -161,8 +179,7 @@ const TOOL_EXEC_PATH = path.join(TOOL_EXEC_FOLDER, TOOL_EXEC);
 
 let MOD_PATH_DEFAULT = MOD_PATH;
 //if (!needsModInstaller) MOD_PATH_DEFAULT = '.';
-let REQ_FILE = EXEC;
-if (multiExe) REQ_FILE = DATA_FOLDER;
+const REQ_FILE = EXEC;
 const PARAMETERS_STRING = '';
 const PARAMETERS = [PARAMETERS_STRING];
 
@@ -1019,20 +1036,13 @@ function applyGame(context, gameSpec) {
   }
 
   //register actions
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config Folder', () => {
+  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Config/Save Folder', () => {
     util.opn(CONFIG_PATH).catch(() => null);
     }, () => {
       const state = context.api.getState();
       const gameId = selectors.activeGameId(state);
       return gameId === GAME_ID;
   });
-  context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open Save Folder', () => {
-    util.opn(SAVE_PATH).catch(() => null);
-    }, () => {
-      const state = context.api.getState();
-      const gameId = selectors.activeGameId(state);
-      return gameId === GAME_ID;
-  }); //*/
   context.registerAction('mod-icons', 300, 'open-ext', {}, 'Open PCGamingWiki Page', () => {
     util.opn(PCGAMINGWIKI_URL).catch(() => null);
   }, () => {
