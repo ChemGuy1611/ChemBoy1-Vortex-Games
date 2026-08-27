@@ -4,6 +4,10 @@
 
 - None Planned
 
+## [1.1.1] - 2026-08-27
+
+- Fixed: .mgsv files are all placed at same level rather than in individual folders, to make adding to SnakeBite easier.
+
 ## [1.1.0] - 2026-08-22
 
 - Added: Updating SnakeBite Mod Manager in Vortex now applies the update automatically. Its installer runs in the background and reuses the folder SnakeBite is already installed in, so there is nothing to click through

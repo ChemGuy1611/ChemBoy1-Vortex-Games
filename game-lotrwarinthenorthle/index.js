@@ -159,8 +159,7 @@ if (hasUserIdFolder) {
   }
 }
 const SAVE_PATH_XBOX = path.join(SAVE_FOLDER_XBOX, USERID_FOLDER);
-const SAVE_EXTS = [".XXX"];
-const SAVE_FILES = ["XXX"];
+const SAVE_EXTS = [".sav"];
 
 const CONFIG_ID = `${GAME_ID}-config`;
 const CONFIG_NAME = "Config";

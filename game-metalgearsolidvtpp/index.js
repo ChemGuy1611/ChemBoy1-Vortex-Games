@@ -2,8 +2,8 @@
 Name: METAL GEAR SOLID V: THE PHANTOM PAIN Vortex Extension
 Structure: Basic Game
 Author: ChemBoy1
-Version: 1.1.0
-Date: 2026-08-22
+Version: 1.1.1
+Date: 2026-08-27
 Notes:
 -
 ///////////////////////////////////////////*/
@@ -614,7 +614,8 @@ async function installMod(api, files, fileName) {
     return {
       type: 'copy',
       source: file,
-      destination: path.join(folder, path.basename(file))
+      destination: path.basename(file)
+      //destination: path.join(folder, path.basename(file))
     };
   });
   instructions.push(modType);
